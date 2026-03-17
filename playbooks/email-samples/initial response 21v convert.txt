@@ -1,0 +1,41 @@
+P {margin-top:0;margin-bottom:0;} 
+
+Hi Hongbo, 
+
+感谢您联系微软全球技术支持中心，我是微软的技术支持工程师Kun Fang。
+
+注意到您与21世纪互联工程师ZhuRui正在工单20260305397740中咨询关于Microsoft Defender for Cloud 停用通知的问题。
+
+由于您是与微软签约的客户，为了协助您尽快解决该问题，并体验到来自微软原厂的技术支持服务，我会在该工单2603050040000857 中继续进行后续的排查。如果有任何技术问题，欢迎随时联系我。
+
+同时，也欢迎您随时通过Services Hub或者Premier热线联系我们，以获取更专业的技术支持服务。如果您在使用Services Hub的过程中遇到任何问题，可与您的客户成功经理取得联系。
+
+根据您的问题咨询描述：
+
+1.Microsoft Defender for Cloud 本身支持哪些安全能力？请分层介绍。
+
+2.上述安全能力下线（缺失）将带来对应的安全风险，Azure针对每种安全能力是否可以给出对应替代方案或建议？
+
+请允许我们花一些时间内部研究和调查这两个问题，然后给您回复。
+
+有什么问题请随时联系。
+
+Best Regards,
+
+Kun Fang
+
+Support Engineer
+
+Mooncake SCIM
+
+Customer Service & Support
+
+fangkun@microsoft.com
+
+Working Hours: Monday-Friday 9:00am - 18:00pm GMT+8
+
+Need help outside of my working hours?
+
+Manager: Karen Zheng
+
+karenzhe@microsoft.com

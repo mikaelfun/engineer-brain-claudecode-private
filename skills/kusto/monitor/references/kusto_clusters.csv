@@ -1,0 +1,12 @@
+cluster_name,cluster_uri,database,description,environment
+Azure Alerts MC,https://azalertsmcchn2.chinanorth2.kusto.chinacloudapi.cn,AzureAlertsManagement,警报管理主数据库（Metric Alerts 触发记录）,Mooncake
+Azure Alerts MC,https://azalertsmcchn2.chinanorth2.kusto.chinacloudapi.cn,LogSearchRule,日志搜索规则（Scheduled Query Rules）,Mooncake
+Azure Alerts MC,https://azalertsmcchn2.chinanorth2.kusto.chinacloudapi.cn,Insights,洞察数据,Mooncake
+Azure Alerts MC,https://azalertsmcchn2.chinanorth2.kusto.chinacloudapi.cn,DynamicAlerts,动态警报,Mooncake
+Azure Alerts MC,https://azalertsmcchn2.chinanorth2.kusto.chinacloudapi.cn,BaselineService,基线服务,Mooncake
+Azure Alerts MC,https://azalertsmcchn2.chinanorth2.kusto.chinacloudapi.cn,ActivityLogAlerts,活动日志警报,Mooncake
+Azure Alerts MC,https://azalertsmcchn2.chinanorth2.kusto.chinacloudapi.cn,LAMetricIngestion,LA 指标摄取,Mooncake
+Azure Alerts MC,https://azalertsmcchn2.chinanorth2.kusto.chinacloudapi.cn,DeepInsights,深度洞察,Mooncake
+Azure Alerts MC,https://azalertsmcchn2.chinanorth2.kusto.chinacloudapi.cn,ITSM,IT 服务管理,Mooncake
+Azure Insights MC,https://azureinsightsmc.chinaeast2.kusto.chinacloudapi.cn,azureinsightsmc,Azure Monitor Insights 数据/诊断设置日志,Mooncake
+Azure NS Cluster,https://aznscluster.chinaeast2.kusto.chinacloudapi.cn,AzNSPROD,通知服务（Action Groups/通知发送）⚠️可能需要额外权限,Mooncake

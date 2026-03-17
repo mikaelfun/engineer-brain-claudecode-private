@@ -1,0 +1,8 @@
+cluster_name,cluster_uri,database,description,environment,primary_tables
+ESTS,https://estscnn2.chinanorth2.kusto.chinacloudapi.cn,ESTS,登录服务 - 认证请求和诊断,Mooncake,PerRequestTableIfx;DiagnosticTracesIfx;UserErrorsIfx
+MSODS,https://msodsmooncake.chinanorth2.kusto.chinacloudapi.cn,MSODS,目录服务 - 审计和同步,Mooncake,IfxAuditLoggingCommon;IfxUlsEvents;IfxBECAuthorizationManager
+CPIM,https://cpimmcprod2.chinanorth2.kusto.chinacloudapi.cn,CPIM,B2C 服务 - 用户旅程和令牌请求,Mooncake,IfxRequestEvent;IfxCPIMOAuth2TokenRequestEvent;IfxThrottlingRequestEvent
+MFA BJB,https://idsharedmcbjb.chinanorth2.kusto.chinacloudapi.cn,idmfacne,MFA 服务 (BJB) - 多因素认证,Mooncake,SASCommonEvent;SASRequestEvent;CappWebSvcRequest
+MFA SHA,https://idsharedmcsha.chinaeast2.kusto.chinacloudapi.cn,idmfacne,MFA 服务 (SHA) - 多因素认证,Mooncake,SASCommonEvent;SASRequestEvent;CappWebSvcRequest
+AAD Gateway BJB,https://idsharedmcbjb.chinanorth2.kusto.chinacloudapi.cn,AADGatewayProd,AAD Gateway (BJB) - 网关和节流,Mooncake,RequestSummaryEventCore;RequestEventCore
+AAD Gateway SHA,https://idsharedmcsha.chinaeast2.kusto.chinacloudapi.cn,AADGatewayProd,AAD Gateway (SHA) - 网关和节流,Mooncake,RequestSummaryEventCore;RequestEventCore

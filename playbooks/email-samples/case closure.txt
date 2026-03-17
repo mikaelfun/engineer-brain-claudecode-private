@@ -1,0 +1,122 @@
+P {margin-top:0;margin-bottom:0;} 
+
+Hi Steven，
+
+感谢您的确认。
+
+若后续还有任何新的问题，欢迎随时与我们联系，我们将非常乐意继续协助您。
+
+问题描述
+
+=============
+
+通过什么方式可以查看已被assign给某个指定的Service Principal的被Admin consent的Application API permission。通过 Get-MgOauth2PermissionGrant查看不到application
+ permission 对应的记录。
+
+问题建议
+
+=============
+
+在 Microsoft Entra ID 中，Delegated Permission 和 Application Permission 存储在不同的底层对象上：
+
+权限类型
+
+底层对象
+
+查询命令
+
+Delegated Permission (委派权限)
+
+oAuth2PermissionGrant
+
+Get-MgOauth2PermissionGrant
+
+Application Permission (应用权限)
+
+appRoleAssignment
+
+Get-MgServicePrincipalAppRoleAssignment
+
+这就是您通过 Get-MgOauth2PermissionGrant 无法查看到 Application Permission 的原因。Application Permission 被 Admin Consent 后，会以 App Role Assignment 的形式记录在 Service Principal 上，需要使用 Get-MgServicePrincipalAppRoleAssignment 来查询。
+
+如果需要查询application permission的status状态（Granted或Not Granted），需要通过枚举反向查找，可以通过以下代码示例：
+
+   $app =
+ Get-MgApplication
+ -Filter "displayName eq 'xxx'"
+
+   $sp  = Get-MgServicePrincipal -Filter "displayName eq 'xxx'"
+
+   # 已 Grant 的 AppRoleId 集合
+
+   $grantedRoles = (Get-MgServicePrincipalAppRoleAssignment -ServicePrincipalId $sp.Id).AppRoleId
+
+   # 
+遍历声明的权限
+，标注 Grant 状态
+
+   foreach ($resource in $app.RequiredResourceAccess) { 
+
+       $resourceSp = Get-MgServicePrincipal -Filter "appId eq '$($resource.ResourceAppId)'"
+
+       foreach ($access in $resource.ResourceAccess) { 
+# 遍历所有API permission
+
+           if ($access.Type -eq "Role") {
+ # 过滤application permission
+
+               $roleName = ($resourceSp.AppRoles | Where-Object { $_.Id -eq $access.Id }).Value
+
+               $isGranted = $access.Id -in $grantedRoles
+
+               [PSCustomObject]@{
+
+                   Resource   = $resourceSp.DisplayName
+
+                   Permission = $roleName
+
+                   Status     = if ($isGranted) { "✅ Granted" } else { "⚠️ Not Granted" }
+
+               }
+
+           }
+
+       }
+
+   }
+
+更多信息
+
+=============
+
+consentType 这个字段只存在于 Delegated Permission 的对象上。
+
+Delegate Permission ConsentType=AllPrincipals相当于Admin 代表所有用户 consent，而不是个别用户consent。
+
+Application permission不存在user consent的场景，因为Application Permission Admin Consent代表的是
+应用本身的权限
+，不是代表某个用户的权限，授予后就是
+全租户生效
+。
+
+稍后您会收到一封服务质量反馈邮件（完成仅需2分钟）。我们期待您提供真实客观的反馈意见，以便我们持续提升Azure平台和技术支持水平。
+
+Best Regards,
+
+Kun Fang
+
+Support Engineer
+
+Mooncake SCIM
+
+Customer Service & Support
+
+fangkun@microsoft.com
+
+Working Hours: Monday-Friday 9:00am - 18:00pm GMT+8
+
+Need help outside of my working hours?
+
+Manager: Karen Zheng
+
+karenzhe@microsoft.com

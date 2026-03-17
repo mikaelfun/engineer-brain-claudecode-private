@@ -1,0 +1,44 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["@anthropic-ai/mcp-server-playwright"]
+    },
+    "icm": {
+      "command": "C:\\Users\\fangkun\\AppData\\Roaming\\agency\\CurrentVersion\\agency.exe",
+      "args": ["mcp", "icm"]
+    },
+    "teams": {
+      "command": "C:\\Users\\fangkun\\AppData\\Roaming\\agency\\CurrentVersion\\agency.exe",
+      "args": ["mcp", "teams"]
+    },
+    "ado-msazure": {
+      "command": "C:\\Users\\fangkun\\AppData\\Roaming\\agency\\CurrentVersion\\agency.exe",
+      "args": ["mcp", "ado-msazure"]
+    },
+    "ado-contentidea": {
+      "command": "C:\\Users\\fangkun\\AppData\\Roaming\\agency\\CurrentVersion\\agency.exe",
+      "args": ["mcp", "ado-contentidea"]
+    },
+    "ado-supportability": {
+      "command": "C:\\Users\\fangkun\\AppData\\Roaming\\agency\\CurrentVersion\\agency.exe",
+      "args": ["mcp", "ado-supportability"]
+    },
+    "kusto": {
+      "command": "C:\\Users\\fangkun\\AppData\\Roaming\\agency\\CurrentVersion\\agency.exe",
+      "args": ["mcp", "kusto"]
+    },
+    "msft-learn": {
+      "command": "C:\\Users\\fangkun\\AppData\\Roaming\\agency\\CurrentVersion\\agency.exe",
+      "args": ["mcp", "msft-learn"]
+    },
+    "workiq": {
+      "command": "C:\\Users\\fangkun\\AppData\\Roaming\\agency\\CurrentVersion\\agency.exe",
+      "args": ["mcp", "workiq"]
+    },
+    "mail": {
+      "command": "C:\\Users\\fangkun\\AppData\\Roaming\\agency\\CurrentVersion\\agency.exe",
+      "args": ["mcp", "mail"]
+    }
+  }
+}

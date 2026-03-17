@@ -1,0 +1,31 @@
+P {margin-top:0;margin-bottom:0;} 
+
+Hi Hongbo,
+
+上午好。
+
+来信想跟您简单跟进下工单到最近状况。
+
+请问关于 Microsoft Defender for Cloud (MDC) 停用还有其他问题可以帮您吗？
+
+有什么需要请随时联系我们，谢谢！
+
+Best Regards,
+
+Kun Fang
+
+Support Engineer
+
+Mooncake SCIM
+
+Customer Service & Support
+
+fangkun@microsoft.com
+
+Working Hours: Monday-Friday 9:00am - 18:00pm GMT+8
+
+Need help outside of my working hours?
+
+Manager: Karen Zheng
+
+karenzhe@microsoft.com

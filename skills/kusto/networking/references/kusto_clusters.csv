@@ -1,0 +1,5 @@
+cluster_name,cluster_uri,database,description,environment
+Azure NW China MC,https://aznwchinamc.chinanorth2.kusto.chinacloudapi.cn,aznwmds,网络 MDS 日志,Mooncake
+Azure NW China MC NetDefaultDB,https://aznwchinamc.chinanorth2.kusto.chinacloudapi.cn,NetDefaultDB,网络默认数据库,Mooncake
+ARG MC NRP,https://argmcn2nrpone.chinanorth2.kusto.chinacloudapi.cn,AzureResourceGraph,资源图查询,Mooncake
+Azure CM,https://azurecm.chinanorth2.kusto.chinacloudapi.cn,azurecm,Fabric 层日志 (网络相关),Mooncake

@@ -1,0 +1,44 @@
+P {margin-top:0;margin-bottom:0;} 
+
+Hi Wanlong，
+
+感谢您联系微软全球技术中心，我是微软的技术支持工程师Kun Fang，很高兴能有机会协助您解决该问题。您可随时通过以下联系方式以及该问题事件号码
+2603100030005863
+
+与我联系。
+
+关于您反馈的"通过分享链接在本地 PowerPoint桌面端打开文件时长时间加载后报错"的问题，为了更高效地定位根因，烦请您协助确认以下信息：
+
+您的 Office 版本号是多少？（查看路径：PowerPoint → 文件 → 账户 → 关于 PowerPoint）
+
+网络环境是什么？（公司内网/VPN/家庭网络？是否有代理服务器？）
+
+分享的powerpoint文档链接是来自同一个组织的链接吗？
+
+通过浏览器（网页端）能否正常打开该文件？
+
+具体的错误信息是什么？（如方便请提供截图）
+
+  以上信息将帮助我们快速缩小排查范围。期待您的回复，如有任何疑问请随时联系我。
+
+有什么问题请随时联系。
+
+Best Regards,
+
+Kun Fang
+
+Support Engineer
+
+Mooncake SCIM
+
+Customer Service & Support
+
+fangkun@microsoft.com
+
+Working Hours: Monday-Friday 9:00am - 18:00pm GMT+8
+
+Need help outside of my working hours?
+
+Manager: Karen Zheng
+
+karenzhe@microsoft.com

@@ -1,0 +1,7 @@
+cluster_name,cluster_uri,database,description,environment
+ARM MC ADX,https://armmcadx.chinaeast2.kusto.chinacloudapi.cn,armmc,ARM 主要日志（Mooncake）,Mooncake
+ARG MC,https://argmcn2arm1pone.chinanorth2.kusto.chinacloudapi.cn,AzureResourceGraph,Azure Resource Graph 日志,Mooncake
+Azure Portal MC,https://azportalmc2.chinaeast2.kusto.chinacloudapi.cn,AzurePortal,Azure Portal 前端日志,Mooncake
+Azure Portal RP MC,https://azportalmc2.chinaeast2.kusto.chinacloudapi.cn,AzurePortalRP,Azure Portal RP 日志,Mooncake
+Azure Deployer MC,https://azdeployermc.kusto.chinacloudapi.cn,AzDeployerKustoMC,Azure Deployer 部署日志,Mooncake
+Azure CRP MC,https://azcrpmc.kusto.chinacloudapi.cn,crp_allmc,CRP 操作日志（ARM-RP 调用链追踪）,Mooncake

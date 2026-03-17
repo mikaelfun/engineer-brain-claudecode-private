@@ -1,0 +1,3 @@
+cluster_name,cluster_uri,database,description,environment
+RDSKMC,https://rdskmc.chinaeast2.kusto.chinacloudapi.cn,WVD,AVD 主要诊断数据 (Mooncake),Mooncake
+RDS Prod,https://rdsprod.eastus2.kusto.windows.net,WVD,AVD East US 2 (Global),Public

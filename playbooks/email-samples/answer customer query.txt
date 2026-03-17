@@ -1,0 +1,431 @@
+P {margin-top:0;margin-bottom:0;} 
+
+Hi Sihua,
+
+我是O365 team的工程师Kun，很高兴能有机会协助您解决该问题。
+
+关于您咨询的 Power BI Audit 相关问题，以下是详细说明：
+
+1. 如何判断 Power BI Audit 是否已开启
+
+Audit 功能在首次通过 Microsoft 365 Compliance Center 执行搜索时会自动开启。开启后，
+Portal UI 上没有关闭按钮
+，只能通过 Exchange Online PowerShell 进行管理。
+
+检查步骤：
+
+# 连接 Exchange Online（世纪互联环境）
+
+Connect-ExchangeOnline -ExchangeEnvironmentName O365China
+
+# 查看 Audit 开启状态
+
+Get-AdminAuditLogConfig | Format-List 
+UnifiedAuditLogIngestionEnabled
+
+返回值说明：
+
+True
+ = Audit 已开启
+
+False
+ = Audit 未开启
+
+补充说明：
+ 只要 Tenant 级别的 Audit 已开启，Power BI Audit 日志默认保留
+
+180 天
+。如果额外配置了 Audit Retention Policy，可以将 Power BI 相关日志的保留期延长至
+
+1 年
+。
+
+2. 如何查看 Audit 的具体开启时间
+
+可以通过搜索 Unified Audit Log 中的配置变更记录来确认开启时间：
+
+# 连接 Exchange Online（世纪互联环境）
+
+Connect-ExchangeOnline -ExchangeEnvironmentName O365China
+
+# 搜索 Audit 开关的变更记录（过去一年内）
+
+Search-UnifiedAuditLog -Operations Set-AdminAuditLogConfig -StartDate (Get-Date).AddYears(-1) -EndDate (Get-Date)
+
+在返回结果中，查看是否包含
+
+UnifiedAuditLogIngestionEnabled
+
+ 参数的变更记录，即可确认
+ Audit 的开启时间。
+
+3. 如何查看 Audit Retention Policy 的具体配置
+
+您可以直接到Purview Portal中查询，或者连接到合规中心 PowerShell 进行查询：
+
+# Purview Portal
+
+https://purview.microsoftonline.cn/audit/auditpolicies
+
+# 连接合规中心（世纪互联环境）
+
+Connect-IPPSSession -ConnectionUri https://ps.compliance.protection.partner.outlook.cn/powershell-liveid -AzureADAuthorizationEndpointUri
+
+https://login.chinacloudapi.cn/organizations
+
+# 查看 Audit 保留策略配置
+
+Get-UnifiedAuditLogRetentionPolicy | Sort-Object -Property Priority -Descending | Format-List Priority, Name, RecordTypes, RetentionDuration
+
+返回结果将显示当前配置的所有 Audit 保留策略，包括优先级、策略名称、适用的日志类型及保留时长。
+
+如下图所示：
+
+如有任何疑问，请随时联系我们。
+
+Best Regards,
+
+Kun Fang
+
+Support Engineer
+
+Mooncake SCIM
+
+Customer Service & Support
+
+fangkun@microsoft.com
+
+Working Hours: Monday-Friday 9:00am - 18:00pm GMT+8
+
+Need help outside of my working hours?
+
+Manager: Karen Zheng
+
+karenzhe@microsoft.com
+
+From:
+ Alice Zhang &lt;alicezhang@microsoft.com&gt;
+
+Sent:
+ Tuesday, March 10, 2026 10:36 AM
+
+To:
+ Cheng, sihua (Contractor) &lt;sihua.cheng@effem.com&gt;; Microsoft Support &lt;supportmail@microsoft.com&gt;; Kun Fang &lt;fangkun@microsoft.com&gt;
+
+Cc:
+ Shuqiang Ren &lt;Shuqiang.Ren@microsoft.com&gt;; Elaine Ng (Accenture Solutions Private Limited) &lt;v-yeelingng@microsoft.com&gt;; Mooncake Database POD Members &lt;mcpoddb@microsoft.com&gt;
+
+Subject:
+ RE: [S500_Child]如何获取2025年全年power bi workspace的usage - TrackingID#2603050040001938
+
+Looping our O365
+
+工程师
+
+Kun Fang
+
+Alice Zhang
+
+（张丹）
+
+Tech Support Engineer SEE
+
+Mooncake (China Azure) Support Team
+
+Working Hours: M-F 9:00am - 6:00pm UTC+8
+
+Manager: Linda Deng/
+
+LIDENG@microsoft.com
+
+From:
+
+ Cheng, sihua (Contractor) &lt;sihua.cheng@effem.com&gt;
+
+Sent:
+ Monday, March 9, 2026 9:13 AM
+
+To:
+ Alice Zhang &lt;alicezhang@microsoft.com&gt;; Microsoft Support &lt;supportmail@microsoft.com&gt;
+
+Cc:
+ Shuqiang Ren &lt;Shuqiang.Ren@microsoft.com&gt;; Elaine Ng (Accenture Solutions Private Limited) &lt;v-yeelingng@microsoft.com&gt;; Mooncake Database POD Members &lt;mcpoddb@microsoft.com&gt;
+
+Subject:
+ [
+
+外部
+
+] RE: [S500_Child]
+
+如何
+
+获取
+
+2025
+
+年全年
+
+power
+ bi workspace
+
+的
+
+usage - TrackingID#2603050040001938
+
+Hi Alice
+，
+
+我想请教一下，我这边是
+power bi
+中国区，
+21
+世纪互联托管的，也同样有相似功能吗？
+
+谢谢
+
+Thank you
+
+Sihua
+
+From:
+
+ Alice Zhang &lt;
+alicezhang@microsoft.com
+&gt;
+
+Sent:
+ Friday, March 6, 2026 2:06 PM
+
+To:
+ Microsoft Support &lt;
+supportmail@microsoft.com
+&gt;; Cheng, sihua (Contractor) &lt;
+sihua.cheng@effem.com
+&gt;
+
+Cc:
+ Shuqiang Ren &lt;
+Shuqiang.Ren@microsoft.com
+&gt;; Elaine Ng (Accenture Solutions Private Limited) &lt;
+v-yeelingng@microsoft.com
+&gt;; Mooncake Database POD Members &lt;
+mcpoddb@microsoft.com
+&gt;
+
+Subject:
+ RE: [S500_Child]
+
+如何获取
+
+2025
+
+年全年
+
+power
+ bi workspace
+
+的
+
+usage - TrackingID#2603050040001938
+
+[EXTERNAL]
+
+Hi Sihua,
+
+以下信息供您参考：
+
+问题描述：
+
+==========
+
+如何获取
+
+Power BI workspace2025
+
+年的访问记录。
+
+问题分析：
+
+===========
+
+从
+
+Power BI
+
+服务角度，我们可以通过
+
+Power
+ BI Activity log API
+
+导出过去
+
+28
+
+天的访问记录。具体信息请参考
+
+Access
+ the Power BI activity log - Power BI | Microsoft Learn
+
+和
+
+Admin
+ - Get Activity Events - REST API (Power BI Power BI REST APIs) | Microsoft Learn
+
+从
+
+M365 Security
+
+角度，在成功启用
+
+Purview
+ Audit Search
+
+后，可以进行相关
+
+Audit
+
+日志的配置。但是日志的收集是从启用成功后开始的。
+
+对于审核的日志保留时效：
+
+如果您使用
+
+Microsoft 365 E5
+
+许可证，它将所有
+
+Exchange
+ Online
+
+、
+
+SharePoint
+
+、
+
+OneDrive
+
+和
+
+Microsoft Entra
+
+审核记录保留一年。默认情况下，所有其他活动的审核记录将保留
+
+ 180 
+
+天。
+
+您可以使用自定义保留策略将您需要的日志保留期更改为一年。
+
+具体步骤如下：
+
+点击
+
+Audit, Policies, Create Audit retention policy
+
+根据您的需要配置对应的用户和
+
+Record
+ Type
+
+。
+
+如果有任何问题，欢迎随时联系我。
+
+Alice Zhang
+
+（张丹）
+
+Tech Support Engineer SEE
+
+Mooncake (China Azure) Support Team
+
+Working Hours: M-F 9:00am - 6:00pm UTC+8
+
+Manager: Linda Deng/
+
+LIDENG@microsoft.com
+
+From:
+
+ Alice Z &lt;
+support@mail.support.microsoft.com
+&gt;
+
+Sent:
+ Friday, March 6, 2026 11:40 AM
+
+To:
+
+sihua.cheng@effem.com
+; Alice Zhang &lt;
+alicezhang@microsoft.com
+&gt;
+
+Cc:
+ Shuqiang Ren &lt;
+Shuqiang.Ren@microsoft.com
+&gt;; Elaine Ng (Accenture Solutions Private Limited) &lt;
+v-yeelingng@microsoft.com
+&gt;; Mooncake Database POD Members &lt;
+mcpoddb@microsoft.com
+&gt;
+
+Subject:
+ [S500_Child]
+
+如何
+
+获取
+
+2025
+
+年全年
+
+power
+ bi workspace
+
+的
+
+usage - TrackingID#2603050040001938
+
+Hi Sihua,
+
+您好
+
+&#128522;
+
+感谢您联系微软技术支持，我是
+
+China
+ Azure
+团队的
+Alice Zhang (
+张丹
+)
+，将和您在案例
+2603050040001938
+上合作调查“如何获取
+2025
+年全年
+power bi workspace
+的
+usage
+”的问题。
+
+我会调查相关问题并回复您。
+
+Alice Zhang
+
+（张丹）
+
+Tech Support Engineer SEE
+
+Mooncake (China Azure) Support Team
+
+Working Hours: M-F 9:00am - 6:00pm UTC+8
+
+Manager: Linda Deng/ 
+
+LIDENG@microsoft.com

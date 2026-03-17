@@ -1,0 +1,3 @@
+cluster_name,cluster_uri,database,description,environment
+Azure RMS MC,https://azrmsmc.kusto.chinacloudapi.cn,azrms,Azure RMS/MIP 请求日志,Mooncake
+ESTS MC,https://estscnn2.chinanorth2.kusto.chinacloudapi.cn,ESTS,Azure AD 登录日志 (含 RMS 认证),Mooncake

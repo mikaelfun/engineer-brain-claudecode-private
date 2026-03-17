@@ -1,0 +1,3 @@
+cluster_name,cluster_uri,database,description,environment
+Intune China,https://intunecn.chinanorth2.kusto.chinacloudapi.cn,intune,设备管理、策略、应用日志,Mooncake
+MSODS Mooncake,https://msodsmooncake.chinanorth2.kusto.chinacloudapi.cn,MSODS,MSODS 审计日志（许可证操作）,Mooncake

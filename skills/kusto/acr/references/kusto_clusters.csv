@@ -1,0 +1,2 @@
+cluster_name,cluster_uri,database,description,environment
+ACR MC,https://acrmc2.chinaeast2.kusto.chinacloudapi.cn,acrprodmc,ACR 主要日志（RegistryActivity/RPActivity/Build）,Mooncake

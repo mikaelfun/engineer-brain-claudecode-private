@@ -1,0 +1,66 @@
+{
+  "fetchedAt": "2026-03-14T15:47:23.0941470+08:00",
+  "reportUrl": "https://msit.powerbi.com/groups/me/reports/d9f581ef-f263-4808-96af-bfa16856ca8b/ReportSection?experience=power-bi",
+  "accounts": [
+    {
+      "account": "AstraZeneca / 阿斯利康",
+      "cc": "mcccwl@microsoft.com;nate.ju@microsoft.com; cheng.lv@microsoft.com;zhimenggeng@microsoft.com;; <Replace with POD alias>",
+      "knowMePage": "https://dev.azure.com/CSS-Mooncake/Mooncake%20Customers%20Know-Me/_wiki/wikis/Mooncake-Customers-Know-Me.wiki/3205/AstraZeneca-EC-C-",
+      "error": null
+    },
+    {
+      "account": "BMW AG/BMW / 宝马",
+      "cc": "mcccwl@microsoft.com;xueman.li@microsoft.com; fantian@microsoft.com;hong.kang@microsoft.com;bing.lin@microsoft.com;; <Replace with POD alias>",
+      "knowMePage": "https://dev.azure.com/CSS-Mooncake/Mooncake%20Customers%20Know-Me/_wiki/wikis/Mooncake-Customers-Know-Me.wiki/129/BMW-GA-S500-",
+      "error": null
+    },
+    {
+      "account": "EY / 安永",
+      "cc": "mcccwl@microsoft.com;Pengliang.Zhang@microsoft.com;yanjunlin@microsoft.com;listeven@microsoft.com;; <Replace with POD alias>",
+      "knowMePage": "https://dev.azure.com/CSS-Mooncake/Mooncake%20Customers%20Know-Me/_wiki/wikis/Mooncake-Customers-Know-Me.wiki/209/EY-GA-S500-",
+      "error": null
+    },
+    {
+      "account": "Ford Motor China / 福特汽车（中国）有限公司",
+      "cc": "mcccwl@microsoft.com;Guyin.Zhou@microsoft.com;yunliu3@microsoft.com;yuache@microsoft.com;Chen.Wei@microsoft.com;; <Replace with POD alias>",
+      "knowMePage": "https://dev.azure.com/CSS-Mooncake/Mooncake%20Customers%20Know-Me/_wiki/wikis/Mooncake-Customers-Know-Me.wiki/133/Ford-GA-S500-",
+      "error": null
+    },
+    {
+      "account": "L'Oreal / 欧莱雅 / Loreal / 欧莱雅(中国)有限公司",
+      "cc": "mcccwl@microsoft.com;tomxu@microsoft.com;alicesh@microsoft.com;chpa@microsoft.com;; <Replace with POD alias>",
+      "knowMePage": null,
+      "error": null
+    },
+    {
+      "account": "Manulife-Sinochem /  中宏人寿",
+      "cc": "mcccwl@microsoft.com;miaozhan@microsoft.com;hanxia@microsoft.com;wongsally@microsoft.com;HongWei.Guo@microsoft.com;; <Replace with POD alias>",
+      "knowMePage": "https://dev.azure.com/CSS-Mooncake/Mooncake%20Customers%20Know-Me/_wiki/wikis/Mooncake-Customers-Know-Me.wiki/136/Sino-Manulife-EC-S500-",
+      "error": null
+    },
+    {
+      "account": "Michelin / 米其林",
+      "cc": "mcccwl@microsoft.com;alexliang@microsoft.com;Shunshou.Chen@microsoft.com;; <Replace with POD alias>",
+      "knowMePage": "https://dev.azure.com/CSS-Mooncake/Mooncake%20Customers%20Know-Me/_wiki/wikis/Mooncake-Customers-Know-Me.wiki/134/Michellin-SMB-S500-",
+      "error": null
+    },
+    {
+      "account": "PROCTER & GAMBLE COMPANY / 宝洁(中国)有限公司 / P&G / 上海联蔚信息科技有限公司(AZ)广州宝洁有限公司supplier Chain项目  /  上海贝塔斯曼商业服务有限公司 / PG",
+      "cc": "mcccwl@microsoft.com;yanjunlin@microsoft.com;qiangzho@microsoft.com;sypang@microsoft.com;; <Replace with POD alias>",
+      "knowMePage": null,
+      "error": null
+    },
+    {
+      "account": "Volkswagen AG / 大众 (!!! 只抄送CSAM为Heather Kang的Case)",
+      "cc": "mcccwl@microsoft.com;fantian@microsoft.com;hong.kang@microsoft.com;timhou@microsoft.com;; <Replace with POD alias>",
+      "knowMePage": "https://dev.azure.com/CSS-Mooncake/Mooncake%20Customers%20Know-Me/_wiki/wikis/Mooncake-Customers-Know-Me.wiki/128/Volkswagen-AG",
+      "error": null
+    },
+    {
+      "account": "梅赛德斯奔驰 / Mercedes-Benz / Daimler/ 戴姆勒",
+      "cc": "mcccwl@microsoft.com;lium@microsoft.com;yima@microsoft.com;xushen@microsoft.com;chxu1@microsoft.com;Shi.Tang@microsoft.com;Xueping.Zhao@microsoft.com;Jingjing.Wen@microsoft.com;; <Replace with POD alias>",
+      "knowMePage": "https://dev.azure.com/CSS-Mooncake/Mooncake%20Customers%20Know-Me/_wiki/wikis/Mooncake-Customers-Know-Me.wiki/130/Mercedes-Benz-GA-S500-",
+      "error": null
+    }
+  ]
+}

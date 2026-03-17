@@ -1,0 +1,24 @@
+cluster_name,cluster_uri,database,description,environment
+Azure CRP MC,https://azcrpmc.kusto.chinacloudapi.cn,crp_allmc,CRP 操作日志 (ApiQosEvent/ContextActivity/VmssQoSEvent),Mooncake
+Disks MC,https://disksmc.chinaeast2.kusto.chinacloudapi.cn,Disks,磁盘操作日志 (DiskRPApiQosEvent/DiskRPTrace),Mooncake
+Azure Allocator MC,https://azureallocatormc.chinaeast2.kusto.chinacloudapi.cn,azureallocatormc,VM 分配日志 (AllocationQosEvent/AllocationTrace),Mooncake
+Azure CM,https://azurecm.chinanorth2.kusto.chinacloudapi.cn,azurecm,Fabric 层日志 (LogContainerSnapshot/TMMgmtTenantEventsEtwTable),Mooncake
+Azure Core (Fa),https://azcore.chinanorth3.kusto.chinacloudapi.cn,Fa,主机节点日志 (WindowsEventTable/VmHealthRawStateEtwTable/HyperV*),Mooncake
+Azure Core (AzureCP),https://azcore.chinanorth3.kusto.chinacloudapi.cn,AzureCP,Kyber 平台日志 (KyberVmAvailabilityMetricEmission/KyberAnnotationEvent),Mooncake
+RDOS MC,https://rdosmc.kusto.chinacloudapi.cn,rdos,主机节点日志 (WindowsEventTable/NodeServiceOperationEtwTable),Mooncake
+Azure DCM MC,https://azuredcmmc.kusto.chinacloudapi.cn,AzureDCMDb,DCM 硬件管理日志 (ResourceSnapshotHistoryV1/dcmInventoryComponentDiskDirect),Mooncake
+Azure PE,https://azpe.chinaeast2.kusto.chinacloudapi.cn,azpe,计划事件日志 (AzPEWorkflowSnapshot/AzPEWorkflowEvent),Mooncake
+Hawkeye,https://hawkeyedataexplorer.chinanorth2.kusto.chinacloudapi.cn,HawkeyeLogs,自动 RCA 日志 (HawkeyeRCAEvents/HawkeyeTriageEvents),Mooncake
+CRP MC BI,https://azcrpmcbi.kusto.chinacloudapi.cn,bi_allmc,CRP BI 数据 (Subscription/VM),Mooncake
+Sparkle,https://sparkle.chinaeast2.kusto.chinacloudapi.cn,defaultdb,固件部署遥测 (FWDeploymentTelemetryFull),Mooncake
+VMAInsight,https://vmainsight.kusto.windows.net,vmadb,VM 可用性分析 (VMA/VMALENS/VmImpactingEventsV1),Public
+VMAInsight Air,https://vmainsight.kusto.windows.net,Air,VM 可用性分析 (Air 数据库),Public
+Azure NW China MC,https://aznwchinamc.chinanorth2.kusto.chinacloudapi.cn,aznwmds,网络 MDS 日志 (VM 网络诊断),Mooncake
+ARG MC NRP,https://argmcn2nrpone.chinanorth2.kusto.chinacloudapi.cn,AzureResourceGraph,资源图查询 (NRP 资源),Mooncake
+ARM MC ADX,https://armmcadx.chinaeast2.kusto.chinacloudapi.cn,armmc,ARM 层日志 (HttpIncomingRequests/EventServiceEntries),Mooncake
+Resource Graph MC,https://argmcn2arm1pone.chinanorth2.kusto.chinacloudapi.cn,AzureResourceGraph,资源图查询日志,Mooncake
+Azure Portal MC,https://azportalmc2.chinaeast2.kusto.chinacloudapi.cn,AzurePortal,Portal 遥测日志 (ClientEvents/ExtEvents),Mooncake
+Azure Backup MC,https://mabprodmcadx.chinaeast2.kusto.chinacloudapi.cn,MABKustoProd,备份服务日志,Mooncake
+Azure Site Recovery MC,https://asradxclusmc.chinanorth2.kusto.chinacloudapi.cn,ASRKustoDB,站点恢复日志 (TelemetryPEToProvider),Mooncake
+Rome (MDC),https://romelogsmc.kusto.chinacloudapi.cn,RomeLogs,MDC 安全日志,Mooncake
+Rome Telemetry Public,https://rometelemetrydata.kusto.windows.net,RomeTelemetry,Rome 遥测数据 (含 MC 数据),Public

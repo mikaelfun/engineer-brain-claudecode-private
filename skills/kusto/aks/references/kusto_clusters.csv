@@ -1,0 +1,7 @@
+cluster_name,cluster_uri,database,description,environment
+AKS Hub,https://mcakshuba.chinaeast2.kusto.chinacloudapi.cn,AKSprod,AKS 主要操作日志,Mooncake
+AKS CCP Logs,https://mcakshuba.chinaeast2.kusto.chinacloudapi.cn,AKSccplogs,控制平面日志,Mooncake
+AKS Infra,https://mcakshuba.chinaeast2.kusto.chinacloudapi.cn,AKSinfra,基础设施信息（ProcessInfo 等）,Mooncake
+ARM MC ADX,https://armmcadx.chinaeast2.kusto.chinacloudapi.cn,armmc,ARM 层日志（EventServiceEntries）,Mooncake
+ACR MC,https://acrmc2.chinaeast2.kusto.chinacloudapi.cn,acrprodmc,ACR 日志,Mooncake
+Azure CRP MC,https://azcrpmc.kusto.chinacloudapi.cn,crp_allmc,CRP 操作日志（ApiQosEvent/VmssQoSEvent）,Mooncake

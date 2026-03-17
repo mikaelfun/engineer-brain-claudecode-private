@@ -1,0 +1,6 @@
+cluster_name,cluster_uri,database,description,environment
+Disks MC,https://disksmc.chinaeast2.kusto.chinacloudapi.cn,Disks,Disk RP 日志、托管磁盘元数据和生命周期事件,Mooncake
+AzCore,https://azcore.chinanorth3.kusto.chinacloudapi.cn,Fa,VM IO 性能、磁盘延迟、限流分析,Mooncake
+DCM MC,https://azuredcmmc.kusto.chinacloudapi.cn,AzureDcmDb,主机硬件磁盘库存和故障信息,Mooncake
+XStore,https://xstore.kusto.windows.net,xstore,存储集群容量和磁盘故障分析,Public
+XStore Analytics,https://xstore.kusto.windows.net,xdataanalytics,存储账户属性和计费数据,Public

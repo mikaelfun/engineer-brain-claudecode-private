@@ -1,0 +1,308 @@
+/**
+ * Engineer Brain Dashboard — 共享类型定义
+ */
+
+// ============ Case 相关 ============
+
+export interface CaseInfo {
+  caseNumber: string
+  title: string
+  severity: string
+  status: string
+  sap: string
+  is24x7: string
+  assignedTo: string
+  createdOn: string
+  caseAge: string
+  activeHours: string
+  origin: string
+  timezone: string
+  country: string
+  contact: {
+    name: string
+    email: string
+    phone: string
+    preferredMethod: string
+  }
+  customer: string
+  customerStatement: string
+  entitlement: {
+    serviceLevel: string
+    serviceName: string
+    schedule: string
+    contractCountry: string
+  }
+  emailCount: number
+  noteCount: number
+  phoneCallCount: number
+  laborCount: number
+  icmCount: number
+  attachmentCount: number
+}
+
+export interface CaseSummary {
+  caseNumber: string
+  title: string
+  severity: string
+  status: string
+  customer: string
+  assignedTo: string
+  createdOn: string
+  caseAge: string
+  meta: CaseHealthMeta | null
+}
+
+export interface CaseStats {
+  total: number
+  bySeverity: Record<string, number>
+  byStatus: Record<string, number>
+  urgentItems: number
+  pendingItems: number
+  normalItems: number
+}
+
+// ============ Email 相关 ============
+
+export interface Email {
+  id: string
+  direction: 'sent' | 'received'
+  date: string
+  subject: string
+  from: string
+  to: string
+  body: string
+}
+
+// ============ Note 相关 ============
+
+export interface Note {
+  id: string
+  date: string
+  author: string
+  title: string
+  body: string
+}
+
+// ============ Todo 相关 ============
+
+export interface TodoFile {
+  date: string
+  filename: string
+  title: string
+  patrolInfo: string
+  sections: TodoSection[]
+  summary: TodoSummary | null
+}
+
+export interface TodoSection {
+  type: 'carryover' | 'patrol'
+  title: string
+  cases: TodoCase[]
+}
+
+export interface TodoCase {
+  caseNumber: string
+  customer: string
+  severity: string
+  status: string
+  priority: 'red' | 'yellow' | 'green'
+  description: string
+  items: TodoItem[]
+}
+
+export interface TodoItem {
+  lineNumber: number
+  checked: boolean
+  priority: 'red' | 'yellow' | 'done'
+  text: string
+  isCarryover: boolean
+}
+
+export interface TodoSummary {
+  urgent: string[]
+  pending: string[]
+  carryover: string[]
+  normal: string[]
+}
+
+// ============ CaseHealth Meta ============
+
+export interface CaseHealthMeta {
+  caseNumber: string
+  lastInspected: string
+  fwr: SlaStatus
+  fdr: SlaStatus
+  irSla: SlaStatus
+  teams_last_updated?: string
+  teams_chat_count?: number
+}
+
+export interface SlaStatus {
+  status: string
+  remaining: string | null
+  checkedAt: string
+}
+
+// ============ Patrol State ============
+
+export interface PatrolState {
+  lastPatrol: string
+  activeCases: string[]
+  arCases: string[]
+  todoFile: string
+  patrolType: string
+  summary: {
+    pendingEngineer: number
+    pendingCustomer: number
+    waitingPG: number
+    ar: number
+    normal: number
+  }
+  currentPatrolStartedAt: string
+  lastRunTiming: {
+    caseCount: number
+    startedAt: string
+    completedAt: string
+    wallClockMinutes: number
+    computeSeconds: number
+    bottlenecks: string[]
+  }
+}
+
+// ============ Agent 相关 ============
+
+export interface AgentInfo {
+  id: string
+  name?: string
+  model: string
+  workspace?: string
+  agentDir?: string
+  subagents?: {
+    allowAgents: string[]
+  }
+}
+
+export interface CronJob {
+  id: string
+  agentId: string
+  name: string
+  enabled: boolean
+  createdAtMs: number
+  updatedAtMs?: number
+  schedule: {
+    kind: string
+    expr?: string
+    tz?: string
+    at?: string
+  }
+  state?: {
+    nextRunAtMs?: number
+    lastRunAtMs?: number
+    lastRunStatus?: string
+    lastStatus?: string
+    lastDurationMs?: number
+    lastError?: string
+    consecutiveErrors?: number
+  }
+}
+
+// ============ Draft 相关 ============
+
+export interface Draft {
+  caseNumber: string
+  filename: string
+  content: string
+  createdAt: string
+}
+
+// ============ SSE 事件 ============
+
+export type SSEEventType =
+  | 'case-updated'
+  | 'todo-updated'
+  | 'patrol-updated'
+  | 'draft-updated'
+  | 'cron-updated'
+  | 'connected'
+  | 'workflow-started'
+  | 'workflow-iteration'
+  | 'workflow-thinking'
+  | 'workflow-tool-call'
+  | 'workflow-tool-result'
+  | 'workflow-completed'
+  | 'workflow-failed'
+  | 'workflow-cancelled'
+
+export interface SSEEvent {
+  type: SSEEventType
+  data: Record<string, unknown>
+  timestamp: string
+}
+
+// ============ Auth 相关 ============
+
+export interface AuthStatus {
+  isSetup: boolean
+  isAuthenticated: boolean
+}
+
+export interface AuthPayload {
+  sub: string
+  iat: number
+  exp: number
+}
+
+// ============ Workflow / Agent 相关 ============
+
+export type WorkflowId = 'patrol' | 'troubleshoot' | 'draft-email' | 'casework'
+
+export type SessionStatus = 'running' | 'completed' | 'failed' | 'cancelled'
+
+export interface WorkflowConfig {
+  id: WorkflowId
+  name: string
+  description: string
+  icon: string
+  requiredParams: string[]
+  maxIterations: number
+  timeoutMs: number
+}
+
+export interface AgentSession {
+  id: string
+  workflowId: WorkflowId
+  workflowName: string
+  status: SessionStatus
+  params: Record<string, string>
+  messages: AgentMessage[]
+  toolCalls: AgentToolCallRecord[]
+  result?: string
+  error?: string
+  startedAt: string
+  completedAt?: string
+  iterations: number
+  maxIterations: number
+}
+
+export interface AgentMessage {
+  role: 'system' | 'user' | 'assistant' | 'tool'
+  content: string | null
+  tool_calls?: Array<{
+    id: string
+    type: 'function'
+    function: { name: string; arguments: string }
+  }>
+  tool_call_id?: string
+  timestamp: string
+}
+
+export interface AgentToolCallRecord {
+  callId: string
+  toolName: string
+  args: Record<string, string>
+  success: boolean
+  output: string
+  error?: string
+  durationMs: number
+  timestamp: string
+}
