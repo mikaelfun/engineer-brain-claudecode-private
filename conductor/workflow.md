@@ -141,6 +141,16 @@ For individual phase verification (step 3 in Track Workflow), use lighter checks
 - Run existing unit tests: `npm test`
 - Spot-check affected pages via Playwright screenshot (no full test suite)
 
+### 🚨 Safety Red Lines for Automated Testing
+
+All generated tests (unit and UI) **MUST** comply with the safety red lines defined in `CLAUDE.md § 自动化测试安全红线`. Before generating or running any test:
+
+1. **Unit tests**: Never import or call D365 write scripts (`add-note.ps1`, `record-labor.ps1`, etc.). Always mock `child_process.execSync`/`spawn` if the module under test invokes PowerShell.
+2. **UI tests**: Never click action buttons (`Full Process`, `Troubleshoot`, `Draft Email`, `Execute`). Only use read-only interactions: navigation, screenshots, visibility checks, tab switching, sorting.
+3. **API tests**: Only call `GET` endpoints and safe `PUT /api/settings`. Never call `POST /api/todo/:id/execute`, `POST /api/case/:id/process`, `POST /api/case/:id/step/*`, or `POST /api/patrol`.
+
+If a test scenario requires verifying a write operation's UI flow, test only up to the confirmation dialog — never submit it.
+
 ### When to Skip / Reduce Testing
 
 | Scenario | Unit Tests | UI Tests |
