@@ -1,3 +1,5 @@
 {
-  "casesRoot": "./cases"
+  "casesRoot": "./cases",
+  "dataRoot": "./data",
+  "teamsSearchCacheHours": 4
 }

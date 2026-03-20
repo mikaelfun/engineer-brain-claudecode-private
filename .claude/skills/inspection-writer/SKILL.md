@@ -1,15 +1,27 @@
 ---
-description: "汇总写 inspection 报告 + todo。由 Main Agent 内联执行，不启动 subagent。"
+description: "汇总写 inspection 报告 + todo。可独立调用 /inspection-writer {caseNumber}，也被 casework 内联执行。"
+allowed-tools:
+  - Bash
+  - Read
+  - Write
+  - Glob
+  - Grep
 ---
 
-# inspection-writer — Inspection 汇总
+# /inspection-writer — Inspection 汇总
 
-由 casework 流程的 Step 5 调用，Main Agent **直接执行**（不 spawn subagent）。
+汇总 Case 的所有产出，生成 inspection 报告和 todo。
 
-## 输入
-从 casework 上下文获取：
-- `caseNumber`
-- `caseDir`（绝对路径）
+## 参数
+- `$ARGUMENTS` — Case 编号（如 `2603100030005863`）
+- 可选上下文变量（由 casework 传入）：
+  - `teamsSearchTimedOut`：teams-search 是否超时
+
+## 配置读取
+```
+读取 config.json 获取 casesRoot
+设置 caseDir = {casesRoot}/active/{caseNumber}/（使用绝对路径）
+```
 
 ## 执行步骤
 

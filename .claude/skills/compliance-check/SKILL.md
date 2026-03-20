@@ -1,15 +1,23 @@
 ---
-description: "Entitlement 合规检查 + 21v Convert 检测，upsert casehealth-meta.json。由 Main Agent 内联执行，不启动 subagent。"
+description: "Entitlement 合规检查 + 21v Convert 检测，upsert casehealth-meta.json。可独立调用 /compliance-check {caseNumber}，也被 casework 内联执行。"
+allowed-tools:
+  - Bash
+  - Read
+  - Write
 ---
 
-# compliance-check — 合规检查
+# /compliance-check — 合规检查
 
-由 casework 流程的 Step 3a 调用，Main Agent **直接执行**（不 spawn subagent）。
+Entitlement 合规检查 + 21v Convert 检测。
 
-## 输入
-从 casework 上下文获取：
-- `caseNumber`
-- `caseDir`（绝对路径）
+## 参数
+- `$ARGUMENTS` — Case 编号（如 `2603100030005863`）
+
+## 配置读取
+```
+读取 config.json 获取 casesRoot
+设置 caseDir = {casesRoot}/active/{caseNumber}/（使用绝对路径）
+```
 
 ## 缓存跳过规则
 

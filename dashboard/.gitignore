@@ -4,3 +4,5 @@ dist/
 web/dist/
 *.log
 .eb-auth.json
+.runtime/
+!.runtime/.gitkeep

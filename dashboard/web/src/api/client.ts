@@ -20,11 +20,17 @@ function getAuthHeaders(): HeadersInit {
   return token ? { 'Authorization': `Bearer ${token}` } : {}
 }
 
+// Guard against multiple concurrent 401 reload attempts
+let isReloading = false
+
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
     if (res.status === 401) {
       localStorage.removeItem('eb_token')
-      window.location.reload()
+      if (!isReloading) {
+        isReloading = true
+        window.location.reload()
+      }
       throw new ApiError(res.status, res.statusText, 'Session expired')
     }
     const text = await res.text().catch(() => '')

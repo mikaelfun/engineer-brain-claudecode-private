@@ -51,7 +51,7 @@ mcpServers:
 - `icm/` — ICM 数据（如有）
 
 ### 2. Kusto 查询
-参考 `playbooks/kusto-query-guide.md` 和 `skills/kusto/SKILL.md`：
+参考 `playbooks/guides/kusto-queries.md` 和 `skills/kusto/SKILL.md`：
 - 先读 `skills/kusto/SKILL.md` 了解可用的 12 个服务子技能
 - 根据问题类型选择对应子技能（如 VM 问题 → `skills/kusto/vm/SKILL.md`）
 - 读取子技能的查询模板（`references/queries/`）和表定义（`references/tables/`）
@@ -159,5 +159,5 @@ acr / aks / arm / avd / disk / entra-id / eop / intune / monitor / networking / 
 - ❌ 不执行 D365 写操作
 
 ## 参考 Playbook
-- `playbooks/troubleshooting-guide.md`
-- `playbooks/kusto-query-guide.md`
+- `playbooks/guides/troubleshooting.md`
+- `playbooks/guides/kusto-queries.md`

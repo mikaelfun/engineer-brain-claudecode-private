@@ -11,25 +11,26 @@ import CaseDetail from './pages/CaseDetail'
 import TodoView from './pages/TodoView'
 import AgentMonitor from './pages/AgentMonitor'
 import DraftsPage from './pages/DraftsPage'
-import WorkflowPage from './pages/WorkflowPage'
 import SettingsPage from './pages/SettingsPage'
 import { PageLoading } from './components/common/Loading'
+import { ErrorBoundary } from './components/common/ErrorBoundary'
 
 function AuthenticatedApp() {
   useSSE()
 
   return (
     <Layout>
+      <ErrorBoundary>
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/case/:id" element={<CaseDetail />} />
         <Route path="/todo" element={<TodoView />} />
         <Route path="/agents" element={<AgentMonitor />} />
         <Route path="/drafts" element={<DraftsPage />} />
-        <Route path="/workflow" element={<WorkflowPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </ErrorBoundary>
     </Layout>
   )
 }

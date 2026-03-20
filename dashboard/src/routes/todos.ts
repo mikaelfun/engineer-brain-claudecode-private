@@ -1,65 +1,121 @@
 /**
- * todos.ts — Todo 读取/勾选路由
+ * todos.ts — Per-case Todo 路由（统一模型）
+ *
+ * 所有 todo 数据来自 per-case todo 目录: cases/active/<id>/todo/
+ * Legacy 全局 todo 已移除。
  */
 import { Hono } from 'hono'
-import { listTodoFiles } from '../services/workspace.js'
-import { parseTodoFile, getLatestTodoFile, getTodoByDate } from '../services/todo-reader.js'
-import { toggleTodoItem } from '../services/todo-writer.js'
+import { readFileSync, existsSync, readdirSync, statSync } from 'fs'
+import { join } from 'path'
+import { config } from '../config.js'
 
 const todos = new Hono()
 
-// GET /api/todos — 可用 todo 日期列表
-todos.get('/', (c) => {
-  const files = listTodoFiles()
+// GET /api/todos/all — 汇总所有 case 的最新 Todo
+todos.get('/all', (c) => {
+  const activeCasesDir = config.activeCasesDir
+
+  if (!existsSync(activeCasesDir)) {
+    return c.json({ todos: [], total: 0 })
+  }
+
+  const allTodos: any[] = []
+
+  try {
+    const caseDirs = readdirSync(activeCasesDir)
+    for (const caseId of caseDirs) {
+      const casePath = join(activeCasesDir, caseId)
+      // Skip non-directories
+      try {
+        if (!statSync(casePath).isDirectory()) continue
+      } catch {
+        continue
+      }
+
+      const todoDir = join(casePath, 'todo')
+      if (!existsSync(todoDir)) continue
+
+      try {
+        const todoFiles = readdirSync(todoDir)
+          .filter((f) => f.endsWith('.md'))
+          .sort()
+          .reverse()
+
+        if (todoFiles.length > 0) {
+          const latestFile = todoFiles[0]
+          const filePath = join(todoDir, latestFile)
+          const content = readFileSync(filePath, 'utf-8')
+
+          allTodos.push({
+            caseNumber: caseId,
+            filename: latestFile,
+            content,
+            updatedAt: statSync(filePath).mtime.toISOString(),
+          })
+        }
+      } catch {
+        // Skip unreadable todo dirs
+      }
+    }
+  } catch {
+    // activeCasesDir not readable
+  }
+
   return c.json({
-    files: files.map(f => ({
-      filename: f,
-      date: f.match(/(\d{8})/)?.[1] || '',
-    })),
-    total: files.length,
+    todos: allTodos.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
+    total: allTodos.length,
   })
 })
 
-// GET /api/todos/latest — 最新 todo
-todos.get('/latest', (c) => {
-  const todo = getLatestTodoFile()
-  if (!todo) {
-    return c.json({ error: 'No todo files found' }, 404)
-  }
-  return c.json(todo)
-})
+// GET /api/todos — list of cases with todos (summary)
+todos.get('/', (c) => {
+  const activeCasesDir = config.activeCasesDir
 
-// GET /api/todos/:date — 指定日期 todo
-todos.get('/:date', (c) => {
-  const date = c.req.param('date')
-
-  // If date is a filename like "20260314.md", extract date
-  const dateStr = date.replace('.md', '')
-
-  // Try exact filename first
-  const todo = parseTodoFile(`${dateStr}.md`) || parseTodoFile(date)
-  if (!todo) {
-    return c.json({ error: 'Todo not found' }, 404)
-  }
-  return c.json(todo)
-})
-
-// PATCH /api/todos/:date/items/:idx — 切换勾选状态
-todos.patch('/:date/items/:idx', async (c) => {
-  const date = c.req.param('date')
-  const lineNumber = parseInt(c.req.param('idx'), 10)
-  const { checked } = await c.req.json<{ checked: boolean }>()
-
-  if (isNaN(lineNumber)) {
-    return c.json({ error: 'Invalid line number' }, 400)
+  if (!existsSync(activeCasesDir)) {
+    return c.json({ files: [], total: 0 })
   }
 
-  const success = toggleTodoItem(date, lineNumber, checked)
-  if (!success) {
-    return c.json({ error: 'Failed to toggle item' }, 400)
+  const files: { caseNumber: string; filename: string; updatedAt: string }[] = []
+
+  try {
+    const caseDirs = readdirSync(activeCasesDir)
+    for (const caseId of caseDirs) {
+      const casePath = join(activeCasesDir, caseId)
+      try {
+        if (!statSync(casePath).isDirectory()) continue
+      } catch {
+        continue
+      }
+
+      const todoDir = join(casePath, 'todo')
+      if (!existsSync(todoDir)) continue
+
+      try {
+        const todoFiles = readdirSync(todoDir)
+          .filter((f) => f.endsWith('.md'))
+          .sort()
+          .reverse()
+
+        if (todoFiles.length > 0) {
+          const filePath = join(todoDir, todoFiles[0])
+          files.push({
+            caseNumber: caseId,
+            filename: todoFiles[0],
+            updatedAt: statSync(filePath).mtime.toISOString(),
+          })
+        }
+      } catch {
+        // skip
+      }
+    }
+  } catch {
+    // skip
   }
 
-  return c.json({ success: true })
+  return c.json({
+    files: files.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
+    total: files.length,
+  })
 })
 
 export default todos

@@ -30,6 +30,10 @@ function classifyChange(filePath: string): { type: SSEEventType; data: Record<st
     const caseMatch = normalized.match(/\/cases\/active\/(\d+)\//)
     const caseNumber = caseMatch?.[1] || ''
 
+    // Per-case todo files → todo-updated (must check before generic case-updated)
+    if (normalized.includes('/todo/')) {
+      return { type: 'todo-updated', data: { caseNumber } }
+    }
     if (normalized.endsWith('casehealth-meta.json') || normalized.endsWith('case-info.md')) {
       return { type: 'case-updated', data: { caseNumber } }
     }
@@ -39,7 +43,7 @@ function classifyChange(filePath: string): { type: SSEEventType; data: Record<st
     return { type: 'case-updated', data: { caseNumber } }
   }
 
-  // Todo files
+  // Legacy global todo files (deprecated, kept for backward compat)
   if (normalized.includes('/cases/todo/')) {
     return { type: 'todo-updated', data: {} }
   }
@@ -59,7 +63,7 @@ function classifyChange(filePath: string): { type: SSEEventType; data: Record<st
 
 export function startFileWatcher() {
   const watchPaths = [
-    join(config.activeCasesDir, '**', '*.{md,json}'),
+    join(config.activeCasesDir, '**', '*.{md,json,log}'),
     join(config.todoDir, '*.md'),
     config.patrolStateFile,
     config.cronJobsFile,

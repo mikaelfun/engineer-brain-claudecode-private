@@ -1,9 +1,17 @@
 /**
- * workspace.ts — 路径解析 + 自动检测 .openclaw
+ * workspace.ts — Case 目录路径解析 + 就绪检测
  */
-import { existsSync, readdirSync } from 'fs'
+import { existsSync, readdirSync, mkdirSync } from 'fs'
 import { join } from 'path'
 import { config } from '../config.js'
+
+/**
+ * Validate caseNumber: must be digits only (D365 case number format).
+ * Prevents path traversal via crafted IDs like "../etc" or "foo/bar".
+ */
+export function isValidCaseNumber(caseNumber: string): boolean {
+  return /^\d{10,20}$/.test(caseNumber)
+}
 
 export function getCaseDir(caseNumber: string): string {
   // Check active first, then AR
@@ -35,18 +43,27 @@ export function listArCases(): string[] {
   }
 }
 
-export function listTodoFiles(): string[] {
-  try {
-    const entries = readdirSync(config.todoDir)
-    return entries
-      .filter(f => f.endsWith('.md'))
-      .sort()
-      .reverse()
-  } catch {
-    return []
-  }
-}
-
 export function isWorkspaceReady(): boolean {
-  return existsSync(config.workspace) && existsSync(config.activeCasesDir)
+  // Auto-create cases directories if they don't exist but the config path is valid
+  const casesDir = config.casesDir
+  if (!existsSync(casesDir)) {
+    try {
+      mkdirSync(casesDir, { recursive: true })
+      console.log(`[workspace] Created cases directory: ${casesDir}`)
+    } catch {
+      return false
+    }
+  }
+
+  const activeCasesDir = config.activeCasesDir
+  if (!existsSync(activeCasesDir)) {
+    try {
+      mkdirSync(activeCasesDir, { recursive: true })
+      console.log(`[workspace] Created active cases directory: ${activeCasesDir}`)
+    } catch {
+      return false
+    }
+  }
+
+  return true
 }

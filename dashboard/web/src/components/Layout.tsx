@@ -14,7 +14,6 @@ interface LayoutProps {
 const navItems = [
   { path: '/', label: 'Dashboard', icon: '📊', exact: true },
   { path: '/todo', label: 'Todo', icon: '📝' },
-  { path: '/workflow', label: 'Workflow', icon: '🔄' },
   { path: '/agents', label: 'Agents', icon: '🤖' },
   { path: '/drafts', label: 'Drafts', icon: '📧' },
   { path: '/settings', label: 'Settings', icon: '⚙️' },
@@ -50,13 +49,16 @@ export default function Layout({ children }: LayoutProps) {
 
             {/* Workspace status (desktop) */}
             <div className="hidden md:flex items-center gap-2 text-xs">
-              {health?.workspace ? (
+              {health?.casesReady ? (
                 <span className="px-2 py-1 bg-green-50 text-green-700 rounded-full">Workspace Connected</span>
               ) : (
-                <span className="px-2 py-1 bg-red-50 text-red-700 rounded-full">Workspace Not Found</span>
-              )}
-              {health?.hasAI && (
-                <span className="px-2 py-1 bg-purple-50 text-purple-700 rounded-full">AI Enabled</span>
+                <Link
+                  to="/settings"
+                  className="px-2 py-1 bg-amber-50 text-amber-700 rounded-full hover:bg-amber-100 transition-colors"
+                  title="Click to configure workspace path"
+                >
+                  ⚠️ Workspace Not Configured
+                </Link>
               )}
             </div>
 

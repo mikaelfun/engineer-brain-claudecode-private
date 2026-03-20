@@ -24,8 +24,38 @@
 - 发现：`agency mcp <name>` 自动维护 OAuth token，本地起代理端口，绕过 tenant 不一致问题
 - 教训：ICM/ADO/Teams 等 Public-side MCP 优先用 agency 本地代理，不要折腾 HTTP 直连 + 手动拿 token
 
+### 2026-03-19 — Closure 邮件必须严格按样本三段式格式生成
+
+- 上下文：巡检后发现 2603100030005863 和 2603030040001542 两个 Case 的 closure 邮件草稿未按 `case closure.txt` 样本格式，用了自由格式（加粗标题 + 自定义段落）
+- 发现：`email-templates.md` 中 closure 类型只有 4 行泛泛描述（"感谢 → 回顾 → 关单 → 重开"），没有强制要求 `=============` 分隔符和三段式结构（问题描述/问题建议/更多信息），导致 email-drafter 自由发挥
+- 修复：
+  1. 在 `email-templates.md` closure 段详细定义固定格式（三段式 + `=============` 分隔符 + 中英文标题对照）
+  2. 顶部加强"必须先读样本文件、严格匹配格式结构"的约束
+- 教训：邮件模板指南如果只写抽象结构描述（如"问题回顾"），agent 会自由发挥格式。必须明确指定分隔符、段落标题名称、格式规则等具体约束，才能确保输出一致
+
 ### 2026-03-16 — Teams 搜索必须多策略组合
 
 - 上下文：客户在 Teams 的显示名和 D365 Contact Name 经常不一致，邮箱搜索命中率极低
 - 发现：caseNumber 搜索最可靠，客户姓名（从 case-info.md 读取）次之，conversationId 兜底
 - 教训：不要从用户名推测真名，搜索必须多策略组合
+
+### 2026-03-19 — fetch-emails.ps1 增量拉取时区 Bug
+
+- 上下文：Case 2603130030004157 增量拉取漏了 2 封邮件（3/19 4:02 和 5:00 UTC 的），导致 status-judge 误判为 pending-customer
+- 根因：`Generated:` 时间戳用 `Get-Date` 写本地时间（GMT+8），但 FetchXML `createdon ge` 比较时 D365 按 UTC 解析。本地 11:04 被当作 UTC 11:04，实际对应 UTC 03:04 之后的邮件被截断了 8 小时窗口
+- 修复：`Generated:` 改用 `(Get-Date).ToUniversalTime()` 写 UTC 时间，header 加 `(UTC)` 标记，注释说明 UTC 语义
+- 教训：与 D365 API 交互的时间戳，写入和读取都必须统一用 UTC，不能依赖本地时区。文件中的时间戳要显式标注时区
+
+### 2026-03-19 — write-teams.ps1 缓存失效：0 结果时不写 _chat-index.json
+
+- 上下文：teams-search agent Step 0 有缓存机制（读 `_chat-index.json` 的 `_lastFetchedAt`），但 patrol 中搜索 0 结果的 case 每次都重复搜索（~45s 浪费）
+- 根因：`write-teams.ps1` 的 `Save-ChatIndex` 只在 `if ($data.chats)` 块内调用。0 结果时 chats 为空数组或 null，`_chat-index.json` 从不创建，缓存检查永远失败
+- 修复：在 chats 处理循环之后，无条件写入顶层 `_lastFetchedAt` 字段并 `Save-ChatIndex`
+- 教训：缓存写入逻辑不能只放在"有数据时"的分支里——"没有数据"本身也是需要缓存的有效结果
+
+### 2026-03-19 — fetch-emails.ps1 旧版 emails.md 无 UTC 标记导致增量遗漏
+
+- 上下文：Case 2603190030000206 的 emails.md 只有 1 封系统邮件，实际有 9 封。增量模式未拉取到新邮件
+- 根因：旧版代码写 `Generated: 2026-03-19 09:47:42`（本地时间），新版已修复为 `09:47:42 (UTC)`。但旧文件没有 `(UTC)` 标记，脚本解析时当作 UTC 用于 FetchXML `createdon ge` 过滤——实际 09:47 本地 = 01:47 UTC，差了 8 小时，漏掉中间的邮件
+- 修复：解析 `Generated:` 时检测是否包含 `(UTC)` 标记。无标记 → 清空 existingIds + lastFetchTime，强制全量重新抓取。重新写入后 header 带 `(UTC)` 标记，后续增量正常
+- 教训：修复写入端（新文件正确）还不够，读取端也要兼容旧格式——要么转换，要么 fallback 到安全模式（全量重抓）

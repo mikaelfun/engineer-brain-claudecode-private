@@ -1,43 +1,58 @@
 /**
  * Dashboard — 总览页
  */
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Briefcase, AlertTriangle, Clock, CheckCircle, Activity, Sparkles, Loader2 } from 'lucide-react'
+import { Briefcase, AlertTriangle, Clock, CheckCircle, Activity, Play, Loader2, ArrowUpDown } from 'lucide-react'
 import { StatCard, Card, CardHeader } from '../components/common/Card'
 import { SeverityBadge, CaseStatusBadge, SlaBadge } from '../components/common/Badge'
 import { Loading, ErrorState, EmptyState } from '../components/common/Loading'
-import { useCases, useCaseStats, usePatrolState, useAnalyzeAll } from '../api/hooks'
-import { useState } from 'react'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
+import { useCases, useCaseStats, usePatrolState, useStartPatrol } from '../api/hooks'
 
 export default function Dashboard() {
   const navigate = useNavigate()
   const { data: casesData, isLoading, error } = useCases()
   const { data: stats } = useCaseStats()
   const { data: patrol } = usePatrolState()
-  const analyzeAll = useAnalyzeAll()
-  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null)
+  const startPatrol = useStartPatrol()
+  const [sortBy, setSortBy] = useState<'default' | 'severity' | 'status' | 'age'>('default')
 
   if (isLoading) return <Loading text="Loading dashboard..." />
   if (error) return <ErrorState message="Failed to load cases" onRetry={() => window.location.reload()} />
 
   const cases = casesData?.cases || []
 
-  // Sort: red > yellow > green (by severity A > B > C)
+  // Multi-sort: default = severity > status priority, or user-selected single sort
   const sortedCases = [...cases].sort((a, b) => {
     const sevOrder: Record<string, number> = { A: 0, B: 1, C: 2 }
-    return (sevOrder[a.severity] ?? 3) - (sevOrder[b.severity] ?? 3)
-  })
-
-  const handleAnalyzeAll = async () => {
-    try {
-      const result = await analyzeAll.mutateAsync()
-      setAiAnalysis(result.analysis)
-    } catch (err) {
-      setAiAnalysis('AI analysis failed. Please check your GitHub Copilot token configuration.')
+    const statusOrder: Record<string, number> = {
+      'Pending Engineer': 0,
+      'Active': 1,
+      'Waiting PG': 2,
+      'Pending Customer': 3,
+      'AR': 4,
     }
-  }
+
+    if (sortBy === 'severity') {
+      return (sevOrder[a.severity] ?? 3) - (sevOrder[b.severity] ?? 3)
+    }
+    if (sortBy === 'status') {
+      return (statusOrder[a.status] ?? 5) - (statusOrder[b.status] ?? 5)
+    }
+    if (sortBy === 'age') {
+      // Parse age like "3d 5h" → compare numerically
+      const parseAge = (age: string) => {
+        const days = parseInt(age.match(/(\d+)d/)?.[1] || '0')
+        const hours = parseInt(age.match(/(\d+)h/)?.[1] || '0')
+        return days * 24 + hours
+      }
+      return parseAge(b.caseAge || '0d') - parseAge(a.caseAge || '0d') // oldest first
+    }
+    // Default: severity > status
+    const sevDiff = (sevOrder[a.severity] ?? 3) - (sevOrder[b.severity] ?? 3)
+    if (sevDiff !== 0) return sevDiff
+    return (statusOrder[a.status] ?? 5) - (statusOrder[b.status] ?? 5)
+  })
 
   return (
     <div className="space-y-6">
@@ -51,12 +66,16 @@ export default function Dashboard() {
           </p>
         </div>
         <button
-          onClick={handleAnalyzeAll}
-          disabled={analyzeAll.isPending}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 disabled:bg-purple-400 transition-colors"
+          onClick={() => startPatrol.mutate()}
+          disabled={startPatrol.isPending}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium shadow-sm"
         >
-          {analyzeAll.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-          AI Analysis
+          {startPatrol.isPending ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Play className="w-4 h-4" />
+          )}
+          {startPatrol.isPending ? 'Patrolling...' : 'Start Patrol'}
         </button>
       </div>
 
@@ -126,30 +145,24 @@ export default function Dashboard() {
         </Card>
       )}
 
-      {/* AI Analysis Result */}
-      {aiAnalysis && (
-        <Card>
-          <CardHeader
-            title="AI Analysis"
-            icon={<Sparkles className="w-5 h-5 text-purple-500" />}
-            action={
-              <button
-                onClick={() => setAiAnalysis(null)}
-                className="text-xs text-gray-400 hover:text-gray-600"
-              >
-                Dismiss
-              </button>
-            }
-          />
-          <div className="prose prose-sm max-w-none">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{aiAnalysis}</ReactMarkdown>
-          </div>
-        </Card>
-      )}
-
       {/* Case Cards */}
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-3">Active Cases</h3>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-lg font-semibold text-gray-900">Active Cases</h3>
+          <div className="flex items-center gap-1.5">
+            <ArrowUpDown className="w-3.5 h-3.5 text-gray-400" />
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="text-xs text-gray-600 border border-gray-200 rounded-lg px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-primary"
+            >
+              <option value="default">Severity + Status</option>
+              <option value="severity">Severity</option>
+              <option value="status">Status</option>
+              <option value="age">Age (oldest first)</option>
+            </select>
+          </div>
+        </div>
         {cases.length === 0 ? (
           <EmptyState icon="📂" title="No active cases" description="No cases found in the workspace" />
         ) : (
@@ -167,7 +180,7 @@ export default function Dashboard() {
                       <SeverityBadge severity={c.severity} />
                       <CaseStatusBadge status={c.status} />
                     </div>
-                    <h4 className="font-medium text-gray-900 mt-1 truncate">{c.title || 'Untitled'}</h4>
+                    <h4 className="font-medium text-gray-900 mt-1 line-clamp-2" title={c.title || 'Untitled'}>{c.title || 'Untitled'}</h4>
                     <p className="text-sm text-gray-500 mt-0.5">
                       {c.customer} | {c.assignedTo} | Age: {c.caseAge}
                     </p>

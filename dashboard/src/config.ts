@@ -1,74 +1,106 @@
 /**
  * config.ts — 环境变量 + 路径配置
+ *
+ * 所有路径来源：
+ *   1. 项目相对路径（repo 内的脚本、skills 等）
+ *   2. config.json（casesRoot / dataRoot 等可配置路径）
+ *   3. dashboard/.runtime/（dashboard 自管理的运行时文件）
  */
-import { existsSync } from 'fs'
-import { join } from 'path'
-import { homedir } from 'os'
+import { existsSync, readFileSync } from 'fs'
+import { join, resolve, isAbsolute, dirname } from 'path'
+import { fileURLToPath } from 'url'
 
-function resolveWorkspace(): string {
-  // 1. 环境变量
-  if (process.env.OPENCLAW_WORKSPACE) {
-    return process.env.OPENCLAW_WORKSPACE
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+
+/**
+ * 从 __dirname 向上查找包含 config.json 的项目根目录
+ */
+function resolveProjectRoot(): string {
+  let dir = __dirname
+  for (let i = 0; i < 10; i++) {
+    if (existsSync(join(dir, 'config.json'))) {
+      return dir
+    }
+    const parent = dirname(dir)
+    if (parent === dir) break
+    dir = parent
   }
-  // 2. 自动检测 ~/.openclaw/workspace
-  const defaultPath = join(homedir(), '.openclaw', 'workspace')
-  if (existsSync(defaultPath)) {
-    return defaultPath
-  }
-  console.warn('[config] ⚠️ OpenClaw workspace not found. Set OPENCLAW_WORKSPACE in .env')
-  return defaultPath
+  // Fallback: assume dashboard/src → project root is ../../
+  const fallback = resolve(__dirname, '..', '..')
+  console.warn(`[config] ⚠️ config.json not found, using fallback project root: ${fallback}`)
+  return fallback
 }
 
-function resolveOpenclawRoot(): string {
-  if (process.env.OPENCLAW_ROOT) {
-    return process.env.OPENCLAW_ROOT
-  }
-  const defaultPath = join(homedir(), '.openclaw')
-  if (existsSync(defaultPath)) {
-    return defaultPath
-  }
-  return defaultPath
+interface ProjectConfig {
+  casesRoot: string
+  dataRoot?: string
 }
+
+/** Cached config — avoids re-reading config.json on every property access */
+let _cachedConfig: ProjectConfig | null = null
+
+function readProjectConfig(): ProjectConfig {
+  if (_cachedConfig) return _cachedConfig
+  const configPath = join(projectRoot, 'config.json')
+  try {
+    const raw = readFileSync(configPath, 'utf-8')
+    _cachedConfig = JSON.parse(raw) as ProjectConfig
+    return _cachedConfig
+  } catch {
+    _cachedConfig = { casesRoot: './cases' }
+    return _cachedConfig
+  }
+}
+
+/** Invalidate cached config — call after settings are updated */
+export function reloadConfig(): void {
+  _cachedConfig = null
+}
+
+function resolveConfigPath(configValue: string): string {
+  if (isAbsolute(configValue)) return configValue
+  return resolve(projectRoot, configValue)
+}
+
+const projectRoot = resolveProjectRoot()
+const runtimeDir = join(projectRoot, 'dashboard', '.runtime')
 
 export const config = {
   port: parseInt(process.env.PORT || '3001', 10),
   jwtSecret: process.env.JWT_SECRET || 'engineer-brain-dev-secret',
-  workspace: resolveWorkspace(),
-  openclawRoot: resolveOpenclawRoot(),
-  githubCopilotToken: process.env.GITHUB_COPILOT_TOKEN || '',
+  projectRoot,
 
   get casesDir() {
-    return join(this.workspace, 'cases')
+    return resolveConfigPath(readProjectConfig().casesRoot)
   },
   get activeCasesDir() {
-    return join(this.workspace, 'cases', 'active')
+    return join(this.casesDir, 'active')
   },
   get arCasesDir() {
-    return join(this.workspace, 'cases', 'AR')
-  },
-  get todoDir() {
-    return join(this.workspace, 'cases', 'todo')
+    return join(this.casesDir, 'AR')
   },
   get patrolStateFile() {
-    return join(this.workspace, 'cases', 'casehealth-state.json')
+    return join(this.casesDir, 'casehealth-state.json')
+  },
+  /** @deprecated Todo files are now per-case (cases/active/{id}/todo/). Kept for backward compat. */
+  get todoDir() {
+    return join(this.casesDir, 'todo')
   },
   get cronJobsFile() {
-    return join(this.openclawRoot, 'cron', 'jobs.json')
-  },
-  get openclawConfigFile() {
-    return join(this.openclawRoot, 'openclaw.json')
+    return join(runtimeDir, 'cron-jobs.json')
   },
   get authFile() {
-    return join(this.openclawRoot, '.eb-auth.json')
+    return join(runtimeDir, '.eb-auth.json')
   },
   get perfReportsDir() {
-    return join(this.workspace, 'perf-reports')
+    return join(runtimeDir, 'perf-reports')
   },
   get scriptsDir() {
-    return join(this.openclawRoot, 'skills', 'd365-case-ops', 'scripts')
+    return join(projectRoot, 'skills', 'd365-case-ops', 'scripts')
   },
   get agentSessionsDir() {
-    return join(this.workspace, 'agent-sessions')
+    return join(runtimeDir, 'agent-sessions')
   },
   agentMaxConcurrency: 1,
 }

@@ -224,14 +224,16 @@ export type SSEEventType =
   | 'draft-updated'
   | 'cron-updated'
   | 'connected'
-  | 'workflow-started'
-  | 'workflow-iteration'
-  | 'workflow-thinking'
-  | 'workflow-tool-call'
-  | 'workflow-tool-result'
-  | 'workflow-completed'
-  | 'workflow-failed'
-  | 'workflow-cancelled'
+  | 'case-session-updated'
+  | 'patrol-progress'
+  | 'patrol-case-completed'
+  | 'settings-updated'
+  | 'case-session-started'
+  | 'case-session-thinking'
+  | 'case-session-tool-call'
+  | 'case-session-tool-result'
+  | 'case-session-completed'
+  | 'case-session-failed'
 
 export interface SSEEvent {
   type: SSEEventType
@@ -256,7 +258,7 @@ export interface AuthPayload {
 
 export type WorkflowId = 'patrol' | 'troubleshoot' | 'draft-email' | 'casework'
 
-export type SessionStatus = 'running' | 'completed' | 'failed' | 'cancelled'
+export type SessionStatus = 'active' | 'completed' | 'failed'
 
 export interface WorkflowConfig {
   id: WorkflowId
@@ -305,4 +307,22 @@ export interface AgentToolCallRecord {
   error?: string
   durationMs: number
   timestamp: string
+}
+
+// ============ Patrol 进度 ============
+
+export interface PatrolProgress {
+  phase: 'discovering' | 'filtering' | 'processing' | 'aggregating' | 'completed' | 'failed'
+  totalCases?: number
+  changedCases?: number
+  processedCases?: number
+  currentCase?: string
+  error?: string
+  todoSummary?: PatrolTodoSummary
+}
+
+export interface PatrolTodoSummary {
+  red: Array<{ caseNumber: string; items: string[] }>
+  yellow: Array<{ caseNumber: string; items: string[] }>
+  green: Array<{ caseNumber: string; items: string[] }>
 }

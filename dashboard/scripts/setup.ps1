@@ -8,7 +8,7 @@ Write-Host "================================================" -ForegroundColor C
 Write-Host ""
 
 # 1. Check Node.js
-Write-Host "[1/5] Checking Node.js..." -ForegroundColor Yellow
+Write-Host "[1/4] Checking Node.js..." -ForegroundColor Yellow
 $nodeVersion = $null
 try {
     $nodeVersion = (node --version 2>$null)
@@ -27,41 +27,39 @@ if ($versionNum -lt 20) {
     Write-Host "  OK: Node.js $nodeVersion" -ForegroundColor Green
 }
 
-# 2. Detect OpenClaw workspace
-Write-Host "[2/5] Detecting OpenClaw workspace..." -ForegroundColor Yellow
-$openclawRoot = "$env:USERPROFILE\.openclaw"
-$workspace = "$openclawRoot\workspace"
+# 2. Check project config.json
+Write-Host "[2/4] Checking project config.json..." -ForegroundColor Yellow
+$scriptDir = Split-Path -Parent $PSScriptRoot
+$projectRoot = Split-Path -Parent $scriptDir
+$configFile = Join-Path $projectRoot "config.json"
 
-if (Test-Path $workspace) {
-    Write-Host "  Found: $workspace" -ForegroundColor Green
+if (Test-Path $configFile) {
+    $cfg = Get-Content $configFile -Raw | ConvertFrom-Json
+    Write-Host "  Found: $configFile" -ForegroundColor Green
+    Write-Host "  casesRoot: $($cfg.casesRoot)" -ForegroundColor Green
 } else {
-    Write-Host "  WARNING: OpenClaw workspace not found at $workspace" -ForegroundColor Yellow
-    Write-Host "  You'll need to set OPENCLAW_WORKSPACE in .env manually" -ForegroundColor Yellow
-    $workspace = ""
+    Write-Host "  WARNING: config.json not found at $configFile" -ForegroundColor Yellow
+    Write-Host "  Creating default config.json..." -ForegroundColor Yellow
+    '{ "casesRoot": "./cases", "dataRoot": "./data" }' | Out-File -FilePath $configFile -Encoding utf8
+    Write-Host "  Created: $configFile" -ForegroundColor Green
 }
 
-# 3. Check for GitHub Copilot token
-Write-Host "[3/5] Checking GitHub Copilot token..." -ForegroundColor Yellow
+# 3. Generate .env
+Write-Host "[3/4] Generating .env file..." -ForegroundColor Yellow
+$jwtSecret = -join ((65..90) + (97..122) + (48..57) | Get-Random -Count 32 | ForEach-Object { [char]$_ })
+
+# Check for GitHub Copilot token
 $copilotToken = $env:GITHUB_COPILOT_TOKEN
 if ($copilotToken) {
-    Write-Host "  Found token in environment" -ForegroundColor Green
+    Write-Host "  Found GitHub Copilot token in environment" -ForegroundColor Green
 } else {
-    Write-Host "  No token found (AI features will be disabled)" -ForegroundColor Yellow
-    Write-Host "  Set GITHUB_COPILOT_TOKEN in .env to enable AI analysis" -ForegroundColor Yellow
+    Write-Host "  No GitHub Copilot token found (AI features will be disabled)" -ForegroundColor Yellow
     $copilotToken = ""
 }
-
-# 4. Generate .env
-Write-Host "[4/5] Generating .env file..." -ForegroundColor Yellow
-$jwtSecret = -join ((65..90) + (97..122) + (48..57) | Get-Random -Count 32 | ForEach-Object { [char]$_ })
 
 $envContent = @"
 # Engineer Brain Dashboard - Configuration
 # Generated on $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
-
-# OpenClaw workspace path
-OPENCLAW_WORKSPACE=$workspace
-OPENCLAW_ROOT=$openclawRoot
 
 # GitHub Copilot API token (optional, for AI analysis)
 GITHUB_COPILOT_TOKEN=$copilotToken
@@ -71,7 +69,6 @@ JWT_SECRET=$jwtSecret
 PORT=3001
 "@
 
-$scriptDir = Split-Path -Parent $PSScriptRoot
 $envPath = Join-Path $scriptDir ".env"
 
 if (Test-Path $envPath) {
@@ -81,8 +78,8 @@ if (Test-Path $envPath) {
     Write-Host "  Created: $envPath" -ForegroundColor Green
 }
 
-# 5. Install dependencies
-Write-Host "[5/5] Installing dependencies..." -ForegroundColor Yellow
+# 4. Install dependencies
+Write-Host "[4/4] Installing dependencies..." -ForegroundColor Yellow
 $rootDir = Split-Path -Parent $PSScriptRoot
 Push-Location $rootDir
 try {

@@ -43,18 +43,19 @@ export function Badge({ children, variant = 'default', size = 'sm', className = 
 
 /** Severity Badge for Case */
 export function SeverityBadge({ severity }: { severity: string }) {
+  const sev = severity || ''
   const config: Record<string, { variant: BadgeVariant; label: string }> = {
     A: { variant: 'danger', label: 'SEV A' },
     B: { variant: 'warning', label: 'SEV B' },
     C: { variant: 'primary', label: 'SEV C' },
   }
-  const { variant, label } = config[severity] || { variant: 'default' as BadgeVariant, label: severity }
+  const { variant, label } = config[sev] || { variant: 'default' as BadgeVariant, label: sev || '?' }
   return <Badge variant={variant} size="sm">{label}</Badge>
 }
 
 /** Case Status Badge */
 export function CaseStatusBadge({ status }: { status: string }) {
-  const statusLower = status.toLowerCase()
+  const statusLower = (status || '').toLowerCase()
   let variant: BadgeVariant = 'default'
 
   if (statusLower.includes('troubleshooting') || statusLower.includes('pending engineer')) {
@@ -72,7 +73,7 @@ export function CaseStatusBadge({ status }: { status: string }) {
 
 /** SLA Status Badge */
 export function SlaBadge({ status }: { status: string }) {
-  const statusLower = status.toLowerCase()
+  const statusLower = (status || '').toLowerCase()
   let variant: BadgeVariant = 'default'
 
   if (statusLower === 'succeeded' || statusLower === 'passed') variant = 'success'

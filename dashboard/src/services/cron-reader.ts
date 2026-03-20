@@ -1,5 +1,5 @@
 /**
- * cron-reader.ts — 读 cron/jobs.json + openclaw.json
+ * cron-reader.ts — 读 cron-jobs.json
  */
 import { readFileSync, existsSync } from 'fs'
 import { config } from '../config.js'
@@ -18,21 +18,7 @@ export function readCronJobs(): CronJob[] {
 }
 
 export function readAgents(): AgentInfo[] {
-  if (!existsSync(config.openclawConfigFile)) return []
-
-  try {
-    const content = readFileSync(config.openclawConfigFile, 'utf-8')
-    const data = JSON.parse(content)
-    const agents = data.agents?.list || []
-    return agents.map((a: any) => ({
-      id: a.id,
-      name: a.name || a.id,
-      model: a.model || data.agents?.defaults?.model?.primary || 'unknown',
-      workspace: a.workspace,
-      agentDir: a.agentDir,
-      subagents: a.subagents,
-    }))
-  } catch {
-    return []
-  }
+  // Agent configuration is now managed via .claude/agents/ in the project.
+  // No external config file is needed.
+  return []
 }

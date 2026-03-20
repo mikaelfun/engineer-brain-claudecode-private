@@ -14,11 +14,13 @@ maxTurns: 15
 - `caseNumber`: Case 编号
 - `caseDir`: Case 数据目录路径
 - `emailType`: 邮件类型
+  - `auto` — AI 自动识别（根据 actualStatus + 邮件历史选择最合适的类型）
   - `initial-response` — 初始回复
   - `request-info` — 请求信息
   - `result-confirm` — 结果确认
   - `follow-up` — 跟进
-  - `closure` — 关单
+  - `closure-confirm` — 关单确认（礼貌确认客户问题是否已解决，是否可以关单；不执行关单操作）
+  - `closure` — 关单（客户已明确同意关单后使用）
   - `21v-convert-ir` — 21V 转 IR
 - `language` (可选): `en` | `zh`，默认 `en`
 - `recipient` (可选): `customer` | `pg` | `internal`，默认 `customer`
@@ -38,12 +40,23 @@ maxTurns: 15
 - `{caseDir}/case-info.md` — 客户信息、联系方式
 - `{caseDir}/emails.md` — 邮件历史（延续语气和上下文）
 - `{caseDir}/analysis/` — 分析报告（如有，引用结论）
-- `playbooks/email-templates.md` — 邮件模板
-- `playbooks/customer-communication.md` — 沟通规范
+- `playbooks/guides/email-templates.md` — 邮件模板
+- `playbooks/guides/customer-communication.md` — 沟通规范
 - `playbooks/email-samples/` — 参考样本
 
 ### 2. 选择模板
-根据 `emailType` 选择对应的邮件模板，填充 Case 信息。
+如果 `emailType` 是 `auto`：
+1. 读 `{caseDir}/casehealth-meta.json` 获取 `actualStatus`
+2. 读邮件历史判断最近沟通方向
+3. 自动选择：
+   - `new` → `initial-response`
+   - `pending-engineer` → `follow-up` 或 `result-confirm`（根据是否有分析结论）
+   - `pending-customer` 且 daysSinceLastContact ≥ 3 → `follow-up`
+   - `ready-to-close` → `closure-confirm`
+   - 其他 → `follow-up`
+4. 在日志中记录选择的类型和原因
+
+根据最终确定的 `emailType` 选择对应的邮件模板，填充 Case 信息。
 
 ### 3. 写草稿
 - 遵循 customer-communication.md 中的语气和格式规范
