@@ -3,10 +3,10 @@
  */
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, CheckCircle2, Circle, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Circle, AlertTriangle, FolderOpen, Clock, RefreshCw } from 'lucide-react'
 import { Tabs } from '../components/common/Tabs'
 import { Card, CardHeader } from '../components/common/Card'
-import { SeverityBadge, CaseStatusBadge, SlaBadge, Badge } from '../components/common/Badge'
+import { SeverityBadge, CaseStatusBadge, SlaBadge, Badge, HealthScoreBadge } from '../components/common/Badge'
 import { Loading, ErrorState, EmptyState } from '../components/common/Loading'
 import {
   useCaseDetail, useCaseEmails, useCaseNotes,
@@ -59,53 +59,102 @@ export default function CaseDetail() {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-start gap-3">
-        <button
-          onClick={() => navigate('/')}
-          className="mt-1 p-1.5 hover:bg-gray-100 rounded-lg"
-        >
-          <ArrowLeft className="w-5 h-5 text-gray-500" />
-        </button>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-mono text-sm text-gray-500">{id}</span>
-            <SeverityBadge severity={caseInfo.severity} />
-            <CaseStatusBadge status={caseInfo.status} />
-          </div>
-          <h2 className="text-xl font-bold text-gray-900 mt-1">{caseInfo.title}</h2>
-          <p className="text-sm text-gray-500">
-            {caseInfo.customer} | {caseInfo.assignedTo} | Age: {caseInfo.caseAge} | {caseInfo.sap}
-          </p>
+      {/* Compact Header Card */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+        {/* Row 1: Back + Title + Health Score */}
+        <div className="flex items-start gap-3">
+          <button
+            onClick={() => navigate('/')}
+            className="mt-1 p-1 hover:bg-gray-100 rounded-lg flex-shrink-0"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-400" />
+          </button>
+          <h2 className="text-lg font-bold text-gray-900 leading-snug flex-1 min-w-0">
+            {caseInfo.title}
+          </h2>
+          {meta && <HealthScoreBadge meta={meta} />}
         </div>
-      </div>
 
-      {/* AI Panel (unified: actions + real-time messages + session history) */}
-      <CaseAIPanel caseNumber={id!} />
-
-      {/* SLA Indicators */}
-      {meta && (
-        <div className="flex gap-4 text-sm">
-          <div className="flex items-center gap-1.5">
-            <span className="text-gray-500">IR SLA:</span>
-            <SlaBadge status={meta.irSla?.status || 'unknown'} />
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-gray-500">FWR:</span>
-            <SlaBadge status={meta.fwr?.status || 'unknown'} />
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-gray-500">FDR:</span>
-            <SlaBadge status={meta.fdr?.status || 'unknown'} />
-          </div>
-          {meta.teams_chat_count > 0 && (
-            <div className="flex items-center gap-1.5">
-              <span className="text-gray-500">Teams:</span>
-              <Badge variant="purple" size="xs">{meta.teams_chat_count} chats</Badge>
-            </div>
+        {/* Row 2: Metadata chips */}
+        <div className="flex items-center gap-1.5 flex-wrap mt-2 ml-9 text-xs">
+          <span className="font-mono text-gray-500">{id}</span>
+          <span className="text-gray-300">·</span>
+          <SeverityBadge severity={caseInfo.severity} />
+          <CaseStatusBadge status={caseInfo.status} />
+          {meta?.actualStatus && meta.actualStatus !== caseInfo.status?.toLowerCase() && (
+            <Badge variant="info" size="xs">{meta.actualStatus}</Badge>
+          )}
+          <span className="text-gray-300">·</span>
+          <span className="text-gray-600">{caseInfo.assignedTo}</span>
+          <span className="text-gray-300">·</span>
+          <span className="text-gray-600">{caseInfo.caseAge || '0 days'}</span>
+          {meta?.daysSinceLastContact != null && meta.daysSinceLastContact > 0 && (
+            <>
+              <span className="text-gray-300">·</span>
+              <span className={`${meta.daysSinceLastContact > 3 ? 'text-red-500 font-medium' : 'text-gray-500'}`}>
+                Last contact {meta.daysSinceLastContact}d ago
+              </span>
+            </>
           )}
         </div>
-      )}
+
+        {/* Row 3: Timestamps */}
+        <div className="flex items-center gap-3 flex-wrap mt-1.5 ml-9 text-xs text-gray-400">
+          <span title={caseInfo.createdOn}>
+            <Clock className="w-3 h-3 inline mr-0.5 -mt-px" />
+            Created {formatCompactTime(caseInfo.createdOn)}
+          </span>
+          {caseInfo.modifiedAt && (
+            <span title={caseInfo.modifiedAt}>
+              · Updated {formatCompactTime(caseInfo.modifiedAt)}
+            </span>
+          )}
+          {caseInfo.fetchedAt && (
+            <span title={caseInfo.fetchedAt}>
+              <RefreshCw className="w-3 h-3 inline mr-0.5 -mt-px" />
+              Fetched {formatCompactTime(caseInfo.fetchedAt)}
+            </span>
+          )}
+        </div>
+
+        {/* Row 4: SAP path */}
+        {caseInfo.sap && (
+          <div className="flex items-center gap-1.5 mt-2 ml-9 text-xs text-gray-500">
+            <FolderOpen className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+            <span className="truncate" title={caseInfo.sap}>{caseInfo.sap}</span>
+          </div>
+        )}
+
+        {/* Row 5: SLA indicators (integrated into header) */}
+        {meta && (
+          <div className="flex items-center gap-3 mt-2.5 ml-9 pt-2.5 border-t border-gray-100 text-xs">
+            <div className="flex items-center gap-1">
+              <span className="text-gray-400">IR:</span>
+              <SlaBadge status={meta.irSla?.status || 'unknown'} />
+              {meta.irSla?.remaining && (
+                <span className="text-gray-400 ml-0.5">{meta.irSla.remaining}</span>
+              )}
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="text-gray-400">FWR:</span>
+              <SlaBadge status={meta.fwr?.status || 'unknown'} />
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="text-gray-400">FDR:</span>
+              <SlaBadge status={meta.fdr?.status || 'unknown'} />
+            </div>
+            {meta.teams_chat_count > 0 && (
+              <div className="flex items-center gap-1">
+                <span className="text-gray-400">Teams:</span>
+                <Badge variant="purple" size="xs">{meta.teams_chat_count} chats</Badge>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* AI Panel */}
+      <CaseAIPanel caseNumber={id!} />
 
       {/* Tabs */}
       <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
@@ -483,6 +532,21 @@ function CaseTodoTab({ caseId, latest, files, toggleTodo }: {
 }
 
 /** Parse per-case todo markdown into structured sections (shared parser) */
+/** Format timestamp to compact form: M/D HH:MM */
+function formatCompactTime(raw: string | undefined): string {
+  if (!raw) return ''
+  // Try parsing as Date first (ISO / locale format)
+  const d = new Date(raw)
+  if (!isNaN(d.getTime())) {
+    return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+  }
+  // Fallback: try "YYYY-MM-DD HH:MM:SS" format
+  const m = raw.match(/(\d{1,2})\/(\d{1,2})\/\d{4}\s+(\d{1,2}:\d{2})/)
+  if (m) return `${m[1]}/${m[2]} ${m[3]}`
+  // Last fallback: return first 16 chars
+  return raw.slice(0, 16)
+}
+
 function parseCaseTodoContent(content: string): Array<{
   type: 'red' | 'yellow' | 'green'
   title: string

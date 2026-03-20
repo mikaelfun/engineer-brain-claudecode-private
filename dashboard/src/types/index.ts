@@ -18,6 +18,8 @@ export interface CaseInfo {
   origin: string
   timezone: string
   country: string
+  fetchedAt: string
+  modifiedAt?: string
   contact: {
     name: string
     email: string
@@ -135,6 +137,20 @@ export interface CaseHealthMeta {
   irSla: SlaStatus
   teams_last_updated?: string
   teams_chat_count?: number
+  actualStatus?: string
+  daysSinceLastContact?: number
+  statusJudgedAt?: string
+  statusReasoning?: string
+  compliance?: {
+    entitlementOk: boolean
+    serviceLevel: string
+    serviceName: string
+    contractCountry: string
+    is21vConvert: boolean
+    '21vCaseId': string | null
+    '21vCaseOwner': string | null
+    warnings: string[]
+  }
 }
 
 export interface SlaStatus {
@@ -234,6 +250,14 @@ export type SSEEventType =
   | 'case-session-tool-result'
   | 'case-session-completed'
   | 'case-session-failed'
+  | 'issue-implement-started'
+  | 'issue-implement-progress'
+  | 'issue-implement-completed'
+  | 'issue-implement-error'
+  | 'issue-track-started'
+  | 'issue-track-progress'
+  | 'issue-track-completed'
+  | 'issue-track-error'
 
 export interface SSEEvent {
   type: SSEEventType
@@ -325,4 +349,35 @@ export interface PatrolTodoSummary {
   red: Array<{ caseNumber: string; items: string[] }>
   yellow: Array<{ caseNumber: string; items: string[] }>
   green: Array<{ caseNumber: string; items: string[] }>
+}
+
+// ============ Issue Tracker ============
+
+export type IssueType = 'bug' | 'feature' | 'refactor' | 'chore'
+export type IssuePriority = 'P0' | 'P1' | 'P2'
+export type IssueStatus = 'pending' | 'tracked' | 'in-progress' | 'done'
+
+export interface Issue {
+  id: string
+  title: string
+  description: string
+  type: IssueType
+  priority: IssuePriority
+  status: IssueStatus
+  trackId?: string
+  createdAt: string
+  updatedAt: string
+}
+
+// ============ Conductor Track ============
+
+export interface TrackMetadata {
+  id: string
+  title: string
+  type: string
+  status: string
+  created: string
+  updated: string
+  phases: { total: number; completed: number }
+  tasks: { total: number; completed: number }
 }

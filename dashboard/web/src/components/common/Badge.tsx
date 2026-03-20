@@ -95,3 +95,52 @@ export function PriorityBadge({ priority }: { priority: 'red' | 'yellow' | 'gree
   const { variant, label } = config[priority] || { variant: 'default' as BadgeVariant, label: priority }
   return <Badge variant={variant} size="xs">{label}</Badge>
 }
+
+/** Health Score Badge — circular score indicator with color coding */
+export function HealthScoreBadge({ meta }: { meta: any }) {
+  const score = computeHealthScore(meta)
+  // Color coding: green >= 70, yellow >= 40, red < 40
+  const colorClass =
+    score >= 70 ? 'bg-green-100 text-green-700 ring-green-300'
+    : score >= 40 ? 'bg-yellow-100 text-yellow-700 ring-yellow-300'
+    : 'bg-red-100 text-red-700 ring-red-300'
+
+  return (
+    <div
+      className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ring-2 ${colorClass}`}
+      title={`Health Score: ${score}/100`}
+    >
+      {score}
+    </div>
+  )
+}
+
+/** Compute health score from CaseHealthMeta (0-100) */
+function computeHealthScore(meta: any): number {
+  if (!meta) return 0
+
+  let score = 100
+
+  // SLA deductions
+  const irStatus = (meta.irSla?.status || '').toLowerCase()
+  if (irStatus === 'failed' || irStatus === 'breached') score -= 30
+  else if (irStatus === 'warning' || irStatus === 'nearing') score -= 10
+
+  const fwrStatus = (meta.fwr?.status || '').toLowerCase()
+  if (fwrStatus === 'failed' || fwrStatus === 'breached') score -= 20
+  else if (fwrStatus === 'warning' || fwrStatus === 'nearing') score -= 5
+
+  const fdrStatus = (meta.fdr?.status || '').toLowerCase()
+  if (fdrStatus === 'failed' || fdrStatus === 'breached') score -= 20
+  else if (fdrStatus === 'warning' || fdrStatus === 'nearing') score -= 5
+
+  // daysSinceLastContact deductions
+  const dslc = meta.daysSinceLastContact ?? 0
+  if (dslc > 7) score -= 20
+  else if (dslc > 3) score -= 10
+
+  // No recent inspection deduction
+  if (!meta.lastInspected) score -= 10
+
+  return Math.max(0, Math.min(100, score))
+}

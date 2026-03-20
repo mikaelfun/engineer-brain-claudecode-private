@@ -13,6 +13,12 @@ function extractTableValue(content: string, key: string): string {
   return match ? match[1].trim() : ''
 }
 
+function extractSnapshotTime(content: string): string {
+  // Match: > Snapshot: 2026-03-20 11:36:57 | Cache valid for ...
+  const match = content.match(/^>\s*Snapshot:\s*(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})/m)
+  return match ? match[1] : ''
+}
+
 function extractSection(content: string, sectionName: string): string {
   const regex = new RegExp(`## ${sectionName}[\\s\\S]*?(?=\\n## |$)`, 'i')
   const match = content.match(regex)
@@ -53,6 +59,7 @@ export function parseCaseInfo(caseNumber: string): CaseInfo | null {
     origin: extractTableValue(basicSection, 'Origin'),
     timezone: extractTableValue(basicSection, 'Timezone'),
     country: extractTableValue(basicSection, 'Country'),
+    fetchedAt: extractSnapshotTime(content),
     contact: {
       name: extractTableValue(contactSection, 'Name'),
       email: extractTableValue(contactSection, 'Email'),

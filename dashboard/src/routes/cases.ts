@@ -122,7 +122,23 @@ cases.get('/:id', (c) => {
   if (!info) {
     return c.json({ error: 'Case not found' }, 404)
   }
-  return c.json(info)
+
+  // Compute modifiedAt: latest mtime of key files in case directory
+  const caseDir = getCaseDir(caseNumber)
+  const keyFiles = ['case-info.md', 'emails.md', 'notes.md', 'casehealth-meta.json']
+  let latestMtime = 0
+  for (const f of keyFiles) {
+    const p = join(caseDir, f)
+    if (existsSync(p)) {
+      try {
+        const mt = statSync(p).mtimeMs
+        if (mt > latestMtime) latestMtime = mt
+      } catch { /* ignore */ }
+    }
+  }
+  const modifiedAt = latestMtime > 0 ? new Date(latestMtime).toISOString() : ''
+
+  return c.json({ ...info, modifiedAt })
 })
 
 // GET /api/cases/:id/emails
