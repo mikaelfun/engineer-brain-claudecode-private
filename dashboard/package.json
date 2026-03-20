@@ -10,6 +10,9 @@
     "build": "cd web && npm run build",
     "start": "concurrently \"tsx src/index.ts\" \"cd web && npm run dev\"",
     "setup": "powershell -ExecutionPolicy Bypass -File scripts/setup.ps1",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "postinstall": "cd web && npm install"
   },
   "dependencies": {
@@ -27,8 +30,10 @@
     "@types/jsonwebtoken": "^9.0.7",
     "@types/node": "^22.10.2",
     "@types/uuid": "^10.0.0",
+    "@vitest/coverage-v8": "^4.1.0",
     "concurrently": "^9.1.0",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.0"
   }
 }

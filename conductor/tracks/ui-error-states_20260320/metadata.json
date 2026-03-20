@@ -1,0 +1,16 @@
+{
+  "id": "ui-error-states_20260320",
+  "title": "UI Error States Fix",
+  "type": "bug",
+  "status": "pending",
+  "created": "2026-03-20T19:00:00+08:00",
+  "updated": "2026-03-20T19:00:00+08:00",
+  "phases": {
+    "total": 2,
+    "completed": 0
+  },
+  "tasks": {
+    "total": 4,
+    "completed": 0
+  }
+}
