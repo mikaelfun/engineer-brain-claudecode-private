@@ -1,0 +1,11 @@
+{
+  "id": "ISS-062",
+  "title": "Implement/Verify Panel 统一升级：消息分组折叠 + Cancel 按钮 + Store 统一",
+  "description": "三个改进：\n1. ImplementPanel 消息展示升级 — 引入 TrackProgressPanel 的消息分组逻辑（tool-call 折叠 + thinking 合并），消除独立 implementStore，改用 issueTrackStore 统一管理\n2. VerifyProgressPanel 增加 Cancel 按钮 — 运行中可取消，需后端 cancel-verify endpoint + 前端按钮\n3. ImplementPanel 也增加 Cancel 按钮（可选）",
+  "type": "feature",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "panel-unify_20260322",
+  "createdAt": "2026-03-22T01:00:00+08:00",
+  "updatedAt": "2026-03-22T23:30:00+08:00"
+}

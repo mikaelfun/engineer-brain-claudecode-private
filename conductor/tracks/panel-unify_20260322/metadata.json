@@ -1,0 +1,17 @@
+{
+  "id": "panel-unify_20260322",
+  "title": "Implement/Verify Panel 统一升级",
+  "type": "feature",
+  "status": "complete",
+  "created": "2026-03-22T01:00:00+08:00",
+  "updated": "2026-03-22T23:30:00+08:00",
+  "issueId": "ISS-062",
+  "phases": {
+    "total": 2,
+    "completed": 2
+  },
+  "tasks": {
+    "total": 10,
+    "completed": 10
+  }
+}
