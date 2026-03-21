@@ -22,7 +22,8 @@
 | [x] | title-truncate-fix_20260320 | Fix Case Title Truncation (pipe in value) | 2026-03-20 | 2026-03-20 |
 | [x] | inspection-beautify_20260320 | Case Detail Inspection 默认首位展示 + 格式美化 | 2026-03-20 | 2026-03-20 |
 | [x] | ai-panel-ops_20260320 | CaseDetail AI Panel — More Single-Step Operations | 2026-03-20 | 2026-03-20 |
-| [ ] | issue-edit-btn_20260320 | Issue 页面增加编辑按钮（点击展开只读详情） | 2026-03-20 | 2026-03-20 |
+| [x] | issue-edit-btn_20260320 | Issue 页面增加编辑按钮（点击展开只读详情） | 2026-03-20 | 2026-03-21 |
 | [x] | issue-search_20260320 | Issue Tracker Keyword Search | 2026-03-20 | 2026-03-20 |
 | [x] | issue-status-group_20260320 | Issues 页面按状态分组 + 折叠 | 2026-03-20 | 2026-03-20 |
-| [ ] | issue-page-group_20260321 | Fix Issues Page Grouping with Pagination | 2026-03-21 | 2026-03-21 |
+| [x] | issue-page-group_20260321 | Fix Issues Page Grouping with Pagination | 2026-03-21 | 2026-03-21 |
+| [x] | track-question-fix_20260321 | Fix Create Track Question Dialog Not Showing | 2026-03-21 | 2026-03-21 |

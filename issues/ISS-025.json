@@ -1,0 +1,11 @@
+{
+  "id": "ISS-025",
+  "title": "WebUI Issues 页面点击 issue 直接进入编辑，需要增加编辑按钮",
+  "description": "当前 WebUI Issues 页面点击单个 issue 时直接进入编辑模式，缺少明确的编辑按钮。应改为点击展开详情（只读），需要编辑时通过专门的编辑按钮进入编辑模式。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "issue-edit-btn_20260320",
+  "createdAt": "2026-03-20T22:35:00+08:00",
+  "updatedAt": "2026-03-21T20:05:00+08:00"
+}
