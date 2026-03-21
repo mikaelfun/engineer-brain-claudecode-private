@@ -48,6 +48,7 @@ EOF
 
 报告内容：
 - 基本信息表（Case Number / Title / Severity / Status / Customer / Case Age）
+- 联系人信息（Contact Name / Email / Phone / Preferred Method）— 从 case-info.md 的 contact 字段读取
 - 合规状态（IR / FDR / FWR / Entitlement / 21v）
 - 最新动态（最后几封邮件摘要）
 - 风险提示
