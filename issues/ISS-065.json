@@ -1,0 +1,11 @@
+{
+  "id": "ISS-065",
+  "title": "Todo仅通知项标记完成后字体未划掉，影响阅读",
+  "description": "Todo里✅仅通知项可以标记完成（勾选），但勾选后字体没有添加删除线样式，完成项和未完成项视觉上没有区别，影响阅读体验。应在checkbox勾选后对文本添加line-through样式。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "tracked",
+  "trackId": "todo-strikethrough_20260321",
+  "createdAt": "2026-03-21T16:00:00+08:00",
+  "updatedAt": "2026-03-22T00:00:00+08:00"
+}

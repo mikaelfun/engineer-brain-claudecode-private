@@ -3,13 +3,14 @@
  *
  * Data source: useTodoAll() — aggregates latest todo from each case's todo/ directory
  */
-import { useState } from 'react'
-import { ChevronDown, ChevronRight, CheckCircle2, Circle, AlertTriangle, Play } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { ChevronDown, ChevronRight, CheckCircle2, Circle, AlertTriangle, Play, Loader2, Check, RotateCcw } from 'lucide-react'
 import { Card, CardHeader } from '../components/common/Card'
 import { Badge, PriorityBadge } from '../components/common/Badge'
 import { Loading, EmptyState } from '../components/common/Loading'
 import { useTodoAll, useTogglePerCaseTodo, useExecuteTodoAction } from '../api/hooks'
 import { useNavigate } from 'react-router-dom'
+import { useTodoExecuteStore, type TodoExecuteStatus } from '../stores/todoExecuteStore'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
@@ -47,7 +48,7 @@ interface TodoSection {
   items: TodoItem[]
 }
 
-function parseTodoContent(content: string): TodoSection[] {
+export function parseTodoContent(content: string): TodoSection[] {
   const lines = content.split('\n')
   const sections: TodoSection[] = []
   let currentSection: TodoSection | null = null
@@ -98,6 +99,112 @@ function parseTodoContent(content: string): TodoSection[] {
   }
 
   return sections
+}
+
+// ============ Elapsed Timer Component ============
+
+function ElapsedTimer({ startTime }: { startTime: number }) {
+  const [elapsed, setElapsed] = useState(0)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  useEffect(() => {
+    // Immediately compute current elapsed
+    setElapsed(Math.floor((Date.now() - startTime) / 1000))
+
+    intervalRef.current = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - startTime) / 1000))
+    }, 1000)
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current)
+    }
+  }, [startTime])
+
+  const mins = Math.floor(elapsed / 60)
+  const secs = elapsed % 60
+
+  return (
+    <span className="text-xs tabular-nums" style={{ color: 'var(--text-tertiary)' }}>
+      {mins > 0 ? `${mins}m ${secs}s` : `${secs}s`}
+    </span>
+  )
+}
+
+// ============ Execute Button with State Machine ============
+
+function ExecuteButton({
+  item,
+  caseNumber,
+  onExecute,
+}: {
+  item: TodoItem
+  caseNumber: string
+  onExecute: (item: TodoItem) => void
+}) {
+  const key = `${caseNumber}:${item.lineNumber}`
+  const execState = useTodoExecuteStore((s) => s.items[key])
+  const resetItem = useTodoExecuteStore((s) => s.resetItem)
+  const status: TodoExecuteStatus = execState?.status || 'idle'
+
+  switch (status) {
+    case 'executing':
+      return (
+        <div className="flex-shrink-0 flex items-center gap-1.5 px-2 py-1 text-xs rounded"
+          style={{ background: 'var(--bg-active)', color: 'var(--text-secondary)' }}>
+          <Loader2 className="w-3 h-3 animate-spin" />
+          <span>Executing...</span>
+          {execState?.startTime && <ElapsedTimer startTime={execState.startTime} />}
+        </div>
+      )
+
+    case 'verifying':
+      return (
+        <div className="flex-shrink-0 flex items-center gap-1.5 px-2 py-1 text-xs rounded"
+          style={{ background: 'var(--bg-active)', color: 'var(--text-secondary)' }}>
+          <Loader2 className="w-3 h-3 animate-spin" />
+          <span>Verifying...</span>
+          {execState?.startTime && <ElapsedTimer startTime={execState.startTime} />}
+        </div>
+      )
+
+    case 'success':
+      return (
+        <div className="flex-shrink-0 flex items-center gap-1 px-2 py-1 text-xs rounded"
+          style={{ background: 'var(--accent-green-dim)', color: 'var(--accent-green)' }}
+          title={execState?.verificationDetails || 'Execution completed successfully'}>
+          <Check className="w-3 h-3" />
+          <span>Complete</span>
+        </div>
+      )
+
+    case 'failed':
+      return (
+        <button
+          onClick={() => {
+            resetItem(key)
+            onExecute(item)
+          }}
+          className="flex-shrink-0 flex items-center gap-1 px-2 py-1 text-xs rounded cursor-pointer"
+          style={{ background: 'var(--accent-red-dim)', color: 'var(--accent-red)' }}
+          title={execState?.verificationDetails || 'Execution failed — click to retry'}>
+          <RotateCcw className="w-3 h-3" />
+          <span>Failed — Retry</span>
+        </button>
+      )
+
+    default: // idle
+      return (
+        <button
+          onClick={() => onExecute(item)}
+          className="flex-shrink-0 px-2 py-1 text-xs rounded flex items-center gap-1"
+          style={{ background: 'var(--accent-amber-dim)', color: 'var(--accent-amber)' }}
+          title={`Execute: ${item.actionType}`}
+        >
+          <Play className="w-3 h-3" />
+          Execute
+        </button>
+      )
+  }
 }
 
 function PerCaseTodoView({ todos, navigate }: { todos: any[]; navigate: any }) {
@@ -163,6 +270,7 @@ function CaseTodoCard({ todo, navigate, toggleTodo, executeTodoAction }: {
 }) {
   const [expanded, setExpanded] = useState(true)
   const sections = parseTodoContent(todo.content || '')
+  const startExecuting = useTodoExecuteStore((s) => s.startExecuting)
 
   // Determine priority from sections
   const hasUrgent = sections.some(s => s.type === 'red' && s.items.some(i => !i.checked))
@@ -180,10 +288,13 @@ function CaseTodoCard({ todo, navigate, toggleTodo, executeTodoAction }: {
 
   const handleExecute = (item: TodoItem) => {
     if (!item.actionType) return
+    const key = `${todo.caseNumber}:${item.lineNumber}`
+    startExecuting(key)
     executeTodoAction.mutate({
       caseId: todo.caseNumber,
       action: item.actionType,
       params: { text: item.text },
+      lineNumber: item.lineNumber,
     })
   }
 
@@ -237,7 +348,17 @@ function CaseTodoCard({ todo, navigate, toggleTodo, executeTodoAction }: {
                     }}
                   >
                     {section.type === 'green' ? (
-                      <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: 'var(--accent-green)' }} />
+                      <button
+                        onClick={() => handleToggle(item.lineNumber, item.checked)}
+                        className="flex-shrink-0 mt-0.5"
+                        disabled={toggleTodo.isPending}
+                      >
+                        {item.checked ? (
+                          <CheckCircle2 className="w-5 h-5" style={{ color: 'var(--accent-green)' }} />
+                        ) : (
+                          <Circle className="w-5 h-5" style={{ color: 'var(--accent-green)' }} />
+                        )}
+                      </button>
                     ) : (
                       <button
                         onClick={() => handleToggle(item.lineNumber, item.checked)}
@@ -253,11 +374,10 @@ function CaseTodoCard({ todo, navigate, toggleTodo, executeTodoAction }: {
                     )}
                     <div className="flex-1 min-w-0">
                       <p
-                        className={`text-sm ${
-                          item.checked || section.type === 'green' ? 'line-through' : ''
-                        }`}
+                        className="text-sm"
                         style={{
-                          color: item.checked || section.type === 'green'
+                          textDecoration: item.checked ? 'line-through' : 'none',
+                          color: item.checked
                             ? 'var(--text-tertiary)'
                             : 'var(--text-primary)'
                         }}
@@ -269,16 +389,11 @@ function CaseTodoCard({ todo, navigate, toggleTodo, executeTodoAction }: {
                       </p>
                     </div>
                     {item.isActionable && !item.checked && (
-                      <button
-                        onClick={() => handleExecute(item)}
-                        className="flex-shrink-0 px-2 py-1 text-xs rounded flex items-center gap-1"
-                        style={{ background: 'var(--accent-amber-dim)', color: 'var(--accent-amber)' }}
-                        disabled={executeTodoAction.isPending}
-                        title={`Execute: ${item.actionType}`}
-                      >
-                        <Play className="w-3 h-3" />
-                        Execute
-                      </button>
+                      <ExecuteButton
+                        item={item}
+                        caseNumber={todo.caseNumber}
+                        onExecute={handleExecute}
+                      />
                     )}
                   </div>
                 ))}

@@ -470,7 +470,7 @@ function CaseTodoTab({ caseId, latest, files, toggleTodo }: {
                             item.checked ? 'var(--bg-inset)' : undefined
                         }}
                       >
-                        {section.type === 'green' || !isViewingLatest ? (
+                        {!isViewingLatest ? (
                           <CheckCircle2
                             className="w-5 h-5 flex-shrink-0 mt-0.5"
                             style={{
@@ -485,16 +485,15 @@ function CaseTodoTab({ caseId, latest, files, toggleTodo }: {
                             disabled={toggleTodo.isPending}
                           >
                             {item.checked ? (
-                              <CheckCircle2 className="w-5 h-5" style={{ color: 'var(--accent-blue)' }} />
+                              <CheckCircle2 className="w-5 h-5" style={{ color: section.type === 'green' ? 'var(--accent-green)' : 'var(--accent-blue)' }} />
                             ) : (
-                              <Circle className="w-5 h-5" style={{ color: 'var(--border-default)' }} />
+                              <Circle className="w-5 h-5" style={{ color: section.type === 'green' ? 'var(--accent-green)' : 'var(--border-default)' }} />
                             )}
                           </button>
                         )}
-                        <p className={`text-sm flex-1 ${
-                          item.checked || section.type === 'green' ? 'line-through' : ''
-                        }`} style={{
-                          color: item.checked || section.type === 'green'
+                        <p className="text-sm flex-1" style={{
+                          textDecoration: item.checked ? 'line-through' : 'none',
+                          color: item.checked
                             ? 'var(--text-tertiary)'
                             : 'var(--text-primary)'
                         }}>
@@ -534,7 +533,7 @@ function formatCompactTime(raw: string | undefined): string {
   return raw.slice(0, 16)
 }
 
-function parseCaseTodoContent(content: string): Array<{
+export function parseCaseTodoContent(content: string): Array<{
   type: 'red' | 'yellow' | 'green'
   title: string
   items: Array<{ text: string; checked: boolean; lineNumber: number }>
