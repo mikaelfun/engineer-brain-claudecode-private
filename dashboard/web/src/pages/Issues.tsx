@@ -771,12 +771,7 @@ function IssueRow({
           {!isExpanded && (
             <div className="flex items-center gap-3 mt-1.5 text-xs" style={{ color: 'var(--text-tertiary)' }}>
               <span>{new Date(issue.createdAt).toLocaleDateString()}</span>
-              {issue.trackId && (
-                <span className="flex items-center gap-0.5" style={{ color: 'var(--accent-blue)' }}>
-                  <ExternalLink className="w-3 h-3" />
-                  {issue.trackId}
-                </span>
-              )}
+              {issue.trackId && <CopyableTrackId trackId={issue.trackId} />}
               {/* Done issue: show track task completion progress */}
               {isDone && issue.trackId && planData?.plan && (() => {
                 const tasks = planData.plan.match(/^- \[.\]\s*Task\s+\d/gim) || []
@@ -969,8 +964,9 @@ function IssueRow({
                   {/* Plan section — from plan.md */}
                   {planData?.plan && (() => {
                     const plan = planData.plan
+                    const lines = plan.split('\n')
                     // Parse tasks: lines matching "- [x] Task X.Y: ..." or "- [ ] Task X.Y: ..."
-                    const taskLines = plan.split('\n').filter(l => /^- \[.\]\s*Task\s+\d/i.test(l.trim()))
+                    const taskLines = lines.filter(l => /^- \[.\]\s*Task\s+\d/i.test(l.trim()))
                     const tasks = taskLines.map(l => {
                       const checked = /^- \[x\]/i.test(l.trim())
                       const text = l.trim().replace(/^- \[.\]\s*/, '')
@@ -980,9 +976,60 @@ function IssueRow({
                     const statusMatch = plan.match(/\*\*Status:\*\*\s*\[(.)\]/)
                     const trackStatus = statusMatch?.[1] === 'x' ? 'Complete' : statusMatch?.[1] === '~' ? 'In Progress' : 'Not Started'
 
-                    if (tasks.length === 0) return null
+                    // Parse Verification items per phase
+                    const verificationItems: { phase: string; checked: boolean; text: string }[] = []
+                    let currentPhase = ''
+                    let inVerification = false
+                    for (const line of lines) {
+                      const phaseMatch = line.match(/^##\s+Phase\s+(\d+):\s*(.*)/)
+                      if (phaseMatch) {
+                        currentPhase = `Phase ${phaseMatch[1]}`
+                        inVerification = false
+                        continue
+                      }
+                      if (/^###\s+Verification/i.test(line)) {
+                        inVerification = true
+                        continue
+                      }
+                      if (/^##[^#]/.test(line) || /^###\s+/.test(line)) {
+                        inVerification = false
+                        continue
+                      }
+                      if (inVerification && /^- \[.\]\s+/.test(line.trim())) {
+                        const checked = /^- \[x\]/i.test(line.trim())
+                        const text = line.trim().replace(/^- \[.\]\s*/, '')
+                        verificationItems.push({ phase: currentPhase, checked, text })
+                      }
+                    }
+
+                    // Parse Post-Implementation Checklist
+                    const checklistItems: { checked: boolean; text: string }[] = []
+                    let inChecklist = false
+                    for (const line of lines) {
+                      if (/^##\s+Post-Implementation Checklist/i.test(line)) {
+                        inChecklist = true
+                        continue
+                      }
+                      if (inChecklist && /^##[^#]/.test(line)) {
+                        inChecklist = false
+                        continue
+                      }
+                      if (inChecklist && /^---/.test(line.trim())) {
+                        inChecklist = false
+                        continue
+                      }
+                      if (inChecklist && /^- \[.\]\s+/.test(line.trim())) {
+                        const checked = /^- \[x\]/i.test(line.trim())
+                        const text = line.trim().replace(/^- \[.\]\s*/, '')
+                        checklistItems.push({ checked, text })
+                      }
+                    }
+
+                    if (tasks.length === 0 && verificationItems.length === 0 && checklistItems.length === 0) return null
 
                     const completedCount = tasks.filter(t => t.checked).length
+                    const verifyCompleted = verificationItems.filter(v => v.checked).length
+                    const checklistCompleted = checklistItems.filter(c => c.checked).length
 
                     return (
                       <div className="rounded-lg p-3" style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-subtle)' }}>
@@ -993,16 +1040,71 @@ function IssueRow({
                             {completedCount}/{tasks.length} tasks · {trackStatus}
                           </span>
                         </div>
-                        <div className="space-y-1">
-                          {tasks.map((task, i) => (
-                            <div key={i} className="flex items-start gap-1.5 text-xs" style={{ color: 'var(--text-secondary)' }}>
-                              <span className="shrink-0 mt-0.5" style={{ color: task.checked ? 'var(--accent-green)' : 'var(--text-tertiary)' }}>
-                                {task.checked ? '✓' : '○'}
+                        {tasks.length > 0 && (
+                          <div className="space-y-1">
+                            {tasks.map((task, i) => (
+                              <div key={i} className="flex items-start gap-1.5 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                                <span className="shrink-0 mt-0.5" style={{ color: task.checked ? 'var(--accent-green)' : 'var(--text-tertiary)' }}>
+                                  {task.checked ? '✓' : '○'}
+                                </span>
+                                <span className={task.checked ? 'line-through opacity-60' : ''}>{task.text}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Verification items per phase */}
+                        {verificationItems.length > 0 && (
+                          <div className="mt-3 pt-2" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+                            <div className="flex items-center gap-1.5 mb-1.5">
+                              <ShieldCheck className="w-3 h-3" style={{ color: 'var(--accent-teal, var(--accent-blue))' }} />
+                              <span className="text-xs font-semibold" style={{ color: 'var(--accent-teal, var(--accent-blue))' }}>
+                                Verification
                               </span>
-                              <span className={task.checked ? 'line-through opacity-60' : ''}>{task.text}</span>
+                              <span className="ml-auto text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                                {verifyCompleted}/{verificationItems.length}
+                              </span>
                             </div>
-                          ))}
-                        </div>
+                            <div className="space-y-1">
+                              {verificationItems.map((item, i) => (
+                                <div key={i} className="flex items-start gap-1.5 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                                  <span className="shrink-0 mt-0.5" style={{ color: item.checked ? 'var(--accent-green)' : 'var(--text-tertiary)' }}>
+                                    {item.checked ? '✓' : '○'}
+                                  </span>
+                                  <span className={item.checked ? 'opacity-60' : ''}>
+                                    <span className="font-medium" style={{ color: 'var(--text-tertiary)' }}>{item.phase}: </span>
+                                    {item.text}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Post-Implementation Checklist */}
+                        {checklistItems.length > 0 && (
+                          <div className="mt-3 pt-2" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+                            <div className="flex items-center gap-1.5 mb-1.5">
+                              <CircleCheck className="w-3 h-3" style={{ color: 'var(--accent-amber)' }} />
+                              <span className="text-xs font-semibold" style={{ color: 'var(--accent-amber)' }}>
+                                Checklist
+                              </span>
+                              <span className="ml-auto text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                                {checklistCompleted}/{checklistItems.length}
+                              </span>
+                            </div>
+                            <div className="space-y-1">
+                              {checklistItems.map((item, i) => (
+                                <div key={i} className="flex items-start gap-1.5 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                                  <span className="shrink-0 mt-0.5" style={{ color: item.checked ? 'var(--accent-green)' : 'var(--text-tertiary)' }}>
+                                    {item.checked ? '✓' : '○'}
+                                  </span>
+                                  <span className={item.checked ? 'opacity-60' : ''}>{item.text}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )
                   })()}
@@ -1025,12 +1127,7 @@ function IssueRow({
               <div className="flex items-center gap-4 text-xs" style={{ color: 'var(--text-secondary)' }}>
                 <span>Created: {new Date(issue.createdAt).toLocaleString()}</span>
                 {issue.updatedAt && <span>Updated: {new Date(issue.updatedAt).toLocaleString()}</span>}
-                {issue.trackId && (
-                  <span className="flex items-center gap-0.5" style={{ color: 'var(--accent-blue)' }}>
-                    <ExternalLink className="w-3 h-3" />
-                    {issue.trackId}
-                  </span>
-                )}
+                {issue.trackId && <CopyableTrackId trackId={issue.trackId} />}
               </div>
               <div className="flex justify-end pt-1">
                 <button
@@ -1154,5 +1251,34 @@ function VerifyResultPanel({ verifyResult }: { verifyResult: { unitTest: { succe
         </div>
       )}
     </div>
+  )
+}
+
+/** ISS-043: Inline trackId display with copy button */
+function CopyableTrackId({ trackId }: { trackId: string }) {
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation()
+    navigator.clipboard.writeText(trackId).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    })
+  }, [trackId])
+
+  return (
+    <span className="inline-flex items-center gap-0.5" style={{ color: 'var(--accent-blue)' }}>
+      <ExternalLink className="w-3 h-3" />
+      {trackId}
+      <button
+        type="button"
+        onClick={handleCopy}
+        className="ml-0.5 p-0.5 rounded transition-colors hover:opacity-80"
+        title="Copy Track ID"
+        style={{ color: copied ? 'var(--accent-green)' : 'var(--accent-blue)' }}
+      >
+        {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+      </button>
+    </span>
   )
 }
