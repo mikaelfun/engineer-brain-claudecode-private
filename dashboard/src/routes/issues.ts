@@ -781,6 +781,236 @@ issues.post('/:id/start-implement', async (c) => {
   return c.json({ issue: enrichIssueFromTrack(getIssue(id)!), message: `Implementation started for track ${trackId}` })
 })
 
+/**
+ * Extract the Verification Plan table from a track's plan.md.
+ * Returns the raw markdown section string, or null if not found.
+ */
+function extractVerificationPlan(trackId: string | undefined): string | null {
+  if (!trackId) return null
+  const planPath = join(config.projectRoot, 'conductor', 'tracks', trackId, 'plan.md')
+  if (!existsSync(planPath)) return null
+  const planContent = readFileSync(planPath, 'utf-8')
+  // Extract everything between "## Verification Plan" and the next "##" heading
+  const match = planContent.match(/## Verification Plan\s*\n([\s\S]*?)(?=\n## |\n---\n|$)/)
+  if (!match) return null
+  const section = match[1].trim()
+  // Verify it has actual content (not just legend/template placeholders)
+  if (!section || section.length < 20) return null
+  return section
+}
+
+/**
+ * Run agent-driven UI verification using Claude SDK query().
+ * The agent reads the Verification Plan and executes Playwright tests.
+ */
+async function runAgentVerification(
+  issueId: string,
+  trackId: string,
+  verificationPlan: string,
+  projectRoot: string,
+): Promise<{ success: boolean; output: string }> {
+  // Read workflow.md safety guards for the prompt
+  const workflowPath = join(projectRoot, 'conductor', 'workflow.md')
+  let safetyGuards = ''
+  if (existsSync(workflowPath)) {
+    const wf = readFileSync(workflowPath, 'utf-8')
+    const safetyMatch = wf.match(/⚠️ Safety Guards for Interaction Tests:([\s\S]*?)(?=\n####|\n###\s|\n##\s|$)/)
+    if (safetyMatch) safetyGuards = safetyMatch[1].trim()
+  }
+
+  // Read spec.md for context
+  const specPath = join(projectRoot, 'conductor', 'tracks', trackId, 'spec.md')
+  let specSummary = ''
+  if (existsSync(specPath)) {
+    specSummary = readFileSync(specPath, 'utf-8').slice(0, 1500)
+  }
+
+  const prompt = `Execute the Verification Plan for track ${trackId}.
+
+## Context
+${specSummary ? `### Spec Summary\n${specSummary}\n` : ''}
+### Verification Plan
+${verificationPlan}
+
+## Instructions
+
+For each row in the Verification Plan table:
+
+1. **If type = Interaction**: Generate a Playwright script that:
+   - Starts dev server if not running (cd dashboard && npm run dev)
+   - Generates a JWT token for auth
+   - Navigates to the appropriate page
+   - Executes the test steps described in the plan
+   - Takes screenshots as evidence
+   - Reports PASS or FAIL with details
+   Run the script via Bash tool.
+
+2. **If type = Visual**: Navigate to the page, take a screenshot, and report what you see.
+
+3. **If type = API**: Use curl/fetch to call the endpoint and assert the response.
+
+4. **If type = Skip**: Note as skipped with reason.
+
+## Safety Rules (CRITICAL)
+${safetyGuards || `- NEVER click: "Full Process", "Troubleshoot", "Draft Email", "Execute" buttons
+- NEVER call: POST /api/todo/:id/execute, POST /api/case/:id/process, POST /api/case/:id/step/*, POST /api/patrol
+- Safe to click: "New Track", "Cancel", "Edit", "Reopen", "Mark Done", "Verify", tab switches, sort, search
+- Safe to call: POST /api/issues (create), DELETE /api/issues/:id (cleanup), PUT /api/issues/:id, all GET endpoints`}
+
+## Playwright Setup
+- Use headless Chromium: \`const { chromium } = require('playwright')\`
+- JWT: \`require('jsonwebtoken').sign({sub:'engineer'}, process.env.JWT_SECRET || 'engineer-brain-local-dev-secret-2026', {expiresIn:'1h'})\`
+- Navigation: use \`waitUntil: 'domcontentloaded'\` (NOT 'networkidle' — SSE keeps connections open)
+- Wait 2-3 seconds after navigation for React + API to settle
+- Screenshots: save to \`scripts/screenshots/\` directory
+
+## Output Format
+Report results as a summary:
+\`\`\`
+VERIFICATION RESULTS:
+1. [criterion]: ✅ PASS — [evidence]
+2. [criterion]: ❌ FAIL — [reason]
+...
+OVERALL: PASS/FAIL
+\`\`\`
+`
+
+  // Broadcast that agent verification is starting
+  const agentStartMsg: VerifyMessage = {
+    type: 'tool-call',
+    content: 'Starting agent-driven UI verification...',
+    toolName: 'UI Tests (Agent)',
+    timestamp: new Date().toISOString(),
+  }
+  appendVerifyMessage(issueId, agentStartMsg)
+  sseManager.broadcast('issue-verify-progress', {
+    issueId,
+    kind: 'tool-call',
+    toolName: 'UI Tests (Agent)',
+    content: agentStartMsg.content,
+    timestamp: agentStartMsg.timestamp,
+  })
+
+  let agentOutput = ''
+  let agentSuccess = false
+
+  try {
+    for await (const message of query({
+      prompt,
+      options: {
+        cwd: projectRoot,
+        settingSources: ['project'] as Options['settingSources'],
+        systemPrompt: {
+          type: 'preset' as const,
+          preset: 'claude_code' as const,
+        },
+        allowedTools: ['Bash', 'Read', 'Glob', 'Grep'],
+        permissionMode: 'acceptEdits',
+        maxTurns: 30,
+      },
+    })) {
+      // Stream agent messages as SSE events
+      if (message.type === 'assistant' && message.message?.content) {
+        const content = message.message.content
+        if (Array.isArray(content)) {
+          for (const block of content) {
+            if (block.type === 'tool_use') {
+              const toolMsg: VerifyMessage = {
+                type: 'tool-call',
+                content: (block as any).name || 'tool',
+                toolName: (block as any).name,
+                timestamp: new Date().toISOString(),
+              }
+              appendVerifyMessage(issueId, toolMsg)
+              sseManager.broadcast('issue-verify-progress', {
+                issueId,
+                kind: 'tool-call',
+                toolName: (block as any).name,
+                timestamp: toolMsg.timestamp,
+              })
+            } else if (block.type === 'text') {
+              const text = (block as any).text || ''
+              agentOutput = text // Keep the latest text block as the final output
+              const thinkMsg: VerifyMessage = {
+                type: 'thinking',
+                content: text.slice(0, 500),
+                timestamp: new Date().toISOString(),
+              }
+              appendVerifyMessage(issueId, thinkMsg)
+              sseManager.broadcast('issue-verify-progress', {
+                issueId,
+                kind: 'thinking',
+                content: thinkMsg.content,
+                timestamp: thinkMsg.timestamp,
+              })
+            }
+          }
+        }
+      }
+    }
+
+    // Parse agent results: look for OVERALL: PASS or OVERALL: FAIL
+    agentSuccess = parseAgentVerificationResult(agentOutput)
+
+    const resultMsg: VerifyMessage = {
+      type: 'tool-result',
+      content: agentOutput.length > 3000
+        ? '...(truncated)\n' + agentOutput.slice(-3000)
+        : agentOutput,
+      toolName: 'UI Tests (Agent)',
+      timestamp: new Date().toISOString(),
+    }
+    appendVerifyMessage(issueId, resultMsg)
+    sseManager.broadcast('issue-verify-progress', {
+      issueId,
+      kind: 'tool-result',
+      toolName: 'UI Tests (Agent)',
+      content: resultMsg.content,
+      timestamp: resultMsg.timestamp,
+    })
+  } catch (err: any) {
+    agentOutput = `Agent verification failed: ${err.message}`
+    const errorMsg: VerifyMessage = {
+      type: 'tool-result',
+      content: agentOutput,
+      toolName: 'UI Tests (Agent)',
+      timestamp: new Date().toISOString(),
+    }
+    appendVerifyMessage(issueId, errorMsg)
+    sseManager.broadcast('issue-verify-progress', {
+      issueId,
+      kind: 'tool-result',
+      toolName: 'UI Tests (Agent)',
+      content: agentOutput,
+      timestamp: errorMsg.timestamp,
+    })
+  }
+
+  return {
+    success: agentSuccess,
+    output: agentOutput.length > 3000
+      ? '...(truncated)\n' + agentOutput.slice(-3000)
+      : agentOutput,
+  }
+}
+
+/**
+ * Parse the agent's final output to determine pass/fail.
+ * Looks for "OVERALL: PASS" or checks if any criterion has ❌ FAIL.
+ */
+function parseAgentVerificationResult(output: string): boolean {
+  if (!output) return false
+  // Check for explicit OVERALL marker
+  const overallMatch = output.match(/OVERALL:\s*(PASS|FAIL)/i)
+  if (overallMatch) return overallMatch[1].toUpperCase() === 'PASS'
+  // Fallback: check for any ❌ FAIL markers
+  if (output.includes('❌') || output.toLowerCase().includes('fail')) return false
+  // If there are ✅ markers and no fail markers, consider it a pass
+  if (output.includes('✅') || output.toLowerCase().includes('pass')) return true
+  // Unknown — default to false
+  return false
+}
+
 // POST /api/issues/:id/verify — async fire-and-forget with SSE progress
 issues.post('/:id/verify', async (c) => {
   const id = c.req.param('id')
@@ -864,7 +1094,31 @@ issues.post('/:id/verify', async (c) => {
       // Step 2: UI Tests (only if unit tests pass)
       let uiResult = { success: false, output: 'Skipped (unit tests failed)' }
       if (unitResult.success) {
-        uiResult = await runStep('UI Tests', 'node scripts/browser-test.mjs', projectRoot, 180_000)
+        // Check if track's plan.md has a Verification Plan section
+        const verificationPlan = extractVerificationPlan(issue.trackId)
+
+        if (verificationPlan) {
+          // Agent-driven UI tests: Claude agent reads Verification Plan and executes it
+          uiResult = await runAgentVerification(id, issue.trackId!, verificationPlan, projectRoot)
+        } else if (existsSync(join(projectRoot, 'scripts', 'browser-test.mjs'))) {
+          // Fallback: legacy browser-test.mjs for tracks without Verification Plan
+          uiResult = await runStep('UI Tests', 'node scripts/browser-test.mjs', projectRoot, 180_000)
+        } else {
+          // No Verification Plan and no browser-test.mjs — skip with message
+          uiResult = { success: true, output: 'No Verification Plan found and no browser-test.mjs exists, UI tests skipped' }
+          const skipMsg: VerifyMessage = {
+            type: 'thinking',
+            content: 'No Verification Plan found, UI tests skipped',
+            timestamp: new Date().toISOString(),
+          }
+          appendVerifyMessage(id, skipMsg)
+          sseManager.broadcast('issue-verify-progress', {
+            issueId: id,
+            kind: 'thinking',
+            content: skipMsg.content,
+            timestamp: skipMsg.timestamp,
+          })
+        }
       } else {
         const skipMsg: VerifyMessage = {
           type: 'thinking',

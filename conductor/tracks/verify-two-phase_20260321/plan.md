@@ -3,7 +3,7 @@
 **Track ID:** verify-two-phase_20260321
 **Spec:** [spec.md](./spec.md)
 **Created:** 2026-03-21
-**Status:** [~] In Progress
+**Status:** [x] Complete
 
 ## Overview
 
@@ -49,7 +49,7 @@ with a Claude agent that reads the Verification Plan and executes it.
 
 ### Tasks
 
-- [ ] Task 2.1: Refactor `verifyAsync()` Step 2 to use Claude SDK `query()` instead of `exec()`
+- [x] Task 2.1: Refactor `verifyAsync()` Step 2 to use Claude SDK `query()` instead of `exec()`
   - Keep Step 1 (`npm test`) as-is using existing `runStep()` helper
   - Replace Step 2: instead of `exec('node scripts/browser-test.mjs')`, call `query()` with:
     - Prompt that references the track's plan.md Verification Plan
@@ -59,7 +59,7 @@ with a Claude agent that reads the Verification Plan and executes it.
     - `maxTurns: 30`
   - Stream agent messages as SSE events (same pattern as implement route)
 
-- [ ] Task 2.2: Build the verification prompt
+- [x] Task 2.2: Build the verification prompt
   - Read plan.md → extract `## Verification Plan` table
   - Read workflow.md → extract Playwright patterns + safety guards
   - Compose prompt:
@@ -77,13 +77,13 @@ with a Claude agent that reads the Verification Plan and executes it.
     Report results as: ✅ PASS or ❌ FAIL per criterion, with evidence.
     ```
 
-- [ ] Task 2.3: Parse agent results and build VerifyResult
+- [x] Task 2.3: Parse agent results and build VerifyResult
   - After agent completes, extract pass/fail from the final assistant message
   - Map to existing VerifyResult structure: `{ unitTest, uiTest, overall }`
   - `uiTest.passed` = true only if all non-skip criteria passed
   - `uiTest.output` = agent's final summary text
 
-- [ ] Task 2.4: Handle fallback when no Verification Plan exists
+- [x] Task 2.4: Handle fallback when no Verification Plan exists
   - If plan.md has no `## Verification Plan` section (old tracks):
     - Fall back to existing behavior: `node scripts/browser-test.mjs` if exists
     - Otherwise skip UI tests with message "No Verification Plan found, UI tests skipped"
