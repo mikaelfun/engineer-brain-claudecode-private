@@ -41,3 +41,6 @@
 | [x] | verify-inline_20260321 | Verify 内联进度展示 | 2026-03-21 | 2026-03-21 |
 | [x] | mark-done-btn_20260321 | Implemented Issue Mark Done Button | 2026-03-21 | 2026-03-21 |
 | [x] | remove-plan-overview_20260321 | 移除 TrackProgressPanel Plan Overview | 2026-03-21 | 2026-03-21 |
+| [x] | done-status-display_20260321 | Done Issue 展示实现状态和验证状态 | 2026-03-21 | 2026-03-21 |
+| [~] | trackid-copy-btn_20260321 | Issue TrackId Copy Button | 2026-03-21 | 2026-03-21 |
+| [~] | verify-plan-display_20260321 | Implemented Issue 展示验证计划 | 2026-03-21 | 2026-03-21 |

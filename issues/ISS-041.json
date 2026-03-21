@@ -1,0 +1,11 @@
+{
+  "id": "ISS-041",
+  "title": "Done Issue 展示实现状态和验证状态（人工/自动、每项结果）",
+  "description": "Done 分组的 issue 展开时，应显示实现和验证的完整状态：1) 实现状态 — track 的 tasks 完成情况（已有）；2) 验证状态 — 区分是人工验证（Mark Done）还是自动测试验证（Verify），如果是自动验证，需展示每一步（Unit Test / UI Test）的通过/失败结果和输出摘要。当前验证结果在 verify-session-manager 中有存储（VerifyResult），但未在 issue 详情面板中持久化展示。",
+  "type": "feature",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "done-status-display_20260321",
+  "createdAt": "2026-03-21T22:10:00+08:00",
+  "updatedAt": "2026-03-21T22:25:00+08:00"
+}

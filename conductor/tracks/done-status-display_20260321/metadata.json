@@ -1,0 +1,19 @@
+{
+  "id": "done-status-display_20260321",
+  "title": "Done Issue 展示实现状态和验证状态",
+  "type": "feature",
+  "status": "complete",
+  "created": "2026-03-21T22:15:00+08:00",
+  "updated": "2026-03-21T22:25:00+08:00",
+  "phases": {
+    "total": 1,
+    "completed": 1
+  },
+  "tasks": {
+    "total": 3,
+    "completed": 3
+  },
+  "commits": [
+    "8dce006: feat: add done issue verification method badges and track progress (done-status-display_20260321)"
+  ]
+}
