@@ -40,7 +40,7 @@ import {
 } from '../agent/case-session-manager.js'
 import { sseManager } from '../watcher/sse-manager.js'
 import { reloadConfig, config as appConfig } from '../config.js'
-import { getSSEEventType, formatMessageForSSE } from '../utils/sse-helpers.js'
+import { getSSEEventType, formatMessageForSSE, getPersistedMessageType } from '../utils/sse-helpers.js'
 
 const caseRoutes = new Hono()
 
@@ -137,8 +137,8 @@ caseRoutes.post('/case/:id/process', async (c) => {
 
           // Persist message for recovery after page refresh
           appendSessionMessage(caseNumber, {
-            type: formatted.messageType as string || 'system',
-            content: typeof formatted.content === 'string' ? formatted.content : '',
+            type: getPersistedMessageType(message),
+            content: formatted.content as string || '',
             toolName: formatted.toolName as string,
             timestamp: formatted.timestamp as string || new Date().toISOString(),
           })
@@ -210,15 +210,30 @@ caseRoutes.post('/case/:id/chat', async (c) => {
     const chatAsync = async () => {
       try {
         for await (const message of chatCaseSession(sessionId, body.message)) {
-          sseManager.broadcast('case-session-thinking', {
+          const eventType = getSSEEventType(message)
+          const formatted = formatMessageForSSE(message)
+          sseManager.broadcast(eventType as any, {
             caseNumber,
             sessionId,
-            ...formatMessageForSSE(message),
+            ...formatted,
+          })
+
+          // Persist message for recovery after page refresh
+          appendSessionMessage(caseNumber, {
+            type: getPersistedMessageType(message),
+            content: formatted.content as string || '',
+            toolName: formatted.toolName as string,
+            timestamp: formatted.timestamp as string || new Date().toISOString(),
           })
         }
         sseManager.broadcast('case-session-completed', {
           caseNumber,
           sessionId,
+        })
+        appendSessionMessage(caseNumber, {
+          type: 'completed',
+          content: 'Chat response completed',
+          timestamp: new Date().toISOString(),
         })
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : String(err)
@@ -226,6 +241,11 @@ caseRoutes.post('/case/:id/chat', async (c) => {
           caseNumber,
           sessionId,
           error: errorMsg,
+        })
+        appendSessionMessage(caseNumber, {
+          type: 'failed',
+          content: errorMsg,
+          timestamp: new Date().toISOString(),
         })
       }
     }
@@ -376,41 +396,97 @@ caseRoutes.get('/todos/all', (c) => {
   })
 })
 
-// POST /todo/:id/execute — 执行 Todo 项
+// POST /todo/:id/execute — 执行 Todo 项 (with verification + structured SSE)
 caseRoutes.post('/todo/:id/execute', async (c) => {
   const caseNumber = c.req.param('id')
   const body = await c.req.json<{
     action: string
     params: Record<string, string>
+    lineNumber?: number
   }>()
 
   if (!body.action) {
     return c.json({ error: 'action is required' }, 400)
   }
 
+  const lineNumber = body.lineNumber || 0
+
   try {
     const execAsync = async () => {
       try {
+        // Broadcast execution started
+        sseManager.broadcast('todo-execute-progress', {
+          caseNumber,
+          action: body.action,
+          lineNumber,
+          phase: 'executing',
+          message: `Executing ${body.action} for Case ${caseNumber}...`,
+        })
+
+        let lastAssistantContent = ''
+        let resultFound = false
+
         for await (const message of executeTodoAction(caseNumber, body.action, body.params || {})) {
-          sseManager.broadcast('case-session-tool-result', {
+          const formatted = formatMessageForSSE(message)
+
+          // Broadcast progress events
+          sseManager.broadcast('todo-execute-progress', {
             caseNumber,
             action: body.action,
-            ...formatMessageForSSE(message),
+            lineNumber,
+            phase: lastAssistantContent.includes('Verification') || lastAssistantContent.includes('verify') ? 'verifying' : 'executing',
+            message: typeof formatted.content === 'string' ? formatted.content.slice(0, 200) : '',
+          })
+
+          // Check for structured result JSON in assistant messages
+          if (formatted.content && typeof formatted.content === 'string') {
+            lastAssistantContent = formatted.content
+            const resultMatch = formatted.content.match(/\{"todoExecuteResult":\s*\{[^}]*\}\}/)
+            if (resultMatch) {
+              try {
+                const parsed = JSON.parse(resultMatch[0])
+                const result = parsed.todoExecuteResult
+                resultFound = true
+                sseManager.broadcast('todo-execute-result', {
+                  caseNumber,
+                  action: body.action,
+                  lineNumber,
+                  success: result.success === true,
+                  verificationDetails: result.verificationDetails || '',
+                })
+              } catch {
+                // JSON parse failed, will handle below
+              }
+            }
+          }
+        }
+
+        // If agent didn't produce structured result, broadcast a generic success
+        if (!resultFound) {
+          sseManager.broadcast('todo-execute-result', {
+            caseNumber,
+            action: body.action,
+            lineNumber,
+            success: true,
+            verificationDetails: 'Execution completed (no structured verification result from agent)',
           })
         }
+
         sseManager.broadcast('todo-updated', { caseNumber })
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : String(err)
-        sseManager.broadcast('case-session-failed', {
+        sseManager.broadcast('todo-execute-result', {
           caseNumber,
           action: body.action,
-          error: errorMsg,
+          lineNumber,
+          success: false,
+          verificationDetails: `Error: ${errorMsg}`,
         })
       }
     }
 
     execAsync()
-    return c.json({ status: 'started', caseNumber, action: body.action }, 202)
+    return c.json({ status: 'started', caseNumber, action: body.action, lineNumber }, 202)
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     return c.json({ error: msg }, 500)

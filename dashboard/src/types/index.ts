@@ -60,9 +60,9 @@ export interface CaseStats {
   total: number
   bySeverity: Record<string, number>
   byStatus: Record<string, number>
-  urgentItems: number
-  pendingItems: number
-  normalItems: number
+  slaAtRisk: number
+  needsMyAction: number
+  awaitingOthers: number
 }
 
 // ============ Email 相关 ============
@@ -265,6 +265,8 @@ export type SSEEventType =
   | 'issue-verify-progress'
   | 'issue-verify-completed'
   | 'issue-verify-error'
+  | 'todo-execute-progress'
+  | 'todo-execute-result'
 
 export interface SSEEvent {
   type: SSEEventType
