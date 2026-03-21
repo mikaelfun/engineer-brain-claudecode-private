@@ -320,7 +320,9 @@ export default function AgentMonitor() {
   const [showFilters, setShowFilters] = useState(false)
 
   // Collapsed groups
-  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({})
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({
+    __completed: true, // Completed sessions collapsed by default
+  })
 
   // Auto-refresh
   const autoRefreshInterval = isRunning ? 5_000 : 30_000
@@ -362,11 +364,22 @@ export default function AgentMonitor() {
     return true
   })
 
-  // Group by type
+  // Split into active/recent vs completed
+  const activeSessions2 = filteredSessions.filter(s => s.status !== 'completed')
+  const completedSessions = filteredSessions.filter(s => s.status === 'completed')
+
+  // Group active/recent by type
   const sessionsByType: Record<string, UnifiedSession[]> = {}
-  for (const s of filteredSessions) {
+  for (const s of activeSessions2) {
     if (!sessionsByType[s.type]) sessionsByType[s.type] = []
     sessionsByType[s.type].push(s)
+  }
+
+  // Group completed by type (for expanded view)
+  const completedByType: Record<string, UnifiedSession[]> = {}
+  for (const s of completedSessions) {
+    if (!completedByType[s.type]) completedByType[s.type] = []
+    completedByType[s.type].push(s)
   }
 
   // Summary counts
@@ -556,7 +569,7 @@ export default function AgentMonitor() {
         </Card>
       )}
 
-      {/* All Sessions — Grouped by Type */}
+      {/* All Sessions — Active/Recent grouped by type, then Completed */}
       <div>
         <h3 className="text-lg font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
           Sessions
@@ -573,6 +586,7 @@ export default function AgentMonitor() {
           <EmptyState icon="🧠" title="No sessions" description={allSessions.length > 0 ? 'No sessions match current filters' : 'No agent sessions recorded yet'} />
         ) : (
           <div className="space-y-3">
+            {/* Active/Recent sessions grouped by type */}
             {typeOrder
               .filter((t) => sessionsByType[t]?.length)
               .map((type) => {
@@ -625,6 +639,63 @@ export default function AgentMonitor() {
                   </Card>
                 )
               })}
+
+            {/* Completed Sessions — collapsed by default */}
+            {completedSessions.length > 0 && (
+              <Card>
+                <button
+                  onClick={() => toggleGroup('__completed')}
+                  className="flex items-center justify-between w-full text-left"
+                >
+                  <div className="flex items-center gap-2">
+                    {collapsedGroups.__completed
+                      ? <ChevronRight className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
+                      : <ChevronDown className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
+                    }
+                    <span className="text-sm" style={{ color: 'var(--text-primary)' }}>
+                      ✅ Completed Sessions
+                    </span>
+                    <span
+                      className="text-xs px-1.5 py-0.5 rounded-full"
+                      style={{ background: 'var(--accent-green-dim)', color: 'var(--accent-green)' }}
+                    >
+                      {completedSessions.length}
+                    </span>
+                  </div>
+                </button>
+
+                {!collapsedGroups.__completed && (
+                  <div className="mt-3 space-y-3">
+                    {typeOrder
+                      .filter(t => completedByType[t]?.length)
+                      .map(type => {
+                        const sessions = completedByType[type]
+                        const config = SESSION_TYPE_CONFIG[type]
+                        return (
+                          <div key={type}>
+                            <div className="flex items-center gap-2 mb-1.5 ml-1">
+                              <span className="text-xs font-medium" style={{ color: 'var(--text-tertiary)' }}>
+                                {config.icon} {config.label}
+                              </span>
+                              <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>({sessions.length})</span>
+                            </div>
+                            <div className="space-y-1.5">
+                              {sessions.map(session => (
+                                <SessionRow
+                                  key={session.id}
+                                  session={session}
+                                  isExpanded={expandedSessionId === session.id}
+                                  onToggle={() => setExpandedSessionId(expandedSessionId === session.id ? null : session.id)}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        )
+                      })}
+                  </div>
+                )}
+              </Card>
+            )}
           </div>
         )}
       </div>
