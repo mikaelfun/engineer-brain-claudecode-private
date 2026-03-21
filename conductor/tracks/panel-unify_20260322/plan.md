@@ -3,7 +3,7 @@
 **Track ID:** panel-unify_20260322
 **Spec:** [spec.md](./spec.md)
 **Created:** 2026-03-22
-**Status:** [~] In Progress
+**Status:** [x] Complete
 
 ## Overview
 
@@ -28,11 +28,11 @@
 
 ### Tasks
 
-- [ ] Task 2.1: 后端增加 POST /api/issues/:id/cancel-verify endpoint
-- [ ] Task 2.2: verify-session-manager 增加 cancellation flag 支持
-- [ ] Task 2.3: verifyAsync() 中检查 cancellation flag，提前退出
-- [ ] Task 2.4: VerifyProgressPanel 增加 Cancel 按钮（运行中显示）
-- [ ] Task 2.5: Issues.tsx 连接 cancel-verify API 调用
+- [x] Task 2.1: 后端增加 POST /api/issues/:id/cancel-verify endpoint
+- [x] Task 2.2: verify-session-manager 增加 cancellation flag 支持
+- [x] Task 2.3: verifyAsync() 中检查 cancellation flag，提前退出
+- [x] Task 2.4: VerifyProgressPanel 增加 Cancel 按钮（运行中显示）
+- [x] Task 2.5: Issues.tsx 连接 cancel-verify API 调用
 
 ### Verification
 

@@ -47,6 +47,7 @@ export function useSSE() {
   const addVerifyMessage = useIssueTrackStore((s) => s.addVerifyMessage)
   const setVerifyActive = useIssueTrackStore((s) => s.setVerifyActive)
   const setVerifyResult = useIssueTrackStore((s) => s.setVerifyResult)
+  const clearVerify = useIssueTrackStore((s) => s.clearVerify)
 
   const connect = useCallback(() => {
     const token = localStorage.getItem('eb_token')
@@ -434,12 +435,17 @@ export function useSSE() {
       const d = data.data || data
       const issueId = d.issueId
       if (issueId) {
-        setVerifyActive(issueId, false)
-        addVerifyMessage(issueId, {
-          kind: 'error',
-          content: d.error || 'Verification failed',
-          timestamp: d.timestamp || new Date().toISOString(),
-        })
+        if (d.error === '__cancelled__') {
+          // Cancelled by user — clear all verify state so panel disappears
+          clearVerify(issueId)
+        } else {
+          setVerifyActive(issueId, false)
+          addVerifyMessage(issueId, {
+            kind: 'error',
+            content: d.error || 'Verification failed',
+            timestamp: d.timestamp || new Date().toISOString(),
+          })
+        }
         queryClient.invalidateQueries({ queryKey: ['issues'] })
       }
     })
@@ -463,7 +469,7 @@ export function useSSE() {
         console.error(`[SSE] Max retries (${MAX_RETRIES}) exceeded, giving up`)
       }
     }
-  }, [queryClient, patrolOnProgress, patrolOnCaseCompleted, addCaseSessionMessage, addIssueTrackMessage, setIssueTrackingActive, clearIssueTrackMessages, setIssuePendingQuestion, startImplement, addImplementMessage, setImplementStatus, addVerifyMessage, setVerifyActive, setVerifyResult])
+  }, [queryClient, patrolOnProgress, patrolOnCaseCompleted, addCaseSessionMessage, addIssueTrackMessage, setIssueTrackingActive, clearIssueTrackMessages, setIssuePendingQuestion, startImplement, addImplementMessage, setImplementStatus, addVerifyMessage, setVerifyActive, setVerifyResult, clearVerify])
 
   useEffect(() => {
     connect()

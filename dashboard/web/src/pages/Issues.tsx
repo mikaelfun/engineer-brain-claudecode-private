@@ -5,7 +5,7 @@
  */
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Plus, X, Trash2, ExternalLink, ChevronRight, ChevronDown, Loader2, Rocket, Play, CheckCircle, RotateCcw, RefreshCw, Monitor, Server, Search, Pencil, FileText, ListChecks, FlaskConical, CircleCheck, ShieldCheck, UserCheck, Copy, Check } from 'lucide-react'
-import { useIssues, useCreateIssue, useUpdateIssue, useDeleteIssue, useCreateTrack, useCancelTrack, useStartImplement, useVerifyIssue, useReopenIssue, useMarkDone, useRestartFrontend, useRestartBackend, useRestartAll, useTrackSpec, useTrackPlan, useActiveTrackSessions } from '../api/hooks'
+import { useIssues, useCreateIssue, useUpdateIssue, useDeleteIssue, useCreateTrack, useCancelTrack, useCancelVerify, useStartImplement, useVerifyIssue, useReopenIssue, useMarkDone, useRestartFrontend, useRestartBackend, useRestartAll, useTrackSpec, useTrackPlan, useActiveTrackSessions } from '../api/hooks'
 import { Loading, ErrorState } from '../components/common/Loading'
 import TrackProgressPanel from '../components/TrackProgressPanel'
 import ImplementPanel from '../components/ImplementPanel'
@@ -705,6 +705,7 @@ function IssueRow({
   // Subscribe to verify store for this specific issue
   const hasVerifyMessages = useIssueTrackStore((s) => (s.verifyMessages[issue.id]?.length ?? 0) > 0)
   const isVerifyActive = useIssueTrackStore((s) => s.activeVerify[issue.id] ?? false)
+  const cancelVerify = useCancelVerify()
 
   // Show progress panel if issue is tracking, has track messages, or was optimistically marked (ISS-029)
   const showProgress = isTracking || hasTrackMessages || isOptimisticTracking
@@ -1206,6 +1207,9 @@ function IssueRow({
             verifyStore.clearVerify(issue.id)
             verifyStore.setVerifyActive(issue.id, true)
             // Re-trigger verify via API would need import; handled by parent handleVerify
+          }}
+          onCancel={() => {
+            cancelVerify.mutate(issue.id)
           }}
         />
       )}

@@ -17,9 +17,11 @@ interface VerifyProgressPanelProps {
   issueId: string
   /** Called when user clicks retry after error */
   onRetry?: () => void
+  /** Called when user clicks cancel during active verify */
+  onCancel?: () => void
 }
 
-export default function VerifyProgressPanel({ issueId, onRetry }: VerifyProgressPanelProps) {
+export default function VerifyProgressPanel({ issueId, onRetry, onCancel }: VerifyProgressPanelProps) {
   const messages = useIssueTrackStore((s) => s.verifyMessages[issueId] ?? EMPTY_VERIFY_MESSAGES)
   const isActive = useIssueTrackStore((s) => s.activeVerify[issueId] ?? false)
   const result = useIssueTrackStore((s) => s.verifyResult[issueId])
@@ -138,6 +140,20 @@ export default function VerifyProgressPanel({ issueId, onRetry }: VerifyProgress
           >
             <History className="w-3 h-3" />
             {collapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+          </button>
+        )}
+
+        {/* Cancel button — show during active verification */}
+        {onCancel && isActive && !isFinished && !errorMsg && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onCancel() }}
+            className="flex items-center gap-1 px-2 py-0.5 rounded text-xs transition-colors hover:opacity-80"
+            style={{ color: 'var(--accent-red)', background: 'var(--accent-red-dim)' }}
+            title="Cancel verification"
+          >
+            <XCircle className="w-3 h-3" />
+            Cancel
           </button>
         )}
       </div>

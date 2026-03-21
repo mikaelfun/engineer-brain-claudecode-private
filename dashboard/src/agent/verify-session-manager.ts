@@ -42,6 +42,9 @@ const MAX_MESSAGES = 100
 // issueId → session info (only one active verify per issue at a time)
 const sessions = new Map<string, VerifySession>()
 
+// issueId → true means cancel has been requested
+const cancelledSet = new Set<string>()
+
 // ---- Lock API ----
 
 /**
@@ -81,6 +84,29 @@ export function releaseVerifyLock(issueId: string, status: 'completed' | 'failed
 export function isVerifyActive(issueId: string): boolean {
   const session = sessions.get(issueId)
   return session?.status === 'active'
+}
+
+// ---- Cancellation API ----
+
+/**
+ * Request cancellation of an active verify session.
+ */
+export function cancelVerify(issueId: string): void {
+  cancelledSet.add(issueId)
+}
+
+/**
+ * Check if verify has been cancelled for an issue.
+ */
+export function isVerifyCancelled(issueId: string): boolean {
+  return cancelledSet.has(issueId)
+}
+
+/**
+ * Clear the cancellation flag (called after cleanup).
+ */
+export function clearVerifyCancellation(issueId: string): void {
+  cancelledSet.delete(issueId)
 }
 
 // ---- Message persistence API ----
@@ -135,4 +161,23 @@ export function getVerifyStatus(issueId: string): {
     result: session.result,
     startedAt: session.startedAt,
   }
+}
+
+/**
+ * Get all verify sessions (for unified session view).
+ */
+export function getAllVerifySessions(): Array<{
+  issueId: string
+  status: 'active' | 'completed' | 'failed'
+  startedAt: string
+  messageCount: number
+  result?: VerifyResult
+}> {
+  return Array.from(sessions.values()).map((s) => ({
+    issueId: s.issueId,
+    status: s.status,
+    startedAt: s.startedAt,
+    messageCount: s.messages.length,
+    result: s.result,
+  }))
 }

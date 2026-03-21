@@ -11,6 +11,7 @@
  * POST   /api/issues/:id/track-answer   — 提交用户对 agent 问题的回答
  * POST   /api/issues/:id/start-implement — tracked → in-progress
  * POST   /api/issues/:id/verify         — 异步运行测试验证（SSE 推送进度）
+ * POST   /api/issues/:id/cancel-verify  — 取消正在运行的 verify
  * GET    /api/issues/:id/verify-status  — 获取 verify 进度消息（刷新恢复用 + 锁状态）
  * POST   /api/issues/:id/reopen         — done/implemented → pending
  * POST   /api/issues/:id/mark-done      — implemented → done + sync conductor track
@@ -46,6 +47,9 @@ import {
   appendVerifyMessage,
   getVerifyStatus,
   clearVerifySession,
+  cancelVerify,
+  isVerifyCancelled,
+  clearVerifyCancellation,
   type VerifyMessage,
   type VerifyResult,
 } from '../agent/verify-session-manager.js'
@@ -909,6 +913,11 @@ OVERALL: PASS/FAIL
         maxTurns: 30,
       },
     })) {
+      // Check for cancellation
+      if (isVerifyCancelled(issueId)) {
+        clearVerifyCancellation(issueId)
+        return { success: false, output: 'Verification cancelled by user' }
+      }
       // Stream agent messages as SSE events
       if (message.type === 'assistant' && message.message?.content) {
         const content = message.message.content
@@ -1088,8 +1097,20 @@ issues.post('/:id/verify', async (c) => {
     }
 
     try {
+      // Check for cancellation before starting
+      if (isVerifyCancelled(id)) {
+        clearVerifyCancellation(id)
+        return
+      }
+
       // Step 1: Unit Tests (Vitest)
       const unitResult = await runStep('Unit Tests', 'npm test -- --reporter=verbose', dashboardDir, 120_000)
+
+      // Check for cancellation after unit tests
+      if (isVerifyCancelled(id)) {
+        clearVerifyCancellation(id)
+        return
+      }
 
       // Step 2: UI Tests (only if unit tests pass)
       let uiResult = { success: false, output: 'Skipped (unit tests failed)' }
@@ -1201,6 +1222,36 @@ issues.get('/:id/verify-status', (c) => {
   const id = c.req.param('id')
   const status = getVerifyStatus(id)
   return c.json(status)
+})
+
+// POST /api/issues/:id/cancel-verify — cancel an active verification
+issues.post('/:id/cancel-verify', (c) => {
+  const id = c.req.param('id')
+  const issue = getIssue(id)
+  if (!issue) return c.json({ error: 'Issue not found' }, 404)
+
+  if (!isVerifyActive(id)) {
+    return c.json({ error: 'No active verification to cancel' }, 400)
+  }
+
+  // Set cancellation flag — running verify will detect and abort
+  cancelVerify(id)
+
+  // Release lock as failed
+  releaseVerifyLock(id, 'failed')
+
+  // Broadcast cancellation — frontend will clear the panel
+  sseManager.broadcast('issue-verify-error', {
+    issueId: id,
+    error: '__cancelled__',
+    timestamp: new Date().toISOString(),
+  })
+
+  // Clear session state
+  clearVerifySession(id)
+  clearVerifyCancellation(id)
+
+  return c.json({ ok: true, message: `Verification cancelled for ${id}` })
 })
 
 // POST /api/issues/:id/reopen — done/implemented → clear verification (ISS-047: single source of truth)
