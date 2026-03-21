@@ -44,7 +44,6 @@ export default function CaseDetail() {
 
   const tabs = [
     { id: 'inspection', label: 'Inspection', icon: '🩺' },
-    { id: 'info', label: 'Info', icon: '📋' },
     { id: 'todo', label: 'Todo', icon: '📌', count: todoData?.total },
     { id: 'emails', label: 'Emails', icon: '📧', count: emailsData?.total },
     { id: 'notes', label: 'Notes', icon: '📝', count: notesData?.total },
@@ -88,10 +87,31 @@ export default function CaseDetail() {
           {meta?.actualStatus && meta.actualStatus !== caseInfo.status?.toLowerCase() && (
             <Badge variant="info" size="xs">{meta.actualStatus}</Badge>
           )}
+          {caseInfo.is24x7 && (
+            <Badge variant="danger" size="xs">24×7</Badge>
+          )}
           <span style={{ color: 'var(--border-default)' }}>·</span>
           <span style={{ color: 'var(--text-secondary)' }}>{caseInfo.assignedTo}</span>
           <span style={{ color: 'var(--border-default)' }}>·</span>
           <span style={{ color: 'var(--text-secondary)' }}>{caseInfo.caseAge || '0 days'}</span>
+          {caseInfo.origin && (
+            <>
+              <span style={{ color: 'var(--border-default)' }}>·</span>
+              <span style={{ color: 'var(--text-tertiary)' }}>{caseInfo.origin}</span>
+            </>
+          )}
+          {caseInfo.country && (
+            <>
+              <span style={{ color: 'var(--border-default)' }}>·</span>
+              <span style={{ color: 'var(--text-tertiary)' }}>{caseInfo.country}</span>
+            </>
+          )}
+          {caseInfo.timezone && (
+            <>
+              <span style={{ color: 'var(--border-default)' }}>·</span>
+              <span style={{ color: 'var(--text-tertiary)' }}>{caseInfo.timezone}</span>
+            </>
+          )}
           {meta?.daysSinceLastContact != null && meta.daysSinceLastContact > 0 && (
             <>
               <span style={{ color: 'var(--border-default)' }}>·</span>
@@ -169,7 +189,6 @@ export default function CaseDetail() {
         <div className="flex-1 min-w-0 space-y-4">
           <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
           <div>
-            {activeTab === 'info' && <InfoTab caseInfo={caseInfo} />}
             {activeTab === 'inspection' && <InspectionTab content={inspectionData?.content} exists={inspectionData?.exists} filename={inspectionData?.filename} updatedAt={inspectionData?.updatedAt} />}
             {activeTab === 'todo' && <CaseTodoTab caseId={id!} latest={todoData?.latest || null} files={todoData?.files || []} toggleTodo={toggleCaseTodo} />}
             {activeTab === 'emails' && <EmailsTab emails={emailsData?.emails || []} />}
@@ -193,63 +212,6 @@ export default function CaseDetail() {
       <div className="xl:hidden">
         <CaseAIPanel caseNumber={id!} />
       </div>
-    </div>
-  )
-}
-
-function InfoTab({ caseInfo }: { caseInfo: any }) {
-  const sections = [
-    { title: 'Basic Info', fields: [
-      ['Case Number', caseInfo.caseNumber],
-      ['Title', caseInfo.title],
-      ['Severity', caseInfo.severity],
-      ['Status', caseInfo.status],
-      ['SAP', caseInfo.sap],
-      ['24x7', caseInfo.is24x7],
-      ['Assigned To', caseInfo.assignedTo],
-      ['Created', caseInfo.createdOn],
-      ['Case Age', caseInfo.caseAge],
-      ['Active Hours', caseInfo.activeHours],
-      ['Origin', caseInfo.origin],
-      ['Timezone', caseInfo.timezone],
-      ['Country', caseInfo.country],
-    ]},
-    { title: 'Contact', fields: [
-      ['Name', caseInfo.contact?.name],
-      ['Email', caseInfo.contact?.email],
-      ['Phone', caseInfo.contact?.phone],
-      ['Preferred', caseInfo.contact?.preferredMethod],
-    ]},
-    { title: 'Customer', fields: [
-      ['Customer', caseInfo.customer],
-    ]},
-    { title: 'Counts', fields: [
-      ['Emails', caseInfo.emailCount],
-      ['Notes', caseInfo.noteCount],
-      ['Phone Calls', caseInfo.phoneCallCount],
-      ['Labor', caseInfo.laborCount],
-      ['ICM', caseInfo.icmCount],
-      ['Attachments', caseInfo.attachmentCount],
-    ]},
-  ]
-
-  return (
-    <div className="grid gap-4 md:grid-cols-2">
-      {sections.map(s => (
-        <Card key={s.title}>
-          <h4 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>{s.title}</h4>
-          <table className="w-full text-sm">
-            <tbody>
-              {s.fields.filter(([, v]) => v !== undefined && v !== '').map(([k, v]) => (
-                <tr key={k as string} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                  <td className="py-1.5 pr-3 whitespace-nowrap" style={{ color: 'var(--text-tertiary)' }}>{k}</td>
-                  <td className="py-1.5 break-all" style={{ color: 'var(--text-primary)' }}>{v}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </Card>
-      ))}
     </div>
   )
 }
