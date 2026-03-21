@@ -360,7 +360,7 @@ export interface PatrolTodoSummary {
 
 export type IssueType = 'bug' | 'feature' | 'refactor' | 'chore'
 export type IssuePriority = 'P0' | 'P1' | 'P2'
-export type IssueStatus = 'pending' | 'tracking' | 'tracked' | 'in-progress' | 'done'
+export type IssueStatus = 'pending' | 'tracking' | 'tracked' | 'in-progress' | 'implemented' | 'done'
 
 export interface IssueVerifyResult {
   unitTest: { success: boolean; output: string }
@@ -383,13 +383,45 @@ export interface Issue {
 
 // ============ Conductor Track ============
 
+export type TrackVerificationStatus = 'pending' | 'running' | 'passed' | 'failed' | 'skipped'
+export type TrackVerificationMethod = 'auto' | 'manual'
+
+export interface TrackVerification {
+  status: TrackVerificationStatus
+  method?: TrackVerificationMethod
+  result?: {
+    unitTest: { success: boolean; output: string }
+    uiTest: { success: boolean; output: string }
+    verifiedAt: string
+  }
+}
+
 export interface TrackMetadata {
   id: string
   title: string
   type: string
   status: string
+  issueId?: string
+  verification?: TrackVerification
   created: string
   updated: string
   phases: { total: number; completed: number }
   tasks: { total: number; completed: number }
+  commits?: string[]
+}
+
+// ============ Unified Session View ============
+
+export type UnifiedSessionType = 'case' | 'implement' | 'verify' | 'track-creation'
+export type UnifiedSessionStatus = 'active' | 'paused' | 'completed' | 'failed'
+
+export interface UnifiedSession {
+  id: string
+  type: UnifiedSessionType
+  status: UnifiedSessionStatus
+  context: string // case number or issue ID
+  intent: string // description of what the session is doing
+  startedAt: string
+  lastActivityAt: string
+  metadata?: Record<string, unknown> // type-specific extra data
 }
