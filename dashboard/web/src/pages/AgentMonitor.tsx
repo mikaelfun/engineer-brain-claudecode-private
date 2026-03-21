@@ -11,9 +11,8 @@ import { useAgents, useCronJobs, usePatrolState, useCancelPatrol, useUnifiedSess
 import type { UnifiedSession } from '../api/hooks'
 import { usePatrolStore } from '../stores/patrolStore'
 import { useCaseSessionStore, type CaseSessionMessage } from '../stores/caseSessionStore'
-import { useImplementStore, type ImplementMessage } from '../stores/implementStore'
-import { useIssueTrackStore, EMPTY_TRACK_MESSAGES, EMPTY_VERIFY_MESSAGES } from '../stores/issueTrackStore'
-import type { IssueTrackMessage, VerifyMessage } from '../stores/issueTrackStore'
+import { useIssueTrackStore, EMPTY_TRACK_MESSAGES, EMPTY_IMPLEMENT_MESSAGES, EMPTY_VERIFY_MESSAGES } from '../stores/issueTrackStore'
+import type { IssueTrackMessage, ImplementMessage, VerifyMessage } from '../stores/issueTrackStore'
 import { SessionMessageList } from '../components/session/SessionMessageList'
 import { useQueryClient } from '@tanstack/react-query'
 import { RefreshCw, ChevronDown, ChevronRight, Filter, Send, Square } from 'lucide-react'
@@ -207,8 +206,8 @@ function SessionDetailPanel({ session }: { session: UnifiedSession }) {
 /** Convert ImplementMessage[] to CaseSessionMessage[] for SessionMessageList */
 function implementToSessionMessages(msgs: ImplementMessage[]): CaseSessionMessage[] {
   return msgs.map(m => ({
-    type: m.type === 'started' ? 'system' as const : m.type as CaseSessionMessage['type'],
-    content: m.content,
+    type: m.kind === 'started' ? 'system' as const : m.kind as CaseSessionMessage['type'],
+    content: m.content || '',
     toolName: m.toolName,
     timestamp: m.timestamp,
   }))
@@ -254,13 +253,13 @@ function verifyToSessionMessages(msgs: VerifyMessage[]): CaseSessionMessage[] {
   })
 }
 
-/** Implement session detail — reads from implementStore */
+/** Implement session detail — reads from issueTrackStore */
 function ImplementSessionDetail({ session }: { session: UnifiedSession }) {
   const issueId = session.context
-  const implSession = useImplementStore(s => s.sessions[issueId])
+  const implMessages = useIssueTrackStore(s => s.implementMessages[issueId] ?? EMPTY_IMPLEMENT_MESSAGES)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const messages = implSession ? implementToSessionMessages(implSession.messages) : EMPTY_MESSAGES
+  const messages = implMessages.length > 0 ? implementToSessionMessages(implMessages) : EMPTY_MESSAGES
   const isActive = session.status === 'active'
 
   // Auto-scroll to bottom on new messages

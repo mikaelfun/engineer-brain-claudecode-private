@@ -60,26 +60,20 @@ vi.mock('../api/client', () => ({
   apiDelete: vi.fn(),
 }))
 
-// Mock implement store
-vi.mock('../stores/implementStore', () => ({
-  useImplementStore: vi.fn((selector: (s: any) => any) => {
-    const store = {
-      sessions: {},
-    }
-    return selector(store)
-  }),
-}))
-
-// Mock issue track store
+// Mock issue track store (unified: includes implement + verify + track creation)
 vi.mock('../stores/issueTrackStore', () => ({
   useIssueTrackStore: vi.fn((selector: (s: any) => any) => {
     const store = {
       messages: {},
       verifyMessages: {},
+      implementMessages: {},
+      implementStatus: {},
+      implementTrackId: {},
     }
     return selector(store)
   }),
   EMPTY_TRACK_MESSAGES: [],
+  EMPTY_IMPLEMENT_MESSAGES: [],
   EMPTY_VERIFY_MESSAGES: [],
 }))
 

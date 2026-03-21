@@ -14,7 +14,6 @@ import { BASE_URL } from '../api/client'
 import { usePatrolStore } from '../stores/patrolStore'
 import { useCaseSessionStore } from '../stores/caseSessionStore'
 import { useIssueTrackStore } from '../stores/issueTrackStore'
-import { useImplementStore } from '../stores/implementStore'
 
 /** Safely parse JSON, returning null on failure */
 function safeParse(raw: string): any | null {
@@ -40,10 +39,11 @@ export function useSSE() {
   const addCaseSessionMessage = useCaseSessionStore((s) => s.addMessage)
   const addIssueTrackMessage = useIssueTrackStore((s) => s.addMessage)
   const setIssueTrackingActive = useIssueTrackStore((s) => s.setTrackingActive)
+  const clearIssueTrackMessages = useIssueTrackStore((s) => s.clearMessages)
   const setIssuePendingQuestion = useIssueTrackStore((s) => s.setPendingQuestion)
-  const startImplementSession = useImplementStore((s) => s.startSession)
-  const addImplementMessage = useImplementStore((s) => s.addMessage)
-  const setImplementStatus = useImplementStore((s) => s.setStatus)
+  const startImplement = useIssueTrackStore((s) => s.startImplement)
+  const addImplementMessage = useIssueTrackStore((s) => s.addImplementMessage)
+  const setImplementStatus = useIssueTrackStore((s) => s.setImplementStatus)
   const addVerifyMessage = useIssueTrackStore((s) => s.addVerifyMessage)
   const setVerifyActive = useIssueTrackStore((s) => s.setVerifyActive)
   const setVerifyResult = useIssueTrackStore((s) => s.setVerifyResult)
@@ -277,12 +277,17 @@ export function useSSE() {
       const d = data.data || data
       const issueId = d.issueId
       if (issueId) {
-        addIssueTrackMessage(issueId, {
-          kind: 'error',
-          error: d.error,
-          timestamp: d.timestamp || new Date().toISOString(),
-        })
-        setIssueTrackingActive(issueId, false)
+        if (d.error === '__cancelled__') {
+          // Cancelled by user — clear all messages so panel disappears
+          clearIssueTrackMessages(issueId)
+        } else {
+          addIssueTrackMessage(issueId, {
+            kind: 'error',
+            error: d.error,
+            timestamp: d.timestamp || new Date().toISOString(),
+          })
+          setIssueTrackingActive(issueId, false)
+        }
         queryClient.invalidateQueries({ queryKey: ['issues'] })
       }
     })
@@ -309,16 +314,16 @@ export function useSSE() {
       }
     })
 
-    // Issue implement progress events → populate implementStore for live display
+    // Issue implement progress events → populate issueTrackStore for live display
     es.addEventListener('issue-implement-started', (e) => {
       const data = safeParse(e.data)
       if (!data) return
       const d = data.data || data
       const issueId = d.issueId
       if (issueId) {
-        startImplementSession(issueId, d.trackId || '')
+        startImplement(issueId, d.trackId || '')
         addImplementMessage(issueId, {
-          type: 'started',
+          kind: 'started',
           content: `Implementation started${d.trackId ? ` for track ${d.trackId}` : ''}`,
           timestamp: d.timestamp || new Date().toISOString(),
         })
@@ -333,7 +338,7 @@ export function useSSE() {
       const issueId = d.issueId
       if (issueId) {
         addImplementMessage(issueId, {
-          type: d.kind || (d.toolName ? 'tool-call' : 'thinking'),
+          kind: d.kind || (d.toolName ? 'tool-call' : 'thinking'),
           content: d.content || d.toolName || '',
           toolName: d.toolName,
           timestamp: d.timestamp || new Date().toISOString(),
@@ -349,7 +354,7 @@ export function useSSE() {
       if (issueId) {
         setImplementStatus(issueId, 'completed')
         addImplementMessage(issueId, {
-          type: 'completed',
+          kind: 'completed',
           content: `Implementation completed${d.trackId ? ` for track ${d.trackId}` : ''}`,
           timestamp: d.timestamp || new Date().toISOString(),
         })
@@ -365,7 +370,7 @@ export function useSSE() {
       if (issueId) {
         setImplementStatus(issueId, 'failed')
         addImplementMessage(issueId, {
-          type: 'failed',
+          kind: 'failed',
           content: d.error || 'Implementation failed',
           timestamp: d.timestamp || new Date().toISOString(),
         })
@@ -458,7 +463,7 @@ export function useSSE() {
         console.error(`[SSE] Max retries (${MAX_RETRIES}) exceeded, giving up`)
       }
     }
-  }, [queryClient, patrolOnProgress, patrolOnCaseCompleted, addCaseSessionMessage, addIssueTrackMessage, setIssueTrackingActive, setIssuePendingQuestion, addVerifyMessage, setVerifyActive, setVerifyResult])
+  }, [queryClient, patrolOnProgress, patrolOnCaseCompleted, addCaseSessionMessage, addIssueTrackMessage, setIssueTrackingActive, clearIssueTrackMessages, setIssuePendingQuestion, startImplement, addImplementMessage, setImplementStatus, addVerifyMessage, setVerifyActive, setVerifyResult])
 
   useEffect(() => {
     connect()

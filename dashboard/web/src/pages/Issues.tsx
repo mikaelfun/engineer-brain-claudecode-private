@@ -3,15 +3,14 @@
  *
  * 功能：列表 + 筛选 + 分页 + 内联创建 + 行内编辑 + 状态驱动操作按钮
  */
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { Plus, X, Trash2, ExternalLink, ChevronRight, ChevronDown, Loader2, Rocket, Play, CheckCircle, RotateCcw, RefreshCw, Monitor, Server, Search, Pencil, FileText, ListChecks, FlaskConical, CircleCheck, ShieldCheck, UserCheck, Copy, Check } from 'lucide-react'
-import { useIssues, useCreateIssue, useUpdateIssue, useDeleteIssue, useCreateTrack, useStartImplement, useVerifyIssue, useReopenIssue, useMarkDone, useRestartFrontend, useRestartBackend, useRestartAll, useTrackSpec, useTrackPlan } from '../api/hooks'
+import { useIssues, useCreateIssue, useUpdateIssue, useDeleteIssue, useCreateTrack, useCancelTrack, useStartImplement, useVerifyIssue, useReopenIssue, useMarkDone, useRestartFrontend, useRestartBackend, useRestartAll, useTrackSpec, useTrackPlan, useActiveTrackSessions } from '../api/hooks'
 import { Loading, ErrorState } from '../components/common/Loading'
 import TrackProgressPanel from '../components/TrackProgressPanel'
 import ImplementPanel from '../components/ImplementPanel'
 import VerifyProgressPanel from '../components/VerifyProgressPanel'
 import { useIssueTrackStore, EMPTY_TRACK_MESSAGES } from '../stores/issueTrackStore'
-import { useImplementStore } from '../stores/implementStore'
 
 type IssueType = 'bug' | 'feature' | 'refactor' | 'chore'
 type IssuePriority = 'P0' | 'P1' | 'P2'
@@ -74,6 +73,7 @@ export default function Issues() {
   const updateIssue = useUpdateIssue()
   const deleteIssue = useDeleteIssue()
   const createTrack = useCreateTrack()
+  const cancelTrack = useCancelTrack()
   const startImplement = useStartImplement()
   const verifyIssue = useVerifyIssue()
   const reopenIssue = useReopenIssue()
@@ -152,7 +152,7 @@ export default function Issues() {
       key: 'pending',
       label: '🟡 Pending',
       description: 'Needs action',
-      issues: filteredIssues.filter((i: any) => ['pending', 'tracking', 'in-progress'].includes(i.status)),
+      issues: filteredIssues.filter((i: any) => ['pending', 'tracking'].includes(i.status)),
       headerBorder: 'var(--accent-amber-dim)',
       headerBg: 'var(--accent-amber-dim)',
       countBg: 'var(--accent-amber-dim)',
@@ -167,6 +167,16 @@ export default function Issues() {
       headerBg: 'var(--accent-blue-dim)',
       countBg: 'var(--accent-blue-dim)',
       countColor: 'var(--accent-blue)',
+    },
+    {
+      key: 'in-progress',
+      label: '🟣 Implementing',
+      description: 'Implementation in progress',
+      issues: filteredIssues.filter((i: any) => i.status === 'in-progress'),
+      headerBorder: 'var(--accent-purple-dim)',
+      headerBg: 'var(--accent-purple-dim)',
+      countBg: 'var(--accent-purple-dim)',
+      countColor: 'var(--accent-purple)',
     },
     {
       key: 'implemented',
@@ -284,8 +294,8 @@ export default function Issues() {
           onClick={(e) => {
             e.stopPropagation()
             // Optimistically start the implement session in local store so ImplementPanel mounts immediately
-            const implementStore = useImplementStore.getState()
-            implementStore.startSession(issue.id, issue.trackId || '')
+            const trackStore = useIssueTrackStore.getState()
+            trackStore.startImplement(issue.id, issue.trackId || '')
             startImplement.mutate(issue.id)
           }}
           disabled={isLoading}
@@ -299,18 +309,16 @@ export default function Issues() {
       )
     }
 
-    // in-progress → Verify
+    // in-progress → no action (implementation ongoing, verify only available after implemented)
     if (status === 'in-progress') {
       return (
-        <button
-          onClick={(e) => { e.stopPropagation(); handleVerify(issue.id) }}
-          className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap"
-          style={{ background: 'var(--accent-green-dim)', color: 'var(--accent-green)' }}
-          title="Run tests to verify"
+        <span
+          className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md whitespace-nowrap"
+          style={{ color: 'var(--text-tertiary)' }}
         >
-          <FlaskConical className="w-3.5 h-3.5" />
-          Verify
-        </button>
+          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          Implementing…
+        </span>
       )
     }
 
@@ -606,6 +614,7 @@ export default function Issues() {
                       renderActionButton={renderActionButton}
                       deleteIssue={deleteIssue}
                       createTrack={createTrack}
+                      cancelTrack={cancelTrack}
                       deleteHoverId={deleteHoverId}
                       setDeleteHoverId={setDeleteHoverId}
                     />
@@ -637,6 +646,7 @@ function IssueRow({
   renderActionButton,
   deleteIssue,
   createTrack,
+  cancelTrack,
   deleteHoverId,
   setDeleteHoverId,
 }: {
@@ -653,6 +663,7 @@ function IssueRow({
   renderActionButton: (issue: any) => React.ReactNode
   deleteIssue: any
   createTrack: any
+  cancelTrack: any
   deleteHoverId: string | null
   setDeleteHoverId: (v: string | null) => void
 }) {
@@ -660,12 +671,36 @@ function IssueRow({
   const hasTrackMessages = useIssueTrackStore((s) => (s.messages[issue.id]?.length ?? 0) > 0)
   const isOptimisticTracking = useIssueTrackStore((s) => s.trackingIssues[issue.id] ?? false)
   const setIssueTracking = useIssueTrackStore((s) => s.setIssueTracking)
+  const clearTrackMessages = useIssueTrackStore((s) => s.clearMessages)
   const isTracking = issue.status === 'tracking'
 
-  // Subscribe to implement store for this specific issue
-  const implementSession = useImplementStore((s) => s.sessions[issue.id])
-  const hasImplementSession = !!implementSession
-  const isImplementActive = implementSession?.status === 'active'
+  // ISS-061: Track whether cancel was just invoked, to prevent recovery effect re-arming
+  const justCancelledRef = useRef(false)
+
+  // ISS-055: Detect active backend track-creation sessions missed by SSE
+  const activeTrackSessions = useActiveTrackSessions()
+  const hasBackendSession = activeTrackSessions.has(issue.id)
+  useEffect(() => {
+    // ISS-061: If cancel was just invoked, skip recovery to avoid re-arming spinner
+    if (justCancelledRef.current) {
+      // Clear the flag once backend session data has updated (hasBackendSession becomes false)
+      if (!hasBackendSession) {
+        justCancelledRef.current = false
+      }
+      return
+    }
+    // If backend has an active session but local state doesn't reflect it,
+    // set the optimistic flag so TrackProgressPanel mounts and its built-in recovery fires
+    if (hasBackendSession && !isTracking && !hasTrackMessages && !isOptimisticTracking) {
+      setIssueTracking(issue.id, true)
+    }
+  }, [hasBackendSession, isTracking, hasTrackMessages, isOptimisticTracking, issue.id, setIssueTracking])
+
+  // Subscribe to implement store for this specific issue (unified in issueTrackStore)
+  const implementStatus = useIssueTrackStore((s) => s.implementStatus[issue.id])
+  const implementTrackId = useIssueTrackStore((s) => s.implementTrackId[issue.id])
+  const hasImplementSession = !!implementStatus
+  const isImplementActive = implementStatus === 'active'
 
   // Subscribe to verify store for this specific issue
   const hasVerifyMessages = useIssueTrackStore((s) => (s.verifyMessages[issue.id]?.length ?? 0) > 0)
@@ -1150,6 +1185,7 @@ function IssueRow({
           issueId={issue.id}
           isTracking={isTracking || isOptimisticTracking}
           onRetry={() => { setIssueTracking(issue.id, true); createTrack.mutate({ id: issue.id }) }}
+          onCancel={() => { justCancelledRef.current = true; cancelTrack.mutate(issue.id); clearTrackMessages(issue.id) }}
         />
       )}
 
@@ -1157,7 +1193,7 @@ function IssueRow({
       {showImplement && !isEditing && (
         <ImplementPanel
           issueId={issue.id}
-          trackId={implementSession!.trackId}
+          trackId={implementTrackId || issue.trackId || ''}
         />
       )}
 

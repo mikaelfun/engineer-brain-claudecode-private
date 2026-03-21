@@ -1,9 +1,13 @@
 /**
- * issueTrackStore.ts — Zustand store for issue track creation + verify progress
+ * issueTrackStore.ts — Zustand store for issue track creation + implement + verify progress
  *
  * Track creation: Populated by SSE events (issue-track-started, issue-track-progress,
  * issue-track-completed, issue-track-error).
  * Consumed by TrackProgressPanel for live progress display.
+ *
+ * Implement: Populated by SSE events (issue-implement-started, issue-implement-progress,
+ * issue-implement-completed, issue-implement-error).
+ * Consumed by ImplementPanel for live progress display.
  *
  * Verify: Populated by SSE events (issue-verify-started, issue-verify-progress,
  * issue-verify-completed, issue-verify-error).
@@ -27,6 +31,13 @@ export interface IssueTrackMessage {
   error?: string
   questions?: IssueTrackQuestion[]
   sessionId?: string
+  timestamp: string
+}
+
+export interface ImplementMessage {
+  kind: 'started' | 'thinking' | 'tool-call' | 'tool-result' | 'completed' | 'failed'
+  content?: string
+  toolName?: string
   timestamp: string
 }
 
@@ -58,6 +69,14 @@ interface IssueTrackStoreState {
   /** Optimistic local flag: issue has just started create-track (ISS-029) */
   trackingIssues: Record<string, boolean>
 
+  // ---- Implement state ----
+  /** Per-issue implement message streams */
+  implementMessages: Record<string, ImplementMessage[]>
+  /** Per-issue implement status */
+  implementStatus: Record<string, 'active' | 'completed' | 'failed'>
+  /** Per-issue implement trackId */
+  implementTrackId: Record<string, string>
+
   // ---- Verify state ----
   /** Per-issue verify message streams */
   verifyMessages: Record<string, VerifyMessage[]>
@@ -81,6 +100,18 @@ interface IssueTrackStoreState {
   /** Set optimistic tracking flag for an issue (ISS-029) */
   setIssueTracking: (issueId: string, active: boolean) => void
 
+  // ---- Implement actions ----
+  /** Start an implement session */
+  startImplement: (issueId: string, trackId: string) => void
+  /** Add an implement message for a specific issue */
+  addImplementMessage: (issueId: string, msg: ImplementMessage) => void
+  /** Set implement status */
+  setImplementStatus: (issueId: string, status: 'active' | 'completed' | 'failed') => void
+  /** Clear implement state for an issue */
+  clearImplement: (issueId: string) => void
+  /** Bulk-load implement messages (for page refresh recovery) */
+  loadImplementMessages: (issueId: string, msgs: ImplementMessage[], status: 'active' | 'completed' | 'failed', trackId: string) => void
+
   // ---- Verify actions ----
   /** Add a verify message for a specific issue */
   addVerifyMessage: (issueId: string, msg: VerifyMessage) => void
@@ -98,6 +129,7 @@ const MAX_MESSAGES = 100
 
 // Stable empty array to avoid Zustand infinite re-render
 export const EMPTY_TRACK_MESSAGES: IssueTrackMessage[] = []
+export const EMPTY_IMPLEMENT_MESSAGES: ImplementMessage[] = []
 export const EMPTY_VERIFY_MESSAGES: VerifyMessage[] = []
 
 export const useIssueTrackStore = create<IssueTrackStoreState>()((set) => ({
@@ -105,6 +137,9 @@ export const useIssueTrackStore = create<IssueTrackStoreState>()((set) => ({
   activeTracking: {},
   pendingQuestions: {},
   trackingIssues: {},
+  implementMessages: {},
+  implementStatus: {},
+  implementTrackId: {},
   verifyMessages: {},
   activeVerify: {},
   verifyResult: {},
@@ -155,6 +190,45 @@ export const useIssueTrackStore = create<IssueTrackStoreState>()((set) => ({
   setIssueTracking: (issueId, active) =>
     set((state) => ({
       trackingIssues: { ...state.trackingIssues, [issueId]: active },
+    })),
+
+  // ---- Implement actions ----
+
+  startImplement: (issueId, trackId) =>
+    set((state) => ({
+      implementMessages: { ...state.implementMessages, [issueId]: [] },
+      implementStatus: { ...state.implementStatus, [issueId]: 'active' },
+      implementTrackId: { ...state.implementTrackId, [issueId]: trackId },
+    })),
+
+  addImplementMessage: (issueId, msg) =>
+    set((state) => {
+      const existing = state.implementMessages[issueId] || []
+      const updated = [...existing, msg].slice(-MAX_MESSAGES)
+      return { implementMessages: { ...state.implementMessages, [issueId]: updated } }
+    }),
+
+  setImplementStatus: (issueId, status) =>
+    set((state) => ({
+      implementStatus: { ...state.implementStatus, [issueId]: status },
+    })),
+
+  clearImplement: (issueId) =>
+    set((state) => {
+      const nextMsgs = { ...state.implementMessages }
+      delete nextMsgs[issueId]
+      const nextStatus = { ...state.implementStatus }
+      delete nextStatus[issueId]
+      const nextTrackId = { ...state.implementTrackId }
+      delete nextTrackId[issueId]
+      return { implementMessages: nextMsgs, implementStatus: nextStatus, implementTrackId: nextTrackId }
+    }),
+
+  loadImplementMessages: (issueId, msgs, status, trackId) =>
+    set((state) => ({
+      implementMessages: { ...state.implementMessages, [issueId]: msgs.slice(-MAX_MESSAGES) },
+      implementStatus: { ...state.implementStatus, [issueId]: status },
+      implementTrackId: { ...state.implementTrackId, [issueId]: trackId },
     })),
 
   // ---- Verify actions ----
