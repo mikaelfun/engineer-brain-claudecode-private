@@ -28,17 +28,17 @@ const variantStyles: Record<BadgeVariant, { bg: string; color: string }> = {
 }
 
 const sizeStyles: Record<string, string> = {
-  xs: 'px-1.5 py-0.5 text-xs',
-  sm: 'px-2 py-0.5 text-xs',
-  md: 'px-2.5 py-1 text-sm',
+  xs: 'px-1.5 py-0.5 text-[10px]',
+  sm: 'px-2 py-0.5 text-[10px]',
+  md: 'px-2.5 py-1 text-xs',
 }
 
 export function Badge({ children, variant = 'default', size = 'sm', className = '' }: BadgeProps) {
   const v = variantStyles[variant]
   return (
     <span
-      className={`inline-flex items-center font-medium rounded-full ${sizeStyles[size]} ${className}`}
-      style={{ background: v.bg, color: v.color }}
+      className={`inline-flex items-center gap-1 font-bold font-mono rounded-[5px] whitespace-nowrap ${sizeStyles[size]} ${className}`}
+      style={{ background: v.bg, color: v.color, letterSpacing: '0.02em' }}
     >
       {children}
     </span>

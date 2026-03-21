@@ -22,6 +22,13 @@ export default function Dashboard() {
 
   const cases = casesData?.cases || []
 
+  // Helper to parse age string like "3d 5h" to hours
+  const parseAge = (age: string) => {
+    const days = parseInt(age.match(/(\d+)d/)?.[1] || '0')
+    const hours = parseInt(age.match(/(\d+)h/)?.[1] || '0')
+    return days * 24 + hours
+  }
+
   // Multi-sort: default = severity > status priority, or user-selected single sort
   const sortedCases = [...cases].sort((a, b) => {
     const sevOrder: Record<string, number> = { A: 0, B: 1, C: 2 }
@@ -40,12 +47,6 @@ export default function Dashboard() {
       return (statusOrder[a.status] ?? 5) - (statusOrder[b.status] ?? 5)
     }
     if (sortBy === 'age') {
-      // Parse age like "3d 5h" → compare numerically
-      const parseAge = (age: string) => {
-        const days = parseInt(age.match(/(\d+)d/)?.[1] || '0')
-        const hours = parseInt(age.match(/(\d+)h/)?.[1] || '0')
-        return days * 24 + hours
-      }
       return parseAge(b.caseAge || '0d') - parseAge(a.caseAge || '0d') // oldest first
     }
     // Default: severity > status
@@ -59,10 +60,10 @@ export default function Dashboard() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Dashboard</h2>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+          <h2 className="text-xl font-extrabold" style={{ color: 'var(--text-primary)', letterSpacing: '-0.03em' }}>Dashboard</h2>
+          <p className="text-xs mt-1 font-mono" style={{ color: 'var(--text-tertiary)' }}>
             {cases.length} active cases
-            {patrol && ` | Last patrol: ${new Date(patrol.lastPatrol).toLocaleString()}`}
+            {patrol && ` · patrol ${new Date(patrol.lastPatrol).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' })} ${new Date(patrol.lastPatrol).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}`}
           </p>
         </div>
         <button
@@ -168,48 +169,69 @@ export default function Dashboard() {
         {cases.length === 0 ? (
           <EmptyState icon="📂" title="No active cases" description="No cases found in the workspace" />
         ) : (
-          <div className="grid gap-3">
-            {sortedCases.map((c: any) => (
-              <Card
-                key={c.caseNumber}
-                hover
-                onClick={() => navigate(`/case/${c.caseNumber}`)}
-              >
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-mono text-sm" style={{ color: 'var(--text-secondary)' }}>{c.caseNumber}</span>
-                      <SeverityBadge severity={c.severity} />
-                      <CaseStatusBadge status={c.status} />
+          <div className="grid gap-2">
+            {sortedCases.map((c: any) => {
+              const sevColorMap: Record<string, string> = {
+                A: 'var(--accent-red)',
+                B: 'var(--accent-amber)',
+                C: 'var(--accent-blue)',
+              }
+              const sevColor = sevColorMap[c.severity] || 'var(--border-subtle)'
+              return (
+                <Card
+                  key={c.caseNumber}
+                  hover
+                  onClick={() => navigate(`/case/${c.caseNumber}`)}
+                  padding="none"
+                >
+                  <div className="flex" style={{ borderLeft: `3px solid ${sevColor}` }}>
+                    <div className="flex-1 min-w-0 px-4 py-3">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-mono text-xs font-semibold" style={{ color: 'var(--accent-blue)' }}>{c.caseNumber}</span>
+                        <SeverityBadge severity={c.severity} />
+                        <CaseStatusBadge status={c.status} />
+                      </div>
+                      <h4 className="font-medium mt-1 text-[13px] truncate" style={{ color: 'var(--text-primary)' }} title={c.title || 'Untitled'}>{c.title || 'Untitled'}</h4>
+                      <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+                        {c.customer}
+                        <span style={{ color: 'var(--text-tertiary)' }}> · </span>
+                        {c.assignedTo}
+                        <span style={{ color: 'var(--text-tertiary)' }}> · </span>
+                        <span className="font-mono" style={{ color: parseAge(c.caseAge) > 168 ? 'var(--accent-red)' : 'var(--text-secondary)' }}>
+                          {c.caseAge}
+                        </span>
+                      </p>
                     </div>
-                    <h4 className="font-medium mt-1 line-clamp-2" style={{ color: 'var(--text-primary)' }} title={c.title || 'Untitled'}>{c.title || 'Untitled'}</h4>
-                    <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>
-                      {c.customer} | {c.assignedTo} | Age: {c.caseAge}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3 text-xs flex-shrink-0">
-                    {c.meta && (
-                      <>
-                        <div className="text-center">
-                          <span className="block" style={{ color: 'var(--text-tertiary)' }}>IR</span>
-                          <SlaBadge status={c.meta.irSla?.status || 'unknown'} />
-                        </div>
-                        <div className="text-center">
-                          <span className="block" style={{ color: 'var(--text-tertiary)' }}>FWR</span>
-                          <SlaBadge status={c.meta.fwr?.status || 'unknown'} />
-                        </div>
-                        {c.meta.teams_chat_count > 0 && (
+                    <div className="flex items-center gap-4 px-4 text-xs flex-shrink-0">
+                      {c.meta && (
+                        <>
                           <div className="text-center">
-                            <span className="block" style={{ color: 'var(--text-tertiary)' }}>Teams</span>
-                            <span className="font-medium" style={{ color: 'var(--accent-purple)' }}>{c.meta.teams_chat_count}</span>
+                            <span className="block text-[10px] font-medium" style={{ color: 'var(--text-tertiary)' }}>IR</span>
+                            <SlaBadge status={c.meta.irSla?.status || 'unknown'} />
                           </div>
-                        )}
-                      </>
-                    )}
+                          <div className="text-center">
+                            <span className="block text-[10px] font-medium" style={{ color: 'var(--text-tertiary)' }}>FWR</span>
+                            <SlaBadge status={c.meta.fwr?.status || 'unknown'} />
+                          </div>
+                          {c.meta.healthScore != null && (
+                            <div
+                              className="w-[34px] h-[34px] rounded-full flex items-center justify-center text-[11px] font-extrabold font-mono"
+                              style={{
+                                border: `2px solid ${c.meta.healthScore >= 80 ? 'var(--accent-green)' : c.meta.healthScore >= 50 ? 'var(--accent-amber)' : 'var(--accent-red)'}`,
+                                color: c.meta.healthScore >= 80 ? 'var(--accent-green)' : c.meta.healthScore >= 50 ? 'var(--accent-amber)' : 'var(--accent-red)',
+                                background: c.meta.healthScore >= 80 ? 'var(--accent-green-dim)' : c.meta.healthScore >= 50 ? 'var(--accent-amber-dim)' : 'var(--accent-red-dim)',
+                              }}
+                            >
+                              {c.meta.healthScore}
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              )
+            })}
           </div>
         )}
       </div>

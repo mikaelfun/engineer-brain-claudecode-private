@@ -16,11 +16,16 @@ interface LayoutProps {
   children: ReactNode
 }
 
-const navItems = [
+type NavItem = { path: string; label: string; icon: string; exact?: boolean }
+type NavSection = { section: string }
+type NavEntry = NavItem | NavSection
+
+const navItems: NavEntry[] = [
   { path: '/', label: 'Dashboard', icon: '📊', exact: true },
-  { path: '/todo', label: 'Todo', icon: '📝' },
+  { path: '/todo', label: 'Todo', icon: '📌' },
   { path: '/agents', label: 'Agents', icon: '🤖' },
-  { path: '/drafts', label: 'Drafts', icon: '📧' },
+  { path: '/drafts', label: 'Drafts', icon: '✉️' },
+  { section: 'Manage' },
   { path: '/issues', label: 'Issues', icon: '🐛' },
   { path: '/settings', label: 'Settings', icon: '⚙️' },
 ]
@@ -62,14 +67,14 @@ export default function Layout({ children }: LayoutProps) {
         <div className="px-5 py-5 border-b border-subtle">
           <Link to="/" className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
-              style={{ background: 'var(--accent-blue)' }}>
+              style={{ background: 'linear-gradient(135deg, var(--accent-blue), var(--accent-purple))', opacity: 0.9 }}>
               <Brain className="w-5 h-5" style={{ color: 'var(--text-inverse)' }} />
             </div>
             <div>
-              <h1 className="text-sm font-bold" style={{ color: 'var(--text-primary)', letterSpacing: '-0.03em' }}>
+              <h1 className="text-sm font-extrabold" style={{ color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
                 Engineer Brain
               </h1>
-              <p className="text-[10px] font-mono" style={{ color: 'var(--text-tertiary)' }}>
+              <p className="text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--text-tertiary)' }}>
                 {health?.casesReady ? 'Connected' : 'Not configured'}
               </p>
             </div>
@@ -77,31 +82,54 @@ export default function Layout({ children }: LayoutProps) {
         </div>
 
         {/* Nav items */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {navItems.map(item => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className="flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-colors"
-              style={{
-                background: isActive(item.path, item.exact) ? 'var(--accent-blue-dim)' : 'transparent',
-                color: isActive(item.path, item.exact) ? 'var(--accent-blue)' : 'var(--text-secondary)',
-              }}
-              onMouseEnter={e => {
-                if (!isActive(item.path, item.exact)) {
-                  (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'
-                }
-              }}
-              onMouseLeave={e => {
-                if (!isActive(item.path, item.exact)) {
-                  (e.currentTarget as HTMLElement).style.background = 'transparent'
-                }
-              }}
-            >
-              <span className="text-base">{item.icon}</span>
-              <span>{item.label}</span>
-            </Link>
-          ))}
+        <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
+          {navItems.map((item, idx) => {
+            if ('section' in item) {
+              return (
+                <div
+                  key={idx}
+                  className="text-[10px] font-bold uppercase tracking-widest px-3 pt-4 pb-1"
+                  style={{ color: 'var(--text-tertiary)' }}
+                >
+                  {item.section}
+                </div>
+              )
+            }
+            const active = isActive(item.path, item.exact)
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className="relative flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-150"
+                style={{
+                  background: active ? 'var(--accent-blue-dim)' : 'transparent',
+                  color: active ? 'var(--accent-blue)' : 'var(--text-secondary)',
+                }}
+                onMouseEnter={e => {
+                  if (!active) {
+                    (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)';
+                    (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)'
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (!active) {
+                    (e.currentTarget as HTMLElement).style.background = 'transparent';
+                    (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)'
+                  }
+                }}
+              >
+                {/* Active indicator bar */}
+                {active && (
+                  <span
+                    className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-[18px] rounded-r-sm"
+                    style={{ background: 'var(--accent-blue)' }}
+                  />
+                )}
+                <span className="w-[18px] text-[13px] flex items-center justify-center">{item.icon}</span>
+                <span>{item.label}</span>
+              </Link>
+            )
+          })}
         </nav>
 
         {/* Bottom section: theme toggle + logout */}
@@ -160,21 +188,31 @@ export default function Layout({ children }: LayoutProps) {
           <div className="relative bg-surface border-r border-default w-64 h-full overflow-y-auto"
             style={{ background: 'var(--bg-surface)' }}>
             <nav className="px-3 py-4 space-y-1">
-              {navItems.map(item => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors"
-                  style={{
-                    background: isActive(item.path, item.exact) ? 'var(--accent-blue-dim)' : 'transparent',
-                    color: isActive(item.path, item.exact) ? 'var(--accent-blue)' : 'var(--text-secondary)',
-                  }}
-                >
-                  <span>{item.icon}</span>
-                  <span>{item.label}</span>
-                </Link>
-              ))}
+              {navItems.map((item, idx) => {
+                if ('section' in item) {
+                  return (
+                    <div key={idx} className="text-[10px] font-bold uppercase tracking-widest px-3 pt-4 pb-1"
+                      style={{ color: 'var(--text-tertiary)' }}>
+                      {item.section}
+                    </div>
+                  )
+                }
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors"
+                    style={{
+                      background: isActive(item.path, item.exact) ? 'var(--accent-blue-dim)' : 'transparent',
+                      color: isActive(item.path, item.exact) ? 'var(--accent-blue)' : 'var(--text-secondary)',
+                    }}
+                  >
+                    <span>{item.icon}</span>
+                    <span>{item.label}</span>
+                  </Link>
+                )
+              })}
             </nav>
             <div className="px-3 py-4 border-t border-subtle space-y-2">
               <button
