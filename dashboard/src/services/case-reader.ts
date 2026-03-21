@@ -8,7 +8,9 @@ import type { CaseInfo } from '../types/index.js'
 
 function extractTableValue(content: string, key: string): string {
   // Match markdown table row: | key | value |
-  const regex = new RegExp(`\\|\\s*${key}\\s*\\|\\s*([^|]*)\\|`, 'i')
+  // Value may contain | characters (e.g. D365 titles like "Unified <Sev B> | PRC | ...")
+  // Strategy: match key column, then capture everything up to the last | on the line
+  const regex = new RegExp(`\\|\\s*${key}\\s*\\|\\s*(.+)\\|\\s*$`, 'im')
   const match = content.match(regex)
   return match ? match[1].trim() : ''
 }
@@ -85,5 +87,36 @@ export function parseCaseInfo(caseNumber: string): CaseInfo | null {
       const m = content.match(/DTM Attachments:\s*(\d+)/)
       return m ? parseInt(m[1], 10) : 0
     })(),
+  }
+}
+
+/**
+ * Read the latest Teams message time from _chat-index.json.
+ * Returns the most recent lastMessageTime across all chats, or undefined if unavailable.
+ */
+export function readTeamsLastMessageTime(caseNumber: string): string | undefined {
+  const caseDir = getCaseDir(caseNumber)
+  const indexPath = join(caseDir, 'teams', '_chat-index.json')
+
+  if (!existsSync(indexPath)) return undefined
+
+  try {
+    const raw = JSON.parse(readFileSync(indexPath, 'utf-8'))
+    let latest: string | undefined
+
+    for (const [key, val] of Object.entries(raw)) {
+      // Skip meta keys like _lastFetchedAt
+      if (key.startsWith('_')) continue
+      const entry = val as { lastMessageTime?: string }
+      if (entry.lastMessageTime) {
+        if (!latest || entry.lastMessageTime > latest) {
+          latest = entry.lastMessageTime
+        }
+      }
+    }
+
+    return latest
+  } catch {
+    return undefined
   }
 }

@@ -1,0 +1,11 @@
+{
+  "id": "ISS-060",
+  "title": "Case 列表显示 Refresh 时间、Teams 消息截止时间、Refresh/Full Process 按钮",
+  "description": "Dashboard 的 Case 列表应该显示：\n1. Case 的 refresh 时间（上次数据刷新时间）\n2. 缓存的 Teams 消息截止时间\n3. Refresh 按钮（单个 case 数据刷新）\n4. Full Process 按钮（触发完整 casework 流程）",
+  "type": "feature",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "case-list-actions_20260322",
+  "createdAt": "2026-03-22T01:00:00+08:00",
+  "updatedAt": "2026-03-22T01:30:00+08:00"
+}

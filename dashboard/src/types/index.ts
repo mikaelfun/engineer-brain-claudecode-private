@@ -51,6 +51,8 @@ export interface CaseSummary {
   assignedTo: string
   createdOn: string
   caseAge: string
+  fetchedAt?: string
+  teamsLastMessageTime?: string
   meta: CaseHealthMeta | null
 }
 

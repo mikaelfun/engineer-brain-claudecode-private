@@ -3,11 +3,13 @@
  */
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Briefcase, AlertTriangle, Clock, CheckCircle, Activity, Play, Loader2, ArrowUpDown } from 'lucide-react'
+import { Briefcase, AlertTriangle, Clock, CheckCircle, Activity, Play, Loader2, ArrowUpDown, RefreshCw, Zap, MessageSquare } from 'lucide-react'
 import { StatCard, Card, CardHeader } from '../components/common/Card'
 import { SeverityBadge, CaseStatusBadge, SlaBadge } from '../components/common/Badge'
 import { Loading, ErrorState, EmptyState } from '../components/common/Loading'
-import { useCases, useCaseStats, usePatrolState, useStartPatrol } from '../api/hooks'
+import { useCases, useCaseStats, usePatrolState, useStartPatrol, useActiveOperations } from '../api/hooks'
+import { apiPost } from '../api/client'
+import { relativeTime } from '../utils/relativeTime'
 
 export default function Dashboard() {
   const navigate = useNavigate()
@@ -15,7 +17,38 @@ export default function Dashboard() {
   const { data: stats } = useCaseStats()
   const { data: patrol } = usePatrolState()
   const startPatrol = useStartPatrol()
+  const { data: activeOps } = useActiveOperations()
+  const [actionLoading, setActionLoading] = useState<Record<string, string>>({}) // caseNumber -> action type
   const [sortBy, setSortBy] = useState<'default' | 'severity' | 'status' | 'age'>('default')
+
+  // Build set of case numbers with active operations
+  const busyCases = new Set<string>()
+  if (activeOps?.operations) {
+    for (const op of activeOps.operations) {
+      busyCases.add(op.caseNumber)
+    }
+  }
+
+  const handleCaseAction = async (caseNumber: string, action: 'refresh' | 'process', e: React.MouseEvent) => {
+    e.stopPropagation() // Don't navigate to case detail
+    setActionLoading(prev => ({ ...prev, [caseNumber]: action }))
+    try {
+      if (action === 'refresh') {
+        await apiPost(`/case/${caseNumber}/step/data-refresh`, { intent: 'Data refresh from dashboard' })
+      } else {
+        await apiPost(`/case/${caseNumber}/process`, { intent: 'Full casework processing from dashboard' })
+      }
+      navigate(`/case/${caseNumber}`)
+    } catch {
+      // On error, just clear loading — user can retry
+    } finally {
+      setActionLoading(prev => {
+        const next = { ...prev }
+        delete next[caseNumber]
+        return next
+      })
+    }
+  }
 
   if (isLoading) return <Loading text="Loading dashboard..." />
   if (error) return <ErrorState message="Failed to load cases" onRetry={() => window.location.reload()} />
@@ -177,6 +210,8 @@ export default function Dashboard() {
                 C: 'var(--accent-blue)',
               }
               const sevColor = sevColorMap[c.severity] || 'var(--border-subtle)'
+              const isBusy = busyCases.has(c.caseNumber) || !!actionLoading[c.caseNumber]
+              const currentAction = actionLoading[c.caseNumber]
               return (
                 <Card
                   key={c.caseNumber}
@@ -201,32 +236,81 @@ export default function Dashboard() {
                           {c.caseAge}
                         </span>
                       </p>
+                      {/* Timestamps row */}
+                      <div className="flex items-center gap-3 mt-1.5 text-[10px] font-mono" style={{ color: 'var(--text-tertiary)' }}>
+                        {c.fetchedAt && (
+                          <span className="flex items-center gap-1" title={`Data refreshed: ${c.fetchedAt}`}>
+                            <RefreshCw className="w-2.5 h-2.5" />
+                            {relativeTime(c.fetchedAt)}
+                          </span>
+                        )}
+                        {c.teamsLastMessageTime && (
+                          <span className="flex items-center gap-1" title={`Teams last message: ${c.teamsLastMessageTime}`}>
+                            <MessageSquare className="w-2.5 h-2.5" />
+                            {relativeTime(c.teamsLastMessageTime)}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-4 px-4 text-xs flex-shrink-0">
-                      {c.meta && (
-                        <>
-                          <div className="text-center">
-                            <span className="block text-[10px] font-medium" style={{ color: 'var(--text-tertiary)' }}>IR</span>
-                            <SlaBadge status={c.meta.irSla?.status || 'unknown'} />
-                          </div>
-                          <div className="text-center">
-                            <span className="block text-[10px] font-medium" style={{ color: 'var(--text-tertiary)' }}>FWR</span>
-                            <SlaBadge status={c.meta.fwr?.status || 'unknown'} />
-                          </div>
-                          {c.meta.healthScore != null && (
-                            <div
-                              className="w-[34px] h-[34px] rounded-full flex items-center justify-center text-[11px] font-extrabold font-mono"
-                              style={{
-                                border: `2px solid ${c.meta.healthScore >= 80 ? 'var(--accent-green)' : c.meta.healthScore >= 50 ? 'var(--accent-amber)' : 'var(--accent-red)'}`,
-                                color: c.meta.healthScore >= 80 ? 'var(--accent-green)' : c.meta.healthScore >= 50 ? 'var(--accent-amber)' : 'var(--accent-red)',
-                                background: c.meta.healthScore >= 80 ? 'var(--accent-green-dim)' : c.meta.healthScore >= 50 ? 'var(--accent-amber-dim)' : 'var(--accent-red-dim)',
-                              }}
-                            >
-                              {c.meta.healthScore}
+                    <div className="flex items-center gap-3 px-3 flex-shrink-0">
+                      {/* Action buttons */}
+                      <div className="flex flex-col gap-1.5" onClick={e => e.stopPropagation()}>
+                        <button
+                          onClick={(e) => handleCaseAction(c.caseNumber, 'refresh', e)}
+                          disabled={isBusy}
+                          className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded border transition-all disabled:opacity-40 hover:brightness-110"
+                          style={{
+                            color: 'var(--accent-blue)',
+                            background: 'var(--accent-blue-dim)',
+                            borderColor: 'color-mix(in srgb, var(--accent-blue) 25%, transparent)',
+                          }}
+                          title="Refresh case data"
+                        >
+                          <RefreshCw className={`w-3 h-3 ${currentAction === 'refresh' ? 'animate-spin' : ''}`} />
+                          Refresh
+                        </button>
+                        <button
+                          onClick={(e) => handleCaseAction(c.caseNumber, 'process', e)}
+                          disabled={isBusy}
+                          className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded border transition-all disabled:opacity-40 hover:brightness-110"
+                          style={{
+                            color: 'var(--accent-green)',
+                            background: 'var(--accent-green-dim)',
+                            borderColor: 'color-mix(in srgb, var(--accent-green) 25%, transparent)',
+                          }}
+                          title="Full casework processing"
+                        >
+                          <Zap className={`w-3 h-3 ${currentAction === 'process' ? 'animate-pulse' : ''}`} />
+                          Process
+                        </button>
+                      </div>
+                      {/* SLA badges */}
+                      <div className="flex items-center gap-4 text-xs">
+                        {c.meta && (
+                          <>
+                            <div className="text-center">
+                              <span className="block text-[10px] font-medium" style={{ color: 'var(--text-tertiary)' }}>IR</span>
+                              <SlaBadge status={c.meta.irSla?.status || 'unknown'} />
                             </div>
-                          )}
-                        </>
-                      )}
+                            <div className="text-center">
+                              <span className="block text-[10px] font-medium" style={{ color: 'var(--text-tertiary)' }}>FWR</span>
+                              <SlaBadge status={c.meta.fwr?.status || 'unknown'} />
+                            </div>
+                            {c.meta.healthScore != null && (
+                              <div
+                                className="w-[34px] h-[34px] rounded-full flex items-center justify-center text-[11px] font-extrabold font-mono"
+                                style={{
+                                  border: `2px solid ${c.meta.healthScore >= 80 ? 'var(--accent-green)' : c.meta.healthScore >= 50 ? 'var(--accent-amber)' : 'var(--accent-red)'}`,
+                                  color: c.meta.healthScore >= 80 ? 'var(--accent-green)' : c.meta.healthScore >= 50 ? 'var(--accent-amber)' : 'var(--accent-red)',
+                                  background: c.meta.healthScore >= 80 ? 'var(--accent-green-dim)' : c.meta.healthScore >= 50 ? 'var(--accent-amber-dim)' : 'var(--accent-red-dim)',
+                                }}
+                              >
+                                {c.meta.healthScore}
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </Card>

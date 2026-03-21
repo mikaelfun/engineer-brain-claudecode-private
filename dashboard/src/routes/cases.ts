@@ -3,7 +3,7 @@
  */
 import { Hono } from 'hono'
 import { listActiveCases, listArCases } from '../services/workspace.js'
-import { parseCaseInfo } from '../services/case-reader.js'
+import { parseCaseInfo, readTeamsLastMessageTime } from '../services/case-reader.js'
 import { parseEmails } from '../services/email-reader.js'
 import { parseNotes } from '../services/note-reader.js'
 import { readCaseMeta, readPatrolState } from '../services/meta-reader.js'
@@ -35,6 +35,7 @@ cases.get('/', (c) => {
   for (const cn of activeCases) {
     const info = parseCaseInfo(cn)
     const meta = readCaseMeta(cn)
+    const teamsLastMessageTime = readTeamsLastMessageTime(cn)
     summaries.push({
       caseNumber: cn,
       title: info?.title || '',
@@ -44,6 +45,8 @@ cases.get('/', (c) => {
       assignedTo: info?.assignedTo || '',
       createdOn: info?.createdOn || '',
       caseAge: info?.caseAge || '',
+      fetchedAt: info?.fetchedAt || undefined,
+      teamsLastMessageTime,
       meta,
     })
   }
@@ -51,6 +54,7 @@ cases.get('/', (c) => {
   for (const cn of arCases) {
     const info = parseCaseInfo(cn)
     const meta = readCaseMeta(cn)
+    const teamsLastMessageTime = readTeamsLastMessageTime(cn)
     summaries.push({
       caseNumber: cn,
       title: info?.title || 'AR Case',
@@ -60,6 +64,8 @@ cases.get('/', (c) => {
       assignedTo: info?.assignedTo || '',
       createdOn: info?.createdOn || '',
       caseAge: info?.caseAge || '',
+      fetchedAt: info?.fetchedAt || undefined,
+      teamsLastMessageTime,
       meta,
     })
   }

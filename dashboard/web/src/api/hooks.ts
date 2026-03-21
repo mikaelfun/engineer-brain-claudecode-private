@@ -235,6 +235,15 @@ export function useChatCase() {
   })
 }
 
+/** All active operations — used by Dashboard to disable action buttons for busy cases */
+export function useActiveOperations() {
+  return useQuery({
+    queryKey: ['operations', 'active'],
+    queryFn: () => apiGet<{ operations: Array<{ caseNumber: string; operationType: string; startedAt: string }>; total: number }>('/operations/active'),
+    refetchInterval: 5_000,
+  })
+}
+
 export function useEndCaseSession() {
   const queryClient = useQueryClient()
 
@@ -459,6 +468,36 @@ export function useCancelTrack() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => apiPost<{ ok: boolean; message: string }>(`/issues/${id}/cancel-track`),
+    onMutate: async (id: string) => {
+      // ISS-061: Optimistic update — immediately flip issue.status from 'tracking' to 'pending'
+      // so that isTracking (derived from issue.status === 'tracking') becomes false instantly
+      await queryClient.cancelQueries({ queryKey: ['issues'] })
+      // Update all matching issue queries in cache
+      queryClient.setQueriesData<{ issues: any[]; total: number; page: number; pageSize: number; totalPages: number }>(
+        { queryKey: ['issues'] },
+        (old) => {
+          if (!old?.issues) return old
+          return {
+            ...old,
+            issues: old.issues.map((issue: any) =>
+              issue.id === id ? { ...issue, status: 'pending' } : issue
+            ),
+          }
+        }
+      )
+      // Also invalidate unified sessions to prevent ISS-055 recovery effect from re-arming
+      queryClient.invalidateQueries({ queryKey: ['sessions', 'all', { type: 'track-creation' }] })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['issues'] })
+    },
+  })
+}
+
+export function useCancelVerify() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => apiPost<{ ok: boolean; message: string }>(`/issues/${id}/cancel-verify`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['issues'] })
     },
