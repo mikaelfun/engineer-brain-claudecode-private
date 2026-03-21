@@ -47,3 +47,4 @@
 | [x] | agent-session-view_20260321 | Agents Page Unified Session View | 2026-03-21 | 2026-03-22 |
 | [ ] | status-label-rename_20260321 | in-progress 状态显示文本改为 Implementing | 2026-03-21 | 2026-03-21 |
 | [x] | track-status-unify_20260321 | Issue 与 Track 状态统一 | 2026-03-21 | 2026-03-21 |
+| [x] | session-detail-panel_20260322 | Agent Monitor Session Detail Panel | 2026-03-22 | 2026-03-22 |

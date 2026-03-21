@@ -1,0 +1,16 @@
+{
+  "id": "session-detail-panel_20260322",
+  "title": "Agent Monitor Session Detail Panel",
+  "type": "feature",
+  "status": "complete",
+  "created": "2026-03-22T04:45:00+08:00",
+  "updated": "2026-03-22T21:00:00+08:00",
+  "phases": {
+    "total": 5,
+    "completed": 5
+  },
+  "tasks": {
+    "total": 13,
+    "completed": 13
+  }
+}

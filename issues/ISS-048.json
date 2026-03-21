@@ -1,0 +1,11 @@
+{
+  "id": "ISS-048",
+  "title": "Agent Monitor Session 实时状态查看 + 交互控制",
+  "description": "Agent Monitor 每个 session 可查看实时状态（SSE 流式），面板可折叠，支持手动终止按钮和输入框发送消息到 session。completed session 应该默认归类折叠。",
+  "type": "feature",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "session-detail-panel_20260322",
+  "createdAt": "2026-03-22T04:40:00+08:00",
+  "updatedAt": "2026-03-22T21:00:00+08:00"
+}
