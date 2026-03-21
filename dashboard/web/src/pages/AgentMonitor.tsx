@@ -144,17 +144,18 @@ function SessionRow({ session, isExpanded, onToggle, onStop }: { session: Unifie
               ⏳ Awaiting input
             </span>
           )}
-          {/* Inline Stop button for active case sessions */}
+          {/* Inline Stop button for active case sessions — icon-only, subtle */}
           {isActive && (
             <span
               role="button"
               onClick={handleInlineStop}
-              className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-xs cursor-pointer transition-colors ${isStopping ? 'opacity-50 pointer-events-none' : ''}`}
-              style={{ color: 'var(--accent-red)', background: 'var(--accent-red-dim)' }}
+              className={`inline-flex items-center justify-center w-5 h-5 rounded cursor-pointer transition-all ${isStopping ? 'opacity-40 pointer-events-none animate-pulse' : 'hover:scale-110'}`}
+              style={{ color: 'var(--accent-red)' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--accent-red-dim)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
               title="Stop session"
             >
-              <Square className="w-3 h-3" />
-              {isStopping ? '...' : 'Stop'}
+              <Square className="w-3 h-3" style={{ fill: isStopping ? 'var(--accent-red)' : 'none' }} />
             </span>
           )}
           <span className="text-xs whitespace-nowrap" style={{ color: 'var(--text-tertiary)' }}>
@@ -810,6 +811,7 @@ export default function AgentMonitor() {
                 const config = SESSION_TYPE_CONFIG[type]
                 const isCollapsed = collapsedGroups[type]
                 const activeCount = sessions.filter((s) => s.status === 'active').length
+                const stoppableCount = sessions.filter((s) => s.type === 'case' && (s.status === 'active' || s.status === 'paused')).length
 
                 return (
                   <Card key={type}>
@@ -838,17 +840,21 @@ export default function AgentMonitor() {
                           </span>
                         )}
                       </button>
-                      {/* Stop All button for case sessions with active sessions */}
-                      {type === 'case' && activeCount > 0 && (
+                      {/* Stop All button for case sessions with stoppable sessions */}
+                      {type === 'case' && stoppableCount > 0 && (
                         <button
                           onClick={() => handleStopAllCaseSessions(sessions)}
                           disabled={stoppingAll}
-                          className="flex items-center gap-1 px-2 py-1 text-xs rounded transition-colors disabled:opacity-50"
-                          style={{ color: 'var(--accent-red)', background: 'var(--accent-red-dim)' }}
+                          className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium rounded-md border transition-all disabled:opacity-50 hover:brightness-110"
+                          style={{
+                            color: 'var(--accent-red)',
+                            background: 'var(--accent-red-dim)',
+                            borderColor: 'color-mix(in srgb, var(--accent-red) 30%, transparent)',
+                          }}
                           title="Stop all active case sessions"
                         >
-                          <Square className="w-3 h-3" />
-                          {stoppingAll ? 'Stopping...' : `Stop All (${activeCount})`}
+                          <Square className="w-3 h-3" style={{ fill: stoppingAll ? 'var(--accent-red)' : 'none' }} />
+                          {stoppingAll ? 'Stopping...' : `Stop All (${stoppableCount})`}
                         </button>
                       )}
                     </div>
