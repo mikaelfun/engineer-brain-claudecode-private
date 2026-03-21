@@ -176,8 +176,14 @@ function saveSessionMessages(): void {
 /**
  * Append a message to persisted session message store.
  * Called by routes when broadcasting SSE events so that messages can be recovered after page refresh.
+ * Skips messages with empty/whitespace-only content to avoid cluttering the UI with blank entries.
  */
 export function appendSessionMessage(caseNumber: string, message: SessionMessage): void {
+  // Filter out empty-content messages (ISS-059: SDK metadata messages with no display content)
+  if (!message.content || !message.content.trim()) {
+    return
+  }
+
   if (!sessionMessages[caseNumber]) {
     sessionMessages[caseNumber] = []
   }

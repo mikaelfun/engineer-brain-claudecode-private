@@ -1,0 +1,11 @@
+{
+  "id": "ISS-059",
+  "title": "Agent Monitor case session展开后有大量空的system消息，需要过滤或隐藏",
+  "description": "Agent Monitor中展开case session后，消息列表中出现大量type为system的空消息（内容为空或仅显示'you'等无意义文本）。需要排查消息来源，确认是持久化时写入了不必要的消息，还是前端渲染时未过滤。空消息应该被隐藏，不影响用户查看有意义的session进展。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "tracked",
+  "trackId": "session-empty-msg_20260322",
+  "createdAt": "2026-03-22T22:35:00+08:00",
+  "updatedAt": "2026-03-22T22:40:00+08:00"
+}

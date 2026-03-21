@@ -57,3 +57,4 @@
 | [x] | ui-test-strategy_20260321 | UI Test Strategy — Issue-Driven Functional Verification | 2026-03-21 | 2026-03-21 |
 | [x] | session-stop-btns_20260321 | Agent Monitor Session Stop Buttons | 2026-03-21 | 2026-03-21 |
 | [x] | verify-two-phase_20260321 | Verify Two-Phase — Track Plan + Agent-Driven Execution | 2026-03-21 | 2026-03-22 |
+| [~] | session-empty-msg_20260322 | Filter Empty System Messages in Agent Monitor | 2026-03-22 | 2026-03-22 |

@@ -39,15 +39,24 @@ export interface DisplayMessage {
  * - Consecutive tool-call/tool-result -> single collapsed-tools item
  * - Consecutive thinking -> single collapsed-thinking item (latest text)
  * - system/completed/failed/user -> always shown as single items
+ * - Empty-content system messages are filtered out (ISS-059)
  */
 export function processMessages(messages: CaseSessionMessage[]): DisplayMessage[] {
   if (messages.length === 0) return []
 
+  // ISS-059: Filter out system messages with empty/whitespace-only content
+  // (SDK metadata messages that have no display value)
+  const filtered = messages.filter(msg =>
+    msg.type !== 'system' || (msg.content && msg.content.trim().length > 0)
+  )
+
+  if (filtered.length === 0) return []
+
   const result: DisplayMessage[] = []
   let i = 0
 
-  while (i < messages.length) {
-    const msg = messages[i]
+  while (i < filtered.length) {
+    const msg = filtered[i]
 
     // Always-show types: emit as single
     if (ALWAYS_SHOW.has(msg.type)) {
@@ -69,8 +78,8 @@ export function processMessages(messages: CaseSessionMessage[]): DisplayMessage[
       let lastStep = msg.step
       let lastTimestamp = msg.timestamp
 
-      while (i < messages.length && TOOL_TYPES.has(messages[i].type)) {
-        const m = messages[i]
+      while (i < filtered.length && TOOL_TYPES.has(filtered[i].type)) {
+        const m = filtered[i]
         group.push(m)
         if (m.toolName) toolNameSet.add(m.toolName)
         if (m.step) lastStep = m.step
@@ -94,8 +103,8 @@ export function processMessages(messages: CaseSessionMessage[]): DisplayMessage[
       let lastStep = msg.step
       let lastTimestamp = msg.timestamp
 
-      while (i < messages.length && messages[i].type === 'thinking') {
-        const m = messages[i]
+      while (i < filtered.length && filtered[i].type === 'thinking') {
+        const m = filtered[i]
         group.push(m)
         if (m.step) lastStep = m.step
         lastTimestamp = m.timestamp

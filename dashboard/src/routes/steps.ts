@@ -23,7 +23,7 @@ import {
   writeStepLog,
 } from '../agent/case-session-manager.js'
 import { sseManager } from '../watcher/sse-manager.js'
-import { getSSEEventType, formatMessageForSSE } from '../utils/sse-helpers.js'
+import { getSSEEventType, formatMessageForSSE, getPersistedMessageType } from '../utils/sse-helpers.js'
 
 const stepRoutes = new Hono()
 
@@ -124,9 +124,9 @@ stepRoutes.post('/case/:id/step/:step', async (c) => {
             ...formatted,
           })
 
-          // Persist message for recovery
+          // Persist message for recovery (use getPersistedMessageType for consistency with case-routes)
           appendSessionMessage(caseNumber, {
-            type: formatted.messageType as string || 'system',
+            type: getPersistedMessageType(message),
             content: typeof formatted.content === 'string' ? formatted.content : '',
             toolName: formatted.toolName as string,
             step: stepName,
