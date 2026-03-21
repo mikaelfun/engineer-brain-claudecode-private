@@ -14,6 +14,7 @@ import { BASE_URL } from '../api/client'
 import { usePatrolStore } from '../stores/patrolStore'
 import { useCaseSessionStore } from '../stores/caseSessionStore'
 import { useIssueTrackStore } from '../stores/issueTrackStore'
+import { useTodoExecuteStore } from '../stores/todoExecuteStore'
 
 /** Safely parse JSON, returning null on failure */
 function safeParse(raw: string): any | null {
@@ -48,6 +49,8 @@ export function useSSE() {
   const setVerifyActive = useIssueTrackStore((s) => s.setVerifyActive)
   const setVerifyResult = useIssueTrackStore((s) => s.setVerifyResult)
   const clearVerify = useIssueTrackStore((s) => s.clearVerify)
+  const todoExecSetProgress = useTodoExecuteStore((s) => s.setProgress)
+  const todoExecSetResult = useTodoExecuteStore((s) => s.setResult)
 
   const connect = useCallback(() => {
     const token = localStorage.getItem('eb_token')
@@ -450,6 +453,33 @@ export function useSSE() {
       }
     })
 
+    // Todo execute progress/result events → populate todoExecuteStore
+    es.addEventListener('todo-execute-progress', (e) => {
+      const data = safeParse(e.data)
+      if (!data) return
+      const d = data.data || data
+      const caseNumber = d.caseNumber
+      const lineNumber = d.lineNumber ?? 0
+      if (caseNumber) {
+        const key = `${caseNumber}:${lineNumber}`
+        todoExecSetProgress(key, d.phase || 'executing', d.message)
+      }
+    })
+
+    es.addEventListener('todo-execute-result', (e) => {
+      const data = safeParse(e.data)
+      if (!data) return
+      const d = data.data || data
+      const caseNumber = d.caseNumber
+      const lineNumber = d.lineNumber ?? 0
+      if (caseNumber) {
+        const key = `${caseNumber}:${lineNumber}`
+        todoExecSetResult(key, d.success === true, d.verificationDetails)
+        // Also invalidate todos to refresh checkbox state
+        queryClient.invalidateQueries({ queryKey: ['todos'] })
+      }
+    })
+
     es.onopen = () => {
       // Reset retry count on successful connection
       retryCountRef.current = 0
@@ -469,7 +499,7 @@ export function useSSE() {
         console.error(`[SSE] Max retries (${MAX_RETRIES}) exceeded, giving up`)
       }
     }
-  }, [queryClient, patrolOnProgress, patrolOnCaseCompleted, addCaseSessionMessage, addIssueTrackMessage, setIssueTrackingActive, clearIssueTrackMessages, setIssuePendingQuestion, startImplement, addImplementMessage, setImplementStatus, addVerifyMessage, setVerifyActive, setVerifyResult, clearVerify])
+  }, [queryClient, patrolOnProgress, patrolOnCaseCompleted, addCaseSessionMessage, addIssueTrackMessage, setIssueTrackingActive, clearIssueTrackMessages, setIssuePendingQuestion, startImplement, addImplementMessage, setImplementStatus, addVerifyMessage, setVerifyActive, setVerifyResult, clearVerify, todoExecSetProgress, todoExecSetResult])
 
   useEffect(() => {
     connect()

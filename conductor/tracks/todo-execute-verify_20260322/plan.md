@@ -43,16 +43,16 @@ Update `TodoView.tsx` to track per-item execution state and render spinner/timer
 
 ### Tasks
 
-- [ ] Task 3.1: Add per-item execution state store — `Map<string, { status: 'idle' | 'executing' | 'verifying' | 'success' | 'failed', startTime?: number, message?: string }>` keyed by `${caseNumber}:${lineNumber}`; update state on SSE events
-- [ ] Task 3.2: Listen to SSE events `todo-execute-progress` and `todo-execute-result` — update per-item state based on event payload; on `todo-execute-result` with `success=true`, also trigger todo toggle to check the item
-- [ ] Task 3.3: Replace Execute button rendering — based on item state: idle → "Execute" (amber, clickable); executing → "Executing..." spinner + elapsed timer (gray, disabled); verifying → "Verifying..." spinner (gray, disabled); success → "Execution Complete" ✓ (green, disabled); failed → "Execution Failed ✗" (red, clickable to retry)
-- [ ] Task 3.4: Add elapsed timer component — start counting on 'executing' state, stop on 'success'/'failed', display as "Xs" or "Xm Xs"
-- [ ] Task 3.5: Pass `lineNumber` in execute mutation call — update `handleExecute()` to include `lineNumber` in the request body
+- [x] Task 3.1: Add per-item execution state store — `Map<string, { status: 'idle' | 'executing' | 'verifying' | 'success' | 'failed', startTime?: number, message?: string }>` keyed by `${caseNumber}:${lineNumber}`; update state on SSE events
+- [x] Task 3.2: Listen to SSE events `todo-execute-progress` and `todo-execute-result` — update per-item state based on event payload; on `todo-execute-result` with `success=true`, also trigger todo toggle to check the item
+- [x] Task 3.3: Replace Execute button rendering — based on item state: idle → "Execute" (amber, clickable); executing → "Executing..." spinner + elapsed timer (gray, disabled); verifying → "Verifying..." spinner (gray, disabled); success → "Execution Complete" ✓ (green, disabled); failed → "Execution Failed ✗" (red, clickable to retry)
+- [x] Task 3.4: Add elapsed timer component — start counting on 'executing' state, stop on 'success'/'failed', display as "Xs" or "Xm Xs"
+- [x] Task 3.5: Pass `lineNumber` in execute mutation call — update `handleExecute()` to include `lineNumber` in the request body
 
 ### Verification
 
-- [ ] TypeScript compiles without errors
-- [ ] Frontend renders correctly with different item states
+- [x] TypeScript compiles without errors
+- [x] Frontend renders correctly with different item states
 
 ## Verification Plan
 

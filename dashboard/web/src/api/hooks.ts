@@ -382,8 +382,8 @@ export function useExecuteTodoAction() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ caseId, action, params }: { caseId: string; action: string; params: Record<string, string> }) =>
-      apiPost<{ status: string }>(`/todo/${caseId}/execute`, { action, params }),
+    mutationFn: ({ caseId, action, params, lineNumber }: { caseId: string; action: string; params: Record<string, string>; lineNumber?: number }) =>
+      apiPost<{ status: string }>(`/todo/${caseId}/execute`, { action, params, lineNumber }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['todos'] })
     },
