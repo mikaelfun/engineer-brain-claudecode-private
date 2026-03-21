@@ -5,14 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:web\"",
-    "dev:server": "tsx watch src/index.ts",
+    "dev:server": "node --import tsx/esm --watch src/index.ts",
     "dev:web": "cd web && npm run dev",
     "build": "cd web && npm run build",
     "start": "concurrently \"tsx src/index.ts\" \"cd web && npm run dev\"",
     "setup": "powershell -ExecutionPolicy Bypass -File scripts/setup.ps1",
-    "test": "vitest run",
+    "test": "vitest run && npm --prefix web test",
+    "test:server": "vitest run",
+    "test:web": "npm --prefix web test",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "vitest run --coverage && npm --prefix web run test:coverage",
     "postinstall": "cd web && npm install"
   },
   "dependencies": {
