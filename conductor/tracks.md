@@ -62,6 +62,6 @@
 | [x] | cancel-spinner-fix_20260322 | Fix Cancel Track Spinner Persists | 2026-03-22 | 2026-03-22 |
 | [x] | case-list-actions_20260322 | Case 列表显示 Refresh 时间、Teams 消息截止时间、Refresh/Full Process 按钮 | 2026-03-22 | 2026-03-22 |
 | [x] | case-list-opt_20260322 | Dashboard Case 列表优化：隐藏 FWR、客户名突出显示 | 2026-03-22 | 2026-03-22 |
-| [~] | todo-strikethrough_20260321 | Todo 仅通知项标记完成后字体未划掉 | 2026-03-21 | 2026-03-21 |
+| [x] | todo-strikethrough_20260321 | Todo 仅通知项标记完成后字体未划掉 | 2026-03-21 | 2026-03-22 |
 | [x] | sap-status-confusion_20260322 | Fix Todo 错误生成 "修改 SAP: Status → Problem Solved" | 2026-03-22 | 2026-03-22 |
-| [~] | todo-execute-verify_20260322 | Todo Execute Verification Mechanism | 2026-03-22 | 2026-03-22 |
+| [x] | todo-execute-verify_20260322 | Todo Execute Verification Mechanism | 2026-03-22 | 2026-03-22 |

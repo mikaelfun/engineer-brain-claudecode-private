@@ -1,0 +1,11 @@
+{
+  "id": "ISS-066",
+  "title": "Todo Execute 验证机制：执行状态 + 计时 + D365 回查验证 + 完成状态展示",
+  "description": "当前 Todo Execute 按钮点击后直接调脚本，无执行状态反馈，也无结果验证。\n\n需求：\n1. 点击 Execute 后进入执行状态，按钮灰掉显示 spinner + 计时器\n2. D365 脚本执行完成后，自动调用拉取脚本回查验证操作是否成功写入\n3. 验证通过 → 按钮变为 'Execution Complete' (灰色/绿色，不可点击)\n4. 验证失败 → 按钮变为 'Execution Failed' (红色，可重试)\n5. 通过 SSE 实时推送执行进度到前端\n\n涉及：\n- 前端 TodoView.tsx Execute 按钮状态机\n- 后端 case-routes.ts POST /todo/:id/execute 路由\n- case-session-manager.ts executeTodoAction() 增加验证步骤\n- SSE 事件：todo-execute-progress / todo-execute-result",
+  "type": "feature",
+  "priority": "P1",
+  "status": "implemented",
+  "trackId": "todo-execute-verify_20260322",
+  "createdAt": "2026-03-22T22:10:00+08:00",
+  "updatedAt": "2026-03-22T23:30:00+08:00"
+}

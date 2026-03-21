@@ -1,0 +1,16 @@
+{
+  "id": "todo-execute-verify_20260322",
+  "title": "Todo Execute Verification Mechanism",
+  "type": "feature",
+  "status": "complete",
+  "created": "2026-03-22T22:15:00+08:00",
+  "updated": "2026-03-22T23:30:00+08:00",
+  "phases": {
+    "total": 3,
+    "completed": 3
+  },
+  "tasks": {
+    "total": 11,
+    "completed": 11
+  }
+}
