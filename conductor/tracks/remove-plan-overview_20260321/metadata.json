@@ -1,0 +1,19 @@
+{
+  "id": "remove-plan-overview_20260321",
+  "title": "移除 TrackProgressPanel Plan Overview",
+  "type": "refactor",
+  "status": "complete",
+  "created": "2026-03-21T22:00:00+08:00",
+  "updated": "2026-03-21T22:05:00+08:00",
+  "phases": {
+    "total": 1,
+    "completed": 1
+  },
+  "tasks": {
+    "total": 2,
+    "completed": 2
+  },
+  "commits": [
+    "0364147: refactor: remove PlanSummary from TrackProgressPanel (remove-plan-overview_20260321)"
+  ]
+}

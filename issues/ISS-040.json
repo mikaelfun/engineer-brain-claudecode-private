@@ -1,0 +1,11 @@
+{
+  "id": "ISS-040",
+  "title": "TrackProgressPanel 移除 Plan Overview — issue 详情已有 Plan 展示",
+  "description": "TrackProgressPanel 完成后显示的 PlanSummary 折叠面板（Plan Overview）与 issue 展开详情中的 Plan 区域功能重复。现在 issue 详情已经可以懒加载显示完整的 plan 任务列表和完成状态，TrackProgressPanel 里的 Plan Overview 可以移除。",
+  "type": "refactor",
+  "priority": "P2",
+  "status": "done",
+  "trackId": "remove-plan-overview_20260321",
+  "createdAt": "2026-03-21T22:00:00+08:00",
+  "updatedAt": "2026-03-21T22:05:00+08:00"
+}
