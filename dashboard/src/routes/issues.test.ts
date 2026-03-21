@@ -27,9 +27,15 @@ vi.mock('../services/issue-reader.js', () => ({
 
 // Mock conductor-reader
 const mockGetTrackMetadata = vi.fn()
+const mockUpdateTrackMetadata = vi.fn()
+const mockUpdateTracksMdStatus = vi.fn()
+const mockEnrichIssueFromTrack = vi.fn((issue: any) => issue)
 
 vi.mock('../services/conductor-reader.js', () => ({
   getTrackMetadata: (...args: any[]) => mockGetTrackMetadata(...args),
+  updateTrackMetadata: (...args: any[]) => mockUpdateTrackMetadata(...args),
+  updateTracksMdStatus: (...args: any[]) => mockUpdateTracksMdStatus(...args),
+  enrichIssueFromTrack: (...args: any[]) => mockEnrichIssueFromTrack(...args),
 }))
 
 // Mock child_process (safety: never run real tests)
@@ -63,6 +69,10 @@ const mockTrackStateGetState = vi.fn()
 const mockTrackStateSetPendingQuestion = vi.fn()
 const mockTrackStateGetPendingQuestion = vi.fn()
 const mockTrackStateClearPendingQuestion = vi.fn()
+const mockTrackStateClear = vi.fn()
+const mockTrackStateCancel = vi.fn()
+const mockTrackStateIsActive = vi.fn().mockReturnValue(false)
+const mockTrackStateIsCancelled = vi.fn().mockReturnValue(false)
 vi.mock('../services/issue-track-state.js', () => ({
   issueTrackState: {
     start: (...args: any[]) => mockTrackStateStart(...args),
@@ -72,6 +82,10 @@ vi.mock('../services/issue-track-state.js', () => ({
     setPendingQuestion: (...args: any[]) => mockTrackStateSetPendingQuestion(...args),
     getPendingQuestion: (...args: any[]) => mockTrackStateGetPendingQuestion(...args),
     clearPendingQuestion: (...args: any[]) => mockTrackStateClearPendingQuestion(...args),
+    clear: (...args: any[]) => mockTrackStateClear(...args),
+    cancel: (...args: any[]) => mockTrackStateCancel(...args),
+    isActive: (...args: any[]) => mockTrackStateIsActive(...args),
+    isCancelled: (...args: any[]) => mockTrackStateIsCancelled(...args),
   },
 }))
 
@@ -105,6 +119,7 @@ const mockReleaseVerifyLock = vi.fn()
 const mockIsVerifyActive = vi.fn().mockReturnValue(false)
 const mockAppendVerifyMessage = vi.fn()
 const mockGetVerifyStatus = vi.fn()
+const mockClearVerifySession = vi.fn()
 
 vi.mock('../agent/verify-session-manager.js', () => ({
   acquireVerifyLock: (...args: any[]) => mockAcquireVerifyLock(...args),
@@ -112,17 +127,22 @@ vi.mock('../agent/verify-session-manager.js', () => ({
   isVerifyActive: (...args: any[]) => mockIsVerifyActive(...args),
   appendVerifyMessage: (...args: any[]) => mockAppendVerifyMessage(...args),
   getVerifyStatus: (...args: any[]) => mockGetVerifyStatus(...args),
+  clearVerifySession: (...args: any[]) => mockClearVerifySession(...args),
 }))
 
-// Mock fs functions used by track-plan route
+// Mock fs functions used by track-plan route and delete cleanup
 const mockExistsSync = vi.fn()
 const mockReadFileSync = vi.fn()
+const mockWriteFileSync = vi.fn()
+const mockRmSync = vi.fn()
 vi.mock('fs', async (importOriginal) => {
   const actual = await importOriginal() as Record<string, any>
   return {
     ...actual,
     existsSync: (...args: any[]) => mockExistsSync(...args),
     readFileSync: (...args: any[]) => mockReadFileSync(...args),
+    writeFileSync: (...args: any[]) => mockWriteFileSync(...args),
+    rmSync: (...args: any[]) => mockRmSync(...args),
   }
 })
 
@@ -287,16 +307,39 @@ describe('Issue Routes', () => {
   })
 
   describe('DELETE /issues/:id', () => {
-    it('deletes existing issue', async () => {
+    it('deletes existing issue and cleans up sessions', async () => {
+      const issue = makeIssue()
+      mockGetIssue.mockReturnValue(issue)
       mockDeleteIssue.mockReturnValue(true)
 
       const app = createApp()
       const res = await app.request('/issues/ISS-001', { method: 'DELETE' })
       expect(res.status).toBe(200)
+      const json = await res.json()
+      expect(json.ok).toBe(true)
+      expect(json.cleanedUp.sessionsCleared).toBe(true)
+      expect(mockClearImplementSession).toHaveBeenCalledWith('ISS-001')
+      expect(mockClearVerifySession).toHaveBeenCalledWith('ISS-001')
+    })
+
+    it('deletes track directory and tracks.md row when issue has trackId', async () => {
+      const issue = makeIssue({ trackId: 'my-track_20260321' })
+      mockGetIssue.mockReturnValue(issue)
+      mockDeleteIssue.mockReturnValue(true)
+      mockExistsSync.mockReturnValue(true)
+      mockReadFileSync.mockReturnValue('| [x] | my-track_20260321 | Title | 2026-03-21 | 2026-03-21 |\n')
+
+      const app = createApp()
+      const res = await app.request('/issues/ISS-001', { method: 'DELETE' })
+      expect(res.status).toBe(200)
+      const json = await res.json()
+      expect(json.cleanedUp.trackDeleted).toBe(true)
+      expect(mockRmSync).toHaveBeenCalled()
+      expect(mockWriteFileSync).toHaveBeenCalled()
     })
 
     it('returns 404 for missing issue', async () => {
-      mockDeleteIssue.mockReturnValue(false)
+      mockGetIssue.mockReturnValue(null)
 
       const app = createApp()
       const res = await app.request('/issues/ISS-999', { method: 'DELETE' })

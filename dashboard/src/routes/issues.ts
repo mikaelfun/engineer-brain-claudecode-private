@@ -7,6 +7,7 @@
  * PUT    /api/issues/:id      — 更新
  * DELETE /api/issues/:id      — 删除
  * POST   /api/issues/:id/create-track   — 从 issue 创建 conductor track
+ * POST   /api/issues/:id/cancel-track   — 取消正在创建的 track
  * POST   /api/issues/:id/track-answer   — 提交用户对 agent 问题的回答
  * POST   /api/issues/:id/start-implement — tracked → in-progress
  * POST   /api/issues/:id/verify         — 异步运行测试验证（SSE 推送进度）
@@ -22,7 +23,7 @@
 import { Hono } from 'hono'
 import { execSync, exec } from 'child_process'
 import { join } from 'path'
-import { existsSync, readFileSync } from 'fs'
+import { existsSync, readFileSync, writeFileSync, rmSync, readdirSync } from 'fs'
 import { query, type Options, type CanUseTool } from '@anthropic-ai/claude-agent-sdk'
 import { listIssues, getIssue, createIssue, updateIssue, deleteIssue } from '../services/issue-reader.js'
 import { getTrackMetadata, updateTrackMetadata, updateTracksMdStatus, enrichIssueFromTrack } from '../services/conductor-reader.js'
@@ -35,6 +36,7 @@ import {
   isImplementActive,
   appendImplementMessage,
   getImplementStatus,
+  clearImplementSession,
   type ImplementMessage,
 } from '../agent/implement-session-manager.js'
 import {
@@ -43,6 +45,7 @@ import {
   isVerifyActive,
   appendVerifyMessage,
   getVerifyStatus,
+  clearVerifySession,
   type VerifyMessage,
   type VerifyResult,
 } from '../agent/verify-session-manager.js'
@@ -155,12 +158,41 @@ issues.put('/:id', async (c) => {
   return c.json(updated)
 })
 
-// DELETE /api/issues/:id — delete
+// DELETE /api/issues/:id — delete issue + cleanup track & sessions
 issues.delete('/:id', (c) => {
   const id = c.req.param('id')
+  const issue = getIssue(id)
+  if (!issue) return c.json({ error: 'Issue not found' }, 404)
+
+  // 1. Cleanup in-memory sessions
+  issueTrackState.clear(id)
+  clearImplementSession(id)
+  clearVerifySession(id)
+
+  // 2. Delete conductor track directory + tracks.md row if trackId exists
+  const trackId = issue.trackId
+  if (trackId) {
+    const tracksDir = join(config.projectRoot, 'conductor', 'tracks')
+    const trackDir = join(tracksDir, trackId)
+    if (existsSync(trackDir)) {
+      rmSync(trackDir, { recursive: true, force: true })
+    }
+
+    // Remove row from tracks.md
+    const tracksMdPath = join(config.projectRoot, 'conductor', 'tracks.md')
+    if (existsSync(tracksMdPath)) {
+      let tracksMd = readFileSync(tracksMdPath, 'utf-8')
+      const escaped = trackId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      const lineRegex = new RegExp(`\\|[^\\n]*${escaped}[^\\n]*\\n?`)
+      tracksMd = tracksMd.replace(lineRegex, '')
+      writeFileSync(tracksMdPath, tracksMd, 'utf-8')
+    }
+  }
+
+  // 3. Delete issue JSON file
   const ok = deleteIssue(id)
-  if (!ok) return c.json({ error: 'Issue not found' }, 404)
-  return c.json({ ok: true })
+  if (!ok) return c.json({ error: 'Failed to delete issue file' }, 500)
+  return c.json({ ok: true, cleanedUp: { trackDeleted: !!trackId, sessionsCleared: true } })
 })
 
 /**
@@ -258,6 +290,11 @@ async function processQueryMessages(
   let lastContent = ''
 
   for await (const message of queryIter) {
+    // Check cancellation flag — stop processing if cancelled
+    if (issueTrackState.isCancelled(issueId)) {
+      break
+    }
+
     // Capture session_id from SDK messages
     if ((message as any).session_id && !capturedSessionId) {
       capturedSessionId = (message as any).session_id
@@ -316,11 +353,16 @@ async function processQueryMessages(
  * Called after the query completes successfully (not interrupted).
  */
 async function finalizeTrackCreation(issueId: string): Promise<void> {
+  // Check if cancelled before finalizing
+  if (issueTrackState.isCancelled(issueId)) {
+    console.log(`[create-track] Skipping finalization for ${issueId} — cancelled by user`)
+    return
+  }
+
   const tracksDir = join(config.projectRoot, 'conductor', 'tracks')
   let foundTrackId: string | null = null
 
   if (existsSync(tracksDir)) {
-    const { readdirSync } = await import('fs')
     const dirs = readdirSync(tracksDir, { withFileTypes: true })
       .filter(d => d.isDirectory())
       .map(d => d.name)
@@ -386,6 +428,71 @@ async function finalizeTrackCreation(issueId: string): Promise<void> {
   issueTrackState.addMessage(issueId, completedMsg)
   issueTrackState.finish(issueId)
 }
+
+// POST /api/issues/:id/cancel-track — cancel an active track creation
+issues.post('/:id/cancel-track', (c) => {
+  const id = c.req.param('id')
+  const issue = getIssue(id)
+  if (!issue) return c.json({ error: 'Issue not found' }, 404)
+
+  // Allow cancel if actively tracking OR has pending question OR issue status is 'tracking'
+  const stateActive = issueTrackState.isActive(id)
+  const hasPending = !!issueTrackState.getPendingQuestion(id)
+  const issueIsTracking = issue.status === 'tracking'
+
+  if (!stateActive && !hasPending && !issueIsTracking) {
+    return c.json({ error: 'No active track creation to cancel' }, 400)
+  }
+
+  // Set cancellation flag — running agent output will be discarded
+  issueTrackState.cancel(id)
+
+  // Reset issue status to pending and clear any trackId that might have been partially set
+  updateIssue(id, { status: 'pending' as IssueStatus })
+
+  // Clean up any partially created track directories
+  // Search for track dirs whose spec.md references this issue ID
+  const tracksDir = join(config.projectRoot, 'conductor', 'tracks')
+  if (existsSync(tracksDir)) {
+    const dirs = readdirSync(tracksDir, { withFileTypes: true })
+      .filter(d => d.isDirectory() && !d.name.startsWith('_'))
+
+    for (const dir of dirs) {
+      const specPath = join(tracksDir, dir.name, 'spec.md')
+      const metaPath = join(tracksDir, dir.name, 'metadata.json')
+      if (existsSync(specPath)) {
+        const specContent = readFileSync(specPath, 'utf-8')
+        if (specContent.includes(id)) {
+          // Check metadata to confirm it's linked to this issue and not already completed
+          if (existsSync(metaPath)) {
+            try {
+              const meta = JSON.parse(readFileSync(metaPath, 'utf-8'))
+              if (meta.source === id || meta.issueId === id) {
+                console.log(`[cancel-track] Removing partial track directory: ${dir.name}`)
+                rmSync(join(tracksDir, dir.name), { recursive: true, force: true })
+                // Also remove entry from tracks.md
+                const tracksMdPath = join(config.projectRoot, 'conductor', 'tracks.md')
+                if (existsSync(tracksMdPath)) {
+                  let tracksMd = readFileSync(tracksMdPath, 'utf-8')
+                  const lineRegex = new RegExp(`\\|[^\\n]*${dir.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[^\\n]*\\n?`)
+                  tracksMd = tracksMd.replace(lineRegex, '')
+                  writeFileSync(tracksMdPath, tracksMd, 'utf-8')
+                }
+              }
+            } catch { /* ignore parse errors */ }
+          }
+        }
+      }
+    }
+  }
+
+  // Broadcast cancellation — frontend will clear the panel
+  sseManager.broadcast('issue-track-error', { issueId: id, error: '__cancelled__', timestamp: new Date().toISOString() })
+  // Clear all in-memory state so panel disappears on recovery too
+  issueTrackState.clear(id)
+
+  return c.json({ ok: true, message: `Track creation cancelled for ${id}` })
+})
 
 // POST /api/issues/:id/create-track — create conductor track from issue via Claude session
 issues.post('/:id/create-track', async (c) => {
