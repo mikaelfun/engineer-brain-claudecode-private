@@ -344,7 +344,10 @@ async function finalizeTrackCreation(issueId: string): Promise<void> {
     const validation = validateTrackArtifacts(trackDir)
 
     if (validation.valid) {
-      updateIssue(issueId, { trackId: foundTrackId, status: 'tracked' as IssueStatus })
+      // Only write trackId to issue JSON — status will be derived from track metadata (ISS-047)
+      updateIssue(issueId, { trackId: foundTrackId })
+      // Write issueId to track metadata for bidirectional association
+      updateTrackMetadata(foundTrackId, { issueId } as any)
       const planPath = join(trackDir, 'plan.md')
       planSummary = readFileSync(planPath, 'utf-8').slice(0, 2000)
     } else {
@@ -551,8 +554,9 @@ issues.post('/:id/track-answer', async (c) => {
 // POST /api/issues/:id/start-implement — tracked → in-progress, spawn conductor:implement
 issues.post('/:id/start-implement', async (c) => {
   const id = c.req.param('id')
-  const issue = getIssue(id)
-  if (!issue) return c.json({ error: 'Issue not found' }, 404)
+  const rawIssue = getIssue(id)
+  if (!rawIssue) return c.json({ error: 'Issue not found' }, 404)
+  const issue = enrichIssueFromTrack(rawIssue)
   if (issue.status !== 'tracked' && issue.status !== 'pending') {
     return c.json({ error: 'Issue must be in tracked or pending status' }, 400)
   }
@@ -567,8 +571,8 @@ issues.post('/:id/start-implement', async (c) => {
     return c.json({ error: 'Implementation already in progress for this issue' }, 409)
   }
 
-  // Update status immediately
-  const updated = updateIssue(id, { status: 'in-progress' })
+  // Update track metadata — status will be derived by enrichIssueFromTrack (ISS-047)
+  updateTrackMetadata(trackId, { status: 'in_progress' })
 
   // Spawn conductor:implement asynchronously
   const implementAsync = async () => {
@@ -647,8 +651,8 @@ issues.post('/:id/start-implement', async (c) => {
         issueId: id, trackId,
         timestamp: completedMsg.timestamp,
       })
-      // Auto-update issue status to implemented (user must manually mark done after verification)
-      updateIssue(id, { status: 'implemented' as IssueStatus })
+      // Update track metadata to complete — issue status derived via enrichIssueFromTrack (ISS-047)
+      updateTrackMetadata(trackId, { status: 'complete' })
     } catch (err: any) {
       console.error(`[implement] Failed for ${trackId}:`, err.message)
       releaseImplementLock(id, 'failed')
@@ -667,14 +671,15 @@ issues.post('/:id/start-implement', async (c) => {
   }
 
   implementAsync() // Fire and forget
-  return c.json({ issue: updated, message: `Implementation started for track ${trackId}` })
+  return c.json({ issue: enrichIssueFromTrack(getIssue(id)!), message: `Implementation started for track ${trackId}` })
 })
 
 // POST /api/issues/:id/verify — async fire-and-forget with SSE progress
 issues.post('/:id/verify', async (c) => {
   const id = c.req.param('id')
-  const issue = getIssue(id)
-  if (!issue) return c.json({ error: 'Issue not found' }, 404)
+  const rawIssue = getIssue(id)
+  if (!rawIssue) return c.json({ error: 'Issue not found' }, 404)
+  const issue = enrichIssueFromTrack(rawIssue)
   if (issue.status !== 'in-progress' && issue.status !== 'implemented' && issue.status !== 'done') {
     return c.json({ error: 'Issue must be in-progress, implemented, or done to verify' }, 400)
   }
@@ -775,16 +780,23 @@ issues.post('/:id/verify', async (c) => {
         overall: unitResult.success && uiResult.success,
       }
 
-      // Update issue status if both pass + persist verify result (ISS-039)
+      // Write verification result to track metadata (ISS-047: single source of truth)
       const verifyResult = {
         unitTest: { success: unitResult.success, output: unitResult.output },
         uiTest: { success: uiResult.success, output: uiResult.output },
         verifiedAt: new Date().toISOString(),
       }
-      if (result.overall) {
-        updateIssue(id, { status: 'done' as IssueStatus, verifyResult })
+      if (issue.trackId) {
+        updateTrackMetadata(issue.trackId, {
+          verification: {
+            status: result.overall ? 'passed' : 'failed',
+            method: 'auto',
+            result: verifyResult,
+          },
+        } as any)
       } else {
-        updateIssue(id, { verifyResult })
+        // Fallback for issues without trackId: write directly to issue JSON
+        updateIssue(id, { verifyResult, ...(result.overall ? { status: 'done' as IssueStatus } : {}) })
       }
 
       // Release lock with result
@@ -830,41 +842,54 @@ issues.get('/:id/verify-status', (c) => {
   return c.json(status)
 })
 
-// POST /api/issues/:id/reopen — done/implemented → pending (keep trackId)
+// POST /api/issues/:id/reopen — done/implemented → clear verification (ISS-047: single source of truth)
 issues.post('/:id/reopen', (c) => {
   const id = c.req.param('id')
-  const issue = getIssue(id)
-  if (!issue) return c.json({ error: 'Issue not found' }, 404)
+  const rawIssue = getIssue(id)
+  if (!rawIssue) return c.json({ error: 'Issue not found' }, 404)
+  const issue = enrichIssueFromTrack(rawIssue)
   if (issue.status !== 'done' && issue.status !== 'implemented') {
     return c.json({ error: 'Issue must be done or implemented to reopen' }, 400)
   }
-  const updated = updateIssue(id, { status: 'pending' })
-  return c.json({ issue: updated })
+
+  if (issue.trackId) {
+    // Clear verification from track metadata — status re-derives to "implemented" (track is still complete)
+    updateTrackMetadata(issue.trackId, { verification: undefined } as any)
+    updateTracksMdStatus(issue.trackId, '[~]')
+  } else {
+    // Fallback: no track → write directly to issue JSON
+    updateIssue(id, { status: 'pending' })
+  }
+
+  return c.json({ issue: enrichIssueFromTrack(getIssue(id)!) })
 })
 
-// POST /api/issues/:id/mark-done — implemented → done, sync conductor track metadata + tracks.md
+// POST /api/issues/:id/mark-done — implemented → done (ISS-047: write to track metadata only)
 issues.post('/:id/mark-done', (c) => {
   const id = c.req.param('id')
-  const issue = getIssue(id)
-  if (!issue) return c.json({ error: 'Issue not found' }, 404)
+  const rawIssue = getIssue(id)
+  if (!rawIssue) return c.json({ error: 'Issue not found' }, 404)
+  const issue = enrichIssueFromTrack(rawIssue)
   if (issue.status !== 'implemented') {
     return c.json({ error: 'Issue must be in implemented status to mark done' }, 400)
   }
 
-  // 1. Update issue status to done
-  const updated = updateIssue(id, { status: 'done' })
-
-  // 2. Sync conductor track metadata if trackId exists
   let trackSynced = false
   let tracksMdSynced = false
   if (issue.trackId) {
-    const trackUpdate = updateTrackMetadata(issue.trackId, { status: 'completed' })
+    // Write verification as manual/skipped to track metadata — status derived as "done" (ISS-047)
+    const trackUpdate = updateTrackMetadata(issue.trackId, {
+      verification: { status: 'skipped', method: 'manual' },
+    } as any)
     trackSynced = !!trackUpdate
     tracksMdSynced = updateTracksMdStatus(issue.trackId, '[x]')
+  } else {
+    // Fallback: no track → write directly to issue JSON
+    updateIssue(id, { status: 'done' })
   }
 
   return c.json({
-    issue: updated,
+    issue: enrichIssueFromTrack(getIssue(id)!),
     trackSynced,
     tracksMdSynced,
     message: `Issue ${id} marked as done${trackSynced ? ', conductor track synced' : ''}`,
