@@ -11,7 +11,8 @@
  * POST   /api/issues/:id/start-implement — tracked → in-progress
  * POST   /api/issues/:id/verify         — 异步运行测试验证（SSE 推送进度）
  * GET    /api/issues/:id/verify-status  — 获取 verify 进度消息（刷新恢复用 + 锁状态）
- * POST   /api/issues/:id/reopen         — done → pending
+ * POST   /api/issues/:id/reopen         — done/implemented → pending
+ * POST   /api/issues/:id/mark-done      — implemented → done + sync conductor track
  * GET    /api/issues/:id/track          — 获取关联 track metadata
  * GET    /api/issues/:id/track-plan     — 获取关联 track 的 plan.md 内容
  * GET    /api/issues/:id/track-spec     — 获取关联 track 的 spec.md 内容
@@ -24,7 +25,7 @@ import { join } from 'path'
 import { existsSync, readFileSync } from 'fs'
 import { query, type Options, type CanUseTool } from '@anthropic-ai/claude-agent-sdk'
 import { listIssues, getIssue, createIssue, updateIssue, deleteIssue } from '../services/issue-reader.js'
-import { getTrackMetadata } from '../services/conductor-reader.js'
+import { getTrackMetadata, updateTrackMetadata, updateTracksMdStatus, enrichIssueFromTrack } from '../services/conductor-reader.js'
 import { config } from '../config.js'
 import { sseManager } from '../watcher/sse-manager.js'
 import { issueTrackState, type IssueTrackQuestion } from '../services/issue-track-state.js'
@@ -98,7 +99,10 @@ issues.get('/', (c) => {
 
   let all = listIssues()
 
-  // Apply filters
+  // Enrich issues that have a trackId — derive status from track metadata (ISS-047)
+  all = all.map(enrichIssueFromTrack)
+
+  // Apply filters (after enrichment so derived status is used)
   if (status) all = all.filter(i => i.status === status)
   if (type) all = all.filter(i => i.type === type)
   if (priority) all = all.filter(i => i.priority === priority)
@@ -119,12 +123,12 @@ issues.get('/', (c) => {
   return c.json({ issues: items, total, page, pageSize, totalPages: Math.ceil(total / pageSize) })
 })
 
-// GET /api/issues/:id — detail
+// GET /api/issues/:id — detail (enriched from track metadata if trackId exists)
 issues.get('/:id', (c) => {
   const id = c.req.param('id')
   const issue = getIssue(id)
   if (!issue) return c.json({ error: 'Issue not found' }, 404)
-  return c.json(issue)
+  return c.json(enrichIssueFromTrack(issue))
 })
 
 // POST /api/issues — create
@@ -643,8 +647,8 @@ issues.post('/:id/start-implement', async (c) => {
         issueId: id, trackId,
         timestamp: completedMsg.timestamp,
       })
-      // Auto-update issue status to done on successful completion
-      updateIssue(id, { status: 'done' as IssueStatus })
+      // Auto-update issue status to implemented (user must manually mark done after verification)
+      updateIssue(id, { status: 'implemented' as IssueStatus })
     } catch (err: any) {
       console.error(`[implement] Failed for ${trackId}:`, err.message)
       releaseImplementLock(id, 'failed')
@@ -671,8 +675,8 @@ issues.post('/:id/verify', async (c) => {
   const id = c.req.param('id')
   const issue = getIssue(id)
   if (!issue) return c.json({ error: 'Issue not found' }, 404)
-  if (issue.status !== 'in-progress' && issue.status !== 'done') {
-    return c.json({ error: 'Issue must be in-progress or done to verify' }, 400)
+  if (issue.status !== 'in-progress' && issue.status !== 'implemented' && issue.status !== 'done') {
+    return c.json({ error: 'Issue must be in-progress, implemented, or done to verify' }, 400)
   }
 
   // Acquire lock — prevent duplicate concurrent verifies
@@ -771,9 +775,16 @@ issues.post('/:id/verify', async (c) => {
         overall: unitResult.success && uiResult.success,
       }
 
-      // Update issue status if both pass
+      // Update issue status if both pass + persist verify result (ISS-039)
+      const verifyResult = {
+        unitTest: { success: unitResult.success, output: unitResult.output },
+        uiTest: { success: uiResult.success, output: uiResult.output },
+        verifiedAt: new Date().toISOString(),
+      }
       if (result.overall) {
-        updateIssue(id, { status: 'done' as IssueStatus })
+        updateIssue(id, { status: 'done' as IssueStatus, verifyResult })
+      } else {
+        updateIssue(id, { verifyResult })
       }
 
       // Release lock with result
@@ -819,16 +830,45 @@ issues.get('/:id/verify-status', (c) => {
   return c.json(status)
 })
 
-// POST /api/issues/:id/reopen — done → pending (keep trackId)
+// POST /api/issues/:id/reopen — done/implemented → pending (keep trackId)
 issues.post('/:id/reopen', (c) => {
   const id = c.req.param('id')
   const issue = getIssue(id)
   if (!issue) return c.json({ error: 'Issue not found' }, 404)
-  if (issue.status !== 'done') {
-    return c.json({ error: 'Issue must be done to reopen' }, 400)
+  if (issue.status !== 'done' && issue.status !== 'implemented') {
+    return c.json({ error: 'Issue must be done or implemented to reopen' }, 400)
   }
   const updated = updateIssue(id, { status: 'pending' })
   return c.json({ issue: updated })
+})
+
+// POST /api/issues/:id/mark-done — implemented → done, sync conductor track metadata + tracks.md
+issues.post('/:id/mark-done', (c) => {
+  const id = c.req.param('id')
+  const issue = getIssue(id)
+  if (!issue) return c.json({ error: 'Issue not found' }, 404)
+  if (issue.status !== 'implemented') {
+    return c.json({ error: 'Issue must be in implemented status to mark done' }, 400)
+  }
+
+  // 1. Update issue status to done
+  const updated = updateIssue(id, { status: 'done' })
+
+  // 2. Sync conductor track metadata if trackId exists
+  let trackSynced = false
+  let tracksMdSynced = false
+  if (issue.trackId) {
+    const trackUpdate = updateTrackMetadata(issue.trackId, { status: 'completed' })
+    trackSynced = !!trackUpdate
+    tracksMdSynced = updateTracksMdStatus(issue.trackId, '[x]')
+  }
+
+  return c.json({
+    issue: updated,
+    trackSynced,
+    tracksMdSynced,
+    message: `Issue ${id} marked as done${trackSynced ? ', conductor track synced' : ''}`,
+  })
 })
 
 // GET /api/issues/:id/track — get associated track metadata
