@@ -13,6 +13,7 @@
  * POST   /api/issues/:id/reopen         — done → pending
  * GET    /api/issues/:id/track          — 获取关联 track metadata
  * GET    /api/issues/:id/track-plan     — 获取关联 track 的 plan.md 内容
+ * GET    /api/issues/:id/track-spec     — 获取关联 track 的 spec.md 内容
  * GET    /api/issues/:id/track-progress — 获取 track 创建的进度消息（刷新恢复用）
  * GET    /api/issues/:id/implement-status — 获取 implement 进度消息（刷新恢复用 + 锁状态）
  */
@@ -149,11 +150,47 @@ issues.delete('/:id', (c) => {
 })
 
 /**
+ * Build an enhanced prompt for conductor:new-track when called with an ISS-XXX argument.
+ * Injects the issue's pre-fill data and instructions to minimize interactive questions.
+ *
+ * The conductor:new-track skill normally asks 5-6 interactive questions. When we already
+ * have issue context (title, description, type, priority), most of those questions are
+ * redundant. This prompt instructs the agent to:
+ * 1. Use the pre-filled issue data directly (skip Q1 summary, Q2 steps, etc.)
+ * 2. Only ask 1 confirmation question (confirm the generated spec)
+ * 3. Skip all test-related questions (those belong in the Verify phase)
+ * 4. Generate spec.md and plan.md directly from the issue context
+ */
+function buildTrackPrompt(issueId: string, issue: { title: string; description: string; type?: string; priority?: string }): string {
+  const typeMap: Record<string, string> = { bug: 'Bug', feature: 'Feature', refactor: 'Refactor', chore: 'Chore' }
+  const trackType = typeMap[issue.type || 'bug'] || 'Bug'
+
+  return `/conductor:new-track ${issueId}
+
+IMPORTANT — This is a WebUI-initiated track creation with pre-filled issue context.
+Follow these rules to minimize interactive questions:
+
+## Pre-filled Issue Context (from ${issueId}.json)
+- **Title:** ${issue.title}
+- **Type:** ${trackType}
+- **Priority:** ${issue.priority || 'P1'}
+- **Description:** ${issue.description}
+
+## Streamlined Flow
+1. **Skip all specification-gathering questions** — use the pre-filled context above to generate the spec directly.
+2. **Do NOT ask about testing strategy** — test decisions (unit vs UI, screenshot vs click, frontend vs backend) belong in the Verify phase and will be auto-inferred from the actual code changes.
+3. **Generate spec.md immediately** from the pre-filled context, then ask ONE confirmation: "Is this specification correct? 1. Yes, proceed to plan generation / 2. No, let me edit / 3. Start over"
+4. **Generate plan.md** after spec approval, then ask ONE confirmation: "Is this plan correct? 1. Yes, create the track / 2. No, let me edit"
+5. **Maximum 2 interactive questions total** (spec confirmation + plan confirmation).
+6. After both confirmations, create all track files (spec.md, plan.md, metadata.json, index.md), register in tracks.md, and update the issue JSON.`
+}
+
+/**
  * Shared canUseTool callback that intercepts AskUserQuestion and denies+interrupts.
  * The intercepted question data is stored in issueTrackState and broadcast via SSE.
  */
 function createCanUseTool(issueId: string, getSessionId: () => string | undefined): CanUseTool {
-  return async (toolName, input) => {
+  return async (toolName, input, _options) => {
     if (toolName === 'AskUserQuestion') {
       const rawQuestions = (input as any).questions || []
       const questions: IssueTrackQuestion[] = rawQuestions.map((q: any) => ({
@@ -369,7 +406,7 @@ issues.post('/:id/create-track', async (c) => {
       const canUseTool = createCanUseTool(id, () => sessionRef.current)
 
       const queryIter = query({
-        prompt: `/conductor:new-track ${id}`,
+        prompt: buildTrackPrompt(id, issue),
         options: {
           cwd: config.projectRoot,
           settingSources: ['project'] as Options['settingSources'],
@@ -377,7 +414,7 @@ issues.post('/:id/create-track', async (c) => {
             type: 'preset' as const,
             preset: 'claude_code' as const,
           },
-          allowedTools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent', 'AskUserQuestion', 'Skill'],
+          allowedTools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent', 'Skill'],
           permissionMode: 'acceptEdits',
           maxTurns: 40,
           canUseTool,
@@ -431,8 +468,9 @@ async function resumeTrackSession(issueId: string, sessionId: string, answer: st
           type: 'preset' as const,
           preset: 'claude_code' as const,
         },
-        allowedTools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent', 'AskUserQuestion', 'Skill'],
+        allowedTools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent', 'Skill'],
         permissionMode: 'acceptEdits',
+        maxTurns: 40,
         canUseTool,
       },
     })
@@ -721,6 +759,21 @@ issues.get('/:id/track-plan', (c) => {
   }
   const plan = readFileSync(planPath, 'utf-8')
   return c.json({ plan, trackId: issue.trackId })
+})
+
+// GET /api/issues/:id/track-spec — get spec.md content for the associated track
+issues.get('/:id/track-spec', (c) => {
+  const id = c.req.param('id')
+  const issue = getIssue(id)
+  if (!issue) return c.json({ error: 'Issue not found' }, 404)
+  if (!issue.trackId) return c.json({ error: 'No track associated' }, 404)
+
+  const specPath = join(config.projectRoot, 'conductor', 'tracks', issue.trackId, 'spec.md')
+  if (!existsSync(specPath)) {
+    return c.json({ error: 'Spec not found' }, 404)
+  }
+  const spec = readFileSync(specPath, 'utf-8')
+  return c.json({ spec, trackId: issue.trackId })
 })
 
 // GET /api/issues/:id/track-progress — get cached progress messages (for page refresh recovery)
