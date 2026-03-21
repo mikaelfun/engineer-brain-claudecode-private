@@ -7,7 +7,7 @@
 import { useState, useRef, useEffect } from 'react'
 import {
   Sparkles, Search, Mail, Play, X, Send,
-  CheckCircle2, Loader2, Wrench, Brain, AlertCircle, ChevronDown,
+  CheckCircle2, Loader2, Brain, AlertCircle, ChevronDown,
   RefreshCw, MessageSquare, ShieldCheck, GitBranch, FileText, BookOpen,
   Zap, ChevronRight
 } from 'lucide-react'
@@ -15,6 +15,7 @@ import { apiPost, apiDelete } from '../api/client'
 import { useCaseSessions, useCaseOperation, useCaseMessages, useEndAllCaseSessions } from '../api/hooks'
 import { useCaseSessionStore, type CaseSessionMessage } from '../stores/caseSessionStore'
 import { SessionBadge } from './SessionBadge'
+import { SessionMessageList } from './session/SessionMessageList'
 
 interface CaseAIPanelProps {
   caseNumber: string
@@ -170,14 +171,14 @@ export default function CaseAIPanel({ caseNumber }: CaseAIPanelProps) {
     }
   }
 
-  const quickActions: Array<{ id: AIAction; icon: typeof RefreshCw; label: string }> = [
-    { id: 'data-refresh', icon: RefreshCw, label: 'Refresh Data' },
-    { id: 'teams-search', icon: MessageSquare, label: 'Teams Search' },
-    { id: 'compliance-check', icon: ShieldCheck, label: 'Compliance' },
-    { id: 'status-judge', icon: GitBranch, label: 'Status Judge' },
-    { id: 'troubleshoot', icon: Search, label: 'Troubleshoot' },
-    { id: 'inspection', icon: FileText, label: 'Inspection' },
-    { id: 'generate-kb', icon: BookOpen, label: 'Generate KB' },
+  const quickActions: Array<{ id: AIAction; icon: typeof RefreshCw; label: string; color: string }> = [
+    { id: 'data-refresh', icon: RefreshCw, label: 'Refresh Data', color: 'var(--accent-blue)' },
+    { id: 'teams-search', icon: MessageSquare, label: 'Teams Search', color: 'var(--accent-purple)' },
+    { id: 'compliance-check', icon: ShieldCheck, label: 'Compliance', color: 'var(--accent-green)' },
+    { id: 'status-judge', icon: GitBranch, label: 'Status Judge', color: 'var(--accent-amber)' },
+    { id: 'troubleshoot', icon: Search, label: 'Troubleshoot', color: 'var(--accent-red)' },
+    { id: 'inspection', icon: FileText, label: 'Inspection', color: 'var(--accent-blue)' },
+    { id: 'generate-kb', icon: BookOpen, label: 'Generate KB', color: 'var(--accent-purple)' },
   ]
 
   return (
@@ -237,7 +238,7 @@ export default function CaseAIPanel({ caseNumber }: CaseAIPanelProps) {
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
             >
-              <Mail className="w-3.5 h-3.5" style={{ color: 'var(--text-tertiary)' }} />
+              <Mail className="w-3.5 h-3.5" style={{ color: 'var(--accent-green)' }} />
               Draft Email
             </button>
             <button
@@ -307,7 +308,7 @@ export default function CaseAIPanel({ caseNumber }: CaseAIPanelProps) {
                 ;(e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)'
               }}
             >
-              <action.icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--text-tertiary)' }} />
+              <action.icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: action.color }} />
               <span className="truncate">{action.label}</span>
               <ChevronRight className="w-3 h-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" style={{ color: 'var(--text-tertiary)' }} />
             </button>
@@ -351,13 +352,9 @@ export default function CaseAIPanel({ caseNumber }: CaseAIPanelProps) {
             </div>
           )}
 
-          {/* SSE Messages */}
+          {/* SSE Messages — filtered & collapsed */}
           {messages.length > 0 && (
-            <div ref={messagesContainerRef} className="max-h-48 overflow-y-auto space-y-1">
-              {messages.map((msg, i) => (
-                <MessageBubble key={i} message={msg} />
-              ))}
-            </div>
+            <SessionMessageList messages={messages} containerRef={messagesContainerRef} />
           )}
 
           {/* Chat Input */}
@@ -454,73 +451,6 @@ export default function CaseAIPanel({ caseNumber }: CaseAIPanelProps) {
             </div>
           </details>
         </div>
-      )}
-    </div>
-  )
-}
-
-/** Compact message bubble for sidebar width */
-function MessageBubble({ message }: { message: { type: string; content: string; toolName?: string; step?: string } }) {
-  const styles: Record<string, { borderColor: string; icon: React.ReactNode; label: string }> = {
-    thinking: {
-      borderColor: 'var(--accent-blue)',
-      icon: <Brain className="w-3 h-3" style={{ color: 'var(--accent-blue)' }} />,
-      label: 'Thinking',
-    },
-    'tool-call': {
-      borderColor: 'var(--accent-amber)',
-      icon: <Wrench className="w-3 h-3" style={{ color: 'var(--accent-amber)' }} />,
-      label: message.toolName || 'Tool',
-    },
-    'tool-result': {
-      borderColor: 'var(--accent-green)',
-      icon: <CheckCircle2 className="w-3 h-3" style={{ color: 'var(--accent-green)' }} />,
-      label: message.toolName || 'Result',
-    },
-    completed: {
-      borderColor: 'var(--accent-green)',
-      icon: <CheckCircle2 className="w-3 h-3" style={{ color: 'var(--accent-green)' }} />,
-      label: 'Done',
-    },
-    failed: {
-      borderColor: 'var(--accent-red)',
-      icon: <AlertCircle className="w-3 h-3" style={{ color: 'var(--accent-red)' }} />,
-      label: 'Error',
-    },
-    user: {
-      borderColor: 'var(--accent-blue)',
-      icon: <Send className="w-3 h-3" style={{ color: 'var(--accent-blue)' }} />,
-      label: 'You',
-    },
-    system: {
-      borderColor: 'var(--text-tertiary)',
-      icon: <Sparkles className="w-3 h-3" style={{ color: 'var(--text-tertiary)' }} />,
-      label: 'System',
-    },
-  }
-
-  const style = styles[message.type] || styles.system
-
-  const displayContent = message.content.length > 200
-    ? message.content.slice(0, 200) + '…'
-    : message.content
-
-  return (
-    <div
-      className={`pl-2 py-1 ${message.type === 'user' ? 'ml-4' : ''}`}
-      style={{ borderLeft: `2px solid ${style.borderColor}` }}
-    >
-      <div className="flex items-center gap-1">
-        {style.icon}
-        <span className="text-[11px] font-medium" style={{ color: 'var(--text-secondary)' }}>{style.label}</span>
-        {message.step && (
-          <span className="text-[10px] ml-auto font-mono" style={{ color: 'var(--text-tertiary)' }}>{message.step}</span>
-        )}
-      </div>
-      {displayContent && (
-        <p className="text-[11px] mt-0.5 ml-4 leading-relaxed break-words whitespace-pre-wrap" style={{ color: 'var(--text-secondary)' }}>
-          {displayContent}
-        </p>
       )}
     </div>
   )
