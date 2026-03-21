@@ -45,6 +45,11 @@
 | [x] | trackid-copy-btn_20260321 | Issue TrackId Copy Button | 2026-03-21 | 2026-03-21 |
 | [x] | verify-plan-display_20260321 | Implemented Issue 展示验证计划 | 2026-03-21 | 2026-03-21 |
 | [x] | agent-session-view_20260321 | Agents Page Unified Session View | 2026-03-21 | 2026-03-22 |
-| [ ] | status-label-rename_20260321 | in-progress 状态显示文本改为 Implementing | 2026-03-21 | 2026-03-21 |
 | [x] | track-status-unify_20260321 | Issue 与 Track 状态统一 | 2026-03-21 | 2026-03-21 |
 | [x] | session-detail-panel_20260322 | Agent Monitor Session Detail Panel | 2026-03-22 | 2026-03-22 |
+| [x] | cancel-track-creation_20260322 | Cancel Track Creation Button | 2026-03-22 | 2026-03-22 |
+| [x] | session-messages-fix_20260322 | Fix Agent Monitor Session Messages Not Displaying | 2026-03-22 | 2026-03-22 |
+| [x] | track-question-prominent_20260321 | Create Track 交互提问突出展示 | 2026-03-21 | 2026-03-22 |
+| [x] | test-mock-fix_20260321 | Fix issues.test.ts Mock Alignment with ISS-047 | 2026-03-21 | 2026-03-21 |
+| [~] | issue-session-sync_20260322 | Fix Issues Page & Agent Monitor State Sync | 2026-03-22 | 2026-03-22 |
+| [x] | session-msg-truncate_20260321 | Fix Agent Monitor Session Message Truncation | 2026-03-21 | 2026-03-21 |

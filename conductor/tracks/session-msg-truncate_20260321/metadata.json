@@ -1,0 +1,16 @@
+{
+  "id": "session-msg-truncate_20260321",
+  "title": "Fix Agent Monitor Session Message Truncation",
+  "type": "bug",
+  "status": "complete",
+  "created": "2026-03-21T10:05:00+08:00",
+  "updated": "2026-03-21T22:25:00+08:00",
+  "phases": {
+    "total": 1,
+    "completed": 1
+  },
+  "tasks": {
+    "total": 5,
+    "completed": 5
+  }
+}

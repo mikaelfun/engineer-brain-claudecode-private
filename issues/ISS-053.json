@@ -1,0 +1,11 @@
+{
+  "id": "ISS-053",
+  "title": "Agent Monitor展开session看到的实时状态消息被截断，不完整",
+  "description": "在Dashboard的Agent Monitor页面，展开某个session查看实时状态消息时，消息内容被截断显示不完整。需要排查是前端渲染截断还是后端推送的数据本身不完整。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "session-msg-truncate_20260321",
+  "createdAt": "2026-03-21T10:00:00+08:00",
+  "updatedAt": "2026-03-21T22:25:00+08:00"
+}

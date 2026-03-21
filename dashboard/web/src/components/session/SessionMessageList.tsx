@@ -241,8 +241,10 @@ export function CollapsedGroup({ group }: { group: DisplayMessage }) {
   )
 }
 
-/** Compact message bubble for sidebar width */
+/** Compact message bubble for sidebar width — with expand/collapse for long content */
 export function MessageBubble({ message, compact }: { message: { type: string; content: string; toolName?: string; step?: string }; compact?: boolean }) {
+  const [expanded, setExpanded] = useState(false)
+
   const styles: Record<string, { borderColor: string; icon: React.ReactNode; label: string }> = {
     thinking: {
       borderColor: 'var(--accent-blue)',
@@ -283,8 +285,10 @@ export function MessageBubble({ message, compact }: { message: { type: string; c
 
   const style = styles[message.type] || styles.system
 
-  const maxLen = compact ? 100 : 200
-  const displayContent = message.content.length > maxLen
+  // Increased preview limits: normal 500, compact 200
+  const maxLen = compact ? 200 : 500
+  const isTruncated = message.content.length > maxLen
+  const displayContent = (isTruncated && !expanded)
     ? message.content.slice(0, maxLen) + '…'
     : message.content
 
@@ -301,9 +305,18 @@ export function MessageBubble({ message, compact }: { message: { type: string; c
         )}
       </div>
       {displayContent && (
-        <p className={`text-[11px] mt-0.5 ml-4 leading-relaxed break-words whitespace-pre-wrap ${compact ? 'line-clamp-2' : ''}`} style={{ color: 'var(--text-secondary)' }}>
+        <p className={`text-[11px] mt-0.5 ml-4 leading-relaxed break-words whitespace-pre-wrap ${compact && !expanded ? 'line-clamp-3' : ''}`} style={{ color: 'var(--text-secondary)' }}>
           {displayContent}
         </p>
+      )}
+      {isTruncated && (
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="text-[10px] ml-4 mt-0.5 font-medium cursor-pointer hover:underline"
+          style={{ color: 'var(--accent-blue)' }}
+        >
+          {expanded ? '▲ Show less' : '▼ Show more'}
+        </button>
       )}
     </div>
   )
