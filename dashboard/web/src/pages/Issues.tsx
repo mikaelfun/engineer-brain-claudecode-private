@@ -3,8 +3,8 @@
  *
  * 功能：列表 + 筛选 + 分页 + 内联创建 + 行内编辑 + 状态驱动操作按钮
  */
-import { useState } from 'react'
-import { Plus, X, Trash2, ExternalLink, ChevronRight, ChevronDown, Loader2, Rocket, Play, CheckCircle, RotateCcw, RefreshCw, Monitor, Server, Search, Pencil, FileText, ListChecks, FlaskConical, CircleCheck } from 'lucide-react'
+import { useState, useCallback } from 'react'
+import { Plus, X, Trash2, ExternalLink, ChevronRight, ChevronDown, Loader2, Rocket, Play, CheckCircle, RotateCcw, RefreshCw, Monitor, Server, Search, Pencil, FileText, ListChecks, FlaskConical, CircleCheck, ShieldCheck, UserCheck, Copy, Check } from 'lucide-react'
 import { useIssues, useCreateIssue, useUpdateIssue, useDeleteIssue, useCreateTrack, useStartImplement, useVerifyIssue, useReopenIssue, useMarkDone, useRestartFrontend, useRestartBackend, useRestartAll, useTrackSpec, useTrackPlan } from '../api/hooks'
 import { Loading, ErrorState } from '../components/common/Loading'
 import TrackProgressPanel from '../components/TrackProgressPanel'
@@ -314,7 +314,7 @@ export default function Issues() {
       )
     }
 
-    // implemented → Mark Done + Reopen
+    // implemented → Mark Done + Verify + Reopen
     if (status === 'implemented') {
       const isDoneLoading = markDone.isPending && markDone.variables === issue.id
       const isReopenLoading = reopenIssue.isPending && reopenIssue.variables === issue.id
@@ -329,6 +329,15 @@ export default function Issues() {
           >
             {isDoneLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CircleCheck className="w-3.5 h-3.5" />}
             Mark Done
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); handleVerify(issue.id) }}
+            className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap"
+            style={{ background: 'var(--accent-amber-dim)', color: 'var(--accent-amber)' }}
+            title="Run tests to verify"
+          >
+            <FlaskConical className="w-3.5 h-3.5" />
+            Verify
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); reopenIssue.mutate(issue.id) }}
@@ -673,8 +682,11 @@ function IssueRow({
   const isEditing = editingId === issue.id
 
   // Lazy-load track spec and plan when expanded and issue has a trackId
+  // For done issues: also load plan when collapsed to show task progress in row header
+  const isDone = issue.status === 'done'
   const { data: specData } = useTrackSpec(issue.id, isExpanded && !!issue.trackId)
-  const { data: planData } = useTrackPlan(issue.id, isExpanded ? issue.trackId : undefined)
+  const needPlan = isExpanded || (isDone && !!issue.trackId)
+  const { data: planData } = useTrackPlan(issue.id, needPlan ? issue.trackId : undefined)
 
   const priorityStyle = PRIORITY_COLORS[issue.priority as IssuePriority]
   const typeStyle = TYPE_COLORS[issue.type as IssueType]
@@ -721,6 +733,31 @@ function IssueRow({
                 {issue.status}
               </span>
             )}
+            {/* Done issue verification method badge */}
+            {issue.status === 'done' && (
+              issue.verifyResult ? (
+                <span
+                  className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium"
+                  style={{
+                    background: issue.verifyResult.unitTest?.success && issue.verifyResult.uiTest?.success
+                      ? 'var(--accent-green-dim)' : 'var(--accent-red-dim)',
+                    color: issue.verifyResult.unitTest?.success && issue.verifyResult.uiTest?.success
+                      ? 'var(--accent-green)' : 'var(--accent-red)',
+                  }}
+                >
+                  <ShieldCheck className="w-3 h-3" />
+                  Auto-Verified
+                </span>
+              ) : (
+                <span
+                  className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium"
+                  style={{ background: 'var(--bg-inset)', color: 'var(--text-tertiary)' }}
+                >
+                  <UserCheck className="w-3 h-3" />
+                  Manual
+                </span>
+              )
+            )}
           </div>
           <h3
             className={`text-sm font-medium mt-1 ${issue.status === 'done' ? 'line-through' : ''}`}
@@ -740,6 +777,18 @@ function IssueRow({
                   {issue.trackId}
                 </span>
               )}
+              {/* Done issue: show track task completion progress */}
+              {isDone && issue.trackId && planData?.plan && (() => {
+                const tasks = planData.plan.match(/^- \[.\]\s*Task\s+\d/gim) || []
+                const completed = planData.plan.match(/^- \[x\]\s*Task\s+\d/gim) || []
+                if (tasks.length === 0) return null
+                return (
+                  <span className="flex items-center gap-1" style={{ color: completed.length === tasks.length ? 'var(--accent-green)' : 'var(--text-tertiary)' }}>
+                    <ListChecks className="w-3 h-3" />
+                    {completed.length}/{tasks.length} tasks {completed.length === tasks.length ? '✓' : ''}
+                  </span>
+                )
+              })()}
             </div>
           )}
         </div>
@@ -961,8 +1010,16 @@ function IssueRow({
               )}
 
               {/* ISS-039: Verify Results — show when issue has persisted verifyResult */}
-              {issue.verifyResult && (
+              {/* ISS-041: Show manual done hint when no verifyResult */}
+              {issue.verifyResult ? (
                 <VerifyResultPanel verifyResult={issue.verifyResult} />
+              ) : isDone && (
+                <div className="rounded-lg p-3 flex items-center gap-2" style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-subtle)' }}>
+                  <UserCheck className="w-4 h-4 shrink-0" style={{ color: 'var(--text-tertiary)' }} />
+                  <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                    Manually marked as done — no automated test verification
+                  </span>
+                </div>
               )}
 
               <div className="flex items-center gap-4 text-xs" style={{ color: 'var(--text-secondary)' }}>
