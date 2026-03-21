@@ -4,8 +4,8 @@
  * 功能：列表 + 筛选 + 分页 + 内联创建 + 行内编辑 + 状态驱动操作按钮
  */
 import { useState } from 'react'
-import { Plus, X, Trash2, ExternalLink, ChevronRight, ChevronDown, Loader2, Rocket, Play, CheckCircle, RotateCcw, RefreshCw, Monitor, Server, Search, Pencil } from 'lucide-react'
-import { useIssues, useCreateIssue, useUpdateIssue, useDeleteIssue, useCreateTrack, useStartImplement, useVerifyIssue, useReopenIssue, useRestartFrontend, useRestartBackend, useRestartAll } from '../api/hooks'
+import { Plus, X, Trash2, ExternalLink, ChevronRight, ChevronDown, Loader2, Rocket, Play, CheckCircle, RotateCcw, RefreshCw, Monitor, Server, Search, Pencil, FileText, ListChecks } from 'lucide-react'
+import { useIssues, useCreateIssue, useUpdateIssue, useDeleteIssue, useCreateTrack, useStartImplement, useVerifyIssue, useReopenIssue, useRestartFrontend, useRestartBackend, useRestartAll, useTrackSpec, useTrackPlan } from '../api/hooks'
 import { Loading, ErrorState } from '../components/common/Loading'
 import TrackProgressPanel from '../components/TrackProgressPanel'
 import ImplementPanel from '../components/ImplementPanel'
@@ -722,6 +722,10 @@ function IssueRow({
   const isExpanded = expandedId === issue.id
   const isEditing = editingId === issue.id
 
+  // Lazy-load track spec and plan when expanded and issue has a trackId
+  const { data: specData } = useTrackSpec(issue.id, isExpanded && !!issue.trackId)
+  const { data: planData } = useTrackPlan(issue.id, isExpanded ? issue.trackId : undefined)
+
   const priorityStyle = PRIORITY_COLORS[issue.priority as IssuePriority]
   const typeStyle = TYPE_COLORS[issue.type as IssueType]
   const statusStyle = STATUS_COLORS[issue.status as IssueStatus]
@@ -897,12 +901,104 @@ function IssueRow({
             </div>
           ) : (
             /* Readonly Detail Panel */
-            <div className="px-4 py-3 space-y-2">
+            <div className="px-4 py-3 space-y-3">
               {issue.description ? (
                 <p className="text-sm whitespace-pre-wrap" style={{ color: 'var(--text-secondary)' }}>{issue.description}</p>
               ) : (
                 <p className="text-sm italic" style={{ color: 'var(--text-tertiary)' }}>No description</p>
               )}
+
+              {/* Track Detail: Analysis + Plan (only for issues with trackId) */}
+              {issue.trackId && (specData || planData) && (
+                <div className="space-y-3 pt-1">
+                  {/* Analysis section — from spec.md */}
+                  {specData?.spec && (() => {
+                    const spec = specData.spec
+                    // Extract Summary section
+                    const summaryMatch = spec.match(/## Summary\s*\n([\s\S]*?)(?=\n## |\n---|\n_Generated)/m)
+                    const summary = summaryMatch?.[1]?.trim()
+                    // Extract Acceptance Criteria
+                    const acMatch = spec.match(/## Acceptance Criteria\s*\n([\s\S]*?)(?=\n## |\n---|\n_Generated)/m)
+                    const acRaw = acMatch?.[1]?.trim()
+                    const acItems = acRaw
+                      ? acRaw.split('\n').filter(l => /^- \[.\]/.test(l.trim())).map(l => {
+                          const checked = /^- \[x\]/i.test(l.trim())
+                          const text = l.trim().replace(/^- \[.\]\s*/, '')
+                          return { checked, text }
+                        })
+                      : []
+
+                    if (!summary && acItems.length === 0) return null
+
+                    return (
+                      <div className="rounded-lg p-3" style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-subtle)' }}>
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <FileText className="w-3.5 h-3.5" style={{ color: 'var(--accent-blue)' }} />
+                          <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--accent-blue)' }}>Analysis</span>
+                        </div>
+                        {summary && (
+                          <p className="text-xs leading-relaxed mb-2" style={{ color: 'var(--text-secondary)' }}>{summary}</p>
+                        )}
+                        {acItems.length > 0 && (
+                          <div className="space-y-1">
+                            <span className="text-xs font-medium" style={{ color: 'var(--text-tertiary)' }}>Acceptance Criteria:</span>
+                            {acItems.map((item, i) => (
+                              <div key={i} className="flex items-start gap-1.5 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                                <span className="shrink-0 mt-0.5" style={{ color: item.checked ? 'var(--accent-green)' : 'var(--text-tertiary)' }}>
+                                  {item.checked ? '✓' : '○'}
+                                </span>
+                                <span className={item.checked ? 'line-through opacity-60' : ''}>{item.text}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })()}
+
+                  {/* Plan section — from plan.md */}
+                  {planData?.plan && (() => {
+                    const plan = planData.plan
+                    // Parse tasks: lines matching "- [x] Task X.Y: ..." or "- [ ] Task X.Y: ..."
+                    const taskLines = plan.split('\n').filter(l => /^- \[.\]\s*Task\s+\d/i.test(l.trim()))
+                    const tasks = taskLines.map(l => {
+                      const checked = /^- \[x\]/i.test(l.trim())
+                      const text = l.trim().replace(/^- \[.\]\s*/, '')
+                      return { checked, text }
+                    })
+                    // Parse status from header
+                    const statusMatch = plan.match(/\*\*Status:\*\*\s*\[(.)\]/)
+                    const trackStatus = statusMatch?.[1] === 'x' ? 'Complete' : statusMatch?.[1] === '~' ? 'In Progress' : 'Not Started'
+
+                    if (tasks.length === 0) return null
+
+                    const completedCount = tasks.filter(t => t.checked).length
+
+                    return (
+                      <div className="rounded-lg p-3" style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-subtle)' }}>
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <ListChecks className="w-3.5 h-3.5" style={{ color: 'var(--accent-purple)' }} />
+                          <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--accent-purple)' }}>Plan</span>
+                          <span className="ml-auto text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                            {completedCount}/{tasks.length} tasks · {trackStatus}
+                          </span>
+                        </div>
+                        <div className="space-y-1">
+                          {tasks.map((task, i) => (
+                            <div key={i} className="flex items-start gap-1.5 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                              <span className="shrink-0 mt-0.5" style={{ color: task.checked ? 'var(--accent-green)' : 'var(--text-tertiary)' }}>
+                                {task.checked ? '✓' : '○'}
+                              </span>
+                              <span className={task.checked ? 'line-through opacity-60' : ''}>{task.text}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  })()}
+                </div>
+              )}
+
               <div className="flex items-center gap-4 text-xs" style={{ color: 'var(--text-secondary)' }}>
                 <span>Created: {new Date(issue.createdAt).toLocaleString()}</span>
                 {issue.updatedAt && <span>Updated: {new Date(issue.updatedAt).toLocaleString()}</span>}

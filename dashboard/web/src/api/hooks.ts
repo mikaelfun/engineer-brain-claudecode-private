@@ -446,6 +446,14 @@ export function useTrackPlan(issueId: string, trackId?: string) {
   })
 }
 
+export function useTrackSpec(issueId: string, enabled: boolean = false) {
+  return useQuery({
+    queryKey: ['track-spec', issueId],
+    queryFn: () => apiGet<{ spec: string; trackId: string }>(`/issues/${issueId}/track-spec`),
+    enabled,
+  })
+}
+
 export function useTrackProgress(issueId: string, enabled: boolean = false) {
   return useQuery({
     queryKey: ['track-progress', issueId],
