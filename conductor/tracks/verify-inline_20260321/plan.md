@@ -3,7 +3,7 @@
 **Track ID:** verify-inline_20260321
 **Spec:** [spec.md](./spec.md)
 **Created:** 2026-03-21
-**Status:** [~] In Progress
+**Status:** [x] Complete
 
 ## Overview
 
@@ -38,25 +38,25 @@
 ### Verification
 
 - [x] TypeScript 编译通过（前端 + 后端）
-- [ ] 单元测试通过
+- [x] 单元测试通过
 
 ## Phase 3: 测试 + 收尾
 
 ### Tasks
 
-- [ ] Task 3.1: 从 WebUI 点击 Verify 测试 inline 进度展示
-- [ ] Task 3.2: 测试页面刷新后 verify 状态恢复
+- [x] Task 3.1: 从 WebUI 点击 Verify 测试 inline 进度展示
+- [x] Task 3.2: 测试页面刷新后 verify 状态恢复
 
 ### Verification
 
-- [ ] 单元测试通过
+- [x] 单元测试通过
 
 ## Post-Implementation Checklist
 
-- [ ] 单元测试文件已创建并通过
-- [ ] 关联 Issue JSON (ISS-037) 状态已更新
-- [ ] Track metadata.json 已更新
-- [ ] tracks.md 状态标记已更新
+- [x] 单元测试文件已创建并通过
+- [x] 关联 Issue JSON (ISS-037) 状态已更新
+- [x] Track metadata.json 已更新
+- [x] tracks.md 状态标记已更新
 
 ---
 

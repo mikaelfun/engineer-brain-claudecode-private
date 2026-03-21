@@ -1,0 +1,11 @@
+{
+  "id": "ISS-037",
+  "title": "点击verify目前弹出独立窗口显示实时状态，应该参照create track在内部展示",
+  "description": "",
+  "type": "bug",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "verify-inline_20260321",
+  "createdAt": "2026-03-21T19:15:00+08:00",
+  "updatedAt": "2026-03-21T19:42:00+08:00"
+}
