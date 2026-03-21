@@ -4,6 +4,9 @@
  * Shows real-time test execution progress inline in the Issues page,
  * replacing the previous full-screen loading overlay + result modal.
  * Mirrors the TrackProgressPanel pattern with SSE-driven state.
+ *
+ * ISS-054: Added polling fallback — when isActive is true and messages exist,
+ * polls verify-status every 5s to detect missed SSE completion events.
  */
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { Loader2, Wrench, CheckCircle2, AlertCircle, XCircle, FlaskConical, ChevronDown, ChevronRight, History } from 'lucide-react'
@@ -22,6 +25,8 @@ export default function VerifyProgressPanel({ issueId, onRetry }: VerifyProgress
   const result = useIssueTrackStore((s) => s.verifyResult[issueId])
   const loadVerifyMessages = useIssueTrackStore((s) => s.loadVerifyMessages)
   const setVerifyResult = useIssueTrackStore((s) => s.setVerifyResult)
+  const setVerifyActive = useIssueTrackStore((s) => s.setVerifyActive)
+  const addVerifyMessage = useIssueTrackStore((s) => s.addVerifyMessage)
   const scrollRef = useRef<HTMLDivElement>(null)
   const hasRecoveredRef = useRef(false)
   const [collapsed, setCollapsed] = useState(false)
@@ -44,6 +49,33 @@ export default function VerifyProgressPanel({ issueId, onRetry }: VerifyProgress
       }
     }
   }, [recoveredData, issueId, loadVerifyMessages])
+
+  // ISS-054: Polling fallback — when isActive but messages exist (SSE completion may be missed),
+  // poll verify-status every 5s. If backend says completed/failed, sync frontend state.
+  const needsPolling = isActive && messages.length > 0
+  const { data: polledData } = useVerifyStatus(issueId, needsPolling, needsPolling ? 5000 : false)
+
+  useEffect(() => {
+    if (!polledData || !isActive) return
+    if (polledData.status === 'completed' || polledData.status === 'failed') {
+      // Backend is done but frontend still thinks it's active — sync state
+      setVerifyActive(issueId, false)
+      if (polledData.result) {
+        setVerifyResult(issueId, polledData.result)
+      }
+      // Add completed/error message if not already present
+      const hasCompletedMsg = messages.some(m => m.kind === 'completed' || m.kind === 'error')
+      if (!hasCompletedMsg) {
+        addVerifyMessage(issueId, {
+          kind: polledData.status === 'completed' ? 'completed' : 'error',
+          content: polledData.status === 'completed'
+            ? (polledData.result?.overall ? 'All tests passed ✓' : 'Tests completed with failures')
+            : 'Verification failed',
+          timestamp: new Date().toISOString(),
+        })
+      }
+    }
+  }, [polledData, isActive, issueId, setVerifyActive, setVerifyResult, addVerifyMessage, messages])
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {

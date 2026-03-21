@@ -1,6 +1,7 @@
 /**
  * TanStack Query hooks for all API endpoints
  */
+import { useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiGet, apiPost, apiPatch, apiPut, apiDelete } from './client'
 
@@ -298,6 +299,52 @@ export function useAllSessions(status?: string) {
   })
 }
 
+// ===== Unified Sessions =====
+
+export interface UnifiedSession {
+  id: string
+  type: 'case' | 'implement' | 'verify' | 'track-creation'
+  status: 'active' | 'paused' | 'completed' | 'failed'
+  context: string
+  intent: string
+  startedAt: string
+  lastActivityAt: string
+  metadata?: Record<string, any>
+}
+
+export function useUnifiedSessions(type?: string, status?: string) {
+  return useQuery({
+    queryKey: ['sessions', 'all', { type, status }],
+    queryFn: () => {
+      const params: Record<string, string> = {}
+      if (type) params.type = type
+      if (status) params.status = status
+      return apiGet<{ sessions: UnifiedSession[]; total: number }>('/sessions/all', Object.keys(params).length ? params : undefined)
+    },
+    refetchInterval: 10_000,
+  })
+}
+
+/**
+ * Returns a Set of issueIds that have active track-creation sessions on the backend.
+ * Used by Issues page to detect and recover sessions missed by SSE (ISS-055).
+ */
+export function useActiveTrackSessions(): Set<string> {
+  const { data } = useUnifiedSessions('track-creation')
+  return useMemo(() => {
+    if (!data?.sessions?.length) return EMPTY_ACTIVE_SET
+    const activeIds = new Set<string>()
+    for (const s of data.sessions) {
+      if (s.status === 'active') {
+        activeIds.add(s.context) // context = issueId for track-creation sessions
+      }
+    }
+    return activeIds.size > 0 ? activeIds : EMPTY_ACTIVE_SET
+  }, [data])
+}
+
+const EMPTY_ACTIVE_SET = new Set<string>()
+
 // ===== Patrol =====
 
 export function useStartPatrol() {
@@ -408,6 +455,16 @@ export function useCreateTrack() {
   })
 }
 
+export function useCancelTrack() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => apiPost<{ ok: boolean; message: string }>(`/issues/${id}/cancel-track`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['issues'] })
+    },
+  })
+}
+
 export function useStartImplement() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -498,10 +555,10 @@ export function useImplementStatus(issueId: string, enabled: boolean = false) {
   })
 }
 
-/** Fetch verify status for page-refresh recovery */
-export function useVerifyStatus(issueId: string, enabled: boolean = false) {
+/** Fetch verify status for page-refresh recovery and polling fallback (ISS-054) */
+export function useVerifyStatus(issueId: string, enabled: boolean = false, refetchInterval?: number | false) {
   return useQuery({
-    queryKey: ['verify-status', issueId],
+    queryKey: ['verify-status', issueId, refetchInterval ? 'polling' : 'recovery'],
     queryFn: () => apiGet<{
       active: boolean
       status: 'active' | 'completed' | 'failed' | 'none'
@@ -510,6 +567,7 @@ export function useVerifyStatus(issueId: string, enabled: boolean = false) {
       startedAt?: string
     }>(`/issues/${issueId}/verify-status`),
     enabled,
+    refetchInterval: refetchInterval ?? false,
   })
 }
 

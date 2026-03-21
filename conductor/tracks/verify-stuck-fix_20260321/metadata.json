@@ -1,0 +1,17 @@
+{
+  "id": "verify-stuck-fix_20260321",
+  "title": "Fix Verify Running Tests Stuck After All Pass",
+  "type": "bug",
+  "status": "complete",
+  "issueId": "ISS-054",
+  "created": "2026-03-21T16:10:00+08:00",
+  "updated": "2026-03-21T22:38:00+08:00",
+  "phases": {
+    "total": 2,
+    "completed": 2
+  },
+  "tasks": {
+    "total": 5,
+    "completed": 5
+  }
+}
