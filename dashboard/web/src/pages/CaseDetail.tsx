@@ -163,7 +163,7 @@ export default function CaseDetail() {
         )}
       </div>
 
-      {/* Main Content: Left 70% (Tabs + Content) | Right 30% (AI Panel) */}
+      {/* Main Content: Left (Tabs + Content) | Right (AI Panel) */}
       <div className="flex gap-4 items-start">
         {/* Left — Information area */}
         <div className="flex-1 min-w-0 space-y-4">
@@ -183,14 +183,14 @@ export default function CaseDetail() {
           </div>
         </div>
 
-        {/* Right — AI Assistant sidebar */}
-        <div className="w-72 flex-shrink-0 hidden lg:block">
+        {/* Right — AI Assistant sidebar (xl+ only, sticky) */}
+        <div className="w-64 flex-shrink-0 hidden xl:block sticky top-4">
           <CaseAIPanel caseNumber={id!} />
         </div>
       </div>
 
-      {/* Mobile: AI Panel below content (shown only on small screens) */}
-      <div className="lg:hidden">
+      {/* Tablet/Mobile: AI Panel below content */}
+      <div className="xl:hidden">
         <CaseAIPanel caseNumber={id!} />
       </div>
     </div>
