@@ -1,0 +1,11 @@
+{
+  "id": "ISS-042",
+  "title": "implemented状态issue应该详细页能展示相关测试计划",
+  "description": "",
+  "type": "feature",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "verify-plan-display_20260321",
+  "createdAt": "2026-03-21T19:45:00+08:00",
+  "updatedAt": "2026-03-21T20:14:00+08:00"
+}
