@@ -1,0 +1,11 @@
+{
+  "id": "ISS-058",
+  "title": "Verify 两阶段改造: Track 创建时写测试大纲 + Verify 时 agent 细化执行",
+  "description": "将 UI 测试计划改为两阶段流程：\n\n阶段 1（Track 创建时）：\n- conductor:new-track 生成的 plan.md 增加 '## Verification Plan' 章节\n- 列出测试大纲：验什么 + 测试类型（Interaction/Visual/API/Skip）+ 高层步骤\n- 基于 Issue 描述和 acceptance criteria 设计\n\n阶段 2（Verify 时）：\n- issues.ts verify 路由从硬编码 'npm test + browser-test.mjs' 改为调 Claude agent\n- Agent 读 plan.md 的 Verification Plan → 细化为具体 Playwright 代码 → 执行 → 报告\n- 保留 unit test (npm test) 作为第一步\n- UI test 用 agent 替代固定脚本\n\n前置依赖：ISS-056（workflow.md 策略已完成）",
+  "type": "feature",
+  "priority": "P1",
+  "status": "tracked",
+  "trackId": "verify-two-phase_20260321",
+  "createdAt": "2026-03-21T23:00:00+08:00",
+  "updatedAt": "2026-03-22T00:30:00+08:00"
+}
