@@ -1,0 +1,11 @@
+{
+  "id": "ISS-047",
+  "title": "Issue 与 Track 状态统一 — Track metadata 作为单一事实源",
+  "description": "Issue 绑定 trackId 后，状态应从 track metadata.json 派生，而非双写两个文件。1) Track metadata 新增 issueId 双向关联 + verification 字段（status/method/result）；2) 后端 GET /api/issues 返回时，有 trackId 的 issue 从 track metadata 派生 effectiveStatus 和 verification；3) 写操作（implement/verify/mark-done/reopen）只写 track metadata，不再双写 issue JSON；4) 前端读取统一数据，无需变更。目的：消除双写不一致风险。",
+  "type": "refactor",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "track-status-unify_20260321",
+  "createdAt": "2026-03-21T22:35:00+08:00",
+  "updatedAt": "2026-03-21T22:55:00+08:00"
+}
