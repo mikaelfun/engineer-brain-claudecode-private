@@ -14,7 +14,7 @@
 | [ ] | cc-finder_20260320 | CC Finder Integration | 2026-03-20 | 2026-03-20 |
 | [ ] | workflow-persist_20260320 | Workflow Progress Persistence | 2026-03-20 | 2026-03-20 |
 | [x] | restart-buttons_20260320 | Issue 页面添加重启前后端按钮 | 2026-03-20 | 2026-03-20 |
-| [ ] | implement-progress_20260320 | Issue Implement 实时进度展示 | 2026-03-20 | 2026-03-20 |
+| [x] | implement-progress_20260320 | Issue Implement 实时进度展示 | 2026-03-20 | 2026-03-21 |
 | [x] | issue-track-fix_20260320 | Fix WebUI Issue Track Button | 2026-03-20 | 2026-03-20 |
 | [x] | issue-track-dialog_20260320 | Issue Track 对话框补充信息 | 2026-03-20 | 2026-03-20 |
 | [x] | track-creation-progress_20260320 | Track 创建流程完善 — 实时进度 + Plan 展示 | 2026-03-20 | 2026-03-20 |
@@ -29,3 +29,4 @@
 | [x] | track-question-fix_20260321 | Fix Create Track Question Dialog Not Showing | 2026-03-21 | 2026-03-21 |
 | [x] | design-system-integration_20260321 | Dashboard Design System Integration — Dual Theme | 2026-03-21 | 2026-03-21 |
 | [x] | web-test-infra_20260321 | Frontend Test Infrastructure | 2026-03-21 | 2026-03-21 |
+| [x] | track-question-fix2_20260321 | Fix Create Track Question Dialog (Round 2) | 2026-03-21 | 2026-03-21 |

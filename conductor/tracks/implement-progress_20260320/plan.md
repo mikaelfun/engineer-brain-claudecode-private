@@ -3,7 +3,7 @@
 **Track ID:** implement-progress_20260320
 **Spec:** [spec.md](./spec.md)
 **Created:** 2026-03-20
-**Status:** [ ] Not Started
+**Status:** [x] Complete
 
 ## Overview
 
@@ -21,8 +21,8 @@
 
 ### Verification
 
-- [ ] `npx tsc --noEmit` 通过
-- [ ] 手动 curl 测试：POST start-implement → 返回 202 + 锁生效 → 重复 POST 返回 409 → GET implement-status 返回消息
+- [x] `npx tsc --noEmit` 通过
+- [x] 手动 curl 测试：POST start-implement → 返回 202 + 锁生效 → 重复 POST 返回 409 → GET implement-status 返回消息
 
 ## Phase 2: 前端 — Store + SSE 消费
 
@@ -34,8 +34,8 @@
 
 ### Verification
 
-- [ ] `npx tsc --noEmit`（含 `dashboard/web/`）通过
-- [ ] 在 console 中确认 SSE 事件能被正确路由到 implementStore
+- [x] `npx tsc --noEmit`（含 `dashboard/web/`）通过
+- [x] 在 console 中确认 SSE 事件能被正确路由到 implementStore
 
 ## Phase 3: 前端 — ImplementPanel UI 组件
 
@@ -46,29 +46,29 @@
 
 ### Verification
 
-- [ ] `npx tsc --noEmit`（含 `dashboard/web/`）通过
-- [ ] 手动在 dashboard 验证：点击 Implement → 面板展开 → 实时消息流 → 完成后显示结果
+- [x] `npx tsc --noEmit`（含 `dashboard/web/`）通过
+- [x] 手动在 dashboard 验证：点击 Implement → 面板展开 → 实时消息流 → 完成后显示结果
 
 ## Phase 4: 测试 + 收尾
 
 ### Tasks
 
-- [ ] Task 4.1: 单元测试 — `implement-session-manager.test.ts`（操作锁 acquire/release、持久化消息 append/get/clear、上限截断）+ `issues.test.ts` 新增 implement-status 和改造后 start-implement 的测试用例
-- [ ] Task 4.2: `browser-test.mjs` 确认 `/issues` 路由仍通过（无 ErrorBoundary / Maximum update depth）
-- [ ] Task 4.3: 更新 ISS-015 状态为 done + 更新 track metadata + tracks.md
+- [x] Task 4.1: 单元测试 — `implement-session-manager.test.ts`（操作锁 acquire/release、持久化消息 append/get/clear、上限截断）+ `issues.test.ts` 新增 implement-status 和改造后 start-implement 的测试用例
+- [x] Task 4.2: `browser-test.mjs` 确认 `/issues` 路由仍通过（无 ErrorBoundary / Maximum update depth）
+- [x] Task 4.3: 更新 ISS-015 状态为 done + 更新 track metadata + tracks.md
 
 ### Verification
 
-- [ ] `npm test` — 所有测试通过
-- [ ] `npx tsc --noEmit` — 两端类型检查通过
+- [x] `npm test` — 所有测试通过
+- [x] `npx tsc --noEmit` — 两端类型检查通过
 
 ## Post-Implementation Checklist
 
-- [ ] 单元测试文件已创建并通过
-- [ ] browser-test.mjs 已覆盖新页面/路由（如有 UI 变更）
-- [ ] 关联 Issue JSON 状态已更新（ISS-015 → done）
-- [ ] Track metadata.json 已更新
-- [ ] tracks.md 状态标记已更新
+- [x] 单元测试文件已创建并通过
+- [x] browser-test.mjs 已覆盖新页面/路由（如有 UI 变更）
+- [x] 关联 Issue JSON 状态已更新（ISS-015 → done）
+- [x] Track metadata.json 已更新
+- [x] tracks.md 状态标记已更新
 
 ---
 

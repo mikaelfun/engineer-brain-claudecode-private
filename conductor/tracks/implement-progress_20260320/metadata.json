@@ -1,0 +1,16 @@
+{
+  "id": "implement-progress_20260320",
+  "title": "Issue Implement 实时进度展示",
+  "type": "feature",
+  "status": "complete",
+  "created": "2026-03-20T18:55:00+08:00",
+  "updated": "2026-03-21T15:05:00+08:00",
+  "phases": {
+    "total": 4,
+    "completed": 4
+  },
+  "tasks": {
+    "total": 10,
+    "completed": 10
+  }
+}
