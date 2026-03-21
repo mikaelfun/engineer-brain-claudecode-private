@@ -200,8 +200,11 @@ export default function Layout({ children }: LayoutProps) {
 
       {/* Main content */}
       <main
-        className="flex-1 min-h-screen"
-        style={{ marginLeft: 'var(--sidebar-width, 220px)' }}
+        className="flex-1 min-h-screen min-w-0 overflow-x-hidden"
+        style={{
+          marginLeft: 'var(--sidebar-width, 220px)',
+          maxWidth: 'calc(100vw - var(--sidebar-width, 220px))',
+        }}
       >
         {/* Mobile top spacing */}
         <div className="md:hidden h-14" />
