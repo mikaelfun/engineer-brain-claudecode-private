@@ -421,7 +421,7 @@ export function useStartImplement() {
 export function useVerifyIssue() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => apiPost<{ issue: any; unitTest: { success: boolean; output: string }; uiTest: { success: boolean; output: string } }>(`/issues/${id}/verify`),
+    mutationFn: (id: string) => apiPost<{ message: string }>(`/issues/${id}/verify`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['issues'] })
     },
@@ -432,6 +432,16 @@ export function useReopenIssue() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => apiPost<any>(`/issues/${id}/reopen`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['issues'] })
+    },
+  })
+}
+
+export function useMarkDone() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => apiPost<any>(`/issues/${id}/mark-done`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['issues'] })
     },
@@ -484,6 +494,21 @@ export function useImplementStatus(issueId: string, enabled: boolean = false) {
       trackId?: string
       startedAt?: string
     }>(`/issues/${issueId}/implement-status`),
+    enabled,
+  })
+}
+
+/** Fetch verify status for page-refresh recovery */
+export function useVerifyStatus(issueId: string, enabled: boolean = false) {
+  return useQuery({
+    queryKey: ['verify-status', issueId],
+    queryFn: () => apiGet<{
+      active: boolean
+      status: 'active' | 'completed' | 'failed' | 'none'
+      messages: Array<{ kind: string; content: string; toolName?: string; timestamp: string }>
+      result?: { unitTest?: { passed: boolean; output: string }; uiTest?: { passed: boolean; output: string }; overall: boolean }
+      startedAt?: string
+    }>(`/issues/${issueId}/verify-status`),
     enabled,
   })
 }

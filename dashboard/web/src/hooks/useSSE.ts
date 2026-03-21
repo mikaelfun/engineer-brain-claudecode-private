@@ -44,6 +44,9 @@ export function useSSE() {
   const startImplementSession = useImplementStore((s) => s.startSession)
   const addImplementMessage = useImplementStore((s) => s.addMessage)
   const setImplementStatus = useImplementStore((s) => s.setStatus)
+  const addVerifyMessage = useIssueTrackStore((s) => s.addVerifyMessage)
+  const setVerifyActive = useIssueTrackStore((s) => s.setVerifyActive)
+  const setVerifyResult = useIssueTrackStore((s) => s.setVerifyResult)
 
   const connect = useCallback(() => {
     const token = localStorage.getItem('eb_token')
@@ -370,6 +373,72 @@ export function useSSE() {
       }
     })
 
+    // Issue verify progress events → populate issueTrackStore verify state
+    es.addEventListener('issue-verify-started', (e) => {
+      const data = safeParse(e.data)
+      if (!data) return
+      const d = data.data || data
+      const issueId = d.issueId
+      if (issueId) {
+        setVerifyActive(issueId, true)
+        addVerifyMessage(issueId, {
+          kind: 'started',
+          content: 'Verification started',
+          timestamp: d.timestamp || new Date().toISOString(),
+        })
+      }
+    })
+
+    es.addEventListener('issue-verify-progress', (e) => {
+      const data = safeParse(e.data)
+      if (!data) return
+      const d = data.data || data
+      const issueId = d.issueId
+      if (issueId) {
+        addVerifyMessage(issueId, {
+          kind: d.kind || (d.toolName ? 'tool-call' : 'thinking'),
+          content: d.content || d.toolName || '',
+          toolName: d.toolName,
+          timestamp: d.timestamp || new Date().toISOString(),
+        })
+      }
+    })
+
+    es.addEventListener('issue-verify-completed', (e) => {
+      const data = safeParse(e.data)
+      if (!data) return
+      const d = data.data || data
+      const issueId = d.issueId
+      if (issueId) {
+        setVerifyActive(issueId, false)
+        addVerifyMessage(issueId, {
+          kind: 'completed',
+          content: d.result?.overall ? 'All tests passed ✓' : 'Tests completed with failures',
+          timestamp: d.timestamp || new Date().toISOString(),
+        })
+        if (d.result) {
+          setVerifyResult(issueId, d.result)
+        }
+        queryClient.invalidateQueries({ queryKey: ['issues'] })
+      }
+    })
+
+    es.addEventListener('issue-verify-error', (e) => {
+      const data = safeParse(e.data)
+      if (!data) return
+      const d = data.data || data
+      const issueId = d.issueId
+      if (issueId) {
+        setVerifyActive(issueId, false)
+        addVerifyMessage(issueId, {
+          kind: 'error',
+          content: d.error || 'Verification failed',
+          timestamp: d.timestamp || new Date().toISOString(),
+        })
+        queryClient.invalidateQueries({ queryKey: ['issues'] })
+      }
+    })
+
     es.onopen = () => {
       // Reset retry count on successful connection
       retryCountRef.current = 0
@@ -389,7 +458,7 @@ export function useSSE() {
         console.error(`[SSE] Max retries (${MAX_RETRIES}) exceeded, giving up`)
       }
     }
-  }, [queryClient, patrolOnProgress, patrolOnCaseCompleted, addCaseSessionMessage, addIssueTrackMessage, setIssueTrackingActive, setIssuePendingQuestion])
+  }, [queryClient, patrolOnProgress, patrolOnCaseCompleted, addCaseSessionMessage, addIssueTrackMessage, setIssueTrackingActive, setIssuePendingQuestion, addVerifyMessage, setVerifyActive, setVerifyResult])
 
   useEffect(() => {
     connect()

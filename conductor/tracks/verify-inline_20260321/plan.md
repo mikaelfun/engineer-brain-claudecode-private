@@ -3,7 +3,7 @@
 **Track ID:** verify-inline_20260321
 **Spec:** [spec.md](./spec.md)
 **Created:** 2026-03-21
-**Status:** [ ] Not Started
+**Status:** [~] In Progress
 
 ## Overview
 
@@ -21,8 +21,8 @@
 
 ### Verification
 
-- [ ] TypeScript 编译通过
-- [ ] 后端启动无报错
+- [x] TypeScript 编译通过
+- [x] 后端启动无报错
 
 ## Phase 2: 前端 inline panel
 
@@ -30,14 +30,14 @@
 
 ### Tasks
 
-- [ ] Task 2.1: 在 `issueTrackStore` 中新增 verify 相关状态（verifyMessages、activeVerify、verifyResult）
-- [ ] Task 2.2: 在 `useSSE` hook 中新增 `issue-verify-*` 事件监听，更新 store
-- [ ] Task 2.3: 创建 `VerifyProgressPanel` 组件，展示 verify 实时进度和结果
-- [ ] Task 2.4: 修改 `Issues.tsx`，移除 verify overlay/modal，改用 inline VerifyProgressPanel
+- [x] Task 2.1: 在 `issueTrackStore` 中新增 verify 相关状态（verifyMessages、activeVerify、verifyResult）
+- [x] Task 2.2: 在 `useSSE` hook 中新增 `issue-verify-*` 事件监听，更新 store
+- [x] Task 2.3: 创建 `VerifyProgressPanel` 组件，展示 verify 实时进度和结果
+- [x] Task 2.4: 修改 `Issues.tsx`，移除 verify overlay/modal，改用 inline VerifyProgressPanel
 
 ### Verification
 
-- [ ] TypeScript 编译通过（前端 + 后端）
+- [x] TypeScript 编译通过（前端 + 后端）
 - [ ] 单元测试通过
 
 ## Phase 3: 测试 + 收尾

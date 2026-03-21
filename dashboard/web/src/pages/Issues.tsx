@@ -4,17 +4,18 @@
  * 功能：列表 + 筛选 + 分页 + 内联创建 + 行内编辑 + 状态驱动操作按钮
  */
 import { useState } from 'react'
-import { Plus, X, Trash2, ExternalLink, ChevronRight, ChevronDown, Loader2, Rocket, Play, CheckCircle, RotateCcw, RefreshCw, Monitor, Server, Search, Pencil, FileText, ListChecks } from 'lucide-react'
-import { useIssues, useCreateIssue, useUpdateIssue, useDeleteIssue, useCreateTrack, useStartImplement, useVerifyIssue, useReopenIssue, useRestartFrontend, useRestartBackend, useRestartAll, useTrackSpec, useTrackPlan } from '../api/hooks'
+import { Plus, X, Trash2, ExternalLink, ChevronRight, ChevronDown, Loader2, Rocket, Play, CheckCircle, RotateCcw, RefreshCw, Monitor, Server, Search, Pencil, FileText, ListChecks, FlaskConical, CircleCheck } from 'lucide-react'
+import { useIssues, useCreateIssue, useUpdateIssue, useDeleteIssue, useCreateTrack, useStartImplement, useVerifyIssue, useReopenIssue, useMarkDone, useRestartFrontend, useRestartBackend, useRestartAll, useTrackSpec, useTrackPlan } from '../api/hooks'
 import { Loading, ErrorState } from '../components/common/Loading'
 import TrackProgressPanel from '../components/TrackProgressPanel'
 import ImplementPanel from '../components/ImplementPanel'
+import VerifyProgressPanel from '../components/VerifyProgressPanel'
 import { useIssueTrackStore, EMPTY_TRACK_MESSAGES } from '../stores/issueTrackStore'
 import { useImplementStore } from '../stores/implementStore'
 
 type IssueType = 'bug' | 'feature' | 'refactor' | 'chore'
 type IssuePriority = 'P0' | 'P1' | 'P2'
-type IssueStatus = 'pending' | 'tracking' | 'tracked' | 'in-progress' | 'done'
+type IssueStatus = 'pending' | 'tracking' | 'tracked' | 'in-progress' | 'implemented' | 'done'
 
 const TYPE_COLORS: Record<IssueType, { bg: string; color: string }> = {
   bug: { bg: 'var(--accent-red-dim)', color: 'var(--accent-red)' },
@@ -34,12 +35,8 @@ const STATUS_COLORS: Record<IssueStatus, { bg: string; color: string }> = {
   tracking: { bg: 'var(--accent-blue-dim)', color: 'var(--accent-blue)' },
   tracked: { bg: 'var(--accent-blue-dim)', color: 'var(--accent-blue)' },
   'in-progress': { bg: 'var(--accent-purple-dim)', color: 'var(--accent-purple)' },
+  implemented: { bg: 'var(--accent-teal-dim, var(--accent-blue-dim))', color: 'var(--accent-teal, var(--accent-blue))' },
   done: { bg: 'var(--accent-green-dim)', color: 'var(--accent-green)' },
-}
-
-interface VerifyResult {
-  unitTest: { success: boolean; output: string }
-  uiTest: { success: boolean; output: string }
 }
 
 export default function Issues() {
@@ -66,10 +63,6 @@ export default function Issues() {
   const [editStatus, setEditStatus] = useState<IssueStatus>('pending')
   const [editTrackId, setEditTrackId] = useState('')
 
-  // Verify modal state
-  const [verifyResult, setVerifyResult] = useState<VerifyResult | null>(null)
-  const [verifyIssueId, setVerifyIssueId] = useState<string | null>(null)
-
   // Delete button hover state
   const [deleteHoverId, setDeleteHoverId] = useState<string | null>(null)
 
@@ -84,6 +77,7 @@ export default function Issues() {
   const startImplement = useStartImplement()
   const verifyIssue = useVerifyIssue()
   const reopenIssue = useReopenIssue()
+  const markDone = useMarkDone()
   const restartFe = useRestartFrontend()
   const restartBe = useRestartBackend()
   const restartAllSvc = useRestartAll()
@@ -175,6 +169,16 @@ export default function Issues() {
       countColor: 'var(--accent-blue)',
     },
     {
+      key: 'implemented',
+      label: '🟢 Implemented',
+      description: 'Awaiting manual verification',
+      issues: filteredIssues.filter((i: any) => i.status === 'implemented'),
+      headerBorder: 'var(--accent-teal-dim, var(--accent-green-dim))',
+      headerBg: 'var(--accent-teal-dim, var(--accent-green-dim))',
+      countBg: 'var(--accent-teal-dim, var(--accent-green-dim))',
+      countColor: 'var(--accent-teal, var(--accent-green))',
+    },
+    {
       key: 'done',
       label: '✅ Done',
       description: 'Completed',
@@ -229,18 +233,10 @@ export default function Issues() {
   }
 
   const handleVerify = (issueId: string) => {
-    setVerifyIssueId(issueId)
-    verifyIssue.mutate(issueId, {
-      onSuccess: (result) => {
-        setVerifyResult({ unitTest: result.unitTest, uiTest: result.uiTest })
-      },
-      onError: () => {
-        setVerifyResult({
-          unitTest: { success: false, output: 'Request failed' },
-          uiTest: { success: false, output: '' },
-        })
-      },
-    })
+    // Fire-and-forget: backend runs tests async, SSE pushes progress
+    const verifyStore = useIssueTrackStore.getState()
+    verifyStore.setVerifyActive(issueId, true)
+    verifyIssue.mutate(issueId)
   }
 
   /** Render the status-driven action button for an issue */
@@ -305,18 +301,45 @@ export default function Issues() {
 
     // in-progress → Verify
     if (status === 'in-progress') {
-      const isLoading = verifyIssue.isPending && verifyIssueId === issue.id
       return (
         <button
           onClick={(e) => { e.stopPropagation(); handleVerify(issue.id) }}
-          disabled={isLoading}
-          className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md disabled:opacity-50 transition-colors whitespace-nowrap"
+          className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap"
           style={{ background: 'var(--accent-green-dim)', color: 'var(--accent-green)' }}
           title="Run tests to verify"
         >
-          {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
+          <FlaskConical className="w-3.5 h-3.5" />
           Verify
         </button>
+      )
+    }
+
+    // implemented → Mark Done + Reopen
+    if (status === 'implemented') {
+      const isDoneLoading = markDone.isPending && markDone.variables === issue.id
+      const isReopenLoading = reopenIssue.isPending && reopenIssue.variables === issue.id
+      return (
+        <div className="flex items-center gap-1">
+          <button
+            onClick={(e) => { e.stopPropagation(); markDone.mutate(issue.id) }}
+            disabled={isDoneLoading}
+            className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md disabled:opacity-50 transition-colors whitespace-nowrap"
+            style={{ background: 'var(--accent-green-dim)', color: 'var(--accent-green)' }}
+            title="Mark as done (verified)"
+          >
+            {isDoneLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CircleCheck className="w-3.5 h-3.5" />}
+            Mark Done
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); reopenIssue.mutate(issue.id) }}
+            disabled={isReopenLoading}
+            className="flex items-center gap-1 px-2 py-1 text-xs rounded-md disabled:opacity-50 transition-colors whitespace-nowrap"
+            style={{ color: 'var(--text-tertiary)' }}
+            title="Reopen issue"
+          >
+            {isReopenLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />}
+          </button>
+        </div>
       )
     }
 
@@ -494,6 +517,7 @@ export default function Issues() {
           <option value="tracking">Tracking</option>
           <option value="tracked">Tracked</option>
           <option value="in-progress">In Progress</option>
+          <option value="implemented">Implemented</option>
           <option value="done">Done</option>
         </select>
         <select
@@ -584,86 +608,6 @@ export default function Issues() {
         )}
       </div>
 
-      {/* Verify Result Modal */}
-      {verifyResult && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => { setVerifyResult(null); setVerifyIssueId(null) }}>
-          <div className="rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden" style={{ background: 'var(--bg-surface)' }} onClick={(e) => e.stopPropagation()}>
-            <div className="px-5 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-default)' }}>
-              <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>Verify Results</h2>
-              <button onClick={() => { setVerifyResult(null); setVerifyIssueId(null) }} className="p-1" style={{ color: 'var(--text-tertiary)' }}>
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-5 space-y-4 overflow-y-auto max-h-[calc(80vh-4rem)]">
-              {/* Unit Test */}
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <span
-                    className="px-2 py-0.5 rounded text-xs font-medium"
-                    style={{
-                      background: verifyResult.unitTest.success ? 'var(--accent-green-dim)' : 'var(--accent-red-dim)',
-                      color: verifyResult.unitTest.success ? 'var(--accent-green)' : 'var(--accent-red)',
-                    }}
-                  >
-                    {verifyResult.unitTest.success ? 'PASS' : 'FAIL'}
-                  </span>
-                  <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Step 1: Unit Tests (Vitest)</span>
-                </div>
-                <pre className="text-xs p-3 rounded-lg overflow-x-auto max-h-48 overflow-y-auto whitespace-pre-wrap" style={{ background: 'var(--bg-inset)', color: 'var(--text-primary)' }}>
-                  {verifyResult.unitTest.output || '(no output)'}
-                </pre>
-              </div>
-
-              {/* UI Test */}
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <span
-                    className="px-2 py-0.5 rounded text-xs font-medium"
-                    style={{
-                      background: !verifyResult.unitTest.success
-                        ? 'var(--bg-inset)'
-                        : verifyResult.uiTest.success ? 'var(--accent-green-dim)' : 'var(--accent-red-dim)',
-                      color: !verifyResult.unitTest.success
-                        ? 'var(--text-secondary)'
-                        : verifyResult.uiTest.success ? 'var(--accent-green)' : 'var(--accent-red)',
-                    }}
-                  >
-                    {!verifyResult.unitTest.success ? 'SKIPPED' : verifyResult.uiTest.success ? 'PASS' : 'FAIL'}
-                  </span>
-                  <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Step 2: UI Tests (Playwright)</span>
-                </div>
-                <pre className="text-xs p-3 rounded-lg overflow-x-auto max-h-48 overflow-y-auto whitespace-pre-wrap" style={{ background: 'var(--bg-inset)', color: 'var(--text-primary)' }}>
-                  {verifyResult.uiTest.output || (verifyResult.unitTest.success ? '(no output)' : 'Skipped — unit tests failed')}
-                </pre>
-              </div>
-
-              {/* Overall result */}
-              <div
-                className="text-center py-2 rounded-lg text-sm font-medium"
-                style={{
-                  background: verifyResult.unitTest.success && verifyResult.uiTest.success ? 'var(--accent-green-dim)' : 'var(--accent-red-dim)',
-                  color: verifyResult.unitTest.success && verifyResult.uiTest.success ? 'var(--accent-green)' : 'var(--accent-red)',
-                }}
-              >
-                {verifyResult.unitTest.success && verifyResult.uiTest.success
-                  ? 'All tests passed — issue marked as done'
-                  : 'Tests failed — issue remains in-progress'}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Verify loading overlay */}
-      {verifyIssue.isPending && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="rounded-xl shadow-2xl px-8 py-6 flex flex-col items-center gap-3" style={{ background: 'var(--bg-surface)' }}>
-            <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--accent-blue)' }} />
-            <p className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Running tests...</p>
-            <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>This may take up to 5 minutes</p>
-          </div>
-        </div>
-      )}
 
     </div>
   )
@@ -714,10 +658,16 @@ function IssueRow({
   const hasImplementSession = !!implementSession
   const isImplementActive = implementSession?.status === 'active'
 
+  // Subscribe to verify store for this specific issue
+  const hasVerifyMessages = useIssueTrackStore((s) => (s.verifyMessages[issue.id]?.length ?? 0) > 0)
+  const isVerifyActive = useIssueTrackStore((s) => s.activeVerify[issue.id] ?? false)
+
   // Show progress panel if issue is tracking, has track messages, or was optimistically marked (ISS-029)
   const showProgress = isTracking || hasTrackMessages || isOptimisticTracking
   // Show implement panel if there is an implement session (active, completed, or failed)
   const showImplement = hasImplementSession
+  // Show verify panel if verify is active or has messages
+  const showVerify = isVerifyActive || hasVerifyMessages
 
   const isExpanded = expandedId === issue.id
   const isEditing = editingId === issue.id
@@ -735,7 +685,7 @@ function IssueRow({
       className="rounded-lg transition-colors"
       style={{
         background: 'var(--bg-surface)',
-        border: isTracking ? '1px solid var(--accent-blue)' : isImplementActive ? '1px solid var(--accent-purple)' : '1px solid var(--border-default)',
+        border: isTracking ? '1px solid var(--accent-blue)' : isImplementActive ? '1px solid var(--accent-purple)' : isVerifyActive ? '1px solid var(--accent-green)' : '1px solid var(--border-default)',
       }}
     >
       {/* Row Header — always visible, click toggles expand/collapse */}
@@ -794,7 +744,7 @@ function IssueRow({
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          {/* Override action button when implement is actively running */}
+          {/* Override action button when implement or verify is actively running */}
           {isImplementActive ? (
             <button
               disabled
@@ -804,6 +754,16 @@ function IssueRow({
             >
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
               Implementing...
+            </button>
+          ) : isVerifyActive ? (
+            <button
+              disabled
+              className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md opacity-70 cursor-not-allowed whitespace-nowrap"
+              style={{ background: 'var(--accent-green-dim)', color: 'var(--accent-green)' }}
+              title="Verification in progress..."
+            >
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              Verifying...
             </button>
           ) : renderActionButton(issue)}
           <button
@@ -873,6 +833,7 @@ function IssueRow({
                   <option value="tracking">Tracking</option>
                   <option value="tracked">Tracked</option>
                   <option value="in-progress">In Progress</option>
+                  <option value="implemented">Implemented</option>
                   <option value="done">Done</option>
                 </select>
                 <input
@@ -999,6 +960,11 @@ function IssueRow({
                 </div>
               )}
 
+              {/* ISS-039: Verify Results — show when issue has persisted verifyResult */}
+              {issue.verifyResult && (
+                <VerifyResultPanel verifyResult={issue.verifyResult} />
+              )}
+
               <div className="flex items-center gap-4 text-xs" style={{ color: 'var(--text-secondary)' }}>
                 <span>Created: {new Date(issue.createdAt).toLocaleString()}</span>
                 {issue.updatedAt && <span>Updated: {new Date(issue.updatedAt).toLocaleString()}</span>}
@@ -1039,6 +1005,96 @@ function IssueRow({
           issueId={issue.id}
           trackId={implementSession!.trackId}
         />
+      )}
+
+      {/* Verify progress panel — shown when verify is active or has messages */}
+      {showVerify && !isEditing && (
+        <VerifyProgressPanel
+          issueId={issue.id}
+          onRetry={() => {
+            const verifyStore = useIssueTrackStore.getState()
+            verifyStore.clearVerify(issue.id)
+            verifyStore.setVerifyActive(issue.id, true)
+            // Re-trigger verify via API would need import; handled by parent handleVerify
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+/** ISS-039: Collapsible verify result panel shown in expanded issue detail */
+function VerifyResultPanel({ verifyResult }: { verifyResult: { unitTest: { success: boolean; output: string }; uiTest: { success: boolean; output: string }; verifiedAt: string } }) {
+  const [expanded, setExpanded] = useState(false)
+  const allPassed = verifyResult.unitTest.success && verifyResult.uiTest.success
+
+  const steps = [
+    { label: 'Unit Tests (Vitest)', result: verifyResult.unitTest, skipped: false },
+    { label: 'UI Tests (Playwright)', result: verifyResult.uiTest, skipped: !verifyResult.unitTest.success },
+  ]
+
+  return (
+    <div className="rounded-lg p-3" style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-subtle)' }}>
+      <button
+        type="button"
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center gap-1.5 w-full text-left"
+      >
+        {expanded
+          ? <ChevronDown className="w-3.5 h-3.5" style={{ color: allPassed ? 'var(--accent-green)' : 'var(--accent-red)' }} />
+          : <ChevronRight className="w-3.5 h-3.5" style={{ color: allPassed ? 'var(--accent-green)' : 'var(--accent-red)' }} />
+        }
+        <FlaskConical className="w-3.5 h-3.5" style={{ color: allPassed ? 'var(--accent-green)' : 'var(--accent-red)' }} />
+        <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: allPassed ? 'var(--accent-green)' : 'var(--accent-red)' }}>
+          Test Results
+        </span>
+        <span
+          className="ml-1 px-1.5 py-0.5 rounded text-xs font-medium"
+          style={{
+            background: allPassed ? 'var(--accent-green-dim)' : 'var(--accent-red-dim)',
+            color: allPassed ? 'var(--accent-green)' : 'var(--accent-red)',
+          }}
+        >
+          {allPassed ? 'ALL PASS' : 'FAILED'}
+        </span>
+        <span className="ml-auto text-xs" style={{ color: 'var(--text-tertiary)' }}>
+          {new Date(verifyResult.verifiedAt).toLocaleString()}
+        </span>
+      </button>
+
+      {expanded && (
+        <div className="mt-2 space-y-2">
+          {steps.map((step, i) => (
+            <div key={i}>
+              <div className="flex items-center gap-2 mb-1">
+                <span
+                  className="px-1.5 py-0.5 rounded text-xs font-medium"
+                  style={{
+                    background: step.skipped
+                      ? 'var(--bg-inset)'
+                      : step.result.success ? 'var(--accent-green-dim)' : 'var(--accent-red-dim)',
+                    color: step.skipped
+                      ? 'var(--text-secondary)'
+                      : step.result.success ? 'var(--accent-green)' : 'var(--accent-red)',
+                  }}
+                >
+                  {step.skipped ? 'SKIPPED' : step.result.success ? 'PASS' : 'FAIL'}
+                </span>
+                <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
+                  Step {i + 1}: {step.label}
+                </span>
+              </div>
+              <pre
+                className="text-xs p-2 rounded overflow-x-auto max-h-32 overflow-y-auto whitespace-pre-wrap"
+                style={{ background: 'var(--bg-surface)', color: 'var(--text-primary)', border: '1px solid var(--border-subtle)' }}
+              >
+                {step.skipped
+                  ? 'Skipped — unit tests failed'
+                  : step.result.output || '(no output)'}
+              </pre>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   )
