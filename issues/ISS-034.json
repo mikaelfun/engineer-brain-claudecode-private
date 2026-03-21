@@ -1,0 +1,11 @@
+{
+  "id": "ISS-034",
+  "title": "WebUI Issues 页面 tracked issue 应显示 track 的问题原因和修复计划",
+  "description": "当 issue 有关联的 conductor track（status 为 tracked 或之后）时，在展开的只读详情面板中显示该 track 的 spec（问题原因）和 plan（修复计划）摘要，让用户无需离开 Issues 页面即可了解问题分析和实施方案。",
+  "type": "feature",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "issue-track-detail_20260321",
+  "createdAt": "2026-03-21T20:40:00+08:00",
+  "updatedAt": "2026-03-21T21:45:00+08:00"
+}

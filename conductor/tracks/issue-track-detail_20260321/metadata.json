@@ -1,0 +1,20 @@
+{
+  "id": "issue-track-detail_20260321",
+  "title": "Issues 页面 Tracked Issue 显示 Track 分析与修复计划",
+  "type": "feature",
+  "status": "complete",
+  "created": "2026-03-21T21:30:00+08:00",
+  "updated": "2026-03-21T21:45:00+08:00",
+  "phases": {
+    "total": 2,
+    "completed": 2
+  },
+  "tasks": {
+    "total": 5,
+    "completed": 5
+  },
+  "commits": [
+    "ce29c9d: feat: add GET /api/issues/:id/track-spec endpoint (issue-track-detail_20260321)",
+    "3721bb8: feat: show track analysis and plan in issue detail panel (issue-track-detail_20260321)"
+  ]
+}

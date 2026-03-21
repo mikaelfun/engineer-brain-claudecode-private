@@ -32,3 +32,9 @@
 | [x] | track-question-fix2_20260321 | Fix Create Track Question Dialog (Round 2) | 2026-03-21 | 2026-03-21 |
 | [x] | sse-message-filter_20260321 | Agent Session SSE Message Filtering | 2026-03-21 | 2026-03-21 |
 | [x] | remove-info-tab_20260321 | 移除 Info Tab — 数据整合到 Header + Inspection | 2026-03-21 | 2026-03-21 |
+| [x] | track-question-reduce_20260321 | Create Track 交互问题过多 — 测试相关问题不应在 track 创建阶段问 | 2026-03-21 | 2026-03-21 |
+| [x] | track-progress-filter_20260321 | Track Progress Panel SSE Message Filtering | 2026-03-21 | 2026-03-21 |
+| [x] | track-autocollapse_20260321 | Track Progress Auto-Collapse After Completion | 2026-03-21 | 2026-03-21 |
+| [x] | issue-track-detail_20260321 | Issues 页面 Tracked Issue 显示 Track 分析与修复计划 | 2026-03-21 | 2026-03-21 |
+| [ ] | verify-step2-fix_20260321 | 修复 Verify 第二步（UI Test）报错 | 2026-03-21 | 2026-03-21 |
+| [~] | verify-inline_20260321 | Verify 内联进度展示 | 2026-03-21 | 2026-03-21 |
