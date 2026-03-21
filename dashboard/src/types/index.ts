@@ -258,6 +258,11 @@ export type SSEEventType =
   | 'issue-track-progress'
   | 'issue-track-completed'
   | 'issue-track-error'
+  | 'issue-track-question'
+  | 'issue-verify-started'
+  | 'issue-verify-progress'
+  | 'issue-verify-completed'
+  | 'issue-verify-error'
 
 export interface SSEEvent {
   type: SSEEventType
@@ -355,7 +360,13 @@ export interface PatrolTodoSummary {
 
 export type IssueType = 'bug' | 'feature' | 'refactor' | 'chore'
 export type IssuePriority = 'P0' | 'P1' | 'P2'
-export type IssueStatus = 'pending' | 'tracked' | 'in-progress' | 'done'
+export type IssueStatus = 'pending' | 'tracking' | 'tracked' | 'in-progress' | 'done'
+
+export interface IssueVerifyResult {
+  unitTest: { success: boolean; output: string }
+  uiTest: { success: boolean; output: string }
+  verifiedAt: string
+}
 
 export interface Issue {
   id: string
@@ -365,6 +376,7 @@ export interface Issue {
   priority: IssuePriority
   status: IssueStatus
   trackId?: string
+  verifyResult?: IssueVerifyResult
   createdAt: string
   updatedAt: string
 }

@@ -1,0 +1,16 @@
+{
+  "id": "verify-inline_20260321",
+  "title": "Verify 内联进度展示",
+  "type": "bug",
+  "status": "in_progress",
+  "created": "2026-03-21T19:20:00+08:00",
+  "updated": "2026-03-21T19:20:00+08:00",
+  "phases": {
+    "total": 3,
+    "completed": 0
+  },
+  "tasks": {
+    "total": 9,
+    "completed": 0
+  }
+}

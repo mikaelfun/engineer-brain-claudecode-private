@@ -38,3 +38,4 @@
 | [x] | issue-track-detail_20260321 | Issues 页面 Tracked Issue 显示 Track 分析与修复计划 | 2026-03-21 | 2026-03-21 |
 | [ ] | verify-step2-fix_20260321 | 修复 Verify 第二步（UI Test）报错 | 2026-03-21 | 2026-03-21 |
 | [~] | verify-inline_20260321 | Verify 内联进度展示 | 2026-03-21 | 2026-03-21 |
+| [ ] | mark-done-btn_20260321 | Implemented Issue Mark Done Button | 2026-03-21 | 2026-03-21 |

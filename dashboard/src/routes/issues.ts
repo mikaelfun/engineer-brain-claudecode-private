@@ -9,7 +9,8 @@
  * POST   /api/issues/:id/create-track   — 从 issue 创建 conductor track
  * POST   /api/issues/:id/track-answer   — 提交用户对 agent 问题的回答
  * POST   /api/issues/:id/start-implement — tracked → in-progress
- * POST   /api/issues/:id/verify         — 运行测试验证
+ * POST   /api/issues/:id/verify         — 异步运行测试验证（SSE 推送进度）
+ * GET    /api/issues/:id/verify-status  — 获取 verify 进度消息（刷新恢复用 + 锁状态）
  * POST   /api/issues/:id/reopen         — done → pending
  * GET    /api/issues/:id/track          — 获取关联 track metadata
  * GET    /api/issues/:id/track-plan     — 获取关联 track 的 plan.md 内容
@@ -18,7 +19,7 @@
  * GET    /api/issues/:id/implement-status — 获取 implement 进度消息（刷新恢复用 + 锁状态）
  */
 import { Hono } from 'hono'
-import { execSync } from 'child_process'
+import { execSync, exec } from 'child_process'
 import { join } from 'path'
 import { existsSync, readFileSync } from 'fs'
 import { query, type Options, type CanUseTool } from '@anthropic-ai/claude-agent-sdk'
@@ -35,6 +36,15 @@ import {
   getImplementStatus,
   type ImplementMessage,
 } from '../agent/implement-session-manager.js'
+import {
+  acquireVerifyLock,
+  releaseVerifyLock,
+  isVerifyActive,
+  appendVerifyMessage,
+  getVerifyStatus,
+  type VerifyMessage,
+  type VerifyResult,
+} from '../agent/verify-session-manager.js'
 import type { IssueStatus, IssueType, IssuePriority } from '../types/index.js'
 
 const issues = new Hono()
@@ -656,71 +666,157 @@ issues.post('/:id/start-implement', async (c) => {
   return c.json({ issue: updated, message: `Implementation started for track ${trackId}` })
 })
 
-// POST /api/issues/:id/verify — run tests, set done if pass
+// POST /api/issues/:id/verify — async fire-and-forget with SSE progress
 issues.post('/:id/verify', async (c) => {
   const id = c.req.param('id')
   const issue = getIssue(id)
   if (!issue) return c.json({ error: 'Issue not found' }, 404)
-  if (issue.status !== 'in-progress') {
-    return c.json({ error: 'Issue must be in-progress to verify' }, 400)
+  if (issue.status !== 'in-progress' && issue.status !== 'done') {
+    return c.json({ error: 'Issue must be in-progress or done to verify' }, 400)
   }
 
-  const dashboardDir = join(config.projectRoot, 'dashboard')
-  const projectRoot = config.projectRoot
-
-  // Step 1: Unit Tests (Vitest)
-  let unitTestSuccess = false
-  let unitTestOutput = ''
-  try {
-    unitTestOutput = execSync('npm test -- --reporter=verbose', {
-      cwd: dashboardDir,
-      timeout: 120_000,
-      encoding: 'utf-8',
-      stdio: ['pipe', 'pipe', 'pipe'],
-    })
-    unitTestSuccess = true
-  } catch (err: any) {
-    unitTestOutput = (err.stdout || '') + '\n' + (err.stderr || '')
-    unitTestSuccess = false
-  }
-  // Truncate to last 3000 chars
-  if (unitTestOutput.length > 3000) {
-    unitTestOutput = '...(truncated)\n' + unitTestOutput.slice(-3000)
+  // Acquire lock — prevent duplicate concurrent verifies
+  if (!acquireVerifyLock(id)) {
+    return c.json({ error: 'Verify already in progress for this issue' }, 409)
   }
 
-  // If unit tests fail, skip UI tests
-  let uiTestSuccess = false
-  let uiTestOutput = ''
-  if (unitTestSuccess) {
-    // Step 2: UI Tests (Playwright via browser-test.mjs)
-    try {
-      uiTestOutput = execSync('node scripts/browser-test.mjs', {
-        cwd: projectRoot,
-        timeout: 180_000,
-        encoding: 'utf-8',
-        stdio: ['pipe', 'pipe', 'pipe'],
-      })
-      uiTestSuccess = true
-    } catch (err: any) {
-      uiTestOutput = (err.stdout || '') + '\n' + (err.stderr || '')
-      uiTestSuccess = false
-    }
-    if (uiTestOutput.length > 3000) {
-      uiTestOutput = '...(truncated)\n' + uiTestOutput.slice(-3000)
-    }
+  // Broadcast started
+  const startMsg: VerifyMessage = {
+    type: 'started',
+    content: `Verification started for ${id}`,
+    timestamp: new Date().toISOString(),
   }
-
-  // Both pass → mark done
-  let updatedIssue = issue
-  if (unitTestSuccess && uiTestSuccess) {
-    updatedIssue = updateIssue(id, { status: 'done' }) || issue
-  }
-
-  return c.json({
-    issue: updatedIssue,
-    unitTest: { success: unitTestSuccess, output: unitTestOutput },
-    uiTest: { success: uiTestSuccess, output: uiTestOutput },
+  appendVerifyMessage(id, startMsg)
+  sseManager.broadcast('issue-verify-started', {
+    issueId: id,
+    timestamp: startMsg.timestamp,
   })
+
+  // Fire-and-forget async verification
+  const verifyAsync = async () => {
+    const dashboardDir = join(config.projectRoot, 'dashboard')
+    const projectRoot = config.projectRoot
+
+    // Helper: run command and stream progress
+    const runStep = (label: string, cmd: string, cwd: string, timeout: number): Promise<{ success: boolean; output: string }> => {
+      return new Promise((resolve) => {
+        const stepStartMsg: VerifyMessage = {
+          type: 'tool-call',
+          content: `Running ${label}...`,
+          toolName: label,
+          timestamp: new Date().toISOString(),
+        }
+        appendVerifyMessage(id, stepStartMsg)
+        sseManager.broadcast('issue-verify-progress', {
+          issueId: id,
+          kind: 'tool-call',
+          toolName: label,
+          content: `Running ${label}...`,
+          timestamp: stepStartMsg.timestamp,
+        })
+
+        const child = exec(cmd, { cwd, timeout, encoding: 'utf-8', maxBuffer: 10 * 1024 * 1024 }, (err, stdout, stderr) => {
+          const output = ((stdout || '') + '\n' + (stderr || '')).trim()
+          const truncated = output.length > 3000
+            ? '...(truncated)\n' + output.slice(-3000)
+            : output
+
+          const resultMsg: VerifyMessage = {
+            type: 'tool-result',
+            content: truncated,
+            toolName: label,
+            timestamp: new Date().toISOString(),
+          }
+          appendVerifyMessage(id, resultMsg)
+          sseManager.broadcast('issue-verify-progress', {
+            issueId: id,
+            kind: 'tool-result',
+            toolName: label,
+            content: truncated,
+            timestamp: resultMsg.timestamp,
+          })
+
+          resolve({ success: !err, output: truncated })
+        })
+      })
+    }
+
+    try {
+      // Step 1: Unit Tests (Vitest)
+      const unitResult = await runStep('Unit Tests', 'npm test -- --reporter=verbose', dashboardDir, 120_000)
+
+      // Step 2: UI Tests (only if unit tests pass)
+      let uiResult = { success: false, output: 'Skipped (unit tests failed)' }
+      if (unitResult.success) {
+        uiResult = await runStep('UI Tests', 'node scripts/browser-test.mjs', projectRoot, 180_000)
+      } else {
+        const skipMsg: VerifyMessage = {
+          type: 'thinking',
+          content: 'Unit tests failed, skipping UI tests',
+          timestamp: new Date().toISOString(),
+        }
+        appendVerifyMessage(id, skipMsg)
+        sseManager.broadcast('issue-verify-progress', {
+          issueId: id,
+          kind: 'thinking',
+          content: skipMsg.content,
+          timestamp: skipMsg.timestamp,
+        })
+      }
+
+      // Build result
+      const result: VerifyResult = {
+        unitTest: { passed: unitResult.success, output: unitResult.output },
+        uiTest: { passed: uiResult.success, output: uiResult.output },
+        overall: unitResult.success && uiResult.success,
+      }
+
+      // Update issue status if both pass
+      if (result.overall) {
+        updateIssue(id, { status: 'done' as IssueStatus })
+      }
+
+      // Release lock with result
+      releaseVerifyLock(id, 'completed', result)
+      const completedMsg: VerifyMessage = {
+        type: 'completed',
+        content: result.overall
+          ? 'All tests passed ✓'
+          : `Tests failed: ${!unitResult.success ? 'Unit Tests' : 'UI Tests'}`,
+        timestamp: new Date().toISOString(),
+      }
+      appendVerifyMessage(id, completedMsg)
+      sseManager.broadcast('issue-verify-completed', {
+        issueId: id,
+        result,
+        timestamp: completedMsg.timestamp,
+      })
+    } catch (err: any) {
+      console.error(`[verify] Failed for ${id}:`, err.message)
+      releaseVerifyLock(id, 'failed')
+      const failedMsg: VerifyMessage = {
+        type: 'failed',
+        content: err.message,
+        timestamp: new Date().toISOString(),
+      }
+      appendVerifyMessage(id, failedMsg)
+      sseManager.broadcast('issue-verify-error', {
+        issueId: id,
+        error: err.message,
+        timestamp: failedMsg.timestamp,
+      })
+    }
+  }
+
+  verifyAsync() // Fire and forget
+  return c.json({ message: `Verification started for ${id}` })
+})
+
+// GET /api/issues/:id/verify-status — get verify progress (for page refresh recovery + lock check)
+issues.get('/:id/verify-status', (c) => {
+  const id = c.req.param('id')
+  const status = getVerifyStatus(id)
+  return c.json(status)
 })
 
 // POST /api/issues/:id/reopen — done → pending (keep trackId)
