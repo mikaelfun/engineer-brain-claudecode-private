@@ -228,7 +228,7 @@ export default function Dashboard() {
                       </div>
                       <h4 className="font-medium mt-1 text-[13px] truncate" style={{ color: 'var(--text-primary)' }} title={c.title || 'Untitled'}>{c.title || 'Untitled'}</h4>
                       <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
-                        {c.customer}
+                        <span className="font-semibold" style={{ color: 'var(--accent-cyan)' }}>{c.customer}</span>
                         <span style={{ color: 'var(--text-tertiary)' }}> · </span>
                         {c.assignedTo}
                         <span style={{ color: 'var(--text-tertiary)' }}> · </span>
@@ -291,10 +291,6 @@ export default function Dashboard() {
                             <div className="text-center">
                               <span className="block text-[10px] font-medium" style={{ color: 'var(--text-tertiary)' }}>IR</span>
                               <SlaBadge status={c.meta.irSla?.status || 'unknown'} />
-                            </div>
-                            <div className="text-center">
-                              <span className="block text-[10px] font-medium" style={{ color: 'var(--text-tertiary)' }}>FWR</span>
-                              <SlaBadge status={c.meta.fwr?.status || 'unknown'} />
                             </div>
                             {c.meta.healthScore != null && (
                               <div

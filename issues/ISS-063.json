@@ -1,0 +1,11 @@
+{
+  "id": "ISS-063",
+  "title": "Dashboard Case 列表优化：隐藏 FWR、客户名用 Customer 字段、名称突出显示",
+  "description": "三个改进：\n1. Case 列表不需要显示 FWR（First Within Response）字段\n2. Case 的客户名称显示不准确，应该使用 Customer 字段而非当前字段\n3. 客户名称字体需要突出并带颜色，方便快速识别",
+  "type": "bug",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "case-list-opt_20260322",
+  "createdAt": "2026-03-22T23:35:00+08:00",
+  "updatedAt": "2026-03-22T23:45:00+08:00"
+}

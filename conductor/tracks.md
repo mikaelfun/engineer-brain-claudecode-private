@@ -61,3 +61,4 @@
 | [x] | panel-unify_20260322 | Implement/Verify Panel 统一升级 | 2026-03-22 | 2026-03-22 |
 | [x] | cancel-spinner-fix_20260322 | Fix Cancel Track Spinner Persists | 2026-03-22 | 2026-03-22 |
 | [x] | case-list-actions_20260322 | Case 列表显示 Refresh 时间、Teams 消息截止时间、Refresh/Full Process 按钮 | 2026-03-22 | 2026-03-22 |
+| [x] | case-list-opt_20260322 | Dashboard Case 列表优化：隐藏 FWR、客户名突出显示 | 2026-03-22 | 2026-03-22 |

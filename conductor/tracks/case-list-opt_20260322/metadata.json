@@ -1,0 +1,17 @@
+{
+  "id": "case-list-opt_20260322",
+  "title": "Dashboard Case 列表优化：隐藏 FWR、客户名突出显示",
+  "type": "bug",
+  "status": "complete",
+  "created": "2026-03-22T23:40:00+08:00",
+  "updated": "2026-03-22T23:45:00+08:00",
+  "issueId": "ISS-063",
+  "phases": {
+    "total": 1,
+    "completed": 1
+  },
+  "tasks": {
+    "total": 3,
+    "completed": 3
+  }
+}
