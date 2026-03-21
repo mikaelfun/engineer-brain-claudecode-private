@@ -44,11 +44,15 @@ export interface DisplayMessage {
 export function processMessages(messages: CaseSessionMessage[]): DisplayMessage[] {
   if (messages.length === 0) return []
 
-  // ISS-059: Filter out system messages with empty/whitespace-only content
-  // (SDK metadata messages that have no display value)
-  const filtered = messages.filter(msg =>
-    msg.type !== 'system' || (msg.content && msg.content.trim().length > 0)
-  )
+  // ISS-059: Filter out messages with empty/whitespace-only content
+  // Exception: tool-call/tool-result may have empty content but meaningful toolName — keep them
+  // Historical data may have raw SDK types (assistant, user) with empty content
+  const filtered = messages.filter(msg => {
+    if (msg.content && msg.content.trim().length > 0) return true
+    // Keep tool messages even with empty content (they show toolName)
+    if (TOOL_TYPES.has(msg.type) || msg.type === 'tool_use' || msg.type === 'tool_result') return true
+    return false
+  })
 
   if (filtered.length === 0) return []
 
