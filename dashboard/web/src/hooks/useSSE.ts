@@ -13,6 +13,8 @@ import { useQueryClient } from '@tanstack/react-query'
 import { BASE_URL } from '../api/client'
 import { usePatrolStore } from '../stores/patrolStore'
 import { useCaseSessionStore } from '../stores/caseSessionStore'
+import { useIssueTrackStore } from '../stores/issueTrackStore'
+import { useImplementStore } from '../stores/implementStore'
 
 /** Safely parse JSON, returning null on failure */
 function safeParse(raw: string): any | null {
@@ -36,6 +38,12 @@ export function useSSE() {
   const patrolOnProgress = usePatrolStore((s) => s.onPatrolProgress)
   const patrolOnCaseCompleted = usePatrolStore((s) => s.onPatrolCaseCompleted)
   const addCaseSessionMessage = useCaseSessionStore((s) => s.addMessage)
+  const addIssueTrackMessage = useIssueTrackStore((s) => s.addMessage)
+  const setIssueTrackingActive = useIssueTrackStore((s) => s.setTrackingActive)
+  const setIssuePendingQuestion = useIssueTrackStore((s) => s.setPendingQuestion)
+  const startImplementSession = useImplementStore((s) => s.startSession)
+  const addImplementMessage = useImplementStore((s) => s.addMessage)
+  const setImplementStatus = useImplementStore((s) => s.setStatus)
 
   const connect = useCallback(() => {
     const token = localStorage.getItem('eb_token')
@@ -211,6 +219,157 @@ export function useSSE() {
       queryClient.invalidateQueries({ queryKey: ['settings'] })
     })
 
+    // Issue track creation progress events → populate issueTrackStore for live display
+    es.addEventListener('issue-track-started', (e) => {
+      const data = safeParse(e.data)
+      if (!data) return
+      const d = data.data || data
+      const issueId = d.issueId
+      if (issueId) {
+        setIssueTrackingActive(issueId, true)
+        addIssueTrackMessage(issueId, {
+          kind: 'started',
+          content: d.issueTitle ? `Track creation started for "${d.issueTitle}"` : 'Track creation started',
+          timestamp: d.timestamp || new Date().toISOString(),
+        })
+        queryClient.invalidateQueries({ queryKey: ['issues'] })
+      }
+    })
+
+    es.addEventListener('issue-track-progress', (e) => {
+      const data = safeParse(e.data)
+      if (!data) return
+      const d = data.data || data
+      const issueId = d.issueId
+      if (issueId) {
+        addIssueTrackMessage(issueId, {
+          kind: d.kind || (d.toolName ? 'tool-call' : 'thinking'),
+          content: d.content,
+          toolName: d.toolName,
+          timestamp: d.timestamp || new Date().toISOString(),
+        })
+      }
+    })
+
+    es.addEventListener('issue-track-completed', (e) => {
+      const data = safeParse(e.data)
+      if (!data) return
+      const d = data.data || data
+      const issueId = d.issueId
+      if (issueId) {
+        addIssueTrackMessage(issueId, {
+          kind: 'completed',
+          trackId: d.trackId,
+          planSummary: d.planSummary,
+          timestamp: d.timestamp || new Date().toISOString(),
+        })
+        setIssueTrackingActive(issueId, false)
+        queryClient.invalidateQueries({ queryKey: ['issues'] })
+      }
+    })
+
+    es.addEventListener('issue-track-error', (e) => {
+      const data = safeParse(e.data)
+      if (!data) return
+      const d = data.data || data
+      const issueId = d.issueId
+      if (issueId) {
+        addIssueTrackMessage(issueId, {
+          kind: 'error',
+          error: d.error,
+          timestamp: d.timestamp || new Date().toISOString(),
+        })
+        setIssueTrackingActive(issueId, false)
+        queryClient.invalidateQueries({ queryKey: ['issues'] })
+      }
+    })
+
+    es.addEventListener('issue-track-question', (e) => {
+      const data = safeParse(e.data)
+      if (!data) return
+      const d = data.data || data
+      const issueId = d.issueId
+      if (issueId) {
+        addIssueTrackMessage(issueId, {
+          kind: 'question',
+          questions: d.questions,
+          sessionId: d.sessionId,
+          content: d.questions?.map((q: any) => q.question).join('; '),
+          timestamp: d.timestamp || new Date().toISOString(),
+        })
+        if (d.sessionId && d.questions) {
+          setIssuePendingQuestion(issueId, d.sessionId, d.questions)
+        } else if (d.questions) {
+          // sessionId may be undefined if canUseTool fires before session_id is captured (ISS-027 fallback)
+          setIssuePendingQuestion(issueId, d.sessionId || '', d.questions)
+        }
+      }
+    })
+
+    // Issue implement progress events → populate implementStore for live display
+    es.addEventListener('issue-implement-started', (e) => {
+      const data = safeParse(e.data)
+      if (!data) return
+      const d = data.data || data
+      const issueId = d.issueId
+      if (issueId) {
+        startImplementSession(issueId, d.trackId || '')
+        addImplementMessage(issueId, {
+          type: 'started',
+          content: `Implementation started${d.trackId ? ` for track ${d.trackId}` : ''}`,
+          timestamp: d.timestamp || new Date().toISOString(),
+        })
+        queryClient.invalidateQueries({ queryKey: ['issues'] })
+      }
+    })
+
+    es.addEventListener('issue-implement-progress', (e) => {
+      const data = safeParse(e.data)
+      if (!data) return
+      const d = data.data || data
+      const issueId = d.issueId
+      if (issueId) {
+        addImplementMessage(issueId, {
+          type: d.kind || (d.toolName ? 'tool-call' : 'thinking'),
+          content: d.content || d.toolName || '',
+          toolName: d.toolName,
+          timestamp: d.timestamp || new Date().toISOString(),
+        })
+      }
+    })
+
+    es.addEventListener('issue-implement-completed', (e) => {
+      const data = safeParse(e.data)
+      if (!data) return
+      const d = data.data || data
+      const issueId = d.issueId
+      if (issueId) {
+        setImplementStatus(issueId, 'completed')
+        addImplementMessage(issueId, {
+          type: 'completed',
+          content: `Implementation completed${d.trackId ? ` for track ${d.trackId}` : ''}`,
+          timestamp: d.timestamp || new Date().toISOString(),
+        })
+        queryClient.invalidateQueries({ queryKey: ['issues'] })
+      }
+    })
+
+    es.addEventListener('issue-implement-error', (e) => {
+      const data = safeParse(e.data)
+      if (!data) return
+      const d = data.data || data
+      const issueId = d.issueId
+      if (issueId) {
+        setImplementStatus(issueId, 'failed')
+        addImplementMessage(issueId, {
+          type: 'failed',
+          content: d.error || 'Implementation failed',
+          timestamp: d.timestamp || new Date().toISOString(),
+        })
+        queryClient.invalidateQueries({ queryKey: ['issues'] })
+      }
+    })
+
     es.onopen = () => {
       // Reset retry count on successful connection
       retryCountRef.current = 0
@@ -230,7 +389,7 @@ export function useSSE() {
         console.error(`[SSE] Max retries (${MAX_RETRIES}) exceeded, giving up`)
       }
     }
-  }, [queryClient, patrolOnProgress, patrolOnCaseCompleted, addCaseSessionMessage])
+  }, [queryClient, patrolOnProgress, patrolOnCaseCompleted, addCaseSessionMessage, addIssueTrackMessage, setIssueTrackingActive, setIssuePendingQuestion])
 
   useEffect(() => {
     connect()

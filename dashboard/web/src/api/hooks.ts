@@ -354,3 +354,148 @@ export function useSaveSettings() {
     },
   })
 }
+
+// ===== Issues =====
+
+export function useIssues(params?: { status?: string; type?: string; priority?: string; page?: number; pageSize?: number }) {
+  return useQuery({
+    queryKey: ['issues', params],
+    queryFn: () => apiGet<{ issues: any[]; total: number; page: number; pageSize: number; totalPages: number }>('/issues', params),
+    refetchInterval: 30_000,
+  })
+}
+
+export function useCreateIssue() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: { title: string; description?: string; type?: string; priority?: string }) =>
+      apiPost<any>('/issues', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['issues'] })
+    },
+  })
+}
+
+export function useUpdateIssue() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...data }: { id: string; [key: string]: any }) =>
+      apiPut<any>(`/issues/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['issues'] })
+    },
+  })
+}
+
+export function useDeleteIssue() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => apiDelete<any>(`/issues/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['issues'] })
+    },
+  })
+}
+
+export function useCreateTrack() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, extraContext }: { id: string; extraContext?: string }) =>
+      apiPost<any>(`/issues/${id}/create-track`, extraContext ? { extraContext } : {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['issues'] })
+    },
+  })
+}
+
+export function useStartImplement() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => apiPost<any>(`/issues/${id}/start-implement`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['issues'] })
+    },
+  })
+}
+
+export function useVerifyIssue() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => apiPost<{ issue: any; unitTest: { success: boolean; output: string }; uiTest: { success: boolean; output: string } }>(`/issues/${id}/verify`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['issues'] })
+    },
+  })
+}
+
+export function useReopenIssue() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => apiPost<any>(`/issues/${id}/reopen`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['issues'] })
+    },
+  })
+}
+
+export function useTrackPlan(issueId: string, trackId?: string) {
+  return useQuery({
+    queryKey: ['track-plan', issueId],
+    queryFn: () => apiGet<{ plan: string; trackId: string }>(`/issues/${issueId}/track-plan`),
+    enabled: !!trackId,
+  })
+}
+
+export function useTrackProgress(issueId: string, enabled: boolean = false) {
+  return useQuery({
+    queryKey: ['track-progress', issueId],
+    queryFn: () => apiGet<{ messages: any[]; isActive: boolean; pendingQuestion: any | null }>(`/issues/${issueId}/track-progress`),
+    enabled,
+  })
+}
+
+export function useAnswerTrackQuestion() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, answer }: { id: string; answer: string }) =>
+      apiPost<{ ok: boolean }>(`/issues/${id}/track-answer`, { answer }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['issues'] })
+    },
+  })
+}
+
+/** Fetch implement status for page-refresh recovery */
+export function useImplementStatus(issueId: string, enabled: boolean = false) {
+  return useQuery({
+    queryKey: ['implement-status', issueId],
+    queryFn: () => apiGet<{
+      active: boolean
+      status: 'active' | 'completed' | 'failed' | 'none'
+      messages: Array<{ type: string; content: string; toolName?: string; timestamp: string }>
+      trackId?: string
+      startedAt?: string
+    }>(`/issues/${issueId}/implement-status`),
+    enabled,
+  })
+}
+
+// ===== Restart =====
+
+export function useRestartFrontend() {
+  return useMutation({
+    mutationFn: () => apiPost<{ success: boolean; message: string }>('/restart/frontend'),
+  })
+}
+
+export function useRestartBackend() {
+  return useMutation({
+    mutationFn: () => apiPost<{ success: boolean; message: string }>('/restart/backend'),
+  })
+}
+
+export function useRestartAll() {
+  return useMutation({
+    mutationFn: () => apiPost<{ success: boolean; message: string }>('/restart/all'),
+  })
+}

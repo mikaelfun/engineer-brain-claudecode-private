@@ -8,7 +8,9 @@ import { Plus, X, Trash2, ExternalLink, ChevronRight, ChevronDown, Loader2, Rock
 import { useIssues, useCreateIssue, useUpdateIssue, useDeleteIssue, useCreateTrack, useStartImplement, useVerifyIssue, useReopenIssue, useRestartFrontend, useRestartBackend, useRestartAll } from '../api/hooks'
 import { Loading, ErrorState } from '../components/common/Loading'
 import TrackProgressPanel from '../components/TrackProgressPanel'
+import ImplementPanel from '../components/ImplementPanel'
 import { useIssueTrackStore, EMPTY_TRACK_MESSAGES } from '../stores/issueTrackStore'
+import { useImplementStore } from '../stores/implementStore'
 
 type IssueType = 'bug' | 'feature' | 'refactor' | 'chore'
 type IssuePriority = 'P0' | 'P1' | 'P2'
@@ -85,6 +87,7 @@ export default function Issues() {
   const restartFe = useRestartFrontend()
   const restartBe = useRestartBackend()
   const restartAllSvc = useRestartAll()
+  const setIssueTracking = useIssueTrackStore((s) => s.setIssueTracking)
 
   // Reconnect state: after backend restart, poll /api/health until it's back
   const [reconnecting, setReconnecting] = useState(false)
@@ -264,7 +267,7 @@ export default function Issues() {
       const isLoading = createTrack.isPending && (createTrack.variables as any)?.id === issue.id
       return (
         <button
-          onClick={(e) => { e.stopPropagation(); createTrack.mutate({ id: issue.id }) }}
+          onClick={(e) => { e.stopPropagation(); setIssueTracking(issue.id, true); createTrack.mutate({ id: issue.id }) }}
           disabled={isLoading}
           className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md disabled:opacity-50 transition-colors whitespace-nowrap"
           style={{ background: 'var(--accent-blue-dim)', color: 'var(--accent-blue)' }}
@@ -282,7 +285,13 @@ export default function Issues() {
       const isLoading = startImplement.isPending && startImplement.variables === issue.id
       return (
         <button
-          onClick={(e) => { e.stopPropagation(); startImplement.mutate(issue.id) }}
+          onClick={(e) => {
+            e.stopPropagation()
+            // Optimistically start the implement session in local store so ImplementPanel mounts immediately
+            const implementStore = useImplementStore.getState()
+            implementStore.startSession(issue.id, issue.trackId || '')
+            startImplement.mutate(issue.id)
+          }}
           disabled={isLoading}
           className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md disabled:opacity-50 transition-colors whitespace-nowrap"
           style={{ background: 'var(--accent-purple-dim)', color: 'var(--accent-purple)' }}
@@ -696,10 +705,19 @@ function IssueRow({
 }) {
   // Subscribe to track messages for this specific issue
   const hasTrackMessages = useIssueTrackStore((s) => (s.messages[issue.id]?.length ?? 0) > 0)
+  const isOptimisticTracking = useIssueTrackStore((s) => s.trackingIssues[issue.id] ?? false)
+  const setIssueTracking = useIssueTrackStore((s) => s.setIssueTracking)
   const isTracking = issue.status === 'tracking'
 
-  // Show progress panel if issue is tracking or has track messages in store
-  const showProgress = isTracking || hasTrackMessages
+  // Subscribe to implement store for this specific issue
+  const implementSession = useImplementStore((s) => s.sessions[issue.id])
+  const hasImplementSession = !!implementSession
+  const isImplementActive = implementSession?.status === 'active'
+
+  // Show progress panel if issue is tracking, has track messages, or was optimistically marked (ISS-029)
+  const showProgress = isTracking || hasTrackMessages || isOptimisticTracking
+  // Show implement panel if there is an implement session (active, completed, or failed)
+  const showImplement = hasImplementSession
 
   const isExpanded = expandedId === issue.id
   const isEditing = editingId === issue.id
@@ -713,7 +731,7 @@ function IssueRow({
       className="rounded-lg transition-colors"
       style={{
         background: 'var(--bg-surface)',
-        border: isTracking ? '1px solid var(--accent-blue)' : '1px solid var(--border-default)',
+        border: isTracking ? '1px solid var(--accent-blue)' : isImplementActive ? '1px solid var(--accent-purple)' : '1px solid var(--border-default)',
       }}
     >
       {/* Row Header — always visible, click toggles expand/collapse */}
@@ -772,7 +790,18 @@ function IssueRow({
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          {renderActionButton(issue)}
+          {/* Override action button when implement is actively running */}
+          {isImplementActive ? (
+            <button
+              disabled
+              className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md opacity-70 cursor-not-allowed whitespace-nowrap"
+              style={{ background: 'var(--accent-purple-dim)', color: 'var(--accent-purple)' }}
+              title="Implementation in progress..."
+            >
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              Implementing...
+            </button>
+          ) : renderActionButton(issue)}
           <button
             onClick={(e) => {
               e.stopPropagation()
@@ -903,8 +932,16 @@ function IssueRow({
       {showProgress && !isEditing && (
         <TrackProgressPanel
           issueId={issue.id}
-          isTracking={isTracking}
-          onRetry={() => createTrack.mutate({ id: issue.id })}
+          isTracking={isTracking || isOptimisticTracking}
+          onRetry={() => { setIssueTracking(issue.id, true); createTrack.mutate({ id: issue.id }) }}
+        />
+      )}
+
+      {/* Implement progress panel — shown when implement session exists */}
+      {showImplement && !isEditing && (
+        <ImplementPanel
+          issueId={issue.id}
+          trackId={implementSession!.trackId}
         />
       )}
     </div>
