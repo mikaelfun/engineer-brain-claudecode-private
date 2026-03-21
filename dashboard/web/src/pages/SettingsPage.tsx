@@ -90,7 +90,7 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <span className="text-gray-400">Loading settings...</span>
+        <span style={{ color: 'var(--text-tertiary)' }}>Loading settings...</span>
       </div>
     )
   }
@@ -99,10 +99,10 @@ export default function SettingsPage() {
     <div className="space-y-6 max-w-2xl">
       {/* Header */}
       <div>
-        <h2 className="text-xl md:text-2xl font-bold text-gray-900 flex items-center gap-2">
+        <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
           <Settings className="w-6 h-6" /> Settings
         </h2>
-        <p className="text-sm text-gray-500 mt-1">
+        <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>
           Configure your Engineer Brain workspace
         </p>
       </div>
@@ -111,11 +111,11 @@ export default function SettingsPage() {
       <Card>
         <CardHeader
           title="Case Data Root"
-          icon={<FolderOpen className="w-4 h-4 text-blue-500" />}
+          icon={<FolderOpen className="w-4 h-4" style={{ color: 'var(--accent-blue)' }} />}
         />
-        <p className="text-sm text-gray-500 mb-3">
+        <p className="text-sm mb-3" style={{ color: 'var(--text-tertiary)' }}>
           The root directory where case data is stored. Active cases are expected at{' '}
-          <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">{'${casesRoot}/active/{case-id}/'}</code>
+          <code className="px-1 py-0.5 rounded text-xs" style={{ background: 'var(--bg-hover)' }}>{'${casesRoot}/active/{case-id}/'}</code>
         </p>
         <div className="flex gap-2">
           <input
@@ -123,40 +123,48 @@ export default function SettingsPage() {
             value={casesRoot}
             onChange={(e) => handleCasesRootChange(e.target.value)}
             placeholder="C:\\path\\to\\cases"
-            className={`flex-1 px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary font-mono ${
-              pathValidation
+            className="flex-1 px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 font-mono"
+            style={{
+              borderColor: pathValidation
                 ? pathValidation.valid
-                  ? 'border-green-300 bg-green-50/30'
-                  : 'border-red-300 bg-red-50/30'
-                : 'border-gray-200'
-            }`}
+                  ? 'var(--accent-green)'
+                  : 'var(--accent-red)'
+                : 'var(--border-default)',
+              background: pathValidation
+                ? pathValidation.valid
+                  ? 'var(--accent-green-dim)'
+                  : 'var(--accent-red-dim)'
+                : undefined,
+            }}
           />
           {validating && (
             <div className="flex items-center px-2">
-              <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+              <Loader2 className="w-4 h-4 animate-spin" style={{ color: 'var(--text-tertiary)' }} />
             </div>
           )}
         </div>
 
         {/* Path Validation Feedback */}
         {pathValidation && !validating && (
-          <div className={`mt-2 p-2.5 rounded-lg text-sm ${
-            pathValidation.valid
-              ? 'bg-green-50 border border-green-100'
-              : 'bg-red-50 border border-red-100'
-          }`}>
+          <div
+            className="mt-2 p-2.5 rounded-lg text-sm border"
+            style={{
+              background: pathValidation.valid ? 'var(--accent-green-dim)' : 'var(--accent-red-dim)',
+              borderColor: pathValidation.valid ? 'var(--accent-green)' : 'var(--accent-red)',
+            }}
+          >
             {pathValidation.valid ? (
               <div className="space-y-1">
-                <div className="flex items-center gap-1.5 text-green-700">
+                <div className="flex items-center gap-1.5" style={{ color: 'var(--accent-green)' }}>
                   <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
                   <span className="font-medium">Path is valid</span>
                 </div>
                 {pathValidation.resolvedPath && (
-                  <p className="text-xs text-green-600 ml-5.5 font-mono">
+                  <p className="text-xs ml-5.5 font-mono" style={{ color: 'var(--accent-green)' }}>
                     {pathValidation.resolvedPath}
                   </p>
                 )}
-                <div className="flex items-center gap-3 ml-5.5 text-xs text-green-600 mt-1">
+                <div className="flex items-center gap-3 ml-5.5 text-xs mt-1" style={{ color: 'var(--accent-green)' }}>
                   {pathValidation.hasActiveDir ? (
                     <>
                       <span className="flex items-center gap-1">
@@ -168,7 +176,7 @@ export default function SettingsPage() {
                       </span>
                     </>
                   ) : (
-                    <span className="text-yellow-600 flex items-center gap-1">
+                    <span className="flex items-center gap-1" style={{ color: 'var(--accent-amber)' }}>
                       <AlertCircle className="w-3 h-3" />
                       No <code>active/</code> subdirectory found
                     </span>
@@ -176,11 +184,11 @@ export default function SettingsPage() {
                 </div>
               </div>
             ) : (
-              <div className="flex items-center gap-1.5 text-red-700">
+              <div className="flex items-center gap-1.5" style={{ color: 'var(--accent-red)' }}>
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 <span>{pathValidation.error}</span>
                 {pathValidation.resolvedPath && (
-                  <span className="text-xs text-red-500 font-mono ml-1">({pathValidation.resolvedPath})</span>
+                  <span className="text-xs font-mono ml-1" style={{ color: 'var(--accent-red)' }}>({pathValidation.resolvedPath})</span>
                 )}
               </div>
             )}
@@ -192,9 +200,9 @@ export default function SettingsPage() {
       <Card>
         <CardHeader
           title="Teams Search Cache Window"
-          icon={<Clock className="w-4 h-4 text-blue-500" />}
+          icon={<Clock className="w-4 h-4" style={{ color: 'var(--accent-blue)' }} />}
         />
-        <p className="text-sm text-gray-500 mb-3">
+        <p className="text-sm mb-3" style={{ color: 'var(--text-tertiary)' }}>
           Skip Teams search if last search was within this many hours. Set to 0 to always search.
         </p>
         <div className="flex gap-2 items-center">
@@ -204,9 +212,10 @@ export default function SettingsPage() {
             max={72}
             value={teamsSearchCacheHours}
             onChange={(e) => setTeamsSearchCacheHours(Number(e.target.value))}
-            className="w-24 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary font-mono"
+            className="w-24 px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 font-mono"
+            style={{ borderColor: 'var(--border-default)' }}
           />
-          <span className="text-sm text-gray-500">hours</span>
+          <span className="text-sm" style={{ color: 'var(--text-tertiary)' }}>hours</span>
         </div>
       </Card>
 
@@ -215,32 +224,36 @@ export default function SettingsPage() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 disabled:bg-gray-300 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+          style={{
+            background: saving ? 'var(--bg-active)' : 'var(--accent-blue)',
+            color: saving ? 'var(--text-tertiary)' : 'var(--text-inverse)',
+          }}
         >
           {saving ? (
-            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            <span className="w-4 h-4 border-2 rounded-full animate-spin" style={{ borderColor: 'transparent', borderTopColor: 'var(--text-inverse)' }} />
           ) : (
             <Save className="w-4 h-4" />
           )}
           Save Settings
         </button>
         {saved && (
-          <span className="flex items-center gap-1 text-sm text-green-600">
+          <span className="flex items-center gap-1 text-sm" style={{ color: 'var(--accent-green)' }}>
             <CheckCircle2 className="w-4 h-4" /> Saved
           </span>
         )}
         {saveError && (
-          <span className="flex items-center gap-1 text-sm text-red-600">
+          <span className="flex items-center gap-1 text-sm" style={{ color: 'var(--accent-red)' }}>
             <AlertCircle className="w-4 h-4" /> {saveError}
           </span>
         )}
       </div>
 
       {/* Info */}
-      <Card className="bg-blue-50/50 border-blue-100">
-        <h4 className="font-medium text-blue-800 text-sm mb-2">About Configuration</h4>
-        <ul className="text-xs text-blue-700 space-y-1">
-          <li>• Settings are stored in <code className="bg-blue-100 px-1 rounded">config.json</code> at the project root</li>
+      <Card style={{ background: 'var(--accent-blue-dim)', borderColor: 'var(--accent-blue)' }}>
+        <h4 className="font-medium text-sm mb-2" style={{ color: 'var(--accent-blue)' }}>About Configuration</h4>
+        <ul className="text-xs space-y-1" style={{ color: 'var(--accent-blue)' }}>
+          <li>• Settings are stored in <code className="px-1 rounded" style={{ background: 'var(--accent-blue-dim)' }}>config.json</code> at the project root</li>
           <li>• Changes take effect immediately for new operations</li>
           <li>• Running sessions are not affected by settings changes</li>
           <li>• The casesRoot path is used by all subagents to locate case data</li>

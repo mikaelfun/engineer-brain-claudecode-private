@@ -1,11 +1,12 @@
 /**
- * Card — 通用卡片容器 (from RDSE2)
+ * Card — 通用卡片容器 (design system v2)
  */
 import React from 'react'
 
 interface CardProps {
   children: React.ReactNode
   className?: string
+  style?: React.CSSProperties
   onClick?: () => void
   hover?: boolean
   padding?: 'none' | 'sm' | 'md' | 'lg'
@@ -21,17 +22,23 @@ const paddingStyles = {
 export function Card({
   children,
   className = '',
+  style,
   onClick,
   hover = false,
   padding = 'md'
 }: CardProps) {
-  const baseClasses = 'bg-white rounded-xl shadow-sm border border-gray-200'
-  const hoverClasses = hover || onClick ? 'hover:shadow-md transition-shadow cursor-pointer' : ''
+  const hoverClasses = hover || onClick ? 'transition-shadow cursor-pointer' : ''
   const paddingClasses = paddingStyles[padding]
 
   return (
     <div
-      className={`${baseClasses} ${hoverClasses} ${paddingClasses} ${className}`}
+      className={`rounded-[10px] ${hoverClasses} ${paddingClasses} ${className}`}
+      style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-subtle)',
+        boxShadow: 'var(--shadow-card)',
+        ...style,
+      }}
       onClick={onClick}
     >
       {children}
@@ -56,8 +63,8 @@ export function CardHeader({
       <div className="flex items-center gap-2">
         {icon}
         <div>
-          <h3 className="font-semibold text-gray-900">{title}</h3>
-          {subtitle && <p className="text-sm text-gray-500">{subtitle}</p>}
+          <h3 className="font-semibold text-[13px]" style={{ color: 'var(--text-primary)' }}>{title}</h3>
+          {subtitle && <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{subtitle}</p>}
         </div>
       </div>
       {action}
@@ -81,26 +88,35 @@ export function StatCard({
   active?: boolean
   onClick?: () => void
 }) {
-  const colorStyles = {
-    blue: 'bg-blue-50 border-blue-200',
-    green: 'bg-green-50 border-green-200',
-    red: 'bg-red-50 border-red-200',
-    yellow: 'bg-yellow-50 border-yellow-200',
-    purple: 'bg-purple-50 border-purple-200',
+  const colorMap: Record<string, { bg: string; accent: string }> = {
+    blue: { bg: 'var(--accent-blue-dim)', accent: 'var(--accent-blue)' },
+    green: { bg: 'var(--accent-green-dim)', accent: 'var(--accent-green)' },
+    red: { bg: 'var(--accent-red-dim)', accent: 'var(--accent-red)' },
+    yellow: { bg: 'var(--accent-amber-dim)', accent: 'var(--accent-amber)' },
+    purple: { bg: 'var(--accent-purple-dim)', accent: 'var(--accent-purple)' },
   }
-
-  const activeRing = active ? 'ring-2 ring-offset-1 ring-blue-500' : ''
-  const hoverEffect = onClick ? 'hover:shadow-md transition-all cursor-pointer' : ''
+  const c = colorMap[color]
+  const activeStyle = active ? { boxShadow: `0 0 0 2px ${c.accent}` } : {}
+  const hoverEffect = onClick ? 'transition-all cursor-pointer' : ''
 
   return (
-    <Card className={`${colorStyles[color]} ${activeRing} ${hoverEffect}`} padding="md" onClick={onClick}>
+    <div
+      className={`rounded-[10px] p-4 md:p-5 ${hoverEffect}`}
+      style={{
+        background: c.bg,
+        border: '1px solid var(--border-subtle)',
+        borderTop: `2px solid ${c.accent}`,
+        ...activeStyle,
+      }}
+      onClick={onClick}
+    >
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-gray-600">{label}</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{label}</p>
+          <p className="text-2xl font-bold mt-1 font-mono" style={{ color: 'var(--text-primary)' }}>{value}</p>
         </div>
-        {icon && <div className="text-gray-400">{icon}</div>}
+        {icon && <div style={{ color: 'var(--text-tertiary)' }}>{icon}</div>}
       </div>
-    </Card>
+    </div>
   )
 }

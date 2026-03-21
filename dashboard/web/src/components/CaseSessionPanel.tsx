@@ -1,11 +1,5 @@
 /**
- * CaseSessionPanel — Per-case SDK session 管理面板
- *
- * 显示在 CaseDetail 页面，提供:
- *  - 当前 session 状态
- *  - Start / End 操作按钮
- *  - Session 详情 (创建时间、最近活动、resume 次数)
- *  - Session 历史列表 (可折叠)
+ * CaseSessionPanel — Per-case SDK session 管理面板 (design system v2)
  */
 import { SessionBadge } from './SessionBadge'
 import { Card, CardHeader } from './common/Card'
@@ -36,7 +30,7 @@ export default function CaseSessionPanel({ caseNumber }: CaseSessionPanelProps) 
   if (isLoading) {
     return (
       <Card>
-        <div className="text-sm text-gray-400 py-2">Loading sessions...</div>
+        <div className="text-sm py-2" style={{ color: 'var(--text-tertiary)' }}>Loading sessions...</div>
       </Card>
     )
   }
@@ -53,7 +47,7 @@ export default function CaseSessionPanel({ caseNumber }: CaseSessionPanelProps) 
               sessionId={activeSessionId!}
             />
           ) : (
-            <span className="text-xs text-gray-400">No active session</span>
+            <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>No active session</span>
           )}
         </div>
 
@@ -64,7 +58,8 @@ export default function CaseSessionPanel({ caseNumber }: CaseSessionPanelProps) 
                 processCase.mutate({ caseId: caseNumber })
               }
               disabled={processCase.isPending}
-              className="px-3 py-1 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              className="px-3 py-1 text-xs font-medium rounded-lg disabled:opacity-50 transition-colors"
+              style={{ background: 'var(--accent-blue)', color: 'var(--text-inverse)' }}
             >
               {processCase.isPending ? '...' : 'Start Session'}
             </button>
@@ -78,7 +73,8 @@ export default function CaseSessionPanel({ caseNumber }: CaseSessionPanelProps) 
                 })
               }
               disabled={endSession.isPending}
-              className="px-3 py-1 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 disabled:opacity-50 transition-colors"
+              className="px-3 py-1 text-xs font-medium rounded-lg disabled:opacity-50 transition-colors"
+              style={{ color: 'var(--accent-red)', background: 'var(--accent-red-dim)' }}
             >
               End
             </button>
@@ -88,7 +84,7 @@ export default function CaseSessionPanel({ caseNumber }: CaseSessionPanelProps) 
 
       {/* Active Session Details */}
       {activeSession && (
-        <div className="text-xs text-gray-500 space-y-1.5 mb-3 p-2.5 bg-gray-50 rounded-lg">
+        <div className="text-xs space-y-1.5 mb-3 p-2.5 rounded-lg" style={{ background: 'var(--bg-inset)' }}>
           <DetailRow
             label="Created"
             value={new Date(activeSession.createdAt).toLocaleString()}
@@ -110,7 +106,7 @@ export default function CaseSessionPanel({ caseNumber }: CaseSessionPanelProps) 
       {/* Session History */}
       {sessions.length > 1 && (
         <details className="mt-2">
-          <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-600 select-none">
+          <summary className="text-xs cursor-pointer select-none" style={{ color: 'var(--text-tertiary)' }}>
             {sessions.length} total sessions
             {sessions.length > 1 && (
               <button
@@ -119,7 +115,8 @@ export default function CaseSessionPanel({ caseNumber }: CaseSessionPanelProps) 
                   e.stopPropagation()
                   endAll.mutate(caseNumber)
                 }}
-                className="ml-2 text-red-400 hover:text-red-600"
+                className="ml-2"
+                style={{ color: 'var(--accent-red)' }}
               >
                 (end all)
               </button>
@@ -129,14 +126,15 @@ export default function CaseSessionPanel({ caseNumber }: CaseSessionPanelProps) 
             {sessions.map((s: any) => (
               <div
                 key={s.sessionId}
-                className="flex items-center justify-between text-xs py-1 px-2 bg-gray-50 rounded"
+                className="flex items-center justify-between text-xs py-1 px-2 rounded"
+                style={{ background: 'var(--bg-inset)' }}
               >
                 <SessionBadge
                   status={s.status}
                   sessionId={s.sessionId}
                   compact
                 />
-                <span className="text-gray-400">
+                <span style={{ color: 'var(--text-tertiary)' }}>
                   {new Date(s.lastActivityAt).toLocaleString()}
                 </span>
               </div>
@@ -147,7 +145,7 @@ export default function CaseSessionPanel({ caseNumber }: CaseSessionPanelProps) 
 
       {/* No sessions */}
       {sessions.length === 0 && !hasActiveSession && (
-        <p className="text-xs text-gray-400">
+        <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
           No sessions yet. Start a session to begin casework processing.
         </p>
       )}
@@ -166,9 +164,10 @@ function DetailRow({
 }) {
   return (
     <div className="flex justify-between gap-2">
-      <span className="text-gray-400 shrink-0">{label}</span>
+      <span className="shrink-0" style={{ color: 'var(--text-tertiary)' }}>{label}</span>
       <span
-        className={`text-gray-600 text-right ${truncate ? 'truncate max-w-[200px]' : ''}`}
+        className={`text-right ${truncate ? 'truncate max-w-[200px]' : ''}`}
+        style={{ color: 'var(--text-secondary)' }}
       >
         {value}
       </span>

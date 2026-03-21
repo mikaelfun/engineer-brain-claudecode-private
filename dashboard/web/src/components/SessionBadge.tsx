@@ -1,5 +1,5 @@
 /**
- * SessionBadge — Case SDK session 状态指示器
+ * SessionBadge — Case SDK session 状态指示器 (design system v2)
  */
 
 interface SessionBadgeProps {
@@ -8,29 +8,30 @@ interface SessionBadgeProps {
   compact?: boolean
 }
 
-const statusConfig = {
+const statusConfig: Record<string, { dotColor: string; textColor: string; bg: string; label: string; animate?: boolean }> = {
   active: {
-    dot: 'bg-green-500 animate-pulse',
-    text: 'text-green-700',
-    bg: 'bg-green-50',
+    dotColor: 'var(--accent-green)',
+    textColor: 'var(--accent-green)',
+    bg: 'var(--accent-green-dim)',
     label: 'Active',
+    animate: true,
   },
   paused: {
-    dot: 'bg-yellow-500',
-    text: 'text-yellow-700',
-    bg: 'bg-yellow-50',
+    dotColor: 'var(--accent-amber)',
+    textColor: 'var(--accent-amber)',
+    bg: 'var(--accent-amber-dim)',
     label: 'Paused',
   },
   completed: {
-    dot: 'bg-gray-400',
-    text: 'text-gray-500',
-    bg: 'bg-gray-50',
+    dotColor: 'var(--text-tertiary)',
+    textColor: 'var(--text-tertiary)',
+    bg: 'var(--bg-inset)',
     label: 'Ended',
   },
   failed: {
-    dot: 'bg-red-500',
-    text: 'text-red-700',
-    bg: 'bg-red-50',
+    dotColor: 'var(--accent-red)',
+    textColor: 'var(--accent-red)',
+    bg: 'var(--accent-red-dim)',
     label: 'Failed',
   },
 }
@@ -40,9 +41,13 @@ export function SessionBadge({ status, sessionId, compact }: SessionBadgeProps) 
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${config.bg} ${config.text}`}
+      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium"
+      style={{ background: config.bg, color: config.textColor }}
     >
-      <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
+      <span
+        className={`w-1.5 h-1.5 rounded-full ${config.animate ? 'animate-pulse' : ''}`}
+        style={{ background: config.dotColor }}
+      />
       {config.label}
       {!compact && sessionId && (
         <span className="font-mono text-[10px] opacity-60">

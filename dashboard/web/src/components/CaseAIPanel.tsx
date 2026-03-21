@@ -1,8 +1,8 @@
 /**
- * CaseAIPanel — AI assistant sidebar (right column, ~30% width)
+ * CaseAIPanel — AI assistant sidebar (design system v2)
  *
- * Design: matches dashboard's existing design language (blue primary, white/gray surfaces)
- * Sticky sidebar that stays visible while browsing tabs
+ * Sticky sidebar that stays visible while browsing tabs.
+ * All colors via CSS variables for dark/light theme support.
  */
 import { useState, useRef, useEffect } from 'react'
 import {
@@ -181,17 +181,30 @@ export default function CaseAIPanel({ caseNumber }: CaseAIPanelProps) {
   ]
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm sticky top-20">
+    <div
+      className="rounded-xl sticky top-20"
+      style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-default)',
+        boxShadow: 'var(--shadow-card)',
+      }}
+    >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+      <div
+        className="flex items-center justify-between px-4 py-3"
+        style={{ borderBottom: '1px solid var(--border-subtle)' }}
+      >
         <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-blue-500" />
-          <span className="text-sm font-semibold text-gray-900">AI Assistant</span>
+          <Sparkles className="w-4 h-4" style={{ color: 'var(--accent-blue)' }} />
+          <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>AI Assistant</span>
         </div>
         {activeSessionId && (
           <button
             onClick={handleEndSession}
-            className="text-xs text-gray-400 hover:text-red-500 flex items-center gap-1 transition-colors"
+            className="text-xs flex items-center gap-1 transition-colors"
+            style={{ color: 'var(--text-tertiary)' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--accent-red)' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-tertiary)' }}
           >
             <X className="w-3 h-3" /> End
           </button>
@@ -203,7 +216,8 @@ export default function CaseAIPanel({ caseNumber }: CaseAIPanelProps) {
         <button
           onClick={() => handleAction('process')}
           disabled={isActionDisabled}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 active:bg-blue-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{ background: 'var(--accent-blue)', color: 'var(--text-inverse)' }}
         >
           {isProcessing
             ? <Loader2 className="w-4 h-4 animate-spin" />
@@ -214,25 +228,38 @@ export default function CaseAIPanel({ caseNumber }: CaseAIPanelProps) {
 
         {/* Draft Email — split button */}
         <div className="relative" ref={emailMenuRef}>
-          <div className="flex rounded-lg border border-gray-200 overflow-hidden">
+          <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid var(--border-default)' }}>
             <button
               onClick={() => handleAction('draft-email', 'auto')}
               disabled={isActionDisabled}
-              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ color: 'var(--text-secondary)' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
             >
-              <Mail className="w-3.5 h-3.5 text-gray-400" />
+              <Mail className="w-3.5 h-3.5" style={{ color: 'var(--text-tertiary)' }} />
               Draft Email
             </button>
             <button
               onClick={() => setEmailTypeMenuOpen(!emailTypeMenuOpen)}
               disabled={isActionDisabled}
-              className="flex items-center px-2 border-l border-gray-200 text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center px-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ borderLeft: '1px solid var(--border-default)', color: 'var(--text-tertiary)' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
             >
               <ChevronDown className={`w-3.5 h-3.5 transition-transform ${emailTypeMenuOpen ? 'rotate-180' : ''}`} />
             </button>
           </div>
           {emailTypeMenuOpen && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-20 py-1">
+            <div
+              className="absolute top-full left-0 right-0 mt-1 rounded-lg z-20 py-1"
+              style={{
+                background: 'var(--bg-elevated)',
+                border: '1px solid var(--border-default)',
+                boxShadow: 'var(--shadow-elevated)',
+              }}
+            >
               {EMAIL_TYPES.map((et) => (
                 <button
                   key={et.value}
@@ -240,10 +267,19 @@ export default function CaseAIPanel({ caseNumber }: CaseAIPanelProps) {
                     setEmailTypeMenuOpen(false)
                     handleAction('draft-email', et.value)
                   }}
-                  className="w-full text-left px-3 py-1.5 text-xs text-gray-600 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                  className="w-full text-left px-3 py-1.5 text-xs transition-colors"
+                  style={{ color: 'var(--text-secondary)' }}
+                  onMouseEnter={e => {
+                    (e.currentTarget as HTMLElement).style.background = 'var(--accent-blue-dim)'
+                    ;(e.currentTarget as HTMLElement).style.color = 'var(--accent-blue)'
+                  }}
+                  onMouseLeave={e => {
+                    (e.currentTarget as HTMLElement).style.background = 'transparent'
+                    ;(e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)'
+                  }}
                 >
                   {et.label}
-                  {et.value === 'auto' && <span className="text-gray-400 ml-1">(default)</span>}
+                  {et.value === 'auto' && <span style={{ color: 'var(--text-tertiary)' }} className="ml-1">(default)</span>}
                 </button>
               ))}
             </div>
@@ -251,7 +287,7 @@ export default function CaseAIPanel({ caseNumber }: CaseAIPanelProps) {
         </div>
 
         {/* Divider */}
-        <div className="border-t border-gray-100 my-1" />
+        <div className="my-1" style={{ borderTop: '1px solid var(--border-subtle)' }} />
 
         {/* Quick Actions — compact list */}
         <div className="space-y-0.5">
@@ -260,11 +296,20 @@ export default function CaseAIPanel({ caseNumber }: CaseAIPanelProps) {
               key={action.id}
               onClick={() => handleAction(action.id)}
               disabled={isActionDisabled}
-              className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md text-left text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors disabled:opacity-40 disabled:cursor-not-allowed group"
+              className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md text-left text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed group"
+              style={{ color: 'var(--text-secondary)' }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'
+                ;(e.currentTarget as HTMLElement).style.color = 'var(--text-primary)'
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLElement).style.background = 'transparent'
+                ;(e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)'
+              }}
             >
-              <action.icon className="w-3.5 h-3.5 text-gray-400 group-hover:text-blue-500 transition-colors flex-shrink-0" />
+              <action.icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--text-tertiary)' }} />
               <span className="truncate">{action.label}</span>
-              <ChevronRight className="w-3 h-3 text-gray-300 ml-auto opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+              <ChevronRight className="w-3 h-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" style={{ color: 'var(--text-tertiary)' }} />
             </button>
           ))}
         </div>
@@ -272,15 +317,15 @@ export default function CaseAIPanel({ caseNumber }: CaseAIPanelProps) {
 
       {/* Status / Messages / Chat — below divider */}
       {(hasActiveOperation || isLiveRunning || error || messages.length > 0 || activeSessionId) && (
-        <div className="border-t border-gray-100 p-3 space-y-2">
+        <div className="p-3 space-y-2" style={{ borderTop: '1px solid var(--border-subtle)' }}>
           {/* Active Operation */}
           {hasActiveOperation && (
-            <div className="flex items-center gap-2 px-2.5 py-2 bg-amber-50 rounded-lg">
-              <Loader2 className="w-3.5 h-3.5 text-amber-600 animate-spin flex-shrink-0" />
-              <span className="text-xs text-amber-700 font-medium truncate flex-1">
+            <div className="flex items-center gap-2 px-2.5 py-2 rounded-lg" style={{ background: 'var(--accent-amber-dim)' }}>
+              <Loader2 className="w-3.5 h-3.5 animate-spin flex-shrink-0" style={{ color: 'var(--accent-amber)' }} />
+              <span className="text-xs font-medium truncate flex-1" style={{ color: 'var(--accent-amber)' }}>
                 {activeOperation!.operationType}
               </span>
-              <span className="text-[10px] text-amber-400 tabular-nums flex-shrink-0">
+              <span className="text-[10px] tabular-nums flex-shrink-0" style={{ color: 'var(--text-tertiary)' }}>
                 {new Date(activeOperation!.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </span>
             </div>
@@ -288,21 +333,21 @@ export default function CaseAIPanel({ caseNumber }: CaseAIPanelProps) {
 
           {/* Active Session */}
           {isLiveRunning && !hasActiveOperation && (
-            <div className="flex items-center gap-2 px-2.5 py-2 bg-blue-50 rounded-lg">
+            <div className="flex items-center gap-2 px-2.5 py-2 rounded-lg" style={{ background: 'var(--accent-blue-dim)' }}>
               <span className="relative flex h-2 w-2 flex-shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500" />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: 'var(--accent-blue)' }} />
+                <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: 'var(--accent-blue)' }} />
               </span>
-              <span className="text-xs text-blue-700 font-medium">Session Active</span>
-              <span className="text-[10px] text-blue-400 font-mono ml-auto">{activeSessionId.slice(0, 8)}</span>
+              <span className="text-xs font-medium" style={{ color: 'var(--accent-blue)' }}>Session Active</span>
+              <span className="text-[10px] font-mono ml-auto" style={{ color: 'var(--text-tertiary)' }}>{activeSessionId.slice(0, 8)}</span>
             </div>
           )}
 
           {/* Error */}
           {error && (
-            <div className="flex items-start gap-2 px-2.5 py-2 bg-red-50 rounded-lg">
-              <AlertCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0 mt-px" />
-              <span className="text-xs text-red-600">{error}</span>
+            <div className="flex items-start gap-2 px-2.5 py-2 rounded-lg" style={{ background: 'var(--accent-red-dim)' }}>
+              <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-px" style={{ color: 'var(--accent-red)' }} />
+              <span className="text-xs" style={{ color: 'var(--accent-red)' }}>{error}</span>
             </div>
           )}
 
@@ -325,12 +370,18 @@ export default function CaseAIPanel({ caseNumber }: CaseAIPanelProps) {
                   onChange={(e) => setChatInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleChat()}
                   placeholder="Message AI..."
-                  className="flex-1 px-2.5 py-1.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300 focus:bg-white transition-all placeholder:text-gray-400"
+                  className="flex-1 px-2.5 py-1.5 text-sm rounded-lg outline-none transition-all"
+                  style={{
+                    background: 'var(--bg-inset)',
+                    border: '1px solid var(--border-default)',
+                    color: 'var(--text-primary)',
+                  }}
                 />
                 <button
                   onClick={handleChat}
                   disabled={!chatInput.trim()}
-                  className="px-2 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 transition-colors"
+                  className="px-2 py-1.5 rounded-lg transition-colors disabled:opacity-40"
+                  style={{ background: 'var(--accent-blue)', color: 'var(--text-inverse)' }}
                 >
                   <Send className="w-3.5 h-3.5" />
                 </button>
@@ -338,19 +389,22 @@ export default function CaseAIPanel({ caseNumber }: CaseAIPanelProps) {
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={handleEndSession}
-                  className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium text-green-700 bg-green-50 rounded hover:bg-green-100 transition-colors"
+                  className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium rounded transition-colors"
+                  style={{ color: 'var(--accent-green)', background: 'var(--accent-green-dim)' }}
                 >
                   <CheckCircle2 className="w-3 h-3" /> Done
                 </button>
                 <button
                   onClick={() => handleAction('process')}
-                  className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium text-gray-600 bg-gray-100 rounded hover:bg-gray-200 transition-colors"
+                  className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium rounded transition-colors"
+                  style={{ color: 'var(--text-secondary)', background: 'var(--bg-inset)' }}
                 >
                   <Loader2 className="w-3 h-3" /> Retry
                 </button>
                 <button
                   onClick={handleEndSession}
-                  className="flex items-center gap-1 px-2 py-1 text-[11px] text-gray-400 rounded hover:bg-gray-100 transition-colors ml-auto"
+                  className="flex items-center gap-1 px-2 py-1 text-[11px] rounded transition-colors ml-auto"
+                  style={{ color: 'var(--text-tertiary)' }}
                 >
                   <X className="w-3 h-3" /> Dismiss
                 </button>
@@ -362,9 +416,9 @@ export default function CaseAIPanel({ caseNumber }: CaseAIPanelProps) {
 
       {/* Session History */}
       {allSessions.length > 0 && (
-        <div className="border-t border-gray-100">
+        <div style={{ borderTop: '1px solid var(--border-subtle)' }}>
           <details className="px-3 py-2">
-            <summary className="text-[11px] text-gray-400 cursor-pointer hover:text-gray-600 select-none flex items-center justify-between">
+            <summary className="text-[11px] cursor-pointer select-none flex items-center justify-between" style={{ color: 'var(--text-tertiary)' }}>
               <span className="flex items-center gap-1">
                 <Brain className="w-3 h-3" />
                 {allSessions.length} session{allSessions.length > 1 ? 's' : ''}
@@ -376,7 +430,8 @@ export default function CaseAIPanel({ caseNumber }: CaseAIPanelProps) {
                     e.stopPropagation()
                     endAllSessions.mutate(caseNumber)
                   }}
-                  className="text-red-400 hover:text-red-500 text-[11px] transition-colors"
+                  className="text-[11px] transition-colors"
+                  style={{ color: 'var(--accent-red)' }}
                 >
                   end all
                 </button>
@@ -386,10 +441,11 @@ export default function CaseAIPanel({ caseNumber }: CaseAIPanelProps) {
               {allSessions.map((s: any) => (
                 <div
                   key={s.sessionId}
-                  className="flex items-center justify-between text-xs py-1 px-1.5 bg-gray-50 rounded"
+                  className="flex items-center justify-between text-xs py-1 px-1.5 rounded"
+                  style={{ background: 'var(--bg-inset)' }}
                 >
                   <SessionBadge status={s.status} sessionId={s.sessionId} compact />
-                  <div className="flex items-center gap-1.5 text-gray-400 text-[10px]">
+                  <div className="flex items-center gap-1.5 text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
                     {s.intent && <span className="truncate max-w-[80px]">{s.intent}</span>}
                     <span className="tabular-nums">{new Date(s.lastActivityAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                   </div>
@@ -405,40 +461,40 @@ export default function CaseAIPanel({ caseNumber }: CaseAIPanelProps) {
 
 /** Compact message bubble for sidebar width */
 function MessageBubble({ message }: { message: { type: string; content: string; toolName?: string; step?: string } }) {
-  const styles: Record<string, { border: string; icon: React.ReactNode; label: string }> = {
+  const styles: Record<string, { borderColor: string; icon: React.ReactNode; label: string }> = {
     thinking: {
-      border: 'border-l-blue-300',
-      icon: <Brain className="w-3 h-3 text-blue-400" />,
+      borderColor: 'var(--accent-blue)',
+      icon: <Brain className="w-3 h-3" style={{ color: 'var(--accent-blue)' }} />,
       label: 'Thinking',
     },
     'tool-call': {
-      border: 'border-l-amber-300',
-      icon: <Wrench className="w-3 h-3 text-amber-500" />,
+      borderColor: 'var(--accent-amber)',
+      icon: <Wrench className="w-3 h-3" style={{ color: 'var(--accent-amber)' }} />,
       label: message.toolName || 'Tool',
     },
     'tool-result': {
-      border: 'border-l-green-300',
-      icon: <CheckCircle2 className="w-3 h-3 text-green-500" />,
+      borderColor: 'var(--accent-green)',
+      icon: <CheckCircle2 className="w-3 h-3" style={{ color: 'var(--accent-green)' }} />,
       label: message.toolName || 'Result',
     },
     completed: {
-      border: 'border-l-green-400',
-      icon: <CheckCircle2 className="w-3 h-3 text-green-500" />,
+      borderColor: 'var(--accent-green)',
+      icon: <CheckCircle2 className="w-3 h-3" style={{ color: 'var(--accent-green)' }} />,
       label: 'Done',
     },
     failed: {
-      border: 'border-l-red-400',
-      icon: <AlertCircle className="w-3 h-3 text-red-500" />,
+      borderColor: 'var(--accent-red)',
+      icon: <AlertCircle className="w-3 h-3" style={{ color: 'var(--accent-red)' }} />,
       label: 'Error',
     },
     user: {
-      border: 'border-l-blue-400',
-      icon: <Send className="w-3 h-3 text-blue-500" />,
+      borderColor: 'var(--accent-blue)',
+      icon: <Send className="w-3 h-3" style={{ color: 'var(--accent-blue)' }} />,
       label: 'You',
     },
     system: {
-      border: 'border-l-gray-300',
-      icon: <Sparkles className="w-3 h-3 text-gray-400" />,
+      borderColor: 'var(--text-tertiary)',
+      icon: <Sparkles className="w-3 h-3" style={{ color: 'var(--text-tertiary)' }} />,
       label: 'System',
     },
   }
@@ -450,16 +506,19 @@ function MessageBubble({ message }: { message: { type: string; content: string; 
     : message.content
 
   return (
-    <div className={`border-l-2 ${style.border} pl-2 py-1 ${message.type === 'user' ? 'ml-4' : ''}`}>
+    <div
+      className={`pl-2 py-1 ${message.type === 'user' ? 'ml-4' : ''}`}
+      style={{ borderLeft: `2px solid ${style.borderColor}` }}
+    >
       <div className="flex items-center gap-1">
         {style.icon}
-        <span className="text-[11px] font-medium text-gray-500">{style.label}</span>
+        <span className="text-[11px] font-medium" style={{ color: 'var(--text-secondary)' }}>{style.label}</span>
         {message.step && (
-          <span className="text-[10px] text-gray-400 ml-auto font-mono">{message.step}</span>
+          <span className="text-[10px] ml-auto font-mono" style={{ color: 'var(--text-tertiary)' }}>{message.step}</span>
         )}
       </div>
       {displayContent && (
-        <p className="text-[11px] text-gray-600 mt-0.5 ml-4 leading-relaxed break-words whitespace-pre-wrap">
+        <p className="text-[11px] mt-0.5 ml-4 leading-relaxed break-words whitespace-pre-wrap" style={{ color: 'var(--text-secondary)' }}>
           {displayContent}
         </p>
       )}

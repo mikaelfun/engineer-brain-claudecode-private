@@ -1,5 +1,5 @@
 /**
- * ErrorBoundary — Catches uncaught render errors to prevent blank pages
+ * ErrorBoundary — Catches uncaught render errors (design system v2)
  */
 import React from 'react'
 
@@ -34,13 +34,16 @@ export class ErrorBoundary extends React.Component<Props, State> {
       return (
         <div className="flex flex-col items-center justify-center min-h-[300px] p-8 text-center">
           <div className="text-4xl mb-4">💥</div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">Something went wrong</h2>
-          <p className="text-sm text-gray-500 mb-4 max-w-md">
+          <h2 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
+            Something went wrong
+          </h2>
+          <p className="text-sm mb-4 max-w-md" style={{ color: 'var(--text-secondary)' }}>
             {this.state.error?.message || 'An unexpected error occurred while rendering this page.'}
           </p>
           <button
             onClick={() => this.setState({ hasError: false, error: null })}
-            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 text-sm"
+            className="px-4 py-2 rounded-lg text-sm font-medium transition-opacity hover:opacity-90"
+            style={{ background: 'var(--accent-blue)', color: 'var(--text-inverse)' }}
           >
             Try Again
           </button>

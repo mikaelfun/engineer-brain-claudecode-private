@@ -15,14 +15,13 @@ import {
   useCaseTiming, useCaseLogs, useCaseAttachments,
   useToggleCaseTodo
 } from '../api/hooks'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
+import MarkdownContent from '../components/common/MarkdownContent'
 import CaseAIPanel from '../components/CaseAIPanel'
 
 export default function CaseDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState('info')
+  const [activeTab, setActiveTab] = useState('inspection')
 
   const { data: caseInfo, isLoading, error } = useCaseDetail(id || '')
   // Always-fetch: key tab data for badge counts (lightweight — only returns arrays)
@@ -36,7 +35,7 @@ export default function CaseDetail() {
   const { data: teamsData } = useCaseTeams(activeTab === 'teams' ? (id || '') : '')
   const { data: meta } = useCaseMeta(id || '') // always needed for SLA indicators
   const { data: analysisData } = useCaseAnalysis(activeTab === 'analysis' ? (id || '') : '')
-  const { data: inspectionData } = useCaseInspection(activeTab === 'inspection' ? (id || '') : '')
+  const { data: inspectionData } = useCaseInspection(id || '')
   const toggleCaseTodo = useToggleCaseTodo(id || '')
   const { data: timingData } = useCaseTiming(activeTab === 'timing' ? (id || '') : '')
 
@@ -44,8 +43,8 @@ export default function CaseDetail() {
   if (error || !caseInfo) return <ErrorState message="Case not found" onRetry={() => navigate('/')} />
 
   const tabs = [
-    { id: 'info', label: 'Info', icon: '📋' },
     { id: 'inspection', label: 'Inspection', icon: '🩺' },
+    { id: 'info', label: 'Info', icon: '📋' },
     { id: 'todo', label: 'Todo', icon: '📌', count: todoData?.total },
     { id: 'emails', label: 'Emails', icon: '📧', count: emailsData?.total },
     { id: 'notes', label: 'Notes', icon: '📝', count: notesData?.total },
@@ -60,16 +59,21 @@ export default function CaseDetail() {
   return (
     <div className="space-y-4">
       {/* Compact Header Card */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+      <div
+        className="rounded-xl p-4"
+        style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-default)', boxShadow: 'var(--shadow-card)' }}
+      >
         {/* Row 1: Back + Title + Health Score */}
         <div className="flex items-start gap-3">
           <button
             onClick={() => navigate('/')}
-            className="mt-1 p-1 hover:bg-gray-100 rounded-lg flex-shrink-0"
+            className="mt-1 p-1 rounded-lg flex-shrink-0"
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+            onMouseLeave={e => e.currentTarget.style.background = ''}
           >
-            <ArrowLeft className="w-5 h-5 text-gray-400" />
+            <ArrowLeft className="w-5 h-5" style={{ color: 'var(--text-tertiary)' }} />
           </button>
-          <h2 className="text-lg font-bold text-gray-900 leading-snug flex-1 min-w-0">
+          <h2 className="text-lg font-bold leading-snug flex-1 min-w-0" style={{ color: 'var(--text-primary)' }}>
             {caseInfo.title}
           </h2>
           {meta && <HealthScoreBadge meta={meta} />}
@@ -77,21 +81,24 @@ export default function CaseDetail() {
 
         {/* Row 2: Metadata chips */}
         <div className="flex items-center gap-1.5 flex-wrap mt-2 ml-9 text-xs">
-          <span className="font-mono text-gray-500">{id}</span>
-          <span className="text-gray-300">·</span>
+          <span className="font-mono" style={{ color: 'var(--text-tertiary)' }}>{id}</span>
+          <span style={{ color: 'var(--border-default)' }}>·</span>
           <SeverityBadge severity={caseInfo.severity} />
           <CaseStatusBadge status={caseInfo.status} />
           {meta?.actualStatus && meta.actualStatus !== caseInfo.status?.toLowerCase() && (
             <Badge variant="info" size="xs">{meta.actualStatus}</Badge>
           )}
-          <span className="text-gray-300">·</span>
-          <span className="text-gray-600">{caseInfo.assignedTo}</span>
-          <span className="text-gray-300">·</span>
-          <span className="text-gray-600">{caseInfo.caseAge || '0 days'}</span>
+          <span style={{ color: 'var(--border-default)' }}>·</span>
+          <span style={{ color: 'var(--text-secondary)' }}>{caseInfo.assignedTo}</span>
+          <span style={{ color: 'var(--border-default)' }}>·</span>
+          <span style={{ color: 'var(--text-secondary)' }}>{caseInfo.caseAge || '0 days'}</span>
           {meta?.daysSinceLastContact != null && meta.daysSinceLastContact > 0 && (
             <>
-              <span className="text-gray-300">·</span>
-              <span className={`${meta.daysSinceLastContact > 3 ? 'text-red-500 font-medium' : 'text-gray-500'}`}>
+              <span style={{ color: 'var(--border-default)' }}>·</span>
+              <span
+                className={meta.daysSinceLastContact > 3 ? 'font-medium' : ''}
+                style={{ color: meta.daysSinceLastContact > 3 ? 'var(--accent-red)' : 'var(--text-tertiary)' }}
+              >
                 Last contact {meta.daysSinceLastContact}d ago
               </span>
             </>
@@ -99,7 +106,7 @@ export default function CaseDetail() {
         </div>
 
         {/* Row 3: Timestamps */}
-        <div className="flex items-center gap-3 flex-wrap mt-1.5 ml-9 text-xs text-gray-400">
+        <div className="flex items-center gap-3 flex-wrap mt-1.5 ml-9 text-xs" style={{ color: 'var(--text-tertiary)' }}>
           <span title={caseInfo.createdOn}>
             <Clock className="w-3 h-3 inline mr-0.5 -mt-px" />
             Created {formatCompactTime(caseInfo.createdOn)}
@@ -119,33 +126,36 @@ export default function CaseDetail() {
 
         {/* Row 4: SAP path */}
         {caseInfo.sap && (
-          <div className="flex items-center gap-1.5 mt-2 ml-9 text-xs text-gray-500">
-            <FolderOpen className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+          <div className="flex items-center gap-1.5 mt-2 ml-9 text-xs" style={{ color: 'var(--text-tertiary)' }}>
+            <FolderOpen className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--text-tertiary)' }} />
             <span className="truncate" title={caseInfo.sap}>{caseInfo.sap}</span>
           </div>
         )}
 
         {/* Row 5: SLA indicators (integrated into header) */}
         {meta && (
-          <div className="flex items-center gap-3 mt-2.5 ml-9 pt-2.5 border-t border-gray-100 text-xs">
+          <div
+            className="flex items-center gap-3 mt-2.5 ml-9 pt-2.5 text-xs"
+            style={{ borderTop: '1px solid var(--border-subtle)' }}
+          >
             <div className="flex items-center gap-1">
-              <span className="text-gray-400">IR:</span>
+              <span style={{ color: 'var(--text-tertiary)' }}>IR:</span>
               <SlaBadge status={meta.irSla?.status || 'unknown'} />
               {meta.irSla?.remaining && (
-                <span className="text-gray-400 ml-0.5">{meta.irSla.remaining}</span>
+                <span className="ml-0.5" style={{ color: 'var(--text-tertiary)' }}>{meta.irSla.remaining}</span>
               )}
             </div>
             <div className="flex items-center gap-1">
-              <span className="text-gray-400">FWR:</span>
+              <span style={{ color: 'var(--text-tertiary)' }}>FWR:</span>
               <SlaBadge status={meta.fwr?.status || 'unknown'} />
             </div>
             <div className="flex items-center gap-1">
-              <span className="text-gray-400">FDR:</span>
+              <span style={{ color: 'var(--text-tertiary)' }}>FDR:</span>
               <SlaBadge status={meta.fdr?.status || 'unknown'} />
             </div>
             {meta.teams_chat_count > 0 && (
               <div className="flex items-center gap-1">
-                <span className="text-gray-400">Teams:</span>
+                <span style={{ color: 'var(--text-tertiary)' }}>Teams:</span>
                 <Badge variant="purple" size="xs">{meta.teams_chat_count} chats</Badge>
               </div>
             )}
@@ -153,25 +163,35 @@ export default function CaseDetail() {
         )}
       </div>
 
-      {/* AI Panel */}
-      <CaseAIPanel caseNumber={id!} />
+      {/* Main Content: Left 70% (Tabs + Content) | Right 30% (AI Panel) */}
+      <div className="flex gap-4 items-start">
+        {/* Left — Information area */}
+        <div className="flex-1 min-w-0 space-y-4">
+          <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+          <div>
+            {activeTab === 'info' && <InfoTab caseInfo={caseInfo} />}
+            {activeTab === 'inspection' && <InspectionTab content={inspectionData?.content} exists={inspectionData?.exists} filename={inspectionData?.filename} updatedAt={inspectionData?.updatedAt} />}
+            {activeTab === 'todo' && <CaseTodoTab caseId={id!} latest={todoData?.latest || null} files={todoData?.files || []} toggleTodo={toggleCaseTodo} />}
+            {activeTab === 'emails' && <EmailsTab emails={emailsData?.emails || []} />}
+            {activeTab === 'notes' && <NotesTab notes={notesData?.notes || []} />}
+            {activeTab === 'teams' && <TeamsTab chats={teamsData?.chats || []} />}
+            {activeTab === 'drafts' && <DraftsTab drafts={draftsData?.drafts || []} />}
+            {activeTab === 'analysis' && <AnalysisTab content={analysisData?.content} exists={analysisData?.exists} />}
+            {activeTab === 'timing' && <TimingTab exists={timingData?.exists} timing={timingData?.timing} />}
+            {activeTab === 'logs' && <LogsTab logs={logsData?.logs || []} />}
+            {activeTab === 'attachments' && <AttachmentsTab files={attachmentsData?.files || []} meta={attachmentsData?.meta} caseNumber={id!} />}
+          </div>
+        </div>
 
-      {/* Tabs */}
-      <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+        {/* Right — AI Assistant sidebar */}
+        <div className="w-72 flex-shrink-0 hidden lg:block">
+          <CaseAIPanel caseNumber={id!} />
+        </div>
+      </div>
 
-      {/* Tab Content */}
-      <div className="mt-4">
-        {activeTab === 'info' && <InfoTab caseInfo={caseInfo} />}
-        {activeTab === 'inspection' && <InspectionTab content={inspectionData?.content} exists={inspectionData?.exists} filename={inspectionData?.filename} updatedAt={inspectionData?.updatedAt} />}
-        {activeTab === 'todo' && <CaseTodoTab caseId={id!} latest={todoData?.latest || null} files={todoData?.files || []} toggleTodo={toggleCaseTodo} />}
-        {activeTab === 'emails' && <EmailsTab emails={emailsData?.emails || []} />}
-        {activeTab === 'notes' && <NotesTab notes={notesData?.notes || []} />}
-        {activeTab === 'teams' && <TeamsTab chats={teamsData?.chats || []} />}
-        {activeTab === 'drafts' && <DraftsTab drafts={draftsData?.drafts || []} />}
-        {activeTab === 'analysis' && <AnalysisTab content={analysisData?.content} exists={analysisData?.exists} />}
-        {activeTab === 'timing' && <TimingTab exists={timingData?.exists} timing={timingData?.timing} />}
-        {activeTab === 'logs' && <LogsTab logs={logsData?.logs || []} />}
-        {activeTab === 'attachments' && <AttachmentsTab files={attachmentsData?.files || []} meta={attachmentsData?.meta} caseNumber={id!} />}
+      {/* Mobile: AI Panel below content (shown only on small screens) */}
+      <div className="lg:hidden">
+        <CaseAIPanel caseNumber={id!} />
       </div>
     </div>
   )
@@ -217,13 +237,13 @@ function InfoTab({ caseInfo }: { caseInfo: any }) {
     <div className="grid gap-4 md:grid-cols-2">
       {sections.map(s => (
         <Card key={s.title}>
-          <h4 className="font-semibold text-gray-900 mb-3">{s.title}</h4>
+          <h4 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>{s.title}</h4>
           <table className="w-full text-sm">
             <tbody>
               {s.fields.filter(([, v]) => v !== undefined && v !== '').map(([k, v]) => (
-                <tr key={k as string} className="border-b border-gray-50">
-                  <td className="py-1.5 pr-3 text-gray-500 whitespace-nowrap">{k}</td>
-                  <td className="py-1.5 text-gray-900 break-all">{v}</td>
+                <tr key={k as string} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                  <td className="py-1.5 pr-3 whitespace-nowrap" style={{ color: 'var(--text-tertiary)' }}>{k}</td>
+                  <td className="py-1.5 break-all" style={{ color: 'var(--text-primary)' }}>{v}</td>
                 </tr>
               ))}
             </tbody>
@@ -261,14 +281,17 @@ function EmailsTab({ emails }: { emails: any[] }) {
                 <Badge variant={email.direction === 'sent' ? 'primary' : 'success'} size="xs">
                   {email.direction === 'sent' ? 'Sent' : 'Received'}
                 </Badge>
-                <span className="text-xs text-gray-400">{email.date}</span>
+                <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{email.date}</span>
               </div>
-              <p className="font-medium text-gray-900 text-sm mt-1 truncate">{email.subject}</p>
-              {email.from && <p className="text-xs text-gray-500">From: {email.from}</p>}
+              <p className="font-medium text-sm mt-1 truncate" style={{ color: 'var(--text-primary)' }}>{email.subject}</p>
+              {email.from && <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>From: {email.from}</p>}
             </div>
           </div>
           {expanded.has(email.id || String(i)) && (
-            <div className="mt-3 pt-3 border-t border-gray-100 text-sm text-gray-700 whitespace-pre-wrap">
+            <div
+              className="mt-3 pt-3 text-sm whitespace-pre-wrap"
+              style={{ borderTop: '1px solid var(--border-subtle)', color: 'var(--text-secondary)' }}
+            >
               {email.body || '(No body)'}
             </div>
           )}
@@ -287,13 +310,13 @@ function NotesTab({ notes }: { notes: any[] }) {
         <Card key={note.id || i} padding="sm">
           <div className="flex items-center gap-2 mb-2">
             <span>📝</span>
-            <span className="text-xs text-gray-400">{note.date}</span>
+            <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{note.date}</span>
             <Badge variant="secondary" size="xs">{note.author}</Badge>
           </div>
           {note.title && note.title !== '(no title)' && (
-            <p className="font-medium text-gray-900 text-sm">{note.title}</p>
+            <p className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>{note.title}</p>
           )}
-          <p className="text-sm text-gray-700 whitespace-pre-wrap mt-1">{note.body}</p>
+          <p className="text-sm whitespace-pre-wrap mt-1" style={{ color: 'var(--text-secondary)' }}>{note.body}</p>
         </Card>
       ))}
     </div>
@@ -314,7 +337,7 @@ function TeamsTab({ chats }: { chats: any[] }) {
     const parts = text.split(new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'))
     return parts.map((part, i) =>
       part.toLowerCase() === searchTerm.toLowerCase()
-        ? <mark key={i} className="bg-yellow-200 px-0.5 rounded">{part}</mark>
+        ? <mark key={i} className="px-0.5 rounded" style={{ background: 'var(--accent-amber-dim)' }}>{part}</mark>
         : part
     )
   }
@@ -327,20 +350,21 @@ function TeamsTab({ chats }: { chats: any[] }) {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Search chats..."
-          className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
+          className="w-full px-3 py-1.5 text-sm rounded-lg focus:outline-none focus:ring-2"
+          style={{ border: '1px solid var(--border-default)', boxShadow: 'none', outlineColor: 'var(--accent-blue)', '--tw-ring-color': 'var(--accent-blue)' } as React.CSSProperties}
         />
       )}
 
       {filteredChats.length === 0 ? (
-        <p className="text-sm text-gray-400 text-center py-4">No matches for "{searchTerm}"</p>
+        <p className="text-sm text-center py-4" style={{ color: 'var(--text-tertiary)' }}>No matches for &ldquo;{searchTerm}&rdquo;</p>
       ) : (
         filteredChats.map((chat, i) => (
           <Card key={chat.chatId || i} padding="sm">
             <div className="flex items-center justify-between mb-2">
-              <h4 className="font-medium text-sm text-gray-900">Chat: {chat.chatId}</h4>
-              <span className="text-xs text-gray-400">{chat.content?.split('\n').length || 0} messages</span>
+              <h4 className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>Chat: {chat.chatId}</h4>
+              <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{chat.content?.split('\n').length || 0} messages</span>
             </div>
-            <div className="text-sm text-gray-700 whitespace-pre-wrap max-h-96 overflow-y-auto">
+            <div className="text-sm whitespace-pre-wrap max-h-96 overflow-y-auto" style={{ color: 'var(--text-secondary)' }}>
               {searchTerm ? highlightText(chat.content || '') : chat.content}
             </div>
           </Card>
@@ -358,12 +382,10 @@ function DraftsTab({ drafts }: { drafts: any[] }) {
       {drafts.map((draft, i) => (
         <Card key={i} padding="sm">
           <div className="flex items-center justify-between mb-2">
-            <span className="font-mono text-xs text-gray-500">{draft.filename}</span>
-            <span className="text-xs text-gray-400">{new Date(draft.createdAt).toLocaleString()}</span>
+            <span className="font-mono text-xs" style={{ color: 'var(--text-tertiary)' }}>{draft.filename}</span>
+            <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{new Date(draft.createdAt).toLocaleString()}</span>
           </div>
-          <div className="prose prose-sm max-w-none">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{draft.content}</ReactMarkdown>
-          </div>
+          <MarkdownContent>{draft.content}</MarkdownContent>
         </Card>
       ))}
     </div>
@@ -375,9 +397,7 @@ function AnalysisTab({ content, exists }: { content?: string; exists?: boolean }
 
   return (
     <Card>
-      <div className="prose prose-sm max-w-none">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
-      </div>
+      <MarkdownContent>{content}</MarkdownContent>
     </Card>
   )
 }
@@ -387,13 +407,11 @@ function InspectionTab({ content, exists, filename, updatedAt }: { content?: str
 
   return (
     <Card>
-      <div className="flex items-center justify-between mb-3 text-xs text-gray-400">
+      <div className="flex items-center justify-between mb-3 text-xs" style={{ color: 'var(--text-tertiary)' }}>
         <span className="font-mono">{filename}</span>
         {updatedAt && <span>{new Date(updatedAt).toLocaleString()}</span>}
       </div>
-      <div className="prose prose-sm max-w-none">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
-      </div>
+      <MarkdownContent>{content}</MarkdownContent>
     </Card>
   )
 }
@@ -434,33 +452,36 @@ function CaseTodoTab({ caseId, latest, files, toggleTodo }: {
     <div className="space-y-3">
       {/* File selector when multiple exist */}
       {files.length > 1 && (
-        <div className="flex items-center gap-2 text-xs text-gray-500">
+        <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-tertiary)' }}>
           <span>History:</span>
-          {files.map(f => (
-            <button
-              key={f.filename}
-              onClick={() => setSelectedFile(f.filename === latest.filename ? null : f.filename)}
-              className={`px-2 py-0.5 rounded font-mono ${
-                (!selectedFile && f.filename === latest.filename) || selectedFile === f.filename
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'bg-gray-100 hover:bg-gray-200'
-              }`}
-            >
-              {f.filename}
-            </button>
-          ))}
+          {files.map(f => {
+            const isActive = (!selectedFile && f.filename === latest.filename) || selectedFile === f.filename
+            return (
+              <button
+                key={f.filename}
+                onClick={() => setSelectedFile(f.filename === latest.filename ? null : f.filename)}
+                className="px-2 py-0.5 rounded font-mono"
+                style={{
+                  background: isActive ? 'var(--accent-blue-dim)' : 'var(--bg-hover)',
+                  color: isActive ? 'var(--accent-blue)' : undefined,
+                }}
+              >
+                {f.filename}
+              </button>
+            )
+          })}
         </div>
       )}
 
       {/* Loading state for historical file */}
       {isHistorical && histLoading && (
-        <div className="py-4 text-center text-sm text-gray-400">Loading historical todo...</div>
+        <div className="py-4 text-center text-sm" style={{ color: 'var(--text-tertiary)' }}>Loading historical todo...</div>
       )}
 
       {/* Content card */}
       {!(isHistorical && histLoading) && (
         <Card>
-          <div className="flex items-center justify-between mb-3 text-xs text-gray-400">
+          <div className="flex items-center justify-between mb-3 text-xs" style={{ color: 'var(--text-tertiary)' }}>
             <div className="flex items-center gap-2">
               <span className="font-mono">{displayFile.filename}</span>
               {!isViewingLatest && (
@@ -474,23 +495,27 @@ function CaseTodoTab({ caseId, latest, files, toggleTodo }: {
             <div className="space-y-4">
               {sections.map((section, si) => (
                 <div key={si}>
-                  <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                  <h4 className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-tertiary)' }}>
                     {section.title}
                   </h4>
                   <div className="space-y-1">
                     {section.items.map((item, ii) => (
                       <div
                         key={ii}
-                        className={`flex items-start gap-2 p-2 rounded-lg ${
-                          section.type === 'green' ? 'bg-green-50' :
-                          item.checked ? 'bg-gray-50' : 'hover:bg-gray-50'
-                        }`}
+                        className="flex items-start gap-2 p-2 rounded-lg"
+                        style={{
+                          background: section.type === 'green' ? 'var(--accent-green-dim)' :
+                            item.checked ? 'var(--bg-inset)' : undefined
+                        }}
                       >
                         {section.type === 'green' || !isViewingLatest ? (
-                          <CheckCircle2 className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
-                            section.type === 'green' ? 'text-green-500' :
-                            item.checked ? 'text-primary' : 'text-gray-300'
-                          }`} />
+                          <CheckCircle2
+                            className="w-5 h-5 flex-shrink-0 mt-0.5"
+                            style={{
+                              color: section.type === 'green' ? 'var(--accent-green)' :
+                                item.checked ? 'var(--accent-blue)' : 'var(--border-default)'
+                            }}
+                          />
                         ) : (
                           <button
                             onClick={() => handleToggle(item.lineNumber, item.checked)}
@@ -498,19 +523,21 @@ function CaseTodoTab({ caseId, latest, files, toggleTodo }: {
                             disabled={toggleTodo.isPending}
                           >
                             {item.checked ? (
-                              <CheckCircle2 className="w-5 h-5 text-primary" />
+                              <CheckCircle2 className="w-5 h-5" style={{ color: 'var(--accent-blue)' }} />
                             ) : (
-                              <Circle className="w-5 h-5 text-gray-300 hover:text-primary" />
+                              <Circle className="w-5 h-5" style={{ color: 'var(--border-default)' }} />
                             )}
                           </button>
                         )}
                         <p className={`text-sm flex-1 ${
-                          item.checked || section.type === 'green'
-                            ? 'text-gray-400 line-through'
-                            : 'text-gray-900'
-                        }`}>
+                          item.checked || section.type === 'green' ? 'line-through' : ''
+                        }`} style={{
+                          color: item.checked || section.type === 'green'
+                            ? 'var(--text-tertiary)'
+                            : 'var(--text-primary)'
+                        }}>
                           {section.type === 'red' && !item.checked && (
-                            <AlertTriangle className="w-3.5 h-3.5 text-red-500 inline mr-1" />
+                            <AlertTriangle className="w-3.5 h-3.5 inline mr-1" style={{ color: 'var(--accent-red)' }} />
                           )}
                           {item.text}
                         </p>
@@ -521,9 +548,7 @@ function CaseTodoTab({ caseId, latest, files, toggleTodo }: {
               ))}
             </div>
           ) : (
-            <div className="prose prose-sm max-w-none">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{displayFile.content}</ReactMarkdown>
-            </div>
+            <MarkdownContent>{displayFile.content}</MarkdownContent>
           )}
         </Card>
       )}
@@ -602,17 +627,20 @@ function TimingTab({ exists, timing }: { exists?: boolean; timing?: any }) {
     inspectionWriter: { label: 'Inspection Writer', icon: '📝' },
   }
 
-  const stepColors = ['bg-blue-400', 'bg-green-400', 'bg-amber-400', 'bg-purple-400', 'bg-rose-400', 'bg-cyan-400', 'bg-orange-400']
+  const stepColors = [
+    'var(--accent-blue)', 'var(--accent-green)', 'var(--accent-amber)',
+    'var(--accent-purple, #a855f7)', 'var(--accent-red)', 'var(--accent-cyan, #06b6d4)', 'var(--accent-amber)'
+  ]
 
   return (
     <div className="space-y-4">
       {/* Summary bar */}
       <Card>
         <div className="flex items-center justify-between mb-2">
-          <h4 className="font-semibold text-gray-900">Casework Timing</h4>
-          <span className="text-lg font-mono font-bold text-blue-600">{formatDuration(totalSec)}</span>
+          <h4 className="font-semibold" style={{ color: 'var(--text-primary)' }}>Casework Timing</h4>
+          <span className="text-lg font-mono font-bold" style={{ color: 'var(--accent-blue)' }}>{formatDuration(totalSec)}</span>
         </div>
-        <div className="text-xs text-gray-500 space-y-1">
+        <div className="text-xs space-y-1" style={{ color: 'var(--text-tertiary)' }}>
           {timing.caseworkStartedAt && <p>Started: {new Date(timing.caseworkStartedAt).toLocaleString()}</p>}
           {timing.caseworkCompletedAt && <p>Completed: {new Date(timing.caseworkCompletedAt).toLocaleString()}</p>}
         </div>
@@ -621,7 +649,7 @@ function TimingTab({ exists, timing }: { exists?: boolean; timing?: any }) {
       {/* Step breakdown */}
       {timing.steps && (
         <Card>
-          <h4 className="font-semibold text-gray-900 mb-3">Step Breakdown</h4>
+          <h4 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Step Breakdown</h4>
           <div className="space-y-2">
             {Object.entries(timing.steps).map(([name, step]: [string, any], idx: number) => {
               const pct = totalSec > 0 ? (step.seconds / totalSec) * 100 : 0
@@ -630,15 +658,15 @@ function TimingTab({ exists, timing }: { exists?: boolean; timing?: any }) {
               return (
                 <div key={name}>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-700">
+                    <span style={{ color: 'var(--text-secondary)' }}>
                       {label.icon} {label.label}
                     </span>
-                    <span className="text-gray-500 font-mono">{formatDuration(step.seconds)}</span>
+                    <span className="font-mono" style={{ color: 'var(--text-tertiary)' }}>{formatDuration(step.seconds)}</span>
                   </div>
-                  <div className="mt-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="mt-1 h-2 rounded-full overflow-hidden" style={{ background: 'var(--bg-hover)' }}>
                     <div
-                      className={`h-full ${barColor} rounded-full transition-all`}
-                      style={{ width: `${Math.max(pct, 1)}%` }}
+                      className="h-full rounded-full transition-all"
+                      style={{ width: `${Math.max(pct, 1)}%`, background: barColor }}
                     />
                   </div>
                 </div>
@@ -651,7 +679,7 @@ function TimingTab({ exists, timing }: { exists?: boolean; timing?: any }) {
       {/* Skipped steps */}
       {timing.skippedSteps?.length > 0 && (
         <Card>
-          <h4 className="font-semibold text-gray-900 mb-2">Skipped Steps</h4>
+          <h4 className="font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Skipped Steps</h4>
           <div className="flex flex-wrap gap-2">
             {timing.skippedSteps.map((s: string) => (
               <Badge key={s} variant="secondary" size="xs">{s}</Badge>
@@ -662,9 +690,9 @@ function TimingTab({ exists, timing }: { exists?: boolean; timing?: any }) {
 
       {/* Errors */}
       {timing.errors?.length > 0 && (
-        <Card className="border-red-200">
-          <h4 className="font-semibold text-red-700 mb-2">Errors</h4>
-          <ul className="text-sm text-red-600 space-y-1">
+        <Card style={{ borderColor: 'var(--accent-red)' }}>
+          <h4 className="font-semibold mb-2" style={{ color: 'var(--accent-red)' }}>Errors</h4>
+          <ul className="text-sm space-y-1" style={{ color: 'var(--accent-red)' }}>
             {timing.errors.map((e: string, i: number) => (
               <li key={i}>• {e}</li>
             ))}
@@ -713,14 +741,15 @@ function LogsTab({ logs }: { logs: Array<{ filename: string; content: string; si
           value={logSearch}
           onChange={(e) => setLogSearch(e.target.value)}
           placeholder="Search logs..."
-          className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
+          className="w-full px-3 py-1.5 text-sm rounded-lg focus:outline-none focus:ring-2"
+          style={{ border: '1px solid var(--border-default)', boxShadow: 'none', outlineColor: 'var(--accent-blue)', '--tw-ring-color': 'var(--accent-blue)' } as React.CSSProperties}
         />
       )}
 
       {Object.entries(groupedLogs).map(([step, stepLogs]) => (
         <div key={step}>
           {Object.keys(groupedLogs).length > 1 && (
-            <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+            <h4 className="text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-tertiary)' }}>
               {step} ({stepLogs.length})
             </h4>
           )}
@@ -732,13 +761,16 @@ function LogsTab({ logs }: { logs: Array<{ filename: string; content: string; si
               >
                 <div className="flex items-center gap-2">
                   <span>📄</span>
-                  <span className="font-mono text-sm text-gray-900">{log.filename}</span>
-                  <span className="text-xs text-gray-400">{formatSize(log.size)}</span>
+                  <span className="font-mono text-sm" style={{ color: 'var(--text-primary)' }}>{log.filename}</span>
+                  <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{formatSize(log.size)}</span>
                 </div>
-                <span className="text-xs text-gray-400">{new Date(log.updatedAt).toLocaleString()}</span>
+                <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{new Date(log.updatedAt).toLocaleString()}</span>
               </div>
               {expanded.has(log.filename) && (
-                <pre className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-600 whitespace-pre-wrap overflow-x-auto max-h-96 overflow-y-auto font-mono bg-gray-50 p-3 rounded">
+                <pre
+                  className="mt-3 pt-3 text-xs whitespace-pre-wrap overflow-x-auto max-h-96 overflow-y-auto font-mono p-3 rounded"
+                  style={{ borderTop: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', background: 'var(--bg-inset)' }}
+                >
                   {log.content}
                 </pre>
               )}
@@ -807,23 +839,42 @@ function AttachmentsTab({ files, meta, caseNumber }: { files: Array<{ filename: 
       {/* File list */}
       {files.length > 0 && (
         <Card>
-          <h4 className="font-semibold text-gray-900 mb-3">Downloaded Files ({files.length})</h4>
-          <div className="divide-y divide-gray-100">
-            {files.map(f => (
-              <div key={f.filename} className="flex items-center justify-between py-2 group">
+          <h4 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Downloaded Files ({files.length})</h4>
+          <div>
+            {files.map((f, i) => (
+              <div
+                key={f.filename}
+                className="flex items-center justify-between py-2 group"
+                style={i > 0 ? { borderTop: '1px solid var(--border-subtle)' } : undefined}
+              >
                 <button
                   onClick={() => handleDownload(f.filename)}
-                  className="flex items-center gap-2 min-w-0 text-left hover:text-blue-600 transition-colors"
+                  className="flex items-center gap-2 min-w-0 text-left transition-colors"
+                  onMouseEnter={e => {
+                    const nameSpan = e.currentTarget.querySelector('[data-name]') as HTMLElement
+                    if (nameSpan) nameSpan.style.color = 'var(--accent-blue)'
+                  }}
+                  onMouseLeave={e => {
+                    const nameSpan = e.currentTarget.querySelector('[data-name]') as HTMLElement
+                    if (nameSpan) nameSpan.style.color = 'var(--text-primary)'
+                  }}
                 >
                   <span>{getFileIcon(f.filename)}</span>
-                  <span className="text-sm text-gray-900 group-hover:text-blue-600 truncate">{f.filename}</span>
+                  <span
+                    data-name
+                    className="text-sm truncate"
+                    style={{ color: 'var(--text-primary)' }}
+                  >
+                    {f.filename}
+                  </span>
                 </button>
                 <div className="flex items-center gap-3 flex-shrink-0">
-                  <span className="text-xs text-gray-400">{formatSize(f.size)}</span>
-                  <span className="text-xs text-gray-400">{new Date(f.updatedAt).toLocaleString()}</span>
+                  <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{formatSize(f.size)}</span>
+                  <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{new Date(f.updatedAt).toLocaleString()}</span>
                   <button
                     onClick={() => handleDownload(f.filename)}
-                    className="text-xs text-blue-500 hover:text-blue-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                    style={{ color: 'var(--accent-blue)' }}
                   >
                     Open
                   </button>
@@ -837,8 +888,11 @@ function AttachmentsTab({ files, meta, caseNumber }: { files: Array<{ filename: 
       {/* Meta info */}
       {meta && (
         <Card>
-          <h4 className="font-semibold text-gray-900 mb-2">Attachment Metadata</h4>
-          <pre className="text-xs text-gray-600 bg-gray-50 p-3 rounded overflow-x-auto max-h-48 overflow-y-auto font-mono">
+          <h4 className="font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Attachment Metadata</h4>
+          <pre
+            className="text-xs p-3 rounded overflow-x-auto max-h-48 overflow-y-auto font-mono"
+            style={{ color: 'var(--text-secondary)', background: 'var(--bg-inset)' }}
+          >
             {JSON.stringify(meta, null, 2)}
           </pre>
         </Card>

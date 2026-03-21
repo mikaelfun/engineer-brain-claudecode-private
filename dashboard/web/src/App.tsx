@@ -12,6 +12,7 @@ import TodoView from './pages/TodoView'
 import AgentMonitor from './pages/AgentMonitor'
 import DraftsPage from './pages/DraftsPage'
 import SettingsPage from './pages/SettingsPage'
+import Issues from './pages/Issues'
 import { PageLoading } from './components/common/Loading'
 import { ErrorBoundary } from './components/common/ErrorBoundary'
 
@@ -28,6 +29,7 @@ function AuthenticatedApp() {
         <Route path="/agents" element={<AgentMonitor />} />
         <Route path="/drafts" element={<DraftsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/issues" element={<Issues />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       </ErrorBoundary>

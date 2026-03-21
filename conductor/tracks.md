@@ -27,3 +27,4 @@
 | [x] | issue-status-group_20260320 | Issues 页面按状态分组 + 折叠 | 2026-03-20 | 2026-03-20 |
 | [x] | issue-page-group_20260321 | Fix Issues Page Grouping with Pagination | 2026-03-21 | 2026-03-21 |
 | [x] | track-question-fix_20260321 | Fix Create Track Question Dialog Not Showing | 2026-03-21 | 2026-03-21 |
+| [x] | design-system-integration_20260321 | Dashboard Design System Integration — Dual Theme | 2026-03-21 | 2026-03-21 |

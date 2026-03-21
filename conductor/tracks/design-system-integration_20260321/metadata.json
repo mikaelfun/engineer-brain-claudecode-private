@@ -1,0 +1,16 @@
+{
+  "id": "design-system-integration_20260321",
+  "title": "Dashboard Design System Integration — Dual Theme",
+  "type": "feature",
+  "status": "complete",
+  "created": "2026-03-21T19:10:00+08:00",
+  "updated": "2026-03-21T23:10:00+08:00",
+  "phases": {
+    "total": 5,
+    "completed": 5
+  },
+  "tasks": {
+    "total": 24,
+    "completed": 24
+  }
+}

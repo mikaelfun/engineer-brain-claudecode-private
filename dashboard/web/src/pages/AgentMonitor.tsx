@@ -69,15 +69,16 @@ export default function AgentMonitor() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Agent Monitor</h2>
-          <p className="text-gray-500 text-sm mt-1">
+          <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Agent Monitor</h2>
+          <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>
             {agents.length} agents | {cronJobs.length} cron jobs | {liveSessions.length} live sessions
           </p>
         </div>
         <button
           onClick={handleRefresh}
           disabled={refreshing}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm border rounded-lg transition-colors disabled:opacity-50"
+          style={{ color: 'var(--text-secondary)', background: 'var(--bg-surface)', borderColor: 'var(--border-default)' }}
           title="Refresh all"
         >
           <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
@@ -98,7 +99,8 @@ export default function AgentMonitor() {
               <button
                 onClick={() => cancelPatrol.mutate()}
                 disabled={cancelPatrol.isPending}
-                className="px-3 py-1 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 disabled:opacity-50 transition-colors"
+                className="px-3 py-1 text-xs font-medium rounded-lg disabled:opacity-50 transition-colors"
+                style={{ color: 'var(--accent-red)', background: 'var(--accent-red-dim)' }}
               >
                 {cancelPatrol.isPending ? 'Cancelling...' : 'Cancel Patrol'}
               </button>
@@ -108,14 +110,14 @@ export default function AgentMonitor() {
           {/* Progress bar */}
           {changedCases > 0 && (
             <div className="mb-3">
-              <div className="flex justify-between text-xs text-gray-500 mb-1">
+              <div className="flex justify-between text-xs mb-1" style={{ color: 'var(--text-tertiary)' }}>
                 <span>{processedCases} / {changedCases} cases</span>
                 <span>{Math.round((processedCases / changedCases) * 100)}%</span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="w-full rounded-full h-2" style={{ background: 'var(--bg-active)' }}>
                 <div
-                  className="bg-blue-500 rounded-full h-2 transition-all duration-500"
-                  style={{ width: `${(processedCases / changedCases) * 100}%` }}
+                  className="rounded-full h-2 transition-all duration-500"
+                  style={{ width: `${(processedCases / changedCases) * 100}%`, background: 'var(--accent-blue)' }}
                 />
               </div>
             </div>
@@ -124,9 +126,9 @@ export default function AgentMonitor() {
           {/* Phase description */}
           <div className="flex items-center gap-2">
             {isRunning && (
-              <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+              <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: 'var(--accent-blue)' }} />
             )}
-            <span className="text-sm text-gray-700">
+            <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
               {phase === 'discovering' && `Discovering active cases... ${totalCases ? `(${totalCases} found)` : ''}`}
               {phase === 'filtering' && `Found ${totalCases} cases, ${changedCases} changed`}
               {phase === 'processing' && `Processing ${changedCases} cases in parallel${currentCase ? ` (latest: ${currentCase})` : ''}...`}
@@ -138,11 +140,11 @@ export default function AgentMonitor() {
 
           {/* Per-case parallel progress */}
           {caseProgress.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-gray-100">
+            <div className="mt-3 pt-3 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs text-gray-500">Cases ({caseProgress.filter(c => c.status === 'completed').length}/{caseProgress.length} done):</span>
+                <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Cases ({caseProgress.filter(c => c.status === 'completed').length}/{caseProgress.length} done):</span>
                 {caseProgress.filter(c => c.status === 'processing').length > 0 && (
-                  <span className="text-xs text-blue-600 font-medium">
+                  <span className="text-xs font-medium" style={{ color: 'var(--accent-blue)' }}>
                     {caseProgress.filter(c => c.status === 'processing').length} running in parallel
                   </span>
                 )}
@@ -151,17 +153,22 @@ export default function AgentMonitor() {
                 {caseProgress.map((cp) => (
                   <span
                     key={cp.caseNumber}
-                    className={`px-1.5 py-0.5 rounded text-xs font-mono flex items-center gap-1 ${
-                      cp.status === 'completed' ? 'bg-green-50 text-green-700'
-                        : cp.status === 'processing' ? 'bg-blue-50 text-blue-700'
-                        : cp.status === 'failed' ? 'bg-red-50 text-red-700'
-                        : 'bg-gray-50 text-gray-600'
-                    }`}
+                    className="px-1.5 py-0.5 rounded text-xs font-mono flex items-center gap-1"
+                    style={{
+                      background: cp.status === 'completed' ? 'var(--accent-green-dim)'
+                        : cp.status === 'processing' ? 'var(--accent-blue-dim)'
+                        : cp.status === 'failed' ? 'var(--accent-red-dim)'
+                        : 'var(--bg-inset)',
+                      color: cp.status === 'completed' ? 'var(--accent-green)'
+                        : cp.status === 'processing' ? 'var(--accent-blue)'
+                        : cp.status === 'failed' ? 'var(--accent-red)'
+                        : 'var(--text-secondary)',
+                    }}
                     title={cp.error || cp.status}
                   >
-                    {cp.status === 'processing' && <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />}
-                    {cp.status === 'completed' && <span className="text-green-500">✓</span>}
-                    {cp.status === 'failed' && <span className="text-red-500">✗</span>}
+                    {cp.status === 'processing' && <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--accent-blue)' }} />}
+                    {cp.status === 'completed' && <span style={{ color: 'var(--accent-green)' }}>✓</span>}
+                    {cp.status === 'failed' && <span style={{ color: 'var(--accent-red)' }}>✗</span>}
                     {cp.caseNumber.slice(-6)}
                   </span>
                 ))}
@@ -171,7 +178,10 @@ export default function AgentMonitor() {
 
           {/* Error */}
           {patrolError && (
-            <div className="mt-2 p-2 bg-red-50 rounded text-xs text-red-600">
+            <div
+              className="mt-2 p-2 rounded text-xs"
+              style={{ background: 'var(--accent-red-dim)', color: 'var(--accent-red)' }}
+            >
               {patrolError}
             </div>
           )}
@@ -184,12 +194,16 @@ export default function AgentMonitor() {
           <CardHeader title="Live Sessions" icon={<span>🧠</span>} />
           <div className="space-y-2">
             {liveSessions.map((s: any) => (
-              <div key={s.sessionId} className="flex items-center justify-between py-1.5 px-2 bg-gray-50 rounded">
+              <div
+                key={s.sessionId}
+                className="flex items-center justify-between py-1.5 px-2 rounded"
+                style={{ background: 'var(--bg-inset)' }}
+              >
                 <div className="flex items-center gap-2">
                   <SessionBadge status={s.status} compact />
-                  <span className="text-sm font-mono text-gray-700">{s.caseNumber}</span>
+                  <span className="text-sm font-mono" style={{ color: 'var(--text-secondary)' }}>{s.caseNumber}</span>
                 </div>
-                <div className="flex items-center gap-3 text-xs text-gray-400">
+                <div className="flex items-center gap-3 text-xs" style={{ color: 'var(--text-tertiary)' }}>
                   {s.intent && <span className="truncate max-w-[200px]">{s.intent}</span>}
                   <span>{new Date(s.lastActivityAt).toLocaleString()}</span>
                 </div>
@@ -209,26 +223,26 @@ export default function AgentMonitor() {
           />
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
             <div>
-              <span className="text-gray-500">Cases</span>
+              <span style={{ color: 'var(--text-tertiary)' }}>Cases</span>
               <p className="font-bold">{patrol.lastRunTiming?.caseCount || 0}</p>
             </div>
             <div>
-              <span className="text-gray-500">Duration</span>
+              <span style={{ color: 'var(--text-tertiary)' }}>Duration</span>
               <p className="font-bold">{patrol.lastRunTiming?.wallClockMinutes || 0} min</p>
             </div>
             <div>
-              <span className="text-gray-500">Compute</span>
+              <span style={{ color: 'var(--text-tertiary)' }}>Compute</span>
               <p className="font-bold">{patrol.lastRunTiming?.computeSeconds || 0}s</p>
             </div>
             <div>
-              <span className="text-gray-500">Started</span>
+              <span style={{ color: 'var(--text-tertiary)' }}>Started</span>
               <p className="font-bold text-xs">{patrol.currentPatrolStartedAt ? new Date(patrol.currentPatrolStartedAt).toLocaleString() : '-'}</p>
             </div>
           </div>
           {patrol.lastRunTiming?.bottlenecks?.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-gray-100">
-              <span className="text-xs text-gray-500">Bottlenecks:</span>
-              <ul className="text-xs text-gray-600 mt-1 space-y-0.5">
+            <div className="mt-3 pt-3 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
+              <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Bottlenecks:</span>
+              <ul className="text-xs mt-1 space-y-0.5" style={{ color: 'var(--text-secondary)' }}>
                 {patrol.lastRunTiming.bottlenecks.map((b: string, i: number) => (
                   <li key={i}>• {b}</li>
                 ))}
@@ -240,7 +254,7 @@ export default function AgentMonitor() {
 
       {/* Agent Grid */}
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-3">Agents</h3>
+        <h3 className="text-lg font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Agents</h3>
         {agents.length === 0 ? (
           <EmptyState icon="🤖" title="No agents" description="No agents configured" />
         ) : (
@@ -249,23 +263,23 @@ export default function AgentMonitor() {
               <Card key={agent.id}>
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-lg">🤖</span>
-                  <h4 className="font-semibold text-gray-900">{agent.name || agent.id}</h4>
+                  <h4 className="font-semibold" style={{ color: 'var(--text-primary)' }}>{agent.name || agent.id}</h4>
                 </div>
                 <div className="space-y-1 text-sm">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-500">Model</span>
+                    <span style={{ color: 'var(--text-tertiary)' }}>Model</span>
                     <Badge variant="primary" size="xs">
                       {agent.model.split('/').pop()}
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-500">ID</span>
-                    <span className="font-mono text-xs text-gray-600">{agent.id}</span>
+                    <span style={{ color: 'var(--text-tertiary)' }}>ID</span>
+                    <span className="font-mono text-xs" style={{ color: 'var(--text-secondary)' }}>{agent.id}</span>
                   </div>
                   {agent.subagents?.allowAgents && (
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-500">Sub-agents</span>
-                      <span className="text-xs text-gray-600">
+                      <span style={{ color: 'var(--text-tertiary)' }}>Sub-agents</span>
+                      <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
                         {agent.subagents.allowAgents.join(', ')}
                       </span>
                     </div>
@@ -279,7 +293,7 @@ export default function AgentMonitor() {
 
       {/* Cron Jobs Table */}
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-3">Cron Jobs</h3>
+        <h3 className="text-lg font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Cron Jobs</h3>
         {cronJobs.length === 0 ? (
           <EmptyState icon="⏰" title="No cron jobs" />
         ) : (
@@ -289,12 +303,12 @@ export default function AgentMonitor() {
                 <div className="flex items-start justify-between mb-2">
                   <div>
                     <div className="flex items-center gap-2">
-                      <h4 className="font-semibold text-gray-900">{job.name}</h4>
+                      <h4 className="font-semibold" style={{ color: 'var(--text-primary)' }}>{job.name}</h4>
                       <Badge variant={job.enabled ? 'success' : 'secondary'} size="xs">
                         {job.enabled ? 'Enabled' : 'Disabled'}
                       </Badge>
                     </div>
-                    <p className="text-xs text-gray-500 mt-0.5">Agent: {job.agentId}</p>
+                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>Agent: {job.agentId}</p>
                   </div>
                   <Badge variant="primary" size="xs">
                     {job.schedule?.kind === 'cron' ? job.schedule.expr : job.schedule?.kind}
@@ -302,17 +316,17 @@ export default function AgentMonitor() {
                 </div>
 
                 {job.state && (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs mt-3 pt-3 border-t border-gray-100">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs mt-3 pt-3 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
                     <div>
-                      <span className="text-gray-500">Last Run</span>
-                      <p className="text-gray-700">
+                      <span style={{ color: 'var(--text-tertiary)' }}>Last Run</span>
+                      <p style={{ color: 'var(--text-secondary)' }}>
                         {job.state.lastRunAtMs
                           ? new Date(job.state.lastRunAtMs).toLocaleString()
                           : 'Never'}
                       </p>
                     </div>
                     <div>
-                      <span className="text-gray-500">Status</span>
+                      <span style={{ color: 'var(--text-tertiary)' }}>Status</span>
                       <p>
                         <Badge
                           variant={job.state.lastStatus === 'error' ? 'danger' : 'success'}
@@ -323,16 +337,19 @@ export default function AgentMonitor() {
                       </p>
                     </div>
                     <div>
-                      <span className="text-gray-500">Duration</span>
-                      <p className="text-gray-700">
+                      <span style={{ color: 'var(--text-tertiary)' }}>Duration</span>
+                      <p style={{ color: 'var(--text-secondary)' }}>
                         {job.state.lastDurationMs
                           ? `${Math.round(job.state.lastDurationMs / 1000)}s`
                           : '-'}
                       </p>
                     </div>
                     <div>
-                      <span className="text-gray-500">Errors</span>
-                      <p className={job.state.consecutiveErrors > 0 ? 'text-red-600 font-medium' : 'text-gray-700'}>
+                      <span style={{ color: 'var(--text-tertiary)' }}>Errors</span>
+                      <p
+                        className={job.state.consecutiveErrors > 0 ? 'font-medium' : ''}
+                        style={{ color: job.state.consecutiveErrors > 0 ? 'var(--accent-red)' : 'var(--text-secondary)' }}
+                      >
                         {job.state.consecutiveErrors || 0}
                       </p>
                     </div>
@@ -340,7 +357,10 @@ export default function AgentMonitor() {
                 )}
 
                 {job.state?.lastError && (
-                  <div className="mt-2 p-2 bg-red-50 rounded text-xs text-red-600 break-all">
+                  <div
+                    className="mt-2 p-2 rounded text-xs break-all"
+                    style={{ background: 'var(--accent-red-dim)', color: 'var(--accent-red)' }}
+                  >
                     {job.state.lastError}
                   </div>
                 )}

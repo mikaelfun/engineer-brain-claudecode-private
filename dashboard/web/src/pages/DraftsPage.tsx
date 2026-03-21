@@ -44,29 +44,34 @@ function DraftCard({ draft }: { draft: any }) {
         onClick={() => setExpanded(!expanded)}
       >
         <div className="flex items-center gap-2">
-          {expanded ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />}
-          <span className="font-mono text-xs text-gray-500">{draft.filename}</span>
+          {expanded
+            ? <ChevronDown className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
+            : <ChevronRight className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />}
+          <span className="font-mono text-xs" style={{ color: 'var(--text-tertiary)' }}>{draft.filename}</span>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={handleCopy}
-            className={`flex items-center gap-1 px-2 py-1 text-xs rounded transition-colors ${
-              copied
-                ? 'text-green-600 bg-green-50'
-                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
-            }`}
+            className="flex items-center gap-1 px-2 py-1 text-xs rounded transition-colors"
+            style={{
+              color: copied ? 'var(--accent-green)' : 'var(--text-tertiary)',
+              background: copied ? 'var(--accent-green-dim)' : undefined,
+            }}
             title="Copy to clipboard"
           >
             {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
             {copied ? 'Copied!' : 'Copy'}
           </button>
-          <span className="text-xs text-gray-400">
+          <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
             {new Date(draft.createdAt).toLocaleString()}
           </span>
         </div>
       </div>
       {expanded && (
-        <div className="prose prose-sm max-w-none border-t border-gray-100 pt-3 mt-3">
+        <div
+          className="prose prose-sm max-w-none border-t pt-3 mt-3"
+          style={{ borderColor: 'var(--border-subtle)' }}
+        >
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
             {cleanContent}
           </ReactMarkdown>
@@ -95,8 +100,8 @@ export default function DraftsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">Email Drafts</h2>
-        <p className="text-gray-500 text-sm mt-1">
+        <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Email Drafts</h2>
+        <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>
           {drafts.length} drafts across {Object.keys(grouped).length} cases
         </p>
       </div>
@@ -111,7 +116,8 @@ export default function DraftsPage() {
         Object.entries(grouped).map(([caseNumber, caseDrafts]) => (
           <div key={caseNumber}>
             <h3
-              className="text-md font-semibold text-gray-900 mb-2 flex items-center gap-2 cursor-pointer hover:text-primary"
+              className="text-md font-semibold mb-2 flex items-center gap-2 cursor-pointer"
+              style={{ color: 'var(--text-primary)' }}
               onClick={() => navigate(`/case/${caseNumber}`)}
             >
               <span>📧</span> Case {caseNumber}

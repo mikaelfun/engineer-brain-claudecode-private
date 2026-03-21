@@ -1,5 +1,5 @@
 /**
- * Badge — 通用徽章组件 (from RDSE2 + Engineer Brain extensions)
+ * Badge — 通用徽章组件 (design system v2)
  */
 import React from 'react'
 
@@ -15,16 +15,16 @@ interface BadgeProps {
   className?: string
 }
 
-const variantStyles: Record<BadgeVariant, string> = {
-  default: 'bg-gray-100 text-gray-700',
-  primary: 'bg-blue-100 text-blue-700',
-  secondary: 'bg-gray-100 text-gray-600',
-  success: 'bg-green-100 text-green-700',
-  warning: 'bg-yellow-100 text-yellow-700',
-  danger: 'bg-red-100 text-red-700',
-  info: 'bg-cyan-100 text-cyan-700',
-  purple: 'bg-purple-100 text-purple-700',
-  orange: 'bg-orange-100 text-orange-700',
+const variantStyles: Record<BadgeVariant, { bg: string; color: string }> = {
+  default: { bg: 'var(--bg-inset)', color: 'var(--text-secondary)' },
+  primary: { bg: 'var(--accent-blue-dim)', color: 'var(--accent-blue)' },
+  secondary: { bg: 'var(--bg-inset)', color: 'var(--text-tertiary)' },
+  success: { bg: 'var(--accent-green-dim)', color: 'var(--accent-green)' },
+  warning: { bg: 'var(--accent-amber-dim)', color: 'var(--accent-amber)' },
+  danger: { bg: 'var(--accent-red-dim)', color: 'var(--accent-red)' },
+  info: { bg: 'var(--accent-blue-dim)', color: 'var(--accent-blue)' },
+  purple: { bg: 'var(--accent-purple-dim)', color: 'var(--accent-purple)' },
+  orange: { bg: 'var(--accent-amber-dim)', color: 'var(--accent-amber)' },
 }
 
 const sizeStyles: Record<string, string> = {
@@ -34,8 +34,12 @@ const sizeStyles: Record<string, string> = {
 }
 
 export function Badge({ children, variant = 'default', size = 'sm', className = '' }: BadgeProps) {
+  const v = variantStyles[variant]
   return (
-    <span className={`inline-flex items-center font-medium rounded-full ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}>
+    <span
+      className={`inline-flex items-center font-medium rounded-full ${sizeStyles[size]} ${className}`}
+      style={{ background: v.bg, color: v.color }}
+    >
       {children}
     </span>
   )
@@ -100,14 +104,19 @@ export function PriorityBadge({ priority }: { priority: 'red' | 'yellow' | 'gree
 export function HealthScoreBadge({ meta }: { meta: any }) {
   const score = computeHealthScore(meta)
   // Color coding: green >= 70, yellow >= 40, red < 40
-  const colorClass =
-    score >= 70 ? 'bg-green-100 text-green-700 ring-green-300'
-    : score >= 40 ? 'bg-yellow-100 text-yellow-700 ring-yellow-300'
-    : 'bg-red-100 text-red-700 ring-red-300'
+  const colors =
+    score >= 70 ? { bg: 'var(--accent-green-dim)', color: 'var(--accent-green)', ring: 'var(--accent-green)' }
+    : score >= 40 ? { bg: 'var(--accent-amber-dim)', color: 'var(--accent-amber)', ring: 'var(--accent-amber)' }
+    : { bg: 'var(--accent-red-dim)', color: 'var(--accent-red)', ring: 'var(--accent-red)' }
 
   return (
     <div
-      className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ring-2 ${colorClass}`}
+      className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold"
+      style={{
+        background: colors.bg,
+        color: colors.color,
+        boxShadow: `0 0 0 2px ${colors.ring}`,
+      }}
       title={`Health Score: ${score}/100`}
     >
       {score}

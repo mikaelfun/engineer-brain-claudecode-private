@@ -1,0 +1,11 @@
+{
+  "id": "ISS-028",
+  "title": "Dashboard 设计系统集成 — 暗色/亮色双主题 + CSS 变量 + 全组件改造",
+  "description": "playbooks/guides/dashboard-design-system.md 和 dashboard/design-preview.html 中定义了完整的双主题设计系统（CSS 变量、暗色默认、亮色切换、布局规范），但从未集成到实际 React 应用中。当前状态：tailwind.config.js 缺少 darkMode: 'class'、index.css 没有 CSS 变量、index.html 没有主题 class、所有组件硬编码 bg-white/bg-gray-50/text-gray-900 等亮色类、无主题切换功能、无 ThemeProvider。需要一次性全量改造。",
+  "type": "feature",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "design-system-integration_20260321",
+  "createdAt": "2026-03-21T19:00:00+08:00",
+  "updatedAt": "2026-03-21T23:10:00+08:00"
+}
