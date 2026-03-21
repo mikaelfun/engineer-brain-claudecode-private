@@ -1,0 +1,16 @@
+{
+  "id": "track-question-reduce_20260321",
+  "title": "Create Track 交互问题过多 — 测试相关问题不应在 track 创建阶段问",
+  "type": "bug",
+  "status": "complete",
+  "created": "2026-03-21T18:10:00+08:00",
+  "updated": "2026-03-21T19:10:00+08:00",
+  "phases": {
+    "total": 2,
+    "completed": 2
+  },
+  "tasks": {
+    "total": 5,
+    "completed": 5
+  }
+}

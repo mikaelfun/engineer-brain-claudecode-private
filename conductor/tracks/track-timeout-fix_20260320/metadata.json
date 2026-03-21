@@ -1,0 +1,21 @@
+{
+  "id": "track-timeout-fix_20260320",
+  "title": "Create Track 超时修复 — 交互输入阻塞 + plan.md 非空校验",
+  "type": "bug",
+  "status": "complete",
+  "created": "2026-03-20T23:00:00+08:00",
+  "updated": "2026-03-21T12:45:41.172Z",
+  "phases": {
+    "total": 3,
+    "completed": 3
+  },
+  "tasks": {
+    "total": 9,
+    "completed": 9
+  },
+  "issueId": "ISS-020",
+  "verification": {
+    "status": "skipped",
+    "method": "manual"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "id": "verify-results-display_20260321",
+  "title": "Verify Results Persistent Display",
+  "type": "feature",
+  "status": "complete",
+  "created": "2026-03-21T21:20:00+08:00",
+  "updated": "2026-03-21T12:45:41.217Z",
+  "source": "ISS-039",
+  "current_phase": 2,
+  "current_task": "2.2",
+  "phases": {
+    "total": 2,
+    "completed": 2
+  },
+  "tasks": {
+    "total": 4,
+    "completed": 4
+  },
+  "issueId": "ISS-039",
+  "verification": {
+    "status": "skipped",
+    "method": "manual"
+  }
+}

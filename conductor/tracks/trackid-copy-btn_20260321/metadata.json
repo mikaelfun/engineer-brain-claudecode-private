@@ -1,0 +1,22 @@
+{
+  "id": "trackid-copy-btn_20260321",
+  "title": "Issue TrackId Copy Button",
+  "type": "feature",
+  "status": "complete",
+  "created": "2026-03-21T21:35:00+08:00",
+  "updated": "2026-03-21T12:45:41.223Z",
+  "source": "ISS-043",
+  "phases": {
+    "total": 1,
+    "completed": 1
+  },
+  "tasks": {
+    "total": 2,
+    "completed": 2
+  },
+  "issueId": "ISS-043",
+  "verification": {
+    "status": "skipped",
+    "method": "manual"
+  }
+}

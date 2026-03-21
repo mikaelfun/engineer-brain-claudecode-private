@@ -4,7 +4,7 @@
   "type": "bug",
   "status": "complete",
   "created": "2026-03-20T22:40:00+08:00",
-  "updated": "2026-03-21T20:05:00+08:00",
+  "updated": "2026-03-21T12:45:41.185Z",
   "phases": {
     "total": 1,
     "completed": 1
@@ -15,5 +15,10 @@
   },
   "commits": [
     "04e26ad: feat: refactor issue row click to expand/collapse with readonly detail panel (issue-edit-btn_20260320)"
-  ]
+  ],
+  "issueId": "ISS-025",
+  "verification": {
+    "status": "skipped",
+    "method": "manual"
+  }
 }

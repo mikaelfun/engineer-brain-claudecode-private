@@ -1,0 +1,17 @@
+{
+  "id": "verify-step2-fix_20260321",
+  "title": "修复 Verify 第二步（UI Test）报错",
+  "type": "bug",
+  "status": "pending",
+  "created": "2026-03-21T11:00:00.000Z",
+  "updated": "2026-03-21T12:45:41.197Z",
+  "phases": {
+    "total": 3,
+    "completed": 0
+  },
+  "tasks": {
+    "total": 8,
+    "completed": 0
+  },
+  "issueId": "ISS-030"
+}

@@ -1,0 +1,19 @@
+{
+  "id": "sse-message-filter_20260321",
+  "title": "Agent Session SSE Message Filtering",
+  "type": "feature",
+  "status": "complete",
+  "created": "2026-03-21T16:35:00+08:00",
+  "updated": "2026-03-21T18:05:00+08:00",
+  "source": "ISS-033",
+  "current_phase": 2,
+  "current_task": "2.2",
+  "phases": {
+    "total": 2,
+    "completed": 2
+  },
+  "tasks": {
+    "total": 5,
+    "completed": 5
+  }
+}

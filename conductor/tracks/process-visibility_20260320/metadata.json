@@ -1,0 +1,17 @@
+{
+  "id": "process-visibility_20260320",
+  "title": "Improve Process Execution Visibility",
+  "type": "feature",
+  "status": "pending",
+  "created": "2026-03-20T00:00:00+08:00",
+  "updated": "2026-03-21T12:45:41.134Z",
+  "phases": {
+    "total": 3,
+    "completed": 0
+  },
+  "tasks": {
+    "total": 9,
+    "completed": 0
+  },
+  "issueId": "ISS-002"
+}

@@ -1,0 +1,21 @@
+{
+  "id": "issue-page-group_20260321",
+  "title": "Fix Issues Page Grouping with Pagination",
+  "type": "bug",
+  "status": "complete",
+  "created": "2026-03-21T17:00:00+08:00",
+  "updated": "2026-03-21T12:45:41.187Z",
+  "phases": {
+    "total": 3,
+    "completed": 3
+  },
+  "tasks": {
+    "total": 5,
+    "completed": 5
+  },
+  "issueId": "ISS-026",
+  "verification": {
+    "status": "skipped",
+    "method": "manual"
+  }
+}

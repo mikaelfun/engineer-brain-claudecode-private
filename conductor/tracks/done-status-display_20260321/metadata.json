@@ -4,7 +4,7 @@
   "type": "feature",
   "status": "complete",
   "created": "2026-03-21T22:15:00+08:00",
-  "updated": "2026-03-21T22:25:00+08:00",
+  "updated": "2026-03-21T12:45:41.220Z",
   "phases": {
     "total": 1,
     "completed": 1
@@ -15,5 +15,10 @@
   },
   "commits": [
     "8dce006: feat: add done issue verification method badges and track progress (done-status-display_20260321)"
-  ]
+  ],
+  "issueId": "ISS-041",
+  "verification": {
+    "status": "skipped",
+    "method": "manual"
+  }
 }

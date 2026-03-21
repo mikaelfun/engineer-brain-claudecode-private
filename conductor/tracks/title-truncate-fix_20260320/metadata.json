@@ -1,0 +1,21 @@
+{
+  "id": "title-truncate-fix_20260320",
+  "title": "Fix Case Title Truncation When Title Contains Pipe Characters",
+  "type": "bug",
+  "status": "complete",
+  "created": "2026-03-20T16:00:00+08:00",
+  "updated": "2026-03-21T12:45:41.174Z",
+  "phases": {
+    "total": 2,
+    "completed": 2
+  },
+  "tasks": {
+    "total": 4,
+    "completed": 4
+  },
+  "issueId": "ISS-021",
+  "verification": {
+    "status": "skipped",
+    "method": "manual"
+  }
+}

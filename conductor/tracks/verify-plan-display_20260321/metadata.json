@@ -4,7 +4,7 @@
   "type": "feature",
   "status": "complete",
   "created": "2026-03-21T19:46:00+08:00",
-  "updated": "2026-03-21T20:14:00+08:00",
+  "updated": "2026-03-21T12:45:41.221Z",
   "phases": {
     "total": 1,
     "completed": 1
@@ -12,5 +12,10 @@
   "tasks": {
     "total": 3,
     "completed": 3
+  },
+  "issueId": "ISS-042",
+  "verification": {
+    "status": "skipped",
+    "method": "manual"
   }
 }

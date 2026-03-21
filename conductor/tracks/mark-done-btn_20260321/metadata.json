@@ -1,0 +1,17 @@
+{
+  "id": "mark-done-btn_20260321",
+  "title": "Implemented Issue Mark Done Button",
+  "type": "feature",
+  "status": "complete",
+  "created": "2026-03-21T16:00:00+08:00",
+  "updated": "2026-03-21T12:45:41.215Z",
+  "phases": {
+    "total": 4,
+    "completed": 4
+  },
+  "tasks": {
+    "total": 10,
+    "completed": 10
+  },
+  "issueId": "ISS-038"
+}

@@ -1,0 +1,21 @@
+{
+  "id": "inspection-beautify_20260320",
+  "title": "Case Detail Inspection 默认首位展示 + 格式美化",
+  "type": "feature",
+  "status": "complete",
+  "created": "2026-03-20T16:00:00+08:00",
+  "updated": "2026-03-21T12:45:41.177Z",
+  "phases": {
+    "total": 2,
+    "completed": 2
+  },
+  "tasks": {
+    "total": 9,
+    "completed": 9
+  },
+  "issueId": "ISS-022",
+  "verification": {
+    "status": "skipped",
+    "method": "manual"
+  }
+}

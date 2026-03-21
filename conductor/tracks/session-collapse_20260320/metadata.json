@@ -1,0 +1,17 @@
+{
+  "id": "session-collapse_20260320",
+  "title": "Session Active Panel Collapsible",
+  "type": "bug",
+  "status": "pending",
+  "created": "2026-03-20T00:00:00+08:00",
+  "updated": "2026-03-21T12:45:41.136Z",
+  "phases": {
+    "total": 1,
+    "completed": 0
+  },
+  "tasks": {
+    "total": 4,
+    "completed": 0
+  },
+  "issueId": "ISS-003"
+}

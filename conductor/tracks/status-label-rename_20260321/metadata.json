@@ -1,0 +1,17 @@
+{
+  "id": "status-label-rename_20260321",
+  "title": "in-progress 状态显示文本改为 Implementing",
+  "type": "feature",
+  "status": "pending",
+  "created": "2026-03-21T20:19:00+08:00",
+  "updated": "2026-03-21T12:45:41.229Z",
+  "phases": {
+    "total": 1,
+    "completed": 0
+  },
+  "tasks": {
+    "total": 2,
+    "completed": 0
+  },
+  "issueId": "ISS-046"
+}

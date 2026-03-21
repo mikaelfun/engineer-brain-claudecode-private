@@ -1,0 +1,21 @@
+{
+  "id": "issue-track-dialog_20260320",
+  "title": "Issue Track 对话框补充信息",
+  "type": "feature",
+  "status": "complete",
+  "created": "2026-03-20T19:15:00+08:00",
+  "updated": "2026-03-21T12:45:41.167Z",
+  "phases": {
+    "total": 2,
+    "completed": 2
+  },
+  "tasks": {
+    "total": 4,
+    "completed": 4
+  },
+  "issueId": "ISS-017",
+  "verification": {
+    "status": "skipped",
+    "method": "manual"
+  }
+}

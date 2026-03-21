@@ -1,0 +1,17 @@
+{
+  "id": "agent-session-view_20260321",
+  "title": "Agents Page Unified Session View",
+  "type": "feature",
+  "status": "complete",
+  "created": "2026-03-21T20:30:00+08:00",
+  "updated": "2026-03-21T12:45:41.227Z",
+  "phases": {
+    "total": 4,
+    "completed": 4
+  },
+  "tasks": {
+    "total": 12,
+    "completed": 12
+  },
+  "issueId": "ISS-044"
+}

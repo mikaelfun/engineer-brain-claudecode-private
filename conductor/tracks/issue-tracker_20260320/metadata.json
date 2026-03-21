@@ -1,0 +1,21 @@
+{
+  "id": "issue-tracker_20260320",
+  "title": "Dashboard Issue Tracker",
+  "type": "feature",
+  "status": "completed",
+  "created": "2026-03-20T00:00:00+08:00",
+  "updated": "2026-03-21T12:45:41.144Z",
+  "phases": {
+    "total": 4,
+    "completed": 4
+  },
+  "tasks": {
+    "total": 11,
+    "completed": 11
+  },
+  "issueId": "ISS-006",
+  "verification": {
+    "status": "skipped",
+    "method": "manual"
+  }
+}

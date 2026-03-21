@@ -4,7 +4,7 @@
   "type": "refactor",
   "status": "complete",
   "created": "2026-03-21T20:15:00+08:00",
-  "updated": "2026-03-21T20:25:00+08:00",
+  "updated": "2026-03-21T12:45:41.202Z",
   "phases": {
     "total": 2,
     "completed": 2
@@ -16,5 +16,10 @@
   "commits": [
     "3b2251a: refactor: remove Info tab, migrate fields to header (remove-info-tab_20260321)",
     "50af64f: chore: add Contact fields to inspection-writer template (remove-info-tab_20260321)"
-  ]
+  ],
+  "issueId": "ISS-032",
+  "verification": {
+    "status": "skipped",
+    "method": "manual"
+  }
 }

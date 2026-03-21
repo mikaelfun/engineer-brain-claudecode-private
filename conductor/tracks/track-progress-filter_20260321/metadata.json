@@ -1,0 +1,24 @@
+{
+  "id": "track-progress-filter_20260321",
+  "title": "Track Progress Panel SSE Message Filtering",
+  "type": "feature",
+  "status": "complete",
+  "created": "2026-03-21T21:05:00+08:00",
+  "updated": "2026-03-21T12:45:41.207Z",
+  "source": "ISS-035",
+  "current_phase": 2,
+  "current_task": "2.2",
+  "phases": {
+    "total": 2,
+    "completed": 2
+  },
+  "tasks": {
+    "total": 5,
+    "completed": 5
+  },
+  "issueId": "ISS-035",
+  "verification": {
+    "status": "skipped",
+    "method": "manual"
+  }
+}

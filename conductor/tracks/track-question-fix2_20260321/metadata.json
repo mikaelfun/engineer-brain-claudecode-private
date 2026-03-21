@@ -1,0 +1,21 @@
+{
+  "id": "track-question-fix2_20260321",
+  "title": "Fix Create Track Question Dialog Not Showing (Round 2)",
+  "type": "bug",
+  "status": "complete",
+  "created": "2026-03-21T13:20:00.000Z",
+  "updated": "2026-03-21T12:45:41.169Z",
+  "phases": {
+    "total": 3,
+    "completed": 3
+  },
+  "tasks": {
+    "total": 7,
+    "completed": 7
+  },
+  "issueId": "ISS-018",
+  "verification": {
+    "status": "skipped",
+    "method": "manual"
+  }
+}

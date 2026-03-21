@@ -4,7 +4,7 @@
   "type": "bug",
   "status": "pending",
   "created": "2026-03-20T19:00:00+08:00",
-  "updated": "2026-03-20T19:00:00+08:00",
+  "updated": "2026-03-21T12:45:41.141Z",
   "phases": {
     "total": 2,
     "completed": 0
@@ -12,5 +12,6 @@
   "tasks": {
     "total": 4,
     "completed": 0
-  }
+  },
+  "issueId": "ISS-005"
 }

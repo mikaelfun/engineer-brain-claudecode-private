@@ -1,0 +1,21 @@
+{
+  "id": "restart-buttons_20260320",
+  "title": "Issue 页面添加重启前后端按钮",
+  "type": "feature",
+  "status": "completed",
+  "created": "2026-03-20T17:30:00+08:00",
+  "updated": "2026-03-21T12:45:41.157Z",
+  "issueId": "ISS-012",
+  "phases": {
+    "total": 2,
+    "completed": 2
+  },
+  "tasks": {
+    "total": 6,
+    "completed": 6
+  },
+  "verification": {
+    "status": "skipped",
+    "method": "manual"
+  }
+}
