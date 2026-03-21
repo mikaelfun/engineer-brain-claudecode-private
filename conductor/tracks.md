@@ -4,7 +4,7 @@
 |--------|----------|-------|---------|---------|
 | [x] | dashboard-ux-fix_20260320 | Dashboard UX Fix | 2026-03-20 | 2026-03-20 |
 | [ ] | ui-error-states_20260320 | UI Error States Fix | 2026-03-20 | 2026-03-20 |
-| [ ] | scroll-fix_20260320 | Fix CaseAIPanel Double-Scroll Bug | 2026-03-20 | 2026-03-20 |
+| [x] | scroll-fix_20260320 | Fix CaseAIPanel Double-Scroll Bug | 2026-03-20 | 2026-03-21 |
 | [ ] | process-visibility_20260320 | Improve Process Execution Visibility | 2026-03-20 | 2026-03-20 |
 | [ ] | session-collapse_20260320 | Session Active Panel Collapsible | 2026-03-20 | 2026-03-20 |
 | [x] | case-header-redesign_20260320 | Case Detail Header Redesign | 2026-03-20 | 2026-03-20 |
@@ -24,4 +24,5 @@
 | [x] | ai-panel-ops_20260320 | CaseDetail AI Panel — More Single-Step Operations | 2026-03-20 | 2026-03-20 |
 | [ ] | issue-edit-btn_20260320 | Issue 页面增加编辑按钮（点击展开只读详情） | 2026-03-20 | 2026-03-20 |
 | [x] | issue-search_20260320 | Issue Tracker Keyword Search | 2026-03-20 | 2026-03-20 |
-| [ ] | issue-status-group_20260320 | Issues 页面按状态分组 + 折叠 | 2026-03-20 | 2026-03-20 |
+| [x] | issue-status-group_20260320 | Issues 页面按状态分组 + 折叠 | 2026-03-20 | 2026-03-20 |
+| [ ] | issue-page-group_20260321 | Fix Issues Page Grouping with Pagination | 2026-03-21 | 2026-03-21 |

@@ -1,19 +1,16 @@
 /**
- * CaseAIPanel — Case AI action panel with real-time SSE message display
+ * CaseAIPanel — AI assistant sidebar (right column, ~30% width)
  *
- * Features:
- * - Action buttons: Full Process / Troubleshoot / Draft Email
- * - Routes troubleshoot → /case/:id/step/troubleshoot, draft-email → /case/:id/step/draft-email
- * - Full process → /case/:id/process (full casework)
- * - Real-time SSE messages from caseSessionStore (thinking / tool-call / tool-result / completed / failed)
- * - Interactive chat when session is active
+ * Design: matches dashboard's existing design language (blue primary, white/gray surfaces)
+ * Sticky sidebar that stays visible while browsing tabs
  */
 import { useState, useRef, useEffect } from 'react'
 import {
   Sparkles, Search, Mail, Play, X, Send,
-  CheckCircle2, Loader2, Wrench, Brain, AlertCircle, ChevronDown
+  CheckCircle2, Loader2, Wrench, Brain, AlertCircle, ChevronDown,
+  RefreshCw, MessageSquare, ShieldCheck, GitBranch, FileText, BookOpen,
+  Zap, ChevronRight
 } from 'lucide-react'
-import { Card, CardHeader } from '../components/common/Card'
 import { apiPost, apiDelete } from '../api/client'
 import { useCaseSessions, useCaseOperation, useCaseMessages, useEndAllCaseSessions } from '../api/hooks'
 import { useCaseSessionStore, type CaseSessionMessage } from '../stores/caseSessionStore'
@@ -23,10 +20,8 @@ interface CaseAIPanelProps {
   caseNumber: string
 }
 
-type AIAction = 'process' | 'troubleshoot' | 'draft-email'
+type AIAction = 'process' | 'data-refresh' | 'compliance-check' | 'status-judge' | 'teams-search' | 'troubleshoot' | 'draft-email' | 'inspection' | 'generate-kb'
 
-// Stable empty array to avoid Zustand infinite re-render loop
-// (creating [] inline in selector → new ref each call → Object.is fails → re-render → loop)
 const EMPTY_MESSAGES: CaseSessionMessage[] = []
 
 export default function CaseAIPanel({ caseNumber }: CaseAIPanelProps) {
@@ -35,33 +30,27 @@ export default function CaseAIPanel({ caseNumber }: CaseAIPanelProps) {
   const [error, setError] = useState<string | null>(null)
   const [emailTypeMenuOpen, setEmailTypeMenuOpen] = useState(false)
   const emailMenuRef = useRef<HTMLDivElement>(null)
-  const chatEndRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
 
   const { data: sessionsData } = useCaseSessions(caseNumber)
   const activeSessionId = sessionsData?.activeSession || null
   const isLiveRunning = !!activeSessionId
   const allSessions = sessionsData?.sessions || []
-  const activeSession = allSessions.find((s: any) => s.sessionId === activeSessionId)
   const endAllSessions = useEndAllCaseSessions()
 
-  // Check backend operation lock status (prevents duplicate spawn)
   const { data: operationData } = useCaseOperation(caseNumber)
   const activeOperation = operationData?.operation || null
   const hasActiveOperation = !!activeOperation
 
-  // Button should be disabled if: local processing state, live session running, OR backend operation active
   const isActionDisabled = isProcessing || isLiveRunning || hasActiveOperation
 
-  // Real-time SSE messages from the store — use stable empty ref to prevent infinite loop
   const messages = useCaseSessionStore((s) => s.messages[caseNumber] ?? EMPTY_MESSAGES)
   const clearMessages = useCaseSessionStore((s) => s.clearMessages)
 
-  // Recover persisted messages on mount (after page refresh)
   const { data: persistedData } = useCaseMessages(caseNumber)
   const hasRecoveredRef = useRef(false)
 
   useEffect(() => {
-    // On mount, if no live SSE messages but persisted messages exist, recover them
     if (
       persistedData?.messages?.length &&
       messages.length === 0 &&
@@ -82,10 +71,12 @@ export default function CaseAIPanel({ caseNumber }: CaseAIPanelProps) {
   }, [persistedData, messages.length, caseNumber])
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    const container = messagesContainerRef.current
+    if (container) {
+      container.scrollTop = container.scrollHeight
+    }
   }, [messages.length])
 
-  // Close email type dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (emailMenuRef.current && !emailMenuRef.current.contains(e.target as Node)) {
@@ -108,7 +99,6 @@ export default function CaseAIPanel({ caseNumber }: CaseAIPanelProps) {
   ] as const
 
   const handleAction = async (action: AIAction, emailType?: string) => {
-    // Double-check: prevent action if operation already running
     if (hasActiveOperation) {
       setError(`Operation already running: ${activeOperation!.operationType}`)
       return
@@ -116,30 +106,25 @@ export default function CaseAIPanel({ caseNumber }: CaseAIPanelProps) {
 
     setIsProcessing(true)
     setError(null)
-    // Clear previous messages on new action
     clearMessages(caseNumber)
 
     try {
       if (action === 'process') {
-        // Full casework → /case/:id/process
         await apiPost<{ status: string; caseNumber: string }>(
           `/case/${caseNumber}/process`,
           { intent: 'Full casework processing' }
         )
       } else {
-        // Step-specific routes → /case/:id/step/{step}
-        const stepName = action // 'troubleshoot' or 'draft-email'
         const body: Record<string, string> = {}
         if (action === 'draft-email' && emailType) {
           body.emailType = emailType
         }
         await apiPost<{ status: string; caseNumber: string; step: string }>(
-          `/case/${caseNumber}/step/${stepName}`,
+          `/case/${caseNumber}/step/${action}`,
           Object.keys(body).length > 0 ? body : undefined
         )
       }
     } catch (err: any) {
-      // Handle 409 Conflict (duplicate operation)
       if (err?.status === 409) {
         setError('This case already has an active operation running. Please wait for it to complete.')
       } else {
@@ -152,11 +137,9 @@ export default function CaseAIPanel({ caseNumber }: CaseAIPanelProps) {
 
   const handleChat = async () => {
     if (!chatInput.trim() || !activeSessionId) return
-
     const message = chatInput.trim()
     setChatInput('')
 
-    // Add user message to store
     useCaseSessionStore.getState().addMessage(caseNumber, {
       type: 'user',
       content: message,
@@ -187,314 +170,298 @@ export default function CaseAIPanel({ caseNumber }: CaseAIPanelProps) {
     }
   }
 
-  const actions = [
-    {
-      id: 'process' as AIAction,
-      label: 'Full Process',
-      icon: <Play className="w-3.5 h-3.5" />,
-      color: 'bg-blue-600 hover:bg-blue-700',
-      description: 'Data refresh + compliance check + troubleshoot + email + inspection',
-    },
-    {
-      id: 'troubleshoot' as AIAction,
-      label: 'Troubleshoot',
-      icon: <Search className="w-3.5 h-3.5" />,
-      color: 'bg-amber-600 hover:bg-amber-700',
-      description: 'Technical analysis with Kusto, ADO, and docs',
-    },
-    {
-      id: 'draft-email' as AIAction,
-      label: 'Draft Email',
-      icon: <Mail className="w-3.5 h-3.5" />,
-      color: 'bg-green-600 hover:bg-green-700',
-      description: 'Write email draft with humanizer',
-    },
+  const quickActions: Array<{ id: AIAction; icon: typeof RefreshCw; label: string }> = [
+    { id: 'data-refresh', icon: RefreshCw, label: 'Refresh Data' },
+    { id: 'teams-search', icon: MessageSquare, label: 'Teams Search' },
+    { id: 'compliance-check', icon: ShieldCheck, label: 'Compliance' },
+    { id: 'status-judge', icon: GitBranch, label: 'Status Judge' },
+    { id: 'troubleshoot', icon: Search, label: 'Troubleshoot' },
+    { id: 'inspection', icon: FileText, label: 'Inspection' },
+    { id: 'generate-kb', icon: BookOpen, label: 'Generate KB' },
   ]
 
   return (
-    <Card className="border-purple-200">
-      <CardHeader
-        title="AI Assistant"
-        icon={<Sparkles className="w-4 h-4 text-purple-500" />}
-        action={
-          activeSessionId ? (
-            <button
-              onClick={handleEndSession}
-              className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1"
-            >
-              <X className="w-3 h-3" /> End Session
-            </button>
-          ) : undefined
-        }
-      />
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm sticky top-20">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-blue-500" />
+          <span className="text-sm font-semibold text-gray-900">AI Assistant</span>
+        </div>
+        {activeSessionId && (
+          <button
+            onClick={handleEndSession}
+            className="text-xs text-gray-400 hover:text-red-500 flex items-center gap-1 transition-colors"
+          >
+            <X className="w-3 h-3" /> End
+          </button>
+        )}
+      </div>
 
-      {/* Action Buttons */}
-      <div className="grid grid-cols-3 gap-2 mb-3">
-        {actions.map((action) => (
-          action.id === 'draft-email' ? (
-            /* Draft Email — split button with email type dropdown */
-            <div key={action.id} className="relative" ref={emailMenuRef}>
-              <div className="flex rounded-lg overflow-hidden">
+      <div className="p-3 space-y-2">
+        {/* Primary CTA */}
+        <button
+          onClick={() => handleAction('process')}
+          disabled={isActionDisabled}
+          className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 active:bg-blue-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isProcessing
+            ? <Loader2 className="w-4 h-4 animate-spin" />
+            : <Play className="w-4 h-4" />
+          }
+          Full Process
+        </button>
+
+        {/* Draft Email — split button */}
+        <div className="relative" ref={emailMenuRef}>
+          <div className="flex rounded-lg border border-gray-200 overflow-hidden">
+            <button
+              onClick={() => handleAction('draft-email', 'auto')}
+              disabled={isActionDisabled}
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Mail className="w-3.5 h-3.5 text-gray-400" />
+              Draft Email
+            </button>
+            <button
+              onClick={() => setEmailTypeMenuOpen(!emailTypeMenuOpen)}
+              disabled={isActionDisabled}
+              className="flex items-center px-2 border-l border-gray-200 text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${emailTypeMenuOpen ? 'rotate-180' : ''}`} />
+            </button>
+          </div>
+          {emailTypeMenuOpen && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-20 py-1">
+              {EMAIL_TYPES.map((et) => (
                 <button
-                  onClick={() => handleAction('draft-email', 'auto')}
-                  disabled={isActionDisabled}
-                  className={`flex-1 flex flex-col items-center gap-1.5 p-3 text-white text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${action.color}`}
-                  title={action.description}
+                  key={et.value}
+                  onClick={() => {
+                    setEmailTypeMenuOpen(false)
+                    handleAction('draft-email', et.value)
+                  }}
+                  className="w-full text-left px-3 py-1.5 text-xs text-gray-600 hover:bg-blue-50 hover:text-blue-700 transition-colors"
                 >
-                  {isProcessing ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    action.icon
-                  )}
-                  {action.label}
+                  {et.label}
+                  {et.value === 'auto' && <span className="text-gray-400 ml-1">(default)</span>}
                 </button>
-                <button
-                  onClick={() => setEmailTypeMenuOpen(!emailTypeMenuOpen)}
-                  disabled={isActionDisabled}
-                  className={`flex items-center px-1.5 text-white border-l border-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${action.color}`}
-                  title="Choose email type"
-                >
-                  <ChevronDown className="w-3 h-3" />
-                </button>
-              </div>
-              {emailTypeMenuOpen && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-10 py-1">
-                  {EMAIL_TYPES.map((et) => (
-                    <button
-                      key={et.value}
-                      onClick={() => {
-                        setEmailTypeMenuOpen(false)
-                        handleAction('draft-email', et.value)
-                      }}
-                      className="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors"
-                    >
-                      {et.label}
-                      {et.value === 'auto' && (
-                        <span className="text-gray-400 ml-1">(default)</span>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
+              ))}
             </div>
-          ) : (
+          )}
+        </div>
+
+        {/* Divider */}
+        <div className="border-t border-gray-100 my-1" />
+
+        {/* Quick Actions — compact list */}
+        <div className="space-y-0.5">
+          {quickActions.map((action) => (
             <button
               key={action.id}
               onClick={() => handleAction(action.id)}
               disabled={isActionDisabled}
-              className={`flex flex-col items-center gap-1.5 p-3 rounded-lg text-white text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${action.color}`}
-              title={action.description}
+              className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md text-left text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors disabled:opacity-40 disabled:cursor-not-allowed group"
             >
-              {isProcessing ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                action.icon
-              )}
-              {action.label}
+              <action.icon className="w-3.5 h-3.5 text-gray-400 group-hover:text-blue-500 transition-colors flex-shrink-0" />
+              <span className="truncate">{action.label}</span>
+              <ChevronRight className="w-3 h-3 text-gray-300 ml-auto opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
             </button>
-          )
-        ))}
+          ))}
+        </div>
       </div>
 
-      {/* Active Operation Info (from backend lock) */}
-      {hasActiveOperation && (
-        <div className="flex items-center gap-2 mb-3 px-2 py-1.5 bg-amber-50 rounded-lg">
-          <Loader2 className="w-3.5 h-3.5 text-amber-600 animate-spin" />
-          <span className="text-xs text-amber-700 font-medium">
-            Running: {activeOperation!.operationType}
-          </span>
-          <span className="text-xs text-amber-400 ml-auto">
-            {new Date(activeOperation!.startedAt).toLocaleTimeString()}
-          </span>
-        </div>
-      )}
+      {/* Status / Messages / Chat — below divider */}
+      {(hasActiveOperation || isLiveRunning || error || messages.length > 0 || activeSessionId) && (
+        <div className="border-t border-gray-100 p-3 space-y-2">
+          {/* Active Operation */}
+          {hasActiveOperation && (
+            <div className="flex items-center gap-2 px-2.5 py-2 bg-amber-50 rounded-lg">
+              <Loader2 className="w-3.5 h-3.5 text-amber-600 animate-spin flex-shrink-0" />
+              <span className="text-xs text-amber-700 font-medium truncate flex-1">
+                {activeOperation!.operationType}
+              </span>
+              <span className="text-[10px] text-amber-400 tabular-nums flex-shrink-0">
+                {new Date(activeOperation!.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </span>
+            </div>
+          )}
 
-      {/* Active Session Info */}
-      {isLiveRunning && (
-        <div className="flex items-center gap-2 mb-3 px-2 py-1.5 bg-purple-50 rounded-lg">
-          <span className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-pulse" />
-          <span className="text-xs text-purple-700 font-medium">
-            Session Active
-          </span>
-          <span className="text-xs text-purple-400 ml-auto font-mono">
-            {activeSessionId.slice(0, 12)}...
-          </span>
-        </div>
-      )}
+          {/* Active Session */}
+          {isLiveRunning && !hasActiveOperation && (
+            <div className="flex items-center gap-2 px-2.5 py-2 bg-blue-50 rounded-lg">
+              <span className="relative flex h-2 w-2 flex-shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500" />
+              </span>
+              <span className="text-xs text-blue-700 font-medium">Session Active</span>
+              <span className="text-[10px] text-blue-400 font-mono ml-auto">{activeSessionId.slice(0, 8)}</span>
+            </div>
+          )}
 
-      {/* Error */}
-      {error && (
-        <div className="mb-3 p-2 bg-red-50 rounded-lg text-xs text-red-700">
-          {error}
-        </div>
-      )}
+          {/* Error */}
+          {error && (
+            <div className="flex items-start gap-2 px-2.5 py-2 bg-red-50 rounded-lg">
+              <AlertCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0 mt-px" />
+              <span className="text-xs text-red-600">{error}</span>
+            </div>
+          )}
 
-      {/* Real-time SSE Messages */}
-      {messages.length > 0 && (
-        <div className="max-h-60 overflow-y-auto mb-3 space-y-1.5">
-          {messages.map((msg, i) => (
-            <MessageBubble key={i} message={msg} />
-          ))}
-          <div ref={chatEndRef} />
-        </div>
-      )}
+          {/* SSE Messages */}
+          {messages.length > 0 && (
+            <div ref={messagesContainerRef} className="max-h-48 overflow-y-auto space-y-1">
+              {messages.map((msg, i) => (
+                <MessageBubble key={i} message={msg} />
+              ))}
+            </div>
+          )}
 
-      {/* Chat Input — only when session is active */}
-      {activeSessionId && (
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={chatInput}
-            onChange={(e) => setChatInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleChat()}
-            placeholder="Send feedback to AI..."
-            className="flex-1 px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-300"
-          />
-          <button
-            onClick={handleChat}
-            disabled={!chatInput.trim()}
-            className="p-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-300 transition-colors"
-          >
-            <Send className="w-4 h-4" />
-          </button>
-        </div>
-      )}
-
-      {/* Quick Actions — only when session is active */}
-      {activeSessionId && (
-        <div className="flex gap-2 mt-3 pt-3 border-t border-gray-100">
-          <button
-            onClick={handleEndSession}
-            className="flex items-center gap-1 px-3 py-1.5 text-xs text-green-700 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
-          >
-            <CheckCircle2 className="w-3 h-3" /> Satisfied
-          </button>
-          <button
-            onClick={() => handleAction('process')}
-            className="flex items-center gap-1 px-3 py-1.5 text-xs text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
-          >
-            <Loader2 className="w-3 h-3" /> Regenerate
-          </button>
-          <button
-            onClick={handleEndSession}
-            className="flex items-center gap-1 px-3 py-1.5 text-xs text-gray-500 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors ml-auto"
-          >
-            <X className="w-3 h-3" /> Dismiss
-          </button>
-        </div>
-      )}
-
-      {/* Session History (integrated from CaseSessionPanel) */}
-      {allSessions.length > 0 && (
-        <details className="mt-3 pt-3 border-t border-gray-100">
-          <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-600 select-none flex items-center justify-between">
-            <span>🧠 {allSessions.length} session{allSessions.length > 1 ? 's' : ''}</span>
-            {allSessions.length > 1 && (
-              <button
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  endAllSessions.mutate(caseNumber)
-                }}
-                className="text-red-400 hover:text-red-600 text-xs"
-              >
-                end all
-              </button>
-            )}
-          </summary>
-          <div className="mt-2 space-y-1">
-            {allSessions.map((s: any) => (
-              <div
-                key={s.sessionId}
-                className="flex items-center justify-between text-xs py-1 px-2 bg-gray-50 rounded"
-              >
-                <SessionBadge
-                  status={s.status}
-                  sessionId={s.sessionId}
-                  compact
+          {/* Chat Input */}
+          {activeSessionId && (
+            <>
+              <div className="flex gap-1.5">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleChat()}
+                  placeholder="Message AI..."
+                  className="flex-1 px-2.5 py-1.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300 focus:bg-white transition-all placeholder:text-gray-400"
                 />
-                <div className="flex items-center gap-2 text-gray-400">
-                  {s.intent && (
-                    <span className="truncate max-w-[150px]">{s.intent}</span>
-                  )}
-                  <span>{new Date(s.lastActivityAt).toLocaleString()}</span>
-                </div>
+                <button
+                  onClick={handleChat}
+                  disabled={!chatInput.trim()}
+                  className="px-2 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 transition-colors"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                </button>
               </div>
-            ))}
-          </div>
-        </details>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={handleEndSession}
+                  className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium text-green-700 bg-green-50 rounded hover:bg-green-100 transition-colors"
+                >
+                  <CheckCircle2 className="w-3 h-3" /> Done
+                </button>
+                <button
+                  onClick={() => handleAction('process')}
+                  className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium text-gray-600 bg-gray-100 rounded hover:bg-gray-200 transition-colors"
+                >
+                  <Loader2 className="w-3 h-3" /> Retry
+                </button>
+                <button
+                  onClick={handleEndSession}
+                  className="flex items-center gap-1 px-2 py-1 text-[11px] text-gray-400 rounded hover:bg-gray-100 transition-colors ml-auto"
+                >
+                  <X className="w-3 h-3" /> Dismiss
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       )}
-    </Card>
+
+      {/* Session History */}
+      {allSessions.length > 0 && (
+        <div className="border-t border-gray-100">
+          <details className="px-3 py-2">
+            <summary className="text-[11px] text-gray-400 cursor-pointer hover:text-gray-600 select-none flex items-center justify-between">
+              <span className="flex items-center gap-1">
+                <Brain className="w-3 h-3" />
+                {allSessions.length} session{allSessions.length > 1 ? 's' : ''}
+              </span>
+              {allSessions.length > 1 && (
+                <button
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    endAllSessions.mutate(caseNumber)
+                  }}
+                  className="text-red-400 hover:text-red-500 text-[11px] transition-colors"
+                >
+                  end all
+                </button>
+              )}
+            </summary>
+            <div className="mt-1.5 space-y-1">
+              {allSessions.map((s: any) => (
+                <div
+                  key={s.sessionId}
+                  className="flex items-center justify-between text-xs py-1 px-1.5 bg-gray-50 rounded"
+                >
+                  <SessionBadge status={s.status} sessionId={s.sessionId} compact />
+                  <div className="flex items-center gap-1.5 text-gray-400 text-[10px]">
+                    {s.intent && <span className="truncate max-w-[80px]">{s.intent}</span>}
+                    <span className="tabular-nums">{new Date(s.lastActivityAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </details>
+        </div>
+      )}
+    </div>
   )
 }
 
-/** Individual message bubble with type-specific styling */
+/** Compact message bubble for sidebar width */
 function MessageBubble({ message }: { message: { type: string; content: string; toolName?: string; step?: string } }) {
-  const typeConfig: Record<string, { icon: React.ReactNode; bg: string; text: string; label: string }> = {
+  const styles: Record<string, { border: string; icon: React.ReactNode; label: string }> = {
     thinking: {
-      icon: <Brain className="w-3 h-3 flex-shrink-0" />,
-      bg: 'bg-purple-50',
-      text: 'text-purple-800',
+      border: 'border-l-blue-300',
+      icon: <Brain className="w-3 h-3 text-blue-400" />,
       label: 'Thinking',
     },
     'tool-call': {
-      icon: <Wrench className="w-3 h-3 flex-shrink-0" />,
-      bg: 'bg-amber-50',
-      text: 'text-amber-800',
+      border: 'border-l-amber-300',
+      icon: <Wrench className="w-3 h-3 text-amber-500" />,
       label: message.toolName || 'Tool',
     },
     'tool-result': {
-      icon: <CheckCircle2 className="w-3 h-3 flex-shrink-0" />,
-      bg: 'bg-green-50',
-      text: 'text-green-800',
+      border: 'border-l-green-300',
+      icon: <CheckCircle2 className="w-3 h-3 text-green-500" />,
       label: message.toolName || 'Result',
     },
     completed: {
-      icon: <CheckCircle2 className="w-3 h-3 flex-shrink-0" />,
-      bg: 'bg-green-50',
-      text: 'text-green-700',
+      border: 'border-l-green-400',
+      icon: <CheckCircle2 className="w-3 h-3 text-green-500" />,
       label: 'Done',
     },
     failed: {
-      icon: <AlertCircle className="w-3 h-3 flex-shrink-0" />,
-      bg: 'bg-red-50',
-      text: 'text-red-700',
+      border: 'border-l-red-400',
+      icon: <AlertCircle className="w-3 h-3 text-red-500" />,
       label: 'Error',
     },
     user: {
-      icon: <Send className="w-3 h-3 flex-shrink-0" />,
-      bg: 'bg-blue-50',
-      text: 'text-blue-800',
+      border: 'border-l-blue-400',
+      icon: <Send className="w-3 h-3 text-blue-500" />,
       label: 'You',
     },
     system: {
-      icon: <Sparkles className="w-3 h-3 flex-shrink-0" />,
-      bg: 'bg-gray-50',
-      text: 'text-gray-700',
+      border: 'border-l-gray-300',
+      icon: <Sparkles className="w-3 h-3 text-gray-400" />,
       label: 'System',
     },
   }
 
-  const config = typeConfig[message.type] || typeConfig.system
+  const style = styles[message.type] || styles.system
 
-  // Truncate long content for display
-  const displayContent = message.content.length > 300
-    ? message.content.slice(0, 300) + '...'
+  const displayContent = message.content.length > 200
+    ? message.content.slice(0, 200) + '…'
     : message.content
 
   return (
-    <div className={`text-xs p-2 rounded-lg ${config.bg} ${config.text} ${message.type === 'user' ? 'ml-8' : 'mr-4'}`}>
-      <div className="flex items-center gap-1.5 mb-0.5">
-        {config.icon}
-        <span className="font-medium">{config.label}</span>
+    <div className={`border-l-2 ${style.border} pl-2 py-1 ${message.type === 'user' ? 'ml-4' : ''}`}>
+      <div className="flex items-center gap-1">
+        {style.icon}
+        <span className="text-[11px] font-medium text-gray-500">{style.label}</span>
         {message.step && (
-          <span className="text-[10px] opacity-60 ml-auto">{message.step}</span>
+          <span className="text-[10px] text-gray-400 ml-auto font-mono">{message.step}</span>
         )}
       </div>
       {displayContent && (
-        <div className="ml-5 break-words whitespace-pre-wrap opacity-90">
+        <p className="text-[11px] text-gray-600 mt-0.5 ml-4 leading-relaxed break-words whitespace-pre-wrap">
           {displayContent}
-        </div>
+        </p>
       )}
     </div>
   )
