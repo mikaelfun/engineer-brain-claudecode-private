@@ -87,7 +87,7 @@ export default function CaseDetail() {
           {meta?.actualStatus && meta.actualStatus !== caseInfo.status?.toLowerCase() && (
             <Badge variant="info" size="xs">{meta.actualStatus}</Badge>
           )}
-          {caseInfo.is24x7 && (
+          {caseInfo.is24x7 && /24\s*[x×]\s*7|yes|true/i.test(caseInfo.is24x7) && (
             <Badge variant="danger" size="xs">24×7</Badge>
           )}
           <span style={{ color: 'var(--border-default)' }}>·</span>

@@ -1,0 +1,10 @@
+{
+  "id": "ISS-033",
+  "title": "Case header 全部显示 24x7 badge，不符合事实",
+  "description": "is24x7 是字符串类型（值如 'Optional'），前端用 && 判断 truthy，导致所有非空字符串的 case 都显示 24x7 badge。需要用正则匹配实际的 24x7 值（'24x7', 'Yes', 'true'）。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "done",
+  "createdAt": "2026-03-21T20:30:00+08:00",
+  "updatedAt": "2026-03-21T20:30:00+08:00"
+}
