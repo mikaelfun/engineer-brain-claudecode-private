@@ -9,13 +9,13 @@ mcpServers:
     args: ["mcp", "kusto"]
   ado-msazure:
     command: "C:\\Users\\fangkun\\AppData\\Roaming\\agency\\CurrentVersion\\agency.exe"
-    args: ["mcp", "ado-msazure"]
+    args: ["mcp", "ado", "--organization", "msazure"]
   ado-contentidea:
     command: "C:\\Users\\fangkun\\AppData\\Roaming\\agency\\CurrentVersion\\agency.exe"
-    args: ["mcp", "ado-contentidea"]
+    args: ["mcp", "ado", "--organization", "contentidea"]
   ado-supportability:
     command: "C:\\Users\\fangkun\\AppData\\Roaming\\agency\\CurrentVersion\\agency.exe"
-    args: ["mcp", "ado-supportability"]
+    args: ["mcp", "ado", "--organization", "supportability"]
   msft-learn:
     command: "C:\\Users\\fangkun\\AppData\\Roaming\\agency\\CurrentVersion\\agency.exe"
     args: ["mcp", "msft-learn"]
