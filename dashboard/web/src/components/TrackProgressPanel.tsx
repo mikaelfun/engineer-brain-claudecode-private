@@ -4,8 +4,8 @@
  * Shows live agent activity. CSS variables for dark/light theme support.
  * Includes interactive QuestionForm for agent AskUserQuestion calls.
  */
-import { useState, useEffect, useRef, type FormEvent } from 'react'
-import { Loader2, Wrench, Brain, CheckCircle2, AlertCircle, Rocket, ChevronDown, MessageCircleQuestion, Send } from 'lucide-react'
+import { useState, useEffect, useRef, useMemo, type FormEvent } from 'react'
+import { Loader2, Wrench, Brain, CheckCircle2, AlertCircle, Rocket, ChevronDown, ChevronRight, MessageCircleQuestion, Send, History } from 'lucide-react'
 import { useIssueTrackStore, EMPTY_TRACK_MESSAGES, type IssueTrackMessage, type IssueTrackQuestion } from '../stores/issueTrackStore'
 import { useTrackProgress, useAnswerTrackQuestion } from '../api/hooks'
 
@@ -26,27 +26,30 @@ export default function TrackProgressPanel({ issueId, isTracking, onRetry }: Tra
   const clearPendingQuestion = useIssueTrackStore((s) => s.clearPendingQuestion)
   const scrollRef = useRef<HTMLDivElement>(null)
   const hasRecoveredRef = useRef(false)
+  const [collapsed, setCollapsed] = useState(false)
 
-  // Recovery: if tracking and no SSE messages yet, fetch from backend
-  const { data: recoveredData } = useTrackProgress(
-    issueId,
-    isTracking && messages.length === 0 && !hasRecoveredRef.current
-  )
+  // Recovery: fetch from backend when tracking with missing state.
+  // ISS-029: Also fetch when we have messages but no pendingQuestion (question may have
+  // arrived before component mounted, so frontend missed the SSE but backend has it).
+  const needsRecovery = isTracking && !hasRecoveredRef.current && (messages.length === 0 || !pendingQuestion)
+  const { data: recoveredData } = useTrackProgress(issueId, needsRecovery)
 
   useEffect(() => {
     if (recoveredData?.messages?.length && messages.length === 0 && !hasRecoveredRef.current) {
       hasRecoveredRef.current = true
       loadMessages(issueId, recoveredData.messages, recoveredData.isActive)
-      // Restore pending question from backend state
-      if (recoveredData.pendingQuestion) {
-        setPendingQuestion(
-          issueId,
-          recoveredData.pendingQuestion.sessionId,
-          recoveredData.pendingQuestion.questions,
-        )
-      }
     }
-  }, [recoveredData, messages.length, issueId, loadMessages, setPendingQuestion])
+    // ISS-029: Always recover pendingQuestion if backend has one and frontend doesn't,
+    // regardless of messages state. This handles the case where the question arrived
+    // before the component mounted.
+    if (recoveredData?.pendingQuestion && !pendingQuestion) {
+      setPendingQuestion(
+        issueId,
+        recoveredData.pendingQuestion.sessionId,
+        recoveredData.pendingQuestion.questions,
+      )
+    }
+  }, [recoveredData, messages.length, issueId, loadMessages, setPendingQuestion, pendingQuestion])
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -55,17 +58,28 @@ export default function TrackProgressPanel({ issueId, isTracking, onRetry }: Tra
     }
   }, [messages.length])
 
-  if (messages.length === 0 && !isTracking) return null
-
   // Find the completed or error message if any
   const completedMsg = messages.find(m => m.kind === 'completed')
   const errorMsg = messages.find(m => m.kind === 'error')
   const hasPendingQuestion = !!pendingQuestion
 
+  // ISS-036: Auto-collapse when track creation completes (not active, not waiting for question)
+  const isFinished = !!completedMsg && !isActive && !hasPendingQuestion
+  useEffect(() => {
+    if (isFinished) setCollapsed(true)
+  }, [isFinished])
+
+  // Expand when question arrives or tracking restarts
+  useEffect(() => {
+    if (hasPendingQuestion || isActive) setCollapsed(false)
+  }, [hasPendingQuestion, isActive])
+
+  if (messages.length === 0 && !isTracking) return null
+
   return (
     <div className="px-4 py-3" style={{ borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-inset)' }}>
       {/* Header */}
-      <div className="flex items-center gap-2 mb-2">
+      <div className="flex items-center gap-2">
         {hasPendingQuestion ? (
           <>
             <MessageCircleQuestion className="w-3.5 h-3.5" style={{ color: 'var(--accent-amber)' }} />
@@ -79,7 +93,10 @@ export default function TrackProgressPanel({ issueId, isTracking, onRetry }: Tra
         ) : completedMsg ? (
           <>
             <CheckCircle2 className="w-3.5 h-3.5" style={{ color: 'var(--accent-green)' }} />
-            <span className="text-xs font-medium" style={{ color: 'var(--accent-green)' }}>Track Created</span>
+            <span className="text-xs font-medium" style={{ color: 'var(--accent-green)' }}>
+              Track Created
+              {completedMsg.trackId && <span className="ml-1 font-normal" style={{ color: 'var(--text-secondary)' }}>({completedMsg.trackId})</span>}
+            </span>
           </>
         ) : errorMsg ? (
           <>
@@ -92,48 +109,59 @@ export default function TrackProgressPanel({ issueId, isTracking, onRetry }: Tra
             <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Track Progress</span>
           </>
         )}
-      </div>
 
-      {/* Message stream */}
-      <div ref={scrollRef} className="max-h-48 overflow-y-auto space-y-1 text-xs">
-        {messages.map((msg, i) => (
-          <MessageRow key={i} msg={msg} />
-        ))}
-        {/* Show spinner at bottom if still active and no pending question */}
-        {!hasPendingQuestion && (isActive || (isTracking && !completedMsg && !errorMsg)) && messages.length > 0 && (
-          <div className="flex items-center gap-1.5 py-0.5" style={{ color: 'var(--text-tertiary)' }}>
-            <Loader2 className="w-3 h-3 animate-spin" />
-            <span>Processing...</span>
-          </div>
+        {/* ISS-036: Toggle button — show when there are messages and finished or collapsed */}
+        {messages.length > 0 && (isFinished || collapsed) && (
+          <button
+            type="button"
+            onClick={() => setCollapsed(!collapsed)}
+            className="ml-auto flex items-center gap-1 px-1.5 py-0.5 rounded text-xs transition-colors"
+            style={{ color: 'var(--text-tertiary)' }}
+            title={collapsed ? 'Show creation log' : 'Hide creation log'}
+          >
+            <History className="w-3 h-3" />
+            {collapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+          </button>
         )}
       </div>
 
-      {/* Question form (shown when agent asks a question) */}
-      {hasPendingQuestion && (
-        <QuestionForm
-          issueId={issueId}
-          questions={pendingQuestion.questions}
-          onAnswered={() => clearPendingQuestion(issueId)}
-        />
-      )}
+      {/* Message stream — hidden when collapsed */}
+      {!collapsed && (
+        <>
+          <div ref={scrollRef} className="max-h-48 overflow-y-auto space-y-1 text-xs mt-2">
+            <ProcessedMessageList messages={messages} />
+            {/* Show spinner at bottom if still active and no pending question */}
+            {!hasPendingQuestion && (isActive || (isTracking && !completedMsg && !errorMsg)) && messages.length > 0 && (
+              <div className="flex items-center gap-1.5 py-0.5" style={{ color: 'var(--text-tertiary)' }}>
+                <Loader2 className="w-3 h-3 animate-spin" />
+                <span>Processing...</span>
+              </div>
+            )}
+          </div>
 
-      {/* Plan summary (shown after completion) */}
-      {completedMsg?.planSummary && (
-        <PlanSummary plan={completedMsg.planSummary} />
-      )}
+          {/* Question form (shown when agent asks a question) */}
+          {hasPendingQuestion && (
+            <QuestionForm
+              issueId={issueId}
+              questions={pendingQuestion.questions}
+              onAnswered={() => clearPendingQuestion(issueId)}
+            />
+          )}
 
-      {/* Error + retry */}
-      {errorMsg && onRetry && (
-        <div className="mt-2 flex items-center gap-2">
-          <span className="text-xs" style={{ color: 'var(--accent-red)' }}>{errorMsg.error}</span>
-          <button
-            onClick={onRetry}
-            className="px-2 py-1 text-xs rounded transition-colors"
-            style={{ background: 'var(--accent-red-dim)', color: 'var(--accent-red)' }}
-          >
-            Retry
-          </button>
-        </div>
+          {/* Error + retry */}
+          {errorMsg && onRetry && (
+            <div className="mt-2 flex items-center gap-2">
+              <span className="text-xs" style={{ color: 'var(--accent-red)' }}>{errorMsg.error}</span>
+              <button
+                onClick={onRetry}
+                className="px-2 py-1 text-xs rounded transition-colors"
+                style={{ background: 'var(--accent-red-dim)', color: 'var(--accent-red)' }}
+              >
+                Retry
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   )
@@ -249,6 +277,114 @@ function QuestionForm({
   )
 }
 
+/** Display message after collapsing consecutive tool-call/thinking messages */
+export interface TrackDisplayMessage {
+  kind: 'single' | 'collapsed-tools' | 'collapsed-thinking'
+  messages: IssueTrackMessage[]
+  toolNames: string[]
+  timestamp: string
+}
+
+/** Merge consecutive tool-call and thinking messages into collapsed groups */
+export function processTrackMessages(messages: IssueTrackMessage[]): TrackDisplayMessage[] {
+  if (!messages.length) return []
+  const result: TrackDisplayMessage[] = []
+  let i = 0
+  while (i < messages.length) {
+    const msg = messages[i]
+    // Consecutive tool-call → collapsed-tools
+    if (msg.kind === 'tool-call') {
+      const group: IssueTrackMessage[] = []
+      const names: string[] = []
+      while (i < messages.length && messages[i].kind === 'tool-call') {
+        group.push(messages[i])
+        const name = messages[i].toolName || 'unknown'
+        if (!names.includes(name)) names.push(name)
+        i++
+      }
+      if (group.length === 1) {
+        result.push({ kind: 'single', messages: [group[0]], toolNames: [], timestamp: group[0].timestamp })
+      } else {
+        result.push({ kind: 'collapsed-tools', messages: group, toolNames: names, timestamp: group[group.length - 1].timestamp })
+      }
+      continue
+    }
+    // Consecutive thinking → collapsed-thinking (keep last)
+    if (msg.kind === 'thinking') {
+      const group: IssueTrackMessage[] = []
+      while (i < messages.length && messages[i].kind === 'thinking') {
+        group.push(messages[i])
+        i++
+      }
+      if (group.length === 1) {
+        result.push({ kind: 'single', messages: [group[0]], toolNames: [], timestamp: group[0].timestamp })
+      } else {
+        result.push({ kind: 'collapsed-thinking', messages: group, toolNames: [], timestamp: group[group.length - 1].timestamp })
+      }
+      continue
+    }
+    // Everything else (started, completed, error, question) → single
+    result.push({ kind: 'single', messages: [msg], toolNames: [], timestamp: msg.timestamp })
+    i++
+  }
+  return result
+}
+
+/** Renders processed (collapsed) message list */
+function ProcessedMessageList({ messages }: { messages: IssueTrackMessage[] }) {
+  const processed = useMemo(() => processTrackMessages(messages), [messages])
+  return (
+    <>
+      {processed.map((item, i) => {
+        if (item.kind === 'collapsed-tools') return <CollapsedToolGroup key={i} group={item} />
+        if (item.kind === 'collapsed-thinking') return <CollapsedThinkingGroup key={i} group={item} />
+        return <MessageRow key={i} msg={item.messages[0]} />
+      })}
+    </>
+  )
+}
+
+/** Collapsed tool group — compact one-line with expand/collapse */
+function CollapsedToolGroup({ group }: { group: TrackDisplayMessage }) {
+  const [expanded, setExpanded] = useState(false)
+  const label = group.toolNames.slice(0, 3).join(', ') + (group.toolNames.length > 3 ? '...' : '')
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center gap-1.5 py-0.5 w-full text-left"
+        style={{ color: 'var(--accent-purple)' }}
+      >
+        {expanded ? <ChevronDown className="w-3 h-3 shrink-0" /> : <ChevronRight className="w-3 h-3 shrink-0" />}
+        <Wrench className="w-3 h-3 shrink-0" />
+        <span>{label} ({group.messages.length} tools)</span>
+      </button>
+      {expanded && (
+        <div className="ml-5 space-y-0.5" style={{ borderLeft: '2px solid var(--accent-purple-dim, var(--border-subtle))' }}>
+          {group.messages.map((m, j) => (
+            <div key={j} className="flex items-center gap-1.5 py-0.5 pl-2" style={{ color: 'var(--text-tertiary)' }}>
+              <Wrench className="w-2.5 h-2.5 shrink-0" />
+              <span>Tool: {m.toolName}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** Collapsed thinking group — shows only last thinking message */
+function CollapsedThinkingGroup({ group }: { group: TrackDisplayMessage }) {
+  const last = group.messages[group.messages.length - 1]
+  return (
+    <div className="flex items-start gap-1.5 py-0.5" style={{ color: 'var(--text-secondary)' }}>
+      <Brain className="w-3 h-3 shrink-0 mt-0.5" />
+      <span className="line-clamp-2">{last.content}</span>
+    </div>
+  )
+}
+
 /** Single message row */
 function MessageRow({ msg }: { msg: IssueTrackMessage }) {
   switch (msg.kind) {
@@ -300,51 +436,4 @@ function MessageRow({ msg }: { msg: IssueTrackMessage }) {
     default:
       return null
   }
-}
-
-/** Collapsible plan summary display */
-function PlanSummary({ plan }: { plan: string }) {
-  // Extract phase/task lines from plan.md for a quick overview
-  const lines = plan.split('\n')
-  const phases: string[] = []
-  for (const line of lines) {
-    const trimmed = line.trim()
-    if (trimmed.startsWith('## Phase') || trimmed.startsWith('## phase')) {
-      phases.push(trimmed.replace(/^##\s*/, ''))
-    } else if (trimmed.startsWith('### ') && phases.length > 0) {
-      // Task under a phase — show indented
-      phases.push('  ' + trimmed.replace(/^###\s*/, ''))
-    }
-  }
-
-  // If we couldn't parse phases, just show the first part as-is
-  const hasParsedPhases = phases.length > 0
-
-  return (
-    <details className="mt-2 group">
-      <summary className="flex items-center gap-1 text-xs cursor-pointer" style={{ color: 'var(--accent-blue)' }}>
-        <ChevronDown className="w-3 h-3 group-open:rotate-180 transition-transform" />
-        Plan Overview ({hasParsedPhases ? `${phases.filter(p => !p.startsWith('  ')).length} phases` : 'raw'})
-      </summary>
-      <div className="mt-1.5 pl-4" style={{ borderLeft: '2px solid var(--accent-blue-dim)' }}>
-        {hasParsedPhases ? (
-          <ul className="space-y-0.5 text-xs">
-            {phases.map((p, i) => (
-              <li
-                key={i}
-                style={{ color: p.startsWith('  ') ? 'var(--text-tertiary)' : 'var(--text-primary)' }}
-                className={p.startsWith('  ') ? 'ml-3' : 'font-medium'}
-              >
-                {p}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <pre className="text-xs whitespace-pre-wrap max-h-40 overflow-y-auto" style={{ color: 'var(--text-secondary)' }}>
-            {plan.slice(0, 1000)}
-          </pre>
-        )}
-      </div>
-    </details>
-  )
 }
