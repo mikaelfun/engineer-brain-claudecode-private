@@ -1,0 +1,11 @@
+{
+  "id": "ISS-032",
+  "title": "Case 页面 Info Tab 与 Inspection 数据重复，考虑移除",
+  "description": "Case Detail 页面的 Info tab 展示的信息在 Inspection tab 中已有相同数据。两个 tab 内容重复，增加了页面复杂度。需要评估是否可以移除 Info tab，将必要信息整合到 Inspection 或其他 tab 中。",
+  "type": "refactor",
+  "priority": "P2",
+  "status": "done",
+  "trackId": "remove-info-tab_20260321",
+  "createdAt": "2026-03-21T20:10:00+08:00",
+  "updatedAt": "2026-03-21T20:25:00+08:00"
+}

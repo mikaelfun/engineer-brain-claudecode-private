@@ -30,3 +30,5 @@
 | [x] | design-system-integration_20260321 | Dashboard Design System Integration — Dual Theme | 2026-03-21 | 2026-03-21 |
 | [x] | web-test-infra_20260321 | Frontend Test Infrastructure | 2026-03-21 | 2026-03-21 |
 | [x] | track-question-fix2_20260321 | Fix Create Track Question Dialog (Round 2) | 2026-03-21 | 2026-03-21 |
+| [x] | sse-message-filter_20260321 | Agent Session SSE Message Filtering | 2026-03-21 | 2026-03-21 |
+| [x] | remove-info-tab_20260321 | 移除 Info Tab — 数据整合到 Header + Inspection | 2026-03-21 | 2026-03-21 |
