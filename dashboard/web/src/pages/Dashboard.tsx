@@ -227,11 +227,19 @@ export default function Dashboard() {
                         <CaseStatusBadge status={c.status} />
                       </div>
                       <h4 className="font-medium mt-1 text-[13px] truncate" style={{ color: 'var(--text-primary)' }} title={c.title || 'Untitled'}>{c.title || 'Untitled'}</h4>
-                      <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
-                        <span className="font-semibold" style={{ color: 'var(--accent-cyan)' }}>{c.customer}</span>
-                        <span style={{ color: 'var(--text-tertiary)' }}> · </span>
-                        {c.assignedTo}
-                        <span style={{ color: 'var(--text-tertiary)' }}> · </span>
+                      <p className="text-xs mt-0.5 flex items-center gap-1.5 flex-wrap">
+                        <span
+                          className="inline-block font-semibold text-[11px] px-1.5 py-0.5 rounded"
+                          style={{
+                            color: 'var(--accent-cyan)',
+                            background: 'color-mix(in srgb, var(--accent-cyan) 12%, transparent)',
+                          }}
+                        >
+                          {c.customer || 'Unknown'}
+                        </span>
+                        <span style={{ color: 'var(--text-tertiary)' }}>·</span>
+                        <span style={{ color: 'var(--text-secondary)' }}>{c.assignedTo}</span>
+                        <span style={{ color: 'var(--text-tertiary)' }}>·</span>
                         <span className="font-mono" style={{ color: parseAge(c.caseAge) > 168 ? 'var(--accent-red)' : 'var(--text-secondary)' }}>
                           {c.caseAge}
                         </span>

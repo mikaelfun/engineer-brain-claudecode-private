@@ -16,6 +16,22 @@ import type { CaseSummary, CaseStats } from '../types/index.js'
 
 const cases = new Hono()
 
+/**
+ * Extract customer name from Entitlement Schedule when customer is "Generic Account".
+ * Schedule format: "CompanyName - SupportPlan (ContractId)" or "CompanyName–SupportPlan"
+ * Returns the part before the first dash/en-dash, trimmed.
+ */
+function resolveCustomerName(customer: string, schedule?: string): string {
+  if (!customer || customer.toLowerCase() === 'generic account') {
+    if (schedule) {
+      // Split on first '-' or '–' (en-dash)
+      const match = schedule.match(/^(.+?)[\s]*[-–]/)
+      if (match) return match[1].trim()
+    }
+  }
+  return customer
+}
+
 /** Validate caseNumber path param — rejects path traversal */
 function validateCaseNumber(c: any): string | null {
   const id = c.req.param('id')
@@ -41,7 +57,7 @@ cases.get('/', (c) => {
       title: info?.title || '',
       severity: info?.severity || '',
       status: info?.status || '',
-      customer: info?.customer || '',
+      customer: resolveCustomerName(info?.customer || '', info?.entitlement?.schedule),
       assignedTo: info?.assignedTo || '',
       createdOn: info?.createdOn || '',
       caseAge: info?.caseAge || '',
@@ -60,7 +76,7 @@ cases.get('/', (c) => {
       title: info?.title || 'AR Case',
       severity: info?.severity || '',
       status: info?.status || 'AR',
-      customer: info?.customer || '',
+      customer: resolveCustomerName(info?.customer || '', info?.entitlement?.schedule),
       assignedTo: info?.assignedTo || '',
       createdOn: info?.createdOn || '',
       caseAge: info?.caseAge || '',
