@@ -11,6 +11,9 @@ import { useAgents, useCronJobs, usePatrolState, useCancelPatrol, useUnifiedSess
 import type { UnifiedSession } from '../api/hooks'
 import { usePatrolStore } from '../stores/patrolStore'
 import { useCaseSessionStore, type CaseSessionMessage } from '../stores/caseSessionStore'
+import { useImplementStore, type ImplementMessage } from '../stores/implementStore'
+import { useIssueTrackStore, EMPTY_TRACK_MESSAGES, EMPTY_VERIFY_MESSAGES } from '../stores/issueTrackStore'
+import type { IssueTrackMessage, VerifyMessage } from '../stores/issueTrackStore'
 import { SessionMessageList } from '../components/session/SessionMessageList'
 import { useQueryClient } from '@tanstack/react-query'
 import { RefreshCw, ChevronDown, ChevronRight, Filter, Send, Square } from 'lucide-react'
@@ -60,8 +63,9 @@ function StatusDot({ status }: { status: string }) {
   )
 }
 
-function SessionRow({ session, isExpanded, onToggle }: { session: UnifiedSession; isExpanded: boolean; onToggle: () => void }) {
+function SessionRow({ session, isExpanded, onToggle, onStop }: { session: UnifiedSession; isExpanded: boolean; onToggle: () => void; onStop?: () => void }) {
   const typeConfig = SESSION_TYPE_CONFIG[session.type] || SESSION_TYPE_CONFIG.case
+  const [isStopping, setIsStopping] = useState(false)
 
   // Format relative time
   const lastActivity = new Date(session.lastActivityAt)
@@ -72,6 +76,22 @@ function SessionRow({ session, isExpanded, onToggle }: { session: UnifiedSession
     : diffMins < 60 ? `${diffMins}m ago`
     : diffMins < 1440 ? `${Math.floor(diffMins / 60)}h ago`
     : `${Math.floor(diffMins / 1440)}d ago`
+
+  const isActive = session.type === 'case' && (session.status === 'active' || session.status === 'paused')
+
+  const handleInlineStop = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (isStopping || !onStop) return
+    setIsStopping(true)
+    try {
+      await apiDelete(`/case/${session.context}/session`, { sessionId: session.id })
+      onStop()
+    } catch {
+      // Session may already be ended
+    } finally {
+      setIsStopping(false)
+    }
+  }
 
   return (
     <div>
@@ -124,6 +144,19 @@ function SessionRow({ session, isExpanded, onToggle }: { session: UnifiedSession
               ⏳ Awaiting input
             </span>
           )}
+          {/* Inline Stop button for active case sessions */}
+          {isActive && (
+            <span
+              role="button"
+              onClick={handleInlineStop}
+              className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-xs cursor-pointer transition-colors ${isStopping ? 'opacity-50 pointer-events-none' : ''}`}
+              style={{ color: 'var(--accent-red)', background: 'var(--accent-red-dim)' }}
+              title="Stop session"
+            >
+              <Square className="w-3 h-3" />
+              {isStopping ? '...' : 'Stop'}
+            </span>
+          )}
           <span className="text-xs whitespace-nowrap" style={{ color: 'var(--text-tertiary)' }}>
             {timeAgo}
           </span>
@@ -141,8 +174,17 @@ function SessionDetailPanel({ session }: { session: UnifiedSession }) {
   if (session.type === 'case') {
     return <CaseSessionDetail session={session} />
   }
+  if (session.type === 'implement') {
+    return <ImplementSessionDetail session={session} />
+  }
+  if (session.type === 'verify') {
+    return <VerifySessionDetail session={session} />
+  }
+  if (session.type === 'track-creation') {
+    return <TrackCreationSessionDetail session={session} />
+  }
 
-  // Non-case sessions: simple status text
+  // Unknown type: simple status text
   return (
     <div className="ml-7 mt-1 mb-2 px-3 py-2 rounded-lg text-xs" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
       <div className="flex items-center gap-2">
@@ -157,6 +199,159 @@ function SessionDetailPanel({ session }: { session: UnifiedSession }) {
       {session.intent && (
         <p className="mt-1 ml-4" style={{ color: 'var(--text-tertiary)' }}>{session.intent}</p>
       )}
+    </div>
+  )
+}
+
+/** Convert ImplementMessage[] to CaseSessionMessage[] for SessionMessageList */
+function implementToSessionMessages(msgs: ImplementMessage[]): CaseSessionMessage[] {
+  return msgs.map(m => ({
+    type: m.type === 'started' ? 'system' as const : m.type as CaseSessionMessage['type'],
+    content: m.content,
+    toolName: m.toolName,
+    timestamp: m.timestamp,
+  }))
+}
+
+/** Convert IssueTrackMessage[] to CaseSessionMessage[] for SessionMessageList */
+function trackToSessionMessages(msgs: IssueTrackMessage[]): CaseSessionMessage[] {
+  return msgs.map(m => {
+    const typeMap: Record<string, CaseSessionMessage['type']> = {
+      'started': 'system',
+      'thinking': 'thinking',
+      'tool-call': 'tool-call',
+      'completed': 'completed',
+      'error': 'failed',
+      'question': 'system',
+    }
+    return {
+      type: typeMap[m.kind] || 'system',
+      content: m.content || m.error || m.trackId || '',
+      toolName: m.toolName,
+      timestamp: m.timestamp,
+    }
+  })
+}
+
+/** Convert VerifyMessage[] to CaseSessionMessage[] for SessionMessageList */
+function verifyToSessionMessages(msgs: VerifyMessage[]): CaseSessionMessage[] {
+  return msgs.map(m => {
+    const typeMap: Record<string, CaseSessionMessage['type']> = {
+      'started': 'system',
+      'thinking': 'thinking',
+      'tool-call': 'tool-call',
+      'tool-result': 'tool-result',
+      'completed': 'completed',
+      'error': 'failed',
+    }
+    return {
+      type: typeMap[m.kind] || 'system',
+      content: m.content || '',
+      toolName: m.toolName,
+      timestamp: m.timestamp,
+    }
+  })
+}
+
+/** Implement session detail — reads from implementStore */
+function ImplementSessionDetail({ session }: { session: UnifiedSession }) {
+  const issueId = session.context
+  const implSession = useImplementStore(s => s.sessions[issueId])
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const messages = implSession ? implementToSessionMessages(implSession.messages) : EMPTY_MESSAGES
+  const isActive = session.status === 'active'
+
+  // Auto-scroll to bottom on new messages
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollTop = containerRef.current.scrollHeight
+    }
+  }, [messages.length])
+
+  return (
+    <div className="ml-7 mt-1 mb-2 rounded-lg overflow-hidden" style={{ border: '1px solid var(--border-subtle)' }}>
+      <div className="px-3 pt-2">
+        {messages.length === 0 ? (
+          <p className="text-xs py-2" style={{ color: 'var(--text-tertiary)' }}>
+            {isActive ? 'Waiting for messages...' : 'No messages recorded'}
+          </p>
+        ) : (
+          <SessionMessageList
+            messages={messages}
+            containerRef={containerRef}
+            maxHeightClass="max-h-64"
+          />
+        )}
+      </div>
+    </div>
+  )
+}
+
+/** Verify session detail — reads from issueTrackStore verify state */
+function VerifySessionDetail({ session }: { session: UnifiedSession }) {
+  const issueId = session.context
+  const verifyMsgs = useIssueTrackStore(s => s.verifyMessages[issueId] || EMPTY_VERIFY_MESSAGES)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const messages = verifyToSessionMessages(verifyMsgs)
+  const isActive = session.status === 'active'
+
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollTop = containerRef.current.scrollHeight
+    }
+  }, [messages.length])
+
+  return (
+    <div className="ml-7 mt-1 mb-2 rounded-lg overflow-hidden" style={{ border: '1px solid var(--border-subtle)' }}>
+      <div className="px-3 pt-2">
+        {messages.length === 0 ? (
+          <p className="text-xs py-2" style={{ color: 'var(--text-tertiary)' }}>
+            {isActive ? 'Waiting for messages...' : 'No messages recorded'}
+          </p>
+        ) : (
+          <SessionMessageList
+            messages={messages}
+            containerRef={containerRef}
+            maxHeightClass="max-h-64"
+          />
+        )}
+      </div>
+    </div>
+  )
+}
+
+/** Track-creation session detail — reads from issueTrackStore */
+function TrackCreationSessionDetail({ session }: { session: UnifiedSession }) {
+  const issueId = session.context
+  const trackMsgs = useIssueTrackStore(s => s.messages[issueId] || EMPTY_TRACK_MESSAGES)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const messages = trackToSessionMessages(trackMsgs)
+  const isActive = session.status === 'active'
+
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollTop = containerRef.current.scrollHeight
+    }
+  }, [messages.length])
+
+  return (
+    <div className="ml-7 mt-1 mb-2 rounded-lg overflow-hidden" style={{ border: '1px solid var(--border-subtle)' }}>
+      <div className="px-3 pt-2">
+        {messages.length === 0 ? (
+          <p className="text-xs py-2" style={{ color: 'var(--text-tertiary)' }}>
+            {isActive ? 'Waiting for messages...' : 'No messages recorded'}
+          </p>
+        ) : (
+          <SessionMessageList
+            messages={messages}
+            containerRef={containerRef}
+            maxHeightClass="max-h-64"
+          />
+        )}
+      </div>
     </div>
   )
 }
@@ -319,6 +514,9 @@ export default function AgentMonitor() {
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [showFilters, setShowFilters] = useState(false)
 
+  // Stop All state
+  const [stoppingAll, setStoppingAll] = useState(false)
+
   // Collapsed groups
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({
     __completed: true, // Completed sessions collapsed by default
@@ -391,6 +589,24 @@ export default function AgentMonitor() {
 
   const toggleGroup = (type: string) => {
     setCollapsedGroups((prev) => ({ ...prev, [type]: !prev[type] }))
+  }
+
+  const refreshSessions = () => {
+    queryClient.invalidateQueries({ queryKey: ['sessions'] })
+  }
+
+  const handleStopAllCaseSessions = async (sessions: UnifiedSession[]) => {
+    const activeCaseSessions = sessions.filter(s => s.type === 'case' && (s.status === 'active' || s.status === 'paused'))
+    if (activeCaseSessions.length === 0) return
+    setStoppingAll(true)
+    try {
+      await Promise.allSettled(
+        activeCaseSessions.map(s => apiDelete(`/case/${s.context}/session`, { sessionId: s.id }))
+      )
+      refreshSessions()
+    } finally {
+      setStoppingAll(false)
+    }
   }
 
   // Group ordering
@@ -597,11 +813,11 @@ export default function AgentMonitor() {
 
                 return (
                   <Card key={type}>
-                    <button
-                      onClick={() => toggleGroup(type)}
-                      className="flex items-center justify-between w-full text-left"
-                    >
-                      <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between">
+                      <button
+                        onClick={() => toggleGroup(type)}
+                        className="flex items-center gap-2 text-left"
+                      >
                         {isCollapsed
                           ? <ChevronRight className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
                           : <ChevronDown className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
@@ -621,8 +837,21 @@ export default function AgentMonitor() {
                             {activeCount} active
                           </span>
                         )}
-                      </div>
-                    </button>
+                      </button>
+                      {/* Stop All button for case sessions with active sessions */}
+                      {type === 'case' && activeCount > 0 && (
+                        <button
+                          onClick={() => handleStopAllCaseSessions(sessions)}
+                          disabled={stoppingAll}
+                          className="flex items-center gap-1 px-2 py-1 text-xs rounded transition-colors disabled:opacity-50"
+                          style={{ color: 'var(--accent-red)', background: 'var(--accent-red-dim)' }}
+                          title="Stop all active case sessions"
+                        >
+                          <Square className="w-3 h-3" />
+                          {stoppingAll ? 'Stopping...' : `Stop All (${activeCount})`}
+                        </button>
+                      )}
+                    </div>
 
                     {!isCollapsed && (
                       <div className="mt-3 space-y-1.5">
@@ -632,6 +861,7 @@ export default function AgentMonitor() {
                             session={session}
                             isExpanded={expandedSessionId === session.id}
                             onToggle={() => setExpandedSessionId(expandedSessionId === session.id ? null : session.id)}
+                            onStop={refreshSessions}
                           />
                         ))}
                       </div>
@@ -686,6 +916,7 @@ export default function AgentMonitor() {
                                   session={session}
                                   isExpanded={expandedSessionId === session.id}
                                   onToggle={() => setExpandedSessionId(expandedSessionId === session.id ? null : session.id)}
+                                  onStop={refreshSessions}
                                 />
                               ))}
                             </div>

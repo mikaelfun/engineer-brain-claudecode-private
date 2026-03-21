@@ -51,5 +51,8 @@
 | [x] | session-messages-fix_20260322 | Fix Agent Monitor Session Messages Not Displaying | 2026-03-22 | 2026-03-22 |
 | [x] | track-question-prominent_20260321 | Create Track 交互提问突出展示 | 2026-03-21 | 2026-03-22 |
 | [x] | test-mock-fix_20260321 | Fix issues.test.ts Mock Alignment with ISS-047 | 2026-03-21 | 2026-03-21 |
-| [~] | issue-session-sync_20260322 | Fix Issues Page & Agent Monitor State Sync | 2026-03-22 | 2026-03-22 |
+| [x] | issue-session-sync_20260322 | Fix Issues Page & Agent Monitor State Sync | 2026-03-22 | 2026-03-22 |
 | [x] | session-msg-truncate_20260321 | Fix Agent Monitor Session Message Truncation | 2026-03-21 | 2026-03-21 |
+| [ ] | verify-stuck-fix_20260321 | Fix Verify Running Tests Stuck After All Pass | 2026-03-21 | 2026-03-21 |
+| [x] | ui-test-strategy_20260321 | UI Test Strategy — Issue-Driven Functional Verification | 2026-03-21 | 2026-03-21 |
+| [x] | session-stop-btns_20260321 | Agent Monitor Session Stop Buttons | 2026-03-21 | 2026-03-21 |

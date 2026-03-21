@@ -1,0 +1,11 @@
+{
+  "id": "ISS-057",
+  "title": "Agent Monitor Case Session 列表行增加 Stop 按钮 + 一键释放所有 Session",
+  "description": "1. 每个 case session 行应直接显示 Stop 按钮，不需要展开详情才能停止。\n2. Case Session 分类区域应有一个\"释放所有 Session\"按钮，一键停止所有活跃的 case session。",
+  "type": "feature",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "session-stop-btns_20260321",
+  "createdAt": "2026-03-21T22:30:00+08:00",
+  "updatedAt": "2026-03-21T22:38:00+08:00"
+}

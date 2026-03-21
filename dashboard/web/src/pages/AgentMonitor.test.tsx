@@ -60,6 +60,29 @@ vi.mock('../api/client', () => ({
   apiDelete: vi.fn(),
 }))
 
+// Mock implement store
+vi.mock('../stores/implementStore', () => ({
+  useImplementStore: vi.fn((selector: (s: any) => any) => {
+    const store = {
+      sessions: {},
+    }
+    return selector(store)
+  }),
+}))
+
+// Mock issue track store
+vi.mock('../stores/issueTrackStore', () => ({
+  useIssueTrackStore: vi.fn((selector: (s: any) => any) => {
+    const store = {
+      messages: {},
+      verifyMessages: {},
+    }
+    return selector(store)
+  }),
+  EMPTY_TRACK_MESSAGES: [],
+  EMPTY_VERIFY_MESSAGES: [],
+}))
+
 import AgentMonitor from './AgentMonitor'
 
 // ---- Test data factories ----
@@ -326,8 +349,8 @@ describe('AgentMonitor', () => {
     // Click the session row to expand
     await user.click(screen.getByText('ISS-010'))
 
-    // Detail panel should appear (non-case shows status text)
-    expect(screen.getByText('Session is running...')).toBeInTheDocument()
+    // Detail panel should appear (implement session shows message panel)
+    expect(screen.getByText('Waiting for messages...')).toBeInTheDocument()
   })
 
   it('shows chat input and stop button for expanded active case sessions', async () => {
@@ -347,6 +370,8 @@ describe('AgentMonitor', () => {
 
     // Chat input and stop button should be visible
     expect(screen.getByPlaceholderText('Send message to session...')).toBeInTheDocument()
-    expect(screen.getByText('Stop')).toBeInTheDocument()
+    // Multiple Stop buttons: inline row button + detail panel button
+    const stopButtons = screen.getAllByText('Stop')
+    expect(stopButtons.length).toBeGreaterThanOrEqual(1)
   })
 })
