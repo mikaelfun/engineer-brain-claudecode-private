@@ -34,8 +34,10 @@ vi.mock('../services/conductor-reader.js', () => ({
 
 // Mock child_process (safety: never run real tests)
 const mockExecSync = vi.fn()
+const mockExec = vi.fn()
 vi.mock('child_process', () => ({
   execSync: (...args: any[]) => mockExecSync(...args),
+  exec: (...args: any[]) => mockExec(...args),
 }))
 
 // Mock config
@@ -95,6 +97,21 @@ vi.mock('../agent/implement-session-manager.js', () => ({
   getImplementMessages: (...args: any[]) => mockGetImplementMessages(...args),
   clearImplementSession: (...args: any[]) => mockClearImplementSession(...args),
   getImplementStatus: (...args: any[]) => mockGetImplementStatus(...args),
+}))
+
+// Mock verify-session-manager
+const mockAcquireVerifyLock = vi.fn().mockReturnValue(true)
+const mockReleaseVerifyLock = vi.fn()
+const mockIsVerifyActive = vi.fn().mockReturnValue(false)
+const mockAppendVerifyMessage = vi.fn()
+const mockGetVerifyStatus = vi.fn()
+
+vi.mock('../agent/verify-session-manager.js', () => ({
+  acquireVerifyLock: (...args: any[]) => mockAcquireVerifyLock(...args),
+  releaseVerifyLock: (...args: any[]) => mockReleaseVerifyLock(...args),
+  isVerifyActive: (...args: any[]) => mockIsVerifyActive(...args),
+  appendVerifyMessage: (...args: any[]) => mockAppendVerifyMessage(...args),
+  getVerifyStatus: (...args: any[]) => mockGetVerifyStatus(...args),
 }))
 
 // Mock fs functions used by track-plan route
@@ -382,69 +399,31 @@ describe('Issue Routes', () => {
   })
 
   describe('POST /issues/:id/verify', () => {
-    it('marks done when both tests pass', async () => {
+    it('returns 200 with started message (async fire-and-forget)', async () => {
       const issue = makeIssue({ status: 'in-progress' })
       mockGetIssue.mockReturnValue(issue)
-      mockExecSync
-        .mockReturnValueOnce('unit tests passed')  // npm test
-        .mockReturnValueOnce('ui tests passed')    // browser-test.mjs
-      mockUpdateIssue.mockReturnValue({ ...issue, status: 'done' })
+      mockAcquireVerifyLock.mockReturnValue(true)
 
       const app = createApp()
       const res = await app.request('/issues/ISS-001/verify', { method: 'POST' })
       expect(res.status).toBe(200)
 
       const json = await res.json()
-      expect(json.unitTest.success).toBe(true)
-      expect(json.uiTest.success).toBe(true)
-      expect(json.issue.status).toBe('done')
-      expect(mockUpdateIssue).toHaveBeenCalledWith('ISS-001', { status: 'done' })
+      expect(json.message).toContain('Verification started')
+      expect(mockAcquireVerifyLock).toHaveBeenCalledWith('ISS-001')
     })
 
-    it('stays in-progress when unit tests fail', async () => {
+    it('returns 409 when verify is already in progress', async () => {
       const issue = makeIssue({ status: 'in-progress' })
       mockGetIssue.mockReturnValue(issue)
-      mockExecSync.mockImplementation(() => {
-        const err: any = new Error('tests failed')
-        err.stdout = 'FAIL some.test.ts'
-        err.stderr = 'error output'
-        throw err
-      })
+      mockAcquireVerifyLock.mockReturnValue(false)
 
       const app = createApp()
       const res = await app.request('/issues/ISS-001/verify', { method: 'POST' })
-      expect(res.status).toBe(200)
-
-      const json = await res.json()
-      expect(json.unitTest.success).toBe(false)
-      expect(json.uiTest.success).toBe(false)
-      expect(json.uiTest.output).toBe('')  // skipped
-      expect(mockUpdateIssue).not.toHaveBeenCalled()
+      expect(res.status).toBe(409)
     })
 
-    it('stays in-progress when UI tests fail', async () => {
-      const issue = makeIssue({ status: 'in-progress' })
-      mockGetIssue.mockReturnValue(issue)
-      mockExecSync
-        .mockReturnValueOnce('unit tests ok')
-        .mockImplementationOnce(() => {
-          const err: any = new Error('browser test failed')
-          err.stdout = 'page error found'
-          err.stderr = ''
-          throw err
-        })
-
-      const app = createApp()
-      const res = await app.request('/issues/ISS-001/verify', { method: 'POST' })
-      expect(res.status).toBe(200)
-
-      const json = await res.json()
-      expect(json.unitTest.success).toBe(true)
-      expect(json.uiTest.success).toBe(false)
-      expect(mockUpdateIssue).not.toHaveBeenCalled()
-    })
-
-    it('rejects non in-progress issue', async () => {
+    it('rejects non in-progress/done issue', async () => {
       mockGetIssue.mockReturnValue(makeIssue({ status: 'tracked' }))
 
       const app = createApp()
@@ -460,21 +439,14 @@ describe('Issue Routes', () => {
       expect(res.status).toBe(404)
     })
 
-    it('truncates long output to last 3000 chars', async () => {
-      const issue = makeIssue({ status: 'in-progress' })
+    it('allows verify for done issues (re-verify)', async () => {
+      const issue = makeIssue({ status: 'done' })
       mockGetIssue.mockReturnValue(issue)
-      const longOutput = 'x'.repeat(5000)
-      mockExecSync
-        .mockReturnValueOnce(longOutput)
-        .mockReturnValueOnce('ui ok')
-      mockUpdateIssue.mockReturnValue({ ...issue, status: 'done' })
+      mockAcquireVerifyLock.mockReturnValue(true)
 
       const app = createApp()
       const res = await app.request('/issues/ISS-001/verify', { method: 'POST' })
-      const json = await res.json()
-
-      expect(json.unitTest.output.length).toBeLessThanOrEqual(3020) // 3000 + prefix
-      expect(json.unitTest.output).toContain('...(truncated)')
+      expect(res.status).toBe(200)
     })
   })
 
