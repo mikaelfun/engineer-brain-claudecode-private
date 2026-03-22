@@ -17,7 +17,6 @@ import { apiPost, apiDelete } from '../api/client'
 import { useCaseSessions, useCaseOperation, useCaseMessages, useEndAllCaseSessions, useEndCaseSession, useCaseStepProgress } from '../api/hooks'
 import { useCaseSessionStore, type CaseSessionMessage } from '../stores/caseSessionStore'
 import { useCaseAssistantStore, type CaseStepMessage } from '../stores/caseAssistantStore'
-import { useShallow } from 'zustand/react/shallow'
 import { SessionMessageList, groupMessagesByStep } from './session/SessionMessageList'
 import { StepQuestionForm } from './session/StepQuestionForm'
 import { StepFilterTabs } from './session/StepFilterTabs'
@@ -107,20 +106,14 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
   // Store-tracked active session ID (from SSE events → caseSessionStore)
   const storeActiveSessionId = useCaseSessionStore((s) => s.activeSessionId[caseNumber])
 
-  // Background action disabled logic — check caseAssistantStore sessionIds for backward compat
-  const storeSessionIds = useCaseAssistantStore(useShallow((s) => s.getSessionIds(caseNumber)))
-
   /** Background actions can run concurrently — only disabled when the same action is already running */
   const BACKGROUND_ACTIONS: ReadonlySet<AIAction> = new Set(['teams-search'])
   const isDisabledFor = (action: AIAction) => {
     if (BACKGROUND_ACTIONS.has(action)) {
-      // Only block if this exact step type is currently active
-      return storeSessionIds.some(sid => {
-        if (!sid.startsWith(`${action}-`)) return false
-        const key = `${caseNumber}::${sid}`
-        const st = useCaseAssistantStore.getState().sessionStatus[key]
-        return st === 'active' || st === 'waiting-input'
-      })
+      // Background actions only block if same step type is already running
+      // Use caseSessionStore currentStep to check
+      const currentStepName = useCaseSessionStore.getState().currentStep[caseNumber]
+      return isStepActive && currentStepName === action
     }
     return isActionDisabled
   }

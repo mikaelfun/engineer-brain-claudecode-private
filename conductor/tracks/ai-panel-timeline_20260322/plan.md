@@ -33,13 +33,13 @@ Migrate SSE event handlers to write case step messages into `caseSessionStore` (
 
 - [x] Task 2.1: Extend `caseSessionStore` — add `pendingQuestions: Record<string, PendingQuestion>` field (keyed by `caseNumber:sessionId`), `setPendingQuestion()`, `clearPendingQuestion()`, `getSessionPendingQuestion()` actions. This moves pending question state from `caseAssistantStore` to `caseSessionStore`.
 - [x] Task 2.2: Update SSE handler in `useSSE.ts` — for case step events (`case-step-started`, `case-step-progress`, `case-step-question`, `case-step-completed`, `case-step-failed`): write messages to `caseSessionStore.addSessionMessage(caseNumber, sessionId, msg)` with `step` field populated. Keep `caseAssistantStore` writes as parallel (dual-write) for backward compat during migration.
-- [ ] Task 2.3: Update CaseAIPanel to read from `caseSessionStore` per-session messages (using `sessionId` from `useCaseSessions()`) instead of `caseAssistantStore` per-executionId messages. Remove the `stepMessageToSessionMessage` adapter — messages are now natively `CaseSessionMessage`. Remove `selectedStepMessages`, `convertedStepMessages`, `effectiveMessages` fallback chain.
-- [ ] Task 2.4: Update step progress recovery (`/case/:id/step-progress` API) — populate `caseSessionStore` on page refresh instead of `caseAssistantStore.loadMessages()`. Ensure recovered messages have `step` field for groupByStep to work.
-- [ ] Task 2.5: Migrate action disabled logic — `getCaseStatus()` currently reads from `caseAssistantStore.sessionStatus`. Move to derive status from `caseSessionStore` messages (check if latest message is 'completed'/'failed' or if session is active from `useCaseSessions()`). Or keep a thin status field in `caseSessionStore`.
+- [x] Task 2.3: Update CaseAIPanel to read from `caseSessionStore` per-session messages (using `sessionId` from `useCaseSessions()`) instead of `caseAssistantStore` per-executionId messages. Remove the `stepMessageToSessionMessage` adapter — messages are now natively `CaseSessionMessage`. Remove `selectedStepMessages`, `convertedStepMessages`, `effectiveMessages` fallback chain.
+- [x] Task 2.4: Update step progress recovery (`/case/:id/step-progress` API) — populate `caseSessionStore` on page refresh instead of `caseAssistantStore.loadMessages()`. Ensure recovered messages have `step` field for groupByStep to work.
+- [x] Task 2.5: Migrate action disabled logic — `getCaseStatus()` currently reads from `caseAssistantStore.sessionStatus`. Move to derive status from `caseSessionStore` messages (check if latest message is 'completed'/'failed' or if session is active from `useCaseSessions()`). Or keep a thin status field in `caseSessionStore`.
 
 ### Verification
 
-- [ ] Phase 2 verified: SSE messages flow through `caseSessionStore`, CaseAIPanel reads from single store, step recovery works after page refresh. AgentMonitor still works correctly (it already reads from `caseSessionStore`).
+- [x] Phase 2 verified: SSE messages flow through `caseSessionStore`, CaseAIPanel reads from single store, step recovery works after page refresh. AgentMonitor still works correctly (it already reads from `caseSessionStore`).
 
 ## Phase 3: Cleanup + AgentMonitor Enhancement
 
