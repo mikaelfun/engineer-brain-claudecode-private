@@ -53,6 +53,7 @@ export default function CaseDetail() {
     { id: 'timing', label: 'Timing', icon: '⏱️' },
     { id: 'logs', label: 'Logs', icon: '📄', count: logsData?.total },
     { id: 'attachments', label: 'Files', icon: '📎', count: attachmentsData?.total },
+    { id: 'ai', label: 'AI Assistant', icon: '🤖' },
   ]
 
   return (
@@ -199,18 +200,19 @@ export default function CaseDetail() {
             {activeTab === 'timing' && <TimingTab exists={timingData?.exists} timing={timingData?.timing} />}
             {activeTab === 'logs' && <LogsTab logs={logsData?.logs || []} />}
             {activeTab === 'attachments' && <AttachmentsTab files={attachmentsData?.files || []} meta={attachmentsData?.meta} caseNumber={id!} />}
+            {activeTab === 'ai' && <CaseAIPanel mode="full" caseNumber={id!} />}
           </div>
         </div>
 
         {/* Right — AI Assistant sidebar (xl+ only, sticky) */}
         <div className="w-64 flex-shrink-0 hidden xl:block sticky top-4">
-          <CaseAIPanel caseNumber={id!} />
+          <CaseAIPanel mode="compact" caseNumber={id!} onOpenFull={() => setActiveTab('ai')} />
         </div>
       </div>
 
       {/* Tablet/Mobile: AI Panel below content */}
       <div className="xl:hidden">
-        <CaseAIPanel caseNumber={id!} />
+        <CaseAIPanel mode="compact" caseNumber={id!} onOpenFull={() => setActiveTab('ai')} />
       </div>
     </div>
   )

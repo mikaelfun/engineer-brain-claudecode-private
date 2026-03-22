@@ -37,7 +37,7 @@
 | [x] | track-autocollapse_20260321 | Track Progress Auto-Collapse After Completion | 2026-03-21 | 2026-03-21 |
 | [x] | issue-track-detail_20260321 | Issues 页面 Tracked Issue 显示 Track 分析与修复计划 | 2026-03-21 | 2026-03-21 |
 | [x] | verify-results-display_20260321 | Verify Results Persistent Display | 2026-03-21 | 2026-03-21 |
-| [ ] | verify-step2-fix_20260321 | 修复 Verify 第二步（UI Test）报错 | 2026-03-21 | 2026-03-21 |
+| [x] | verify-step2-fix_20260321 | 修复 Verify 第二步（UI Test）报错 | 2026-03-21 | 2026-03-22 |
 | [x] | verify-inline_20260321 | Verify 内联进度展示 | 2026-03-21 | 2026-03-21 |
 | [x] | mark-done-btn_20260321 | Implemented Issue Mark Done Button | 2026-03-21 | 2026-03-21 |
 | [x] | remove-plan-overview_20260321 | 移除 TrackProgressPanel Plan Overview | 2026-03-21 | 2026-03-21 |
@@ -65,3 +65,5 @@
 | [x] | todo-strikethrough_20260321 | Todo 仅通知项标记完成后字体未划掉 | 2026-03-21 | 2026-03-22 |
 | [x] | sap-status-confusion_20260322 | Fix Todo 错误生成 "修改 SAP: Status → Problem Solved" | 2026-03-22 | 2026-03-22 |
 | [x] | todo-execute-verify_20260322 | Todo Execute Verification Mechanism | 2026-03-22 | 2026-03-22 |
+| [x] | ai-assistant-tab_20260322 | Case 详情页全屏 AI Assistant 分页 | 2026-03-22 | 2026-03-22 |
+| [~] | input-required-context_20260322 | INPUT REQUIRED 卡片显示 specification 上下文 | 2026-03-22 | 2026-03-22 |

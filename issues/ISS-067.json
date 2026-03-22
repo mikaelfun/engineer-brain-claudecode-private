@@ -1,0 +1,11 @@
+{
+  "id": "ISS-067",
+  "title": "Case 详情页增加全屏 AI Assistant 分页",
+  "description": "当前 Case 详情页的 AI Assistant 面板太小，不方便交互。需要增加一个跳转按钮，跳转到case里一个完整的AI assistant分页，和inspection, emails并排。",
+  "type": "feature",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "ai-assistant-tab_20260322",
+  "createdAt": "2026-03-22T20:30:00+08:00",
+  "updatedAt": "2026-03-22T23:30:00+08:00"
+}
