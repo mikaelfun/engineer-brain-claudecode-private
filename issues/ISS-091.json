@@ -1,0 +1,11 @@
+{
+  "id": "ISS-091",
+  "title": "SSE 中出现两遍相同的消息流，agent monitor 正确只有一遍",
+  "description": "Dashboard SSE 流式输出中，同一消息流出现了两遍重复内容。而在 agent monitor 中查看是正确的，只有一遍。怀疑是前端 SSE 订阅或后端 SSE 推送存在重复。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "sse-dup-msg-fix_20260322",
+  "createdAt": "2026-03-22T16:00:00+08:00",
+  "updatedAt": "2026-03-22T17:30:00+08:00"
+}

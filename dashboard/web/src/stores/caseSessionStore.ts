@@ -81,6 +81,19 @@ interface CaseSessionStoreState {
 
 const MAX_MESSAGES_PER_CASE = 200
 
+/**
+ * De-duplication check: skip if the last N messages contain the same type+content.
+ * This prevents duplicate messages caused by:
+ * - Backend emitting overlapping SSE events (e.g. case-step-completed + case-session-completed)
+ * - Multiple CaseAIPanel instances hydrating recovery data into the same store
+ * - Race conditions between live SSE and recovery fetch
+ */
+const DEDUP_WINDOW = 5
+function isDuplicateMessage(existing: CaseSessionMessage[], newMsg: CaseSessionMessage): boolean {
+  const tail = existing.slice(-DEDUP_WINDOW)
+  return tail.some(m => m.type === newMsg.type && m.content === newMsg.content)
+}
+
 export const useCaseSessionStore = create<CaseSessionStoreState>()((set, get) => ({
   messages: {},
   sessionMessages: {},
@@ -92,6 +105,7 @@ export const useCaseSessionStore = create<CaseSessionStoreState>()((set, get) =>
   addMessage: (caseNumber, message) =>
     set((state) => {
       const existing = state.messages[caseNumber] || []
+      if (isDuplicateMessage(existing, message)) return state // skip duplicate
       const updated = [...existing, message].slice(-MAX_MESSAGES_PER_CASE)
       return { messages: { ...state.messages, [caseNumber]: updated } }
     }),
@@ -107,6 +121,7 @@ export const useCaseSessionStore = create<CaseSessionStoreState>()((set, get) =>
     set((state) => {
       const key = `${caseNumber}:${sessionId}`
       const existing = state.sessionMessages[key] || []
+      if (isDuplicateMessage(existing, message)) return state // skip duplicate
       const updated = [...existing, message].slice(-MAX_MESSAGES_PER_CASE)
       return { sessionMessages: { ...state.sessionMessages, [key]: updated } }
     }),

@@ -334,7 +334,9 @@ async function processStepMessages(
     }
 
     // Also broadcast raw SSE events for backward compatibility
-    if (message.type !== 'assistant' && message.type !== 'tool_result') {
+    // Exclude 'result' type — it would emit 'case-session-completed' which duplicates
+    // the explicit 'case-step-completed' broadcast after the message loop completes.
+    if (message.type !== 'assistant' && message.type !== 'tool_result' && message.type !== 'result') {
       messageCount++
       const eventType = getSSEEventType(message)
       const formatted = formatMessageForSSE(message)
@@ -746,11 +748,10 @@ stepRoutes.post('/case/:id/step-cancel', (c) => {
     executionId,
   })
 
-  // Invalidate operation query
-  sseManager.broadcast('case-session-completed' as any, {
-    caseNumber,
-    step: stepName,
-  })
+  // Invalidate operation query so buttons are released
+  // Use sessions-changed event instead of case-session-completed to avoid
+  // duplicate terminal messages in the frontend (ISS-091)
+  sseManager.broadcast('sessions-changed' as any, { reason: 'step-cancelled', caseNumber, step: stepName })
 
   return c.json({ ok: true, step: stepName })
 })

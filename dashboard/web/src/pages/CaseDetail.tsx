@@ -206,13 +206,13 @@ export default function CaseDetail() {
 
         {/* Right — AI Assistant sidebar (xl+ only, sticky) */}
         <div className="w-64 flex-shrink-0 hidden xl:block sticky top-4">
-          <CaseAIPanel mode="compact" caseNumber={id!} onOpenFull={() => setActiveTab('ai')} />
+          <CaseAIPanel mode="compact" caseNumber={id!} onOpenFull={() => setActiveTab('ai')} skipRecovery />
         </div>
       </div>
 
       {/* Tablet/Mobile: AI Panel below content */}
       <div className="xl:hidden">
-        <CaseAIPanel mode="compact" caseNumber={id!} onOpenFull={() => setActiveTab('ai')} />
+        <CaseAIPanel mode="compact" caseNumber={id!} onOpenFull={() => setActiveTab('ai')} skipRecovery />
       </div>
     </div>
   )

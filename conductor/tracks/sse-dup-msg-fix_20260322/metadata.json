@@ -1,0 +1,17 @@
+{
+  "id": "sse-dup-msg-fix_20260322",
+  "title": "Fix SSE Duplicate Messages in AI Assistant Panel",
+  "type": "bug",
+  "status": "complete",
+  "created": "2026-03-22T16:00:00+08:00",
+  "updated": "2026-03-22T17:30:00+08:00",
+  "issueId": "ISS-091",
+  "phases": {
+    "total": 3,
+    "completed": 3
+  },
+  "tasks": {
+    "total": 5,
+    "completed": 5
+  }
+}

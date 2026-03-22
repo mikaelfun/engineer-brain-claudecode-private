@@ -86,3 +86,4 @@
 | [x] | fullprocess-sse-fix_20260322 | Fix Full Process SSE Messages Empty Content | 2026-03-22 | 2026-03-22 |
 | [x] | restart-proc-leak_20260322 | WebUI Restart 进程泄漏修复 | 2026-03-22 | 2026-03-22 |
 | [x] | fullprocess-sse-mid_20260322 | Fix Full Process SSE Intermediate Messages Not Shown | 2026-03-22 | 2026-03-22 |
+| [x] | sse-dup-msg-fix_20260322 | Fix SSE Duplicate Messages in AI Assistant Panel | 2026-03-22 | 2026-03-22 |

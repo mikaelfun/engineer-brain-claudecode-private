@@ -24,6 +24,9 @@ interface CaseAIPanelProps {
   caseNumber: string
   mode?: 'compact' | 'full'
   onOpenFull?: () => void
+  /** Skip recovery hydration — used by compact panel instances to prevent
+   *  dual-hydration when both full and compact panels coexist (ISS-091) */
+  skipRecovery?: boolean
 }
 
 type AIAction = 'process' | 'data-refresh' | 'compliance-check' | 'status-judge' | 'teams-search' | 'troubleshoot' | 'draft-email' | 'inspection' | 'generate-kb'
@@ -62,7 +65,7 @@ function getSessionLabel(session: { intent?: string; sessionId: string }): strin
   return session.sessionId.slice(0, 8)
 }
 
-export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: CaseAIPanelProps) {
+export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull, skipRecovery = false }: CaseAIPanelProps) {
   const navigate = useNavigate()
   const [chatInput, setChatInput] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
@@ -146,10 +149,11 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
     }
   }, [storeActiveSessionId])
 
-  const { data: persistedData } = useCaseMessages(caseNumber)
+  const { data: persistedData } = useCaseMessages(skipRecovery ? '' : caseNumber)
   const hasRecoveredRef = useRef(false)
 
   useEffect(() => {
+    if (skipRecovery) return // compact panels skip recovery to prevent dual-hydration (ISS-091)
     if (
       persistedData?.messages?.length &&
       effectiveMessages.length === 0 &&
@@ -167,14 +171,15 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
         })
       }
     }
-  }, [persistedData, effectiveMessages.length, caseNumber])
+  }, [persistedData, effectiveMessages.length, caseNumber, skipRecovery])
 
   // Step progress recovery — hydrate caseSessionStore on page refresh
   const hasStepRecoveredRef = useRef(false)
-  const needsStepRecovery = timelineMessages.length === 0 && !hasStepRecoveredRef.current
-  const { data: stepProgressData } = useCaseStepProgress(caseNumber, needsStepRecovery)
+  const needsStepRecovery = !skipRecovery && timelineMessages.length === 0 && !hasStepRecoveredRef.current
+  const { data: stepProgressData } = useCaseStepProgress(skipRecovery ? '' : caseNumber, needsStepRecovery)
 
   useEffect(() => {
+    if (skipRecovery) return // compact panels skip recovery to prevent dual-hydration (ISS-091)
     if (stepProgressData && !hasStepRecoveredRef.current) {
       hasStepRecoveredRef.current = true
       const store = useCaseSessionStore.getState()
