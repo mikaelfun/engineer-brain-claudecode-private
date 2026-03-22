@@ -359,8 +359,15 @@ function TrackCreationSessionDetail({ session }: { session: UnifiedSession }) {
 /** Case session detail with live SSE messages, chat input, and stop button */
 function CaseSessionDetail({ session }: { session: UnifiedSession }) {
   const caseNumber = session.context // case sessions use caseNumber as context
-  const storeMessages = useCaseSessionStore(s => s.messages[caseNumber] || EMPTY_MESSAGES)
+  const sessionId = session.id
+  // Use per-session messages when sessionId is available, fallback to case-level aggregate
+  const sessionKey = sessionId ? `${caseNumber}:${sessionId}` : ''
+  const perSessionMessages = useCaseSessionStore(s => sessionKey ? (s.sessionMessages[sessionKey] || EMPTY_MESSAGES) : EMPTY_MESSAGES)
+  const caseLevelMessages = useCaseSessionStore(s => s.messages[caseNumber] || EMPTY_MESSAGES)
+  // Prefer per-session; fallback to case-level if per-session is empty
+  const storeMessages = perSessionMessages.length > 0 ? perSessionMessages : caseLevelMessages
   const addMessage = useCaseSessionStore(s => s.addMessage)
+  const addSessionMessage = useCaseSessionStore(s => s.addSessionMessage)
   const containerRef = useRef<HTMLDivElement>(null)
   const [chatInput, setChatInput] = useState('')
   const [isSending, setIsSending] = useState(false)
@@ -374,9 +381,13 @@ function CaseSessionDetail({ session }: { session: UnifiedSession }) {
       hasRecoveredRef.current = true
       for (const msg of recoveredData.messages) {
         addMessage(caseNumber, msg as CaseSessionMessage)
+        // Also populate per-session bucket so future reads use it
+        if (sessionId) {
+          addSessionMessage(caseNumber, sessionId, msg as CaseSessionMessage)
+        }
       }
     }
-  }, [recoveredData, storeMessages.length, caseNumber, addMessage])
+  }, [recoveredData, storeMessages.length, caseNumber, sessionId, addMessage, addSessionMessage])
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
