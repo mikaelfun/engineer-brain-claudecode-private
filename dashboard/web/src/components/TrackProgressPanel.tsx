@@ -2,10 +2,10 @@
  * TrackProgressPanel — Real-time progress display for track creation (design system v2)
  *
  * Shows live agent activity. CSS variables for dark/light theme support.
- * Includes interactive QuestionForm for agent AskUserQuestion calls.
+ * Inline QuestionForm with prominent styling for agent AskUserQuestion calls (ISS-049).
  */
 import { useState, useEffect, useRef, useMemo, type FormEvent } from 'react'
-import { Loader2, Wrench, Brain, CheckCircle2, AlertCircle, Rocket, ChevronDown, ChevronRight, MessageCircleQuestion, Send, History } from 'lucide-react'
+import { Loader2, Wrench, Brain, CheckCircle2, AlertCircle, Rocket, ChevronDown, ChevronRight, MessageCircleQuestion, Send, History, XCircle } from 'lucide-react'
 import { useIssueTrackStore, EMPTY_TRACK_MESSAGES, type IssueTrackMessage, type IssueTrackQuestion } from '../stores/issueTrackStore'
 import { useTrackProgress, useAnswerTrackQuestion } from '../api/hooks'
 
@@ -15,9 +15,11 @@ interface TrackProgressPanelProps {
   isTracking: boolean
   /** Called when user clicks retry after error */
   onRetry?: () => void
+  /** Called when user clicks cancel during active creation */
+  onCancel?: () => void
 }
 
-export default function TrackProgressPanel({ issueId, isTracking, onRetry }: TrackProgressPanelProps) {
+export default function TrackProgressPanel({ issueId, isTracking, onRetry, onCancel }: TrackProgressPanelProps) {
   const messages = useIssueTrackStore((s) => s.messages[issueId] ?? EMPTY_TRACK_MESSAGES)
   const isActive = useIssueTrackStore((s) => s.activeTracking[issueId] ?? false)
   const pendingQuestion = useIssueTrackStore((s) => s.pendingQuestions[issueId])
@@ -123,6 +125,20 @@ export default function TrackProgressPanel({ issueId, isTracking, onRetry }: Tra
             {collapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
           </button>
         )}
+
+        {/* ISS-050: Cancel button — show during active creation (not finished, not waiting for question) */}
+        {onCancel && !isFinished && !errorMsg && (isActive || (isTracking && !completedMsg)) && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onCancel() }}
+            className="ml-auto flex items-center gap-1 px-2 py-0.5 rounded text-xs transition-colors hover:opacity-80"
+            style={{ color: 'var(--accent-red)', background: 'var(--accent-red-dim)' }}
+            title="Cancel track creation"
+          >
+            <XCircle className="w-3 h-3" />
+            Cancel
+          </button>
+        )}
       </div>
 
       {/* Message stream — hidden when collapsed */}
@@ -139,11 +155,12 @@ export default function TrackProgressPanel({ issueId, isTracking, onRetry }: Tra
             )}
           </div>
 
-          {/* Question form (shown when agent asks a question) */}
+          {/* Question form — prominent inline card (ISS-049: bigger font, clear separation) */}
           {hasPendingQuestion && (
             <QuestionForm
               issueId={issueId}
               questions={pendingQuestion.questions}
+              messages={messages}
               onAnswered={() => clearPendingQuestion(issueId)}
             />
           )}
@@ -151,7 +168,6 @@ export default function TrackProgressPanel({ issueId, isTracking, onRetry }: Tra
           {/* Error + retry */}
           {errorMsg && onRetry && (
             <div className="mt-2 flex items-center gap-2">
-              <span className="text-xs" style={{ color: 'var(--accent-red)' }}>{errorMsg.error}</span>
               <button
                 onClick={onRetry}
                 className="px-2 py-1 text-xs rounded transition-colors"
@@ -167,25 +183,31 @@ export default function TrackProgressPanel({ issueId, isTracking, onRetry }: Tra
   )
 }
 
-/** Interactive question form for agent AskUserQuestion */
+/** Inline question form — prominent styling for agent AskUserQuestion (ISS-049) */
 function QuestionForm({
   issueId,
   questions,
+  messages,
   onAnswered,
 }: {
   issueId: string
   questions: IssueTrackQuestion[]
+  messages: IssueTrackMessage[]
   onAnswered: () => void
 }) {
   const [answer, setAnswer] = useState('')
   const [selectedOptions, setSelectedOptions] = useState<Record<number, string>>({})
   const answerMutation = useAnswerTrackQuestion()
   const inputRef = useRef<HTMLInputElement>(null)
+  const contextRef = useRef<HTMLDivElement>(null)
 
   // Focus input on mount
   useEffect(() => {
     inputRef.current?.focus()
   }, [])
+
+  // Extract the last thinking content before the question as context (plan/spec content)
+  const contextContent = useMemo(() => extractContextContent(messages), [messages])
 
   const handleOptionClick = (questionIdx: number, label: string) => {
     setSelectedOptions(prev => ({ ...prev, [questionIdx]: label }))
@@ -209,12 +231,43 @@ function QuestionForm({
 
   return (
     <div
-      className="mt-2 rounded-lg p-3 space-y-3"
-      style={{ border: '1px solid var(--accent-amber)', background: 'var(--accent-amber-dim)' }}
+      className="mt-3 rounded-lg p-4 space-y-3"
+      style={{
+        border: '2px solid var(--accent-amber)',
+        background: 'var(--accent-amber-dim)',
+      }}
     >
+      {/* Header badge */}
+      <div className="flex items-center gap-1.5 mb-1">
+        <MessageCircleQuestion className="w-4 h-4" style={{ color: 'var(--accent-amber)' }} />
+        <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--accent-amber)' }}>
+          Input Required
+        </span>
+      </div>
+
+      {/* Context content — plan/spec text from thinking messages */}
+      {contextContent && (
+        <div
+          ref={contextRef}
+          className="rounded-md px-3 py-2.5 text-xs leading-relaxed whitespace-pre-wrap max-h-40 overflow-y-auto"
+          style={{
+            background: 'var(--bg-surface)',
+            borderLeft: '3px solid var(--accent-amber)',
+            color: 'var(--text-secondary)',
+          }}
+        >
+          {contextContent}
+        </div>
+      )}
+
       {questions.map((q, i) => (
-        <div key={i} className="space-y-1.5">
-          <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{q.question}</p>
+        <div key={i} className="space-y-2">
+          {/* Question — larger, bolder text */}
+          <p className="text-sm font-semibold leading-relaxed" style={{ color: 'var(--text-primary)' }}>
+            {q.question}
+          </p>
+
+          {/* Option buttons — slightly larger */}
           {q.options && q.options.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {q.options.map((opt, j) => (
@@ -222,10 +275,10 @@ function QuestionForm({
                   key={j}
                   type="button"
                   onClick={() => handleOptionClick(i, opt.label)}
-                  className="px-2.5 py-1 text-xs rounded-md transition-colors"
+                  className="px-3 py-1.5 text-xs rounded-md transition-colors font-medium"
                   style={{
                     background: selectedOptions[i] === opt.label ? 'var(--accent-amber)' : 'var(--bg-surface)',
-                    border: `1px solid ${selectedOptions[i] === opt.label ? 'var(--accent-amber)' : 'var(--border-default)'}`,
+                    border: `1.5px solid ${selectedOptions[i] === opt.label ? 'var(--accent-amber)' : 'var(--border-default)'}`,
                     color: selectedOptions[i] === opt.label ? 'var(--text-inverse)' : 'var(--text-primary)',
                   }}
                   title={opt.description}
@@ -245,10 +298,10 @@ function QuestionForm({
           value={answer}
           onChange={(e) => setAnswer(e.target.value)}
           placeholder="Type your answer or select an option above..."
-          className="flex-1 px-2.5 py-1.5 text-xs rounded-md outline-none transition-all"
+          className="flex-1 px-3 py-2 text-xs rounded-md outline-none transition-all"
           style={{
             background: 'var(--bg-surface)',
-            border: '1px solid var(--border-default)',
+            border: '1.5px solid var(--border-default)',
             color: 'var(--text-primary)',
           }}
           disabled={answerMutation.isPending}
@@ -256,7 +309,7 @@ function QuestionForm({
         <button
           type="submit"
           disabled={!answer.trim() || answerMutation.isPending}
-          className="px-3 py-1.5 text-xs rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
+          className="px-3 py-2 text-xs rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1 font-medium"
           style={{ background: 'var(--accent-amber)', color: 'var(--text-inverse)' }}
         >
           {answerMutation.isPending ? (
@@ -275,6 +328,24 @@ function QuestionForm({
       )}
     </div>
   )
+}
+
+/** Extract thinking content before question as context for INPUT REQUIRED card (ISS-072) */
+export function extractContextContent(messages: IssueTrackMessage[]): string {
+  // Walk backwards from the end, collect consecutive thinking messages before the question
+  // Skip 'question' and 'tool-call' messages (AskUserQuestion tool-call sits between thinking and question)
+  const thinkingTexts: string[] = []
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i]
+    if (m.kind === 'thinking' && m.content) {
+      thinkingTexts.unshift(m.content)
+    } else if (m.kind === 'question' || m.kind === 'tool-call') {
+      continue
+    } else {
+      break
+    }
+  }
+  return thinkingTexts.join('\n\n').trim()
 }
 
 /** Display message after collapsing consecutive tool-call/thinking messages */

@@ -1,0 +1,11 @@
+{
+  "id": "ISS-072",
+  "title": "Create Track 的 INPUT REQUIRED 卡片应显示 specification 内容，而非仅在 SSE 流中",
+  "description": "在 WebUI Issues 页面点击 Create Track 时，AskUserQuestion 的 INPUT REQUIRED 卡片只显示 'Is this specification correct?' 问题本身，而 specification 内容（Track ID、Type、Summary 等）被输出在上方的 SSE 流式文本中，用户需要向上滚动才能看到要确认的内容。应该将 specification 摘要/预览放在 INPUT REQUIRED 卡片内部，让用户无需翻滚就能看到并做决策。",
+  "type": "bug",
+  "priority": "P2",
+  "status": "done",
+  "trackId": "input-required-context_20260322",
+  "createdAt": "2026-03-22T10:00:00+08:00",
+  "updatedAt": "2026-03-22T10:10:00+08:00"
+}

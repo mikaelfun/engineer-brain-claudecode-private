@@ -1,0 +1,16 @@
+{
+  "id": "input-required-context_20260322",
+  "title": "INPUT REQUIRED 卡片显示 specification 上下文",
+  "type": "bug",
+  "status": "complete",
+  "created": "2026-03-22T10:05:00+08:00",
+  "updated": "2026-03-22T10:10:00+08:00",
+  "phases": {
+    "total": 1,
+    "completed": 1
+  },
+  "tasks": {
+    "total": 2,
+    "completed": 2
+  }
+}
