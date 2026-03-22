@@ -262,7 +262,7 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
                       setEmailTypeMenuOpen(false)
                       handleAction('draft-email', et.value)
                     }}
-                    className="w-full text-left px-3 py-1.5 text-xs transition-colors"
+                    className="w-full text-left px-3 py-2 text-sm transition-colors"
                     style={{ color: 'var(--text-secondary)' }}
                     onMouseEnter={e => {
                       (e.currentTarget as HTMLElement).style.background = 'var(--accent-blue-dim)'
@@ -302,7 +302,7 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
                   ;(e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)'
                 }}
               >
-                <action.icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: action.color }} />
+                <action.icon className="w-4 h-4 flex-shrink-0" style={{ color: action.color }} />
                 <span className="truncate">{action.label}</span>
                 <ChevronRight className="w-3 h-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" style={{ color: 'var(--text-tertiary)' }} />
               </button>
@@ -349,8 +349,8 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
         background: 'var(--bg-surface)',
         border: '1px solid var(--border-default)',
         boxShadow: 'var(--shadow-card)',
-        minHeight: '500px',
-        maxHeight: 'calc(100vh - 200px)',
+        minHeight: '600px',
+        maxHeight: 'calc(100vh - 160px)',
       }}
     >
       {/* Header */}
@@ -359,12 +359,12 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
         style={{ borderBottom: '1px solid var(--border-subtle)' }}
       >
         <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4" style={{ color: 'var(--accent-blue)' }} />
-          <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>AI Assistant</span>
+          <Sparkles className="w-5 h-5" style={{ color: 'var(--accent-blue)' }} />
+          <span className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>AI Assistant</span>
           {hasActiveOperation && (
             <div className="flex items-center gap-1.5 ml-2 px-2 py-0.5 rounded-full" style={{ background: 'var(--accent-amber-dim)' }}>
-              <Loader2 className="w-3 h-3 animate-spin" style={{ color: 'var(--accent-amber)' }} />
-              <span className="text-[11px] font-medium" style={{ color: 'var(--accent-amber)' }}>{activeOperation!.operationType}</span>
+              <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: 'var(--accent-amber)' }} />
+              <span className="text-xs font-medium" style={{ color: 'var(--accent-amber)' }}>{activeOperation!.operationType}</span>
             </div>
           )}
           {isLiveRunning && !hasActiveOperation && (
@@ -373,13 +373,13 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: 'var(--accent-blue)' }} />
                 <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: 'var(--accent-blue)' }} />
               </span>
-              <span className="text-[11px] font-medium" style={{ color: 'var(--accent-blue)' }}>Session Active</span>
+              <span className="text-xs font-medium" style={{ color: 'var(--accent-blue)' }}>Session Active</span>
             </div>
           )}
         </div>
         <div className="flex items-center gap-2">
           {allSessions.length > 0 && (
-            <span className="text-[11px] font-mono" style={{ color: 'var(--text-tertiary)' }}>
+            <span className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>
               {allSessions.length} session{allSessions.length > 1 ? 's' : ''}
             </span>
           )}
@@ -421,10 +421,10 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
           <button
             onClick={() => handleAction('process')}
             disabled={isActionDisabled}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ background: 'var(--accent-blue)', color: 'var(--text-inverse)' }}
           >
-            {isProcessing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
+            {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
             Full Process
           </button>
 
@@ -434,12 +434,12 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
               <button
                 onClick={() => handleAction('draft-email', 'auto')}
                 disabled={isActionDisabled}
-                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ color: 'var(--text-secondary)' }}
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
               >
-                <Mail className="w-3.5 h-3.5" style={{ color: 'var(--accent-green)' }} />
+                <Mail className="w-4 h-4" style={{ color: 'var(--accent-green)' }} />
                 Draft Email
               </button>
               <button
@@ -469,7 +469,7 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
                       setEmailTypeMenuOpen(false)
                       handleAction('draft-email', et.value)
                     }}
-                    className="w-full text-left px-3 py-1.5 text-xs transition-colors"
+                    className="w-full text-left px-3 py-2 text-sm transition-colors"
                     style={{ color: 'var(--text-secondary)' }}
                     onMouseEnter={e => {
                       (e.currentTarget as HTMLElement).style.background = 'var(--accent-blue-dim)'
@@ -494,7 +494,7 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
               key={action.id}
               onClick={() => handleAction(action.id)}
               disabled={isActionDisabled}
-              className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               style={{ color: 'var(--text-secondary)' }}
               onMouseEnter={e => {
                 (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'
@@ -505,7 +505,7 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
                 ;(e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)'
               }}
             >
-              <action.icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: action.color }} />
+              <action.icon className="w-4 h-4 flex-shrink-0" style={{ color: action.color }} />
               {action.label}
             </button>
           ))}
@@ -514,9 +514,9 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
 
       {/* Error banner */}
       {error && (
-        <div className="mx-5 mt-3 flex items-start gap-2 px-3 py-2 rounded-lg" style={{ background: 'var(--accent-red-dim)' }}>
-          <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-px" style={{ color: 'var(--accent-red)' }} />
-          <span className="text-xs flex-1" style={{ color: 'var(--accent-red)' }}>{error}</span>
+        <div className="mx-5 mt-3 flex items-start gap-2 px-3 py-2.5 rounded-lg" style={{ background: 'var(--accent-red-dim)' }}>
+          <AlertCircle className="w-4 h-4 flex-shrink-0 mt-px" style={{ color: 'var(--accent-red)' }} />
+          <span className="text-sm flex-1" style={{ color: 'var(--accent-red)' }}>{error}</span>
           <button onClick={() => setError(null)} className="flex-shrink-0">
             <X className="w-3 h-3" style={{ color: 'var(--accent-red)' }} />
           </button>
@@ -527,13 +527,13 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
       <div
         ref={messagesContainerRef}
         className="flex-1 overflow-y-auto px-5 py-3"
-        style={{ minHeight: '200px' }}
+        style={{ minHeight: '300px' }}
       >
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center py-12" style={{ color: 'var(--text-tertiary)' }}>
-            <Brain className="w-10 h-10 mb-3 opacity-30" />
-            <p className="text-sm">No messages yet</p>
-            <p className="text-xs mt-1">Run an action above to start interacting with the AI assistant</p>
+            <Brain className="w-12 h-12 mb-3 opacity-30" />
+            <p className="text-base">No messages yet</p>
+            <p className="text-sm mt-1">Run an action above to start interacting with the AI assistant</p>
           </div>
         ) : (
           <SessionMessageList messages={messages} containerRef={messagesContainerRef} />
@@ -541,7 +541,7 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
       </div>
 
       {/* Chat Input — fixed at bottom */}
-      <div className="px-5 py-3 flex-shrink-0" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+      <div className="px-5 py-4 flex-shrink-0" style={{ borderTop: '1px solid var(--border-subtle)' }}>
         <div className="flex gap-2">
           <input
             type="text"
@@ -550,7 +550,7 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
             onKeyDown={(e) => e.key === 'Enter' && handleChat()}
             placeholder={activeSessionId ? 'Message AI...' : 'Start an action above first...'}
             disabled={!activeSessionId}
-            className="flex-1 px-3 py-2 text-sm rounded-lg outline-none transition-all disabled:opacity-50"
+            className="flex-1 px-4 py-2.5 text-sm rounded-lg outline-none transition-all disabled:opacity-50"
             style={{
               background: 'var(--bg-inset)',
               border: '1px solid var(--border-default)',
@@ -560,31 +560,31 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
           <button
             onClick={handleChat}
             disabled={!chatInput.trim() || !activeSessionId}
-            className="px-3 py-2 rounded-lg transition-colors disabled:opacity-40"
+            className="px-3.5 py-2.5 rounded-lg transition-colors disabled:opacity-40"
             style={{ background: 'var(--accent-blue)', color: 'var(--text-inverse)' }}
           >
-            <Send className="w-4 h-4" />
+            <Send className="w-4.5 h-4.5" />
           </button>
         </div>
         {activeSessionId && (
           <div className="flex items-center gap-1.5 mt-2">
             <button
               onClick={handleEndSession}
-              className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium rounded transition-colors"
+              className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded transition-colors"
               style={{ color: 'var(--accent-green)', background: 'var(--accent-green-dim)' }}
             >
-              <CheckCircle2 className="w-3 h-3" /> Done
+              <CheckCircle2 className="w-3.5 h-3.5" /> Done
             </button>
             <button
               onClick={() => handleAction('process')}
-              className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium rounded transition-colors"
+              className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded transition-colors"
               style={{ color: 'var(--text-secondary)', background: 'var(--bg-inset)' }}
             >
-              <Loader2 className="w-3 h-3" /> Retry
+              <Loader2 className="w-3.5 h-3.5" /> Retry
             </button>
             <button
               onClick={() => clearMessages(caseNumber)}
-              className="flex items-center gap-1 px-2 py-1 text-[11px] rounded transition-colors ml-auto"
+              className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded transition-colors ml-auto"
               style={{ color: 'var(--text-tertiary)' }}
             >
               Clear Messages
@@ -596,22 +596,22 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
       {/* Session History — collapsible */}
       {allSessions.length > 0 && (
         <div style={{ borderTop: '1px solid var(--border-subtle)' }} className="flex-shrink-0">
-          <details className="px-5 py-2">
-            <summary className="text-[11px] cursor-pointer select-none flex items-center justify-between" style={{ color: 'var(--text-tertiary)' }}>
-              <span className="flex items-center gap-1">
-                <Brain className="w-3 h-3" />
+          <details className="px-5 py-2.5">
+            <summary className="text-xs cursor-pointer select-none flex items-center justify-between" style={{ color: 'var(--text-tertiary)' }}>
+              <span className="flex items-center gap-1.5">
+                <Brain className="w-3.5 h-3.5" />
                 {allSessions.length} session{allSessions.length > 1 ? 's' : ''}
               </span>
             </summary>
-            <div className="mt-1.5 space-y-1">
+            <div className="mt-2 space-y-1.5">
               {allSessions.map((s: any) => (
                 <div
                   key={s.sessionId}
-                  className="flex items-center justify-between text-xs py-1 px-1.5 rounded"
+                  className="flex items-center justify-between text-xs py-1.5 px-2 rounded"
                   style={{ background: 'var(--bg-inset)' }}
                 >
                   <SessionBadge status={s.status} sessionId={s.sessionId} compact />
-                  <div className="flex items-center gap-1.5 text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
+                  <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-tertiary)' }}>
                     {s.intent && <span className="truncate max-w-[200px]">{s.intent}</span>}
                     <span className="tabular-nums">{new Date(s.lastActivityAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                   </div>
