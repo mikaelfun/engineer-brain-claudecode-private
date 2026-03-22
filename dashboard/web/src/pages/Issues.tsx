@@ -717,6 +717,19 @@ function IssueRow({
   const isExpanded = expandedId === issue.id
   const isEditing = editingId === issue.id
 
+  // Auto-scroll to this issue row when Implement is started (ISS-073)
+  const rowRef = useRef<HTMLDivElement>(null)
+  const prevImplementActiveRef = useRef(false)
+  useEffect(() => {
+    if (isImplementActive && !prevImplementActiveRef.current) {
+      // Delay to allow ImplementPanel to mount first
+      setTimeout(() => {
+        rowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 150)
+    }
+    prevImplementActiveRef.current = !!isImplementActive
+  }, [isImplementActive])
+
   // Lazy-load track spec and plan when expanded and issue has a trackId
   // For done issues: also load plan when collapsed to show task progress in row header
   const isDone = issue.status === 'done'
@@ -730,6 +743,7 @@ function IssueRow({
 
   return (
     <div
+      ref={rowRef}
       className="rounded-lg transition-colors"
       style={{
         background: 'var(--bg-surface)',

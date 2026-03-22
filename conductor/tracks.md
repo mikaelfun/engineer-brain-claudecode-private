@@ -67,4 +67,4 @@
 | [x] | todo-execute-verify_20260322 | Todo Execute Verification Mechanism | 2026-03-22 | 2026-03-22 |
 | [x] | ai-assistant-tab_20260322 | Case 详情页全屏 AI Assistant 分页 | 2026-03-22 | 2026-03-22 |
 | [x] | input-required-context_20260322 | INPUT REQUIRED 卡片显示 specification 上下文 | 2026-03-22 | 2026-03-22 |
-| [~] | implement-auto-scroll_20260322 | WebUI Issue Implement Auto-Scroll | 2026-03-22 | 2026-03-22 |
+| [x] | implement-auto-scroll_20260322 | WebUI Issue Implement Auto-Scroll | 2026-03-22 | 2026-03-22 |
