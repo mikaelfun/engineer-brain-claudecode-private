@@ -225,7 +225,7 @@ export function useSSE() {
       }
     })
 
-    // Case step completed event — finalize caseAssistantStore status
+    // Case step completed event — finalize caseAssistantStore status + invalidate operation
     es.addEventListener('case-step-completed', (e) => {
       const data = safeParse(e.data)
       if (!data) return
@@ -239,10 +239,15 @@ export function useSSE() {
           step: d.step,
           timestamp: new Date().toISOString(),
         })
+        // Invalidate operation query so buttons are released
+        queryClient.invalidateQueries({ queryKey: ['case-operation', caseNumber] })
+        queryClient.invalidateQueries({ queryKey: ['case-sessions', caseNumber] })
+        queryClient.invalidateQueries({ queryKey: ['cases', caseNumber] })
+        queryClient.invalidateQueries({ queryKey: ['cases', caseNumber, 'todo'] })
       }
     })
 
-    // Case step failed event — set failed status in caseAssistantStore
+    // Case step failed event — set failed status in caseAssistantStore + invalidate operation
     es.addEventListener('case-step-failed', (e) => {
       const data = safeParse(e.data)
       if (!data) return
@@ -257,6 +262,9 @@ export function useSSE() {
           step: d.step,
           timestamp: new Date().toISOString(),
         })
+        // Invalidate operation query so buttons are released
+        queryClient.invalidateQueries({ queryKey: ['case-operation', caseNumber] })
+        queryClient.invalidateQueries({ queryKey: ['case-sessions', caseNumber] })
       }
     })
 
