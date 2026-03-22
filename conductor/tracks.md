@@ -78,3 +78,4 @@
 | [x] | ai-step-badge-fix_20260323 | AI Assistant Header Step 状态标签多 session 修复 | 2026-03-23 | 2026-03-23 |
 | [x] | step-session-visible_20260322 | Fix step session not visible in Agent Monitor | 2026-03-22 | 2026-03-22 |
 | [x] | chat-queue_20260322 | AI Assistant Chat Queue During Step Execution | 2026-03-22 | 2026-03-22 |
+| [x] | free-chat_20260323 | AI Assistant Free Chat — 无 session 时允许用户直接聊天 | 2026-03-23 | 2026-03-23 |

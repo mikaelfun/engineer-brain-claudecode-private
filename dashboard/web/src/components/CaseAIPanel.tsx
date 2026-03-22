@@ -525,8 +525,9 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
 
   const handleChat = async () => {
     // Send chat to the selected session (tab-aware)
-    const chatSessionId = effectiveSessionId || activeSessionId || activeSessions[0]?.sessionId
-    if (!chatInput.trim() || !chatSessionId) return
+    // If no session exists, send without sessionId — backend will auto-create one
+    const chatSessionId = effectiveSessionId || activeSessionId || activeSessions[0]?.sessionId || null
+    if (!chatInput.trim()) return
     const message = chatInput.trim()
     setChatInput('')
 
@@ -556,7 +557,7 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
 
     try {
       await apiPost(`/case/${caseNumber}/chat`, {
-        sessionId: chatSessionId,
+        ...(chatSessionId ? { sessionId: chatSessionId } : {}),
         message,
       })
     } catch (err: any) {
@@ -1210,10 +1211,8 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
             onKeyDown={(e) => e.key === 'Enter' && handleChat()}
             placeholder={
               isStepActive ? 'Message AI (queued while busy)...'
-              : (effectiveSessionId || activeSessions.length > 0) ? 'Message AI...'
-              : 'Start an action above first...'
+              : 'Message AI...'
             }
-            disabled={!effectiveSessionId && activeSessions.length === 0}
             className="flex-1 px-4 py-2.5 text-sm rounded-lg outline-none transition-all disabled:opacity-50"
             style={{
               background: 'var(--bg-inset)',
@@ -1223,7 +1222,7 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
           />
           <button
             onClick={handleChat}
-            disabled={!chatInput.trim() || (!effectiveSessionId && activeSessions.length === 0)}
+            disabled={!chatInput.trim()}
             className="px-3.5 py-2.5 rounded-lg transition-colors disabled:opacity-40"
             style={{ background: 'var(--accent-blue)', color: 'var(--text-inverse)' }}
           >

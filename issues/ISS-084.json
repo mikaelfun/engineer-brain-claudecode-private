@@ -1,0 +1,11 @@
+{
+  "id": "ISS-084",
+  "title": "AI Assistant Free Chat — 无 session 时允许用户直接聊天",
+  "description": "当前 AI Assistant 面板在没有 active session 时禁用了用户输入框，用户必须先执行 step 或 Full Process 才能发送消息。需要支持 free chat：无 session 时也允许输入，首条消息自动创建新 session。后端 POST /case/:id/chat 需在无 session 时自动创建新 session 而非返回 404。",
+  "type": "feature",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "free-chat_20260323",
+  "createdAt": "2026-03-23T02:00:00+08:00",
+  "updatedAt": "2026-03-23T02:05:00+08:00"
+}

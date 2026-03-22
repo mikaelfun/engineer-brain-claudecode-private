@@ -202,8 +202,61 @@ caseRoutes.post('/case/:id/chat', async (c) => {
 
   // Use provided sessionId, or find the active session for this case
   const sessionId = body.sessionId || getActiveSessionForCase(caseNumber)
+
+  // If no session exists, auto-create one via processCaseSession (free chat)
   if (!sessionId) {
-    return c.json({ error: 'No active session for this case. Start with POST /case/:id/process first.' }, 404)
+    try {
+      const createAsync = async () => {
+        let newSessionId: string | undefined
+        try {
+          for await (const message of processCaseSession(caseNumber, body.message)) {
+            // Capture the SDK session ID from the first message
+            if (!newSessionId && (message as any).sdkSessionId) {
+              newSessionId = (message as any).sdkSessionId
+            }
+            const eventType = getSSEEventType(message)
+            const formatted = formatMessageForSSE(message)
+            sseManager.broadcast(eventType as any, {
+              caseNumber,
+              sessionId: newSessionId || 'pending',
+              ...formatted,
+            })
+            appendSessionMessage(caseNumber, {
+              type: getPersistedMessageType(message),
+              content: formatted.content as string || '',
+              toolName: formatted.toolName as string,
+              timestamp: formatted.timestamp as string || new Date().toISOString(),
+            })
+          }
+          sseManager.broadcast('case-session-completed', {
+            caseNumber,
+            sessionId: newSessionId || 'unknown',
+          })
+          appendSessionMessage(caseNumber, {
+            type: 'completed',
+            content: 'Chat response completed',
+            timestamp: new Date().toISOString(),
+          })
+        } catch (err) {
+          const errorMsg = err instanceof Error ? err.message : String(err)
+          sseManager.broadcast('case-session-failed', {
+            caseNumber,
+            sessionId: newSessionId || 'unknown',
+            error: errorMsg,
+          })
+          appendSessionMessage(caseNumber, {
+            type: 'failed',
+            content: errorMsg,
+            timestamp: new Date().toISOString(),
+          })
+        }
+      }
+      createAsync()
+      return c.json({ status: 'started', sessionId: 'creating' }, 202)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      return c.json({ error: msg }, 500)
+    }
   }
 
   try {
