@@ -9,7 +9,7 @@ import { useState, useRef, useEffect } from 'react'
 import {
   Sparkles, Search, Mail, Play, X, Send,
   CheckCircle2, Loader2, Brain, AlertCircle, ChevronDown,
-  RefreshCw, MessageSquare, ShieldCheck, GitBranch, FileText, BookOpen,
+  RefreshCw, MessageSquare, GitBranch, FileText, BookOpen,
   Zap, ChevronRight, Maximize2
 } from 'lucide-react'
 import { apiPost, apiDelete } from '../api/client'
@@ -175,13 +175,12 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
   }
 
   const quickActions: Array<{ id: AIAction; icon: typeof RefreshCw; label: string; color: string }> = [
-    { id: 'data-refresh', icon: RefreshCw, label: 'Refresh Data', color: 'var(--accent-blue)' },
-    { id: 'teams-search', icon: MessageSquare, label: 'Teams Search', color: 'var(--accent-purple)' },
-    { id: 'compliance-check', icon: ShieldCheck, label: 'Compliance', color: 'var(--accent-green)' },
-    { id: 'status-judge', icon: GitBranch, label: 'Status Judge', color: 'var(--accent-amber)' },
+    { id: 'data-refresh', icon: RefreshCw, label: 'Refresh', color: 'var(--accent-blue)' },
+    { id: 'teams-search', icon: MessageSquare, label: 'Teams', color: 'var(--accent-purple)' },
+    { id: 'status-judge', icon: GitBranch, label: 'Status', color: 'var(--accent-amber)' },
     { id: 'troubleshoot', icon: Search, label: 'Troubleshoot', color: 'var(--accent-red)' },
     { id: 'inspection', icon: FileText, label: 'Inspection', color: 'var(--accent-blue)' },
-    { id: 'generate-kb', icon: BookOpen, label: 'Generate KB', color: 'var(--accent-purple)' },
+    { id: 'generate-kb', icon: BookOpen, label: 'KB', color: 'var(--accent-purple)' },
   ]
 
   // ========== COMPACT MODE ==========
@@ -414,33 +413,33 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
         </div>
       </div>
 
-      {/* Action Buttons — horizontal grid */}
-      <div className="px-5 py-3 flex-shrink-0" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-        <div className="flex flex-wrap gap-2">
+      {/* Action Buttons — single row, compact */}
+      <div className="px-5 py-2 flex-shrink-0" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+        <div className="flex items-center gap-1.5 flex-wrap">
           {/* Primary: Full Process */}
           <button
             onClick={() => handleAction('process')}
             disabled={isActionDisabled}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ background: 'var(--accent-blue)', color: 'var(--text-inverse)' }}
           >
-            {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+            {isProcessing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
             Full Process
           </button>
 
           {/* Draft Email — split button */}
           <div className="relative" ref={emailMenuRef}>
-            <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid var(--border-default)' }}>
+            <div className="flex rounded-md overflow-hidden" style={{ border: '1px solid var(--border-default)' }}>
               <button
                 onClick={() => handleAction('draft-email', 'auto')}
                 disabled={isActionDisabled}
-                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ color: 'var(--text-secondary)' }}
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
               >
-                <Mail className="w-4 h-4" style={{ color: 'var(--accent-green)' }} />
-                Draft Email
+                <Mail className="w-3.5 h-3.5" style={{ color: 'var(--accent-green)' }} />
+                Email
               </button>
               <button
                 onClick={() => setEmailTypeMenuOpen(!emailTypeMenuOpen)}
@@ -494,7 +493,7 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
               key={action.id}
               onClick={() => handleAction(action.id)}
               disabled={isActionDisabled}
-              className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               style={{ color: 'var(--text-secondary)' }}
               onMouseEnter={e => {
                 (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'
@@ -505,7 +504,7 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
                 ;(e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)'
               }}
             >
-              <action.icon className="w-4 h-4 flex-shrink-0" style={{ color: action.color }} />
+              <action.icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: action.color }} />
               {action.label}
             </button>
           ))}
@@ -536,7 +535,7 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
             <p className="text-sm mt-1">Run an action above to start interacting with the AI assistant</p>
           </div>
         ) : (
-          <SessionMessageList messages={messages} containerRef={messagesContainerRef} />
+          <SessionMessageList messages={messages} containerRef={messagesContainerRef} maxHeightClass="" />
         )}
       </div>
 

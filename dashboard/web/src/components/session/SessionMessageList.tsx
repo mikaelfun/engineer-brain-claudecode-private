@@ -159,7 +159,7 @@ export function SessionMessageList({
   const displayMessages = useMemo(() => processMessages(messages), [messages])
 
   return (
-    <div ref={containerRef as React.LegacyRef<HTMLDivElement>} className={`${maxHeightClass} overflow-y-auto space-y-1`}>
+    <div ref={containerRef as React.LegacyRef<HTMLDivElement>} className={`${maxHeightClass} overflow-y-auto space-y-2`}>
       {displayMessages.map((dm, i) => {
         if (dm.kind === 'single') {
           return <MessageBubble key={i} message={dm.messages[0]} />
@@ -189,17 +189,17 @@ export function CollapsedGroup({ group }: { group: DisplayMessage }) {
           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
           onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
         >
-          <Loader2 className="w-3 h-3 animate-spin flex-shrink-0" style={{ color: 'var(--accent-amber)' }} />
-          <span className="text-[11px] font-medium truncate" style={{ color: 'var(--text-secondary)' }}>
+          <Loader2 className="w-3.5 h-3.5 animate-spin flex-shrink-0" style={{ color: 'var(--accent-amber)' }} />
+          <span className="text-xs font-medium truncate" style={{ color: 'var(--text-secondary)' }}>
             {toolLabel || 'Working'}
           </span>
           {toolCount > 1 && (
-            <span className="text-[10px] font-mono flex-shrink-0" style={{ color: 'var(--text-tertiary)' }}>
+            <span className="text-xs font-mono flex-shrink-0" style={{ color: 'var(--text-tertiary)' }}>
               ({toolCount})
             </span>
           )}
           {group.step && (
-            <span className="text-[10px] ml-auto font-mono flex-shrink-0" style={{ color: 'var(--text-tertiary)' }}>{group.step}</span>
+            <span className="text-xs ml-auto font-mono flex-shrink-0" style={{ color: 'var(--text-tertiary)' }}>{group.step}</span>
           )}
           <ChevronRight
             className={`w-3 h-3 flex-shrink-0 transition-transform ${expanded ? 'rotate-90' : ''}`}
@@ -232,8 +232,8 @@ export function CollapsedGroup({ group }: { group: DisplayMessage }) {
         onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
       >
-        <Brain className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--accent-blue)' }} />
-        <span className="text-[11px] truncate" style={{ color: 'var(--text-secondary)' }}>
+        <Brain className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--accent-blue)' }} />
+        <span className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>
           {preview || 'Thinking…'}
         </span>
         {group.messages.length > 1 && (
@@ -261,37 +261,37 @@ export function MessageBubble({ message, compact }: { message: { type: string; c
   const styles: Record<string, { borderColor: string; icon: React.ReactNode; label: string }> = {
     thinking: {
       borderColor: 'var(--accent-blue)',
-      icon: <Brain className="w-3 h-3" style={{ color: 'var(--accent-blue)' }} />,
+      icon: <Brain className="w-3.5 h-3.5" style={{ color: 'var(--accent-blue)' }} />,
       label: 'Thinking',
     },
     'tool-call': {
       borderColor: 'var(--accent-amber)',
-      icon: <Wrench className="w-3 h-3" style={{ color: 'var(--accent-amber)' }} />,
+      icon: <Wrench className="w-3.5 h-3.5" style={{ color: 'var(--accent-amber)' }} />,
       label: message.toolName || 'Tool',
     },
     'tool-result': {
       borderColor: 'var(--accent-green)',
-      icon: <CheckCircle2 className="w-3 h-3" style={{ color: 'var(--accent-green)' }} />,
+      icon: <CheckCircle2 className="w-3.5 h-3.5" style={{ color: 'var(--accent-green)' }} />,
       label: message.toolName || 'Result',
     },
     completed: {
       borderColor: 'var(--accent-green)',
-      icon: <CheckCircle2 className="w-3 h-3" style={{ color: 'var(--accent-green)' }} />,
+      icon: <CheckCircle2 className="w-3.5 h-3.5" style={{ color: 'var(--accent-green)' }} />,
       label: 'Done',
     },
     failed: {
       borderColor: 'var(--accent-red)',
-      icon: <AlertCircle className="w-3 h-3" style={{ color: 'var(--accent-red)' }} />,
+      icon: <AlertCircle className="w-3.5 h-3.5" style={{ color: 'var(--accent-red)' }} />,
       label: 'Error',
     },
     user: {
       borderColor: 'var(--accent-blue)',
-      icon: <Send className="w-3 h-3" style={{ color: 'var(--accent-blue)' }} />,
+      icon: <Send className="w-3.5 h-3.5" style={{ color: 'var(--accent-blue)' }} />,
       label: 'You',
     },
     system: {
       borderColor: 'var(--text-tertiary)',
-      icon: <Sparkles className="w-3 h-3" style={{ color: 'var(--text-tertiary)' }} />,
+      icon: <Sparkles className="w-3.5 h-3.5" style={{ color: 'var(--text-tertiary)' }} />,
       label: 'System',
     },
   }
@@ -307,25 +307,25 @@ export function MessageBubble({ message, compact }: { message: { type: string; c
 
   return (
     <div
-      className={`pl-2 py-1 ${message.type === 'user' ? 'ml-4' : ''}`}
+      className={`pl-2.5 py-1.5 ${message.type === 'user' ? 'ml-4' : ''}`}
       style={{ borderLeft: `2px solid ${style.borderColor}` }}
     >
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1.5">
         {style.icon}
-        <span className="text-[11px] font-medium" style={{ color: 'var(--text-secondary)' }}>{style.label}</span>
+        <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>{style.label}</span>
         {message.step && (
-          <span className="text-[10px] ml-auto font-mono" style={{ color: 'var(--text-tertiary)' }}>{message.step}</span>
+          <span className="text-xs ml-auto font-mono" style={{ color: 'var(--text-tertiary)' }}>{message.step}</span>
         )}
       </div>
       {displayContent && (
-        <p className={`text-[11px] mt-0.5 ml-4 leading-relaxed break-words whitespace-pre-wrap ${compact && !expanded ? 'line-clamp-3' : ''}`} style={{ color: 'var(--text-secondary)' }}>
+        <p className={`text-sm mt-0.5 ml-5 leading-relaxed break-words whitespace-pre-wrap ${compact && !expanded ? 'line-clamp-3' : ''}`} style={{ color: 'var(--text-secondary)' }}>
           {displayContent}
         </p>
       )}
       {isTruncated && (
         <button
           onClick={() => setExpanded(!expanded)}
-          className="text-[10px] ml-4 mt-0.5 font-medium cursor-pointer hover:underline"
+          className="text-xs ml-5 mt-0.5 font-medium cursor-pointer hover:underline"
           style={{ color: 'var(--accent-blue)' }}
         >
           {expanded ? '▲ Show less' : '▼ Show more'}
