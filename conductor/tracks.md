@@ -79,3 +79,5 @@
 | [x] | step-session-visible_20260322 | Fix step session not visible in Agent Monitor | 2026-03-22 | 2026-03-22 |
 | [x] | chat-queue_20260322 | AI Assistant Chat Queue During Step Execution | 2026-03-22 | 2026-03-22 |
 | [x] | free-chat_20260323 | AI Assistant Free Chat — 无 session 时允许用户直接聊天 | 2026-03-23 | 2026-03-23 |
+| [x] | monitor-step-group_20260323 | Agent Monitor Step-Grouped Message Display | 2026-03-23 | 2026-03-23 |
+| [x] | session-reuse_20260323 | Full Process 应继承已有 Session 而非总是新建 | 2026-03-23 | 2026-03-23 |

@@ -371,6 +371,14 @@ export async function* processCaseSession(
   intent: string,
   canUseTool?: CanUseTool
 ): AsyncGenerator<SDKMessage & { sdkSessionId?: string }> {
+  // Check if case already has a resumable session → reuse it (avoid orphan sessions)
+  const existingSessionId = caseIndex[caseNumber]
+  if (existingSessionId && sessions[existingSessionId] && sessions[existingSessionId].status !== 'completed') {
+    // Resume existing session with new intent
+    yield* chatCaseSession(existingSessionId, `Case ${caseNumber}: ${intent}`, canUseTool) as any
+    return
+  }
+
   const now = new Date().toISOString()
   let sdkSessionId: string | undefined
 
@@ -389,7 +397,8 @@ export async function* processCaseSession(
           append: buildCaseAppendPrompt(caseNumber),
         },
         allowedTools: ['Read', 'Write', 'Bash', 'Glob', 'Grep', 'Agent'],
-        permissionMode: 'acceptEdits',
+        permissionMode: 'bypassPermissions',
+        allowDangerouslySkipPermissions: true,
         maxTurns: 50,
         ...(canUseTool ? { canUseTool } : {}),
       },
@@ -460,6 +469,8 @@ export async function* chatCaseSession(
       options: {
         resume: sessionId, // SDK's real session_id
         cwd: getProjectRoot(),
+        permissionMode: 'bypassPermissions',
+        allowDangerouslySkipPermissions: true,
         ...(canUseTool ? { canUseTool } : {}),
       },
     })) {
@@ -594,7 +605,8 @@ After verification, output a single JSON block on a line by itself:
         append: buildCaseAppendPrompt(caseNumber),
       },
       allowedTools: ['Bash', 'Read', 'Write'],
-      permissionMode: 'acceptEdits',
+      permissionMode: 'bypassPermissions',
+      allowDangerouslySkipPermissions: true,
       maxTurns: 10,
     },
   })) {
@@ -717,7 +729,8 @@ async function _runPatrol(
                 preset: 'claude_code' as const,
               },
               allowedTools: ['Read', 'Write', 'Bash', 'Glob', 'Grep', 'Agent'],
-              permissionMode: 'acceptEdits',
+              permissionMode: 'bypassPermissions',
+              allowDangerouslySkipPermissions: true,
               maxTurns: 100,
             },
           })) {

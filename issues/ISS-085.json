@@ -1,0 +1,11 @@
+{
+  "id": "ISS-085",
+  "title": "Full Process 应继承已有 Session 而非总是新建",
+  "description": "processCaseSession 总是创建新 session，即使 caseIndex 中已有可 resume 的 session。这导致孤儿 session 堆积，且浪费已有上下文。应像 stepCaseSession 一样先检查 caseIndex，有则 resume。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "session-reuse_20260323",
+  "createdAt": "2026-03-23T02:10:00+08:00",
+  "updatedAt": "2026-03-23T02:12:00+08:00"
+}
