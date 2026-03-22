@@ -399,9 +399,8 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
   }
 
   const handleChat = async () => {
-    // Send chat to the selected session (tab-aware)
-    // If no session exists, send without sessionId — backend will auto-create one
-    const chatSessionId = effectiveSessionId || activeSessionId || activeSessions[0]?.sessionId || null
+    // Chat routes to the real backend session (not the display filter)
+    const chatSessionId = activeSessionId || activeSessions[0]?.sessionId || null
     if (!chatInput.trim()) return
     const message = chatInput.trim()
     setChatInput('')
@@ -459,7 +458,7 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
 
   /** Drain queued messages sequentially via POST /case/:id/chat */
   async function drainQueue() {
-    const chatSessionId = effectiveSessionId || activeSessionId || activeSessions[0]?.sessionId
+    const chatSessionId = activeSessionId || activeSessions[0]?.sessionId
     if (!chatSessionId) return
 
     setIsDraining(true)
