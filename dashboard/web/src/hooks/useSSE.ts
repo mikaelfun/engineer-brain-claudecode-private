@@ -54,11 +54,20 @@ export function useSSE() {
   const todoExecSetProgress = useTodoExecuteStore((s) => s.setProgress)
   const todoExecSetResult = useTodoExecuteStore((s) => s.setResult)
 
-  // Case assistant step state actions
+  // Case assistant step state actions (per-session aware)
   const caseStepAddMessage = useCaseAssistantStore((s) => s.addMessage)
   const caseStepSetStatus = useCaseAssistantStore((s) => s.setStatus)
   const caseStepSetCurrentStep = useCaseAssistantStore((s) => s.setCurrentStep)
   const caseStepSetPendingQuestion = useCaseAssistantStore((s) => s.setPendingQuestion)
+  const caseStepSetActiveSessionId = useCaseAssistantStore((s) => s.setActiveSessionId)
+  const caseStepBackfillSessionId = useCaseAssistantStore((s) => s.backfillSessionId)
+
+  // caseSessionStore unified actions (Phase 2 migration target)
+  const sessionStoreSetStatus = useCaseSessionStore((s) => s.setSessionStatus)
+  const sessionStoreSetActiveSession = useCaseSessionStore((s) => s.setActiveSessionId)
+  const sessionStoreSetCurrentStep = useCaseSessionStore((s) => s.setCurrentStep)
+  const sessionStoreSetPendingQuestion = useCaseSessionStore((s) => s.setPendingQuestion)
+  const sessionStoreClearPendingQuestion = useCaseSessionStore((s) => s.clearPendingQuestion)
 
   const connect = useCallback(() => {
     const token = localStorage.getItem('eb_token')
@@ -168,76 +177,143 @@ export function useSSE() {
       const d = data.data || data
       const caseNumber = d.caseNumber
       if (caseNumber) {
-        addCaseSessionMessage(caseNumber, {
+        // Use executionId as the message bucket key (unique per button click)
+        // Fall back to sessionId for backward compat
+        const bucketId = d.executionId || d.sessionId
+        const ts = d.startedAt || new Date().toISOString()
+        const startMsg: import('../stores/caseSessionStore').CaseSessionMessage = {
           type: 'system',
           content: `Step "${d.step}" started`,
           step: d.step,
-          timestamp: d.startedAt || new Date().toISOString(),
-        })
-        // Update caseAssistantStore
-        caseStepSetStatus(caseNumber, 'active')
+          timestamp: ts,
+        }
+        addCaseSessionMessage(caseNumber, startMsg)
+        if (d.sessionId) addCaseSessionPerSession(caseNumber, d.sessionId, startMsg)
+
+        // Update caseSessionStore unified state
+        sessionStoreSetStatus(caseNumber, 'active')
+        if (d.step) sessionStoreSetCurrentStep(caseNumber, d.step)
+        if (d.sessionId) sessionStoreSetActiveSession(caseNumber, d.sessionId)
+
+        // Update caseAssistantStore (per-execution, backward compat)
+        caseStepSetStatus(caseNumber, bucketId, 'active')
         if (d.step) caseStepSetCurrentStep(caseNumber, d.step)
-        caseStepAddMessage(caseNumber, {
+        if (bucketId) caseStepSetActiveSessionId(caseNumber, bucketId)
+        caseStepAddMessage(caseNumber, bucketId, {
           kind: 'started',
           content: `Step "${d.step}" started`,
           step: d.step,
-          timestamp: d.startedAt || new Date().toISOString(),
+          sessionId: bucketId,
+          timestamp: ts,
         })
         // Immediately invalidate operation query so UI reflects active operation
         queryClient.invalidateQueries({ queryKey: ['case-operation', caseNumber] })
       }
     })
 
-    // Case step progress events (semantic) — populate caseAssistantStore
+    // Case step progress events (semantic) — populate caseAssistantStore per-execution
+    // Also write to caseSessionStore so Agent Monitor can display these messages (ISS-082)
     es.addEventListener('case-step-progress', (e) => {
       const data = safeParse(e.data)
       if (!data) return
       const d = data.data || data
       const caseNumber = d.caseNumber
       if (caseNumber) {
-        caseStepAddMessage(caseNumber, {
+        const bucketId = d.executionId || d.sessionId
+        // Backfill if this is the first time we see a real bucketId
+        if (bucketId) {
+          caseStepBackfillSessionId(caseNumber, bucketId)
+        }
+        caseStepAddMessage(caseNumber, bucketId, {
           kind: d.kind || (d.toolName ? 'tool-call' : 'thinking'),
           content: d.content,
           toolName: d.toolName,
           step: d.step,
+          sessionId: bucketId,
           timestamp: d.timestamp || new Date().toISOString(),
         })
+        // Mirror to caseSessionStore for Agent Monitor display (ISS-082)
+        const msgType = d.kind === 'tool-call' ? 'tool-call' : d.kind === 'tool-result' ? 'tool-result' : 'thinking'
+        const sessionMsg: import('../stores/caseSessionStore').CaseSessionMessage = {
+          type: msgType,
+          content: typeof d.content === 'string' ? d.content : '',
+          toolName: d.toolName,
+          step: d.step,
+          timestamp: d.timestamp || new Date().toISOString(),
+        }
+        addCaseSessionMessage(caseNumber, sessionMsg)
+        if (d.sessionId) addCaseSessionPerSession(caseNumber, d.sessionId, sessionMsg)
       }
     })
 
-    // Case step question event — AskUserQuestion interception
+    // Case step question event — AskUserQuestion interception (per-execution)
     es.addEventListener('case-step-question', (e) => {
       const data = safeParse(e.data)
       if (!data) return
       const d = data.data || data
       const caseNumber = d.caseNumber
       if (caseNumber) {
-        caseStepAddMessage(caseNumber, {
+        const bucketId = d.executionId || d.sessionId || ''
+        const ts = d.timestamp || new Date().toISOString()
+
+        // Write to caseSessionStore (unified)
+        if (d.questions) {
+          sessionStoreSetStatus(caseNumber, 'waiting-input')
+          sessionStoreSetPendingQuestion(caseNumber, d.sessionId || bucketId, d.questions)
+          const questionMsg: import('../stores/caseSessionStore').CaseSessionMessage = {
+            type: 'system',
+            content: d.questions?.map((q: any) => q.question).join('; ') || 'Question pending',
+            step: d.step,
+            timestamp: ts,
+          }
+          addCaseSessionMessage(caseNumber, questionMsg)
+          if (d.sessionId) addCaseSessionPerSession(caseNumber, d.sessionId, questionMsg)
+        }
+
+        // Write to caseAssistantStore (backward compat)
+        caseStepAddMessage(caseNumber, bucketId, {
           kind: 'question',
           questions: d.questions,
-          sessionId: d.sessionId,
+          sessionId: bucketId,
           content: d.questions?.map((q: any) => q.question).join('; '),
-          timestamp: d.timestamp || new Date().toISOString(),
+          timestamp: ts,
         })
         if (d.questions) {
-          caseStepSetPendingQuestion(caseNumber, d.sessionId || '', d.questions)
+          caseStepSetPendingQuestion(caseNumber, bucketId, d.questions)
         }
       }
     })
 
-    // Case step completed event — finalize caseAssistantStore status + invalidate operation
+    // Case step completed event — finalize status + invalidate operation
     es.addEventListener('case-step-completed', (e) => {
       const data = safeParse(e.data)
       if (!data) return
       const d = data.data || data
       const caseNumber = d.caseNumber
       if (caseNumber) {
-        caseStepSetStatus(caseNumber, 'completed')
-        caseStepAddMessage(caseNumber, {
+        const bucketId = d.executionId || d.sessionId
+        const ts = new Date().toISOString()
+        const completedMsg: import('../stores/caseSessionStore').CaseSessionMessage = {
+          type: 'completed',
+          content: d.step ? `Step "${d.step}" completed` : 'Step completed',
+          step: d.step,
+          timestamp: ts,
+        }
+
+        // Update caseSessionStore unified state
+        sessionStoreSetStatus(caseNumber, 'completed')
+        sessionStoreClearPendingQuestion(caseNumber)
+        addCaseSessionMessage(caseNumber, completedMsg)
+        if (d.sessionId) addCaseSessionPerSession(caseNumber, d.sessionId, completedMsg)
+
+        // Update caseAssistantStore (backward compat)
+        caseStepSetStatus(caseNumber, bucketId, 'completed')
+        caseStepAddMessage(caseNumber, bucketId, {
           kind: 'completed',
           content: d.step ? `Step "${d.step}" completed` : 'Step completed',
           step: d.step,
-          timestamp: new Date().toISOString(),
+          sessionId: bucketId,
+          timestamp: ts,
         })
         // Invalidate operation query so buttons are released
         queryClient.invalidateQueries({ queryKey: ['case-operation', caseNumber] })
@@ -247,20 +323,37 @@ export function useSSE() {
       }
     })
 
-    // Case step failed event — set failed status in caseAssistantStore + invalidate operation
+    // Case step failed event — set failed status + invalidate operation
     es.addEventListener('case-step-failed', (e) => {
       const data = safeParse(e.data)
       if (!data) return
       const d = data.data || data
       const caseNumber = d.caseNumber
       if (caseNumber) {
-        caseStepSetStatus(caseNumber, 'failed')
-        caseStepAddMessage(caseNumber, {
+        const bucketId = d.executionId || d.sessionId
+        const ts = new Date().toISOString()
+        const failedMsg: import('../stores/caseSessionStore').CaseSessionMessage = {
+          type: 'failed',
+          content: d.error || 'Step failed',
+          step: d.step,
+          timestamp: ts,
+        }
+
+        // Update caseSessionStore unified state
+        sessionStoreSetStatus(caseNumber, 'failed')
+        sessionStoreClearPendingQuestion(caseNumber)
+        addCaseSessionMessage(caseNumber, failedMsg)
+        if (d.sessionId) addCaseSessionPerSession(caseNumber, d.sessionId, failedMsg)
+
+        // Update caseAssistantStore (backward compat)
+        caseStepSetStatus(caseNumber, bucketId, 'failed')
+        caseStepAddMessage(caseNumber, bucketId, {
           kind: 'error',
           error: d.error,
           content: d.error || 'Step failed',
           step: d.step,
-          timestamp: new Date().toISOString(),
+          sessionId: bucketId,
+          timestamp: ts,
         })
         // Invalidate operation query so buttons are released
         queryClient.invalidateQueries({ queryKey: ['case-operation', caseNumber] })
@@ -331,6 +424,11 @@ export function useSSE() {
 
     es.addEventListener('settings-updated', () => {
       queryClient.invalidateQueries({ queryKey: ['settings'] })
+    })
+
+    // Sessions changed event — immediately refresh Agent Monitor session list (ISS-082)
+    es.addEventListener('sessions-changed', () => {
+      queryClient.invalidateQueries({ queryKey: ['sessions'] })
     })
 
     // Issue track creation progress events → populate issueTrackStore for live display
@@ -606,7 +704,7 @@ export function useSSE() {
         console.error(`[SSE] Max retries (${MAX_RETRIES}) exceeded, giving up`)
       }
     }
-  }, [queryClient, patrolOnProgress, patrolOnCaseCompleted, addCaseSessionMessage, addCaseSessionPerSession, addIssueTrackMessage, setIssueTrackingActive, clearIssueTrackMessages, setIssuePendingQuestion, startImplement, addImplementMessage, setImplementStatus, addVerifyMessage, setVerifyActive, setVerifyResult, clearVerify, todoExecSetProgress, todoExecSetResult, caseStepAddMessage, caseStepSetStatus, caseStepSetCurrentStep, caseStepSetPendingQuestion])
+  }, [queryClient, patrolOnProgress, patrolOnCaseCompleted, addCaseSessionMessage, addCaseSessionPerSession, addIssueTrackMessage, setIssueTrackingActive, clearIssueTrackMessages, setIssuePendingQuestion, startImplement, addImplementMessage, setImplementStatus, addVerifyMessage, setVerifyActive, setVerifyResult, clearVerify, todoExecSetProgress, todoExecSetResult, caseStepAddMessage, caseStepSetStatus, caseStepSetCurrentStep, caseStepSetPendingQuestion, caseStepSetActiveSessionId, caseStepBackfillSessionId, sessionStoreSetStatus, sessionStoreSetActiveSession, sessionStoreSetCurrentStep, sessionStoreSetPendingQuestion, sessionStoreClearPendingQuestion])
 
   useEffect(() => {
     connect()
