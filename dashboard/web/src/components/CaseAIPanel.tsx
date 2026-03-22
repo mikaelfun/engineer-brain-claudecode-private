@@ -11,16 +11,16 @@ import {
   Sparkles, Search, Mail, Play, X, Send,
   CheckCircle2, Loader2, Brain, AlertCircle, ChevronDown,
   RefreshCw, MessageSquare, GitBranch, FileText, BookOpen,
-  ChevronRight, Maximize2, ExternalLink, Square,
-  MessageCircleQuestion
+  ChevronRight, Maximize2, ExternalLink, Square
 } from 'lucide-react'
 import { apiPost, apiDelete } from '../api/client'
 import { useCaseSessions, useCaseOperation, useCaseMessages, useEndAllCaseSessions, useEndCaseSession, useCaseStepProgress } from '../api/hooks'
 import { useCaseSessionStore, type CaseSessionMessage } from '../stores/caseSessionStore'
 import { useCaseAssistantStore, EMPTY_STEP_MESSAGES, type CaseStepMessage, type CaseStepStatus } from '../stores/caseAssistantStore'
 import { useShallow } from 'zustand/react/shallow'
-import { SessionMessageList } from './session/SessionMessageList'
+import { SessionMessageList, groupMessagesByStep } from './session/SessionMessageList'
 import { StepQuestionForm } from './session/StepQuestionForm'
+import { StepFilterTabs } from './session/StepFilterTabs'
 
 interface CaseAIPanelProps {
   caseNumber: string
@@ -95,6 +95,7 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
   const [error, setError] = useState<string | null>(null)
   const [emailTypeMenuOpen, setEmailTypeMenuOpen] = useState(false)
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
+  const [activeStepFilter, setActiveStepFilter] = useState<string | null>(null)
   const [queuedMessages, setQueuedMessages] = useState<QueuedMessage[]>([])
   const [isDraining, setIsDraining] = useState(false)
   const emailMenuRef = useRef<HTMLDivElement>(null)
@@ -180,8 +181,40 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
     [selectedStepMessages],
   )
 
-  // Use step messages when available, fall back to legacy
-  const effectiveMessages = convertedStepMessages.length > 0 ? convertedStepMessages : legacyMessages
+  // Merge ALL session messages into a unified timeline (sorted by timestamp)
+  const allStepMessages = useCaseAssistantStore(useShallow((s) => {
+    const prefix = `${caseNumber}::`
+    const allMsgs: CaseStepMessage[] = []
+    for (const [key, msgs] of Object.entries(s.messages)) {
+      if (key.startsWith(prefix) && !key.endsWith('::__active__')) {
+        allMsgs.push(...msgs)
+      }
+    }
+    return allMsgs
+  }))
+
+  const allConvertedMessages = useMemo(
+    () => allStepMessages
+      .map(stepMessageToSessionMessage)
+      .sort((a, b) => (a.timestamp || '').localeCompare(b.timestamp || '')),
+    [allStepMessages],
+  )
+
+  // Unified timeline: merge all sessions, fall back to legacy
+  const timelineMessages = allConvertedMessages.length > 0 ? allConvertedMessages : legacyMessages
+
+  // Step groups for filter tabs
+  const stepGroups = useMemo(() => groupMessagesByStep(timelineMessages), [timelineMessages])
+
+  // Filtered messages when a step filter is active
+  const filteredMessages = useMemo(() => {
+    if (!activeStepFilter) return timelineMessages
+    const group = stepGroups.find(g => g.stepName === activeStepFilter)
+    return group?.messages ?? EMPTY_MESSAGES
+  }, [activeStepFilter, timelineMessages, stepGroups])
+
+  // Use step messages when available, fall back to legacy (kept for backward compat)
+  const effectiveMessages = filteredMessages
 
   // Build session tabs from store session IDs (executionId-based, reactive via storeSessionIds)
   // Also subscribe reactively to sessionStatus so tab icons update
@@ -947,72 +980,13 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
         </div>
       )}
 
-      {/* Session Tabs — shown when any session has messages */}
-      {sessionTabs.length > 0 && (
-        <div className="flex items-center gap-1 px-5 py-1.5 flex-shrink-0 overflow-x-auto" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-          {sessionTabs.map((tab) => {
-            const isSelected = effectiveSessionId === tab.sessionId
-            const isTabActive = tab.status === 'active'
-            const isTabWaiting = tab.status === 'waiting-input'
-            const isTabCompleted = tab.status === 'completed'
-            const isTabFailed = tab.status === 'failed'
-            return (
-              <button
-                key={tab.sessionId}
-                onClick={() => setSelectedSessionId(tab.sessionId)}
-                className="px-2.5 py-1 rounded text-xs font-medium transition-colors flex-shrink-0 flex items-center gap-1.5"
-                style={{
-                  background: isSelected ? 'var(--accent-blue-dim)' : 'transparent',
-                  color: isSelected ? 'var(--accent-blue)' : 'var(--text-tertiary)',
-                }}
-                onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
-                onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-              >
-                {/* Status indicator */}
-                {isTabActive && <Loader2 className="w-3 h-3 animate-spin" style={{ color: 'var(--accent-amber)' }} />}
-                {isTabWaiting && <MessageCircleQuestion className="w-3 h-3" style={{ color: 'var(--accent-purple)' }} />}
-                {isTabCompleted && <CheckCircle2 className="w-3 h-3" style={{ color: 'var(--accent-green)' }} />}
-                {isTabFailed && <AlertCircle className="w-3 h-3" style={{ color: 'var(--accent-red)' }} />}
-                {!isTabActive && !isTabWaiting && !isTabCompleted && !isTabFailed && (
-                  <span className="relative flex h-1.5 w-1.5">
-                    <span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ background: 'var(--accent-amber)' }} />
-                  </span>
-                )}
-                {tab.label}
-                {/* Per-tab dismiss button (completed/failed tabs) */}
-                {(isTabCompleted || isTabFailed) && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleDismissTab(tab.sessionId)
-                    }}
-                    className="p-0.5 rounded transition-colors"
-                    style={{ color: 'var(--text-tertiary)' }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)' }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-tertiary)' }}
-                    title="Dismiss"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                )}
-              </button>
-            )
-          })}
-          {/* Clear All button */}
-          {sessionTabs.length > 0 && (
-            <button
-              onClick={() => { clearStepMessages(caseNumber); clearMessages(caseNumber); setSelectedSessionId(null) }}
-              className="px-2 py-1 rounded text-xs transition-colors flex-shrink-0 ml-auto"
-              style={{ color: 'var(--text-tertiary)' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-              title="Clear all messages"
-            >
-              Clear
-            </button>
-          )}
-        </div>
-      )}
+      {/* Step Filter Tabs — shown when timeline has step groups */}
+      <StepFilterTabs
+        steps={stepGroups}
+        activeFilter={activeStepFilter}
+        onFilterChange={setActiveStepFilter}
+        onClear={() => { clearStepMessages(caseNumber); clearMessages(caseNumber); setSelectedSessionId(null); setActiveStepFilter(null) }}
+      />
 
       {/* Messages area — flex-grow, scrollable */}
       <div
@@ -1027,7 +1001,7 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
             <p className="text-sm mt-1">Run an action above to start interacting with the AI assistant</p>
           </div>
         ) : (
-          <SessionMessageList messages={effectiveMessages} maxHeightClass="" />
+          <SessionMessageList messages={effectiveMessages} maxHeightClass="" groupByStep={!activeStepFilter} />
         )}
       </div>
 
