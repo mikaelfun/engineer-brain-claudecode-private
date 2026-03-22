@@ -1,0 +1,11 @@
+{
+  "id": "ISS-081",
+  "title": "AI Assistant 页面 header 只显示一个 step 状态标签，多 session 时不准确",
+  "description": "AI Assistant 面板 header 旁边的 step 状态标签（如 'data-refresh'）只显示一个 session 的 step，但实际可能有多个 active session 并行运行（如 Teams + Refresh）。状态显示不准确，考虑优化显示所有活跃 step 或去掉该单一标签。截图显示 header 显示 'data-refresh' 但下方列表有 Teams 和 Refresh 两个活跃 session。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "ai-step-badge-fix_20260323",
+  "createdAt": "2026-03-23T01:25:00+08:00",
+  "updatedAt": "2026-03-23T01:30:00+08:00"
+}
