@@ -16,7 +16,6 @@ import {
 import { apiPost, apiDelete } from '../api/client'
 import { useCaseSessions, useCaseOperation, useCaseMessages, useEndAllCaseSessions, useEndCaseSession, useCaseStepProgress } from '../api/hooks'
 import { useCaseSessionStore, type CaseSessionMessage } from '../stores/caseSessionStore'
-import { useCaseAssistantStore, type CaseStepMessage } from '../stores/caseAssistantStore'
 import { SessionMessageList, groupMessagesByStep } from './session/SessionMessageList'
 import { StepQuestionForm } from './session/StepQuestionForm'
 import { StepFilterTabs } from './session/StepFilterTabs'
@@ -123,9 +122,6 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
   // - Otherwise use the store's active session
   const effectiveSessionId = selectedSessionId || storeActiveSessionId || activeSessions[0]?.sessionId || null
 
-  const clearStepMessages = useCaseAssistantStore((s) => s.clearAll)
-  const clearSession = useCaseAssistantStore((s) => s.clearSession)
-
   // Messages: read from caseSessionStore unified per-case timeline
   const timelineMessages = useCaseSessionStore((s) => s.messages[caseNumber] ?? EMPTY_MESSAGES)
   const clearMessages = useCaseSessionStore((s) => s.clearMessages)
@@ -207,15 +203,6 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
         if (stepProgressData.currentStep) {
           store.setCurrentStep(caseNumber, stepProgressData.currentStep)
         }
-        // Also write to caseAssistantStore for backward compat
-        const recoveredBucketId = stepProgressData.executionId
-          || stepProgressData.messages.find((m: any) => m.sessionId)?.sessionId
-          || stepProgressData.pendingQuestion?.sessionId || '__recovered__'
-        useCaseAssistantStore.getState().loadMessages(
-          caseNumber, recoveredBucketId, stepProgressData.messages as CaseStepMessage[], status,
-          stepProgressData.currentStep ?? undefined,
-          stepProgressData.pendingQuestion ? { sessionId: stepProgressData.pendingQuestion.sessionId, questions: stepProgressData.pendingQuestion.questions } : null
-        )
       }
       // Recover pending question
       if (stepProgressData.pendingQuestion && !pendingQuestion) {
@@ -263,20 +250,9 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
 
     setIsProcessing(true)
     setError(null)
-    // Auto-dismiss old non-active tabs of the same step type (completed, failed, idle/paused)
-    const storeState = useCaseAssistantStore.getState()
-    for (const sid of storeState.getSessionIds(caseNumber)) {
-      // executionId format: "step-name-timestamp" — check if same step type
-      if (sid.startsWith(`${action}-`)) {
-        const key = `${caseNumber}::${sid}`
-        const st = storeState.sessionStatus[key]
-        if (st !== 'active' && st !== 'waiting-input') {
-          storeState.clearSession(caseNumber, sid)
-        }
-      }
-    }
-    // Clear legacy messages for backward compat
-    clearMessages(caseNumber)
+    // Reset for new action: clear previous messages and status
+    useCaseSessionStore.getState().clearAll(caseNumber)
+    setActiveStepFilter(null)
 
     try {
       if (action === 'process') {
@@ -410,15 +386,13 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
     setIsDraining(false)
   }
 
-  const handleDismissTab = (targetId: string) => {
+  const handleDismissTab = (_targetId: string) => {
     // Mark as completed in the store, then end the underlying SDK session
     useCaseSessionStore.getState().setSessionStatus(caseNumber, 'completed')
     // End the SDK session so buttons are released
     if (activeSessionId) {
       apiDelete(`/case/${caseNumber}/session`, { sessionId: activeSessionId }).catch(() => {})
     }
-    // Remove the tab from store
-    clearSession(caseNumber, targetId)
   }
 
   const handleEndSession = async () => {
@@ -884,8 +858,6 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
         activeFilter={activeStepFilter}
         onFilterChange={setActiveStepFilter}
         onClear={() => {
-          clearStepMessages(caseNumber)
-          clearMessages(caseNumber)
           useCaseSessionStore.getState().clearAll(caseNumber)
           setSelectedSessionId(null)
           setActiveStepFilter(null)
@@ -971,7 +943,7 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
               </button>
             )}
             <button
-              onClick={() => { if (effectiveSessionId) clearSession(caseNumber, effectiveSessionId) }}
+              onClick={() => { useCaseSessionStore.getState().clearAll(caseNumber); setActiveStepFilter(null) }}
               className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded transition-colors ml-auto"
               style={{ color: 'var(--text-tertiary)' }}
             >

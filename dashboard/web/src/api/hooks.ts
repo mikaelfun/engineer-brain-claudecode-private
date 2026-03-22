@@ -610,7 +610,7 @@ export function useVerifyStatus(issueId: string, enabled: boolean = false, refet
   })
 }
 
-/** Fetch step progress for page-refresh recovery (caseAssistantStore hydration) */
+/** Fetch step progress for page-refresh recovery (caseSessionStore hydration) */
 export function useCaseStepProgress(caseNumber: string, enabled: boolean = false) {
   return useQuery({
     queryKey: ['case-step-progress', caseNumber],
@@ -628,6 +628,7 @@ export function useCaseStepProgress(caseNumber: string, enabled: boolean = false
       isActive: boolean
       pendingQuestion: { sessionId: string; questions: Array<{ question: string; header?: string; options?: Array<{ label: string; description?: string }>; multiSelect?: boolean }> } | null
       currentStep: string | null
+      executionId: string | null
     }>(`/case/${caseNumber}/step-progress`),
     enabled,
   })

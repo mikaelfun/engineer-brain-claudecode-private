@@ -47,7 +47,7 @@ Remove dead code and add question form to AgentMonitor.
 
 ### Tasks
 
-- [ ] Task 3.1: Remove `caseAssistantStore` dual-write from SSE handler (useSSE.ts). Remove all `caseAssistantStore` imports and usage from CaseAIPanel. Keep `caseAssistantStore.ts` file only if other consumers exist (check grep), otherwise delete.
+- [~] Task 3.1: Remove `caseAssistantStore` dual-write from SSE handler (useSSE.ts). Remove all `caseAssistantStore` imports and usage from CaseAIPanel. Keep `caseAssistantStore.ts` file only if other consumers exist (check grep), otherwise delete.
 - [ ] Task 3.2: Add `StepQuestionForm` to AgentMonitor's `CaseSessionDetail` — when the case session has a pending question, render the shared question form below the message list.
 - [ ] Task 3.3: Clean up unused adapter functions — remove `stepMessageToSessionMessage()`, remove `KIND_TO_TYPE` mapping, remove `INTENT_LABEL_MAP` if no longer needed.
 - [ ] Task 3.4: Update `QueuedMessage` handling — ensure queued chat messages appear in the timeline as a `__chat__` step segment or in the `__general__` group.
