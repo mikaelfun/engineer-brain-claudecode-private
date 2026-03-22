@@ -14,6 +14,7 @@ import { useCaseSessionStore, type CaseSessionMessage } from '../stores/caseSess
 import { useIssueTrackStore, EMPTY_TRACK_MESSAGES, EMPTY_IMPLEMENT_MESSAGES, EMPTY_VERIFY_MESSAGES } from '../stores/issueTrackStore'
 import type { IssueTrackMessage, ImplementMessage, VerifyMessage } from '../stores/issueTrackStore'
 import { SessionMessageList } from '../components/session/SessionMessageList'
+import { StepQuestionForm } from '../components/session/StepQuestionForm'
 import { useQueryClient } from '@tanstack/react-query'
 import { RefreshCw, ChevronDown, ChevronRight, Filter, Send, Square } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
@@ -366,6 +367,7 @@ function CaseSessionDetail({ session }: { session: UnifiedSession }) {
   const caseLevelMessages = useCaseSessionStore(s => s.messages[caseNumber] || EMPTY_MESSAGES)
   // Prefer per-session; fallback to case-level if per-session is empty
   const storeMessages = perSessionMessages.length > 0 ? perSessionMessages : caseLevelMessages
+  const pendingQuestion = useCaseSessionStore(s => s.getPendingQuestion(caseNumber))
   const addMessage = useCaseSessionStore(s => s.addMessage)
   const addSessionMessage = useCaseSessionStore(s => s.addSessionMessage)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -449,9 +451,22 @@ function CaseSessionDetail({ session }: { session: UnifiedSession }) {
             messages={storeMessages}
             containerRef={containerRef}
             maxHeightClass="max-h-64"
+            groupByStep
           />
         )}
       </div>
+
+      {/* Pending question form */}
+      {pendingQuestion && (
+        <div className="px-3 py-2">
+          <StepQuestionForm
+            caseNumber={caseNumber}
+            questions={pendingQuestion.questions}
+            contextMessages={storeMessages}
+            onAnswered={() => { useCaseSessionStore.getState().clearPendingQuestion(caseNumber) }}
+          />
+        </div>
+      )}
 
       {/* Chat input + Stop button for active sessions */}
       {isActive && (
