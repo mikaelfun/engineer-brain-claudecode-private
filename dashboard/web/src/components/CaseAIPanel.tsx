@@ -11,14 +11,14 @@ import {
   Sparkles, Search, Mail, Play, X, Send,
   CheckCircle2, Loader2, Brain, AlertCircle, ChevronDown,
   RefreshCw, MessageSquare, GitBranch, FileText, BookOpen,
-  Zap, ChevronRight, Maximize2, ExternalLink, Square,
+  ChevronRight, Maximize2, ExternalLink, Square,
   MessageCircleQuestion
 } from 'lucide-react'
 import { apiPost, apiDelete } from '../api/client'
 import { useCaseSessions, useCaseOperation, useCaseMessages, useEndAllCaseSessions, useEndCaseSession, useAnswerStepQuestion, useCaseStepProgress } from '../api/hooks'
 import { useCaseSessionStore, type CaseSessionMessage } from '../stores/caseSessionStore'
 import { useCaseAssistantStore, EMPTY_STEP_MESSAGES, type CaseStepMessage, type CaseStepStatus, type CaseStepQuestion } from '../stores/caseAssistantStore'
-import { SessionBadge } from './SessionBadge'
+import { useShallow } from 'zustand/react/shallow'
 import { SessionMessageList } from './session/SessionMessageList'
 
 interface CaseAIPanelProps {
@@ -41,6 +41,7 @@ function stepMessageToSessionMessage(msg: CaseStepMessage): CaseSessionMessage {
     started: 'system',
     thinking: 'thinking',
     'tool-call': 'tool-call',
+    'tool-result': 'tool-result',
     completed: 'completed',
     error: 'failed',
     question: 'system',
@@ -254,51 +255,128 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
   const endAllSessions = useEndAllCaseSessions()
   const endCaseSession = useEndCaseSession()
   // Filter: only active/paused sessions (exclude completed)
-  const activeSessions = allSessions.filter((s: any) => s.status !== 'completed')
+  const activeSessions = useMemo(
+    () => allSessions.filter((s: any) => s.status !== 'completed'),
+    [allSessions],
+  )
 
   const { data: operationData } = useCaseOperation(caseNumber)
   const activeOperation = operationData?.operation || null
   const hasActiveOperation = !!activeOperation
 
-  // Only disable buttons during active API request or active backend operation lock
-  // Paused sessions should NOT block new actions (they are resumable by design)
-  // Uses caseAssistantStore status for state-driven disable logic
-  const stepStatus = useCaseAssistantStore((s) => s.status[caseNumber]) as CaseStepStatus | undefined
-  const isStepActive = stepStatus === 'active' || stepStatus === 'waiting-input'
+  // Per-session message + status from caseAssistantStore
+  // Get the store-tracked active session ID (from SSE events)
+  const storeActiveSessionId = useCaseAssistantStore((s) => s.activeSessionId[caseNumber])
+  // Get all session IDs that have messages in the store (shallow compare to avoid new array ref)
+  const storeSessionIds = useCaseAssistantStore(useShallow((s) => s.getSessionIds(caseNumber)))
+  // Overall case-level status for global disable logic
+  const caseStatus = useCaseAssistantStore((s) => s.getCaseStatus(caseNumber))
+  const isStepActive = caseStatus === 'active' || caseStatus === 'waiting-input'
   const isActionDisabled = isProcessing || hasActiveOperation || isStepActive
 
-  // Primary message source: caseAssistantStore (semantic step messages)
-  const stepMessages = useCaseAssistantStore((s) => s.messages[caseNumber] ?? EMPTY_STEP_MESSAGES)
-  // Pending question from step execution (AskUserQuestion interception)
-  const pendingQuestion = useCaseAssistantStore((s) => s.pendingQuestions[caseNumber])
-  const clearPendingQuestion = useCaseAssistantStore((s) => s.clearPendingQuestion)
+  /** Background actions can run concurrently — only disabled when the same action is already running */
+  const BACKGROUND_ACTIONS: ReadonlySet<AIAction> = new Set(['teams-search'])
+  const isDisabledFor = (action: AIAction) => {
+    if (BACKGROUND_ACTIONS.has(action)) {
+      // Only block if this exact step type is currently active
+      return storeSessionIds.some(sid => {
+        if (!sid.startsWith(`${action}-`)) return false
+        const key = `${caseNumber}::${sid}`
+        const st = useCaseAssistantStore.getState().sessionStatus[key]
+        return st === 'active' || st === 'waiting-input'
+      })
+    }
+    return isActionDisabled
+  }
+
+  // Determine the effective selected session:
+  // - If user selected a tab, use that
+  // - Otherwise use the store's active session
+  const effectiveSessionId = selectedSessionId || storeActiveSessionId || activeSessions[0]?.sessionId || null
+
+  // Per-session messages for the selected session
+  const selectedStepMessages = useCaseAssistantStore((s) => {
+    if (!effectiveSessionId) return EMPTY_STEP_MESSAGES
+    const key = `${caseNumber}::${effectiveSessionId}`
+    return s.messages[key] ?? EMPTY_STEP_MESSAGES
+  })
+
+  // Per-session status
+  const selectedSessionStatus = useCaseAssistantStore((s) => {
+    if (!effectiveSessionId) return undefined as CaseStepStatus | undefined
+    const key = `${caseNumber}::${effectiveSessionId}`
+    return s.sessionStatus[key] as CaseStepStatus | undefined
+  })
+
+  // Per-session pending question
+  const selectedPendingQuestion = useCaseAssistantStore((s) => {
+    if (!effectiveSessionId) return undefined
+    const key = `${caseNumber}::${effectiveSessionId}`
+    return s.pendingQuestions[key]
+  })
+
+  const clearStepMessages = useCaseAssistantStore((s) => s.clearAll)
+  const clearSession = useCaseAssistantStore((s) => s.clearSession)
+
   // Fallback: caseSessionStore (legacy backward-compatible messages)
   const legacyMessages = useCaseSessionStore((s) => s.messages[caseNumber] ?? EMPTY_MESSAGES)
   const clearMessages = useCaseSessionStore((s) => s.clearMessages)
-  const clearStepMessages = useCaseAssistantStore((s) => s.clearAll)
 
   // Convert step messages to session message format for SessionMessageList
   const convertedStepMessages = useMemo(
-    () => stepMessages.map(stepMessageToSessionMessage),
-    [stepMessages],
+    () => selectedStepMessages.map(stepMessageToSessionMessage),
+    [selectedStepMessages],
   )
 
   // Use step messages when available, fall back to legacy
-  const messages = convertedStepMessages.length > 0 ? convertedStepMessages : legacyMessages
+  const effectiveMessages = convertedStepMessages.length > 0 ? convertedStepMessages : legacyMessages
 
-  // Effective messages: primary source is step messages, no per-session tab switching needed
-  const effectiveMessages = messages
+  // Build session tabs from store session IDs (executionId-based, reactive via storeSessionIds)
+  // Also subscribe reactively to sessionStatus so tab icons update
+  const sessionStatusMap = useCaseAssistantStore(useShallow((s) => {
+    const map: Record<string, CaseStepStatus> = {}
+    const prefix = `${caseNumber}::`
+    for (const [k, v] of Object.entries(s.sessionStatus)) {
+      if (k.startsWith(prefix)) {
+        map[k.slice(prefix.length)] = v
+      }
+    }
+    return map
+  }))
 
-  // Auto-select activeSessionId when no tab is selected and sessions change
+  const sessionTabs = useMemo(() => {
+    const tabs: Array<{ sessionId: string; label: string; status: CaseStepStatus }> = []
+    for (const sid of storeSessionIds) {
+      // Parse step name from executionId format: "step-name-timestamp"
+      const stepMatch = sid.match(/^(.+)-\d+$/)
+      const label = stepMatch ? getSessionLabel({ intent: stepMatch[1], sessionId: sid }) : sid.slice(0, 8)
+      const status = sessionStatusMap[sid] || 'idle'
+      tabs.push({ sessionId: sid, label, status })
+    }
+    return tabs
+  }, [storeSessionIds, sessionStatusMap])
+
+  // Auto-select session tab (only when tabs change, not when selectedSessionId changes)
   useEffect(() => {
-    if (activeSessions.length > 0 && !selectedSessionId) {
-      setSelectedSessionId(activeSessionId)
+    setSelectedSessionId((prev) => {
+      // If no tab selected, auto-select the store's active session or first active
+      if (!prev && (storeActiveSessionId || activeSessions.length > 0)) {
+        return storeActiveSessionId || activeSessionId || activeSessions[0]?.sessionId || null
+      }
+      // If selected session was ended (no longer in tabs), switch to active
+      if (prev && !sessionTabs.some(t => t.sessionId === prev)) {
+        return storeActiveSessionId || activeSessionId || activeSessions[0]?.sessionId || null
+      }
+      return prev
+    })
+  }, [sessionTabs, storeActiveSessionId, activeSessionId, activeSessions])
+
+  // Auto-select new session when a new step starts
+  useEffect(() => {
+    if (storeActiveSessionId && storeActiveSessionId !== selectedSessionId) {
+      setSelectedSessionId(storeActiveSessionId)
     }
-    // If selected session is no longer in active list, reset
-    if (selectedSessionId && !activeSessions.some((s: any) => s.sessionId === selectedSessionId)) {
-      setSelectedSessionId(activeSessionId || (activeSessions[0] as any)?.sessionId || null)
-    }
-  }, [activeSessions, activeSessionId, selectedSessionId])
+  }, [storeActiveSessionId])
 
   const { data: persistedData } = useCaseMessages(caseNumber)
   const hasRecoveredRef = useRef(false)
@@ -306,7 +384,7 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
   useEffect(() => {
     if (
       persistedData?.messages?.length &&
-      messages.length === 0 &&
+      effectiveMessages.length === 0 &&
       !hasRecoveredRef.current
     ) {
       hasRecoveredRef.current = true
@@ -321,11 +399,11 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
         })
       }
     }
-  }, [persistedData, messages.length, caseNumber])
+  }, [persistedData, effectiveMessages.length, caseNumber])
 
   // Step progress recovery — hydrate caseAssistantStore on page refresh
   const hasStepRecoveredRef = useRef(false)
-  const needsStepRecovery = stepMessages.length === 0 && !hasStepRecoveredRef.current
+  const needsStepRecovery = selectedStepMessages.length === 0 && !hasStepRecoveredRef.current
   const { data: stepProgressData } = useCaseStepProgress(caseNumber, needsStepRecovery)
   const loadStepMessages = useCaseAssistantStore((s) => s.loadMessages)
   const setStepPendingQuestion = useCaseAssistantStore((s) => s.setPendingQuestion)
@@ -337,22 +415,32 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
         const status = stepProgressData.pendingQuestion ? 'waiting-input' as const
           : stepProgressData.isActive ? 'active' as const
           : 'completed' as const
-        loadStepMessages(caseNumber, stepProgressData.messages as CaseStepMessage[], status, stepProgressData.currentStep ?? undefined,
+        // Prefer executionId (unique per button click), fall back to sessionId
+        const recoveredBucketId = stepProgressData.executionId
+          || stepProgressData.messages.find((m: any) => m.sessionId)?.sessionId
+          || stepProgressData.pendingQuestion?.sessionId || '__recovered__'
+        loadStepMessages(caseNumber, recoveredBucketId, stepProgressData.messages as CaseStepMessage[], status, stepProgressData.currentStep ?? undefined,
           stepProgressData.pendingQuestion ? { sessionId: stepProgressData.pendingQuestion.sessionId, questions: stepProgressData.pendingQuestion.questions } : null)
+        if (recoveredBucketId !== '__recovered__') {
+          setSelectedSessionId(recoveredBucketId)
+        }
       }
       // Recover pending question even if no messages (edge case)
-      if (stepProgressData.pendingQuestion && !pendingQuestion) {
+      if (stepProgressData.pendingQuestion && !selectedPendingQuestion) {
         setStepPendingQuestion(caseNumber, stepProgressData.pendingQuestion.sessionId, stepProgressData.pendingQuestion.questions)
       }
     }
-  }, [stepProgressData, caseNumber, loadStepMessages, setStepPendingQuestion, pendingQuestion])
+  }, [stepProgressData, caseNumber, loadStepMessages, setStepPendingQuestion, selectedPendingQuestion])
 
+  // Auto-scroll to bottom when messages change.
   useEffect(() => {
     const container = messagesContainerRef.current
     if (container) {
-      container.scrollTop = container.scrollHeight
+      requestAnimationFrame(() => {
+        container.scrollTop = container.scrollHeight
+      })
     }
-  }, [effectiveMessages.length])
+  }, [selectedStepMessages, legacyMessages])
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -376,15 +464,27 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
   ] as const
 
   const handleAction = async (action: AIAction, emailType?: string) => {
-    if (hasActiveOperation) {
+    if (hasActiveOperation && !BACKGROUND_ACTIONS.has(action)) {
       setError(`Operation already running: ${activeOperation!.operationType}`)
       return
     }
 
     setIsProcessing(true)
     setError(null)
+    // Auto-dismiss old non-active tabs of the same step type (completed, failed, idle/paused)
+    const storeState = useCaseAssistantStore.getState()
+    for (const sid of storeState.getSessionIds(caseNumber)) {
+      // executionId format: "step-name-timestamp" — check if same step type
+      if (sid.startsWith(`${action}-`)) {
+        const key = `${caseNumber}::${sid}`
+        const st = storeState.sessionStatus[key]
+        if (st !== 'active' && st !== 'waiting-input') {
+          storeState.clearSession(caseNumber, sid)
+        }
+      }
+    }
+    // Clear legacy messages for backward compat
     clearMessages(caseNumber)
-    clearStepMessages(caseNumber)
 
     try {
       if (action === 'process') {
@@ -414,8 +514,8 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
   }
 
   const handleChat = async () => {
-    // Allow chat with any active/paused session
-    const chatSessionId = activeSessionId || activeSessions[0]?.sessionId
+    // Send chat to the selected session (tab-aware)
+    const chatSessionId = effectiveSessionId || activeSessionId || activeSessions[0]?.sessionId
     if (!chatInput.trim() || !chatSessionId) return
     const message = chatInput.trim()
     setChatInput('')
@@ -440,14 +540,36 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
     }
   }
 
+  const setStepStatus = useCaseAssistantStore((s) => s.setStatus)
+
+  const handleDismissTab = (targetId: string) => {
+    // Mark as completed in the store, then end the underlying SDK session
+    setStepStatus(caseNumber, targetId, 'completed')
+    // End the SDK session so buttons are released
+    if (activeSessionId) {
+      apiDelete(`/case/${caseNumber}/session`, { sessionId: activeSessionId }).catch(() => {})
+    }
+    // Remove the tab from store
+    clearSession(caseNumber, targetId)
+    if (selectedSessionId === targetId) {
+      const remaining = sessionTabs.filter(t => t.sessionId !== targetId)
+      setSelectedSessionId(remaining[0]?.sessionId || null)
+    }
+  }
+
   const handleEndSession = async () => {
-    if (!activeSessionId) return
+    // Cancel the active step execution
     try {
-      await apiDelete(`/case/${caseNumber}/session`, { sessionId: activeSessionId })
-      clearMessages(caseNumber)
-      clearStepMessages(caseNumber)
+      await apiPost(`/case/${caseNumber}/step-cancel`, {})
     } catch {
-      // ignore
+      // Fallback: try ending the SDK session directly
+      if (activeSessionId) {
+        await apiDelete(`/case/${caseNumber}/session`, { sessionId: activeSessionId }).catch(() => {})
+      }
+    }
+    // Mark current tab as failed (cancelled)
+    if (effectiveSessionId) {
+      setStepStatus(caseNumber, effectiveSessionId, 'failed')
     }
   }
 
@@ -566,7 +688,7 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
               <button
                 key={action.id}
                 onClick={() => handleAction(action.id)}
-                disabled={isActionDisabled}
+                disabled={isDisabledFor(action.id)}
                 className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md text-left text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed group"
                 style={{ color: 'var(--text-secondary)' }}
                 onMouseEnter={e => {
@@ -592,7 +714,9 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
             <div className="flex items-center gap-2 px-2.5 py-2 rounded-lg" style={{ background: 'var(--accent-amber-dim)' }}>
               <Loader2 className="w-3.5 h-3.5 animate-spin flex-shrink-0" style={{ color: 'var(--accent-amber)' }} />
               <span className="text-xs font-medium truncate flex-1" style={{ color: 'var(--accent-amber)' }}>
-                {activeOperation!.operationType}
+                {activeSessions.length > 1
+                  ? `${activeSessions.length} steps running`
+                  : activeOperation!.operationType}
               </span>
             </div>
           </div>
@@ -713,26 +837,30 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
           <Sparkles className="w-5 h-5" style={{ color: 'var(--accent-blue)' }} />
           <span className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>AI Assistant</span>
           {(hasActiveOperation || isStepActive) && (
-            <div className="flex items-center gap-1.5 ml-2 px-2 py-0.5 rounded-full" style={{ background: stepStatus === 'waiting-input' ? 'var(--accent-purple-dim)' : 'var(--accent-amber-dim)' }}>
-              <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: stepStatus === 'waiting-input' ? 'var(--accent-purple)' : 'var(--accent-amber)' }} />
-              <span className="text-xs font-medium" style={{ color: stepStatus === 'waiting-input' ? 'var(--accent-purple)' : 'var(--accent-amber)' }}>
-                {stepStatus === 'waiting-input' ? 'Waiting for input' : activeOperation?.operationType || 'Processing'}
+            <div className="flex items-center gap-1.5 ml-2 px-2 py-0.5 rounded-full" style={{ background: caseStatus === 'waiting-input' ? 'var(--accent-purple-dim)' : 'var(--accent-amber-dim)' }}>
+              <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: caseStatus === 'waiting-input' ? 'var(--accent-purple)' : 'var(--accent-amber)' }} />
+              <span className="text-xs font-medium" style={{ color: caseStatus === 'waiting-input' ? 'var(--accent-purple)' : 'var(--accent-amber)' }}>
+                {caseStatus === 'waiting-input'
+                  ? 'Waiting for input'
+                  : activeSessions.length > 1
+                    ? `${activeSessions.length} steps running`
+                    : activeOperation?.operationType || 'Processing'}
               </span>
             </div>
           )}
-          {stepStatus === 'completed' && !hasActiveOperation && (
+          {caseStatus === 'completed' && !hasActiveOperation && (
             <div className="flex items-center gap-1.5 ml-2 px-2 py-0.5 rounded-full" style={{ background: 'var(--accent-green-dim)' }}>
               <CheckCircle2 className="w-3.5 h-3.5" style={{ color: 'var(--accent-green)' }} />
               <span className="text-xs font-medium" style={{ color: 'var(--accent-green)' }}>Completed</span>
             </div>
           )}
-          {stepStatus === 'failed' && !hasActiveOperation && (
+          {caseStatus === 'failed' && !hasActiveOperation && (
             <div className="flex items-center gap-1.5 ml-2 px-2 py-0.5 rounded-full" style={{ background: 'var(--accent-red-dim)' }}>
               <AlertCircle className="w-3.5 h-3.5" style={{ color: 'var(--accent-red)' }} />
               <span className="text-xs font-medium" style={{ color: 'var(--accent-red)' }}>Failed</span>
             </div>
           )}
-          {isLiveRunning && !hasActiveOperation && !isStepActive && !stepStatus && (
+          {isLiveRunning && !hasActiveOperation && !isStepActive && !caseStatus && (
             <div className="flex items-center gap-1.5 ml-2 px-2 py-0.5 rounded-full" style={{ background: 'var(--accent-blue-dim)' }}>
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: 'var(--accent-blue)' }} />
@@ -858,7 +986,7 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
             <button
               key={action.id}
               onClick={() => handleAction(action.id)}
-              disabled={isActionDisabled}
+              disabled={isDisabledFor(action.id)}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               style={{ color: 'var(--text-secondary)' }}
               onMouseEnter={e => {
@@ -888,29 +1016,20 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
         </div>
       )}
 
-      {/* Session Tabs — when multiple active sessions exist */}
-      {activeSessions.length > 1 && (
+      {/* Session Tabs — shown when any session has messages */}
+      {sessionTabs.length > 0 && (
         <div className="flex items-center gap-1 px-5 py-1.5 flex-shrink-0 overflow-x-auto" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-          <button
-            onClick={() => setSelectedSessionId(null)}
-            className="px-2.5 py-1 rounded text-xs font-medium transition-colors flex-shrink-0"
-            style={{
-              background: selectedSessionId === null ? 'var(--accent-blue-dim)' : 'transparent',
-              color: selectedSessionId === null ? 'var(--accent-blue)' : 'var(--text-tertiary)',
-            }}
-            onMouseEnter={e => { if (selectedSessionId !== null) (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
-            onMouseLeave={e => { if (selectedSessionId !== null) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-          >
-            All
-          </button>
-          {activeSessions.map((s: any) => {
-            const isSelected = selectedSessionId === s.sessionId
-            const label = getSessionLabel(s)
+          {sessionTabs.map((tab) => {
+            const isSelected = effectiveSessionId === tab.sessionId
+            const isTabActive = tab.status === 'active'
+            const isTabWaiting = tab.status === 'waiting-input'
+            const isTabCompleted = tab.status === 'completed'
+            const isTabFailed = tab.status === 'failed'
             return (
               <button
-                key={s.sessionId}
-                onClick={() => setSelectedSessionId(s.sessionId)}
-                className="px-2.5 py-1 rounded text-xs font-medium transition-colors flex-shrink-0 flex items-center gap-1"
+                key={tab.sessionId}
+                onClick={() => setSelectedSessionId(tab.sessionId)}
+                className="px-2.5 py-1 rounded text-xs font-medium transition-colors flex-shrink-0 flex items-center gap-1.5"
                 style={{
                   background: isSelected ? 'var(--accent-blue-dim)' : 'transparent',
                   color: isSelected ? 'var(--accent-blue)' : 'var(--text-tertiary)',
@@ -918,15 +1037,49 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
                 onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
                 onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
               >
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{
-                    background: s.status === 'active' ? 'var(--accent-green)' : 'var(--accent-amber)',
-                  }} />
-                </span>
-                {label}
+                {/* Status indicator */}
+                {isTabActive && <Loader2 className="w-3 h-3 animate-spin" style={{ color: 'var(--accent-amber)' }} />}
+                {isTabWaiting && <MessageCircleQuestion className="w-3 h-3" style={{ color: 'var(--accent-purple)' }} />}
+                {isTabCompleted && <CheckCircle2 className="w-3 h-3" style={{ color: 'var(--accent-green)' }} />}
+                {isTabFailed && <AlertCircle className="w-3 h-3" style={{ color: 'var(--accent-red)' }} />}
+                {!isTabActive && !isTabWaiting && !isTabCompleted && !isTabFailed && (
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ background: 'var(--accent-amber)' }} />
+                  </span>
+                )}
+                {tab.label}
+                {/* Per-tab dismiss button (completed/failed tabs) */}
+                {(isTabCompleted || isTabFailed) && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleDismissTab(tab.sessionId)
+                    }}
+                    className="p-0.5 rounded transition-colors"
+                    style={{ color: 'var(--text-tertiary)' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)' }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-tertiary)' }}
+                    title="Dismiss"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
               </button>
             )
           })}
+          {/* Clear All button */}
+          {sessionTabs.length > 0 && (
+            <button
+              onClick={() => { clearStepMessages(caseNumber); clearMessages(caseNumber); setSelectedSessionId(null) }}
+              className="px-2 py-1 rounded text-xs transition-colors flex-shrink-0 ml-auto"
+              style={{ color: 'var(--text-tertiary)' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+              title="Clear all messages"
+            >
+              Clear
+            </button>
+          )}
         </div>
       )}
 
@@ -943,17 +1096,19 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
             <p className="text-sm mt-1">Run an action above to start interacting with the AI assistant</p>
           </div>
         ) : (
-          <SessionMessageList messages={effectiveMessages} containerRef={messagesContainerRef} maxHeightClass="" />
+          <SessionMessageList messages={effectiveMessages} maxHeightClass="" />
         )}
       </div>
 
-      {/* Step Question Form — shown when AI asks a question (AskUserQuestion interception) */}
-      {pendingQuestion && (
+      {/* Step Question Form — shown when selected session has a pending question */}
+      {selectedPendingQuestion && effectiveSessionId && (
         <StepQuestionForm
           caseNumber={caseNumber}
-          questions={pendingQuestion.questions}
-          messages={stepMessages}
-          onAnswered={() => clearPendingQuestion(caseNumber)}
+          questions={selectedPendingQuestion.questions}
+          messages={selectedStepMessages}
+          onAnswered={() => {
+            useCaseAssistantStore.getState().clearPendingQuestion(caseNumber, effectiveSessionId)
+          }}
         />
       )}
 
@@ -967,10 +1122,10 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
             onKeyDown={(e) => e.key === 'Enter' && handleChat()}
             placeholder={
               isStepActive ? 'AI is processing...'
-              : (activeSessionId || activeSessions.length > 0) ? 'Message AI...'
+              : (effectiveSessionId || activeSessions.length > 0) ? 'Message AI...'
               : 'Start an action above first...'
             }
-            disabled={isStepActive || (!activeSessionId && activeSessions.length === 0)}
+            disabled={isStepActive || (!effectiveSessionId && activeSessions.length === 0)}
             className="flex-1 px-4 py-2.5 text-sm rounded-lg outline-none transition-all disabled:opacity-50"
             style={{
               background: 'var(--bg-inset)',
@@ -980,17 +1135,17 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
           />
           <button
             onClick={handleChat}
-            disabled={!chatInput.trim() || isStepActive || (!activeSessionId && activeSessions.length === 0)}
+            disabled={!chatInput.trim() || isStepActive || (!effectiveSessionId && activeSessions.length === 0)}
             className="px-3.5 py-2.5 rounded-lg transition-colors disabled:opacity-40"
             style={{ background: 'var(--accent-blue)', color: 'var(--text-inverse)' }}
           >
             <Send className="w-4.5 h-4.5" />
           </button>
         </div>
-        {activeSessionId && (
+        {effectiveSessionId && (
           <div className="flex items-center gap-1.5 mt-2">
-            {/* State-driven action buttons */}
-            {stepStatus === 'active' && (
+            {/* State-driven action buttons — based on selected session status */}
+            {selectedSessionStatus === 'active' && (
               <button
                 onClick={handleEndSession}
                 className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded transition-colors"
@@ -999,26 +1154,17 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
                 <Square className="w-3.5 h-3.5" /> Cancel
               </button>
             )}
-            {(stepStatus === 'completed' || stepStatus === 'failed' || (!stepStatus && !hasActiveOperation)) && (
-              <>
-                <button
-                  onClick={handleEndSession}
-                  className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded transition-colors"
-                  style={{ color: 'var(--accent-green)', background: 'var(--accent-green-dim)' }}
-                >
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Done
-                </button>
-                <button
-                  onClick={() => handleAction('data-refresh')}
-                  className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded transition-colors"
-                  style={{ color: 'var(--text-secondary)', background: 'var(--bg-inset)' }}
-                >
-                  <RefreshCw className="w-3.5 h-3.5" /> Retry
-                </button>
-              </>
+            {(selectedSessionStatus === 'completed' || selectedSessionStatus === 'failed') && (
+              <button
+                onClick={() => handleDismissTab(effectiveSessionId)}
+                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded transition-colors"
+                style={{ color: 'var(--accent-green)', background: 'var(--accent-green-dim)' }}
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" /> Done
+              </button>
             )}
             <button
-              onClick={() => { clearMessages(caseNumber); clearStepMessages(caseNumber) }}
+              onClick={() => { if (effectiveSessionId) clearSession(caseNumber, effectiveSessionId) }}
               className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded transition-colors ml-auto"
               style={{ color: 'var(--text-tertiary)' }}
             >
@@ -1028,83 +1174,35 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
         )}
       </div>
 
-      {/* Session List — only active/paused sessions + controls */}
-      {(activeSessions.length > 0 || allSessions.length > 0) && (
-        <div style={{ borderTop: '1px solid var(--border-subtle)' }} className="flex-shrink-0 px-5 py-2.5">
-          {/* Section header with Agent Monitor link */}
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium flex items-center gap-1.5" style={{ color: 'var(--text-tertiary)' }}>
-              <Brain className="w-3.5 h-3.5" />
-              {activeSessions.length > 0
-                ? `${activeSessions.length} active session${activeSessions.length > 1 ? 's' : ''}`
-                : 'No active sessions'
-              }
-            </span>
-            <div className="flex items-center gap-2">
-              {/* Stop All button — when 2+ non-completed sessions */}
-              {activeSessions.length >= 2 && (
-                <button
-                  onClick={() => endAllSessions.mutate(caseNumber)}
-                  className="text-xs flex items-center gap-1 px-2 py-1 rounded transition-colors"
-                  style={{ color: 'var(--accent-red)' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--accent-red-dim)' }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-                >
-                  <Square className="w-3 h-3" /> Stop All
-                </button>
-              )}
-              {/* Agent Monitor link */}
+      {/* Session Info Footer — Agent Monitor link + Stop All */}
+      {activeSessions.length > 0 && (
+        <div style={{ borderTop: '1px solid var(--border-subtle)' }} className="flex-shrink-0 px-5 py-2 flex items-center justify-between">
+          <span className="text-xs font-medium flex items-center gap-1.5" style={{ color: 'var(--text-tertiary)' }}>
+            <Brain className="w-3.5 h-3.5" />
+            {activeSessions.length} active session{activeSessions.length > 1 ? 's' : ''}
+          </span>
+          <div className="flex items-center gap-2">
+            {activeSessions.length >= 2 && (
               <button
-                onClick={() => navigate('/agents')}
+                onClick={() => endAllSessions.mutate(caseNumber)}
                 className="text-xs flex items-center gap-1 px-2 py-1 rounded transition-colors"
-                style={{ color: 'var(--accent-blue)' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--accent-blue-dim)' }}
+                style={{ color: 'var(--accent-red)' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--accent-red-dim)' }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
               >
-                <ExternalLink className="w-3 h-3" /> Agent Monitor
+                <Square className="w-3 h-3" /> Stop All
               </button>
-            </div>
+            )}
+            <button
+              onClick={() => navigate('/agents')}
+              className="text-xs flex items-center gap-1 px-2 py-1 rounded transition-colors"
+              style={{ color: 'var(--accent-blue)' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--accent-blue-dim)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+            >
+              <ExternalLink className="w-3 h-3" /> Monitor
+            </button>
           </div>
-
-          {/* Active/paused session list with per-session Stop buttons */}
-          {activeSessions.length > 0 && (
-            <div className="space-y-1.5">
-              {activeSessions.map((s: any) => (
-                <div
-                  key={s.sessionId}
-                  className="flex items-center justify-between text-xs py-1.5 px-2 rounded"
-                  style={{ background: 'var(--bg-inset)' }}
-                >
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <SessionBadge status={s.status} sessionId={s.sessionId} compact />
-                    <span className="truncate max-w-[200px]" style={{ color: 'var(--text-tertiary)' }}>{getSessionLabel(s)}</span>
-                  </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <span className="tabular-nums" style={{ color: 'var(--text-tertiary)' }}>
-                      {new Date(s.lastActivityAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                    {/* Per-session Stop button */}
-                    <button
-                      onClick={() => endCaseSession.mutate({ caseId: caseNumber, sessionId: s.sessionId })}
-                      className="p-1 rounded transition-colors"
-                      style={{ color: 'var(--text-tertiary)' }}
-                      onMouseEnter={e => {
-                        (e.currentTarget as HTMLElement).style.color = 'var(--accent-red)'
-                        ;(e.currentTarget as HTMLElement).style.background = 'var(--accent-red-dim)'
-                      }}
-                      onMouseLeave={e => {
-                        (e.currentTarget as HTMLElement).style.color = 'var(--text-tertiary)'
-                        ;(e.currentTarget as HTMLElement).style.background = 'transparent'
-                      }}
-                      title="Stop this session"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       )}
     </div>
