@@ -13,6 +13,7 @@ import AgentMonitor from './pages/AgentMonitor'
 import DraftsPage from './pages/DraftsPage'
 import SettingsPage from './pages/SettingsPage'
 import Issues from './pages/Issues'
+import CasesPage from './pages/CasesPage'
 import { PageLoading } from './components/common/Loading'
 import { ErrorBoundary } from './components/common/ErrorBoundary'
 
@@ -24,6 +25,7 @@ function AuthenticatedApp() {
       <ErrorBoundary>
       <Routes>
         <Route path="/" element={<Dashboard />} />
+        <Route path="/cases" element={<CasesPage />} />
         <Route path="/case/:id" element={<CaseDetail />} />
         <Route path="/todo" element={<TodoView />} />
         <Route path="/agents" element={<AgentMonitor />} />

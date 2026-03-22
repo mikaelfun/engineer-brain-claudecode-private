@@ -22,6 +22,7 @@ type NavEntry = NavItem | NavSection
 
 const navItems: NavEntry[] = [
   { path: '/', label: 'Dashboard', icon: '📊', exact: true },
+  { path: '/cases', label: 'Cases', icon: '📁' },
   { path: '/todo', label: 'Todo', icon: '📌' },
   { path: '/agents', label: 'Agents', icon: '🤖' },
   { path: '/drafts', label: 'Drafts', icon: '✉️' },
