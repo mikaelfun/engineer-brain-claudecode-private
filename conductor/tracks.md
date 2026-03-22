@@ -81,3 +81,4 @@
 | [x] | free-chat_20260323 | AI Assistant Free Chat — 无 session 时允许用户直接聊天 | 2026-03-23 | 2026-03-23 |
 | [x] | monitor-step-group_20260323 | Agent Monitor Step-Grouped Message Display | 2026-03-23 | 2026-03-23 |
 | [x] | session-reuse_20260323 | Full Process 应继承已有 Session 而非总是新建 | 2026-03-23 | 2026-03-23 |
+| [x] | ai-panel-timeline_20260322 | CaseAIPanel Timeline + Filter Tab Redesign | 2026-03-22 | 2026-03-23 |
