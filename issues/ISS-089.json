@@ -1,0 +1,11 @@
+{
+  "id": "ISS-089",
+  "title": "WebUI restart 按钮产生残留进程 — killPid 不杀进程树 + spawnBackend 无 killPort",
+  "description": "restart-service.ts 的重启实现存在 3 个 bug，导致每次 WebUI 点击 Restart 按钮都遗留 2-4 个孤儿进程：\n\n1. killPid() 使用 `taskkill /F /PID` 只杀单个进程，不杀进程树。应加 /T 参数。shell:true + detached:true spawn 出的链路是 cmd.exe → npx node.exe → vite/tsx node.exe，killPort 只能找到最内层监听端口的 node.exe，外层 cmd.exe 和 npx 全部变成孤儿。\n\n2. spawnFrontend/spawnBackend 没有保存 child.pid，下次 restart 无法直接定位和杀掉上次 spawn 的进程树根。\n\n3. restartBackend() 没有调用 killPort(BACKEND_PORT)，依赖 process.exit(0) 释放端口，但 detached 的父 cmd.exe 和 npx 中间层还活着。对比 restartFrontend() 有 killPort 但也因 bug1 只杀了叶子进程。\n\n影响：每次重启都滚雪球式增加残留进程，长时间运行后累积大量僵尸 cmd.exe/node.exe/bash.exe。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "restart-proc-leak_20260322",
+  "createdAt": "2026-03-22T22:50:00+08:00",
+  "updatedAt": "2026-03-22T23:05:00+08:00"
+}

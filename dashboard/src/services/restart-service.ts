@@ -3,6 +3,9 @@
  *
  * 开发模式下通过 shell 命令杀指定端口进程并 spawn 新进程。
  * Windows 环境使用 taskkill + netstat 定位 PID。
+ *
+ * ISS-089: Fix process tree leak — use /T flag, track spawned PIDs,
+ *          killPort before backend restart.
  */
 import { exec, spawn } from 'child_process'
 import { promisify } from 'util'
@@ -14,6 +17,10 @@ const execAsync = promisify(exec)
 
 const FRONTEND_PORT = 5173
 const BACKEND_PORT = config.port // default 3001
+
+// ISS-089: Track spawned child PIDs for clean kill on next restart
+let lastFrontendPid: number | null = null
+let lastBackendPid: number | null = null
 
 /** Find PID listening on a given port (Windows) */
 async function findPidByPort(port: number): Promise<number | null> {
@@ -33,23 +40,38 @@ async function findPidByPort(port: number): Promise<number | null> {
   }
 }
 
-/** Kill a process by PID (Windows) */
+/** Kill a process tree by PID (Windows) — ISS-089: added /T for tree kill */
 async function killPid(pid: number): Promise<void> {
   try {
-    await execAsync(`taskkill /F /PID ${pid}`)
+    await execAsync(`taskkill /F /T /PID ${pid}`)
   } catch {
     // process may already be dead
   }
 }
 
-/** Kill process on a given port */
-async function killPort(port: number): Promise<boolean> {
-  const pid = await findPidByPort(port)
-  if (!pid) return false
-  await killPid(pid)
-  // Wait a moment for port to be released
-  await new Promise(r => setTimeout(r, 500))
-  return true
+/** Kill saved spawned process + port listener as fallback */
+async function killSavedAndPort(savedPid: number | null, port: number): Promise<boolean> {
+  let killed = false
+
+  // First: kill saved process tree (the cmd.exe root we spawned)
+  if (savedPid) {
+    console.log(`[restart] Killing saved process tree PID=${savedPid}`)
+    await killPid(savedPid)
+    killed = true
+    // Wait for process tree to die
+    await new Promise(r => setTimeout(r, 300))
+  }
+
+  // Fallback: kill whatever is still listening on the port
+  const portPid = await findPidByPort(port)
+  if (portPid) {
+    console.log(`[restart] Killing port ${port} listener PID=${portPid}`)
+    await killPid(portPid)
+    killed = true
+    await new Promise(r => setTimeout(r, 300))
+  }
+
+  return killed
 }
 
 /** Spawn frontend dev server (vite) as detached process */
@@ -61,6 +83,9 @@ function spawnFrontend(): void {
     detached: true,
     stdio: 'ignore',
   })
+  // ISS-089: save PID for clean kill on next restart
+  lastFrontendPid = child.pid ?? null
+  console.log(`[restart] Spawned frontend PID=${lastFrontendPid}`)
   child.unref()
 }
 
@@ -74,11 +99,16 @@ function spawnBackend(): void {
     stdio: 'ignore',
     env: { ...process.env, PORT: String(BACKEND_PORT) },
   })
+  // ISS-089: save PID for clean kill on next restart
+  lastBackendPid = child.pid ?? null
+  console.log(`[restart] Spawned backend PID=${lastBackendPid}`)
   child.unref()
 }
 
 export async function restartFrontend(): Promise<{ success: boolean; message: string }> {
-  const killed = await killPort(FRONTEND_PORT)
+  // ISS-089: kill saved process tree + port fallback
+  const killed = await killSavedAndPort(lastFrontendPid, FRONTEND_PORT)
+  lastFrontendPid = null
   spawnFrontend()
   return {
     success: true,
@@ -92,7 +122,9 @@ export async function restartBackend(): Promise<{ success: boolean; message: str
   // Abort all active SDK queries before exiting (ISS-086)
   const aborted = abortAllQueries()
   console.log(`[restart] Aborted ${aborted} active queries before backend restart`)
-  // For backend self-restart: spawn new process first, then exit current
+  // ISS-089: kill old backend process tree + port before spawning new one
+  await killSavedAndPort(lastBackendPid, BACKEND_PORT)
+  lastBackendPid = null
   spawnBackend()
   // Schedule self-exit after response is sent
   setTimeout(() => process.exit(0), 500)
@@ -106,9 +138,13 @@ export async function restartAll(): Promise<{ success: boolean; message: string 
   // Abort all active SDK queries before exiting (ISS-086)
   const aborted = abortAllQueries()
   console.log(`[restart] Aborted ${aborted} active queries before full restart`)
-  // Restart frontend first (non-destructive to current process)
-  await restartFrontend()
-  // Then restart backend (will kill current process)
+  // ISS-089: kill both saved process trees + ports
+  await killSavedAndPort(lastFrontendPid, FRONTEND_PORT)
+  lastFrontendPid = null
+  await killSavedAndPort(lastBackendPid, BACKEND_PORT)
+  lastBackendPid = null
+  // Spawn fresh processes
+  spawnFrontend()
   spawnBackend()
   setTimeout(() => process.exit(0), 500)
   return {
@@ -116,3 +152,6 @@ export async function restartAll(): Promise<{ success: boolean; message: string 
     message: `All services restarting...`,
   }
 }
+
+// Export for testing
+export { lastFrontendPid, lastBackendPid, findPidByPort, killPid, killSavedAndPort }

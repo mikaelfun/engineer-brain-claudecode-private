@@ -1,0 +1,19 @@
+{
+  "id": "restart-proc-leak_20260322",
+  "title": "WebUI Restart 进程泄漏修复",
+  "type": "bug",
+  "status": "complete",
+  "created": "2026-03-22T22:55:00+08:00",
+  "updated": "2026-03-22T23:05:00+08:00",
+  "issueId": "ISS-089",
+  "current_phase": 3,
+  "current_task": "3.2",
+  "phases": {
+    "total": 3,
+    "completed": 3
+  },
+  "tasks": {
+    "total": 8,
+    "completed": 7
+  }
+}
