@@ -16,7 +16,7 @@ import {
 import { apiPost, apiDelete } from '../api/client'
 import { useCaseSessions, useCaseOperation, useCaseMessages, useEndAllCaseSessions, useEndCaseSession, useCaseStepProgress } from '../api/hooks'
 import { useCaseSessionStore, type CaseSessionMessage } from '../stores/caseSessionStore'
-import { useCaseAssistantStore, EMPTY_STEP_MESSAGES, type CaseStepMessage, type CaseStepStatus } from '../stores/caseAssistantStore'
+import { useCaseAssistantStore, type CaseStepMessage } from '../stores/caseAssistantStore'
 import { useShallow } from 'zustand/react/shallow'
 import { SessionMessageList, groupMessagesByStep } from './session/SessionMessageList'
 import { StepQuestionForm } from './session/StepQuestionForm'
@@ -39,30 +39,6 @@ export interface QueuedMessage {
 }
 
 const EMPTY_MESSAGES: CaseSessionMessage[] = []
-
-/**
- * Convert CaseStepMessage (kind-based, from caseAssistantStore) to CaseSessionMessage
- * (type-based, for SessionMessageList). This bridges the new semantic store with
- * the existing message rendering components.
- */
-function stepMessageToSessionMessage(msg: CaseStepMessage): CaseSessionMessage {
-  const KIND_TO_TYPE: Record<string, CaseSessionMessage['type']> = {
-    started: 'system',
-    thinking: 'thinking',
-    'tool-call': 'tool-call',
-    'tool-result': 'tool-result',
-    completed: 'completed',
-    error: 'failed',
-    question: 'system',
-  }
-  return {
-    type: KIND_TO_TYPE[msg.kind] || 'system',
-    content: msg.content || msg.error || '',
-    toolName: msg.toolName,
-    step: msg.step,
-    timestamp: msg.timestamp,
-  }
-}
 
 /** Map session intent text → action button label */
 const INTENT_LABEL_MAP: Array<[RegExp, string]> = [
@@ -117,15 +93,22 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
   const activeOperation = operationData?.operation || null
   const hasActiveOperation = !!activeOperation
 
-  // Per-session message + status from caseAssistantStore
-  // Get the store-tracked active session ID (from SSE events)
-  const storeActiveSessionId = useCaseAssistantStore((s) => s.activeSessionId[caseNumber])
-  // Get all session IDs that have messages in the store (shallow compare to avoid new array ref)
-  const storeSessionIds = useCaseAssistantStore(useShallow((s) => s.getSessionIds(caseNumber)))
-  // Overall case-level status for global disable logic
-  const caseStatus = useCaseAssistantStore((s) => s.getCaseStatus(caseNumber))
+  // Per-case status from caseSessionStore (unified)
+  const caseStatus = useCaseSessionStore((s) => s.getSessionStatus(caseNumber))
   const isStepActive = caseStatus === 'active' || caseStatus === 'waiting-input'
   const isActionDisabled = isProcessing || hasActiveOperation || isStepActive
+
+  // Pending question from caseSessionStore
+  const pendingQuestion = useCaseSessionStore((s) => s.getPendingQuestion(caseNumber))
+
+  // Per-case current step
+  const currentStep = useCaseSessionStore((s) => s.currentStep[caseNumber])
+
+  // Store-tracked active session ID (from SSE events → caseSessionStore)
+  const storeActiveSessionId = useCaseSessionStore((s) => s.activeSessionId[caseNumber])
+
+  // Background action disabled logic — check caseAssistantStore sessionIds for backward compat
+  const storeSessionIds = useCaseAssistantStore(useShallow((s) => s.getSessionIds(caseNumber)))
 
   /** Background actions can run concurrently — only disabled when the same action is already running */
   const BACKGROUND_ACTIONS: ReadonlySet<AIAction> = new Set(['teams-search'])
@@ -147,63 +130,14 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
   // - Otherwise use the store's active session
   const effectiveSessionId = selectedSessionId || storeActiveSessionId || activeSessions[0]?.sessionId || null
 
-  // Per-session messages for the selected session
-  const selectedStepMessages = useCaseAssistantStore((s) => {
-    if (!effectiveSessionId) return EMPTY_STEP_MESSAGES
-    const key = `${caseNumber}::${effectiveSessionId}`
-    return s.messages[key] ?? EMPTY_STEP_MESSAGES
-  })
-
-  // Per-session status
-  const selectedSessionStatus = useCaseAssistantStore((s) => {
-    if (!effectiveSessionId) return undefined as CaseStepStatus | undefined
-    const key = `${caseNumber}::${effectiveSessionId}`
-    return s.sessionStatus[key] as CaseStepStatus | undefined
-  })
-
-  // Per-session pending question
-  const selectedPendingQuestion = useCaseAssistantStore((s) => {
-    if (!effectiveSessionId) return undefined
-    const key = `${caseNumber}::${effectiveSessionId}`
-    return s.pendingQuestions[key]
-  })
-
   const clearStepMessages = useCaseAssistantStore((s) => s.clearAll)
   const clearSession = useCaseAssistantStore((s) => s.clearSession)
 
-  // Fallback: caseSessionStore (legacy backward-compatible messages)
-  const legacyMessages = useCaseSessionStore((s) => s.messages[caseNumber] ?? EMPTY_MESSAGES)
+  // Messages: read from caseSessionStore unified per-case timeline
+  const timelineMessages = useCaseSessionStore((s) => s.messages[caseNumber] ?? EMPTY_MESSAGES)
   const clearMessages = useCaseSessionStore((s) => s.clearMessages)
 
-  // Convert step messages to session message format for SessionMessageList
-  const convertedStepMessages = useMemo(
-    () => selectedStepMessages.map(stepMessageToSessionMessage),
-    [selectedStepMessages],
-  )
-
-  // Merge ALL session messages into a unified timeline (sorted by timestamp)
-  const allStepMessages = useCaseAssistantStore(useShallow((s) => {
-    const prefix = `${caseNumber}::`
-    const allMsgs: CaseStepMessage[] = []
-    for (const [key, msgs] of Object.entries(s.messages)) {
-      if (key.startsWith(prefix) && !key.endsWith('::__active__')) {
-        allMsgs.push(...msgs)
-      }
-    }
-    return allMsgs
-  }))
-
-  const allConvertedMessages = useMemo(
-    () => allStepMessages
-      .map(stepMessageToSessionMessage)
-      .sort((a, b) => (a.timestamp || '').localeCompare(b.timestamp || '')),
-    [allStepMessages],
-  )
-
-  // Unified timeline: merge all sessions, fall back to legacy
-  const timelineMessages = allConvertedMessages.length > 0 ? allConvertedMessages : legacyMessages
-
-  // Step groups for filter tabs
+  // Step groups for filter tabs — computed from caseSessionStore timeline
   const stepGroups = useMemo(() => groupMessagesByStep(timelineMessages), [timelineMessages])
 
   // Filtered messages when a step filter is active
@@ -213,50 +147,10 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
     return group?.messages ?? EMPTY_MESSAGES
   }, [activeStepFilter, timelineMessages, stepGroups])
 
-  // Use step messages when available, fall back to legacy (kept for backward compat)
+  // Use filtered messages as the effective display source
   const effectiveMessages = filteredMessages
 
-  // Build session tabs from store session IDs (executionId-based, reactive via storeSessionIds)
-  // Also subscribe reactively to sessionStatus so tab icons update
-  const sessionStatusMap = useCaseAssistantStore(useShallow((s) => {
-    const map: Record<string, CaseStepStatus> = {}
-    const prefix = `${caseNumber}::`
-    for (const [k, v] of Object.entries(s.sessionStatus)) {
-      if (k.startsWith(prefix)) {
-        map[k.slice(prefix.length)] = v
-      }
-    }
-    return map
-  }))
-
-  const sessionTabs = useMemo(() => {
-    const tabs: Array<{ sessionId: string; label: string; status: CaseStepStatus }> = []
-    for (const sid of storeSessionIds) {
-      // Parse step name from executionId format: "step-name-timestamp"
-      const stepMatch = sid.match(/^(.+)-\d+$/)
-      const label = stepMatch ? getSessionLabel({ intent: stepMatch[1], sessionId: sid }) : sid.slice(0, 8)
-      const status = sessionStatusMap[sid] || 'idle'
-      tabs.push({ sessionId: sid, label, status })
-    }
-    return tabs
-  }, [storeSessionIds, sessionStatusMap])
-
-  // Auto-select session tab (only when tabs change, not when selectedSessionId changes)
-  useEffect(() => {
-    setSelectedSessionId((prev) => {
-      // If no tab selected, auto-select the store's active session or first active
-      if (!prev && (storeActiveSessionId || activeSessions.length > 0)) {
-        return storeActiveSessionId || activeSessionId || activeSessions[0]?.sessionId || null
-      }
-      // If selected session was ended (no longer in tabs), switch to active
-      if (prev && !sessionTabs.some(t => t.sessionId === prev)) {
-        return storeActiveSessionId || activeSessionId || activeSessions[0]?.sessionId || null
-      }
-      return prev
-    })
-  }, [sessionTabs, storeActiveSessionId, activeSessionId, activeSessions])
-
-  // Auto-select new session when a new step starts
+  // Auto-select new session when a new step starts (via caseSessionStore)
   useEffect(() => {
     if (storeActiveSessionId && storeActiveSessionId !== selectedSessionId) {
       setSelectedSessionId(storeActiveSessionId)
@@ -286,36 +180,56 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
     }
   }, [persistedData, effectiveMessages.length, caseNumber])
 
-  // Step progress recovery — hydrate caseAssistantStore on page refresh
+  // Step progress recovery — hydrate caseSessionStore on page refresh
   const hasStepRecoveredRef = useRef(false)
-  const needsStepRecovery = selectedStepMessages.length === 0 && !hasStepRecoveredRef.current
+  const needsStepRecovery = timelineMessages.length === 0 && !hasStepRecoveredRef.current
   const { data: stepProgressData } = useCaseStepProgress(caseNumber, needsStepRecovery)
-  const loadStepMessages = useCaseAssistantStore((s) => s.loadMessages)
-  const setStepPendingQuestion = useCaseAssistantStore((s) => s.setPendingQuestion)
 
   useEffect(() => {
     if (stepProgressData && !hasStepRecoveredRef.current) {
       hasStepRecoveredRef.current = true
+      const store = useCaseSessionStore.getState()
       if (stepProgressData.messages?.length) {
+        // Determine status from step progress data
         const status = stepProgressData.pendingQuestion ? 'waiting-input' as const
           : stepProgressData.isActive ? 'active' as const
           : 'completed' as const
-        // Prefer executionId (unique per button click), fall back to sessionId
+        // Populate caseSessionStore unified timeline
+        const KIND_TO_TYPE: Record<string, CaseSessionMessage['type']> = {
+          started: 'system', thinking: 'thinking', 'tool-call': 'tool-call',
+          'tool-result': 'tool-result', completed: 'completed', error: 'failed', question: 'system',
+        }
+        for (const msg of stepProgressData.messages) {
+          const msgKind = (msg as any).kind || ''
+          store.addMessage(caseNumber, {
+            type: KIND_TO_TYPE[msgKind] || (msg as any).type || 'system',
+            content: msg.content || (msg as any).error || '',
+            toolName: msg.toolName,
+            step: msg.step,
+            timestamp: msg.timestamp,
+          })
+        }
+        // Set status and current step
+        store.setSessionStatus(caseNumber, status)
+        if (stepProgressData.currentStep) {
+          store.setCurrentStep(caseNumber, stepProgressData.currentStep)
+        }
+        // Also write to caseAssistantStore for backward compat
         const recoveredBucketId = stepProgressData.executionId
           || stepProgressData.messages.find((m: any) => m.sessionId)?.sessionId
           || stepProgressData.pendingQuestion?.sessionId || '__recovered__'
-        loadStepMessages(caseNumber, recoveredBucketId, stepProgressData.messages as CaseStepMessage[], status, stepProgressData.currentStep ?? undefined,
-          stepProgressData.pendingQuestion ? { sessionId: stepProgressData.pendingQuestion.sessionId, questions: stepProgressData.pendingQuestion.questions } : null)
-        if (recoveredBucketId !== '__recovered__') {
-          setSelectedSessionId(recoveredBucketId)
-        }
+        useCaseAssistantStore.getState().loadMessages(
+          caseNumber, recoveredBucketId, stepProgressData.messages as CaseStepMessage[], status,
+          stepProgressData.currentStep ?? undefined,
+          stepProgressData.pendingQuestion ? { sessionId: stepProgressData.pendingQuestion.sessionId, questions: stepProgressData.pendingQuestion.questions } : null
+        )
       }
-      // Recover pending question even if no messages (edge case)
-      if (stepProgressData.pendingQuestion && !selectedPendingQuestion) {
-        setStepPendingQuestion(caseNumber, stepProgressData.pendingQuestion.sessionId, stepProgressData.pendingQuestion.questions)
+      // Recover pending question
+      if (stepProgressData.pendingQuestion && !pendingQuestion) {
+        store.setPendingQuestion(caseNumber, stepProgressData.pendingQuestion.sessionId, stepProgressData.pendingQuestion.questions)
       }
     }
-  }, [stepProgressData, caseNumber, loadStepMessages, setStepPendingQuestion, selectedPendingQuestion])
+  }, [stepProgressData, caseNumber, pendingQuestion])
 
   // Auto-scroll to bottom when messages change.
   useEffect(() => {
@@ -325,7 +239,7 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
         container.scrollTop = container.scrollHeight
       })
     }
-  }, [selectedStepMessages, legacyMessages])
+  }, [timelineMessages])
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -503,21 +417,15 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
     setIsDraining(false)
   }
 
-  const setStepStatus = useCaseAssistantStore((s) => s.setStatus)
-
   const handleDismissTab = (targetId: string) => {
     // Mark as completed in the store, then end the underlying SDK session
-    setStepStatus(caseNumber, targetId, 'completed')
+    useCaseSessionStore.getState().setSessionStatus(caseNumber, 'completed')
     // End the SDK session so buttons are released
     if (activeSessionId) {
       apiDelete(`/case/${caseNumber}/session`, { sessionId: activeSessionId }).catch(() => {})
     }
     // Remove the tab from store
     clearSession(caseNumber, targetId)
-    if (selectedSessionId === targetId) {
-      const remaining = sessionTabs.filter(t => t.sessionId !== targetId)
-      setSelectedSessionId(remaining[0]?.sessionId || null)
-    }
   }
 
   const handleEndSession = async () => {
@@ -530,10 +438,8 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
         await apiDelete(`/case/${caseNumber}/session`, { sessionId: activeSessionId }).catch(() => {})
       }
     }
-    // Mark current tab as failed (cancelled)
-    if (effectiveSessionId) {
-      setStepStatus(caseNumber, effectiveSessionId, 'failed')
-    }
+    // Mark as failed (cancelled) in caseSessionStore
+    useCaseSessionStore.getState().setSessionStatus(caseNumber, 'failed')
   }
 
   const quickActions: Array<{ id: AIAction; icon: typeof RefreshCw; label: string; color: string }> = [
@@ -823,7 +729,7 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
               <span className="text-xs font-medium" style={{ color: 'var(--accent-red)' }}>Failed</span>
             </div>
           )}
-          {isLiveRunning && !hasActiveOperation && !isStepActive && !caseStatus && (
+          {isLiveRunning && !hasActiveOperation && !isStepActive && caseStatus === 'idle' && (
             <div className="flex items-center gap-1.5 ml-2 px-2 py-0.5 rounded-full" style={{ background: 'var(--accent-blue-dim)' }}>
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: 'var(--accent-blue)' }} />
@@ -984,7 +890,13 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
         steps={stepGroups}
         activeFilter={activeStepFilter}
         onFilterChange={setActiveStepFilter}
-        onClear={() => { clearStepMessages(caseNumber); clearMessages(caseNumber); setSelectedSessionId(null); setActiveStepFilter(null) }}
+        onClear={() => {
+          clearStepMessages(caseNumber)
+          clearMessages(caseNumber)
+          useCaseSessionStore.getState().clearAll(caseNumber)
+          setSelectedSessionId(null)
+          setActiveStepFilter(null)
+        }}
       />
 
       {/* Messages area — flex-grow, scrollable */}
@@ -1004,14 +916,14 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
         )}
       </div>
 
-      {/* Step Question Form — shown when selected session has a pending question */}
-      {selectedPendingQuestion && effectiveSessionId && (
+      {/* Step Question Form — shown when case has a pending question */}
+      {pendingQuestion && (
         <StepQuestionForm
           caseNumber={caseNumber}
-          questions={selectedPendingQuestion.questions}
-          contextMessages={selectedStepMessages}
+          questions={pendingQuestion.questions}
+          contextMessages={timelineMessages}
           onAnswered={() => {
-            useCaseAssistantStore.getState().clearPendingQuestion(caseNumber, effectiveSessionId)
+            useCaseSessionStore.getState().clearPendingQuestion(caseNumber)
           }}
         />
       )}
@@ -1046,8 +958,8 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
         </div>
         {effectiveSessionId && (
           <div className="flex items-center gap-1.5 mt-2">
-            {/* State-driven action buttons — based on selected session status */}
-            {selectedSessionStatus === 'active' && (
+            {/* State-driven action buttons — based on case session status */}
+            {caseStatus === 'active' && (
               <button
                 onClick={handleEndSession}
                 className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded transition-colors"
@@ -1056,7 +968,7 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
                 <Square className="w-3.5 h-3.5" /> Cancel
               </button>
             )}
-            {(selectedSessionStatus === 'completed' || selectedSessionStatus === 'failed') && (
+            {(caseStatus === 'completed' || caseStatus === 'failed') && (
               <button
                 onClick={() => handleDismissTab(effectiveSessionId)}
                 className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded transition-colors"
