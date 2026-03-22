@@ -76,3 +76,5 @@
 | [x] | agent-monitor-sse_20260323 | Agent Monitor Session SSE 修复 | 2026-03-23 | 2026-03-23 |
 | [x] | todowrite-hang-fix_20260322 | Fix data-refresh hang on TodoWrite tool call | 2026-03-22 | 2026-03-22 |
 | [x] | ai-step-badge-fix_20260323 | AI Assistant Header Step 状态标签多 session 修复 | 2026-03-23 | 2026-03-23 |
+| [x] | step-session-visible_20260322 | Fix step session not visible in Agent Monitor | 2026-03-22 | 2026-03-22 |
+| [x] | chat-queue_20260322 | AI Assistant Chat Queue During Step Execution | 2026-03-22 | 2026-03-22 |

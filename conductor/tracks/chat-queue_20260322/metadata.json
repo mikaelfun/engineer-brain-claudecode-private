@@ -1,0 +1,16 @@
+{
+  "id": "chat-queue_20260322",
+  "title": "AI Assistant Chat Queue During Step Execution",
+  "type": "feature",
+  "status": "complete",
+  "created": "2026-03-22T10:20:00+08:00",
+  "updated": "2026-03-22T17:55:00+08:00",
+  "phases": {
+    "total": 2,
+    "completed": 2
+  },
+  "tasks": {
+    "total": 6,
+    "completed": 6
+  }
+}

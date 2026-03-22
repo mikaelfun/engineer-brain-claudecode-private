@@ -8,7 +8,7 @@
 import { useState, useMemo } from 'react'
 import {
   Sparkles, Send, CheckCircle2, Loader2, Wrench, Brain,
-  AlertCircle, ChevronRight
+  AlertCircle, ChevronRight, Clock
 } from 'lucide-react'
 import type { CaseSessionMessage } from '../../stores/caseSessionStore'
 
@@ -17,7 +17,7 @@ import type { CaseSessionMessage } from '../../stores/caseSessionStore'
 // ============================================================
 
 /** Types that are always shown individually (never collapsed) */
-const ALWAYS_SHOW: Set<string> = new Set(['system', 'completed', 'failed', 'user'])
+const ALWAYS_SHOW: Set<string> = new Set(['system', 'completed', 'failed', 'user', 'queued'])
 
 /** Collapsible verbose types */
 const TOOL_TYPES: Set<string> = new Set(['tool-call', 'tool-result'])
@@ -50,7 +50,7 @@ export function processMessages(messages: CaseSessionMessage[]): DisplayMessage[
   const filtered = messages.filter(msg => {
     if (msg.content && msg.content.trim().length > 0) return true
     // Keep tool messages even with empty content (they show toolName)
-    if (TOOL_TYPES.has(msg.type) || msg.type === 'tool_use' || msg.type === 'tool_result') return true
+    if (TOOL_TYPES.has(msg.type) || (msg.type as string) === 'tool_use' || (msg.type as string) === 'tool_result') return true
     return false
   })
 
@@ -158,27 +158,37 @@ export function SessionMessageList({
 }: SessionMessageListProps) {
   const displayMessages = useMemo(() => processMessages(messages), [messages])
 
+  // When no maxHeightClass and no containerRef, skip overflow wrapper (parent handles scrolling)
+  const wrapperClass = maxHeightClass
+    ? `${maxHeightClass} overflow-y-auto space-y-2`
+    : 'space-y-2'
+
   return (
-    <div ref={containerRef as React.LegacyRef<HTMLDivElement>} className={`${maxHeightClass} overflow-y-auto space-y-2`}>
+    <div ref={containerRef as React.LegacyRef<HTMLDivElement>} className={wrapperClass}>
       {displayMessages.map((dm, i) => {
         if (dm.kind === 'single') {
           return <MessageBubble key={i} message={dm.messages[0]} />
         }
-        return <CollapsedGroup key={i} group={dm} />
+        return <CollapsedGroup key={i} group={dm} isLast={i === displayMessages.length - 1} />
       })}
     </div>
   )
 }
 
 /** Collapsed group — compact summary with expand toggle */
-export function CollapsedGroup({ group }: { group: DisplayMessage }) {
-  const [expanded, setExpanded] = useState(false)
+export function CollapsedGroup({ group, isLast }: { group: DisplayMessage; isLast?: boolean }) {
+  // Tools: default collapsed; Thinking: default expanded (show full content)
+  const [expanded, setExpanded] = useState(group.kind !== 'collapsed-tools')
 
   if (group.kind === 'collapsed-tools') {
     const toolCount = group.messages.filter(m => m.type === 'tool-call').length
     const toolLabel = group.toolNames.length <= 2
       ? group.toolNames.join(', ')
       : `${group.toolNames.slice(0, 2).join(', ')}…`
+
+    // Show spinner only if this is the last group (still executing)
+    const ToolIcon = isLast ? Loader2 : Wrench
+    const iconClass = isLast ? 'w-3.5 h-3.5 animate-spin flex-shrink-0' : 'w-3.5 h-3.5 flex-shrink-0'
 
     return (
       <div>
@@ -189,7 +199,7 @@ export function CollapsedGroup({ group }: { group: DisplayMessage }) {
           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
           onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
         >
-          <Loader2 className="w-3.5 h-3.5 animate-spin flex-shrink-0" style={{ color: 'var(--accent-amber)' }} />
+          <ToolIcon className={iconClass} style={{ color: 'var(--accent-amber)' }} />
           <span className="text-xs font-medium truncate" style={{ color: 'var(--text-secondary)' }}>
             {toolLabel || 'Working'}
           </span>
@@ -199,7 +209,10 @@ export function CollapsedGroup({ group }: { group: DisplayMessage }) {
             </span>
           )}
           {group.step && (
-            <span className="text-xs ml-auto font-mono flex-shrink-0" style={{ color: 'var(--text-tertiary)' }}>{group.step}</span>
+            <span className="text-xs font-mono flex-shrink-0" style={{ color: 'var(--text-tertiary)' }}>{group.step}</span>
+          )}
+          {group.timestamp && (
+            <span className="text-xs font-mono flex-shrink-0" style={{ color: 'var(--text-tertiary)' }}>{formatTime(group.timestamp)}</span>
           )}
           <ChevronRight
             className={`w-3 h-3 flex-shrink-0 transition-transform ${expanded ? 'rotate-90' : ''}`}
@@ -217,45 +230,29 @@ export function CollapsedGroup({ group }: { group: DisplayMessage }) {
     )
   }
 
-  // collapsed-thinking
-  const lastThinking = group.messages[group.messages.length - 1]
-  const preview = lastThinking.content.length > 60
-    ? lastThinking.content.slice(0, 60) + '…'
-    : lastThinking.content
-
+  // collapsed-thinking — show all messages expanded by default (full content)
   return (
-    <div>
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-1.5 pl-2 py-1 text-left rounded-sm transition-colors"
-        style={{ borderLeft: '2px solid var(--accent-blue)' }}
-        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
-        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-      >
-        <Brain className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--accent-blue)' }} />
-        <span className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>
-          {preview || 'Thinking…'}
-        </span>
-        {group.messages.length > 1 && (
-          <ChevronRight
-            className={`w-3 h-3 ml-auto flex-shrink-0 transition-transform ${expanded ? 'rotate-90' : ''}`}
-            style={{ color: 'var(--text-tertiary)' }}
-          />
-        )}
-      </button>
-      {expanded && group.messages.length > 1 && (
-        <div className="ml-3 mt-0.5 space-y-0.5">
-          {group.messages.map((msg, j) => (
-            <MessageBubble key={j} message={msg} compact />
-          ))}
-        </div>
-      )}
+    <div className="space-y-0.5">
+      {group.messages.map((msg, j) => (
+        <MessageBubble key={j} message={msg} />
+      ))}
     </div>
   )
 }
 
+/** Format timestamp as HH:MM:SS */
+function formatTime(ts: string | undefined): string {
+  if (!ts) return ''
+  try {
+    const d = new Date(ts)
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+  } catch {
+    return ''
+  }
+}
+
 /** Compact message bubble for sidebar width — with expand/collapse for long content */
-export function MessageBubble({ message, compact }: { message: { type: string; content: string; toolName?: string; step?: string }; compact?: boolean }) {
+export function MessageBubble({ message, compact }: { message: { type: string; content: string; toolName?: string; step?: string; timestamp?: string }; compact?: boolean }) {
   const [expanded, setExpanded] = useState(false)
 
   const styles: Record<string, { borderColor: string; icon: React.ReactNode; label: string }> = {
@@ -294,6 +291,11 @@ export function MessageBubble({ message, compact }: { message: { type: string; c
       icon: <Sparkles className="w-3.5 h-3.5" style={{ color: 'var(--text-tertiary)' }} />,
       label: 'System',
     },
+    queued: {
+      borderColor: 'var(--accent-amber)',
+      icon: <Clock className="w-3.5 h-3.5" style={{ color: 'var(--accent-amber)' }} />,
+      label: '⏳ Queued',
+    },
   }
 
   const style = styles[message.type] || styles.system
@@ -307,14 +309,17 @@ export function MessageBubble({ message, compact }: { message: { type: string; c
 
   return (
     <div
-      className={`pl-2.5 py-1.5 ${message.type === 'user' ? 'ml-4' : ''}`}
+      className={`pl-2.5 py-1.5 ${message.type === 'user' || message.type === 'queued' ? 'ml-4' : ''}`}
       style={{ borderLeft: `2px solid ${style.borderColor}` }}
     >
       <div className="flex items-center gap-1.5">
         {style.icon}
         <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>{style.label}</span>
         {message.step && (
-          <span className="text-xs ml-auto font-mono" style={{ color: 'var(--text-tertiary)' }}>{message.step}</span>
+          <span className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>{message.step}</span>
+        )}
+        {message.timestamp && (
+          <span className="text-xs font-mono ml-auto flex-shrink-0" style={{ color: 'var(--text-tertiary)' }}>{formatTime(message.timestamp)}</span>
         )}
       </div>
       {displayContent && (

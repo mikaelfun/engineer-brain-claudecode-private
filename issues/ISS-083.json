@@ -1,0 +1,11 @@
+{
+  "id": "ISS-083",
+  "title": "AI Assistant step 执行时应随时可发送消息，消息在 session 队列自动排队",
+  "description": "AI Assistant 页面在执行 step（如 data-refresh、troubleshoot 等）时，用户应该能随时在聊天输入框发送消息。发送的消息在 session 内自动队列排队，等当前 step 执行完毕后 session 自动处理用户排队的输入，而非阻塞输入或丢弃消息。",
+  "type": "feature",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "chat-queue_20260322",
+  "createdAt": "2026-03-22T10:15:00+08:00",
+  "updatedAt": "2026-03-22T17:55:00+08:00"
+}

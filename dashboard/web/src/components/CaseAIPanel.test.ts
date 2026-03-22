@@ -171,4 +171,40 @@ describe('processMessages', () => {
     expect(result).toHaveLength(1)
     expect(result[0].toolNames).toEqual([])
   })
+
+  it('passes through queued message as single item', () => {
+    const result = processMessages([msg('queued', 'My queued question')])
+    expect(result).toHaveLength(1)
+    expect(result[0].kind).toBe('single')
+    expect(result[0].messages[0].type).toBe('queued')
+    expect(result[0].messages[0].content).toBe('My queued question')
+  })
+
+  it('preserves queued messages between tool groups', () => {
+    const messages = [
+      msg('tool-call', '', 'Bash'),
+      msg('tool-result', 'output', 'Bash'),
+      msg('queued', 'Question while busy'),
+      msg('tool-call', '', 'Read'),
+    ]
+    const result = processMessages(messages)
+    expect(result).toHaveLength(3)
+    expect(result[0].kind).toBe('collapsed-tools')
+    expect(result[1].kind).toBe('single')
+    expect(result[1].messages[0].type).toBe('queued')
+    expect(result[2].kind).toBe('collapsed-tools')
+  })
+
+  it('shows multiple queued messages as separate items', () => {
+    const messages = [
+      msg('queued', 'First question'),
+      msg('queued', 'Second question'),
+    ]
+    const result = processMessages(messages)
+    expect(result).toHaveLength(2)
+    expect(result[0].kind).toBe('single')
+    expect(result[1].kind).toBe('single')
+    expect(result[0].messages[0].content).toBe('First question')
+    expect(result[1].messages[0].content).toBe('Second question')
+  })
 })

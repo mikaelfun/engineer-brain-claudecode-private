@@ -29,6 +29,14 @@ interface CaseAIPanelProps {
 
 type AIAction = 'process' | 'data-refresh' | 'compliance-check' | 'status-judge' | 'teams-search' | 'troubleshoot' | 'draft-email' | 'inspection' | 'generate-kb'
 
+/** A chat message queued locally while a step is executing */
+export interface QueuedMessage {
+  id: string
+  content: string
+  timestamp: string
+  status: 'queued' | 'sending' | 'sent' | 'failed'
+}
+
 const EMPTY_MESSAGES: CaseSessionMessage[] = []
 
 /**
@@ -245,6 +253,8 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
   const [error, setError] = useState<string | null>(null)
   const [emailTypeMenuOpen, setEmailTypeMenuOpen] = useState(false)
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
+  const [queuedMessages, setQueuedMessages] = useState<QueuedMessage[]>([])
+  const [isDraining, setIsDraining] = useState(false)
   const emailMenuRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
 
@@ -520,6 +530,24 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
     const message = chatInput.trim()
     setChatInput('')
 
+    // If step is active or we're draining the queue, queue the message locally
+    if (isStepActive || isDraining) {
+      const queuedMsg: QueuedMessage = {
+        id: `queued-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        content: message,
+        timestamp: new Date().toISOString(),
+        status: 'queued',
+      }
+      setQueuedMessages(prev => [...prev, queuedMsg])
+      // Also show in the session message list as a user message with queued indicator
+      useCaseSessionStore.getState().addMessage(caseNumber, {
+        type: 'queued',
+        content: message,
+        timestamp: queuedMsg.timestamp,
+      })
+      return
+    }
+
     useCaseSessionStore.getState().addMessage(caseNumber, {
       type: 'user',
       content: message,
@@ -538,6 +566,66 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
         timestamp: new Date().toISOString(),
       })
     }
+  }
+
+  // ---- Auto-drain queued messages when step completes ----
+  const prevIsStepActiveRef = useRef(isStepActive)
+
+  useEffect(() => {
+    const wasActive = prevIsStepActiveRef.current
+    prevIsStepActiveRef.current = isStepActive
+
+    // Detect transition: step was active → now idle, and we have queued messages
+    if (wasActive && !isStepActive && queuedMessages.length > 0) {
+      drainQueue()
+    }
+  }, [isStepActive]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  /** Drain queued messages sequentially via POST /case/:id/chat */
+  async function drainQueue() {
+    const chatSessionId = effectiveSessionId || activeSessionId || activeSessions[0]?.sessionId
+    if (!chatSessionId) return
+
+    setIsDraining(true)
+    const toSend = [...queuedMessages]
+
+    for (const qMsg of toSend) {
+      // Update status to "sending"
+      setQueuedMessages(prev =>
+        prev.map(m => m.id === qMsg.id ? { ...m, status: 'sending' as const } : m)
+      )
+
+      try {
+        // Replace the "queued" message in the stream with a normal "user" message
+        // (The queued one is already shown; we add a user-type so the response context is clear)
+        useCaseSessionStore.getState().addMessage(caseNumber, {
+          type: 'user',
+          content: qMsg.content,
+          timestamp: new Date().toISOString(),
+        })
+
+        await apiPost(`/case/${caseNumber}/chat`, {
+          sessionId: chatSessionId,
+          message: qMsg.content,
+        })
+
+        // Remove from queue on success
+        setQueuedMessages(prev => prev.filter(m => m.id !== qMsg.id))
+      } catch (err: any) {
+        // Mark as failed, keep remaining in queue
+        setQueuedMessages(prev =>
+          prev.map(m => m.id === qMsg.id ? { ...m, status: 'failed' as const } : m)
+        )
+        useCaseSessionStore.getState().addMessage(caseNumber, {
+          type: 'failed',
+          content: `Failed to send queued message: ${err?.message || 'Unknown error'}`,
+          timestamp: new Date().toISOString(),
+        })
+        break // Stop draining on first error
+      }
+    }
+
+    setIsDraining(false)
   }
 
   const setStepStatus = useCaseAssistantStore((s) => s.setStatus)
@@ -1121,11 +1209,11 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
             onChange={(e) => setChatInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleChat()}
             placeholder={
-              isStepActive ? 'AI is processing...'
+              isStepActive ? 'Message AI (queued while busy)...'
               : (effectiveSessionId || activeSessions.length > 0) ? 'Message AI...'
               : 'Start an action above first...'
             }
-            disabled={isStepActive || (!effectiveSessionId && activeSessions.length === 0)}
+            disabled={!effectiveSessionId && activeSessions.length === 0}
             className="flex-1 px-4 py-2.5 text-sm rounded-lg outline-none transition-all disabled:opacity-50"
             style={{
               background: 'var(--bg-inset)',
@@ -1135,7 +1223,7 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
           />
           <button
             onClick={handleChat}
-            disabled={!chatInput.trim() || isStepActive || (!effectiveSessionId && activeSessions.length === 0)}
+            disabled={!chatInput.trim() || (!effectiveSessionId && activeSessions.length === 0)}
             className="px-3.5 py-2.5 rounded-lg transition-colors disabled:opacity-40"
             style={{ background: 'var(--accent-blue)', color: 'var(--text-inverse)' }}
           >
