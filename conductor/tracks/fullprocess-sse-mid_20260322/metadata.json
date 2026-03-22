@@ -1,0 +1,16 @@
+{
+  "id": "fullprocess-sse-mid_20260322",
+  "title": "Fix Full Process SSE Intermediate Messages Not Shown",
+  "type": "bug",
+  "status": "complete",
+  "created": "2026-03-22T22:45:00+08:00",
+  "updated": "2026-03-22T22:50:00+08:00",
+  "phases": {
+    "total": 1,
+    "completed": 1
+  },
+  "tasks": {
+    "total": 1,
+    "completed": 1
+  }
+}

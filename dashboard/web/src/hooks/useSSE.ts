@@ -121,7 +121,16 @@ export function useSSE() {
           timestamp: d.timestamp || new Date().toISOString(),
         }
         addCaseSessionMessage(caseNumber, msg)
-        if (d.sessionId) addCaseSessionPerSession(caseNumber, d.sessionId, msg)
+        if (d.sessionId) {
+          addCaseSessionPerSession(caseNumber, d.sessionId, msg)
+          // Auto-discover session ID (ISS-090)
+          const currentActive = useCaseSessionStore.getState().activeSessionId[caseNumber]
+          if (!currentActive) {
+            sessionStoreSetActiveSession(caseNumber, d.sessionId)
+            sessionStoreSetStatus(caseNumber, 'active')
+            if (d.step) sessionStoreSetCurrentStep(caseNumber, d.step)
+          }
+        }
       }
     })
 
@@ -139,7 +148,16 @@ export function useSSE() {
           timestamp: d.timestamp || new Date().toISOString(),
         }
         addCaseSessionMessage(caseNumber, msg)
-        if (d.sessionId) addCaseSessionPerSession(caseNumber, d.sessionId, msg)
+        if (d.sessionId) {
+          addCaseSessionPerSession(caseNumber, d.sessionId, msg)
+          // Auto-discover session ID (ISS-090)
+          const currentActive = useCaseSessionStore.getState().activeSessionId[caseNumber]
+          if (!currentActive) {
+            sessionStoreSetActiveSession(caseNumber, d.sessionId)
+            sessionStoreSetStatus(caseNumber, 'active')
+            if (d.step) sessionStoreSetCurrentStep(caseNumber, d.step)
+          }
+        }
       }
     })
 
@@ -157,7 +175,16 @@ export function useSSE() {
           timestamp: d.timestamp || new Date().toISOString(),
         }
         addCaseSessionMessage(caseNumber, msg)
-        if (d.sessionId) addCaseSessionPerSession(caseNumber, d.sessionId, msg)
+        if (d.sessionId) {
+          addCaseSessionPerSession(caseNumber, d.sessionId, msg)
+          // Auto-discover session ID (ISS-090)
+          const currentActive = useCaseSessionStore.getState().activeSessionId[caseNumber]
+          if (!currentActive) {
+            sessionStoreSetActiveSession(caseNumber, d.sessionId)
+            sessionStoreSetStatus(caseNumber, 'active')
+            if (d.step) sessionStoreSetCurrentStep(caseNumber, d.step)
+          }
+        }
       }
     })
 
@@ -204,7 +231,17 @@ export function useSSE() {
           timestamp: d.timestamp || new Date().toISOString(),
         }
         addCaseSessionMessage(caseNumber, sessionMsg)
-        if (d.sessionId) addCaseSessionPerSession(caseNumber, d.sessionId, sessionMsg)
+        if (d.sessionId) {
+          addCaseSessionPerSession(caseNumber, d.sessionId, sessionMsg)
+          // Auto-discover session ID: if case-step-started lacked sessionId (e.g. full-process),
+          // promote the first progress event's sessionId to activeSession (ISS-090)
+          const currentActive = useCaseSessionStore.getState().activeSessionId[caseNumber]
+          if (!currentActive) {
+            sessionStoreSetActiveSession(caseNumber, d.sessionId)
+            sessionStoreSetStatus(caseNumber, 'active')
+            if (d.step) sessionStoreSetCurrentStep(caseNumber, d.step)
+          }
+        }
       }
     })
 
