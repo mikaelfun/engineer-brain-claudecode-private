@@ -4,11 +4,15 @@
  * Extracted from CaseAIPanel.tsx for reuse in AgentMonitor SessionDetailPanel.
  * Processes raw SSE messages into display-friendly groups (collapsed tools,
  * collapsed thinking) and renders them with expand/collapse support.
+ *
+ * groupByStep mode (ISS-085): When enabled, messages are first grouped by
+ * their `step` field, then each step group is rendered as a collapsible
+ * section with a step header showing name + status.
  */
 import { useState, useMemo } from 'react'
 import {
   Sparkles, Send, CheckCircle2, Loader2, Wrench, Brain,
-  AlertCircle, ChevronRight, Clock
+  AlertCircle, ChevronRight, ChevronDown, Clock, Play
 } from 'lucide-react'
 import type { CaseSessionMessage } from '../../stores/caseSessionStore'
 
@@ -140,6 +144,77 @@ export function processMessages(messages: CaseSessionMessage[]): DisplayMessage[
 }
 
 // ============================================================
+// Step grouping — group messages by step field (ISS-085)
+// ============================================================
+
+/** Human-friendly step labels */
+const STEP_LABELS: Record<string, string> = {
+  'full-process': 'Full Process',
+  'data-refresh': 'Data Refresh',
+  'compliance-check': 'Compliance Check',
+  'status-judge': 'Status Judge',
+  'teams-search': 'Teams Search',
+  'troubleshoot': 'Troubleshoot',
+  'draft-email': 'Draft Email',
+  'inspection': 'Inspection',
+  'generate-kb': 'Generate KB',
+}
+
+export interface StepGroup {
+  /** Step name or '__general__' for messages without step */
+  stepName: string
+  /** Human-friendly label */
+  label: string
+  /** Inferred status from messages */
+  status: 'running' | 'completed' | 'failed'
+  /** Messages in this step group */
+  messages: CaseSessionMessage[]
+  /** First message timestamp */
+  startTime: string
+  /** Last message timestamp */
+  endTime: string
+}
+
+/**
+ * Group messages by their `step` field into StepGroup[].
+ * Preserves chronological order of first appearance.
+ */
+export function groupMessagesByStep(messages: CaseSessionMessage[]): StepGroup[] {
+  if (messages.length === 0) return []
+
+  // Build ordered map: stepName → messages
+  const stepOrder: string[] = []
+  const stepMap = new Map<string, CaseSessionMessage[]>()
+
+  for (const msg of messages) {
+    const key = msg.step || '__general__'
+    if (!stepMap.has(key)) {
+      stepOrder.push(key)
+      stepMap.set(key, [])
+    }
+    stepMap.get(key)!.push(msg)
+  }
+
+  return stepOrder.map((stepName): StepGroup => {
+    const msgs = stepMap.get(stepName)!
+    // Infer status: if any message is 'completed', step is completed;
+    // if any is 'failed', step is failed; otherwise running
+    const hasCompleted = msgs.some(m => m.type === 'completed')
+    const hasFailed = msgs.some(m => m.type === 'failed')
+    const status = hasFailed ? 'failed' : hasCompleted ? 'completed' : 'running'
+
+    return {
+      stepName,
+      label: stepName === '__general__' ? 'General' : (STEP_LABELS[stepName] || stepName),
+      status,
+      messages: msgs,
+      startTime: msgs[0]?.timestamp || '',
+      endTime: msgs[msgs.length - 1]?.timestamp || '',
+    }
+  })
+}
+
+// ============================================================
 // Rendered message list with collapse/expand support
 // ============================================================
 
@@ -149,20 +224,45 @@ export interface SessionMessageListProps {
   containerRef?: React.RefObject<HTMLDivElement | null>
   /** Max height CSS class. Defaults to 'max-h-48' */
   maxHeightClass?: string
+  /** Group messages by step field (ISS-085). Used by Agent Monitor for case sessions. */
+  groupByStep?: boolean
 }
 
 export function SessionMessageList({
   messages,
   containerRef,
   maxHeightClass = 'max-h-48',
+  groupByStep = false,
 }: SessionMessageListProps) {
   const displayMessages = useMemo(() => processMessages(messages), [messages])
+  const stepGroups = useMemo(() => groupByStep ? groupMessagesByStep(messages) : [], [messages, groupByStep])
 
   // When no maxHeightClass and no containerRef, skip overflow wrapper (parent handles scrolling)
   const wrapperClass = maxHeightClass
     ? `${maxHeightClass} overflow-y-auto space-y-2`
     : 'space-y-2'
 
+  // Step-grouped mode (ISS-085)
+  if (groupByStep && stepGroups.length > 0) {
+    // Only use step-grouped mode when there are at least 2 distinct steps
+    // (or when there's at least 1 named step); otherwise fall back to flat display
+    const hasNamedSteps = stepGroups.some(g => g.stepName !== '__general__')
+    if (hasNamedSteps) {
+      return (
+        <div ref={containerRef as React.LegacyRef<HTMLDivElement>} className={wrapperClass}>
+          {stepGroups.map((group, i) => (
+            <StepGroupSection
+              key={`${group.stepName}-${i}`}
+              group={group}
+              defaultExpanded={i === stepGroups.length - 1}
+            />
+          ))}
+        </div>
+      )
+    }
+  }
+
+  // Default flat display
   return (
     <div ref={containerRef as React.LegacyRef<HTMLDivElement>} className={wrapperClass}>
       {displayMessages.map((dm, i) => {
@@ -171,6 +271,91 @@ export function SessionMessageList({
         }
         return <CollapsedGroup key={i} group={dm} isLast={i === displayMessages.length - 1} />
       })}
+    </div>
+  )
+}
+
+/** Step group section — collapsible step header with inner message list (ISS-085) */
+function StepGroupSection({ group, defaultExpanded }: { group: StepGroup; defaultExpanded: boolean }) {
+  const [expanded, setExpanded] = useState(defaultExpanded)
+  const innerDisplayMessages = useMemo(() => processMessages(group.messages), [group.messages])
+
+  const statusConfig = {
+    running: {
+      icon: <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: 'var(--accent-blue)' }} />,
+      color: 'var(--accent-blue)',
+      bg: 'var(--accent-blue-dim)',
+      label: 'Running',
+    },
+    completed: {
+      icon: <CheckCircle2 className="w-3.5 h-3.5" style={{ color: 'var(--accent-green)' }} />,
+      color: 'var(--accent-green)',
+      bg: 'var(--accent-green-dim)',
+      label: 'Done',
+    },
+    failed: {
+      icon: <AlertCircle className="w-3.5 h-3.5" style={{ color: 'var(--accent-red)' }} />,
+      color: 'var(--accent-red)',
+      bg: 'var(--accent-red-dim)',
+      label: 'Failed',
+    },
+  }
+
+  const sc = statusConfig[group.status]
+  const msgCount = group.messages.length
+  const ChevronIcon = expanded ? ChevronDown : ChevronRight
+
+  return (
+    <div className="rounded-md overflow-hidden" style={{ border: '1px solid var(--border-subtle)' }}>
+      {/* Step header */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center gap-2 px-2.5 py-1.5 text-left transition-colors"
+        style={{ background: 'var(--bg-inset)' }}
+        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
+        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-inset)' }}
+      >
+        <ChevronIcon className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--text-tertiary)' }} />
+        {group.stepName !== '__general__' ? (
+          <Play className="w-3 h-3 flex-shrink-0" style={{ color: sc.color }} />
+        ) : (
+          <Sparkles className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--text-tertiary)' }} />
+        )}
+        <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>
+          {group.label}
+        </span>
+        {/* Status badge */}
+        <span
+          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs"
+          style={{ background: sc.bg, color: sc.color }}
+        >
+          {sc.icon}
+          {sc.label}
+        </span>
+        {/* Message count */}
+        <span className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>
+          {msgCount} msg{msgCount !== 1 ? 's' : ''}
+        </span>
+        {/* Time range */}
+        {group.startTime && (
+          <span className="text-xs font-mono ml-auto" style={{ color: 'var(--text-tertiary)' }}>
+            {formatTime(group.startTime)}
+            {group.endTime && group.endTime !== group.startTime && ` → ${formatTime(group.endTime)}`}
+          </span>
+        )}
+      </button>
+
+      {/* Expanded message body */}
+      {expanded && (
+        <div className="px-2.5 py-1.5 space-y-1" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+          {innerDisplayMessages.map((dm, i) => {
+            if (dm.kind === 'single') {
+              return <MessageBubble key={i} message={dm.messages[0]} />
+            }
+            return <CollapsedGroup key={i} group={dm} isLast={i === innerDisplayMessages.length - 1} />
+          })}
+        </div>
+      )}
     </div>
   )
 }

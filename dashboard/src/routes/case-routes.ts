@@ -132,6 +132,7 @@ caseRoutes.post('/case/:id/process', async (c) => {
           sseManager.broadcast(eventType as any, {
             caseNumber,
             sessionId: capturedSessionId,
+            step: 'full-process',
             ...formatted,
           })
 
@@ -140,6 +141,7 @@ caseRoutes.post('/case/:id/process', async (c) => {
             type: getPersistedMessageType(message),
             content: formatted.content as string || '',
             toolName: formatted.toolName as string,
+            step: 'full-process',
             timestamp: formatted.timestamp as string || new Date().toISOString(),
           })
         }
@@ -147,6 +149,7 @@ caseRoutes.post('/case/:id/process', async (c) => {
         sseManager.broadcast('case-session-completed', {
           caseNumber,
           sessionId: capturedSessionId,
+          step: 'full-process',
         })
         appendSessionMessage(caseNumber, {
           type: 'completed',
@@ -166,6 +169,7 @@ caseRoutes.post('/case/:id/process', async (c) => {
         sseManager.broadcast('case-session-failed', {
           caseNumber,
           sessionId: capturedSessionId,
+          step: 'full-process',
           error: errorMsg,
         })
 
