@@ -29,6 +29,8 @@ import {
   appendSessionMessage,
   clearSessionMessages,
   writeStepLog,
+  endSession,
+  abortQuery,
 } from '../agent/case-session-manager.js'
 import { sseManager } from '../watcher/sse-manager.js'
 import { getSSEEventType, formatMessageForSSE, getPersistedMessageType } from '../utils/sse-helpers.js'
@@ -51,18 +53,80 @@ const VALID_STEPS = [
 type StepName = typeof VALID_STEPS[number]
 
 /**
+ * Steps that support interactive Q&A (AskUserQuestion → dashboard UI).
+ * Automated steps (data-refresh, compliance-check, etc.) deny AskUserQuestion
+ * without interrupting — the model is told to proceed autonomously.
+ */
+const INTERACTIVE_STEPS: ReadonlySet<string> = new Set([
+  'troubleshoot',
+  'draft-email',
+])
+
+/**
+ * Background steps that run concurrently without blocking other steps.
+ * These do NOT acquire the per-case operation lock, so other steps can
+ * start while they are running (mirroring the casework flow where
+ * teams-search runs in parallel with data-refresh).
+ */
+const BACKGROUND_STEPS: ReadonlySet<string> = new Set([
+  'teams-search',
+])
+
+/**
+ * REPL-only tools that hang in headless SDK mode.
+ * These are Claude Code built-in tools designed for interactive terminal sessions.
+ * They must be denied in automated SDK step sessions to prevent hangs (ISS-079).
+ */
+const REPL_ONLY_TOOLS: ReadonlySet<string> = new Set([
+  'TodoWrite',
+  'TodoRead',
+  'TaskCreate',
+  'TaskUpdate',
+  'TaskList',
+  'TaskGet',
+  'EnterPlanMode',
+  'ExitPlanMode',
+])
+
+/**
  * Create a canUseTool callback that intercepts AskUserQuestion tool calls.
  * Modeled after the issue-track pattern in issues.ts.
  *
  * Uses a closure over getSessionId so that the session ID can be backfilled
  * after it becomes available from the SDK message stream. (ISS-029 pattern)
+ *
+ * Also blocks REPL-only tools (TodoWrite, TaskCreate, etc.) that hang in
+ * headless SDK mode (ISS-079).
+ *
+ * For automated steps (data-refresh, compliance-check, etc.), AskUserQuestion
+ * is denied WITHOUT interrupting — the model continues autonomously.
+ * For interactive steps (troubleshoot, draft-email), AskUserQuestion is
+ * intercepted and forwarded to the dashboard UI for user response.
  */
 function createStepCanUseTool(
   caseNumber: string,
+  stepName: string,
   getSessionId: () => string | undefined,
 ): CanUseTool {
   return async (toolName, input, _options) => {
+    // Block REPL-only tools that hang in headless SDK mode (ISS-079)
+    if (REPL_ONLY_TOOLS.has(toolName)) {
+      return {
+        behavior: 'deny' as const,
+        message: 'Task tracking tools (TodoWrite, TaskCreate, etc.) are not available in automated SDK sessions. Skip task management and proceed directly with the actual work.',
+      }
+    }
+
     if (toolName === 'AskUserQuestion') {
+      // For automated steps, deny without interrupting — model should proceed
+      if (!INTERACTIVE_STEPS.has(stepName)) {
+        return {
+          behavior: 'deny' as const,
+          message: 'This is an automated step. Do not ask for approval or confirmation — proceed with all operations autonomously. Execute all bash commands and operations without asking.',
+        }
+      }
+
+      // For interactive steps, intercept and forward to dashboard UI
       const rawQuestions = (input as any).questions || []
       const questions: CaseStepQuestion[] = rawQuestions.map((q: any) => ({
         question: q.question || '',
@@ -84,7 +148,7 @@ function createStepCanUseTool(
         content: questions.map(q => q.question).join('; '),
         timestamp: new Date().toISOString(),
       }
-      sseManager.broadcast('case-step-question' as any, {
+      sseManager.broadcast('case-step-question', {
         caseNumber,
         sessionId,
         questions,
@@ -96,6 +160,55 @@ function createStepCanUseTool(
     }
     return { behavior: 'allow' as const }
   }
+}
+
+/**
+ * Extract a human-readable summary from tool input.
+ * Shows what the tool is doing (command, query, file path, search message, etc.)
+ */
+function summarizeToolInput(toolName: string, input: any): string {
+  if (!input || typeof input !== 'object') return ''
+  try {
+    // Bash: show the command being run
+    if (toolName === 'Bash' && input.command) {
+      return input.command.slice(0, 300)
+    }
+    // Read/Write/Edit: show file path
+    if ((toolName === 'Read' || toolName === 'Write' || toolName === 'Edit') && input.file_path) {
+      return input.file_path
+    }
+    // Glob: show pattern
+    if (toolName === 'Glob' && input.pattern) {
+      return input.pattern
+    }
+    // Grep: show search pattern
+    if (toolName === 'Grep' && input.pattern) {
+      return `/${input.pattern}/` + (input.path ? ` in ${input.path}` : '')
+    }
+    // Agent: show prompt summary
+    if (toolName === 'Agent' && input.prompt) {
+      return input.prompt.slice(0, 200)
+    }
+    // Teams MCP tools: show message/query
+    if (toolName === 'mcp__teams__SearchTeamsMessages' && input.message) {
+      return `Search: ${input.message}`
+    }
+    if (toolName === 'mcp__teams__ListChatMessages' && input.chatId) {
+      return `Chat: ${input.chatId.slice(0, 60)}`
+    }
+    // WebFetch/WebSearch
+    if (input.url) return input.url
+    if (input.query) return input.query
+    // Generic: show first string-valued key
+    for (const key of Object.keys(input)) {
+      if (typeof input[key] === 'string' && input[key].length > 0) {
+        return `${key}: ${input[key].slice(0, 200)}`
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return ''
 }
 
 /**
@@ -112,9 +225,11 @@ async function processStepMessages(
   queryIter: AsyncIterable<any>,
   existingSessionId?: string,
   sessionRef?: { current: string | undefined },
+  executionId?: string,
 ): Promise<{ interrupted: boolean; sessionId: string | undefined; messageCount: number }> {
   let capturedSessionId = existingSessionId
   let messageCount = 0
+  let lastToolName: string | undefined
 
   for await (const message of queryIter) {
     // Check cancellation
@@ -132,7 +247,7 @@ async function processStepMessages(
       if (pending && !pending.sessionId) {
         caseStepState.setPendingQuestion(caseNumber, capturedSessionId!, pending.questions)
         // Re-broadcast with correct sessionId
-        sseManager.broadcast('case-step-question' as any, {
+        sseManager.broadcast('case-step-question', {
           caseNumber,
           sessionId: capturedSessionId,
           questions: pending.questions,
@@ -153,15 +268,21 @@ async function processStepMessages(
       if (Array.isArray(content)) {
         for (const block of content) {
           if (block.type === 'tool_use') {
+            // Extract human-readable summary of tool input
+            const toolInput = (block as any).input
+            const toolContent = summarizeToolInput((block as any).name, toolInput)
+            lastToolName = (block as any).name
             const toolMsg = {
               kind: 'tool-call' as const,
               toolName: (block as any).name,
+              content: toolContent,
               step: stepName,
               timestamp: new Date().toISOString(),
             }
-            sseManager.broadcast('case-step-progress' as any, {
+            sseManager.broadcast('case-step-progress', {
               caseNumber,
               sessionId: capturedSessionId,
+              executionId,
               ...toolMsg,
             })
             caseStepState.addMessage(caseNumber, toolMsg)
@@ -173,9 +294,10 @@ async function processStepMessages(
               step: stepName,
               timestamp: new Date().toISOString(),
             }
-            sseManager.broadcast('case-step-progress' as any, {
+            sseManager.broadcast('case-step-progress', {
               caseNumber,
               sessionId: capturedSessionId,
+              executionId,
               ...thinkMsg,
             })
             caseStepState.addMessage(caseNumber, thinkMsg)
@@ -185,8 +307,34 @@ async function processStepMessages(
       }
     }
 
+    // Parse tool_result messages into semantic 'tool-result' kind
+    if (message.type === 'tool_result') {
+      const resultContent = typeof message.content === 'string'
+        ? message.content.slice(0, 300)
+        : typeof message.text === 'string'
+          ? message.text.slice(0, 300)
+          : ''
+      if (resultContent) {
+        const resultMsg = {
+          kind: 'tool-result' as const,
+          toolName: lastToolName,
+          content: resultContent,
+          step: stepName,
+          timestamp: new Date().toISOString(),
+        }
+        sseManager.broadcast('case-step-progress', {
+          caseNumber,
+          sessionId: capturedSessionId,
+          executionId,
+          ...resultMsg,
+        })
+        caseStepState.addMessage(caseNumber, resultMsg)
+        messageCount++
+      }
+    }
+
     // Also broadcast raw SSE events for backward compatibility
-    if (message.type !== 'assistant' || !message.message?.content) {
+    if (message.type !== 'assistant' && message.type !== 'tool_result') {
       messageCount++
       const eventType = getSSEEventType(message)
       const formatted = formatMessageForSSE(message)
@@ -194,6 +342,7 @@ async function processStepMessages(
         caseNumber,
         step: stepName,
         sessionId: capturedSessionId,
+        executionId,
         ...formatted,
       })
     }
@@ -229,7 +378,7 @@ async function resumeStepSession(
 ): Promise<void> {
   try {
     const sessionRef: { current: string | undefined } = { current: sessionId }
-    const canUseTool = createStepCanUseTool(caseNumber, () => sessionRef.current)
+    const canUseTool = createStepCanUseTool(caseNumber, stepName, () => sessionRef.current)
 
     const queryIter = chatCaseSession(sessionId, answer, canUseTool)
     const result = await processStepMessages(caseNumber, stepName, queryIter, sessionId, sessionRef)
@@ -249,7 +398,7 @@ async function resumeStepSession(
     })
     caseStepState.finish(caseNumber)
 
-    sseManager.broadcast('case-step-completed' as any, {
+    sseManager.broadcast('case-step-completed', {
       caseNumber,
       step: stepName,
       sessionId: result.sessionId,
@@ -281,7 +430,7 @@ async function resumeStepSession(
     caseStepState.addMessage(caseNumber, errorMsg)
     caseStepState.finish(caseNumber)
 
-    sseManager.broadcast('case-step-failed' as any, {
+    sseManager.broadcast('case-step-failed', {
       caseNumber,
       step: stepName,
       error: err.message,
@@ -309,21 +458,26 @@ stepRoutes.post('/case/:id/step/:step', async (c) => {
     }, 400)
   }
 
-  // Check if case already has an active operation (prevent duplicate spawn)
-  const existingOp = getActiveCaseOperation(caseNumber)
-  if (existingOp) {
-    return c.json({
-      error: 'Case already has an active operation',
-      activeOperation: existingOp,
-    }, 409)
-  }
+  // Background steps (e.g. teams-search) run concurrently — skip lock
+  const isBackground = BACKGROUND_STEPS.has(stepName)
 
-  // Acquire operation lock
-  if (!acquireCaseOperationLock(caseNumber, stepName)) {
-    return c.json({
-      error: 'Failed to acquire operation lock (race condition)',
-      activeOperation: getActiveCaseOperation(caseNumber),
-    }, 409)
+  if (!isBackground) {
+    // Check if case already has an active operation (prevent duplicate spawn)
+    const existingOp = getActiveCaseOperation(caseNumber)
+    if (existingOp) {
+      return c.json({
+        error: 'Case already has an active operation',
+        activeOperation: existingOp,
+      }, 409)
+    }
+
+    // Acquire operation lock
+    if (!acquireCaseOperationLock(caseNumber, stepName)) {
+      return c.json({
+        error: 'Failed to acquire operation lock (race condition)',
+        activeOperation: getActiveCaseOperation(caseNumber),
+      }, 409)
+    }
   }
 
   // Parse optional body params (e.g. emailType for draft-email)
@@ -337,23 +491,30 @@ stepRoutes.post('/case/:id/step/:step', async (c) => {
 
   const activeSessionId = getActiveSessionForCase(caseNumber)
 
+  // Generate a unique execution ID per step button click
+  // This separates message streams even when the underlying SDK session is reused
+  const executionId = `${stepName}-${Date.now()}`
+
   try {
     const stepAsync = async () => {
       const stepStartedAt = new Date().toISOString()
 
       // Initialize step state (for recovery + semantic events)
-      caseStepState.start(caseNumber, stepName)
+      caseStepState.start(caseNumber, stepName, executionId)
 
-      // Broadcast step-started event
+      // Broadcast step-started event with executionId so frontend can create a new tab
       const emailTypeLabel = bodyParams.emailType && bodyParams.emailType !== 'auto'
         ? ` (${bodyParams.emailType})`
         : ' (AI Auto-detect)'
-      sseManager.broadcast('case-step-started' as any, {
+      sseManager.broadcast('case-step-started', {
         caseNumber,
         step: stepName,
+        executionId,
         startedAt: stepStartedAt,
         ...(stepName === 'draft-email' ? { emailType: bodyParams.emailType || 'auto' } : {}),
       })
+      // Notify Agent Monitor to refresh session list (ISS-082)
+      sseManager.broadcast('sessions-changed' as any, { reason: 'step-started', caseNumber, step: stepName })
       caseStepState.addMessage(caseNumber, {
         kind: 'started',
         content: `Step "${stepName}"${stepName === 'draft-email' ? emailTypeLabel : ''} started`,
@@ -372,7 +533,7 @@ stepRoutes.post('/case/:id/step/:step', async (c) => {
 
       // Create canUseTool for AskUserQuestion interception
       const sessionRef: { current: string | undefined } = { current: activeSessionId || undefined }
-      const canUseTool = createStepCanUseTool(caseNumber, () => sessionRef.current)
+      const canUseTool = createStepCanUseTool(caseNumber, stepName, () => sessionRef.current)
 
       try {
         const queryIter = stepCaseSession(caseNumber, stepName, {
@@ -381,7 +542,7 @@ stepRoutes.post('/case/:id/step/:step', async (c) => {
         })
 
         const result = await processStepMessages(
-          caseNumber, stepName, queryIter, activeSessionId || undefined, sessionRef,
+          caseNumber, stepName, queryIter, activeSessionId || undefined, sessionRef, executionId,
         )
 
         if (result.interrupted) {
@@ -401,11 +562,14 @@ stepRoutes.post('/case/:id/step/:step', async (c) => {
         })
         caseStepState.finish(caseNumber)
 
-        sseManager.broadcast('case-step-completed' as any, {
+        sseManager.broadcast('case-step-completed', {
           caseNumber,
           step: stepName,
           sessionId: result.sessionId || activeSessionId,
+          executionId,
         })
+        // Notify Agent Monitor to refresh session list (ISS-082)
+        sseManager.broadcast('sessions-changed' as any, { reason: 'step-completed', caseNumber, step: stepName })
 
         appendSessionMessage(caseNumber, {
           type: 'completed',
@@ -420,8 +584,8 @@ stepRoutes.post('/case/:id/step/:step', async (c) => {
           messageCount: result.messageCount,
         })
 
-        // Release lock on completion
-        releaseCaseOperationLock(caseNumber)
+        // Release lock on completion (background steps don't hold a lock)
+        if (!isBackground) releaseCaseOperationLock(caseNumber)
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : String(err)
 
@@ -433,11 +597,14 @@ stepRoutes.post('/case/:id/step/:step', async (c) => {
         })
         caseStepState.finish(caseNumber)
 
-        sseManager.broadcast('case-step-failed' as any, {
+        sseManager.broadcast('case-step-failed', {
           caseNumber,
           step: stepName,
           error: errorMsg,
+          executionId,
         })
+        // Notify Agent Monitor to refresh session list (ISS-082)
+        sseManager.broadcast('sessions-changed' as any, { reason: 'step-failed', caseNumber, step: stepName })
 
         writeStepLog(caseNumber, stepName, {
           status: 'failed',
@@ -445,7 +612,7 @@ stepRoutes.post('/case/:id/step/:step', async (c) => {
           error: errorMsg,
         })
 
-        releaseCaseOperationLock(caseNumber)
+        if (!isBackground) releaseCaseOperationLock(caseNumber)
       }
     }
 
@@ -457,7 +624,7 @@ stepRoutes.post('/case/:id/step/:step', async (c) => {
       existingSession: activeSessionId || null,
     }, 202)
   } catch (err) {
-    releaseCaseOperationLock(caseNumber)
+    if (!isBackground) releaseCaseOperationLock(caseNumber)
     const msg = err instanceof Error ? err.message : String(err)
     return c.json({ error: msg }, 500)
   }
@@ -492,7 +659,7 @@ stepRoutes.post('/case/:id/step-answer', async (c) => {
     step: caseStepState.getState(caseNumber)?.currentStep,
     timestamp: new Date().toISOString(),
   }
-  sseManager.broadcast('case-step-progress' as any, { caseNumber, ...answerMsg })
+  sseManager.broadcast('case-step-progress', { caseNumber, ...answerMsg })
   caseStepState.addMessage(caseNumber, answerMsg)
 
   // Get the step name and start time from the active operation for logging
@@ -525,6 +692,7 @@ stepRoutes.get('/case/:id/step-progress', (c) => {
     isActive: state.isActive,
     pendingQuestion: state.pendingQuestion ?? null,
     currentStep: state.currentStep ?? null,
+    executionId: state.executionId ?? null,
   })
 })
 
@@ -541,6 +709,50 @@ stepRoutes.get('/case/:id/step', (c) => {
       url: `/api/case/${caseNumber}/step/${step}`,
     })),
   })
+})
+
+// POST /case/:id/step-cancel — cancel an active step execution
+stepRoutes.post('/case/:id/step-cancel', (c) => {
+  const caseNumber = c.req.param('id')
+
+  const activeOp = getActiveCaseOperation(caseNumber)
+  if (!activeOp && !caseStepState.isActive(caseNumber)) {
+    return c.json({ error: 'No active step to cancel' }, 404)
+  }
+
+  const stepName = activeOp?.operationType || caseStepState.getState(caseNumber)?.currentStep || 'unknown'
+  const executionId = caseStepState.getState(caseNumber)?.executionId
+
+  // Cancel the step state (processStepMessages will break out of loop)
+  caseStepState.cancel(caseNumber)
+
+  // Abort the underlying SDK query to terminate child processes (ISS-086)
+  abortQuery(caseNumber)
+
+  // Release the operation lock so buttons are re-enabled
+  releaseCaseOperationLock(caseNumber)
+
+  // End the SDK session
+  const sessionId = getActiveSessionForCase(caseNumber)
+  if (sessionId) {
+    endSession(sessionId)
+  }
+
+  // Broadcast cancellation as a failed event
+  sseManager.broadcast('case-step-failed', {
+    caseNumber,
+    step: stepName,
+    error: 'Cancelled by user',
+    executionId,
+  })
+
+  // Invalidate operation query
+  sseManager.broadcast('case-session-completed' as any, {
+    caseNumber,
+    step: stepName,
+  })
+
+  return c.json({ ok: true, step: stepName })
 })
 
 export default stepRoutes

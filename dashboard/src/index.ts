@@ -10,7 +10,8 @@ import { logger } from 'hono/logger'
 import { config } from './config.js'
 import { authMiddleware } from './middleware/auth.js'
 import { isWorkspaceReady } from './services/workspace.js'
-import { startFileWatcher } from './watcher/file-watcher.js'
+import { startFileWatcher, stopFileWatcher } from './watcher/file-watcher.js'
+import { abortAllQueries } from './agent/case-session-manager.js'
 
 import authRoutes from './routes/auth.js'
 import casesRoutes from './routes/cases.js'
@@ -20,6 +21,9 @@ import draftsRoutes from './routes/drafts.js'
 import eventsRoutes from './routes/events.js'
 import caseAiRoutes from './routes/case-routes.js'
 import stepRoutes from './routes/steps.js'
+import issuesRoutes from './routes/issues.js'
+import restartRoutes from './routes/restart.js'
+import { sessionRoutes } from './routes/sessions.js'
 
 const app = new Hono()
 
@@ -55,6 +59,9 @@ app.use('/api/case/*', authMiddleware)
 app.use('/api/patrol', authMiddleware)
 app.use('/api/settings', authMiddleware)
 app.use('/api/sessions', authMiddleware)
+app.use('/api/sessions/*', authMiddleware)
+app.use('/api/issues/*', authMiddleware)
+app.use('/api/restart/*', authMiddleware)
 
 app.route('/api/cases', casesRoutes)
 app.route('/api/todos', todosRoutes)
@@ -62,6 +69,9 @@ app.route('/api/agents', agentsRoutes)
 app.route('/api/drafts', draftsRoutes)
 app.route('/api', caseAiRoutes)
 app.route('/api', stepRoutes)
+app.route('/api/issues', issuesRoutes)
+app.route('/api/restart', restartRoutes)
+app.route('/api/sessions', sessionRoutes)
 
 // ===== Start =====
 console.log(`
@@ -82,3 +92,15 @@ serve({
   fetch: app.fetch,
   port: config.port,
 })
+
+// ===== Graceful Shutdown (ISS-086) =====
+function shutdown(signal: string) {
+  console.log(`\n[shutdown] Received ${signal}, aborting all active queries...`)
+  const aborted = abortAllQueries()
+  console.log(`[shutdown] Aborted ${aborted} active queries`)
+  stopFileWatcher()
+  process.exit(0)
+}
+
+process.on('SIGINT', () => shutdown('SIGINT'))
+process.on('SIGTERM', () => shutdown('SIGTERM'))

@@ -1,0 +1,11 @@
+{
+  "id": "ISS-086",
+  "title": "SDK session 进程泄漏 — endSession/cancel/restart 未实际终止子进程树",
+  "description": "Claude Code SDK session 的 endSession()、step cancel、patrol cancel、backend restart 均只更新元数据状态，未调用 SDK 的 abortController.abort() 或 query.close() 终止底层进程。导致已结束的 session 的 MCP server 子进程树（cmd.exe/bash.exe + node.exe）持续运行成为僵尸进程。当前观察到 ~109 个孤儿 cmd/bash 进程不属于任何活跃 Claude session。\n\n根因：\n1. endSession() 仅设 status=completed，不 abort 底层 query\n2. step cancel 仅设 flag + break 消息循环，无 AbortController\n3. patrol cancel 仅阻止下一批，不 abort 当前批次 session\n4. restartBackend() 直接 process.exit(0)，无 shutdown hook\n5. index.ts 无 SIGINT/SIGTERM handler\n\nSDK 已提供：Options.abortController + Query.close() 两种清理机制，但项目未使用。",
+  "type": "bug",
+  "priority": "P0",
+  "status": "done",
+  "trackId": "session-cleanup_20260322",
+  "createdAt": "2026-03-22T17:30:00+08:00",
+  "updatedAt": "2026-03-22T21:00:00+08:00"
+}

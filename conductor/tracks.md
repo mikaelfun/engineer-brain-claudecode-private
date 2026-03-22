@@ -82,3 +82,4 @@
 | [x] | monitor-step-group_20260323 | Agent Monitor Step-Grouped Message Display | 2026-03-23 | 2026-03-23 |
 | [x] | session-reuse_20260323 | Full Process 应继承已有 Session 而非总是新建 | 2026-03-23 | 2026-03-23 |
 | [x] | ai-panel-timeline_20260322 | CaseAIPanel Timeline + Filter Tab Redesign | 2026-03-22 | 2026-03-23 |
+| [x] | session-cleanup_20260322 | SDK Session 进程清理 | 2026-03-22 | 2026-03-22 |

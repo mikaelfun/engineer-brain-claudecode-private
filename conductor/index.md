@@ -28,6 +28,9 @@
 | [Track Timeout Fix](./tracks/track-timeout-fix_20260320/index.md) | Completed | 9/9 tasks |
 
 | [Todo Strikethrough Fix](./tracks/todo-strikethrough_20260321/index.md) | Pending | 0/7 tasks |
+| [AI Panel Redesign](./tracks/ai-panel-redesign_20260322/index.md) | Pending | 0/12 tasks |
+| [AI Panel Timeline](./tracks/ai-panel-timeline_20260322/index.md) | Pending | 0/12 tasks |
+| [SDK Session 进程清理](./tracks/session-cleanup_20260322/index.md) | Pending | 0/12 tasks |
 
 ## All Tracks
 

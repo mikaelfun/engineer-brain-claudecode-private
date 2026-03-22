@@ -67,6 +67,70 @@ interface ActiveOperation {
 // In-memory lock: caseNumber → active operation info
 const activeOperations = new Map<string, ActiveOperation>()
 
+// ---- AbortController Registry (ISS-086) ----
+// Tracks active SDK query() AbortControllers for process cleanup
+// Key: caseNumber (or 'patrol-{caseNumber}' for patrol sessions)
+const activeQueries = new Map<string, AbortController>()
+
+/**
+ * Register an AbortController for an active query.
+ * Returns the AbortController for injection into query() options.
+ */
+export function registerQuery(key: string): AbortController {
+  // If there's already one for this key, abort it first
+  const existing = activeQueries.get(key)
+  if (existing) {
+    try { existing.abort() } catch { /* ignore */ }
+  }
+  const ac = new AbortController()
+  activeQueries.set(key, ac)
+  return ac
+}
+
+/**
+ * Abort and remove a single query by key.
+ * Returns true if an active query was found and aborted.
+ */
+export function abortQuery(key: string): boolean {
+  const ac = activeQueries.get(key)
+  if (ac) {
+    try { ac.abort() } catch { /* ignore */ }
+    activeQueries.delete(key)
+    return true
+  }
+  return false
+}
+
+/**
+ * Unregister a query without aborting (for normal completion cleanup).
+ */
+export function unregisterQuery(key: string): void {
+  activeQueries.delete(key)
+}
+
+/**
+ * Abort ALL active queries (for shutdown / restart).
+ * Returns number of queries aborted.
+ */
+export function abortAllQueries(): number {
+  let count = 0
+  for (const [key, ac] of activeQueries) {
+    try {
+      ac.abort()
+      count++
+    } catch { /* ignore */ }
+  }
+  activeQueries.clear()
+  return count
+}
+
+/**
+ * Get the number of active queries (for monitoring).
+ */
+export function getActiveQueryCount(): number {
+  return activeQueries.size
+}
+
 /**
  * Acquire an operation lock for a case.
  * Returns true if lock acquired, false if case already has an active operation.
@@ -385,10 +449,14 @@ export async function* processCaseSession(
   // Ensure context directory exists
   ensureContextDir(caseNumber)
 
+  // Create AbortController for this query (ISS-086)
+  const abortController = registerQuery(caseNumber)
+
   try {
     for await (const message of query({
       prompt: `Case ${caseNumber}: ${intent}`,
       options: {
+        abortController,
         cwd: getProjectRoot(),
         settingSources: ['project'] as Options['settingSources'],
         systemPrompt: {
@@ -433,7 +501,11 @@ export async function* processCaseSession(
       sessions[sdkSessionId].status = 'paused'
       saveSessionStore()
     }
+    // Clean up AbortController on normal completion (ISS-086)
+    unregisterQuery(caseNumber)
   } catch (err) {
+    // Clean up AbortController on failure (ISS-086)
+    unregisterQuery(caseNumber)
     if (sdkSessionId && sessions[sdkSessionId]) {
       sessions[sdkSessionId].status = 'failed'
       saveSessionStore()
@@ -463,10 +535,14 @@ export async function* chatCaseSession(
   // Record user input to persistent context
   appendUserInput(session.caseNumber, 'user-note', userMessage)
 
+  // Create AbortController for this query (ISS-086)
+  const abortController = registerQuery(session.caseNumber)
+
   try {
     for await (const message of query({
       prompt: userMessage,
       options: {
+        abortController,
         resume: sessionId, // SDK's real session_id
         cwd: getProjectRoot(),
         permissionMode: 'bypassPermissions',
@@ -481,7 +557,11 @@ export async function* chatCaseSession(
 
     session.status = 'paused' // Paused, can be resumed
     saveSessionStore()
+    // Clean up AbortController on normal completion (ISS-086)
+    unregisterQuery(session.caseNumber)
   } catch (err) {
+    // Clean up AbortController on failure (ISS-086)
+    unregisterQuery(session.caseNumber)
     session.status = 'failed'
     saveSessionStore()
     throw err
@@ -594,23 +674,29 @@ After verification, output a single JSON block on a line by itself:
   }
 
   // Fallback: standalone query
-  for await (const message of query({
-    prompt,
-    options: {
-      cwd: getProjectRoot(),
-      settingSources: ['project'] as Options['settingSources'],
-      systemPrompt: {
-        type: 'preset' as const,
-        preset: 'claude_code' as const,
-        append: buildCaseAppendPrompt(caseNumber),
+  const todoAbort = registerQuery(`todo-${caseNumber}`)
+  try {
+    for await (const message of query({
+      prompt,
+      options: {
+        abortController: todoAbort,
+        cwd: getProjectRoot(),
+        settingSources: ['project'] as Options['settingSources'],
+        systemPrompt: {
+          type: 'preset' as const,
+          preset: 'claude_code' as const,
+          append: buildCaseAppendPrompt(caseNumber),
+        },
+        allowedTools: ['Bash', 'Read', 'Write'],
+        permissionMode: 'bypassPermissions',
+        allowDangerouslySkipPermissions: true,
+        maxTurns: 10,
       },
-      allowedTools: ['Bash', 'Read', 'Write'],
-      permissionMode: 'bypassPermissions',
-      allowDangerouslySkipPermissions: true,
-      maxTurns: 10,
-    },
-  })) {
-    yield message
+    })) {
+      yield message
+    }
+  } finally {
+    unregisterQuery(`todo-${caseNumber}`)
   }
 }
 
@@ -632,6 +718,12 @@ let patrolRunning = false
 export function cancelPatrol(): boolean {
   if (!patrolRunning) return false
   patrolCancelled = true
+  // Abort all active patrol-* queries to terminate child processes (ISS-086)
+  for (const key of Array.from(activeQueries.keys())) {
+    if (key.startsWith('patrol-')) {
+      abortQuery(key)
+    }
+  }
   return true
 }
 
@@ -719,28 +811,34 @@ async function _runPatrol(
         try {
           const patrolPrompt = `请读取 .claude/skills/patrol/SKILL.md 获取完整执行步骤，仅对 Case ${caseNumber} 执行巡检流程。`
 
-          for await (const message of query({
-            prompt: patrolPrompt,
-            options: {
-              cwd: projectRoot,
-              settingSources: ['project'] as Options['settingSources'],
-              systemPrompt: {
-                type: 'preset' as const,
-                preset: 'claude_code' as const,
+          const patrolAbort = registerQuery(`patrol-${caseNumber}`)
+          try {
+            for await (const message of query({
+              prompt: patrolPrompt,
+              options: {
+                abortController: patrolAbort,
+                cwd: projectRoot,
+                settingSources: ['project'] as Options['settingSources'],
+                systemPrompt: {
+                  type: 'preset' as const,
+                  preset: 'claude_code' as const,
+                },
+                allowedTools: ['Read', 'Write', 'Bash', 'Glob', 'Grep', 'Agent'],
+                permissionMode: 'bypassPermissions',
+                allowDangerouslySkipPermissions: true,
+                maxTurns: 100,
               },
-              allowedTools: ['Read', 'Write', 'Bash', 'Glob', 'Grep', 'Agent'],
-              permissionMode: 'bypassPermissions',
-              allowDangerouslySkipPermissions: true,
-              maxTurns: 100,
-            },
-          })) {
-            // Forward SDK messages as SSE for real-time monitoring
-            const eventType = getSSEEventType(message)
-            sseManager.broadcast(eventType as any, {
-              type: 'patrol',
-              caseNumber,
-              ...formatMessageForSSE(message),
-            })
+            })) {
+              // Forward SDK messages as SSE for real-time monitoring
+              const eventType = getSSEEventType(message)
+              sseManager.broadcast(eventType as any, {
+                type: 'patrol',
+                caseNumber,
+                ...formatMessageForSSE(message),
+              })
+            }
+          } finally {
+            unregisterQuery(`patrol-${caseNumber}`)
           }
 
           // Per-case completed
@@ -877,6 +975,8 @@ function parseTodoContent(content: string): { red: string[]; yellow: string[]; g
 export function endSession(sessionId: string): boolean {
   if (sessions[sessionId]) {
     const caseNumber = sessions[sessionId].caseNumber
+    // Abort the underlying SDK query to terminate child processes (ISS-086)
+    abortQuery(caseNumber)
     sessions[sessionId].status = 'completed'
     // Remove from case index
     if (caseIndex[caseNumber] === sessionId) {
