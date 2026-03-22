@@ -717,18 +717,30 @@ function IssueRow({
   const isExpanded = expandedId === issue.id
   const isEditing = editingId === issue.id
 
-  // Auto-scroll to this issue row when Implement is started (ISS-073)
+  // Auto-scroll to this issue row when any tracked operation starts (ISS-073)
+  // Covers: Create Track, Implement, Verify
   const rowRef = useRef<HTMLDivElement>(null)
-  const prevImplementActiveRef = useRef(false)
+  const prevActiveRef = useRef({ tracking: false, implement: false, verify: false })
   useEffect(() => {
-    if (isImplementActive && !prevImplementActiveRef.current) {
-      // Delay to allow ImplementPanel to mount first
+    const wasActive = prevActiveRef.current
+    const nowTracking = isTracking || isOptimisticTracking
+    const nowImplement = !!isImplementActive
+    const nowVerify = !!isVerifyActive
+
+    // Scroll when any operation transitions from inactive → active
+    if (
+      (nowTracking && !wasActive.tracking) ||
+      (nowImplement && !wasActive.implement) ||
+      (nowVerify && !wasActive.verify)
+    ) {
+      // Delay to allow progress panel to mount first
       setTimeout(() => {
         rowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }, 150)
     }
-    prevImplementActiveRef.current = !!isImplementActive
-  }, [isImplementActive])
+
+    prevActiveRef.current = { tracking: nowTracking, implement: nowImplement, verify: nowVerify }
+  }, [isTracking, isOptimisticTracking, isImplementActive, isVerifyActive])
 
   // Lazy-load track spec and plan when expanded and issue has a trackId
   // For done issues: also load plan when collapsed to show task progress in row header
