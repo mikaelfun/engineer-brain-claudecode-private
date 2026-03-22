@@ -1,92 +1,78 @@
 /**
- * Dashboard — 总览页
+ * Dashboard — Statistics overview & visualization
+ * Case list has been moved to CasesPage.tsx (ISS-076)
  */
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Briefcase, AlertTriangle, Clock, CheckCircle, Activity, Play, Loader2, ArrowUpDown, RefreshCw, Zap, MessageSquare } from 'lucide-react'
-import { StatCard, Card, CardHeader } from '../components/common/Card'
-import { SeverityBadge, CaseStatusBadge, SlaBadge } from '../components/common/Badge'
+import { Briefcase, ShieldAlert, UserCheck, Clock, Activity, Play, Loader2, AlertTriangle, TrendingUp, BarChart3 } from 'lucide-react'
+import { Card, CardHeader } from '../components/common/Card'
 import { Loading, ErrorState, EmptyState } from '../components/common/Loading'
-import { useCases, useCaseStats, usePatrolState, useStartPatrol, useActiveOperations } from '../api/hooks'
-import { apiPost } from '../api/client'
-import { relativeTime } from '../utils/relativeTime'
+import { useCases, usePatrolState, useStartPatrol } from '../api/hooks'
+import { classifyCase } from './CasesPage'
+
+/** Parse age string like "3d 5h" to hours */
+function parseAge(age: string) {
+  const days = parseInt(age.match(/(\d+)d/)?.[1] || '0')
+  const hours = parseInt(age.match(/(\d+)h/)?.[1] || '0')
+  return days * 24 + hours
+}
 
 export default function Dashboard() {
   const navigate = useNavigate()
   const { data: casesData, isLoading, error } = useCases()
-  const { data: stats } = useCaseStats()
   const { data: patrol } = usePatrolState()
   const startPatrol = useStartPatrol()
-  const { data: activeOps } = useActiveOperations()
-  const [actionLoading, setActionLoading] = useState<Record<string, string>>({}) // caseNumber -> action type
-  const [sortBy, setSortBy] = useState<'default' | 'severity' | 'status' | 'age'>('default')
-
-  // Build set of case numbers with active operations
-  const busyCases = new Set<string>()
-  if (activeOps?.operations) {
-    for (const op of activeOps.operations) {
-      busyCases.add(op.caseNumber)
-    }
-  }
-
-  const handleCaseAction = async (caseNumber: string, action: 'refresh' | 'process', e: React.MouseEvent) => {
-    e.stopPropagation() // Don't navigate to case detail
-    setActionLoading(prev => ({ ...prev, [caseNumber]: action }))
-    try {
-      if (action === 'refresh') {
-        await apiPost(`/case/${caseNumber}/step/data-refresh`, { intent: 'Data refresh from dashboard' })
-      } else {
-        await apiPost(`/case/${caseNumber}/process`, { intent: 'Full casework processing from dashboard' })
-      }
-      navigate(`/case/${caseNumber}`)
-    } catch {
-      // On error, just clear loading — user can retry
-    } finally {
-      setActionLoading(prev => {
-        const next = { ...prev }
-        delete next[caseNumber]
-        return next
-      })
-    }
-  }
 
   if (isLoading) return <Loading text="Loading dashboard..." />
   if (error) return <ErrorState message="Failed to load cases" onRetry={() => window.location.reload()} />
 
   const cases = casesData?.cases || []
 
-  // Helper to parse age string like "3d 5h" to hours
-  const parseAge = (age: string) => {
-    const days = parseInt(age.match(/(\d+)d/)?.[1] || '0')
-    const hours = parseInt(age.match(/(\d+)h/)?.[1] || '0')
-    return days * 24 + hours
+  // Compute stats (single source of truth from useCases)
+  const classifications = cases.map((c: any) => ({ case: c, ...classifyCase(c) }))
+  const statCounts = {
+    total: cases.length,
+    slaAtRisk: classifications.filter((c: any) => c.slaAtRisk).length,
+    needsMyAction: classifications.filter((c: any) => c.needsMyAction).length,
+    awaitingOthers: classifications.filter((c: any) => c.awaitingOthers).length,
   }
 
-  // Multi-sort: default = severity > status priority, or user-selected single sort
-  const sortedCases = [...cases].sort((a, b) => {
-    const sevOrder: Record<string, number> = { A: 0, B: 1, C: 2 }
-    const statusOrder: Record<string, number> = {
-      'Pending Engineer': 0,
-      'Active': 1,
-      'Waiting PG': 2,
-      'Pending Customer': 3,
-      'AR': 4,
-    }
+  // Severity distribution
+  const sevCounts: Record<string, number> = { A: 0, B: 0, C: 0 }
+  cases.forEach((c: any) => { sevCounts[c.severity] = (sevCounts[c.severity] || 0) + 1 })
 
-    if (sortBy === 'severity') {
-      return (sevOrder[a.severity] ?? 3) - (sevOrder[b.severity] ?? 3)
-    }
-    if (sortBy === 'status') {
-      return (statusOrder[a.status] ?? 5) - (statusOrder[b.status] ?? 5)
-    }
-    if (sortBy === 'age') {
-      return parseAge(b.caseAge || '0d') - parseAge(a.caseAge || '0d') // oldest first
-    }
-    // Default: severity > status
-    const sevDiff = (sevOrder[a.severity] ?? 3) - (sevOrder[b.severity] ?? 3)
-    if (sevDiff !== 0) return sevDiff
-    return (statusOrder[a.status] ?? 5) - (statusOrder[b.status] ?? 5)
+  // Status distribution
+  const statusCounts: Record<string, number> = {}
+  cases.forEach((c: any) => {
+    const s = c.meta?.actualStatus || c.status || 'unknown'
+    statusCounts[s] = (statusCounts[s] || 0) + 1
   })
+
+  // Response metrics
+  const casesWithDays = cases.filter((c: any) => c.meta?.daysSinceLastContact != null)
+  const avgDays = casesWithDays.length > 0
+    ? (casesWithDays.reduce((sum: number, c: any) => sum + (c.meta.daysSinceLastContact ?? 0), 0) / casesWithDays.length).toFixed(1)
+    : '—'
+  const longestNoContact = casesWithDays.length > 0
+    ? casesWithDays.reduce((max: any, c: any) => (c.meta.daysSinceLastContact ?? 0) > (max.meta?.daysSinceLastContact ?? 0) ? c : max, casesWithDays[0])
+    : null
+  const irMet = cases.filter((c: any) => c.meta?.irSla?.status === 'met').length
+  const irNotMet = cases.filter((c: any) => c.meta?.irSla?.status === 'not-met').length
+  const irTotal = irMet + irNotMet
+
+  // Clickable stat card component (navigates to /cases?filter=xxx)
+  const ClickableStat = ({ label, value, color, filter }: { label: string; value: number; color: string; filter: string }) => (
+    <button
+      onClick={() => navigate(`/cases?filter=${filter}`)}
+      className="flex flex-col items-center justify-center p-4 rounded-xl border transition-all hover:scale-[1.02]"
+      style={{
+        background: `color-mix(in srgb, var(--accent-${color}) 6%, var(--bg-surface))`,
+        borderColor: `color-mix(in srgb, var(--accent-${color}) 20%, transparent)`,
+      }}
+    >
+      <span className="text-3xl font-extrabold font-mono" style={{ color: `var(--accent-${color})` }}>{value}</span>
+      <span className="text-xs mt-1 font-medium" style={{ color: 'var(--text-secondary)' }}>{label}</span>
+    </button>
+  )
 
   return (
     <div className="space-y-6">
@@ -114,215 +100,175 @@ export default function Dashboard() {
         </button>
       </div>
 
-      {/* Stat Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        <StatCard
-          label="Active Cases"
-          value={stats?.total ?? cases.length}
-          icon={<Briefcase className="w-6 h-6" />}
-          color="blue"
-        />
-        <StatCard
-          label="Urgent Items"
-          value={stats?.urgentItems ?? 0}
-          icon={<AlertTriangle className="w-6 h-6" />}
-          color="red"
-        />
-        <StatCard
-          label="Pending Items"
-          value={stats?.pendingItems ?? 0}
-          icon={<Clock className="w-6 h-6" />}
-          color="yellow"
-        />
-        <StatCard
-          label="Normal"
-          value={stats?.normalItems ?? 0}
-          icon={<CheckCircle className="w-6 h-6" />}
-          color="green"
-        />
-      </div>
-
-      {/* Patrol Status */}
-      {patrol && (
-        <Card>
-          <CardHeader
-            title="Patrol Status"
-            icon={<Activity className="w-5 h-5" style={{ color: 'var(--accent-blue)' }} />}
-            subtitle={`Type: ${patrol.patrolType} | ${patrol.lastRunTiming?.caseCount || 0} cases in ${patrol.lastRunTiming?.wallClockMinutes || 0} min`}
-          />
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
-            <div className="px-3 py-2 rounded-lg" style={{ background: 'var(--accent-red-dim)' }}>
-              <span style={{ color: 'var(--text-secondary)' }}>Pending Engineer</span>
-              <p className="font-bold" style={{ color: 'var(--accent-red)' }}>{patrol.summary?.pendingEngineer || 0}</p>
-            </div>
-            <div className="px-3 py-2 rounded-lg" style={{ background: 'var(--accent-amber-dim)' }}>
-              <span style={{ color: 'var(--text-secondary)' }}>Pending Customer</span>
-              <p className="font-bold" style={{ color: 'var(--accent-amber)' }}>{patrol.summary?.pendingCustomer || 0}</p>
-            </div>
-            <div className="px-3 py-2 rounded-lg" style={{ background: 'var(--accent-blue-dim)' }}>
-              <span style={{ color: 'var(--text-secondary)' }}>Waiting PG</span>
-              <p className="font-bold" style={{ color: 'var(--accent-blue)' }}>{patrol.summary?.waitingPG || 0}</p>
-            </div>
-            <div className="px-3 py-2 rounded-lg" style={{ background: 'var(--accent-purple-dim)' }}>
-              <span style={{ color: 'var(--text-secondary)' }}>AR</span>
-              <p className="font-bold" style={{ color: 'var(--accent-purple)' }}>{patrol.summary?.ar || 0}</p>
-            </div>
-            <div className="px-3 py-2 rounded-lg" style={{ background: 'var(--accent-green-dim)' }}>
-              <span style={{ color: 'var(--text-secondary)' }}>Normal</span>
-              <p className="font-bold" style={{ color: 'var(--accent-green)' }}>{patrol.summary?.normal || 0}</p>
-            </div>
+      {/* Overview Stat Cards — clickable, navigate to /cases?filter=xxx */}
+      {cases.length === 0 ? (
+        <EmptyState icon="📊" title="No data yet" description="Add cases to see statistics" />
+      ) : (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+            <ClickableStat label="Total Active" value={statCounts.total} color="blue" filter="all" />
+            <ClickableStat label="SLA At Risk" value={statCounts.slaAtRisk} color="red" filter="sla-at-risk" />
+            <ClickableStat label="Needs My Action" value={statCounts.needsMyAction} color="amber" filter="needs-my-action" />
+            <ClickableStat label="Awaiting Others" value={statCounts.awaitingOthers} color="green" filter="awaiting-others" />
           </div>
-          {patrol.lastRunTiming?.bottlenecks?.length > 0 && (
-            <div className="mt-3 text-xs" style={{ color: 'var(--text-secondary)' }}>
-              Bottlenecks: {patrol.lastRunTiming.bottlenecks.join(' | ')}
-            </div>
-          )}
-        </Card>
-      )}
 
-      {/* Case Cards */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>Active Cases</h3>
-          <div className="flex items-center gap-1.5">
-            <ArrowUpDown className="w-3.5 h-3.5" style={{ color: 'var(--text-tertiary)' }} />
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              className="text-xs border rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary"
-              style={{ color: 'var(--text-secondary)', borderColor: 'var(--border-default)', background: 'var(--bg-surface)' }}
-            >
-              <option value="default">Severity + Status</option>
-              <option value="severity">Severity</option>
-              <option value="status">Status</option>
-              <option value="age">Age (oldest first)</option>
-            </select>
+          {/* Two-column layout for distribution cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Severity Distribution */}
+            <Card>
+              <CardHeader
+                title="Severity Distribution"
+                icon={<BarChart3 className="w-5 h-5" style={{ color: 'var(--accent-blue)' }} />}
+              />
+              <div className="space-y-3">
+                {Object.entries(sevCounts).map(([sev, count]) => {
+                  const pct = cases.length > 0 ? (count / cases.length) * 100 : 0
+                  const colorMap: Record<string, string> = { A: 'red', B: 'amber', C: 'blue' }
+                  const c = colorMap[sev] || 'blue'
+                  return (
+                    <div key={sev} className="flex items-center gap-3">
+                      <span className="text-xs font-bold font-mono w-8" style={{ color: `var(--accent-${c})` }}>Sev {sev}</span>
+                      <div className="flex-1 h-5 rounded-md overflow-hidden" style={{ background: 'var(--bg-inset)' }}>
+                        <div
+                          className="h-full rounded-md transition-all duration-500"
+                          style={{ width: `${pct}%`, background: `var(--accent-${c})`, minWidth: count > 0 ? '8px' : '0' }}
+                        />
+                      </div>
+                      <span className="text-sm font-bold font-mono w-8 text-right" style={{ color: 'var(--text-primary)' }}>{count}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </Card>
+
+            {/* Status Distribution */}
+            <Card>
+              <CardHeader
+                title="Status Breakdown"
+                icon={<TrendingUp className="w-5 h-5" style={{ color: 'var(--accent-purple)' }} />}
+              />
+              <div className="space-y-2">
+                {Object.entries(statusCounts)
+                  .sort(([, a], [, b]) => b - a)
+                  .map(([status, count]) => {
+                    const statusColorMap: Record<string, string> = {
+                      'pending-engineer': 'red',
+                      'new': 'red',
+                      'researching': 'amber',
+                      'pending-customer': 'green',
+                      'pending-pg': 'blue',
+                      'ready-to-close': 'purple',
+                    }
+                    const c = statusColorMap[status] || 'blue'
+                    return (
+                      <div key={status} className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ background: `color-mix(in srgb, var(--accent-${c}) 8%, transparent)` }}>
+                        <span className="text-xs font-medium capitalize" style={{ color: 'var(--text-secondary)' }}>
+                          {status.replace(/-/g, ' ')}
+                        </span>
+                        <span className="text-sm font-bold font-mono" style={{ color: `var(--accent-${c})` }}>{count}</span>
+                      </div>
+                    )
+                  })}
+              </div>
+            </Card>
           </div>
-        </div>
-        {cases.length === 0 ? (
-          <EmptyState icon="📂" title="No active cases" description="No cases found in the workspace" />
-        ) : (
-          <div className="grid gap-2">
-            {sortedCases.map((c: any) => {
-              const sevColorMap: Record<string, string> = {
-                A: 'var(--accent-red)',
-                B: 'var(--accent-amber)',
-                C: 'var(--accent-blue)',
-              }
-              const sevColor = sevColorMap[c.severity] || 'var(--border-subtle)'
-              const isBusy = busyCases.has(c.caseNumber) || !!actionLoading[c.caseNumber]
-              const currentAction = actionLoading[c.caseNumber]
-              return (
-                <Card
-                  key={c.caseNumber}
-                  hover
-                  onClick={() => navigate(`/case/${c.caseNumber}`)}
-                  padding="none"
-                >
-                  <div className="flex" style={{ borderLeft: `3px solid ${sevColor}` }}>
-                    <div className="flex-1 min-w-0 px-4 py-3">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-mono text-xs font-semibold" style={{ color: 'var(--accent-blue)' }}>{c.caseNumber}</span>
-                        <SeverityBadge severity={c.severity} />
-                        <CaseStatusBadge status={c.status} />
-                      </div>
-                      <h4 className="font-medium mt-1 text-[13px] truncate" style={{ color: 'var(--text-primary)' }} title={c.title || 'Untitled'}>{c.title || 'Untitled'}</h4>
-                      <p className="text-xs mt-0.5 flex items-center gap-1.5 flex-wrap">
-                        <span
-                          className="inline-block font-semibold text-[11px] px-1.5 py-0.5 rounded"
-                          style={{
-                            color: 'var(--accent-cyan)',
-                            background: 'color-mix(in srgb, var(--accent-cyan) 12%, transparent)',
-                          }}
-                        >
-                          {c.customer || 'Unknown'}
-                        </span>
-                        <span style={{ color: 'var(--text-tertiary)' }}>·</span>
-                        <span style={{ color: 'var(--text-secondary)' }}>{c.assignedTo}</span>
-                        <span style={{ color: 'var(--text-tertiary)' }}>·</span>
-                        <span className="font-mono" style={{ color: parseAge(c.caseAge) > 168 ? 'var(--accent-red)' : 'var(--text-secondary)' }}>
-                          {c.caseAge}
-                        </span>
-                      </p>
-                      {/* Timestamps row */}
-                      <div className="flex items-center gap-3 mt-1.5 text-[10px] font-mono" style={{ color: 'var(--text-tertiary)' }}>
-                        {c.fetchedAt && (
-                          <span className="flex items-center gap-1" title={`Data refreshed: ${c.fetchedAt}`}>
-                            <RefreshCw className="w-2.5 h-2.5" />
-                            {relativeTime(c.fetchedAt)}
-                          </span>
-                        )}
-                        {c.teamsLastMessageTime && (
-                          <span className="flex items-center gap-1" title={`Teams last message: ${c.teamsLastMessageTime}`}>
-                            <MessageSquare className="w-2.5 h-2.5" />
-                            {relativeTime(c.teamsLastMessageTime)}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 px-3 flex-shrink-0">
-                      {/* Action buttons */}
-                      <div className="flex flex-col gap-1.5" onClick={e => e.stopPropagation()}>
-                        <button
-                          onClick={(e) => handleCaseAction(c.caseNumber, 'refresh', e)}
-                          disabled={isBusy}
-                          className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded border transition-all disabled:opacity-40 hover:brightness-110"
-                          style={{
-                            color: 'var(--accent-blue)',
-                            background: 'var(--accent-blue-dim)',
-                            borderColor: 'color-mix(in srgb, var(--accent-blue) 25%, transparent)',
-                          }}
-                          title="Refresh case data"
-                        >
-                          <RefreshCw className={`w-3 h-3 ${currentAction === 'refresh' ? 'animate-spin' : ''}`} />
-                          Refresh
-                        </button>
-                        <button
-                          onClick={(e) => handleCaseAction(c.caseNumber, 'process', e)}
-                          disabled={isBusy}
-                          className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded border transition-all disabled:opacity-40 hover:brightness-110"
-                          style={{
-                            color: 'var(--accent-green)',
-                            background: 'var(--accent-green-dim)',
-                            borderColor: 'color-mix(in srgb, var(--accent-green) 25%, transparent)',
-                          }}
-                          title="Full casework processing"
-                        >
-                          <Zap className={`w-3 h-3 ${currentAction === 'process' ? 'animate-pulse' : ''}`} />
-                          Process
-                        </button>
-                      </div>
-                      {/* SLA badges */}
-                      <div className="flex items-center gap-4 text-xs">
-                        {c.meta && (
-                          <>
-                            <div className="text-center">
-                              <span className="block text-[10px] font-medium" style={{ color: 'var(--text-tertiary)' }}>IR</span>
-                              <SlaBadge status={c.meta.irSla?.status || 'unknown'} />
-                            </div>
-                            {c.meta.healthScore != null && (
-                              <div
-                                className="w-[34px] h-[34px] rounded-full flex items-center justify-center text-[11px] font-extrabold font-mono"
-                                style={{
-                                  border: `2px solid ${c.meta.healthScore >= 80 ? 'var(--accent-green)' : c.meta.healthScore >= 50 ? 'var(--accent-amber)' : 'var(--accent-red)'}`,
-                                  color: c.meta.healthScore >= 80 ? 'var(--accent-green)' : c.meta.healthScore >= 50 ? 'var(--accent-amber)' : 'var(--accent-red)',
-                                  background: c.meta.healthScore >= 80 ? 'var(--accent-green-dim)' : c.meta.healthScore >= 50 ? 'var(--accent-amber-dim)' : 'var(--accent-red-dim)',
-                                }}
-                              >
-                                {c.meta.healthScore}
-                              </div>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </div>
+
+          {/* Response Metrics */}
+          <Card>
+            <CardHeader
+              title="Response Metrics"
+              icon={<AlertTriangle className="w-5 h-5" style={{ color: 'var(--accent-amber)' }} />}
+            />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Avg days since last contact */}
+              <div className="text-center p-4 rounded-xl" style={{ background: 'var(--bg-inset)' }}>
+                <span className="text-3xl font-extrabold font-mono" style={{ color: Number(avgDays) >= 3 ? 'var(--accent-red)' : 'var(--accent-green)' }}>
+                  {avgDays}
+                </span>
+                <p className="text-xs mt-1 font-medium" style={{ color: 'var(--text-secondary)' }}>Avg Days Since Contact</p>
+              </div>
+
+              {/* Longest no-contact case */}
+              <div className="text-center p-4 rounded-xl" style={{ background: 'var(--bg-inset)' }}>
+                {longestNoContact ? (
+                  <>
+                    <span className="text-3xl font-extrabold font-mono" style={{ color: 'var(--accent-red)' }}>
+                      {longestNoContact.meta?.daysSinceLastContact ?? 0}d
+                    </span>
+                    <p className="text-xs mt-1 font-medium" style={{ color: 'var(--text-secondary)' }}>Longest No Contact</p>
+                    <button
+                      onClick={() => navigate(`/case/${longestNoContact.caseNumber}`)}
+                      className="text-[10px] mt-1 font-mono hover:underline"
+                      style={{ color: 'var(--accent-blue)' }}
+                    >
+                      {longestNoContact.caseNumber}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-3xl font-extrabold font-mono" style={{ color: 'var(--text-tertiary)' }}>—</span>
+                    <p className="text-xs mt-1 font-medium" style={{ color: 'var(--text-secondary)' }}>Longest No Contact</p>
+                  </>
+                )}
+              </div>
+
+              {/* IR SLA ratio bar */}
+              <div className="text-center p-4 rounded-xl" style={{ background: 'var(--bg-inset)' }}>
+                <div className="flex items-center justify-center gap-2">
+                  <span className="text-xl font-extrabold font-mono" style={{ color: 'var(--accent-green)' }}>{irMet}</span>
+                  <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>/</span>
+                  <span className="text-xl font-extrabold font-mono" style={{ color: 'var(--accent-red)' }}>{irNotMet}</span>
+                </div>
+                <p className="text-xs mt-1 font-medium" style={{ color: 'var(--text-secondary)' }}>IR Met / Not Met</p>
+                {irTotal > 0 && (
+                  <div className="mt-2 h-2 rounded-full overflow-hidden flex" style={{ background: 'var(--bg-base)' }}>
+                    <div className="h-full" style={{ width: `${(irMet / irTotal) * 100}%`, background: 'var(--accent-green)' }} />
+                    <div className="h-full" style={{ width: `${(irNotMet / irTotal) * 100}%`, background: 'var(--accent-red)' }} />
                   </div>
-                </Card>
-              )
-            })}
-          </div>
-        )}
-      </div>
+                )}
+              </div>
+            </div>
+          </Card>
+
+          {/* Patrol Status */}
+          {patrol && (
+            <Card>
+              <CardHeader
+                title="Patrol Status"
+                icon={<Activity className="w-5 h-5" style={{ color: 'var(--accent-blue)' }} />}
+                subtitle={`Type: ${patrol.patrolType} | ${patrol.lastRunTiming?.caseCount || 0} cases in ${patrol.lastRunTiming?.wallClockMinutes || 0} min`}
+              />
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
+                <div className="px-3 py-2 rounded-lg" style={{ background: 'var(--accent-red-dim)' }}>
+                  <span style={{ color: 'var(--text-secondary)' }}>Pending Engineer</span>
+                  <p className="font-bold" style={{ color: 'var(--accent-red)' }}>{patrol.summary?.pendingEngineer || 0}</p>
+                </div>
+                <div className="px-3 py-2 rounded-lg" style={{ background: 'var(--accent-amber-dim)' }}>
+                  <span style={{ color: 'var(--text-secondary)' }}>Pending Customer</span>
+                  <p className="font-bold" style={{ color: 'var(--accent-amber)' }}>{patrol.summary?.pendingCustomer || 0}</p>
+                </div>
+                <div className="px-3 py-2 rounded-lg" style={{ background: 'var(--accent-blue-dim)' }}>
+                  <span style={{ color: 'var(--text-secondary)' }}>Waiting PG</span>
+                  <p className="font-bold" style={{ color: 'var(--accent-blue)' }}>{patrol.summary?.waitingPG || 0}</p>
+                </div>
+                <div className="px-3 py-2 rounded-lg" style={{ background: 'var(--accent-purple-dim)' }}>
+                  <span style={{ color: 'var(--text-secondary)' }}>AR</span>
+                  <p className="font-bold" style={{ color: 'var(--accent-purple)' }}>{patrol.summary?.ar || 0}</p>
+                </div>
+                <div className="px-3 py-2 rounded-lg" style={{ background: 'var(--accent-green-dim)' }}>
+                  <span style={{ color: 'var(--text-secondary)' }}>Normal</span>
+                  <p className="font-bold" style={{ color: 'var(--accent-green)' }}>{patrol.summary?.normal || 0}</p>
+                </div>
+              </div>
+              {patrol.lastRunTiming?.bottlenecks?.length > 0 && (
+                <div className="mt-3 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                  Bottlenecks: {patrol.lastRunTiming.bottlenecks.join(' | ')}
+                </div>
+              )}
+            </Card>
+          )}
+        </>
+      )}
     </div>
   )
 }
