@@ -68,3 +68,6 @@
 | [x] | ai-assistant-tab_20260322 | Case 详情页全屏 AI Assistant 分页 | 2026-03-22 | 2026-03-22 |
 | [x] | input-required-context_20260322 | INPUT REQUIRED 卡片显示 specification 上下文 | 2026-03-22 | 2026-03-22 |
 | [x] | implement-auto-scroll_20260322 | WebUI Issue Implement Auto-Scroll | 2026-03-22 | 2026-03-22 |
+| [x] | issue-sort-by-time_20260322 | Issues 页面各分组按修改时间排序 | 2026-03-22 | 2026-03-22 |
+| [~] | session-panel-opt_20260322 | AI Assistant Session Panel Optimization | 2026-03-22 | 2026-03-22 |
+| [x] | dashboard-cases-split_20260322 | Cases 列表独立页面 + Dashboard 统计可视化 | 2026-03-22 | 2026-03-22 |

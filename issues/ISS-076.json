@@ -1,0 +1,11 @@
+{
+  "id": "ISS-076",
+  "title": "Cases列表应该单独放在Cases栏，Dashboard应该偏向statistic和指标类的可视化展示",
+  "description": "当前 Dashboard 页面混合了 Case 列表和统计卡片。需要将 Case 列表拆分到独立的 Cases 导航栏，Dashboard 页面改为以统计指标和可视化为主（如 SLA 趋势、Case 分布饼图、响应时间指标、工作量统计等）。",
+  "type": "feature",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "dashboard-cases-split_20260322",
+  "createdAt": "2026-03-22T22:30:00+08:00",
+  "updatedAt": "2026-03-22T23:10:00+08:00"
+}
