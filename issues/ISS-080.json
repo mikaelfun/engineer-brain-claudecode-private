@@ -1,0 +1,11 @@
+{
+  "id": "ISS-080",
+  "title": "Agent Monitor 里 session 点开后没有 SSE",
+  "description": "在 Agent Monitor 页面点开一个 session 后，没有收到 SSE（Server-Sent Events）消息流，导致无法实时查看 session 的消息更新。根因：CaseSessionDetail 从 case-level aggregate bucket 读取消息，而非 session-level bucket。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "agent-monitor-sse_20260323",
+  "createdAt": "2026-03-23T00:15:00+08:00",
+  "updatedAt": "2026-03-23T00:25:00+08:00"
+}

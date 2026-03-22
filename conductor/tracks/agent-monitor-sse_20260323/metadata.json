@@ -1,0 +1,17 @@
+{
+  "id": "agent-monitor-sse_20260323",
+  "title": "Agent Monitor Session SSE 修复",
+  "type": "bug",
+  "status": "complete",
+  "issueId": "ISS-080",
+  "created": "2026-03-23T00:15:00+08:00",
+  "updated": "2026-03-23T00:25:00+08:00",
+  "phases": {
+    "total": 1,
+    "completed": 1
+  },
+  "tasks": {
+    "total": 3,
+    "completed": 3
+  }
+}

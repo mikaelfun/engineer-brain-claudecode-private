@@ -73,3 +73,5 @@
 | [x] | dashboard-cases-split_20260322 | Cases 列表独立页面 + Dashboard 统计可视化 | 2026-03-22 | 2026-03-22 |
 | [x] | ai-assistant-session_20260322 | Fix AI Assistant Session 消息流体验 | 2026-03-22 | 2026-03-22 |
 | [x] | ai-panel-redesign_20260322 | AI Assistant Panel 重新设计 — 工作流级交互架构 | 2026-03-22 | 2026-03-23 |
+| [x] | agent-monitor-sse_20260323 | Agent Monitor Session SSE 修复 | 2026-03-23 | 2026-03-23 |
+| [ ] | todowrite-hang-fix_20260322 | Fix data-refresh hang on TodoWrite tool call | 2026-03-22 | 2026-03-22 |
