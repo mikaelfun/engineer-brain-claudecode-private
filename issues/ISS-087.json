@@ -1,0 +1,11 @@
+{
+  "id": "ISS-087",
+  "title": "Full Process 点击后只显示 started 消息，Agent Monitor 无消息流",
+  "description": "点击 Full Process 按钮后，展开 SSE 消息区域显示很多条消息，但只能看到 Step \"full-process\" started，agent monitor 也看不到任何消息流。疑似 SSE 事件流未正确传递 agent 执行过程中的中间消息。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "fullprocess-sse-fix_20260322",
+  "createdAt": "2026-03-22T13:50:00+08:00",
+  "updatedAt": "2026-03-22T22:30:00+08:00"
+}

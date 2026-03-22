@@ -41,6 +41,7 @@ import {
 import { sseManager } from '../watcher/sse-manager.js'
 import { reloadConfig, config as appConfig } from '../config.js'
 import { getSSEEventType, formatMessageForSSE, getPersistedMessageType } from '../utils/sse-helpers.js'
+import type { CanUseTool } from '@anthropic-ai/claude-agent-sdk'
 
 const caseRoutes = new Hono()
 
@@ -72,6 +73,202 @@ function saveConfig(config: Record<string, any>): void {
 
 // ---- Case Processing Routes ----
 
+/**
+ * REPL-only tools that hang in headless SDK mode.
+ * Must be denied in automated SDK sessions to prevent hangs (ISS-079).
+ */
+const REPL_ONLY_TOOLS: ReadonlySet<string> = new Set([
+  'TodoWrite', 'TodoRead', 'TaskCreate', 'TaskUpdate', 'TaskList', 'TaskGet',
+  'EnterPlanMode', 'ExitPlanMode',
+])
+
+/**
+ * Create a canUseTool callback for automated (non-interactive) sessions.
+ * Denies REPL-only tools and AskUserQuestion.
+ */
+function createAutoCanUseTool(): CanUseTool {
+  return async (toolName) => {
+    if (REPL_ONLY_TOOLS.has(toolName)) {
+      return {
+        behavior: 'deny' as const,
+        message: 'Task tracking tools are not available in automated SDK sessions. Skip and proceed.',
+      }
+    }
+    if (toolName === 'AskUserQuestion') {
+      return {
+        behavior: 'deny' as const,
+        message: 'This is an automated process. Do not ask for approval — proceed autonomously.',
+      }
+    }
+    return { behavior: 'allow' as const }
+  }
+}
+
+/**
+ * Extract a human-readable summary from tool input.
+ * Mirrors the summarizeToolInput in steps.ts.
+ */
+function summarizeToolInput(toolName: string, input: any): string {
+  if (!input || typeof input !== 'object') return ''
+  try {
+    if (toolName === 'Bash' && input.command) return input.command.slice(0, 300)
+    if (['Read', 'Write', 'Edit'].includes(toolName) && input.file_path) return input.file_path
+    if (toolName === 'Glob' && input.pattern) return input.pattern
+    if (toolName === 'Grep' && input.pattern) return `/${input.pattern}/` + (input.path ? ` in ${input.path}` : '')
+    if (toolName === 'Agent' && input.prompt) return input.prompt.slice(0, 200)
+    if (input.url) return input.url
+    if (input.query) return input.query
+    for (const key of Object.keys(input)) {
+      if (typeof input[key] === 'string' && input[key].length > 0) {
+        return `${key}: ${input[key].slice(0, 200)}`
+      }
+    }
+  } catch { /* ignore */ }
+  return ''
+}
+
+/**
+ * Deep-parse SDK messages and broadcast semantic SSE events.
+ * This mirrors processStepMessages in steps.ts but without caseStepState
+ * (full-process is fully automated, no interactive Q&A).
+ */
+async function broadcastSDKMessages(
+  caseNumber: string,
+  stepName: string,
+  queryIter: AsyncIterable<any>,
+): Promise<{ sessionId: string | undefined; messageCount: number }> {
+  let capturedSessionId: string | undefined
+  let messageCount = 0
+  let lastToolName: string | undefined
+
+  for await (const message of queryIter) {
+    // Capture SDK session ID
+    if ((message as any).sdkSessionId && !capturedSessionId) {
+      capturedSessionId = (message as any).sdkSessionId
+    }
+    if ((message as any).session_id && !capturedSessionId) {
+      capturedSessionId = (message as any).session_id
+    }
+
+    // Deep-parse assistant messages (SDK nested structure: message.message.content)
+    if (message.type === 'assistant' && message.message?.content) {
+      const content = message.message.content
+      if (Array.isArray(content)) {
+        for (const block of content) {
+          if (block.type === 'tool_use') {
+            const toolContent = summarizeToolInput((block as any).name, (block as any).input)
+            lastToolName = (block as any).name
+            messageCount++
+            sseManager.broadcast('case-step-progress' as any, {
+              caseNumber,
+              sessionId: capturedSessionId,
+              step: stepName,
+              kind: 'tool-call',
+              toolName: lastToolName,
+              content: toolContent,
+              timestamp: new Date().toISOString(),
+            })
+            appendSessionMessage(caseNumber, {
+              type: 'tool-call',
+              content: toolContent,
+              toolName: lastToolName,
+              step: stepName,
+              timestamp: new Date().toISOString(),
+            })
+          } else if (block.type === 'text' && (block as any).text) {
+            messageCount++
+            const text = (block as any).text.slice(0, 500)
+            sseManager.broadcast('case-step-progress' as any, {
+              caseNumber,
+              sessionId: capturedSessionId,
+              step: stepName,
+              kind: 'thinking',
+              content: text,
+              timestamp: new Date().toISOString(),
+            })
+            appendSessionMessage(caseNumber, {
+              type: 'thinking',
+              content: text,
+              step: stepName,
+              timestamp: new Date().toISOString(),
+            })
+          } else if (block.type === 'thinking' && (block as any).thinking) {
+            messageCount++
+            const thinkText = (block as any).thinking.slice(0, 500)
+            sseManager.broadcast('case-step-progress' as any, {
+              caseNumber,
+              sessionId: capturedSessionId,
+              step: stepName,
+              kind: 'thinking',
+              content: thinkText,
+              timestamp: new Date().toISOString(),
+            })
+            appendSessionMessage(caseNumber, {
+              type: 'thinking',
+              content: thinkText,
+              step: stepName,
+              timestamp: new Date().toISOString(),
+            })
+          }
+        }
+      }
+      continue // already handled
+    }
+
+    // Deep-parse tool_result messages
+    if (message.type === 'tool_result') {
+      const resultContent = typeof message.content === 'string'
+        ? message.content.slice(0, 300)
+        : typeof message.text === 'string'
+          ? message.text.slice(0, 300)
+          : ''
+      if (resultContent) {
+        messageCount++
+        sseManager.broadcast('case-step-progress' as any, {
+          caseNumber,
+          sessionId: capturedSessionId,
+          step: stepName,
+          kind: 'tool-result',
+          toolName: lastToolName,
+          content: resultContent,
+          timestamp: new Date().toISOString(),
+        })
+        appendSessionMessage(caseNumber, {
+          type: 'tool-result',
+          content: resultContent,
+          toolName: lastToolName,
+          step: stepName,
+          timestamp: new Date().toISOString(),
+        })
+      }
+      continue // already handled
+    }
+
+    // For other message types (system, user, result), broadcast as-is
+    messageCount++
+    const eventType = getSSEEventType(message)
+    const formatted = formatMessageForSSE(message)
+    sseManager.broadcast(eventType as any, {
+      caseNumber,
+      sessionId: capturedSessionId,
+      step: stepName,
+      ...formatted,
+    })
+    // Only persist non-empty content
+    if (typeof formatted.content === 'string' && formatted.content.trim()) {
+      appendSessionMessage(caseNumber, {
+        type: getPersistedMessageType(message),
+        content: formatted.content,
+        toolName: formatted.toolName as string,
+        step: stepName,
+        timestamp: formatted.timestamp as string || new Date().toISOString(),
+      })
+    }
+  }
+
+  return { sessionId: capturedSessionId, messageCount }
+}
+
 // POST /case/:id/process — 完整 Case 处理
 caseRoutes.post('/case/:id/process', async (c) => {
   const caseNumber = c.req.param('id')
@@ -98,9 +295,7 @@ caseRoutes.post('/case/:id/process', async (c) => {
   try {
     // Start processing asynchronously
     const processAsync = async () => {
-      let capturedSessionId: string | undefined
       const processStartedAt = new Date().toISOString()
-      let messageCount = 0
 
       // Broadcast process-started event
       sseManager.broadcast('case-step-started' as any, {
@@ -108,6 +303,8 @@ caseRoutes.post('/case/:id/process', async (c) => {
         step: 'full-process',
         startedAt: processStartedAt,
       })
+      // Notify Agent Monitor to refresh session list
+      sseManager.broadcast('sessions-changed' as any, { reason: 'step-started', caseNumber, step: 'full-process' })
 
       // Clear previous messages for fresh run
       clearSessionMessages(caseNumber)
@@ -119,38 +316,20 @@ caseRoutes.post('/case/:id/process', async (c) => {
       })
 
       try {
-        for await (const message of processCaseSession(caseNumber, intent)) {
-          // Capture the SDK session ID from the message stream
-          if ((message as any).sdkSessionId && !capturedSessionId) {
-            capturedSessionId = (message as any).sdkSessionId
-          }
-
-          messageCount++
-          // Broadcast each message as SSE event
-          const eventType = getSSEEventType(message)
-          const formatted = formatMessageForSSE(message)
-          sseManager.broadcast(eventType as any, {
-            caseNumber,
-            sessionId: capturedSessionId,
-            step: 'full-process',
-            ...formatted,
-          })
-
-          // Persist message for recovery after page refresh
-          appendSessionMessage(caseNumber, {
-            type: getPersistedMessageType(message),
-            content: formatted.content as string || '',
-            toolName: formatted.toolName as string,
-            step: 'full-process',
-            timestamp: formatted.timestamp as string || new Date().toISOString(),
-          })
-        }
-
-        sseManager.broadcast('case-session-completed', {
+        const canUseTool = createAutoCanUseTool()
+        const result = await broadcastSDKMessages(
           caseNumber,
-          sessionId: capturedSessionId,
+          'full-process',
+          processCaseSession(caseNumber, intent, canUseTool),
+        )
+
+        sseManager.broadcast('case-step-completed' as any, {
+          caseNumber,
+          sessionId: result.sessionId,
           step: 'full-process',
         })
+        // Notify Agent Monitor to refresh session list
+        sseManager.broadcast('sessions-changed' as any, { reason: 'step-completed', caseNumber, step: 'full-process' })
         appendSessionMessage(caseNumber, {
           type: 'completed',
           content: 'Full process completed',
@@ -162,23 +341,23 @@ caseRoutes.post('/case/:id/process', async (c) => {
         writeStepLog(caseNumber, 'full-process', {
           status: 'completed',
           startedAt: processStartedAt,
-          messageCount,
+          messageCount: result.messageCount,
         })
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : String(err)
         sseManager.broadcast('case-session-failed', {
           caseNumber,
-          sessionId: capturedSessionId,
           step: 'full-process',
           error: errorMsg,
         })
+        // Notify Agent Monitor to refresh session list
+        sseManager.broadcast('sessions-changed' as any, { reason: 'step-failed', caseNumber, step: 'full-process' })
 
         // Write step log on failure
         writeStepLog(caseNumber, 'full-process', {
           status: 'failed',
           startedAt: processStartedAt,
           error: errorMsg,
-          messageCount,
         })
       } finally {
         // Always release the lock when operation finishes
