@@ -15,6 +15,7 @@ import { usePatrolStore } from '../stores/patrolStore'
 import { useCaseSessionStore } from '../stores/caseSessionStore'
 import { useIssueTrackStore } from '../stores/issueTrackStore'
 import { useTodoExecuteStore } from '../stores/todoExecuteStore'
+import { useCaseAssistantStore } from '../stores/caseAssistantStore'
 
 /** Safely parse JSON, returning null on failure */
 function safeParse(raw: string): any | null {
@@ -38,6 +39,7 @@ export function useSSE() {
   const patrolOnProgress = usePatrolStore((s) => s.onPatrolProgress)
   const patrolOnCaseCompleted = usePatrolStore((s) => s.onPatrolCaseCompleted)
   const addCaseSessionMessage = useCaseSessionStore((s) => s.addMessage)
+  const addCaseSessionPerSession = useCaseSessionStore((s) => s.addSessionMessage)
   const addIssueTrackMessage = useIssueTrackStore((s) => s.addMessage)
   const setIssueTrackingActive = useIssueTrackStore((s) => s.setTrackingActive)
   const clearIssueTrackMessages = useIssueTrackStore((s) => s.clearMessages)
@@ -51,6 +53,12 @@ export function useSSE() {
   const clearVerify = useIssueTrackStore((s) => s.clearVerify)
   const todoExecSetProgress = useTodoExecuteStore((s) => s.setProgress)
   const todoExecSetResult = useTodoExecuteStore((s) => s.setResult)
+
+  // Case assistant step state actions
+  const caseStepAddMessage = useCaseAssistantStore((s) => s.addMessage)
+  const caseStepSetStatus = useCaseAssistantStore((s) => s.setStatus)
+  const caseStepSetCurrentStep = useCaseAssistantStore((s) => s.setCurrentStep)
+  const caseStepSetPendingQuestion = useCaseAssistantStore((s) => s.setPendingQuestion)
 
   const connect = useCallback(() => {
     const token = localStorage.getItem('eb_token')
@@ -106,12 +114,14 @@ export function useSSE() {
       const d = data.data || data
       const caseNumber = d.caseNumber
       if (caseNumber) {
-        addCaseSessionMessage(caseNumber, {
+        const msg: import('../stores/caseSessionStore').CaseSessionMessage = {
           type: 'thinking',
           content: typeof d.content === 'string' ? d.content : '',
           step: d.step,
           timestamp: d.timestamp || new Date().toISOString(),
-        })
+        }
+        addCaseSessionMessage(caseNumber, msg)
+        if (d.sessionId) addCaseSessionPerSession(caseNumber, d.sessionId, msg)
       }
     })
 
@@ -121,13 +131,15 @@ export function useSSE() {
       const d = data.data || data
       const caseNumber = d.caseNumber
       if (caseNumber) {
-        addCaseSessionMessage(caseNumber, {
+        const msg: import('../stores/caseSessionStore').CaseSessionMessage = {
           type: 'tool-call',
           content: typeof d.content === 'string' ? d.content : '',
           toolName: d.toolName,
           step: d.step,
           timestamp: d.timestamp || new Date().toISOString(),
-        })
+        }
+        addCaseSessionMessage(caseNumber, msg)
+        if (d.sessionId) addCaseSessionPerSession(caseNumber, d.sessionId, msg)
       }
     })
 
@@ -137,13 +149,15 @@ export function useSSE() {
       const d = data.data || data
       const caseNumber = d.caseNumber
       if (caseNumber) {
-        addCaseSessionMessage(caseNumber, {
+        const msg: import('../stores/caseSessionStore').CaseSessionMessage = {
           type: 'tool-result',
           content: typeof d.content === 'string' ? d.content : '',
           toolName: d.toolName,
           step: d.step,
           timestamp: d.timestamp || new Date().toISOString(),
-        })
+        }
+        addCaseSessionMessage(caseNumber, msg)
+        if (d.sessionId) addCaseSessionPerSession(caseNumber, d.sessionId, msg)
       }
     })
 
@@ -160,8 +174,89 @@ export function useSSE() {
           step: d.step,
           timestamp: d.startedAt || new Date().toISOString(),
         })
+        // Update caseAssistantStore
+        caseStepSetStatus(caseNumber, 'active')
+        if (d.step) caseStepSetCurrentStep(caseNumber, d.step)
+        caseStepAddMessage(caseNumber, {
+          kind: 'started',
+          content: `Step "${d.step}" started`,
+          step: d.step,
+          timestamp: d.startedAt || new Date().toISOString(),
+        })
         // Immediately invalidate operation query so UI reflects active operation
         queryClient.invalidateQueries({ queryKey: ['case-operation', caseNumber] })
+      }
+    })
+
+    // Case step progress events (semantic) — populate caseAssistantStore
+    es.addEventListener('case-step-progress', (e) => {
+      const data = safeParse(e.data)
+      if (!data) return
+      const d = data.data || data
+      const caseNumber = d.caseNumber
+      if (caseNumber) {
+        caseStepAddMessage(caseNumber, {
+          kind: d.kind || (d.toolName ? 'tool-call' : 'thinking'),
+          content: d.content,
+          toolName: d.toolName,
+          step: d.step,
+          timestamp: d.timestamp || new Date().toISOString(),
+        })
+      }
+    })
+
+    // Case step question event — AskUserQuestion interception
+    es.addEventListener('case-step-question', (e) => {
+      const data = safeParse(e.data)
+      if (!data) return
+      const d = data.data || data
+      const caseNumber = d.caseNumber
+      if (caseNumber) {
+        caseStepAddMessage(caseNumber, {
+          kind: 'question',
+          questions: d.questions,
+          sessionId: d.sessionId,
+          content: d.questions?.map((q: any) => q.question).join('; '),
+          timestamp: d.timestamp || new Date().toISOString(),
+        })
+        if (d.questions) {
+          caseStepSetPendingQuestion(caseNumber, d.sessionId || '', d.questions)
+        }
+      }
+    })
+
+    // Case step completed event — finalize caseAssistantStore status
+    es.addEventListener('case-step-completed', (e) => {
+      const data = safeParse(e.data)
+      if (!data) return
+      const d = data.data || data
+      const caseNumber = d.caseNumber
+      if (caseNumber) {
+        caseStepSetStatus(caseNumber, 'completed')
+        caseStepAddMessage(caseNumber, {
+          kind: 'completed',
+          content: d.step ? `Step "${d.step}" completed` : 'Step completed',
+          step: d.step,
+          timestamp: new Date().toISOString(),
+        })
+      }
+    })
+
+    // Case step failed event — set failed status in caseAssistantStore
+    es.addEventListener('case-step-failed', (e) => {
+      const data = safeParse(e.data)
+      if (!data) return
+      const d = data.data || data
+      const caseNumber = d.caseNumber
+      if (caseNumber) {
+        caseStepSetStatus(caseNumber, 'failed')
+        caseStepAddMessage(caseNumber, {
+          kind: 'error',
+          error: d.error,
+          content: d.error || 'Step failed',
+          step: d.step,
+          timestamp: new Date().toISOString(),
+        })
       }
     })
 
@@ -171,12 +266,14 @@ export function useSSE() {
       if (!data) return
       const caseNumber = data.data?.caseNumber
       if (caseNumber) {
-        addCaseSessionMessage(caseNumber, {
+        const msg: import('../stores/caseSessionStore').CaseSessionMessage = {
           type: 'completed',
           content: data.data?.step ? `Step "${data.data.step}" completed` : 'Session completed',
           step: data.data?.step,
           timestamp: new Date().toISOString(),
-        })
+        }
+        addCaseSessionMessage(caseNumber, msg)
+        if (data.data?.sessionId) addCaseSessionPerSession(caseNumber, data.data.sessionId, msg)
         queryClient.invalidateQueries({ queryKey: ['cases', caseNumber] })
         queryClient.invalidateQueries({ queryKey: ['cases', caseNumber, 'todo'] })
         queryClient.invalidateQueries({ queryKey: ['case-sessions', caseNumber] })
@@ -191,12 +288,14 @@ export function useSSE() {
       if (!data) return
       const caseNumber = data.data?.caseNumber
       if (caseNumber) {
-        addCaseSessionMessage(caseNumber, {
+        const msg: import('../stores/caseSessionStore').CaseSessionMessage = {
           type: 'failed',
           content: data.data?.error || 'Session failed',
           step: data.data?.step,
           timestamp: new Date().toISOString(),
-        })
+        }
+        addCaseSessionMessage(caseNumber, msg)
+        if (data.data?.sessionId) addCaseSessionPerSession(caseNumber, data.data.sessionId, msg)
         queryClient.invalidateQueries({ queryKey: ['case-sessions', caseNumber] })
         queryClient.invalidateQueries({ queryKey: ['case-operation', caseNumber] })
       }
@@ -499,7 +598,7 @@ export function useSSE() {
         console.error(`[SSE] Max retries (${MAX_RETRIES}) exceeded, giving up`)
       }
     }
-  }, [queryClient, patrolOnProgress, patrolOnCaseCompleted, addCaseSessionMessage, addIssueTrackMessage, setIssueTrackingActive, clearIssueTrackMessages, setIssuePendingQuestion, startImplement, addImplementMessage, setImplementStatus, addVerifyMessage, setVerifyActive, setVerifyResult, clearVerify, todoExecSetProgress, todoExecSetResult])
+  }, [queryClient, patrolOnProgress, patrolOnCaseCompleted, addCaseSessionMessage, addCaseSessionPerSession, addIssueTrackMessage, setIssueTrackingActive, clearIssueTrackMessages, setIssuePendingQuestion, startImplement, addImplementMessage, setImplementStatus, addVerifyMessage, setVerifyActive, setVerifyResult, clearVerify, todoExecSetProgress, todoExecSetResult, caseStepAddMessage, caseStepSetStatus, caseStepSetCurrentStep, caseStepSetPendingQuestion])
 
   useEffect(() => {
     connect()

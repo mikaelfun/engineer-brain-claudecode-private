@@ -69,5 +69,7 @@
 | [x] | input-required-context_20260322 | INPUT REQUIRED 卡片显示 specification 上下文 | 2026-03-22 | 2026-03-22 |
 | [x] | implement-auto-scroll_20260322 | WebUI Issue Implement Auto-Scroll | 2026-03-22 | 2026-03-22 |
 | [x] | issue-sort-by-time_20260322 | Issues 页面各分组按修改时间排序 | 2026-03-22 | 2026-03-22 |
-| [~] | session-panel-opt_20260322 | AI Assistant Session Panel Optimization | 2026-03-22 | 2026-03-22 |
+| [x] | session-panel-opt_20260322 | AI Assistant Session Panel Optimization | 2026-03-22 | 2026-03-22 |
 | [x] | dashboard-cases-split_20260322 | Cases 列表独立页面 + Dashboard 统计可视化 | 2026-03-22 | 2026-03-22 |
+| [x] | ai-assistant-session_20260322 | Fix AI Assistant Session 消息流体验 | 2026-03-22 | 2026-03-22 |
+| [x] | ai-panel-redesign_20260322 | AI Assistant Panel 重新设计 — 工作流级交互架构 | 2026-03-22 | 2026-03-23 |

@@ -12,7 +12,7 @@
  *
  * 注意: @anthropic-ai/claude-agent-sdk 提供 query() 函数
  */
-import { query, type Options, type SDKMessage } from '@anthropic-ai/claude-agent-sdk'
+import { query, type Options, type SDKMessage, type CanUseTool } from '@anthropic-ai/claude-agent-sdk'
 import { readFileSync, existsSync, writeFileSync, mkdirSync, appendFileSync, readdirSync } from 'fs'
 import { join, resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
@@ -368,7 +368,8 @@ function appendUserInput(caseNumber: string, type: string, content: string): voi
  */
 export async function* processCaseSession(
   caseNumber: string,
-  intent: string
+  intent: string,
+  canUseTool?: CanUseTool
 ): AsyncGenerator<SDKMessage & { sdkSessionId?: string }> {
   const now = new Date().toISOString()
   let sdkSessionId: string | undefined
@@ -390,6 +391,7 @@ export async function* processCaseSession(
         allowedTools: ['Read', 'Write', 'Bash', 'Glob', 'Grep', 'Agent'],
         permissionMode: 'acceptEdits',
         maxTurns: 50,
+        ...(canUseTool ? { canUseTool } : {}),
       },
     })) {
       // Capture SDK session ID from the first message that has it
@@ -437,7 +439,8 @@ export async function* processCaseSession(
  */
 export async function* chatCaseSession(
   sessionId: string,
-  userMessage: string
+  userMessage: string,
+  canUseTool?: CanUseTool
 ): AsyncGenerator<SDKMessage> {
   const session = sessions[sessionId]
   if (!session) {
@@ -457,6 +460,7 @@ export async function* chatCaseSession(
       options: {
         resume: sessionId, // SDK's real session_id
         cwd: getProjectRoot(),
+        ...(canUseTool ? { canUseTool } : {}),
       },
     })) {
       session.lastActivityAt = new Date().toISOString()
@@ -480,7 +484,7 @@ export async function* chatCaseSession(
 export async function* stepCaseSession(
   caseNumber: string,
   stepName: string,
-  options?: { emailType?: string }
+  options?: { emailType?: string; canUseTool?: CanUseTool }
 ): AsyncGenerator<SDKMessage & { sdkSessionId?: string }> {
   // Build email type instruction for draft-email step
   const emailTypeInstruction = (() => {
@@ -511,17 +515,32 @@ export async function* stepCaseSession(
   const existingSessionId = caseIndex[caseNumber]
   if (existingSessionId && sessions[existingSessionId] && sessions[existingSessionId].status !== 'completed') {
     // Resume existing session with step prompt
-    yield* chatCaseSession(existingSessionId, prompt) as any
+    yield* chatCaseSession(existingSessionId, prompt, options?.canUseTool) as any
     return
   }
 
   // No existing session → create new one
-  yield* processCaseSession(caseNumber, prompt)
+  yield* processCaseSession(caseNumber, prompt, options?.canUseTool)
 }
 
 /**
- * Execute a specific Todo action (D365 write operation).
+ * Map action type to its verification (read-back) script.
+ */
+const ACTION_VERIFY_SCRIPTS: Record<string, string> = {
+  note: 'fetch-notes.ps1',
+  labor: 'view-labor.ps1',
+  sap: 'refresh-timeline.ps1',
+}
+
+/**
+ * Execute a specific Todo action (D365 write operation) with post-write verification.
  * Runs in the case's existing session if available.
+ *
+ * The agent will:
+ * 1. Execute the D365 write script
+ * 2. Run the matching read-back script to verify success
+ * 3. Report a structured JSON result
+ * 4. Only mark the todo checkbox [x] if verification passes
  */
 export async function* executeTodoAction(
   caseNumber: string,
@@ -530,14 +549,31 @@ export async function* executeTodoAction(
 ): AsyncGenerator<SDKMessage> {
   const casesRoot = getCasesRoot()
   const caseDir = join(casesRoot, 'active', caseNumber)
+  const verifyScript = ACTION_VERIFY_SCRIPTS[action] || ''
 
   const prompt = `Execute the following D365 action for Case ${caseNumber}:
 Action: ${action}
 Parameters: ${JSON.stringify(params)}
 Case directory: ${caseDir}
 
+## Step 1: Execute Write Operation
 Use the appropriate PowerShell script from skills/d365-case-ops/scripts/ to execute this action.
-After execution, update the corresponding Todo file to mark this item as completed [x].`
+
+## Step 2: Verify Write Success
+After the write script completes, run the read-back verification script to confirm the operation was recorded in D365:
+${verifyScript ? `- Verification script: skills/d365-case-ops/scripts/${verifyScript}` : '- Check the D365 timeline/notes for the case to verify the write succeeded'}
+- Compare the read-back result against what was written
+- Determine if the operation was successfully persisted
+
+## Step 3: Report Result
+After verification, output a single JSON block on a line by itself:
+\`\`\`json
+{"todoExecuteResult": {"success": true/false, "action": "${action}", "verificationDetails": "description of what was verified"}}
+\`\`\`
+
+## Step 4: Update Todo Checkbox
+- If verification PASSED (success=true): update the corresponding Todo file to mark this item as completed [x]
+- If verification FAILED (success=false): do NOT mark the checkbox, leave it as [ ]`
 
   // Try to resume in existing case session
   const existingSessionId = caseIndex[caseNumber]

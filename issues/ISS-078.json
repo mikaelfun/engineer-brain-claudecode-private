@@ -1,0 +1,11 @@
+{
+  "id": "ISS-078",
+  "title": "AI Assistant 交互和展示逻辑需要重新设计",
+  "description": "AI Assistant 当前的交互和展示逻辑不可用，需要重新设计。参考 Issues 页面 TrackProgressPanel 的成熟模式，对 AI Assistant 的消息流、按钮状态、Session 管理、交互能力进行全面重构。",
+  "type": "feature",
+  "priority": "P0",
+  "status": "done",
+  "trackId": "ai-panel-redesign_20260322",
+  "createdAt": "2026-03-22T23:20:00+08:00",
+  "updatedAt": "2026-03-23T12:55:00+08:00"
+}

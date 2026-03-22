@@ -5,16 +5,19 @@
  * - `compact` — sidebar: quick action buttons + jump-to-tab button + status indicator
  * - `full`    — tab pane: full-width with grid actions + messages + chat input + session management
  */
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo, type FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Sparkles, Search, Mail, Play, X, Send,
   CheckCircle2, Loader2, Brain, AlertCircle, ChevronDown,
   RefreshCw, MessageSquare, GitBranch, FileText, BookOpen,
-  Zap, ChevronRight, Maximize2
+  Zap, ChevronRight, Maximize2, ExternalLink, Square,
+  MessageCircleQuestion
 } from 'lucide-react'
 import { apiPost, apiDelete } from '../api/client'
-import { useCaseSessions, useCaseOperation, useCaseMessages, useEndAllCaseSessions } from '../api/hooks'
+import { useCaseSessions, useCaseOperation, useCaseMessages, useEndAllCaseSessions, useEndCaseSession, useAnswerStepQuestion, useCaseStepProgress } from '../api/hooks'
 import { useCaseSessionStore, type CaseSessionMessage } from '../stores/caseSessionStore'
+import { useCaseAssistantStore, EMPTY_STEP_MESSAGES, type CaseStepMessage, type CaseStepStatus, type CaseStepQuestion } from '../stores/caseAssistantStore'
 import { SessionBadge } from './SessionBadge'
 import { SessionMessageList } from './session/SessionMessageList'
 
@@ -28,11 +31,219 @@ type AIAction = 'process' | 'data-refresh' | 'compliance-check' | 'status-judge'
 
 const EMPTY_MESSAGES: CaseSessionMessage[] = []
 
+/**
+ * Convert CaseStepMessage (kind-based, from caseAssistantStore) to CaseSessionMessage
+ * (type-based, for SessionMessageList). This bridges the new semantic store with
+ * the existing message rendering components.
+ */
+function stepMessageToSessionMessage(msg: CaseStepMessage): CaseSessionMessage {
+  const KIND_TO_TYPE: Record<string, CaseSessionMessage['type']> = {
+    started: 'system',
+    thinking: 'thinking',
+    'tool-call': 'tool-call',
+    completed: 'completed',
+    error: 'failed',
+    question: 'system',
+  }
+  return {
+    type: KIND_TO_TYPE[msg.kind] || 'system',
+    content: msg.content || msg.error || '',
+    toolName: msg.toolName,
+    step: msg.step,
+    timestamp: msg.timestamp,
+  }
+}
+
+/** Extract thinking content before question as context for INPUT REQUIRED card */
+function extractStepContext(messages: CaseStepMessage[]): string {
+  const thinkingTexts: string[] = []
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i]
+    if (m.kind === 'thinking' && m.content) {
+      thinkingTexts.unshift(m.content)
+    } else if (m.kind === 'question' || m.kind === 'tool-call') {
+      continue
+    } else {
+      break
+    }
+  }
+  return thinkingTexts.join('\n\n').trim()
+}
+
+/** Inline question form for case step AskUserQuestion interception */
+function StepQuestionForm({
+  caseNumber,
+  questions,
+  messages,
+  onAnswered,
+}: {
+  caseNumber: string
+  questions: CaseStepQuestion[]
+  messages: CaseStepMessage[]
+  onAnswered: () => void
+}) {
+  const [answer, setAnswer] = useState('')
+  const [selectedOptions, setSelectedOptions] = useState<Record<number, string>>({})
+  const answerMutation = useAnswerStepQuestion()
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    inputRef.current?.focus()
+  }, [])
+
+  const contextContent = useMemo(() => extractStepContext(messages), [messages])
+
+  const handleOptionClick = (questionIdx: number, label: string) => {
+    setSelectedOptions(prev => ({ ...prev, [questionIdx]: label }))
+    setAnswer(label)
+  }
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault()
+    const trimmed = answer.trim()
+    if (!trimmed || answerMutation.isPending) return
+
+    answerMutation.mutate(
+      { caseNumber, answer: trimmed },
+      {
+        onSuccess: () => {
+          setAnswer('')
+          setSelectedOptions({})
+          onAnswered()
+        },
+      },
+    )
+  }
+
+  return (
+    <div
+      className="mx-5 mt-3 rounded-lg p-4 space-y-3"
+      style={{
+        border: '2px solid var(--accent-amber)',
+        background: 'var(--accent-amber-dim)',
+      }}
+    >
+      {/* Header badge */}
+      <div className="flex items-center gap-1.5 mb-1">
+        <MessageCircleQuestion className="w-4 h-4" style={{ color: 'var(--accent-amber)' }} />
+        <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--accent-amber)' }}>
+          Input Required
+        </span>
+      </div>
+
+      {/* Context content — thinking messages before the question */}
+      {contextContent && (
+        <div
+          className="rounded-md px-3 py-2.5 text-xs leading-relaxed whitespace-pre-wrap max-h-40 overflow-y-auto"
+          style={{
+            background: 'var(--bg-surface)',
+            borderLeft: '3px solid var(--accent-amber)',
+            color: 'var(--text-secondary)',
+          }}
+        >
+          {contextContent}
+        </div>
+      )}
+
+      {questions.map((q, i) => (
+        <div key={i} className="space-y-2">
+          <p className="text-sm font-semibold leading-relaxed" style={{ color: 'var(--text-primary)' }}>
+            {q.question}
+          </p>
+
+          {q.options && q.options.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {q.options.map((opt, j) => (
+                <button
+                  key={j}
+                  type="button"
+                  onClick={() => handleOptionClick(i, opt.label)}
+                  className="px-3 py-1.5 text-xs rounded-md transition-colors font-medium"
+                  style={{
+                    background: selectedOptions[i] === opt.label ? 'var(--accent-amber)' : 'var(--bg-surface)',
+                    border: `1.5px solid ${selectedOptions[i] === opt.label ? 'var(--accent-amber)' : 'var(--border-default)'}`,
+                    color: selectedOptions[i] === opt.label ? 'var(--text-inverse)' : 'var(--text-primary)',
+                  }}
+                  title={opt.description}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+
+      <form onSubmit={handleSubmit} className="flex gap-2">
+        <input
+          ref={inputRef}
+          type="text"
+          value={answer}
+          onChange={(e) => setAnswer(e.target.value)}
+          placeholder="Type your answer or select an option above..."
+          className="flex-1 px-3 py-2 text-sm rounded-md outline-none transition-all"
+          style={{
+            background: 'var(--bg-surface)',
+            border: '1.5px solid var(--border-default)',
+            color: 'var(--text-primary)',
+          }}
+          disabled={answerMutation.isPending}
+        />
+        <button
+          type="submit"
+          disabled={!answer.trim() || answerMutation.isPending}
+          className="px-3 py-2 text-sm rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5 font-medium"
+          style={{ background: 'var(--accent-amber)', color: 'var(--text-inverse)' }}
+        >
+          {answerMutation.isPending ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <Send className="w-3.5 h-3.5" />
+          )}
+          Send
+        </button>
+      </form>
+
+      {answerMutation.isError && (
+        <p className="text-xs" style={{ color: 'var(--accent-red)' }}>
+          Failed to send answer: {(answerMutation.error as Error)?.message || 'Unknown error'}
+        </p>
+      )}
+    </div>
+  )
+}
+
+/** Map session intent text → action button label */
+const INTENT_LABEL_MAP: Array<[RegExp, string]> = [
+  [/full.?casework|Full Process/i, 'Full Process'],
+  [/data-refresh/i, 'Refresh'],
+  [/compliance-check/i, 'Compliance'],
+  [/status-judge/i, 'Status'],
+  [/teams-search/i, 'Teams'],
+  [/troubleshoot/i, 'Troubleshoot'],
+  [/draft-email|email-drafter/i, 'Email'],
+  [/inspection/i, 'Inspection'],
+  [/generate-kb|Knowledge Base/i, 'KB'],
+  [/patrol/i, 'Patrol'],
+]
+
+function getSessionLabel(session: { intent?: string; sessionId: string }): string {
+  if (session.intent) {
+    for (const [re, label] of INTENT_LABEL_MAP) {
+      if (re.test(session.intent)) return label
+    }
+    return session.intent.length > 16 ? session.intent.slice(0, 16) + '…' : session.intent
+  }
+  return session.sessionId.slice(0, 8)
+}
+
 export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: CaseAIPanelProps) {
+  const navigate = useNavigate()
   const [chatInput, setChatInput] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [emailTypeMenuOpen, setEmailTypeMenuOpen] = useState(false)
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
   const emailMenuRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
 
@@ -41,15 +252,53 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
   const isLiveRunning = !!activeSessionId
   const allSessions = sessionsData?.sessions || []
   const endAllSessions = useEndAllCaseSessions()
+  const endCaseSession = useEndCaseSession()
+  // Filter: only active/paused sessions (exclude completed)
+  const activeSessions = allSessions.filter((s: any) => s.status !== 'completed')
 
   const { data: operationData } = useCaseOperation(caseNumber)
   const activeOperation = operationData?.operation || null
   const hasActiveOperation = !!activeOperation
 
-  const isActionDisabled = isProcessing || isLiveRunning || hasActiveOperation
+  // Only disable buttons during active API request or active backend operation lock
+  // Paused sessions should NOT block new actions (they are resumable by design)
+  // Uses caseAssistantStore status for state-driven disable logic
+  const stepStatus = useCaseAssistantStore((s) => s.status[caseNumber]) as CaseStepStatus | undefined
+  const isStepActive = stepStatus === 'active' || stepStatus === 'waiting-input'
+  const isActionDisabled = isProcessing || hasActiveOperation || isStepActive
 
-  const messages = useCaseSessionStore((s) => s.messages[caseNumber] ?? EMPTY_MESSAGES)
+  // Primary message source: caseAssistantStore (semantic step messages)
+  const stepMessages = useCaseAssistantStore((s) => s.messages[caseNumber] ?? EMPTY_STEP_MESSAGES)
+  // Pending question from step execution (AskUserQuestion interception)
+  const pendingQuestion = useCaseAssistantStore((s) => s.pendingQuestions[caseNumber])
+  const clearPendingQuestion = useCaseAssistantStore((s) => s.clearPendingQuestion)
+  // Fallback: caseSessionStore (legacy backward-compatible messages)
+  const legacyMessages = useCaseSessionStore((s) => s.messages[caseNumber] ?? EMPTY_MESSAGES)
   const clearMessages = useCaseSessionStore((s) => s.clearMessages)
+  const clearStepMessages = useCaseAssistantStore((s) => s.clearAll)
+
+  // Convert step messages to session message format for SessionMessageList
+  const convertedStepMessages = useMemo(
+    () => stepMessages.map(stepMessageToSessionMessage),
+    [stepMessages],
+  )
+
+  // Use step messages when available, fall back to legacy
+  const messages = convertedStepMessages.length > 0 ? convertedStepMessages : legacyMessages
+
+  // Effective messages: primary source is step messages, no per-session tab switching needed
+  const effectiveMessages = messages
+
+  // Auto-select activeSessionId when no tab is selected and sessions change
+  useEffect(() => {
+    if (activeSessions.length > 0 && !selectedSessionId) {
+      setSelectedSessionId(activeSessionId)
+    }
+    // If selected session is no longer in active list, reset
+    if (selectedSessionId && !activeSessions.some((s: any) => s.sessionId === selectedSessionId)) {
+      setSelectedSessionId(activeSessionId || (activeSessions[0] as any)?.sessionId || null)
+    }
+  }, [activeSessions, activeSessionId, selectedSessionId])
 
   const { data: persistedData } = useCaseMessages(caseNumber)
   const hasRecoveredRef = useRef(false)
@@ -74,12 +323,36 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
     }
   }, [persistedData, messages.length, caseNumber])
 
+  // Step progress recovery — hydrate caseAssistantStore on page refresh
+  const hasStepRecoveredRef = useRef(false)
+  const needsStepRecovery = stepMessages.length === 0 && !hasStepRecoveredRef.current
+  const { data: stepProgressData } = useCaseStepProgress(caseNumber, needsStepRecovery)
+  const loadStepMessages = useCaseAssistantStore((s) => s.loadMessages)
+  const setStepPendingQuestion = useCaseAssistantStore((s) => s.setPendingQuestion)
+
+  useEffect(() => {
+    if (stepProgressData && !hasStepRecoveredRef.current) {
+      hasStepRecoveredRef.current = true
+      if (stepProgressData.messages?.length) {
+        const status = stepProgressData.pendingQuestion ? 'waiting-input' as const
+          : stepProgressData.isActive ? 'active' as const
+          : 'completed' as const
+        loadStepMessages(caseNumber, stepProgressData.messages as CaseStepMessage[], status, stepProgressData.currentStep ?? undefined,
+          stepProgressData.pendingQuestion ? { sessionId: stepProgressData.pendingQuestion.sessionId, questions: stepProgressData.pendingQuestion.questions } : null)
+      }
+      // Recover pending question even if no messages (edge case)
+      if (stepProgressData.pendingQuestion && !pendingQuestion) {
+        setStepPendingQuestion(caseNumber, stepProgressData.pendingQuestion.sessionId, stepProgressData.pendingQuestion.questions)
+      }
+    }
+  }, [stepProgressData, caseNumber, loadStepMessages, setStepPendingQuestion, pendingQuestion])
+
   useEffect(() => {
     const container = messagesContainerRef.current
     if (container) {
       container.scrollTop = container.scrollHeight
     }
-  }, [messages.length])
+  }, [effectiveMessages.length])
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -111,6 +384,7 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
     setIsProcessing(true)
     setError(null)
     clearMessages(caseNumber)
+    clearStepMessages(caseNumber)
 
     try {
       if (action === 'process') {
@@ -140,7 +414,9 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
   }
 
   const handleChat = async () => {
-    if (!chatInput.trim() || !activeSessionId) return
+    // Allow chat with any active/paused session
+    const chatSessionId = activeSessionId || activeSessions[0]?.sessionId
+    if (!chatInput.trim() || !chatSessionId) return
     const message = chatInput.trim()
     setChatInput('')
 
@@ -152,7 +428,7 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
 
     try {
       await apiPost(`/case/${caseNumber}/chat`, {
-        sessionId: activeSessionId,
+        sessionId: chatSessionId,
         message,
       })
     } catch (err: any) {
@@ -169,6 +445,7 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
     try {
       await apiDelete(`/case/${caseNumber}/session`, { sessionId: activeSessionId })
       clearMessages(caseNumber)
+      clearStepMessages(caseNumber)
     } catch {
       // ignore
     }
@@ -321,6 +598,81 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
           </div>
         )}
 
+        {/* Active Sessions (compact sidebar) */}
+        {(activeSessions.length > 0 || allSessions.length > 0) && (
+          <div style={{ borderTop: '1px solid var(--border-subtle)' }} className="px-3 py-2">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-xs font-medium flex items-center gap-1" style={{ color: 'var(--text-tertiary)' }}>
+                <Brain className="w-3 h-3" />
+                {activeSessions.length > 0
+                  ? `${activeSessions.length} active`
+                  : 'No active'
+                }
+              </span>
+              <div className="flex items-center gap-1">
+                {activeSessions.length >= 2 && (
+                  <button
+                    onClick={() => endAllSessions.mutate(caseNumber)}
+                    className="text-xs px-1.5 py-0.5 rounded transition-colors"
+                    style={{ color: 'var(--accent-red)' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--accent-red-dim)' }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                  >
+                    Stop All
+                  </button>
+                )}
+                <button
+                  onClick={() => navigate('/agents')}
+                  className="text-xs px-1.5 py-0.5 rounded transition-colors"
+                  style={{ color: 'var(--accent-blue)' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--accent-blue-dim)' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                >
+                  Monitor
+                </button>
+              </div>
+            </div>
+            {activeSessions.length > 0 && (
+              <div className="space-y-1">
+                {activeSessions.map((s: any) => (
+                  <div
+                    key={s.sessionId}
+                    className="flex items-center justify-between text-xs py-1 px-1.5 rounded"
+                    style={{ background: 'var(--bg-inset)' }}
+                  >
+                    <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                      <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
+                        <span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{
+                          background: s.status === 'active' ? 'var(--accent-green)' : 'var(--accent-amber)',
+                        }} />
+                      </span>
+                      <span className="truncate" style={{ color: 'var(--text-secondary)' }}>
+                        {getSessionLabel(s)}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => endCaseSession.mutate({ caseId: caseNumber, sessionId: s.sessionId })}
+                      className="p-0.5 rounded transition-colors flex-shrink-0"
+                      style={{ color: 'var(--text-tertiary)' }}
+                      onMouseEnter={e => {
+                        (e.currentTarget as HTMLElement).style.color = 'var(--accent-red)'
+                        ;(e.currentTarget as HTMLElement).style.background = 'var(--accent-red-dim)'
+                      }}
+                      onMouseLeave={e => {
+                        (e.currentTarget as HTMLElement).style.color = 'var(--text-tertiary)'
+                        ;(e.currentTarget as HTMLElement).style.background = 'transparent'
+                      }}
+                      title="Stop"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Open Full AI Assistant button */}
         {onOpenFull && (
           <div style={{ borderTop: '1px solid var(--border-subtle)' }}>
@@ -360,13 +712,27 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
         <div className="flex items-center gap-2">
           <Sparkles className="w-5 h-5" style={{ color: 'var(--accent-blue)' }} />
           <span className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>AI Assistant</span>
-          {hasActiveOperation && (
-            <div className="flex items-center gap-1.5 ml-2 px-2 py-0.5 rounded-full" style={{ background: 'var(--accent-amber-dim)' }}>
-              <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: 'var(--accent-amber)' }} />
-              <span className="text-xs font-medium" style={{ color: 'var(--accent-amber)' }}>{activeOperation!.operationType}</span>
+          {(hasActiveOperation || isStepActive) && (
+            <div className="flex items-center gap-1.5 ml-2 px-2 py-0.5 rounded-full" style={{ background: stepStatus === 'waiting-input' ? 'var(--accent-purple-dim)' : 'var(--accent-amber-dim)' }}>
+              <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: stepStatus === 'waiting-input' ? 'var(--accent-purple)' : 'var(--accent-amber)' }} />
+              <span className="text-xs font-medium" style={{ color: stepStatus === 'waiting-input' ? 'var(--accent-purple)' : 'var(--accent-amber)' }}>
+                {stepStatus === 'waiting-input' ? 'Waiting for input' : activeOperation?.operationType || 'Processing'}
+              </span>
             </div>
           )}
-          {isLiveRunning && !hasActiveOperation && (
+          {stepStatus === 'completed' && !hasActiveOperation && (
+            <div className="flex items-center gap-1.5 ml-2 px-2 py-0.5 rounded-full" style={{ background: 'var(--accent-green-dim)' }}>
+              <CheckCircle2 className="w-3.5 h-3.5" style={{ color: 'var(--accent-green)' }} />
+              <span className="text-xs font-medium" style={{ color: 'var(--accent-green)' }}>Completed</span>
+            </div>
+          )}
+          {stepStatus === 'failed' && !hasActiveOperation && (
+            <div className="flex items-center gap-1.5 ml-2 px-2 py-0.5 rounded-full" style={{ background: 'var(--accent-red-dim)' }}>
+              <AlertCircle className="w-3.5 h-3.5" style={{ color: 'var(--accent-red)' }} />
+              <span className="text-xs font-medium" style={{ color: 'var(--accent-red)' }}>Failed</span>
+            </div>
+          )}
+          {isLiveRunning && !hasActiveOperation && !isStepActive && !stepStatus && (
             <div className="flex items-center gap-1.5 ml-2 px-2 py-0.5 rounded-full" style={{ background: 'var(--accent-blue-dim)' }}>
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: 'var(--accent-blue)' }} />
@@ -377,9 +743,9 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
           )}
         </div>
         <div className="flex items-center gap-2">
-          {allSessions.length > 0 && (
+          {activeSessions.length > 0 && (
             <span className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>
-              {allSessions.length} session{allSessions.length > 1 ? 's' : ''}
+              {activeSessions.length} active
             </span>
           )}
           {activeSessionId && (
@@ -399,7 +765,7 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
               <X className="w-3 h-3" /> End Session
             </button>
           )}
-          {allSessions.length > 1 && (
+          {activeSessions.length > 1 && (
             <button
               onClick={() => endAllSessions.mutate(caseNumber)}
               className="text-xs flex items-center gap-1 px-2 py-1 rounded transition-colors"
@@ -522,22 +888,74 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
         </div>
       )}
 
+      {/* Session Tabs — when multiple active sessions exist */}
+      {activeSessions.length > 1 && (
+        <div className="flex items-center gap-1 px-5 py-1.5 flex-shrink-0 overflow-x-auto" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+          <button
+            onClick={() => setSelectedSessionId(null)}
+            className="px-2.5 py-1 rounded text-xs font-medium transition-colors flex-shrink-0"
+            style={{
+              background: selectedSessionId === null ? 'var(--accent-blue-dim)' : 'transparent',
+              color: selectedSessionId === null ? 'var(--accent-blue)' : 'var(--text-tertiary)',
+            }}
+            onMouseEnter={e => { if (selectedSessionId !== null) (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
+            onMouseLeave={e => { if (selectedSessionId !== null) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+          >
+            All
+          </button>
+          {activeSessions.map((s: any) => {
+            const isSelected = selectedSessionId === s.sessionId
+            const label = getSessionLabel(s)
+            return (
+              <button
+                key={s.sessionId}
+                onClick={() => setSelectedSessionId(s.sessionId)}
+                className="px-2.5 py-1 rounded text-xs font-medium transition-colors flex-shrink-0 flex items-center gap-1"
+                style={{
+                  background: isSelected ? 'var(--accent-blue-dim)' : 'transparent',
+                  color: isSelected ? 'var(--accent-blue)' : 'var(--text-tertiary)',
+                }}
+                onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
+                onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+              >
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{
+                    background: s.status === 'active' ? 'var(--accent-green)' : 'var(--accent-amber)',
+                  }} />
+                </span>
+                {label}
+              </button>
+            )
+          })}
+        </div>
+      )}
+
       {/* Messages area — flex-grow, scrollable */}
       <div
         ref={messagesContainerRef}
         className="flex-1 overflow-y-auto px-5 py-3"
         style={{ minHeight: '300px' }}
       >
-        {messages.length === 0 ? (
+        {effectiveMessages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center py-12" style={{ color: 'var(--text-tertiary)' }}>
             <Brain className="w-12 h-12 mb-3 opacity-30" />
             <p className="text-base">No messages yet</p>
             <p className="text-sm mt-1">Run an action above to start interacting with the AI assistant</p>
           </div>
         ) : (
-          <SessionMessageList messages={messages} containerRef={messagesContainerRef} maxHeightClass="" />
+          <SessionMessageList messages={effectiveMessages} containerRef={messagesContainerRef} maxHeightClass="" />
         )}
       </div>
+
+      {/* Step Question Form — shown when AI asks a question (AskUserQuestion interception) */}
+      {pendingQuestion && (
+        <StepQuestionForm
+          caseNumber={caseNumber}
+          questions={pendingQuestion.questions}
+          messages={stepMessages}
+          onAnswered={() => clearPendingQuestion(caseNumber)}
+        />
+      )}
 
       {/* Chat Input — fixed at bottom */}
       <div className="px-5 py-4 flex-shrink-0" style={{ borderTop: '1px solid var(--border-subtle)' }}>
@@ -547,8 +965,12 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
             value={chatInput}
             onChange={(e) => setChatInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleChat()}
-            placeholder={activeSessionId ? 'Message AI...' : 'Start an action above first...'}
-            disabled={!activeSessionId}
+            placeholder={
+              isStepActive ? 'AI is processing...'
+              : (activeSessionId || activeSessions.length > 0) ? 'Message AI...'
+              : 'Start an action above first...'
+            }
+            disabled={isStepActive || (!activeSessionId && activeSessions.length === 0)}
             className="flex-1 px-4 py-2.5 text-sm rounded-lg outline-none transition-all disabled:opacity-50"
             style={{
               background: 'var(--bg-inset)',
@@ -558,7 +980,7 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
           />
           <button
             onClick={handleChat}
-            disabled={!chatInput.trim() || !activeSessionId}
+            disabled={!chatInput.trim() || isStepActive || (!activeSessionId && activeSessions.length === 0)}
             className="px-3.5 py-2.5 rounded-lg transition-colors disabled:opacity-40"
             style={{ background: 'var(--accent-blue)', color: 'var(--text-inverse)' }}
           >
@@ -567,22 +989,36 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
         </div>
         {activeSessionId && (
           <div className="flex items-center gap-1.5 mt-2">
+            {/* State-driven action buttons */}
+            {stepStatus === 'active' && (
+              <button
+                onClick={handleEndSession}
+                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded transition-colors"
+                style={{ color: 'var(--accent-red)', background: 'var(--accent-red-dim)' }}
+              >
+                <Square className="w-3.5 h-3.5" /> Cancel
+              </button>
+            )}
+            {(stepStatus === 'completed' || stepStatus === 'failed' || (!stepStatus && !hasActiveOperation)) && (
+              <>
+                <button
+                  onClick={handleEndSession}
+                  className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded transition-colors"
+                  style={{ color: 'var(--accent-green)', background: 'var(--accent-green-dim)' }}
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Done
+                </button>
+                <button
+                  onClick={() => handleAction('data-refresh')}
+                  className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded transition-colors"
+                  style={{ color: 'var(--text-secondary)', background: 'var(--bg-inset)' }}
+                >
+                  <RefreshCw className="w-3.5 h-3.5" /> Retry
+                </button>
+              </>
+            )}
             <button
-              onClick={handleEndSession}
-              className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded transition-colors"
-              style={{ color: 'var(--accent-green)', background: 'var(--accent-green-dim)' }}
-            >
-              <CheckCircle2 className="w-3.5 h-3.5" /> Done
-            </button>
-            <button
-              onClick={() => handleAction('process')}
-              className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded transition-colors"
-              style={{ color: 'var(--text-secondary)', background: 'var(--bg-inset)' }}
-            >
-              <Loader2 className="w-3.5 h-3.5" /> Retry
-            </button>
-            <button
-              onClick={() => clearMessages(caseNumber)}
+              onClick={() => { clearMessages(caseNumber); clearStepMessages(caseNumber) }}
               className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded transition-colors ml-auto"
               style={{ color: 'var(--text-tertiary)' }}
             >
@@ -592,32 +1028,83 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull }: C
         )}
       </div>
 
-      {/* Session History — collapsible */}
-      {allSessions.length > 0 && (
-        <div style={{ borderTop: '1px solid var(--border-subtle)' }} className="flex-shrink-0">
-          <details className="px-5 py-2.5">
-            <summary className="text-xs cursor-pointer select-none flex items-center justify-between" style={{ color: 'var(--text-tertiary)' }}>
-              <span className="flex items-center gap-1.5">
-                <Brain className="w-3.5 h-3.5" />
-                {allSessions.length} session{allSessions.length > 1 ? 's' : ''}
-              </span>
-            </summary>
-            <div className="mt-2 space-y-1.5">
-              {allSessions.map((s: any) => (
+      {/* Session List — only active/paused sessions + controls */}
+      {(activeSessions.length > 0 || allSessions.length > 0) && (
+        <div style={{ borderTop: '1px solid var(--border-subtle)' }} className="flex-shrink-0 px-5 py-2.5">
+          {/* Section header with Agent Monitor link */}
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-medium flex items-center gap-1.5" style={{ color: 'var(--text-tertiary)' }}>
+              <Brain className="w-3.5 h-3.5" />
+              {activeSessions.length > 0
+                ? `${activeSessions.length} active session${activeSessions.length > 1 ? 's' : ''}`
+                : 'No active sessions'
+              }
+            </span>
+            <div className="flex items-center gap-2">
+              {/* Stop All button — when 2+ non-completed sessions */}
+              {activeSessions.length >= 2 && (
+                <button
+                  onClick={() => endAllSessions.mutate(caseNumber)}
+                  className="text-xs flex items-center gap-1 px-2 py-1 rounded transition-colors"
+                  style={{ color: 'var(--accent-red)' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--accent-red-dim)' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                >
+                  <Square className="w-3 h-3" /> Stop All
+                </button>
+              )}
+              {/* Agent Monitor link */}
+              <button
+                onClick={() => navigate('/agents')}
+                className="text-xs flex items-center gap-1 px-2 py-1 rounded transition-colors"
+                style={{ color: 'var(--accent-blue)' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--accent-blue-dim)' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+              >
+                <ExternalLink className="w-3 h-3" /> Agent Monitor
+              </button>
+            </div>
+          </div>
+
+          {/* Active/paused session list with per-session Stop buttons */}
+          {activeSessions.length > 0 && (
+            <div className="space-y-1.5">
+              {activeSessions.map((s: any) => (
                 <div
                   key={s.sessionId}
                   className="flex items-center justify-between text-xs py-1.5 px-2 rounded"
                   style={{ background: 'var(--bg-inset)' }}
                 >
-                  <SessionBadge status={s.status} sessionId={s.sessionId} compact />
-                  <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                    {s.intent && <span className="truncate max-w-[200px]">{s.intent}</span>}
-                    <span className="tabular-nums">{new Date(s.lastActivityAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <SessionBadge status={s.status} sessionId={s.sessionId} compact />
+                    <span className="truncate max-w-[200px]" style={{ color: 'var(--text-tertiary)' }}>{getSessionLabel(s)}</span>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className="tabular-nums" style={{ color: 'var(--text-tertiary)' }}>
+                      {new Date(s.lastActivityAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                    {/* Per-session Stop button */}
+                    <button
+                      onClick={() => endCaseSession.mutate({ caseId: caseNumber, sessionId: s.sessionId })}
+                      className="p-1 rounded transition-colors"
+                      style={{ color: 'var(--text-tertiary)' }}
+                      onMouseEnter={e => {
+                        (e.currentTarget as HTMLElement).style.color = 'var(--accent-red)'
+                        ;(e.currentTarget as HTMLElement).style.background = 'var(--accent-red-dim)'
+                      }}
+                      onMouseLeave={e => {
+                        (e.currentTarget as HTMLElement).style.color = 'var(--text-tertiary)'
+                        ;(e.currentTarget as HTMLElement).style.background = 'transparent'
+                      }}
+                      title="Stop this session"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
                   </div>
                 </div>
               ))}
             </div>
-          </details>
+          )}
         </div>
       )}
     </div>

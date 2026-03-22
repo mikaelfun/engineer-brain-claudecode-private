@@ -610,6 +610,41 @@ export function useVerifyStatus(issueId: string, enabled: boolean = false, refet
   })
 }
 
+/** Fetch step progress for page-refresh recovery (caseAssistantStore hydration) */
+export function useCaseStepProgress(caseNumber: string, enabled: boolean = false) {
+  return useQuery({
+    queryKey: ['case-step-progress', caseNumber],
+    queryFn: () => apiGet<{
+      messages: Array<{
+        kind: string
+        content?: string
+        toolName?: string
+        step?: string
+        error?: string
+        questions?: Array<{ question: string; header?: string; options?: Array<{ label: string; description?: string }>; multiSelect?: boolean }>
+        sessionId?: string
+        timestamp: string
+      }>
+      isActive: boolean
+      pendingQuestion: { sessionId: string; questions: Array<{ question: string; header?: string; options?: Array<{ label: string; description?: string }>; multiSelect?: boolean }> } | null
+      currentStep: string | null
+    }>(`/case/${caseNumber}/step-progress`),
+    enabled,
+  })
+}
+
+/** Submit an answer to a case step pending question */
+export function useAnswerStepQuestion() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ caseNumber, answer }: { caseNumber: string; answer: string }) =>
+      apiPost<{ ok: boolean }>(`/case/${caseNumber}/step-answer`, { answer }),
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['case-step-progress', vars.caseNumber] })
+    },
+  })
+}
+
 // ===== Restart =====
 
 export function useRestartFrontend() {
