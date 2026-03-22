@@ -494,7 +494,7 @@ function CaseTodoTab({ caseId, latest, files, toggleTodo }: {
                           </button>
                         )}
                         <p className="text-sm flex-1" style={{
-                          textDecoration: item.checked ? 'line-through' : 'none',
+                          textDecoration: (item.checked && section.type !== 'green') ? 'line-through' : 'none',
                           color: item.checked
                             ? 'var(--text-tertiary)'
                             : 'var(--text-primary)'

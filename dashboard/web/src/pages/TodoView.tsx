@@ -376,7 +376,7 @@ function CaseTodoCard({ todo, navigate, toggleTodo, executeTodoAction }: {
                       <p
                         className="text-sm"
                         style={{
-                          textDecoration: item.checked ? 'line-through' : 'none',
+                          textDecoration: (item.checked && section.type !== 'green') ? 'line-through' : 'none',
                           color: item.checked
                             ? 'var(--text-tertiary)'
                             : 'var(--text-primary)'
