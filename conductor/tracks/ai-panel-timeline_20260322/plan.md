@@ -16,14 +16,14 @@ Replace the per-executionId tab strip with step filter tabs and switch the messa
 ### Tasks
 
 - [x] Task 1.1: Extract `StepQuestionForm` from CaseAIPanel into `dashboard/web/src/components/session/StepQuestionForm.tsx` as a shared component. Keep the same props interface, add optional `sessionId` prop for AgentMonitor use.
-- [ ] Task 1.2: Create `StepFilterTabs` component in `dashboard/web/src/components/session/StepFilterTabs.tsx`. Props: `steps: StepGroup[]` (from `groupMessagesByStep`), `activeFilter: string | null` (null = All), `onFilterChange: (stepName: string | null) => void`. Renders `[All]` + per-step buttons with status badges (✅🔄❌) and message counts.
-- [ ] Task 1.3: Refactor CaseAIPanel full mode message area — replace `sessionTabs` strip (L1108-1173) with `StepFilterTabs`. Replace per-session message rendering with `SessionMessageList` using `groupByStep=true`. When a filter is active, pass only that step's messages to `SessionMessageList` (using `groupMessagesByStep` to filter, then render flat without step grouping).
-- [ ] Task 1.4: Update CaseAIPanel full mode chat input — decouple from `effectiveSessionId` (which was executionId). Chat always sends to the real backend `activeSessionId` from `useCaseSessions()`. Remove tab-awareness from chat routing.
-- [ ] Task 1.5: Update CaseAIPanel compact mode — keep existing sidebar layout, but derive active step info from `groupMessagesByStep` on the message stream instead of from `caseAssistantStore.currentStep`.
+- [x] Task 1.2: Create `StepFilterTabs` component in `dashboard/web/src/components/session/StepFilterTabs.tsx`. Props: `steps: StepGroup[]` (from `groupMessagesByStep`), `activeFilter: string | null` (null = All), `onFilterChange: (stepName: string | null) => void`. Renders `[All]` + per-step buttons with status badges (✅🔄❌) and message counts.
+- [x] Task 1.3: Refactor CaseAIPanel full mode message area — replace `sessionTabs` strip (L1108-1173) with `StepFilterTabs`. Replace per-session message rendering with `SessionMessageList` using `groupByStep=true`. When a filter is active, pass only that step's messages to `SessionMessageList` (using `groupMessagesByStep` to filter, then render flat without step grouping).
+- [x] Task 1.4: Update CaseAIPanel full mode chat input — decouple from `effectiveSessionId` (which was executionId). Chat always sends to the real backend `activeSessionId` from `useCaseSessions()`. Remove tab-awareness from chat routing.
+- [x] Task 1.5: Update CaseAIPanel compact mode — keep existing sidebar layout, but derive active step info from `groupMessagesByStep` on the message stream instead of from `caseAssistantStore.currentStep`. (No change needed — compact mode already uses sessions API, not caseAssistantStore.currentStep)
 
 ### Verification
 
-- [ ] Phase 1 verified: CaseAIPanel shows timeline with step sections, filter tabs work, chat routes correctly, compact mode unchanged. TypeScript compiles. Existing unit tests pass.
+- [x] Phase 1 verified: CaseAIPanel shows timeline with step sections, filter tabs work, chat routes correctly, compact mode unchanged. TypeScript compiles. Existing unit tests pass (1 pre-existing failure in AgentMonitor unrelated to this track).
 
 ## Phase 2: Data Flow Migration — SSE → caseSessionStore
 
