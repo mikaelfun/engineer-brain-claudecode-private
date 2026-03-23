@@ -49,33 +49,35 @@ async function findPidByPort(port: number): Promise<number | null> {
 }
 
 /**
- * ISS-100: Get parent PID and process name for a given PID (Windows).
- * Uses PowerShell Get-CimInstance (wmic is deprecated/removed in modern Windows).
+ * ISS-100: Get all process parent info in a single PowerShell call.
+ * Returns a Map of PID → { parentPid, processName }.
+ * This avoids cold-starting PowerShell for each getParentInfo call.
  */
-async function getParentInfo(pid: number): Promise<{ parentPid: number; processName: string } | null> {
+async function getAllProcessParentInfo(): Promise<Map<number, { parentPid: number; processName: string }>> {
+  const map = new Map<number, { parentPid: number; processName: string }>()
   try {
     const { stdout } = await execAsync(
-      `powershell -NoProfile -Command "Get-CimInstance Win32_Process -Filter 'ProcessId=${pid}' | Select-Object -Property Name,ParentProcessId | ConvertTo-Csv -NoTypeInformation"`
+      `powershell -NoProfile -Command "Get-CimInstance Win32_Process | Select-Object ProcessId,Name,ParentProcessId | ConvertTo-Csv -NoTypeInformation"`,
+      { maxBuffer: 10 * 1024 * 1024 } // 10MB buffer for all processes
     )
-    // CSV output: "Name","ParentProcessId" (with header line)
     const lines = stdout.trim().split('\n').filter(l => l.trim().length > 0)
     for (const line of lines) {
-      // Skip header
-      if (line.trim().startsWith('"Name"')) continue
-      // Parse CSV: "node.exe","12345"
-      const match = line.match(/"([^"]+)","(\d+)"/)
+      if (line.trim().startsWith('"ProcessId"')) continue // skip header
+      // Parse CSV: "12345","node.exe","67890"
+      const match = line.match(/"(\d+)","([^"]+)","(\d+)"/)
       if (match) {
-        const processName = match[1].trim().toLowerCase()
-        const parentPid = parseInt(match[2], 10)
-        if (parentPid > 0) {
-          return { parentPid, processName }
+        const pid = parseInt(match[1], 10)
+        const processName = match[2].trim().toLowerCase()
+        const parentPid = parseInt(match[3], 10)
+        if (pid > 0) {
+          map.set(pid, { parentPid, processName })
         }
       }
     }
-    return null
   } catch {
-    return null
+    // PowerShell failed — return empty map, caller will use original PID
   }
+  return map
 }
 
 /**
@@ -85,10 +87,14 @@ async function getParentInfo(pid: number): Promise<{ parentPid: number; processN
  * the parent chain as long as the parent is a Node.js/cmd/shell process.
  * Returns the topmost PID in the tree that is still part of the chain.
  *
+ * Uses a single PowerShell call to get all process info, then traverses in memory.
  * This ensures we kill the --watch watcher parent, not just the child.
  * Max depth of 10 to prevent infinite loops.
  */
 async function findProcessTreeRoot(pid: number): Promise<number> {
+  const processMap = await getAllProcessParentInfo()
+  if (processMap.size === 0) return pid // PowerShell failed
+
   let currentPid = pid
   const visited = new Set<number>()
 
@@ -96,8 +102,8 @@ async function findProcessTreeRoot(pid: number): Promise<number> {
     if (visited.has(currentPid)) break // cycle detection
     visited.add(currentPid)
 
-    const info = await getParentInfo(currentPid)
-    if (!info) break // process doesn't exist or wmic failed
+    const info = processMap.get(currentPid)
+    if (!info) break // process not found
 
     const { parentPid } = info
 
@@ -105,11 +111,10 @@ async function findProcessTreeRoot(pid: number): Promise<number> {
     if (parentPid <= 4) break
 
     // Check if parent itself is a Node.js/shell process
-    // getParentInfo(parentPid).processName = the Name of process parentPid
-    const parentSelf = await getParentInfo(parentPid)
-    if (!parentSelf) break
+    const parentInfo = processMap.get(parentPid)
+    if (!parentInfo) break
 
-    if (NODE_TREE_PROCESS_NAMES.has(parentSelf.processName.toLowerCase())) {
+    if (NODE_TREE_PROCESS_NAMES.has(parentInfo.processName)) {
       // Parent is a node/cmd/shell process — it's part of our tree, go up
       currentPid = parentPid
     } else {
@@ -260,4 +265,4 @@ export async function restartAll(): Promise<{ success: boolean; message: string 
 }
 
 // Export for testing
-export { lastFrontendPid, lastBackendPid, findPidByPort, killPid, killSavedAndPort, findProcessTreeRoot, getParentInfo }
+export { lastFrontendPid, lastBackendPid, findPidByPort, killPid, killSavedAndPort, findProcessTreeRoot, getAllProcessParentInfo }

@@ -32,6 +32,16 @@ vi.mock('../agent/case-session-manager.js', () => ({
 // Mock process.exit
 vi.spyOn(process, 'exit').mockImplementation((() => {}) as never)
 
+/**
+ * Helper: build a PowerShell CSV stdout for getAllProcessParentInfo.
+ * Takes an array of [pid, name, parentPid] tuples.
+ */
+function buildProcessCsv(processes: [number, string, number][]): string {
+  const header = '"ProcessId","Name","ParentProcessId"'
+  const rows = processes.map(([pid, name, ppid]) => `"${pid}","${name}","${ppid}"`)
+  return [header, ...rows].join('\n') + '\n'
+}
+
 describe('restart-service', () => {
   let restartFrontend: () => Promise<{ success: boolean; message: string }>
   let restartBackend: () => Promise<{ success: boolean; message: string }>
@@ -66,8 +76,8 @@ describe('restart-service', () => {
       // findPidByPort returns a PID for port 5173
       mockExecImpl
         .mockResolvedValueOnce({ stdout: '  TCP    0.0.0.0:5173    0.0.0.0:0    LISTENING    9999\n' })
-        // findProcessTreeRoot(9999): getParentInfo fails → returns 9999
-        .mockRejectedValueOnce(new Error('wmic failed'))
+        // getAllProcessParentInfo — returns process list (PowerShell fails → empty)
+        .mockRejectedValueOnce(new Error('ps failed'))
         .mockResolvedValueOnce({}) // taskkill
         .mockRejectedValueOnce(new Error('no match')) // retry findPidByPort
 
@@ -87,12 +97,13 @@ describe('restart-service', () => {
       const mod = await import('./restart-service.js')
       const { findProcessTreeRoot } = mod
 
-      // getParentInfo(1000) → parent=500, processName='node.exe'
-      // getParentInfo(500) → processName='explorer.exe' (not in node tree)
-      // → should return 1000 (can't go higher)
+      // Process map: PID 1000 (node.exe, parent=500), PID 500 (explorer.exe, parent=100)
+      // → 500 is explorer.exe, not in NODE_TREE_PROCESS_NAMES → return 1000
       mockExecImpl
-        .mockResolvedValueOnce({ stdout: '"Name","ParentProcessId"\n"node.exe","500"\n' })
-        .mockResolvedValueOnce({ stdout: '"Name","ParentProcessId"\n"explorer.exe","100"\n' })
+        .mockResolvedValueOnce({ stdout: buildProcessCsv([
+          [1000, 'node.exe', 500],
+          [500, 'explorer.exe', 100],
+        ])})
 
       const root = await findProcessTreeRoot(1000)
       expect(root).toBe(1000)
@@ -103,27 +114,19 @@ describe('restart-service', () => {
       const mod = await import('./restart-service.js')
       const { findProcessTreeRoot } = mod
 
-      // Process tree: 3000 (node.exe) → parent 2000 (cmd.exe) → parent 1000 (node.exe) → parent 500 (explorer.exe)
-      // getParentInfo(3000) → {parentPid:2000, processName:'node.exe'}
-      //   check parent 2000: getParentInfo(2000) → {processName:'cmd.exe'} → cmd.exe in set → go up to 2000
-      // getParentInfo(2000) → {parentPid:1000, processName:'cmd.exe'}
-      //   check parent 1000: getParentInfo(1000) → {processName:'node.exe'} → node.exe in set → go up to 1000
-      // getParentInfo(1000) → {parentPid:500, processName:'node.exe'}
-      //   check parent 500: getParentInfo(500) → {processName:'explorer.exe'} → not in set → break
+      // Process tree:
+      //   3000 (node.exe) → parent 2000 (cmd.exe) → parent 1000 (node.exe) → parent 500 (explorer.exe)
+      // Walk: 3000→parent=2000, 2000 is cmd.exe (in set) → go to 2000
+      //       2000→parent=1000, 1000 is node.exe (in set) → go to 1000
+      //       1000→parent=500, 500 is explorer.exe (not in set) → stop
       // return 1000
       mockExecImpl
-        // getParentInfo(3000)
-        .mockResolvedValueOnce({ stdout: '"Name","ParentProcessId"\n"node.exe","2000"\n' })
-        // getParentInfo(2000) — checking if parent 2000 is in tree
-        .mockResolvedValueOnce({ stdout: '"Name","ParentProcessId"\n"cmd.exe","1000"\n' })
-        // getParentInfo(2000) — now currentPid=2000, getting its parent info
-        .mockResolvedValueOnce({ stdout: '"Name","ParentProcessId"\n"cmd.exe","1000"\n' })
-        // getParentInfo(1000) — checking if parent 1000 is in tree
-        .mockResolvedValueOnce({ stdout: '"Name","ParentProcessId"\n"node.exe","500"\n' })
-        // getParentInfo(1000) — now currentPid=1000, getting its parent info
-        .mockResolvedValueOnce({ stdout: '"Name","ParentProcessId"\n"node.exe","500"\n' })
-        // getParentInfo(500) — checking if parent 500 is in tree
-        .mockResolvedValueOnce({ stdout: '"Name","ParentProcessId"\n"explorer.exe","1"\n' })
+        .mockResolvedValueOnce({ stdout: buildProcessCsv([
+          [3000, 'node.exe', 2000],
+          [2000, 'cmd.exe', 1000],
+          [1000, 'node.exe', 500],
+          [500, 'explorer.exe', 1],
+        ])})
 
       const root = await findProcessTreeRoot(3000)
       expect(root).toBe(1000)
@@ -134,9 +137,11 @@ describe('restart-service', () => {
       const mod = await import('./restart-service.js')
       const { findProcessTreeRoot } = mod
 
-      // getParentInfo(1000) → parentPid=4 (System)
+      // PID 1000 (node.exe, parent=4) — System process, don't go higher
       mockExecImpl
-        .mockResolvedValueOnce({ stdout: '"Name","ParentProcessId"\n"node.exe","4"\n' })
+        .mockResolvedValueOnce({ stdout: buildProcessCsv([
+          [1000, 'node.exe', 4],
+        ])})
 
       const root = await findProcessTreeRoot(1000)
       expect(root).toBe(1000)
@@ -147,7 +152,7 @@ describe('restart-service', () => {
       const mod = await import('./restart-service.js')
       const { findProcessTreeRoot } = mod
 
-      mockExecImpl.mockRejectedValue(new Error('wmic failed'))
+      mockExecImpl.mockRejectedValue(new Error('ps failed'))
 
       const root = await findProcessTreeRoot(1000)
       expect(root).toBe(1000) // returns original PID
@@ -185,14 +190,14 @@ describe('restart-service', () => {
       // First findPidByPort → 9999
       mockExecImpl
         .mockResolvedValueOnce({ stdout: '  TCP    0.0.0.0:5173    0.0.0.0:0    LISTENING    9999\n' })
-        // findProcessTreeRoot(9999): getParentInfo(9999) fails → returns 9999
-        .mockRejectedValueOnce(new Error('wmic failed'))
+        // getAllProcessParentInfo fails → returns 9999 as-is
+        .mockRejectedValueOnce(new Error('ps failed'))
         // killPid(9999)
         .mockResolvedValueOnce({})
         // Retry findPidByPort → 9998 (watcher respawned!)
         .mockResolvedValueOnce({ stdout: '  TCP    0.0.0.0:5173    0.0.0.0:0    LISTENING    9998\n' })
-        // findProcessTreeRoot(9998): getParentInfo fails → returns 9998
-        .mockRejectedValueOnce(new Error('wmic failed'))
+        // getAllProcessParentInfo fails → returns 9998 as-is
+        .mockRejectedValueOnce(new Error('ps failed'))
         // killPid(9998)
         .mockResolvedValueOnce({})
 
@@ -240,7 +245,7 @@ describe('restart-service', () => {
       // No saved PID (first run), but port 3010 has a listener
       mockExecImpl
         .mockResolvedValueOnce({ stdout: '  TCP    0.0.0.0:3010    0.0.0.0:0    LISTENING    8888\n' }) // findPidByPort(3010)
-        .mockRejectedValueOnce(new Error('wmic failed')) // findProcessTreeRoot → getParentInfo fails → returns 8888
+        .mockRejectedValueOnce(new Error('ps failed')) // getAllProcessParentInfo fails → returns 8888
         .mockResolvedValueOnce({}) // taskkill /F /T /PID 8888
         .mockRejectedValueOnce(new Error('no match')) // retry findPidByPort — port freed
 
