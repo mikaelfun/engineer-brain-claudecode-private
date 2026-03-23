@@ -17,7 +17,12 @@
 #>
 param(
     [Parameter(Mandatory)][string]$TicketNumber,
-    [string]$OutputDir = $(if ($env:D365_CASES_ROOT) { "$env:D365_CASES_ROOT\active" } else { "$env:USERPROFILE\.openclaw\workspace\cases\active" }),
+    [string]$OutputDir = $(if ($env:D365_CASES_ROOT) { "$env:D365_CASES_ROOT\active" } else {
+        $projRoot = (Resolve-Path "$PSScriptRoot\..\..\..").Path
+        $cfg = Get-Content "$projRoot\config.json" -Raw | ConvertFrom-Json
+        $cr = if ([IO.Path]::IsPathRooted($cfg.casesRoot)) { $cfg.casesRoot } else { Join-Path $projRoot $cfg.casesRoot }
+        "$cr\active"
+    }),
     [switch]$Force,
     [int]$CacheMinutes = 10,
     [switch]$IncludeIrCheck,
@@ -37,6 +42,12 @@ if (-not $incidentId) {
     exit 1
 }
 Write-Host "🔵 Incident ID: $incidentId (cached)"
+
+# Ensure browser is on D365 BEFORE parallel jobs launch.
+# Without this, each Start-Job's Ensure-D365Tab may simultaneously trigger
+# Restart-D365Browser (kill-all + open), causing browser state corruption
+# that breaks the subsequent IR check.
+Ensure-D365Tab
 
 # Launch 3 parallel jobs
 Write-Host "🔵 Launching parallel: snapshot + emails + notes..."

@@ -31,6 +31,7 @@
 | [AI Panel Redesign](./tracks/ai-panel-redesign_20260322/index.md) | Pending | 0/12 tasks |
 | [AI Panel Timeline](./tracks/ai-panel-timeline_20260322/index.md) | Pending | 0/12 tasks |
 | [SDK Session 进程清理](./tracks/session-cleanup_20260322/index.md) | Pending | 0/12 tasks |
+| [Fix SSE Duplicate Messages](./tracks/sse-dup-msg-fix_20260322/index.md) | Pending | 0/5 tasks |
 
 ## All Tracks
 

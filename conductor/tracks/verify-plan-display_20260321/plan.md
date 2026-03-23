@@ -22,6 +22,22 @@
 - [x] TypeScript 编译通过
 - [x] 单元测试通过
 
+## Verification Plan
+
+| # | Acceptance Criterion | Test Type | Test Steps |
+|---|---------------------|-----------|------------|
+| 1 | Plan 面板除 Task 列表外，额外展示 Verification 检查项（来自各 Phase 的 `### Verification` 小节） | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 2 | Plan 面板展示 Post-Implementation Checklist（来自 `## Post-Implementation Checklist`... | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 3 | 检查项显示 ✅/⬜ 状态（对应 `[x]` / `[ ]`） | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 4 | Verification 和 Checklist 区域视觉上与 Task 列表区分（如小标题或分隔线） | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 5 | 对无 verification 内容的 plan 保持现有展示不变 | Visual | Navigate to page → screenshot → verify visual matches spec |
+
+**Test Type Legend:**
+- **Interaction** — Playwright clicks, form fills, state assertions
+- **Visual** — Navigate + screenshot + visual inspection
+- **API** — curl/fetch endpoint + assert response
+- **Skip** — Backend-only or covered by unit tests
+
 ## Post-Implementation Checklist
 
 - [x] 关联 Issue JSON (ISS-042) 状态已更新

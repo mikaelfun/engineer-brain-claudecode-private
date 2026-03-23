@@ -4,7 +4,7 @@
   "type": "bug",
   "status": "complete",
   "created": "2026-03-22T23:40:00+08:00",
-  "updated": "2026-03-22T23:45:00+08:00",
+  "updated": "2026-03-22T02:08:30.324Z",
   "issueId": "ISS-063",
   "phases": {
     "total": 1,
@@ -13,5 +13,20 @@
   "tasks": {
     "total": 3,
     "completed": 3
+  },
+  "verification": {
+    "status": "passed",
+    "method": "auto",
+    "result": {
+      "unitTest": {
+        "success": true,
+        "output": "> engineer-brain-dashboard@1.0.0 test\n> vitest run && npm --prefix web test --reporter=verbose\n\n\n\u001b[1m\u001b[46m RUN \u001b[49m\u001b[22m \u001b[36mv4.1.0 \u001b[39m\u001b[90mC:/Users/fangkun/Documents/Claude Code Projects/EngineerBrain/dashboard\u001b[39m\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[32m4 passed\u001b[39m\u001b[22m\u001b[90m (4)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[32m109 passed\u001b[39m\u001b[22m\u001b[90m (109)\u001b[39m\n\u001b[2m   Start at \u001b[22m 10:03:48\n\u001b[2m   Duration \u001b[22m 1.18s\u001b[2m (transform 743ms, setup 0ms, import 1.27s, tests 194ms, environment 1ms)\u001b[22m\n\n\n> engineer-brain-web@1.0.0 test\n> vitest run\n\n\n\u001b[1m\u001b[46m RUN \u001b[49m\u001b[22m \u001b[36mv4.1.0 \u001b[39m\u001b[90mC:/Users/fangkun/Documents/Claude Code Projects/EngineerBrain/dashboard/web\u001b[39m\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[32m7 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[32m83 passed\u001b[39m\u001b[22m\u001b[90m (83)\u001b[39m\n\u001b[2m   Start at \u001b[22m 10:03:53\n\u001b[2m   Duration \u001b[22m 12.71s\u001b[2m (transform 3.23s, setup 8.35s, import 11.83s, tests 1.70s, environment 53.35s)\u001b[22m\n\n\nnpm warn Unknown cli config \"--reporter\". This will stop working in the next major version of npm."
+      },
+      "uiTest": {
+        "success": true,
+        "output": "---\n\n## VERIFICATION RESULTS:\n\n| # | Acceptance Criterion | Result | Evidence |\n|---|---------------------|--------|----------|\n| 1 | Case 卡片不再显示 FWR SLA 徽章 | ✅ PASS | **Code**: `Dashboard.tsx` has zero `FWR`/`fwrSla` references (grep confirmed). SLA badges section (lines 341-363) only renders IR + Health Score. **Visual**: Dashboard screenshot shows 11 case cards — none display FWR label. **Playwright**: `page.locator('text=FWR').count() === 0` confirmed. |\n| 2 | 客户名称使用正确的 Customer 字段 | ⏭️ SKIP | Backend-only data field. Already confirmed `c.customer` maps to D365 `_customerid_value@OData.Community.Display.V1.FormattedValue` — no UI change needed. |\n| 3 | 客户名称使用 accent 颜色 + font-semibold 加粗 | ✅ PASS | **Code**: Lines 275-285 use `font-bold` + `color: var(--accent-cyan)` + `background: color-mix(in srgb, var(--accent-cyan) 15%, transparent)` + `borderColor` + `textShadow` glow effect. **Visual**: Screenshot shows all 11 customer names rendered as prominent colored pill badges (e.g., \"Volkswagen Group\", \"Ford China\", \"上汽大众\", \"Deloitte China\") — instantly distinguishable from surrounding gray text. **Playwright**: 45 `.font-bold` elements found, `fontWeight: 700` confirmed. |\n\n**OVERALL: ✅ PASS**\n\n> **Note**: The backend server had a pre-existing compilation error in `dashboard/src/routes/issues.ts` (uncommitted changes unrelated to this track). The frontend Vite server was operational on port 5180 and case cards rendered correctly with real data, allowing full visual + automated verification."
+      },
+      "verifiedAt": "2026-03-22T02:08:30.322Z"
+    }
   }
 }

@@ -1,0 +1,10 @@
+{
+  "id": "ISS-097",
+  "title": "ai assistant用户主动发送消息，触发的sdk session没有sse",
+  "description": "",
+  "type": "bug",
+  "priority": "P1",
+  "status": "pending",
+  "createdAt": "2026-03-23T03:21:39.889Z",
+  "updatedAt": "2026-03-23T03:21:39.889Z"
+}

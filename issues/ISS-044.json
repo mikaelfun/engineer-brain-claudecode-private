@@ -1,0 +1,11 @@
+{
+  "id": "ISS-044",
+  "title": "Agents 页面应能看到 Case 相关和 Issue 创建的各种 Agent Session",
+  "description": "Agents 页面当前只展示手动创建的 agent session。应扩展为同时展示：1) Case 处理流程中创建的 agent session（如 troubleshooter、email-drafter、teams-search 等）；2) Issue 实现流程中创建的 agent session（如 conductor implement 产生的 session）；3) Verify 流程创建的 session。用户可以在一个统一视图查看所有 agent 的执行历史和状态。",
+  "type": "feature",
+  "priority": "P1",
+  "status": "implemented",
+  "trackId": "agent-session-view_20260321",
+  "createdAt": "2026-03-21T20:30:00+08:00",
+  "updatedAt": "2026-03-22T04:31:00+08:00"
+}

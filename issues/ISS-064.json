@@ -1,0 +1,11 @@
+{
+  "id": "ISS-064",
+  "title": "Todo 错误生成 \"修改 SAP: Status → Problem Solved\" — SAP 与 Status 无关",
+  "description": "Case 2603090040000814 的 Todo 中出现了 \"修改 SAP: Status → Problem Solved\"。SAP (Support Area Path) 是技术分类路径，与 Case Status 完全无关。inspection-writer 或 status-judge 在生成 Todo 时错误地将 Status 变更映射到了 SAP 修改操作。应修复 Todo 生成逻辑，避免将 Status 变更误判为 SAP 修改。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "sap-status-confusion_20260322",
+  "createdAt": "2026-03-21T16:00:00+08:00",
+  "updatedAt": "2026-03-22T16:10:00+08:00"
+}

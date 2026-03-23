@@ -1,0 +1,10 @@
+{
+  "id": "ISS-045",
+  "title": "reopen的issue应该清空plan等等旧的信息，重新变成pending状态可create track重新评估生成计划",
+  "description": "",
+  "type": "bug",
+  "priority": "P1",
+  "status": "pending",
+  "createdAt": "2026-03-21T12:14:00.627Z",
+  "updatedAt": "2026-03-21T15:08:02.879Z"
+}

@@ -77,7 +77,7 @@ function SessionRow({ session, isExpanded, onToggle, onStop }: { session: Unifie
     : diffMins < 1440 ? `${Math.floor(diffMins / 60)}h ago`
     : `${Math.floor(diffMins / 1440)}d ago`
 
-  const isActive = session.type === 'case' && (session.status === 'active' || session.status === 'paused')
+  const isStoppable = session.type === 'case' && (session.status === 'active' || session.status === 'paused' || session.status === 'failed')
 
   const handleInlineStop = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -144,8 +144,8 @@ function SessionRow({ session, isExpanded, onToggle, onStop }: { session: Unifie
               ⏳ Awaiting input
             </span>
           )}
-          {/* Inline Stop button for active case sessions — icon-only, subtle */}
-          {isActive && (
+          {/* Inline Stop/Dismiss button for active/paused/failed case sessions */}
+          {isStoppable && (
             <span
               role="button"
               onClick={handleInlineStop}
@@ -399,6 +399,7 @@ function CaseSessionDetail({ session }: { session: UnifiedSession }) {
   }, [storeMessages.length])
 
   const isActive = session.status === 'active' || session.status === 'paused'
+  const isDismissable = isActive || session.status === 'failed'
 
   const handleChat = async () => {
     const text = chatInput.trim()
@@ -468,41 +469,50 @@ function CaseSessionDetail({ session }: { session: UnifiedSession }) {
         </div>
       )}
 
-      {/* Chat input + Stop button for active sessions */}
-      {isActive && (
+      {/* Chat input + Stop/Dismiss button */}
+      {isDismissable && (
         <div className="flex items-center gap-2 px-3 py-2 mt-1" style={{ borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}>
-          <input
-            type="text"
-            value={chatInput}
-            onChange={e => setChatInput(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') handleChat() }}
-            placeholder="Send message to session..."
-            className="flex-1 text-xs px-2.5 py-1.5 rounded border outline-none"
-            style={{
-              background: 'var(--bg-inset)',
-              color: 'var(--text-primary)',
-              borderColor: 'var(--border-default)',
-            }}
-            disabled={isSending}
-          />
-          <button
-            onClick={handleChat}
-            disabled={!chatInput.trim() || isSending}
-            className="p-1.5 rounded transition-colors disabled:opacity-40"
-            style={{ color: 'var(--accent-blue)' }}
-            title="Send"
-          >
-            <Send className="w-3.5 h-3.5" />
-          </button>
+          {isActive && (
+            <>
+              <input
+                type="text"
+                value={chatInput}
+                onChange={e => setChatInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleChat() }}
+                placeholder="Send message to session..."
+                className="flex-1 text-xs px-2.5 py-1.5 rounded border outline-none"
+                style={{
+                  background: 'var(--bg-inset)',
+                  color: 'var(--text-primary)',
+                  borderColor: 'var(--border-default)',
+                }}
+                disabled={isSending}
+              />
+              <button
+                onClick={handleChat}
+                disabled={!chatInput.trim() || isSending}
+                className="p-1.5 rounded transition-colors disabled:opacity-40"
+                style={{ color: 'var(--accent-blue)' }}
+                title="Send"
+              >
+                <Send className="w-3.5 h-3.5" />
+              </button>
+            </>
+          )}
+          {!isActive && (
+            <span className="flex-1 text-xs" style={{ color: 'var(--text-tertiary)' }}>
+              Session failed — dismiss to clean up
+            </span>
+          )}
           <button
             onClick={handleStop}
             disabled={isStopping}
             className="flex items-center gap-1 px-2 py-1 text-xs rounded transition-colors disabled:opacity-40"
             style={{ color: 'var(--accent-red)', background: 'var(--accent-red-dim)' }}
-            title="Stop session"
+            title={isActive ? 'Stop session' : 'Dismiss failed session'}
           >
             <Square className="w-3 h-3" />
-            Stop
+            {isActive ? 'Stop' : 'Dismiss'}
           </button>
         </div>
       )}
@@ -622,7 +632,7 @@ export default function AgentMonitor() {
   }
 
   const handleStopAllCaseSessions = async (sessions: UnifiedSession[]) => {
-    const activeCaseSessions = sessions.filter(s => s.type === 'case' && (s.status === 'active' || s.status === 'paused'))
+    const activeCaseSessions = sessions.filter(s => s.type === 'case' && (s.status === 'active' || s.status === 'paused' || s.status === 'failed'))
     if (activeCaseSessions.length === 0) return
     setStoppingAll(true)
     try {
@@ -836,7 +846,7 @@ export default function AgentMonitor() {
                 const config = SESSION_TYPE_CONFIG[type]
                 const isCollapsed = collapsedGroups[type]
                 const activeCount = sessions.filter((s) => s.status === 'active').length
-                const stoppableCount = sessions.filter((s) => s.type === 'case' && (s.status === 'active' || s.status === 'paused')).length
+                const stoppableCount = sessions.filter((s) => s.type === 'case' && (s.status === 'active' || s.status === 'paused' || s.status === 'failed')).length
 
                 return (
                   <Card key={type}>

@@ -24,6 +24,22 @@
 - [x] 点击 Edit → 进入编辑模式
 - [x] TypeScript 编译通过
 
+## Verification Plan
+
+| # | Acceptance Criterion | Test Type | Test Steps |
+|---|---------------------|-----------|------------|
+| 1 | 点击 issue 行展开只读详情，不直接进入编辑 | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 2 | 只读详情中有明确的 Edit 按钮 | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 3 | 点击 Edit 按钮进入编辑模式 | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 4 | Save/Cancel 后回到只读详情 | Interaction | Start operation → click cancel/stop → verify operation ends and state reverts |
+| 5 | 再次点击行标题/头部可以折叠详情 | Visual | Navigate to page → screenshot → verify visual matches spec |
+
+**Test Type Legend:**
+- **Interaction** — Playwright clicks, form fills, state assertions
+- **Visual** — Navigate + screenshot + visual inspection
+- **API** — curl/fetch endpoint + assert response
+- **Skip** — Backend-only or covered by unit tests
+
 ## Post-Implementation Checklist
 
 - [x] 关联 Issue JSON 状态已更新

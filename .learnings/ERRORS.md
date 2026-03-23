@@ -79,3 +79,10 @@
 - 解决：用绝对路径 `--profile "$TEMP/playwright-d365-profile"`；删除误创建的目录（需先 `playwright-cli kill-all`）
 - 预防：`--profile` 永远用绝对路径（`$TEMP` 或 `$HOME`），不用相对路径
 - 相关文件：`.claude/agents/data-refresh.md`
+
+### 2026-03-21 — taskkill /F /IM node.exe 误杀 Claude Code 进程
+
+- 症状：重启 Dashboard 前后端时，执行 `taskkill /F /IM node.exe` 把 Claude Code 本身（也是 node 进程）一起杀掉了，导致会话中断
+- 原因：`taskkill /IM node.exe` 按进程名匹配，会杀掉所有 node.exe 进程，包括 Claude Code CLI、MCP server 等
+- 解决：用 `netstat -ano | findstr "LISTENING" | findstr ":5173 :3010"` 找到占用端口的具体 PID，然后 `powershell -Command "Stop-Process -Id {PID} -Force"` 精准杀掉
+- 预防：**绝对不要用 `taskkill /F /IM node.exe`**。始终先查端口占用的 PID，只杀特定 PID。同理也不要 `killall node` 或 `pkill node`

@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Engineer Brain — Design Preview v2</title>
+
+<!-- Fonts: JetBrains Mono for data/code, Plus Jakarta Sans for UI -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+  /* ============================
+     CSS VARIABLES — DUAL THEME
+     ============================ */
+  :root {
+    --font-display: 'Plus Jakarta Sans', -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Cascadia Code', monospace;
+    --theme-transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    --sidebar-width: 220px;
+  }
+
+  /* =============================================
+     DARK THEME — v2: softer, lower contrast
+     ============================================= */
+  .dark {
+    /* Lifted base: warm dark gray, not near-black */
+    --bg-base: #1a1d24;
+    --bg-surface: #22262f;
+    --bg-elevated: #282d38;
+    --bg-hover: #2e3340;
+    --bg-active: #353b4a;
+    --bg-inset: #1e2129;      /* recessed areas */
+
+    /* Softer borders */
+    --border-subtle: rgba(255,255,255,0.05);
+    --border-default: rgba(255,255,255,0.08);
+    --border-strong: rgba(255,255,255,0.13);
+
+    /* Reduced contrast text — not pure white */
+    --text-primary: #c9cdd6;
+    --text-secondary: #8b919e;
+    --text-tertiary: #5e6370;
+    --text-inverse: #1a1d24;
+
+    /* Muted accent colors — less saturated */
+    --accent-blue: #6ba3e8;
+    --accent-blue-dim: rgba(107,163,232,0.10);
+    --accent-green: #5cbf8a;
+    --accent-green-dim: rgba(92,191,138,0.10);
+    --accent-amber: #d4a44a;
+    --accent-amber-dim: rgba(212,164,74,0.10);
+    --accent-red: #d47272;
+    --accent-red-dim: rgba(212,114,114,0.10);
+    --accent-purple: #9e8cc7;
+    --accent-purple-dim: rgba(158,140,199,0.10);
+
+    /* Softer glows */
+    --glow-blue: 0 0 12px rgba(107,163,232,0.08);
+    --glow-green: 0 0 12px rgba(92,191,138,0.08);
+    --glow-amber: 0 0 12px rgba(212,164,74,0.08);
+    --glow-red: 0 0 12px rgba(212,114,114,0.08);
+
+    --shadow-card: 0 1px 3px rgba(0,0,0,0.2);
+    --shadow-elevated: 0 4px 20px rgba(0,0,0,0.25);
+  }
+
+  /* LIGHT THEME */
+  .light {
+    --bg-base: #f4f6fa;
+    --bg-surface: #ffffff;
+    --bg-elevated: #ffffff;
+    --bg-hover: #f0f2f7;
+    --bg-active: #e6e9f0;
+    --bg-inset: #f0f1f5;
+
+    --border-subtle: rgba(0,0,0,0.05);
+    --border-default: rgba(0,0,0,0.08);
+    --border-strong: rgba(0,0,0,0.14);
+
+    --text-primary: #2c3040;
+    --text-secondary: #5a6478;
+    --text-tertiary: #8b95a9;
+    --text-inverse: #ffffff;
+
+    --accent-blue: #3b7dd8;
+    --accent-blue-dim: rgba(59,125,216,0.07);
+    --accent-green: #2d9a62;
+    --accent-green-dim: rgba(45,154,98,0.07);
+    --accent-amber: #b8862e;
+    --accent-amber-dim: rgba(184,134,46,0.07);
+    --accent-red: #c05050;
+    --accent-red-dim: rgba(192,80,80,0.07);
+    --accent-purple: #7c5fbf;
+    --accent-purple-dim: rgba(124,95,191,0.07);
+
+    --glow-blue: none;
+    --glow-green: none;
+    --glow-amber: none;
+    --glow-red: none;
+
+    --shadow-card: 0 1px 3px rgba(0,0,0,0.05), 0 0 0 1px var(--border-subtle);
+    --shadow-elevated: 0 4px 20px rgba(0,0,0,0.06);
+  }
+
+  /* ============================
+     BASE RESETS
+     ============================ */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-display);
+    background: var(--bg-base);
+    color: var(--text-primary);
+    transition: var(--theme-transition);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+    padding-top: 44px;
+  }
+
+  /* Very subtle noise texture instead of grid */
+  .dark body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    opacity: 0.015;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Subtle radial ambient glow */
+  .grid-bg {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .dark .grid-bg {
+    background:
+      radial-gradient(ellipse at 20% 0%, rgba(107,163,232,0.03) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 100%, rgba(158,140,199,0.02) 0%, transparent 60%);
+  }
+
+  /* ============================
+     LAYOUT
+     ============================ */
+  .app-layout {
+    display: flex;
+    min-height: 100vh;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* --- Sidebar --- */
+  .sidebar {
+    width: var(--sidebar-width);
+    background: var(--bg-surface);
+    border-right: 1px solid var(--border-subtle);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 44px;
+    left: 0;
+    bottom: 0;
+    z-index: 50;
+    transition: var(--theme-transition);
+  }
+
+  .sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 20px 16px;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .sidebar-logo .logo-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+    opacity: 0.9;
+  }
+  .sidebar-logo .logo-text {
+    font-weight: 800;
+    font-size: 14px;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+  }
+  .sidebar-logo .logo-sub {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .sidebar-nav {
+    flex: 1;
+    padding: 12px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-decoration: none;
+    position: relative;
+  }
+  .nav-item:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+  .nav-item.active {
+    background: var(--accent-blue-dim);
+    color: var(--accent-blue);
+  }
+  .nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 18px;
+    border-radius: 0 3px 3px 0;
+    background: var(--accent-blue);
+  }
+  .nav-item .nav-icon {
+    width: 18px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .nav-item .nav-badge {
+    margin-left: auto;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 8px;
+    background: var(--accent-red-dim);
+    color: var(--accent-red);
+    font-family: var(--font-mono);
+  }
+  .nav-section-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    padding: 14px 12px 5px;
+  }
+
+  .sidebar-footer {
+    padding: 10px;
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .theme-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border-radius: 7px;
+    background: var(--bg-hover);
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text-secondary);
+    border: none;
+    font-family: var(--font-display);
+    width: 100%;
+    transition: all 0.15s ease;
+  }
+  .theme-toggle:hover { background: var(--bg-active); color: var(--text-primary); }
+
+  /* --- Main Content --- */
+  .main-content {
+    margin-left: var(--sidebar-width);
+    flex: 1;
+    padding: 24px 32px;
+    min-width: 0;
+  }
+
+  /* ============================
+     PAGE HEADER
+     ============================ */
+  .page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .page-title {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--text-primary);
+  }
+  .page-subtitle {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-top: 3px;
+    font-family: var(--font-mono);
+    font-weight: 400;
+  }
+
+  /* ============================
+     STAT CARDS
+     ============================ */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .stat-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    padding: 14px 18px;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    opacity: 0.7;
+  }
+  .stat-card:hover {
+    border-color: var(--border-default);
+    transform: translateY(-1px);
+  }
+  .stat-card.blue::before { background: var(--accent-blue); }
+  .stat-card.green::before { background: var(--accent-green); }
+  .stat-card.amber::before { background: var(--accent-amber); }
+  .stat-card.red::before { background: var(--accent-red); }
+
+  .stat-card:hover.blue { box-shadow: var(--glow-blue); }
+  .stat-card:hover.green { box-shadow: var(--glow-green); }
+  .stat-card:hover.amber { box-shadow: var(--glow-amber); }
+  .stat-card:hover.red { box-shadow: var(--glow-red); }
+
+  .stat-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .stat-value {
+    font-size: 26px;
+    font-weight: 800;
+    font-family: var(--font-mono);
+    margin-top: 4px;
+    letter-spacing: -0.02em;
+  }
+  .stat-card.blue .stat-value { color: var(--accent-blue); }
+  .stat-card.green .stat-value { color: var(--accent-green); }
+  .stat-card.amber .stat-value { color: var(--accent-amber); }
+  .stat-card.red .stat-value { color: var(--accent-red); }
+
+  .stat-delta {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    margin-top: 5px;
+    padding: 1px 5px;
+    border-radius: 5px;
+    font-family: var(--font-mono);
+  }
+  .stat-delta.up { background: var(--accent-red-dim); color: var(--accent-red); }
+  .stat-delta.down { background: var(--accent-green-dim); color: var(--accent-green); }
+
+  /* ============================
+     CARDS
+     ============================ */
+  .card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    padding: 18px;
+    transition: var(--theme-transition);
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ============================
+     TABLE (Case List)
+     ============================ */
+  .case-table {
+    width: 100%;
+    border-spacing: 0;
+    font-size: 13px;
+  }
+  .case-table thead th {
+    text-align: left;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-tertiary);
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-surface);
+  }
+  .case-table tbody tr {
+    cursor: pointer;
+    transition: all 0.1s ease;
+  }
+  .case-table tbody tr:hover { background: var(--bg-hover); }
+  .case-table tbody td {
+    padding: 11px 12px;
+    border-bottom: 1px solid var(--border-subtle);
+    vertical-align: middle;
+  }
+  .case-number {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent-blue);
+  }
+  .case-title-cell {
+    max-width: 300px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+  .case-customer {
+    color: var(--text-secondary);
+    font-size: 12px;
+  }
+
+  /* ============================
+     BADGES
+     ============================ */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+  .badge-sev-a { background: var(--accent-red-dim); color: var(--accent-red); }
+  .badge-sev-b { background: var(--accent-amber-dim); color: var(--accent-amber); }
+  .badge-sev-c { background: var(--accent-blue-dim); color: var(--accent-blue); }
+  .badge-pe { background: var(--accent-red-dim); color: var(--accent-red); }
+  .badge-active { background: var(--accent-blue-dim); color: var(--accent-blue); }
+  .badge-wpg { background: var(--accent-purple-dim); color: var(--accent-purple); }
+  .badge-pc { background: var(--accent-amber-dim); color: var(--accent-amber); }
+  .badge-ar { background: var(--accent-green-dim); color: var(--accent-green); }
+
+  .sla-ok { color: var(--accent-green); }
+  .sla-warn { color: var(--accent-amber); }
+  .sla-fail { color: var(--accent-red); }
+
+  .sla-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+  }
+  .sla-dot.ok { background: var(--accent-green); }
+  .sla-dot.warn { background: var(--accent-amber); }
+  .sla-dot.fail { background: var(--accent-red); animation: pulse-dot 2.5s ease-in-out infinite; }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* Health Score Circle */
+  .health-score {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 800;
+    font-family: var(--font-mono);
+    border: 2px solid;
+  }
+  .health-good { border-color: var(--accent-green); color: var(--accent-green); background: var(--accent-green-dim); }
+  .health-warn { border-color: var(--accent-amber); color: var(--accent-amber); background: var(--accent-amber-dim); }
+  .health-bad { border-color: var(--accent-red); color: var(--accent-red); background: var(--accent-red-dim); }
+
+  /* ============================
+     BUTTONS
+     ============================ */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--font-display);
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s ease;
+  }
+  .btn-primary {
+    background: var(--accent-blue);
+    color: var(--text-inverse);
+  }
+  .btn-primary:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+  }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-default);
+  }
+  .btn-ghost:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+
+  /* ============================
+     PATROL STATUS BAR
+     ============================ */
+  .patrol-bar {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .patrol-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .patrol-status-pills {
+    display: flex;
+    gap: 6px;
+    flex: 1;
+    flex-wrap: wrap;
+  }
+  .patrol-pill {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--font-mono);
+  }
+  .patrol-pill .pill-count { font-size: 13px; font-weight: 800; }
+  .patrol-pill.pe { background: var(--accent-red-dim); color: var(--accent-red); }
+  .patrol-pill.pc { background: var(--accent-amber-dim); color: var(--accent-amber); }
+  .patrol-pill.wpg { background: var(--accent-purple-dim); color: var(--accent-purple); }
+  .patrol-pill.ar { background: var(--accent-blue-dim); color: var(--accent-blue); }
+  .patrol-pill.ok { background: var(--accent-green-dim); color: var(--accent-green); }
+
+  /* Row severity accent */
+  .row-sev-a td:first-child { border-left: 3px solid var(--accent-red); padding-left: 9px; }
+  .row-sev-b td:first-child { border-left: 3px solid var(--accent-amber); padding-left: 9px; }
+  .row-sev-c td:first-child { border-left: 3px solid var(--accent-blue); padding-left: 9px; }
+
+  .age-cell { font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary); }
+  .age-old { color: var(--accent-red); font-weight: 600; }
+
+  .live-pulse {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-green);
+    animation: pulse-dot 2s infinite;
+  }
+
+  /* ============================
+     PAGE DIVIDER
+     ============================ */
+  .page-divider {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-default), transparent);
+    margin: 48px 0;
+  }
+
+  /* ============================
+     CASE DETAIL — HEADER
+     ============================ */
+  .case-header-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    padding: 18px 22px;
+    margin-bottom: 18px;
+  }
+  .case-header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+  .case-header-title {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+  }
+  .case-meta-chips {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .case-meta-dot { color: var(--text-tertiary); }
+  .sla-row {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-subtle);
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .sla-item { display: flex; align-items: center; gap: 4px; }
+
+  /* ============================
+     CASE DETAIL — INTEGRATED LAYOUT
+     AI Panel 融入页面，不再是独立卡片
+     ============================ */
+  .detail-layout {
+    display: grid;
+    /* Main content + AI sidebar share same surface */
+    grid-template-columns: 1fr 280px;
+    gap: 0;
+    align-items: start;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  /* Left content area */
+  .detail-left {
+    min-width: 0;
+    padding: 18px;
+    /* subtle divider between content and AI */
+    border-right: 1px solid var(--border-subtle);
+  }
+
+  /* Tabs */
+  .tab-bar {
+    display: flex;
+    border-bottom: 1px solid var(--border-subtle);
+    margin-bottom: 16px;
+    gap: 0;
+    overflow-x: auto;
+  }
+  .tab-item {
+    padding: 9px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+  }
+  .tab-item:hover {
+    color: var(--text-secondary);
+    background: var(--bg-hover);
+  }
+  .tab-item.active {
+    color: var(--accent-blue);
+    border-bottom-color: var(--accent-blue);
+  }
+  .tab-count {
+    font-size: 9px;
+    font-family: var(--font-mono);
+    padding: 1px 4px;
+    border-radius: 6px;
+    background: var(--bg-hover);
+    margin-left: 4px;
+  }
+  .tab-item.active .tab-count {
+    background: var(--accent-blue-dim);
+    color: var(--accent-blue);
+  }
+
+  /* ============================
+     AI PANEL — Integrated (右侧区域)
+     不再有独立 border/shadow，融为页面一部分
+     ============================ */
+  .ai-panel {
+    /* 继承父级 detail-layout 的 bg-surface */
+    background: transparent;
+    position: sticky;
+    top: 68px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .ai-panel-header {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .ai-panel-header .sparkle { font-size: 14px; }
+
+  .ai-panel-body { padding: 12px 14px; }
+
+  .ai-btn-primary {
+    width: 100%;
+    padding: 9px;
+    border-radius: 7px;
+    background: var(--accent-blue);
+    color: var(--text-inverse);
+    font-weight: 700;
+    font-size: 12px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.15s ease;
+    font-family: var(--font-display);
+    margin-bottom: 8px;
+  }
+  .ai-btn-primary:hover { filter: brightness(1.1); }
+
+  .ai-split-btn {
+    display: flex;
+    border-radius: 7px;
+    border: 1px solid var(--border-default);
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+  .ai-split-main {
+    flex: 1;
+    padding: 7px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-display);
+    transition: all 0.1s ease;
+  }
+  .ai-split-main:hover { background: var(--bg-hover); color: var(--text-primary); }
+  .ai-split-drop {
+    padding: 7px 8px;
+    border: none;
+    border-left: 1px solid var(--border-default);
+    background: none;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    transition: all 0.1s ease;
+    font-size: 10px;
+  }
+  .ai-split-drop:hover { background: var(--bg-hover); }
+
+  .ai-divider {
+    height: 1px;
+    background: var(--border-subtle);
+    margin: 4px 0;
+  }
+
+  .ai-action {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 5px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.1s ease;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    font-family: var(--font-display);
+  }
+  .ai-action:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+  .ai-action .action-icon { width: 16px; font-size: 12px; }
+  .ai-action .action-arrow {
+    margin-left: auto;
+    opacity: 0;
+    color: var(--text-tertiary);
+    transition: opacity 0.1s;
+    font-size: 11px;
+  }
+  .ai-action:hover .action-arrow { opacity: 1; }
+
+  /* AI Session area — uses inset bg for depth */
+  .ai-session {
+    border-top: 1px solid var(--border-subtle);
+    padding: 12px 14px;
+    background: var(--bg-inset);
+  }
+
+  .session-indicator {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 10px;
+    background: var(--accent-blue-dim);
+    border-radius: 6px;
+    margin-bottom: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent-blue);
+  }
+
+  .msg-bubble {
+    border-left: 2px solid;
+    padding: 4px 8px;
+    margin-bottom: 6px;
+    border-radius: 0 4px 4px 0;
+    font-size: 11px;
+  }
+  .msg-bubble .msg-label {
+    font-size: 10px;
+    font-weight: 700;
+    margin-bottom: 1px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .msg-bubble .msg-text {
+    color: var(--text-secondary);
+    font-size: 11px;
+    line-height: 1.5;
+  }
+  .msg-thinking { border-color: var(--accent-blue); }
+  .msg-thinking .msg-label { color: var(--accent-blue); }
+  .msg-tool { border-color: var(--accent-amber); }
+  .msg-tool .msg-label { color: var(--accent-amber); }
+  .msg-tool .msg-text { font-family: var(--font-mono); font-size: 10px; }
+  .msg-result { border-color: var(--accent-green); }
+  .msg-result .msg-label { color: var(--accent-green); }
+
+  .chat-input-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .chat-input {
+    flex: 1;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border-default);
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    font-size: 12px;
+    font-family: var(--font-display);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .chat-input:focus { border-color: var(--accent-blue); }
+  .chat-input::placeholder { color: var(--text-tertiary); }
+  .chat-send {
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: var(--accent-blue);
+    color: var(--text-inverse);
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    transition: filter 0.15s;
+  }
+  .chat-send:hover { filter: brightness(1.1); }
+
+  /* ============================
+     INSPECTION CONTENT
+     ============================ */
+  .inspection-preview {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+  }
+  .inspection-preview h3 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 14px 0 6px;
+  }
+  .inspection-preview h3:first-child { margin-top: 0; }
+  .inspection-preview p { margin-bottom: 6px; }
+  .inspection-preview table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+    font-size: 12px;
+  }
+  .inspection-preview thead th {
+    text-align: left;
+    padding: 7px 10px;
+    background: var(--bg-hover);
+    color: var(--text-tertiary);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-radius: 4px 4px 0 0;
+  }
+  .inspection-preview td {
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+  }
+
+  /* ============================
+     PREVIEW BANNER
+     ============================ */
+  .preview-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 999;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border-default);
+    color: var(--text-primary);
+    text-align: center;
+    padding: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+  }
+  .preview-banner .switch-btn {
+    padding: 4px 10px;
+    border-radius: 5px;
+    background: var(--bg-active);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-default);
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--font-display);
+    transition: all 0.15s;
+  }
+  .preview-banner .switch-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+  /* ============================
+     ANIMATIONS
+     ============================ */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-in { animation: fadeInUp 0.35s ease-out both; }
+  .delay-1 { animation-delay: 0.04s; }
+  .delay-2 { animation-delay: 0.08s; }
+  .delay-3 { animation-delay: 0.12s; }
+  .delay-4 { animation-delay: 0.16s; }
+  .delay-5 { animation-delay: 0.2s; }
+</style>
+</head>
+
+<body>
+<div class="grid-bg"></div>
+
+<!-- Preview Banner -->
+<div class="preview-banner">
+  🎨 Engineer Brain — Design v2
+  <button class="switch-btn" onclick="toggleTheme()">
+    <span id="theme-toggle-text">☀️ Light</span>
+  </button>
+  <button class="switch-btn" onclick="document.getElementById('case-detail-section').scrollIntoView({behavior:'smooth'})">
+    ↓ CaseDetail
+  </button>
+</div>
+
+<div class="app-layout">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🧠</div>
+      <div>
+        <div class="logo-text">Engineer Brain</div>
+        <div class="logo-sub">Case Automation</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="nav-item active">
+        <span class="nav-icon">📊</span> Dashboard
+      </a>
+      <a class="nav-item">
+        <span class="nav-icon">📌</span> Todo
+        <span class="nav-badge">3</span>
+      </a>
+      <a class="nav-item">
+        <span class="nav-icon">🤖</span> Agents
+      </a>
+      <a class="nav-item">
+        <span class="nav-icon">✉️</span> Drafts
+      </a>
+
+      <div class="nav-section-label">Manage</div>
+      <a class="nav-item">
+        <span class="nav-icon">🐛</span> Issues
+      </a>
+      <a class="nav-item">
+        <span class="nav-icon">⚙️</span> Settings
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="theme-toggle" onclick="toggleTheme()">
+        <span id="theme-icon">🌙</span>
+        <span id="theme-label">Dark Mode</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main class="main-content">
+
+    <!-- ================== -->
+    <!-- DASHBOARD PAGE     -->
+    <!-- ================== -->
+    <div class="page-header animate-in">
+      <div>
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-subtitle">8 active cases · patrol 03/21 09:15</p>
+      </div>
+      <button class="btn btn-primary">▶ Start Patrol</button>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="stats-grid">
+      <div class="stat-card blue animate-in delay-1">
+        <div class="stat-label">Active Cases</div>
+        <div class="stat-value">8</div>
+      </div>
+      <div class="stat-card red animate-in delay-2">
+        <div class="stat-label">Urgent</div>
+        <div class="stat-value">2</div>
+        <span class="stat-delta up">↑ 1</span>
+      </div>
+      <div class="stat-card amber animate-in delay-3">
+        <div class="stat-label">Pending</div>
+        <div class="stat-value">3</div>
+      </div>
+      <div class="stat-card green animate-in delay-4">
+        <div class="stat-label">Normal</div>
+        <div class="stat-value">3</div>
+        <span class="stat-delta down">↓ 2</span>
+      </div>
+    </div>
+
+    <!-- Patrol Bar -->
+    <div class="patrol-bar animate-in delay-3">
+      <div class="patrol-label">
+        <span class="live-pulse"></span> Patrol
+      </div>
+      <div class="patrol-status-pills">
+        <div class="patrol-pill pe">PE <span class="pill-count">2</span></div>
+        <div class="patrol-pill pc">PC <span class="pill-count">1</span></div>
+        <div class="patrol-pill wpg">WPG <span class="pill-count">2</span></div>
+        <div class="patrol-pill ar">AR <span class="pill-count">1</span></div>
+        <div class="patrol-pill ok">OK <span class="pill-count">2</span></div>
+      </div>
+      <span style="font-size:10px; color:var(--text-tertiary); font-family:var(--font-mono); white-space:nowrap;">8 cases · 4m 32s</span>
+    </div>
+
+    <!-- Case Table -->
+    <div class="card animate-in delay-4">
+      <div class="card-header">
+        <span class="card-title">Active Cases</span>
+        <button class="btn btn-ghost" style="padding:4px 10px; font-size:11px;">↕ Sort</button>
+      </div>
+
+      <table class="case-table">
+        <thead>
+          <tr>
+            <th>Case</th>
+            <th>Sev</th>
+            <th>Title</th>
+            <th>Status</th>
+            <th>Customer</th>
+            <th>Age</th>
+            <th style="text-align:center">IR</th>
+            <th style="text-align:center">FWR</th>
+            <th style="text-align:center">Health</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="row-sev-a animate-in delay-1">
+            <td><span class="case-number">2503140028</span></td>
+            <td><span class="badge badge-sev-a">A</span></td>
+            <td class="case-title-cell">AKS cluster nodes NotReady after upgrade to 1.28</td>
+            <td><span class="badge badge-pe">Pending Engineer</span></td>
+            <td class="case-customer">Contoso Ltd</td>
+            <td class="age-cell age-old">5d 12h</td>
+            <td style="text-align:center"><span class="sla-dot fail"></span></td>
+            <td style="text-align:center"><span class="sla-dot warn"></span></td>
+            <td style="text-align:center"><div class="health-score health-bad">35</div></td>
+          </tr>
+          <tr class="row-sev-a animate-in delay-2">
+            <td><span class="case-number">2503180042</span></td>
+            <td><span class="badge badge-sev-a">A</span></td>
+            <td class="case-title-cell">SQL MI connection timeouts causing production outage</td>
+            <td><span class="badge badge-pe">Pending Engineer</span></td>
+            <td class="case-customer">Fabrikam Inc</td>
+            <td class="age-cell">1d 8h</td>
+            <td style="text-align:center"><span class="sla-dot ok"></span></td>
+            <td style="text-align:center"><span class="sla-dot ok"></span></td>
+            <td style="text-align:center"><div class="health-score health-warn">55</div></td>
+          </tr>
+          <tr class="row-sev-b animate-in delay-3">
+            <td><span class="case-number">2503120015</span></td>
+            <td><span class="badge badge-sev-b">B</span></td>
+            <td class="case-title-cell">Azure Functions cold start latency spike in Premium plan</td>
+            <td><span class="badge badge-wpg">Waiting PG</span></td>
+            <td class="case-customer">Adventure Works</td>
+            <td class="age-cell">7d 3h</td>
+            <td style="text-align:center"><span class="sla-dot ok"></span></td>
+            <td style="text-align:center"><span class="sla-dot warn"></span></td>
+            <td style="text-align:center"><div class="health-score health-warn">60</div></td>
+          </tr>
+          <tr class="row-sev-b animate-in delay-4">
+            <td><span class="case-number">2503100008</span></td>
+            <td><span class="badge badge-sev-b">B</span></td>
+            <td class="case-title-cell">App Service certificate renewal failing with DNS validation</td>
+            <td><span class="badge badge-pc">Pending Customer</span></td>
+            <td class="case-customer">Northwind Traders</td>
+            <td class="age-cell">10d 2h</td>
+            <td style="text-align:center"><span class="sla-dot ok"></span></td>
+            <td style="text-align:center"><span class="sla-dot ok"></span></td>
+            <td style="text-align:center"><div class="health-score health-good">80</div></td>
+          </tr>
+          <tr class="row-sev-c animate-in delay-5">
+            <td><span class="case-number">2503160033</span></td>
+            <td><span class="badge badge-sev-c">C</span></td>
+            <td class="case-title-cell">Cosmos DB RU consumption spike investigation</td>
+            <td><span class="badge badge-active">Active</span></td>
+            <td class="case-customer">Wide World Import</td>
+            <td class="age-cell">3d 5h</td>
+            <td style="text-align:center"><span class="sla-dot ok"></span></td>
+            <td style="text-align:center"><span class="sla-dot ok"></span></td>
+            <td style="text-align:center"><div class="health-score health-good">90</div></td>
+          </tr>
+          <tr class="row-sev-c animate-in delay-5">
+            <td><span class="case-number">2503190055</span></td>
+            <td><span class="badge badge-sev-c">C</span></td>
+            <td class="case-title-cell">VNet peering not propagating routes to spoke subscription</td>
+            <td><span class="badge badge-wpg">Waiting PG</span></td>
+            <td class="case-customer">Tailspin Toys</td>
+            <td class="age-cell">2d 1h</td>
+            <td style="text-align:center"><span class="sla-dot ok"></span></td>
+            <td style="text-align:center"><span class="sla-dot ok"></span></td>
+            <td style="text-align:center"><div class="health-score health-good">85</div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ============================== -->
+    <!-- CASE DETAIL SECTION            -->
+    <!-- ============================== -->
+    <hr class="page-divider" id="case-detail-section">
+
+    <div class="page-header animate-in">
+      <div>
+        <h1 class="page-title">Case Detail Preview</h1>
+        <p class="page-subtitle">integrated layout — AI panel 融入右侧</p>
+      </div>
+    </div>
+
+    <!-- Case Header -->
+    <div class="case-header-card animate-in delay-1">
+      <div class="case-header-top">
+        <div style="flex:1">
+          <div class="case-meta-chips" style="margin-bottom:5px">
+            <span style="cursor:pointer; color:var(--text-tertiary)">← Back</span>
+            <span class="case-meta-dot">·</span>
+            <span class="case-number">2503140028</span>
+            <span class="badge badge-sev-a">A</span>
+            <span class="badge badge-pe">Pending Engineer</span>
+          </div>
+          <div class="case-header-title">AKS cluster nodes NotReady after upgrade to 1.28</div>
+          <div class="case-meta-chips">
+            <span>Contoso Ltd</span>
+            <span class="case-meta-dot">·</span>
+            <span>Kun Fang</span>
+            <span class="case-meta-dot">·</span>
+            <span>5d 12h</span>
+            <span class="case-meta-dot">·</span>
+            <span style="color:var(--accent-red); font-weight:600">Last contact 4d ago</span>
+          </div>
+        </div>
+        <div class="health-score health-bad" style="margin-left:16px">35</div>
+      </div>
+
+      <div class="sla-row">
+        <div class="sla-item">
+          <span style="color:var(--text-tertiary)">IR:</span>
+          <span class="sla-dot fail"></span>
+          <span class="sla-fail" style="font-weight:600; font-size:12px;">Failed</span>
+        </div>
+        <div class="sla-item">
+          <span style="color:var(--text-tertiary)">FWR:</span>
+          <span class="sla-dot warn"></span>
+          <span class="sla-warn" style="font-weight:600; font-size:12px;">Warning</span>
+        </div>
+        <div class="sla-item">
+          <span style="color:var(--text-tertiary)">FDR:</span>
+          <span class="sla-dot ok"></span>
+          <span class="sla-ok" style="font-weight:600; font-size:12px;">OK</span>
+        </div>
+        <div class="sla-item">
+          <span style="color:var(--text-tertiary)">Teams:</span>
+          <span class="badge" style="background:var(--accent-purple-dim); color:var(--accent-purple);">3 chats</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- === INTEGRATED LAYOUT: content + AI in one card === -->
+    <div class="detail-layout animate-in delay-2">
+
+      <!-- LEFT: Tabs + Content -->
+      <div class="detail-left">
+        <div class="tab-bar">
+          <div class="tab-item active">🩺 Inspection</div>
+          <div class="tab-item">📋 Info</div>
+          <div class="tab-item">📌 Todo <span class="tab-count">4</span></div>
+          <div class="tab-item">📧 Emails <span class="tab-count">12</span></div>
+          <div class="tab-item">📝 Notes <span class="tab-count">5</span></div>
+          <div class="tab-item">💬 Teams <span class="tab-count">3</span></div>
+          <div class="tab-item">✉️ Drafts</div>
+          <div class="tab-item">🔍 Analysis</div>
+          <div class="tab-item">⏱️ Timing</div>
+          <div class="tab-item">📄 Logs <span class="tab-count">7</span></div>
+          <div class="tab-item">📎 Files <span class="tab-count">2</span></div>
+        </div>
+
+        <div class="inspection-preview">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; font-size:11px; color:var(--text-tertiary);">
+            <span style="font-family:var(--font-mono)">260321-0915.md</span>
+            <span>2026-03-21 09:15</span>
+          </div>
+
+          <h3>📋 Case Summary</h3>
+          <p>Customer reports AKS cluster nodes entering NotReady state after upgrading from Kubernetes 1.27 to 1.28. Issue appears intermittently across 3 node pools in production.</p>
+
+          <h3>🔍 Key Findings</h3>
+          <table>
+            <thead>
+              <tr><th>Finding</th><th>Details</th><th>Impact</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>kubelet crash loop</td>
+                <td style="font-family:var(--font-mono); font-size:10px;">OOMKilled every ~15min</td>
+                <td><span class="badge badge-sev-a">High</span></td>
+              </tr>
+              <tr>
+                <td>Memory pressure</td>
+                <td>Nodes hitting 95% memory utilization</td>
+                <td><span class="badge badge-sev-b">Medium</span></td>
+              </tr>
+              <tr>
+                <td>CNI plugin</td>
+                <td>Azure CNI overlay mode misconfigured</td>
+                <td><span class="badge badge-sev-b">Medium</span></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3>⚡ Recommended Actions</h3>
+          <p>1. Increase node pool VM size from Standard_D4s_v3 to Standard_D8s_v3<br>
+          2. Apply CNI overlay fix from KB article AKS-2024-031<br>
+          3. Schedule maintenance window for controlled node restart</p>
+        </div>
+      </div>
+
+      <!-- RIGHT: AI Panel — 融入同一卡片 -->
+      <div class="ai-panel">
+        <div class="ai-panel-header">
+          <span class="sparkle">✨</span> AI Assistant
+        </div>
+
+        <div class="ai-panel-body">
+          <button class="ai-btn-primary">▶ Full Process</button>
+
+          <div class="ai-split-btn">
+            <button class="ai-split-main">✉️ Draft Email</button>
+            <button class="ai-split-drop">▾</button>
+          </div>
+
+          <div class="ai-divider"></div>
+
+          <button class="ai-action"><span class="action-icon">🔄</span> Refresh Data <span class="action-arrow">→</span></button>
+          <button class="ai-action"><span class="action-icon">💬</span> Teams Search <span class="action-arrow">→</span></button>
+          <button class="ai-action"><span class="action-icon">🛡️</span> Compliance <span class="action-arrow">→</span></button>
+          <button class="ai-action"><span class="action-icon">🔀</span> Status Judge <span class="action-arrow">→</span></button>
+          <button class="ai-action"><span class="action-icon">🔍</span> Troubleshoot <span class="action-arrow">→</span></button>
+          <button class="ai-action"><span class="action-icon">📄</span> Inspection <span class="action-arrow">→</span></button>
+          <button class="ai-action"><span class="action-icon">📚</span> Generate KB <span class="action-arrow">→</span></button>
+        </div>
+
+        <!-- Session area — inset bg for visual depth -->
+        <div class="ai-session">
+          <div class="session-indicator">
+            <span class="live-pulse"></span>
+            Session Active
+            <span style="font-size:10px; font-family:var(--font-mono); color:var(--text-tertiary); margin-left:auto;">abc12def</span>
+          </div>
+
+          <div class="msg-bubble msg-thinking">
+            <div class="msg-label">🧠 Thinking</div>
+            <div class="msg-text">Analyzing case context and SLA status...</div>
+          </div>
+          <div class="msg-bubble msg-tool">
+            <div class="msg-label">🔧 Kusto Query</div>
+            <div class="msg-text">AKSNodeStatus | where ClusterName == ...</div>
+          </div>
+          <div class="msg-bubble msg-result">
+            <div class="msg-label">✓ Result</div>
+            <div class="msg-text">Found 3 nodes with OOMKilled kubelet</div>
+          </div>
+
+          <div class="chat-input-row">
+            <input type="text" class="chat-input" placeholder="Message AI...">
+            <button class="chat-send">➤</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+</div>
+
+<script>
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.classList.contains('dark');
+  if (isDark) {
+    html.classList.remove('dark');
+    html.classList.add('light');
+    document.getElementById('theme-toggle-text').textContent = '🌙 Dark';
+    document.getElementById('theme-icon').textContent = '☀️';
+    document.getElementById('theme-label').textContent = 'Light Mode';
+  } else {
+    html.classList.remove('light');
+    html.classList.add('dark');
+    document.getElementById('theme-toggle-text').textContent = '☀️ Light';
+    document.getElementById('theme-icon').textContent = '🌙';
+    document.getElementById('theme-label').textContent = 'Dark Mode';
+  }
+  localStorage.setItem('eb-theme', html.classList.contains('dark') ? 'dark' : 'light');
+}
+const saved = localStorage.getItem('eb-theme');
+if (saved === 'light') toggleTheme();
+</script>
+
+</body>
+</html>

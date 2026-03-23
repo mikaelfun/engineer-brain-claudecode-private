@@ -1,0 +1,11 @@
+{
+  "id": "ISS-022",
+  "title": "Case Detail 页面 Inspection Tab 默认首位展示 + 格式美化",
+  "description": "Case Detail 页面的 Inspection tab 需要放在首位，作为默认展示的 tab。当前 inspection 内容的格式看起来很糟糕、不美观，需要研究美化方案，改善 markdown 渲染效果和视觉呈现。",
+  "type": "feature",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "inspection-beautify_20260320",
+  "createdAt": "2026-03-20T16:00:00+08:00",
+  "updatedAt": "2026-03-20T22:30:00+08:00"
+}

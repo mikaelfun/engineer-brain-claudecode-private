@@ -1,0 +1,10 @@
+{
+  "id": "ISS-068",
+  "title": "API: patrol-state endpoint returns 404 when no data instead of 200 with empty state",
+  "description": "GET /api/agents/patrol-state returns 404 with {\"error\":\"No patrol state\"} when no patrol has been run, but other \"no data\" endpoints return 200 with empty/null. Should be consistent: return 200 with null or empty state object for frontend consistency.",
+  "type": "bug",
+  "priority": "P2",
+  "status": "pending",
+  "createdAt": "2026-03-22T17:30:00+08:00",
+  "updatedAt": "2026-03-22T01:57:28.884Z"
+}

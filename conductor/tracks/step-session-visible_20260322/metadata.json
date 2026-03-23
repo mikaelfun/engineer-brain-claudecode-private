@@ -1,0 +1,16 @@
+{
+  "id": "step-session-visible_20260322",
+  "title": "Fix step session not visible in Agent Monitor",
+  "type": "bug",
+  "status": "complete",
+  "created": "2026-03-22T17:30:00+08:00",
+  "updated": "2026-03-22T17:35:00+08:00",
+  "phases": {
+    "total": 2,
+    "completed": 2
+  },
+  "tasks": {
+    "total": 4,
+    "completed": 4
+  }
+}

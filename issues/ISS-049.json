@@ -1,0 +1,11 @@
+{
+  "id": "ISS-049",
+  "title": "Create Track 交互提问内容应放在交互框里，字体更大更突出",
+  "description": "Creating track 交互过程中，交互的提问和引用内容混在普通文本中，用户很难快速定位当前需要回答的问题是什么。应将提问内容放在交互对话框（QuestionDialog）中，字体更大更突出，让用户一眼就能看到需要回答什么。",
+  "type": "feature",
+  "priority": "P1",
+  "status": "implemented",
+  "trackId": "track-question-prominent_20260321",
+  "createdAt": "2026-03-21T20:35:00+08:00",
+  "updatedAt": "2026-03-22T21:20:00+08:00"
+}

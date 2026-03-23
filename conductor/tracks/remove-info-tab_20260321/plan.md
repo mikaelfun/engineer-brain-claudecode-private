@@ -34,6 +34,22 @@
 
 - [x] inspection-writer 模板中有 Contact phone 和 preferred method 字段要求
 
+## Verification Plan
+
+| # | Acceptance Criterion | Test Type | Test Steps |
+|---|---------------------|-----------|------------|
+| 1 | CaseDetail tabs 中不再有 Info tab | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 2 | 24x7、Origin、Timezone、Country 显示在 case header 区域 | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 3 | inspection-writer skill 模板确保 Contact 完整信息（含 phone、preferred method） | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 4 | 移除 Info tab 相关代码（InfoTab 函数、tab 定义） | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 5 | TypeScript 编译通过，无引用残留 | Visual | Navigate to page → screenshot → verify visual matches spec |
+
+**Test Type Legend:**
+- **Interaction** — Playwright clicks, form fills, state assertions
+- **Visual** — Navigate + screenshot + visual inspection
+- **API** — curl/fetch endpoint + assert response
+- **Skip** — Backend-only or covered by unit tests
+
 ## Post-Implementation Checklist
 
 - [x] 关联 Issue JSON 状态已更新

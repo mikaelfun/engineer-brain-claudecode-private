@@ -506,22 +506,27 @@ function Invoke-D365ApiBatch {
         [array]$Requests
     )
 
-    # Build requests JSON array for injection into JS
-    $reqList = @()
-    foreach ($r in $Requests) {
-        $method = if ($r.Method) { $r.Method } else { 'GET' }
-        $endpoint = $r.Endpoint
-        $body = if ($r.Body) { $r.Body } else { '' }
-        if ($r.FetchXml) {
-            $endpoint = $endpoint + $(if ($endpoint.Contains('?')) { '&' } else { '?' }) + 'fetchXml=' + [System.Uri]::EscapeDataString($r.FetchXml)
-        }
-        $reqList += @{ method = $method; url = $endpoint; body = $body }
-    }
-    $reqJson = ($reqList | ConvertTo-Json -Compress -Depth 5)
-    # Escape for JS single-quote string
-    $reqJsonEscaped = $reqJson -replace '\\', '\\\\' -replace "'", "\'"
+    # Inner function: build JS and execute batch
+    function _DoBatchCall {
+        # --- Tab pre-check: ensure playwright-cli is on a D365 page ---
+        Ensure-D365Tab
 
-    $js = @"
+        # Build requests JSON array for injection into JS
+        $reqList = @()
+        foreach ($r in $Requests) {
+            $method = if ($r.Method) { $r.Method } else { 'GET' }
+            $endpoint = $r.Endpoint
+            $body = if ($r.Body) { $r.Body } else { '' }
+            if ($r.FetchXml) {
+                $endpoint = $endpoint + $(if ($endpoint.Contains('?')) { '&' } else { '?' }) + 'fetchXml=' + [System.Uri]::EscapeDataString($r.FetchXml)
+            }
+            $reqList += @{ method = $method; url = $endpoint; body = $body }
+        }
+        $reqJson = ($reqList | ConvertTo-Json -Compress -Depth 5)
+        # Escape for JS single-quote string
+        $reqJsonEscaped = $reqJson -replace '\\', '\\\\' -replace "'", "\'"
+
+        $js = @"
 async page => {
   const requests = JSON.parse('$reqJsonEscaped');
   const results = await page.evaluate(async (reqs) => {
@@ -559,30 +564,51 @@ async page => {
 }
 "@
 
-    $raw = playwright-cli run-code $js 2>&1 | Out-String
+        $raw = playwright-cli run-code $js 2>&1 | Out-String
 
-    if ($raw -match '__D365BATCH__([A-Za-z0-9+/=]+)__END__') {
-        $b64 = $Matches[1]
-        try {
-            $jsonStr = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($b64))
-            $arr = $jsonStr | ConvertFrom-Json
-            $results = @()
-            foreach ($item in $arr) {
-                if ($item._status -ge 400 -or $item._status -eq 0) {
-                    Write-Host "⚠️ Batch API error (HTTP $($item._status)): $($item._error)"
-                    $results += $null
-                } else {
-                    $results += $item
+        if ($raw -match '__D365BATCH__([A-Za-z0-9+/=]+)__END__') {
+            $b64 = $Matches[1]
+            try {
+                $jsonStr = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($b64))
+                $arr = $jsonStr | ConvertFrom-Json
+                $results = @()
+                foreach ($item in $arr) {
+                    if ($item._status -ge 400 -or $item._status -eq 0) {
+                        Write-Host "⚠️ Batch API error (HTTP $($item._status)): $($item._error)"
+                        $results += $null
+                    } else {
+                        $results += $item
+                    }
                 }
+                return $results
+            } catch {
+                Write-Host "⚠️ Batch API JSON parse error: $($_.Exception.Message)"
+                return $null
             }
-            return $results
-        } catch {
-            Write-Host "⚠️ Batch API JSON parse error: $($_.Exception.Message)"
-            return $null
         }
+
+        Write-Host "⚠️ Batch API call failed (no result marker)"
+        return $null
     }
 
-    Write-Host "⚠️ Batch API call failed (no result marker)"
+    # --- First attempt ---
+    $result = _DoBatchCall
+    if ($null -ne $result) { return $result }
+
+    # --- First attempt failed: invalidate tab cache and retry with browser restart ---
+    Write-Host "🔄 First batch API attempt failed. Restarting browser and retrying..."
+    $script:_d365TabVerified = $false
+    $restarted = Restart-D365Browser
+    if (-not $restarted) {
+        Write-Host "❌ Browser restart failed. Giving up."
+        return $null
+    }
+
+    # --- Second attempt ---
+    $result2 = _DoBatchCall
+    if ($null -ne $result2) { return $result2 }
+
+    Write-Host "❌ Batch API call failed after browser restart retry"
     return $null
 }
 

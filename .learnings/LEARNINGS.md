@@ -59,3 +59,22 @@
 - 根因：旧版代码写 `Generated: 2026-03-19 09:47:42`（本地时间），新版已修复为 `09:47:42 (UTC)`。但旧文件没有 `(UTC)` 标记，脚本解析时当作 UTC 用于 FetchXML `createdon ge` 过滤——实际 09:47 本地 = 01:47 UTC，差了 8 小时，漏掉中间的邮件
 - 修复：解析 `Generated:` 时检测是否包含 `(UTC)` 标记。无标记 → 清空 existingIds + lastFetchTime，强制全量重新抓取。重新写入后 header 带 `(UTC)` 标记，后续增量正常
 - 教训：修复写入端（新文件正确）还不够，读取端也要兼容旧格式——要么转换，要么 fallback 到安全模式（全量重抓）
+
+### 2026-03-20 — Claude Code Plan Mode 与 Conductor 冲突导致绕过 track 实现
+
+- 上下文：ISS-019 需要实现 "Track 创建流程完善"。Claude Code 自动进入 `EnterPlanMode`，在 plan mode 中探索代码库、写了详细 4 阶段实现计划，然后 `ExitPlanMode`
+- 问题：ExitPlanMode 后上下文被清空重置，新 turn 只看到 "Implement the following plan" + plan 文本。此时完全丢失了 conductor 工作流意识，直接手动实现了所有代码
+- 后果：conductor/tracks.md、plan.md、metadata.json 全部不同步；没有走 TDD 验证流程；无法追踪 track 完成状态
+- 根因：两套 planning 系统冲突 — Claude Code 内置 Plan Mode（临时的，exit 后清空）vs Conductor（持久化到文件系统的 track/spec/plan）
+- 修复：在 CLAUDE.md 关键规则中增加 "❌ 禁止对实现任务使用 EnterPlanMode"，规划应通过 `/conductor:new-track` 完成
+- 教训：内置 Plan Mode 适合一次性快速探索，但在有 Conductor 管理的项目中必须禁用，否则 ExitPlanMode 的上下文重置会破坏工作流连续性
+
+### 2026-03-23 — Playwright daemon 生命周期：孤儿进程是设计如此，无需手动清理
+
+- 上下文：进程审计发现一个 `playwright-cli run-cli-server --daemon` 孤儿进程（父进程已退出），担心是否资源泄露
+- 发现：
+  - `playwright-cli` 是 CLI 客户端，通过 session 文件（`--daemon-session=...default.session`）与后台 daemon 通信
+  - 所有 `run-code`、`tab-list`、`open` 等命令都发给同一个 daemon，daemon 管理浏览器实例 + D365 登录态
+  - 后续 casework 脚本（`download-attachments.ps1`、`warm-dtm-token.ps1` 等）自动连接已有 daemon 复用，不会创建新进程
+  - `Restart-D365Browser` 调用 `playwright-cli kill-all` 时会杀掉所有 Playwright 进程（daemon + 浏览器），然后 `open` 启动新的，确保始终只有一个 daemon 实例
+- 教训：Playwright daemon 孤儿进程是设计如此（跨 casework 复用），`kill-all → open` 机制保证不会累积。无需手动清理，留着等下次 casework 自然复用即可

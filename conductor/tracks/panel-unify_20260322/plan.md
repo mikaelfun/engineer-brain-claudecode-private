@@ -38,6 +38,22 @@
 
 - [ ] npm test 全部通过
 
+## Verification Plan
+
+| # | Acceptance Criterion | Test Type | Test Steps |
+|---|---------------------|-----------|------------|
+| 1 | ImplementPanel 使用 TrackProgressPanel 的消息分组逻辑（tool 折叠 + thinking 合并） | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 2 | Implement 状态迁移到 issueTrackStore（消除独立 implementStore） | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 3 | VerifyProgressPanel 增加 Cancel 按钮（运行中显示，点击取消验证） | Interaction | Start operation → click cancel/stop → verify operation ends and state reverts |
+| 4 | 后端增加 cancel-verify endpoint | API | Call the relevant endpoint → verify response shape and status code |
+| 5 | 所有现有测试通过 | Visual | Navigate to page → screenshot → verify visual matches spec |
+
+**Test Type Legend:**
+- **Interaction** — Playwright clicks, form fills, state assertions
+- **Visual** — Navigate + screenshot + visual inspection
+- **API** — curl/fetch endpoint + assert response
+- **Skip** — Backend-only or covered by unit tests
+
 ## Post-Implementation Checklist
 
 - [ ] 单元测试文件已创建/更新并通过

@@ -91,6 +91,32 @@ Todo 分级：
 - 🟡 待确认执行：D365 写操作（Note/Labor/SAP）
 - ✅ 仅通知：已完成的步骤
 
+#### 🟡 SAP 修改项生成规则
+
+**SAP = Support Area Path**（产品技术分类路径），格式如 `Azure\Compute\Virtual Machines\Management`。
+
+**仅在以下场景生成 "修改 SAP" Todo 项：**
+- case-info.md 中的 Service Name / Support Topic 与实际问题的产品/技术方向不匹配
+- 需要将 Support Area Path 从一个产品分类路径变更到另一个
+
+**示例（正确）：**
+```
+- [ ] 修改 SAP: Support Topic → Azure\Storage\Blob\Connectivity
+```
+
+**❌ 以下字段变更绝不属于 SAP 修改（禁止生成 "修改 SAP" Todo）：**
+- Status（如 Problem Solved / Active / Resolved）— 这是 Case 状态字段
+- Severity（如 A / B / C）— 这是严重级别
+- Priority（如 P1 / P2）— 这是优先级
+- Assigned To — 这是分配字段
+- 任何非 Support Area Path 的字段
+
+**错误示例（绝对禁止）：**
+```
+- [ ] 修改 SAP: Status → Problem Solved     ← ❌ Status 不是 SAP
+- [ ] 修改 SAP: Severity → C                ← ❌ Severity 不是 SAP
+```
+
 ### 4. 更新 Meta
 Upsert `{caseDir}/casehealth-meta.json` 的 `lastInspected` 字段。
 

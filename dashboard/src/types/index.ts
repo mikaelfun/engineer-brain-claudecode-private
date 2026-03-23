@@ -267,6 +267,11 @@ export type SSEEventType =
   | 'issue-verify-error'
   | 'todo-execute-progress'
   | 'todo-execute-result'
+  | 'case-step-started'
+  | 'case-step-progress'
+  | 'case-step-completed'
+  | 'case-step-failed'
+  | 'case-step-question'
 
 export interface SSEEvent {
   type: SSEEventType

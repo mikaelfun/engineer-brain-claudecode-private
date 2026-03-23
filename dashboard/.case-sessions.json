@@ -1,0 +1,306 @@
+{
+  "sessions": {
+    "38d1cffa-79ed-4ab0-8c69-cd419c73d74f": {
+      "sessionId": "38d1cffa-79ed-4ab0-8c69-cd419c73d74f",
+      "caseNumber": "2601290030000748",
+      "intent": "Full casework processing",
+      "status": "completed",
+      "createdAt": "2026-03-20T01:06:21.580Z",
+      "lastActivityAt": "2026-03-20T01:17:03.761Z"
+    },
+    "119d86e0-8ffe-418e-b975-efd2fb22e8c1": {
+      "sessionId": "119d86e0-8ffe-418e-b975-efd2fb22e8c1",
+      "caseNumber": "2601290030000748",
+      "intent": "Full casework processing",
+      "status": "completed",
+      "createdAt": "2026-03-20T01:06:19.750Z",
+      "lastActivityAt": "2026-03-20T01:17:12.454Z"
+    },
+    "9cae6fde-0a59-4e34-aa29-ee7d94ec9846": {
+      "sessionId": "9cae6fde-0a59-4e34-aa29-ee7d94ec9846",
+      "caseNumber": "2601290030000748",
+      "intent": "Spawn an email-drafter agent (read .claude/agents/email-drafter.md) for Case 2601290030000748",
+      "status": "completed",
+      "createdAt": "2026-03-20T01:06:43.303Z",
+      "lastActivityAt": "2026-03-20T01:14:56.183Z"
+    },
+    "3f5e67d6-917a-43b0-9c43-8a27cca109df": {
+      "sessionId": "3f5e67d6-917a-43b0-9c43-8a27cca109df",
+      "caseNumber": "2601290030000748",
+      "intent": "Spawn an email-drafter agent (read .claude/agents/email-drafter.md) for Case 2601290030000748",
+      "status": "completed",
+      "createdAt": "2026-03-20T01:06:44.322Z",
+      "lastActivityAt": "2026-03-20T01:14:05.470Z"
+    },
+    "e8183a07-2f8f-4510-85df-dd3664208bd9": {
+      "sessionId": "e8183a07-2f8f-4510-85df-dd3664208bd9",
+      "caseNumber": "2601290030000748",
+      "intent": "Spawn a troubleshooter agent (read .claude/agents/troubleshooter.md) for Case 2601290030000748",
+      "status": "completed",
+      "createdAt": "2026-03-20T01:06:45.022Z",
+      "lastActivityAt": "2026-03-20T01:15:06.912Z"
+    },
+    "6a852b0f-8b7f-4bee-9d10-782546e63260": {
+      "sessionId": "6a852b0f-8b7f-4bee-9d10-782546e63260",
+      "caseNumber": "2601290030000748",
+      "intent": "Full casework processing",
+      "status": "completed",
+      "createdAt": "2026-03-20T01:06:45.617Z",
+      "lastActivityAt": "2026-03-20T01:17:52.913Z"
+    },
+    "d46d38e5-9f77-4224-a553-0b65c185bff2": {
+      "sessionId": "d46d38e5-9f77-4224-a553-0b65c185bff2",
+      "caseNumber": "2601290030000748",
+      "intent": "Spawn an email-drafter agent (read .claude/agents/email-drafter.md) for Case 2601290030000748",
+      "status": "completed",
+      "createdAt": "2026-03-20T01:06:46.226Z",
+      "lastActivityAt": "2026-03-20T01:13:29.526Z"
+    },
+    "7ca80c5c-b516-4315-8e88-3e75af5dc39c": {
+      "sessionId": "7ca80c5c-b516-4315-8e88-3e75af5dc39c",
+      "caseNumber": "2603030040001542",
+      "intent": "Spawn an email-drafter agent (read .claude/agents/email-drafter.md) for Case 2603030040001542",
+      "status": "completed",
+      "createdAt": "2026-03-20T01:06:49.451Z",
+      "lastActivityAt": "2026-03-20T01:14:14.129Z"
+    },
+    "d2b98bee-f74d-4995-a2fe-aedb8db75420": {
+      "sessionId": "d2b98bee-f74d-4995-a2fe-aedb8db75420",
+      "caseNumber": "2603030040001542",
+      "intent": "Spawn a troubleshooter agent (read .claude/agents/troubleshooter.md) for Case 2603030040001542",
+      "status": "completed",
+      "createdAt": "2026-03-20T01:06:49.060Z",
+      "lastActivityAt": "2026-03-20T01:11:47.445Z"
+    },
+    "e8cadd4e-daf0-4d88-b7fe-56098ae4c0fc": {
+      "sessionId": "e8cadd4e-daf0-4d88-b7fe-56098ae4c0fc",
+      "caseNumber": "2603090040000814",
+      "intent": "Full casework processing",
+      "status": "completed",
+      "createdAt": "2026-03-20T07:55:53.368Z",
+      "lastActivityAt": "2026-03-20T08:07:10.563Z"
+    },
+    "ad38842a-79a8-42ce-a357-be33f1943e17": {
+      "sessionId": "ad38842a-79a8-42ce-a357-be33f1943e17",
+      "caseNumber": "2603200030000875",
+      "intent": "Full casework processing",
+      "status": "completed",
+      "createdAt": "2026-03-20T14:17:56.178Z",
+      "lastActivityAt": "2026-03-20T14:25:54.689Z"
+    },
+    "a9d28409-f9e4-4834-ac8e-72fe43bd2b8d": {
+      "sessionId": "a9d28409-f9e4-4834-ac8e-72fe43bd2b8d",
+      "caseNumber": "2603060030001353",
+      "intent": "Full casework processing",
+      "status": "completed",
+      "createdAt": "2026-03-21T06:13:05.103Z",
+      "lastActivityAt": "2026-03-21T06:21:54.300Z"
+    },
+    "d27f3cc2-dca3-4667-9d91-3af00a90d19e": {
+      "sessionId": "d27f3cc2-dca3-4667-9d91-3af00a90d19e",
+      "caseNumber": "2601290030000748",
+      "intent": "Read .claude/skills/data-refresh/SKILL.md and execute data-refresh for Case 2601290030000748",
+      "status": "completed",
+      "createdAt": "2026-03-21T09:37:14.732Z",
+      "lastActivityAt": "2026-03-21T09:39:45.993Z"
+    },
+    "49411148-7146-4ef0-be0d-4800247c67f9": {
+      "sessionId": "49411148-7146-4ef0-be0d-4800247c67f9",
+      "caseNumber": "2603200030000875",
+      "intent": "Read .claude/skills/data-refresh/SKILL.md and execute data-refresh for Case 2603200030000875",
+      "status": "completed",
+      "createdAt": "2026-03-21T17:19:03.987Z",
+      "lastActivityAt": "2026-03-21T17:21:45.624Z"
+    },
+    "e305d29b-5157-400b-9208-ad59adf02661": {
+      "sessionId": "e305d29b-5157-400b-9208-ad59adf02661",
+      "caseNumber": "2603200030000875",
+      "intent": "Read .claude/skills/compliance-check/SKILL.md and execute compliance-check for Case 2603200030000875",
+      "status": "completed",
+      "createdAt": "2026-03-21T17:21:57.968Z",
+      "lastActivityAt": "2026-03-21T17:22:58.244Z"
+    },
+    "3bf24d0d-849e-4c44-b6c0-9c83e9ac8a15": {
+      "sessionId": "3bf24d0d-849e-4c44-b6c0-9c83e9ac8a15",
+      "caseNumber": "2603200030000875",
+      "intent": "Read .claude/skills/status-judge/SKILL.md and execute status-judge for Case 2603200030000875",
+      "status": "completed",
+      "createdAt": "2026-03-21T17:23:10.534Z",
+      "lastActivityAt": "2026-03-21T17:25:03.302Z"
+    },
+    "1de53beb-04cf-42e8-8f92-6f58a57a035c": {
+      "sessionId": "1de53beb-04cf-42e8-8f92-6f58a57a035c",
+      "caseNumber": "2603200030000875",
+      "intent": "Full casework processing",
+      "status": "completed",
+      "createdAt": "2026-03-21T17:25:21.784Z",
+      "lastActivityAt": "2026-03-21T17:30:19.649Z"
+    },
+    "004193dc-9acf-4835-9ac0-615dc9ead029": {
+      "sessionId": "004193dc-9acf-4835-9ac0-615dc9ead029",
+      "caseNumber": "2603200030000875",
+      "intent": "Spawn an email-drafter agent (read .claude/agents/email-drafter.md) for Case 2603200030000875.",
+      "status": "completed",
+      "createdAt": "2026-03-21T17:30:32.031Z",
+      "lastActivityAt": "2026-03-21T17:33:54.246Z"
+    },
+    "414fdd59-0871-4f0d-809c-29b492039315": {
+      "sessionId": "414fdd59-0871-4f0d-809c-29b492039315",
+      "caseNumber": "2601290030000748",
+      "intent": "Read .claude/skills/data-refresh/SKILL.md and execute data-refresh for Case 2601290030000748",
+      "status": "completed",
+      "createdAt": "2026-03-22T02:52:40.123Z",
+      "lastActivityAt": "2026-03-22T05:01:44.914Z"
+    },
+    "4084f0de-d3dd-4220-adde-8a82df62c730": {
+      "sessionId": "4084f0de-d3dd-4220-adde-8a82df62c730",
+      "caseNumber": "2602130040001034",
+      "intent": "Read .claude/skills/data-refresh/SKILL.md and execute data-refresh for Case 2602130040001034",
+      "status": "completed",
+      "createdAt": "2026-03-22T05:45:40.591Z",
+      "lastActivityAt": "2026-03-22T05:48:33.253Z"
+    },
+    "5cbaca15-fa2a-42dd-a872-b7f6e713e0d4": {
+      "sessionId": "5cbaca15-fa2a-42dd-a872-b7f6e713e0d4",
+      "caseNumber": "2602130040001034",
+      "intent": "Read .claude/skills/data-refresh/SKILL.md and execute data-refresh for Case 2602130040001034",
+      "status": "completed",
+      "createdAt": "2026-03-22T05:49:16.383Z",
+      "lastActivityAt": "2026-03-22T06:57:09.926Z"
+    },
+    "ea616876-169f-4a44-bab7-a74b62563da8": {
+      "sessionId": "ea616876-169f-4a44-bab7-a74b62563da8",
+      "caseNumber": "2603030040001542",
+      "intent": "Spawn a teams-search agent (read .claude/agents/teams-search.md) for Case 2603030040001542",
+      "status": "completed",
+      "createdAt": "2026-03-22T06:58:17.981Z",
+      "lastActivityAt": "2026-03-22T07:09:43.458Z"
+    },
+    "90e9deb2-4d10-4aba-9054-50d9a530c4f7": {
+      "sessionId": "90e9deb2-4d10-4aba-9054-50d9a530c4f7",
+      "caseNumber": "2603030040001542",
+      "intent": "Read .claude/skills/data-refresh/SKILL.md and execute data-refresh for Case 2603030040001542",
+      "status": "completed",
+      "createdAt": "2026-03-22T07:44:45.211Z",
+      "lastActivityAt": "2026-03-22T07:55:49.065Z"
+    },
+    "743fed3a-213f-43ff-a1f7-26844b3dc501": {
+      "sessionId": "743fed3a-213f-43ff-a1f7-26844b3dc501",
+      "caseNumber": "2603030040001542",
+      "intent": "Case 2603030040001542 is being closed. Read all case data from the case directory and generate a Knowledge Base article. Save to {caseDir}/kb/kb-article.md",
+      "status": "completed",
+      "createdAt": "2026-03-22T08:11:42.142Z",
+      "lastActivityAt": "2026-03-22T08:14:02.374Z"
+    },
+    "014c7bc4-5c66-4e39-8ac3-8448fd250965": {
+      "sessionId": "014c7bc4-5c66-4e39-8ac3-8448fd250965",
+      "caseNumber": "2603060030001353",
+      "intent": "Read .claude/skills/data-refresh/SKILL.md and execute data-refresh for Case 2603060030001353",
+      "status": "completed",
+      "createdAt": "2026-03-22T08:29:01.188Z",
+      "lastActivityAt": "2026-03-22T08:29:01.188Z"
+    },
+    "838c568c-a435-42ab-95ba-69b186d03d45": {
+      "sessionId": "838c568c-a435-42ab-95ba-69b186d03d45",
+      "caseNumber": "2603030040001542",
+      "intent": "Read .claude/skills/data-refresh/SKILL.md and execute data-refresh for Case 2603030040001542",
+      "status": "completed",
+      "createdAt": "2026-03-22T09:01:05.383Z",
+      "lastActivityAt": "2026-03-22T09:01:05.383Z"
+    },
+    "c12e36c0-e988-40b8-9002-85b12b255478": {
+      "sessionId": "c12e36c0-e988-40b8-9002-85b12b255478",
+      "caseNumber": "2603060030001353",
+      "intent": "Read .claude/skills/status-judge/SKILL.md and execute status-judge for Case 2603060030001353",
+      "status": "completed",
+      "createdAt": "2026-03-22T09:13:35.411Z",
+      "lastActivityAt": "2026-03-22T09:15:09.530Z"
+    },
+    "f4e6077e-24dd-4228-8e76-2e5d3a2e3fd9": {
+      "sessionId": "f4e6077e-24dd-4228-8e76-2e5d3a2e3fd9",
+      "caseNumber": "2603130030004157",
+      "intent": "Read .claude/skills/data-refresh/SKILL.md and execute data-refresh for Case 2603130030004157",
+      "status": "completed",
+      "createdAt": "2026-03-22T09:20:05.387Z",
+      "lastActivityAt": "2026-03-22T09:22:15.044Z"
+    },
+    "f67dd38a-522d-4bff-a964-c504fdc010ea": {
+      "sessionId": "f67dd38a-522d-4bff-a964-c504fdc010ea",
+      "caseNumber": "2603130030004157",
+      "intent": "Spawn a teams-search agent (read .claude/agents/teams-search.md) for Case 2603130030004157",
+      "status": "completed",
+      "createdAt": "2026-03-22T09:20:07.630Z",
+      "lastActivityAt": "2026-03-22T09:26:18.769Z"
+    },
+    "ac6aa60c-c1df-4262-b323-18bab98ce65b": {
+      "sessionId": "ac6aa60c-c1df-4262-b323-18bab98ce65b",
+      "caseNumber": "2603190030000206",
+      "intent": "Full casework processing",
+      "status": "completed",
+      "createdAt": "2026-03-22T13:23:13.447Z",
+      "lastActivityAt": "2026-03-22T13:32:39.834Z"
+    },
+    "b061e3c0-8eb1-4706-9590-32b044d48a4e": {
+      "sessionId": "b061e3c0-8eb1-4706-9590-32b044d48a4e",
+      "caseNumber": "2603050040000857",
+      "intent": "Full casework processing",
+      "status": "completed",
+      "createdAt": "2026-03-22T13:57:20.411Z",
+      "lastActivityAt": "2026-03-22T14:09:04.078Z"
+    },
+    "1f92fa19-ee2a-43bd-968e-58106f94ad4d": {
+      "sessionId": "1f92fa19-ee2a-43bd-968e-58106f94ad4d",
+      "caseNumber": "2503180060007128",
+      "intent": "test",
+      "status": "completed",
+      "createdAt": "2026-03-22T14:09:24.846Z",
+      "lastActivityAt": "2026-03-22T14:10:53.104Z"
+    },
+    "47cae47f-0039-4083-8449-b05149ed4b07": {
+      "sessionId": "47cae47f-0039-4083-8449-b05149ed4b07",
+      "caseNumber": "2503180060007128",
+      "intent": "test",
+      "status": "completed",
+      "createdAt": "2026-03-22T14:11:09.492Z",
+      "lastActivityAt": "2026-03-22T14:16:41.952Z"
+    },
+    "ebb3be8a-3450-40ab-afdf-71c83219c9f7": {
+      "sessionId": "ebb3be8a-3450-40ab-afdf-71c83219c9f7",
+      "caseNumber": "2602130040001034",
+      "intent": "Spawn a teams-search agent (read .claude/agents/teams-search.md) for Case 2602130040001034",
+      "status": "paused",
+      "createdAt": "2026-03-23T02:10:43.662Z",
+      "lastActivityAt": "2026-03-23T03:11:33.745Z"
+    },
+    "2c80b83e-d23a-4e8a-bd2f-8b9de096fa54": {
+      "sessionId": "2c80b83e-d23a-4e8a-bd2f-8b9de096fa54",
+      "caseNumber": "2603170030001139",
+      "intent": "Full casework processing",
+      "status": "paused",
+      "createdAt": "2026-03-23T03:01:20.159Z",
+      "lastActivityAt": "2026-03-23T03:11:56.865Z"
+    },
+    "3b103501-fba2-4303-89a4-648dd45e6a02": {
+      "sessionId": "3b103501-fba2-4303-89a4-648dd45e6a02",
+      "caseNumber": "2603230030001221",
+      "intent": "客户配置了inbound connector 的efskipips，里面包含了222.68.248.5，为什么还是没有追踪到实际来源ip",
+      "status": "paused",
+      "createdAt": "2026-03-23T03:18:14.823Z",
+      "lastActivityAt": "2026-03-23T03:24:21.244Z"
+    },
+    "b252b087-a4b3-4e36-9aaa-bb06dce0fc7c": {
+      "sessionId": "b252b087-a4b3-4e36-9aaa-bb06dce0fc7c",
+      "caseNumber": "2603100030005863",
+      "intent": "Full casework processing",
+      "status": "paused",
+      "createdAt": "2026-03-23T04:56:12.109Z",
+      "lastActivityAt": "2026-03-23T05:02:50.349Z"
+    }
+  },
+  "caseIndex": {
+    "2602130040001034": "ebb3be8a-3450-40ab-afdf-71c83219c9f7",
+    "2603170030001139": "2c80b83e-d23a-4e8a-bd2f-8b9de096fa54",
+    "2603230030001221": "3b103501-fba2-4303-89a4-648dd45e6a02",
+    "2603100030005863": "b252b087-a4b3-4e36-9aaa-bb06dce0fc7c"
+  }
+}

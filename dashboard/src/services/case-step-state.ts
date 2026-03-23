@@ -19,7 +19,7 @@ export interface CaseStepQuestion {
 }
 
 export interface CaseStepMessage {
-  kind: 'started' | 'thinking' | 'tool-call' | 'completed' | 'error' | 'question'
+  kind: 'started' | 'thinking' | 'tool-call' | 'tool-result' | 'completed' | 'error' | 'question'
   content?: string
   toolName?: string
   step?: string
@@ -39,6 +39,7 @@ interface StepState {
   messages: CaseStepMessage[]
   isActive: boolean
   currentStep?: string
+  executionId?: string
   pendingQuestion?: PendingQuestion | null
   cancelled?: boolean
 }
@@ -49,11 +50,12 @@ class CaseStepStateManager {
   private states = new Map<string, StepState>()
 
   /** Initialize step state for a case (called on step-started) */
-  start(caseNumber: string, stepName?: string): void {
+  start(caseNumber: string, stepName?: string, executionId?: string): void {
     this.states.set(caseNumber, {
       messages: [],
       isActive: true,
       currentStep: stepName,
+      executionId,
     })
   }
 
@@ -139,6 +141,7 @@ class CaseStepStateManager {
     caseNumber: string
     isActive: boolean
     currentStep?: string
+    executionId?: string
     messageCount: number
     hasPendingQuestion: boolean
     startedAt?: string
@@ -147,6 +150,7 @@ class CaseStepStateManager {
       caseNumber,
       isActive: state.isActive,
       currentStep: state.currentStep,
+      executionId: state.executionId,
       messageCount: state.messages.length,
       hasPendingQuestion: !!state.pendingQuestion,
       startedAt: state.messages[0]?.timestamp,

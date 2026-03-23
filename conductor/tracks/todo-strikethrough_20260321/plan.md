@@ -3,7 +3,7 @@
 **Track ID:** todo-strikethrough_20260321
 **Spec:** [spec.md](./spec.md)
 **Created:** 2026-03-21
-**Status:** [~] In Progress
+**Status:** [x] Complete
 
 ## Overview
 
@@ -31,7 +31,7 @@
 ### Tasks
 
 - [x] Task 2.1: 编写单元测试验证 parseTodoContent 解析 ✅ 项后的 checked 状态
-- [~] Task 2.2: 提交代码
+- [x] Task 2.2: 提交代码
 
 ### Verification
 
@@ -51,10 +51,10 @@
 
 ## Post-Implementation Checklist
 
-- [ ] 单元测试文件已创建/更新并通过
-- [ ] 关联 Issue JSON 状态已更新
-- [ ] Track metadata.json 已更新
-- [ ] tracks.md 状态标记已更新
+- [x] 单元测试文件已创建/更新并通过
+- [x] 关联 Issue JSON 状态已更新
+- [x] Track metadata.json 已更新
+- [x] tracks.md 状态标记已更新
 
 ---
 

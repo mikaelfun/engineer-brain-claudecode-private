@@ -1,0 +1,11 @@
+{
+  "id": "ISS-014",
+  "title": "webui issues页面把done, tracked, pending三种类型分开放，支持折叠",
+  "description": "当前issues页面所有类型放在一起，不方便观察，需要支持分类折叠，过滤",
+  "type": "bug",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "issue-status-group_20260320",
+  "createdAt": "2026-03-20T13:23:32.227Z",
+  "updatedAt": "2026-03-20T15:51:21.367Z"
+}

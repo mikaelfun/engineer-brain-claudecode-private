@@ -1,0 +1,11 @@
+{
+  "id": "ISS-030",
+  "title": "点击verify后测试第二步报错",
+  "description": "iss018",
+  "type": "bug",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "verify-step2-fix_20260321",
+  "createdAt": "2026-03-21T07:34:59.437Z",
+  "updatedAt": "2026-03-22T10:10:00.000Z"
+}

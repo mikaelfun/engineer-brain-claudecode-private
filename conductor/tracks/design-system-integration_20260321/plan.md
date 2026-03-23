@@ -82,6 +82,25 @@
 - [x] 每个页面在暗色/亮色下正确渲染
 - [x] TypeScript 编译通过
 
+## Verification Plan
+
+| # | Acceptance Criterion | Test Type | Test Steps |
+|---|---------------------|-----------|------------|
+| 1 | 默认暗色主题，`<html class="dark">` 激活 | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 2 | 主题切换按钮（侧边栏底部），支持 dark/light/system 三种模式 | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 3 | 主题偏好持久化到 localStorage | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 4 | 所有页面和组件正确渲染暗色和亮色主题 | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 5 | CSS 变量系统完整实现（`--bg-base`、`--text-primary`、`--accent-*` 等） | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 6 | 布局从顶部导航改为左侧固定侧边栏（220px） | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 7 | 排版使用 Plus Jakarta Sans + JetBrains Mono 字体 | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 8 | TypeScript 编译通过，现有单元测试通过 | Visual | Navigate to page → screenshot → verify visual matches spec |
+
+**Test Type Legend:**
+- **Interaction** — Playwright clicks, form fills, state assertions
+- **Visual** — Navigate + screenshot + visual inspection
+- **API** — curl/fetch endpoint + assert response
+- **Skip** — Backend-only or covered by unit tests
+
 ## Phase 5: Post-Implementation Checklist
 
 - [x] TypeScript 编译通过（`cd dashboard && npx tsc --noEmit` + `cd dashboard/web && npx tsc --noEmit`）

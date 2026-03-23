@@ -1,0 +1,16 @@
+{
+  "id": "ai-assistant-session_20260322",
+  "title": "Fix AI Assistant Session 消息流体验",
+  "type": "bug",
+  "status": "done",
+  "created": "2026-03-22T22:40:00+08:00",
+  "updated": "2026-03-22T23:15:00+08:00",
+  "phases": {
+    "total": 2,
+    "completed": 2
+  },
+  "tasks": {
+    "total": 4,
+    "completed": 4
+  }
+}

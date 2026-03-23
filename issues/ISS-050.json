@@ -1,0 +1,11 @@
+{
+  "id": "ISS-050",
+  "title": "Creating Track 实时过程中应有取消按钮",
+  "description": "在 WebUI Issue 页面创建 Track 的实时过程中（SSE 进度展示阶段），用户在确认创建最终 track 之前应该有一个取消按钮，可以中止 track 创建流程。当前如果发现问题描述不对或不想创建了，没有办法取消。",
+  "type": "feature",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "cancel-track-creation_20260322",
+  "createdAt": "2026-03-22T08:16:00+08:00",
+  "updatedAt": "2026-03-22T08:18:00+08:00"
+}

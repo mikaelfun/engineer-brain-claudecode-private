@@ -1,0 +1,11 @@
+{
+  "id": "ISS-079",
+  "title": "data-refresh 执行到日志写入后卡住（TodoWrite hang）",
+  "description": "Dashboard 通过 step API 执行 data-refresh 时，Step 3 ICM 判断为空跳过后，写完 data-refresh.log 日志，接着调用 TodoWrite 时卡住不动，UI 持续显示 'AI is processing...'。截图显示在 05:03:29 PM 发起 TodoWrite 后再无后续输出。Case: 260303004000154​2。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "todowrite-hang-fix_20260322",
+  "createdAt": "2026-03-22T17:10:00+08:00",
+  "updatedAt": "2026-03-22T17:20:00+08:00"
+}

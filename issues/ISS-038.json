@@ -1,0 +1,11 @@
+{
+  "id": "ISS-038",
+  "title": "Implemented Issue 增加 Mark Done 按钮，人工验证后标记完成并同步状态",
+  "description": "对状态为 implemented 的 issue，在 Dashboard Issue Tracker 页面增加 Mark Done 按钮。点击后将 issue status 更新为 done，同时需要反馈到：1) conductor track 的 metadata.json（status → completed）；2) issue JSON 的 status 字段；3) 保持 issue/track 状态的一致性。适用于人工验证实现结果后确认完成的场景。",
+  "type": "feature",
+  "priority": "P1",
+  "status": "implemented",
+  "trackId": "mark-done-btn_20260321",
+  "createdAt": "2026-03-21T16:00:00+08:00",
+  "updatedAt": "2026-03-21T19:34:00+08:00"
+}

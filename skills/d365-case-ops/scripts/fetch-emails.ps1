@@ -23,7 +23,12 @@
 #>
 param(
     [Parameter(Mandatory)][string]$TicketNumber,
-    [string]$OutputDir = $(if ($env:D365_CASES_ROOT) { "$env:D365_CASES_ROOT\active" } else { "$env:USERPROFILE\.openclaw\workspace\cases\active" }),
+    [string]$OutputDir = $(if ($env:D365_CASES_ROOT) { "$env:D365_CASES_ROOT\active" } else {
+        $projRoot = (Resolve-Path "$PSScriptRoot\..\..\..").Path
+        $cfg = Get-Content "$projRoot\config.json" -Raw | ConvertFrom-Json
+        $cr = if ([IO.Path]::IsPathRooted($cfg.casesRoot)) { $cfg.casesRoot } else { Join-Path $projRoot $cfg.casesRoot }
+        "$cr\active"
+    }),
     [switch]$Force
 )
 
@@ -52,9 +57,21 @@ if (-not $Force -and (Test-Path $emailsFile)) {
     foreach ($m in $idMatches) {
         $existingIds[$m.Groups[1].Value] = $true
     }
-    # 从 header 提取上次拉取时间，用于服务端过滤
+    # 从 header 提取上次拉取时间（UTC），用于服务端 createdon ge 过滤
+    # Generated 时间戳始终为 UTC，与 D365 createdon (UTC) 对齐
     if ($content -match 'Generated:\s+(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})') {
-        $lastFetchTime = $Matches[1]
+        $rawTimestamp = $Matches[1]
+        # 检查是否有 (UTC) 标记 — 旧版本生成的文件没有此标记，时间戳是本地时间
+        if ($content -match 'Generated:\s+\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\s+\(UTC\)') {
+            $lastFetchTime = $rawTimestamp
+        } else {
+            # 旧版本文件：时间戳是本地时间，不是 UTC
+            # 强制全量重新抓取以避免时区偏移导致遗漏邮件
+            Write-Host "⚠️ Stale header detected (no UTC marker): Generated: $rawTimestamp"
+            Write-Host "⚠️ Forcing full re-fetch to avoid timezone offset (local time treated as UTC)"
+            $existingIds = @{}
+            $lastFetchTime = $null
+        }
     }
     Write-Host "🔵 Found $($existingIds.Count) existing emails in local cache (lastFetch: $lastFetchTime)"
 }
@@ -361,8 +378,14 @@ function Format-EmailEntry {
     # 清理 HTML 正文为纯文本
     $body = $rawBody
     if ($body) {
-        # 移除 HTML 标签
+        # Block-level HTML tags → newline (before stripping all tags)
+        $body = $body -replace '</p>', "`n"
+        $body = $body -replace '</div>', "`n"
+        $body = $body -replace '</tr>', "`n"
+        $body = $body -replace '</li>', "`n"
+        $body = $body -replace '<li[^>]*>', "• "
         $body = $body -replace '<br\s*/?>', "`n"
+        # 移除剩余 HTML 标签
         $body = $body -replace '<[^>]+>', ''
         # 解码 HTML entities
         $body = [System.Net.WebUtility]::HtmlDecode($body)
@@ -456,7 +479,7 @@ if ($Force -or -not (Test-Path $emailsFile)) {
     $header = @"
 # Emails — Case $TicketNumber
 
-> Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') | Total: $($newEmails.Count) emails (excluding system notifications)
+> Generated: $((Get-Date).ToUniversalTime().ToString('yyyy-MM-dd HH:mm:ss')) (UTC) | Total: $($newEmails.Count) emails (excluding system notifications)
 
 "@
     $entries = $newEmails | ForEach-Object { Format-EmailEntry -Email $_ }
@@ -473,7 +496,7 @@ if ($Force -or -not (Test-Path $emailsFile)) {
     $totalCount = $existingIds.Count + $newEmails.Count
     $existingContent = Get-Content $emailsFile -Raw
     $existingContent = $existingContent -replace 'Total: \d+ emails', "Total: $totalCount emails"
-    $existingContent = $existingContent -replace 'Generated: .+? \|', "Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') |"
+    $existingContent = $existingContent -replace 'Generated: .+? \|', "Generated: $((Get-Date).ToUniversalTime().ToString('yyyy-MM-dd HH:mm:ss')) (UTC) |"
     Set-Content -Path $emailsFile -Value $existingContent -Encoding UTF8
     Write-Host "✅ Appended $($newEmails.Count) new emails (total: $totalCount): $emailsFile"
 }

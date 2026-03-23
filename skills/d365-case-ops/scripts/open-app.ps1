@@ -39,8 +39,10 @@ if ($currentUrl -and $currentUrl -ne 'about:blank') {
     playwright-cli run-code "async page => { await page.goto('$Url', { waitUntil: 'domcontentloaded', timeout: 30000 }); }" 2>&1 | Out-Null
     Start-Sleep -Seconds 3
 } else {
-    Write-Host "🔵 Opening D365: $Url"
-    playwright-cli open $Url --browser=msedge --persistent 2>&1 | Out-Null
+    # Use persistent profile + D365 URL to avoid about:blank landing page
+    $profilePath = $script:D365BrowserProfile
+    Write-Host "🔵 Opening D365: $Url (profile: $profilePath)"
+    playwright-cli open --persistent --profile $profilePath --browser msedge $Url 2>&1 | Out-Null
     Start-Sleep -Seconds 5
 }
 

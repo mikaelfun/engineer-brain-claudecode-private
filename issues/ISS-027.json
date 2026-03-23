@@ -1,0 +1,11 @@
+{
+  "id": "ISS-027",
+  "title": "Create Track 点击后没有在 UI 中显示对话框以供用户交互回答 conductor:new-track 的交互提问，最后 track 也创建失败",
+  "description": "在 Issues 页面点击 Create Track 按钮后，后端 agent 执行 /conductor:new-track 时会通过 AskUserQuestion 发起交互提问，但前端 TrackProgressPanel 没有正确显示对话框让用户回答，导致 agent 一直等待（或超时），最终 track 创建失败。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "track-question-fix_20260321",
+  "createdAt": "2026-03-21T17:45:00+08:00",
+  "updatedAt": "2026-03-21T18:40:00+08:00"
+}

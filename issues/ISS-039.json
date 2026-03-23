@@ -1,0 +1,11 @@
+{
+  "id": "ISS-039",
+  "title": "执行过 Verify 的 Issue 应可展开查看测试项目和结果",
+  "description": "Issue 页面中，已执行过 Verify 步骤的 Issue 应该有一个按钮可以展开查看各个测试项目（TypeScript 编译、单元测试、UI 测试等）的执行状态和结果详情。当前完成 verify 后没有结构化的结果展示。",
+  "type": "feature",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "verify-results-display_20260321",
+  "createdAt": "2026-03-21T21:20:00+08:00",
+  "updatedAt": "2026-03-21T21:30:00+08:00"
+}

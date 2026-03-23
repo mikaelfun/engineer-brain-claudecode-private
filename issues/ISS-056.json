@@ -1,0 +1,11 @@
+{
+  "id": "ISS-056",
+  "title": "UI Test 未根据 Issue 问题做功能复现验证，测试覆盖过于简单",
+  "description": "当前 Verify 流程的 UI Test（Step 2）没有根据 Issue 的实际问题设计复现测试计划。例如 ISS-050（创建 Cancel Track 按钮），UI 测试应该模拟：创建新 Issue → 点击 New Track → 等待 Track 创建中 → 点击 Cancel 按钮 → 验证取消效果（Issue 状态回到 pending、进度面板消失）。但实际生成的 UI 测试过于简单，基本只做页面截图和元素可见性检查，没有真正测试到功能行为。\n\n根因：workflow.md 的 UI Test 部分只要求从 spec.md 提取 acceptance criteria 做 Playwright 断言，但没有要求根据 Issue 的具体问题设计端到端的功能复现流程。测试生成倾向于保守的截图验证而非交互式功能验证。\n\n期望改进：\n1. Verify 的 UI Test 应读取 Issue 描述，理解问题场景，设计针对性的交互测试步骤\n2. 对于 UI 交互类 Issue（按钮、对话框、状态转换），应模拟完整用户操作流程\n3. 对于纯样式/布局类 Issue，截图验证即可\n4. 测试计划应在执行前展示给用户确认",
+  "type": "feature",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "ui-test-strategy_20260321",
+  "createdAt": "2026-03-21T22:15:00+08:00",
+  "updatedAt": "2026-03-21T22:15:00+08:00"
+}

@@ -1,4 +1,7 @@
-$dirs = Get-ChildItem 'C:\Users\fangkun\.openclaw\workspace\cases\active' -Directory
+$projRoot = (Resolve-Path "$PSScriptRoot\..").Path
+$cfg = Get-Content "$projRoot\config.json" -Raw | ConvertFrom-Json
+$cr = if ([IO.Path]::IsPathRooted($cfg.casesRoot)) { $cfg.casesRoot } else { Join-Path $projRoot $cfg.casesRoot }
+$dirs = Get-ChildItem "$cr\active" -Directory
 foreach ($d in $dirs) {
     $meta = Join-Path $d.FullName 'casehealth-meta.json'
     if (Test-Path $meta) {

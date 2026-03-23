@@ -1,0 +1,11 @@
+{
+  "id": "ISS-075",
+  "title": "AI Assistant Session 面板优化：过滤 completed、布局调整、Stop 按钮、多 Tab 切换",
+  "description": "AI Assistant tab 中 Session 面板需要多项改进：\n\n1. **过滤 completed sessions** — sessions 列表不应显示已完成的 session，只显示 active/paused\n2. **布局调整** — sessions 部分应放在右侧 AI Assistant tab 下方（而非独立区域）\n3. **Agent Monitor 链接** — 增加链接跳转到 Agent Monitor 页面查看完整详情\n4. **Stop 按钮** — 每个 active/paused session 增加 Stop 按钮 + 一键 Stop All 按钮\n5. **多 Tab 消息切换** — session 实时消息框支持多 tab 切换不同 session 内容（当前只显示一个）",
+  "type": "feature",
+  "priority": "P1",
+  "status": "implemented",
+  "trackId": "session-panel-opt_20260322",
+  "createdAt": "2026-03-22T23:55:00+08:00",
+  "updatedAt": "2026-03-23T00:30:00+08:00"
+}

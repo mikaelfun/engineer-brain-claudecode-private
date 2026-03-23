@@ -1,0 +1,10 @@
+{
+  "id": "ISS-092",
+  "title": "dashboard start patrol后没有状态更新，只能在agents里看进展。",
+  "description": "",
+  "type": "feature",
+  "priority": "P1",
+  "status": "pending",
+  "createdAt": "2026-03-23T01:38:35.980Z",
+  "updatedAt": "2026-03-23T01:38:35.980Z"
+}

@@ -1,0 +1,11 @@
+{
+  "id": "ISS-074",
+  "title": "WebUI Issues 各类分类的 issue 应按修改时间由近到远排序",
+  "description": "Issue Tracker 页面中，各分类（pending/tracked/done 等）下的 issue 列表应按 updatedAt 降序排列（最近修改的排在最前），方便快速定位最新变动的 issue。",
+  "type": "feature",
+  "priority": "P2",
+  "status": "done",
+  "trackId": "issue-sort-by-time_20260322",
+  "createdAt": "2026-03-22T22:00:00+08:00",
+  "updatedAt": "2026-03-22T22:05:00+08:00"
+}

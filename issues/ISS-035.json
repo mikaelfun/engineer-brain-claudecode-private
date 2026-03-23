@@ -1,0 +1,11 @@
+{
+  "id": "ISS-035",
+  "title": "Issue Create Track 实时状态显示过多 Tool 步骤，应隐藏只显示关键状态流",
+  "description": "WebUI Issue 页面点击 Create Track 后，实时进度面板显示很多 Tool: 步骤（如 Tool: Read, Tool: Write 等），信息噪音大。应参考 sse-message-filter_20260321 的做法，对 issue-track-progress SSE 事件也做消息折叠，只显示关键的状态变化（如 'Creating spec...', 'Generating plan...', 'Done'），隐藏 verbose 的工具调用细节。",
+  "type": "feature",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "track-progress-filter_20260321",
+  "createdAt": "2026-03-21T21:00:00+08:00",
+  "updatedAt": "2026-03-21T21:10:00+08:00"
+}

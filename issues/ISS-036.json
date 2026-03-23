@@ -1,0 +1,11 @@
+{
+  "id": "ISS-036",
+  "title": "Track Created 后实时状态窗口应自动折叠，可展开查看历史状态流",
+  "description": "Issue 页面 Create Track 完成后，TrackProgressPanel 实时状态窗口仍然全部展开占据空间。应在 track created 后自动折叠该面板，只显示一行完成状态。可在右侧放一个按钮，点击展开之前 create track 的完整状态流记录。",
+  "type": "feature",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "track-autocollapse_20260321",
+  "createdAt": "2026-03-21T21:15:00+08:00",
+  "updatedAt": "2026-03-21T21:18:00+08:00"
+}

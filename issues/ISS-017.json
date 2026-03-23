@@ -1,0 +1,11 @@
+{
+  "id": "ISS-017",
+  "title": "Issue 点击 Track 后立马提示用户补充详细信息，应该在session跑起来后触发用户补充信息的流程再显示出输入框提供",
+  "description": "",
+  "type": "feature",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "issue-track-dialog_20260320",
+  "createdAt": "2026-03-20T19:15:00+08:00",
+  "updatedAt": "2026-03-20T14:15:00.000Z"
+}

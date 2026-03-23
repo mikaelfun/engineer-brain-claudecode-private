@@ -1,0 +1,10 @@
+{
+  "id": "ISS-011",
+  "title": "Issue页面增强：展示已修复issue + 状态驱动按钮（创建Track/实现/验证/Reopen）",
+  "description": "WebUI的Issue页面需要以下增强：\n1. 展示已修复（done）的issue，不只是 pending/in-progress\n2. 每个issue根据状态显示不同的操作按钮：\n   - 未关联track的issue → 「创建Track」按钮\n   - 有track但未实现的 → 「实现」按钮\n   - 已实现待验证的 → 「验证」按钮（按conductor workflow定义的验证方式）\n   - 已修复(done)的issue → 「Reopen」按钮\n3. 验证流程参照 conductor workflow 中定义的方式执行",
+  "type": "feature",
+  "priority": "P1",
+  "status": "done",
+  "createdAt": "2026-03-20T16:00:00+08:00",
+  "updatedAt": "2026-03-20T18:40:00+08:00"
+}

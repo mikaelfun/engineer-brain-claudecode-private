@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//mnt/c/Users/fangkun/AppData/Roaming/**)",
+      "Read(//mnt/c/Users/fangkun/AppData/Local/**)",
+      "Bash(pwsh *)",
+      "Bash(pwsh -NoProfile *)",
+      "Bash(playwright-cli *)"
+    ]
+  }
+}

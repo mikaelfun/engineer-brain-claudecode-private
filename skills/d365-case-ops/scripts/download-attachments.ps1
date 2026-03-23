@@ -18,7 +18,12 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$TicketNumber,
 
-    [string]$OutputDir = $(if ($env:D365_CASES_ROOT) { "$env:D365_CASES_ROOT\active" } else { "$env:USERPROFILE\.openclaw\workspace\cases\active" }),
+    [string]$OutputDir = $(if ($env:D365_CASES_ROOT) { "$env:D365_CASES_ROOT\active" } else {
+        $projRoot = (Resolve-Path "$PSScriptRoot\..\..\..").Path
+        $cfg = Get-Content "$projRoot\config.json" -Raw | ConvertFrom-Json
+        $cr = if ([IO.Path]::IsPathRooted($cfg.casesRoot)) { $cfg.casesRoot } else { Join-Path $projRoot $cfg.casesRoot }
+        "$cr\active"
+    }),
 
     [switch]$Force
 )
@@ -90,25 +95,40 @@ if ($locationUrl -match 'workspaceid=([a-f0-9-]+)' -or $locationUrl -match '/wor
 }
 Write-Host "?? Workspace ID: $workspaceId"
 
-# ???? 4. ?? DTM Bearer Token (??????????50???) ????
-Write-Host "?? Acquiring DTM Bearer Token..."
+# 🔐 4. 获取 DTM Bearer Token (缓存有效期50分钟内跳过) 🔐
+Write-Host "🔑 Acquiring DTM Bearer Token..."
 
 $tokenCacheDir = Join-Path $env:TEMP "d365-case-ops-runtime"
 if (-not (Test-Path $tokenCacheDir)) { New-Item -Path $tokenCacheDir -ItemType Directory -Force | Out-Null }
-$tokenCacheFile = Join-Path $tokenCacheDir "dtm-token-$workspaceId.json"
 
+# ── 4a. 优先读取全局预热 token（warm-dtm-token.ps1 写入，跨 workspace 通用） ──
 $cachedToken = $null
-if (Test-Path $tokenCacheFile) {
+$globalCacheFile = Join-Path $tokenCacheDir "dtm-token-global.json"
+if (Test-Path $globalCacheFile) {
+    try {
+        $globalData = Get-Content $globalCacheFile -Raw -Encoding UTF8 | ConvertFrom-Json
+        $globalAge = (Get-Date) - [datetime]$globalData.timestamp
+        if ($globalAge.TotalMinutes -lt 50 -and $globalData.token.Length -gt 100) {
+            $cachedToken = $globalData.token
+            Write-Host "⚡ Using global pre-warmed token (age: $([int]$globalAge.TotalMinutes)m)"
+        }
+    } catch { }
+}
+
+# ── 4b. 其次读取 per-workspace 缓存 ──
+$tokenCacheFile = Join-Path $tokenCacheDir "dtm-token-$workspaceId.json"
+if (-not $cachedToken -and (Test-Path $tokenCacheFile)) {
     try {
         $cacheData = Get-Content $tokenCacheFile -Raw -Encoding UTF8 | ConvertFrom-Json
         $cacheAge = (Get-Date) - [datetime]$cacheData.timestamp
         if ($cacheAge.TotalMinutes -lt 50 -and $cacheData.token.Length -gt 100) {
             $cachedToken = $cacheData.token
-            Write-Host "? Using cached token (age: $([int]$cacheAge.TotalMinutes)m)"
+            Write-Host "✅ Using cached token (age: $([int]$cacheAge.TotalMinutes)m)"
         }
     } catch { }
 }
 
+# ── 4c. 兜底：Playwright 导航截获 token ──
 if (-not $cachedToken) {
     $currentUrl = (playwright-cli tab-list 2>&1 | Select-String "\(current\)") -replace '.*\]\(', '' -replace '\).*', ''
 
@@ -133,10 +153,10 @@ async (page) => {
     $token = ($tokenLine -replace ".*Page Title:\s*", "").Trim()
 
     if (-not $token -or $token -eq "NO_TOKEN" -or $token.Length -lt 100) {
-        Write-Host "? Failed to acquire DTM token."
+        Write-Host "❌ Failed to acquire DTM token."
         exit 1
     }
-    Write-Host "? Token acquired (length: $($token.Length)), caching..."
+    Write-Host "✅ Token acquired via Playwright (length: $($token.Length)), caching..."
     @{ token = $token; timestamp = (Get-Date -Format "o") } | ConvertTo-Json | Set-Content $tokenCacheFile -Encoding UTF8
 } else {
     $token = $cachedToken
@@ -240,10 +260,10 @@ foreach ($r in $results) {
     }
 }
 
-# ???? 7. ??? D365?????????????????????? ????
-# ??????? token????????????????
+# ── 7. 导航回 D365（仅当通过 Playwright 获取 token 时需要） ──
+# 使用全局/缓存 token 时无需导航，currentUrl 为 null
 if ($currentUrl) {
-    Write-Host "?? Switching back to D365..."
+    Write-Host "🔄 Switching back to D365..."
     if ($currentUrl -match "onesupport") {
         playwright-cli run-code "async page => { await page.goto('$currentUrl', { waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => {}); }" 2>&1 | Out-Null
     } else {

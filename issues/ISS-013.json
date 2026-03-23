@@ -1,0 +1,10 @@
+{
+  "id": "ISS-013",
+  "title": "WebUI Issue 点击 Implement 后没有执行，直接显示 Verify 按钮",
+  "description": "在 Issues 页面点击 tracked 状态 issue 的 Implement 按钮后，没有实际执行 conductor:implement 流程，issue 状态直接变为 in-progress 并显示 Verify 按钮。应该触发后端 spawn Claude session 执行 /conductor:implement。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "done",
+  "createdAt": "2026-03-20T18:10:00.000Z",
+  "updatedAt": "2026-03-20T18:20:00.000Z"
+}

@@ -1,0 +1,17 @@
+{
+  "id": "test-mock-fix_20260321",
+  "title": "Fix issues.test.ts Mock Alignment with ISS-047",
+  "type": "bug",
+  "status": "complete",
+  "created": "2026-03-21T00:00:00+08:00",
+  "updated": "2026-03-21T22:10:00+08:00",
+  "issueId": "ISS-052",
+  "phases": {
+    "total": 1,
+    "completed": 1
+  },
+  "tasks": {
+    "total": 3,
+    "completed": 3
+  }
+}

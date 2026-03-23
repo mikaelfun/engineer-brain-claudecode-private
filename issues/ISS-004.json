@@ -1,0 +1,11 @@
+{
+  "id": "ISS-004",
+  "title": "Case Detail Header Redesign",
+  "description": "重新设计 Case Detail 页面 header，参考截图 UI 整合关键信息（Case号、SR号、Severity、Status、Owner、创建/更新/拉取时间、SAP 产品路径、SLA 状态、健康分数）到紧凑的 header 卡片。",
+  "type": "refactor",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "case-header-redesign_20260320",
+  "createdAt": "2026-03-20T10:03:00.000Z",
+  "updatedAt": "2026-03-20T14:15:00.000Z"
+}

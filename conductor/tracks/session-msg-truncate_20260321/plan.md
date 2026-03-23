@@ -26,6 +26,21 @@
 - [x] TypeScript 编译通过：`npx tsc --noEmit`
 - [x] 既有单元测试通过：`npm test`（176/176 pass）
 
+## Verification Plan
+
+| # | Acceptance Criterion | Test Type | Test Steps |
+|---|---------------------|-----------|------------|
+| 1 | MessageBubble 正常模式：默认展示较长预览（如 500 字符），超出部分可点击展开查看全文 | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 2 | MessageBubble compact 模式（collapsed group 内部）：展开后显示完整内容 | Interaction | Navigate to page → find collapsible element → click to toggle → verify expanded/collapsed state |
+| 3 | Collapsed thinking preview 保持 60 字符预览（这是 collapsed 状态，合理） | Interaction | Navigate to page → find collapsible element → click to toggle → verify expanded/collapsed state |
+| 4 | 展开/收起状态切换流畅，不影响滚动行为 | Visual | Navigate to page → screenshot → verify visual matches spec |
+
+**Test Type Legend:**
+- **Interaction** — Playwright clicks, form fills, state assertions
+- **Visual** — Navigate + screenshot + visual inspection
+- **API** — curl/fetch endpoint + assert response
+- **Skip** — Backend-only or covered by unit tests
+
 ## Post-Implementation Checklist
 
 - [ ] 单元测试文件已创建并通过

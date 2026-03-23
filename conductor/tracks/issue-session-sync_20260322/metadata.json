@@ -1,0 +1,20 @@
+{
+  "id": "issue-session-sync_20260322",
+  "title": "Fix Issues Page & Agent Monitor State Sync",
+  "type": "bug",
+  "status": "complete",
+  "created": "2026-03-22T22:30:00+08:00",
+  "updated": "2026-03-21T15:10:02.053Z",
+  "phases": {
+    "total": 1,
+    "completed": 1
+  },
+  "tasks": {
+    "total": 3,
+    "completed": 3
+  },
+  "verification": {
+    "status": "skipped",
+    "method": "manual"
+  }
+}

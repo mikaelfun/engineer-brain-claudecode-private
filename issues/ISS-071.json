@@ -1,0 +1,10 @@
+{
+  "id": "ISS-071",
+  "title": "Draft Email agent 可能超时（>180s），需要调查是否卡住",
+  "description": "在 AI Panel 交互测试中，点击 Draft Email 按钮后 agent 在 180s 内未完成。可能原因：1) humanizer 润色耗时 2) email template 生成复杂 3) agent 在 Full Process 之后 session 上下文过大导致变慢 4) agent 实际卡住。需要检查 draft-email agent 的日志，确认是正常慢还是异常。如果是正常慢，前端应显示更明确的进度提示。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "pending",
+  "createdAt": "2026-03-22T17:32:00+08:00",
+  "updatedAt": "2026-03-22T17:32:00+08:00"
+}

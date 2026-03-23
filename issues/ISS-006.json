@@ -1,0 +1,11 @@
+{
+  "id": "ISS-006",
+  "title": "Dashboard Issue Tracker 入口",
+  "description": "Dashboard 增加 Issue 入口页面，支持：创建 issue（标题+描述+类型+优先级）、查看所有 issue 列表（分页）、状态筛选（pending/tracked/in-progress/done）、issue 与 conductor track 关联。数据存储在本地 issues/ 目录。CLI /issue 命令作为 fallback。",
+  "type": "feature",
+  "priority": "P2",
+  "status": "done",
+  "trackId": "issue-tracker_20260320",
+  "createdAt": "2026-03-20T10:05:00.000Z",
+  "updatedAt": "2026-03-20T16:00:00.000Z"
+}

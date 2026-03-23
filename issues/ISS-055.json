@@ -1,0 +1,11 @@
+{
+  "id": "ISS-055",
+  "title": "Issues页面与Agent Monitor状态不同步：Agent Monitor显示ISS-045有active track-creation session（Awaiting input），但Issues页面显示pending状态且看不到track创建进度面板",
+  "description": "Agent Monitor通过/sessions/all API显示ISS-045有活跃的track-creation session（状态为Awaiting input），但Issues页面上ISS-045显示为pending状态，且看不到TrackProgressPanel。根因：Issues页面的showProgress门控逻辑依赖三个条件（issue.status==='tracking' OR 本地store有messages OR optimistic flag），但如果SSE事件被错过（页面未加载/刷新）且issue.status未被设为tracking，则TrackProgressPanel永远不会mount，recovery API永远不会被调用，形成死循环。需要Issues页面在加载时检查后端session状态，桥接状态差异。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "issue-session-sync_20260322",
+  "createdAt": "2026-03-22T22:30:00+08:00",
+  "updatedAt": "2026-03-22T22:26:00+08:00"
+}

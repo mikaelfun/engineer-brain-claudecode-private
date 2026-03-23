@@ -23,7 +23,12 @@
 #>
 param(
     [Parameter(Mandatory)][string]$TicketNumber,
-    [string]$OutputDir = $(if ($env:D365_CASES_ROOT) { "$env:D365_CASES_ROOT\active" } else { "$env:USERPROFILE\.openclaw\workspace\cases\active" }),
+    [string]$OutputDir = $(if ($env:D365_CASES_ROOT) { "$env:D365_CASES_ROOT\active" } else {
+        $projRoot = (Resolve-Path "$PSScriptRoot\..\..\..").Path
+        $cfg = Get-Content "$projRoot\config.json" -Raw | ConvertFrom-Json
+        $cr = if ([IO.Path]::IsPathRooted($cfg.casesRoot)) { $cfg.casesRoot } else { Join-Path $projRoot $cfg.casesRoot }
+        "$cr\active"
+    }),
     [switch]$Force
 )
 

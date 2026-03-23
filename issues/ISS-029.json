@@ -1,0 +1,11 @@
+{
+  "id": "ISS-029",
+  "title": "ISS-018 从网页 Create Track 失败 — 交互问题窗口不弹出",
+  "description": "在 Dashboard Issues 页面点击 Create Track 按钮时，后端 Claude SDK session 需要交互式回答问题（如确认 spec），但 WebUI 没有弹出交互窗口，导致 track 创建超时失败。此问题在 ISS-027/track-question-fix_20260321 中曾修复过一次，但仍然复现。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "track-question-fix2_20260321",
+  "createdAt": "2026-03-21T13:15:00.000Z",
+  "updatedAt": "2026-03-21T14:22:00.000Z"
+}

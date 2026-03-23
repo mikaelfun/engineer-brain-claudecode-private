@@ -1,0 +1,11 @@
+{
+  "id": "ISS-051",
+  "title": "Agent Monitor Session 展开后看不到实时消息",
+  "description": "AgentMonitor 展开 case session 后无法看到实时消息状态。根因: (1) sse-helpers.ts formatMessageForSSE 对 SDK 结构化 content（数组）提取为空字符串; (2) 后端持久化消息类型使用原始 SDK 类型(assistant/tool_use)而非前端类型(thinking/tool-call); (3) chat 路由不持久化消息且总是广播为 case-session-thinking 而不用 getSSEEventType",
+  "type": "bug",
+  "priority": "P0",
+  "status": "done",
+  "trackId": "session-messages-fix_20260322",
+  "createdAt": "2026-03-22T21:30:00+08:00",
+  "updatedAt": "2026-03-22T21:45:00+08:00"
+}

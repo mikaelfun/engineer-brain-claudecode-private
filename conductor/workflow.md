@@ -166,18 +166,164 @@ await user.click(screen.getByRole('button'))
 **Procedure:**
 1. Read `conductor/tracks/{trackId}/spec.md` — extract acceptance criteria
 2. Read `conductor/tracks/{trackId}/plan.md` — extract all completed tasks and their descriptions
-3. Start dev server (`cd dashboard && npm run dev`)
-4. Wait for frontend (port 5173) and backend (port 3010) to be ready
-5. Generate a valid JWT for testing:
+3. **Generate Issue-Driven Test Plan** (see below)
+4. **Display test plan for user confirmation** (see below)
+5. Start dev server (`cd dashboard && npm run dev`)
+6. Wait for frontend (port 5173) and backend (port 3010) to be ready
+7. Generate a valid JWT for testing:
    ```bash
    node -e "const jwt=require('jsonwebtoken'); console.log(jwt.sign({sub:'engineer'}, process.env.JWT_SECRET||'engineer-brain-local-dev-secret-2026', {expiresIn:'1h'}))"
    ```
-6. Use Playwright (headless Chromium) to test each acceptance criterion
-7. Take screenshots at key verification points
-8. Stop dev server
-9. Generate test report with pass/fail per acceptance criterion
+8. Execute each test from the approved plan
+9. Take screenshots at key verification points
+10. Stop dev server
+11. Generate test report with pass/fail per acceptance criterion
 
-**Playwright Patterns:**
+#### Step 2a: Issue-Driven Test Plan Generation
+
+Before executing any Playwright tests, generate a structured test plan that reflects the actual
+user scenario described in the Issue.
+
+**Input sources (read in order):**
+1. **Issue JSON** — Read `issues/{issueId}.json` (found via track's `metadata.json → issueId` or `spec.md → Source`). Extract `title`, `description`, `type` to understand the real problem/feature.
+2. **spec.md** — Extract acceptance criteria (the "what to verify")
+3. **plan.md** — Extract completed tasks (the "what was changed")
+
+**Classify each acceptance criterion into a test type:**
+
+| Test Type | When to Use | What to Do |
+|-----------|-------------|------------|
+| **Interaction** | Criterion involves user actions: clicking buttons, filling forms, opening/closing dialogs, state transitions, drag-drop | Multi-step Playwright test: navigate → setup data → click/type → wait → assert state change |
+| **Visual** | Criterion involves appearance: layout, styling, theme, responsive design, icon display | Navigate → screenshot → verify via Read tool |
+| **API** | Criterion involves backend behavior: new endpoint, changed response shape, data persistence | `fetch()` or `curl` call → assert response JSON |
+| **Skip** | Criterion is backend-only with no UI surface, or already covered by unit tests | Document reason for skipping |
+
+**Classification rules (by Issue type and keywords):**
+
+| Issue Type | Keywords in Description | Default Test Type |
+|------------|----------------------|-------------------|
+| feature (UI) | "button", "dialog", "modal", "panel", "click", "toggle", "expand", "collapse" | Interaction |
+| feature (UI) | "layout", "style", "theme", "color", "font", "spacing", "responsive" | Visual |
+| bug (UI) | "not showing", "disappears", "wrong state", "not updating" | Interaction |
+| bug (UI) | "overflow", "truncated", "misaligned", "wrong color" | Visual |
+| feature/bug (API) | "endpoint", "API", "response", "status code" | API |
+| refactor/chore | no UI surface | Skip |
+
+**Example — ISS-050 (Cancel Track Creation Button):**
+
+| Criterion | Type | Test Steps |
+|-----------|------|------------|
+| Cancel button visible during track creation | Interaction | 1. POST `/api/issues` to create test issue<br>2. POST `/api/issues/{id}/create-track` to start track creation<br>3. Navigate to Issues page<br>4. Verify Cancel button appears in progress panel<br>5. Click Cancel button<br>6. Verify: issue status reverts to pending (via GET API)<br>7. Verify: progress panel disappears from DOM<br>8. Screenshot for evidence |
+| Track creation can be restarted after cancel | Interaction | 1. After cancel (above), verify "New Track" button is clickable again<br>2. Screenshot |
+
+**Example — ISS-030 (Design System Integration):**
+
+| Criterion | Type | Test Steps |
+|-----------|------|------------|
+| Dark mode colors use CSS variables | Visual | 1. Navigate to Dashboard<br>2. Screenshot at 1440px<br>3. Read screenshot, verify dark theme palette |
+| Light mode toggle works | Interaction | 1. Navigate to Settings<br>2. Click theme toggle<br>3. Screenshot<br>4. Verify body class changed |
+
+#### Step 2b: Test Plan Confirmation
+
+Before executing the plan, display it to the user:
+
+```
+## UI Test Plan for {trackId}
+
+Based on Issue {issueId}: {issue title}
+
+| # | Criterion | Test Type | Steps Summary |
+|---|-----------|-----------|---------------|
+| 1 | {criterion} | Interaction | Navigate → Create issue → Click cancel → Verify state |
+| 2 | {criterion} | Visual | Navigate → Screenshot → Verify layout |
+| 3 | {criterion} | Skip | Backend-only, covered by unit tests |
+
+Approve this test plan?
+1. Yes, execute all tests
+2. Skip some tests (specify which #)
+3. Edit test steps
+4. Skip UI tests entirely
+```
+
+#### Interaction Test Patterns (Playwright)
+
+```javascript
+// === Pattern 1: API-seeded data + UI interaction ===
+// Use when test needs specific data state (e.g., an issue in a specific status)
+
+// Seed: create test data via API (safe — uses POST /api/issues which is a local write)
+const createRes = await fetch(`${BASE_URL}/api/issues`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TOKEN}` },
+  body: JSON.stringify({ title: 'Test Issue for UI verification', type: 'bug', priority: 'P2' }),
+})
+const { id: testIssueId } = await createRes.json()
+
+// Navigate and interact
+await page.goto(`${BASE_URL}/issues`, { waitUntil: 'domcontentloaded' })
+await page.waitForTimeout(2000)
+
+// Find the test issue row and click action button
+const issueRow = page.locator(`[data-issue-id="${testIssueId}"]`)
+await issueRow.locator('button:has-text("New Track")').click()
+
+// Wait for state change
+await page.waitForSelector('[data-testid="track-progress-panel"]', { timeout: 5000 })
+
+// Assert state
+const panel = page.locator('[data-testid="track-progress-panel"]')
+await expect(panel).toBeVisible()
+
+// Cleanup: delete test issue after verification
+await fetch(`${BASE_URL}/api/issues/${testIssueId}`, {
+  method: 'DELETE',
+  headers: { 'Authorization': `Bearer ${TOKEN}` },
+})
+
+
+// === Pattern 2: State transition verification ===
+// Use when testing a button that changes visible state
+
+// Before click
+const statusBefore = await page.locator('.issue-status').textContent()
+console.log(`Status before: ${statusBefore}`)
+
+// Click action
+await page.locator('button:has-text("Cancel")').click()
+await page.waitForTimeout(1000) // wait for API + React re-render
+
+// After click — verify state changed
+const statusAfter = await page.locator('.issue-status').textContent()
+console.log(`Status after: ${statusAfter}`)
+assert(statusAfter !== statusBefore, `Status should have changed from ${statusBefore}`)
+
+// Screenshot for evidence
+await page.screenshot({ path: 'scripts/screenshots/state-transition.png' })
+
+
+// === Pattern 3: Dialog/Modal interaction ===
+// Use when testing dialog open → interact → close flow
+
+await page.locator('button:has-text("Edit")').click()
+await page.waitForSelector('[role="dialog"]', { timeout: 3000 })
+
+// Interact with dialog content
+await page.fill('[name="title"]', 'Updated Title')
+await page.locator('button:has-text("Save")').click()
+
+// Verify dialog closed and changes reflected
+await expect(page.locator('[role="dialog"]')).not.toBeVisible()
+await expect(page.locator('.issue-title')).toHaveText('Updated Title')
+```
+
+**⚠️ Safety Guards for Interaction Tests:**
+- **NEVER click**: "Full Process", "Troubleshoot", "Draft Email", "Execute" buttons (see CLAUDE.md § 自动化测试安全红线)
+- **NEVER call**: `POST /api/todo/:id/execute`, `POST /api/case/:id/process`, `POST /api/case/:id/step/*`, `POST /api/patrol`
+- **Safe to click**: "New Track", "Cancel", "Edit", "Reopen", "Mark Done", "Verify", tab switches, sort headers, search input, theme toggle
+- **Safe to call**: `POST /api/issues` (create), `DELETE /api/issues/:id` (cleanup), `PUT /api/issues/:id` (update), all `GET` endpoints
+- If a test scenario requires verifying a dangerous button's flow, test only up to the confirmation dialog — **never submit it**
+
+**Playwright Patterns (unchanged):**
 ```javascript
 // Auth: inject token via storageState (no login flow needed)
 storageState: {
@@ -191,12 +337,6 @@ await page.waitForTimeout(2000) // allow React + API data to settle
 // Screenshots for evidence
 await page.screenshot({ path: 'scripts/screenshots/<name>.png', fullPage: true })
 ```
-
-**Test Scope (derived from spec.md):**
-- For each acceptance criterion → generate 1+ specific UI assertions
-- For UI changes → screenshot at relevant pages
-- For API changes → verify via both `curl` API call and frontend display
-- For error handling → test both happy path and error path
 
 ### Step 3: Report & Follow-up
 
@@ -309,7 +449,7 @@ For individual phase verification (step 3 in Track Workflow), use lighter checks
 All generated tests (unit and UI) **MUST** comply with the safety red lines defined in `CLAUDE.md § 自动化测试安全红线`. Before generating or running any test:
 
 1. **Unit tests**: Never import or call D365 write scripts (`add-note.ps1`, `record-labor.ps1`, etc.). Always mock `child_process.execSync`/`spawn` if the module under test invokes PowerShell.
-2. **UI tests**: Never click action buttons (`Full Process`, `Troubleshoot`, `Draft Email`, `Execute`). Only use read-only interactions: navigation, screenshots, visibility checks, tab switching, sorting.
+2. **UI tests**: Never click dangerous action buttons (`Full Process`, `Troubleshoot`, `Draft Email`, `Execute`). Safe interactions include: navigation, screenshots, visibility checks, tab switching, sorting, and safe Issue operations (`New Track`, `Cancel`, `Edit`, `Reopen`, `Mark Done`, `Verify`). See Step 2 "Safety Guards for Interaction Tests" for the full safe/unsafe list.
 3. **API tests**: Only call `GET` endpoints and safe `PUT /api/settings`. Never call `POST /api/todo/:id/execute`, `POST /api/case/:id/process`, `POST /api/case/:id/step/*`, or `POST /api/patrol`.
 
 If a test scenario requires verifying a write operation's UI flow, test only up to the confirmation dialog — never submit it.

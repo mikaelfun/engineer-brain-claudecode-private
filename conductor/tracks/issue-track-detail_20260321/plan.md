@@ -35,6 +35,23 @@
 - [x] 无 trackId 的 issue 展开后仅显示 description（行为不变）
 - [x] 双主题下样式正常
 
+## Verification Plan
+
+| # | Acceptance Criterion | Test Type | Test Steps |
+|---|---------------------|-----------|------------|
+| 1 | 后端提供 `GET /api/issues/:id/track-spec` 端点，返回 spec.md 原始内容 | API | Call the relevant endpoint → verify response shape and status code |
+| 2 | 有 trackId 的 issue 展开时，显示 "Analysis" 区域（来自 spec.md 的 Summary + Acceptance Crit... | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 3 | 有 trackId 的 issue 展开时，显示 "Plan" 区域（来自 plan.md 的任务列表 + 完成状态） | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 4 | 无 trackId 的 issue 展开时，行为不变（仅显示 description） | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 5 | Track 数据懒加载：仅在展开时 fetch，收起时不请求 | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 6 | 使用 CSS 变量适配双主题 | Visual | Navigate to page → screenshot → verify visual matches spec |
+
+**Test Type Legend:**
+- **Interaction** — Playwright clicks, form fills, state assertions
+- **Visual** — Navigate + screenshot + visual inspection
+- **API** — curl/fetch endpoint + assert response
+- **Skip** — Backend-only or covered by unit tests
+
 ## Post-Implementation Checklist
 
 - [x] 关联 Issue JSON 状态已更新

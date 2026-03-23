@@ -60,6 +60,16 @@
 - **根因**：`-Force` 会跳过 fetch-emails.ps1 的增量逻辑，每次全量拉取所有邮件 + 内联图片
 - **注意**：首次执行仍需全量拉取；短时间内重复执行受益最大
 
+## Plan Mode 收尾教训（2026-03-20）
+- **问题**：Plan mode 清空上下文后，agent 只执行 plan 里的技术任务，遗漏了业务收尾（更新 issue 状态、写测试文件）
+- **根因**：Plan 只有代码清单，没有"更新关联 issue 状态""按 workflow.md 生成测试"这类收尾步骤。上下文断裂后 agent 不知道这是为哪个 issue 做的
+- **修复**：在 `conductor/workflow.md` 新增 Step 4: Issue & Track 状态收尾，强制每个 plan 最后阶段包含 Post-Implementation Checklist：
+  - 单元测试文件已创建并通过
+  - browser-test.mjs 已覆盖新页面/路由
+  - 关联 Issue JSON 状态已更新
+  - Track metadata.json / tracks.md 已更新
+- **规则**：Plan 模板的最后一个阶段必须有这个 checklist，这样即使上下文清空，agent 读到 plan 也不会漏
+
 ## 重要记录
 - 2026-03-16: 完成 OpenClaw → Claude Code 迁移，9 个 skills + 9 个 playbooks + 6 个 subagent + 4 个 slash commands
 - 2026-03-17: 首次完整 casework 执行（2603090040000814），修复 3 个脚本 bug，teams-case-search 改为 MCP 直调 + write-teams.ps1

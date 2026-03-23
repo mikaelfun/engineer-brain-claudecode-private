@@ -21,6 +21,21 @@
 - [ ] TrackProgressPanel 不再显示 Plan Overview
 - [ ] TypeScript 编译通过
 
+## Verification Plan
+
+| # | Acceptance Criterion | Test Type | Test Steps |
+|---|---------------------|-----------|------------|
+| 1 | TrackProgressPanel 不再显示 Plan Overview 折叠面板 | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 2 | PlanSummary 组件代码删除（无其他消费者） | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 3 | Track 创建完成后仍显示 ✓ 完成状态 | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 4 | TypeScript 编译通过 | Visual | Navigate to page → screenshot → verify visual matches spec |
+
+**Test Type Legend:**
+- **Interaction** — Playwright clicks, form fills, state assertions
+- **Visual** — Navigate + screenshot + visual inspection
+- **API** — curl/fetch endpoint + assert response
+- **Skip** — Backend-only or covered by unit tests
+
 ## Post-Implementation Checklist
 
 - [ ] 关联 Issue JSON 状态已更新

@@ -35,7 +35,7 @@ vi.mock('../services/conductor-reader.js', () => ({
   getTrackMetadata: (...args: any[]) => mockGetTrackMetadata(...args),
   updateTrackMetadata: (...args: any[]) => mockUpdateTrackMetadata(...args),
   updateTracksMdStatus: (...args: any[]) => mockUpdateTracksMdStatus(...args),
-  enrichIssueFromTrack: (...args: any[]) => mockEnrichIssueFromTrack(...args),
+  enrichIssueFromTrack: (issue: any) => mockEnrichIssueFromTrack(issue),
 }))
 
 // Mock child_process (safety: never run real tests)
@@ -50,6 +50,7 @@ vi.mock('child_process', () => ({
 vi.mock('../config.js', () => ({
   config: {
     projectRoot: '/mock/project',
+    jwtSecret: 'test-secret',
   },
 }))
 
@@ -405,7 +406,10 @@ describe('Issue Routes', () => {
       const issue = makeIssue({ status: 'tracked', trackId: 'some-track' })
       mockGetIssue.mockReturnValue(issue)
       mockAcquireImplementLock.mockReturnValue(true) // Lock available
-      mockUpdateIssue.mockReturnValue({ ...issue, status: 'in-progress' })
+      // enrichIssueFromTrack: first call returns 'tracked' (guard check), second call returns 'in-progress' (after track metadata update)
+      mockEnrichIssueFromTrack
+        .mockReturnValueOnce({ ...issue, status: 'tracked' })
+        .mockReturnValueOnce({ ...issue, status: 'in-progress' })
 
       const app = createApp()
       const res = await app.request('/issues/ISS-001/start-implement', { method: 'POST' })
@@ -413,7 +417,8 @@ describe('Issue Routes', () => {
 
       const json = await res.json()
       expect(json.issue.status).toBe('in-progress')
-      expect(mockUpdateIssue).toHaveBeenCalledWith('ISS-001', { status: 'in-progress' })
+      // ISS-047: route now updates track metadata instead of issue status directly
+      expect(mockUpdateTrackMetadata).toHaveBeenCalledWith('some-track', { status: 'in_progress' })
     })
 
     it('rejects pending issue without trackId', async () => {
@@ -494,19 +499,23 @@ describe('Issue Routes', () => {
   })
 
   describe('POST /issues/:id/reopen', () => {
-    it('transitions done → pending, keeps trackId', async () => {
+    it('transitions done → implemented (clears verification, keeps trackId)', async () => {
       const issue = makeIssue({ status: 'done', trackId: 'old-track' })
       mockGetIssue.mockReturnValue(issue)
-      mockUpdateIssue.mockReturnValue({ ...issue, status: 'pending' })
+      // enrichIssueFromTrack: first call returns 'done' (guard check), second returns 'implemented' (after verification cleared)
+      mockEnrichIssueFromTrack
+        .mockReturnValueOnce({ ...issue, status: 'done' })
+        .mockReturnValueOnce({ ...issue, status: 'implemented' })
 
       const app = createApp()
       const res = await app.request('/issues/ISS-001/reopen', { method: 'POST' })
       expect(res.status).toBe(200)
 
       const json = await res.json()
-      expect(json.issue.status).toBe('pending')
-      // updateIssue only sets status, does NOT clear trackId
-      expect(mockUpdateIssue).toHaveBeenCalledWith('ISS-001', { status: 'pending' })
+      // ISS-047: reopen clears verification from track metadata; status re-derives to 'implemented' (track still complete)
+      expect(json.issue.status).toBe('implemented')
+      expect(mockUpdateTrackMetadata).toHaveBeenCalledWith('old-track', { verification: undefined })
+      expect(mockUpdateTracksMdStatus).toHaveBeenCalledWith('old-track', '[~]')
     })
 
     it('rejects non-done issue', async () => {
@@ -1023,14 +1032,18 @@ describe('Issue Routes', () => {
       const issue = makeIssue({ status: 'tracked', trackId: 'some-track' })
       mockGetIssue.mockReturnValue(issue)
       mockAcquireImplementLock.mockReturnValue(true) // Lock available
-      mockUpdateIssue.mockReturnValue({ ...issue, status: 'in-progress' })
+      // enrichIssueFromTrack: first call returns 'tracked' (guard), subsequent calls return 'in-progress'
+      mockEnrichIssueFromTrack
+        .mockReturnValueOnce({ ...issue, status: 'tracked' })
+        .mockReturnValue({ ...issue, status: 'in-progress' })
 
       const app = createApp()
       const res = await app.request('/issues/ISS-001/start-implement', { method: 'POST' })
       expect(res.status).toBe(200)
 
       expect(mockAcquireImplementLock).toHaveBeenCalledWith('ISS-001', 'some-track')
-      expect(mockUpdateIssue).toHaveBeenCalledWith('ISS-001', { status: 'in-progress' })
+      // ISS-047: route updates track metadata instead of issue status directly
+      expect(mockUpdateTrackMetadata).toHaveBeenCalledWith('some-track', { status: 'in_progress' })
     })
   })
 })

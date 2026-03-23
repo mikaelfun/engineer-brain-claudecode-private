@@ -1,0 +1,11 @@
+{
+  "id": "ISS-043",
+  "title": "Issue 页面 TrackId 旁边应有拷贝按钮",
+  "description": "WebUI Issue 页面展开详情后，trackId 文本旁边应增加一个拷贝按钮，点击后将 trackId 复制到剪贴板，方便在 CLI 中使用（如 /conductor:implement trackId）。",
+  "type": "feature",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "trackid-copy-btn_20260321",
+  "createdAt": "2026-03-21T21:35:00+08:00",
+  "updatedAt": "2026-03-21T20:15:00+08:00"
+}

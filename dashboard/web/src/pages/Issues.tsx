@@ -4,8 +4,8 @@
  * 功能：列表 + 筛选 + 分页 + 内联创建 + 行内编辑 + 状态驱动操作按钮
  */
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { Plus, X, Trash2, ExternalLink, ChevronRight, ChevronDown, Loader2, Rocket, Play, CheckCircle, RotateCcw, RefreshCw, Monitor, Server, Search, Pencil, FileText, ListChecks, FlaskConical, CircleCheck, ShieldCheck, UserCheck, Copy, Check } from 'lucide-react'
-import { useIssues, useCreateIssue, useUpdateIssue, useDeleteIssue, useCreateTrack, useCancelTrack, useCancelVerify, useStartImplement, useVerifyIssue, useReopenIssue, useMarkDone, useRestartFrontend, useRestartBackend, useRestartAll, useTrackSpec, useTrackPlan, useActiveTrackSessions } from '../api/hooks'
+import { Plus, X, Trash2, ExternalLink, ChevronRight, ChevronDown, Loader2, Rocket, Play, CheckCircle, RotateCcw, Search, Pencil, FileText, ListChecks, FlaskConical, CircleCheck, ShieldCheck, UserCheck, Copy, Check } from 'lucide-react'
+import { useIssues, useCreateIssue, useUpdateIssue, useDeleteIssue, useCreateTrack, useCancelTrack, useCancelVerify, useStartImplement, useVerifyIssue, useReopenIssue, useMarkDone, useTrackSpec, useTrackPlan, useActiveTrackSessions } from '../api/hooks'
 import { Loading, ErrorState } from '../components/common/Loading'
 import TrackProgressPanel from '../components/TrackProgressPanel'
 import ImplementPanel from '../components/ImplementPanel'
@@ -78,55 +78,7 @@ export default function Issues() {
   const verifyIssue = useVerifyIssue()
   const reopenIssue = useReopenIssue()
   const markDone = useMarkDone()
-  const restartFe = useRestartFrontend()
-  const restartBe = useRestartBackend()
-  const restartAllSvc = useRestartAll()
   const setIssueTracking = useIssueTrackStore((s) => s.setIssueTracking)
-
-  // Reconnect state: after backend restart, poll /api/health until it's back
-  const [reconnecting, setReconnecting] = useState(false)
-
-  const pollHealth = () => {
-    setReconnecting(true)
-    const interval = setInterval(async () => {
-      try {
-        const res = await fetch('/api/health')
-        if (res.ok) {
-          clearInterval(interval)
-          setReconnecting(false)
-          window.location.reload()
-        }
-      } catch {
-        // still down, keep polling
-      }
-    }, 1500)
-    // Safety timeout: stop polling after 30s
-    setTimeout(() => { clearInterval(interval); setReconnecting(false) }, 30000)
-  }
-
-  const handleRestartFrontend = () => {
-    restartFe.mutate(undefined, {
-      onSuccess: () => {
-        // Frontend will restart, vite HMR should auto-reconnect
-        // Give it a moment then reload
-        setTimeout(() => window.location.reload(), 3000)
-      },
-    })
-  }
-
-  const handleRestartBackend = () => {
-    restartBe.mutate(undefined, {
-      onSuccess: () => pollHealth(),
-      onError: () => pollHealth(), // request may fail as server dies
-    })
-  }
-
-  const handleRestartAll = () => {
-    restartAllSvc.mutate(undefined, {
-      onSuccess: () => pollHealth(),
-      onError: () => pollHealth(),
-    })
-  }
 
   if (isLoading) return <Loading text="Loading issues..." />
   if (error) return <ErrorState message="Failed to load issues" onRetry={() => window.location.reload()} />
@@ -146,13 +98,20 @@ export default function Issues() {
       })
     : issues
 
+  // Sort helper: by updatedAt descending, fallback to createdAt
+  const sortByUpdatedDesc = (a: any, b: any) => {
+    const timeA = new Date(a.updatedAt || a.createdAt || 0).getTime()
+    const timeB = new Date(b.updatedAt || b.createdAt || 0).getTime()
+    return timeB - timeA
+  }
+
   // Group issues by status category (all filtered issues, no pagination)
   const issueGroups = [
     {
       key: 'pending',
       label: '🟡 Pending',
       description: 'Needs action',
-      issues: filteredIssues.filter((i: any) => ['pending', 'tracking'].includes(i.status)),
+      issues: filteredIssues.filter((i: any) => ['pending', 'tracking'].includes(i.status)).sort(sortByUpdatedDesc),
       headerBorder: 'var(--accent-amber-dim)',
       headerBg: 'var(--accent-amber-dim)',
       countBg: 'var(--accent-amber-dim)',
@@ -162,7 +121,7 @@ export default function Issues() {
       key: 'tracked',
       label: '🔵 Tracked',
       description: 'Has implementation track',
-      issues: filteredIssues.filter((i: any) => i.status === 'tracked'),
+      issues: filteredIssues.filter((i: any) => i.status === 'tracked').sort(sortByUpdatedDesc),
       headerBorder: 'var(--accent-blue-dim)',
       headerBg: 'var(--accent-blue-dim)',
       countBg: 'var(--accent-blue-dim)',
@@ -172,7 +131,7 @@ export default function Issues() {
       key: 'in-progress',
       label: '🟣 Implementing',
       description: 'Implementation in progress',
-      issues: filteredIssues.filter((i: any) => i.status === 'in-progress'),
+      issues: filteredIssues.filter((i: any) => i.status === 'in-progress').sort(sortByUpdatedDesc),
       headerBorder: 'var(--accent-purple-dim)',
       headerBg: 'var(--accent-purple-dim)',
       countBg: 'var(--accent-purple-dim)',
@@ -182,7 +141,7 @@ export default function Issues() {
       key: 'implemented',
       label: '🟢 Implemented',
       description: 'Awaiting manual verification',
-      issues: filteredIssues.filter((i: any) => i.status === 'implemented'),
+      issues: filteredIssues.filter((i: any) => i.status === 'implemented').sort(sortByUpdatedDesc),
       headerBorder: 'var(--accent-teal-dim, var(--accent-green-dim))',
       headerBg: 'var(--accent-teal-dim, var(--accent-green-dim))',
       countBg: 'var(--accent-teal-dim, var(--accent-green-dim))',
@@ -192,7 +151,7 @@ export default function Issues() {
       key: 'done',
       label: '✅ Done',
       description: 'Completed',
-      issues: filteredIssues.filter((i: any) => i.status === 'done'),
+      issues: filteredIssues.filter((i: any) => i.status === 'done').sort(sortByUpdatedDesc),
       headerBorder: 'var(--accent-green-dim)',
       headerBg: 'var(--accent-green-dim)',
       countBg: 'var(--accent-green-dim)',
@@ -387,39 +346,6 @@ export default function Issues() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Issues</h1>
         <div className="flex items-center gap-2">
-          {/* Restart buttons */}
-          <div className="flex items-center gap-1 rounded-lg px-1 py-0.5" style={{ border: '1px solid var(--border-default)' }}>
-            <button
-              onClick={handleRestartFrontend}
-              disabled={restartFe.isPending || reconnecting}
-              className="flex items-center gap-1 px-2 py-1.5 text-xs rounded disabled:opacity-40 transition-colors"
-              style={{ color: 'var(--text-secondary)' }}
-              title="Restart frontend (vite)"
-            >
-              {restartFe.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Monitor className="w-3.5 h-3.5" />}
-              <span className="hidden sm:inline">FE</span>
-            </button>
-            <button
-              onClick={handleRestartBackend}
-              disabled={restartBe.isPending || reconnecting}
-              className="flex items-center gap-1 px-2 py-1.5 text-xs rounded disabled:opacity-40 transition-colors"
-              style={{ color: 'var(--text-secondary)' }}
-              title="Restart backend (tsx)"
-            >
-              {restartBe.isPending || reconnecting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Server className="w-3.5 h-3.5" />}
-              <span className="hidden sm:inline">BE</span>
-            </button>
-            <button
-              onClick={handleRestartAll}
-              disabled={restartAllSvc.isPending || reconnecting}
-              className="flex items-center gap-1 px-2 py-1.5 text-xs rounded disabled:opacity-40 transition-colors"
-              style={{ color: 'var(--text-secondary)' }}
-              title="Restart all (frontend + backend)"
-            >
-              {restartAllSvc.isPending || reconnecting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
-              <span className="hidden sm:inline">All</span>
-            </button>
-          </div>
           <button
             onClick={() => setShowCreate(!showCreate)}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
@@ -430,17 +356,6 @@ export default function Issues() {
           </button>
         </div>
       </div>
-
-      {/* Reconnecting overlay */}
-      {reconnecting && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="rounded-xl shadow-2xl px-8 py-6 flex flex-col items-center gap-3" style={{ background: 'var(--bg-surface)' }}>
-            <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--accent-blue)' }} />
-            <p className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Restarting services...</p>
-            <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Waiting for server to come back online</p>
-          </div>
-        </div>
-      )}
 
       {/* Create Form */}
       {showCreate && (

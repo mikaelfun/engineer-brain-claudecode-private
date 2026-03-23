@@ -35,6 +35,21 @@ When `isActive` is `true` and messages exist (so recovery won't trigger), poll `
 
 - [x] `npm run test:web` — all tests pass (6/6 VerifyProgressPanel tests pass)
 
+## Verification Plan
+
+| # | Acceptance Criterion | Test Type | Test Steps |
+|---|---------------------|-----------|------------|
+| 1 | When verify tests all pass, "Running Tests..." transitions to "All Tests Pass... | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 2 | When verify tests fail, "Running Tests..." transitions to "Tests Failed" with... | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 3 | If SSE completion event is missed, a polling/timeout fallback detects complet... | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 4 | Page refresh during or after verify correctly recovers state (not stuck as "R... | Visual | Navigate to page → screenshot → verify visual matches spec |
+
+**Test Type Legend:**
+- **Interaction** — Playwright clicks, form fills, state assertions
+- **Visual** — Navigate + screenshot + visual inspection
+- **API** — curl/fetch endpoint + assert response
+- **Skip** — Backend-only or covered by unit tests
+
 ## Post-Implementation Checklist
 
 - [x] 单元测试文件已创建并通过

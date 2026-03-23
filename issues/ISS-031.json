@@ -1,0 +1,10 @@
+{
+  "id": "ISS-031",
+  "title": "从UI点击Create Track失败，仍然没有显示输入框让用户交互",
+  "description": "ISS-029 修复后，从 WebUI Issues 页面点击 Create Track 按钮，仍然没有显示交互输入框（question dialog）让用户回答 conductor:new-track 的交互问题。根因：AskUserQuestion 被列入 allowedTools，SDK 自动放行不触发 canUseTool 回调。修复：从 allowedTools 中移除 AskUserQuestion，让 SDK 走 canUseTool 路径进行拦截。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "done",
+  "createdAt": "2026-03-21T15:30:00+08:00",
+  "updatedAt": "2026-03-21T16:05:00+08:00"
+}

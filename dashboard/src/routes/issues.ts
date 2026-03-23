@@ -543,7 +543,8 @@ issues.post('/:id/create-track', async (c) => {
             preset: 'claude_code' as const,
           },
           allowedTools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent', 'Skill'],
-          permissionMode: 'acceptEdits',
+          permissionMode: 'bypassPermissions',
+          allowDangerouslySkipPermissions: true,
           maxTurns: 40,
           canUseTool,
         },
@@ -597,7 +598,8 @@ async function resumeTrackSession(issueId: string, sessionId: string, answer: st
           preset: 'claude_code' as const,
         },
         allowedTools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent', 'Skill'],
-        permissionMode: 'acceptEdits',
+        permissionMode: 'bypassPermissions',
+        allowDangerouslySkipPermissions: true,
         maxTurns: 40,
         canUseTool,
       },
@@ -710,7 +712,8 @@ issues.post('/:id/start-implement', async (c) => {
             preset: 'claude_code' as const,
           },
           allowedTools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'Agent', 'Skill'],
-          permissionMode: 'acceptEdits',
+          permissionMode: 'bypassPermissions',
+          allowDangerouslySkipPermissions: true,
           maxTurns: 80,
         },
       })) {
@@ -909,7 +912,8 @@ OVERALL: PASS/FAIL
           preset: 'claude_code' as const,
         },
         allowedTools: ['Bash', 'Read', 'Glob', 'Grep'],
-        permissionMode: 'acceptEdits',
+        permissionMode: 'bypassPermissions',
+        allowDangerouslySkipPermissions: true,
         maxTurns: 30,
       },
     })) {
@@ -1053,7 +1057,7 @@ issues.post('/:id/verify', async (c) => {
     const projectRoot = config.projectRoot
 
     // Helper: run command and stream progress
-    const runStep = (label: string, cmd: string, cwd: string, timeout: number): Promise<{ success: boolean; output: string }> => {
+    const runStep = (label: string, cmd: string, cwd: string, timeout: number, env?: Record<string, string>): Promise<{ success: boolean; output: string }> => {
       return new Promise((resolve) => {
         const stepStartMsg: VerifyMessage = {
           type: 'tool-call',
@@ -1070,7 +1074,7 @@ issues.post('/:id/verify', async (c) => {
           timestamp: stepStartMsg.timestamp,
         })
 
-        const child = exec(cmd, { cwd, timeout, encoding: 'utf-8', maxBuffer: 10 * 1024 * 1024 }, (err, stdout, stderr) => {
+        const child = exec(cmd, { cwd, timeout, encoding: 'utf-8', maxBuffer: 10 * 1024 * 1024, env: { ...process.env, ...env } }, (err, stdout, stderr) => {
           const output = ((stdout || '') + '\n' + (stderr || '')).trim()
           const truncated = output.length > 3000
             ? '...(truncated)\n' + output.slice(-3000)
@@ -1115,30 +1119,65 @@ issues.post('/:id/verify', async (c) => {
       // Step 2: UI Tests (only if unit tests pass)
       let uiResult = { success: false, output: 'Skipped (unit tests failed)' }
       if (unitResult.success) {
-        // Check if track's plan.md has a Verification Plan section
-        const verificationPlan = extractVerificationPlan(issue.trackId)
+        // Pre-flight: check if frontend service is reachable
+        const frontendUrl = 'http://localhost:5173'
+        let frontendReachable = false
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          try {
+            const res = await fetch(frontendUrl, { signal: AbortSignal.timeout(5000) })
+            if (res.ok || res.status < 500) { frontendReachable = true; break }
+          } catch { /* ignore */ }
+          if (attempt < 3) await new Promise(r => setTimeout(r, 2000))
+        }
 
-        if (verificationPlan) {
-          // Agent-driven UI tests: Claude agent reads Verification Plan and executes it
-          uiResult = await runAgentVerification(id, issue.trackId!, verificationPlan, projectRoot)
-        } else if (existsSync(join(projectRoot, 'scripts', 'browser-test.mjs'))) {
-          // Fallback: legacy browser-test.mjs for tracks without Verification Plan
-          uiResult = await runStep('UI Tests', 'node scripts/browser-test.mjs', projectRoot, 180_000)
-        } else {
-          // No Verification Plan and no browser-test.mjs — skip with message
-          uiResult = { success: true, output: 'No Verification Plan found and no browser-test.mjs exists, UI tests skipped' }
-          const skipMsg: VerifyMessage = {
-            type: 'thinking',
-            content: 'No Verification Plan found, UI tests skipped',
+        if (!frontendReachable) {
+          uiResult = { success: false, output: `Frontend service not reachable at ${frontendUrl}. Make sure the dev server is running (cd dashboard && npm run dev).` }
+          const unreachableMsg: VerifyMessage = {
+            type: 'tool-result',
+            content: uiResult.output,
+            toolName: 'UI Tests',
             timestamp: new Date().toISOString(),
           }
-          appendVerifyMessage(id, skipMsg)
+          appendVerifyMessage(id, unreachableMsg)
           sseManager.broadcast('issue-verify-progress', {
             issueId: id,
-            kind: 'thinking',
-            content: skipMsg.content,
-            timestamp: skipMsg.timestamp,
+            kind: 'tool-result',
+            toolName: 'UI Tests',
+            content: uiResult.output,
+            timestamp: unreachableMsg.timestamp,
           })
+        } else {
+          // Browser test env vars
+          const browserTestEnv = {
+            BROWSER_TEST_URL: frontendUrl,
+            JWT_SECRET: config.jwtSecret,
+          }
+
+          // Check if track's plan.md has a Verification Plan section
+          const verificationPlan = extractVerificationPlan(issue.trackId)
+
+          if (verificationPlan) {
+            // Agent-driven UI tests: Claude agent reads Verification Plan and executes it
+            uiResult = await runAgentVerification(id, issue.trackId!, verificationPlan, projectRoot)
+          } else if (existsSync(join(projectRoot, 'scripts', 'browser-test.mjs'))) {
+            // Fallback: legacy browser-test.mjs for tracks without Verification Plan
+            uiResult = await runStep('UI Tests', 'node scripts/browser-test.mjs', projectRoot, 180_000, browserTestEnv)
+          } else {
+            // No Verification Plan and no browser-test.mjs — skip with message
+            uiResult = { success: true, output: 'No Verification Plan found and no browser-test.mjs exists, UI tests skipped' }
+            const skipMsg: VerifyMessage = {
+              type: 'thinking',
+              content: 'No Verification Plan found, UI tests skipped',
+              timestamp: new Date().toISOString(),
+            }
+            appendVerifyMessage(id, skipMsg)
+            sseManager.broadcast('issue-verify-progress', {
+              issueId: id,
+              kind: 'thinking',
+              content: skipMsg.content,
+              timestamp: skipMsg.timestamp,
+            })
+          }
         }
       } else {
         const skipMsg: VerifyMessage = {

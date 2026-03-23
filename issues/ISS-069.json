@@ -1,0 +1,10 @@
+{
+  "id": "ISS-069",
+  "title": "API: case sub-resource endpoints return 200 for non-existent cases instead of 404",
+  "description": "GET /api/cases/9999999999999999/emails returns 200 with {\"emails\":[],\"total\":0} for a non-existent case, while GET /api/cases/9999999999999999 correctly returns 404. Sub-resource endpoints (emails, notes, teams, etc.) should also return 404 if the parent case doesn't exist, for API consistency.",
+  "type": "bug",
+  "priority": "P2",
+  "status": "pending",
+  "createdAt": "2026-03-22T17:31:00+08:00",
+  "updatedAt": "2026-03-22T02:02:02.276Z"
+}

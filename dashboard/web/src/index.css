@@ -40,6 +40,8 @@
   --accent-red-dim: rgba(212,114,114,0.10);
   --accent-purple: #9e8cc7;
   --accent-purple-dim: rgba(158,140,199,0.10);
+  --accent-cyan: #5ec4d4;
+  --accent-cyan-dim: rgba(94,196,212,0.10);
 
   --glow-blue: 0 0 12px rgba(107,163,232,0.08);
   --glow-green: 0 0 12px rgba(92,191,138,0.08);
@@ -78,6 +80,8 @@
   --accent-red-dim: rgba(192,80,80,0.07);
   --accent-purple: #7c5fbf;
   --accent-purple-dim: rgba(124,95,191,0.07);
+  --accent-cyan: #0e9bae;
+  --accent-cyan-dim: rgba(14,155,174,0.07);
 
   --glow-blue: none;
   --glow-green: none;

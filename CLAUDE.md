@@ -34,9 +34,11 @@ Kun Fang 的 AI 助手，Azure 技术支持工程师。
 - `playbooks/` — 领域知识（按类别组织）
   - `schemas/` — 数据结构定义（case-directory, meta-schema, timing-schema, todo-format）
   - `rules/` — 决策规则（case-lifecycle, ir-entitlement）
-  - `guides/` — 操作指南（customer-communication, email-templates, troubleshooting, kusto-queries, d365-operations）
+  - `guides/` — 操作指南（customer-communication, email-templates, troubleshooting, kusto-queries, d365-operations, **dashboard-design-system**）
   - `email-samples/` — 参考邮件样本
 - `cases/` — Case 数据（默认位置，可通过 config.json 配置）
+- `issues/` — Issue Tracker 数据（JSON 文件，CLI `/issue` 和 WebUI 共用）
+- `conductor/` — Conductor 项目管理（tracks、specs、plans）
 - `data/` — 业务参考数据（mooncake-cc.json 等）
 - `memory/` — 记忆系统
 - `dashboard/` — Web Dashboard 代码
@@ -79,7 +81,7 @@ Kun Fang 的 AI 助手，Azure 技术支持工程师。
 
 ### 巡检流程（/patrol）
 1. `pwsh skills/d365-case-ops/scripts/list-active-cases.ps1 -OutputJson`
-2. 筛选需处理 Case：`modifiedon > lastInspected` 或 `lastInspected > 24h` 或无 meta（每日兜底）
+2. 筛选需处理 Case：`lastInspected > 24h` 或无 meta（每日巡检）
 3. **阶段 0（预热，~15s）**：并行执行 `check-ir-status-batch.ps1 -SaveMeta` + `warm-dtm-token.ps1`
    - IR/FDR/FWR 批量预填 + DTM token 缓存到 `dtm-token-global.json`
 4. **阶段 1（全量并行）**：spawn casework agent，每个 case 自己执行全流程（含 data-refresh）
@@ -220,7 +222,45 @@ cases/active/{caseNumber}/
 - 会话中遇到的重要事实和教训 → 写入 `memory/daily/YYYY-MM-DD.md`
 - 会话结束前将值得长期记忆的内容提炼到 `memory/MEMORY.md`
 - 遇到的错误和解决方案 → 写入 `.learnings/ERRORS.md`
-- 用户反馈的功能需求 → 写入 `.learnings/FEATURE_REQUESTS.md`
+- 用户反馈的功能需求/Bug → 用 `/issue` 创建到 `issues/` 目录（不再写 FEATURE_REQUESTS.md）
+
+## 配置
+用户配置存储在项目根的 `config.json`：
+
+## 开发工作流
+
+### Issue → Track → Implement
+1. **发现问题/需求** → `/issue "描述"` 创建 issue 到 `issues/` 目录（CLI 或 WebUI 均可）
+2. **需要实现时** → `/conductor:new-track ISS-XXX` 创建 conductor track（见下方关联规则）
+3. **实现 track** → **必须用 `/conductor:implement {trackId}`**，不要手动实现（否则 conductor 状态文件不同步）
+4. **完成后** → 更新 issue status 为 `done`
+
+### Issue → Track 关联规则
+当 `/conductor:new-track` 的参数匹配 `ISS-\d+` 格式时：
+1. **Pre-fill**：读取 `issues/{issueId}.json`，获取 title/description/type/priority 预填到 track spec，减少交互式提问
+2. **Post-creation**：track 创建完成后，自动回写 issue JSON：
+   - `issue.trackId = 生成的 trackId`
+   - `issue.status = "tracked"`
+   - `issue.updatedAt = 当前时间`
+
+示例：
+```
+/conductor:new-track ISS-007
+→ 读取 ISS-007.json（title: "Teams 搜索客户名精准度", type: "feature", priority: "P2"）
+→ 预填 spec，跳过 Q1(summary)，直接确认
+→ 创建 track: teams-name-match_20260320
+→ 回写 ISS-007.json: trackId = "teams-name-match_20260320", status = "tracked"
+```
+
+### 关键规则
+- ❌ 不要手动实现 conductor track（跳过 `/conductor:implement`）— 会导致 plan.md/metadata.json/index.md 状态不一致
+- ❌ 不要往 `FEATURE_REQUESTS.md` 写新条目 — 已迁移到 `issues/` 目录
+- ❌ **禁止对实现任务使用 `EnterPlanMode`** — Plan Mode 退出后上下文清空，会丢失 conductor 流程意识，导致直接手动实现而绕过 `/conductor:implement`。如需规划，用 `/conductor:new-track` 生成 spec + plan，而非 Claude Code 内置的 Plan Mode。
+- ❌ **任何 Issue 修复（无论大小）都必须走完整 conductor 流程**（`/conductor:new-track` → `/conductor:implement`）— 不能因为修复简单就跳过 conductor 流程，否则 issue/track 状态不更新，违反工作流一致性
+- ✅ Issue 是问题记录的单一入口（`issues/ISS-XXX.json`）
+- ✅ Conductor Track 是实现计划（`conductor/tracks/{trackId}/`）
+- ✅ 单向引用：Issue.trackId → Track ID
+- ✅ 收到 "实现 XXX" 的请求时，先检查是否有对应 conductor track，没有则先 `/conductor:new-track`
 
 ## 配置
 用户配置存储在项目根的 `config.json`：
@@ -232,6 +272,11 @@ cases/active/{caseNumber}/
 - `casesRoot` 指定 case 数据存放的根路径
 - WebUI Settings 页可编辑此配置
 - 所有 skill/agent 通过读取 config.json 获取路径
+
+## Dashboard UI 规范
+- 所有 Dashboard UI 修改**必须**先读 `playbooks/guides/dashboard-design-system.md`
+- 核心要点：暗色模式（柔和低对比度）+ 浅色模式双主题、左侧边栏导航、表格视图 Case 列表、AI Panel 融入页面不独立突出
+- 设计预览文件：`dashboard/design-preview.html`（浏览器可直接打开）
 
 ## 与 Dashboard 的集成
 Dashboard 通过 Claude Code SDK 创建 per-case session：

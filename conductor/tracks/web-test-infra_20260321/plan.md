@@ -56,6 +56,25 @@
 - [x] `cd dashboard && npm test` 同时跑通后端 3 个测试 + 前端 2+ 测试
 - [x] workflow.md 包含前端测试 mock patterns 段落
 
+## Verification Plan
+
+| # | Acceptance Criterion | Test Type | Test Steps |
+|---|---------------------|-----------|------------|
+| 1 | **安装依赖** — 在 dashboard/web/ 安装 vitest、@vitest/coverage-v8、jsdom、@testing-libr... | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 2 | **创建 vitest.config.ts** — 在 dashboard/web/ 创建独立配置：environment: 'jsdom'、global... | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 3 | **创建 setup.ts** — dashboard/web/src/test-utils/setup.ts，导入 @testing-library/j... | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 4 | **添加 test scripts** — 在 dashboard/web/package.json 添加 "test": "vitest run"、"t... | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 5 | **创建 render helper** — dashboard/web/src/test-utils/render.tsx，封装 QueryClient... | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 6 | **创建 mock helpers** — dashboard/web/src/test-utils/mocks.ts，提供 createMockCase... | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 7 | **创建 test-utils/index.ts** — 统一导出所有 test-utils | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 8 | **组件测试示例** — dashboard/web/src/components/SessionBadge.test.tsx，测试不同 session ... | Visual | Navigate to page → screenshot → verify visual appearance |
+
+**Test Type Legend:**
+- **Interaction** — Playwright clicks, form fills, state assertions
+- **Visual** — Navigate + screenshot + visual inspection
+- **API** — curl/fetch endpoint + assert response
+- **Skip** — Backend-only or covered by unit tests
+
 ## Post-Implementation Checklist
 
 - [x] 单元测试文件已创建并通过

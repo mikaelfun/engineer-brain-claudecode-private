@@ -1,0 +1,11 @@
+{
+  "id": "ISS-023",
+  "title": "CaseDetail AI Panel 需要更多单项操作按钮（刷新邮件、刷新Teams、拉取附件等）",
+  "description": "当前 CaseAIPanel 只有 Full Process / Troubleshoot / Draft Email 三个按钮。需要增加更多细粒度的单项操作，如刷新邮件、刷新 Teams、拉取附件等。先调研 D365 脚本和 step routes 中哪些操作支持单独执行，再决定暴露哪些按钮。",
+  "type": "feature",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "ai-panel-ops_20260320",
+  "createdAt": "2026-03-20T21:58:00+08:00",
+  "updatedAt": "2026-03-20T22:10:00+08:00"
+}

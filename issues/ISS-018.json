@@ -1,0 +1,11 @@
+{
+  "id": "ISS-018",
+  "title": "Issue中restart 前后端按钮，没有杀掉旧进程，导致前端端口被占用开了新端口",
+  "description": "",
+  "type": "bug",
+  "priority": "P1",
+  "status": "done",
+  "createdAt": "2026-03-20T13:47:09.648Z",
+  "updatedAt": "2026-03-21T11:13:08.810Z",
+  "trackId": "track-question-fix2_20260321"
+}

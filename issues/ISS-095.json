@@ -1,0 +1,10 @@
+{
+  "id": "ISS-095",
+  "title": "full casework process没有调用casework command",
+  "description": "",
+  "type": "bug",
+  "priority": "P1",
+  "status": "pending",
+  "createdAt": "2026-03-23T03:02:49.766Z",
+  "updatedAt": "2026-03-23T03:02:49.766Z"
+}

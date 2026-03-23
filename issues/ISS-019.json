@@ -1,0 +1,11 @@
+{
+  "id": "ISS-019",
+  "title": "Track 创建流程完善：等待 agent 完成、展示 plan、实时进度、交互输入",
+  "description": "当前点击 Create Track 后立即将 status 改为 tracked 并显示 Implement 按钮，但此时后台 agent 还没执行完 /conductor:new-track，trackId 和 plan.md 可能还不存在。需要：\n1. pending → tracking（新中间状态），等 agent 完成后才改为 tracked\n2. agent 执行期间展示实时进度（thinking/tool-call 等关键状态）\n3. agent 完成后展示 plan.md 关键内容（phases/tasks 概览）\n4. 如果 agent 需要用户补充信息（如 acceptance criteria），支持在 UI 中提供输入框交互\n5. 只有确认 trackId + plan.md 存在后，才显示 Implement 按钮",
+  "type": "feature",
+  "priority": "P0",
+  "status": "done",
+  "trackId": "track-creation-progress_20260320",
+  "createdAt": "2026-03-20T19:35:00+08:00",
+  "updatedAt": "2026-03-20T22:30:00+08:00"
+}

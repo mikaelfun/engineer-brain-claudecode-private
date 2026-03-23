@@ -1,0 +1,11 @@
+{
+  "id": "ISS-012",
+  "title": "Issue 页面添加重启前后端按钮",
+  "description": "Issue 页面需要有一个重启前后端和单独重启前端/后端的按钮，方便验证修复。按钮功能：1) 重启前端 2) 重启后端 3) 重启全部（前端+后端）。",
+  "type": "feature",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "restart-buttons_20260320",
+  "createdAt": "2026-03-20T17:30:00.000Z",
+  "updatedAt": "2026-03-20T18:00:00.000Z"
+}

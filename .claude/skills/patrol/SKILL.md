@@ -54,9 +54,10 @@ allowed-tools:
 3. **筛选需要处理的 Case**
    对每个 case，读取 `{casesRoot}/active/{case-id}/casehealth-meta.json` 的 `lastInspected`。
    满足以下**任一条件**即纳入处理：
-   - D365 `modifiedon > lastInspected`（捕捉新活动）
-   - `lastInspected` 距当前时间超过 24 小时（每日兜底巡检，确保及时发现客户长时间未回复等需跟进场景）
+   - `lastInspected` 距当前时间超过 24 小时（每日巡检，确保及时发现新邮件、客户长时间未回复等需跟进场景）
    - 无 `casehealth-meta.json` 或无 `lastInspected` 字段（新 case，首次巡检）
+
+   > **设计说明**：不使用 D365 `modifiedon` 作为筛选条件，因为新邮件是独立 Email Activity，不一定更新 Case 实体的 `modifiedon`，会导致漏检。
 
 4. **阶段 0：预热（并行执行，~15s）**
 

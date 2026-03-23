@@ -210,6 +210,25 @@ function loadSessionStore(): void {
           }
         }
       }
+      // --- Startup stale session recovery ---
+      // On fresh start, no SDK queries are running in-memory.
+      // Any session still marked 'active' is a zombie from a previous crash/restart.
+      let recoveredCount = 0
+      for (const [sid, info] of Object.entries(sessions)) {
+        const session = info as CaseSessionInfo
+        if (session.status === 'active') {
+          session.status = 'failed'
+          // Clean caseIndex so it doesn't block new sessions
+          if (caseIndex[session.caseNumber] === sid) {
+            delete caseIndex[session.caseNumber]
+          }
+          recoveredCount++
+        }
+      }
+      if (recoveredCount > 0) {
+        console.log(`[session-manager] Recovered ${recoveredCount} stale active session(s) → failed`)
+        saveSessionStore()
+      }
     } catch {
       sessions = {}
       caseIndex = {}
@@ -360,6 +379,42 @@ export function writeStepLog(
 loadSessionStore()
 loadSessionMessages()
 
+// ---- Runtime Stale Session Watchdog ----
+// Periodically check for 'active' sessions that have no corresponding in-memory query.
+// This catches cases where the SDK subprocess died but the async iterator never threw/completed.
+const STALE_SESSION_CHECK_INTERVAL_MS = 60_000 // check every 60s
+const STALE_SESSION_THRESHOLD_MS = 5 * 60_000  // 5 min without activity + no in-memory query → stale
+
+const staleSessionWatchdog = setInterval(() => {
+  const now = Date.now()
+  let recovered = 0
+
+  for (const [sid, session] of Object.entries(sessions)) {
+    if (session.status !== 'active') continue
+
+    // If there's an active in-memory query for this case, it's genuinely running
+    if (activeQueries.has(session.caseNumber)) continue
+
+    // No in-memory query — check how long since last activity
+    const lastActivity = new Date(session.lastActivityAt).getTime()
+    if (now - lastActivity > STALE_SESSION_THRESHOLD_MS) {
+      session.status = 'failed'
+      if (caseIndex[session.caseNumber] === sid) {
+        delete caseIndex[session.caseNumber]
+      }
+      recovered++
+      console.log(`[session-watchdog] Recovered stale session ${sid} (case ${session.caseNumber}, inactive ${Math.round((now - lastActivity) / 1000)}s)`)
+    }
+  }
+
+  if (recovered > 0) {
+    saveSessionStore()
+  }
+}, STALE_SESSION_CHECK_INTERVAL_MS)
+
+// Don't let the watchdog prevent Node from exiting
+staleSessionWatchdog.unref()
+
 // ---- System Prompt Builder ----
 
 function buildCaseAppendPrompt(caseNumber: string): string {
@@ -508,6 +563,10 @@ export async function* processCaseSession(
     unregisterQuery(caseNumber)
     if (sdkSessionId && sessions[sdkSessionId]) {
       sessions[sdkSessionId].status = 'failed'
+      // Clean up caseIndex so failed session doesn't block new sessions
+      if (caseIndex[caseNumber] === sdkSessionId) {
+        delete caseIndex[caseNumber]
+      }
       saveSessionStore()
     }
     throw err
@@ -563,6 +622,10 @@ export async function* chatCaseSession(
     // Clean up AbortController on failure (ISS-086)
     unregisterQuery(session.caseNumber)
     session.status = 'failed'
+    // Clean up caseIndex so failed session doesn't block new sessions
+    if (caseIndex[session.caseNumber] === sessionId) {
+      delete caseIndex[session.caseNumber]
+    }
     saveSessionStore()
     throw err
   }
@@ -996,12 +1059,22 @@ export function getSession(sessionId: string): CaseSessionInfo | null {
 }
 
 /**
- * Get the active session ID for a case (if any)
+ * Get the active session ID for a case (if any).
+ * Only returns sessions that are actually active or paused (resumable).
+ * Failed/completed sessions are not considered active.
  */
 export function getActiveSessionForCase(caseNumber: string): string | null {
   const sessionId = caseIndex[caseNumber]
-  if (sessionId && sessions[sessionId] && sessions[sessionId].status !== 'completed') {
-    return sessionId
+  if (sessionId && sessions[sessionId]) {
+    const status = sessions[sessionId].status
+    if (status === 'active' || status === 'paused') {
+      return sessionId
+    }
+    // Clean up stale caseIndex entries (failed sessions that weren't cleaned up)
+    if (status === 'failed' || status === 'completed') {
+      delete caseIndex[caseNumber]
+      saveSessionStore()
+    }
   }
   return null
 }

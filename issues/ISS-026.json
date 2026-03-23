@@ -1,0 +1,11 @@
+{
+  "id": "ISS-026",
+  "title": "WebUI Issues 第二页没有被正确分类到三个模块",
+  "description": "Issue Tracker 页面在分页后（第二页），issues 没有按照三个模块（如 pending/tracked/done 或其他分类维度）正确归类显示，可能是分页逻辑在分类之前执行导致的。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "issue-page-group_20260321",
+  "createdAt": "2026-03-21T17:00:00+08:00",
+  "updatedAt": "2026-03-21T17:30:00+08:00"
+}

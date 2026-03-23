@@ -51,6 +51,23 @@
 
 - [x] 单元测试通过
 
+## Verification Plan
+
+| # | Acceptance Criterion | Test Type | Test Steps |
+|---|---------------------|-----------|------------|
+| 1 | 点击 Verify 后在 issue 行内展开 inline panel 显示实时进度 | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 2 | 移除全屏 loading overlay 和结果 modal | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 3 | 后端 verify 改为异步执行，通过 SSE 推送 unit test / UI test 的开始、通过/失败、输出 | Skip | Covered by unit tests |
+| 4 | 测试结果（pass/fail + output）在 inline panel 内展示 | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 5 | 页面刷新后可恢复 verify 进度状态（类似 track-progress recovery） | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 6 | verify 执行中不可重复点击 | Visual | Navigate to page → screenshot → verify visual matches spec |
+
+**Test Type Legend:**
+- **Interaction** — Playwright clicks, form fills, state assertions
+- **Visual** — Navigate + screenshot + visual inspection
+- **API** — curl/fetch endpoint + assert response
+- **Skip** — Backend-only or covered by unit tests
+
 ## Post-Implementation Checklist
 
 - [x] 单元测试文件已创建并通过

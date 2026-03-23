@@ -1,0 +1,17 @@
+{
+  "id": "ui-test-strategy_20260321",
+  "title": "UI Test Strategy — Issue-Driven Functional Verification",
+  "type": "feature",
+  "status": "complete",
+  "created": "2026-03-21T22:20:00+08:00",
+  "updated": "2026-03-21T22:30:00+08:00",
+  "issueId": "ISS-056",
+  "phases": {
+    "total": 1,
+    "completed": 1
+  },
+  "tasks": {
+    "total": 4,
+    "completed": 4
+  }
+}

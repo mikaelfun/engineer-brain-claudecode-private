@@ -11,7 +11,7 @@
 #>
 param(
     [switch]$Force,
-    [string]$OutputDir = "$env:USERPROFILE\.openclaw\workspace\data"
+    [string]$OutputDir = "$PSScriptRoot\..\data"
 )
 
 $ErrorActionPreference = "Stop"

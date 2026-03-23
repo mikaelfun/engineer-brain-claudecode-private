@@ -1,0 +1,572 @@
+{
+  "timestamp": "2026-03-21T17:11:32.796Z",
+  "total": 70,
+  "passed": 70,
+  "failed": 0,
+  "bugs": 0,
+  "screenshots": 37,
+  "consoleErrors": 25,
+  "results": [
+    {
+      "phase": "A",
+      "name": "Login page title",
+      "status": "PASS",
+      "detail": "Engineer Brain"
+    },
+    {
+      "phase": "A",
+      "name": "Password input visible",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "A",
+      "name": "Submit button visible",
+      "status": "PASS",
+      "detail": "Login"
+    },
+    {
+      "phase": "A",
+      "name": "Version text present",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "B",
+      "name": "Dashboard heading visible",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "B",
+      "name": "Stat cards visible",
+      "status": "PASS",
+      "detail": "4/4 labels found"
+    },
+    {
+      "phase": "B",
+      "name": "Case cards visible",
+      "status": "PASS",
+      "detail": "11 case numbers"
+    },
+    {
+      "phase": "B",
+      "name": "Sort dropdown exists",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "B",
+      "name": "Sort options",
+      "status": "PASS",
+      "detail": "Severity + Status, Severity, Status, Age (oldest first)"
+    },
+    {
+      "phase": "B",
+      "name": "Sort options cycled through",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "B",
+      "name": "SLA At Risk filter click",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "B",
+      "name": "Case card navigation",
+      "status": "PASS",
+      "detail": "http://localhost:5173/case/2601290030000748"
+    },
+    {
+      "phase": "C",
+      "name": "Case number in header",
+      "status": "PASS",
+      "detail": "2603200030000875"
+    },
+    {
+      "phase": "C",
+      "name": "Severity badge visible",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "C",
+      "name": "Tab: Inspection",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "C",
+      "name": "Tab: Todo",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "C",
+      "name": "Tab: Emails",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "C",
+      "name": "Tab: Notes",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "C",
+      "name": "Tab: Teams",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "C",
+      "name": "Tab: Drafts",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "C",
+      "name": "Tab: Analysis",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "C",
+      "name": "Tab: Timing",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "C",
+      "name": "Tab: Logs",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "C",
+      "name": "Tab: Files",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "C",
+      "name": "Email expand",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "C",
+      "name": "Teams tab",
+      "status": "PASS",
+      "detail": "No search (< 2 chats)"
+    },
+    {
+      "phase": "C",
+      "name": "Logs search",
+      "status": "PASS",
+      "detail": "Typed text"
+    },
+    {
+      "phase": "C",
+      "name": "Log entry expand",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "C",
+      "name": "AI Panel header visible",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "C",
+      "name": "Full Process button",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "C",
+      "name": "Draft Email button",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "C",
+      "name": "Draft Email dropdown",
+      "status": "PASS",
+      "detail": "6/6 options"
+    },
+    {
+      "phase": "C",
+      "name": "Quick action buttons",
+      "status": "PASS",
+      "detail": "7/7"
+    },
+    {
+      "phase": "C",
+      "name": "Chat input not shown (no session)",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "C",
+      "name": "Session history disclosure",
+      "status": "PASS",
+      "detail": "1 session"
+    },
+    {
+      "phase": "D",
+      "name": "Todo page loaded",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "D",
+      "name": "Todo items present",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "E",
+      "name": "Agents page loaded",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "E",
+      "name": "Agent content rendered",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "F",
+      "name": "Drafts page loaded",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "F",
+      "name": "Drafts content rendered",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "G",
+      "name": "Filter dropdowns",
+      "status": "PASS",
+      "detail": "2 selects"
+    },
+    {
+      "phase": "G",
+      "name": "Select #1",
+      "status": "PASS",
+      "detail": "All Status, Pending, Tracking, Tracked, In Progress, Implemented, Done"
+    },
+    {
+      "phase": "G",
+      "name": "Select #2",
+      "status": "PASS",
+      "detail": "All Types, Bug, Feature, Refactor, Chore"
+    },
+    {
+      "phase": "G",
+      "name": "Search input works",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "G",
+      "name": "Issue list",
+      "status": "PASS",
+      "detail": "33 issues (ISS-045, ISS-015, ISS-067, ISS-030, ISS-010, ISS-009, ISS-008, ISS-007, ISS-005, ISS-003, ISS-002, ISS-063, ISS-061, ISS-059, ISS-066, ISS-060, ISS-062, ISS-058, ISS-056, ISS-057, ISS-050, ISS-049, ISS-044, ISS-054, ISS-038, ISS-064, ISS-065, ISS-053, ISS-052, ISS-047, ISS-001)"
+    },
+    {
+      "phase": "H",
+      "name": "Settings heading",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "H",
+      "name": "casesRoot input",
+      "status": "PASS",
+      "detail": "\"./cases\""
+    },
+    {
+      "phase": "H",
+      "name": "teamsSearchCacheHours",
+      "status": "PASS",
+      "detail": "4"
+    },
+    {
+      "phase": "H",
+      "name": "Save button",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "H",
+      "name": "About section",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "I",
+      "name": "Initial theme",
+      "status": "PASS",
+      "detail": "Dark"
+    },
+    {
+      "phase": "I",
+      "name": "Theme cycle 1",
+      "status": "PASS",
+      "detail": "Light"
+    },
+    {
+      "phase": "I",
+      "name": "Theme cycle 2",
+      "status": "PASS",
+      "detail": "System"
+    },
+    {
+      "phase": "I",
+      "name": "Theme cycle 3",
+      "status": "PASS",
+      "detail": "Dark"
+    },
+    {
+      "phase": "J",
+      "name": "Desktop sidebar hidden",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "J",
+      "name": "Mobile header visible",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "J",
+      "name": "Mobile menu opened",
+      "status": "PASS",
+      "detail": "12 nav items"
+    },
+    {
+      "phase": "J",
+      "name": "Mobile nav → Todo",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "J",
+      "name": "Mobile nav → Settings",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "K",
+      "name": "Nav: Dashboard",
+      "status": "PASS",
+      "detail": "/"
+    },
+    {
+      "phase": "K",
+      "name": "Nav: Todo",
+      "status": "PASS",
+      "detail": "/todo"
+    },
+    {
+      "phase": "K",
+      "name": "Nav: Agents",
+      "status": "PASS",
+      "detail": "/agents"
+    },
+    {
+      "phase": "K",
+      "name": "Nav: Drafts",
+      "status": "PASS",
+      "detail": "/drafts"
+    },
+    {
+      "phase": "K",
+      "name": "Nav: Issues",
+      "status": "PASS",
+      "detail": "/issues"
+    },
+    {
+      "phase": "K",
+      "name": "Nav: Settings",
+      "status": "PASS",
+      "detail": "/settings"
+    },
+    {
+      "phase": "K",
+      "name": "Invalid route",
+      "status": "PASS",
+      "detail": "/"
+    },
+    {
+      "phase": "L",
+      "name": "Navigated to case",
+      "status": "PASS",
+      "detail": "2601290030000748"
+    },
+    {
+      "phase": "L",
+      "name": "Back returns to Dashboard",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "phase": "M",
+      "name": "Error state for invalid case",
+      "status": "PASS",
+      "detail": ""
+    }
+  ],
+  "consoleErrorDetails": [
+    {
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "url": "http://localhost:5173/"
+    },
+    {
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "url": "http://localhost:5173/agents"
+    },
+    {
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "url": "http://localhost:5173/"
+    },
+    {
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "url": "http://localhost:5173/"
+    },
+    {
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "url": "http://localhost:5173/"
+    },
+    {
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "url": "http://localhost:5173/"
+    },
+    {
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "url": "http://localhost:5173/"
+    },
+    {
+      "text": "Failed to load resource: the server responded with a status of 400 (Bad Request)",
+      "url": "http://localhost:5173/case/INVALID_CASE_999"
+    },
+    {
+      "text": "Failed to load resource: the server responded with a status of 400 (Bad Request)",
+      "url": "http://localhost:5173/case/INVALID_CASE_999"
+    },
+    {
+      "text": "Failed to load resource: the server responded with a status of 400 (Bad Request)",
+      "url": "http://localhost:5173/case/INVALID_CASE_999"
+    },
+    {
+      "text": "Failed to load resource: the server responded with a status of 400 (Bad Request)",
+      "url": "http://localhost:5173/case/INVALID_CASE_999"
+    },
+    {
+      "text": "Failed to load resource: the server responded with a status of 400 (Bad Request)",
+      "url": "http://localhost:5173/case/INVALID_CASE_999"
+    },
+    {
+      "text": "Failed to load resource: the server responded with a status of 400 (Bad Request)",
+      "url": "http://localhost:5173/case/INVALID_CASE_999"
+    },
+    {
+      "text": "Failed to load resource: the server responded with a status of 400 (Bad Request)",
+      "url": "http://localhost:5173/case/INVALID_CASE_999"
+    },
+    {
+      "text": "Failed to load resource: the server responded with a status of 400 (Bad Request)",
+      "url": "http://localhost:5173/case/INVALID_CASE_999"
+    },
+    {
+      "text": "Failed to load resource: the server responded with a status of 400 (Bad Request)",
+      "url": "http://localhost:5173/case/INVALID_CASE_999"
+    },
+    {
+      "text": "Failed to load resource: the server responded with a status of 400 (Bad Request)",
+      "url": "http://localhost:5173/case/INVALID_CASE_999"
+    },
+    {
+      "text": "Failed to load resource: the server responded with a status of 400 (Bad Request)",
+      "url": "http://localhost:5173/case/INVALID_CASE_999"
+    },
+    {
+      "text": "Failed to load resource: the server responded with a status of 400 (Bad Request)",
+      "url": "http://localhost:5173/case/INVALID_CASE_999"
+    },
+    {
+      "text": "Failed to load resource: the server responded with a status of 400 (Bad Request)",
+      "url": "http://localhost:5173/case/INVALID_CASE_999"
+    },
+    {
+      "text": "Failed to load resource: the server responded with a status of 400 (Bad Request)",
+      "url": "http://localhost:5173/case/INVALID_CASE_999"
+    },
+    {
+      "text": "Failed to load resource: the server responded with a status of 400 (Bad Request)",
+      "url": "http://localhost:5173/case/INVALID_CASE_999"
+    },
+    {
+      "text": "Failed to load resource: the server responded with a status of 400 (Bad Request)",
+      "url": "http://localhost:5173/case/INVALID_CASE_999"
+    },
+    {
+      "text": "Failed to load resource: the server responded with a status of 400 (Bad Request)",
+      "url": "http://localhost:5173/case/INVALID_CASE_999"
+    },
+    {
+      "text": "Failed to load resource: the server responded with a status of 400 (Bad Request)",
+      "url": "http://localhost:5173/case/INVALID_CASE_999"
+    }
+  ],
+  "screenshotFiles": [
+    "001_A1_login_page.png",
+    "002_B1_dashboard.png",
+    "003_B2_sort_cycled.png",
+    "004_B3_sla_filter.png",
+    "005_B4_navigated_to_case.png",
+    "006_C1_case_detail.png",
+    "007_C_tab_inspection.png",
+    "008_C_tab_todo.png",
+    "009_C_tab_emails.png",
+    "010_C_tab_notes.png",
+    "011_C_tab_teams.png",
+    "012_C_tab_drafts.png",
+    "013_C_tab_analysis.png",
+    "014_C_tab_timing.png",
+    "015_C_tab_logs.png",
+    "016_C_tab_files.png",
+    "017_C_email_expanded.png",
+    "018_C_log_expanded.png",
+    "019_C_draft_email_dropdown.png",
+    "020_D1_todo_page.png",
+    "021_D2_todo_data.png",
+    "022_E1_agents_page.png",
+    "023_F1_drafts_page.png",
+    "024_G1_issues_page.png",
+    "025_G2_issues_search.png",
+    "026_G3_issues_final.png",
+    "027_H1_settings_page.png",
+    "028_I1_theme_initial.png",
+    "029_I2_theme_light.png",
+    "030_I3_theme_system.png",
+    "031_I4_theme_dark.png",
+    "032_J1_mobile_dashboard.png",
+    "033_J2_mobile_menu_open.png",
+    "034_J3_mobile_todo.png",
+    "035_J4_mobile_settings.png",
+    "036_K1_invalid_route.png",
+    "037_M1_invalid_case.png"
+  ]
+}

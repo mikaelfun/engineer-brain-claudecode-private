@@ -72,6 +72,24 @@ Restructure session grouping so completed sessions are separated and collapsed b
 - [x] Completed sessions appear in collapsed section at bottom
 - [x] Active sessions remain in main view
 
+## Verification Plan
+
+| # | Acceptance Criterion | Test Type | Test Steps |
+|---|---------------------|-----------|------------|
+| 1 | Each session row in AgentMonitor is expandable (click to toggle detail panel) | Interaction | Navigate to relevant page → locate element → click → verify state change |
+| 2 | Expanded panel shows real-time SSE message stream (thinking, tool-call, tool-... | Interaction | Navigate to page → find collapsible element → click to toggle → verify expanded/collapsed state |
+| 3 | For active/paused case sessions, a chat input box allows sending messages (re... | Interaction | Navigate to page → type in input → submit → verify response appears |
+| 4 | Active sessions show a "Stop" button that calls the session end API | Interaction | Navigate to relevant page → locate element → click → verify state change |
+| 5 | Completed sessions are grouped under a collapsible "Completed Sessions" secti... | Interaction | Navigate to page → find collapsible element → click to toggle → verify expanded/collapsed state |
+| 6 | Message display reuses the same grouping/collapsing logic as CaseAIPanel (con... | Interaction | Navigate to page → find collapsible element → click to toggle → verify expanded/collapsed state |
+| 7 | On page refresh, persisted messages are recovered from the backend for case s... | Visual | Navigate to page → screenshot → verify visual matches spec |
+
+**Test Type Legend:**
+- **Interaction** — Playwright clicks, form fills, state assertions
+- **Visual** — Navigate + screenshot + visual inspection
+- **API** — curl/fetch endpoint + assert response
+- **Skip** — Backend-only or covered by unit tests
+
 ## Phase 5: Post-Implementation Checklist
 
 - [x] Unit test for SessionMessageList shared component

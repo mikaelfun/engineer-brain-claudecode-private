@@ -1,0 +1,11 @@
+{
+  "id": "ISS-008",
+  "title": "SAP 合规检查",
+  "description": "compliance-check skill 当前只检查 Service Name / Schedule / Contract Country / 21v Convert，未包含 SAP 产品路径验证。需将 SAP 路径加入合规检查规则。",
+  "type": "feature",
+  "priority": "P2",
+  "status": "tracked",
+  "trackId": "sap-compliance_20260320",
+  "createdAt": "2026-03-20T10:07:00.000Z",
+  "updatedAt": "2026-03-20T10:07:00.000Z"
+}

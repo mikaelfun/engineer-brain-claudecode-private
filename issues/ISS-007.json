@@ -1,0 +1,11 @@
+{
+  "id": "ISS-007",
+  "title": "Teams 搜索客户名精准度",
+  "description": "Teams 搜索使用 D365 Contact Name 搜索不够精准（如\"伟 毕\"搜不到 \"Bi, Weiwei\"）。需要实现中英文客户名映射或模糊匹配机制。",
+  "type": "feature",
+  "priority": "P2",
+  "status": "tracked",
+  "trackId": "teams-name-match_20260320",
+  "createdAt": "2026-03-20T10:06:00.000Z",
+  "updatedAt": "2026-03-20T10:06:00.000Z"
+}

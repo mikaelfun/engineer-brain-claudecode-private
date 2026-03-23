@@ -1,0 +1,106 @@
+# casehealth-meta.json Schema
+
+机器可读的 Case 元数据，用于快速判断 Case 状态（不需要解析 Markdown）。
+
+## 写入者
+- `data-refresh`：通过 `fetch-all-data.ps1 -IncludeIrCheck` 写入 `irSla`/`fdr`/`fwr`（API 优先查询 `msdfm_caseperfattributes`，失败时降级到 UI scraping）
+- `data-refresh`（批量）：通过 `check-ir-status-batch.ps1 -SaveMeta` 批量写入所有 case 的 `irSla`/`fdr`/`fwr`
+- `compliance-check`：写入 `compliance` 对象（Entitlement + 21v Convert，不涉及 IR）
+- `status-judge`：写入 `actualStatus` / `daysSinceLastContact` / `statusJudgedAt`
+- `inspection-writer`：写入 `lastInspected`
+
+## IR/FDR/FWR status 值
+
+`check-ir-status.ps1` 的原始输出直接写入，**不做 kebab-case 转换**：
+
+| check-ir-status.ps1 输出 | 写入 meta 的值 | 含义 |
+|--------------------------|---------------|------|
+| `Succeeded` | `Succeeded` | SLA 已满足 |
+| `In Progress` | `In Progress` | SLA 计时中 |
+| `Nearing` | `Nearing` | 接近超时 |
+| `Expired` | `Expired` | SLA 超时 |
+| `unknown` | `unknown` | 数据缺失或检查失败 |
+
+## 完整 Schema
+
+```json
+{
+  "caseNumber": "2603090040000814",
+  "lastInspected": "2026-03-17T11:00:00+08:00",
+  "actualStatus": "pending-customer",
+  "daysSinceLastContact": 4,
+  "statusJudgedAt": "2026-03-17T11:00:00+08:00",
+  "statusReasoning": "最后邮件(3/13)是工程师发出follow-up要求客户确认是否恢复，客户4天未回复 → pending-customer",
+  "irSla": {
+    "status": "Succeeded",
+    "remaining": null,
+    "checkedAt": "2026-03-17T11:00:00+08:00",
+    "source": "api"
+  },
+  "fdr": {
+    "status": "Expired",
+    "remaining": null,
+    "checkedAt": "2026-03-17T11:00:00+08:00",
+    "source": "api"
+  },
+  "fwr": {
+    "status": "Expired",
+    "remaining": null,
+    "checkedAt": "2026-03-17T11:00:00+08:00",
+    "source": "api"
+  },
+  "compliance": {
+    "is21vConvert": true,
+    "21vCaseId": "20260309398206",
+    "21vCaseOwner": "zhang.lihong@oe.21vianet.com",
+    "entitlementOk": true,
+    "serviceLevel": "Premier",
+    "serviceName": "Unfd AddOn | ProSv Ente - China Cld",
+    "contractCountry": "China",
+    "warnings": []
+  }
+}
+```
+
+## 字段说明
+
+| 字段 | 类型 | 写入者 | 说明 |
+|------|------|--------|------|
+| `caseNumber` | string | data-refresh | Case 编号 |
+| `lastInspected` | ISO 8601 | inspection-writer | 最后巡检时间 |
+| `actualStatus` | string | status-judge | `pending-customer` / `pending-engineer` / `pending-pg` / `ready-to-close` / `new` / `researching` |
+| `daysSinceLastContact` | number | status-judge | 距上次工程师邮件的天数 |
+| `statusJudgedAt` | ISO 8601 | status-judge | 状态判断时间 |
+| `statusReasoning` | string | status-judge | 一句话判断理由（关键依据 → 结论），≤200字。完整推理链在 `logs/status-judge.log` |
+| `irSla` | object | data-refresh | IR SLA 状态 |
+| `fdr` | object | data-refresh | FDR 状态 |
+| `fwr` | object | data-refresh | FWR 状态 |
+| `irSla/fdr/fwr.status` | string | data-refresh | `Succeeded` / `In Progress` / `Nearing`(仅UI) / `Expired` / `unknown` |
+| `irSla/fdr/fwr.remaining` | string\|null | data-refresh | 剩余时间，已满足时为 null |
+| `irSla/fdr/fwr.checkedAt` | ISO 8601 | data-refresh | 检查时间 |
+| `irSla/fdr/fwr.source` | string\|null | data-refresh | 数据来源：`"api"` 或 `"ui"` |
+| `compliance` | object | compliance-check | 合规检查结果 |
+| `compliance.is21vConvert` | boolean | compliance-check | 是否 21v 转单 |
+| `compliance.21vCaseId` | string\|null | compliance-check | 21v Case ID |
+| `compliance.21vCaseOwner` | string\|null | compliance-check | 21v Owner 邮箱 |
+| `compliance.entitlementOk` | boolean | compliance-check | Entitlement 是否合规 |
+| `compliance.serviceLevel` | string | compliance-check | Premier / ProDirect / Standard |
+| `compliance.serviceName` | string | compliance-check | Entitlement 的 Service Name 原值 |
+| `compliance.contractCountry` | string | compliance-check | Entitlement 的 Contract Country 原值 |
+| `compliance.warnings` | string[] | compliance-check | 警告列表 |
+
+## ⚠️ 禁止的字段名
+
+以下字段名曾被 subagent 错误使用，**禁止出现**：
+- ❌ `is21v`（用 `compliance.is21vConvert`）
+- ❌ `21vCaseNumber` / `twentyOneVTicket`（用 `compliance.21vCaseId`）
+- ❌ `21vOwner` / `twentyOneVOwner`（用 `compliance.21vCaseOwner`）
+- ❌ `irMet`（用 `irSla.status`）
+- ❌ `entitlement`（用 `compliance.serviceLevel`）
+- ❌ 顶层的 `entitlementOk`（放在 `compliance` 内）
+
+## 规则
+- 使用 **upsert** 模式：读取已有文件 → 合并更新 → 写回
+- `irSla`/`fdr`/`fwr` 由 data-refresh 写入，compliance-check 不覆盖
+- `actualStatus` 由 status-judge 写入，其他 agent 不写
+- 未知值用 `null`，不省略字段

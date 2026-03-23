@@ -62,6 +62,24 @@
 - [x] `npm test` — 所有测试通过
 - [x] `npx tsc --noEmit` — 两端类型检查通过
 
+## Verification Plan
+
+| # | Acceptance Criterion | Test Type | Test Steps |
+|---|---------------------|-----------|------------|
+| 1 | 点击 Implement 按钮后，该 issue 行下方展开内联进度面板 | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 2 | 进度面板实时显示 SDK 消息流：thinking（💭）、tool-call（🔧）、tool-result（✅/❌） | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 3 | 进度面板有 loading spinner 和当前状态文字（Running / Completed / Failed） | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 4 | 刷新页面后，正在进行的 implement 面板自动恢复（持久化消息） | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 5 | 同一 issue 不能重复点击 Implement（操作锁 + 按钮 disabled） | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 6 | 完成后 issue 状态自动更新、面板显示完成摘要 | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 7 | 失败时面板显示错误信息 | Visual | Navigate to page → screenshot → verify visual matches spec |
+
+**Test Type Legend:**
+- **Interaction** — Playwright clicks, form fills, state assertions
+- **Visual** — Navigate + screenshot + visual inspection
+- **API** — curl/fetch endpoint + assert response
+- **Skip** — Backend-only or covered by unit tests
+
 ## Post-Implementation Checklist
 
 - [x] 单元测试文件已创建并通过

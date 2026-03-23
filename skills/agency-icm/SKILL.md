@@ -47,63 +47,63 @@ description: "Use Agency-managed ICM MCP tools for incident lookups and summarie
 ### 1. 获取 incident summary
 
 ```powershell
-& "C:\Users\fangkun\.openclaw\skills\agency-icm\scripts\get-incident-summary.ps1" `
+& "skills/agency-icm/scripts/get-incident-summary.ps1" `
   -IncidentId 626495494
 ```
 
 ### 2. 获取 incident details
 
 ```powershell
-& "C:\Users\fangkun\.openclaw\skills\agency-icm\scripts\get-incident-details.ps1" `
+& "skills/agency-icm/scripts/get-incident-details.ps1" `
   -IncidentId 626495494
 ```
 
 ### 3. 获取 incident context
 
 ```powershell
-& "C:\Users\fangkun\.openclaw\skills\agency-icm\scripts\get-incident-context.ps1" `
+& "skills/agency-icm/scripts/get-incident-context.ps1" `
   -IncidentId 626495494
 ```
 
 ### 4. 获取 similar incidents
 
 ```powershell
-& "C:\Users\fangkun\.openclaw\skills\agency-icm\scripts\get-similar-incidents.ps1" `
+& "skills/agency-icm/scripts/get-similar-incidents.ps1" `
   -IncidentId 626495494
 ```
 
 ### 5. 获取 incident location
 
 ```powershell
-& "C:\Users\fangkun\.openclaw\skills\agency-icm\scripts\get-incident-location.ps1" `
+& "skills/agency-icm/scripts/get-incident-location.ps1" `
   -IncidentId 626495494
 ```
 
 ### 6. 获取 customer impact
 
 ```powershell
-& "C:\Users\fangkun\.openclaw\skills\agency-icm\scripts\get-incident-customer-impact.ps1" `
+& "skills/agency-icm/scripts/get-incident-customer-impact.ps1" `
   -IncidentId 626495494
 ```
 
 ### 7. 获取 mitigation hints
 
 ```powershell
-& "C:\Users\fangkun\.openclaw\skills\agency-icm\scripts\get-mitigation-hints.ps1" `
+& "skills/agency-icm/scripts/get-mitigation-hints.ps1" `
   -IncidentId 626495494
 ```
 
 ### 8. 获取 support requests / critsit
 
 ```powershell
-& "C:\Users\fangkun\.openclaw\skills\agency-icm\scripts\get-support-requests-critsit.ps1" `
+& "skills/agency-icm/scripts/get-support-requests-critsit.ps1" `
   -IncidentId 626495494
 ```
 
 ### 9. 判断特定客户是否受影响
 
 ```powershell
-& "C:\Users\fangkun\.openclaw\skills\agency-icm\scripts\is-specific-customer-impacted.ps1" `
+& "skills/agency-icm/scripts/is-specific-customer-impacted.ps1" `
   -IncidentId 626495494 `
   -CustomerName "Contoso"
 ```
@@ -111,42 +111,42 @@ description: "Use Agency-managed ICM MCP tools for incident lookups and summarie
 ### 10. 根据 team id 获取 team
 
 ```powershell
-& "C:\Users\fangkun\.openclaw\skills\agency-icm\scripts\get-team-by-id.ps1" `
+& "skills/agency-icm/scripts/get-team-by-id.ps1" `
   -TeamId 86687
 ```
 
 ### 11. 根据 team name 查询 team
 
 ```powershell
-& "C:\Users\fangkun\.openclaw\skills\agency-icm\scripts\get-teams-by-name.ps1" `
+& "skills/agency-icm/scripts/get-teams-by-name.ps1" `
   -TeamName "PGEscalation"
 ```
 
 ### 12. 根据 public id 查询 team
 
 ```powershell
-& "C:\Users\fangkun\.openclaw\skills\agency-icm\scripts\get-teams-by-public-id.ps1" `
+& "skills/agency-icm/scripts/get-teams-by-public-id.ps1" `
   -PublicId "TenantName\\TeamName"
 ```
 
 ### 13. 获取 on-call schedule
 
 ```powershell
-& "C:\Users\fangkun\.openclaw\skills\agency-icm\scripts\get-on-call-schedule-by-team-id.ps1" `
+& "skills/agency-icm/scripts/get-on-call-schedule-by-team-id.ps1" `
   -TeamIds 86687
 ```
 
 ### 14. 根据服务名获取服务信息
 
 ```powershell
-& "C:\Users\fangkun\.openclaw\skills\agency-icm\scripts\get-services-by-names.ps1" `
+& "skills/agency-icm/scripts/get-services-by-names.ps1" `
   -Names "Azure Virtual Network","Azure Databricks"
 ```
 
 ### 15. 获取受影响的服务 / 区域 / 云
 
 ```powershell
-& "C:\Users\fangkun\.openclaw\skills\agency-icm\scripts\get-impacted-services-regions-clouds.ps1" `
+& "skills/agency-icm/scripts/get-impacted-services-regions-clouds.ps1" `
   -IncidentId 626495494
 ```
 

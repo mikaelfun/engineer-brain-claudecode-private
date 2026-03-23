@@ -1,0 +1,11 @@
+{
+  "id": "ISS-061",
+  "title": "Create Track Cancel 后 Creating Track... 仍在转圈",
+  "description": "在 Issues 页面点击 Create Track 后取消，TrackProgressPanel 的 'Creating Track...' 转圈动画没有停止，仍然显示进行中状态。Cancel 操作应该立即清除进度面板的 loading 状态。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "cancel-spinner-fix_20260322",
+  "createdAt": "2026-03-22T23:10:00+08:00",
+  "updatedAt": "2026-03-22T23:20:00+08:00"
+}

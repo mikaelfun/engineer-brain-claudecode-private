@@ -1,0 +1,11 @@
+{
+  "id": "ISS-100",
+  "title": "Dashboard 重启按钮实现逻辑不完善：spawn 命令与 dev 脚本不一致，无法正确杀死 --watch 模式进程",
+  "description": "## 问题\n\nrestart-service.ts 中 spawn 的命令与 package.json dev 脚本不一致：\n\n| 组件 | npm run dev 用的命令 | restart service spawn 的命令 |\n|------|---------------------|-----------------------------|\n| 后端 | `node --import tsx/esm --watch src/index.ts` | `npx tsx src/index.ts` |\n| 前端 | `cd web && npm run dev`（即 `vite`） | `npx vite --port 5173` |\n\n### 具体问题\n\n1. **--watch 模式进程树杀不干净**：`npm run dev:server` 启动的是 `node --watch` 模式，有 watcher 父进程 + 实际执行子进程。restart service 通过端口找到的是子进程 PID，即使用 `taskkill /F /T` 杀掉，watcher 父进程仍然存活，会在文件变化时重新 spawn 子进程占端口，导致新启动的后端 EADDRINUSE。\n\n2. **restart 后丢失 --watch 能力**：restart service spawn `npx tsx src/index.ts` 没有 `--watch`，所以重启后代码修改不再自动重载，与开发体验不一致。\n\n3. **前端类似问题**：`npx vite --port 5173` vs `cd web && npm run dev` 的 cwd 和参数可能不一致。\n\n## 复现\n\n1. `npm run dev:server` 启动后端（--watch 模式）\n2. 在 Dashboard 点击 BE 重启按钮\n3. restart service 杀端口进程 → watcher 父进程还活着\n4. restart service spawn 新后端 → EADDRINUSE\n5. 或 watcher 感知到文件变化重启 → 两个后端竞争同一端口\n\n## 建议修复方向\n\n- restart service 应找到并杀掉整个进程树（包括 watcher 父进程），而非只杀端口占用进程\n- spawn 命令应与 package.json scripts 保持一致（含 --watch）\n- 或者统一用 restart service 自己的启动方式，不混用 npm run dev",
+  "type": "bug",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "restart-watch-fix_20260323",
+  "createdAt": "2026-03-23T09:30:00.000Z",
+  "updatedAt": "2026-03-23T10:20:00.000Z"
+}

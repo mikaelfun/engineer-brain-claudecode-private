@@ -1,0 +1,10 @@
+{
+  "id": "ISS-070",
+  "title": "CaseAIPanel 双重渲染导致 Playwright locator 歧义",
+  "description": "CaseDetail 页面对 CaseAIPanel 组件渲染了两次：desktop sidebar (xl:block) 和 mobile below-content (xl:hidden)。在 1920px viewport 下，desktop 版本可见但 mobile 版本隐藏。Playwright locator 匹配 text=AI Assistant 或 button:has-text(Draft Email) 时会解析到 2 个元素，导致 strict mode violation。建议：给两个实例添加 data-testid 区分（如 data-testid='ai-panel-desktop' 和 data-testid='ai-panel-mobile'），或用 CSS 条件渲染替代 display:none 隐藏。",
+  "type": "improvement",
+  "priority": "P2",
+  "status": "pending",
+  "createdAt": "2026-03-22T17:31:00+08:00",
+  "updatedAt": "2026-03-22T17:31:00+08:00"
+}

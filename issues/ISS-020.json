@@ -1,0 +1,11 @@
+{
+  "id": "ISS-020",
+  "title": "Create Track 超时：conductor:new-track 等待交互输入但 UI 无反馈通道",
+  "description": "点击 Create Track 后等待约 2 分钟显示 track created，但实际 plan.md 为空。根因推测：/conductor:new-track skill 在执行过程中可能需要用户交互输入（如确认 spec 内容、选择实现方案），但 WebUI spawn 的 Claude session 使用 permissionMode: 'acceptEdits'，没有向用户传递交互式问题的通道（AskUserQuestion 工具的输出不会到达前端），导致 agent 要么跳过了关键步骤，要么超时退出。\n\n需要：\n1. 排查 conductor:new-track 在无交互情况下是否能正确生成完整 spec + plan\n2. 如果必须交互 → 在 prompt 中明确指示 'auto-fill, do not ask questions'\n3. 或在 UI 中增加交互通道（SSE 传递问题 → 前端显示 → 用户回答 → resume session）\n4. 增加 plan.md 非空校验：agent 完成后检查 plan.md 是否有实质内容，为空则标记失败而非成功",
+  "type": "bug",
+  "priority": "P0",
+  "status": "done",
+  "trackId": "track-timeout-fix_20260320",
+  "createdAt": "2026-03-20T22:40:00+08:00",
+  "updatedAt": "2026-03-20T23:10:00+08:00"
+}

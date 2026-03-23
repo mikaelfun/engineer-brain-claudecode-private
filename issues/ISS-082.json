@@ -1,0 +1,11 @@
+{
+  "id": "ISS-082",
+  "title": "执行 status-judge step 时 session 不显示在 active session 和 agent monitor 中",
+  "description": "通过 Dashboard step API 执行 status-judge 步骤时，SDK session 没有显示在 active session 列表中，Agent Monitor 页面也看不到该 session。可能是 session 注册/广播逻辑缺失，或 step 执行太快导致 session 在 UI 刷新前已结束。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "step-session-visible_20260322",
+  "createdAt": "2026-03-22T17:25:00+08:00",
+  "updatedAt": "2026-03-22T17:35:00+08:00"
+}

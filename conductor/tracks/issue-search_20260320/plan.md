@@ -23,6 +23,22 @@ Add a search input to the Issues page that filters the displayed issue list by k
 - [x] Manual check: search by keyword, ID, partial match all work correctly
 - [x] Search + status/type filters combine correctly
 
+## Verification Plan
+
+| # | Acceptance Criterion | Test Type | Test Steps |
+|---|---------------------|-----------|------------|
+| 1 | A search input box is visible on the Issues page alongside existing filters | Interaction | Navigate to page → type in input → submit → verify response appears |
+| 2 | Typing a keyword filters the issue list in real-time (case-insensitive) | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 3 | Search matches against issue title, description, and ID (e.g. "ISS-021") | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 4 | Search works in combination with existing status/type filters | Visual | Navigate to page → screenshot → verify visual matches spec |
+| 5 | Clearing the search box restores the full filtered list | Visual | Navigate to page → screenshot → verify visual matches spec |
+
+**Test Type Legend:**
+- **Interaction** — Playwright clicks, form fills, state assertions
+- **Visual** — Navigate + screenshot + visual inspection
+- **API** — curl/fetch endpoint + assert response
+- **Skip** — Backend-only or covered by unit tests
+
 ## Post-Implementation Checklist
 
 - [x] 关联 Issue JSON 状态已更新 (ISS-024 → done)

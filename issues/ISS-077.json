@@ -1,0 +1,11 @@
+{
+  "id": "ISS-077",
+  "title": "AI Assistant Session 消息流体验问题（时间戳、过程细节、状态释放、交互）",
+  "description": "AI Assistant tab 中点击 data-refresh 等操作按钮后存在多个问题：\n1. Session 消息没有时间戳\n2. 只显示 Step \"data-refresh\" completed，没有过程细节\n3. Completed 后 session 为 paused 状态，其他按钮没有被释放，仍然不可点击\n4. 消息流应该以 Issues 中 create track 等按钮的消息流为标准，支持交互，支持发送消息",
+  "type": "bug",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "ai-assistant-session_20260322",
+  "createdAt": "2026-03-22T22:40:00+08:00",
+  "updatedAt": "2026-03-22T23:15:00+08:00"
+}

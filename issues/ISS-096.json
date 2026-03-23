@@ -1,0 +1,10 @@
+{
+  "id": "ISS-096",
+  "title": "case session spawn的subagent未被agent monitor track",
+  "description": "",
+  "type": "bug",
+  "priority": "P1",
+  "status": "pending",
+  "createdAt": "2026-03-23T03:05:31.352Z",
+  "updatedAt": "2026-03-23T03:05:31.352Z"
+}

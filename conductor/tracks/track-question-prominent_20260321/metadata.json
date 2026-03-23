@@ -1,0 +1,16 @@
+{
+  "id": "track-question-prominent_20260321",
+  "title": "Create Track 交互提问突出展示",
+  "type": "feature",
+  "status": "complete",
+  "created": "2026-03-21T20:35:00+08:00",
+  "updated": "2026-03-22T21:20:00+08:00",
+  "phases": {
+    "total": 2,
+    "completed": 2
+  },
+  "tasks": {
+    "total": 6,
+    "completed": 6
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "id": "ISS-052",
+  "title": "issues.test.ts 3个测试失败: start-implement/reopen/lock 路由的 mock 未适配 ISS-047 enrichIssueFromTrack",
+  "description": "issues.test.ts 中 3 个测试失败:\n1. POST /issues/:id/start-implement — transitions tracked → in-progress: mockEnrichIssueFromTrack 默认返回原 issue 不修改 status，但路由现在用 enrichIssueFromTrack 派生 status 而非 updateIssue 写 status。测试期望 json.issue.status === 'in-progress' 但拿到 'tracked'。\n2. POST /issues/:id/reopen — transitions done → pending, keeps trackId: 同理，路由现在对有 trackId 的 issue 清除 verification 而非 updateIssue({ status: 'pending' })，最终 status 靠 enrichIssueFromTrack 派生。测试 mock 没适配。\n3. POST /issues/:id/start-implement (lock behavior) — acquires lock: 路由先 enrichIssueFromTrack 再判断 status，mock 返回原始 issue(status='tracked') 但路由调用 updateTrackMetadata 而非 updateIssue 来切状态，导致 mockUpdateIssue 未被调用。\n\n根因: ISS-047 重构后 status 通过 track metadata 派生（enrichIssueFromTrack），不再直接 updateIssue status 字段，但测试 mock 仍按旧模式 assert。需要更新 mockEnrichIssueFromTrack 的行为和断言。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "test-mock-fix_20260321",
+  "createdAt": "2026-03-21T00:00:00+08:00",
+  "updatedAt": "2026-03-21T22:10:00+08:00"
+}

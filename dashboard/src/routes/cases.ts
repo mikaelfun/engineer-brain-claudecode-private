@@ -97,9 +97,9 @@ cases.get('/stats', (c) => {
     total: activeCases.length,
     bySeverity: {},
     byStatus: {},
-    urgentItems: 0,
-    pendingItems: 0,
-    normalItems: 0,
+    slaAtRisk: 0,
+    needsMyAction: 0,
+    awaitingOthers: 0,
   }
 
   for (const cn of activeCases) {
@@ -109,27 +109,27 @@ cases.get('/stats', (c) => {
       stats.byStatus[info.status] = (stats.byStatus[info.status] || 0) + 1
     }
 
-    // Aggregate from per-case todo files
-    const caseDir = getCaseDir(cn)
-    const todoDir = join(caseDir, 'todo')
-    if (existsSync(todoDir)) {
-      try {
-        const todoFiles = readdirSync(todoDir)
-          .filter((f: string) => f.endsWith('.md'))
-          .map((f: string) => ({ name: f, mtime: statSync(join(todoDir, f)).mtimeMs }))
-          .sort((a, b) => b.mtime - a.mtime)
+    // Classify cases by meta (actualStatus + SLA risk)
+    const meta = readCaseMeta(cn)
+    if (meta) {
+      const status = meta.actualStatus || ''
+      const days = meta.daysSinceLastContact ?? 0
+      const irSlaStatus = meta.irSla?.status || ''
 
-        if (todoFiles.length > 0) {
-          const content = readFileSync(join(todoDir, todoFiles[0].name), 'utf-8')
-          // Count 🔴 🟡 ✅ items from the todo content
-          const redCount = (content.match(/🔴/g) || []).length
-          const yellowCount = (content.match(/🟡/g) || []).length
-          const greenCount = (content.match(/✅/g) || []).length
-          stats.urgentItems += redCount
-          stats.pendingItems += yellowCount
-          stats.normalItems += greenCount
-        }
-      } catch { /* ignore */ }
+      // SLA At Risk: IR SLA not met, OR daysSinceLastContact >= 3 (regardless of status)
+      const isSlaAtRisk = irSlaStatus === 'not-met' || days >= 3
+      if (isSlaAtRisk) {
+        stats.slaAtRisk++
+      }
+
+      // Needs My Action: pending-engineer / new / researching
+      if (['pending-engineer', 'new', 'researching'].includes(status)) {
+        stats.needsMyAction++
+      }
+      // Awaiting Others: pending-customer / pending-pg / ready-to-close
+      else if (['pending-customer', 'pending-pg', 'ready-to-close'].includes(status)) {
+        stats.awaitingOthers++
+      }
     }
   }
 

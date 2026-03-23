@@ -311,6 +311,11 @@ if ($data.chats) {
   Save-ChatIndex -path $indexPath -indexMap $chatIndex
 }
 
+# Always update top-level _lastFetchedAt regardless of chat count
+# This ensures the cache check in teams-search agent Step 0 works even when 0 chats returned
+$chatIndex['_lastFetchedAt'] = (Get-Date).ToUniversalTime().ToString('o')
+Save-ChatIndex -path $indexPath -indexMap $chatIndex
+
 # --- Write search log ---
 $now = Get-NowGmt8String
 if (-not (Test-Path $logPath)) {

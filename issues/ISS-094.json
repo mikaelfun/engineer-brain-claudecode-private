@@ -1,0 +1,10 @@
+{
+  "id": "ISS-094",
+  "title": "start patrol后进度没有实时显示，没有sse",
+  "description": "",
+  "type": "bug",
+  "priority": "P1",
+  "status": "pending",
+  "createdAt": "2026-03-23T01:44:04.171Z",
+  "updatedAt": "2026-03-23T01:44:04.171Z"
+}

@@ -7,9 +7,9 @@
  */
 import { ReactNode, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { LogOut, Menu, X, Brain, Sun, Moon, Monitor } from 'lucide-react'
+import { LogOut, Menu, X, Brain, Sun, Moon, Monitor, Server, Loader2, RefreshCw } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
-import { useHealth } from '../api/hooks'
+import { useHealth, useRestartFrontend, useRestartBackend, useRestartAll } from '../api/hooks'
 import { useTheme, type ThemeMode } from '../hooks/useTheme'
 
 interface LayoutProps {
@@ -49,8 +49,47 @@ export default function Layout({ children }: LayoutProps) {
   const { data: health } = useHealth()
   const { mode, cycleTheme } = useTheme()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [reconnecting, setReconnecting] = useState(false)
+
+  const restartFe = useRestartFrontend()
+  const restartBe = useRestartBackend()
+  const restartAllSvc = useRestartAll()
 
   const ThemeIcon = themeIcons[mode]
+
+  const pollHealth = () => {
+    setReconnecting(true)
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch('/api/health')
+        if (res.ok) {
+          clearInterval(interval)
+          setReconnecting(false)
+          window.location.reload()
+        }
+      } catch {
+        // still down, keep polling
+      }
+    }, 1500)
+  }
+
+  const handleRestartFe = () => {
+    restartFe.mutate(undefined, {
+      onSuccess: () => setTimeout(() => window.location.reload(), 3000),
+    })
+  }
+  const handleRestartBe = () => {
+    restartBe.mutate(undefined, {
+      onSuccess: () => pollHealth(),
+      onError: () => pollHealth(),
+    })
+  }
+  const handleRestartAll = () => {
+    restartAllSvc.mutate(undefined, {
+      onSuccess: () => pollHealth(),
+      onError: () => pollHealth(),
+    })
+  }
 
   const isActive = (path: string, exact?: boolean) => {
     if (exact) return location.pathname === path
@@ -133,8 +172,47 @@ export default function Layout({ children }: LayoutProps) {
           })}
         </nav>
 
-        {/* Bottom section: theme toggle + logout */}
+        {/* Bottom section: restart + theme toggle + logout */}
         <div className="px-3 py-4 border-t border-subtle space-y-2">
+          {/* Restart buttons */}
+          <div className="flex items-center gap-1 px-1">
+            <button
+              onClick={handleRestartFe}
+              disabled={restartFe.isPending || reconnecting}
+              className="flex items-center gap-1.5 flex-1 px-2 py-1.5 rounded text-[11px] font-medium disabled:opacity-40 transition-colors"
+              style={{ color: 'var(--text-tertiary)' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+              title="Restart frontend (vite)"
+            >
+              {restartFe.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Monitor className="w-3 h-3" />}
+              FE
+            </button>
+            <button
+              onClick={handleRestartBe}
+              disabled={restartBe.isPending || reconnecting}
+              className="flex items-center gap-1.5 flex-1 px-2 py-1.5 rounded text-[11px] font-medium disabled:opacity-40 transition-colors"
+              style={{ color: 'var(--text-tertiary)' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+              title="Restart backend (tsx)"
+            >
+              {restartBe.isPending || reconnecting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Server className="w-3 h-3" />}
+              BE
+            </button>
+            <button
+              onClick={handleRestartAll}
+              disabled={restartAllSvc.isPending || reconnecting}
+              className="flex items-center gap-1.5 flex-1 px-2 py-1.5 rounded text-[11px] font-medium disabled:opacity-40 transition-colors"
+              style={{ color: 'var(--text-tertiary)' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+              title="Restart all"
+            >
+              {restartAllSvc.isPending || reconnecting ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+              All
+            </button>
+          </div>
           <button
             onClick={cycleTheme}
             className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-[13px] font-medium transition-colors"
@@ -251,6 +329,17 @@ export default function Layout({ children }: LayoutProps) {
           {children}
         </div>
       </main>
+
+      {/* Reconnecting overlay */}
+      {reconnecting && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.5)' }}>
+          <div className="rounded-xl shadow-2xl px-8 py-6 flex flex-col items-center gap-3" style={{ background: 'var(--bg-surface)' }}>
+            <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--accent-blue)' }} />
+            <p className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Restarting services...</p>
+            <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Waiting for server to come back online</p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

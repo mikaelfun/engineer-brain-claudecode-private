@@ -1,0 +1,16 @@
+{
+  "id": "cancel-spinner-fix_20260322",
+  "title": "Fix Cancel Track Spinner Persists",
+  "type": "bug",
+  "status": "complete",
+  "created": "2026-03-22T23:20:00+08:00",
+  "updated": "2026-03-22T23:25:00+08:00",
+  "phases": {
+    "total": 1,
+    "completed": 1
+  },
+  "tasks": {
+    "total": 2,
+    "completed": 2
+  }
+}

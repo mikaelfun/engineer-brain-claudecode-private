@@ -128,3 +128,22 @@ export function getImplementStatus(issueId: string): {
     startedAt: session.startedAt,
   }
 }
+
+/**
+ * Get all implement sessions (for unified session view).
+ */
+export function getAllImplementSessions(): Array<{
+  issueId: string
+  trackId: string
+  status: 'active' | 'completed' | 'failed'
+  startedAt: string
+  messageCount: number
+}> {
+  return Array.from(sessions.values()).map((s) => ({
+    issueId: s.issueId,
+    trackId: s.trackId,
+    status: s.status,
+    startedAt: s.startedAt,
+    messageCount: s.messages.length,
+  }))
+}

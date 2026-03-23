@@ -22,6 +22,21 @@
 - [x] TypeScript 编译通过：`npx tsc --noEmit`
 - [x] 既有单元测试通过：`npm test`（73 frontend + backend all pass）
 
+## Verification Plan
+
+| # | Acceptance Criterion | Test Type | Test Steps |
+|---|---------------------|-----------|------------|
+| 1 | 每个 active/paused 的 case session 行右侧直接显示 Stop 按钮（红色 ■ 图标，不展开即可点击） | Interaction | Start operation → click cancel/stop → verify operation ends and state reverts |
+| 2 | Case Session 分组头部增加"Stop All"按钮，点击可停止该分组内所有 active 的 case session | Interaction | Start operation → click cancel/stop → verify operation ends and state reverts |
+| 3 | Stop 按钮有 loading 状态（disabled + spinner），避免重复点击 | Interaction | Start operation → click cancel/stop → verify operation ends and state reverts |
+| 4 | 停止后 session 状态自动刷新 | Visual | Navigate to page → screenshot → verify visual matches spec |
+
+**Test Type Legend:**
+- **Interaction** — Playwright clicks, form fills, state assertions
+- **Visual** — Navigate + screenshot + visual inspection
+- **API** — curl/fetch endpoint + assert response
+- **Skip** — Backend-only or covered by unit tests
+
 ## Post-Implementation Checklist
 
 - [x] 关联 Issue JSON 状态已更新（ISS-057 → done）

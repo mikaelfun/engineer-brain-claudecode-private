@@ -54,7 +54,7 @@ try {
       protocolVersion = '2024-11-05'
       capabilities = @{}
       clientInfo = @{
-        name = 'openclaw-agency-icm'
+        name = 'engineer-brain-agency-icm'
         version = '1.0'
       }
     }

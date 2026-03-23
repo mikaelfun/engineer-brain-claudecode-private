@@ -1,0 +1,11 @@
+{
+  "id": "ISS-021",
+  "title": "case 2602130040001034的标题显示被截断",
+  "description": "Case Detail 页面 Header 标题被截断。根因: case-info.md 的 Title 字段含 | 字符，extractTableValue() 正则 ([^|]*) 在第一个 | 处截断。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "done",
+  "trackId": "title-truncate-fix_20260320",
+  "createdAt": "2026-03-20T16:00:00+08:00",
+  "updatedAt": "2026-03-20T23:42:00+08:00"
+}
