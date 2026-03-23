@@ -91,8 +91,8 @@ describe('restart-service', () => {
       // getParentInfo(500) → processName='explorer.exe' (not in node tree)
       // → should return 1000 (can't go higher)
       mockExecImpl
-        .mockResolvedValueOnce({ stdout: 'Node,Name,ParentProcessId\nPC,node.exe,500\n' })
-        .mockResolvedValueOnce({ stdout: 'Node,Name,ParentProcessId\nPC,explorer.exe,100\n' })
+        .mockResolvedValueOnce({ stdout: '"Name","ParentProcessId"\n"node.exe","500"\n' })
+        .mockResolvedValueOnce({ stdout: '"Name","ParentProcessId"\n"explorer.exe","100"\n' })
 
       const root = await findProcessTreeRoot(1000)
       expect(root).toBe(1000)
@@ -113,17 +113,17 @@ describe('restart-service', () => {
       // return 1000
       mockExecImpl
         // getParentInfo(3000)
-        .mockResolvedValueOnce({ stdout: 'Node,Name,ParentProcessId\nPC,node.exe,2000\n' })
+        .mockResolvedValueOnce({ stdout: '"Name","ParentProcessId"\n"node.exe","2000"\n' })
         // getParentInfo(2000) — checking if parent 2000 is in tree
-        .mockResolvedValueOnce({ stdout: 'Node,Name,ParentProcessId\nPC,cmd.exe,1000\n' })
+        .mockResolvedValueOnce({ stdout: '"Name","ParentProcessId"\n"cmd.exe","1000"\n' })
         // getParentInfo(2000) — now currentPid=2000, getting its parent info
-        .mockResolvedValueOnce({ stdout: 'Node,Name,ParentProcessId\nPC,cmd.exe,1000\n' })
+        .mockResolvedValueOnce({ stdout: '"Name","ParentProcessId"\n"cmd.exe","1000"\n' })
         // getParentInfo(1000) — checking if parent 1000 is in tree
-        .mockResolvedValueOnce({ stdout: 'Node,Name,ParentProcessId\nPC,node.exe,500\n' })
+        .mockResolvedValueOnce({ stdout: '"Name","ParentProcessId"\n"node.exe","500"\n' })
         // getParentInfo(1000) — now currentPid=1000, getting its parent info
-        .mockResolvedValueOnce({ stdout: 'Node,Name,ParentProcessId\nPC,node.exe,500\n' })
+        .mockResolvedValueOnce({ stdout: '"Name","ParentProcessId"\n"node.exe","500"\n' })
         // getParentInfo(500) — checking if parent 500 is in tree
-        .mockResolvedValueOnce({ stdout: 'Node,Name,ParentProcessId\nPC,explorer.exe,1\n' })
+        .mockResolvedValueOnce({ stdout: '"Name","ParentProcessId"\n"explorer.exe","1"\n' })
 
       const root = await findProcessTreeRoot(3000)
       expect(root).toBe(1000)
@@ -136,13 +136,13 @@ describe('restart-service', () => {
 
       // getParentInfo(1000) → parentPid=4 (System)
       mockExecImpl
-        .mockResolvedValueOnce({ stdout: 'Node,Name,ParentProcessId\nPC,node.exe,4\n' })
+        .mockResolvedValueOnce({ stdout: '"Name","ParentProcessId"\n"node.exe","4"\n' })
 
       const root = await findProcessTreeRoot(1000)
       expect(root).toBe(1000)
     })
 
-    it('should handle wmic failure gracefully', async () => {
+    it('should handle PowerShell failure gracefully', async () => {
       vi.resetModules()
       const mod = await import('./restart-service.js')
       const { findProcessTreeRoot } = mod

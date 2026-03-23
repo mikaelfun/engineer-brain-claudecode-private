@@ -50,22 +50,23 @@ async function findPidByPort(port: number): Promise<number | null> {
 
 /**
  * ISS-100: Get parent PID and process name for a given PID (Windows).
- * Uses wmic to query process info.
+ * Uses PowerShell Get-CimInstance (wmic is deprecated/removed in modern Windows).
  */
 async function getParentInfo(pid: number): Promise<{ parentPid: number; processName: string } | null> {
   try {
     const { stdout } = await execAsync(
-      `wmic process where "ProcessId=${pid}" get ParentProcessId,Name /format:csv`
+      `powershell -NoProfile -Command "Get-CimInstance Win32_Process -Filter 'ProcessId=${pid}' | Select-Object -Property Name,ParentProcessId | ConvertTo-Csv -NoTypeInformation"`
     )
-    // CSV output: Node,Name,ParentProcessId (with header line)
+    // CSV output: "Name","ParentProcessId" (with header line)
     const lines = stdout.trim().split('\n').filter(l => l.trim().length > 0)
-    // Find data line (skip header)
     for (const line of lines) {
-      const parts = line.trim().split(',')
-      // Format: ComputerName,Name,ParentProcessId
-      if (parts.length >= 3 && parts[1] !== 'Name') {
-        const processName = parts[1].trim().toLowerCase()
-        const parentPid = parseInt(parts[2].trim(), 10)
+      // Skip header
+      if (line.trim().startsWith('"Name"')) continue
+      // Parse CSV: "node.exe","12345"
+      const match = line.match(/"([^"]+)","(\d+)"/)
+      if (match) {
+        const processName = match[1].trim().toLowerCase()
+        const parentPid = parseInt(match[2], 10)
         if (parentPid > 0) {
           return { parentPid, processName }
         }
