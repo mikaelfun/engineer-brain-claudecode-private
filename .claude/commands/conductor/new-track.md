@@ -297,7 +297,7 @@ After spec approval, generate `conductor/tracks/{trackId}/plan.md`:
 ## Post-Implementation Checklist
 
 - [ ] 单元测试文件已创建/更新并通过
-- [ ] 关联 Issue JSON 状态已更新
+- [ ] 关联 Issue JSON 状态已更新为 `implemented`（非 `done`，需 verify 后才可标 `done`）
 - [ ] Track metadata.json 已更新
 - [ ] tracks.md 状态标记已更新
 

@@ -233,7 +233,19 @@ cases/active/{caseNumber}/
 1. **发现问题/需求** → `/issue "描述"` 创建 issue 到 `issues/` 目录（CLI 或 WebUI 均可）
 2. **需要实现时** → `/conductor:new-track ISS-XXX` 创建 conductor track（见下方关联规则）
 3. **实现 track** → **必须用 `/conductor:implement {trackId}`**，不要手动实现（否则 conductor 状态文件不同步）
-4. **完成后** → 更新 issue status 为 `done`
+4. **实现完成** → issue status 自动设为 `implemented`（由 implement skill 完成）
+5. **验证通过** → `/conductor:verify {trackId}` 或 `/conductor:verify --mark-done {trackId}` 将 issue 设为 `done`
+
+### Issue 状态流转
+```
+pending → tracked → in-progress → implemented → done
+  │         │          │              │
+  │         │          │              └─ /conductor:verify 或 mark-done
+  │         │          └─ /conductor:implement 开始执行
+  │         └─ /conductor:new-track 创建 track
+  └─ /issue 创建
+```
+**⚠️ 只有 `/conductor:verify` 或 mark-done 可以把 issue 从 `implemented` 变为 `done`，`/conductor:implement` 完成时只能设 `implemented`**
 
 ### Issue → Track 关联规则
 当 `/conductor:new-track` 的参数匹配 `ISS-\d+` 格式时：

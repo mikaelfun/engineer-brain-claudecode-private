@@ -268,6 +268,15 @@ In `conductor/tracks/{trackId}/plan.md`:
 
 - Update header status to `[x] Complete`
 
+### 2a. Update Issue Status → `implemented`
+
+If the track has an associated issue (`metadata.json` → `issueId`):
+
+- Read `issues/{issueId}.json`
+- Set `status: "implemented"` (**NOT** `done` — only `/conductor:verify` or `/conductor:verify --mark-done` can set `done`)
+- Update `updatedAt` timestamp
+- This indicates: code is complete, awaiting verification
+
 ### 3. Documentation Sync Offer
 
 ```
