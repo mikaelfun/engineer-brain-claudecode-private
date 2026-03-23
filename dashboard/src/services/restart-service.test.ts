@@ -240,23 +240,27 @@ describe('restart-service', () => {
     })
   })
 
-  describe('restartBackend kills port', () => {
-    it('should kill backend port listener before spawning new process', async () => {
-      // No saved PID (first run), but port 3010 has a listener
-      mockExecImpl
-        .mockResolvedValueOnce({ stdout: '  TCP    0.0.0.0:3010    0.0.0.0:0    LISTENING    8888\n' }) // findPidByPort(3010)
-        .mockRejectedValueOnce(new Error('ps failed')) // getAllProcessParentInfo fails → returns 8888
-        .mockResolvedValueOnce({}) // taskkill /F /T /PID 8888
-        .mockRejectedValueOnce(new Error('no match')) // retry findPidByPort — port freed
+  describe('restartBackend self-exit (no self-kill)', () => {
+    it('should NOT kill own port — just spawn new backend and schedule exit', async () => {
+      // No saved PID (first run), port 3010 has a listener (which is us)
+      // restartBackend should NOT call taskkill on itself
+      mockExecImpl.mockRejectedValue(new Error('no match'))
+      mockSpawn.mockReturnValue({ pid: 66666, unref: vi.fn() })
 
       await restartBackend()
 
-      // Verify taskkill was called for port 3010 listener
-      const taskkillCall = mockExecImpl.mock.calls.find(
+      // Should NOT have any taskkill calls (we don't kill our own port)
+      const taskkillCalls = mockExecImpl.mock.calls.filter(
         (call: unknown[]) => typeof call[0] === 'string' && (call[0] as string).startsWith('taskkill')
       )
-      expect(taskkillCall).toBeDefined()
-      expect(taskkillCall![0]).toBe('taskkill /F /T /PID 8888')
+      expect(taskkillCalls.length).toBe(0)
+
+      // Should have spawned new backend
+      expect(mockSpawn).toHaveBeenCalledWith(
+        'node',
+        ['--import', 'tsx/esm', '--watch', 'src/index.ts'],
+        expect.objectContaining({ shell: true, detached: true })
+      )
     })
   })
 

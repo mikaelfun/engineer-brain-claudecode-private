@@ -235,10 +235,19 @@ export async function restartBackend(): Promise<{ success: boolean; message: str
   // Abort all active SDK queries before exiting (ISS-086)
   const aborted = abortAllQueries()
   console.log(`[restart] Aborted ${aborted} active queries before backend restart`)
-  await killSavedAndPort(lastBackendPid, BACKEND_PORT)
+  // NOTE: Do NOT kill own port — we ARE the backend process on BACKEND_PORT.
+  // taskkill /T on our own tree would kill us before spawn runs.
+  // Instead: kill saved PID from previous restart (if any), spawn new backend,
+  // then exit. The new detached process will bind the port after we release it.
+  if (lastBackendPid) {
+    console.log(`[restart] Killing previously spawned backend PID=${lastBackendPid}`)
+    await killPid(lastBackendPid)
+    await new Promise(r => setTimeout(r, 300))
+  }
   lastBackendPid = null
   spawnBackend()
-  // Schedule self-exit after response is sent
+  // Schedule self-exit after response is sent — port is released on exit,
+  // allowing the newly spawned backend to bind it.
   setTimeout(() => process.exit(0), 500)
   return {
     success: true,
@@ -250,9 +259,15 @@ export async function restartAll(): Promise<{ success: boolean; message: string 
   // Abort all active SDK queries before exiting (ISS-086)
   const aborted = abortAllQueries()
   console.log(`[restart] Aborted ${aborted} active queries before full restart`)
+  // Kill frontend (safe — we are not the frontend process)
   await killSavedAndPort(lastFrontendPid, FRONTEND_PORT)
   lastFrontendPid = null
-  await killSavedAndPort(lastBackendPid, BACKEND_PORT)
+  // Kill saved backend PID only (not our own port — see restartBackend comment)
+  if (lastBackendPid) {
+    console.log(`[restart] Killing previously spawned backend PID=${lastBackendPid}`)
+    await killPid(lastBackendPid)
+    await new Promise(r => setTimeout(r, 300))
+  }
   lastBackendPid = null
   // Spawn fresh processes
   spawnFrontend()
