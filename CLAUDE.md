@@ -85,8 +85,8 @@ Kun Fang 的 AI 助手，Azure 技术支持工程师。
 1. **发现问题/需求** → `/issue "描述"` 创建 issue 到 `issues/` 目录（CLI 或 WebUI 均可）
 2. **需要实现时** → `/conductor:new-track ISS-XXX` 创建 conductor track（见下方关联规则）
 3. **实现 track** → **必须用 `/conductor:implement {trackId}`**，不要手动实现（否则 conductor 状态文件不同步）
-4. **实现完成** → issue status 自动设为 `implemented`（由 implement skill 完成）
-5. **验证通过** → `/conductor:verify {trackId}` 或 `/conductor:verify --mark-done {trackId}` 将 issue 设为 `done`
+4. **实现完成** → issue status 自动设为 `implemented`
+5. **验证通过** → `/conductor:verify {trackId}` 或 `--mark-done` 将 issue 设为 `done`
 
 ### Issue 状态流转
 ```
