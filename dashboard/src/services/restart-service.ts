@@ -181,48 +181,45 @@ async function killSavedAndPort(savedPid: number | null, port: number): Promise<
 /**
  * Spawn frontend dev server (vite) as detached process.
  * ISS-100: Aligned with package.json dev:web script.
+ * Uses PowerShell Start-Process to ensure the process survives parent exit on Windows.
  */
-function spawnFrontend(): void {
+async function spawnFrontend(): Promise<void> {
   const cwd = join(config.projectRoot, 'dashboard', 'web')
-  const cmd = 'npx'
-  const args = ['vite', '--port', String(FRONTEND_PORT)]
-  console.log(`[restart] Spawning frontend: ${cmd} ${args.join(' ')} (cwd: ${cwd})`)
-  const child = spawn(cmd, args, {
-    cwd,
-    shell: true,
-    detached: true,
-    stdio: 'ignore',
-  })
-  lastFrontendPid = child.pid ?? null
-  console.log(`[restart] Spawned frontend PID=${lastFrontendPid}`)
-  child.unref()
+  const cmd = `npx vite --port ${FRONTEND_PORT}`
+  console.log(`[restart] Spawning frontend: ${cmd} (cwd: ${cwd})`)
+  try {
+    await execAsync(
+      `powershell -NoProfile -Command "Start-Process -FilePath 'cmd' -ArgumentList '/c','npx','vite','--port','${FRONTEND_PORT}' -WorkingDirectory '${cwd}' -WindowStyle Hidden"`,
+    )
+    console.log(`[restart] Frontend spawn initiated`)
+  } catch (e) {
+    console.error(`[restart] Failed to spawn frontend:`, e)
+  }
 }
 
 /**
  * Spawn backend dev server as detached process.
  * ISS-100: Aligned with package.json dev:server script — uses node --watch.
+ * Uses PowerShell Start-Process to ensure the process survives parent exit on Windows.
  */
-function spawnBackend(): void {
+async function spawnBackend(): Promise<void> {
   const cwd = join(config.projectRoot, 'dashboard')
-  const cmd = 'node'
-  const args = ['--import', 'tsx/esm', '--watch', 'src/index.ts']
-  console.log(`[restart] Spawning backend: ${cmd} ${args.join(' ')} (cwd: ${cwd})`)
-  const child = spawn(cmd, args, {
-    cwd,
-    shell: true,
-    detached: true,
-    stdio: 'ignore',
-    env: { ...process.env, PORT: String(BACKEND_PORT) },
-  })
-  lastBackendPid = child.pid ?? null
-  console.log(`[restart] Spawned backend PID=${lastBackendPid}`)
-  child.unref()
+  const cmd = `node --import tsx/esm --watch src/index.ts`
+  console.log(`[restart] Spawning backend: ${cmd} (cwd: ${cwd})`)
+  try {
+    await execAsync(
+      `powershell -NoProfile -Command "Start-Process -FilePath 'node' -ArgumentList '--import','tsx/esm','--watch','src/index.ts' -WorkingDirectory '${cwd}' -WindowStyle Hidden"`,
+    )
+    console.log(`[restart] Backend spawn initiated`)
+  } catch (e) {
+    console.error(`[restart] Failed to spawn backend:`, e)
+  }
 }
 
 export async function restartFrontend(): Promise<{ success: boolean; message: string }> {
   const killed = await killSavedAndPort(lastFrontendPid, FRONTEND_PORT)
   lastFrontendPid = null
-  spawnFrontend()
+  await spawnFrontend()
   return {
     success: true,
     message: killed
@@ -245,7 +242,7 @@ export async function restartBackend(): Promise<{ success: boolean; message: str
     await new Promise(r => setTimeout(r, 300))
   }
   lastBackendPid = null
-  spawnBackend()
+  await spawnBackend()
   // Schedule self-exit after response is sent — port is released on exit,
   // allowing the newly spawned backend to bind it.
   setTimeout(() => process.exit(0), 500)
@@ -270,8 +267,8 @@ export async function restartAll(): Promise<{ success: boolean; message: string 
   }
   lastBackendPid = null
   // Spawn fresh processes
-  spawnFrontend()
-  spawnBackend()
+  await spawnFrontend()
+  await spawnBackend()
   setTimeout(() => process.exit(0), 500)
   return {
     success: true,

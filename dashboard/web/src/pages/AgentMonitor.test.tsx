@@ -47,8 +47,11 @@ vi.mock('../stores/caseSessionStore', () => ({
   useCaseSessionStore: vi.fn((selector: (s: any) => any) => {
     const store = {
       messages: {},
+      sessionMessages: {},
       addMessage: vi.fn(),
+      addSessionMessage: vi.fn(),
       clearMessages: vi.fn(),
+      getPendingQuestion: vi.fn(() => null),
     }
     return selector(store)
   }),

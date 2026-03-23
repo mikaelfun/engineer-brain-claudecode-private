@@ -1,0 +1,11 @@
+{
+  "id": "ISS-103",
+  "title": "Issue Implement 实时进度展示",
+  "description": "Backfill issue for existing track implement-progress_20260320",
+  "type": "feature",
+  "priority": "P2",
+  "status": "done",
+  "trackId": "implement-progress_20260320",
+  "createdAt": "2026-03-20T12:00:00+08:00",
+  "updatedAt": "2026-03-23T21:00:00+08:00"
+}

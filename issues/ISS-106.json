@@ -1,0 +1,11 @@
+{
+  "id": "ISS-106",
+  "title": "Frontend Test Infrastructure",
+  "description": "Backfill issue for existing track web-test-infra_20260321",
+  "type": "chore",
+  "priority": "P2",
+  "status": "done",
+  "trackId": "web-test-infra_20260321",
+  "createdAt": "2026-03-21T12:00:00+08:00",
+  "updatedAt": "2026-03-23T21:00:00+08:00"
+}

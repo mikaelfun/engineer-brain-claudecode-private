@@ -276,9 +276,9 @@
       "sessionId": "2c80b83e-d23a-4e8a-bd2f-8b9de096fa54",
       "caseNumber": "2603170030001139",
       "intent": "Full casework processing",
-      "status": "paused",
+      "status": "completed",
       "createdAt": "2026-03-23T03:01:20.159Z",
-      "lastActivityAt": "2026-03-23T03:11:56.865Z"
+      "lastActivityAt": "2026-03-23T09:05:26.769Z"
     },
     "3b103501-fba2-4303-89a4-648dd45e6a02": {
       "sessionId": "3b103501-fba2-4303-89a4-648dd45e6a02",
@@ -295,12 +295,28 @@
       "status": "paused",
       "createdAt": "2026-03-23T04:56:12.109Z",
       "lastActivityAt": "2026-03-23T05:02:50.349Z"
+    },
+    "9ca2cf14-5fd0-4218-ae7d-e5f768ab3fb0": {
+      "sessionId": "9ca2cf14-5fd0-4218-ae7d-e5f768ab3fb0",
+      "caseNumber": "2603200030000875",
+      "intent": "Full casework processing",
+      "status": "failed",
+      "createdAt": "2026-03-23T08:58:43.005Z",
+      "lastActivityAt": "2026-03-23T09:05:32.077Z"
+    },
+    "b97ed4bf-ba15-4d5c-a582-17c44453a829": {
+      "sessionId": "b97ed4bf-ba15-4d5c-a582-17c44453a829",
+      "caseNumber": "2603170030001139",
+      "intent": "Full casework processing",
+      "status": "paused",
+      "createdAt": "2026-03-23T09:15:51.452Z",
+      "lastActivityAt": "2026-03-23T09:25:06.887Z"
     }
   },
   "caseIndex": {
     "2602130040001034": "ebb3be8a-3450-40ab-afdf-71c83219c9f7",
-    "2603170030001139": "2c80b83e-d23a-4e8a-bd2f-8b9de096fa54",
     "2603230030001221": "3b103501-fba2-4303-89a4-648dd45e6a02",
-    "2603100030005863": "b252b087-a4b3-4e36-9aaa-bb06dce0fc7c"
+    "2603100030005863": "b252b087-a4b3-4e36-9aaa-bb06dce0fc7c",
+    "2603170030001139": "b97ed4bf-ba15-4d5c-a582-17c44453a829"
   }
 }

@@ -1,0 +1,11 @@
+{
+  "id": "ISS-101",
+  "title": "增加 /conductor:verify 命令，对齐 WebUI verify 按钮逻辑",
+  "description": "CLI 实现后 track 变 complete、issue 变 implemented，但缺少后续验证步骤把 issue 推到 done。需要：\n1) /conductor:verify [trackId|ISS-xxx] 运行 unit+UI 测试并写入 metadata.json verification 字段\n2) 支持 mark-done（手动跳过验证）\n3) 支持 reopen（清除验证回到 implemented）\n4) 与 WebUI 的 verify/mark-done/reopen 行为完全对齐",
+  "type": "feature",
+  "priority": "P2",
+  "status": "done",
+  "trackId": "conductor-verify_20260323",
+  "createdAt": "2026-03-23T20:30:00+08:00",
+  "updatedAt": "2026-03-23T20:35:00+08:00"
+}

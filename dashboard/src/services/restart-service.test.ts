@@ -159,47 +159,62 @@ describe('restart-service', () => {
     })
   })
 
-  describe('ISS-100: spawn commands align with dev scripts', () => {
-    it('should spawn backend with node --watch (aligned with dev:server)', async () => {
-      mockSpawn.mockReturnValue({ pid: 66666, unref: vi.fn() })
+  describe('ISS-100: spawn commands use PowerShell Start-Process', () => {
+    it('should spawn backend via PowerShell Start-Process with node --watch', async () => {
+      // All exec calls succeed (no port listener, PowerShell Start-Process succeeds)
+      mockExecImpl
+        .mockRejectedValueOnce(new Error('no match')) // findPidByPort — no port listener
+        .mockResolvedValueOnce({}) // PowerShell Start-Process for backend
 
       await restartBackend()
 
-      expect(mockSpawn).toHaveBeenCalledWith(
-        'node',
-        ['--import', 'tsx/esm', '--watch', 'src/index.ts'],
-        expect.objectContaining({ shell: true, detached: true })
+      // Find the PowerShell Start-Process call for backend
+      const psCall = mockExecImpl.mock.calls.find(
+        (call: unknown[]) => typeof call[0] === 'string' && (call[0] as string).includes('Start-Process') && (call[0] as string).includes('--watch')
       )
+      expect(psCall).toBeDefined()
+      expect(psCall![0]).toMatch(/node/)
+      expect(psCall![0]).toMatch(/--import.*tsx\/esm/)
+      expect(psCall![0]).toMatch(/--watch/)
+      expect(psCall![0]).toMatch(/src\/index\.ts/)
     })
 
-    it('should spawn frontend with npx vite (aligned with dev:web)', async () => {
-      mockSpawn.mockReturnValue({ pid: 55555, unref: vi.fn() })
+    it('should spawn frontend via PowerShell Start-Process with npx vite', async () => {
+      mockExecImpl
+        .mockRejectedValueOnce(new Error('no match')) // findPidByPort — no port listener
+        .mockResolvedValueOnce({}) // PowerShell Start-Process for frontend
 
       await restartFrontend()
 
-      expect(mockSpawn).toHaveBeenCalledWith(
-        'npx',
-        ['vite', '--port', '5173'],
-        expect.objectContaining({ shell: true, detached: true })
+      const psCall = mockExecImpl.mock.calls.find(
+        (call: unknown[]) => typeof call[0] === 'string' && (call[0] as string).includes('Start-Process') && (call[0] as string).includes('vite')
       )
+      expect(psCall).toBeDefined()
+      expect(psCall![0]).toMatch(/npx/)
+      expect(psCall![0]).toMatch(/vite/)
+      expect(psCall![0]).toMatch(/5173/)
     })
   })
 
   describe('ISS-100: port release retry', () => {
     it('should retry kill if port still occupied after first kill', async () => {
-      // First findPidByPort → 9999
-      mockExecImpl
-        .mockResolvedValueOnce({ stdout: '  TCP    0.0.0.0:5173    0.0.0.0:0    LISTENING    9999\n' })
-        // getAllProcessParentInfo fails → returns 9999 as-is
-        .mockRejectedValueOnce(new Error('ps failed'))
-        // killPid(9999)
-        .mockResolvedValueOnce({})
-        // Retry findPidByPort → 9998 (watcher respawned!)
-        .mockResolvedValueOnce({ stdout: '  TCP    0.0.0.0:5173    0.0.0.0:0    LISTENING    9998\n' })
-        // getAllProcessParentInfo fails → returns 9998 as-is
-        .mockRejectedValueOnce(new Error('ps failed'))
-        // killPid(9998)
-        .mockResolvedValueOnce({})
+      let callIndex = 0
+      const responses: Array<{ resolve?: unknown; reject?: Error }> = [
+        { resolve: { stdout: '  TCP    0.0.0.0:5173    0.0.0.0:0    LISTENING    9999\n' } }, // findPidByPort
+        { reject: new Error('ps failed') },    // getAllProcessParentInfo
+        { resolve: {} },                        // killPid(9999)
+        { resolve: { stdout: '  TCP    0.0.0.0:5173    0.0.0.0:0    LISTENING    9998\n' } }, // retry findPidByPort
+        { reject: new Error('ps failed') },    // retry getAllProcessParentInfo
+        { resolve: {} },                        // killPid(9998)
+        { resolve: {} },                        // PowerShell Start-Process frontend
+      ]
+      // mockReset clears both mockRejectedValue and any previous implementation
+      mockExecImpl.mockReset()
+      mockExecImpl.mockImplementation(() => {
+        const resp = responses[callIndex++]
+        if (!resp || resp.reject) return Promise.reject(resp?.reject ?? new Error('no mock'))
+        return Promise.resolve(resp.resolve)
+      })
 
       await restartFrontend()
 
@@ -214,24 +229,27 @@ describe('restart-service', () => {
   })
 
   describe('spawn PID tracking', () => {
-    it('should kill saved PID on subsequent restart', async () => {
-      // First call: spawn returns PID 55555, no port listener
-      mockSpawn.mockReturnValue({ pid: 55555, unref: vi.fn() })
-      mockExecImpl.mockRejectedValue(new Error('no match'))
+    it('should call killSavedAndPort on subsequent restart (frontend)', async () => {
+      // First call: no port listener, PowerShell Start-Process succeeds
+      mockExecImpl
+        .mockRejectedValueOnce(new Error('no match')) // findPidByPort — no listener
+        .mockResolvedValueOnce({}) // PowerShell Start-Process frontend
 
       await restartFrontend()
 
       // Reset mocks for second call
       mockExecImpl.mockReset()
-      // Second call: killPid(55555) then findPidByPort fallback
+      // Second call: findPidByPort finds a process, kill it, spawn new
       mockExecImpl
-        .mockResolvedValueOnce({}) // taskkill /F /T /PID 55555
-        .mockRejectedValueOnce(new Error('no match')) // findPidByPort fallback
-      mockSpawn.mockReturnValue({ pid: 77777, unref: vi.fn() })
+        .mockResolvedValueOnce({ stdout: '  TCP    0.0.0.0:5173    0.0.0.0:0    LISTENING    55555\n' }) // findPidByPort
+        .mockRejectedValueOnce(new Error('ps failed')) // getAllProcessParentInfo
+        .mockResolvedValueOnce({}) // taskkill 55555
+        .mockRejectedValueOnce(new Error('no match')) // retry findPidByPort
+        .mockResolvedValueOnce({}) // PowerShell Start-Process frontend
 
       await restartFrontend()
 
-      // Verify taskkill was called with the previously saved PID
+      // Verify taskkill was called for the port listener
       const taskkillCall = mockExecImpl.mock.calls.find(
         (call: unknown[]) => typeof call[0] === 'string' && (call[0] as string).includes('55555')
       )
@@ -244,8 +262,9 @@ describe('restart-service', () => {
     it('should NOT kill own port — just spawn new backend and schedule exit', async () => {
       // No saved PID (first run), port 3010 has a listener (which is us)
       // restartBackend should NOT call taskkill on itself
-      mockExecImpl.mockRejectedValue(new Error('no match'))
-      mockSpawn.mockReturnValue({ pid: 66666, unref: vi.fn() })
+      mockExecImpl
+        .mockRejectedValueOnce(new Error('no match')) // no findPidByPort for backend (skipped)
+        .mockResolvedValueOnce({}) // PowerShell Start-Process
 
       await restartBackend()
 
@@ -255,31 +274,35 @@ describe('restart-service', () => {
       )
       expect(taskkillCalls.length).toBe(0)
 
-      // Should have spawned new backend
-      expect(mockSpawn).toHaveBeenCalledWith(
-        'node',
-        ['--import', 'tsx/esm', '--watch', 'src/index.ts'],
-        expect.objectContaining({ shell: true, detached: true })
+      // Should have spawned new backend via PowerShell
+      const psCall = mockExecImpl.mock.calls.find(
+        (call: unknown[]) => typeof call[0] === 'string' && (call[0] as string).includes('Start-Process') && (call[0] as string).includes('node')
       )
+      expect(psCall).toBeDefined()
     })
   })
 
   describe('restartAll', () => {
     it('should spawn both frontend and backend', async () => {
-      // All port lookups return no match (clean state)
-      mockExecImpl.mockRejectedValue(new Error('no match'))
-      mockSpawn.mockReturnValue({ pid: 11111, unref: vi.fn() })
+      // All port lookups return no match (clean state), PowerShell spawns succeed
+      mockExecImpl
+        .mockRejectedValueOnce(new Error('no match')) // findPidByPort for frontend
+        .mockResolvedValueOnce({}) // PowerShell Start-Process frontend
+        .mockResolvedValueOnce({}) // PowerShell Start-Process backend
 
       await restartAll()
 
-      // Should spawn exactly 2 processes
-      expect(mockSpawn).toHaveBeenCalledTimes(2)
+      // Should have two Start-Process calls
+      const psCalls = mockExecImpl.mock.calls.filter(
+        (call: unknown[]) => typeof call[0] === 'string' && (call[0] as string).includes('Start-Process')
+      )
+      expect(psCalls.length).toBe(2)
 
-      const spawnCmds = mockSpawn.mock.calls.map((c: unknown[]) => c[0] as string)
-      const hasViteFrontend = spawnCmds.includes('npx')
-      const hasNodeBackend = spawnCmds.includes('node')
-      expect(hasViteFrontend).toBe(true)
-      expect(hasNodeBackend).toBe(true)
+      const cmds = psCalls.map((c: unknown[]) => c[0] as string)
+      const hasFrontend = cmds.some(c => c.includes('vite'))
+      const hasBackend = cmds.some(c => c.includes('--watch'))
+      expect(hasFrontend).toBe(true)
+      expect(hasBackend).toBe(true)
     })
   })
 })

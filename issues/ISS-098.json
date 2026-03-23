@@ -1,0 +1,10 @@
+{
+  "id": "ISS-098",
+  "title": "ai assistant中full process的sse不更新，agent monitor里正常更新。",
+  "description": "",
+  "type": "bug",
+  "priority": "P1",
+  "status": "pending",
+  "createdAt": "2026-03-23T09:19:20.223Z",
+  "updatedAt": "2026-03-23T09:19:20.223Z"
+}

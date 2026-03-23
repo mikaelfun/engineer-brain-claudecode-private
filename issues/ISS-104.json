@@ -1,0 +1,11 @@
+{
+  "id": "ISS-104",
+  "title": "Agent Session SSE Message Filtering",
+  "description": "Backfill issue for existing track sse-message-filter_20260321",
+  "type": "feature",
+  "priority": "P2",
+  "status": "done",
+  "trackId": "sse-message-filter_20260321",
+  "createdAt": "2026-03-21T12:00:00+08:00",
+  "updatedAt": "2026-03-23T21:00:00+08:00"
+}

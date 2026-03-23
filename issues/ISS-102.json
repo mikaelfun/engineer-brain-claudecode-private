@@ -1,0 +1,11 @@
+{
+  "id": "ISS-102",
+  "title": "Dashboard UX Fix",
+  "description": "Backfill issue for existing track dashboard-ux-fix_20260320",
+  "type": "bug",
+  "priority": "P2",
+  "status": "done",
+  "trackId": "dashboard-ux-fix_20260320",
+  "createdAt": "2026-03-20T12:00:00+08:00",
+  "updatedAt": "2026-03-23T21:00:00+08:00"
+}

@@ -1,0 +1,10 @@
+{
+  "id": "ISS-099",
+  "title": "case patrol需要把非active的case归档到archive",
+  "description": "",
+  "type": "bug",
+  "priority": "P1",
+  "status": "pending",
+  "createdAt": "2026-03-23T09:30:08.674Z",
+  "updatedAt": "2026-03-23T09:30:08.674Z"
+}

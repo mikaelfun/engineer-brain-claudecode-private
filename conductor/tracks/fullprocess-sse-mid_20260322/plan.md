@@ -20,6 +20,17 @@
 - [x] TypeScript compiles: `npx tsc --noEmit`
 - [ ] Full Process shows intermediate messages in AI Assistant
 
+## Verification Plan
+
+| # | Acceptance Criterion | Test Type | Test Steps |
+|---|---------------------|-----------|------------|
+| 1 | case-step-progress 自动设置 activeSessionId | Skip | 前端 SSE hook 内部逻辑，已有单元测试覆盖 |
+| 2 | Full Process 执行时 AI Assistant 实时显示中间消息 | Visual | 打开 Case Detail → AI Assistant tab → 点击 Full Process → 截图确认 tool 调用和 thinking 消息实时出现 |
+
+**Test Type Legend:**
+- **Visual** — Navigate + screenshot + visual inspection
+- **Skip** — Backend-only or covered by unit tests
+
 ## Post-Implementation Checklist
 
 - [x] TypeScript compiles without errors

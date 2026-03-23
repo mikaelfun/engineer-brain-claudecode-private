@@ -1,0 +1,11 @@
+{
+  "id": "ISS-105",
+  "title": "Create Track 交互问题过多 — 测试相关问题不应在 track 创建阶段问",
+  "description": "Backfill issue for existing track track-question-reduce_20260321",
+  "type": "bug",
+  "priority": "P2",
+  "status": "done",
+  "trackId": "track-question-reduce_20260321",
+  "createdAt": "2026-03-21T12:00:00+08:00",
+  "updatedAt": "2026-03-23T21:00:00+08:00"
+}

@@ -293,7 +293,21 @@ Cleanup options:
 3. Keep - Leave as-is
 ```
 
-### 5. Completion Summary
+### 5. Verify Offer
+
+After track completion, prompt the user to verify:
+
+```
+Track implementation complete! Run verification?
+
+Verification will run unit tests + UI tests and update issue status to "done" if all pass.
+
+1. Yes, verify now → run /conductor:verify {trackId}
+2. Mark done (skip tests) → run /conductor:verify --mark-done {trackId}
+3. No, skip → leave issue as "implemented" (can verify later with /conductor:verify)
+```
+
+### 6. Completion Summary
 
 ```
 Track Complete: {track title}
@@ -304,8 +318,10 @@ Summary:
 - Tasks completed: {M}/{M}
 - Commits created: {count}
 - Tests: All passing
+- Verification: {Passed ✅ / Skipped ⏭️ / Pending ⏳}
 
 Next steps:
+- Run /conductor:verify {trackId} to verify (if skipped)
 - Run /conductor:status to see project progress
 - Run /conductor:new-track for next feature
 ```

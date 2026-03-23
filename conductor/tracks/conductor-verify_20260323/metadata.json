@@ -1,0 +1,20 @@
+{
+  "id": "conductor-verify_20260323",
+  "title": "/conductor:verify CLI Command",
+  "type": "feature",
+  "status": "completed",
+  "created": "2026-03-23T20:30:00+08:00",
+  "updated": "2026-03-23T20:35:00+08:00",
+  "phases": {
+    "total": 2,
+    "completed": 2
+  },
+  "tasks": {
+    "total": 4,
+    "completed": 4
+  },
+  "verification": {
+    "status": "skipped",
+    "method": "manual"
+  }
+}

@@ -59,6 +59,7 @@ title = 参数文本
 选择 1 或 2 时：
 - 调用 `/conductor:new-track ISS-XXX`（按 CLAUDE.md 关联规则自动预填 + 回写 trackId）
 - 选择 1 时：track 创建完成后继续调用 `/conductor:implement {trackId}`
+  - implement 完成后，自动提示是否 verify（由 implement.md 的 Verify Offer 步骤处理）
 - 选择 2 时：track 创建完成即结束
 
 选择 3 时：
