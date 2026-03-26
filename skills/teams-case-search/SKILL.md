@@ -1,68 +1,34 @@
 ---
 name: teams-case-search
-description: "Teams Case Search 脚本参考文档。搜索执行逻辑已迁移到 .claude/agents/teams-search.md，此文件仅保留脚本参数和 schema 参考。"
+description: "write-teams.ps1 脚本参考。搜索逻辑见 .claude/skills/teams-search/SKILL.md。"
 ---
 
 # Teams Case Search — 脚本参考
 
-> **执行逻辑已迁移到 `.claude/agents/teams-search.md`。**
-> 本文件保留 `write-teams.ps1` 参数说明和 JSON Schema 作为参考文档。
+> **搜索逻辑已整合到 `.claude/skills/teams-search/SKILL.md`（KQL 并行搜索）。**
+> 本目录仅保留 `write-teams.ps1` 脚本。
 
-## 架构
+## write-teams.ps1
 
-```
-Claude subagent (MCP 调用)          write-teams.ps1 (文件写入)
-┌─────────────────────────┐         ┌─────────────────────────┐
-│ SearchTeamsMessages      │──JSON──▶│ 增量写入 chat .md 文件   │
-│ ListChatMessages         │         │ 更新 _chat-index.json   │
-│ (直接用 MCP tools)       │         │ 追加 _search-log.md     │
-└─────────────────────────┘         └─────────────────────────┘
-```
+文件位置：`skills/teams-case-search/scripts/write-teams.ps1`
 
-- **MCP 搜索/拉取**：由 Claude subagent 直接使用 MCP 工具（见 `.claude/agents/teams-search.md`）
-- **文件写入**：由 `write-teams.ps1` 处理（接收 JSON 输入，写文件/index/log）
-
-## write-teams.ps1 参数
+### 参数
 
 | 参数 | 必填 | 说明 |
 |------|------|------|
-| `-OutputDir` | ✅ | 输出目录（通常为 `cases/active/{id}/teams/`） |
-| `-InputJson` | ❌ | JSON 字符串。不传则从 stdin 读取 |
-| `-InputFile` | ❌ | JSON 文件路径。替代 InputJson/stdin |
+| `-OutputDir` | Yes | 输出目录（通常为 `{caseDir}/teams/`） |
+| `-InputJson` | No | JSON 字符串。不传则从 stdin 读取 |
+| `-InputFile` | No | JSON 文件路径。替代 InputJson/stdin |
 
-## 输入 JSON Schema
+### 功能
+- HTML 标签剥离
+- UTC → GMT+8 时间戳转换
+- 增量追加（已有消息不重复写入）
+- 系统消息自动过滤
+- `_chat-index.json` 索引管理（含 `_lastFetchedAt`）
+- `_search-log.md` 搜索历史
 
-```json
-{
-  "caseNumber": "string (必填)",
-  "searchResults": [
-    {
-      "keyword": "string — 搜索关键词",
-      "status": "success|timeout|parse_error",
-      "chatIds": ["string — chatId 数组"]
-    }
-  ],
-  "chats": [
-    {
-      "chatId": "string (必填)",
-      "messages": [
-        {
-          "id": "string",
-          "createdDateTime": "ISO 8601 UTC",
-          "from": { "displayName": "string" },
-          "body": { "contentType": "Html|Text", "content": "string" }
-        }
-      ]
-    }
-  ],
-  "searchMode": "full|incremental|full-fallback",
-  "fallbackTriggered": false,
-  "windowDays": null,
-  "elapsed": 45.2
-}
-```
-
-## 输出文件
+### 输出文件
 
 ```text
 teams/
@@ -85,14 +51,8 @@ teams/
 **Chandrasekar, Sushanth (S.)** (15:56): Hi Fang
 ```
 
-## 注意事项
+## 迁移历史
 
-- `SearchTeamsMessages` 耗时通常 ~30-50s（M365 Copilot 后端）
-- `ListChatMessages` 耗时通常 ~10s/chat
-- 系统消息（`<systemEventMessage/>`）和空消息会被自动过滤
-
-## 迁移说明
-
-- **旧版 `fetch-teams.ps1`**：使用 `mcporter call` 调用 MCP，仅在 Openclaw 环境可用
-- **新版**：MCP 调用由 Claude subagent 直接执行，`write-teams.ps1` 只负责文件 I/O
-- `fetch-teams.ps1` 保留作为 Openclaw 兼容参考，Claude Code 环境使用 `write-teams.ps1`
+1. **v1** `fetch-teams.ps1`：使用 `mcporter call` 调用 MCP（Openclaw 环境）
+2. **v2** Agent 模式：`SearchTeamsMessages` (Copilot) + `write-teams.ps1`
+3. **v3** Skill 模式：`SearchTeamMessagesQueryParameters` (KQL 并行) + `write-teams.ps1`（当前）

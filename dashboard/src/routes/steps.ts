@@ -65,11 +65,13 @@ const INTERACTIVE_STEPS: ReadonlySet<string> = new Set([
 /**
  * Background steps that run concurrently without blocking other steps.
  * These do NOT acquire the per-case operation lock, so other steps can
- * start while they are running (mirroring the casework flow where
- * teams-search runs in parallel with data-refresh).
+ * start while they are running.
+ *
+ * Note: teams-search was moved to inline execution (KQL parallel search,
+ * ~15-25s) and no longer needs background mode.
  */
 const BACKGROUND_STEPS: ReadonlySet<string> = new Set([
-  'teams-search',
+  // Currently empty — teams-search is now inline
 ])
 
 /**

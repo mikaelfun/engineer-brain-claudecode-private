@@ -42,13 +42,12 @@ mkdir -p "{caseDir}"
 **⏱ 记录流程开始时间：**
 用 Bash 执行 `pwsh -NoProfile -c "(Get-Date).ToString('o')"` 获取 ISO 8601 时间戳，存入变量 `t0_start`。
 
-### Step 2a. 后台启动 teams-search Agent
-使用 Agent 工具，`run_in_background: true`：
-- prompt 中必须包含：
-  - caseNumber
-  - caseDir 的绝对路径
-  - "请先读取 `.claude/agents/teams-search.md` 获取完整执行步骤"
-  - "必须通过 write-teams.ps1 写文件，禁止直接用 Write 工具写 teams 目录"
+### Step 2a. 内联执行 teams-search
+**读取 `.claude/skills/teams-search/SKILL.md` 获取完整步骤并执行。**
+- 传入 caseNumber、caseDir 绝对路径
+- KQL 并行搜索，通常 ~15-25s 完成
+- 结果通过 `write-teams.ps1` 写入 `{caseDir}/teams/`
+⏱ 记录 `t_teamsSearch_start` / `t_teamsSearch_end`
 
 ### Step 2b. 内联执行 data-refresh
 **如果参数包含 `--skip-data-refresh`**：跳过此步骤，记录 `STEP 2b SKIP | data-refresh (pre-fetched by patrol)`。
@@ -88,23 +87,17 @@ patrol 模式下数据已在阶段 1 串行拉取完毕，无需重复执行。
 **⏱ 记录各 subagent 的 start/end 时间。未执行的记入 `skippedSteps`。**
 **⏱ 记录 `t3_routing_end`**
 
-### Step 4.5. 等待 teams-search（inspection 前非阻塞检查）
+### Step 4.5. 检查 teams-search 结果
 
-用 pwsh 计算 `t0_start` 到当前的已过秒数 `elapsed`，设 `remaining = max(0, 180 - elapsed)` 秒。
-使用 `TaskOutput` 检查 teams-search Agent，`timeout` 设为 `remaining * 1000` 毫秒：
-- **完成** → 正常使用 teams 数据，`teamsSearchTimedOut = false`
-- **超时** → 设置 `teamsSearchTimedOut = true`，**不再等待**，立即继续
-  - 检查 `{caseDir}/teams/` 下是否已有缓存的 `.md` 文件（排除 `_` 开头的元文件）
-  - 有缓存 → 后续步骤使用本地缓存的 teams 消息
-  - 无缓存 → 跳过 teams 数据
-  - 将超时事件记入 `timing.json` 的 `errors` 数组：`"teams-search TIMEOUT (3min), using cached/skipped"`
-  - 将超时信息传递给 Step 5 inspection-writer
-
-**⏱ `teamsSearch` 的 `completedAt`：正常完成用实际时间，超时则记录超时时刻。**
+teams-search 已在 Step 2a 内联完成，检查结果：
+- 检查 `{caseDir}/teams/` 下是否有 `.md` 文件（排除 `_` 开头的元文件）
+- 有文件 → `teamsSearchTimedOut = false`，正常使用 teams 数据
+- 无文件（缓存检查跳过或搜索无结果） → 跳过 teams 数据
+- 将结果传递给 Step 5 inspection-writer
 
 ### Step 5. 内联执行 inspection-writer
 **读取 `.claude/skills/inspection-writer/SKILL.md` 获取完整步骤并执行。**
-- 将 `teamsSearchTimedOut` 作为上下文传入
+- teams-search 现在是内联同步执行，不再有超时问题
 ⏱ 记录 `t4_inspection_start` / `t4_inspection_end`
 
 ### Step 5.5. 写入时间统计

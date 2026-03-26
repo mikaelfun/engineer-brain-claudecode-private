@@ -653,7 +653,7 @@ export async function* stepCaseSession(
     'data-refresh': `Read .claude/skills/data-refresh/SKILL.md and execute data-refresh for Case ${caseNumber}`,
     'compliance-check': `Read .claude/skills/compliance-check/SKILL.md and execute compliance-check for Case ${caseNumber}`,
     'status-judge': `Read .claude/skills/status-judge/SKILL.md and execute status-judge for Case ${caseNumber}`,
-    'teams-search': `Spawn a teams-search agent (read .claude/agents/teams-search.md) for Case ${caseNumber}`,
+    'teams-search': `Read .claude/skills/teams-search/SKILL.md and execute teams-search for Case ${caseNumber}`,
     'troubleshoot': `Spawn a troubleshooter agent (read .claude/agents/troubleshooter.md) for Case ${caseNumber}`,
     'draft-email': `Spawn an email-drafter agent (read .claude/agents/email-drafter.md) for Case ${caseNumber}.${emailTypeInstruction}`,
     'inspection': `Read .claude/skills/inspection-writer/SKILL.md and execute inspection-writer for Case ${caseNumber}`,
