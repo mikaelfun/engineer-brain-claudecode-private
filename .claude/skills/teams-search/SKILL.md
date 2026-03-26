@@ -54,15 +54,15 @@ Main Agent (内联执行)                    write-teams.ps1 (文件写入)
 
 ### 搜索策略：模型驱动 Query 扩展
 
-根据 caseNumber 和 contactName/email，生成 2 个 KQL 查询并行执行：
+根据 caseNumber 和 contactName/email，生成 3 个查询**并行执行**：
 
-#### Q1: caseNumber 精确搜索（必选）
+#### Q1: KQL caseNumber 搜索（必选）
 ```
 mcp__teams__SearchTeamMessagesQueryParameters(queryString="{caseNumber}")
 ```
-命中精确包含 case 编号的消息。
+命中精确包含 case 编号的消息内容。
 
-#### Q2: 联系人搜索（必选，根据可用信息选择策略）
+#### Q2: KQL 联系人搜索（必选，根据可用信息选择策略）
 
 **优先策略 — 有邮箱时用 `from:` 操作符：**
 ```
@@ -76,6 +76,16 @@ mcp__teams__SearchTeamMessagesQueryParameters(queryString="{caseNumber} OR {cont
 ```
 > **注意**：只用名字的**第一个 token**（如 "Sushanth"），不要用完整全名的精确短语匹配（如 `"Sushanth C"` 会 0 命中）。
 
+#### Q3: ListChats topic 过滤（必选）
+```
+mcp__teams__ListChats(userUpns=["fangkun@microsoft.com"], topic="{caseNumber}", top=10)
+```
+**专门捕获 meeting/group chat**——这些聊天的 topic 通常包含 `TrackingID#{caseNumber}`，
+但消息正文里没有 case number，所以 KQL 搜不到。`ListChats` 按 topic 子串匹配，能补上这个盲区。
+
+> **为什么需要 Q3**：客户会议聊天（meeting chat）的消息里往往不含 case number，
+> 只有 chat topic 包含 `TrackingID#...`。KQL 只搜消息内容，ListChats 搜 topic 元数据。
+
 ### KQL 语法要点
 - Graph Search 默认 AND 逻辑——多个单词都必须同时出现
 - 用 `OR` 显式组合不同关键词：`{caseNumber} OR {name}`
@@ -84,13 +94,14 @@ mcp__teams__SearchTeamMessagesQueryParameters(queryString="{caseNumber} OR {cont
 - 避免过多 AND 关键词（`container registry {caseNumber}`），太严格导致 0 命中
 
 ### 并行执行
-两个查询**同时发送**（在同一个消息中调用两个 MCP tool），等待所有结果返回。
+三个查询**同时发送**（在同一个消息中调用三个 MCP tool），等待所有结果返回。
 
 ### 增量搜索
-如果 `{caseDir}/teams/_search-log.md` 存在且有最近成功记录，在 queryString 末尾追加时间过滤：
+如果 `{caseDir}/teams/_search-log.md` 存在且有最近成功记录，KQL 查询追加时间过滤：
 ```
 queryString="{caseNumber} sent>=2026-03-23"
 ```
+Q3 (ListChats) **不支持时间过滤**，始终全量执行（很快，不影响）。
 设置 `searchMode = "incremental"`。
 
 ### 回退策略
@@ -101,14 +112,16 @@ queryString="{caseNumber} sent>=2026-03-23"
 
 ## Step 3: 合并搜索结果 + 拉取消息
 
-1. **合并 chatIds**：从 Q1/Q2 的返回结果中提取所有唯一 chatId
-   - `SearchTeamMessagesQueryParameters` 返回 `hitContainers`，每个包含 `resource.channelIdentity.channelId` 或消息的 chatId
+1. **合并 chatIds**：从 Q1/Q2/Q3 的返回结果中提取所有唯一 chatId
+   - Q1/Q2（KQL）：返回 `hitContainers`，每个包含 `resource.channelIdentity.channelId` 或消息的 chatId
+   - Q3（ListChats）：返回 `chats` 数组，每个包含 `id` 字段即为 chatId
    - 提取所有不重复的 chatId
 
 2. **记录关联来源**：
    - Q1 命中的 chatId → `source: "case-number"`
    - Q2 命中的 chatId → `source: "contact-name"`
-   - 两者都命中的 → `source: "case-number"`（优先）
+   - Q3 命中的 chatId → `source: "meeting-topic"`
+   - 多个来源都命中的 → `source: "case-number"`（优先）
 
 3. **拉取完整消息**：对每个 chatId 调用：
 ```
@@ -232,6 +245,7 @@ teams/
 | 方法 | 工具 | 耗时 | 备注 |
 |------|------|------|------|
 | 旧方案 | `SearchTeamsMessages` (Copilot) | ~30-50s/query | M365 Copilot 后端，语义搜索 |
-| 新方案 | `SearchTeamMessagesQueryParameters` (KQL) | ~5-10s/query | Graph Search API，关键词搜索 |
+| 新方案 Q1/Q2 | `SearchTeamMessagesQueryParameters` (KQL) | ~5-10s/query | Graph Search API，关键词搜索 |
+| 新方案 Q3 | `ListChats` (topic filter) | ~10-15s | Graph API，元数据过滤，补 meeting chat |
 | 旧方案总计 | 2x Copilot + messages | ~60-100s | 需后台 agent |
-| **新方案总计** | **2x KQL 并行 + messages** | **~15-25s** | **内联执行即可** |
+| **新方案总计** | **3 查询并行 + messages** | **~20-30s** | **内联执行即可** |
