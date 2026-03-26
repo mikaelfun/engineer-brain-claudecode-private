@@ -1,0 +1,10 @@
+{
+  "id": "ISS-109",
+  "title": "UI Test验证结果未正确展示：agent最后一个text block覆盖结构化结果",
+  "description": "## 问题\n\n`/conductor:verify` 的 UI Test 结果面板只显示一段无关文字（如 \"That's the notification for the first...\"），而非结构化的 per-criterion 验证结果。\n\n## 根因\n\n1. **后端 `runAgentVerification()` 只保留最后一个 assistant text block** — `agentOutput = text` 每次覆盖，如果 agent 最后输出闲话就丢失前面的结构化结果\n2. **数据模型只有 `{ passed: boolean, output: string }`** — 没有 per-criterion 结构（criterion name / pass-fail / evidence）\n3. **前端忠实渲染 raw string** — `VerifyProgressPanel` 和 `Issues.tsx` 的 `VerifyResultPanel` 都只用 `<pre>` 展示 `output`\n\n## 涉及文件\n\n- `dashboard/src/routes/issues.ts` — `runAgentVerification()` + `parseAgentVerificationResult()`\n- `dashboard/src/agent/verify-session-manager.ts` — `VerifyResult` 类型定义\n- `dashboard/web/src/components/VerifyProgressPanel.tsx` — 前端展示\n- `dashboard/web/src/pages/Issues.tsx` — `VerifyResultPanel`\n- `dashboard/web/src/stores/issueTrackStore.ts` — store 类型\n\n## 建议修复方向\n\n1. 后端：拼接所有 assistant text blocks 而非只保留最后一个\n2. 后端：从 agent output 中解析 per-criterion 结构（criterion / passed / evidence）\n3. 数据模型：扩展 `uiTest` 为 `{ passed, output, criteria: Array<{name, passed, evidence}> }`\n4. 前端：渲染 criteria 列表（✅/❌ per row）而非 raw `<pre>` text",
+  "type": "bug",
+  "priority": "P1",
+  "status": "pending",
+  "createdAt": "2026-03-24T00:25:00.000Z",
+  "updatedAt": "2026-03-24T00:25:00.000Z"
+}

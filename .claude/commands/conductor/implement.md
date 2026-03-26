@@ -268,14 +268,21 @@ In `conductor/tracks/{trackId}/plan.md`:
 
 - Update header status to `[x] Complete`
 
-### 2a. Update Issue Status → `implemented`
+### 2a. Issue Status — DO NOT Write Directly
 
-If the track has an associated issue (`metadata.json` → `issueId`):
+**Issue status is DERIVED from track metadata** via `deriveIssueStatus()` in `conductor-reader.ts`.
+The Dashboard UI reads track `metadata.json` (status + verification fields) and derives the issue status automatically:
 
-- Read `issues/{issueId}.json`
-- Set `status: "implemented"` (**NOT** `done` — only `/conductor:verify` or `/conductor:verify --mark-done` can set `done`)
-- Update `updatedAt` timestamp
-- This indicates: code is complete, awaiting verification
+| Track metadata state | Derived issue status |
+|---------------------|---------------------|
+| `status: "in_progress"` | `in-progress` |
+| `status: "complete"` + no `verification` | `implemented` |
+| `status: "complete"` + `verification.status: "passed"/"skipped"` | `done` |
+| `status: "complete"` + `verification.status: "failed"` | `implemented` |
+
+**⚠️ Do NOT write `issues/{issueId}.json → status` directly** — the written value will be overwritten by `deriveIssueStatus()` at read time, causing confusion.
+
+After setting track `status: "complete"` in step 2, the issue automatically derives to `implemented`. To reach `done`, use `/conductor:verify` (step 5 below).
 
 ### 3. Documentation Sync Offer
 
@@ -309,11 +316,11 @@ After track completion, prompt the user to verify:
 ```
 Track implementation complete! Run verification?
 
-Verification will run unit tests + UI tests and update issue status to "done" if all pass.
+Verification will write to metadata.json → verification field, which derives issue status to "done".
 
 1. Yes, verify now → run /conductor:verify {trackId}
 2. Mark done (skip tests) → run /conductor:verify --mark-done {trackId}
-3. No, skip → leave issue as "implemented" (can verify later with /conductor:verify)
+3. No, skip → issue stays "implemented" (can verify later with /conductor:verify)
 ```
 
 ### 6. Completion Summary

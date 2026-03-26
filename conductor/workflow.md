@@ -354,10 +354,10 @@ await page.screenshot({ path: 'scripts/screenshots/<name>.png', fullPage: true }
 
 **每次实现任务完成后（包括 plan mode 清空上下文的情况），必须执行以下收尾检查：**
 
-1. **关联 Issue 状态同步** — 如果本次任务来源于某个 Issue（ISS-XXX），更新该 issue 的 status：
-   - 实现完成 + 测试通过 → `status: "done"`
-   - 实现完成但测试未通过 → `status: "in-progress"`（保持）
-   - 读取方式：检查 plan 文件中的 Source/Issue 引用，或检查 conductor track 的 spec.md
+1. **Issue 状态 — 不直接写** — Issue status 由 `deriveIssueStatus()` 从 track metadata 派生（`conductor-reader.ts`），**不要直接写 `issues/{issueId}.json → status`**。只需确保 track metadata 正确：
+   - Track `status: "complete"` → issue 派生为 `implemented`
+   - Track `verification.status: "passed"/"skipped"` → issue 派生为 `done`
+   - 直接写 issue JSON 的 status 会被派生值覆盖，造成混淆
 2. **Track metadata 同步** — 更新 `conductor/tracks/{trackId}/metadata.json` 的 status、tasks、updated 字段
 3. **tracks.md 同步** — 更新 `conductor/tracks.md` 表格中对应行的状态标记
 
@@ -368,7 +368,7 @@ await page.screenshot({ path: 'scripts/screenshots/<name>.png', fullPage: true }
 ## Post-Implementation Checklist
 - [ ] 单元测试文件已创建并通过
 - [ ] browser-test.mjs 已覆盖新页面/路由（如有 UI 变更）
-- [ ] 关联 Issue JSON 状态已更新
+- [ ] 关联 Issue JSON 状态已更新（注意：不直接写 status，由 track metadata 派生）
 - [ ] Track metadata.json 已更新
 - [ ] tracks.md 状态标记已更新
 ```

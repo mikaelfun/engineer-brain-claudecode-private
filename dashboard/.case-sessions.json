@@ -286,7 +286,7 @@
       "intent": "客户配置了inbound connector 的efskipips，里面包含了222.68.248.5，为什么还是没有追踪到实际来源ip",
       "status": "paused",
       "createdAt": "2026-03-23T03:18:14.823Z",
-      "lastActivityAt": "2026-03-23T03:24:21.244Z"
+      "lastActivityAt": "2026-03-24T01:37:30.916Z"
     },
     "b252b087-a4b3-4e36-9aaa-bb06dce0fc7c": {
       "sessionId": "b252b087-a4b3-4e36-9aaa-bb06dce0fc7c",
@@ -311,12 +311,39 @@
       "status": "paused",
       "createdAt": "2026-03-23T09:15:51.452Z",
       "lastActivityAt": "2026-03-23T09:25:06.887Z"
+    },
+    "f1d1a906-5a6c-4b2b-af84-62410b309d77": {
+      "sessionId": "f1d1a906-5a6c-4b2b-af84-62410b309d77",
+      "caseNumber": "2601290030000748",
+      "intent": "Spawn an email-drafter agent (read .claude/agents/email-drafter.md) for Case 2601290030000748.",
+      "status": "paused",
+      "createdAt": "2026-03-24T02:45:05.194Z",
+      "lastActivityAt": "2026-03-24T02:51:33.296Z"
+    },
+    "d19eeb1e-7a58-4f50-9c4a-ea326a71d4af": {
+      "sessionId": "d19eeb1e-7a58-4f50-9c4a-ea326a71d4af",
+      "caseNumber": "2603060030001353",
+      "intent": "Spawn an email-drafter agent (read .claude/agents/email-drafter.md) for Case 2603060030001353.",
+      "status": "paused",
+      "createdAt": "2026-03-24T03:15:28.583Z",
+      "lastActivityAt": "2026-03-24T03:21:47.813Z"
+    },
+    "6d96b9ee-2614-4c6a-a27c-9a3ed7640cc9": {
+      "sessionId": "6d96b9ee-2614-4c6a-a27c-9a3ed7640cc9",
+      "caseNumber": "2603190030000206",
+      "intent": "Spawn an email-drafter agent (read .claude/agents/email-drafter.md) for Case 2603190030000206.",
+      "status": "paused",
+      "createdAt": "2026-03-24T03:18:10.296Z",
+      "lastActivityAt": "2026-03-24T03:21:53.889Z"
     }
   },
   "caseIndex": {
     "2602130040001034": "ebb3be8a-3450-40ab-afdf-71c83219c9f7",
     "2603230030001221": "3b103501-fba2-4303-89a4-648dd45e6a02",
     "2603100030005863": "b252b087-a4b3-4e36-9aaa-bb06dce0fc7c",
-    "2603170030001139": "b97ed4bf-ba15-4d5c-a582-17c44453a829"
+    "2603170030001139": "b97ed4bf-ba15-4d5c-a582-17c44453a829",
+    "2601290030000748": "f1d1a906-5a6c-4b2b-af84-62410b309d77",
+    "2603060030001353": "d19eeb1e-7a58-4f50-9c4a-ea326a71d4af",
+    "2603190030000206": "6d96b9ee-2614-4c6a-a27c-9a3ed7640cc9"
   }
 }

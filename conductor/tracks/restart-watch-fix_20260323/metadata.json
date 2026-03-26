@@ -13,5 +13,9 @@
   "tasks": {
     "total": 9,
     "completed": 9
+  },
+  "verification": {
+    "status": "skipped",
+    "method": "manual"
   }
 }

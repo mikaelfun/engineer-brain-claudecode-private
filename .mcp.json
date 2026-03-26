@@ -1,8 +1,8 @@
 {
   "mcpServers": {
     "playwright": {
-      "command": "npx",
-      "args": ["@anthropic-ai/mcp-server-playwright"]
+      "command": "cmd",
+      "args": ["/c", "npx", "@playwright/mcp@latest"]
     },
     "icm": {
       "command": "C:\\Users\\fangkun\\AppData\\Roaming\\agency\\CurrentVersion\\agency.exe",
@@ -31,6 +31,18 @@
     "mail": {
       "command": "C:\\Users\\fangkun\\AppData\\Roaming\\agency\\CurrentVersion\\agency.exe",
       "args": ["mcp", "mail"]
+    },
+    "OfficeMCP": {
+      "command": "uvx",
+      "args": ["officemcp"]
+    },
+    "local-rag": {
+      "command": "npx",
+      "args": ["-y", "mcp-local-rag"],
+      "env": {
+        "BASE_DIR": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\data\\OneNote Export",
+        "MODEL_NAME": "jinaai/jina-embeddings-v2-base-zh"
+      }
     }
   }
 }

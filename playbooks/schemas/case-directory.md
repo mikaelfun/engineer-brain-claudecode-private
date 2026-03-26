@@ -20,7 +20,8 @@ ${casesRoot}/
 | `case-info.md` | Markdown | d365-case-ops | Case 快照（基本信息、联系人、Entitlement 等） |
 | `casehealth-meta.json` | JSON | caseworker / IR 脚本 | 巡检元数据（见 `schemas/meta-schema.md`） |
 | `inspection-YYYYMMDD.md` | Markdown | inspection-writer | 巡检摘要（见 `schemas/meta-schema.md`） |
-| `emails.md` | Markdown | d365-case-ops | 完整邮件历史（按时间倒序） |
+| `emails.md` | Markdown | d365-case-ops | 完整邮件历史（按时间倒序，D365 源） |
+| `emails-office.md` | Markdown | email-search | Outlook 邮件完整正文（按时间正序，Office Mail MCP 源，与 emails.md 互补） |
 | `notes.md` | Markdown | d365-case-ops | Note 历史（增量更新） |
 | `timing.json` | JSON | casework (Main Agent) | 各步骤执行耗时（见 `schemas/timing-schema.md`） |
 
