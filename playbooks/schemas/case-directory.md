@@ -19,7 +19,8 @@ ${casesRoot}/
 |------|------|--------|------|
 | `case-info.md` | Markdown | d365-case-ops | Case 快照（基本信息、联系人、Entitlement 等） |
 | `casehealth-meta.json` | JSON | caseworker / IR 脚本 | 巡检元数据（见 `schemas/meta-schema.md`） |
-| `inspection-YYYYMMDD.md` | Markdown | inspection-writer | 巡检摘要（见 `schemas/meta-schema.md`） |
+| `case-summary.md` | Markdown | inspection-writer | 增量叙事摘要（问题描述/排查进展/关键发现/风险） |
+| `inspection-YYYYMMDD.md` | Markdown | ~~inspection-writer~~ | **废弃（legacy，保留不删）**。已由 `case-summary.md` + `todo/*.md` 替代 |
 | `emails.md` | Markdown | d365-case-ops | 完整邮件历史（按时间倒序，D365 源） |
 | `emails-office.md` | Markdown | email-search | Outlook 邮件完整正文（按时间正序，Office Mail MCP 源，与 emails.md 互补） |
 | `notes.md` | Markdown | d365-case-ops | Note 历史（增量更新） |
@@ -40,7 +41,7 @@ ${casesRoot}/
 | `logs/` | subagent 执行日志（每个 agent 一个 .log 文件） | 各 subagent 自动写入 |
 | `context/` | 用户补充的上下文 | 用户交互 / Main Agent |
 | `kb/` | 关单时生成的 KB 文章 | Main Agent |
-| `todo/` | Todo 文件 | inspection-writer |
+| `todo/` | Todo 文件 | generate-todo.sh |
 
 ## context/ 目录（用户补充上下文）
 
@@ -49,8 +50,9 @@ ${casesRoot}/
 ```text
 context/
   user-inputs.jsonl      # 用户补充的每条信息（JSONL，append-only）
-  case-summary.md        # 结构化 case 摘要（由 agent 维护）
 ```
+
+> **注意**：`case-summary.md` 已从 `context/` 提升到 Case 根目录，由 inspection-writer skill 维护。
 
 ### user-inputs.jsonl
 
@@ -61,14 +63,14 @@ context/
 
 type 枚举: `phone-call` / `meeting` / `observation` / `user-note`
 
-### case-summary.md
+### ~~case-summary.md~~（已提升到根目录）
 
-结构化 case 摘要，每次 casework 完成后自动更新：
+`case-summary.md` 现在位于 Case 根目录（非 context/ 子目录），提升可见性。
+由 inspection-writer skill 维护，包含：
 - 问题描述
-- 排查进展
+- 排查进展（增量追加）
 - 关键发现
-- 待解决项
-- 用户补充信息
+- 风险评估
 
 作为 resume 时的上下文锚点注入 systemPrompt。
 

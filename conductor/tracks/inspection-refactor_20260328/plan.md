@@ -1,0 +1,138 @@
+# Implementation Plan: Inspection 重构
+
+**Track ID:** inspection-refactor_20260328
+**Spec:** [spec.md](./spec.md)
+**Created:** 2026-03-28
+**Status:** [ ] Not Started
+
+## Overview
+
+分 3 阶段：(1) 创建规则化 todo 脚本 + 文档更新 (2) 重写 SKILL 流程 (3) Dashboard 适配。核心改动是把 casework Step 4 从「LLM 全量生成 inspection + todo」变为「增量更新 case-summary + bash 生成 todo」。
+
+## Phase 1: 规则化 Todo 脚本 + Schema 更新
+
+创建不依赖 LLM 的 todo 生成脚本，更新目录 schema 文档。
+
+### Tasks
+
+- [x] Task 1.1: 创建 `skills/d365-case-ops/scripts/generate-todo.sh`
+  - 输入：`$1` = caseDir 绝对路径
+  - 读取 `casehealth-meta.json`（用 bash + python/node 解析 JSON，或纯 bash grep/sed）
+  - 按 spec 中的规则矩阵生成 todo 文件到 `{caseDir}/todo/YYMMDD-HHMM.md`
+  - 输出到 stdout：`TODO_OK|red=N,yellow=N,green=N`（供 casework 日志用）
+  - 规则矩阵：
+    - 🔴：`actualStatus == "new" && irSla.status != "Succeeded"` → IR SLA 未完成；`compliance.entitlementOk == false` → Entitlement 异常
+    - 🟡：`pending-customer && days >= 3` → follow-up；`pending-customer && days >= 5` → 已 3 次 follow-up 未回复，考虑关单；`ready-to-close` → closure email
+    - ✅：`irSla.status == "Succeeded"` → IR 已完成；`pending-customer && days < 3` → 等待客户；`pending-pg` → 等待 PG；`researching` → 排查中
+- [x] Task 1.2: 更新 `playbooks/schemas/case-directory.md`
+  - `inspection-YYYYMMDD.md` 标记为 **废弃（legacy，保留不删）**
+  - `case-summary.md` 从 `context/` 提升到 caseDir 根目录，角色：增量叙事摘要
+  - `todo/*.md` 写入者从 `inspection-writer` 改为 `generate-todo.sh`
+  - 删除 `context/case-summary.md` 的定义（已提升到根目录）
+
+### Verification
+
+- [x] 用现有 case 2603260030005229 的 meta.json 测试 generate-todo.sh，确认输出格式和规则正确
+
+## Phase 2: SKILL 流程重写
+
+重写 inspection-writer SKILL + casework Step 4。
+
+### Tasks
+
+- [ ] Task 2.1: 重写 `.claude/skills/inspection-writer/SKILL.md`
+  - 更新 skill 描述为「case-summary 增量更新 + todo 规则化生成」
+  - 新流程：
+    1. 读取 `case-summary.md`（如存在）+ `casehealth-meta.json`
+    2. 判断是否需要更新 summary：
+       - 文件不存在 → 读 case-info + emails + notes + teams → LLM 生成完整 summary（用 spec 中定义的格式模板）
+       - CHANGED（有新数据）→ 读新增内容 → LLM 用 Edit 追加「排查进展」条目 + 按需更新「风险」
+       - NO_CHANGE → 跳过 summary
+    3. 调用 `bash generate-todo.sh "{caseDir}"` 生成 todo
+    4. 更新 meta.lastInspected（用 Edit 工具）
+  - case-summary.md 格式模板（首次生成用）：
+    ```markdown
+    # Case Summary — {caseNumber}
+
+    ## 问题描述
+    {一句话}
+
+    ## 排查进展
+    - [{date}] {事件}
+
+    ## 关键发现
+    - {发现}
+
+    ## 风险
+    - {评估}
+    ```
+- [ ] Task 2.2: 更新 `.claude/skills/casework/SKILL.md` Step 4
+  - 快速路径（NO_CHANGE + case-summary.md 已存在）：
+    - 只调 `generate-todo.sh` + `timing.sh`，跳过 LLM
+    - 不需要预读 inspection-writer/SKILL.md
+  - 快速路径（NO_CHANGE + case-summary.md 不存在）：
+    - 按 inspection-writer/SKILL.md 首次生成
+  - 正常流程（CHANGED）：
+    - 按 inspection-writer/SKILL.md 增量更新
+  - 更新 Bash 调用次数预估表：快速路径从 3 次 → 3 次（但省去 LLM 思考时间）
+
+### Verification
+
+- [ ] 检查 SKILL.md 语法正确，流程逻辑无矛盾
+
+## Phase 3: Dashboard 适配 + 收尾
+
+适配 Dashboard 读取新文件，更新引用路径。
+
+### Tasks
+
+- [ ] Task 3.1: 后端 — 更新 `dashboard/src/routes/cases.ts`
+  - `GET /api/cases/:id/inspection` 端点（L288-321）：
+    - 优先读 `case-summary.md`
+    - fallback 读 `inspection-*.md`（兼容旧数据）
+    - 返回结构增加 `legacy: boolean` 字段
+- [ ] Task 3.2: 后端 — 更新 `dashboard/src/agent/case-session-manager.ts`
+  - L425-436：路径从 `context/case-summary.md` → `case-summary.md`（caseDir 根目录）
+  - L660：step prompt 描述更新（inspection-writer → case-summary + todo）
+  - L795-802：patrol lastInspected 逻辑保持不变
+- [ ] Task 3.3: 前端 — 更新 `dashboard/web/src/pages/CaseDetail.tsx`
+  - InspectionTab → 改名 SummaryTab（或保留组件名只改 label）
+  - Tab label 从 `Inspection` 改为 `Summary`，icon 改为 📋
+  - 保留空状态提示
+- [ ] Task 3.4: 前端 — 更新 action labels
+  - `web/src/components/CaseAIPanel.tsx` L422：label `Inspection` → `Summary`
+  - `web/src/components/session/SessionMessageList.tsx` L159：action label 更新
+  - `web/src/api/hooks.ts`：hook 名和端点保持不变（后端已兼容）
+
+### Verification
+
+- [ ] Dashboard Case Detail 页面正常渲染 case-summary 内容
+- [ ] 旧 inspection 文件仍可 fallback 显示（legacy=true）
+
+## Verification Plan
+
+| # | Acceptance Criterion | Test Type | Test Steps |
+|---|---------------------|-----------|------------|
+| 1 | generate-todo.sh 规则矩阵正确 | API | 用 meta.json 测试各种 status+days 组合，assert stdout 输出 |
+| 2 | case-summary NO_CHANGE 跳过 | Skip | Backend-only，casework 运行日志验证 |
+| 3 | case-summary CHANGED 增量追加 | Skip | Backend-only，casework 运行日志验证 |
+| 4 | casework 快速路径无 LLM | Skip | Backend-only，timing.json 验证 |
+| 5 | Dashboard Summary tab 渲染 | Visual | 导航到 Case Detail → screenshot → 验证 tab label + 内容 |
+| 6 | 旧 inspection fallback | API | GET /api/cases/:id/inspection（无 case-summary 的 case）→ assert legacy=true |
+
+**Test Type Legend:**
+- **Interaction** — Playwright clicks, form fills, state assertions
+- **Visual** — Navigate + screenshot + visual inspection
+- **API** — curl/fetch endpoint + assert response
+- **Skip** — Backend-only or covered by unit tests
+
+## Post-Implementation Checklist
+
+- [ ] 单元测试文件已创建/更新并通过
+- [ ] 关联 Issue JSON 状态已更新为 `implemented`（非 `done`，需 verify 后才可标 `done`）
+- [ ] Track metadata.json 已更新
+- [ ] tracks.md 状态标记已更新
+
+---
+
+_Generated by Conductor. Tasks will be marked [~] in progress and [x] complete._

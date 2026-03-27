@@ -91,3 +91,4 @@
 | [x] | conductor-verify_20260323 | /conductor:verify CLI Command | 2026-03-23 | 2026-03-23 |
 | [x] | patrol-progress-ui_20260327 | Dashboard Patrol 实时进度展示 | 2026-03-27 | 2026-03-27 |
 | [x] | patrol-backend-fix_20260327 | Patrol 后端重构 — 调度+预热+per-case processCaseSession | 2026-03-27 | 2026-03-27 |
+| [~] | inspection-refactor_20260328 | Inspection 重构 — case-summary + 规则化 todo | 2026-03-28 | 2026-03-28 |

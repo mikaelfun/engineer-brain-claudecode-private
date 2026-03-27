@@ -1,0 +1,17 @@
+{
+  "id": "inspection-refactor_20260328",
+  "title": "Inspection 重构 — case-summary + 规则化 todo",
+  "type": "refactor",
+  "status": "in_progress",
+  "issueId": "ISS-113",
+  "created": "2026-03-28T02:00:00+08:00",
+  "updated": "2026-03-28T02:00:00+08:00",
+  "phases": {
+    "total": 3,
+    "completed": 0
+  },
+  "tasks": {
+    "total": 8,
+    "completed": 0
+  }
+}
