@@ -13,5 +13,14 @@
   "tasks": {
     "total": 8,
     "completed": 8
+  },
+  "verification": {
+    "status": "passed",
+    "method": "auto",
+    "result": {
+      "unitTest": { "success": true, "output": "15 test files, 240 tests passed (backend 7 files/140 tests + frontend 8 files/100 tests)" },
+      "uiTest": { "success": true, "output": "generate-todo.sh 6 rule matrix scenarios passed; Dashboard Summary tab renders correctly with legacy fallback; action labels updated to Summary" },
+      "verifiedAt": "2026-03-28T00:10:00+08:00"
+    }
   }
 }
