@@ -7,124 +7,166 @@ allowed-tools:
   - Glob
   - Grep
   - Agent
-  - mcp__teams__SearchTeamsMessages
-  - mcp__teams__ListChatMessages
   - mcp__icm__get_incident_details_by_id
   - mcp__icm__get_ai_summary
 ---
 
 # /casework — Case 全流程处理
 
-对单个 Case 执行完整的自动化处理流程。本 skill 是**纯编排器**——各步骤的具体执行逻辑定义在独立 skill 文件中。
+混合编排器。重型步骤 spawn Agent（context 隔离 + 并行），轻型步骤内联执行（省 spawn 开销）。
 
 ## 参数
-- `$ARGUMENTS` — Case 编号（如 `2603100030005863`）
-- 可选标记 `--skip-data-refresh`：跳过 Step 2b（data-refresh），用于 patrol 已预先完成数据拉取的场景
+- `$ARGUMENTS` — Case 编号
+- 可选 `--skip-data-refresh`：跳过 data-refresh（patrol 已预先拉取）
+
+## 规范
+- **日志** append 到 `{caseDir}/logs/casework.log`，格式 `[YYYY-MM-DD HH:MM:SS] STEP {n} {START|OK|FAIL|SKIP} | {描述}`
+- **时间戳** `date +%s > "{caseDir}/logs/.t_{stepName}"`，**禁止**为日志或时间戳单独发 Bash
+- **Bash 健壮性**：变量赋值**必须用换行独占一行**（`\n`），❌ 不能用 `;` 和后续命令放同一行（Git Bash 中 `;` 赋值会被 `|` pipe 静默吞掉）。命令间用 `;` 分隔（非 `&&`）防短路。变量不跨 Bash 调用保留。示例：
+  ```bash
+  CD="/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain"
+  CASE_DIR="$CD/cases/active/2603260030005229"
+  date +%s > "$CASE_DIR/logs/.t_xxx" ; pwsh ... 2>&1 | tail -1
+  ```
+- **路径格式**：本机 Bash 为 Git Bash，路径**必须**用 POSIX 格式 `/c/Users/...`。❌ `C:\Users\...` ❌ `C:/Users/...` — 这两种格式在 `>` 重定向中会失败。`config.json` 的 `casesRoot` 为相对路径时，先 `cd` 到项目根再拼接，或用 `$(cd /c/...; pwd)` 解析为绝对路径
+- **调用计数**：Main Agent 在整个 casework 流程中累计 `bashCalls`（Bash 工具调用次数）、`toolCalls`（所有工具调用次数，含 Read/Glob/Grep/Edit/Agent/Bash/MCP）、`agentSpawns`（Agent 工具 spawn 次数），最后传给 timing 脚本
 
 ## 执行步骤
 
-### 日志规范
+### Step 1. Changegate + 分路
 
-每个 step 执行前后 append 到 `{caseDir}/logs/casework.log`。
-格式：`[YYYY-MM-DD HH:MM:SS] STEP {n} {START|OK|FAIL|SKIP} | {描述}`
-用 Bash echo append 写入。`{caseDir}/logs/` 不存在时先创建。
-与 timing.json 互补：timing.json 是结构化耗时，casework.log 是可读执行轨迹。
+`caseDir` 直接从项目根拼接：`{projectRoot}/cases/active/{caseNumber}`（`casesRoot` 基本不变，无需每次读 `config.json`）。首次 Bash 一并完成 mkdir + `.t_start` + changegate，省去独立 init 步骤。
 
-### Step 1. 读取配置
-读取 `config.json` 获取 `casesRoot`
-设置 `caseDir = {casesRoot}/active/{caseNumber}/`（使用绝对路径）
-
-确保 case 目录存在：
 ```bash
-mkdir -p "{caseDir}"
+CD="{projectRoot}"
+CASE_DIR="$CD/cases/active/{caseNumber}"
+mkdir -p "$CASE_DIR/logs"
+date +%s > "$CASE_DIR/logs/.t_start"
+date +%s > "$CASE_DIR/logs/.t_changegate_start"
+pwsh -NoProfile -File "$CD/skills/d365-case-ops/scripts/check-case-changes.ps1" \
+  -TicketNumber {caseNumber} -OutputDir "$CD/cases/active" 2>&1 | tail -1
+date +%s > "$CASE_DIR/logs/.t_changegate_end"
 ```
 
-**⏱ 记录流程开始时间：**
-用 Bash 执行 `pwsh -NoProfile -c "(Get-Date).ToString('o')"` 获取 ISO 8601 时间戳，存入变量 `t0_start`。
+`--skip-data-refresh` 时跳过 changegate，记日志 `STEP 1 SKIP | --skip-data-refresh`。
 
-### Step 2a. 内联执行 teams-search
-**读取 `.claude/skills/teams-search/SKILL.md` 获取完整步骤并执行。**
-- 传入 caseNumber、caseDir 绝对路径
-- KQL 并行搜索，通常 ~15-25s 完成
-- 结果通过 `write-teams.ps1` 写入 `{caseDir}/teams/`
-⏱ 记录 `t_teamsSearch_start` / `t_teamsSearch_end`
+---
 
-### Step 2b. 内联执行 data-refresh
-**如果参数包含 `--skip-data-refresh`**：跳过此步骤，记录 `STEP 2b SKIP | data-refresh (pre-fetched by patrol)`。
-patrol 模式下数据已在阶段 1 串行拉取完毕，无需重复执行。
+#### 路径 A：NO_CHANGE → 快速路径
 
-**否则**：读取 `.claude/skills/data-refresh/SKILL.md` 获取完整步骤并执行。
-⏱ 记录 `t1_dataRefresh_start` / `t1_dataRefresh_end`
+单次 Bash 完成 DR-skip + Teams/compliance/judge/routing 全部缓存检查（⏱ 包裹 `.t_fastpath_start/end`）：
 
-### Step 3a. 内联执行 compliance-check
-**读取 `.claude/skills/compliance-check/SKILL.md` 获取完整步骤并执行。**
-⏱ 记录 `t2_compliance_start`
-
-### Step 3b. 内联执行 status-judge
-**读取 `.claude/skills/status-judge/SKILL.md` 获取完整步骤并执行。**
-⏱ 记录 `t2_compliance_end`
-
-### Step 4. 按 actualStatus 路由执行
-
-**⏱ 记录 `t3_routing_start`**
-
-| actualStatus | 执行的 Agent | 说明 |
-|---|---|---|
-| `new` | troubleshooter → email-drafter | 新 Case 全流程 |
-| `pending-engineer` | troubleshooter → email-drafter | 排查 + 回复 |
-| `pending-customer` | email-drafter（仅 daysSinceLastContact ≥ 3） | 超期才 follow-up |
-| `pending-pg` | （不启动额外 agent） | 仅记录 |
-| `researching` | troubleshooter | 继续排查 |
-| `ready-to-close` | email-drafter (closure-confirm) | 先确认客户是否同意关单 |
-
-**关键**：pending-customer 时**不运行** troubleshooter。
-**关键**：pending-pg 时不启动额外 agent，只记录当前状态。
-
-每个 subagent 的 prompt 中必须包含：
-- caseNumber、caseDir 绝对路径
-- "请先读取 `.claude/agents/{agent-name}.md` 获取完整执行步骤"
-
-**⏱ 记录各 subagent 的 start/end 时间。未执行的记入 `skippedSteps`。**
-**⏱ 记录 `t3_routing_end`**
-
-### Step 4.5. 检查 teams-search 结果
-
-teams-search 已在 Step 2a 内联完成，检查结果：
-- 检查 `{caseDir}/teams/` 下是否有 `.md` 文件（排除 `_` 开头的元文件）
-- 有文件 → `teamsSearchTimedOut = false`，正常使用 teams 数据
-- 无文件（缓存检查跳过或搜索无结果） → 跳过 teams 数据
-- 将结果传递给 Step 5 inspection-writer
-
-### Step 5. 内联执行 inspection-writer
-**读取 `.claude/skills/inspection-writer/SKILL.md` 获取完整步骤并执行。**
-- teams-search 现在是内联同步执行，不再有超时问题
-⏱ 记录 `t4_inspection_start` / `t4_inspection_end`
-
-### Step 5.5. 写入时间统计
-
-**⏱ 记录 `t0_end`（流程结束时间）**
-
-用之前记录的各步骤时间戳，通过 pwsh 计算耗时并写入 `{caseDir}/timing.json`：
-
-```json
-{
-  "caseworkStartedAt": "{t0_start}",
-  "caseworkCompletedAt": "{t0_end}",
-  "totalSeconds": 180,
-  "steps": {
-    "dataRefresh": { "startedAt": "...", "completedAt": "...", "seconds": 60 },
-    "teamsSearch": { "startedAt": "...", "completedAt": "...", "seconds": 45 },
-    "complianceCheck": { "startedAt": "...", "completedAt": "...", "seconds": 30 }
-  },
-  "skippedSteps": ["troubleshooter", "emailDrafter"],
-  "errors": []
-}
+```bash
+date +%s > "{caseDir}/logs/.t_fastpath_start" ; bash skills/d365-case-ops/scripts/casework-fast-path.sh "{caseDir}" "{changegateDetail}" ; date +%s > "{caseDir}/logs/.t_fastpath_end"
 ```
+
+- `FAST_PATH_OK|status=...,days=...` → **跳到 Step 4**。仅预读 `casehealth-meta.json` + `case-summary.md`（如存在）
+- `FAST_PATH_BREAK|teams=...,judge=...` → 回退路径 B，从 BREAK 的步骤开始
+
+---
+
+#### 路径 B：CHANGED 或 FAST_PATH_BREAK → 正常流程
+
+**B1. spawn data-refresh（仅 CHANGED 时）**
+
+```
+subagent_type: "data-refresh"
+description: "data-refresh {caseNumber}"
+run_in_background: true
+prompt: |
+  Case {caseNumber}，caseDir={caseDir}（绝对路径），casesRoot={casesRoot}。
+  请先读取 .claude/skills/data-refresh/SKILL.md 获取完整执行步骤，然后执行。
+  ⚠️ casework changegate 已预热浏览器并缓存 incidentId，跳过 Step 0a 和 0b。
+  ⏱ 第一个 Bash 调用中写 date +%s > "{caseDir}/logs/.t_dataRefresh_start"
+  ⏱ 最后一个 Bash 调用中写 date +%s > "{caseDir}/logs/.t_dataRefresh_end"
+  完成后汇报各步骤成功/失败状态。
+```
+
+**B2. Teams 预检 + 按需 spawn teams-search + 并行预读（同一条消息）**
+
+> 快速路径已确认 Teams 缓存有效时跳过。
+
+Teams 缓存检查逻辑同 `casework-fast-path.sh` 中 Teams 段。过期/无缓存时 spawn：
+
+```
+subagent_type: "teams-search"
+description: "teams-search {caseNumber}"
+run_in_background: true
+prompt: |
+  Case {caseNumber}，caseDir={caseDir}（绝对路径）。
+  contactName={contactName}，contactEmail={contactEmail}。
+  请先读取 .claude/skills/teams-search/SKILL.md 获取完整执行步骤，然后执行。
+  ⏱ 第一个 Bash 调用中写 date +%s > "{caseDir}/logs/.t_teamsSearch_start"
+  ⏱ 最后一个 Bash 调用中写 date +%s > "{caseDir}/logs/.t_teamsSearch_end"
+```
+
+同一消息并行预读：`compliance-check/SKILL.md`、`status-judge/SKILL.md`、`casehealth-meta.json`、`case-summary.md`（如存在）、`playbooks/rules/case-lifecycle.md`。后续不再重复 Read。
+
+**B3. compliance-check**：按 compliance-check/SKILL.md 执行。⏱ `.t_compliance_start/end` 合并到工作命令。
+
+**B4. 等待后台 agent → status-judge**
+
+> ⚠️ **必须等 data-refresh + teams-search 都完成再执行 judge**（防止 statusJudgedAt < _cache-epoch 导致下次误判）。等待用 `TaskOutput`（timeout 180s），若 compaction 丢失 task ID，回退检查 `.t_*_end` 文件存在性（最多 3×10s）。
+
+等待完成后，status-judge 缓存预检逻辑同 `casework-fast-path.sh` 中 judge 段（额外在开头写 `.t_agentWait_end` + `.t_statusJudge_start`）。
+- `JUDGE_CACHE_VALID` → 跳过，用 meta 已有 actualStatus/days
+- `JUDGE_CACHE_MISS` → 按 status-judge/SKILL.md 执行
+
+**B5. 按 actualStatus 路由** ⏱ `.t_routing_start/end`
+
+| actualStatus | 执行 |
+|---|---|
+| `new` / `pending-engineer` | troubleshooter → email-drafter |
+| `pending-customer` | email-drafter（仅 days ≥ 3） |
+| `pending-pg` | 无额外 agent，仅记录 |
+| `researching` | troubleshooter |
+| `ready-to-close` | email-drafter (closure) |
+
+spawn 时指定 `subagent_type: "troubleshooter"` / `"email-drafter"`，提示读取 `.claude/agents/{name}.md`。
+
+### Step 4. case-summary + todo + timing.json
+
+按 inspection-writer/SKILL.md 执行。分三种路径：
+
+**快速路径（NO_CHANGE + case-summary.md 已存在）**：
+- 只调 `bash generate-todo.sh "{caseDir}"` 生成 todo（~1s）
+- 跳过 case-summary（无变化）
+- 调 `bash casework-timing.sh` 生成 timing.json
+- 不需要预读 inspection-writer/SKILL.md
+- Edit 更新 meta `lastInspected`
+
+**快速路径（NO_CHANGE + case-summary.md 不存在）**：
+- 按 inspection-writer/SKILL.md Step 2a 首次生成 case-summary.md
+- 调 `bash generate-todo.sh "{caseDir}"` 生成 todo
+- 调 `bash casework-timing.sh` 生成 timing.json
+- Edit 更新 meta `lastInspected`
+
+**正常流程（CHANGED）**：
+- 按 inspection-writer/SKILL.md Step 2a/2b 生成或增量更新 case-summary.md
+- 调 `bash generate-todo.sh "{caseDir}"` 生成 todo
+- 调 `bash casework-timing.sh` 生成 timing.json
+- Edit 更新 meta `lastInspected`
+
+⏱ Bash 开头 `date +%s > "{caseDir}/logs/.t_inspection_start"`。timing 调用：
+
+```bash
+# generate-todo + timing 合并为单次 Bash：
+date +%s > "{caseDir}/logs/.t_inspection_start"
+bash skills/d365-case-ops/scripts/generate-todo.sh "{caseDir}"
+bash skills/d365-case-ops/scripts/casework-timing.sh "{caseDir}" "{skippedStepsJson}" "{errorsJson}" '{"bash":N,"tools":N,"agents":N}'
+```
+
+> `N` 由 Main Agent 在整个流程中累计替换。`bash` = Bash 工具调用次数，`tools` = 所有工具调用次数（Bash+Read+Glob+Grep+Edit+Agent+MCP），`agents` = Agent spawn 次数。
 
 ### Step 6. 展示结果
-读取最新 `{caseDir}/todo/` 文件，以 🔴🟡✅ 格式展示 Todo 汇总。
+读取最新 `{caseDir}/todo/` 文件，🔴🟡✅ 格式展示 Todo 汇总 + timing 统计。
 
-读取 `{caseDir}/timing.json`，在 Todo 汇总后展示耗时统计：
-```
-⏱ 总耗时 Xm Xs | data-refresh Xs | teams-search Xs | compliance Xs | ...
-```
+---
+
+## Bash 调用次数
+
+| 场景 | 调用 | 预计耗时 |
+|------|------|----------|
+| **快速路径**（全缓存 + summary 存在） | 3 次：changegate + fastpath + todo+timing | ~15-30s |
+| **快速路径**（全缓存 + summary 不存在） | 3 次：changegate + fastpath + todo+timing + Write summary | ~30-45s |
+| **正常流程**（有变化） | 5-8 次：changegate + B2~B5 + summary+todo+timing | ~120-240s |

@@ -40,7 +40,7 @@
 
 ### Tasks
 
-- [ ] Task 2.1: 重写 `.claude/skills/inspection-writer/SKILL.md`
+- [x] Task 2.1: 重写 `.claude/skills/inspection-writer/SKILL.md`
   - 更新 skill 描述为「case-summary 增量更新 + todo 规则化生成」
   - 新流程：
     1. 读取 `case-summary.md`（如存在）+ `casehealth-meta.json`
@@ -66,7 +66,7 @@
     ## 风险
     - {评估}
     ```
-- [ ] Task 2.2: 更新 `.claude/skills/casework/SKILL.md` Step 4
+- [x] Task 2.2: 更新 `.claude/skills/casework/SKILL.md` Step 4
   - 快速路径（NO_CHANGE + case-summary.md 已存在）：
     - 只调 `generate-todo.sh` + `timing.sh`，跳过 LLM
     - 不需要预读 inspection-writer/SKILL.md
@@ -78,7 +78,7 @@
 
 ### Verification
 
-- [ ] 检查 SKILL.md 语法正确，流程逻辑无矛盾
+- [x] 检查 SKILL.md 语法正确，流程逻辑无矛盾
 
 ## Phase 3: Dashboard 适配 + 收尾
 

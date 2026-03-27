@@ -1,126 +1,106 @@
 ---
-description: "汇总写 inspection 报告 + todo。可独立调用 /inspection-writer {caseNumber}，也被 casework 内联执行。"
+description: "case-summary 增量更新 + 规则化 todo 生成。可独立调用 /inspection-writer {caseNumber}，也被 casework 内联执行。"
 allowed-tools:
   - Bash
   - Read
   - Write
+  - Edit
   - Glob
   - Grep
 ---
 
-# /inspection-writer — Inspection 汇总
+# /inspection-writer — Case Summary + Todo
 
-汇总 Case 的所有产出，生成 inspection 报告和 todo。
+增量更新 case-summary.md + 规则化生成 todo（generate-todo.sh）。
 
 ## 参数
-- `$ARGUMENTS` — Case 编号（如 `2603100030005863`）
-- 可选上下文变量（由 casework 传入）：
-  - `teamsSearchTimedOut`：teams-search 是否超时
+- `$ARGUMENTS` — Case 编号
+- 上下文变量（casework 传入）：
+  - `changePath` — `NO_CHANGE` | `CHANGED`
+  - `caseDir` — Case 目录绝对路径
 
 ## 配置读取
-```
-读取 config.json 获取 casesRoot
-设置 caseDir = {casesRoot}/active/{caseNumber}/（使用绝对路径）
-```
+读取 `config.json` 获取 `casesRoot`，设置 `caseDir = {casesRoot}/active/{caseNumber}/`（绝对路径）。
 
 ## 执行步骤
 
-### 1. 读取所有产出
-读取 case 目录下所有可用文件：
-- `case-info.md`、`emails.md`、`notes.md`
-- `casehealth-meta.json`
-- `teams/*.md`（聊天记录）
-- `analysis/*.md`、`drafts/*.md`（如有）
-- `timing.json`（可能尚未生成）
+### 1. 判断 case-summary.md 更新策略
 
-### 2. 写 Inspection 报告
+读取 `{caseDir}/case-summary.md`（如存在）+ `{caseDir}/casehealth-meta.json`。
 
-**文件名必须含日期**，用 Bash 写：
-```bash
-TODAY=$(date '+%Y%m%d')
-cat > "{caseDir}/inspection-${TODAY}.md" << 'EOF'
-# Case Inspection — {caseNumber}
-...
-EOF
-```
+**决策树**：
+- **NO_CHANGE + case-summary.md 已存在** → 跳过 summary，直接到 Step 3
+- **NO_CHANGE + case-summary.md 不存在** → 走 Step 2a（首次生成）
+- **CHANGED + case-summary.md 不存在** → 走 Step 2a（首次生成）
+- **CHANGED + case-summary.md 已存在** → 走 Step 2b（增量追加）
 
-❌ 禁止写 `inspection.md`（无日期）。
+### 2a. 首次生成 case-summary.md
 
-报告内容：
-- 基本信息表（Case Number / Title / Severity / Status / Customer / Case Age）
-- 联系人信息（Contact Name / Email / Phone / Preferred Method）— 从 case-info.md 的 contact 字段读取
-- 合规状态（IR / FDR / FWR / Entitlement / 21v）
-- 最新动态（最后几封邮件摘要）
-- 风险提示
-- 本次未完成部分（如有超时/跳过的步骤，见下方说明）
-- 执行统计（如 timing.json 已存在）
+读取：`case-info.md`、`emails.md`、`notes.md`、`teams/*.md`（如有）。
 
-#### 「本次未完成部分」section
-当 casework 流程中有步骤超时或跳过时（如 teams-search 3 分钟超时），在 inspection 中添加：
+用 Write 工具生成完整 summary，格式：
 
 ```markdown
-## 本次未完成部分
-- ⏳ Teams 搜索超时（3min），使用本地缓存 / 无缓存已跳过
+# Case Summary — {caseNumber}
+
+## 问题描述
+{一句话描述客户问题}
+
+## 排查进展
+- [{YYYY-MM-DD}] {事件1}
+- [{YYYY-MM-DD}] {事件2}
+
+## 关键发现
+- {发现1}
+
+## 风险
+- {基于 actualStatus + days + SLA 的风险评估}
 ```
 
-- casework 会通过上下文变量（如 `teamsSearchTimedOut`）传递超时信息
-- 没有未完成步骤时 **不写此 section**
-- 此 section 位于「风险提示」之后、「执行统计」之前
+**规则**：
+- 「问题描述」从 case-info title + 首封邮件提取，一句话
+- 「排查进展」按时间线梳理关键事件（邮件往来、电话、Note 记录等），每条一行
+- 「关键发现」提取诊断结论（来自 analysis/ 或邮件中的技术内容）
+- 「风险」评估 SLA、客户响应、是否需要升级等
 
-### 3. 生成 Todo
+### 2b. 增量追加 case-summary.md
+
+仅读取**新增内容**（自上次 inspection 后的新邮件、notes、teams 消息）。
+
+用 **Edit 工具**追加：
+1. 在「排查进展」末尾追加 1-2 行新事件
+2. 如有新发现，追加到「关键发现」
+3. 如风险状况变化，更新「风险」section
+
+**不要**重写整个文件，只 Edit 追加/修改变化部分。
+
+### 3. 规则化生成 todo
+
+调用 bash 脚本：
 
 ```bash
-TODONAME=$(date '+%y%m%d-%H%M')
-mkdir -p "{caseDir}/todo"
-cat > "{caseDir}/todo/${TODONAME}.md" << 'EOF'
-# Todo — {caseNumber} — {YYYY-MM-DD HH:MM}
-
-## 🔴 需人工决策
-- [ ] ...
-
-## 🟡 待确认执行
-- [ ] ...
-
-## ✅ 仅通知
-- [x] ...
-EOF
+bash skills/d365-case-ops/scripts/generate-todo.sh "{caseDir}"
 ```
 
-Todo 分级：
-- 🔴 需人工决策：需用户判断的事项
-- 🟡 待确认执行：D365 写操作（Note/Labor/SAP）
-- ✅ 仅通知：已完成的步骤
-
-#### 🟡 SAP 修改项生成规则
-
-**SAP = Support Area Path**（产品技术分类路径），格式如 `Azure\Compute\Virtual Machines\Management`。
-
-**仅在以下场景生成 "修改 SAP" Todo 项：**
-- case-info.md 中的 Service Name / Support Topic 与实际问题的产品/技术方向不匹配
-- 需要将 Support Area Path 从一个产品分类路径变更到另一个
-
-**示例（正确）：**
-```
-- [ ] 修改 SAP: Support Topic → Azure\Storage\Blob\Connectivity
-```
-
-**❌ 以下字段变更绝不属于 SAP 修改（禁止生成 "修改 SAP" Todo）：**
-- Status（如 Problem Solved / Active / Resolved）— 这是 Case 状态字段
-- Severity（如 A / B / C）— 这是严重级别
-- Priority（如 P1 / P2）— 这是优先级
-- Assigned To — 这是分配字段
-- 任何非 Support Area Path 的字段
-
-**错误示例（绝对禁止）：**
-```
-- [ ] 修改 SAP: Status → Problem Solved     ← ❌ Status 不是 SAP
-- [ ] 修改 SAP: Severity → C                ← ❌ Severity 不是 SAP
-```
+输出 `TODO_OK|red=N,yellow=N,green=N`。
 
 ### 4. 更新 Meta
-Upsert `{caseDir}/casehealth-meta.json` 的 `lastInspected` 字段。
 
-### 5. 写日志
+用 Edit 工具更新 `casehealth-meta.json` 的 `lastInspected` 字段为当前时间。
+
+### 5. 日志
+
 ```bash
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] inspection-writer OK | inspection-{TODAY}.md + todo/{TODONAME}.md" >> "{caseDir}/logs/inspection-writer.log"
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] inspection-writer OK | case-summary={created|updated|skipped} todo={red}r/{yellow}y/{green}g" >> "{caseDir}/logs/inspection-writer.log"
 ```
+
+## 与 casework 集成
+
+casework Step 4 调用本 skill 时：
+- **快速路径**（NO_CHANGE + summary 已存在）：只执行 Step 3 + Step 4，跳过 LLM（~2s）
+- **快速路径**（NO_CHANGE + summary 不存在）：执行 Step 2a + Step 3 + Step 4（~15s）
+- **正常流程**（CHANGED）：执行 Step 2a/2b + Step 3 + Step 4（~10-15s）
+
+## 废弃说明
+
+`inspection-YYYYMMDD.md` 已废弃（legacy），现有文件保留不删。新 casework 不再生成 inspection 文件，改为 `case-summary.md` + `todo/*.md`。
