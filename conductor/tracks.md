@@ -89,3 +89,5 @@
 | [x] | sse-dup-msg-fix_20260322 | Fix SSE Duplicate Messages in AI Assistant Panel | 2026-03-22 | 2026-03-22 |
 | [x] | restart-watch-fix_20260323 | Fix Restart Service --watch Mode Process Kill & Spawn Mismatch | 2026-03-23 | 2026-03-23 |
 | [x] | conductor-verify_20260323 | /conductor:verify CLI Command | 2026-03-23 | 2026-03-23 |
+| [x] | patrol-progress-ui_20260327 | Dashboard Patrol 实时进度展示 | 2026-03-27 | 2026-03-27 |
+| [~] | patrol-backend-fix_20260327 | Patrol 后端重构 — 调度+预热+per-case processCaseSession | 2026-03-27 | 2026-03-27 |

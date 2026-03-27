@@ -2,11 +2,14 @@
  * Dashboard — Statistics overview & visualization
  * Case list has been moved to CasesPage.tsx (ISS-076)
  */
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Briefcase, ShieldAlert, UserCheck, Clock, Activity, Play, Loader2, AlertTriangle, TrendingUp, BarChart3 } from 'lucide-react'
+import { Briefcase, ShieldAlert, UserCheck, Clock, Activity, Play, Loader2, AlertTriangle, TrendingUp, BarChart3, X, Square } from 'lucide-react'
 import { Card, CardHeader } from '../components/common/Card'
 import { Loading, ErrorState, EmptyState } from '../components/common/Loading'
-import { useCases, usePatrolState, useStartPatrol } from '../api/hooks'
+import { useCases, usePatrolState, useStartPatrol, useCancelPatrol } from '../api/hooks'
+import { usePatrolStore } from '../stores/patrolStore'
+import { apiGet } from '../api/client'
 import { classifyCase } from './CasesPage'
 
 /** Parse age string like "3d 5h" to hours */
@@ -21,6 +24,37 @@ export default function Dashboard() {
   const { data: casesData, isLoading, error } = useCases()
   const { data: patrol } = usePatrolState()
   const startPatrol = useStartPatrol()
+  const cancelPatrol = useCancelPatrol()
+
+  // Real-time patrol state from SSE-driven Zustand store
+  const patrolRunning = usePatrolStore((s) => s.isRunning)
+  const patrolPhase = usePatrolStore((s) => s.phase)
+  const patrolTotal = usePatrolStore((s) => s.totalCases)
+  const patrolChanged = usePatrolStore((s) => s.changedCases)
+  const patrolProcessed = usePatrolStore((s) => s.processedCases)
+  const patrolCurrentCase = usePatrolStore((s) => s.currentCase)
+  const patrolError = usePatrolStore((s) => s.error)
+  const patrolLastCompleted = usePatrolStore((s) => s.lastCompletedAt)
+
+  // Show completed summary for 15 seconds after patrol finishes
+  const showCompleted = !patrolRunning && patrolPhase === 'completed' && patrolLastCompleted
+
+  const isPatrolActive = patrolRunning || startPatrol.isPending
+
+  // Recover patrol running state on page load/refresh (ISS-094)
+  // Only set store if backend says running AND we haven't received SSE events yet
+  useEffect(() => {
+    if (patrolRunning) return // Store already knows patrol is running (from SSE)
+    let cancelled = false
+    apiGet<{ running: boolean }>('/patrol/status').then((res) => {
+      if (cancelled) return
+      if (res.running) {
+        // Backend says patrol running — set minimal state, SSE events will fill details
+        usePatrolStore.getState().onPatrolProgress({ phase: 'processing' })
+      }
+    }).catch(() => { /* ignore */ })
+    return () => { cancelled = true }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (isLoading) return <Loading text="Loading dashboard..." />
   if (error) return <ErrorState message="Failed to load cases" onRetry={() => window.location.reload()} />
@@ -85,20 +119,103 @@ export default function Dashboard() {
             {patrol && ` · patrol ${new Date(patrol.lastPatrol).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' })} ${new Date(patrol.lastPatrol).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}`}
           </p>
         </div>
-        <button
-          onClick={() => startPatrol.mutate()}
-          disabled={startPatrol.isPending}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
-          style={{ background: 'var(--accent-blue)', color: 'var(--text-inverse)', boxShadow: 'var(--shadow-card)' }}
-        >
-          {startPatrol.isPending ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Play className="w-4 h-4" />
+        <div className="flex items-center gap-2">
+          {patrolRunning && (
+            <button
+              onClick={() => cancelPatrol.mutate()}
+              disabled={cancelPatrol.isPending}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+              style={{ background: 'var(--accent-red-dim)', color: 'var(--accent-red)' }}
+            >
+              <Square className="w-3.5 h-3.5" />
+              {cancelPatrol.isPending ? 'Cancelling...' : 'Cancel'}
+            </button>
           )}
-          {startPatrol.isPending ? 'Patrolling...' : 'Start Patrol'}
-        </button>
+          <button
+            onClick={() => startPatrol.mutate()}
+            disabled={isPatrolActive}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+            style={{ background: 'var(--accent-blue)', color: 'var(--text-inverse)', boxShadow: 'var(--shadow-card)' }}
+          >
+            {isPatrolActive ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Play className="w-4 h-4" />
+            )}
+            {isPatrolActive ? 'Patrolling...' : 'Start Patrol'}
+          </button>
+        </div>
       </div>
+
+      {/* Patrol Progress (real-time SSE) */}
+      {(patrolRunning || showCompleted || patrolError) && (
+        <div
+          className="rounded-xl px-4 py-3 border transition-all"
+          style={{
+            background: patrolError
+              ? 'var(--accent-red-dim)'
+              : showCompleted
+                ? 'var(--accent-green-dim)'
+                : 'color-mix(in srgb, var(--accent-blue) 8%, var(--bg-surface))',
+            borderColor: patrolError
+              ? 'color-mix(in srgb, var(--accent-red) 30%, transparent)'
+              : showCompleted
+                ? 'color-mix(in srgb, var(--accent-green) 30%, transparent)'
+                : 'color-mix(in srgb, var(--accent-blue) 20%, transparent)',
+          }}
+        >
+          {/* Status line */}
+          <div className="flex items-center justify-between mb-1.5">
+            <div className="flex items-center gap-2">
+              {patrolRunning && <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: 'var(--accent-blue)' }} />}
+              {showCompleted && <Activity className="w-3.5 h-3.5" style={{ color: 'var(--accent-green)' }} />}
+              {patrolError && <AlertTriangle className="w-3.5 h-3.5" style={{ color: 'var(--accent-red)' }} />}
+              <span className="text-xs font-semibold" style={{
+                color: patrolError ? 'var(--accent-red)' : showCompleted ? 'var(--accent-green)' : 'var(--accent-blue)',
+              }}>
+                {patrolError
+                  ? 'Patrol Failed'
+                  : showCompleted
+                    ? `Patrol Complete — ${patrolProcessed} cases processed, ${patrolChanged} changed`
+                    : patrolPhase === 'filtering'
+                      ? `Filtering... ${patrolTotal > 0 ? `${patrolTotal} cases` : ''}`
+                      : patrolPhase === 'warming-up'
+                        ? `Warming up... ${patrolChanged > 0 ? `${patrolChanged} cases to process` : ''}`
+                        : patrolPhase === 'processing'
+                        ? `Processing ${patrolCurrentCase || '...'}${patrolChanged > 0 ? ` (${patrolProcessed}/${patrolChanged})` : patrolTotal > 0 ? ` (${patrolProcessed}/${patrolTotal})` : ''}`
+                        : patrolPhase === 'aggregating'
+                          ? 'Aggregating todos...'
+                          : 'Patrol running...'
+                }
+              </span>
+            </div>
+            {patrolRunning && patrolChanged > 0 && (
+              <span className="text-[10px] font-mono" style={{ color: 'var(--text-tertiary)' }}>
+                {patrolProcessed}/{patrolChanged}
+              </span>
+            )}
+          </div>
+
+          {/* Progress bar */}
+          {patrolRunning && patrolChanged > 0 && (
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--bg-inset)' }}>
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{
+                  width: `${Math.min((patrolProcessed / patrolChanged) * 100, 100)}%`,
+                  background: 'var(--accent-blue)',
+                  minWidth: patrolProcessed > 0 ? '8px' : '0',
+                }}
+              />
+            </div>
+          )}
+
+          {/* Error detail */}
+          {patrolError && (
+            <p className="text-[11px] mt-1" style={{ color: 'var(--accent-red)' }}>{patrolError}</p>
+          )}
+        </div>
+      )}
 
       {/* Overview Stat Cards — clickable, navigate to /cases?filter=xxx */}
       {cases.length === 0 ? (

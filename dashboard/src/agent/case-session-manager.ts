@@ -16,6 +16,7 @@ import { query, type Options, type SDKMessage, type CanUseTool } from '@anthropi
 import { readFileSync, existsSync, writeFileSync, mkdirSync, appendFileSync, readdirSync } from 'fs'
 import { join, resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
+import { execSync } from 'child_process'
 import { sseManager } from '../watcher/sse-manager.js'
 import { getSSEEventType, formatMessageForSSE } from '../utils/sse-helpers.js'
 import type { PatrolProgress, PatrolTodoSummary } from '../types/index.js'
@@ -763,6 +764,112 @@ After verification, output a single JSON block on a line by itself:
   }
 }
 
+// ---- Patrol Helpers ----
+
+/**
+ * Filter cases by lastInspected — only include cases that:
+ * 1. Have no casehealth-meta.json or no lastInspected field (new case)
+ * 2. lastInspected is older than 24 hours
+ */
+export function filterCasesByLastInspected(
+  allCases: string[],
+  casesRootResolved: string
+): { filtered: string[]; skipped: string[] } {
+  const now = Date.now()
+  const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000
+  const filtered: string[] = []
+  const skipped: string[] = []
+
+  for (const caseNumber of allCases) {
+    const metaPath = join(casesRootResolved, 'active', caseNumber, 'casehealth-meta.json')
+    try {
+      if (!existsSync(metaPath)) {
+        filtered.push(caseNumber) // New case, no meta
+        continue
+      }
+      const meta = JSON.parse(readFileSync(metaPath, 'utf-8'))
+      if (!meta.lastInspected) {
+        filtered.push(caseNumber) // No lastInspected field
+        continue
+      }
+      const lastInspected = new Date(meta.lastInspected).getTime()
+      if (now - lastInspected > TWENTY_FOUR_HOURS) {
+        filtered.push(caseNumber) // Stale — needs re-inspection
+      } else {
+        skipped.push(caseNumber) // Recently inspected, skip
+      }
+    } catch {
+      filtered.push(caseNumber) // Parse error → treat as needing inspection
+    }
+  }
+
+  return { filtered, skipped }
+}
+
+/**
+ * Run patrol warm-up phase — parallel execution of:
+ * 1. check-ir-status-batch.ps1 -SaveMeta (IR/FDR/FWR batch pre-fill)
+ * 2. warm-dtm-token.ps1 (DTM token cache warming)
+ *
+ * Failures are logged but don't block patrol.
+ */
+export async function runPatrolWarmup(casesRootResolved: string): Promise<{
+  irBatch: { success: boolean; error?: string }
+  dtmToken: { success: boolean; error?: string }
+}> {
+  const projectRoot = getProjectRoot()
+  const results = {
+    irBatch: { success: false } as { success: boolean; error?: string },
+    dtmToken: { success: false } as { success: boolean; error?: string },
+  }
+
+  // Run both warmup tasks in parallel
+  const [irResult, dtmResult] = await Promise.allSettled([
+    // IR/FDR/FWR batch check
+    new Promise<void>((resolve, reject) => {
+      try {
+        const script = join(projectRoot, 'skills', 'd365-case-ops', 'scripts', 'check-ir-status-batch.ps1')
+        if (existsSync(script)) {
+          execSync(
+            `pwsh -NoProfile -File "${script}" -SaveMeta -MetaDir "${join(casesRootResolved, 'active')}"`,
+            { cwd: projectRoot, timeout: 30000, stdio: 'pipe' }
+          )
+        }
+        resolve()
+      } catch (err) {
+        reject(err)
+      }
+    }),
+    // DTM token warming
+    new Promise<void>((resolve, reject) => {
+      try {
+        const script = join(projectRoot, 'skills', 'd365-case-ops', 'scripts', 'warm-dtm-token.ps1')
+        if (existsSync(script)) {
+          execSync(
+            `pwsh -NoProfile -File "${script}" -CasesRoot "${casesRootResolved}"`,
+            { cwd: projectRoot, timeout: 60000, stdio: 'pipe' }
+          )
+        }
+        resolve()
+      } catch (err) {
+        reject(err)
+      }
+    }),
+  ])
+
+  results.irBatch.success = irResult.status === 'fulfilled'
+  if (irResult.status === 'rejected') {
+    results.irBatch.error = irResult.reason instanceof Error ? irResult.reason.message : String(irResult.reason)
+  }
+
+  results.dtmToken.success = dtmResult.status === 'fulfilled'
+  if (dtmResult.status === 'rejected') {
+    results.dtmToken.error = dtmResult.reason instanceof Error ? dtmResult.reason.message : String(dtmResult.reason)
+  }
+
+  return results
+}
+
 /**
  * Run patrol (batch inspection) — 并行 per-case SDK sessions
  *
@@ -777,16 +884,17 @@ After verification, output a single JSON block on a line by itself:
 // Patrol cancellation flag
 let patrolCancelled = false
 let patrolRunning = false
+const patrolActiveCases = new Set<string>() // Track active patrol case sessions for cancel
 
 export function cancelPatrol(): boolean {
   if (!patrolRunning) return false
   patrolCancelled = true
-  // Abort all active patrol-* queries to terminate child processes (ISS-086)
-  for (const key of Array.from(activeQueries.keys())) {
-    if (key.startsWith('patrol-')) {
-      abortQuery(key)
-    }
+  // Abort all active patrol case sessions
+  for (const caseNumber of patrolActiveCases) {
+    abortQuery(caseNumber)
+    releaseCaseOperationLock(caseNumber)
   }
+  patrolActiveCases.clear()
   return true
 }
 
@@ -816,7 +924,7 @@ async function _runPatrol(
   const casesRootResolved = resolve(projectRoot, casesRoot)
   const activeCasesDir = join(casesRootResolved, 'active')
 
-  // Phase 1: Discover
+  // Phase 1: Discover active cases
   onProgress({ phase: 'discovering' })
 
   let allCases: string[] = []
@@ -839,128 +947,185 @@ async function _runPatrol(
     return { red: [], yellow: [], green: [] }
   }
 
-  // Phase 2: Process all cases in parallel
+  // Phase 2: Filter by lastInspected (only cases needing re-inspection)
+  onProgress({ phase: 'filtering', totalCases: allCases.length })
+
+  const { filtered: casesToProcess, skipped } = filterCasesByLastInspected(allCases, casesRootResolved)
+
+  if (casesToProcess.length === 0) {
+    onProgress({
+      phase: 'completed',
+      totalCases: allCases.length,
+      changedCases: 0,
+      processedCases: 0,
+    })
+    return aggregateTodos(casesRootResolved)
+  }
+
+  // Phase 3: Warm-up (DTM token + IR batch)
+  onProgress({
+    phase: 'warming-up' as PatrolProgress['phase'],
+    totalCases: allCases.length,
+    changedCases: casesToProcess.length,
+  })
+
+  const warmupResult = await runPatrolWarmup(casesRootResolved)
+  if (warmupResult.irBatch.error) {
+    console.warn('[patrol] IR batch warmup warning:', warmupResult.irBatch.error)
+  }
+  if (warmupResult.dtmToken.error) {
+    console.warn('[patrol] DTM token warmup warning:', warmupResult.dtmToken.error)
+  }
+
+  if (patrolCancelled) {
+    onProgress({ phase: 'completed', totalCases: allCases.length, changedCases: casesToProcess.length, processedCases: 0 })
+    return aggregateTodos(casesRootResolved)
+  }
+
+  // Phase 4: Process cases via processCaseSession (semaphore-limited concurrency)
   onProgress({
     phase: 'processing',
     totalCases: allCases.length,
-    changedCases: allCases.length,
+    changedCases: casesToProcess.length,
     processedCases: 0,
   })
 
   let processedCount = 0
-  const CONCURRENCY_LIMIT = 5 // Max parallel SDK sessions
+  const CONCURRENCY_LIMIT = 5
+  const CASE_TIMEOUT_MS = 15 * 60 * 1000 // 15 minutes per case
 
-  // Process in batches to limit concurrency
-  const processCaseBatch = async (batch: string[]) => {
-    const results = await Promise.allSettled(
-      batch.map(async (caseNumber) => {
-        // Broadcast per-case start
+  // Semaphore for concurrency control
+  let activeCount = 0
+  const queue = [...casesToProcess]
+  const caseResults: Array<{ caseNumber: string; status: 'completed' | 'failed' | 'timeout'; error?: string }> = []
+
+  const processNextCase = async (): Promise<void> => {
+    while (queue.length > 0) {
+      if (patrolCancelled) return
+
+      const caseNumber = queue.shift()!
+      activeCount++
+      patrolActiveCases.add(caseNumber)
+
+      // Acquire operation lock (prevents user from starting full-process on same case)
+      const lockAcquired = acquireCaseOperationLock(caseNumber, 'patrol')
+      if (!lockAcquired) {
+        // Case already has an active operation — skip it
+        caseResults.push({ caseNumber, status: 'failed', error: 'Case already has active operation' })
+        processedCount++
+        activeCount--
+        patrolActiveCases.delete(caseNumber)
+        continue
+      }
+
+      // Broadcast per-case start
+      onProgress({
+        phase: 'processing',
+        totalCases: allCases.length,
+        changedCases: casesToProcess.length,
+        processedCases: processedCount,
+        currentCase: caseNumber,
+      })
+
+      sseManager.broadcast('patrol-progress' as any, {
+        phase: 'processing',
+        currentCase: caseNumber,
+        totalCases: allCases.length,
+        changedCases: casesToProcess.length,
+        processedCases: processedCount,
+      })
+
+      // Notify Agent Monitor
+      sseManager.broadcast('sessions-changed' as any, { reason: 'patrol-case-started', caseNumber })
+
+      try {
+        const patrolIntent = `请读取 .claude/skills/casework/SKILL.md 获取完整执行步骤，对 Case ${caseNumber} 执行完整 casework 流程。caseDir: ${join(casesRootResolved, 'active', caseNumber)}/。`
+
+        // Use processCaseSession — this registers the session in sessions map + caseIndex
+        // and makes it visible in Agent Monitor and Case detail page
+        const sessionGen = processCaseSession(caseNumber, patrolIntent)
+
+        // Consume the AsyncGenerator with timeout
+        let caseSessionId: string | undefined
+        const timeoutPromise = new Promise<'timeout'>((resolve) =>
+          setTimeout(() => resolve('timeout'), CASE_TIMEOUT_MS)
+        )
+
+        const processPromise = (async () => {
+          for await (const message of sessionGen) {
+            if (!caseSessionId && (message as any).sdkSessionId) {
+              caseSessionId = (message as any).sdkSessionId
+            }
+            // Broadcast SDK messages as SSE (via existing event types)
+            const eventType = getSSEEventType(message)
+            const formatted = formatMessageForSSE(message)
+            sseManager.broadcast(eventType as any, {
+              caseNumber,
+              sessionId: caseSessionId || 'pending',
+              step: 'patrol',
+              ...formatted,
+            })
+            // Persist messages for session recovery
+            appendSessionMessage(caseNumber, {
+              type: eventType,
+              content: (formatted.content as string) || '',
+              toolName: formatted.toolName as string,
+              step: 'patrol',
+              timestamp: (formatted.timestamp as string) || new Date().toISOString(),
+            })
+          }
+          return 'completed' as const
+        })()
+
+        const result = await Promise.race([processPromise, timeoutPromise])
+
+        if (result === 'timeout') {
+          // Abort the timed-out session
+          abortQuery(caseNumber)
+          caseResults.push({ caseNumber, status: 'timeout', error: 'Case processing timed out (15 min)' })
+        } else {
+          caseResults.push({ caseNumber, status: 'completed' })
+        }
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : String(err)
+        caseResults.push({ caseNumber, status: 'failed', error: errorMsg })
+      } finally {
+        processedCount++
+        releaseCaseOperationLock(caseNumber)
+        patrolActiveCases.delete(caseNumber)
+        activeCount--
+
+        // Broadcast per-case completion
+        const lastResult = caseResults[caseResults.length - 1]
+        sseManager.broadcast('patrol-case-completed' as any, {
+          caseNumber,
+          processedCases: processedCount,
+          error: lastResult?.error,
+        })
+        sseManager.broadcast('sessions-changed' as any, { reason: 'patrol-case-completed', caseNumber })
+
         onProgress({
           phase: 'processing',
           totalCases: allCases.length,
-          changedCases: allCases.length,
-          processedCases: processedCount,
-          currentCase: caseNumber,
-        })
-
-        sseManager.broadcast('patrol-progress' as any, {
-          phase: 'processing',
-          currentCase: caseNumber,
-          totalCases: allCases.length,
-          changedCases: allCases.length,
+          changedCases: casesToProcess.length,
           processedCases: processedCount,
         })
-
-        try {
-          const patrolPrompt = `请读取 .claude/skills/patrol/SKILL.md 获取完整执行步骤，仅对 Case ${caseNumber} 执行巡检流程。`
-
-          const patrolAbort = registerQuery(`patrol-${caseNumber}`)
-          try {
-            for await (const message of query({
-              prompt: patrolPrompt,
-              options: {
-                abortController: patrolAbort,
-                cwd: projectRoot,
-                settingSources: ['project'] as Options['settingSources'],
-                systemPrompt: {
-                  type: 'preset' as const,
-                  preset: 'claude_code' as const,
-                },
-                allowedTools: ['Read', 'Write', 'Bash', 'Glob', 'Grep', 'Agent'],
-                permissionMode: 'bypassPermissions',
-                allowDangerouslySkipPermissions: true,
-                maxTurns: 100,
-              },
-            })) {
-              // Forward SDK messages as SSE for real-time monitoring
-              const eventType = getSSEEventType(message)
-              sseManager.broadcast(eventType as any, {
-                type: 'patrol',
-                caseNumber,
-                ...formatMessageForSSE(message),
-              })
-            }
-          } finally {
-            unregisterQuery(`patrol-${caseNumber}`)
-          }
-
-          // Per-case completed
-          processedCount++
-          sseManager.broadcast('patrol-case-completed' as any, {
-            caseNumber,
-            processedCases: processedCount,
-          })
-
-          return { caseNumber, status: 'completed' as const }
-        } catch (err) {
-          processedCount++
-          const errorMsg = err instanceof Error ? err.message : String(err)
-
-          sseManager.broadcast('patrol-case-completed' as any, {
-            caseNumber,
-            processedCases: processedCount,
-            error: errorMsg,
-          })
-
-          return { caseNumber, status: 'failed' as const, error: errorMsg }
-        }
-      })
-    )
-
-    return results
-  }
-
-  // Execute in batches of CONCURRENCY_LIMIT
-  for (let i = 0; i < allCases.length; i += CONCURRENCY_LIMIT) {
-    // Check cancellation between batches
-    if (patrolCancelled) {
-      onProgress({
-        phase: 'completed',
-        totalCases: allCases.length,
-        changedCases: allCases.length,
-        processedCases: processedCount,
-      })
-      sseManager.broadcast('patrol-progress' as any, {
-        phase: 'completed',
-        totalCases: allCases.length,
-        processedCases: processedCount,
-        cancelled: true,
-      })
-      return aggregateTodos(casesRootResolved)
+      }
     }
-
-    const batch = allCases.slice(i, i + CONCURRENCY_LIMIT)
-    await processCaseBatch(batch)
   }
 
-  // Phase 3: Aggregate todos
+  // Launch CONCURRENCY_LIMIT workers
+  const workers = Array.from({ length: Math.min(CONCURRENCY_LIMIT, casesToProcess.length) }, () => processNextCase())
+  await Promise.allSettled(workers)
+
+  // Phase 5: Aggregate todos
   onProgress({ phase: 'aggregating' })
   const todoSummary = aggregateTodos(casesRootResolved)
 
   onProgress({
     phase: 'completed',
     totalCases: allCases.length,
-    changedCases: allCases.length,
+    changedCases: casesToProcess.length,
     processedCases: processedCount,
     todoSummary,
   })

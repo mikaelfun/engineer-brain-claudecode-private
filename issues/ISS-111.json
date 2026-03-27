@@ -1,0 +1,11 @@
+{
+  "id": "ISS-111",
+  "title": "Patrol SDK query 无响应 — session 不创建、SSE 无事件、标志卡死",
+  "description": "POST /api/patrol 返回 202 后，patrolCoordinator 调用 Claude Agent SDK 的 query() 完全无响应：\n\n**症状：**\n- `for await (const message of query(...))` 循环不产出任何 message\n- 没有 SSE 事件广播（零个 patrol-progress / case-session-thinking / tool-call）\n- Agent Monitor 看不到 patrol session（sessions/all 返回空）\n- Dashboard 显示 Patrolling... 但进度永远 0/N\n- patrolRunning 标志卡在 true（query 卡住 → finally 块不执行）\n- 唯一恢复方式是重启后端\n\n**后端日志确认：**\n- POST /patrol → 202 成功\n- 之后只有轮询请求（patrol-state 404），无任何 SDK 事件\n\n**可能原因：**\n1. SDK query() 静默失败（连接问题 / 认证 / rate limit）\n2. query() 的 for-await 循环第一条消息就阻塞\n3. SDK 进程 spawn 失败但没有抛出异常\n4. permissionMode/allowedTools 配置问题\n\n**需要排查：**\n1. 在 _runPatrol 的 query() 调用前后加 console.log，确认是否进入循环\n2. 给 query() 加 try-catch 看是否有静默错误\n3. 检查 SDK 版本兼容性\n4. 增加 patrol 超时机制（如 30 分钟无进展自动清除 patrolRunning）\n5. 考虑 query() 调用失败后的优雅降级",
+  "type": "bug",
+  "priority": "P1",
+  "status": "tracked",
+  "trackId": "patrol-backend-fix_20260327",
+  "createdAt": "2026-03-27T09:58:00.000Z",
+  "updatedAt": "2026-03-27T10:30:00.000Z"
+}
