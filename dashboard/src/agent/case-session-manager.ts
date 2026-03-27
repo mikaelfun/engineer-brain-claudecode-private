@@ -422,14 +422,24 @@ function buildCaseAppendPrompt(caseNumber: string): string {
   const casesRoot = getCasesRoot()
   const caseDir = join(casesRoot, 'active', caseNumber)
 
-  // Inject case-summary.md as context anchor if it exists
+  // Inject case-summary.md as context anchor if it exists (root level, not context/)
   let caseSummary = ''
-  const summaryPath = join(caseDir, 'context', 'case-summary.md')
+  const summaryPath = join(caseDir, 'case-summary.md')
   if (existsSync(summaryPath)) {
     try {
       caseSummary = `\n\n## Case Summary (persistent context)\n${readFileSync(summaryPath, 'utf-8')}\n`
     } catch {
       // ignore
+    }
+  } else {
+    // Fallback: try legacy context/case-summary.md path
+    const legacySummaryPath = join(caseDir, 'context', 'case-summary.md')
+    if (existsSync(legacySummaryPath)) {
+      try {
+        caseSummary = `\n\n## Case Summary (persistent context)\n${readFileSync(legacySummaryPath, 'utf-8')}\n`
+      } catch {
+        // ignore
+      }
     }
   }
 
@@ -639,7 +649,7 @@ export async function* chatCaseSession(
 export async function* stepCaseSession(
   caseNumber: string,
   stepName: string,
-  options?: { emailType?: string; canUseTool?: CanUseTool }
+  options?: { emailType?: string; forceRefresh?: boolean; fullSearch?: boolean; canUseTool?: CanUseTool }
 ): AsyncGenerator<SDKMessage & { sdkSessionId?: string }> {
   // Build email type instruction for draft-email step
   const emailTypeInstruction = (() => {
@@ -651,13 +661,13 @@ export async function* stepCaseSession(
 
   // Map step names to skill/agent invocations
   const stepPrompts: Record<string, string> = {
-    'data-refresh': `Read .claude/skills/data-refresh/SKILL.md and execute data-refresh for Case ${caseNumber}`,
-    'compliance-check': `Read .claude/skills/compliance-check/SKILL.md and execute compliance-check for Case ${caseNumber}`,
-    'status-judge': `Read .claude/skills/status-judge/SKILL.md and execute status-judge for Case ${caseNumber}`,
-    'teams-search': `Read .claude/skills/teams-search/SKILL.md and execute teams-search for Case ${caseNumber}`,
-    'troubleshoot': `Spawn a troubleshooter agent (read .claude/agents/troubleshooter.md) for Case ${caseNumber}`,
-    'draft-email': `Spawn an email-drafter agent (read .claude/agents/email-drafter.md) for Case ${caseNumber}.${emailTypeInstruction}`,
-    'inspection': `Read .claude/skills/inspection-writer/SKILL.md and execute inspection-writer for Case ${caseNumber}`,
+    'data-refresh': `Execute data-refresh for Case ${caseNumber}. Read .claude/skills/data-refresh/SKILL.md for full instructions, then execute.`,
+    'compliance-check': `Execute compliance-check for Case ${caseNumber}. Read .claude/skills/compliance-check/SKILL.md for full instructions, then execute.`,
+    'status-judge': `Execute status-judge for Case ${caseNumber}. Read .claude/skills/status-judge/SKILL.md for full instructions, then execute.`,
+    'teams-search': `Execute teams-search for Case ${caseNumber}${options?.forceRefresh ? ' --force-refresh' : ''}${options?.fullSearch ? ' --full-search' : ''}. Read .claude/skills/teams-search/SKILL.md for full instructions, then execute.`,
+    'troubleshoot': `Execute troubleshoot for Case ${caseNumber}. Read .claude/skills/troubleshoot/SKILL.md for full instructions, then execute.`,
+    'draft-email': `Execute draft-email for Case ${caseNumber}.${emailTypeInstruction} Read .claude/skills/draft-email/SKILL.md for full instructions, then execute.`,
+    'inspection': `Execute inspection-writer for Case ${caseNumber}. This updates case-summary.md (incremental narrative) and generates todo via generate-todo.sh. Read .claude/skills/inspection-writer/SKILL.md for full instructions, then execute.`,
     'generate-kb': `Case ${caseNumber} is being closed. Read all case data from the case directory and generate a Knowledge Base article. Save to {caseDir}/kb/kb-article.md`,
   }
 
@@ -1039,7 +1049,7 @@ async function _runPatrol(
       sseManager.broadcast('sessions-changed' as any, { reason: 'patrol-case-started', caseNumber })
 
       try {
-        const patrolIntent = `请读取 .claude/skills/casework/SKILL.md 获取完整执行步骤，对 Case ${caseNumber} 执行完整 casework 流程。caseDir: ${join(casesRootResolved, 'active', caseNumber)}/。`
+        const patrolIntent = `对 Case ${caseNumber} 执行完整 casework 流程。caseDir: ${join(casesRootResolved, 'active', caseNumber)}/。请读取 .claude/skills/casework/SKILL.md 获取完整执行步骤。`
 
         // Use processCaseSession — this registers the session in sessions map + caseIndex
         // and makes it visible in Agent Monitor and Case detail page

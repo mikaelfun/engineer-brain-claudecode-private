@@ -3,7 +3,7 @@
 **Track ID:** inspection-refactor_20260328
 **Spec:** [spec.md](./spec.md)
 **Created:** 2026-03-28
-**Status:** [ ] Not Started
+**Status:** [x] Complete
 
 ## Overview
 
@@ -86,20 +86,20 @@
 
 ### Tasks
 
-- [ ] Task 3.1: 后端 — 更新 `dashboard/src/routes/cases.ts`
+- [x] Task 3.1: 后端 — 更新 `dashboard/src/routes/cases.ts`
   - `GET /api/cases/:id/inspection` 端点（L288-321）：
     - 优先读 `case-summary.md`
     - fallback 读 `inspection-*.md`（兼容旧数据）
     - 返回结构增加 `legacy: boolean` 字段
-- [ ] Task 3.2: 后端 — 更新 `dashboard/src/agent/case-session-manager.ts`
+- [x] Task 3.2: 后端 — 更新 `dashboard/src/agent/case-session-manager.ts`
   - L425-436：路径从 `context/case-summary.md` → `case-summary.md`（caseDir 根目录）
   - L660：step prompt 描述更新（inspection-writer → case-summary + todo）
   - L795-802：patrol lastInspected 逻辑保持不变
-- [ ] Task 3.3: 前端 — 更新 `dashboard/web/src/pages/CaseDetail.tsx`
+- [x] Task 3.3: 前端 — 更新 `dashboard/web/src/pages/CaseDetail.tsx`
   - InspectionTab → 改名 SummaryTab（或保留组件名只改 label）
   - Tab label 从 `Inspection` 改为 `Summary`，icon 改为 📋
   - 保留空状态提示
-- [ ] Task 3.4: 前端 — 更新 action labels
+- [x] Task 3.4: 前端 — 更新 action labels
   - `web/src/components/CaseAIPanel.tsx` L422：label `Inspection` → `Summary`
   - `web/src/components/session/SessionMessageList.tsx` L159：action label 更新
   - `web/src/api/hooks.ts`：hook 名和端点保持不变（后端已兼容）

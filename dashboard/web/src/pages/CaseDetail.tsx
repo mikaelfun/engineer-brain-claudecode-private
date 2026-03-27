@@ -21,7 +21,7 @@ import CaseAIPanel from '../components/CaseAIPanel'
 export default function CaseDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState('inspection')
+  const [activeTab, setActiveTab] = useState('summary')
 
   const { data: caseInfo, isLoading, error } = useCaseDetail(id || '')
   // Always-fetch: key tab data for badge counts (lightweight — only returns arrays)
@@ -43,7 +43,7 @@ export default function CaseDetail() {
   if (error || !caseInfo) return <ErrorState message="Case not found" onRetry={() => navigate('/')} />
 
   const tabs = [
-    { id: 'inspection', label: 'Inspection', icon: '🩺' },
+    { id: 'summary', label: 'Summary', icon: '📋' },
     { id: 'todo', label: 'Todo', icon: '📌', count: todoData?.total },
     { id: 'emails', label: 'Emails', icon: '📧', count: emailsData?.total },
     { id: 'notes', label: 'Notes', icon: '📝', count: notesData?.total },
@@ -190,7 +190,7 @@ export default function CaseDetail() {
         <div className="flex-1 min-w-0 space-y-4">
           <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
           <div>
-            {activeTab === 'inspection' && <InspectionTab content={inspectionData?.content} exists={inspectionData?.exists} filename={inspectionData?.filename} updatedAt={inspectionData?.updatedAt} />}
+            {activeTab === 'summary' && <InspectionTab content={inspectionData?.content} exists={inspectionData?.exists} filename={inspectionData?.filename} updatedAt={inspectionData?.updatedAt} />}
             {activeTab === 'todo' && <CaseTodoTab caseId={id!} latest={todoData?.latest || null} files={todoData?.files || []} toggleTodo={toggleCaseTodo} />}
             {activeTab === 'emails' && <EmailsTab emails={emailsData?.emails || []} />}
             {activeTab === 'notes' && <NotesTab notes={notesData?.notes || []} />}
@@ -367,7 +367,7 @@ function AnalysisTab({ content, exists }: { content?: string; exists?: boolean }
 }
 
 function InspectionTab({ content, exists, filename, updatedAt }: { content?: string; exists?: boolean; filename?: string; updatedAt?: string }) {
-  if (!exists || !content) return <EmptyState icon="🩺" title="No inspection report" description="Run casework to generate an inspection" />
+  if (!exists || !content) return <EmptyState icon="📋" title="No case summary" description="Run casework to generate a summary" />
 
   return (
     <Card>
@@ -580,59 +580,180 @@ function TimingTab({ exists, timing }: { exists?: boolean; timing?: any }) {
     return `${Math.round(s)}s`
   }
 
-  const stepLabels: Record<string, { label: string; icon: string }> = {
-    dataRefresh: { label: 'Data Refresh', icon: '🔄' },
-    teamsSearch: { label: 'Teams Search', icon: '💬' },
-    complianceCheck: { label: 'Compliance Check', icon: '✅' },
-    statusJudge: { label: 'Status Judge', icon: '🔍' },
-    troubleshooter: { label: 'Troubleshooter', icon: '🔧' },
-    emailDrafter: { label: 'Email Drafter', icon: '📧' },
-    inspectionWriter: { label: 'Inspection Writer', icon: '📝' },
-  }
+  // Support both v2 (phases) and v1 (steps) timing.json
+  const phaseData = timing.phases || timing.steps || {}
+  const stats = timing.stats
 
-  const stepColors = [
-    'var(--accent-blue)', 'var(--accent-green)', 'var(--accent-amber)',
-    'var(--accent-purple, #a855f7)', 'var(--accent-red)', 'var(--accent-cyan, #06b6d4)', 'var(--accent-amber)'
+  // Ordered step definitions matching casework SKILL.md flow
+  // Fast path:  init → changegate → decision → fastpath → dataGathering → inspection (Step 1 → 4)
+  // Normal path: init → changegate → spawnAndPrep → compliance → waitAgents → statusJudge → routing → dataGathering → inspection (Step 1 → B1-B5 → 4)
+  type StepDef = { key: string; step: string; label: string; category: 'setup' | 'detect' | 'llm' | 'work' | 'wait' | 'output' }
+
+  const fastPathSteps: StepDef[] = [
+    { key: 'init',          step: '1',  label: 'mkdir logs + 写起始时间戳',            category: 'setup' },
+    { key: 'changegate',    step: '1',  label: '比对 emails/notes/ICM 变化',          category: 'detect' },
+    { key: 'decision',      step: '1a', label: '判断 NO_CHANGE → 快速/正常路径',      category: 'llm' },
+    { key: 'fastpath',      step: '1a', label: '验证 Teams/合规/Judge/路由缓存',       category: 'detect' },
+    { key: 'dataGathering', step: '4',  label: '读 case-info/emails/notes/teams → 构思',  category: 'llm' },
+    { key: 'inspection',    step: '4',  label: 'summary + todo + timing',        category: 'output' },
   ]
+
+  const normalPathSteps: StepDef[] = [
+    { key: 'init',          step: '1',    label: 'mkdir logs + 写起始时间戳',                    category: 'setup' },
+    { key: 'changegate',    step: '1',    label: '比对 emails/notes/ICM 变化',                   category: 'detect' },
+    { key: 'spawnAndPrep',  step: 'B1-2', label: 'Spawn DR + TS agents → 预读 SKILLs',          category: 'work' },
+    { key: 'compliance',    step: 'B3',   label: '检查 Entitlement + 21v Convert',               category: 'work' },
+    { key: 'waitAgents',    step: 'B4',   label: '等待 data-refresh + teams-search 完成',         category: 'wait' },
+    { key: 'statusJudge',   step: 'B4',   label: '分析 emails/notes → 判断 actualStatus',        category: 'work' },
+    { key: 'routing',       step: 'B5',   label: '按 status 路由 → spawn troubleshooter/drafter', category: 'work' },
+    { key: 'dataGathering', step: '4',    label: '读 case-info/emails/notes/teams → 构思',        category: 'llm' },
+    { key: 'inspection',    step: '4',    label: 'summary + todo + timing',                 category: 'output' },
+  ]
+
+  // Detect path: fastpath phase exists → fast path, otherwise normal
+  const isFastPath = 'fastpath' in phaseData || 'decision' in phaseData
+  const stepDefs = isFastPath ? fastPathSteps : normalPathSteps
+
+  // v1 fallback: if phaseData has old keys (steps), use flat rendering
+  const isV1 = !timing.phases && timing.steps
+  const v1Steps: StepDef[] = Object.keys(phaseData).map((k, i) => ({
+    key: k, step: `${i + 1}`, label: k, category: 'work' as const,
+  }))
+
+  const steps = isV1 ? v1Steps : stepDefs.filter(s => s.key in phaseData)
+
+  const categoryStyles: Record<string, { color: string; bg: string; dot: string }> = {
+    setup:  { color: 'var(--text-secondary)',           bg: 'var(--bg-hover)',              dot: 'var(--text-tertiary)' },
+    detect: { color: 'var(--accent-blue)',              bg: 'rgba(107,163,232,0.15)',       dot: 'var(--accent-blue)' },
+    llm:    { color: 'var(--accent-purple, #9e8cc7)',   bg: 'rgba(158,140,199,0.15)',       dot: 'var(--accent-purple, #9e8cc7)' },
+    work:   { color: 'var(--accent-green)',             bg: 'rgba(92,191,138,0.15)',        dot: 'var(--accent-green)' },
+    wait:   { color: 'var(--accent-amber)',             bg: 'rgba(212,164,74,0.15)',        dot: 'var(--accent-amber)' },
+    output: { color: 'var(--accent-cyan, #06b6d4)',    bg: 'rgba(6,182,212,0.15)',         dot: 'var(--accent-cyan, #06b6d4)' },
+  }
 
   return (
     <div className="space-y-4">
-      {/* Summary bar */}
+      {/* Summary card */}
       <Card>
         <div className="flex items-center justify-between mb-2">
-          <h4 className="font-semibold" style={{ color: 'var(--text-primary)' }}>Casework Timing</h4>
+          <div className="flex items-center gap-2">
+            <h4 className="font-semibold" style={{ color: 'var(--text-primary)' }}>Casework Timing</h4>
+            {!isV1 && (
+              <span className="text-xs px-1.5 py-0.5 rounded font-mono" style={{
+                background: isFastPath ? 'rgba(212,164,74,0.15)' : 'rgba(92,191,138,0.15)',
+                color: isFastPath ? 'var(--accent-amber)' : 'var(--accent-green)',
+              }}>
+                {isFastPath ? '⚡ Fast Path' : '🔄 Normal'}
+              </span>
+            )}
+          </div>
           <span className="text-lg font-mono font-bold" style={{ color: 'var(--accent-blue)' }}>{formatDuration(totalSec)}</span>
         </div>
         <div className="text-xs space-y-1" style={{ color: 'var(--text-tertiary)' }}>
           {timing.caseworkStartedAt && <p>Started: {new Date(timing.caseworkStartedAt).toLocaleString()}</p>}
           {timing.caseworkCompletedAt && <p>Completed: {new Date(timing.caseworkCompletedAt).toLocaleString()}</p>}
         </div>
+        {/* Stats row */}
+        {stats && (stats.bashCalls > 0 || stats.toolCalls > 0 || stats.agentSpawns > 0) && (
+          <div className="flex gap-4 mt-2 pt-2" style={{ borderTop: '1px solid var(--border-primary)' }}>
+            {stats.toolCalls > 0 && (
+              <span className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>
+                🔧 Tools: {stats.toolCalls}
+              </span>
+            )}
+            {stats.bashCalls > 0 && (
+              <span className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>
+                💻 Bash: {stats.bashCalls}
+              </span>
+            )}
+            {stats.agentSpawns > 0 && (
+              <span className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>
+                🤖 Agents: {stats.agentSpawns}
+              </span>
+            )}
+          </div>
+        )}
       </Card>
 
-      {/* Step breakdown */}
-      {timing.steps && (
+      {/* Pipeline breakdown */}
+      {steps.length > 0 && (
         <Card>
-          <h4 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Step Breakdown</h4>
-          <div className="space-y-2">
-            {Object.entries(timing.steps).map(([name, step]: [string, any], idx: number) => {
-              const pct = totalSec > 0 ? (step.seconds / totalSec) * 100 : 0
-              const label = stepLabels[name] || { label: name, icon: '⚙️' }
-              const barColor = stepColors[idx % stepColors.length]
+          <h4 className="font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Pipeline</h4>
+          <div className="relative">
+            {steps.map((s, idx) => {
+              const phase = phaseData[s.key] || { seconds: 0 }
+              const sec = phase.seconds || 0
+              const pct = totalSec > 0 ? (sec / totalSec) * 100 : 0
+              const style = categoryStyles[s.category] || categoryStyles.work
+              const isLast = idx === steps.length - 1
+
               return (
-                <div key={name}>
-                  <div className="flex items-center justify-between text-sm">
-                    <span style={{ color: 'var(--text-secondary)' }}>
-                      {label.icon} {label.label}
-                    </span>
-                    <span className="font-mono" style={{ color: 'var(--text-tertiary)' }}>{formatDuration(step.seconds)}</span>
+                <div key={s.key} className="relative flex" style={{ minHeight: '3rem' }}>
+                  {/* Timeline rail */}
+                  <div className="flex flex-col items-center" style={{ width: '2rem', flexShrink: 0 }}>
+                    {/* Dot */}
+                    <div style={{
+                      width: 10, height: 10, borderRadius: '50%',
+                      background: style.dot, flexShrink: 0, marginTop: 4,
+                      boxShadow: `0 0 0 3px ${style.bg}`,
+                    }} />
+                    {/* Line */}
+                    {!isLast && (
+                      <div style={{
+                        width: 2, flex: 1,
+                        background: 'var(--border-default)',
+                        marginTop: 2, marginBottom: 2,
+                      }} />
+                    )}
                   </div>
-                  <div className="mt-1 h-2 rounded-full overflow-hidden" style={{ background: 'var(--bg-hover)' }}>
-                    <div
-                      className="h-full rounded-full transition-all"
-                      style={{ width: `${Math.max(pct, 1)}%`, background: barColor }}
-                    />
+
+                  {/* Step content */}
+                  <div className="flex-1 pb-3 ml-1" style={{ minWidth: 0 }}>
+                    {/* Header row: step badge + label + duration */}
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="font-mono text-xs px-1 py-0.5 rounded shrink-0" style={{
+                        background: style.bg,
+                        color: style.color,
+                        minWidth: '2rem',
+                        textAlign: 'center',
+                      }}>
+                        {s.step}
+                      </span>
+                      <span className="truncate" style={{ color: 'var(--text-secondary)' }}>{phase.label || s.label}</span>
+                      <span className="ml-auto flex items-center gap-1.5 shrink-0">
+                        <span className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>
+                          {pct >= 1 ? `${Math.round(pct)}%` : '<1%'}
+                        </span>
+                        <span className="font-mono font-medium" style={{ color: style.color, minWidth: '3rem', textAlign: 'right' }}>
+                          {formatDuration(sec)}
+                        </span>
+                      </span>
+                    </div>
+                    {/* Bar */}
+                    <div className="mt-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--bg-hover)' }}>
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{ width: `${Math.max(pct, 1)}%`, background: style.color, opacity: 0.8 }}
+                      />
+                    </div>
                   </div>
                 </div>
+              )
+            })}
+          </div>
+
+          {/* Category legend */}
+          <div className="flex flex-wrap gap-3 mt-3 pt-3" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+            {(['detect', 'work', 'llm', 'wait', 'output'] as const).filter(cat =>
+              steps.some(s => s.category === cat)
+            ).map(cat => {
+              const names: Record<string, string> = { detect: 'Detection', work: 'Execution', llm: 'LLM Thinking', wait: 'Waiting', output: 'Output', setup: 'Setup' }
+              const style = categoryStyles[cat]
+              return (
+                <span key={cat} className="flex items-center gap-1 text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: style.dot, display: 'inline-block' }} />
+                  {names[cat]}
+                </span>
               )
             })}
           </div>
@@ -642,9 +763,9 @@ function TimingTab({ exists, timing }: { exists?: boolean; timing?: any }) {
       {/* Skipped steps */}
       {timing.skippedSteps?.length > 0 && (
         <Card>
-          <h4 className="font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Skipped Steps</h4>
+          <h4 className="font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Skipped</h4>
           <div className="flex flex-wrap gap-2">
-            {timing.skippedSteps.map((s: string) => (
+            {(Array.isArray(timing.skippedSteps[0]) ? timing.skippedSteps.flat() : timing.skippedSteps).map((s: string) => (
               <Badge key={s} variant="secondary" size="xs">{s}</Badge>
             ))}
           </div>
@@ -652,11 +773,11 @@ function TimingTab({ exists, timing }: { exists?: boolean; timing?: any }) {
       )}
 
       {/* Errors */}
-      {timing.errors?.length > 0 && (
+      {timing.errors?.filter((e: any) => e && (typeof e === 'string' ? e : true)).length > 0 && (
         <Card style={{ borderColor: 'var(--accent-red)' }}>
           <h4 className="font-semibold mb-2" style={{ color: 'var(--accent-red)' }}>Errors</h4>
           <ul className="text-sm space-y-1" style={{ color: 'var(--accent-red)' }}>
-            {timing.errors.map((e: string, i: number) => (
+            {timing.errors.filter((e: any) => e && (typeof e === 'string')).map((e: string, i: number) => (
               <li key={i}>• {e}</li>
             ))}
           </ul>

@@ -50,7 +50,7 @@ const INTENT_LABEL_MAP: Array<[RegExp, string]> = [
   [/teams-search/i, 'Teams'],
   [/troubleshoot/i, 'Troubleshoot'],
   [/draft-email|email-drafter/i, 'Email'],
-  [/inspection/i, 'Inspection'],
+  [/inspection/i, 'Summary'],
   [/generate-kb|Knowledge Base/i, 'KB'],
   [/patrol/i, 'Patrol'],
 ]
@@ -419,7 +419,7 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull, ski
     { id: 'teams-search', icon: MessageSquare, label: 'Teams', color: 'var(--accent-purple)' },
     { id: 'status-judge', icon: GitBranch, label: 'Status', color: 'var(--accent-amber)' },
     { id: 'troubleshoot', icon: Search, label: 'Troubleshoot', color: 'var(--accent-red)' },
-    { id: 'inspection', icon: FileText, label: 'Inspection', color: 'var(--accent-blue)' },
+    { id: 'inspection', icon: FileText, label: 'Summary', color: 'var(--accent-blue)' },
     { id: 'generate-kb', icon: BookOpen, label: 'KB', color: 'var(--accent-purple)' },
   ]
 

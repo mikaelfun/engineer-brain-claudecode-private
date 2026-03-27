@@ -156,7 +156,7 @@ const STEP_LABELS: Record<string, string> = {
   'teams-search': 'Teams Search',
   'troubleshoot': 'Troubleshoot',
   'draft-email': 'Draft Email',
-  'inspection': 'Inspection',
+  'inspection': 'Summary',
   'generate-kb': 'Generate KB',
 }
 

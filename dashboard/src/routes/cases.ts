@@ -191,7 +191,7 @@ cases.get('/:id/teams', (c) => {
   }
 
   try {
-    const files = readdirSync(teamsDir).filter((f: string) => f.endsWith('.md'))
+    const files = readdirSync(teamsDir).filter((f: string) => f.endsWith('.md') && !f.startsWith('_'))
     const chats = files.map((f: string) => {
       const content = readFileSync(join(teamsDir, f), 'utf-8')
       return {
@@ -285,13 +285,32 @@ cases.get('/:id/drafts', (c) => {
   return c.json({ drafts, total: drafts.length })
 })
 
-// GET /api/cases/:id/inspection — 最新 inspection 报告
+// GET /api/cases/:id/inspection — case-summary 或 legacy inspection 报告
 cases.get('/:id/inspection', (c) => {
   const caseNumber = validateCaseNumber(c)
   if (!caseNumber) return c.json({ error: 'Invalid case number' }, 400)
   const caseDir = getCaseDir(caseNumber)
 
-  // Find inspection-*.md files, sorted by mtime descending
+  // Priority 1: case-summary.md (new format)
+  const summaryPath = join(caseDir, 'case-summary.md')
+  if (existsSync(summaryPath)) {
+    try {
+      const content = readFileSync(summaryPath, 'utf-8')
+      const mtime = statSync(summaryPath).mtimeMs
+      return c.json({
+        content,
+        filename: 'case-summary.md',
+        exists: true,
+        legacy: false,
+        updatedAt: new Date(mtime).toISOString(),
+        allFiles: ['case-summary.md'],
+      })
+    } catch {
+      // fall through to legacy
+    }
+  }
+
+  // Priority 2: legacy inspection-*.md files (fallback)
   try {
     const files = readdirSync(caseDir)
       .filter((f: string) => f.startsWith('inspection-') && f.endsWith('.md'))
@@ -309,6 +328,7 @@ cases.get('/:id/inspection', (c) => {
         content,
         filename: latest.name,
         exists: true,
+        legacy: true,
         updatedAt: new Date(latest.mtime).toISOString(),
         allFiles: files.map(f => f.name),
       })
@@ -317,7 +337,7 @@ cases.get('/:id/inspection', (c) => {
     // fall through
   }
 
-  return c.json({ content: '', filename: '', exists: false, allFiles: [] })
+  return c.json({ content: '', filename: '', exists: false, legacy: false, allFiles: [] })
 })
 
 // GET /api/cases/:id/todo — per-case todo 文件列表 + 最新内容
