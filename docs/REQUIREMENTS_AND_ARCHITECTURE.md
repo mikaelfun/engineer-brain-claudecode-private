@@ -457,7 +457,6 @@ EngineerBrain/
 │   ├── humanizer/               # 英文 AI 文本润色
 │   ├── humanizer-zh/            # 中文 AI 文本润色
 │   ├── agency-icm/              # ICM 事件查询 (16 PS1 脚本)
-│   ├── teams-case-search/       # Teams 搜索脚本
 │   ├── contentidea-kb-search/   # ContentIdea KB 搜索
 │   ├── workiq/                  # Microsoft 365 WorkIQ
 │   └── kb-article-generator/    # KB 文章生成

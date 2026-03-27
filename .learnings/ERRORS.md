@@ -27,7 +27,7 @@
 - 原因：后端不支持 `createdDateTime` 做 filter 或 orderby，错误信息明确指出 not supported/not allowed
 - 解决：放弃用 `ListChatMessages(filter/orderby)` 做时间切片增量抓取；改用 `SearchTeamsMessages` 自然语言时间窗做增量入口，命中的 chat 再用 `ListChatMessages` 全量拉取
 - 预防：工具 schema 不等于后端真实能力，增量方案必须以实测为准。已记入 Teams skill 文档
-- 相关文件：`skills/teams-case-search/scripts/fetch-teams.ps1`
+- 相关文件：`skills/teams-search/scripts/fetch-teams.ps1`（已废弃）
 
 ### 2026-03-16 — playwright-cli Chrome not found + Edge 切换
 
@@ -70,7 +70,7 @@
 - 原因：`ConvertFrom-Json` 把 `"...Z"` 结尾的 ISO 时间解析为 `System.DateTime(Kind=Utc)`；但 PowerShell `.ToString()` 输出不带 Z 后缀（如 `03/12/2026 09:11:44`）；`DateTimeOffset::Parse` 拿到没有时区标记的字符串后当成本地时间 (GMT+8)，`.ToOffset(+8)` 自然不变
 - 解决：在 `To-Gmt8` 函数中检测输入类型，如果是 `DateTime` 则显式构造 `new DateTimeOffset(dt, TimeSpan.Zero)` 确保按 UTC 处理
 - 预防：PowerShell 中处理 JSON 日期时永远检查 `ConvertFrom-Json` 的自动类型转换
-- 相关文件：`skills/teams-case-search/scripts/write-teams.ps1`
+- 相关文件：`.claude/skills/teams-search/scripts/write-teams.ps1`
 
 ### 2026-03-17 — playwright-cli --profile 相对路径把浏览器数据写入 cases/active/
 
@@ -86,3 +86,48 @@
 - 原因：`taskkill /IM node.exe` 按进程名匹配，会杀掉所有 node.exe 进程，包括 Claude Code CLI、MCP server 等
 - 解决：用 `netstat -ano | findstr "LISTENING" | findstr ":5173 :3010"` 找到占用端口的具体 PID，然后 `powershell -Command "Stop-Process -Id {PID} -Force"` 精准杀掉
 - 预防：**绝对不要用 `taskkill /F /IM node.exe`**。始终先查端口占用的 PID，只杀特定 PID。同理也不要 `killall node` 或 `pkill node`
+
+### 2026-03-27 — Custom subagent_type 'data-refresh' not found
+
+- 症状：`Agent(subagent_type: "data-refresh")` 返回 "Agent type 'data-refresh' not found"，回退为 general-purpose agent（加载全量 195 tools + 12 MCP）
+- 原因：`.claude/agents/data-refresh.md` 的 YAML frontmatter 缺少 `name` 字段。`name` 和 `description` 都是**必填**字段，缺少任一则 agent 不会注册到可用类型列表
+- 解决：在所有 3 个 agent.md（data-refresh, email-drafter, troubleshooter）中添加 `name` 字段
+- 追加：`tools` 字段必须用逗号分隔字符串（`tools: Bash, Read, Write`），不能用 JSON 数组格式
+- 追加：agent 定义在会话启动时加载，修改后需重启会话或 `/agents` 才能生效
+- 预防：已在 CLAUDE.md 中新增 "Custom Subagent 注册" 章节，包含必填字段、格式规范、加载时机
+- 相关文件：`.claude/agents/data-refresh.md`, `.claude/agents/email-drafter.md`, `.claude/agents/troubleshooter.md`
+
+### 2026-03-27 — SKILL 注入 agent prompt 反而更慢
+
+- 症状：将 SKILL.md 完整内容注入 agent spawn prompt（Agent B），比让 agent 自己读 SKILL.md（Agent C）慢 15 秒（99s vs 84s）
+- 原因：注入大段文本增大了 agent 每一轮的 context 处理开销（prompt 在所有 turn 中都要处理），远超省下的 1 次 Read 调用（~2s）
+- 解决：回滚 5 个文件的 SKILL 注入改动（casework/patrol/troubleshoot/draft-email SKILL.md + case-session-manager.ts）
+- 预防：agent prompt 保持精简，只包含参数和 "请先读取 xxx 获取完整执行步骤" 的指令。大段内容让 agent 运行时自己读取
+
+### 2026-03-27 — Git Bash `;` 变量赋值被 pipe 吞掉
+
+- 症状：`CASE_DIR="/c/..." ; date +%s > "$CASE_DIR/logs/.t_xxx" ; pwsh ... 2>&1 | tail -1` 中 `$CASE_DIR` 为空，输出 `/logs/.t_xxx: No such file or directory`
+- 原因：Git Bash (MSYS2) 环境下，当命令行中**任何位置**出现 `|`（pipe）时，同一行用 `;` 设置的所有 shell 变量赋值会被静默丢弃。这是 Bash 工具对 `;` 单行命令的解析行为导致的
+- 复现：`X=hello ; echo "$X" ; echo a | cat ; echo "$X"` → `X` 全程为空。去掉 `| cat` 则正常
+- 解决：**变量赋值必须用换行（`\n`），不能用 `;` 放在同一行**。即使 `export` 也不能规避
+- 正确写法：
+  ```bash
+  CASE_DIR="/c/Users/.../cases/active/123"
+  date +%s > "$CASE_DIR/logs/.t_xxx" ; pwsh ... 2>&1 | tail -1
+  ```
+- 预防：更新 casework SKILL.md 的 Bash 健壮性规则，变量赋值行独占一行
+- 相关文件：`.claude/skills/casework/SKILL.md`（Bash 健壮性规则）
+
+### 2026-03-28 — E2E Playwright 截图累积撑爆 Claude Code session context
+
+- 症状：verify 流程运行到后期 session 容量耗尽，无法继续
+- 原因：每步操作都截 PNG 全页图 + 用 Read tool 把截图传回会话，累积图片 token 撑爆 context（不是单张太大，而是张数太多）
+- 解决（三层）：
+  1. 减少截图次数：只在关键验证点截图，不要每步都截
+  2. JPEG 代替 PNG：`type: 'jpeg', quality: 70`，单张体积减小 70-80%
+  3. 按测试类型隔离图片 context：
+     - E2E / API / Interaction 类：靠代码断言验证，截图只保存文件不传回会话
+     - Visual 类：委托 subagent 查看截图返回纯文本 PASS/FAIL，subagent 结束后图片 context 自动释放
+- 核心原则：**主会话永远不直接 Read 截图文件**
+- 预防：规则写入 `conductor/workflow.md`（📸截图优化规则 + UI Screenshot Verification）和 `.claude/commands/conductor/verify.md`
+- 追加：`openviking add-memory` 提取 0 条，需用 `session new → add-message → commit` 手动流程才能写入记忆

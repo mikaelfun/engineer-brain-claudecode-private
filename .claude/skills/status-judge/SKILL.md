@@ -10,101 +10,67 @@ allowed-tools:
 
 # /status-judge — Case 状态判断
 
-综合分析 Case 的实际状态，判定 `actualStatus` 和 `daysSinceLastContact`。
+综合分析 Case 实际状态，判定 `actualStatus` 和 `daysSinceLastContact`。
 
 ## 参数
-- `$ARGUMENTS` — Case 编号（如 `2603100030005863`）
+- `$ARGUMENTS` — Case 编号
 
 ## 配置读取
-```
-读取 config.json 获取 casesRoot
-设置 caseDir = {casesRoot}/active/{caseNumber}/（使用绝对路径）
-```
+读取 `config.json` 获取 `casesRoot`，设置 `caseDir = {casesRoot}/active/{caseNumber}/`（绝对路径）。
 
 ## 执行步骤
 
 ### 1. 读取参考知识
-读取 `playbooks/rules/case-lifecycle.md` 获取 actualStatus 判定指导。
+读取 `playbooks/rules/case-lifecycle.md`。
 
 ### 2. 读取 Case 数据
-- 读 `{caseDir}/case-info.md` — 获取 Status、ICM Number、Case 基本信息
-- 读 `{caseDir}/emails.md` — 重点关注**最后几封邮件**的方向和内容
+- `{caseDir}/case-info.md` — Status、ICM Number、基本信息
+- `{caseDir}/emails.md` — **只读最后 100 行**（最近几封邮件），当前状态与最早邮件无关：
+  ```bash
+  tail -100 "{caseDir}/emails.md"
+  ```
+  邮件总数和 Note 总数从 `case-info.md` 提取（格式 `## Emails (N)` / `## Notes (N)`），供缓存用：
+  ```bash
+  sed -n 's/.*Emails (\([0-9]*\)).*/\1/p' "{caseDir}/case-info.md" | head -1
+  sed -n 's/.*Notes (\([0-9]*\)).*/\1/p' "{caseDir}/case-info.md" | head -1
+  ```
+  > 以上命令合并到单次 Bash 调用中
 
-### 3. ICM 状态动态查询（如有 ICM）
-从 `case-info.md` 读取 ICM Number，如果有：
-- 使用 `mcp__icm__get_ai_summary` 获取当前摘要
-- 使用 `mcp__icm__get_incident_details_by_id` 获取当前状态
-- **关键**：case-info.md 中有 ICM Number 不代表一定是 pending-pg，必须查询 ICM 当前状态
-  - PG 仍在处理 → pending-pg
-  - PG 已完成/已反馈 → 可能是 pending-engineer
+### 3. ICM 动态查询（如有）
+有 ICM → 用 `get_ai_summary` + `get_incident_details_by_id` 查当前状态。
+**有 ICM ≠ pending-pg**：PG 仍处理→pending-pg，PG 已完成→可能 pending-engineer。
 
 ### 4. 综合判断 actualStatus
 
-**actualStatus 枚举值**：
+枚举值：`new` | `pending-engineer` | `pending-customer` | `pending-pg` | `researching` | `ready-to-close`
 
-| 值 | 含义 |
-|---|---|
-| `new` | 新 Case，尚无沟通记录 |
-| `pending-engineer` | 轮到工程师行动 |
-| `pending-customer` | 等客户回复 |
-| `pending-pg` | 等产品组（ICM） |
-| `researching` | 工程师正在排查中 |
-| `ready-to-close` | 可关单 |
-
-**关键判断原则**（详见 `playbooks/rules/case-lifecycle.md`）：
-1. **不依赖 D365 Status 字段** — D365 Status 是需要工程师去更新的字段，不是判断输入
-2. **ICM 状态需动态查询** — 有 ICM 不等于 pending-pg
-3. **最后邮件方向不等于状态** — 需结合邮件内容理解意图
-4. **结合邮件内容理解意图** — 如"观察几天后反馈"→ pending-customer
+**判断原则**：① 不依赖 D365 Status 字段 ② ICM 状态需动态查询 ③ 最后邮件方向≠状态，需结合内容理解意图
 
 ### 5. 计算 daysSinceLastContact
-- 从最后一封**工程师发出的邮件**到现在的自然日天数
-- 用于判断是否需要 follow-up（≥ 3 天 且 actualStatus = pending-customer）
+最后一封**工程师发出邮件**到现在的自然日天数（用于 ≥3 天 follow-up 判断）。
 
 ### 6. Upsert casehealth-meta.json
-读已有 meta → 添加/更新以下字段 → 写回。
-**保留所有已有字段不变**（compliance、irSla、fdr、fwr 等）。
-
+保留已有字段（compliance/irSla/fdr/fwr），添加/更新：
 ```json
-{
-  "actualStatus": "pending-engineer",
-  "daysSinceLastContact": 2,
-  "statusJudgedAt": "2026-03-18T10:00:00+08:00",
-  "statusReasoning": "最后邮件(3/16)是工程师发出的排查建议，客户尚未回复，但ICM#12345仍在PG处理中(Active)，case主要阻塞在PG → pending-pg"
-}
+{ "actualStatus": "...", "daysSinceLastContact": 2, "statusJudgedAt": "ISO8601", "statusReasoning": "一句话推理 → {status}", "emailCountAtJudge": 14, "noteCountAtJudge": 2, "icmIdAtJudge": "12345 或空字符串" }
 ```
+- `statusReasoning`：含关键依据，以 `→ {actualStatus}` 结尾，≤200 字。
+- `emailCountAtJudge`：本次 judge 时 emails.md 的邮件总数（从文件头 `Emails (N)` 提取）。
+- `noteCountAtJudge`：本次 judge 时 notes.md 的 Note 总数（从文件头 `Notes (N)` 提取）。
+- `icmIdAtJudge`：本次 judge 时 case-info.md 中的 ICM Number（无则空字符串）。
+- 以上三个字段用于下次缓存判断，任一变化触发重新 judge。
 
-**`statusReasoning` 字段规范**：
-- 一句话概括判断逻辑，包含关键依据（最后邮件方向/日期、ICM 状态、客户意图等）
-- 最后用 `→ {actualStatus}` 结尾，明确推导结论
-- 控制在 200 字以内（meta 是机器可读文件，不放长文）
-
-### 7. 写日志（含完整推理链）
+### 7. 写日志（单次 Bash + heredoc）
 
 ```bash
-mkdir -p "{caseDir}/logs"
+mkdir -p "{caseDir}/logs" && cat >> "{caseDir}/logs/status-judge.log" << SJEOF
+[$(date '+%Y-%m-%d %H:%M:%S')] === status-judge START ===
+[$(date '+%Y-%m-%d %H:%M:%S')] INPUT | D365 Status: {d365Status} | Severity: {severity} | ICM: {icmNumber or 'none'}
+[$(date '+%Y-%m-%d %H:%M:%S')] EMAILS | Last: {direction}({date}) "{subject}" | Last engineer: {date}
+[$(date '+%Y-%m-%d %H:%M:%S')] ICM | {摘要 or "N/A"}
+[$(date '+%Y-%m-%d %H:%M:%S')] REASONING | {推理要点} → {actualStatus}
+[$(date '+%Y-%m-%d %H:%M:%S')] RESULT | actualStatus={status} daysSinceLastContact={days}
+[$(date '+%Y-%m-%d %H:%M:%S')] === status-judge END ===
+SJEOF
 ```
-
-日志文件：`{caseDir}/logs/status-judge.log`，append 模式。
-
-**日志格式**：
-
-```
-[YYYY-MM-DD HH:MM:SS] === status-judge START ===
-[YYYY-MM-DD HH:MM:SS] INPUT | D365 Status: {d365Status} | Severity: {severity} | ICM: {icmNumber or 'none'}
-[YYYY-MM-DD HH:MM:SS] EMAILS | Last email: {direction}({date}) "{subject摘要}" | Last engineer email: {date}
-[YYYY-MM-DD HH:MM:SS] ICM | {ICM 查询结果摘要，如 "Active - PG investigating" 或 "Resolved - fix deployed" 或 "N/A"}
-[YYYY-MM-DD HH:MM:SS] REASONING | {完整推理过程，可多行}
-  - 最后邮件是工程师在3/16发出的排查建议，要求客户测试后反馈
-  - 客户尚未回复（2天）
-  - ICM#12345状态为Active，PG仍在调查
-  - 虽然在等客户回复，但主要阻塞在PG处理
-  - 结论：pending-pg
-[YYYY-MM-DD HH:MM:SS] RESULT | actualStatus=pending-pg daysSinceLastContact=2
-[YYYY-MM-DD HH:MM:SS] === status-judge END ===
-```
-
-**规则**：
-- 用 Bash `echo` 逐行 append 写入（`>>`）
-- REASONING 部分必须包含：读了什么数据 → 观察到什么 → 为什么选这个 status
-- 这是排障和审计用的，要能让人事后还原判断逻辑
+**禁止**多次 `echo >>` 逐行写入。

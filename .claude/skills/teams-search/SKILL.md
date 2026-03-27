@@ -3,249 +3,147 @@ name: teams-search
 description: "Teams 消息搜索（KQL 并行）+ 落盘到 teams/"
 ---
 
-# Teams Search Skill — KQL Parallel Search
+# Teams Search — KQL Parallel Search
 
-## 概述
-搜索与指定 Case 相关的 Teams 消息，通过 `write-teams.ps1` 落盘到 case 目录。
-使用 **KQL 并行搜索**（`SearchTeamMessagesQueryParameters`）替代 M365 Copilot 搜索，速度提升 ~3x。
-
-## 架构
-
-```
-Main Agent (内联执行)                    write-teams.ps1 (文件写入)
-┌──────────────────────────────┐        ┌─────────────────────────┐
-│ SearchTeamMessagesQueryParams │──JSON─▶│ 增量写入 chat .md 文件   │
-│ ListChatMessages              │        │ 更新 _chat-index.json   │
-│ (KQL 并行，~5-10s/query)     │        │ 追加 _search-log.md     │
-└──────────────────────────────┘        └─────────────────────────┘
-```
+搜索与 Case 相关的 Teams 消息，通过 `write-teams.ps1` 落盘。
 
 ## 关键约束
-- **禁止自己写 teams 目录下的 md 文件**
-- **必须通过 `write-teams.ps1` 写文件**——它负责 `_search-log.md`、`_chat-index.json`、会话文件
-- 即使搜索结果为空，也必须调用 `write-teams.ps1`（传空 chats 数组）
+- **禁止自己写 teams/ 下的 md 文件**，必须通过 `write-teams.ps1`
+- 搜索结果为空也必须调用 write-teams.ps1（传空 chats）
+- write-teams.ps1 会自动过滤 bot/self chat（displayName="unknown-chat"），无需手动处理
 
 ## 输入
-- `caseNumber`: Case 编号
-- `caseDir`: Case 数据目录路径（如 `{casesRoot}/active/{caseNumber}/`）
+- `caseNumber`, `caseDir`（绝对路径）
+- `contactName`, `contactEmail`（调用方传入，省去读 case-info.md）
+- 可选 `--force-refresh`：忽略缓存 TTL，强制执行搜索（跳过 Step 0 缓存检查）
+- 可选 `--full-search`：强制全量搜索，忽略增量逻辑（不追加 `sent>=` 过滤）
 
 ---
 
-## Step 0: 缓存检查（搜索前必须先执行）
+## Step 0: 缓存检查（Bash 计算，禁止 LLM 做时间差）
 
-1. 读 `config.json` 获取 `teamsSearchCacheHours`（默认 4）
-2. 读 `{caseDir}/teams/_chat-index.json`，检查顶层 `_lastFetchedAt` 字段
-   - `_lastFetchedAt` 是 ISO 8601 UTC 时间戳，由 `write-teams.ps1` 在每次运行时写入
-3. 如果 `_lastFetchedAt` 存在且距当前时间 < `teamsSearchCacheHours` 小时：
-   - 输出 `"Cache valid (last fetched {_lastFetchedAt}), skipping Teams search"`
-   - 写日志 `STEP 0 SKIP | Cache valid, age={N}h < threshold={M}h`
-   - **直接退出，不执行后续步骤**
-4. 否则继续执行搜索
+**`--force-refresh` 时跳过此步骤**，直接进入 Step 1，日志记录：
+```bash
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] STEP 0 SKIP | --force-refresh, bypassing cache check" >> "$LOG"
+```
 
----
+**正常流程必须用以下 Bash 命令检查缓存，不要自己读 JSON 算时间差**：
 
-## Step 1: 读取 Case 信息
+```bash
+LOG="{caseDir}/logs/teams-search.log" && mkdir -p "{caseDir}/logs" && \
+CACHE_FILE="{caseDir}/teams/_cache-epoch" && \
+if [ -f "$CACHE_FILE" ]; then \
+  CACHE_EPOCH=$(cat "$CACHE_FILE") && NOW=$(date +%s) && \
+  AGE_SECS=$((NOW - CACHE_EPOCH)) && AGE_H=$((AGE_SECS / 3600)) && AGE_M=$(( (AGE_SECS % 3600) / 60 )) && \
+  THRESHOLD=$((4 * 3600)) && \
+  if [ $AGE_SECS -lt $THRESHOLD ]; then \
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] STEP 0 SKIP | Cache valid, age=${AGE_H}h${AGE_M}m < 4h" >> "$LOG" && \
+    echo "CACHE_VALID|${AGE_H}h${AGE_M}m"; \
+  else \
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] STEP 0 OK | Cache expired, age=${AGE_H}h${AGE_M}m > 4h" >> "$LOG" && \
+    echo "CACHE_EXPIRED|${AGE_H}h${AGE_M}m"; \
+  fi; \
+else \
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] STEP 0 OK | No cache file, proceeding with search" >> "$LOG" && \
+  echo "NO_CACHE"; \
+fi
+```
 
-从 `{caseDir}/case-info.md` 读取：
-- **Primary Contact Name**（客户联系人姓名）
-- **Primary Contact Email**（客户联系人邮箱，如果有）
+输出 `CACHE_VALID` → **直接退出，不执行后续步骤**。输出 `CACHE_EXPIRED` 或 `NO_CACHE` → 继续。
+
+## Step 1: 联系人信息
+
+使用调用方传入的 `contactName` 和 `contactEmail`。
+仅当未传入时才从 `{caseDir}/case-info.md` 读取（独立调用场景）。
 
 ## Step 2: KQL 并行搜索
 
-### 搜索策略：模型驱动 Query 扩展
+**始终 Q1 + Q2 + Q3 三路并行**（单条消息 3 个 MCP 调用）。
 
-根据 caseNumber 和 contactName/email，生成 3 个查询**并行执行**：
-
-#### Q1: KQL caseNumber 搜索（必选）
+**Q1** — caseNumber 搜索：
 ```
-mcp__teams__SearchTeamMessagesQueryParameters(queryString="{caseNumber}")
+SearchTeamMessagesQueryParameters(queryString="{caseNumber}")
 ```
-命中精确包含 case 编号的消息内容。
 
-#### Q2: KQL 联系人搜索（必选，根据可用信息选择策略）
-
-**优先策略 — 有邮箱时用 `from:` 操作符：**
+**Q2** — 联系人搜索（有邮箱用 `from:{email}`，无邮箱用 `{caseNumber} OR {firstName}`）：
 ```
-mcp__teams__SearchTeamMessagesQueryParameters(queryString="from:{contactEmail}")
+SearchTeamMessagesQueryParameters(queryString="from:{contactEmail}")
 ```
-精确匹配发件人邮箱，高精度。
+> 姓名只用第一个 token，不用精确短语匹配。
 
-**回退策略 — 无邮箱时用姓名首 token + OR：**
+**Q3** — ListChats topic 过滤（捕获 meeting chat，KQL 搜不到这类）：
 ```
-mcp__teams__SearchTeamMessagesQueryParameters(queryString="{caseNumber} OR {contactFirstName}")
+ListChats(userUpns=["fangkun@microsoft.com"], topic="{caseNumber}", top=50)
 ```
-> **注意**：只用名字的**第一个 token**（如 "Sushanth"），不要用完整全名的精确短语匹配（如 `"Sushanth C"` 会 0 命中）。
 
-#### Q3: ListChats topic 过滤（必选）
-```
-mcp__teams__ListChats(userUpns=["fangkun@microsoft.com"], topic="{caseNumber}", top=10)
-```
-**专门捕获 meeting/group chat**——这些聊天的 topic 通常包含 `TrackingID#{caseNumber}`，
-但消息正文里没有 case number，所以 KQL 搜不到。`ListChats` 按 topic 子串匹配，能补上这个盲区。
-
-> **为什么需要 Q3**：客户会议聊天（meeting chat）的消息里往往不含 case number，
-> 只有 chat topic 包含 `TrackingID#...`。KQL 只搜消息内容，ListChats 搜 topic 元数据。
-
-### KQL 语法要点
-- Graph Search 默认 AND 逻辑——多个单词都必须同时出现
-- 用 `OR` 显式组合不同关键词：`{caseNumber} OR {name}`
-- 用 `from:` 按发件人过滤：`from:user@example.com`
-- 避免精确短语匹配（`"multi word"`），命中率极低
-- 避免过多 AND 关键词（`container registry {caseNumber}`），太严格导致 0 命中
-
-### 并行执行
-三个查询**同时发送**（在同一个消息中调用三个 MCP tool），等待所有结果返回。
+### KQL 要点
+- 默认 AND 逻辑，用 `OR` 组合关键词
+- 用 `from:` 按发件人，避免精确短语和过多 AND
 
 ### 增量搜索
-如果 `{caseDir}/teams/_search-log.md` 存在且有最近成功记录，KQL 查询追加时间过滤：
-```
-queryString="{caseNumber} sent>=2026-03-23"
-```
-Q3 (ListChats) **不支持时间过滤**，始终全量执行（很快，不影响）。
-设置 `searchMode = "incremental"`。
+有 `_search-log.md` 且有最近成功记录 → Q1/Q2 追加 `sent>=YYYY-MM-DD`，设 `searchMode="incremental"`。
+Q3 始终全量（ListChats 不支持时间过滤），但 Step 3 中用本地 `_chat-index.json` 做 chatId diff，**仅对新发现的 chatId 拉取消息**，已知 chatId 跳过（write-teams.ps1 会增量 append）。
+增量 Q1+Q2 均 0 命中且无本地缓存 → 回退全量，设 `searchMode="full-fallback"`。
 
-### 回退策略
-- 增量搜索超时/0 结果且无本地缓存 → 回退全量搜索，设 `searchMode = "full-fallback"`
-- 增量 0 命中但本地已存在 Teams 缓存 → 视为"没有新消息"，不回退
+**`--full-search` 时**：跳过增量逻辑，不追加 `sent>=`，强制 `searchMode="full"`。所有 chatId 均重新拉取消息。
 
 ---
 
-## Step 3: 合并搜索结果 + 拉取消息
+## Step 3: 合并结果 + 拉取消息
 
-1. **合并 chatIds**：从 Q1/Q2/Q3 的返回结果中提取所有唯一 chatId
-   - Q1/Q2（KQL）：返回 `hitContainers`，每个包含 `resource.channelIdentity.channelId` 或消息的 chatId
-   - Q3（ListChats）：返回 `chats` 数组，每个包含 `id` 字段即为 chatId
-   - 提取所有不重复的 chatId
-
-2. **记录关联来源**：
-   - Q1 命中的 chatId → `source: "case-number"`
-   - Q2 命中的 chatId → `source: "contact-name"`
-   - Q3 命中的 chatId → `source: "meeting-topic"`
-   - 多个来源都命中的 → `source: "case-number"`（优先）
-
-3. **拉取完整消息**：对每个 chatId 调用：
-```
-mcp__teams__ListChatMessages(chatId="{chatId}")
-```
-
-> **已知限制**：
-> - `ListChatMessages` 的 `filter`/`orderby` 参数实际不可用（后端不支持）
-> - `ListChatMessages` 耗时 ~10s/chat
-> - `SearchTeamMessagesQueryParameters` 耗时 ~5-10s/query
+1. 合并 Q1/Q2/Q3 的唯一 chatId
+2. 记录来源：Q1→`case-number`，Q2→`contact-name`，Q3→`meeting-topic`（多来源取优先）
+3. **增量 diff**：读取 `{caseDir}/teams/_chat-index.json` 中已有 chatId 列表
+   - **新 chatId**（不在 index 中）→ `ListChatMessages` 拉取完整消息
+   - **已知 chatId**（在 index 中）→ 也 `ListChatMessages` 拉取（write-teams.ps1 会增量 append 新消息）
+   - 如果合并后 0 个 chatId → 跳过拉取
 
 ---
 
 ## Step 4: 文件写入
 
-构造 JSON 传给 `write-teams.ps1`：
+用固定模板填入搜索结果，传给 write-teams.ps1（**不要自行设计 JSON 结构**，直接用下方模板替换占位符）：
 
-**方式 1: 通过 stdin（推荐）**
 ```bash
-echo '{json}' | pwsh -NoProfile -File skills/teams-case-search/scripts/write-teams.ps1 -OutputDir "{caseDir}/teams"
+LOG="{caseDir}/logs/teams-search.log" && \
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] STEP 4 START | write-teams.ps1" >> "$LOG" && \
+echo '{json}' | pwsh -NoProfile -File .claude/skills/teams-search/scripts/write-teams.ps1 -OutputDir "{caseDir}/teams" 2>&1 && \
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] STEP 4 OK | files written" >> "$LOG" || \
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] STEP 4 FAIL | see output" >> "$LOG"
 ```
 
-**方式 2: 通过文件（JSON 过大时）**
-先将 JSON 写入 `{caseDir}/teams/_input.json`，然后：
-```bash
-pwsh -NoProfile -File skills/teams-case-search/scripts/write-teams.ps1 -OutputDir "{caseDir}/teams" -InputFile "{caseDir}/teams/_input.json"
-```
+JSON 过大时先写 `{caseDir}/teams/_input.json`，用 `-InputFile` 参数。
 
-### 输入 JSON Schema
-
+### 固定 JSON 模板（直接填入，不要自行构造结构）
 ```json
 {
-  "caseNumber": "string (必填)",
+  "caseNumber": "{caseNumber}",
   "searchResults": [
-    {
-      "keyword": "string — KQL queryString",
-      "status": "success|timeout|parse_error",
-      "chatIds": ["string — chatId 数组"]
-    }
+    { "keyword": "{caseNumber}", "status": "{q1Status}", "chatIds": ["{q1ChatIds}"] },
+    { "keyword": "from:{contactEmail}", "status": "{q2Status}", "chatIds": ["{q2ChatIds}"] },
+    { "keyword": "topic:{caseNumber}", "status": "{q3Status}", "chatIds": ["{q3ChatIds}"] }
   ],
   "chats": [
     {
-      "chatId": "string (必填)",
-      "source": "string — 'case-number' | 'contact-name'",
-      "messages": [
-        {
-          "id": "string",
-          "createdDateTime": "ISO 8601 UTC",
-          "from": { "displayName": "string" },
-          "body": { "contentType": "Html|Text", "content": "string" }
-        }
-      ]
+      "chatId": "{chatId}",
+      "source": "{source}",
+      "messages": [{messages}]
     }
   ],
-  "searchMode": "full|incremental|full-fallback",
-  "fallbackTriggered": false,
-  "windowDays": null,
-  "elapsed": 16.5
+  "searchMode": "{full|incremental|full-fallback}",
+  "elapsed": {elapsedSeconds}
 }
 ```
 
-### write-teams.ps1 参数
-
-| 参数 | 必填 | 说明 |
-|------|------|------|
-| `-OutputDir` | Yes | 输出目录（通常为 `{caseDir}/teams/`） |
-| `-InputJson` | No | JSON 字符串。不传则从 stdin 读取 |
-| `-InputFile` | No | JSON 文件路径。替代 InputJson/stdin |
-
 ---
 
-## 输出文件（由 write-teams.ps1 生成）
+## 日志规范
 
-```text
-teams/
-  _search-log.md        # 搜索历史记录
-  _chat-index.json      # chatId -> 文件名/时间 映射
-  {sanitized-name}.md   # 每个聊天一个文件
-```
-
----
-
-## 执行日志
-
-每个步骤执行前后都必须写入日志文件 `{caseDir}/logs/teams-search.log`。
-
-日志格式（每行一条，append 模式）：
-```
-[YYYY-MM-DD HH:MM:SS] STEP {步骤号} {状态} | {描述}
-```
-
-示例：
-```
-[2026-03-26 11:08:00] STEP 1 START | Reading case-info.md for contact name/email
-[2026-03-26 11:08:01] STEP 1 OK    | Contact: Sushanth C, Email: schan124@ford.com
-[2026-03-26 11:08:02] STEP 2 START | KQL parallel search: Q1="2602130040001034", Q2="from:schan124@ford.com"
-[2026-03-26 11:08:12] STEP 2 OK    | Q1: 5 hits, Q2: 72 hits, merged 3 unique chatIds
-[2026-03-26 11:08:13] STEP 3 START | ListChatMessages: 19:meeting_xxx
-[2026-03-26 11:08:23] STEP 3 OK    | 10 messages (8 valid, 2 system)
-[2026-03-26 11:08:24] STEP 4 START | write-teams.ps1
-[2026-03-26 11:08:28] STEP 4 OK    | 3 chat files written, _search-log.md updated
-```
-
-规则：
-- 用 Bash `echo "[$(date '+%Y-%m-%d %H:%M:%S')] ..." >> {caseDir}/logs/teams-search.log` 写入
-- `{caseDir}/logs/` 目录不存在时先创建
-- MCP 调用的输入和结果摘要都要记录
-- write-teams.ps1 的 exit code 和输出摘要要记录
-
----
+日志 append 到 `{caseDir}/logs/teams-search.log`。
+**禁止**为单个 echo 单独发起 Bash 调用——必须合并到工作命令中。
+Step 0 的日志已在缓存检查脚本中合并。其余步骤的日志合并到 Step 4 的 Bash 调用中。
+MCP 调用无法写日志，在前后最近的 Bash 命令中记录。
 
 ## 错误处理
-- Teams MCP 不可用 → 构造 status="timeout" 的 JSON，仍然调用 write-teams.ps1 记录
-- 无搜索结果 → 构造空 chats 的 JSON，仍然调用 write-teams.ps1 记录
-- 不要自己手写 `_search-log.md` 或 chat 文件，统一由 write-teams.ps1 处理
-
----
-
-## 性能对比
-
-| 方法 | 工具 | 耗时 | 备注 |
-|------|------|------|------|
-| 旧方案 | `SearchTeamsMessages` (Copilot) | ~30-50s/query | M365 Copilot 后端，语义搜索 |
-| 新方案 Q1/Q2 | `SearchTeamMessagesQueryParameters` (KQL) | ~5-10s/query | Graph Search API，关键词搜索 |
-| 新方案 Q3 | `ListChats` (topic filter) | ~10-15s | Graph API，元数据过滤，补 meeting chat |
-| 旧方案总计 | 2x Copilot + messages | ~60-100s | 需后台 agent |
-| **新方案总计** | **3 查询并行 + messages** | **~20-30s** | **内联执行即可** |
+- Teams MCP 不可用 → 构造 status="timeout" 的 JSON，仍调用 write-teams.ps1
+- 无结果 → 空 chats JSON，仍调用 write-teams.ps1

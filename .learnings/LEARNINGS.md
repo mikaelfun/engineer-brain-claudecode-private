@@ -78,3 +78,15 @@
   - 后续 casework 脚本（`download-attachments.ps1`、`warm-dtm-token.ps1` 等）自动连接已有 daemon 复用，不会创建新进程
   - `Restart-D365Browser` 调用 `playwright-cli kill-all` 时会杀掉所有 Playwright 进程（daemon + 浏览器），然后 `open` 启动新的，确保始终只有一个 daemon 实例
 - 教训：Playwright daemon 孤儿进程是设计如此（跨 casework 复用），`kill-all → open` 机制保证不会累积。无需手动清理，留着等下次 casework 自然复用即可
+
+## 2026-03-28: E2E Testing > Shallow Testing
+
+**Problem**: Verification plan generation defaulted to `Skip` for refactor/chore tracks with no UI surface. This led to shallow tests (label checks, static assertions) that missed real behavioral issues.
+
+**Solution**: Added `E2E` test type to conductor verification strategy. Core principle: "只要不是 D365 写入和执行操作，都可以自动化验收". E2E tests use backup → execute → verify → restore pattern. Updated both `conductor/workflow.md` and `.claude/commands/conductor/new-track.md`.
+
+**Key changes**:
+- New test type `E2E` — backup data → run actual scripts/workflows → verify file outputs + API + UI → restore data
+- `refactor/chore | no UI surface | Skip` rule deprecated — use E2E instead when workflows are executable
+- `Skip` now restricted to D365 write/execute operations only (must justify)
+- 4 E2E test patterns documented: Data Backup/Restore Wrapper, Script Output Verification, API + File Integration, Full Workflow E2E

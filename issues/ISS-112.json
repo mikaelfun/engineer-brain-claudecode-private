@@ -1,0 +1,10 @@
+{
+  "id": "ISS-112",
+  "title": "WebUI per-step MCP 优化：SDK session 按 step 动态加载 MCP subset",
+  "description": "目前 CLI 路径已有 dedicated agent.md（data-refresh 3 tools/1 MCP, email-drafter 3 tools/0 MCP, troubleshooter 6 tools/5 MCP），但 WebUI SDK session 始终加载全量 195 tools/12 MCPs。需要改造 case-session-manager.ts 的 session 创建逻辑，按 step 选择对应的 MCP subset，而非全量加载 12 个 MCP server。预计每次 step session spawn 节省 10-50s MCP 初始化时间。",
+  "type": "feature",
+  "priority": "P1",
+  "status": "pending",
+  "createdAt": "2026-03-27T16:00:00+08:00",
+  "updatedAt": "2026-03-27T16:00:00+08:00"
+}

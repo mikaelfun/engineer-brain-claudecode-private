@@ -37,12 +37,12 @@ allowed-tools:
 
 2. **确保数据存在**
    如果 `{caseDir}/case-info.md` 不存在：
-   - 先执行 `Agent(data-refresh)` 拉取数据
+   - 先执行 `Agent(subagent_type: "data-refresh")` 拉取数据
 
 3. **写邮件**
-   `Agent(email-drafter)`:
+   `Agent(subagent_type: "email-drafter")`:
    - prompt 中包含 caseNumber、caseDir、emailType、language
-   - "请先读取 `.claude/agents/email-drafter.md` 获取完整执行步骤"
+   - 请先读取 `.claude/agents/email-drafter.md` 获取完整执行步骤
 
 4. **展示结果**
    读取生成的草稿文件

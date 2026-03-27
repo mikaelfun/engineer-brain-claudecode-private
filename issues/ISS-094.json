@@ -1,10 +1,11 @@
 {
   "id": "ISS-094",
   "title": "start patrol后进度没有实时显示，没有sse",
-  "description": "",
+  "description": "Dashboard 页面点击 Start Patrol 后没有实时进度反馈。按钮瞬间恢复为 Start Patrol，用户不知道 patrol 是否在运行。根因是 Dashboard.tsx 没有消费 patrolStore，只用了 mutation isPending（POST 返回 202 后立即结束）。后端 SSE 和 patrolStore 已完整，Agent Monitor 页面能正常显示进度，仅 Dashboard 未接入。",
   "type": "bug",
   "priority": "P1",
-  "status": "pending",
+  "status": "tracked",
+  "trackId": "patrol-progress-ui_20260327",
   "createdAt": "2026-03-23T01:44:04.171Z",
-  "updatedAt": "2026-03-23T01:44:04.171Z"
+  "updatedAt": "2026-03-27T09:40:00.000Z"
 }

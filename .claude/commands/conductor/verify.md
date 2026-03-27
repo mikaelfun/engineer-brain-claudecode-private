@@ -104,7 +104,8 @@ Parse arguments to determine operation mode:
    - Follow `conductor/workflow.md` Step 2 procedure:
      - Generate JWT for testing
      - Execute each test from the Verification Plan using Playwright
-     - Take screenshots at key points
+     - Take screenshots only at key verification points (JPEG, quality 70, save to file only)
+     - **主会话不直接读取截图**：E2E/API/Interaction 靠代码断言；Visual 类 spawn subagent 查看截图返回纯文本 PASS/FAIL（图片留在 subagent context，结束后释放）
      - Report pass/fail per acceptance criterion
    - **⚠️ Respect safety red lines** from CLAUDE.md — never click dangerous buttons
 6. If no Verification Plan:

@@ -106,8 +106,8 @@
 
 ### Verification
 
-- [ ] Dashboard Case Detail 页面正常渲染 case-summary 内容
-- [ ] 旧 inspection 文件仍可 fallback 显示（legacy=true）
+- [x] Dashboard Case Detail 页面正常渲染 case-summary 内容
+- [x] 旧 inspection 文件仍可 fallback 显示（legacy=true）
 
 ## Verification Plan
 

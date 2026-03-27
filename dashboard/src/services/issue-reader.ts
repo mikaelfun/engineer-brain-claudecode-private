@@ -95,3 +95,28 @@ export function deleteIssue(id: string): boolean {
   unlinkSync(filePath)
   return true
 }
+
+/**
+ * Startup recovery: reset orphan "tracking" issues back to "pending".
+ *
+ * When the server restarts mid-track-creation, the in-memory agent session is
+ * lost but the issue JSON persists with status "tracking". Without recovery the
+ * issue is permanently stuck because create-track guards against non-pending status.
+ *
+ * Call this once at server startup (before any request handling).
+ */
+export function recoverOrphanTrackingIssues(): number {
+  const issues = listIssues()
+  let recovered = 0
+  for (const issue of issues) {
+    if (issue.status === 'tracking' && !issue.trackId) {
+      updateIssue(issue.id, { status: 'pending' as IssueStatus })
+      console.log(`[startup-recovery] Reset orphan issue ${issue.id} ("${issue.title}") from "tracking" → "pending"`)
+      recovered++
+    }
+  }
+  if (recovered > 0) {
+    console.log(`[startup-recovery] Recovered ${recovered} orphan tracking issue(s)`)
+  }
+  return recovered
+}

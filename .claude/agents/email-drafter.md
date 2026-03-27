@@ -1,7 +1,8 @@
 ---
+name: email-drafter
 description: "写邮件草稿 + humanizer 润色"
-tools: ["Read", "Write", "Bash"]
-model: "sonnet"
+tools: Read, Write, Bash
+model: sonnet
 maxTurns: 15
 ---
 

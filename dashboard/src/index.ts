@@ -12,6 +12,7 @@ import { authMiddleware } from './middleware/auth.js'
 import { isWorkspaceReady } from './services/workspace.js'
 import { startFileWatcher, stopFileWatcher } from './watcher/file-watcher.js'
 import { abortAllQueries } from './agent/case-session-manager.js'
+import { recoverOrphanTrackingIssues } from './services/issue-reader.js'
 
 import authRoutes from './routes/auth.js'
 import casesRoutes from './routes/cases.js'
@@ -87,6 +88,9 @@ console.log(`
 if (isWorkspaceReady()) {
   startFileWatcher()
 }
+
+// Startup recovery: reset orphan "tracking" issues left by server restarts
+recoverOrphanTrackingIssues()
 
 serve({
   fetch: app.fetch,

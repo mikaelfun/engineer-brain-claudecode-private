@@ -1,24 +1,15 @@
 ---
+name: troubleshooter
 description: "技术排查 + 写分析报告"
-tools: ["Bash", "Read", "Write", "Glob", "Grep", "WebSearch"]
-model: "opus"
+tools: Bash, Read, Write, Glob, Grep, WebSearch
+model: opus
 maxTurns: 30
 mcpServers:
-  kusto:
-    command: "C:\\Users\\fangkun\\AppData\\Roaming\\agency\\CurrentVersion\\agency.exe"
-    args: ["mcp", "kusto"]
-  ado-msazure:
-    command: "C:\\Users\\fangkun\\AppData\\Roaming\\agency\\CurrentVersion\\agency.exe"
-    args: ["mcp", "ado", "--organization", "msazure"]
-  ado-contentidea:
-    command: "C:\\Users\\fangkun\\AppData\\Roaming\\agency\\CurrentVersion\\agency.exe"
-    args: ["mcp", "ado", "--organization", "contentidea"]
-  ado-supportability:
-    command: "C:\\Users\\fangkun\\AppData\\Roaming\\agency\\CurrentVersion\\agency.exe"
-    args: ["mcp", "ado", "--organization", "supportability"]
-  msft-learn:
-    command: "C:\\Users\\fangkun\\AppData\\Roaming\\agency\\CurrentVersion\\agency.exe"
-    args: ["mcp", "msft-learn"]
+  - kusto
+  - ado-msazure
+  - msft-learn
+  - icm
+  - local-rag
 ---
 
 # Troubleshooter Agent

@@ -11,74 +11,38 @@ allowed-tools:
 Entitlement 合规检查 + 21v Convert 检测。
 
 ## 参数
-- `$ARGUMENTS` — Case 编号（如 `2603100030005863`）
+- `$ARGUMENTS` — Case 编号
 
 ## 配置读取
-```
-读取 config.json 获取 casesRoot
-设置 caseDir = {casesRoot}/active/{caseNumber}/（使用绝对路径）
-```
+读取 `config.json` 获取 `casesRoot`，设置 `caseDir = {casesRoot}/active/{caseNumber}/`（绝对路径）。
 
-## 缓存跳过规则
-
-**读 `{caseDir}/casehealth-meta.json` 中的 `compliance` 字段：**
-- `compliance.entitlementOk === true` → **跳过整个 compliance check**，直接沿用缓存值
-- 缺失 / `entitlementOk === false` / `compliance` 不存在 → 执行下面的完整检查
+## 缓存跳过
+读 `{caseDir}/casehealth-meta.json`：`compliance.entitlementOk === true` → **跳过**，沿用缓存。否则执行完整检查。
 
 ## 执行步骤
 
 ### 1. 读取数据
-- 读 `{caseDir}/case-info.md`
-- 读 `{caseDir}/casehealth-meta.json`（保留已有 irSla/fdr/fwr 等字段）
+- `{caseDir}/case-info.md`
+- `{caseDir}/casehealth-meta.json`（保留已有 irSla/fdr/fwr 等）
 
 ### 2. Entitlement 合规检查
-从 case-info.md 的 Entitlement 表格读取：
-- **Service Name**
-- **Schedule**
-- **Contract Country**
-
-**判断 `entitlementOk`：**
-- ✅ Compliant：Service Name 或 Schedule 包含 `China Cld` 或 `China Cloud`（不区分大小写），**且** Contract Country 为 `China`
-- ❌ Not Compliant：Service Name 和 Schedule **都不包含** `China Cld` / `China Cloud`，**或** Contract Country 不是 `China`
-
-如果不合规，在 `warnings` 中记录具体原因（如 "Service Name 不含 China Cloud"、"Contract Country 非 China"）。
+从 case-info.md 的 Entitlement 表读 Service Name、Schedule、Contract Country。
+- ✅ OK：Service Name 或 Schedule 含 `China Cld`/`China Cloud`（不区分大小写），**且** Contract Country = `China`
+- ❌ Fail：不满足上述条件，`warnings` 记录原因
 
 ### 3. 21v Convert 检测
-从 case-info.md 的 Customer Statement 检查：
-- 搜索关键词 `21v ticket` / `21Vianet`（不区分大小写）
-- 如果匹配，提取：
-  - `21vCaseId`：21v ticket 后面的数字（如 `20260309398206`）
-  - `21vCaseOwner`：从 "21v case owner:" 后面提取邮箱
-
-⚠️ 21v Convert **不影响** `entitlementOk` 判断。它是独立的标注，用于提醒操作前需与 21v owner 同步。
+从 Customer Statement 搜索 `21v ticket`/`21Vianet`，匹配则提取 `21vCaseId` 和 `21vCaseOwner`。
+⚠️ 21v 不影响 `entitlementOk`，是独立标注。
 
 ### 4. Upsert casehealth-meta.json
-
-读已有 meta → 合并 compliance 字段 → 写回。**保留所有已有字段不变**（irSla/fdr/fwr/actualStatus 等）。
-
-精确格式：
+保留已有字段，合并 compliance：
 ```json
-{
-  "compliance": {
-    "entitlementOk": true,
-    "serviceLevel": "Premier",
-    "serviceName": "Unfd AddOn | ProSv Ente - China Cld",
-    "contractCountry": "China",
-    "is21vConvert": true,
-    "21vCaseId": "20260309398206",
-    "21vCaseOwner": "zhang.lihong@oe.21vianet.com",
-    "warnings": []
-  }
-}
+{ "compliance": { "entitlementOk": true, "serviceLevel": "Premier", "serviceName": "...", "contractCountry": "China", "is21vConvert": false, "21vCaseId": null, "21vCaseOwner": null, "warnings": [] } }
 ```
 
-### 5. 写日志
+### 5. 写日志（合并到 Step 4 的 Bash 中）
 ```bash
-mkdir -p "{caseDir}/logs"
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] compliance-check OK | Entitlement={ok/fail} 21v={yes/no}" >> "{caseDir}/logs/compliance-check.log"
+mkdir -p "{caseDir}/logs" && echo "[$(date '+%Y-%m-%d %H:%M:%S')] compliance-check OK | Entitlement={ok/fail} 21v={yes/no}" >> "{caseDir}/logs/compliance-check.log"
 ```
-
-如果跳过（缓存命中）：
-```bash
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] compliance-check SKIP | cached compliant" >> "{caseDir}/logs/compliance-check.log"
-```
+缓存跳过时：`compliance-check SKIP | cached compliant`。
+**禁止**为 mkdir 和 echo 分别发起两次 Bash。

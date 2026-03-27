@@ -83,7 +83,8 @@ allowed-tools:
 
    ```
    Agent({
-     prompt: "请读取 .claude/skills/casework/SKILL.md 获取完整执行步骤，对 Case {caseNumber} 执行完整 casework 流程。caseDir: {casesRoot}/active/{caseNumber}/。",
+     subagent_type: "casework",
+     prompt: "对 Case {caseNumber} 执行完整 casework 流程。caseDir: {casesRoot}/active/{caseNumber}/。请读取 .claude/skills/casework/SKILL.md 获取完整执行步骤。",
      run_in_background: true
    })
    ```

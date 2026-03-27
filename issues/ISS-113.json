@@ -1,0 +1,11 @@
+{
+  "id": "ISS-113",
+  "title": "Inspection 重构：case-summary 增量叙事 + 规则化 todo 替代 inspection",
+  "description": "当前 inspection-YYYYMMDD.md 每次全量 LLM 重写 47 行，其中 95% 是 case-info/meta 的重复数据，唯一价值是「最新动态」4 行叙事。改为：(1) case-summary.md 增量追加叙事（仅 CHANGED 时 LLM 追加 1-2 行），(2) todo 规则化生成（bash 脚本，基于 meta.actualStatus + days 的规则矩阵），(3) 废弃 inspection-*.md，Dashboard 组合渲染 case-info + meta + summary + todo。快速路径省 40-50s LLM，CHANGED 路径省 30-40s。",
+  "type": "refactor",
+  "priority": "P1",
+  "status": "tracked",
+  "trackId": "inspection-refactor_20260328",
+  "createdAt": "2026-03-28T01:45:00+08:00",
+  "updatedAt": "2026-03-28T01:45:00+08:00"
+}

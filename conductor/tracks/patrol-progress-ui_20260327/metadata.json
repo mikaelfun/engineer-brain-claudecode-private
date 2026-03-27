@@ -1,0 +1,17 @@
+{
+  "id": "patrol-progress-ui_20260327",
+  "title": "Dashboard Patrol 实时进度展示",
+  "type": "bug",
+  "status": "complete",
+  "issueId": "ISS-094",
+  "created": "2026-03-27T09:40:00.000Z",
+  "updated": "2026-03-27T09:55:00.000Z",
+  "phases": {
+    "total": 4,
+    "completed": 4
+  },
+  "tasks": {
+    "total": 9,
+    "completed": 9
+  }
+}

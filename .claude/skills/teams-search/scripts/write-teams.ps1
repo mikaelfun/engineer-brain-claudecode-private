@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
   Write Teams chat messages to disk (search-log, chat-index, per-chat md files).
-  This is the "writer" half of the teams-case-search skill.
+  This is the "writer" half of the teams-search skill.
   MCP search/fetch is done by the Claude subagent; results are piped here as JSON.
 
 .DESCRIPTION
@@ -263,14 +263,18 @@ $filesCreated = @()
 $totalMessagesWritten = 0
 $writeSummary = @()
 
-# Process each chat's messages
+# Two-pass processing: aggregate by filename first, then write merged files.
+# This handles the case where the same person has multiple Teams accounts (different user IDs)
+# which create separate 1:1 chats that map to the same filename via Sanitize-Name.
 if ($data.chats) {
+  # --- Pass 1: Parse, filter, and group by target filename ---
+  $fileGroups = @{}  # fileName -> { displayName, chatIds, allMessages }
+
   foreach ($chatData in $data.chats) {
     try {
       $chatId = $chatData.chatId
       if (-not $chatId) { continue }
 
-      $existingMeta = if ($chatIndex.ContainsKey($chatId)) { $chatIndex[$chatId] } else { $null }
       $parsed = Parse-ChatMessages -chatData $chatData
       $chatName = $parsed.displayName
       $messages = @($parsed.messages)
@@ -280,32 +284,93 @@ if ($data.chats) {
         continue
       }
 
+      if ($chatName -eq 'unknown-chat') {
+        Write-Host "Skip chatId $chatId (bot/self chat — no external participants)"
+        continue
+      }
+
       $sanitized = Sanitize-Name $chatName
       $fileName = "$sanitized.md"
+
+      if (-not $fileGroups.ContainsKey($fileName)) {
+        $fileGroups[$fileName] = [PSCustomObject]@{
+          displayName = $chatName
+          chatIds     = [System.Collections.ArrayList]@()
+          allMessages = [System.Collections.ArrayList]@()
+        }
+      }
+      [void]$fileGroups[$fileName].chatIds.Add($chatId)
+      foreach ($m in $messages) { [void]$fileGroups[$fileName].allMessages.Add($m) }
+    } catch {
+      Write-Warning "Failed to parse chatId $($chatData.chatId): $_"
+    }
+  }
+
+  # --- Pass 2: Write merged files ---
+  foreach ($entry in $fileGroups.GetEnumerator()) {
+    try {
+      $fileName = $entry.Key
+      $group = $entry.Value
+      $chatIds = @($group.chatIds)
+      $mergedMessages = @($group.allMessages)
+
+      # Deduplicate messages by time+from+body (same message may appear in overlapping searches)
+      $seen = @{}
+      $uniqueMessages = @()
+      foreach ($m in $mergedMessages) {
+        $key = New-MessageKey $m
+        if (-not $seen.ContainsKey($key)) {
+          $seen[$key] = $true
+          $uniqueMessages += $m
+        }
+      }
+      $mergedMessages = $uniqueMessages
+
+      # Use the first chatId's existing meta for incremental write decision
+      $primaryChatId = $chatIds[0]
+      $existingMeta = if ($chatIndex.ContainsKey($primaryChatId)) { $chatIndex[$primaryChatId] } else { $null }
+      # Also check other chatIds — use the one with the latest lastMessageTime
+      foreach ($cid in $chatIds) {
+        if ($chatIndex.ContainsKey($cid)) {
+          $meta = $chatIndex[$cid]
+          if (-not $existingMeta -or ($meta.lastMessageTime -and $existingMeta.lastMessageTime -and $meta.lastMessageTime -gt $existingMeta.lastMessageTime)) {
+            $existingMeta = $meta
+            $primaryChatId = $cid
+          }
+        }
+      }
+
       $filePath = Join-Path $OutputDir $fileName
-      $writeResult = Write-ChatFileIncremental -filePath $filePath -chatId $chatId -displayName $chatName -allMessages $messages -existingMeta $existingMeta
+      # For multi-chatId files, use the primary chatId in the header; list all in chat-index
+      $writeResult = Write-ChatFileIncremental -filePath $filePath -chatId ($chatIds -join ' + ') -displayName $group.displayName -allMessages $mergedMessages -existingMeta $existingMeta
 
       if (-not ($filesCreated -contains $fileName)) { $filesCreated += $fileName }
       $totalMessagesWritten += [int]$writeResult.AppendedCount
       $writeSummary += [PSCustomObject]@{
-        chatId = $chatId
+        chatIds = $chatIds
         file = $fileName
         mode = $writeResult.WriteMode
         appended = $writeResult.AppendedCount
         total = $writeResult.TotalMessages
+        mergedFrom = $chatIds.Count
       }
 
-      $chatIndex[$chatId] = [PSCustomObject]@{
-        fileName = $fileName
-        displayName = $chatName
-        lastMessageTime = $writeResult.LastMessageTime
-        totalMessages = $writeResult.TotalMessages
-        lastFetchedAt = (Get-Date).ToUniversalTime().ToString('o')
+      # Update chat-index for each chatId pointing to the same file
+      $fetchedAt = (Get-Date).ToUniversalTime().ToString('o')
+      foreach ($cid in $chatIds) {
+        $chatIndex[$cid] = [PSCustomObject]@{
+          fileName = $fileName
+          displayName = $group.displayName
+          lastMessageTime = $writeResult.LastMessageTime
+          totalMessages = $writeResult.TotalMessages
+          lastFetchedAt = $fetchedAt
+        }
       }
 
-      Write-Host "OK ${fileName}: $($writeResult.WriteMode) ($($writeResult.AppendedCount) new / $($writeResult.TotalMessages) total)"
+      $mergeNote = if ($chatIds.Count -gt 1) { " (merged from $($chatIds.Count) chats)" } else { '' }
+      Write-Host "OK ${fileName}: $($writeResult.WriteMode) ($($writeResult.AppendedCount) new / $($writeResult.TotalMessages) total)${mergeNote}"
     } catch {
-      Write-Warning "Failed to write chatId $($chatData.chatId): $_"
+      Write-Warning "Failed to write file $($entry.Key): $_"
     }
   }
   Save-ChatIndex -path $indexPath -indexMap $chatIndex
@@ -315,6 +380,10 @@ if ($data.chats) {
 # This ensures the cache check in teams-search agent Step 0 works even when 0 chats returned
 $chatIndex['_lastFetchedAt'] = (Get-Date).ToUniversalTime().ToString('o')
 Save-ChatIndex -path $indexPath -indexMap $chatIndex
+
+# Write epoch cache file for bash-based cache check (avoids LLM time arithmetic errors)
+$epochPath = Join-Path $OutputDir '_cache-epoch'
+[DateTimeOffset]::UtcNow.ToUnixTimeSeconds().ToString() | Set-Content -Path $epochPath -NoNewline -Encoding ASCII
 
 # --- Write search log ---
 $now = Get-NowGmt8String

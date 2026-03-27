@@ -484,11 +484,13 @@ stepRoutes.post('/case/:id/step/:step', async (c) => {
     }
   }
 
-  // Parse optional body params (e.g. emailType for draft-email)
-  let bodyParams: { emailType?: string } = {}
+  // Parse optional body params (e.g. emailType for draft-email, forceRefresh/fullSearch for teams-search)
+  let bodyParams: { emailType?: string; forceRefresh?: boolean; fullSearch?: boolean } = {}
   try {
     const body = await c.req.json()
     if (body?.emailType) bodyParams.emailType = body.emailType
+    if (body?.forceRefresh) bodyParams.forceRefresh = true
+    if (body?.fullSearch) bodyParams.fullSearch = true
   } catch {
     // No body or invalid JSON — fine, use defaults
   }

@@ -44,6 +44,45 @@ Kun Fang 的 AI 助手，Azure 技术支持工程师。
 
 **核心规则**: 每个 procedure 只在一个 SKILL.md/agent.md 里定义，casework 通过读取引用，不复制内容。
 
+### Custom Subagent 注册（⚠️ 踩坑记录）
+
+`.claude/agents/*.md` 定义的 agent 会注册为 `Agent()` 工具的 `subagent_type`，但有严格要求：
+
+**必填 frontmatter 字段：**
+- `name` — **必须有**，否则 agent 不会注册，spawn 时回退为 `general-purpose`
+- `description` — **必须有**，用于 agent 列表展示
+
+**格式规范：**
+- `tools` — 逗号分隔字符串（如 `tools: Bash, Read, Write`），不要用 JSON 数组
+- `mcpServers` — YAML 列表，仅项目级 agent 支持（plugin agent 不支持）
+- `model` — 可选，`sonnet` / `opus` / `haiku`
+- `maxTurns` — 可选，限制 agent 最大交互轮次
+
+**示例（最小可用）：**
+```yaml
+---
+name: my-agent
+description: "做某件事"
+tools: Bash, Read, Write
+---
+```
+
+**加载时机：**
+- Agent 定义在**会话启动时**加载
+- 新增或修改 agent.md 后需要**重启会话**或执行 `/agents` 才能生效
+- 不重启会导致 `Agent type 'xxx' not found` 错误
+
+**当前已注册的 5 个 agent：**
+| name | model | tools | mcpServers |
+|------|-------|-------|------------|
+| `casework` | sonnet | Bash, Read, Write, Edit, Glob, Grep, Agent | icm |
+| `data-refresh` | sonnet | Bash, Read, Write | icm |
+| `teams-search` | sonnet | Bash, Read, Write | teams |
+| `email-drafter` | sonnet | Read, Write, Bash | — |
+| `troubleshooter` | opus | Bash, Read, Write, Glob, Grep, WebSearch | kusto, ado-msazure, msft-learn, icm, local-rag |
+
+**性能注意：** 不要在 spawn prompt 中注入大段 SKILL 内容。实测注入 vs 让 agent 自己读 SKILL.md，注入反而慢 15s（增大了每轮 context 处理开销）。正确做法是 prompt 中写 `请先读取 .claude/agents/xxx.md 获取完整执行步骤`。
+
 ### 调度规则
 - 收到 Case 任务 → 编排执行，读取对应 skill 获取步骤
 - 步骤间通过 case 目录文件传递数据
@@ -111,6 +150,30 @@ pending → tracked → in-progress → implemented → done
 - ✅ Issue 是问题记录的单一入口（`issues/ISS-XXX.json`）
 - ✅ Conductor Track 是实现计划（`conductor/tracks/{trackId}/`）
 - ✅ 收到 "实现 XXX" 的请求时，先检查是否有对应 conductor track，没有则先 `/conductor:new-track`
+
+## Playwright 浏览器
+- **必须使用 Edge（msedge）**，本机未安装 Chrome
+- `.mcp.json` 已配置 `--browser msedge`
+- ❌ 不要尝试用 Chrome / Chromium，会报错找不到
+
+## Git Bash 路径格式（⚠️ 全局规则）
+本机 Bash 工具运行在 **Git Bash (MSYS2)** 环境下。所有 Bash 命令中的路径**必须**使用 POSIX 格式：
+- ✅ `/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain/cases/...`
+- ❌ `C:\Users\fangkun\...`（反斜杠被转义）
+- ❌ `C:/Users/fangkun/...`（`>` 重定向会失败：`/cases/...: No such file or directory`）
+
+**转换规则**：`C:\a\b` → `/c/a/b`，即盘符小写 + 去冒号 + 正斜杠。
+适用于所有 skill / agent 中的 Bash 调用（casework、data-refresh、teams-search 等）。
+
+**⚠️ 变量赋值 + pipe 陷阱**：当命令中**任何位置**出现 `|`（pipe）时，同一行用 `;` 设置的 shell 变量会被**静默丢弃**。变量赋值必须用换行独占一行：
+```bash
+# ✅ 正确：变量赋值独占一行
+CASE_DIR="/c/Users/.../cases/active/123"
+pwsh ... 2>&1 | tail -1
+
+# ❌ 错误：; 赋值 + pipe → 变量为空
+CASE_DIR="/c/..." ; pwsh ... 2>&1 | tail -1
+```
 
 ## 配置
 用户配置存储在项目根的 `config.json`：
