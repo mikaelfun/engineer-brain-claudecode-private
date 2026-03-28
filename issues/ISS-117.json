@@ -1,0 +1,11 @@
+{
+  "id": "ISS-117",
+  "title": "poll_for_completion 完成检测逻辑不匹配实际 casework 完成状态",
+  "description": "casework 实际在 30s 内完成（timing.json 已生成），但 poll_for_completion 通过 GET /api/case/{id}/operation 检测完成状态时永远无法匹配，导致所有 E2E 测试（fast-path, state-routing, incremental 等）超时失败。infer_casework_phase() 返回 'timing' 表示已完成，但 poll 仍在等待 API 返回 completed/done/failed 状态。根本原因：API 端点的响应格式与 poll 的解析逻辑不一致。",
+  "type": "bug",
+  "priority": "P0",
+  "status": "tracked",
+  "trackId": "poll-detect-fix_20260328",
+  "createdAt": "2026-03-28T21:00:00+08:00",
+  "updatedAt": "2026-03-28T21:05:00+08:00"
+}
