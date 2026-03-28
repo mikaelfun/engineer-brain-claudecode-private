@@ -1,0 +1,37 @@
+{
+  "testId": "auth-endpoints",
+  "round": 0,
+  "timestamp": "2026-03-28T03:59:56.467Z",
+  "status": "fail",
+  "assertions": [
+    {
+      "name": "GET /api/auth/status → HTTP 200",
+      "pass": true,
+      "expected": 200,
+      "actual": 200
+    },
+    {
+      "name": "GET /api/auth/status → body has needSetup field",
+      "pass": false,
+      "expected": "needSetup",
+      "actual": "isSetup (field name mismatch; body: {\"isSetup\":true})",
+      "note": "API 返回 isSetup 而非 needSetup，可能是 schema 变更"
+    },
+    {
+      "name": "POST /api/auth/login → HTTP 200 or 401",
+      "pass": true,
+      "expected": "200 or 401",
+      "actual": 401,
+      "detail": "{\"error\":\"Invalid password\"} — password admin123 不正确"
+    },
+    {
+      "name": "GET /api/auth/me → HTTP 200 (conditional on login success)",
+      "pass": null,
+      "expected": 200,
+      "actual": "SKIPPED",
+      "note": "login 返回 401，跳过 /me 测试"
+    }
+  ],
+  "error": null,
+  "duration_ms": 1240
+}

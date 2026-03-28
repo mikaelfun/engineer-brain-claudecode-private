@@ -1,0 +1,82 @@
+id: "case-data-endpoints"
+name: "Case 数据端点批量测试"
+category: "backend-api"
+source: "dashboard/src/routes/cases.ts — SCAN gap"
+description: "验证 Case 详情的各个数据子端点（notes, teams, analysis, drafts, inspection, todo, timing, logs, attachments）"
+safety_level: "safe"
+priority: "high"
+tags: ["api", "auto-generated", "scan-round-0"]
+
+test_case_id: "2603090040000814"
+
+steps:
+  - action: "api_call"
+    params:
+      method: "GET"
+      url: "{base_url}/api/cases/{test_case_id}/notes"
+    safety_check: "api.safe[GET]"
+    expected_status: [200, 404]
+
+  - action: "api_call"
+    params:
+      method: "GET"
+      url: "{base_url}/api/cases/{test_case_id}/teams"
+    safety_check: "api.safe[GET]"
+    expected_status: [200, 404]
+
+  - action: "api_call"
+    params:
+      method: "GET"
+      url: "{base_url}/api/cases/{test_case_id}/analysis"
+    safety_check: "api.safe[GET]"
+    expected_status: [200, 404]
+
+  - action: "api_call"
+    params:
+      method: "GET"
+      url: "{base_url}/api/cases/{test_case_id}/drafts"
+    safety_check: "api.safe[GET]"
+    expected_status: [200]
+
+  - action: "api_call"
+    params:
+      method: "GET"
+      url: "{base_url}/api/cases/{test_case_id}/inspection"
+    safety_check: "api.safe[GET]"
+    expected_status: [200, 404]
+
+  - action: "api_call"
+    params:
+      method: "GET"
+      url: "{base_url}/api/cases/{test_case_id}/todo"
+    safety_check: "api.safe[GET]"
+    expected_status: [200, 404]
+
+  - action: "api_call"
+    params:
+      method: "GET"
+      url: "{base_url}/api/cases/{test_case_id}/timing"
+    safety_check: "api.safe[GET]"
+    expected_status: [200, 404]
+
+  - action: "api_call"
+    params:
+      method: "GET"
+      url: "{base_url}/api/cases/{test_case_id}/logs"
+    safety_check: "api.safe[GET]"
+    expected_status: [200]
+
+  - action: "api_call"
+    params:
+      method: "GET"
+      url: "{base_url}/api/cases/{test_case_id}/attachments"
+    safety_check: "api.safe[GET]"
+    expected_status: [200]
+
+assertions:
+  - type: "response_shape"
+    expected: "all endpoints return valid JSON or empty array"
+  - type: "no_500"
+    expected: "no endpoint returns 5xx status"
+
+timeout_seconds: 60

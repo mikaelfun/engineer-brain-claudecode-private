@@ -1,0 +1,19 @@
+{
+  "testId": "case-data-endpoints",
+  "round": 0,
+  "timestamp": "2026-03-28T06:32:30.000Z",
+  "status": "pass",
+  "assertions": [
+    {"endpoint": "GET /api/cases/:id/notes",       "status": 200, "passed": true},
+    {"endpoint": "GET /api/cases/:id/teams",       "status": 200, "passed": true},
+    {"endpoint": "GET /api/cases/:id/analysis",    "status": 200, "passed": true},
+    {"endpoint": "GET /api/cases/:id/drafts",      "status": 200, "passed": true},
+    {"endpoint": "GET /api/cases/:id/inspection",  "status": 200, "passed": true},
+    {"endpoint": "GET /api/cases/:id/todo",        "status": 200, "passed": true},
+    {"endpoint": "GET /api/cases/:id/timing",      "status": 200, "passed": true},
+    {"endpoint": "GET /api/cases/:id/logs",        "status": 200, "passed": true},
+    {"endpoint": "GET /api/cases/:id/attachments", "status": 200, "passed": true}
+  ],
+  "error": null,
+  "duration_ms": 1519
+}

@@ -1,0 +1,67 @@
+id: "issues-crud"
+name: "Issues CRUD API 测试"
+category: "backend-api"
+source: "dashboard/src/routes/issues.ts — SCAN gap"
+description: "验证 Issues 的增删改查端点"
+safety_level: "safe"
+priority: "medium"
+tags: ["api", "crud", "auto-generated", "scan-round-0"]
+
+steps:
+  - action: "api_call"
+    params:
+      method: "GET"
+      url: "{base_url}/api/issues"
+    safety_check: "api.safe[GET]"
+    expected_status: [200]
+
+  - action: "api_call"
+    params:
+      method: "POST"
+      url: "{base_url}/api/issues"
+      body: '{"title": "TEST-AUTO: 临时测试Issue", "type": "bug", "priority": "P2", "description": "自动化测试创建，会在 teardown 删除"}'
+    safety_check: "api.safe[POST /api/issues]"
+    expected_status: [200, 201]
+
+  - action: "extract_id"
+    params:
+      from: "previous_response"
+      field: "id"
+      save_as: "created_issue_id"
+
+  - action: "api_call"
+    params:
+      method: "GET"
+      url: "{base_url}/api/issues/{created_issue_id}"
+    safety_check: "api.safe[GET]"
+    expected_status: [200]
+
+  - action: "api_call"
+    params:
+      method: "PUT"
+      url: "{base_url}/api/issues/{created_issue_id}"
+      body: '{"title": "TEST-AUTO: 修改后标题", "priority": "P1"}'
+    safety_check: "api.safe[PUT /api/issues/:id]"
+    expected_status: [200]
+
+assertions:
+  - type: "response_shape"
+    target: "GET /issues"
+    expected: "array of issue objects"
+  - type: "response_field"
+    target: "GET /issues/:id"
+    field: "title"
+    expected: "contains: TEST-AUTO"
+  - type: "response_field"
+    target: "PUT /issues/:id"
+    field: "priority"
+    expected: "equals: P1"
+
+teardown:
+  - action: "api_call"
+    params:
+      method: "DELETE"
+      url: "{base_url}/api/issues/{created_issue_id}"
+    safety_check: "api.safe[DELETE /api/issues/:id]"
+
+timeout_seconds: 30
