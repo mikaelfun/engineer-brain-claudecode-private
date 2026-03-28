@@ -1,0 +1,17 @@
+{
+  "id": "testloop-self-heal_20260328",
+  "title": "Test Loop 自愈能力：自动检测重复失败 → 诊断根因 → 跳过 → 优先修复",
+  "type": "feature",
+  "status": "complete",
+  "issueId": "ISS-118",
+  "created": "2026-03-28T21:15:00+08:00",
+  "updated": "2026-03-28T22:30:00+08:00",
+  "phases": {
+    "total": 4,
+    "completed": 4
+  },
+  "tasks": {
+    "total": 13,
+    "completed": 13
+  }
+}

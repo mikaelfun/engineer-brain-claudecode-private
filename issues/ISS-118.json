@@ -1,0 +1,11 @@
+{
+  "id": "ISS-118",
+  "title": "Test Loop 自愈能力：自动检测重复失败模式 → 诊断根因 → 跳过 → 优先修复",
+  "description": "当前 test loop 在 verify/fix 阶段遇到反复失败时，只会机械重试直到 retryCount 上限。缺乏智能自愈能力：(1) 无法识别 systemic failure pattern（如多个测试因同一根因超时）；(2) 无法自主诊断根因（如 poll_for_completion 逻辑不匹配）；(3) 无法自动跳过并注入 learning；(4) 无法将框架级 bug 作为高优先级 fix item 加入下一轮。目标：让 test loop 在任意阶段能自主 detect pattern → diagnose → skip + record → prioritize fix，实现真正的自我迭代和进化。",
+  "type": "feature",
+  "priority": "P0",
+  "status": "tracked",
+  "trackId": "testloop-self-heal_20260328",
+  "createdAt": "2026-03-28T21:00:00+08:00",
+  "updatedAt": "2026-03-28T21:15:00+08:00"
+}

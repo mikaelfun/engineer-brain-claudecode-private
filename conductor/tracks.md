@@ -95,4 +95,4 @@
 | [x] | test-framework_20260328 | 自动化测试框架重构 — 文件驱动状态机 + 主-子Agent + /loop 持续迭代 | 2026-03-28 | 2026-03-28 |
 | [x] | testloop-batch_20260328 | Test Loop 架构优化 — 批量处理 + subagent 隔离 | 2026-03-28 | 2026-03-28 |
 | [x] | poll-detect-fix_20260328 | Fix poll_for_completion 完成检测逻辑 | 2026-03-28 | 2026-03-28 |
-| [ ] | testloop-self-heal_20260328 | Test Loop 自愈能力：自动检测重复失败 → 诊断根因 → 跳过 → 优先修复 | 2026-03-28 | 2026-03-28 |
+| [x] | testloop-self-heal_20260328 | Test Loop 自愈能力：自动检测重复失败 → 诊断根因 → 跳过 → 优先修复 | 2026-03-28 | 2026-03-28 |

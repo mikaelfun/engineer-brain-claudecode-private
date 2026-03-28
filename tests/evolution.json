@@ -78,6 +78,22 @@
         "files_changed": 1,
         "components_modified": ["poll_for_completion() — 重写完成检测逻辑 + 添加 timing.json fallback + 超时诊断"]
       }
+    },
+    {
+      "id": "EVO-006",
+      "date": "2026-03-28",
+      "issueId": "ISS-118",
+      "trackId": "testloop-self-heal_20260328",
+      "title": "Test Loop 自愈能力",
+      "category": "reliability",
+      "summary": "在 VERIFY 阶段失败路径插入 Self-Heal Check。新增 pattern-detector.sh 做 failure signature 聚类，识别 systemic/stuck failure 后自动跳过、创建 framework fix item（priority=1）、记录 self-heal.md。FIX 阶段按 priority 排序，framework 类走独立修复路径。evolution 展示 self-heal 记录。",
+      "before": "VERIFY 失败 → 机械重试 retryCount++，达上限才跳过；无法识别 systemic failure；FIX 无优先级区分",
+      "after": "VERIFY 后自动检测 pattern（systemic/stuck）→ 跳过受影响测试 → 创建 framework fix（priority=1）→ FIX 阶段优先处理 → evolution 展示 self-heal 记录",
+      "impact": {
+        "files_changed": 4,
+        "components_added": ["pattern-detector.sh", "self-heal-recorder.sh"],
+        "components_modified": ["test-loop SKILL.md — Self-Heal Check 步骤 + FIX 排序", "test-supervisor SKILL.md — evolution 自愈记录展示"]
+      }
     }
   ]
 }
