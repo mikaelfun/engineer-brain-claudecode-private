@@ -1,0 +1,47 @@
+id: "e2e-state-routing"
+name: "State Routing — 验证不同 actualStatus 路由"
+category: "workflow-e2e"
+source: "playbooks/guides/casework-evolution-loop.md — Scenario D"
+description: "修改 meta.actualStatus 为各种状态 → 跑 casework → 验证路由到正确 agent"
+safety_level: "safe"
+priority: "high"
+tags: ["evolution-loop", "scenario-d", "regression"]
+
+test_case_id: "2603060030001353"  # Premier, pending-customer
+
+setup:
+  - action: "backup_case"
+    params:
+      source: "{cases_root}/active/{test_case_id}"
+      dest: "{backup_dir}/{test_case_id}"
+
+steps:
+  # 测试 6 种状态路由
+  - action: "modify_meta_and_run"
+    params:
+      case_id: "{test_case_id}"
+      statuses:
+        - "new"
+        - "pending-customer"
+        - "pending-engineer"
+        - "researching"
+        - "ready-to-close"
+        - "pending-pg"
+    safety_check: "scripts.safe[casework]"
+    timeout_seconds: 300
+
+assertions:
+  - type: "file_exists"
+    target: "{cases_root}/active/{test_case_id}/todo/"
+    expected: true
+  - type: "file_content"
+    target: "{cases_root}/active/{test_case_id}/case-summary.md"
+    expected: "contains_status_analysis"
+
+teardown:
+  - action: "restore_case"
+    params:
+      source: "{backup_dir}/{test_case_id}"
+      dest: "{cases_root}/active/{test_case_id}"
+
+timeout_seconds: 600

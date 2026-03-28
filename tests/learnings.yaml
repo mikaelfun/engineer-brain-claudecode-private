@@ -1,0 +1,156 @@
+# Test Learnings — 踩坑经验固化
+# FIX 阶段解决环境/流程问题时自动追加
+# 每轮 TEST 开始前必读 — 避免重复踩坑
+# Source: .learnings/ERRORS.md 初始迁移
+
+# ============================================================
+# 环境问题（每次都可能遇到）
+# ============================================================
+
+- id: dashboard-port-check
+  category: env
+  problem: "Dashboard 可能未启动，Playwright/curl 访问 localhost 超时"
+  solution: |
+    先检查端口: curl -sf http://localhost:3010/api/health
+    不在线时: netstat -ano | findstr "LISTENING" | findstr ":5173 :3010" 找 PID
+    精准 kill 后重启: cd dashboard && npm run dev &
+    ❌ 绝不 taskkill /F /IM node.exe（会杀掉 Claude Code 自身）
+  resolved_at: "2026-03-21"
+
+- id: jwt-auth-token
+  category: env
+  problem: "API 测试需要 JWT token，每次都要重新生成"
+  solution: |
+    在 dashboard 目录下执行:
+    node -e "const jwt=require('jsonwebtoken');console.log(jwt.sign({sub:'engineer'},process.env.JWT_SECRET||'engineer-brain-local-dev-secret-2026',{expiresIn:'1h'}))"
+    token 有效期 1 小时，每轮开始生成一次即可
+  resolved_at: "2026-03-28"
+
+- id: path-format-git-bash
+  category: env
+  problem: "Windows 路径在 Git Bash 中不工作"
+  solution: |
+    必须 POSIX 格式: /c/Users/fangkun/... （不是 C:\Users\fangkun\...）
+    转换规则: 盘符小写 + 去冒号 + 正斜杠
+  resolved_at: "2026-03-27"
+
+- id: variable-pipe-gotcha
+  category: env
+  problem: "变量赋值和 pipe 在同一行时变量被静默丢弃"
+  solution: |
+    变量赋值必须独占一行:
+    ✅ CASE_DIR="/c/..."  (换行)  pwsh ... | tail -1
+    ❌ CASE_DIR="/c/..." ; pwsh ... | tail -1
+  resolved_at: "2026-03-27"
+
+- id: browser-snapshot-ban
+  category: env
+  problem: "browser_snapshot 输出巨大，撑爆会话 context"
+  solution: |
+    主 session 禁用 browser_snapshot。替代方案:
+    1. browser_evaluate 提取关键数据
+    2. browser_take_screenshot 保存到文件（JPEG, quality=60）
+    3. UI 测试 spawn 轻量 subagent（haiku），subagent 内可用 snapshot
+    4. 截图绝不 Read 回主 session
+  resolved_at: "2026-03-28"
+
+- id: screenshot-accumulation
+  category: env
+  problem: "多次截图累积撑爆 session context"
+  solution: |
+    1. 只在关键验证点截图
+    2. JPEG 格式 quality=60
+    3. 保存到文件不传回会话
+    4. Visual 类测试委托 subagent 查看，subagent 结束后 context 自动释放
+  resolved_at: "2026-03-28"
+
+# ============================================================
+# Playwright / 浏览器
+# ============================================================
+
+- id: playwright-msedge-only
+  category: playwright
+  problem: "本机没有 Chrome，Playwright 找不到浏览器"
+  solution: |
+    必须用 msedge: .mcp.json 已配置 --browser msedge
+    ❌ 不要尝试 Chrome / Chromium
+  resolved_at: "2026-03-16"
+
+- id: playwright-profile-path
+  category: playwright
+  problem: "--profile 相对路径把浏览器数据写入错误位置"
+  solution: |
+    --profile 永远用绝对路径: $TEMP/playwright-d365-profile
+    不要用相对路径
+  resolved_at: "2026-03-17"
+
+# ============================================================
+# Agent / MCP
+# ============================================================
+
+- id: agent-name-required
+  category: agent
+  problem: "Custom subagent 找不到，回退为 general-purpose"
+  solution: |
+    .claude/agents/*.md 必须有 name + description 两个 frontmatter 字段
+    tools 用逗号分隔字符串，不用 JSON 数组
+    修改后需重启会话或 /agents 才生效
+  resolved_at: "2026-03-27"
+
+- id: agent-prompt-slim
+  category: agent
+  problem: "注入大段 SKILL 内容到 agent prompt 反而更慢"
+  solution: |
+    agent prompt 保持精简，只写参数 + "请先读取 xxx 获取完整执行步骤"
+    让 agent 运行时自己读 SKILL.md，注入反而慢 15s
+  resolved_at: "2026-03-27"
+
+# ============================================================
+# D365 脚本
+# ============================================================
+
+- id: d365-tab-guard
+  category: d365
+  problem: "D365 API 返回 null — 当前 tab 不在 D365 页面"
+  solution: |
+    D365 脚本入口统一加 tab 守卫（Ensure-D365Tab）
+    确保在 D365 tab 上再调 API
+  resolved_at: "2026-03-15"
+
+- id: d365-param-name
+  category: d365
+  problem: "D365 脚本参数是 -TicketNumber 不是 -CaseNumber"
+  solution: |
+    所有 D365 脚本用 -TicketNumber
+    -OutputDir 传父目录（cases/active/），不带 case number
+  resolved_at: "2026-03-16"
+
+- id: teams-filter-unsupported
+  category: d365
+  problem: "ListChatMessages 的 filter/orderby 不实际可用"
+  solution: |
+    用 SearchTeamsMessages 做时间窗增量入口
+    命中的 chat 再用 ListChatMessages 全量拉取
+    工具 schema 不等于后端真实能力
+  resolved_at: "2026-03-16"
+
+# ============================================================
+# 测试流程
+# ============================================================
+
+- id: fetch-emails-false-positive
+  category: test
+  problem: "fetch-emails FAIL 误报 — 邮件正文中的 ❌ 触发错误检测"
+  solution: |
+    只扫描脚本输出最后 5 行判断 PASS/FAIL
+    不扫描完整输出（包含邮件正文）
+  resolved_at: "2026-03-28"
+
+- id: node-kill-safety
+  category: test
+  problem: "taskkill /IM node.exe 会杀掉 Claude Code 进程"
+  solution: |
+    用 netstat 找端口占用的具体 PID，只杀特定 PID
+    ❌ 绝不 taskkill /F /IM node.exe
+    ❌ 绝不 killall node / pkill node
+  resolved_at: "2026-03-21"

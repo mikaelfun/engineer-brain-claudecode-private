@@ -1,0 +1,133 @@
+# Test Definition Schema
+# 所有 tests/registry/{category}/{id}.yaml 文件必须遵循此 schema
+
+# ============================================================
+# 必填字段
+# ============================================================
+required_fields:
+  - name: "id"
+    type: "string"
+    description: "唯一标识符，格式: {category}-{short-name}"
+    example: "backend-api-health-check"
+
+  - name: "name"
+    type: "string"
+    description: "测试名称（人类可读）"
+    example: "Health Check Endpoint"
+
+  - name: "category"
+    type: "enum"
+    values: ["backend-api", "ui-interaction", "ui-visual", "workflow-e2e", "frontend"]
+    description: "测试类别，决定使用哪个执行器"
+
+  - name: "source"
+    type: "string"
+    description: "需求来源（文件路径或描述）"
+    example: "dashboard/src/routes/cases.ts"
+
+  - name: "safety_level"
+    type: "enum"
+    values: ["safe", "review", "blocked"]
+    description: "安全级别 — 从 safety.yaml 查表确认"
+
+  - name: "steps"
+    type: "list"
+    description: "执行步骤列表，每步包含 action + params"
+    item_schema:
+      - name: "action"
+        type: "string"
+        description: "操作类型"
+      - name: "params"
+        type: "object"
+        description: "操作参数"
+      - name: "safety_check"
+        type: "string"
+        description: "对应 safety.yaml 中的 action（可选，自动推断）"
+
+  - name: "assertions"
+    type: "list"
+    description: "断言列表，每个包含 type + expected"
+    item_schema:
+      - name: "type"
+        type: "enum"
+        values: ["status_code", "json_field", "file_exists", "file_content", "text_contains", "element_visible", "element_text", "screenshot_match", "timing_under"]
+      - name: "target"
+        type: "string"
+        description: "断言目标（路径、字段名、CSS 选择器等）"
+      - name: "expected"
+        type: "any"
+        description: "期望值"
+
+# ============================================================
+# 可选字段
+# ============================================================
+optional_fields:
+  - name: "description"
+    type: "string"
+    description: "测试描述"
+
+  - name: "tags"
+    type: "list[string]"
+    description: "标签，用于过滤和分组"
+    example: ["regression", "smoke", "critical"]
+
+  - name: "priority"
+    type: "enum"
+    values: ["critical", "high", "medium", "low"]
+    description: "优先级，决定执行顺序"
+    default: "medium"
+
+  - name: "depends_on"
+    type: "list[string]"
+    description: "依赖的其他测试 ID（必须先通过）"
+
+  - name: "test_case_id"
+    type: "string"
+    description: "使用的 case ID（从 env.yaml test_cases 中选）"
+
+  - name: "setup"
+    type: "object"
+    description: "测试前准备步骤（backup、data seeding 等）"
+
+  - name: "teardown"
+    type: "object"
+    description: "测试后清理步骤（restore、cleanup 等）"
+
+  - name: "timeout_seconds"
+    type: "integer"
+    description: "超时时间（秒）"
+    default: 120
+
+  - name: "retry"
+    type: "integer"
+    description: "失败后重试次数"
+    default: 0
+
+  - name: "regression_for"
+    type: "string"
+    description: "此测试是哪个 bug 的回归测试（finding ID）"
+
+# ============================================================
+# 示例
+# ============================================================
+example:
+  id: "backend-api-health-check"
+  name: "Health Check Endpoint"
+  category: "backend-api"
+  source: "dashboard/src/routes/cases.ts"
+  description: "验证 GET /api/health 返回 200 + 正确 JSON 结构"
+  safety_level: "safe"
+  priority: "critical"
+  tags: ["smoke", "api"]
+  steps:
+    - action: "http_request"
+      params:
+        method: "GET"
+        url: "http://localhost:3010/api/health"
+  assertions:
+    - type: "status_code"
+      expected: 200
+    - type: "json_field"
+      target: "status"
+      expected: "ok"
+  timeout_seconds: 10

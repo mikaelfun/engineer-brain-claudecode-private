@@ -1,0 +1,48 @@
+id: "e2e-incremental"
+name: "Incremental — 模拟有更新"
+category: "workflow-e2e"
+source: "playbooks/guides/casework-evolution-loop.md — Scenario B"
+description: "修改 meta 的 lastFetchTime 为 1 天前 → 跑 casework → 验证增量检测正确"
+safety_level: "safe"
+priority: "high"
+tags: ["evolution-loop", "scenario-b", "regression"]
+
+test_case_id: "2603090040000814"  # Data-rich
+
+setup:
+  - action: "backup_case"
+    params:
+      source: "{cases_root}/active/{test_case_id}"
+      dest: "{backup_dir}/{test_case_id}"
+  - action: "modify_meta"
+    params:
+      file: "{cases_root}/active/{test_case_id}/casehealth-meta.json"
+      field: "lastInspected"
+      value: "yesterday_iso"  # 动态计算为昨天
+
+steps:
+  - action: "run_casework"
+    params:
+      case_id: "{test_case_id}"
+    safety_check: "scripts.safe[casework]"
+    timeout_seconds: 300
+
+assertions:
+  - type: "file_content"
+    target: "{cases_root}/active/{test_case_id}/timing.json"
+    expected: "valid_json"
+  - type: "json_field"
+    target: "{cases_root}/active/{test_case_id}/timing.json"
+    field: "changegate"
+    expected: "not_null"  # changegate 应该检测到变化
+  - type: "file_exists"
+    target: "{cases_root}/active/{test_case_id}/case-summary.md"
+    expected: true
+
+teardown:
+  - action: "restore_case"
+    params:
+      source: "{backup_dir}/{test_case_id}"
+      dest: "{cases_root}/active/{test_case_id}"
+
+timeout_seconds: 360

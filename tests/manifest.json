@@ -1,0 +1,27 @@
+{
+  "version": "1.0.0",
+  "lastScan": null,
+  "scanSources": [
+    "dashboard/src/routes/*.ts",
+    "dashboard/web/src/components/**/*.tsx",
+    ".claude/skills/*/SKILL.md",
+    "conductor/tracks/*/spec.md",
+    "issues/ISS-*.json",
+    "playbooks/schemas/*.md"
+  ],
+  "features": [],
+  "coverage": {
+    "total": 0,
+    "tested": 0,
+    "untested": 0,
+    "partial": 0,
+    "percentage": 0
+  },
+  "categories": {
+    "backend-api": { "total": 0, "tested": 0 },
+    "ui-interaction": { "total": 0, "tested": 0 },
+    "ui-visual": { "total": 0, "tested": 0 },
+    "workflow-e2e": { "total": 0, "tested": 0 },
+    "frontend": { "total": 0, "tested": 0 }
+  }
+}

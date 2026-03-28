@@ -1,0 +1,47 @@
+id: "regression-judge-cache-fields"
+name: "回归: Judge 缓存字段缺失"
+category: "workflow-e2e"
+source: "cases/test-results/evolution-log.md — Bug #2"
+description: "status-judge 应该填充 emailCountAtJudge/noteCountAtJudge/icmIdAtJudge"
+safety_level: "safe"
+priority: "critical"
+tags: ["regression", "fixed-bug"]
+regression_for: "evolution-finding-2"
+
+test_case_id: "2603090040000814"
+
+setup:
+  - action: "backup_case"
+    params:
+      source: "{cases_root}/active/{test_case_id}"
+      dest: "{backup_dir}/{test_case_id}"
+
+steps:
+  - action: "run_skill"
+    params:
+      skill: "status-judge"
+      case_id: "{test_case_id}"
+    safety_check: "scripts.safe[status-judge]"
+    timeout_seconds: 60
+
+assertions:
+  - type: "json_field"
+    target: "{cases_root}/active/{test_case_id}/casehealth-meta.json"
+    field: "judge.emailCountAtJudge"
+    expected: "not_null"
+  - type: "json_field"
+    target: "{cases_root}/active/{test_case_id}/casehealth-meta.json"
+    field: "judge.noteCountAtJudge"
+    expected: "not_null"
+  - type: "json_field"
+    target: "{cases_root}/active/{test_case_id}/casehealth-meta.json"
+    field: "judge.statusJudgedAt"
+    expected: "not_null"
+
+teardown:
+  - action: "restore_case"
+    params:
+      source: "{backup_dir}/{test_case_id}"
+      dest: "{cases_root}/active/{test_case_id}"
+
+timeout_seconds: 120

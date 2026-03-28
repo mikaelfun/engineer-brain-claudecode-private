@@ -1,0 +1,45 @@
+id: "regression-waitagents-drift"
+name: "回归: waitAgents phase 漂移"
+category: "workflow-e2e"
+source: "cases/test-results/evolution-log.md — Bug #5"
+description: "compliance 被跳过时应使用 t_cg_e 作为锚点"
+safety_level: "safe"
+priority: "high"
+tags: ["regression", "fixed-bug"]
+regression_for: "evolution-finding-5"
+
+test_case_id: "2603090040000814"
+
+setup:
+  - action: "backup_case"
+    params:
+      source: "{cases_root}/active/{test_case_id}"
+      dest: "{backup_dir}/{test_case_id}"
+  - action: "ensure_compliance_cached"
+    params:
+      case_dir: "{cases_root}/active/{test_case_id}"
+      # 确保 compliance 已缓存，会被跳过
+
+steps:
+  - action: "run_casework"
+    params:
+      case_id: "{test_case_id}"
+    safety_check: "scripts.safe[casework]"
+    timeout_seconds: 300
+
+assertions:
+  - type: "file_content"
+    target: "{cases_root}/active/{test_case_id}/timing.json"
+    expected: "valid_json"
+  - type: "json_field"
+    target: "{cases_root}/active/{test_case_id}/timing.json"
+    field: "phases"
+    expected: "no_negative_durations"  # 没有负数时长（漂移的症状）
+
+teardown:
+  - action: "restore_case"
+    params:
+      source: "{backup_dir}/{test_case_id}"
+      dest: "{cases_root}/active/{test_case_id}"
+
+timeout_seconds: 360

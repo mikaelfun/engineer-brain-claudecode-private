@@ -1,0 +1,45 @@
+id: "e2e-fast-path"
+name: "Fast Path — 模拟无变化"
+category: "workflow-e2e"
+source: "playbooks/guides/casework-evolution-loop.md — Scenario C"
+description: "确保本地数据完整且新鲜 → 跑 casework → 验证 changegate=NO_CHANGE + 快速路径命中"
+safety_level: "safe"
+priority: "high"
+tags: ["evolution-loop", "scenario-c", "regression", "performance"]
+
+test_case_id: "2603090040000814"  # Data-rich, 已有完整数据
+
+setup:
+  - action: "backup_case"
+    params:
+      source: "{cases_root}/active/{test_case_id}"
+      dest: "{backup_dir}/{test_case_id}"
+  - action: "ensure_fresh_cache"
+    params:
+      case_dir: "{cases_root}/active/{test_case_id}"
+      # 确保 meta.lastInspected 是最近的
+
+steps:
+  - action: "run_casework"
+    params:
+      case_id: "{test_case_id}"
+    safety_check: "scripts.safe[casework]"
+    timeout_seconds: 120
+
+assertions:
+  - type: "timing_under"
+    target: "{cases_root}/active/{test_case_id}/timing.json"
+    field: "total_seconds"
+    expected: 60  # 快速路径应该 < 60s
+  - type: "json_field"
+    target: "{cases_root}/active/{test_case_id}/timing.json"
+    field: "changegate"
+    expected: "NO_CHANGE"
+
+teardown:
+  - action: "restore_case"
+    params:
+      source: "{backup_dir}/{test_case_id}"
+      dest: "{cases_root}/active/{test_case_id}"
+
+timeout_seconds: 180

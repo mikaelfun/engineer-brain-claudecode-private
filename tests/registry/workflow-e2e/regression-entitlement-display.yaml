@@ -1,0 +1,46 @@
+id: "regression-entitlement-display"
+name: "回归: Entitlement 合规显示歧义"
+category: "workflow-e2e"
+source: "cases/test-results/evolution-log.md — Bug #4"
+description: "serviceLevel=Unknown 时应显示 '未检查' 而不是暗示合规"
+safety_level: "safe"
+priority: "high"
+tags: ["regression", "fixed-bug"]
+regression_for: "evolution-finding-4"
+
+test_case_id: "2603250010001221"  # 可能 serviceLevel=Unknown
+
+setup:
+  - action: "backup_case"
+    params:
+      source: "{cases_root}/active/{test_case_id}"
+      dest: "{backup_dir}/{test_case_id}"
+  - action: "modify_meta"
+    params:
+      file: "{cases_root}/active/{test_case_id}/casehealth-meta.json"
+      field: "compliance.serviceLevel"
+      value: "Unknown"
+
+steps:
+  - action: "run_skill"
+    params:
+      skill: "inspection-writer"
+      case_id: "{test_case_id}"
+    safety_check: "scripts.safe[inspection-writer]"
+    timeout_seconds: 120
+
+assertions:
+  - type: "file_content"
+    target: "{cases_root}/active/{test_case_id}/case-summary.md"
+    expected: "contains: 未检查"
+  - type: "file_content"
+    target: "{cases_root}/active/{test_case_id}/case-summary.md"
+    expected: "not_contains: 合规"  # 不应显示"合规"
+
+teardown:
+  - action: "restore_case"
+    params:
+      source: "{backup_dir}/{test_case_id}"
+      dest: "{cases_root}/active/{test_case_id}"
+
+timeout_seconds: 180

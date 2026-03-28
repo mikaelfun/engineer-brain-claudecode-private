@@ -1,0 +1,11 @@
+{
+  "id": "ISS-114",
+  "title": "自动化测试框架重构：文件驱动状态机 + 主-子Agent + /loop 持续迭代",
+  "description": "当前 casework-evolution-loop 存在根本性问题：(1) 上下文压缩导致忘记安全规则和测试要求；(2) UI 测试不执行点击操作，即使非 D365 写操作是安全的；(3) 发现问题不修复；(4) 需要用户不断手动调整。\n\n重构为文件驱动架构：\n- State Machine: tests/state.json 驱动 SCAN→GENERATE→TEST→FIX→VERIFY 循环\n- Safety Manifest: tests/safety.yaml 结构化安全规则，可编程查询\n- Test Registry: tests/registry/ 独立测试定义文件\n- 主-子 Agent 模式: Main session 轻量编排，spawn agent 做具体工作，避免 context 膨胀\n- 经验固化: tests/env.yaml + tests/learnings.yaml 避免重复踩坑\n- 需求驱动: SCAN 阶段自动扫描 issues/conductor/skills 发现新需求并生成测试\n- /loop 集成: 每轮读文件状态，不依赖 session memory\n\n测试范围：后端 API + 前端组件 + UI 交互（Playwright）+ 工作流 E2E + patrol\nUI 测试安全操作：导航/点击/输入/主题切换/布局验证/工作流触发/CRUD/toggle/patrol\n迁移现有 evolution-loop 7 个场景(A-G) 和 70+ findings 作为回归测试基础",
+  "type": "feature",
+  "priority": "P0",
+  "status": "tracked",
+  "trackId": "test-framework_20260328",
+  "createdAt": "2026-03-28T15:30:00+08:00",
+  "updatedAt": "2026-03-28T15:36:00+08:00"
+}
