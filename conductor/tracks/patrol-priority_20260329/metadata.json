@@ -1,0 +1,19 @@
+{
+  "id": "patrol-priority_20260329",
+  "title": "Patrol 动态优先级 — severity×SLA×活跃度评分排序",
+  "type": "feature",
+  "status": "pending",
+  "created": "2026-03-29T23:00:00+08:00",
+  "updated": "2026-03-29T23:00:00+08:00",
+  "issueId": "ISS-153",
+  "current_phase": 0,
+  "current_task": "",
+  "phases": {
+    "total": 2,
+    "completed": 0
+  },
+  "tasks": {
+    "total": 7,
+    "completed": 0
+  }
+}

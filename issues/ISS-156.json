@@ -1,0 +1,12 @@
+{
+  "id": "ISS-156",
+  "title": "verify.md 桥接到 SKILL.md — 消除双实现",
+  "description": "verify.md（全局 command）包含旧的两步实现（npm test + Playwright），SKILL.md 包含新的五步推理实现。两者 metadata.json 输出格式不兼容（旧: unitTest/uiTest，新: regression/criteria[]）。verify.md 应改为桥接模式，只做 pre-flight 然后指向 SKILL.md。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "tracked",
+  "created": "2026-03-29T23:00:00+08:00",
+  "updated": "2026-03-29T23:00:00+08:00",
+  "source": "architecture-review",
+  "trackId": "verify-bridge_20260329"
+}

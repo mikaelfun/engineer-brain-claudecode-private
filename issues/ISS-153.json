@@ -1,0 +1,12 @@
+{
+  "id": "ISS-153",
+  "title": "Patrol 动态优先级 — severity×SLA×活跃度评分排序",
+  "description": "patrol 当前用二值 24h 阈值筛选 case，SevA 和 SevC 一视同仁。改为：1) 脚本快速提取所有 case meta 2) LLM 按 severity×SLA剩余×最近活跃度×pending状态 评分排序 3) 高优先先跑，低优先用轻量巡检模式（只刷数据+更新 summary，不 spawn troubleshooter）。",
+  "type": "feature",
+  "priority": "P1",
+  "status": "tracked",
+  "created": "2026-03-29T23:00:00+08:00",
+  "updated": "2026-03-29T23:00:00+08:00",
+  "source": "architecture-review",
+  "trackId": "patrol-priority_20260329"
+}

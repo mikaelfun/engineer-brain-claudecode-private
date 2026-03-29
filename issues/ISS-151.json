@@ -1,0 +1,12 @@
+{
+  "id": "ISS-151",
+  "title": "Casework 路由推理化 — B5 status→agent 静态表 → LLM 路由计划",
+  "description": "casework SKILL.md Step B5 路由表是固定 actualStatus→agent 枚举映射，不复用已有 analysis、不感知客户邮件紧迫性、pending-pg 永远无行动（即使 ICM 已 resolved）、不传递 emailType 给 drafter。改为路由前增加 LLM 轻量推理步骤，读 meta+summary+analysis+最近邮件，输出路由计划（含 skipTroubleshooter/emailType/emailContext）。同步更新 casework-fast-path.sh 的 NEED_AGENT 判断。",
+  "type": "feature",
+  "priority": "P0",
+  "status": "tracked",
+  "created": "2026-03-29T23:00:00+08:00",
+  "updated": "2026-03-29T23:00:00+08:00",
+  "source": "architecture-review",
+  "trackId": "routing-reasoning_20260329"
+}
