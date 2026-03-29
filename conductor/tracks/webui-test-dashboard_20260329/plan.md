@@ -3,7 +3,7 @@
 **Track ID:** webui-test-dashboard_20260329
 **Spec:** [spec.md](./spec.md)
 **Created:** 2026-03-29
-**Status:** [ ] Not Started
+**Status:** [x] Complete
 
 ## Overview
 
@@ -42,9 +42,9 @@ Add 4 new capabilities to TestLab.tsx: (1) Runner controls (Start/Stop/Pause), (
 
 ### Tasks
 
-- [ ] Task 3.1: Reorganize TestLab.tsx layout — Controls integrated into title bar (right-aligned), Attention panel below title (full width), Activity stream merged with Pipeline section, Evolution below Trend chart. Follow spec layout diagram.
-- [ ] Task 3.2: Write unit tests — `test-runner.ts` route tests (mock session spawn, directive write, status check). TestLab component tests (RunnerControl render states, AttentionPanel priority sorting, empty states).
-- [ ] Task 3.3: Final integration — Ensure all components work together, dark/light theme compliance, responsive behavior at 1440px+.
+- [x] Task 3.1: Reorganize TestLab.tsx layout — Controls integrated into title bar (right-aligned), Attention panel below title (full width), Activity stream merged with Pipeline section, Evolution below Trend chart. Follow spec layout diagram.
+- [x] Task 3.2: Write unit tests — `test-runner.ts` route tests (mock session spawn, directive write, status check). TestLab component tests (RunnerControl render states, AttentionPanel priority sorting, empty states).
+- [x] Task 3.3: Final integration — Ensure all components work together, dark/light theme compliance, responsive behavior at 1440px+.
 
 ### Phase 3 Verification
 - `npm test` → all tests (server + web) pass

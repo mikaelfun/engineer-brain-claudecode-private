@@ -118,4 +118,5 @@
 | [ ] | patrol-priority_20260329 | Patrol 动态优先级 — severity×SLA×活跃度评分排序 | 2026-03-29 | 2026-03-29 |
 | [ ] | troubleshoot-recipes_20260329 | 排查 Recipes — 按问题类型索引搜索策略 | 2026-03-29 | 2026-03-29 |
 | [ ] | vp-align_20260329 | new-track Verification Plan 与 verify 推理一致性 | 2026-03-29 | 2026-03-29 |
-| [~] | verify-bridge_20260329 | verify.md 桥接到 SKILL.md — 消除双实现 | 2026-03-29 | 2026-03-29 |
+| [x] | verify-bridge_20260329 | verify.md 桥接到 SKILL.md — 消除双实现 | 2026-03-29 | 2026-03-29 |
+| [x] | webui-test-dashboard_20260329 | WebUI real-time Test Dashboard with Runner controls | 2026-03-29 | 2026-03-30 |
