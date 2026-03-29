@@ -50,10 +50,9 @@
       "env": {
         "BASE_DIR": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\data\\OneNote Export",
         "DB_PATH": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\data\\lancedb",
-        "EMBEDDING_PROVIDER": "azure",
-        "OPENAI_API_KEY": "DtUhQOXGC2rtXFeH4eE5PXBdE9M4ZhkbhkhBRjSh3t6oG72yGLKvJQQJ99CCACYeBjFXJ3w3AAABACOGKlUa",
-        "OPENAI_BASE_URL": "https://kunaoieastus.openai.azure.com",
-        "OPENAI_API_VERSION": "2023-05-15",
+        "EMBEDDING_PROVIDER": "openai",
+        "OPENAI_API_KEY": "sk-vXY3OWzBgtQGxFry1cZerQB0bpLojgbkdyWt7wnsHMDeQ3uw",
+        "OPENAI_BASE_URL": "https://kunnewapi.net/v1",
         "MODEL_NAME": "text-embedding-3-small"
       }
     }
