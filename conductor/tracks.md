@@ -96,3 +96,15 @@
 | [x] | testloop-batch_20260328 | Test Loop 架构优化 — 批量处理 + subagent 隔离 | 2026-03-28 | 2026-03-28 |
 | [x] | poll-detect-fix_20260328 | Fix poll_for_completion 完成检测逻辑 | 2026-03-28 | 2026-03-28 |
 | [x] | testloop-self-heal_20260328 | Test Loop 自愈能力：自动检测重复失败 → 诊断根因 → 跳过 → 优先修复 | 2026-03-28 | 2026-03-28 |
+| [x] | testloop-verify-merge_20260328 | Test-Loop 吸收 Conductor:Verify 精华 + Conductor:Verify 瘦身 | 2026-03-28 | 2026-03-29 |
+| [x] | testloop-data-layer_20260328 | Test Loop 双层数据源 — Live + Synthetic 分离 | 2026-03-28 | 2026-03-28 |
+| [x] | evolution-split_20260328 | Evolution 概念拆分 — Discoveries + Evolution | 2026-03-28 | 2026-03-28 |
+| [x] | scan-recycle_20260329 | SCAN 阶段回收 regression/retry/unverified 旧问题 | 2026-03-29 | 2026-03-29 |
+| [x] | issue-scanner_20260329 | 新增 issue-scanner.sh 扫描 issues/ 目录生成测试 | 2026-03-29 | 2026-03-29 |
+| [x] | mcp-session-fix_20260329 | Dashboard case-session-manager spawn session 未传 mcpServers | 2026-03-29 | 2026-03-29 |
+| [x] | fix-depth_20260329 | fix-analyzer.sh 增加根因追溯，减少误判 env issue | 2026-03-29 | 2026-03-29 |
+| [x] | agent-log-visible_20260329 | Dashboard API 返回 agent executionSummary | 2026-03-29 | 2026-03-29 |
+| [x] | auto-implement_20260329 | env.yaml 增加 autoImplementTracked 开关 | 2026-03-29 | 2026-03-29 |
+| [x] | phase-retro_20260329 | Phase Retrospective — test-loop 阶段回顾机制 | 2026-03-29 | 2026-03-29 |
+| [x] | cli-dashboard-v2_20260329 | CLI Dashboard: Script-rendered deterministic output | 2026-03-29 | 2026-03-29 |
+| [~] | preflight-skill-split_20260329 | Pre-flight script + SKILL.md phase split | 2026-03-29 | 2026-03-29 |

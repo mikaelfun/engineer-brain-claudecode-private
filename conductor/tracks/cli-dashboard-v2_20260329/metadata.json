@@ -1,0 +1,14 @@
+{
+  "id": "cli-dashboard-v2_20260329",
+  "title": "CLI Dashboard: Script-rendered deterministic output",
+  "type": "enhancement",
+  "status": "complete",
+  "issueId": "ISS-143",
+  "created": "2026-03-29T19:30:00.000Z",
+  "updated": "2026-03-29T20:15:00.000Z",
+  "current_phase": 1,
+  "current_task": "1.2",
+  "phases": { "total": 1, "completed": 1 },
+  "tasks": { "total": 2, "completed": 2 },
+  "commits": []
+}
