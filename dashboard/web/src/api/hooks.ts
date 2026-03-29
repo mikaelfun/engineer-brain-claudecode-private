@@ -665,3 +665,117 @@ export function useRestartAll() {
     mutationFn: () => apiPost<{ success: boolean; message: string }>('/restart/all'),
   })
 }
+
+// ===== Test Lab =====
+
+export function useTestState() {
+  return useQuery({
+    queryKey: ['tests', 'state'],
+    queryFn: async () => {
+      try {
+        return await apiGet<any>('/tests/state')
+      } catch (err: any) {
+        if (err?.status === 404) return null
+        throw err
+      }
+    },
+    refetchInterval: 30_000,
+    retry: (failureCount, error: any) => {
+      if (error?.status === 404) return false
+      return failureCount < 3
+    },
+  })
+}
+
+export function useTestDiscoveries() {
+  return useQuery({
+    queryKey: ['tests', 'discoveries'],
+    queryFn: async () => {
+      try {
+        return await apiGet<any>('/tests/discoveries')
+      } catch (err: any) {
+        if (err?.status === 404) return null
+        throw err
+      }
+    },
+    refetchInterval: 60_000,
+    retry: (failureCount, error: any) => {
+      if (error?.status === 404) return false
+      return failureCount < 3
+    },
+  })
+}
+
+export function useTestTrends() {
+  return useQuery({
+    queryKey: ['tests', 'trends'],
+    queryFn: () => apiGet<any[]>('/tests/trends'),
+    staleTime: 60_000,
+  })
+}
+
+export function useTestRegistry() {
+  return useQuery({
+    queryKey: ['tests', 'registry'],
+    queryFn: async () => {
+      try {
+        return await apiGet<Record<string, any>>('/tests/registry')
+      } catch (err: any) {
+        if (err?.status === 404) return {}
+        throw err
+      }
+    },
+    staleTime: 5 * 60 * 1000, // 5 min — registry rarely changes
+    retry: (failureCount, error: any) => {
+      if (error?.status === 404) return false
+      return failureCount < 3
+    },
+  })
+}
+
+export function useRunnerStatus() {
+  return useQuery({
+    queryKey: ['tests', 'runner-status'],
+    queryFn: () => apiGet<{ status: 'idle' | 'running' | 'paused'; startedAt: string | null; lastRunAt: string | null }>('/tests/runner/status'),
+    refetchInterval: 5_000,
+  })
+}
+
+export function useRunnerStart() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => apiPost<{ status: string }>('/tests/runner/start'),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tests', 'runner-status'] })
+    },
+  })
+}
+
+export function useRunnerStop() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => apiPost<{ status: string }>('/tests/runner/stop'),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tests', 'runner-status'] })
+    },
+  })
+}
+
+export function useTestEvolution() {
+  return useQuery({
+    queryKey: ['tests', 'evolution'],
+    queryFn: async () => {
+      try {
+        return await apiGet<any[]>('/tests/evolution')
+      } catch (err: any) {
+        if (err?.status === 404) return []
+        throw err
+      }
+    },
+    staleTime: 60_000,
+    retry: (failureCount, error: any) => {
+      if (error?.status === 404) return false
+      return failureCount < 3
+    },
+  })
+}

@@ -291,8 +291,9 @@ export function useSSE() {
         addCaseSessionMessage(caseNumber, completedMsg)
         if (d.sessionId) addCaseSessionPerSession(caseNumber, d.sessionId, completedMsg)
 
-        // Invalidate operation query so buttons are released
+        // Invalidate + force refetch operation query so buttons are released immediately
         queryClient.invalidateQueries({ queryKey: ['case-operation', caseNumber] })
+        queryClient.refetchQueries({ queryKey: ['case-operation', caseNumber] })
         queryClient.invalidateQueries({ queryKey: ['case-sessions', caseNumber] })
         queryClient.invalidateQueries({ queryKey: ['cases', caseNumber] })
         queryClient.invalidateQueries({ queryKey: ['cases', caseNumber, 'todo'] })
@@ -320,8 +321,9 @@ export function useSSE() {
         addCaseSessionMessage(caseNumber, failedMsg)
         if (d.sessionId) addCaseSessionPerSession(caseNumber, d.sessionId, failedMsg)
 
-        // Invalidate operation query so buttons are released
+        // Invalidate + force refetch operation query so buttons are released immediately
         queryClient.invalidateQueries({ queryKey: ['case-operation', caseNumber] })
+        queryClient.refetchQueries({ queryKey: ['case-operation', caseNumber] })
         queryClient.invalidateQueries({ queryKey: ['case-sessions', caseNumber] })
       }
     })
@@ -344,6 +346,7 @@ export function useSSE() {
         queryClient.invalidateQueries({ queryKey: ['cases', caseNumber, 'todo'] })
         queryClient.invalidateQueries({ queryKey: ['case-sessions', caseNumber] })
         queryClient.invalidateQueries({ queryKey: ['case-operation', caseNumber] })
+        queryClient.refetchQueries({ queryKey: ['case-operation', caseNumber] })
       }
       queryClient.invalidateQueries({ queryKey: ['sessions'] })
       queryClient.invalidateQueries({ queryKey: ['todos'] })
@@ -364,6 +367,7 @@ export function useSSE() {
         if (data.data?.sessionId) addCaseSessionPerSession(caseNumber, data.data.sessionId, msg)
         queryClient.invalidateQueries({ queryKey: ['case-sessions', caseNumber] })
         queryClient.invalidateQueries({ queryKey: ['case-operation', caseNumber] })
+        queryClient.refetchQueries({ queryKey: ['case-operation', caseNumber] })
       }
       queryClient.invalidateQueries({ queryKey: ['sessions'] })
     })
@@ -648,6 +652,34 @@ export function useSSE() {
         // Also invalidate todos to refresh checkbox state
         queryClient.invalidateQueries({ queryKey: ['todos'] })
       }
+    })
+
+    // Test Lab SSE events → invalidate TanStack Query caches
+    es.addEventListener('test-state-updated', () => {
+      queryClient.invalidateQueries({ queryKey: ['tests', 'state'] })
+      queryClient.invalidateQueries({ queryKey: ['tests', 'discoveries'] })
+    })
+
+    es.addEventListener('test-discoveries-updated', () => {
+      queryClient.invalidateQueries({ queryKey: ['tests', 'discoveries'] })
+    })
+
+    es.addEventListener('test-result-updated', () => {
+      queryClient.invalidateQueries({ queryKey: ['tests', 'state'] })
+      queryClient.invalidateQueries({ queryKey: ['tests', 'trends'] })
+    })
+
+    es.addEventListener('test-evolution-updated', () => {
+      queryClient.invalidateQueries({ queryKey: ['tests', 'evolution'] })
+    })
+
+    es.addEventListener('test-directives-updated', () => {
+      queryClient.invalidateQueries({ queryKey: ['tests', 'state'] })
+      queryClient.invalidateQueries({ queryKey: ['tests', 'runner-status'] })
+    })
+
+    es.addEventListener('runner-status-changed', () => {
+      queryClient.invalidateQueries({ queryKey: ['tests', 'runner-status'] })
     })
 
     es.onopen = () => {
