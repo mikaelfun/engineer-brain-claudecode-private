@@ -111,11 +111,11 @@
 | [x] | runner-brain_20260329 | Runner upgrade: Strategic Review + Meta-analysis + Immutable Core | 2026-03-29 | 2026-03-29 |
 | [x] | verify-redesign_20260329 | Conductor Verify 重新设计 — 推理驱动 + Recipe 自我演进 | 2026-03-29 | 2026-03-29 |
 | [x] | scan-expansion_20260329 | SCAN multi-type expansion: UX, performance, architecture, design-fidelity | 2026-03-29 | 2026-03-29 |
-| [ ] | recipe-arch_20260329 | Recipe Architecture 共享指南 — 推理+自我演进元架构 | 2026-03-29 | 2026-03-29 |
+| [x] | recipe-arch_20260329 | Recipe Architecture 共享指南 — 推理+自我演进元架构 | 2026-03-29 | 2026-03-30 |
 | [ ] | todo-reasoning_20260329 | Todo 推理化 — generate-todo.sh → LLM context + todo recipes | 2026-03-29 | 2026-03-29 |
 | [ ] | routing-reasoning_20260329 | Casework 路由推理化 — B5 status→agent → LLM 路由计划 | 2026-03-29 | 2026-03-29 |
 | [ ] | email-recipes_20260329 | Email Recipes + 用户编辑学习循环 | 2026-03-29 | 2026-03-29 |
 | [ ] | patrol-priority_20260329 | Patrol 动态优先级 — severity×SLA×活跃度评分排序 | 2026-03-29 | 2026-03-29 |
 | [ ] | troubleshoot-recipes_20260329 | 排查 Recipes — 按问题类型索引搜索策略 | 2026-03-29 | 2026-03-29 |
 | [ ] | vp-align_20260329 | new-track Verification Plan 与 verify 推理一致性 | 2026-03-29 | 2026-03-29 |
-| [ ] | verify-bridge_20260329 | verify.md 桥接到 SKILL.md — 消除双实现 | 2026-03-29 | 2026-03-29 |
+| [~] | verify-bridge_20260329 | verify.md 桥接到 SKILL.md — 消除双实现 | 2026-03-29 | 2026-03-29 |
