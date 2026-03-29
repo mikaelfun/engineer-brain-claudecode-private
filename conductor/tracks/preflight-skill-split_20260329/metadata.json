@@ -1,0 +1,14 @@
+{
+  "id": "preflight-skill-split_20260329",
+  "title": "Pre-flight script + SKILL.md phase split",
+  "type": "enhancement",
+  "status": "complete",
+  "issueId": "ISS-144",
+  "created": "2026-03-29T19:30:00.000Z",
+  "updated": "2026-03-29T21:00:00.000Z",
+  "current_phase": 4,
+  "current_task": "4.7",
+  "phases": { "total": 4, "completed": 4 },
+  "tasks": { "total": 13, "completed": 13 },
+  "commits": []
+}

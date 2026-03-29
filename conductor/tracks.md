@@ -107,4 +107,4 @@
 | [x] | auto-implement_20260329 | env.yaml 增加 autoImplementTracked 开关 | 2026-03-29 | 2026-03-29 |
 | [x] | phase-retro_20260329 | Phase Retrospective — test-loop 阶段回顾机制 | 2026-03-29 | 2026-03-29 |
 | [x] | cli-dashboard-v2_20260329 | CLI Dashboard: Script-rendered deterministic output | 2026-03-29 | 2026-03-29 |
-| [~] | preflight-skill-split_20260329 | Pre-flight script + SKILL.md phase split | 2026-03-29 | 2026-03-29 |
+| [x] | preflight-skill-split_20260329 | Pre-flight script + SKILL.md phase split | 2026-03-29 | 2026-03-29 |

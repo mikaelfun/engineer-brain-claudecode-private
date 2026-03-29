@@ -1,0 +1,11 @@
+{
+  "id": "ISS-144",
+  "title": "Pre-flight script + SKILL.md phase split for test-loop startup optimization",
+  "description": "Runner agent wastes 14+ tool calls reading files before starting work. Two changes: (1) Create pre-flight.sh that merges health-check + gate + trend summary into one compact JSON call. (2) Split 800-line SKILL.md into phase-specific files (phases/common.md, SCAN.md, GENERATE.md, TEST.md, FIX.md, VERIFY.md, state-update.md) so test-loop only reads ~150 lines per invocation instead of 800. Update runner and test-loop spawn prompts accordingly.",
+  "type": "enhancement",
+  "priority": "P1",
+  "status": "implemented",
+  "createdAt": "2026-03-29T19:30:00Z",
+  "updatedAt": "2026-03-29T21:00:00Z",
+  "trackId": "preflight-skill-split_20260329"
+}
