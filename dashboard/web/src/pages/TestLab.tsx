@@ -280,11 +280,23 @@ function ActivityStream({ phaseHistory }: { phaseHistory: any[] }) {
       try {
         const parsed = JSON.parse(e.data)
         const d = parsed.data || parsed
+        // Build a meaningful detail string from SSE data
+        let detail = d.testId || d.note || ''
+        if (eventType === 'state-updated' && d.phase) {
+          const parts: string[] = []
+          if (d.currentTest) parts.push(d.currentTest)
+          else if (d.testId) parts.push(d.testId)
+          if (d.queues) {
+            parts.push(`T:${d.queues.test} F:${d.queues.fix} V:${d.queues.verify} R:${d.queues.regression}`)
+          }
+          if (d.round !== undefined) parts.push(`R${d.round}`)
+          detail = parts.join(' · ') || eventType
+        }
         const newEvent: ActivityEvent = {
           type: eventType,
           phase: d.phase,
-          action: d.action,
-          detail: d.testId || d.note || eventType,
+          action: d.action || (eventType === 'state-updated' ? d.phase : undefined),
+          detail,
           timestamp: d.timestamp || new Date().toISOString(),
         }
         setEvents(prev => {

@@ -3,6 +3,7 @@
  */
 import chokidar from 'chokidar'
 import { join } from 'path'
+import { readFileSync } from 'fs'
 import { config } from '../config.js'
 import { sseManager } from './sse-manager.js'
 import type { SSEEventType } from '../types/index.js'
@@ -58,6 +59,49 @@ function classifyChange(filePath: string): { type: SSEEventType; data: Record<st
     return { type: 'cron-updated', data: {} }
   }
 
+  // Test supervisor files
+  if (normalized.includes('/tests/state.json')) {
+    // Read state.json to extract key context for SSE event
+    try {
+      const raw = readFileSync(filePath, 'utf8')
+      const state = JSON.parse(raw)
+      const queues = {
+        test: (state.testQueue || []).length,
+        fix: (state.fixQueue || []).length,
+        verify: (state.verifyQueue || []).length,
+        regression: (state.regressionQueue || []).length,
+      }
+      // Find latest phaseHistory entry for action context
+      const history = state.phaseHistory || []
+      const latest = history.length > 0 ? history[history.length - 1] : null
+      return {
+        type: 'test-state-updated',
+        data: {
+          phase: state.phase,
+          round: state.round,
+          queues,
+          action: latest?.action,
+          testId: latest?.testId,
+          currentTest: state.currentTest || null,
+        },
+      }
+    } catch {
+      return { type: 'test-state-updated', data: {} }
+    }
+  }
+  if (normalized.includes('/tests/discoveries.json')) {
+    return { type: 'test-discoveries-updated', data: {} }
+  }
+  if (normalized.includes('/tests/evolution.json')) {
+    return { type: 'test-evolution-updated', data: {} }
+  }
+  if (normalized.includes('/tests/directives.json')) {
+    return { type: 'test-directives-updated', data: {} }
+  }
+  if (normalized.includes('/tests/results/') && normalized.endsWith('.json')) {
+    return { type: 'test-result-updated', data: {} }
+  }
+
   return null
 }
 
@@ -67,6 +111,11 @@ export function startFileWatcher() {
     join(config.todoDir, '*.md'),
     config.patrolStateFile,
     config.cronJobsFile,
+    join(config.projectRoot, 'tests', 'state.json'),
+    join(config.projectRoot, 'tests', 'discoveries.json'),
+    join(config.projectRoot, 'tests', 'evolution.json'),
+    join(config.projectRoot, 'tests', 'directives.json'),
+    join(config.projectRoot, 'tests', 'results', '*.json'),
   ]
 
   console.log('[watcher] Starting file watcher...')
