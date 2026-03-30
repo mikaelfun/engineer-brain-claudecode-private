@@ -1,0 +1,17 @@
+{
+  "id": "testloop-perf_20260330",
+  "title": "test-loop/supervisor 性能优化",
+  "type": "refactor",
+  "status": "complete",
+  "issueId": "ISS-169",
+  "created": "2026-03-30T17:20:00+08:00",
+  "updated": "2026-03-30T17:30:00+08:00",
+  "phases": {
+    "total": 3,
+    "completed": 3
+  },
+  "tasks": {
+    "total": 10,
+    "completed": 9
+  }
+}

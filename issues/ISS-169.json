@@ -1,0 +1,11 @@
+{
+  "id": "ISS-169",
+  "title": "test-loop/supervisor 性能优化：砍 Recipe Evolution 推理、精简 Supervisor、SCAN delta、FIX 并行",
+  "description": "基于实际性能数据分析（32min/轮，supervisor 占 50%），整合 4 项优化：\n\n1. **砍掉 Recipe Evolution 推理** — test-loop 的 2 处 + supervisor Step 4C，每轮省 ~900 tokens。保留 phaseHistory 元数据标记（零成本），改为按需查询统计\n2. **精简 Supervisor 推理** — trend-analyzer.sh 预计算结论（不输出原始数据让 LLM 推理）、Self-check 快速路径（正常时跳过 git log/diff）\n3. **test-loop Retrospective 精简** — 砍 Recipe Evolution Check，保留熔断检查（100% 同一错误→earlyExit），砍跨轮重复浪费检测（supervisor trend-analyzer 已覆盖）\n4. **SCAN delta 检测** — spec-scanner.sh 加 hash cache，只扫 git diff 变更的 tracks\n\n预计：32min → 22-25min（节省 25-30%）",
+  "type": "refactor",
+  "priority": "P1",
+  "status": "tracked",
+  "trackId": "testloop-perf_20260330",
+  "createdAt": "2026-03-30T17:15:00+08:00",
+  "updatedAt": "2026-03-30T17:20:00+08:00"
+}

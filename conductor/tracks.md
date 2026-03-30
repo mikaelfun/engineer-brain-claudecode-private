@@ -120,3 +120,10 @@
 | [ ] | vp-align_20260329 | new-track Verification Plan 与 verify 推理一致性 | 2026-03-29 | 2026-03-29 |
 | [x] | verify-bridge_20260329 | verify.md 桥接到 SKILL.md — 消除双实现 | 2026-03-29 | 2026-03-29 |
 | [x] | webui-test-dashboard_20260329 | WebUI real-time Test Dashboard with Runner controls | 2026-03-29 | 2026-03-30 |
+| [x] | coverage-metrics_20260330 | Fix coverage metrics — totalTests=0 bug + 多维进度指标 | 2026-03-30 | 2026-03-30 |
+| [x] | recipe-seed_20260330 | tests/recipes/ 目录结构 + learnings.yaml seed | 2026-03-30 | 2026-03-30 |
+| [x] | fix-recipes_20260330 | Fix Strategy Recipes — FIX.md 二元→recipe 匹配 | 2026-03-30 | 2026-03-30 |
+| [x] | testloop-perf_20260330 | test-loop/supervisor 性能优化 | 2026-03-30 | 2026-03-30 |
+| [x] | gen-recipes_20260330 | Test Generation Recipes — GENERATE.md 结构化 | 2026-03-30 | 2026-03-30 |
+| [x] | scan-recipes_20260330 | Scan Strategy Recipes — runner 上下文感知调度 | 2026-03-30 | 2026-03-30 |
+| [x] | fix-issue-creation_20260330 | Test-loop FIX 阶段发现产品 Bug 自动创建 Issue | 2026-03-30 | 2026-03-30 |

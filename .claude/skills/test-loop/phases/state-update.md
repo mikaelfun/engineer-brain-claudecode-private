@@ -1,6 +1,6 @@
 ## State Update + Continuation (read after every phase)
 
-Post-phase logic: update state, run retrospective, decide continuation.
+Post-phase logic: update state, circuit-breaker check, decide continuation.
 
 ### Step 2: Update State
 
@@ -36,58 +36,28 @@ After each phase completes:
 
 6. If round >= maxRounds → set phase=COMPLETE
 
-### Step 2.2: Phase Retrospective
+### Step 2.2: Circuit Breaker (lightweight)
 
-**After state update, before continuation check.** Agent reviews phase execution for framework logic bugs.
+**Quick check only — full analysis done by supervisor meta-analysis.**
 
-**Self-ask checklist** (any "yes" → dig deeper):
+After state update, check for catastrophic failure patterns that require immediate exit:
 
-1. **Input/output ratio reasonable?**
-   - SCAN N gaps → GENERATE waste rate > 50%? (abnormal)
-   - TEST N tests → all same failure? (same-cause rate > 80% → abnormal)
-   - FIX N fixes → VERIFY all regressed? (regression rate > 60% → abnormal)
+1. **TEST phase**: Did ALL tests in this batch fail with the same root error message?
+   - Same-cause rate > 90% AND batch size ≥ 3 → **earlyExit**
+   - Mark in roundJourney: `"earlyExit": true, "earlyExitReason": "same-cause catastrophic failure: {error}"`
+   - Skip continuation → return summary immediately
 
-2. **Cross-round repeated waste?**
-   - Same gaps reported 2+ rounds by SCAN but filtered by GENERATE? (idle loop)
-   - Same test bouncing FIX→VERIFY→FIX 3+ times? (ping-pong)
+2. **FIX phase**: Did ALL fix attempts fail (0 moved to verifyQueue)?
+   - All-fail rate = 100% AND batch size ≥ 3 → **earlyExit**
+   - Same marking as above
 
-3. **Root cause = environment or logic defect?**
-   - Environment (port, permissions, network) → **don't escalate** (learnings handles it)
-   - Logic defect (regex, condition, data structure) → **escalate**
+**If no catastrophic pattern → skip (zero output), proceed to Step 2.1.**
 
-4. **Can locate specific file/code?**
-   - From error info, I/O comparison, logs → infer targetFile and targetLine
-
-**Decision**:
-- ✅ No anomaly → skip, go to Step 2.1
-- 🔧 Logic bug found → execute 3 steps, then go to Step 2.1:
-
-  **A. Record learning**:
-  ```bash
-  bash tests/executors/learnings-writer.sh "retro-{round}-{PHASE}" "framework" "{problem}" "{root cause}"
-  ```
-
-  **B. Create framework fix item** (fixQueue head, priority=1):
-  ```bash
-  # Read current fixQueue, prepend retroItem with retroContext, merge back
-  echo '{"fixQueue":[retroItem, ...currentFQ]}' | bash tests/executors/state-writer.sh --merge
-  ```
-  retroContext schema: `{ phase, round, anomaly, rootCause, targetFile, targetLine }`
-
-  **C. Record self-heal**:
-  ```bash
-  bash tests/executors/self-heal-recorder.sh "retro-{round}-{PHASE}" "logic_bug" "{signature}" "N/A" "{diagnosis}" "Created framework fix from Phase Retrospective"
-  ```
-
-**Constraints**:
-- Max 1 retro fix item per phase per round
-- Retrospective **never modifies code** — only creates fixQueue item
-- No anomaly → zero output (no "all clear" noise)
-- targetFile/targetLine are best-effort
+No anomaly analysis, no recipe checks, no framework fix injection — those are supervisor's job.
 
 ### Step 2.1: Continuation Check
 
-**After state update + retrospective**, decide whether to continue or return:
+**After state update + circuit breaker**, decide whether to continue or return:
 
 ```
 Read updated state.json:
@@ -102,7 +72,6 @@ Read updated state.json:
 **Design**: SCAN (~30s) + GENERATE (~1min) are short — don't waste a tick. Chain SCAN→GENERATE→TEST in one invocation.
 
 **⚠️ Before continuing**: Re-check directives (Step 0.5) — handle pause/resume.
-**⚠️ Retrospective may change next phase**: fixQueue additions can redirect SCAN→FIX.
 
 ### Step 2.5: COMPLETE State
 
