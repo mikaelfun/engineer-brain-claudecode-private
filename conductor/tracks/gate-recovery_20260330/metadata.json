@@ -1,0 +1,17 @@
+{
+  "id": "gate-recovery_20260330",
+  "title": "Supervisor gate=error 推理驱动恢复",
+  "type": "feature",
+  "status": "complete",
+  "issueId": "ISS-170",
+  "created": "2026-03-30T22:20:00+08:00",
+  "updated": "2026-03-30T22:55:00+08:00",
+  "phases": {
+    "total": 2,
+    "completed": 2
+  },
+  "tasks": {
+    "total": 7,
+    "completed": 7
+  }
+}

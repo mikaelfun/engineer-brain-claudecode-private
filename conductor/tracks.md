@@ -127,3 +127,4 @@
 | [x] | gen-recipes_20260330 | Test Generation Recipes — GENERATE.md 结构化 | 2026-03-30 | 2026-03-30 |
 | [x] | scan-recipes_20260330 | Scan Strategy Recipes — runner 上下文感知调度 | 2026-03-30 | 2026-03-30 |
 | [x] | fix-issue-creation_20260330 | Test-loop FIX 阶段发现产品 Bug 自动创建 Issue | 2026-03-30 | 2026-03-30 |
+| [x] | gate-recovery_20260330 | Supervisor gate=error 推理驱动恢复 | 2026-03-30 | 2026-03-30 |

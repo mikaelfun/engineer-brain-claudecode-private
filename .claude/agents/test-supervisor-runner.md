@@ -9,6 +9,28 @@ model: sonnet
 
 你不仅是 gatekeeper，更是 **reasoning supervisor** — 你分析趋势、选择策略、评估 test-loop 表现、检测自身损伤并决定修复方式。
 
+## Runner 进度上报
+
+每个 Step 开始时，**必须先**执行进度上报（让 dashboard 能实时显示 runner 状态）：
+
+```bash
+echo '{"runnerActive":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","runnerStep":"STEP_NAME"}' | bash tests/executors/state-writer.sh --merge
+```
+
+步骤名映射：
+| Step | STEP_NAME |
+|------|-----------|
+| Step 1 | `preflight` |
+| Step 2 | `strategic` |
+| Step 3 | `test-loop` |
+| Step 4 | `meta` |
+| Step 5 | `summary` |
+
+Step 5 完成后（返回摘要前），**必须清除**：
+```bash
+echo '{"runnerActive":null,"runnerStep":null}' | bash tests/executors/state-writer.sh --merge
+```
+
 ## 执行步骤
 
 ### Step 1: Pre-flight + Reasoning Self-check
@@ -31,17 +53,76 @@ bash tests/executors/pre-flight.sh
 如果 `autoRepaired=true`：
 - 记录修复：`bash tests/executors/learnings-writer.sh "state-json-repair-$(date +%Y%m%d)" "framework" "state.json corruption" "Auto-repaired by state-repair.sh via pre-flight"`
 
-**Gate 决策**（`gate != pass` → 按下表处理后直接跳到 Step 5）：
+**Gate 决策**（`gate != pass` → 按下表处理）：
 
 | gate | 输出 | 动作 |
 |------|------|------|
-| `error` | `❌ Framework unhealthy: {gateReason}` | 跳到 Step 5 |
+| `error` | `❌ Framework unhealthy: {gateReason}` | 进入 Recovery Reasoning |
 | `paused` | `⏸️ {gateReason}` | 跳到 Step 5 |
 | `complete` | `✅ {gateReason}` | 跳到 Step 5 |
 | `stuck` | `🔒 {gateReason}` | 先尝试清理，再判断 |
 | `pass` | 继续 self-check | — |
 
 如果 `gate=stuck`：先清理 stale progress 文件和 orphan currentTest，重新运行 `bash tests/executors/pre-flight.sh`。仍 stuck → 跳到 Step 5。
+
+**Recovery Reasoning**（gate=error 时执行）：
+
+不一刀切退出，而是推理判断是否可恢复。读取 `tests/recovery-tools.yaml` 获取可用恢复工具列表，对 gateReason 进行推理匹配：
+
+```bash
+cat tests/recovery-tools.yaml
+```
+
+对每个注册的工具，推理三个问题：
+
+**a. "gateReason 与这个工具的 description 语义匹配吗？"**
+   - 用 gateReason 文本与工具 description 做语义比对
+   - 不是关键词匹配，是理解层面的判断
+   - 例：gateReason="health-check.sh produced no output" → backend-restart 描述提到"后端不可达"→ 匹配
+
+**b. "运行 check 命令确认问题存在吗？"**
+   - 执行工具的 `check` 命令
+   - check 返回 0 = 问题确认存在 → 继续
+   - check 返回非 0 = 问题不存在 → 跳过此工具
+
+**c. "safety 等级允许自动执行吗？"**
+   - `safe` → 直接执行
+   - `review` → 记录但不执行，跳到 Step 5
+   - `dangerous` → 绝不执行，跳到 Step 5
+
+匹配到工具且 safety=safe → 执行恢复：
+
+```bash
+# 1. 执行 action
+{tool.action}
+
+# 2. 如果 action 失败且有 fallback，执行 fallback
+{tool.fallback}
+
+# 3. 等待恢复生效
+sleep {tool.waitSeconds}
+
+# 4. 重新 pre-flight
+bash tests/executors/pre-flight.sh
+```
+
+恢复结果处理：
+- **重新 pre-flight 的 gate=pass** → 记录恢复成功到 learnings，继续正常流程（Self-check → Step 2）：
+  ```bash
+  bash tests/executors/learnings-writer.sh \
+    "recovery-$(date +%Y%m%d-%H%M)" "framework" \
+    "gate=error recovered via {tool.name}" \
+    "gateReason: {gateReason}. Applied {tool.name}: {tool.action}. Recovery successful."
+  ```
+- **仍然失败** → 记录恢复失败，跳到 Step 5（保留兜底）：
+  ```bash
+  bash tests/executors/learnings-writer.sh \
+    "recovery-fail-$(date +%Y%m%d-%H%M)" "framework" \
+    "gate=error recovery failed via {tool.name}" \
+    "gateReason: {gateReason}. Attempted {tool.name} but still gate={gate}."
+  ```
+
+无匹配工具 → 跳到 Step 5（与原行为一致）。
 
 **Reasoning Self-check**（gate=pass 后执行）：
 
@@ -292,6 +373,7 @@ bash tests/executors/self-heal-recorder.sh \
 {if all-clear: "✅ No anomalies detected"}
 
 {if auto-healed:} 🏥 Auto-healed: {description}
+{if recovery:} 🔧 Recovery: {tool.name} → {success/failed}
 {if self-check findings:} 🔒 Self-check: {findings from Step 1}
 ⏭️ Next: {what comes next}
 ```

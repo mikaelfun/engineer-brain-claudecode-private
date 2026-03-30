@@ -1,0 +1,11 @@
+{
+  "id": "ISS-170",
+  "title": "Supervisor gate=error 推理驱动恢复 — 替代一刀切退出，推理 gateReason + recovery-tools 自动恢复",
+  "description": "当前 test-supervisor-runner Step 1 对 gate=error 是一刀切退出（直接跳到 Step 5），不尝试任何恢复。实际场景中后端未运行等环境问题是可恢复的，但 supervisor 不会尝试。\n\n根因：gate=error 处理是硬编码规则，不像 gate=stuck 有清理重试逻辑。\n\n方案：推理驱动恢复（不加 if-else 规则）：\n1. gate=error 时读取 gateReason\n2. 推理三个问题：错误性质（环境/数据/框架）、可用恢复手段、恢复安全性\n3. 引入 recovery-tools.yaml 注册可用恢复工具（restart API、state-repair 等），supervisor 推理匹配而非硬编码\n4. 判断可恢复 → 执行恢复 → 重新 pre-flight → 仍失败才退出\n\n新工具只需注册到 recovery-tools.yaml，supervisor 自动获得新恢复能力，无需改代码。",
+  "type": "feature",
+  "priority": "P1",
+  "status": "tracked",
+  "trackId": "gate-recovery_20260330",
+  "createdAt": "2026-03-30T22:15:00+08:00",
+  "updatedAt": "2026-03-30T22:15:00+08:00"
+}
