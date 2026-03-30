@@ -818,7 +818,9 @@ export function useRunnerStatus() {
   return useQuery({
     queryKey: ['tests', 'runner-status'],
     queryFn: () => apiGet<{
-      status: 'idle' | 'running' | 'paused' | 'waiting'
+      status: 'idle' | 'running' | 'paused' | 'waiting' | 'external'
+      source?: string | null
+      supervisorStatus?: string | null
       startedAt: string | null
       lastRunAt: string | null
       loop: boolean

@@ -10,6 +10,14 @@ import type { SSEEventType } from '../types/index.js'
 
 let watcher: ReturnType<typeof chokidar.watch> | null = null
 
+// Track previous supervisor status for transition detection
+let lastSupervisorStatus: string | null = null
+
+// Supervisor statuses that indicate an active run
+const ACTIVE_SUPERVISOR_STATUSES = new Set([
+  'running', 'scanning', 'generating', 'testing', 'fixing', 'verifying',
+])
+
 // Debounce map: path → timeout
 const debounceMap = new Map<string, NodeJS.Timeout>()
 
@@ -80,6 +88,19 @@ function classifyChange(filePath: string): { type: SSEEventType; data: Record<st
     try {
       const raw = readFileSync(filePath, 'utf8')
       const sup = JSON.parse(raw)
+      const currentStatus = sup.status as string
+
+      // Detect active→idle transition: broadcast runner-status-changed for frontend auto-recovery
+      const wasActive = lastSupervisorStatus !== null && ACTIVE_SUPERVISOR_STATUSES.has(lastSupervisorStatus)
+      const isNowInactive = !ACTIVE_SUPERVISOR_STATUSES.has(currentStatus)
+      if (wasActive && isNowInactive) {
+        debounceEmit('runner-status-changed' as SSEEventType, {
+          status: 'idle',
+          externalRunEnded: true,
+        }, 'runner-status-changed:external-end')
+      }
+      lastSupervisorStatus = currentStatus
+
       return {
         type: 'test-supervisor-updated',
         data: {

@@ -15,10 +15,10 @@
 
 ### Tasks
 
-- [ ] Task 1.1: 在 `test-runner.ts` 的 status 路由中，当 `runnerState.status === 'idle'` 时，调用 `readSupervisorState()` 检查 supervisor.json 的 status 字段
-- [ ] Task 1.2: 若 supervisor.json status 为 running/scanning/generating/testing/fixing/verifying，返回 `{ status: 'external', source: 'cli', supervisorStatus: '...' }`
-- [ ] Task 1.3: 在 stop 路由中，当检测到 external run 时，直接写入 supervisor.json 的 `directive: "pause"` 字段（而非依赖 abortController）
-- [ ] Task 1.4: 在 file-watcher 的 supervisor.json 变化回调中，检测 status 从 running→idle 的转变，广播 `runner-status-changed` SSE 事件
+- [x] Task 1.1: 在 `test-runner.ts` 的 status 路由中，当 `runnerState.status === 'idle'` 时，调用 `readSupervisor()` 检查 supervisor.json 的 status 字段
+- [x] Task 1.2: 若 supervisor.json status 为 running/scanning/generating/testing/fixing/verifying，返回 `{ status: 'external', source: 'cli', supervisorStatus: '...' }`
+- [x] Task 1.3: 在 stop 路由中，当检测到 external run 时，直接写入 supervisor.json 的 `directive: "pause"` 字段（而非依赖 abortController）
+- [x] Task 1.4: 在 file-watcher 的 supervisor.json 变化回调中，检测 status 从 running→idle 的转变，广播 `runner-status-changed` SSE 事件
 
 ### Verification
 
@@ -30,9 +30,9 @@ TestLab 页面识别 external 状态并更新 UI。
 
 ### Tasks
 
-- [ ] Task 2.1: 在 `TestLab.tsx` 中处理 `status === 'external'`：显示 amber/yellow 状态指示器 + "External run" 标签
-- [ ] Task 2.2: Stop 按钮在 external 状态下可用，点击调用 `POST /api/tests/runner/stop`（后端已处理 directive 注入）
-- [ ] Task 2.3: Start 按钮在 external 状态下禁用（外部 run 进行中不允许启动新 run）
+- [x] Task 2.1: 在 `TestLab.tsx` 中处理 `status === 'external'`：显示 amber/yellow 状态指示器 + "External run" 标签
+- [x] Task 2.2: Stop 按钮在 external 状态下可用，点击调用 `POST /api/tests/runner/stop`（后端已处理 directive 注入）
+- [x] Task 2.3: Start 按钮在 external 状态下禁用（外部 run 进行中不允许启动新 run）
 - [ ] Task 2.4: SSE `runner-status-changed` 事件触发时刷新 runner status，实现外部 run 结束后自动恢复 idle
 
 ### Verification

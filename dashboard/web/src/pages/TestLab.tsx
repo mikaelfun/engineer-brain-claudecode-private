@@ -9,6 +9,8 @@
  * 5. Tab content: Overview (Activity + Queues), Discoveries, Trends, Evolution
  */
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   useTestState,
   useTestDiscoveries,
@@ -61,8 +63,8 @@ const STAGE_ICONS: Record<string, string> = {
 
 const TESTLAB_KEYFRAMES = `
 @keyframes bar-pulse {
-  0%, 100% { opacity: 0.7; }
-  50% { opacity: 1; }
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 @keyframes shimmer {
   0% { background-position: -200% 0; }
@@ -70,15 +72,48 @@ const TESTLAB_KEYFRAMES = `
 }
 @keyframes blink {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+  50% { opacity: 0.25; }
 }
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 @keyframes stage-glow {
-  0%, 100% { box-shadow: 0 0 0 0 currentColor; }
-  50% { box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 20%, transparent); }
+  0%, 100% {
+    box-shadow: 0 0 24px var(--glow-color, rgba(107,163,232,0.15)),
+                0 0 48px var(--glow-far, rgba(107,163,232,0.06)),
+                inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+  50% {
+    box-shadow: 0 0 36px var(--glow-color, rgba(107,163,232,0.22)),
+                0 0 72px var(--glow-far, rgba(107,163,232,0.09)),
+                inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-3px); }
+}
+@keyframes connector-flow {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+@keyframes shimmer-border {
+  0%   { background-position: -300% 0; }
+  100% { background-position: 300% 0; }
+}
+@keyframes pulse-ring {
+  0%   { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+[data-theme="light"] {
+  --glass-bg: rgba(255,255,255,0.82);
+  --glass-border: rgba(0,0,0,0.08);
+  --glass-blur: blur(8px);
 }
 `
 
@@ -92,6 +127,28 @@ function useInjectKeyframes() {
     document.head.appendChild(style)
     return () => { style.remove() }
   }, [])
+}
+
+// ============ Glassmorphism Utilities ============
+
+import type { CSSProperties } from 'react'
+
+function glassStyle(extra?: CSSProperties): CSSProperties {
+  return {
+    background: 'var(--glass-bg)',
+    backdropFilter: 'var(--glass-blur, blur(14px))',
+    WebkitBackdropFilter: 'var(--glass-blur, blur(14px))',
+    border: '1px solid var(--glass-border)',
+    ...extra,
+  }
+}
+
+function glassCardStyle(extra?: CSSProperties): CSSProperties {
+  return glassStyle({
+    borderRadius: 'var(--radius-lg, 16px)',
+    padding: '18px 20px',
+    ...extra,
+  })
 }
 
 // ============ Elapsed Timer Hook ============
@@ -158,7 +215,8 @@ function TestLabHeader({ pipelineData }: { pipelineData: any }) {
   const lastRunAt = runnerStatus?.lastRunAt
   const isRunning = status === 'running'
   const isWaiting = status === 'waiting'
-  const isActive = isRunning || isWaiting
+  const isExternal = status === 'external'
+  const isActive = isRunning || isWaiting || isExternal
   const loopEnabled = runnerStatus?.loop || false
   const runsCompleted = runnerStatus?.runsCompleted || 0
   const nextRunAt = runnerStatus?.nextRunAt
@@ -174,10 +232,12 @@ function TestLabHeader({ pipelineData }: { pipelineData: any }) {
   // Start menu dropdown
   const [showStartMenu, setShowStartMenu] = useState(false)
   const startMenuRef = useRef<HTMLDivElement>(null)
+  const startDropdownRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (!showStartMenu) return
     const handler = (e: MouseEvent) => {
-      if (startMenuRef.current && !startMenuRef.current.contains(e.target as Node)) setShowStartMenu(false)
+      if (startMenuRef.current && !startMenuRef.current.contains(e.target as Node)
+        && startDropdownRef.current && !startDropdownRef.current.contains(e.target as Node)) setShowStartMenu(false)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
@@ -199,29 +259,28 @@ function TestLabHeader({ pipelineData }: { pipelineData: any }) {
 
   return (
     <div
-      style={{
-        background: 'var(--bg-surface)',
-        border: '1px solid var(--border-subtle)',
-        borderRadius: '10px',
+      style={glassCardStyle({
         overflow: 'hidden',
         position: 'relative',
-      }}
+        padding: 0,
+      })}
     >
-      {/* Animated top bar when active */}
+      {/* Animated top shimmer bar when active */}
       {isActive && (
         <div style={{
-          height: '2px',
-          background: `linear-gradient(90deg, transparent, ${stageColor}, transparent)`,
-          animation: 'bar-pulse 2s ease-in-out infinite',
+          height: '3px',
+          background: `linear-gradient(90deg, transparent 0%, ${stageColor} 25%, var(--accent-purple, #9e8cc7) 50%, ${stageColor} 75%, transparent 100%)`,
+          backgroundSize: '200% 100%',
+          animation: 'shimmer-border 2.4s linear infinite',
         }} />
       )}
 
       {/* Single-line header content */}
-      <div className="flex items-center justify-between px-4 py-2.5 gap-4">
+      <div className="flex items-center justify-between px-5 py-3 gap-4">
         {/* Left: Cycle info + Stage badge + Elapsed */}
         <div className="flex items-center gap-3 min-w-0">
           {/* Cycle counter */}
-          <span className="text-[15px] font-bold font-mono" style={{ color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
+          <span className="font-bold font-mono" style={{ fontSize: '20px', color: 'var(--text-primary)', whiteSpace: 'nowrap', letterSpacing: '-0.5px' }}>
             Cycle {cycle}/{maxCycles}
           </span>
 
@@ -264,17 +323,19 @@ function TestLabHeader({ pipelineData }: { pipelineData: any }) {
             style={{
               background: isRunning ? 'var(--accent-green)' :
                 isWaiting ? 'var(--accent-purple)' :
+                isExternal ? 'var(--accent-amber)' :
                 status === 'paused' ? 'var(--accent-amber)' : 'var(--text-tertiary)',
-              boxShadow: isActive ? `0 0 6px ${isWaiting ? 'var(--accent-purple)' : 'var(--accent-green)'}` : 'none',
-              animation: isWaiting ? 'blink 1.5s ease-in-out infinite' : 'none',
+              boxShadow: isActive ? `0 0 6px ${isWaiting ? 'var(--accent-purple)' : isExternal ? 'var(--accent-amber)' : 'var(--accent-green)'}` : 'none',
+              animation: isWaiting ? 'blink 1.5s ease-in-out infinite' : isExternal ? 'blink 2s ease-in-out infinite' : 'none',
             }}
           />
           <span className="text-[12px] font-bold font-mono" style={{
             color: isRunning ? 'var(--accent-green)' :
               isWaiting ? 'var(--accent-purple)' :
+              isExternal ? 'var(--accent-amber)' :
               status === 'paused' ? 'var(--accent-amber)' : 'var(--text-tertiary)',
           }}>
-            {isWaiting ? 'WAITING' : status.toUpperCase()}
+            {isExternal ? 'EXTERNAL' : isWaiting ? 'WAITING' : status.toUpperCase()}
           </span>
 
           {/* Loop badge */}
@@ -284,7 +345,7 @@ function TestLabHeader({ pipelineData }: { pipelineData: any }) {
             </span>
           )}
 
-          {/* Start button (when idle) */}
+          {/* Start button (when idle, not external) */}
           {status === 'idle' && (
             <div ref={startMenuRef} style={{ position: 'relative' }}
               onKeyDown={(e) => { if (e.key === 'Escape' && showStartMenu) { setShowStartMenu(false); e.stopPropagation() } }}
@@ -292,56 +353,60 @@ function TestLabHeader({ pipelineData }: { pipelineData: any }) {
               <button
                 onClick={() => setShowStartMenu(!showStartMenu)}
                 disabled={startMutation.isPending}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold transition-all hover:opacity-80 disabled:opacity-50"
-                style={{ background: 'var(--accent-green-dim)', color: 'var(--accent-green)' }}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[12px] font-bold transition-all hover:opacity-80 disabled:opacity-50"
+                style={{ background: 'var(--accent-green)', color: '#fff', boxShadow: '0 0 12px rgba(92,191,138,0.3)' }}
               >
-                <Play className="w-3.5 h-3.5" /> Start
-                <ChevronDown className="w-3 h-3" style={{ transform: showStartMenu ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }} />
+                <Play className="w-4 h-4" /> Start
+                <ChevronDown className="w-3.5 h-3.5" style={{ transform: showStartMenu ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }} />
               </button>
-              {showStartMenu && (
-                <div style={{
-                  position: 'absolute', top: '100%', right: 0, marginTop: '4px',
-                  background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)',
-                  borderRadius: '8px', padding: '4px', minWidth: '170px', zIndex: 50,
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                }}>
-                  <button
-                    onClick={() => { startMutation.mutate({}); setShowStartMenu(false) }}
-                    className="w-full text-left px-3 py-2 rounded-md text-[12px] font-bold transition-all"
-                    style={{ color: 'var(--accent-green)', background: 'transparent', border: 'none', cursor: 'pointer' }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--accent-green-dim)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                  >
-                    <Play className="w-3.5 h-3.5 inline mr-1.5" style={{ verticalAlign: 'middle' }} />
-                    Single Run
-                  </button>
-                  <div className="px-3 pt-2 pb-0.5 text-[9px] font-mono font-bold" style={{ color: 'var(--text-tertiary)' }}>LOOP MODE</div>
-                  {[5, 10, 15, 30].map(mins => (
+              {showStartMenu && (() => {
+                const rect = startMenuRef.current?.getBoundingClientRect()
+                return rect ? createPortal(
+                  <div ref={startDropdownRef} style={{
+                    position: 'fixed', top: rect.bottom + 4, right: window.innerWidth - rect.right,
+                    background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)',
+                    borderRadius: '8px', padding: '4px', minWidth: '170px', zIndex: 9999,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                  }}>
                     <button
-                      key={mins}
-                      onClick={() => { startMutation.mutate({ loop: true, intervalMinutes: mins }); setShowStartMenu(false) }}
-                      className="w-full text-left px-3 py-1.5 rounded-md text-[12px] font-bold transition-all"
-                      style={{ color: 'var(--accent-purple)', background: 'transparent', border: 'none', cursor: 'pointer' }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--accent-blue-dim)')}
+                      onClick={() => { startMutation.mutate({}); setShowStartMenu(false) }}
+                      className="w-full text-left px-3 py-2 rounded-md text-[12px] font-bold transition-all"
+                      style={{ color: 'var(--accent-green)', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--accent-green-dim)')}
                       onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                     >
-                      {'\u267B\uFE0F'} Every {mins}m
+                      <Play className="w-3.5 h-3.5 inline mr-1.5" style={{ verticalAlign: 'middle' }} />
+                      Single Run
                     </button>
-                  ))}
-                </div>
-              )}
+                    <div className="px-3 pt-2 pb-0.5 text-[9px] font-mono font-bold" style={{ color: 'var(--text-tertiary)' }}>LOOP MODE</div>
+                    {[5, 10, 15, 30].map(mins => (
+                      <button
+                        key={mins}
+                        onClick={() => { startMutation.mutate({ loop: true, intervalMinutes: mins }); setShowStartMenu(false) }}
+                        className="w-full text-left px-3 py-1.5 rounded-md text-[12px] font-bold transition-all"
+                        style={{ color: 'var(--accent-purple)', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--accent-blue-dim)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                      >
+                        {'\u267B\uFE0F'} Every {mins}m
+                      </button>
+                    ))}
+                  </div>,
+                  document.body
+                ) : null
+              })()}
             </div>
           )}
 
-          {/* Stop button (when running/waiting) */}
-          {(status === 'running' || status === 'waiting') && (
+          {/* Stop button (when running/waiting/external) */}
+          {(status === 'running' || status === 'waiting' || status === 'external') && (
             <button
               onClick={handleStopClick}
               disabled={stopMutation.isPending}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold transition-all hover:opacity-80 disabled:opacity-50"
-              style={{ background: 'var(--accent-red-dim)', color: 'var(--accent-red)' }}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[12px] font-bold transition-all hover:opacity-80 disabled:opacity-50"
+              style={{ background: 'var(--accent-red)', color: '#fff', boxShadow: '0 0 12px rgba(212,114,114,0.3)' }}
             >
-              <Square className="w-3.5 h-3.5" /> {confirmStop ? 'Confirm?' : 'Stop'}
+              <Square className="w-4 h-4" /> {confirmStop ? 'Confirm?' : 'Stop'}
             </button>
           )}
 
@@ -414,17 +479,16 @@ function ReasoningNarrative({ supervisorData }: { supervisorData: any }) {
 
   return (
     <div
-      style={{
-        background: 'var(--bg-surface)',
-        border: `1px solid ${selfHealEvent ? 'color-mix(in srgb, var(--accent-amber) 30%, transparent)' : 'var(--border-subtle)'}`,
-        borderRadius: '10px',
+      style={glassCardStyle({
+        padding: 0,
         overflow: 'hidden',
-      }}
+        borderColor: selfHealEvent ? 'color-mix(in srgb, var(--accent-amber) 30%, transparent)' : undefined,
+      })}
     >
       {/* Collapsed summary — always visible */}
       <button
         onClick={() => setManualToggle(prev => prev === null ? !shouldAutoExpand : !prev)}
-        className="w-full flex items-center justify-between px-4 py-2.5 transition-all hover:opacity-90"
+        className="w-full flex items-center justify-between px-5 py-3 transition-all hover:opacity-90"
         style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
       >
         <div className="flex items-center gap-2 min-w-0">
@@ -451,62 +515,113 @@ function ReasoningNarrative({ supervisorData }: { supervisorData: any }) {
         </div>
       </button>
 
-      {/* Expanded 5-step narrative */}
+      {/* Expanded 5-step narrative — vertical timeline */}
       {isExpanded && (
         <div
-          className="px-4 pb-3 space-y-2"
-          style={{ borderTop: '1px solid var(--border-subtle)', animation: 'fadeIn 0.2s ease-out' }}
+          style={{ borderTop: '1px solid var(--border-subtle)', animation: 'fadeIn 0.25s ease-out', padding: '0 24px 18px' }}
         >
-          {/* Self-heal banner */}
+          {/* Self-heal banner — structured amber card */}
           {selfHealEvent && (
             <div
-              className="flex items-center gap-2 px-3 py-2 rounded-lg mt-2 text-[12px]"
-              style={{ background: 'var(--accent-amber-dim)', color: 'var(--accent-amber)' }}
+              style={{
+                marginTop: '14px',
+                padding: '11px 16px',
+                borderRadius: 'var(--radius-md, 10px)',
+                background: 'rgba(212,164,74,0.07)',
+                border: '1px solid rgba(212,164,74,0.18)',
+                borderLeft: '3px solid var(--accent-amber)',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '10px',
+                animation: 'fadeIn 0.35s ease-out',
+              }}
             >
-              <span>\uD83D\uDD27</span>
-              <span className="font-bold">Self-Heal Event:</span>
-              <span style={{ color: 'var(--text-secondary)' }}>
-                {typeof selfHealEvent === 'string' ? selfHealEvent : JSON.stringify(selfHealEvent)}
-              </span>
+              <span style={{ fontSize: '17px', flexShrink: 0, marginTop: '1px' }}>{'🔧'}</span>
+              <div>
+                <div style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--accent-amber)' }}>Self-Heal Event</div>
+                <div style={{ fontSize: '12.5px', color: 'rgba(212,164,74,0.7)', marginTop: '2px' }}>
+                  {typeof selfHealEvent === 'string' ? selfHealEvent : selfHealEvent?.description || JSON.stringify(selfHealEvent)}
+                </div>
+              </div>
             </div>
           )}
 
-          {/* Reasoning steps */}
-          <div className="space-y-1.5 mt-2">
-            {REASONING_STEPS.map((step) => {
+          {/* Reasoning steps — vertical timeline with left dots + connecting line */}
+          <div style={{ position: 'relative', marginTop: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {/* Vertical connecting line */}
+            <div style={{
+              position: 'absolute',
+              left: '5px',
+              top: '12px',
+              bottom: '12px',
+              width: '2px',
+              background: 'var(--border-subtle)',
+              borderRadius: '1px',
+            }} />
+
+            {REASONING_STEPS.map((step, idx) => {
               const meta = REASONING_LABELS[step]
               const content = reasoning[step]
               const isCurrent = supervisorStep === step
               const hasContent = !!content
+              const dotColor = isCurrent ? 'var(--accent-blue)' : hasContent ? 'var(--accent-green)' : 'var(--text-tertiary)'
 
               return (
                 <div
                   key={step}
-                  className="flex items-start gap-2.5 px-3 py-1.5 rounded-lg"
                   style={{
-                    background: isCurrent ? 'color-mix(in srgb, var(--accent-blue) 8%, transparent)' : 'transparent',
-                    opacity: hasContent || isCurrent ? 1 : 0.4,
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '14px',
+                    padding: '10px 14px',
+                    borderRadius: 'var(--radius-sm, 6px)',
+                    background: isCurrent ? 'color-mix(in srgb, var(--accent-blue) 8%, transparent)' : 'var(--bg-inset)',
+                    border: '1px solid var(--border-subtle)',
+                    opacity: hasContent || isCurrent ? 1 : 0.38,
+                    animation: `fadeIn 0.3s ease-out ${idx * 40}ms backwards`,
+                    position: 'relative',
                   }}
                 >
-                  <span className="text-[14px] flex-shrink-0 mt-0.5">{meta.icon}</span>
-                  <div className="min-w-0 flex-1">
-                    <span className="text-[11px] font-bold font-mono" style={{
-                      color: isCurrent ? 'var(--accent-blue)' : hasContent ? 'var(--text-primary)' : 'var(--text-tertiary)',
-                    }}>
-                      {meta.label}
-                    </span>
+                  {/* Timeline dot */}
+                  <div style={{
+                    width: '12px',
+                    height: '12px',
+                    borderRadius: '50%',
+                    background: dotColor,
+                    flexShrink: 0,
+                    marginTop: '2px',
+                    boxShadow: isCurrent ? `0 0 8px ${dotColor}` : 'none',
+                    transition: 'all 0.3s',
+                  }} />
+
+                  {/* Icon + Label + Content */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '15px', flexShrink: 0 }}>{meta.icon}</span>
+                      <span className="font-mono" style={{
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        textTransform: 'uppercase' as const,
+                        letterSpacing: '1.2px',
+                        color: isCurrent ? 'var(--accent-blue)' : hasContent ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                      }}>
+                        {meta.label}
+                      </span>
+                      {isCurrent && (
+                        <span className="font-mono" style={{
+                          fontSize: '9px', fontWeight: 700, padding: '1px 6px',
+                          borderRadius: '4px', background: 'var(--accent-blue-dim)', color: 'var(--accent-blue)',
+                        }}>
+                          NOW
+                        </span>
+                      )}
+                    </div>
                     {hasContent && (
-                      <p className="text-[11px] mt-0.5 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                      <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5, marginTop: '2px' }}>
                         {typeof content === 'string' ? content : JSON.stringify(content)}
                       </p>
                     )}
                   </div>
-                  {isCurrent && (
-                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded flex-shrink-0"
-                      style={{ background: 'var(--accent-blue-dim)', color: 'var(--accent-blue)' }}>
-                      NOW
-                    </span>
-                  )}
                 </div>
               )
             })}
@@ -526,14 +641,9 @@ function StagePipeline({ pipelineData }: { pipelineData: any }) {
 
   return (
     <div
-      style={{
-        background: 'var(--bg-surface)',
-        border: '1px solid var(--border-subtle)',
-        borderRadius: '10px',
-        padding: '14px 16px',
-      }}
+      style={glassCardStyle({ padding: '20px 24px' })}
     >
-      <div className="flex items-center gap-0 overflow-x-auto">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 0, width: '100%' }}>
         {STAGES.map((stage, i) => {
           const stageData = stages[stage] || {}
           const status = stageData.status || (stage === currentStage ? 'running' : 'pending')
@@ -542,56 +652,154 @@ function StagePipeline({ pipelineData }: { pipelineData: any }) {
           const isPending = !isDone && !isActive
           const color = isDone ? 'var(--accent-green)' : isActive ? stageColorOf(stage) : 'var(--text-tertiary)'
           const summary = stageData.summary || ''
+          const stageCol = stageColorOf(stage)
+
+          // Compute glow CSS vars for active stage
+          const glowVars: Record<string, string> = {}
+          if (isActive && !isDone) {
+            if (stage === 'FIX') {
+              glowVars['--glow-color'] = 'rgba(212,164,74,0.16)'
+              glowVars['--glow-far'] = 'rgba(212,164,74,0.06)'
+            } else if (stage === 'VERIFY') {
+              glowVars['--glow-color'] = 'rgba(92,191,138,0.16)'
+              glowVars['--glow-far'] = 'rgba(92,191,138,0.06)'
+            } else if (stage === 'GENERATE') {
+              glowVars['--glow-color'] = 'rgba(158,140,199,0.16)'
+              glowVars['--glow-far'] = 'rgba(158,140,199,0.06)'
+            } else if (stage === 'TEST') {
+              glowVars['--glow-color'] = 'rgba(212,164,74,0.16)'
+              glowVars['--glow-far'] = 'rgba(212,164,74,0.06)'
+            } else {
+              glowVars['--glow-color'] = 'rgba(107,163,232,0.16)'
+              glowVars['--glow-far'] = 'rgba(107,163,232,0.06)'
+            }
+          }
+
+          // Connector state
+          const nextStage = i < STAGES.length - 1 ? STAGES[i + 1] : null
+          const nextData = nextStage ? (stages[nextStage] || {}) : {}
+          const nextStatus = nextData.status || (nextStage === currentStage ? 'running' : 'pending')
+          const nextActive = nextStatus === 'running' || nextStatus === 'in-progress' || nextStage === currentStage
+          const connectorLit = isDone
+          const connectorFlowing = isActive && !isDone
 
           return (
-            <div key={stage} className="flex items-center flex-shrink-0" style={{ flex: i < STAGES.length - 1 ? 1 : undefined }}>
-              {/* Stage pill */}
+            <div key={stage} style={{ display: 'contents' }}>
+              {/* Stage card */}
               <div
-                className="flex flex-col items-center gap-1"
-                style={{ minWidth: '80px' }}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '26px 24px 22px',
+                  borderRadius: 'var(--radius-xl, 20px)',
+                  border: `1.5px solid ${isDone ? 'rgba(92,191,138,0.12)' : isActive ? `color-mix(in srgb, ${stageCol} 28%, transparent)` : 'var(--border-subtle)'}`,
+                  background: isDone ? 'rgba(92,191,138,0.03)'
+                    : isActive ? `linear-gradient(170deg, color-mix(in srgb, ${stageCol} 6%, transparent) 0%, var(--bg-inset) 100%)`
+                    : 'var(--bg-inset)',
+                  flex: 1,
+                  minWidth: '120px',
+                  maxWidth: '220px',
+                  position: 'relative',
+                  zIndex: 2,
+                  transition: 'all 0.45s cubic-bezier(0.4, 0, 0.2, 1)',
+                  transform: isActive && !isDone ? 'scale(1.06)' : 'scale(1)',
+                  animation: isActive && !isDone ? 'stage-glow 2.8s ease-in-out infinite' : 'none',
+                  opacity: isPending ? 0.38 : 1,
+                  ...glowVars as any,
+                }}
                 title={summary || `${stage}: ${status}`}
               >
-                {/* Icon + status */}
-                <div
-                  className="flex items-center justify-center rounded-lg px-3 py-1.5 gap-1.5 transition-all"
-                  style={{
-                    background: isDone ? 'color-mix(in srgb, var(--accent-green) 12%, transparent)'
-                      : isActive ? `color-mix(in srgb, ${stageColorOf(stage)} 12%, transparent)`
-                      : 'var(--bg-inset)',
-                    border: `1.5px solid ${isDone ? 'var(--accent-green)' : isActive ? stageColorOf(stage) : 'var(--border-subtle)'}`,
-                    animation: isActive && !isDone ? 'stage-glow 2s ease-in-out infinite' : 'none',
-                    color,
-                  }}
-                >
-                  <span className="text-[14px]">{STAGE_ICONS[stage]}</span>
-                  <span className="text-[11px] font-bold font-mono" style={{ color }}>
-                    {stage}
-                  </span>
-                  <span className="text-[10px]">
-                    {isDone ? '\u2705' : isActive ? '\uD83D\uDD04' : '\u23F3'}
-                  </span>
-                </div>
+                {/* Large icon */}
+                <span style={{
+                  fontSize: '36px',
+                  lineHeight: 1,
+                  transition: 'transform 0.3s',
+                  animation: isActive && !isDone ? 'float 2.2s ease-in-out infinite' : 'none',
+                }}>
+                  {STAGE_ICONS[stage]}
+                </span>
+
+                {/* Stage name */}
+                <span className="font-mono" style={{
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  letterSpacing: '1.8px',
+                  textTransform: 'uppercase',
+                  color: isDone ? 'var(--text-secondary)' : isActive ? 'var(--text-primary)' : isPending ? 'var(--text-tertiary)' : 'var(--text-primary)',
+                }}>
+                  {stage}
+                </span>
+
+                {/* Status text */}
+                <span className="font-mono" style={{
+                  fontSize: '12px',
+                  fontWeight: 500,
+                  color: 'var(--text-secondary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                }}>
+                  {isDone && <span style={{ color: 'var(--accent-green)' }}>{'\u2705'} Done</span>}
+                  {isActive && !isDone && (
+                    <>
+                      <span style={{
+                        display: 'inline-block',
+                        width: '12px', height: '12px',
+                        border: `2px solid color-mix(in srgb, ${stageCol} 18%, transparent)`,
+                        borderTopColor: stageCol,
+                        borderRadius: '50%',
+                        animation: 'spin 0.75s linear infinite',
+                      }} />
+                      Running
+                    </>
+                  )}
+                  {isPending && <span style={{ color: 'var(--text-tertiary)' }}>Pending</span>}
+                </span>
 
                 {/* Summary text */}
                 {summary && (
-                  <span className="text-[9px] font-mono text-center truncate max-w-[100px]"
-                    style={{ color: 'var(--text-tertiary)' }} title={summary}>
+                  <span className="font-mono" style={{
+                    fontSize: '10px',
+                    color: 'var(--text-tertiary)',
+                    textAlign: 'center',
+                    maxWidth: '160px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }} title={summary}>
                     {summary}
                   </span>
                 )}
               </div>
 
-              {/* Connector line */}
+              {/* Connector line — three states: lit / flowing / off */}
               {i < STAGES.length - 1 && (
                 <div
                   style={{
                     flex: 1,
+                    minWidth: '24px',
+                    maxWidth: '80px',
                     height: '2px',
-                    minWidth: '12px',
-                    background: isDone ? 'var(--accent-green)' : 'var(--border-subtle)',
-                    transition: 'background 0.3s',
-                    alignSelf: 'center',
-                    marginBottom: summary ? '16px' : '0',
+                    borderRadius: '1px',
+                    zIndex: 1,
+                    transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+                    ...(connectorLit ? {
+                      background: `linear-gradient(90deg, var(--accent-green), rgba(92,191,138,0.25))`,
+                      boxShadow: '0 0 10px rgba(92,191,138,0.12)',
+                    } : connectorFlowing ? {
+                      background: stage === 'FIX' || stage === 'TEST'
+                        ? 'linear-gradient(90deg, rgba(212,164,74,0.2), var(--accent-amber), rgba(212,164,74,0.2))'
+                        : 'linear-gradient(90deg, rgba(107,163,232,0.2), var(--accent-blue), rgba(107,163,232,0.2))',
+                      backgroundSize: '200% 100%',
+                      animation: 'connector-flow 1.6s linear infinite',
+                      boxShadow: stage === 'FIX' || stage === 'TEST'
+                        ? '0 0 10px rgba(212,164,74,0.08)'
+                        : '0 0 10px rgba(107,163,232,0.08)',
+                    } : {
+                      background: 'rgba(255,255,255,0.05)',
+                    }),
                   }}
                 />
               )}
@@ -622,8 +830,8 @@ function StatsBar({ statsData }: { statsData: any }) {
 
   return (
     <div
-      className="flex items-center justify-between px-4 py-2.5 rounded-lg"
-      style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '10px' }}
+      className="flex items-center justify-between"
+      style={glassCardStyle({ padding: '10px 16px' })}
     >
       {/* Cumulative stats */}
       <div className="flex items-center gap-4">

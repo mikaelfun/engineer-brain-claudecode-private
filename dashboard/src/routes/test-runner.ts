@@ -221,6 +221,25 @@ testRunnerRoutes.post('/start', async (c) => {
 
 // POST /stop — Inject pause directive (safe stop)
 testRunnerRoutes.post('/stop', async (c) => {
+  // Handle external CLI run: memory says idle but supervisor.json says running
+  if (runnerState.status === 'idle') {
+    const supervisor = readSupervisor()
+    if (supervisor && ACTIVE_SUPERVISOR_STATUSES.has(supervisor.status)) {
+      // External run detected — inject pause directive for CLI supervisor to pick up
+      const directives = readDirectives()
+      directives.push({
+        type: 'pause',
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+        source: 'webui-external-stop',
+      })
+      writeDirectives(directives)
+      broadcastRunnerStatus()
+      return c.json({ status: 'stopping', source: 'external' })
+    }
+    return c.json({ error: 'Runner 未在运行', status: runnerState.status }, 409)
+  }
+
   if (runnerState.status !== 'running' && runnerState.status !== 'waiting') {
     return c.json({ error: 'Runner 未在运行', status: runnerState.status }, 409)
   }
