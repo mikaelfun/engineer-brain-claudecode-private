@@ -256,18 +256,61 @@ function ActivityStream({ phaseHistory }: { phaseHistory: any[] }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [events, setEvents] = useState<ActivityEvent[]>([])
 
-  // Initialize from phaseHistory (last 20)
+  // Load recent events from API on mount (survives page refresh)
   useEffect(() => {
-    if (!phaseHistory?.length) return
-    const recent = phaseHistory.slice(-20).map((entry: any) => ({
-      type: 'phase-history',
-      phase: entry.phase,
-      action: entry.action,
-      detail: entry.note || entry.testId || '',
-      timestamp: entry.timestamp || new Date().toISOString(),
-    }))
-    setEvents(recent)
-  }, [phaseHistory])
+    fetch(`${BASE_URL}/api/tests/recent-events?limit=20`)
+      .then(r => r.ok ? r.json() : [])
+      .then((stored: any[]) => {
+        if (stored.length > 0) {
+          const mapped = stored.map((evt: any) => {
+            const d = evt.data || {}
+            const eventType = (evt.type || '').replace('test-', '').replace('runner-', '')
+            let detail = d.testId || d.note || ''
+            if (eventType === 'state-updated' && d.phase) {
+              const parts: string[] = []
+              if (d.currentTest) parts.push(d.currentTest)
+              else if (d.testId) parts.push(d.testId)
+              if (d.queues) {
+                parts.push(`T:${d.queues.test} F:${d.queues.fix} V:${d.queues.verify} R:${d.queues.regression}`)
+              }
+              if (d.round !== undefined) parts.push(`R${d.round}`)
+              detail = parts.join(' · ') || eventType
+            }
+            return {
+              type: eventType,
+              phase: d.phase,
+              action: d.action || (eventType === 'state-updated' ? d.phase : undefined),
+              detail,
+              timestamp: evt.timestamp || new Date().toISOString(),
+            }
+          })
+          setEvents(mapped)
+        } else if (phaseHistory?.length) {
+          // Fallback to phaseHistory if no stored events
+          const recent = phaseHistory.slice(-20).map((entry: any) => ({
+            type: 'phase-history',
+            phase: entry.phase,
+            action: entry.action,
+            detail: entry.note || entry.testId || '',
+            timestamp: entry.timestamp || new Date().toISOString(),
+          }))
+          setEvents(recent)
+        }
+      })
+      .catch(() => {
+        // Fallback to phaseHistory on error
+        if (phaseHistory?.length) {
+          const recent = phaseHistory.slice(-20).map((entry: any) => ({
+            type: 'phase-history',
+            phase: entry.phase,
+            action: entry.action,
+            detail: entry.note || entry.testId || '',
+            timestamp: entry.timestamp || new Date().toISOString(),
+          }))
+          setEvents(recent)
+        }
+      })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Subscribe to real-time SSE events
   useEffect(() => {

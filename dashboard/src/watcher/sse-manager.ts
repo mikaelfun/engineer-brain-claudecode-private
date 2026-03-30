@@ -11,6 +11,8 @@ type SSEClient = {
 class SSEManager {
   private clients: SSEClient[] = []
   private clientId = 0
+  private recentEvents: SSEEvent[] = []
+  private readonly maxRecentEvents = 50
 
   addClient(controller: ReadableStreamDefaultController): string {
     const id = `client-${++this.clientId}`
@@ -39,6 +41,14 @@ class SSEManager {
       timestamp: new Date().toISOString(),
     }
 
+    // Store in ring buffer (only test-related events for TestLab)
+    if (type.startsWith('test-') || type === 'runner-status-changed') {
+      this.recentEvents.push(event)
+      if (this.recentEvents.length > this.maxRecentEvents) {
+        this.recentEvents = this.recentEvents.slice(-this.maxRecentEvents)
+      }
+    }
+
     const deadClients: string[] = []
 
     for (const client of this.clients) {
@@ -63,6 +73,10 @@ class SSEManager {
 
   get clientCount() {
     return this.clients.length
+  }
+
+  getRecentEvents(limit = 50): SSEEvent[] {
+    return this.recentEvents.slice(-limit)
   }
 }
 
