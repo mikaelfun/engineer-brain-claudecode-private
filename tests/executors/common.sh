@@ -581,6 +581,10 @@ validate_no_raw_placeholders() {
 # - data_source=live → picks from live-cases.yaml or env.yaml test_cases
 # - empty/missing → falls back to test_case_id (backward compatible)
 #
+# Side effects (for synthetic):
+#   Writes RESOLVED_SYNTHETIC_PROFILE and RESOLVED_SYNTHETIC_SEED to
+#   /tmp/synthetic-resolve-info.env so callers can source it after subshell.
+#
 # Usage: CASE_DIR=$(resolve_case_dir "$test_def_file")
 resolve_case_dir() {
   local test_def="$1"
@@ -596,7 +600,15 @@ resolve_case_dir() {
         local profiles_file="$TESTS_ROOT/fixtures/synthetic/profiles.yaml"
         profile=$(grep -E "^  [a-z][a-z0-9-]+:$" "$profiles_file" | sed 's/://; s/^  //' | shuf -n1)
       fi
-      local seed=$RANDOM
+      # Support fixed seed from test definition (for reproducible regression)
+      local seed
+      seed=$(read_yaml_value "$test_def" "synthetic_seed" 2>/dev/null || echo "")
+      if [[ -z "$seed" ]]; then
+        seed=$RANDOM
+      fi
+      # Export for callers to record on failure (via temp file since we're in subshell)
+      echo "RESOLVED_SYNTHETIC_PROFILE=$profile" > /tmp/synthetic-resolve-info.env
+      echo "RESOLVED_SYNTHETIC_SEED=$seed" >> /tmp/synthetic-resolve-info.env
       local gen_output
       gen_output=$(bash "$TESTS_ROOT/fixtures/synthetic/generator.sh" "$profile" "$seed" 2>&1)
       # Extract output directory from generator output

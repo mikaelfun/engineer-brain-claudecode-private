@@ -1,0 +1,12 @@
+{
+  "id": "ISS-177",
+  "title": "Workflow 测试采用 Synthetic Data 替代 Live Case 依赖",
+  "description": "当前 15 个 synthetic profile 处于闲置状态，所有 workflow 测试仍依赖 live case。应让 compliance-check、status-judge、inspection 等测试使用 data_source: synthetic + 对应 profile，并保留触发过失败的 seed 到 learnings.yaml，实现边缘场景的可复现回归测试。",
+  "type": "enhancement",
+  "priority": "P1",
+  "status": "tracked",
+  "trackId": "synthetic-adoption_20260330",
+  "testLoopScan": true,
+  "createdAt": "2026-03-30T23:10:00+08:00",
+  "updatedAt": "2026-03-30T23:10:00+08:00"
+}

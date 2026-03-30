@@ -1,0 +1,21 @@
+{
+  "id": "auto-track-issues_20260330",
+  "title": "test-loop 创建的 Issue 自动生成 Conductor Track",
+  "type": "enhancement",
+  "status": "complete",
+  "created": "2026-03-30T22:35:00+08:00",
+  "updated": "2026-03-31T01:55:00+08:00",
+  "phases": {
+    "total": 2,
+    "completed": 2
+  },
+  "tasks": {
+    "total": 7,
+    "completed": 7
+  },
+  "verification": {
+    "status": "skipped",
+    "reason": "mark-done: issue-creator.sh auto-track tested via issue-scanner (ISS-177 correctly tracked, not ISSUE_SKIP)",
+    "skippedAt": "2026-03-31T01:55:00+08:00"
+  }
+}

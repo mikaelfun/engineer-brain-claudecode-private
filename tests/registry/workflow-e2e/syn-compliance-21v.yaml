@@ -1,0 +1,42 @@
+id: "syn-compliance-21v"
+name: "Synthetic — 21v Convert Case"
+category: "workflow-e2e"
+source: "issues/ISS-177.json"
+description: "Generate compliance-21v-convert synthetic case → verify case-info.md has 21Vianet keyword → verify casehealth-meta.json compliance.is21vConvert=true"
+safety_level: "safe"
+priority: "medium"
+tags: ["synthetic", "compliance", "iss-177"]
+
+data_source: synthetic
+synthetic_profile: compliance-21v-convert
+
+steps:
+  - action: "run_script"
+    params:
+      command: "echo 'Synthetic case generated at {case_dir}'"
+
+assertions:
+  - type: "file_exists"
+    target: "{case_dir}/case-info.md"
+    expected: true
+    description: "case-info.md generated"
+  - type: "file_content"
+    target: "{case_dir}/case-info.md"
+    expected: "21Vianet"
+    description: "Customer Statement mentions 21Vianet"
+  - type: "file_content"
+    target: "{case_dir}/casehealth-meta.json"
+    expected: "valid_json"
+    description: "casehealth-meta.json is valid JSON"
+  - type: "json_field"
+    target: "{case_dir}/casehealth-meta.json"
+    field: "compliance.is21vConvert"
+    expected: true
+    description: "Detected as 21v convert case"
+  - type: "json_field"
+    target: "{case_dir}/casehealth-meta.json"
+    field: "compliance.entitlementOk"
+    expected: true
+    description: "Entitlement still passes (China Cld service)"
+
+timeout_seconds: 30

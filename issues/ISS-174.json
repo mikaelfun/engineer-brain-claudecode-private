@@ -1,0 +1,12 @@
+{
+  "id": "ISS-174",
+  "title": "test-loop 创建的 Issue 自动生成 Conductor Track",
+  "description": "当前 test-loop 通过 issue-creator.sh 创建的 Issue 停留在 pending 状态，无人跟进。应在创建 Issue 后自动生成 conductor track（spec.md 从 fix analysis 提取 AC），直接进入 tracked 状态，让下轮 SCAN 自动检测 gap 并生成测试。涉及修改 issue-creator.sh，在创建 issue 后调用 conductor new-track 逻辑生成 spec.md 并回写 trackId/status。",
+  "type": "enhancement",
+  "priority": "P1",
+  "status": "tracked",
+  "trackId": "auto-track-issues_20260330",
+  "testLoopScan": true,
+  "createdAt": "2026-03-30T22:30:00+08:00",
+  "updatedAt": "2026-03-30T22:30:00+08:00"
+}

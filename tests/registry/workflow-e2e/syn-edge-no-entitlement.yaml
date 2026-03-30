@@ -1,0 +1,33 @@
+id: "syn-edge-no-entitlement"
+name: "Synthetic — Edge: Missing Entitlement"
+category: "workflow-e2e"
+source: "issues/ISS-177.json"
+description: "Generate edge-no-entitlement synthetic case → verify entitlement fields are empty, compliance fails"
+safety_level: "safe"
+priority: "medium"
+tags: ["synthetic", "edge-case", "iss-177"]
+
+data_source: synthetic
+synthetic_profile: edge-no-entitlement
+
+steps:
+  - action: "run_script"
+    params:
+      command: "echo 'Synthetic case generated at {case_dir}'"
+
+assertions:
+  - type: "file_exists"
+    target: "{case_dir}/case-info.md"
+    expected: true
+    description: "case-info.md generated"
+  - type: "file_content"
+    target: "{case_dir}/casehealth-meta.json"
+    expected: "valid_json"
+    description: "casehealth-meta.json is valid JSON"
+  - type: "json_field"
+    target: "{case_dir}/casehealth-meta.json"
+    field: "compliance.entitlementOk"
+    expected: false
+    description: "Entitlement check fails (no entitlement)"
+
+timeout_seconds: 30

@@ -108,6 +108,10 @@ DATA_SOURCE=$(read_yaml_value "$TEST_FILE" "data_source" 2>/dev/null || echo "")
 if [ -n "$DATA_SOURCE" ]; then
   # New data_source mode: use resolve_case_dir()
   CASE_DIR=$(resolve_case_dir "$TEST_FILE")
+  # Source synthetic resolve info (profile + seed) for seed recording on failure
+  if [ "$DATA_SOURCE" = "synthetic" ] && [ -f /tmp/synthetic-resolve-info.env ]; then
+    source /tmp/synthetic-resolve-info.env
+  fi
   if [ -n "$CASE_DIR" ]; then
     TEST_CASE_ID=$(basename "$CASE_DIR")
     log_info "Data source: $DATA_SOURCE → $CASE_DIR"
@@ -501,7 +505,7 @@ execute_script_test() {
   fi
 
   # Replace variables
-  script_cmd=$(echo "$script_cmd" | sed "s|{cases_root}|$CASES_ROOT|g" | sed "s|{test_case_id}|$TEST_CASE_ID|g" | sed "s|{live_case_id}|$TEST_CASE_ID|g" | sed "s|{project_root}|$PROJECT_ROOT|g")
+  script_cmd=$(echo "$script_cmd" | sed "s|{cases_root}|$CASES_ROOT|g" | sed "s|{test_case_id}|$TEST_CASE_ID|g" | sed "s|{live_case_id}|$TEST_CASE_ID|g" | sed "s|{project_root}|$PROJECT_ROOT|g" | sed "s|{case_dir}|${CASE_DIR:-}|g")
 
   # CONTRACT_MISMATCH guard: catch unresolved placeholders in script command
   if ! validate_no_raw_placeholders "$script_cmd" "script command"; then
@@ -672,7 +676,7 @@ execute_api_workflow_test() {
 # ============================================================
 verify_case_outputs() {
   local case_id="$1"
-  local case_dir="$CASES_ROOT/active/$case_id"
+  local case_dir="${CASE_DIR:-$CASES_ROOT/active/$case_id}"
 
   # Parse assertions from YAML
   local in_assertions=false
@@ -698,7 +702,7 @@ verify_case_outputs() {
       while IFS= read -r aline; do
         aline="${aline//$'\r'/}"
         if echo "$aline" | grep -q "target:"; then
-          target=$(echo "$aline" | sed 's/.*target: *"\(.*\)"/\1/' | sed "s|{cases_root}|$CASES_ROOT|g" | sed "s|{test_case_id}|$case_id|g" | sed "s|{live_case_id}|$case_id|g")
+          target=$(echo "$aline" | sed 's/.*target: *"\(.*\)"/\1/' | sed "s|{cases_root}|$CASES_ROOT|g" | sed "s|{test_case_id}|$case_id|g" | sed "s|{live_case_id}|$case_id|g" | sed "s|{case_dir}|$case_dir|g")
         fi
         if echo "$aline" | grep -q "expected:"; then
           expected=$(echo "$aline" | sed 's/.*expected: *\(.*\)/\1/' | tr -d ' "')
@@ -729,7 +733,7 @@ verify_case_outputs() {
       while IFS= read -r aline; do
         aline="${aline//$'\r'/}"
         if echo "$aline" | grep -q "target:"; then
-          target=$(echo "$aline" | sed 's/.*target: *"\(.*\)"/\1/' | sed "s|{cases_root}|$CASES_ROOT|g" | sed "s|{test_case_id}|$case_id|g" | sed "s|{live_case_id}|$case_id|g")
+          target=$(echo "$aline" | sed 's/.*target: *"\(.*\)"/\1/' | sed "s|{cases_root}|$CASES_ROOT|g" | sed "s|{test_case_id}|$case_id|g" | sed "s|{live_case_id}|$case_id|g" | sed "s|{case_dir}|$case_dir|g")
         fi
         if echo "$aline" | grep -q "expected:"; then
           # Preserve content after "expected:" including spaces for contains/not_contains prefixes
@@ -807,7 +811,7 @@ verify_case_outputs() {
       while IFS= read -r aline; do
         aline="${aline//$'\r'/}"
         if echo "$aline" | grep -q "target:"; then
-          target=$(echo "$aline" | sed 's/.*target: *"\(.*\)"/\1/' | sed "s|{cases_root}|$CASES_ROOT|g" | sed "s|{test_case_id}|$case_id|g" | sed "s|{live_case_id}|$case_id|g")
+          target=$(echo "$aline" | sed 's/.*target: *"\(.*\)"/\1/' | sed "s|{cases_root}|$CASES_ROOT|g" | sed "s|{test_case_id}|$case_id|g" | sed "s|{live_case_id}|$case_id|g" | sed "s|{case_dir}|$case_dir|g")
         fi
         if echo "$aline" | grep -q "field:"; then
           field=$(echo "$aline" | sed 's/.*field: *"\{0,1\}\(.*\)"\{0,1\}/\1/' | sed 's/ *#.*//' | tr -d ' "')
@@ -903,7 +907,13 @@ case "$WORKFLOW_TYPE" in
   casework)     execute_casework_test ;;
   single_step)  execute_single_step_test ;;
   patrol)       execute_patrol_test ;;
-  script)       execute_script_test ;;
+  script)       execute_script_test
+                # Also run file/json assertions if present (supports synthetic tests)
+                if [ -n "$TEST_CASE_ID" ]; then
+                  verify_case_outputs "$TEST_CASE_ID"
+                fi
+                run_standalone_bash_assertions
+                ;;
   api)          execute_api_workflow_test ;;
   file-check|unknown) execute_file_verification ;;
 esac
@@ -924,6 +934,16 @@ fi
 
 write_result "$ROUND" "$TEST_ID" "$OVERALL_STATUS" "$ASSERTIONS_JSON" "$ERROR_VAL" "$ELAPSED"
 clear_progress "$TEST_ID"
+
+# Record synthetic seed on failure (for reproducible regression)
+if [ "$OVERALL_STATUS" = "fail" ] && [ "${DATA_SOURCE:-}" = "synthetic" ]; then
+  if [ -n "${RESOLVED_SYNTHETIC_PROFILE:-}" ] && [ -n "${RESOLVED_SYNTHETIC_SEED:-}" ]; then
+    FAIL_DESC="$ASSERTIONS_FAILED of $ASSERTION_COUNT assertions failed"
+    bash "$EXECUTORS_DIR/seed-recorder.sh" \
+      "$RESOLVED_SYNTHETIC_PROFILE" "$RESOLVED_SYNTHETIC_SEED" "$TEST_ID" "$FAIL_DESC" \
+      2>/dev/null || log_warn "seed-recorder.sh failed (non-fatal)"
+  fi
+fi
 
 # Summary
 echo ""

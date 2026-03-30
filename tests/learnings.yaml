@@ -581,3 +581,22 @@
   solution: |
     fix-analyzer.sh should check result JSON for envIssue:true field before falling back to keyword pattern matching. Priority fix for reducing false-negative env detection.
   resolved_at: "2026-03-30"
+
+# ============================================================
+# Synthetic Seeds — 失败 synthetic 测试的 seed 记录
+# ============================================================
+# 当 data_source=synthetic 的测试失败时，自动记录 profile + seed，
+# 用于后续可复现的回归测试。
+#
+# Schema:
+#   - profile: <profiles.yaml 中的 profile 名>
+#     seed: <int — 传给 generator.sh 的随机 seed>
+#     testId: <registry 中的 test ID>
+#     failure: <简短失败描述>
+#     discoveredAt: <YYYY-MM-DD>
+#
+# 使用方式：
+#   test-definition.yaml 设置 synthetic_seed: <seed> 可固定 seed 复现
+#   resolve_case_dir() 读取该字段替代 $RANDOM
+#
+synthetic_seeds: []
