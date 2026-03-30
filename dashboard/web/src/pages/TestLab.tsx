@@ -428,7 +428,7 @@ function EvolutionTimeline() {
               </div>
               {entry.impact && (
                 <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-secondary)' }}>
-                  {entry.impact}
+                  {typeof entry.impact === 'string' ? entry.impact : `${entry.impact.files_changed || 0} files changed, ${entry.impact.components_added || 0} added, ${entry.impact.components_modified || 0} modified`}
                 </p>
               )}
               {entry.timestamp && (
