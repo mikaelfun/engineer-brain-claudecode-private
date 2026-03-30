@@ -41,7 +41,7 @@ class SSEManager {
       timestamp: new Date().toISOString(),
     }
 
-    // Store in ring buffer (only test-related events for TestLab)
+    // Store in ring buffer (test-related events for TestLab)
     if (type.startsWith('test-') || type === 'runner-status-changed') {
       this.recentEvents.push(event)
       if (this.recentEvents.length > this.maxRecentEvents) {

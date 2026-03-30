@@ -9,8 +9,8 @@
 | `directive pause` | 暂停 loop |
 | `directive resume` | 恢复 loop |
 | `directive skip <testId> "<reason>"` | 跳过测试 |
-| `directive force_phase <phase>` | 强制切换阶段（SCAN/TEST/FIX/VERIFY） |
-| `directive adjust_config <key> <value>` | 修改 state.json 配置 |
+| `directive force_stage <stage>` | 强制切换阶段（SCAN/TEST/FIX/VERIFY） |
+| `directive adjust_config <key> <value>` | 修改配置 |
 | `directive add_requirement "<description>"` | 注入新需求 |
 | `directive add_learning "<id>" "<category>" "<problem>" "<solution>"` | 注入经验 |
 | `directive note "<message>"` | 纯备注 |
@@ -32,11 +32,11 @@
    { "type": "skip_test", "payload": { "testId": "<testId>", "reason": "<reason>" } }
    ```
 
-   **force_phase**:
+   **force_stage**:
    ```json
-   { "type": "force_phase", "payload": { "phase": "<SCAN|TEST|FIX|VERIFY>" } }
+   { "type": "force_stage", "payload": { "stage": "<SCAN|TEST|FIX|VERIFY>" } }
    ```
-   验证 phase 必须是有效值，否则拒绝。
+   验证 stage 必须是有效值，否则拒绝。
 
    **adjust_config**:
    ```json
@@ -85,7 +85,7 @@
    ```
    ✅ Directive {id} created: {type}
    📋 Payload: {JSON payload}
-   ⏳ Status: pending — will be processed in next test-loop round
+   ⏳ Status: pending — will be processed in next test-loop cycle
    ```
 
 ### 用 node 原子写入

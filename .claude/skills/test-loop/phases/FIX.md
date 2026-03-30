@@ -7,7 +7,7 @@
 ### 🔴 Step -1: Start Timer (MANDATORY)
 ```bash
 START_TS=$(date +%s%3N)
-echo '{"roundJourney":{"FIX":{"status":"running","startedAt":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}}}' | bash tests/executors/state-writer.sh --merge
+echo '{"stages":{"FIX":{"status":"running","startedAt":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}}}' | bash tests/executors/state-writer.sh --target pipeline --merge
 ```
 
 ### Sorting
@@ -19,9 +19,9 @@ Sort fixQueue by `priority` (ascending, default 5). `category: "framework"` item
 1. **Before loop**: Sort fixQueue by priority, snapshot
 2. **For each fix in fixQueue** (by priority order, index `i` from 0):
 
-   a. Set `state.json.currentTest = testId` and report progress:
+   a. Set `currentTest = testId` and report progress:
    ```bash
-   echo '{"currentTest":"{testId}","phaseProgress":{"current":'$((i+1))',"total":{TOTAL},"testId":"{testId}"}}' | bash tests/executors/state-writer.sh --merge
+   echo '{"currentTest":"{testId}","stageProgress":{"current":'$((i+1))',"total":{TOTAL},"testId":"{testId}"}}' | bash tests/executors/state-writer.sh --target pipeline --merge
    ```
 
    **⚠️ Progress visibility** — write progress file before spawning:
@@ -114,20 +114,20 @@ Sort fixQueue by `priority` (ascending, default 5). `category: "framework"` item
 
    **如果 classification === "product"**：
    ```bash
-   bash tests/executors/issue-creator.sh "<testId>" "<round>" "<title>" "<description>" "<priority>" "tests/results/fixes/<testId>-fix.md"
+   bash tests/executors/issue-creator.sh "<testId>" "<cycle>" "<title>" "<description>" "<priority>" "tests/results/fixes/<testId>-fix.md"
    ```
    - 脚本自动去重（同 testId 已有 Issue 则跳过）
    - 输出 `ISSUE_CREATED|ISS-XXX|testId` 或 `ISSUE_EXISTS|ISS-XXX|testId`
-   - 记录到 phaseHistory：`{ ..., issueCreated: "ISS-XXX" }` 或 `{ ..., issueCreated: null }`
+   - 记录到 stageHistory：`{ ..., issueCreated: "ISS-XXX" }` 或 `{ ..., issueCreated: null }`
 
    **如果 classification === "infrastructure"**：
-   - 不创建 Issue，仅在 phaseHistory 中标记 `issueClassification: "infrastructure"`
+   - 不创建 Issue，仅在 stageHistory 中标记 `issueClassification: "infrastructure"`
 
-   f. **After agent returns — update state.json**:
-      - Fix success → phaseHistory: `{ phase: "FIX", action: "fix_pass", testId, fixType, recipeUsed, ... }`
-      - Fix failure → phaseHistory: `{ phase: "FIX", action: "fix_fail", testId, reason, recipeUsed, ... }`
+   f. **After agent returns — update state**:
+      - Fix success → stageHistory: `{ stage: "FIX", action: "fix_pass", testId, fixType, recipeUsed, ... }`
+      - Fix failure → stageHistory: `{ stage: "FIX", action: "fix_fail", testId, reason, recipeUsed, ... }`
         - retryCount++; if retryCount >= 3 → stats.skipped++, write to skipRegistry: `{ testId, reason: "retry:exhausted", reviewable: true }`
       - Clear `currentTest`
    g. Continue next fix
 
-3. **After loop**: phase=VERIFY
+3. **After loop**: currentStage=VERIFY

@@ -1,0 +1,28 @@
+{
+  "cumulative": {
+    "passed": 165,
+    "failed": 44,
+    "fixed": 44,
+    "skipped": 13
+  },
+  "cycleStats": {
+    "passed": 0
+  },
+  "scanStrategy": {
+    "recipesUsed": [
+      "regression-focused-scan.md"
+    ],
+    "scannersActivated": [
+      "coverage"
+    ],
+    "overrideReason": "regressionRate=55% triggered regression-focused-scan recipe; env_issue items exhausted into skipRegistry"
+  },
+  "observabilityStatus": {
+    "probesTotal": 6,
+    "probesRun": 0,
+    "probesPass": 0,
+    "probesFail": 0,
+    "staleCount": 0,
+    "lastResults": {}
+  }
+}

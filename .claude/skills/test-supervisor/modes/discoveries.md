@@ -7,17 +7,17 @@
 | 数据 | 来源文件 |
 |------|---------|
 | 聚合汇总 | `tests/discoveries.json`（stats-reporter.sh 自动生成） |
-| 每轮发现的失败 | `tests/results/{round}-{testId}.json` |
+| 每轮发现的失败 | `tests/results/{cycle}-{testId}.json` |
 | 诊断分析 | `tests/results/fixes/{testId}-analysis.md` |
 | 修复记录 | `tests/results/fixes/{testId}-fix.md` |
 | 验证结果 | `tests/results/fixes/{testId}-verify.md` |
 | 回归影响 | `tests/results/fixes/{testId}-regression.md` |
-| 轮次汇总 | `tests/results/round-{N}-summary.json` |
+| 轮次汇总 | `tests/results/cycle-{N}-summary.json` |
 
 ### 执行步骤
 
-1. 读取 `tests/discoveries.json`（如不存在，提示先运行 `bash tests/executors/stats-reporter.sh <round>`）
-2. 用 Read 工具直接读 `tests/state.json` 获取当前 round、fixQueue（⚠️ 不要用 `cat | node` 管道，Windows 下 `/dev/stdin` 会报 ENOENT）
+1. 读取 `tests/discoveries.json`（如不存在，提示先运行 `bash tests/executors/stats-reporter.sh <cycle>`）
+2. 用 Read 工具直接读 `tests/pipeline.json` 获取当前 cycle，读 `tests/queues.json` 获取 fixQueue（⚠️ 不要用 `cat | node` 管道，Windows 下 `/dev/stdin` 会报 ENOENT）
 3. 对 discoveries.json 中每个 entry，如果 hasAnalysis/hasFix/hasVerify，读取对应 fixes/ 文件提取关键信息
 4. 格式化输出：
 
@@ -30,18 +30,18 @@
    Retry needed: {retryNeeded} | Unaddressed: {unaddressed} | Regression: {regression}
 
 ─── Discovery Timeline ──────────────────────────────────
-{for each discovery, grouped by foundRound:}
+{for each discovery, grouped by foundCycle:}
 
-📍 Round {foundRound} — Discovered {count} issues
+📍 Cycle {foundCycle} — Discovered {count} issues
 
 {status_emoji} {testId} — {status_label}
-   Found: Round {foundRound} — {firstFailedAssertion}
+   Found: Cycle {foundCycle} — {firstFailedAssertion}
    {if rootCause:} Root cause: {rootCause}
    {if hasFix:}
    Fix: {from fix.md — Fix Type + Description}
    Modified: {from fix.md — Modified Files}
    {end if}
-   {if hasVerify:} Verified: Round {verifiedRound} {pass/fail}
+   {if hasVerify:} Verified: Cycle {verifiedCycle} {pass/fail}
    {if hasRegression:} ⚠️ Regression: {regression details}
 
 {end for}

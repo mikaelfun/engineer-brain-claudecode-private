@@ -8,15 +8,15 @@
 |------|---------|
 | 框架架构变更 | `tests/evolution.json`（手动补充） |
 | 自愈记录 | `tests/results/fixes/{pattern-id}-self-heal.md` |
-| 轮次汇总 | `tests/results/round-{N}-summary.json`（用于 metrics 计算） |
-| 阶段时间线 | `tests/state.json` → phaseHistory |
+| 轮次汇总 | `tests/results/cycle-{N}-summary.json`（用于 metrics 计算） |
+| 阶段时间线 | `tests/stats.json` → stageHistory |
 
 ### 执行步骤
 
 1. 读取 `tests/evolution.json`（如不存在提示 "No evolution records yet"）
 2. 扫描 `tests/results/fixes/*-self-heal.md`，提取自愈记录
-3. 读取所有 `tests/results/round-*-summary.json`，计算 metrics 变化
-4. 读取 `tests/state.json` 获取 phaseHistory
+3. 读取所有 `tests/results/cycle-*-summary.json`，计算 metrics 变化
+4. 读取 `tests/stats.json` 获取 stageHistory
 5. 格式化输出：
 
 ```
@@ -24,8 +24,8 @@
 ══════════════════════════════════════════════════
 
 📈 Capability Growth
-   {from earliest to latest round summary:}
-   R0: {pass0}/{total0} pass ({coverage0}%) → R{N}: {passN}/{totalN} pass ({coverageN}%)
+   {from earliest to latest cycle summary:}
+   C0: {pass0}/{total0} pass ({coverage0}%) → C{N}: {passN}/{totalN} pass ({coverageN}%)
    Entries: {evolution.json entry count} architecture changes
    Self-heals: {self-heal file count} automatic recoveries
 
@@ -50,9 +50,9 @@
 {end for}
 {if no self-heal files: "(none)"}
 
-─── Phase Efficiency ───────────────────────────
-{from phaseHistory, aggregate per-phase durations:}
-   Phase     | Entries | Avg Duration
+─── Stage Efficiency ───────────────────────────
+{from stageHistory, aggregate per-stage durations:}
+   Stage     | Entries | Avg Duration
    SCAN      | {n}     | {avg}s
    TEST      | {n}     | {avg}s
    FIX       | {n}     | {avg}s

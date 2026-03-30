@@ -3,14 +3,14 @@
 **框架自愈**。检测并修复测试框架自身的问题（不是项目代码）。
 
 ### 触发方式
-- **自动触发**：dashboard/health 模式检测到 health-check.sh 失败时自动执行 state.json 修复（pre-check）
+- **自动触发**：dashboard/health 模式检测到 health-check.sh 失败时自动执行 state 文件修复（pre-check）
 - **手动触发**：`/test-supervisor auto-heal` — 全面扫描框架健康状态
 
 ### 异常分类表
 
 | 类型 | 触发条件 | 快速路径 | 通用路径 |
 |------|---------|---------|---------|
-| `data_integrity` | state.json JSON parse 失败 | `state-repair.sh` | — |
+| `data_integrity` | pipeline.json/queues.json/stats.json JSON parse 失败 | `state-repair.sh` | — |
 | `stale_progress` | `.progress-*.json` 文件 > 15 min | 清理文件 | — |
 | `orphan_lock` | `currentTest` 非空但无 `.progress` 文件 | 清空 `currentTest` | — |
 | `executor_crash` | 执行器非零退出且无结果文件 | — | Spawn agent 分析修复 |
@@ -26,7 +26,7 @@
 
 2. **扫描已知快速修复模式**：
 
-   **2a. state.json 完整性**：
+   **2a. State 文件完整性**：
    - 已在 Step 1 检查
 
    **2b. 清理过期 .progress 文件**（> 15 min）：
@@ -37,12 +37,12 @@
    对每个文件检查 timestamp，如果 > 15 min 前 → 删除 → 记录
 
    **2c. 清理 orphan currentTest**：
-   - 读取 `state.json.currentTest`
-   - 如果非空 且 无对应 `.progress-{testId}.json` 且 上次 phaseHistory > 10 min 前
-   - → 用 `state-writer.sh` 清空 currentTest
+   - 读取 `pipeline.json` 的 `currentTest`
+   - 如果非空 且 无对应 `.progress-{testId}.json` 且 上次 stageHistory > 10 min 前
+   - → 用 `state-writer.sh --target pipeline` 清空 currentTest
 
    **2d. 清理 stale progress from completed tests**：
-   - 检查 `.progress-*.json` 中的 testId 是否已有结果文件 `tests/results/{round}-{testId}.json`
+   - 检查 `.progress-*.json` 中的 testId 是否已有结果文件 `tests/results/{cycle}-{testId}.json`
    - 如果已有结果 → 删除 stale progress 文件
 
 3. **汇总修复结果**：
@@ -91,7 +91,7 @@ Auto-heal **只**修改以下路径（符合 `tests/safety.yaml` 的 `supervisor
 
 | 允许 | 路径 |
 |------|------|
-| ✅ | `tests/state.json`（通过 `state-writer.sh` 原子写入） |
+| ✅ | `tests/pipeline.json`、`tests/queues.json`、`tests/stats.json`、`tests/supervisor.json`（通过 `state-writer.sh --target` 原子写入） |
 | ✅ | `tests/results/.progress-*.json`（清理过期文件） |
 | ✅ | `tests/results/backups/`（备份损坏的文件） |
 | ✅ | `tests/learnings.yaml`（记录经验） |

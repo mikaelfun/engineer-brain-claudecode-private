@@ -668,6 +668,87 @@ export function useRestartAll() {
 
 // ===== Test Lab =====
 
+// --- Split state hooks (pipeline model) ---
+
+export function useTestPipeline() {
+  return useQuery({
+    queryKey: ['tests', 'pipeline'],
+    queryFn: async () => {
+      try {
+        return await apiGet<any>('/tests/pipeline')
+      } catch (err: any) {
+        if (err?.status === 404) return null
+        throw err
+      }
+    },
+    // No fixed polling — SSE invalidation drives refetch
+    staleTime: 10_000,
+    retry: (failureCount, error: any) => {
+      if (error?.status === 404) return false
+      return failureCount < 3
+    },
+  })
+}
+
+export function useTestSupervisor() {
+  return useQuery({
+    queryKey: ['tests', 'supervisor'],
+    queryFn: async () => {
+      try {
+        return await apiGet<any>('/tests/supervisor')
+      } catch (err: any) {
+        if (err?.status === 404) return null
+        throw err
+      }
+    },
+    staleTime: 10_000,
+    retry: (failureCount, error: any) => {
+      if (error?.status === 404) return false
+      return failureCount < 3
+    },
+  })
+}
+
+export function useTestQueues() {
+  return useQuery({
+    queryKey: ['tests', 'queues'],
+    queryFn: async () => {
+      try {
+        return await apiGet<any>('/tests/queues')
+      } catch (err: any) {
+        if (err?.status === 404) return null
+        throw err
+      }
+    },
+    staleTime: 10_000,
+    retry: (failureCount, error: any) => {
+      if (error?.status === 404) return false
+      return failureCount < 3
+    },
+  })
+}
+
+export function useTestStats() {
+  return useQuery({
+    queryKey: ['tests', 'stats'],
+    queryFn: async () => {
+      try {
+        return await apiGet<any>('/tests/stats')
+      } catch (err: any) {
+        if (err?.status === 404) return null
+        throw err
+      }
+    },
+    staleTime: 10_000,
+    retry: (failureCount, error: any) => {
+      if (error?.status === 404) return false
+      return failureCount < 3
+    },
+  })
+}
+
+// --- Assembled state hook (backward compat — still available for components using full state) ---
+
 export function useTestState() {
   return useQuery({
     queryKey: ['tests', 'state'],
@@ -736,7 +817,15 @@ export function useTestRegistry() {
 export function useRunnerStatus() {
   return useQuery({
     queryKey: ['tests', 'runner-status'],
-    queryFn: () => apiGet<{ status: 'idle' | 'running' | 'paused'; startedAt: string | null; lastRunAt: string | null }>('/tests/runner/status'),
+    queryFn: () => apiGet<{
+      status: 'idle' | 'running' | 'paused' | 'waiting'
+      startedAt: string | null
+      lastRunAt: string | null
+      loop: boolean
+      intervalMinutes: number
+      runsCompleted: number
+      nextRunAt: string | null
+    }>('/tests/runner/status'),
     refetchInterval: 5_000,
   })
 }
@@ -744,7 +833,8 @@ export function useRunnerStatus() {
 export function useRunnerStart() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: () => apiPost<{ status: string }>('/tests/runner/start'),
+    mutationFn: (opts?: { loop?: boolean; intervalMinutes?: number }) =>
+      apiPost<{ status: string }>('/tests/runner/start', opts || {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tests', 'runner-status'] })
     },

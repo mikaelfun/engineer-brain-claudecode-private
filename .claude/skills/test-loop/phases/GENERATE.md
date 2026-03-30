@@ -7,12 +7,12 @@
 ### 🔴 Step -1: Start Timer (MANDATORY)
 ```bash
 START_TS=$(date +%s%3N)
-echo '{"roundJourney":{"GENERATE":{"status":"running","startedAt":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}}}' | bash tests/executors/state-writer.sh --merge
+echo '{"stages":{"GENERATE":{"status":"running","startedAt":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}}}' | bash tests/executors/state-writer.sh --target pipeline --merge
 ```
 
 ### Steps
 
-1. Read gap list from `state.json`
+1. Read gap list from `tests/pipeline.json`
 
 2. **Recipe Lookup** (advisory — graceful degradation if files missing):
 
@@ -67,7 +67,7 @@ echo '{"roundJourney":{"GENERATE":{"status":"running","startedAt":"'$(date -u +%
    - If hardcoded-classified: use category-default template
    - Spec-driven gaps: add `source: spec-driven` and `trackId` fields
    - Design-fidelity gaps: add `source: design-fidelity` and `trackId` fields
-   - Add testId to `state.json.testQueue`
+   - Add testId to testQueue (via `state-writer.sh --target queues --merge`)
 
 5. Update `tests/manifest.json` coverage
-6. Set `state.json` phase=TEST
+6. Set currentStage=TEST (via `state-writer.sh --target pipeline --merge`)

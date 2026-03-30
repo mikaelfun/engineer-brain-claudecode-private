@@ -1,54 +1,4 @@
 {
-  "phase": "IDLE",
-  "round": 28,
-  "stats": {
-    "passed": 165,
-    "failed": 44,
-    "fixed": 44,
-    "skipped": 13
-  },
-  "maxRounds": 80,
-  "roundJourney": {
-    "SCAN": {
-      "status": "done",
-      "summary": "13 issue gaps, 2 obs gaps, 6 spec gaps | total=21 gaps → GENERATE",
-      "duration_ms": 292927,
-      "startedAt": "2026-03-30T00:03:41Z",
-      "completedAt": "2026-03-30T00:08:34Z"
-    },
-    "GENERATE": {
-      "status": "done",
-      "summary": "13 tests generated from 13 gaps (7 issue-driven, 2 obs, 4 spec-driven)",
-      "duration_ms": 94664,
-      "startedAt": "2026-03-30T00:09:05Z",
-      "completedAt": "2026-03-30T00:10:40Z"
-    },
-    "TEST": {
-      "status": "done",
-      "summary": "1 passed, 3 failed, 9 env-skipped (backend not running)",
-      "duration_ms": 484750,
-      "startedAt": "2026-03-30T01:47:25Z",
-      "completedAt": "2026-03-30T01:55:30Z"
-    },
-    "FIX": {
-      "status": "running",
-      "summary": "",
-      "duration_ms": 391409,
-      "startedAt": "2026-03-30T02:36:28Z",
-      "completedAt": "2026-03-29T23:54:35Z"
-    },
-    "VERIFY": {
-      "status": "pending",
-      "summary": "",
-      "duration_ms": 111901,
-      "startedAt": "2026-03-29T23:55:40Z",
-      "completedAt": "2026-03-29T23:57:32Z",
-      "verifyProcessed": 0,
-      "regressionProcessed": 0,
-      "verifyPassed": 0,
-      "regressionPassed": 1
-    }
-  },
   "testQueue": [],
   "fixQueue": [
     {
@@ -86,7 +36,6 @@
   ],
   "regressionQueue": [],
   "gaps": [],
-  "currentTest": "",
   "inProgress": [],
   "skipRegistry": [
     {
@@ -168,30 +117,5 @@
       "skippedAt": "2026-03-30T01:54:51.617Z",
       "round": 28
     }
-  ],
-  "phaseHistory": [],
-  "observabilityStatus": {
-    "probesTotal": 6,
-    "probesRun": 0,
-    "probesPass": 0,
-    "probesFail": 0,
-    "staleCount": 0,
-    "lastResults": {}
-  },
-  "roundStats": {
-    "passed": 0
-  },
-  "scanStrategy": {
-    "recipesUsed": [
-      "regression-focused-scan.md"
-    ],
-    "scannersActivated": [
-      "coverage"
-    ],
-    "overrideReason": "regressionRate=55% triggered regression-focused-scan recipe; env_issue items exhausted into skipRegistry"
-  },
-  "runnerActive": "2026-03-30T02:35:41Z",
-  "runnerStep": "test-loop",
-  "phaseProgress": null,
-  "status": "idle"
+  ]
 }

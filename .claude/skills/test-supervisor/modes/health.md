@@ -6,12 +6,12 @@
 
 1. 运行 `bash tests/executors/health-check.sh` → 获取基础 JSON
    - **Auto-heal pre-check**：同 dashboard 模式 Step 2（如果输出含 `"error"` → `state-repair.sh` → 重跑）
-2. 读取 `tests/state.json` 获取完整 fixQueue 和 phaseHistory
+2. 读取 `tests/queues.json` 获取完整 fixQueue，读取 `tests/stats.json` 获取 stageHistory
 3. 分析并输出：
 
 #### 2a. 反复失败测试分析
 ```
-读取 state.json → fixQueue
+读取 queues.json → fixQueue
 按 retryCount 降序排列
 输出:
   🔴 Stuck Tests (retryCount >= 3):
@@ -22,9 +22,9 @@
 
 #### 2b. 阶段停留时间分析
 ```
-读取 state.json → phaseHistory
-计算每个 phase 的累计停留时间:
-  Phase     | Entries | Total Duration
+读取 stats.json → stageHistory
+计算每个 stage 的累计停留时间:
+  Stage     | Entries | Total Duration
   SCAN      | 2       | 30s
   GENERATE  | 1       | 10s
   TEST      | 3       | 15m
@@ -36,10 +36,10 @@
 ```
 从 health-check.sh 的 observabilityStatus.lastResults 中:
 对每个已执行的探针，读取完整结果文件:
-  tests/results/{round}-{probeId}.json
+  tests/results/{cycle}-{probeId}.json
 检查 assertions 中 pass=false 的项:
   🔴 Probe Violations:
-     - {probeId} round {N}: {assertion.name} — expected {expected}, got {actual}
+     - {probeId} cycle {N}: {assertion.name} — expected {expected}, got {actual}
 如果没有违规:
   ✅ All executed probes passing
 ```

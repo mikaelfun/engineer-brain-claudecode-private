@@ -14,7 +14,8 @@ node_path() {
   echo "$1" | sed 's|^/\([a-zA-Z]\)/|\1:/|'
 }
 
-STATE_FILE_NODE=$(node_path "$TESTS_ROOT/state.json")
+STATE_FILE_NODE=$(node_path "$TESTS_ROOT/pipeline.json")
+LEGACY_STATE_NODE=$(node_path "$TESTS_ROOT/state.json")
 RESULTS_DIR_NODE=$(node_path "$RESULTS_DIR")
 DISC_FILE_NODE=$(node_path "$TESTS_ROOT/discoveries.json")
 
@@ -25,22 +26,27 @@ NODE_PATH="$DASHBOARD_DIR/node_modules" node -e "
   const fs = require('fs');
   const path = require('path');
 
-  const stateFile = '${STATE_FILE_NODE}'.replace(/\\\\/g, '/');
+  const pipelineFile = '${STATE_FILE_NODE}'.replace(/\\\\/g, '/');
+  const legacyStateFile = '${LEGACY_STATE_NODE}'.replace(/\\\\/g, '/');
   const resultsDir = '${RESULTS_DIR_NODE}'.replace(/\\\\/g, '/');
   const discFile = '${DISC_FILE_NODE}'.replace(/\\\\/g, '/');
   const numRounds = parseInt('${NUM_ROUNDS}') || 3;
 
-  // Read state.json
-  if (!fs.existsSync(stateFile)) {
-    console.log(JSON.stringify({ error: 'state.json not found' }));
+  // Read from pipeline.json (primary), fall back to state.json (legacy)
+  let currentCycle = 0;
+  if (fs.existsSync(pipelineFile)) {
+    const pipeline = JSON.parse(fs.readFileSync(pipelineFile, 'utf8'));
+    currentCycle = pipeline.cycle || 0;
+  } else if (fs.existsSync(legacyStateFile)) {
+    const state = JSON.parse(fs.readFileSync(legacyStateFile, 'utf8'));
+    currentCycle = state.round || 0;
+  } else {
+    console.log(JSON.stringify({ error: 'pipeline.json not found' }));
     process.exit(0);
   }
 
-  const state = JSON.parse(fs.readFileSync(stateFile, 'utf8'));
-  const currentRound = state.round || 0;
-
-  if (currentRound <= 0) {
-    console.log(JSON.stringify({ error: 'no rounds completed yet', rounds: [], trends: {}, alerts: [] }));
+  if (currentCycle <= 0) {
+    console.log(JSON.stringify({ error: 'no cycles completed yet', rounds: [], trends: {}, alerts: [] }));
     process.exit(0);
   }
 
@@ -56,10 +62,14 @@ NODE_PATH="$DASHBOARD_DIR/node_modules" node -e "
   const durations = [];
 
   let collected = 0;
-  let checkRound = currentRound;
+  let checkRound = currentCycle;
 
   while (collected < numRounds && checkRound >= 0) {
-    const summaryFile = path.join(resultsDir, 'round-' + checkRound + '-summary.json');
+    // Try cycle-* first (new), then round-* (backward compat)
+    let summaryFile = path.join(resultsDir, 'cycle-' + checkRound + '-summary.json');
+    if (!fs.existsSync(summaryFile)) {
+      summaryFile = path.join(resultsDir, 'round-' + checkRound + '-summary.json');
+    }
     if (fs.existsSync(summaryFile)) {
       try {
         const summary = JSON.parse(fs.readFileSync(summaryFile, 'utf8'));

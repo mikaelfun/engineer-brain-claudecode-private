@@ -1,21 +1,32 @@
 #!/usr/bin/env bash
-# tests/executors/state-writer.sh — Atomic write utility for state.json
+# tests/executors/state-writer.sh — Atomic write utility for split state files
 #
 # Usage:
-#   echo '{"phase":"TEST",...}' | bash tests/executors/state-writer.sh
-#   bash tests/executors/state-writer.sh < /path/to/new-state.json
-#   bash tests/executors/state-writer.sh --file /path/to/new-state.json
-#   bash tests/executors/state-writer.sh --merge < partial.json
-#   echo '{"phase":"FIX","round":5}' | bash tests/executors/state-writer.sh --merge
+#   echo '{"currentStage":"TEST"}' | bash tests/executors/state-writer.sh --merge --target pipeline
+#   echo '{"cumulative":{"passed":10}}' | bash tests/executors/state-writer.sh --merge --target stats
+#   echo '{"phase":"FIX","round":5}' | bash tests/executors/state-writer.sh --merge   # auto-routes + translates old names
+#   bash tests/executors/state-writer.sh --file /path/to/data.json --target queues
 #
-# Modes:
-#   (default)  Full replace — input must be a complete state object.
-#              Auto-downgrades to merge if truncation detected (>50% field loss).
-#   --merge    Shallow merge — reads current state.json, overlays input fields,
-#              writes the merged result. Safe for partial updates.
+# Targets (split files):
+#   pipeline   — cycle, maxCycles, currentStage, currentTest, stageProgress, stages
+#   queues     — testQueue, fixQueue, verifyQueue, regressionQueue, gaps, inProgress, skipRegistry
+#   stats      — cumulative, cycleStats, scanStrategy, observabilityStatus
+#   supervisor — status, tick, active, step, reasoning, selfHealEvent, schedulerInterval, lastTickAt
 #
-# Reads JSON from stdin (or --file), validates it, writes atomically via
-# temp file + rename. This prevents corrupted state.json from partial writes.
+# Arguments:
+#   --target pipeline|queues|stats|supervisor  Write to specific file only
+#   --merge                                    Shallow merge (deep merge for stages, cumulative)
+#   --file <path>                              Read from file instead of stdin
+#
+# When --target is specified: read/write ONLY that file.
+# When NO --target: auto-route fields to correct files based on field names.
+# Old field names (round, phase, maxRounds, roundJourney, roundStats, runnerActive,
+# runnerStep, phaseHistory, stats, phaseProgress) are auto-translated to new names.
+#
+# Side effects:
+#   - Writes to the target split file(s) atomically
+#   - Also updates state.json combined view (backward compat during transition)
+#   - stageHistory entries are archived to tests/history/cycle-NNN/
 #
 # Exit codes: 0 = success, 1 = validation failed, 2 = write failed
 # Output: STATE_WRITE|<status>|<detail>
@@ -25,13 +36,12 @@ set -u
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
 
-STATE_FILE="$TESTS_ROOT/state.json"
-
 # ============================================================
 # Arguments
 # ============================================================
 INPUT_FILE=""
 MERGE_MODE="false"
+TARGET=""
 while [ $# -gt 0 ]; do
   case "${1}" in
     --file)
@@ -42,17 +52,30 @@ while [ $# -gt 0 ]; do
       MERGE_MODE="true"
       shift
       ;;
+    --target)
+      TARGET="${2:-}"
+      shift 2 || { echo "STATE_WRITE|failed|--target requires a value"; exit 1; }
+      ;;
     *)
       shift
       ;;
   esac
 done
 
+# Validate target
+case "$TARGET" in
+  pipeline|queues|stats|supervisor|"") ;;
+  *)
+    echo "STATE_WRITE|failed|invalid target: $TARGET (expected: pipeline|queues|stats|supervisor)"
+    exit 1
+    ;;
+esac
+
 # ============================================================
 # Read input into temp file (avoids stdin/pipe issues with node)
 # ============================================================
 TMP_INPUT=$(mktemp)
-trap "rm -f '$TMP_INPUT'" EXIT
+trap "rm -f '$TMP_INPUT' '$TMP_INPUT.stderr'" EXIT
 
 if [ -n "$INPUT_FILE" ]; then
   if [ ! -f "$INPUT_FILE" ]; then
@@ -71,134 +94,220 @@ if [ ! -s "$TMP_INPUT" ]; then
 fi
 
 # ============================================================
-# Validate + atomic write via node (paths via env vars)
+# Validate, route, merge/replace, atomic write via Node.js
+# All paths passed via env vars (POSIX-safe for Git Bash).
+# JS code uses double quotes; bash wrapper uses single quotes
+# to prevent shell variable expansion inside the JS.
 # ============================================================
-WRITE_RESULT=$(STATE_PATH="$STATE_FILE" INPUT_PATH="$TMP_INPUT" MERGE="$MERGE_MODE" \
-  NODE_PATH="$DASHBOARD_DIR/node_modules" node -e "
-const fs = require('fs');
+WRITE_RESULT=$(TESTS_ROOT="$TESTS_ROOT" INPUT_PATH="$TMP_INPUT" MERGE="$MERGE_MODE" TARGET="$TARGET" \
+  NODE_PATH="$DASHBOARD_DIR/node_modules" node -e '
+var fs = require("fs");
+var testsRoot = process.env.TESTS_ROOT;
+var inputPath = process.env.INPUT_PATH;
+var mergeMode = process.env.MERGE === "true";
+var target = process.env.TARGET || "";
 
-const input = fs.readFileSync(process.env.INPUT_PATH, 'utf8');
-const stateFile = process.env.STATE_PATH;
-const mergeMode = process.env.MERGE === 'true';
+// ---- File paths ----
+var FILES = {
+  pipeline:   testsRoot + "/pipeline.json",
+  queues:     testsRoot + "/queues.json",
+  stats:      testsRoot + "/stats.json",
+  supervisor: testsRoot + "/supervisor.json"
+};
+var stateFile  = testsRoot + "/state.json";
+var historyDir = testsRoot + "/history";
 
-// Step 1: Validate input JSON
-let parsed;
-try {
-  parsed = JSON.parse(input);
-} catch(e) {
-  console.log('INVALID|' + e.message);
+// ---- Field routing: new field name -> target file ----
+var ROUTING = {
+  cycle:"pipeline", maxCycles:"pipeline", currentStage:"pipeline",
+  currentTest:"pipeline", stageProgress:"pipeline", stages:"pipeline",
+  testQueue:"queues", fixQueue:"queues", verifyQueue:"queues",
+  regressionQueue:"queues", gaps:"queues", inProgress:"queues", skipRegistry:"queues",
+  cumulative:"stats", cycleStats:"stats", scanStrategy:"stats", observabilityStatus:"stats",
+  status:"supervisor", tick:"supervisor", active:"supervisor", step:"supervisor",
+  reasoning:"supervisor", selfHealEvent:"supervisor", schedulerInterval:"supervisor", lastTickAt:"supervisor"
+};
+
+// ---- Old -> new field name translation ----
+var RENAME = {
+  round:"cycle", phase:"currentStage", maxRounds:"maxCycles",
+  roundJourney:"stages", roundStats:"cycleStats", runnerActive:"active",
+  runnerStep:"step", phaseHistory:"stageHistory", stats:"cumulative",
+  phaseProgress:"stageProgress"
+};
+
+// ---- Step 1: Parse input ----
+var parsed;
+try { parsed = JSON.parse(fs.readFileSync(inputPath, "utf8")); }
+catch(e) { console.log("INVALID|" + e.message); process.exit(1); }
+if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+  console.log("INVALID|input must be a JSON object");
   process.exit(1);
 }
 
-if (!parsed || typeof parsed !== 'object') {
-  console.log('INVALID|not an object');
-  process.exit(1);
+// ---- Step 2: Translate old field names, extract stageHistory ----
+var translated = {};
+var stageHistory = null;
+Object.keys(parsed).forEach(function(key) {
+  var newKey = RENAME[key] || key;
+  if (newKey === "stageHistory") {
+    stageHistory = parsed[key];
+  } else {
+    translated[newKey] = parsed[key];
+  }
+});
+
+// ---- Helpers ----
+function readJson(fp) {
+  try { return JSON.parse(fs.readFileSync(fp, "utf8")); }
+  catch(e) { return null; }
 }
 
-// Step 2: Read current state (needed for merge + truncation guard)
-let current = null;
-try {
-  current = JSON.parse(fs.readFileSync(stateFile, 'utf8'));
-} catch(e) {
-  // No existing state or corrupted — skip guards
-}
-
-// Step 3: Merge or replace
-
-// Helper: apply deep merge logic (stats, roundJourney, phaseHistory append)
 function deepMerge(base, overlay) {
-  const result = { ...base, ...overlay };
-  // Deep merge for known nested objects
-  if (overlay.stats && base.stats) {
-    result.stats = { ...base.stats, ...overlay.stats };
+  var result = Object.assign({}, base, overlay);
+  // Deep merge: stages (per-stage merge, like old roundJourney)
+  if (overlay.stages && base.stages) {
+    result.stages = Object.assign({}, base.stages);
+    Object.keys(overlay.stages).forEach(function(k) {
+      result.stages[k] = Object.assign({}, base.stages[k] || {}, overlay.stages[k]);
+    });
   }
-  if (overlay.roundJourney && base.roundJourney) {
-    result.roundJourney = { ...base.roundJourney };
-    for (const [phase, val] of Object.entries(overlay.roundJourney)) {
-      result.roundJourney[phase] = { ...(base.roundJourney[phase] || {}), ...val };
-    }
-  }
-  // Array append for phaseHistory (not replace)
-  if (overlay.phaseHistory && Array.isArray(overlay.phaseHistory)) {
-    if (overlay.phaseHistory.length === 0) {
-      // Empty array = explicit reset (round transition)
-      result.phaseHistory = [];
-    } else {
-      const existing = Array.isArray(base.phaseHistory) ? base.phaseHistory : [];
-      result.phaseHistory = existing.concat(overlay.phaseHistory);
-    }
+  // Deep merge: cumulative (like old stats)
+  if (overlay.cumulative && base.cumulative) {
+    result.cumulative = Object.assign({}, base.cumulative, overlay.cumulative);
   }
   return result;
 }
 
-let final;
-let autoMerged = false;
-if (mergeMode) {
-  // Shallow merge: current fields preserved, input fields overlaid
-  if (!current) {
-    // No existing state — require full object
-    const requiredFields = ['phase', 'round', 'stats'];
-    const missing = requiredFields.filter(f => !(f in parsed));
-    if (missing.length > 0) {
-      console.log('INVALID|merge with no existing state — missing required fields: ' + missing.join(', '));
-      process.exit(1);
-    }
-    final = parsed;
-  } else {
-    final = deepMerge(current, parsed);
+function atomicWrite(fp, data) {
+  var txt = JSON.stringify(data, null, 2) + "\n";
+  var tmp = fp + ".write-tmp-" + process.pid;
+  try {
+    fs.writeFileSync(tmp, txt, "utf8");
+    fs.renameSync(tmp, fp);
+    return txt.length;
+  } catch(e) {
+    try { fs.unlinkSync(tmp); } catch(e2) {}
+    throw e;
   }
+}
+
+// ---- Step 3: Route fields to target files ----
+var updates = {};  // { pipeline: {...}, queues: {...}, ... }
+if (target) {
+  // --target specified: all fields go to that target
+  updates[target] = translated;
 } else {
-  // Full replace mode
-  const requiredFields = ['phase', 'round', 'stats'];
-  const missing = requiredFields.filter(f => !(f in parsed));
-  if (missing.length > 0) {
-    console.log('INVALID|missing required fields: ' + missing.join(', '));
-    process.exit(1);
-  }
-
-  // Truncation guard: auto-downgrade to merge if new object drops >50% of fields
-  if (current) {
-    const currentKeys = Object.keys(current).length;
-    const newKeys = Object.keys(parsed).length;
-    if (currentKeys > 5 && newKeys < currentKeys * 0.5) {
-      // Auto-downgrade: merge instead of replace to prevent data loss
-      autoMerged = true;
-      const warning = 'TRUNCATION_GUARD: field count ' + currentKeys + ' → ' + newKeys + ' (>50% loss). Auto-downgraded to merge.';
-      process.stderr.write('[WARN] ' + warning + '\n');
-      final = deepMerge(current, parsed);
+  // Auto-route by field name
+  Object.keys(translated).forEach(function(key) {
+    var t = ROUTING[key];
+    if (t) {
+      if (!updates[t]) updates[t] = {};
+      updates[t][key] = translated[key];
     } else {
-      final = parsed;
+      process.stderr.write("[WARN] state-writer: unknown field \"" + key + "\" skipped\n");
     }
+  });
+}
+
+// ---- Step 4: Apply updates per target (merge/replace + truncation guard) ----
+var totalBytes = 0;
+var affected = [];
+var autoMerged = false;
+var finalStates = {};  // cache final state per target for state.json build
+
+Object.keys(updates).forEach(function(t) {
+  var fields = updates[t];
+  var fp = FILES[t];
+  if (!fp) { console.log("INVALID|unknown target: " + t); process.exit(1); }
+
+  var current = readJson(fp);
+  var final;
+
+  if (mergeMode) {
+    // Merge mode: overlay fields onto current
+    final = current ? deepMerge(current, fields) : fields;
   } else {
-    final = parsed;
+    // Replace mode with truncation guard
+    if (current) {
+      var ck = Object.keys(current).length;
+      var nk = Object.keys(fields).length;
+      if (ck > 3 && nk < ck * 0.5) {
+        autoMerged = true;
+        var warn = "TRUNCATION_GUARD on " + t + ": " + ck + " -> " + nk + " fields. Auto-merge.";
+        process.stderr.write("[WARN] " + warn + "\n");
+        final = deepMerge(current, fields);
+      } else {
+        final = fields;
+      }
+    } else {
+      final = fields;
+    }
   }
+
+  try { totalBytes += atomicWrite(fp, final); }
+  catch(e) { console.log("WRITE_ERROR|" + t + ": " + e.message); process.exit(2); }
+  finalStates[t] = final;
+  affected.push(t);
+});
+
+// ---- Step 5: Handle stageHistory archiving ----
+// empty [] = reset (no action), non-empty = append to history/cycle-NNN/
+if (stageHistory && Array.isArray(stageHistory) && stageHistory.length > 0) {
+  var pl = finalStates.pipeline || readJson(FILES.pipeline) || {};
+  var cycle = pl.cycle || 0;
+  var cDir = historyDir + "/cycle-" + String(cycle).padStart(3, "0");
+  try { fs.mkdirSync(cDir, { recursive: true }); } catch(e) {}
+  var archiveFile = cDir + "/stage-transitions.jsonl";
+  var lines = stageHistory.map(function(entry) { return JSON.stringify(entry); }).join("\n") + "\n";
+  fs.appendFileSync(archiveFile, lines, "utf8");
+  affected.push("history");
 }
 
-// Step 4: Validate final object has required fields
-const finalRequired = ['phase', 'round', 'stats'];
-const finalMissing = finalRequired.filter(f => !(f in final));
-if (finalMissing.length > 0) {
-  console.log('INVALID|final object missing required fields: ' + finalMissing.join(', '));
-  process.exit(1);
-}
+// ---- Step 6: Build combined state.json (backward compat with old field names) ----
+["pipeline", "queues", "stats", "supervisor"].forEach(function(t) {
+  if (!finalStates[t]) finalStates[t] = readJson(FILES[t]) || {};
+});
+var p  = finalStates.pipeline;
+var q  = finalStates.queues;
+var s  = finalStates.stats;
+var sv = finalStates.supervisor;
 
-// Step 5: Pretty-print with consistent formatting
-const formatted = JSON.stringify(final, null, 2) + '\n';
+var combined = {
+  phase:               p.currentStage    || "IDLE",
+  round:               p.cycle           || 0,
+  stats:               s.cumulative      || {},
+  maxRounds:           p.maxCycles       || 80,
+  roundJourney:        p.stages          || {},
+  testQueue:           q.testQueue       || [],
+  fixQueue:            q.fixQueue        || [],
+  verifyQueue:         q.verifyQueue     || [],
+  regressionQueue:     q.regressionQueue || [],
+  gaps:                q.gaps            || [],
+  currentTest:         p.currentTest     || "",
+  inProgress:          q.inProgress      || [],
+  skipRegistry:        q.skipRegistry    || [],
+  phaseHistory:        [],
+  observabilityStatus: s.observabilityStatus || {},
+  roundStats:          s.cycleStats      || {},
+  scanStrategy:        s.scanStrategy    || {},
+  runnerActive:        sv.active         || null,
+  runnerStep:          sv.step           || null,
+  phaseProgress:       p.stageProgress   || null,
+  status:              sv.status         || "idle"
+};
 
-// Step 6: Atomic write — write to temp file in same directory, then rename
-const tmpFile = stateFile + '.write-tmp-' + process.pid;
-try {
-  fs.writeFileSync(tmpFile, formatted, 'utf8');
-  fs.renameSync(tmpFile, stateFile);
-  const mode = mergeMode ? 'merge' : (autoMerged ? 'auto-merge' : 'replace');
-  console.log('OK|' + formatted.length + ' bytes (' + mode + ', ' + Object.keys(final).length + ' fields)');
-} catch(e) {
-  try { fs.unlinkSync(tmpFile); } catch(e2) {}
-  console.log('WRITE_ERROR|' + e.message);
-  process.exit(2);
-}
-" 2>"$TMP_INPUT.stderr")
+try { atomicWrite(stateFile, combined); }
+catch(e) { process.stderr.write("[WARN] Failed to update state.json: " + e.message + "\n"); }
 
+// ---- Output result ----
+var mode = mergeMode ? "merge" : (autoMerged ? "auto-merge" : "replace");
+console.log("OK|" + totalBytes + " bytes (" + mode + ", targets: " + affected.join(",") + ")");
+' 2>"$TMP_INPUT.stderr")
+
+# ============================================================
+# Handle result
+# ============================================================
 WRITE_STATUS=$(echo "$WRITE_RESULT" | cut -d'|' -f1)
 WRITE_DETAIL=$(echo "$WRITE_RESULT" | cut -d'|' -f2-)
 STDERR_OUTPUT=""
@@ -236,6 +345,7 @@ case "$WRITE_STATUS" in
     ;;
   *)
     log_fail "state-writer: unexpected result: $WRITE_RESULT"
+    [ -n "$STDERR_OUTPUT" ] && log_fail "stderr: $STDERR_OUTPUT"
     echo "STATE_WRITE|failed|unexpected"
     exit 1
     ;;

@@ -59,7 +59,74 @@ function classifyChange(filePath: string): { type: SSEEventType; data: Record<st
     return { type: 'cron-updated', data: {} }
   }
 
-  // Test supervisor files
+  // Test supervisor files — split state model (pipeline.json, queues.json, stats.json, supervisor.json)
+  if (normalized.includes('/tests/pipeline.json')) {
+    try {
+      const raw = readFileSync(filePath, 'utf8')
+      const pipeline = JSON.parse(raw)
+      return {
+        type: 'test-pipeline-updated',
+        data: {
+          currentStage: pipeline.currentStage,
+          cycle: pipeline.cycle,
+          currentTest: pipeline.currentTest || null,
+        },
+      }
+    } catch {
+      return { type: 'test-pipeline-updated', data: {} }
+    }
+  }
+  if (normalized.includes('/tests/supervisor.json')) {
+    try {
+      const raw = readFileSync(filePath, 'utf8')
+      const sup = JSON.parse(raw)
+      return {
+        type: 'test-supervisor-updated',
+        data: {
+          status: sup.status,
+          tick: sup.tick,
+          step: sup.step,
+          hasSelfHeal: !!sup.selfHealEvent,
+          reasoning: sup.reasoning,
+        },
+      }
+    } catch {
+      return { type: 'test-supervisor-updated', data: {} }
+    }
+  }
+  if (normalized.includes('/tests/queues.json')) {
+    try {
+      const raw = readFileSync(filePath, 'utf8')
+      const q = JSON.parse(raw)
+      return {
+        type: 'test-queues-updated',
+        data: {
+          test: (q.testQueue || []).length,
+          fix: (q.fixQueue || []).length,
+          verify: (q.verifyQueue || []).length,
+          regression: (q.regressionQueue || []).length,
+        },
+      }
+    } catch {
+      return { type: 'test-queues-updated', data: {} }
+    }
+  }
+  if (normalized.includes('/tests/stats.json')) {
+    try {
+      const raw = readFileSync(filePath, 'utf8')
+      const stats = JSON.parse(raw)
+      return {
+        type: 'test-stats-updated',
+        data: {
+          cumulative: stats.cumulative,
+          cycleStats: stats.cycleStats,
+        },
+      }
+    } catch {
+      return { type: 'test-stats-updated', data: {} }
+    }
+  }
+  // Legacy state.json (still watched for backward compat during migration)
   if (normalized.includes('/tests/state.json')) {
     // Read state.json to extract key context for SSE event
     try {
@@ -112,6 +179,10 @@ export function startFileWatcher() {
     config.patrolStateFile,
     config.cronJobsFile,
     join(config.projectRoot, 'tests', 'state.json'),
+    join(config.projectRoot, 'tests', 'pipeline.json'),
+    join(config.projectRoot, 'tests', 'supervisor.json'),
+    join(config.projectRoot, 'tests', 'queues.json'),
+    join(config.projectRoot, 'tests', 'stats.json'),
     join(config.projectRoot, 'tests', 'discoveries.json'),
     join(config.projectRoot, 'tests', 'evolution.json'),
     join(config.projectRoot, 'tests', 'directives.json'),

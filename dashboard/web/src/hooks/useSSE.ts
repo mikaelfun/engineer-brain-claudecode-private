@@ -655,6 +655,29 @@ export function useSSE() {
     })
 
     // Test Lab SSE events → invalidate TanStack Query caches
+    // Split file events (pipeline model)
+    es.addEventListener('test-pipeline-updated', () => {
+      queryClient.invalidateQueries({ queryKey: ['tests', 'pipeline'] })
+      queryClient.invalidateQueries({ queryKey: ['tests', 'state'] })
+      queryClient.invalidateQueries({ queryKey: ['tests', 'runner-status'] })
+    })
+
+    es.addEventListener('test-supervisor-updated', () => {
+      queryClient.invalidateQueries({ queryKey: ['tests', 'supervisor'] })
+      queryClient.invalidateQueries({ queryKey: ['tests', 'state'] })
+    })
+
+    es.addEventListener('test-queues-updated', () => {
+      queryClient.invalidateQueries({ queryKey: ['tests', 'queues'] })
+      queryClient.invalidateQueries({ queryKey: ['tests', 'state'] })
+    })
+
+    es.addEventListener('test-stats-updated', () => {
+      queryClient.invalidateQueries({ queryKey: ['tests', 'stats'] })
+      queryClient.invalidateQueries({ queryKey: ['tests', 'state'] })
+    })
+
+    // Legacy state.json event (backward compat during migration)
     es.addEventListener('test-state-updated', () => {
       queryClient.invalidateQueries({ queryKey: ['tests', 'state'] })
       queryClient.invalidateQueries({ queryKey: ['tests', 'discoveries'] })

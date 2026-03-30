@@ -1,0 +1,16 @@
+{
+  "status": "idle",
+  "tick": 0,
+  "step": "test-loop",
+  "reasoning": {
+    "observe": null,
+    "diagnose": null,
+    "decide": null,
+    "act": null,
+    "reflect": null
+  },
+  "selfHealEvent": null,
+  "schedulerInterval": null,
+  "lastTickAt": null,
+  "active": "2026-03-30T02:35:41Z"
+}

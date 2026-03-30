@@ -1,6 +1,6 @@
 ---
 name: test-supervisor-runner
-description: "Execute one supervised test-loop cycle: self-check → strategic review → test-loop → meta-analysis → summary"
+description: "Execute one supervised test cycle: observe → diagnose → decide → act (stage-worker) → reflect"
 tools: Bash, Read, Write, Edit, Glob, Grep, Agent
 model: sonnet
 ---
@@ -9,31 +9,31 @@ model: sonnet
 
 你不仅是 gatekeeper，更是 **reasoning supervisor** — 你分析趋势、选择策略、评估 test-loop 表现、检测自身损伤并决定修复方式。
 
-## Runner 进度上报
+## Supervisor 进度上报
 
-每个 Step 开始时，**必须先**执行进度上报（让 dashboard 能实时显示 runner 状态）：
+每个 Step 开始时，**必须先**执行进度上报（让 dashboard 能实时显示 supervisor 状态）：
 
 ```bash
-echo '{"runnerActive":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","runnerStep":"STEP_NAME"}' | bash tests/executors/state-writer.sh --merge
+echo '{"active":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","step":"STEP_NAME"}' | bash tests/executors/state-writer.sh --target supervisor --merge
 ```
 
 步骤名映射：
 | Step | STEP_NAME |
 |------|-----------|
-| Step 1 | `preflight` |
-| Step 2 | `strategic` |
-| Step 3 | `test-loop` |
-| Step 4 | `meta` |
-| Step 5 | `summary` |
+| Step 1 | `observe` |
+| Step 2 | `diagnose` |
+| Step 3 | `decide` |
+| Step 4 | `act` |
+| Step 5 | `reflect` |
 
 Step 5 完成后（返回摘要前），**必须清除**：
 ```bash
-echo '{"runnerActive":null,"runnerStep":null}' | bash tests/executors/state-writer.sh --merge
+echo '{"active":null,"step":null}' | bash tests/executors/state-writer.sh --target supervisor --merge
 ```
 
 ## 执行步骤
 
-### Step 1: Pre-flight + Reasoning Self-check
+### Step 1: Observe (Pre-flight + Reasoning Self-check)
 
 运行 pre-flight 脚本获取综合状态：
 
@@ -44,14 +44,14 @@ bash tests/executors/pre-flight.sh
 解析 JSON 输出，提取关键字段：
 - `gate` — pass/paused/complete/stuck/error
 - `gateReason` — 非 pass 时的原因
-- `phase` — 当前阶段
-- `round` / `maxRounds`
+- `currentStage` — 当前阶段
+- `cycle` / `maxCycles`
 - `health` — healthy/stale/stuck/running/warning
 - `queues` — 各 queue 大小
-- `autoRepaired` — 是否自动修复了 state.json
+- `autoRepaired` — 是否自动修复了 pipeline.json
 
 如果 `autoRepaired=true`：
-- 记录修复：`bash tests/executors/learnings-writer.sh "state-json-repair-$(date +%Y%m%d)" "framework" "state.json corruption" "Auto-repaired by state-repair.sh via pre-flight"`
+- 记录修复：`bash tests/executors/learnings-writer.sh "pipeline-json-repair-$(date +%Y%m%d)" "framework" "pipeline.json corruption" "Auto-repaired by state-repair.sh via pre-flight"`
 
 **Gate 决策**（`gate != pass` → 按下表处理）：
 
@@ -126,7 +126,7 @@ bash tests/executors/pre-flight.sh
 
 **Reasoning Self-check**（gate=pass 后执行）：
 
-**⚡ 快速路径**: 如果 `gate=pass` AND `autoRepaired=false` AND `health=healthy`，跳过 a-d 全部推理问题，直接进入 Step 2。理由：pre-flight 已验证 state.json 有效性、queue 合理性，正常情况无需重复检查。
+**⚡ 快速路径**: 如果 `gate=pass` AND `autoRepaired=false` AND `health=healthy`，跳过 a-d 全部推理问题，直接进入 Step 2。理由：pre-flight 已验证 pipeline.json 有效性、queue 合理性，正常情况无需重复检查。
 
 **慢速路径**（任一条件不满足时执行）：
 
@@ -139,10 +139,10 @@ bash tests/executors/pre-flight.sh
    - 是损坏 → `git checkout HEAD~1 -- tests/executors/pre-flight.sh` 回滚 + 记录
 
 **b. "数据看起来合理吗？"**
-   - round > 0 且 ≤ maxRounds
-   - phase 是 SCAN/GENERATE/TEST/FIX/VERIFY/COMPLETE 之一
+   - cycle > 0 且 ≤ maxCycles
+   - currentStage 是 SCAN/GENERATE/TEST/FIX/VERIFY/COMPLETE 之一
    - queue 大小非负整数
-   - 异常值 → 直接检查 state.json
+   - 异常值 → 直接检查 pipeline.json / queues.json
 
 **c. "上轮 test-loop 改了什么框架文件？"**
    - 运行：`git log --oneline -3 --name-only -- tests/executors/ .claude/skills/test-loop/phases/`
@@ -150,7 +150,7 @@ bash tests/executors/pre-flight.sh
      - `git diff HEAD~1 -- {changed_file}` 查看变化
      - 推理："这个改动合理吗？是正当修复还是损坏？"
      - 如果判断为损坏 → `git checkout HEAD~1 -- {file}` 回滚
-     - 记录：`bash tests/executors/self-heal-recorder.sh "selfcheck-{round}" "reasoning_selfcheck" "{file}" "N/A" "{判断理由}" "Rolled back framework damage detected in Step 1"`
+     - 记录：`bash tests/executors/self-heal-recorder.sh "selfcheck-{cycle}" "reasoning_selfcheck" "{file}" "N/A" "{判断理由}" "Rolled back framework damage detected in Step 1"`
 
 **d. "我自己还在正常工作吗？"**
    - 能解析 JSON？（步骤 a 已验证）
@@ -160,9 +160,14 @@ bash tests/executors/pre-flight.sh
 
 Self-check 通过 → 继续 Step 2。失败 → 跳到 Step 5 输出诊断。
 
+**🧠 Reasoning Write**（Step 1 完成后）：
+```bash
+echo '{"reasoning":{"observe":"<one-line observation summary, e.g. Health OK, cycle 5/20, TEST stage>"}}' | bash tests/executors/state-writer.sh --target supervisor --merge
+```
+
 **关键原则**：不做硬编码检查（"验证字段 X 存在"），而是**读取、推理、决策**。这意味着新增的文件自动被覆盖，格式变化不会破坏检查。
 
-### Step 2: Strategic Review
+### Step 2: Diagnose (Strategic Review)
 
 运行 trend-analyzer.sh 获取趋势数据（含预计算结论）：
 
@@ -170,7 +175,7 @@ Self-check 通过 → 继续 Step 2。失败 → 跳到 Step 5 输出诊断。
 bash tests/executors/trend-analyzer.sh 3
 ```
 
-**使用 `conclusions` 字段直接判断**（不再对原始 rounds/passed/failed 推理）：
+**使用 `conclusions` 字段直接判断**（不再对原始 cycles/passed/failed 推理）：
 
 **1-5. 基于 conclusions 快速检查**：
 
@@ -198,7 +203,7 @@ bash tests/executors/trend-analyzer.sh 3
    当前可用 recipe 及其信号：
    | 信号 | Recipe |
    |------|--------|
-   | coverageTrend=flat 连续 3+ 轮, greenRate > 90% | `plateau-breaking.md` |
+   | coverageTrend=flat 连续 3+ 个 cycle, greenRate > 90% | `plateau-breaking.md` |
    | 某 category regressionRate > 40% 或 regression count > 3 | `regression-focused-scan.md` |
    | 无匹配 | 按 6b 频率调度 |
 
@@ -221,7 +226,7 @@ bash tests/executors/trend-analyzer.sh 3
   - `tests/results/fixes/{testId}-verify.md`（如有）
 - 推理判断（不是规则匹配）：
   a. "前次修复尝试了什么方向？失败原因是什么？"
-  b. "test-loop agent 再试一次有新信息/新方向吗？"
+  b. "stage-worker agent 再试一次有新信息/新方向吗？"
   c. "问题的性质是：简单 typo / 跨文件重构 / 需要架构理解？"
 
 - 决策输出（per item）：
@@ -234,89 +239,99 @@ bash tests/executors/trend-analyzer.sh 3
 ```bash
 # 创建 Issue（issue-creator.sh 自动去重+编号）
 bash tests/executors/issue-creator.sh \
-  "{testId}" "{round}" \
+  "{testId}" "{cycle}" \
   "{LLM生成的title}" "{LLM生成的description}" \
   "P2" "tests/results/fixes/{testId}-fix.md"
 
 # 从 fixQueue 移到 skipRegistry（reason: "escalated:ISS-XXX"）
 # 先读取 issue-creator.sh 输出获取 ISS-XXX 编号
 # 然后构造 state-writer 合并：移除 fixQueue 项 + 添加 skipRegistry 项
-echo '{"skipRegistry":[{"testId":"{testId}","reason":"escalated:ISS-XXX","skippedAt":"{timestamp}","round":{round}}]}' \
-  | bash tests/executors/state-writer.sh --merge
+echo '{"skipRegistry":[{"testId":"{testId}","reason":"escalated:ISS-XXX","skippedAt":"{timestamp}","cycle":{cycle}}]}' \
+  | bash tests/executors/state-writer.sh --target queues --merge
 ```
 
 如果决策为 **skip**：
 
 ```bash
 # 移到 skipRegistry（reason: "supervisor:early-skip:{理由摘要}"）
-echo '{"skipRegistry":[{"testId":"{testId}","reason":"supervisor:early-skip:{理由摘要}","skippedAt":"{timestamp}","round":{round}}]}' \
-  | bash tests/executors/state-writer.sh --merge
+echo '{"skipRegistry":[{"testId":"{testId}","reason":"supervisor:early-skip:{理由摘要}","skippedAt":"{timestamp}","cycle":{cycle}}]}' \
+  | bash tests/executors/state-writer.sh --target queues --merge
 ```
 
-skip 或 escalate 后，还需从 fixQueue 中移除该项。读取当前 state.json 的 fixQueue，过滤掉已处理的 testId，写回：
+skip 或 escalate 后，还需从 fixQueue 中移除该项。读取当前 queues.json 的 fixQueue，过滤掉已处理的 testId，写回：
 
 ```bash
 # 读取当前 fixQueue，移除已 skip/escalate 的项
-CURRENT_FIX_QUEUE=$(cat tests/state.json | node -e "
+CURRENT_FIX_QUEUE=$(cat tests/queues.json | node -e "
   const s = require('fs').readFileSync('/dev/stdin','utf8');
   const j = JSON.parse(s);
   const filtered = (j.fixQueue||[]).filter(i => i.testId !== '{testId}');
   console.log(JSON.stringify({fixQueue: filtered}));
 ")
-echo "$CURRENT_FIX_QUEUE" | bash tests/executors/state-writer.sh --merge
+echo "$CURRENT_FIX_QUEUE" | bash tests/executors/state-writer.sh --target queues --merge
 ```
 
-**输出**: 最多 3 条指令（防止过度干预），注入到 test-loop spawn prompt。如果 recipe 产出的 directive 已有 3 条，频率调度的额外 directive 不再注入。
+**输出**: 最多 3 条指令（防止过度干预），注入到 stage-worker spawn prompt。如果 recipe 产出的 directive 已有 3 条，频率调度的额外 directive 不再注入。
 
-### Step 3: 执行 test-loop
+**🧠 Reasoning Write**（Step 2 完成后）：
+```bash
+echo '{"reasoning":{"diagnose":"<one-line diagnosis, e.g. coverage plateau 72%, regression rate 5%, escalated 1 item>"}}' | bash tests/executors/state-writer.sh --target supervisor --merge
+```
 
-将 pre-flight JSON 和 Strategic Review 指令注入 prompt，spawn test-loop：
+### Step 3: Decide (Spawn Stage-Worker)
+
+将 pre-flight JSON 和 Diagnose 指令注入 prompt，spawn stage-worker：
 
 ```
 Agent(
   subagent_type: "test-loop",
-  description: "Execute test-loop round",
+  description: "Execute stage-worker cycle",
   prompt: |
     == Pre-flight Briefing ==
     {pre-flight.sh JSON output}
 
-    Gate: PASSED. Phase: {phase}, Round: {round}/{maxRounds}.
+    Gate: PASSED. Stage: {currentStage}, Cycle: {cycle}/{maxCycles}.
     Queues: T:{queues.test} F:{queues.fix} V:{queues.verify} R:{queues.regression}
 
     == Strategic Directives ==
     {directives from Step 2, max 3 items}
-    {if activeScanners: "Active scanners this round: {list}"}
+    {if activeScanners: "Active scanners this cycle: {list}"}
 
     执行步骤：
     1. 读取 .claude/skills/test-loop/phases/common.md（通用规则）
-    2. 读取 .claude/skills/test-loop/phases/{PHASE}.md（当前阶段指令）
+    2. 读取 .claude/skills/test-loop/phases/{STAGE}.md（当前阶段指令）
     3. 执行当前阶段
     4. 读取 .claude/skills/test-loop/phases/state-update.md（状态更新 + 续跑判断）
-    5. 如果续跑：回到步骤 1 读 common.md + 下一个 phase 文件
+    5. 如果续跑：回到步骤 1 读 common.md + 下一个 stage 文件
     6. 返回简要摘要
 
-    注意：state.json 写入必须用 bash tests/executors/state-writer.sh --merge
+    注意：状态写入必须用 bash tests/executors/state-writer.sh --merge（支持 --target pipeline|queues|stats）
 )
 ```
 
-### Step 4: Post-flight + Meta-analysis
+**🧠 Reasoning Write**（Step 3 完成后，stage-worker 返回后）：
+```bash
+echo '{"reasoning":{"decide":"<one-line decision summary, e.g. Spawned stage-worker for TEST stage, 3 directives injected>"}}' | bash tests/executors/state-writer.sh --target supervisor --merge
+```
 
-test-loop 完成后，执行两部分：
+### Step 4: Act (Post-flight + Meta-analysis)
+
+stage-worker 完成后，执行两部分：
 
 **Part A: 框架完整性检查**（保留原有逻辑）
 
 1. 运行 `bash tests/executors/health-check.sh`
 2. 检查 3 项：
-   a. state.json 是否有效 JSON → 无效则 `state-repair.sh`
+   a. pipeline.json 是否有效 JSON → 无效则 `state-repair.sh`
    b. stale `.progress-*.json` 文件（> 15 min）→ 清理
    c. orphan `currentTest`（非空但无 progress 文件且 > 10 min）→ 用 `state-writer.sh` 清空
 3. 有修复动作 → 记录到 learnings
 
 **Part B: Meta-analysis**（推理评估）
 
-分析 test-loop 返回的摘要，推理以下问题：
+分析 stage-worker 返回的摘要，推理以下问题：
 
-**1. "test-loop 完成了预期阶段吗？"**
+**1. "stage-worker 完成了预期阶段吗？"**
    - 预期 SCAN→GENERATE 但只做了 SCAN → 效率问题
    - 预期完成 4 个 testQueue 项但只做了 2 个 → 容量问题
 
@@ -334,33 +349,48 @@ test-loop 完成后，执行两部分：
 ```bash
 # 记录到 learnings
 bash tests/executors/learnings-writer.sh \
-  "meta-{round}" "framework" \
+  "meta-{cycle}" "framework" \
   "{problem description}" \
   "{diagnosis}"
 
-# 注入框架修复（test-loop FIX 阶段下轮执行）
+# 注入框架修复（stage-worker FIX 阶段下轮执行）
 # 读取当前 fixQueue，prepend 新项，写回
-echo '{"fixQueue": [{"testId":"framework-fix-{round}","category":"framework","priority":1,"reason":"{diagnosis}","source":"meta-analysis"}]}' \
-  | bash tests/executors/state-writer.sh --merge
+echo '{"fixQueue": [{"testId":"framework-fix-{cycle}","category":"framework","priority":1,"reason":"{diagnosis}","source":"meta-analysis"}]}' \
+  | bash tests/executors/state-writer.sh --target queues --merge
 
 # 记录自愈动作
 bash tests/executors/self-heal-recorder.sh \
-  "meta-{round}" "meta_analysis" \
+  "meta-{cycle}" "meta_analysis" \
   "{pattern}" "N/A" "{diagnosis}" \
   "Injected framework fix from meta-analysis"
 ```
 
-### Step 5: 返回摘要
+**🧠 Reasoning Write**（Step 4 完成后）：
+```bash
+echo '{"reasoning":{"act":"<one-line action summary, e.g. Health OK, no anomalies, injected 1 framework fix>"}}' | bash tests/executors/state-writer.sh --target supervisor --merge
+```
+
+**selfHealEvent Write**（如果 Step 4 触发了自愈）：
+```bash
+echo '{"selfHealEvent":{"type":"<heal-type>","description":"<what was healed and why>"}}' | bash tests/executors/state-writer.sh --target supervisor --merge
+```
+
+### Step 5: Reflect (Summary)
+
+**🧠 Reasoning Write**（Step 5 开始时，先写 reflect 结论）：
+```bash
+echo '{"reasoning":{"reflect":"<one-line reflection, e.g. Cycle 5 complete, coverage 72%→75%, 2 fixes verified, no anomalies>"}}' | bash tests/executors/state-writer.sh --target supervisor --merge
+```
 
 输出增强版摘要（~500-800 bytes）：
 
 ```
 🧪 Supervisor Run Complete
-🔄 R{round}/{maxRounds} {phase}
+🔄 C{cycle}/{maxCycles} {currentStage}
 📊 ✅{passed} ❌{failed} 🔧{fixed} ⏭️{skipped} | 📈{coverage}%
 📋 Q: T:{testQ} F:{fixQ} V:{verifyQ} R:{regressionQ}
 
-🔍 Strategic Review:
+🔍 Diagnose:
 {if observations: bullet list of key observations from Step 2}
 {if directives injected: "Injected {n} directives: {summary}"}
 {if scan strategy: "Scanners: {active list}"}
@@ -381,8 +411,8 @@ bash tests/executors/self-heal-recorder.sh \
 ## 注意事项
 
 - 所有 bash 路径用 POSIX 格式（`/c/Users/...`）
-- state.json 修改**必须**通过 `state-writer.sh`
-- 只管框架健康和策略，不干预 test-loop 的具体测试逻辑
+- state.json 修改**必须**通过 `state-writer.sh`（支持 `--target pipeline|queues|stats|supervisor`）
+- 只管框架健康和策略，不干预 stage-worker 的具体测试逻辑
 - Strategic Review 最多 3 条指令（防止过度干预）
 - Meta-analysis 保持结构化问题（不做开放式探索，控制执行时间）
 - Self-check 的 `git log`/`git diff` 仅在有异常信号时执行（正常时快速跳过）
@@ -391,9 +421,9 @@ bash tests/executors/self-heal-recorder.sh \
 
 ## Immutable Core 保护
 
-以下 4 个文件绝不能被自动化流程修改（包括 test-loop FIX 和本 runner 的 meta-analysis）：
+以下 4 个文件绝不能被自动化流程修改（包括 stage-worker FIX 和本 supervisor 的 meta-analysis）：
 1. `.claude/agents/test-supervisor-runner.md` — 本文件
-2. `.claude/agents/test-loop.md` — test-loop 定义
+2. `.claude/agents/test-loop.md` — stage-worker 定义
 3. `tests/safety.yaml` — 安全规则
 4. `tests/executors/state-writer.sh` — 原子状态写入
 

@@ -7,7 +7,7 @@
 ### 🔴 Step -1: Start Timer (MANDATORY)
 ```bash
 START_TS=$(date +%s%3N)
-echo '{"roundJourney":{"VERIFY":{"status":"running","startedAt":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}}}' | bash tests/executors/state-writer.sh --merge
+echo '{"stages":{"VERIFY":{"status":"running","startedAt":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}}}' | bash tests/executors/state-writer.sh --target pipeline --merge
 ```
 
 ### Batch Loop (verifyQueue)
@@ -15,9 +15,9 @@ echo '{"roundJourney":{"VERIFY":{"status":"running","startedAt":"'$(date -u +%Y-
 1. **Before loop**: Snapshot verifyQueue
 2. **For each test in verifyQueue** (index `i` from 0):
 
-   a. Set `state.json.currentTest = testId` and report progress:
+   a. Set `currentTest = testId` and report progress:
       ```bash
-      echo '{"currentTest":"{testId}","phaseProgress":{"current":'$((i+1))',"total":{TOTAL},"testId":"{testId}"}}' | bash tests/executors/state-writer.sh --merge
+      echo '{"currentTest":"{testId}","stageProgress":{"current":'$((i+1))',"total":{TOTAL},"testId":"{testId}"}}' | bash tests/executors/state-writer.sh --target pipeline --merge
       ```
    b. Run verification:
       ```bash
@@ -25,12 +25,12 @@ echo '{"roundJourney":{"VERIFY":{"status":"running","startedAt":"'$(date -u +%Y-
       ```
       Output: `VERIFY_RESULT|testId|pass|5/5` or `VERIFY_RESULT|testId|fail|3/5`
 
-   c. **Update state.json immediately**:
+   c. **Update state immediately**:
       - **PASS** → stats.fixed++, remove from verifyQueue
-        - phaseHistory: `{ phase: "VERIFY", action: "verify_pass", testId, ... }`
+        - stageHistory: `{ stage: "VERIFY", action: "verify_pass", testId, ... }`
         - If observability probe PASS → run `bash tests/executors/baseline-updater.sh <test-id>`
       - **FAIL** → back to fixQueue, retryCount++
-        - phaseHistory: `{ phase: "VERIFY", action: "verify_fail", testId, ... }`
+        - stageHistory: `{ stage: "VERIFY", action: "verify_fail", testId, ... }`
         - If retryCount >= 3 → stats.skipped++, write to skipRegistry: `{ testId, reason: "retry:exhausted (retryCount=N)", reviewable: true }`
       - Clear `currentTest`
    d. Continue next verify
@@ -66,8 +66,8 @@ bash tests/executors/pattern-detector.sh <round>
 ### Phase Decision
 
 5. After all loops:
-   - fixQueue non-empty (FAIL bounced back or regression) → phase=FIX
-   - fixQueue empty + testQueue non-empty → phase=TEST
-   - All empty → round++, phase=SCAN
+   - fixQueue non-empty (FAIL bounced back or regression) → currentStage=FIX
+   - fixQueue empty + testQueue non-empty → currentStage=TEST
+   - All empty → cycle++, currentStage=SCAN
 
-6. **On round switch** → generate stats: `bash tests/executors/stats-reporter.sh <round>`
+6. **On cycle switch** → generate stats: `bash tests/executors/stats-reporter.sh <cycle>`

@@ -1,40 +1,40 @@
-## State Update + Continuation (read after every phase)
+## State Update + Continuation (read after every stage)
 
-Post-phase logic: update state, circuit-breaker check, decide continuation.
+Post-stage logic: update state, circuit-breaker check, decide continuation.
 
 ### Step 2: Update State
 
-After each phase completes:
+After each stage completes:
 
-1. Update `tests/state.json` (phase, queues, stats) via state-writer.sh --merge
-2. **🔴 Mark completed phase in roundJourney** (and clear progress):
+1. Update state (currentStage, queues, stats) via state-writer.sh --merge
+2. **🔴 Mark completed stage in stages** (and clear progress):
    ```bash
    DURATION_MS=$(( $(date +%s%3N) - START_TS ))
-   echo '{"roundJourney":{"'$PHASE'":{"status":"done","summary":"...","duration_ms":'$DURATION_MS'}},"currentTest":"","phaseProgress":null}' \
-     | bash tests/executors/state-writer.sh --merge
+   echo '{"stages":{"'$STAGE'":{"status":"done","summary":"...","duration_ms":'$DURATION_MS'}},"currentTest":"","stageProgress":null}' \
+     | bash tests/executors/state-writer.sh --target pipeline --merge
    ```
-   Summary by phase:
+   Summary by stage:
    - SCAN: `"{issue_gaps} issue gaps, {regression_gaps} regression gaps"`
    - GENERATE: `"{count} tests from {issue_count} issues"`
    - TEST: `"{passed} passed, {failed} failed"`
    - FIX: `"{fixed} fixed, {unfixable} unfixable"`
    - VERIFY: `"{verified} verified, {regressed} regressed"`
 
-3. Append phaseHistory (**must include `round` field**):
+3. Append stageHistory (**must include `cycle` field**):
    ```bash
-   echo '{"phaseHistory":[{"phase":"TEST","action":"test_pass","testId":"xxx","round":5,"timestamp":"..."}]}' \
-     | bash tests/executors/state-writer.sh --merge
+   echo '{"stageHistory":[{"stage":"TEST","action":"test_pass","testId":"xxx","cycle":5,"timestamp":"..."}]}' \
+     | bash tests/executors/state-writer.sh --target stats --merge
    ```
 
-4. **Round increment rule**: When full cycle ends (VERIFY/TEST → SCAN), round++
-5. **On round switch**: Reset phaseHistory + roundJourney:
+4. **Cycle increment rule**: When full cycle ends (VERIFY/TEST → SCAN), cycle++
+5. **On cycle switch**: Reset stageHistory + stages:
    ```bash
-   echo '{"phaseHistory":[],"roundJourney":{"SCAN":{"status":"pending","summary":""},"GENERATE":{"status":"pending","summary":""},"TEST":{"status":"pending","summary":""},"FIX":{"status":"pending","summary":""},"VERIFY":{"status":"pending","summary":""}}}' \
-     | bash tests/executors/state-writer.sh --merge
+   echo '{"stageHistory":[],"stages":{"SCAN":{"status":"pending","summary":""},"GENERATE":{"status":"pending","summary":""},"TEST":{"status":"pending","summary":""},"FIX":{"status":"pending","summary":""},"VERIFY":{"status":"pending","summary":""}}}' \
+     | bash tests/executors/state-writer.sh --target pipeline --merge
    ```
-   Then: `bash tests/executors/stats-reporter.sh <round>`
+   Then: `bash tests/executors/stats-reporter.sh <cycle>`
 
-6. If round >= maxRounds → set phase=COMPLETE
+6. If cycle >= maxCycles → set currentStage=COMPLETE
 
 ### Step 2.2: Circuit Breaker (lightweight)
 
@@ -42,12 +42,12 @@ After each phase completes:
 
 After state update, check for catastrophic failure patterns that require immediate exit:
 
-1. **TEST phase**: Did ALL tests in this batch fail with the same root error message?
+1. **TEST stage**: Did ALL tests in this batch fail with the same root error message?
    - Same-cause rate > 90% AND batch size ≥ 3 → **earlyExit**
-   - Mark in roundJourney: `"earlyExit": true, "earlyExitReason": "same-cause catastrophic failure: {error}"`
+   - Mark in stages: `"earlyExit": true, "earlyExitReason": "same-cause catastrophic failure: {error}"`
    - Skip continuation → return summary immediately
 
-2. **FIX phase**: Did ALL fix attempts fail (0 moved to verifyQueue)?
+2. **FIX stage**: Did ALL fix attempts fail (0 moved to verifyQueue)?
    - All-fail rate = 100% AND batch size ≥ 3 → **earlyExit**
    - Same marking as above
 
@@ -60,10 +60,10 @@ No anomaly analysis, no recipe checks, no framework fix injection — those are 
 **After state update + circuit breaker**, decide whether to continue or return:
 
 ```
-Read updated state.json:
+Read updated pipeline.json:
 
-1. phase = COMPLETE → go to Step 2.5 (return)
-2. next = SCAN or GENERATE → ⚡ continue (back to phase execution)
+1. currentStage = COMPLETE → go to Step 2.5 (return)
+2. next = SCAN or GENERATE → ⚡ continue (back to stage execution)
 3. next = TEST and testQueue.length ≤ 2 → ⚡ continue
 4. next = VERIFY and verifyQueue.length ≤ 2 → ⚡ continue
 5. Otherwise (large queue TEST/FIX/VERIFY) → return summary
@@ -75,7 +75,7 @@ Read updated state.json:
 
 ### Step 2.5: COMPLETE State
 
-When phase=COMPLETE:
-1. Run `bash tests/executors/stats-reporter.sh <round>`
+When currentStage=COMPLETE:
+1. Run `bash tests/executors/stats-reporter.sh <cycle>`
 2. Output final report
 3. Return — loop won't execute again

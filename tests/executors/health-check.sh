@@ -3,11 +3,13 @@
 #
 # Usage: bash tests/executors/health-check.sh
 #
-# Reads: tests/state.json, tests/directives.json, tests/results/round-*-summary.json
+# Reads: tests/pipeline.json, tests/queues.json, tests/stats.json (split state files)
+#         tests/state.json (legacy fallback for phaseHistory)
+#         tests/directives.json, tests/results/round-*-summary.json
 # Outputs: Structured JSON to stdout (for test-supervisor consumption)
 #
 # Health determination:
-#   stale   — last phaseHistory entry > 30 minutes ago
+#   stale   — last stageHistory entry > 30 minutes ago
 #   stuck   — fixQueue has tests with retryCount >= 3
 #   warning — fixQueue non-empty OR coverage < 30%
 #   healthy — otherwise
@@ -19,25 +21,26 @@ source "$SCRIPT_DIR/common.sh"
 
 STATE_FILE="$TESTS_ROOT/state.json"
 DIRECTIVES_FILE="$TESTS_ROOT/directives.json"
+# Split state files (PIPELINE_FILE, QUEUES_FILE, STATS_FILE defined in common.sh)
 
 # ============================================================
 # Check prerequisites
 # ============================================================
-if [ ! -f "$STATE_FILE" ]; then
+if [ ! -f "$PIPELINE_FILE" ] && [ ! -f "$STATE_FILE" ]; then
   cat << 'NOSTATE'
 {
   "timestamp": "",
-  "phase": "UNKNOWN",
-  "round": 0,
-  "maxRounds": 0,
+  "currentStage": "UNKNOWN",
+  "cycle": 0,
+  "maxCycles": 0,
   "health": "warning",
   "queueSizes": { "test": 0, "fix": 0, "verify": 0, "regression": 0 },
-  "stats": { "passed": 0, "failed": 0, "fixed": 0, "skipped": 0 },
+  "cumulative": { "passed": 0, "failed": 0, "fixed": 0, "skipped": 0 },
   "coverage": "0%",
   "lastActivity": null,
   "staleSince": null,
   "stuckTests": [],
-  "warnings": ["state.json not found — test loop has not been initialized"],
+  "warnings": ["state files not found — test loop has not been initialized"],
   "pendingDirectives": 0,
   "observabilityStatus": { "probesTotal": 0, "probesRun": 0, "probesPass": 0, "probesFail": 0, "staleCount": 0, "lastResults": {} }
 }
@@ -52,12 +55,58 @@ STATE_PATH="$STATE_FILE"
 DIRECTIVES_PATH="$DIRECTIVES_FILE"
 RESULTS_PATH="$RESULTS_DIR"
 
-HEALTH_JSON=$(STATE_PATH="$STATE_PATH" DIRECTIVES_PATH="$DIRECTIVES_PATH" RESULTS_PATH="$RESULTS_PATH" NODE_PATH="$DASHBOARD_DIR/node_modules" node -e "
+HEALTH_JSON=$(PIPELINE_PATH="$PIPELINE_FILE" QUEUES_PATH="$QUEUES_FILE" STATS_PATH="$STATS_FILE" STATE_PATH="$STATE_PATH" DIRECTIVES_PATH="$DIRECTIVES_PATH" RESULTS_PATH="$RESULTS_PATH" NODE_PATH="$DASHBOARD_DIR/node_modules" node -e "
 const fs = require('fs');
 const path = require('path');
 
-// Read state.json
-const state = JSON.parse(fs.readFileSync(process.env.STATE_PATH, 'utf8'));
+// Read from split files (primary), fall back to state.json (legacy)
+let currentStage, cycle, maxCycles, cumulativeStats, stageHistory, testQueueData, fixQueueData;
+let verifyQueueData, regressionQueueData, skipRegistryData, stagesData, currentTest;
+let lastRoundAt, startedAt;
+try {
+  const pipeline = JSON.parse(fs.readFileSync(process.env.PIPELINE_PATH, 'utf8'));
+  const queuesData = JSON.parse(fs.readFileSync(process.env.QUEUES_PATH, 'utf8'));
+  const statsData = JSON.parse(fs.readFileSync(process.env.STATS_PATH, 'utf8'));
+  currentStage = pipeline.currentStage || 'UNKNOWN';
+  cycle = pipeline.cycle || 0;
+  maxCycles = pipeline.maxCycles || 50;
+  currentTest = pipeline.currentTest || '';
+  stagesData = pipeline.stages || {};
+  cumulativeStats = statsData.cumulative || {};
+  testQueueData = queuesData.testQueue || [];
+  fixQueueData = queuesData.fixQueue || [];
+  verifyQueueData = queuesData.verifyQueue || [];
+  regressionQueueData = queuesData.regressionQueue || [];
+  skipRegistryData = queuesData.skipRegistry || [];
+  // Legacy fields — read from state.json if available
+  try {
+    const state = JSON.parse(fs.readFileSync(process.env.STATE_PATH, 'utf8'));
+    stageHistory = state.phaseHistory || [];
+    lastRoundAt = state.lastRoundAt || null;
+    startedAt = state.startedAt || null;
+  } catch(e2) {
+    stageHistory = [];
+    lastRoundAt = null;
+    startedAt = null;
+  }
+} catch(e) {
+  // Full fallback to state.json (legacy)
+  const state = JSON.parse(fs.readFileSync(process.env.STATE_PATH, 'utf8'));
+  currentStage = state.phase || 'UNKNOWN';
+  cycle = state.round || 0;
+  maxCycles = state.maxRounds || 50;
+  currentTest = state.currentTest || '';
+  stagesData = state.stages || {};
+  cumulativeStats = state.stats || {};
+  testQueueData = state.testQueue || [];
+  fixQueueData = state.fixQueue || [];
+  verifyQueueData = state.verifyQueue || [];
+  regressionQueueData = state.regressionQueue || [];
+  skipRegistryData = state.skipRegistry || [];
+  stageHistory = state.phaseHistory || [];
+  lastRoundAt = state.lastRoundAt || null;
+  startedAt = state.startedAt || null;
+}
 
 // Read directives.json (optional)
 let directives = { version: 1, paused: false, directives: [] };
@@ -70,14 +119,10 @@ const now = new Date();
 const timestamp = now.toISOString();
 
 // ---- Basic info ----
-const phase = state.phase || 'UNKNOWN';
-const round = state.round || 0;
-const maxRounds = state.maxRounds || 50;
-const stats = state.stats || {};
-const passed = stats.passed || 0;
-const failed = stats.failed || 0;
-const fixed = stats.fixed || 0;
-const skipped = stats.skipped || 0;
+const passed = cumulativeStats.passed || 0;
+const failed = cumulativeStats.failed || 0;
+const fixed = cumulativeStats.fixed || 0;
+const skipped = cumulativeStats.skipped || 0;
 // Coverage = distinct testIds that ever passed / total test definitions in registry.
 // Count registry YAML files as the true denominator (stats.totalTests may be stale).
 const registryDir = path.join(path.dirname(resultsDir), 'registry');
@@ -91,7 +136,7 @@ try {
     registryCount += files.length;
   }
 } catch(e) {}
-const totalTests = registryCount || stats.totalTests || 0;
+const totalTests = registryCount || cumulativeStats.totalTests || 0;
 
 // Scan all result files for unique passing testIds (not cumulative run counts).
 const passingTestIds = new Set();
@@ -113,25 +158,40 @@ const coveragePct = totalTests > 0
 const coverage = coveragePct + '%';
 
 // ---- Queue sizes ----
-const testQueue = (state.testQueue || []).length;
-const fixQueue = (state.fixQueue || []).length;
-const verifyQueue = (state.verifyQueue || []).length;
-const regressionQueue = (state.regressionQueue || []).length;
+const testQueue = testQueueData.length;
+const fixQueue = fixQueueData.length;
+const verifyQueue = verifyQueueData.length;
+const regressionQueue = regressionQueueData.length;
 
 // ---- Last activity ----
-// Walk phaseHistory backwards to find the most recent timestamp or completedAt.
-// Also use state.json file mtime as a signal of recent writes (covers active SCAN/GENERATE).
-const phaseHistory = state.phaseHistory || [];
+// Walk stageHistory backwards to find the most recent timestamp or completedAt.
+// Also use state file mtime as a signal of recent writes (covers active SCAN/GENERATE).
 let lastActivity = null;
-for (let i = phaseHistory.length - 1; i >= 0; i--) {
-  const entry = phaseHistory[i];
+for (let i = stageHistory.length - 1; i >= 0; i--) {
+  const entry = stageHistory[i];
   const ts = entry.timestamp || entry.completedAt || null;
   if (ts) { lastActivity = ts; break; }
 }
-if (!lastActivity) lastActivity = state.lastRoundAt || state.startedAt || null;
+if (!lastActivity) lastActivity = lastRoundAt || startedAt || null;
 
-// Also check state.json file mtime — if the file was written recently,
-// the loop is active even if phaseHistory hasn't been updated yet.
+// Also check pipeline.json stages for latest completedAt/startedAt
+if (stagesData) {
+  for (const stg of Object.values(stagesData)) {
+    const ts = stg.completedAt || stg.startedAt || null;
+    if (ts && (!lastActivity || new Date(ts) > new Date(lastActivity))) {
+      lastActivity = ts;
+    }
+  }
+}
+
+// Also check state file mtime — if the file was written recently,
+// the loop is active even if stageHistory hasn't been updated yet.
+try {
+  const pipelineMtime = fs.statSync(process.env.PIPELINE_PATH).mtime;
+  if (!lastActivity || pipelineMtime > new Date(lastActivity)) {
+    lastActivity = pipelineMtime.toISOString();
+  }
+} catch(e) {}
 try {
   const stateMtime = fs.statSync(process.env.STATE_PATH).mtime;
   if (!lastActivity || stateMtime > new Date(lastActivity)) {
@@ -140,13 +200,13 @@ try {
 } catch(e) {}
 
 // ---- Stuck tests (retryCount >= 3) ----
-const stuckTests = (state.fixQueue || [])
+const stuckTests = fixQueueData
   .filter(t => (t.retryCount || 0) >= 3)
   .map(t => ({ testId: t.testId, retryCount: t.retryCount, reason: t.reason }));
 
 // ---- Skip registry ----
-// Read from state.skipRegistry (maintained by test-loop) or reconstruct from result files.
-let skipRegistry = state.skipRegistry || [];
+// Read from queues.skipRegistry (maintained by test-loop) or reconstruct from result files.
+let skipRegistry = [...skipRegistryData];
 // Also scan result files for skip status entries not yet in registry
 try {
   const skipFiles = fs.readdirSync(resultsDir)
@@ -298,20 +358,19 @@ try {
   }
 } catch(e) {}
 
-// Fallback: if no .progress files but state.json.currentTest is set,
+// Fallback: if no .progress files but pipeline.currentTest is set,
 // the main session is doing inline work (FIX analysis, agent spawn, etc.)
-const currentTest = state.currentTest || '';
 if (inProgress.length === 0 && currentTest) {
-  // Estimate elapsed from last phaseHistory entry timestamp
+  // Estimate elapsed from last stageHistory entry timestamp
   let ctElapsed = 0;
   if (lastActivity) {
     ctElapsed = Math.round((now.getTime() - new Date(lastActivity).getTime()) / 1000);
   }
   inProgress.push({
     testId: currentTest,
-    type: phase.toLowerCase(),
-    step: phase.toLowerCase() + ':active',
-    detail: 'Detected via state.json.currentTest (no .progress file)',
+    type: currentStage.toLowerCase(),
+    step: currentStage.toLowerCase() + ':active',
+    detail: 'Detected via pipeline.json.currentTest (no .progress file)',
     elapsed_s: ctElapsed
   });
 }
@@ -340,18 +399,18 @@ if (staleSince) {
   health = 'warning';
 }
 
-// ---- Per-round stats (scan result files for current round) ----
-const roundStats = { passed: 0, failed: 0, fixed: 0, skipped: 0 };
+// ---- Per-cycle stats (scan result files for current cycle) ----
+const cycleStats = { passed: 0, failed: 0, fixed: 0, skipped: 0 };
 try {
-  const roundPrefix = round + '-';
+  const roundPrefix = cycle + '-';
   const resultFiles = fs.readdirSync(resultsDir)
     .filter(f => f.startsWith(roundPrefix) && f.endsWith('.json') && !f.includes('summary'));
   for (const rf of resultFiles) {
     try {
       const res = JSON.parse(fs.readFileSync(path.join(resultsDir, rf), 'utf8'));
-      if (res.status === 'pass') roundStats.passed++;
-      else if (res.status === 'fail') roundStats.failed++;
-      else if (res.status === 'skip') roundStats.skipped++;
+      if (res.status === 'pass') cycleStats.passed++;
+      else if (res.status === 'fail') cycleStats.failed++;
+      else if (res.status === 'skip') cycleStats.skipped++;
     } catch(e) {}
   }
   // Fixed = tests that failed in earlier rounds but passed this round
@@ -362,25 +421,25 @@ try {
       if (res.status === 'pass' && res.testId) {
         // Check if this test had a fix record
         const fixPath = path.join(resultsDir, 'fixes', res.testId + '-fix.md');
-        if (fs.existsSync(fixPath)) roundStats.fixed++;
+        if (fs.existsSync(fixPath)) cycleStats.fixed++;
       }
     } catch(e) {}
   }
 } catch(e) {}
 
-// ---- Previous round stats ----
-const prevRoundStats = { passed: 0, failed: 0, fixed: 0, skipped: 0 };
-if (round > 1) {
+// ---- Previous cycle stats ----
+const prevCycleStats = { passed: 0, failed: 0, fixed: 0, skipped: 0 };
+if (cycle > 1) {
   try {
-    const prevPrefix = (round - 1) + '-';
+    const prevPrefix = (cycle - 1) + '-';
     const prevFiles = fs.readdirSync(resultsDir)
       .filter(f => f.startsWith(prevPrefix) && f.endsWith('.json') && !f.includes('summary'));
     for (const rf of prevFiles) {
       try {
         const res = JSON.parse(fs.readFileSync(path.join(resultsDir, rf), 'utf8'));
-        if (res.status === 'pass') prevRoundStats.passed++;
-        else if (res.status === 'fail') prevRoundStats.failed++;
-        else if (res.status === 'skip') prevRoundStats.skipped++;
+        if (res.status === 'pass') prevCycleStats.passed++;
+        else if (res.status === 'fail') prevCycleStats.failed++;
+        else if (res.status === 'skip') prevCycleStats.skipped++;
       } catch(e) {}
     }
     for (const rf of prevFiles) {
@@ -388,50 +447,49 @@ if (round > 1) {
         const res = JSON.parse(fs.readFileSync(path.join(resultsDir, rf), 'utf8'));
         if (res.status === 'pass' && res.testId) {
           const fixPath = path.join(resultsDir, 'fixes', res.testId + '-fix.md');
-          if (fs.existsSync(fixPath)) prevRoundStats.fixed++;
+          if (fs.existsSync(fixPath)) prevCycleStats.fixed++;
         }
       } catch(e) {}
     }
   } catch(e) {}
 }
 
-// ---- Round Journey (aggregate from phaseHistory for current round) ----
+// ---- Stages (aggregate from stageHistory for current cycle) ----
 const PHASES_ORDER = ['SCAN', 'GENERATE', 'TEST', 'FIX', 'VERIFY'];
-const roundJourney = {};
-for (const p of PHASES_ORDER) { roundJourney[p] = { status: 'pending', summary: '' }; }
+const stages = {};
+for (const p of PHASES_ORDER) { stages[p] = { status: 'pending', summary: '' }; }
 
-// Seed from state.json.roundJourney (baseline — always available even when phaseHistory is sparse)
-if (state.roundJourney) {
+// Seed from pipeline.stages (baseline — always available even when stageHistory is sparse)
+if (stagesData) {
   for (const p of PHASES_ORDER) {
-    if (state.roundJourney[p]) {
-      roundJourney[p] = Object.assign({}, roundJourney[p], state.roundJourney[p]);
+    if (stagesData[p]) {
+      stages[p] = Object.assign({}, stages[p], stagesData[p]);
     }
   }
 }
 
-// Collect phase entries for current round
-const roundEntries = phaseHistory.filter(e => {
-  // Entries with explicit round field
-  if (e.round === round) return true;
-  // Entries without round field but belonging to this round's timeframe
-  // Use lastRoundAt as the boundary
-  if (state.lastRoundAt && e.timestamp) {
-    return new Date(e.timestamp) >= new Date(state.lastRoundAt);
+// Collect phase entries for current cycle
+const roundEntries = stageHistory.filter(e => {
+  // Entries with explicit round/cycle field
+  if (e.round === cycle || e.cycle === cycle) return true;
+  // Entries without round field but belonging to this cycle's timeframe
+  if (lastRoundAt && e.timestamp) {
+    return new Date(e.timestamp) >= new Date(lastRoundAt);
   }
   return false;
 });
 
-// Also include entries that match the current round's phases even without round field
-// by walking backwards from the end of phaseHistory
+// Also include entries that match the current cycle's phases even without round field
+// by walking backwards from the end of stageHistory
 const allRoundEntries = [];
-for (let i = phaseHistory.length - 1; i >= 0; i--) {
-  const e = phaseHistory[i];
-  // Stop when we hit a round boundary (previous round's entries)
-  if (e.round !== undefined && e.round < round) break;
-  // Also stop if entry's phase is later than current phase in a fresh round
-  // (indicates it belongs to previous round)
-  if (e.round === undefined && state.lastRoundAt && e.timestamp) {
-    if (new Date(e.timestamp) < new Date(state.lastRoundAt)) break;
+for (let i = stageHistory.length - 1; i >= 0; i--) {
+  const e = stageHistory[i];
+  // Stop when we hit a cycle boundary (previous cycle's entries)
+  if (e.round !== undefined && e.round < cycle) break;
+  if (e.cycle !== undefined && e.cycle < cycle) break;
+  // Also stop if entry's phase is later than current stage in a fresh cycle
+  if (e.round === undefined && e.cycle === undefined && lastRoundAt && e.timestamp) {
+    if (new Date(e.timestamp) < new Date(lastRoundAt)) break;
   }
   if (e.phase && PHASES_ORDER.includes(e.phase)) {
     allRoundEntries.unshift(e);
@@ -445,16 +503,16 @@ const entries = allRoundEntries.length >= roundEntries.length ? allRoundEntries 
 const scanEntries = entries.filter(e => e.phase === 'SCAN');
 if (scanEntries.length > 0) {
   const last = scanEntries[scanEntries.length - 1];
-  roundJourney.SCAN.status = 'done';
-  if (last.duration_ms) roundJourney.SCAN.duration_ms = last.duration_ms;
+  stages.SCAN.status = 'done';
+  if (last.duration_ms) stages.SCAN.duration_ms = last.duration_ms;
   if (last.gaps !== undefined) {
-    roundJourney.SCAN.summary = last.gaps + ' issue gaps, ' + (last.regression_gaps || 0) + ' regression gaps';
+    stages.SCAN.summary = last.gaps + ' issue gaps, ' + (last.regression_gaps || 0) + ' regression gaps';
   } else if (last.result) {
     // Extract key numbers from result text
     const m = last.result.match(/(\d+)\s*ISSUE_GAP/);
     const mr = last.result.match(/(\d+)\s*ISSUE_REGRESSION_GAP/);
-    if (m) roundJourney.SCAN.summary = (m[1]||0) + ' issue gaps' + (mr ? ', ' + mr[1] + ' regression gaps' : '');
-    else roundJourney.SCAN.summary = last.result.substring(0, 80);
+    if (m) stages.SCAN.summary = (m[1]||0) + ' issue gaps' + (mr ? ', ' + mr[1] + ' regression gaps' : '');
+    else stages.SCAN.summary = last.result.substring(0, 80);
   }
 }
 
@@ -462,11 +520,11 @@ if (scanEntries.length > 0) {
 const genEntries = entries.filter(e => e.phase === 'GENERATE');
 if (genEntries.length > 0) {
   const last = genEntries[genEntries.length - 1];
-  roundJourney.GENERATE.status = 'done';
-  if (last.duration_ms) roundJourney.GENERATE.duration_ms = last.duration_ms;
+  stages.GENERATE.status = 'done';
+  if (last.duration_ms) stages.GENERATE.duration_ms = last.duration_ms;
   if (last.result) {
     const m = last.result.match(/(\d+)\s*new test/i);
-    roundJourney.GENERATE.summary = m ? m[1] + ' tests created' : last.result.substring(0, 80);
+    stages.GENERATE.summary = m ? m[1] + ' tests created' : last.result.substring(0, 80);
   }
 }
 
@@ -475,17 +533,17 @@ const testPassCount = entries.filter(e => e.action === 'test_pass').length;
 const testFailCount = entries.filter(e => e.action === 'test_fail').length;
 const testComplete = entries.find(e => e.phase === 'TEST' && e.action === 'phase_complete');
 if (testPassCount > 0 || testFailCount > 0 || testComplete) {
-  // Use roundStats as more accurate source (from result files)
-  const tp = roundStats.passed || testPassCount;
-  const tf = roundStats.failed || testFailCount;
+  // Use cycleStats as more accurate source (from result files)
+  const tp = cycleStats.passed || testPassCount;
+  const tf = cycleStats.failed || testFailCount;
   const total = tp + tf;
   const rate = total > 0 ? Math.round(tp / total * 100) : 0;
-  roundJourney.TEST.status = (phase === 'TEST') ? 'running' : 'done';
-  roundJourney.TEST.summary = tp + ' pass, ' + tf + ' fail' + (total > 0 ? ' (' + rate + '%)' : '');
+  stages.TEST.status = (currentStage === 'TEST') ? 'running' : 'done';
+  stages.TEST.summary = tp + ' pass, ' + tf + ' fail' + (total > 0 ? ' (' + rate + '%)' : '');
   if (testComplete && testComplete.timestamp && genEntries.length > 0) {
     const genLast = genEntries[genEntries.length - 1];
     if (genLast.timestamp) {
-      roundJourney.TEST.duration_ms = new Date(testComplete.timestamp).getTime() - new Date(genLast.timestamp).getTime();
+      stages.TEST.duration_ms = new Date(testComplete.timestamp).getTime() - new Date(genLast.timestamp).getTime();
     }
   }
 }
@@ -503,23 +561,23 @@ if (batchFix) {
   fixedCount = fixPassEntries.length;
 }
 if (fixEntries.length > 0 || phase === 'FIX') {
-  roundJourney.FIX.status = (phase === 'FIX') ? 'running' : 'done';
-  const fixPending = (phase === 'FIX') ? fixQueue : 0;
-  roundJourney.FIX.summary = fixedCount + ' fixed, ' + unfixableCount + ' unfixable, ' + fixPending + ' pending';
+  stages.FIX.status = (currentStage === 'FIX') ? 'running' : 'done';
+  const fixPending = (currentStage === 'FIX') ? fixQueue : 0;
+  stages.FIX.summary = fixedCount + ' fixed, ' + unfixableCount + ' unfixable, ' + fixPending + ' pending';
 }
 
 // VERIFY summary
 const verifyPassEntries = entries.filter(e => e.action === 'verify_pass');
 const verifyFailEntries = entries.filter(e => e.action === 'verify_fail' || e.action === 'verify_regressed');
 if (verifyPassEntries.length > 0 || verifyFailEntries.length > 0 || phase === 'VERIFY') {
-  roundJourney.VERIFY.status = (phase === 'VERIFY') ? 'running' : 'done';
-  const vPending = (phase === 'VERIFY') ? verifyQueue : 0;
-  roundJourney.VERIFY.summary = verifyPassEntries.length + ' verified, ' + verifyFailEntries.length + ' regressed, ' + vPending + ' pending';
+  stages.VERIFY.status = (currentStage === 'VERIFY') ? 'running' : 'done';
+  const vPending = (currentStage === 'VERIFY') ? verifyQueue : 0;
+  stages.VERIFY.summary = verifyPassEntries.length + ' verified, ' + verifyFailEntries.length + ' regressed, ' + vPending + ' pending';
 }
 
-// Mark current phase as running if not already done
-if (roundJourney[phase] && roundJourney[phase].status === 'pending') {
-  roundJourney[phase].status = 'running';
+// Mark current stage as running if not already done
+if (stages[currentStage] && stages[currentStage].status === 'pending') {
+  stages[currentStage].status = 'running';
 }
 
 // ---- Infer missing durations from consecutive phase timestamps ----
@@ -538,7 +596,7 @@ for (const e of entries) {
 // For each phase without duration_ms, compute from: phase.first → nextPhase.first (or phase.last if no next)
 for (let pi = 0; pi < PHASES_ORDER.length; pi++) {
   const p = PHASES_ORDER[pi];
-  if (roundJourney[p].status !== 'pending' && !roundJourney[p].duration_ms && phaseTimestamps[p]) {
+  if (stages[p].status !== 'pending' && !stages[p].duration_ms && phaseTimestamps[p]) {
     // Find next phase that has a timestamp
     let endTs = null;
     for (let ni = pi + 1; ni < PHASES_ORDER.length; ni++) {
@@ -548,15 +606,15 @@ for (let pi = 0; pi < PHASES_ORDER.length; pi++) {
       }
     }
     // Also try: use lastRoundAt as SCAN start if SCAN has only one timestamp
-    if (p === 'SCAN' && state.lastRoundAt) {
-      const scanStart = new Date(state.lastRoundAt).getTime();
+    if (p === 'SCAN' && lastRoundAt) {
+      const scanStart = new Date(lastRoundAt).getTime();
       const scanEnd = endTs ? new Date(endTs).getTime() : new Date(phaseTimestamps[p].last).getTime();
       if (scanEnd > scanStart) {
-        roundJourney[p].duration_ms = scanEnd - scanStart;
+        stages[p].duration_ms = scanEnd - scanStart;
       }
     } else if (endTs) {
       const dur = new Date(endTs).getTime() - new Date(phaseTimestamps[p].first).getTime();
-      if (dur > 0) roundJourney[p].duration_ms = dur;
+      if (dur > 0) stages[p].duration_ms = dur;
     }
   }
 }
@@ -565,8 +623,8 @@ for (let pi = 0; pi < PHASES_ORDER.length; pi++) {
 const fixBreakdown = {
   fixed: fixedCount,
   unfixable: unfixableCount,
-  pending: (phase === 'FIX') ? fixQueue : 0,
-  total: roundStats.failed || (testFailCount + fixedCount)
+  pending: (currentStage === 'FIX') ? fixQueue : 0,
+  total: cycleStats.failed || (testFailCount + fixedCount)
 };
 const verifyBreakdown = {
   verified: verifyPassEntries.length,
@@ -577,9 +635,9 @@ const verifyBreakdown = {
 // ---- Output ----
 const output = {
   timestamp,
-  phase,
-  round,
-  maxRounds,
+  currentStage,
+  cycle,
+  maxCycles,
   health,
   queueSizes: {
     test: testQueue,
@@ -587,10 +645,10 @@ const output = {
     verify: verifyQueue,
     regression: regressionQueue
   },
-  stats: { passed, failed, fixed, skipped, unresolved: fixQueue },
+  cumulative: { passed, failed, fixed, skipped, unresolved: fixQueue },
   skipRegistry,
-  roundStats,
-  prevRoundStats,
+  cycleStats,
+  prevCycleStats,
   coverage,
   lastActivity,
   staleSince,
@@ -598,7 +656,7 @@ const output = {
   warnings,
   pendingDirectives,
   inProgress,
-  roundJourney,
+  stages,
   fixBreakdown,
   verifyBreakdown,
   observabilityStatus: {

@@ -19,7 +19,7 @@ export interface TestRegistryEntry {
   tags: string[]
 }
 
-// ============ Types ============
+// ============ Types (Pipeline Model) ============
 
 export interface TestStats {
   passed: number
@@ -28,16 +28,86 @@ export interface TestStats {
   skipped: number
 }
 
-export interface RoundJourneyPhase {
+export interface StageEntry {
   status: string
   summary: string
+  duration_ms?: number
+  startedAt?: string | null
+  completedAt?: string | null
+  [key: string]: unknown
+}
+
+export interface PipelineState {
+  cycle: number
+  maxCycles: number
+  currentStage: string
+  currentTest: string
+  stageProgress: unknown | null
+  stages: Record<string, StageEntry>
+}
+
+export interface QueuesState {
+  testQueue: TestQueueItem[]
+  fixQueue: TestQueueItem[]
+  verifyQueue: TestQueueItem[]
+  regressionQueue: TestQueueItem[]
+  gaps: unknown[]
+  inProgress: string[]
+  skipRegistry: unknown[]
+}
+
+export interface StatsState {
+  cumulative: TestStats
+  cycleStats: TestStats
+  scanStrategy: Record<string, unknown> | null
+  observabilityStatus: ObservabilityStatus | null
+}
+
+export interface ReasoningState {
+  observe: string | null
+  diagnose: string | null
+  decide: string | null
+  act: string | null
+  reflect: string | null
+}
+
+export interface SelfHealEvent {
+  type: string
+  description: string
+}
+
+export interface SupervisorState {
+  status: string
+  tick: number
+  active: string | null
+  step: string | null
+  reasoning: ReasoningState
+  selfHealEvent: SelfHealEvent | null
+  schedulerInterval: string | null
+  lastTickAt: string | null
 }
 
 export interface TestQueueItem {
   testId: string
-  category: string
-  source: string
-  addedAt: string
+  category?: string
+  source?: string
+  addedAt?: string
+  [key: string]: unknown
+}
+
+export interface ObservabilityStatus {
+  probesTotal: number
+  probesRun: number
+  probesPass: number
+  probesFail: number
+  staleCount: number
+  lastResults: Record<string, unknown>
+}
+
+// Legacy compat: assembled full state (old format)
+export interface RoundJourneyPhase {
+  status: string
+  summary: string
 }
 
 export interface PhaseHistoryEntry {
@@ -60,16 +130,13 @@ export interface PhaseHistoryEntry {
   [key: string]: unknown
 }
 
-export interface ObservabilityStatus {
-  probesTotal: number
-  probesRun: number
-  probesPass: number
-  probesFail: number
-  staleCount: number
-  lastResults: Record<string, unknown>
-}
-
 export interface TestState {
+  // New pipeline model fields
+  cycle: number
+  maxCycles: number
+  currentStage: string
+  stages: Record<string, StageEntry>
+  // Legacy compat aliases
   phase: string
   round: number
   stats: TestStats
@@ -86,6 +153,9 @@ export interface TestState {
   phaseHistory: PhaseHistoryEntry[]
   observabilityStatus: ObservabilityStatus
   roundStats: TestStats
+  // Supervisor fields
+  reasoning?: ReasoningState
+  selfHealEvent?: SelfHealEvent | null
 }
 
 export interface DiscoverySummary {
@@ -147,9 +217,117 @@ function resultsDir(): string {
   return join(testsDir(), 'results')
 }
 
-// ============ Readers ============
+// ============ Split State Readers (Pipeline Model) ============
 
+/** Read pipeline.json — cycle, stages, progress */
+export function readPipeline(): PipelineState | null {
+  const filePath = join(testsDir(), 'pipeline.json')
+  if (!existsSync(filePath)) return null
+  try {
+    const raw = readFileSync(filePath, 'utf-8')
+    return JSON.parse(raw) as PipelineState
+  } catch (err) {
+    console.error('[test-reader] Failed to read pipeline.json:', err)
+    return null
+  }
+}
+
+/** Read queues.json — testQueue, fixQueue, verifyQueue, regressionQueue, gaps, skipRegistry */
+export function readQueues(): QueuesState | null {
+  const filePath = join(testsDir(), 'queues.json')
+  if (!existsSync(filePath)) return null
+  try {
+    const raw = readFileSync(filePath, 'utf-8')
+    return JSON.parse(raw) as QueuesState
+  } catch (err) {
+    console.error('[test-reader] Failed to read queues.json:', err)
+    return null
+  }
+}
+
+/** Read stats.json — cumulative, cycleStats, scanStrategy, observabilityStatus */
+export function readStats(): StatsState | null {
+  const filePath = join(testsDir(), 'stats.json')
+  if (!existsSync(filePath)) return null
+  try {
+    const raw = readFileSync(filePath, 'utf-8')
+    return JSON.parse(raw) as StatsState
+  } catch (err) {
+    console.error('[test-reader] Failed to read stats.json:', err)
+    return null
+  }
+}
+
+/** Read supervisor.json — reasoning, selfHealEvent, tick, status */
+export function readSupervisor(): SupervisorState | null {
+  const filePath = join(testsDir(), 'supervisor.json')
+  if (!existsSync(filePath)) return null
+  try {
+    const raw = readFileSync(filePath, 'utf-8')
+    return JSON.parse(raw) as SupervisorState
+  } catch (err) {
+    console.error('[test-reader] Failed to read supervisor.json:', err)
+    return null
+  }
+}
+
+// ============ Assembled State Reader ============
+
+/**
+ * Read full test state — assembles from split files (pipeline.json, queues.json, stats.json, supervisor.json).
+ * Falls back to monolithic state.json if split files don't exist (backward compat).
+ * Provides legacy field aliases (phase, round, roundJourney, roundStats) for existing consumers.
+ */
 export function readTestState(): TestState | null {
+  const pipeline = readPipeline()
+
+  // If pipeline.json exists, assemble from split files
+  if (pipeline) {
+    const queues = readQueues()
+    const stats = readStats()
+    const supervisor = readSupervisor()
+
+    // Build stages → legacy roundJourney mapping
+    const roundJourney: Record<string, RoundJourneyPhase> = {}
+    if (pipeline.stages) {
+      for (const [name, entry] of Object.entries(pipeline.stages)) {
+        roundJourney[name] = { status: entry.status, summary: entry.summary }
+      }
+    }
+
+    // Read phaseHistory from history dir (or empty)
+    const phaseHistory = readPhaseHistory(pipeline.cycle)
+
+    return {
+      // New pipeline model fields
+      cycle: pipeline.cycle,
+      maxCycles: pipeline.maxCycles,
+      currentStage: pipeline.currentStage,
+      stages: pipeline.stages,
+      // Legacy compat aliases
+      phase: pipeline.currentStage,
+      round: pipeline.cycle,
+      maxRounds: pipeline.maxCycles,
+      currentTest: pipeline.currentTest,
+      roundJourney,
+      stats: stats?.cumulative || { passed: 0, failed: 0, fixed: 0, skipped: 0 },
+      roundStats: stats?.cycleStats || { passed: 0, failed: 0, fixed: 0, skipped: 0 },
+      observabilityStatus: stats?.observabilityStatus || { probesTotal: 0, probesRun: 0, probesPass: 0, probesFail: 0, staleCount: 0, lastResults: {} },
+      testQueue: queues?.testQueue || [],
+      fixQueue: queues?.fixQueue || [],
+      verifyQueue: queues?.verifyQueue || [],
+      regressionQueue: queues?.regressionQueue || [],
+      gaps: queues?.gaps || [],
+      inProgress: queues?.inProgress || [],
+      skipRegistry: queues?.skipRegistry || [],
+      phaseHistory,
+      // Supervisor fields
+      reasoning: supervisor?.reasoning || undefined,
+      selfHealEvent: supervisor?.selfHealEvent || null,
+    }
+  }
+
+  // Fallback: read monolithic state.json (pre-migration)
   const filePath = join(testsDir(), 'state.json')
   if (!existsSync(filePath)) return null
   try {
@@ -158,6 +336,43 @@ export function readTestState(): TestState | null {
   } catch (err) {
     console.error('[test-reader] Failed to read state.json:', err)
     return null
+  }
+}
+
+/** Read phase history entries from history directory for the current cycle */
+function readPhaseHistory(cycle: number): PhaseHistoryEntry[] {
+  const historyDir = join(testsDir(), 'history')
+  if (!existsSync(historyDir)) return []
+  try {
+    // Try cycle-specific history first
+    const cycleDir = join(historyDir, `cycle-${cycle}`)
+    if (existsSync(cycleDir)) {
+      const files = readdirSync(cycleDir)
+        .filter(f => f.endsWith('.json'))
+        .sort()
+      const entries: PhaseHistoryEntry[] = []
+      for (const f of files) {
+        try {
+          const raw = readFileSync(join(cycleDir, f), 'utf-8')
+          const data = JSON.parse(raw)
+          if (Array.isArray(data)) {
+            entries.push(...data)
+          } else if (data.stageHistory) {
+            entries.push(...data.stageHistory)
+          }
+        } catch { /* skip */ }
+      }
+      if (entries.length > 0) return entries
+    }
+    // Fall back to top-level phase-history.json
+    const phFilePath = join(historyDir, 'phase-history.json')
+    if (existsSync(phFilePath)) {
+      const raw = readFileSync(phFilePath, 'utf-8')
+      return JSON.parse(raw) as PhaseHistoryEntry[]
+    }
+    return []
+  } catch {
+    return []
   }
 }
 

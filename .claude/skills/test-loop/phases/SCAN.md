@@ -7,16 +7,16 @@
 ### 🔴 Step -1: Start Timer (MANDATORY)
 ```bash
 START_TS=$(date +%s%3N)
-echo '{"roundJourney":{"SCAN":{"status":"running","startedAt":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}}}' | bash tests/executors/state-writer.sh --merge
+echo '{"stages":{"SCAN":{"status":"running","startedAt":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}}}' | bash tests/executors/state-writer.sh --target pipeline --merge
 ```
 
-### Step 0: Load State (only in SCAN — first phase of each round)
+### Step 0: Load State (only in SCAN — first stage of each cycle)
 
-1. Read `tests/state.json` → determine phase and queues
+1. Read `tests/pipeline.json` + `tests/queues.json` → determine stage and queues
 2. Read `tests/safety.yaml` → load safety rules
 3. Read `tests/env.yaml` → load environment config (ports, passwords, case pool)
 4. Read `tests/learnings.yaml` → load known issues
-5. If `round >= maxRounds` → run `bash tests/executors/stats-reporter.sh <round>`, output final report, return (set phase=COMPLETE)
+5. If `cycle >= maxCycles` → run `bash tests/executors/stats-reporter.sh <cycle>`, output final report, return (set currentStage=COMPLETE)
 6. **Interrupt recovery**: If `currentTest` non-empty → previous execution was interrupted. Push `currentTest` back to queue head, clear `currentTest`, continue normally.
 
 ### Step 0 (SCAN sub-steps): Recycle + Skip Re-evaluate + Live Cases
@@ -25,10 +25,10 @@ echo '{"roundJourney":{"SCAN":{"status":"running","startedAt":"'$(date -u +%Y-%m
 ```bash
 bash tests/executors/queue-recycler.sh
 ```
-Checks regressionQueue / fixQueue(retryCount<3) / verifyQueue, moves recyclable items to testQueue. Record phaseHistory if recycled.
+Checks regressionQueue / fixQueue(retryCount<3) / verifyQueue, moves recyclable items to testQueue. Record stageHistory if recycled.
 
 **0.1. Skip re-evaluation** (every SCAN):
-Check `state.skipRegistry` for `reviewable: true` entries where `round - entry.round >= 3` → move back to testQueue, remove from skipRegistry. (`reviewable: false` like safety:blocked → never retry.)
+Check `queues.skipRegistry` for `reviewable: true` entries where `cycle - entry.cycle >= 3` → move back to testQueue, remove from skipRegistry. (`reviewable: false` like safety:blocked → never retry.)
 
 **0.5. Refresh Live Case pool** (daily):
 ```bash
@@ -64,13 +64,13 @@ bash tests/executors/issue-scanner.sh
 - `done` (with trackId + spec) → check regression coverage → `ISSUE_REGRESSION_GAP` or `ISSUE_COVERED`
 - `pending` / no trackId → `ISSUE_SKIP`
 
-Append `ISSUE_GAP` to state.json.gaps (source: `issue-driven`).
-Append `ISSUE_REGRESSION_GAP` to state.json.gaps (source: `issue-regression`).
+Append `ISSUE_GAP` to gaps in pipeline.json (source: `issue-driven`).
+Append `ISSUE_REGRESSION_GAP` to gaps in pipeline.json (source: `issue-regression`).
 
 **4b. Auto-implement tracked issues** (optional, controlled by `env.yaml`):
 Read `tests/env.yaml` → `automation.autoImplementTracked`.
 - **false (default)** → skip, log note directive
-- **true** → for tracked issues with plan.md, spawn `conductor:implement {trackId}` (max `max_auto_implement_per_round` per round, default 1). Record phaseHistory.
+- **true** → for tracked issues with plan.md, spawn `conductor:implement {trackId}` (max `max_auto_implement_per_round` per cycle, default 1). Record stageHistory.
 
 **5. Scan Observability gaps**:
 ```bash
@@ -82,7 +82,7 @@ bash tests/executors/observability-scanner.sh
 ```bash
 bash tests/executors/probe-scheduler.sh {round}
 ```
-Run all due probes directly (not via testQueue). Schedule: every `probe_schedule.interval_rounds` (default 5). Failed probes → record phaseHistory warning.
+Run all due probes directly (not via testQueue). Schedule: every `probe_schedule.interval_rounds` (default 5). Failed probes → record stageHistory warning.
 
 **6. Scan Spec acceptance criteria**:
 ```bash
@@ -111,20 +111,20 @@ done
 
 **Scheduling logic** (runner decides, SCAN phase executes):
 - `every_round` → always run (coverage scanner — this is the default Steps 1-6)
-- `every_3_rounds` → run when `round % 3 == 0`
-- `every_5_rounds` → run when `round % 5 == 0`
-- Runner Strategic Review can override: force a scanner early or skip one
+- `every_3_rounds` → run when `cycle % 3 == 0`
+- `every_5_rounds` → run when `cycle % 5 == 0`
+- Supervisor Diagnose step can override: force a scanner early or skip one
 
 GAP output format from additional scanners:
 ```
 GAP|{type}|{source}|{category}|{description}|{priority}
 ```
-Append all GAP lines to `state.json.gaps` with the scanner's source tag.
+Append all GAP lines to `pipeline.json` gaps with the scanner's source tag.
 
 **7. Update manifest.json**: Add new features, update tested/untested, coverage stats.
 
 ### SCAN Decision
 
-- Has untested features → set phase=GENERATE, write gaps to state.json
-- No gap + testQueue non-empty (recycled items) → phase=TEST
-- No gap + testQueue empty → record `{ action: "no_work" }`, round++, phase=SCAN
+- Has untested features → set currentStage=GENERATE, write gaps to pipeline.json
+- No gap + testQueue non-empty (recycled items) → currentStage=TEST
+- No gap + testQueue empty → record `{ action: "no_work" }`, cycle++, currentStage=SCAN

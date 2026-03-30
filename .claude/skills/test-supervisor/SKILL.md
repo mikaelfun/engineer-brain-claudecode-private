@@ -8,8 +8,8 @@
 /test-supervisor run                      # ⭐ spawn agent 执行测试循环（context 隔离）
 /test-supervisor db                       # 一屏总览 dashboard
 /test-supervisor health                   # 深度诊断
-/test-supervisor trends                   # 多轮趋势图
-/test-supervisor review [round|testId]    # 详细审查
+/test-supervisor trends                   # 多周期趋势图
+/test-supervisor review [cycle|testId]    # 详细审查
 /test-supervisor directive <type> [args]  # 下达指令
 /test-supervisor directives               # 查看指令队列
 /test-supervisor discoveries              # 测试为项目发现的 bug
@@ -69,4 +69,4 @@ Read(".claude/skills/test-supervisor/modes/dashboard.md")
 - 所有 bash 路径用 POSIX 格式（`/c/Users/...`）
 - `run` 模式通过 Agent 实现 context 隔离，每 tick 仅 ~1KB 注入主 session
 - 其他 mode 按需加载（~2-4KB/次），一次性调用不累积
-- state.json 修改**必须**通过 `state-writer.sh`
+- State 文件（pipeline.json/queues.json/stats.json/supervisor.json）修改**必须**通过 `state-writer.sh --target`

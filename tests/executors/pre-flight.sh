@@ -18,20 +18,21 @@ source "$SCRIPT_DIR/common.sh"
 
 STATE_FILE="$TESTS_ROOT/state.json"
 DIRECTIVES_FILE="$TESTS_ROOT/directives.json"
+# Split state files (PIPELINE_FILE, QUEUES_FILE, STATS_FILE defined in common.sh)
 
 # ============================================================
 # Step 1: Auto-repair if state.json is corrupt
 # ============================================================
 AUTO_REPAIRED="false"
 
-if [ ! -f "$STATE_FILE" ]; then
+if [ ! -f "$STATE_FILE" ] && [ ! -f "$PIPELINE_FILE" ]; then
   cat << 'EOF'
 {
   "gate": "error",
-  "gateReason": "state.json not found — test loop has not been initialized",
-  "phase": "UNKNOWN",
-  "round": 0,
-  "maxRounds": 0,
+  "gateReason": "state files not found — test loop has not been initialized",
+  "currentStage": "UNKNOWN",
+  "cycle": 0,
+  "maxCycles": 0,
   "health": "warning",
   "staleSince": null,
   "queues": { "test": 0, "fix": 0, "verify": 0, "regression": 0 },
@@ -54,11 +55,11 @@ if ! STATE_PATH="$STATE_FILE" NODE_PATH="$DASHBOARD_DIR/node_modules" node -e "J
     AUTO_REPAIRED="true"
     # Re-check after repair
     if ! STATE_PATH="$STATE_FILE" NODE_PATH="$DASHBOARD_DIR/node_modules" node -e "JSON.parse(require('fs').readFileSync(process.env.STATE_PATH,'utf8'))" 2>/dev/null; then
-      echo '{"gate":"error","gateReason":"state.json corrupt and repair failed","phase":"UNKNOWN","round":0,"maxRounds":0,"health":"warning","staleSince":null,"queues":{"test":0,"fix":0,"verify":0,"regression":0},"testQueueHead":[],"fixQueueHead":[],"paused":false,"pendingDirectives":0,"coverage":"0%","trends":{"passedDelta":[],"failedDelta":[],"fixedDelta":[],"coverageTrend":"unknown"},"autoRepaired":true}'
+      echo '{"gate":"error","gateReason":"state.json corrupt and repair failed","currentStage":"UNKNOWN","cycle":0,"maxCycles":0,"health":"warning","staleSince":null,"queues":{"test":0,"fix":0,"verify":0,"regression":0},"testQueueHead":[],"fixQueueHead":[],"paused":false,"pendingDirectives":0,"coverage":"0%","trends":{"passedDelta":[],"failedDelta":[],"fixedDelta":[],"coverageTrend":"unknown"},"autoRepaired":true}'
       exit 0
     fi
   else
-    echo '{"gate":"error","gateReason":"state.json corrupt and state-repair.sh failed","phase":"UNKNOWN","round":0,"maxRounds":0,"health":"warning","staleSince":null,"queues":{"test":0,"fix":0,"verify":0,"regression":0},"testQueueHead":[],"fixQueueHead":[],"paused":false,"pendingDirectives":0,"coverage":"0%","trends":{"passedDelta":[],"failedDelta":[],"fixedDelta":[],"coverageTrend":"unknown"},"autoRepaired":false}'
+    echo '{"gate":"error","gateReason":"state.json corrupt and state-repair.sh failed","currentStage":"UNKNOWN","cycle":0,"maxCycles":0,"health":"warning","staleSince":null,"queues":{"test":0,"fix":0,"verify":0,"regression":0},"testQueueHead":[],"fixQueueHead":[],"paused":false,"pendingDirectives":0,"coverage":"0%","trends":{"passedDelta":[],"failedDelta":[],"fixedDelta":[],"coverageTrend":"unknown"},"autoRepaired":false}'
     exit 0
   fi
 fi
@@ -68,21 +69,43 @@ fi
 # ============================================================
 HEALTH_JSON=$(bash "$SCRIPT_DIR/health-check.sh" 2>/dev/null)
 if [ -z "$HEALTH_JSON" ]; then
-  echo '{"gate":"error","gateReason":"health-check.sh produced no output","phase":"UNKNOWN","round":0,"maxRounds":0,"health":"warning","staleSince":null,"queues":{"test":0,"fix":0,"verify":0,"regression":0},"testQueueHead":[],"fixQueueHead":[],"paused":false,"pendingDirectives":0,"coverage":"0%","trends":{"passedDelta":[],"failedDelta":[],"fixedDelta":[],"coverageTrend":"unknown"},"autoRepaired":'$AUTO_REPAIRED'}'
+  echo '{"gate":"error","gateReason":"health-check.sh produced no output","currentStage":"UNKNOWN","cycle":0,"maxCycles":0,"health":"warning","staleSince":null,"queues":{"test":0,"fix":0,"verify":0,"regression":0},"testQueueHead":[],"fixQueueHead":[],"paused":false,"pendingDirectives":0,"coverage":"0%","trends":{"passedDelta":[],"failedDelta":[],"fixedDelta":[],"coverageTrend":"unknown"},"autoRepaired":'$AUTO_REPAIRED'}'
   exit 0
 fi
 
 # ============================================================
 # Step 3: Compute gate + trends + queue heads via node
 # ============================================================
-PREFLIGHT_JSON=$(STATE_PATH="$STATE_FILE" DIRECTIVES_PATH="$DIRECTIVES_FILE" RESULTS_PATH="$RESULTS_DIR" AUTO_REPAIRED="$AUTO_REPAIRED" NODE_PATH="$DASHBOARD_DIR/node_modules" node -e "
+PREFLIGHT_JSON=$(PIPELINE_PATH="$PIPELINE_FILE" QUEUES_PATH="$QUEUES_FILE" STATE_PATH="$STATE_FILE" DIRECTIVES_PATH="$DIRECTIVES_FILE" RESULTS_PATH="$RESULTS_DIR" AUTO_REPAIRED="$AUTO_REPAIRED" NODE_PATH="$DASHBOARD_DIR/node_modules" node -e "
 const fs = require('fs');
 const path = require('path');
 
 // Parse inputs
 const healthData = JSON.parse(process.argv[1]);
-const state = JSON.parse(fs.readFileSync(process.env.STATE_PATH, 'utf8'));
 const autoRepaired = process.env.AUTO_REPAIRED === 'true';
+
+// Read from split files (primary), fall back to state.json (legacy)
+let currentStage, cycle, maxCycles, testQueue, fixQueue, verifyQueue, regressionQueue;
+try {
+  const pipeline = JSON.parse(fs.readFileSync(process.env.PIPELINE_PATH, 'utf8'));
+  const queuesData = JSON.parse(fs.readFileSync(process.env.QUEUES_PATH, 'utf8'));
+  currentStage = pipeline.currentStage || 'UNKNOWN';
+  cycle = pipeline.cycle || 0;
+  maxCycles = pipeline.maxCycles || 50;
+  testQueue = queuesData.testQueue || [];
+  fixQueue = queuesData.fixQueue || [];
+  verifyQueue = queuesData.verifyQueue || [];
+  regressionQueue = queuesData.regressionQueue || [];
+} catch(e) {
+  const state = JSON.parse(fs.readFileSync(process.env.STATE_PATH, 'utf8'));
+  currentStage = state.phase || 'UNKNOWN';
+  cycle = state.round || 0;
+  maxCycles = state.maxRounds || 50;
+  testQueue = state.testQueue || [];
+  fixQueue = state.fixQueue || [];
+  verifyQueue = state.verifyQueue || [];
+  regressionQueue = state.regressionQueue || [];
+}
 
 // Read directives
 let directives = { paused: false, directives: [] };
@@ -90,20 +113,11 @@ try {
   directives = JSON.parse(fs.readFileSync(process.env.DIRECTIVES_PATH, 'utf8'));
 } catch(e) {}
 
-const phase = state.phase || 'UNKNOWN';
-const round = state.round || 0;
-const maxRounds = state.maxRounds || 50;
 const health = healthData.health || 'warning';
 const staleSince = healthData.staleSince || null;
 const paused = directives.paused || false;
 
-// ---- Queue sizes ----
-const testQueue = state.testQueue || [];
-const fixQueue = state.fixQueue || [];
-const verifyQueue = state.verifyQueue || [];
-const regressionQueue = state.regressionQueue || [];
-
-const queues = {
+// ---- Queue sizes ----const queues = {
   test: testQueue.length,
   fix: fixQueue.length,
   verify: verifyQueue.length,
@@ -135,9 +149,9 @@ if (healthData.error || health === 'error') {
 } else if (paused && !hasPendingResume) {
   gate = 'paused';
   gateReason = 'Loop paused by supervisor directive (no pending resume)';
-} else if (phase === 'COMPLETE') {
+} else if (currentStage === 'COMPLETE') {
   gate = 'complete';
-  gateReason = 'Test loop complete (round ' + round + '/' + maxRounds + ')';
+  gateReason = 'Test loop complete (cycle ' + cycle + '/' + maxCycles + ')';
 } else if (health === 'stuck') {
   // Try to detect if cleanup might help
   const stuckTests = (healthData.stuckTests || []);
@@ -219,9 +233,9 @@ try {
 const output = {
   gate,
   gateReason: gateReason || undefined,
-  phase,
-  round,
-  maxRounds,
+  currentStage,
+  cycle,
+  maxCycles,
   health,
   staleSince,
   queues,
@@ -252,7 +266,7 @@ console.log(JSON.stringify(output));
 
 if [ -z "$PREFLIGHT_JSON" ]; then
   # Fallback: output health data with gate=error
-  echo '{"gate":"error","gateReason":"pre-flight node computation failed","phase":"UNKNOWN","round":0,"maxRounds":0,"health":"warning","staleSince":null,"queues":{"test":0,"fix":0,"verify":0,"regression":0},"testQueueHead":[],"fixQueueHead":[],"paused":false,"pendingDirectives":0,"coverage":"0%","trends":{"passedDelta":[],"failedDelta":[],"fixedDelta":[],"coverageTrend":"unknown"},"autoRepaired":'$AUTO_REPAIRED'}'
+  echo '{"gate":"error","gateReason":"pre-flight node computation failed","currentStage":"UNKNOWN","cycle":0,"maxCycles":0,"health":"warning","staleSince":null,"queues":{"test":0,"fix":0,"verify":0,"regression":0},"testQueueHead":[],"fixQueueHead":[],"paused":false,"pendingDirectives":0,"coverage":"0%","trends":{"passedDelta":[],"failedDelta":[],"fixedDelta":[],"coverageTrend":"unknown"},"autoRepaired":'$AUTO_REPAIRED'}'
   exit 0
 fi
 

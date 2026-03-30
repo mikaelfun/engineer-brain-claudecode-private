@@ -7,6 +7,10 @@
 import { Hono } from 'hono'
 import {
   readTestState,
+  readPipeline,
+  readQueues,
+  readStats,
+  readSupervisor,
   readDiscoveries,
   readRoundSummaries,
   readTestResult,
@@ -19,13 +23,49 @@ import { sseManager } from '../watcher/sse-manager.js'
 
 const testSupervisorRoutes = new Hono()
 
-// GET /api/tests/state — Full test-loop state machine
+// GET /api/tests/state — Full test-loop state (assembled from split files)
 testSupervisorRoutes.get('/state', (c) => {
   const state = readTestState()
   if (!state) {
     return c.json({ error: 'No test state found' }, 404)
   }
   return c.json(state)
+})
+
+// GET /api/tests/pipeline — Pipeline stage progress (cycle, stages, currentStage)
+testSupervisorRoutes.get('/pipeline', (c) => {
+  const pipeline = readPipeline()
+  if (!pipeline) {
+    return c.json({ error: 'No pipeline state found' }, 404)
+  }
+  return c.json(pipeline)
+})
+
+// GET /api/tests/supervisor — Supervisor reasoning + self-heal events
+testSupervisorRoutes.get('/supervisor', (c) => {
+  const supervisor = readSupervisor()
+  if (!supervisor) {
+    return c.json({ error: 'No supervisor state found' }, 404)
+  }
+  return c.json(supervisor)
+})
+
+// GET /api/tests/queues — All queues (test, fix, verify, regression, gaps, skipRegistry)
+testSupervisorRoutes.get('/queues', (c) => {
+  const queues = readQueues()
+  if (!queues) {
+    return c.json({ error: 'No queues state found' }, 404)
+  }
+  return c.json(queues)
+})
+
+// GET /api/tests/stats — Cumulative and cycle stats
+testSupervisorRoutes.get('/stats', (c) => {
+  const stats = readStats()
+  if (!stats) {
+    return c.json({ error: 'No stats found' }, 404)
+  }
+  return c.json(stats)
 })
 
 // GET /api/tests/discoveries — Discovery index with summary

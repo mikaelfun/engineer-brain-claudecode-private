@@ -15,6 +15,13 @@ REGISTRY_DIR="$TESTS_ROOT/registry"
 EXECUTORS_DIR="$TESTS_ROOT/executors"
 DASHBOARD_DIR="$PROJECT_ROOT/dashboard"
 
+# State files
+STATE_FILE="$TESTS_ROOT/state.json"        # legacy (backward compat)
+PIPELINE_FILE="$TESTS_ROOT/pipeline.json"  # cycle, stages, currentStage, currentTest
+QUEUES_FILE="$TESTS_ROOT/queues.json"      # testQueue, fixQueue, verifyQueue, etc.
+STATS_FILE="$TESTS_ROOT/stats.json"        # cumulative stats, cycleStats
+SUPERVISOR_FILE="$TESTS_ROOT/supervisor.json"  # supervisor state
+
 # ============================================================
 # Environment (from env.yaml — hardcoded for performance)
 # ============================================================
@@ -673,7 +680,7 @@ select_live_case() {
 # ============================================================
 # Check if test-loop is currently running (for conductor:verify concurrency safety)
 # Returns: 0 = running, 1 = idle
-# Detection: .progress-*.json files OR state.json.currentTest non-empty
+# Detection: .progress-*.json files OR pipeline.json.currentTest non-empty
 is_testloop_running() {
   # Check 1: Any .progress-*.json files exist?
   local progress_files
@@ -682,13 +689,12 @@ is_testloop_running() {
     return 0  # running
   fi
 
-  # Check 2: state.json currentTest non-empty?
-  local state_file="$TESTS_ROOT/state.json"
-  if [ -f "$state_file" ]; then
+  # Check 2: pipeline.json currentTest non-empty? (was state.json)
+  if [ -f "$PIPELINE_FILE" ]; then
     local current_test
-    current_test=$(NODE_PATH="$DASHBOARD_DIR/node_modules" node -e "
-      const s = JSON.parse(require('fs').readFileSync('${state_file}','utf8'));
-      console.log(s.currentTest || '');
+    current_test=$(PIPE_FILE="$PIPELINE_FILE" NODE_PATH="$DASHBOARD_DIR/node_modules" node -e "
+      const p = JSON.parse(require('fs').readFileSync(process.env.PIPE_FILE,'utf8'));
+      console.log(p.currentTest || '');
     " 2>/dev/null || echo "")
     if [ -n "$current_test" ]; then
       return 0  # running

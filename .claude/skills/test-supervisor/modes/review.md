@@ -1,30 +1,30 @@
-## Mode 4: `review [round|testId]`
+## Mode 4: `review [cycle|testId]`
 
-**详细审查**。按 round 或 testId 深入查看。
+**详细审查**。按 cycle 或 testId 深入查看。
 
 ### 参数解析
 ```
 subargs 第一个词:
-  - 纯数字 → reviewType = "round", targetRound = 数字
+  - 纯数字 → reviewType = "cycle", targetCycle = 数字
   - 其他 → reviewType = "testId", targetTestId = 字符串
-  - 空 → 默认 reviewType = "round", targetRound = state.json.round (最新)
+  - 空 → 默认 reviewType = "cycle", targetCycle = pipeline.json.cycle (最新)
 ```
 
-### 4a. 审查指定 Round
+### 4a. 审查指定 Cycle
 
-1. 读取 `tests/results/round-{N}-summary.json`
-2. 列出该 round 所有结果文件：
+1. 读取 `tests/results/cycle-{N}-summary.json`
+2. 列出该 cycle 所有结果文件：
    ```bash
    ls tests/results/{N}-*.json 2>/dev/null
    ```
 3. 对每个结果文件读取并汇总：
 
 ```
-📋 Round {N} Review
+📋 Cycle {N} Review
 ═══════════════════════════════════════
 
-Summary: {from round-N-summary.json}
-  Phase: {phase} | Tests: {total} | Coverage: {coverage}%
+Summary: {from cycle-N-summary.json}
+  Stage: {currentStage} | Tests: {total} | Coverage: {coverage}%
 
 Results:
   ✅ {testId} — {duration_ms}ms — {assertion_count} assertions
@@ -35,7 +35,7 @@ Results:
 
 ### 4b. 审查指定 TestId
 
-1. 找到所有 round 中该 testId 的结果：
+1. 找到所有 cycle 中该 testId 的结果：
    ```bash
    ls tests/results/*-{testId}.json 2>/dev/null | sort -V
    ```
@@ -47,10 +47,10 @@ Results:
 🔍 Test History: {testId}
 ═══════════════════════════════════════
 
-Results across rounds:
-  Round 0: ❌ FAIL — {duration}ms
+Results across cycles:
+  Cycle 0: ❌ FAIL — {duration}ms
      Failures: {list failed assertions}
-  Round 1: ✅ PASS — {duration}ms
+  Cycle 1: ✅ PASS — {duration}ms
   ...
 
 {if fix analysis exists:}
@@ -67,4 +67,3 @@ Results across rounds:
 ```
 
 ---
-

@@ -1,6 +1,6 @@
 ## Common Rules (read every invocation)
 
-Shared rules for all test-loop phases. Read this BEFORE reading any phase file.
+Shared rules for all stage-worker stages. Read this BEFORE reading any stage file.
 
 ### 🔴 Safety (every invocation)
 Read `tests/safety.yaml`. Check before any operation:
@@ -8,51 +8,51 @@ Read `tests/safety.yaml`. Check before any operation:
 - **BLOCKED** → skip and log reason (never execute)
 - Uncertain → mark warning, skip
 
-### 🔴 state.json Writer Rule
+### 🔴 State Writer Rule
 
-**ALL state.json writes MUST use `state-writer.sh --merge`**. Never use Write tool, heredoc, `echo >`, or any direct write.
+**ALL state writes MUST use `state-writer.sh --merge`** (supports `--target pipeline|queues|stats`). Never use Write tool, heredoc, `echo >`, or any direct write.
 
 Reason: Non-atomic writes cause truncated JSON / trailing commas / corruption.
 
 ```bash
 # ⭐ Only pass fields you want to change — rest is preserved
-echo '{"phase":"TEST","stats":{"passed":10}}' | bash tests/executors/state-writer.sh --merge
+echo '{"currentStage":"TEST","stats":{"passed":10}}' | bash tests/executors/state-writer.sh --target pipeline --merge
 ```
 
 **`--merge` behavior**:
-- Unmentioned fields → **preserved** (won't lose maxRounds etc.)
+- Unmentioned fields → **preserved** (won't lose maxCycles etc.)
 - `stats` → **deep merge** (only changes specified sub-fields)
-- `roundJourney` → **per-phase deep merge**
-- `phaseHistory` → empty `[]` = reset; non-empty = **append** (concat)
+- `stages` → **per-stage deep merge**
+- `stageHistory` → empty `[]` = reset; non-empty = **append** (concat)
 - Arrays (`testQueue`, `fixQueue` etc.) → **full replace** (read-then-write)
 
 **🔴 Forbidden**: full-replace mode (without `--merge`) — overwrites concurrent changes.
 
 **Environment**: Use `process.env.STATE_PATH` in node, not hardcoded paths.
 
-### 🔴 roundJourney Update Pattern (MANDATORY — every phase)
+### 🔴 stages Update Pattern (MANDATORY — every stage)
 
-**Step A: BEFORE any phase logic** — capture wall-clock start + mark running:
+**Step A: BEFORE any stage logic** — capture wall-clock start + mark running:
 ```bash
 START_TS=$(date +%s%3N)
-echo '{"roundJourney":{"'$PHASE'":{"status":"running","startedAt":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}}}' | bash tests/executors/state-writer.sh --merge
+echo '{"stages":{"'$STAGE'":{"status":"running","startedAt":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}}}' | bash tests/executors/state-writer.sh --target pipeline --merge
 ```
 ⚠️ `START_TS` must be set via `date +%s%3N` (milliseconds). Do NOT use hardcoded values.
 
-**Step B: AFTER phase completes** — calculate real duration + mark done:
+**Step B: AFTER stage completes** — calculate real duration + mark done:
 ```bash
 DURATION_MS=$(( $(date +%s%3N) - START_TS ))
-echo '{"roundJourney":{"'$PHASE'":{"status":"done","summary":"...","duration_ms":'$DURATION_MS',"completedAt":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}}}' \
-  | bash tests/executors/state-writer.sh --merge
+echo '{"stages":{"'$STAGE'":{"status":"done","summary":"...","duration_ms":'$DURATION_MS',"completedAt":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}}}' \
+  | bash tests/executors/state-writer.sh --target pipeline --merge
 ```
 ⚠️ `duration_ms` MUST be computed from `START_TS`. Never estimate or hardcode (e.g. 120000, 30000).
 
-**Step C: On round transition** (VERIFY/TEST → SCAN, round++) — reset ALL phases:
+**Step C: On cycle transition** (VERIFY/TEST → SCAN, cycle++) — reset ALL stages:
 ```bash
-echo '{"roundJourney":{"SCAN":{"status":"pending"},"GENERATE":{"status":"pending"},"TEST":{"status":"pending"},"FIX":{"status":"pending"},"VERIFY":{"status":"pending"}}}' \
-  | bash tests/executors/state-writer.sh --merge
+echo '{"stages":{"SCAN":{"status":"pending"},"GENERATE":{"status":"pending"},"TEST":{"status":"pending"},"FIX":{"status":"pending"},"VERIFY":{"status":"pending"}}}' \
+  | bash tests/executors/state-writer.sh --target pipeline --merge
 ```
-⚠️ This clears stale duration/status from previous round. Must happen BEFORE new SCAN starts.
+⚠️ This clears stale duration/status from previous cycle. Must happen BEFORE new SCAN starts.
 
 ### Recipe 查询通用原则
 
@@ -63,9 +63,9 @@ echo '{"roundJourney":{"SCAN":{"status":"pending"},"GENERATE":{"status":"pending
 - Recipe 步骤是参考，不是死板流程 — LLM 应根据实际错误细节调整执行
 - Recipe 修复后务必调用 `fix-recorder.sh` 并传入 `recipe_used` 参数
 
-### Step 0.5: Process Directives (every phase)
+### Step 0.5: Process Directives (every stage)
 
-Before executing phase logic, check `tests/directives.json`:
+Before executing stage logic, check `tests/directives.json`:
 
 1. If file doesn't exist → skip
 2. If `paused=true` and no pending `resume` directive → output "⏸️ Loop paused" → **return immediately**
@@ -77,13 +77,13 @@ Before executing phase logic, check `tests/directives.json`:
 | `resume` | set `paused=false`, mark processed, continue |
 | `skip_test` | remove from testQueue, stats.skipped++, mark processed |
 | `add_requirement` | append to `gaps` array, mark processed |
-| `add_tests` | add to testQueue (dedup), set phase=TEST if needed, mark processed |
+| `add_tests` | add to testQueue (dedup), set currentStage=TEST if needed, mark processed |
 | `prioritize` | move testId to testQueue head, mark processed |
-| `force_phase` | set phase (SCAN/TEST/FIX/VERIFY only), mark processed |
-| `adjust_config` | set state[key]=value (maxRounds/round only), mark processed |
+| `force_stage` | set currentStage (SCAN/TEST/FIX/VERIFY only), mark processed |
+| `adjust_config` | set state[key]=value (maxCycles/cycle only), mark processed |
 | `add_learning` | run learnings-writer.sh, mark processed |
 | `note` | acknowledge, mark processed |
 | unknown | mark `status=rejected` |
 
 4. Update each directive: `status=processed/rejected`, `processedAt`, `processedResult`
-5. Write back directives.json (atomic) and state.json (via state-writer.sh)
+5. Write back directives.json (atomic) and state via state-writer.sh

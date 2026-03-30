@@ -4,9 +4,12 @@
 # Usage: bash tests/executors/stats-reporter.sh <round>
 # Example: bash tests/executors/stats-reporter.sh 0
 #
-# Reads: tests/state.json, tests/registry/ (YAML count), tests/results/,
+# Reads: tests/pipeline.json, tests/stats.json, tests/queues.json (split state files)
+#        tests/state.json (legacy fallback)
+#        tests/registry/ (YAML count), tests/results/,
 #        tests/discoveries.json (for fixThroughput)
-# Writes: tests/results/round-{N}-summary.json
+# Writes: tests/results/round-{N}-summary.json (backward compat filename)
+#         tests/results/cycle-{N}-summary.json (new)
 #         tests/stats.md (updated)
 #         tests/discoveries.json (regenerated)
 #
@@ -26,27 +29,58 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
 
 ROUND="${1:?Usage: stats-reporter.sh <round>}"
-STATE_FILE="$TESTS_ROOT/state.json"
 
-if [ ! -f "$STATE_FILE" ]; then
-  log_fail "state.json not found"
+if [ ! -f "$PIPELINE_FILE" ] && [ ! -f "$TESTS_ROOT/state.json" ]; then
+  log_fail "pipeline.json and state.json not found"
   exit 1
 fi
 
 log_info "=== Stats Reporter ==="
-log_info "Generating report for Round $ROUND"
+log_info "Generating report for Cycle $ROUND"
 
 # ============================================================
-# Read state.json + compute all metrics via single node call
+# Read split files + compute all metrics via single node call
 # ============================================================
 # Uses registry YAML count as totalTests (fixes totalTests=0 bug).
 # Coverage formula unified with health-check.sh:
 #   unique ever-passed testIds / registryCount
-STATS_JSON=$(STATE_PATH="$STATE_FILE" RESULTS_PATH="$RESULTS_DIR" TESTS_ROOT_PATH="$TESTS_ROOT" ROUND_NUM="$ROUND" NODE_PATH="$DASHBOARD_DIR/node_modules" node -e "
+STATS_JSON=$(PIPELINE_PATH="$PIPELINE_FILE" STATS_PATH="$STATS_FILE" QUEUES_PATH="$QUEUES_FILE" STATE_PATH="$TESTS_ROOT/state.json" RESULTS_PATH="$RESULTS_DIR" TESTS_ROOT_PATH="$TESTS_ROOT" ROUND_NUM="$ROUND" NODE_PATH="$DASHBOARD_DIR/node_modules" node -e "
   const fs = require('fs');
   const path = require('path');
-  const state = JSON.parse(fs.readFileSync(process.env.STATE_PATH, 'utf8'));
-  const s = state.stats || {};
+
+  // Read from split files (primary), fall back to state.json (legacy)
+  let cycle, maxCycles, currentStage, cumulativeStats, testQueueLen, fixQueueLen, verifyQueueLen, regressionQueueLen, stageHistoryLen;
+  try {
+    const pipeline = JSON.parse(fs.readFileSync(process.env.PIPELINE_PATH, 'utf8'));
+    const statsData = JSON.parse(fs.readFileSync(process.env.STATS_PATH, 'utf8'));
+    const queuesData = JSON.parse(fs.readFileSync(process.env.QUEUES_PATH, 'utf8'));
+    cycle = pipeline.cycle || 0;
+    maxCycles = pipeline.maxCycles || 50;
+    currentStage = pipeline.currentStage || 'UNKNOWN';
+    cumulativeStats = statsData.cumulative || {};
+    testQueueLen = (queuesData.testQueue || []).length;
+    fixQueueLen = (queuesData.fixQueue || []).length;
+    verifyQueueLen = (queuesData.verifyQueue || []).length;
+    regressionQueueLen = (queuesData.regressionQueue || []).length;
+    // stageHistory not in split files yet
+    try {
+      const state = JSON.parse(fs.readFileSync(process.env.STATE_PATH, 'utf8'));
+      stageHistoryLen = (state.phaseHistory || []).length;
+    } catch(e2) { stageHistoryLen = 0; }
+  } catch(e) {
+    const state = JSON.parse(fs.readFileSync(process.env.STATE_PATH, 'utf8'));
+    cycle = state.round || 0;
+    maxCycles = state.maxRounds || 50;
+    currentStage = state.phase || 'UNKNOWN';
+    cumulativeStats = state.stats || {};
+    testQueueLen = (state.testQueue || []).length;
+    fixQueueLen = (state.fixQueue || []).length;
+    verifyQueueLen = (state.verifyQueue || []).length;
+    regressionQueueLen = (state.regressionQueue || []).length;
+    stageHistoryLen = (state.phaseHistory || []).length;
+  }
+
+  const s = cumulativeStats;
   const resultsDir = process.env.RESULTS_PATH;
   const testsRoot = process.env.TESTS_ROOT_PATH;
   const roundNum = parseInt(process.env.ROUND_NUM);
@@ -141,9 +175,9 @@ STATS_JSON=$(STATE_PATH="$STATE_FILE" RESULTS_PATH="$RESULTS_DIR" TESTS_ROOT_PAT
   const skipped = s.skipped || 0;
 
   console.log(JSON.stringify({
-    round: state.round,
-    maxRounds: state.maxRounds,
-    phase: state.phase,
+    cycle: cycle,
+    maxCycles: maxCycles,
+    currentStage: currentStage,
     totalTests: totalTests,
     passed: passed,
     failed: failed,
@@ -159,11 +193,11 @@ STATS_JSON=$(STATE_PATH="$STATE_FILE" RESULTS_PATH="$RESULTS_DIR" TESTS_ROOT_PAT
     fixThroughput: fixThroughput,
     fixVerified: fixVerified,
     fixTotal: fixTotal,
-    testQueueLen: (state.testQueue||[]).length,
-    fixQueueLen: (state.fixQueue||[]).length,
-    verifyQueueLen: (state.verifyQueue||[]).length,
-    regressionQueueLen: (state.regressionQueue||[]).length,
-    phaseHistoryLen: (state.phaseHistory||[]).length
+    testQueueLen: testQueueLen,
+    fixQueueLen: fixQueueLen,
+    verifyQueueLen: verifyQueueLen,
+    regressionQueueLen: regressionQueueLen,
+    stageHistoryLen: stageHistoryLen
   }));
 " 2>/dev/null)
 
@@ -179,8 +213,8 @@ FAILED=$(echo "$STATS_JSON" | NODE_PATH="$DASHBOARD_DIR/node_modules" node -e "c
 FIXED=$(echo "$STATS_JSON" | NODE_PATH="$DASHBOARD_DIR/node_modules" node -e "const d=JSON.parse(require('fs').readFileSync(0,'utf8'));console.log(d.fixed)" 2>/dev/null)
 SKIPPED=$(echo "$STATS_JSON" | NODE_PATH="$DASHBOARD_DIR/node_modules" node -e "const d=JSON.parse(require('fs').readFileSync(0,'utf8'));console.log(d.skipped)" 2>/dev/null)
 COVERAGE=$(echo "$STATS_JSON" | NODE_PATH="$DASHBOARD_DIR/node_modules" node -e "const d=JSON.parse(require('fs').readFileSync(0,'utf8'));console.log(d.coverage)" 2>/dev/null)
-MAX_ROUNDS=$(echo "$STATS_JSON" | NODE_PATH="$DASHBOARD_DIR/node_modules" node -e "const d=JSON.parse(require('fs').readFileSync(0,'utf8'));console.log(d.maxRounds)" 2>/dev/null)
-PHASE=$(echo "$STATS_JSON" | NODE_PATH="$DASHBOARD_DIR/node_modules" node -e "const d=JSON.parse(require('fs').readFileSync(0,'utf8'));console.log(d.phase)" 2>/dev/null)
+MAX_ROUNDS=$(echo "$STATS_JSON" | NODE_PATH="$DASHBOARD_DIR/node_modules" node -e "const d=JSON.parse(require('fs').readFileSync(0,'utf8'));console.log(d.maxCycles)" 2>/dev/null)
+PHASE=$(echo "$STATS_JSON" | NODE_PATH="$DASHBOARD_DIR/node_modules" node -e "const d=JSON.parse(require('fs').readFileSync(0,'utf8'));console.log(d.currentStage)" 2>/dev/null)
 TQ_LEN=$(echo "$STATS_JSON" | NODE_PATH="$DASHBOARD_DIR/node_modules" node -e "const d=JSON.parse(require('fs').readFileSync(0,'utf8'));console.log(d.testQueueLen)" 2>/dev/null)
 FQ_LEN=$(echo "$STATS_JSON" | NODE_PATH="$DASHBOARD_DIR/node_modules" node -e "const d=JSON.parse(require('fs').readFileSync(0,'utf8'));console.log(d.fixQueueLen)" 2>/dev/null)
 GREEN_RATE=$(echo "$STATS_JSON" | NODE_PATH="$DASHBOARD_DIR/node_modules" node -e "const d=JSON.parse(require('fs').readFileSync(0,'utf8'));console.log(d.greenRate)" 2>/dev/null)
@@ -190,15 +224,17 @@ REGRESSION_RATE=$(echo "$STATS_JSON" | NODE_PATH="$DASHBOARD_DIR/node_modules" n
 FIX_THROUGHPUT=$(echo "$STATS_JSON" | NODE_PATH="$DASHBOARD_DIR/node_modules" node -e "const d=JSON.parse(require('fs').readFileSync(0,'utf8'));console.log(d.fixThroughput)" 2>/dev/null)
 
 # ============================================================
-# Write round summary JSON
+# Write round summary JSON (round-* for backward compat + cycle-* new)
 # ============================================================
 SUMMARY_FILE="$RESULTS_DIR/round-${ROUND}-summary.json"
+CYCLE_SUMMARY_FILE="$RESULTS_DIR/cycle-${ROUND}-summary.json"
 
 cat > "$SUMMARY_FILE" << SUMMARY_EOF
 {
   "round": $ROUND,
+  "cycle": $ROUND,
   "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
-  "phase": "$PHASE",
+  "currentStage": "$PHASE",
   "stats": {
     "totalTests": $TOTAL,
     "passed": $PASSED,
@@ -210,7 +246,7 @@ cat > "$SUMMARY_FILE" << SUMMARY_EOF
     "regressionRate": $REGRESSION_RATE,
     "fixThroughput": $FIX_THROUGHPUT
   },
-  "roundStats": {
+  "cycleStats": {
     "passed": $ROUND_PASS,
     "failed": $ROUND_FAIL
   },
@@ -221,7 +257,11 @@ cat > "$SUMMARY_FILE" << SUMMARY_EOF
 }
 SUMMARY_EOF
 
+# Also write cycle-* summary (identical content)
+cp "$SUMMARY_FILE" "$CYCLE_SUMMARY_FILE"
+
 log_info "Round summary: $SUMMARY_FILE"
+log_info "Cycle summary: $CYCLE_SUMMARY_FILE"
 
 # ============================================================
 # Update stats.md
@@ -232,8 +272,8 @@ cat > "$STATS_MD" << STATS_EOF
 # Test Framework Stats
 
 **Updated:** $(date -u +"%Y-%m-%dT%H:%M:%SZ")
-**Round:** $ROUND / $MAX_ROUNDS
-**Phase:** $PHASE
+**Round/Cycle:** $ROUND / $MAX_ROUNDS
+**Stage:** $PHASE
 
 ## Cumulative Stats
 
@@ -246,7 +286,7 @@ cat > "$STATS_MD" << STATS_EOF
 | Skipped | $SKIPPED |
 | Coverage | ${COVERAGE}% |
 
-## Round $ROUND Stats
+## Cycle $ROUND Stats
 
 | Metric | Value |
 |--------|-------|
@@ -456,4 +496,4 @@ log_info "Discoveries updated: $DISCOVERIES_FILE"
 # ============================================================
 # Output summary line
 # ============================================================
-echo "STATS|round=$ROUND|passed=$PASSED|failed=$FAILED|fixed=$FIXED|coverage=${COVERAGE}%|greenRate=${GREEN_RATE}%|regressionRate=${REGRESSION_RATE}%|fixThroughput=${FIX_THROUGHPUT}%"
+echo "STATS|cycle=$ROUND|passed=$PASSED|failed=$FAILED|fixed=$FIXED|coverage=${COVERAGE}%|greenRate=${GREEN_RATE}%|regressionRate=${REGRESSION_RATE}%|fixThroughput=${FIX_THROUGHPUT}%"
