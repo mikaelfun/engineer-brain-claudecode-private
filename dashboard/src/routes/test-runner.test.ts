@@ -13,12 +13,14 @@ const mockReadDirectives = vi.fn()
 const mockWriteDirectives = vi.fn()
 const mockReadTestState = vi.fn()
 const mockReadPipeline = vi.fn()
+const mockReadSupervisor = vi.fn()
 
 vi.mock('../services/test-reader.js', () => ({
   readDirectives: (...args: any[]) => mockReadDirectives(...args),
   writeDirectives: (...args: any[]) => mockWriteDirectives(...args),
   readTestState: (...args: any[]) => mockReadTestState(...args),
   readPipeline: (...args: any[]) => mockReadPipeline(...args),
+  readSupervisor: (...args: any[]) => mockReadSupervisor(...args),
 }))
 
 // Mock Claude SDK query — hangs forever so runner stays 'running'
@@ -57,6 +59,7 @@ beforeEach(async () => {
     writeDirectives: (...args: any[]) => mockWriteDirectives(...args),
     readTestState: (...args: any[]) => mockReadTestState(...args),
     readPipeline: (...args: any[]) => mockReadPipeline(...args),
+    readSupervisor: (...args: any[]) => mockReadSupervisor(...args),
   }))
   vi.doMock('@anthropic-ai/claude-agent-sdk', () => ({
     query: vi.fn(() => ({

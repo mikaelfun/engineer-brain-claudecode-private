@@ -2,19 +2,19 @@
   "id": "runner-cli-sync_20260330",
   "title": "TestLab Runner 状态与 CLI Run 同步",
   "type": "enhancement",
-  "status": "in_progress",
+  "status": "complete",
   "issueId": "ISS-178",
   "created": "2026-03-30T22:30:00+08:00",
-  "updated": "2026-03-31T07:30:00+08:00",
-  "current_phase": 2,
-  "current_task": "2.4",
+  "updated": "2026-03-30T23:15:00+08:00",
+  "current_phase": 3,
+  "current_task": "3.2",
   "phases": {
     "total": 3,
-    "completed": 1
+    "completed": 3
   },
   "tasks": {
     "total": 10,
-    "completed": 7
+    "completed": 10
   },
   "commits": [
     "d9553c0: wip: backend external CLI run detection for TestLab runner (runner-cli-sync_20260330)"

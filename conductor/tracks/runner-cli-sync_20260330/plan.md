@@ -3,7 +3,7 @@
 **Track ID:** runner-cli-sync_20260330
 **Spec:** [spec.md](./spec.md)
 **Created:** 2026-03-30
-**Status:** [ ] Not Started
+**Status:** [x] Complete
 
 ## Overview
 
@@ -33,7 +33,7 @@ TestLab 页面识别 external 状态并更新 UI。
 - [x] Task 2.1: 在 `TestLab.tsx` 中处理 `status === 'external'`：显示 amber/yellow 状态指示器 + "External run" 标签
 - [x] Task 2.2: Stop 按钮在 external 状态下可用，点击调用 `POST /api/tests/runner/stop`（后端已处理 directive 注入）
 - [x] Task 2.3: Start 按钮在 external 状态下禁用（外部 run 进行中不允许启动新 run）
-- [ ] Task 2.4: SSE `runner-status-changed` 事件触发时刷新 runner status，实现外部 run 结束后自动恢复 idle
+- [x] Task 2.4: SSE `runner-status-changed` 事件触发时刷新 runner status，实现外部 run 结束后自动恢复 idle
 
 ### Verification
 
@@ -43,8 +43,8 @@ TestLab 页面识别 external 状态并更新 UI。
 
 ### Tasks
 
-- [ ] Task 3.1: 验证 WebUI Start 启动的 run 行为不变（内存 runnerState 正常流转）
-- [ ] Task 3.2: 验证外部 run 结束后 runner 控制条恢复 idle
+- [x] Task 3.1: 验证 WebUI Start 启动的 run 行为不变（内存 runnerState 正常流转）
+- [x] Task 3.2: 验证外部 run 结束后 runner 控制条恢复 idle
 
 ### Verification
 
