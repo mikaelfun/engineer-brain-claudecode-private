@@ -8,7 +8,7 @@
  */
 import { Hono } from 'hono'
 import { query, type Options } from '@anthropic-ai/claude-agent-sdk'
-import { readDirectives, writeDirectives, readTestState, readPipeline } from '../services/test-reader.js'
+import { readDirectives, writeDirectives, readTestState, readPipeline, readSupervisor } from '../services/test-reader.js'
 import { config } from '../config.js'
 import { sseManager } from '../watcher/sse-manager.js'
 import type { SSEEventType } from '../types/index.js'
@@ -225,7 +225,7 @@ testRunnerRoutes.post('/stop', async (c) => {
     return c.json({ error: 'Runner 未在运行', status: runnerState.status }, 409)
   }
 
-  // Write pause directive for test-loop to read at next check
+  // Write pause directive for stage-worker to read at next check
   const directives = readDirectives()
   directives.push({
     type: 'pause',
@@ -252,13 +252,34 @@ testRunnerRoutes.post('/stop', async (c) => {
   return c.json({ status: 'stopping' })
 })
 
+// Supervisor statuses that indicate an active external run
+const ACTIVE_SUPERVISOR_STATUSES = new Set([
+  'running', 'scanning', 'generating', 'testing', 'fixing', 'verifying',
+])
+
 // GET /status — Current runner status
 testRunnerRoutes.get('/status', (c) => {
   const pipeline = readPipeline()
   const state = !pipeline ? readTestState() : null
 
+  // Detect external CLI run: memory says idle but supervisor.json says running
+  let effectiveStatus: string = runnerState.status
+  let source: string | null = null
+  let supervisorStatus: string | null = null
+
+  if (runnerState.status === 'idle') {
+    const supervisor = readSupervisor()
+    if (supervisor && ACTIVE_SUPERVISOR_STATUSES.has(supervisor.status)) {
+      effectiveStatus = 'external'
+      source = 'cli'
+      supervisorStatus = supervisor.status
+    }
+  }
+
   return c.json({
-    status: runnerState.status,
+    status: effectiveStatus,
+    source,
+    supervisorStatus,
     sessionId: runnerState.sessionId,
     startedAt: runnerState.startedAt,
     lastRunAt: runnerState.lastRunAt,

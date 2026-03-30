@@ -1,0 +1,17 @@
+{
+  "id": "runner-cli-sync_20260330",
+  "title": "TestLab Runner 状态与 CLI Run 同步",
+  "type": "enhancement",
+  "status": "pending",
+  "issueId": "ISS-178",
+  "created": "2026-03-30T22:30:00+08:00",
+  "updated": "2026-03-30T22:30:00+08:00",
+  "phases": {
+    "total": 3,
+    "completed": 0
+  },
+  "tasks": {
+    "total": 10,
+    "completed": 0
+  }
+}

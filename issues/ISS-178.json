@@ -1,0 +1,12 @@
+{
+  "id": "ISS-178",
+  "title": "TestLab runner 状态与 CLI 发起的 test-supervisor run 脱节",
+  "description": "从 CLI 执行 /test-supervisor run 时，WebUI TestLab 的 runner 控制条（Start/Stop 按钮、状态指示器）无法感知运行状态，始终显示 idle。\n\n根因：runner 状态（runnerState）是后端内存变量，只有通过 POST /api/tests/runner/start 发起的 run 才会更新。CLI 直接 spawn Agent 修改 state 文件，file-watcher 能捕获 pipeline/queues/stats 变化并广播 SSE 事件，但 runner 控制层不知道有 run 在进行。\n\n影响：\n- Pipeline 进展、阶段变化、队列数据能正常实时显示 ✅\n- Runner 状态条显示 idle（应显示 running）❌\n- Stop 按钮无效（没有 abortController）❌\n\n修复方向：\n1. 让 runner status API 也检查 supervisor.json 的 status 字段（file-based 状态检测）\n2. 当检测到外部 run 时，runner 控制条显示 'external run detected' 状态\n3. Stop 按钮在外部 run 时注入 pause directive（已有机制）而非依赖 abortController",
+  "type": "enhancement",
+  "priority": "P2",
+  "status": "tracked",
+  "trackId": "runner-cli-sync_20260330",
+  "createdAt": "2026-03-30T22:05:00+08:00",
+  "updatedAt": "2026-03-30T22:30:00+08:00",
+  "source": "user-reported"
+}

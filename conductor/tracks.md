@@ -131,4 +131,5 @@
 | [x] | auto-track-issues_20260330 | test-loop 创建的 Issue 自动生成 Conductor Track | 2026-03-30 | 2026-03-30 |
 | [x] | synthetic-adoption_20260330 | Workflow 测试采用 Synthetic Data | 2026-03-30 | 2026-03-31 |
 | [x] | test-arch-refactor_20260330 | Test Architecture Refactor — Pipeline Model | 2026-03-30 | 2026-03-30 |
-| [~] | testlab-ui-polish_20260330 | TestLab UI 美化 — Design A Mission Control | 2026-03-30 | 2026-03-30 |
+| [x] | testlab-ui-polish_20260330 | TestLab UI 美化 — Design A Mission Control | 2026-03-30 | 2026-03-30 |
+| [~] | runner-cli-sync_20260330 | TestLab Runner 状态与 CLI Run 同步 | 2026-03-30 | 2026-03-30 |
