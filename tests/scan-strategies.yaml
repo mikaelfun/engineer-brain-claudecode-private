@@ -1,0 +1,38 @@
+# Scan strategy definitions for runner Strategic Review
+# Runner reads this file in Step 2 to decide which scanners to activate per round.
+# Scanner executors are created in Track 4 (ISS-146); this file only defines scheduling.
+
+strategies:
+  coverage:
+    frequency: every_round
+    description: "Standard test coverage gap scan (existing SCAN logic)"
+    # No executor field — this is the default SCAN behavior
+
+  design-fidelity:
+    frequency: every_3_rounds
+    description: "Compare spec AC with actual implementation behavior"
+    executor: design-fidelity-scanner.sh
+    # Created in Track 4 (ISS-146), referenced here for scheduling
+
+  ux-review:
+    frequency: every_5_rounds
+    description: "UX workflow evaluation via static code + API analysis"
+    executor: ux-reviewer.sh
+    # Created in Track 4 (ISS-146)
+
+  performance:
+    frequency: every_3_rounds
+    description: "API response times and casework timing vs baselines"
+    executor: performance-scanner.sh
+    # Created in Track 4 (ISS-146)
+
+  architecture:
+    frequency: every_5_rounds
+    description: "CLAUDE.md compliance and code anti-pattern scan"
+    executor: architecture-scanner.sh
+    # Created in Track 4 (ISS-146)
+
+# Override rules (runner Strategic Review applies these)
+overrides:
+  high_regression_category: "Force scan for category with >5 regressions"
+  coverage_plateau: "Add design-fidelity scan if coverage flat 3+ rounds"

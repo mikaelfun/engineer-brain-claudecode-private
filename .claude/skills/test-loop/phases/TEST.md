@@ -4,17 +4,26 @@
 
 **Execution**: Main session orchestrates loop, spawns per-test agents.
 
+### 🔴 Step -1: Start Timer (MANDATORY)
+```bash
+START_TS=$(date +%s%3N)
+echo '{"roundJourney":{"TEST":{"status":"running","startedAt":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}}}' | bash tests/executors/state-writer.sh --merge
+```
+
 ### Batch Loop
 
 1. **Before loop**: Snapshot testQueue (prevent mid-loop mutation confusion)
-2. **For each test in testQueue** (sequential):
+2. **For each test in testQueue** (sequential, index `i` from 0):
 
    a. Read `tests/registry/{category}/{id}.yaml` for test definition
    b. Check `safety_level` — BLOCKED → skip, stats.skipped++, write to skipRegistry:
       ```
       state.skipRegistry.push({ testId, reason: "safety:blocked", round, reviewable: false })
       ```
-   c. Set `state.json.currentTest = testId` (interrupt recovery)
+   c. Set `state.json.currentTest = testId` and report progress:
+      ```bash
+      echo '{"currentTest":"{testId}","phaseProgress":{"current":'$((i+1))',"total":{TOTAL},"testId":"{testId}"}}' | bash tests/executors/state-writer.sh --merge
+      ```
    d. **Spawn agent by category**:
 
    | Category | Agent | Tools | Executor |

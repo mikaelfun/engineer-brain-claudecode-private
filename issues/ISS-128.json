@@ -1,0 +1,10 @@
+{
+  "id": "ISS-128",
+  "title": "TEST-AUTO: start-implement test",
+  "description": "Automated test �� will be deleted in teardown",
+  "type": "feature",
+  "priority": "P3",
+  "status": "tracked",
+  "createdAt": "2026-03-28T19:02:16.644Z",
+  "updatedAt": "2026-03-28T19:02:39.738Z"
+}

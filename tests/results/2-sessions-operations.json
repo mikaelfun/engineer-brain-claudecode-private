@@ -1,0 +1,9 @@
+{
+  "testId": "sessions-operations",
+  "round": 2,
+  "timestamp": "2026-03-28T16:41:58.000Z",
+  "status": "pass",
+  "assertions": [{"name":"GET /api/sessions → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'sessions':[{'sessionId':'dba734d7-afe9-4474-bc4e-e6b9d1be67ae','caseNumber':'2603130030004157','intent':'对 Case 2603130030004157 执行完整 case"},{"name":"GET /api/sessions → JSON response","pass":true,"expected":"JSON","actual":"JSON"},{"name":"GET /api/sessions/all → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'sessions':[{'id':'dba734d7-afe9-4474-bc4e-e6b9d1be67ae','type':'case','status':'paused','context':'2603130030004157','intent':'对 Case 260313003000"},{"name":"GET /api/sessions/all → JSON response","pass":true,"expected":"JSON","actual":"JSON"},{"name":"GET /api/operations/active → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'operations':[],'total':0} "},{"name":"GET /api/operations/active → JSON response","pass":true,"expected":"JSON","actual":"JSON"}],
+  "error": null,
+  "duration_ms": 14010
+}

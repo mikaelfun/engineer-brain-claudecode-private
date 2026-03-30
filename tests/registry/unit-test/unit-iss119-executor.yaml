@@ -1,0 +1,41 @@
+id: "wf-iss119-unit-runner"
+name: "ISS-119 — unit-test category 与 unit-runner.sh executor 验证"
+category: "workflow-e2e"
+source: "issues/ISS-119.json"
+description: "验证 ISS-119 AC：Test-Loop 新增 unit-test category，有 unit-runner.sh executor 可执行 npm test 并生成标准结果 JSON"
+safety_level: "safe"
+priority: "high"
+tags: ["issue-driven", "iss-119", "unit-test", "executor"]
+
+steps:
+  - action: "bash_command"
+    params:
+      command: "ls tests/executors/unit-runner.sh 2>/dev/null && echo EXISTS || echo MISSING"
+    description: "检查 unit-runner.sh 存在"
+
+  - action: "bash_command"
+    params:
+      command: "ls tests/registry/unit-test/*.yaml 2>/dev/null | wc -l"
+    description: "检查 unit-test category 有测试定义文件"
+
+  - action: "bash_command"
+    params:
+      command: "grep -c 'npm test\\|npm run test\\|vitest' tests/executors/unit-runner.sh 2>/dev/null || echo 0"
+    description: "unit-runner.sh 包含 npm test 执行逻辑"
+
+  - action: "bash_command"
+    params:
+      command: "bash tests/executors/unit-runner.sh unit-server 24 2>&1 | tail -3"
+    description: "unit-runner.sh 能执行 unit-server 测试并生成结果"
+
+assertions:
+  - type: "file_exists"
+    target: "tests/executors/unit-runner.sh"
+    description: "Test-Loop 新增 unit-test category，有 unit-runner.sh executor"
+
+  - type: "file_content"
+    target: "tests/executors/unit-runner.sh"
+    expected: "npm"
+    description: "unit-runner.sh 可执行 npm test 并生成标准结果 JSON"
+
+timeout_seconds: 120

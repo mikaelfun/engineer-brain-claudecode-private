@@ -67,6 +67,7 @@ export function createIssue(data: {
     type: data.type || 'bug',
     priority: data.priority || 'P1',
     status: 'pending',
+    testLoopScan: true,
     createdAt: now,
     updatedAt: now,
   }

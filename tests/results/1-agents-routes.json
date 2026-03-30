@@ -1,0 +1,9 @@
+{
+  "testId": "agents-routes",
+  "round": 1,
+  "timestamp": "2026-03-28T16:33:55.000Z",
+  "status": "pass",
+  "assertions": [{"name":"GET /api/agents → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'agents':[],'total':0} "},{"name":"GET /api/agents → JSON response","pass":true,"expected":"JSON","actual":"JSON"},{"name":"GET /api/agents/cron-jobs → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'jobs':[],'total':0} "},{"name":"GET /api/agents/cron-jobs → JSON response","pass":true,"expected":"JSON","actual":"JSON"},{"name":"GET /api/agents/patrol-state → HTTP 404","pass":true,"expected":"200,404","actual":"404","note":"{'error':'Patrol state not found'} "},{"name":"GET /api/agents/patrol-state → JSON response","pass":true,"expected":"JSON","actual":"JSON"}],
+  "error": null,
+  "duration_ms": 13599
+}

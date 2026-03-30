@@ -1,0 +1,23 @@
+{
+  "id": "recipe-seed_20260330",
+  "title": "tests/recipes/ 目录结构 + learnings.yaml seed",
+  "type": "feature",
+  "status": "implemented",
+  "created": "2026-03-30T10:00:00+08:00",
+  "updated": "2026-03-30T15:30:00+08:00",
+  "issueId": "ISS-164",
+  "current_phase": 2,
+  "current_task": "2.2",
+  "phases": {
+    "total": 2,
+    "completed": 2
+  },
+  "tasks": {
+    "total": 5,
+    "completed": 5
+  },
+  "verification": {
+    "status": "pending",
+    "method": "file-check"
+  }
+}

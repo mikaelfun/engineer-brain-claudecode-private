@@ -1,0 +1,11 @@
+{
+  "id": "ISS-132",
+  "title": "SCAN 阶段回收 regression/retry/unverified 旧问题",
+  "description": "当前 SCAN 只扫新 gap，不回收 regressionQueue(10)/fixQueue retry(2)/verifyQueue(3)。导致 loop 在 95% 覆盖率后空转。需要在 SCAN 阶段开头插入回收检查，将旧问题重新加入 testQueue。",
+  "type": "feature",
+  "priority": "P0",
+  "status": "tracked",
+  "trackId": "scan-recycle_20260329",
+  "createdAt": "2026-03-29T02:17:06Z",
+  "updatedAt": "2026-03-29T02:19:09Z"
+}

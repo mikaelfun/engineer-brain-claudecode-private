@@ -1,0 +1,11 @@
+{
+  "id": "ISS-136",
+  "title": "Dashboard API 返回 agent executionSummary 提升测试诊断能力",
+  "description": "当前 spawned agent 内部执行是黑盒，test 只能看最终 HTTP response。需要 Dashboard API response 增加 executionSummary 字段：包含 toolCalls(success/fail)、mcpServers(实际可用列表)、agentType、turns。让测试可以断言 MCP 可用性和 tool 调用成功率。",
+  "type": "feature",
+  "priority": "P1",
+  "status": "implemented",
+  "trackId": "agent-log-visible_20260329",
+  "createdAt": "2026-03-29T02:17:06Z",
+  "updatedAt": "2026-03-29T11:00:00Z"
+}

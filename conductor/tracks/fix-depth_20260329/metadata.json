@@ -1,0 +1,11 @@
+{
+  "id": "fix-depth_20260329",
+  "title": "fix-analyzer.sh 增加根因追溯，减少误判 env issue",
+  "type": "feature",
+  "status": "complete",
+  "issueId": "ISS-135",
+  "created": "2026-03-29T02:20:00Z",
+  "updated": "2026-03-29T02:35:00Z",
+  "phases": { "total": 3, "completed": 3 },
+  "tasks": { "total": 11, "completed": 11 }
+}

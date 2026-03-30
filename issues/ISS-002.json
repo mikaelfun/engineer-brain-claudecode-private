@@ -4,7 +4,7 @@
   "description": "Case full process 执行时 UI 几乎只显示 \"Thinking\"，看不到实际操作。SSE 管道多个环节丢失信息：后端类型映射默认 thinking、不提取 tool arguments、前端丢弃非字符串 content、chat route 硬编码 thinking、持久化恢复类型名不匹配。",
   "type": "feature",
   "priority": "P1",
-  "status": "tracked",
+  "status": "done",
   "trackId": "process-visibility_20260320",
   "createdAt": "2026-03-20T10:01:00.000Z",
   "updatedAt": "2026-03-20T10:01:00.000Z"

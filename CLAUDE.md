@@ -23,8 +23,18 @@ Kun Fang 的 AI 助手，Azure 技术支持工程师。
 | `issues/` | Issue Tracker | JSON 文件，CLI `/issue` 和 WebUI 共用 |
 | `conductor/` | 项目管理 | tracks、specs、plans |
 | `dashboard/` | Web Dashboard | 前端 + 后端代码 |
+| `tests/` | 自动化测试框架 | registry（定义）、executors（执行器）、results（结果）、state.json（状态机） |
 | `memory/` | 记忆系统 | daily / MEMORY.md |
 | `.learnings/` | 经验教训 | LEARNINGS.md / ERRORS.md |
+
+### 外部存储（不在项目目录内）
+
+| 位置 | 角色 | 内容 |
+|------|------|------|
+| `~/Documents/EngineerBrain-Data/` | 数据目录 | OneNote Export（1.4GB）、lancedb 向量库、mooncake-cc.json |
+| `~/.claude/mcp-servers/local-rag/` | MCP 工具 | local-rag MCP server + node_modules |
+
+路径通过 `config.json → dataRoot` 和 `.mcp.json` 配置，不硬编码。
 
 ## Main Agent 角色
 
@@ -72,7 +82,7 @@ tools: Bash, Read, Write
 - 新增或修改 agent.md 后需要**重启会话**或执行 `/agents` 才能生效
 - 不重启会导致 `Agent type 'xxx' not found` 错误
 
-**当前已注册的 5 个 agent：**
+**当前已注册的 6 个 agent：**
 | name | model | tools | mcpServers |
 |------|-------|-------|------------|
 | `casework` | sonnet | Bash, Read, Write, Edit, Glob, Grep, Agent | icm |
@@ -80,6 +90,7 @@ tools: Bash, Read, Write
 | `teams-search` | sonnet | Bash, Read, Write | teams |
 | `email-drafter` | sonnet | Read, Write, Bash | — |
 | `troubleshooter` | opus | Bash, Read, Write, Glob, Grep, WebSearch | kusto, ado-msazure, msft-learn, icm, local-rag |
+| `test-loop` | sonnet | Bash, Read, Write, Glob, Grep, Agent | — |
 
 **性能注意：** 不要在 spawn prompt 中注入大段 SKILL 内容。实测注入 vs 让 agent 自己读 SKILL.md，注入反而慢 15s（增大了每轮 context 处理开销）。正确做法是 prompt 中写 `请先读取 .claude/agents/xxx.md 获取完整执行步骤`。
 
@@ -153,8 +164,12 @@ pending → tracked → in-progress → implemented → done
 
 ## Playwright 浏览器
 - **必须使用 Edge（msedge）**，本机未安装 Chrome
-- `.mcp.json` 已配置 `--browser msedge`
+- `.mcp.json` 已配置 `--browser msedge` + `--output-dir .playwright-output`
 - ❌ 不要尝试用 Chrome / Chromium，会报错找不到
+- ❌ **禁止使用 `browser_snapshot`**：snapshot 输出巨大（数百行 YAML），一次就能撑爆会话 context，导致后续交互被 compact 丢失关键上下文
+- ✅ 需要网页信息时，优先用 `gh` CLI、`WebFetch`、或 `Bash` + `curl` 获取结构化数据
+- ✅ 如确需浏览器操作，用 `browser_evaluate` 提取关键数据，不要 snapshot 整页
+- ✅ MCP 日志输出到 `.playwright-output/`（gitignored），不污染项目根目录
 
 ## Git Bash 路径格式（⚠️ 全局规则）
 本机 Bash 工具运行在 **Git Bash (MSYS2)** 环境下。所有 Bash 命令中的路径**必须**使用 POSIX 格式：
@@ -179,11 +194,22 @@ CASE_DIR="/c/..." ; pwsh ... 2>&1 | tail -1
 用户配置存储在项目根的 `config.json`：
 ```json
 {
-  "casesRoot": "C:\\path\\to\\cases"
+  "casesRoot": "./cases",
+  "dataRoot": "C:\\Users\\fangkun\\Documents\\EngineerBrain-Data",
+  "teamsSearchCacheHours": 4
 }
 ```
 - `casesRoot` 指定 case 数据存放的根路径
+- `dataRoot` 指定外部数据目录（OneNote 导出、向量库、业务参考数据）
 - WebUI Settings 页可编辑此配置
+
+## 临时文件与截图规范
+- **Playwright MCP 输出** → `.playwright-output/`（通过 `--output-dir` 配置，gitignored）
+- **脚本测试截图** → `scripts/screenshots/`（gitignored，可重新生成）
+- **自动化测试截图** → `tests/results/screenshots/`（gitignored，测试框架自动管理）
+- **Conductor visual verify** → 临时 `screenshot.jpeg`（用完即删，不提交）
+- ❌ 不要在项目根目录或脚本目录直接生成截图文件
+- ❌ 不要硬编码绝对路径，用 `__dirname` + `join` 构建相对路径
 
 ## Dashboard UI 规范
 - 所有 Dashboard UI 修改**必须**先读 `playbooks/guides/dashboard-design-system.md`

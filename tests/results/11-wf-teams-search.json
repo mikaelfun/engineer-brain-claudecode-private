@@ -1,0 +1,9 @@
+{
+  "testId": "wf-teams-search",
+  "round": 11,
+  "timestamp": "2026-03-28T20:24:49.000Z",
+  "status": "pass",
+  "assertions": [{"name":"Setup: backup created","pass":true,"expected":"backup exists","actual":"created at /tmp/e2e-backup-wf-teams-search-1774729340"},{"name":"POST /api/case/:id/step/data-refresh","pass":true,"expected":"200|202","actual":"202"},{"name":"Step completed within timeout","pass":true,"expected":"completed","actual":"completed"},{"name":"File exists: 2601290030000748","pass":true,"expected":"exists","actual":"exists"},{"name":"File exists: emails.md","pass":true,"expected":"exists","actual":"exists"},{"name":"Non-empty: emails.md","pass":true,"expected":"non_empty","actual":"39295 bytes"},{"name":"File exists: case-info.md","pass":true,"expected":"exists","actual":"exists"}],
+  "error": null,
+  "duration_ms": 165015
+}

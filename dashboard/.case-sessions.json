@@ -270,7 +270,7 @@
       "intent": "Spawn a teams-search agent (read .claude/agents/teams-search.md) for Case 2602130040001034",
       "status": "paused",
       "createdAt": "2026-03-23T02:10:43.662Z",
-      "lastActivityAt": "2026-03-23T03:11:33.745Z"
+      "lastActivityAt": "2026-03-29T05:22:11.390Z"
     },
     "2c80b83e-d23a-4e8a-bd2f-8b9de096fa54": {
       "sessionId": "2c80b83e-d23a-4e8a-bd2f-8b9de096fa54",
@@ -284,17 +284,17 @@
       "sessionId": "3b103501-fba2-4303-89a4-648dd45e6a02",
       "caseNumber": "2603230030001221",
       "intent": "客户配置了inbound connector 的efskipips，里面包含了222.68.248.5，为什么还是没有追踪到实际来源ip",
-      "status": "paused",
+      "status": "failed",
       "createdAt": "2026-03-23T03:18:14.823Z",
-      "lastActivityAt": "2026-03-24T01:37:30.916Z"
+      "lastActivityAt": "2026-03-27T08:10:18.747Z"
     },
     "b252b087-a4b3-4e36-9aaa-bb06dce0fc7c": {
       "sessionId": "b252b087-a4b3-4e36-9aaa-bb06dce0fc7c",
       "caseNumber": "2603100030005863",
       "intent": "Full casework processing",
-      "status": "paused",
+      "status": "failed",
       "createdAt": "2026-03-23T04:56:12.109Z",
-      "lastActivityAt": "2026-03-23T05:02:50.349Z"
+      "lastActivityAt": "2026-03-27T23:35:15.206Z"
     },
     "9ca2cf14-5fd0-4218-ae7d-e5f768ab3fb0": {
       "sessionId": "9ca2cf14-5fd0-4218-ae7d-e5f768ab3fb0",
@@ -310,15 +310,15 @@
       "intent": "Full casework processing",
       "status": "paused",
       "createdAt": "2026-03-23T09:15:51.452Z",
-      "lastActivityAt": "2026-03-23T09:25:06.887Z"
+      "lastActivityAt": "2026-03-28T04:41:58.626Z"
     },
     "f1d1a906-5a6c-4b2b-af84-62410b309d77": {
       "sessionId": "f1d1a906-5a6c-4b2b-af84-62410b309d77",
       "caseNumber": "2601290030000748",
       "intent": "Spawn an email-drafter agent (read .claude/agents/email-drafter.md) for Case 2601290030000748.",
-      "status": "paused",
+      "status": "failed",
       "createdAt": "2026-03-24T02:45:05.194Z",
-      "lastActivityAt": "2026-03-24T02:51:33.296Z"
+      "lastActivityAt": "2026-03-28T19:30:46.476Z"
     },
     "d19eeb1e-7a58-4f50-9c4a-ea326a71d4af": {
       "sessionId": "d19eeb1e-7a58-4f50-9c4a-ea326a71d4af",
@@ -326,7 +326,7 @@
       "intent": "Spawn an email-drafter agent (read .claude/agents/email-drafter.md) for Case 2603060030001353.",
       "status": "paused",
       "createdAt": "2026-03-24T03:15:28.583Z",
-      "lastActivityAt": "2026-03-24T03:21:47.813Z"
+      "lastActivityAt": "2026-03-28T14:20:48.595Z"
     },
     "6d96b9ee-2614-4c6a-a27c-9a3ed7640cc9": {
       "sessionId": "6d96b9ee-2614-4c6a-a27c-9a3ed7640cc9",
@@ -334,16 +334,159 @@
       "intent": "Spawn an email-drafter agent (read .claude/agents/email-drafter.md) for Case 2603190030000206.",
       "status": "paused",
       "createdAt": "2026-03-24T03:18:10.296Z",
-      "lastActivityAt": "2026-03-24T03:21:53.889Z"
+      "lastActivityAt": "2026-03-28T19:50:39.260Z"
+    },
+    "8cc3a39f-d80c-48a9-9ab6-4b88497f3107": {
+      "sessionId": "8cc3a39f-d80c-48a9-9ab6-4b88497f3107",
+      "caseNumber": "2603260030005229",
+      "intent": "Execute inspection-writer for Case 2603260030005229. This updates case-summary.md (incremental narrative) and generates todo via generate-todo.sh. Read .claude/skills/inspection-writer/SKILL.md for full instructions, then execute.",
+      "status": "completed",
+      "createdAt": "2026-03-28T01:39:18.276Z",
+      "lastActivityAt": "2026-03-28T01:39:50.594Z"
+    },
+    "5443edf4-aba3-4467-b1a7-ab6dfd1f283a": {
+      "sessionId": "5443edf4-aba3-4467-b1a7-ab6dfd1f283a",
+      "caseNumber": "2603260030005229",
+      "intent": "Full casework processing",
+      "status": "completed",
+      "createdAt": "2026-03-28T01:48:48.810Z",
+      "lastActivityAt": "2026-03-28T01:49:24.273Z"
+    },
+    "fd6e9212-e414-4d16-b1e4-86502e5ea233": {
+      "sessionId": "fd6e9212-e414-4d16-b1e4-86502e5ea233",
+      "caseNumber": "2603260030005229",
+      "intent": "Full casework processing",
+      "status": "completed",
+      "createdAt": "2026-03-28T02:11:45.092Z",
+      "lastActivityAt": "2026-03-28T02:12:45.328Z"
+    },
+    "07288a20-0bf6-4051-bb32-de92f0ef00f7": {
+      "sessionId": "07288a20-0bf6-4051-bb32-de92f0ef00f7",
+      "caseNumber": "2603260030005229",
+      "intent": "Full casework processing",
+      "status": "completed",
+      "createdAt": "2026-03-28T02:14:20.198Z",
+      "lastActivityAt": "2026-03-28T02:15:27.360Z"
+    },
+    "ca22ddb2-b3df-4478-9beb-e40d14db5b64": {
+      "sessionId": "ca22ddb2-b3df-4478-9beb-e40d14db5b64",
+      "caseNumber": "2603260030005229",
+      "intent": "Full casework processing",
+      "status": "completed",
+      "createdAt": "2026-03-28T02:41:28.022Z",
+      "lastActivityAt": "2026-03-28T02:46:13.015Z"
+    },
+    "e5a0b36c-a899-4a69-9669-f24aeaf27b2e": {
+      "sessionId": "e5a0b36c-a899-4a69-9669-f24aeaf27b2e",
+      "caseNumber": "2603260030005229",
+      "intent": "Full casework processing",
+      "status": "completed",
+      "createdAt": "2026-03-28T02:49:19.326Z",
+      "lastActivityAt": "2026-03-28T02:49:19.326Z"
+    },
+    "9439c455-f2db-428b-bccf-417c54e1850e": {
+      "sessionId": "9439c455-f2db-428b-bccf-417c54e1850e",
+      "caseNumber": "2603260030005229",
+      "intent": "Full casework processing",
+      "status": "paused",
+      "createdAt": "2026-03-28T02:53:29.401Z",
+      "lastActivityAt": "2026-03-28T03:09:32.347Z"
+    },
+    "80ec2d42-e675-4839-8d90-9af46afeef4b": {
+      "sessionId": "80ec2d42-e675-4839-8d90-9af46afeef4b",
+      "caseNumber": "2603100030005863",
+      "intent": "Full casework processing",
+      "status": "paused",
+      "createdAt": "2026-03-28T04:27:09.950Z",
+      "lastActivityAt": "2026-03-28T14:18:58.472Z"
+    },
+    "519aacd9-aa70-49aa-aae4-f2cd7d193f3a": {
+      "sessionId": "519aacd9-aa70-49aa-aae4-f2cd7d193f3a",
+      "caseNumber": "2603090040000814",
+      "intent": "对 Case 2603090040000814 执行完整 casework 流程。caseDir: C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603090040000814/。请读取 .claude/skills/casework/SKILL.md 获取完整执行步骤。",
+      "status": "completed",
+      "createdAt": "2026-03-28T04:34:16.374Z",
+      "lastActivityAt": "2026-03-28T14:17:31.486Z"
+    },
+    "61745f06-3b50-4187-90e8-51c91b9e99ad": {
+      "sessionId": "61745f06-3b50-4187-90e8-51c91b9e99ad",
+      "caseNumber": "2603200030000875",
+      "intent": "对 Case 2603200030000875 执行完整 casework 流程。caseDir: C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603200030000875/。请读取 .claude/skills/casework/SKILL.md 获取完整执行步骤。",
+      "status": "paused",
+      "createdAt": "2026-03-28T04:34:16.412Z",
+      "lastActivityAt": "2026-03-28T04:41:44.407Z"
+    },
+    "dba734d7-afe9-4474-bc4e-e6b9d1be67ae": {
+      "sessionId": "dba734d7-afe9-4474-bc4e-e6b9d1be67ae",
+      "caseNumber": "2603130030004157",
+      "intent": "对 Case 2603130030004157 执行完整 casework 流程。caseDir: C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603130030004157/。请读取 .claude/skills/casework/SKILL.md 获取完整执行步骤。",
+      "status": "paused",
+      "createdAt": "2026-03-28T04:34:16.384Z",
+      "lastActivityAt": "2026-03-28T15:35:44.749Z"
+    },
+    "284fc376-d729-4c0f-b829-fe42cf82d14a": {
+      "sessionId": "284fc376-d729-4c0f-b829-fe42cf82d14a",
+      "caseNumber": "2603250010001221",
+      "intent": "Full casework processing",
+      "status": "paused",
+      "createdAt": "2026-03-28T07:20:28.290Z",
+      "lastActivityAt": "2026-03-28T14:48:06.774Z"
+    },
+    "89e25611-afd7-495a-a4ec-e5eeeb588a48": {
+      "sessionId": "89e25611-afd7-495a-a4ec-e5eeeb588a48",
+      "caseNumber": "2603230010001900001",
+      "intent": "Full casework processing",
+      "status": "paused",
+      "createdAt": "2026-03-28T12:42:08.412Z",
+      "lastActivityAt": "2026-03-28T14:11:52.409Z"
+    },
+    "52176473-d18c-4cb1-a3d6-10912885ad2c": {
+      "sessionId": "52176473-d18c-4cb1-a3d6-10912885ad2c",
+      "caseNumber": "first_case_id",
+      "intent": "Automated test �� lock check only",
+      "status": "paused",
+      "createdAt": "2026-03-28T19:10:46.589Z",
+      "lastActivityAt": "2026-03-28T20:23:59.550Z"
+    },
+    "02dc6687-7367-48a9-bbc5-0265eb4a2924": {
+      "sessionId": "02dc6687-7367-48a9-bbc5-0265eb4a2924",
+      "caseNumber": "2601290030000748",
+      "intent": "Execute data-refresh for Case 2601290030000748. Read .claude/skills/data-refresh/SKILL.md for full instructions, then execute.",
+      "status": "paused",
+      "createdAt": "2026-03-28T19:31:34.192Z",
+      "lastActivityAt": "2026-03-28T20:24:30.502Z"
+    },
+    "c62138c7-b9be-45a7-bb7d-2ef8c885abb3": {
+      "sessionId": "c62138c7-b9be-45a7-bb7d-2ef8c885abb3",
+      "caseNumber": "2603090040000814",
+      "intent": "Execute data-refresh for Case 2603090040000814. Read .claude/skills/data-refresh/SKILL.md for full instructions, then execute.",
+      "status": "paused",
+      "createdAt": "2026-03-29T03:12:17.402Z",
+      "lastActivityAt": "2026-03-29T03:15:25.113Z"
+    },
+    "f42e3079-9d36-4291-9c54-7437add8dc5b": {
+      "sessionId": "f42e3079-9d36-4291-9c54-7437add8dc5b",
+      "caseNumber": "2603030040001542",
+      "intent": "Full casework processing",
+      "status": "paused",
+      "createdAt": "2026-03-29T05:11:44.895Z",
+      "lastActivityAt": "2026-03-29T05:23:20.408Z"
     }
   },
   "caseIndex": {
     "2602130040001034": "ebb3be8a-3450-40ab-afdf-71c83219c9f7",
-    "2603230030001221": "3b103501-fba2-4303-89a4-648dd45e6a02",
-    "2603100030005863": "b252b087-a4b3-4e36-9aaa-bb06dce0fc7c",
     "2603170030001139": "b97ed4bf-ba15-4d5c-a582-17c44453a829",
-    "2601290030000748": "f1d1a906-5a6c-4b2b-af84-62410b309d77",
     "2603060030001353": "d19eeb1e-7a58-4f50-9c4a-ea326a71d4af",
-    "2603190030000206": "6d96b9ee-2614-4c6a-a27c-9a3ed7640cc9"
+    "2603190030000206": "6d96b9ee-2614-4c6a-a27c-9a3ed7640cc9",
+    "2603260030005229": "9439c455-f2db-428b-bccf-417c54e1850e",
+    "2603100030005863": "80ec2d42-e675-4839-8d90-9af46afeef4b",
+    "2603200030000875": "61745f06-3b50-4187-90e8-51c91b9e99ad",
+    "2603130030004157": "dba734d7-afe9-4474-bc4e-e6b9d1be67ae",
+    "2603250010001221": "284fc376-d729-4c0f-b829-fe42cf82d14a",
+    "2603230010001900001": "89e25611-afd7-495a-a4ec-e5eeeb588a48",
+    "first_case_id": "52176473-d18c-4cb1-a3d6-10912885ad2c",
+    "2601290030000748": "02dc6687-7367-48a9-bbc5-0265eb4a2924",
+    "2603090040000814": "c62138c7-b9be-45a7-bb7d-2ef8c885abb3",
+    "2603030040001542": "f42e3079-9d36-4291-9c54-7437add8dc5b"
   }
 }

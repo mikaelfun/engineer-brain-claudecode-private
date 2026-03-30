@@ -1,0 +1,17 @@
+{
+  "id": "testloop-data-layer_20260328",
+  "title": "Test Loop 双层数据源 — Live + Synthetic 分离",
+  "type": "feature",
+  "status": "complete",
+  "issueId": "ISS-120",
+  "created": "2026-03-28T23:15:00+08:00",
+  "updated": "2026-03-28T23:35:00+08:00",
+  "phases": {
+    "total": 4,
+    "completed": 4
+  },
+  "tasks": {
+    "total": 17,
+    "completed": 17
+  }
+}

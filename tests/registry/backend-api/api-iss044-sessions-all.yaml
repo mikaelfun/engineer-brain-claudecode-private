@@ -1,0 +1,78 @@
+id: "api-iss044-sessions-all"
+name: "ISS-044 — GET /api/sessions/all 返回统一 session 视图（含 case/implement/verify 类型）"
+category: "backend-api"
+source: "ISS-044 / dashboard/src/routes/sessions.ts — GET /sessions/all"
+description: |
+  验证 GET /api/sessions/all 端点：
+  1. 返回 200 + 数组
+  2. 每条 session 有 type 字段（case/implement/verify/track-creation）
+  3. 每条 session 有 status/context/intent/startedAt 字段
+  4. 支持 type filter 参数（?type=case 只返回 case sessions）
+safety_level: "safe"
+priority: "high"
+tags: ["api", "sessions", "unified-view", "ISS-044"]
+
+source_type: "issue-driven"
+issueId: "ISS-044"
+trackId: "agent-session-view_20260321"
+
+steps:
+  # Step 1: GET /api/sessions/all — 无 filter
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/sessions/all"
+      auth: true
+      expected_status: [200]
+    safety_check: "api.safe[GET]"
+
+  # Step 2: GET /api/sessions/all?type=case — 类型过滤
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/sessions/all?type=case"
+      auth: true
+      expected_status: [200]
+    safety_check: "api.safe[GET]"
+
+  # Step 3: GET /api/sessions/all?status=completed — 状态过滤
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/sessions/all?status=completed"
+      auth: true
+      expected_status: [200]
+    safety_check: "api.safe[GET]"
+
+assertions:
+  # AC1: 端点返回 200
+  - type: "status_code"
+    target: "step1"
+    expected: 200
+    description: "GET /api/sessions/all 返回 200"
+
+  # AC2: 响应体是数组（sessions list）
+  - type: "json_field"
+    target: "step1.type"
+    expected: "array"
+    description: "响应为 session 数组"
+
+  # AC3: type 过滤有效（返回数组）
+  - type: "status_code"
+    target: "step2"
+    expected: 200
+    description: "type=case 过滤返回 200"
+
+  # AC4: status 过滤有效（返回数组）
+  - type: "status_code"
+    target: "step3"
+    expected: 200
+    description: "status=completed 过滤返回 200"
+
+  # AC5: 源码中 session 结构包含 type/status/context/intent 字段
+  - type: "source_contains"
+    target: "dashboard/src/routes/sessions.ts"
+    expected: "type:"
+    description: "session 结构包含 type 字段（case/implement/verify/track-creation）"
+
+timeout_seconds: 15

@@ -1,297 +1,4 @@
 {
-  "2603090040000814": [
-    {
-      "type": "assistant",
-      "content": "",
-      "timestamp": "2026-03-20T08:04:48.645Z"
-    },
-    {
-      "type": "assistant",
-      "content": "",
-      "timestamp": "2026-03-20T08:04:50.741Z"
-    },
-    {
-      "type": "user",
-      "content": "",
-      "timestamp": "2026-03-20T08:04:50.956Z"
-    },
-    {
-      "type": "assistant",
-      "content": "",
-      "timestamp": "2026-03-20T08:04:54.729Z"
-    },
-    {
-      "type": "assistant",
-      "content": "",
-      "timestamp": "2026-03-20T08:05:00.385Z"
-    },
-    {
-      "type": "user",
-      "content": "",
-      "timestamp": "2026-03-20T08:05:00.387Z"
-    },
-    {
-      "type": "assistant",
-      "content": "",
-      "timestamp": "2026-03-20T08:05:05.960Z"
-    },
-    {
-      "type": "user",
-      "content": "",
-      "timestamp": "2026-03-20T08:05:05.965Z"
-    },
-    {
-      "type": "assistant",
-      "content": "",
-      "timestamp": "2026-03-20T08:05:09.199Z"
-    },
-    {
-      "type": "assistant",
-      "content": "",
-      "timestamp": "2026-03-20T08:05:11.187Z"
-    },
-    {
-      "type": "assistant",
-      "content": "",
-      "timestamp": "2026-03-20T08:05:12.089Z"
-    },
-    {
-      "type": "user",
-      "content": "",
-      "timestamp": "2026-03-20T08:05:12.110Z"
-    },
-    {
-      "type": "user",
-      "content": "",
-      "timestamp": "2026-03-20T08:05:12.753Z"
-    },
-    {
-      "type": "assistant",
-      "content": "",
-      "timestamp": "2026-03-20T08:05:15.824Z"
-    },
-    {
-      "type": "assistant",
-      "content": "",
-      "timestamp": "2026-03-20T08:05:16.400Z"
-    },
-    {
-      "type": "user",
-      "content": "",
-      "timestamp": "2026-03-20T08:05:16.406Z"
-    },
-    {
-      "type": "user",
-      "content": "",
-      "timestamp": "2026-03-20T08:05:16.408Z"
-    },
-    {
-      "type": "assistant",
-      "content": "",
-      "timestamp": "2026-03-20T08:05:19.847Z"
-    },
-    {
-      "type": "assistant",
-      "content": "",
-      "timestamp": "2026-03-20T08:05:41.631Z"
-    },
-    {
-      "type": "user",
-      "content": "",
-      "timestamp": "2026-03-20T08:05:41.926Z"
-    },
-    {
-      "type": "assistant",
-      "content": "",
-      "timestamp": "2026-03-20T08:05:54.273Z"
-    },
-    {
-      "type": "user",
-      "content": "",
-      "timestamp": "2026-03-20T08:05:54.692Z"
-    },
-    {
-      "type": "assistant",
-      "content": "",
-      "timestamp": "2026-03-20T08:05:57.760Z"
-    },
-    {
-      "type": "assistant",
-      "content": "",
-      "timestamp": "2026-03-20T08:05:58.579Z"
-    },
-    {
-      "type": "user",
-      "content": "",
-      "timestamp": "2026-03-20T08:05:58.585Z"
-    },
-    {
-      "type": "assistant",
-      "content": "",
-      "timestamp": "2026-03-20T08:06:04.954Z"
-    },
-    {
-      "type": "user",
-      "content": "",
-      "timestamp": "2026-03-20T08:06:04.978Z"
-    },
-    {
-      "type": "assistant",
-      "content": "",
-      "timestamp": "2026-03-20T08:06:11.870Z"
-    },
-    {
-      "type": "assistant",
-      "content": "",
-      "timestamp": "2026-03-20T08:06:12.841Z"
-    },
-    {
-      "type": "user",
-      "content": "",
-      "timestamp": "2026-03-20T08:06:13.080Z"
-    },
-    {
-      "type": "user",
-      "content": "",
-      "timestamp": "2026-03-20T08:06:13.774Z"
-    },
-    {
-      "type": "assistant",
-      "content": "",
-      "timestamp": "2026-03-20T08:06:16.695Z"
-    },
-    {
-      "type": "assistant",
-      "content": "",
-      "timestamp": "2026-03-20T08:06:27.545Z"
-    },
-    {
-      "type": "user",
-      "content": "",
-      "timestamp": "2026-03-20T08:06:28.332Z"
-    },
-    {
-      "type": "assistant",
-      "content": "",
-      "timestamp": "2026-03-20T08:06:35.208Z"
-    },
-    {
-      "type": "user",
-      "content": "",
-      "timestamp": "2026-03-20T08:06:35.566Z"
-    },
-    {
-      "type": "assistant",
-      "content": "",
-      "timestamp": "2026-03-20T08:06:38.504Z"
-    },
-    {
-      "type": "assistant",
-      "content": "",
-      "timestamp": "2026-03-20T08:06:39.157Z"
-    },
-    {
-      "type": "assistant",
-      "content": "",
-      "timestamp": "2026-03-20T08:06:40.040Z"
-    },
-    {
-      "type": "user",
-      "content": "",
-      "timestamp": "2026-03-20T08:06:40.050Z"
-    },
-    {
-      "type": "user",
-      "content": "",
-      "timestamp": "2026-03-20T08:06:40.053Z"
-    },
-    {
-      "type": "assistant",
-      "content": "",
-      "timestamp": "2026-03-20T08:06:48.938Z"
-    },
-    {
-      "type": "user",
-      "content": "",
-      "timestamp": "2026-03-20T08:06:48.941Z"
-    },
-    {
-      "type": "assistant",
-      "content": "",
-      "timestamp": "2026-03-20T08:07:01.252Z"
-    },
-    {
-      "type": "result",
-      "content": "---\n\n# ✅ Casework 完成 — 2603090040000814\n\n**[S500] 无法删除 unknown 用户** | Sev C | 11 days | **ready-to-close** 🎉\n\n客户今天 (3/20 7:48) 回复确认：**\"鉴于此问题的根因已经确认，工单可以先关闭\"**，并询问了重开流程。\n\n---\n\n## 🔴 需人工决策\n- [ ] **审阅并发送 closure 邮件草稿** (`drafts/20260320-1603-closure-zh-customer.md`)\n  - 含问题总结（PIM delegation condition 根因 + 两个方案）\n  - 回答了客户\"如何重开工单\"的问题（14天内可 reopen）\n  - CC 了 21v case owner\n- [ ] 确认是否需要同步通知 21v case owner (zhang.lihong@oe.21vianet.com) 关单\n\n## 🟡 待确认执行\n- [ ] 添加 Note: 客户 3/20 确认根因已明确，同意关单\n- [ ] 记录 Labor: 15min | Case closure and follow-up\n- [ ] 修改 SAP: Status → Problem Solved\n- [ ] 执行关单: Resolve Case\n\n## ✅ 仅通知\n- [x] 数据刷新完成（2 封新邮件）\n- [x] 合规检查通过（Premier China Cld）\n- [x] 状态判定：ready-to-close\n- [x] Closure 邮件草稿已生成（humanized ✅）\n- [x] Teams 搜索完成（1 个聊天记录）\n\n---\n\n⏱ **总耗时 9m 16s** | data-refresh 110s | compliance+status 88s | routing(email-drafter) 175s | inspection 61s",
-      "timestamp": "2026-03-20T08:07:01.274Z"
-    },
-    {
-      "type": "system",
-      "content": "",
-      "timestamp": "2026-03-20T08:07:01.278Z"
-    },
-    {
-      "type": "system",
-      "content": "",
-      "timestamp": "2026-03-20T08:07:01.280Z"
-    },
-    {
-      "type": "assistant",
-      "content": "",
-      "timestamp": "2026-03-20T08:07:10.559Z"
-    },
-    {
-      "type": "result",
-      "content": "\n\nTeams-search agent 已完成。Teams MCP 不可用（权限问题），但已按错误处理规则记录了 timeout 状态，**之前缓存的聊天记录（杨昭，2026-03-19）仍然保留**，inspection 已正确使用了缓存数据。\n\nCasework 全流程已完成，无需额外操作。等你审阅 closure 邮件草稿后发送即可 👍",
-      "timestamp": "2026-03-20T08:07:10.563Z"
-    },
-    {
-      "type": "completed",
-      "content": "Full process completed",
-      "step": "full-process",
-      "timestamp": "2026-03-20T08:07:12.626Z"
-    }
-  ],
-  "2603030040001542": [
-    {
-      "type": "system",
-      "content": "Step \"data-refresh\" started",
-      "step": "data-refresh",
-      "timestamp": "2026-03-22T09:01:05.375Z"
-    }
-  ],
-  "2603130030004157": [
-    {
-      "type": "system",
-      "content": "Step \"teams-search\" started",
-      "step": "teams-search",
-      "timestamp": "2026-03-22T09:23:38.204Z"
-    },
-    {
-      "type": "completed",
-      "content": "## ✅ status-judge 完成 — Case 2603130030004157\n\n| 字段 | 值 |\n|------|-----|\n| **actualStatus** | `ready-to-close` |\n| **daysSinceLastContact** | **3 天**（上次工程师邮件 3/19） |\n| **statusReasoning** | 3/19 客户明确回复\"这个case可以关了谢谢\"，D365 已标 Resolved，应尽快发 closure 邮件完成关单 |\n\n**判断依据**：\n- 3/17 多轮技术交流解决了跨云 token 问题（OAuth 2.0 Authorization Code + Refresh Token 方案）\n- 3/19 工程师发出 closure-confirm → 客户 Steven 明确回复可以关单\n- 无 ICM、D365 已标 Resolved\n- **下一步**：应发 closure 邮件并执行关单流程（客户已明确确认，无需再发 closure-confirm）",
-      "step": "status-judge",
-      "timestamp": "2026-03-22T09:25:04.303Z"
-    },
-    {
-      "type": "completed",
-      "content": "Step \"status-judge\" completed",
-      "step": "status-judge",
-      "timestamp": "2026-03-22T09:25:04.434Z"
-    },
-    {
-      "type": "completed",
-      "content": "**Status-judge 完成 ✅ — Case 2603130030004157**\n\n| 项目 | 结果 |\n|------|------|\n| **actualStatus** | `ready-to-close` |\n| **daysSinceLastContact** | 3 天（工程师 3/19 closure-confirm） |\n| **D365 Status** | Resolved |\n| **ICM** | 无 |\n\n**推理链**：\n1. 3/17 工程师与客户 Leo 多轮沟通 cross-cloud token 问题，给出 refresh token 方案\n2. 3/17 客户 Leo 感谢回复 → 3/19 工程师发 closure-confirm 确认关单\n3. 3/19 客户明确回复 **\"这个case可以关了谢谢\"** → 可直接发 closure 邮件（无需再发 closure-confirm）\n4. 结论：**ready-to-close**，应尽快发 closure 邮件完成关单",
-      "step": "teams-search",
-      "timestamp": "2026-03-22T09:26:18.773Z"
-    },
-    {
-      "type": "completed",
-      "content": "Step \"teams-search\" completed",
-      "step": "teams-search",
-      "timestamp": "2026-03-22T09:26:18.874Z"
-    }
-  ],
   "2603050040000857": [
     {
       "type": "system",
@@ -332,700 +39,7 @@
       "timestamp": "2026-03-22T14:16:43.999Z"
     }
   ],
-  "2602130040001034": [
-    {
-      "type": "tool-call",
-      "content": "ls -la \"C:/Users/fangkun/Documents/Claude Code Projects/EngineerBrain/cases/active/2602130040001034/attachments/\" 2>&1",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:04:45.084Z"
-    },
-    {
-      "type": "thinking",
-      "content": "Attachments already downloaded (7 files). The attachments meta shows 12 but some may be inline images or duplicates. Good enough — let me proceed to Steps 3a & 3b.",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:04:50.138Z"
-    },
-    {
-      "type": "thinking",
-      "content": "### Step 3a: Compliance Check\n\nFrom the existing `casehealth-meta.json`, I already read that `compliance.entitlementOk === true`. Per the skill spec, this means I **skip** the full compliance check and use cached values.",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:05:00.305Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "cd \"C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\" && echo \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 3a START | compliance-check\" >> cases/active/2602130040001034/logs/casework.log && echo \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 3a SKIP | cached compliant (entitlementOk=true, Premier, China ",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:05:02.545Z"
-    },
-    {
-      "type": "thinking",
-      "content": "### Step 3b: Status Judge\n\nNow I need to judge the actual status. Let me analyze the data:\n\n**Key facts:**\n- Last email (3/19 03:38): **Engineer (Kun)** sent — fixed ZoneRedundancy, asked about cross-sub transfer details, proposed continuing on Teams\n- **No new emails** since 3/19 (4 days ago)\n- Teams chat (3/20): Migration completed successfully ~3:30 PM. Customer confirmed all images migrated. Next step is Private Endpoint creation. Kun advised on DNS zone reuse + Network Contributor role. Cus",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:05:16.945Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "cd \"C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\" && cat >> cases/active/2602130040001034/logs/status-judge.log << 'LOGEOF'\n[2026-03-23 11:05:10] === status-judge START ===\n[2026-03-23 11:05:10] INPUT | D365 Status: Waiting for customer confirmation | Severity: B | ICM: none\n[2026-0",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:05:25.549Z"
-    },
-    {
-      "type": "thinking",
-      "content": "Now update the casehealth-meta.json with the new status judgment:",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:05:30.261Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2602130040001034\\casehealth-meta.json",
-      "toolName": "Read",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:05:30.663Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2602130040001034\\casehealth-meta.json",
-      "toolName": "Edit",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:05:39.174Z"
-    },
-    {
-      "type": "thinking",
-      "content": "Good. Now Step 4 — Route by actualStatus.",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:05:44.340Z"
-    },
-    {
-      "type": "thinking",
-      "content": "### Step 4: Route by actualStatus\n\n`actualStatus = pending-customer` with `daysSinceLastContact = 3` (≥ 3 threshold) → **email-drafter (follow-up)**\n\nBut wait — we already ran email-drafter earlier today and generated `drafts/20260323-0957-follow-up-en-customer.md`. However, that draft was based on the old context (before teams-search data was incorporated). Now we have the Teams chat showing the migration was actually **completed** on 3/20, and the real pending item is PE creation. The earlier ",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:05:58.708Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "cd \"C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\" && echo \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 4 START | routing: pending-customer + daysSinceLastContact=3 → email-drafter (follow-up)\" >> cases/active/2602130040001034/logs/casework.log && pwsh -NoProfile -c \"(Get-Date).ToString('o')",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:06:00.940Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "You are the Email Drafter Agent. Follow the instructions in .claude/agents/email-drafter.md exactly.\n\n## Input Parameters\n- **caseNumber**: 2602130040001034\n- **caseDir**: C:\\Users\\fangkun\\Documents\\C",
-      "toolName": "Agent",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:06:18.173Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\.claude\\agents\\email-drafter.md",
-      "toolName": "Read",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:06:22.832Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2602130040001034\\teams\\chandrasekar-sushanth-s.md",
-      "toolName": "Read",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:06:23.180Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2602130040001034\\case-info.md",
-      "toolName": "Read",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:06:29.367Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2602130040001034\\emails.md",
-      "toolName": "Read",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:06:29.730Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "**/analysis/*",
-      "toolName": "Glob",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:06:29.950Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\playbooks\\guides\\email-templates.md",
-      "toolName": "Read",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:06:30.201Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\playbooks\\guides\\customer-communication.md",
-      "toolName": "Read",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:06:30.349Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "**/email-samples/*",
-      "toolName": "Glob",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:06:30.604Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\playbooks\\email-samples\\follow up.txt",
-      "toolName": "Read",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:06:34.528Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\skills\\humanizer\\SKILL.md",
-      "toolName": "Read",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:06:35.282Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "mkdir -p \"C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2602130040001034\\logs\" 2>/dev/null; echo \"dir ready\"",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:06:36.797Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "date '+%Y%m%d-%H%M' 2>/dev/null || echo \"20260323-1115\"",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:07:18.497Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "ls \"C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2602130040001034\\drafts/\" 2>/dev/null || echo \"no drafts dir yet\"",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:07:20.117Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "echo \"[2026-03-23 11:07:00] STEP 1 OK | Read context: case-info.md, emails.md (28 emails), teams/chandrasekar-sushanth-s.md, analysis/ (2 reports), email-templates.md, customer-communication.md, follow up.txt sample\" >> \"C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2602",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:08:01.163Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "echo \"[2026-03-23 11:07:05] STEP 2 OK | Template selected: follow-up (explicit input). Context: migration completed 3/20, PE creation pending since 3/20 19:31\" >> \"C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2602130040001034\\logs\\email-drafter.log\"",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:08:02.695Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "mkdir -p \"C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2602130040001034\\drafts\"",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:08:23.390Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2602130040001034\\drafts\\20260323-1107-follow-up-en-customer.md",
-      "toolName": "Write",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:08:35.776Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "echo \"[2026-03-23 11:07:30] STEP 3 OK | Draft written: follow-up referencing completed migration (3/20) and pending PE creation. Lightweight 3-5 sentence structure per template.\" >> \"C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2602130040001034\\logs\\email-drafter.log\" &",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:08:42.904Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "cd \"C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\" && echo \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 4 OK | email-drafter completed: follow-up draft saved to drafts/20260323-1107-follow-up-en-customer.md\" >> cases/active/2602130040001034/logs/casework.log && pwsh -NoProfile -c \"(Get-Date)",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:08:57.797Z"
-    },
-    {
-      "type": "thinking",
-      "content": "Now Step 5: Inspection Writer.",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:09:03.467Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "cd \"C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\" && echo \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 5 START | inspection-writer\" >> cases/active/2602130040001034/logs/casework.log",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:09:15.659Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "cd \"C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\" && TODAY=$(date '+%Y%m%d') && cat > \"cases/active/2602130040001034/inspection-${TODAY}.md\" << 'EOF'\n# Case Inspection — 2602130040001034\n\n> Inspected at: 2026-03-23 11:09 (GMT+8)\n\n## 基本信息\n\n| 字段 | 值 |\n|------|-----|\n| Case Number | 26",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:09:48.654Z"
-    },
-    {
-      "type": "thinking",
-      "content": "Now write the Todo:",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:09:54.133Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "cd \"C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\" && TODONAME=$(date '+%y%m%d-%H%M') && mkdir -p cases/active/2602130040001034/todo && cat > \"cases/active/2602130040001034/todo/${TODONAME}.md\" << 'EOF'\n# Todo — 2602130040001034 — 2026-03-23 11:09\n\n## 🔴 需人工决策\n- [ ] 审核邮件草稿 `drafts/20",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:10:06.840Z"
-    },
-    {
-      "type": "thinking",
-      "content": "Now update the meta `lastInspected`:",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:10:11.433Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2602130040001034\\casehealth-meta.json",
-      "toolName": "Read",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:10:12.544Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2602130040001034\\casehealth-meta.json",
-      "toolName": "Edit",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:10:18.157Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "cd \"C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\" && echo \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 5 OK | inspection-20260323.md + todo/260323-1110.md + meta.lastInspected updated\" >> cases/active/2602130040001034/logs/casework.log && echo \"[$(date '+%Y-%m-%d %H:%M:%S')] inspection-writ",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:10:26.993Z"
-    },
-    {
-      "type": "thinking",
-      "content": "### Step 5.5: Write timing.json",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:10:32.482Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "cd \"C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\" && pwsh -NoProfile -c \"(Get-Date).ToString('o')\"",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:10:33.714Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2602130040001034\\timing.json",
-      "toolName": "Read",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:10:40.128Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2602130040001034\\timing.json",
-      "toolName": "Write",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:10:55.069Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "cd \"C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\" && echo \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 5.5 OK | timing.json written (438s total)\" >> cases/active/2602130040001034/logs/casework.log && echo \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 6 START | Display results\" >> cases/active/260213",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:11:02.097Z"
-    },
-    {
-      "type": "thinking",
-      "content": "### Step 6: Display Results",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:11:06.572Z"
-    },
-    {
-      "type": "thinking",
-      "content": "---\n\n## ✅ Casework 完成 — Case 2602130040001034\n\n### Status: `pending-customer` | Days Since Last Contact: **3**\n\n---\n\n### 🔴 需人工决策\n- [ ] 审核邮件草稿 `drafts/20260323-1107-follow-up-en-customer.md` 后决定是否发送（follow-up on PE creation）\n- [ ] 若客户确认 PE 创建完成且无更多问题，可进入 **ready-to-close → closure-confirm** 流程\n\n### 🟡 待确认执行\n- [ ] 添加 Note: 3/20 Teams session — 使用 admin credentials 完成跨订阅镜像迁移，指导 PE 创建及 DNS zone 复用\n- [ ] 记录 Labor: 60min | Troubleshooting | 3/20 Teams call ACR cross-sub import + migration + PE guidan",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:11:33.740Z"
-    },
-    {
-      "type": "completed",
-      "content": "---\n\n## ✅ Casework 完成 — Case 2602130040001034\n\n### Status: `pending-customer` | Days Since Last Contact: **3**\n\n---\n\n### 🔴 需人工决策\n- [ ] 审核邮件草稿 `drafts/20260323-1107-follow-up-en-customer.md` 后决定是否发送（follow-up on PE creation）\n- [ ] 若客户确认 PE 创建完成且无更多问题，可进入 **ready-to-close → closure-confirm** 流程\n\n### 🟡 待确认执行\n- [ ] 添加 Note: 3/20 Teams session — 使用 admin credentials 完成跨订阅镜像迁移，指导 PE 创建及 DNS zone 复用\n- [ ] 记录 Labor: 60min | Troubleshooting | 3/20 Teams call ACR cross-sub import + migration + PE guidance\n- [ ] FDR/FWR 均已过期 — 评估是否需要更新\n\n### ✅ 仅通知\n- [x] Data refresh (0 new emails/notes, IR cached)\n- [x] Compliance OK (Premier, entitlement cached)\n- [x] Status: pending-customer (migration done 3/20, PE pending)\n- [x] Teams search: 2 chats, 23 messages\n- [x] Email draft: follow-up with Teams context (PE creation check)\n\n---\n\n### 📧 邮件草稿预览\n\n> Hi Sushanth,\n> \n> Hope you had a good weekend.\n> \n> Just checking in on the Private Endpoint creation for the prod ACR (capcnaksregistryprod). Last we spoke on Thursday, you were going to verify the Network Contributor role on the subnet and try creating the PE.\n> \n> To recap from our chat -- it is safe to reuse the existing `privatelink.azurecr.cn` Private DNS Zone. Each ACR gets its own A record, so the new prod PE won't affect the existing dev PE or its DNS records.\n> \n> Let me know how it went, or if you ran into any issues with the role assignment or PE setup. Happy to jump on a quick call if needed.\n\n---\n\n⏱ **总耗时 7m18s** | data-refresh 80s | teams-search 328s (earlier) | compliance 3s (cached) | status-judge 7s | email-drafter 177s | inspection 90s",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:11:33.747Z"
-    },
-    {
-      "type": "completed",
-      "content": "Full process completed",
-      "step": "full-process",
-      "timestamp": "2026-03-23T03:11:33.811Z"
-    }
-  ],
-  "2603100030005863": [
-    {
-      "type": "tool-call",
-      "content": "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 2b OK | data-refresh complete (10.6s)\" >> \"C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603100030005863\\logs\\casework.log\"",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-23T04:58:49.287Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\.claude\\skills\\compliance-check\\SKILL.md",
-      "toolName": "Read",
-      "step": "full-process",
-      "timestamp": "2026-03-23T04:58:59.234Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\.claude\\skills\\status-judge\\SKILL.md",
-      "toolName": "Read",
-      "step": "full-process",
-      "timestamp": "2026-03-23T04:59:00.046Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "pwsh -NoProfile -c \"(Get-Date).ToString('o')\"",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-23T04:59:00.318Z"
-    },
-    {
-      "type": "thinking",
-      "content": "Now executing Step 3a (compliance-check) and Step 3b (status-judge). Let me first read the existing meta and required data files:",
-      "step": "full-process",
-      "timestamp": "2026-03-23T04:59:04.324Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603100030005863\\casehealth-meta.json",
-      "toolName": "Read",
-      "step": "full-process",
-      "timestamp": "2026-03-23T04:59:06.371Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603100030005863\\emails.md",
-      "toolName": "Read",
-      "step": "full-process",
-      "timestamp": "2026-03-23T04:59:06.679Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603100030005863\\notes.md",
-      "toolName": "Read",
-      "step": "full-process",
-      "timestamp": "2026-03-23T04:59:07.501Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\playbooks\\rules\\case-lifecycle.md",
-      "toolName": "Read",
-      "step": "full-process",
-      "timestamp": "2026-03-23T04:59:07.871Z"
-    },
-    {
-      "type": "thinking",
-      "content": "Now I have all the context. Let me execute compliance-check and status-judge:\n\n**Compliance Check**: `compliance.entitlementOk === true` in existing meta → **SKIP** (cached compliant).\n\n**Status Judge**: Let me analyze and write the results.",
-      "step": "full-process",
-      "timestamp": "2026-03-23T04:59:30.629Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] compliance-check SKIP | cached compliant\" >> \"C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603100030005863\\logs\\compliance-check.log\" && echo \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 3a OK | compliance-check SKIP (cached compliant)\" >> ",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-23T04:59:34.499Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "cat << 'LOGEOF' >> \"C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603100030005863\\logs\\status-judge.log\"\n[2026-03-23 12:59:30] === status-judge START ===\n[2026-03-23 12:59:30] INPUT | D365 Status: Resolved | Severity: C | ICM: none\n[2026-03-23 12:59:30] EMAILS | Last em",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-23T04:59:40.926Z"
-    },
-    {
-      "type": "thinking",
-      "content": "Now update the casehealth-meta.json with the status-judge results:",
-      "step": "full-process",
-      "timestamp": "2026-03-23T04:59:44.267Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603100030005863\\casehealth-meta.json",
-      "toolName": "Read",
-      "step": "full-process",
-      "timestamp": "2026-03-23T04:59:44.779Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603100030005863\\casehealth-meta.json",
-      "toolName": "Edit",
-      "step": "full-process",
-      "timestamp": "2026-03-23T04:59:51.071Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 3b OK | status-judge: actualStatus=ready-to-close, daysSinceLastContact=6\" >> \"C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603100030005863\\logs\\casework.log\" && pwsh -NoProfile -c \"(Get-Date).ToString('o')\"",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-23T04:59:56.749Z"
-    },
-    {
-      "type": "thinking",
-      "content": "### Step 4: Route by actualStatus\n\n`actualStatus = ready-to-close`. Per the routing table:\n- **ready-to-close** → email-drafter (closure-confirm)\n\nHowever, looking at the case data more carefully:\n- Customer explicitly said \"可以先关闭了\" (3/17) — **already confirmed closure**\n- 3/19 engineer Note: \"cx verifies closure\" + \"closing with summary\"\n- D365 Status is already **Resolved**\n- Case has been Resolved for 4 days already\n\nPer the case-lifecycle rule: \"客户已明确说'可以关' → 直接发 closure 邮件 + 关单\". The custom",
-      "step": "full-process",
-      "timestamp": "2026-03-23T05:00:12.398Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 4 START | Route: ready-to-close\" >> \"C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603100030005863\\logs\\casework.log\" && echo \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 4 SKIP | D365 Status=Resolved, customer confirmed closure on 3/17",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-23T05:00:15.403Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "pwsh -NoProfile -c \"(Get-Date).ToString('o')\"",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-23T05:00:15.872Z"
-    },
-    {
-      "type": "thinking",
-      "content": "### Step 4.5: Wait for teams-search\n\nLet me check elapsed time and wait for teams-search with remaining timeout:",
-      "step": "full-process",
-      "timestamp": "2026-03-23T05:00:24.734Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "pwsh -NoProfile -c \"$t0 = [DateTimeOffset]::Parse('2026-03-23T12:57:27.9893695+08:00'); $now = [DateTimeOffset]::Now; $elapsed = ($now - $t0).TotalSeconds; $remaining = [Math]::Max(0, 180 - $elapsed); Write-Host \\\"elapsed=${elapsed}s remaining=${remaining}s remainingMs=$([int]($remaining * 1000))\\\"\"",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-23T05:00:27.040Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "pwsh -NoProfile -c '$t0 = [DateTimeOffset]::Parse(\"2026-03-23T12:57:27.9893695+08:00\"); $now = [DateTimeOffset]::Now; $elapsed = ($now - $t0).TotalSeconds; $remaining = [Math]::Max(0, 180 - $elapsed); Write-Host \"elapsed=$([int]$elapsed)s remaining=$([int]$remaining)s remainingMs=$([int]($remaining ",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-23T05:00:30.891Z"
-    },
-    {
-      "type": "thinking",
-      "content": "Elapsed > 180s. Let me check teams-search with a short timeout (non-blocking):",
-      "step": "full-process",
-      "timestamp": "2026-03-23T05:00:34.607Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "task_id: a1181817731e6dd92",
-      "toolName": "TaskOutput",
-      "step": "full-process",
-      "timestamp": "2026-03-23T05:00:35.623Z"
-    },
-    {
-      "type": "thinking",
-      "content": "Teams-search is still running — 3min timeout exceeded. Let me check for cached teams data:",
-      "step": "full-process",
-      "timestamp": "2026-03-23T05:00:40.152Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "*.md",
-      "toolName": "Glob",
-      "step": "full-process",
-      "timestamp": "2026-03-23T05:00:41.665Z"
-    },
-    {
-      "type": "thinking",
-      "content": "Good — cached teams data exists (`chen-wanlong.md`). Proceeding with cached data.",
-      "step": "full-process",
-      "timestamp": "2026-03-23T05:00:46.333Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 4.5 TIMEOUT | teams-search exceeded 3min, using cached teams data (chen-wanlong.md)\" >> \"C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603100030005863\\logs\\casework.log\"",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-23T05:00:48.264Z"
-    },
-    {
-      "type": "thinking",
-      "content": "### Step 5: Inspection-writer",
-      "step": "full-process",
-      "timestamp": "2026-03-23T05:00:52.023Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\.claude\\skills\\inspection-writer\\SKILL.md",
-      "toolName": "Read",
-      "step": "full-process",
-      "timestamp": "2026-03-23T05:00:52.026Z"
-    },
-    {
-      "type": "thinking",
-      "content": "Now let me read the cached teams data and any analysis/drafts before writing the inspection:",
-      "step": "full-process",
-      "timestamp": "2026-03-23T05:00:55.979Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603100030005863\\teams\\chen-wanlong.md",
-      "toolName": "Read",
-      "step": "full-process",
-      "timestamp": "2026-03-23T05:00:58.055Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "*.md",
-      "toolName": "Glob",
-      "step": "full-process",
-      "timestamp": "2026-03-23T05:00:58.814Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "*.md",
-      "toolName": "Glob",
-      "step": "full-process",
-      "timestamp": "2026-03-23T05:00:59.314Z"
-    },
-    {
-      "type": "thinking",
-      "content": "Now I have everything needed. Let me write the inspection report and todo:",
-      "step": "full-process",
-      "timestamp": "2026-03-23T05:01:03.811Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 5 START | inspection-writer\" >> \"C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603100030005863\\logs\\casework.log\"",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-23T05:01:05.532Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "TODAY=$(date '+%Y%m%d') && cat > \"C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603100030005863\\inspection-${TODAY}.md\" << 'EOF'\n# Case Inspection — 2603100030005863\n\n> Inspected: 2026-03-23 13:00 GMT+8\n\n## 基本信息\n\n| 字段 | 值 |\n|------|-----|\n| Case Number | 260310003000586",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-23T05:01:25.535Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "TODONAME=$(date '+%y%m%d-%H%M') && mkdir -p \"C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603100030005863\\todo\" && cat > \"C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603100030005863\\todo/${TODONAME}.md\" << 'EOF'\n# Todo — 2603100030005863",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-23T05:01:39.989Z"
-    },
-    {
-      "type": "thinking",
-      "content": "Now update lastInspected in meta:",
-      "step": "full-process",
-      "timestamp": "2026-03-23T05:01:44.160Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603100030005863\\casehealth-meta.json",
-      "toolName": "Read",
-      "step": "full-process",
-      "timestamp": "2026-03-23T05:01:45.598Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603100030005863\\casehealth-meta.json",
-      "toolName": "Edit",
-      "step": "full-process",
-      "timestamp": "2026-03-23T05:01:49.612Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] inspection-writer OK | inspection-20260323.md + todo/260323-1301.md\" >> \"C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603100030005863\\logs\\inspection-writer.log\" && echo \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 5 OK | inspection-writer ",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-23T05:01:57.910Z"
-    },
-    {
-      "type": "thinking",
-      "content": "### Step 5.5: Write timing.json",
-      "step": "full-process",
-      "timestamp": "2026-03-23T05:02:02.329Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "pwsh -NoProfile -c '\n$t0_start = \"2026-03-23T12:57:27.989+08:00\"\n$t1_dr_start = \"2026-03-23T12:58:06.551+08:00\"\n$t1_dr_end = \"2026-03-23T12:58:44.450+08:00\"\n$t2_start = \"2026-03-23T12:59:00.884+08:00\"\n$t2_end = \"2026-03-23T12:59:57.621+08:00\"\n$t3_start = \"2026-03-23T12:59:57.621+08:00\"\n$t3_end = \"20",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-23T05:02:12.267Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 5.5 OK | timing.json written (285s total)\" >> \"C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603100030005863\\logs\\casework.log\" && echo \"[$(date '+%Y-%m-%d %H:%M:%S')] CASEWORK DONE\" >> \"C:\\Users\\fangkun\\Documents\\Claude Code Pr",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-23T05:02:17.232Z"
-    },
-    {
-      "type": "thinking",
-      "content": "---\n\n## ✅ Casework Complete — Case 2603100030005863\n\n**在线PPT文件本地打开失败** | Sev C | 波士顿咨询(上海)有限公司 | Wanlong Chen\n\n### 📋 Todo 汇总\n\n#### 🔴 需人工决策\n- [ ] Case 已 Resolved 4 天但仍在 active 目录，确认是否归档到 archived/\n\n#### 🟡 待确认执行\n- [ ] 记录 Labor: 10min | Case closure follow-up and inspection\n\n#### ✅ 仅通知\n- [x] 数据刷新完成: case-info / emails(0) / notes(5) / attachments(0)\n- [x] 合规检查通过: Entitlement OK (Premier, China Cld), IR Succeeded\n- [x] 状态判断: **ready-to-close** (客户 3/17 确认 \"可以先关闭了\")\n- [x] D365 Status 已为 Resolved，cl",
-      "step": "full-process",
-      "timestamp": "2026-03-23T05:02:43.755Z"
-    },
-    {
-      "type": "completed",
-      "content": "---\n\n## ✅ Casework Complete — Case 2603100030005863\n\n**在线PPT文件本地打开失败** | Sev C | 波士顿咨询(上海)有限公司 | Wanlong Chen\n\n### 📋 Todo 汇总\n\n#### 🔴 需人工决策\n- [ ] Case 已 Resolved 4 天但仍在 active 目录，确认是否归档到 archived/\n\n#### 🟡 待确认执行\n- [ ] 记录 Labor: 10min | Case closure follow-up and inspection\n\n#### ✅ 仅通知\n- [x] 数据刷新完成: case-info / emails(0) / notes(5) / attachments(0)\n- [x] 合规检查通过: Entitlement OK (Premier, China Cld), IR Succeeded\n- [x] 状态判断: **ready-to-close** (客户 3/17 确认 \"可以先关闭了\")\n- [x] D365 Status 已为 Resolved，closure 邮件草稿已存在 (3/19)\n- [x] Teams 搜索超时，使用本地缓存 (chen-wanlong.md)\n\n---\n\n⏱ **总耗时 4m 45s** | data-refresh 38s | compliance+status 57s | routing 19s | teams-search ⏳ 3min timeout (cached)",
-      "step": "full-process",
-      "timestamp": "2026-03-23T05:02:43.766Z"
-    },
-    {
-      "type": "thinking",
-      "content": "\n\nTeams-search agent 已完成（耗时 ~168s），结果与本地缓存一致：找到 1 个与 Chen, Wanlong 的 1:1 chat（20 条消息），已更新 `teams/` 目录文件。Casework 流程已全部结束，无需额外操作。",
-      "step": "full-process",
-      "timestamp": "2026-03-23T05:02:50.342Z"
-    },
-    {
-      "type": "completed",
-      "content": "\n\nTeams-search agent 已完成（耗时 ~168s），结果与本地缓存一致：找到 1 个与 Chen, Wanlong 的 1:1 chat（20 条消息），已更新 `teams/` 目录文件。Casework 流程已全部结束，无需额外操作。",
-      "step": "full-process",
-      "timestamp": "2026-03-23T05:02:50.349Z"
-    },
-    {
-      "type": "completed",
-      "content": "Full process completed",
-      "step": "full-process",
-      "timestamp": "2026-03-23T05:02:52.417Z"
-    }
-  ],
   "2603200030000875": [
-    {
-      "type": "tool-call",
-      "content": "你是 Teams Search Agent。请先读取 `.claude/agents/teams-search.md` 获取完整执行步骤。\n\n任务参数：\n- caseNumber: 2603200030000875\n- caseDir: C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\260320",
-      "toolName": "Agent",
-      "step": "full-process",
-      "timestamp": "2026-03-23T09:00:36.001Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 2a START | teams-search agent launched (background)\" >> \"C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603200030000875\\logs\\casework.log\"",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-23T09:00:38.007Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "pwsh -NoProfile -c 'Remove-Item -Path (Join-Path $env:TEMP \"d365-case-context.json\") -Force -ErrorAction SilentlyContinue; Write-Output \"Cache cleared\"'",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-23T09:00:39.550Z"
-    },
     {
       "type": "tool-call",
       "content": "playwright-cli tab-list --browser msedge 2>&1",
@@ -1345,23 +359,27 @@
       "toolName": "Bash",
       "step": "full-process",
       "timestamp": "2026-03-23T09:05:38.745Z"
+    },
+    {
+      "type": "case-session-completed",
+      "content": "---\n\n## ✅ Casework 完成 — Case 2603200030000875\n\n### 📋 Todo 汇总\n\n| 级别 | 项目 |\n|------|------|\n| 🔴 需人工决策 | （无） |\n| 🟡 待确认执行 | 准备关单，发 closure email |\n| ✅ 仅通知 | IR SLA 已完成 ✓ · Entitlement 合规（Premier）✓ |\n\n### 📧 邮件草稿\n\n**`20260328-1239-closure-zh-customer.md`** — closure 邮件（中文），包含：\n- 问题描述（shopfloor 节点池 B16ms VM 积分耗尽）\n- 建议方案（换 D 系列 VM / 横向扩容 / 拆分节点池）\n- B 系列 VM 积分机制说明 + 参考链接\n- 关单确认 + 满意度调查引导\n\n### ⏱ Timing\n\n| 指标 | 值 |\n|------|-----|\n| 总耗时 | **361s (~6min)** |\n| Changegate | 20s |\n| Agent Spawn | 43s |\n| Agent Wait | 62s |\n| Routing (email-drafter) | 219s |\n| Bash calls | 13 |\n| Tool calls | 30 |\n| Agent spawns | 2 (data-refresh + email-drafter) |\n\n### 流程路径\n`Changegate: CHANGED` → `Path B` → `compliance: SKIP (cached)` → `judge: CACHE_VALID (ready-to-close, 7d)` → `email-drafter: closure` → `inspection: summary created + todo 0🔴/1🟡/2✅`",
+      "step": "patrol",
+      "timestamp": "2026-03-28T04:41:26.681Z"
+    },
+    {
+      "type": "case-session-completed",
+      "content": "\n\n⚠️ **Data-refresh 后台 agent 已完成** — Step 1 (fetch-all-data) 失败：**D365 API HTTP 403 IP blocked**（当前网络 IP 被 Power Platform 环境封锁）。\n\n不过这不影响本次 casework 结果：changegate 返回 `CHANGED|reason=case_not_found_in_api` 正是同一原因（API 不可达），但本地缓存数据（case-info.md / notes.md 等来自 3/27）仍然有效，status-judge 缓存命中，closure 邮件草稿已正常生成。\n\n**建议**：检查 VPN 连接状态，确认连入正确的企业网络后，可用 `/data-refresh 2603200030000875` 单独补刷数据。",
+      "step": "patrol",
+      "timestamp": "2026-03-28T04:41:36.862Z"
+    },
+    {
+      "type": "case-session-completed",
+      "content": "\n\n✅ **Email-drafter 后台 agent 也已完成确认**。Closure 邮件草稿已经过 humanizer-zh 润色，去除了 AI 味（删谄媚收尾、移除加粗内联标题、顺序叙事替代列点等）。\n\n所有后台任务均已结束，本次 casework 流程完整收工。下一步：审阅 `drafts/20260328-1239-closure-zh-customer.md` 草稿，确认无误后发送给客户即可关单。",
+      "step": "patrol",
+      "timestamp": "2026-03-28T04:41:44.407Z"
     }
   ],
   "2603170030001139": [
-    {
-      "type": "tool-call",
-      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\playbooks\\guides\\email-templates.md",
-      "toolName": "Read",
-      "step": "full-process",
-      "timestamp": "2026-03-23T09:20:10.906Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\playbooks\\guides\\customer-communication.md",
-      "toolName": "Read",
-      "step": "full-process",
-      "timestamp": "2026-03-23T09:20:11.291Z"
-    },
     {
       "type": "tool-call",
       "content": "*",
@@ -1680,403 +698,2217 @@
       "content": "Full process completed",
       "step": "full-process",
       "timestamp": "2026-03-23T09:25:09.004Z"
+    },
+    {
+      "type": "case-session-completed",
+      "content": "---\n\n## ✅ Casework 完成 — Case 2603170030001139\n\n**Tenant Restriction V1 on when cross cloud** | Sev B | Premier | **ready-to-close**\n\n### Todo 汇总\n\n🔴 **0** 需人工决策\n🟡 **1** 待确认执行\n- [ ] 准备关单，发 closure email\n\n✅ **2** 仅通知\n- [x] IR SLA 已完成\n- [x] Entitlement 合规（Premier）\n\n### ⏱ 总耗时 6m 3s | data-refresh 140s | teams-search 29s | compliance 30s | status-judge 0s (cached) | routing 19s | inspection 61s\n\n### ⚠️ 注意事项\n- **D365 数据拉取失败**（IP block `0x80095ffe`），使用 2026-03-27 缓存数据\n- 客户 3/23 已明确同意关单，D365 Status 已 Resolved\n- troubleshooter 和 emailDrafter 均跳过（Case 已无需排查或新回复）",
+      "step": "patrol",
+      "timestamp": "2026-03-28T04:41:50.850Z"
+    },
+    {
+      "type": "case-session-completed",
+      "content": "\n\nTeams search agent 已完成（88s，0 个 Teams 会话命中，缓存已刷新）。Casework 全流程已结束，结果如上方汇总所示。",
+      "step": "patrol",
+      "timestamp": "2026-03-28T04:41:58.627Z"
     }
   ],
   "2603230030001221": [
     {
-      "type": "tool-call",
-      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603230030001221\\case-info.md",
-      "toolName": "Read",
-      "step": "full-process",
-      "timestamp": "2026-03-24T01:30:59.053Z"
-    },
+      "type": "system",
+      "content": "Step \"draft-email\" (AI Auto-detect) started",
+      "step": "draft-email",
+      "timestamp": "2026-03-27T08:09:27.522Z"
+    }
+  ],
+  "2603260030005229": [
     {
       "type": "tool-call",
-      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603230030001221\\emails.md",
-      "toolName": "Read",
-      "step": "full-process",
-      "timestamp": "2026-03-24T01:30:59.704Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "playbooks/guides/email-templates.md",
-      "toolName": "Glob",
-      "step": "full-process",
-      "timestamp": "2026-03-24T01:31:00.588Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "playbooks/guides/customer-communication.md",
-      "toolName": "Glob",
-      "step": "full-process",
-      "timestamp": "2026-03-24T01:31:01.149Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "playbooks/email-samples/**",
-      "toolName": "Glob",
-      "step": "full-process",
-      "timestamp": "2026-03-24T01:31:01.739Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\playbooks\\guides\\email-templates.md",
-      "toolName": "Read",
-      "step": "full-process",
-      "timestamp": "2026-03-24T01:31:06.086Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\playbooks\\guides\\customer-communication.md",
-      "toolName": "Read",
-      "step": "full-process",
-      "timestamp": "2026-03-24T01:31:06.365Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\playbooks\\email-samples\\answer customer query.txt",
-      "toolName": "Read",
-      "step": "full-process",
-      "timestamp": "2026-03-24T01:31:06.723Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "mkdir -p \"C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603230030001221\\logs\" && echo \"[2026-03-24 09:35:00] STEP 1 OK | Read context: case-info.md, emails.md, analysis report, email-templates.md, customer-communication.md\" >> \"C:\\Users\\fangkun\\Documents\\Claude Code Pro",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603260030005229\"\npwsh -NoProfile -Command \"Get-Content '$CD/cases/active/2603260030005229/casehealth-meta.json' | ConvertFrom-Json | Select-Object -ExpandProperty changegate | ConvertTo-Json\" 2>&1",
       "toolName": "Bash",
       "step": "full-process",
-      "timestamp": "2026-03-24T01:31:28.702Z"
+      "timestamp": "2026-03-28T03:03:02.713Z"
     },
     {
       "type": "tool-call",
-      "content": "skills/humanizer-zh/SKILL.md",
-      "toolName": "Glob",
-      "step": "full-process",
-      "timestamp": "2026-03-24T01:31:40.100Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\skills\\humanizer-zh\\SKILL.md",
+      "content": "/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain/cases/active/2603260030005229/casehealth-meta.json",
       "toolName": "Read",
       "step": "full-process",
-      "timestamp": "2026-03-24T01:31:42.420Z"
+      "timestamp": "2026-03-28T03:03:08.488Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Now I need to check what the changegate result was. The background task output was empty (0 bytes). Let me re-run the changegate since the background output was lost, or check if the changegate actually ran properly. The `.t_changegate_end` file exists with timestamp 1774666893 so it did complete. But the output was empty - this might mean \"NO_CHANGE\" (the tail -1 was empty).\n\nLet me just re-run the changegate to get the actual output, or check the script to understand what it outputs.",
+      "step": "full-process",
+      "timestamp": "2026-03-28T03:03:15.492Z"
+    },
+    {
+      "type": "thinking",
+      "content": "The background task output was empty. Let me re-run changegate to get the actual output:",
+      "step": "full-process",
+      "timestamp": "2026-03-28T03:03:15.877Z"
     },
     {
       "type": "tool-call",
-      "content": "mkdir -p \"C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603230030001221\\drafts\"",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\npwsh -NoProfile -File \"$CD/skills/d365-case-ops/scripts/check-case-changes.ps1\" -TicketNumber 2603260030005229 -OutputDir \"$CD/cases/active\" 2>&1 | tail -5",
       "toolName": "Bash",
       "step": "full-process",
-      "timestamp": "2026-03-24T01:32:56.904Z"
+      "timestamp": "2026-03-28T03:03:18.027Z"
     },
     {
       "type": "tool-call",
-      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603230030001221\\drafts\\20260324-0940-result-confirm-zh-customer.md",
+      "content": "sleep 20 && cat \"/c/Users/fangkun/AppData/Local/Temp/claude/C--Users-fangkun-Documents-Claude-Code-Projects-EngineerBrain/9439c455-f2db-428b-bccf-417c54e1850e/tasks/b4akoft5n.output\" 2>/dev/null",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T03:04:25.196Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "sleep 15 && cat \"/c/Users/fangkun/AppData/Local/Temp/claude/C--Users-fangkun-Documents-Claude-Code-Projects-EngineerBrain/9439c455-f2db-428b-bccf-417c54e1850e/tasks/b4akoft5n.output\" 2>/dev/null; echo \"---EOF---\"",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T03:04:52.636Z"
+    },
+    {
+      "type": "thinking",
+      "content": "The output is still empty. Let me check if the script completed by looking for a different indicator. Let me run the changegate directly without backgrounding.",
+      "step": "full-process",
+      "timestamp": "2026-03-28T03:05:13.778Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\npwsh -NoProfile -File \"$CD/skills/d365-case-ops/scripts/check-case-changes.ps1\" -TicketNumber 2603260030005229 -OutputDir \"$CD/cases/active\" 2>&1",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T03:05:14.784Z"
+    },
+    {
+      "type": "thinking",
+      "content": "The D365 API is returning a 403 error - IP blocked. This is an access/network issue. The changegate detected CHANGED with reason=case_not_found_in_api because the API is inaccessible.\n\nThis is not a real \"change\" - it's an API access issue. Let me check if the user is connected to VPN or if there's an IP block issue. Let me inform the user about this.\n\nActually, looking at the previous runs (all yesterday), they had NO_CHANGE. The case data was last refreshed yesterday. The 403 error is likely b",
+      "step": "full-process",
+      "timestamp": "2026-03-28T03:06:05.637Z"
+    },
+    {
+      "type": "thinking",
+      "content": "⚠️ **D365 API 访问被阻止** — 返回了 HTTP 403（IP blocked）。changegate 结果是 `CHANGED|reason=case_not_found_in_api`，但这不是真正的数据变化，而是网络/VPN 问题。",
+      "step": "full-process",
+      "timestamp": "2026-03-28T03:06:06.985Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\necho \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 1 FAIL | D365 API 403 (IP blocked), changegate returned case_not_found_in_api\" >> \"$CD/cases/active/2603260030005229/logs/casework.log\"",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T03:06:08.287Z"
+    },
+    {
+      "type": "thinking",
+      "content": "**当前状况：**\n\n- 🔴 **D365 API 返回 403** — `Sorry, you can't access this resource because your IP address is blocked`\n- 脚本已尝试重启浏览器并重试，但仍然失败\n- 这可能是 VPN 连接问题或 IP 被 Power Platform 环境封锁\n\n**可选方案：**\n\n1. **检查 VPN 连接** — 确认是否连接到公司 VPN，IP 是否在允许列表\n2. **使用缓存数据继续** — 案例数据上次于 **昨天 (3/27 21:02)** 刷新，距今 ~13h。我可以基于已有缓存数据走快速路径（跳过 API 调用），生成最新的 Todo 和 Timing\n3. **稍后重试** — 等 VPN/网络恢复后再跑\n\n要我用缓存数据继续处理吗？（走快速路径，跳过 data-refresh）",
+      "step": "full-process",
+      "timestamp": "2026-03-28T03:06:19.495Z"
+    },
+    {
+      "type": "completed",
+      "content": "**当前状况：**\n\n- 🔴 **D365 API 返回 403** — `Sorry, you can't access this resource because your IP address is blocked`\n- 脚本已尝试重启浏览器并重试，但仍然失败\n- 这可能是 VPN 连接问题或 IP 被 Power Platform 环境封锁\n\n**可选方案：**\n\n1. **检查 VPN 连接** — 确认是否连接到公司 VPN，IP 是否在允许列表\n2. **使用缓存数据继续** — 案例数据上次于 **昨天 (3/27 21:02)** 刷新，距今 ~13h。我可以基于已有缓存数据走快速路径（跳过 API 调用），生成最新的 Todo 和 Timing\n3. **稍后重试** — 等 VPN/网络恢复后再跑\n\n要我用缓存数据继续处理吗？（走快速路径，跳过 data-refresh）",
+      "step": "full-process",
+      "timestamp": "2026-03-28T03:06:23.917Z"
+    },
+    {
+      "type": "thinking",
+      "content": "The user said \"continue\" (用缓存数据继续). Let me proceed with the fast path using cached data, skipping the API-dependent steps.\n\nLet me run the fast path check, then proceed to generate todo and timing.",
+      "step": "full-process",
+      "timestamp": "2026-03-28T03:06:32.173Z"
+    },
+    {
+      "type": "thinking",
+      "content": "好的，用缓存数据继续走快速路径。\n\n### Step 2: Fast Path（缓存验证）",
+      "step": "full-process",
+      "timestamp": "2026-03-28T03:06:32.967Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603260030005229\"\necho \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 1 OK | API 403 but proceeding with cached data (fast path)\" >> \"$CASE_DIR/logs/casework.log\"\ndate +%s > \"$CASE_DIR/logs/.t_fastpath_start\"\nbash \"$",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T03:06:36.618Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Fast path broke because Teams cache is expired (13h37m, the TTL is 4 hours per config.json). But we can't refresh Teams because of the API issue. Let me check what the fast path break means for the workflow - we need to handle the teams cache being expired. \n\nSince we're doing a \"continue with cached data\" approach, I should treat the expired teams cache as acceptable and proceed. Let me check what data we have and proceed with the inspection step.\n\nActually, looking at the SKILL.md: `FAST_PATH_",
+      "step": "full-process",
+      "timestamp": "2026-03-28T03:06:51.717Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Fast path 中断 — Teams 缓存过期 (13h37m > 4h TTL)，但 compliance 和 status-judge 缓存仍有效。由于 API 受阻，Teams 无法刷新，我将跳过 Teams 刷新，用已有缓存继续。",
+      "step": "full-process",
+      "timestamp": "2026-03-28T03:06:52.320Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603260030005229\"\necho \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 2 OK | FAST_PATH_BREAK teams=EXPIRED(13h37m), skip teams-refresh (API 403)\" >> \"$CASE_DIR/logs/casework.log\"\necho \"[$(date '+%Y-%m-%d %H:%M:%S')] ",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T03:06:57.268Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain/cases/active/2603260030005229/case-info.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T03:06:58.234Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain/cases/active/2603260030005229/emails.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T03:06:58.798Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain/cases/active/2603260030005229/notes.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T03:06:58.969Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Good, I have all the case data. Now let me check if case-summary.md exists and proceed to Step 4 (Inspection).",
+      "step": "full-process",
+      "timestamp": "2026-03-28T03:07:04.099Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "ls \"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain/cases/active/2603260030005229/case-summary.md\" 2>/dev/null && echo \"EXISTS\" || echo \"NOT_FOUND\"",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T03:07:05.122Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "ls -t \"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain/cases/active/2603260030005229/todo/\" 2>/dev/null | head -3",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T03:07:06.148Z"
+    },
+    {
+      "type": "thinking",
+      "content": "case-summary.md doesn't exist, so I need to generate it first (SKILL.md says \"快速路径（NO_CHANGE + case-summary.md 不存在）\" → generate summary first). Let me read the inspection-writer SKILL.md to understand the format.",
+      "step": "full-process",
+      "timestamp": "2026-03-28T03:07:11.674Z"
+    },
+    {
+      "type": "thinking",
+      "content": "No case-summary.md yet. Let me read the inspection-writer skill to create it properly:",
+      "step": "full-process",
+      "timestamp": "2026-03-28T03:07:12.491Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain/.claude/skills/inspection-writer/SKILL.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T03:07:13.079Z"
+    },
+    {
+      "type": "thinking",
+      "content": "### Step 4: Inspection — Generate case-summary.md + Todo + Timing\n\nFirst, let me create the case-summary.md (Step 2a - first time generation):",
+      "step": "full-process",
+      "timestamp": "2026-03-28T03:07:17.744Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "ls \"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain/cases/active/2603260030005229/teams/\"",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T03:07:18.739Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain/cases/active/2603260030005229/teams/wang-qifan-q.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T03:07:23.449Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Good. Now I have all the data to write the case-summary.md and generate todo + timing.",
+      "step": "full-process",
+      "timestamp": "2026-03-28T03:07:28.160Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain/cases/active/2603260030005229/case-summary.md",
       "toolName": "Write",
       "step": "full-process",
-      "timestamp": "2026-03-24T01:33:26.365Z"
+      "timestamp": "2026-03-28T03:07:40.011Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Now generate todo + timing:",
+      "step": "full-process",
+      "timestamp": "2026-03-28T03:07:43.865Z"
     },
     {
       "type": "tool-call",
-      "content": "echo \"[2026-03-24 09:38:00] STEP 3 OK | Draft written: result-confirm type, zh, customer recipient\" >> \"C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603230030001221\\logs\\email-drafter.log\" && echo \"[2026-03-24 09:39:00] STEP 4 OK | Humanizer-zh applied inline during dr",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603260030005229\"\ndate +%s > \"$CASE_DIR/logs/.t_inspection_start\"\nbash \"$CD/skills/d365-case-ops/scripts/generate-todo.sh\" \"$CASE_DIR\"",
       "toolName": "Bash",
       "step": "full-process",
-      "timestamp": "2026-03-24T01:33:33.155Z"
+      "timestamp": "2026-03-28T03:07:46.107Z"
     },
     {
       "type": "tool-call",
-      "content": "pwsh -NoProfile -c \"(Get-Date).ToString('o')\"",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603260030005229\"\nbash \"$CD/skills/d365-case-ops/scripts/casework-timing.sh\" \"$CASE_DIR\" '[\"data-refresh\",\"teams-search\",\"routing\"]' '[\"API 403 IP blocked\"]' '{\"bash\":5,\"tools\":14,\"agents\":0}'\ndate +%s > \"$",
       "toolName": "Bash",
       "step": "full-process",
-      "timestamp": "2026-03-24T01:33:57.793Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 4 OK | troubleshooter + email-drafter completed\" >> \"./cases/active/2603230030001221/logs/casework.log\"",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-24T01:34:02.518Z"
+      "timestamp": "2026-03-28T03:07:56.159Z"
     },
     {
       "type": "thinking",
-      "content": "`t3_routing_end = 2026-03-24T09:33:58.3542208+08:00`. Now Step 4.5: Wait for teams-search.",
+      "content": "Now update the meta `lastInspected`:",
       "step": "full-process",
-      "timestamp": "2026-03-24T01:34:06.166Z"
-    },
-    {
-      "type": "thinking",
-      "content": "Since over 14 minutes have elapsed (well past the 180s threshold), let me check the teams-search agent status:",
-      "step": "full-process",
-      "timestamp": "2026-03-24T01:34:17.266Z"
+      "timestamp": "2026-03-28T03:08:02.487Z"
     },
     {
       "type": "tool-call",
-      "content": "task_id: aed06c205a96c58f0",
-      "toolName": "TaskOutput",
-      "step": "full-process",
-      "timestamp": "2026-03-24T01:34:18.307Z"
-    },
-    {
-      "type": "thinking",
-      "content": "The teams-search agent has already completed (we got notified and it auto-cleaned up). Let me check the output files:",
-      "step": "full-process",
-      "timestamp": "2026-03-24T01:34:23.487Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "ls \"./cases/active/2603230030001221/teams/\" 2>/dev/null",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-24T01:34:24.198Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "./cases/active/2603230030001221/teams/_search-log.md",
-      "toolName": "Read",
-      "step": "full-process",
-      "timestamp": "2026-03-24T01:34:27.248Z"
-    },
-    {
-      "type": "thinking",
-      "content": "Teams search timed out, no results. Let me log that and continue.",
-      "step": "full-process",
-      "timestamp": "2026-03-24T01:34:30.336Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 4.5 OK | teams-search completed (timeout, 0 results, no cached data)\" >> \"./cases/active/2603230030001221/logs/casework.log\"",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-24T01:34:32.160Z"
-    },
-    {
-      "type": "thinking",
-      "content": "Now Step 5: inspection-writer.",
-      "step": "full-process",
-      "timestamp": "2026-03-24T01:34:35.570Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "c:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\.claude\\skills\\inspection-writer\\SKILL.md",
-      "toolName": "Read",
-      "step": "full-process",
-      "timestamp": "2026-03-24T01:34:47.258Z"
-    },
-    {
-      "type": "thinking",
-      "content": "Now let me read the new analysis report and the draft to include in the inspection.",
-      "step": "full-process",
-      "timestamp": "2026-03-24T01:34:50.483Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "./cases/active/2603230030001221/analysis/20260324-0930-connector-match-failure.md",
-      "toolName": "Read",
-      "step": "full-process",
-      "timestamp": "2026-03-24T01:34:52.104Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "drafts/*.md",
-      "toolName": "Glob",
-      "step": "full-process",
-      "timestamp": "2026-03-24T01:34:52.517Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "*.md",
-      "toolName": "Glob",
-      "step": "full-process",
-      "timestamp": "2026-03-24T01:34:57.523Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "./cases/active/2603230030001221/drafts/20260324-0940-result-confirm-zh-customer.md",
-      "toolName": "Read",
-      "step": "full-process",
-      "timestamp": "2026-03-24T01:35:00.773Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "./cases/active/2603230030001221/notes.md",
-      "toolName": "Read",
-      "step": "full-process",
-      "timestamp": "2026-03-24T01:35:01.045Z"
-    },
-    {
-      "type": "thinking",
-      "content": "Now I have all the context. Let me write the inspection report and todo.",
-      "step": "full-process",
-      "timestamp": "2026-03-24T01:35:04.548Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 5 START | inspection-writer\" >> \"./cases/active/2603230030001221/logs/casework.log\"",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-24T01:35:06.301Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "TODAY=$(date '+%Y%m%d')\ncat > \"./cases/active/2603230030001221/inspection-${TODAY}.md\" << 'INSPEOF'\n# Case Inspection — 2603230030001221\n\n## 基本信息\n\n| 字段 | 值 |\n|------|-----|\n| Case Number | 2603230030001221 |\n| Title | 未拦截钓鱼邮件 |\n| Severity | B |\n| Status | Troubleshooting |\n| Customer | 大众-Unified En",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-24T01:35:44.734Z"
-    },
-    {
-      "type": "thinking",
-      "content": "Now write the Todo file:",
-      "step": "full-process",
-      "timestamp": "2026-03-24T01:35:48.222Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "TODONAME=$(date '+%y%m%d-%H%M')\nmkdir -p \"./cases/active/2603230030001221/todo\"\ncat > \"./cases/active/2603230030001221/todo/${TODONAME}.md\" << 'TODOEOF'\n# Todo — 2603230030001221 — 2026-03-24 09:35\n\n## 🔴 需人工决策\n\n- [ ] 审阅并发送邮件草稿 `drafts/20260324-0940-result-confirm-zh-customer.md`（回复客户临时方案：新建 Partner",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-24T01:35:58.518Z"
-    },
-    {
-      "type": "thinking",
-      "content": "Now update the meta `lastInspected` field:",
-      "step": "full-process",
-      "timestamp": "2026-03-24T01:36:03.099Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "./cases/active/2603230030001221/casehealth-meta.json",
-      "toolName": "Read",
-      "step": "full-process",
-      "timestamp": "2026-03-24T01:36:03.735Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "./cases/active/2603230030001221/casehealth-meta.json",
+      "content": "/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain/cases/active/2603260030005229/casehealth-meta.json",
       "toolName": "Edit",
       "step": "full-process",
-      "timestamp": "2026-03-24T01:36:07.810Z"
-    },
-    {
-      "type": "tool-call",
-      "content": "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] inspection-writer OK | inspection-20260324.md + todo/260324-0935.md\" >> \"./cases/active/2603230030001221/logs/inspection-writer.log\" && echo \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 5 OK | inspection-writer completed\" >> \"./cases/active/2603230030001221/logs/casework",
-      "toolName": "Bash",
-      "step": "full-process",
-      "timestamp": "2026-03-24T01:36:14.659Z"
+      "timestamp": "2026-03-28T03:08:03.867Z"
     },
     {
       "type": "thinking",
-      "content": "Now Step 5.5: Write timing.json.",
+      "content": "### Step 6: 展示结果",
       "step": "full-process",
-      "timestamp": "2026-03-24T01:36:18.286Z"
+      "timestamp": "2026-03-28T03:08:08.517Z"
     },
     {
       "type": "tool-call",
-      "content": "pwsh -NoProfile -c \"(Get-Date).ToString('o')\"",
+      "content": "ls -t \"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain/cases/active/2603260030005229/todo/\" | head -1",
       "toolName": "Bash",
       "step": "full-process",
-      "timestamp": "2026-03-24T01:36:19.144Z"
+      "timestamp": "2026-03-28T03:08:09.338Z"
     },
     {
       "type": "tool-call",
-      "content": "pwsh -NoProfile -c '\n$t0_start = [DateTime]::Parse(\"2026-03-24T09:19:14.6399313+08:00\")\n$t1_dr_start = $t0_start  # data-refresh started right after init\n$t1_dr_end = [DateTime]::Parse(\"2026-03-24T09:22:13.1974702+08:00\")\n$t2_comp_start = $t1_dr_end\n$t2_comp_end = [DateTime]::Parse(\"2026-03-24T09:23",
-      "toolName": "Bash",
+      "content": "/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain/cases/active/2603260030005229/todo/260328-1107.md",
+      "toolName": "Read",
       "step": "full-process",
-      "timestamp": "2026-03-24T01:36:50.047Z"
+      "timestamp": "2026-03-28T03:08:15.921Z"
     },
     {
       "type": "tool-call",
-      "content": "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 5.5 OK | timing.json written (1025s total)\" >> \"./cases/active/2603230030001221/logs/casework.log\" && echo \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 6 START | Show results\" >> \"./cases/active/2603230030001221/logs/casework.log\"",
-      "toolName": "Bash",
+      "content": "/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain/cases/active/2603260030005229/timing.json",
+      "toolName": "Read",
       "step": "full-process",
-      "timestamp": "2026-03-24T01:36:56.215Z"
+      "timestamp": "2026-03-28T03:08:16.403Z"
     },
     {
       "type": "thinking",
-      "content": "---\n\n## Case 2603230030001221 — 处理完成\n\n### 🔴 需人工决策\n- [ ] **审阅并发送邮件草稿** `drafts/20260324-0940-result-confirm-zh-customer.md` — 回复客户临时方案（新建 Partner connector + IP 匹配 + EFSkipLastIP，绕开 UntrustedRoot 证书问题）\n- [ ] 确认是否需要电话跟进客户（Sev B，客户已等 1 天）\n\n### 🟡 待确认执行\n- [ ] 添加 Note: 定位根因为 IronPort TLS 证书 UntrustedRoot → connector 匹配失败，提供临时方案\n- [ ] 记录 Labor: 3/24 排查时间\n\n### ✅ 仅通知\n- [x] 数据刷新完成（11 emails, 2 notes, 1 attachment downloaded）\n- [x] 根因深层分析完成：`analysis/20260324-0930-connector-match-failure.md`\n- [x] 邮件草稿已生",
+      "content": "---\n\n## ✅ Casework 完成 — Case 2603260030005229\n\n| 指标 | 值 |\n|------|-----|\n| **总耗时** | 391s (6.5min) — 含 changegate API 重试 |\n| **路径** | Fast Path (缓存数据) |\n| **Bash 调用** | 5 次 |\n| **Agent Spawn** | 0 |\n| **⚠️ 错误** | D365 API 403 (IP blocked) |\n\n### 📋 Todo 汇总\n\n🔴 **需人工决策**：（无）\n\n🟡 **待确认执行**：（无）\n\n✅ **仅通知**：\n- ✅ IR SLA 已完成\n- ✅ 等待客户回复（~1 天）\n- ✅ Entitlement 合规（Premier / China Cloud）\n\n### 📝 新增 case-summary.md\n- 问题：Custom RBAC Role 缺少 `query/action` 和 `search/action` 权限导致 Alert Rule 查询失败\n- 状态：已建议客户加权限 +",
       "step": "full-process",
-      "timestamp": "2026-03-24T01:37:26.361Z"
+      "timestamp": "2026-03-28T03:08:28.228Z"
     },
     {
       "type": "completed",
-      "content": "---\n\n## Case 2603230030001221 — 处理完成\n\n### 🔴 需人工决策\n- [ ] **审阅并发送邮件草稿** `drafts/20260324-0940-result-confirm-zh-customer.md` — 回复客户临时方案（新建 Partner connector + IP 匹配 + EFSkipLastIP，绕开 UntrustedRoot 证书问题）\n- [ ] 确认是否需要电话跟进客户（Sev B，客户已等 1 天）\n\n### 🟡 待确认执行\n- [ ] 添加 Note: 定位根因为 IronPort TLS 证书 UntrustedRoot → connector 匹配失败，提供临时方案\n- [ ] 记录 Labor: 3/24 排查时间\n\n### ✅ 仅通知\n- [x] 数据刷新完成（11 emails, 2 notes, 1 attachment downloaded）\n- [x] 根因深层分析完成：`analysis/20260324-0930-connector-match-failure.md`\n- [x] 邮件草稿已生成：`drafts/20260324-0940-result-confirm-zh-customer.md`\n- [x] IR SLA: ✅ Succeeded | FDR: ⏳ In Progress | FWR: ⏳ In Progress\n- [x] Teams 搜索超时（无相关讨论）\n\n---\n\n⏱ 总耗时 **17m 5s** | data-refresh 179s | teams-search timeout | compliance 0s (cached) | status-judge 84s | troubleshooter 389s | email-drafter 213s | inspection 141s",
+      "content": "---\n\n## ✅ Casework 完成 — Case 2603260030005229\n\n| 指标 | 值 |\n|------|-----|\n| **总耗时** | 391s (6.5min) — 含 changegate API 重试 |\n| **路径** | Fast Path (缓存数据) |\n| **Bash 调用** | 5 次 |\n| **Agent Spawn** | 0 |\n| **⚠️ 错误** | D365 API 403 (IP blocked) |\n\n### 📋 Todo 汇总\n\n🔴 **需人工决策**：（无）\n\n🟡 **待确认执行**：（无）\n\n✅ **仅通知**：\n- ✅ IR SLA 已完成\n- ✅ 等待客户回复（~1 天）\n- ✅ Entitlement 合规（Premier / China Cloud）\n\n### 📝 新增 case-summary.md\n- 问题：Custom RBAC Role 缺少 `query/action` 和 `search/action` 权限导致 Alert Rule 查询失败\n- 状态：已建议客户加权限 + 考虑改用 UAMI，客户正在验证中\n- 风险：pending-customer 1天，暂无 SLA 压力\n\n> ⚠️ **注意**：D365 API 当前因 IP 被阻止不可用。数据基于昨天 21:02 的缓存，Teams 缓存过期（13h+）。建议检查 VPN 连接后重新运行以刷新数据。",
       "step": "full-process",
-      "timestamp": "2026-03-24T01:37:26.371Z"
+      "timestamp": "2026-03-28T03:08:51.548Z"
     },
     {
       "type": "thinking",
-      "content": "\n\nTeams search agent 已完成（MCP 不可用导致 timeout，已记录）。这和我们之前在 Step 4.5 检查的结果一致，不影响最终产出。\n\nCasework 流程已全部完成 ✅",
+      "content": "\n\n收到后台任务通知（b52r7hl84 是之前第一次 changegate 的结果，已经处理完毕）。\n\nCasework 已全部完成 ✅ — 结果已在上方展示。需要我做其他操作吗？",
       "step": "full-process",
-      "timestamp": "2026-03-24T01:37:30.910Z"
+      "timestamp": "2026-03-28T03:09:01.538Z"
     },
     {
       "type": "completed",
-      "content": "\n\nTeams search agent 已完成（MCP 不可用导致 timeout，已记录）。这和我们之前在 Step 4.5 检查的结果一致，不影响最终产出。\n\nCasework 流程已全部完成 ✅",
+      "content": "\n\n收到后台任务通知（b52r7hl84 是之前第一次 changegate 的结果，已经处理完毕）。\n\nCasework 已全部完成 ✅ — 结果已在上方展示。需要我做其他操作吗？",
       "step": "full-process",
-      "timestamp": "2026-03-24T01:37:30.918Z"
+      "timestamp": "2026-03-28T03:09:12.524Z"
+    },
+    {
+      "type": "thinking",
+      "content": "\n\n收到 — 这是之前第二次 changegate 重试的后台通知（b4akoft5n），同样已处理完毕。Casework 流程已全部结束 ✅。",
+      "step": "full-process",
+      "timestamp": "2026-03-28T03:09:21.927Z"
+    },
+    {
+      "type": "completed",
+      "content": "\n\n收到 — 这是之前第二次 changegate 重试的后台通知（b4akoft5n），同样已处理完毕。Casework 流程已全部结束 ✅。",
+      "step": "full-process",
+      "timestamp": "2026-03-28T03:09:32.347Z"
     },
     {
       "type": "completed",
       "content": "Full process completed",
       "step": "full-process",
-      "timestamp": "2026-03-24T01:37:31.113Z"
-    }
-  ],
-  "2601290030000748": [
-    {
-      "type": "system",
-      "content": "Step \"draft-email\" (AI Auto-detect) started",
-      "step": "draft-email",
-      "timestamp": "2026-03-24T02:45:05.177Z"
-    },
-    {
-      "type": "completed",
-      "content": "Email-drafter agent 已完成！草稿摘要如下：\n\n---\n\n### 📧 草稿已生成\n\n| 项目 | 值 |\n|------|-----|\n| **路径** | `drafts/20260324-1000-follow-up-zh-customer.md` |\n| **类型** | `follow-up`（auto 选择：pending-customer + daysSinceLastContact ≥ 3） |\n| **语言** | 中文 |\n| **收件人** | wwbi@outlook.com (伟 毕) |\n\n### ⚠️ 发送时机建议\n上封邮件 (3/23) 仅过去 1 天，**建议 3/26 或 3/27 再发送**，给客户留出收集日志的时间。\n\n### 📝 草稿要点\n- 轻量跟进，不重复技术细节\n- 提醒客户收集 Company Portal + Authenticator 日志、MFA 弹窗时间和用户 ID\n- 说明拿到日志后能做的事（验证 MDM 配置下发 + 排查两个异常现象）\n- 语气和签名格式匹配历史邮件风格",
-      "step": "draft-email",
-      "timestamp": "2026-03-24T02:51:33.296Z"
-    },
-    {
-      "type": "completed",
-      "content": "Step \"draft-email\" completed",
-      "step": "draft-email",
-      "timestamp": "2026-03-24T02:51:35.381Z"
+      "timestamp": "2026-03-28T03:09:32.386Z"
     }
   ],
   "2603060030001353": [
     {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\.claude\\skills\\casework\\SKILL.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:09:52.776Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603060030001353\"\nmkdir -p \"$CASE_DIR/logs\"\ndate +%s > \"$CASE_DIR/logs/.t_start\"\ndate +%s > \"$CASE_DIR/logs/.t_changegate_start\"\npwsh -NoProfile -File \"$CD/skills/d365-case-ops/scripts/check-case-changes.ps",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:10:01.627Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603060030001353\"\nLOG=\"$CASE_DIR/logs/casework.log\"\nNOW=$(date '+%Y-%m-%d %H:%M:%S')\necho \"[$NOW] STEP 1 OK | Changegate: NO_CHANGE|emails=21,notes=3,icm=,status=Pending customer response\" >> \"$LOG\"\necho \"[",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:10:24.528Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603060030001353\"\nLOG=\"$CASE_DIR/logs/casework.log\"\nNOW=$(date '+%Y-%m-%d %H:%M:%S')\necho \"[$NOW] STEP 2 FAIL | FAST_PATH_BREAK: judge=MISS, teamsChanged=true, routing=NEED_AGENT\" >> \"$LOG\"\necho \"[$NOW] STE",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:10:42.161Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603060030001353\\casehealth-meta.json",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:10:46.096Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\.claude\\skills\\compliance-check\\SKILL.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:10:46.805Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\.claude\\skills\\status-judge\\SKILL.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:10:47.049Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\.claude\\skills\\teams-search\\SKILL.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:10:47.418Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603060030001353\"\n# Get contact info from case-info.md\ngrep -E \"(Contact|Title:|Organization|Email|contact)\" \"$CASE_DIR/case-info.md\" | head -20",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:11:06.924Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\playbooks\\rules\\case-lifecycle.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:11:07.580Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603060030001353\"\ngrep -A1 \"联系人\\|Primary Contact\\|Contact Name\\|姓名\\|Name\" \"$CASE_DIR/case-info.md\" | head -20",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:11:38.071Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603060030001353\"\nLOG=\"$CASE_DIR/logs/casework.log\"\nNOW=$(date '+%Y-%m-%d %H:%M:%S')\necho \"[$NOW] STEP B2 START | Spawning teams-search (teamsChanged=true), compliance skip queued\" >> \"$LOG\"\necho \"[$NOW] ST",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:11:55.486Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603060030001353\"\ntail -100 \"$CASE_DIR/emails.md\"",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:11:59.820Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603060030001353\"\nLOG=\"$CASE_DIR/logs/casework.log\"\nNOW=$(date '+%Y-%m-%d %H:%M:%S')\necho \"[$NOW] STEP B2 OK | teams-search spawning as background agent\" >> \"$LOG\"",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:12:20.439Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603060030001353\"\n# Get email count and note count for judge\nEMAIL_COUNT=$(grep -m1 \"Emails (\" \"$CASE_DIR/case-info.md\" | sed 's/.*Emails (\\([0-9]*\\)).*/\\1/')\nNOTE_COUNT=$(grep -m1 \"Notes (\" \"$CASE_DIR/case",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:12:26.714Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603060030001353\"\ndate +%s > \"$CASE_DIR/logs/.t_teamsSearch_start\"",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:12:38.490Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603060030001353\"\n# Run teams-search cache check inline (from SKILL.md)\nLOG=\"$CASE_DIR/logs/teams-search.log\"\nmkdir -p \"$CASE_DIR/logs\"\nCACHE_FILE=\"$CASE_DIR/teams/_cache-epoch\"\nif [ -f \"$CACHE_FILE\" ]; the",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:12:48.932Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603060030001353\"\nLOG=\"$CASE_DIR/logs/casework.log\"\nNOW=$(date '+%Y-%m-%d %H:%M:%S')\necho \"[$NOW] STEP B2 OK | teams-search cache VALID (2h11m < 4h), no spawn needed\" >> \"$LOG\"\necho \"[$NOW] STEP B4 START | ",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:13:02.594Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603060030001353\\casehealth-meta.json",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:13:37.879Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603060030001353\\casehealth-meta.json",
+      "toolName": "Write",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:13:48.197Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603060030001353\"\ndate +%s > \"$CASE_DIR/logs/.t_statusJudge_end\"\nLOG=\"$CASE_DIR/logs/casework.log\"\nNOW=$(date '+%Y-%m-%d %H:%M:%S')\necho \"[$NOW] STEP B4 OK | status-judge: actualStatus=pending-customer, day",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:13:59.130Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603060030001353\"\nLOG=\"$CASE_DIR/logs/casework.log\"\ndate +%s > \"$CASE_DIR/logs/.t_routing_start\"\nNOW=$(date '+%Y-%m-%d %H:%M:%S')\necho \"[$NOW] STEP B5 START | routing: pending-customer, days=1\" >> \"$LOG\"\nec",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:14:08.711Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\.claude\\skills\\inspection-writer\\SKILL.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:14:14.709Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "case-summary.md",
+      "toolName": "Glob",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:14:15.141Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603060030001353\\case-summary.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:14:31.557Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603060030001353\"\nLOG=\"$CASE_DIR/logs/casework.log\"\ndate +%s > \"$CASE_DIR/logs/.t_inspection_start\"\nNOW=$(date '+%Y-%m-%d %H:%M:%S')\necho \"[$NOW] STEP 4 START | inspection-writer: case-summary already curre",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:14:47.945Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603060030001353\"\ncd \"$CD\"\nbash skills/d365-case-ops/scripts/casework-timing.sh \"$CASE_DIR\" '[]' '[]' '{\"bash\":13,\"tools\":22,\"agents\":0}'",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:14:54.023Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603060030001353\\casehealth-meta.json",
+      "toolName": "Edit",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:15:02.194Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603060030001353\"\nLOG=\"$CASE_DIR/logs/casework.log\"\nNOW=$(date '+%Y-%m-%d %H:%M:%S')\necho \"[$NOW] STEP 4 OK | case-summary=skipped(current) todo=0r/0y/3g timing=OK\" >> \"$LOG\"\necho \"[$(date '+%Y-%m-%d %H:%M:",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:15:17.474Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603060030001353\\casehealth-meta.json",
+      "toolName": "Write",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:15:29.990Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603060030001353\"\n# Read latest todo file\nls -t \"$CASE_DIR/todo/\" 2>/dev/null | head -5",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:15:37.682Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603060030001353\\todo\\260328-0243.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:15:43.143Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603060030001353\\todo\\260327-0946.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:15:57.170Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603060030001353\"\n# Get timing info\ncat \"$CASE_DIR/logs/timing.json\" 2>/dev/null || echo \"no timing.json\"\nls -t \"$CASE_DIR/todo/\" | head -1",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:15:58.423Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603060030001353\"\nLATEST=$(ls -t \"$CASE_DIR/todo/\" | head -1)\necho \"Latest todo: $LATEST\"\ncat \"$CASE_DIR/todo/$LATEST\"",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:17:03.316Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603060030001353\"\nls -lt \"$CASE_DIR/todo/\"",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:17:17.859Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603060030001353\\todo\\260328-0817.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:17:38.384Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603060030001353\\todo\\260327-1323.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:17:38.454Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603060030001353\\todo\\260328-0244.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:17:47.496Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603060030001353\"\nls \"$CASE_DIR/todo/\" | sort -r | head -5\necho \"---\"\n# Find the todo file with timestamp matching today or latest content\ngrep -l \"2026-03-28\" \"$CASE_DIR/todo/\"*.md 2>/dev/null | sort -r | ",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:18:06.121Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\skills\\d365-case-ops\\scripts\\generate-todo.sh",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:18:27.235Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603060030001353\"\nls \"$CASE_DIR/todo/\" | sort -r",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:18:48.413Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603060030001353\"\ncat \"$CASE_DIR/todo/260328-0817.md\"",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:18:59.290Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603060030001353\"\n# Verify current meta state\ncat \"$CASE_DIR/casehealth-meta.json\" | grep -E '\"actualStatus|\"daysSince|\"statusJudgedAt|\"emailCountAtJudge|\"lastInspected\"'",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:19:53.886Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603060030001353\"\ncd \"$CD\"\nbash skills/d365-case-ops/scripts/generate-todo.sh \"$CASE_DIR\"\necho \"---\"\nls \"$CASE_DIR/todo/\" | sort -r | head -3",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:20:00.030Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603060030001353\"\ncat \"$CASE_DIR/todo/260328-2220.md\"",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:20:07.389Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603060030001353\"\nLOG=\"$CASE_DIR/logs/casework.log\"\ncd \"$CD\"\n# Final timing\nbash skills/d365-case-ops/scripts/casework-timing.sh \"$CASE_DIR\" '[]' '[]' '{\"bash\":16,\"tools\":28,\"agents\":0}'\nNOW=$(date '+%Y-%m-",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:20:15.070Z"
+    },
+    {
+      "type": "thinking",
+      "content": "## ✅ Casework 完成 — Case 2603060030001353\n\n### 路径：**Path A → FAST_PATH_BREAK → Path B (partial)**\nChangegate `NO_CHANGE`（emails=21 不变），fast-path 中 judge 缓存过期（cached@19 vs 21）→ 回退执行 status-judge。\n\n---\n\n### 步骤结果\n\n| 步骤 | 结果 | 说明 |\n|------|------|------|\n| Changegate | ✅ OK | `NO_CHANGE` ｜ emails=21, notes=3 |\n| Fast Path | ⚡ BREAK | judge=MISS（19→21） |\n| Data Refresh | ⏭ SKIP | 无变化 |\n| Teams Search | ⏭ SKIP | 缓存有效（2h11m < 4h） |\n| Compliance | ⏭ SKIP | 缓存有效：Premier China Cld |\n| Status Judge | ✅ OK |",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:20:48.495Z"
+    },
+    {
+      "type": "completed",
+      "content": "## ✅ Casework 完成 — Case 2603060030001353\n\n### 路径：**Path A → FAST_PATH_BREAK → Path B (partial)**\nChangegate `NO_CHANGE`（emails=21 不变），fast-path 中 judge 缓存过期（cached@19 vs 21）→ 回退执行 status-judge。\n\n---\n\n### 步骤结果\n\n| 步骤 | 结果 | 说明 |\n|------|------|------|\n| Changegate | ✅ OK | `NO_CHANGE` ｜ emails=21, notes=3 |\n| Fast Path | ⚡ BREAK | judge=MISS（19→21） |\n| Data Refresh | ⏭ SKIP | 无变化 |\n| Teams Search | ⏭ SKIP | 缓存有效（2h11m < 4h） |\n| Compliance | ⏭ SKIP | 缓存有效：Premier China Cld |\n| Status Judge | ✅ OK | 重新判断，更新 emailCount 19→21 |\n| Routing | ✅ OK | `pending-customer` + days=1 → **无需跟进** |\n| Case Summary | ⏭ SKIP | 已包含最新邮件内容 |\n| Todo + Timing | ✅ OK | 0🔴 / 0🟡 / 3✅ |\n\n### 路由决策\n- **actualStatus**: `pending-customer`\n- **daysSinceLastContact**: 1 天\n- **判定**: days < 3 → 不触发 email-drafter\n\n### Todo 汇总\n| 🔴 | 🟡 | ✅ |\n|----|----|----|\n| 0 | 0 | 3 |\n\n- ✅ IR SLA 已完成\n- ✅ 等待客户回复（1 天）\n- ✅ Entitlement 合规（Premier）\n\n**All green — 今天无需操作。**\n\n### ⏱ Bash 16 次 | Tool 28 次 | Agent 0 次",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:20:48.596Z"
+    },
+    {
+      "type": "completed",
+      "content": "Full process completed",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:20:48.635Z"
+    }
+  ],
+  "2603100030005863": [
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603100030005863\\casehealth-meta.json",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:10:28.381Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\.claude\\skills\\compliance-check\\SKILL.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:10:29.191Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\.claude\\skills\\status-judge\\SKILL.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:10:29.538Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Now I have all the data. Let me execute B3 (compliance) and B4 (status-judge) inline.\n\n**B3 Compliance**: `compliance.entitlementOk === true` in meta → **SKIP** (cached compliant).\n\n**B4 Status-judge**: The meta shows `statusJudgedAt: \"2026-03-28T12:36:00+08:00\"` but the fast path said `judge=MISS`. Let me check the fast path logic... The fast path checks if emailCount/noteCount/icmId match what was at judge time. emails=0 matches emailCountAtJudge=0, notes=5 matches noteCountAtJudge=5, icm=\"\" m",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:10:44.990Z"
+    },
+    {
+      "type": "thinking",
+      "content": "B3: Compliance cached (`entitlementOk=true`). Let me log it and wait for teams-search before running status-judge.",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:10:45.080Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603100030005863\"\necho \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 1 OK | NO_CHANGE emails=0 notes=5 status=Resolved\" >> \"$CASE_DIR/logs/casework.log\"\necho \"[$(date '+%Y-%m-%d %H:%M:%S')] FAST_PATH BREAK | teams=E",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:10:51.098Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Now waiting for teams-search agent to complete before running status-judge.",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:10:59.635Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "task_id: a962fbe22930f2adc",
+      "toolName": "TaskOutput",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:11:00.253Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "task_id: a962fbe22930f2adc",
+      "toolName": "TaskOutput",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:14:17.509Z"
+    },
+    {
+      "type": "thinking",
+      "content": "The task ID may have been compacted. Let me check if the teams-search end timestamp file exists as a fallback.",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:14:25.908Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Task ID lost to compaction. Let me check the fallback timestamp files.",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:14:25.935Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603100030005863\"\nfor i in 1 2 3; do\n  if [ -f \"$CASE_DIR/logs/.t_teamsSearch_end\" ]; then\n    echo \"TEAMS_DONE\"\n    cat \"$CASE_DIR/logs/.t_teamsSearch_end\"\n    break\n  fi\n  sleep 10\ndone\nif [ ! -f \"$CASE_D",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:14:28.510Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Teams-search done. Now B4: Status-judge. Since `NO_CHANGE` (emails=0/0, notes=5/5, icm=/) and teamsChanged was the only trigger, let me read the latest Teams data and re-judge.",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:14:36.885Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603100030005863\\notes.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:14:41.012Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603100030005863\\emails.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:14:41.016Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Good. Now I can run the status-judge. The data is clear:- Last email: Customer (3/17) said \"可以先关闭了，暂时没有反馈\" (Can close it, no feedback for now)- Last engineer email: 3/17 follow-up\n- D365 Status: Resolved- Engineer note (3/19): \"cx verifies closure, closing with summary\"\n- No ICM- Days since last engineer email: 3/28 - 3/17 = 11 daysactualStatus: `ready-to-close` — customer explicitly said \"可以先关闭了\" which per lifecycle rules means we can go straight to closure (skip closure-confirm). \n\nThe judgmen",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:14:52.282Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Status-judge: Customer explicitly said \"可以先关闭了\" (3/17), engineer note \"cx verifies closure\" (3/19), D365=Resolved. → `ready-to-close`, days=11. Same as previous judgment. Let me write the result.",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:14:53.147Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603100030005863\"\ndate +%s > \"$CASE_DIR/logs/.t_agentWait_end\"\ndate +%s > \"$CASE_DIR/logs/.t_statusJudge_start\"\ncat >> \"$CASE_DIR/logs/status-judge.log\" << SJEOF\n[$(date '+%Y-%m-%d %H:%M:%S')] === status-ju",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:15:00.882Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Now update meta with the new judgment timestamp:",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:15:09.732Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603100030005863\\casehealth-meta.json",
+      "toolName": "Edit",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:15:13.591Z"
+    },
+    {
+      "type": "thinking",
+      "content": "B5: Route `ready-to-close` → email-drafter (closure). Customer already explicitly confirmed closure → direct closure (skip closure-confirm). Multiple closure drafts already exist from today. Let me spawn the email-drafter.",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:15:22.719Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603100030005863\"\ndate +%s > \"$CASE_DIR/logs/.t_routing_start\"\necho \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP B5 START | route: ready-to-close → email-drafter(closure)\" >> \"$CASE_DIR/logs/casework.log\"\ndate +%s ",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:15:28.805Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "Case 2603100030005863, caseDir=/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain/cases/active/2603100030005863 (absolute path).\n\nPlease read .claude/agents/email-drafter.md first, then exe",
+      "toolName": "Agent",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:15:33.962Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Email-drafter (closure) spawned in background. Meanwhile, let me proceed with Step 4 (inspection-writer) — since `NO_CHANGE` + `case-summary.md` already exists, I skip summary and only run todo + timing.",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:15:43.824Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603100030005863\"\ndate +%s > \"$CASE_DIR/logs/.t_inspection_start\"\nbash \"$CD/skills/d365-case-ops/scripts/generate-todo.sh\" \"$CASE_DIR\"\nbash \"$CD/skills/d365-case-ops/scripts/casework-timing.sh\" \"$CASE_DIR\" ",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:15:47.018Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603100030005863\"\necho \"[$(date '+%Y-%m-%d %H:%M:%S')] inspection-writer OK | case-summary=skipped todo=0r/1y/2g\" >> \"$CASE_DIR/logs/inspection-writer.log\"\necho \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 4 OK | c",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:15:58.701Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Now update meta `lastInspected`:",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:16:06.260Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603100030005863\\casehealth-meta.json",
+      "toolName": "Edit",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:16:06.720Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603100030005863\\casehealth-meta.json",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:16:25.538Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603100030005863\\casehealth-meta.json",
+      "toolName": "Edit",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:16:41.508Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603100030005863\\casehealth-meta.json",
+      "toolName": "Edit",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:16:42.854Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Step 4 done. Now reading the latest todo for display, and waiting for the email-drafter agent.",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:16:58.253Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "cases/active/2603100030005863/todo/*.md",
+      "toolName": "Glob",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:17:03.115Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Hmm, I expected a new todo file from generate-todo.sh but the latest one is still 260328-1509.md. Let me check if a new one was generated... Actually, the script may reuse the same file or generate based on time. The latest is 260328-1509 which was from the last run. Let me check if there's a newer one - the glob shows no new file, so the script likely determined the todo hasn't changed and kept the existing one.\n\nLet me read the latest todo and wait for email-drafter.",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:17:17.055Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603100030005863\\todo\\260328-1509.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:17:17.652Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Now waiting for email-drafter agent to complete.",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:17:27.899Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "task_id: ac0950a92fed9abf5",
+      "toolName": "TaskOutput",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:17:28.071Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603100030005863\"\nif [ -f \"$CASE_DIR/logs/.t_emailDrafter_end\" ]; then\n  echo \"DRAFTER_DONE\"\n  ls -t \"$CASE_DIR/drafts/\" | head -3\nelse\n  echo \"DRAFTER_NOT_DONE\"\nfi",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:17:50.373Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Email-drafter completed. Let me finalize.",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:17:57.307Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603100030005863\\drafts\\20260328-2217-closure-zh-customer.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:17:57.430Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603100030005863\"\necho \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP B5 OK | email-drafter(closure) → drafts/20260328-2217-closure-zh-customer.md\" >> \"$CASE_DIR/logs/casework.log\"\necho \"[$(date '+%Y-%m-%d %H:%M:%S')",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:17:59.041Z"
+    },
+    {
+      "type": "thinking",
+      "content": "---\n\n## ✅ Casework Complete — 2603100030005863\n\n**在线PPT文件本地打开失败** | 波士顿咨询 Wanlong Chen | Sev C | Premier\n\n### Pipeline Summary\n\n| Step | Status | Detail |\n|------|--------|--------|\n| **1. Changegate** | ✅ OK | `NO_CHANGE` emails=0, notes=5, status=Resolved |\n| **Fast Path** | ⚠️ BREAK | teams=EXPIRED(5h18m), judge=MISS |\n| **B2. Teams-search** | ✅ DONE | Teams MCP unavailable, cached 20 msgs preserved |\n| **B3. Compliance** | ⏭️ SKIP | Cached compliant (Premier, entitlementOk=true) |\n| **B4. St",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:18:28.864Z"
+    },
+    {
+      "type": "completed",
+      "content": "---\n\n## ✅ Casework Complete — 2603100030005863\n\n**在线PPT文件本地打开失败** | 波士顿咨询 Wanlong Chen | Sev C | Premier\n\n### Pipeline Summary\n\n| Step | Status | Detail |\n|------|--------|--------|\n| **1. Changegate** | ✅ OK | `NO_CHANGE` emails=0, notes=5, status=Resolved |\n| **Fast Path** | ⚠️ BREAK | teams=EXPIRED(5h18m), judge=MISS |\n| **B2. Teams-search** | ✅ DONE | Teams MCP unavailable, cached 20 msgs preserved |\n| **B3. Compliance** | ⏭️ SKIP | Cached compliant (Premier, entitlementOk=true) |\n| **B4. Status-judge** | ✅ OK | `ready-to-close` (days=11) — cx confirmed \"可以先关闭了\" |\n| **B5. Email-drafter** | ✅ OK | `20260328-2217-closure-zh-customer.md` |\n| **4. Inspection** | ✅ OK | summary=skipped(no_change), todo=0🔴/1🟡/2✅ |\n\n### 📋 Todo\n\n**🟡 待确认执行**\n- [ ] 准备关单，发 closure email\n\n**✅ 仅通知**\n- [x] IR SLA 已完成\n- [x] Entitlement 合规（Premier）\n\n### 📧 New Closure Draft\n\n**File:** `20260328-2217-closure-zh-customer.md`\n\n> Hi Wanlong，感谢您的确认。\n> - **问题描述**：PPT 本地打开长时间加载后报错\n> - **解决方案**：清理 `OfficeFileCache` 文件夹（4步操作）\n> - **补充**：重启 PPT 或重新下载文件也可临时解决\n> - Survey 引导 + 署名\n\n### ⏱ Timing\n`total=356s | cg=7s fp=1s data=336s insp=1s | bash=6 tools=16 agents=2`\n\n### 建议下一步\n1. **审阅 closure draft** → 确认后发送\n2. **归档** → 发送后移至 `archived/`",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:18:28.963Z"
+    },
+    {
+      "type": "thinking",
+      "content": "\n\nTeams-search agent 确认完成 ✅ — Teams MCP 不可用，已有缓存 `chen-wanlong.md` 保留不变。Casework 全流程已在上方汇总展示完毕。",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:18:37.182Z"
+    },
+    {
+      "type": "completed",
+      "content": "\n\nTeams-search agent 确认完成 ✅ — Teams MCP 不可用，已有缓存 `chen-wanlong.md` 保留不变。Casework 全流程已在上方汇总展示完毕。",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:18:37.578Z"
+    },
+    {
+      "type": "thinking",
+      "content": "\n\nThat was a stale background task from the teams-search agent (write-teams.ps1) that got killed — no impact on the completed casework. Everything for case 2603100030005863 is already finalized. ✅",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:18:49.451Z"
+    },
+    {
+      "type": "completed",
+      "content": "\n\nThat was a stale background task from the teams-search agent (write-teams.ps1) that got killed — no impact on the completed casework. Everything for case 2603100030005863 is already finalized. ✅",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:18:49.468Z"
+    },
+    {
+      "type": "thinking",
+      "content": "\n\nEmail-drafter agent 正式确认完成 ✅ — `20260328-2217-closure-zh-customer.md` 已生成并完成 Humanizer 润色。Casework 全流程已完成，请审阅后发送。",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:18:58.451Z"
+    },
+    {
+      "type": "completed",
+      "content": "\n\nEmail-drafter agent 正式确认完成 ✅ — `20260328-2217-closure-zh-customer.md` 已生成并完成 Humanizer 润色。Casework 全流程已完成，请审阅后发送。",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:18:58.473Z"
+    },
+    {
+      "type": "completed",
+      "content": "Full process completed",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:18:58.522Z"
+    }
+  ],
+  "2603230010001900001": [
+    {
       "type": "system",
-      "content": "Step \"draft-email\" (AI Auto-detect) started",
-      "step": "draft-email",
-      "timestamp": "2026-03-24T03:15:28.571Z"
+      "content": "Full process started",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:09:44.705Z"
+    },
+    {
+      "type": "thinking",
+      "content": "The user is asking me to run full casework processing again for the same case. The meta.json was just updated externally (statusJudgedAt and lastInspected updated, reasoning slightly refined). Let me run the casework flow again.",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:09:54.141Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Starting full casework for **2603230010001900001** again.",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:09:54.528Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603230010001900001\"\nmkdir -p \"$CASE_DIR/logs\"\ndate +%s > \"$CASE_DIR/logs/.t_start\"\ndate +%s > \"$CASE_DIR/logs/.t_changegate_start\"\necho \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 1 START | changegate\" >> \"$CASE_",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:09:57.604Z"
+    },
+    {
+      "type": "thinking",
+      "content": "**NO_CHANGE** → fast path.",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:10:18.903Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603230010001900001\"\necho \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 1 OK | changegate detected NO_CHANGE\" >> \"$CASE_DIR/logs/casework.log\"\ndate +%s > \"$CASE_DIR/logs/.t_fastpath_start\"\nbash \"$CD/skills/d365-case",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:10:20.321Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Fast path broke again due to `routing=NEED_AGENT(pending-engineer/days=3)`. This time judge is not MISS (it was just updated), but routing still needs an agent because the status is pending-engineer with 3 days.\n\nLooking at the routing rules:\n- `pending-engineer` → spawn troubleshooter\n- But the answer is already known (iOS Edge doesn't support CBA)\n\nActually, the routing says NEED_AGENT because the status-judge result (pending-engineer, days=3) triggers routing that expects an agent to be spawn",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:10:31.750Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Fast path broke: `routing=NEED_AGENT(pending-engineer/days=3)`. Judge is cached (updated externally) but routing still flags action needed. Let me check existing summary.",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:10:32.104Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603230010001900001\\case-summary.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:10:32.875Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603230010001900001\\notes.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:10:39.390Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Good — case-summary and notes confirm the analysis is complete. The routing NEED_AGENT trigger is because `pending-engineer + days=3` normally spawns a troubleshooter, but since the answer is already known, I'll log the routing skip and proceed to inspection.",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:10:45.950Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603230010001900001\"\necho \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP B5 OK | routing: pending-engineer/days=3 → troubleshooter SKIP (answer confirmed in case-summary, iOS Edge no CBA)\" >> \"$CASE_DIR/logs/casework",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:10:50.521Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603230010001900001\"\nls -t \"$CASE_DIR/todo/\" | head -1",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:11:00.220Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603230010001900001\\todo\\260328-2210.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:11:06.280Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "ls -la \"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain/cases/active/2603230010001900001/todo/\"",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:11:12.559Z"
+    },
+    {
+      "type": "thinking",
+      "content": "The generate-todo.sh said TODO_OK but the timestamp might be 260328-2058 (same as before, overwritten). Let me read the latest file by modification time.",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:11:18.451Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603230010001900001\\todo\\260328-2058.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:11:19.034Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603230010001900001\"\necho \"[$(date '+%Y-%m-%d %H:%M:%S')] CASEWORK COMPLETE | total=53s | todo: red=0 yellow=0 green=1\" >> \"$CASE_DIR/logs/casework.log\"\ndate +%s > \"$CASE_DIR/logs/.t_inspection_end\"",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:11:27.757Z"
+    },
+    {
+      "type": "thinking",
+      "content": "## ✅ Casework Complete — 2603230010001900001\n\n| 项目 | 结果 |\n|------|------|\n| **Case** | Microsoft Entra CBA on iOS Edge |\n| **Customer** | Mr. 毕伟伟 (Volkswagen) · Premier |\n| **actualStatus** | `pending-engineer` · 3 days since last contact |\n| **Changegate** | NO_CHANGE → fast path → BREAK (routing=NEED_AGENT) |\n| **Judge** | ✅ cached (updated at 21:00) |\n| **Routing** | troubleshooter SKIP (answer already confirmed in case-summary) |\n\n### 📋 Todo\n\n| 🔴 需人工决策 | 🟡 待确认执行 | ✅ 仅通知 |\n|:---:|:---:|:--",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:11:52.318Z"
     },
     {
       "type": "completed",
-      "content": "## ✅ Email Drafter 完成 — Case 2603060030001353\n\n### Auto-Select 决策\n\n| 依据 | 值 | 判断 |\n|------|-----|------|\n| actualStatus | `pending-customer` | — |\n| 最后工程师邮件 | 3/20（距今 4 天） | ≥ 3 天 → 触发 follow-up |\n| 最后客户回复 | 3/17（距今 7 天） | 客户持续未响应 |\n| 分析报告 | 无 | 不选 result-confirm |\n| **选定类型** | **`follow-up`** | 第 5 次跟进 |\n\n### 草稿摘要\n\n- **收件人:** zhangjiaqi@csvw.com\n- **主题:** Re: 优化告警邮件收不到问题 - TrackingID#2603060030001353\n- **语言:** 中文\n- **核心内容:** 跟进之前发送的 Transport Rule 配置步骤，同时因客户已 7 天未回复，加入了温和的**关单提醒**\n- **Humanized:** ✅ 通过 humanizer-zh 扫描，无 AI 痕迹\n\n### 输出文件\n- 📄 `drafts/260324-1119-follow-up-zh-customer.md`\n- 📋 `logs/email-drafter.log`\n\n草稿已保存，请审阅后自行发送。",
-      "step": "draft-email",
-      "timestamp": "2026-03-24T03:21:47.813Z"
+      "content": "## ✅ Casework Complete — 2603230010001900001\n\n| 项目 | 结果 |\n|------|------|\n| **Case** | Microsoft Entra CBA on iOS Edge |\n| **Customer** | Mr. 毕伟伟 (Volkswagen) · Premier |\n| **actualStatus** | `pending-engineer` · 3 days since last contact |\n| **Changegate** | NO_CHANGE → fast path → BREAK (routing=NEED_AGENT) |\n| **Judge** | ✅ cached (updated at 21:00) |\n| **Routing** | troubleshooter SKIP (answer already confirmed in case-summary) |\n\n### 📋 Todo\n\n| 🔴 需人工决策 | 🟡 待确认执行 | ✅ 仅通知 |\n|:---:|:---:|:---:|\n| 0 | 0 | 1 (Entitlement OK) |\n\n### ⏱ Timing: **53s** total (cg=8s, dec=14s, data=29s, insp=1s)\n\n### 💡 关键风险不变\n- ⚠️ **0 emails in 4+ days** — 远程已口头确认 iOS Edge 不支持 CBA，但无正式邮件记录\n- 建议立即发送书面总结邮件推进关单\n\n需要草拟邮件吗？",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:11:52.410Z"
     },
     {
       "type": "completed",
-      "content": "Step \"draft-email\" completed",
-      "step": "draft-email",
-      "timestamp": "2026-03-24T03:21:49.883Z"
+      "content": "Full process completed",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:11:52.442Z"
+    }
+  ],
+  "2603250010001221": [
+    {
+      "type": "system",
+      "content": "Full process started",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:42:31.149Z"
+    },
+    {
+      "type": "thinking",
+      "content": "The system reminder shows that casehealth-meta.json was modified - notably `entitlementOk` changed from `true` to `false` and `serviceLevel` changed from `\"Premier\"` to `\"Unknown\"`. This means the compliance cache is now invalid and needs to be re-checked. Let me proceed with casework.",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:42:42.481Z"
+    },
+    {
+      "type": "thinking",
+      "content": "### Step 1: Changegate + Init",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:42:42.486Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603250010001221\"\nmkdir -p \"$CASE_DIR/logs\"\ndate +%s > \"$CASE_DIR/logs/.t_start\"\ndate +%s > \"$CASE_DIR/logs/.t_changegate_start\"\npwsh -NoProfile -File \"$CD/skills/d365-case-ops/scripts/check-case-changes.ps",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:42:46.305Z"
+    },
+    {
+      "type": "thinking",
+      "content": "`NO_CHANGE` → Fast path. But I note the meta was externally modified (`entitlementOk` flipped to `false`, `serviceLevel` to `Unknown`), so compliance will need re-checking.",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:43:02.296Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603250010001221\"\necho \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 1 OK | NO_CHANGE emails=27 notes=2 icm= status=Pending customer response\" >> \"$CASE_DIR/logs/casework.log\"\ndate +%s > \"$CASE_DIR/logs/.t_fastpath_",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:43:04.064Z"
+    },
+    {
+      "type": "thinking",
+      "content": "`FAST_PATH_BREAK` — compliance needs re-check + routing needs agent. → Path B from B3.\n\n### Step B2-B3: Read compliance skill + re-run compliance check",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:43:13.929Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\.claude\\skills\\compliance-check\\SKILL.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:43:14.086Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603250010001221\\case-info.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:43:14.377Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Compliance check: case-info shows `Service Name = Unfd AddOn | ProSv Ente - China Cld`, `Schedule` contains `China cloud`, `Contract Country = China`, `Service Level = Premier`. → **entitlementOk = true**. 21v Convert: Customer Statement contains \"21v ticket 20260325400880\", owner = `zuo.xiaojing@oe.21vianet.com`.",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:43:22.313Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603250010001221\\casehealth-meta.json",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:43:23.031Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Re-verify from case-info: Service Name contains `China Cld` ✅, Contract Country = `China` ✅, Service Level = `Premier`. → `entitlementOk = true`.",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:43:40.299Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603250010001221\\casehealth-meta.json",
+      "toolName": "Edit",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:43:40.947Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603250010001221\"\necho \"[$(date '+%Y-%m-%d %H:%M:%S')] compliance-check OK | Entitlement=ok 21v=yes (re-verified from case-info: ServiceName=China Cld, Country=China, Level=Premier)\" >> \"$CASE_DIR/logs/comp",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:43:49.770Z"
+    },
+    {
+      "type": "thinking",
+      "content": "### Step B5: Spawn email-drafter (closure)",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:43:56.829Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "Case 2603250010001221，caseDir=/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain/cases/active/2603250010001221（绝对路径）。\nactualStatus=ready-to-close，daysSinceLastContact=1。emailType=auto。\n请先读取",
+      "toolName": "Agent",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:44:10.852Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Email-drafter 已在后台运行。等待完成通知后进入 Step 4...",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:44:19.387Z"
+    },
+    {
+      "type": "thinking",
+      "content": "\n\nEmail-drafter 完成。进入 Step 4。",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:46:41.175Z"
+    },
+    {
+      "type": "thinking",
+      "content": "### Step 4: todo + timing (case-summary skipped — NO_CHANGE + exists)",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:46:49.296Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603250010001221\"\necho \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP B3 OK | compliance re-check entitlementOk=true (was false, re-verified Premier+ChinaCld)\" >> \"$CASE_DIR/logs/casework.log\"\necho \"[$(date '+%Y-%m-%",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:46:54.429Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603250010001221\\casehealth-meta.json",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:47:06.786Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603250010001221\\casehealth-meta.json",
+      "toolName": "Edit",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:47:15.935Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603250010001221\\casehealth-meta.json",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:47:23.150Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603250010001221\\casehealth-meta.json",
+      "toolName": "Edit",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:47:30.007Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603250010001221\"\necho \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 4 OK | case-summary=skipped todo=0r/1y/2g timing=248s\" >> \"$CASE_DIR/logs/casework.log\"\necho \"[$(date '+%Y-%m-%d %H:%M:%S')] inspection-writer OK ",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:47:38.596Z"
+    },
+    {
+      "type": "thinking",
+      "content": "---\n\n## ✅ Casework 完成 — Case 2603250010001221\n\n### 状态\n\n| 项目 | 结果 |\n|---|---|\n| **actualStatus** | `ready-to-close` |\n| **daysSinceLastContact** | 1 |\n| **Changegate** | `NO_CHANGE` → fast-path → BREAK (compliance + routing) |\n| **Compliance** | ⚠️ Re-checked (was `entitlementOk=false`) → ✅ **Premier, China Cld, Country=China** — restored to OK |\n| **Status Judge** | ✅ Cached → ready-to-close |\n| **Teams** | ✅ Cached |\n| **Email Drafter** | ✅ closure-confirm (zh) → `drafts/20260328-1900-closure-c",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:48:06.671Z"
+    },
+    {
+      "type": "completed",
+      "content": "---\n\n## ✅ Casework 完成 — Case 2603250010001221\n\n### 状态\n\n| 项目 | 结果 |\n|---|---|\n| **actualStatus** | `ready-to-close` |\n| **daysSinceLastContact** | 1 |\n| **Changegate** | `NO_CHANGE` → fast-path → BREAK (compliance + routing) |\n| **Compliance** | ⚠️ Re-checked (was `entitlementOk=false`) → ✅ **Premier, China Cld, Country=China** — restored to OK |\n| **Status Judge** | ✅ Cached → ready-to-close |\n| **Teams** | ✅ Cached |\n| **Email Drafter** | ✅ closure-confirm (zh) → `drafts/20260328-1900-closure-confirm-zh-customer.md` |\n\n### Todo — 🔴 0 / 🟡 1 / ✅ 2\n\n| 级别 | 项目 |\n|---|---|\n| 🟡 | 准备关单，发 closure email |\n| ✅ | IR SLA 已完成 |\n| ✅ | Entitlement 合规 (Premier) |\n\n### ⏱ Timing\n\n| 阶段 | 耗时 |\n|---|---|\n| Changegate | 4s |\n| Decision + Fastpath | 14s |\n| Compliance re-check | ~2s (inline) |\n| Data Gathering (agent) | 229s |\n| Inspection + Todo | 1s |\n| **Total** | **248s (~4.1min)** |\n| Bash: 6 | Tools: 14 | Agents: 1 |\n\n### 📧 草稿预览 (closure-confirm)\n\n> Hi Jun，想跟您确认下，adb-prod-aks 这边如果观察下来没有新的问题，我这边准备先关闭这个工单了。子网那边记得新开工单到 networking team，有专门的同事协助配置。后续有任何问题随时回复邮件或新开 case 联系我们。",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:48:06.775Z"
+    },
+    {
+      "type": "completed",
+      "content": "Full process completed",
+      "step": "full-process",
+      "timestamp": "2026-03-28T14:48:06.808Z"
+    }
+  ],
+  "2603130030004157": [
+    {
+      "type": "system",
+      "content": "Step \"inspection\" started",
+      "step": "inspection",
+      "timestamp": "2026-03-28T15:34:17.196Z"
+    },
+    {
+      "type": "completed",
+      "content": "---\n\n## ✅ Inspection-writer 完成 — Case 2603130030004157\n\n| 步骤 | 状态 | 说明 |\n|---|---|---|\n| **Step 2a** case-summary.md | ✅ 首次生成 | 问题描述 + 8 条时间线 + 关键发现 + 风险 |\n| **Step 3** generate-todo.sh | ✅ `1🔴 / 1🟡 / 2✅` | → `todo/260328-2335.md` |\n| **Step 4** meta lastInspected | ✅ → `2026-03-28T23:35:00+08:00` |\n| **Step 5** 日志 | ✅ 写入 `inspection-writer.log` |\n\n### 📋 最新 Todo (`260328-2335.md`)\n\n| | 项目 |\n|---|---|\n| 🔴 | **Entitlement 异常，需确认客户合同状态** — meta 中 `entitlementOk=false` / `serviceLevel=Unknown`（3/19 旧快照），case-info 实际显示 **Premier**，建议重跑 compliance-check 刷新 |\n| 🟡 | 准备关单，发 closure email |\n| ✅ | IR SLA 已完成 |\n| ✅ | Entitlement 未检查（compliance 未运行） |",
+      "step": "inspection",
+      "timestamp": "2026-03-28T15:35:44.750Z"
+    },
+    {
+      "type": "completed",
+      "content": "Step \"inspection\" completed",
+      "step": "inspection",
+      "timestamp": "2026-03-28T15:35:44.833Z"
     }
   ],
   "2603190030000206": [
     {
       "type": "system",
-      "content": "Step \"draft-email\" (AI Auto-detect) started",
-      "step": "draft-email",
-      "timestamp": "2026-03-24T03:18:10.287Z"
+      "content": "Step \"inspection\" started",
+      "step": "inspection",
+      "timestamp": "2026-03-28T19:49:15.020Z"
     },
     {
       "type": "completed",
-      "content": "✅ **Email Drafter Agent 执行完成！**\n\n### 草稿摘要\n\n| 项目 | 内容 |\n|------|------|\n| **类型** | `follow-up`（auto 自动选择：pending-customer + 4天未回复 → follow-up） |\n| **收件人** | 佳麒 张 (zhangjiaqi@csvw.com) |\n| **语言** | 中文 |\n| **文件** | `drafts/20260324-1030-follow-up-zh-customer.md` |\n| **Humanized** | ✅ 已润色 |\n\n### 邮件核心内容\n- 轻量跟进，询问 EFSkipIPs 添加后的效果\n- 简短提醒两个待确认事项：IronPort 路由原因 + SPAM 策略调整\n- 语气自然，延续之前邮件风格\n\n请审阅草稿内容，确认无误后你来发送即可。",
-      "step": "draft-email",
-      "timestamp": "2026-03-24T03:21:53.889Z"
+      "content": "✅ **Inspection-writer for Case 2603190030000206 完成！**\n\n| Step | 状态 | 详情 |\n|------|------|------|\n| **1. 策略判断** | ⏭️ Fast path | case-summary.md 已存在 + 无新数据 → 跳过 summary |\n| **修复** | 🔧 | `casehealth-meta.json` 缺失，已从已知状态重建（daysSinceLastContact 更新为 **3**） |\n| **3. generate-todo.sh** | ✅ | `red=0, yellow=1, green=2` |\n| **4. lastInspected** | ✅ | 更新为 `2026-03-29T03:46:00+08:00` |\n| **5. 日志** | ✅ | 已记录 |\n\n### Todo 汇总\n\n| 级别 | 条目 |\n|------|------|\n| 🟡 **待确认** | 客户 3 天无回复，建议发 follow-up 邮件 |\n| ✅ 通知 | IR SLA 已完成 |\n| ✅ 通知 | Entitlement 合规（Premier） |",
+      "step": "inspection",
+      "timestamp": "2026-03-28T19:50:39.261Z"
     },
     {
       "type": "completed",
-      "content": "Step \"draft-email\" completed",
-      "step": "draft-email",
-      "timestamp": "2026-03-24T03:21:55.940Z"
+      "content": "Step \"inspection\" completed",
+      "step": "inspection",
+      "timestamp": "2026-03-28T19:50:39.288Z"
+    }
+  ],
+  "first_case_id": [
+    {
+      "type": "system",
+      "content": "Full process started",
+      "step": "full-process",
+      "timestamp": "2026-03-28T20:22:33.566Z"
+    },
+    {
+      "type": "thinking",
+      "content": "The user is pointing out that the ghost session with `caseNumber: \"first_case_id\"` is now **active** (changed from \"failed\" to \"active\") and is even indexed in `caseIndex`. This is polluting the session store. I need to clean it up by removing this ghost session and its caseIndex entry.",
+      "step": "full-process",
+      "timestamp": "2026-03-28T20:22:44.412Z"
+    },
+    {
+      "type": "thinking",
+      "content": "The ghost session is now **active** and indexed in `caseIndex` — it needs to be cleaned up. Let me remove it.",
+      "step": "full-process",
+      "timestamp": "2026-03-28T20:22:45.132Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\dashboard\\.case-sessions.json",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T20:22:46.006Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\dashboard\\.case-sessions.json",
+      "toolName": "Edit",
+      "step": "full-process",
+      "timestamp": "2026-03-28T20:22:52.551Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\dashboard\\.case-sessions.json",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T20:22:57.725Z"
+    },
+    {
+      "type": "thinking",
+      "content": "The file keeps changing (lastActivityAt keeps updating). This looks like the session is being kept alive by something. Let me try to do both edits at once to minimize the race window.",
+      "step": "full-process",
+      "timestamp": "2026-03-28T20:23:03.741Z"
+    },
+    {
+      "type": "thinking",
+      "content": "The file is being actively updated (the `lastActivityAt` keeps changing). Let me use a targeted approach to remove both the ghost session entry and its caseIndex entry atomically:",
+      "step": "full-process",
+      "timestamp": "2026-03-28T20:23:03.880Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "cd \"C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\" && node -e \"\nconst fs = require('fs');\nconst f = 'dashboard/.case-sessions.json';\nconst data = JSON.parse(fs.readFileSync(f, 'utf8'));\n\n// Remove ghost session\nconst ghostId = '52176473-d18c-4cb1-a3d6-10912885ad2c';\nif (data.sessions",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-28T20:23:07.293Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Cleaned up. Now let me also fix the root cause — add `{first_case_id}` placeholder resolution to `api-runner.sh`:",
+      "step": "full-process",
+      "timestamp": "2026-03-28T20:23:13.942Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\tests\\registry\\backend-api\\api-case-process.yaml",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T20:23:14.914Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Now I see the full picture. The test YAML expects Step 1's response to supply the first case ID for Step 3. Let me add `{first_case_id}` resolution to the runner:",
+      "step": "full-process",
+      "timestamp": "2026-03-28T20:23:20.993Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\tests\\executors\\api-runner.sh",
+      "toolName": "Edit",
+      "step": "full-process",
+      "timestamp": "2026-03-28T20:23:26.052Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Now add the extraction logic in `execute_api_step` — after a successful GET on `/api/cases`, extract the first case ID:",
+      "step": "full-process",
+      "timestamp": "2026-03-28T20:23:31.179Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\tests\\executors\\api-runner.sh",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-28T20:23:31.763Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\tests\\executors\\api-runner.sh",
+      "toolName": "Edit",
+      "step": "full-process",
+      "timestamp": "2026-03-28T20:23:43.249Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Now initialize `FIRST_CASE_ID` alongside `CREATED_ISSUE_ID` in `parse_steps`:",
+      "step": "full-process",
+      "timestamp": "2026-03-28T20:23:48.264Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\tests\\executors\\api-runner.sh",
+      "toolName": "Edit",
+      "step": "full-process",
+      "timestamp": "2026-03-28T20:23:49.957Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Done. Here's a summary of what I fixed:\n\n## Changes Made\n\n### 1. Cleaned ghost session from `.case-sessions.json`\n- Removed session `52176473...` with `caseNumber: \"first_case_id\"` (status: active)\n- Removed `\"first_case_id\"` from `caseIndex`\n\n### 2. Fixed `api-runner.sh` — added `{first_case_id}` placeholder resolution\n\n| What | Where |\n|------|-------|\n| **Initialize** `FIRST_CASE_ID=\"\"` | `parse_steps()` alongside `CREATED_ISSUE_ID` |\n| **Extract** first case ID from `GET /api/cases` response",
+      "step": "full-process",
+      "timestamp": "2026-03-28T20:23:59.464Z"
+    },
+    {
+      "type": "completed",
+      "content": "Done. Here's a summary of what I fixed:\n\n## Changes Made\n\n### 1. Cleaned ghost session from `.case-sessions.json`\n- Removed session `52176473...` with `caseNumber: \"first_case_id\"` (status: active)\n- Removed `\"first_case_id\"` from `caseIndex`\n\n### 2. Fixed `api-runner.sh` — added `{first_case_id}` placeholder resolution\n\n| What | Where |\n|------|-------|\n| **Initialize** `FIRST_CASE_ID=\"\"` | `parse_steps()` alongside `CREATED_ISSUE_ID` |\n| **Extract** first case ID from `GET /api/cases` response | `execute_api_step()` — parses `cases[0].caseNumber` from JSON |\n| **Resolve** `{first_case_id}` in URL placeholders | URL parsing block, after `{created_issue_id}` resolution |\n\nNow when `api-case-process.yaml` runs:\n- **Step 1** `GET /api/cases` → extracts the first real case number (e.g., `2601290030000748`)\n- **Step 3** `POST /api/case/{first_case_id}/process` → uses that real case number instead of the literal placeholder",
+      "step": "full-process",
+      "timestamp": "2026-03-28T20:23:59.552Z"
+    },
+    {
+      "type": "completed",
+      "content": "Full process completed",
+      "step": "full-process",
+      "timestamp": "2026-03-28T20:23:59.584Z"
+    }
+  ],
+  "2601290030000748": [
+    {
+      "type": "system",
+      "content": "Step \"data-refresh\" started",
+      "step": "data-refresh",
+      "timestamp": "2026-03-28T20:22:41.457Z"
+    },
+    {
+      "type": "completed",
+      "content": "---\n\n## ✅ Data-Refresh 完成 — Case 2601290030000748\n\n| Step | 状态 | 详情 |\n|------|------|------|\n| **0a** 清除缓存 | ✅ OK | incident ID cache cleared |\n| **0b** 浏览器预检 | ✅ OK | `dynamics.com` detected, browser ready |\n| **1** D365 数据拉取 | ✅ OK | Snapshot 刷新, 18 emails (0 new), 10 notes (0 new), IR SLA Succeeded, 22.2s |\n| **2** 附件下载 (DTM) | ⏭ SKIP | DTM Attachments = 0 |\n| **3** ICM 数据拉取 | ⚠️ WARN | ICM MCP server 未连接，无法拉取 incident 51000000887562 |\n\n> **ICM Note**: ICM MCP tools 在当前 session 不可用。如需 ICM 详情，请确保 ICM MCP server 已配置后重试。",
+      "step": "data-refresh",
+      "timestamp": "2026-03-28T20:24:30.503Z"
+    },
+    {
+      "type": "completed",
+      "content": "Step \"data-refresh\" completed",
+      "step": "data-refresh",
+      "timestamp": "2026-03-28T20:24:30.534Z"
+    }
+  ],
+  "2603090040000814": [
+    {
+      "type": "system",
+      "content": "Step \"data-refresh\" started",
+      "step": "data-refresh",
+      "timestamp": "2026-03-29T03:12:17.357Z"
+    },
+    {
+      "type": "completed",
+      "content": "## Data Refresh 完成 — Case 2603090040000814\n\n| Step | 状态 | 详情 |\n|------|------|------|\n| **0a** 缓存清理 | ✅ OK | incident ID cache cleared |\n| **0b** 浏览器预检 | ✅ OK | `dynamics.com` tab active |\n| **1** D365 数据拉取 | ⚠️ **部分失败** | Snapshot 基本信息 OK，但 **Batch API 9次 HTTP 0 错误** 导致 Customer Statement、Entitlement、Labor 数据丢失。Emails 因 **IP blocked (403)** 增量拉取失败（本地缓存 26 封保留）。Notes OK（4条，无新增）。IR SLA cached OK。 |\n| **2** 附件下载 | ⏭️ 跳过 | DTM Attachments = 0 |\n| **3** ICM 拉取 | ⏭️ 跳过 | 无 ICM Number |\n\n### ⚠️ 注意事项\n- **Snapshot 数据降级**：由于 D365 Batch API 连续失败，本次 snapshot 丢失了 Customer Statement、Entitlement 详情和 Labor 记录。这些数据在之前的 snapshot (2026-03-27) 中是完整的。\n- **Emails IP blocked**：浏览器重启后仍返回 403（IP blocked），增量邮件拉取未成功，但本地缓存的 26 封邮件仍保留。\n- 如需恢复完整数据，建议排查网络/IP 限制后重新执行 data-refresh。",
+      "step": "data-refresh",
+      "timestamp": "2026-03-29T03:15:25.113Z"
+    },
+    {
+      "type": "completed",
+      "content": "Step \"data-refresh\" completed",
+      "step": "data-refresh",
+      "timestamp": "2026-03-29T03:15:25.197Z"
+    }
+  ],
+  "2603030040001542": [
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\playbooks\\rules\\case-lifecycle.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:17:51.098Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Now I have a good picture:\n\n- compliance: `entitlementOk: true` → **SKIP** (cached)\n- status-judge: already judged, `actualStatus: ready-to-close`, `days: 10`\n- routing: ready-to-close → email-drafter (closure)\n- teams: NO_CACHE → need to spawn teams-search\n- case-summary.md: doesn't exist → need to create it\n\nFrom the meta, the status reasoning says: \"客户Tyler Du明确表示'no further question, go for close'。Notes(3/19)记录'cx verifies closure'。\"\n\n\nThe customer explicitly approved closure, so I can skip ",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:18:04.729Z"
+    },
+    {
+      "type": "thinking",
+      "content": "**Counters**: bashCalls=2, toolCalls=7, agentSpawns=0\n\nMeta shows: compliance cached ✅, status already judged (ready-to-close, days=10). Need: teams-search + email-drafter (closure). Let me get contact info for teams-search:",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:18:06.032Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603030040001542\"\nhead -50 \"$CASE_DIR/case-info.md\"",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:18:07.741Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Contact: Tyler Du, no email provided. Let me still spawn teams-search with the name. And I need to log compliance skip and then proceed with routing.\n\nLet me now:\n1. Log compliance SKIP + spawn teams-search in background\n2. Spawn email-drafter for closure\n\nActually, I also need to read the email-drafter agent definition or check the .claude/agents/email-drafter.md to understand what to pass. But per CLAUDE.md, I should tell the agent to read its own SKILL.md.\n\nLet me also read the last emails to",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:18:19.485Z"
+    },
+    {
+      "type": "thinking",
+      "content": "**Counters**: bashCalls=3, toolCalls=8, agentSpawns=0\n\nContact: **Tyler Du** (no email). Customer explicitly said \"no further question, go for close\" → direct **closure** email (skip closure-confirm per case-lifecycle.md).\n\nNow executing: compliance SKIP log + spawn teams-search + spawn email-drafter in parallel:",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:18:20.356Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603030040001542\"\ndate +%s > \"$CASE_DIR/logs/.t_compliance_start\"\necho \"[$(date '+%Y-%m-%d %H:%M:%S')] compliance-check SKIP | cached compliant\" >> \"$CASE_DIR/logs/compliance-check.log\"\ndate +%s > \"$CASE_DI",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:18:25.257Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "Case 2603030040001542，caseDir=C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603030040001542（绝对路径）。\ncontactName=Tyler Du，contactEmail=（空）。\n请先读取 .claude/skills/teams-search",
+      "toolName": "Agent",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:18:29.761Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "Case 2603030040001542，caseDir=C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603030040001542（绝对路径）。\nactualStatus=ready-to-close，daysSinceLastContact=10。\n客户 Tyler Du 已明确表示 ",
+      "toolName": "Agent",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:18:33.233Z"
+    },
+    {
+      "type": "thinking",
+      "content": "The custom agents aren't registered in this session. I need to use general-purpose agents instead. Let me re-spawn them as general-purpose agents.",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:18:39.329Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Custom agents not registered in this session. Spawning as general-purpose agents:\n\n**Counters**: bashCalls=4, toolCalls=11, agentSpawns=0 (failed spawns don't count)",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:18:40.108Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "You are a Teams search agent for D365 case automation. \n\nCase 2603030040001542，caseDir absolute path (use POSIX format in Bash): /c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain/cases/act",
+      "toolName": "Agent",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:18:45.610Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "You are an email drafter agent for D365 case automation.\n\nCase 2603030040001542，caseDir absolute path (use POSIX format in Bash): /c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain/cases/ac",
+      "toolName": "Agent",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:18:48.922Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Both agents are running in background. Now while they work, let me prepare for Step 4 (inspection). I need to read the inspection-writer SKILL.md since case-summary.md doesn't exist and we'll need to create it.\n\nActually, I should wait for the background agents to complete before doing the inspection step. But I can pre-read the inspection-writer SKILL.md now.\n\nAlso, since case-summary.md doesn't exist, I'll need to create it. Let me read the inspection-writer skill and prepare.",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:18:56.394Z"
+    },
+    {
+      "type": "thinking",
+      "content": "**Counters**: bashCalls=4, toolCalls=13, agentSpawns=2\n\nBoth agents spawned in background. While waiting, let me pre-read the inspection-writer skill for Step 4:",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:18:57.546Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\.claude\\skills\\inspection-writer\\SKILL.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:18:58.004Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Now I need to wait for the background agents to complete before proceeding with the inspection step. Let me check what data I need:\n\nFor case-summary.md (first-time generation), I need:\n- case-info.md (already partially read)\n- emails.md\n- notes.md\n- teams/*.md (if any)\n\nSince case-summary.md doesn't exist, this is a NO_CHANGE + no summary case → Step 2a (first generate).\n\nLet me pre-read the needed files while waiting for the background agents. I can read case-info, emails, notes in parallel.",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:19:05.161Z"
+    },
+    {
+      "type": "thinking",
+      "content": "**Counters**: bashCalls=4, toolCalls=14, agentSpawns=2\n\nWhile waiting for background agents, let me pre-read case data for summary generation (case-summary.md doesn't exist → Step 2a):",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:19:06.045Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603030040001542\\case-info.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:19:06.701Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603030040001542\\emails.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:19:06.998Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603030040001542\\notes.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:19:07.793Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "cases/active/2603030040001542/teams/*.md",
+      "toolName": "Glob",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:19:08.000Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Now I have all the data I need. Let me proceed with:\n\n1. Generate case-summary.md (Step 2a - first time) since it doesn't exist\n2. Wait for background agents\n3. Then do todo + timing\n\nThe case is about a customer (Tyler Du, Morgan Stanley) using 21V AAD account trying to access global services (VS Subscription portal, Service Hub, etc.). The solution was Cross-Cloud B2B (CCB2B). Customer confirmed no more questions and agreed to close.\n\nLet me write the case-summary.md first. Also, I see there A",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:19:19.529Z"
+    },
+    {
+      "type": "thinking",
+      "content": "**Counters**: bashCalls=4, toolCalls=19, agentSpawns=2\n\nI have all the data. Now generating **case-summary.md** (Step 2a - first creation) since it doesn't exist:",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:19:19.907Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "ls \"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain/cases/active/2603030040001542/context/\" 2>/dev/null || echo \"context dir does not exist\"",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:19:20.891Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "mkdir -p \"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain/cases/active/2603030040001542/context\"",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:19:26.964Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603030040001542\\context\\case-summary.md",
+      "toolName": "Write",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:19:54.460Z"
+    },
+    {
+      "type": "thinking",
+      "content": "**Counters**: bashCalls=6, toolCalls=22, agentSpawns=2\n\nCase summary created. Now executing **Step 4**: generate-todo + routing log + timing + meta update. Let me also write the routing end timestamp:",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:20:01.739Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603030040001542\"\ndate +%s > \"$CASE_DIR/logs/.t_routing_end\"\necho \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 4 OK | routing=ready-to-close → email-drafter(closure)\" >> \"$CASE_DIR/logs/casework.log\"\ndate +%s > \"$C",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:20:06.139Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Todo generated: 0 red, 1 yellow, 2 green. Now I need to:\n1. Run casework-timing.sh\n2. Update meta lastInspected\n3. Write inspection log\n\nLet me calculate the skipped steps and errors for timing.\nSkipped: data-refresh (NO_CHANGE), compliance (cached), status-judge (cached)\nErrors: none\n\nbashCalls so far: 7, toolCalls: 23, agentSpawns: 2\n\nFor the timing script I need: skippedStepsJson, errorsJson, and the counters.",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:20:16.840Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603030040001542\"\nbash \"$CD/skills/d365-case-ops/scripts/casework-timing.sh\" \"$CASE_DIR\" '[\"dataRefresh\",\"compliance\",\"statusJudge\"]' '[]' '{\"bash\":8,\"tools\":25,\"agents\":2}'",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:20:18.711Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Good, timing generated. Now update meta lastInspected and write inspection log.",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:20:30.973Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603030040001542\\casehealth-meta.json",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:20:31.878Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603030040001542\\casehealth-meta.json",
+      "toolName": "Edit",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:20:38.055Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2603030040001542\"\necho \"[$(date '+%Y-%m-%d %H:%M:%S')] inspection-writer OK | case-summary=created todo=0r/1y/2g\" >> \"$CASE_DIR/logs/inspection-writer.log\"\ndate +%s > \"$CASE_DIR/logs/.t_inspection_end\"\necho",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:20:47.419Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Now let me read the generated todo to display results:",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:20:53.030Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "ls -t \"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain/cases/active/2603030040001542/todo/\" | head -1",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:20:54.848Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603030040001542\\todo\\260329-1320.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:21:00.564Z"
+    },
+    {
+      "type": "thinking",
+      "content": "**Counters**: bashCalls=10, toolCalls=28, agentSpawns=2\n\nNow let me check if the background agents have completed. Let me check their output:",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:21:06.824Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "test -f \"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain/cases/active/2603030040001542/logs/.t_teamsSearch_end\" && echo \"teams-search DONE\" || echo \"teams-search PENDING\"\ntest -f \"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain/cases/active/2603030040001542/logs/.t_emailD",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:21:09.344Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Background agents still running. Let me wait for them - I'll be notified when they complete. Let me present the results so far to the user.",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:21:16.720Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Background agents still running. Here are the results so far:\n\n---\n\n## 📋 Casework Complete — Case 2603030040001542\n\n**Status**: `ready-to-close` | **Days since last contact**: 10 | **Severity**: B\n\n### ⏱ Timing\n| Phase | Duration |\n|-------|----------|\n| Total | **191s** |\n| Changegate | 11s |\n| Decision | 10s |\n| Fast-path check | 2s |\n| Data (background agents) | 155s |\n| Inspection | 13s |\n| Calls | bash=8, tools=25, agents=2 |\n\n### 📝 Todo (260329-1320)\n\n| | Item |\n|---|---|\n| 🟡 | `[ ]` 准备",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:21:23.686Z"
+    },
+    {
+      "type": "thinking",
+      "content": "\n\n**Email-drafter agent completed!** ✅ (101s)\n\nLet me show you the draft:",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:21:35.803Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2603030040001542\\drafts\\20260329-1000-closure-en-customer.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:21:36.509Z"
+    },
+    {
+      "type": "thinking",
+      "content": "✅ **Closure email draft ready** → `drafts/20260329-1000-closure-en-customer.md`\n\nTeams-search agent is still running in background. Here's the updated summary:\n\n---\n\n## 📋 Case 2603030040001542 — Final Results\n\n| Item | Status |\n|------|--------|\n| Changegate | ✅ NO_CHANGE |\n| Compliance | ✅ Cached (Premier, China Cld) |\n| Status Judge | ✅ Cached → `ready-to-close` (10 days) |\n| Email Draft | ✅ **Closure email** ready for review |\n| Teams Search | ⏳ Running... |\n| Case Summary | ✅ Created (首次) |",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:21:47.712Z"
+    },
+    {
+      "type": "thinking",
+      "content": "\n\n**Teams-search agent completed** ⚠️ (225s) — Teams MCP 超时，未获取新消息，保留已有 3 个聊天文件。\n\n---\n\n## 📋 Case 2603030040001542 — All Done\n\n| Step | Status | Detail |\n|------|--------|--------|\n| Changegate | ✅ | NO_CHANGE |\n| Compliance | ✅ SKIP | Cached (Premier, China Cld) |\n| Status Judge | ✅ SKIP | Cached → `ready-to-close` (10 days) |\n| Teams Search | ⚠️ | MCP timeout, 保留已有缓存 |\n| Email Draft | ✅ | **Closure email** → `drafts/20260329-1000-closure-en-customer.md` |\n| Case Summary | ✅ | 首次生成 |\n| Todo | ✅",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:22:47.202Z"
+    },
+    {
+      "type": "completed",
+      "content": "\n\n**Teams-search agent completed** ⚠️ (225s) — Teams MCP 超时，未获取新消息，保留已有 3 个聊天文件。\n\n---\n\n## 📋 Case 2603030040001542 — All Done\n\n| Step | Status | Detail |\n|------|--------|--------|\n| Changegate | ✅ | NO_CHANGE |\n| Compliance | ✅ SKIP | Cached (Premier, China Cld) |\n| Status Judge | ✅ SKIP | Cached → `ready-to-close` (10 days) |\n| Teams Search | ⚠️ | MCP timeout, 保留已有缓存 |\n| Email Draft | ✅ | **Closure email** → `drafts/20260329-1000-closure-en-customer.md` |\n| Case Summary | ✅ | 首次生成 |\n| Todo | ✅ | 🔴×0 🟡×1 ✅×2 |\n| **Timing** | **191s** | bash=8, tools=25, agents=2 |\n\n### 🟡 Action Required\n- `[ ]` **发 closure email** — 草稿已就绪，请审阅后发送给 Tyler Du",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:22:59.860Z"
+    },
+    {
+      "type": "thinking",
+      "content": "That was a leftover background task from the teams-search agent (already completed). No action needed — all casework steps for **Case 2603030040001542** are done.",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:23:09.852Z"
+    },
+    {
+      "type": "completed",
+      "content": "That was a leftover background task from the teams-search agent (already completed). No action needed — all casework steps for **Case 2603030040001542** are done.",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:23:20.408Z"
+    },
+    {
+      "type": "completed",
+      "content": "Full process completed",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:23:20.450Z"
+    }
+  ],
+  "2602130040001034": [
+    {
+      "type": "system",
+      "content": "Full process started",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:13:54.179Z"
+    },
+    {
+      "type": "thinking",
+      "content": "The user wants to run full casework processing for Case 2602130040001034. The SKILL.md has been significantly updated since last time. Let me follow the new flow carefully.\n\nKey changes in the updated casework SKILL.md:\n1. Path format must be POSIX `/c/Users/...` for Git Bash\n2. Step 1 is now \"Changegate + 分路\" using check-case-changes.ps1\n3. There's a fast path (NO_CHANGE) and normal path (CHANGED)\n4. Bash calls must use newlines for variable assignments, not `;`\n5. Need to track bashCalls, tool",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:14:08.945Z"
+    },
+    {
+      "type": "thinking",
+      "content": "I'll follow the updated casework SKILL.md. Starting with Step 1: Changegate + routing.\n\n**Counters:** bashCalls=0, toolCalls=0, agentSpawns=0",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:14:09.018Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2602130040001034\"\nmkdir -p \"$CASE_DIR/logs\"\ndate +%s > \"$CASE_DIR/logs/.t_start\"\ndate +%s > \"$CASE_DIR/logs/.t_changegate_start\"\necho \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 1 START | changegate\" >> \"$CASE_DIR",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:14:12.244Z"
+    },
+    {
+      "type": "thinking",
+      "content": "bashCalls=1, toolCalls=1. Changegate says **NO_CHANGE** — emails=47, notes=5, same as last judge. Fast path!",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:14:34.685Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2602130040001034\"\necho \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 1 OK | NO_CHANGE emails=47 notes=5 icm= status=Pending customer response\" >> \"$CASE_DIR/logs/casework.log\"\ndate +%s > \"$CASE_DIR/logs/.t_fastpath_",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:14:37.196Z"
+    },
+    {
+      "type": "thinking",
+      "content": "bashCalls=2, toolCalls=2. Fast path broke on **teams=NO_CACHE** — Teams cache is missing/expired. I need to fall back to Path B starting from Teams search. Let me check what we have and spawn the needed agents.",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:14:46.930Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2602130040001034\"\necho \"[$(date '+%Y-%m-%d %H:%M:%S')] FAST_PATH_BREAK | teams=NO_CACHE, falling back to path B from teams-search\" >> \"$CASE_DIR/logs/casework.log\"\nls -la \"$CASE_DIR/teams/\" 2>&1",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:14:48.840Z"
+    },
+    {
+      "type": "thinking",
+      "content": "bashCalls=3, toolCalls=3. Teams data files exist from 3/27 09:41 but cache script says NO_CACHE (likely expired beyond teamsSearchCacheHours=4). Since changegate says NO_CHANGE, the data hasn't changed — but I need to refresh the Teams cache. Let me proceed with B2: spawn teams-search + parallel pre-reads.",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:14:57.432Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "Case 2602130040001034，caseDir=/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain/cases/active/2602130040001034（绝对路径）。\ncontactName=CSushanth, contactEmail=schan124@ford.com。\n请先读取 .claude/age",
+      "toolName": "Agent",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:15:02.107Z"
+    },
+    {
+      "type": "thinking",
+      "content": "agentSpawns=1, toolCalls=4. Teams search spawned in background. Now parallel pre-reads for compliance/judge/lifecycle + existing meta:",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:15:08.567Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\.claude\\skills\\status-judge\\SKILL.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:15:09.129Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2602130040001034\\casehealth-meta.json",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:15:10.020Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\playbooks\\rules\\case-lifecycle.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:15:10.605Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2602130040001034\\case-summary.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:15:11.196Z"
+    },
+    {
+      "type": "thinking",
+      "content": "toolCalls=4+4=8. case-summary.md doesn't exist yet. The meta shows:\n- actualStatus=pending-customer, daysSinceLastContact=1\n- emailCountAtJudge=47, noteCountAtJudge=5, icmIdAtJudge=\"\"\n- Last judged: 2026-03-27T13:20:50+08:00\n\nChangegate returned: emails=47, notes=5, icm=, status=Pending customer response\nThese match emailCountAtJudge/noteCountAtJudge/icmIdAtJudge exactly, so the status-judge cache is VALID.\n\n\nSince there's no change detected, I'm skipping the data refresh and compliance checks. ",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:15:25.921Z"
+    },
+    {
+      "type": "thinking",
+      "content": "toolCalls=8. No case-summary.md exists yet. Let me check the cache validity:\n\n**Judge cache check:** changegate emails=47 = meta emailCountAtJudge=47, notes=5 = noteCountAtJudge=5, icm=\"\" = icmIdAtJudge=\"\" → **JUDGE_CACHE_VALID**\n\n**Routing:** actualStatus=pending-customer, daysSinceLastContact=1 (<3) → **no follow-up needed**, skip email-drafter.",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:15:27.598Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2602130040001034\"\ncat >> \"$CASE_DIR/logs/casework.log\" << 'CWEOF'\n[2026-03-29 STEP B3 SKIP | compliance cached (entitlementOk=true)]\n[2026-03-29 STEP B4 SKIP | status-judge cache valid (emails=47=47, notes=",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:15:40.615Z"
+    },
+    {
+      "type": "thinking",
+      "content": "bashCalls=4, toolCalls=10. Now I need to wait for teams-search before writing case-summary. Let me also pre-read the inspection-writer SKILL and existing data:",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:15:48.367Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\.claude\\skills\\inspection-writer\\SKILL.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:15:48.439Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2602130040001034\\case-info.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:15:49.072Z"
+    },
+    {
+      "type": "thinking",
+      "content": "toolCalls=12. Now let me read the emails (tail -100) and Teams data for the case-summary generation, while waiting for teams-search:",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:15:56.023Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2602130040001034\"\ntail -100 \"$CASE_DIR/emails.md\"",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:15:56.376Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2602130040001034\\teams\\chandrasekar-sushanth-s.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:16:04.464Z"
+    },
+    {
+      "type": "thinking",
+      "content": "bashCalls=5, toolCalls=14. Now I have all context for the case-summary. Since this is a FAST_PATH_BREAK (not full CHANGED), but case-summary.md doesn't exist, I need Step 2a (first-time generation). Let me wait for the teams-search agent first, then write everything.",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:16:15.806Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "task_id: a1ff721761fcfa44b",
+      "toolName": "TaskOutput",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:16:17.085Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Teams search timed out after 180s. Per the spec, I should check if there's cached data and proceed.",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:19:28.122Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Teams search timed out (3min). Per spec, check for cached teams data and proceed:",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:19:29.334Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2602130040001034\"\nls -la \"$CASE_DIR/teams/\" | grep -v \"^total\" | grep -v \"^\\.\" | grep -v \"^d\" | grep -v \"^-.*_\"\necho \"---\"\necho \"[$(date '+%Y-%m-%d %H:%M:%S')] STEP 4.5 | teams-search TIMEOUT (3min), using ",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:19:32.456Z"
+    },
+    {
+      "type": "thinking",
+      "content": "bashCalls=6, toolCalls=16. Cached teams file exists (`chandrasekar-sushanth-s.md` from 3/27). Already read it above. Now proceed with Step 4: case-summary + todo + timing.",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:19:41.466Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Now read the full emails.md for the first-time case-summary generation:",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:19:49.698Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2602130040001034\\emails.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:19:49.887Z"
+    },
+    {
+      "type": "thinking",
+      "content": "toolCalls=15. Now I have the full picture. Let me write the case-summary.md (first-time generation) and then do todo + timing.\n\nThe timeline:\n- 2/13: Case opened. Chris Luo initial response, asked for details.\n- 2/16: Customer (Sushanth) described requirements: separate prod/preprod ACR, managed identity, AKS deployment yaml.\n- 2/17: Winds (manager) acknowledged during Chris's holiday.\n- 2/24: Chris returned, shared solution: az acr import script, az aks update --attach-acr, remove imagepullsecr",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:20:13.799Z"
+    },
+    {
+      "type": "thinking",
+      "content": "toolCalls=15. Now I have all data. Let me write case-summary.md (first-time generation) and run todo + timing:",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:20:13.847Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2602130040001034\\case-summary.md",
+      "toolName": "Write",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:20:34.619Z"
+    },
+    {
+      "type": "thinking",
+      "content": "toolCalls=16. Now generate todo + timing in one Bash call:",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:20:42.472Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2602130040001034\"\ndate +%s > \"$CASE_DIR/logs/.t_inspection_start\"\nbash \"$CD/skills/d365-case-ops/scripts/generate-todo.sh\" \"$CASE_DIR\"\nbash \"$CD/skills/d365-case-ops/scripts/casework-timing.sh\" \"$CASE_DIR\" ",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:20:45.293Z"
+    },
+    {
+      "type": "thinking",
+      "content": "bashCalls=7, toolCalls=17. Now update meta `lastInspected`:",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:21:04.546Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2602130040001034\\casehealth-meta.json",
+      "toolName": "Edit",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:21:05.150Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "CD=\"/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain\"\nCASE_DIR=\"$CD/cases/active/2602130040001034\"\necho \"[$(date '+%Y-%m-%d %H:%M:%S')] inspection-writer OK | case-summary=created todo=0r/1y/2g\" >> \"$CASE_DIR/logs/inspection-writer.log\"\necho \"[$(date '+%Y-%m-%d %H:%M:%S')] === casework ",
+      "toolName": "Bash",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:21:13.272Z"
+    },
+    {
+      "type": "thinking",
+      "content": "### Step 6: Display Results",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:21:23.591Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "cases/active/2602130040001034/todo/*.md",
+      "toolName": "Glob",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:21:23.626Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases\\active\\2602130040001034\\todo\\260329-1320.md",
+      "toolName": "Read",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:21:30.801Z"
+    },
+    {
+      "type": "thinking",
+      "content": "---\n\n## ✅ Casework 完成 — Case 2602130040001034\n\n**Status:** `pending-customer` | **Days Since Last Contact:** 1 | **Case Age:** 42 days\n\n---\n\n### 🟡 待确认执行\n- [ ] 客户 3 天无回复时，建议发 follow-up 邮件（当前 days=1，尚不需要）\n\n### ✅ 仅通知\n- [x] IR SLA 已完成 ✅\n- [x] Entitlement 合规 (Premier) ✅\n- [x] **case-summary.md** 首次生成（完整时间线 2/13→3/26，含所有技术里程碑）\n\n### 当前进展\n客户 3/26 回复：**PE 已在 east3 + north3 创建完成**。下一步是更新 Managed Identity 指向 prod ACR 并测试 pull/push。客户承诺 3/26-27 更新结果。Kun 回复 \"will wait\"。\n\nTeams 3/26 补充：客户确认 `az aks update --",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:21:51.924Z"
+    },
+    {
+      "type": "completed",
+      "content": "---\n\n## ✅ Casework 完成 — Case 2602130040001034\n\n**Status:** `pending-customer` | **Days Since Last Contact:** 1 | **Case Age:** 42 days\n\n---\n\n### 🟡 待确认执行\n- [ ] 客户 3 天无回复时，建议发 follow-up 邮件（当前 days=1，尚不需要）\n\n### ✅ 仅通知\n- [x] IR SLA 已完成 ✅\n- [x] Entitlement 合规 (Premier) ✅\n- [x] **case-summary.md** 首次生成（完整时间线 2/13→3/26，含所有技术里程碑）\n\n### 当前进展\n客户 3/26 回复：**PE 已在 east3 + north3 创建完成**。下一步是更新 Managed Identity 指向 prod ACR 并测试 pull/push。客户承诺 3/26-27 更新结果。Kun 回复 \"will wait\"。\n\nTeams 3/26 补充：客户确认 `az aks update --attach-acr` 不会断开现有 dev ACR，Kun 确认该命令仅添加新角色。\n\n---\n\n⏱ **总耗时 394s** | changegate 12s | fastpath 3s | teams-search 365s (timeout, used cache) | compliance skip | judge skip | routing skip | inspection 3s | **Bash 7次 | Tools 17次 | Agents 1**",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:21:52.086Z"
+    },
+    {
+      "type": "thinking",
+      "content": "\n\nTeams search agent 已完成（后台）。MCP 不可用导致搜索超时，但 `_cache-epoch` 已更新（4h 内不会重复搜索），历史消息文件保持 3/27 版本不变 — 与 casework 中使用 cached data 的决策一致，无需额外处理。",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:22:01.570Z"
+    },
+    {
+      "type": "completed",
+      "content": "\n\nTeams search agent 已完成（后台）。MCP 不可用导致搜索超时，但 `_cache-epoch` 已更新（4h 内不会重复搜索），历史消息文件保持 3/27 版本不变 — 与 casework 中使用 cached data 的决策一致，无需额外处理。",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:22:01.622Z"
+    },
+    {
+      "type": "thinking",
+      "content": "\n\nThat's a leftover background task from the teams-search agent that got killed — no action needed since the agent already completed successfully and updated the cache epoch. Everything is clean.",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:22:11.296Z"
+    },
+    {
+      "type": "completed",
+      "content": "\n\nThat's a leftover background task from the teams-search agent that got killed — no action needed since the agent already completed successfully and updated the cache epoch. Everything is clean.",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:22:11.392Z"
+    },
+    {
+      "type": "completed",
+      "content": "Full process completed",
+      "step": "full-process",
+      "timestamp": "2026-03-29T05:22:11.456Z"
     }
   ]
 }

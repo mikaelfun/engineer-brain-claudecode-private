@@ -1,0 +1,59 @@
+id: "wf-iss038-impl-status"
+name: "ISS-038 — conductor:implement 完成后 issue 状态为 implemented（非 done）"
+category: "workflow-e2e"
+source: "ISS-038 / .claude/commands/conductor/implement.md / dashboard/src/services/conductor-reader.ts"
+description: |
+  验证 conductor:implement 完成（track status=complete）后，
+  issue 状态派生为 'implemented'（不是 'done'）。
+  只有通过 conductor:verify 后才能变为 'done'。
+  使用源码检查方式，验证 deriveIssueStatus 逻辑和文档一致。
+safety_level: "safe"
+priority: "high"
+tags: ["issue-lifecycle", "conductor", "status", "ISS-038"]
+
+source_type: "issue-driven"
+issueId: "ISS-038"
+trackId: "mark-done-btn_20260321"
+
+steps:
+  # Step 1: 验证 conductor-reader.ts 中的 deriveIssueStatus 逻辑
+  - action: "run_bash"
+    params:
+      command: "grep -n 'implemented\\|complete.*verif\\|status.*complete' dashboard/src/services/conductor-reader.ts"
+      cwd: "{project_root}"
+    safety_check: "scripts.safe[read-only]"
+
+  # Step 2: 验证 implement.md 文档明确说明 complete+no verification → implemented
+  - action: "run_bash"
+    params:
+      command: "grep -n 'implemented\\|complete.*verif\\|verification' .claude/commands/conductor/implement.md | head -20"
+      cwd: "{project_root}"
+    safety_check: "scripts.safe[read-only]"
+
+  # Step 3: 验证不存在直接写 issues/xxx.json status 的代码（不绕过 derive 机制）
+  - action: "run_bash"
+    params:
+      command: "grep -rn 'status.*=.*done\\|status.*done' .claude/commands/conductor/implement.md | head -10"
+      cwd: "{project_root}"
+    safety_check: "scripts.safe[read-only]"
+
+assertions:
+  # AC1: conductor-reader.ts 包含 implemented 状态派生逻辑
+  - type: "stdout_contains"
+    target: "step1"
+    expected: "implemented"
+    description: "conductor-reader.ts 必须包含 implemented 状态判断"
+
+  # AC2: complete + no verification → implemented (not done)
+  - type: "stdout_contains"
+    target: "step2"
+    expected: "implemented"
+    description: "implement.md 必须说明 complete+no verification 派生为 implemented"
+
+  # AC3: implement 命令不直接设置 done 状态
+  - type: "stdout_not_contains"
+    target: "step3"
+    expected: "status.*done"
+    description: "implement 命令完成时不应直接设置 done 状态，只有 verify 后才能 done"
+
+timeout_seconds: 30

@@ -34,6 +34,8 @@
 | [Fix SSE Duplicate Messages](./tracks/sse-dup-msg-fix_20260322/index.md) | Pending | 0/5 tasks |
 | [Dashboard Patrol 实时进度展示](./tracks/patrol-progress-ui_20260327/index.md) | Pending | 0/9 tasks |
 
+| [Verify Redesign](./tracks/verify-redesign_20260329/index.md) | Pending | 0/9 tasks |
+
 ## All Tracks
 
 - [Track List](./tracks.md)

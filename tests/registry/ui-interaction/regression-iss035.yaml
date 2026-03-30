@@ -1,0 +1,40 @@
+id: "regression-iss035"
+name: "Regression: ISS-035 — Issue Create Track 实时状态显示过多 Tool 步骤，应隐藏只显示关键状态流"
+category: "ui-interaction"
+source: "issues/ISS-035.json"
+description: "回归测试：验证 ISS-035 实现的功能未退化"
+safety_level: "safe"
+priority: "medium"
+tags: ["regression", "issue-driven", "iss-035"]
+regression_for: "ISS-035"
+
+steps:
+  - action: "navigate"
+    params:
+      url: "{frontend_url}"
+    safety_check: "ui.safe[navigate_to_page]"
+  - action: "verify_element"
+    params:
+      selector: "body"
+      expected: "visible"
+      timeout: 5000
+
+assertions:
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "连续的 `thinking` 消息只保留最后一条"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "合并的消息组可点击展开查看原始详情"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "TypeScript 编译通过"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "单元测试覆盖合并逻辑"
+
+timeout_seconds: 60

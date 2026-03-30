@@ -1,0 +1,313 @@
+# Synthetic Case Profiles
+# Used by generator.sh to create test case directories
+# Each profile defines field values and data volumes for synthetic case generation
+#
+# Usage: generator.sh <profile-name> [seed]
+# Output: tests/fixtures/synthetic/generated/syn-{profile}-{hash}/
+
+# ─────────────────────────────────────────────────────────
+# Base defaults — profiles inherit and override
+# ─────────────────────────────────────────────────────────
+defaults:
+  severity: "B"
+  status: "Active"
+  sap: "Azure / Identity / MFA"
+  assignedTo: "fangkun@microsoft.com"
+  origin: "Web"
+  timezone: "China Standard Time"
+  country: "China"
+  caseAge: 14
+  activeHours: 8
+  primaryContact:
+    name: "Zhang Wei"
+    email: "zhangwei@contoso.com"
+    phone: "+86-10-12345678"
+    preferredMethod: "Email"
+  customer: "Contoso Ltd."
+  entitlement:
+    serviceLevel: "Premier"
+    serviceName: "Unfd AddOn | ProSv Ente - China Cld"
+    schedule: "Contoso-2026-Premier-China (SCH-00123456)"
+    contractCountry: "China"
+  customerStatement: "我们的 Azure 环境遇到了一些问题，需要技术支持帮忙排查。"
+  icm:
+    linked: false
+    incidentId: null
+    severity: null
+  emails:
+    count: 6
+    sentCount: 3
+    receivedCount: 3
+    lastSentDaysAgo: 2
+    hasInlineImages: false
+    hasExternal: true
+  notes:
+    count: 4
+    hasSystemNotes: true
+  labor:
+    entries: 2
+    totalMinutes: 120
+  casehealthMeta:
+    fwr: { status: "In Progress", remaining: "3d 2h" }
+    fdr: { status: "In Progress", remaining: "5d 0h" }
+    irSla: { status: "Succeeded", completedOn: "2026-03-15T10:00:00Z" }
+    compliance:
+      entitlementOk: true
+      is21vConvert: false
+      warnings: []
+    actualStatus: "pending-customer"
+    daysSinceLastContact: 2
+    statusReasoning: "最后邮件是工程师请求日志，客户尚未回复 → pending-customer"
+
+# ─────────────────────────────────────────────────────────
+# Profile Definitions
+# ─────────────────────────────────────────────────────────
+profiles:
+
+  # ── 基础场景 ──────────────────────────────────────────
+
+  normal:
+    description: "标准 case — 中等数据量，合规，pending-customer"
+    # Inherits all defaults, no overrides needed
+
+  empty:
+    description: "空 case — 刚创建，无邮件/笔记/labor"
+    overrides:
+      severity: "C"
+      caseAge: 0
+      activeHours: 0
+      customerStatement: "New case, no details yet."
+      emails:
+        count: 0
+        sentCount: 0
+        receivedCount: 0
+        lastSentDaysAgo: null
+        hasInlineImages: false
+        hasExternal: false
+      notes:
+        count: 1
+        hasSystemNotes: true
+      labor:
+        entries: 0
+        totalMinutes: 0
+      casehealthMeta:
+        fwr: { status: "In Progress", remaining: "7d 0h" }
+        fdr: { status: "In Progress", remaining: "14d 0h" }
+        irSla: { status: "In Progress", remaining: "3d 23h 50m" }
+        actualStatus: "new"
+        daysSinceLastContact: 0
+        statusReasoning: "刚创建的 case，无任何交互 → new"
+
+  heavy:
+    description: "重 case — 大量邮件/笔记，长生命周期，有 ICM"
+    overrides:
+      severity: "A"
+      caseAge: 90
+      activeHours: 48
+      icm:
+        linked: true
+        incidentId: "51000099999999"
+        severity: 2
+      emails:
+        count: 45
+        sentCount: 22
+        receivedCount: 23
+        lastSentDaysAgo: 1
+        hasInlineImages: true
+        hasExternal: true
+      notes:
+        count: 25
+        hasSystemNotes: true
+      labor:
+        entries: 12
+        totalMinutes: 960
+      casehealthMeta:
+        fwr: { status: "Expired", remaining: null }
+        fdr: { status: "Expired", remaining: null }
+        irSla: { status: "Succeeded", completedOn: "2026-01-05T08:00:00Z" }
+        actualStatus: "pending-pg"
+        daysSinceLastContact: 1
+        statusReasoning: "ICM#51000099999999 Sev2 仍 Active，PG 尚未修复根因 → pending-pg"
+
+  # ── Compliance 变体 ────────────────────────────────────
+
+  compliance-ok-china-cld:
+    description: "合规通过 — Service Name 含 'China Cld'"
+    overrides:
+      entitlement:
+        serviceLevel: "Premier"
+        serviceName: "Unfd AddOn | ProSv Ente - China Cld"
+        schedule: "Contoso-2026-Premier-China (SCH-00123456)"
+        contractCountry: "China"
+      casehealthMeta:
+        compliance:
+          entitlementOk: true
+          is21vConvert: false
+          warnings: []
+
+  compliance-ok-china-cloud:
+    description: "合规通过 — Service Name 含 'China Cloud'"
+    overrides:
+      entitlement:
+        serviceLevel: "ProDirect"
+        serviceName: "Azure ProDirect Support - China Cloud"
+        schedule: "Fabrikam-2026-ProDirect-CN (SCH-00789012)"
+        contractCountry: "China"
+      casehealthMeta:
+        compliance:
+          entitlementOk: true
+          is21vConvert: false
+          warnings: []
+
+  compliance-fail-no-china:
+    description: "合规失败 — Service Name 不含 China 关键词"
+    overrides:
+      entitlement:
+        serviceLevel: "Premier"
+        serviceName: "Unfd AddOn | ProSv Ente - US West"
+        schedule: "Contoso-2026-Premier-US (SCH-00345678)"
+        contractCountry: "United States"
+      casehealthMeta:
+        compliance:
+          entitlementOk: false
+          is21vConvert: false
+          warnings:
+            - "Service Name 不含 China Cld/China Cloud"
+            - "Contract Country 非 China"
+
+  compliance-fail-wrong-service:
+    description: "合规失败 — Contract Country 是 China 但 Service Name 无 China 关键词"
+    overrides:
+      entitlement:
+        serviceLevel: "Standard"
+        serviceName: "Azure Standard Support - APAC"
+        schedule: "Tailspin-2026-Standard-APAC (SCH-00567890)"
+        contractCountry: "China"
+      casehealthMeta:
+        compliance:
+          entitlementOk: false
+          is21vConvert: false
+          warnings:
+            - "Service Name 不含 China Cld/China Cloud，合约为 APAC 区域"
+
+  compliance-21v-convert:
+    description: "21v 转换 case — Customer Statement 含 21Vianet + 21v ticket"
+    overrides:
+      customerStatement: "This is a 21Vianet case. Original 21v ticket number: SR2601150012345. Customer migrated from 21Vianet to Global Azure but still has China Cloud entitlement."
+      entitlement:
+        serviceLevel: "Premier"
+        serviceName: "Unfd AddOn | ProSv Ente - China Cld"
+        schedule: "Contoso-2026-Premier-China (SCH-00123456)"
+        contractCountry: "China"
+      casehealthMeta:
+        compliance:
+          entitlementOk: true
+          is21vConvert: true
+          warnings: []
+
+  compliance-21v-partial:
+    description: "21v 部分信息 — Customer Statement 含 21Vianet 但缺少 ticket number"
+    overrides:
+      customerStatement: "客户之前使用 21Vianet 运营的 Azure 服务，现在需要迁移到 Global Azure。请协助处理。"
+      entitlement:
+        serviceLevel: "Premier"
+        serviceName: "Unfd AddOn | ProSv Ente - China Cloud"
+        schedule: "Fabrikam-2026-Premier-CN (SCH-00234567)"
+        contractCountry: "China"
+      casehealthMeta:
+        compliance:
+          entitlementOk: true
+          is21vConvert: true
+          warnings:
+            - "21v 转换 case 但未提供原始 21v ticket number"
+
+  # ── Status 变体 ────────────────────────────────────────
+
+  status-pending-customer:
+    description: "等待客户 — 工程师已回复，等客户反馈"
+    overrides:
+      emails:
+        count: 8
+        sentCount: 5
+        receivedCount: 3
+        lastSentDaysAgo: 3
+        hasInlineImages: false
+        hasExternal: true
+      casehealthMeta:
+        actualStatus: "pending-customer"
+        daysSinceLastContact: 3
+        statusReasoning: "工程师 3 天前发送了诊断步骤邮件，客户尚未回复 → pending-customer"
+
+  status-pending-engineer:
+    description: "等待工程师 — 客户已回复，工程师需跟进"
+    overrides:
+      emails:
+        count: 10
+        sentCount: 4
+        receivedCount: 6
+        lastSentDaysAgo: 5
+        hasInlineImages: true
+        hasExternal: true
+      casehealthMeta:
+        actualStatus: "pending-engineer"
+        daysSinceLastContact: 5
+        statusReasoning: "客户 2 天前回复了日志文件和错误截图，工程师尚未分析 → pending-engineer"
+
+  status-stale:
+    description: "过期 case — 超过 7 天无互动"
+    overrides:
+      caseAge: 45
+      activeHours: 16
+      emails:
+        count: 12
+        sentCount: 6
+        receivedCount: 6
+        lastSentDaysAgo: 12
+        hasInlineImages: false
+        hasExternal: true
+      casehealthMeta:
+        fwr: { status: "Expired", remaining: null }
+        actualStatus: "pending-customer"
+        daysSinceLastContact: 12
+        statusReasoning: "最后互动已超过 12 天，工程师多次 follow-up 均无回复 → pending-customer (stale)"
+
+  # ── Edge Case 变体 ─────────────────────────────────────
+
+  edge-no-entitlement:
+    description: "无 Entitlement 信息 — case-info.md 缺少 Entitlement 表"
+    overrides:
+      entitlement:
+        serviceLevel: ""
+        serviceName: ""
+        schedule: ""
+        contractCountry: ""
+      casehealthMeta:
+        compliance:
+          entitlementOk: false
+          is21vConvert: false
+          warnings:
+            - "Entitlement 信息完全缺失"
+
+  edge-corrupted-meta:
+    description: "损坏的 meta — casehealth-meta.json 是非法 JSON"
+    overrides:
+      _corruptMeta: true
+      # generator.sh will write invalid JSON when _corruptMeta is set
+
+  edge-missing-fields:
+    description: "缺失字段 — case-info.md 缺少多个关键字段（severity、status、contact）"
+    overrides:
+      severity: ""
+      status: ""
+      primaryContact:
+        name: ""
+        email: ""
+        phone: ""
+        preferredMethod: ""
+      customer: ""
+      customerStatement: ""
+      casehealthMeta:
+        irSla: { status: "unknown" }
+        actualStatus: "new"
+        daysSinceLastContact: 0
+        statusReasoning: "缺少关键字段，无法准确判断 → new"

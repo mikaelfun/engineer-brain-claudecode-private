@@ -1,0 +1,23 @@
+{
+  "testId": "learnings-regression-infra",
+  "category": "observability",
+  "round": 4,
+  "status": "pass",
+  "assertions": {
+    "total": 7,
+    "passed": 7,
+    "failed": 0
+  },
+  "checks": [
+    {"id": "timing-json-stale-fallback", "result": "PASS"},
+    {"id": "local-outside-function", "result": "PASS"},
+    {"id": "node-posix-path", "result": "PASS"},
+    {"id": "state-json-atomic-write", "result": "PASS"},
+    {"id": "judge-field-paths", "result": "PASS"},
+    {"id": "auto-heal-20260328-1538", "result": "PASS"},
+    {"id": "variable-pipe-gotcha", "result": "PASS"}
+  ],
+  "note": "observability-runner.sh lacks handler for learnings-regression-infra probe ID — checks executed inline, all 7/7 pass",
+  "duration_ms": 800,
+  "timestamp": "2026-03-28T18:32:00Z"
+}

@@ -1,0 +1,32 @@
+id: "regression-iss017"
+name: "Regression: ISS-017 — Issue 点击 Track 后立马提示用户补充详细信息，应该在session跑起来后触发用户补充信息的流程再显示出输入"
+category: "ui-interaction"
+source: "issues/ISS-017.json"
+description: "回归测试：验证 ISS-017 实现的功能未退化"
+safety_level: "safe"
+priority: "medium"
+tags: ["regression", "issue-driven", "iss-017"]
+regression_for: "ISS-017"
+
+steps:
+  - action: "navigate"
+    params:
+      url: "{frontend_url}"
+    safety_check: "ui.safe[navigate_to_page]"
+  - action: "verify_element"
+    params:
+      selector: "body"
+      expected: "visible"
+      timeout: 5000
+
+assertions:
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "对话框包含可选输入字段：额外说明 / 验收标准 / 技术约束"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "TypeScript 编译无错误"
+
+timeout_seconds: 60

@@ -1,0 +1,32 @@
+id: "wf-iss044"
+name: "ISS-044 — Agents 页面应能看到 Case 相关和 Issue 创建的各种 Agent Session"
+category: "ui-visual"
+source: "issues/ISS-044.json"
+description: "验证 ISS-044（implemented）的验收标准：Sessions are grouped by type with clear visual distinction"
+safety_level: "safe"
+priority: "high"
+tags: ["issue-driven", "iss-044", "implemented"]
+
+steps:
+  - action: "navigate"
+    params:
+      url: "{frontend_url}"
+    safety_check: "ui.safe[navigate_to_page]"
+  - action: "verify_element"
+    params:
+      selector: "body"
+      expected: "visible"
+      timeout: 5000
+
+assertions:
+  - type: "element_visible"
+    target: "body"
+    description: "Sessions are grouped by type with clear visual distinction"
+  - type: "element_visible"
+    target: "body"
+    description: "Each session shows: type badge, context (case#/issue ID), status, intent/descrip"
+  - type: "element_visible"
+    target: "body"
+    description: "Filter/search capability: filter by session type and status"
+
+timeout_seconds: 120

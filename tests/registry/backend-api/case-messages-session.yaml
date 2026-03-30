@@ -1,0 +1,96 @@
+id: "case-messages-session"
+name: "Case Messages and Session Management Endpoints"
+category: "backend-api"
+source: "dashboard/src/routes/case-routes.ts — SCAN round-4 gap"
+description: "验证 Case 消息管理和 Session 操作端点：GET/DELETE messages, GET sessions, POST session/end-all"
+safety_level: "safe"
+priority: "medium"
+tags: ["api", "case", "messages", "session", "round-4"]
+
+steps:
+  # Step 1: GET case messages (safe read)
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/case/{test_case_id}/messages"
+      auth: true
+      expected_status: [200, 404]
+    safety_check: "api.safe[GET /api/case/:id/operation]"
+
+  # Step 2: GET case sessions list
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/case/{test_case_id}/sessions"
+      auth: true
+      expected_status: [200, 404]
+    safety_check: "api.safe[GET /api/case/:id/operation]"
+
+  # Step 3: GET global sessions list
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/sessions"
+      auth: true
+      expected_status: [200]
+    safety_check: "api.safe[GET /api/sessions]"
+
+  # Step 4: GET active operations
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/operations/active"
+      auth: true
+      expected_status: [200]
+    safety_check: "api.safe[GET /api/operations/active]"
+
+  # Step 5: DELETE case messages (clears local message history — safe)
+  - action: "http_request"
+    params:
+      method: "DELETE"
+      url: "{api_base}/api/case/{test_case_id}/messages"
+      auth: true
+      expected_status: [200, 204, 404]
+    safety_check: "api.safe[GET /api/case/:id/operation]"
+
+  # Step 6: POST session/end-all (terminates any active sessions for this case — safe)
+  - action: "http_request"
+    params:
+      method: "POST"
+      url: "{api_base}/api/case/{test_case_id}/session/end-all"
+      auth: true
+      expected_status: [200, 204, 404]
+    safety_check: "api.safe[GET /api/case/:id/operation]"
+
+assertions:
+  - type: "status_code"
+    target: "GET /api/case/:id/messages"
+    expected: [200, 404]
+    description: "messages 端点响应有效"
+
+  - type: "status_code"
+    target: "GET /api/case/:id/sessions"
+    expected: [200, 404]
+    description: "case sessions 端点响应有效"
+
+  - type: "status_code"
+    target: "GET /api/sessions"
+    expected: 200
+    description: "全局 sessions 列表端点正常"
+
+  - type: "status_code"
+    target: "GET /api/operations/active"
+    expected: 200
+    description: "active operations 端点正常"
+
+  - type: "status_code"
+    target: "DELETE /api/case/:id/messages"
+    expected: [200, 204, 404]
+    description: "DELETE messages 返回有效状态码"
+
+  - type: "status_code"
+    target: "POST /api/case/:id/session/end-all"
+    expected: [200, 204, 404]
+    description: "session/end-all 端点返回有效状态码"
+
+timeout_seconds: 30

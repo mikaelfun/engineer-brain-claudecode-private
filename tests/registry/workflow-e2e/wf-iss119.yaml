@@ -1,0 +1,39 @@
+id: "wf-iss119"
+name: "ISS-119 — conductor:verify --mark-done/--reopen 功能不回归"
+category: "workflow-e2e"
+source: "issues/ISS-119.json"
+description: "验证 ISS-119（tracked）的验收标准：conductor:verify --mark-done 和 --reopen 功能正常，现有 test-loop 测试不回归"
+safety_level: "safe"
+priority: "high"
+tags: ["issue-driven", "iss-119", "tracked", "regression"]
+
+steps:
+  - action: "bash_command"
+    params:
+      command: "bash tests/executors/health-check.sh"
+    description: "检查 test-loop 框架健康状态"
+  - action: "bash_command"
+    params:
+      command: "ls tests/registry/workflow-e2e/*.yaml | wc -l"
+    description: "统计现有 workflow-e2e 测试数量（不低于 19 个）"
+  - action: "bash_command"
+    params:
+      command: "cat tests/state.json | grep -E '\"phase\"|\"round\"'"
+    description: "验证 state.json 可读且结构完整"
+
+assertions:
+  - type: "file_exists"
+    target: "tests/state.json"
+    description: "state.json 存在"
+  - type: "file_content"
+    target: "tests/state.json"
+    expected: "phase"
+    description: "state.json 包含 phase 字段"
+  - type: "bash_exit_zero"
+    target: "ls tests/registry/workflow-e2e/*.yaml | wc -l | awk '$1>=19'"
+    description: "现有 workflow-e2e 测试不少于 19 个（无回归）"
+  - type: "file_exists"
+    target: ".claude/skills/test-loop/SKILL.md"
+    description: "test-loop SKILL.md 存在（conductor:verify 精华已吸收）"
+
+timeout_seconds: 60

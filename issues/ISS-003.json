@@ -4,7 +4,7 @@
   "description": "CaseAIPanel 中 \"Session Active\" 区域及附属内容（消息列表、Chat 输入、Quick Actions）无法折叠，占据大量页面空间。需添加折叠/展开机制。",
   "type": "bug",
   "priority": "P1",
-  "status": "tracked",
+  "status": "done",
   "trackId": "session-collapse_20260320",
   "createdAt": "2026-03-20T10:02:00.000Z",
   "updatedAt": "2026-03-20T10:02:00.000Z"

@@ -1,0 +1,12 @@
+{
+  "id": "ISS-163",
+  "title": "Fix coverage metrics: totalTests=0 bug + 多维进度指标",
+  "description": "## 问题\n\n当前 test framework 有三套不一致的 coverage 指标：\n\n1. **health-check.sh**: `unique passing testIds / registry YAML count` — 非递减（至少通过过一次），掩盖回归\n2. **stats-reporter.sh**: `(passed+fixed) / totalTests` — **broken**，因为 state.json 的 totalTests=0，导致 round summary 里 coverage 永远是 0\n3. **manifest.json**: `tested features / total features` = 95.2% — 接近天花板无区分度\n\n## 改进方向\n\n1. 修复 totalTests=0 bug（stats-reporter.sh 应从 registry count 获取，与 health-check.sh 一致）\n2. 统一 coverage 计算语义：health-check.sh 和 stats-reporter.sh 应该用相同公式\n3. 设计多维进度指标体系替代单一 coverage：\n   - **discovery rate**: 本轮 SCAN gaps / 上轮 gaps（还在发现新东西吗）\n   - **fix throughput**: verified discoveries / total discoveries\n   - **green rate**: 本轮 TEST pass / 本轮 TEST total（当下健康度）\n   - **regression rate**: 本轮回归数 / 上轮通过数\n   - **framework maturity**: EVO entries + retro fixes\n4. 更新 pre-flight.sh、dashboard-renderer.sh 适配新指标\n\n## 依赖\n\n无。此 issue 应最先实施，因为其他改进依赖正确的指标。\n\n## 风险\n\n修改 coverage 计算方式会导致 trend-analyzer 看到数值跳变。需要在同一 commit 中同步更新 trend 分析的阈值逻辑，或在第一轮跑新指标时 reset trend baseline。",
+  "type": "bug",
+  "priority": "P0",
+  "status": "implemented",
+  "trackId": "coverage-metrics_20260330",
+  "labels": ["test-framework", "metrics"],
+  "createdAt": "2026-03-30T10:00:00+08:00",
+  "updatedAt": "2026-03-30T19:30:00+08:00"
+}

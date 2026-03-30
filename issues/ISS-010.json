@@ -4,8 +4,7 @@
   "description": "当前页面刷新后 SSE 消息可从后端恢复，但 Zustand store 的实时 workflow 进度状态（当前步骤、各步骤耗时等）未持久化到 localStorage 或后端。需要完整的 workflow state 持久化方案。",
   "type": "feature",
   "priority": "P2",
-  "status": "tracked",
-  "trackId": "workflow-persist_20260320",
+  "status": "pending",
   "createdAt": "2026-03-20T10:09:00.000Z",
-  "updatedAt": "2026-03-20T10:09:00.000Z"
+  "updatedAt": "2026-03-29T10:00:00.000Z"
 }

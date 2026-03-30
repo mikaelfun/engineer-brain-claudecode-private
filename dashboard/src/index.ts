@@ -25,6 +25,8 @@ import stepRoutes from './routes/steps.js'
 import issuesRoutes from './routes/issues.js'
 import restartRoutes from './routes/restart.js'
 import { sessionRoutes } from './routes/sessions.js'
+import testSupervisorRoutes from './routes/test-supervisor.js'
+import testRunnerRoutes from './routes/test-runner.js'
 
 const app = new Hono()
 
@@ -63,6 +65,7 @@ app.use('/api/sessions', authMiddleware)
 app.use('/api/sessions/*', authMiddleware)
 app.use('/api/issues/*', authMiddleware)
 app.use('/api/restart/*', authMiddleware)
+app.use('/api/tests/*', authMiddleware)
 
 app.route('/api/cases', casesRoutes)
 app.route('/api/todos', todosRoutes)
@@ -73,6 +76,8 @@ app.route('/api', stepRoutes)
 app.route('/api/issues', issuesRoutes)
 app.route('/api/restart', restartRoutes)
 app.route('/api/sessions', sessionRoutes)
+app.route('/api/tests', testSupervisorRoutes)
+app.route('/api/tests/runner', testRunnerRoutes)
 
 // ===== Start =====
 console.log(`

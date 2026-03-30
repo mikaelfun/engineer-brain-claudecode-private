@@ -1,0 +1,106 @@
+# Probe Definition Schema
+# Observability probe 定义扩展 — 在 test-definition.yaml 基础上新增字段
+# 所有 tests/registry/observability/{id}.yaml 必须遵循此 schema
+
+# ============================================================
+# 继承自 test-definition.yaml 的必填字段
+# ============================================================
+inherits: "test-definition.yaml"
+# id, name, category (= "observability"), source, safety_level, steps, assertions
+
+# ============================================================
+# Probe 专有必填字段
+# ============================================================
+probe_required_fields:
+  - name: "probe_type"
+    type: "enum"
+    values: ["metric", "stability", "audit"]
+    description: |
+      探针类型:
+      - metric: 收集数值指标，对比 baselines.yaml 基线
+      - stability: 重复执行 N 次，统计成功率
+      - audit: 扫描文件，检查规则/模式
+
+  - name: "baseline_ref"
+    type: "string"
+    description: "baselines.yaml 中的 key path（如 'casework_timing' 或 'agent_config'）"
+
+# ============================================================
+# Probe 专有可选字段
+# ============================================================
+probe_optional_fields:
+  - name: "metrics"
+    type: "list"
+    applies_to: ["metric"]
+    description: "要收集的指标定义列表"
+    item_schema:
+      - name: "name"
+        type: "string"
+        description: "指标名称"
+      - name: "source"
+        type: "string"
+        description: "数据源文件"
+      - name: "json_path"
+        type: "string"
+        description: "JSON 路径（用 . 分隔）"
+      - name: "baseline_key"
+        type: "string"
+        description: "baselines.yaml 中的对应 key path"
+
+  - name: "stability_config"
+    type: "object"
+    applies_to: ["stability"]
+    description: "稳定性测试配置"
+    schema:
+      - name: "min_runs"
+        type: "integer"
+        description: "最少执行次数"
+        default: 5
+      - name: "min_success_rate"
+        type: "float"
+        description: "最低成功率（0.0-1.0）"
+        default: 1.0
+      - name: "tests"
+        type: "list"
+        description: "稳定性测试用例列表"
+        item_schema:
+          - name: "name"
+            type: "string"
+          - name: "command"
+            type: "string"
+          - name: "expected_output"
+            type: "string"
+
+  - name: "audit_config"
+    type: "object"
+    applies_to: ["audit"]
+    description: "审计扫描配置"
+    schema:
+      - name: "scan_glob"
+        type: "string"
+        description: "要扫描的文件 glob 模式"
+      - name: "rules"
+        type: "list"
+        description: "审计规则列表"
+
+# ============================================================
+# 示例
+# ============================================================
+example:
+  id: "my-metric-probe"
+  name: "My Metric Probe"
+  category: "observability"
+  source: "some/source/file"
+  safety_level: "safe"
+  probe_type: "metric"
+  baseline_ref: "casework_timing"
+  metrics:
+    - name: "total_time"
+      source: "timing.json"
+      json_path: "totalSeconds"
+      baseline_key: "casework_timing.total_seconds"
+  steps:
+    - action: "collect_metrics"
+  assertions:
+    - type: "under_baseline"
+      expected: true

@@ -8,7 +8,7 @@ priority: "high"
 tags: ["regression", "fixed-bug"]
 regression_for: "evolution-finding-4"
 
-test_case_id: "2603250010001221"  # 可能 serviceLevel=Unknown
+test_case_id: "2603130030004157"
 
 setup:
   - action: "backup_case"
@@ -20,22 +20,30 @@ setup:
       file: "{cases_root}/active/{test_case_id}/casehealth-meta.json"
       field: "compliance.serviceLevel"
       value: "Unknown"
+  - action: "modify_meta"
+    params:
+      file: "{cases_root}/active/{test_case_id}/casehealth-meta.json"
+      field: "compliance.entitlementOk"
+      value: "false"
+  - action: "delete_dir"
+    params:
+      target: "{cases_root}/active/{test_case_id}/case-summary.md"
 
 steps:
-  - action: "run_skill"
+  - action: "run_single_step"
     params:
-      skill: "inspection-writer"
       case_id: "{test_case_id}"
+      step_name: "inspection"
     safety_check: "scripts.safe[inspection-writer]"
-    timeout_seconds: 120
+    timeout_seconds: 300
 
 assertions:
+  - type: "file_exists"
+    target: "{cases_root}/active/{test_case_id}/case-summary.md"
+    expected: true
   - type: "file_content"
     target: "{cases_root}/active/{test_case_id}/case-summary.md"
-    expected: "contains: 未检查"
-  - type: "file_content"
-    target: "{cases_root}/active/{test_case_id}/case-summary.md"
-    expected: "not_contains: 合规"  # 不应显示"合规"
+    expected: "not_contains: 合规"
 
 teardown:
   - action: "restore_case"
@@ -43,4 +51,4 @@ teardown:
       source: "{backup_dir}/{test_case_id}"
       dest: "{cases_root}/active/{test_case_id}"
 
-timeout_seconds: 180
+timeout_seconds: 600

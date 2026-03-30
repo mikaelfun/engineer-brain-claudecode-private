@@ -1,0 +1,56 @@
+id: "wf-inspection"
+name: "Inspection Writer — 独立执行验证"
+category: "workflow-e2e"
+source: "manifest.json — wf-inspection (partial)"
+description: "运行 run_single_step:inspection-writer，验证 case-summary.md + todo 文件正确生成"
+safety_level: "safe"
+priority: "medium"
+tags: ["inspection-writer", "workflow", "case-summary"]
+
+test_case_id: "2603190030000206"  # Data-rich case
+
+setup:
+  - action: "backup_case"
+    params:
+      source: "{cases_root}/active/{test_case_id}"
+      dest: "{backup_dir}/{test_case_id}"
+  - action: "delete_dir"
+    params:
+      path: "{cases_root}/active/{test_case_id}/case-summary.md"
+      ignore_missing: true
+
+steps:
+  # inspection-writer 需要 case-info.md + casehealth-meta.json 存在
+  # test case 2603190030000206 是 data-rich case，历史运行中 data-refresh 已产出这些文件
+  - action: "run_single_step"
+    params:
+      step_name: "inspection"
+      case_id: "{test_case_id}"
+    safety_check: "scripts.safe[inspection-writer]"
+    timeout_seconds: 300
+
+assertions:
+  # inspection step 完成（HTTP 202 + operation 完成）
+  - type: "file_content"
+    target: "{cases_root}/active/{test_case_id}/casehealth-meta.json"
+    expected: "valid_json"
+  - type: "json_field"
+    target: "{cases_root}/active/{test_case_id}/casehealth-meta.json"
+    field: "actualStatus"
+    expected: "not_null"
+  - type: "json_field"
+    target: "{cases_root}/active/{test_case_id}/casehealth-meta.json"
+    field: "lastInspected"
+    expected: "not_null"
+  # inspection-writer 日志确认执行成功
+  - type: "file_exists"
+    target: "{cases_root}/active/{test_case_id}/logs/inspection-writer.log"
+    expected: true
+
+teardown:
+  - action: "restore_case"
+    params:
+      source: "{backup_dir}/{test_case_id}"
+      dest: "{cases_root}/active/{test_case_id}"
+
+timeout_seconds: 480

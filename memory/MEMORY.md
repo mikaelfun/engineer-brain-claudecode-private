@@ -75,4 +75,4 @@
 - 2026-03-17: 首次完整 casework 执行（2603090040000814），修复 3 个脚本 bug，teams-case-search 改为 MCP 直调 + write-teams.ps1
 - 2026-03-17: casework 性能优化 — 去掉 `-Force` + `-CacheMinutes 10`，data-refresh 提速 66%
 - Case 数据默认在项目 `cases/` 目录，可通过 config.json 的 casesRoot 配置
-- 业务参考数据在 `data/` 目录（mooncake-cc.json：21v 客户-CC 映射）
+- 业务参考数据在 `config.json → dataRoot` 指定的外部目录（mooncake-cc.json：21v 客户-CC 映射）

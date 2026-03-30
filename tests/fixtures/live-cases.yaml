@@ -1,0 +1,129 @@
+# Live Cases Pool — Active D365 Cases for Test Loop
+# Auto-refreshed by refresh-live-cases.sh
+# Last refresh: 2026-03-29T21:22:01Z
+
+lastRefreshed: "2026-03-29T21:22:01Z"
+refreshInterval: 86400  # 24 hours in seconds
+source: "scan-active-dir"
+
+cases:
+  - id: "2601290030000748"
+    title: "Teams request MFA, need check the reason"
+    severity: "B"
+    pool: "data_rich"
+    hasEmails: true
+    emailCount: 16
+    hasICM: true
+    tags: []
+  - id: "2602130040001034"
+    title: "Unified <Sev B> | PRC | Azure container registry | ACR requirements so that image push or pull is restricted to the production environment"
+    severity: "B"
+    pool: "data_rich"
+    hasEmails: true
+    emailCount: 32
+    hasICM: false
+    tags: []
+  - id: "2603030040001542"
+    title: "Unified <SEV B> | PRC | 21v AAD | The resource principal named https://management.core.windows.net/ was not found in the tenant"
+    severity: "B"
+    pool: "data_rich"
+    hasEmails: true
+    emailCount: 24
+    hasICM: false
+    tags: []
+  - id: "2603050040000857"
+    title: "[S500]关于由世纪互联运营的 Microsoft Azure 的 Microsoft Defender for Cloud 停用通知"
+    severity: "C"
+    pool: "data_rich"
+    hasEmails: true
+    emailCount: 9
+    hasICM: false
+    tags: []
+  - id: "2603060030001353"
+    title: "优化告警邮件收不到问题"
+    severity: "B"
+    pool: "data_rich"
+    hasEmails: true
+    emailCount: 18
+    hasICM: false
+    tags: []
+  - id: "2603090040000814"
+    title: "[S500]无法删除unknown 用户"
+    severity: "C"
+    pool: "data_rich"
+    hasEmails: true
+    emailCount: 26
+    hasICM: false
+    tags: []
+  - id: "2603100030005863"
+    title: "在线的PPT文件,选择在本地打开后一直加载,然后就报错,导致一直无法在本地打开"
+    severity: "C"
+    pool: "data_rich"
+    hasEmails: true
+    emailCount: 5
+    hasICM: false
+    tags: []
+  - id: "2603130030004157"
+    title: "cross cloud sign in token"
+    severity: "B"
+    pool: "data_rich"
+    hasEmails: true
+    emailCount: 10
+    hasICM: false
+    tags: []
+  - id: "2603170030001139"
+    title: "Tenant Restriction V1 on when cross cloud"
+    severity: "B"
+    pool: "data_rich"
+    hasEmails: true
+    emailCount: 6
+    hasICM: false
+    tags: []
+  - id: "2603190030000206"
+    title: "未拦截钓鱼邮件"
+    severity: "B"
+    pool: "data_rich"
+    hasEmails: true
+    emailCount: 12
+    hasICM: false
+    tags: []
+  - id: "2603200030000875"
+    title: "AKS node异常问题排查"
+    severity: "B"
+    pool: "data_rich"
+    hasEmails: true
+    emailCount: 7
+    hasICM: false
+    tags: []
+  - id: "2603230010001900001"
+    title: "Microsoft Entra certificate-based authentication"
+    severity: "B"
+    pool: "minimal"
+    hasEmails: false
+    emailCount: 0
+    hasICM: false
+    tags: []
+  - id: "2603230030001221"
+    title: "未拦截钓鱼邮件"
+    severity: "B"
+    pool: "data_rich"
+    hasEmails: true
+    emailCount: 15
+    hasICM: false
+    tags: []
+  - id: "2603250010001221"
+    title: "[S500]3月20日为什么报警？3月22日为什么提示升级失败？"
+    severity: "C"
+    pool: "data_rich"
+    hasEmails: true
+    emailCount: 8
+    hasICM: false
+    tags: []
+  - id: "2603260030005229"
+    title: "Azure  ALert Issue"
+    severity: "B"
+    pool: "data_sparse"
+    hasEmails: true
+    emailCount: 1
+    hasICM: false
+    tags: []

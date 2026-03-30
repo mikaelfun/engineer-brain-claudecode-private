@@ -1,0 +1,17 @@
+{
+  "round": 4,
+  "timestamp": "2026-03-28T18:40:49Z",
+  "phase": "SCAN",
+  "stats": {
+    "totalTests": 28,
+    "passed": 25,
+    "failed": 13,
+    "fixed": 13,
+    "skipped": 4,
+    "coverage": 136
+  },
+  "queues": {
+    "testQueue": 0,
+    "fixQueue": 0
+  }
+}

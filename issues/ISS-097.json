@@ -1,10 +1,11 @@
 {
   "id": "ISS-097",
-  "title": "ai assistant用户主动发送消息，触发的sdk session没有sse",
-  "description": "",
+  "title": "AI Assistant SSE 全面修复：用户消息和 Full Process 均无实时推送",
+  "description": "AI Assistant 页面的 SSE 推送存在多个问题：\n\n1. **用户主动发送消息**触发的 SDK session 没有 SSE 事件推送（原 ISS-097）\n2. **Full Process** 执行时 SSE 不更新，但 Agent Monitor 里正常更新（原 ISS-098）\n\n两个问题的共同根因可能是 AI Assistant 页面的 SSE 订阅通道与 Agent Monitor 使用了不同的事件源，或者 AI Panel 的 EventSource 连接未正确建立/恢复。\n\n需要统一排查 AI Assistant 页面的 SSE 管道，确保与 Agent Monitor 行为一致。",
   "type": "bug",
   "priority": "P1",
   "status": "pending",
+  "mergedFrom": ["ISS-098"],
   "createdAt": "2026-03-23T03:21:39.889Z",
-  "updatedAt": "2026-03-23T03:21:39.889Z"
+  "updatedAt": "2026-03-29T10:00:00.000Z"
 }

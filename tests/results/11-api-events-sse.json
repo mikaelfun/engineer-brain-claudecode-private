@@ -1,0 +1,12 @@
+{
+  "testId": "api-events-sse",
+  "round": 11,
+  "status": "pass",
+  "duration_ms": 3100,
+  "assertions": [
+    {"name": "SSE events 端点可访问", "result": "pass", "expected": 200, "actual": 200},
+    {"name": "响应 Content-Type 为 SSE 格式", "result": "pass", "expected": "text/event-stream", "actual": "text/event-stream"}
+  ],
+  "notes": "SSE connection established, headers confirmed. curl max-time=3s used.",
+  "timestamp": "2026-03-28T20:18:50Z"
+}

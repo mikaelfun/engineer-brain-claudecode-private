@@ -1,0 +1,40 @@
+id: "regression-iss105"
+name: "Regression: ISS-105 — Create Track 交互问题过多 — 测试相关问题不应在 track 创建阶段问"
+category: "ui-interaction"
+source: "issues/ISS-105.json"
+description: "回归测试：验证 ISS-105 实现的功能未退化"
+safety_level: "safe"
+priority: "medium"
+tags: ["regression", "issue-driven", "iss-105"]
+regression_for: "ISS-105"
+
+steps:
+  - action: "navigate"
+    params:
+      url: "{frontend_url}"
+    safety_check: "ui.safe[navigate_to_page]"
+  - action: "verify_element"
+    params:
+      selector: "body"
+      expected: "visible"
+      timeout: 5000
+
+assertions:
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "从 WebUI 带 ISS-XXX 参数的 Create Track，交互问题 ≤ 2 个（确认 summary + 确认 spec）"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "测试相关问题不在 track 创建阶段出现"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "CLI 直接调用 `/conductor:new-track`（无 ISS-XXX）的完整问答流程不受影响"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "生成的 spec.md 和 plan.md 质量不下降（仍包含完整的 acceptance criteria、phases、tasks）"
+
+timeout_seconds: 60

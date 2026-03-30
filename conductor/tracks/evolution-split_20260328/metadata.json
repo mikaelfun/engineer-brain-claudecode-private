@@ -1,0 +1,16 @@
+{
+  "id": "evolution-split_20260328",
+  "title": "Evolution 概念拆分 — Discoveries + Evolution",
+  "type": "refactor",
+  "status": "completed",
+  "created": "2026-03-28T20:00:00+08:00",
+  "updated": "2026-03-28T20:15:00+08:00",
+  "phases": {
+    "total": 2,
+    "completed": 2
+  },
+  "tasks": {
+    "total": 7,
+    "completed": 7
+  }
+}

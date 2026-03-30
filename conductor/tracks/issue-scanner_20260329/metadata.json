@@ -1,0 +1,11 @@
+{
+  "id": "issue-scanner_20260329",
+  "title": "新增 issue-scanner.sh 扫描 issues/ 目录生成测试",
+  "type": "feature",
+  "status": "complete",
+  "issueId": "ISS-133",
+  "created": "2026-03-29T02:20:00Z",
+  "updated": "2026-03-29T02:36:00Z",
+  "phases": { "total": 3, "completed": 3 },
+  "tasks": { "total": 11, "completed": 11 }
+}

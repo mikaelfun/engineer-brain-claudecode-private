@@ -1,0 +1,10 @@
+{
+  "id": "ISS-139",
+  "title": "roundJourney not updated during phase transitions",
+  "description": "test-loop writes phaseHistory but never syncs roundJourney status/summary/duration_ms in state.json. Health-check.sh compensates by computing from phaseHistory, but direct consumers of state.json (e.g. WebUI) see all-pending. Root cause: phase transition code only appends to phaseHistory without updating roundJourney fields.",
+  "type": "bug",
+  "priority": "P1",
+  "status": "implemented",
+  "createdAt": "2026-03-29T09:25:00+08:00",
+  "updatedAt": "2026-03-29T09:41:18.852Z"
+}

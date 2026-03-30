@@ -1,0 +1,26 @@
+{
+  "testId": "api-events-sse",
+  "round": 5,
+  "category": "backend-api",
+  "result": "pass",
+  "duration_s": 3,
+  "timestamp": "2026-03-28T18:55:37.071Z",
+  "assertions": [
+    {
+      "id": "1",
+      "description": "GET /api/events HTTP 200",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "id": "2",
+      "description": "Content-Type: text/event-stream",
+      "expected": "text/event-stream",
+      "actual": "text/event-stream",
+      "pass": true
+    }
+  ],
+  "failedAssertions": [],
+  "notes": "SSE endpoint responds correctly with proper headers. Stream stays open (curl cut at 3s)."
+}

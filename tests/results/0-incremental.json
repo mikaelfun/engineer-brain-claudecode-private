@@ -1,0 +1,9 @@
+{
+  "testId": "incremental",
+  "round": 0,
+  "timestamp": "2026-03-28T14:16:23.000Z",
+  "status": "pass",
+  "assertions": [{"name":"Setup: backup created","pass":true,"expected":"backup exists","actual":"created at /tmp/e2e-backup-incremental-1774707312"},{"name":"POST /api/case/:id/process","pass":true,"expected":"200|202","actual":"202"},{"name":"Casework completed within timeout","pass":true,"expected":"completed","actual":"completed"},{"name":"Valid JSON: timing.json","pass":true,"expected":"valid_json","actual":"valid"},{"name":"JSON field: phases.changegate not null","pass":true,"expected":"not_null","actual":"{\"seconds\":5,\"label\":\"PowerShell 比对 emails/notes/ICM 数量变化\"}"},{"name":"File exists: case-summary.md","pass":true,"expected":"exists","actual":"exists"}],
+  "error": null,
+  "duration_ms": 81047
+}

@@ -25,7 +25,7 @@ steps:
     params:
       case_id: "{test_case_id}"
     safety_check: "scripts.safe[casework]"
-    timeout_seconds: 300
+    timeout_seconds: 1200
 
 assertions:
   - type: "file_content"
@@ -33,7 +33,7 @@ assertions:
     expected: "valid_json"
   - type: "json_field"
     target: "{cases_root}/active/{test_case_id}/timing.json"
-    field: "changegate"
+    field: "phases.changegate"
     expected: "not_null"  # changegate 应该检测到变化
   - type: "file_exists"
     target: "{cases_root}/active/{test_case_id}/case-summary.md"
@@ -45,4 +45,4 @@ teardown:
       source: "{backup_dir}/{test_case_id}"
       dest: "{cases_root}/active/{test_case_id}"
 
-timeout_seconds: 360
+timeout_seconds: 1800

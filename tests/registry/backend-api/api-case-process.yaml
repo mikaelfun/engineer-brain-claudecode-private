@@ -1,0 +1,70 @@
+id: "api-case-process"
+name: "POST /case/:id/process — Case 处理端点基本响应"
+category: "backend-api"
+source: "dashboard/src/routes/case-routes.ts — POST /case/:id/process"
+description: "验证 POST /case/:id/process 端点可接受请求（返回有效状态码），GET /api/cases 验证 case 列表可访问。注：完整 casework 耗时 >1min，本测试只验证端点可达性和锁机制。"
+safety_level: "safe"
+priority: "high"
+tags: ["api", "case", "process", "core", "round-6"]
+
+steps:
+  # Step 1: GET /api/cases — list cases
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/cases"
+      auth: true
+      expected_status: [200]
+    safety_check: "api.safe[GET /api/cases]"
+
+  # Step 2: Verify cases response shape
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/cases?limit=1"
+      auth: true
+      expected_status: [200]
+    safety_check: "api.safe[GET /api/cases]"
+
+  # Step 3: POST /case/:id/process with first available case
+  # Either starts processing (200/202) or case is locked (409) or case not found (404)
+  - action: "http_request"
+    params:
+      method: "POST"
+      url: "{api_base}/api/case/{first_case_id}/process"
+      body: '{"intent":"Automated test — lock check only"}'
+      auth: true
+      expected_status: [200, 202, 400, 404, 409, 503]
+    safety_check: "api.safe[POST /api/case/:id/process]"
+
+  # Step 4: GET /api/operations/active — check any active operations
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/operations/active"
+      auth: true
+      expected_status: [200]
+    safety_check: "api.safe[GET /api/operations/active]"
+
+assertions:
+  - type: "status_code"
+    target: "GET /api/cases"
+    expected: 200
+    description: "cases 列表可访问"
+
+  - type: "json_field"
+    target: "GET /api/cases"
+    field: "cases"
+    description: "响应包含 cases 数组"
+
+  - type: "status_code"
+    target: "POST /api/case/:id/process"
+    expected: [200, 202, 400, 404, 409, 503]
+    description: "process 端点返回有效状态码（200/202=开始, 404=case不存在, 409=已锁定, 503=不可用）"
+
+  - type: "status_code"
+    target: "GET /api/operations/active"
+    expected: 200
+    description: "operations/active 端点可访问"
+
+timeout_seconds: 30

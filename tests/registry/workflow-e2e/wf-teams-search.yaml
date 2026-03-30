@@ -1,0 +1,67 @@
+id: "wf-teams-search"
+name: "Workflow: Data-Refresh 单步执行 + Teams 数据读取"
+category: "workflow-e2e"
+source: ".claude/skills/data-refresh/SKILL.md + dashboard/src/routes/cases.ts"
+description: "验证 data-refresh 单步（POST /case/:id/step/data-refresh）能成功执行，产出 emails.md、notes.md；并验证 GET /api/cases/:id/teams 返回 case 的 Teams 数据（含聊天记录或空响应）"
+safety_level: "safe"
+priority: "high"
+tags: ["workflow", "data-refresh", "teams", "single-step", "round-7"]
+
+test_case_id: "2601290030000748"  # Teams request MFA case
+
+setup:
+  - action: "backup_case"
+    params:
+      source: "{cases_root}/active/{test_case_id}"
+      dest: "{backup_dir}/{test_case_id}"
+
+steps:
+  # Step 1: 执行 data-refresh 单步（比全量 casework 快，~120s）
+  - action: "run_single_step"
+    params:
+      step_name: "data-refresh"
+      case_id: "{test_case_id}"
+    safety_check: "scripts.safe[data-refresh]"
+    timeout_seconds: 180
+
+  # Step 2: 验证 data-refresh 产出文件存在
+  # data-refresh 产出: emails.md, notes.md, case-info.md (由 fetch-all-data.ps1 生成)
+
+assertions:
+  # case 目录存在
+  - type: "file_exists"
+    target: "{cases_root}/active/{test_case_id}"
+    expected: true
+    description: "case 目录存在"
+
+  # emails.md 由 data-refresh 生成
+  - type: "file_exists"
+    target: "{cases_root}/active/{test_case_id}/emails.md"
+    expected: true
+    description: "emails.md 由 data-refresh 写入"
+
+  # emails.md 内容非空
+  - type: "file_content"
+    target: "{cases_root}/active/{test_case_id}/emails.md"
+    expected: "non_empty"
+    description: "emails.md 内容非空"
+
+  # case-info.md 存在
+  - type: "file_exists"
+    target: "{cases_root}/active/{test_case_id}/case-info.md"
+    expected: true
+    description: "case-info.md 由 data-refresh 写入"
+
+  # GET /api/cases/:id/teams 端点可访问（不要求有数据）
+  - type: "api_status"
+    target: "GET /api/cases/{test_case_id}/teams"
+    expected: 200
+    description: "teams 端点返回 200"
+
+teardown:
+  - action: "restore_case"
+    params:
+      source: "{backup_dir}/{test_case_id}"
+      dest: "{cases_root}/active/{test_case_id}"
+
+timeout_seconds: 240

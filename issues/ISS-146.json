@@ -1,0 +1,11 @@
+{
+  "id": "ISS-146",
+  "title": "SCAN multi-type expansion: UX, performance, architecture, design-fidelity scanners",
+  "description": "Current SCAN only discovers test coverage gaps. Expand to 5 scan strategies: (1) coverage (existing), (2) design-fidelity: compare spec AC with actual implementation behavior, (3) ux-review: Playwright walks core user workflows evaluating usability against dashboard-design-system.md, (4) performance: API response times and casework timing vs baselines, (5) architecture: CLAUDE.md compliance, code anti-patterns, dependency analysis. Create scan-strategies.yaml for runner to select strategies per round. Each scanner outputs gaps that feed into existing GENERATE→TEST→FIX→VERIFY pipeline.",
+  "type": "feature",
+  "priority": "P2",
+  "status": "tracked",
+  "createdAt": "2026-03-29T19:30:00Z",
+  "updatedAt": "2026-03-29T19:35:00Z",
+  "trackId": "scan-expansion_20260329"
+}

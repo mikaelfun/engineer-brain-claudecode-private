@@ -5,8 +5,7 @@
   "type": "feature",
   "priority": "P0",
   "status": "tracked",
-  "created": "2026-03-29T23:00:00+08:00",
-  "updated": "2026-03-29T23:00:00+08:00",
-  "source": "architecture-review",
-  "trackId": "todo-reasoning_20260329"
+  "trackId": "todo-reasoning_20260329",
+  "createdAt": "2026-03-29T23:00:00+08:00",
+  "updatedAt": "2026-03-29T23:00:00+08:00"
 }

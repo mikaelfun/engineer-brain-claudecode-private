@@ -13,6 +13,14 @@
 
 ---
 
+### 2026-03-30 — state-writer --merge 覆盖 fixQueue 数组
+- 症状：`echo '{"fixQueue":[...1 item...]}' | state-writer --merge` 将原有 16 项 fixQueue 替换为 1 项
+- 原因：`--merge` 是 shallow merge，数组字段会被完整替换（不像 phaseHistory 有特殊 append 逻辑）
+- 解决：手动从 failed tests 重建 fixQueue（18 项），通过 --merge 写回
+- 预防：注入单项到 fixQueue 时，必须先读取当前 fixQueue，prepend 新项后写整个数组；或创建专用 `queue-prepend.sh` helper
+
+---
+
 ### 2026-03-15 — D365 Entitlement 数据全部返回 null
 
 - 症状：fetch-case-snapshot.ps1 中 `_msdfm_entitlementredemptionid_value` 字段在所有 Case 上返回 null，导致 Entitlement 数据缺失

@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TestLab Dashboard Preview</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700;800&display=swap');
+
+  :root {
+    --bg-base: #1a1d24;
+    --bg-surface: #22262f;
+    --bg-elevated: #282d38;
+    --bg-hover: #2e3340;
+    --bg-active: #353b4a;
+    --bg-inset: #1e2129;
+    --text-primary: #c9cdd6;
+    --text-secondary: #8b919e;
+    --text-tertiary: #5e6370;
+    --border-subtle: rgba(255,255,255,0.05);
+    --border-default: rgba(255,255,255,0.08);
+    --accent-blue: #6ba3e8;
+    --accent-green: #5cbf8a;
+    --accent-amber: #d4a44a;
+    --accent-red: #d47272;
+    --accent-purple: #9e8cc7;
+    --accent-blue-dim: rgba(107,163,232,0.10);
+    --accent-green-dim: rgba(92,191,138,0.10);
+    --accent-amber-dim: rgba(212,164,74,0.10);
+    --accent-red-dim: rgba(212,114,114,0.10);
+    --accent-purple-dim: rgba(158,140,199,0.10);
+    --font-ui: 'Plus Jakarta Sans', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg-base);
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    font-size: 13px;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    width: 220px;
+    background: var(--bg-surface);
+    border-right: 1px solid var(--border-subtle);
+    padding: 20px 16px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar-logo {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-bottom: 28px;
+    color: var(--text-primary);
+  }
+  .sidebar-nav a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 2px;
+    transition: all 0.1s;
+  }
+  .sidebar-nav a:hover { background: var(--bg-hover); color: var(--text-primary); }
+  .sidebar-nav a.active {
+    background: var(--accent-blue-dim);
+    color: var(--accent-blue);
+    font-weight: 600;
+  }
+
+  /* Main content */
+  .main { flex: 1; padding: 24px 32px; overflow-y: auto; }
+
+  /* Title bar with runner controls */
+  .title-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .title-left {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .title-left h1 {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+  }
+  .title-left .round-badge {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  /* Runner Control */
+  .runner-control {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    border-radius: 10px;
+    padding: 10px 16px;
+  }
+  .runner-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .status-dot.idle { background: var(--text-tertiary); }
+  .status-dot.running {
+    background: var(--accent-green);
+    animation: pulse-dot 2s infinite;
+  }
+  .status-dot.paused { background: var(--accent-amber); }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(92,191,138,0.4); }
+    50% { opacity: 0.8; box-shadow: 0 0 0 4px rgba(92,191,138,0); }
+  }
+
+  .status-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .status-label.idle { color: var(--text-tertiary); }
+  .status-label.running { color: var(--accent-green); }
+  .status-label.paused { color: var(--accent-amber); }
+
+  .runner-meta {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    font-family: var(--font-mono);
+  }
+
+  .runner-buttons {
+    display: flex;
+    gap: 6px;
+  }
+  .btn {
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-default);
+    background: transparent;
+    color: var(--text-secondary);
+    font-family: var(--font-ui);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+  .btn.primary {
+    background: var(--accent-blue);
+    border-color: var(--accent-blue);
+    color: #fff;
+  }
+  .btn.primary:hover { filter: brightness(1.1); }
+  .btn.danger {
+    border-color: var(--accent-red);
+    color: var(--accent-red);
+  }
+  .btn.danger:hover { background: var(--accent-red-dim); }
+
+  /* Card */
+  .card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .card-header .icon {
+    width: 16px;
+    height: 16px;
+    opacity: 0.7;
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  .card-subtitle {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-left: auto;
+    font-family: var(--font-mono);
+  }
+
+  /* Attention Panel */
+  .attention-panel {
+    border-left: 3px solid var(--accent-amber);
+  }
+  .attention-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    font-size: 12px;
+  }
+  .attention-item.red {
+    background: var(--accent-red-dim);
+    border-left: 3px solid var(--accent-red);
+  }
+  .attention-item.yellow {
+    background: var(--accent-amber-dim);
+    border-left: 3px solid var(--accent-amber);
+  }
+  .attention-item .emoji { font-size: 14px; flex-shrink: 0; }
+  .attention-item .text { color: var(--text-primary); flex: 1; }
+  .attention-item .detail {
+    color: var(--text-tertiary);
+    font-family: var(--font-mono);
+    font-size: 10px;
+  }
+
+  .nominal {
+    padding: 12px;
+    text-align: center;
+    color: var(--accent-green);
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  /* Phase Pipeline */
+  .pipeline {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 4px 0;
+  }
+  .phase-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 90px;
+  }
+  .phase-circle {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    margin-bottom: 4px;
+    transition: all 0.2s;
+  }
+  .phase-circle.done {
+    background: var(--accent-green-dim);
+    border: 2px solid var(--accent-green);
+  }
+  .phase-circle.running {
+    background: var(--accent-blue-dim);
+    border: 2px solid var(--accent-blue);
+    animation: pulse-phase 2.5s infinite;
+  }
+  .phase-circle.pending {
+    background: var(--bg-inset);
+    border: 2px solid var(--text-tertiary);
+  }
+  @keyframes pulse-phase {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(107,163,232,0.3); }
+    50% { box-shadow: 0 0 0 6px rgba(107,163,232,0); }
+  }
+  .phase-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .phase-label.done { color: var(--accent-green); }
+  .phase-label.running { color: var(--accent-blue); }
+  .phase-label.pending { color: var(--text-tertiary); }
+  .phase-summary {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    max-width: 100px;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-top: 2px;
+  }
+  .phase-connector {
+    width: 32px;
+    height: 2px;
+    background: var(--border-default);
+    margin-bottom: 20px;
+  }
+  .phase-connector.done { background: var(--accent-green); opacity: 0.4; }
+
+  /* Activity Stream (inline with pipeline) */
+  .pipeline-activity {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 16px;
+  }
+
+  .activity-stream {
+    max-height: 220px;
+    overflow-y: auto;
+    padding-right: 8px;
+  }
+  .activity-stream::-webkit-scrollbar { width: 4px; }
+  .activity-stream::-webkit-scrollbar-thumb { background: var(--bg-hover); border-radius: 2px; }
+
+  .activity-event {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border-subtle);
+    font-size: 11px;
+  }
+  .activity-time {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+    width: 42px;
+  }
+  .activity-badge {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .activity-badge.SCAN { background: var(--accent-purple-dim); color: var(--accent-purple); }
+  .activity-badge.TEST { background: var(--accent-blue-dim); color: var(--accent-blue); }
+  .activity-badge.FIX { background: var(--accent-amber-dim); color: var(--accent-amber); }
+  .activity-badge.VERIFY { background: var(--accent-green-dim); color: var(--accent-green); }
+  .activity-badge.GENERATE { background: var(--accent-red-dim); color: var(--accent-red); }
+  .activity-text { color: var(--text-secondary); }
+  .activity-id {
+    font-family: var(--font-mono);
+    color: var(--accent-blue);
+    font-size: 10px;
+  }
+
+  /* Stats Cards */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .stat-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    padding: 14px 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    opacity: 0.7;
+  }
+  .stat-card.green::before { background: var(--accent-green); }
+  .stat-card.red::before { background: var(--accent-red); }
+  .stat-card.amber::before { background: var(--accent-amber); }
+  .stat-card.blue::before { background: var(--accent-blue); }
+  .stat-card.purple::before { background: var(--accent-purple); }
+
+  .stat-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-tertiary);
+    margin-bottom: 6px;
+  }
+  .stat-value {
+    font-family: var(--font-mono);
+    font-size: 26px;
+    font-weight: 800;
+  }
+  .stat-value.green { color: var(--accent-green); }
+  .stat-value.red { color: var(--accent-red); }
+  .stat-value.amber { color: var(--accent-amber); }
+  .stat-value.blue { color: var(--accent-blue); }
+  .stat-value.purple { color: var(--accent-purple); }
+  .stat-sub {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    font-family: var(--font-mono);
+    margin-top: 4px;
+  }
+
+  /* Two column layout */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  /* Queue table */
+  .queue-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .queue-table th {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-tertiary);
+    text-align: left;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border-default);
+  }
+  .queue-table td {
+    font-size: 12px;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+  }
+  .queue-table td:first-child {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--accent-blue);
+  }
+  .queue-table .badge {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .badge.pass { background: var(--accent-green-dim); color: var(--accent-green); }
+  .badge.fail { background: var(--accent-red-dim); color: var(--accent-red); }
+  .badge.pending { background: var(--bg-inset); color: var(--text-tertiary); }
+
+  /* Evolution Timeline */
+  .evolution-timeline {
+    position: relative;
+    padding-left: 20px;
+  }
+  .evolution-timeline::before {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--border-default);
+  }
+  .evo-node {
+    position: relative;
+    margin-bottom: 14px;
+    padding-left: 16px;
+  }
+  .evo-node::before {
+    content: '';
+    position: absolute;
+    left: -16px;
+    top: 5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid var(--accent-purple);
+    background: var(--bg-surface);
+  }
+  .evo-round {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--accent-purple);
+    margin-bottom: 2px;
+  }
+  .evo-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+  }
+  .evo-impact {
+    font-size: 11px;
+    color: var(--text-tertiary);
+  }
+
+  /* Trend mini chart placeholder */
+  .trend-chart-placeholder {
+    height: 120px;
+    background: var(--bg-inset);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-tertiary);
+    font-size: 12px;
+  }
+
+  /* Collapsible */
+  .collapsible-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .collapsible-header .arrow {
+    color: var(--text-tertiary);
+    font-size: 10px;
+    transition: transform 0.2s;
+  }
+
+  /* Demo tabs */
+  .demo-tabs {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 100;
+    display: flex;
+    gap: 4px;
+    background: var(--bg-elevated);
+    padding: 4px;
+    border-radius: 8px;
+    border: 1px solid var(--border-default);
+  }
+  .demo-tab {
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 5px;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-family: var(--font-ui);
+  }
+  .demo-tab.active {
+    background: var(--accent-blue-dim);
+    color: var(--accent-blue);
+  }
+</style>
+</head>
+<body>
+
+<!-- Demo state switcher -->
+<div class="demo-tabs">
+  <button class="demo-tab active" onclick="setRunnerState('idle')">IDLE</button>
+  <button class="demo-tab" onclick="setRunnerState('running')">RUNNING</button>
+  <button class="demo-tab" onclick="setRunnerState('paused')">PAUSED</button>
+  <button class="demo-tab" onclick="toggleAttention()">Toggle Attention</button>
+</div>
+
+<!-- Sidebar -->
+<nav class="sidebar">
+  <div class="sidebar-logo">EngineerBrain</div>
+  <div class="sidebar-nav">
+    <a href="#">Dashboard</a>
+    <a href="#">Cases</a>
+    <a href="#">Issues</a>
+    <a href="#">Agents</a>
+    <a href="#" class="active">Test Lab</a>
+    <a href="#">Settings</a>
+  </div>
+</nav>
+
+<!-- Main Content -->
+<div class="main">
+
+  <!-- Title Bar + Runner Controls -->
+  <div class="title-bar">
+    <div class="title-left">
+      <h1>Test Lab</h1>
+      <span class="round-badge">R26 / 80 tests</span>
+    </div>
+    <div class="runner-control" id="runner-control">
+      <div class="runner-status">
+        <div class="status-dot idle" id="status-dot"></div>
+        <span class="status-label idle" id="status-label">IDLE</span>
+      </div>
+      <div class="runner-meta" id="runner-meta">Last: 03-29 09:57 (1h ago)</div>
+      <div class="runner-buttons" id="runner-buttons">
+        <button class="btn primary">Start</button>
+        <button class="btn">Pause</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Attention Panel -->
+  <div class="card attention-panel" id="attention-panel">
+    <div class="card-header">
+      <span style="font-size:14px">&#x26A0;&#xFE0F;</span>
+      <span class="card-title">Attention</span>
+      <span class="card-subtitle">3 items</span>
+    </div>
+    <div class="attention-item red">
+      <span class="emoji">&#x1F534;</span>
+      <span class="text">Framework fix queued: <strong>obs-stability-probe</strong></span>
+      <span class="detail">since R24</span>
+    </div>
+    <div class="attention-item red">
+      <span class="emoji">&#x1F534;</span>
+      <span class="text">Health check: <strong>FIX phase stuck</strong> for 3 rounds</span>
+      <span class="detail">45min</span>
+    </div>
+    <div class="attention-item yellow">
+      <span class="emoji">&#x1F7E1;</span>
+      <span class="text">Coverage plateau: no new tests for 3 rounds</span>
+      <span class="detail">R24-R26</span>
+    </div>
+  </div>
+
+  <!-- Pipeline + Activity Stream (side by side) -->
+  <div class="card">
+    <div class="pipeline-activity">
+      <div>
+        <div class="card-header">
+          <span style="color:var(--accent-blue);font-size:14px">&#x26A1;</span>
+          <span class="card-title">Phase Pipeline</span>
+          <span class="card-subtitle">Currently: wf-iss142-retro-skill</span>
+        </div>
+        <div class="pipeline">
+          <div class="phase-node">
+            <div class="phase-circle done">&#x2705;</div>
+            <span class="phase-label done">SCAN</span>
+            <span class="phase-summary">3 gaps found</span>
+          </div>
+          <div class="phase-connector done"></div>
+          <div class="phase-node">
+            <div class="phase-circle done">&#x2705;</div>
+            <span class="phase-label done">GENERATE</span>
+            <span class="phase-summary">3 tests created</span>
+          </div>
+          <div class="phase-connector done"></div>
+          <div class="phase-node">
+            <div class="phase-circle running">&#x1F3C3;</div>
+            <span class="phase-label running">TEST</span>
+            <span class="phase-summary">2/5 passed</span>
+          </div>
+          <div class="phase-connector"></div>
+          <div class="phase-node">
+            <div class="phase-circle pending">&#x23F3;</div>
+            <span class="phase-label pending">FIX</span>
+          </div>
+          <div class="phase-connector"></div>
+          <div class="phase-node">
+            <div class="phase-circle pending">&#x23F3;</div>
+            <span class="phase-label pending">VERIFY</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Activity Stream -->
+      <div>
+        <div class="card-header">
+          <span style="color:var(--accent-green);font-size:14px">&#x1F4E1;</span>
+          <span class="card-title">Activity</span>
+          <span class="card-subtitle">live</span>
+        </div>
+        <div class="activity-stream">
+          <div class="activity-event">
+            <span class="activity-time">11:52</span>
+            <span class="activity-badge TEST">TEST</span>
+            <span class="activity-text">&#x2705; <span class="activity-id">wf-iss142-retro</span> 3/3 pass</span>
+          </div>
+          <div class="activity-event">
+            <span class="activity-time">11:51</span>
+            <span class="activity-badge TEST">TEST</span>
+            <span class="activity-text">&#x2705; <span class="activity-id">auth-endpoints</span> 4/4 pass</span>
+          </div>
+          <div class="activity-event">
+            <span class="activity-time">11:49</span>
+            <span class="activity-badge TEST">TEST</span>
+            <span class="activity-text">&#x274C; <span class="activity-id">ui-todo-toggle</span> 1/3 fail</span>
+          </div>
+          <div class="activity-event">
+            <span class="activity-time">11:47</span>
+            <span class="activity-badge GENERATE">GEN</span>
+            <span class="activity-text">Created <span class="activity-id">wf-patrol-batch</span></span>
+          </div>
+          <div class="activity-event">
+            <span class="activity-time">11:45</span>
+            <span class="activity-badge SCAN">SCAN</span>
+            <span class="activity-text">Found 3 gaps from 80 specs</span>
+          </div>
+          <div class="activity-event">
+            <span class="activity-time">11:44</span>
+            <span class="activity-badge SCAN">SCAN</span>
+            <span class="activity-text">Recycled 2 regression items</span>
+          </div>
+          <div class="activity-event">
+            <span class="activity-time">11:42</span>
+            <span class="activity-badge VERIFY">VERIFY</span>
+            <span class="activity-text">&#x2705; <span class="activity-id">api-health</span> fix verified</span>
+          </div>
+          <div class="activity-event">
+            <span class="activity-time">11:40</span>
+            <span class="activity-badge FIX">FIX</span>
+            <span class="activity-text">Fixed <span class="activity-id">api-health</span> schema_mismatch</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-grid">
+    <div class="stat-card green">
+      <div class="stat-label">Passed</div>
+      <div class="stat-value green">62</div>
+      <div class="stat-sub">+3 this round</div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-label">Failed</div>
+      <div class="stat-value red">5</div>
+      <div class="stat-sub">-2 this round</div>
+    </div>
+    <div class="stat-card amber">
+      <div class="stat-label">Fixed</div>
+      <div class="stat-value amber">38</div>
+      <div class="stat-sub">+1 this round</div>
+    </div>
+    <div class="stat-card blue">
+      <div class="stat-label">Coverage</div>
+      <div class="stat-value blue">78%</div>
+      <div class="stat-sub">62/80 specs</div>
+    </div>
+    <div class="stat-card purple">
+      <div class="stat-label">Discoveries</div>
+      <div class="stat-value purple">12</div>
+      <div class="stat-sub">4 regression</div>
+    </div>
+  </div>
+
+  <!-- Journey + Queues (2-col) -->
+  <div class="two-col">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Test Queue</span>
+        <span class="card-subtitle">5 items</span>
+      </div>
+      <table class="queue-table">
+        <thead><tr><th>Test ID</th><th>Category</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>wf-iss142-retro</td><td>workflow-e2e</td><td><span class="badge pass">PASS</span></td></tr>
+          <tr><td>auth-endpoints</td><td>backend-api</td><td><span class="badge pass">PASS</span></td></tr>
+          <tr><td>ui-todo-toggle</td><td>ui-interaction</td><td><span class="badge fail">FAIL</span></td></tr>
+          <tr><td>wf-patrol-batch</td><td>workflow-e2e</td><td><span class="badge pending">PENDING</span></td></tr>
+          <tr><td>obs-stability</td><td>observability</td><td><span class="badge pending">PENDING</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Fix Queue</span>
+        <span class="card-subtitle">2 items</span>
+      </div>
+      <table class="queue-table">
+        <thead><tr><th>Test ID</th><th>Type</th><th>Attempt</th></tr></thead>
+        <tbody>
+          <tr><td>ui-todo-toggle</td><td>logic_error</td><td>1st</td></tr>
+          <tr><td>obs-stability</td><td>platform_instability</td><td>2nd (framework)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Discoveries + Trend + Evolution -->
+  <div class="two-col">
+    <div class="card">
+      <div class="card-header">
+        <span style="color:var(--accent-red);font-size:14px">&#x1F41B;</span>
+        <span class="card-title">Discoveries</span>
+        <span class="card-subtitle">12 total</span>
+      </div>
+      <table class="queue-table">
+        <thead><tr><th>ID</th><th>Title</th><th>Type</th></tr></thead>
+        <tbody>
+          <tr><td>#12</td><td>Todo toggle 500 on missing file</td><td><span class="badge fail">BUG</span></td></tr>
+          <tr><td>#11</td><td>SSE empty content on process</td><td><span class="badge fail">BUG</span></td></tr>
+          <tr><td>#10</td><td>Auth token expiry not handled</td><td><span class="badge" style="background:var(--accent-amber-dim);color:var(--accent-amber)">REGRESSION</span></td></tr>
+          <tr><td>#9</td><td>Case list sort by severity</td><td><span class="badge pass">FIXED</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span style="color:var(--accent-purple);font-size:14px">&#x1F9EC;</span>
+        <span class="card-title">Evolution Timeline</span>
+        <span class="card-subtitle">7 milestones</span>
+      </div>
+      <div class="evolution-timeline">
+        <div class="evo-node">
+          <div class="evo-round">Round 26</div>
+          <div class="evo-title">Issue-scanner single-process optimization</div>
+          <div class="evo-impact">135 issues in 2.5s (was 120s+)</div>
+        </div>
+        <div class="evo-node">
+          <div class="evo-round">Round 22</div>
+          <div class="evo-title">Batch test execution with subagent isolation</div>
+          <div class="evo-impact">3x throughput, no context bleed</div>
+        </div>
+        <div class="evo-node">
+          <div class="evo-round">Round 18</div>
+          <div class="evo-title">Self-heal recorder + auto-skip repeated failures</div>
+          <div class="evo-impact">Eliminated infinite fix loops</div>
+        </div>
+        <div class="evo-node">
+          <div class="evo-round">Round 12</div>
+          <div class="evo-title">Phase retrospective mechanism</div>
+          <div class="evo-impact">Quality feedback loop per phase</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trend Chart placeholder -->
+  <div class="card">
+    <div class="card-header">
+      <span style="color:var(--accent-blue);font-size:14px">&#x1F4C8;</span>
+      <span class="card-title">Trend</span>
+      <span class="card-subtitle">Last 10 rounds</span>
+    </div>
+    <div class="trend-chart-placeholder">
+      [SVG Area Chart — Pass/Fail/Fixed over rounds — already implemented in existing TestLab.tsx]
+    </div>
+  </div>
+
+</div>
+
+<script>
+function setRunnerState(state) {
+  const dot = document.getElementById('status-dot');
+  const label = document.getElementById('status-label');
+  const buttons = document.getElementById('runner-buttons');
+  const meta = document.getElementById('runner-meta');
+
+  // Reset demo tabs
+  document.querySelectorAll('.demo-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+
+  dot.className = 'status-dot ' + state;
+  label.className = 'status-label ' + state;
+  label.textContent = state.toUpperCase();
+
+  if (state === 'idle') {
+    buttons.innerHTML = '<button class="btn primary">&#x25B6; Start</button><button class="btn">&#x23F8; Pause</button>';
+    meta.textContent = 'Last: 03-29 09:57 (1h ago)';
+  } else if (state === 'running') {
+    buttons.innerHTML = '<button class="btn danger">&#x23F9; Stop</button><button class="btn">&#x23F8; Pause</button>';
+    meta.textContent = 'Started: 03-29 11:42 (10m ago)';
+  } else if (state === 'paused') {
+    buttons.innerHTML = '<button class="btn primary">&#x25B6; Resume</button><button class="btn danger">&#x23F9; Stop</button>';
+    meta.textContent = 'Paused: 03-29 11:50 (2m ago)';
+  }
+}
+
+let attentionVisible = true;
+function toggleAttention() {
+  const panel = document.getElementById('attention-panel');
+  attentionVisible = !attentionVisible;
+  if (attentionVisible) {
+    panel.style.display = 'block';
+  } else {
+    panel.innerHTML = '<div class="nominal">\u2705 All systems nominal</div>';
+    panel.style.display = 'block';
+  }
+}
+</script>
+</body>
+</html>

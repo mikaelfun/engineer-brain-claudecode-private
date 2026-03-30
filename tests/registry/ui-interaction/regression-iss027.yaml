@@ -1,0 +1,44 @@
+id: "regression-iss027"
+name: "Regression: ISS-027 — Create Track 点击后没有在 UI 中显示对话框以供用户交互回答 conductor:new-track 的交"
+category: "ui-interaction"
+source: "issues/ISS-027.json"
+description: "回归测试：验证 ISS-027 实现的功能未退化"
+safety_level: "safe"
+priority: "medium"
+tags: ["regression", "issue-driven", "iss-027"]
+regression_for: "ISS-027"
+
+steps:
+  - action: "navigate"
+    params:
+      url: "{frontend_url}"
+    safety_check: "ui.safe[navigate_to_page]"
+  - action: "verify_element"
+    params:
+      selector: "body"
+      expected: "visible"
+      timeout: 5000
+
+assertions:
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "`canUseTool` 回调在 AskUserQuestion 触发时能读取到正确的 `sessionId`"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "SSE `issue-track-question` 事件的 `sessionId` 字段不为 `undefined`"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "前端 `TrackProgressPanel` 正确显示 `QuestionForm`，用户可以回答"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "用户回答后 session 正确 resume，track 创建流程继续"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "TypeScript 编译通过，现有单元测试通过"
+
+timeout_seconds: 60

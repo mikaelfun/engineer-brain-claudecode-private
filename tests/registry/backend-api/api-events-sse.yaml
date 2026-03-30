@@ -1,0 +1,40 @@
+id: "api-events-sse"
+name: "SSE Events Stream — GET /api/events 基本连接测试"
+category: "backend-api"
+source: "dashboard/src/routes/events.ts — GET /api/events"
+description: "验证 GET /api/events 返回 SSE 响应头（Content-Type: text/event-stream），确认 SSE 推送基础设施可用"
+safety_level: "safe"
+priority: "low"
+tags: ["api", "sse", "events", "round-5"]
+
+steps:
+  # Step 1: Quick check — does /api/events respond with SSE headers?
+  # Use curl with timeout 2s to get response headers without waiting for stream
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/events"
+      auth: true
+      timeout_ms: 3000
+      expected_status: [200]
+      check_headers:
+        - name: "content-type"
+          contains: "text/event-stream"
+    safety_check: "api.safe[GET /api/health]"
+
+assertions:
+  - type: "status_code"
+    target: "GET /api/events"
+    expected: 200
+    description: "SSE events 端点可访问"
+
+  - type: "response_header"
+    target: "GET /api/events"
+    header: "content-type"
+    contains: "text/event-stream"
+    description: "响应 Content-Type 为 SSE 格式"
+
+timeout_seconds: 10
+notes: |
+  SSE 连接会持续保持打开，api-runner.sh 需要使用 curl --max-time 来截断。
+  只验证连接可建立 + 响应头正确，不等待实际 event 推送。

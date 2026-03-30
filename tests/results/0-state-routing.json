@@ -1,0 +1,9 @@
+{
+  "testId": "state-routing",
+  "round": 0,
+  "timestamp": "2026-03-28T14:15:06.000Z",
+  "status": "fail",
+  "assertions": [{"name":"Setup: backup created","pass":true,"expected":"backup exists","actual":"created at /tmp/e2e-backup-state-routing-1774706956"},{"name":"POST /api/case/:id/process","pass":true,"expected":"200|202","actual":"202"},{"name":"Casework completed within timeout","pass":true,"expected":"completed","actual":"completed"},{"name":"File exists: case-summary.md","pass":true,"expected":"exists","actual":"exists"},{"name":"Valid JSON: casehealth-meta.json","pass":true,"expected":"valid_json","actual":"valid"},{"name":"File exists: todo","pass":true,"expected":"exists","actual":"exists"},{"name":"POST /api/case/:id/process","pass":false,"expected":"200|202","actual":"409","note":"{\"error\":\"Case already has an active operation\",\"activeOperation\":{\"caseNumber\":\"2603060030001353\",\"operationType\":\"full-process\",\"startedAt\":\"2026-03-28T14:09:30.963Z\"}}"}],
+  "error": "1 of 7 assertions failed",
+  "duration_ms": 361226
+}

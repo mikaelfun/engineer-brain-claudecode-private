@@ -128,8 +128,8 @@ pwsh -File check-ir-status-batch.ps1 -SaveMeta -MetaDir "$casesRoot\active"
 部分 Mooncake 客户要求邮件 CC 特定人员（TAM / SDM 等）
 
 ### 数据源
-- 缓存文件：`workspace/data/mooncake-cc.json`
-- 刷新：`pwsh workspace/scripts/fetch-powerbi-cc.ps1 -Force`（约 2 分钟）
+- 缓存文件：`{dataRoot}/mooncake-cc.json`（dataRoot 在 config.json 配置）
+- 刷新：`pwsh workspace/scripts/fetch-powerbi-cc.ps1 -OutputDir "{dataRoot}" -Force`（约 2 分钟）
 
 ### 匹配逻辑
 - 读取 mooncake-cc.json 中的 accounts 列表

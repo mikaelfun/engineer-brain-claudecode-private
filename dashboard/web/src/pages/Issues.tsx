@@ -4,7 +4,7 @@
  * 功能：列表 + 筛选 + 分页 + 内联创建 + 行内编辑 + 状态驱动操作按钮
  */
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { Plus, X, Trash2, ExternalLink, ChevronRight, ChevronDown, Loader2, Rocket, Play, CheckCircle, RotateCcw, Search, Pencil, FileText, ListChecks, FlaskConical, CircleCheck, ShieldCheck, UserCheck, Copy, Check } from 'lucide-react'
+import { Plus, X, Trash2, ExternalLink, ChevronRight, ChevronDown, Loader2, Rocket, Play, CheckCircle, RotateCcw, Search, Pencil, FileText, ListChecks, FlaskConical, CircleCheck, ShieldCheck, UserCheck, Copy, Check, FlaskRound } from 'lucide-react'
 import { useIssues, useCreateIssue, useUpdateIssue, useDeleteIssue, useCreateTrack, useCancelTrack, useCancelVerify, useStartImplement, useVerifyIssue, useReopenIssue, useMarkDone, useTrackSpec, useTrackPlan, useActiveTrackSessions } from '../api/hooks'
 import { Loading, ErrorState } from '../components/common/Loading'
 import TrackProgressPanel from '../components/TrackProgressPanel'
@@ -15,6 +15,23 @@ import { useIssueTrackStore, EMPTY_TRACK_MESSAGES } from '../stores/issueTrackSt
 type IssueType = 'bug' | 'feature' | 'refactor' | 'chore'
 type IssuePriority = 'P0' | 'P1' | 'P2'
 type IssueStatus = 'pending' | 'tracking' | 'tracked' | 'in-progress' | 'implemented' | 'done'
+
+interface VerifyCriterion {
+  id: string
+  description: string
+  result: 'pass' | 'fail' | 'skip'
+  evidence: string
+  recipe?: string | null
+}
+
+interface IssueVerifyResult {
+  unitTest?: { success: boolean; output: string }
+  uiTest?: { success: boolean; output: string }
+  verifiedAt?: string
+  regression?: 'pass' | 'fail'
+  criteria?: VerifyCriterion[]
+  timestamp?: string
+}
 
 const TYPE_COLORS: Record<IssueType, { bg: string; color: string }> = {
   bug: { bg: 'var(--accent-red-dim)', color: 'var(--accent-red)' },
@@ -716,9 +733,13 @@ function IssueRow({
                 <span
                   className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium"
                   style={{
-                    background: issue.verifyResult.unitTest?.success && issue.verifyResult.uiTest?.success
+                    background: (issue.verifyResult.criteria
+                      ? issue.verifyResult.criteria.every((c: { result: string }) => c.result === 'pass' || c.result === 'skip')
+                      : issue.verifyResult.unitTest?.success && issue.verifyResult.uiTest?.success)
                       ? 'var(--accent-green-dim)' : 'var(--accent-red-dim)',
-                    color: issue.verifyResult.unitTest?.success && issue.verifyResult.uiTest?.success
+                    color: (issue.verifyResult.criteria
+                      ? issue.verifyResult.criteria.every((c: { result: string }) => c.result === 'pass' || c.result === 'skip')
+                      : issue.verifyResult.unitTest?.success && issue.verifyResult.uiTest?.success)
                       ? 'var(--accent-green)' : 'var(--accent-red)',
                   }}
                 >
@@ -735,6 +756,23 @@ function IssueRow({
                 </span>
               )
             )}
+            {/* Test Loop Scan toggle — click to toggle, stopPropagation to avoid row expand */}
+            <span
+              title={issue.testLoopScan !== false ? 'Test Loop: enabled (click to disable)' : 'Test Loop: disabled (click to enable)'}
+              className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium cursor-pointer select-none"
+              style={{
+                background: issue.testLoopScan !== false ? 'var(--accent-teal-dim, var(--accent-blue-dim))' : 'var(--bg-inset)',
+                color: issue.testLoopScan !== false ? 'var(--accent-teal, var(--accent-blue))' : 'var(--text-tertiary)',
+                opacity: issue.testLoopScan !== false ? 1 : 0.5,
+              }}
+              onClick={(e) => {
+                e.stopPropagation()
+                updateIssue.mutate({ id: issue.id, testLoopScan: issue.testLoopScan !== false ? false : true })
+              }}
+            >
+              <FlaskConical className="w-3 h-3" />
+              {issue.testLoopScan !== false ? 'Scan' : 'Skip'}
+            </span>
           </div>
           <h3
             className={`text-sm font-medium mt-1 ${issue.status === 'done' ? 'line-through' : ''}`}
@@ -1158,15 +1196,20 @@ function IssueRow({
   )
 }
 
-/** ISS-039: Collapsible verify result panel shown in expanded issue detail */
-function VerifyResultPanel({ verifyResult }: { verifyResult: { unitTest: { success: boolean; output: string }; uiTest: { success: boolean; output: string }; verifiedAt: string } }) {
+/** ISS-039: Collapsible verify result panel shown in expanded issue detail.
+ *  Supports both old format (unitTest/uiTest) and new criteria-based format. */
+function VerifyResultPanel({ verifyResult }: { verifyResult: IssueVerifyResult }) {
   const [expanded, setExpanded] = useState(false)
-  const allPassed = verifyResult.unitTest.success && verifyResult.uiTest.success
+  const isNewFormat = Array.isArray(verifyResult.criteria) && verifyResult.criteria.length > 0
+  const allPassed = isNewFormat
+    ? verifyResult.criteria!.every(c => c.result === 'pass' || c.result === 'skip')
+    : (verifyResult.unitTest?.success ?? false) && (verifyResult.uiTest?.success ?? false)
+  const timestamp = verifyResult.timestamp || verifyResult.verifiedAt
 
-  const steps = [
-    { label: 'Unit Tests (Vitest)', result: verifyResult.unitTest, skipped: false },
-    { label: 'UI Tests (Playwright)', result: verifyResult.uiTest, skipped: !verifyResult.unitTest.success },
-  ]
+  const oldSteps = !isNewFormat ? [
+    { label: 'Unit Tests (Vitest)', result: verifyResult.unitTest!, skipped: false },
+    { label: 'UI Tests (Playwright)', result: verifyResult.uiTest!, skipped: !verifyResult.unitTest?.success },
+  ] : []
 
   return (
     <div className="rounded-lg p-3" style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-subtle)' }}>
@@ -1193,13 +1236,49 @@ function VerifyResultPanel({ verifyResult }: { verifyResult: { unitTest: { succe
           {allPassed ? 'ALL PASS' : 'FAILED'}
         </span>
         <span className="ml-auto text-xs" style={{ color: 'var(--text-tertiary)' }}>
-          {new Date(verifyResult.verifiedAt).toLocaleString()}
+          {new Date(timestamp || '').toLocaleString()}
         </span>
       </button>
 
       {expanded && (
         <div className="mt-2 space-y-2">
-          {steps.map((step, i) => (
+          {/* New criteria-based format */}
+          {isNewFormat && verifyResult.criteria!.map((criterion, i) => (
+            <div key={criterion.id || i}>
+              <div className="flex items-center gap-2 mb-1">
+                <span
+                  className="px-1.5 py-0.5 rounded text-xs font-medium"
+                  style={{
+                    background: criterion.result === 'skip'
+                      ? 'var(--bg-inset)'
+                      : criterion.result === 'pass' ? 'var(--accent-green-dim)' : 'var(--accent-red-dim)',
+                    color: criterion.result === 'skip'
+                      ? 'var(--text-secondary)'
+                      : criterion.result === 'pass' ? 'var(--accent-green)' : 'var(--accent-red)',
+                  }}
+                >
+                  {criterion.result === 'skip' ? 'SKIP' : criterion.result === 'pass' ? 'PASS' : 'FAIL'}
+                </span>
+                <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
+                  {criterion.id}: {criterion.description}
+                </span>
+                {criterion.recipe && (
+                  <span className="text-xs px-1 rounded" style={{ background: 'var(--bg-inset)', color: 'var(--text-tertiary)' }}>
+                    {criterion.recipe}
+                  </span>
+                )}
+              </div>
+              <pre
+                className="text-xs p-2 rounded overflow-x-auto max-h-32 overflow-y-auto whitespace-pre-wrap"
+                style={{ background: 'var(--bg-surface)', color: 'var(--text-primary)', border: '1px solid var(--border-subtle)' }}
+              >
+                {criterion.evidence || '(no evidence)'}
+              </pre>
+            </div>
+          ))}
+
+          {/* Old unitTest/uiTest format */}
+          {!isNewFormat && oldSteps.map((step, i) => (
             <div key={i}>
               <div className="flex items-center gap-2 mb-1">
                 <span

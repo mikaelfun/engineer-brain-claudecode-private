@@ -3,7 +3,7 @@
 **Track ID:** test-framework_20260328
 **Spec:** [spec.md](./spec.md)
 **Created:** 2026-03-28
-**Status:** [~] In Progress
+**Status:** [x] Complete
 
 ## Overview
 
@@ -60,19 +60,19 @@
 
 ### Tasks
 
-- [ ] Task 3.1: 实现后端 API 测试执行器 — 读取 `tests/registry/backend-api/*.yaml`，用 curl 执行（自动生成 JWT），验证 status code + response shape + error handling，结果写入 `tests/results/{round}-{testId}.json`
-- [ ] Task 3.2: 实现工作流 E2E 测试执行器 — 读取 `tests/registry/workflow-e2e/*.yaml`，执行 backup → prepare data → run casework/skill → verify outputs → restore 流程，验证 timing.json + case-summary.md + todo/*.md + logs
-- [ ] Task 3.3: 实现 UI 交互测试执行器 — 读取 `tests/registry/ui-interaction/*.yaml`，用 Playwright MCP 执行：先检查 env.yaml 端口 → 读 safety.yaml 确认操作安全 → navigate → snapshot → click/fill/toggle → snapshot → 验证状态变化，截图保存为 JPEG 到 `tests/results/screenshots/`
-- [ ] Task 3.4: 实现 UI 视觉测试执行器 — 读取 `tests/registry/ui-visual/*.yaml`，Playwright 执行：navigate → resize → screenshot → 验证布局/主题/响应式，对比基线截图
-- [ ] Task 3.5: 实现安全检查前置拦截 — 每个执行器在执行前读取 safety.yaml，查表确认操作安全级别：SAFE→执行，BLOCKED→跳过并记录 reason，UNKNOWN→标记为 warning 等待人工确认
-- [ ] Task 3.6: 实现 patrol 测试支持 — 在 workflow-e2e 执行器中支持 patrol 场景（`POST /api/patrol`），包含多 case 批量验证逻辑
+- [x] Task 3.1: 实现后端 API 测试执行器 — 读取 `tests/registry/backend-api/*.yaml`，用 curl 执行（自动生成 JWT），验证 status code + response shape + error handling，结果写入 `tests/results/{round}-{testId}.json`
+- [x] Task 3.2: 实现工作流 E2E 测试执行器 — 读取 `tests/registry/workflow-e2e/*.yaml`，执行 backup → prepare data → run casework/skill → verify outputs → restore 流程，验证 timing.json + case-summary.md + todo/*.md + logs
+- [x] Task 3.3: 实现 UI 交互测试执行器 — 读取 `tests/registry/ui-interaction/*.yaml`，用 Playwright MCP 执行：先检查 env.yaml 端口 → 读 safety.yaml 确认操作安全 → navigate → snapshot → click/fill/toggle → snapshot → 验证状态变化，截图保存为 JPEG 到 `tests/results/screenshots/`
+- [x] Task 3.4: 实现 UI 视觉测试执行器 — 读取 `tests/registry/ui-visual/*.yaml`，Playwright 执行：navigate → resize → screenshot → 验证布局/主题/响应式，对比基线截图
+- [x] Task 3.5: 实现安全检查前置拦截 — 每个执行器在执行前读取 safety.yaml，查表确认操作安全级别：SAFE→执行，BLOCKED→跳过并记录 reason，UNKNOWN→标记为 warning 等待人工确认
+- [x] Task 3.6: 实现 patrol 测试支持 — 在 workflow-e2e 执行器中支持 patrol 场景（`POST /api/patrol`），包含多 case 批量验证逻辑
 
 ### Verification
 
-- [ ] API 测试执行器能跑通 health + cases + meta 等基本端点
-- [ ] E2E 测试执行器能完成 full-scenario 的 backup/restore 循环
-- [ ] UI 测试执行器能在 msedge 中完成导航+点击+验证
-- [ ] safety 拦截器正确阻止 POST /api/todo/:id/execute
+- [x] API 测试执行器能跑通 health + cases + meta 等基本端点
+- [x] E2E 测试执行器能完成 full-scenario 的 backup/restore 循环
+- [x] UI 测试执行器能在 msedge 中完成导航+点击+验证
+- [x] safety 拦截器正确阻止 POST /api/todo/:id/execute
 
 ---
 
@@ -82,17 +82,17 @@
 
 ### Tasks
 
-- [ ] Task 4.1: 实现 FIX 阶段逻辑 — 从 state.json 的 fixQueue 取出失败测试，分析 `tests/results/{round}-{testId}.json` 中的 actual vs expected，spawn agent（model=opus）进行根因分析 + 代码修复，修复后记录 diff 到 `tests/results/fixes/{testId}-fix.md`
-- [ ] Task 4.2: 实现 VERIFY 阶段逻辑 — 从 verifyQueue 取出已修复测试，重新执行同一测试定义，PASS→标记修复成功（从 fixQueue/verifyQueue 移除），FAIL→回到 fixQueue 附加上次修复的 context
-- [ ] Task 4.3: 实现经验固化写入 — FIX 阶段解决环境/流程问题时自动追加 learnings.yaml（区分 code_bug vs env_issue，env_issue 写 learnings，code_bug 写 results/fixes/）
-- [ ] Task 4.4: 实现回归保护 — FIX 修改代码后，自动将相关测试标记为 "需回归"，下轮 TEST 阶段优先执行回归测试
+- [x] Task 4.1: 实现 FIX 阶段逻辑 — 从 state.json 的 fixQueue 取出失败测试，分析 `tests/results/{round}-{testId}.json` 中的 actual vs expected，spawn agent（model=opus）进行根因分析 + 代码修复，修复后记录 diff 到 `tests/results/fixes/{testId}-fix.md`
+- [x] Task 4.2: 实现 VERIFY 阶段逻辑 — 从 verifyQueue 取出已修复测试，重新执行同一测试定义，PASS→标记修复成功（从 fixQueue/verifyQueue 移除），FAIL→回到 fixQueue 附加上次修复的 context
+- [x] Task 4.3: 实现经验固化写入 — FIX 阶段解决环境/流程问题时自动追加 learnings.yaml（区分 code_bug vs env_issue，env_issue 写 learnings，code_bug 写 results/fixes/）
+- [x] Task 4.4: 实现回归保护 — FIX 修改代码后，自动将相关测试标记为 "需回归"，下轮 TEST 阶段优先执行回归测试
 
 ### Verification
 
-- [ ] FIX 能正确分析一个已知的简单 bug 并生成修复代码
-- [ ] VERIFY 能重跑测试并确认修复有效
-- [ ] 环境问题修复后 learnings.yaml 有新增条目
-- [ ] 修复后相关测试被标记为需回归
+- [x] FIX 能正确分析一个已知的简单 bug 并生成修复代码
+- [x] VERIFY 能重跑测试并确认修复有效
+- [x] 环境问题修复后 learnings.yaml 有新增条目
+- [x] 修复后相关测试被标记为需回归
 
 ---
 
@@ -102,18 +102,18 @@
 
 ### Tasks
 
-- [ ] Task 5.1: 完善 `.claude/skills/test-loop/SKILL.md` 的状态转换逻辑 — SCAN→GENERATE（有 gap 时）或 TEST（无 gap 时），TEST→FIX（有失败时）或 SCAN（全通过时），FIX→VERIFY→TEST（回归），完整状态机图 + 转换条件
-- [ ] Task 5.2: 实现 round 计数和 maxRounds 停止 — state.json 的 round 每完成一个 SCAN→...→回到 SCAN 加 1，达到 maxRounds 时标记 phase=COMPLETE，loop 读到 COMPLETE 直接返回
-- [ ] Task 5.3: 实现 loop 启动提示词 — 创建 `tests/loop-prompt.md`，包含启动 `/loop 8m /test-loop` 的完整提示词，以及手动单次运行 `/test-loop` 的方式
-- [ ] Task 5.4: 实现统计报告 — 每轮结束更新 `tests/stats.md`（当前 round、总测试数、通过/失败/修复/跳过数、覆盖率、最近修复列表），以及 `tests/results/round-{N}-summary.json`
-- [ ] Task 5.5: 实现中断恢复 — 如果 state.json 的 phase 在 TEST/FIX/VERIFY 中途 session 被中断，下轮 loop 能从 state.json 恢复执行（不重头来）
+- [x] Task 5.1: 完善 `.claude/skills/test-loop/SKILL.md` 的状态转换逻辑 — SCAN→GENERATE（有 gap 时）或 TEST（无 gap 时），TEST→FIX（有失败时）或 SCAN（全通过时），FIX→VERIFY→TEST（回归），完整状态机图 + 转换条件
+- [x] Task 5.2: 实现 round 计数和 maxRounds 停止 — state.json 的 round 每完成一个 SCAN→...→回到 SCAN 加 1，达到 maxRounds 时标记 phase=COMPLETE，loop 读到 COMPLETE 直接返回
+- [x] Task 5.3: 实现 loop 启动提示词 — 创建 `tests/loop-prompt.md`，包含启动 `/loop 8m /test-loop` 的完整提示词，以及手动单次运行 `/test-loop` 的方式
+- [x] Task 5.4: 实现统计报告 — 每轮结束更新 `tests/stats.md`（当前 round、总测试数、通过/失败/修复/跳过数、覆盖率、最近修复列表），以及 `tests/results/round-{N}-summary.json`
+- [x] Task 5.5: 实现中断恢复 — 如果 state.json 的 phase 在 TEST/FIX/VERIFY 中途 session 被中断，下轮 loop 能从 state.json 恢复执行（不重头来）
 
 ### Verification
 
-- [ ] 手动运行 `/test-loop` 一次，能完成完整 SCAN→GENERATE→TEST→(FIX→VERIFY)→回到 SCAN
-- [ ] `/loop 8m /test-loop` 能持续运行多轮
-- [ ] round 达到 maxRounds 时自动停止
-- [ ] 中断后重启能从上次状态恢复
+- [x] 手动运行 `/test-loop` 一次，能完成完整 SCAN→GENERATE→TEST→(FIX→VERIFY)→回到 SCAN
+- [x] `/loop 8m /test-loop` 能持续运行多轮
+- [x] round 达到 maxRounds 时自动停止
+- [x] 中断后重启能从上次状态恢复
 
 ---
 
@@ -123,19 +123,19 @@
 
 ### Tasks
 
-- [ ] Task 6.1: 迁移 evolution-log.md 中的 70+ findings 到 `tests/results/legacy-findings.json` — 结构化的 findings 列表，每个包含 id、scenario、description、severity、fixed、regression_test_id
-- [ ] Task 6.2: 更新 `playbooks/guides/casework-evolution-loop.md` — 添加 "已迁移到新框架" 标记，指向 tests/ 目录，保留作为历史参考
-- [ ] Task 6.3: 实现自我提升：需求变更检测 — SCAN 阶段对比上次 scan 的 manifest.json，高亮新增/变更的 features，自动进入 GENERATE 为它们生成测试
-- [ ] Task 6.4: 实现自我提升：覆盖率跟踪 — `tests/manifest.json` 中每个 feature 标记 tested/untested/partial，SCAN 阶段计算覆盖率，低覆盖区域优先生成测试
-- [ ] Task 6.5: 更新 CLAUDE.md — 添加 tests/ 目录到项目结构表，添加 /test-loop 到 skills 列表，添加自动化测试使用说明
-- [ ] Task 6.6: 创建 `tests/README.md` — 框架使用指南（如何启动、如何添加测试、如何查看结果、如何设置 maxRounds）
+- [x] Task 6.1: 迁移 evolution-log.md 中的 70+ findings 到 `tests/results/legacy-findings.json` — 结构化的 findings 列表，每个包含 id、scenario、description、severity、fixed、regression_test_id
+- [x] Task 6.2: 更新 `playbooks/guides/casework-evolution-loop.md` — 添加 "已迁移到新框架" 标记，指向 tests/ 目录，保留作为历史参考
+- [x] Task 6.3: 实现自我提升：需求变更检测 — SCAN 阶段对比上次 scan 的 manifest.json，高亮新增/变更的 features，自动进入 GENERATE 为它们生成测试
+- [x] Task 6.4: 实现自我提升：覆盖率跟踪 — `tests/manifest.json` 中每个 feature 标记 tested/untested/partial，SCAN 阶段计算覆盖率，低覆盖区域优先生成测试
+- [x] Task 6.5: 更新 CLAUDE.md — 添加 tests/ 目录到项目结构表，添加 /test-loop 到 skills 列表，添加自动化测试使用说明
+- [x] Task 6.6: 创建 `tests/README.md` — 框架使用指南（如何启动、如何添加测试、如何查看结果、如何设置 maxRounds）
 
 ### Verification
 
-- [ ] legacy findings 全部可被 JSON 解析
-- [ ] SCAN 能检测到新增 issue 并标记为未覆盖
-- [ ] 覆盖率计算与实际 registry 文件一致
-- [ ] CLAUDE.md 的目录结构表包含 tests/
+- [x] legacy findings 全部可被 JSON 解析
+- [x] SCAN 能检测到新增 issue 并标记为未覆盖
+- [x] 覆盖率计算与实际 registry 文件一致
+- [x] CLAUDE.md 的目录结构表包含 tests/
 
 ---
 

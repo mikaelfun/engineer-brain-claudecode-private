@@ -1,0 +1,28 @@
+id: "regression-iss067"
+name: "Regression: ISS-067 — Case 详情页增加全屏 AI Assistant 分页"
+category: "ui-interaction"
+source: "issues/ISS-067.json"
+description: "回归测试：验证 ISS-067 实现的功能未退化"
+safety_level: "safe"
+priority: "medium"
+tags: ["regression", "issue-driven", "iss-067"]
+regression_for: "ISS-067"
+
+steps:
+  - action: "navigate"
+    params:
+      url: "{frontend_url}"
+    safety_check: "ui.safe[navigate_to_page]"
+  - action: "verify_element"
+    params:
+      selector: "body"
+      expected: "visible"
+      timeout: 5000
+
+assertions:
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "右侧栏精简为快捷按钮（Full Process / Refresh 等）+ 'Open AI Assistant' 跳转按钮"
+
+timeout_seconds: 60

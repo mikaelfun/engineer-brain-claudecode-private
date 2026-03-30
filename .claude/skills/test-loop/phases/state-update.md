@@ -7,10 +7,10 @@ Post-phase logic: update state, circuit-breaker check, decide continuation.
 After each phase completes:
 
 1. Update `tests/state.json` (phase, queues, stats) via state-writer.sh --merge
-2. **🔴 Mark completed phase in roundJourney**:
+2. **🔴 Mark completed phase in roundJourney** (and clear progress):
    ```bash
    DURATION_MS=$(( $(date +%s%3N) - START_TS ))
-   echo '{"roundJourney":{"'$PHASE'":{"status":"done","summary":"...","duration_ms":'$DURATION_MS'}}}' \
+   echo '{"roundJourney":{"'$PHASE'":{"status":"done","summary":"...","duration_ms":'$DURATION_MS'}},"currentTest":"","phaseProgress":null}' \
      | bash tests/executors/state-writer.sh --merge
    ```
    Summary by phase:

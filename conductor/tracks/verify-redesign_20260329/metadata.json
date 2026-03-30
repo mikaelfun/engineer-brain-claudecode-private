@@ -1,0 +1,83 @@
+{
+  "id": "verify-redesign_20260329",
+  "title": "Conductor Verify 重新设计 — 推理驱动 + Recipe 自我演进",
+  "type": "feature",
+  "status": "complete",
+  "created": "2026-03-29T21:00:00+08:00",
+  "updated": "2026-03-29T22:05:00+08:00",
+  "issueId": "ISS-148",
+  "current_phase": 3,
+  "current_task": "3.2",
+  "phases": {
+    "total": 3,
+    "completed": 3
+  },
+  "tasks": {
+    "total": 9,
+    "completed": 9
+  },
+  "verification": {
+    "status": "passed",
+    "method": "auto",
+    "timestamp": "2026-03-29T22:05:00+08:00",
+    "regression": "pass",
+    "criteria": [
+      {
+        "id": "AC1",
+        "description": "verify 读取 spec.md 提取验收标准，对每条推理验证类型",
+        "result": "pass",
+        "evidence": "SKILL.md Step 2 has Read spec + Extract acceptance criteria + Classify verification type",
+        "recipe": "file-content-check.md"
+      },
+      {
+        "id": "AC2",
+        "description": "verification-recipes 目录结构 + 4 初始 recipe",
+        "result": "pass",
+        "evidence": "5 files exist, all 4 recipes have 匹配条件/前置检查/执行步骤/常见坑 sections, _index.md has 匹配规则+演进日志",
+        "recipe": "file-content-check.md"
+      },
+      {
+        "id": "AC3",
+        "description": "verify 匹配 recipe 执行",
+        "result": "pass",
+        "evidence": "SKILL.md Step 2 references _index.md, Step 3 has 'If recipe matched' path",
+        "recipe": "file-content-check.md"
+      },
+      {
+        "id": "AC4",
+        "description": "无匹配 recipe 从零推理",
+        "result": "pass",
+        "evidence": "SKILL.md Step 3 has 'If no recipe matched (from-scratch reasoning)' with LLM reasoning path",
+        "recipe": "file-content-check.md"
+      },
+      {
+        "id": "AC5",
+        "description": "反思提取触发条件",
+        "result": "pass",
+        "evidence": "SKILL.md Step 5 has trigger table (retries>=2, pitfall, >10 lines, outdated) + _index.md 演进日志 update",
+        "recipe": "file-content-check.md"
+      },
+      {
+        "id": "AC6",
+        "description": "npm test regression guard",
+        "result": "pass",
+        "evidence": "SKILL.md Step 1: Regression Guard with 'npm test' command, runs before all other steps",
+        "recipe": "file-content-check.md"
+      },
+      {
+        "id": "AC7",
+        "description": "汇总报告 per-criterion PASS/FAIL + metadata.json",
+        "result": "pass",
+        "evidence": "SKILL.md Step 4 has report template with per-criterion PASS/FAIL/evidence + metadata.json verification field write",
+        "recipe": "file-content-check.md"
+      },
+      {
+        "id": "AC8",
+        "description": "workflow.md 更新为新流程",
+        "result": "pass",
+        "evidence": "workflow.md Step 2 references .claude/skills/conductor/verify/SKILL.md + verification-recipes dir, Step 2a marked as 仅供参考",
+        "recipe": "file-content-check.md"
+      }
+    ]
+  }
+}

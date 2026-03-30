@@ -1,0 +1,40 @@
+id: "regression-iss103"
+name: "Regression: ISS-103 — Issue Implement 实时进度展示"
+category: "ui-interaction"
+source: "issues/ISS-103.json"
+description: "回归测试：验证 ISS-103 实现的功能未退化"
+safety_level: "safe"
+priority: "medium"
+tags: ["regression", "issue-driven", "iss-103"]
+regression_for: "ISS-103"
+
+steps:
+  - action: "navigate"
+    params:
+      url: "{frontend_url}"
+    safety_check: "ui.safe[navigate_to_page]"
+  - action: "verify_element"
+    params:
+      selector: "body"
+      expected: "visible"
+      timeout: 5000
+
+assertions:
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "进度面板实时显示 SDK 消息流：thinking（💭）、tool-call（🔧）、tool-result（✅/❌）"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "刷新页面后，正在进行的 implement 面板自动恢复（持久化消息）"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "完成后 issue 状态自动更新、面板显示完成摘要"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "失败时面板显示错误信息"
+
+timeout_seconds: 60

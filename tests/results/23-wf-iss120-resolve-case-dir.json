@@ -1,0 +1,9 @@
+{
+  "testId": "wf-iss120-resolve-case-dir",
+  "round": 23,
+  "timestamp": "2026-03-29T07:35:10.000Z",
+  "status": "pass",
+  "assertions": [],
+  "error": null,
+  "duration_ms": 19483
+}

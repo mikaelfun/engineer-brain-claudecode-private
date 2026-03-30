@@ -1,0 +1,10 @@
+{
+  "id": "ISS-161",
+  "title": "OneNote SOP/Operation 规则提取 → Engineer Handbook + 问答机器人",
+  "description": "长期演进方向：Engineer Brain 支持用 onenote-export 从零读取或增量读取团队 OneNote 中的 SOP 和 operation 规则，LLM 推理并记录到 Engineer Handbook 分类放好，后续可以充当问答机器人。\n\n核心流程：\n1. 通过 onenote-export 全量或增量同步团队 OneNote（如 MCVKB）\n2. LLM 扫描笔记内容，识别 SOP（Standard Operating Procedure）和 operation 规则类内容\n   - SOP 示例：ICM 升级流程、Case 转移流程、21v Convert 操作步骤\n   - Operation 规则示例：Labor 记录规范、邮件回复时效要求、SAP 修改标准\n3. 推理分类并结构化记录到 Engineer Handbook（playbooks/handbook/ 或类似目录）\n   - 按 topic 分类：case-management / escalation / communication / tools / compliance\n   - 结构化格式：When（何时适用）/ What（做什么）/ How（具体步骤）/ Why（为什么）\n4. 增量更新：OneNote 页面变更时自动更新对应 handbook 条目\n5. 问答模式：用户提问 \"XXX 怎么操作\" → 检索 handbook → 返回结构化答案\n\n与其他 Issue 的关系：\n- ISS-159（OneNote → troubleshooting recipe）关注排查技术问题\n- ISS-161（本 issue）关注流程规范和操作规则\n- 两者都从 OneNote 提取知识，但目标用途不同\n\n问答机器人模式：\n- 可整合 local-rag（向量化搜索）实现语义匹配\n- 支持自然语言提问：\"怎么做 ICM 升级\"、\"Labor 记录的规则是什么\"\n- 返回结构化的步骤指引 + 原始 OneNote 链接",
+  "type": "feature",
+  "priority": "P2",
+  "status": "pending",
+  "createdAt": "2026-03-29T22:04:00Z",
+  "updatedAt": "2026-03-29T22:04:00Z"
+}

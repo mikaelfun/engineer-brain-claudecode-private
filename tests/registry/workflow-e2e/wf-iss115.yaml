@@ -1,0 +1,33 @@
+id: "wf-iss115"
+name: "ISS-115 — Test Loop 架构优化：批量处理 + subagent 隔离"
+category: "workflow-e2e"
+source: "issues/ISS-115.json"
+description: "验证 ISS-115（implemented）的验收标准：SKILL.md TEST 阶段改为遍历 testQueue 所有 items，每个 spawn sonnet agen"
+safety_level: "safe"
+data_source: live
+live_pool: "data_rich"
+priority: "high"
+tags: ["issue-driven", "iss-115", "implemented"]
+
+steps:
+  - action: "run_skill"
+    params:
+      skill: "data-refresh"
+      case_id: "{live_case_id}"
+    safety_check: "scripts.safe[data-refresh]"
+
+assertions:
+  - type: "file_exists"
+    target: "cases/active/{test_case_id}/case-summary.md"
+    description: "SKILL.md TEST 阶段改为遍历 testQueue 所有 items，每个 spawn sonnet agent"
+  - type: "file_exists"
+    target: "cases/active/{test_case_id}/case-summary.md"
+    description: "SKILL.md FIX 阶段改为遍历 fixQueue 所有 items，每个 spawn opus agent"
+  - type: "file_exists"
+    target: "cases/active/{test_case_id}/case-summary.md"
+    description: "SKILL.md VERIFY 阶段改为遍历 verifyQueue 所有 items，每个 spawn sonnet agent"
+  - type: "file_exists"
+    target: "cases/active/{test_case_id}/case-summary.md"
+    description: "每个 agent 完成后立即更新 state.json（stats + queue 移动 + phaseHistory 追加）"
+
+timeout_seconds: 120

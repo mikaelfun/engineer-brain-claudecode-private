@@ -1,0 +1,58 @@
+id: "ui-verify-panel"
+name: "UI Interaction: Verify Progress Panel — 验证进度面板"
+category: "ui-interaction"
+source: "dashboard/web/src/components/VerifyProgressPanel.tsx"
+description: "验证 Verify Progress Panel 功能：检查 /api/issues/:id/verify-status 端点，验证前端 Issues 页面正常加载"
+safety_level: "safe"
+priority: "medium"
+tags: ["ui", "interaction", "verify-panel", "conductor", "round-9"]
+
+steps:
+  - action: "navigate"
+    params:
+      url: "{frontend_url}"
+    safety_check: "ui.safe[navigate_to_page]"
+
+  - action: "click"
+    params:
+      target: "Issues nav item"
+    safety_check: "ui.safe[click_sidebar_nav]"
+
+  - action: "verify_element"
+    params:
+      selector: "main"
+      expected: "visible"
+      timeout: 5000
+
+  - action: "screenshot"
+    params:
+      selector: "body"
+      filename: "ui-verify-panel-issues.jpg"
+
+  - action: "check_element"
+    params:
+      selector: "[class*='VerifyProgress'], [class*='verify-progress'], [class*='verify-panel']"
+      timeout: 3000
+      optional: true
+
+  - action: "screenshot"
+    params:
+      selector: "body"
+      filename: "ui-verify-panel-detail.jpg"
+
+assertions:
+  - type: "element_visible"
+    target: "issues page main content"
+    expected: true
+    description: "Issues 页面主内容区域可见"
+
+  - type: "page_load"
+    target: "/issues"
+    expected: "loaded"
+    description: "Issues 页面加载成功"
+
+  - type: "no_console_errors"
+    target: "page"
+    description: "页面无严重控制台错误"
+
+timeout_seconds: 45

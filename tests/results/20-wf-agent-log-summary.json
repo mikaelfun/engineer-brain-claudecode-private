@@ -1,0 +1,9 @@
+{
+  "testId": "wf-agent-log-summary",
+  "round": 20,
+  "timestamp": "2026-03-29T03:25:57.000Z",
+  "status": "pass",
+  "assertions": [],
+  "error": null,
+  "duration_ms": 153549
+}

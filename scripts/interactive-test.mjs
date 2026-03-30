@@ -9,6 +9,13 @@
  * 6. Rapidly switch between pages while SSE is running
  */
 import { chromium } from 'playwright';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
+import { existsSync, mkdirSync } from 'fs';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const screenshotDir = join(__dirname, 'screenshots');
+if (!existsSync(screenshotDir)) mkdirSync(screenshotDir, { recursive: true });
 
 const BASE = 'http://localhost:5177';
 const PASSWORD = 'eb2026';
@@ -50,7 +57,7 @@ const PASSWORD = 'eb2026';
     if (hasMaxUpdate || hasErrBoundary) {
       console.log(`   ❌ [${label}] MaxUpdateDepth=${hasMaxUpdate} ErrorBoundary=${hasErrBoundary}`);
       await page.screenshot({
-        path: `C:/Users/fangkun/Documents/Claude Code Projects/EngineerBrain/scripts/screenshots/error-${label}.png`,
+        path: join(screenshotDir, `error-${label}.png`),
         fullPage: true
       });
       return true;
@@ -113,7 +120,7 @@ const PASSWORD = 'eb2026';
       process.stdout.write(`   [${(i+1)*5}s] maxUpdate=${hasMaxUpdate} errBoundary=${hasErrBoundary} pageErr=${pageErr} consErr=${consErr}\n`);
       if (hasMaxUpdate || hasErrBoundary) {
         await page.screenshot({
-          path: `C:/Users/fangkun/Documents/Claude Code Projects/EngineerBrain/scripts/screenshots/error-soak-${(i+1)*5}s.png`,
+          path: join(screenshotDir, `error-soak-${(i+1)*5}s.png`),
           fullPage: true
         });
         break;

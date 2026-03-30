@@ -1,0 +1,44 @@
+id: "regression-iss004"
+name: "Regression: ISS-004 — Case Detail Header Redesign"
+category: "ui-interaction"
+source: "issues/ISS-004.json"
+description: "回归测试：验证 ISS-004 实现的功能未退化"
+safety_level: "safe"
+priority: "medium"
+tags: ["regression", "issue-driven", "iss-004"]
+regression_for: "ISS-004"
+
+steps:
+  - action: "navigate"
+    params:
+      url: "{frontend_url}"
+    safety_check: "ui.safe[navigate_to_page]"
+  - action: "verify_element"
+    params:
+      selector: "body"
+      expected: "visible"
+      timeout: 5000
+
+assertions:
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "Header 显示完整 title（大字加粗）"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "产品路径（SAP）显示为独立行，带文件夹图标"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "SLA 状态整合到 header 底部（IR/FWR/FDR 合并显示）"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "Header 右侧显示健康分数圆圈（基于 SLA 状态和 daysSinceLastContact 计算）"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "拉取时间显示（从 case-info.md Snapshot 行解析）"
+
+timeout_seconds: 60

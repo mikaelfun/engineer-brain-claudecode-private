@@ -94,6 +94,21 @@
         "components_added": ["pattern-detector.sh", "self-heal-recorder.sh"],
         "components_modified": ["test-loop SKILL.md — Self-Heal Check 步骤 + FIX 排序", "test-supervisor SKILL.md — evolution 自愈记录展示"]
       }
+    },
+    {
+      "id": "EVO-007",
+      "date": "2026-03-28",
+      "trackId": "evolution-split_20260328",
+      "title": "Evolution 概念拆分 — Discoveries + Evolution",
+      "category": "usability",
+      "summary": "将混合的 /test-supervisor evolution 命令拆分为两个独立命令：discoveries（项目质量发现，叙事主语是'测试帮项目拦截了什么 bug'）和 evolution（框架自我进化，叙事主语是'框架自己变强了多少'）。新增 discoveries.json 由 stats-reporter.sh 自动聚合生成。",
+      "before": "evolution 命令混合展示：per-test lifecycle（项目 bug）+ self-heal records（框架自愈）+ framework changes（框架架构），概念模糊",
+      "after": "discoveries 命令展示项目质量发现（Impact Summary + Discovery Timeline）；evolution 命令仅展示框架成长（Architecture Changes + Self-Heal + Phase Efficiency）",
+      "impact": {
+        "files_changed": 2,
+        "components_added": ["discoveries.json", "Mode 7: discoveries"],
+        "components_modified": ["stats-reporter.sh — 新增 discoveries.json 生成", "test-supervisor SKILL.md — Mode 7→discoveries, Mode 8→evolution(slimmed), Mode 9→auto-heal, Mode 10→run"]
+      }
     }
   ]
 }

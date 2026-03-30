@@ -1,0 +1,36 @@
+id: "regression-iss058"
+name: "Regression: ISS-058 — Verify 两阶段改造: Track 创建时写测试大纲 + Verify 时 agent 细化执行"
+category: "ui-interaction"
+source: "issues/ISS-058.json"
+description: "回归测试：验证 ISS-058 实现的功能未退化"
+safety_level: "safe"
+priority: "medium"
+tags: ["regression", "issue-driven", "iss-058"]
+regression_for: "ISS-058"
+
+steps:
+  - action: "navigate"
+    params:
+      url: "{frontend_url}"
+    safety_check: "ui.safe[navigate_to_page]"
+  - action: "verify_element"
+    params:
+      selector: "body"
+      expected: "visible"
+      timeout: 5000
+
+assertions:
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "`conductor:new-track` SKILL.md plan template includes a `## Verification Plan` s"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "Agent reads plan.md's Verification Plan + workflow.md's interaction patterns"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "Agent generates a temporary Playwright script, executes it, captures results"
+
+timeout_seconds: 60

@@ -1,0 +1,9 @@
+{
+  "testId": "wf-iss113",
+  "round": 26,
+  "timestamp": "2026-03-29T21:13:11.000Z",
+  "status": "skip",
+  "assertions": [],
+  "error": "env_skip: backend not running",
+  "duration_ms": 83
+}

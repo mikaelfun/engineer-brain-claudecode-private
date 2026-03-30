@@ -1,0 +1,9 @@
+{
+  "testId": "auth-endpoints",
+  "round": 1,
+  "timestamp": "2026-03-28T04:48:50.000Z",
+  "status": "fail",
+  "assertions": [{"name":"GET /api/auth/status → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'isSetup':true} "},{"name":"GET /api/auth/status → JSON response","pass":true,"expected":"JSON","actual":"JSON"},{"name":"POST /api/auth/login → HTTP 401","pass":false,"expected":"200","actual":"401","note":"{'error':'Invalid password'} "},{"name":"POST /api/auth/login → JSON response","pass":true,"expected":"JSON","actual":"JSON"},{"name":"GET /api/auth/me → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'success':true,'user':'engineer'} "},{"name":"GET /api/auth/me → JSON response","pass":true,"expected":"JSON","actual":"JSON"}],
+  "error": "1 of 6 assertions failed",
+  "duration_ms": 17199
+}

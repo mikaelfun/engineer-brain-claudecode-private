@@ -4,12 +4,21 @@
 
 **Execution**: Main session orchestrates, uses verify-rerun.sh per test.
 
+### 🔴 Step -1: Start Timer (MANDATORY)
+```bash
+START_TS=$(date +%s%3N)
+echo '{"roundJourney":{"VERIFY":{"status":"running","startedAt":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}}}' | bash tests/executors/state-writer.sh --merge
+```
+
 ### Batch Loop (verifyQueue)
 
 1. **Before loop**: Snapshot verifyQueue
-2. **For each test in verifyQueue**:
+2. **For each test in verifyQueue** (index `i` from 0):
 
-   a. Set `state.json.currentTest = testId`
+   a. Set `state.json.currentTest = testId` and report progress:
+      ```bash
+      echo '{"currentTest":"{testId}","phaseProgress":{"current":'$((i+1))',"total":{TOTAL},"testId":"{testId}"}}' | bash tests/executors/state-writer.sh --merge
+      ```
    b. Run verification:
       ```bash
       bash tests/executors/verify-rerun.sh <test-id> <round>

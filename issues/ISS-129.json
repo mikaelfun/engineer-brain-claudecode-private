@@ -1,0 +1,21 @@
+{
+  "id": "ISS-129",
+  "title": "TEST-AUTO: verify endpoint test",
+  "description": "Automated test �� will be deleted",
+  "type": "feature",
+  "priority": "P3",
+  "status": "done",
+  "createdAt": "2026-03-28T19:11:36.768Z",
+  "updatedAt": "2026-03-28T19:13:10.846Z",
+  "verifyResult": {
+    "unitTest": {
+      "success": true,
+      "output": "> engineer-brain-dashboard@1.0.0 test\n> vitest run && npm --prefix web test --reporter=verbose\n\n\n\u001b[1m\u001b[46m RUN \u001b[49m\u001b[22m \u001b[36mv4.1.0 \u001b[39m\u001b[90mC:/Users/fangkun/Documents/Claude Code Projects/EngineerBrain/dashboard\u001b[39m\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[32m7 passed\u001b[39m\u001b[22m\u001b[90m (7)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[32m140 passed\u001b[39m\u001b[22m\u001b[90m (140)\u001b[39m\n\u001b[2m   Start at \u001b[22m 03:12:07\n\u001b[2m   Duration \u001b[22m 2.95s\u001b[2m (transform 1.15s, setup 0ms, import 2.23s, tests 2.36s, environment 1ms)\u001b[22m\n\n\n> engineer-brain-web@1.0.0 test\n> vitest run\n\n\n\u001b[1m\u001b[46m RUN \u001b[49m\u001b[22m \u001b[36mv4.1.0 \u001b[39m\u001b[90mC:/Users/fangkun/Documents/Claude Code Projects/EngineerBrain/dashboard/web\u001b[39m\n\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[32m8 passed\u001b[39m\u001b[22m\u001b[90m (8)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[32m100 passed\u001b[39m\u001b[22m\u001b[90m (100)\u001b[39m\n\u001b[2m   Start at \u001b[22m 03:12:13\n\u001b[2m   Duration \u001b[22m 9.56s\u001b[2m (transform 3.90s, setup 7.03s, import 10.10s, tests 1.06s, environment 45.11s)\u001b[22m\n\n\nnpm warn Unknown cli config \"--reporter\". This will stop working in the next major version of npm."
+    },
+    "uiTest": {
+      "success": true,
+      "output": "🌐 Browser Test — http://localhost:5173\n\n0. Health check...\n   ✅ Service reachable\n\n1. Injecting auth token...\n   ✅ Authenticated via JWT\n\n[/] ✅ \"Dashboard\"\n   ⚠️ Console errors (1):\n     Failed to load resource: the server responded with a status of 404 (Not Found)\n[/todo] ✅ \"Todo\"\n[/agents] ✅ \"Agent Monitor\"\n   ⚠️ Console errors (1):\n     Failed to load resource: the server responded with a status of 404 (Not Found)\n[/drafts] ✅ \"Email Drafts\"\n[/settings] ✅ \" Settings\"\n[/issues] ✅ \"(no h2)\"\n\n--- Soak test: Dashboard 15s ---\n   ✅ Stable after 15s\n\n✅ 0 page(s) had errors"
+    },
+    "verifiedAt": "2026-03-28T19:13:10.844Z"
+  }
+}

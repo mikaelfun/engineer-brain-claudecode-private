@@ -1,0 +1,29 @@
+{
+  "id": "scan-expansion_20260329",
+  "title": "SCAN multi-type expansion: UX, performance, architecture, design-fidelity",
+  "type": "feature",
+  "status": "complete",
+  "issueId": "ISS-146",
+  "created": "2026-03-29T19:30:00.000Z",
+  "updated": "2026-03-29T22:48:00.000Z",
+  "current_phase": 3,
+  "current_task": "3.2",
+  "phases": { "total": 3, "completed": 3 },
+  "tasks": { "total": 9, "completed": 9 },
+  "commits": [],
+  "verification": {
+    "status": "passed",
+    "method": "auto",
+    "result": {
+      "unitTest": { "success": true, "output": "240 tests passed (7 backend suites + 8 frontend suites)" },
+      "uiTest": { "success": true, "output": "No Verification Plan; functional verification: all 4 scanners produce valid GAP output" },
+      "scannerVerification": {
+        "design-fidelity-scanner": { "success": true, "gapsFound": 25, "tracksChecked": 95, "criteriaChecked": 546 },
+        "ux-reviewer": { "success": true, "gapsFound": 1, "checks": "loading,error,empty,nav,a11y" },
+        "performance-scanner": { "success": true, "gapsFound": 0, "note": "all endpoints within baselines" },
+        "architecture-scanner": { "success": true, "gapsFound": 6, "checks": "win_paths,var_pipe,hardcoded_paths,direct_state_write" }
+      },
+      "verifiedAt": "2026-03-29T14:48:00.000Z"
+    }
+  }
+}

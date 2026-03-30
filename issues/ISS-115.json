@@ -1,0 +1,11 @@
+{
+  "id": "ISS-115",
+  "title": "Test Loop 架构优化：批量处理 + subagent 隔离",
+  "description": "当前设计每次 cron 触发只处理 1 个 item 就结束 session，导致：(1) throughput 极低（19个测试 × 10min = 3h+）；(2) subagent 隔离无实际意义（每次只有1个）；(3) 每次新 session 重复读 env/learnings 浪费开销。\n\n改为方案B：每次 loop 迭代批量处理当前 phase 的所有 queue items，用 subagent 隔离每个 item。主 session 编排 loop，遍历 testQueue/fixQueue/verifyQueue，每个 item spawn 对应 agent（TEST=sonnet, FIX=opus），agent 返回后立即更新 state.json，supervisor 可实时看到进度。\n\n具体改动：\n- SKILL.md 第367行「每轮只执行一个阶段的一个动作」→ 改为「遍历当前 phase 的所有 queue items」\n- TEST 阶段：for each test in testQueue → spawn sonnet agent → 收结果 → 更新 state\n- FIX 阶段：for each fix in fixQueue → spawn opus agent → 修复 → 收结果\n- VERIFY 阶段：for each verify in verifyQueue → spawn sonnet agent → 验证 → 收结果\n- 每个 agent 完成后立即写 phaseHistory，supervisor 可实时追踪\n- 不再依赖 cron 定时触发，一个 session 可跑完整个 phase\n\n附加需求：executor progress 日志\n- executor（e2e-runner.sh 等）在关键步骤处写 .progress-{testId}.json 到 results 目录\n- 内容：{testId, step, detail, elapsed_s, timestamp}\n- Supervisor 可读取 progress 文件查看当前执行步骤和耗时\n- executor 完成后清理 progress 文件\n- health-check.sh 增加读取 .progress-*.json 展示当前正在执行的测试",
+  "type": "refactor",
+  "priority": "P1",
+  "status": "implemented",
+  "trackId": "testloop-batch_20260328",
+  "createdAt": "2026-03-28T09:41:00.000Z",
+  "updatedAt": "2026-03-28T09:41:00.000Z"
+}

@@ -1,0 +1,10 @@
+{
+  "id": "ISS-159",
+  "title": "团队 OneNote 知识提取 → Troubleshooting Recipe 自我演进",
+  "description": "长期演进方向：Engineer Brain 支持用 onenote-export 从零读取或增量读取团队 OneNote（如 MCVKB），LLM 推理笔记内容是否可以提取成某个 topic 的 troubleshooting recipe，积累 troubleshooter 自我演进材料。\n\n核心流程：\n1. 通过 onenote-export 全量或增量同步团队 OneNote 到本地 Markdown（已有能力）\n2. LLM 扫描每个笔记页面，分析内容类型（排查记录 / 流程文档 / ICM 模板 / 知识分享）\n3. 对排查类内容，推理是否可以归纳为某个 topic 的 troubleshooting recipe\n4. 自动生成结构化 recipe 到 playbooks/guides/troubleshooting-recipes/\n5. 已有同类 recipe → 合并增强（增加新案例、新变体、新 Kusto 查询）\n6. 与 ISS-158（邮件扫描）互补：邮件提供实战案例，OneNote 提供总结性知识\n\n与现有能力的关系：\n- onenote-export / onenote-search 已提供 OneNote 读取和搜索能力\n- local-rag 已提供向量化搜索能力\n- 缺失的是：LLM 主动分析 → 提取结构化 recipe → 沉淀到 troubleshooter 知识库",
+  "type": "feature",
+  "priority": "P2",
+  "status": "pending",
+  "createdAt": "2026-03-29T22:00:00Z",
+  "updatedAt": "2026-03-29T22:00:00Z"
+}

@@ -1,0 +1,11 @@
+{
+  "id": "ISS-124",
+  "title": "env.yaml 与 common.sh 环境变量双真相源",
+  "description": "已合并到 ISS-122（test-loop 代码质量三合一）",
+  "type": "refactor",
+  "priority": "P2",
+  "status": "done",
+  "mergedInto": "ISS-122",
+  "createdAt": "2026-03-29T00:00:00+08:00",
+  "updatedAt": "2026-03-29T10:00:00.000Z"
+}

@@ -1,0 +1,11 @@
+{
+  "id": "ISS-122",
+  "title": "test-loop 代码质量三合一：步骤编号 + Git Bash 兼容 + 环境变量双源",
+  "description": "test-loop 基础设施的三个代码质量问题，合并处理：\n\n## 1. SCAN 步骤编号重复（原 ISS-122）\nSKILL.md SCAN 阶段有两个 Step 6：spec-scanner 和决定下一步。应改为 Step 7/8。subagent 执行时可能产生困惑跳过 spec-scanner。\n\n## 2. pattern-detector.sh Git Bash 兼容风险（原 ISS-123）\npattern-detector.sh 第 47-50 行使用 node -e + readFileSync('/dev/stdin') 通过 pipe 读取数据。Round 0 已在 poll_for_completion 中遇到过相同的 Git Bash + Node.js /dev/stdin 兼容问题并修复。建议改为通过环境变量或临时文件传递 JSON。\n\n## 3. env.yaml 与 common.sh 双真相源（原 ISS-124）\ncommon.sh 第 21-23 行硬编码了 API_BASE、FRONTEND_URL、JWT_SECRET（注释 from env.yaml — hardcoded for performance），但 SKILL.md 指示 subagent 读取 env.yaml 获取环境配置。如果用户修改 env.yaml 的端口，common.sh 不会同步更新。建议在 env.yaml 头部加同步注释，或让 common.sh 启动时从 env.yaml 读取一次。",
+  "type": "bug",
+  "priority": "P2",
+  "status": "pending",
+  "mergedFrom": ["ISS-123", "ISS-124"],
+  "createdAt": "2026-03-29T00:00:00+08:00",
+  "updatedAt": "2026-03-29T10:00:00.000Z"
+}

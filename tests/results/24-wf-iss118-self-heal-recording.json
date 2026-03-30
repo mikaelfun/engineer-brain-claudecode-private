@@ -1,0 +1,1 @@
+{"testId":"wf-iss118-self-heal-recording","round":24,"timestamp":"2026-03-29T09:27:27Z","status":"pass","assertions":[{"name":"File exists: self-heal-recorder.sh","pass":true,"expected":"exists","actual":"exists"},{"name":"Content match: self-heal-recorder.sh","pass":true,"expected":"self-heal","actual":"found"}],"error":null,"duration_ms":523}

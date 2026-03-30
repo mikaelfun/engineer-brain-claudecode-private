@@ -27,15 +27,15 @@ steps:
 assertions:
   - type: "json_field"
     target: "{cases_root}/active/{test_case_id}/casehealth-meta.json"
-    field: "judge.emailCountAtJudge"
+    field: "emailCountAtJudge"
     expected: "not_null"
   - type: "json_field"
     target: "{cases_root}/active/{test_case_id}/casehealth-meta.json"
-    field: "judge.noteCountAtJudge"
+    field: "noteCountAtJudge"
     expected: "not_null"
   - type: "json_field"
     target: "{cases_root}/active/{test_case_id}/casehealth-meta.json"
-    field: "judge.statusJudgedAt"
+    field: "statusJudgedAt"
     expected: "not_null"
 
 teardown:

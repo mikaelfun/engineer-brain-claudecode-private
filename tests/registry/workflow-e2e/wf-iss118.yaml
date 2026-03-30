@@ -1,0 +1,30 @@
+id: "wf-iss118"
+name: "ISS-118 — Test Loop 自愈能力：自动检测重复失败模式 → 诊断根因 → 跳过 → 优先修复"
+category: "workflow-e2e"
+source: "issues/ISS-118.json"
+description: "验证 ISS-118（tracked）的验收标准：pattern analysis 能识别 systemic failure（多个测试因同一根因失败），并聚合为单一 fr"
+safety_level: "safe"
+data_source: live
+live_pool: "data_rich"
+priority: "medium"
+tags: ["issue-driven", "iss-118", "tracked"]
+
+steps:
+  - action: "run_skill"
+    params:
+      skill: "data-refresh"
+      case_id: "{live_case_id}"
+    safety_check: "scripts.safe[data-refresh]"
+
+assertions:
+  - type: "file_exists"
+    target: "cases/active/{test_case_id}/case-summary.md"
+    description: "pattern analysis 能识别 systemic failure（多个测试因同一根因失败），并聚合为单一 framework-level issue"
+  - type: "file_exists"
+    target: "cases/active/{test_case_id}/case-summary.md"
+    description: "识别到 systemic failure 后，自动跳过受影响的测试（注入 skip directive + learning），不阻塞其他测试"
+  - type: "file_exists"
+    target: "cases/active/{test_case_id}/case-summary.md"
+    description: "所有自愈动作记录到 `tests/results/fixes/{pattern-id}-self-heal.md`，supervisor evolution 模"
+
+timeout_seconds: 120

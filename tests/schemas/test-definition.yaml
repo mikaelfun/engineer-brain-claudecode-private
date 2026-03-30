@@ -17,7 +17,7 @@ required_fields:
 
   - name: "category"
     type: "enum"
-    values: ["backend-api", "ui-interaction", "ui-visual", "workflow-e2e", "frontend"]
+    values: ["backend-api", "ui-interaction", "ui-visual", "workflow-e2e", "frontend", "observability"]
     description: "测试类别，决定使用哪个执行器"
 
   - name: "source"
@@ -106,6 +106,44 @@ optional_fields:
   - name: "regression_for"
     type: "string"
     description: "此测试是哪个 bug 的回归测试（finding ID）"
+
+  - name: "data_source"
+    type: "enum"
+    values: ["live", "synthetic"]
+    description: "数据源类型 — live 使用 live-cases.yaml 中的真实 case，synthetic 使用 generator.sh 生成的模拟数据。留空则走旧逻辑（test_case_id）"
+
+  - name: "synthetic_profile"
+    type: "string"
+    description: "synthetic 模式使用的 profile 名（对应 profiles.yaml 中的 profile）。值为 'random' 时随机选择一个 profile。仅 data_source=synthetic 时有效"
+    example: "compliance-fail-no-china"
+
+  - name: "live_pool"
+    type: "enum"
+    values: ["data_rich", "data_sparse", "minimal"]
+    description: "live 模式下从 env.yaml 的 test_cases 中选择的池类型。仅 data_source=live 时有效"
+    default: "data_rich"
+
+  # Observability probe 专有字段（category = "observability" 时使用）
+  - name: "probe_type"
+    type: "enum"
+    values: ["metric", "stability", "audit"]
+    description: "探针类型 — 详见 tests/schemas/probe-definition.yaml"
+
+  - name: "baseline_ref"
+    type: "string"
+    description: "baselines.yaml 中的 key path"
+
+  - name: "metrics"
+    type: "list"
+    description: "要收集的指标定义（probe_type=metric 时使用）"
+
+  - name: "stability_config"
+    type: "object"
+    description: "稳定性测试配置（probe_type=stability 时使用）"
+
+  - name: "audit_config"
+    type: "object"
+    description: "审计扫描配置（probe_type=audit 时使用）"
 
 # ============================================================
 # 示例

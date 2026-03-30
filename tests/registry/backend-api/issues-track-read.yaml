@@ -1,0 +1,83 @@
+id: "issues-track-read"
+name: "Issues Track READ Endpoints — track, track-plan, track-spec, track-progress, implement-status"
+category: "backend-api"
+source: "dashboard/src/routes/issues.ts"
+description: "验证 issue track 相关 GET 端点正确返回（200 或 404 if no track）"
+safety_level: "safe"
+priority: "medium"
+tags: ["api", "issues", "track", "round-3"]
+
+steps:
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/issues"
+      auth: true
+    safety_check: "api.safe[GET /api/issues]"
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/issues/ISS-001"
+      auth: true
+      expected_status: [200, 404]
+    safety_check: "api.safe[GET /api/issues]"
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/issues/ISS-001/track"
+      auth: true
+      expected_status: [200, 404]
+    safety_check: "api.safe[GET /api/issues]"
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/issues/ISS-001/track-plan"
+      auth: true
+      expected_status: [200, 404]
+    safety_check: "api.safe[GET /api/issues]"
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/issues/ISS-001/track-spec"
+      auth: true
+      expected_status: [200, 404]
+    safety_check: "api.safe[GET /api/issues]"
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/issues/ISS-001/track-progress"
+      auth: true
+      expected_status: [200, 404]
+    safety_check: "api.safe[GET /api/issues]"
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/issues/ISS-001/implement-status"
+      auth: true
+      expected_status: [200, 404]
+    safety_check: "api.safe[GET /api/issues]"
+
+assertions:
+  - type: "status_code"
+    target: "GET /api/issues"
+    expected: 200
+  - type: "status_code"
+    target: "GET /api/issues/ISS-001"
+    expected: [200, 404]
+  - type: "status_code"
+    target: "GET /api/issues/ISS-001/track"
+    expected: [200, 404]
+  - type: "status_code"
+    target: "GET /api/issues/ISS-001/track-plan"
+    expected: [200, 404]
+  - type: "status_code"
+    target: "GET /api/issues/ISS-001/track-spec"
+    expected: [200, 404]
+  - type: "status_code"
+    target: "GET /api/issues/ISS-001/track-progress"
+    expected: [200, 404]
+  - type: "status_code"
+    target: "GET /api/issues/ISS-001/implement-status"
+    expected: [200, 404]
+
+timeout_seconds: 30

@@ -1,0 +1,59 @@
+id: "ui-session-badge"
+name: "UI Interaction: Session Badge — 会话状态徽章"
+category: "ui-interaction"
+source: "dashboard/web/src/components/SessionBadge.tsx"
+description: "验证 SessionBadge 组件：检查 /api/sessions 端点，验证 Dashboard 首页加载时无错误，Case 列表中 session badge 可能显示"
+safety_level: "safe"
+priority: "low"
+tags: ["ui", "interaction", "session-badge", "status", "round-9"]
+
+steps:
+  - action: "navigate"
+    params:
+      url: "{frontend_url}"
+    safety_check: "ui.safe[navigate_to_page]"
+
+  - action: "verify_element"
+    params:
+      selector: "main"
+      expected: "visible"
+      timeout: 5000
+
+  - action: "click"
+    params:
+      target: "Cases nav item"
+    safety_check: "ui.safe[click_sidebar_nav]"
+
+  - action: "verify_element"
+    params:
+      selector: "table tbody, [class*='case-list'], main"
+      expected: "visible"
+      timeout: 5000
+
+  - action: "check_element"
+    params:
+      selector: "[class*='SessionBadge'], [class*='session-badge'], [data-testid='session-badge']"
+      timeout: 3000
+      optional: true
+
+  - action: "screenshot"
+    params:
+      selector: "body"
+      filename: "ui-session-badge-cases.jpg"
+
+assertions:
+  - type: "element_visible"
+    target: "cases page main content"
+    expected: true
+    description: "Cases 页面主内容区域可见"
+
+  - type: "page_load"
+    target: "/cases"
+    expected: "loaded"
+    description: "Cases 页面加载成功"
+
+  - type: "no_console_errors"
+    target: "page"
+    description: "页面无严重控制台错误"
+
+timeout_seconds: 45

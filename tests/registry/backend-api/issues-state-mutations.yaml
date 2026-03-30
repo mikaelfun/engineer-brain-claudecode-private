@@ -1,0 +1,105 @@
+id: "issues-state-mutations"
+name: "Issues State Mutation Endpoints — reopen, mark-done, verify-status"
+category: "backend-api"
+source: "dashboard/src/routes/issues.ts — SCAN round-4 gap"
+description: "验证 Issue 状态变更 POST 端点：创建 Issue、reopen、mark-done、cancel-verify、verify-status"
+safety_level: "safe"
+priority: "medium"
+tags: ["api", "issues", "state-mutations", "round-4"]
+
+steps:
+  # Step 1: Create a test issue (pending)
+  - action: "http_request"
+    params:
+      method: "POST"
+      url: "{api_base}/api/issues"
+      body: '{"title":"TEST-AUTO: state-mutations test","type":"bug","priority":"P3","description":"Automated test — will be deleted in teardown"}'
+      auth: true
+    safety_check: "api.safe[POST /api/issues]"
+    expected_status: [200, 201]
+
+  # Step 2: GET verify-status (works on any issue, returns status info)
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/issues/{created_issue_id}/verify-status"
+      auth: true
+      expected_status: [200, 404]
+    safety_check: "api.safe[GET /api/issues]"
+
+  # Step 3: POST mark-done (move to done)
+  - action: "http_request"
+    params:
+      method: "POST"
+      url: "{api_base}/api/issues/{created_issue_id}/mark-done"
+      auth: true
+      expected_status: [200, 400, 422]
+    safety_check: "api.safe[POST /api/issues]"
+
+  # Step 4: GET issue to check current status
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/issues/{created_issue_id}"
+      auth: true
+      expected_status: [200]
+    safety_check: "api.safe[GET /api/issues]"
+
+  # Step 5: POST reopen (from done → pending)
+  - action: "http_request"
+    params:
+      method: "POST"
+      url: "{api_base}/api/issues/{created_issue_id}/reopen"
+      auth: true
+      expected_status: [200, 400, 422]
+    safety_check: "api.safe[POST /api/issues]"
+
+  # Step 6: POST cancel-verify (only valid if in verify state, expect 400/422 otherwise)
+  - action: "http_request"
+    params:
+      method: "POST"
+      url: "{api_base}/api/issues/{created_issue_id}/cancel-verify"
+      auth: true
+      expected_status: [200, 400, 422]
+    safety_check: "api.safe[POST /api/issues]"
+
+assertions:
+  - type: "status_code"
+    target: "POST /api/issues (create)"
+    expected: [200, 201]
+    description: "Issue 创建成功"
+
+  - type: "status_code"
+    target: "GET /api/issues/:id/verify-status"
+    expected: [200, 404]
+    description: "verify-status 端点响应有效"
+
+  - type: "status_code"
+    target: "POST /api/issues/:id/mark-done"
+    expected: [200, 400, 422]
+    description: "mark-done 端点返回有效状态码"
+
+  - type: "status_code"
+    target: "GET /api/issues/:id"
+    expected: 200
+    description: "GET issue 仍然可读"
+
+  - type: "status_code"
+    target: "POST /api/issues/:id/reopen"
+    expected: [200, 400, 422]
+    description: "reopen 端点返回有效状态码"
+
+  - type: "status_code"
+    target: "POST /api/issues/:id/cancel-verify"
+    expected: [200, 400, 422]
+    description: "cancel-verify 端点返回有效状态码"
+
+teardown:
+  - action: "http_request"
+    params:
+      method: "DELETE"
+      url: "{api_base}/api/issues/{created_issue_id}"
+      auth: true
+    safety_check: "api.safe[DELETE /api/issues/:id]"
+
+timeout_seconds: 45

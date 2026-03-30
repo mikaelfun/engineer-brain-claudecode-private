@@ -1,0 +1,26 @@
+{
+  "testId": "wf-iss142-retro-retrocontext",
+  "round": 26,
+  "timestamp": "2026-03-29T17:21:29.218Z",
+  "status": "pass",
+  "assertions": [
+    {
+      "name": "self-heal-recorder.sh 存在",
+      "pass": true
+    },
+    {
+      "name": "self-heal-recorder.sh 有执行权限",
+      "pass": true
+    },
+    {
+      "name": "输出 SELF_HEAL_RECORDED 标准格式",
+      "pass": true
+    },
+    {
+      "name": "SKILL.md 包含 retroContext 相关内容",
+      "pass": true
+    }
+  ],
+  "error": null,
+  "duration_ms": 833
+}

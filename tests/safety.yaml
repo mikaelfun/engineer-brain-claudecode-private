@@ -247,6 +247,100 @@ playwright:
       reason: "输出巨大，撑爆 context — 用 browser_evaluate 替代"
 
 # ============================================================
+# Observability 操作（全部只读）
+# ============================================================
+observability:
+  safe:
+    - action: "read_timing_json"
+      reason: "读取 case timing 数据"
+    - action: "read_agent_frontmatter"
+      reason: "读取 agent 定义文件 frontmatter"
+    - action: "read_skill_prompt"
+      reason: "读取 SKILL.md 中的 prompt 模板"
+    - action: "run_bash_stability_test"
+      reason: "运行 bash 变量稳定性测试（纯 shell 操作）"
+    - action: "read_baselines"
+      reason: "读取 baselines.yaml 基线定义"
+    - action: "analyze_metrics"
+      reason: "分析收集的指标数据（纯计算）"
+    - action: "read_learnings"
+      reason: "读取 learnings.yaml 验证条件"
+    - action: "scan_config_files"
+      reason: "扫描配置文件检查规范性"
+  blocked: []   # 所有 observability 操作都是只读
+
+# ============================================================
+# Supervisor Auto-Heal 操作边界 (Immutable Core + Reasoning Shell)
+# ============================================================
+# Architecture: protect only the reasoning capability (4 files).
+# If runner can still think, it can investigate and recover from anything.
+# Everything else is protected by runner's reasoning + git rollback.
+
+supervisor_auto_heal:
+  # === Immutable Core ===
+  # These files are NEVER modified by automated processes (test-loop FIX, meta-analysis fixQueue).
+  # Only direct human edits can change them.
+  # Test-loop FIX phase must skip these even if they appear in fixQueue.
+  immutable_core:
+    - path: ".claude/agents/test-supervisor-runner.md"
+      reason: "Runner's own reasoning definition — self-modification would be self-lobotomy"
+    - path: ".claude/agents/test-loop.md"
+      reason: "Test-loop agent definition — runner's primary tool for observation and action"
+    - path: "tests/safety.yaml"
+      reason: "Safety rules — modifying protections defeats the purpose"
+    - path: "tests/executors/state-writer.sh"
+      reason: "Atomic state mechanism — corruption here corrupts all state"
+
+  # === Auto-fixable (Reasoning Shell) ===
+  # These files CAN be modified by test-loop FIX phase.
+  # Runner's reasoning self-check (Step 1) monitors changes via git diff and can rollback.
+  auto_fixable:
+    - pattern: "tests/executors/*.sh"
+      exclude: ["state-writer.sh"]
+      reason: "Executor scripts — runner monitors via git diff"
+    - pattern: ".claude/skills/test-loop/phases/*.md"
+      reason: "Phase instructions — runner verifies behavior after changes"
+    - pattern: "tests/scan-strategies.yaml"
+      reason: "Scan config — safe to evolve"
+    - pattern: "tests/baselines.yaml"
+      reason: "Performance baselines — safe to evolve"
+
+  # === Allowed paths (direct write — kept for backward compatibility) ===
+  allowed_paths:
+    - action: "tests/state.json"
+      reason: "通过 state-writer.sh 原子写入修复损坏的 JSON"
+    - action: "tests/results/.progress-*.json"
+      reason: "清理过期的 progress 跟踪文件"
+    - action: "tests/results/backups/"
+      reason: "备份损坏的 state.json 用于事后分析"
+    - action: "tests/learnings.yaml"
+      reason: "记录自愈经验"
+    - action: "tests/evolution.json"
+      reason: "记录框架变更日志"
+
+  # === Blocked paths (outside test framework domain) ===
+  blocked_paths:
+    - action: "dashboard/**"
+      reason: "Project production code — test framework observes, never modifies"
+    - action: "cases/**"
+      reason: "Case data — completely separate domain"
+    - action: "skills/**"
+      reason: "Domain skills (casework, etc.) — not test framework's responsibility"
+    - action: ".claude/skills/test-supervisor/**"
+      reason: "Supervisor skill — only human-modified"
+
+# ============================================================
+# Safety Red Lines (absolute — no reasoning override)
+# ============================================================
+safety_red_lines:
+  - "Never execute commands that modify production data (cases/, dashboard/ DB)"
+  - "Never send emails or messages to external systems"
+  - "Never modify .claude/agents/ files (immutable core)"
+  - "Never delete test results or round summaries"
+  - "Never bypass state-writer.sh for state.json modifications"
+  - "Never run commands with network access beyond localhost (curl to external APIs)"
+
+# ============================================================
 # 注意事项
 # ============================================================
 notes:

@@ -1,0 +1,19 @@
+{
+  "id": "testloop-verify-merge_20260328",
+  "title": "Test-Loop 吸收 Conductor:Verify 精华 + Conductor:Verify 瘦身",
+  "type": "refactor",
+  "status": "complete",
+  "issueId": "ISS-119",
+  "created": "2026-03-28T23:15:00+08:00",
+  "updated": "2026-03-29T01:30:00+08:00",
+  "current_phase": 3,
+  "current_task": "3.4",
+  "phases": {
+    "total": 3,
+    "completed": 3
+  },
+  "tasks": {
+    "total": 16,
+    "completed": 16
+  }
+}

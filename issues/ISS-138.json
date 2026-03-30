@@ -1,0 +1,10 @@
+{
+  "id": "ISS-138",
+  "title": "copilot-proxy 间歇性 400 Bad Request — Claude Code 启动时部分请求被 GitHub Copilot 后端拒绝",
+  "description": "## 现象\nClaude Code 新启动 session 时，间歇性出现 API Error 400。同一 session 的后续请求正常，或通过 `/model` 重设模型后恢复。\n\n## 根因\n完整请求链路：Claude Code → nginx(443) → New API(3000/docker) → copilot-proxy(15432) → GitHub Copilot API (api.githubcopilot.com/chat/completions)\n\ncopilot-proxy@0.4.2 将 Claude Messages API 转换为 GitHub Copilot Chat Completions 格式时，某些 Claude Code 特有参数（beta headers、thinking 配置、大 max_tokens 等）无法被 Copilot 后端接受，返回 400 Bad Request。\n\n## 证据\n- 错误格式 `\"type\":\"<nil>\"` — Go nil 值序列化，来自 New API 层\n- copilot-proxy 日志：`ERROR Failed to create chat completions Response { status: 400 }` → `url: 'https://api.githubcopilot.com/chat/completions'`\n- 日志中有 `Clamping anthropic max_tokens from 128000 to backend model limit 64000` — proxy 尝试适配但未完全覆盖所有不兼容参数\n- New API 使用日志中搜不到 400 的 request ID — 请求在 relay 层被拒，未写入消费日志\n- nginx access.log 今日 28 条 400（vs 2459 条 200），全来自 claude-cli/2.1.74\n\n## 当前 Workaround\n`/model` 重设模型触发 Claude Code 重建连接，后续请求正常。\n\n## 可选修复\n1. 给 copilot-proxy (github.com/nicepkg/copilot-proxy 或 @jer-y/copilot-proxy) 提 issue 请求修复参数转换\n2. 在 New API 中加一个 Anthropic 直连 channel 做 fallback\n3. 继续使用 /model workaround",
+  "type": "bug",
+  "priority": "P2",
+  "status": "pending",
+  "createdAt": "2026-03-29T16:45:00+08:00",
+  "updatedAt": "2026-03-29T16:45:00+08:00"
+}

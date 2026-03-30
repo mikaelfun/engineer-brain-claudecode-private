@@ -1,0 +1,48 @@
+id: "ui-markdown-render"
+name: "UI Interaction: Markdown Content — Markdown 渲染组件"
+category: "ui-interaction"
+source: "dashboard/web/src/components/common/MarkdownContent.tsx"
+description: "验证 MarkdownContent 组件在 Case Detail 页面正确渲染 inspection 内容：GFM 表格、代码块、引用块等样式正常"
+safety_level: "safe"
+priority: "medium"
+tags: ["ui", "interaction", "markdown", "inspection", "round-10"]
+
+steps:
+  - action: "navigate"
+    params:
+      url: "{frontend_url}/cases"
+    safety_check: "ui.safe[navigate_to_page]"
+
+  - action: "verify_element"
+    params:
+      selector: "main"
+      expected: "visible"
+      timeout: 5000
+
+  - action: "click_first_case"
+    params:
+      description: "点击列表中第一个 case 进入详情页"
+    safety_check: "ui.safe[click_case_row]"
+
+  - action: "verify_element"
+    params:
+      selector: "main"
+      expected: "visible"
+      timeout: 8000
+
+  - action: "screenshot"
+    params:
+      selector: "body"
+      filename: "ui-markdown-render-case-detail.jpg"
+
+  - action: "navigate"
+    params:
+      url: "{frontend_url}"
+    safety_check: "ui.safe[navigate_to_page]"
+
+assertions:
+  - type: "no_console_errors"
+    description: "Markdown 渲染无 JS 错误"
+  - type: "element_visible_or_skip"
+    selector: ".prose"
+    description: "markdown 容器 .prose 可见（有 inspection 内容时）"

@@ -90,3 +90,15 @@
 - `refactor/chore | no UI surface | Skip` rule deprecated — use E2E instead when workflows are executable
 - `Skip` now restricted to D365 write/execute operations only (must justify)
 - 4 E2E test patterns documented: Data Backup/Restore Wrapper, Script Output Verification, API + File Integration, Full Workflow E2E
+
+## 2026-03-28 — Casework Evolution Loop 发现
+
+### 不要全文扫描 Job 输出来判断成功/失败
+- **问题**: `fetch-all-data.ps1` 用 `-match '❌|Failed'` 扫描 `Receive-Job` 输出判断是否失败，但邮件正文内容也被包含在输出中。邮件中的 "❌ 不在 EFSkipIPs" 触发了误报 FAIL。
+- **修复**: 只扫描输出最后 5 行（`Select-Object -Last 5`），避免业务内容污染诊断结果。
+- **教训**: 当 PowerShell Job 的输出包含用户数据时，错误检测必须限定范围——只检查脚本自身的状态输出。
+
+### 缓存值的时间衰减
+- **问题**: `daysSinceLastContact` 在 judge 缓存命中跳过时不更新，随时间推移越来越不准确。
+- **修复**: 在 `generate-todo.sh` 中用 `statusJudgedAt` 日期与今天日期的日历差来修正缓存值。
+- **教训**: 带时间维度的缓存值需要在使用时加上时间衰减补偿，否则会导致触发条件延迟。

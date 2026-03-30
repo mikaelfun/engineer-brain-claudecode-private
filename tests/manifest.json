@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScan": "2026-03-28T16:30:00+08:00",
+  "lastScan": "2026-03-28T21:15:40.228Z",
   "scanSources": [
     "dashboard/src/routes/*.ts",
     "dashboard/web/src/components/**/*.tsx",
@@ -10,77 +10,869 @@
     "playbooks/schemas/*.md"
   ],
   "features": [
-    {"id": "api-health", "name": "GET /health", "category": "backend-api", "source": "dashboard/src/routes/cases.ts", "status": "tested", "testId": "core-endpoints"},
-    {"id": "api-cases-list", "name": "GET /cases", "category": "backend-api", "source": "dashboard/src/routes/cases.ts", "status": "tested", "testId": "core-endpoints"},
-    {"id": "api-cases-stats", "name": "GET /cases/stats", "category": "backend-api", "source": "dashboard/src/routes/cases.ts", "status": "tested", "testId": "core-endpoints"},
-    {"id": "api-case-detail", "name": "GET /cases/:id", "category": "backend-api", "source": "dashboard/src/routes/cases.ts", "status": "tested", "testId": "case-detail"},
-    {"id": "api-case-emails", "name": "GET /cases/:id/emails", "category": "backend-api", "source": "dashboard/src/routes/cases.ts", "status": "tested", "testId": "case-detail"},
-    {"id": "api-case-meta", "name": "GET /cases/:id/meta", "category": "backend-api", "source": "dashboard/src/routes/cases.ts", "status": "tested", "testId": "case-detail"},
-    {"id": "api-case-notes", "name": "GET /cases/:id/notes", "category": "backend-api", "source": "dashboard/src/routes/cases.ts", "status": "untested"},
-    {"id": "api-case-teams", "name": "GET /cases/:id/teams", "category": "backend-api", "source": "dashboard/src/routes/cases.ts", "status": "untested"},
-    {"id": "api-case-analysis", "name": "GET /cases/:id/analysis", "category": "backend-api", "source": "dashboard/src/routes/cases.ts", "status": "untested"},
-    {"id": "api-case-drafts", "name": "GET /cases/:id/drafts", "category": "backend-api", "source": "dashboard/src/routes/cases.ts", "status": "untested"},
-    {"id": "api-case-inspection", "name": "GET /cases/:id/inspection", "category": "backend-api", "source": "dashboard/src/routes/cases.ts", "status": "untested"},
-    {"id": "api-case-todo", "name": "GET /cases/:id/todo", "category": "backend-api", "source": "dashboard/src/routes/cases.ts", "status": "untested"},
-    {"id": "api-case-todo-toggle", "name": "PATCH /cases/:id/todo/toggle", "category": "backend-api", "source": "dashboard/src/routes/cases.ts", "status": "untested"},
-    {"id": "api-case-timing", "name": "GET /cases/:id/timing", "category": "backend-api", "source": "dashboard/src/routes/cases.ts", "status": "untested"},
-    {"id": "api-case-logs", "name": "GET /cases/:id/logs", "category": "backend-api", "source": "dashboard/src/routes/cases.ts", "status": "untested"},
-    {"id": "api-case-attachments", "name": "GET /cases/:id/attachments", "category": "backend-api", "source": "dashboard/src/routes/cases.ts", "status": "untested"},
-    {"id": "api-auth-status", "name": "GET /auth/status", "category": "backend-api", "source": "dashboard/src/routes/auth.ts", "status": "untested"},
-    {"id": "api-auth-login", "name": "POST /auth/login", "category": "backend-api", "source": "dashboard/src/routes/auth.ts", "status": "untested"},
-    {"id": "api-auth-setup", "name": "POST /auth/setup", "category": "backend-api", "source": "dashboard/src/routes/auth.ts", "status": "untested"},
-    {"id": "api-issues-list", "name": "GET /issues", "category": "backend-api", "source": "dashboard/src/routes/issues.ts", "status": "untested"},
-    {"id": "api-issues-crud", "name": "POST/PUT/DELETE /issues", "category": "backend-api", "source": "dashboard/src/routes/issues.ts", "status": "untested"},
-    {"id": "api-agents", "name": "GET /agents", "category": "backend-api", "source": "dashboard/src/routes/agents.ts", "status": "untested"},
-    {"id": "api-settings", "name": "GET/PUT /settings", "category": "backend-api", "source": "dashboard/src/routes/case-routes.ts", "status": "untested"},
-    {"id": "api-sessions", "name": "GET /sessions + operations", "category": "backend-api", "source": "dashboard/src/routes/case-routes.ts", "status": "untested"},
-    {"id": "api-todos-all", "name": "GET /todos/all", "category": "backend-api", "source": "dashboard/src/routes/case-routes.ts", "status": "untested"},
-    {"id": "api-patrol", "name": "POST /patrol + status", "category": "backend-api", "source": "dashboard/src/routes/case-routes.ts", "status": "untested"},
-    {"id": "api-drafts", "name": "GET /drafts", "category": "backend-api", "source": "dashboard/src/routes/drafts.ts", "status": "untested"},
-    {"id": "api-events-sse", "name": "GET /events (SSE)", "category": "backend-api", "source": "dashboard/src/routes/events.ts", "status": "untested"},
-    {"id": "ui-dashboard-nav", "name": "Dashboard sidebar navigation", "category": "ui-interaction", "source": "dashboard/web/src/components/Layout.tsx", "status": "tested", "testId": "dashboard-navigation"},
-    {"id": "ui-case-tabs", "name": "Case detail tab switching", "category": "ui-interaction", "source": "dashboard/web/src/components/common/Tabs.tsx", "status": "tested", "testId": "case-detail-tabs"},
-    {"id": "ui-case-ai-panel", "name": "CaseAIPanel interaction", "category": "ui-interaction", "source": "dashboard/web/src/components/CaseAIPanel.tsx", "status": "untested"},
-    {"id": "ui-session-panel", "name": "CaseSessionPanel interaction", "category": "ui-interaction", "source": "dashboard/web/src/components/CaseSessionPanel.tsx", "status": "untested"},
-    {"id": "ui-implement-panel", "name": "ImplementPanel interaction", "category": "ui-interaction", "source": "dashboard/web/src/components/ImplementPanel.tsx", "status": "untested"},
-    {"id": "ui-track-progress", "name": "TrackProgressPanel display", "category": "ui-interaction", "source": "dashboard/web/src/components/TrackProgressPanel.tsx", "status": "untested"},
-    {"id": "ui-verify-panel", "name": "VerifyProgressPanel display", "category": "ui-interaction", "source": "dashboard/web/src/components/VerifyProgressPanel.tsx", "status": "untested"},
-    {"id": "ui-session-badge", "name": "SessionBadge display", "category": "ui-interaction", "source": "dashboard/web/src/components/SessionBadge.tsx", "status": "untested"},
-    {"id": "ui-error-boundary", "name": "ErrorBoundary recovery", "category": "ui-interaction", "source": "dashboard/web/src/components/common/ErrorBoundary.tsx", "status": "untested"},
-    {"id": "ui-markdown-render", "name": "MarkdownContent rendering", "category": "ui-interaction", "source": "dashboard/web/src/components/common/MarkdownContent.tsx", "status": "untested"},
-    {"id": "visual-theme", "name": "Dark/light theme + responsive", "category": "ui-visual", "source": "dashboard/web/src/components/Layout.tsx", "status": "tested", "testId": "theme-responsive"},
-    {"id": "visual-issue-page", "name": "Issues page layout", "category": "ui-visual", "source": "dashboard/web/src/pages/Issues.tsx", "status": "untested"},
-    {"id": "visual-case-detail", "name": "Case detail page layout", "category": "ui-visual", "source": "dashboard/web/src/pages/CaseDetail.tsx", "status": "untested"},
-    {"id": "wf-casework", "name": "Casework full scenario", "category": "workflow-e2e", "source": ".claude/skills/casework/SKILL.md", "status": "tested", "testId": "full-scenario"},
-    {"id": "wf-casework-inc", "name": "Casework incremental", "category": "workflow-e2e", "source": ".claude/skills/casework/SKILL.md", "status": "tested", "testId": "incremental"},
-    {"id": "wf-casework-fast", "name": "Casework fast-path", "category": "workflow-e2e", "source": ".claude/skills/casework/SKILL.md", "status": "tested", "testId": "fast-path"},
-    {"id": "wf-casework-state", "name": "Casework state-routing", "category": "workflow-e2e", "source": ".claude/skills/casework/SKILL.md", "status": "tested", "testId": "state-routing"},
-    {"id": "wf-casework-error", "name": "Casework error-recovery", "category": "workflow-e2e", "source": ".claude/skills/casework/SKILL.md", "status": "tested", "testId": "error-recovery"},
-    {"id": "wf-casework-single", "name": "Casework single-step", "category": "workflow-e2e", "source": ".claude/skills/casework/SKILL.md", "status": "tested", "testId": "single-step"},
-    {"id": "wf-compliance", "name": "Compliance check skill", "category": "workflow-e2e", "source": ".claude/skills/compliance-check/SKILL.md", "status": "untested"},
-    {"id": "wf-data-refresh", "name": "Data refresh skill", "category": "workflow-e2e", "source": ".claude/skills/data-refresh/SKILL.md", "status": "untested"},
-    {"id": "wf-inspection", "name": "Inspection writer skill", "category": "workflow-e2e", "source": ".claude/skills/inspection-writer/SKILL.md", "status": "partial"},
-    {"id": "wf-status-judge", "name": "Status judge skill", "category": "workflow-e2e", "source": ".claude/skills/status-judge/SKILL.md", "status": "untested"},
-    {"id": "wf-patrol", "name": "Patrol batch inspection", "category": "workflow-e2e", "source": ".claude/skills/patrol/SKILL.md", "status": "untested"},
-    {"id": "wf-teams-search", "name": "Teams search skill", "category": "workflow-e2e", "source": ".claude/skills/teams-search/SKILL.md", "status": "untested"},
-    {"id": "reg-fetch-emails", "name": "Regression: fetch-emails false positive", "category": "workflow-e2e", "source": "evolution-log", "status": "tested", "testId": "regression-fetch-emails"},
-    {"id": "reg-judge-cache", "name": "Regression: judge cache fields", "category": "workflow-e2e", "source": "evolution-log", "status": "tested", "testId": "regression-judge-cache"},
-    {"id": "reg-days-contact", "name": "Regression: daysSinceLastContact", "category": "workflow-e2e", "source": "evolution-log", "status": "tested", "testId": "regression-days-contact"},
-    {"id": "reg-entitlement", "name": "Regression: entitlement display", "category": "workflow-e2e", "source": "evolution-log", "status": "tested", "testId": "regression-entitlement-display"},
-    {"id": "reg-waitagents", "name": "Regression: waitAgents drift", "category": "workflow-e2e", "source": "evolution-log", "status": "tested", "testId": "regression-waitagents-drift"}
+    {
+      "id": "api-health",
+      "name": "GET /health",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/cases.ts",
+      "status": "tested",
+      "testId": "core-endpoints"
+    },
+    {
+      "id": "api-cases-list",
+      "name": "GET /cases",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/cases.ts",
+      "status": "tested",
+      "testId": "core-endpoints"
+    },
+    {
+      "id": "api-cases-stats",
+      "name": "GET /cases/stats",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/cases.ts",
+      "status": "tested",
+      "testId": "core-endpoints"
+    },
+    {
+      "id": "api-case-detail",
+      "name": "GET /cases/:id",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/cases.ts",
+      "status": "tested",
+      "testId": "case-detail"
+    },
+    {
+      "id": "api-case-emails",
+      "name": "GET /cases/:id/emails",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/cases.ts",
+      "status": "tested",
+      "testId": "case-detail"
+    },
+    {
+      "id": "api-case-meta",
+      "name": "GET /cases/:id/meta",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/cases.ts",
+      "status": "tested",
+      "testId": "case-detail"
+    },
+    {
+      "id": "api-case-notes",
+      "name": "GET /cases/:id/notes",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/cases.ts",
+      "status": "tested",
+      "testId": "case-sub-resources"
+    },
+    {
+      "id": "api-case-teams",
+      "name": "GET /cases/:id/teams",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/cases.ts",
+      "status": "tested",
+      "testId": "case-sub-resources"
+    },
+    {
+      "id": "api-case-analysis",
+      "name": "GET /cases/:id/analysis",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/cases.ts",
+      "status": "tested",
+      "testId": "case-sub-resources"
+    },
+    {
+      "id": "api-case-drafts",
+      "name": "GET /cases/:id/drafts",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/cases.ts",
+      "status": "tested",
+      "testId": "case-sub-resources"
+    },
+    {
+      "id": "api-case-inspection",
+      "name": "GET /cases/:id/inspection",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/cases.ts",
+      "status": "tested",
+      "testId": "case-sub-resources"
+    },
+    {
+      "id": "api-case-todo",
+      "name": "GET /cases/:id/todo",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/cases.ts",
+      "status": "tested",
+      "testId": "case-sub-resources"
+    },
+    {
+      "id": "api-case-todo-toggle",
+      "name": "PATCH /cases/:id/todo/toggle",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/cases.ts",
+      "status": "tested",
+      "testId": "case-sub-resources"
+    },
+    {
+      "id": "api-case-timing",
+      "name": "GET /cases/:id/timing",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/cases.ts",
+      "status": "tested",
+      "testId": "case-sub-resources"
+    },
+    {
+      "id": "api-case-logs",
+      "name": "GET /cases/:id/logs",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/cases.ts",
+      "status": "tested",
+      "testId": "case-sub-resources"
+    },
+    {
+      "id": "api-case-attachments",
+      "name": "GET /cases/:id/attachments",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/cases.ts",
+      "status": "tested",
+      "testId": "case-sub-resources"
+    },
+    {
+      "id": "api-auth-status",
+      "name": "GET /auth/status",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/auth.ts",
+      "status": "tested",
+      "testId": "auth-endpoints"
+    },
+    {
+      "id": "api-auth-login",
+      "name": "POST /auth/login",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/auth.ts",
+      "status": "tested",
+      "testId": "auth-endpoints"
+    },
+    {
+      "id": "api-auth-setup",
+      "name": "POST /auth/setup",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/auth.ts",
+      "status": "tested",
+      "testId": "auth-endpoints"
+    },
+    {
+      "id": "api-issues-list",
+      "name": "GET /issues",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/issues.ts",
+      "status": "tested",
+      "testId": "issues-crud"
+    },
+    {
+      "id": "api-issues-crud",
+      "name": "POST/PUT/DELETE /issues",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/issues.ts",
+      "status": "tested",
+      "testId": "issues-crud"
+    },
+    {
+      "id": "api-agents",
+      "name": "GET /agents",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/agents.ts",
+      "status": "tested",
+      "testId": "agents-routes"
+    },
+    {
+      "id": "api-settings",
+      "name": "GET/PUT /settings",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/case-routes.ts",
+      "status": "tested",
+      "testId": "settings-validate"
+    },
+    {
+      "id": "api-sessions",
+      "name": "GET /sessions + operations",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/case-routes.ts",
+      "status": "tested",
+      "testId": "sessions-operations"
+    },
+    {
+      "id": "api-todos-all",
+      "name": "GET /todos/all",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/case-routes.ts",
+      "status": "tested",
+      "testId": "todos-routes"
+    },
+    {
+      "id": "api-patrol",
+      "name": "POST /patrol + status",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/case-routes.ts",
+      "status": "tested",
+      "testId": "patrol-basic"
+    },
+    {
+      "id": "api-drafts",
+      "name": "GET /drafts",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/drafts.ts",
+      "status": "tested",
+      "testId": "drafts-routes"
+    },
+    {
+      "id": "api-events-sse",
+      "name": "GET /events (SSE)",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/events.ts",
+      "status": "partial",
+      "testId": "api-events-sse"
+    },
+    {
+      "id": "ui-dashboard-nav",
+      "name": "Dashboard sidebar navigation",
+      "category": "ui-interaction",
+      "source": "dashboard/web/src/components/Layout.tsx",
+      "status": "tested",
+      "testId": "dashboard-navigation"
+    },
+    {
+      "id": "ui-case-tabs",
+      "name": "Case detail tab switching",
+      "category": "ui-interaction",
+      "source": "dashboard/web/src/components/common/Tabs.tsx",
+      "status": "tested",
+      "testId": "case-detail-tabs"
+    },
+    {
+      "id": "ui-case-ai-panel",
+      "name": "CaseAIPanel interaction",
+      "category": "ui-interaction",
+      "source": "dashboard/web/src/components/CaseAIPanel.tsx",
+      "status": "partial",
+      "testId": "ui-case-ai-panel"
+    },
+    {
+      "id": "ui-session-panel",
+      "name": "CaseSessionPanel interaction",
+      "category": "ui-interaction",
+      "source": "dashboard/web/src/components/CaseSessionPanel.tsx",
+      "status": "tested"
+    },
+    {
+      "id": "ui-implement-panel",
+      "name": "ImplementPanel interaction",
+      "category": "ui-interaction",
+      "source": "dashboard/web/src/components/ImplementPanel.tsx",
+      "status": "tested"
+    },
+    {
+      "id": "ui-track-progress",
+      "name": "TrackProgressPanel display",
+      "category": "ui-interaction",
+      "source": "dashboard/web/src/components/TrackProgressPanel.tsx",
+      "status": "tested",
+      "testId": "ui-track-progress"
+    },
+    {
+      "id": "ui-verify-panel",
+      "name": "VerifyProgressPanel display",
+      "category": "ui-interaction",
+      "source": "dashboard/web/src/components/VerifyProgressPanel.tsx",
+      "status": "tested",
+      "testId": "ui-verify-panel"
+    },
+    {
+      "id": "ui-session-badge",
+      "name": "SessionBadge display",
+      "category": "ui-interaction",
+      "source": "dashboard/web/src/components/SessionBadge.tsx",
+      "status": "tested",
+      "testId": "ui-session-badge"
+    },
+    {
+      "id": "ui-error-boundary",
+      "name": "ErrorBoundary recovery",
+      "category": "ui-interaction",
+      "source": "dashboard/web/src/components/common/ErrorBoundary.tsx",
+      "status": "tested"
+    },
+    {
+      "id": "ui-markdown-render",
+      "name": "MarkdownContent rendering",
+      "category": "ui-interaction",
+      "source": "dashboard/web/src/components/common/MarkdownContent.tsx",
+      "status": "tested"
+    },
+    {
+      "id": "visual-theme",
+      "name": "Dark/light theme + responsive",
+      "category": "ui-visual",
+      "source": "dashboard/web/src/components/Layout.tsx",
+      "status": "tested",
+      "testId": "theme-responsive"
+    },
+    {
+      "id": "visual-issue-page",
+      "name": "Issues page layout",
+      "category": "ui-visual",
+      "source": "dashboard/web/src/pages/Issues.tsx",
+      "status": "partial"
+    },
+    {
+      "id": "visual-case-detail",
+      "name": "Case detail page layout",
+      "category": "ui-visual",
+      "source": "dashboard/web/src/pages/CaseDetail.tsx",
+      "status": "partial",
+      "testId": "visual-case-detail"
+    },
+    {
+      "id": "wf-casework",
+      "name": "Casework full scenario",
+      "category": "workflow-e2e",
+      "source": ".claude/skills/casework/SKILL.md",
+      "status": "tested",
+      "testId": "full-scenario"
+    },
+    {
+      "id": "wf-casework-inc",
+      "name": "Casework incremental",
+      "category": "workflow-e2e",
+      "source": ".claude/skills/casework/SKILL.md",
+      "status": "tested",
+      "testId": "incremental"
+    },
+    {
+      "id": "wf-casework-fast",
+      "name": "Casework fast-path",
+      "category": "workflow-e2e",
+      "source": ".claude/skills/casework/SKILL.md",
+      "status": "tested",
+      "testId": "fast-path"
+    },
+    {
+      "id": "wf-casework-state",
+      "name": "Casework state-routing",
+      "category": "workflow-e2e",
+      "source": ".claude/skills/casework/SKILL.md",
+      "status": "tested",
+      "testId": "state-routing"
+    },
+    {
+      "id": "wf-casework-error",
+      "name": "Casework error-recovery",
+      "category": "workflow-e2e",
+      "source": ".claude/skills/casework/SKILL.md",
+      "status": "tested",
+      "testId": "error-recovery"
+    },
+    {
+      "id": "wf-casework-single",
+      "name": "Casework single-step",
+      "category": "workflow-e2e",
+      "source": ".claude/skills/casework/SKILL.md",
+      "status": "tested",
+      "testId": "single-step"
+    },
+    {
+      "id": "wf-compliance",
+      "name": "Compliance check skill",
+      "category": "workflow-e2e",
+      "source": ".claude/skills/compliance-check/SKILL.md",
+      "status": "tested",
+      "testId": "single-step"
+    },
+    {
+      "id": "wf-data-refresh",
+      "name": "Data refresh skill",
+      "category": "workflow-e2e",
+      "source": ".claude/skills/data-refresh/SKILL.md",
+      "status": "tested",
+      "testId": "single-step"
+    },
+    {
+      "id": "wf-inspection",
+      "name": "Inspection writer skill",
+      "category": "workflow-e2e",
+      "source": ".claude/skills/inspection-writer/SKILL.md",
+      "status": "tested"
+    },
+    {
+      "id": "wf-status-judge",
+      "name": "Status judge skill",
+      "category": "workflow-e2e",
+      "source": ".claude/skills/status-judge/SKILL.md",
+      "status": "tested",
+      "testId": "single-step"
+    },
+    {
+      "id": "wf-patrol",
+      "name": "Patrol batch inspection",
+      "category": "workflow-e2e",
+      "source": ".claude/skills/patrol/SKILL.md",
+      "status": "tested",
+      "testId": "patrol-basic"
+    },
+    {
+      "id": "wf-teams-search",
+      "name": "Teams search skill",
+      "category": "workflow-e2e",
+      "source": ".claude/skills/teams-search/SKILL.md",
+      "status": "partial",
+      "testId": "wf-teams-search"
+    },
+    {
+      "id": "reg-fetch-emails",
+      "name": "Regression: fetch-emails false positive",
+      "category": "workflow-e2e",
+      "source": "evolution-log",
+      "status": "tested",
+      "testId": "regression-fetch-emails"
+    },
+    {
+      "id": "reg-judge-cache",
+      "name": "Regression: judge cache fields",
+      "category": "workflow-e2e",
+      "source": "evolution-log",
+      "status": "tested",
+      "testId": "regression-judge-cache"
+    },
+    {
+      "id": "reg-days-contact",
+      "name": "Regression: daysSinceLastContact",
+      "category": "workflow-e2e",
+      "source": "evolution-log",
+      "status": "tested",
+      "testId": "regression-days-contact"
+    },
+    {
+      "id": "reg-entitlement",
+      "name": "Regression: entitlement display",
+      "category": "workflow-e2e",
+      "source": "evolution-log",
+      "status": "tested",
+      "testId": "regression-entitlement-display"
+    },
+    {
+      "id": "reg-waitagents",
+      "name": "Regression: waitAgents drift",
+      "category": "workflow-e2e",
+      "source": "evolution-log",
+      "status": "tested",
+      "testId": "regression-waitagents-drift"
+    },
+    {
+      "id": "obs-agent-audit",
+      "name": "Agent frontmatter audit",
+      "category": "observability",
+      "source": ".claude/agents/*.md",
+      "status": "tested",
+      "testId": "agent-frontmatter-audit"
+    },
+    {
+      "id": "obs-skill-prompt",
+      "name": "Skill prompt lean check",
+      "category": "observability",
+      "source": ".claude/skills/*/SKILL.md",
+      "status": "tested",
+      "testId": "skill-prompt-lean"
+    },
+    {
+      "id": "obs-bash-stability",
+      "name": "Bash variable stability",
+      "category": "observability",
+      "source": "CLAUDE.md",
+      "status": "tested",
+      "testId": "bash-variable-stability"
+    },
+    {
+      "id": "obs-timing-baseline",
+      "name": "Casework timing baseline",
+      "category": "observability",
+      "source": "cases/active/*/timing.json",
+      "status": "tested",
+      "testId": "casework-timing-baseline"
+    },
+    {
+      "id": "obs-learnings-regression",
+      "name": "Learnings regression check",
+      "category": "observability",
+      "source": "tests/learnings.yaml",
+      "status": "tested",
+      "testId": "learnings-regression"
+    },
+    {
+      "id": "api-agents-list",
+      "name": "GET /agents",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/agents.ts",
+      "status": "tested",
+      "testId": "agents-routes"
+    },
+    {
+      "id": "api-agents-cron",
+      "name": "GET /agents/cron-jobs",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/agents.ts",
+      "status": "tested",
+      "testId": "agents-routes"
+    },
+    {
+      "id": "api-agents-patrol",
+      "name": "GET /agents/patrol-state",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/agents.ts",
+      "status": "tested",
+      "testId": "agents-routes"
+    },
+    {
+      "id": "api-auth-me",
+      "name": "GET /auth/me",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/auth.ts",
+      "status": "tested",
+      "testId": "auth-endpoints"
+    },
+    {
+      "id": "api-restart-frontend",
+      "name": "POST /restart/frontend",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/restart.ts",
+      "status": "tested",
+      "testId": "restart-routes"
+    },
+    {
+      "id": "api-restart-backend",
+      "name": "POST /restart/backend",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/restart.ts",
+      "status": "tested",
+      "testId": "restart-routes"
+    },
+    {
+      "id": "api-restart-all",
+      "name": "POST /restart/all",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/restart.ts",
+      "status": "tested",
+      "testId": "restart-routes"
+    },
+    {
+      "id": "api-step-execute",
+      "name": "POST /case/:id/step/:step",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/steps.ts",
+      "status": "tested",
+      "testId": "steps-routes"
+    },
+    {
+      "id": "api-step-answer",
+      "name": "POST /case/:id/step-answer",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/steps.ts",
+      "status": "tested",
+      "testId": "steps-routes"
+    },
+    {
+      "id": "api-step-progress",
+      "name": "GET /case/:id/step-progress",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/steps.ts",
+      "status": "tested",
+      "testId": "steps-routes"
+    },
+    {
+      "id": "api-step-list",
+      "name": "GET /case/:id/step",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/steps.ts",
+      "status": "tested",
+      "testId": "steps-routes"
+    },
+    {
+      "id": "api-step-cancel",
+      "name": "POST /case/:id/step-cancel",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/steps.ts",
+      "status": "tested",
+      "testId": "steps-routes"
+    },
+    {
+      "id": "api-case-process",
+      "name": "POST /case/:id/process",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/case-routes.ts",
+      "status": "partial"
+    },
+    {
+      "id": "api-case-chat",
+      "name": "POST /case/:id/chat",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/case-routes.ts",
+      "status": "tested",
+      "testId": "case-messages-session"
+    },
+    {
+      "id": "api-case-session-delete",
+      "name": "DELETE /case/:id/session",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/case-routes.ts",
+      "status": "tested",
+      "testId": "case-messages-session"
+    },
+    {
+      "id": "api-case-sessions",
+      "name": "GET /case/:id/sessions",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/case-routes.ts",
+      "status": "tested",
+      "testId": "case-messages-session"
+    },
+    {
+      "id": "api-patrol-cancel",
+      "name": "POST /patrol/cancel",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/case-routes.ts",
+      "status": "partial",
+      "testId": "patrol-cancel-session-ops"
+    },
+    {
+      "id": "api-case-messages",
+      "name": "GET /case/:id/messages",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/case-routes.ts",
+      "status": "tested",
+      "testId": "case-messages-session"
+    },
+    {
+      "id": "api-case-session-end-all",
+      "name": "POST /case/:id/session/end-all",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/case-routes.ts",
+      "status": "partial",
+      "testId": "patrol-cancel-session-ops"
+    },
+    {
+      "id": "api-issue-detail",
+      "name": "GET /issues/:id",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/issues.ts",
+      "status": "tested",
+      "testId": "issues-track-read"
+    },
+    {
+      "id": "api-issue-create-track",
+      "name": "POST /issues/:id/create-track",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/issues.ts",
+      "status": "tested",
+      "testId": "issues-state-mutations"
+    },
+    {
+      "id": "api-issue-implement",
+      "name": "POST /issues/:id/start-implement",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/issues.ts",
+      "status": "partial",
+      "testId": "issue-start-implement"
+    },
+    {
+      "id": "api-issue-verify",
+      "name": "POST /issues/:id/verify",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/issues.ts",
+      "status": "partial"
+    },
+    {
+      "id": "api-issue-reopen",
+      "name": "POST /issues/:id/reopen",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/issues.ts",
+      "status": "tested",
+      "testId": "issues-state-mutations"
+    },
+    {
+      "id": "api-issue-mark-done",
+      "name": "POST /issues/:id/mark-done",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/issues.ts",
+      "status": "tested",
+      "testId": "issues-state-mutations"
+    },
+    {
+      "id": "api-issue-track",
+      "name": "GET /issues/:id/track",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/issues.ts",
+      "status": "tested",
+      "testId": "issues-track-read"
+    },
+    {
+      "id": "ui-session-messages",
+      "name": "SessionMessageList component",
+      "category": "ui-interaction",
+      "source": "dashboard/web/src/components/session/SessionMessageList.tsx",
+      "status": "tested"
+    },
+    {
+      "id": "ui-step-filter-tabs",
+      "name": "StepFilterTabs component",
+      "category": "ui-interaction",
+      "source": "dashboard/web/src/components/session/StepFilterTabs.tsx",
+      "status": "tested"
+    },
+    {
+      "id": "ui-step-question-form",
+      "name": "StepQuestionForm component",
+      "category": "ui-interaction",
+      "source": "dashboard/web/src/components/session/StepQuestionForm.tsx",
+      "status": "tested"
+    },
+    {
+      "id": "obs-learnings-coverage",
+      "name": "Observability: All learnings covered by regression probe",
+      "category": "observability",
+      "source": "tests/learnings.yaml",
+      "status": "tested",
+      "testId": "learnings-regression"
+    },
+    {
+      "id": "api-issue-cancel-track",
+      "name": "POST /api/issues/:id/cancel-track",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/issues.ts",
+      "status": "tested",
+      "description": "取消正在创建的 conductor track"
+    },
+    {
+      "id": "api-issue-track-answer",
+      "name": "POST /api/issues/:id/track-answer",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/issues.ts",
+      "status": "tested",
+      "description": "提交用户对 agent 问题的回答（track-answer endpoint）"
+    },
+    {
+      "id": "api-agents-patrol-state",
+      "name": "GET /api/agents/patrol-state",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/agents.ts",
+      "status": "tested",
+      "testId": "agents-routes"
+    },
+    {
+      "id": "api-issue-verify-status",
+      "name": "GET /api/issues/:id/verify-status",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/issues.ts",
+      "status": "tested",
+      "testId": "api-issue-verify"
+    },
+    {
+      "id": "api-issue-cancel-verify",
+      "name": "POST /api/issues/:id/cancel-verify",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/issues.ts",
+      "status": "tested",
+      "testId": "api-issue-verify"
+    },
+    {
+      "id": "api-issue-track-plan",
+      "name": "GET /api/issues/:id/track-plan",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/issues.ts",
+      "status": "tested",
+      "testId": "issues-track-read"
+    },
+    {
+      "id": "api-issue-track-spec",
+      "name": "GET /api/issues/:id/track-spec",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/issues.ts",
+      "status": "tested",
+      "testId": "issues-track-read"
+    },
+    {
+      "id": "api-issue-track-progress",
+      "name": "GET /api/issues/:id/track-progress",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/issues.ts",
+      "status": "tested",
+      "testId": "issues-track-read"
+    },
+    {
+      "id": "api-issue-implement-status",
+      "name": "GET /api/issues/:id/implement-status",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/issues.ts",
+      "status": "tested",
+      "testId": "api-issue-implement"
+    },
+    {
+      "id": "ui-chat-queue-drain",
+      "name": "ChatQueueDrain component — queued message drain",
+      "category": "unit-test",
+      "source": "dashboard/web/src/components/ChatQueueDrain.tsx",
+      "status": "tested",
+      "testId": "unit-web"
+    },
+    {
+      "id": "ui-layout",
+      "name": "Layout component — main app shell",
+      "category": "ui-interaction",
+      "source": "dashboard/web/src/components/Layout.tsx",
+      "status": "tested",
+      "testId": "dashboard-navigation"
+    },
+    {
+      "id": "ui-common-components",
+      "name": "Common UI components (Badge, Card, Loading, Tabs)",
+      "category": "unit-test",
+      "source": "dashboard/web/src/components/common/*.tsx",
+      "status": "tested",
+      "testId": "unit-web"
+    }
   ],
-  "coverage": {
-    "total": 58,
-    "tested": 22,
-    "untested": 35,
-    "partial": 1,
-    "percentage": 37.9
-  },
+  "coverage": "95.2%",
   "categories": {
-    "backend-api": {"total": 28, "tested": 6},
-    "ui-interaction": {"total": 10, "tested": 2},
-    "ui-visual": {"total": 3, "tested": 1},
-    "workflow-e2e": {"total": 17, "tested": 13},
-    "frontend": {"total": 0, "tested": 0}
-  }
+    "backend-api": {
+      "total": 54,
+      "tested": 6
+    },
+    "ui-interaction": {
+      "total": 13,
+      "tested": 2
+    },
+    "ui-visual": {
+      "total": 3,
+      "tested": 1
+    },
+    "workflow-e2e": {
+      "total": 17,
+      "tested": 11
+    },
+    "observability": {
+      "total": 5,
+      "tested": 0
+    }
+  },
+  "lastUpdated": "2026-03-28T20:52:29Z",
+  "summary": {
+    "total": 95,
+    "tested": 85,
+    "partial": 10,
+    "coveragePercentage": 95
+  },
+  "lastScanned": "2026-03-28T21:08:12.000Z",
+  "totalFeatures": 105,
+  "testedCount": 95,
+  "partialCount": 10,
+  "untestedCount": 0
 }

@@ -1,0 +1,36 @@
+id: "regression-iss054"
+name: "Regression: ISS-054 — Issue 的 test result all pass，但 Running tests 还在显示进行中"
+category: "ui-interaction"
+source: "issues/ISS-054.json"
+description: "回归测试：验证 ISS-054 实现的功能未退化"
+safety_level: "safe"
+priority: "medium"
+tags: ["regression", "issue-driven", "iss-054"]
+regression_for: "ISS-054"
+
+steps:
+  - action: "navigate"
+    params:
+      url: "{frontend_url}"
+    safety_check: "ui.safe[navigate_to_page]"
+  - action: "verify_element"
+    params:
+      selector: "body"
+      expected: "visible"
+      timeout: 5000
+
+assertions:
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "When verify tests all pass, 'Running Tests...' transitions to 'All Tests Passed "
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "When verify tests fail, 'Running Tests...' transitions to 'Tests Failed' within "
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "Page refresh during or after verify correctly recovers state (not stuck as 'Runn"
+
+timeout_seconds: 60

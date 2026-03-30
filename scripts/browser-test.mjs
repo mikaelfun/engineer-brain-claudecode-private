@@ -11,6 +11,7 @@ import { chromium } from 'playwright';
 import { createRequire } from 'module';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
+import { existsSync, mkdirSync } from 'fs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = join(__dirname, '..');
@@ -25,8 +26,9 @@ const JWT_SECRET = process.env.JWT_SECRET || 'engineer-brain-local-dev-secret-20
 // Generate a valid JWT token for authentication
 const TOKEN = jwt.sign({ sub: 'engineer' }, JWT_SECRET, { expiresIn: '1h' });
 
-// Screenshot output directory (same dir as this script)
-const screenshotDir = __dirname;
+// Screenshot output directory
+const screenshotDir = join(__dirname, 'screenshots');
+if (!existsSync(screenshotDir)) mkdirSync(screenshotDir, { recursive: true });
 
 // --- Health check: verify service is reachable before launching browser ---
 async function healthCheck(url, retries = 3, delayMs = 2000) {

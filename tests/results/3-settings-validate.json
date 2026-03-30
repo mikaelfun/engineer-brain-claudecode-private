@@ -1,0 +1,9 @@
+{
+  "testId": "settings-validate",
+  "round": 3,
+  "timestamp": "2026-03-28T16:53:03.000Z",
+  "status": "pass",
+  "assertions": [{"name":"GET /api/settings → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'casesRoot':'./cases','dataRoot':'./data','teamsSearchCacheHours':4} "},{"name":"GET /api/settings → JSON response","pass":true,"expected":"JSON","actual":"JSON"},{"name":"POST /api/settings/validate-path → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'valid':true,'resolvedPath':'C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases','caseCount':15,'hasActiveDir':true} "},{"name":"POST /api/settings/validate-path → JSON response","pass":true,"expected":"JSON","actual":"JSON"}],
+  "error": null,
+  "duration_ms": 12171
+}

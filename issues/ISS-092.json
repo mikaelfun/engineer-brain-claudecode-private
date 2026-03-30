@@ -1,10 +1,11 @@
 {
   "id": "ISS-092",
   "title": "dashboard start patrol后没有状态更新，只能在agents里看进展。",
-  "description": "",
+  "description": "已合并到 ISS-094（start patrol后进度没有实时显示，没有sse）",
   "type": "feature",
   "priority": "P1",
-  "status": "pending",
+  "status": "done",
+  "mergedInto": "ISS-094",
   "createdAt": "2026-03-23T01:38:35.980Z",
-  "updatedAt": "2026-03-23T01:38:35.980Z"
+  "updatedAt": "2026-03-29T10:00:00.000Z"
 }

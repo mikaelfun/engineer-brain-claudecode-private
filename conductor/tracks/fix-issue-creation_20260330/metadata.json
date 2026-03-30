@@ -1,0 +1,17 @@
+{
+  "id": "fix-issue-creation_20260330",
+  "title": "Test-loop FIX 阶段发现产品 Bug 自动创建 Issue",
+  "type": "feature",
+  "status": "complete",
+  "created": "2026-03-30T17:00:00+08:00",
+  "updated": "2026-03-30T17:30:00+08:00",
+  "issueId": "ISS-168",
+  "phases": {
+    "total": 4,
+    "completed": 4
+  },
+  "tasks": {
+    "total": 7,
+    "completed": 7
+  }
+}

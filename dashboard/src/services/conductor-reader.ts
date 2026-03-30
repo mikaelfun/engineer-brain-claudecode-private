@@ -138,6 +138,34 @@ _To be defined during planning._
 }
 
 /**
+ * Extract IssueVerifyResult from verification data, handling both old and new formats.
+ *
+ * Old format: verification.result.{ unitTest, uiTest, verifiedAt }
+ * New format: verification.{ regression, criteria[], timestamp }
+ */
+function extractVerifyResult(v: NonNullable<TrackMetadata['verification']>): IssueVerifyResult | undefined {
+  // New format: criteria-based (from SKILL.md)
+  if (v.criteria && Array.isArray(v.criteria)) {
+    return {
+      regression: v.regression,
+      criteria: v.criteria,
+      timestamp: v.timestamp,
+    }
+  }
+
+  // Old format: unitTest + uiTest
+  if (v.result) {
+    return {
+      unitTest: v.result.unitTest,
+      uiTest: v.result.uiTest,
+      verifiedAt: v.result.verifiedAt,
+    }
+  }
+
+  return undefined
+}
+
+/**
  * Derive issue status and verifyResult from track metadata.
  * This is the single mapping rule from track state → issue state.
  *
@@ -163,21 +191,11 @@ export function deriveIssueStatus(track: TrackMetadata): { status: IssueStatus; 
       return { status: 'implemented' }
     }
     if (v.status === 'passed' || v.status === 'skipped') {
-      const verifyResult = v.result ? {
-        unitTest: v.result.unitTest,
-        uiTest: v.result.uiTest,
-        verifiedAt: v.result.verifiedAt,
-      } : undefined
-      return { status: 'done', verifyResult }
+      return { status: 'done', verifyResult: extractVerifyResult(v) }
     }
     if (v.status === 'failed') {
       // Failed verification — still show as implemented so user can re-verify
-      const verifyResult = v.result ? {
-        unitTest: v.result.unitTest,
-        uiTest: v.result.uiTest,
-        verifiedAt: v.result.verifiedAt,
-      } : undefined
-      return { status: 'implemented', verifyResult }
+      return { status: 'implemented', verifyResult: extractVerifyResult(v) }
     }
   }
 

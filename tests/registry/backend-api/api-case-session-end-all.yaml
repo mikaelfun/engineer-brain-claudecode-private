@@ -1,0 +1,40 @@
+id: "api-case-session-end-all"
+name: "Case Session End-All — POST /api/case/:id/session/end-all"
+category: "backend-api"
+source: "dashboard/src/routes/case-routes.ts — POST /case/:id/session/end-all"
+description: "验证结束 case 所有 session 端点：用测试 case 调用端点，验证响应正常（200）或无 session 时正常返回"
+safety_level: "safe"
+priority: "medium"
+tags: ["api", "session", "end-all", "case", "round-11"]
+
+steps:
+  # Step 1: Get sessions first to know current state
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/sessions"
+      auth: true
+      expected_status: [200]
+    safety_check: "api.safe[GET /api/sessions]"
+
+  # Step 2: Use a test case (data_rich) to call end-all sessions
+  - action: "http_request"
+    params:
+      method: "POST"
+      url: "{api_base}/api/case/2603090040000814/session/end-all"
+      auth: true
+      expected_status: [200, 404]
+    safety_check: "api.safe[POST /api/case/:id/step/*]"
+
+assertions:
+  - type: "status_code"
+    target: "GET /api/sessions"
+    expected: 200
+    description: "sessions 列表端点正常"
+
+  - type: "status_code"
+    target: "POST /api/case/:id/session/end-all"
+    expected: [200, 404]
+    description: "session end-all 端点返回有效状态码（200=成功, 404=case不存在）"
+
+timeout_seconds: 20

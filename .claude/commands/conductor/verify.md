@@ -20,7 +20,7 @@ Parse arguments to determine operation mode:
 
 | Argument Pattern | Mode | Description |
 |-----------------|------|-------------|
-| `[trackId\|ISS-xxx]` (no flags) | **Verify** | Run unit + UI tests, write result to metadata |
+| `[trackId\|ISS-xxx]` (no flags) | **Verify** | Reasoning-driven verification via SKILL.md |
 | `--mark-done [trackId\|ISS-xxx]` | **Mark Done** | Skip verification, mark as done (manual) |
 | `--reopen [trackId\|ISS-xxx]` | **Reopen** | Clear verification, return to implemented |
 | (none) | **Interactive** | Show implemented tracks, let user choose |
@@ -75,100 +75,35 @@ Parse arguments to determine operation mode:
 1. Scan `issues/ISS-*.json` files for one with `trackId` matching current track
 2. Store the issue ID for later status display (informational only — status is derived)
 
-### Step 3: Run Unit Tests
+### Step 3: Execute Reasoning-Driven Verification (SKILL.md)
 
-1. Display: `🧪 Running unit tests...`
-2. Execute:
-   ```bash
-   cd dashboard && npm test -- --reporter=verbose
+**Delegate to `.claude/skills/conductor/verify/SKILL.md`.**
+
+Read the SKILL.md file and execute its complete 5-step verification flow:
+
+1. **Step 1 — Regression Guard**: Run `cd dashboard && npm test` as a safety net
+2. **Step 2 — 推理验证方案**: Read spec.md → extract AC → classify type → match recipe → build plan → ask user to confirm
+3. **Step 3 — 执行验证**: For each AC, follow matched recipe or reason from scratch → record PASS/FAIL/SKIP + evidence
+4. **Step 4 — 汇总报告**: Display result summary → write `metadata.json` with new criteria-based format:
+   ```json
+   {
+     "verification": {
+       "status": "passed" | "failed" | "skipped",
+       "timestamp": "ISO_TIMESTAMP",
+       "regression": "pass" | "fail",
+       "criteria": [
+         { "id": "AC1", "description": "...", "result": "pass", "evidence": "...", "recipe": "..." }
+       ]
+     }
+   }
    ```
-3. Capture exit code and output
-4. Display result:
-   - ✅ `Unit tests passed (XX tests, XX suites)`
-   - ❌ `Unit tests FAILED` + show failure output
+5. **Step 5 — 反思提取**: Only if triggered (retries ≥2, pitfall, long script, recipe outdated) → create/update recipes
 
-### Step 4: Run UI Tests (only if unit tests pass)
-
-1. If unit tests failed: Skip with message `⏭️ Skipping UI tests (unit tests failed)`
-
-2. Check if frontend is reachable:
-   ```bash
-   curl -s http://localhost:5173 -o /dev/null -w "%{http_code}"
-   ```
-   - If not reachable: Display warning — `⚠️ Frontend not running at localhost:5173. UI tests skipped.`
-   - Set uiTest as `{ success: false, output: "Frontend not reachable" }`
-
-3. Read `conductor/tracks/{trackId}/plan.md`
-4. Extract `## Verification Plan` section
-5. If Verification Plan exists:
-   - Follow `conductor/workflow.md` Step 2 procedure:
-     - Generate JWT for testing
-     - Execute each test from the Verification Plan using Playwright
-     - Take screenshots only at key verification points (JPEG, quality 70, save to file only)
-     - **主会话不直接读取截图**：E2E/API/Interaction 靠代码断言；Visual 类 spawn subagent 查看截图返回纯文本 PASS/FAIL（图片留在 subagent context，结束后释放）
-     - Report pass/fail per acceptance criterion
-   - **⚠️ Respect safety red lines** from CLAUDE.md — never click dangerous buttons
-6. If no Verification Plan:
-   - Check if `scripts/browser-test.mjs` exists → run it
-   - Otherwise: `uiTest = { success: true, output: "No Verification Plan, UI tests skipped" }`
-
-### Step 5: Write Verification Result
-
-Read current `conductor/tracks/{trackId}/metadata.json` and update:
-
-**If tests passed (unit ✅ AND ui ✅):**
-
-```json
-{
-  "verification": {
-    "status": "passed",
-    "method": "auto",
-    "result": {
-      "unitTest": { "success": true, "output": "..." },
-      "uiTest": { "success": true, "output": "..." },
-      "verifiedAt": "ISO_TIMESTAMP"
-    }
-  }
-}
-```
-
-Update `conductor/tracks.md`: keep status as `[x]`
-
-**If tests failed:**
-
-```json
-{
-  "verification": {
-    "status": "failed",
-    "method": "auto",
-    "result": {
-      "unitTest": { "success": true/false, "output": "..." },
-      "uiTest": { "success": true/false, "output": "..." },
-      "verifiedAt": "ISO_TIMESTAMP"
-    }
-  }
-}
-```
-
-Update `conductor/tracks.md`: change status to `[~]` (needs attention)
-
-### Step 6: Display Summary
-
-```
-═══════════════════════════════════════
-  Verification Result: {trackId}
-═══════════════════════════════════════
-
-  Unit Tests:  ✅ Passed / ❌ Failed
-  UI Tests:    ✅ Passed / ❌ Failed / ⏭️ Skipped
-  ─────────────────────────────────
-  Overall:     ✅ PASSED → Issue derives to "done"
-               ❌ FAILED → Issue stays "implemented"
-
-  Issue: ISS-XXX ({issue title})
-  Track: {trackId}
-═══════════════════════════════════════
-```
+**After SKILL.md completes:**
+- Update `conductor/tracks.md` status based on result:
+  - Passed/skipped → keep `[x]`
+  - Failed → change to `[~]`
+- Display final summary with issue derivation status
 
 ---
 
@@ -272,6 +207,8 @@ Track completed (status: complete)
 
 - Track not found: Suggest available tracks
 - Issue not found (ISS-xxx): Report error with file path
-- Unit test command fails to execute: Report npm error, skip UI tests
-- Playwright not available: Skip UI tests with warning
-- metadata.json write fails: Report error, do not update tracks.md
+- Unit test command fails to execute: Report npm error, ask user whether to continue
+- spec.md has no acceptance criteria: Warn and offer `--mark-done`
+- Recipe file missing/corrupt: Warn and fallback to from-scratch reasoning
+- Playwright browser launch fails: Check msedge availability, suggest `mcp__playwright__browser_install`
+- metadata.json write fails: Retry once, then display manual fix instructions

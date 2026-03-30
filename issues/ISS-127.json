@@ -1,0 +1,10 @@
+{
+  "id": "ISS-127",
+  "title": "TEST-AUTO: state-mutations test",
+  "description": "Automated test �� will be deleted in teardown",
+  "type": "bug",
+  "priority": "P3",
+  "status": "pending",
+  "createdAt": "2026-03-28T18:38:55.199Z",
+  "updatedAt": "2026-03-28T18:38:55.199Z"
+}

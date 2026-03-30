@@ -272,6 +272,12 @@ export type SSEEventType =
   | 'case-step-completed'
   | 'case-step-failed'
   | 'case-step-question'
+  | 'test-state-updated'
+  | 'test-discoveries-updated'
+  | 'test-result-updated'
+  | 'test-evolution-updated'
+  | 'test-directives-updated'
+  | 'runner-status-changed'
 
 export interface SSEEvent {
   type: SSEEventType
@@ -372,9 +378,14 @@ export type IssuePriority = 'P0' | 'P1' | 'P2'
 export type IssueStatus = 'pending' | 'tracking' | 'tracked' | 'in-progress' | 'implemented' | 'done'
 
 export interface IssueVerifyResult {
-  unitTest: { success: boolean; output: string }
-  uiTest: { success: boolean; output: string }
-  verifiedAt: string
+  // Old format fields (still present for backward compat)
+  unitTest?: { success: boolean; output: string }
+  uiTest?: { success: boolean; output: string }
+  verifiedAt?: string
+  // New format fields (criteria-based)
+  regression?: 'pass' | 'fail'
+  criteria?: TrackVerifyCriterion[]
+  timestamp?: string
 }
 
 export interface Issue {
@@ -385,6 +396,7 @@ export interface Issue {
   priority: IssuePriority
   status: IssueStatus
   trackId?: string
+  testLoopScan?: boolean
   verifyResult?: IssueVerifyResult
   createdAt: string
   updatedAt: string
@@ -395,14 +407,33 @@ export interface Issue {
 export type TrackVerificationStatus = 'pending' | 'running' | 'passed' | 'failed' | 'skipped'
 export type TrackVerificationMethod = 'auto' | 'manual'
 
+/** Single criterion result from reasoning-driven verification (SKILL.md format) */
+export interface TrackVerifyCriterion {
+  id: string           // e.g. "AC1"
+  description: string
+  result: 'pass' | 'fail' | 'skip'
+  evidence: string
+  recipe?: string | null  // e.g. "file-content-check.md"
+}
+
 export interface TrackVerification {
   status: TrackVerificationStatus
   method?: TrackVerificationMethod
+  timestamp?: string
+  reason?: string                // mark-done reason
+  regression?: 'pass' | 'fail'  // Step 1 regression guard result
+
+  // --- Old format (unitTest + uiTest) ---
   result?: {
     unitTest: { success: boolean; output: string }
     uiTest: { success: boolean; output: string }
     verifiedAt: string
+    // Allow extra fields from scanner verification etc.
+    [key: string]: unknown
   }
+
+  // --- New format (criteria-based, from SKILL.md) ---
+  criteria?: TrackVerifyCriterion[]
 }
 
 export interface TrackMetadata {
@@ -417,6 +448,21 @@ export interface TrackMetadata {
   phases: { total: number; completed: number }
   tasks: { total: number; completed: number }
   commits?: string[]
+}
+
+// ============ Execution Summary (ISS-136) ============
+
+export interface ToolCallRecord {
+  name: string
+  success: boolean
+  error?: string
+}
+
+export interface ExecutionSummary {
+  agentType: string
+  turns: number
+  mcpServers: string[]
+  toolCalls: ToolCallRecord[]
 }
 
 // ============ Unified Session View ============

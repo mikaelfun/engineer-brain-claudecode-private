@@ -91,8 +91,9 @@ foreach ($r in $results) {
     if ($job.State -eq "Completed") {
         $output = Receive-Job $job
         $status = "OK"
-        # Check for error indicators in output
-        if ($output -match '❌|ERR:|Failed|exit 1') {
+        # Only check the LAST 5 lines for error indicators (avoid false positives from email content)
+        $tailLines = ($output -split "`n" | Select-Object -Last 5) -join "`n"
+        if ($tailLines -match '❌|ERR:|Failed|exit 1') {
             $status = "FAIL"
             $allOk = $false
         }

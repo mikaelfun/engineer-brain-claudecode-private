@@ -37,11 +37,14 @@ import {
   getSessionMessages,
   clearSessionMessages,
   writeStepLog,
+  buildExecutionSummary,
+  getCaseMcpServerNames,
 } from '../agent/case-session-manager.js'
 import { sseManager } from '../watcher/sse-manager.js'
 import { reloadConfig, config as appConfig } from '../config.js'
 import { getSSEEventType, formatMessageForSSE, getPersistedMessageType } from '../utils/sse-helpers.js'
 import type { CanUseTool } from '@anthropic-ai/claude-agent-sdk'
+import type { ToolCallRecord, ExecutionSummary } from '../types/index.js'
 
 const caseRoutes = new Hono()
 
@@ -136,10 +139,12 @@ async function broadcastSDKMessages(
   caseNumber: string,
   stepName: string,
   queryIter: AsyncIterable<any>,
-): Promise<{ sessionId: string | undefined; messageCount: number }> {
+): Promise<{ sessionId: string | undefined; messageCount: number; toolCalls: ToolCallRecord[]; turns: number }> {
   let capturedSessionId: string | undefined
   let messageCount = 0
   let lastToolName: string | undefined
+  const toolCalls: ToolCallRecord[] = []
+  let turns = 0
 
   for await (const message of queryIter) {
     // Capture SDK session ID
@@ -152,12 +157,15 @@ async function broadcastSDKMessages(
 
     // Deep-parse assistant messages (SDK nested structure: message.message.content)
     if (message.type === 'assistant' && message.message?.content) {
+      turns++
       const content = message.message.content
       if (Array.isArray(content)) {
         for (const block of content) {
           if (block.type === 'tool_use') {
             const toolContent = summarizeToolInput((block as any).name, (block as any).input)
             lastToolName = (block as any).name
+            // Track tool call (mark as pending; will be resolved by tool_result)
+            toolCalls.push({ name: lastToolName!, success: true })
             messageCount++
             sseManager.broadcast('case-step-progress' as any, {
               caseNumber,
@@ -217,6 +225,14 @@ async function broadcastSDKMessages(
 
     // Deep-parse tool_result messages
     if (message.type === 'tool_result') {
+      // Check if tool_result indicates an error
+      const isError = (message as any).is_error === true
+      if (isError && toolCalls.length > 0) {
+        const lastCall = toolCalls[toolCalls.length - 1]
+        lastCall.success = false
+        const errText = typeof message.content === 'string' ? message.content.slice(0, 200) : ''
+        if (errText) lastCall.error = errText
+      }
       const resultContent = typeof message.content === 'string'
         ? message.content.slice(0, 300)
         : typeof message.text === 'string'
@@ -266,7 +282,7 @@ async function broadcastSDKMessages(
     }
   }
 
-  return { sessionId: capturedSessionId, messageCount }
+  return { sessionId: capturedSessionId, messageCount, toolCalls, turns }
 }
 
 // POST /case/:id/process — 完整 Case 处理
@@ -323,10 +339,17 @@ caseRoutes.post('/case/:id/process', async (c) => {
           processCaseSession(caseNumber, intent, canUseTool),
         )
 
+        const executionSummary = buildExecutionSummary(
+          result.toolCalls,
+          'full-process',
+          result.turns,
+        )
+
         sseManager.broadcast('case-step-completed' as any, {
           caseNumber,
           sessionId: result.sessionId,
           step: 'full-process',
+          executionSummary,
         })
         // Notify Agent Monitor to refresh session list
         sseManager.broadcast('sessions-changed' as any, { reason: 'step-completed', caseNumber, step: 'full-process' })

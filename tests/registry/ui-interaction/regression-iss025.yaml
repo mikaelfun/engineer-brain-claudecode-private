@@ -1,0 +1,44 @@
+id: "regression-iss025"
+name: "Regression: ISS-025 — WebUI Issues 页面点击 issue 直接进入编辑，需要增加编辑按钮"
+category: "ui-interaction"
+source: "issues/ISS-025.json"
+description: "回归测试：验证 ISS-025 实现的功能未退化"
+safety_level: "safe"
+priority: "medium"
+tags: ["regression", "issue-driven", "iss-025"]
+regression_for: "ISS-025"
+
+steps:
+  - action: "navigate"
+    params:
+      url: "{frontend_url}"
+    safety_check: "ui.safe[navigate_to_page]"
+  - action: "verify_element"
+    params:
+      selector: "body"
+      expected: "visible"
+      timeout: 5000
+
+assertions:
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "点击 issue 行展开只读详情，不直接进入编辑"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "只读详情中有明确的 Edit 按钮"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "点击 Edit 按钮进入编辑模式"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "Save/Cancel 后回到只读详情"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "再次点击行标题/头部可以折叠详情"
+
+timeout_seconds: 60

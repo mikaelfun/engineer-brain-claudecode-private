@@ -180,21 +180,40 @@ try {
   }
 } catch(e) {}
 
-// Coverage trend: compare last 2 summaries
+// Coverage trend: compare last 2 summaries using corrected coverage values
 let coverageTrend = 'unknown';
 if (roundSummaries.length >= 2) {
   const prev = roundSummaries[roundSummaries.length - 2].stats || {};
   const curr = roundSummaries[roundSummaries.length - 1].stats || {};
-  const prevTotal = (prev.totalTests || 1);
-  const currTotal = (curr.totalTests || 1);
-  const prevCov = (prev.passed || 0) / prevTotal;
-  const currCov = (curr.passed || 0) / currTotal;
+  const prevCov = (prev.coverage || 0) / 100;
+  const currCov = (curr.coverage || 0) / 100;
   if (currCov > prevCov + 0.02) coverageTrend = 'improving';
   else if (currCov < prevCov - 0.02) coverageTrend = 'declining';
   else coverageTrend = 'flat';
 } else if (roundSummaries.length === 1) {
   coverageTrend = 'insufficient_data';
 }
+
+// ---- New metrics: greenRate, fixThroughput, regressionRate ----
+// From latest round summary (which now includes these per-round metrics)
+let latestGreenRate = null;
+let latestRegressionRate = null;
+let latestFixThroughput = null;
+if (roundSummaries.length > 0) {
+  const latest = roundSummaries[roundSummaries.length - 1].stats || {};
+  latestGreenRate = latest.greenRate !== undefined ? latest.greenRate : null;
+  latestRegressionRate = latest.regressionRate !== undefined ? latest.regressionRate : null;
+  latestFixThroughput = latest.fixThroughput !== undefined ? latest.fixThroughput : null;
+}
+// Also read discoveries.json for live fixThroughput (more current than round summary)
+const discFile = path.join(path.dirname(resultsDir), 'discoveries.json');
+try {
+  const disc = JSON.parse(fs.readFileSync(discFile, 'utf8'));
+  const ds = disc.summary || {};
+  const dt = ds.total || 0;
+  const dv = ds.verified || 0;
+  if (dt > 0) latestFixThroughput = Math.round(dv / dt * 100);
+} catch(e) {}
 
 // ---- Output ----
 const output = {
@@ -211,6 +230,11 @@ const output = {
   paused,
   pendingDirectives,
   coverage,
+  metrics: {
+    greenRate: latestGreenRate,
+    fixThroughput: latestFixThroughput,
+    regressionRate: latestRegressionRate
+  },
   trends: {
     passedDelta,
     failedDelta,

@@ -4,6 +4,12 @@
 
 **Execution**: Main Agent directly (no spawn).
 
+### 🔴 Step -1: Start Timer (MANDATORY)
+```bash
+START_TS=$(date +%s%3N)
+echo '{"roundJourney":{"SCAN":{"status":"running","startedAt":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}}}' | bash tests/executors/state-writer.sh --merge
+```
+
 ### Step 0: Load State (only in SCAN — first phase of each round)
 
 1. Read `tests/state.json` → determine phase and queues
@@ -83,6 +89,37 @@ Run all due probes directly (not via testQueue). Schedule: every `probe_schedule
 bash tests/executors/spec-scanner.sh
 ```
 Scan `conductor/tracks/*/spec.md` AC → compare with registry → output `SPEC_GAP`. Append to gaps (source: `spec-driven`).
+
+**6.5. Run Additional Scanners** (if activated by runner):
+
+Check pre-flight briefing `activeScanners` array (from `tests/scan-strategies.yaml` scheduling).
+For each activated scanner, run and collect GAP output lines:
+
+| Scanner | Executor | Frequency | Description |
+|---------|----------|-----------|-------------|
+| design-fidelity | `design-fidelity-scanner.sh` | every_3_rounds | Compare spec AC with implementation code |
+| ux-review | `ux-reviewer.sh` | every_5_rounds | Static UX anti-pattern detection |
+| performance | `performance-scanner.sh` | every_3_rounds | API/timing vs baselines |
+| architecture | `architecture-scanner.sh` | every_5_rounds | CLAUDE.md compliance + code anti-patterns |
+
+```bash
+# Example: run activated scanners
+for scanner in "${activeScanners[@]}"; do
+  bash "tests/executors/${scanner}"
+done
+```
+
+**Scheduling logic** (runner decides, SCAN phase executes):
+- `every_round` → always run (coverage scanner — this is the default Steps 1-6)
+- `every_3_rounds` → run when `round % 3 == 0`
+- `every_5_rounds` → run when `round % 5 == 0`
+- Runner Strategic Review can override: force a scanner early or skip one
+
+GAP output format from additional scanners:
+```
+GAP|{type}|{source}|{category}|{description}|{priority}
+```
+Append all GAP lines to `state.json.gaps` with the scanner's source tag.
 
 **7. Update manifest.json**: Add new features, update tested/untested, coverage stats.
 

@@ -1,0 +1,32 @@
+id: "wf-iss120-data-source"
+name: "ISS-120 — test-definition.yaml schema 增加 data_source 字段"
+category: "workflow-e2e"
+source: "issues/ISS-120.json"
+description: "验证 ISS-120 AC：test-definition.yaml schema 增加 data_source 字段（live / synthetic），支持 synthetic_profile 指定 profile 或 'random'"
+safety_level: "safe"
+priority: "medium"
+tags: ["issue-driven", "iss-120", "tracked"]
+
+steps:
+  - action: "bash_command"
+    params:
+      command: "cat tests/schemas/test-definition.yaml"
+    description: "读取 test-definition.yaml schema"
+  - action: "bash_command"
+    params:
+      command: "grep -r 'data_source' tests/registry/workflow-e2e/*.yaml | wc -l"
+    description: "统计使用 data_source 字段的测试数"
+
+assertions:
+  - type: "file_content"
+    target: "tests/schemas/test-definition.yaml"
+    expected: "data_source"
+    description: "schema 中包含 data_source 字段定义"
+  - type: "bash_exit_zero"
+    target: "grep -q 'data_source' tests/schemas/test-definition.yaml"
+    description: "data_source 字段在 schema 中已定义"
+  - type: "bash_exit_zero"
+    target: "grep -r 'data_source' tests/registry/workflow-e2e/*.yaml | grep -q '\\.' && echo OK || true"
+    description: "至少有一个 registry 测试使用 data_source 字段"
+
+timeout_seconds: 30

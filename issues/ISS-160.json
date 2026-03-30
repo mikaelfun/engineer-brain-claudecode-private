@@ -1,0 +1,10 @@
+{
+  "id": "ISS-160",
+  "title": "ADO Wiki 知识提取 → Troubleshooting Recipe 自我演进",
+  "description": "长期演进方向：Engineer Brain 支持用 ADO MCP 拉取各种 Wiki 资料（msazure / contentidea / supportability 等多个 ADO 组织的 Wiki），从零读取，LLM 推理 Wiki 内容是否有效、是否可以提取成某个 topic 的 troubleshooting recipe，积累 troubleshooter 自我演进材料。\n\n核心流程：\n1. 通过 ADO MCP (ado-msazure / ado-contentidea / ado-supportability) 的 wiki_list_wikis / wiki_list_pages / wiki_get_page_content 拉取 Wiki 页面\n2. LLM 分析每个 Wiki 页面，评估内容质量和类型（TSG / SOP / 已知问题 / 产品文档 / 过时内容）\n3. 过滤无效/过时内容，对有效排查类内容推理是否可以归纳为 troubleshooting recipe\n4. 自动生成结构化 recipe 到 playbooks/guides/troubleshooting-recipes/\n5. 已有同类 recipe → 合并增强（增加新步骤、Kusto 查询、参考链接）\n6. 定期增量更新：记录已处理的 Wiki 页面 ID，只处理新增/修改的页面\n\n与 ISS-158（邮件扫描）和 ISS-159（OneNote 提取）的关系：\n- 三大知识源互补：邮件=实战案例，OneNote=团队总结，Wiki=官方文档\n- 统一的 recipe 格式和存储位置\n- troubleshooter 排查时自动匹配所有来源的 recipe\n\n已有能力基础：\n- ADO MCP 已配置（3 个组织）\n- az-devops skill 已支持 Wiki 搜索/浏览\n- search_wiki / wiki_get_page_content 等工具已可用",
+  "type": "feature",
+  "priority": "P2",
+  "status": "pending",
+  "createdAt": "2026-03-29T22:02:00Z",
+  "updatedAt": "2026-03-29T22:02:00Z"
+}

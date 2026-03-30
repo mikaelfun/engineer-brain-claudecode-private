@@ -1,0 +1,11 @@
+{
+  "id": "ISS-145",
+  "title": "Runner upgrade: Strategic Review + Meta-analysis for reasoning-driven evolution",
+  "description": "Runner currently is a thin gate (health-check → spawn test-loop → post-flight). Upgrade to act as 'supervisor brain': (1) Add Strategic Review step before spawning test-loop — reads last 3 round summaries, analyzes trends (coverage plateau, regression hotspots, fix quality), injects directives (prioritize tests, scan focus areas). (2) Add Meta-analysis step after test-loop returns — evaluates test-loop's efficiency, identifies framework issues, can inject fixQueue items for self-repair. Create trend-analyzer.sh helper script.",
+  "type": "feature",
+  "priority": "P1",
+  "status": "tracked",
+  "createdAt": "2026-03-29T19:30:00Z",
+  "updatedAt": "2026-03-29T19:35:00Z",
+  "trackId": "runner-brain_20260329"
+}

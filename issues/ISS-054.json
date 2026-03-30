@@ -1,11 +1,12 @@
 {
   "id": "ISS-054",
   "title": "Issue 的 test result all pass，但 Running tests 还在显示进行中",
-  "description": "Issue Tracker 页面中，verify 运行测试后所有测试结果都已 pass，但 UI 上 'Running tests' 的进行中状态没有结束/消失，仍然显示为正在运行。应该在所有测试通过后自动更新为完成状态。",
+  "description": "已合并到 ISS-045（Issue 生命周期 Bug 修复）",
   "type": "bug",
   "priority": "P1",
-  "status": "pending",
+  "status": "done",
+  "mergedInto": "ISS-045",
   "trackId": "verify-stuck-fix_20260321",
   "createdAt": "2026-03-21T16:05:00+08:00",
-  "updatedAt": "2026-03-21T16:10:00+08:00"
+  "updatedAt": "2026-03-29T10:00:00.000Z"
 }

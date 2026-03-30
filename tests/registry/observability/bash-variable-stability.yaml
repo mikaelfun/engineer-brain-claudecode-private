@@ -1,0 +1,53 @@
+# Bash Variable Stability — 验证 pipe 场景下变量赋值稳定性
+# 对应问题: 变量赋值 + pipe 在同一行时变量被静默丢弃
+# Probe 类型: stability (重复执行 + 成功率统计)
+
+id: "bash-variable-stability"
+name: "Bash Variable Stability Test"
+category: "observability"
+source: "CLAUDE.md"
+description: "运行 5 次带 pipe 的变量赋值测试，验证 POSIX 路径在 pipe 场景下保持完整"
+safety_level: "safe"
+priority: "critical"
+tags: ["observability", "stability", "bash", "regression"]
+
+probe_type: "stability"
+baseline_ref: "bash_stability"
+
+stability_config:
+  min_runs: 5
+  min_success_rate: 1.0
+  tests:
+    - name: "variable_survives_pipe_newline"
+      description: "变量赋值独占一行 + pipe — 变量应存活"
+      command: |
+        TESTVAR="/c/Users/fangkun/test/path"
+        echo "$TESTVAR" | grep -q "/c/Users" && echo "PASS" || echo "FAIL"
+      expected_output: "PASS"
+
+    - name: "posix_path_in_pipe"
+      description: "POSIX 路径在 pipe 中保持完整"
+      command: |
+        CASE_DIR="/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain/cases/active/123"
+        echo "$CASE_DIR" | grep -q "EngineerBrain" && echo "PASS" || echo "FAIL"
+      expected_output: "PASS"
+
+    - name: "no_semicolon_pipe_pattern"
+      description: "确保代码库中无 '; VAR=' + pipe 反模式（排除检测器自身）"
+      command: |
+        COUNT=$(grep -rn ';\s*[A-Z_]\+=' tests/executors/*.sh .claude/skills/*/SKILL.md 2>/dev/null | grep -v 'observability-scanner\|observability-runner' | grep '|' | grep -v 'grep\|#\|echo\|log_' | wc -l)
+        [ "$COUNT" -eq 0 ] && echo "PASS" || echo "FAIL:$COUNT"
+      expected_output: "PASS"
+
+steps:
+  - action: "run_stability_tests"
+    params:
+      runs: 5
+      tests_ref: "stability_config.tests"
+
+assertions:
+  - type: "success_rate"
+    expected: 1.0
+    description: "所有 stability 测试 100% 通过率"
+
+timeout_seconds: 60

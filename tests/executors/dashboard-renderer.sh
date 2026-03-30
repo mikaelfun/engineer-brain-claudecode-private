@@ -98,6 +98,13 @@ try {
   hasIP = fs.readdirSync(RESULTS).filter(f => f.startsWith('.progress-') && f.endsWith('.json')).length > 0;
 } catch(e) {}
 if (!hasIP && state.currentTest) hasIP = true;
+// Runner-level activity: runner writes runnerActive timestamp on start, clears on end
+let runnerActive = false;
+if (state.runnerActive) {
+  const ra = new Date(state.runnerActive).getTime();
+  // Consider runner active if timestamp is within last 30 minutes
+  if (now - ra < 30*60*1000) { runnerActive = true; hasIP = true; }
+}
 let staleSince = null;
 if (lastAct) {
   const el = now - new Date(lastAct).getTime();
@@ -126,13 +133,50 @@ try {
 } catch(e) {}
 const covPct = total > 0 ? (passIds.size/total*100).toFixed(1) : '0.0';
 
+// ---- Per-round metrics from latest round summary ----
+let greenRate = null, regrRate = null, fixThru = null;
+try {
+  const sf = path.join(RESULTS, 'round-'+round+'-summary.json');
+  if (fs.existsSync(sf)) {
+    const summary = JSON.parse(fs.readFileSync(sf, 'utf8'));
+    const ss = summary.stats || {};
+    greenRate = ss.greenRate !== undefined ? ss.greenRate : null;
+    regrRate = ss.regressionRate !== undefined ? ss.regressionRate : null;
+    fixThru = ss.fixThroughput !== undefined ? ss.fixThroughput : null;
+  }
+} catch(e) {}
+
 // ---- Phase progress ----
 const PHASES = ['SCAN','GENERATE','TEST','FIX','VERIFY'];
 const rj = state.roundJourney || {};
-const pSym = p => { const s=rj[p]?rj[p].status:'pending'; if(p===phase&&s!=='done') return '\ud83d\udd36'; if(s==='done') return '\u2705'; return '\u2b1c'; };
+const pSym = (p,i) => {
+  const s = rj[p] ? rj[p].status : 'pending';
+  if (p === phase && s !== 'done') return '\ud83d\udd36';
+  // If phase is after current phase, treat as pending regardless of stale data
+  const ci = PHASES.indexOf(phase);
+  if (ci >= 0 && i > ci) return '\u2b1c';
+  if (s === 'done') return '\u2705';
+  return '\u2b1c';
+};
 const fDur = ms => { if(!ms||ms<=0) return '\u2014'; const s=Math.round(ms/1000); if(s<60) return s+'s'; const m=Math.floor(s/60),r=s%60; return r>0?m+'m'+r+'s':m+'m'; };
-const pLine = PHASES.map(p=>pSym(p)+p).join('\u2501\u2501\u25b6');
-const dLine = PHASES.map(p=>fDur(rj[p]?rj[p].duration_ms:0).padEnd(5)).join('      ');
+const pLine = PHASES.map((p,i)=>pSym(p,i)+p).join('\u2501\u2501\u25b6');
+// Only show duration for phases that are done AND come before/at current phase
+const curIdx = PHASES.indexOf(phase);
+const dLine = PHASES.map((p,i) => {
+  const pj = rj[p];
+  // Currently running phase: show elapsed time with ~ prefix + progress
+  if (p === phase && pj && pj.status === 'running' && pj.startedAt) {
+    const elapsed = now - new Date(pj.startedAt).getTime();
+    let label = '~'+fDur(elapsed);
+    const pp = state.phaseProgress;
+    if (pp && pp.current && pp.total) label += ' '+pp.current+'/'+pp.total;
+    return label.padEnd(10);
+  }
+  if (!pj || pj.status !== 'done') return '\u2014'.padEnd(5);
+  // If phase is after current running phase, it's stale data from previous round — hide it
+  if (i > curIdx && curIdx >= 0) return '\u2014'.padEnd(5);
+  return fDur(pj.duration_ms || 0).padEnd(5);
+}).join('      ');
 
 // ---- Trend (last 3 rounds) ----
 const trend = [];
@@ -202,14 +246,41 @@ const hdr = '  \ud83e\uddea Test Supervisor   R'+round+'/'+maxRounds+' \u2502 '+
 O.push('\u2502'+hdr.padEnd(W-2)+'\u2502');
 O.push('\u251c'+'\u2500'.repeat(W-2)+'\u2524');
 O.push(ln(''));
+// ---- Runner progress (only shown when runner is active) ----
+if (runnerActive && state.runnerStep) {
+  const RS = ['preflight','strategic','test-loop','meta','summary'];
+  const RSL = {preflight:'Pre-flight',strategic:'Strategy',['test-loop']:'Test-Loop',meta:'Meta',summary:'Done'};
+  const rsi = RS.indexOf(state.runnerStep);
+  const rpLine = RS.map((s,i) => {
+    const label = RSL[s]||s;
+    if (i < rsi) return '\u2705'+label;
+    if (i === rsi) return '\ud83d\udd36'+label;
+    return '\u2b1c'+label;
+  }).join('\u2501');
+  const elapsed = Math.round((now - new Date(state.runnerActive).getTime())/1000);
+  const eStr = elapsed < 60 ? elapsed+'s' : Math.floor(elapsed/60)+'m'+elapsed%60+'s';
+  O.push(ln('\ud83e\udd16 Runner  '+eStr));
+  O.push(ln(rpLine));
+  O.push(ln(''));
+}
 O.push(ln(pLine));
 O.push(ln(dLine));
+// Show current test being processed (if any)
+const ct = state.currentTest || '';
+if (ct) {
+  const ctShort = ct.length > 45 ? ct.slice(0,43)+'..' : ct;
+  O.push(ln('  \u25b6 '+ctShort));
+}
 O.push(ln(''));
 O.push(ln('\u26a0\ufe0f Attention '+'\u2500'.repeat(Math.max(0,W-18))));
 if (attItems.length===0) O.push(ln('\u2705 No issues requiring attention'));
 else for (const a of attItems) O.push(ln(a));
 O.push(ln(''));
 O.push(ln('\ud83d\udcca '+passed+'\u2705 '+failed+'\u274c '+fixed+'\ud83d\udd27 '+skipped+'\u23ed\ufe0f  \u2502 '+covPct+'% cov'));
+const grS = greenRate!==null?greenRate+'%':'\u2014';
+const rrS = regrRate!==null?regrRate+'%':'\u2014';
+const ftS = fixThru!==null?fixThru+'%':'\u2014';
+O.push(ln('   GR:'+grS+' Regr:'+rrS+' FixThru:'+ftS));
 O.push(ln(''));
 const tR=[round-2,round-1,round].map(r=>r<1?'\u2014':'R'+r).join('\u2192');
 O.push(ln('\ud83d\udcc8 Trend ('+tR+')'));

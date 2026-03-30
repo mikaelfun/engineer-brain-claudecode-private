@@ -1,0 +1,23 @@
+{
+  "id": "scan-recipes_20260330",
+  "title": "Scan Strategy Recipes — runner 上下文感知调度",
+  "type": "feature",
+  "status": "complete",
+  "created": "2026-03-30T10:00:00+08:00",
+  "updated": "2026-03-30T19:50:00+08:00",
+  "issueId": "ISS-167",
+  "current_phase": 2,
+  "current_task": "2.2",
+  "phases": {
+    "total": 2,
+    "completed": 2
+  },
+  "tasks": {
+    "total": 4,
+    "completed": 4
+  },
+  "verification": {
+    "status": "pending",
+    "method": "manual-review"
+  }
+}

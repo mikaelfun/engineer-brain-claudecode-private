@@ -1,0 +1,10 @@
+{
+  "id": "ISS-116",
+  "title": "Casework 内部 phase 实时可观测：executor poll 中推断当前阶段",
+  "description": "当前 e2e-runner.sh 的 poll_for_completion 循环只能看到 casework 整体是否完成（running/completed），无法看到内部卡在哪个 phase。导致 fix-analyzer 只能产出 'timeout' 级别的分析，opus fix agent 只能盲目加 timeout，无法定位根因（如 waitAgents 占 83% 时间）。\n\n方案B（零侵入）：在 poll_for_completion 循环中，通过检查 case 目录下文件的存在/修改时间来推断当前 casework phase：\n- timing.json 存在且有部分 phase 数据 → 读取最新 phase\n- casehealth-meta.json 新建/更新 → post-compliance\n- case-summary.md 新建/更新 → inspection 阶段\n- todo/ 目录有新文件 → todo 生成阶段\n\n每次 poll 检测到 phase 变化时更新 .progress-{testId}.json 的 step 字段为 'casework:{phase}'，这样：\n1. supervisor 的 health-check.sh 能实时看到 casework 卡在哪个 phase\n2. fix-analyzer.sh 能读取 progress 历史推断瓶颈 phase\n3. opus fix agent 能精准定位性能问题（如 waitAgents 耗时过长 → 检查 troubleshooter Kusto 超时设置）",
+  "type": "feature",
+  "priority": "P1",
+  "status": "implemented",
+  "createdAt": "2026-03-28T18:25:00.000Z",
+  "updatedAt": "2026-03-28T19:45:00.000Z"
+}

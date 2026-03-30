@@ -1,0 +1,9 @@
+{
+  "testId": "wf-iss133-output-format",
+  "round": 25,
+  "timestamp": "2026-03-29T11:41:04.000Z",
+  "status": "pass",
+  "assertions": [],
+  "error": null,
+  "duration_ms": 16526
+}

@@ -1,0 +1,12 @@
+{
+  "id": "ISS-167",
+  "title": "Scan Strategy Recipes: runner Strategic Review 从频率调度到上下文感知",
+  "description": "## 问题\n\nscan-strategies.yaml 是纯频率调度（every_3_rounds, every_5_rounds），runner Step 2 的 Strategic Review 虽有推理但缺乏经验积累——每次从零推理该开哪些 scanner。\n\n## 改进方向\n\n1. scan-strategies.yaml 保留作为默认调度，新增 tests/recipes/scan/_index.md 作为上下文覆写层：\n   - coverage 连续 3 轮未增 → plateau-breaking.md\n   - 某 category regression rate > 40% → regression-focused-scan.md\n   - 新 issue 被创建 → issue-driven-priority.md\n   - FIX 成功率连续下降 → deep-diagnosis-scan.md\n   - 以上都不匹配 → 按 scan-strategies.yaml 默认频率\n\n2. runner Step 2 改为：先查 recipe → 有覆写则用 recipe 建议 → 无覆写则按频率\n\n3. 演进触发：\n   - runner 手动 override scanner 选择后，该 override 后续证明有效（coverage 增加 / regression 减少）→ 自动提取为 recipe\n\n## 依赖\n\n- ISS-164（tests/recipes/scan/ 目录和种子文件）\n- ISS-163（正确的 coverage 指标，否则 plateau 检测不准）\n\n## 注意\n\n- 此 issue 需要修改 test-supervisor-runner.md 的 Step 2 逻辑\n- test-supervisor-runner.md 是 Immutable Core，但手动修改是允许的（只是 test-loop FIX 阶段不能自动改它）\n\n## 预期收益\n\n- 更智能的扫描调度（基于上下文而非固定周期）\n- 减少无效扫描轮次\n- 经验积累：有效的 override 自动变成 recipe",
+  "type": "feature",
+  "priority": "P2",
+  "status": "tracked",
+  "trackId": "scan-recipes_20260330",
+  "labels": ["test-framework", "recipe-architecture"],
+  "createdAt": "2026-03-30T10:00:00+08:00",
+  "updatedAt": "2026-03-30T10:05:00+08:00"
+}

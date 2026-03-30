@@ -1,0 +1,96 @@
+id: "case-sub-resources"
+name: "Case Sub-Resource GET Endpoints — notes, teams, todo, timing, logs, inspection, drafts, analysis, attachments"
+category: "backend-api"
+source: "dashboard/src/routes/cases.ts"
+description: "验证所有 case 子资源 GET 端点返回 200 + 有效 JSON"
+safety_level: "safe"
+priority: "medium"
+tags: ["api", "cases", "sub-resources", "round-3"]
+test_case_id: "2603090040000814"
+
+steps:
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/cases/{test_case_id}/notes"
+      auth: true
+    safety_check: "api.safe[GET /api/cases/:id/notes]"
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/cases/{test_case_id}/teams"
+      auth: true
+    safety_check: "api.safe[GET /api/teams]"
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/cases/{test_case_id}/todo"
+      auth: true
+    safety_check: "api.safe[GET /api/cases/:id/todo]"
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/cases/{test_case_id}/timing"
+      auth: true
+    safety_check: "api.safe[GET /api/cases/:id/timing]"
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/cases/{test_case_id}/logs"
+      auth: true
+    safety_check: "api.safe[GET /api/logs]"
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/cases/{test_case_id}/inspection"
+      auth: true
+    safety_check: "api.safe[GET /api/cases/:id/inspection]"
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/cases/{test_case_id}/drafts"
+      auth: true
+    safety_check: "api.safe[GET /api/drafts]"
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/cases/{test_case_id}/analysis"
+      auth: true
+    safety_check: "api.safe[GET /api/analysis]"
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/cases/{test_case_id}/attachments"
+      auth: true
+    safety_check: "api.safe[GET /api/attachments]"
+
+assertions:
+  - type: "status_code"
+    target: "GET /api/cases/:id/notes"
+    expected: 200
+  - type: "status_code"
+    target: "GET /api/cases/:id/teams"
+    expected: 200
+  - type: "status_code"
+    target: "GET /api/cases/:id/todo"
+    expected: 200
+  - type: "status_code"
+    target: "GET /api/cases/:id/timing"
+    expected: 200
+  - type: "status_code"
+    target: "GET /api/cases/:id/logs"
+    expected: 200
+  - type: "status_code"
+    target: "GET /api/cases/:id/inspection"
+    expected: 200
+  - type: "status_code"
+    target: "GET /api/cases/:id/drafts"
+    expected: 200
+  - type: "status_code"
+    target: "GET /api/cases/:id/analysis"
+    expected: 200
+  - type: "status_code"
+    target: "GET /api/cases/:id/attachments"
+    expected: 200
+
+timeout_seconds: 60

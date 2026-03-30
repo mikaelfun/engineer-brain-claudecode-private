@@ -1,0 +1,11 @@
+{
+  "id": "ISS-143",
+  "title": "CLI Dashboard: script-rendered deterministic output replacing LLM template filling",
+  "description": "Current /test-supervisor db relies on LLM reading a 140-line template and filling values, causing inconsistent formatting and wasted context. Redesign: create dashboard-renderer.sh that reads state.json + round summaries + discoveries and outputs formatted text directly. Simplify modes/dashboard.md from 140 lines to ~3 lines. Key design: Attention section first (red/yellow priority items), trend arrows, one-screen constraint (≤25 lines), queue heads only.",
+  "type": "enhancement",
+  "priority": "P2",
+  "status": "tracked",
+  "createdAt": "2026-03-29T19:30:00Z",
+  "updatedAt": "2026-03-29T19:35:00Z",
+  "trackId": "cli-dashboard-v2_20260329"
+}

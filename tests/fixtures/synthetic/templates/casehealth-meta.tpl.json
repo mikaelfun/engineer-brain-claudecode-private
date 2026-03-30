@@ -1,0 +1,37 @@
+{
+  "caseNumber": "{{CASE_NUMBER}}",
+  "fwr": {
+    "status": "{{FWR_STATUS}}",
+    "remaining": {{FWR_REMAINING}},
+    "checkedAt": "{{CHECKED_AT}}",
+    "source": "api"
+  },
+  "fdr": {
+    "status": "{{FDR_STATUS}}",
+    "remaining": {{FDR_REMAINING}},
+    "checkedAt": "{{CHECKED_AT}}",
+    "source": "api"
+  },
+  "irSla": {
+    "status": "{{IR_STATUS}}",
+    "remaining": {{IR_REMAINING}},
+    "completedOn": {{IR_COMPLETED_ON}},
+    "checkedAt": "{{CHECKED_AT}}",
+    "source": "api"
+  },
+  "compliance": {
+    "entitlementOk": {{ENTITLEMENT_OK}},
+    "serviceLevel": "{{SERVICE_LEVEL}}",
+    "serviceName": "{{SERVICE_NAME}}",
+    "contractCountry": "{{CONTRACT_COUNTRY}}",
+    "is21vConvert": {{IS_21V_CONVERT}},
+    "warnings": [{{WARNINGS}}]
+  },
+  "actualStatus": "{{ACTUAL_STATUS}}",
+  "daysSinceLastContact": {{DAYS_SINCE_LAST_CONTACT}},
+  "statusJudgedAt": "{{STATUS_JUDGED_AT}}",
+  "statusReasoning": "{{STATUS_REASONING}}",
+  "emailCountAtJudge": {{EMAIL_COUNT}},
+  "noteCountAtJudge": {{NOTE_COUNT}},
+  "icmIdAtJudge": {{ICM_ID}}
+}

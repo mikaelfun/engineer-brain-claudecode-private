@@ -1,0 +1,12 @@
+{
+  "id": "ISS-165",
+  "title": "Fix Strategy Recipes: 改 FIX.md 从二元判断到 recipe 匹配",
+  "description": "## 问题\n\nFIX 阶段当前是二元策略选择：\n- isEnvIssue=true → Main Agent 直接处理\n- isEnvIssue=false → spawn opus agent\n\n但失败类型远比二元丰富（timeout、port conflict、missing dep、assertion drift、race condition 等），很多已知模式不需要 opus 推理。\n\n## 改进方向\n\n1. 在 FIX.md 的 fix-analyzer 之后、spawn opus 之前，插入 recipe 查询步骤：\n   - 读 tests/recipes/fix/_index.md\n   - 按 failure signature 匹配 recipe\n   - 有匹配 → 按 recipe 步骤修复（可能 sonnet 或 Main Agent 直接处理）\n   - 无匹配 → fallback 到当前 opus 路径\n\n2. 在 state-update.md Phase Retrospective 中添加 recipe 演进触发：\n   - fix 成功且 fix_type 不在已有 recipe 中 → 建议提取新 recipe\n   - fix 失败且已有 recipe 步骤过时 → 更新 recipe\n   - fix 需要 >2 次重试 → 提取为 recipe\n\n3. 更新 fix-recorder.sh 记录使用了哪个 recipe（或 from-scratch）\n\n## 依赖\n\n- ISS-164（tests/recipes/fix/ 目录和种子文件）\n\n## 预期收益\n\n- 已知模式修复速度提升 3-5x（跳过 opus 推理）\n- opus token 节省（只在未知模式时使用）\n- 经验自动积累到 recipe（不再只存 learnings.yaml）",
+  "type": "feature",
+  "priority": "P1",
+  "status": "implemented",
+  "trackId": "fix-recipes_20260330",
+  "labels": ["test-framework", "recipe-architecture"],
+  "createdAt": "2026-03-30T10:00:00+08:00",
+  "updatedAt": "2026-03-30T17:30:00+08:00"
+}

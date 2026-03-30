@@ -1,0 +1,11 @@
+{
+  "id": "ISS-137",
+  "title": "env.yaml 增加 autoImplementTracked 开关控制自动实现",
+  "description": "test-loop SCAN 发现 tracked(有 trackId+plan) 但未 implemented 的 issue 时，默认跳过（用户手动 conductor:implement）。增加 env.yaml 开关 autoImplementTracked: false，开启后 test-loop 自动 spawn conductor:implement 实现 tracked issue。默认关闭(保守)。",
+  "type": "feature",
+  "priority": "P2",
+  "status": "tracked",
+  "trackId": "auto-implement_20260329",
+  "createdAt": "2026-03-29T02:17:06Z",
+  "updatedAt": "2026-03-29T02:20:00Z"
+}

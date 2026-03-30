@@ -93,6 +93,8 @@
 ## 注意事项
 
 - **state.json 写入必须用 `bash tests/executors/state-writer.sh --merge`** — 见 `phases/common.md`
+- **Step 2.2 Phase Retrospective**：每个 phase 完成后回顾执行结果，检测框架逻辑 bug 并升级到 fixQueue（见 `phases/state-update.md` Step 2.2）；每轮每阶段最多创建 1 个 retro fix item（防刷屏）
+- **FIX 阶段精准修复**：fixQueue 中带有 `retroContext`（含 targetFile/targetLine）的 framework fix 项，直接定位到具体文件行进行精准修复（见 `phases/FIX.md` Framework Fix Path）
 - **续跑判断**：每个 phase 完成后按 `phases/state-update.md` Step 2.1 判断是否继续
 - 每轮遍历当前 phase 的所有 queue items，用 subagent 隔离每个 item
 - 每个 agent 完成后立即更新 state.json

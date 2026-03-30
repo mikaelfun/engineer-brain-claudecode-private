@@ -1,0 +1,27 @@
+id: "wf-iss133-output-format"
+name: "ISS-133 — issue-scanner.sh 输出格式与 spec-scanner.sh 一致"
+category: "workflow-e2e"
+source: "issues/ISS-133.json"
+description: "验证 ISS-133 AC：issue-scanner.sh 输出格式为 ISSUE_GAP|{issueId}|{criterion}|{category}，与 spec-scanner.sh 输出格式一致"
+safety_level: "safe"
+priority: "high"
+tags: ["issue-driven", "iss-133", "implemented"]
+
+steps:
+  - action: "bash_command"
+    params:
+      command: "bash tests/executors/issue-scanner.sh 2>&1 | grep '^ISSUE_GAP' | head -3"
+    description: "执行 issue-scanner.sh 检查输出格式"
+
+assertions:
+  - type: "bash_exit_zero"
+    target: "bash tests/executors/issue-scanner.sh 2>&1 | grep -q '^ISSUE_GAP|'"
+    description: "issue-scanner.sh 输出包含 ISSUE_GAP| 格式行"
+  - type: "bash_exit_zero"
+    target: "bash tests/executors/issue-scanner.sh 2>&1 | grep '^ISSUE_GAP' | head -1 | awk -F'|' 'NF>=4' | grep -q 'ISSUE_GAP'"
+    description: "ISSUE_GAP 行有 4 个字段：ISSUE_GAP|issueId|criterion|category"
+  - type: "bash_exit_zero"
+    target: "bash tests/executors/issue-scanner.sh 2>&1 | grep '^ISSUE_SCAN' | grep -q '|gaps='"
+    description: "最后一行包含 ISSUE_SCAN 汇总行"
+
+timeout_seconds: 60

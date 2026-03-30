@@ -1,0 +1,11 @@
+{
+  "id": "ISS-135",
+  "title": "fix-analyzer.sh 增加根因追溯，减少误判 env issue",
+  "description": "当前 fix-analyzer.sh 将 timeout/auth_issue/service_down 直接标记为 IS_ENV_ISSUE=true 并 skip。实际这些可能是代码配置问题（如 MCP 未传递）。需要增加 Root Cause Trace 步骤：从 test result 提取 API endpoint → 找到 handler → 检查 session spawn 配置 → 如果是配置缺失则降级为 config_missing(code_bug)。",
+  "type": "feature",
+  "priority": "P1",
+  "status": "tracked",
+  "trackId": "fix-depth_20260329",
+  "createdAt": "2026-03-29T02:17:06Z",
+  "updatedAt": "2026-03-29T02:20:00Z"
+}

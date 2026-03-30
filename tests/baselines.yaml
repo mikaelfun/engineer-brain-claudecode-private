@@ -1,0 +1,105 @@
+# Observability Baselines — 性能和稳定性基线定义
+# 手动设定初始值，后续 Phase B 自动进化
+# Source: 实际 timing.json 数据 + 经验规则
+
+version: "1.0.0"
+updated_at: "2026-03-29"
+
+# ============================================================
+# Casework 性能基线（单位: 秒）
+# warn_ratio: 超过则标记 warning
+# critical_ratio: 超过则标记 fail
+# ============================================================
+casework_timing:
+  total_seconds:
+    baseline: 405
+    warn_ratio: 1.3
+    critical_ratio: 1.8
+  steps:
+    dataRefresh:
+      baseline: 95
+      warn_ratio: 1.5
+      critical_ratio: 2.5
+    complianceCheck:
+      baseline: 36
+      warn_ratio: 2.0
+      critical_ratio: 3.0
+    statusJudge:
+      baseline: 10
+      warn_ratio: 3.0
+      critical_ratio: 5.0
+    teamsSearch:
+      baseline: 162
+      warn_ratio: 1.5
+      critical_ratio: 2.0
+    inspectionWriter:
+      baseline: 64
+      warn_ratio: 2.0
+      critical_ratio: 3.0
+
+# ============================================================
+# Agent 配置基线
+# ============================================================
+agent_config:
+  required_fields:
+    - "name"
+    - "description"
+  tools_format: "comma_separated_string"
+  max_agents: 10
+
+# ============================================================
+# Skill Prompt 基线
+# ============================================================
+skill_prompt:
+  max_inline_bytes: 2048
+  required_pattern: "请先读取|read.*SKILL|读取.*获取"
+
+# ============================================================
+# Bash 稳定性基线
+# ============================================================
+bash_stability:
+  min_success_rate: 1.0
+  min_runs: 5
+
+# ============================================================
+# Probe 调度配置
+# ============================================================
+probe_schedule:
+  interval_rounds: 5    # 每 5 轮重跑一次
+  force_on_first: true  # 首轮（无历史结果）全部执行
+
+# ============================================================
+# API 响应时间基线（单位: 毫秒）
+# 用于 performance-scanner.sh
+# ============================================================
+api_response_time:
+  health:
+    endpoint: "/api/health"
+    baseline_ms: 500
+    warn_ratio: 1.5
+    critical_ratio: 3.0
+  cases:
+    endpoint: "/api/cases"
+    baseline_ms: 2000
+    warn_ratio: 1.5
+    critical_ratio: 2.5
+  test_state:
+    endpoint: "/api/tests/state"
+    baseline_ms: 500
+    warn_ratio: 1.5
+    critical_ratio: 3.0
+  todos:
+    endpoint: "/api/todos"
+    baseline_ms: 1000
+    warn_ratio: 1.5
+    critical_ratio: 2.5
+  issues:
+    endpoint: "/api/issues"
+    baseline_ms: 1000
+    warn_ratio: 1.5
+    critical_ratio: 2.5
+  auth_status:
+    endpoint: "/api/auth/status"
+    baseline_ms: 300
+    warn_ratio: 2.0
+    critical_ratio: 4.0

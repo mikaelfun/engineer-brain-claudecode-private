@@ -38,10 +38,31 @@ title = 参数文本
   "type": "bug",
   "priority": "P1",
   "status": "pending",
+  "testLoopScan": true,
   "createdAt": "ISO timestamp",
   "updatedAt": "ISO timestamp"
 }
 ```
+
+#### 字段规范（⚠️ 必须严格遵守）
+
+| 字段 | 类型 | 必填 | 默认 | 说明 |
+|------|------|------|------|------|
+| `id` | string | ✅ | — | 格式 `ISS-XXX`（3位数，自增） |
+| `title` | string | ✅ | — | 简短标题 |
+| `description` | string | ✅ | `""` | 详细描述 |
+| `type` | enum | ✅ | `"bug"` | `bug` / `feature` / `refactor` / `chore` |
+| `priority` | enum | ✅ | `"P1"` | `P0` / `P1` / `P2` |
+| `status` | enum | ✅ | `"pending"` | `pending` / `tracking` / `tracked` / `in-progress` / `implemented` / `done` |
+| `testLoopScan` | boolean | ✅ | `true` | test-loop scanner 是否扫描此 issue。`false` 时跳过 |
+| `trackId` | string | — | — | 关联的 conductor track ID（由 `/conductor:new-track` 回写） |
+| `verifyResult` | object | — | — | verify 结果（由 `/conductor:verify` 回写） |
+| `createdAt` | string | ✅ | — | ISO 8601 时间戳（**必须叫 `createdAt`，不是 `created`**） |
+| `updatedAt` | string | ✅ | — | ISO 8601 时间戳（**必须叫 `updatedAt`，不是 `updated`**） |
+
+> ❌ 禁止使用 `created`/`updated`/`source` 等非标准字段名——后端 `issue-reader.ts` 按 `createdAt` 排序，字段名错误会导致服务启动 crash。
+> ❌ 禁止遗漏 `testLoopScan` 字段——新建 issue 必须显式设为 `true`。
+> ❌ 批量创建 issue 时同样必须遵守此 schema，不可自行简化字段。
 
 ### 3. 输出确认 + 询问是否创建 Track
 

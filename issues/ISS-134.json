@@ -1,0 +1,11 @@
+{
+  "id": "ISS-134",
+  "title": "Dashboard case-session-manager spawn session 未传 mcpServers",
+  "description": "case-session-manager.js createSession() 只配了 allowedTools 但没传 mcpServers，导致 spawned Claude session 无法访问 Teams/ICM/Mail MCP。所有 E2E 测试中涉及 MCP 依赖的场景均会失败。需要在 spawn 参数中添加 mcpServers 配置。参考：dashboard/dist/agent/case-session-manager.js line 450-460。",
+  "type": "bug",
+  "priority": "P0",
+  "status": "implemented",
+  "trackId": "mcp-session-fix_20260329",
+  "createdAt": "2026-03-29T02:17:06Z",
+  "updatedAt": "2026-03-29T14:30:00Z"
+}

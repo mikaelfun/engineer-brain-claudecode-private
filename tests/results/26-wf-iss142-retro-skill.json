@@ -1,0 +1,9 @@
+{
+  "testId": "wf-iss142-retro-skill",
+  "round": 26,
+  "timestamp": "2026-03-29T18:54:33.000Z",
+  "status": "pass",
+  "assertions": [{"name":"SKILL.md 包含 Step 2.2 章节标题","pass":true,"expected":"exit 0","actual":"exit 0"},{"name":"SKILL.md 包含 Phase Retrospective 关键词","pass":true,"expected":"exit 0","actual":"exit 0"},{"name":"Step 2.2 位于 Step 2.1 之前（正确顺序）","pass":true,"expected":"exit 0","actual":"exit 0"}],
+  "error": null,
+  "duration_ms": 43661
+}

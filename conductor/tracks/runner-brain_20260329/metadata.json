@@ -1,0 +1,14 @@
+{
+  "id": "runner-brain_20260329",
+  "title": "Runner upgrade: Strategic Review + Meta-analysis + Immutable Core",
+  "type": "feature",
+  "status": "complete",
+  "issueId": "ISS-145",
+  "created": "2026-03-29T19:30:00.000Z",
+  "updated": "2026-03-29T20:30:00.000Z",
+  "current_phase": 4,
+  "current_task": "4.2",
+  "phases": { "total": 4, "completed": 4 },
+  "tasks": { "total": 6, "completed": 6 },
+  "commits": []
+}

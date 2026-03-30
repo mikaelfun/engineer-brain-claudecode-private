@@ -1,8 +1,8 @@
 id: "auth-endpoints"
 name: "认证端点测试"
 category: "backend-api"
-source: "dashboard/src/routes/auth.ts — SCAN gap"
-description: "验证 auth 相关端点：status 检查、login 流程"
+source: "dashboard/src/routes/auth.ts"
+description: "验证 auth 相关端点：status 检查、JWT /me 验证。Login 需要 bcrypt 密码无法硬编码，改为验证 status + me。"
 safety_level: "safe"
 priority: "high"
 tags: ["api", "auth", "auto-generated", "scan-round-0"]
@@ -17,14 +17,6 @@ steps:
 
   - action: "api_call"
     params:
-      method: "POST"
-      url: "{base_url}/api/auth/login"
-      body: '{"password": "{dashboard_password}"}'
-    safety_check: "api.safe[POST /api/auth/login]"
-    expected_status: [200]
-
-  - action: "api_call"
-    params:
       method: "GET"
       url: "{base_url}/api/auth/me"
       headers:
@@ -35,11 +27,11 @@ steps:
 assertions:
   - type: "response_field"
     target: "auth/status"
-    field: "needSetup"
+    field: "isSetup"
     expected: "is_boolean"
   - type: "response_field"
-    target: "auth/login"
-    field: "token"
+    target: "auth/me"
+    field: "sub"
     expected: "is_string"
 
 timeout_seconds: 30

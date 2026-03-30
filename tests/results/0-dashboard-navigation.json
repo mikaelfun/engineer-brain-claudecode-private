@@ -1,0 +1,65 @@
+{
+  "testId": "dashboard-navigation",
+  "round": 0,
+  "category": "ui-interaction",
+  "status": "pass",
+  "steps": [
+    {
+      "step": 1,
+      "action": "navigate",
+      "status": "pass",
+      "detail": "Successfully navigated to http://localhost:5173 and page loaded with title 'Engineer Brain'"
+    },
+    {
+      "step": 2,
+      "action": "verify-sidebar",
+      "status": "pass",
+      "detail": "Sidebar navigation verified - 7 navigation items found (Dashboard, Cases, Todo, Agents, Drafts, Issues, Settings)"
+    },
+    {
+      "step": 3,
+      "action": "click-cases",
+      "status": "pass",
+      "detail": "Clicked 'Cases' nav item and navigated to /cases page with active cases table displayed (15 active cases)"
+    },
+    {
+      "step": 4,
+      "action": "verify-case-list",
+      "status": "pass",
+      "detail": "Case list table visible with case cards showing case IDs, severity, status, titles, and action buttons"
+    },
+    {
+      "step": 5,
+      "action": "click-issues",
+      "status": "pass",
+      "detail": "Clicked 'Issues' nav item and navigated to /issues page with issues list displayed (112 issues total)"
+    },
+    {
+      "step": 6,
+      "action": "verify-issues-list",
+      "status": "pass",
+      "detail": "Issues list visible with issue cards showing issue IDs, types, statuses, and descriptions"
+    },
+    {
+      "step": 7,
+      "action": "click-dashboard",
+      "status": "pass",
+      "detail": "Clicked 'Dashboard' nav item and navigated back to / page with dashboard stats and overview cards"
+    },
+    {
+      "step": 8,
+      "action": "verify-dashboard-stats",
+      "status": "pass",
+      "detail": "Dashboard stats visible: 15 Total Active, 7 SLA At Risk, 1 Needs My Action, 13 Awaiting Others; charts and metrics displayed"
+    }
+  ],
+  "duration_ms": 45000,
+  "screenshots": [
+    "dashboard-navigation-step1-homepage.jpeg",
+    "dashboard-navigation-step3-cases-list.jpeg",
+    "dashboard-navigation-step5-issues-list.jpeg",
+    "dashboard-navigation-step7-dashboard-final.jpeg"
+  ],
+  "error": null,
+  "timestamp": "2026-03-28T06:50:50Z"
+}

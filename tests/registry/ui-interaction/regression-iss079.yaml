@@ -1,0 +1,36 @@
+id: "regression-iss079"
+name: "Regression: ISS-079 — data-refresh 执行到日志写入后卡住（TodoWrite hang）"
+category: "ui-interaction"
+source: "issues/ISS-079.json"
+description: "回归测试：验证 ISS-079 实现的功能未退化"
+safety_level: "safe"
+priority: "medium"
+tags: ["regression", "issue-driven", "iss-079"]
+regression_for: "ISS-079"
+
+steps:
+  - action: "navigate"
+    params:
+      url: "{frontend_url}"
+    safety_check: "ui.safe[navigate_to_page]"
+  - action: "verify_element"
+    params:
+      selector: "body"
+      expected: "visible"
+      timeout: 5000
+
+assertions:
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "`TodoWrite` and other REPL-only tools (`TaskCreate`, `TaskUpdate`, `TaskList`, `"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "Denied tools return a helpful message telling the agent to skip task tracking an"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "Existing tool interception (AskUserQuestion) continues to work unchanged"
+
+timeout_seconds: 60

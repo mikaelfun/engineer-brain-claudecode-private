@@ -1,0 +1,28 @@
+id: "wf-iss132-phasehistory"
+name: "ISS-132 — SCAN phaseHistory 记录回收数量和来源"
+category: "workflow-e2e"
+source: "issues/ISS-132.json"
+description: "验证 ISS-132 AC：SCAN 阶段执行 queue-recycler.sh 后，state.json phaseHistory 中记录回收数量（fromRegression/fromFix/fromVerify）"
+safety_level: "safe"
+priority: "medium"
+tags: ["issue-driven", "iss-132", "tracked"]
+
+steps:
+  - action: "bash_command"
+    params:
+      command: "bash tests/executors/queue-recycler.sh"
+    description: "执行队列回收（观察输出格式）"
+  - action: "bash_command"
+    params:
+      command: "grep -n 'phaseHistory\\|recycle\\|fromRegression\\|fromFix\\|fromVerify' tests/executors/queue-recycler.sh | head -20"
+    description: "检查 queue-recycler.sh 是否写入 phaseHistory"
+
+assertions:
+  - type: "bash_exit_zero"
+    target: "grep -q 'phaseHistory\\|RECYCLE_SUMMARY' tests/executors/queue-recycler.sh"
+    description: "queue-recycler.sh 输出包含 RECYCLE_SUMMARY 格式"
+  - type: "bash_exit_zero"
+    target: "bash tests/executors/queue-recycler.sh 2>&1 | grep -q 'RECYCLE_SUMMARY'"
+    description: "执行 queue-recycler.sh 输出 RECYCLE_SUMMARY 行"
+
+timeout_seconds: 30

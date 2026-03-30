@@ -1,0 +1,23 @@
+{
+  "id": "gen-recipes_20260330",
+  "title": "Test Generation Recipes — GENERATE.md 结构化",
+  "type": "feature",
+  "status": "implemented",
+  "created": "2026-03-30T10:00:00+08:00",
+  "updated": "2026-03-30T17:30:00+08:00",
+  "issueId": "ISS-166",
+  "current_phase": 2,
+  "current_task": "2.2",
+  "phases": {
+    "total": 2,
+    "completed": 2
+  },
+  "tasks": {
+    "total": 4,
+    "completed": 4
+  },
+  "verification": {
+    "status": "pending",
+    "method": "manual-review"
+  }
+}

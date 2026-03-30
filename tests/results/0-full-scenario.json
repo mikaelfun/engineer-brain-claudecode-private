@@ -1,0 +1,9 @@
+{
+  "testId": "full-scenario",
+  "round": 0,
+  "timestamp": "2026-03-28T14:16:06.000Z",
+  "status": "fail",
+  "assertions": [{"name":"Setup: backup created","pass":true,"expected":"backup exists","actual":"created at /tmp/e2e-backup-full-scenario-1774706958"},{"name":"POST /api/case/:id/process","pass":true,"expected":"200|202","actual":"202"},{"name":"Casework completed within timeout","pass":true,"expected":"completed","actual":"completed"},{"name":"File exists: case-summary.md","pass":true,"expected":"exists","actual":"exists"},{"name":"File exists: casehealth-meta.json","pass":true,"expected":"exists","actual":"exists"},{"name":"File exists: timing.json","pass":true,"expected":"exists","actual":"exists"},{"name":"Valid JSON: timing.json","pass":true,"expected":"valid_json","actual":"valid"},{"name":"File exists: todo","pass":true,"expected":"exists","actual":"exists"},{"name":"POST /api/case/:id/process","pass":false,"expected":"200|202","actual":"409","note":"{\"error\":\"Case already has an active operation\",\"activeOperation\":{\"caseNumber\":\"2603100030005863\",\"operationType\":\"full-process\",\"startedAt\":\"2026-03-28T14:09:36.052Z\"}}"}],
+  "error": "1 of 9 assertions failed",
+  "duration_ms": 420866
+}

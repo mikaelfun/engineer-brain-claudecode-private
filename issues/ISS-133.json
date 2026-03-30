@@ -1,0 +1,11 @@
+{
+  "id": "ISS-133",
+  "title": "新增 issue-scanner.sh 扫描 issues/ 目录生成测试",
+  "description": "spec-scanner.sh 只扫 conductor tracks，不扫 issues/。需要新增 issue-scanner.sh 作为 SCAN 第7步。状态过滤：tracked/implemented(有 trackId+spec) → 提取 AC 作为 gap；done → 检查回归覆盖；pending → SKIP（需求不详细）。没有 trackId 的也 SKIP。",
+  "type": "feature",
+  "priority": "P1",
+  "status": "implemented",
+  "trackId": "issue-scanner_20260329",
+  "createdAt": "2026-03-29T02:17:06Z",
+  "updatedAt": "2026-03-29T14:00:00Z"
+}

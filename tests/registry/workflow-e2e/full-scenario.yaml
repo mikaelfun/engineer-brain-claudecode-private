@@ -49,4 +49,4 @@ teardown:
       source: "{backup_dir}/{test_case_id}"
       dest: "{cases_root}/active/{test_case_id}"
 
-timeout_seconds: 360
+timeout_seconds: 900

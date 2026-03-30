@@ -1,0 +1,20 @@
+{
+  "testId": "issue-track-answer",
+  "round": 13,
+  "status": "pass",
+  "timestamp": "2026-03-28T20:52:09Z",
+  "duration_ms": 4200,
+  "steps": [
+    {"step": 1, "status": "pass", "http_status": 400, "note": "Missing answer returns 400"},
+    {"step": 2, "status": "pass", "http_status": 400, "note": "Empty answer string returns 400"},
+    {"step": 3, "status": "pass", "http_status": 404, "note": "No pending question returns 404"},
+    {"step": 4, "status": "pass", "http_status": 404, "note": "Non-existent issue returns 404 (no pending question)"}
+  ],
+  "assertions": [
+    {"type": "status_code", "expected": [400], "actual": 400, "passed": true},
+    {"type": "json_field", "target": "step1.body.error", "expected": "not null", "actual": "answer is required", "passed": true},
+    {"type": "status_code", "expected": [400], "actual": 400, "passed": true},
+    {"type": "status_code", "expected": [404], "actual": 404, "passed": true},
+    {"type": "json_field", "target": "step3.body.error", "expected": "not null", "actual": "No pending question for this issue", "passed": true}
+  ]
+}

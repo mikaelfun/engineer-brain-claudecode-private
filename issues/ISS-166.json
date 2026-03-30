@@ -1,0 +1,12 @@
+{
+  "id": "ISS-166",
+  "title": "Test Generation Recipes: GENERATE.md 分类规则结构化为 recipe",
+  "description": "## 问题\n\nGENERATE.md 包含约 50 行硬编码的 gap 分类规则和模板选择逻辑（spec-driven/issue-driven/design-fidelity/ux-review/performance/architecture），已经复杂到难以维护。新增 scanner 类型时必须改 GENERATE.md 本身。\n\n## 改进方向\n\n1. 将分类规则提取到 tests/recipes/generation/_index.md：\n   - 按 source × gap type 匹配 recipe\n   - 每个 recipe 包含：匹配条件、YAML 模板结构、推荐 assertion types、常见坑\n\n2. GENERATE.md 变为 thin orchestrator：\n   - 读 _index.md 匹配 recipe\n   - 有匹配 → 按 recipe 模板生成\n   - 无匹配 → LLM 从零推理分类+模板（当前行为）\n\n3. 演进触发：\n   - GENERATE 产生的测试在 TEST 阶段首次运行 100% 失败 → 检查是否模板问题 → 更新 recipe\n   - 新 scanner 类型的 gap 首次出现 → LLM 从零推理后，提取为 recipe\n\n## 依赖\n\n- ISS-164（tests/recipes/generation/ 目录和种子文件）\n\n## 预期收益\n\n- 新增 scanner 类型不需要改 GENERATE.md\n- 测试首次通过率上升（结构化模板比 LLM 每次从零推理更稳定）\n- 分类逻辑可被 test-supervisor review 模式审查",
+  "type": "feature",
+  "priority": "P1",
+  "status": "implemented",
+  "trackId": "gen-recipes_20260330",
+  "labels": ["test-framework", "recipe-architecture"],
+  "createdAt": "2026-03-30T10:00:00+08:00",
+  "updatedAt": "2026-03-30T17:30:00+08:00"
+}

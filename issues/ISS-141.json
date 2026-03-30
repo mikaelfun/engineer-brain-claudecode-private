@@ -1,0 +1,10 @@
+{
+  "id": "ISS-141",
+  "title": "Probe learnings-regression-infra stale for 20 rounds",
+  "description": "The learnings-regression-infra probe last executed at Round 4 (2026-03-28 18:32). Now at Round 24, it has been stale for 20 rounds while all other 5 probes ran at R27. Likely the probe's execution condition no longer triggers, or it was excluded from the regular probe run cycle. Need to investigate why and either fix the trigger or update the probe.",
+  "type": "bug",
+  "priority": "P2",
+  "status": "implemented",
+  "createdAt": "2026-03-29T09:25:00+08:00",
+  "updatedAt": "2026-03-29T09:41:18.996Z"
+}

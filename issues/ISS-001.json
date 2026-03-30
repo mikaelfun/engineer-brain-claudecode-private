@@ -4,7 +4,7 @@
   "description": "Case full process 执行时，scrollIntoView() 导致内外两层 scrollbar 都被滚动到底部。应改用 container.scrollTop 只滚动内层消息容器。",
   "type": "bug",
   "priority": "P1",
-  "status": "tracked",
+  "status": "done",
   "trackId": "scroll-fix_20260320",
   "createdAt": "2026-03-20T10:00:00.000Z",
   "updatedAt": "2026-03-20T10:00:00.000Z"

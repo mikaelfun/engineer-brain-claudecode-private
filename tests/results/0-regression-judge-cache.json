@@ -1,0 +1,9 @@
+{
+  "testId": "regression-judge-cache",
+  "round": 0,
+  "timestamp": "2026-03-28T13:52:21.000Z",
+  "status": "pass",
+  "assertions": [{"name":"Setup: backup created","pass":true,"expected":"backup exists","actual":"created at /tmp/e2e-backup-regression-judge-cache-1774705865"},{"name":"POST /api/case/:id/process","pass":true,"expected":"200|202","actual":"202"},{"name":"Casework completed within timeout","pass":true,"expected":"completed","actual":"completed"},{"name":"JSON field: emailCountAtJudge not null","pass":true,"expected":"not_null","actual":"0"},{"name":"JSON field: noteCountAtJudge not null","pass":true,"expected":"not_null","actual":"4"},{"name":"JSON field: statusJudgedAt not null","pass":true,"expected":"not_null","actual":"\"2026-03-28T15:58:00+08:00\""}],
+  "error": null,
+  "duration_ms": 94867
+}

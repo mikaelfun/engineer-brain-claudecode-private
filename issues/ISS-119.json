@@ -1,0 +1,11 @@
+{
+  "id": "ISS-119",
+  "title": "Test-Loop 吸收 Conductor:Verify 精华 + Conductor:Verify 瘦身",
+  "description": "## 问题\nTest-Loop 和 Conductor:Verify 在测试执行引擎上高度重叠（E2E/API/UI runner），维护两套测试执行逻辑浪费且易不一致。\n\n## 目标\n1. Test-Loop 吸收 Conductor:Verify 的精华能力：\n   - 新增 unit-test category + unit-runner.sh（npm test）\n   - SCAN 阶段新增 spec-driven 扫描（读 conductor/tracks/*/spec.md 验收标准生成测试）\n   - GENERATE 阶段复用验收标准分类逻辑（E2E/Interaction/Visual/API/Skip）\n2. Conductor:Verify 瘦身为轻量协调者：\n   - 自己只跑 npm test（unit test）\n   - 查询 test-loop 的 results/ 检查已有结果（只读）\n   - 需要补测时写 directives.json（异步安全，不碰 state.json）\n   - 或在 test-loop idle 时独立跑 executor（同步安全）\n   - 只写自己的 metadata.json verification 字段\n   - 保留 --mark-done / --reopen 生命周期管理\n\n## 并发安全\n- state.json 是单写者设计，conductor:verify 绝不直接写 state.json\n- 跨 session 通信通过 directives.json（已有通道）\n- 检测 test-loop 运行状态：检查 .progress-*.json 或 state.json.currentTest",
+  "type": "feature",
+  "priority": "P1",
+  "status": "tracked",
+  "trackId": "testloop-verify-merge_20260328",
+  "createdAt": "2026-03-28T23:15:00+08:00",
+  "updatedAt": "2026-03-28T23:18:00+08:00"
+}

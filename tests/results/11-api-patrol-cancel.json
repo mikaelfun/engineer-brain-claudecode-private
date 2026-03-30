@@ -1,0 +1,9 @@
+{
+  "testId": "api-patrol-cancel",
+  "round": 11,
+  "timestamp": "2026-03-28T20:27:50.000Z",
+  "status": "pass",
+  "assertions": [{"name":"GET /api/patrol/status → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'running':false} "},{"name":"GET /api/patrol/status → JSON response","pass":true,"expected":"JSON","actual":"JSON"},{"name":"POST /api/patrol/cancel → HTTP 404","pass":true,"expected":"200,404,409","actual":"404","note":"{'error':'No patrol is currently running'} "},{"name":"POST /api/patrol/cancel → JSON response","pass":true,"expected":"JSON","actual":"JSON"}],
+  "error": null,
+  "duration_ms": 10888
+}

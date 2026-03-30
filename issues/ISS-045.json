@@ -1,10 +1,11 @@
 {
   "id": "ISS-045",
-  "title": "reopen的issue应该清空plan等等旧的信息，重新变成pending状态可create track重新评估生成计划",
-  "description": "",
+  "title": "Issue 生命周期 Bug 修复：reopen 清空旧数据 + verify 完成状态卡住",
+  "description": "Issue 状态流转的两个 bug，合并处理：\n\n## 1. Reopen 的 issue 应清空旧信息（原 ISS-045）\nreopen 的 issue 应该清空 plan 等旧的信息，重新变成 pending 状态可 create track 重新评估生成计划。当前 reopen 后仍保留旧的 trackId、plan 等信息，导致重新 create track 时出现混乱。\n\n## 2. Verify 测试全部通过但状态卡在进行中（原 ISS-054）\nIssue Tracker 页面中，verify 运行测试后所有测试结果都已 pass，但 UI 上 'Running tests' 的进行中状态没有结束/消失，仍然显示为正在运行。应该在所有测试通过后自动更新为完成状态。",
   "type": "bug",
   "priority": "P1",
   "status": "pending",
+  "mergedFrom": ["ISS-054"],
   "createdAt": "2026-03-21T12:14:00.627Z",
-  "updatedAt": "2026-03-21T15:08:02.879Z"
+  "updatedAt": "2026-03-29T10:00:00.000Z"
 }

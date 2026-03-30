@@ -1,0 +1,9 @@
+{
+  "testId": "api-issue-implement",
+  "round": 11,
+  "timestamp": "2026-03-28T20:22:59.000Z",
+  "status": "pass",
+  "assertions": [{"name":"POST /api/issues → HTTP 201","pass":true,"expected":"200,201","actual":"201","note":"{'id':'ISS-131','title':'TEST-AUTO: implement endpoint test','description':'Automated test �� will be deleted','type':'feature','priority':'P3','s"},{"name":"POST /api/issues → JSON response","pass":true,"expected":"JSON","actual":"JSON"},{"name":"POST /api/issues/ISS-131/start-implement → HTTP 400","pass":true,"expected":"400,409,422","actual":"400","note":"{'error':'Issue has no associated trackId'} "},{"name":"POST /api/issues/ISS-131/start-implement → JSON response","pass":true,"expected":"JSON","actual":"JSON"},{"name":"GET /api/issues/ISS-131/implement-status → HTTP 200","pass":true,"expected":"200,404","actual":"200","note":"{'active':false,'status':'none','messages':[]} "},{"name":"GET /api/issues/ISS-131/implement-status → JSON response","pass":true,"expected":"JSON","actual":"JSON"}],
+  "error": null,
+  "duration_ms": 29807
+}

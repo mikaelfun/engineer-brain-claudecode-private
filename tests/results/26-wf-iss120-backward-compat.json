@@ -1,0 +1,9 @@
+{
+  "testId": "wf-iss120-backward-compat",
+  "round": 26,
+  "timestamp": "2026-03-29T19:02:58.000Z",
+  "status": "pass",
+  "assertions": [{"name":"e2e-runner.sh 仍保留 test_case_id 模式支持","pass":true,"expected":"exit 0","actual":"exit 0"},{"name":"test_case_id 有独立处理分支（与 data_source 共存）","pass":true,"expected":"exit 0","actual":"exit 0"}],
+  "error": null,
+  "duration_ms": 34907
+}

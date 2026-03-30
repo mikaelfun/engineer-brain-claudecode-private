@@ -1,10 +1,11 @@
 {
   "id": "ISS-098",
   "title": "ai assistant中full process的sse不更新，agent monitor里正常更新。",
-  "description": "",
+  "description": "已合并到 ISS-097（AI Assistant SSE 全面修复）",
   "type": "bug",
   "priority": "P1",
-  "status": "pending",
+  "status": "done",
+  "mergedInto": "ISS-097",
   "createdAt": "2026-03-23T09:19:20.223Z",
-  "updatedAt": "2026-03-23T09:19:20.223Z"
+  "updatedAt": "2026-03-29T10:00:00.000Z"
 }

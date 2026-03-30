@@ -1,0 +1,10 @@
+{
+  "id": "ISS-162",
+  "title": "Team Case Reviewer: Intune Reviewer — AI 辅助识别 Technical Blocker",
+  "description": "Team Case Reviewer 角色：Intune Reviewer。定期通过 Office Mail MCP 获取团队邮件中关于 Intune 的工单邮件，LLM 推理当前工程师是否遇到 technical blocker，技术排查是否陷入误区，需要 reviewer 人为介入干预提供帮助和方向。\n\n核心流程：\n1. 定期（如每日）通过 Office Mail MCP 搜索团队 Intune case 相关邮件\n   - 搜索条件：case number 格式 + Intune/Endpoint Manager 相关关键词\n   - 过滤范围：POD 组内成员的邮件（非自己的 case）\n2. LLM 分析每个 case 的邮件链，推理以下维度：\n   - 🔴 Technical Blocker：工程师是否卡在某个技术点无法推进\n   - 🟡 方向偏离：排查方向是否有误（如客户问题是 A 但工程师在查 B）\n   - 🟡 信息缺失：是否缺少关键信息但工程师没有主动索取\n   - 🟢 进展正常：排查路径合理，无需干预\n3. 对 🔴🟡 的 case 生成 reviewer 建议：\n   - 建议排查方向 / 推荐 Kusto 查询 / 推荐参考文档\n   - 标注需要 reviewer 关注的优先级\n4. 输出 reviewer dashboard / 汇总报告\n\n价值：\n- 作为 Intune Reviewer 的 AI 助手，提前发现团队成员的排查瓶颈\n- 减少 reviewer 逐个 case 人工检查的时间\n- 在工程师陷入误区前主动提供方向性帮助\n- 可扩展到其他产品线（AKS Reviewer、VM Reviewer 等）\n\n技术依赖：\n- Office Mail MCP（搜索团队邮件）\n- troubleshooter 能力（Kusto 查询建议、文档搜索）\n- 团队成员列表配置（config.json 或类似）\n\n与现有能力的关系：\n- 类似 patrol 但面向的是团队成员的 case 而非自己的\n- 只读不写：不修改别人的 case，只产出建议报告\n- 可与 ISS-158/159/160 的 recipe 系统集成：匹配 recipe 给出排查建议",
+  "type": "feature",
+  "priority": "P2",
+  "status": "pending",
+  "createdAt": "2026-03-29T22:06:00Z",
+  "updatedAt": "2026-03-29T22:06:00Z"
+}

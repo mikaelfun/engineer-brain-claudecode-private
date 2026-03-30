@@ -4,7 +4,7 @@
   "description": "Dashboard UI 错误状态处理修复。",
   "type": "bug",
   "priority": "P1",
-  "status": "tracked",
+  "status": "done",
   "trackId": "ui-error-states_20260320",
   "createdAt": "2026-03-20T10:04:00.000Z",
   "updatedAt": "2026-03-20T13:21:37.503Z"

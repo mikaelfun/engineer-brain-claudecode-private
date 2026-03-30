@@ -14,28 +14,21 @@ setup:
     params:
       source: "{cases_root}/active/{test_case_id}"
       dest: "{backup_dir}/{test_case_id}"
-
-steps:
-  # 场景 1: 损坏 JSON 文件
+  # Fault injection: corrupt JSON + delete logs dir (handled by e2e-runner setup actions parser)
   - action: "corrupt_file"
     params:
       file: "{cases_root}/active/{test_case_id}/casehealth-meta.json"
       content: "{invalid json}}}"
-  - action: "run_casework"
-    params:
-      case_id: "{test_case_id}"
-    safety_check: "scripts.safe[casework]"
-    timeout_seconds: 300
-
-  # 场景 2: 删除 logs 目录
   - action: "delete_dir"
     params:
       target: "{cases_root}/active/{test_case_id}/logs/"
+
+steps:
   - action: "run_casework"
     params:
       case_id: "{test_case_id}"
     safety_check: "scripts.safe[casework]"
-    timeout_seconds: 300
+    timeout_seconds: 900
 
 assertions:
   - type: "file_exists"
@@ -43,7 +36,7 @@ assertions:
     expected: true
   - type: "file_content"
     target: "{cases_root}/active/{test_case_id}/casehealth-meta.json"
-    expected: "valid_json"  # 应该被修复
+    expected: "valid_json"
 
 teardown:
   - action: "restore_case"
@@ -51,4 +44,4 @@ teardown:
       source: "{backup_dir}/{test_case_id}"
       dest: "{cases_root}/active/{test_case_id}"
 
-timeout_seconds: 600
+timeout_seconds: 1200

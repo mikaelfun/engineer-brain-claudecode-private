@@ -1,0 +1,107 @@
+id: "issue-start-implement"
+name: "Issue Start-Implement Endpoint — tracked → in-progress"
+category: "backend-api"
+source: "dashboard/src/routes/issues.ts — POST /issues/:id/start-implement"
+description: "验证 POST /issues/:id/start-implement 将 issue 状态从 tracked → in-progress，GET implement-status 返回状态信息"
+safety_level: "safe"
+priority: "medium"
+tags: ["api", "issues", "implement", "state-machine", "round-5"]
+
+steps:
+  # Step 1: Create a test issue (pending)
+  - action: "http_request"
+    params:
+      method: "POST"
+      url: "{api_base}/api/issues"
+      body: '{"title":"TEST-AUTO: start-implement test","type":"feature","priority":"P3","description":"Automated test — will be deleted in teardown"}'
+      auth: true
+    safety_check: "api.safe[POST /api/issues]"
+    expected_status: [200, 201]
+
+  # Step 2: Check current status (should be pending)
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/issues/{created_issue_id}"
+      auth: true
+      expected_status: [200]
+    safety_check: "api.safe[GET /api/issues]"
+
+  # Step 3: POST start-implement — on a pending issue this should return 400/422 (not tracked yet)
+  - action: "http_request"
+    params:
+      method: "POST"
+      url: "{api_base}/api/issues/{created_issue_id}/start-implement"
+      auth: true
+      expected_status: [200, 400, 422]
+    safety_check: "api.safe[POST /api/issues]"
+
+  # Step 4: GET implement-status — should work regardless of state
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/issues/{created_issue_id}/implement-status"
+      auth: true
+      expected_status: [200, 404]
+    safety_check: "api.safe[GET /api/issues]"
+
+  # Step 5: Mark issue as implemented first, then test mark-done → reopen → try start-implement again
+  - action: "http_request"
+    params:
+      method: "PUT"
+      url: "{api_base}/api/issues/{created_issue_id}"
+      body: '{"status":"tracked"}'
+      auth: true
+      expected_status: [200]
+    safety_check: "api.safe[PUT /api/issues/:id]"
+
+  # Step 6: Now try start-implement — status=tracked via PUT but no real trackId set
+  # API requires trackId → returns 400 "Issue has no associated trackId" (correct behavior)
+  - action: "http_request"
+    params:
+      method: "POST"
+      url: "{api_base}/api/issues/{created_issue_id}/start-implement"
+      auth: true
+      expected_status: [200, 202, 400, 409]
+    safety_check: "api.safe[POST /api/issues]"
+
+assertions:
+  - type: "status_code"
+    target: "POST /api/issues (create)"
+    expected: [200, 201]
+    description: "测试 issue 创建成功"
+
+  - type: "status_code"
+    target: "GET /api/issues/:id"
+    expected: 200
+    description: "Issue 可读取"
+
+  - type: "status_code"
+    target: "POST /api/issues/:id/start-implement (pending issue)"
+    expected: [200, 400, 422]
+    description: "start-implement 对 pending issue 返回有效状态码"
+
+  - type: "status_code"
+    target: "GET /api/issues/:id/implement-status"
+    expected: [200, 404]
+    description: "implement-status 端点响应有效"
+
+  - type: "status_code"
+    target: "PUT /api/issues/:id (set tracked)"
+    expected: 200
+    description: "PUT 更新 issue 状态成功"
+
+  - type: "status_code"
+    target: "POST /api/issues/:id/start-implement (tracked issue)"
+    expected: [200, 202, 400, 409]
+    description: "start-implement 对 tracked-via-PUT issue 返回有效状态码 (200/202=启动, 400=无trackId, 409=已有操作)"
+
+teardown:
+  - action: "http_request"
+    params:
+      method: "DELETE"
+      url: "{api_base}/api/issues/{created_issue_id}"
+      auth: true
+    safety_check: "api.safe[DELETE /api/issues/:id]"
+
+timeout_seconds: 45

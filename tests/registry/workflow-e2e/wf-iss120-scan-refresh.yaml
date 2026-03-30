@@ -1,0 +1,45 @@
+id: "wf-iss120-scan-refresh"
+name: "ISS-120 — SCAN 阶段 live-cases.yaml 每日刷新逻辑"
+category: "workflow-e2e"
+source: "issues/ISS-120.json"
+description: "验证 ISS-120 AC：SCAN 阶段增加 live-cases.yaml 每日刷新逻辑（refresh-live-cases.sh），超过 24h 时自动扫描 cases/active/ 更新 case 池"
+safety_level: "safe"
+priority: "medium"
+tags: ["issue-driven", "iss-120", "live-cases", "refresh", "scan"]
+
+steps:
+  - action: "bash_command"
+    params:
+      command: "ls tests/executors/refresh-live-cases.sh 2>/dev/null && echo EXISTS || echo MISSING"
+    description: "检查 refresh-live-cases.sh 存在"
+
+  - action: "bash_command"
+    params:
+      command: "ls tests/fixtures/live-cases.yaml 2>/dev/null && echo EXISTS || echo MISSING"
+    description: "检查 live-cases.yaml fixture 存在"
+
+  - action: "bash_command"
+    params:
+      command: "bash tests/executors/refresh-live-cases.sh 2>&1 | head -5"
+    description: "执行 refresh-live-cases.sh 并检查输出"
+
+  - action: "bash_command"
+    params:
+      command: "cat tests/fixtures/live-cases.yaml 2>/dev/null | grep -c 'lastRefreshed'"
+    description: "live-cases.yaml 包含 lastRefreshed 字段（刷新时间控制）"
+
+assertions:
+  - type: "file_exists"
+    target: "tests/executors/refresh-live-cases.sh"
+    description: "SCAN 阶段增加 live-cases.yaml 每日刷新逻辑"
+
+  - type: "file_exists"
+    target: "tests/fixtures/live-cases.yaml"
+    description: "live-cases.yaml fixture 文件存在于 tests/fixtures/"
+
+  - type: "file_content"
+    target: "tests/fixtures/live-cases.yaml"
+    expected: "lastRefreshed"
+    description: "live-cases.yaml 包含 lastRefreshed 字段用于 24h 超期检测"
+
+timeout_seconds: 30

@@ -2,7 +2,7 @@
   "mcpServers": {
     "playwright": {
       "command": "cmd",
-      "args": ["/c", "npx", "@playwright/mcp@latest", "--browser", "msedge"]
+      "args": ["/c", "npx", "@playwright/mcp@latest", "--browser", "msedge", "--output-dir", ".playwright-output"]
     },
     "icm": {
       "command": "C:\\Users\\fangkun\\AppData\\Roaming\\agency\\CurrentVersion\\agency.exe",
@@ -46,10 +46,10 @@
     },
     "local-rag": {
       "command": "node",
-      "args": ["C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\tools\\mcp-local-rag\\dist\\index.js"],
+      "args": ["C:\\Users\\fangkun\\.claude\\mcp-servers\\local-rag\\dist\\index.js"],
       "env": {
-        "BASE_DIR": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\data\\OneNote Export",
-        "DB_PATH": "C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\data\\lancedb",
+        "BASE_DIR": "C:\\Users\\fangkun\\Documents\\EngineerBrain-Data\\OneNote Export",
+        "DB_PATH": "C:\\Users\\fangkun\\Documents\\EngineerBrain-Data\\lancedb",
         "EMBEDDING_PROVIDER": "openai",
         "OPENAI_API_KEY": "sk-vXY3OWzBgtQGxFry1cZerQB0bpLojgbkdyWt7wnsHMDeQ3uw",
         "OPENAI_BASE_URL": "https://kunnewapi.net/v1",

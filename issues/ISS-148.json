@@ -1,0 +1,11 @@
+{
+  "id": "ISS-148",
+  "title": "Conductor Verify 重新设计 — 推理驱动 + Recipe 自我演进",
+  "description": "当前 conductor:verify 是规则驱动的固定两步（npm test + Playwright UI），不读 spec 的验收标准，不推理验证方案。问题：(1) CLI/脚本类 track 无法验证（如 ISS-143 dashboard-renderer.sh）; (2) npm test 只证明没回归，不证明新功能 work; (3) 每次 UI 验证都要重新探索 Edge/JWT/port 等坑。\n\n重新设计：\n1. LLM 读 spec → 推理每条验收标准的验证方案\n2. 检查 verification-recipes/ 目录是否有匹配的 recipe（复用已有经验）\n3. 有 recipe → 按步骤执行；无 recipe → 从零推理\n4. 执行后反思：如果某类验证探索复杂（重试≥2次/遇到坑/脚本>10行），提取为新 recipe\n5. npm test 保留作为 regression guard，不是核心验证",
+  "type": "enhancement",
+  "priority": "P1",
+  "status": "tracked",
+  "trackId": "verify-redesign_20260329",
+  "createdAt": "2026-03-29T20:30:00Z",
+  "updatedAt": "2026-03-29T21:00:00+08:00"
+}

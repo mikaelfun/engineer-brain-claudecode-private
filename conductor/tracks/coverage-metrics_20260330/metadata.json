@@ -1,0 +1,23 @@
+{
+  "id": "coverage-metrics_20260330",
+  "title": "Fix coverage metrics — totalTests=0 bug + 多维进度指标",
+  "type": "bug",
+  "status": "implemented",
+  "created": "2026-03-30T10:00:00+08:00",
+  "updated": "2026-03-30T19:30:00+08:00",
+  "issueId": "ISS-163",
+  "current_phase": 2,
+  "current_task": "2.2",
+  "phases": {
+    "total": 2,
+    "completed": 2
+  },
+  "tasks": {
+    "total": 5,
+    "completed": 5
+  },
+  "verification": {
+    "status": "pending",
+    "method": "script"
+  }
+}

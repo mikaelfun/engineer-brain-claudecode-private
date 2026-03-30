@@ -53,7 +53,7 @@ assertions:
     expected: "valid_json"
   - type: "json_field"
     target: "{cases_root}/active/{test_case_id}/casehealth-meta.json"
-    field: "judge.actualStatus"
+    field: "actualStatus"
     expected: "not_null"
   - type: "file_exists"
     target: "{cases_root}/active/{test_case_id}/case-summary.md"

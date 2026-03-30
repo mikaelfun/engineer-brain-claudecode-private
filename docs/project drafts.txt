@@ -1,0 +1,225 @@
+4.5  │ 检查 teams 结果 应该放在 status-judge之前，之前是后台查询，所以放后面步骤，status和troubleshoot/email都需要根据teams的情况调整。
+/api/cases/:id/teams：读 teams/ 下所有 .md 文件，直接返回 content，会导致webui teams里显示_search-log.md ，这个不需要显示
+
+
+筛选条件是 lastInspected 超过 24h，这个设计是不是不合理，中间如果客户有回复和更新之类的话，就会漏掉
+
+teams step没有日志，缓存时间计算有问题，优化过滤SBA manager bot相关的消息
+
+casework读取各个步骤skill太大，占用上下文，是否可以优化，考虑清除context？
+
+spawn teams search agent优化，如果缓存没过期，无需spawn agent。
+
+
+Teams 缓存预检放在2b，让refresh data agent先起来。compliance judge确实可以在refresh data agent并行，但是status judge没有等refresh data agent结束。compliance和routing的计时逻辑有问题。
+
+
+statusjudge优化，能不能根据status指征缓存，增量更新，不全部整个case历史和细节。
+statusjudge agent spawn的耗时
+
+
+执行中报错Task Output a1c91d950c6c38678
+  ⎿  Error: No task found with ID: a1c91d950c6c38678
+Bash(cd "C:/Users/fangkun/Documents/Claude Code Projects/EngineerBrain" && CASE_DIR="./cases/active/2603260030005229" && tail -100
+      "${CASE_DIR}/emails.md" && echo "=…)
+  ⎿  Error: Exit code 1
+     tail: cannot open '/emails.md' for reading: No such file or directory
+
+data-refresh agent为什么spawn，缓存命中不是应该跳过吗
+
+计时系统不够精确，很多等待时间没有单独记出来，让计时结果不准
+
+inspection当前逻辑是什么，能否优化，比如设置缓存，增量更新，读取现有的inspection和更新的内容直接改写，不需要全量搜集重新思考。
+
+需人工决策中，compliance.is21vConvert不需要确认归属。待确认执行中，if actualStatus == "pending-customer" && days >= 5后面部分应该改为3此follow之后。FDR和FWR不需要待确认执行
+
+
+
+
+SAP adapt reminder
+
+cc功能在email drafter添加
+email drafter不自动中英文邮件
+
+icm 状态现在在status judge里做，应该放到之前。
+
+我想设计一个loop循环，目的是让claude code不断测试和优化casework agent/skill在CLI和webui中的稳定性，效率和一致性。你可以从当前可用的case列表里选几个或者全部case ID，claude code需要对这些case做各种场景的测试，比如全量（无本地数据），增量（本地有部分数据，但检测有更新）。切记不能做任何D365的写入和执行操作，所以可以用模型自己更改本地数据来满足不同测试场景，可以在测试后收集问题和可优化的点，然后逐个实施改进，再验证改进是否有效。最终目的是进化出一个最成熟，稳定，效率的casework agent/skill。casework的设计和目的在playbook里应该有。帮我设计一套/loop提示词，我再去开一个窗口执行。
+
+请执行 casework evolution loop，共 5 轮。先读 playbooks/guides/casework-evolution-loop.md
+  获取完整流程，然后连续执行测试→分析→改进。每轮结束后输出轮次进度（如"第 2/5 轮完成"），然后直接开始下一轮，不要等我确认。5
+  轮全部完成后输出总结报告（累计发现/修复/待处理）并停止。
+
+
+看一下最近的session记录，关于自动化测试的多轮对话，你会发现情况很糟糕。
+我的目的是根据项目的设计，架构，功能和实现来自动设计遍历所有分支，异常情况等的自动化测试，遍历所有测试场景找可以修复问题，找可提高效率的改进，找能让结果更加稳定的方法，包含后端测试，前端测试，UI测试（playwright browser session),最终效果是让测试尽量模拟用户的平时操作，而且可以让claude code不停迭代，或者设置轮数上限。
+我尝试了用一个session帮我构造一个loop提示词来针对一个具体功能casework迭代优化，但是被建议用一次性提示词，加上一个casework-evolution-loop.md。然后在另外一个Session中执行这个提示词。但是效果并不好。执行的session虽然可以多轮执行，但是上下文压缩会让他经常忘记需要注意的点。而且也有很多没有满足要求的地方，需要我一直调整修改。比如ui测试的安全红线，我已经明确说明非D365写和执行操作都是可以自动化测试的，但是就是不做ui的点击测试。也导致修改的代码和实现的功能根本没有从用户的ui交互得到验证。有时候测试完记录了问题，但是也不去尝试修复。有时候忘记ui验证的截图需要用subagent来读取，这样能避免session被截图撑爆导致中断的问题。
+我想得到的这套持续自我迭代的测试，验证，发现，修复的流程是不是还得用loop来实现？这样可以约束agent严格按照应该遵守的条例来执行。是不是需要根据项目当前的需求/实现文档来自动构建测试，这样假如我自己后续提出新的需求，放在对应文档中，流程就会验证中发现需求没有实现，进而去主动设计和实现。我作为项目编排者，就不需要每一个bug和需求都需要我亲力亲为，我只需要把预期的功能和效果提出来，就可以自动做整个设计验证迭代的流程。你可以帮我想想怎么来做吗。
+
+
+
+
+自我提升机制，比如遇到一个问题，是ui网页登陆的问题，每次都要从头经历一遍猜密码，找密码的流程。如果解决了，我希望他能固化加强，下次就不会重复无用功。比如固定一个密码，固定前后端端口。
+
+
+增加修改修复功能或者框架后，会自己调整更新测试框架吗，看看这套体系有没有真正落实每个部分的持续迭代能力。
+
+ui网页登陆的问题，每次都要从头经历一遍猜密码，找密码的流程。如果解决了，我希望他能固化加强，下次就不会重复无用功。比如固定一个密码，固定前后端端口。
+
+除了这个loop框架，是不是还可以设计一个监督者的skill之类的，可以monitor每次loop的执行情况，有没有持续迭代，以及有没有按照我们设想的来执行的，这样我可以单独session用这个监督者skill观察和调度这个loop测试框架，或者提供新的需求和想法。而不是每次开新的session都不知道怎么monitor。
+
+回看一下昨晚session关于casework cli的优化过程，这就是我手动发现问题和调优的流程，我想让loop框架能够替代我做这样的事情，看看能不能泛化后放入当前框架的架构，让loop框架拥有类似的迭代能力。
+
+
+
+
+帮我记录一个issue，目前已经有onenote-export和onenote-search skill，准备把这两个整合到casework流程中，作为用户个人的case相关笔记信息存储。troubleshooter也需要增加onenote-search的功能，onenote里的团队Notebook有很多对于实际case收益巨大的解决方案和已知问题记录。以及有很多团队内部流程和知识库，比如某个问题排查到工具无法分析跟因，需要升级到产品组的时候，onenote里包含了各个产品升级到产品组所对应的ICM模板链接，可以提取出来自动将模板填写。也比如客户想根据azure maintanence tracking id获取受影响的订阅id中的资源，OneNote里就有一篇非常精准的流程来处理这个需求。还有很多其他的场景。所以OneNote对于case处理非常重要
+
+test-loop agent需要general purpose agent吗，还是注册一个轻量subagent
+
+supervisor db: round已经改为80，但还是显示总round 50。
+
+
+重新设计supervisor dashboard。作为监控用户，我只知道我发现了多少issue，什么issue，是关注issue/某个具体功能的测试验证修复状态的，当前supervisor db只返回scan testfix verify成功失败多少，但是作为用户我根本不知道这一轮修了什么问题，哪些修好，哪些没修好，哪些直接测通不用修，哪些功能发现有测试gap要generate等等。
+dashboard除了整体的scan generate情况，还需要看当前在针对那个issue做test/fix/verify，round结束也需要知道修复了哪些issue，变更了什么状态（tracked->done还是implemented->done，还是pending->implemented）。不然每个supervisor run agent时间太长了二三十分钟，全程黑箱看不见在干什么，分别花了多少时间。看看怎么设计更合理
+
+
+
+再继续聊聊计划，别开始改动。你理解supervisor是main session，那么真实用法场景是在main session中执行/loop 5m /supervisor run来循环执行。这样一来之前设计supervisor run为agent形式启动就是为了防止一个问题，main session在loop中上下文撑爆导致main session挂掉。用agent启动supervisor run就可以把context聚集到这个agent里面，跑完可以抛掉。我同意你test-loop SKILL.md拆分为 phase 文件，但如果砍掉runner层，会丢失runner的几个步骤，比如auto heal，检测test-loop架构问题修复，推理驱动的自我演进。runner其实就是扮演控制和监督test-loop subagent的角色，当runner发现自身的逻辑问题，也可以通过test-loop注入fixqueue来实现自我修复，下次loop中可以重新加载agent最新的代码和修改。
+我的根本目标就是，整个test-loop能够在自动发现(测试场景gap，设计与实现的功能gap，异常或者低于预期的效率gap，架构的漏洞gap，webui显示效果不够合理和便捷的gap)，测试，修复，验证全链路闭环并且靠推理演进。就是代替我不断的去webui测试功能，发现问题，提高效率这些重复性工作。如果可以，agent也可以基于推理来设计可能都需求，但是还是以我自己创建issue来提出需求和指导为总体方向为主。帮我研究看看当前的架构设计和最终需要的效果有没有差异，以及更好的设计架构。
+
+
+ 实施顺序
+
+  Session 2:  /conductor:implement cli-dashboard-v2_20260329
+  Session 3:  /conductor:implement preflight-skill-split_20260329
+  Session 4:  /conductor:implement runner-brain_20260329        (依赖 T2)
+  Session 5:  /conductor:implement scan-expansion_20260329      (依赖 T2)
+  Session 6:  /conductor:implement webui-test-dashboard_20260329 (依赖 T1+T3)
+
+
+  换个角度想——runner 作为推理体，自愈的最低前提是什么？
+
+  推理自愈 = 能启动 + 能观察 + 能行动 + 能记忆
+
+  ┌────────┬───────────────────────────────────────────────┬────────────────────┐
+  │  能力  │                     含义                      │      如果丧失      │
+  ├────────┼───────────────────────────────────────────────┼────────────────────┤
+  │ 能启动 │ agent 定义加载正确，LLM 能读到指令            │ 推理引擎不存在     │
+  ├────────┼───────────────────────────────────────────────┼────────────────────┤
+  │ 能观察 │ 能 cat state.json、git log、ls tests/results/ │ 看不到系统状态     │
+  ├────────┼───────────────────────────────────────────────┼────────────────────┤
+  │ 能行动 │ 能 git checkout、能写文件                     │ 知道问题但无法修复 │
+  ├────────┼───────────────────────────────────────────────┼────────────────────┤
+  │ 能记忆 │ 能写 learnings、能记到 state.json             │ 下轮重复犯错       │
+  └────────┴───────────────────────────────────────────────┴────────────────────┘
+
+那真正需要硬编码的是什么？ 是保护这 4 个能力本身不被破坏：
+
+  写死的不是"怎么检测问题"
+  写死的是"保证推理引擎本身不会被自己修坏"
+
+  ---
+  重新设计：Immutable Core + Reasoning Shell
+
+  ┌─────────────────────────────────────────────────┐
+  │  Immutable Core（硬编码，永不自动修改）            │
+  │                                                  │
+  │  1. runner agent 定义                            │
+  │     .claude/agents/test-supervisor-runner.md      │
+  │     → 推理引擎的"大脑"，改坏它就失去推理能力       │
+  │                                                  │
+  │  2. git                                          │
+  │     → 万能回滚机制，改坏任何东西都能 checkout 回来  │
+  │                                                  │
+  │  3. 基础 I/O                                     │
+  │     bash、read、write tools → agent 的手和眼      │
+  │     （这些是 Claude Code 平台能力，agent 改不了）   │
+  │                                                  │
+  │  唯一的硬规则：                                    │
+  │  safety.yaml 里 human_only 列表的文件             │
+  │  永远不允许 FIX phase 自动修改                     │
+  └─────────────────────────────────────────────────┘
+                      │
+                      ▼
+  ┌─────────────────────────────────────────────────┐
+  │  Reasoning Shell（推理驱动，自适应）               │
+  │                                                  │
+  │  runner 每轮启动时的推理流程：                      │
+  │                                                  │
+  │  "我能正常读取 state.json 吗？"                    │
+  │    → 能：继续                                     │
+  │    → 不能：为什么？git log 最近改了什么？回滚试试   │
+  │                                                  │
+  │  "health-check 输出合理吗？"                       │
+  │    → 不是检查固定字段，而是：看起来对不对？          │
+  │    → 和上一轮比有什么变化？变化合理吗？             │
+  │                                                  │
+  │  "上一轮 framework fix 改了什么文件？"              │
+  │    → git diff HEAD~1 -- tests/executors/          │
+  │    → 改动是否导致了当前异常？                       │
+  │    → 如果是：git checkout HEAD~1 -- {file}         │
+  │                                                  │
+  │  "我需要记住什么？"                                │
+  │    → learnings-writer.sh 记录经验                  │
+  │    → 下轮自己会读到这个经验                        │
+  └─────────────────────────────────────────────────┘
+
+
+● 这个想法非常好——本质上是 verification 的经验沉淀和自我演进。让我具体设计这个架构。
+
+  核心概念：Verification Recipes（验证配方）
+
+  LLM 推理验证方案
+        │
+        ├─ 有 recipe？──→ 读取 recipe，按步骤执行（快速路径）
+        │
+        └─ 没有 recipe？──→ 从零推理 + 执行（探索路径）
+                                │
+                                └─ 执行后反思：这次探索复杂吗？
+                                      │
+                                      ├─ 是 → 提取为新 recipe
+                                      └─ 否 → 不提取
+
+  让我看看现有的 learnings 机制，和这个对比一下：
+
+● Read 2 files (ctrl+o to expand)
+
+
+
+汇总优先级矩阵
+
+  ┌─────┬──────────────────────┬──────────────────────────┬───────────┬────────────────────────────────────────┐
+  │  #  │         位置         │          反模式          │   影响    │                改进方向                │
+  ├─────┼──────────────────────┼──────────────────────────┼───────────┼────────────────────────────────────────┤
+  │ 3   │ casework 路由表      │ 固定 status→action 映射  │ 🔴 High   │ LLM 推理最优行动 + 路由表作为 fallback │
+  ├─────┼──────────────────────┼──────────────────────────┼───────────┼────────────────────────────────────────┤
+  │ 1   │ fix-analyzer.sh      │ grep 分类 + 模板修复建议 │ 🔴 High   │ LLM 读上下文推理根因 + 定制修复方案    │
+  ├─────┼──────────────────────┼──────────────────────────┼───────────┼────────────────────────────────────────┤
+  │ 2   │ issue/spec-scanner   │ 关键字匹配判断覆盖率     │ 🟡 Medium │ LLM 语义比较 AC vs 测试                │
+  ├─────┼──────────────────────┼──────────────────────────┼───────────┼────────────────────────────────────────┤
+  │ 4   │ email-drafter auto   │ 固定 status→emailType    │ 🟡 Medium │ LLM 推理最佳邮件类型和语气             │
+  ├─────┼──────────────────────┼──────────────────────────┼───────────┼────────────────────────────────────────┤
+  │ 5   │ generate-todo.sh     │ 纯规则生成 todo          │ 🟡 Medium │ LLM 综合推理 + 规则格式化              │
+  ├─────┼──────────────────────┼──────────────────────────┼───────────┼────────────────────────────────────────┤
+  │ 6   │ troubleshooter 流程  │ 固定 4-Phase + 3 轮上限  │ 🟡 Medium │ 动态策略 + 利用历史经验                │
+  ├─────┼──────────────────────┼──────────────────────────┼───────────┼────────────────────────────────────────┤
+  │ 7   │ fix-analyzer env判断 │ 粗分类 + grep trace      │ 🟡 Medium │ LLM 推理 env vs code bug               │
+  ├─────┼──────────────────────┼──────────────────────────┼───────────┼────────────────────────────────────────┤
+  │ 8   │ compliance-check     │ 硬编码合规规则           │ 🟢 Low    │ 规则驱动合理，但维护可推理辅助         │
+
+共性反模式总结
+
+  A. 关键字匹配代替语义理解 — fix-analyzer、issue-scanner、spec-scanner 都用 grep/regex 做分类，而这些分类本质上需要理解上下文
+
+  B. 固定路由表代替推理决策 — casework 路由、email-drafter auto、troubleshooter 流程都是 "if status == X then do Y"，不考虑 case 具体情况
+
+  C. 没有经验积累机制 — 类似你提出的 verification-recipes，很多地方（排查策略、邮件风格、fix 方案）都可以从经验中学习和复用
+
+  D. 模板输出代替推理生成 — fix 建议、todo 内容、邮件类型选择都是模板化的
+
+
+把项目路径清理下，看看有没有临时文件或者不合适的存放结构。尤其是data那里面的onenote export和向量数据库，是不是适合单独放在本地其他路径？不然里面文件太多影响项目有些文件检索的bash效率
+
+
+coverage 现在的定义是什么，是否适合作为test supervisor的进度指标。
+fix/scan strategy recipe，Test Generation Recipes是否适合放在playbooks文件夹，还是适合放在test里。

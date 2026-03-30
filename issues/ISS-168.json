@@ -1,0 +1,11 @@
+{
+  "id": "ISS-168",
+  "title": "Test-loop FIX 阶段应由 LLM 推理判断发现的是产品 Bug 还是基础设施问题，产品 Bug 自动创建 Issue",
+  "description": "当前 test-loop FIX 阶段修复 bug 后只记录到 discoveries.json 和 fixes/ 目录，不会回写到 issues/ 目录。导致产品级别的 bug 修完就不可追溯。\n\n需要在 FIX 阶段完成修复后，由 LLM 推理判断该发现属于哪类：\n- 测试基础设施问题（YAML 格式、脚本路径、executor 逻辑等）→ 仅记录到 discoveries.json\n- 产品缺陷（casework 流程缺步骤、邮件模板错误、skill 逻辑 bug 等）→ 自动创建 Issue 到 issues/ 目录\n\n推理驱动而非规则驱动：不用 grep/keyword 匹配分类，让 LLM 基于修复内容、修改的文件路径、错误性质综合判断。\n\n创建的 Issue 应包含：\n- 来源标记：discoveredBy: test-loop, round: N, testId: xxx\n- 修复详情引用：fixes/{testId}-fix.md\n- 自动设 type=bug, priority 由 LLM 判断",
+  "type": "feature",
+  "priority": "P1",
+  "status": "tracked",
+  "trackId": "fix-issue-creation_20260330",
+  "createdAt": "2026-03-30T17:00:00+08:00",
+  "updatedAt": "2026-03-30T17:00:00+08:00"
+}

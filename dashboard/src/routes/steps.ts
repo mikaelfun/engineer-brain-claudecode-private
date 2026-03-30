@@ -19,6 +19,7 @@
  */
 import { Hono } from 'hono'
 import type { CanUseTool } from '@anthropic-ai/claude-agent-sdk'
+import type { ToolCallRecord, ExecutionSummary } from '../types/index.js'
 import {
   stepCaseSession,
   chatCaseSession,
@@ -31,6 +32,8 @@ import {
   writeStepLog,
   endSession,
   abortQuery,
+  buildExecutionSummary,
+  getCaseMcpServerNames,
 } from '../agent/case-session-manager.js'
 import { sseManager } from '../watcher/sse-manager.js'
 import { getSSEEventType, formatMessageForSSE, getPersistedMessageType } from '../utils/sse-helpers.js'
@@ -228,10 +231,12 @@ async function processStepMessages(
   existingSessionId?: string,
   sessionRef?: { current: string | undefined },
   executionId?: string,
-): Promise<{ interrupted: boolean; sessionId: string | undefined; messageCount: number }> {
+): Promise<{ interrupted: boolean; sessionId: string | undefined; messageCount: number; toolCalls: ToolCallRecord[]; turns: number }> {
   let capturedSessionId = existingSessionId
   let messageCount = 0
   let lastToolName: string | undefined
+  const toolCalls: ToolCallRecord[] = []
+  let turns = 0
 
   for await (const message of queryIter) {
     // Check cancellation
@@ -266,6 +271,7 @@ async function processStepMessages(
 
     // Parse assistant messages into semantic types
     if (message.type === 'assistant' && message.message?.content) {
+      turns++
       const content = message.message.content
       if (Array.isArray(content)) {
         for (const block of content) {
@@ -274,6 +280,8 @@ async function processStepMessages(
             const toolInput = (block as any).input
             const toolContent = summarizeToolInput((block as any).name, toolInput)
             lastToolName = (block as any).name
+            // Track tool call for executionSummary (ISS-136)
+            toolCalls.push({ name: lastToolName!, success: true })
             const toolMsg = {
               kind: 'tool-call' as const,
               toolName: (block as any).name,
@@ -311,6 +319,14 @@ async function processStepMessages(
 
     // Parse tool_result messages into semantic 'tool-result' kind
     if (message.type === 'tool_result') {
+      // Check if tool_result indicates an error (ISS-136)
+      const isError = (message as any).is_error === true
+      if (isError && toolCalls.length > 0) {
+        const lastCall = toolCalls[toolCalls.length - 1]
+        lastCall.success = false
+        const errText = typeof message.content === 'string' ? message.content.slice(0, 200) : ''
+        if (errText) lastCall.error = errText
+      }
       const resultContent = typeof message.content === 'string'
         ? message.content.slice(0, 300)
         : typeof message.text === 'string'
@@ -366,7 +382,7 @@ async function processStepMessages(
 
   // If we have a pending question, the query was interrupted
   const interrupted = !!caseStepState.getPendingQuestion(caseNumber)
-  return { interrupted, sessionId: capturedSessionId, messageCount }
+  return { interrupted, sessionId: capturedSessionId, messageCount, toolCalls, turns }
 }
 
 /**
@@ -402,10 +418,17 @@ async function resumeStepSession(
     })
     caseStepState.finish(caseNumber)
 
+    const executionSummary = buildExecutionSummary(
+      result.toolCalls,
+      stepName,
+      result.turns,
+    )
+
     sseManager.broadcast('case-step-completed', {
       caseNumber,
       step: stepName,
       sessionId: result.sessionId,
+      executionSummary,
     })
 
     appendSessionMessage(caseNumber, {
@@ -568,11 +591,18 @@ stepRoutes.post('/case/:id/step/:step', async (c) => {
         })
         caseStepState.finish(caseNumber)
 
+        const executionSummary = buildExecutionSummary(
+          result.toolCalls,
+          stepName,
+          result.turns,
+        )
+
         sseManager.broadcast('case-step-completed', {
           caseNumber,
           step: stepName,
           sessionId: result.sessionId || activeSessionId,
           executionId,
+          executionSummary,
         })
         // Notify Agent Monitor to refresh session list (ISS-082)
         sseManager.broadcast('sessions-changed' as any, { reason: 'step-completed', caseNumber, step: stepName })

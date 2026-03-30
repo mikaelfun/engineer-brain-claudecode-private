@@ -30,19 +30,38 @@ echo '{"phase":"TEST","stats":{"passed":10}}' | bash tests/executors/state-write
 
 **Environment**: Use `process.env.STATE_PATH` in node, not hardcoded paths.
 
-### 🔴 roundJourney Update Pattern
+### 🔴 roundJourney Update Pattern (MANDATORY — every phase)
 
-**Before** executing any phase logic, mark as `running`:
+**Step A: BEFORE any phase logic** — capture wall-clock start + mark running:
 ```bash
-echo '{"roundJourney":{"'$PHASE'":{"status":"running"}}}' | bash tests/executors/state-writer.sh --merge
+START_TS=$(date +%s%3N)
+echo '{"roundJourney":{"'$PHASE'":{"status":"running","startedAt":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}}}' | bash tests/executors/state-writer.sh --merge
 ```
+⚠️ `START_TS` must be set via `date +%s%3N` (milliseconds). Do NOT use hardcoded values.
 
-**After** phase completes, mark as `done` with summary + duration:
+**Step B: AFTER phase completes** — calculate real duration + mark done:
 ```bash
 DURATION_MS=$(( $(date +%s%3N) - START_TS ))
-echo '{"roundJourney":{"'$PHASE'":{"status":"done","summary":"...","duration_ms":'$DURATION_MS'}}}' \
+echo '{"roundJourney":{"'$PHASE'":{"status":"done","summary":"...","duration_ms":'$DURATION_MS',"completedAt":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}}}' \
   | bash tests/executors/state-writer.sh --merge
 ```
+⚠️ `duration_ms` MUST be computed from `START_TS`. Never estimate or hardcode (e.g. 120000, 30000).
+
+**Step C: On round transition** (VERIFY/TEST → SCAN, round++) — reset ALL phases:
+```bash
+echo '{"roundJourney":{"SCAN":{"status":"pending"},"GENERATE":{"status":"pending"},"TEST":{"status":"pending"},"FIX":{"status":"pending"},"VERIFY":{"status":"pending"}}}' \
+  | bash tests/executors/state-writer.sh --merge
+```
+⚠️ This clears stale duration/status from previous round. Must happen BEFORE new SCAN starts.
+
+### Recipe 查询通用原则
+
+- Recipe 查询是 **advisory**，不是 mandatory — 找不到匹配时静默 fallback，不报错
+- `tests/recipes/fix/_index.md` 不存在 → 跳过 recipe 查询，等价于无匹配
+- Recipe 文件不存在（`_index` 引用但文件缺失）→ 跳过该条目，尝试下一个匹配
+- 一个 failure 可匹配多个 recipe → 按 `_index.md` 优先级使用第一个可用 recipe
+- Recipe 步骤是参考，不是死板流程 — LLM 应根据实际错误细节调整执行
+- Recipe 修复后务必调用 `fix-recorder.sh` 并传入 `recipe_used` 参数
 
 ### Step 0.5: Process Directives (every phase)
 

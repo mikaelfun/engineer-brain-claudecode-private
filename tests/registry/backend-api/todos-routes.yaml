@@ -1,0 +1,40 @@
+id: "todos-routes"
+name: "Todos API Routes — List + All Summary"
+category: "backend-api"
+source: "dashboard/src/routes/todos.ts"
+description: "验证 Todos GET 端点返回 200 + 正确 JSON 结构"
+safety_level: "safe"
+priority: "medium"
+tags: ["api", "todos", "round-2"]
+
+steps:
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/todos"
+      auth: true
+    safety_check: "api.safe[GET /api/todos]"
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/todos/all"
+      auth: true
+    safety_check: "api.safe[GET /api/todos/all]"
+
+assertions:
+  - type: "status_code"
+    target: "GET /api/todos"
+    expected: 200
+  - type: "status_code"
+    target: "GET /api/todos/all"
+    expected: 200
+  - type: "json_field"
+    target: "GET /api/todos/all"
+    field: "todos"
+    expected_type: "array"
+  - type: "json_field"
+    target: "GET /api/todos/all"
+    field: "total"
+    expected_type: "number"
+
+timeout_seconds: 30

@@ -1,0 +1,91 @@
+id: "wf-agent-log-summary"
+name: "Agent ExecutionSummary — 源码实现验证"
+category: "workflow-e2e"
+source: "ISS-136 / conductor/tracks/agent-log-visible_20260329/spec.md"
+description: "验证 executionSummary 功能已正确实现：buildExecutionSummary() 函数存在、通过 SSE case-step-completed 广播、ExecutionSummary 类型包含 toolCalls/mcpServers/agentType/turns 字段。注：executionSummary 经 SSE 广播，不在 GET /operation REST 端点持久化（test_design fix r20）。"
+safety_level: "safe"
+priority: "medium"
+tags: ["executionSummary", "api", "diagnostics", "logging"]
+
+source_type: "issue-driven"
+issueId: "ISS-136"
+trackId: "agent-log-visible_20260329"
+
+steps:
+  # AC1: buildExecutionSummary 函数存在于 case-session-manager.ts
+  - action: "run_bash"
+    params:
+      command: "grep -n 'buildExecutionSummary' dashboard/src/agent/case-session-manager.ts"
+      cwd: "{project_root}"
+    safety_check: "scripts.safe[read-only]"
+    timeout_seconds: 10
+
+  # AC2: ExecutionSummary 类型包含所有必需字段
+  - action: "run_bash"
+    params:
+      command: "grep -A 8 'interface ExecutionSummary' dashboard/src/agent/case-session-manager.ts || grep -A 8 'ExecutionSummary' dashboard/src/agent/case-session-manager.ts | head -20"
+      cwd: "{project_root}"
+    safety_check: "scripts.safe[read-only]"
+    timeout_seconds: 10
+
+  # AC3: SSE 广播包含 executionSummary
+  - action: "run_bash"
+    params:
+      command: "grep -n 'executionSummary' dashboard/src/routes/steps.ts | grep -c 'broadcast\\|executionSummary'"
+      cwd: "{project_root}"
+    safety_check: "scripts.safe[read-only]"
+    timeout_seconds: 10
+
+  # AC4: case-routes.ts 也实现了 executionSummary 广播
+  - action: "run_bash"
+    params:
+      command: "grep -c 'executionSummary' dashboard/src/routes/case-routes.ts"
+      cwd: "{project_root}"
+    safety_check: "scripts.safe[read-only]"
+    timeout_seconds: 10
+
+  # AC5: 单元测试通过（不因 executionSummary 变更而失败）
+  - action: "run_bash"
+    params:
+      command: "cd dashboard && npm test 2>&1 | tail -10"
+      cwd: "{project_root}"
+    safety_check: "scripts.safe[unit-test]"
+    timeout_seconds: 120
+
+assertions:
+  # AC1: buildExecutionSummary 函数存在
+  - type: "stdout_contains"
+    expected: "buildExecutionSummary"
+    description: "buildExecutionSummary must exist in case-session-manager.ts"
+    step: 0
+
+  # AC2: ExecutionSummary 类型有所需字段
+  - type: "stdout_contains"
+    expected: "toolCalls"
+    description: "ExecutionSummary type must include toolCalls field"
+    step: 1
+
+  - type: "stdout_contains"
+    expected: "mcpServers"
+    description: "ExecutionSummary type must include mcpServers field"
+    step: 1
+
+  # AC3: SSE 广播 executionSummary (count > 0)
+  - type: "exit_code"
+    expected: 0
+    description: "executionSummary must appear in broadcast calls in steps.ts"
+    step: 2
+
+  # AC4: case-routes.ts 有 executionSummary
+  - type: "stdout_not_contains"
+    expected: "0"
+    description: "case-routes.ts must reference executionSummary"
+    step: 3
+
+  # AC5: 单元测试不失败
+  - type: "stdout_not_contains"
+    expected: "FAIL"
+    description: "Unit tests must pass after executionSummary implementation"
+    step: 4
+
+timeout_seconds: 180

@@ -1,0 +1,11 @@
+{
+  "id": "ISS-147",
+  "title": "WebUI real-time Test Dashboard with Runner start/stop controls",
+  "description": "Enhance existing TestLab.tsx with: (1) RunnerControl component — Start/Stop/Pause buttons that spawn/control runner via Claude SDK session or directives, safe stop via pause directive not process kill. (2) AttentionPanel component — priority-sorted issues needing attention (replaces flat stats as primary view). (3) ActivityStream component — SSE-driven real-time log of phase events as they happen. (4) EvolutionTimeline component — visual timeline of framework evolution milestones. Backend: new POST /api/tests/runner/{start,stop,status} endpoints. Enhance SSE events from file-watcher for granular state change notifications.",
+  "type": "feature",
+  "priority": "P2",
+  "status": "tracked",
+  "createdAt": "2026-03-29T19:30:00Z",
+  "updatedAt": "2026-03-29T19:35:00Z",
+  "trackId": "webui-test-dashboard_20260329"
+}

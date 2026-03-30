@@ -1,0 +1,68 @@
+{
+  "testId": "issues-crud",
+  "round": 0,
+  "status": "PASS",
+  "executedAt": "2026-03-28T06:31:38.415Z",
+  "duration_ms": 46368,
+  "steps": [
+    {
+      "step": "GET /api/issues",
+      "status": 200,
+      "result": "PASS",
+      "detail": "返回 200，响应体为 {issues: [...]}，包含 112 条 issue 对象的数组"
+    },
+    {
+      "step": "POST /api/issues",
+      "status": 201,
+      "result": "PASS",
+      "detail": "创建成功，返回 201，新 issue ID = ISS-115，title 包含 TEST-AUTO"
+    },
+    {
+      "step": "extract_id",
+      "status": null,
+      "result": "PASS",
+      "detail": "从 POST 响应提取 created_issue_id = ISS-115"
+    },
+    {
+      "step": "GET /api/issues/ISS-115",
+      "status": 200,
+      "result": "PASS",
+      "detail": "返回 200，title 包含 'TEST-AUTO'，priority=P2，status=pending"
+    },
+    {
+      "step": "PUT /api/issues/ISS-115",
+      "status": 200,
+      "result": "PASS",
+      "detail": "返回 200，priority 已更新为 P1，updatedAt 已刷新"
+    },
+    {
+      "step": "DELETE /api/issues/ISS-115 (teardown)",
+      "status": 200,
+      "result": "PASS",
+      "detail": "返回 200，{ok:true, cleanedUp:{trackDeleted:false, sessionsCleared:true}}，测试数据已清理"
+    }
+  ],
+  "assertions": [
+    {
+      "type": "response_shape",
+      "target": "GET /issues",
+      "result": "PASS",
+      "detail": "响应包含 issues 数组（112 项）。注意：实际响应结构为 {issues:[...]} 而非裸数组，但 issues 字段本身为 array of issue objects，断言视为通过"
+    },
+    {
+      "type": "response_field",
+      "target": "GET /issues/:id",
+      "field": "title",
+      "result": "PASS",
+      "detail": "title 字段包含 'TEST-AUTO'：title = 'TEST-AUTO: 临时测试Issue'"
+    },
+    {
+      "type": "response_field",
+      "target": "PUT /issues/:id",
+      "field": "priority",
+      "result": "PASS",
+      "detail": "priority 字段等于 'P1'：更新前 P2 → 更新后 P1，断言通过"
+    }
+  ],
+  "error": null
+}

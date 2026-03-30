@@ -1,0 +1,45 @@
+# Skill Prompt Lean Check — 检查 agent prompt 不注入大段内容
+# 对应问题: 注入 SKILL 内容到 prompt 反而慢 15s
+# Probe 类型: audit (模式扫描)
+
+id: "skill-prompt-lean"
+name: "Skill Prompt Lean Check"
+category: "observability"
+source: ".claude/skills/*/SKILL.md"
+description: "扫描 SKILL.md 中 spawn agent 的 prompt 模板，确保无大段 inline 注入"
+safety_level: "safe"
+priority: "high"
+tags: ["observability", "audit", "performance"]
+
+probe_type: "audit"
+baseline_ref: "skill_prompt"
+
+audit_config:
+  scan_glob: ".claude/skills/*/SKILL.md"
+  rules:
+    - check: "inline_content_size"
+      max_bytes: 2048
+      description: "Prompt 模板中 inline 内容不超过 2KB"
+    - check: "delegation_pattern"
+      required_pattern: "请先读取|read.*SKILL|读取.*获取"
+      description: "Prompt 应指示 agent 自己读取 SKILL.md"
+
+steps:
+  - action: "scan_skill_files"
+    params:
+      glob: ".claude/skills/*/SKILL.md"
+  - action: "extract_prompt_blocks"
+    params:
+      pattern: "Prompt:|prompt:"
+  - action: "measure_inline_content"
+  - action: "check_delegation_pattern"
+
+assertions:
+  - type: "no_oversized_prompts"
+    expected: true
+    description: "无 > 2KB 的 inline SKILL 内容注入"
+  - type: "delegation_pattern_present"
+    expected: true
+    description: "prompt 模式为 '请先读取 xxx' 而非直接注入"
+
+timeout_seconds: 30

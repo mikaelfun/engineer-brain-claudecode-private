@@ -1,0 +1,11 @@
+{
+  "id": "ISS-120",
+  "title": "Test Loop 双层数据源：Live + Synthetic 分离",
+  "description": "为 test loop 增加双层数据源架构：\n\n1. **Live 数据源**（真实 D365 数据）：data-refresh、email-search、ICM 查询、teams-search 等元数据拉取类操作，case 池从 D365 API 每天刷新一次到 tests/fixtures/live-cases.yaml\n\n2. **Synthetic 数据源**（本地生成模拟数据）：compliance-check、status-judge、inspection-writer、casework 流程编排、UI 渲染等非元数据拉取操作，支持多种 profiles（normal/empty/heavy/compliance-ok/compliance-fail/21v-convert/status-各种/edge-各种）\n\n核心改动：\n- 新增 tests/fixtures/synthetic/ 目录（profiles.yaml + generator.sh + templates/）\n- 新增 tests/fixtures/live-cases.yaml（SCAN 阶段每日刷新）\n- test-definition.yaml schema 增加 data_source 字段（live/synthetic）\n- common.sh 新增 resolve_case_dir() 根据 data_source 选择数据\n- SCAN 阶段增加 D365 active case 拉取逻辑\n- 各 executor 适配 resolve_case_dir()",
+  "type": "feature",
+  "priority": "P0",
+  "status": "tracked",
+  "trackId": "testloop-data-layer_20260328",
+  "createdAt": "2026-03-28T23:15:00+08:00",
+  "updatedAt": "2026-03-28T23:15:00+08:00"
+}

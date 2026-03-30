@@ -1,0 +1,9 @@
+{
+  "testId": "unit-server",
+  "round": 1,
+  "timestamp": "2026-03-28T16:16:46.000Z",
+  "status": "pass",
+  "assertions": [{"name":"npm_exit_code","pass":true,"expected":"0","actual":"0"},{"name":"no_test_failures","pass":true,"expected":"0","actual":"0"},{"name":"tests_executed","pass":true,"expected":">0","actual":"140"}],
+  "error": null,
+  "duration_ms": 7109
+}

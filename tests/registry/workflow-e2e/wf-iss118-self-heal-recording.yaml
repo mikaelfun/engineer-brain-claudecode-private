@@ -1,0 +1,41 @@
+id: "wf-iss118-self-heal-recording"
+name: "ISS-118 — Self-heal 动作记录到 self-heal.md 文件"
+category: "workflow-e2e"
+source: "issues/ISS-118.json"
+description: "验证 ISS-118 AC：所有自愈动作记录到 tests/results/fixes/{pattern-id}-self-heal.md，self-heal-recorder.sh 存在且可执行"
+safety_level: "safe"
+priority: "medium"
+tags: ["issue-driven", "iss-118", "self-heal", "recording"]
+
+steps:
+  - action: "bash_command"
+    params:
+      command: "ls tests/executors/self-heal-recorder.sh 2>/dev/null && echo EXISTS || echo MISSING"
+    description: "检查 self-heal-recorder.sh 存在"
+
+  - action: "bash_command"
+    params:
+      command: "grep -c 'self-heal' tests/executors/self-heal-recorder.sh 2>/dev/null || echo 0"
+    description: "检查 self-heal-recorder.sh 内容包含 self-heal 写入逻辑"
+
+  - action: "bash_command"
+    params:
+      command: "grep -c 'self.heal' .claude/skills/test-loop/SKILL.md 2>/dev/null || echo 0"
+    description: "SKILL.md 中记录了 self-heal-recorder.sh 调用规范"
+
+  - action: "bash_command"
+    params:
+      command: "ls tests/results/fixes/*-self-heal.md 2>/dev/null | wc -l"
+    description: "检查 results/fixes/ 目录是否有已生成的 self-heal.md 文件（历史记录）"
+
+assertions:
+  - type: "file_exists"
+    target: "tests/executors/self-heal-recorder.sh"
+    description: "所有自愈动作记录到 tests/results/fixes/{pattern-id}-self-heal.md 需要 self-heal-recorder.sh"
+
+  - type: "file_content"
+    target: "tests/executors/self-heal-recorder.sh"
+    expected: "self-heal"
+    description: "self-heal-recorder.sh 包含记录自愈动作到 -self-heal.md 的逻辑"
+
+timeout_seconds: 30

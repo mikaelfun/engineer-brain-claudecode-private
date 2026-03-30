@@ -18,6 +18,21 @@ ACTUAL_STATUS=$(sed -n 's/.*"actualStatus":[[:space:]]*"\([^"]*\)".*/\1/p' "$MET
 DAYS=$(sed -n 's/.*"daysSinceLastContact":[[:space:]]*\([0-9]*\).*/\1/p' "$META" | head -1)
 DAYS=${DAYS:-0}
 
+# Recalculate days: add calendar-day difference since statusJudgedAt to cached value
+JUDGED_AT=$(sed -n 's/.*"statusJudgedAt":[[:space:]]*"\([^"]*\)".*/\1/p' "$META" | head -1)
+if [ -n "$JUDGED_AT" ] && [ "$DAYS" -ge 0 ] 2>/dev/null; then
+  JUDGED_DATE=$(date -d "$JUDGED_AT" '+%Y-%m-%d' 2>/dev/null || echo "")
+  TODAY=$(date '+%Y-%m-%d')
+  if [ -n "$JUDGED_DATE" ] && [ "$JUDGED_DATE" != "$TODAY" ]; then
+    JUDGED_EPOCH=$(date -d "$JUDGED_DATE" +%s 2>/dev/null || echo "0")
+    TODAY_EPOCH=$(date -d "$TODAY" +%s 2>/dev/null || echo "0")
+    if [ "$JUDGED_EPOCH" -gt 0 ] 2>/dev/null && [ "$TODAY_EPOCH" -gt 0 ] 2>/dev/null; then
+      ELAPSED_DAYS=$(( (TODAY_EPOCH - JUDGED_EPOCH) / 86400 ))
+      DAYS=$(( DAYS + ELAPSED_DAYS ))
+    fi
+  fi
+fi
+
 IR_STATUS=$(sed -n 's/.*"irSla".*"status":[[:space:]]*"\([^"]*\)".*/\1/p' "$META" | head -1)
 # irSla 可能跨多行，用 awk 做更健壮的提取
 if [ -z "$IR_STATUS" ]; then
@@ -70,8 +85,10 @@ fi
 if [ "$ACTUAL_STATUS" = "researching" ]; then
   GREEN_ITEMS+=("技术排查中")
 fi
-if [ "$ENTITLEMENT_OK" = "true" ]; then
+if [ "$ENTITLEMENT_OK" = "true" ] && [ "$SERVICE_LEVEL" != "Unknown" ]; then
   GREEN_ITEMS+=("Entitlement 合规（${SERVICE_LEVEL}）")
+elif [ "$SERVICE_LEVEL" = "Unknown" ]; then
+  GREEN_ITEMS+=("Entitlement 未检查（compliance 未运行）")
 fi
 
 # --- 生成 todo 文件 ---

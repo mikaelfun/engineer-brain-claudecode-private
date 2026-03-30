@@ -1,0 +1,10 @@
+{
+  "id": "ISS-140",
+  "title": "observabilityStatus not persisted to state.json after probe execution",
+  "description": "Probe results are computed at runtime by health-check.sh but never written back to state.json via state-writer.sh. The observabilityStatus field in state.json stays as empty {}. This means probe data is lost across sessions and any consumer reading state.json directly gets no probe info.",
+  "type": "bug",
+  "priority": "P1",
+  "status": "implemented",
+  "createdAt": "2026-03-29T09:25:00+08:00",
+  "updatedAt": "2026-03-29T09:41:18.921Z"
+}

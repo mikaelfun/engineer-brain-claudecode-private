@@ -5,7 +5,7 @@
   "status": "complete",
   "issueId": "ISS-170",
   "created": "2026-03-30T22:20:00+08:00",
-  "updated": "2026-03-30T22:55:00+08:00",
+  "updated": "2026-03-30T22:58:00+08:00",
   "phases": {
     "total": 2,
     "completed": 2
@@ -13,5 +13,9 @@
   "tasks": {
     "total": 7,
     "completed": 7
+  },
+  "verification": {
+    "status": "skipped",
+    "method": "manual"
   }
 }

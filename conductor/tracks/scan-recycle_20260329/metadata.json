@@ -1,0 +1,17 @@
+{
+  "id": "scan-recycle_20260329",
+  "title": "SCAN 阶段回收 regression/retry/unverified 旧问题",
+  "type": "feature",
+  "status": "complete",
+  "issueId": "ISS-132",
+  "created": "2026-03-29T02:20:00Z",
+  "updated": "2026-03-29T02:45:00Z",
+  "phases": {
+    "total": 3,
+    "completed": 3
+  },
+  "tasks": {
+    "total": 8,
+    "completed": 8
+  }
+}

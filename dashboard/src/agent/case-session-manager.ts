@@ -12,14 +12,14 @@
  *
  * 注意: @anthropic-ai/claude-agent-sdk 提供 query() 函数
  */
-import { query, type Options, type SDKMessage, type CanUseTool } from '@anthropic-ai/claude-agent-sdk'
+import { query, type Options, type SDKMessage, type CanUseTool, type McpServerConfig } from '@anthropic-ai/claude-agent-sdk'
 import { readFileSync, existsSync, writeFileSync, mkdirSync, appendFileSync, readdirSync } from 'fs'
 import { join, resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { execSync } from 'child_process'
 import { sseManager } from '../watcher/sse-manager.js'
 import { getSSEEventType, formatMessageForSSE } from '../utils/sse-helpers.js'
-import type { PatrolProgress, PatrolTodoSummary } from '../types/index.js'
+import type { PatrolProgress, PatrolTodoSummary, ExecutionSummary, ToolCallRecord } from '../types/index.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -72,6 +72,23 @@ const activeOperations = new Map<string, ActiveOperation>()
 // Tracks active SDK query() AbortControllers for process cleanup
 // Key: caseNumber (or 'patrol-{caseNumber}' for patrol sessions)
 const activeQueries = new Map<string, AbortController>()
+
+// ---- Connection Timeout ----
+// SDK query() has internal exponential-backoff retry on ECONNREFUSED,
+// leading to ~180s total wait. We add a connection-level timeout that
+// aborts the query if no first message arrives within CONNECTION_TIMEOUT_MS.
+const CONNECTION_TIMEOUT_MS = 120_000 // 120 seconds — MCP servers (13+) need time to initialize
+
+/**
+ * Create a timer that auto-aborts the AbortController if no message arrives.
+ * Call clearConnectionTimeout() after receiving the first message.
+ */
+function setConnectionTimeout(ac: AbortController, label: string): ReturnType<typeof setTimeout> {
+  return setTimeout(() => {
+    console.error(`[SDK] Connection timeout (${CONNECTION_TIMEOUT_MS / 1000}s) for ${label} — aborting`)
+    try { ac.abort() } catch { /* ignore */ }
+  }, CONNECTION_TIMEOUT_MS)
+}
 
 /**
  * Register an AbortController for an active query.
@@ -188,6 +205,51 @@ function getCasesRoot(): string {
   }
   return ''
 }
+
+// ---- MCP Server Config ----
+
+// MCP servers relevant to case processing (subset of .mcp.json)
+// Excludes: playwright (browser), ado-* (ADO boards), workiq, OfficeMCP
+const CASE_MCP_SERVER_NAMES = ['icm', 'teams', 'mail', 'kusto', 'msft-learn', 'local-rag']
+
+// Cached MCP config (loaded once per process)
+let _mcpServersCache: Record<string, McpServerConfig> | null = null
+
+/**
+ * Load MCP server configs from project .mcp.json, filtered to case-relevant servers.
+ * Returns empty object if .mcp.json is missing or malformed (never blocks session creation).
+ */
+function getCaseMcpServers(): Record<string, McpServerConfig> {
+  if (_mcpServersCache !== null) return _mcpServersCache
+
+  const mcpConfigPath = join(getProjectRoot(), '.mcp.json')
+  try {
+    if (!existsSync(mcpConfigPath)) {
+      console.warn('[MCP] .mcp.json not found — sessions will run without MCP servers')
+      _mcpServersCache = {}
+      return _mcpServersCache
+    }
+
+    const raw = JSON.parse(readFileSync(mcpConfigPath, 'utf-8'))
+    const allServers: Record<string, any> = raw.mcpServers || {}
+    const filtered: Record<string, McpServerConfig> = {}
+
+    for (const name of CASE_MCP_SERVER_NAMES) {
+      if (allServers[name]) {
+        filtered[name] = allServers[name] as McpServerConfig
+      }
+    }
+
+    console.log(`[MCP] Loaded ${Object.keys(filtered).length} case MCP servers: ${Object.keys(filtered).join(', ')}`)
+    _mcpServersCache = filtered
+    return _mcpServersCache
+  } catch (err) {
+    console.warn('[MCP] Failed to load .mcp.json — sessions will run without MCP servers:', (err as Error).message)
+    _mcpServersCache = {}
+    return _mcpServersCache
+  }
+}
+
 
 // ---- Session Store (in-memory + file-backed) ----
 
@@ -376,6 +438,42 @@ export function writeStepLog(
   }
 }
 
+// ---- Execution Summary Extraction (ISS-136) ----
+
+/**
+ * Extract ExecutionSummary from collected SDK messages.
+ * Called by route handlers after session completes.
+ *
+ * @param messages - Raw SDK messages collected during session
+ * @param agentType - The agent/step type (e.g. 'full-process', 'data-refresh')
+ * @param mcpServerNames - MCP server names passed to the session
+ * @returns ExecutionSummary or null if extraction fails
+ */
+export function buildExecutionSummary(
+  toolCalls: ToolCallRecord[],
+  agentType: string,
+  turns: number,
+  mcpServerNames?: string[],
+): ExecutionSummary | null {
+  try {
+    return {
+      agentType,
+      turns,
+      mcpServers: mcpServerNames ?? Object.keys(getCaseMcpServers()),
+      toolCalls,
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Get the list of case MCP server names (for executionSummary).
+ */
+export function getCaseMcpServerNames(): string[] {
+  return Object.keys(getCaseMcpServers())
+}
+
 // Initialize on import
 loadSessionStore()
 loadSessionMessages()
@@ -422,6 +520,17 @@ function buildCaseAppendPrompt(caseNumber: string): string {
   const casesRoot = getCasesRoot()
   const caseDir = join(casesRoot, 'active', caseNumber)
 
+  // Inject CLAUDE.md project instructions (since we use settingSources: ['user'] to skip project MCP servers)
+  let claudeMd = ''
+  const claudeMdPath = join(getProjectRoot(), 'CLAUDE.md')
+  if (existsSync(claudeMdPath)) {
+    try {
+      claudeMd = `\n\n## Project Instructions (CLAUDE.md)\n${readFileSync(claudeMdPath, 'utf-8')}\n`
+    } catch {
+      // ignore
+    }
+  }
+
   // Inject case-summary.md as context anchor if it exists (root level, not context/)
   let caseSummary = ''
   const summaryPath = join(caseDir, 'case-summary.md')
@@ -443,7 +552,7 @@ function buildCaseAppendPrompt(caseNumber: string): string {
     }
   }
 
-  return `\nYou are processing Case ${caseNumber}.\nCase directory: ${caseDir}\n${caseSummary}`
+  return `${claudeMd}\nYou are processing Case ${caseNumber}.\nCase directory: ${caseDir}\n${caseSummary}`
 }
 
 // ---- SDK Session ID Extraction ----
@@ -517,6 +626,9 @@ export async function* processCaseSession(
 
   // Create AbortController for this query (ISS-086)
   const abortController = registerQuery(caseNumber)
+  // Connection timeout: abort if no first message within 30s
+  const connTimer = setConnectionTimeout(abortController, `process:${caseNumber}`)
+  let firstMessageReceived = false
 
   try {
     for await (const message of query({
@@ -524,19 +636,30 @@ export async function* processCaseSession(
       options: {
         abortController,
         cwd: getProjectRoot(),
-        settingSources: ['project'] as Options['settingSources'],
+        // settingSources: ['user'] — skip 'project' to avoid loading .mcp.json (300+ MCP tools
+        // overflow the API token limit). CLAUDE.md is injected via systemPrompt.append instead.
+        // Case-relevant MCP servers are explicitly passed via mcpServers option (ISS-134).
+        settingSources: ['user'] as Options['settingSources'],
+        mcpServers: getCaseMcpServers(),
         systemPrompt: {
           type: 'preset' as const,
           preset: 'claude_code' as const,
           append: buildCaseAppendPrompt(caseNumber),
         },
-        allowedTools: ['Read', 'Write', 'Bash', 'Glob', 'Grep', 'Agent'],
+        tools: ['Bash', 'Read', 'Write', 'Edit', 'Glob', 'Grep', 'Agent'],
+        allowedTools: ['Read', 'Write', 'Bash', 'Edit', 'Glob', 'Grep', 'Agent'],
         permissionMode: 'bypassPermissions',
         allowDangerouslySkipPermissions: true,
         maxTurns: 50,
+        stderr: (data: string) => console.error(`[SDK:stderr:${caseNumber}]`, data.trim()),
         ...(canUseTool ? { canUseTool } : {}),
       },
     })) {
+      // Clear connection timeout on first message
+      if (!firstMessageReceived) {
+        firstMessageReceived = true
+        clearTimeout(connTimer)
+      }
       // Capture SDK session ID from the first message that has it
       const msgSessionId = extractSessionId(message)
       if (msgSessionId && !sdkSessionId) {
@@ -567,11 +690,15 @@ export async function* processCaseSession(
       sessions[sdkSessionId].status = 'paused'
       saveSessionStore()
     }
-    // Clean up AbortController on normal completion (ISS-086)
+    // Clean up AbortController + connection timer on normal completion (ISS-086)
+    clearTimeout(connTimer)
     unregisterQuery(caseNumber)
   } catch (err) {
-    // Clean up AbortController on failure (ISS-086)
+    // Clean up AbortController + connection timer on failure (ISS-086)
+    clearTimeout(connTimer)
     unregisterQuery(caseNumber)
+    // Enhance error message for connection timeout
+    const isTimeout = !firstMessageReceived && (err as Error)?.message?.includes('abort')
     if (sdkSessionId && sessions[sdkSessionId]) {
       sessions[sdkSessionId].status = 'failed'
       // Clean up caseIndex so failed session doesn't block new sessions
@@ -579,6 +706,9 @@ export async function* processCaseSession(
         delete caseIndex[caseNumber]
       }
       saveSessionStore()
+    }
+    if (isTimeout) {
+      throw new Error(`SDK connection timeout: no response within ${CONNECTION_TIMEOUT_MS / 1000}s. Check that Claude Code CLI is installed and accessible.`)
     }
     throw err
   }
@@ -607,6 +737,9 @@ export async function* chatCaseSession(
 
   // Create AbortController for this query (ISS-086)
   const abortController = registerQuery(session.caseNumber)
+  // Connection timeout: abort if no first message within 30s
+  const connTimer = setConnectionTimeout(abortController, `chat:${session.caseNumber}`)
+  let firstMessageReceived = false
 
   try {
     for await (const message of query({
@@ -620,6 +753,11 @@ export async function* chatCaseSession(
         ...(canUseTool ? { canUseTool } : {}),
       },
     })) {
+      // Clear connection timeout on first message
+      if (!firstMessageReceived) {
+        firstMessageReceived = true
+        clearTimeout(connTimer)
+      }
       session.lastActivityAt = new Date().toISOString()
       saveSessionStore()
       yield message
@@ -627,17 +765,23 @@ export async function* chatCaseSession(
 
     session.status = 'paused' // Paused, can be resumed
     saveSessionStore()
-    // Clean up AbortController on normal completion (ISS-086)
+    // Clean up AbortController + connection timer on normal completion (ISS-086)
+    clearTimeout(connTimer)
     unregisterQuery(session.caseNumber)
   } catch (err) {
-    // Clean up AbortController on failure (ISS-086)
+    // Clean up AbortController + connection timer on failure (ISS-086)
+    clearTimeout(connTimer)
     unregisterQuery(session.caseNumber)
+    const isTimeout = !firstMessageReceived && (err as Error)?.message?.includes('abort')
     session.status = 'failed'
     // Clean up caseIndex so failed session doesn't block new sessions
     if (caseIndex[session.caseNumber] === sessionId) {
       delete caseIndex[session.caseNumber]
     }
     saveSessionStore()
+    if (isTimeout) {
+      throw new Error(`SDK connection timeout: no response within ${CONNECTION_TIMEOUT_MS / 1000}s. Check that Claude Code CLI is installed and accessible.`)
+    }
     throw err
   }
 }
@@ -749,27 +893,33 @@ After verification, output a single JSON block on a line by itself:
 
   // Fallback: standalone query
   const todoAbort = registerQuery(`todo-${caseNumber}`)
+  const todoConnTimer = setConnectionTimeout(todoAbort, `todo:${caseNumber}`)
+  let todoFirstMsg = false
   try {
     for await (const message of query({
       prompt,
       options: {
         abortController: todoAbort,
         cwd: getProjectRoot(),
-        settingSources: ['project'] as Options['settingSources'],
+        settingSources: ['user'] as Options['settingSources'],
+        mcpServers: getCaseMcpServers(),
         systemPrompt: {
           type: 'preset' as const,
           preset: 'claude_code' as const,
           append: buildCaseAppendPrompt(caseNumber),
         },
+        tools: ['Bash', 'Read', 'Write'],
         allowedTools: ['Bash', 'Read', 'Write'],
         permissionMode: 'bypassPermissions',
         allowDangerouslySkipPermissions: true,
         maxTurns: 10,
       },
     })) {
+      if (!todoFirstMsg) { todoFirstMsg = true; clearTimeout(todoConnTimer) }
       yield message
     }
   } finally {
+    clearTimeout(todoConnTimer)
     unregisterQuery(`todo-${caseNumber}`)
   }
 }

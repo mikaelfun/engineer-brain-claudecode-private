@@ -1,0 +1,12 @@
+{
+  "id": "ISS-164",
+  "title": "Create tests/recipes/ directory structure + seed from learnings.yaml",
+  "description": "## 目标\n\n为 test-loop 建立 Recipe Architecture 基础设施，从现有 learnings.yaml（34 条经验）中提取种子 recipes。\n\n## 工作内容\n\n1. 创建目录结构：\n   ```\n   tests/recipes/\n     README.md           → 引用 playbooks/guides/recipe-architecture.md\n     fix/_index.md        → Fix Strategy Recipe Index\n     scan/_index.md       → Scan Strategy Recipe Index\n     generation/_index.md → Test Generation Recipe Index\n   ```\n\n2. 从 learnings.yaml 提取 fix recipes 种子：\n   - env 类 learnings（dashboard-port-check, jwt-auth-token, node-kill-safety 等）→ env-service-down.md, auth-token-expired.md\n   - playwright 类 learnings（msedge-only, profile-path, snapshot-ban）→ playwright-environment.md\n   - framework 类 learnings（state-json-atomic-write, truncation-guard 等）→ state-corruption-recovery.md\n\n3. 每个 _index.md 遵循 recipe-architecture.md 的标准格式：匹配规则表 + 版本号 + 演进日志\n\n4. 每个 recipe 文件遵循标准格式：匹配条件 + 前置检查 + 执行步骤 + 常见坑\n\n## 依赖\n\n无。纯新增文件，不修改现有逻辑。可与 ISS-163 并行。\n\n## 注意\n\n- recipes 放在 tests/ 而非 playbooks/，因为由 test-loop Phase Retrospective 自动演进\n- playbooks/guides/recipe-architecture.md 保持不变（共享标准）\n- 此 issue 只建目录和种子文件，不修改 phase 文件的执行逻辑（那是 ISS-165/166/167 的事）",
+  "type": "feature",
+  "priority": "P1",
+  "status": "tracked",
+  "trackId": "recipe-seed_20260330",
+  "labels": ["test-framework", "recipe-architecture"],
+  "createdAt": "2026-03-30T10:00:00+08:00",
+  "updatedAt": "2026-03-30T10:05:00+08:00"
+}

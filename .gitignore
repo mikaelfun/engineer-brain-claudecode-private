@@ -4,6 +4,31 @@ cases/
 # Node modules
 node_modules/
 
+# Data directory (moved to ~/Documents/EngineerBrain-Data/)
+data/
+
+# MCP tools (moved to ~/.claude/mcp-servers/)
+tools/
+
+# Playwright MCP output (configured via --output-dir)
+.playwright-output/
+.playwright-cli/
+.playwright-mcp/
+
+# CC-Connect cache
+.cc-connect/
+
+# Screenshots (all regenerable via scripts/tests)
+scripts/screenshots/
+tests/results/screenshots/
+dashboard/screenshots-*/
+dashboard/test-screenshots-*/
+
+# Scattered images (no binary assets in this repo)
+*.png
+*.jpg
+*.jpeg
+
 # Environment files
 .env
 .env.local

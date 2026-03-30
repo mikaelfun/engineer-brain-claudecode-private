@@ -1,0 +1,9 @@
+{
+  "testId": "regression-waitagents-drift",
+  "round": 0,
+  "timestamp": "2026-03-28T14:10:54.000Z",
+  "status": "pass",
+  "assertions": [{"name":"Setup: backup created","pass":true,"expected":"backup exists","actual":"created at /tmp/e2e-backup-regression-waitagents-drift-1774706979"},{"name":"POST /api/case/:id/process","pass":true,"expected":"200|202","actual":"202"},{"name":"Casework completed within timeout","pass":true,"expected":"completed","actual":"completed"},{"name":"Valid JSON: timing.json","pass":true,"expected":"valid_json","actual":"valid"},{"name":"JSON field: phases not null","pass":true,"expected":"not_null","actual":"{\"init\":{\"seconds\":0,\"label\":\"mkdir logs + 写起始时间戳\"},\"changegate\":{\"seconds\":9,\"label\":\"PowerShell 比对 emails/notes/ICM 数量变化\"},\"decision\":{\"seconds\":14,\"label\":\"LLM 判断 NO_CHANGE/CHANGED → 选择快速/正常路径\"},\"fastpath\":{\"seconds\":2,\"label\":\"验证 Teams/合规/Judge/路由缓存是否仍有效\"},\"dataGathering\":{\"seconds\":11,\"label\":\"读 case-info + emails + notes + teams + meta → 构思 inspection 内容\"},\"inspection\":{\"seconds\":1,\"label\":\"写 inspection 报告 + todo 清单 + timing.json\"}}"}],
+  "error": null,
+  "duration_ms": 89734
+}
