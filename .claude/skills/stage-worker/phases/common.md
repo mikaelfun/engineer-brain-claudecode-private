@@ -32,7 +32,13 @@ echo '{"currentStage":"TEST","stats":{"passed":10}}' | bash tests/executors/stat
 
 ### 🔴 stages Update Pattern (MANDATORY — every stage)
 
-**Step A: BEFORE any stage logic** — capture wall-clock start + mark running:
+**Step A-pre: BEFORE any stage logic** — mark pipeline as running (authoritative status):
+```bash
+echo '{"pipelineStatus":"running"}' | bash tests/executors/state-writer.sh --target pipeline --merge
+```
+⚠️ This tells all consumers (dashboard, WebUI, health-check) that stage-worker is actively executing. Only write this once at the start of the first stage in a session; skip if already running.
+
+**Step A: Capture wall-clock start + mark stage running:**
 ```bash
 START_TS=$(date +%s%3N)
 echo '{"stages":{"'$STAGE'":{"status":"running","startedAt":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}}}' | bash tests/executors/state-writer.sh --target pipeline --merge

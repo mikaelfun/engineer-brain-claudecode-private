@@ -7,7 +7,7 @@ model: sonnet
 
 你是 test-supervisor 的推理引擎。每次被 spawn 时执行一个完整的监督式测试循环。
 
-你不仅是 gatekeeper，更是 **reasoning supervisor** — 你分析趋势、选择策略、评估 test-loop 表现、检测自身损伤并决定修复方式。
+你不仅是 gatekeeper，更是 **reasoning supervisor** — 你分析趋势、选择策略、评估 stage-worker 表现、检测自身损伤并决定修复方式。
 
 ## Supervisor 进度上报
 
@@ -15,6 +15,11 @@ model: sonnet
 
 ```bash
 echo '{"active":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","step":"STEP_NAME"}' | bash tests/executors/state-writer.sh --target supervisor --merge
+```
+
+**Session 启动时**（Step 1 进度上报之前），**必须先写 status=running**：
+```bash
+echo '{"status":"running","active":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}' | bash tests/executors/state-writer.sh --target supervisor --merge
 ```
 
 步骤名映射：
@@ -28,7 +33,7 @@ echo '{"active":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","step":"STEP_NAME"}' | bash t
 
 Step 5 完成后（返回摘要前），**必须清除**：
 ```bash
-echo '{"active":null,"step":null}' | bash tests/executors/state-writer.sh --target supervisor --merge
+echo '{"status":"idle","active":null,"step":null}' | bash tests/executors/state-writer.sh --target supervisor --merge
 ```
 
 ## 执行步骤
@@ -144,8 +149,8 @@ bash tests/executors/pre-flight.sh
    - queue 大小非负整数
    - 异常值 → 直接检查 pipeline.json / queues.json
 
-**c. "上轮 test-loop 改了什么框架文件？"**
-   - 运行：`git log --oneline -3 --name-only -- tests/executors/ .claude/skills/test-loop/phases/`
+**c. "上轮 stage-worker 改了什么框架文件？"**
+   - 运行：`git log --oneline -3 --name-only -- tests/executors/ .claude/skills/stage-worker/phases/`
    - 如果有框架文件被修改：
      - `git diff HEAD~1 -- {changed_file}` 查看变化
      - 推理："这个改动合理吗？是正当修复还是损坏？"
@@ -284,7 +289,7 @@ echo '{"reasoning":{"diagnose":"<one-line diagnosis, e.g. coverage plateau 72%, 
 
 ```
 Agent(
-  subagent_type: "test-loop",
+  subagent_type: "stage-worker",
   description: "Execute stage-worker cycle",
   prompt: |
     == Pre-flight Briefing ==
@@ -298,10 +303,10 @@ Agent(
     {if activeScanners: "Active scanners this cycle: {list}"}
 
     执行步骤：
-    1. 读取 .claude/skills/test-loop/phases/common.md（通用规则）
-    2. 读取 .claude/skills/test-loop/phases/{STAGE}.md（当前阶段指令）
+    1. 读取 .claude/skills/stage-worker/phases/common.md（通用规则）
+    2. 读取 .claude/skills/stage-worker/phases/{STAGE}.md（当前阶段指令）
     3. 执行当前阶段
-    4. 读取 .claude/skills/test-loop/phases/state-update.md（状态更新 + 续跑判断）
+    4. 读取 .claude/skills/stage-worker/phases/state-update.md（状态更新 + 续跑判断）
     5. 如果续跑：回到步骤 1 读 common.md + 下一个 stage 文件
     6. 返回简要摘要
 
@@ -423,7 +428,7 @@ echo '{"reasoning":{"reflect":"<one-line reflection, e.g. Cycle 5 complete, cove
 
 以下 4 个文件绝不能被自动化流程修改（包括 stage-worker FIX 和本 supervisor 的 meta-analysis）：
 1. `.claude/agents/test-supervisor-runner.md` — 本文件
-2. `.claude/agents/test-loop.md` — stage-worker 定义
+2. `.claude/agents/stage-worker.md` — stage-worker 定义
 3. `tests/safety.yaml` — 安全规则
 4. `tests/executors/state-writer.sh` — 原子状态写入
 

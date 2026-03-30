@@ -1,0 +1,12 @@
+{
+  "id": "ISS-180",
+  "title": "State tracking lacks authoritative running/idle status",
+  "description": "pipeline.currentStage means 'next step to execute' not 'currently executing', causing dashboard and WebUI to show RUNNING when everything is idle. Root causes: (1) pipeline.json has no idle concept — currentStage is always SCAN/GENERATE/TEST/FIX/VERIFY; (2) dashboard-renderer infers health via heuristics (sup.active timestamp + 30min window, .progress-*.json file existence) instead of authoritative fields; (3) supervisor.json step rendering doesn't handle 'all done + idle' state; (4) WebUI SSE backend uses same fuzzy inference. Fix: add authoritative status field (idle|running|waiting) to pipeline.json and supervisor.json, have stage-worker and supervisor-runner explicitly write on start/end, update all consumers (dashboard-renderer, WebUI SSE, health-check) to read authoritative status.",
+  "type": "bug",
+  "priority": "P1",
+  "status": "tracked",
+  "trackId": "state-authority_20260330",
+  "testLoopScan": true,
+  "createdAt": "2026-03-30T16:05:00+08:00",
+  "updatedAt": "2026-03-30T16:05:00+08:00"
+}

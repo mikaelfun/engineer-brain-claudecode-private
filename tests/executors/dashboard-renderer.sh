@@ -1,32 +1,28 @@
 #!/usr/bin/env bash
 # tests/executors/dashboard-renderer.sh — Deterministic CLI Dashboard
 #
-# Reads state.json + round summaries + discoveries + evolution + directives
+# Reads split state files (pipeline.json, queues.json, stats.json, supervisor.json)
+# + cycle summaries + discoveries + evolution + directives
 # and outputs a formatted one-screen dashboard to stdout.
 #
 # Usage: bash tests/executors/dashboard-renderer.sh
-# Output: Plain text, ≤25 lines, deterministic (no LLM variance)
+# Output: Plain text, deterministic (no LLM variance)
 
 set -u
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
 
-STATE_FILE="$TESTS_ROOT/state.json"
-DIRECTIVES_FILE="$TESTS_ROOT/directives.json"
-DISCOVERIES_FILE="$TESTS_ROOT/discoveries.json"
-EVOLUTION_FILE="$TESTS_ROOT/evolution.json"
-
 # ============================================================
-# Graceful fallback if state.json doesn't exist
+# Graceful fallback if pipeline.json doesn't exist
 # ============================================================
-if [ ! -f "$STATE_FILE" ]; then
+if [ ! -f "$PIPELINE_FILE" ]; then
   cat << 'EOF'
 ┌───────────────────────────────────────────────────────────┐
-│  🧪 Test Supervisor   R0/0 │ UNKNOWN │ ⚠️ warning        │
+│  🧪 Test Supervisor   C0/0 │ UNKNOWN │ ⚠️ WARNING        │
 ├───────────────────────────────────────────────────────────┤
 │  ⚠️ Attention ────────────────────────────────────────── │
-│  🔴 state.json not found — test loop not initialized     │
+│  🔴 pipeline.json not found — test framework not init    │
 │                                                           │
 │  📊 0✅ 0❌ 0🔧 0⏭️  │ 0% cov                          │
 │  📋 Queues  T:0  F:0  V:0  R:0                           │
@@ -37,13 +33,15 @@ fi
 
 # ============================================================
 # Single Node.js invocation — pass all paths as env vars
-# (Git Bash translates POSIX→Windows in env vars, not in strings)
 # ============================================================
 DASHBOARD_OUTPUT=$(
-  DB_STATE="$STATE_FILE" \
-  DB_DIRECTIVES="$DIRECTIVES_FILE" \
-  DB_DISCOVERIES="$DISCOVERIES_FILE" \
-  DB_EVOLUTION="$EVOLUTION_FILE" \
+  DB_PIPELINE="$PIPELINE_FILE" \
+  DB_QUEUES="$QUEUES_FILE" \
+  DB_STATS="$STATS_FILE" \
+  DB_SUPERVISOR="$SUPERVISOR_FILE" \
+  DB_DIRECTIVES="$TESTS_ROOT/directives.json" \
+  DB_DISCOVERIES="$TESTS_ROOT/discoveries.json" \
+  DB_EVOLUTION="$TESTS_ROOT/evolution.json" \
   DB_RESULTS="$RESULTS_DIR" \
   DB_TESTS_ROOT="$TESTS_ROOT" \
   NODE_PATH="$DASHBOARD_DIR/node_modules" \
@@ -51,71 +49,93 @@ DASHBOARD_OUTPUT=$(
 const fs = require('fs');
 const path = require('path');
 
-const STATE = process.env.DB_STATE;
+const PIPELINE = process.env.DB_PIPELINE;
+const QUEUES = process.env.DB_QUEUES;
+const STATS = process.env.DB_STATS;
+const SUPERVISOR = process.env.DB_SUPERVISOR;
 const DIRECTIVES = process.env.DB_DIRECTIVES;
 const DISCOVERIES = process.env.DB_DISCOVERIES;
 const EVOLUTION = process.env.DB_EVOLUTION;
 const RESULTS = process.env.DB_RESULTS;
 const TESTS_ROOT = process.env.DB_TESTS_ROOT;
 
-const state = JSON.parse(fs.readFileSync(STATE, 'utf8'));
-const round = state.round || 0;
-const maxRounds = state.maxRounds || 50;
-const phase = state.phase || 'UNKNOWN';
-const st = state.stats || {};
-const passed = st.passed || 0;
-const failed = st.failed || 0;
-const fixed = st.fixed || 0;
-const skipped = st.skipped || 0;
+// ---- Read split state files ----
+const pl = JSON.parse(fs.readFileSync(PIPELINE, 'utf8'));
+let q = {}; try { q = JSON.parse(fs.readFileSync(QUEUES, 'utf8')); } catch(e) {}
+let st = {}; try { st = JSON.parse(fs.readFileSync(STATS, 'utf8')); } catch(e) {}
+let sup = {}; try { sup = JSON.parse(fs.readFileSync(SUPERVISOR, 'utf8')); } catch(e) {}
+
+// ---- Core fields (new terminology) ----
+const cycle = pl.cycle || 0;
+const maxCycles = pl.maxCycles || 80;
+const currentStage = pl.currentStage || 'UNKNOWN';
+const stages = pl.stages || {};
+const currentTest = pl.currentTest || '';
+const stageProgress = pl.stageProgress || null;
+
+const cum = st.cumulative || {};
+const passed = cum.passed || 0;
+const failed = cum.failed || 0;
+const fixed = cum.fixed || 0;
+const skipped = cum.skipped || 0;
 
 // ---- Queues ----
-const testQ = state.testQueue || [];
-const fixQ = state.fixQueue || [];
-const verifyQ = state.verifyQueue || [];
-const regrQ = state.regressionQueue || [];
-const getId = x => { const id = typeof x === 'string' ? x : (x.testId || '?'); return id.length > 15 ? id.slice(0,13)+'..' : id; };
-const tqH = testQ.slice(0,2).map(getId);
-const fqH = fixQ.slice(0,2).map(getId);
-const vqH = verifyQ.slice(0,2).map(getId);
-const rqH = regrQ.slice(0,2).map(getId);
+const testQ = q.testQueue || [];
+const fixQ = q.fixQueue || [];
+const verifyQ = q.verifyQueue || [];
+const regrQ = q.regressionQueue || [];
+const skipReg = q.skipRegistry || [];
+const getId = x => typeof x === 'string' ? x : (x.testId || '?');
+const tqH = testQ.map(getId);
+const fqH = fixQ.map(getId);
+const vqH = verifyQ.map(getId);
+const rqH = regrQ.map(getId);
 
 // ---- Health ----
 const now = Date.now();
-const ph = state.phaseHistory || [];
+// Use the most recent stage completedAt as last activity
 let lastAct = null;
-for (let i = ph.length - 1; i >= 0; i--) {
-  const ts = ph[i].timestamp || ph[i].completedAt;
-  if (ts) { lastAct = ts; break; }
+const STAGE_ORDER = ['SCAN','GENERATE','TEST','FIX','VERIFY'];
+for (const sn of STAGE_ORDER) {
+  const sg = stages[sn];
+  if (sg && sg.completedAt) {
+    if (!lastAct || new Date(sg.completedAt) > new Date(lastAct)) lastAct = sg.completedAt;
+  }
 }
-if (!lastAct) lastAct = state.lastRoundAt || state.startedAt || null;
+// Fallback: check pipeline.json mtime
 try {
-  const mt = fs.statSync(STATE).mtime;
+  const mt = fs.statSync(PIPELINE).mtime;
   if (!lastAct || mt > new Date(lastAct)) lastAct = mt.toISOString();
 } catch(e) {}
+
 const stuckTests = fixQ.filter(t => (t.retryCount || 0) >= 3);
 let hasIP = false;
 try {
   hasIP = fs.readdirSync(RESULTS).filter(f => f.startsWith('.progress-') && f.endsWith('.json')).length > 0;
 } catch(e) {}
-if (!hasIP && state.currentTest) hasIP = true;
-// Runner-level activity: runner writes runnerActive timestamp on start, clears on end
+if (!hasIP && currentTest) hasIP = true;
+
+// Supervisor-level activity: read authoritative status fields
 let runnerActive = false;
-if (state.runnerActive) {
-  const ra = new Date(state.runnerActive).getTime();
-  // Consider runner active if timestamp is within last 30 minutes
-  if (now - ra < 30*60*1000) { runnerActive = true; hasIP = true; }
-}
+const supStep = sup.step || null;
+const supStatus = sup.status || 'idle';
+const plStatus = pl.pipelineStatus || 'idle';
+if (supStatus === 'running' || plStatus === 'running') { runnerActive = true; hasIP = true; }
+
 let staleSince = null;
 if (lastAct) {
   const el = now - new Date(lastAct).getTime();
   if (el > 30*60*1000 && !hasIP) staleSince = lastAct;
 }
-let health = 'healthy';
-if (staleSince) health = 'stale';
-else if (stuckTests.length > 0) health = 'stuck';
-else if (hasIP) health = 'running';
-else if (fixQ.length > 0) health = 'warning';
-const hE = {healthy:'\u2705',running:'\ud83c\udfc3',warning:'\u26a0\ufe0f',stuck:'\ud83d\udd12',stale:'\ud83d\udca4'}[health]||'?';
+
+let health = 'HEALTHY';
+if (supStatus === 'idle' && plStatus === 'idle' && !hasIP) health = fixQ.length > 0 ? 'PENDING' : 'IDLE';
+else if (currentStage === 'IDLE' && !hasIP) health = fixQ.length > 0 ? 'PENDING' : 'IDLE';
+else if (staleSince) health = 'STALE';
+else if (stuckTests.length > 0) health = 'STUCK';
+else if (hasIP) health = 'RUNNING';
+else if (fixQ.length > 0) health = 'WARNING';
+const hE = {IDLE:'\u2705',HEALTHY:'\u2705',RUNNING:'\ud83c\udfc3',WARNING:'\u26a0\ufe0f',PENDING:'\u26a0\ufe0f',STUCK:'\ud83d\udd12',STALE:'\ud83d\udca4'}[health]||'?';
 
 // ---- Coverage ----
 const regDir = path.join(TESTS_ROOT, 'registry');
@@ -124,7 +144,7 @@ try {
   for (const sub of fs.readdirSync(regDir,{withFileTypes:true}).filter(d=>d.isDirectory()))
     regCnt += fs.readdirSync(path.join(regDir,sub.name)).filter(f=>f.endsWith('.yaml')||f.endsWith('.yml')).length;
 } catch(e) {}
-const total = regCnt || st.totalTests || 0;
+const total = regCnt || 0;
 const passIds = new Set();
 try {
   for (const rf of fs.readdirSync(RESULTS).filter(f=>f.endsWith('.json')&&!f.includes('summary')&&!f.startsWith('.'))) {
@@ -133,10 +153,12 @@ try {
 } catch(e) {}
 const covPct = total > 0 ? (passIds.size/total*100).toFixed(1) : '0.0';
 
-// ---- Per-round metrics from latest round summary ----
+// ---- Per-cycle metrics from latest cycle summary ----
+// Support both naming: cycle-N-summary.json (new) and round-N-summary.json (legacy)
 let greenRate = null, regrRate = null, fixThru = null;
 try {
-  const sf = path.join(RESULTS, 'round-'+round+'-summary.json');
+  let sf = path.join(RESULTS, 'cycle-'+cycle+'-summary.json');
+  if (!fs.existsSync(sf)) sf = path.join(RESULTS, 'round-'+cycle+'-summary.json');
   if (fs.existsSync(sf)) {
     const summary = JSON.parse(fs.readFileSync(sf, 'utf8'));
     const ss = summary.stats || {};
@@ -146,47 +168,43 @@ try {
   }
 } catch(e) {}
 
-// ---- Phase progress ----
+// ---- Stage pipeline progress ----
 const PHASES = ['SCAN','GENERATE','TEST','FIX','VERIFY'];
-const rj = state.roundJourney || {};
 const pSym = (p,i) => {
-  const s = rj[p] ? rj[p].status : 'pending';
-  if (p === phase && s !== 'done') return '\ud83d\udd36';
-  // If phase is after current phase, treat as pending regardless of stale data
-  const ci = PHASES.indexOf(phase);
+  const s = stages[p] ? stages[p].status : 'pending';
+  if (p === currentStage && s !== 'done') return '\ud83d\udd36';
+  const ci = PHASES.indexOf(currentStage);
   if (ci >= 0 && i > ci) return '\u2b1c';
   if (s === 'done') return '\u2705';
   return '\u2b1c';
 };
 const fDur = ms => { if(!ms||ms<=0) return '\u2014'; const s=Math.round(ms/1000); if(s<60) return s+'s'; const m=Math.floor(s/60),r=s%60; return r>0?m+'m'+r+'s':m+'m'; };
 const pLine = PHASES.map((p,i)=>pSym(p,i)+p).join('\u2501\u2501\u25b6');
-// Only show duration for phases that are done AND come before/at current phase
-const curIdx = PHASES.indexOf(phase);
+const curIdx = PHASES.indexOf(currentStage);
 const dLine = PHASES.map((p,i) => {
-  const pj = rj[p];
-  // Currently running phase: show elapsed time with ~ prefix + progress
-  if (p === phase && pj && pj.status === 'running' && pj.startedAt) {
-    const elapsed = now - new Date(pj.startedAt).getTime();
+  const sg = stages[p];
+  // Currently running stage: show elapsed time with ~ prefix + progress
+  if (p === currentStage && sg && sg.status === 'running' && sg.startedAt) {
+    const elapsed = now - new Date(sg.startedAt).getTime();
     let label = '~'+fDur(elapsed);
-    const pp = state.phaseProgress;
-    if (pp && pp.current && pp.total) label += ' '+pp.current+'/'+pp.total;
+    if (stageProgress && stageProgress.current && stageProgress.total) label += ' '+stageProgress.current+'/'+stageProgress.total;
     return label.padEnd(10);
   }
-  if (!pj || pj.status !== 'done') return '\u2014'.padEnd(5);
-  // If phase is after current running phase, it's stale data from previous round — hide it
+  if (!sg || sg.status !== 'done') return '\u2014'.padEnd(5);
   if (i > curIdx && curIdx >= 0) return '\u2014'.padEnd(5);
-  return fDur(pj.duration_ms || 0).padEnd(5);
+  return fDur(sg.duration_ms || 0).padEnd(5);
 }).join('      ');
 
-// ---- Trend (last 3 rounds) ----
+// ---- Trend (last 3 cycles) ----
 const trend = [];
-for (let r=round-2; r<=round; r++) {
+for (let r=cycle-2; r<=cycle; r++) {
   if (r<1) { trend.push(null); continue; }
-  const sf = path.join(RESULTS, 'round-'+r+'-summary.json');
+  // Try cycle-N first, then round-N (backward compat)
+  let sf = path.join(RESULTS, 'cycle-'+r+'-summary.json');
+  if (!fs.existsSync(sf)) sf = path.join(RESULTS, 'round-'+r+'-summary.json');
   try { trend.push(JSON.parse(fs.readFileSync(sf,'utf8')).stats||{}); }
   catch(e) {
-    if (r===round) {
-      // Use cumulative state.stats for current round (most accurate)
+    if (r===cycle) {
       trend.push({passed:passed,failed:failed,fixed:fixed});
     } else trend.push(null);
   }
@@ -199,15 +217,19 @@ const tStr = (l,v) => l+': '+v.map(x=>x!==null?String(x):'\u2014').join('\u2192'
 // ---- Attention ----
 const att = [];
 for (const fq of fixQ) { if (fq.category==='framework'&&(fq.priority===1||fq.priority==='1')) att.push('\ud83d\udd34 Framework fix: '+fq.testId); }
-if (health==='stuck') att.push('\ud83d\udd34 Health: stuck ('+stuckTests.length+' test(s) retried 3+ times)');
-if (health==='stale') { const sm=Math.round((now-new Date(staleSince).getTime())/60000); att.push('\ud83d\udfe1 Stale: no activity for '+sm+' min'); }
+if (health==='STUCK') att.push('\ud83d\udd34 Health: stuck ('+stuckTests.length+' test(s) retried 3+ times)');
+if (health==='STALE') { const sm=Math.round((now-new Date(staleSince).getTime())/60000); att.push('\ud83d\udfe1 Stale: no activity for '+sm+' min'); }
+if (skipReg.length > 0) { att.push('\ud83d\udfe1 '+skipReg.length+' tests in skipRegistry'); }
 try {
   const disc=JSON.parse(fs.readFileSync(DISCOVERIES,'utf8'));
   const ds=disc.summary||{};
   const dt=(ds.totalDiscoveries||0), dr=(ds.regressions||0);
   if (dt>0&&dr/dt>0.5) att.push('\ud83d\udfe1 Regressions: '+dr+'/'+dt+' ('+Math.round(dr/dt*100)+'%)');
 } catch(e) {}
-if (trend.every(t=>t!==null)&&pVals[0]===pVals[1]&&pVals[1]===pVals[2]&&pVals[0]!==null) att.push('\ud83d\udfe1 Coverage flat for 3 rounds');
+if (trend.every(t=>t!==null)&&pVals[0]===pVals[1]&&pVals[1]===pVals[2]&&pVals[0]!==null) att.push('\ud83d\udfe1 Coverage flat for 3 cycles');
+// Self-heal event
+const she = sup.selfHealEvent;
+if (she) att.push('\ud83d\udfe0 Self-heal: '+(she.description||she.type||'active'));
 
 // ---- Probes ----
 let obs = {total:0,pass:0,fail:0,stale:0};
@@ -221,54 +243,68 @@ try {
   obs.total=pIds.length; let pp=0,pf=0,ps=0;
   for (const pid of pIds) {
     try { const pFiles=fs.readdirSync(RESULTS).filter(f=>f.endsWith('-'+pid+'.json')).sort().reverse();
-      if(pFiles.length>0) { const pr=JSON.parse(fs.readFileSync(path.join(RESULTS,pFiles[0]),'utf8')); if(pr.status==='pass') pp++; else pf++; if((round-(pr.round||0))>5) ps++; }
+      if(pFiles.length>0) { const pr=JSON.parse(fs.readFileSync(path.join(RESULTS,pFiles[0]),'utf8')); if(pr.status==='pass') pp++; else pf++; if((cycle-(pr.round||pr.cycle||0))>5) ps++; }
     } catch(e) {}
   }
   obs={total:pIds.length,pass:pp,fail:pf,stale:ps};
   if (ps>0) att.push('\ud83d\udfe1 '+ps+' stale probe(s)');
 } catch(e) {}
-const attItems = att.slice(0,3);
+const attItems = att;
 
 // ---- Directives ----
 let pendDir=0, paused=false;
 try { const d=JSON.parse(fs.readFileSync(DIRECTIVES,'utf8')); pendDir=(d.directives||[]).filter(x=>x.status==='pending').length; paused=!!d.paused; } catch(e) {}
+
+// ---- Scan Strategy ----
+const scanStrat = st.scanStrategy || {};
+const recipesUsed = (scanStrat.recipesUsed || []).join(', ') || 'frequency-only';
 
 // ---- Evolution ----
 let evoCnt=0, evoLast='\u2014';
 try { const e=JSON.parse(fs.readFileSync(EVOLUTION,'utf8')); const ent=e.entries||[]; evoCnt=ent.length; if(ent.length>0) evoLast=ent[ent.length-1].id||'\u2014'; } catch(e) {}
 
 // ---- Render ----
-const W=61;
+let W=61;
+
+const qS = (l,a,h) => l+':'+a.length+(a.length>0&&h.length?' '+h.join(', '):'');
+const qItems = [qS('T',testQ,tqH),qS('F',fixQ,fqH),qS('V',verifyQ,vqH),qS('R',regrQ,rqH)];
+for (const ai of attItems) W = Math.max(W, ai.length + 6);
+W = Math.min(W, 100);
 const ln = s => '\u2502  '+s.padEnd(W-4)+'\u2502';
 const O = [];
 O.push('\u250c'+'\u2500'.repeat(W-2)+'\u2510');
-const hdr = '  \ud83e\uddea Test Supervisor   R'+round+'/'+maxRounds+' \u2502 '+phase+' \u2502 '+hE+' '+health;
+const hdr = '  \ud83e\uddea Test Supervisor   C'+cycle+'/'+maxCycles+' \u2502 '+currentStage+' \u2502 '+hE+' '+health;
 O.push('\u2502'+hdr.padEnd(W-2)+'\u2502');
 O.push('\u251c'+'\u2500'.repeat(W-2)+'\u2524');
 O.push(ln(''));
-// ---- Runner progress (only shown when runner is active) ----
-if (runnerActive && state.runnerStep) {
-  const RS = ['preflight','strategic','test-loop','meta','summary'];
-  const RSL = {preflight:'Pre-flight',strategic:'Strategy',['test-loop']:'Test-Loop',meta:'Meta',summary:'Done'};
-  const rsi = RS.indexOf(state.runnerStep);
+// ---- Supervisor reasoning progress ----
+if (runnerActive && supStep) {
+  const RS = ['observe','diagnose','decide','act','reflect'];
+  const RSL = {observe:'Observe',diagnose:'Diagnose',decide:'Decide',act:'Act',reflect:'Reflect'};
+  const rsi = RS.indexOf(supStep);
   const rpLine = RS.map((s,i) => {
     const label = RSL[s]||s;
-    if (i < rsi) return '\u2705'+label;
+    if (rsi >= 0 && i < rsi) return '\u2705'+label;
     if (i === rsi) return '\ud83d\udd36'+label;
     return '\u2b1c'+label;
-  }).join('\u2501');
-  const elapsed = Math.round((now - new Date(state.runnerActive).getTime())/1000);
+  }).join(' \u2192 ');
+  const elapsed = Math.round((now - new Date(sup.active).getTime())/1000);
   const eStr = elapsed < 60 ? elapsed+'s' : Math.floor(elapsed/60)+'m'+elapsed%60+'s';
-  O.push(ln('\ud83e\udd16 Runner  '+eStr));
+  O.push(ln('\ud83e\udd16 Supervisor  '+eStr));
   O.push(ln(rpLine));
+  O.push(ln(''));
+} else if (supStatus === 'idle' && sup.reasoning && Object.keys(sup.reasoning).length > 0) {
+  // Supervisor completed all steps and is idle — show last reasoning summary
+  const lastKey = Object.keys(sup.reasoning).pop();
+  const lastVal = sup.reasoning[lastKey] || '';
+  const summary = lastVal.length > 60 ? lastVal.substring(0, 57) + '...' : lastVal;
+  O.push(ln('\ud83e\udd16 Supervisor  idle \u2502 last: ' + summary));
   O.push(ln(''));
 }
 O.push(ln(pLine));
 O.push(ln(dLine));
-// Show current test being processed (if any)
-const ct = state.currentTest || '';
-if (ct) {
-  const ctShort = ct.length > 45 ? ct.slice(0,43)+'..' : ct;
+if (currentTest) {
+  const ctShort = currentTest.length > 45 ? currentTest.slice(0,43)+'..' : currentTest;
   O.push(ln('  \u25b6 '+ctShort));
 }
 O.push(ln(''));
@@ -282,20 +318,53 @@ const rrS = regrRate!==null?regrRate+'%':'\u2014';
 const ftS = fixThru!==null?fixThru+'%':'\u2014';
 O.push(ln('   GR:'+grS+' Regr:'+rrS+' FixThru:'+ftS));
 O.push(ln(''));
-const tR=[round-2,round-1,round].map(r=>r<1?'\u2014':'R'+r).join('\u2192');
+const tR=[cycle-2,cycle-1,cycle].map(r=>r<1?'\u2014':'C'+r).join('\u2192');
 O.push(ln('\ud83d\udcc8 Trend ('+tR+')'));
 O.push(ln(tStr('passed',pVals)+'  '+tStr('fixed',fVals)));
 O.push(ln(''));
-const qS = (l,a,h) => l+':'+a.length+(a.length>0&&h.length?' '+h.join(','):'');
 O.push(ln('\ud83d\udccb Queues'));
-// Compact: show counts + heads, truncate if too long
-let qLine = [qS('T',testQ,tqH),qS('F',fixQ,fqH),qS('V',verifyQ,vqH),qS('R',regrQ,rqH)].join('  ');
-if (qLine.length > W-6) qLine = qLine.slice(0, W-9) + '...';
-O.push(ln(qLine));
+const maxQLen = W - 8;
+for (const qi of qItems) {
+  if (qi.length <= maxQLen) { O.push(ln('  '+qi)); }
+  else {
+    const prefix = qi.match(/^[TFVR]:\\d+ /);
+    const pfx = prefix ? prefix[0] : '';
+    const rest = qi.slice(pfx.length);
+    const ids = rest.split(', ');
+    let line = pfx;
+    for (let k = 0; k < ids.length; k++) {
+      const add = (line === pfx ? '' : ', ') + ids[k];
+      if ((line + add).length > maxQLen && line !== pfx) {
+        O.push(ln('  '+line));
+        line = '  ' + ids[k];
+      } else {
+        line += add;
+      }
+    }
+    if (line) O.push(ln('  '+line));
+  }
+}
 O.push(ln(''));
 O.push(ln('\ud83d\udd2d Probes: '+obs.pass+'\u2705 '+obs.fail+'\u274c ('+obs.stale+' stale)'));
 O.push(ln('\ud83d\udcdd Directives: '+pendDir+' pending'+(paused?' \u2502 \u23f8\ufe0f PAUSED':'')));
+O.push(ln('\ud83d\udd0d Recipes: '+recipesUsed));
 O.push(ln('\ud83e\uddec Evolution: '+evoCnt+' iterations \u2502 last: '+evoLast));
+// ---- Last Reasoning ----
+const reas = sup.reasoning || {};
+const lastReas = reas.reflect || reas.act || reas.decide || reas.diagnose || reas.observe || null;
+if (lastReas) {
+  O.push(ln(''));
+  O.push(ln('\ud83e\udde0 Last Reasoning'));
+  const maxLen = W - 8;
+  let remaining = lastReas;
+  while (remaining.length > 0) {
+    if (remaining.length <= maxLen) { O.push(ln('  '+remaining)); break; }
+    let cut = remaining.lastIndexOf(' ', maxLen);
+    if (cut <= 0) cut = maxLen;
+    O.push(ln('  '+remaining.slice(0, cut)));
+    remaining = remaining.slice(cut).trimStart();
+  }
+}
 O.push('\u2514'+'\u2500'.repeat(W-2)+'\u2518');
 console.log(O.join(String.fromCharCode(10)));
 " 2>&1)

@@ -45,6 +45,7 @@ After state update, check for catastrophic failure patterns that require immedia
 1. **TEST stage**: Did ALL tests in this batch fail with the same root error message?
    - Same-cause rate > 90% AND batch size ≥ 3 → **earlyExit**
    - Mark in stages: `"earlyExit": true, "earlyExitReason": "same-cause catastrophic failure: {error}"`
+   - **Mark pipeline idle**: `echo '{"pipelineStatus":"idle"}' | bash tests/executors/state-writer.sh --target pipeline --merge`
    - Skip continuation → return summary immediately
 
 2. **FIX stage**: Did ALL fix attempts fail (0 moved to verifyQueue)?
@@ -68,6 +69,12 @@ Read updated pipeline.json:
 4. next = VERIFY and verifyQueue.length ≤ 2 → ⚡ continue
 5. Otherwise (large queue TEST/FIX/VERIFY) → return summary
 ```
+
+**Before returning** (cases 1 and 5, i.e., when NOT continuing), mark pipeline idle:
+```bash
+echo '{"pipelineStatus":"idle"}' | bash tests/executors/state-writer.sh --target pipeline --merge
+```
+⚠️ Only write `pipelineStatus:"idle"` when stage-worker is about to return to supervisor. Do NOT write it when continuing to next stage.
 
 **Design**: SCAN (~30s) + GENERATE (~1min) are short — don't waste a tick. Chain SCAN→GENERATE→TEST in one invocation.
 

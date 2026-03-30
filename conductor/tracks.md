@@ -133,3 +133,5 @@
 | [x] | test-arch-refactor_20260330 | Test Architecture Refactor — Pipeline Model | 2026-03-30 | 2026-03-30 |
 | [x] | testlab-ui-polish_20260330 | TestLab UI 美化 — Design A Mission Control | 2026-03-30 | 2026-03-30 |
 | [x] | runner-cli-sync_20260330 | TestLab Runner 状态与 CLI Run 同步 | 2026-03-30 | 2026-03-30 |
+| [~] | state-authority_20260330 | State Tracking Authoritative Status | 2026-03-30 | 2026-03-30 |
+| [x] | issue-dedup_20260330 | /issue Skill 相似 Issue 检测 + 合并/Reopen | 2026-03-30 | 2026-03-30 | | /issue Skill 相似 Issue 检测 + 合并/Reopen | 2026-03-30 | 2026-03-30 |
