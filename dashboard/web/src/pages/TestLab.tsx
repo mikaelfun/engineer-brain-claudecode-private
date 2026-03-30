@@ -32,7 +32,7 @@ import {
   CheckCircle, XCircle, Wrench, SkipForward, Activity,
   Bug, Play, Square, Zap, Milestone, ChevronDown, ChevronUp,
 } from 'lucide-react'
-import { BASE_URL } from '../api/client'
+import { BASE_URL, apiGet } from '../api/client'
 
 // ============ Stage Color Map ============
 
@@ -215,7 +215,8 @@ function TestLabHeader({ pipelineData }: { pipelineData: any }) {
   const lastRunAt = runnerStatus?.lastRunAt
   const isRunning = status === 'running'
   const isWaiting = status === 'waiting'
-  const isExternal = status === 'external'
+  // Detect external: either backend says 'external', or runner idle but pipeline has active stage
+  const isExternal = status === 'external' || (status === 'idle' && !!pipelineData?.currentStage)
   const isActive = isRunning || isWaiting || isExternal
   const loopEnabled = runnerStatus?.loop || false
   const runsCompleted = runnerStatus?.runsCompleted || 0
@@ -346,7 +347,7 @@ function TestLabHeader({ pipelineData }: { pipelineData: any }) {
           )}
 
           {/* Start button (when idle, not external) */}
-          {status === 'idle' && (
+          {status === 'idle' && !isExternal && (
             <div ref={startMenuRef} style={{ position: 'relative' }}
               onKeyDown={(e) => { if (e.key === 'Escape' && showStartMenu) { setShowStartMenu(false); e.stopPropagation() } }}
             >
@@ -448,13 +449,17 @@ const REASONING_LABELS: Record<string, { icon: string; label: string }> = {
   reflect: { icon: '\uD83D\uDCAD', label: 'Reflect' },
 }
 
-function ReasoningNarrative({ supervisorData }: { supervisorData: any }) {
+function ReasoningNarrative({ supervisorData, runnerStatus, pipelineData }: { supervisorData: any; runnerStatus?: any; pipelineData?: any }) {
   const [manualToggle, setManualToggle] = useState<boolean | null>(null)
 
   const reasoning = supervisorData?.reasoning || {}
   const selfHealEvent = supervisorData?.selfHealEvent
   const supervisorStep = supervisorData?.step || ''
   const tick = supervisorData?.tick
+
+  // Detect external CLI run — supervisor.json is stale, pipeline.json is truth
+  const isExternal = runnerStatus?.status === 'external'
+  const externalStage = isExternal ? (pipelineData?.currentStage || runnerStatus?.supervisorStatus || '') : ''
 
   // Smart fold: auto-expand on self-heal or reflect content
   const shouldAutoExpand = !!(selfHealEvent || reasoning.reflect)
@@ -464,15 +469,17 @@ function ReasoningNarrative({ supervisorData }: { supervisorData: any }) {
   const summaryText = useMemo(() => {
     if (selfHealEvent) return `\uD83D\uDD27 Self-heal detected \u2014 ${typeof selfHealEvent === 'string' ? selfHealEvent : selfHealEvent?.description || 'intervention in progress'}`
     if (reasoning.reflect) return `\uD83D\uDCAD Reflecting \u2014 ${typeof reasoning.reflect === 'string' ? reasoning.reflect.slice(0, 80) : 'analysis complete'}${typeof reasoning.reflect === 'string' && reasoning.reflect.length > 80 ? '...' : ''}`
+    // External CLI run — show active stage from pipeline instead of "idle"
+    if (isExternal) return `\u26A1 CLI Active \u2014 ${externalStage || 'running'}`
     if (!supervisorData || supervisorData.status === 'idle') return '\uD83D\uDCA4 Supervisor idle'
     if (supervisorStep) {
       const meta = REASONING_LABELS[supervisorStep]
       return `${meta?.icon || '\u2705'} ${meta?.label || supervisorStep} \u2014 step ${REASONING_STEPS.indexOf(supervisorStep as any) + 1}/5`
     }
     return '\u2705 Normal \u2014 all steps passed'
-  }, [supervisorData, selfHealEvent, reasoning.reflect, supervisorStep])
+  }, [supervisorData, selfHealEvent, reasoning.reflect, supervisorStep, isExternal, externalStage])
 
-  const summaryColor = selfHealEvent ? 'var(--accent-amber)' : reasoning.reflect ? 'var(--accent-purple)' : 'var(--accent-green)'
+  const summaryColor = selfHealEvent ? 'var(--accent-amber)' : isExternal ? 'var(--accent-blue)' : reasoning.reflect ? 'var(--accent-purple)' : 'var(--accent-green)'
 
   // Count filled reasoning steps
   const filledSteps = REASONING_STEPS.filter(s => reasoning[s]).length
@@ -520,6 +527,33 @@ function ReasoningNarrative({ supervisorData }: { supervisorData: any }) {
         <div
           style={{ borderTop: '1px solid var(--border-subtle)', animation: 'fadeIn 0.25s ease-out', padding: '0 24px 18px' }}
         >
+          {/* External run info banner */}
+          {isExternal && (
+            <div
+              style={{
+                marginTop: '14px',
+                padding: '10px 16px',
+                borderRadius: 'var(--radius-md, 10px)',
+                background: 'color-mix(in srgb, var(--accent-blue) 8%, transparent)',
+                border: '1px solid color-mix(in srgb, var(--accent-blue) 20%, transparent)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                animation: 'fadeIn 0.35s ease-out',
+              }}
+            >
+              <span style={{ fontSize: '15px', flexShrink: 0 }}>{'\u26A1'}</span>
+              <div>
+                <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--accent-blue)' }}>
+                  CLI Supervisor Active — {externalStage || 'Running'}
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '1px' }}>
+                  Reasoning data below is from previous tick. Live status shown in pipeline.
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Self-heal banner — structured amber card */}
           {selfHealEvent && (
             <div
@@ -562,9 +596,13 @@ function ReasoningNarrative({ supervisorData }: { supervisorData: any }) {
             {REASONING_STEPS.map((step, idx) => {
               const meta = REASONING_LABELS[step]
               const content = reasoning[step]
-              const isCurrent = supervisorStep === step
+              const isCurrent = !isExternal && supervisorStep === step
               const hasContent = !!content
-              const dotColor = isCurrent ? 'var(--accent-blue)' : hasContent ? 'var(--accent-green)' : 'var(--text-tertiary)'
+              // In external mode: stale reasoning shown dimmed (not green)
+              const dotColor = isCurrent ? 'var(--accent-blue)'
+                : (hasContent && !isExternal) ? 'var(--accent-green)'
+                : hasContent ? 'var(--text-secondary)'
+                : 'var(--text-tertiary)'
 
               return (
                 <div
@@ -974,20 +1012,29 @@ function QueuesPanel({ queuesData, registry }: { queuesData: any; registry: Reco
       )}
 
       {/* Skip registry */}
-      {skipRegistry && Object.keys(skipRegistry).length > 0 && (
+      {skipRegistry && (Array.isArray(skipRegistry) ? skipRegistry.length > 0 : Object.keys(skipRegistry).length > 0) && (
         <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px' }}>
           <div className="flex items-center gap-2 px-3 py-2">
             <span className="text-[12px] font-bold" style={{ color: 'var(--text-tertiary)' }}>Skipped Tests</span>
-            <Badge variant="default" size="xs">{Object.keys(skipRegistry).length}</Badge>
+            <Badge variant="default" size="xs">{Array.isArray(skipRegistry) ? skipRegistry.length : Object.keys(skipRegistry).length}</Badge>
           </div>
           <div className="px-3 pb-2 space-y-1 max-h-[150px] overflow-y-auto">
-            {Object.entries(skipRegistry).map(([testId, reason]) => (
-              <div key={testId} className="flex items-center gap-2 text-[11px] font-mono px-2 py-1 rounded"
-                style={{ background: 'var(--bg-inset)' }}>
-                <span style={{ color: 'var(--text-primary)' }}>{testId}</span>
-                <span style={{ color: 'var(--text-tertiary)' }}>{String(reason)}</span>
-              </div>
-            ))}
+            {(Array.isArray(skipRegistry)
+              ? skipRegistry.map((entry: any, idx: number) => (
+                  <div key={entry.testId || idx} className="flex items-center gap-2 text-[11px] font-mono px-2 py-1 rounded"
+                    style={{ background: 'var(--bg-inset)' }}>
+                    <span style={{ color: 'var(--text-primary)' }}>{entry.testId || `#${idx}`}</span>
+                    <span style={{ color: 'var(--text-tertiary)' }}>{entry.reason || ''}</span>
+                  </div>
+                ))
+              : Object.entries(skipRegistry).map(([testId, reason]) => (
+                  <div key={testId} className="flex items-center gap-2 text-[11px] font-mono px-2 py-1 rounded"
+                    style={{ background: 'var(--bg-inset)' }}>
+                    <span style={{ color: 'var(--text-primary)' }}>{testId}</span>
+                    <span style={{ color: 'var(--text-tertiary)' }}>{String(reason)}</span>
+                  </div>
+                ))
+            )}
           </div>
         </div>
       )}
@@ -1027,8 +1074,8 @@ function ActivityStream() {
 
   // Load initial events from API
   useEffect(() => {
-    fetch(`${BASE_URL}/api/tests/recent-events?limit=30`)
-      .then(r => r.ok ? r.json() : [])
+    apiGet<any[]>('/tests/recent-events', { limit: 30 })
+      .then((stored: any[]) => stored || [])
       .then((stored: any[]) => {
         if (stored.length > 0) {
           const mapped = stored.map((evt: any) => {
@@ -1433,6 +1480,7 @@ export default function TestLab() {
   const { data: supervisor } = useTestSupervisor()
   const { data: queues } = useTestQueues()
   const { data: stats } = useTestStats()
+  const { data: runnerStatus } = useRunnerStatus()
 
   // Legacy hooks (fallback + tab data)
   const { data: state, isLoading: stateLoading } = useTestState()
@@ -1501,7 +1549,7 @@ export default function TestLab() {
       <TestLabHeader pipelineData={pipelineData} />
 
       {/* 2. Reasoning Narrative — smart fold */}
-      <ReasoningNarrative supervisorData={supervisorData} />
+      <ReasoningNarrative supervisorData={supervisorData} runnerStatus={runnerStatus} pipelineData={pipelineData} />
 
       {/* 3. Stage Pipeline — 5-stage horizontal flow */}
       <StagePipeline pipelineData={pipelineData} />
