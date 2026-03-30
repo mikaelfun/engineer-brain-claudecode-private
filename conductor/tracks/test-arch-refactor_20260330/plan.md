@@ -3,7 +3,7 @@
 **Track ID:** test-arch-refactor_20260330
 **Spec:** [spec.md](./spec.md)
 **Created:** 2026-03-30
-**Status:** [~] In Progress
+**Status:** [x] Complete
 
 ## Overview
 
@@ -78,11 +78,11 @@ End-to-end verification and documentation updates.
 
 ### Tasks
 
-- [ ] Task 4.1: Run a full test cycle with new architecture — verify SCAN→GENERATE→TEST→FIX→VERIFY completes
-- [ ] Task 4.2: Verify self-heal scenario — inject a corrupt state, verify supervisor detects and heals
-- [ ] Task 4.3: Update MEMORY.md with architecture changes
-- [ ] Task 4.4: Run existing unit tests — ensure no regressions
-- [ ] Task 4.5: Create migration notes — document breaking changes for any external references
+- [x] Task 4.1: Run a full test cycle with new architecture — verify SCAN→GENERATE→TEST→FIX→VERIFY completes
+- [x] Task 4.2: Verify self-heal scenario — inject a corrupt state, verify supervisor detects and heals
+- [x] Task 4.3: Update MEMORY.md with architecture changes
+- [x] Task 4.4: Run existing unit tests — ensure no regressions
+- [x] Task 4.5: Create migration notes — document breaking changes for any external references
 
 ### Verification
 

@@ -70,6 +70,39 @@
   - Track metadata.json / tracks.md 已更新
 - **规则**：Plan 模板的最后一个阶段必须有这个 checklist，这样即使上下文清空，agent 读到 plan 也不会漏
 
+## 测试架构：Pipeline Model（2026-03-30 重构）
+
+### 概念重命名
+- Round → **Cycle**（测试周期）
+- Phase → **Stage**（SCAN/GENERATE/TEST/FIX/VERIFY）
+- Runner Steps → **Reasoning Steps**（Observe/Diagnose/Decide/Act/Reflect）
+
+### 状态文件拆分
+`state.json` → 4 个聚焦文件（旧 state.json 保留用于向后兼容）：
+- `pipeline.json` — cycle、maxCycles、currentStage、stages（5 阶段进度）
+- `queues.json` — testQueue、fixQueue、verifyQueue、regressionQueue、gaps、skipRegistry
+- `stats.json` — cumulative、cycleStats、scanStrategy、observabilityStatus
+- `supervisor.json` — status、tick、step、reasoning（5 步结论）、selfHealEvent
+
+### 核心脚本
+- `state-writer.sh --target pipeline|queues|stats|supervisor --merge` — 按目标写入特定文件
+- `state-writer.sh --merge`（无 --target）— 自动路由，旧字段名自动翻译（phase→currentStage, round→cycle）
+- `state-reader.sh` — 从 4 文件组装完整状态
+- `state-migrate.sh` — 从旧 state.json 迁移到 4 文件
+- `tick-archiver.sh` — 每 tick 归档 supervisor.json 到 history/cycle-N/tick-M.json
+
+### Dashboard 架构
+- 4 个新 API 端点：/pipeline、/supervisor、/queues、/stats
+- SSE 统一推送替代 4 个轮询间隔（chokidar watch state 文件变化 → 广播事件）
+- 前端 TanStack Query hooks 用 staleTime 替代 refetchInterval（SSE 事件触发 invalidation）
+- TestLab.tsx V2 组件：TestLabHeader、ReasoningNarrative（智能折叠）、StagePipeline（水平 5 阶段）、StatsBar、QueuesPanel、ActivityStream
+- 智能折叠：selfHealEvent 存在 → 自动展开推理过程；正常时折叠为一行摘要
+
+### 2-Agent 观察者-主体分离
+- **Supervisor（Observer）**：test-supervisor-runner agent — 观察、诊断、决策、修复框架问题
+- **Stage Worker（Subject）**：test-loop agent — 执行 SCAN→GENERATE→TEST→FIX→VERIFY 阶段
+- 观察者不能与被观察者合并 — 这是自愈架构的核心约束
+
 ## 重要记录
 - 2026-03-16: 完成 OpenClaw → Claude Code 迁移，9 个 skills + 9 个 playbooks + 6 个 subagent + 4 个 slash commands
 - 2026-03-17: 首次完整 casework 执行（2603090040000814），修复 3 个脚本 bug，teams-case-search 改为 MCP 直调 + write-teams.ps1

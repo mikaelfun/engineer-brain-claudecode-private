@@ -12,11 +12,13 @@ import { Hono } from 'hono'
 const mockReadDirectives = vi.fn()
 const mockWriteDirectives = vi.fn()
 const mockReadTestState = vi.fn()
+const mockReadPipeline = vi.fn()
 
 vi.mock('../services/test-reader.js', () => ({
   readDirectives: (...args: any[]) => mockReadDirectives(...args),
   writeDirectives: (...args: any[]) => mockWriteDirectives(...args),
   readTestState: (...args: any[]) => mockReadTestState(...args),
+  readPipeline: (...args: any[]) => mockReadPipeline(...args),
 }))
 
 // Mock Claude SDK query — hangs forever so runner stays 'running'
@@ -44,6 +46,7 @@ let app: Hono
 beforeEach(async () => {
   vi.clearAllMocks()
   mockReadDirectives.mockReturnValue([])
+  mockReadPipeline.mockReturnValue(null)
   mockReadTestState.mockReturnValue({ phase: 'TEST', round: 3 })
 
   // Re-import to reset in-memory runnerState
@@ -53,6 +56,7 @@ beforeEach(async () => {
     readDirectives: (...args: any[]) => mockReadDirectives(...args),
     writeDirectives: (...args: any[]) => mockWriteDirectives(...args),
     readTestState: (...args: any[]) => mockReadTestState(...args),
+    readPipeline: (...args: any[]) => mockReadPipeline(...args),
   }))
   vi.doMock('@anthropic-ai/claude-agent-sdk', () => ({
     query: vi.fn(() => ({

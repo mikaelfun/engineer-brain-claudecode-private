@@ -130,4 +130,4 @@
 | [x] | gate-recovery_20260330 | Supervisor gate=error 推理驱动恢复 | 2026-03-30 | 2026-03-30 |
 | [x] | auto-track-issues_20260330 | test-loop 创建的 Issue 自动生成 Conductor Track | 2026-03-30 | 2026-03-30 |
 | [ ] | synthetic-adoption_20260330 | Workflow 测试采用 Synthetic Data | 2026-03-30 | 2026-03-30 |
-| [~] | test-arch-refactor_20260330 | Test Architecture Refactor — Pipeline Model | 2026-03-30 | 2026-03-30 |
+| [x] | test-arch-refactor_20260330 | Test Architecture Refactor — Pipeline Model | 2026-03-30 | 2026-03-30 |
