@@ -608,8 +608,35 @@ if ($SectionPath) {
     Write-Host "Filter by section: $SectionPath -> $($allPages.Count) pages" -ForegroundColor Yellow
 }
 if ($PageName) {
-    $allPages = @($allPages | Where-Object { $_.Name -match $PageName })
-    Write-Host "Filter by page: $PageName -> $($allPages.Count) pages" -ForegroundColor Yellow
+    $matchedPages = @($allPages | Where-Object { $_.Name -match $PageName })
+    # Forward scan: include sub-pages (higher pageLevel) following each matched page
+    $expandedPages = [System.Collections.Generic.List[object]]::new()
+    foreach ($matched in $matchedPages) {
+        $expandedPages.Add($matched)
+        # Find this page's index in the unfiltered list
+        $idx = -1
+        for ($i = 0; $i -lt $allPagesUnfiltered.Count; $i++) {
+            if ($allPagesUnfiltered[$i].Id -eq $matched.Id) {
+                $idx = $i
+                break
+            }
+        }
+        if ($idx -ge 0) {
+            # Scan forward: collect consecutive pages with Level > matched.Level in same section
+            for ($j = $idx + 1; $j -lt $allPagesUnfiltered.Count; $j++) {
+                $candidate = $allPagesUnfiltered[$j]
+                if ($candidate.Path -ne $matched.Path) { break }  # different section
+                if ($candidate.Level -le $matched.Level) { break }  # same or higher level = sibling/parent
+                # This is a sub-page — include it (avoid duplicates)
+                if (-not ($expandedPages | Where-Object { $_.Id -eq $candidate.Id })) {
+                    $expandedPages.Add($candidate)
+                }
+            }
+        }
+    }
+    $allPages = @($expandedPages)
+    $subCount = $allPages.Count - $matchedPages.Count
+    Write-Host "Filter by page: $PageName -> $($matchedPages.Count) matched + $subCount sub-pages = $($allPages.Count) total" -ForegroundColor Yellow
 }
 
 if ($allPages.Count -eq 0) {
