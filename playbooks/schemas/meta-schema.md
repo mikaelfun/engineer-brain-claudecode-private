@@ -6,6 +6,7 @@
 - `data-refresh`：通过 `fetch-all-data.ps1 -IncludeIrCheck` 写入 `irSla`/`fdr`/`fwr`（API 优先查询 `msdfm_caseperfattributes`，失败时降级到 UI scraping）
 - `data-refresh`（批量）：通过 `check-ir-status-batch.ps1 -SaveMeta` 批量写入所有 case 的 `irSla`/`fdr`/`fwr`
 - `compliance-check`：写入 `compliance` 对象（Entitlement + 21v Convert，不涉及 IR）
+- `compliance-check`：写入 `ccEmails` / `ccAccount` / `ccKnowMePage`（RDSE CC Finder，仅匹配时写入）
 - `status-judge`：写入 `actualStatus` / `daysSinceLastContact` / `statusJudgedAt`
 - `inspection-writer`：写入 `lastInspected`
 
@@ -58,7 +59,10 @@
     "serviceName": "Unfd AddOn | ProSv Ente - China Cld",
     "contractCountry": "China",
     "warnings": []
-  }
+  },
+  "ccEmails": "tam@microsoft.com; sdm@microsoft.com; mcpodvm@microsoft.com; mcccwl@microsoft.com",
+  "ccAccount": "BMW (宝马)",
+  "ccKnowMePage": "https://dev.azure.com/..."
 }
 ```
 
@@ -88,6 +92,9 @@
 | `compliance.serviceName` | string | compliance-check | Entitlement 的 Service Name 原值 |
 | `compliance.contractCountry` | string | compliance-check | Entitlement 的 Contract Country 原值 |
 | `compliance.warnings` | string[] | compliance-check | 警告列表 |
+| `ccEmails` | string\|undefined | compliance-check | RDSE CC 邮件列表（分号分隔），仅匹配时写入 |
+| `ccAccount` | string\|undefined | compliance-check | 匹配到的 RDSE 账号名 |
+| `ccKnowMePage` | string\|undefined | compliance-check | Know-Me Wiki 链接，仅非 null 时写入 |
 
 ## ⚠️ 禁止的字段名
 

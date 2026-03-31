@@ -2,9 +2,11 @@
   "casesRoot": "./cases",
   "dataRoot": "C:\\Users\\fangkun\\Documents\\EngineerBrain-Data",
   "teamsSearchCacheHours": 4,
+  "podAlias": "mcpodvm@microsoft.com",
   "onenote": {
     "personalNotebook": "Kun Fang OneNote",
     "teamNotebooks": ["MCVKB"],
-    "freshnessThresholdMonths": 12
+    "freshnessThresholdMonths": 12,
+    "autoRagSync": true
   }
 }

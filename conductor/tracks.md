@@ -11,7 +11,7 @@
 | [x] | issue-tracker_20260320 | Dashboard Issue Tracker | 2026-03-20 | 2026-03-20 |
 | [ ] | teams-name-match_20260320 | Teams Search Customer Name Matching | 2026-03-20 | 2026-03-20 |
 | [ ] | sap-compliance_20260320 | SAP Compliance Check | 2026-03-20 | 2026-03-20 |
-| [ ] | cc-finder_20260320 | CC Finder Integration | 2026-03-20 | 2026-03-20 |
+| [~] | cc-finder_20260320 | CC Finder Integration | 2026-03-20 | 2026-03-31 |
 | [ ] | workflow-persist_20260320 | Workflow Progress Persistence | 2026-03-20 | 2026-03-20 |
 | [x] | restart-buttons_20260320 | Issue 页面添加重启前后端按钮 | 2026-03-20 | 2026-03-20 |
 | [x] | implement-progress_20260320 | Issue Implement 实时进度展示 | 2026-03-20 | 2026-03-21 |
@@ -135,3 +135,8 @@
 | [x] | runner-cli-sync_20260330 | TestLab Runner 状态与 CLI Run 同步 | 2026-03-30 | 2026-03-30 |
 | [~] | state-authority_20260330 | State Tracking Authoritative Status | 2026-03-30 | 2026-03-30 |
 | [x] | issue-dedup_20260330 | /issue Skill 相似 Issue 检测 + 合并/Reopen | 2026-03-30 | 2026-03-30 | | /issue Skill 相似 Issue 检测 + 合并/Reopen | 2026-03-30 | 2026-03-30 |
+| [ ] | testloop-iss-183_20260330 | Missing test-supervisor detail endpoints (/result/:round/:testId and /fix/:testId) | 2026-03-30 | 2026-03-30 |
+| [x] | case-archive-detect_20260331 | Patrol/Casework Case Archive & Transfer Detection | 2026-03-31 | 2026-03-31 |
+| [x] | patrol-case-sse_20260331 | Patrol Case SSE Shows Full Casework Process | 2026-03-31 | 2026-03-31 |
+| [x] | draft-collapse_20260331 | Draft Tab 折叠优化 | 2026-03-31 | 2026-03-31 |
+| [x] | draft-rich-copy_20260331 | WebUI Draft Rich HTML Copy + Edit | 2026-03-31 | 2026-03-31 |

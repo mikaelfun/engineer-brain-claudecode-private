@@ -3,7 +3,7 @@
 **Track ID:** cc-finder_20260320
 **Spec:** [spec.md](./spec.md)
 **Created:** 2026-03-31
-**Status:** [ ] Not Started
+**Status:** [~] In Progress
 
 ## Overview
 
@@ -15,9 +15,9 @@ Add CC lookup step to compliance-check SKILL.md and implement matching logic.
 
 ### Tasks
 
-- [ ] Task 1.1: Add `podAlias` field to `config.json` (default `mcpodvm@microsoft.com`)
-- [ ] Task 1.2: Add CC lookup step (Step 3.5) to `.claude/skills/compliance-check/SKILL.md` — after entitlement/21v checks, before upsert. Logic: read `{dataRoot}/mooncake-cc.json`, fuzzy match case customer name against `accounts[].account`, replace `<Replace with POD alias>` with `config.json → podAlias`, write `ccEmails`/`ccAccount`/`ccKnowMePage` to casehealth-meta.json
-- [ ] Task 1.3: Update `playbooks/schemas/case-directory.md` to document new casehealth-meta fields (`ccEmails`, `ccAccount`, `ccKnowMePage`)
+- [x] Task 1.1: Add `podAlias` field to `config.json` (default `mcpodvm@microsoft.com`)
+- [x] Task 1.2: Add CC lookup step (Step 3.5) to `.claude/skills/compliance-check/SKILL.md` — after entitlement/21v checks, before upsert. Logic: read `{dataRoot}/mooncake-cc.json`, fuzzy match case customer name against `accounts[].account`, replace `<Replace with POD alias>` with `config.json → podAlias`, write `ccEmails`/`ccAccount`/`ccKnowMePage` to casehealth-meta.json
+- [x] Task 1.3: Update `playbooks/schemas/case-directory.md` to document new casehealth-meta fields (`ccEmails`, `ccAccount`, `ccKnowMePage`)
 
 ### Verification
 
