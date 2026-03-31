@@ -5,7 +5,7 @@
   "status": "complete",
   "issueId": "ISS-009",
   "created": "2026-03-20T00:00:00.000Z",
-  "updated": "2026-04-01T00:00:00.000Z",
+  "updated": "2026-04-01T00:25:00.000Z",
   "phases": {
     "total": 4,
     "completed": 4
@@ -13,5 +13,21 @@
   "tasks": {
     "total": 9,
     "completed": 9
+  },
+  "verification": {
+    "status": "passed",
+    "timestamp": "2026-04-01T00:25:00.000Z",
+    "regression": "pass",
+    "criteria": [
+      { "id": "AC1", "description": "compliance-check fuzzy matches customer name against mooncake-cc.json", "result": "pass", "evidence": "SKILL.md contains complete fuzzy match logic with /‐delimiter split and case-insensitive partial match", "recipe": "file-content-check" },
+      { "id": "AC2", "description": "Matched CC emails written to casehealth-meta.json", "result": "pass", "evidence": "SKILL.md writes ccEmails/ccAccount/ccKnowMePage; meta-schema.md documents all 3 fields", "recipe": "file-content-check" },
+      { "id": "AC3", "description": "POD alias placeholder replaced with config value", "result": "pass", "evidence": "SKILL.md contains replacement logic; config.json has podAlias=mcpodvm@microsoft.com", "recipe": "file-content-check" },
+      { "id": "AC4", "description": "Unmatched customers silently skipped", "result": "pass", "evidence": "SKILL.md explicitly states '静默跳过，不写 CC 相关字段'", "recipe": "file-content-check" },
+      { "id": "AC5", "description": "email-drafter adds CC header in initial-response", "result": "pass", "evidence": "email-drafter.md Step 5 adds **CC:** line conditionally for initial-response", "recipe": "file-content-check" },
+      { "id": "AC6", "description": "Non-initial-response drafts skip CC", "result": "pass", "evidence": "email-drafter.md CC rules explicitly limit to emailType=initial-response", "recipe": "file-content-check" },
+      { "id": "AC7", "description": "Dashboard CC copy button", "result": "pass", "evidence": "CaseDetail.tsx and DraftsPage.tsx both parse **CC:** regex and render Copy CC button with navigator.clipboard.writeText", "recipe": "file-content-check" },
+      { "id": "AC8", "description": "Todo CC reminder with CC list", "result": "pass", "evidence": "E2E: generate-todo.sh produces yellow item with CC emails + Know-Me Wiki link; without ccEmails no CC item appears", "recipe": "cli-script-output" },
+      { "id": "AC9", "description": "config.json podAlias editable via Settings", "result": "pass", "evidence": "config.json contains podAlias field; SettingsPage.tsx reads/writes/displays podAlias", "recipe": "file-content-check" }
+    ]
   }
 }
