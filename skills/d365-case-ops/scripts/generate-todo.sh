@@ -49,6 +49,10 @@ SERVICE_LEVEL=${SERVICE_LEVEL:-Unknown}
 CASE_NUMBER=$(sed -n 's/.*"caseNumber":[[:space:]]*"\([^"]*\)".*/\1/p' "$META" | head -1)
 CASE_NUMBER=${CASE_NUMBER:-unknown}
 
+# CC Finder fields (RDSE customers)
+CC_EMAILS=$(sed -n 's/.*"ccEmails":[[:space:]]*"\([^"]*\)".*/\1/p' "$META" | head -1)
+CC_KNOW_ME=$(sed -n 's/.*"ccKnowMePage":[[:space:]]*"\([^"]*\)".*/\1/p' "$META" | head -1)
+
 # --- 规则矩阵 ---
 RED_ITEMS=()
 YELLOW_ITEMS=()
@@ -61,8 +65,21 @@ fi
 if [ "$ENTITLEMENT_OK" = "false" ]; then
   RED_ITEMS+=("Entitlement 异常，需确认客户合同状态")
 fi
+if [ "$ACTUAL_STATUS" = "pending-engineer" ] && [ "$DAYS" -ge 2 ] 2>/dev/null; then
+  RED_ITEMS+=("客户等待回复已 ${DAYS} 天，需尽快响应")
+fi
 
 # 🟡 待确认执行
+if [ "$ACTUAL_STATUS" = "pending-engineer" ] && [ "$DAYS" -lt 2 ] 2>/dev/null; then
+  YELLOW_ITEMS+=("客户等待工程师回复（${DAYS} 天），需安排跟进")
+fi
+# Check for unsent drafts
+if [ -d "$CD/drafts" ]; then
+  DRAFT_COUNT=$(ls "$CD/drafts/"*.md 2>/dev/null | wc -l)
+  if [ "$DRAFT_COUNT" -gt 0 ] 2>/dev/null; then
+    YELLOW_ITEMS+=("有 ${DRAFT_COUNT} 封邮件草稿待审阅发送")
+  fi
+fi
 if [ "$ACTUAL_STATUS" = "pending-customer" ] && [ "$DAYS" -ge 5 ] 2>/dev/null; then
   YELLOW_ITEMS+=("客户 ${DAYS} 天无回复，已 3 次 follow-up 未回复，考虑关单")
 elif [ "$ACTUAL_STATUS" = "pending-customer" ] && [ "$DAYS" -ge 3 ] 2>/dev/null; then
@@ -70,6 +87,14 @@ elif [ "$ACTUAL_STATUS" = "pending-customer" ] && [ "$DAYS" -ge 3 ] 2>/dev/null;
 fi
 if [ "$ACTUAL_STATUS" = "ready-to-close" ]; then
   YELLOW_ITEMS+=("准备关单，发 closure email")
+fi
+# CC Finder reminder for RDSE customers
+if [ -n "$CC_EMAILS" ]; then
+  CC_REMINDER="发送 Initial Response 时请 CC: \`${CC_EMAILS}\`"
+  if [ -n "$CC_KNOW_ME" ]; then
+    CC_REMINDER="${CC_REMINDER} | [Know-Me Wiki](${CC_KNOW_ME})"
+  fi
+  YELLOW_ITEMS+=("$CC_REMINDER")
 fi
 
 # ✅ 仅通知
@@ -81,6 +106,9 @@ if [ "$ACTUAL_STATUS" = "pending-customer" ] && [ "$DAYS" -lt 3 ] 2>/dev/null; t
 fi
 if [ "$ACTUAL_STATUS" = "pending-pg" ]; then
   GREEN_ITEMS+=("等待 PG 回复")
+fi
+if [ "$ACTUAL_STATUS" = "pending-internal" ]; then
+  GREEN_ITEMS+=("等待内部确认")
 fi
 if [ "$ACTUAL_STATUS" = "researching" ]; then
   GREEN_ITEMS+=("技术排查中")

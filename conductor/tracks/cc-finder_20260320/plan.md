@@ -44,7 +44,7 @@ Add CC reminder to generate-todo.sh for RDSE cases.
 
 ### Tasks
 
-- [ ] Task 3.1: Add CC check to `skills/d365-case-ops/scripts/generate-todo.sh` — read `ccEmails` from meta.json, if present add yellow item: `发送 Initial Response 时请 CC: {ccEmails}`. If `ccKnowMePage` exists, append ` | [Know-Me Wiki]({url})`
+- [x] Task 3.1: Add CC check to `skills/d365-case-ops/scripts/generate-todo.sh` — read `ccEmails` from meta.json, if present add yellow item: `发送 Initial Response 时请 CC: {ccEmails}`. If `ccKnowMePage` exists, append ` | [Know-Me Wiki]({url})`
 
 ### Verification
 
