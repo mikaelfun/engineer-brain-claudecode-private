@@ -1,0 +1,12 @@
+{
+  "id": "ISS-194",
+  "title": "onenote-export 传入链接时不递归导入 sub page",
+  "description": "当 /onenote-export 传入一个 OneNote 页面链接时，只导出了当前页面，不会自动递归导入该页面下的 sub page。期望行为：检测到链接指向的页面有子页面时，应递归导出所有子页面。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "tracked",
+  "trackId": "onenote-subpage_20260401",
+  "testLoopScan": true,
+  "createdAt": "2026-04-01T00:30:00.000Z",
+  "updatedAt": "2026-04-01T00:30:00.000Z"
+}

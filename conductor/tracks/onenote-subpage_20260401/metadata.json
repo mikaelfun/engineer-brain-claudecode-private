@@ -1,0 +1,17 @@
+{
+  "id": "onenote-subpage_20260401",
+  "title": "onenote-export Sub-Page Recursive Export",
+  "type": "bug",
+  "status": "pending",
+  "issueId": "ISS-194",
+  "created": "2026-04-01T00:30:00.000Z",
+  "updated": "2026-04-01T00:30:00.000Z",
+  "phases": {
+    "total": 1,
+    "completed": 0
+  },
+  "tasks": {
+    "total": 2,
+    "completed": 0
+  }
+}
