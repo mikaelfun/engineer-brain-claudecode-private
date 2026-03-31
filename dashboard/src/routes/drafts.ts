@@ -2,7 +2,7 @@
  * drafts.ts — 邮件草稿路由 (只读)
  */
 import { Hono } from 'hono'
-import { readAllDrafts, readCaseDrafts } from '../services/draft-reader.js'
+import { readAllDrafts, readCaseDrafts, writeDraft } from '../services/draft-reader.js'
 
 const drafts = new Hono()
 
@@ -24,6 +24,24 @@ drafts.get('/:caseId/:file', (c) => {
   }
 
   return c.json(draft)
+})
+
+// PUT /api/drafts/:caseId/:file — save edited draft
+drafts.put('/:caseId/:file', async (c) => {
+  const caseId = c.req.param('caseId')
+  const file = c.req.param('file')
+  const body = await c.req.json<{ content: string }>()
+
+  if (!body.content && body.content !== '') {
+    return c.json({ error: 'content is required' }, 400)
+  }
+
+  const success = writeDraft(caseId, file, body.content)
+  if (!success) {
+    return c.json({ error: 'Draft not found or write failed' }, 404)
+  }
+
+  return c.json({ ok: true })
 })
 
 export default drafts

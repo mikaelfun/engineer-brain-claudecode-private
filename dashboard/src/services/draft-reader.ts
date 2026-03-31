@@ -1,7 +1,7 @@
 /**
  * draft-reader.ts — 读 drafts/*.md
  */
-import { readFileSync, existsSync, readdirSync, statSync } from 'fs'
+import { readFileSync, writeFileSync, existsSync, readdirSync, statSync } from 'fs'
 import { join } from 'path'
 import { getCaseDir } from './workspace.js'
 import { listActiveCases } from './workspace.js'
@@ -43,4 +43,18 @@ export function readAllDrafts(): Draft[] {
   return allDrafts.sort((a, b) =>
     new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   )
+}
+
+export function writeDraft(caseNumber: string, filename: string, content: string): boolean {
+  const caseDir = getCaseDir(caseNumber)
+  const filePath = join(caseDir, 'drafts', filename)
+
+  if (!existsSync(filePath)) return false
+
+  try {
+    writeFileSync(filePath, content, 'utf-8')
+    return true
+  } catch {
+    return false
+  }
 }
