@@ -82,7 +82,7 @@ prompt: |
   完成后汇报各步骤成功/失败状态。
 ```
 
-**B2. Teams 预检 + 按需 spawn teams-search + 并行预读（同一条消息）**
+**B2. Teams 预检 + 按需 spawn teams-search + onenote-case-search + 并行预读（同一条消息）**
 
 > 快速路径已确认 Teams 缓存有效时跳过。
 
@@ -100,9 +100,39 @@ prompt: |
   ⏱ 最后一个 Bash 调用中写 date +%s > "{caseDir}/logs/.t_teamsSearch_end"
 ```
 
+同时 spawn onenote-case-search（与 teams-search 并行后台执行）：
+
+```
+subagent_type: "onenote-case-search"
+description: "onenote-case-search {caseNumber}"
+run_in_background: true
+prompt: |
+  Case {caseNumber}，caseDir={caseDir}（绝对路径）。
+  请先读取 .claude/agents/onenote-case-search.md 获取完整执行步骤，然后执行。
+  ⏱ 第一个 Bash 调用中写 date +%s > "{caseDir}/logs/.t_onenoteSearch_start"
+  ⏱ 最后一个 Bash 调用中写 date +%s > "{caseDir}/logs/.t_onenoteSearch_end"
+```
+
 同一消息并行预读：`compliance-check/SKILL.md`、`status-judge/SKILL.md`、`casehealth-meta.json`、`case-summary.md`（如存在）、`playbooks/rules/case-lifecycle.md`。后续不再重复 Read。
 
 **B3. compliance-check**：按 compliance-check/SKILL.md 执行。⏱ `.t_compliance_start/end` 合并到工作命令。
+
+**B3.5. 归档/转移检测**
+
+检测当前 case 是否已在 D365 中归档或转移（不再在 active list 中）：
+
+```bash
+RESULT=$(pwsh -NoProfile -File skills/d365-case-ops/scripts/detect-case-status.ps1 -CasesRoot {casesRoot} -CaseNumbers {caseNumber} 2>&1 | tail -1)
+```
+
+解析 `$RESULT`（JSON 数组）：
+- 空数组 `[]` → case 仍 active，继续正常流程
+- 包含条目且 `status` 为 `archived` 或 `transferred` → **提前终止 casework**：
+  1. 确保目标目录存在：`mkdir -p "{casesRoot}/archived"` 或 `mkdir -p "{casesRoot}/transfer"`
+  2. 移动目录：`mv "{casesRoot}/active/{caseNumber}" "{casesRoot}/{archived|transfer}/{caseNumber}"`
+  3. 记录日志到 `{casesRoot}/archive-log.jsonl`（append 一行 JSON）
+  4. 输出提示：`⚠️ Case {caseNumber} 已{归档/转移}，casework 提前终止`
+  5. **不再执行 B4/B5/Step 4 及后续步骤**
 
 **B4. 等待后台 agent → status-judge**
 
