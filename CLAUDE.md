@@ -82,15 +82,16 @@ tools: Bash, Read, Write
 - 新增或修改 agent.md 后需要**重启会话**或执行 `/agents` 才能生效
 - 不重启会导致 `Agent type 'xxx' not found` 错误
 
-**当前已注册的 6 个 agent：**
+**当前已注册的 7 个 agent：**
 | name | model | tools | mcpServers |
 |------|-------|-------|------------|
-| `casework` | sonnet | Bash, Read, Write, Edit, Glob, Grep, Agent | icm |
+| `casework` | opus | Bash, Read, Write, Edit, Glob, Grep, Agent | icm |
 | `data-refresh` | sonnet | Bash, Read, Write | icm |
 | `teams-search` | sonnet | Bash, Read, Write | teams |
-| `email-drafter` | sonnet | Read, Write, Bash | — |
-| `troubleshooter` | opus | Bash, Read, Write, Glob, Grep, WebSearch | kusto, ado-msazure, msft-learn, icm, local-rag |
-| `test-loop` | sonnet | Bash, Read, Write, Glob, Grep, Agent | — |
+| `email-drafter` | opus | Read, Write, Bash | — |
+| `troubleshooter` | opus | Bash, Read, Write, Glob, Grep, WebSearch | kusto, msft-learn, icm, local-rag |
+| `stage-worker` | opus | Bash, Read, Write, Glob, Grep, Agent | — |
+| `onenote-case-search` | sonnet | Bash, Read, Write, Glob, Grep | — |
 
 **性能注意：** 不要在 spawn prompt 中注入大段 SKILL 内容。实测注入 vs 让 agent 自己读 SKILL.md，注入反而慢 15s（增大了每轮 context 处理开销）。正确做法是 prompt 中写 `请先读取 .claude/agents/xxx.md 获取完整执行步骤`。
 
@@ -170,6 +171,7 @@ pending → tracked → in-progress → implemented → done
 - ✅ 需要网页信息时，优先用 `gh` CLI、`WebFetch`、或 `Bash` + `curl` 获取结构化数据
 - ✅ 如确需浏览器操作，用 `browser_evaluate` 提取关键数据，不要 snapshot 整页
 - ✅ MCP 日志输出到 `.playwright-output/`（gitignored），不污染项目根目录
+- 🚨 **截图验证必须走 subagent**：任何需要截图分析的场景（Playwright `browser_take_screenshot`、Read 图片文件），**禁止在主 session 直接读取/分析截图**。图片内容会瞬间撑爆 context window，导致 compact 丢失关键上下文甚至会话崩溃。正确做法：spawn 一个轻量 subagent（haiku），让它读取截图、分析内容、返回文字结论（~200 bytes），主 session 只接收文字结果。
 
 ## Git Bash 路径格式（⚠️ 全局规则）
 本机 Bash 工具运行在 **Git Bash (MSYS2)** 环境下。所有 Bash 命令中的路径**必须**使用 POSIX 格式：
