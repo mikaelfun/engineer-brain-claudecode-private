@@ -2,7 +2,7 @@
 name: email-drafter
 description: "写邮件草稿 + humanizer 润色"
 tools: Read, Write, Bash
-model: sonnet
+model: opus
 maxTurns: 15
 ---
 
@@ -41,6 +41,7 @@ maxTurns: 15
 - `{caseDir}/case-info.md` — 客户信息、联系方式
 - `{caseDir}/emails.md` — 邮件历史（延续语气和上下文）
 - `{caseDir}/analysis/` — 分析报告（如有，引用结论）
+- `{caseDir}/casehealth-meta.json` — 读取 `ccEmails` 字段（RDSE CC 联系人）
 - `playbooks/guides/email-templates.md` — 邮件模板
 - `playbooks/guides/customer-communication.md` — 沟通规范
 - `playbooks/email-samples/` — 参考样本
@@ -81,6 +82,7 @@ maxTurns: 15
 # Email Draft — {type}
 
 **To:** {recipient email}
+**CC:** {ccEmails from casehealth-meta.json}
 **Subject:** {subject line}
 **Language:** {en|zh}
 **Type:** {emailType}
@@ -93,6 +95,11 @@ maxTurns: 15
 
 _Generated at {timestamp} | Humanized: ✅_
 ```
+
+**CC 行规则：**
+- **仅在 `emailType` 为 `initial-response` 且 `casehealth-meta.json` 中存在 `ccEmails` 字段时**才添加 `**CC:**` 行
+- 其他邮件类型（follow-up、closure 等）或无 `ccEmails` 时，省略 `**CC:**` 行
+- CC 内容直接使用 `ccEmails` 的值（分号分隔的邮件列表）
 
 ## 输出文件
 - `{caseDir}/drafts/YYYYMMDD-HHMM-{type}-{lang}-{recipient}.md` — 邮件草稿

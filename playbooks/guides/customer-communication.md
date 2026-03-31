@@ -30,6 +30,14 @@ Manager: [Manager Name]
 - 响应要及时，SLA 更严格
 - 部分客户有专属 TAM/SDM，邮件需要 CC（见 ir-entitlement-rules.md 的 CC 邮件列表）
 
+## RDSE 客户 CC 规则
+
+RDSE 客户的 Initial Response 邮件必须 CC 对应的 TAM/SDM。
+- CC 列表来源：`mooncake-cc.json`（由 `fetch-powerbi-cc.js` 从 PowerBI 抓取）
+- compliance-check 会自动查找并写入 `casehealth-meta.json → ccEmails`
+- email-drafter 在生成 initial-response 时自动添加 `CC:` header 行
+- 工程师在 Outlook 发送邮件时，需将 CC 列表粘贴到 CC 栏
+
 ## Mooncake（中国区）特殊性
 
 - 很多客户在 21Vianet 运营的中国区 Azure

@@ -30,9 +30,9 @@ Modify email-drafter agent to add CC line for initial-response drafts.
 
 ### Tasks
 
-- [ ] Task 2.1: Update `.claude/agents/email-drafter.md` Step 1 (Read Context) to also read `casehealth-meta.json → ccEmails`
-- [ ] Task 2.2: Update `.claude/agents/email-drafter.md` Step 5 (Save Draft) to add `**CC:** {ccEmails}` header line when `emailType === 'initial-response'` AND `ccEmails` exists. Place between `**To:**` and `**Subject:**` lines
-- [ ] Task 2.3: Update `playbooks/guides/customer-communication.md` to reference CC line for RDSE customers
+- [x] Task 2.1: Update `.claude/agents/email-drafter.md` Step 1 (Read Context) to also read `casehealth-meta.json → ccEmails`
+- [x] Task 2.2: Update `.claude/agents/email-drafter.md` Step 5 (Save Draft) to add `**CC:** {ccEmails}` header line when `emailType === 'initial-response'` AND `ccEmails` exists. Place between `**To:**` and `**Subject:**` lines
+- [x] Task 2.3: Update `playbooks/guides/customer-communication.md` to reference CC line for RDSE customers
 
 ### Verification
 
