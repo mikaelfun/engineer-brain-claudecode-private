@@ -2,39 +2,60 @@
  * DraftsPage — 邮件草稿审批页
  */
 import { useState } from 'react'
-import { ChevronDown, ChevronRight, Copy, Check } from 'lucide-react'
+import { ChevronDown, ChevronRight, Copy, Check, Pencil, X, Save } from 'lucide-react'
 import { Card } from '../components/common/Card'
 import { Badge } from '../components/common/Badge'
 import { Loading, EmptyState } from '../components/common/Loading'
 import { useDrafts } from '../api/hooks'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
+import MarkdownContent from '../components/common/MarkdownContent'
 import { useNavigate } from 'react-router-dom'
 
 function DraftCard({ draft }: { draft: any }) {
   const [expanded, setExpanded] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [editContent, setEditContent] = useState('')
 
-  // Compress multiple empty lines but preserve single blank lines for email formatting
   const cleanContent = draft.content?.replace(/\n{3,}/g, '\n\n') || ''
 
   const handleCopy = async (e: React.MouseEvent) => {
     e.stopPropagation()
     try {
-      await navigator.clipboard.writeText(cleanContent)
+      const { copyAsRichText } = await import('../utils/clipboard')
+      await copyAsRichText(editing ? editContent : cleanContent)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {
-      // Fallback for browsers without clipboard API
-      const textarea = document.createElement('textarea')
-      textarea.value = cleanContent
-      document.body.appendChild(textarea)
-      textarea.select()
-      document.execCommand('copy')
-      document.body.removeChild(textarea)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      setCopied(false)
     }
+  }
+
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setEditContent(cleanContent)
+    setEditing(true)
+    if (!expanded) setExpanded(true)
+  }
+
+  const handleSave = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    try {
+      const res = await fetch(`/api/drafts/${draft.caseNumber}/${draft.filename}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: editContent }),
+      })
+      if (res.ok) {
+        draft.content = editContent
+        setEditing(false)
+      }
+    } catch { /* ignore */ }
+  }
+
+  const handleCancel = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setEditing(false)
+    setEditContent('')
   }
 
   return (
@@ -51,13 +72,22 @@ function DraftCard({ draft }: { draft: any }) {
         </div>
         <div className="flex items-center gap-2">
           <button
+            onClick={handleEdit}
+            className="flex items-center gap-1 px-2 py-1 text-xs rounded transition-colors"
+            style={{ color: editing ? 'var(--accent-blue)' : 'var(--text-tertiary)' }}
+            title="Edit draft"
+          >
+            <Pencil className="w-3 h-3" />
+            Edit
+          </button>
+          <button
             onClick={handleCopy}
             className="flex items-center gap-1 px-2 py-1 text-xs rounded transition-colors"
             style={{
               color: copied ? 'var(--accent-green)' : 'var(--text-tertiary)',
               background: copied ? 'var(--accent-green-dim)' : undefined,
             }}
-            title="Copy to clipboard"
+            title="Copy as rich text for Outlook"
           >
             {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
             {copied ? 'Copied!' : 'Copy'}
@@ -69,12 +99,41 @@ function DraftCard({ draft }: { draft: any }) {
       </div>
       {expanded && (
         <div
-          className="prose prose-sm max-w-none border-t pt-3 mt-3"
+          className="border-t pt-3 mt-3"
           style={{ borderColor: 'var(--border-subtle)' }}
         >
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {cleanContent}
-          </ReactMarkdown>
+          {editing ? (
+            <div className="space-y-2">
+              <textarea
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                className="w-full min-h-[300px] p-3 rounded text-sm font-mono"
+                style={{
+                  background: 'var(--bg-secondary)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--border-default)',
+                }}
+              />
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={handleCancel}
+                  className="flex items-center gap-1 px-3 py-1.5 text-xs rounded transition-colors"
+                  style={{ color: 'var(--text-tertiary)', border: '1px solid var(--border-default)' }}
+                >
+                  <X className="w-3 h-3" /> Cancel
+                </button>
+                <button
+                  onClick={handleSave}
+                  className="flex items-center gap-1 px-3 py-1.5 text-xs rounded transition-colors"
+                  style={{ color: 'var(--accent-blue)', border: '1px solid var(--accent-blue)' }}
+                >
+                  <Save className="w-3 h-3" /> Save
+                </button>
+              </div>
+            </div>
+          ) : (
+            <MarkdownContent>{cleanContent}</MarkdownContent>
+          )}
         </div>
       )}
     </Card>

@@ -1,9 +1,9 @@
 /**
  * CaseDetail — Case 详情页 (多 tab)
  */
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, CheckCircle2, Circle, AlertTriangle, FolderOpen, Clock, RefreshCw } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Circle, AlertTriangle, FolderOpen, Clock, RefreshCw, ChevronDown, ChevronRight, Copy, Check, Pencil, X, Save } from 'lucide-react'
 import { Tabs } from '../components/common/Tabs'
 import { Card, CardHeader } from '../components/common/Card'
 import { SeverityBadge, CaseStatusBadge, SlaBadge, Badge, HealthScoreBadge } from '../components/common/Badge'
@@ -192,10 +192,10 @@ export default function CaseDetail() {
           <div>
             {activeTab === 'summary' && <InspectionTab content={inspectionData?.content} exists={inspectionData?.exists} filename={inspectionData?.filename} updatedAt={inspectionData?.updatedAt} />}
             {activeTab === 'todo' && <CaseTodoTab caseId={id!} latest={todoData?.latest || null} files={todoData?.files || []} toggleTodo={toggleCaseTodo} />}
-            {activeTab === 'emails' && <EmailsTab emails={emailsData?.emails || []} />}
+            {activeTab === 'emails' && <EmailsTab emails={emailsData?.emails || []} caseNumber={id!} />}
             {activeTab === 'notes' && <NotesTab notes={notesData?.notes || []} />}
             {activeTab === 'teams' && <TeamsTab chats={teamsData?.chats || []} />}
-            {activeTab === 'drafts' && <DraftsTab drafts={draftsData?.drafts || []} />}
+            {activeTab === 'drafts' && <DraftsTab drafts={draftsData?.drafts || []} caseNumber={id!} />}
             {activeTab === 'analysis' && <AnalysisTab content={analysisData?.content} exists={analysisData?.exists} />}
             {activeTab === 'timing' && <TimingTab exists={timingData?.exists} timing={timingData?.timing} />}
             {activeTab === 'logs' && <LogsTab logs={logsData?.logs || []} />}
@@ -218,10 +218,35 @@ export default function CaseDetail() {
   )
 }
 
-function EmailsTab({ emails }: { emails: any[] }) {
+/** Fetches image with JWT auth header, renders as blob URL */
+function AuthImage({ src, alt, className, style }: { src: string; alt: string; className?: string; style?: React.CSSProperties }) {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    const token = localStorage.getItem('eb_token')
+    fetch(src, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.blob() : null)
+      .then(blob => {
+        if (blob && !cancelled) setBlobUrl(URL.createObjectURL(blob))
+      })
+      .catch(() => {})
+    return () => { cancelled = true; if (blobUrl) URL.revokeObjectURL(blobUrl) }
+  }, [src])
+
+  if (!blobUrl) return null
+  return <img src={blobUrl} alt={alt} className={className} style={style} />
+}
+
+function EmailsTab({ emails, caseNumber }: { emails: any[]; caseNumber: string }) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
 
   if (emails.length === 0) return <EmptyState icon="📧" title="No emails" />
+
+  // Sort newest first
+  const sorted = [...emails].sort((a, b) =>
+    new Date(b.date).getTime() - new Date(a.date).getTime()
+  )
 
   const toggle = (id: string) => {
     const next = new Set(expanded)
@@ -229,9 +254,36 @@ function EmailsTab({ emails }: { emails: any[] }) {
     setExpanded(next)
   }
 
+  // Transform inline image markdown to img tags with API URLs
+  const renderBody = (body: string) => {
+    if (!body) return '(No body)'
+    // Strip legacy "**Inline Images:**" header and empty image refs
+    const cleaned = body
+      .replace(/\*\*Inline Images:\*\*\n?/g, '')
+      .replace(/!\[inline-image\]\(\)\n?/g, '')
+    const parts = cleaned.split(/(!\[.*?\]\(images\/[^)]+\))/)
+    return parts.map((part, i) => {
+      const imgMatch = part.match(/!\[.*?\]\((images\/([^)]+))\)/)
+      if (imgMatch) {
+        const filename = imgMatch[2]
+        const src = `/api/cases/${caseNumber}/images/${filename}`
+        return (
+          <AuthImage
+            key={i}
+            src={src}
+            alt="inline"
+            className="max-w-full my-2 rounded border"
+            style={{ borderColor: 'var(--border-subtle)', maxHeight: '400px' }}
+          />
+        )
+      }
+      return <span key={i}>{part}</span>
+    })
+  }
+
   return (
     <div className="space-y-3">
-      {emails.map((email, i) => (
+      {sorted.map((email, i) => (
         <Card key={email.id || i} padding="sm">
           <div
             className="flex items-start gap-3 cursor-pointer"
@@ -256,7 +308,7 @@ function EmailsTab({ emails }: { emails: any[] }) {
               className="mt-3 pt-3 text-sm whitespace-pre-wrap"
               style={{ borderTop: '1px solid var(--border-subtle)', color: 'var(--text-secondary)' }}
             >
-              {email.body || '(No body)'}
+              {renderBody(email.body)}
             </div>
           )}
         </Card>
@@ -338,19 +390,151 @@ function TeamsTab({ chats }: { chats: any[] }) {
   )
 }
 
-function DraftsTab({ drafts }: { drafts: any[] }) {
+function DraftCard({ draft, defaultExpanded, caseNumber }: { draft: any; defaultExpanded: boolean; caseNumber: string }) {
+  const [expanded, setExpanded] = useState(defaultExpanded)
+  const [copied, setCopied] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [editContent, setEditContent] = useState('')
+
+  const cleanContent = draft.content?.replace(/\n{3,}/g, '\n\n') || ''
+
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    try {
+      const { copyAsRichText } = await import('../utils/clipboard')
+      await copyAsRichText(editing ? editContent : cleanContent)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      setCopied(false)
+    }
+  }
+
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setEditContent(cleanContent)
+    setEditing(true)
+    if (!expanded) setExpanded(true)
+  }
+
+  const handleSave = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    try {
+      const res = await fetch(`/api/drafts/${caseNumber}/${draft.filename}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: editContent }),
+      })
+      if (res.ok) {
+        draft.content = editContent
+        setEditing(false)
+      }
+    } catch { /* ignore */ }
+  }
+
+  const handleCancel = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setEditing(false)
+    setEditContent('')
+  }
+
+  return (
+    <Card padding="sm">
+      <div
+        className="flex items-center justify-between cursor-pointer"
+        onClick={() => setExpanded(!expanded)}
+      >
+        <div className="flex items-center gap-2">
+          {expanded
+            ? <ChevronDown className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
+            : <ChevronRight className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />}
+          <span className="font-mono text-xs" style={{ color: 'var(--text-tertiary)' }}>{draft.filename}</span>
+          {!defaultExpanded && (
+            <Badge variant="secondary" size="xs">Historical</Badge>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleEdit}
+            className="flex items-center gap-1 px-2 py-1 text-xs rounded transition-colors"
+            style={{ color: editing ? 'var(--accent-blue)' : 'var(--text-tertiary)' }}
+            title="Edit draft"
+          >
+            <Pencil className="w-3 h-3" />
+            Edit
+          </button>
+          <button
+            onClick={handleCopy}
+            className="flex items-center gap-1 px-2 py-1 text-xs rounded transition-colors"
+            style={{
+              color: copied ? 'var(--accent-green)' : 'var(--text-tertiary)',
+              background: copied ? 'var(--accent-green-dim)' : undefined,
+            }}
+            title="Copy as rich text for Outlook"
+          >
+            {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+            {copied ? 'Copied!' : 'Copy'}
+          </button>
+          <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+            {new Date(draft.createdAt).toLocaleString()}
+          </span>
+        </div>
+      </div>
+      {expanded && (
+        <div
+          className="border-t pt-3 mt-3"
+          style={{ borderColor: 'var(--border-subtle)' }}
+        >
+          {editing ? (
+            <div className="space-y-2">
+              <textarea
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                className="w-full min-h-[300px] p-3 rounded text-sm font-mono"
+                style={{
+                  background: 'var(--bg-secondary)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--border-default)',
+                }}
+              />
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={handleCancel}
+                  className="flex items-center gap-1 px-3 py-1.5 text-xs rounded transition-colors"
+                  style={{ color: 'var(--text-tertiary)', border: '1px solid var(--border-default)' }}
+                >
+                  <X className="w-3 h-3" /> Cancel
+                </button>
+                <button
+                  onClick={handleSave}
+                  className="flex items-center gap-1 px-3 py-1.5 text-xs rounded transition-colors"
+                  style={{ color: 'var(--accent-blue)', border: '1px solid var(--accent-blue)' }}
+                >
+                  <Save className="w-3 h-3" /> Save
+                </button>
+              </div>
+            </div>
+          ) : (
+            <MarkdownContent>{cleanContent}</MarkdownContent>
+          )}
+        </div>
+      )}
+    </Card>
+  )
+}
+
+function DraftsTab({ drafts, caseNumber }: { drafts: any[]; caseNumber: string }) {
   if (drafts.length === 0) return <EmptyState icon="✉️" title="No drafts" />
+
+  // Sort by createdAt descending — latest first
+  const sorted = [...drafts].sort((a, b) =>
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  )
 
   return (
     <div className="space-y-3">
-      {drafts.map((draft, i) => (
-        <Card key={i} padding="sm">
-          <div className="flex items-center justify-between mb-2">
-            <span className="font-mono text-xs" style={{ color: 'var(--text-tertiary)' }}>{draft.filename}</span>
-            <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{new Date(draft.createdAt).toLocaleString()}</span>
-          </div>
-          <MarkdownContent>{draft.content}</MarkdownContent>
-        </Card>
+      {sorted.map((draft, i) => (
+        <DraftCard key={i} draft={draft} defaultExpanded={i === 0} caseNumber={caseNumber} />
       ))}
     </div>
   )
