@@ -1,5 +1,10 @@
 {
   "casesRoot": "./cases",
   "dataRoot": "C:\\Users\\fangkun\\Documents\\EngineerBrain-Data",
-  "teamsSearchCacheHours": 4
+  "teamsSearchCacheHours": 4,
+  "onenote": {
+    "personalNotebook": "Kun Fang OneNote",
+    "teamNotebooks": ["MCVKB"],
+    "freshnessThresholdMonths": 12
+  }
 }
