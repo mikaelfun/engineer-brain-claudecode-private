@@ -4,13 +4,19 @@ import { marked } from 'marked'
 marked.use({ async: false })
 
 /**
- * Extract email body from draft markdown (strip metadata header and footer).
+ * Extract email body from draft markdown.
+ * Strips: metadata header (before first ---), signature (from Best Regards), footer (after last ---)
+ *
  * Draft format:
  *   # Email Draft — {type}
  *   **To:** ...
  *   **Subject:** ...
  *   ---
+ *   Hi xxx,
  *   {body}
+ *   Best Regards,
+ *   Kun Fang
+ *   ...
  *   ---
  *   _Generated at ..._
  */
@@ -25,16 +31,37 @@ function extractEmailBody(markdown: string): string {
     }
   }
 
+  let bodyStart = 0
+  let bodyEnd = lines.length
+
   if (separators.length >= 2) {
-    // Body is between first and second ---
-    return lines.slice(separators[0] + 1, separators[1]).join('\n').trim()
+    bodyStart = separators[0] + 1
+    bodyEnd = separators[separators.length - 1]
   } else if (separators.length === 1) {
-    // Only one separator — body is everything after it
-    return lines.slice(separators[0] + 1).join('\n').trim()
+    bodyStart = separators[0] + 1
   }
 
-  // No separator found, use full content
-  return markdown
+  // Extract body lines
+  const bodyLines = lines.slice(bodyStart, bodyEnd)
+
+  // Find signature start — "Best Regards" or similar patterns
+  let sigStart = bodyLines.length
+  for (let i = 0; i < bodyLines.length; i++) {
+    const line = bodyLines[i].trim().toLowerCase()
+    if (
+      line.startsWith('best regards') ||
+      line.startsWith('best regard,') ||
+      line.startsWith('此致') ||
+      line.startsWith('regards,') ||
+      line.startsWith('thanks,') ||
+      line.startsWith('thank you,')
+    ) {
+      sigStart = i
+      break
+    }
+  }
+
+  return bodyLines.slice(0, sigStart).join('\n').trim()
 }
 
 /**
@@ -45,14 +72,13 @@ function markdownToEmailHtml(markdown: string): string {
   const body = extractEmailBody(markdown)
   const rawHtml = marked.parse(body) as string
 
-  // Wrap in email-safe container with inline styles
   return `<div style="font-family: Calibri, Arial, sans-serif; font-size: 11pt; color: #000000; line-height: 1.5;">${rawHtml}</div>`
 }
 
 /**
  * Copy markdown content as rich HTML to clipboard.
- * Outlook and other email clients will paste with formatting preserved.
- * Falls back to plain text if clipboard API is not available.
+ * Strips metadata header, signature block, and footer.
+ * Outlook will paste with formatting preserved (bold, lists, links).
  */
 export async function copyAsRichText(markdown: string): Promise<void> {
   const html = markdownToEmailHtml(markdown)
@@ -73,7 +99,6 @@ export async function copyAsRichText(markdown: string): Promise<void> {
     try {
       await navigator.clipboard.writeText(plainText)
     } catch {
-      // Last resort fallback
       const textarea = document.createElement('textarea')
       textarea.value = plainText
       document.body.appendChild(textarea)
