@@ -1,7 +1,10 @@
 import { marked } from 'marked'
 
+// Configure marked for synchronous operation
+marked.use({ async: false })
+
 /**
- * Extract email body from draft markdown (strip metadata header).
+ * Extract email body from draft markdown (strip metadata header and footer).
  * Draft format:
  *   # Email Draft — {type}
  *   **To:** ...
@@ -14,27 +17,24 @@ import { marked } from 'marked'
 function extractEmailBody(markdown: string): string {
   const lines = markdown.split('\n')
 
-  // Find first --- separator (after metadata header)
-  let bodyStart = -1
-  let bodyEnd = lines.length
-
+  // Find --- separators
+  const separators: number[] = []
   for (let i = 0; i < lines.length; i++) {
     if (lines[i].trim() === '---') {
-      if (bodyStart === -1) {
-        bodyStart = i + 1
-      } else {
-        // Second --- is the footer separator
-        bodyEnd = i
-      }
+      separators.push(i)
     }
   }
 
-  if (bodyStart === -1) {
-    // No separator found, use full content
-    return markdown
+  if (separators.length >= 2) {
+    // Body is between first and second ---
+    return lines.slice(separators[0] + 1, separators[1]).join('\n').trim()
+  } else if (separators.length === 1) {
+    // Only one separator — body is everything after it
+    return lines.slice(separators[0] + 1).join('\n').trim()
   }
 
-  return lines.slice(bodyStart, bodyEnd).join('\n').trim()
+  // No separator found, use full content
+  return markdown
 }
 
 /**
@@ -43,7 +43,7 @@ function extractEmailBody(markdown: string): string {
  */
 function markdownToEmailHtml(markdown: string): string {
   const body = extractEmailBody(markdown)
-  const rawHtml = marked.parse(body, { async: false }) as string
+  const rawHtml = marked.parse(body) as string
 
   // Wrap in email-safe container with inline styles
   return `<div style="font-family: Calibri, Arial, sans-serif; font-size: 11pt; color: #000000; line-height: 1.5;">${rawHtml}</div>`
