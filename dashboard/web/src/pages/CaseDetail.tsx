@@ -393,10 +393,34 @@ function TeamsTab({ chats }: { chats: any[] }) {
 function DraftCard({ draft, defaultExpanded, caseNumber }: { draft: any; defaultExpanded: boolean; caseNumber: string }) {
   const [expanded, setExpanded] = useState(defaultExpanded)
   const [copied, setCopied] = useState(false)
+  const [ccCopied, setCcCopied] = useState(false)
   const [editing, setEditing] = useState(false)
   const [editContent, setEditContent] = useState('')
 
   const cleanContent = draft.content?.replace(/\n{3,}/g, '\n\n') || ''
+
+  // Extract CC line from draft content
+  const ccMatch = cleanContent.match(/\*\*CC:\*\*\s*(.+)/i)
+  const ccEmails = ccMatch ? ccMatch[1].trim() : null
+
+  const handleCopyCC = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!ccEmails) return
+    try {
+      await navigator.clipboard.writeText(ccEmails)
+      setCcCopied(true)
+      setTimeout(() => setCcCopied(false), 1500)
+    } catch {
+      const textarea = document.createElement('textarea')
+      textarea.value = ccEmails
+      document.body.appendChild(textarea)
+      textarea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textarea)
+      setCcCopied(true)
+      setTimeout(() => setCcCopied(false), 1500)
+    }
+  }
 
   const handleCopy = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -485,6 +509,28 @@ function DraftCard({ draft, defaultExpanded, caseNumber }: { draft: any; default
           className="border-t pt-3 mt-3"
           style={{ borderColor: 'var(--border-subtle)' }}
         >
+          {ccEmails && (
+            <div
+              className="flex items-center gap-2 px-3 py-2 rounded mb-3 text-xs"
+              style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-subtle)' }}
+            >
+              <span style={{ color: 'var(--text-secondary)' }}>
+                <strong>CC:</strong> {ccEmails}
+              </span>
+              <button
+                onClick={handleCopyCC}
+                className="flex items-center gap-1 px-1.5 py-0.5 rounded transition-colors shrink-0"
+                style={{
+                  color: ccCopied ? 'var(--accent-green)' : 'var(--text-tertiary)',
+                  background: ccCopied ? 'var(--accent-green-dim)' : undefined,
+                }}
+                title="Copy CC list"
+              >
+                {ccCopied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                {ccCopied ? '✓' : 'Copy CC'}
+              </button>
+            </div>
+          )}
           {editing ? (
             <div className="space-y-2">
               <textarea

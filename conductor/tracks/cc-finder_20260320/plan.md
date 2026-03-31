@@ -3,7 +3,7 @@
 **Track ID:** cc-finder_20260320
 **Spec:** [spec.md](./spec.md)
 **Created:** 2026-03-31
-**Status:** [~] In Progress
+**Status:** [x] Complete
 
 ## Overview
 
@@ -57,9 +57,9 @@ Frontend: parse CC header in draft content, render copy button.
 
 ### Tasks
 
-- [ ] Task 4.1: Update `DraftCard` in `dashboard/web/src/pages/CaseDetail.tsx` — parse draft content for `**CC:**` line, extract CC value, render a dedicated copy button (clipboard icon) next to the CC line that copies only the email list
-- [ ] Task 4.2: Apply same CC copy button logic to `DraftCard` in `dashboard/web/src/pages/DraftsPage.tsx`
-- [ ] Task 4.3: Add `podAlias` field to `dashboard/web/src/pages/SettingsPage.tsx` — read/write from config.json
+- [x] Task 4.1: Update `DraftCard` in `dashboard/web/src/pages/CaseDetail.tsx` — parse draft content for `**CC:**` line, extract CC value, render a dedicated copy button (clipboard icon) next to the CC line that copies only the email list
+- [x] Task 4.2: Apply same CC copy button logic to `DraftCard` in `dashboard/web/src/pages/DraftsPage.tsx`
+- [x] Task 4.3: Add `podAlias` field to `dashboard/web/src/pages/SettingsPage.tsx` — read/write from config.json
 
 ### Verification
 

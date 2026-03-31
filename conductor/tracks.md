@@ -11,7 +11,7 @@
 | [x] | issue-tracker_20260320 | Dashboard Issue Tracker | 2026-03-20 | 2026-03-20 |
 | [ ] | teams-name-match_20260320 | Teams Search Customer Name Matching | 2026-03-20 | 2026-03-20 |
 | [ ] | sap-compliance_20260320 | SAP Compliance Check | 2026-03-20 | 2026-03-20 |
-| [~] | cc-finder_20260320 | CC Finder Integration | 2026-03-20 | 2026-03-31 |
+| [x] | cc-finder_20260320 | CC Finder Integration | 2026-03-20 | 2026-04-01 |
 | [ ] | workflow-persist_20260320 | Workflow Progress Persistence | 2026-03-20 | 2026-03-20 |
 | [x] | restart-buttons_20260320 | Issue 页面添加重启前后端按钮 | 2026-03-20 | 2026-03-20 |
 | [x] | implement-progress_20260320 | Issue Implement 实时进度展示 | 2026-03-20 | 2026-03-21 |

@@ -2,7 +2,7 @@
  * SettingsPage — 用户配置页
  */
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Settings, Save, FolderOpen, CheckCircle2, Clock, AlertCircle, Loader2 } from 'lucide-react'
+import { Settings, Save, FolderOpen, CheckCircle2, Clock, AlertCircle, Loader2, Users } from 'lucide-react'
 import { Card, CardHeader } from '../components/common/Card'
 import { apiGet, apiPut, apiPost } from '../api/client'
 
@@ -17,6 +17,7 @@ interface PathValidation {
 export default function SettingsPage() {
   const [casesRoot, setCasesRoot] = useState('')
   const [teamsSearchCacheHours, setTeamsSearchCacheHours] = useState(4)
+  const [podAlias, setPodAlias] = useState('mcpodvm@microsoft.com')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -36,6 +37,7 @@ export default function SettingsPage() {
       const config = await apiGet<Record<string, any>>('/settings')
       setCasesRoot(config.casesRoot || '')
       setTeamsSearchCacheHours(config.teamsSearchCacheHours ?? 4)
+      setPodAlias(config.podAlias || 'mcpodvm@microsoft.com')
       // Validate the initial path
       if (config.casesRoot) {
         validatePath(config.casesRoot)
@@ -75,7 +77,7 @@ export default function SettingsPage() {
     setSaved(false)
     setSaveError(null)
     try {
-      await apiPut('/settings', { casesRoot, teamsSearchCacheHours })
+      await apiPut('/settings', { casesRoot, teamsSearchCacheHours, podAlias })
       setSaved(true)
       // Re-validate after save to refresh resolved path
       validatePath(casesRoot)
@@ -217,6 +219,25 @@ export default function SettingsPage() {
           />
           <span className="text-sm" style={{ color: 'var(--text-tertiary)' }}>hours</span>
         </div>
+      </Card>
+
+      {/* POD Alias (CC Finder) */}
+      <Card>
+        <CardHeader
+          title="POD Alias"
+          icon={<Users className="w-4 h-4" style={{ color: 'var(--accent-blue)' }} />}
+        />
+        <p className="text-sm mb-3" style={{ color: 'var(--text-tertiary)' }}>
+          Email alias used to replace <code className="px-1 py-0.5 rounded text-xs" style={{ background: 'var(--bg-hover)' }}>{'<Replace with POD alias>'}</code> in RDSE customer CC lists.
+        </p>
+        <input
+          type="text"
+          value={podAlias}
+          onChange={(e) => setPodAlias(e.target.value)}
+          placeholder="mcpodvm@microsoft.com"
+          className="w-full max-w-md px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 font-mono"
+          style={{ borderColor: 'var(--border-default)' }}
+        />
       </Card>
 
       {/* Save Button */}
