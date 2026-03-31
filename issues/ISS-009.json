@@ -1,10 +1,11 @@
 {
   "id": "ISS-009",
-  "title": "cc-finder 集成",
-  "description": "casework 流程中自动查找 case 客户的 CC（Customer Contact）联系人信息。已有 fetch-powerbi-cc 脚本和 mooncake-cc.json 数据，但未集成到 workflow。",
+  "title": "RDSE客户cc-finder 集成,",
+  "description": "casework 流程中自动查找 case 客户的 CC（Customer Contact）联系人信息。已有 fetch-powerbi-cc 脚本和 mooncake-cc.json 数据，但未集成到 workflow。RDSE客户需要额外在initial draft提供一行cc拷贝列表，让工程师拷贝。",
   "type": "feature",
   "priority": "P2",
-  "status": "pending",
+  "status": "tracked",
+  "trackId": "cc-finder_20260320",
   "createdAt": "2026-03-20T10:08:00.000Z",
-  "updatedAt": "2026-03-29T10:00:00.000Z"
+  "updatedAt": "2026-03-31T16:00:00.000Z"
 }
