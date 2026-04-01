@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V2: Unified Progress Card</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700;800&display=swap');
+
+  :root {
+    --bg-base: #1a1d24;
+    --bg-surface: #22262f;
+    --bg-elevated: #282d38;
+    --bg-hover: #2e3340;
+    --bg-active: #353b4a;
+    --bg-inset: #1e2129;
+    --text-primary: #c9cdd6;
+    --text-secondary: #8b919e;
+    --text-tertiary: #5e6370;
+    --border-subtle: rgba(255,255,255,0.05);
+    --border-default: rgba(255,255,255,0.08);
+    --accent-blue: #6ba3e8;
+    --accent-green: #5cbf8a;
+    --accent-amber: #d4a44a;
+    --accent-red: #d47272;
+    --accent-purple: #9e8cc7;
+    --accent-blue-dim: rgba(107,163,232,0.10);
+    --accent-green-dim: rgba(92,191,138,0.10);
+    --accent-amber-dim: rgba(212,164,74,0.10);
+    --accent-red-dim: rgba(212,114,114,0.10);
+    --accent-purple-dim: rgba(158,140,199,0.10);
+    --font-ui: 'Plus Jakarta Sans', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg-base);
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    font-size: 13px;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ============ SIDEBAR ============ */
+  .sidebar {
+    width: 220px;
+    background: var(--bg-surface);
+    border-right: 1px solid var(--border-subtle);
+    padding: 20px 16px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar-logo {
+    font-size: 15px; font-weight: 800; letter-spacing: -0.03em;
+    margin-bottom: 28px; color: var(--text-primary);
+  }
+  .sidebar-logo .logo-icon { margin-right: 6px; }
+  .sidebar-nav a {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; border-radius: 8px; color: var(--text-secondary);
+    text-decoration: none; font-size: 13px; font-weight: 500;
+    margin-bottom: 2px; transition: all 0.1s;
+  }
+  .sidebar-nav a:hover { background: var(--bg-hover); color: var(--text-primary); }
+  .sidebar-nav a.active { background: var(--accent-blue-dim); color: var(--accent-blue); font-weight: 600; }
+  .sidebar-nav .nav-icon { width: 18px; text-align: center; font-size: 14px; }
+
+  /* ============ MAIN ============ */
+  .main { flex: 1; padding: 24px 32px; overflow-y: auto; }
+
+  /* Design label */
+  .label {
+    font-size: 11px; font-weight: 700; color: var(--accent-green);
+    margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.06em;
+  }
+
+  /* ============ TITLE BAR ============ */
+  .title-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .title-left { display: flex; align-items: baseline; gap: 12px; }
+  .title-left h1 { font-size: 20px; font-weight: 800; letter-spacing: -0.03em; }
+  .round-badge {
+    font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary);
+    background: var(--bg-surface); padding: 3px 10px; border-radius: 12px;
+    border: 1px solid var(--border-default);
+  }
+  .controls { display: flex; align-items: center; gap: 8px; }
+  .runner-pill {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg-surface); border: 1px solid var(--border-default);
+    border-radius: 10px; padding: 7px 14px;
+  }
+  .runner-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  }
+  .runner-dot.running { background: var(--accent-green); animation: pulse-dot 2s infinite; }
+  .runner-dot.idle { background: var(--text-tertiary); }
+  @keyframes pulse-dot {
+    0%,100% { box-shadow: 0 0 0 0 rgba(92,191,138,0.4); }
+    50% { box-shadow: 0 0 0 4px rgba(92,191,138,0); }
+  }
+  .runner-label {
+    font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .runner-label.running { color: var(--accent-green); }
+  .runner-label.idle { color: var(--text-tertiary); }
+  .btn {
+    padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border-default);
+    background: transparent; color: var(--text-secondary); font-family: var(--font-ui);
+    font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s;
+  }
+  .btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+  .btn.danger { border-color: var(--accent-red); color: var(--accent-red); }
+  .btn.danger:hover { background: var(--accent-red-dim); }
+  .btn.blue { border-color: var(--accent-blue); color: var(--accent-blue); }
+  .btn.blue:hover { background: var(--accent-blue-dim); }
+  .interval-sel {
+    padding: 4px 8px; border-radius: 6px; border: 1px solid var(--accent-blue);
+    background: var(--accent-blue-dim); color: var(--accent-blue);
+    font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+    outline: none; cursor: pointer;
+  }
+
+  /* ============ UNIFIED PROGRESS CARD ============ */
+  .unified-card {
+    background: var(--bg-surface); border: 1px solid var(--border-subtle);
+    border-radius: 12px; overflow: hidden; margin-bottom: 16px;
+    position: relative;
+  }
+  .unified-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
+    animation: bar-pulse 3s ease-in-out infinite;
+  }
+  .unified-card.idle::before {
+    background: var(--text-tertiary); animation: none; opacity: 0.3;
+  }
+  @keyframes bar-pulse { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
+
+  /* Section 1: Current Activity */
+  .section-activity {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 24px; border-bottom: 1px solid var(--border-subtle);
+  }
+  .activity-left { display: flex; align-items: center; gap: 16px; }
+  .pulse-ring {
+    width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0; position: relative;
+    background: var(--accent-amber-dim); border: 2px solid var(--accent-amber);
+  }
+  .pulse-ring::after {
+    content: ''; position: absolute; inset: -4px; border-radius: 50%;
+    border: 2px solid var(--accent-amber); opacity: 0;
+    animation: ring-expand 2s ease-out infinite;
+  }
+  @keyframes ring-expand {
+    0% { transform: scale(0.9); opacity: 0.5; }
+    100% { transform: scale(1.35); opacity: 0; }
+  }
+  .pulse-ring.idle {
+    background: var(--bg-inset); border-color: var(--text-tertiary);
+  }
+  .pulse-ring.idle::after { animation: none; }
+  .pulse-ring.blue { background: var(--accent-blue-dim); border-color: var(--accent-blue); }
+  .pulse-ring.blue::after { border-color: var(--accent-blue); }
+  .pulse-ring.green { background: var(--accent-green-dim); border-color: var(--accent-green); }
+  .pulse-ring.green::after { border-color: var(--accent-green); }
+
+  .act-title { font-size: 16px; font-weight: 800; letter-spacing: -0.02em; }
+  .act-detail { font-size: 12px; color: var(--text-secondary); margin-top: 3px; }
+  .act-detail .tid { font-family: var(--font-mono); color: var(--accent-blue); font-weight: 600; }
+  .activity-right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+  .timer {
+    font-family: var(--font-mono); font-size: 26px; font-weight: 800;
+    color: var(--accent-blue); letter-spacing: -0.02em;
+  }
+  .timer.dim { color: var(--text-tertiary); font-size: 22px; }
+  .timer-label {
+    font-size: 10px; color: var(--text-tertiary); font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+
+  /* Section 2: Phase Pipeline */
+  .section-pipeline {
+    padding: 18px 24px; border-bottom: 1px solid var(--border-subtle);
+  }
+  .pipeline-label {
+    font-size: 10px; font-weight: 700; color: var(--text-tertiary);
+    text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px;
+  }
+  .pipeline { display: flex; align-items: flex-start; }
+  .ph {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    position: relative; min-width: 0;
+  }
+  .ph:not(:last-child)::after {
+    content: ''; position: absolute; top: 14px; right: -1px;
+    width: calc(100% - 60px); height: 2px;
+    background: var(--border-default); transform: translateX(50%);
+  }
+  .ph:not(:last-child).done::after { background: var(--accent-green); opacity: 0.4; }
+  .ph-dot {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; margin-bottom: 5px; position: relative; z-index: 1;
+  }
+  .ph.done .ph-dot { background: var(--accent-green-dim); border: 2px solid var(--accent-green); }
+  .ph.active .ph-dot {
+    background: var(--accent-blue-dim); border: 2px solid var(--accent-blue);
+    animation: ph-pulse 2.5s ease-in-out infinite;
+  }
+  .ph.pending .ph-dot { background: var(--bg-inset); border: 2px solid var(--text-tertiary); }
+  @keyframes ph-pulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(107,163,232,0.3); }
+    50% { box-shadow: 0 0 0 5px rgba(107,163,232,0); }
+  }
+  .ph-name {
+    font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .ph.done .ph-name { color: var(--accent-green); }
+  .ph.active .ph-name { color: var(--accent-blue); }
+  .ph.pending .ph-name { color: var(--text-tertiary); }
+  .ph-stat {
+    font-family: var(--font-mono); font-size: 9px; color: var(--text-tertiary);
+    margin-top: 4px; line-height: 1.4;
+  }
+  .ph-dur {
+    font-family: var(--font-mono); font-size: 9px; color: var(--text-tertiary); margin-top: 2px;
+  }
+  .ph.active .ph-dur { color: var(--accent-blue); font-weight: 600; }
+  .ph-tag {
+    margin-top: 6px; padding: 3px 8px; border-radius: 5px;
+    font-family: var(--font-mono); font-size: 8px; font-weight: 700;
+    background: var(--accent-blue-dim); color: var(--accent-blue);
+    border: 1px solid rgba(107,163,232,0.15);
+    max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .g { color: var(--accent-green); }
+  .r { color: var(--accent-red); }
+  .b { color: var(--accent-blue); }
+  .a { color: var(--accent-amber); }
+  .t { color: var(--text-tertiary); }
+  .n { font-weight: 700; }
+
+  /* Section 3: Queue + Loop footer */
+  .section-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 24px; background: var(--bg-inset);
+  }
+  .queue-chips { display: flex; gap: 16px; }
+  .qchip { display: flex; align-items: center; gap: 6px; }
+  .qchip-label {
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.04em; color: var(--text-tertiary);
+  }
+  .qchip-val { font-family: var(--font-mono); font-size: 13px; font-weight: 800; }
+  .loop-info {
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--font-mono); font-size: 10px; color: var(--accent-blue);
+  }
+  .loop-dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--accent-blue); animation: blink 1.5s ease-in-out infinite;
+  }
+  .loop-dot.idle { background: var(--text-tertiary); animation: none; }
+  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.25; } }
+
+  /* ============ ACTIVITY DETAIL STRIP ============ */
+  .detail-strip {
+    background: var(--bg-surface); border: 1px solid var(--border-subtle);
+    border-radius: 10px; margin-bottom: 16px; overflow: hidden;
+  }
+  .strip-top {
+    display: flex; align-items: center; gap: 10px; padding: 12px 18px;
+  }
+  .live-dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--accent-green);
+    flex-shrink: 0; animation: blink 1.5s ease-in-out infinite;
+  }
+  .live-dot.idle { background: var(--text-tertiary); animation: none; }
+  .strip-text { font-size: 12px; font-weight: 600; color: var(--text-secondary); flex: 1; }
+  .strip-text .tid { font-family: var(--font-mono); color: var(--accent-blue); }
+  .strip-tag {
+    font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+    padding: 2px 8px; border-radius: 4px;
+  }
+  .strip-tag.blue { background: var(--accent-blue-dim); color: var(--accent-blue); }
+  .strip-tag.purple { background: var(--accent-purple-dim); color: var(--accent-purple); }
+  .strip-tag.green { background: var(--accent-green-dim); color: var(--accent-green); }
+  .strip-tag.dim { background: var(--bg-inset); color: var(--text-tertiary); }
+
+  .strip-bottom {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+    padding: 12px 18px; border-top: 1px solid var(--border-subtle);
+  }
+  .sb-cell { display: flex; flex-direction: column; gap: 4px; }
+  .sb-label {
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--text-tertiary);
+  }
+  .sb-bar-row { display: flex; align-items: center; gap: 6px; }
+  .sb-bar {
+    flex: 1; height: 6px; background: var(--bg-inset); border-radius: 3px;
+    overflow: hidden; max-width: 80px;
+  }
+  .sb-fill { height: 100%; border-radius: 3px; }
+  .sb-fill.g { background: var(--accent-green); }
+  .sb-fill.a { background: var(--accent-amber); }
+  .sb-fill.b { background: var(--accent-blue); }
+  .sb-count { font-family: var(--font-mono); font-size: 12px; font-weight: 700; }
+  .sb-value {
+    font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--text-primary);
+  }
+
+  /* ============ ATTENTION CARD ============ */
+  .card {
+    background: var(--bg-surface); border: 1px solid var(--border-subtle);
+    border-radius: 10px; padding: 18px; margin-bottom: 16px;
+  }
+  .card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+  .card-title { font-size: 13px; font-weight: 700; }
+  .card-sub { font-size: 11px; color: var(--text-tertiary); margin-left: auto; font-family: var(--font-mono); }
+
+  .attention { border-left: 3px solid var(--accent-amber); }
+  .att-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px; border-radius: 6px; margin-bottom: 6px; font-size: 12px;
+  }
+  .att-item:last-child { margin-bottom: 0; }
+  .att-item.yellow { background: var(--accent-amber-dim); border-left: 3px solid var(--accent-amber); }
+  .att-item .emoji { font-size: 14px; flex-shrink: 0; }
+  .att-item .txt { color: var(--text-primary); flex: 1; }
+  .att-item .meta { color: var(--text-tertiary); font-family: var(--font-mono); font-size: 10px; }
+
+  /* ============ STATS CARDS ============ */
+  .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 16px; }
+  .stat-card {
+    background: var(--bg-surface); border: 1px solid var(--border-subtle);
+    border-radius: 10px; padding: 14px 16px; position: relative; overflow: hidden;
+  }
+  .stat-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; opacity: 0.7;
+  }
+  .stat-card.green::before { background: var(--accent-green); }
+  .stat-card.red::before { background: var(--accent-red); }
+  .stat-card.amber::before { background: var(--accent-amber); }
+  .stat-card.blue::before { background: var(--accent-blue); }
+  .stat-card.purple::before { background: var(--accent-purple); }
+  .stat-label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--text-tertiary); margin-bottom: 6px;
+  }
+  .stat-value { font-family: var(--font-mono); font-size: 26px; font-weight: 800; }
+  .stat-value.green { color: var(--accent-green); }
+  .stat-value.red { color: var(--accent-red); }
+  .stat-value.amber { color: var(--accent-amber); }
+  .stat-value.blue { color: var(--accent-blue); }
+  .stat-value.purple { color: var(--accent-purple); }
+  .stat-sub { font-size: 10px; color: var(--text-tertiary); font-family: var(--font-mono); margin-top: 4px; }
+
+  /* ============ TWO COL ============ */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+
+  /* Queue table */
+  .qtable { width: 100%; border-collapse: collapse; }
+  .qtable th {
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--text-tertiary); text-align: left; padding: 6px 8px;
+    border-bottom: 1px solid var(--border-default);
+  }
+  .qtable td {
+    font-size: 12px; padding: 6px 8px; border-bottom: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+  }
+  .qtable td:first-child { font-family: var(--font-mono); font-size: 11px; color: var(--accent-blue); }
+  .badge {
+    font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+    padding: 2px 6px; border-radius: 4px; display: inline-block;
+  }
+  .badge.pass { background: var(--accent-green-dim); color: var(--accent-green); }
+  .badge.fail { background: var(--accent-red-dim); color: var(--accent-red); }
+  .badge.pend { background: var(--bg-inset); color: var(--text-tertiary); }
+
+  /* ============ ACTIVITY STREAM ============ */
+  .activity-list { max-height: 200px; overflow-y: auto; }
+  .activity-list::-webkit-scrollbar { width: 4px; }
+  .activity-list::-webkit-scrollbar-thumb { background: var(--bg-hover); border-radius: 2px; }
+  .act {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 5px 0; border-bottom: 1px solid var(--border-subtle); font-size: 11px;
+  }
+  .act-time { font-family: var(--font-mono); font-size: 10px; color: var(--text-tertiary); flex-shrink: 0; width: 42px; }
+  .act-badge {
+    font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+    padding: 1px 5px; border-radius: 4px; flex-shrink: 0;
+  }
+  .act-badge.SCAN { background: var(--accent-purple-dim); color: var(--accent-purple); }
+  .act-badge.TEST { background: var(--accent-blue-dim); color: var(--accent-blue); }
+  .act-badge.FIX { background: var(--accent-amber-dim); color: var(--accent-amber); }
+  .act-badge.VERIFY { background: var(--accent-green-dim); color: var(--accent-green); }
+  .act-badge.GEN { background: var(--accent-red-dim); color: var(--accent-red); }
+  .act-text { color: var(--text-secondary); }
+  .act-id { font-family: var(--font-mono); color: var(--accent-blue); font-size: 10px; }
+
+  /* ============ DEMO SWITCHER ============ */
+  .demo-bar {
+    position: fixed; top: 12px; right: 12px; z-index: 100;
+    display: flex; gap: 4px; background: var(--bg-elevated);
+    padding: 4px; border-radius: 8px; border: 1px solid var(--border-default);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  .demo-t {
+    padding: 5px 12px; font-size: 11px; font-weight: 600; border-radius: 5px;
+    cursor: pointer; border: none; background: transparent;
+    color: var(--text-secondary); font-family: var(--font-ui); transition: all 0.15s;
+  }
+  .demo-t:hover { background: var(--bg-hover); }
+  .demo-t.active { background: var(--accent-blue-dim); color: var(--accent-blue); }
+</style>
+</head>
+<body>
+
+<!-- ========== Demo Switcher (fixed top-right) ========== -->
+<div class="demo-bar">
+  <button class="demo-t" onclick="setScene('testing',this)">TEST Phase</button>
+  <button class="demo-t active" onclick="setScene('fixing',this)">FIX Phase</button>
+  <button class="demo-t" onclick="setScene('verify',this)">VERIFY Phase</button>
+  <button class="demo-t" onclick="setScene('idle',this)">IDLE</button>
+</div>
+
+<!-- ========== Sidebar ========== -->
+<nav class="sidebar">
+  <div class="sidebar-logo"><span class="logo-icon">🧠</span> EngineerBrain</div>
+  <div class="sidebar-nav">
+    <a href="#"><span class="nav-icon">📊</span> Dashboard</a>
+    <a href="#"><span class="nav-icon">📋</span> Cases</a>
+    <a href="#"><span class="nav-icon">🐛</span> Issues</a>
+    <a href="#"><span class="nav-icon">🤖</span> Agents</a>
+    <a href="#" class="active"><span class="nav-icon">🧪</span> Test Lab</a>
+    <a href="#"><span class="nav-icon">⚙️</span> Settings</a>
+  </div>
+</nav>
+
+<!-- ========== Main Content ========== -->
+<div class="main">
+
+  <!-- Design Label -->
+  <div class="label">V2: 统一 Progress Card（Runner + Phase 合并为单卡）</div>
+
+  <!-- ========== Title Bar ========== -->
+  <div class="title-bar">
+    <div class="title-left">
+      <h1>Test Lab</h1>
+      <span class="round-badge" id="round-badge">R28 / 80 tests</span>
+    </div>
+    <div class="controls">
+      <div class="runner-pill">
+        <div class="runner-dot running" id="rdot"></div>
+        <span class="runner-label running" id="rlabel">RUNNING</span>
+      </div>
+      <button class="btn danger" id="rbtn">&#x23F9; Stop</button>
+      <button class="btn blue" id="rbtn-loop">🔄 Loop</button>
+      <select class="interval-sel" id="interval-sel">
+        <option>5m</option><option>10m</option><option>15m</option><option>30m</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- ==========================================================
+       V2 UNIQUE: UNIFIED PROGRESS CARD
+       One card with three stacked sections
+       ========================================================== -->
+  <div class="unified-card" id="unified-card">
+
+    <!-- Section 1: Current Activity -->
+    <div class="section-activity">
+      <div class="activity-left">
+        <div class="pulse-ring" id="hero-ring">🔧</div>
+        <div>
+          <div class="act-title" id="hero-action">Fixing Test</div>
+          <div class="act-detail" id="hero-detail">
+            <span class="tid">spec-playwright-ui-tests</span>
+            &middot; attempt 1 &middot; reason: test_fail
+          </div>
+        </div>
+      </div>
+      <div class="activity-right">
+        <div class="timer" id="hero-time">6:41</div>
+        <div class="timer-label">phase elapsed</div>
+      </div>
+    </div>
+
+    <!-- Section 2: Phase Pipeline -->
+    <div class="section-pipeline">
+      <div class="pipeline-label" id="pipeline-label">Round 28 &middot; Phase Pipeline &middot; 3/5 done</div>
+      <div class="pipeline" id="pipeline">
+        <!-- SCAN -->
+        <div class="ph done" id="ph-scan">
+          <div class="ph-dot">✅</div>
+          <div class="ph-name">SCAN</div>
+          <div class="ph-stat"><span class="n">21</span> gaps</div>
+          <div class="ph-dur">4m53s</div>
+        </div>
+        <!-- GENERATE -->
+        <div class="ph done" id="ph-gen">
+          <div class="ph-dot">✅</div>
+          <div class="ph-name">GEN</div>
+          <div class="ph-stat"><span class="n">13</span> tests</div>
+          <div class="ph-dur">1m35s</div>
+        </div>
+        <!-- TEST -->
+        <div class="ph done" id="ph-test">
+          <div class="ph-dot" id="test-dot">✅</div>
+          <div class="ph-name">TEST</div>
+          <div class="ph-stat" id="test-stat"><span class="n g">1</span>✅ <span class="n r">3</span>❌ <span class="n t">9</span>⏭</div>
+          <div class="ph-dur" id="test-dur">8m5s</div>
+        </div>
+        <!-- FIX -->
+        <div class="ph active" id="ph-fix">
+          <div class="ph-dot" id="fix-dot">🔧</div>
+          <div class="ph-name">FIX</div>
+          <div class="ph-stat" id="fix-stat">0/1 · ~6m41s</div>
+          <div class="ph-tag" id="fix-tag">🔧 spec-playwrig...</div>
+        </div>
+        <!-- VERIFY -->
+        <div class="ph pending" id="ph-verify">
+          <div class="ph-dot" id="verify-dot">⏳</div>
+          <div class="ph-name">VERIFY</div>
+          <div class="ph-stat" id="verify-stat">3 queued</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: Queue chips + Loop info footer -->
+    <div class="section-footer">
+      <div class="queue-chips">
+        <div class="qchip">
+          <span class="qchip-label">Test</span>
+          <span class="qchip-val" style="color:var(--accent-green)" id="q-test">0</span>
+        </div>
+        <div class="qchip">
+          <span class="qchip-label">Fix</span>
+          <span class="qchip-val" style="color:var(--accent-amber)" id="q-fix">1</span>
+        </div>
+        <div class="qchip">
+          <span class="qchip-label">Verify</span>
+          <span class="qchip-val" style="color:var(--accent-blue)" id="q-verify">3</span>
+        </div>
+        <div class="qchip">
+          <span class="qchip-label">Regress</span>
+          <span class="qchip-val" style="color:var(--accent-purple)" id="q-regress">0</span>
+        </div>
+      </div>
+      <div class="loop-info" id="loop-info">
+        <div class="loop-dot" id="loop-dot"></div>
+        <span id="loop-text">Loop #3 &middot; 每5分钟 &middot; 下一轮: 4:12</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== Activity Detail Strip ========== -->
+  <div class="detail-strip" id="strip">
+    <div class="strip-top">
+      <div class="live-dot" id="strip-dot"></div>
+      <span class="strip-text" id="strip-text">Analyzing failure &amp; generating fix for <span class="tid">spec-playwright-ui-tests</span></span>
+      <span class="strip-tag blue" id="strip-phase">FIX</span>
+      <span class="strip-tag purple" id="strip-step">TEST-LOOP</span>
+    </div>
+    <div class="strip-bottom">
+      <div class="sb-cell">
+        <div class="sb-label">Test Queue</div>
+        <div class="sb-bar-row">
+          <div class="sb-bar"><div class="sb-fill g" id="sb-test" style="width:100%"></div></div>
+          <span class="sb-count" style="color:var(--accent-green)" id="sb-test-n">0</span>
+        </div>
+      </div>
+      <div class="sb-cell">
+        <div class="sb-label">Fix Queue</div>
+        <div class="sb-bar-row">
+          <div class="sb-bar"><div class="sb-fill a" id="sb-fix" style="width:50%"></div></div>
+          <span class="sb-count" style="color:var(--accent-amber)" id="sb-fix-n">1</span>
+        </div>
+      </div>
+      <div class="sb-cell">
+        <div class="sb-label">Verify Queue</div>
+        <div class="sb-bar-row">
+          <div class="sb-bar"><div class="sb-fill b" id="sb-verify" style="width:15%"></div></div>
+          <span class="sb-count" style="color:var(--accent-blue)" id="sb-verify-n">3</span>
+        </div>
+      </div>
+      <div class="sb-cell">
+        <div class="sb-label">Round Result</div>
+        <div class="sb-value" id="sb-round">
+          <span style="color:var(--accent-green)">1</span>✅
+          <span style="color:var(--accent-red)">3</span>❌
+          <span style="color:var(--text-tertiary)">9</span>⏭
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== Attention Card ========== -->
+  <div class="card attention" id="attention">
+    <div class="card-header">
+      <span style="font-size:14px">⚠️</span>
+      <span class="card-title">Attention</span>
+      <span class="card-sub">1 item</span>
+    </div>
+    <div class="att-item yellow">
+      <span class="emoji">🟡</span>
+      <span class="txt">1 stale probe detected</span>
+      <span class="meta">since R27</span>
+    </div>
+  </div>
+
+  <!-- ========== Stats Cards ========== -->
+  <div class="stats-grid">
+    <div class="stat-card green">
+      <div class="stat-label">Passed</div>
+      <div class="stat-value green">165</div>
+      <div class="stat-sub">+1 this round</div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-label">Failed</div>
+      <div class="stat-value red">44</div>
+      <div class="stat-sub">+3 this round</div>
+    </div>
+    <div class="stat-card amber">
+      <div class="stat-label">Fixed</div>
+      <div class="stat-value amber">44</div>
+      <div class="stat-sub">&mdash; this round</div>
+    </div>
+    <div class="stat-card blue">
+      <div class="stat-label">Coverage</div>
+      <div class="stat-value blue">80.7%</div>
+      <div class="stat-sub">165/204 specs</div>
+    </div>
+    <div class="stat-card purple">
+      <div class="stat-label">Skipped</div>
+      <div class="stat-value purple">13</div>
+      <div class="stat-sub">9 env issues</div>
+    </div>
+  </div>
+
+  <!-- ========== Two-column: Fix Queue + Verify Queue ========== -->
+  <div class="two-col">
+    <!-- Fix Queue -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Fix Queue</span>
+        <span class="card-sub">1 item</span>
+      </div>
+      <table class="qtable">
+        <thead><tr><th>Test ID</th><th>Reason</th><th>Round</th></tr></thead>
+        <tbody>
+          <tr><td>spec-playwright-ui-tests</td><td>test_fail</td><td>R28</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <!-- Verify Queue -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Verify Queue</span>
+        <span class="card-sub">3 items</span>
+      </div>
+      <table class="qtable">
+        <thead><tr><th>Test ID</th><th>Fix Type</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>framework-fix-fixanalyzer...</td><td>framework_fix</td><td><span class="badge pend">PENDING</span></td></tr>
+          <tr><td>obs-bash-antipattern-r28</td><td>infra_fix</td><td><span class="badge pend">PENDING</span></td></tr>
+          <tr><td>obs-uncovered-learnings-r28</td><td>infra_fix</td><td><span class="badge pend">PENDING</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ========== Activity Stream ========== -->
+  <div class="card">
+    <div class="card-header">
+      <span style="color:var(--accent-green);font-size:14px">📡</span>
+      <span class="card-title">Activity Stream</span>
+      <span class="card-sub">live</span>
+    </div>
+    <div class="activity-list">
+      <div class="act">
+        <span class="act-time">10:42</span>
+        <span class="act-badge FIX">FIX</span>
+        <span class="act-text">Analyzing <span class="act-id">spec-playwright-ui-tests</span></span>
+      </div>
+      <div class="act">
+        <span class="act-time">10:36</span>
+        <span class="act-badge FIX">FIX</span>
+        <span class="act-text">✅ Fixed <span class="act-id">obs-uncovered-learnings-r28</span> → verify queue</span>
+      </div>
+      <div class="act">
+        <span class="act-time">10:35</span>
+        <span class="act-badge FIX">FIX</span>
+        <span class="act-text">✅ Fixed <span class="act-id">obs-bash-antipattern-r28</span> → verify queue</span>
+      </div>
+      <div class="act">
+        <span class="act-time">10:27</span>
+        <span class="act-badge FIX">FIX</span>
+        <span class="act-text">✅ Fixed <span class="act-id">framework-fix-fixanalyzer</span> → verify queue</span>
+      </div>
+      <div class="act">
+        <span class="act-time">09:55</span>
+        <span class="act-badge TEST">TEST</span>
+        <span class="act-text">✅ <span class="act-id">spec-remove-info-tab</span> passed</span>
+      </div>
+      <div class="act">
+        <span class="act-time">09:54</span>
+        <span class="act-badge TEST">TEST</span>
+        <span class="act-text">❌ <span class="act-id">spec-playwright-ui-tests</span> failed → fix queue</span>
+      </div>
+      <div class="act">
+        <span class="act-time">09:50</span>
+        <span class="act-badge TEST">TEST</span>
+        <span class="act-text">⏭ 9 tests env-skipped (backend not running)</span>
+      </div>
+      <div class="act">
+        <span class="act-time">08:10</span>
+        <span class="act-badge GEN">GEN</span>
+        <span class="act-text">Created 13 tests from 13 gaps</span>
+      </div>
+      <div class="act">
+        <span class="act-time">08:08</span>
+        <span class="act-badge SCAN">SCAN</span>
+        <span class="act-text">Found 21 gaps (13 issue, 2 obs, 6 spec)</span>
+      </div>
+      <div class="act">
+        <span class="act-time">08:03</span>
+        <span class="act-badge SCAN">SCAN</span>
+        <span class="act-text">Round 28 started</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function setScene(scene, btn) {
+  // Update demo switcher buttons
+  document.querySelectorAll('.demo-t').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  const el = id => document.getElementById(id);
+
+  if (scene === 'testing') {
+    // === Unified Card ===
+    el('unified-card').className = 'unified-card';
+
+    // Activity section
+    el('hero-ring').innerHTML = '🏃'; el('hero-ring').className = 'pulse-ring blue';
+    el('hero-action').textContent = 'Running Test';
+    el('hero-detail').innerHTML = '<span class="tid">iss150-severity-threshold</span> &middot; category: backend-api &middot; 3/13 tests';
+    el('hero-time').textContent = '3:22'; el('hero-time').className = 'timer';
+
+    // Pipeline
+    el('pipeline-label').innerHTML = 'Round 28 &middot; Phase Pipeline &middot; 2/5 done';
+    el('ph-scan').className = 'ph done';
+    el('ph-gen').className = 'ph done';
+    el('ph-test').className = 'ph active';
+    el('test-dot').innerHTML = '🏃';
+    el('test-stat').innerHTML = '<span class="n g">1</span>✅ <span class="n r">1</span>❌ <span class="n t">1</span>⏭';
+    el('test-dur').textContent = '~3m22s';
+    // Add tag to TEST
+    let testTag = el('ph-test').querySelector('.ph-tag');
+    if (!testTag) { testTag = document.createElement('div'); testTag.className = 'ph-tag'; el('ph-test').appendChild(testTag); }
+    testTag.innerHTML = '🏃 iss150-severity...'; testTag.style.display = '';
+
+    el('ph-fix').className = 'ph pending'; el('fix-dot').innerHTML = '⏳';
+    el('fix-stat').textContent = '—';
+    el('fix-tag').style.display = 'none';
+    el('ph-verify').className = 'ph pending'; el('verify-dot').innerHTML = '⏳';
+    el('verify-stat').textContent = '—';
+    let vTag = el('ph-verify').querySelector('.ph-tag'); if(vTag) vTag.style.display = 'none';
+
+    // Footer
+    el('q-test').textContent = '10'; el('q-fix').textContent = '0';
+    el('q-verify').textContent = '0'; el('q-regress').textContent = '0';
+    el('loop-dot').className = 'loop-dot';
+    el('loop-text').innerHTML = 'Loop #3 &middot; 每5分钟 &middot; 下一轮: 4:12';
+
+    // Strip
+    el('strip-text').innerHTML = 'Executing assertions for <span class="tid">iss150-severity-threshold</span>';
+    el('strip-phase').textContent = 'TEST'; el('strip-phase').className = 'strip-tag blue';
+    el('strip-step').textContent = 'TEST-LOOP'; el('strip-step').className = 'strip-tag purple';
+    el('strip-dot').className = 'live-dot';
+    el('sb-test-n').textContent = '10'; el('sb-test').style.width = '0%';
+    el('sb-fix-n').textContent = '0'; el('sb-fix').style.width = '0%';
+    el('sb-verify-n').textContent = '0'; el('sb-verify').style.width = '0%';
+
+    // Runner controls
+    el('rdot').className = 'runner-dot running';
+    el('rlabel').className = 'runner-label running'; el('rlabel').textContent = 'RUNNING';
+    el('rbtn').innerHTML = '&#x23F9; Stop'; el('rbtn').className = 'btn danger';
+  }
+  else if (scene === 'fixing') {
+    // === Unified Card ===
+    el('unified-card').className = 'unified-card';
+
+    // Activity section
+    el('hero-ring').innerHTML = '🔧'; el('hero-ring').className = 'pulse-ring';
+    el('hero-action').textContent = 'Fixing Test';
+    el('hero-detail').innerHTML = '<span class="tid">spec-playwright-ui-tests</span> &middot; attempt 1 &middot; reason: test_fail';
+    el('hero-time').textContent = '6:41'; el('hero-time').className = 'timer';
+
+    // Pipeline
+    el('pipeline-label').innerHTML = 'Round 28 &middot; Phase Pipeline &middot; 3/5 done';
+    el('ph-scan').className = 'ph done';
+    el('ph-gen').className = 'ph done';
+    el('ph-test').className = 'ph done';
+    el('test-dot').innerHTML = '✅';
+    el('test-stat').innerHTML = '<span class="n g">1</span>✅ <span class="n r">3</span>❌ <span class="n t">9</span>⏭';
+    el('test-dur').textContent = '8m5s';
+    let testTag = el('ph-test').querySelector('.ph-tag'); if(testTag) testTag.style.display = 'none';
+
+    el('ph-fix').className = 'ph active'; el('fix-dot').innerHTML = '🔧';
+    el('fix-stat').textContent = '0/1 · ~6m41s';
+    el('fix-tag').innerHTML = '🔧 spec-playwrig...'; el('fix-tag').style.display = '';
+
+    el('ph-verify').className = 'ph pending'; el('verify-dot').innerHTML = '⏳';
+    el('verify-stat').textContent = '3 queued';
+    let vTag = el('ph-verify').querySelector('.ph-tag'); if(vTag) vTag.style.display = 'none';
+
+    // Footer
+    el('q-test').textContent = '0'; el('q-fix').textContent = '1';
+    el('q-verify').textContent = '3'; el('q-regress').textContent = '0';
+    el('loop-dot').className = 'loop-dot';
+    el('loop-text').innerHTML = 'Loop #3 &middot; 每5分钟 &middot; 下一轮: 4:12';
+
+    // Strip
+    el('strip-text').innerHTML = 'Analyzing failure &amp; generating fix for <span class="tid">spec-playwright-ui-tests</span>';
+    el('strip-phase').textContent = 'FIX'; el('strip-phase').className = 'strip-tag blue';
+    el('strip-step').textContent = 'TEST-LOOP'; el('strip-step').className = 'strip-tag purple';
+    el('strip-dot').className = 'live-dot';
+    el('sb-test-n').textContent = '0'; el('sb-test').style.width = '100%';
+    el('sb-fix-n').textContent = '1'; el('sb-fix').style.width = '50%';
+    el('sb-verify-n').textContent = '3'; el('sb-verify').style.width = '15%';
+    el('sb-round').innerHTML = '<span style="color:var(--accent-green)">1</span>✅ <span style="color:var(--accent-red)">3</span>❌ <span style="color:var(--text-tertiary)">9</span>⏭';
+
+    // Runner controls
+    el('rdot').className = 'runner-dot running';
+    el('rlabel').className = 'runner-label running'; el('rlabel').textContent = 'RUNNING';
+    el('rbtn').innerHTML = '&#x23F9; Stop'; el('rbtn').className = 'btn danger';
+  }
+  else if (scene === 'verify') {
+    // === Unified Card ===
+    el('unified-card').className = 'unified-card';
+
+    // Activity section
+    el('hero-ring').innerHTML = '✅'; el('hero-ring').className = 'pulse-ring green';
+    el('hero-action').textContent = 'Verifying Fix';
+    el('hero-detail').innerHTML = '<span class="tid">framework-fix-fixanalyzer-env-r28</span> &middot; 1/3 verifications';
+    el('hero-time').textContent = '1:08'; el('hero-time').className = 'timer';
+
+    // Pipeline
+    el('pipeline-label').innerHTML = 'Round 28 &middot; Phase Pipeline &middot; 4/5 done';
+    el('ph-scan').className = 'ph done';
+    el('ph-gen').className = 'ph done';
+    el('ph-test').className = 'ph done';
+    el('test-dot').innerHTML = '✅';
+    el('test-stat').innerHTML = '<span class="n g">1</span>✅ <span class="n r">3</span>❌ <span class="n t">9</span>⏭';
+    el('test-dur').textContent = '8m5s';
+    let testTag = el('ph-test').querySelector('.ph-tag'); if(testTag) testTag.style.display = 'none';
+
+    el('ph-fix').className = 'ph done'; el('fix-dot').innerHTML = '✅';
+    el('fix-stat').innerHTML = '<span class="n g">1</span>/1 · 7m12s';
+    el('fix-tag').style.display = 'none';
+
+    el('ph-verify').className = 'ph active'; el('verify-dot').innerHTML = '🔍';
+    el('verify-stat').innerHTML = '<span class="n g">0</span>/3 · ~1m08s';
+    // Add tag to VERIFY
+    let vTag = el('ph-verify').querySelector('.ph-tag');
+    if (!vTag) { vTag = document.createElement('div'); vTag.className = 'ph-tag'; el('ph-verify').appendChild(vTag); }
+    vTag.innerHTML = '🔍 framework-fix...'; vTag.style.display = '';
+
+    // Footer
+    el('q-test').textContent = '0'; el('q-fix').textContent = '0';
+    el('q-verify').textContent = '2'; el('q-regress').textContent = '0';
+    el('loop-dot').className = 'loop-dot';
+    el('loop-text').innerHTML = 'Loop #3 &middot; 每5分钟 &middot; 下一轮: 4:12';
+
+    // Strip
+    el('strip-text').innerHTML = 'Re-running test for <span class="tid">framework-fix-fixanalyzer-env-r28</span>';
+    el('strip-phase').textContent = 'VERIFY'; el('strip-phase').className = 'strip-tag green';
+    el('strip-step').textContent = 'TEST-LOOP'; el('strip-step').className = 'strip-tag purple';
+    el('strip-dot').className = 'live-dot';
+    el('sb-test-n').textContent = '0'; el('sb-test').style.width = '100%';
+    el('sb-fix-n').textContent = '0'; el('sb-fix').style.width = '100%';
+    el('sb-verify-n').textContent = '2'; el('sb-verify').style.width = '33%';
+    el('sb-round').innerHTML = '<span style="color:var(--accent-green)">1</span>✅ <span style="color:var(--accent-red)">3</span>❌ <span style="color:var(--text-tertiary)">9</span>⏭';
+
+    // Runner controls
+    el('rdot').className = 'runner-dot running';
+    el('rlabel').className = 'runner-label running'; el('rlabel').textContent = 'RUNNING';
+    el('rbtn').innerHTML = '&#x23F9; Stop'; el('rbtn').className = 'btn danger';
+  }
+  else { // idle
+    // === Unified Card ===
+    el('unified-card').className = 'unified-card idle';
+
+    // Activity section
+    el('hero-ring').innerHTML = '⏸'; el('hero-ring').className = 'pulse-ring idle';
+    el('hero-action').textContent = 'Idle';
+    el('hero-detail').innerHTML = 'Round 28 completed 12 min ago';
+    el('hero-time').textContent = '—'; el('hero-time').className = 'timer dim';
+
+    // Pipeline
+    el('pipeline-label').innerHTML = 'Round 28 &middot; Phase Pipeline &middot; 5/5 done';
+    el('ph-scan').className = 'ph done';
+    el('ph-gen').className = 'ph done';
+    el('ph-test').className = 'ph done';
+    el('test-dot').innerHTML = '✅';
+    el('test-stat').innerHTML = '<span class="n g">1</span>✅ <span class="n r">3</span>❌ <span class="n t">9</span>⏭';
+    el('test-dur').textContent = '8m5s';
+    let testTag = el('ph-test').querySelector('.ph-tag'); if(testTag) testTag.style.display = 'none';
+
+    el('ph-fix').className = 'ph done'; el('fix-dot').innerHTML = '✅';
+    el('fix-stat').innerHTML = '<span class="n g">1</span>/1 · 7m12s';
+    el('fix-tag').style.display = 'none';
+
+    el('ph-verify').className = 'ph done'; el('verify-dot').innerHTML = '✅';
+    el('verify-stat').innerHTML = '<span class="n g">3</span>/3 · 2m30s';
+    let vTag = el('ph-verify').querySelector('.ph-tag'); if(vTag) vTag.style.display = 'none';
+
+    // Footer
+    el('q-test').textContent = '0'; el('q-fix').textContent = '0';
+    el('q-verify').textContent = '0'; el('q-regress').textContent = '0';
+    el('loop-dot').className = 'loop-dot idle';
+    el('loop-text').innerHTML = 'Loop paused &middot; Last: 03-30 10:48 (12m ago)';
+    el('loop-info').style.color = 'var(--text-tertiary)';
+
+    // Strip
+    el('strip-text').innerHTML = 'No active operation';
+    el('strip-phase').textContent = 'IDLE'; el('strip-phase').className = 'strip-tag dim';
+    el('strip-step').textContent = '—'; el('strip-step').className = 'strip-tag dim';
+    el('strip-dot').className = 'live-dot idle';
+    el('sb-test-n').textContent = '0'; el('sb-test').style.width = '100%';
+    el('sb-fix-n').textContent = '0'; el('sb-fix').style.width = '100%';
+    el('sb-verify-n').textContent = '0'; el('sb-verify').style.width = '100%';
+    el('sb-round').innerHTML = '<span style="color:var(--accent-green)">1</span>✅ <span style="color:var(--accent-red)">3</span>❌ <span style="color:var(--text-tertiary)">9</span>⏭';
+
+    // Runner controls
+    el('rdot').className = 'runner-dot idle';
+    el('rlabel').className = 'runner-label idle'; el('rlabel').textContent = 'IDLE';
+    el('rbtn').textContent = '▶ Start'; el('rbtn').className = 'btn';
+  }
+
+  // Reset loop-info color for non-idle scenes
+  if (scene !== 'idle') {
+    el('loop-info').style.color = '';
+  }
+}
+</script>
+</body>
+</html>

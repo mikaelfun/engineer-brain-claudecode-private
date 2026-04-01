@@ -1,0 +1,8 @@
+{
+  "testId": "iss150-severity-threshold",
+  "cycle": 31,
+  "result": "PASS",
+  "duration_ms": 25145,
+  "failureReason": null,
+  "executedAt": "2026-03-30T18:36:02.000Z"
+}

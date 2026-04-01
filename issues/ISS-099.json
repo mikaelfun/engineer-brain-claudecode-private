@@ -1,10 +1,12 @@
 {
   "id": "ISS-099",
-  "title": "case patrol需要把非active的case归档到archive",
-  "description": "",
-  "type": "bug",
+  "title": "patrol和casework应对case archive/transfer状态做检测与归档",
+  "description": "patrol和casework应该对当前case是否已经archive做判断。如果d365拉取的active case已经不包含该case，说明当前case已经archive或者transfer，可以尝试用d365拉取closed case来确认，如果有这个能力直接用，没有这个能力探索出来API后固化为脚本，archive的case应该从active移入archive文件夹，transfer的case放入新的transfer文件夹",
+  "type": "feature",
   "priority": "P1",
-  "status": "pending",
+  "status": "tracked",
+  "trackId": "case-archive-detect_20260331",
+  "testLoopScan": true,
   "createdAt": "2026-03-23T09:30:08.674Z",
-  "updatedAt": "2026-03-23T09:30:08.674Z"
+  "updatedAt": "2026-03-31T16:00:00+08:00"
 }

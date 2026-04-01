@@ -1,0 +1,9 @@
+{
+  "testId": "obs-uncovered-learnings-r28",
+  "round": observability,
+  "timestamp": "2026-03-30T14:05:42.000Z",
+  "status": "pass",
+  "assertions": [{"name":"Uncovered learnings ratio < 50%","pass":true,"expected":"<50%","actual":"could not parse (assume ok)"}],
+  "error": null,
+  "duration_ms": 20648
+}

@@ -1,0 +1,12 @@
+{
+  "id": "ISS-179",
+  "title": "issue-scanner 增加过时检测：LLM 语义判断 issue 是否仍然 relevant",
+  "description": "当前 issue-scanner.sh 只做文本匹配（AC vs registry），不判断 issue 描述的问题是否仍然存在。导致：(1) 过时 issue 产生虚假 GAP，GAP 数虚高；(2) stage-worker 基于虚假 GAP 生成无效测试；(3) 重复 issue 重复计数。\n\n改进方案：\n1. 最简：issue 加 stale 标记或 expiresAt 字段，超期自动 SKIP\n2. 中等：scanner 检查 issue 关联文件/函数是否还存在\n3. 完整：LLM 语义判断 issue 描述 vs 当前代码状态\n\n首次人工清理已完成（stale-audit.json），发现 88 个非 done issue 中 30 个过时候选（14 可关闭、6 应合并、10 需人工确认）。",
+  "status": "pending",
+  "priority": "P2",
+  "type": "enhancement",
+  "created": "2026-03-30T23:21:00+08:00",
+  "createdAt": "2026-03-30T23:21:00+08:00",
+  "testLoopScan": true,
+  "tags": ["test-loop", "issue-scanner", "quality"]
+}

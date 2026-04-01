@@ -4,13 +4,13 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronRight, Copy, Check, Pencil, X, Save } from 'lucide-react'
 import { Card } from '../components/common/Card'
-import { Badge } from '../components/common/Badge'
 import { Loading, EmptyState } from '../components/common/Loading'
 import { useDrafts } from '../api/hooks'
 import MarkdownContent from '../components/common/MarkdownContent'
 import { useNavigate } from 'react-router-dom'
 
-function DraftCard({ draft }: { draft: any }) {
+function DraftCard({ draft, showCaseNumber = false }: { draft: any; showCaseNumber?: boolean }) {
+  const navigate = useNavigate()
   const [expanded, setExpanded] = useState(false)
   const [copied, setCopied] = useState(false)
   const [ccCopied, setCcCopied] = useState(false)
@@ -92,6 +92,16 @@ function DraftCard({ draft }: { draft: any }) {
           {expanded
             ? <ChevronDown className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
             : <ChevronRight className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />}
+          {showCaseNumber && (
+            <span
+              className="font-mono text-xs px-1.5 py-0.5 rounded cursor-pointer hover:underline"
+              style={{ color: 'var(--accent-blue)', background: 'var(--bg-tertiary)' }}
+              onClick={(e) => { e.stopPropagation(); navigate(`/case/${draft.caseNumber}`) }}
+              title={`Go to Case ${draft.caseNumber}`}
+            >
+              {draft.caseNumber}
+            </span>
+          )}
           <span className="font-mono text-xs" style={{ color: 'var(--text-tertiary)' }}>{draft.filename}</span>
         </div>
         <div className="flex items-center gap-2">
@@ -187,55 +197,43 @@ function DraftCard({ draft }: { draft: any }) {
 }
 
 export default function DraftsPage() {
-  const navigate = useNavigate()
   const { data: draftsData, isLoading } = useDrafts()
 
   if (isLoading) return <Loading text="Loading drafts..." />
 
   const drafts = draftsData?.drafts || []
 
-  // Group by case number
-  const grouped = drafts.reduce((acc: Record<string, any[]>, draft: any) => {
-    const key = draft.caseNumber
-    if (!acc[key]) acc[key] = []
-    acc[key].push(draft)
-    return acc
-  }, {})
+  // Keep only the latest draft per case (backend already sorts DESC by mtime)
+  const latestPerCase: any[] = []
+  const seen = new Set<string>()
+  for (const draft of drafts) {
+    if (!seen.has(draft.caseNumber)) {
+      seen.add(draft.caseNumber)
+      latestPerCase.push(draft)
+    }
+  }
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Email Drafts</h2>
         <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>
-          {drafts.length} drafts across {Object.keys(grouped).length} cases
+          Latest draft from {latestPerCase.length} cases
         </p>
       </div>
 
-      {drafts.length === 0 ? (
+      {latestPerCase.length === 0 ? (
         <EmptyState
           icon="✉️"
           title="No drafts"
           description="Email drafts created by the email-drafter agent will appear here"
         />
       ) : (
-        Object.entries(grouped).map(([caseNumber, caseDrafts]) => (
-          <div key={caseNumber}>
-            <h3
-              className="text-md font-semibold mb-2 flex items-center gap-2 cursor-pointer"
-              style={{ color: 'var(--text-primary)' }}
-              onClick={() => navigate(`/case/${caseNumber}`)}
-            >
-              <span>📧</span> Case {caseNumber}
-              <Badge variant="primary" size="xs">{(caseDrafts as any[]).length}</Badge>
-            </h3>
-
-            <div className="space-y-3">
-              {(caseDrafts as any[]).map((draft, i) => (
-                <DraftCard key={i} draft={draft} />
-              ))}
-            </div>
-          </div>
-        ))
+        <div className="space-y-3">
+          {latestPerCase.map((draft, i) => (
+            <DraftCard key={`${draft.caseNumber}-${draft.filename}`} draft={draft} showCaseNumber />
+          ))}
+        </div>
       )}
     </div>
   )

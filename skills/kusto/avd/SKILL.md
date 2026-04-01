@@ -40,17 +40,17 @@ last_modified: 2026-01-14
 
 | 表名 | 用途 | 文档 |
 |------|------|------|
-| RDInfraTrace | AVD 基础设施跟踪日志 (Agent, Broker, Gateway) | [📄](./references/tables/RDInfraTrace.md) |
-| RDClientTrace | 客户端跟踪日志 | [📄](./references/tables/RDClientTrace.md) |
-| DiagActivity | 诊断活动日志 (连接、Feed) | [📄](./references/tables/DiagActivity.md) |
-| DiagError | 诊断错误日志 | [📄](./references/tables/DiagError.md) |
-| RDOperation | 健康检查和操作结果 | [📄](./references/tables/RDOperation.md) |
-| RDPCoreTSEventLog | RDSH 主机 RDP 核心事件 | [📄](./references/tables/RDPCoreTSEventLog.md) |
-| RDAgentMetadata | VM 和 Agent 元数据 | [📄](./references/tables/RDAgentMetadata.md) |
-| ShoeboxAgentHealth | Agent 健康状态 (ARM 诊断) | [📄](./references/tables/ShoeboxAgentHealth.md) |
-| HostPool | 主机池配置信息 | [📄](./references/tables/HostPool.md) |
-| AppGroup | 应用组信息 | [📄](./references/tables/AppGroup.md) |
-| RDTenant | 租户信息 | [📄](./references/tables/RDTenant.md) |
+| RDInfraTrace | AVD 基础设施跟踪日志 (Agent, Broker, Gateway) | [📄](./references/tables/WVD/RDInfraTrace.md) |
+| RDClientTrace | 客户端跟踪日志 | [📄](./references/tables/WVD/RDClientTrace.md) |
+| DiagActivity | 诊断活动日志 (连接、Feed) | [📄](./references/tables/WVD/DiagActivity.md) |
+| DiagError | 诊断错误日志 | [📄](./references/tables/WVD/DiagError.md) |
+| RDOperation | 健康检查和操作结果 | [📄](./references/tables/WVD/RDOperation.md) |
+| RDPCoreTSEventLog | RDSH 主机 RDP 核心事件 | [📄](./references/tables/WVD/RDPCoreTSEventLog.md) |
+| RDAgentMetadata | VM 和 Agent 元数据 | [📄](./references/tables/WVD/RDAgentMetadata.md) |
+| ShoeboxAgentHealth | Agent 健康状态 (ARM 诊断) | [📄](./references/tables/WVD/ShoeboxAgentHealth.md) |
+| HostPool | 主机池配置信息 | [📄](./references/tables/WVD/HostPool.md) |
+| AppGroup | 应用组信息 | [📄](./references/tables/WVD/AppGroup.md) |
+| RDTenant | 租户信息 | [📄](./references/tables/WVD/RDTenant.md) |
 
 详细表定义见: [tables/](./references/tables/)
 

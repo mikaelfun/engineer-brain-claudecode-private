@@ -1,0 +1,9 @@
+{
+  "testId": "syn-compliance-ok",
+  "round": 2,
+  "timestamp": "2026-03-30T09:48:38.000Z",
+  "status": "pass",
+  "assertions": [{"name":"Script exit code","pass":true,"expected":"0","actual":"0"},{"name":"File exists: case-info.md","pass":true,"expected":"exists","actual":"exists"},{"name":"Content match: case-info.md","pass":true,"expected":"China Cld","actual":"found"},{"name":"Valid JSON: casehealth-meta.json","pass":true,"expected":"valid_json","actual":"valid"},{"name":"JSON field: compliance.entitlementOk = true","pass":true,"expected":"true","actual":"true"},{"name":"JSON field: compliance.is21vConvert = false","pass":true,"expected":"false","actual":"false"}],
+  "error": null,
+  "duration_ms": 90368
+}

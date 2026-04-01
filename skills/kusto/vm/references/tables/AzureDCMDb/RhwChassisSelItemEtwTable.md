@@ -1,6 +1,6 @@
 ---
 name: RhwChassisSelItemEtwTable
-database: AzureDcmDb
+database: AzureDCMDb
 cluster: https://azuredcmmc.kusto.chinacloudapi.cn
 description: 机箱 SEL (System Event Log) 事件表，记录 BMC 系统事件日志
 status: active

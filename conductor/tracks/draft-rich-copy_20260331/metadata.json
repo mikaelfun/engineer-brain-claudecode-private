@@ -1,0 +1,17 @@
+{
+  "id": "draft-rich-copy_20260331",
+  "title": "WebUI Draft Rich HTML Copy + Edit",
+  "type": "feature",
+  "status": "complete",
+  "issueId": "ISS-192",
+  "created": "2026-03-31T23:30:00+08:00",
+  "updated": "2026-03-31T23:45:00+08:00",
+  "phases": {
+    "total": 2,
+    "completed": 2
+  },
+  "tasks": {
+    "total": 5,
+    "completed": 5
+  }
+}

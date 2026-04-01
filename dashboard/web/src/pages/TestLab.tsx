@@ -24,6 +24,7 @@ import {
   useTestSupervisor,
   useTestQueues,
   useTestStats,
+  useTestStory,
 } from '../api/hooks'
 import { Card, CardHeader } from '../components/common/Card'
 import { Badge } from '../components/common/Badge'
@@ -1221,6 +1222,197 @@ function ActivityStream() {
   )
 }
 
+// ============ Story Narrative ============
+
+function StoryNarrative() {
+  const { data: story, isLoading } = useTestStory()
+
+  if (isLoading) return <Loading text="Loading story..." />
+  if (!story) return <EmptyState icon="\uD83D\uDCD6" title="No story yet" description="Run a test cycle first" />
+
+  const sectionStyle: React.CSSProperties = {
+    background: 'var(--card-bg)',
+    borderRadius: 10,
+    padding: '16px 20px',
+    border: '1px solid var(--border-subtle)',
+  }
+
+  const headingStyle: React.CSSProperties = {
+    fontSize: 14,
+    fontWeight: 700,
+    marginBottom: 10,
+    color: 'var(--text-primary)',
+  }
+
+  const bodyStyle: React.CSSProperties = {
+    fontSize: 13,
+    lineHeight: 1.7,
+    color: 'var(--text-secondary)',
+  }
+
+  const tagStyle = (color: string): React.CSSProperties => ({
+    display: 'inline-block',
+    fontSize: 11,
+    fontWeight: 600,
+    padding: '2px 8px',
+    borderRadius: 6,
+    background: color + '18',
+    color,
+    marginRight: 6,
+  })
+
+  return (
+    <div className="space-y-3" style={{ animation: 'fadeIn 0.2s ease-out' }}>
+      {/* Title */}
+      <div style={{ ...sectionStyle, background: 'linear-gradient(135deg, var(--card-bg), var(--surface-hover))' }}>
+        <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)' }}>
+          Test Framework Story — Cycle {story.cycle}/{story.maxCycles}
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 4 }}>
+          Current stage: <span style={tagStyle('var(--accent-blue)')}>{story.currentStage}</span>
+        </div>
+      </div>
+
+      {/* Round Narrative */}
+      {story.roundNarrative.length > 0 && (
+        <div style={sectionStyle}>
+          <div style={headingStyle}>This Cycle</div>
+          <div style={bodyStyle}>
+            {story.roundNarrative.map((line: string, i: number) => (
+              <div key={i} style={{ marginBottom: 6 }} dangerouslySetInnerHTML={{
+                __html: line.replace(/\*\*(.+?)\*\*/g, '<strong style="color:var(--text-primary)">$1</strong>')
+              }} />
+            ))}
+            {story.scanStrategyNote && (
+              <div style={{ marginTop: 8, fontSize: 12, color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
+                Strategy: {story.scanStrategyNote}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Scorecard */}
+      <div style={sectionStyle}>
+        <div style={headingStyle}>Scorecard</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10 }}>
+          {[
+            { label: 'Fixed & Stable', value: story.scorecard.verified, color: '#22c55e', icon: '\u2705' },
+            { label: 'Fixed, Unverified', value: story.scorecard.fixedUnverified, color: '#3b82f6', icon: '\uD83D\uDD27' },
+            { label: 'Regressed', value: story.scorecard.regression, color: '#f59e0b', icon: '\uD83D\uDD04' },
+            { label: 'Retrying', value: story.scorecard.retryNeeded, color: '#ef4444', icon: '\uD83D\uDD01' },
+            { label: 'Total Found', value: story.scorecard.total, color: 'var(--text-secondary)', icon: '\uD83D\uDCCB' },
+          ].map(item => (
+            <div key={item.label} style={{
+              textAlign: 'center',
+              padding: '12px 8px',
+              borderRadius: 8,
+              background: item.color + '10',
+              border: `1px solid ${item.color}30`,
+            }}>
+              <div style={{ fontSize: 24, fontWeight: 800, color: item.color }}>{item.value}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
+                {item.icon} {item.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Success Stories */}
+      <div style={sectionStyle}>
+        <div style={headingStyle}>{'\uD83C\uDFC6'} Successfully Fixed</div>
+        {story.successStories.length === 0 ? (
+          <div style={{ ...bodyStyle, fontStyle: 'italic' }}>No verified fixes yet</div>
+        ) : (
+          <div style={{ ...bodyStyle, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {story.successStories.map((s: any) => (
+              <div key={s.testId} style={{
+                padding: '8px 12px',
+                borderRadius: 6,
+                background: '#22c55e10',
+                borderLeft: '3px solid #22c55e',
+              }}>
+                <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{s.testId}</span>
+                <span style={{ margin: '0 6px', color: 'var(--text-tertiary)' }}>—</span>
+                {s.description}
+                {s.fixedRound != null && (
+                  <span style={{ fontSize: 11, color: 'var(--text-tertiary)', marginLeft: 6 }}>
+                    (verified R{s.fixedRound})
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Struggles */}
+      <div style={sectionStyle}>
+        <div style={headingStyle}>{'\u26A0\uFE0F'} Still Struggling</div>
+        {story.struggles.length === 0 ? (
+          <div style={{ ...bodyStyle, fontStyle: 'italic' }}>No regressions — all clear!</div>
+        ) : (
+          <div style={{ ...bodyStyle, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {story.struggles.map((s: any) => (
+              <div key={s.testId} style={{
+                padding: '8px 12px',
+                borderRadius: 6,
+                background: '#f59e0b10',
+                borderLeft: '3px solid #f59e0b',
+              }}>
+                <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{s.testId}</span>
+                {s.rootCause && (
+                  <span style={tagStyle('#f59e0b')}>{s.rootCause}</span>
+                )}
+                {s.foundRound != null && (
+                  <span style={{ fontSize: 11, color: 'var(--text-tertiary)', marginLeft: 6 }}>
+                    found R{s.foundRound}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Learnings */}
+      {story.learnings.length > 0 && (
+        <div style={sectionStyle}>
+          <div style={headingStyle}>{'\uD83D\uDCDD'} Lessons Learned</div>
+          <div style={{ ...bodyStyle, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {story.learnings.map((l: any) => (
+              <div key={l.id} style={{
+                padding: '8px 12px',
+                borderRadius: 6,
+                background: 'var(--surface-hover)',
+              }}>
+                <div>
+                  <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{l.id}</span>
+                  <span style={tagStyle('var(--accent-blue)')}>{l.category}</span>
+                </div>
+                <div style={{ marginTop: 4 }}>{l.problem}</div>
+                {l.solution && (
+                  <div style={{ marginTop: 2, fontSize: 12, color: 'var(--text-tertiary)' }}>
+                    Fix: {l.solution}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Next Step */}
+      <div style={{ ...sectionStyle, borderColor: 'var(--accent-blue)30', background: 'var(--accent-blue)08' }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--accent-blue)' }}>
+          {'\u23ED\uFE0F'} Next: {story.nextStep}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ============ Discovery Table ============
 
 function DiscoveryTable({ discoveries, registry }: { discoveries: any; registry: Record<string, any> }) {
@@ -1461,10 +1653,11 @@ function EvolutionTimeline() {
 
 // ============ Main Page ============
 
-type TabKey = 'overview' | 'discoveries' | 'trends' | 'evolution'
+type TabKey = 'overview' | 'story' | 'discoveries' | 'trends' | 'evolution'
 
 const TAB_DEFS: { key: TabKey; label: string; icon: string }[] = [
   { key: 'overview', label: 'Overview', icon: '\uD83D\uDCCA' },
+  { key: 'story', label: 'Story', icon: '\uD83D\uDCD6' },
   { key: 'discoveries', label: 'Discoveries', icon: '\uD83D\uDD0D' },
   { key: 'trends', label: 'Trends', icon: '\uD83D\uDCC8' },
   { key: 'evolution', label: 'Evolution', icon: '\uD83E\uDDEC' },
@@ -1589,6 +1782,10 @@ export default function TestLab() {
             <ActivityStream />
             <QueuesPanel queuesData={queuesData} registry={reg} />
           </div>
+        )}
+
+        {activeTab === 'story' && (
+          <StoryNarrative />
         )}
 
         {activeTab === 'discoveries' && (

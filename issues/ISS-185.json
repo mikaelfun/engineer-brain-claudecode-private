@@ -1,0 +1,11 @@
+{
+  "id": "ISS-185",
+  "title": "TestLab Story Mode: natural language narrative for supervisor/worker activities",
+  "description": "Add /test-supervisor story CLI mode + GET /api/tests/story backend endpoint + Story tab in TestLab UI.",
+  "type": "feature",
+  "priority": "normal",
+  "status": "in-progress",
+  "createdAt": "2026-03-31T13:30:00+08:00",
+  "updatedAt": "2026-03-31T13:30:00+08:00",
+  "labels": ["testlab", "ux"]
+}

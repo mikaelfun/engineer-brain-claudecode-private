@@ -4,7 +4,7 @@
   "description": "将现有的 onenote-export 和 onenote-search skill 整合进 casework 和 troubleshooter 流程，充分利用团队 Notebook 中的知识资产。\n\n## 背景\nOneNote 团队 Notebook 包含大量对 case 处理至关重要的信息：\n- 解决方案和已知问题记录\n- 内部排查流程和知识库\n- ICM 模板链接（各产品升级到产品组对应的模板）\n- 特定场景的精准操作流程（如根据 Azure Maintenance Tracking ID 获取受影响订阅的资源）\n- 其他团队积累的实战经验\n\n## 需求\n\n### 1. Casework 集成\n- 将 onenote-search 作为 casework 流程的一个环节\n- 用作用户个人 case 相关笔记的信息存储\n- case 处理时自动搜索 OneNote 中的相关知识\n\n### 2. Troubleshooter 集成\n- troubleshooter agent 增加 onenote-search 能力\n- 排查时自动检索团队 Notebook 中的：\n  - 已知问题和解决方案\n  - 排查流程和 SOP\n  - 产品组升级 ICM 模板\n\n### 3. 典型场景\n- 工具无法分析根因需升级产品组时 → 自动从 OneNote 提取对应产品的 ICM 模板链接并预填\n- 客户需要根据 Maintenance Tracking ID 查资源 → 自动匹配 OneNote 中的处理流程\n- 遇到已知问题 → 自动匹配历史解决方案",
   "type": "feature",
   "priority": "P1",
-  "status": "pending",
+  "status": "implemented",
   "createdAt": "2026-03-28T16:00:00+08:00",
-  "updatedAt": "2026-03-28T16:00:00+08:00"
+  "updatedAt": "2026-03-31T22:00:00+08:00"
 }

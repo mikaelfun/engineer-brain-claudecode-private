@@ -1,0 +1,12 @@
+{
+  "id": "ISS-197",
+  "title": "Email Drafter 应从邮件历史自动判断撰写语言",
+  "description": "当前 email drafter 无法判断应该用什么语言撰写邮件，可能导致给中文客户写英文邮件或反之。应该从 case 的邮件历史（通过 Office Mail MCP 获取的往来邮件）自动检测客户使用的语言，然后以相同语言撰写草稿。\n\n实现思路：\n1. draft-email SKILL.md 执行前，读取 case 邮件历史（已有的 emails/ 目录或通过 MCP 拉取）\n2. 分析客户邮件的语言（中文/英文/日文等）\n3. 将检测到的语言作为 context 传给 email drafter agent\n4. drafter 据此选择对应语言撰写草稿",
+  "type": "feature",
+  "priority": "P1",
+  "status": "tracked",
+  "trackId": "email-lang-detect_20260401",
+  "testLoopScan": true,
+  "createdAt": "2026-04-01T11:10:00.000Z",
+  "updatedAt": "2026-04-01T11:10:00.000Z"
+}

@@ -1,0 +1,9 @@
+{
+  "testId": "df-inspection-blockquote",
+  "round": 99,
+  "timestamp": "2026-03-31T21:01:02.000Z",
+  "status": "pass",
+  "assertions": [{"name":"MarkdownContent.tsx must have blockquote styling","pass":true,"expected":">0","actual":"3"},{"name":"Blockquote must have left border styling","pass":true,"expected":">0","actual":"1"},{"name":"Blockquote must use CSS variables for theme-aware background color","pass":true,"expected":">0","actual":"7"}],
+  "error": null,
+  "duration_ms": 54628
+}

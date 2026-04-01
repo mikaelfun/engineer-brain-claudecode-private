@@ -1,0 +1,11 @@
+{
+  "id": "ISS-176",
+  "title": "email drafter邮件风格拟人化",
+  "description": "通过officemcp持续学习指定用户的邮件编写风格，偏好，习惯，持续改进soul.md，同时email draft接受用户编辑，反馈后模型重新生成，一键拷贝。基于编辑后和反馈持续演进soul.md。",
+  "type": "feature",
+  "priority": "P2",
+  "status": "pending",
+  "testLoopScan": true,
+  "createdAt": "2026-03-30T05:50:02.909Z",
+  "updatedAt": "2026-03-30T05:50:02.909Z"
+}

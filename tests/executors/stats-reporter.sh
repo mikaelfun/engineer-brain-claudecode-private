@@ -325,6 +325,13 @@ STATS_EOF
 log_info "Stats updated: $STATS_MD"
 
 # ============================================================
+# Write cycleStats back to stats.json (WebUI reads this)
+# ============================================================
+echo "{\"cycleStats\":{\"passed\":$ROUND_PASS,\"failed\":$ROUND_FAIL,\"fixed\":$FIXED,\"skipped\":$SKIPPED}}" \
+  | bash "$SCRIPT_DIR/state-writer.sh" --target stats --merge
+log_info "cycleStats written to stats.json"
+
+# ============================================================
 # Generate discoveries.json (aggregate from fixes/ directory)
 # ============================================================
 DISCOVERIES_FILE="$TESTS_ROOT/discoveries.json"

@@ -600,3 +600,318 @@
 #   resolve_case_dir() 读取该字段替代 $RANDOM
 #
 synthetic_seeds: []
+
+- id: recovery-20260330-2158
+  category: framework
+  problem: "gate=error recovered: health-check.sh used undefined 'phase' var (should be 'currentStage')"
+  solution: |
+    gateReason: Failed to generate health report. Root cause: health-check.sh Node.js inline script had 2 references to undefined variable 'phase' (line ~563, ~572) instead of 'currentStage'. Regression introduced in commit 200d39b. Fixed by sed substitution. Recovery successful.
+  resolved_at: "2026-03-30"
+
+- id: fix-spec-playwright-ui-tests
+  category: test
+  problem: "Backend API was down at test time (HTTP 000 on /api/cases and /api/issues). Environment self-healed, backend now healthy at localhost:3010."
+  solution: |
+    See fix report: tests/results/fixes/spec-playwright-ui-tests-fix.md
+  resolved_at: "2026-03-30"
+
+- id: state-truncation-automerge-20260330-221049
+  category: test
+  problem: "Truncation guard auto-merged: a caller passed a partial state object in full-replace mode. [WARN] TRUNCATION_GUARD on supervisor: 8 -> 3 fields. Auto-merge."
+  solution: |
+    Auto-downgraded to merge. Caller should use --merge flag explicitly.
+  resolved_at: "2026-03-30"
+
+- id: meta-29
+  category: framework
+  problem: "queue-recycler.sh triggered truncation guard (4659 bytes, supervisor 8→3 fields), causing 8 skip-recycle testQueue items to be lost"
+  solution: |
+    Skip-recycle added 11 items to testQueue, then queue-recycler ran with multi-target write (pipeline+stats+queues+supervisor) that auto-merged and may have caused ordering conflict. Only 6 of 15 expected testQueue items present. Items will self-recover in next SCAN skip re-eval.
+  resolved_at: "2026-03-30"
+
+- id: stale-progress-cleanup-20260331-0102
+  category: framework
+  problem: "Stale .progress-iss177-synthetic-adoption.json (from 2026-03-30T16:45:13Z, >24h old) caused health=running"
+  solution: |
+    Deleted stale progress file in Step 1 observe. Also cleared orphan runnerActive in supervisor.json. Pipeline.currentTest was already empty. Health restored to healthy after cleanup.
+  resolved_at: "2026-03-30"
+
+- id: meta-31-result-schema
+  category: framework
+  problem: "result files use mixed schema: some executors write 'result: PASS/FAIL' (uppercase), others write 'status: pass/fail' (lowercase)"
+  solution: |
+    Cycle 31 TEST: 6 results used status field (counted), iss150/iss155 used result field (possibly miscounted), iss154 used result:FAIL (moved to fixQueue). Stage-worker TEST summary '7 passed, 0 failed' is likely wrong (should be 8 passed, 1 failed). Root cause: different executor scripts use different field names. Fix: standardize all executors to write both fields, or fix stage-worker stats aggregation to check both.
+  resolved_at: "2026-03-30"
+
+- id: meta-32-queue-schema-mismatch
+  category: framework
+  problem: "fixQueue schema mismatch: queues.json stores strings, fix-recorder.sh expects objects with testId field"
+  solution: |
+    fix-recorder.sh reads state.json (old) but pre-flight reads queues.json (new). fixQueue items in queues.json are plain strings, but fix-recorder node script uses .findIndex(e => e.testId === id) which fails on strings. Result: item not removed from queues.json fixQueue. Workaround: supervisor manually syncs queues.json after fix-recorder runs. Long-term fix: standardize fixQueue format to objects in both files.
+  resolved_at: "2026-03-30"
+
+- id: stale-fix-stage-20260331
+  category: framework
+  problem: "FIX stage status not reset on cycle transition"
+  solution: |
+    After TEST completes and all tests pass, stages.FIX remained status=running from previous cycle. Fixed by marking pending before next FIX starts. Consider adding FIX stage reset in TEST→FIX transition logic.
+  resolved_at: "2026-03-30"
+
+- id: e2e-runner-assertion-gap-20260331
+  category: framework
+  problem: "e2e-runner does not support bash_output_not_contains assertion type"
+  solution: |
+    arch-windows-path-compliance passed with 0 assertions (vacuous) because both assertions were bash_output_not_contains type. e2e-runner silently skips unsupported assertion types and defaults to pass. Need to add bash_output_not_contains support: execute target command, check if output contains expected string, fail if it does.
+  resolved_at: "2026-03-30"
+
+- id: stale-generate-running-202603310431
+  category: framework
+  problem: "GENERATE stage stuck in stale running status with inverted timestamps"
+  solution: |
+    Background stage-worker set GENERATE startedAt but completedAt was overwritten with earlier value (from SCAN). Supervisor Step 4 detected and reset to pending.
+  resolved_at: "2026-03-30"
+
+- id: stale-test-status-c35
+  category: framework
+  problem: "Stale TEST status 'running' from previous cycle run"
+  solution: |
+    After stage-worker exited, TEST stage status remained 'running' from previous invocation. Auto-cleaned by supervisor Step 4 health check.
+  resolved_at: "2026-03-30"
+
+- id: stage-status-cleanup-c36
+  category: framework
+  problem: "TEST stage had stale 'running' status + absurd duration_ms (1774905817389ms)"
+  solution: |
+    Stale status from previous interrupted run. Reset to pending in Step 4 health check. Root cause: stage-worker was interrupted mid-TEST, START_TS may have been computed incorrectly.
+  resolved_at: "2026-03-30"
+
+- id: meta-36
+  category: framework
+  problem: "TEST stage 2 failures not routed to fixQueue"
+  solution: |
+    Cycle 36 TEST: 5 tests run (3P/2F), but testQueue retained all 5 items and fixQueue remained empty. fixBreakdown.total=2 vs fixQueue=0 inconsistency. Both failed tests (test-supervisor-detail-endpoints, error-handling-api-404) still in testQueue for retry. Either TEST->fixQueue routing skipped or design is retry-in-testQueue pattern. No action taken as health=healthy and stats tracked correctly.
+  resolved_at: "2026-03-30"
+
+- id: meta-36-api-runner-assertions
+  category: framework
+  problem: "api-runner.sh does not read assertions.expected for custom HTTP status codes"
+  solution: |
+    cycle 36 meta-analysis: error-handling-api-404 defines expected:404 in assertions section but api-runner only reads expected_status from steps params, defaults to 200. Workaround: add expected_status:404 in step params. test-supervisor-detail-endpoints uses wrong testId 'core-endpoints' instead of full id 'test-supervisor-core-endpoints' in result/fix lookup URLs.
+  resolved_at: "2026-03-30"
+
+- id: verify-report-header-mismatch-20260331-0707
+  category: framework
+  problem: "verify.md header shows pre-run failure status after actual test passes"
+  solution: |
+    In cycle 36, error-handling-api-404 verify.md header='fail 4/6' but executor output and backend-api-error-handling-api-404.json both show pass 6/6. Verdict section written with stale pre-run data. Cosmetic only — queues correctly empty.
+  resolved_at: "2026-03-30"
+
+- id: verify-duration-overflow-20260331-0707
+  category: framework
+  problem: "VERIFY stage duration_ms overflow in pipeline state"
+  solution: |
+    Cycle 36 VERIFY stage shows duration_ms=1774911557821 (~49303h). Likely caused by incorrect timestamp arithmetic (possibly negative or epoch diff). Cosmetic — does not affect test execution. Review duration calculation in state-writer.sh or stage state-update.md.
+  resolved_at: "2026-03-30"
+
+- id: supervisor-recipe-eval-20260331-0721
+  category: framework
+  problem: "Supervisor Step 2 recipe evaluation uses wrong regressionRate metric"
+  solution: |
+    Supervisor checked conclusions.regressionRate (test pass rate=0%) to evaluate regression-focused-scan recipe, but should check discoveryStats.regressionRate (discovery level=48%). Stage-worker correctly applied recipe via 48% threshold. Fix: Step 2 recipe eval must check BOTH regressionRate metrics when regression-focused-scan conditions are evaluated.
+  resolved_at: "2026-03-30"
+
+- id: stale-stageProgress-cycle38
+  category: framework
+  problem: "Stale stageProgress left in pipeline.json after GENERATE (testId: error-handling-api-404, current:2, total:2)"
+  solution: |
+    Cleared in supervisor Step 4 Act. Root cause: previous TEST run left stageProgress uncleared on pipeline idle.
+  resolved_at: "2026-03-30"
+
+- id: meta-39-probe-result
+  category: framework
+  problem: "observabilityStatus probes show 0 pass/fail despite 9 probes run"
+  solution: |
+    probesRun=9 but probesPass=0 and probesFail=0, lastResults={} — probe result recording may be broken. Non-blocking, VERIFY duration_ms also shows corrupted value (1.7T ms).
+  resolved_at: "2026-03-31"
+
+- id: meta-40-obs-results
+  category: framework
+  problem: "observabilityStatus.lastResults empty despite 9 probes run"
+  solution: |
+    health-check cycle 40: probesRun=9, probesPass=0, probesFail=0, lastResults={}. Probe results not written back to state. Possible issue in observability state-update path.
+  resolved_at: "2026-03-31"
+
+- id: meta-probe-results-41
+  category: framework
+  problem: "probesRun=9 but probesPass=0, probesFail=0 — probe result recording broken"
+  solution: |
+    Cycle 41 observabilityStatus shows 9 probes ran but zero categorized pass/fail. Explains greenRate=0 anomaly detected in trend-analyzer. Probe result write path likely has a silent failure — worth investigating probe executor output parsing.
+  resolved_at: "2026-03-31"
+
+- id: meta-41
+  category: framework
+  problem: "GENERATE phase fails to create registry files for 5 arch/ux tests across cycles 40-41"
+  solution: |
+    Tests ux-no-empty-state, arch-skill-windows-paths, arch-scanner-var-pipe, arch-obs-hardcoded-paths, arch-scanner-direct-state-write are discovered by SCAN but GENERATE skips them (registry file missing). Pattern: 2 consecutive cycles (40, 41). Root cause: GENERATE executor may not handle arch/ux category test specs. Coverage impact: 5 tests stuck in skipRegistry, coverage declining 81.1%->80.6%.
+  resolved_at: "2026-03-31"
+
+- id: state-truncation-automerge-20260401-020448
+  category: test
+  problem: "Truncation guard auto-merged: a caller passed a partial state object in full-replace mode. [WARN] TRUNCATION_GUARD on pipeline: 13 -> 6 fields. Auto-merge."
+  solution: |
+    Auto-downgraded to merge. Caller should use --merge flag explicitly.
+  resolved_at: "2026-03-31"
+
+- id: stale-stage-status-cycle42
+  category: framework
+  problem: "TEST stage had stale 'running' status with hardcoded duration_ms=120000 after session interruption"
+  solution: |
+    Likely caused by stage-worker session ending without marking TEST as done/pending. supervisor Step 4 detected and cleared. Framework should ensure pipeline idle clears currentStage status.
+  resolved_at: "2026-03-31"
+
+- id: meta-42
+  category: framework
+  problem: "e2e-runner phantom pass: 0-assertion tests count as pass in assertion-only mode"
+  solution: |
+    iss-194-subpage-export and perf-casework-timing pass with 0 assertions. e2e-runner returns pass when no case-ID is provided and no assertions are executed. This inflates coverage stats. Fix: e2e-runner should return SKIP (not PASS) when assertions=0.
+  resolved_at: "2026-03-31"
+
+- id: meta-42b
+  category: environment
+  problem: "UI tests fail: localhost:3001 not running in test environment"
+  solution: |
+    3 ui-interaction tests (iss-192 x2, ux-no-empty-state) fail because localhost:3001 unreachable. Backend=3010 healthy, Frontend=5173 healthy. Tests reference port 3001 (likely proxy/combined port). Not a framework bug - environment configuration issue. FIX phase should check if dashboard runs on 5173 instead and update test config.
+  resolved_at: "2026-03-31"
+
+- id: meta-42-port-mismatch
+  category: framework
+  problem: "GENERATE stage systematically uses wrong port 3001 (3/5 test fixes had this pattern)"
+  solution: |
+    Tests generated by GENERATE stage used port 3001 (non-existent) instead of 5173 (frontend) or 3010 (API). 3 of 5 FIX items in cycle 42 were port fixes. Root cause likely in GENERATE.md test URL template. Fixed in test definitions this cycle but GENERATE logic not updated - may recur.
+  resolved_at: "2026-03-31"
+
+- id: meta-42-placeholder-format
+  category: framework
+  problem: "GENERATE stage uses {{double_brace}} placeholder syntax incompatible with framework parser"
+  solution: |
+    1 of 5 FIX items (iss-192-save-api) had {{x}} placeholders that couldn't be resolved; framework expects {x} single-brace format. Fixed in test definition but GENERATE.md template should be updated to prevent recurrence.
+  resolved_at: "2026-03-31"
+
+- id: meta-42-ui-frontend-000
+  category: framework
+  problem: "3/3 UI tests fail with Page→000000 despite health check passing"
+  solution: |
+    ui-runner.sh health check uses TCP/port probe but actual HTTP navigation gets 000 (connection refused or no response). Affects iss-192-copy-html-draft, iss-192-edit-save-draft, ux-no-empty-state. Frontend reports healthy but navigation fails. Check if dashboard frontend (localhost:5173) is truly serving HTTP responses.
+  resolved_at: "2026-03-31"
+
+- id: meta-42-placeholder-live-caseid
+  category: test-definition
+  problem: "iss-192-save-api has unresolved {live_case_id} placeholder (CONTRACT_MISMATCH)"
+  solution: |
+    api-runner.sh correctly detects unresolved placeholders and reports CONTRACT_MISMATCH. Test YAML must have {live_case_id} substituted with a real active case ID. Fix: update test registry YAML or add config-based placeholder resolution in the executor.
+  resolved_at: "2026-03-31"
+
+- id: orphan-test-cycle42
+  category: framework
+  problem: "orphan currentTest after stage-worker timeout"
+  solution: |
+    stage-worker timed out (5min limit) mid-FIX phase, left currentTest=iss-192-copy-html-draft orphaned in pipeline.json+state.json. Cleared by supervisor Step 4.
+  resolved_at: "2026-03-31"
+
+- id: fix-timestamp-anomaly-42
+  category: framework
+  problem: "FIX stage completedAt < startedAt after restart"
+  solution: |
+    FIX stage shows completedAt=2026-03-31T18:43:44Z but startedAt=2026-03-31T19:06:24Z — stage state not reset when FIX restarted after VERIFY. Stage-worker should reset completedAt when beginning a new FIX phase iteration.
+  resolved_at: "2026-03-31"
+
+- id: stale-progress-20260401-0335
+  category: framework
+  problem: "Orphan progress file: framework-e2e-phantom-pass-42 stuck at verify_start for 43+ min"
+  solution: |
+    test_definition_not_found caused verify_start to hang without cleanup. Auto-cleaned by supervisor Step 4.
+  resolved_at: "2026-03-31"
+
+- id: stale-progress-cleanup-20260401-0354
+  category: framework
+  problem: "Stale progress file framework-fix-42 (17min, verify_start)"
+  solution: |
+    progress file from cycle 42 VERIFY survived into cycle 43; created 19:36:15Z, cleaned at 2026-03-31T19:54:09Z; framework-fix-42 was a meta-analysis injected item from pipeline.json stale fixQueue
+  resolved_at: "2026-03-31"
+
+- id: meta-43
+  category: framework
+  problem: "GENERATE stage orphaned — stage-worker CLI exited mid-GENERATE after completing SCAN"
+  solution: |
+    Cycle 43 SCAN completed (10 gaps, 4min). Stage-worker CLI session ended at GENERATE transition (19:49:12). GENERATE status stuck at running, testQueue=0. Root cause: CLI session token limit or graceful exit after SCAN completion without executing GENERATE loop. Fix: reset GENERATE status=pending, pipelineStatus=idle for next supervisor tick.
+  resolved_at: "2026-03-31"
+
+- id: orphan-currenttest-43
+  category: framework
+  problem: "Orphan currentTest executor-bash-command-support (no progress file, 23+ min)"
+  solution: |
+    FIX phase set currentTest but did not clear after fix completion. Cleaned by supervisor Act step.
+  resolved_at: "2026-03-31"
+
+- id: meta-44
+  category: framework
+  problem: "e2e-runner bash-check assertion flusher missing bash_exit_zero handler"
+  solution: |
+    execute_bash_check_test's _flush_bash_check_assertion handles text_gt/equals/contains but NOT bash_exit_zero/bash_output_* types. When bash-check tests have bash_exit_zero assertions, flusher evals STEP_OUTPUT_{target-as-shell-cmd} → STEP_OUTPUT_source unbound variable crash. Fix: add bash_exit_zero/bash_output_* cases to _flush_bash_check_assertion that delegate to _exec_bash_exit_zero_assertion/_exec_bash_output_contains_assertion. Affects all 10 newly generated cycle-44 tests.
+  resolved_at: "2026-03-31"
+
+- id: meta-44-verify-stall
+  category: framework
+  problem: "VERIFY stage cannot process fixType=framework_fix items, pipeline stalls at VERIFY"
+  solution: |
+    framework-fix-44 (fixType=framework_fix) remained in verifyQueue after VERIFY stage completed (stages.VERIFY.status=done). VERIFY.md and state-update.md have no logic to auto-accept framework fixes that have no re-runnable test. Result: phase stuck at VERIFY, currentTest orphaned. Fix: state-update.md should auto-clear framework_fix items from verifyQueue and advance phase after VERIFY processing.
+  resolved_at: "2026-03-31"
+
+- id: stale-progress-20260401-0619
+  category: framework
+  problem: "Stale .progress-framework-fix-44.json (35 min in verify_start)"
+  solution: |
+    Progress file remained after verify phase completed. Cleaned up in supervisor Step 4 Act.
+  resolved_at: "2026-03-31"
+
+- id: meta-44-vq-corruption
+  category: framework
+  problem: "verifyQueue received CLI flags as testId (--fixId, --testId, --category)"
+  solution: |
+    state-writer.sh invocation with --target queues --merge produced malformed entry where CLI arg names became JSON field values. Stage-worker state-update needs stricter argument validation.
+  resolved_at: "2026-03-31"
+
+- id: meta-fixqueue-overwrite-20260401-0622
+  category: framework
+  problem: "Meta-analysis fixQueue injection overwrites existing items (state-writer deepMerge replaces arrays)"
+  solution: |
+    Fix: when injecting to fixQueue, must read+prepend full array, not just write new item. The SKILL example command is misleading - it shows only new item but comment says prepend. Use the pattern: read current+prepend+write full array.
+  resolved_at: "2026-03-31"
+
+- id: fix-reg-guard-retro-endpoints
+  category: test
+  problem: "Already passing — failure was caused by STEP_OUTPUT_source unbound var catastrophic bug in e2e-runner.sh (framework-fix-45). Retro handling code already present in fix-recorder.sh and fix-analyzer.sh."
+  solution: |
+    See fix report: tests/results/fixes/reg-guard-retro-endpoints-fix.md
+  resolved_at: "2026-03-31"
+
+- id: fix-df-retro-fix-context
+  category: test
+  problem: "Already passing — failure was caused by STEP_OUTPUT_source unbound var catastrophic bug in e2e-runner.sh (framework-fix-45). fix-analyzer.sh already has retroContext handling at lines 244-275."
+  solution: |
+    See fix report: tests/results/fixes/df-retro-fix-context-fix.md
+  resolved_at: "2026-03-31"
+
+- id: e2e-runner-tail1-truncation-20260401
+  category: framework
+  problem: "e2e-runner.sh tail -1 truncates multi-line bash step output to last line only"
+  solution: |
+    Lines 753 and 824: step_result piped through tail -1 silently drops all but last line. text_contains assertions on non-last lines always fail. Fixed by removing | tail -1. May explain historic endpoint_missing misclassifications. Strategic directive 'prioritize root cause analysis' was critical to finding this instead of re-patching test definition.
+  resolved_at: "2026-03-31"
+
+- id: meta-46
+  category: framework
+  problem: "TEST stage e2e-runner.sh STEP_OUTPUT_source unbound variable (100% failure, batch=3)"
+  solution: |
+    e2e-runner.sh uses eval STEP_OUTPUT_\ but step_index may become non-numeric (e.g. 'source'), causing set -u failure. FIX: add :-empty guard or validate step_index is numeric before eval.
+  resolved_at: "2026-03-31"

@@ -1,0 +1,9 @@
+{
+  "testId": "iss170-supervisor-recovery",
+  "round": workflow-e2e,
+  "timestamp": "2026-03-30T15:17:07.000Z",
+  "status": "pass",
+  "assertions": [],
+  "error": null,
+  "duration_ms": 31387
+}

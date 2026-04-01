@@ -1,0 +1,2 @@
+{"stage":"SCAN","action":"scan_complete","cycle":43,"gaps":10,"designFidelityGaps":27,"issueGaps":50,"timestamp":"2026-03-31T19:49:00Z"}
+{"stage":"GENERATE","action":"generate_complete","cycle":43,"timestamp":"2026-03-31T20:07:55Z","testsGenerated":10,"recipe":"design-fidelity-test.md"}

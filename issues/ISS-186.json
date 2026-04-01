@@ -1,0 +1,11 @@
+{
+  "id": "ISS-186",
+  "title": "Case Summary 在 WebUI 不显示 — inspection API 路径不匹配",
+  "description": "API 查找 {caseDir}/case-summary.md，但 inspection-writer 写到 {caseDir}/context/case-summary.md，路径不匹配导致 exists: false",
+  "type": "bug",
+  "priority": "P0",
+  "status": "pending",
+  "testLoopScan": true,
+  "createdAt": "2026-03-31T11:19:09.743Z",
+  "updatedAt": "2026-03-31T11:19:09.743Z"
+}

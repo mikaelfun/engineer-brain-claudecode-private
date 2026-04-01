@@ -1,0 +1,18 @@
+{
+  "id": "draft-collapse_20260331",
+  "title": "Draft Tab 折叠优化 + DraftsPage 扁平化",
+  "type": "bug",
+  "status": "complete",
+  "created": "2026-03-31T10:00:00.000Z",
+  "updated": "2026-04-01T16:05:00.000Z",
+  "current_phase": 3,
+  "current_task": "3.2",
+  "phases": {
+    "total": 3,
+    "completed": 3
+  },
+  "tasks": {
+    "total": 7,
+    "completed": 7
+  }
+}

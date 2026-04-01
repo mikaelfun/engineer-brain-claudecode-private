@@ -1,0 +1,56 @@
+# Test Definition: arch-scanner-var-pipe
+# Generated from architecture scanner gap
+# Category: workflow-e2e (bash anti-pattern)
+# Priority: P2
+
+id: arch-scanner-var-pipe
+category: workflow-e2e
+title: Bash scripts should not use semicolon+variable+pipe pattern
+description: |
+  CLAUDE.md Git Bash path format section warns that variables assigned with semicolon
+  and then used in pipe commands get silently discarded due to Git Bash (MSYS2) behavior.
+
+  This test scans architecture-scanner.sh and other executor scripts to ensure they
+  don't use the problematic pattern: VAR=value ; command | pipe
+
+acceptance_criteria:
+  - No semicolon+variable+pipe pattern in executor scripts
+  - Variable assignments use newlines (not semicolons) when followed by pipes
+  - architecture-scanner.sh specifically compliant
+
+source: arch-scan
+type: architecture
+priority: P2
+safety_level: SAFE
+
+assertions:
+  - type: bash_antipattern
+    description: Detect semicolon+variable+pipe in architecture-scanner.sh
+    command: |
+      if grep -E ';\s*[A-Z_]+=.*\|' tests/executors/architecture-scanner.sh; then
+        echo "FAIL: Found semicolon+variable+pipe pattern"
+        exit 1
+      else
+        echo "PASS"
+      fi
+    expected_output: "PASS"
+
+  - type: file_content
+    description: Verify variable assignments use newlines before pipes
+    command: |
+      # Check that variable assignments before pipes are on separate lines
+      bash tests/executors/architecture-scanner.sh --dry-run 2>&1 | grep -i "error.*variable" && echo "FAIL" || echo "PASS"
+    expected_output: "PASS"
+
+fix_hint: |
+  Replace semicolon-separated variable assignments with newlines:
+
+  # ❌ Wrong:
+  VAR="/path" ; cmd | pipe
+
+  # ✅ Correct:
+  VAR="/path"
+  cmd | pipe
+
+recipe_used: none
+created_at: 2026-04-01T09:32:00Z

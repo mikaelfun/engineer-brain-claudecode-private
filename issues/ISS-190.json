@@ -1,0 +1,11 @@
+{
+  "id": "ISS-190",
+  "title": "感觉compliance check没有检查china cld",
+  "description": "",
+  "type": "bug",
+  "priority": "P1",
+  "status": "pending",
+  "testLoopScan": true,
+  "createdAt": "2026-03-31T12:04:40.571Z",
+  "updatedAt": "2026-03-31T12:04:40.571Z"
+}

@@ -1,0 +1,30 @@
+# Test: Architecture compliance — no direct state.json write in architecture-scanner.sh
+# Generated: Round 32 | Source: arch-scan:direct-write
+# Recipe: none
+
+id: "arch-direct-state-write"
+name: "Architecture: architecture-scanner.sh must use state-writer.sh not direct JSON write"
+category: "workflow-e2e"
+source: "arch-scan:direct-write"
+safety_level: "safe"
+description: "Verify architecture-scanner.sh uses state-writer.sh --merge for all state writes, not direct echo/cat/tee writes to state.json, pipeline.json, or queues.json. Direct writes cause truncation and JSON corruption."
+
+steps:
+  - action: "validate"
+    params:
+      description: "Check architecture-scanner.sh for prohibited direct JSON file writes"
+
+assertions:
+  - type: "file_exists"
+    target: "tests/executors/architecture-scanner.sh"
+    expected: "true"
+  - type: "bash_output_not_contains"
+    target: "grep -nP '> tests/(state|pipeline|queues|stats)\\.json|tee tests/(state|pipeline|queues)\\.json' tests/executors/architecture-scanner.sh 2>/dev/null || echo ''"
+    expected: ".json"
+    description: "No direct redirect writes to state/pipeline/queues JSON files"
+
+metadata:
+  generatedAt: "2026-03-31T19:09:00.000Z"
+  round: 32
+  gapId: "arch-scan:direct-write"
+  recipeUsed: null

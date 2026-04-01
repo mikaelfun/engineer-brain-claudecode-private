@@ -1,0 +1,5 @@
+{
+  "testId":"framework-fix-41","cycle":42,"result":"SKIP",
+  "reason":"no registry file found","duration_ms":0,
+  "timestamp":"2026-03-31T18:21:32Z"
+}

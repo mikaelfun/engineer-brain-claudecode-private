@@ -1,0 +1,12 @@
+{
+  "id": "ISS-181",
+  "title": "/issue skill 新建时应检测相似 issue，支持合并或 reopen",
+  "description": "/issue skill 创建新 issue 时，应先扫描已有 issues 列表，判断当前描述是否与现有 issue 关联或相似，并给用户以下选择：\n\n## 1. 相似 issue 检测\n创建前读取所有 issues/*.json，对比 title 和 description 的关键词相似度（前3个词匹配、子字符串匹配等），找出可能相关的 issue 列出。\n\n## 2. 匹配到活跃 issue（pending/tracked/in-progress/implemented）\n提示用户：\n- 合并到已有 issue（更新描述，保留原 ID）\n- 忽略相似，单独新建\n\n## 3. 匹配到已完成 issue（done/closed）\n提示用户：\n- Reopen 并更新描述（清空旧 trackId/verifyResult，status 回到 pending）\n- 忽略，单独新建\n\n## 4. 描述选项\n对于合并和 reopen 场景，给用户提供几个描述选项：\n- 追加新描述到已有描述末尾\n- 替换为新描述\n- 手动编辑（保留两者，用户自行调整）\n\n## 实现位置\n修改 `.claude/skills/issue/SKILL.md`，在步骤 1（解析参数）和步骤 2（生成 Issue）之间插入相似度检测步骤。",
+  "type": "feature",
+  "priority": "P1",
+  "status": "tracked",
+  "trackId": "issue-dedup_20260330",
+  "testLoopScan": true,
+  "createdAt": "2026-03-30T23:42:00+08:00",
+  "updatedAt": "2026-03-30T23:42:00+08:00"
+}

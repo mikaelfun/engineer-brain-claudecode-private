@@ -1,0 +1,11 @@
+{
+  "id": "ISS-172",
+  "title": "TestLab UX: information architecture redundancy — merge/simplify pipelines",
+  "description": "UX review findings batch 2:\n1. Runner Steps pipeline (Pre-flight→Strategy→Test-Loop→Meta→Done) and PhasePipeline (SCAN→GEN→TEST→FIX→VERIFY) look nearly identical, users can't distinguish hierarchy\n2. ActivityDetailStrip duplicates phase/status info from LiveHero + PhasePipeline — 3 cards showing same thing\n3. Title bar Round badge duplicates LiveHero round display\nFix: differentiate Runner Steps visually (breadcrumb/text, not dots), merge queue bars into PhasePipeline or LiveHero, remove title bar badge",
+  "type": "enhancement",
+  "priority": "high",
+  "status": "implemented",
+  "createdAt": "2026-03-30T14:00:00+08:00",
+  "source": "ux-review",
+  "implementedAt": "2026-03-30T05:37:39.303Z"
+}

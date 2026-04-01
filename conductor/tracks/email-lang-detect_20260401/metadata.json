@@ -1,0 +1,16 @@
+{
+  "id": "email-lang-detect_20260401",
+  "title": "Email Drafter Auto Language Detection",
+  "type": "feature",
+  "status": "complete",
+  "created": "2026-04-01T11:15:00.000Z",
+  "updated": "2026-04-01T11:25:00.000Z",
+  "phases": {
+    "total": 1,
+    "completed": 1
+  },
+  "tasks": {
+    "total": 4,
+    "completed": 4
+  }
+}

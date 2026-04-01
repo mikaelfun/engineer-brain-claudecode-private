@@ -1,0 +1,9 @@
+{
+  "testId": "arch-skill-windows-paths",
+  "round": 43,
+  "timestamp": "2026-03-31T21:01:07.000Z",
+  "status": "pass",
+  "assertions": [{"name":"No C: drive references in bash code blocks (excluding documentation examples)","pass":true,"expected":"0","actual":"0"}],
+  "error": null,
+  "duration_ms": 38991
+}

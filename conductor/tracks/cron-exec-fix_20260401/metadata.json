@@ -1,0 +1,16 @@
+{
+  "id": "cron-exec-fix_20260401",
+  "title": "Fix Cron Job Execution — Replace SDK query() with CLI subprocess",
+  "type": "bug",
+  "status": "complete",
+  "created": "2026-04-01T12:20:00.000Z",
+  "updated": "2026-04-01T12:35:00.000Z",
+  "phases": {
+    "total": 2,
+    "completed": 2
+  },
+  "tasks": {
+    "total": 7,
+    "completed": 7
+  }
+}

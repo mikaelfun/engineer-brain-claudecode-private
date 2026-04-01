@@ -1,0 +1,35 @@
+# Test: ISS-177 Workflow Tests Use Synthetic Data
+# Generated: Round 29 | Source: issues/ISS-177.json
+# Recipe: none
+
+id: "iss177-synthetic-adoption"
+name: "Workflow Tests: synthetic data profiles configured for edge case coverage"
+category: "workflow-e2e"
+source: "issues/ISS-177.json"
+safety_level: "safe"
+description: "Verify synthetic profiles exist and are usable as test data sources; check that at least one workflow test references data_source: synthetic"
+
+steps:
+  - action: "validate"
+    params:
+      description: "Verify synthetic profiles and fixtures exist"
+
+assertions:
+  - type: "file_exists"
+    target: "tests/fixtures/synthetic/profiles.yaml"
+    expected: "true"
+  - type: "registry_count_above"
+    target: "tests/fixtures/"
+    expected: "1"
+  - type: "json_field"
+    target: "issues/ISS-177.json"
+    field: "status"
+    expected: "tracked"
+
+metadata:
+  generatedAt: "2026-03-30T14:10:00.000Z"
+  round: 29
+  gapId: "ISS-177"
+  issueId: "ISS-177"
+  trackId: "synthetic-adoption_20260330"
+  recipeUsed: null

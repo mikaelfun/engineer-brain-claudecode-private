@@ -1,0 +1,1572 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TestLab — Design A: Mission Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   DESIGN TOKENS
+   ═══════════════════════════════════════════════════════════════ */
+:root {
+  --bg-base: #1a1d24;
+  --bg-surface: #22262f;
+  --bg-elevated: #282d38;
+  --bg-hover: #2e3340;
+  --bg-inset: #1e2129;
+  --text-primary: #c9cdd6;
+  --text-secondary: #8b919e;
+  --text-tertiary: #5e6370;
+  --border-subtle: rgba(255,255,255,0.05);
+  --border-default: rgba(255,255,255,0.08);
+  --accent-blue: #6ba3e8;
+  --accent-green: #5cbf8a;
+  --accent-amber: #d4a44a;
+  --accent-red: #d47272;
+  --accent-purple: #9e8cc7;
+
+  --font-ui: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+
+  --glass-bg: rgba(34, 38, 47, 0.72);
+  --glass-border: rgba(255,255,255,0.06);
+  --glass-blur: blur(14px);
+
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ═══ LIGHT THEME ═══ */
+[data-theme="light"] {
+  --bg-base: #f4f5f7;
+  --bg-surface: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-hover: #f0f1f4;
+  --bg-inset: #eef0f4;
+  --text-primary: #1a1d24;
+  --text-secondary: #5e6370;
+  --text-tertiary: #8b919e;
+  --border-subtle: rgba(0,0,0,0.06);
+  --border-default: rgba(0,0,0,0.10);
+  --accent-blue: #4a8cd8;
+  --accent-green: #3da36e;
+  --accent-amber: #c49030;
+  --accent-red: #c05050;
+  --accent-purple: #8670b5;
+  --glass-bg: rgba(255,255,255,0.82);
+  --glass-border: rgba(0,0,0,0.08);
+}
+[data-theme="light"] body {
+  background: linear-gradient(135deg, #f0f2f6 0%, #e8ecf4 50%, #f2f0f6 100%);
+}
+[data-theme="light"] .glass {
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  backdrop-filter: blur(8px);
+}
+[data-theme="light"] .p-stage {
+  background: #f8f9fb;
+  border-color: rgba(0,0,0,0.08);
+}
+[data-theme="light"] .p-stage.done {
+  background: rgba(61,163,110,0.06);
+  border-color: rgba(61,163,110,0.15);
+}
+[data-theme="light"] .p-stage.active .p-name,
+[data-theme="light"] .p-stage.active-fix .p-name {
+  color: var(--text-primary);
+}
+[data-theme="light"] .p-stage.active {
+  background: linear-gradient(170deg, rgba(74,140,216,0.08) 0%, #fff 100%);
+  border-color: rgba(74,140,216,0.25);
+}
+[data-theme="light"] .p-stage.active-fix {
+  background: linear-gradient(170deg, rgba(196,144,48,0.08) 0%, #fff 100%);
+  border-color: rgba(196,144,48,0.25);
+}
+[data-theme="light"] .p-conn.off { background: rgba(0,0,0,0.08); }
+[data-theme="light"] .p-conn.lit {
+  background: linear-gradient(90deg, var(--accent-green), rgba(61,163,110,0.3));
+}
+[data-theme="light"] .scene-btn {
+  background: rgba(0,0,0,0.04);
+  color: var(--text-secondary);
+  border-color: rgba(0,0,0,0.08);
+}
+[data-theme="light"] .scene-btn.active {
+  background: var(--accent-blue);
+  color: #fff;
+  border-color: var(--accent-blue);
+}
+[data-theme="light"] .self-heal-banner {
+  background: rgba(196,144,48,0.08);
+  border-color: rgba(196,144,48,0.2);
+}
+[data-theme="light"] .stat-item { color: var(--text-primary); }
+[data-theme="light"] .tab-btn.active {
+  color: var(--accent-blue);
+  border-bottom-color: var(--accent-blue);
+}
+[data-theme="light"] .q-item {
+  background: #f4f5f7;
+}
+[data-theme="light"] .act-row:nth-child(even) {
+  background: rgba(0,0,0,0.02);
+}
+.theme-toggle {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-left: auto;
+}
+.theme-toggle:hover {
+  background: rgba(255,255,255,0.14);
+  color: var(--text-primary);
+}
+[data-theme="light"] .theme-toggle {
+  background: rgba(0,0,0,0.05);
+  border-color: rgba(0,0,0,0.12);
+}
+[data-theme="light"] .theme-toggle:hover {
+  background: rgba(0,0,0,0.1);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ANIMATIONS
+   ═══════════════════════════════════════════════════════════════ */
+@keyframes bar-pulse {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes stage-glow {
+  0%, 100% {
+    box-shadow: 0 0 24px var(--glow-color, rgba(107,163,232,0.15)),
+                0 0 48px var(--glow-far, rgba(107,163,232,0.06)),
+                inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+  50% {
+    box-shadow: 0 0 36px var(--glow-color, rgba(107,163,232,0.22)),
+                0 0 72px var(--glow-far, rgba(107,163,232,0.09)),
+                inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-3px); }
+}
+
+@keyframes connector-flow {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+@keyframes shimmer-border {
+  0%   { background-position: -300% 0; }
+  100% { background-position: 300% 0; }
+}
+
+@keyframes pulse-ring {
+  0%   { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESET & BASE
+   ═══════════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+body {
+  font-family: var(--font-ui);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* cinematic radial background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 90% 50% at 50% -10%, rgba(107,163,232,0.045) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 40% at 15% 90%, rgba(92,191,138,0.025) 0%, transparent 55%),
+    radial-gradient(ellipse 40% 35% at 85% 15%, rgba(158,140,199,0.02) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.page-wrap {
+  position: relative;
+  z-index: 1;
+  max-width: 1420px;
+  margin: 0 auto;
+  padding: 0 32px 60px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GLASS CARD
+   ═══════════════════════════════════════════════════════════════ */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SCENE SWITCHER — fixed top bar
+   ═══════════════════════════════════════════════════════════════ */
+.scene-bar {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  background: rgba(26,29,36,0.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 10px 32px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.scene-bar__tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-right: 14px;
+  user-select: none;
+}
+
+.scene-btn {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  padding: 5px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+  letter-spacing: 0.3px;
+}
+.scene-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: rgba(255,255,255,0.12);
+}
+.scene-btn.active {
+  background: rgba(107,163,232,0.08);
+  color: var(--accent-blue);
+  border-color: rgba(107,163,232,0.25);
+  box-shadow: 0 0 14px rgba(107,163,232,0.06);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   1. HEADER BAR
+   ═══════════════════════════════════════════════════════════════ */
+.header {
+  margin-top: 24px;
+  padding: 20px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* animated top border */
+.header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--border-glow-a, var(--accent-blue)) 25%,
+    var(--border-glow-b, var(--accent-purple)) 50%,
+    var(--border-glow-a, var(--accent-blue)) 75%,
+    transparent 100%
+  );
+  background-size: 300% 100%;
+  opacity: 0;
+  transition: opacity 0.4s var(--ease);
+}
+.header.running::before {
+  opacity: 1;
+  animation: shimmer-border 4s linear infinite;
+}
+
+.hdr-left {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.cycle-display {
+  font-family: var(--font-mono);
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+.cycle-display .dim {
+  color: var(--text-tertiary);
+  font-weight: 400;
+}
+
+.stage-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 14px;
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  transition: all 0.35s var(--ease);
+}
+.stage-chip.chip-idle {
+  background: rgba(94,99,112,0.1);
+  border: 1px solid rgba(94,99,112,0.15);
+  color: var(--text-tertiary);
+}
+.stage-chip.chip-test {
+  background: rgba(158,140,199,0.1);
+  border: 1px solid rgba(158,140,199,0.2);
+  color: var(--accent-purple);
+  box-shadow: 0 0 18px rgba(158,140,199,0.06);
+}
+.stage-chip.chip-fix {
+  background: rgba(212,164,74,0.1);
+  border: 1px solid rgba(212,164,74,0.2);
+  color: var(--accent-amber);
+  box-shadow: 0 0 18px rgba(212,164,74,0.06);
+}
+.stage-chip.chip-selfheal {
+  background: rgba(212,164,74,0.12);
+  border: 1px solid rgba(212,164,74,0.25);
+  color: var(--accent-amber);
+  box-shadow: 0 0 20px rgba(212,164,74,0.08);
+}
+
+.timer {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: 1.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.hdr-right {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.status-pill {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.dot-wrap {
+  position: relative;
+  width: 10px;
+  height: 10px;
+}
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  position: absolute;
+  top: 1px; left: 1px;
+  transition: background 0.3s var(--ease), box-shadow 0.3s var(--ease);
+}
+.status-dot.idle {
+  background: var(--text-tertiary);
+  box-shadow: none;
+}
+.status-dot.on {
+  background: var(--accent-green);
+  box-shadow: 0 0 10px rgba(92,191,138,0.45);
+  animation: blink 1.6s ease-in-out infinite;
+}
+/* pulse ring behind dot */
+.dot-ring {
+  position: absolute;
+  inset: -1px;
+  border-radius: 50%;
+  border: 1.5px solid var(--accent-green);
+  opacity: 0;
+}
+.status-dot.on ~ .dot-ring {
+  animation: pulse-ring 2s ease-out infinite;
+}
+
+.status-word {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 1.8px;
+  transition: color 0.3s var(--ease);
+}
+.status-word.idle { color: var(--text-tertiary); }
+.status-word.on   { color: var(--accent-green); }
+
+.btn-ctrl {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 7px 22px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+  letter-spacing: 0.5px;
+}
+.btn-ctrl.start {
+  border: 1px solid rgba(92,191,138,0.3);
+  background: rgba(92,191,138,0.08);
+  color: var(--accent-green);
+}
+.btn-ctrl.start:hover {
+  background: rgba(92,191,138,0.15);
+  border-color: rgba(92,191,138,0.5);
+}
+.btn-ctrl.stop {
+  border: 1px solid rgba(212,114,114,0.3);
+  background: rgba(212,114,114,0.08);
+  color: var(--accent-red);
+}
+.btn-ctrl.stop:hover {
+  background: rgba(212,114,114,0.15);
+  border-color: rgba(212,114,114,0.5);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   2. REASONING NARRATIVE
+   ═══════════════════════════════════════════════════════════════ */
+.reasoning {
+  margin-top: 14px;
+}
+
+.reasoning-bar {
+  padding: 13px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s var(--ease);
+}
+.reasoning-bar:hover { background: rgba(255,255,255,0.015); }
+
+.reasoning-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.reasoning-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 1.6px;
+}
+
+.reasoning-summary {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+}
+
+.reasoning-chevron {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  transition: transform 0.35s var(--ease);
+}
+.reasoning-chevron.open { transform: rotate(180deg); }
+
+.reasoning-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.45s var(--ease);
+}
+.reasoning-body.open {
+  max-height: 600px;
+}
+
+.heal-banner {
+  margin: 0 24px 14px;
+  padding: 11px 16px;
+  border-radius: var(--radius-md);
+  background: rgba(212,164,74,0.07);
+  border: 1px solid rgba(212,164,74,0.18);
+  border-left: 3px solid var(--accent-amber);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  animation: fadeIn 0.35s var(--ease);
+}
+.heal-banner .heal-emoji { font-size: 17px; flex-shrink: 0; margin-top: 1px; }
+.heal-banner .heal-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--accent-amber);
+}
+.heal-banner .heal-detail {
+  font-size: 12.5px;
+  color: rgba(212,164,74,0.7);
+  font-weight: 400;
+}
+
+.reasoning-steps {
+  padding: 0 24px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.r-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  animation: fadeIn 0.3s var(--ease) backwards;
+}
+.r-step:nth-child(2) { animation-delay: 40ms; }
+.r-step:nth-child(3) { animation-delay: 80ms; }
+.r-step:nth-child(4) { animation-delay: 120ms; }
+.r-step:nth-child(5) { animation-delay: 160ms; }
+
+.r-step .r-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+.r-step .r-body { flex: 1; }
+.r-step .r-name {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin-bottom: 2px;
+}
+.r-step .r-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.r-step.dim { opacity: 0.4; }
+
+/* ═══════════════════════════════════════════════════════════════
+   3. STAGE PIPELINE — THE HERO
+   ═══════════════════════════════════════════════════════════════ */
+.pipeline-hero {
+  margin-top: 18px;
+  padding: 40px 36px 44px;
+}
+
+.pipeline-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 2.5px;
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.pipeline-track {
+  display: flex;
+  align-items: center;
+  justify-content: stretch;
+  gap: 0;
+  width: 100%;
+}
+
+/* Stage card */
+.p-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 26px 24px 22px;
+  border-radius: var(--radius-xl);
+  border: 1.5px solid var(--border-subtle);
+  background: var(--bg-inset);
+  flex: 1;
+  min-width: 120px;
+  max-width: 220px;
+  position: relative;
+  z-index: 2;
+  transition: all 0.45s var(--ease);
+}
+
+.p-stage .p-icon {
+  font-size: 36px;
+  line-height: 1;
+  transition: transform 0.3s var(--ease);
+}
+
+.p-stage .p-name {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+.p-stage .p-status {
+  font-size: 12px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-weight: 500;
+}
+
+/* states */
+.p-stage.done {
+  border-color: rgba(92,191,138,0.12);
+  background: rgba(92,191,138,0.03);
+}
+.p-stage.done .p-name { color: var(--text-secondary); }
+
+.p-stage.active {
+  border-color: rgba(107,163,232,0.28);
+  background: linear-gradient(170deg, rgba(107,163,232,0.06) 0%, var(--bg-inset) 100%);
+  transform: scale(1.06);
+  --glow-color: rgba(107,163,232,0.16);
+  --glow-far: rgba(107,163,232,0.06);
+  animation: stage-glow 2.8s ease-in-out infinite;
+}
+.p-stage.active .p-icon { animation: float 2.2s ease-in-out infinite; }
+.p-stage.active .p-name { color: #fff; }
+
+/* shimmer on active */
+.p-stage.active::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: var(--radius-xl);
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: bar-pulse 3.5s linear infinite;
+  pointer-events: none;
+}
+
+.p-stage.active-fix {
+  border-color: rgba(212,164,74,0.28);
+  background: linear-gradient(170deg, rgba(212,164,74,0.06) 0%, var(--bg-inset) 100%);
+  transform: scale(1.06);
+  --glow-color: rgba(212,164,74,0.16);
+  --glow-far: rgba(212,164,74,0.06);
+  animation: stage-glow 2.8s ease-in-out infinite;
+}
+.p-stage.active-fix .p-icon { animation: float 2.2s ease-in-out infinite; }
+.p-stage.active-fix .p-name { color: #fff; }
+.p-stage.active-fix::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: var(--radius-xl);
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: bar-pulse 3.5s linear infinite;
+  pointer-events: none;
+}
+
+.p-stage.pending {
+  opacity: 0.38;
+}
+.p-stage.pending .p-name { color: var(--text-tertiary); }
+
+/* connector lines */
+.p-conn {
+  flex: 1;
+  min-width: 24px;
+  max-width: 80px;
+  height: 2px;
+  flex-shrink: 1;
+  border-radius: 1px;
+  z-index: 1;
+  transition: all 0.5s var(--ease);
+}
+.p-conn.off {
+  background: rgba(255,255,255,0.05);
+}
+.p-conn.lit {
+  background: linear-gradient(90deg, var(--accent-green), rgba(92,191,138,0.25));
+  box-shadow: 0 0 10px rgba(92,191,138,0.12);
+}
+.p-conn.flowing {
+  background: linear-gradient(90deg,
+    rgba(107,163,232,0.2),
+    var(--accent-blue),
+    rgba(107,163,232,0.2)
+  );
+  background-size: 200% 100%;
+  animation: connector-flow 1.6s linear infinite;
+  box-shadow: 0 0 10px rgba(107,163,232,0.08);
+}
+.p-conn.flowing-amber {
+  background: linear-gradient(90deg,
+    rgba(212,164,74,0.2),
+    var(--accent-amber),
+    rgba(212,164,74,0.2)
+  );
+  background-size: 200% 100%;
+  animation: connector-flow 1.6s linear infinite;
+  box-shadow: 0 0 10px rgba(212,164,74,0.08);
+}
+
+/* spinner inside status */
+.mini-spin {
+  display: inline-block;
+  width: 12px; height: 12px;
+  border: 2px solid rgba(107,163,232,0.18);
+  border-top-color: var(--accent-blue);
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+.mini-spin.amber {
+  border-color: rgba(212,164,74,0.18);
+  border-top-color: var(--accent-amber);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   4. STATS BAR
+   ═══════════════════════════════════════════════════════════════ */
+.stats-row {
+  margin-top: 14px;
+  padding: 13px 28px;
+  display: flex;
+  align-items: center;
+}
+
+.stats-group {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  flex: 1;
+}
+
+.stats-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 1.8px;
+  min-width: 52px;
+}
+
+.s-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+}
+.s-item .s-val { font-weight: 700; }
+.s-item.green  { color: var(--accent-green); }
+.s-item.red    { color: var(--accent-red); }
+.s-item.amber  { color: var(--accent-amber); }
+.s-item.muted  { color: var(--text-tertiary); }
+
+.stats-sep {
+  width: 1px;
+  height: 26px;
+  background: var(--border-default);
+  margin: 0 20px;
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   5. TAB BAR
+   ═══════════════════════════════════════════════════════════════ */
+.tab-row {
+  margin-top: 18px;
+  display: flex;
+  gap: 2px;
+  padding: 0 4px;
+}
+
+.tab-btn {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 22px;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+  position: relative;
+}
+.tab-btn:hover {
+  color: var(--text-secondary);
+  background: rgba(255,255,255,0.02);
+}
+.tab-btn.on {
+  color: var(--text-primary);
+  background: var(--glass-bg);
+}
+.tab-btn.on::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 18px; right: 18px;
+  height: 2px;
+  background: var(--accent-blue);
+  border-radius: 1px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   6. TAB CONTENT
+   ═══════════════════════════════════════════════════════════════ */
+.tab-body {
+  border-radius: 0 var(--radius-lg) var(--radius-lg) var(--radius-lg);
+  padding: 26px 28px;
+  min-height: 390px;
+}
+
+.two-col {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 24px;
+}
+
+/* section titles */
+.sec-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 1.8px;
+  margin-bottom: 16px;
+}
+
+/* activity stream */
+.stream {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+.stream::-webkit-scrollbar { width: 3px; }
+.stream::-webkit-scrollbar-track { background: transparent; }
+.stream::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 2px; }
+
+.ev {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  transition: background 0.12s var(--ease);
+}
+.ev:hover { background: rgba(255,255,255,0.018); }
+
+.ev-time {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+  min-width: 44px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.ev-icon { font-size: 13px; flex-shrink: 0; margin-top: 2px; }
+.ev-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  flex: 1;
+}
+.ev-badge {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.ev-badge.b-scan { background: rgba(107,163,232,0.1); color: var(--accent-blue); border: 1px solid rgba(107,163,232,0.12); }
+.ev-badge.b-gen  { background: rgba(158,140,199,0.1); color: var(--accent-purple); border: 1px solid rgba(158,140,199,0.12); }
+.ev-badge.b-test { background: rgba(92,191,138,0.1); color: var(--accent-green); border: 1px solid rgba(92,191,138,0.12); }
+.ev-badge.b-fix  { background: rgba(212,164,74,0.1); color: var(--accent-amber); border: 1px solid rgba(212,164,74,0.12); }
+
+/* queues */
+.q-section { margin-bottom: 10px; }
+
+.q-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.12s var(--ease);
+}
+.q-head:hover { background: var(--bg-hover); }
+
+.q-name {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.q-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  background: rgba(255,255,255,0.04);
+  padding: 2px 9px;
+  border-radius: 4px;
+  min-width: 24px;
+  text-align: center;
+}
+
+.q-items {
+  padding: 6px 0 0 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.q-item {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  padding: 4px 8px;
+  border-left: 2px solid var(--border-subtle);
+}
+.q-item.hot {
+  color: var(--text-secondary);
+  border-left-color: var(--accent-blue);
+}
+
+.q-empty {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  font-style: italic;
+  padding: 4px 8px 4px 24px;
+}
+
+/* placeholder for non-overview tabs */
+.tab-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  gap: 14px;
+}
+.tab-placeholder .ph-icon { font-size: 36px; opacity: 0.22; }
+.tab-placeholder .ph-text {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-tertiary);
+  letter-spacing: 1.5px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   UTILITIES
+   ═══════════════════════════════════════════════════════════════ */
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- SCENE SWITCHER -->
+<div class="scene-bar">
+  <span class="scene-bar__tag">Scene</span>
+  <button class="scene-btn active" data-s="idle">Idle</button>
+  <button class="scene-btn" data-s="testing">Testing</button>
+  <button class="scene-btn" data-s="fixing">Fixing</button>
+  <button class="scene-btn" data-s="selfheal">Self-Heal</button>
+  <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">☀️ Light</button>
+</div>
+
+<div class="page-wrap">
+
+  <!-- 1. HEADER BAR -->
+  <div class="glass header" id="hdr">
+    <div class="hdr-left">
+      <div class="cycle-display" id="hdrCycle">Cycle 0<span class="dim">/10</span></div>
+      <div class="stage-chip chip-idle" id="hdrChip"><span id="hdrChipIcon">⏸</span> <span id="hdrChipText">IDLE</span></div>
+      <div class="timer" id="hdrTimer">—</div>
+    </div>
+    <div class="hdr-right">
+      <div class="status-pill">
+        <div class="dot-wrap">
+          <div class="status-dot idle" id="hdrDot"></div>
+          <div class="dot-ring"></div>
+        </div>
+        <span class="status-word idle" id="hdrWord">IDLE</span>
+      </div>
+      <button class="btn-ctrl start" id="hdrBtn">START</button>
+    </div>
+  </div>
+
+  <!-- 2. REASONING NARRATIVE -->
+  <div class="glass reasoning" id="reasonCard">
+    <div class="reasoning-bar" id="reasonToggle">
+      <div class="reasoning-left">
+        <span class="reasoning-tag">Reasoning</span>
+        <span class="reasoning-summary" id="reasonSum">💤 Supervisor idle — awaiting start</span>
+      </div>
+      <span class="reasoning-chevron" id="reasonChev">▼</span>
+    </div>
+    <div class="reasoning-body" id="reasonBody">
+      <div class="heal-banner hidden" id="healBanner">
+        <span class="heal-emoji">🔧</span>
+        <span>
+          <span class="heal-label">Self-Heal Event: </span>
+          <span class="heal-detail" id="healDetail">Corrupt pipeline.json detected — auto-recovering</span>
+        </span>
+      </div>
+      <div class="reasoning-steps" id="reasonSteps"></div>
+    </div>
+  </div>
+
+  <!-- 3. STAGE PIPELINE (HERO) -->
+  <div class="glass pipeline-hero">
+    <div class="pipeline-title">Execution Pipeline</div>
+    <div class="pipeline-track" id="pipeTrack">
+      <div class="p-stage pending" id="ps-scan">
+        <span class="p-icon">🔍</span>
+        <span class="p-name">Scan</span>
+        <span class="p-status" id="px-scan">⏳ pending</span>
+      </div>
+      <div class="p-conn off" id="pc-1"></div>
+      <div class="p-stage pending" id="ps-gen">
+        <span class="p-icon">⚙️</span>
+        <span class="p-name">Generate</span>
+        <span class="p-status" id="px-gen">⏳ pending</span>
+      </div>
+      <div class="p-conn off" id="pc-2"></div>
+      <div class="p-stage pending" id="ps-test">
+        <span class="p-icon">🧪</span>
+        <span class="p-name">Test</span>
+        <span class="p-status" id="px-test">⏳ pending</span>
+      </div>
+      <div class="p-conn off" id="pc-3"></div>
+      <div class="p-stage pending" id="ps-fix">
+        <span class="p-icon">🔧</span>
+        <span class="p-name">Fix</span>
+        <span class="p-status" id="px-fix">⏳ pending</span>
+      </div>
+      <div class="p-conn off" id="pc-4"></div>
+      <div class="p-stage pending" id="ps-verify">
+        <span class="p-icon">✅</span>
+        <span class="p-name">Verify</span>
+        <span class="p-status" id="px-verify">⏳ pending</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. STATS BAR -->
+  <div class="glass stats-row">
+    <div class="stats-group">
+      <span class="stats-label">Total</span>
+      <span class="s-item green">✓ <span class="s-val" id="sTp">0</span> passed</span>
+      <span class="s-item red">✗ <span class="s-val" id="sTf">0</span> failed</span>
+      <span class="s-item amber">🔧 <span class="s-val" id="sTx">0</span> fixed</span>
+      <span class="s-item muted">⏭ <span class="s-val" id="sTs">0</span> skipped</span>
+    </div>
+    <div class="stats-sep"></div>
+    <div class="stats-group">
+      <span class="stats-label">Cycle</span>
+      <span class="s-item green">✓ <span class="s-val" id="sCp">0</span> passed</span>
+      <span class="s-item red">✗ <span class="s-val" id="sCf">0</span> failed</span>
+      <span class="s-item amber">🔧 <span class="s-val" id="sCx">0</span> fixed</span>
+      <span class="s-item muted">⏭ <span class="s-val" id="sCs">0</span> skipped</span>
+    </div>
+  </div>
+
+  <!-- 5. TAB BAR -->
+  <div class="tab-row" id="tabRow">
+    <button class="tab-btn on" data-tab="overview">Overview</button>
+    <button class="tab-btn" data-tab="discoveries">Discoveries</button>
+    <button class="tab-btn" data-tab="trends">Trends</button>
+    <button class="tab-btn" data-tab="evolution">Evolution</button>
+  </div>
+
+  <!-- 6. TAB CONTENT -->
+  <div class="glass tab-body" id="tabBody">
+    <div class="two-col" id="overviewPane">
+      <div>
+        <div class="sec-title">Activity Stream</div>
+        <div class="stream" id="streamList"></div>
+      </div>
+      <div>
+        <div class="sec-title">Queues</div>
+        <div id="queueList"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   SCENE DATA
+   ══════════════════════════════════════════════════════════════════ */
+const DATA = {
+
+  idle: {
+    cycle: '0', total: '10', timer: '\u2014',
+    chip: { icon: '\u23F8', text: 'IDLE', cls: 'chip-idle' },
+    running: false,
+    borderGlow: null,
+    btn: { text: 'START', cls: 'start' },
+    stages: ['pending','pending','pending','pending','pending'],
+    conns: ['off','off','off','off'],
+    reason: {
+      summary: '\uD83D\uDCA4 Supervisor idle \u2014 awaiting start',
+      expanded: false,
+      heal: false,
+      steps: []
+    },
+    totalStats: [0,0,0,0],
+    cycStats: [0,0,0,0],
+    events: [
+      { t:'\u2014', i:'\uD83D\uDCA4', m:'Waiting for cycle to begin\u2026', b:null }
+    ],
+    queues: [
+      { n:'\uD83E\uDDEA Test Queue',   c:0, items:[] },
+      { n:'\uD83D\uDD27 Fix Queue',    c:0, items:[] },
+      { n:'\u2705 Verify Queue', c:0, items:[] }
+    ]
+  },
+
+  testing: {
+    cycle: '3', total: '10', timer: '04:32',
+    chip: { icon: '\uD83E\uDDEA', text: 'TEST', cls: 'chip-test' },
+    running: true,
+    borderGlow: null,
+    btn: { text: 'STOP', cls: 'stop' },
+    stages: ['done','done','active','pending','pending'],
+    conns: ['lit','flowing','off','off'],
+    reason: {
+      summary: '\uD83E\uDDEA Observe \u2014 analyzing test results, step 2/5',
+      expanded: false,
+      heal: false,
+      steps: [
+        { icon:'\uD83D\uDC41\uFE0F', name:'Observe', text:'Scanning 14 test results from current batch\u2026' },
+        { icon:'\uD83D\uDD2C', name:'Diagnose', text:'\u2014', dim:true }
+      ]
+    },
+    totalStats: [42,3,5,2],
+    cycStats: [12,1,2,0],
+    events: [
+      { t:'04:32', i:'\uD83E\uDDEA', m:'Running test: case-lifecycle-create-to-close',      b:'test' },
+      { t:'04:28', i:'\u2705', m:'Test passed: note-attachment-upload',                b:'test' },
+      { t:'04:15', i:'\u2705', m:'Test passed: labor-entry-validation',                b:'test' },
+      { t:'03:58', i:'\u274C', m:'Test failed: sap-billing-sync \u2014 timeout after 30s',  b:'test' },
+      { t:'03:42', i:'\u2705', m:'Test passed: compliance-entitlement-check',          b:'test' },
+      { t:'03:30', i:'\u2699\uFE0F', m:'Generated 14 test cases from 6 registry entries',    b:'gen'  },
+      { t:'03:12', i:'\u2699\uFE0F', m:'Analyzing test registry for stale definitions\u2026',     b:'gen'  },
+      { t:'02:45', i:'\uD83D\uDD0D', m:'Scanned skills/ \u2014 3 modified files since last cycle',b:'scan' },
+      { t:'02:30', i:'\uD83D\uDD0D', m:'Scanned playbooks/schemas/ \u2014 no changes',            b:'scan' },
+      { t:'02:15', i:'\uD83D\uDD0D', m:'Cycle 3 initiated \u2014 scanning codebase for changes',  b:'scan' }
+    ],
+    queues: [
+      { n:'\uD83E\uDDEA Test Queue', c:5, items:[
+        { text:'email-draft-humanizer', hot:true },
+        { text:'kusto-query-builder', hot:false },
+        { text:'todo-checkbox-execute', hot:false },
+        { text:'patrol-batch-scan', hot:false },
+        { text:'teams-search-cache', hot:false }
+      ]},
+      { n:'\uD83D\uDD27 Fix Queue', c:1, items:[
+        { text:'sap-billing-sync (timeout)', hot:false }
+      ]},
+      { n:'\u2705 Verify Queue', c:0, items:[] }
+    ]
+  },
+
+  fixing: {
+    cycle: '3', total: '10', timer: '12:45',
+    chip: { icon: '\uD83D\uDD27', text: 'FIX', cls: 'chip-fix' },
+    running: true,
+    borderGlow: ['var(--accent-amber)','var(--accent-red)'],
+    btn: { text: 'STOP', cls: 'stop' },
+    stages: ['done','done','done','active-fix','pending'],
+    conns: ['lit','lit','flowing-amber','off'],
+    reason: {
+      summary: '\uD83D\uDD27 Act \u2014 applying fix to sap-billing-sync',
+      expanded: true,
+      heal: false,
+      steps: [
+        { icon:'\uD83D\uDC41\uFE0F', name:'Observe',  text:'3 tests failed in cycle 3: sap-billing-sync, kusto-timeout-handler, note-encoding' },
+        { icon:'\uD83D\uDD2C', name:'Diagnose', text:'Root cause: API endpoint timeout set to 30s, needs 60s for batch operations' },
+        { icon:'\uD83E\uDDED', name:'Decide',   text:'Strategy: increase timeout + add retry logic with exponential backoff' },
+        { icon:'\uD83D\uDEE0\uFE0F', name:'Act',      text:'Modifying skills/d365/sap-billing.ps1 \u2014 updating timeout configuration\u2026' },
+        { icon:'\uD83E\uDE9E', name:'Reflect',  text:'\u2014', dim:true }
+      ]
+    },
+    totalStats: [42,3,5,2],
+    cycStats: [12,3,1,0],
+    events: [
+      { t:'12:45', i:'\uD83D\uDD27', m:'Fixing: sap-billing-sync \u2014 adjusting timeout to 60s',           b:'fix'  },
+      { t:'12:30', i:'\u2705', m:'Fix applied: note-encoding \u2014 added UTF-8 BOM handling',          b:'fix'  },
+      { t:'12:12', i:'\uD83D\uDD27', m:'Diagnosing root cause for kusto-timeout-handler failure',         b:'fix'  },
+      { t:'11:45', i:'\uD83D\uDD27', m:'Fix queue populated \u2014 3 failed tests require intervention',       b:'fix'  },
+      { t:'11:30', i:'\uD83E\uDDEA', m:'Test stage complete \u2014 12 passed, 3 failed',                       b:'test' },
+      { t:'10:15', i:'\u2705', m:'Test passed: patrol-batch-scan',                                  b:'test' },
+      { t:'09:45', i:'\u2705', m:'Test passed: case-lifecycle-create-to-close',                     b:'test' },
+      { t:'08:30', i:'\u2699\uFE0F', m:'Generated 15 test cases',                                         b:'gen'  },
+      { t:'07:00', i:'\uD83D\uDD0D', m:'Cycle 3 \u2014 full scan complete',                                    b:'scan' }
+    ],
+    queues: [
+      { n:'\uD83E\uDDEA Test Queue', c:0, items:[] },
+      { n:'\uD83D\uDD27 Fix Queue', c:3, items:[
+        { text:'sap-billing-sync (timeout \u2192 60s)', hot:true },
+        { text:'kusto-timeout-handler (retry logic)', hot:false },
+        { text:'note-encoding (UTF-8 BOM) \u2713', hot:false }
+      ]},
+      { n:'\u2705 Verify Queue', c:1, items:[
+        { text:'note-encoding \u2014 re-run pending', hot:false }
+      ]}
+    ]
+  },
+
+  selfheal: {
+    cycle: '3', total: '10', timer: '15:22',
+    chip: { icon: '\uD83D\uDD27', text: 'SELF-HEAL', cls: 'chip-selfheal' },
+    running: true,
+    borderGlow: ['var(--accent-amber)','var(--accent-red)'],
+    btn: { text: 'STOP', cls: 'stop' },
+    stages: ['done','done','done','active-fix','pending'],
+    conns: ['lit','lit','flowing-amber','off'],
+    reason: {
+      summary: '\uD83D\uDD27 Self-heal detected \u2014 intervention in progress',
+      expanded: true,
+      heal: true,
+      steps: [
+        { icon:'\uD83D\uDC41\uFE0F', name:'Observe',  text:'Pipeline state file corrupted \u2014 JSON parse error in tests/state.json' },
+        { icon:'\uD83D\uDD2C', name:'Diagnose', text:'Cause: concurrent write during cycle 2 left truncated JSON. File size 0 bytes.' },
+        { icon:'\uD83E\uDDED', name:'Decide',   text:'Self-heal: reconstruct state.json from test results + registry. No data loss expected.' },
+        { icon:'\uD83D\uDEE0\uFE0F', name:'Act',      text:'Rebuilding state.json from tests/results/*.json \u2014 47 entries recovered' },
+        { icon:'\uD83E\uDE9E', name:'Reflect',  text:'Prevention: add file lock + atomic write pattern to state manager' }
+      ]
+    },
+    totalStats: [47,3,7,2],
+    cycStats: [14,1,3,0],
+    events: [
+      { t:'15:22', i:'\uD83D\uDD27', m:'Self-heal: rebuilding state.json \u2014 47/47 entries recovered',     b:'fix'  },
+      { t:'15:18', i:'\u26A0\uFE0F', m:'ANOMALY DETECTED: tests/state.json corrupt (0 bytes)',            b:'fix'  },
+      { t:'15:10', i:'\uD83D\uDD27', m:'Fix applied: kusto-timeout-handler \u2014 added 3\u00D7 retry',            b:'fix'  },
+      { t:'14:45', i:'\uD83D\uDD27', m:'Fix applied: sap-billing-sync \u2014 timeout 30s \u2192 60s',              b:'fix'  },
+      { t:'14:20', i:'\uD83E\uDDEA', m:'Re-test passed: note-encoding (after UTF-8 fix)',                 b:'test' },
+      { t:'13:50', i:'\uD83E\uDDEA', m:'Test stage complete \u2014 14 passed, 1 failed',                       b:'test' },
+      { t:'12:00', i:'\u2699\uFE0F', m:'Generated 15 test cases from registry',                           b:'gen'  },
+      { t:'11:00', i:'\uD83D\uDD0D', m:'Cycle 3 scan \u2014 5 files changed',                                  b:'scan' }
+    ],
+    queues: [
+      { n:'\uD83E\uDDEA Test Queue', c:0, items:[] },
+      { n:'\uD83D\uDD27 Fix Queue', c:1, items:[
+        { text:'\u26A0\uFE0F state.json recovery (self-heal)', hot:true }
+      ]},
+      { n:'\u2705 Verify Queue', c:2, items:[
+        { text:'sap-billing-sync \u2014 re-test queued', hot:false },
+        { text:'kusto-timeout-handler \u2014 re-test queued', hot:false }
+      ]}
+    ]
+  }
+};
+
+/* ══════════════════════════════════════════════════════════════════
+   DOM HELPERS
+   ══════════════════════════════════════════════════════════════════ */
+const $ = function(id) { return document.getElementById(id); };
+
+/* ══════════════════════════════════════════════════════════════════
+   RENDER
+   ══════════════════════════════════════════════════════════════════ */
+function render(scene) {
+  var d = DATA[scene];
+
+  /* Header */
+  var hdr = $('hdr');
+  if (d.running) hdr.classList.add('running');
+  else hdr.classList.remove('running');
+
+  if (d.borderGlow) {
+    hdr.style.setProperty('--border-glow-a', d.borderGlow[0]);
+    hdr.style.setProperty('--border-glow-b', d.borderGlow[1]);
+  } else {
+    hdr.style.removeProperty('--border-glow-a');
+    hdr.style.removeProperty('--border-glow-b');
+  }
+
+  $('hdrCycle').innerHTML = 'Cycle ' + d.cycle + '<span class="dim">/' + d.total + '</span>';
+
+  var chip = $('hdrChip');
+  chip.className = 'stage-chip ' + d.chip.cls;
+  $('hdrChipIcon').textContent = d.chip.icon;
+  $('hdrChipText').textContent = d.chip.text;
+
+  $('hdrTimer').textContent = d.timer;
+
+  var dot = $('hdrDot');
+  dot.className = 'status-dot ' + (d.running ? 'on' : 'idle');
+  var word = $('hdrWord');
+  word.textContent = d.running ? 'RUNNING' : 'IDLE';
+  word.className = 'status-word ' + (d.running ? 'on' : 'idle');
+
+  var btn = $('hdrBtn');
+  btn.textContent = d.btn.text;
+  btn.className = 'btn-ctrl ' + d.btn.cls;
+
+  /* Pipeline */
+  var stageIds = ['scan','gen','test','fix','verify'];
+  var stageEls = stageIds.map(function(id) { return $('ps-' + id); });
+  var statusEls = stageIds.map(function(id) { return $('px-' + id); });
+  d.stages.forEach(function(st, i) {
+    stageEls[i].className = 'p-stage ' + st;
+    if (st === 'done')            statusEls[i].innerHTML = '\u2705 done';
+    else if (st === 'active')     statusEls[i].innerHTML = '<span class="mini-spin"></span> running';
+    else if (st === 'active-fix') statusEls[i].innerHTML = '<span class="mini-spin amber"></span> running';
+    else                          statusEls[i].innerHTML = '\u23F3 pending';
+  });
+  d.conns.forEach(function(c, i) {
+    $('pc-' + (i + 1)).className = 'p-conn ' + c;
+  });
+
+  /* Reasoning */
+  var r = d.reason;
+  $('reasonSum').textContent = r.summary;
+
+  var healBanner = $('healBanner');
+  if (r.heal) healBanner.classList.remove('hidden');
+  else healBanner.classList.add('hidden');
+
+  var stepsEl = $('reasonSteps');
+  if (r.steps.length) {
+    stepsEl.innerHTML = r.steps.map(function(s) {
+      return '<div class="r-step' + (s.dim ? ' dim' : '') + '">' +
+        '<span class="r-icon">' + s.icon + '</span>' +
+        '<div class="r-body">' +
+          '<div class="r-name">' + s.name + '</div>' +
+          '<div class="r-text">' + s.text + '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  } else {
+    stepsEl.innerHTML = '<div style="padding:10px 14px;color:var(--text-tertiary);font-size:13px;font-style:italic;">No reasoning steps \u2014 supervisor is idle.</div>';
+  }
+
+  var body = $('reasonBody');
+  var chev = $('reasonChev');
+  if (r.expanded) {
+    body.classList.add('open');
+    chev.classList.add('open');
+  } else {
+    body.classList.remove('open');
+    chev.classList.remove('open');
+  }
+
+  /* Stats */
+  $('sTp').textContent = d.totalStats[0];
+  $('sTf').textContent = d.totalStats[1];
+  $('sTx').textContent = d.totalStats[2];
+  $('sTs').textContent = d.totalStats[3];
+  $('sCp').textContent = d.cycStats[0];
+  $('sCf').textContent = d.cycStats[1];
+  $('sCx').textContent = d.cycStats[2];
+  $('sCs').textContent = d.cycStats[3];
+
+  /* Activity */
+  var sl = $('streamList');
+  sl.innerHTML = d.events.map(function(e) {
+    return '<div class="ev">' +
+      '<span class="ev-time">' + e.t + '</span>' +
+      '<span class="ev-icon">' + e.i + '</span>' +
+      '<span class="ev-text">' + e.m + '</span>' +
+      (e.b ? '<span class="ev-badge b-' + e.b + '">' + e.b + '</span>' : '') +
+    '</div>';
+  }).join('');
+
+  /* Queues */
+  var ql = $('queueList');
+  ql.innerHTML = d.queues.map(function(q) {
+    var itemsHtml = q.items.length
+      ? q.items.map(function(it) {
+          return '<div class="q-item' + (it.hot ? ' hot' : '') + '">' + it.text + '</div>';
+        }).join('')
+      : '<div class="q-empty">Empty</div>';
+    return '<div class="q-section">' +
+      '<div class="q-head" onclick="this.nextElementSibling.classList.toggle(\'hidden\')">' +
+        '<span class="q-name">' + q.n + '</span>' +
+        '<span class="q-count">' + q.c + '</span>' +
+      '</div>' +
+      '<div class="q-items' + (q.items.length === 0 ? ' hidden' : '') + '">' +
+        itemsHtml +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   REASONING TOGGLE
+   ══════════════════════════════════════════════════════════════════ */
+$('reasonToggle').addEventListener('click', function() {
+  $('reasonBody').classList.toggle('open');
+  $('reasonChev').classList.toggle('open');
+});
+
+/* ══════════════════════════════════════════════════════════════════
+   TAB SWITCHING
+   ══════════════════════════════════════════════════════════════════ */
+document.querySelectorAll('.tab-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('on'); });
+    btn.classList.add('on');
+
+    var tab = btn.getAttribute('data-tab');
+    var tabBody = $('tabBody');
+
+    if (tab === 'overview') {
+      tabBody.innerHTML =
+        '<div class="two-col" id="overviewPane">' +
+          '<div>' +
+            '<div class="sec-title">Activity Stream</div>' +
+            '<div class="stream" id="streamList"></div>' +
+          '</div>' +
+          '<div>' +
+            '<div class="sec-title">Queues</div>' +
+            '<div id="queueList"></div>' +
+          '</div>' +
+        '</div>';
+      /* re-render current scene data */
+      var activeBtn = document.querySelector('.scene-btn.active');
+      if (activeBtn) render(activeBtn.getAttribute('data-s'));
+    } else {
+      var icons = { discoveries:'\uD83D\uDD2C', trends:'\uD83D\uDCC8', evolution:'\uD83E\uDDEC' };
+      tabBody.innerHTML =
+        '<div class="tab-placeholder">' +
+          '<span class="ph-icon">' + (icons[tab] || '\uD83D\uDCCA') + '</span>' +
+          '<span class="ph-text">' + tab.toUpperCase() + ' \u2014 Coming Soon</span>' +
+        '</div>';
+    }
+  });
+});
+
+/* ══════════════════════════════════════════════════════════════════
+   SCENE SWITCHING
+   ══════════════════════════════════════════════════════════════════ */
+function setScene(name) {
+  document.querySelectorAll('.scene-btn').forEach(function(b) { b.classList.remove('active'); });
+  document.querySelector('.scene-btn[data-s="' + name + '"]').classList.add('active');
+
+  /* reset tab to Overview */
+  document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('on'); });
+  document.querySelector('.tab-btn[data-tab="overview"]').classList.add('on');
+  $('tabBody').innerHTML =
+    '<div class="two-col" id="overviewPane">' +
+      '<div>' +
+        '<div class="sec-title">Activity Stream</div>' +
+        '<div class="stream" id="streamList"></div>' +
+      '</div>' +
+      '<div>' +
+        '<div class="sec-title">Queues</div>' +
+        '<div id="queueList"></div>' +
+      '</div>' +
+    '</div>';
+
+  render(name);
+}
+
+document.querySelectorAll('.scene-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    setScene(btn.getAttribute('data-s'));
+  });
+});
+
+/* ══════════════════════════════════════════════════════════════════
+   INIT
+   ══════════════════════════════════════════════════════════════════ */
+function toggleTheme() {
+  var html = document.documentElement;
+  var btn = document.getElementById('themeToggle');
+  if (html.getAttribute('data-theme') === 'dark') {
+    html.setAttribute('data-theme', 'light');
+    btn.textContent = '🌙 Dark';
+  } else {
+    html.setAttribute('data-theme', 'dark');
+    btn.textContent = '☀️ Light';
+  }
+}
+
+setScene('idle');
+</script>
+</body>
+</html>

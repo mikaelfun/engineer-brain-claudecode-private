@@ -1,0 +1,12 @@
+{
+  "id": "ISS-196",
+  "title": "WebUI Agents 页面增加 Cron Job 创建/删除/状态查看功能",
+  "description": "在 WebUI 的 Agents 页面为 Cron Job（Remote Triggers）增加完整的管理功能：\n\n1. **创建 Cron Job** — 用户可以通过 UI 表单创建定时任务（选择 prompt/slash command + cron 表达式），例如 \"每 3 小时增量同步已导出的 OneNote notebook\"\n2. **删除 Cron Job** — 对已有的 cron job 支持删除操作\n3. **执行状态查看** — 展示每个 cron job 的最近执行时间、执行结果（成功/失败）、下次执行时间等状态信息\n\n当前 Agents 页面只展示了 session 列表，缺少对 scheduled/recurring task 的管理入口。这个功能可以让用户通过 WebUI 管理后台定时任务，比如定期同步 OneNote、定期巡检等，而不需要在 CLI 中手动设置。\n\n技术方向：可以基于 Claude Code 的 RemoteTrigger API（/v1/code/triggers）或本地 CronCreate/CronDelete 机制实现。",
+  "type": "feature",
+  "priority": "P1",
+  "status": "tracked",
+  "trackId": "cron-management_20260401",
+  "testLoopScan": true,
+  "createdAt": "2026-04-01T10:30:00.000Z",
+  "updatedAt": "2026-04-01T10:30:00.000Z"
+}

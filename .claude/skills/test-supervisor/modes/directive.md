@@ -1,6 +1,6 @@
 ## Mode 5: `directive <type> [payload]`
 
-**下达指令**。写入 `tests/directives.json` 供 test-loop 的 Step 0.5 处理。
+**下达指令**。写入 `tests/directives.json` 供 stage-worker 的 Step 0.5 处理。
 
 ### 快捷语法
 
@@ -85,7 +85,7 @@
    ```
    ✅ Directive {id} created: {type}
    📋 Payload: {JSON payload}
-   ⏳ Status: pending — will be processed in next test-loop cycle
+   ⏳ Status: pending — will be processed in next stage-worker cycle
    ```
 
 ### 用 node 原子写入

@@ -1,0 +1,76 @@
+{
+  "product": "AKS",
+  "templateName": "AKS SEV3 CSS (CRI)",
+  "templateUrl": "https://portal.microsofticm.com/imp/v3/incidents/create?tmpl=m2X2TY",
+  "eeeProcess": "EEE AKS team queue, 24-72 business hours. Email azcomputeeee@microsoft.com for prioritization.",
+  "eeeWikiUrl": "https://supportability.visualstudio.com/AzureContainers/_wiki/wikis/Containers%20Wiki/1281160/EEE-AKS-CRIs-process-and-expectations-for-CSS-delivery",
+
+  "titleFormat": "[Mooncake] | CRI-AKS | <description> | <case number> |",
+
+  "fixedFields": {
+    "environment": "PROD",
+    "cloudInstance": "China/Gallatin",
+    "impactedServices": "Azure Kubernetes Service",
+    "teamRequesting": "CSS APAC",
+    "keywords": "#CRI-AKS; #Status:Emerging; #ProblemName:Unassigned; #ProblemType:Unassigned; #RegionalLead:Unassign"
+  },
+
+  "descriptionTable": [
+    { "key": "rlReviewer",       "label": "RL reviewer alias",                                                      "default": "binglin" },
+    { "key": "subscriptionId",   "label": "SubscriptionId",                                                         "source": "case-info" },
+    { "key": "clusterFqdn",      "label": "Cluster FQDN:",                                                          "source": "manual", "optional": true },
+    { "key": "clusterId",        "label": "ClusterID/CCP namespace",                                                "source": "analysis" },
+    { "key": "clusterArmId",     "label": "Cluster ARM_ID",                                                         "source": "manual", "optional": true },
+    { "key": "sev2Confirm",      "label": "[SEV2 only] Confirmed customer will be available while it remains SEV2?", "default": "N/A" },
+    { "key": "businessImpact",   "label": "Business Impact** (# users impacted and/or explanation of impact)",       "source": "llm-generate" },
+    { "key": "ask",              "label": "Ask: Mitigation, RCA, Mitigation+RCA, Other (specify)",                   "source": "llm-generate" },
+    { "key": "entitlement",      "label": "Entitlement: RR, PRE, PRO",                                              "source": "manual", "optional": true },
+    { "key": "tamAlias",         "label": "TAM alias:",                                                              "source": "manual", "optional": true },
+    { "key": "companyName",      "label": "Company Name (from customer email or case details)",                      "source": "case-info" },
+    { "key": "customerVerbatim", "label": "Customer verbatim from case",                                             "source": "llm-generate" },
+    { "key": "caseOwnerDesc",    "label": "Case owner's description of issue",                                       "source": "llm-generate" },
+    { "key": "frequency",        "label": "Frequency: Always Repros, Intermittent (specify pattern), Happened Once", "source": "llm-generate" },
+    { "key": "utcTime",          "label": "UTC time of most recent occurrence (preferred format: 2018-01-02T03:04:05Z)", "source": "analysis" },
+    { "key": "didThisWork",      "label": "Did this ever work: UTC time when it last worked, or Never Worked",       "source": "llm-generate" },
+    { "key": "reproSteps",       "label": "Repro Steps",                                                            "source": "llm-generate" },
+    { "key": "internalRepro",    "label": "Internal repro attempted: Yes/No (if No, why not - time, complexity, lack access)", "source": "llm-generate" },
+    { "key": "customerDataLoc",  "label": "Customer data location: Case share, attached to ICM, Not Applicable, or Other (specify)", "default": "attached to ICM" },
+    { "key": "troubleshooting",  "label": "Troubleshooting Performed (kusto/geneva links)",                          "source": "llm-generate", "richText": true }
+  ],
+
+  "inputFields": [
+    { "ariaLabel": "Title",             "source": "titleFormat" },
+    { "ariaLabel": "Support Ticket Id", "source": "case-info",  "field": "caseNumber" },
+    { "ariaLabel": "Subscription Id",   "source": "case-info",  "field": "subscriptionId" },
+    { "ariaLabel": "Customer Name",     "source": "case-info",  "field": "companyName" },
+    { "ariaLabel": "TA Approver",       "source": "manual",     "optional": true }
+  ],
+
+  "radioFields": [
+    { "ariaLabelPattern": "Severity of the incident {value}",       "source": "manual", "default": "3" },
+    { "ariaLabelPattern": "Customer/SLA Impact SHELL.OPTION.{YES|NO}", "source": "manual", "default": "NO" }
+  ],
+
+  "selectFields": [
+    { "ariaLabel": "Impacted Regions Type for search or click for select", "source": "analysis", "field": "region", "type": "select2" }
+  ],
+
+  "kustoHighlight": {
+    "keyword": "#0000ff",
+    "function": "#8b008b",
+    "string": "#a31515",
+    "operator": "#808080",
+    "codeBlockStyle": "font-size:11px;font-family:Consolas,monospace;background:#f5f5f5;padding:4px 6px;display:block;border:1px solid #ddd;white-space:pre-wrap;"
+  },
+
+  "browserNotes": [
+    "Description rich text editor is inside iframe.k-content (Kendo Editor)",
+    "Description table: iframe > table > tr > td (20 rows, 2 columns per row)",
+    "Regular cells: click cell → selectAll → keyboard.type (triggers Angular binding)",
+    "Troubleshooting cell (richText:true): use innerHTML (supports HTML tables, code blocks, syntax highlighting)",
+    "Impacted Regions: select2 multi-select — click container .select2-choices → type search → click result",
+    "Severity: radio buttons with aria-label 'Severity of the incident {n}'",
+    "SLA Impact: radio with aria-label 'Customer/SLA Impact SHELL.OPTION.{YES|NO}'",
+    "Leave site dialog: browser_handle_dialog accept:true when navigating away from filled form"
+  ]
+}

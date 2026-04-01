@@ -1,0 +1,16 @@
+{
+  "id": "sdk-agents-fix_20260401",
+  "title": "SDK Session 加载自定义 Agent 定义",
+  "type": "bug",
+  "status": "complete",
+  "created": "2026-04-01T12:50:00+08:00",
+  "updated": "2026-04-01T15:13:00+08:00",
+  "phases": {
+    "total": 2,
+    "completed": 2
+  },
+  "tasks": {
+    "total": 3,
+    "completed": 3
+  }
+}

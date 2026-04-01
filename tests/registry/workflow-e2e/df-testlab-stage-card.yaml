@@ -1,0 +1,39 @@
+id: "df-testlab-stage-card"
+name: "Design Fidelity: TestLab Stage Card 含大图标(36px)+状态指示器+发光动画"
+category: "workflow-e2e"
+source: "design-fidelity"
+description: "验证 TestLab.tsx 实现 Stage card 包含 36px 大图标、阶段名称、状态指示器，活跃阶段有 stage-glow 动画"
+safety_level: "safe"
+priority: "high"
+recipe_used: "design-fidelity-test.md"
+tags: ["design-fidelity", "testlab-ui-polish", "stage-card"]
+
+steps:
+  - action: "bash_command"
+    params:
+      command: "grep -c \"36px\\|w-9\\|h-9\\|text-3xl\" dashboard/web/src/pages/TestLab.tsx"
+    safety_check: "scripts.safe[compliance-check]"
+  - action: "bash_command"
+    params:
+      command: "grep -c \"stage-glow\\|@keyframes stage-glow\" dashboard/web/src/pages/TestLab.tsx"
+    safety_check: "scripts.safe[compliance-check]"
+  - action: "bash_command"
+    params:
+      command: "grep -c \"glow.*color\\|--glow-color\" dashboard/web/src/pages/TestLab.tsx"
+    safety_check: "scripts.safe[compliance-check]"
+
+assertions:
+  - type: "text_gt"
+    target: "step1_output"
+    expected: "0"
+    description: "Stage card must have 36px icon (w-9/h-9 or explicit 36px)"
+  - type: "text_gt"
+    target: "step2_output"
+    expected: "0"
+    description: "stage-glow keyframe animation must be defined"
+  - type: "text_gt"
+    target: "step3_output"
+    expected: "0"
+    description: "Active stage glow color CSS variables must be set"
+
+timeout_seconds: 30

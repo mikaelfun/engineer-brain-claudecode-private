@@ -40,30 +40,30 @@ last_modified: 2026-01-14
 
 | 表名 | 用途 | 文档 |
 |------|------|------|
-| traces | 警报处理跟踪日志（含 Metric Alerts 触发记录） | [📄](./references/tables/traces-alerts.md) |
-| requests | 请求日志 | [📄](./references/tables/requests.md) |
-| exceptions | 异常日志 | [📄](./references/tables/exceptions.md) |
-| customEvents | 自定义事件 | [📄](./references/tables/customEvents.md) |
-| customMetrics | 自定义指标 | [📄](./references/tables/customMetrics.md) |
-| dependencies | 依赖项调用日志 | [📄](./references/tables/dependencies.md) |
-| AmpSliLogs | 警报管理平台 SLI 日志 | [📄](./references/tables/AmpSliLogs.md) |
-| TraceTelemetry | 跟踪遥测（警报处理详情） | [📄](./references/tables/TraceTelemetry.md) |
-| ServiceFabricOperationalEvent | Service Fabric 操作事件 | [📄](./references/tables/ServiceFabricOperationalEvent.md) |
+| traces | 警报处理跟踪日志（含 Metric Alerts 触发记录） | [📄](./references/tables/AzureAlertsManagement/traces-alerts.md) |
+| requests | 请求日志 | [📄](./references/tables/AzureAlertsManagement/requests.md) |
+| exceptions | 异常日志 | [📄](./references/tables/AzureAlertsManagement/exceptions.md) |
+| customEvents | 自定义事件 | [📄](./references/tables/AzureAlertsManagement/customEvents.md) |
+| customMetrics | 自定义指标 | [📄](./references/tables/AzureAlertsManagement/customMetrics.md) |
+| dependencies | 依赖项调用日志 | [📄](./references/tables/AzureAlertsManagement/dependencies.md) |
+| AmpSliLogs | 警报管理平台 SLI 日志 | [📄](./references/tables/AzureAlertsManagement/AmpSliLogs.md) |
+| TraceTelemetry | 跟踪遥测（警报处理详情） | [📄](./references/tables/AzureAlertsManagement/TraceTelemetry.md) |
+| ServiceFabricOperationalEvent | Service Fabric 操作事件 | [📄](./references/tables/AzureAlertsManagement/ServiceFabricOperationalEvent.md) |
 
 ### LogSearchRule 数据库 (日志搜索规则)
 
 | 表名 | 用途 | 文档 |
 |------|------|------|
-| traces | 日志搜索规则执行跟踪 | [📄](./references/tables/traces-logsearchrule.md) |
-| LogSearchRuleSliLogs | 日志搜索规则 SLI 日志 | [📄](./references/tables/LogSearchRuleSliLogs.md) |
+| traces | 日志搜索规则执行跟踪 | [📄](./references/tables/LogSearchRule/traces-logsearchrule.md) |
+| LogSearchRuleSliLogs | 日志搜索规则 SLI 日志 | [📄](./references/tables/LogSearchRule/LogSearchRuleSliLogs.md) |
 
 ### azureinsightsmc 数据库 (Azure Insights)
 
 | 表名 | 用途 | 文档 |
 |------|------|------|
-| Traces | Azure Insights 跟踪日志 | [📄](./references/tables/Traces-insights.md) |
-| ItemizedQosEvent | 诊断设置 QoS 事件 | [📄](./references/tables/ItemizedQosEvent.md) |
-| ActivityLogAlertsSliLogs | 活动日志警报 SLI 日志 | [📄](./references/tables/ActivityLogAlertsSliLogs.md) |
+| Traces | Azure Insights 跟踪日志 | [📄](./references/tables/azureinsightsmc/Traces-insights.md) |
+| ItemizedQosEvent | 诊断设置 QoS 事件 | [📄](./references/tables/azureinsightsmc/ItemizedQosEvent.md) |
+| ActivityLogAlertsSliLogs | 活动日志警报 SLI 日志 | [📄](./references/tables/azureinsightsmc/ActivityLogAlertsSliLogs.md) |
 
 详细表定义见: [tables/](./references/tables/)
 

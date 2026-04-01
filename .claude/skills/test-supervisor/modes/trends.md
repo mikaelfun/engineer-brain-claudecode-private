@@ -8,7 +8,7 @@
    ```bash
    ls tests/results/cycle-*-summary.json 2>/dev/null | sort -V
    ```
-2. 如果没有 summary 文件 → 输出 "No cycle summaries yet. Run test-loop first." → 返回
+2. 如果没有 summary 文件 → 输出 "No cycle summaries yet. Run stage-worker first." → 返回
 3. 用 node 读取所有 summary 并汇总：
    ```bash
    SUMMARIES=$(NODE_PATH="$DASHBOARD_DIR/node_modules" node -e "

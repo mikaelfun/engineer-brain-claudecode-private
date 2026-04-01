@@ -385,6 +385,39 @@ function Get-FrontmatterModified {
     return $null
 }
 
+function Get-FrontmatterContentHash {
+    param([string]$filePath)
+    # Read the first 10 lines to extract "content_hash:" value from YAML frontmatter
+    if (-not (Test-Path -LiteralPath $filePath)) { return $null }
+    try {
+        $lines = @(Get-Content -LiteralPath $filePath -TotalCount 10 -ErrorAction Stop)
+        $inFrontmatter = $false
+        foreach ($line in $lines) {
+            if ($line -eq '---' -and -not $inFrontmatter) {
+                $inFrontmatter = $true
+                continue
+            }
+            if ($line -eq '---' -and $inFrontmatter) {
+                break
+            }
+            if ($inFrontmatter -and $line -match '^\s*content_hash:\s*(.+)$') {
+                return $matches[1].Trim()
+            }
+        }
+    } catch {}
+    return $null
+}
+
+function Get-ContentHash {
+    param([string]$content)
+    # Compute MD5 hash of content string
+    $md5 = [System.Security.Cryptography.MD5]::Create()
+    $bytes = [System.Text.Encoding]::UTF8.GetBytes($content)
+    $hashBytes = $md5.ComputeHash($bytes)
+    $md5.Dispose()
+    return ($hashBytes | ForEach-Object { $_.ToString("x2") }) -join ""
+}
+
 function List-AvailableNotebooks {
     param($xdoc, $ns)
     Write-Host ""
@@ -604,7 +637,8 @@ $allPages = $script:allPages
 # Apply filters
 if ($SectionPath) {
     $filterPath = $SectionPath -replace '/', '\'
-    $allPages = @($allPages | Where-Object { $_.Path -like "*$filterPath*" })
+    # Use .Contains() instead of -like to avoid [] being treated as wildcard char classes
+    $allPages = @($allPages | Where-Object { $_.Path.IndexOf($filterPath, [StringComparison]::OrdinalIgnoreCase) -ge 0 })
     Write-Host "Filter by section: $SectionPath -> $($allPages.Count) pages" -ForegroundColor Yellow
 }
 if ($PageName) {
@@ -754,12 +788,33 @@ for ($i = 0; $i -lt $allPages.Count; $i++) {
 
         $markdown = Convert-OneNoteXmlToMarkdown $pageDoc $page.Name $imgDir $imgRelPath
 
-        # Add frontmatter
+        # --- Content hash check: avoid false incremental when timestamp drifts ---
+        $newContentHash = Get-ContentHash $markdown
+        if (-not $Force -and (Test-Path -LiteralPath $outFile)) {
+            $localContentHash = Get-FrontmatterContentHash $outFile
+            if ($localContentHash -and $localContentHash -eq $newContentHash) {
+                # Content identical — only update frontmatter timestamps, skip full rewrite
+                try {
+                    $existingContent = [System.IO.File]::ReadAllText($outFile, [System.Text.Encoding]::UTF8)
+                    # Replace modified: line in frontmatter
+                    $updatedContent = $existingContent -replace '(?m)^modified:\s*.+$', "modified: $modified"
+                    [System.IO.File]::WriteAllText($outFile, $updatedContent, [System.Text.Encoding]::UTF8)
+                    Write-Host " UPDATE (timestamp only)" -ForegroundColor DarkCyan
+                    $skipCount++
+                    continue
+                } catch {
+                    # Fall through to full rewrite on error
+                }
+            }
+        }
+
+        # Add frontmatter (with content_hash)
         $frontmatter = @"
 ---
 title: "$($page.Name)"
 created: $created
 modified: $modified
+content_hash: $newContentHash
 source: OneNote
 ---
 

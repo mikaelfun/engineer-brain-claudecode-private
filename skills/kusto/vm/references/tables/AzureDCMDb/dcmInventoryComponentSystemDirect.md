@@ -1,6 +1,6 @@
 ---
 name: dcmInventoryComponentSystemDirect
-database: AzureDcmDb
+database: AzureDCMDb
 cluster: https://azuredcmmc.kusto.chinacloudapi.cn
 description: DCM 系统组件清单表，记录节点系统级硬件信息（BIOS、主板、处理器、内存等）
 status: active

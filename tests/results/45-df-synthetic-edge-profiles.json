@@ -1,0 +1,9 @@
+{
+  "testId": "df-synthetic-edge-profiles",
+  "round": 45,
+  "timestamp": "2026-03-31T23:05:37.000Z",
+  "status": "pass",
+  "assertions": [{"name":"edge-corrupted-meta profile defined","pass":true,"expected":"PASS: edge-corrupted-meta defined","actual":"found"},{"name":"edge-no-entitlement profile defined","pass":true,"expected":"PASS: edge-no-entitlement defined","actual":"found"}],
+  "error": null,
+  "duration_ms": 57523
+}

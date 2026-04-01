@@ -1,0 +1,12 @@
+{
+  "id": "ISS-200",
+  "title": "WebUI casework SDK session 无法加载自定义 subagent type，回退为 general-purpose",
+  "description": "通过 Dashboard WebUI 触发 casework full-process 时，Claude Code SDK session 无法识别 `.claude/agents/*.md` 中定义的自定义 subagent type（如 `teams-search`、`onenote-case-search`），导致 spawn agent 时回退为 `general-purpose`。\n\n**复现步骤：**\n1. Dashboard WebUI → Case → Process → full-process\n2. casework 执行到 B2 步骤，尝试 spawn `teams-search` 和 `onenote-case-search`\n3. Agent 报错：agent types not available，自动回退为 general-purpose\n\n**日志证据：**\n```\nThinking\nfull-process\n03:00:21 PM\nThe agent types `teams-search` and `onenote-case-search` are not available. I need to use `general-purpose` agent instead.\n```\n\n**根因分析：**\n`.claude/agents/*.md` 的自定义 agent 定义在 CLI 会话启动时加载。但 SDK session（通过 `@anthropic-ai/claude-code` 的 `query()` API 创建）可能不走同样的 agent 加载路径，导致自定义 subagent_type 未注册。\n\n**影响：**\n- general-purpose agent 没有专用 MCP server 配置（如 teams-search 需要 teams MCP）\n- 回退 agent 缺少专用 prompt 和工具集，执行质量下降\n- CLI 直接调用 `/casework` 不受影响（agent 定义正常加载）",
+  "type": "bug",
+  "priority": "P1",
+  "status": "tracked",
+  "testLoopScan": true,
+  "trackId": "sdk-agents-fix_20260401",
+  "createdAt": "2026-04-01T12:45:00+08:00",
+  "updatedAt": "2026-04-01T12:45:00+08:00"
+}

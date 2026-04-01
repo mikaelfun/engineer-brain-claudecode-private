@@ -1,6 +1,6 @@
 ---
 name: dcmInventoryComponentDiskDirect
-database: AzureDcmDb
+database: AzureDCMDb
 cluster: https://azuredcmmc.kusto.chinacloudapi.cn
 description: 主机磁盘硬件库存信息，包含序列号、产品 ID、固件版本等
 status: active

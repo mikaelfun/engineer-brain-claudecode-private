@@ -110,6 +110,7 @@ async function runnerLoop(ac: AbortController) {
         writeDirectives(filtered)
       }
 
+      const runStartedAt = Date.now()
       runnerState.status = 'running'
       runnerState.sessionId = null
       runnerState.nextRunAt = null
@@ -127,15 +128,22 @@ async function runnerLoop(ac: AbortController) {
       // Check if aborted during the run
       if (ac.signal.aborted) break
 
-      // Wait for interval before next run
-      const waitMs = runnerState.intervalMinutes * 60 * 1000
-      runnerState.status = 'waiting'
-      runnerState.nextRunAt = new Date(Date.now() + waitMs).toISOString()
-      broadcastRunnerStatus()
+      // Wait for remaining interval (measured from run START, not end)
+      const intervalMs = runnerState.intervalMinutes * 60 * 1000
+      const elapsed = Date.now() - runStartedAt
+      const remainingMs = Math.max(0, intervalMs - elapsed)
 
-      console.log(`[test-runner] Loop: waiting ${runnerState.intervalMinutes}m before next run...`)
-      const sleptFully = await sleepWithAbort(waitMs, ac)
-      if (!sleptFully) break
+      if (remainingMs > 0) {
+        runnerState.status = 'waiting'
+        runnerState.nextRunAt = new Date(Date.now() + remainingMs).toISOString()
+        broadcastRunnerStatus()
+
+        console.log(`[test-runner] Loop: run took ${Math.round(elapsed/1000)}s, waiting ${Math.round(remainingMs/1000)}s before next run`)
+        const sleptFully = await sleepWithAbort(remainingMs, ac)
+        if (!sleptFully) break
+      } else {
+        console.log(`[test-runner] Loop: run took ${Math.round(elapsed/1000)}s (>= interval ${runnerState.intervalMinutes}m), starting next immediately`)
+      }
     }
 
     // Normal completion
@@ -221,10 +229,14 @@ testRunnerRoutes.post('/start', async (c) => {
 
 // POST /stop — Inject pause directive (safe stop)
 testRunnerRoutes.post('/stop', async (c) => {
-  // Handle external CLI run: memory says idle but supervisor.json says running
+  // Handle external CLI run: memory says idle but files say running
   if (runnerState.status === 'idle') {
     const supervisor = readSupervisor()
-    if (supervisor && ACTIVE_SUPERVISOR_STATUSES.has(supervisor.status)) {
+    const pipeline = readPipeline()
+    const isSupActive = supervisor && ACTIVE_SUPERVISOR_STATUSES.has(supervisor.status)
+    const isPipeActive = pipeline?.pipelineStatus === 'running'
+
+    if (isSupActive || isPipeActive) {
       // External run detected — inject pause directive for CLI supervisor to pick up
       const directives = readDirectives()
       directives.push({
@@ -281,17 +293,22 @@ testRunnerRoutes.get('/status', (c) => {
   const pipeline = readPipeline()
   const state = !pipeline ? readTestState() : null
 
-  // Detect external CLI run: memory says idle but supervisor.json says running
+  // Detect external CLI run: memory says idle but files say running
+  // Check both supervisor.json AND pipeline.json — CLI supervisor may not
+  // update supervisor.json status, but stage-worker always updates pipeline.json
   let effectiveStatus: string = runnerState.status
   let source: string | null = null
   let supervisorStatus: string | null = null
 
   if (runnerState.status === 'idle') {
     const supervisor = readSupervisor()
-    if (supervisor && ACTIVE_SUPERVISOR_STATUSES.has(supervisor.status)) {
+    const isSupActive = supervisor && ACTIVE_SUPERVISOR_STATUSES.has(supervisor.status)
+    const isPipeActive = pipeline?.pipelineStatus === 'running'
+
+    if (isSupActive || isPipeActive) {
       effectiveStatus = 'external'
       source = 'cli'
-      supervisorStatus = supervisor.status
+      supervisorStatus = isSupActive ? supervisor!.status : (pipeline?.currentStage || 'running')
     }
   }
 

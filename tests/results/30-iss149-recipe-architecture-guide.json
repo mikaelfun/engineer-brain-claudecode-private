@@ -1,0 +1,9 @@
+{
+  "testId": "iss149-recipe-architecture-guide",
+  "round": 30,
+  "timestamp": "2026-03-30T17:44:01.000Z",
+  "status": "pass",
+  "assertions": [{"name":"File exists: recipe-architecture.md","pass":true,"expected":"exists","actual":"exists"},{"name":"File exists: _index.md","pass":true,"expected":"exists","actual":"exists"},{"name":"JSON field: status = tracked","pass":true,"expected":"tracked","actual":"\"tracked\""}],
+  "error": null,
+  "duration_ms": 55448
+}

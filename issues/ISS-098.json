@@ -7,5 +7,7 @@
   "status": "done",
   "mergedInto": "ISS-097",
   "createdAt": "2026-03-23T09:19:20.223Z",
-  "updatedAt": "2026-03-29T10:00:00.000Z"
+  "updatedAt": "2026-03-29T10:00:00.000Z",
+  "closedReason": "stale-audit: absorbed by later work or test-auto residue",
+  "closedAt": "2026-03-30T23:25:00+08:00"
 }

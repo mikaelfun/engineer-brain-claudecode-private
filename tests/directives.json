@@ -1,43 +1,81 @@
-{
-  "version": 1,
-  "paused": false,
-  "directives": [
-    {
-      "id": "dir-001",
-      "type": "skip_test",
-      "status": "processed",
-      "payload": {
-        "testId": "fast-path",
-        "reason": "poll_for_completion completion detection mismatch — casework finishes in 30s but poll times out. Need separate investigation of /api/case/:id/operation response."
-      },
-      "createdAt": "2026-03-28T12:19:39.730Z",
-      "processedAt": "2026-03-28T12:42:00.000Z",
-      "processedResult": "not in queue — fast-path already PASSED 5/5 and removed from fixQueue"
+[
+  {
+    "id": "dir-001",
+    "type": "skip_test",
+    "status": "processed",
+    "payload": {
+      "testId": "fast-path",
+      "reason": "poll_for_completion completion detection mismatch — casework finishes in 30s but poll times out. Need separate investigation of /api/case/:id/operation response."
     },
-    {
-      "id": "dir-002",
-      "type": "skip_test",
-      "status": "processed",
-      "payload": {
-        "testId": "state-routing",
-        "reason": "Same poll_for_completion issue — casework completes but poll never detects completion, times out at 1200s."
-      },
-      "createdAt": "2026-03-28T12:19:39.730Z",
-      "processedAt": "2026-03-28T12:42:00.000Z",
-      "processedResult": "removed from fixQueue (retryCount=2), stats.skipped++"
+    "createdAt": "2026-03-28T12:19:39.730Z",
+    "processedAt": "2026-03-28T12:42:00.000Z",
+    "processedResult": "not in queue — fast-path already PASSED 5/5 and removed from fixQueue"
+  },
+  {
+    "id": "dir-002",
+    "type": "skip_test",
+    "status": "processed",
+    "payload": {
+      "testId": "state-routing",
+      "reason": "Same poll_for_completion issue — casework completes but poll never detects completion, times out at 1200s."
     },
-    {
-      "id": "dir-003",
-      "type": "add_requirement",
-      "status": "pending",
-      "payload": {
-        "description": "TestLab EvolutionTimeline entry.impact 可能是 object 而非 string，需要测试覆盖：验证 impact 为 string 和 object 两种情况都能正常渲染，不崩溃。文件：dashboard/web/src/pages/TestLab.tsx EvolutionTimeline 组件。",
-        "priority": "high",
-        "category": "ui-rendering"
-      },
-      "createdAt": "2026-03-30T02:06:25.514Z",
-      "processedAt": null,
-      "processedResult": null
-    }
-  ]
-}
+    "createdAt": "2026-03-28T12:19:39.730Z",
+    "processedAt": "2026-03-28T12:42:00.000Z",
+    "processedResult": "removed from fixQueue (retryCount=2), stats.skipped++"
+  },
+  {
+    "id": "dir-003",
+    "type": "add_requirement",
+    "status": "processed",
+    "payload": {
+      "description": "TestLab EvolutionTimeline entry.impact 可能是 object 而非 string，需要测试覆盖：验证 impact 为 string 和 object 两种情况都能正常渲染，不崩溃。文件：dashboard/web/src/pages/TestLab.tsx EvolutionTimeline 组件。",
+      "priority": "high",
+      "category": "ui-rendering"
+    },
+    "createdAt": "2026-03-30T02:06:25.514Z",
+    "processedAt": "2026-03-30T15:13:43.587Z",
+    "processedResult": "appended to gaps array (ui-rendering, high priority)"
+  },
+  {
+    "id": "dir-004",
+    "type": "note",
+    "status": "processed",
+    "payload": {
+      "message": "考虑给stage-worker增加日志，帮助db展示具体phase进度"
+    },
+    "createdAt": "2026-03-30T17:20:25.299Z",
+    "processedAt": "2026-03-30T17:33:23.309Z",
+    "processedResult": "acknowledged — considering log enhancements for stage-worker phase progress"
+  },
+  {
+    "type": "pause",
+    "status": "processed",
+    "createdAt": "2026-03-31T01:14:23.148Z",
+    "source": "webui-external-stop",
+    "processedAt": "2026-03-31T04:21:34.426Z",
+    "processedResult": "paused=true"
+  },
+  {
+    "type": "pause",
+    "status": "processed",
+    "createdAt": "2026-03-31T01:14:26.230Z",
+    "source": "webui-external-stop",
+    "processedAt": "2026-03-31T04:21:34.427Z",
+    "processedResult": "paused=true"
+  },
+  {
+    "id": "dir-007",
+    "type": "resume",
+    "status": "processed",
+    "payload": {},
+    "createdAt": "2026-03-31T04:26:43.177Z",
+    "processedAt": "2026-03-31T04:32:45.406Z",
+    "processedResult": "paused=false, resumed from cycle 40"
+  },
+  {
+    "type": "pause",
+    "status": "pending",
+    "createdAt": "2026-04-01T01:23:50.692Z",
+    "source": "webui-external-stop"
+  }
+]

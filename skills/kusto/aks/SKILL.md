@@ -39,30 +39,30 @@ last_modified: 2026-01-14
 
 | 表名 | 用途 | 文档 |
 |------|------|------|
-| ManagedClusterSnapshot | 集群快照和配置 | [📄](./references/tables/ManagedClusterSnapshot.md) |
-| AgentPoolSnapshot | 节点池快照 | [📄](./references/tables/AgentPoolSnapshot.md) |
-| FrontEndQoSEvents | 前端 QoS 事件 | [📄](./references/tables/FrontEndQoSEvents.md) |
-| AsyncQoSEvents | 异步操作 QoS 事件 | [📄](./references/tables/AsyncQoSEvents.md) |
-| FrontEndContextActivity | 前端上下文活动 | [📄](./references/tables/FrontEndContextActivity.md) |
-| AsyncContextActivity | 异步上下文活动 | [📄](./references/tables/AsyncContextActivity.md) |
-| IncomingRequestTrace | ARM 入站请求 | [📄](./references/tables/IncomingRequestTrace.md) |
-| OutgoingRequestTrace | CRP 出站请求 | [📄](./references/tables/OutgoingRequestTrace.md) |
-| RemediatorEvent | 补救器事件 | [📄](./references/tables/RemediatorEvent.md) |
-| AutoUpgraderEvents | 自动升级事件 | [📄](./references/tables/AutoUpgraderEvents.md) |
-| OverlaymgrEvents | Overlay 管理器事件 | [📄](./references/tables/OverlaymgrEvents.md) |
-| HelmControllerEvents | Helm Controller 事件 | [📄](./references/tables/HelmControllerEvents.md) |
-| AKSAlertmanager | AKS 告警 | [📄](./references/tables/AKSAlertmanager.md) |
-| BlackboxMonitoringActivity | ⚠️ 黑盒监控活动（已弃用） | [📄](./references/tables/BlackboxMonitoringActivity.md) |
+| ManagedClusterSnapshot | 集群快照和配置 | [📄](./references/tables/AKSprod/ManagedClusterSnapshot.md) |
+| AgentPoolSnapshot | 节点池快照 | [📄](./references/tables/AKSprod/AgentPoolSnapshot.md) |
+| FrontEndQoSEvents | 前端 QoS 事件 | [📄](./references/tables/AKSprod/FrontEndQoSEvents.md) |
+| AsyncQoSEvents | 异步操作 QoS 事件 | [📄](./references/tables/AKSprod/AsyncQoSEvents.md) |
+| FrontEndContextActivity | 前端上下文活动 | [📄](./references/tables/AKSprod/FrontEndContextActivity.md) |
+| AsyncContextActivity | 异步上下文活动 | [📄](./references/tables/AKSprod/AsyncContextActivity.md) |
+| IncomingRequestTrace | ARM 入站请求 | [📄](./references/tables/AKSprod/IncomingRequestTrace.md) |
+| OutgoingRequestTrace | CRP 出站请求 | [📄](./references/tables/AKSprod/OutgoingRequestTrace.md) |
+| RemediatorEvent | 补救器事件 | [📄](./references/tables/AKSprod/RemediatorEvent.md) |
+| AutoUpgraderEvents | 自动升级事件 | [📄](./references/tables/AKSprod/AutoUpgraderEvents.md) |
+| OverlaymgrEvents | Overlay 管理器事件 | [📄](./references/tables/AKSprod/OverlaymgrEvents.md) |
+| HelmControllerEvents | Helm Controller 事件 | [📄](./references/tables/AKSprod/HelmControllerEvents.md) |
+| AKSAlertmanager | AKS 告警 | [📄](./references/tables/AKSprod/AKSAlertmanager.md) |
+| BlackboxMonitoringActivity | ⚠️ 黑盒监控活动（已弃用） | [📄](./references/tables/AKSprod/BlackboxMonitoringActivity.md) |
 
 ### AKSccplogs 数据库
 
 | 表名 | 用途 | 文档 |
 |------|------|------|
-| ControlPlaneEvents | 控制平面组件日志 | [📄](./references/tables/ControlPlaneEvents.md) |
+| ControlPlaneEvents | 控制平面组件日志 | [📄](./references/tables/AKSccplogs/ControlPlaneEvents.md) |
 | ControlPlaneEventsNonShoebox | 控制平面日志（非 Shoebox） | - |
-| KubeAudit | Kubernetes 审计日志（推荐） | [📄](./references/tables/KubeAudit.md) |
-| AKSKubeEvents | Kubernetes 事件 | [📄](./references/tables/AKSKubeEvents.md) |
-| KubeControllerManager | Controller Manager 日志 | [📄](./references/tables/KubeControllerManager.md) |
+| KubeAudit | Kubernetes 审计日志（推荐） | [📄](./references/tables/AKSccplogs/KubeAudit.md) |
+| AKSKubeEvents | Kubernetes 事件 | [📄](./references/tables/AKSccplogs/AKSKubeEvents.md) |
+| KubeControllerManager | Controller Manager 日志 | [📄](./references/tables/AKSccplogs/KubeControllerManager.md) |
 
 详细表定义见: [tables/](./references/tables/)
 

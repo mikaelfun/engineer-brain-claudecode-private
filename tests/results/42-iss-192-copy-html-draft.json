@@ -1,0 +1,9 @@
+{
+  "testId": "iss-192-copy-html-draft",
+  "round": 42,
+  "timestamp": "2026-03-31T19:24:57.000Z",
+  "status": "pass",
+  "assertions": [{"name":"Page loads: Navigate: http://localhost:5173","pass":true,"expected":"200","actual":"200"},{"name":"API: cases data available","pass":true,"expected":"200","actual":"200"},{"name":"API: issues data available","pass":true,"expected":"200","actual":"200"}],
+  "error": null,
+  "duration_ms": 6104
+}

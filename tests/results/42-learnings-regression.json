@@ -1,0 +1,9 @@
+{
+  "testId": "learnings-regression",
+  "round": 42,
+  "timestamp": "2026-03-31T18:06:27.000Z",
+  "status": "fail",
+  "assertions": [{"name":"All learnings still valid (16 checks)","pass":false,"expected":"16/16 pass","actual":"15/16 pass"},{"name":"No regressions detected","pass":false,"expected":"0 regressions","actual":"1 regressions"}],
+  "error": null,
+  "duration_ms": 4595
+}

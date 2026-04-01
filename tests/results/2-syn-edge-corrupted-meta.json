@@ -1,0 +1,9 @@
+{
+  "testId": "syn-edge-corrupted-meta",
+  "round": 2,
+  "timestamp": "2026-03-30T11:35:15.000Z",
+  "status": "pass",
+  "assertions": [{"name":"Script exit code","pass":true,"expected":"0","actual":"0"},{"name":"File exists: case-info.md","pass":true,"expected":"exists","actual":"exists"},{"name":"File exists: casehealth-meta.json","pass":true,"expected":"exists","actual":"exists"},{"name":"Non-empty: casehealth-meta.json","pass":true,"expected":"non_empty","actual":"144 bytes"}],
+  "error": null,
+  "duration_ms": 81119
+}

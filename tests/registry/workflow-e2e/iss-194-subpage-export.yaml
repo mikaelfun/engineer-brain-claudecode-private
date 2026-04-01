@@ -1,0 +1,48 @@
+id: iss-194-subpage-export
+name: "ISS-194: OneNote Export — Sub-page Nesting Preserved in Directory Structure"
+category: workflow-e2e
+source: "issues/ISS-194.json (AC: Sub-pages included + nesting preserved in export)"
+safety_level: safe
+recipe_used: none
+issueId: ISS-194
+priority: P1
+description: >
+  Verifies that when a OneNote export link targets a page with sub-pages, all sub-pages
+  are recursively included. Level 2 sub-pages appear under level 1, level 3 under level 2.
+  When the target page has no sub-pages, behavior is unchanged. Full notebook/section
+  export is unaffected.
+
+steps:
+  - action: bash
+    params:
+      command: >
+        node skills/onenote-export/export.js
+        --page "{{test_page_with_subpages}}"
+        --output /tmp/iss194-test-export
+      description: "Run OneNote export for a page with known sub-pages"
+  - action: check_directory_structure
+    params:
+      root: "/tmp/iss194-test-export"
+      description: "Verify sub-page directory nesting"
+  - action: bash
+    params:
+      command: >
+        find /tmp/iss194-test-export -type f -name "*.md" | sort
+      description: "List all exported files"
+
+assertions:
+  - type: file_count_gte
+    path: "/tmp/iss194-test-export"
+    expected: 2
+    description: "At least 2 files exported (parent + at least 1 sub-page)"
+  - type: directory_nesting
+    depth: 2
+    description: "Sub-pages appear in subdirectory of parent page directory"
+  - type: text_contains
+    file: "/tmp/iss194-test-export/export-manifest.json"
+    expected: "subpages"
+    description: "Export manifest records sub-page inclusion"
+
+tags: [onenote, export, subpages, nesting, ISS-194]
+createdAt: "2026-04-01"
+createdByCycle: 42

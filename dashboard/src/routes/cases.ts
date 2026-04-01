@@ -291,22 +291,27 @@ cases.get('/:id/inspection', (c) => {
   if (!caseNumber) return c.json({ error: 'Invalid case number' }, 400)
   const caseDir = getCaseDir(caseNumber)
 
-  // Priority 1: case-summary.md (new format)
-  const summaryPath = join(caseDir, 'case-summary.md')
-  if (existsSync(summaryPath)) {
-    try {
-      const content = readFileSync(summaryPath, 'utf-8')
-      const mtime = statSync(summaryPath).mtimeMs
-      return c.json({
-        content,
-        filename: 'case-summary.md',
-        exists: true,
-        legacy: false,
-        updatedAt: new Date(mtime).toISOString(),
-        allFiles: ['case-summary.md'],
-      })
-    } catch {
-      // fall through to legacy
+  // Priority 1: case-summary.md (new format — check both context/ and root)
+  const summaryPaths = [
+    join(caseDir, 'context', 'case-summary.md'),
+    join(caseDir, 'case-summary.md'),
+  ]
+  for (const summaryPath of summaryPaths) {
+    if (existsSync(summaryPath)) {
+      try {
+        const content = readFileSync(summaryPath, 'utf-8')
+        const mtime = statSync(summaryPath).mtimeMs
+        return c.json({
+          content,
+          filename: 'case-summary.md',
+          exists: true,
+          legacy: false,
+          updatedAt: new Date(mtime).toISOString(),
+          allFiles: ['case-summary.md'],
+        })
+      } catch {
+        // fall through to next path or legacy
+      }
     }
   }
 
@@ -575,6 +580,45 @@ cases.get('/:id/attachments/:filename', (c) => {
       'Content-Type': contentType,
       'Content-Disposition': `${disposition}; filename="${encodeURIComponent(filename)}"`,
       'Content-Length': content.length.toString(),
+    },
+  })
+})
+
+// GET /api/cases/:id/images/:filename — serve email inline images
+cases.get('/:id/images/:filename', (c) => {
+  const caseNumber = validateCaseNumber(c)
+  if (!caseNumber) return c.json({ error: 'Invalid case number' }, 400)
+  const filename = c.req.param('filename')
+
+  if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+    return c.json({ error: 'Invalid filename' }, 400)
+  }
+
+  const caseDir = getCaseDir(caseNumber)
+  const filePath = join(caseDir, 'images', filename)
+
+  if (!existsSync(filePath)) {
+    return c.json({ error: 'Image not found' }, 404)
+  }
+
+  const ext = extname(filename).toLowerCase()
+  const mimeTypes: Record<string, string> = {
+    '.png': 'image/png',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.gif': 'image/gif',
+    '.bmp': 'image/bmp',
+    '.svg': 'image/svg+xml',
+  }
+  const contentType = mimeTypes[ext] || 'application/octet-stream'
+  const content = readFileSync(filePath)
+
+  return new Response(content, {
+    headers: {
+      'Content-Type': contentType,
+      'Content-Disposition': `inline; filename="${encodeURIComponent(filename)}"`,
+      'Content-Length': content.length.toString(),
+      'Cache-Control': 'public, max-age=86400',
     },
   })
 })

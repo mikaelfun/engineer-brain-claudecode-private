@@ -1,0 +1,54 @@
+id: "test-supervisor-analytics-endpoints"
+name: "Test Supervisor Analytics & History Endpoints"
+category: "backend-api"
+source: "dashboard/src/routes/test-supervisor.ts"
+description: "Verify GET /api/tests/stats, /trends, /discoveries, /evolution, /recent-events return 200"
+safety_level: "safe"
+priority: "high"
+tags: ["testlab", "api", "plateau-breaking"]
+
+steps:
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/tests/stats"
+      auth: true
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/tests/trends"
+      auth: true
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/tests/discoveries"
+      auth: true
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/tests/evolution"
+      auth: true
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/tests/recent-events"
+      auth: true
+
+assertions:
+  - type: "status_code"
+    target: "GET /api/tests/stats"
+    expected: 200
+  - type: "status_code"
+    target: "GET /api/tests/trends"
+    expected: 200
+  - type: "status_code"
+    target: "GET /api/tests/discoveries"
+    expected: 200
+  - type: "status_code"
+    target: "GET /api/tests/evolution"
+    expected: 200
+  - type: "status_code"
+    target: "GET /api/tests/recent-events"
+    expected: 200
+
+timeout_seconds: 30

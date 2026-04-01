@@ -145,6 +145,28 @@ if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
   process.exit(1);
 }
 
+// ---- Step 1b: Validate queue entry fields (defense against CLI flag corruption) ----
+// Detects --fixId/--testId/--category etc. passed as field values
+var CLI_FLAG_RE = /^--\w/;
+var QUEUE_FIELD_KEYS = ["testId", "fixType", "category", "fixDescription", "recipeUsed", "reason", "source"];
+var QUEUE_ARRAY_KEYS = ["testQueue", "fixQueue", "verifyQueue", "regressionQueue", "inProgress"];
+
+function validateQueueEntries(obj) {
+  QUEUE_ARRAY_KEYS.forEach(function(qk) {
+    if (!Array.isArray(obj[qk])) return;
+    obj[qk].forEach(function(entry, idx) {
+      if (!entry || typeof entry !== "object") return;
+      QUEUE_FIELD_KEYS.forEach(function(fk) {
+        if (typeof entry[fk] === "string" && CLI_FLAG_RE.test(entry[fk])) {
+          console.log("INVALID|queue " + qk + "[" + idx + "]." + fk + " contains CLI flag value: " + entry[fk] + " — rejecting write (positional arg parsing error?)");
+          process.exit(1);
+        }
+      });
+    });
+  });
+}
+validateQueueEntries(parsed);
+
 // ---- Step 2: Translate old field names, extract stageHistory ----
 var translated = {};
 var stageHistory = null;

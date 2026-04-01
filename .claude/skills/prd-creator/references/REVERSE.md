@@ -1,0 +1,330 @@
+# 逆向 PRD 提取 — 从代码到产品需求文档
+
+从现有代码库自动分析架构、功能、用户流程，反推生成完整 PRD 文档。
+
+## 适用场景
+
+- 已有项目需要补产品文档
+- 向新团队成员/利益相关者介绍项目
+- 梳理产品全貌，发现功能盲区
+- 为后续迭代建立需求基线
+
+## 提取流程
+
+```
+逆向 PRD 提取进度:
+- [ ] Step 1: 项目概览扫描
+- [ ] Step 2: 已有文档收集
+- [ ] Step 3: 功能模块识别
+- [ ] Step 4: 用户流程提取
+- [ ] Step 5: 数据模型分析
+- [ ] Step 6: 技术栈识别
+- [ ] Step 7: 功能清单确认（用户审批）
+- [ ] Step 8: 生成完整 PRD
+- [ ] Step 9: 用户迭代修改
+```
+
+### Step 1: 项目概览扫描
+
+使用 Glob 快速了解项目结构：
+
+```
+扫描目标（按优先级）：
+1. 项目根目录文件：README.md, package.json, pyproject.toml, Cargo.toml, go.mod 等
+2. 配置文件：config.*, .env.example, tsconfig.json, webpack.config.*
+3. 入口文件：src/index.*, src/main.*, src/app.*, pages/_app.*
+4. 目录结构：src/, lib/, api/, components/, routes/, services/
+```
+
+**关键动作**：
+- `Glob("**/*.{ts,tsx,js,jsx,py,go,rs}", ...)` 获取源文件列表
+- `Glob("**/package.json")` 识别 monorepo 结构
+- `Bash("ls -la")` 查看根目录
+
+**产出**：项目类型判断（Web App / CLI / Library / API / Desktop / Mobile）
+
+### Step 2: 已有文档收集
+
+读取项目中已存在的文档，作为 PRD 生成的上下文锚点：
+
+| 文件 | 提取内容 |
+|------|---------|
+| `README.md` | 项目简介、安装方式、功能概述 |
+| `CLAUDE.md` / `AGENTS.md` | 项目架构、角色定义、工作流 |
+| `conductor/product.md` | 已有产品定义（Conductor 项目） |
+| `conductor/tech-stack.md` | 技术栈（Conductor 项目） |
+| `conductor/tracks/*/spec.md` | 已有功能 spec（可批量提取） |
+| `issues/*.json` | 已知问题和需求（Issue Tracker） |
+| `docs/**/*.md` | 任何文档目录 |
+| `CHANGELOG.md` | 版本历史、功能演进 |
+
+**关键动作**：
+- 逐个 `Read` 上述文件（存在则读，不存在跳过）
+- 对 Conductor 项目，特别关注 `tracks.md` 中已完成 track 的标题列表（`[x]` 行）
+
+### Step 3: 功能模块识别
+
+**3a. API 端点提取**
+
+```bash
+# Express / Fastify / Hono 路由
+Grep("(app|router)\.(get|post|put|delete|patch)\(", glob="*.{ts,js}")
+
+# Next.js App Router
+Glob("**/app/**/route.{ts,js}")
+
+# Next.js Pages API
+Glob("**/pages/api/**/*.{ts,js}")
+```
+
+**3b. UI 页面/组件提取**
+
+```bash
+# React 页面组件
+Glob("**/pages/**/*.{tsx,jsx}")
+Glob("**/app/**/page.{tsx,jsx}")
+
+# 独立组件
+Glob("**/components/**/*.{tsx,jsx}")
+```
+
+**3c. 服务/业务逻辑提取**
+
+```bash
+# 服务层
+Glob("**/services/**/*.{ts,js}")
+Glob("**/lib/**/*.{ts,js}")
+
+# 脚本/CLI 命令
+Glob("**/scripts/**/*.{sh,ts,js}")
+Glob("**/skills/**/*.md")
+```
+
+**3d. 数据层提取**
+
+```bash
+# 数据库模型/Schema
+Grep("(model|schema|entity|table|migration)", glob="*.{ts,js,py}")
+Glob("**/models/**/*")
+Glob("**/prisma/schema.prisma")
+Glob("**/drizzle/**/*.ts")
+```
+
+**产出**：功能模块清单（模块名 + 文件列表 + 简要描述）
+
+### Step 4: 用户流程提取
+
+从代码中推断用户流程：
+
+1. **路由结构** → 页面导航流程
+2. **表单组件** → 数据输入流程
+3. **API 调用链** → 业务操作流程
+4. **状态管理** → 用户状态流转
+
+**分析方法**：
+- 读取路由/导航配置文件，绘制页面流转图
+- 搜索 `onSubmit`, `handleClick`, `fetch`, `axios` 等调用，理解交互链路
+- 搜索状态枚举（如 `status: "pending" | "active" | "done"`），理解业务状态机
+
+**对于 Conductor 项目的特殊处理**：
+- 读取 `conductor/workflow.md` 获取开发流程
+- 读取 `.claude/skills/*/SKILL.md` 的 frontmatter（name + description）获取能力列表
+- 从 `issues/*.json` 的 `type` 分布推断产品方向
+
+### Step 5: 数据模型分析
+
+- 识别主要数据实体（User, Case, Issue, Track...）
+- 提取字段和关系
+- 对于文件系统存储（非数据库）的项目，分析目录结构和 JSON schema
+
+### Step 6: 技术栈识别
+
+从 `package.json` / `pyproject.toml` / `go.mod` 等提取：
+
+| 层 | 识别内容 |
+|----|---------|
+| 语言 | TypeScript, Python, Go, Rust... |
+| 前端 | React, Vue, Next.js, Svelte... |
+| 后端 | Express, FastAPI, Gin... |
+| 数据库 | PostgreSQL, MongoDB, SQLite, 文件系统... |
+| 工具 | ESLint, Prettier, Vitest, Playwright... |
+| 部署 | Docker, Vercel, AWS... |
+| 外部集成 | Stripe, Auth0, MCP servers... |
+
+### Step 7: 功能清单确认（⚠️ 必须等用户审批）
+
+将 Step 3-6 的分析结果汇总为**功能清单草稿**，使用 AskUserQuestion 确认：
+
+```
+我从代码中识别了以下功能模块，请确认是否准确：
+
+📦 核心功能
+1. [模块A] — 描述...
+2. [模块B] — 描述...
+3. [模块C] — 描述...
+
+🔧 基础设施
+4. [认证系统] — 描述...
+5. [数据存储] — 描述...
+
+❓ 不确定的部分
+6. [模块X] — 看到了代码但不确定用途，请说明
+7. [模块Y] — 似乎是实验性功能？
+
+请确认：
+1. 准确，继续生成 PRD
+2. 需要补充（请说明遗漏的功能）
+3. 需要删减（请说明不应包含的部分）
+```
+
+**关键规则**：
+- ❌ 不要在没有用户确认的情况下直接生成 PRD
+- ✅ 对不确定的模块明确标注，让用户澄清
+- ✅ 区分"已实现"和"计划中"的功能（从 issues/tracks 状态判断）
+
+### Step 8: 生成完整 PRD
+
+基于确认后的功能清单，生成 PRD 文档，结构如下：
+
+```markdown
+# Product Requirements Document: {项目名称}
+
+**生成日期:** YYYY-MM-DD
+**生成方式:** 代码逆向提取 + 人工确认
+**项目版本:** {从 package.json 或 git tag 提取}
+
+## 1. 产品概述
+
+### 1.1 产品定位
+{从 README + product.md + 代码分析综合提炼}
+
+### 1.2 目标用户
+{从 UI 设计、功能特征、文档描述推断}
+
+### 1.3 核心价值主张
+{解决什么问题、提供什么独特价值}
+
+## 2. 功能需求
+
+### 2.1 {功能模块A}
+**状态**: ✅ 已实现 / 🚧 部分实现 / 📋 计划中
+
+**描述**: ...
+
+**用户故事**:
+- As a {用户}, I want to {动作} so that {价值}
+
+**功能详情**:
+- FR-001: {具体功能点}
+- FR-002: {具体功能点}
+
+**关联文件**:
+- `src/components/ModuleA/...`
+- `src/api/moduleA/...`
+
+### 2.2 {功能模块B}
+...
+
+## 3. 用户流程
+
+### 3.1 {主要流程A}
+1. 用户 → {动作}
+2. 系统 → {响应}
+3. ...
+
+### 3.2 {主要流程B}
+...
+
+## 4. 数据模型
+
+### 4.1 核心实体
+| 实体 | 存储方式 | 关键字段 | 关系 |
+|------|---------|---------|------|
+| {Entity1} | {DB/File} | {fields} | {relations} |
+
+## 5. 技术架构
+
+### 5.1 技术栈
+{从 Step 6 提取}
+
+### 5.2 系统架构
+{从代码结构推断：monolith/microservice/serverless}
+
+### 5.3 外部集成
+{API/SDK/MCP 依赖}
+
+## 6. 非功能需求
+
+### 6.1 已实现
+- {从代码中看到的：认证、缓存、错误处理...}
+
+### 6.2 待改进（从 issues 提取）
+- {open issues 中的性能/安全/可靠性需求}
+
+## 7. 产品演进
+
+### 7.1 已完成的迭代
+{从 conductor tracks [x] 或 CHANGELOG 提取}
+
+### 7.2 进行中
+{从 conductor tracks [~] 提取}
+
+### 7.3 计划中
+{从 issues pending + conductor tracks [ ] 提取}
+
+## Appendix
+
+### A. 文件结构概览
+{关键目录说明}
+
+### B. API 端点清单
+{从 Step 3a 提取}
+
+### C. UI 页面清单
+{从 Step 3b 提取}
+
+---
+
+_Generated by prd-creator (Mode B: Reverse Engineering) from codebase analysis._
+```
+
+### Step 9: 用户迭代修改
+
+生成后主动问：
+- "PRD 中哪些部分不准确？"
+- "是否需要补充产品愿景/商业目标等无法从代码推断的信息？"
+- "是否需要调整功能优先级排序？"
+
+## 对 Conductor 项目的增强
+
+如果检测到项目使用 Conductor（`conductor/product.md` 存在），额外执行：
+
+1. **读取所有 track titles**（从 `tracks.md`），按完成状态分类
+2. **读取所有 issue titles**（从 `issues/*.json`），按 status 分类
+3. **将 track/issue 数据融入 PRD 的"产品演进"章节**
+4. **交叉验证**：PRD 中的功能是否都有对应 track/issue 覆盖
+
+## 输出选项
+
+生成完成后提示用户：
+
+```
+PRD 已生成。保存位置？
+1. 项目根目录 PRD.md（推荐）
+2. conductor/product-prd.md（Conductor 项目）
+3. docs/PRD.md
+4. 自定义路径
+```
+
+## 性能注意
+
+代码分析可能涉及大量文件读取。优化策略：
+- 使用 `Glob` 批量获取文件列表，而非逐目录遍历
+- 使用 `Grep` 搜索关键模式，而非逐文件 Read
+- 对大文件只读取前 100 行（函数签名/export 通常在文件头部）
+- 使用 `Agent(subagent_type="Explore")` 做大范围代码搜索
+
+## Attribution
+
+Original PRD creation flow based on [PageAI-Pro/ralph-loop](https://github.com/PageAI-Pro/ralph-loop) (MIT License).
+Reverse engineering mode is an EngineerBrain extension.

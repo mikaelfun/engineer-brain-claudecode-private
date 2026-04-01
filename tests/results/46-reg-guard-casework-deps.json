@@ -1,0 +1,9 @@
+{
+  "testId": "reg-guard-casework-deps",
+  "round": 46,
+  "timestamp": "2026-03-31T23:38:36.000Z",
+  "status": "skip",
+  "assertions": [],
+  "error": "no assertions executed (phantom pass prevention)",
+  "duration_ms": 53806
+}

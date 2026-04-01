@@ -1,0 +1,9 @@
+{
+  "testId": "iss180-stage-worker-status-write",
+  "round": 33,
+  "timestamp": "2026-03-30T20:19:27.000Z",
+  "status": "pass",
+  "assertions": [{"name":"JSON field: pipelineStatus in enum [idle  running  paused]","pass":true,"expected":"enum:idle  running  paused","actual":"running"},{"name":"stage-worker phases must not directly write pipelineStatus to pipeline.json","pass":true,"expected":"not contains 'pipeline.json'","actual":"not contains 'pipeline.json'"},{"name":"stage-worker phases must reference pipelineStatus:running","pass":true,"expected":"contains 'running'","actual":"contains 'running'"},{"name":"stage-worker phases must reference pipelineStatus:idle (on return)","pass":true,"expected":"contains 'idle'","actual":"contains 'idle'"}],
+  "error": null,
+  "duration_ms": 56824
+}

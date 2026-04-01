@@ -48,16 +48,16 @@ last_modified: 2026-02-14
 
 | 表名 | 用途 | 文档 |
 |------|------|------|
-| IFxRequestLogEvent | MIP 请求日志（加密、解密、预授权等） | [📄](./references/tables/IFxRequestLogEvent.md) |
-| IFxTrace | RMS 跟踪日志 | [📄](./references/tables/IFxTrace.md) |
-| IFxScenarioLogEvent | RMS 场景日志 | [📄](./references/tables/IFxScenarioLogEvent.md) |
+| IFxRequestLogEvent | MIP 请求日志（加密、解密、预授权等） | [📄](./references/tables/azrms/IFxRequestLogEvent.md) |
+| IFxTrace | RMS 跟踪日志 | [📄](./references/tables/azrms/IFxTrace.md) |
+| IFxScenarioLogEvent | RMS 场景日志 | [📄](./references/tables/azrms/IFxScenarioLogEvent.md) |
 
 ### ESTS 数据库 (ESTS MC)
 
 | 表名 | 用途 | 文档 |
 |------|------|------|
-| PerRequestTableIfx | AAD 登录请求（用于 RMS 认证） | [📄](./references/tables/PerRequestTableIfx.md) |
-| DiagnosticTracesIfx | 诊断跟踪日志（AAD 错误详情） | [📄](./references/tables/DiagnosticTracesIfx.md) |
+| PerRequestTableIfx | AAD 登录请求（用于 RMS 认证） | [📄](./references/tables/ESTS/PerRequestTableIfx.md) |
+| DiagnosticTracesIfx | 诊断跟踪日志（AAD 错误详情） | [📄](./references/tables/ESTS/DiagnosticTracesIfx.md) |
 
 详细表定义见: [tables/](./references/tables/)
 

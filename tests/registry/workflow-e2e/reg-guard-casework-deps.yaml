@@ -1,0 +1,52 @@
+id: "reg-guard-casework-deps"
+name: "Regression Guard — casework dependency files exist"
+category: "workflow-e2e"
+source: "wf-regression-scan"
+description: "Guards against wf-iss038/iss111 missing_file regressions. Verifies critical casework dependency files and skill definitions are present."
+safety_level: "safe"
+priority: "high"
+tags: ["regression-guard", "casework", "dependencies"]
+recipe_used: "none"
+
+steps:
+  - action: "bash_command"
+    params:
+      command: |
+        ERRORS=0
+        # Check critical skill files exist
+        for skill in casework data-refresh compliance-check status-judge inspection-writer; do
+          if [ ! -f ".claude/skills/$skill/SKILL.md" ]; then
+            echo "FAIL: missing .claude/skills/$skill/SKILL.md"
+            ERRORS=$((ERRORS+1))
+          fi
+        done
+        # Check critical agent definitions
+        for agent in casework data-refresh troubleshooter email-drafter; do
+          if [ ! -f ".claude/agents/$agent.md" ]; then
+            echo "FAIL: missing .claude/agents/$agent.md"
+            ERRORS=$((ERRORS+1))
+          fi
+        done
+        # Check API routes exist
+        if [ ! -f "dashboard/src/routes/cases.ts" ]; then
+          echo "FAIL: missing cases.ts route"
+          ERRORS=$((ERRORS+1))
+        fi
+        if [ $ERRORS -eq 0 ]; then echo "PASS: all dependency files present"; fi
+        exit $ERRORS
+    description: "Verify all casework dependency files exist"
+
+assertions:
+  - type: "file_exists"
+    target: ".claude/skills/casework/SKILL.md"
+    description: "Casework SKILL.md exists"
+
+  - type: "file_exists"
+    target: ".claude/agents/casework.md"
+    description: "Casework agent definition exists"
+
+  - type: "file_exists"
+    target: "dashboard/src/routes/cases.ts"
+    description: "Cases API route file exists"
+
+timeout_seconds: 10

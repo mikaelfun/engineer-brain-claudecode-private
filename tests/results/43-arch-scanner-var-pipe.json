@@ -1,0 +1,9 @@
+{
+  "testId": "arch-scanner-var-pipe",
+  "round": 43,
+  "timestamp": "2026-03-31T21:01:39.000Z",
+  "status": "pass",
+  "assertions": [{"name":"No semicolon+var+pipe pattern in scripts or SKILL.md bash examples","pass":true,"expected":"0","actual":"0"}],
+  "error": null,
+  "duration_ms": 24819
+}

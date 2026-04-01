@@ -1,0 +1,17 @@
+{"stage":"SCAN","action":"scan_complete","testId":"cycle-42-scan","cycle":42,"timestamp":"2026-03-31T18:07:32Z","summary":"58 gaps + 15 regression, 27 design-fidelity, 1 perf"}
+{"stage":"GENERATE","action":"generate_complete","testId":"cycle-42-generate","cycle":42,"timestamp":"2026-03-31T18:12:00Z","summary":"5 new tests (ISS-192x3, ISS-194, perf) + 4 arch regression re-queued"}
+{"stage":"VERIFY","action":"verify_error","testId":"framework-e2e-phantom-pass-42","result":"test_definition_not_found","action2":"moved_to_skipRegistry","timestamp":"2026-03-31T18:54:06Z"}
+{"stage":"VERIFY","action":"verify_fail","testId":"iss-192-copy-html-draft","result":"2/3","action2":"back_to_fixQueue","retryCount":1,"timestamp":"2026-03-31T18:54:06Z"}
+{"stage":"VERIFY","action":"verify_fail","testId":"iss-192-edit-save-draft","result":"2/3","action2":"back_to_fixQueue","retryCount":1,"timestamp":"2026-03-31T18:54:06Z"}
+{"stage":"VERIFY","action":"verify_fail","testId":"iss-192-save-api","result":"0/3","action2":"back_to_fixQueue","retryCount":1,"timestamp":"2026-03-31T18:54:06Z"}
+{"stage":"VERIFY","action":"verify_fail","testId":"ux-no-empty-state","result":"2/3","action2":"back_to_fixQueue","retryCount":1,"timestamp":"2026-03-31T18:54:06Z"}
+{"stage":"FIX","action":"fix_pass","testId":"iss-192-copy-html-draft","fixType":"framework_fix","recipeUsed":null,"cycle":42,"timestamp":"2026-03-31T19:11:45Z","issueClassification":"infrastructure"}
+{"stage":"FIX","action":"fix_pass","testId":"iss-192-edit-save-draft","fixType":"framework_fix","recipeUsed":null,"cycle":42,"timestamp":"2026-03-31T19:11:56Z","issueClassification":"infrastructure"}
+{"stage":"FIX","action":"fix_pass","testId":"iss-192-save-api","fixType":"framework_fix","recipeUsed":null,"cycle":42,"timestamp":"2026-03-31T19:11:57Z","issueClassification":"infrastructure"}
+{"stage":"FIX","action":"fix_pass","testId":"ux-no-empty-state","fixType":"framework_fix","recipeUsed":null,"cycle":42,"timestamp":"2026-03-31T19:11:59Z","issueClassification":"infrastructure"}
+{"stage":"VERIFY","action":"verify_pass","testId":"iss-192-copy-html-draft","result":"pass","assertions":"3/3","timestamp":"2026-03-31T19:25:09Z"}
+{"stage":"VERIFY","action":"verify_pass","testId":"iss-192-edit-save-draft","result":"pass","assertions":"3/3","timestamp":"2026-03-31T19:25:46Z"}
+{"stage":"VERIFY","action":"verify_fail","testId":"iss-192-save-api","result":"fail","assertions":"0/3","retryCount":2,"reason":"unresolved placeholder {draft_filename}","timestamp":"2026-03-31T19:27:16Z"}
+{"stage":"VERIFY","action":"verify_pass","testId":"ux-no-empty-state","result":"pass","assertions":"3/3","timestamp":"2026-03-31T19:27:53Z"}
+{"stage":"FIX","action":"fix_pass","testId":"framework-fix-42","fixType":"framework_fix","cycle":42,"timestamp":"2026-03-31T19:34:55Z"}
+{"stage":"VERIFY","action":"verify_pass","testId":"framework-fix-42","cycle":42,"timestamp":"2026-03-31T19:36:40Z","note":"Framework fix verified conceptually - updated stage reset logic in common.md and state-update.md"}

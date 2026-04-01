@@ -1,0 +1,11 @@
+{
+  "id": "ISS-191",
+  "title": "casework应该能识别当前case的scope是否在POD supported topic list(onenote)，如果超出范围需要提示工程师转case/cut AR到对应的支持团队。",
+  "description": "https://microsoft.sharepoint.com/teams/mcpod/_layouts/Doc.aspx?sourcedoc={9FE34E22-6819-4D32-9DBC-347E7806EEEB}&wd=target%28%5BTeam%5DNew%20Hire%20Manual%20%28Must-Read%5C%29.one%7C39B3DDF5-583C-41FB-BDB8-7FD2ADECE230%2F%5BTeam%5DSupport%20Topic%20List%7C581EFB06-171E-4CD7-A433-B4E40A4929EB%2F%29&wdpartid={27C6D0A3-6846-0B02-3899-9DA4CFC9146E}{1}&wdsectionfileid={486B12B5-5AD7-41FA-9C55-8A637B4CC3C2}&end\nonenote:https://microsoft.sharepoint.com/teams/mcpod/SiteAssets/Mooncake%20POD%20Support%20Notebook/%5bTeam%5dNew%20Hire%20Manual%20(Must-Read).one#%5bTeam%5dSupport%20Topic%20List&section-id={39B3DDF5-583C-41FB-BDB8-7FD2ADECE230}&page-id={581EFB06-171E-4CD7-A433-B4E40A4929EB}&end",
+  "type": "bug",
+  "priority": "P1",
+  "status": "pending",
+  "testLoopScan": true,
+  "createdAt": "2026-03-31T15:04:51.046Z",
+  "updatedAt": "2026-03-31T15:04:51.046Z"
+}

@@ -1,0 +1,31 @@
+id: "arch-skill-windows-paths"
+name: "Architecture — SKILL.md bash commands use POSIX paths (not Windows paths)"
+category: "workflow-e2e"
+source: "arch-scan"
+description: "Verify that bash command blocks in SKILL.md files use POSIX paths, not Windows paths. Documentation examples (❌ markers, JSON configs, user prompts) are excluded."
+safety_level: "safe"
+priority: "P2"
+tags: ["architecture", "compliance", "paths", "cycle-41"]
+
+steps:
+  # Check for Windows paths inside ```bash code blocks only (actual executable commands)
+  # Excludes: documentation examples marked with ❌, JSON config examples, user-facing prompts
+  - action: "bash_command"
+    params:
+      command: |
+        # Find bash code blocks with Windows paths (actual commands that would fail)
+        # Using awk to extract only content between ```bash and ``` markers
+        find .claude/skills/ -name '*.md' -exec awk '
+          /^```bash/,/^```/ {
+            if (/C:/ && !/❌/ && !/"C:/) print FILENAME ":" NR ":" $0
+          }
+        ' {} \; 2>/dev/null | wc -l
+    safety_check: "scripts.safe[compliance-check]"
+
+assertions:
+  - type: "text_equals"
+    target: "command_output"
+    expected: "0"
+    description: "No C: drive references in bash code blocks (excluding documentation examples)"
+
+timeout_seconds: 30

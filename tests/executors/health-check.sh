@@ -61,6 +61,7 @@ const path = require('path');
 
 // Read from split files (primary), fall back to state.json (legacy)
 let currentStage, cycle, maxCycles, cumulativeStats, stageHistory, testQueueData, fixQueueData;
+let pipelineStatus = 'idle';
 let verifyQueueData, regressionQueueData, skipRegistryData, stagesData, currentTest;
 let lastRoundAt, startedAt;
 try {
@@ -72,6 +73,7 @@ try {
   maxCycles = pipeline.maxCycles || 50;
   currentTest = pipeline.currentTest || '';
   stagesData = pipeline.stages || {};
+  pipelineStatus = pipeline.pipelineStatus || 'idle';
   cumulativeStats = statsData.cumulative || {};
   testQueueData = queuesData.testQueue || [];
   fixQueueData = queuesData.fixQueue || [];
@@ -538,7 +540,7 @@ if (testPassCount > 0 || testFailCount > 0 || testComplete) {
   const tf = cycleStats.failed || testFailCount;
   const total = tp + tf;
   const rate = total > 0 ? Math.round(tp / total * 100) : 0;
-  stages.TEST.status = (currentStage === 'TEST') ? 'running' : 'done';
+  stages.TEST.status = stages.TEST.status !== 'pending' ? stages.TEST.status : (currentStage === 'TEST' ? 'running' : 'pending');
   stages.TEST.summary = tp + ' pass, ' + tf + ' fail' + (total > 0 ? ' (' + rate + '%)' : '');
   if (testComplete && testComplete.timestamp && genEntries.length > 0) {
     const genLast = genEntries[genEntries.length - 1];
@@ -549,7 +551,7 @@ if (testPassCount > 0 || testFailCount > 0 || testComplete) {
 }
 
 // FIX summary
-const fixEntries = entries.filter(e => e.phase === 'FIX');
+const fixEntries = entries.filter(e => e.currentStage === 'FIX');
 const batchFix = fixEntries.find(e => e.action === 'batch-fix');
 const fixPassEntries = fixEntries.filter(e => e.action === 'fix_pass' || e.action === 'fix_done');
 const fixFailEntries = fixEntries.filter(e => e.action === 'fix_fail' || e.action === 'fix_skip');
@@ -560,8 +562,8 @@ if (batchFix) {
 } else {
   fixedCount = fixPassEntries.length;
 }
-if (fixEntries.length > 0 || phase === 'FIX') {
-  stages.FIX.status = (currentStage === 'FIX') ? 'running' : 'done';
+if (fixEntries.length > 0 || currentStage === 'FIX') {
+  stages.FIX.status = stages.FIX.status !== 'pending' ? stages.FIX.status : (currentStage === 'FIX' ? 'running' : 'pending');
   const fixPending = (currentStage === 'FIX') ? fixQueue : 0;
   stages.FIX.summary = fixedCount + ' fixed, ' + unfixableCount + ' unfixable, ' + fixPending + ' pending';
 }
@@ -569,8 +571,8 @@ if (fixEntries.length > 0 || phase === 'FIX') {
 // VERIFY summary
 const verifyPassEntries = entries.filter(e => e.action === 'verify_pass');
 const verifyFailEntries = entries.filter(e => e.action === 'verify_fail' || e.action === 'verify_regressed');
-if (verifyPassEntries.length > 0 || verifyFailEntries.length > 0 || phase === 'VERIFY') {
-  stages.VERIFY.status = (currentStage === 'VERIFY') ? 'running' : 'done';
+if (verifyPassEntries.length > 0 || verifyFailEntries.length > 0 || currentStage === 'VERIFY') {
+  stages.VERIFY.status = stages.VERIFY.status !== 'pending' ? stages.VERIFY.status : (currentStage === 'VERIFY' ? 'running' : 'pending');
   const vPending = (currentStage === 'VERIFY') ? verifyQueue : 0;
   stages.VERIFY.summary = verifyPassEntries.length + ' verified, ' + verifyFailEntries.length + ' regressed, ' + vPending + ' pending';
 }
@@ -638,6 +640,7 @@ const output = {
   currentStage,
   cycle,
   maxCycles,
+  pipelineStatus,
   health,
   queueSizes: {
     test: testQueue,

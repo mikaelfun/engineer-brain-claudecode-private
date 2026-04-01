@@ -5,7 +5,7 @@
 **Source:** conductor/tracks/test-framework_20260328/spec.md
 **Failure Type:** logic_error
 **Is Env Issue:** false
-**Analyzed At:** 2026-03-30T02:07:56Z
+**Analyzed At:** 2026-03-30T14:06:45Z
 
 ## Failed Assertions
 

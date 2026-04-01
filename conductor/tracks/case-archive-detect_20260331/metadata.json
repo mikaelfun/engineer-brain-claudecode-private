@@ -1,0 +1,22 @@
+{
+  "id": "case-archive-detect_20260331",
+  "title": "Patrol/Casework Case Archive & Transfer Detection",
+  "type": "feature",
+  "status": "complete",
+  "issueId": "ISS-099",
+  "created": "2026-03-31T16:00:00+08:00",
+  "updated": "2026-03-31T16:30:00+08:00",
+  "verification": {
+    "status": "skipped",
+    "reason": "mark-done by user — will verify naturally during next patrol",
+    "skippedAt": "2026-03-31T16:30:00+08:00"
+  },
+  "phases": {
+    "total": 3,
+    "completed": 3
+  },
+  "tasks": {
+    "total": 7,
+    "completed": 7
+  }
+}

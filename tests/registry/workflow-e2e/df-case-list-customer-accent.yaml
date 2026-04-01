@@ -1,0 +1,39 @@
+id: "df-case-list-customer-accent"
+name: "Design Fidelity: Case List 客户名称使用 accent 颜色 + font-semibold 加粗"
+category: "workflow-e2e"
+source: "design-fidelity"
+description: "验证 CasesPage.tsx 客户名称使用 accent 颜色（accent-cyan 或 accent 色系）在列表中突出显示"
+safety_level: "safe"
+priority: "high"
+recipe_used: "design-fidelity-test.md"
+tags: ["design-fidelity", "case-list-opt", "customer-accent"]
+
+steps:
+  - action: "bash_command"
+    params:
+      command: "grep -B5 \"c\\.customer\" dashboard/web/src/pages/CasesPage.tsx | grep -c \"accent\\|color\""
+    safety_check: "scripts.safe[compliance-check]"
+  - action: "bash_command"
+    params:
+      command: "grep -c \"accent-cyan\\|accent-blue\\|accent\" dashboard/web/src/pages/CasesPage.tsx"
+    safety_check: "scripts.safe[compliance-check]"
+  - action: "bash_command"
+    params:
+      command: "grep -A5 \"c\\.customer\" dashboard/web/src/pages/CasesPage.tsx | grep -c \"accent\\|color\""
+    safety_check: "scripts.safe[compliance-check]"
+
+assertions:
+  - type: "text_gt"
+    target: "step1_output"
+    expected: "0"
+    description: "Customer element must have accent color or font-semibold styling"
+  - type: "text_gt"
+    target: "step2_output"
+    expected: "0"
+    description: "CasesPage.tsx must use accent color variables"
+  - type: "text_gt"
+    target: "step3_output"
+    expected: "0"
+    description: "Customer name display element must reference accent color"
+
+timeout_seconds: 30

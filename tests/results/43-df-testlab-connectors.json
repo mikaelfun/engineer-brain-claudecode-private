@@ -1,0 +1,9 @@
+{
+  "testId": "df-testlab-connectors",
+  "round": 43,
+  "timestamp": "2026-03-31T20:38:00.000Z",
+  "status": "pass",
+  "assertions": [{"name":"connector-flow keyframe animation must exist","pass":true,"expected":">0","actual":"2"},{"name":"glassmorphism effect (backdrop-blur) must be applied","pass":true,"expected":">0","actual":"3"},{"name":"Connector states (done/flow/pending) must have distinct visual styling","pass":true,"expected":">0","actual":"3"}],
+  "error": null,
+  "duration_ms": 44811
+}

@@ -100,7 +100,7 @@
 
 ### 2-Agent 观察者-主体分离
 - **Supervisor（Observer）**：test-supervisor-runner agent — 观察、诊断、决策、修复框架问题
-- **Stage Worker（Subject）**：test-loop agent — 执行 SCAN→GENERATE→TEST→FIX→VERIFY 阶段
+- **Stage Worker（Subject）**：stage-worker agent — 执行 SCAN→GENERATE→TEST→FIX→VERIFY 阶段
 - 观察者不能与被观察者合并 — 这是自愈架构的核心约束
 
 ## 重要记录

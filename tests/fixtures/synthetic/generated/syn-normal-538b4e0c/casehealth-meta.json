@@ -1,0 +1,37 @@
+{
+  "caseNumber": "SYN0000023644",
+  "fwr": {
+    "status": "In Progress",
+    "remaining": "3d 2h",
+    "checkedAt": "2026-03-31T21:30:29Z",
+    "source": "synthetic"
+  },
+  "fdr": {
+    "status": "In Progress",
+    "remaining": "5d 0h",
+    "checkedAt": "2026-03-31T21:30:29Z",
+    "source": "synthetic"
+  },
+  "irSla": {
+    "status": "Succeeded",
+    "remaining": null,
+    "completedOn": "2026-03-15T10:00:00Z",
+    "checkedAt": "2026-03-31T21:30:29Z",
+    "source": "synthetic"
+  },
+  "compliance": {
+    "entitlementOk": true,
+    "serviceLevel": "Premier",
+    "serviceName": "Unfd AddOn | ProSv Ente - China Cld",
+    "contractCountry": "China",
+    "is21vConvert": false,
+    "warnings": []
+  },
+  "actualStatus": "pending-customer",
+  "daysSinceLastContact": 2,
+  "statusJudgedAt": "2026-03-31T21:30:29Z",
+  "statusReasoning": "最后邮件是工程师请求日志，客户尚未回复 → pending-customer",
+  "emailCountAtJudge": 6,
+  "noteCountAtJudge": 4,
+  "icmIdAtJudge": null
+}

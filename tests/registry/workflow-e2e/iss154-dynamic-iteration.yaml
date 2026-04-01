@@ -16,7 +16,7 @@ steps:
 
 assertions:
   - type: "file_exists"
-    target: ".claude/skills/troubleshooter/SKILL.md"
+    target: ".claude/skills/troubleshoot/SKILL.md"
     expected: ""
 
 metadata:

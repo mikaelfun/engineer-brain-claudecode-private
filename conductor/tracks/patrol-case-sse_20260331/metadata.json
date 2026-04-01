@@ -1,0 +1,51 @@
+{
+  "id": "patrol-case-sse_20260331",
+  "title": "Patrol Case SSE Shows Full Casework Process",
+  "type": "bug",
+  "status": "complete",
+  "created": "2026-03-31T16:00:00+08:00",
+  "updated": "2026-03-31T16:08:00+08:00",
+  "phases": {
+    "total": 3,
+    "completed": 3
+  },
+  "tasks": {
+    "total": 6,
+    "completed": 6
+  },
+  "verification": {
+    "status": "passed",
+    "timestamp": "2026-03-31T16:08:00+08:00",
+    "regression": "pass",
+    "criteria": [
+      {
+        "id": "AC1",
+        "description": "Patrol SSE messages contain actual thinking/tool content",
+        "result": "pass",
+        "evidence": "broadcastSDKMessages deep-parses message.message.content (nested SDK structure) instead of message.content (which returned empty)",
+        "recipe": "code-inspection"
+      },
+      {
+        "id": "AC2",
+        "description": "Patrol uses case-step-progress event type for frontend consistency",
+        "result": "pass",
+        "evidence": "4 case-step-progress broadcast points in sdk-message-broadcaster.ts, replacing old case-session-thinking/tool-call events",
+        "recipe": "code-inspection"
+      },
+      {
+        "id": "AC3",
+        "description": "Agent Monitor shows same detail for patrol cases as single-case",
+        "result": "pass",
+        "evidence": "Full lifecycle events (started/progress/completed) emitted, same caseSessionStore path as single-case processing",
+        "recipe": "code-inspection"
+      },
+      {
+        "id": "AC4",
+        "description": "Patrol step name preserved for message identification",
+        "result": "pass",
+        "evidence": "step: 'patrol' passed to broadcastSDKMessages and all lifecycle events",
+        "recipe": "code-inspection"
+      }
+    ]
+  }
+}

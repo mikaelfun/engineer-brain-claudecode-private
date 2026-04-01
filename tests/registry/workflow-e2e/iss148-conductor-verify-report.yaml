@@ -1,0 +1,35 @@
+# Test: ISS-148 Conductor Verify Report Format
+# Generated: Round 30 | Source: issues/ISS-148.json
+# Recipe: none
+
+id: "iss148-conductor-verify-report"
+name: "Conductor Verify generates per-criterion PASS/FAIL report written to metadata.json"
+category: "workflow-e2e"
+source: "issues/ISS-148.json"
+safety_level: "safe"
+description: "Verify that conductor verify SKILL.md includes per-criterion PASS/FAIL with evidence, and that results can be written to metadata.json"
+
+steps:
+  - action: "validate"
+    params:
+      description: "Verify conductor verify SKILL exists and has correct report structure"
+
+assertions:
+  - type: "file_exists"
+    target: ".claude/skills/conductor/verify/SKILL.md"
+    expected: "true"
+  - type: "text_contains"
+    target: ".claude/skills/conductor/verify/SKILL.md"
+    expected: "metadata.json"
+  - type: "json_field"
+    target: "issues/ISS-148.json"
+    field: "status"
+    expected: "tracked"
+
+metadata:
+  generatedAt: "2026-03-30T17:20:00.000Z"
+  round: 30
+  gapId: "ISS-148"
+  issueId: "ISS-148"
+  trackId: null
+  recipeUsed: null

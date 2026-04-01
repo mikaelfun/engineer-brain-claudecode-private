@@ -352,7 +352,7 @@ function Format-EmailEntry {
 
     # 提取内联图片（在 HTML 清理前）
     # 增量检查：如果 images/ 已有该邮件的图片文件，复用引用不重新提取
-    $imageSection = ""
+    $imageRefs = @()
     $rawBody = $Email.description
     if ($rawBody -and ($rawBody -match 'src="(cid:|data:image/)')) {
         # 检查本地是否已有该邮件的图片
@@ -362,22 +362,41 @@ function Format-EmailEntry {
         }
         # 如果是增量模式且已有图片，跳过提取，直接引用已有文件
         if (-not $Force -and $existingImgs.Count -gt 0 -and $existingIds.ContainsKey($id)) {
-            $imgLines = $existingImgs | ForEach-Object { "![inline-image](images/$($_.Name))" }
-            $imageSection = "`n**Inline Images:**`n" + ($imgLines -join "`n") + "`n"
+            foreach ($img in $existingImgs) {
+                $imageRefs += @{ Original = ""; LocalPath = "images/$($img.Name)" }
+            }
         } else {
             if (-not (Test-Path $imagesDir)) { New-Item -ItemType Directory -Path $imagesDir -Force | Out-Null }
-            $imgRefs = Extract-InlineImages -EmailId $id -HtmlBody $rawBody -ImagesDir $imagesDir
-            if ($imgRefs -and $imgRefs.Count -gt 0) {
-                $imgLines = $imgRefs | ForEach-Object { "![inline-image]($($_.LocalPath))" }
-                $imageSection = "`n**Inline Images:**`n" + ($imgLines -join "`n") + "`n"
-                Write-Host "🖼️ Extracted $($imgRefs.Count) inline image(s) from email $id"
+            $imageRefs = Extract-InlineImages -EmailId $id -HtmlBody $rawBody -ImagesDir $imagesDir
+            if ($imageRefs -and $imageRefs.Count -gt 0) {
+                Write-Host "🖼️ Extracted $($imageRefs.Count) inline image(s) from email $id"
             }
         }
     }
 
-    # 清理 HTML 正文为纯文本
+    # 清理 HTML 正文为纯文本，同时将 <img> 替换为 markdown 引用保留在原位
     $body = $rawBody
     if ($body) {
+        # Step 1: Replace <img> tags with markdown image refs BEFORE stripping HTML
+        # Strategy: collect all extracted image refs, then replace <img> tags in order
+        if ($imageRefs.Count -gt 0) {
+            # Replace each <img src="cid:..."> or <img src="data:image/..."> with markdown ref
+            # Match in order — D365 attachments correspond to <img> tags in document order
+            $imgTagPattern = '<img[^>]*src="(cid:|data:image/)[^"]*"[^>]*/?\s*>'
+            $allImgTags = [regex]::Matches($body, $imgTagPattern)
+            $refIdx = 0
+            foreach ($imgTag in $allImgTags) {
+                if ($refIdx -lt $imageRefs.Count) {
+                    $ref = $imageRefs[$refIdx]
+                    $body = $body.Replace($imgTag.Value, "`n![inline-image]($($ref.LocalPath))`n")
+                    $refIdx++
+                }
+            }
+        }
+        # Remove any remaining unmatched <img> tags (signature/filtered images)
+        $body = $body -replace '<img[^>]*src="(cid:|data:image/)[^"]*"[^>]*/?\s*>',''
+
+        # Step 2: Standard HTML cleanup (same as before)
         # Block-level HTML tags → newline (before stripping all tags)
         $body = $body -replace '</p>', "`n"
         $body = $body -replace '</div>', "`n"
@@ -385,7 +404,7 @@ function Format-EmailEntry {
         $body = $body -replace '</li>', "`n"
         $body = $body -replace '<li[^>]*>', "• "
         $body = $body -replace '<br\s*/?>', "`n"
-        # 移除剩余 HTML 标签
+        # 移除剩余 HTML 标签（但保留 markdown 图片引用 ![...](...) ）
         $body = $body -replace '<[^>]+>', ''
         # 解码 HTML entities
         $body = [System.Net.WebUtility]::HtmlDecode($body)
@@ -432,7 +451,7 @@ function Format-EmailEntry {
 **To:** $toStr
 
 $body
-$imageSection
+
 ---
 
 "@

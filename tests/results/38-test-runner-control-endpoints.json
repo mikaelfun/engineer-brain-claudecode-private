@@ -1,0 +1,9 @@
+{
+  "testId": "test-runner-control-endpoints",
+  "round": 38,
+  "timestamp": "2026-03-30T23:55:08.000Z",
+  "status": "pass",
+  "assertions": [{"name":"GET /api/tests/runner/status → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'status':'external','source':'cli','supervisorStatus':'running','sessionId':null,'startedAt':null,'lastRunAt':null,'currentStage':'TEST','currentCycl"},{"name":"GET /api/tests/runner/status → JSON response","pass":true,"expected":"JSON","actual":"JSON"}],
+  "error": null,
+  "duration_ms": 14482
+}

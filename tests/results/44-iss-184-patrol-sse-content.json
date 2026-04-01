@@ -1,0 +1,9 @@
+{
+  "testId": "iss-184-patrol-sse-content",
+  "round": 44,
+  "timestamp": "2026-03-31T22:10:56.000Z",
+  "status": "pass",
+  "assertions": [{"name":"SSE routes handle thinking/content blocks","pass":true,"expected":"exit 0","actual":"exit 0"},{"name":"SSE routes handle tool use events","pass":true,"expected":"exit 0","actual":"exit 0"}],
+  "error": null,
+  "duration_ms": 33951
+}

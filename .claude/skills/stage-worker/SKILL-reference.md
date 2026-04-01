@@ -1,4 +1,4 @@
-# Test Loop — 自动化测试框架
+# Stage Worker — 自动化测试框架
 
 持续自我迭代的测试→发现→修复→验证闭环。
 每轮从文件读状态，不依赖 session memory。
@@ -7,9 +7,9 @@
 ```
 /test-supervisor run              # ⭐ 推荐：通过 supervisor 监督式执行
 /loop 5m /test-supervisor run     # ⭐ 推荐：持续监督式循环
-/test-loop                        # 直接执行（手动或被 supervisor spawn）
-/test-loop --phase SCAN           # 强制指定阶段
-/test-loop --max-rounds 10        # 覆盖 maxRounds
+/stage-worker                     # 直接执行（手动或被 supervisor spawn）
+/stage-worker --phase SCAN        # 强制指定阶段
+/stage-worker --max-rounds 10     # 覆盖 maxRounds
 ```
 
 ## 🔴 安全红线（每轮必读）
@@ -795,5 +795,5 @@ echo '{"roundJourney":{"SCAN":{"status":"running"}}}' | bash tests/executors/sta
 - 截图绝不传回主 session（保存到文件）
 - 遵循 env.yaml 的环境配置，避免重复猜测
 - 遵循 learnings.yaml 的踩坑经验，避免重复犯错
-- **自主进化**：test-loop 自行管理所有测试逻辑（失败分析、retry 策略、self-heal pattern 检测），supervisor 不介入这些决策
+- **自主进化**：stage-worker 自行管理所有测试逻辑（失败分析、retry 策略、self-heal pattern 检测），supervisor 不介入这些决策
 - **Phase Retrospective**：每个 phase 完成后 agent 回顾执行结果，通过推理（非规则）识别框架逻辑 bug 并升级到 fixQueue。这是规则驱动自愈（pattern-detector）的补充，覆盖规则无法预见的未知异常

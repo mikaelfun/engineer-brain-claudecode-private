@@ -1,0 +1,41 @@
+id: "reg-guard-retro-endpoints"
+name: "Regression Guard — retro API endpoints available"
+category: "workflow-e2e"
+source: "wf-regression-scan"
+description: "Guards against wf-iss142-retro-* regressions (endpoint_missing). Verifies retro-related API endpoints and SKILL references exist."
+safety_level: "safe"
+priority: "high"
+tags: ["regression-guard", "retro", "endpoint-availability"]
+recipe_used: "none"
+
+steps:
+  - action: "bash_command"
+    params:
+      command: |
+        ERRORS=0
+        # Check that retro-related patterns exist in codebase
+        if ! grep -rq "retro" .claude/skills/stage-worker/ 2>/dev/null; then
+          echo "FAIL: no retro references in stage-worker skills"
+          ERRORS=$((ERRORS+1))
+        else
+          echo "PASS: retro references found in stage-worker"
+        fi
+        # Check fixQueue retro-fix item handling
+        if ! grep -rq "retro-fix\|retroContext\|retro_fix" tests/executors/ 2>/dev/null; then
+          echo "WARN: no retro-fix handling in executors"
+        else
+          echo "PASS: retro-fix handling exists in executors"
+        fi
+        exit $ERRORS
+    description: "Verify retro feature infrastructure exists"
+
+assertions:
+  - type: "bash_exit_zero"
+    target: "grep -rq 'retroContext\\|retro' .claude/skills/stage-worker/phases/ 2>/dev/null"
+    description: "retroContext referenced in stage-worker phases"
+
+  - type: "bash_exit_zero"
+    target: "grep -rq 'retro-fix\\|retro_fix' tests/executors/fix-recorder.sh 2>/dev/null || grep -rq 'retro' tests/executors/fix-analyzer.sh 2>/dev/null"
+    description: "retro handling exists in fix-recorder or fix-analyzer"
+
+timeout_seconds: 15

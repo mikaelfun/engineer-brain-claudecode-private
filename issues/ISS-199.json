@@ -1,0 +1,12 @@
+{
+  "id": "ISS-199",
+  "title": "Dashboard Cron Job 执行 slash command 无效，1.8秒假成功",
+  "description": "## 现象\n\nDashboard Cron Job 配置了 `/onenote-export sync`（每3小时），点击 Run 后 1.8 秒显示 success，但实际未执行任何 OneNote 同步操作。\n\n## 根因\n\n`cron-manager.ts` 的 `runTriggerNow()` 用 Claude Agent SDK 的 `query()` 执行 prompt：\n\n```js\nfor await (const _message of query({\n  prompt: job.name, // \"/onenote-export sync\"\n  options: { cwd: config.projectRoot, maxTurns: 30, ... }\n})) { /* consume silently */ }\n```\n\nSDK 的 `query()` 不认识 slash command（那是 Claude Code CLI 的概念）。SDK 收到 `/onenote-export sync` 后可能只是文本回复一句话就结束了，所以 1.8 秒假成功。\n\n## 影响\n\n**所有 cron job 的实际执行都无效**，不仅是 onenote-export sync。\n\n## 关键文件\n\n- `dashboard/src/services/cron-manager.ts` 第 92-104 行（scheduleJob 执行逻辑）\n- `dashboard/src/services/cron-manager.ts` 第 222-235 行（runTriggerNow 执行逻辑）\n- `dashboard/.runtime/cron-jobs.json`（cron 任务配置）\n\n## 修复方向\n\n1. **用 Claude Code CLI 而非 SDK** — 通过 `claude --print` 或子进程调用 CLI，CLI 支持 slash command\n2. **直接执行底层脚本** — 对已知的 slash command（如 onenote-export sync）直接调用对应的 PowerShell/Node 脚本，绕过 AI\n3. **混合方案** — 简单任务直接执行脚本，复杂任务调 CLI",
+  "type": "bug",
+  "priority": "P1",
+  "status": "tracked",
+  "trackId": "cron-exec-fix_20260401",
+  "testLoopScan": true,
+  "createdAt": "2026-04-01T12:15:00.000Z",
+  "updatedAt": "2026-04-01T12:15:00.000Z"
+}

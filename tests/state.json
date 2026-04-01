@@ -1,177 +1,122 @@
 {
-  "phase": "IDLE",
-  "round": 28,
+  "phase": "TEST",
+  "round": 47,
   "stats": {
-    "passed": 165,
-    "failed": 44,
-    "fixed": 44,
-    "skipped": 13
+    "passed": 214,
+    "failed": 3,
+    "fixed": 22,
+    "skipped": 18
   },
   "maxRounds": 80,
   "roundJourney": {
     "SCAN": {
       "status": "done",
-      "summary": "13 issue gaps, 2 obs gaps, 6 spec gaps | total=21 gaps → GENERATE",
-      "duration_ms": 292927,
-      "startedAt": "2026-03-30T00:03:41Z",
-      "completedAt": "2026-03-30T00:08:34Z"
+      "summary": "5 issue gaps, 0 regression gaps (3 design-fidelity, 2 issue-driven)",
+      "duration_ms": 1775000761396,
+      "startedAt": "2026-03-31T23:42:51Z",
+      "completedAt": "2026-03-31T23:46:01Z"
     },
     "GENERATE": {
       "status": "done",
-      "summary": "13 tests generated from 13 gaps (7 issue-driven, 2 obs, 4 spec-driven)",
-      "duration_ms": 94664,
-      "startedAt": "2026-03-30T00:09:05Z",
-      "completedAt": "2026-03-30T00:10:40Z"
+      "summary": "5 tests from 5 gaps (all pre-existing YAMLs re-queued)",
+      "duration_ms": 1775000841313,
+      "startedAt": "2026-03-31T23:46:45Z",
+      "completedAt": "2026-03-31T23:47:22Z",
+      "gapsProcessed": 5,
+      "testsGenerated": 0,
+      "testsRequeued": 5
     },
     "TEST": {
-      "status": "done",
-      "summary": "1 passed, 3 failed, 9 env-skipped (backend not running)",
-      "duration_ms": 484750,
-      "startedAt": "2026-03-30T01:47:25Z",
-      "completedAt": "2026-03-30T01:55:30Z"
+      "status": "pending",
+      "summary": "",
+      "duration_ms": 504130,
+      "startedAt": "2026-03-31T23:30:52Z",
+      "completedAt": "2026-03-31T23:39:15Z",
+      "earlyExit": true,
+      "earlyExitReason": "same-cause catastrophic failure: STEP_OUTPUT_source unbound variable (100% failure rate, batch=3)"
     },
     "FIX": {
-      "status": "running",
+      "status": "pending",
       "summary": "",
-      "duration_ms": 391409,
-      "startedAt": "2026-03-30T02:36:28Z",
-      "completedAt": "2026-03-29T23:54:35Z"
+      "duration_ms": 46895,
+      "startedAt": "2026-03-31T23:39:50Z",
+      "completedAt": "2026-03-31T23:40:36Z"
     },
     "VERIFY": {
       "status": "pending",
       "summary": "",
-      "duration_ms": 111901,
-      "startedAt": "2026-03-29T23:55:40Z",
-      "completedAt": "2026-03-29T23:57:32Z",
-      "verifyProcessed": 0,
+      "duration_ms": 48757,
+      "startedAt": "2026-03-31T23:41:08Z",
+      "completedAt": "2026-03-31T23:41:57Z",
+      "verifyProcessed": 11,
       "regressionProcessed": 0,
-      "verifyPassed": 0,
-      "regressionPassed": 1
+      "verifyPassed": 11,
+      "regressionPassed": 0
     }
   },
-  "testQueue": [],
-  "fixQueue": [
-    {
-      "testId": "spec-playwright-ui-tests",
-      "round": 28,
-      "addedAt": "2026-03-30T01:54:51.617Z",
-      "reason": "test_fail"
-    }
+  "testQueue": [
+    "df-retro-fix-context",
+    "df-poll-detect-fix",
+    "df-synthetic-edge-profiles",
+    "iss-184-patrol-sse-content",
+    "iss-181-reopen-cleanup"
   ],
-  "verifyQueue": [
-    {
-      "testId": "framework-fix-fixanalyzer-env-r28",
-      "fixType": "framework_fix",
-      "fixDescription": "fix-analyzer.sh now checks envIssue field in result JSON before keyword classification",
-      "recipeUsed": null,
-      "retryCount": 0,
-      "fixedAt": "2026-03-30T01:59:16.608Z"
-    },
-    {
-      "testId": "obs-bash-antipattern-r28",
-      "fixType": "infrastructure_fix",
-      "fixDescription": "Added probe_type:audit to YAML and obs-bash-antipattern-r28 handler to observability-runner.sh",
-      "recipeUsed": null,
-      "retryCount": 0,
-      "fixedAt": "2026-03-30T02:07:22.634Z"
-    },
-    {
-      "testId": "obs-uncovered-learnings-r28",
-      "fixType": "infrastructure_fix",
-      "fixDescription": "Added probe_type:metric to YAML and obs-uncovered-learnings-r28 metric handler to observability-runner.sh",
-      "recipeUsed": null,
-      "retryCount": 0,
-      "fixedAt": "2026-03-30T02:07:38.374Z"
-    }
-  ],
+  "fixQueue": [],
+  "verifyQueue": [],
   "regressionQueue": [],
-  "gaps": [],
+  "gaps": [
+    {
+      "type": "architecture",
+      "source": "arch-scan",
+      "category": "workflow-e2e",
+      "description": "SKILL.md has Windows-style paths (CLAUDE.md requires POSIX)",
+      "priority": "P2",
+      "testId": "arch-skill-windows-paths"
+    },
+    {
+      "type": "architecture",
+      "source": "arch-scan",
+      "category": "workflow-e2e",
+      "description": "architecture-scanner.sh has semicolon+var+pipe anti-pattern",
+      "priority": "P2",
+      "testId": "arch-scanner-var-pipe"
+    },
+    {
+      "type": "observability",
+      "source": "obs-scan",
+      "category": "workflow-e2e",
+      "description": "observability-runner.sh has hardcoded absolute paths — use $PROJECT_ROOT",
+      "priority": "P3",
+      "testId": "arch-obs-hardcoded-paths"
+    },
+    {
+      "type": "architecture",
+      "source": "arch-scan",
+      "category": "workflow-e2e",
+      "description": "architecture-scanner.sh has direct state.json write — use state-writer.sh",
+      "priority": "P2",
+      "testId": "arch-scanner-direct-state-write"
+    }
+  ],
   "currentTest": "",
   "inProgress": [],
   "skipRegistry": [
     {
-      "testId": "regression-iss058",
-      "reason": "retry:exhausted",
-      "reviewable": true,
-      "skippedAt": "2026-03-29T23:52:59.532Z",
-      "lastError": "Backend not running at http://localhost:3010",
-      "retryCount": 3
+      "testId": "iss-192-save-api",
+      "reason": "escalated:ISS-195",
+      "skippedAt": "2026-03-31T19:30:40Z",
+      "cycle": 42
     },
     {
-      "testId": "regression-iss064",
-      "reason": "retry:exhausted",
-      "reviewable": true,
-      "skippedAt": "2026-03-29T23:52:59.532Z",
-      "lastError": "Backend not running at http://localhost:3010",
-      "retryCount": 3
-    },
-    {
-      "testId": "iss150-severity-threshold",
-      "reason": "env_skip:backend_not_running",
-      "reviewable": true,
-      "skippedAt": "2026-03-30T01:54:51.617Z",
-      "round": 28
-    },
-    {
-      "testId": "iss151-email-type-context",
-      "reason": "env_skip:backend_not_running",
-      "reviewable": true,
-      "skippedAt": "2026-03-30T01:54:51.617Z",
-      "round": 28
-    },
-    {
-      "testId": "iss153-scoring-factors",
-      "reason": "env_skip:backend_not_running",
-      "reviewable": true,
-      "skippedAt": "2026-03-30T01:54:51.617Z",
-      "round": 28
-    },
-    {
-      "testId": "iss154-dynamic-iteration",
-      "reason": "env_skip:backend_not_running",
-      "reviewable": true,
-      "skippedAt": "2026-03-30T01:54:51.617Z",
-      "round": 28
-    },
-    {
-      "testId": "iss155-verification-plan-recipe",
-      "reason": "env_skip:backend_not_running",
-      "reviewable": true,
-      "skippedAt": "2026-03-30T01:54:51.617Z",
-      "round": 28
-    },
-    {
-      "testId": "iss168-discoveries-issueid",
-      "reason": "env_skip:backend_not_running",
-      "reviewable": true,
-      "skippedAt": "2026-03-30T01:54:51.617Z",
-      "round": 28
-    },
-    {
-      "testId": "spec-recipe-arch-index-format",
-      "reason": "env_skip:backend_not_running",
-      "reviewable": true,
-      "skippedAt": "2026-03-30T01:54:51.617Z",
-      "round": 28
-    },
-    {
-      "testId": "spec-recipe-arch-llm-flow",
-      "reason": "env_skip:backend_not_running",
-      "reviewable": true,
-      "skippedAt": "2026-03-30T01:54:51.617Z",
-      "round": 28
-    },
-    {
-      "testId": "spec-remove-info-tab-header",
-      "reason": "env_skip:backend_not_running",
-      "reviewable": true,
-      "skippedAt": "2026-03-30T01:54:51.617Z",
-      "round": 28
+      "testId": "reg-guard-casework-deps",
+      "reason": "no-assertions",
+      "skippedAt": "2026-03-31T23:39:06Z",
+      "cycle": 46
     }
   ],
   "phaseHistory": [],
   "observabilityStatus": {
-    "probesTotal": 6,
+    "probesTotal": 9,
     "probesRun": 0,
     "probesPass": 0,
     "probesFail": 0,
@@ -179,7 +124,10 @@
     "lastResults": {}
   },
   "roundStats": {
-    "passed": 0
+    "passed": 0,
+    "failed": 0,
+    "fixed": 0,
+    "skipped": 0
   },
   "scanStrategy": {
     "recipesUsed": [
@@ -190,8 +138,8 @@
     ],
     "overrideReason": "regressionRate=55% triggered regression-focused-scan recipe; env_issue items exhausted into skipRegistry"
   },
-  "runnerActive": "2026-03-30T02:35:41Z",
-  "runnerStep": "test-loop",
+  "runnerActive": "2026-03-31T23:25:32Z",
+  "runnerStep": "decide",
   "phaseProgress": null,
-  "status": "idle"
+  "status": "running"
 }

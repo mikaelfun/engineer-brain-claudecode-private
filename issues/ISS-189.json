@@ -1,0 +1,11 @@
+{
+  "id": "ISS-189",
+  "title": "Troubleshooter的排查不够详细，容易猜测，没有切实证据链，穷尽一切方法",
+  "description": "2603250010001221两个analysis md",
+  "type": "bug",
+  "priority": "P1",
+  "status": "pending",
+  "testLoopScan": true,
+  "createdAt": "2026-03-31T11:48:33.644Z",
+  "updatedAt": "2026-03-31T11:48:33.644Z"
+}

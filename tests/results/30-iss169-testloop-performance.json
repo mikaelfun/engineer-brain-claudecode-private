@@ -1,0 +1,9 @@
+{
+  "testId": "iss169-testloop-performance",
+  "round": 30,
+  "timestamp": "2026-03-30T17:46:06.000Z",
+  "status": "pass",
+  "assertions": [{"name":"File exists: test-supervisor-runner.md","pass":true,"expected":"exists","actual":"exists"},{"name":"JSON field: status = tracked","pass":true,"expected":"tracked","actual":"\"tracked\""}],
+  "error": null,
+  "duration_ms": 51948
+}

@@ -6,7 +6,11 @@
   "priority": "P1",
   "status": "implemented",
   "trackId": "gen-recipes_20260330",
-  "labels": ["test-framework", "recipe-architecture"],
+  "labels": [
+    "test-framework",
+    "recipe-architecture"
+  ],
   "createdAt": "2026-03-30T10:00:00+08:00",
-  "updatedAt": "2026-03-30T17:30:00+08:00"
+  "updatedAt": "2026-03-30T05:21:03.521Z",
+  "testLoopScan": true
 }

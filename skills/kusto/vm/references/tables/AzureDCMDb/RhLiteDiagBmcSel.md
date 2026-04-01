@@ -1,6 +1,6 @@
 ---
 name: RhLiteDiagBmcSel
-database: AzureDcmDb
+database: AzureDCMDb
 cluster: https://azuredcmmc.kusto.chinacloudapi.cn
 description: BMC SEL 诊断数据（LiteDiag 格式），记录 BMC 系统事件日志
 status: active

@@ -1,0 +1,9 @@
+{
+  "testId": "iss-192-save-api",
+  "round": 42,
+  "timestamp": "2026-03-31T18:23:34.000Z",
+  "status": "fail",
+  "assertions": [{"name":"No raw placeholders in API URL: GET http://localhost:3001/api/case/{{live_case_id}}/drafts","pass":false,"expected":"all resolved","actual":"raw: {live_case_id}"},{"name":"No raw placeholders in API URL: PUT http://localhost:3001/api/case/{{live_case_id}}/draft","pass":false,"expected":"all resolved","actual":"raw: {live_case_id}"},{"name":"No raw placeholders in API URL: GET http://localhost:3001/api/case/{{live_case_id}}/drafts","pass":false,"expected":"all resolved","actual":"raw: {live_case_id}"}],
+  "error": "3 of 3 assertions failed",
+  "duration_ms": 27092
+}

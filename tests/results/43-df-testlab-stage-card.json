@@ -1,0 +1,9 @@
+{
+  "testId": "df-testlab-stage-card",
+  "round": 43,
+  "timestamp": "2026-03-31T20:37:14.000Z",
+  "status": "pass",
+  "assertions": [{"name":"Stage card must have 36px icon (w-9/h-9 or explicit 36px)","pass":true,"expected":">0","actual":"2"},{"name":"stage-glow keyframe animation must be defined","pass":true,"expected":">0","actual":"2"},{"name":"Active stage glow color CSS variables must be set","pass":true,"expected":">0","actual":"7"}],
+  "error": null,
+  "duration_ms": 52025
+}

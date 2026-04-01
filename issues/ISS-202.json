@@ -1,0 +1,11 @@
+{
+  "id": "ISS-202",
+  "title": "设计多troubleshooter agent，不同模型，加reviewer agent，以事实为依据挑战模型的分析，完善证据链，左右互博",
+  "description": "",
+  "type": "bug",
+  "priority": "P1",
+  "status": "pending",
+  "testLoopScan": true,
+  "createdAt": "2026-04-01T09:47:09.563Z",
+  "updatedAt": "2026-04-01T09:47:09.563Z"
+}

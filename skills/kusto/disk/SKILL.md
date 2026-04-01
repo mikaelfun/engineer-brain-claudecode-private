@@ -40,28 +40,28 @@ last_modified: 2026-01-14
 
 | 表名 | 用途 | 文档 |
 |------|------|------|
-| DiskManagerApiQoSEvent | Disk RP API 调用 QoS 事件 | [📄](./references/tables/DiskManagerApiQoSEvent.md) |
-| DiskManagerContextActivityEvent | Disk 操作上下文活动 | [📄](./references/tables/DiskManagerContextActivityEvent.md) |
-| DiskRPResourceLifecycleEvent | 磁盘生命周期事件（创建/删除/附加） | [📄](./references/tables/DiskRPResourceLifecycleEvent.md) |
-| Disk | 托管磁盘元数据快照 | [📄](./references/tables/Disk.md) |
+| DiskManagerApiQoSEvent | Disk RP API 调用 QoS 事件 | [📄](./references/tables/Disks/DiskManagerApiQoSEvent.md) |
+| DiskManagerContextActivityEvent | Disk 操作上下文活动 | [📄](./references/tables/Disks/DiskManagerContextActivityEvent.md) |
+| DiskRPResourceLifecycleEvent | 磁盘生命周期事件（创建/删除/附加） | [📄](./references/tables/Disks/DiskRPResourceLifecycleEvent.md) |
+| Disk | 托管磁盘元数据快照 | [📄](./references/tables/Disks/Disk.md) |
 
 ### Fa 数据库 (IO 性能和诊断)
 
 | 表名 | 用途 | 文档 |
 |------|------|------|
-| OsXIOSurfaceCounterTable | VM 磁盘 IO 性能计数器（IOPS/MBPS/QD） | [📄](./references/tables/OsXIOSurfaceCounterTable.md) |
-| OsXIOSurfaceLatencyHistogramTableV2 | 磁盘 IO 延迟分布直方图 | [📄](./references/tables/OsXIOSurfaceLatencyHistogramTableV2.md) |
-| OsXIOXdiskCounterTable | xStore 层 IO 指标（RDMA/STCP） | [📄](./references/tables/OsXIOXdiskCounterTable.md) |
-| OsXIOThrottleCounterTable | IO 限流详细计数器 | [📄](./references/tables/OsXIOThrottleCounterTable.md) |
-| VhdDiskEtwEventTable | VHD 磁盘 ETW 事件（IO 超时/错误） | [📄](./references/tables/VhdDiskEtwEventTable.md) |
-| OsVhddiskEventTable | VHD 磁盘错误详情 | [📄](./references/tables/OsVhddiskEventTable.md) |
-| OsConfigTable | RDOS 磁盘配置（Blob URL, IOPS Limit） | [📄](./references/tables/OsConfigTable.md) |
+| OsXIOSurfaceCounterTable | VM 磁盘 IO 性能计数器（IOPS/MBPS/QD） | [📄](./references/tables/Fa/OsXIOSurfaceCounterTable.md) |
+| OsXIOSurfaceLatencyHistogramTableV2 | 磁盘 IO 延迟分布直方图 | [📄](./references/tables/Fa/OsXIOSurfaceLatencyHistogramTableV2.md) |
+| OsXIOXdiskCounterTable | xStore 层 IO 指标（RDMA/STCP） | [📄](./references/tables/Fa/OsXIOXdiskCounterTable.md) |
+| OsXIOThrottleCounterTable | IO 限流详细计数器 | [📄](./references/tables/Fa/OsXIOThrottleCounterTable.md) |
+| VhdDiskEtwEventTable | VHD 磁盘 ETW 事件（IO 超时/错误） | [📄](./references/tables/Fa/VhdDiskEtwEventTable.md) |
+| OsVhddiskEventTable | VHD 磁盘错误详情 | [📄](./references/tables/Fa/OsVhddiskEventTable.md) |
+| OsConfigTable | RDOS 磁盘配置（Blob URL, IOPS Limit） | [📄](./references/tables/Fa/OsConfigTable.md) |
 
 ### AzureDcmDb 数据库 (硬件信息)
 
 | 表名 | 用途 | 文档 |
 |------|------|------|
-| dcmInventoryComponentDiskDirect | 主机磁盘硬件库存（序列号/固件） | [📄](./references/tables/dcmInventoryComponentDiskDirect.md) |
+| dcmInventoryComponentDiskDirect | 主机磁盘硬件库存（序列号/固件） | [📄](./references/tables/AzureDCMDb/dcmInventoryComponentDiskDirect.md) |
 
 详细表定义见: [tables/](./references/tables/)
 

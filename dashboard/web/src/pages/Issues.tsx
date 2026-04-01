@@ -756,23 +756,46 @@ function IssueRow({
                 </span>
               )
             )}
-            {/* Test Loop Scan toggle — click to toggle, stopPropagation to avoid row expand */}
-            <span
+            {/* Test Loop Scan toggle — mini switch style, visually distinct from static badges */}
+            <button
+              type="button"
               title={issue.testLoopScan !== false ? 'Test Loop: enabled (click to disable)' : 'Test Loop: disabled (click to enable)'}
-              className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium cursor-pointer select-none"
-              style={{
-                background: issue.testLoopScan !== false ? 'var(--accent-teal-dim, var(--accent-blue-dim))' : 'var(--bg-inset)',
-                color: issue.testLoopScan !== false ? 'var(--accent-teal, var(--accent-blue))' : 'var(--text-tertiary)',
-                opacity: issue.testLoopScan !== false ? 1 : 0.5,
-              }}
+              className="flex items-center gap-1.5 cursor-pointer select-none group"
+              style={{ opacity: issue.testLoopScan !== false ? 1 : 0.6 }}
               onClick={(e) => {
                 e.stopPropagation()
                 updateIssue.mutate({ id: issue.id, testLoopScan: issue.testLoopScan !== false ? false : true })
               }}
             >
-              <FlaskConical className="w-3 h-3" />
-              {issue.testLoopScan !== false ? 'Scan' : 'Skip'}
-            </span>
+              {/* Mini toggle switch track */}
+              <span
+                className="relative inline-flex items-center rounded-full transition-colors duration-200"
+                style={{
+                  width: 28,
+                  height: 16,
+                  background: issue.testLoopScan !== false
+                    ? 'var(--accent-teal, var(--accent-cyan, #5ec4d4))'
+                    : 'var(--border-primary, #555)',
+                }}
+              >
+                {/* Switch knob */}
+                <span
+                  className="inline-block rounded-full bg-white shadow transition-transform duration-200"
+                  style={{
+                    width: 12,
+                    height: 12,
+                    transform: issue.testLoopScan !== false ? 'translateX(14px)' : 'translateX(2px)',
+                  }}
+                />
+              </span>
+              <span
+                className="text-xs"
+                style={{ color: issue.testLoopScan !== false ? 'var(--accent-teal, var(--accent-cyan, #5ec4d4))' : 'var(--text-tertiary)' }}
+              >
+                <FlaskConical className="w-3 h-3 inline -mt-px mr-0.5" />
+                {issue.testLoopScan !== false ? 'Scan' : 'Skip'}
+              </span>
+            </button>
           </div>
           <h3
             className={`text-sm font-medium mt-1 ${issue.status === 'done' ? 'line-through' : ''}`}

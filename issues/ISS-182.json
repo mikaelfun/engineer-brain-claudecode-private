@@ -1,0 +1,11 @@
+{
+  "id": "ISS-182",
+  "title": "TestLab WebUI 3个显示Bug: IDLE状态不一致 + [object Object]渲染 + /api/api/双重前缀",
+  "description": "TestLab页面与CLI dashboard对比发现3个Bug:\n\n1. **IDLE vs RUNNING状态不一致** (TestLab.tsx ~L213-219)\n   - CLI dashboard显示 RUNNING，WebUI显示 IDLE\n   - 根因：isRunning只检查status==='running'，未处理pipeline.currentStage存在时的fallback\n   - 修复：当status==='idle'但pipelineData.currentStage存在时，应视为active\n\n2. **Skipped Tests渲染[object Object]** (TestLab.tsx ~L1021-1025)\n   - skipRegistry是数组[{testId,reason}...]，但代码用Object.entries()处理\n   - Object.entries(array)产生[['0',{...}],['1',{...}]...]，String({...})='[object Object]'\n   - 修复：改为Array.isArray检查 + .map((entry) => entry.testId / entry.reason)\n\n3. **recent-events API双重/api/api/前缀** (TestLab.tsx ~L1067)\n   - BASE_URL已是'/api'，代码又拼接了'/api/tests/recent-events'\n   - 实际请求变成 /api/api/tests/recent-events → 404\n   - 修复：改为 `${BASE_URL}/tests/recent-events`",
+  "type": "bug",
+  "priority": "P0",
+  "status": "implemented",
+  "testLoopScan": true,
+  "createdAt": "2026-03-31T01:36:00+08:00",
+  "updatedAt": "2026-03-31T01:50:00+08:00"
+}

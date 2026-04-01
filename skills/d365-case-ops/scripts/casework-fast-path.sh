@@ -34,10 +34,12 @@ fi
 # --- Compliance cache check ---
 COMP_OK="false"
 ENTITLEMENT_OK=$(sed -n 's/.*"entitlementOk":[[:space:]]*\(true\|false\).*/\1/p' "$META" 2>/dev/null | head -1)
-if [ "$ENTITLEMENT_OK" = "true" ]; then
+# ccAccount must exist in meta (even null counts as evaluated); missing = CC Finder never ran
+CC_EVALUATED=$(grep -c '"ccAccount"' "$META" 2>/dev/null || echo 0)
+if [ "$ENTITLEMENT_OK" = "true" ] && [ "$CC_EVALUATED" -gt 0 ]; then
   COMP_OK="true"
   echo "$NOW" > "$CD/logs/.t_compliance_start"; echo "$NOW" > "$CD/logs/.t_compliance_end"
-  echo "[$(date '+%Y-%m-%d %H:%M:%S')] STEP 3a SKIP | compliance cached (entitlementOk=true)" >> "$LOG"
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] STEP 3a SKIP | compliance cached (entitlementOk=true, ccAccount evaluated)" >> "$LOG"
 fi
 
 # --- Status-judge cache check ---

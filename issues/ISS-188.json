@@ -1,0 +1,11 @@
+{
+  "id": "ISS-188",
+  "title": "Email 内联图片不显示 — 缺少 images/ 路由",
+  "description": "Email markdown 引用 images/inlineimg_xxx.png，图片文件存在于 case 目录下 images/，但后端只有 attachments/ 文件服务路由，没有 images/ 路由",
+  "type": "bug",
+  "priority": "P1",
+  "status": "pending",
+  "testLoopScan": true,
+  "createdAt": "2026-03-31T11:19:09.743Z",
+  "updatedAt": "2026-03-31T11:19:09.743Z"
+}

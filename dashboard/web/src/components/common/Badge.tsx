@@ -124,6 +124,83 @@ export function HealthScoreBadge({ meta }: { meta: any }) {
   )
 }
 
+/** Entitlement Warning Banner — full-width alert for non-compliant cases */
+export function EntitlementWarningBanner({ compliance }: { compliance: any }) {
+  if (!compliance || compliance.entitlementOk !== false) return null
+
+  return (
+    <div
+      className="rounded-lg px-3 py-2.5 text-xs"
+      style={{
+        background: 'color-mix(in srgb, var(--accent-red) 12%, var(--bg-surface))',
+        border: '1px solid color-mix(in srgb, var(--accent-red) 30%, transparent)',
+      }}
+    >
+      <div className="flex items-center gap-2 mb-1.5">
+        <span className="text-sm">⚠️</span>
+        <span className="font-bold" style={{ color: 'var(--accent-red)' }}>
+          Entitlement Warning — Contact TA
+        </span>
+      </div>
+      <div className="grid grid-cols-3 gap-2 ml-6" style={{ color: 'var(--text-secondary)' }}>
+        <div>
+          <span style={{ color: 'var(--text-tertiary)' }}>Service: </span>
+          <span className="font-mono">{compliance.serviceName || 'N/A'}</span>
+        </div>
+        <div>
+          <span style={{ color: 'var(--text-tertiary)' }}>Schedule: </span>
+          <span className="font-mono">{compliance.schedule || 'N/A'}</span>
+        </div>
+        <div>
+          <span style={{ color: 'var(--text-tertiary)' }}>Country: </span>
+          <span className="font-mono">{compliance.contractCountry || 'N/A'}</span>
+        </div>
+      </div>
+      {compliance.warnings?.length > 0 && (
+        <div className="ml-6 mt-1" style={{ color: 'var(--accent-red)' }}>
+          {compliance.warnings.join('; ')}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** Compact entitlement warning badge for case list cards */
+export function EntitlementWarningBadge({ compliance }: { compliance: any }) {
+  if (!compliance || compliance.entitlementOk !== false) return null
+  return (
+    <span
+      className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold font-mono rounded-[5px] whitespace-nowrap"
+      style={{
+        background: 'color-mix(in srgb, var(--accent-red) 15%, transparent)',
+        color: 'var(--accent-red)',
+        border: '1px solid color-mix(in srgb, var(--accent-red) 30%, transparent)',
+      }}
+      title={`Service: ${compliance.serviceName || 'N/A'} | Schedule: ${compliance.schedule || 'N/A'} | Country: ${compliance.contractCountry || 'N/A'}`}
+    >
+      ⚠️ ENTITLEMENT
+    </span>
+  )
+}
+
+/** RDSE customer badge for case list and detail header */
+export function RdseBadge({ ccAccount }: { ccAccount?: string }) {
+  if (!ccAccount) return null
+  return (
+    <span
+      className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold font-mono rounded-[5px] whitespace-nowrap"
+      style={{
+        background: 'var(--accent-purple-dim)',
+        color: 'var(--accent-purple)',
+        border: '1px solid color-mix(in srgb, var(--accent-purple) 25%, transparent)',
+      }}
+      title={`RDSE Customer: ${ccAccount}`}
+    >
+      RDSE · {ccAccount.length > 20 ? ccAccount.slice(0, 20) + '…' : ccAccount}
+    </span>
+  )
+}
+
 /** Compute health score from CaseHealthMeta (0-100) */
 function computeHealthScore(meta: any): number {
   if (!meta) return 0

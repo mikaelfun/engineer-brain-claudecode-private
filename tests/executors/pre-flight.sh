@@ -117,7 +117,8 @@ const health = healthData.health || 'warning';
 const staleSince = healthData.staleSince || null;
 const paused = directives.paused || false;
 
-// ---- Queue sizes ----const queues = {
+// ---- Queue sizes ----
+const queues = {
   test: testQueue.length,
   fix: fixQueue.length,
   verify: verifyQueue.length,

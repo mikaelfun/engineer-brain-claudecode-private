@@ -56,7 +56,10 @@ generate_jwt() {
 # ============================================================
 check_backend() {
   local status
-  status=$(curl -sf -o /dev/null -w "%{http_code}" "$API_BASE/api/health" 2>/dev/null || echo "000")
+  status=$(curl -sf -o /dev/null -w "%{http_code}" "$API_BASE/api/health" 2>/dev/null)
+  if [ -z "$status" ]; then
+    status="000"
+  fi
   if [ "$status" = "200" ]; then
     return 0
   else
@@ -66,7 +69,10 @@ check_backend() {
 
 check_frontend() {
   local status
-  status=$(curl -sf -o /dev/null -w "%{http_code}" "$FRONTEND_URL" 2>/dev/null || echo "000")
+  status=$(curl -sf -o /dev/null -w "%{http_code}" "$FRONTEND_URL" 2>/dev/null)
+  if [ -z "$status" ]; then
+    status="000"
+  fi
   if [ "$status" = "200" ]; then
     return 0
   else

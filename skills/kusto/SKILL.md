@@ -186,6 +186,42 @@ Parameters:
 [分析结论]
 ```
 
+## 目录结构（重构后）
+
+表定义按 **database** 子目录组织：
+
+```
+skills/kusto/{product}/references/
+├── kusto_clusters.csv
+├── tables/
+│   ├── {database_1}/
+│   │   ├── Table1.md
+│   │   └── Table2.md
+│   ├── {database_2}/
+│   │   └── Table3.md
+│   └── README.md
+└── queries/
+    └── {scenario}.md
+```
+
+## 执行方式
+
+**推荐**: 使用 [kusto-query skill](../.claude/skills/kusto-query/SKILL.md) 执行查询：
+- 多集群切换（37 个 cluster+db 组合）
+- 智能截断（控制 context 开销）
+- Schema 漂移自动修复
+- 通过 `scripts/kusto-query.py` 执行
+
+**备选**: Kusto MCP（仅限 mcakshuba/AKSprod 集群）。
+
+## 产品排查 Skill
+
+每个产品有独立的排查 skill（决策树 + 已知问题 + 工具链）：
+- 总览: `skills/products/SKILL.md`
+- 各产品: `skills/products/{product}/SKILL.md`
+
+Kusto skill 提供**数据字典**（表、查询模板），产品 skill 提供**排查思路**。
+
 ## 访问说明
 
 - **Mooncake 环境**: 使用 CME 卡 (`<username>@cme.gbl`) 访问
@@ -193,5 +229,6 @@ Parameters:
 
 ## 相关资源
 
-- [fabric-rti-mcp 工具文档](../README.md)
+- [kusto-query skill](../.claude/skills/kusto-query/SKILL.md) — Python 查询引擎
+- [产品排查 Skill 总览](../products/SKILL.md) — 排查思路和决策树
 - [Kusto 查询语言参考](https://learn.microsoft.com/kusto/query/)

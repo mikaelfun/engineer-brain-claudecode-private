@@ -11,6 +11,7 @@ import CaseDetail from './pages/CaseDetail'
 import TodoView from './pages/TodoView'
 import AgentMonitor from './pages/AgentMonitor'
 import DraftsPage from './pages/DraftsPage'
+import LaborEstimatePage from './pages/LaborEstimatePage'
 import SettingsPage from './pages/SettingsPage'
 import Issues from './pages/Issues'
 import CasesPage from './pages/CasesPage'
@@ -30,6 +31,7 @@ function AuthenticatedApp() {
         <Route path="/cases" element={<CasesPage />} />
         <Route path="/case/:id" element={<CaseDetail />} />
         <Route path="/todo" element={<TodoView />} />
+        <Route path="/labor" element={<LaborEstimatePage />} />
         <Route path="/agents" element={<AgentMonitor />} />
         <Route path="/drafts" element={<DraftsPage />} />
         <Route path="/tests" element={<TestLab />} />

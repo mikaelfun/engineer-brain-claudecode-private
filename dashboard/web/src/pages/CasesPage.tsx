@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Briefcase, ShieldAlert, UserCheck, Clock, ArrowUpDown, RefreshCw, Zap, MessageSquare, Loader2 } from 'lucide-react'
 import { StatCard, Card } from '../components/common/Card'
-import { SeverityBadge, CaseStatusBadge, SlaBadge } from '../components/common/Badge'
+import { SeverityBadge, CaseStatusBadge, SlaBadge, EntitlementWarningBadge, RdseBadge } from '../components/common/Badge'
 import { Loading, ErrorState, EmptyState } from '../components/common/Loading'
 import { useCases, useActiveOperations } from '../api/hooks'
 import { apiPost } from '../api/client'
@@ -215,6 +215,8 @@ export default function CasesPage() {
                         <span className="font-mono text-xs font-semibold" style={{ color: 'var(--accent-blue)' }}>{c.caseNumber}</span>
                         <SeverityBadge severity={c.severity} />
                         <CaseStatusBadge status={c.status} />
+                        {c.meta?.compliance && <EntitlementWarningBadge compliance={c.meta.compliance} />}
+                        {c.meta?.ccAccount && <RdseBadge ccAccount={c.meta.ccAccount} />}
                       </div>
                       <h4 className="font-medium mt-1 text-[13px] truncate" style={{ color: 'var(--text-primary)' }} title={c.title || 'Untitled'}>{c.title || 'Untitled'}</h4>
                       <p className="text-xs mt-0.5 flex items-center gap-1.5 flex-wrap">

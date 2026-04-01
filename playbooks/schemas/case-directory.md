@@ -9,7 +9,9 @@
 ```text
 ${casesRoot}/
   active/{case-id}/      # 所有活跃 Case（普通 + AR）
-  archived/{case-id}/    # 已关单 Case
+  archived/{case-id}/    # 已关单 Case（D365 Resolved/Cancelled）
+  transfer/{case-id}/    # 已转移 Case（不在 active 也不在 closed，转给其他工程师）
+  archive-log.jsonl      # 归档/转移操作日志（每行一条 JSON）
   casehealth-state.json  # 全局巡检状态
 ```
 

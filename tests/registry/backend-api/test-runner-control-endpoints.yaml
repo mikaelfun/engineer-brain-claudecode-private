@@ -1,0 +1,26 @@
+id: "test-runner-control-endpoints"
+name: "Test Runner Lifecycle Control Endpoints"
+category: "backend-api"
+source: "dashboard/src/routes/test-runner.ts"
+description: "Verify GET /api/tests/runner/status returns 200 with runner state. POST /start and /stop tested via status only (avoid triggering actual test run)"
+safety_level: "safe"
+priority: "high"
+tags: ["testlab", "api", "plateau-breaking"]
+
+steps:
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/tests/runner/status"
+      auth: true
+
+assertions:
+  - type: "status_code"
+    target: "GET /api/tests/runner/status"
+    expected: 200
+  - type: "json_field"
+    target: "GET /api/tests/runner/status"
+    field: "state"
+    expected: "string"
+
+timeout_seconds: 15

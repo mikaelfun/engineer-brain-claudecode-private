@@ -1,0 +1,9 @@
+{
+  "testId": "reg-guard-retro-endpoints",
+  "round": 46,
+  "timestamp": "2026-03-31T23:37:32.000Z",
+  "status": "pass",
+  "assertions": [{"name":"retroContext referenced in stage-worker phases","pass":true,"expected":"exit 0","actual":"exit 0"},{"name":"retro handling exists in fix-recorder or fix-analyzer","pass":true,"expected":"exit 0","actual":"exit 0"}],
+  "error": null,
+  "duration_ms": 45465
+}

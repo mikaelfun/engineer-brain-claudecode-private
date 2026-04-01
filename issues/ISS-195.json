@@ -1,0 +1,16 @@
+{
+  "id": "ISS-195",
+  "title": "api-runner: implement step chaining (dynamic placeholder extraction from response)",
+  "description": "Test iss-192-save-api fails with unresolved {draft_filename} placeholder. Root cause: api-runner.sh does not support extracting values from previous step responses and injecting them into subsequent API calls. Two fix attempts (retryCount=2) addressed unrelated curl issues, never tackled step chaining. Need to design chaining syntax in test YAML and implement extraction/injection logic in api-runner.sh.",
+  "type": "bug",
+  "priority": "P2",
+  "status": "tracked",
+  "testLoopScan": true,
+  "discoveredBy": "test-loop",
+  "testId": "iss-192-save-api",
+  "round": 42,
+  "fixRef": "tests/results/fixes/iss-192-save-api-fix.md",
+  "createdAt": "2026-03-31T19:30:30Z",
+  "updatedAt": "2026-03-31T19:30:30Z",
+  "trackId": "testloop-iss-195_20260331"
+}

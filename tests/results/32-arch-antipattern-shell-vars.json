@@ -1,0 +1,9 @@
+{
+  "testId": "arch-antipattern-shell-vars",
+  "round": 32,
+  "timestamp": "2026-03-30T19:31:15.000Z",
+  "status": "pass",
+  "assertions": [{"name":"File exists: architecture-scanner.sh","pass":true,"expected":"exists","actual":"exists"}],
+  "error": null,
+  "duration_ms": 28832
+}

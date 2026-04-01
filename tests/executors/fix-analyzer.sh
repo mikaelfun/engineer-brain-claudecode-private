@@ -240,6 +240,42 @@ if [ "$IS_ENV_ISSUE" = true ]; then
   log_info "Root Cause Trace: $TRACE_RESULT"
 fi
 
+# ============================================================
+# Extract retroContext if present (from Phase Retrospective)
+# ============================================================
+# fixQueue items created by Phase Retrospective carry a retroContext object
+# with guided repair info: anomaly, rootCause, targetFile, targetLine, phase, round.
+# When retroContext is available, it provides precise fix locations — no exploration needed.
+RETRO_CONTEXT=""
+HAS_RETRO_CONTEXT=false
+
+# Check result JSON for retroContext (may be embedded by stage-worker)
+RETRO_CONTEXT=$(echo "$RESULT_JSON" | NODE_PATH="$DASHBOARD_DIR/node_modules" node -e "
+const d=JSON.parse(require('fs').readFileSync(0,'utf8'));
+if (d.retroContext) {
+  console.log(JSON.stringify(d.retroContext, null, 2));
+}
+" 2>/dev/null || echo "")
+
+# Also check queues.json fixQueue for retroContext on this testId
+if [ -z "$RETRO_CONTEXT" ] && [ -f "$QUEUES_FILE" ]; then
+  RETRO_CONTEXT=$(QUEUES_PATH="$QUEUES_FILE" FIX_TEST_ID="$TEST_ID" \
+    NODE_PATH="$DASHBOARD_DIR/node_modules" node -e "
+    const fs = require('fs');
+    const queues = JSON.parse(fs.readFileSync(process.env.QUEUES_PATH, 'utf8'));
+    const item = (queues.fixQueue || []).find(e => e.testId === process.env.FIX_TEST_ID);
+    if (item && item.retroContext) {
+      console.log(JSON.stringify(item.retroContext, null, 2));
+    }
+  " 2>/dev/null || echo "")
+fi
+
+if [ -n "$RETRO_CONTEXT" ] && [ "$RETRO_CONTEXT" != "" ]; then
+  HAS_RETRO_CONTEXT=true
+  log_info "retroContext found — guided repair available"
+  log_info "retroContext: $RETRO_CONTEXT"
+fi
+
 write_progress "$TEST_ID" "fix_classify" "Classified as $FAILURE_TYPE (env=$IS_ENV_ISSUE), writing analysis" "fix"
 
 # ============================================================
@@ -352,6 +388,21 @@ elif [ "$IS_ENV_ISSUE" = true ]; then
   echo "_Trace skipped — initial classification was env_issue but no API endpoint found to trace._"
 else
   echo "_Not applicable — failure type ($FAILURE_TYPE) did not trigger root cause trace._"
+fi)
+
+## Retro Context (Phase Retrospective)
+
+$(if [ "$HAS_RETRO_CONTEXT" = true ]; then
+  echo "**Guided repair available** — retroContext provides precise fix location."
+  echo ""
+  echo "\`\`\`json"
+  echo "$RETRO_CONTEXT"
+  echo "\`\`\`"
+  echo ""
+  echo "Use the retroContext fields (targetFile, targetLine, rootCause, anomaly) to perform"
+  echo "a targeted fix without exploratory investigation."
+else
+  echo "_No retroContext available — standard analysis workflow applies._"
 fi)
 
 ## Files to Examine

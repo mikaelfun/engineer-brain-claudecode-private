@@ -1,0 +1,16 @@
+{
+  "id": "ISS-183",
+  "title": "Missing test-supervisor detail endpoints (/result/:round/:testId and /fix/:testId)",
+  "description": "Dashboard API missing two critical endpoints for test-loop observability:\\n\\n1. GET /api/tests/result/:round/:testId - Should return specific round test results\\n2. GET /api/tests/fix/:testId - Should return fix details for a test\\n\\nThese endpoints are needed for detailed test inspection in the Test Lab UI. Currently returns 404 when queried.\\n\\nFixed by implementing fallback logic in test-reader service and enhancing route handler.",
+  "type": "bug",
+  "priority": "P2",
+  "status": "tracked",
+  "testLoopScan": true,
+  "discoveredBy": "test-loop",
+  "testId": "test-supervisor-detail-endpoints",
+  "round": 36,
+  "fixRef": "tests/results/fixes/test-supervisor-detail-endpoints-fix.md",
+  "createdAt": "2026-03-30T22:41:50Z",
+  "updatedAt": "2026-03-30T22:41:50Z",
+  "trackId": "testloop-iss-183_20260330"
+}

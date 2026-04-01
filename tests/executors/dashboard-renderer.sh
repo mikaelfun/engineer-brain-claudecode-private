@@ -116,11 +116,16 @@ try {
 if (!hasIP && currentTest) hasIP = true;
 
 // Supervisor-level activity: read authoritative status fields
+// Bug fix: don't blindly trust sup.status — check active timestamp for staleness
 let runnerActive = false;
 const supStep = sup.step || null;
 const supStatus = sup.status || 'idle';
 const plStatus = pl.pipelineStatus || 'idle';
-if (supStatus === 'running' || plStatus === 'running') { runnerActive = true; hasIP = true; }
+const supActive = sup.active ? new Date(sup.active).getTime() : 0;
+const supStaleMins = supActive > 0 ? Math.round((now - supActive) / 60000) : 999;
+// Supervisor claiming "running" but no heartbeat for 30+ min = crashed runner
+const supTrulyRunning = supStatus === 'running' && supStaleMins < 30;
+if (supTrulyRunning || plStatus === 'running') { runnerActive = true; hasIP = true; }
 
 let staleSince = null;
 if (lastAct) {

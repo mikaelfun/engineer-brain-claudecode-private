@@ -1,0 +1,25 @@
+{
+  "round": 40,
+  "cycle": 40,
+  "timestamp": "2026-03-31T17:17:14Z",
+  "currentStage": "SCAN",
+  "stats": {
+    "totalTests": 238,
+    "passed": 202,
+    "failed": 5,
+    "fixed": 5,
+    "skipped": 13,
+    "coverage": 81,
+    "greenRate": 0,
+    "regressionRate": 0,
+    "fixThroughput": 26
+  },
+  "cycleStats": {
+    "passed": 0,
+    "failed": 0
+  },
+  "queues": {
+    "testQueue": 0,
+    "fixQueue": 0
+  }
+}

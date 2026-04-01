@@ -1,0 +1,9 @@
+{
+  "testId": "learnings-regression-infra",
+  "round": 37,
+  "timestamp": "2026-03-30T23:15:43.000Z",
+  "status": "pass",
+  "assertions": [{"name":"All infra learnings still valid (7 checks)","pass":true,"expected":"7/7 pass","actual":"7/7 pass"},{"name":"No infra regressions detected","pass":true,"expected":"0 regressions","actual":"0 regressions"}],
+  "error": null,
+  "duration_ms": 1613
+}

@@ -4,8 +4,10 @@
   "description": "在 Issues 页面点击 Implement 按钮后，页面没有自动滚动到正在实现的 Issue 卡片位置。用户需要手动寻找当前正在 implementing 的 issue，体验不好。\n\n期望行为：点击 Implement 后，页面自动滚动到该 issue 卡片并保持可见，方便用户实时追踪实现进度。",
   "type": "feature",
   "priority": "P1",
-  "status": "implemented",
+  "status": "done",
   "trackId": "implement-auto-scroll_20260322",
   "createdAt": "2026-03-22T23:35:00+08:00",
-  "updatedAt": "2026-03-22T23:45:00+08:00"
+  "updatedAt": "2026-03-22T23:45:00+08:00",
+  "closedReason": "stale-audit: absorbed by later work or test-auto residue",
+  "closedAt": "2026-03-30T23:25:00+08:00"
 }

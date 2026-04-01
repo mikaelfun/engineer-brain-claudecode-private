@@ -1,0 +1,26 @@
+id: df-inspection-blockquote
+name: "Design Fidelity: Inspection blockquote with left border and dark theme"
+category: ui-visual
+source: design-fidelity
+description: "验证 inspection-beautify spec AC: 引用块有左边框和背景色"
+safety_level: safe
+priority: high
+tags: ["design-fidelity", "inspection-beautify_20260320"]
+recipe_used: design-fidelity-test.md
+data_source: live
+live_pool: data_rich
+steps:
+  - action: playwright_navigate
+    params:
+      url: "http://localhost:5173/cases/{caseId}"
+  - action: playwright_click
+    params:
+      selector: "[data-tab='inspection'], button:has-text('Inspection')"
+  - action: playwright_evaluate
+    params:
+      expression: "document.querySelectorAll('blockquote').length"
+assertions:
+  - type: element_visible
+    target: "blockquote"
+    expected: true
+timeout_seconds: 90

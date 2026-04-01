@@ -1,0 +1,12 @@
+{
+  "id": "ISS-198",
+  "title": "onenote-export sync 缺少导出范围记忆 + timestamp 假增量",
+  "description": "两个问题：\n\n1) **导出范围记忆缺失**：sync 模式对每个 notebook 只传 -NotebookName（无 filter），导致之前用 -SectionPath 部分导出的 notebook 被全量拉入不需要的 section。需要每个 notebook 目录存 .export-scope.json 记录原始导出范围（sections 列表），sync 时读取并传给脚本。无 scope 文件时提示用户确认范围。\n\n2) **timestamp 不稳定导致假增量**：OneNote COM hierarchy 的 lastModifiedTime 在两次调用间不一致（时间戳倒退），导致增量检测全部判定为"已变更"但内容实际没变（324/407 pages 重导出，diff 只有 frontmatter modified: 行）。需要增加 content hash 校验：timestamp 不同时先比较 content hash，hash 相同只更新 frontmatter timestamp 不重导页面内容，hash 不同才真正重导。hash 存在 frontmatter content_hash: 字段。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "tracked",
+  "trackId": "onenote-sync-scope_20260401",
+  "testLoopScan": true,
+  "createdAt": "2026-04-01T16:30:00.000Z",
+  "updatedAt": "2026-04-01T16:30:00.000Z"
+}

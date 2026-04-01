@@ -8,6 +8,7 @@ import { Hono } from 'hono'
 import { readFileSync, existsSync, readdirSync, statSync } from 'fs'
 import { join } from 'path'
 import { config } from '../config.js'
+import { readCaseMeta } from '../services/meta-reader.js'
 
 const todos = new Hono()
 
@@ -46,11 +47,14 @@ todos.get('/all', (c) => {
           const filePath = join(todoDir, latestFile)
           const content = readFileSync(filePath, 'utf-8')
 
+          const meta = readCaseMeta(caseId)
           allTodos.push({
             caseNumber: caseId,
             filename: latestFile,
             content,
             updatedAt: statSync(filePath).mtime.toISOString(),
+            compliance: meta?.compliance || null,
+            ccAccount: meta?.ccAccount || null,
           })
         }
       } catch {

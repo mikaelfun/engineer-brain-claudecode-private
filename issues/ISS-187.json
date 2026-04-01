@@ -1,0 +1,11 @@
+{
+  "id": "ISS-187",
+  "title": "Email tab 排序从旧到新，应从新到旧",
+  "description": "前端 EmailsTab 直接 emails.map() 不做排序，后端按文件中原始顺序（旧→新）返回，用户期望最新邮件在最上面",
+  "type": "bug",
+  "priority": "P1",
+  "status": "pending",
+  "testLoopScan": true,
+  "createdAt": "2026-03-31T11:19:09.743Z",
+  "updatedAt": "2026-03-31T11:19:09.743Z"
+}

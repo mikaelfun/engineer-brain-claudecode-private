@@ -4,7 +4,7 @@
  */
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Briefcase, ShieldAlert, UserCheck, Clock, Activity, Play, Loader2, AlertTriangle, TrendingUp, BarChart3, X, Square } from 'lucide-react'
+import { Briefcase, ShieldAlert, UserCheck, Clock, Activity, Play, Loader2, AlertTriangle, TrendingUp, BarChart3, X, Square, Ban } from 'lucide-react'
 import { Card, CardHeader } from '../components/common/Card'
 import { Loading, ErrorState, EmptyState } from '../components/common/Loading'
 import { useCases, usePatrolState, useStartPatrol, useCancelPatrol } from '../api/hooks'
@@ -228,6 +228,93 @@ export default function Dashboard() {
             <ClickableStat label="Needs My Action" value={statCounts.needsMyAction} color="amber" filter="needs-my-action" />
             <ClickableStat label="Awaiting Others" value={statCounts.awaitingOthers} color="green" filter="awaiting-others" />
           </div>
+
+          {/* Entitlement & RDSE Alerts */}
+          {(() => {
+            const entitlementCases = cases.filter((c: any) => c.meta?.compliance?.entitlementOk === false)
+            const rdseCases = cases.filter((c: any) => c.meta?.ccAccount)
+            if (entitlementCases.length === 0 && rdseCases.length === 0) return null
+            return (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {entitlementCases.length > 0 && (
+                  <div
+                    className="rounded-xl p-4 border"
+                    style={{
+                      background: 'color-mix(in srgb, var(--accent-red) 8%, var(--bg-surface))',
+                      borderColor: 'color-mix(in srgb, var(--accent-red) 25%, transparent)',
+                    }}
+                  >
+                    <div className="flex items-center gap-2 mb-3">
+                      <Ban className="w-4 h-4" style={{ color: 'var(--accent-red)' }} />
+                      <span className="text-sm font-bold" style={{ color: 'var(--accent-red)' }}>
+                        Entitlement Warning ({entitlementCases.length})
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      {entitlementCases.map((c: any) => (
+                        <button
+                          key={c.caseNumber}
+                          onClick={() => navigate(`/case/${c.caseNumber}`)}
+                          className="w-full text-left px-3 py-2 rounded-lg transition-colors"
+                          style={{ background: 'color-mix(in srgb, var(--accent-red) 6%, transparent)' }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'color-mix(in srgb, var(--accent-red) 12%, transparent)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'color-mix(in srgb, var(--accent-red) 6%, transparent)'}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-mono text-xs font-semibold" style={{ color: 'var(--accent-blue)' }}>{c.caseNumber}</span>
+                            <span className="text-[10px] font-mono" style={{ color: 'var(--accent-red)' }}>Contact TA</span>
+                          </div>
+                          <div className="text-[10px] mt-0.5 font-mono" style={{ color: 'var(--text-tertiary)' }}>
+                            {c.meta.compliance.serviceName || 'N/A'} · {c.meta.compliance.schedule || 'N/A'} · {c.meta.compliance.contractCountry || 'N/A'}
+                          </div>
+                          <div className="text-xs mt-0.5 truncate" style={{ color: 'var(--text-secondary)' }}>{c.title}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {rdseCases.length > 0 && (
+                  <div
+                    className="rounded-xl px-4 py-3 border"
+                    style={{
+                      background: 'color-mix(in srgb, var(--accent-purple) 6%, var(--bg-surface))',
+                      borderColor: 'color-mix(in srgb, var(--accent-purple) 20%, transparent)',
+                    }}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <ShieldAlert className="w-3.5 h-3.5" style={{ color: 'var(--accent-purple)' }} />
+                      <span className="text-xs font-bold" style={{ color: 'var(--accent-purple)' }}>
+                        RDSE ({rdseCases.length})
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {rdseCases.map((c: any) => {
+                        // Show short account name (first alias before /)
+                        const shortName = (c.meta.ccAccount || '').split('/')[0].trim()
+                        return (
+                          <button
+                            key={c.caseNumber}
+                            onClick={() => navigate(`/case/${c.caseNumber}`)}
+                            className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-mono transition-colors"
+                            style={{
+                              background: 'color-mix(in srgb, var(--accent-purple) 10%, transparent)',
+                              border: '1px solid color-mix(in srgb, var(--accent-purple) 15%, transparent)',
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.background = 'color-mix(in srgb, var(--accent-purple) 20%, transparent)'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'color-mix(in srgb, var(--accent-purple) 10%, transparent)'}
+                            title={`${c.caseNumber} · ${c.title}`}
+                          >
+                            <span style={{ color: 'var(--accent-blue)' }}>{c.caseNumber.slice(-4)}</span>
+                            <span style={{ color: 'var(--accent-purple)' }}>{shortName}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })()}
 
           {/* Two-column layout for distribution cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

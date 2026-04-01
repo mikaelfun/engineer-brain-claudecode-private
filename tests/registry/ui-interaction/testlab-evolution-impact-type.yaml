@@ -1,0 +1,34 @@
+# Test: TestLab EvolutionTimeline impact type safety
+# Generated: Round 32 | Source: directive:dir-003
+# Recipe: none
+
+id: "testlab-evolution-impact-type"
+name: "TestLab: EvolutionTimeline renders when entry.impact is object or string"
+category: "ui-interaction"
+source: "directive:dir-003"
+safety_level: "safe"
+description: "Verify dashboard/web/src/pages/TestLab.tsx EvolutionTimeline component handles entry.impact as both string and object without crashing or rendering [object Object]"
+
+steps:
+  - action: "validate"
+    params:
+      description: "Verify EvolutionTimeline has type-safe impact rendering logic"
+
+assertions:
+  - type: "file_exists"
+    target: "dashboard/web/src/pages/TestLab.tsx"
+    expected: "true"
+  - type: "text_not_contains"
+    target: "dashboard/web/src/pages/TestLab.tsx"
+    expected: "{entry.impact}"
+    description: "Direct interpolation without type check would produce [object Object] for non-string impact"
+  - type: "text_contains_one_of"
+    target: "dashboard/web/src/pages/TestLab.tsx"
+    expected: ["typeof", "String(", "impact?.toString", "impact as string", "String(entry.impact"]
+    description: "At least one safe string coercion pattern must be present for impact rendering"
+
+metadata:
+  generatedAt: "2026-03-31T19:09:00.000Z"
+  round: 32
+  gapId: "directive:dir-003"
+  recipeUsed: null

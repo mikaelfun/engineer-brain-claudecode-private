@@ -1,10 +1,12 @@
 {
   "id": "ISS-110",
-  "title": "draft 显示优化",
-  "description": "",
+  "title": "Drafts 页显示优化：按生成时间排序，旧 draft 只在 case 内显示",
+  "description": "Drafts 页不应按 case 分组显示，应按 draft 生成的绝对时间排序，最新的在最上面。每个 case 只显示最近一次生成的 draft，旧的 draft 不在 Drafts 页显示，只在对应 case 详情里显示。",
+  "testLoopScan": true,
   "type": "bug",
   "priority": "P1",
-  "status": "pending",
+  "status": "tracked",
+  "trackId": "draft-collapse_20260331",
   "createdAt": "2026-03-24T02:43:33.610Z",
-  "updatedAt": "2026-03-26T16:00:00.656Z"
+  "updatedAt": "2026-04-01T16:00:00.000Z"
 }

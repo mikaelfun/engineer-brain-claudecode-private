@@ -53,20 +53,20 @@ last_modified: 2026-01-14
 
 | 表名 | 用途 | 文档 |
 |------|------|------|
-| EventServiceEntries | ARM 事件服务条目（活动日志） | [📄](./references/tables/EventServiceEntries.md) |
-| HttpIncomingRequests | ARM 入站 HTTP 请求 | [📄](./references/tables/HttpIncomingRequests.md) |
-| HttpOutgoingRequests | ARM 出站 HTTP 请求（到 RP） | [📄](./references/tables/HttpOutgoingRequests.md) |
-| ClientRequests | ARM 客户端请求 | [📄](./references/tables/ClientRequests.md) |
-| ClientErrors | 客户端错误 | [📄](./references/tables/ClientErrors.md) |
-| Deployments | ARM 模板部署记录 | [📄](./references/tables/Deployments.md) |
-| DeploymentOperations | ARM 部署操作详情 | [📄](./references/tables/DeploymentOperations.md) |
-| ProviderErrors | 资源提供程序错误 | [📄](./references/tables/ProviderErrors.md) |
-| Errors | ARM 系统错误 | [📄](./references/tables/Errors.md) |
-| Traces | ARM 追踪日志 | [📄](./references/tables/Traces.md) |
-| JobOperations | 后台作业操作日志 | [📄](./references/tables/JobOperations.md) |
-| JobErrors | 后台作业错误 | [📄](./references/tables/JobErrors.md) |
-| CapacityTraces | 容量检查追踪 | [📄](./references/tables/CapacityTraces.md) |
-| CapacityErrors | 容量检查错误 | [📄](./references/tables/CapacityErrors.md) |
+| EventServiceEntries | ARM 事件服务条目（活动日志） | [📄](./references/tables/armmc/EventServiceEntries.md) |
+| HttpIncomingRequests | ARM 入站 HTTP 请求 | [📄](./references/tables/armmc/HttpIncomingRequests.md) |
+| HttpOutgoingRequests | ARM 出站 HTTP 请求（到 RP） | [📄](./references/tables/armmc/HttpOutgoingRequests.md) |
+| ClientRequests | ARM 客户端请求 | [📄](./references/tables/armmc/ClientRequests.md) |
+| ClientErrors | 客户端错误 | [📄](./references/tables/armmc/ClientErrors.md) |
+| Deployments | ARM 模板部署记录 | [📄](./references/tables/armmc/Deployments.md) |
+| DeploymentOperations | ARM 部署操作详情 | [📄](./references/tables/armmc/DeploymentOperations.md) |
+| ProviderErrors | 资源提供程序错误 | [📄](./references/tables/armmc/ProviderErrors.md) |
+| Errors | ARM 系统错误 | [📄](./references/tables/armmc/Errors.md) |
+| Traces | ARM 追踪日志 | [📄](./references/tables/armmc/Traces.md) |
+| JobOperations | 后台作业操作日志 | [📄](./references/tables/armmc/JobOperations.md) |
+| JobErrors | 后台作业错误 | [📄](./references/tables/armmc/JobErrors.md) |
+| CapacityTraces | 容量检查追踪 | [📄](./references/tables/armmc/CapacityTraces.md) |
+| CapacityErrors | 容量检查错误 | [📄](./references/tables/armmc/CapacityErrors.md) |
 
 详细表定义见: [tables/](./references/tables/)
 

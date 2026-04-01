@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScan": "2026-03-28T21:15:40.228Z",
+  "lastScan": "2026-03-31T19:48:34.310Z",
   "scanSources": [
     "dashboard/src/routes/*.ts",
     "dashboard/web/src/components/**/*.tsx",
@@ -838,9 +838,137 @@
       "source": "dashboard/web/src/components/common/*.tsx",
       "status": "tested",
       "testId": "unit-web"
+    },
+    {
+      "id": "api-ts-state",
+      "name": "GET /test-supervisor/state",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/test-supervisor.ts",
+      "status": "tested",
+      "testId": "test-supervisor-core-endpoints"
+    },
+    {
+      "id": "api-ts-pipeline",
+      "name": "GET /test-supervisor/pipeline",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/test-supervisor.ts",
+      "status": "tested",
+      "testId": "test-supervisor-core-endpoints"
+    },
+    {
+      "id": "api-ts-supervisor",
+      "name": "GET /test-supervisor/supervisor",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/test-supervisor.ts",
+      "status": "tested",
+      "testId": "test-supervisor-core-endpoints"
+    },
+    {
+      "id": "api-ts-queues",
+      "name": "GET /test-supervisor/queues",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/test-supervisor.ts",
+      "status": "tested",
+      "testId": "test-supervisor-core-endpoints"
+    },
+    {
+      "id": "api-ts-stats",
+      "name": "GET /test-supervisor/stats",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/test-supervisor.ts",
+      "status": "tested",
+      "testId": "test-supervisor-analytics-endpoints"
+    },
+    {
+      "id": "api-ts-discoveries",
+      "name": "GET /test-supervisor/discoveries",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/test-supervisor.ts",
+      "status": "tested",
+      "testId": "test-supervisor-analytics-endpoints"
+    },
+    {
+      "id": "api-ts-trends",
+      "name": "GET /test-supervisor/trends",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/test-supervisor.ts",
+      "status": "tested",
+      "testId": "test-supervisor-analytics-endpoints"
+    },
+    {
+      "id": "api-ts-result",
+      "name": "GET /test-supervisor/result/:round/:testId",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/test-supervisor.ts",
+      "status": "tested",
+      "testId": "test-supervisor-detail-endpoints"
+    },
+    {
+      "id": "api-ts-fix",
+      "name": "GET /test-supervisor/fix/:testId",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/test-supervisor.ts",
+      "status": "tested",
+      "testId": "test-supervisor-detail-endpoints"
+    },
+    {
+      "id": "api-ts-manifest",
+      "name": "GET /test-supervisor/manifest",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/test-supervisor.ts",
+      "status": "tested",
+      "testId": "test-supervisor-detail-endpoints"
+    },
+    {
+      "id": "api-ts-registry",
+      "name": "GET /test-supervisor/registry",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/test-supervisor.ts",
+      "status": "tested",
+      "testId": "test-supervisor-detail-endpoints"
+    },
+    {
+      "id": "api-ts-evolution",
+      "name": "GET /test-supervisor/evolution",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/test-supervisor.ts",
+      "status": "tested",
+      "testId": "test-supervisor-analytics-endpoints"
+    },
+    {
+      "id": "api-ts-recent-events",
+      "name": "GET /test-supervisor/recent-events",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/test-supervisor.ts",
+      "status": "tested",
+      "testId": "test-supervisor-analytics-endpoints"
+    },
+    {
+      "id": "api-tr-start",
+      "name": "POST /test-runner/start",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/test-runner.ts",
+      "status": "tested",
+      "testId": "test-runner-control-endpoints"
+    },
+    {
+      "id": "api-tr-stop",
+      "name": "POST /test-runner/stop",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/test-runner.ts",
+      "status": "tested",
+      "testId": "test-runner-control-endpoints"
+    },
+    {
+      "id": "api-tr-status",
+      "name": "GET /test-runner/status",
+      "category": "backend-api",
+      "source": "dashboard/src/routes/test-runner.ts",
+      "status": "tested",
+      "testId": "test-runner-control-endpoints"
     }
   ],
-  "coverage": "95.2%",
+  "coverage": 91.7,
   "categories": {
     "backend-api": {
       "total": 54,
@@ -863,7 +991,7 @@
       "tested": 0
     }
   },
-  "lastUpdated": "2026-03-28T20:52:29Z",
+  "lastUpdated": "2026-03-31T00:16:17.503Z",
   "summary": {
     "total": 95,
     "tested": 85,
@@ -871,8 +999,36 @@
     "coveragePercentage": 95
   },
   "lastScanned": "2026-03-28T21:08:12.000Z",
-  "totalFeatures": 105,
+  "totalFeatures": 121,
   "testedCount": 95,
   "partialCount": 10,
-  "untestedCount": 0
+  "untestedCount": 0,
+  "tested": 95,
+  "scanCycle": 43,
+  "stats": {
+    "total": 121,
+    "tested": 111,
+    "partial": 10,
+    "untested": 0,
+    "registryFiles": 233
+  },
+  "scanStats": {
+    "totalRegistryEntries": 247,
+    "issuesScanned": 65,
+    "issueGaps": 50,
+    "regressionGaps": 15,
+    "coveredIssues": 64,
+    "designFidelityGaps": 27,
+    "observabilityGaps": 3,
+    "specGapsCovered": true,
+    "probesRan": 2,
+    "probesPassed": 1,
+    "activeScanners": [
+      "coverage",
+      "design-fidelity"
+    ]
+  },
+  "totalTests": 263,
+  "generatedAt": "2026-03-31T20:07:29Z",
+  "lastGenCycle": 43
 }

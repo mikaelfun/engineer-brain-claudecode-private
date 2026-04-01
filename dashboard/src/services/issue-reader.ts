@@ -38,7 +38,7 @@ export function listIssues(): Issue[] {
     }
   }
   // Sort by createdAt desc (newest first)
-  issues.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+  issues.sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''))
   return issues
 }
 

@@ -1,0 +1,11 @@
+{
+  "id": "ISS-175",
+  "title": "TestLab UI 展示 test-loop 自动发现的 Issues",
+  "description": "TestLab 页面缺少对 test-loop 自动创建的 Issue 的展示。应增加一个区域显示 discoveredBy=test-loop 的 Issues，包括状态、关联测试、优先级等信息，让用户可以看到自动发现的问题并决定是否 skip。",
+  "type": "enhancement",
+  "priority": "P2",
+  "status": "pending",
+  "testLoopScan": true,
+  "createdAt": "2026-03-30T22:30:00+08:00",
+  "updatedAt": "2026-03-30T05:57:13.521Z"
+}

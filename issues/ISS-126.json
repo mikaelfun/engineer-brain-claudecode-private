@@ -4,7 +4,9 @@
   "description": "Automated test �� will be deleted in teardown",
   "type": "bug",
   "priority": "P3",
-  "status": "pending",
+  "status": "done",
   "createdAt": "2026-03-28T18:37:30.399Z",
-  "updatedAt": "2026-03-28T18:37:30.399Z"
+  "updatedAt": "2026-03-28T18:37:30.399Z",
+  "closedReason": "stale-audit: absorbed by later work or test-auto residue",
+  "closedAt": "2026-03-30T23:25:00+08:00"
 }

@@ -141,3 +141,9 @@
 | [x] | draft-collapse_20260331 | Draft Tab 折叠优化 | 2026-03-31 | 2026-03-31 |
 | [x] | draft-rich-copy_20260331 | WebUI Draft Rich HTML Copy + Edit | 2026-03-31 | 2026-03-31 |
 | [x] | onenote-subpage_20260401 | onenote-export Sub-Page Recursive Export | 2026-04-01 | 2026-04-01 |
+| [ ] | testloop-iss-195_20260331 | api-runner: implement step chaining (dynamic placeholder extraction from response) | 2026-03-31 | 2026-03-31 |
+| [x] | cron-management_20260401 | WebUI Cron Job Management | 2026-04-01 | 2026-04-01 |
+| [x] | email-lang-detect_20260401 | Email Drafter Auto Language Detection | 2026-04-01 | 2026-04-01 |
+| [x] | onenote-sync-scope_20260401 | OneNote Sync 范围记忆 + Content Hash 增量校验 | 2026-04-01 | 2026-04-01 |
+| [x] | cron-exec-fix_20260401 | Fix Cron Job Execution — Replace SDK query() with CLI subprocess | 2026-04-01 | 2026-04-01 |
+| [x] | sdk-agents-fix_20260401 | SDK Session 加载自定义 Agent 定义 | 2026-04-01 | 2026-04-01 |

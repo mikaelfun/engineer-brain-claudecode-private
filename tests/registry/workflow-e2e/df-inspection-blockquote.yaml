@@ -1,0 +1,39 @@
+id: "df-inspection-blockquote"
+name: "Design Fidelity: 巡检引用块有左边框和背景色 + 深色主题适配"
+category: "workflow-e2e"
+source: "design-fidelity"
+description: "验证 MarkdownContent.tsx 实现引用块（blockquote）带有左边框（border-left）和背景色，并适配深色主题"
+safety_level: "safe"
+priority: "high"
+recipe_used: "design-fidelity-test.md"
+tags: ["design-fidelity", "inspection-beautify", "blockquote"]
+
+steps:
+  - action: "bash_command"
+    params:
+      command: "grep -c \"blockquote\" dashboard/web/src/components/common/MarkdownContent.tsx"
+    safety_check: "scripts.safe[compliance-check]"
+  - action: "bash_command"
+    params:
+      command: "grep -c \"borderLeft\\|border-left\\|border-l\" dashboard/web/src/components/common/MarkdownContent.tsx"
+    safety_check: "scripts.safe[compliance-check]"
+  - action: "bash_command"
+    params:
+      command: "grep -c \"accent-blue\\|accent.*dim\\|bg-.*inset\\|var(--bg\\|var(--accent\" dashboard/web/src/components/common/MarkdownContent.tsx"
+    safety_check: "scripts.safe[compliance-check]"
+
+assertions:
+  - type: "text_gt"
+    target: "step1_output"
+    expected: "0"
+    description: "MarkdownContent.tsx must have blockquote styling"
+  - type: "text_gt"
+    target: "step2_output"
+    expected: "0"
+    description: "Blockquote must have left border styling"
+  - type: "text_gt"
+    target: "step3_output"
+    expected: "0"
+    description: "Blockquote must use CSS variables for theme-aware background color"
+
+timeout_seconds: 30

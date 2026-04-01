@@ -1,0 +1,16 @@
+{
+  "id": "testloop-iss-195_20260331",
+  "title": "api-runner: implement step chaining (dynamic placeholder extraction from response)",
+  "type": "bug",
+  "status": "pending",
+  "created": "2026-03-31T19:30:30Z",
+  "updated": "2026-03-31T19:30:30Z",
+  "phases": {
+    "total": 1,
+    "completed": 0
+  },
+  "tasks": {
+    "total": 3,
+    "completed": 0
+  }
+}

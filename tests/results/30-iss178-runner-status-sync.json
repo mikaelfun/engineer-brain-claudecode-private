@@ -1,0 +1,9 @@
+{
+  "testId": "iss178-runner-status-sync",
+  "round": 30,
+  "timestamp": "2026-03-30T17:37:16.000Z",
+  "status": "pass",
+  "assertions": [{"name":"File exists: supervisor.json","pass":true,"expected":"exists","actual":"exists"},{"name":"JSON field: status = [idle,running]","pass":true,"expected":"[idle,running]","actual":"\"running\""},{"name":"JSON field: status = tracked","pass":true,"expected":"tracked","actual":"\"tracked\""}],
+  "error": null,
+  "duration_ms": 58616
+}

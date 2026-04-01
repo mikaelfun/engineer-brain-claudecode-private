@@ -1,0 +1,9 @@
+{
+  "testId": "test-supervisor-core-endpoints",
+  "round": 36,
+  "timestamp": "2026-03-30T22:18:41.000Z",
+  "status": "pass",
+  "assertions": [{"name":"GET /api/tests/state → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'cycle':36,'maxCycles':80,'currentStage':'TEST','stages':{'SCAN':{'status':'done','summary':'Cycle 36: 32 issue-gaps, 15 regression-gaps, 3 observabi"},{"name":"GET /api/tests/state → JSON response","pass":true,"expected":"JSON","actual":"JSON"},{"name":"GET /api/tests/pipeline → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'currentStage':'TEST','cycle':36,'maxCycles':80,'stages':{'SCAN':{'status':'done','summary':'Cycle 36: 32 issue-gaps, 15 regression-gaps, 3 observabi"},{"name":"GET /api/tests/pipeline → JSON response","pass":true,"expected":"JSON","actual":"JSON"},{"name":"GET /api/tests/supervisor → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'reasoning':{'diagnose':'scanPrecision low, coverage decreasing 82%->81%, no plateau/regression, activeScanners: coverage+design-fidelity+performance"},{"name":"GET /api/tests/supervisor → JSON response","pass":true,"expected":"JSON","actual":"JSON"},{"name":"GET /api/tests/queues → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'testQueue':['test-supervisor-core-endpoints','test-supervisor-analytics-endpoints','test-supervisor-detail-endpoints','test-runner-control-endpoints"},{"name":"GET /api/tests/queues → JSON response","pass":true,"expected":"JSON","actual":"JSON"}],
+  "error": null,
+  "duration_ms": 24866
+}

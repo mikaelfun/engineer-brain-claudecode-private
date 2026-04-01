@@ -1,0 +1,9 @@
+{
+  "testId": "integ-select-live-case-pools",
+  "round": 46,
+  "timestamp": "2026-03-31T23:36:34.000Z",
+  "status": "pass",
+  "assertions": [{"name":"minimal pool returns non-empty","pass":true,"expected":"exit 0","actual":"exit 0"}],
+  "error": null,
+  "duration_ms": 1775000194488
+}

@@ -1,0 +1,9 @@
+{
+  "testId": "skill-prompt-lean",
+  "round": 37,
+  "timestamp": "2026-03-30T23:15:48.000Z",
+  "status": "pass",
+  "assertions": [{"name":"No oversized prompts (>max_inline_bytes)","pass":true,"expected":"0 oversized","actual":"0 oversized"},{"name":"Delegation pattern present in substantial prompts","pass":true,"expected":"0 missing","actual":"0 missing delegation"}],
+  "error": null,
+  "duration_ms": 1644
+}

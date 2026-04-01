@@ -1,0 +1,16 @@
+{
+  "id": "onenote-sync-scope_20260401",
+  "title": "OneNote Sync 范围记忆 + Content Hash 增量校验",
+  "type": "bug",
+  "status": "complete",
+  "created": "2026-04-01T16:35:00.000Z",
+  "updated": "2026-04-01T17:00:00.000Z",
+  "phases": {
+    "total": 3,
+    "completed": 2
+  },
+  "tasks": {
+    "total": 10,
+    "completed": 8
+  }
+}

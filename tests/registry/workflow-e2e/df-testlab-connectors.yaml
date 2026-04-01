@@ -1,0 +1,39 @@
+id: "df-testlab-connectors"
+name: "Design Fidelity: TestLab Connector 线条有三种状态样式 + glassmorphism 效果"
+category: "workflow-e2e"
+source: "design-fidelity"
+description: "验证 TestLab.tsx 实现 Connector 线条的完成/流动/待定三种状态样式及 glassmorphism 视觉效果"
+safety_level: "safe"
+priority: "high"
+recipe_used: "design-fidelity-test.md"
+tags: ["design-fidelity", "testlab-ui-polish", "connectors"]
+
+steps:
+  - action: "bash_command"
+    params:
+      command: "grep -c \"connector-flow\\|@keyframes connector\" dashboard/web/src/pages/TestLab.tsx"
+    safety_check: "scripts.safe[compliance-check]"
+  - action: "bash_command"
+    params:
+      command: "grep -c \"backdrop-blur\\|glassmorphism\\|blur(\" dashboard/web/src/pages/TestLab.tsx"
+    safety_check: "scripts.safe[compliance-check]"
+  - action: "bash_command"
+    params:
+      command: "grep -n \"done\\|flow\\|pending\\|waiting\" dashboard/web/src/pages/TestLab.tsx | grep -i \"connector\\|border\\|color\" | wc -l"
+    safety_check: "scripts.safe[compliance-check]"
+
+assertions:
+  - type: "text_gt"
+    target: "step1_output"
+    expected: "0"
+    description: "connector-flow keyframe animation must exist"
+  - type: "text_gt"
+    target: "step2_output"
+    expected: "0"
+    description: "glassmorphism effect (backdrop-blur) must be applied"
+  - type: "text_gt"
+    target: "step3_output"
+    expected: "0"
+    description: "Connector states (done/flow/pending) must have distinct visual styling"
+
+timeout_seconds: 30

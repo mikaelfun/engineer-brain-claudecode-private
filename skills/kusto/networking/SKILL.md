@@ -35,16 +35,16 @@ last_modified: 2026-01-14
 
 | 表名 | 用途 | 文档 |
 |------|------|------|
-| TunnelEventsTable | VPN Gateway 隧道事件 | [📄](./references/tables/TunnelEventsTable.md) |
-| GatewayTenantHealth | 网关租户健康状态 | [📄](./references/tables/GatewayTenantHealth.md) |
-| CircuitTable | ExpressRoute 线路信息 | [📄](./references/tables/CircuitTable.md) |
-| NMAgentCriticalErrorFifteenMinuteTable | NMAgent 关键错误 | [📄](./references/tables/NMAgentCriticalErrorFifteenMinuteTable.md) |
-| ApplicationGatewaysExtendedLatestProd | Application Gateway 信息 | [📄](./references/tables/ApplicationGatewaysExtendedLatestProd.md) |
-| Servers | 服务器节点信息 | [📄](./references/tables/Servers.md) |
-| DeviceInterfaceLinks | 设备接口链接 | [📄](./references/tables/DeviceInterfaceLinks.md) |
-| DeviceStatic | 设备静态信息 | [📄](./references/tables/DeviceStatic.md) |
-| DeviceIpInterface | 设备 IP 接口 | [📄](./references/tables/DeviceIpInterface.md) |
-| NodeCapabilitiesEvent | 节点 VM 能力信息 | [📄](./references/tables/NodeCapabilitiesEvent.md) |
+| TunnelEventsTable | VPN Gateway 隧道事件 | [📄](./references/tables/aznwmds/TunnelEventsTable.md) |
+| GatewayTenantHealth | 网关租户健康状态 | [📄](./references/tables/aznwmds/GatewayTenantHealth.md) |
+| CircuitTable | ExpressRoute 线路信息 | [📄](./references/tables/aznwmds/CircuitTable.md) |
+| NMAgentCriticalErrorFifteenMinuteTable | NMAgent 关键错误 | [📄](./references/tables/aznwmds/NMAgentCriticalErrorFifteenMinuteTable.md) |
+| ApplicationGatewaysExtendedLatestProd | Application Gateway 信息 | [📄](./references/tables/aznwmds/ApplicationGatewaysExtendedLatestProd.md) |
+| Servers | 服务器节点信息 | [📄](./references/tables/aznwmds/Servers.md) |
+| DeviceInterfaceLinks | 设备接口链接 | [📄](./references/tables/aznwmds/DeviceInterfaceLinks.md) |
+| DeviceStatic | 设备静态信息 | [📄](./references/tables/aznwmds/DeviceStatic.md) |
+| DeviceIpInterface | 设备 IP 接口 | [📄](./references/tables/aznwmds/DeviceIpInterface.md) |
+| NodeCapabilitiesEvent | 节点 VM 能力信息 | [📄](./references/tables/aznwmds/NodeCapabilitiesEvent.md) |
 
 > ⚠️ **注意**: `HolmesNodeMetadataEvent` 表（用于查询节点硬件代系信息）在当前 Mooncake 集群中不可用。
 
@@ -52,7 +52,7 @@ last_modified: 2026-01-14
 
 | 表名 | 用途 | 文档 |
 |------|------|------|
-| Resources | Azure 资源图 | [📄](./references/tables/Resources_ARG.md) |
+| Resources | Azure 资源图 | [📄](./references/tables/AzureResourceGraph/Resources_ARG.md) |
 
 详细表定义见: [tables/](./references/tables/)
 

@@ -42,31 +42,31 @@ last_modified: 2026-01-14
 
 | 表名 | 用途 | 文档 |
 |------|------|------|
-| PerRequestTableIfx | 认证请求详情 | [查看](./references/tables/PerRequestTableIfx.md) |
-| DiagnosticTracesIfx | 诊断跟踪日志 | [查看](./references/tables/DiagnosticTracesIfx.md) |
+| PerRequestTableIfx | 认证请求详情 | [查看](./references/tables/ESTS/PerRequestTableIfx.md) |
+| DiagnosticTracesIfx | 诊断跟踪日志 | [查看](./references/tables/ESTS/DiagnosticTracesIfx.md) |
 | UserErrorsIfx | 用户错误日志 | (联合查询 DiagnosticTracesIfx) |
 
 ### MSODS 数据库 (目录服务)
 
 | 表名 | 用途 | 文档 |
 |------|------|------|
-| IfxAuditLoggingCommon | 目录对象审计 | [查看](./references/tables/IfxAuditLoggingCommon.md) |
-| IfxUlsEvents | 内部操作事件 | [查看](./references/tables/IfxUlsEvents.md) |
-| IfxBECAuthorizationManager | 授权管理日志 | [查看](./references/tables/IfxBECAuthorizationManager.md) |
+| IfxAuditLoggingCommon | 目录对象审计 | [查看](./references/tables/MSODS/IfxAuditLoggingCommon.md) |
+| IfxUlsEvents | 内部操作事件 | [查看](./references/tables/MSODS/IfxUlsEvents.md) |
+| IfxBECAuthorizationManager | 授权管理日志 | [查看](./references/tables/MSODS/IfxBECAuthorizationManager.md) |
 
 ### MFA 数据库 (多因素认证)
 
 | 表名 | 用途 | 文档 |
 |------|------|------|
-| SASCommonEvent | MFA 通用事件 | [查看](./references/tables/SASCommonEvent.md) |
-| SASRequestEvent | MFA 请求事件 | [查看](./references/tables/SASRequestEvent.md) |
-| CappWebSvcRequest | 外部提供商通信 | [查看](./references/tables/CappWebSvcRequest.md) |
+| SASCommonEvent | MFA 通用事件 | [查看](./references/tables/idmfacne/SASCommonEvent.md) |
+| SASRequestEvent | MFA 请求事件 | [查看](./references/tables/idmfacne/SASRequestEvent.md) |
+| CappWebSvcRequest | 外部提供商通信 | [查看](./references/tables/idmfacne/CappWebSvcRequest.md) |
 
 ### AAD Gateway 数据库
 
 | 表名 | 用途 | 文档 |
 |------|------|------|
-| RequestSummaryEventCore | 网关请求摘要 | [查看](./references/tables/RequestSummaryEventCore.md) |
+| RequestSummaryEventCore | 网关请求摘要 | [查看](./references/tables/AADGatewayProd/RequestSummaryEventCore.md) |
 
 ## 预定义查询
 

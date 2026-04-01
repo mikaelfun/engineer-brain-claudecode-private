@@ -35,12 +35,12 @@ last_modified: 2026-01-14
 
 | 表名 | 用途 | 文档 |
 |------|------|------|
-| RegistryMasterData | ACR 注册表元数据和配置 | [📄](./references/tables/RegistryMasterData.md) |
-| RegistryActivity | 注册表活动日志 (Push/Pull/Auth) | [📄](./references/tables/RegistryActivity.md) |
-| RPActivity | ACR RP 活动日志 | [📄](./references/tables/RPActivity.md) |
-| StorageAccountLogs | 存储账户日志（层下载性能） | [📄](./references/tables/StorageAccountLogs.md) |
-| BuildHostTrace | ACR Task 构建日志 | [📄](./references/tables/BuildHostTrace.md) |
-| WorkerServiceActivity | Worker 服务活动（Manifest 统计） | [📄](./references/tables/WorkerServiceActivity.md) |
+| RegistryMasterData | ACR 注册表元数据和配置 | [📄](./references/tables/acrprodmc/RegistryMasterData.md) |
+| RegistryActivity | 注册表活动日志 (Push/Pull/Auth) | [📄](./references/tables/acrprodmc/RegistryActivity.md) |
+| RPActivity | ACR RP 活动日志 | [📄](./references/tables/acrprodmc/RPActivity.md) |
+| StorageAccountLogs | 存储账户日志（层下载性能） | [📄](./references/tables/acrprodmc/StorageAccountLogs.md) |
+| BuildHostTrace | ACR Task 构建日志 | [📄](./references/tables/acrprodmc/BuildHostTrace.md) |
+| WorkerServiceActivity | Worker 服务活动（Manifest 统计） | [📄](./references/tables/acrprodmc/WorkerServiceActivity.md) |
 
 详细表定义见: [tables/](./references/tables/)
 

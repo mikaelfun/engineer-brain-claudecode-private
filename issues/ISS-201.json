@@ -1,0 +1,11 @@
+{
+  "id": "ISS-201",
+  "title": "case summary 现在有太多agent生成的内容，需要增加一个单独的文件，存放case的事实描述，用来保护上下文污染，从零排查，不受旧上下文的干扰。",
+  "description": "",
+  "type": "bug",
+  "priority": "P1",
+  "status": "pending",
+  "testLoopScan": true,
+  "createdAt": "2026-04-01T09:45:48.551Z",
+  "updatedAt": "2026-04-01T09:45:48.551Z"
+}

@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V1: Live Hero + Phase Pipeline (双层分离)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700;800&display=swap');
+
+  :root {
+    --bg-base: #1a1d24;
+    --bg-surface: #22262f;
+    --bg-elevated: #282d38;
+    --bg-hover: #2e3340;
+    --bg-active: #353b4a;
+    --bg-inset: #1e2129;
+    --text-primary: #c9cdd6;
+    --text-secondary: #8b919e;
+    --text-tertiary: #5e6370;
+    --border-subtle: rgba(255,255,255,0.05);
+    --border-default: rgba(255,255,255,0.08);
+    --accent-blue: #6ba3e8;
+    --accent-green: #5cbf8a;
+    --accent-amber: #d4a44a;
+    --accent-red: #d47272;
+    --accent-purple: #9e8cc7;
+    --accent-blue-dim: rgba(107,163,232,0.10);
+    --accent-green-dim: rgba(92,191,138,0.10);
+    --accent-amber-dim: rgba(212,164,74,0.10);
+    --accent-red-dim: rgba(212,114,114,0.10);
+    --accent-purple-dim: rgba(158,140,199,0.10);
+    --font-ui: 'Plus Jakarta Sans', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg-base);
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    font-size: 13px;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ============ SIDEBAR ============ */
+  .sidebar {
+    width: 220px;
+    background: var(--bg-surface);
+    border-right: 1px solid var(--border-subtle);
+    padding: 20px 16px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar-logo {
+    font-size: 15px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 28px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .sidebar-logo .logo-icon {
+    width: 28px; height: 28px; border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+    display: flex; align-items: center; justify-content: center; font-size: 14px;
+  }
+  .sidebar-nav a {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; border-radius: 8px; color: var(--text-secondary);
+    text-decoration: none; font-size: 13px; font-weight: 500; margin-bottom: 2px; transition: all 0.1s;
+  }
+  .sidebar-nav a:hover { background: var(--bg-hover); color: var(--text-primary); }
+  .sidebar-nav a.active { background: var(--accent-blue-dim); color: var(--accent-blue); font-weight: 600; }
+  .sidebar-nav .nav-icon { font-size: 15px; width: 20px; text-align: center; }
+
+  /* ============ MAIN ============ */
+  .main { flex: 1; padding: 24px 32px; overflow-y: auto; }
+
+  /* ============ DESIGN LABEL ============ */
+  .design-label {
+    font-size: 11px; font-weight: 700; color: var(--accent-blue);
+    text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 16px;
+    padding: 6px 12px; background: var(--accent-blue-dim);
+    border: 1px solid rgba(107,163,232,0.15); border-radius: 6px; display: inline-block;
+  }
+
+  /* ============ TITLE BAR ============ */
+  .title-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .title-left { display: flex; align-items: baseline; gap: 12px; }
+  .title-left h1 { font-size: 20px; font-weight: 800; letter-spacing: -0.03em; }
+  .round-badge {
+    font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary);
+    padding: 3px 10px; background: var(--bg-elevated); border-radius: 12px;
+    border: 1px solid var(--border-default);
+  }
+
+  /* ============ RUNNER CONTROL ============ */
+  .runner-ctrl {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--bg-surface); border: 1px solid var(--border-default);
+    border-radius: 10px; padding: 8px 14px;
+  }
+  .runner-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  }
+  .runner-dot.running { background: var(--accent-green); animation: pulse-dot 2s infinite; }
+  .runner-dot.idle { background: var(--text-tertiary); }
+  @keyframes pulse-dot {
+    0%,100% { box-shadow: 0 0 0 0 rgba(92,191,138,0.4); }
+    50% { box-shadow: 0 0 0 4px rgba(92,191,138,0); }
+  }
+  .runner-label {
+    font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .runner-label.running { color: var(--accent-green); }
+  .runner-label.idle { color: var(--text-tertiary); }
+  .runner-meta { font-size: 10px; color: var(--text-tertiary); font-family: var(--font-mono); }
+  .btn {
+    padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border-default);
+    background: transparent; color: var(--text-secondary); font-family: var(--font-ui);
+    font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s;
+  }
+  .btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+  .btn.danger { border-color: var(--accent-red); color: var(--accent-red); }
+  .btn.danger:hover { background: var(--accent-red-dim); }
+
+  /* ============ CARD ============ */
+  .card {
+    background: var(--bg-surface); border: 1px solid var(--border-subtle);
+    border-radius: 10px; padding: 18px; margin-bottom: 16px;
+  }
+  .card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+  .card-title { font-size: 13px; font-weight: 700; }
+  .card-sub { font-size: 11px; color: var(--text-tertiary); margin-left: auto; font-family: var(--font-mono); }
+
+  /* ============ LIVE STATUS HERO (V1 Unique — TALL card) ============ */
+  .live-hero {
+    background: var(--bg-surface); border: 1px solid var(--border-subtle);
+    border-radius: 12px; padding: 20px 24px; margin-bottom: 16px;
+    position: relative; overflow: hidden;
+  }
+  .live-hero::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
+    animation: bar-pulse 3s ease-in-out infinite;
+  }
+  .live-hero.idle::before { background: var(--text-tertiary); animation: none; opacity: 0.3; }
+  @keyframes bar-pulse { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
+
+  .hero-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .hero-left { display: flex; align-items: center; gap: 14px; }
+
+  .pulse-ring {
+    width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0; position: relative;
+    background: var(--accent-blue-dim); border: 2px solid var(--accent-blue);
+  }
+  .pulse-ring::after {
+    content: ''; position: absolute; inset: -4px; border-radius: 50%;
+    border: 2px solid var(--accent-blue); opacity: 0;
+    animation: ring-expand 2s ease-out infinite;
+  }
+  @keyframes ring-expand {
+    0% { transform: scale(0.9); opacity: 0.5; }
+    100% { transform: scale(1.35); opacity: 0; }
+  }
+  .pulse-ring.idle {
+    background: var(--bg-inset); border-color: var(--text-tertiary);
+  }
+  .pulse-ring.idle::after { animation: none; }
+  .pulse-ring.amber { background: var(--accent-amber-dim); border-color: var(--accent-amber); }
+  .pulse-ring.amber::after { border-color: var(--accent-amber); }
+  .pulse-ring.green { background: var(--accent-green-dim); border-color: var(--accent-green); }
+  .pulse-ring.green::after { border-color: var(--accent-green); }
+
+  .hero-action { font-size: 18px; font-weight: 800; letter-spacing: -0.02em; }
+  .hero-detail { font-size: 12px; color: var(--text-secondary); margin-top: 3px; }
+  .hero-detail .tid { font-family: var(--font-mono); color: var(--accent-blue); font-weight: 600; }
+
+  .hero-timer { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+  .hero-elapsed {
+    font-family: var(--font-mono); font-size: 24px; font-weight: 800;
+    color: var(--accent-blue); letter-spacing: -0.02em;
+  }
+  .hero-elapsed.dim { color: var(--text-tertiary); font-size: 20px; }
+  .hero-elapsed-label {
+    font-size: 10px; color: var(--text-tertiary); font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+
+  /* ============ RUNNER STEPS MINI-PIPELINE (inside Hero — V1 unique) ============ */
+  .runner-steps {
+    display: flex; align-items: center; padding-top: 16px;
+    border-top: 1px solid var(--border-subtle);
+  }
+  .rstep {
+    display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+  }
+  .rstep-line {
+    flex: 1; height: 2px; background: var(--border-default); min-width: 20px; margin: 0 6px;
+  }
+  .rstep-line.done { background: var(--accent-green); opacity: 0.4; }
+  .rstep-dot {
+    width: 24px; height: 24px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; flex-shrink: 0;
+    border: 2px solid var(--text-tertiary); background: var(--bg-inset);
+    color: var(--text-tertiary);
+  }
+  .rstep.done .rstep-dot { border-color: var(--accent-green); background: var(--accent-green-dim); color: var(--accent-green); }
+  .rstep.active .rstep-dot {
+    border-color: var(--accent-blue); background: var(--accent-blue-dim); color: var(--accent-blue);
+    animation: step-pulse 2s ease-in-out infinite;
+  }
+  @keyframes step-pulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(107,163,232,0.3); }
+    50% { box-shadow: 0 0 0 4px rgba(107,163,232,0); }
+  }
+  .rstep-info { display: flex; flex-direction: column; }
+  .rstep-name {
+    font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap;
+  }
+  .rstep.done .rstep-name { color: var(--accent-green); }
+  .rstep.active .rstep-name { color: var(--accent-blue); }
+  .rstep.pending .rstep-name { color: var(--text-tertiary); }
+  .rstep-time { font-family: var(--font-mono); font-size: 9px; color: var(--text-tertiary); }
+
+  /* Runner step clickable */
+  .rstep { cursor: pointer; transition: opacity 0.15s; }
+  .rstep:hover { opacity: 0.8; }
+  .rstep.expanded .rstep-dot { box-shadow: 0 0 0 3px rgba(107,163,232,0.2); }
+  .rstep-expand-hint {
+    font-family: var(--font-mono); font-size: 7px; color: var(--text-tertiary);
+    text-align: center; margin-top: 1px; opacity: 0.6;
+  }
+  .rstep.expanded .rstep-expand-hint { display: none; }
+
+  /* Step detail panel (shared, below runner steps row) */
+  .step-detail-panel {
+    margin-top: 12px; padding: 14px 16px;
+    background: var(--bg-inset); border: 1px solid var(--border-subtle);
+    border-radius: 8px; display: none;
+    animation: panel-in 0.2s ease-out;
+  }
+  .step-detail-panel.visible { display: block; }
+  @keyframes panel-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .sdp-header {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+  }
+  .sdp-title {
+    font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+    text-transform: uppercase; color: var(--accent-blue);
+  }
+  .sdp-title.done-t { color: var(--accent-green); }
+  .sdp-title.pending-t { color: var(--text-tertiary); }
+  .sdp-dur {
+    font-family: var(--font-mono); font-size: 10px; color: var(--text-tertiary);
+    margin-left: auto;
+  }
+  .sdp-close {
+    font-size: 14px; color: var(--text-tertiary); cursor: pointer;
+    background: none; border: none; padding: 0 4px; line-height: 1;
+  }
+  .sdp-close:hover { color: var(--text-primary); }
+  .sdp-body {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px;
+  }
+  .sdp-item {
+    display: flex; align-items: center; gap: 6px; font-size: 11px;
+    color: var(--text-secondary);
+  }
+  .sdp-item .sdp-icon { font-size: 12px; flex-shrink: 0; }
+  .sdp-item .sdp-label { color: var(--text-tertiary); font-size: 10px; min-width: 60px; }
+  .sdp-item .sdp-val { font-family: var(--font-mono); font-size: 11px; font-weight: 600; }
+  .sdp-item .g { color: var(--accent-green); }
+  .sdp-item .r { color: var(--accent-red); }
+  .sdp-item .b { color: var(--accent-blue); }
+  .sdp-item .a { color: var(--accent-amber); }
+  .sdp-note {
+    grid-column: 1 / -1; font-size: 10px; color: var(--text-tertiary);
+    padding-top: 6px; border-top: 1px solid var(--border-subtle);
+    margin-top: 4px; font-style: italic;
+  }
+
+  /* Loop info badge (inside hero) */
+  .loop-badge {
+    display: inline-flex; align-items: center; gap: 6px; margin-left: auto;
+    padding: 4px 10px; border-radius: 6px;
+    background: var(--accent-blue-dim); border: 1px solid rgba(107,163,232,0.15);
+    font-family: var(--font-mono); font-size: 10px; color: var(--accent-blue);
+    white-space: nowrap;
+  }
+  .loop-badge .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent-blue); animation: blink 1.5s infinite; }
+  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.25; } }
+
+  /* ============ PHASE PIPELINE (V1 Unique — separate card) ============ */
+  .pipeline-row { display: flex; align-items: flex-start; }
+  .ph {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    position: relative; min-width: 0;
+  }
+  .ph:not(:last-child)::after {
+    content: ''; position: absolute; top: 17px;
+    right: -1px; width: calc(100% - 80px);
+    height: 2px; background: var(--border-default);
+    transform: translateX(50%);
+  }
+  .ph:not(:last-child).done::after { background: var(--accent-green); opacity: 0.4; }
+
+  .ph-icon {
+    width: 34px; height: 34px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; margin-bottom: 6px; position: relative; z-index: 1;
+  }
+  .ph.done .ph-icon { background: var(--accent-green-dim); border: 2px solid var(--accent-green); }
+  .ph.active .ph-icon {
+    background: var(--accent-blue-dim); border: 2px solid var(--accent-blue);
+    animation: ph-pulse 2.5s ease-in-out infinite;
+  }
+  .ph.pending .ph-icon { background: var(--bg-inset); border: 2px solid var(--text-tertiary); }
+  @keyframes ph-pulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(107,163,232,0.3); }
+    50% { box-shadow: 0 0 0 6px rgba(107,163,232,0); }
+  }
+  .ph-name {
+    font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;
+  }
+  .ph.done .ph-name { color: var(--accent-green); }
+  .ph.active .ph-name { color: var(--accent-blue); }
+  .ph.pending .ph-name { color: var(--text-tertiary); }
+
+  .ph-bar {
+    width: 70%; height: 4px; background: var(--bg-inset);
+    border-radius: 2px; margin-bottom: 6px; overflow: hidden;
+  }
+  .ph-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+  .ph.done .ph-bar-fill { width: 100%; background: var(--accent-green); }
+  .ph.active .ph-bar-fill {
+    background: linear-gradient(90deg, var(--accent-blue), rgba(107,163,232,0.4), var(--accent-blue));
+    background-size: 200% 100%; animation: shimmer 1.5s ease-in-out infinite;
+  }
+  .ph.pending .ph-bar-fill { width: 0; }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+  .ph-stat {
+    font-family: var(--font-mono); font-size: 10px; color: var(--text-tertiary); line-height: 1.5;
+  }
+  .ph.active .ph-stat { color: var(--text-secondary); }
+  .ph-stat .n { font-weight: 700; }
+  .ph-stat .g { color: var(--accent-green); }
+  .ph-stat .r { color: var(--accent-red); }
+  .ph-stat .a { color: var(--accent-amber); }
+  .ph-stat .b { color: var(--accent-blue); }
+  .ph-stat .t { color: var(--text-tertiary); }
+
+  .ph-dur {
+    font-family: var(--font-mono); font-size: 9px; color: var(--text-tertiary); margin-top: 2px;
+  }
+  .ph.active .ph-dur { color: var(--accent-blue); font-weight: 600; }
+
+  .ph-current {
+    margin-top: 8px; padding: 4px 10px;
+    background: var(--accent-blue-dim); border: 1px solid rgba(107,163,232,0.15);
+    border-radius: 6px; font-family: var(--font-mono); font-size: 9px;
+    color: var(--accent-blue); max-width: 130px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+
+  /* ============ ACTIVITY DETAIL STRIP ============ */
+  .detail-strip {
+    background: var(--bg-surface); border: 1px solid var(--border-subtle);
+    border-radius: 10px; margin-bottom: 16px; overflow: hidden;
+  }
+  .strip-top {
+    display: flex; align-items: center; gap: 10px; padding: 12px 18px;
+  }
+  .live-dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--accent-green);
+    flex-shrink: 0; animation: blink 1.5s ease-in-out infinite;
+  }
+  .live-dot.idle { background: var(--text-tertiary); animation: none; }
+  .strip-text { font-size: 12px; font-weight: 600; color: var(--text-secondary); flex: 1; }
+  .strip-text .tid { font-family: var(--font-mono); color: var(--accent-blue); }
+  .strip-tag {
+    font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+    padding: 2px 8px; border-radius: 4px;
+  }
+  .strip-tag.blue { background: var(--accent-blue-dim); color: var(--accent-blue); }
+  .strip-tag.purple { background: var(--accent-purple-dim); color: var(--accent-purple); }
+  .strip-tag.green { background: var(--accent-green-dim); color: var(--accent-green); }
+  .strip-tag.amber { background: var(--accent-amber-dim); color: var(--accent-amber); }
+  .strip-tag.idle-tag { background: var(--bg-inset); color: var(--text-tertiary); }
+
+  .strip-bottom {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+    padding: 12px 18px; border-top: 1px solid var(--border-subtle);
+  }
+  .sb-cell { display: flex; flex-direction: column; gap: 4px; }
+  .sb-label {
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--text-tertiary);
+  }
+  .sb-bar-row { display: flex; align-items: center; gap: 6px; }
+  .sb-bar {
+    flex: 1; height: 6px; background: var(--bg-inset); border-radius: 3px;
+    overflow: hidden; max-width: 80px;
+  }
+  .sb-fill { height: 100%; border-radius: 3px; }
+  .sb-fill.g { background: var(--accent-green); }
+  .sb-fill.a { background: var(--accent-amber); }
+  .sb-fill.b { background: var(--accent-blue); }
+  .sb-count { font-family: var(--font-mono); font-size: 12px; font-weight: 700; }
+  .sb-value {
+    font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--text-primary);
+  }
+
+  /* ============ ATTENTION ============ */
+  .attention { border-left: 3px solid var(--accent-amber); }
+  .att-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px; border-radius: 6px; margin-bottom: 6px; font-size: 12px;
+  }
+  .att-item:last-child { margin-bottom: 0; }
+  .att-item.yellow { background: var(--accent-amber-dim); border-left: 3px solid var(--accent-amber); }
+  .att-item .emoji { font-size: 14px; flex-shrink: 0; }
+  .att-item .txt { color: var(--text-primary); flex: 1; }
+  .att-item .meta { color: var(--text-tertiary); font-family: var(--font-mono); font-size: 10px; }
+
+  /* ============ STATS CARDS ============ */
+  .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 16px; }
+  .stat-card {
+    background: var(--bg-surface); border: 1px solid var(--border-subtle);
+    border-radius: 10px; padding: 14px 16px; position: relative; overflow: hidden;
+  }
+  .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; opacity: 0.7; }
+  .stat-card.green::before { background: var(--accent-green); }
+  .stat-card.red::before { background: var(--accent-red); }
+  .stat-card.amber::before { background: var(--accent-amber); }
+  .stat-card.blue::before { background: var(--accent-blue); }
+  .stat-card.purple::before { background: var(--accent-purple); }
+  .stat-label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--text-tertiary); margin-bottom: 6px;
+  }
+  .stat-value { font-family: var(--font-mono); font-size: 26px; font-weight: 800; }
+  .stat-value.green { color: var(--accent-green); }
+  .stat-value.red { color: var(--accent-red); }
+  .stat-value.amber { color: var(--accent-amber); }
+  .stat-value.blue { color: var(--accent-blue); }
+  .stat-value.purple { color: var(--accent-purple); }
+  .stat-sub { font-size: 10px; color: var(--text-tertiary); font-family: var(--font-mono); margin-top: 4px; }
+
+  /* ============ TWO COL ============ */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+
+  /* Queue table */
+  .qtable { width: 100%; border-collapse: collapse; }
+  .qtable th {
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--text-tertiary); text-align: left; padding: 6px 8px;
+    border-bottom: 1px solid var(--border-default);
+  }
+  .qtable td {
+    font-size: 12px; padding: 6px 8px; border-bottom: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+  }
+  .qtable td:first-child { font-family: var(--font-mono); font-size: 11px; color: var(--accent-blue); }
+  .badge {
+    font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+    padding: 2px 6px; border-radius: 4px; display: inline-block;
+  }
+  .badge.pass { background: var(--accent-green-dim); color: var(--accent-green); }
+  .badge.fail { background: var(--accent-red-dim); color: var(--accent-red); }
+  .badge.pend { background: var(--bg-inset); color: var(--text-tertiary); }
+
+  /* ============ ACTIVITY STREAM ============ */
+  .activity-list { max-height: 200px; overflow-y: auto; }
+  .activity-list::-webkit-scrollbar { width: 4px; }
+  .activity-list::-webkit-scrollbar-thumb { background: var(--bg-hover); border-radius: 2px; }
+  .act {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 5px 0; border-bottom: 1px solid var(--border-subtle); font-size: 11px;
+  }
+  .act-time { font-family: var(--font-mono); font-size: 10px; color: var(--text-tertiary); flex-shrink: 0; width: 42px; }
+  .act-badge {
+    font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+    padding: 1px 5px; border-radius: 4px; flex-shrink: 0;
+  }
+  .act-badge.SCAN { background: var(--accent-purple-dim); color: var(--accent-purple); }
+  .act-badge.TEST { background: var(--accent-blue-dim); color: var(--accent-blue); }
+  .act-badge.FIX { background: var(--accent-amber-dim); color: var(--accent-amber); }
+  .act-badge.VERIFY { background: var(--accent-green-dim); color: var(--accent-green); }
+  .act-badge.GEN { background: var(--accent-red-dim); color: var(--accent-red); }
+  .act-text { color: var(--text-secondary); }
+  .act-id { font-family: var(--font-mono); color: var(--accent-blue); font-size: 10px; }
+
+  /* ============ DEMO SWITCHER ============ */
+  .demo-bar {
+    position: fixed; top: 12px; right: 12px; z-index: 100;
+    display: flex; gap: 4px; background: var(--bg-elevated);
+    padding: 4px; border-radius: 8px; border: 1px solid var(--border-default);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  .demo-t {
+    padding: 5px 12px; font-size: 11px; font-weight: 600; border-radius: 5px;
+    cursor: pointer; border: none; background: transparent;
+    color: var(--text-secondary); font-family: var(--font-ui); transition: all 0.15s;
+  }
+  .demo-t:hover { background: var(--bg-hover); }
+  .demo-t.active { background: var(--accent-blue-dim); color: var(--accent-blue); }
+</style>
+</head>
+<body>
+
+<!-- ==========================================
+     DEMO SWITCHER (fixed top-right)
+     ========================================== -->
+<div class="demo-bar">
+  <button class="demo-t" onclick="setScene('testing',this)">TEST Phase</button>
+  <button class="demo-t active" onclick="setScene('fixing',this)">FIX Phase</button>
+  <button class="demo-t" onclick="setScene('verify',this)">VERIFY Phase</button>
+  <button class="demo-t" onclick="setScene('idle',this)">IDLE</button>
+</div>
+
+<!-- ==========================================
+     SIDEBAR
+     ========================================== -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">&#x1F9E0;</div>
+    EngineerBrain
+  </div>
+  <div class="sidebar-nav">
+    <a href="#"><span class="nav-icon">&#x1F4CA;</span> Dashboard</a>
+    <a href="#"><span class="nav-icon">&#x1F4C1;</span> Cases</a>
+    <a href="#"><span class="nav-icon">&#x1F41B;</span> Issues</a>
+    <a href="#"><span class="nav-icon">&#x1F916;</span> Agents</a>
+    <a href="#" class="active"><span class="nav-icon">&#x1F9EA;</span> Test Lab</a>
+    <a href="#"><span class="nav-icon">&#x2699;&#xFE0F;</span> Settings</a>
+  </div>
+</nav>
+
+<!-- ==========================================
+     MAIN CONTENT
+     ========================================== -->
+<div class="main">
+
+  <!-- Design Label -->
+  <div class="design-label">V1: Live Hero + Runner Steps + Phase Pipeline&#xFF08;&#x53CC;&#x5C42;&#x5206;&#x79BB;&#xFF09;</div>
+
+  <!-- ==========================================
+       TITLE BAR + Runner Control
+       ========================================== -->
+  <div class="title-bar">
+    <div class="title-left">
+      <h1>Test Lab</h1>
+      <span class="round-badge" id="round-badge">R28 / 80 tests</span>
+    </div>
+    <div class="runner-ctrl" id="runner-ctrl">
+      <div class="runner-dot running" id="rdot"></div>
+      <span class="runner-label running" id="rlabel">RUNNING</span>
+      <span class="runner-meta" id="rmeta">Started: 03-30 08:03</span>
+      <button class="btn danger" id="rbtn">&#x23F9; Stop</button>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       [V1 UNIQUE] LIVE HERO CARD
+       Tall card with pulse icon, action text, timer,
+       and runner steps mini-pipeline INSIDE
+       ========================================== -->
+  <div class="live-hero" id="hero">
+    <div class="hero-top">
+      <div class="hero-left">
+        <div class="pulse-ring" id="hero-ring">&#x1F527;</div>
+        <div>
+          <div class="hero-action" id="hero-action">Fixing Test</div>
+          <div class="hero-detail" id="hero-detail">
+            <span class="tid">spec-playwright-ui-tests</span>
+            &middot; attempt 1 &middot; reason: test_fail
+          </div>
+        </div>
+      </div>
+      <div class="hero-timer">
+        <div class="hero-elapsed" id="hero-time">6:41</div>
+        <div class="hero-elapsed-label">phase elapsed</div>
+      </div>
+    </div>
+
+    <!-- Runner Steps Pipeline (INSIDE hero — V1 differentiator) -->
+    <div class="runner-steps" id="runner-steps">
+      <div class="rstep done" onclick="toggleStep('preflight')">
+        <div class="rstep-dot">&#x2713;</div>
+        <div class="rstep-info"><div class="rstep-name">Pre-flight</div><div class="rstep-time">2s</div><div class="rstep-expand-hint">click</div></div>
+      </div>
+      <div class="rstep-line done"></div>
+      <div class="rstep done" onclick="toggleStep('strategy')">
+        <div class="rstep-dot">&#x2713;</div>
+        <div class="rstep-info"><div class="rstep-name">Strategy</div><div class="rstep-time">8s</div><div class="rstep-expand-hint">click</div></div>
+      </div>
+      <div class="rstep-line done"></div>
+      <div class="rstep active" onclick="toggleStep('testloop')">
+        <div class="rstep-dot">&#x25B6;</div>
+        <div class="rstep-info"><div class="rstep-name">Test-Loop</div><div class="rstep-time">~15m</div><div class="rstep-expand-hint">click</div></div>
+      </div>
+      <div class="rstep-line"></div>
+      <div class="rstep pending" onclick="toggleStep('meta')">
+        <div class="rstep-dot"></div>
+        <div class="rstep-info"><div class="rstep-name">Meta</div><div class="rstep-time">&mdash;</div><div class="rstep-expand-hint">click</div></div>
+      </div>
+      <div class="rstep-line"></div>
+      <div class="rstep pending" onclick="toggleStep('summary')">
+        <div class="rstep-dot"></div>
+        <div class="rstep-info"><div class="rstep-name">Done</div><div class="rstep-time">&mdash;</div><div class="rstep-expand-hint">click</div></div>
+      </div>
+      <div class="loop-badge" id="loop-badge"><div class="dot"></div>Loop #3 &middot; next: 4:12</div>
+    </div>
+
+    <!-- Step Detail Panel (collapsible, below runner steps) -->
+    <div class="step-detail-panel" id="step-panel"></div>
+  </div>
+
+  <!-- ==========================================
+       [V1 UNIQUE] PHASE PIPELINE CARD (separate card)
+       Visual separation: "where are we in the cycle"
+       ========================================== -->
+  <div class="card" id="phase-card">
+    <div class="card-header">
+      <span style="color:var(--accent-blue);font-size:14px">&#x26A1;</span>
+      <span class="card-title">Round 28 &middot; Phase Pipeline</span>
+      <span class="card-sub" id="phase-sub">FIX in progress</span>
+    </div>
+
+    <div class="pipeline-row" id="pipeline">
+      <!-- SCAN -->
+      <div class="ph done">
+        <div class="ph-icon">&#x2705;</div>
+        <div class="ph-name">SCAN</div>
+        <div class="ph-bar"><div class="ph-bar-fill" style="width:100%"></div></div>
+        <div class="ph-stat"><span class="n">21</span> gaps found</div>
+        <div class="ph-dur">4m53s</div>
+      </div>
+      <!-- GENERATE -->
+      <div class="ph done">
+        <div class="ph-icon">&#x2705;</div>
+        <div class="ph-name">GENERATE</div>
+        <div class="ph-bar"><div class="ph-bar-fill" style="width:100%"></div></div>
+        <div class="ph-stat"><span class="n">13</span> tests created</div>
+        <div class="ph-dur">1m35s</div>
+      </div>
+      <!-- TEST -->
+      <div class="ph done" id="ph-test">
+        <div class="ph-icon">&#x2705;</div>
+        <div class="ph-name">TEST</div>
+        <div class="ph-bar"><div class="ph-bar-fill" style="width:100%"></div></div>
+        <div class="ph-stat">
+          <span class="n g">1</span>&#x2705;
+          <span class="n r">3</span>&#x274C;
+          <span class="n t">9</span>&#x23ED;
+        </div>
+        <div class="ph-dur">8m5s</div>
+      </div>
+      <!-- FIX -->
+      <div class="ph active" id="ph-fix">
+        <div class="ph-icon" id="fix-icon">&#x1F527;</div>
+        <div class="ph-name">FIX</div>
+        <div class="ph-bar"><div class="ph-bar-fill" id="fix-bar" style="width:33%"></div></div>
+        <div class="ph-stat" id="fix-stat"><span class="n">0</span>/<span class="n">1</span> fixed</div>
+        <div class="ph-dur" id="fix-dur">~6m41s</div>
+        <div class="ph-current" id="fix-current">&#x1F527; spec-playwrig...</div>
+      </div>
+      <!-- VERIFY -->
+      <div class="ph pending" id="ph-verify">
+        <div class="ph-icon" id="verify-icon">&#x23F3;</div>
+        <div class="ph-name">VERIFY</div>
+        <div class="ph-bar"><div class="ph-bar-fill" id="verify-bar" style="width:0%"></div></div>
+        <div class="ph-stat" id="verify-stat"><span class="n b">3</span> queued</div>
+        <div class="ph-dur" id="verify-dur">&mdash;</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       ACTIVITY DETAIL STRIP
+       ========================================== -->
+  <div class="detail-strip" id="strip">
+    <div class="strip-top">
+      <div class="live-dot" id="strip-dot"></div>
+      <span class="strip-text" id="strip-text">Analyzing failure &amp; generating fix for <span class="tid">spec-playwright-ui-tests</span></span>
+      <span class="strip-tag blue" id="strip-phase">FIX</span>
+      <span class="strip-tag purple" id="strip-step">TEST-LOOP</span>
+    </div>
+    <div class="strip-bottom">
+      <div class="sb-cell">
+        <div class="sb-label">Test Queue</div>
+        <div class="sb-bar-row">
+          <div class="sb-bar"><div class="sb-fill g" id="sb-test" style="width:100%"></div></div>
+          <span class="sb-count" style="color:var(--accent-green)" id="sb-test-n">0</span>
+        </div>
+      </div>
+      <div class="sb-cell">
+        <div class="sb-label">Fix Queue</div>
+        <div class="sb-bar-row">
+          <div class="sb-bar"><div class="sb-fill a" id="sb-fix" style="width:50%"></div></div>
+          <span class="sb-count" style="color:var(--accent-amber)" id="sb-fix-n">1</span>
+        </div>
+      </div>
+      <div class="sb-cell">
+        <div class="sb-label">Verify Queue</div>
+        <div class="sb-bar-row">
+          <div class="sb-bar"><div class="sb-fill b" id="sb-verify" style="width:15%"></div></div>
+          <span class="sb-count" style="color:var(--accent-blue)" id="sb-verify-n">3</span>
+        </div>
+      </div>
+      <div class="sb-cell">
+        <div class="sb-label">Round Result</div>
+        <div class="sb-value" id="sb-round">
+          <span style="color:var(--accent-green)">1</span>&#x2705;
+          <span style="color:var(--accent-red)">3</span>&#x274C;
+          <span style="color:var(--text-tertiary)">9</span>&#x23ED;
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       ATTENTION CARD
+       ========================================== -->
+  <div class="card attention" id="attention">
+    <div class="card-header">
+      <span style="font-size:14px">&#x26A0;&#xFE0F;</span>
+      <span class="card-title">Attention</span>
+      <span class="card-sub">1 item</span>
+    </div>
+    <div class="att-item yellow">
+      <span class="emoji">&#x1F7E1;</span>
+      <span class="txt">1 stale probe detected &mdash; test may need manual review</span>
+      <span class="meta">since R27</span>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       STATS CARDS
+       ========================================== -->
+  <div class="stats-grid">
+    <div class="stat-card green">
+      <div class="stat-label">Passed</div>
+      <div class="stat-value green">165</div>
+      <div class="stat-sub">+1 this round</div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-label">Failed</div>
+      <div class="stat-value red">44</div>
+      <div class="stat-sub">+3 this round</div>
+    </div>
+    <div class="stat-card amber">
+      <div class="stat-label">Fixed</div>
+      <div class="stat-value amber">44</div>
+      <div class="stat-sub">&mdash; this round</div>
+    </div>
+    <div class="stat-card blue">
+      <div class="stat-label">Coverage</div>
+      <div class="stat-value blue">80.7%</div>
+      <div class="stat-sub">165/204 specs</div>
+    </div>
+    <div class="stat-card purple">
+      <div class="stat-label">Skipped</div>
+      <div class="stat-value purple">13</div>
+      <div class="stat-sub">9 env issues</div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       TWO-COLUMN: Fix Queue + Verify Queue
+       ========================================== -->
+  <div class="two-col">
+    <!-- Fix Queue -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Fix Queue</span>
+        <span class="card-sub">1 item</span>
+      </div>
+      <table class="qtable">
+        <thead><tr><th>Test ID</th><th>Reason</th><th>Round</th></tr></thead>
+        <tbody>
+          <tr><td>spec-playwright-ui-tests</td><td>test_fail</td><td>R28</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <!-- Verify Queue -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Verify Queue</span>
+        <span class="card-sub">3 items</span>
+      </div>
+      <table class="qtable">
+        <thead><tr><th>Test ID</th><th>Fix Type</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>framework-fix-fixanalyzer...</td><td>framework_fix</td><td><span class="badge pend">PENDING</span></td></tr>
+          <tr><td>obs-bash-antipattern-r28</td><td>infra_fix</td><td><span class="badge pend">PENDING</span></td></tr>
+          <tr><td>obs-uncovered-learnings-r28</td><td>infra_fix</td><td><span class="badge pend">PENDING</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       ACTIVITY STREAM
+       ========================================== -->
+  <div class="card">
+    <div class="card-header">
+      <span style="color:var(--accent-green);font-size:14px">&#x1F4E1;</span>
+      <span class="card-title">Activity Stream</span>
+      <span class="card-sub">live</span>
+    </div>
+    <div class="activity-list">
+      <div class="act">
+        <span class="act-time">10:42</span>
+        <span class="act-badge FIX">FIX</span>
+        <span class="act-text">Analyzing <span class="act-id">spec-playwright-ui-tests</span></span>
+      </div>
+      <div class="act">
+        <span class="act-time">10:36</span>
+        <span class="act-badge FIX">FIX</span>
+        <span class="act-text">&#x2705; Fixed <span class="act-id">obs-uncovered-learnings-r28</span> &rarr; verify queue</span>
+      </div>
+      <div class="act">
+        <span class="act-time">10:35</span>
+        <span class="act-badge FIX">FIX</span>
+        <span class="act-text">&#x2705; Fixed <span class="act-id">obs-bash-antipattern-r28</span> &rarr; verify queue</span>
+      </div>
+      <div class="act">
+        <span class="act-time">10:27</span>
+        <span class="act-badge FIX">FIX</span>
+        <span class="act-text">&#x2705; Fixed <span class="act-id">framework-fix-fixanalyzer</span> &rarr; verify queue</span>
+      </div>
+      <div class="act">
+        <span class="act-time">09:55</span>
+        <span class="act-badge TEST">TEST</span>
+        <span class="act-text">&#x2705; <span class="act-id">spec-remove-info-tab</span> passed</span>
+      </div>
+      <div class="act">
+        <span class="act-time">09:54</span>
+        <span class="act-badge TEST">TEST</span>
+        <span class="act-text">&#x274C; <span class="act-id">spec-playwright-ui-tests</span> failed &rarr; fix queue</span>
+      </div>
+      <div class="act">
+        <span class="act-time">09:50</span>
+        <span class="act-badge TEST">TEST</span>
+        <span class="act-text">&#x23ED; 9 tests env-skipped (backend not running)</span>
+      </div>
+      <div class="act">
+        <span class="act-time">08:10</span>
+        <span class="act-badge GEN">GEN</span>
+        <span class="act-text">Created 13 tests from 13 gaps</span>
+      </div>
+      <div class="act">
+        <span class="act-time">08:08</span>
+        <span class="act-badge SCAN">SCAN</span>
+        <span class="act-text">Found 21 gaps (13 issue, 2 obs, 6 spec)</span>
+      </div>
+      <div class="act">
+        <span class="act-time">08:03</span>
+        <span class="act-badge SCAN">SCAN</span>
+        <span class="act-text">Round 28 started</span>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /.main -->
+
+<!-- ==========================================
+     SCENE SWITCHER JAVASCRIPT
+     Updates ALL dynamic elements when switching scenes
+     ========================================== -->
+<script>
+function setScene(scene, btn) {
+  // Update demo switcher active state
+  document.querySelectorAll('.demo-t').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  const el = id => document.getElementById(id);
+
+  // Close any open step panel & track scene
+  currentScene = scene;
+  currentOpenStep = null;
+  const stepPanel = el('step-panel');
+  if (stepPanel) stepPanel.classList.remove('visible');
+
+  // Helper: remove ph-current from a phase if it exists
+  function removeCurrent(phId) {
+    const cur = el(phId).querySelector('.ph-current');
+    if (cur) cur.remove();
+  }
+  // Helper: ensure ph-current exists on a phase
+  function ensureCurrent(phId, html) {
+    let cur = el(phId).querySelector('.ph-current');
+    if (!cur) {
+      cur = document.createElement('div');
+      cur.className = 'ph-current';
+      el(phId).appendChild(cur);
+    }
+    cur.innerHTML = html;
+    cur.style.display = '';
+    return cur;
+  }
+  // Helper: hide ph-current
+  function hideCurrent(phId) {
+    const cur = el(phId).querySelector('.ph-current');
+    if (cur) cur.style.display = 'none';
+  }
+
+  /* ======== TESTING scene ======== */
+  if (scene === 'testing') {
+    // Hero card
+    el('hero-ring').innerHTML = '&#x1F3C3;';
+    el('hero-ring').className = 'pulse-ring';
+    el('hero-action').textContent = 'Running Test';
+    el('hero-detail').innerHTML = '<span class="tid">iss150-severity-threshold</span> &middot; category: backend-api &middot; 3/13 tests';
+    el('hero-time').textContent = '3:22';
+    el('hero-time').className = 'hero-elapsed';
+    el('hero').className = 'live-hero';
+    el('loop-badge').style.display = '';
+
+    // Runner steps: Pre-flight done, Strategy done, Test-Loop active, Meta/Done pending
+    el('runner-steps').innerHTML = `
+      <div class="rstep done" onclick="toggleStep('preflight')"><div class="rstep-dot">&#x2713;</div><div class="rstep-info"><div class="rstep-name">Pre-flight</div><div class="rstep-time">2s</div><div class="rstep-expand-hint">click</div></div></div>
+      <div class="rstep-line done"></div>
+      <div class="rstep done" onclick="toggleStep('strategy')"><div class="rstep-dot">&#x2713;</div><div class="rstep-info"><div class="rstep-name">Strategy</div><div class="rstep-time">8s</div><div class="rstep-expand-hint">click</div></div></div>
+      <div class="rstep-line done"></div>
+      <div class="rstep active" onclick="toggleStep('testloop')"><div class="rstep-dot">&#x25B6;</div><div class="rstep-info"><div class="rstep-name">Test-Loop</div><div class="rstep-time">~3m</div><div class="rstep-expand-hint">click</div></div></div>
+      <div class="rstep-line"></div>
+      <div class="rstep pending" onclick="toggleStep('meta')"><div class="rstep-dot"></div><div class="rstep-info"><div class="rstep-name">Meta</div><div class="rstep-time">&mdash;</div><div class="rstep-expand-hint">click</div></div></div>
+      <div class="rstep-line"></div>
+      <div class="rstep pending" onclick="toggleStep('summary')"><div class="rstep-dot"></div><div class="rstep-info"><div class="rstep-name">Done</div><div class="rstep-time">&mdash;</div><div class="rstep-expand-hint">click</div></div></div>
+      <div class="loop-badge" id="loop-badge"><div class="dot"></div>Loop #3 &middot; next: 4:12</div>
+    `;
+
+    // Phase pipeline: SCAN/GEN done, TEST active, FIX/VERIFY pending
+    el('ph-test').className = 'ph active';
+    el('ph-test').querySelector('.ph-icon').innerHTML = '&#x1F3C3;';
+    el('ph-test').querySelector('.ph-bar .ph-bar-fill').style.width = '23%';
+    el('ph-test').querySelector('.ph-stat').innerHTML = '<span class="n g">1</span>&#x2705; <span class="n r">1</span>&#x274C; <span class="n t">1</span>&#x23ED;';
+    el('ph-test').querySelector('.ph-dur').textContent = '~3m22s';
+    ensureCurrent('ph-test', '&#x1F3C3; iss150-severity...');
+
+    el('ph-fix').className = 'ph pending';
+    el('fix-icon').innerHTML = '&#x23F3;';
+    el('fix-bar').style.width = '0%';
+    el('fix-stat').innerHTML = '&mdash;';
+    el('fix-dur').textContent = '&mdash;';
+    hideCurrent('ph-fix');
+
+    el('ph-verify').className = 'ph pending';
+    el('verify-icon').innerHTML = '&#x23F3;';
+    el('verify-bar').style.width = '0%';
+    el('verify-stat').innerHTML = '&mdash;';
+    el('verify-dur').textContent = '&mdash;';
+
+    el('phase-sub').textContent = 'TEST in progress';
+
+    // Activity detail strip
+    el('strip-text').innerHTML = 'Executing assertions for <span class="tid">iss150-severity-threshold</span>';
+    el('strip-phase').textContent = 'TEST';
+    el('strip-phase').className = 'strip-tag blue';
+    el('strip-step').textContent = 'TEST-LOOP';
+    el('strip-dot').className = 'live-dot';
+
+    // Queue bars
+    el('sb-test').style.width = '23%';
+    el('sb-test-n').textContent = '10';
+    el('sb-fix').style.width = '0%';
+    el('sb-fix-n').textContent = '0';
+    el('sb-verify').style.width = '0%';
+    el('sb-verify-n').textContent = '0';
+
+    // Runner ctrl
+    el('rdot').className = 'runner-dot running';
+    el('rlabel').className = 'runner-label running';
+    el('rlabel').textContent = 'RUNNING';
+    el('rmeta').textContent = 'Started: 03-30 08:03';
+    el('rbtn').innerHTML = '&#x23F9; Stop';
+    el('rbtn').className = 'btn danger';
+  }
+
+  /* ======== FIXING scene ======== */
+  else if (scene === 'fixing') {
+    // Hero card
+    el('hero-ring').innerHTML = '&#x1F527;';
+    el('hero-ring').className = 'pulse-ring amber';
+    el('hero-action').textContent = 'Fixing Test';
+    el('hero-detail').innerHTML = '<span class="tid">spec-playwright-ui-tests</span> &middot; attempt 1 &middot; reason: test_fail';
+    el('hero-time').textContent = '6:41';
+    el('hero-time').className = 'hero-elapsed';
+    el('hero').className = 'live-hero';
+
+    // Runner steps
+    el('runner-steps').innerHTML = `
+      <div class="rstep done" onclick="toggleStep('preflight')"><div class="rstep-dot">&#x2713;</div><div class="rstep-info"><div class="rstep-name">Pre-flight</div><div class="rstep-time">2s</div><div class="rstep-expand-hint">click</div></div></div>
+      <div class="rstep-line done"></div>
+      <div class="rstep done" onclick="toggleStep('strategy')"><div class="rstep-dot">&#x2713;</div><div class="rstep-info"><div class="rstep-name">Strategy</div><div class="rstep-time">8s</div><div class="rstep-expand-hint">click</div></div></div>
+      <div class="rstep-line done"></div>
+      <div class="rstep active" onclick="toggleStep('testloop')"><div class="rstep-dot">&#x25B6;</div><div class="rstep-info"><div class="rstep-name">Test-Loop</div><div class="rstep-time">~15m</div><div class="rstep-expand-hint">click</div></div></div>
+      <div class="rstep-line"></div>
+      <div class="rstep pending" onclick="toggleStep('meta')"><div class="rstep-dot"></div><div class="rstep-info"><div class="rstep-name">Meta</div><div class="rstep-time">&mdash;</div><div class="rstep-expand-hint">click</div></div></div>
+      <div class="rstep-line"></div>
+      <div class="rstep pending" onclick="toggleStep('summary')"><div class="rstep-dot"></div><div class="rstep-info"><div class="rstep-name">Done</div><div class="rstep-time">&mdash;</div><div class="rstep-expand-hint">click</div></div></div>
+      <div class="loop-badge" id="loop-badge"><div class="dot"></div>Loop #3 &middot; next: 4:12</div>
+    `;
+
+    // Phase pipeline: TEST done, FIX active, VERIFY pending
+    el('ph-test').className = 'ph done';
+    el('ph-test').querySelector('.ph-icon').innerHTML = '&#x2705;';
+    el('ph-test').querySelector('.ph-bar .ph-bar-fill').style.width = '100%';
+    el('ph-test').querySelector('.ph-stat').innerHTML = '<span class="n g">1</span>&#x2705; <span class="n r">3</span>&#x274C; <span class="n t">9</span>&#x23ED;';
+    el('ph-test').querySelector('.ph-dur').textContent = '8m5s';
+    removeCurrent('ph-test');
+
+    el('ph-fix').className = 'ph active';
+    el('fix-icon').innerHTML = '&#x1F527;';
+    el('fix-bar').style.width = '33%';
+    el('fix-stat').innerHTML = '<span class="n">0</span>/<span class="n">1</span> fixed';
+    el('fix-dur').textContent = '~6m41s';
+    ensureCurrent('ph-fix', '&#x1F527; spec-playwrig...');
+
+    el('ph-verify').className = 'ph pending';
+    el('verify-icon').innerHTML = '&#x23F3;';
+    el('verify-bar').style.width = '0%';
+    el('verify-stat').innerHTML = '<span class="n b">3</span> queued';
+    el('verify-dur').textContent = '&mdash;';
+
+    el('phase-sub').textContent = 'FIX in progress';
+
+    // Activity detail strip
+    el('strip-text').innerHTML = 'Analyzing failure &amp; generating fix for <span class="tid">spec-playwright-ui-tests</span>';
+    el('strip-phase').textContent = 'FIX';
+    el('strip-phase').className = 'strip-tag amber';
+    el('strip-step').textContent = 'TEST-LOOP';
+    el('strip-dot').className = 'live-dot';
+
+    // Queue bars
+    el('sb-test').style.width = '100%';
+    el('sb-test-n').textContent = '0';
+    el('sb-fix').style.width = '50%';
+    el('sb-fix-n').textContent = '1';
+    el('sb-verify').style.width = '15%';
+    el('sb-verify-n').textContent = '3';
+
+    // Runner ctrl
+    el('rdot').className = 'runner-dot running';
+    el('rlabel').className = 'runner-label running';
+    el('rlabel').textContent = 'RUNNING';
+    el('rmeta').textContent = 'Started: 03-30 08:03';
+    el('rbtn').innerHTML = '&#x23F9; Stop';
+    el('rbtn').className = 'btn danger';
+  }
+
+  /* ======== VERIFY scene ======== */
+  else if (scene === 'verify') {
+    // Hero card
+    el('hero-ring').innerHTML = '&#x2705;';
+    el('hero-ring').className = 'pulse-ring green';
+    el('hero-action').textContent = 'Verifying Fix';
+    el('hero-detail').innerHTML = '<span class="tid">framework-fix-fixanalyzer-env-r28</span> &middot; 1/3 verifications';
+    el('hero-time').textContent = '1:08';
+    el('hero-time').className = 'hero-elapsed';
+    el('hero').className = 'live-hero';
+
+    // Runner steps: all done except Meta (active) and Done (pending)
+    el('runner-steps').innerHTML = `
+      <div class="rstep done" onclick="toggleStep('preflight')"><div class="rstep-dot">&#x2713;</div><div class="rstep-info"><div class="rstep-name">Pre-flight</div><div class="rstep-time">2s</div><div class="rstep-expand-hint">click</div></div></div>
+      <div class="rstep-line done"></div>
+      <div class="rstep done" onclick="toggleStep('strategy')"><div class="rstep-dot">&#x2713;</div><div class="rstep-info"><div class="rstep-name">Strategy</div><div class="rstep-time">8s</div><div class="rstep-expand-hint">click</div></div></div>
+      <div class="rstep-line done"></div>
+      <div class="rstep done" onclick="toggleStep('testloop')"><div class="rstep-dot">&#x2713;</div><div class="rstep-info"><div class="rstep-name">Test-Loop</div><div class="rstep-time">18m</div><div class="rstep-expand-hint">click</div></div></div>
+      <div class="rstep-line done"></div>
+      <div class="rstep active" onclick="toggleStep('meta')"><div class="rstep-dot">&#x25B6;</div><div class="rstep-info"><div class="rstep-name">Meta</div><div class="rstep-time">~1m</div><div class="rstep-expand-hint">click</div></div></div>
+      <div class="rstep-line"></div>
+      <div class="rstep pending" onclick="toggleStep('summary')"><div class="rstep-dot"></div><div class="rstep-info"><div class="rstep-name">Done</div><div class="rstep-time">&mdash;</div><div class="rstep-expand-hint">click</div></div></div>
+      <div class="loop-badge" id="loop-badge"><div class="dot"></div>Loop #3 &middot; next: 1:44</div>
+    `;
+
+    // Phase pipeline: TEST/FIX done, VERIFY active
+    el('ph-test').className = 'ph done';
+    el('ph-test').querySelector('.ph-icon').innerHTML = '&#x2705;';
+    el('ph-test').querySelector('.ph-bar .ph-bar-fill').style.width = '100%';
+    el('ph-test').querySelector('.ph-stat').innerHTML = '<span class="n g">1</span>&#x2705; <span class="n r">3</span>&#x274C; <span class="n t">9</span>&#x23ED;';
+    el('ph-test').querySelector('.ph-dur').textContent = '8m5s';
+    removeCurrent('ph-test');
+
+    el('ph-fix').className = 'ph done';
+    el('fix-icon').innerHTML = '&#x2705;';
+    el('fix-bar').style.width = '100%';
+    el('fix-stat').innerHTML = '<span class="n g">1</span>/<span class="n">1</span> fixed';
+    el('fix-dur').textContent = '7m12s';
+    hideCurrent('ph-fix');
+
+    el('ph-verify').className = 'ph active';
+    el('verify-icon').innerHTML = '&#x1F50D;';
+    el('verify-bar').style.width = '33%';
+    el('verify-stat').innerHTML = '<span class="n g">0</span>/<span class="n">3</span> verified';
+    el('verify-dur').textContent = '~1m08s';
+    ensureCurrent('ph-verify', '&#x1F50D; framework-fix...');
+
+    el('phase-sub').textContent = 'VERIFY in progress';
+
+    // Activity detail strip
+    el('strip-text').innerHTML = 'Re-running test for <span class="tid">framework-fix-fixanalyzer-env-r28</span>';
+    el('strip-phase').textContent = 'VERIFY';
+    el('strip-phase').className = 'strip-tag green';
+    el('strip-step').textContent = 'META';
+    el('strip-dot').className = 'live-dot';
+
+    // Queue bars
+    el('sb-test').style.width = '100%';
+    el('sb-test-n').textContent = '0';
+    el('sb-fix').style.width = '100%';
+    el('sb-fix-n').textContent = '0';
+    el('sb-verify').style.width = '33%';
+    el('sb-verify-n').textContent = '3';
+
+    // Runner ctrl
+    el('rdot').className = 'runner-dot running';
+    el('rlabel').className = 'runner-label running';
+    el('rlabel').textContent = 'RUNNING';
+    el('rmeta').textContent = 'Started: 03-30 08:03';
+    el('rbtn').innerHTML = '&#x23F9; Stop';
+    el('rbtn').className = 'btn danger';
+  }
+
+  /* ======== IDLE scene ======== */
+  else {
+    // Hero card
+    el('hero-ring').innerHTML = '&#x23F8;';
+    el('hero-ring').className = 'pulse-ring idle';
+    el('hero-action').textContent = 'Idle';
+    el('hero-detail').innerHTML = 'Round 28 completed 12 min ago';
+    el('hero-time').textContent = '&mdash;';
+    el('hero-time').className = 'hero-elapsed dim';
+    el('hero').className = 'live-hero idle';
+
+    // Runner steps: all done
+    el('runner-steps').innerHTML = `
+      <div class="rstep done" onclick="toggleStep('preflight')"><div class="rstep-dot">&#x2713;</div><div class="rstep-info"><div class="rstep-name">Pre-flight</div><div class="rstep-time">2s</div><div class="rstep-expand-hint">click</div></div></div>
+      <div class="rstep-line done"></div>
+      <div class="rstep done" onclick="toggleStep('strategy')"><div class="rstep-dot">&#x2713;</div><div class="rstep-info"><div class="rstep-name">Strategy</div><div class="rstep-time">8s</div><div class="rstep-expand-hint">click</div></div></div>
+      <div class="rstep-line done"></div>
+      <div class="rstep done" onclick="toggleStep('testloop')"><div class="rstep-dot">&#x2713;</div><div class="rstep-info"><div class="rstep-name">Test-Loop</div><div class="rstep-time">18m</div><div class="rstep-expand-hint">click</div></div></div>
+      <div class="rstep-line done"></div>
+      <div class="rstep done" onclick="toggleStep('meta')"><div class="rstep-dot">&#x2713;</div><div class="rstep-info"><div class="rstep-name">Meta</div><div class="rstep-time">32s</div><div class="rstep-expand-hint">click</div></div></div>
+      <div class="rstep-line done"></div>
+      <div class="rstep done" onclick="toggleStep('summary')"><div class="rstep-dot">&#x2713;</div><div class="rstep-info"><div class="rstep-name">Done</div><div class="rstep-time">1s</div><div class="rstep-expand-hint">click</div></div></div>
+    `;
+
+    // Phase pipeline: all done
+    el('ph-test').className = 'ph done';
+    el('ph-test').querySelector('.ph-icon').innerHTML = '&#x2705;';
+    el('ph-test').querySelector('.ph-bar .ph-bar-fill').style.width = '100%';
+    el('ph-test').querySelector('.ph-stat').innerHTML = '<span class="n g">1</span>&#x2705; <span class="n r">3</span>&#x274C; <span class="n t">9</span>&#x23ED;';
+    el('ph-test').querySelector('.ph-dur').textContent = '8m5s';
+    removeCurrent('ph-test');
+
+    el('ph-fix').className = 'ph done';
+    el('fix-icon').innerHTML = '&#x2705;';
+    el('fix-bar').style.width = '100%';
+    el('fix-stat').innerHTML = '<span class="n g">1</span>/<span class="n">1</span> fixed';
+    el('fix-dur').textContent = '7m12s';
+    hideCurrent('ph-fix');
+
+    el('ph-verify').className = 'ph done';
+    el('verify-icon').innerHTML = '&#x2705;';
+    el('verify-bar').style.width = '100%';
+    el('verify-stat').innerHTML = '<span class="n g">3</span>/<span class="n">3</span> verified';
+    el('verify-dur').textContent = '2m30s';
+    let vc = el('ph-verify').querySelector('.ph-current');
+    if (vc) vc.remove();
+
+    el('phase-sub').textContent = 'R28 completed';
+
+    // Activity detail strip
+    el('strip-text').innerHTML = 'No active operation';
+    el('strip-phase').textContent = 'IDLE';
+    el('strip-phase').className = 'strip-tag idle-tag';
+    el('strip-step').textContent = 'DONE';
+    el('strip-step').className = 'strip-tag idle-tag';
+    el('strip-dot').className = 'live-dot idle';
+
+    // Queue bars
+    el('sb-test').style.width = '100%';
+    el('sb-test-n').textContent = '0';
+    el('sb-fix').style.width = '100%';
+    el('sb-fix-n').textContent = '0';
+    el('sb-verify').style.width = '100%';
+    el('sb-verify-n').textContent = '0';
+    el('sb-round').innerHTML = '<span style="color:var(--accent-green)">1</span>&#x2705; <span style="color:var(--accent-red)">3</span>&#x274C; <span style="color:var(--text-tertiary)">9</span>&#x23ED;';
+
+    // Runner ctrl
+    el('rdot').className = 'runner-dot idle';
+    el('rlabel').className = 'runner-label idle';
+    el('rlabel').textContent = 'IDLE';
+    el('rmeta').textContent = 'Last: 03-30 10:48 (12m ago)';
+    el('rbtn').innerHTML = '&#x25B6; Start';
+    el('rbtn').className = 'btn';
+  }
+}
+
+// ==========================================
+// STEP DETAIL PANEL — expandable info per runner stage
+// ==========================================
+let currentOpenStep = null;
+
+// Step detail data per scene
+const stepData = {
+  fixing: {
+    preflight: {
+      title: 'Pre-flight Check', titleClass: 'done-t', dur: '2s',
+      items: [
+        { icon: '✅', label: 'Env', val: 'Node 20.11 · npm 10.2', cls: 'g' },
+        { icon: '✅', label: 'Git', val: 'clean · main branch', cls: 'g' },
+        { icon: '✅', label: 'Deps', val: '0 outdated', cls: 'g' },
+        { icon: '✅', label: 'Ports', val: '3010 free', cls: 'g' },
+      ],
+      note: 'All system checks passed. Ready to proceed.'
+    },
+    strategy: {
+      title: 'Strategic Review', titleClass: 'done-t', dur: '8s',
+      items: [
+        { icon: '📋', label: 'Registry', val: '80 tests loaded', cls: 'b' },
+        { icon: '🎯', label: 'Focus', val: 'issue-linked tests first', cls: 'b' },
+        { icon: '📊', label: 'Stale', val: '1 probe (obs-stale-r26)', cls: 'a' },
+        { icon: '🔄', label: 'Retry', val: '3 from R27', cls: 'a' },
+      ],
+      note: 'Strategy: Prioritize ISS-linked gaps → new obs → spec coverage.'
+    },
+    testloop: {
+      title: 'Test-Loop', titleClass: '', dur: '~15m (running)',
+      items: [
+        { icon: '🔍', label: 'SCAN', val: '21 gaps · 4m53s', cls: 'g' },
+        { icon: '📝', label: 'GEN', val: '13 tests · 1m35s', cls: 'g' },
+        { icon: '🧪', label: 'TEST', val: '1✅ 3❌ 9⏭ · 8m5s', cls: 'g' },
+        { icon: '🔧', label: 'FIX', val: '0/1 fixing · ~6m41s', cls: 'b' },
+        { icon: '✔️', label: 'VERIFY', val: '3 queued', cls: '' },
+        { icon: '📌', label: 'Current', val: 'spec-playwright-ui-tests', cls: 'b' },
+      ],
+      note: 'Phase FIX active — analyzing test failure and generating code fix.'
+    },
+    meta: {
+      title: 'Meta-Analysis', titleClass: 'pending-t', dur: '—',
+      items: [
+        { icon: '⏳', label: 'Status', val: 'Waiting for test-loop', cls: '' },
+        { icon: '📊', label: 'Will do', val: 'Pattern analysis', cls: '' },
+        { icon: '💡', label: 'Will do', val: 'Update learnings', cls: '' },
+        { icon: '📈', label: 'Will do', val: 'Coverage trend calc', cls: '' },
+      ],
+      note: 'Will analyze test results and extract patterns after test-loop completes.'
+    },
+    summary: {
+      title: 'Summary', titleClass: 'pending-t', dur: '—',
+      items: [
+        { icon: '⏳', label: 'Status', val: 'Waiting', cls: '' },
+        { icon: '📄', label: 'Will do', val: 'Generate round report', cls: '' },
+        { icon: '💾', label: 'Will do', val: 'Save state.json', cls: '' },
+        { icon: '📣', label: 'Will do', val: 'Emit SSE summary', cls: '' },
+      ],
+      note: 'Will produce final round report and persist results.'
+    }
+  },
+  idle: {
+    preflight: {
+      title: 'Pre-flight Check', titleClass: 'done-t', dur: '2s',
+      items: [
+        { icon: '✅', label: 'Env', val: 'Node 20.11 · npm 10.2', cls: 'g' },
+        { icon: '✅', label: 'Git', val: 'clean · main branch', cls: 'g' },
+        { icon: '✅', label: 'Deps', val: '0 outdated', cls: 'g' },
+        { icon: '✅', label: 'Ports', val: '3010 free', cls: 'g' },
+      ],
+      note: 'All system checks passed.'
+    },
+    strategy: {
+      title: 'Strategic Review', titleClass: 'done-t', dur: '8s',
+      items: [
+        { icon: '📋', label: 'Registry', val: '80 tests loaded', cls: 'b' },
+        { icon: '🎯', label: 'Focus', val: 'issue-linked first', cls: 'b' },
+        { icon: '📊', label: 'Stale', val: '1 probe flagged', cls: 'a' },
+        { icon: '🔄', label: 'Retry', val: '3 from R27', cls: 'a' },
+      ],
+      note: 'Prioritized ISS-linked → obs → spec coverage.'
+    },
+    testloop: {
+      title: 'Test-Loop', titleClass: 'done-t', dur: '18m',
+      items: [
+        { icon: '✅', label: 'SCAN', val: '21 gaps · 4m53s', cls: 'g' },
+        { icon: '✅', label: 'GEN', val: '13 tests · 1m35s', cls: 'g' },
+        { icon: '✅', label: 'TEST', val: '1✅ 3❌ 9⏭ · 8m5s', cls: 'g' },
+        { icon: '✅', label: 'FIX', val: '1/1 fixed · 7m12s', cls: 'g' },
+        { icon: '✅', label: 'VERIFY', val: '3/3 verified · 2m30s', cls: 'g' },
+        { icon: '📌', label: 'Result', val: '+1 pass, -3 fail, 0 regress', cls: 'g' },
+      ],
+      note: 'All 5 phases completed successfully.'
+    },
+    meta: {
+      title: 'Meta-Analysis', titleClass: 'done-t', dur: '32s',
+      items: [
+        { icon: '✅', label: 'Patterns', val: '2 new patterns found', cls: 'g' },
+        { icon: '✅', label: 'Learnings', val: '1 entry added', cls: 'g' },
+        { icon: '📈', label: 'Coverage', val: '80.7% (+0.5%)', cls: 'g' },
+        { icon: '🔄', label: 'Stale', val: '1 probe still stale', cls: 'a' },
+      ],
+      note: 'Pattern: env-skip correlates with missing backend. Learning saved to LEARNINGS.md.'
+    },
+    summary: {
+      title: 'Summary', titleClass: 'done-t', dur: '1s',
+      items: [
+        { icon: '✅', label: 'Report', val: 'R28 report generated', cls: 'g' },
+        { icon: '✅', label: 'State', val: 'state.json updated', cls: 'g' },
+        { icon: '✅', label: 'Duration', val: '21m 14s total', cls: 'g' },
+        { icon: '📣', label: 'SSE', val: 'Summary event emitted', cls: 'g' },
+      ],
+      note: 'Round 28 complete. Next loop in 4:12.'
+    }
+  }
+};
+// Alias scenes that share similar data
+stepData.testing = JSON.parse(JSON.stringify(stepData.fixing));
+stepData.testing.testloop.items[2] = { icon: '🧪', label: 'TEST', val: '1✅ 1❌ 1⏭ · running', cls: 'b' };
+stepData.testing.testloop.items[3] = { icon: '🔧', label: 'FIX', val: '—', cls: '' };
+stepData.testing.testloop.items[4] = { icon: '✔️', label: 'VERIFY', val: '—', cls: '' };
+stepData.testing.testloop.items[5] = { icon: '📌', label: 'Current', val: 'iss150-severity-threshold', cls: 'b' };
+stepData.testing.testloop.dur = '~3m (running)';
+stepData.testing.testloop.note = 'Phase TEST active — executing test assertions.';
+
+stepData.verify = JSON.parse(JSON.stringify(stepData.idle));
+stepData.verify.testloop.titleClass = 'done-t';
+stepData.verify.meta = {
+  title: 'Meta-Analysis', titleClass: '', dur: '~1m (running)',
+  items: [
+    { icon: '🔍', label: 'Status', val: 'Running analysis...', cls: 'b' },
+    { icon: '📊', label: 'Patterns', val: 'scanning...', cls: 'b' },
+    { icon: '💡', label: 'Learnings', val: 'pending', cls: '' },
+    { icon: '📈', label: 'Coverage', val: 'calculating...', cls: 'b' },
+  ],
+  note: 'Analyzing test-loop results for patterns and insights.'
+};
+stepData.verify.summary = stepData.fixing.summary;
+
+let currentScene = 'fixing';
+
+function toggleStep(stepName) {
+  const panel = document.getElementById('step-panel');
+
+  if (currentOpenStep === stepName) {
+    // Close
+    panel.classList.remove('visible');
+    currentOpenStep = null;
+    document.querySelectorAll('.rstep.expanded').forEach(s => s.classList.remove('expanded'));
+    return;
+  }
+
+  currentOpenStep = stepName;
+  const data = (stepData[currentScene] || stepData.fixing)[stepName];
+  if (!data) return;
+
+  // Highlight clicked step
+  document.querySelectorAll('.rstep.expanded').forEach(s => s.classList.remove('expanded'));
+  const steps = document.querySelectorAll('#runner-steps .rstep');
+  const stepIndex = { preflight: 0, strategy: 1, testloop: 2, meta: 3, summary: 4 }[stepName];
+  if (steps[stepIndex]) steps[stepIndex].classList.add('expanded');
+
+  // Build panel content
+  let html = `
+    <div class="sdp-header">
+      <span class="sdp-title ${data.titleClass}">${data.title}</span>
+      <span class="sdp-dur">${data.dur}</span>
+      <button class="sdp-close" onclick="toggleStep('${stepName}')">&times;</button>
+    </div>
+    <div class="sdp-body">
+  `;
+  data.items.forEach(item => {
+    html += `<div class="sdp-item">
+      <span class="sdp-icon">${item.icon}</span>
+      <span class="sdp-label">${item.label}</span>
+      <span class="sdp-val ${item.cls}">${item.val}</span>
+    </div>`;
+  });
+  if (data.note) {
+    html += `<div class="sdp-note">${data.note}</div>`;
+  }
+  html += '</div>';
+
+  panel.innerHTML = html;
+  panel.classList.add('visible');
+}
+</script>
+</body>
+</html>

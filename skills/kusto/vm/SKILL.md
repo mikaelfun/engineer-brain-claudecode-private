@@ -76,57 +76,57 @@ last_modified: 2026-01-14
 
 | 表名 | 用途 | 文档 |
 |------|------|------|
-| ApiQosEvent | API 服务质量事件 | [📄](./references/tables/ApiQosEvent.md) |
-| ApiQosEvent_nonGet | 非 GET 操作事件 | [📄](./references/tables/ApiQosEvent_nonGet.md) |
-| VMApiQosEvent | VM API QoS 事件（含 VM 模型） | [📄](./references/tables/VMApiQosEvent.md) |
-| ContextActivity | 上下文活动详细日志 | [📄](./references/tables/ContextActivity.md) |
-| VmssQoSEvent | VMSS QoS 事件 | [📄](./references/tables/VmssQoSEvent.md) |
-| VmssVMGoalSeekingActivity | VMSS Goal Seeking 活动 | [📄](./references/tables/VmssVMGoalSeekingActivity.md) |
-| MutatingComponentQoSTable | CRP 组件操作 QoS | [📄](./references/tables/MutatingComponentQoSTable.md) |
+| ApiQosEvent | API 服务质量事件 | [📄](./references/tables/crp_allmc/ApiQosEvent.md) |
+| ApiQosEvent_nonGet | 非 GET 操作事件 | [📄](./references/tables/crp_allmc/ApiQosEvent_nonGet.md) |
+| VMApiQosEvent | VM API QoS 事件（含 VM 模型） | [📄](./references/tables/crp_allmc/VMApiQosEvent.md) |
+| ContextActivity | 上下文活动详细日志 | [📄](./references/tables/crp_allmc/ContextActivity.md) |
+| VmssQoSEvent | VMSS QoS 事件 | [📄](./references/tables/crp_allmc/VmssQoSEvent.md) |
+| VmssVMGoalSeekingActivity | VMSS Goal Seeking 活动 | [📄](./references/tables/crp_allmc/VmssVMGoalSeekingActivity.md) |
+| MutatingComponentQoSTable | CRP 组件操作 QoS | [📄](./references/tables/crp_allmc/MutatingComponentQoSTable.md) |
 | ComputeAllocationActivity | 计算分配活动 | [📄](./references/tables/ComputeAllocationActivity.md) |
-| VMAutoExtensionUpgradeEvent | 扩展自动升级事件 | [📄](./references/tables/VMAutoExtensionUpgradeEvent.md) |
+| VMAutoExtensionUpgradeEvent | 扩展自动升级事件 | [📄](./references/tables/crp_allmc/VMAutoExtensionUpgradeEvent.md) |
 
 ### Fabric 层 (azurecm)
 
 | 表名 | 用途 | 文档 |
 |------|------|------|
-| LogContainerSnapshot | VM 容器快照 | [📄](./references/tables/LogContainerSnapshot.md) |
-| LogContainerHealthSnapshot | 容器健康状态 | [📄](./references/tables/LogContainerHealthSnapshot.md) |
-| LogNodeSnapshot | 节点快照 | [📄](./references/tables/LogNodeSnapshot.md) |
-| TMMgmtTenantEventsEtwTable | 租户事件 | [📄](./references/tables/TMMgmtTenantEventsEtwTable.md) |
-| TMMgmtNodeEventsEtwTable | 节点事件 | [📄](./references/tables/TMMgmtNodeEventsEtwTable.md) |
-| TMMgmtNodeStateChangedEtwTable | 节点状态变更 | [📄](./references/tables/TMMgmtNodeStateChangedEtwTable.md) |
-| ServiceHealingTriggerEtwTable | Service Healing 触发 | [📄](./references/tables/ServiceHealingTriggerEtwTable.md) |
-| FaultHandlingRecoveryEventEtwTable | 故障恢复事件 | [📄](./references/tables/FaultHandlingRecoveryEventEtwTable.md) |
-| LiveMigrationContainerDetailsEventLog | Live Migration 详情 | [📄](./references/tables/LiveMigrationContainerDetailsEventLog.md) |
-| LogAllocatableVmCountMetric | 可分配 VM 数量 | [📄](./references/tables/LogAllocatableVmCountMetric.md) |
-| TMMgmtSlaMeasurementEventEtwTable | SLA 测量事件 | [📄](./references/tables/TMMgmtSlaMeasurementEventEtwTable.md) |
+| LogContainerSnapshot | VM 容器快照 | [📄](./references/tables/azurecm/LogContainerSnapshot.md) |
+| LogContainerHealthSnapshot | 容器健康状态 | [📄](./references/tables/azurecm/LogContainerHealthSnapshot.md) |
+| LogNodeSnapshot | 节点快照 | [📄](./references/tables/azurecm/LogNodeSnapshot.md) |
+| TMMgmtTenantEventsEtwTable | 租户事件 | [📄](./references/tables/azurecm/TMMgmtTenantEventsEtwTable.md) |
+| TMMgmtNodeEventsEtwTable | 节点事件 | [📄](./references/tables/azurecm/TMMgmtNodeEventsEtwTable.md) |
+| TMMgmtNodeStateChangedEtwTable | 节点状态变更 | [📄](./references/tables/azurecm/TMMgmtNodeStateChangedEtwTable.md) |
+| ServiceHealingTriggerEtwTable | Service Healing 触发 | [📄](./references/tables/azurecm/ServiceHealingTriggerEtwTable.md) |
+| FaultHandlingRecoveryEventEtwTable | 故障恢复事件 | [📄](./references/tables/azurecm/FaultHandlingRecoveryEventEtwTable.md) |
+| LiveMigrationContainerDetailsEventLog | Live Migration 详情 | [📄](./references/tables/azurecm/LiveMigrationContainerDetailsEventLog.md) |
+| LogAllocatableVmCountMetric | 可分配 VM 数量 | [📄](./references/tables/azurecm/LogAllocatableVmCountMetric.md) |
+| TMMgmtSlaMeasurementEventEtwTable | SLA 测量事件 | [📄](./references/tables/azurecm/TMMgmtSlaMeasurementEventEtwTable.md) |
 
 ### 主机节点层 (Fa/rdos/AzureCP)
 
 | 表名 | 用途 | 文档 |
 |------|------|------|
-| WindowsEventTable | Windows 事件日志 | [📄](./references/tables/WindowsEventTable.md) |
-| VmHealthRawStateEtwTable | VM 健康状态（每 15 秒） | [📄](./references/tables/VmHealthRawStateEtwTable.md) |
-| VmHealthTransitionStateEtwTable | VM 状态转换事件 | [📄](./references/tables/VmHealthTransitionStateEtwTable.md) |
-| NodeServiceOperationEtwTable | 节点服务操作 | [📄](./references/tables/NodeServiceOperationEtwTable.md) |
-| HyperVWorkerTable | Hyper-V Worker 事件 | [📄](./references/tables/HyperVWorkerTable.md) |
-| VmCounterFiveMinuteRoleInstanceCentralBondTable | VM 性能计数器 | [📄](./references/tables/VmCounterFiveMinuteRoleInstanceCentralBondTable.md) |
-| VmServiceContainerOperations | VM 容器操作 | [📄](./references/tables/VmServiceContainerOperations.md) |
-| GuestAgentExtensionEvents | Guest Agent 扩展事件 | [📄](./references/tables/GuestAgentExtensionEvents.md) |
+| WindowsEventTable | Windows 事件日志 | [📄](./references/tables/Fa/WindowsEventTable.md) |
+| VmHealthRawStateEtwTable | VM 健康状态（每 15 秒） | [📄](./references/tables/Fa/VmHealthRawStateEtwTable.md) |
+| VmHealthTransitionStateEtwTable | VM 状态转换事件 | [📄](./references/tables/Fa/VmHealthTransitionStateEtwTable.md) |
+| NodeServiceOperationEtwTable | 节点服务操作 | [📄](./references/tables/Fa/NodeServiceOperationEtwTable.md) |
+| HyperVWorkerTable | Hyper-V Worker 事件 | [📄](./references/tables/Fa/HyperVWorkerTable.md) |
+| VmCounterFiveMinuteRoleInstanceCentralBondTable | VM 性能计数器 | [📄](./references/tables/Fa/VmCounterFiveMinuteRoleInstanceCentralBondTable.md) |
+| VmServiceContainerOperations | VM 容器操作 | [📄](./references/tables/Fa/VmServiceContainerOperations.md) |
+| GuestAgentExtensionEvents | Guest Agent 扩展事件 | [📄](./references/tables/Fa/GuestAgentExtensionEvents.md) |
 
 ### 硬件层 (AzureDCMDb)
 
 | 表名 | 用途 | 文档 |
 |------|------|------|
 | ResourceSnapshotHistoryV1 | 节点生命周期状态 | [📄](./references/tables/ResourceSnapshotHistoryV1.md) |
-| dcmInventoryComponentDiskDirect | 磁盘硬件库存 | [📄](./references/tables/dcmInventoryComponentDiskDirect.md) |
+| dcmInventoryComponentDiskDirect | 磁盘硬件库存 | [📄](./references/tables/AzureDCMDb/dcmInventoryComponentDiskDirect.md) |
 
 ### 分析层 (vmadb)
 
 | 表名 | 用途 | 文档 |
 |------|------|------|
-| VMA | VM 可用性事件 (RCA) | [📄](./references/tables/VMA.md) |
+| VMA | VM 可用性事件 (RCA) | [📄](./references/tables/vmadb/VMA.md) |
 
 ## 工作流程
 

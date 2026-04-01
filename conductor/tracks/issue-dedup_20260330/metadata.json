@@ -1,0 +1,17 @@
+{
+  "id": "issue-dedup_20260330",
+  "title": "/issue Skill 相似 Issue 检测 + 合并/Reopen",
+  "type": "feature",
+  "status": "complete",
+  "issueId": "ISS-181",
+  "created": "2026-03-30T23:45:00+08:00",
+  "updated": "2026-03-30T23:50:00+08:00",
+  "phases": {
+    "total": 1,
+    "completed": 1
+  },
+  "tasks": {
+    "total": 5,
+    "completed": 5
+  }
+}

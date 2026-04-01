@@ -6,7 +6,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { ChevronDown, ChevronRight, CheckCircle2, Circle, AlertTriangle, Play, Loader2, Check, RotateCcw } from 'lucide-react'
 import { Card, CardHeader } from '../components/common/Card'
-import { Badge, PriorityBadge } from '../components/common/Badge'
+import { Badge, PriorityBadge, EntitlementWarningBanner, EntitlementWarningBadge, RdseBadge } from '../components/common/Badge'
 import { Loading, EmptyState } from '../components/common/Loading'
 import { useTodoAll, useTogglePerCaseTodo, useExecuteTodoAction } from '../api/hooks'
 import { useNavigate } from 'react-router-dom'
@@ -316,6 +316,8 @@ function CaseTodoCard({ todo, navigate, toggleTodo, executeTodoAction }: {
           >
             Case {todo.caseNumber}
           </span>
+          {todo.compliance && <EntitlementWarningBadge compliance={todo.compliance} />}
+          {todo.ccAccount && <RdseBadge ccAccount={todo.ccAccount} />}
           {/* Section badges */}
           {sections.map(s => {
             const unchecked = s.items.filter(i => !i.checked).length
@@ -329,6 +331,13 @@ function CaseTodoCard({ todo, navigate, toggleTodo, executeTodoAction }: {
           {new Date(todo.updatedAt).toLocaleString()}
         </span>
       </div>
+
+      {/* Entitlement warning banner (below header, before todo sections) */}
+      {todo.compliance?.entitlementOk === false && (
+        <div className="mt-2">
+          <EntitlementWarningBanner compliance={todo.compliance} />
+        </div>
+      )}
 
       {expanded && sections.length > 0 && (
         <div className="mt-3 pt-3 border-t space-y-4" style={{ borderColor: 'var(--border-subtle)' }}>

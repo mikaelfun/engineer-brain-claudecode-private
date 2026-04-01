@@ -14,10 +14,11 @@
 
 ```
 Step 0（强制）：扫描本地知识库（团队共享 KB）
-Step 1：搜索 ADO 内部知识源（并行）
+Step 1：搜索 ADO 内部知识源（并行，使用 az devops CLI）
   - ADO-Wiki（内部 TSG / 已知问题）
   - ADO-ContentIdea（内部 KB 文章）
   - ADO-msazure（msazure 项目文档）
+  注：通过 az devops invoke --area search 调用，详见 troubleshooter agent 定义
 Step 2：搜索外部官方文档
   - Microsoft Learn（通过 microsoftdocs MCP）
 Step 3：Web 搜索补充（最后手段）

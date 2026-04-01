@@ -1,0 +1,9 @@
+{
+  "testId": "test-supervisor-core-endpoints",
+  "round": 38,
+  "timestamp": "2026-03-30T23:53:22.000Z",
+  "status": "pass",
+  "assertions": [{"name":"GET /api/tests/state → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'cycle':38,'maxCycles':80,'currentStage':'TEST','stages':{'SCAN':{'status':'done','summary':'Issue scan: 36 new gaps, 15 regression gaps | Observabil"},{"name":"GET /api/tests/state → JSON response","pass":true,"expected":"JSON","actual":"JSON"},{"name":"GET /api/tests/pipeline → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'currentStage':'TEST','cycle':38,'maxCycles':80,'stages':{'SCAN':{'status':'done','summary':'Issue scan: 36 new gaps, 15 regression gaps | Observabil"},{"name":"GET /api/tests/pipeline → JSON response","pass":true,"expected":"JSON","actual":"JSON"},{"name":"GET /api/tests/supervisor → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'reasoning':{'decide':'Spawned stage-worker for TEST stage C38/80, coverage scanner active, 0 directives injected'},'active':'2026-03-30T23:50:45Z','"},{"name":"GET /api/tests/supervisor → JSON response","pass":true,"expected":"JSON","actual":"JSON"},{"name":"GET /api/tests/queues → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'testQueue':[{'testId':'test-supervisor-core-endpoints','category':'backend-api','priority':1,'source':'coverage-scan','recipe_used':'none'},{'testId"},{"name":"GET /api/tests/queues → JSON response","pass":true,"expected":"JSON","actual":"JSON"}],
+  "error": null,
+  "duration_ms": 43816
+}

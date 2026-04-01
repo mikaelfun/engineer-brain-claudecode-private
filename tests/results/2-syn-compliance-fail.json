@@ -1,0 +1,9 @@
+{
+  "testId": "syn-compliance-fail",
+  "round": 2,
+  "timestamp": "2026-03-30T11:32:53.000Z",
+  "status": "pass",
+  "assertions": [{"name":"Script exit code","pass":true,"expected":"0","actual":"0"},{"name":"File exists: case-info.md","pass":true,"expected":"exists","actual":"exists"},{"name":"Content match: case-info.md","pass":true,"expected":"US West","actual":"found"},{"name":"Valid JSON: casehealth-meta.json","pass":true,"expected":"valid_json","actual":"valid"},{"name":"JSON field: compliance.entitlementOk = false","pass":true,"expected":"false","actual":"false"}],
+  "error": null,
+  "duration_ms": 6216344
+}

@@ -37,6 +37,21 @@ maxTurns: 15
 
 ## 执行步骤
 
+### 0. 语言自动检测（当 language 未指定或为 `auto` 时）
+
+如果 `language` 参数未提供、为空、或为 `auto`：
+1. 读取 `{caseDir}/emails.md`
+2. 提取**客户发送的邮件内容**（不含系统邮件和工程师回复）
+3. 统计客户邮件中 CJK 字符（Unicode 范围 `\u4e00-\u9fff\u3400-\u4dbf`）占总字符的比例
+4. 判断规则：
+   - CJK 字符比例 > 20% → `language = zh`
+   - 否则 → `language = en`
+5. 在日志中记录：`STEP 0 OK | lang={detected} (auto-detected from emails, CJK ratio={ratio}%)`
+
+如果 `emails.md` 不存在或为空，默认 `language = en`，日志记录 `STEP 0 OK | lang=en (default, no emails found)`。
+
+如果 `language` 参数已明确指定（`en` 或 `zh`），跳过检测，日志记录 `STEP 0 SKIP | lang={specified} (explicitly set)`。
+
 ### 1. 读取上下文
 - `{caseDir}/case-info.md` — 客户信息、联系方式
 - `{caseDir}/emails.md` — 邮件历史（延续语气和上下文）
@@ -66,7 +81,7 @@ maxTurns: 15
 - 如有分析报告，引用关键结论
 
 ### 4. Humanizer 润色
-根据语言选择 humanizer：
+根据最终确定的语言（Step 0 自动检测或显式指定）选择 humanizer：
 - English: 调用 humanizer skill
   ```
   读取 skills/humanizer/SKILL.md 获取使用说明，按说明润色草稿

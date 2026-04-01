@@ -1,0 +1,9 @@
+{
+  "testId": "df-sidebar-layout",
+  "round": 43,
+  "timestamp": "2026-03-31T20:54:44.000Z",
+  "status": "pass",
+  "assertions": [{"name":"Layout.tsx must reference 220px or --sidebar-width CSS variable","pass":true,"expected":">0","actual":"4"},{"name":"Sidebar must have fixed positioning (Tailwind 'fixed' or CSS position:fixed)","pass":true,"expected":">0","actual":"5"},{"name":"Main content must offset by sidebar width","pass":true,"expected":">0","actual":"3"}],
+  "error": null,
+  "duration_ms": 46624
+}

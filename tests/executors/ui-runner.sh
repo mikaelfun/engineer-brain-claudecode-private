@@ -91,13 +91,27 @@ check_page() {
   local path="$1"
   local name="$2"
 
+  # Handle both absolute URLs and relative paths
+  local full_url
+  if [[ "$path" =~ ^https?:// ]]; then
+    # Already a full URL — use as-is
+    full_url="$path"
+  else
+    # Relative path — prepend FRONTEND_URL
+    full_url="${FRONTEND_URL}${path}"
+  fi
+
   local status
-  status=$(curl -sf -o /dev/null -w "%{http_code}" "${FRONTEND_URL}${path}" 2>/dev/null || echo "000")
+  status=$(curl -sf -o /dev/null -w "%{http_code}" "$full_url" 2>/dev/null)
+  # Fallback to "000" only if curl produced no output
+  if [ -z "$status" ]; then
+    status="000"
+  fi
   if [ "$status" = "200" ]; then
-    log_pass "Page loads: $name ($path) → $status"
+    log_pass "Page loads: $name ($full_url) → $status"
     add_assertion "Page loads: $name" "true" "200" "$status"
   else
-    log_fail "Page fails: $name ($path) → $status"
+    log_fail "Page fails: $name ($full_url) → $status"
     add_assertion "Page loads: $name" "false" "200" "$status"
   fi
 }

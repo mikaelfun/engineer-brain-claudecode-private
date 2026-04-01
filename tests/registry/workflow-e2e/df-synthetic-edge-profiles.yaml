@@ -1,0 +1,47 @@
+id: "df-synthetic-edge-profiles"
+name: "Design Fidelity: edge case profiles for error recovery testing"
+category: "workflow-e2e"
+source: "design-fidelity"
+description: "Verifies synthetic-adoption AC4: edge case 测试使用 edge-* profile（edge-corrupted-meta、edge-no-entitlement、edge-missing-fields），验证错误恢复能力"
+safety_level: "safe"
+priority: "high"
+tags: ["design-fidelity", "synthetic-adoption", "edge-cases"]
+recipe_used: "design-fidelity-test.md"
+
+steps:
+  - action: "bash_command"
+    params:
+      command: |
+        PROFILES_FILE="tests/fixtures/synthetic/profiles.yaml"
+        if [ ! -f "$PROFILES_FILE" ]; then
+          echo "FAIL: profiles.yaml not found"
+          exit 1
+        fi
+        ERRORS=0
+        for profile in edge-corrupted-meta edge-no-entitlement edge-missing-fields; do
+          if grep -q "^  $profile:" "$PROFILES_FILE" 2>/dev/null; then
+            echo "PASS: $profile defined"
+          else
+            echo "FAIL: $profile not found in profiles.yaml"
+            ERRORS=$((ERRORS+1))
+          fi
+        done
+        exit $ERRORS
+    description: "Verify edge-* profiles exist in profiles.yaml"
+
+assertions:
+  - type: "file_exists"
+    target: "tests/fixtures/synthetic/profiles.yaml"
+    description: "Synthetic profiles.yaml exists"
+
+  - type: "text_contains"
+    target: "step1_output"
+    expected: "PASS: edge-corrupted-meta defined"
+    description: "edge-corrupted-meta profile defined"
+
+  - type: "text_contains"
+    target: "step1_output"
+    expected: "PASS: edge-no-entitlement defined"
+    description: "edge-no-entitlement profile defined"
+
+timeout_seconds: 15

@@ -1,0 +1,11 @@
+{
+  "id": "ISS-173",
+  "title": "TestLab UX: Start menu direction, Stop confirmation, fake StepDetail data",
+  "description": "UX review findings batch 3:\n1. Start dropdown opens upward (bottom:100%), gets clipped at viewport top — change to downward\n2. Stop button has no confirmation — accidental click kills long-running loop session\n3. StepDetailPanel pre-flight shows hardcoded fake data ('Checked','OK') — remove until real data available\n4. Loop interval hardcoded to 5m/15m only — add custom option or more presets",
+  "type": "bug",
+  "priority": "critical",
+  "status": "implemented",
+  "createdAt": "2026-03-30T14:00:00+08:00",
+  "source": "ux-review",
+  "implementedAt": "2026-03-30T05:37:39.418Z"
+}

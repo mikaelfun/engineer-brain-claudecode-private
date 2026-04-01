@@ -1,0 +1,21 @@
+id: df-testlab-connectors
+name: "Design Fidelity: TestLab connector lines with status styles + glassmorphism"
+category: ui-visual
+source: design-fidelity
+description: "验证 testlab-ui-polish spec AC: Connector 线条有三种状态样式 + glassmorphism 效果"
+safety_level: safe
+priority: high
+tags: ["design-fidelity", "testlab-ui-polish_20260330"]
+recipe_used: design-fidelity-test.md
+steps:
+  - action: playwright_navigate
+    params:
+      url: "http://localhost:5173/testlab"
+  - action: playwright_evaluate
+    params:
+      expression: "document.querySelectorAll('.stage-connector, .pipeline-connector, [data-testid=connector]').length"
+assertions:
+  - type: element_visible
+    target: ".stage-connector, .pipeline-connector"
+    expected: true
+timeout_seconds: 60

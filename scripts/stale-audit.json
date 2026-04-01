@@ -1,0 +1,217 @@
+{
+  "audit_date": "2026-03-30",
+  "total_reviewed": 88,
+  "stale_candidates": [
+    {
+      "id": "ISS-038",
+      "status": "implemented",
+      "title": "Implemented Issue 增加 Mark Done 按钮",
+      "reason": "ISS-047 (done) Issue 与 Track 状态统一改造已覆盖 Mark Done 功能",
+      "recommendation": "close"
+    },
+    {
+      "id": "ISS-044",
+      "status": "implemented",
+      "title": "Agents 页面应能看到 Case/Issue 的 Agent Session",
+      "reason": "ISS-048 (done) Agent Monitor Session 实时状态查看已实现全量 session 展示，目标被吸收",
+      "recommendation": "close"
+    },
+    {
+      "id": "ISS-045",
+      "status": "pending",
+      "title": "Issue 生命周期 Bug：reopen 清空旧数据 + verify 状态卡住",
+      "reason": "ISS-047 (done) Issue 与 Track 状态统一已重构生命周期流转，reopen/verify 逻辑已重写",
+      "recommendation": "close"
+    },
+    {
+      "id": "ISS-049",
+      "status": "implemented",
+      "title": "Create Track 交互提问应放在交互框里",
+      "reason": "ISS-072 (done) INPUT REQUIRED 卡片重新设计 + ISS-062 (done) Panel 统一升级已覆盖",
+      "recommendation": "close"
+    },
+    {
+      "id": "ISS-066",
+      "status": "implemented",
+      "title": "Todo Execute 验证机制：执行状态+计时+D365回查",
+      "reason": "长期 implemented 未 verify。ISS-102 (done) Dashboard UX Fix 已重做 Todo UI，需人工确认是否有未覆盖需求",
+      "recommendation": "needs_review"
+    },
+    {
+      "id": "ISS-070",
+      "status": "pending",
+      "title": "CaseAIPanel 双重渲染导致 Playwright locator 歧义",
+      "reason": "ISS-107 (done) CaseAIPanel Timeline + Filter Tab Redesign 已重构，旧的双重渲染架构可能已不存在",
+      "recommendation": "needs_review"
+    },
+    {
+      "id": "ISS-071",
+      "status": "pending",
+      "title": "Draft Email agent 可能超时（>180s）",
+      "reason": "调查性 issue，缺乏复现条件。后续 session 管理和 MCP 优化可能已改变情况",
+      "recommendation": "needs_review"
+    },
+    {
+      "id": "ISS-073",
+      "status": "implemented",
+      "title": "Implement 后应自动滚动到当前 Issue",
+      "reason": "ISS-103 (done) Issue Implement 实时进度展示已重做 UI，滚动行为已覆盖",
+      "recommendation": "close"
+    },
+    {
+      "id": "ISS-075",
+      "status": "implemented",
+      "title": "AI Assistant Session 面板优化：过滤/布局/Stop/多Tab",
+      "reason": "ISS-077+078 (done) AI Assistant 体验全面重新设计已吸收所有子项",
+      "recommendation": "close"
+    },
+    {
+      "id": "ISS-088",
+      "status": "pending",
+      "title": "Case页面header精简缩小",
+      "reason": "ISS-004 (done) Case Detail Header Redesign 已完成。需确认此 issue 是否在 ISS-004 之后提出的新需求",
+      "recommendation": "needs_review"
+    },
+    {
+      "id": "ISS-090",
+      "status": "pending",
+      "title": "AI Assistant Full Process SSE 没有中间过程",
+      "reason": "ISS-097 (pending) AI Assistant SSE 全面修复已合并包含此问题",
+      "recommendation": "merge_into_ISS-097"
+    },
+    {
+      "id": "ISS-091",
+      "status": "pending",
+      "title": "SSE 中出现两遍相同消息流",
+      "reason": "SSE 消息重复问题，属于 ISS-097 范畴",
+      "recommendation": "merge_into_ISS-097"
+    },
+    {
+      "id": "ISS-092",
+      "status": "pending",
+      "title": "start patrol后没有状态更新",
+      "reason": "与 ISS-094 (tracked) patrol 进度实时显示高度重复，ISS-094 已有 track",
+      "recommendation": "merge_into_ISS-094"
+    },
+    {
+      "id": "ISS-093",
+      "status": "pending",
+      "title": "start patrol memory占用过高",
+      "reason": "描述为空，缺乏复现数据。ISS-153 (tracked) Patrol 动态优先级会重构 patrol 流程",
+      "recommendation": "needs_review"
+    },
+    {
+      "id": "ISS-095",
+      "status": "pending",
+      "title": "full casework process没有调用casework command",
+      "reason": "描述为空，无具体信息。后续 casework 流程多次改进可能已修复",
+      "recommendation": "needs_review"
+    },
+    {
+      "id": "ISS-096",
+      "status": "pending",
+      "title": "case session spawn的subagent未被agent monitor track",
+      "reason": "ISS-048 (done) Agent Monitor 已实现 session tracking，此问题可能已修复",
+      "recommendation": "needs_review"
+    },
+    {
+      "id": "ISS-098",
+      "status": "pending",
+      "title": "ai assistant中full process的sse不更新",
+      "reason": "ISS-097 描述中已明确包含此问题（标注为'原 ISS-098'），完全重复",
+      "recommendation": "close"
+    },
+    {
+      "id": "ISS-099",
+      "status": "pending",
+      "title": "case patrol需要把非active的case归档到archive",
+      "reason": "描述为空。被 ISS-153 (tracked) Patrol 动态优先级改造吸收",
+      "recommendation": "merge_into_ISS-153"
+    },
+    {
+      "id": "ISS-109",
+      "status": "pending",
+      "title": "UI Test验证结果未正确展示",
+      "reason": "ISS-058 (done) Verify 两阶段改造 + ISS-148 (tracked) Verify 重新设计已完全重构 verify 流程",
+      "recommendation": "close"
+    },
+    {
+      "id": "ISS-110",
+      "status": "pending",
+      "title": "draft 显示优化",
+      "reason": "描述为空，无法判断具体需求，无法执行",
+      "recommendation": "needs_review"
+    },
+    {
+      "id": "ISS-123",
+      "status": "pending",
+      "title": "pattern-detector.sh /dev/stdin Git Bash 兼容风险",
+      "reason": "ISS-122 (pending) test-loop 代码质量三合一已包含 Git Bash 兼容问题，此为子集",
+      "recommendation": "merge_into_ISS-122"
+    },
+    {
+      "id": "ISS-124",
+      "status": "pending",
+      "title": "env.yaml 与 common.sh 环境变量双真相源",
+      "reason": "ISS-122 (pending) test-loop 代码质量三合一已包含此问题，此为子集",
+      "recommendation": "merge_into_ISS-122"
+    },
+    {
+      "id": "ISS-125",
+      "status": "pending",
+      "title": "TEST-AUTO: state-mutations test",
+      "reason": "自动化测试临时 issue 残留，描述含乱码 + 'will be deleted in teardown'",
+      "recommendation": "close"
+    },
+    {
+      "id": "ISS-126",
+      "status": "pending",
+      "title": "TEST-AUTO: state-mutations test",
+      "reason": "与 ISS-125 重复，自动化测试临时 issue 残留",
+      "recommendation": "close"
+    },
+    {
+      "id": "ISS-127",
+      "status": "pending",
+      "title": "TEST-AUTO: state-mutations test",
+      "reason": "与 ISS-125/126 重复，自动化测试临时 issue 残留",
+      "recommendation": "close"
+    },
+    {
+      "id": "ISS-128",
+      "status": "tracked",
+      "title": "TEST-AUTO: start-implement test",
+      "reason": "自动化测试临时 issue 残留，ISS-129/130 同类已 done，此为垃圾数据",
+      "recommendation": "close"
+    },
+    {
+      "id": "ISS-131",
+      "status": "pending",
+      "title": "TEST-AUTO: implement endpoint test",
+      "reason": "自动化测试临时 issue 残留，同 ISS-125~128",
+      "recommendation": "close"
+    },
+    {
+      "id": "ISS-010",
+      "status": "pending",
+      "title": "WebUI 刷新后 Workflow 进度持久化",
+      "reason": "ISS-077/078 (done) AI Assistant 重新设计后，workflow 进度展示架构已大幅改变，原方案可能不适用",
+      "recommendation": "needs_review"
+    },
+    {
+      "id": "ISS-068",
+      "status": "pending",
+      "title": "API: patrol-state 404 vs 200 一致性",
+      "reason": "patrol 正在被 ISS-094/111/153 大量改造，API 行为可能已变化",
+      "recommendation": "needs_review"
+    },
+    {
+      "id": "ISS-100",
+      "status": "pending",
+      "title": "Dashboard 重启按钮逻辑不完善",
+      "reason": "ISS-089 (done) restart 残留进程问题已修复。需确认此 issue 是否还有未覆盖部分",
+      "recommendation": "needs_review"
+    }
+  ],
+  "summary": "审查 88 个非 done issue，发现 30 个过时候选。分类：(1) 可直接关闭 14 个 — 7 个 TEST-AUTO 临时残留(ISS-125~131)、7 个被已完成改造吸收(ISS-038/044/045/049/073/075/098/109)；(2) 应合并 6 个 — ISS-090+091→ISS-097, ISS-092+099→ISS-094/153, ISS-123+124→ISS-122；(3) 需人工确认 10 个 — 描述为空或环境已变无法自动判断(ISS-066/070/071/088/093/095/096/010/068/100/110)。剩余 58 个 issue 仍有效，其中 test-loop 生态(ISS-114~178)和 Recipe 架构(ISS-148~155)是当前活跃开发方向。"
+}
