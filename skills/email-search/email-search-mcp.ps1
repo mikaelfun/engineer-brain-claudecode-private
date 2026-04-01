@@ -66,8 +66,39 @@ if ($SearchResultJson) {
         }
     }
 
-    $totalAfter = $unique.Count
-    Write-Log "STEP 1 OK    | Found $totalBefore emails, deduplicated to $totalAfter"
+    $totalDedup = $unique.Count
+
+    # 过滤自动回复
+    $autoReplyPatterns = @('自动回复', '自动答复', 'Automatic reply', 'Out of Office', 'AutoReply')
+    $filtered = @()
+    $autoReplyCount = 0
+    foreach ($email in $unique) {
+        $isAutoReply = $false
+        foreach ($pattern in $autoReplyPatterns) {
+            if ($email.subject -and $email.subject.Contains($pattern)) {
+                $isAutoReply = $true
+                break
+            }
+        }
+        # Also skip very short emails without reply markers (likely system notifications)
+        if (-not $isAutoReply -and $email.bodyPreview -and $email.bodyPreview.Length -lt 200) {
+            $subj = $email.subject
+            if ($subj -and -not ($subj -match '^(Re:|RE:|回复|答复|FW:|Fw:|\[外部\])')) {
+                $isAutoReply = $true
+            }
+        }
+        if ($isAutoReply) {
+            $autoReplyCount++
+        } else {
+            $filtered += $email
+        }
+    }
+
+    $totalAfter = $filtered.Count
+    Write-Log "STEP 1 OK    | Found $totalBefore emails, dedup to $totalDedup, filtered to $totalAfter (skipped $autoReplyCount auto-replies)"
+
+    # Use filtered results from here
+    $unique = $filtered
 
     # 创建临时目录
     if (-not (Test-Path $tmpDir)) {
