@@ -1078,8 +1078,13 @@ function ActivityStream() {
     apiGet<any[]>('/tests/recent-events', { limit: 30 })
       .then((stored: any[]) => stored || [])
       .then((stored: any[]) => {
-        if (stored.length > 0) {
-          const mapped = stored.map((evt: any) => {
+        // Filter to only test/runner events — exclude case-step, patrol, etc.
+        const testEvents = stored.filter((evt: any) => {
+          const t = evt.type || ''
+          return t.startsWith('test-') || t.startsWith('runner-')
+        })
+        if (testEvents.length > 0) {
+          const mapped = testEvents.map((evt: any) => {
             const d = evt.data || {}
             const eventType = (evt.type || '').replace('test-', '').replace('runner-', '')
             let detail = d.testId || d.note || ''
