@@ -64,15 +64,29 @@ if gapDays <= threshold:
   结束
 ```
 
-### Step 5: 学习历史 Note 风格
+### Step 5: 用户 Note 偏好（硬规则）
 
-从 notes.md 提取最近 5 条**非系统** note（即不含 `系统自动分配` 的 note）：
-- 分析风格特征：
-  - 语言：中文 / 英文 / 混合
-  - 格式：bullet point / 段落 prose / 混合
-  - 开头惯用语（如 "Hi team," / "Update:" / 无开头语）
-  - 签名习惯（有无结尾签名）
-- 记住这些特征用于下一步生成
+**以下偏好不需要 AI 猜测，直接应用：**
+
+- **Title 固定**: `fangkun note`（永远不变）
+- **Body 格式**:
+  - 每个日期一行，格式 `YYMMDD--`（如 `260315--`）
+  - 同一天的多个条目用 bullet point（`- -`）
+  - 内容用英文，简洁，工程师视角
+  - 不要开头问候语（No "Hi team"），不要签名
+  - 每条以动词开头（`-followed up`, `-collected logs`, `-advised cx`）
+
+**示例 body**:
+```
+260315--
+- -followed up with cx on workaround deployment status.
+- -collected diagnostic logs for analysis.
+260320--
+- -confirmed MDM config is in effect on device.
+- -advised cx to reboot for full validation.
+260401--
+- -ICM resolved by PG, pending cx confirmation on closure.
+```
 
 ### Step 6: 读取最新进展
 
@@ -83,20 +97,26 @@ if gapDays <= threshold:
 
 ### Step 7: 生成草稿
 
-基于 Step 5 的风格 + Step 6 的内容，生成 note 草稿。
+基于 Step 5 的固定偏好 + Step 6 的进展内容，生成 note 草稿。
 
 写入 `{CASE_DIR}/note-draft.md`：
 
 ```yaml
 ---
-title: "Status Update - {today YYYY-MM-DD}"
+title: "fangkun note"
 body: |
-  {基于历史风格和最新进展生成的 note 内容}
+  {按 YYMMDD-- 格式组织，每天一组 bullet points}
 gapDays: {gapDays}
 lastNoteDate: "{lastNoteDate YYYY-MM-DD}"
 generatedAt: "{now ISO8601}"
 ---
 ```
+
+**生成规则：**
+1. 从 case-summary.md 提取 lastNoteDate 之后的每个日期条目
+2. 按日期分组，每组格式 `YYMMDD--`
+3. 每条进展转为 `- -{简洁英文动词开头}`
+4. 如果某天无进展但需要补充，写 `- -continued investigation, no update.`
 
 ### Step 8: 展示草稿
 
