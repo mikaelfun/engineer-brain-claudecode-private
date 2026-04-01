@@ -13,6 +13,7 @@ import { isWorkspaceReady } from './services/workspace.js'
 import { startFileWatcher, stopFileWatcher } from './watcher/file-watcher.js'
 import { abortAllQueries } from './agent/case-session-manager.js'
 import { recoverOrphanTrackingIssues } from './services/issue-reader.js'
+import { initCronManager } from './services/cron-manager.js'
 
 import authRoutes from './routes/auth.js'
 import casesRoutes from './routes/cases.js'
@@ -27,6 +28,8 @@ import restartRoutes from './routes/restart.js'
 import { sessionRoutes } from './routes/sessions.js'
 import testSupervisorRoutes from './routes/test-supervisor.js'
 import testRunnerRoutes from './routes/test-runner.js'
+import { skillRoutes } from './routes/skill-routes.js'
+import { initSkillRegistry } from './services/skill-registry.js'
 
 const app = new Hono()
 
@@ -66,6 +69,8 @@ app.use('/api/sessions/*', authMiddleware)
 app.use('/api/issues/*', authMiddleware)
 app.use('/api/restart/*', authMiddleware)
 app.use('/api/tests/*', authMiddleware)
+app.use('/api/skills', authMiddleware)
+app.use('/api/skills/*', authMiddleware)
 
 app.route('/api/cases', casesRoutes)
 app.route('/api/todos', todosRoutes)
@@ -78,6 +83,7 @@ app.route('/api/restart', restartRoutes)
 app.route('/api/sessions', sessionRoutes)
 app.route('/api/tests', testSupervisorRoutes)
 app.route('/api/tests/runner', testRunnerRoutes)
+app.route('/api/skills', skillRoutes)
 
 // ===== Start =====
 console.log(`
@@ -96,6 +102,12 @@ if (isWorkspaceReady()) {
 
 // Startup recovery: reset orphan "tracking" issues left by server restarts
 recoverOrphanTrackingIssues()
+
+// Initialize cron job scheduler
+initCronManager()
+
+// Initialize skill registry
+initSkillRegistry(config.projectRoot)
 
 serve({
   fetch: app.fetch,
