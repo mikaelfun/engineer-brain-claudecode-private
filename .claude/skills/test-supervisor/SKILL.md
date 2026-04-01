@@ -3,7 +3,7 @@ name: test-supervisor
 displayName: Test Supervisor
 description: "测试循环的监督和指令入口"
 category: inline
-stability: dev
+stability: stable
 ---
 
 # Test Supervisor — 薄路由器

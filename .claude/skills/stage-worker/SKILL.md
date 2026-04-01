@@ -3,7 +3,7 @@ name: stage-worker
 displayName: Stage Worker
 description: "Test Loop 的执行 agent"
 category: inline
-stability: dev
+stability: stable
 ---
 
 # Test Loop — Stage Worker

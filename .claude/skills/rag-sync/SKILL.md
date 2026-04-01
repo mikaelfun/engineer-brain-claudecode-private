@@ -3,7 +3,7 @@ name: rag-sync
 displayName: RAG 同步
 description: "增量同步 OneNote 知识库到 Local RAG"
 category: inline
-stability: dev
+stability: stable
 ---
 
 # /rag-sync — 增量同步 OneNote 知识库到 Local RAG

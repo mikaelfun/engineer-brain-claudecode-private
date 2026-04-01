@@ -2,7 +2,7 @@
 name: onenote-search
 displayName: OneNote 搜索
 category: inline
-stability: dev
+stability: stable
 description: "搜索已导出的 OneNote Markdown 知识库。ripgrep 精确搜索 + 向量语义搜索混合模式，支持中英文。"
 allowed-tools:
   - Read

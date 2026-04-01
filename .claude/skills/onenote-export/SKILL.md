@@ -2,7 +2,7 @@
 name: onenote-export
 displayName: OneNote 导出
 category: inline
-stability: dev
+stability: stable
 description: "导出/同步/更新 OneNote 笔记本为 Markdown。触发词：OneNote、onenote、同步笔记本、导出笔记、更新笔记本、sync notebook。支持传入 OneNote 链接或 SharePoint URL 自动识别。常用 notebook：MCVKB、Kun Fang OneNote。"
 allowed-tools:
   - Bash
