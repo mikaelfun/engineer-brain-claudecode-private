@@ -30,7 +30,7 @@ import testSupervisorRoutes from './routes/test-supervisor.js'
 import testRunnerRoutes from './routes/test-runner.js'
 import { skillRoutes } from './routes/skill-routes.js'
 import { initSkillRegistry } from './services/skill-registry.js'
-import { noteGapRoutes } from './routes/note-gap-routes.js'
+import { noteGapRoutes, noteGapBatchRoutes } from './routes/note-gap-routes.js'
 import { laborEstimateRoutes } from './routes/labor-estimate.js'
 
 const app = new Hono()
@@ -77,6 +77,7 @@ app.use('/api/case/*/note-gap', authMiddleware)
 app.use('/api/case/*/note-gap/*', authMiddleware)
 app.use('/api/labor-estimate/*', authMiddleware)
 app.use('/api/labor-estimate', authMiddleware)
+app.use('/api/note-gaps', authMiddleware)
 
 app.route('/api/cases', casesRoutes)
 app.route('/api/todos', todosRoutes)
@@ -91,6 +92,7 @@ app.route('/api/tests', testSupervisorRoutes)
 app.route('/api/tests/runner', testRunnerRoutes)
 app.route('/api/skills', skillRoutes)
 app.route('/api/case', noteGapRoutes)
+app.route('/api/note-gaps', noteGapBatchRoutes)
 app.route('/api/labor-estimate', laborEstimateRoutes)
 
 // ===== Start =====

@@ -1079,7 +1079,7 @@ export interface NoteGapItem {
 export function useAllNoteGaps() {
   return useQuery<{ gaps: NoteGapItem[] }>({
     queryKey: ['note-gaps-all'],
-    queryFn: () => apiGet<{ gaps: NoteGapItem[] }>('/case/all/note-gap'),
+    queryFn: () => apiGet<{ gaps: NoteGapItem[] }>('/note-gaps'),
     refetchInterval: 30_000,
   })
 }

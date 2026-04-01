@@ -8,16 +8,17 @@ import matter from 'gray-matter'
 
 const execAsync = promisify(exec)
 const noteGapRoutes = new Hono()
+const noteGapBatchRoutes = new Hono()
 
 function getDraftPath(caseNumber: string): string {
   return join(config.activeCasesDir, caseNumber, 'note-draft.md')
 }
 
 /**
- * GET /all/note-gap — Get all note gaps across all active cases
- * MUST be defined BEFORE /:id/note-gap to avoid "all" being matched as an ID
+ * GET / — Get all note gaps across all active cases
+ * Mounted on /api/note-gaps (separate from /api/case/:id/note-gap)
  */
-noteGapRoutes.get('/all/note-gap', (c) => {
+noteGapBatchRoutes.get('/', (c) => {
   const casesDir = config.activeCasesDir
   if (!existsSync(casesDir)) return c.json({ gaps: [] })
 
@@ -135,4 +136,4 @@ noteGapRoutes.delete('/:id/note-gap', (c) => {
   return c.json({ success: true, message: 'Note gap dismissed' })
 })
 
-export { noteGapRoutes }
+export { noteGapRoutes, noteGapBatchRoutes }
