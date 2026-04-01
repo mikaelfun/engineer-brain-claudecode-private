@@ -178,6 +178,53 @@ export function useCronJobs() {
   })
 }
 
+// ---- Trigger hooks (self-managed cron jobs) ----
+
+export function useTriggers() {
+  return useQuery({
+    queryKey: ['agents', 'triggers'],
+    queryFn: () => apiGet<{ triggers: any[]; total: number }>('/agents/triggers'),
+    refetchInterval: 30_000, // Refresh every 30s to show updated state
+  })
+}
+
+export function useCreateTrigger() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: { name: string; prompt: string; cron: string; description?: string }) =>
+      apiPost<any>('/agents/triggers', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agents', 'triggers'] })
+      queryClient.invalidateQueries({ queryKey: ['agents', 'cron-jobs'] })
+    },
+  })
+}
+
+export function useDeleteTrigger() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => apiDelete<any>(`/agents/triggers/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agents', 'triggers'] })
+      queryClient.invalidateQueries({ queryKey: ['agents', 'cron-jobs'] })
+    },
+  })
+}
+
+export function useRunTrigger() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => apiPost<any>(`/agents/triggers/${id}/run`, {}),
+    onSuccess: () => {
+      // Refetch after a short delay to pick up updated state
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['agents', 'triggers'] })
+        queryClient.invalidateQueries({ queryKey: ['agents', 'cron-jobs'] })
+      }, 2000)
+    },
+  })
+}
+
 export function usePatrolState() {
   return useQuery({
     queryKey: ['agents', 'patrol-state'],
@@ -869,5 +916,46 @@ export function useTestEvolution() {
       if (error?.status === 404) return false
       return failureCount < 3
     },
+  })
+}
+
+export function useTestStory() {
+  return useQuery({
+    queryKey: ['tests', 'story'],
+    queryFn: async () => {
+      try {
+        return await apiGet<any>('/tests/story')
+      } catch (err: any) {
+        if (err?.status === 404) return null
+        throw err
+      }
+    },
+    staleTime: 30_000,
+    retry: (failureCount, error: any) => {
+      if (error?.status === 404) return false
+      return failureCount < 3
+    },
+  })
+}
+
+// ===== Skills =====
+
+export interface SkillInfo {
+  name: string
+  displayName: string
+  description: string
+  category: 'inline' | 'agent' | 'orchestrator'
+  stability: 'stable' | 'beta' | 'dev'
+  requiredInput?: string
+  estimatedDuration?: string
+  steps?: string[]
+  webUiAlias?: string
+}
+
+export function useSkills() {
+  return useQuery<SkillInfo[]>({
+    queryKey: ['skills'],
+    queryFn: () => apiGet<SkillInfo[]>('/skills'),
+    staleTime: 60_000,
   })
 }

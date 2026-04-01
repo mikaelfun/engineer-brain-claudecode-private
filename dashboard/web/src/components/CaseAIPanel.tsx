@@ -11,10 +11,10 @@ import {
   Sparkles, Search, Mail, Play, X, Send,
   CheckCircle2, Loader2, Brain, AlertCircle, ChevronDown,
   RefreshCw, MessageSquare, GitBranch, FileText, BookOpen,
-  ChevronRight, Maximize2, ExternalLink, Square
+  ChevronRight, Maximize2, ExternalLink, Square, Shield, Zap
 } from 'lucide-react'
 import { apiPost, apiDelete } from '../api/client'
-import { useCaseSessions, useCaseOperation, useCaseMessages, useEndAllCaseSessions, useEndCaseSession, useCaseStepProgress } from '../api/hooks'
+import { useCaseSessions, useCaseOperation, useCaseMessages, useEndAllCaseSessions, useEndCaseSession, useCaseStepProgress, useSkills } from '../api/hooks'
 import { useCaseSessionStore, type CaseSessionMessage } from '../stores/caseSessionStore'
 import { SessionMessageList, groupMessagesByStep } from './session/SessionMessageList'
 import { StepQuestionForm } from './session/StepQuestionForm'
@@ -29,7 +29,7 @@ interface CaseAIPanelProps {
   skipRecovery?: boolean
 }
 
-type AIAction = 'process' | 'data-refresh' | 'compliance-check' | 'status-judge' | 'teams-search' | 'troubleshoot' | 'draft-email' | 'inspection' | 'generate-kb'
+type AIAction = 'process' | string
 
 /** A chat message queued locally while a step is executing */
 export interface QueuedMessage {
@@ -414,14 +414,37 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull, ski
     useCaseSessionStore.getState().setSessionStatus(caseNumber, 'failed')
   }
 
-  const quickActions: Array<{ id: AIAction; icon: typeof RefreshCw; label: string; color: string }> = [
-    { id: 'data-refresh', icon: RefreshCw, label: 'Refresh', color: 'var(--accent-blue)' },
-    { id: 'teams-search', icon: MessageSquare, label: 'Teams', color: 'var(--accent-purple)' },
-    { id: 'status-judge', icon: GitBranch, label: 'Status', color: 'var(--accent-amber)' },
-    { id: 'troubleshoot', icon: Search, label: 'Troubleshoot', color: 'var(--accent-red)' },
-    { id: 'inspection', icon: FileText, label: 'Summary', color: 'var(--accent-blue)' },
-    { id: 'generate-kb', icon: BookOpen, label: 'KB', color: 'var(--accent-purple)' },
-  ]
+  const { data: skills } = useSkills()
+
+  const SKILL_ICONS: Record<string, typeof RefreshCw> = {
+    'data-refresh': RefreshCw,
+    'teams-search': MessageSquare,
+    'status-judge': GitBranch,
+    'troubleshoot': Search,
+    'inspection': FileText,
+    'inspection-writer': FileText,
+    'generate-kb': BookOpen,
+    'compliance-check': Shield,
+  }
+
+  const SKILL_COLORS: Record<string, string> = {
+    'data-refresh': 'var(--accent-blue)',
+    'teams-search': 'var(--accent-purple)',
+    'status-judge': 'var(--accent-amber)',
+    'troubleshoot': 'var(--accent-red)',
+    'inspection-writer': 'var(--accent-blue)',
+    'generate-kb': 'var(--accent-purple)',
+  }
+
+  const quickActions = (skills ?? [])
+    .filter(s => s.category !== 'orchestrator' && s.stability !== 'dev')
+    .filter(s => s.name !== 'draft-email' && s.name !== 'compliance-check')
+    .map(s => ({
+      id: (s.webUiAlias || s.name) as AIAction,
+      icon: SKILL_ICONS[s.webUiAlias || s.name] || SKILL_ICONS[s.name] || Zap,
+      label: s.displayName,
+      color: SKILL_COLORS[s.webUiAlias || s.name] || SKILL_COLORS[s.name] || 'var(--accent-blue)',
+    }))
 
   // ========== COMPACT MODE ==========
   if (mode === 'compact') {
