@@ -11,7 +11,7 @@ import {
   Sparkles, Search, Mail, Play, X, Send,
   CheckCircle2, Loader2, Brain, AlertCircle, ChevronDown,
   RefreshCw, MessageSquare, GitBranch, FileText, BookOpen,
-  ChevronRight, Maximize2, ExternalLink, Square, Shield, Zap
+  ChevronRight, Maximize2, ExternalLink, Square, Shield, Zap, Clock
 } from 'lucide-react'
 import { apiPost, apiDelete } from '../api/client'
 import { useCaseSessions, useCaseOperation, useCaseMessages, useEndAllCaseSessions, useEndCaseSession, useCaseStepProgress, useSkills } from '../api/hooks'
@@ -449,6 +449,8 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull, ski
     'inspection-writer': FileText,
     'generate-kb': BookOpen,
     'compliance-check': Shield,
+    'labor-estimate': Clock,
+    'note-gap': FileText,
   }
 
   const SKILL_COLORS: Record<string, string> = {
@@ -458,6 +460,8 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull, ski
     'troubleshoot': 'var(--accent-red)',
     'inspection-writer': 'var(--accent-blue)',
     'generate-kb': 'var(--accent-purple)',
+    'labor-estimate': 'var(--accent-green)',
+    'note-gap': 'var(--accent-amber)',
   }
 
   // Only show case-relevant skills as quick actions
