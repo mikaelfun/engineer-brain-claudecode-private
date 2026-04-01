@@ -6,7 +6,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, CheckCircle2, Circle, AlertTriangle, FolderOpen, Clock, RefreshCw, ChevronDown, ChevronRight, Copy, Check, Pencil, X, Save } from 'lucide-react'
 import { Tabs } from '../components/common/Tabs'
 import { Card, CardHeader } from '../components/common/Card'
-import { SeverityBadge, CaseStatusBadge, SlaBadge, Badge, HealthScoreBadge } from '../components/common/Badge'
+import { SeverityBadge, CaseStatusBadge, SlaBadge, Badge, HealthScoreBadge, EntitlementWarningBanner, RdseBadge } from '../components/common/Badge'
 import { Loading, ErrorState, EmptyState } from '../components/common/Loading'
 import {
   useCaseDetail, useCaseEmails, useCaseNotes,
@@ -17,6 +17,7 @@ import {
 } from '../api/hooks'
 import MarkdownContent from '../components/common/MarkdownContent'
 import CaseAIPanel from '../components/CaseAIPanel'
+import { NoteGapCard } from '../components/NoteGapCard'
 
 export default function CaseDetail() {
   const { id } = useParams<{ id: string }>()
@@ -91,6 +92,7 @@ export default function CaseDetail() {
           {caseInfo.is24x7 && /24\s*[x×]\s*7|yes|true/i.test(caseInfo.is24x7) && (
             <Badge variant="danger" size="xs">24×7</Badge>
           )}
+          {meta?.ccAccount && <RdseBadge ccAccount={meta.ccAccount} />}
           <span style={{ color: 'var(--border-default)' }}>·</span>
           <span style={{ color: 'var(--text-secondary)' }}>{caseInfo.assignedTo}</span>
           <span style={{ color: 'var(--border-default)' }}>·</span>
@@ -182,12 +184,20 @@ export default function CaseDetail() {
             )}
           </div>
         )}
+
+        {/* Entitlement Warning Banner */}
+        {meta?.compliance?.entitlementOk === false && (
+          <div className="mt-2.5 ml-9">
+            <EntitlementWarningBanner compliance={meta.compliance} />
+          </div>
+        )}
       </div>
 
       {/* Main Content: Left (Tabs + Content) | Right (AI Panel) */}
       <div className="flex gap-4 items-start">
         {/* Left — Information area */}
         <div className="flex-1 min-w-0 space-y-4">
+          <NoteGapCard caseId={id!} />
           <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
           <div>
             {activeTab === 'summary' && <InspectionTab content={inspectionData?.content} exists={inspectionData?.exists} filename={inspectionData?.filename} updatedAt={inspectionData?.updatedAt} />}
