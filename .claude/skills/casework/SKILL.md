@@ -12,6 +12,7 @@ steps:
   - teams-search
   - troubleshoot
   - draft-email
+  - note-gap
   - inspection-writer
 promptTemplate: |
   Process Case {caseNumber}. Read .claude/skills/casework/SKILL.md and follow all steps.

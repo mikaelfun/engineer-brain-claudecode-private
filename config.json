@@ -2,6 +2,7 @@
   "casesRoot": "./cases",
   "dataRoot": "C:\\Users\\fangkun\\Documents\\EngineerBrain-Data",
   "teamsSearchCacheHours": 4,
+  "noteGapThresholdDays": 3,
   "podAlias": "mcpodvm@microsoft.com",
   "onenote": {
     "personalNotebook": "Kun Fang OneNote",
