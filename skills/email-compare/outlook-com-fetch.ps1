@@ -33,46 +33,63 @@ function Search-OutlookFolder {
         [System.Collections.Generic.List[object]]$Results
     )
 
-    Write-Host "  📂 Searching: $($Folder.Name) ($($Folder.Items.Count) items)..."
+    $itemCount = 0
+    try { $itemCount = $Folder.Items.Count } catch { return }
+    if ($itemCount -eq 0) { return }
 
+    Write-Host "  📂 Searching: $($Folder.Name) ($itemCount items)..."
+
+    # Manual iteration with Subject.Contains() — reliable without Instant Search index.
+    # DASL Restrict LIKE filter silently returns 0 results when Instant Search is disabled.
+    $found = 0
     try {
-        $filter = "@SQL=""urn:schemas:httpmail:subject"" LIKE '%$SearchTerm%' OR ""urn:schemas:httpmail:textdescription"" LIKE '%$SearchTerm%'"
-        $items = $Folder.Items.Restrict($filter)
+        $items = $Folder.Items
+        $items.Sort("[ReceivedTime]", $true)  # newest first for faster hits on recent cases
 
         foreach ($item in $items) {
-            if ($item.Class -ne 43) { continue }  # 43 = olMail
+            try {
+                if ($item.Class -ne 43) { continue }  # 43 = olMail
+                if (-not $item.Subject -or -not $item.Subject.Contains($SearchTerm)) { continue }
 
-            $attachmentNames = @()
-            for ($i = 1; $i -le $item.Attachments.Count; $i++) {
-                $att = $item.Attachments.Item($i)
-                if ($att.FileName -match '\.(png|jpg|jpeg|gif|bmp)$' -and $item.HTMLBody -match "cid:") {
-                    continue
+                $attachmentNames = @()
+                for ($i = 1; $i -le $item.Attachments.Count; $i++) {
+                    $att = $item.Attachments.Item($i)
+                    if ($att.FileName -match '\.(png|jpg|jpeg|gif|bmp)$' -and $item.HTMLBody -match "cid:") {
+                        continue
+                    }
+                    $attachmentNames += $att.FileName
                 }
-                $attachmentNames += $att.FileName
-            }
 
-            $emailObj = [PSCustomObject]@{
-                subject         = $item.Subject
-                from            = $item.SenderEmailAddress
-                fromName        = $item.SenderName
-                to              = $item.To
-                cc              = $item.CC
-                bcc             = $item.BCC
-                sentDate        = $item.SentOn.ToString("yyyy-MM-ddTHH:mm:ssZ")
-                receivedDate    = $item.ReceivedTime.ToString("yyyy-MM-ddTHH:mm:ssZ")
-                bodyLength      = $item.Body.Length
-                htmlBodyLength  = $item.HTMLBody.Length
-                bodyPreview     = $item.Body.Substring(0, [Math]::Min(500, $item.Body.Length))
-                bodyFull        = $item.Body
-                attachmentCount = $attachmentNames.Count
-                attachmentNames = $attachmentNames
-                size            = $item.Size
-                folder          = $Folder.FolderPath
+                $emailObj = [PSCustomObject]@{
+                    subject         = $item.Subject
+                    from            = $item.SenderEmailAddress
+                    fromName        = $item.SenderName
+                    to              = $item.To
+                    cc              = $item.CC
+                    bcc             = $item.BCC
+                    sentDate        = $item.SentOn.ToString("yyyy-MM-ddTHH:mm:ssZ")
+                    receivedDate    = $item.ReceivedTime.ToString("yyyy-MM-ddTHH:mm:ssZ")
+                    bodyLength      = $item.Body.Length
+                    htmlBodyLength  = $item.HTMLBody.Length
+                    bodyPreview     = $item.Body.Substring(0, [Math]::Min(500, $item.Body.Length))
+                    bodyFull        = $item.Body
+                    attachmentCount = $attachmentNames.Count
+                    attachmentNames = $attachmentNames
+                    size            = $item.Size
+                    folder          = $Folder.FolderPath
+                }
+                $Results.Add($emailObj)
+                $found++
+            } catch {
+                # Skip individual item errors (e.g., non-mail items)
             }
-            $Results.Add($emailObj)
         }
     } catch {
         Write-Host "  ⚠️ Error searching $($Folder.Name): $($_.Exception.Message)"
+    }
+
+    if ($found -gt 0) {
+        Write-Host "    → Found $found matching emails"
     }
 }
 
@@ -101,12 +118,21 @@ if ($SearchAllFolders) {
         }
     }
 } else {
-    Write-Host "🔵 Searching Inbox + Sent Items..."
-    $inbox = $namespace.GetDefaultFolder(6)
-    $sentItems = $namespace.GetDefaultFolder(5)
+    Write-Host "🔵 Searching common folders (Inbox, Sent Items, + mail-rule folders)..."
+    # Outlook rules often move case emails to custom folders (ToMe, 21v & Customer, etc.)
+    # Search all top-level folders in the default store to catch rule-routed emails
+    $store = $namespace.Stores | Where-Object { $_.DisplayName -like "*$($namespace.CurrentUser.Name)*" -or $_.IsDataFileStore } | Select-Object -First 1
+    if (-not $store) { $store = $namespace.Stores | Select-Object -First 1 }
 
-    Search-OutlookFolder -Folder $inbox -SearchTerm $CaseNumber -Results $results
-    Search-OutlookFolder -Folder $sentItems -SearchTerm $CaseNumber -Results $results
+    $rootFolder = $store.GetRootFolder()
+    $skipFolders = @("Calendar", "Contacts", "Tasks", "Journal", "Notes", "Outbox",
+                     "RSS Feeds", "Sync Issues", "Quick Step Settings", "Conversation Action Settings",
+                     "Conversation History", "ExternalContacts", "Yammer Root", "Files")
+
+    foreach ($folder in $rootFolder.Folders) {
+        if ($folder.Name -in $skipFolders) { continue }
+        Search-OutlookFolder -Folder $folder -SearchTerm $CaseNumber -Results $results
+    }
 }
 
 $endTime = Get-Date
