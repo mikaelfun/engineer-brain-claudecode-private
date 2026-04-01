@@ -2,8 +2,8 @@
 name: email-batch-worker
 description: "批量邮件搜索 worker — 从任务池拉取 Case 号，搜索并保存邮件"
 tools: Bash, Read, Write
-model: sonnet
-maxTurns: 30
+model: opus
+maxTurns: 50
 mcpServers:
   - mail
 ---
