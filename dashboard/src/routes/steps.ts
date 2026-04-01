@@ -39,6 +39,8 @@ import {
 import { sseManager } from '../watcher/sse-manager.js'
 import { getSSEEventType, formatMessageForSSE, getPersistedMessageType } from '../utils/sse-helpers.js'
 import { caseStepState, type CaseStepQuestion } from '../services/case-step-state.js'
+import { withInactivityTimeout, INACTIVITY_TIMEOUT_MS } from '../utils/operation-timeout.js'
+import { sdkQueue } from '../utils/sdk-queue.js'
 
 const stepRoutes = new Hono()
 
@@ -400,8 +402,10 @@ async function resumeStepSession(
     const sessionRef: { current: string | undefined } = { current: sessionId }
     const canUseTool = createStepCanUseTool(caseNumber, stepName, () => sessionRef.current)
 
+    const abortCtrl = new AbortController()
     const queryIter = chatCaseSession(sessionId, answer, canUseTool)
-    const result = await processStepMessages(caseNumber, stepName, queryIter, sessionId, sessionRef)
+    const timedIter = withInactivityTimeout(queryIter, abortCtrl, INACTIVITY_TIMEOUT_MS, `resume:${stepName}:${caseNumber}`)
+    const result = await processStepMessages(caseNumber, stepName, timedIter, sessionId, sessionRef)
 
     if (result.interrupted) {
       // Another question — wait for next answer
@@ -565,13 +569,15 @@ stepRoutes.post('/case/:id/step/:step', async (c) => {
       const canUseTool = createStepCanUseTool(caseNumber, stepName, () => sessionRef.current)
 
       try {
+        const abortCtrl = new AbortController()
         const queryIter = stepCaseSession(caseNumber, stepName, {
           ...bodyParams,
           canUseTool,
         })
+        const timedIter = withInactivityTimeout(queryIter, abortCtrl, INACTIVITY_TIMEOUT_MS, `step:${stepName}:${caseNumber}`)
 
         const result = await processStepMessages(
-          caseNumber, stepName, queryIter, activeSessionId || undefined, sessionRef, executionId,
+          caseNumber, stepName, timedIter, activeSessionId || undefined, sessionRef, executionId,
         )
 
         if (result.interrupted) {
@@ -652,7 +658,7 @@ stepRoutes.post('/case/:id/step/:step', async (c) => {
       }
     }
 
-    stepAsync() // Fire and forget
+    sdkQueue.enqueue(stepAsync, `step:${stepName}:${caseNumber}`, caseNumber) // Fire and forget via queue
     return c.json({
       status: 'started',
       caseNumber,
