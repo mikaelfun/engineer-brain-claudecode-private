@@ -1,5 +1,14 @@
 ---
 description: "判断 Case 的 actualStatus 和 daysSinceLastContact，upsert 到 casehealth-meta.json。可独立调用 /status-judge {caseNumber}，也被 casework 内联执行。"
+name: status-judge
+displayName: 状态判断
+category: inline
+stability: stable
+requiredInput: caseNumber
+mcpServers: [icm]
+estimatedDuration: 15s
+promptTemplate: |
+  Execute status-judge for Case {caseNumber}. Read .claude/skills/status-judge/SKILL.md for full instructions, then execute.
 allowed-tools:
   - Bash
   - Read

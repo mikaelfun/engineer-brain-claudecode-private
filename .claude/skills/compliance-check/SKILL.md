@@ -1,5 +1,13 @@
 ---
 description: "Entitlement 合规检查 + 21v Convert 检测 + RDSE CC Finder，upsert casehealth-meta.json。可独立调用 /compliance-check {caseNumber}，也被 casework 内联执行。"
+name: compliance-check
+displayName: 合规检查
+category: inline
+stability: stable
+requiredInput: caseNumber
+estimatedDuration: 20s
+promptTemplate: |
+  Execute compliance-check for Case {caseNumber}. Read .claude/skills/compliance-check/SKILL.md for full instructions, then execute.
 allowed-tools:
   - Bash
   - Read
@@ -17,7 +25,11 @@ Entitlement 合规检查 + 21v Convert 检测。
 读取 `config.json` 获取 `casesRoot`，设置 `caseDir = {casesRoot}/active/{caseNumber}/`（绝对路径）。
 
 ## 缓存跳过
-读 `{caseDir}/casehealth-meta.json`：`compliance.entitlementOk === true` → **跳过**，沿用缓存。否则执行完整检查。
+读 `{caseDir}/casehealth-meta.json`：
+- `compliance.entitlementOk === true` **且** `ccAccount` 字段已存在（非 undefined）→ **跳过**，沿用缓存
+- 否则执行完整检查（Entitlement 已缓存时仍需运行 CC Finder）
+
+> ⚠️ `ccAccount` 为 `null` 视为"已评估但未匹配"，允许跳过。`ccAccount` 字段不存在（undefined）才表示 CC Finder 从未执行过。
 
 ## 执行步骤
 
@@ -41,11 +53,11 @@ Entitlement 合规检查 + 21v Convert 检测。
 
 从 `case-info.md` 提取客户名（`Customer/Account` 字段）。
 
-**匹配逻辑**：遍历 `accounts[]`，对每个 `account` 字段做 fuzzy match：
-- account 字段可能包含多个别名，用 `/` 分隔（如 `"BMW (宝马) / 宝马中国"`）
-- 将 account 按 `/` 拆分为多个别名，trim 空格
-- 客户名与任一别名**部分匹配**（包含关系，不区分大小写）即命中
-- 取第一个匹配的 account
+**匹配逻辑**：遍历 `accounts[]`，对每个 `account` 字段做 token-level fuzzy match：
+- account 字段可能包含多个别名，用 `/` 分隔（如 `"BMW AG/BMW / 宝马"`）
+- 将 account 和客户名分别按 `/`、空格、`-`、`–` 拆分为 token（去除括号内噪音，过滤长度 < 2 的 token）
+- 任一 token 存在子串包含关系（`大众中国` 包含 `大众`）即命中
+- 取匹配 token 数最多的 account
 
 **匹配成功**时：
 1. 提取 `cc` 字段（分号分隔的邮件列表）
@@ -55,13 +67,14 @@ Entitlement 合规检查 + 21v Convert 检测。
    - `ccAccount`: 匹配到的账号名
    - `ccKnowMePage`: Know-Me Wiki 链接（仅当非 null 时写入）
 
-**未匹配**时：静默跳过，不写 CC 相关字段。
+**未匹配**时：写入 `ccAccount: null`（标记已评估），不写 `ccEmails`/`ccKnowMePage`。
 
 ### 5. Upsert casehealth-meta.json
 保留已有字段，合并 compliance：
 ```json
-{ "compliance": { "entitlementOk": true, "serviceLevel": "Premier", "serviceName": "...", "contractCountry": "China", "is21vConvert": false, "21vCaseId": null, "21vCaseOwner": null, "warnings": [] } }
+{ "compliance": { "entitlementOk": true, "serviceLevel": "Premier", "serviceName": "...", "schedule": "CustomerName - China Cld Premier (ContractId)", "contractCountry": "China", "is21vConvert": false, "21vCaseId": null, "21vCaseOwner": null, "warnings": [] } }
 ```
+> `schedule` 字段记录 Entitlement 表的原始 Schedule 值，用于 audit 追溯。
 
 ### 6. 写日志（合并到 Step 5 的 Bash 中）
 ```bash

@@ -1,6 +1,13 @@
 ---
 name: teams-search
 description: "Teams 消息搜索（KQL 并行）+ 落盘到 teams/"
+displayName: Teams 搜索
+category: inline
+stability: stable
+requiredInput: caseNumber
+estimatedDuration: 25s
+promptTemplate: |
+  Execute teams-search for Case {caseNumber}{forceRefresh}{fullSearch}. Read .claude/skills/teams-search/SKILL.md for full instructions, then execute.
 ---
 
 # Teams Search — KQL Parallel Search

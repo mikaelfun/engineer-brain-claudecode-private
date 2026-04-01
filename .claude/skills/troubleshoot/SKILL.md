@@ -1,5 +1,14 @@
 ---
 description: "单独技术排查：对指定 Case 执行 Kusto 诊断、文档搜索等技术分析，输出分析报告。"
+name: troubleshoot
+displayName: 技术排查
+category: agent
+stability: stable
+requiredInput: caseNumber
+mcpServers: [kusto, msft-learn, icm, local-rag]
+estimatedDuration: 120s
+promptTemplate: |
+  Execute troubleshoot for Case {caseNumber}. Read .claude/skills/troubleshoot/SKILL.md for full instructions, then execute.
 allowed-tools:
   - Bash
   - Read

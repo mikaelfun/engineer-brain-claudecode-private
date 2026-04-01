@@ -1,5 +1,13 @@
 ---
 description: "单独写邮件草稿：对指定 Case 生成指定类型的邮件草稿（initial-response/follow-up/closure 等）。"
+name: draft-email
+displayName: 邮件草稿
+category: agent
+stability: stable
+requiredInput: caseNumber
+estimatedDuration: 60s
+promptTemplate: |
+  Execute draft-email for Case {caseNumber}.{emailTypeInstruction} Read .claude/skills/draft-email/SKILL.md for full instructions, then execute.
 allowed-tools:
   - Bash
   - Read
@@ -26,7 +34,8 @@ allowed-tools:
 - `21v-convert-ir` — 21V 转 IR
 
 ## 可选语言
-- `en` — English（默认）
+- `auto` — 自动检测（默认）：从邮件历史判断客户使用的语言
+- `en` — English
 - `zh` — Chinese
 
 ## 执行步骤
@@ -41,7 +50,7 @@ allowed-tools:
 
 3. **写邮件**
    `Agent(subagent_type: "email-drafter")`:
-   - prompt 中包含 caseNumber、caseDir、emailType、language
+   - prompt 中包含 caseNumber、caseDir、emailType、language（不指定语言时传 `auto`，agent 会从邮件历史自动检测）
    - 请先读取 `.claude/agents/email-drafter.md` 获取完整执行步骤
 
 4. **展示结果**

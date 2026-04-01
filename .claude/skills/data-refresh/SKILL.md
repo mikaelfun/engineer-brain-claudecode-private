@@ -1,5 +1,14 @@
 ---
 description: "拉取 Case 最新数据 + ICM 信息。可独立调用 /data-refresh {caseNumber}，也被 casework 内联执行。"
+name: data-refresh
+displayName: 数据刷新
+category: inline
+stability: stable
+requiredInput: caseNumber
+mcpServers: [icm]
+estimatedDuration: 30s
+promptTemplate: |
+  Execute data-refresh for Case {caseNumber}. Read .claude/skills/data-refresh/SKILL.md for full instructions, then execute.
 allowed-tools:
   - Bash
   - Read

@@ -1,5 +1,20 @@
 ---
 description: "Case 全流程处理：数据刷新 → 合规检查 → 状态判断 → 技术排查/邮件 → Inspection。用于处理单个 D365 Case。"
+name: casework
+displayName: Case 全流程处理
+category: orchestrator
+stability: stable
+requiredInput: caseNumber
+steps:
+  - data-refresh
+  - compliance-check
+  - status-judge
+  - teams-search
+  - troubleshoot
+  - draft-email
+  - inspection-writer
+promptTemplate: |
+  Process Case {caseNumber}. Read .claude/skills/casework/SKILL.md and follow all steps.
 allowed-tools:
   - Bash
   - Read
@@ -67,6 +82,23 @@ date +%s > "{caseDir}/logs/.t_fastpath_start" ; bash skills/d365-case-ops/script
 
 #### 路径 B：CHANGED 或 FAST_PATH_BREAK → 正常流程
 
+**B0. 归档/转移检测（仅 CHANGED 时，FAST_PATH_BREAK 跳过）**
+
+检测当前 case 是否已在 D365 中归档或转移（不再在 active list 中）。**必须在 spawn 任何后台 agent 之前执行**，避免对已归档 case 做无用功。
+
+```bash
+RESULT=$(pwsh -NoProfile -File skills/d365-case-ops/scripts/detect-case-status.ps1 -CasesRoot {casesRoot} -CaseNumbers {caseNumber} -SkipClosureCheck 2>&1 | tail -1)
+```
+
+解析 `$RESULT`（JSON 数组）：
+- 空数组 `[]` → case 仍 active，继续正常流程
+- 包含条目且 `status` 为 `archived` 或 `transferred` → **提前终止 casework**：
+  1. 确保目标目录存在：`mkdir -p "{casesRoot}/archived"` 或 `mkdir -p "{casesRoot}/transfer"`
+  2. 移动目录：`mv "{casesRoot}/active/{caseNumber}" "{casesRoot}/{archived|transfer}/{caseNumber}"`
+  3. 记录日志到 `{casesRoot}/archive-log.jsonl`（append 一行 JSON）
+  4. 输出提示：`⚠️ Case {caseNumber} 已{归档/转移}，casework 提前终止`
+  5. **不再执行 B1~B5/Step 4 及后续步骤**
+
 **B1. spawn data-refresh（仅 CHANGED 时）**
 
 ```
@@ -117,22 +149,25 @@ prompt: |
 
 **B3. compliance-check**：按 compliance-check/SKILL.md 执行。⏱ `.t_compliance_start/end` 合并到工作命令。
 
-**B3.5. 归档/转移检测**
+**B3a. Entitlement 阻断检测**
 
-检测当前 case 是否已在 D365 中归档或转移（不再在 active list 中）：
+compliance-check 完成后，读取 `casehealth-meta.json` 中 `compliance.entitlementOk`：
 
-```bash
-RESULT=$(pwsh -NoProfile -File skills/d365-case-ops/scripts/detect-case-status.ps1 -CasesRoot {casesRoot} -CaseNumbers {caseNumber} 2>&1 | tail -1)
-```
-
-解析 `$RESULT`（JSON 数组）：
-- 空数组 `[]` → case 仍 active，继续正常流程
-- 包含条目且 `status` 为 `archived` 或 `transferred` → **提前终止 casework**：
-  1. 确保目标目录存在：`mkdir -p "{casesRoot}/archived"` 或 `mkdir -p "{casesRoot}/transfer"`
-  2. 移动目录：`mv "{casesRoot}/active/{caseNumber}" "{casesRoot}/{archived|transfer}/{caseNumber}"`
-  3. 记录日志到 `{casesRoot}/archive-log.jsonl`（append 一行 JSON）
-  4. 输出提示：`⚠️ Case {caseNumber} 已{归档/转移}，casework 提前终止`
-  5. **不再执行 B4/B5/Step 4 及后续步骤**
+- `entitlementOk === true` → 继续正常流程
+- `entitlementOk === false` → **⚠️ 阻断 casework**：
+  1. 生成 **紧急 Todo**（写入 `{caseDir}/todo/` 目录）：
+     ```markdown
+     ## 🔴 需立即处理
+     - [ ] ⚠️ **Entitlement 不合规 — 请联系 TA 确认**
+       - Service Name: {compliance.serviceName}
+       - Schedule: {compliance.schedule}
+       - Contract Country: {compliance.contractCountry}
+       - Warnings: {compliance.warnings}
+       - 此 Case 的 Entitlement 不满足 China Cloud 要求，不可继续处理。请联系 TA (Technical Advisor) 确认是否需要转移或关闭。
+     ```
+  2. 记录日志：`STEP B3a BLOCK | Entitlement failed: {warnings}`
+  3. **不再执行 B4/B5/Step 4 及后续步骤**
+  4. 输出提示：`🚫 Case {caseNumber} Entitlement 不合规，casework 已阻断。请在 Todo 中查看详情并联系 TA。`
 
 **B4. 等待后台 agent → status-judge**
 
