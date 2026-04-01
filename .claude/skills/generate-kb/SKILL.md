@@ -1,6 +1,6 @@
 ---
 name: generate-kb
-displayName: 知识库文章
+displayName: 生成知识库KB
 description: "Case 关闭时生成 Knowledge Base 文章"
 category: inline
 stability: beta
