@@ -969,7 +969,7 @@ export async function* stepCaseSession(
     'onenote-case-search': (cn) => {
       const casesRoot = getCasesRoot()
       const caseDir = join(casesRoot, 'active', cn)
-      return `Case ${cn}, caseDir=${caseDir}. Please read .claude/agents/onenote-case-search.md for full instructions, then execute.`
+      return `Spawn the onenote-case-search agent for Case ${cn}. Use the Agent tool with subagent_type "onenote-case-search" and prompt: "Case ${cn}, caseDir=${caseDir}（绝对路径）。请先读取 .claude/agents/onenote-case-search.md 获取完整执行步骤，然后执行。"`
     },
   }
 
