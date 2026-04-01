@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { existsSync, readFileSync, unlinkSync } from 'fs'
+import { existsSync, readFileSync, readdirSync, unlinkSync } from 'fs'
 import { join } from 'path'
 import { exec } from 'child_process'
 import { promisify } from 'util'
@@ -12,6 +12,47 @@ const noteGapRoutes = new Hono()
 function getDraftPath(caseNumber: string): string {
   return join(config.activeCasesDir, caseNumber, 'note-draft.md')
 }
+
+/**
+ * GET /all/note-gap — Get all note gaps across all active cases
+ * MUST be defined BEFORE /:id/note-gap to avoid "all" being matched as an ID
+ */
+noteGapRoutes.get('/all/note-gap', (c) => {
+  const casesDir = config.activeCasesDir
+  if (!existsSync(casesDir)) return c.json({ gaps: [] })
+
+  const dirs = readdirSync(casesDir, { withFileTypes: true })
+    .filter(d => d.isDirectory())
+    .map(d => d.name)
+
+  const gaps: Array<{
+    caseNumber: string
+    title: string
+    body: string
+    gapDays: number
+    lastNoteDate: string
+    generatedAt: string
+  }> = []
+
+  for (const dir of dirs) {
+    const draftPath = join(casesDir, dir, 'note-draft.md')
+    if (!existsSync(draftPath)) continue
+    try {
+      const content = readFileSync(draftPath, 'utf-8')
+      const { data } = matter(content)
+      gaps.push({
+        caseNumber: dir,
+        title: data.title || '',
+        body: data.body || '',
+        gapDays: data.gapDays || 0,
+        lastNoteDate: data.lastNoteDate || '',
+        generatedAt: data.generatedAt || '',
+      })
+    } catch {}
+  }
+
+  return c.json({ gaps })
+})
 
 /**
  * GET /:id/note-gap — Get current note gap status + draft if exists

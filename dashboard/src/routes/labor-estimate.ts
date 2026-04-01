@@ -10,6 +10,9 @@
  * POST /batch-submit                  — Batch submit to D365
  */
 import { Hono } from 'hono'
+import { existsSync, readFileSync, readdirSync } from 'fs'
+import { join } from 'path'
+import { config } from '../config.js'
 import {
   readLaborEstimate,
   readAllLaborEstimates,
@@ -35,14 +38,35 @@ laborEstimateRoutes.get('/:caseNumber', (c) => {
   return c.json({ estimate, exists: true })
 })
 
-// POST /all — Trigger batch AI estimation (stub)
+// POST /all — Load existing estimates for today from disk
 // Must be before /:caseNumber to avoid matching "all" as a caseNumber
 laborEstimateRoutes.post('/all', async (c) => {
+  const casesDir = config.activeCasesDir
+  const estimates: any[] = []
+
+  if (existsSync(casesDir)) {
+    const dirs = readdirSync(casesDir, { withFileTypes: true })
+      .filter(d => d.isDirectory())
+
+    for (const dir of dirs) {
+      const estimatePath = join(casesDir, dir.name, 'labor', 'labor-estimate.json')
+      if (!existsSync(estimatePath)) continue
+      try {
+        const data = JSON.parse(readFileSync(estimatePath, 'utf-8'))
+        // Only include today's estimates
+        const today = new Date().toISOString().split('T')[0]
+        if (data.date === today) {
+          estimates.push({ success: true, estimate: data })
+        }
+      } catch {}
+    }
+  }
+
   return c.json({
-    success: false,
-    message: 'Use CLI /labor-estimate all command to generate estimates. WebUI SDK integration coming soon.',
-    estimates: [],
-    total: 0,
+    success: true,
+    message: `Found ${estimates.length} existing estimates for today`,
+    estimates,
+    total: estimates.length,
   })
 })
 
