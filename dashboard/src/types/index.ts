@@ -277,6 +277,8 @@ export type SSEEventType =
   | 'case-step-completed'
   | 'case-step-failed'
   | 'case-step-question'
+  | 'case-step-heartbeat'
+  | 'sdk-queue-changed'
   | 'test-state-updated'
   | 'test-pipeline-updated'
   | 'test-supervisor-updated'
