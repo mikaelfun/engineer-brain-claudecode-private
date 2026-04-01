@@ -117,9 +117,47 @@ done
 
 GAP output format from additional scanners:
 ```
-GAP|{type}|{source}|{category}|{description}|{priority}
+GAP|{type}|{source}|{category}|{description}|{priority}|{impact}|{impactReason}
 ```
 Append all GAP lines to `pipeline.json` gaps with the scanner's source tag.
+
+**6.8. Impact Classification（优先级引擎）**
+
+每个 GAP 必须附带 `impact` 和 `impactReason` 字段。分级规则详见 `playbooks/rules/impact-classification.md`。
+
+**快速参考：**
+- **P0 — 流程断裂**: 核心用户流程（casework/patrol/dashboard加载）完全不可用
+- **P1 — 功能故障**: 功能存在但执行报错（按钮无响应、API 错误、生成失败）
+- **P2 — 体验退化**: 能用但体验差（耗时过长、UI 错位、对比度不足）
+- **P3 — 代码质量**: 不影响用户（架构问题、代码重复、类型不安全）
+
+**写入 queues.json 时的格式**：
+```json
+{
+  "testId": "xxx",
+  "impact": "P1",
+  "impactReason": "Todo执行是用户日常操作的核心功能",
+  "... 其他现有字段 ...": "..."
+}
+```
+
+**impactReason** 用一句话解释为什么是这个等级，供晨报展示。
+
+**6.9. SCAN 事件记录**
+
+每发现一个 gap，写入事件：
+```bash
+bash tests/executors/event-writer.sh \
+  --type bug_discovered \
+  --impact {impact} \
+  --area {area derived from category} \
+  --detail "{gap description}"
+```
+
+特殊事件类型映射：
+- 性能类 gap（performance scanner）→ `--type perf_regression --delta "{delta}"`
+- UI/设计类 gap（design-fidelity scanner）→ `--type ui_issue`
+- 流程断裂（E2E 整体失败）→ `--type flow_broken`
 
 **7. Update manifest.json**: Add new features, update tested/untested, coverage stats.
 
