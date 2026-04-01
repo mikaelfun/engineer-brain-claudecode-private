@@ -460,9 +460,14 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull, ski
     'generate-kb': 'var(--accent-purple)',
   }
 
+  // Only show case-relevant skills as quick actions
+  const CASE_SKILL_ALLOWLIST = new Set([
+    'data-refresh', 'status-judge', 'troubleshoot', 'inspection-writer',
+    'generate-kb', 'teams-search', 'labor-estimate', 'note-gap',
+  ])
+
   const quickActions = (skills ?? [])
-    .filter(s => s.category !== 'orchestrator' && s.stability !== 'dev')
-    .filter(s => s.name !== 'draft-email' && s.name !== 'compliance-check')
+    .filter(s => CASE_SKILL_ALLOWLIST.has(s.name))
     .map(s => ({
       id: (s.webUiAlias || s.name) as AIAction,
       icon: SKILL_ICONS[s.webUiAlias || s.name] || SKILL_ICONS[s.name] || Zap,
