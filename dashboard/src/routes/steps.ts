@@ -20,6 +20,7 @@
 import { Hono } from 'hono'
 import type { CanUseTool } from '@anthropic-ai/claude-agent-sdk'
 import type { ToolCallRecord, ExecutionSummary } from '../types/index.js'
+import { getSkillRegistry } from '../services/skill-registry.js'
 import {
   stepCaseSession,
   chatCaseSession,
@@ -41,19 +42,18 @@ import { caseStepState, type CaseStepQuestion } from '../services/case-step-stat
 
 const stepRoutes = new Hono()
 
-// Valid step names
-const VALID_STEPS = [
-  'data-refresh',
-  'compliance-check',
-  'status-judge',
-  'teams-search',
-  'troubleshoot',
-  'draft-email',
-  'inspection',
-  'generate-kb',
-] as const
+// Valid step names — dynamically derived from skill registry
+function getValidSteps(): string[] {
+  const registry = getSkillRegistry()
+  const skills = registry.listSkills()
+  const steps: string[] = []
+  for (const skill of skills) {
+    steps.push(skill.webUiAlias || skill.name)
+  }
+  return steps
+}
 
-type StepName = typeof VALID_STEPS[number]
+type StepName = string
 
 /**
  * Steps that support interactive Q&A (AskUserQuestion → dashboard UI).
@@ -478,10 +478,10 @@ stepRoutes.post('/case/:id/step/:step', async (c) => {
   const caseNumber = c.req.param('id')
   const stepName = c.req.param('step') as StepName
 
-  if (!VALID_STEPS.includes(stepName)) {
+  if (!getValidSteps().includes(stepName)) {
     return c.json({
       error: `Invalid step: ${stepName}`,
-      validSteps: VALID_STEPS,
+      validSteps: getValidSteps(),
     }, 400)
   }
 
@@ -740,7 +740,7 @@ stepRoutes.get('/case/:id/step', (c) => {
   return c.json({
     caseNumber,
     activeSession: activeSessionId || null,
-    availableSteps: VALID_STEPS.map((step) => ({
+    availableSteps: getValidSteps().map((step) => ({
       name: step,
       url: `/api/case/${caseNumber}/step/${step}`,
     })),

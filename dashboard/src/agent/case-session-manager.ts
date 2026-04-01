@@ -12,13 +12,14 @@
  *
  * 注意: @anthropic-ai/claude-agent-sdk 提供 query() 函数
  */
-import { query, type Options, type SDKMessage, type CanUseTool, type McpServerConfig } from '@anthropic-ai/claude-agent-sdk'
+import { query, type Options, type SDKMessage, type CanUseTool, type McpServerConfig, type AgentDefinition } from '@anthropic-ai/claude-agent-sdk'
 import { readFileSync, existsSync, writeFileSync, mkdirSync, appendFileSync, readdirSync } from 'fs'
 import { join, resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { execSync } from 'child_process'
 import { sseManager } from '../watcher/sse-manager.js'
-import { getSSEEventType, formatMessageForSSE } from '../utils/sse-helpers.js'
+import { getSkillRegistry } from '../services/skill-registry.js'
+import { broadcastSDKMessages } from '../utils/sdk-message-broadcaster.js'
 import type { PatrolProgress, PatrolTodoSummary, ExecutionSummary, ToolCallRecord } from '../types/index.js'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -251,7 +252,141 @@ function getCaseMcpServers(): Record<string, McpServerConfig> {
 }
 
 
-// ---- Session Store (in-memory + file-backed) ----
+// ---- Agent Definitions Loader (ISS-200) ----
+
+// Cached agent definitions (loaded once per process)
+let _agentDefinitionsCache: Record<string, AgentDefinition> | null = null
+
+/**
+ * Load custom agent definitions from {projectRoot}/.claude/agents/*.md.
+ * Parses YAML frontmatter for name/description/tools/model/mcpServers,
+ * uses markdown body as the agent's prompt.
+ *
+ * Returns Record<string, AgentDefinition> for injection into query() options.agents.
+ * Cached after first call. Individual parse failures are warned and skipped.
+ */
+export function loadAgentDefinitions(): Record<string, AgentDefinition> {
+  if (_agentDefinitionsCache !== null) return _agentDefinitionsCache
+
+  const agentsDir = join(getProjectRoot(), '.claude', 'agents')
+  const definitions: Record<string, AgentDefinition> = {}
+
+  try {
+    if (!existsSync(agentsDir)) {
+      console.warn('[Agents] .claude/agents/ not found — no custom agents loaded')
+      _agentDefinitionsCache = definitions
+      return definitions
+    }
+
+    const files = readdirSync(agentsDir).filter(f => f.endsWith('.md'))
+
+    for (const file of files) {
+      try {
+        const filePath = join(agentsDir, file)
+        const content = readFileSync(filePath, 'utf-8')
+
+        // Parse YAML frontmatter (between --- delimiters)
+        const fmMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/)
+        if (!fmMatch) {
+          console.warn(`[Agents] ${file}: no valid frontmatter found, skipping`)
+          continue
+        }
+
+        const frontmatter = fmMatch[1]
+        const body = fmMatch[2].trim()
+
+        // Parse YAML fields manually (avoid adding yaml dependency)
+        const name = parseYamlField(frontmatter, 'name')
+        const description = parseYamlField(frontmatter, 'description')
+
+        if (!name || !description) {
+          console.warn(`[Agents] ${file}: missing required 'name' or 'description' in frontmatter, skipping`)
+          continue
+        }
+
+        const toolsRaw = parseYamlField(frontmatter, 'tools')
+        const model = parseYamlField(frontmatter, 'model')
+        const mcpServersList = parseYamlList(frontmatter, 'mcpServers')
+
+        const def: AgentDefinition = {
+          description: description.replace(/^["']|["']$/g, ''), // strip surrounding quotes
+          prompt: body,
+        }
+
+        if (toolsRaw) {
+          def.tools = toolsRaw.split(',').map(t => t.trim()).filter(Boolean)
+        }
+
+        if (model) {
+          def.model = model
+        }
+
+        if (mcpServersList.length > 0) {
+          def.mcpServers = mcpServersList
+        }
+
+        definitions[name] = def
+      } catch (err) {
+        console.warn(`[Agents] Failed to parse ${file}:`, (err as Error).message)
+      }
+    }
+
+    console.log(`[Agents] Loaded ${Object.keys(definitions).length} agent definitions: ${Object.keys(definitions).join(', ')}`)
+  } catch (err) {
+    console.warn('[Agents] Failed to read .claude/agents/ directory:', (err as Error).message)
+  }
+
+  _agentDefinitionsCache = definitions
+  return definitions
+}
+
+/**
+ * Parse a simple YAML scalar field: "key: value" or "key: 'value'" or 'key: "value"'
+ */
+function parseYamlField(yaml: string, key: string): string | undefined {
+  const regex = new RegExp(`^${key}:\\s*(.+?)\\s*$`, 'm')
+  const match = yaml.match(regex)
+  if (!match) return undefined
+  return match[1].replace(/^["']|["']$/g, '') // strip surrounding quotes
+}
+
+/**
+ * Parse a YAML list field:
+ *   mcpServers:
+ *     - teams
+ *     - icm
+ * Returns string[] of list items.
+ */
+function parseYamlList(yaml: string, key: string): string[] {
+  const lines = yaml.split(/\r?\n/)
+  const items: string[] = []
+  let capturing = false
+
+  for (const line of lines) {
+    if (line.match(new RegExp(`^${key}:\\s*$`))) {
+      capturing = true
+      continue
+    }
+    if (capturing) {
+      const itemMatch = line.match(/^\s+-\s+(.+?)\s*$/)
+      if (itemMatch) {
+        items.push(itemMatch[1])
+      } else if (line.match(/^\S/)) {
+        // Next top-level key, stop capturing
+        break
+      }
+    }
+  }
+
+  return items
+}
+
+/**
+ * Clear the agent definitions cache (for testing or hot-reload).
+ */
+export function clearAgentDefinitionsCache(): void {
+  _agentDefinitionsCache = null
+}
 
 const sessionStorePath = join(getProjectRoot(), 'dashboard', '.case-sessions.json')
 const sessionMessagesPath = join(getProjectRoot(), 'dashboard', '.case-session-messages.json')
@@ -611,11 +746,24 @@ export async function* processCaseSession(
   canUseTool?: CanUseTool
 ): AsyncGenerator<SDKMessage & { sdkSessionId?: string }> {
   // Check if case already has a resumable session → reuse it (avoid orphan sessions)
+  // But only if it was active recently (within 10 minutes). Stale sessions are likely dead
+  // and resuming them causes the SDK to hang with no SSE output.
   const existingSessionId = caseIndex[caseNumber]
   if (existingSessionId && sessions[existingSessionId] && sessions[existingSessionId].status !== 'completed') {
-    // Resume existing session with new intent
-    yield* chatCaseSession(existingSessionId, `Case ${caseNumber}: ${intent}`, canUseTool) as any
-    return
+    const lastActivity = sessions[existingSessionId].lastActivityAt
+    const staleThresholdMs = 10 * 60 * 1000 // 10 minutes
+    const isStale = lastActivity && (Date.now() - new Date(lastActivity).getTime() > staleThresholdMs)
+    if (isStale) {
+      // Mark stale session as completed so a fresh session is created
+      sessions[existingSessionId].status = 'completed'
+      delete caseIndex[caseNumber]
+      saveSessionStore()
+      console.log(`[processCaseSession] Stale session ${existingSessionId} for case ${caseNumber} marked completed (last activity: ${lastActivity})`)
+    } else {
+      // Resume existing session with new intent
+      yield* chatCaseSession(existingSessionId, `Case ${caseNumber}: ${intent}`, canUseTool) as any
+      return
+    }
   }
 
   const now = new Date().toISOString()
@@ -639,8 +787,10 @@ export async function* processCaseSession(
         // settingSources: ['user'] — skip 'project' to avoid loading .mcp.json (300+ MCP tools
         // overflow the API token limit). CLAUDE.md is injected via systemPrompt.append instead.
         // Case-relevant MCP servers are explicitly passed via mcpServers option (ISS-134).
+        // Custom agents are explicitly loaded from .claude/agents/*.md (ISS-200).
         settingSources: ['user'] as Options['settingSources'],
         mcpServers: getCaseMcpServers(),
+        agents: loadAgentDefinitions(),
         systemPrompt: {
           type: 'preset' as const,
           preset: 'claude_code' as const,
@@ -650,7 +800,7 @@ export async function* processCaseSession(
         allowedTools: ['Read', 'Write', 'Bash', 'Edit', 'Glob', 'Grep', 'Agent'],
         permissionMode: 'bypassPermissions',
         allowDangerouslySkipPermissions: true,
-        maxTurns: 50,
+        maxTurns: 100,
         stderr: (data: string) => console.error(`[SDK:stderr:${caseNumber}]`, data.trim()),
         ...(canUseTool ? { canUseTool } : {}),
       },
@@ -795,37 +945,50 @@ export async function* stepCaseSession(
   stepName: string,
   options?: { emailType?: string; forceRefresh?: boolean; fullSearch?: boolean; canUseTool?: CanUseTool }
 ): AsyncGenerator<SDKMessage & { sdkSessionId?: string }> {
-  // Build email type instruction for draft-email step
-  const emailTypeInstruction = (() => {
-    if (stepName !== 'draft-email' || !options?.emailType || options.emailType === 'auto') {
-      return '' // AI auto-detect (default)
-    }
-    return ` The email type is: "${options.emailType}". Draft accordingly.`
-  })()
-
-  // Map step names to skill/agent invocations
-  const stepPrompts: Record<string, string> = {
-    'data-refresh': `Execute data-refresh for Case ${caseNumber}. Read .claude/skills/data-refresh/SKILL.md for full instructions, then execute.`,
-    'compliance-check': `Execute compliance-check for Case ${caseNumber}. Read .claude/skills/compliance-check/SKILL.md for full instructions, then execute.`,
-    'status-judge': `Execute status-judge for Case ${caseNumber}. Read .claude/skills/status-judge/SKILL.md for full instructions, then execute.`,
-    'teams-search': `Execute teams-search for Case ${caseNumber}${options?.forceRefresh ? ' --force-refresh' : ''}${options?.fullSearch ? ' --full-search' : ''}. Read .claude/skills/teams-search/SKILL.md for full instructions, then execute.`,
-    'troubleshoot': `Execute troubleshoot for Case ${caseNumber}. Read .claude/skills/troubleshoot/SKILL.md for full instructions, then execute.`,
-    'draft-email': `Execute draft-email for Case ${caseNumber}.${emailTypeInstruction} Read .claude/skills/draft-email/SKILL.md for full instructions, then execute.`,
-    'inspection': `Execute inspection-writer for Case ${caseNumber}. This updates case-summary.md (incremental narrative) and generates todo via generate-todo.sh. Read .claude/skills/inspection-writer/SKILL.md for full instructions, then execute.`,
-    'generate-kb': `Case ${caseNumber} is being closed. Read all case data from the case directory and generate a Knowledge Base article. Save to {caseDir}/kb/kb-article.md`,
+  // Build dynamic params for prompt template
+  const promptParams: Record<string, string> = {
+    caseNumber,
   }
 
-  const prompt = stepPrompts[stepName]
+  // Handle step-specific params
+  if (stepName === 'draft-email') {
+    const emailTypeInstruction = (() => {
+      if (!options?.emailType || options.emailType === 'auto') return ''
+      return ` The email type is: "${options.emailType}". Draft accordingly.`
+    })()
+    promptParams.emailTypeInstruction = emailTypeInstruction
+  }
+
+  if (stepName === 'teams-search') {
+    promptParams.forceRefresh = options?.forceRefresh ? ' --force-refresh' : ''
+    promptParams.fullSearch = options?.fullSearch ? ' --full-search' : ''
+  }
+
+  // Look up prompt from skill registry
+  const prompt = getSkillRegistry().getPrompt(stepName, promptParams)
   if (!prompt) {
-    throw new Error(`Unknown step: ${stepName}. Available: ${Object.keys(stepPrompts).join(', ')}`)
+    const available = getSkillRegistry().listSkills().map(s => s.webUiAlias || s.name)
+    throw new Error(`Unknown step: ${stepName}. Available: ${available.join(', ')}`)
   }
 
   // Check if case already has a session → resume in that session
+  // But only if it was active recently (within 10 minutes). Stale sessions cause SDK to hang.
   const existingSessionId = caseIndex[caseNumber]
   if (existingSessionId && sessions[existingSessionId] && sessions[existingSessionId].status !== 'completed') {
-    // Resume existing session with step prompt
-    yield* chatCaseSession(existingSessionId, prompt, options?.canUseTool) as any
-    return
+    const lastActivity = sessions[existingSessionId].lastActivityAt
+    const staleThresholdMs = 10 * 60 * 1000 // 10 minutes
+    const isStale = lastActivity && (Date.now() - new Date(lastActivity).getTime() > staleThresholdMs)
+    if (isStale) {
+      // Mark stale session as completed so a fresh session is created
+      sessions[existingSessionId].status = 'completed'
+      delete caseIndex[caseNumber]
+      saveSessionStore()
+      console.log(`[stepCaseSession] Stale session ${existingSessionId} for case ${caseNumber} marked completed (last activity: ${lastActivity})`)
+    } else {
+      // Resume existing session with step prompt
+      yield* chatCaseSession(existingSessionId, prompt, options?.canUseTool) as any
+      return
+    }
   }
 
   // No existing session → create new one
@@ -885,10 +1048,21 @@ After verification, output a single JSON block on a line by itself:
 - If verification FAILED (success=false): do NOT mark the checkbox, leave it as [ ]`
 
   // Try to resume in existing case session
+  // But only if it was active recently (within 10 minutes). Stale sessions cause SDK to hang.
   const existingSessionId = caseIndex[caseNumber]
   if (existingSessionId && sessions[existingSessionId] && sessions[existingSessionId].status !== 'completed') {
-    yield* chatCaseSession(existingSessionId, prompt)
-    return
+    const lastActivity = sessions[existingSessionId].lastActivityAt
+    const staleThresholdMs = 10 * 60 * 1000 // 10 minutes
+    const isStale = lastActivity && (Date.now() - new Date(lastActivity).getTime() > staleThresholdMs)
+    if (isStale) {
+      sessions[existingSessionId].status = 'completed'
+      delete caseIndex[caseNumber]
+      saveSessionStore()
+      console.log(`[executeTodoAction] Stale session ${existingSessionId} for case ${caseNumber} marked completed (last activity: ${lastActivity})`)
+    } else {
+      yield* chatCaseSession(existingSessionId, prompt)
+      return
+    }
   }
 
   // Fallback: standalone query
@@ -1212,28 +1386,16 @@ async function _runPatrol(
         )
 
         const processPromise = (async () => {
-          for await (const message of sessionGen) {
-            if (!caseSessionId && (message as any).sdkSessionId) {
-              caseSessionId = (message as any).sdkSessionId
-            }
-            // Broadcast SDK messages as SSE (via existing event types)
-            const eventType = getSSEEventType(message)
-            const formatted = formatMessageForSSE(message)
-            sseManager.broadcast(eventType as any, {
-              caseNumber,
-              sessionId: caseSessionId || 'pending',
-              step: 'patrol',
-              ...formatted,
-            })
-            // Persist messages for session recovery
-            appendSessionMessage(caseNumber, {
-              type: eventType,
-              content: (formatted.content as string) || '',
-              toolName: formatted.toolName as string,
-              step: 'patrol',
-              timestamp: (formatted.timestamp as string) || new Date().toISOString(),
-            })
-          }
+          // Emit case-step-started for frontend step-grouped display
+          sseManager.broadcast('case-step-started' as any, {
+            caseNumber,
+            step: 'patrol',
+            startedAt: new Date().toISOString(),
+          })
+
+          // Use shared deep-parser — same as single-case processing
+          const broadcastResult = await broadcastSDKMessages(caseNumber, 'patrol', sessionGen)
+          caseSessionId = broadcastResult.sessionId
           return 'completed' as const
         })()
 
@@ -1255,8 +1417,14 @@ async function _runPatrol(
         patrolActiveCases.delete(caseNumber)
         activeCount--
 
-        // Broadcast per-case completion
+        // Emit case-step-completed for frontend step-grouped display
         const lastResult = caseResults[caseResults.length - 1]
+        sseManager.broadcast('case-step-completed' as any, {
+          caseNumber,
+          step: 'patrol',
+          error: lastResult?.error,
+        })
+        // Broadcast per-case completion (patrol-level progress)
         sseManager.broadcast('patrol-case-completed' as any, {
           caseNumber,
           processedCases: processedCount,
