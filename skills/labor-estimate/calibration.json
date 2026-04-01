@@ -1,0 +1,13 @@
+{
+  "adjustments": {
+    "troubleshooting": { "multiplier": 1.0, "samples": 0 },
+    "email": { "multiplier": 1.0, "samples": 0 },
+    "research": { "multiplier": 1.0, "samples": 0 },
+    "notes": { "multiplier": 1.0, "samples": 0 },
+    "remote_session": { "multiplier": 1.0, "samples": 0 },
+    "internal_consult": { "multiplier": 1.0, "samples": 0 },
+    "analysis": { "multiplier": 1.0, "samples": 0 }
+  },
+  "history": [],
+  "lastUpdated": ""
+}
