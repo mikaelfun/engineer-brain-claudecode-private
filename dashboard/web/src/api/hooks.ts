@@ -1021,3 +1021,46 @@ export function useTestReport(date?: string) {
     },
   })
 }
+
+// ===== Note Gap =====
+
+export interface NoteGapStatus {
+  hasGap: boolean
+  draft: {
+    title: string
+    body: string
+    gapDays: number
+    lastNoteDate: string
+    generatedAt: string
+  } | null
+}
+
+export function useNoteGap(caseId: string) {
+  return useQuery<NoteGapStatus>({
+    queryKey: ['note-gap', caseId],
+    queryFn: () => apiGet<NoteGapStatus>(`/case/${caseId}/note-gap`),
+    enabled: !!caseId,
+    refetchInterval: 30_000,
+  })
+}
+
+export function useSubmitNote(caseId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: { title: string; body: string }) =>
+      apiPost(`/case/${caseId}/note-gap/submit`, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['note-gap', caseId] })
+    },
+  })
+}
+
+export function useDismissNoteGap(caseId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () => apiDelete(`/case/${caseId}/note-gap`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['note-gap', caseId] })
+    },
+  })
+}
