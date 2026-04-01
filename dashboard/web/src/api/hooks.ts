@@ -1065,6 +1065,25 @@ export function useDismissNoteGap(caseId: string) {
   })
 }
 
+// ===== Batch Note Gaps =====
+
+export interface NoteGapItem {
+  caseNumber: string
+  title: string
+  body: string
+  gapDays: number
+  lastNoteDate: string
+  generatedAt: string
+}
+
+export function useAllNoteGaps() {
+  return useQuery<{ gaps: NoteGapItem[] }>({
+    queryKey: ['note-gaps-all'],
+    queryFn: () => apiGet<{ gaps: NoteGapItem[] }>('/note-gaps/all'),
+    refetchInterval: 30_000,
+  })
+}
+
 // ===== Labor Estimate =====
 
 export interface LaborEstimateItem {
