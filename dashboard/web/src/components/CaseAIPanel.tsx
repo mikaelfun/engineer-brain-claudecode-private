@@ -19,6 +19,8 @@ import { useCaseSessionStore, type CaseSessionMessage } from '../stores/caseSess
 import { SessionMessageList, groupMessagesByStep } from './session/SessionMessageList'
 import { StepQuestionForm } from './session/StepQuestionForm'
 import { StepFilterTabs } from './session/StepFilterTabs'
+import { StallWarningBanner } from './session/StallWarningBanner'
+import { QueueStatusIndicator } from './session/QueueStatusIndicator'
 
 interface CaseAIPanelProps {
   caseNumber: string
@@ -104,6 +106,28 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull, ski
 
   // Per-case current step
   const currentStep = useCaseSessionStore((s) => s.currentStep[caseNumber])
+
+  // Queue status (global) from caseSessionStore
+  const queueStatus = useCaseSessionStore((s) => s.queueStatus)
+
+  // Stall detection: compare lastHeartbeatAt with current time every 5s
+  const lastHeartbeat = useCaseSessionStore((s) => s.lastHeartbeatAt[caseNumber])
+  const [isStalled, setIsStalled] = useState(false)
+
+  useEffect(() => {
+    if (!isStepActive) {
+      setIsStalled(false)
+      return
+    }
+    const checkStall = () => {
+      if (!lastHeartbeat) { setIsStalled(false); return }
+      const elapsed = Date.now() - new Date(lastHeartbeat).getTime()
+      setIsStalled(elapsed > 30_000)
+    }
+    checkStall()
+    const timer = setInterval(checkStall, 5_000)
+    return () => clearInterval(timer)
+  }, [isStepActive, lastHeartbeat])
 
   // Store-tracked active session ID (from SSE events → caseSessionStore)
   const storeActiveSessionId = useCaseSessionStore((s) => s.activeSessionId[caseNumber])
@@ -770,6 +794,18 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull, ski
           )}
         </div>
       </div>
+
+      {/* Stall Warning + Queue Status */}
+      <StallWarningBanner visible={isStalled} />
+      {queueStatus && (
+        <div className="px-5 pt-1">
+          <QueueStatusIndicator
+            currentLabel={queueStatus.currentLabel}
+            queueLength={queueStatus.queueLength}
+            queueLabels={queueStatus.queueLabels}
+          />
+        </div>
+      )}
 
       {/* Action Buttons — single row, compact */}
       <div className="px-5 py-2 flex-shrink-0" style={{ borderBottom: '1px solid var(--border-subtle)' }}>

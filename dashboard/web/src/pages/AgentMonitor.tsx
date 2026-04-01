@@ -7,18 +7,20 @@
 import { Card, CardHeader } from '../components/common/Card'
 import { Badge } from '../components/common/Badge'
 import { Loading, EmptyState } from '../components/common/Loading'
-import { useAgents, useCronJobs, usePatrolState, useCancelPatrol, useUnifiedSessions, useCaseMessages } from '../api/hooks'
+import { useAgents, useCronJobs, usePatrolState, useCancelPatrol, useUnifiedSessions, useCaseMessages, useTriggers, useDeleteTrigger, useRunTrigger } from '../api/hooks'
 import type { UnifiedSession } from '../api/hooks'
 import { usePatrolStore } from '../stores/patrolStore'
 import { useCaseSessionStore, type CaseSessionMessage } from '../stores/caseSessionStore'
 import { useIssueTrackStore, EMPTY_TRACK_MESSAGES, EMPTY_IMPLEMENT_MESSAGES, EMPTY_VERIFY_MESSAGES } from '../stores/issueTrackStore'
 import type { IssueTrackMessage, ImplementMessage, VerifyMessage } from '../stores/issueTrackStore'
 import { SessionMessageList } from '../components/session/SessionMessageList'
+import { QueueStatusIndicator } from '../components/session/QueueStatusIndicator'
 import { StepQuestionForm } from '../components/session/StepQuestionForm'
 import { useQueryClient } from '@tanstack/react-query'
-import { RefreshCw, ChevronDown, ChevronRight, Filter, Send, Square } from 'lucide-react'
+import { RefreshCw, ChevronDown, ChevronRight, Filter, Send, Square, Plus, Trash2, Play } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { apiPost, apiDelete } from '../api/client'
+import { CreateTriggerDialog } from '../components/agents/CreateTriggerDialog'
 
 const EMPTY_MESSAGES: CaseSessionMessage[] = []
 
@@ -525,6 +527,11 @@ function CaseSessionDetail({ session }: { session: UnifiedSession }) {
 export default function AgentMonitor() {
   const { data: agentsData, isLoading: agentsLoading } = useAgents()
   const { data: cronData, isLoading: cronLoading } = useCronJobs()
+  const { data: triggersData } = useTriggers()
+  const deleteTrigger = useDeleteTrigger()
+  const runTrigger = useRunTrigger()
+  const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const { data: patrol } = usePatrolState()
   const { data: unifiedData, isLoading: sessionsLoading } = useUnifiedSessions()
 
@@ -537,6 +544,9 @@ export default function AgentMonitor() {
   const currentCase = usePatrolStore((s) => s.currentCase)
   const caseProgress = usePatrolStore((s) => s.caseProgress)
   const patrolError = usePatrolStore((s) => s.error)
+
+  // Global queue status
+  const queueStatus = useCaseSessionStore((s) => s.queueStatus)
 
   const cancelPatrol = useCancelPatrol()
   const queryClient = useQueryClient()
@@ -657,6 +667,15 @@ export default function AgentMonitor() {
           <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>
             {activeSessions.length} active | {allSessions.length} total sessions | {cronJobs.length} cron jobs
           </p>
+          {queueStatus && (
+            <div className="mt-1.5">
+              <QueueStatusIndicator
+                currentLabel={queueStatus.currentLabel}
+                queueLength={queueStatus.queueLength}
+                queueLabels={queueStatus.queueLabels}
+              />
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -1050,7 +1069,20 @@ export default function AgentMonitor() {
 
       {/* Cron Jobs Table */}
       <div>
-        <h3 className="text-lg font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Cron Jobs</h3>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>Cron Jobs</h3>
+          <button
+            onClick={() => setShowCreateDialog(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium transition-colors"
+            style={{
+              background: 'var(--accent-blue)',
+              color: 'white',
+            }}
+          >
+            <Plus className="w-4 h-4" />
+            New Cron Job
+          </button>
+        </div>
         {cronJobs.length === 0 ? (
           <EmptyState icon="⏰" title="No cron jobs" />
         ) : (
@@ -1058,18 +1090,65 @@ export default function AgentMonitor() {
             {cronJobs.map((job: any) => (
               <Card key={job.id}>
                 <div className="flex items-start justify-between mb-2">
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <h4 className="font-semibold" style={{ color: 'var(--text-primary)' }}>{job.name}</h4>
+                      <h4 className="font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{job.name}</h4>
                       <Badge variant={job.enabled ? 'success' : 'secondary'} size="xs">
                         {job.enabled ? 'Enabled' : 'Disabled'}
                       </Badge>
                     </div>
-                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>Agent: {job.agentId}</p>
+                    {(job as any).prompt && (job as any).prompt !== job.name && (
+                      <p className="text-xs mt-0.5 font-mono truncate" style={{ color: 'var(--text-tertiary)' }}>
+                        {(job as any).prompt}
+                      </p>
+                    )}
+                    {(job as any).description && (
+                      <p className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
+                        {(job as any).description}
+                      </p>
+                    )}
                   </div>
-                  <Badge variant="primary" size="xs">
-                    {job.schedule?.kind === 'cron' ? job.schedule.expr : job.schedule?.kind}
-                  </Badge>
+                  <div className="flex items-center gap-2 ml-3 flex-shrink-0">
+                    <Badge variant="primary" size="xs">
+                      {job.schedule?.kind === 'cron' ? job.schedule.expr : job.schedule?.kind}
+                    </Badge>
+                    <button
+                      onClick={() => runTrigger.mutate(job.id)}
+                      disabled={runTrigger.isPending}
+                      className="p-1.5 rounded transition-colors hover:bg-[var(--bg-hover)]"
+                      style={{ color: 'var(--accent-green)' }}
+                      title="Run now"
+                    >
+                      <Play className="w-4 h-4" />
+                    </button>
+                    {deletingId === job.id ? (
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => { deleteTrigger.mutate(job.id); setDeletingId(null) }}
+                          className="px-2 py-0.5 rounded text-xs font-medium"
+                          style={{ background: 'var(--accent-red)', color: 'white' }}
+                        >
+                          Confirm
+                        </button>
+                        <button
+                          onClick={() => setDeletingId(null)}
+                          className="px-2 py-0.5 rounded text-xs"
+                          style={{ color: 'var(--text-tertiary)' }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setDeletingId(job.id)}
+                        className="p-1.5 rounded transition-colors hover:bg-[var(--bg-hover)]"
+                        style={{ color: 'var(--accent-red)' }}
+                        title="Delete"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {job.state && (
@@ -1086,10 +1165,10 @@ export default function AgentMonitor() {
                       <span style={{ color: 'var(--text-tertiary)' }}>Status</span>
                       <p>
                         <Badge
-                          variant={job.state.lastStatus === 'error' ? 'danger' : 'success'}
+                          variant={job.state.lastStatus === 'error' ? 'danger' : job.state.lastStatus === 'success' ? 'success' : 'secondary'}
                           size="xs"
                         >
-                          {job.state.lastStatus || 'unknown'}
+                          {job.state.lastStatus || 'pending'}
                         </Badge>
                       </p>
                     </div>
@@ -1121,11 +1200,36 @@ export default function AgentMonitor() {
                     {job.state.lastError}
                   </div>
                 )}
+
+                {job.state?.lastOutput && (
+                  <details className="mt-2">
+                    <summary
+                      className="text-xs cursor-pointer select-none"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >
+                      Last Output ({job.state.lastOutput.length} chars)
+                    </summary>
+                    <pre
+                      className="mt-1 p-2 rounded text-xs overflow-auto whitespace-pre-wrap"
+                      style={{
+                        background: 'var(--bg-secondary)',
+                        color: 'var(--text-primary)',
+                        maxHeight: '200px',
+                        border: '1px solid var(--border-primary)',
+                      }}
+                    >
+                      {job.state.lastOutput}
+                    </pre>
+                  </details>
+                )}
               </Card>
             ))}
           </div>
         )}
       </div>
+
+      {/* Create Trigger Dialog */}
+      <CreateTriggerDialog isOpen={showCreateDialog} onClose={() => setShowCreateDialog(false)} />
     </div>
   )
 }
