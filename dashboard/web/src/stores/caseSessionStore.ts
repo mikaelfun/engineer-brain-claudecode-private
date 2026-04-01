@@ -46,6 +46,15 @@ interface CaseSessionStoreState {
   activeSessionId: Record<string, string>
   /** Per-case current step name */
   currentStep: Record<string, string>
+  /** Per-case last heartbeat timestamp for stall detection */
+  lastHeartbeatAt: Record<string, string>
+  /** Global SDK queue status (null = unknown) */
+  queueStatus: {
+    isQueued: boolean
+    currentLabel: string | null
+    queueLength: number
+    queueLabels: string[]
+  } | null
 
   /** Add a message for a specific case (unified timeline) */
   addMessage: (caseNumber: string, message: CaseSessionMessage) => void
@@ -75,6 +84,11 @@ interface CaseSessionStoreState {
   /** Set current step name for a case */
   setCurrentStep: (caseNumber: string, step: string) => void
 
+  /** Set last heartbeat timestamp for a case (stall detection) */
+  setLastHeartbeatAt: (caseNumber: string, timestamp: string) => void
+  /** Set global SDK queue status */
+  setQueueStatus: (status: CaseSessionStoreState['queueStatus']) => void
+
   /** Clear all state for a case */
   clearAll: (caseNumber: string) => void
 }
@@ -101,6 +115,8 @@ export const useCaseSessionStore = create<CaseSessionStoreState>()((set, get) =>
   sessionStatus: {},
   activeSessionId: {},
   currentStep: {},
+  lastHeartbeatAt: {},
+  queueStatus: null,
 
   addMessage: (caseNumber, message) =>
     set((state) => {
@@ -176,6 +192,14 @@ export const useCaseSessionStore = create<CaseSessionStoreState>()((set, get) =>
       currentStep: { ...state.currentStep, [caseNumber]: step },
     })),
 
+  setLastHeartbeatAt: (caseNumber, timestamp) =>
+    set((state) => ({
+      lastHeartbeatAt: { ...state.lastHeartbeatAt, [caseNumber]: timestamp },
+    })),
+
+  setQueueStatus: (status) =>
+    set(() => ({ queueStatus: status })),
+
   // ---- Cleanup ----
   clearAll: (caseNumber) =>
     set((state) => {
@@ -201,6 +225,9 @@ export const useCaseSessionStore = create<CaseSessionStoreState>()((set, get) =>
       const cs = { ...state.currentStep }
       delete cs[caseNumber]
 
+      const lhb = { ...state.lastHeartbeatAt }
+      delete lhb[caseNumber]
+
       return {
         messages: msgs,
         sessionMessages: sessMsgs,
@@ -208,6 +235,7 @@ export const useCaseSessionStore = create<CaseSessionStoreState>()((set, get) =>
         sessionStatus: ss,
         activeSessionId: asid,
         currentStep: cs,
+        lastHeartbeatAt: lhb,
       }
     }),
 }))

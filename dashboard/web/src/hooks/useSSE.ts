@@ -31,6 +31,7 @@ export function useSSE() {
   const eventSourceRef = useRef<EventSource | null>(null)
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const retryCountRef = useRef(0)
+  const lastSeqRef = useRef<number>(0)
   const MAX_RETRIES = 10
   const BASE_DELAY_MS = 2000
 
@@ -59,6 +60,8 @@ export function useSSE() {
   const sessionStoreSetCurrentStep = useCaseSessionStore((s) => s.setCurrentStep)
   const sessionStoreSetPendingQuestion = useCaseSessionStore((s) => s.setPendingQuestion)
   const sessionStoreClearPendingQuestion = useCaseSessionStore((s) => s.clearPendingQuestion)
+  const sessionStoreSetHeartbeat = useCaseSessionStore((s) => s.setLastHeartbeatAt)
+  const sessionStoreSetQueueStatus = useCaseSessionStore((s) => s.setQueueStatus)
 
   const connect = useCallback(() => {
     const token = localStorage.getItem('eb_token')
@@ -70,12 +73,26 @@ export function useSSE() {
       eventSourceRef.current = null
     }
 
-    const url = `${BASE_URL}/events`
+    const url = `${BASE_URL}/events${lastSeqRef.current > 0 ? `?lastSeq=${lastSeqRef.current}` : ''}`
     const es = new EventSource(url)
     eventSourceRef.current = es
 
+    /** Update last event sequence number from parsed SSE data */
+    function updateLastSeq(data: Record<string, unknown> | null) {
+      if (data && typeof (data as any).seq === 'number' && (data as any).seq > lastSeqRef.current) {
+        lastSeqRef.current = (data as any).seq
+      }
+    }
+
+    /** Parse SSE event data and track sequence for reconnect replay */
+    function parseAndTrack(raw: string): any | null {
+      const data = safeParse(raw)
+      updateLastSeq(data)
+      return data
+    }
+
     es.addEventListener('case-updated', (e) => {
-      const data = safeParse(e.data)
+      const data = parseAndTrack(e.data)
       if (!data) return
       const caseNumber = data.data?.caseNumber
       queryClient.invalidateQueries({ queryKey: ['cases'] })
@@ -85,7 +102,7 @@ export function useSSE() {
     })
 
     es.addEventListener('todo-updated', (e) => {
-      const data = safeParse(e.data)
+      const data = parseAndTrack(e.data)
       queryClient.invalidateQueries({ queryKey: ['todos'] })
       // Also invalidate per-case todo queries
       const caseNumber = data?.data?.caseNumber
@@ -109,7 +126,7 @@ export function useSSE() {
 
     // Case session real-time SSE events → populate caseSessionStore for live display
     es.addEventListener('case-session-thinking', (e) => {
-      const data = safeParse(e.data)
+      const data = parseAndTrack(e.data)
       if (!data) return
       const d = data.data || data
       const caseNumber = d.caseNumber
@@ -135,7 +152,7 @@ export function useSSE() {
     })
 
     es.addEventListener('case-session-tool-call', (e) => {
-      const data = safeParse(e.data)
+      const data = parseAndTrack(e.data)
       if (!data) return
       const d = data.data || data
       const caseNumber = d.caseNumber
@@ -162,7 +179,7 @@ export function useSSE() {
     })
 
     es.addEventListener('case-session-tool-result', (e) => {
-      const data = safeParse(e.data)
+      const data = parseAndTrack(e.data)
       if (!data) return
       const d = data.data || data
       const caseNumber = d.caseNumber
@@ -190,7 +207,7 @@ export function useSSE() {
 
     // Case step started event — update operation status immediately
     es.addEventListener('case-step-started', (e) => {
-      const data = safeParse(e.data)
+      const data = parseAndTrack(e.data)
       if (!data) return
       const d = data.data || data
       const caseNumber = d.caseNumber
@@ -217,7 +234,7 @@ export function useSSE() {
 
     // Case step progress events — write to caseSessionStore
     es.addEventListener('case-step-progress', (e) => {
-      const data = safeParse(e.data)
+      const data = parseAndTrack(e.data)
       if (!data) return
       const d = data.data || data
       const caseNumber = d.caseNumber
@@ -247,7 +264,7 @@ export function useSSE() {
 
     // Case step question event — AskUserQuestion interception
     es.addEventListener('case-step-question', (e) => {
-      const data = safeParse(e.data)
+      const data = parseAndTrack(e.data)
       if (!data) return
       const d = data.data || data
       const caseNumber = d.caseNumber
@@ -272,7 +289,7 @@ export function useSSE() {
 
     // Case step completed event — finalize status + invalidate operation
     es.addEventListener('case-step-completed', (e) => {
-      const data = safeParse(e.data)
+      const data = parseAndTrack(e.data)
       if (!data) return
       const d = data.data || data
       const caseNumber = d.caseNumber
@@ -302,7 +319,7 @@ export function useSSE() {
 
     // Case step failed event — set failed status + invalidate operation
     es.addEventListener('case-step-failed', (e) => {
-      const data = safeParse(e.data)
+      const data = parseAndTrack(e.data)
       if (!data) return
       const d = data.data || data
       const caseNumber = d.caseNumber
@@ -330,7 +347,7 @@ export function useSSE() {
 
     // Case session completion/failure → store + query invalidation
     es.addEventListener('case-session-completed', (e) => {
-      const data = safeParse(e.data)
+      const data = parseAndTrack(e.data)
       if (!data) return
       const caseNumber = data.data?.caseNumber
       if (caseNumber) {
@@ -353,7 +370,7 @@ export function useSSE() {
     })
 
     es.addEventListener('case-session-failed', (e) => {
-      const data = safeParse(e.data)
+      const data = parseAndTrack(e.data)
       if (!data) return
       const caseNumber = data.data?.caseNumber
       if (caseNumber) {
@@ -374,13 +391,13 @@ export function useSSE() {
 
     // Patrol progress events
     es.addEventListener('patrol-progress', (e) => {
-      const data = safeParse(e.data)
+      const data = parseAndTrack(e.data)
       if (!data) return
       patrolOnProgress(data.data || data)
     })
 
     es.addEventListener('patrol-case-completed', (e) => {
-      const data = safeParse(e.data)
+      const data = parseAndTrack(e.data)
       if (!data) return
       patrolOnCaseCompleted(data.data || data)
       const caseNumber = (data.data || data)?.caseNumber
@@ -400,9 +417,33 @@ export function useSSE() {
       queryClient.invalidateQueries({ queryKey: ['sessions'] })
     })
 
+    // Heartbeat events — update lastHeartbeatAt to drive stall detection
+    es.addEventListener('case-step-heartbeat', (e) => {
+      const data = parseAndTrack(e.data)
+      if (!data) return
+      const d = data.data || data
+      const caseNumber = d.caseNumber
+      if (caseNumber) {
+        sessionStoreSetHeartbeat(caseNumber, d.timestamp || new Date().toISOString())
+      }
+    })
+
+    // SDK queue status changes — update global queue indicator
+    es.addEventListener('sdk-queue-changed', (e) => {
+      const data = parseAndTrack(e.data)
+      if (!data) return
+      const d = data.data || data
+      sessionStoreSetQueueStatus({
+        isQueued: d.running === true && (d.queueLength ?? 0) > 0,
+        currentLabel: d.currentLabel || null,
+        queueLength: d.queueLength ?? 0,
+        queueLabels: d.queueLabels || [],
+      })
+    })
+
     // Issue track creation progress events → populate issueTrackStore for live display
     es.addEventListener('issue-track-started', (e) => {
-      const data = safeParse(e.data)
+      const data = parseAndTrack(e.data)
       if (!data) return
       const d = data.data || data
       const issueId = d.issueId
@@ -418,7 +459,7 @@ export function useSSE() {
     })
 
     es.addEventListener('issue-track-progress', (e) => {
-      const data = safeParse(e.data)
+      const data = parseAndTrack(e.data)
       if (!data) return
       const d = data.data || data
       const issueId = d.issueId
@@ -433,7 +474,7 @@ export function useSSE() {
     })
 
     es.addEventListener('issue-track-completed', (e) => {
-      const data = safeParse(e.data)
+      const data = parseAndTrack(e.data)
       if (!data) return
       const d = data.data || data
       const issueId = d.issueId
@@ -450,7 +491,7 @@ export function useSSE() {
     })
 
     es.addEventListener('issue-track-error', (e) => {
-      const data = safeParse(e.data)
+      const data = parseAndTrack(e.data)
       if (!data) return
       const d = data.data || data
       const issueId = d.issueId
@@ -471,7 +512,7 @@ export function useSSE() {
     })
 
     es.addEventListener('issue-track-question', (e) => {
-      const data = safeParse(e.data)
+      const data = parseAndTrack(e.data)
       if (!data) return
       const d = data.data || data
       const issueId = d.issueId
@@ -494,7 +535,7 @@ export function useSSE() {
 
     // Issue implement progress events → populate issueTrackStore for live display
     es.addEventListener('issue-implement-started', (e) => {
-      const data = safeParse(e.data)
+      const data = parseAndTrack(e.data)
       if (!data) return
       const d = data.data || data
       const issueId = d.issueId
@@ -510,7 +551,7 @@ export function useSSE() {
     })
 
     es.addEventListener('issue-implement-progress', (e) => {
-      const data = safeParse(e.data)
+      const data = parseAndTrack(e.data)
       if (!data) return
       const d = data.data || data
       const issueId = d.issueId
@@ -525,7 +566,7 @@ export function useSSE() {
     })
 
     es.addEventListener('issue-implement-completed', (e) => {
-      const data = safeParse(e.data)
+      const data = parseAndTrack(e.data)
       if (!data) return
       const d = data.data || data
       const issueId = d.issueId
@@ -541,7 +582,7 @@ export function useSSE() {
     })
 
     es.addEventListener('issue-implement-error', (e) => {
-      const data = safeParse(e.data)
+      const data = parseAndTrack(e.data)
       if (!data) return
       const d = data.data || data
       const issueId = d.issueId
@@ -558,7 +599,7 @@ export function useSSE() {
 
     // Issue verify progress events → populate issueTrackStore verify state
     es.addEventListener('issue-verify-started', (e) => {
-      const data = safeParse(e.data)
+      const data = parseAndTrack(e.data)
       if (!data) return
       const d = data.data || data
       const issueId = d.issueId
@@ -573,7 +614,7 @@ export function useSSE() {
     })
 
     es.addEventListener('issue-verify-progress', (e) => {
-      const data = safeParse(e.data)
+      const data = parseAndTrack(e.data)
       if (!data) return
       const d = data.data || data
       const issueId = d.issueId
@@ -588,7 +629,7 @@ export function useSSE() {
     })
 
     es.addEventListener('issue-verify-completed', (e) => {
-      const data = safeParse(e.data)
+      const data = parseAndTrack(e.data)
       if (!data) return
       const d = data.data || data
       const issueId = d.issueId
@@ -607,7 +648,7 @@ export function useSSE() {
     })
 
     es.addEventListener('issue-verify-error', (e) => {
-      const data = safeParse(e.data)
+      const data = parseAndTrack(e.data)
       if (!data) return
       const d = data.data || data
       const issueId = d.issueId
@@ -629,7 +670,7 @@ export function useSSE() {
 
     // Todo execute progress/result events → populate todoExecuteStore
     es.addEventListener('todo-execute-progress', (e) => {
-      const data = safeParse(e.data)
+      const data = parseAndTrack(e.data)
       if (!data) return
       const d = data.data || data
       const caseNumber = d.caseNumber
@@ -641,7 +682,7 @@ export function useSSE() {
     })
 
     es.addEventListener('todo-execute-result', (e) => {
-      const data = safeParse(e.data)
+      const data = parseAndTrack(e.data)
       if (!data) return
       const d = data.data || data
       const caseNumber = d.caseNumber
@@ -665,6 +706,8 @@ export function useSSE() {
     es.addEventListener('test-supervisor-updated', () => {
       queryClient.invalidateQueries({ queryKey: ['tests', 'supervisor'] })
       queryClient.invalidateQueries({ queryKey: ['tests', 'state'] })
+      // Supervisor status change may indicate external CLI run start/stop
+      queryClient.invalidateQueries({ queryKey: ['tests', 'runner-status'] })
     })
 
     es.addEventListener('test-queues-updated', () => {
@@ -708,9 +751,11 @@ export function useSSE() {
     es.onopen = () => {
       // Reset retry count on successful connection
       retryCountRef.current = 0
+      console.log('[SSE] Connection opened, lastSeq:', lastSeqRef.current)
     }
 
     es.onerror = () => {
+      console.warn('[SSE] Connection error, readyState:', es.readyState, 'lastSeq:', lastSeqRef.current)
       es.close()
       eventSourceRef.current = null
 
@@ -718,18 +763,30 @@ export function useSSE() {
       if (retryCountRef.current < MAX_RETRIES) {
         const delay = BASE_DELAY_MS * Math.pow(2, Math.min(retryCountRef.current, 5))
         retryCountRef.current++
-        console.warn(`[SSE] Connection lost, reconnecting in ${delay}ms (attempt ${retryCountRef.current}/${MAX_RETRIES})`)
+        console.warn(`[SSE] Reconnecting in ${delay}ms (attempt ${retryCountRef.current}/${MAX_RETRIES}, lastSeq=${lastSeqRef.current})`)
         reconnectTimerRef.current = setTimeout(connect, delay)
       } else {
-        console.error(`[SSE] Max retries (${MAX_RETRIES}) exceeded, giving up`)
+        console.error(`[SSE] Max retries (${MAX_RETRIES}) exceeded, giving up. Last seq: ${lastSeqRef.current}`)
       }
     }
-  }, [queryClient, patrolOnProgress, patrolOnCaseCompleted, addCaseSessionMessage, addCaseSessionPerSession, addIssueTrackMessage, setIssueTrackingActive, clearIssueTrackMessages, setIssuePendingQuestion, startImplement, addImplementMessage, setImplementStatus, addVerifyMessage, setVerifyActive, setVerifyResult, clearVerify, todoExecSetProgress, todoExecSetResult, sessionStoreSetStatus, sessionStoreSetActiveSession, sessionStoreSetCurrentStep, sessionStoreSetPendingQuestion, sessionStoreClearPendingQuestion])
+  }, [queryClient, patrolOnProgress, patrolOnCaseCompleted, addCaseSessionMessage, addCaseSessionPerSession, addIssueTrackMessage, setIssueTrackingActive, clearIssueTrackMessages, setIssuePendingQuestion, startImplement, addImplementMessage, setImplementStatus, addVerifyMessage, setVerifyActive, setVerifyResult, clearVerify, todoExecSetProgress, todoExecSetResult, sessionStoreSetStatus, sessionStoreSetActiveSession, sessionStoreSetCurrentStep, sessionStoreSetPendingQuestion, sessionStoreClearPendingQuestion, sessionStoreSetHeartbeat, sessionStoreSetQueueStatus])
 
   useEffect(() => {
     connect()
 
+    // Periodic liveness check: if EventSource dies silently (HMR, StrictMode, proxy timeout),
+    // force reconnect. This catches cases where onerror never fires.
+    const livenessCheck = setInterval(() => {
+      const es = eventSourceRef.current
+      if (!es || es.readyState === EventSource.CLOSED) {
+        console.warn('[SSE] Liveness check: connection dead, forcing reconnect. lastSeq:', lastSeqRef.current)
+        retryCountRef.current = 0 // reset retry counter for fresh reconnect
+        connect()
+      }
+    }, 5000)
+
     return () => {
+      clearInterval(livenessCheck)
       if (reconnectTimerRef.current) {
         clearTimeout(reconnectTimerRef.current)
         reconnectTimerRef.current = null
