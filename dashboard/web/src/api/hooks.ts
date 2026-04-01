@@ -1064,3 +1064,115 @@ export function useDismissNoteGap(caseId: string) {
     },
   })
 }
+
+// ===== Labor Estimate =====
+
+export interface LaborEstimateItem {
+  date: string
+  caseNumber: string
+  caseTitle?: string
+  estimated: {
+    totalMinutes: number
+    classification: string
+    description: string
+    breakdown: Array<{ type: string; minutes: number; detail: string }>
+  }
+  final: {
+    totalMinutes: number
+    classification: string
+    description: string
+  } | null
+  status: 'pending' | 'confirmed' | 'submitted'
+}
+
+export function useLaborEstimates() {
+  return useQuery({
+    queryKey: ['labor-estimates'],
+    queryFn: () => apiGet<{ estimates: LaborEstimateItem[]; total: number }>('/labor-estimate'),
+    refetchInterval: 10_000,
+  })
+}
+
+export function useLaborEstimate(caseNumber: string) {
+  return useQuery({
+    queryKey: ['labor-estimate', caseNumber],
+    queryFn: () => apiGet<{ estimate: LaborEstimateItem | null; exists: boolean }>(`/labor-estimate/${caseNumber}`),
+    enabled: !!caseNumber,
+  })
+}
+
+export function useLaborEstimateTrigger() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (caseNumber: string) =>
+      apiPost<{ success: boolean; estimate: LaborEstimateItem | null }>(`/labor-estimate/${caseNumber}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['labor-estimates'] })
+    },
+  })
+}
+
+export function useLaborEstimateAll() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () =>
+      apiPost<{
+        success: boolean
+        estimates: Array<{ caseNumber: string; success: boolean; estimate?: LaborEstimateItem | null; error?: string }>
+        total: number
+      }>('/labor-estimate/all'),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['labor-estimates'] })
+    },
+  })
+}
+
+export function useLaborEstimateUpdate() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ caseNumber, ...body }: {
+      caseNumber: string
+      totalMinutes?: number
+      classification?: string
+      description?: string
+    }) => apiPut<{ success: boolean; estimate: LaborEstimateItem }>(`/labor-estimate/${caseNumber}`, body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['labor-estimates'] })
+    },
+  })
+}
+
+export function useLaborSubmit() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ caseNumber, ...body }: {
+      caseNumber: string
+      totalMinutes: number
+      classification: string
+      description: string
+    }) => apiPost<{ success: boolean; message: string }>(`/labor-estimate/${caseNumber}/submit`, body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['labor-estimates'] })
+    },
+  })
+}
+
+export function useLaborBatchSubmit() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (items: Array<{
+      caseNumber: string
+      totalMinutes: number
+      classification: string
+      description: string
+    }>) => apiPost<{
+      results: Array<{ caseNumber: string; success: boolean; message: string }>
+      total: number
+      succeeded: number
+      failed: number
+    }>('/labor-estimate/batch-submit', { items }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['labor-estimates'] })
+    },
+  })
+}
