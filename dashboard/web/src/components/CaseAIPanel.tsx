@@ -450,7 +450,7 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull, ski
     'compliance-check': Shield,
     'labor-estimate': Clock,
     'note-gap': FileText,
-    'onenote-search': Search,
+    'onenote-case-search': Search,
   }
 
   const SKILL_COLORS: Record<string, string> = {
@@ -461,24 +461,29 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull, ski
     'generate-kb': 'var(--accent-purple)',
     'labor-estimate': 'var(--accent-green)',
     'note-gap': 'var(--accent-amber)',
-    'onenote-search': 'var(--accent-purple)',
+    'onenote-case-search': 'var(--accent-purple)',
   }
 
   // Only show case-relevant skills as quick actions
   const CASE_SKILL_ALLOWLIST = new Set([
     'data-refresh', 'troubleshoot', 'inspection-writer',
     'generate-kb', 'teams-search', 'labor-estimate', 'note-gap',
-    'onenote-search',
+    'onenote-case-search',
   ])
 
-  const quickActions = (skills ?? [])
-    .filter(s => CASE_SKILL_ALLOWLIST.has(s.name))
-    .map(s => ({
-      id: (s.webUiAlias || s.name) as AIAction,
-      icon: SKILL_ICONS[s.webUiAlias || s.name] || SKILL_ICONS[s.name] || Zap,
-      label: s.displayName,
-      color: SKILL_COLORS[s.webUiAlias || s.name] || SKILL_COLORS[s.name] || 'var(--accent-blue)',
-    }))
+  const quickActions = [
+    // From skill registry
+    ...(skills ?? [])
+      .filter(s => CASE_SKILL_ALLOWLIST.has(s.name))
+      .map(s => ({
+        id: (s.webUiAlias || s.name) as AIAction,
+        icon: SKILL_ICONS[s.webUiAlias || s.name] || SKILL_ICONS[s.name] || Zap,
+        label: s.displayName,
+        color: SKILL_COLORS[s.webUiAlias || s.name] || SKILL_COLORS[s.name] || 'var(--accent-blue)',
+      })),
+    // Agent-based actions (not in skill registry)
+    { id: 'onenote-case-search' as AIAction, icon: Search, label: 'OneNote 搜索', color: 'var(--accent-purple)' },
+  ]
 
   // ========== COMPACT MODE ==========
   if (mode === 'compact') {

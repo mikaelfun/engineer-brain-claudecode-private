@@ -52,6 +52,8 @@ function getValidSteps(): string[] {
   for (const skill of skills) {
     steps.push(skill.webUiAlias || skill.name)
   }
+  // Agent-based steps not in skill registry but available as buttons
+  steps.push('onenote-case-search')
   return steps
 }
 

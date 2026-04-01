@@ -964,8 +964,19 @@ export async function* stepCaseSession(
     promptParams.fullSearch = options?.fullSearch ? ' --full-search' : ''
   }
 
-  // Look up prompt from skill registry
-  const prompt = getSkillRegistry().getPrompt(stepName, promptParams)
+  // Look up prompt from skill registry, with fallback for agent-based steps
+  const AGENT_STEP_PROMPTS: Record<string, (caseNumber: string) => string> = {
+    'onenote-case-search': (cn) => {
+      const casesRoot = getCasesRoot()
+      const caseDir = join(casesRoot, 'active', cn)
+      return `Case ${cn}, caseDir=${caseDir}. Please read .claude/agents/onenote-case-search.md for full instructions, then execute.`
+    },
+  }
+
+  let prompt: string | null = getSkillRegistry().getPrompt(stepName, promptParams)
+  if (!prompt && AGENT_STEP_PROMPTS[stepName]) {
+    prompt = AGENT_STEP_PROMPTS[stepName](caseNumber)
+  }
   if (!prompt) {
     const available = getSkillRegistry().listSkills().map(s => s.webUiAlias || s.name)
     throw new Error(`Unknown step: ${stepName}. Available: ${available.join(', ')}`)
