@@ -147,12 +147,16 @@ export interface CaseHealthMeta {
     entitlementOk: boolean
     serviceLevel: string
     serviceName: string
+    schedule: string
     contractCountry: string
     is21vConvert: boolean
     '21vCaseId': string | null
     '21vCaseOwner': string | null
     warnings: string[]
   }
+  ccEmails?: string
+  ccAccount?: string
+  ccKnowMePage?: string
 }
 
 export interface SlaStatus {
@@ -220,6 +224,7 @@ export interface CronJob {
     lastStatus?: string
     lastDurationMs?: number
     lastError?: string
+    lastOutput?: string
     consecutiveErrors?: number
   }
 }
@@ -282,6 +287,7 @@ export type SSEEventType =
   | 'test-evolution-updated'
   | 'test-directives-updated'
   | 'runner-status-changed'
+  | 'skill-registry-updated'
 
 export interface SSEEvent {
   type: SSEEventType

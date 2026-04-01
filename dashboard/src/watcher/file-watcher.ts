@@ -6,6 +6,7 @@ import { join } from 'path'
 import { readFileSync } from 'fs'
 import { config } from '../config.js'
 import { sseManager } from './sse-manager.js'
+import { getSkillRegistry } from '../services/skill-registry.js'
 import type { SSEEventType } from '../types/index.js'
 
 let watcher: ReturnType<typeof chokidar.watch> | null = null
@@ -92,7 +93,17 @@ function classifyChange(filePath: string): { type: SSEEventType; data: Record<st
 
       // Detect active→idle transition: broadcast runner-status-changed for frontend auto-recovery
       const wasActive = lastSupervisorStatus !== null && ACTIVE_SUPERVISOR_STATUSES.has(lastSupervisorStatus)
-      const isNowInactive = !ACTIVE_SUPERVISOR_STATUSES.has(currentStatus)
+      const isNowActive = ACTIVE_SUPERVISOR_STATUSES.has(currentStatus)
+      const isNowInactive = !isNowActive
+      // idle→active: external CLI run started
+      if (!wasActive && isNowActive && lastSupervisorStatus !== null) {
+        debounceEmit('runner-status-changed' as SSEEventType, {
+          status: 'external',
+          source: 'cli',
+          supervisorStatus: currentStatus,
+        }, 'runner-status-changed:external-start')
+      }
+      // active→idle: external CLI run ended
       if (wasActive && isNowInactive) {
         debounceEmit('runner-status-changed' as SSEEventType, {
           status: 'idle',
@@ -190,6 +201,11 @@ function classifyChange(filePath: string): { type: SSEEventType; data: Record<st
     return { type: 'test-result-updated', data: {} }
   }
 
+  if (normalized.includes('/.claude/skills/') && normalized.endsWith('/SKILL.md')) {
+    try { getSkillRegistry().reloadSkill(normalized) } catch {}
+    return { type: 'skill-registry-updated', data: {} }
+  }
+
   return null
 }
 
@@ -208,6 +224,7 @@ export function startFileWatcher() {
     join(config.projectRoot, 'tests', 'evolution.json'),
     join(config.projectRoot, 'tests', 'directives.json'),
     join(config.projectRoot, 'tests', 'results', '*.json'),
+    join(config.projectRoot, '.claude', 'skills', '**', 'SKILL.md'),
   ]
 
   console.log('[watcher] Starting file watcher...')
