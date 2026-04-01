@@ -93,3 +93,32 @@ Before executing stage logic, check `tests/directives.json`:
 
 4. Update each directive: `status=processed/rejected`, `processedAt`, `processedResult`
 5. Write back directives.json (atomic) and state via state-writer.sh
+
+### 🔵 Event Writing（事件记录）
+
+所有 stage 必须在关键动作点写入事件日志。
+
+**工具**: `bash tests/executors/event-writer.sh`
+
+**必填参数**: `--type --impact --area --detail`
+
+**事件类型速查**:
+
+| type | 何时写入 | 必须附加的参数 |
+|------|---------|--------------|
+| `feature_verified` | TEST 中测试完成 | `--result pass\|fail` |
+| `bug_discovered` | TEST 失败分析确认为 bug | — |
+| `bug_fixed` | FIX → VERIFY 通过 | `--method direct\|competitive` |
+| `fix_failed` | VERIFY 未通过 | — |
+| `perf_regression` | performance scanner 检出退化 | `--delta "+XX%"` |
+| `perf_improved` | FIX 后性能改善 | `--delta "-XX%"` |
+| `ui_issue` | design-fidelity scanner 检出 | — |
+| `flow_broken` | E2E 测试核心流程断裂 | — |
+| `needs_human` | 竞争修复评分都 < 5.0 | — |
+
+**area 值**: 使用 test 所属的功能区域，如 `casework`, `dashboard`, `patrol`, `email-drafter`, `troubleshooter`, `data-refresh`, `compliance`, `framework`
+
+**规则**:
+- 事件写入是 **advisory**，失败不阻塞流程（`|| true`）
+- 不要重复写入同一个发现（SCAN 写了就不要 TEST 再写）
+- `detail` 用中文或英文均可，简洁描述（<100字）

@@ -39,10 +39,36 @@ echo '{"stages":{"TEST":{"status":"running","startedAt":"'$(date -u +%Y-%m-%dT%H
 
    e. **After agent returns — update state immediately**:
       - Read `tests/results/{cycle}-{id}.json`
-      - PASS → remove from testQueue, stats.passed++
-      - FAIL → move to fixQueue, stats.failed++
+      - PASS → remove from testQueue, cumulative.passed++, cycleStats.passed++
+      - FAIL → move to fixQueue, cumulative.failed++, cycleStats.failed++
+      - Update both cumulative and cycleStats in one call:
+        `echo '{"cumulative":{"passed":N},"cycleStats":{"passed":M}}' | bash tests/executors/state-writer.sh --target stats --merge`
       - Append stageHistory (testId, result, duration)
       - Clear `currentTest`
+
+   **e2. 写入事件**
+
+   测试通过：
+   ```bash
+   bash tests/executors/event-writer.sh \
+     --type feature_verified --impact "${ITEM_IMPACT:-P3}" --result pass \
+     --area "{category}" --detail "{testId} 验证通过" || true
+   ```
+
+   测试失败：
+   ```bash
+   bash tests/executors/event-writer.sh \
+     --type feature_verified --impact "${ITEM_IMPACT:-P3}" --result fail \
+     --area "{category}" --detail "{testId} 验证失败: {failure_summary}" || true
+   ```
+
+   如果失败分析确认是 bug（非测试本身问题）：
+   ```bash
+   bash tests/executors/event-writer.sh \
+     --type bug_discovered --impact "${ITEM_IMPACT:-P3}" \
+     --area "{category}" --detail "{root cause summary}" || true
+   ```
+
    f. Continue to next test
 
 3. **After loop — decide next phase**:
