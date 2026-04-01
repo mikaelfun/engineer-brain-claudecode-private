@@ -143,6 +143,15 @@ Append all GAP lines to `pipeline.json` gaps with the scanner's source tag.
 
 **impactReason** 用一句话解释为什么是这个等级，供晨报展示。
 
+**预算控制**
+
+读取 `pipeline.json` 的 `priorityConfig`：
+- `p0p1Only: true` → 只入队 P0 和 P1 gap，P2/P3 记录到事件日志但不入 testQueue
+- `skipP3: true` → 不入队 P3 gap
+- `maxP3Items: N` → P3 gap 最多入队 N 个
+
+适用于时间紧张的短时运行。默认全部入队。
+
 **6.9. SCAN 事件记录**
 
 每发现一个 gap，写入事件：
