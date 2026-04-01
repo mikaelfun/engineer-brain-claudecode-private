@@ -1,4 +1,9 @@
 ---
+name: email-search
+displayName: 邮件搜索
+category: inline
+stability: dev
+requiredInput: caseNumber
 description: "通过 Office Mail MCP 搜索 Case 相关邮件完整内容。可独立调用 /email-search {caseNumber}，也可被 casework/其他 skill 引用。"
 allowed-tools:
   - Bash

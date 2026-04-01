@@ -1,4 +1,10 @@
 ---
+name: patrol
+displayName: 批量巡检
+category: orchestrator
+stability: stable
+promptTemplate: |
+  Execute patrol. Read .claude/skills/patrol/SKILL.md and follow all steps.
 description: "批量巡检：获取所有活跃 Case 列表，筛选有变化的 Case，逐个执行 casework 流程，汇总 Todo。"
 allowed-tools:
   - Bash
@@ -58,6 +64,31 @@ allowed-tools:
    - 无 `casehealth-meta.json` 或无 `lastInspected` 字段（新 case，首次巡检）
 
    > **设计说明**：不使用 D365 `modifiedon` 作为筛选条件，因为新邮件是独立 Email Activity，不一定更新 Case 实体的 `modifiedon`，会导致漏检。
+
+   **2.5. 归档/转移检测**
+
+   获取 active case 列表后，扫描本地 `{casesRoot}/active/` 目录，找出不在 D365 active list 中的 case：
+
+   ```bash
+   pwsh -NoProfile -File skills/d365-case-ops/scripts/detect-case-status.ps1 -CasesRoot {casesRoot}
+   ```
+
+   脚本输出 JSON 数组，每个元素包含 `caseNumber`, `status`（archived/transferred）, `reason`, `closureEmailEvidence`。
+
+   对每个检测到的 case：
+   - 确保 `{casesRoot}/archived/` 和 `{casesRoot}/transfer/` 目录存在（`mkdir -p`）
+   - 根据 status 移动目录：
+     ```bash
+     # archived case
+     mv "{casesRoot}/active/{caseNumber}" "{casesRoot}/archived/{caseNumber}"
+     # transferred case
+     mv "{casesRoot}/active/{caseNumber}" "{casesRoot}/transfer/{caseNumber}"
+     ```
+   - 记录日志到 `{casesRoot}/archive-log.jsonl`（append）：
+     ```json
+     {"timestamp":"ISO","caseNumber":"...","status":"archived|transferred","reason":"...","closureEmailEvidence":"...","from":"active/","to":"archived/|transfer/"}
+     ```
+   - 归档/转移的 case 从后续步骤 3 的待处理列表中**排除**，不再 spawn casework
 
 4. **阶段 0：预热（并行执行，~15s）**
 

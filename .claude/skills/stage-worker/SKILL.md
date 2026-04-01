@@ -1,3 +1,11 @@
+---
+name: stage-worker
+displayName: Stage Worker
+description: "Test Loop 的执行 agent"
+category: inline
+stability: dev
+---
+
 # Test Loop — Stage Worker
 
 > **This skill implements the Stage Worker** — the execution agent in the Pipeline Model.
@@ -10,9 +18,9 @@
 ```
 /test-supervisor run              # ⭐ 推荐：通过 supervisor 监督式执行
 /loop 5m /test-supervisor run     # ⭐ 推荐：持续监督式循环
-/test-loop                        # 直接执行（手动或被 supervisor spawn）
-/test-loop --stage SCAN           # 强制指定阶段
-/test-loop --max-cycles 10        # 覆盖 maxCycles
+/stage-worker                     # 直接执行（手动或被 supervisor spawn）
+/stage-worker --stage SCAN        # 强制指定阶段
+/stage-worker --max-cycles 10     # 覆盖 maxCycles
 ```
 
 ## 🔴 安全红线（每轮必读）

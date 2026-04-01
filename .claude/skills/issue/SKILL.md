@@ -1,3 +1,11 @@
+---
+name: issue
+displayName: Issue Tracker
+description: "记录问题/需求到 issues/ 目录"
+category: inline
+stability: dev
+---
+
 # Issue — CLI Issue Tracker
 
 记录问题/需求到 `issues/` 目录。Dashboard 挂了也能用。
@@ -25,7 +33,81 @@ title = 参数文本
 - 优先级：P0 / P1 / P2（默认 P1）
 - 描述（可选）
 
-### 2. 生成 Issue
+### 2. 相似 Issue 检测
+
+在创建新 issue 前，扫描已有 issues 检测相似项。
+
+#### 2.1 扫描匹配
+
+读取所有 `issues/*.json`，对比新 title 与每个 issue 的 title 和 description：
+- **子字符串匹配**：新 title 是已有 title 的子串，或反之
+- **关键词匹配**：提取新 title 的前 3 个关键词（去除停用词），与已有 issue 的 title + description 对比，至少 2 个命中
+- 按匹配度排序，取 **top 5** 相似项
+
+#### 2.2 分支处理
+
+**无匹配** → 直接跳到步骤 3（生成 Issue），用户体验不变。
+
+**匹配到相似 issue** → 用 `AskUserQuestion` 展示匹配结果并让用户选择。按已有 issue 状态分两种情况：
+
+##### 匹配到活跃 issue（pending / tracked / in-progress / implemented）
+
+展示匹配到的 issue 信息（ID、title、status、description 前 100 字），然后提问：
+
+```
+发现以下相似的活跃 Issue：
+  - ISS-XXX: {title} [{status}]
+    {description 前 100 字}...
+
+请选择：
+1. 合并到 ISS-XXX（更新描述，保留原 ID）
+2. 忽略相似，单独新建
+```
+
+如果匹配到多个，每个单独列出，选项 1 需指定合并到哪个。
+
+选择**合并**时，继续询问描述处理方式：
+```
+如何处理描述？
+1. 追加 — 新描述追加到已有描述末尾（用 "\n\n---\n\n" 分隔）
+2. 替换 — 用新描述替换已有描述
+3. 手动编辑 — 保留两者，你自行调整
+```
+- 选择 1: 读取已有 issue JSON，在 description 末尾追加新内容，更新 `updatedAt`
+- 选择 2: 用新 title/description 覆盖已有 issue 的 title/description，更新 `updatedAt`
+- 选择 3: 展示已有描述和新描述，等待用户提供最终描述文本，写入
+
+合并完成后输出确认，**跳过步骤 3**，直接到步骤 4 询问是否创建 Track（如果已有 trackId 则跳过 Track 提问）。
+
+##### 匹配到已完成 issue（done，或有 closedReason / closedAt）
+
+展示匹配到的 issue 信息，然后提问：
+
+```
+发现以下相似的已完成 Issue：
+  - ISS-XXX: {title} [done]
+    {description 前 100 字}...
+    关闭原因: {closedReason}
+
+请选择：
+1. Reopen ISS-XXX 并更新描述
+2. 忽略，单独新建
+```
+
+选择 **Reopen** 时：
+1. 询问描述处理方式（同上：追加 / 替换 / 手动编辑）
+2. 清空旧字段：删除 `trackId`、`verifyResult`、`closedReason`、`closedAt`
+3. 设置 `status` 为 `"pending"`
+4. 更新 `updatedAt`
+5. 写入 issue JSON
+
+Reopen 完成后输出确认，**跳过步骤 3**，直接到步骤 4 询问是否创建 Track。
+
+##### 同时匹配到活跃和已完成 issue
+
+全部列出，按活跃优先排序，让用户选择合并目标或新建。
+
+### 3. 生成 Issue
 
 读取 `issues/` 目录，找到最大 ID，生成下一个：`ISS-001`, `ISS-002`, ...
 
@@ -64,7 +146,7 @@ title = 参数文本
 > ❌ 禁止遗漏 `testLoopScan` 字段——新建 issue 必须显式设为 `true`。
 > ❌ 批量创建 issue 时同样必须遵守此 schema，不可自行简化字段。
 
-### 3. 输出确认 + 询问是否创建 Track
+### 4. 输出确认 + 询问是否创建 Track
 
 ```
 ✅ Issue ISS-XXX created

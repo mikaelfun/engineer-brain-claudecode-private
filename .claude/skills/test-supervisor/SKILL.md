@@ -1,3 +1,11 @@
+---
+name: test-supervisor
+displayName: Test Supervisor
+description: "测试循环的监督和指令入口"
+category: inline
+stability: dev
+---
+
 # Test Supervisor — 薄路由器
 
 测试循环的监督、诊断、指令入口。高频操作（run）走 Agent 隔离；低频操作按需加载 mode 文件。
@@ -7,6 +15,7 @@
 ```
 /test-supervisor run                      # ⭐ spawn agent 执行测试循环（context 隔离）
 /test-supervisor db                       # 一屏总览 dashboard
+/test-supervisor story                    # 📖 自然语言叙事（发现了什么、做了什么、学到了什么）
 /test-supervisor health                   # 深度诊断
 /test-supervisor trends                   # 多周期趋势图
 /test-supervisor review [cycle|testId]    # 详细审查
@@ -36,7 +45,7 @@ args = 用户输入去掉 "/test-supervisor " 前缀
 ```
 Agent(
   subagent_type: "test-supervisor-runner",
-  description: "Execute supervised test-loop cycle",
+  description: "Execute supervised stage-worker cycle",
   prompt: "执行一轮监督式测试循环。读取 .claude/agents/test-supervisor-runner.md 获取步骤。"
 )
 ```
@@ -57,6 +66,7 @@ Read(".claude/skills/test-supervisor/modes/dashboard.md")
 | `health` | `modes/health.md` |
 | `trends` | `modes/trends.md` |
 | `review` | `modes/review.md` |
+| `story` | `modes/story.md` |
 | `directive` / `directives` | `modes/directive.md` |
 | `discoveries` | `modes/discoveries.md` |
 | `evolution` | `modes/evolution.md` |
