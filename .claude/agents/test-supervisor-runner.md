@@ -17,10 +17,11 @@ model: sonnet
 echo '{"active":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","step":"STEP_NAME"}' | bash tests/executors/state-writer.sh --target supervisor --merge
 ```
 
-**Session 启动时**（Step 1 进度上报之前），**必须先写 status=running**：
+**Session 启动时**（Step 1 进度上报之前），**必须先写 status=running 并清空旧 reasoning**：
 ```bash
-echo '{"status":"running","active":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}' | bash tests/executors/state-writer.sh --target supervisor --merge
+echo '{"status":"running","active":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","reasoning":{},"selfHealEvent":null,"tick":0}' | bash tests/executors/state-writer.sh --target supervisor --merge
 ```
+> ⚠️ `reasoning:{}` 是关键 — 不清空的话，上一轮 tick 的 reasoning 会通过 `--merge` 残留，导致 WebUI 显示过时数据。
 
 步骤名映射：
 | Step | STEP_NAME |
@@ -33,12 +34,26 @@ echo '{"status":"running","active":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}' | bash t
 
 Step 5 完成后（返回摘要前），**必须清除**：
 ```bash
-echo '{"status":"idle","active":null,"step":null}' | bash tests/executors/state-writer.sh --target supervisor --merge
+echo '{"status":"idle","active":null,"step":null,"reasoning":{}}' | bash tests/executors/state-writer.sh --target supervisor --merge
 ```
 
 ## 执行步骤
 
 ### Step 1: Observe (Pre-flight + Reasoning Self-check)
+
+### 1.pre: Events 日志重置
+
+每次 supervisor session 启动时，归档旧的 events.jsonl（如果存在）：
+
+```bash
+EVENTS_FILE="tests/results/events.jsonl"
+if [[ -f "$EVENTS_FILE" && -s "$EVENTS_FILE" ]]; then
+  ARCHIVE_DATE=$(date +%Y%m%d-%H%M%S)
+  mv "$EVENTS_FILE" "tests/results/events-${ARCHIVE_DATE}.jsonl"
+fi
+```
+
+确保本次 session 的事件日志是干净的。
 
 运行 pre-flight 脚本获取综合状态：
 
@@ -386,6 +401,22 @@ echo '{"selfHealEvent":{"type":"<heal-type>","description":"<what was healed and
 ```bash
 echo '{"reasoning":{"reflect":"<one-line reflection, e.g. Cycle 5 complete, coverage 72%→75%, 2 fixes verified, no anomalies>"}}' | bash tests/executors/state-writer.sh --target supervisor --merge
 ```
+
+### 5b. Morning Report Generation（晨报生成）
+
+如果 `tests/results/events.jsonl` 存在且非空：
+
+```bash
+bash tests/executors/morning-report-generator.sh
+```
+
+成功后在摘要中包含：
+- 晨报文件路径
+- 需要关注的 P0-P1 问题数量
+- 自动修复数量
+- 竞争修复次数
+
+如果 events.jsonl 不存在或为空，跳过晨报生成（可能是空跑或所有事件都在子阶段完成前发生了 session 中断）。
 
 输出增强版摘要（~500-800 bytes）：
 
