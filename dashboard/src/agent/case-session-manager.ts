@@ -79,6 +79,7 @@ const activeQueries = new Map<string, AbortController>()
 // leading to ~180s total wait. We add a connection-level timeout that
 // aborts the query if no first message arrives within CONNECTION_TIMEOUT_MS.
 const CONNECTION_TIMEOUT_MS = 120_000 // 120 seconds — MCP servers (13+) need time to initialize
+const RESUME_TIMEOUT_MS = 10_000 // 10 seconds — resume doesn't need MCP init, should be fast
 
 /**
  * Create a timer that auto-aborts the AbortController if no message arrives.
@@ -213,42 +214,71 @@ function getCasesRoot(): string {
 // Excludes: playwright (browser), ado-* (ADO boards), workiq, OfficeMCP
 const CASE_MCP_SERVER_NAMES = ['icm', 'teams', 'mail', 'kusto', 'msft-learn', 'local-rag']
 
+// Per-step MCP requirements — steps not listed here get ALL MCP servers (full-process, etc.)
+const STEP_MCP_SERVERS: Record<string, string[]> = {
+  'data-refresh':        ['icm'],
+  'compliance-check':    [],
+  'status-judge':        [],
+  'inspection':          [],
+  'labor-estimate':      [],
+  'note-gap':            [],
+  'onenote-case-search': [],
+  'generate-kb':         ['local-rag'],
+  'teams-search':        ['teams'],
+  'email-search':        ['mail'],
+  'draft-email':         [],
+  'troubleshoot':        ['kusto', 'msft-learn', 'local-rag', 'icm'],
+}
+
 // Cached MCP config (loaded once per process)
 let _mcpServersCache: Record<string, McpServerConfig> | null = null
 
 /**
  * Load MCP server configs from project .mcp.json, filtered to case-relevant servers.
+ * If stepName is provided and has a mapping in STEP_MCP_SERVERS, only load those MCPs.
  * Returns empty object if .mcp.json is missing or malformed (never blocks session creation).
  */
-function getCaseMcpServers(): Record<string, McpServerConfig> {
-  if (_mcpServersCache !== null) return _mcpServersCache
+function getCaseMcpServers(stepName?: string): Record<string, McpServerConfig> {
+  // Load all case MCP configs into cache (once per process)
+  if (_mcpServersCache === null) {
+    const mcpConfigPath = join(getProjectRoot(), '.mcp.json')
+    try {
+      if (!existsSync(mcpConfigPath)) {
+        console.warn('[MCP] .mcp.json not found — sessions will run without MCP servers')
+        _mcpServersCache = {}
+      } else {
+        const raw = JSON.parse(readFileSync(mcpConfigPath, 'utf-8'))
+        const allServers: Record<string, any> = raw.mcpServers || {}
+        const filtered: Record<string, McpServerConfig> = {}
 
-  const mcpConfigPath = join(getProjectRoot(), '.mcp.json')
-  try {
-    if (!existsSync(mcpConfigPath)) {
-      console.warn('[MCP] .mcp.json not found — sessions will run without MCP servers')
-      _mcpServersCache = {}
-      return _mcpServersCache
-    }
+        for (const name of CASE_MCP_SERVER_NAMES) {
+          if (allServers[name]) {
+            filtered[name] = allServers[name] as McpServerConfig
+          }
+        }
 
-    const raw = JSON.parse(readFileSync(mcpConfigPath, 'utf-8'))
-    const allServers: Record<string, any> = raw.mcpServers || {}
-    const filtered: Record<string, McpServerConfig> = {}
-
-    for (const name of CASE_MCP_SERVER_NAMES) {
-      if (allServers[name]) {
-        filtered[name] = allServers[name] as McpServerConfig
+        console.log(`[MCP] Loaded ${Object.keys(filtered).length} case MCP servers: ${Object.keys(filtered).join(', ')}`)
+        _mcpServersCache = filtered
       }
+    } catch (err) {
+      console.warn('[MCP] Failed to load .mcp.json — sessions will run without MCP servers:', (err as Error).message)
+      _mcpServersCache = {}
     }
-
-    console.log(`[MCP] Loaded ${Object.keys(filtered).length} case MCP servers: ${Object.keys(filtered).join(', ')}`)
-    _mcpServersCache = filtered
-    return _mcpServersCache
-  } catch (err) {
-    console.warn('[MCP] Failed to load .mcp.json — sessions will run without MCP servers:', (err as Error).message)
-    _mcpServersCache = {}
-    return _mcpServersCache
   }
+
+  // If step has a specific MCP mapping, filter down
+  if (stepName && stepName in STEP_MCP_SERVERS) {
+    const needed = STEP_MCP_SERVERS[stepName]
+    if (needed.length === 0) return {}
+    const result: Record<string, McpServerConfig> = {}
+    for (const name of needed) {
+      if (_mcpServersCache[name]) result[name] = _mcpServersCache[name]
+    }
+    return result
+  }
+
+  // Default: return all case MCP servers
+  return _mcpServersCache
 }
 
 
@@ -760,9 +790,17 @@ export async function* processCaseSession(
       saveSessionStore()
       console.log(`[processCaseSession] Stale session ${existingSessionId} for case ${caseNumber} marked completed (last activity: ${lastActivity})`)
     } else {
-      // Resume existing session with new intent
-      yield* chatCaseSession(existingSessionId, `Case ${caseNumber}: ${intent}`, canUseTool) as any
-      return
+      // Resume existing session with new intent — but fallback if resume fails
+      try {
+        yield* chatCaseSession(existingSessionId, `Case ${caseNumber}: ${intent}`, canUseTool) as any
+        return
+      } catch (resumeErr: any) {
+        console.warn(`[processCaseSession] Resume failed for session ${existingSessionId} (case ${caseNumber}): ${resumeErr.message}. Creating new session.`)
+        sessions[existingSessionId].status = 'completed'
+        delete caseIndex[caseNumber]
+        saveSessionStore()
+        // Fall through to create new session below
+      }
     }
   }
 
@@ -887,8 +925,11 @@ export async function* chatCaseSession(
 
   // Create AbortController for this query (ISS-086)
   const abortController = registerQuery(session.caseNumber)
-  // Connection timeout: abort if no first message within 30s
-  const connTimer = setConnectionTimeout(abortController, `chat:${session.caseNumber}`)
+  // Resume timeout: shorter than new session (no MCP init needed)
+  const connTimer = setTimeout(() => {
+    console.error(`[SDK] Resume timeout (${RESUME_TIMEOUT_MS / 1000}s) for chat:${session.caseNumber} — aborting`)
+    try { abortController.abort() } catch { /* ignore */ }
+  }, RESUME_TIMEOUT_MS)
   let firstMessageReceived = false
 
   try {
@@ -996,9 +1037,18 @@ export async function* stepCaseSession(
       saveSessionStore()
       console.log(`[stepCaseSession] Stale session ${existingSessionId} for case ${caseNumber} marked completed (last activity: ${lastActivity})`)
     } else {
-      // Resume existing session with step prompt
-      yield* chatCaseSession(existingSessionId, prompt, options?.canUseTool) as any
-      return
+      // Resume existing session with step prompt — but fallback to new session if resume fails
+      try {
+        yield* chatCaseSession(existingSessionId, prompt, options?.canUseTool) as any
+        return
+      } catch (resumeErr: any) {
+        // Resume failed (stale SDK process, connection timeout, etc.) — cleanup and fallback
+        console.warn(`[stepCaseSession] Resume failed for session ${existingSessionId} (case ${caseNumber}): ${resumeErr.message}. Creating new session.`)
+        sessions[existingSessionId].status = 'completed'
+        delete caseIndex[caseNumber]
+        saveSessionStore()
+        // Fall through to processCaseSession below
+      }
     }
   }
 
@@ -1071,8 +1121,16 @@ After verification, output a single JSON block on a line by itself:
       saveSessionStore()
       console.log(`[executeTodoAction] Stale session ${existingSessionId} for case ${caseNumber} marked completed (last activity: ${lastActivity})`)
     } else {
-      yield* chatCaseSession(existingSessionId, prompt)
-      return
+      try {
+        yield* chatCaseSession(existingSessionId, prompt)
+        return
+      } catch (resumeErr: any) {
+        console.warn(`[executeTodoAction] Resume failed for session ${existingSessionId} (case ${caseNumber}): ${resumeErr.message}. Falling back to standalone query.`)
+        sessions[existingSessionId].status = 'completed'
+        delete caseIndex[caseNumber]
+        saveSessionStore()
+        // Fall through to standalone query below
+      }
     }
   }
 
