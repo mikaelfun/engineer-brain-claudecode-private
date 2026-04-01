@@ -443,7 +443,6 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull, ski
   const SKILL_ICONS: Record<string, typeof RefreshCw> = {
     'data-refresh': RefreshCw,
     'teams-search': MessageSquare,
-    'status-judge': GitBranch,
     'troubleshoot': Search,
     'inspection': FileText,
     'inspection-writer': FileText,
@@ -451,23 +450,25 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull, ski
     'compliance-check': Shield,
     'labor-estimate': Clock,
     'note-gap': FileText,
+    'onenote-search': Search,
   }
 
   const SKILL_COLORS: Record<string, string> = {
     'data-refresh': 'var(--accent-blue)',
     'teams-search': 'var(--accent-purple)',
-    'status-judge': 'var(--accent-amber)',
     'troubleshoot': 'var(--accent-red)',
     'inspection-writer': 'var(--accent-blue)',
     'generate-kb': 'var(--accent-purple)',
     'labor-estimate': 'var(--accent-green)',
     'note-gap': 'var(--accent-amber)',
+    'onenote-search': 'var(--accent-purple)',
   }
 
   // Only show case-relevant skills as quick actions
   const CASE_SKILL_ALLOWLIST = new Set([
-    'data-refresh', 'status-judge', 'troubleshoot', 'inspection-writer',
+    'data-refresh', 'troubleshoot', 'inspection-writer',
     'generate-kb', 'teams-search', 'labor-estimate', 'note-gap',
+    'onenote-search',
   ])
 
   const quickActions = (skills ?? [])

@@ -623,4 +623,36 @@ cases.get('/:id/images/:filename', (c) => {
   })
 })
 
+// GET /api/cases/:id/onenote — OneNote markdown files from case onenote/ directory
+cases.get('/:id/onenote', (c) => {
+  const caseNumber = validateCaseNumber(c)
+  if (!caseNumber) return c.json({ error: 'Invalid case number' }, 400)
+  const caseDir = getCaseDir(caseNumber)
+  const onenoteDir = join(caseDir, 'onenote')
+
+  if (!existsSync(onenoteDir)) {
+    return c.json({ files: [], total: 0 })
+  }
+
+  try {
+    const files = readdirSync(onenoteDir)
+      .filter(f => f.endsWith('.md'))
+      .map(f => {
+        const filePath = join(onenoteDir, f)
+        const stat = statSync(filePath)
+        const content = readFileSync(filePath, 'utf-8')
+        return {
+          filename: f,
+          content,
+          size: stat.size,
+          updatedAt: stat.mtime.toISOString(),
+        }
+      })
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+    return c.json({ files, total: files.length })
+  } catch {
+    return c.json({ files: [], total: 0 })
+  }
+})
+
 export default cases

@@ -71,6 +71,14 @@ export function useCaseAnalysis(id: string) {
   })
 }
 
+export function useCaseOnenote(id: string) {
+  return useQuery({
+    queryKey: ['cases', id, 'onenote'],
+    queryFn: () => apiGet<{ files: Array<{ filename: string; content: string; size: number; updatedAt: string }>; total: number }>(`/cases/${id}/onenote`),
+    enabled: !!id,
+  })
+}
+
 export function useCaseDrafts(id: string) {
   return useQuery({
     queryKey: ['cases', id, 'drafts'],
@@ -1049,10 +1057,15 @@ export function useSubmitNote(caseId: string) {
   return useMutation({
     mutationFn: (data: { title: string; body: string }) =>
       apiPost(`/case/${caseId}/note-gap/submit`, data),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['note-gap', caseId] })
-    },
+    // Don't invalidate immediately — let the component show success state first
+    // Component calls delayedInvalidate() after showing feedback
   })
+}
+
+/** Call after showing success feedback to clear the note gap card */
+export function useInvalidateNoteGap(caseId: string) {
+  const qc = useQueryClient()
+  return () => qc.invalidateQueries({ queryKey: ['note-gap', caseId] })
 }
 
 export function useDismissNoteGap(caseId: string) {

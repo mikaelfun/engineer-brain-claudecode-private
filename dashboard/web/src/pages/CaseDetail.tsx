@@ -10,7 +10,7 @@ import { SeverityBadge, CaseStatusBadge, SlaBadge, Badge, HealthScoreBadge, Enti
 import { Loading, ErrorState, EmptyState } from '../components/common/Loading'
 import {
   useCaseDetail, useCaseEmails, useCaseNotes,
-  useCaseTeams, useCaseMeta, useCaseAnalysis,
+  useCaseTeams, useCaseMeta, useCaseAnalysis, useCaseOnenote,
   useCaseDrafts, useCaseInspection, useCaseTodo, useCaseTodoFile,
   useCaseTiming, useCaseLogs, useCaseAttachments,
   useToggleCaseTodo
@@ -36,6 +36,7 @@ export default function CaseDetail() {
   const { data: teamsData } = useCaseTeams(activeTab === 'teams' ? (id || '') : '')
   const { data: meta } = useCaseMeta(id || '') // always needed for SLA indicators
   const { data: analysisData } = useCaseAnalysis(activeTab === 'analysis' ? (id || '') : '')
+  const { data: onenoteData } = useCaseOnenote(activeTab === 'onenote' ? (id || '') : '')
   const { data: inspectionData } = useCaseInspection(id || '')
   const toggleCaseTodo = useToggleCaseTodo(id || '')
   const { data: timingData } = useCaseTiming(activeTab === 'timing' ? (id || '') : '')
@@ -51,6 +52,7 @@ export default function CaseDetail() {
     { id: 'teams', label: 'Teams', icon: '💬', count: teamsData?.total },
     { id: 'drafts', label: 'Drafts', icon: '✉️', count: draftsData?.total },
     { id: 'analysis', label: 'Analysis', icon: '🔍' },
+    { id: 'onenote', label: 'OneNote', icon: '📓', count: onenoteData?.total },
     { id: 'timing', label: 'Timing', icon: '⏱️' },
     { id: 'logs', label: 'Logs', icon: '📄', count: logsData?.total },
     { id: 'attachments', label: 'Files', icon: '📎', count: attachmentsData?.total },
@@ -207,6 +209,7 @@ export default function CaseDetail() {
             {activeTab === 'teams' && <TeamsTab chats={teamsData?.chats || []} />}
             {activeTab === 'drafts' && <DraftsTab drafts={draftsData?.drafts || []} caseNumber={id!} />}
             {activeTab === 'analysis' && <AnalysisTab content={analysisData?.content} exists={analysisData?.exists} />}
+            {activeTab === 'onenote' && <OnenoteTab files={onenoteData?.files || []} />}
             {activeTab === 'timing' && <TimingTab exists={timingData?.exists} timing={timingData?.timing} />}
             {activeTab === 'logs' && <LogsTab logs={logsData?.logs || []} />}
             {activeTab === 'attachments' && <AttachmentsTab files={attachmentsData?.files || []} meta={attachmentsData?.meta} caseNumber={id!} />}
@@ -603,6 +606,39 @@ function AnalysisTab({ content, exists }: { content?: string; exists?: boolean }
     <Card>
       <MarkdownContent>{content}</MarkdownContent>
     </Card>
+  )
+}
+
+function OnenoteTab({ files }: { files: Array<{ filename: string; content: string; size: number; updatedAt: string }> }) {
+  const [expanded, setExpanded] = useState<string | null>(files.length === 1 ? files[0]?.filename : null)
+
+  if (files.length === 0) return <EmptyState icon="📓" title="No OneNote notes" description="Use /onenote-search to find and save relevant notes for this case" />
+
+  return (
+    <div className="space-y-3">
+      {files.map(f => (
+        <Card key={f.filename}>
+          <button
+            onClick={() => setExpanded(expanded === f.filename ? null : f.filename)}
+            className="w-full flex items-center justify-between text-left"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{f.filename.replace(/\.md$/, '')}</span>
+              <span className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>{(f.size / 1024).toFixed(1)}KB</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{new Date(f.updatedAt).toLocaleString()}</span>
+              {expanded === f.filename ? <ChevronDown className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} /> : <ChevronRight className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />}
+            </div>
+          </button>
+          {expanded === f.filename && (
+            <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+              <MarkdownContent>{f.content}</MarkdownContent>
+            </div>
+          )}
+        </Card>
+      ))}
+    </div>
   )
 }
 
