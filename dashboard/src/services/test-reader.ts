@@ -1,5 +1,5 @@
 /**
- * test-reader.ts — Read test-loop data files from disk
+ * test-reader.ts — Read stage-worker data files from disk
  *
  * All functions follow the same pattern as case-reader.ts:
  * readFileSync + existsSync guard + JSON.parse with try/catch.
@@ -44,6 +44,11 @@ export interface PipelineState {
   currentTest: string
   stageProgress: unknown | null
   stages: Record<string, StageEntry>
+  /** Overall pipeline status — 'idle' | 'running' */
+  pipelineStatus?: string
+  /** Active marker (ISO timestamp or null) */
+  active?: string | null
+  status?: string
 }
 
 export interface QueuesState {
@@ -428,6 +433,32 @@ export function readTestResult(round: number, testId: string): Record<string, un
   }
 }
 
+/**
+ * Fallback: find the latest result for a testId across all rounds.
+ * Scans results dir for *-{testId}.json and returns the highest-round match.
+ */
+export function readLatestTestResult(testId: string): Record<string, unknown> | null {
+  const dir = resultsDir()
+  if (!existsSync(dir)) return null
+  try {
+    const suffix = `-${testId}.json`
+    const files = readdirSync(dir)
+      .filter(f => f.endsWith(suffix) && /^\d+/.test(f))
+      .sort((a, b) => {
+        const roundA = parseInt(a.match(/^(\d+)/)?.[1] || '0')
+        const roundB = parseInt(b.match(/^(\d+)/)?.[1] || '0')
+        return roundA - roundB
+      })
+    if (files.length === 0) return null
+    const latest = files[files.length - 1]
+    const raw = readFileSync(join(dir, latest), 'utf-8')
+    return JSON.parse(raw)
+  } catch (err) {
+    console.error(`[test-reader] Failed to scan for latest result of ${testId}:`, err)
+    return null
+  }
+}
+
 export function readFixDetails(testId: string): string | null {
   const fixesDir = join(resultsDir(), 'fixes')
   if (!existsSync(fixesDir)) return null
@@ -608,4 +639,236 @@ export function readTestRegistry(): Record<string, TestRegistryEntry> {
   _registryCacheTime = Date.now()
   console.log(`[test-reader] Registry loaded: ${map.size} test definitions`)
   return Object.fromEntries(map)
+}
+
+// ============ Story (Natural Language Narrative) ============
+
+export interface StoryData {
+  cycle: number
+  maxCycles: number
+  currentStage: string
+  /** Natural language summary of what happened this cycle */
+  roundNarrative: string[]
+  /** Scan strategy explanation */
+  scanStrategyNote: string | null
+  /** Cumulative discovery stats */
+  scorecard: {
+    total: number
+    verified: number
+    fixedUnverified: number
+    regression: number
+    retryNeeded: number
+  }
+  /** Top verified fixes with descriptions */
+  successStories: { testId: string; description: string; fixedRound: number | null }[]
+  /** Top regressions */
+  struggles: { testId: string; rootCause: string | null; foundRound: number | null }[]
+  /** Recent learnings */
+  learnings: { id: string; category: string; problem: string; solution: string }[]
+  /** What's next */
+  nextStep: string
+}
+
+/**
+ * Compile a narrative story from test data files.
+ * Reads state, discoveries, learnings, and fix reports.
+ */
+export function readStory(): StoryData | null {
+  // 1. Read pipeline state
+  const pipeline = readPipeline()
+  if (!pipeline) return null
+
+  const cycle = pipeline.cycle || 0
+  const maxCycles = pipeline.maxCycles || 0
+  const currentStage = pipeline.currentStage || 'UNKNOWN'
+  const stages = pipeline.stages || {}
+
+  // 2. Build round narrative from stage summaries
+  const stageOrder = ['SCAN', 'GENERATE', 'TEST', 'FIX', 'VERIFY']
+  const roundNarrative: string[] = []
+  for (const stageName of stageOrder) {
+    const stage = stages[stageName]
+    if (stage?.summary && stage.status === 'done') {
+      roundNarrative.push(`**${stageName}**: ${stage.summary}`)
+    }
+  }
+
+  // 3. Scan strategy
+  let scanStrategyNote: string | null = null
+  try {
+    const statsData = readStats()
+    if (statsData?.scanStrategy?.overrideReason) {
+      scanStrategyNote = String(statsData.scanStrategy.overrideReason)
+    }
+  } catch { /* ignore */ }
+
+  // 4. Discoveries scorecard
+  const discoveries = readDiscoveries()
+  const scorecard = {
+    total: discoveries?.summary?.total || 0,
+    verified: discoveries?.summary?.verified || 0,
+    fixedUnverified: discoveries?.summary?.fixedUnverified || 0,
+    regression: discoveries?.summary?.regression || 0,
+    retryNeeded: discoveries?.summary?.retryNeeded || 0,
+  }
+
+  // 5. Success stories (verified fixes)
+  const successStories: StoryData['successStories'] = []
+  const verifiedItems = (discoveries?.discoveries || [])
+    .filter((d: any) => d.status === 'verified' && d.hasFix)
+    .slice(0, 5)
+  for (const item of verifiedItems) {
+    let description = ''
+    const fixContent = readFixDetails(item.testId)
+    if (fixContent) {
+      // Extract description from fix report markdown
+      const descMatch = fixContent.match(/\*\*Description:\*\*\s*(.+)/i)
+        || fixContent.match(/^## What Was Fixed\n\n(.+)/m)
+      description = descMatch?.[1] || item.testId
+    }
+    successStories.push({
+      testId: item.testId,
+      description: description || item.firstFailedAssertion || item.testId,
+      fixedRound: item.verifiedRound || null,
+    })
+  }
+
+  // 6. Struggles (regressions)
+  const struggles: StoryData['struggles'] = (discoveries?.discoveries || [])
+    .filter((d: any) => d.status === 'regression')
+    .slice(0, 5)
+    .map((d: any) => ({
+      testId: d.testId,
+      rootCause: d.rootCause || null,
+      foundRound: d.foundRound || null,
+    }))
+
+  // 7. Learnings (parse YAML manually — no yaml lib in dashboard)
+  const learnings: StoryData['learnings'] = []
+  const learningsPath = join(testsDir(), 'learnings.yaml')
+  if (existsSync(learningsPath)) {
+    try {
+      const raw = readFileSync(learningsPath, 'utf-8')
+      // Simple YAML list parser: split by "- id:" markers
+      const entries = raw.split(/^- id:\s*/m).filter(Boolean)
+      const recentEntries = entries.slice(-5) // last 5
+      for (const entry of recentEntries) {
+        const lines = entry.split('\n')
+        const id = lines[0]?.trim() || ''
+        const categoryMatch = entry.match(/category:\s*(.+)/)
+        const problemMatch = entry.match(/problem:\s*"?(.+?)"?\s*$/)
+        const solutionMatch = entry.match(/solution:\s*\|?\s*\n([\s\S]*?)(?=\n\s*\w+:|$)/)
+        learnings.push({
+          id,
+          category: categoryMatch?.[1]?.trim() || '',
+          problem: problemMatch?.[1]?.trim() || '',
+          solution: solutionMatch?.[1]?.split('\n')[0]?.trim() || '',
+        })
+      }
+    } catch { /* ignore parse errors */ }
+  }
+
+  // 8. Next step
+  const queues = readQueues()
+  const testQ = queues?.testQueue?.length || 0
+  const fixQ = queues?.fixQueue?.length || 0
+  const verifyQ = queues?.verifyQueue?.length || 0
+  let nextStep = ''
+  if (currentStage === 'SCAN' || currentStage === 'GENERATE') {
+    nextStep = `Scanning for gaps and generating new tests (cycle ${cycle})`
+  } else if (testQ > 0) {
+    nextStep = `Testing ${testQ} items in the test queue`
+  } else if (fixQ > 0) {
+    nextStep = `Fixing ${fixQ} failed tests`
+  } else if (verifyQ > 0) {
+    nextStep = `Verifying ${verifyQ} previous fixes`
+  } else {
+    nextStep = `Ready for next scan cycle (${cycle + 1}/${maxCycles})`
+  }
+
+  return {
+    cycle,
+    maxCycles,
+    currentStage,
+    roundNarrative,
+    scanStrategyNote,
+    scorecard,
+    successStories,
+    struggles,
+    learnings,
+    nextStep,
+  }
+}
+
+// ============ Dashboard Data (Morning Report JSON) ============
+
+export interface DashboardEvent {
+  ts?: string
+  type: string
+  impact?: string
+  area?: string
+  detail?: string
+  result?: string
+  method?: string
+  chosen?: string
+  confidence?: string | number
+  delta?: string
+  [key: string]: unknown
+}
+
+export interface DashboardDataSummary {
+  verified_pass: number
+  verified_fail: number
+  bugs: number
+  fixed: number
+  fix_failed: number
+  needs_human: number
+  perf_regressions: number
+  perf_improved: number
+  ui_issues: number
+}
+
+export interface DashboardData {
+  runDate: string
+  duration: string
+  cycles: number
+  summary: DashboardDataSummary
+  events: DashboardEvent[]
+  byArea: Record<string, DashboardEvent[]>
+  byImpact: Record<string, DashboardEvent[]>
+  competitiveFixes: DashboardEvent[]
+}
+
+/** Return sorted list of available report dates (newest first) */
+export function readDashboardReportDates(): string[] {
+  const dir = resultsDir()
+  if (!existsSync(dir)) return []
+  try {
+    return readdirSync(dir)
+      .filter(f => /^dashboard-data-\d{4}-\d{2}-\d{2}\.json$/.test(f))
+      .map(f => f.replace('dashboard-data-', '').replace('.json', ''))
+      .sort((a, b) => b.localeCompare(a))
+  } catch {
+    return []
+  }
+}
+
+/** Read dashboard-data-{date}.json; if date is omitted, reads the latest */
+export function readDashboardData(date?: string): DashboardData | null {
+  const dir = resultsDir()
+  let targetDate = date
+  if (!targetDate) {
+    const dates = readDashboardReportDates()
+    if (dates.length === 0) return null
+    targetDate = dates[0]
+  }
+  const filePath = join(dir, `dashboard-data-${targetDate}.json`)
+  if (!existsSync(filePath)) return null
+  try {
+    const raw = readFileSync(filePath, 'utf-8')
+    return JSON.parse(raw) as DashboardData
+  } catch (err) {
+    console.error(`[test-reader] Failed to read dashboard-data-${targetDate}.json:`, err)
+    return null
+  }
 }

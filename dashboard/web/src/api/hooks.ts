@@ -959,3 +959,65 @@ export function useSkills() {
     staleTime: 60_000,
   })
 }
+
+// ===== Test Results (Morning Report) =====
+
+export interface TestResultEvent {
+  ts?: string
+  type: string
+  impact?: string
+  area?: string
+  detail?: string
+  result?: string
+  method?: string
+  chosen?: string
+  confidence?: string | number
+  delta?: string
+  [key: string]: unknown
+}
+
+export interface TestResultSummary {
+  verified_pass: number
+  verified_fail: number
+  bugs: number
+  fixed: number
+  fix_failed: number
+  needs_human: number
+  perf_regressions: number
+  perf_improved: number
+  ui_issues: number
+}
+
+export interface TestResultData {
+  runDate: string
+  duration: string
+  cycles: number
+  summary: TestResultSummary
+  events: TestResultEvent[]
+  byArea: Record<string, TestResultEvent[]>
+  byImpact: Record<string, TestResultEvent[]>
+  competitiveFixes: TestResultEvent[]
+}
+
+export function useTestReportDates() {
+  return useQuery<{ dates: string[] }>({
+    queryKey: ['tests', 'report-dates'],
+    queryFn: () => apiGet<{ dates: string[] }>('/tests/report-dates'),
+    staleTime: 60_000,
+  })
+}
+
+export function useTestReport(date?: string) {
+  return useQuery<TestResultData>({
+    queryKey: ['tests', 'report', date ?? 'latest'],
+    queryFn: () =>
+      date
+        ? apiGet<TestResultData>(`/tests/report/${date}`)
+        : apiGet<TestResultData>('/tests/report'),
+    staleTime: 60_000,
+    retry: (failureCount, error: any) => {
+      if (error?.status === 404) return false
+      return failureCount < 3
+    },
+  })
+}

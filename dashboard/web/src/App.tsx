@@ -15,6 +15,7 @@ import SettingsPage from './pages/SettingsPage'
 import Issues from './pages/Issues'
 import CasesPage from './pages/CasesPage'
 import TestLab from './pages/TestLab'
+import TestResults from './pages/TestResults'
 import { PageLoading } from './components/common/Loading'
 import { ErrorBoundary } from './components/common/ErrorBoundary'
 
@@ -32,6 +33,7 @@ function AuthenticatedApp() {
         <Route path="/agents" element={<AgentMonitor />} />
         <Route path="/drafts" element={<DraftsPage />} />
         <Route path="/tests" element={<TestLab />} />
+        <Route path="/test-results" element={<TestResults />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/issues" element={<Issues />} />
         <Route path="*" element={<Navigate to="/" replace />} />

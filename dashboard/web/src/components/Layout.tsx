@@ -27,6 +27,7 @@ const navItems: NavEntry[] = [
   { path: '/agents', label: 'Agents', icon: '🤖' },
   { path: '/drafts', label: 'Drafts', icon: '✉️' },
   { path: '/tests', label: 'Test Lab', icon: '🧪' },
+  { path: '/test-results', label: 'Test Results', icon: '📈' },
   { section: 'Manage' },
   { path: '/issues', label: 'Issues', icon: '🐛' },
   { path: '/settings', label: 'Settings', icon: '⚙️' },
