@@ -18,7 +18,7 @@ After each stage completes:
    - GENERATE: `"{count} tests from {issue_count} issues"`
    - TEST: `"{passed} passed, {failed} failed"`
    - FIX: `"{fixed} fixed, {unfixable} unfixable"`
-   - VERIFY: `"{verified} verified, {regressed} regressed"`
+   - VERIFY: `"{verified} verified, {regressed} regressed, {fw_accepted} fw-auto-accepted"`
 
 3. Append stageHistory (**must include `cycle` field**):
    ```bash
@@ -27,14 +27,27 @@ After each stage completes:
    ```
 
 4. **Cycle increment rule**: When full cycle ends (VERIFY/TEST → SCAN), cycle++
-5. **On cycle switch**: Reset stageHistory + stages:
+5. **On cycle switch**: Reset stageHistory + stages + cycleStats:
    ```bash
    echo '{"stageHistory":[],"stages":{"SCAN":{"status":"pending","summary":""},"GENERATE":{"status":"pending","summary":""},"TEST":{"status":"pending","summary":""},"FIX":{"status":"pending","summary":""},"VERIFY":{"status":"pending","summary":""}}}' \
      | bash tests/executors/state-writer.sh --target pipeline --merge
+   echo '{"cycleStats":{"passed":0,"failed":0,"fixed":0,"skipped":0}}' \
+     | bash tests/executors/state-writer.sh --target stats --merge
    ```
    Then: `bash tests/executors/stats-reporter.sh <cycle>`
 
 6. If cycle >= maxCycles → set currentStage=COMPLETE
+
+### Step 2.05: Queue Priority Sort（仅 SCAN 后）
+
+如果刚完成的阶段是 `SCAN` 且 `testQueue` 非空：
+
+```bash
+bash tests/executors/queue-sorter.sh
+```
+
+确保高优先级（P0）的测试最先执行。排序基于 queue item 的 `impact` 字段。
+无 `impact` 字段的 item 视为 P3。
 
 ### Step 2.2: Circuit Breaker (lightweight)
 
@@ -66,7 +79,7 @@ Read updated pipeline.json:
 1. currentStage = COMPLETE → go to Step 2.5 (return)
 2. next = SCAN or GENERATE → ⚡ continue (back to stage execution)
 3. next = TEST and testQueue.length ≤ 2 → ⚡ continue
-4. next = VERIFY and verifyQueue.length ≤ 2 → ⚡ continue
+4. next = VERIFY and verifyQueue.length ≤ 2 → ⚡ continue (note: fixType=framework_fix items are auto-accepted without test execution, so VERIFY is fast for these)
 5. Otherwise (large queue TEST/FIX/VERIFY) → return summary
 ```
 
