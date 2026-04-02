@@ -90,133 +90,123 @@ if (-not $OutputPath) { Write-Host "ERROR: -OutputPath required"; exit 1 }
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
 
 # ══════════════════════════════════════════════════════════════════════
-# Step 0: Ensure browser
+# Main extraction with retry (covers EXTRACT_ERROR + BROWSER_FAILED)
 # ══════════════════════════════════════════════════════════════════════
-if (-not (Ensure-OwaBrowser)) {
-    Write-Log "OWA FAILED | Browser not available"
-    Write-Host "STATUS=BROWSER_FAILED"
-    exit 1
-}
-$t0 = $sw.ElapsedMilliseconds
+$maxRetries = 2
+$success = $false
 
-# ══════════════════════════════════════════════════════════════════════
-# Step 1: Navigate to inbox + Search
-# ══════════════════════════════════════════════════════════════════════
-Write-Log "OWA STEP1 | Searching for case $CaseNumber"
+for ($attempt = 0; $attempt -le $maxRetries; $attempt++) {
+    if ($attempt -gt 0) {
+        Write-Log "OWA RETRY $attempt | Restarting browser and retrying..."
+        playwright-cli -s=owa close 2>&1 | Out-Null
+        Start-Sleep -Seconds 3
+    }
 
-# Navigate to inbox (in case we're on a different page)
-playwright-cli -s=owa goto $OWA_URL 2>&1 | Out-Null
+    # Step 0: Ensure browser
+    if (-not (Ensure-OwaBrowser)) {
+        Write-Log "OWA FAILED | Browser not available (attempt $attempt)"
+        continue
+    }
+    $t0 = $sw.ElapsedMilliseconds
 
-# Poll until inbox loaded (search box available)
-for ($nav = 0; $nav -lt 10; $nav++) {
-    Start-Sleep -Seconds 1
-    $navCheck = playwright-cli -s=owa eval '(document.querySelector("[role=search] [role=combobox]") ? "ready" : "waiting")' 2>&1 | Out-String
-    if ($navCheck -match "ready") { break }
-}
+    # Step 1: Navigate + Search
+    Write-Log "OWA STEP1 | Searching for case $CaseNumber"
+    playwright-cli -s=owa goto $OWA_URL 2>&1 | Out-Null
+    for ($nav = 0; $nav -lt 10; $nav++) {
+        Start-Sleep -Seconds 1
+        $navCheck = playwright-cli -s=owa eval '(document.querySelector("[role=search] [role=combobox]") ? "ready" : "waiting")' 2>&1 | Out-String
+        if ($navCheck -match "ready") { break }
+    }
 
-# Focus search box + type + enter
-playwright-cli -s=owa eval "(document.querySelector(`"[role=search] [role=combobox]`")?.focus(), document.querySelector(`"[role=search] [role=combobox]`")?.click(), `"ok`")" 2>&1 | Out-Null
-Start-Sleep -Milliseconds 800
-playwright-cli -s=owa press "Control+a" 2>&1 | Out-Null
-Start-Sleep -Milliseconds 300
-playwright-cli -s=owa type $CaseNumber 2>&1 | Out-Null
-Start-Sleep -Milliseconds 500
-playwright-cli -s=owa press Enter 2>&1 | Out-Null
+    playwright-cli -s=owa eval "(document.querySelector(`"[role=search] [role=combobox]`")?.focus(), document.querySelector(`"[role=search] [role=combobox]`")?.click(), `"ok`")" 2>&1 | Out-Null
+    Start-Sleep -Milliseconds 800
+    playwright-cli -s=owa press "Control+a" 2>&1 | Out-Null
+    Start-Sleep -Milliseconds 300
+    playwright-cli -s=owa type $CaseNumber 2>&1 | Out-Null
+    Start-Sleep -Milliseconds 500
+    playwright-cli -s=owa press Enter 2>&1 | Out-Null
 
-# Poll for search results instead of fixed sleep
-$found = $false
-for ($attempt = 0; $attempt -lt $SearchTimeout; $attempt++) {
-    Start-Sleep -Seconds 1
-    $check = playwright-cli -s=owa eval "
-    (function(){
-        var options = document.querySelectorAll(`"[role=option]`");
-        for (var i = 0; i < options.length; i++) {
-            if ((options[i].getAttribute(`"aria-label`") || `"`").indexOf(`"$CaseNumber`") > -1) return `"found`";
-        }
-        return `"waiting`";
-    })()
-    " 2>&1 | Out-String
-    if ($check -match "found") { $found = $true; break }
-}
+    $found = $false
+    for ($s = 0; $s -lt $SearchTimeout; $s++) {
+        Start-Sleep -Seconds 1
+        $check = playwright-cli -s=owa eval "
+        (function(){
+            var options = document.querySelectorAll(`"[role=option]`");
+            for (var i = 0; i < options.length; i++) {
+                if ((options[i].getAttribute(`"aria-label`") || `"`").length > 40) return `"found`";
+            }
+            return `"waiting`";
+        })()
+        " 2>&1 | Out-String
+        if ($check -match "found") { $found = $true; break }
+    }
 
-if (-not $found) {
-    Write-Log "OWA STEP1 EMPTY | No results for $CaseNumber after ${SearchTimeout}s"
-    # Write empty output
-    $emptyContent = "# Emails (OWA) — Case $CaseNumber`n`n> No emails found | $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')`n"
-    [System.IO.File]::WriteAllText($OutputPath, $emptyContent, [System.Text.UTF8Encoding]::new($false))
-    Write-Host "STATUS=EMPTY"
-    Write-Host "EMAIL_COUNT=0"
-    exit 0
-}
-$t1 = $sw.ElapsedMilliseconds
-Write-Log "OWA STEP1 OK | Search results found ($($t1-$t0)ms)"
+    if (-not $found) {
+        Write-Log "OWA STEP1 EMPTY | No results for $CaseNumber"
+        $emptyContent = "# Emails (OWA) — Case $CaseNumber`n`n> No emails found | $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')`n"
+        $outDir = Split-Path -Parent $OutputPath
+        if ($outDir -and -not (Test-Path $outDir)) { New-Item -ItemType Directory -Path $outDir -Force | Out-Null }
+        [System.IO.File]::WriteAllText($OutputPath, $emptyContent, [System.Text.UTF8Encoding]::new($false))
+        Write-Host "STATUS=EMPTY"
+        Write-Host "EMAIL_COUNT=0"
+        exit 0
+    }
+    $t1 = $sw.ElapsedMilliseconds
+    Write-Log "OWA STEP1 OK | Search results found ($($t1-$t0)ms)"
 
-# ══════════════════════════════════════════════════════════════════════
-# Step 2-4: Open all conversations, expand, load bodies, extract
-# Uses external JS file to avoid PowerShell escape hell
-# ══════════════════════════════════════════════════════════════════════
-$mode = if ($PreviewOnly) { "preview" } else { "full" }
-Write-Log "OWA STEP2 | Extracting ($mode mode, scrollDelay=${ScrollDelay}ms)"
+    # Step 2-4: Extract
+    $mode = if ($PreviewOnly) { "preview" } else { "full" }
+    Write-Log "OWA STEP2 | Extracting ($mode mode)"
+    playwright-cli -s=owa eval "(window.__OWA_CASE_NUMBER=`"$CaseNumber`", window.__OWA_MODE=`"$mode`", window.__OWA_SCROLL_DELAY=$ScrollDelay, `"params set`")" 2>&1 | Out-Null
 
-# Inject parameters into browser window
-playwright-cli -s=owa eval "(window.__OWA_CASE_NUMBER=`"$CaseNumber`", window.__OWA_MODE=`"$mode`", window.__OWA_SCROLL_DELAY=$ScrollDelay, `"params set`")" 2>&1 | Out-Null
+    $jsFile = Join-Path $PSScriptRoot "owa-extract-conversation.js"
+    $jsContent = Get-Content $jsFile -Raw
+    $extractResult = playwright-cli -s=owa eval $jsContent 2>&1 | Out-String
+    $t4 = $sw.ElapsedMilliseconds
 
-# Execute extraction JS file (read content, pass as eval argument)
-$jsFile = Join-Path $PSScriptRoot "owa-extract-conversation.js"
-$jsContent = Get-Content $jsFile -Raw
-$extractResult = playwright-cli -s=owa eval $jsContent 2>&1 | Out-String
+    # Step 5: Parse metadata
+    $metaMatch = [regex]::Match($extractResult, '(\d+)\|(\d+)\|(\d+)\|(\d+)')
+    if (-not $metaMatch.Success) {
+        Write-Log "OWA EXTRACT_ERROR | Bad metadata format (attempt $attempt, len=$($extractResult.Length))"
+        continue  # retry
+    }
+    $emailCount = [int]$metaMatch.Groups[1].Value
+    $convCount = [int]$metaMatch.Groups[2].Value
+    $bodyCount = [int]$metaMatch.Groups[3].Value
 
-$t4 = $sw.ElapsedMilliseconds
-Write-Log "OWA STEP2 OK | Extraction complete ($($t4-$t1)ms)"
+    # Read md from textarea
+    $mdContent = playwright-cli -s=owa eval 'document.getElementById("_owa_extract_md").value' 2>&1 | Out-String
+    $mdMatch = [regex]::Match($mdContent, '### Result\s*\n"(.*)"', [System.Text.RegularExpressions.RegexOptions]::Singleline)
+    if (-not $mdMatch.Success) {
+        Write-Log "OWA EXTRACT_ERROR | Cannot read textarea (attempt $attempt)"
+        continue  # retry
+    }
 
-# ══════════════════════════════════════════════════════════════════════
-# Step 5: Read md from browser textarea + write output
-# JS stored md in textarea#_owa_extract_md, returns "count|convs|bodies|chars"
-# ══════════════════════════════════════════════════════════════════════
-
-# Parse metadata from eval result (format: "count|convs|bodies|chars")
-$metaMatch = [regex]::Match($extractResult, '(\d+)\|(\d+)\|(\d+)\|(\d+)')
-if (-not $metaMatch.Success) {
-    Write-Log "OWA ERROR | Unexpected extract result format (len=$($extractResult.Length))"
-    Write-Log "OWA ERROR | First 200 chars: $($extractResult.Substring(0, [Math]::Min(200, $extractResult.Length)))"
-    Write-Host "STATUS=EXTRACT_ERROR"
-    exit 1
-}
-$emailCount = [int]$metaMatch.Groups[1].Value
-$convCount = [int]$metaMatch.Groups[2].Value
-$bodyCount = [int]$metaMatch.Groups[3].Value
-$mdChars = [int]$metaMatch.Groups[4].Value
-
-# Read md content from browser textarea
-$mdContent = playwright-cli -s=owa eval 'document.getElementById("_owa_extract_md").value' 2>&1 | Out-String
-
-# Extract the value (between first and last quote in ### Result section)
-$mdMatch = [regex]::Match($mdContent, '### Result\s*\n"(.*)"', [System.Text.RegularExpressions.RegexOptions]::Singleline)
-if ($mdMatch.Success) {
     $md = $mdMatch.Groups[1].Value
-    # Unescape
     $md = $md -replace '\\\\', '%%BACKSLASH%%'
     $md = $md -replace '\\n', "`n"
     $md = $md -replace '\\t', "`t"
     $md = $md -replace '\\"', '"'
     $md = $md -replace '%%BACKSLASH%%', '\'
-} else {
-    Write-Log "OWA ERROR | Cannot read md from textarea"
-    Write-Host "STATUS=EXTRACT_ERROR"
-    exit 1
+
+    # Write output
+    $outDir = Split-Path -Parent $OutputPath
+    if ($outDir -and -not (Test-Path $outDir)) { New-Item -ItemType Directory -Path $outDir -Force | Out-Null }
+    [System.IO.File]::WriteAllText($OutputPath, $md, [System.Text.UTF8Encoding]::new($false))
+    $sizeKB = [math]::Round((Get-Item $OutputPath).Length / 1024, 1)
+
+    $sw.Stop()
+    Write-Log "OWA DONE | $emailCount emails ($convCount convs, $bodyCount bodies), ${sizeKB}KB, ${mode} mode, $($sw.ElapsedMilliseconds)ms total"
+    Write-Host "STATUS=OK"
+    Write-Host "EMAIL_COUNT=$emailCount"
+    Write-Host "SIZE_KB=$sizeKB"
+    Write-Host "DURATION_MS=$($sw.ElapsedMilliseconds)"
+    $success = $true
+    break
 }
 
-# Ensure output dir exists
-$outDir = Split-Path -Parent $OutputPath
-if ($outDir -and -not (Test-Path $outDir)) { New-Item -ItemType Directory -Path $outDir -Force | Out-Null }
-
-[System.IO.File]::WriteAllText($OutputPath, $md, [System.Text.UTF8Encoding]::new($false))
-$sizeKB = [math]::Round((Get-Item $OutputPath).Length / 1024, 1)
-
-$sw.Stop()
-$mode = if ($PreviewOnly) { "preview" } else { "full" }
-Write-Log "OWA DONE | $emailCount emails ($convCount convs, $bodyCount bodies), ${sizeKB}KB, ${mode} mode, $($sw.ElapsedMilliseconds)ms total"
-Write-Host "STATUS=OK"
-Write-Host "EMAIL_COUNT=$emailCount"
-Write-Host "SIZE_KB=$sizeKB"
-Write-Host "DURATION_MS=$($sw.ElapsedMilliseconds)"
+if (-not $success) {
+    Write-Log "OWA FAILED | All $($maxRetries+1) attempts failed for case $CaseNumber"
+    Write-Host "STATUS=FAILED"
+    exit 1
+}
