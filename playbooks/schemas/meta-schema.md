@@ -8,6 +8,7 @@
 - `compliance-check`：写入 `compliance` 对象（Entitlement + 21v Convert，不涉及 IR）
 - `compliance-check`：写入 `ccEmails` / `ccAccount` / `ccKnowMePage`（RDSE CC Finder，仅匹配时写入）
 - `status-judge`：写入 `actualStatus` / `daysSinceLastContact` / `statusJudgedAt`
+- `status-judge`：写入 `recommendedActions`（LLM 推荐的下一步行动，仅 CHANGED 路径）
 - `inspection-writer`：写入 `lastInspected`
 - `casework` (auto-detect)：写入 `isAR` / `mainCaseId`（case number 后缀检测）
 - `casework` (LLM/auto)：写入 `ar` 对象（scope 提取、沟通模式检测、case owner 信息）
@@ -34,6 +35,12 @@
   "daysSinceLastContact": 4,
   "statusJudgedAt": "2026-03-17T11:00:00+08:00",
   "statusReasoning": "最后邮件(3/13)是工程师发出follow-up要求客户确认是否恢复，客户4天未回复 → pending-customer",
+  "recommendedActions": [
+    {
+      "action": "email-drafter",
+      "reason": "客户 4 天未回复，需发 follow-up 邮件"
+    }
+  ],
   "irSla": {
     "status": "Succeeded",
     "remaining": null,
@@ -116,6 +123,9 @@
 | `daysSinceLastContact` | number | status-judge | 距上次工程师邮件的天数 |
 | `statusJudgedAt` | ISO 8601 | status-judge | 状态判断时间 |
 | `statusReasoning` | string | status-judge | 一句话判断理由（关键依据 → 结论），≤200字。完整推理链在 `logs/status-judge.log` |
+| `recommendedActions` | array\|null | status-judge | LLM 推荐的下一步行动。casework B5 优先采纳，为空时 fallback 到固定路由表。仅在 CHANGED 路径（status-judge 实际执行时）写入，快速路径不写入。 |
+| `recommendedActions[].action` | string | status-judge | `"no-agent"` / `"troubleshooter"` / `"email-drafter"` / `"troubleshooter+email-drafter"` |
+| `recommendedActions[].reason` | string | status-judge | ≤100 字，解释推荐理由 |
 | `irSla` | object | data-refresh | IR SLA 状态 |
 | `fdr` | object | data-refresh | FDR 状态 |
 | `fwr` | object | data-refresh | FWR 状态 |
