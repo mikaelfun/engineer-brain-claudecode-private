@@ -53,20 +53,43 @@ CASE_NUMBER=${CASE_NUMBER:-unknown}
 CC_EMAILS=$(sed -n 's/.*"ccEmails":[[:space:]]*"\([^"]*\)".*/\1/p' "$META" | head -1)
 CC_KNOW_ME=$(sed -n 's/.*"ccKnowMePage":[[:space:]]*"\([^"]*\)".*/\1/p' "$META" | head -1)
 
+# AR fields
+IS_AR=$(sed -n 's/.*"isAR":[[:space:]]*\(true\|false\).*/\1/p' "$META" | head -1)
+IS_AR=${IS_AR:-false}
+MAIN_CASE_ID=$(sed -n 's/.*"mainCaseId":[[:space:]]*"\([^"]*\)".*/\1/p' "$META" | head -1)
+AR_SCOPE=$(sed -n 's/.*"scope":[[:space:]]*"\([^"]*\)".*/\1/p' "$META" | head -1)
+SCOPE_CONFIRMED=$(sed -n 's/.*"scopeConfirmed":[[:space:]]*\(true\|false\).*/\1/p' "$META" | head -1)
+SCOPE_CONFIRMED=${SCOPE_CONFIRMED:-false}
+COMM_MODE=$(sed -n 's/.*"communicationMode":[[:space:]]*"\([^"]*\)".*/\1/p' "$META" | head -1)
+COMM_MODE=${COMM_MODE:-internal}
+CASE_OWNER_NAME=$(sed -n 's/.*"caseOwnerName":[[:space:]]*"\([^"]*\)".*/\1/p' "$META" | head -1)
+CASE_OWNER_EMAIL=$(sed -n 's/.*"caseOwnerEmail":[[:space:]]*"\([^"]*\)".*/\1/p' "$META" | head -1)
+
 # --- 规则矩阵 ---
 RED_ITEMS=()
 YELLOW_ITEMS=()
 GREEN_ITEMS=()
 
 # 🔴 需人工决策
-if [ "$ACTUAL_STATUS" = "new" ] && [ "$IR_STATUS" != "Succeeded" ]; then
-  RED_ITEMS+=("IR SLA 未完成（status=$IR_STATUS），需立即处理")
+if [ "$IS_AR" != "true" ]; then
+  # SLA rules only apply to main cases
+  if [ "$ACTUAL_STATUS" = "new" ] && [ "$IR_STATUS" != "Succeeded" ]; then
+    RED_ITEMS+=("IR SLA 未完成（status=$IR_STATUS），需立即处理")
+  fi
 fi
 if [ "$ENTITLEMENT_OK" = "false" ]; then
   RED_ITEMS+=("Entitlement 异常，需确认客户合同状态")
 fi
 if [ "$ACTUAL_STATUS" = "pending-engineer" ] && [ "$DAYS" -ge 2 ] 2>/dev/null; then
-  RED_ITEMS+=("客户等待回复已 ${DAYS} 天，需尽快响应")
+  if [ "$IS_AR" = "true" ]; then
+    if [ "$COMM_MODE" = "internal" ]; then
+      RED_ITEMS+=("Case owner 等待回复已 ${DAYS} 天，需尽快响应")
+    else
+      RED_ITEMS+=("客户等待回复已 ${DAYS} 天（AR scope），需尽快响应")
+    fi
+  else
+    RED_ITEMS+=("客户等待回复已 ${DAYS} 天，需尽快响应")
+  fi
 fi
 
 # 🟡 待确认执行
@@ -97,12 +120,45 @@ if [ -n "$CC_EMAILS" ]; then
   YELLOW_ITEMS+=("$CC_REMINDER")
 fi
 
+# AR-specific YELLOW rules
+if [ "$IS_AR" = "true" ]; then
+  if [ "$SCOPE_CONFIRMED" = "false" ] && [ -n "$AR_SCOPE" ]; then
+    YELLOW_ITEMS+=("AR Scope: ${AR_SCOPE}，请确认是否准确")
+  fi
+  if [ "$ACTUAL_STATUS" = "ready-to-close" ]; then
+    # Override the generic "准备关单" with AR-specific message
+    NEW_YELLOW=()
+    for item in "${YELLOW_ITEMS[@]}"; do
+      [[ "$item" != "准备关单，发 closure email" ]] && NEW_YELLOW+=("$item")
+    done
+    YELLOW_ITEMS=("${NEW_YELLOW[@]}")
+    YELLOW_ITEMS+=("AR 工作完成，通知 case owner: ${CASE_OWNER_NAME} (${CASE_OWNER_EMAIL})")
+  fi
+  if [ "$ACTUAL_STATUS" = "pending-customer" ] && [ "$DAYS" -ge 3 ] 2>/dev/null; then
+    if [ "$COMM_MODE" = "internal" ]; then
+      # Override generic follow-up with AR-specific
+      NEW_YELLOW2=()
+      for item in "${YELLOW_ITEMS[@]}"; do
+        [[ "$item" != *"天无回复，建议发 follow-up"* ]] && [[ "$item" != *"天无回复，已 3 次"* ]] && NEW_YELLOW2+=("$item")
+      done
+      YELLOW_ITEMS=("${NEW_YELLOW2[@]}")
+      YELLOW_ITEMS+=("Case owner ${DAYS} 天无回复，建议发 follow-up")
+    fi
+  fi
+fi
+
 # ✅ 仅通知
-if [ "$IR_STATUS" = "Succeeded" ]; then
-  GREEN_ITEMS+=("IR SLA 已完成")
+if [ "$IS_AR" != "true" ]; then
+  if [ "$IR_STATUS" = "Succeeded" ]; then
+    GREEN_ITEMS+=("IR SLA 已完成")
+  fi
 fi
 if [ "$ACTUAL_STATUS" = "pending-customer" ] && [ "$DAYS" -lt 3 ] 2>/dev/null; then
-  GREEN_ITEMS+=("等待客户回复（${DAYS} 天）")
+  if [ "$IS_AR" = "true" ] && [ "$COMM_MODE" = "internal" ]; then
+    GREEN_ITEMS+=("等待 case owner 回复（${DAYS} 天）")
+  else
+    GREEN_ITEMS+=("等待客户回复（${DAYS} 天）")
+  fi
 fi
 if [ "$ACTUAL_STATUS" = "pending-pg" ]; then
   GREEN_ITEMS+=("等待 PG 回复")
@@ -117,6 +173,12 @@ if [ "$ENTITLEMENT_OK" = "true" ] && [ "$SERVICE_LEVEL" != "Unknown" ]; then
   GREEN_ITEMS+=("Entitlement 合规（${SERVICE_LEVEL}）")
 elif [ "$SERVICE_LEVEL" = "Unknown" ]; then
   GREEN_ITEMS+=("Entitlement 未检查（compliance 未运行）")
+fi
+if [ "$IS_AR" = "true" ]; then
+  GREEN_ITEMS+=("AR Case | Main: ${MAIN_CASE_ID} | Mode: ${COMM_MODE}")
+  if [ "$SCOPE_CONFIRMED" = "true" ]; then
+    GREEN_ITEMS+=("AR Scope 已确认: ${AR_SCOPE}")
+  fi
 fi
 
 # --- 生成 todo 文件 ---
