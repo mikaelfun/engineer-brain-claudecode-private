@@ -35,8 +35,12 @@ function Write-Log {
 }
 
 function Test-BrowserAlive {
-    $result = playwright-cli -s=owa eval '({url: location.href, title: document.title})' 2>&1 | Out-String
-    return ($result -match "outlook\.office\.com" -or $result -match "Mail -")
+    try {
+        $result = playwright-cli -s=owa eval '({url: location.href, title: document.title})' 2>&1 | Out-String
+        return ($result -match "outlook\.office\.com" -or $result -match "Mail -")
+    } catch {
+        return $false
+    }
 }
 
 function Start-OwaBrowser {

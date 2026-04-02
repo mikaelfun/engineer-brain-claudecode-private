@@ -22,7 +22,14 @@
         }
     }
     if (matchOptions.length === 0) {
-        return JSON.stringify({count: 0, conversations: 0, bodyCount: 0, chars: 0, md: "# No results for " + caseNumber});
+        // Store empty result in textarea too (consistent path)
+        var emptyMd = "# Emails (OWA) \u2014 Case " + caseNumber + "\n\n> No search results found\n";
+        var ta0 = document.getElementById("_owa_extract_md") || document.createElement("textarea");
+        ta0.id = "_owa_extract_md";
+        ta0.style.cssText = "position:fixed;left:-9999px";
+        ta0.value = emptyMd;
+        if (!ta0.parentElement) document.body.appendChild(ta0);
+        return "0|0|0|" + emptyMd.length;
     }
 
     var allLabels = [];
@@ -45,8 +52,9 @@
             }
         }
 
-        // Collect listitem labels (dedup)
+        // Collect listitem labels (dedup by exact match)
         var items = document.querySelectorAll("[role=listitem]");
+        var newLabelsThisConv = 0;
         for (var j = 0; j < items.length; j++) {
             var label = items[j].getAttribute("aria-label") || "";
             if (label.length > 30) {
@@ -54,12 +62,12 @@
                 for (var d = 0; d < allLabels.length; d++) {
                     if (allLabels[d] === label) { isDup = true; break; }
                 }
-                if (!isDup) allLabels.push(label);
+                if (!isDup) { allLabels.push(label); newLabelsThisConv++; }
             }
         }
 
-        // Fallback: if no listitems found, use the option label itself as email metadata
-        if (items.length === 0 || allLabels.length === 0) {
+        // Fallback: if no NEW listitems found in this conv, use the option label
+        if (newLabelsThisConv === 0) {
             var optLabel = matchOptions[c].getAttribute("aria-label") || "";
             if (optLabel.length > 30) {
                 var isDup2 = false;
