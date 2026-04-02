@@ -29,14 +29,16 @@ param(
         $cr = if ([IO.Path]::IsPathRooted($cfg.casesRoot)) { $cfg.casesRoot } else { Join-Path $projRoot $cfg.casesRoot }
         "$cr\active"
     }),
-    [switch]$Force
+    [switch]$Force,
+    [string]$OutputFileName = "notes.md",
+    [string]$OutputSubDir
 )
 
 . "$PSScriptRoot\_init.ps1"
 
-$caseDir = Join-Path $OutputDir $TicketNumber
-if (-not (Test-Path $caseDir)) { New-Item -ItemType Directory -Path $caseDir -Force | Out-Null }
-$notesFile = Join-Path $caseDir "notes.md"
+$targetDir = if ($OutputSubDir) { Join-Path $OutputDir $OutputSubDir } else { Join-Path $OutputDir $TicketNumber }
+if (-not (Test-Path $targetDir)) { New-Item -ItemType Directory -Path $targetDir -Force | Out-Null }
+$notesFile = Join-Path $targetDir $OutputFileName
 
 # --- 获取 incidentid ---
 Write-Host "🔵 Resolving incidentid for $TicketNumber ..."
