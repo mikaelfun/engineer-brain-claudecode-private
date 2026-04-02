@@ -46,6 +46,7 @@ allowed-tools:
 ### 2a. 首次生成 case-summary.md
 
 读取：`case-info.md`、`emails.md`、`notes.md`、`teams/*.md`（如有）。
+- AR Case 额外读取：`notes-ar.md`（如存在）
 
 用 Write 工具生成完整 summary，格式：
 
@@ -74,6 +75,21 @@ allowed-tools:
 - **Entitlement 不合规时**：在「风险」section 首行插入 `⚠️ **Entitlement Warning** — Service: {serviceName}, Schedule: {schedule}, Country: {contractCountry}。请联系 TA 确认。`
 - **RDSE 客户时**：在「问题描述」末尾注明 `[RDSE: {ccAccount}]`
 
+**AR Case 规则**（`meta.isAR === true`）：
+- 「问题描述」格式：`[AR] {ar.scope} — Main Case: {mainCaseId}`
+- 「排查进展」从 notes-ar.md + emails.md 提取 AR scope 相关事件
+- 「关键发现」仅包含 AR scope 内的诊断结论
+- 「风险」不包含 SLA 风险评估（不是 AR owner 的 SLA）
+- 额外 section **「AR 信息」**（放在「问题描述」和「排查进展」之间）：
+  ```markdown
+  ## AR 信息
+  - Main Case: {mainCaseId}
+  - Case Owner: {ar.caseOwnerName} ({ar.caseOwnerEmail})
+  - Communication Mode: {ar.communicationMode}
+  - Scope: {ar.scope}
+  - Scope Confirmed: {ar.scopeConfirmed}
+  ```
+
 ### 2b. 增量追加 case-summary.md
 
 仅读取**新增内容**（自上次 inspection 后的新邮件、notes、teams 消息）。
@@ -84,6 +100,8 @@ allowed-tools:
 3. 如风险状况变化，更新「风险」section
 
 **不要**重写整个文件，只 Edit 追加/修改变化部分。
+
+**AR Case**：增量追加逻辑相同，但只关注 AR scope 相关的新事件。如 `ar.communicationMode` 或 `ar.scopeConfirmed` 有变化，更新「AR 信息」section。
 
 ### 3. 规则化生成 todo
 

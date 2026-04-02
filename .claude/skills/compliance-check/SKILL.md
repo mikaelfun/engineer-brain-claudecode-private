@@ -31,6 +31,15 @@ Entitlement 合规检查 + 21v Convert 检测。
 
 > ⚠️ `ccAccount` 为 `null` 视为"已评估但未匹配"，允许跳过。`ccAccount` 字段不存在（undefined）才表示 CC Finder 从未执行过。
 
+### AR 缓存策略
+AR case 的 compliance 缓存更积极：
+- Entitlement 检查基于 **main case** 数据（`case-info.md` 来自 main case），合同信息不会因 AR 而变化
+- 首次检查后缓存永久有效（除非手动清除 meta）
+- casework AR PATH 在 Step A3 中调用时，读取 `compliance.entitlementOk`：
+  - 有值 → 跳过（无论 true/false，都不重新检查）
+  - 无值 → 执行完整检查
+- `entitlementOk === false` 时 casework 阻断，但不重新检查（避免反复查询已知不合规的 case）
+
 ## 执行步骤
 
 ### 1. 读取数据

@@ -45,6 +45,12 @@ allowed-tools:
   ```
   > 以上命令合并到单次 Bash 调用中
 
+- `{caseDir}/notes-ar.md`（如存在）— **只读最后 50 行**（AR notes 通常较少）：
+  ```bash
+  tail -50 "{caseDir}/notes-ar.md" 2>/dev/null || echo "(no AR notes)"
+  ```
+  > AR Mode 时必须读取此文件。
+
 ### 3. ICM 动态查询（如有）
 有 ICM → 用 `get_ai_summary` + `get_incident_details_by_id` 查当前状态。
 **有 ICM ≠ pending-pg**：PG 仍处理→pending-pg，PG 已完成→可能 pending-engineer。
@@ -55,6 +61,44 @@ allowed-tools:
 
 **判断原则**：① 不依赖 D365 Status 字段 ② ICM 状态需动态查询 ③ 最后邮件方向≠状态，需结合内容理解意图
 
+### AR Mode 判断原则
+
+当 `meta.isAR === true` 时，status-judge 使用 AR 语义规则。核心区别：
+
+**数据源变化**：
+- `emails.md` — 来自 **main case**，分析客户/case owner 的最新沟通
+- `notes-ar.md` — AR 专属 notes，分析 case owner 的需求和你的回复
+- `ar.communicationMode` — 决定用哪套判断规则
+
+**内部模式** (`communicationMode = "internal"`)：
+- 你与 case owner 之间的沟通，不直接面对客户
+- `pending-engineer` = case owner 在 notes/Teams 中提了新问题，你未回应
+- `pending-customer` = 你在 notes 中回复了，等 case owner 反馈
+- `ready-to-close` = AR scope 问题已解决，你已回复 case owner
+- `daysSinceLastContact` = 距你最后一次在 `notes-ar.md` 中回复的天数
+
+**客户面向模式** (`communicationMode = "customer-facing"`)：
+- 你被拉入客户邮件链，直接面对客户（但只处理 AR scope 内的问题）
+- `pending-engineer` = 客户发了新的 AR scope 内问题，你未回复
+- `pending-customer` = 你回复了客户（AR scope 内），等客户反馈
+- `ready-to-close` = 客户确认 AR scope 问题已解决
+- `daysSinceLastContact` = 距你最后一次在 `emails.md` 中给客户发邮件的天数
+
+### AR 判断步骤
+
+1. 读取 `notes-ar.md`（如存在）— 最后几条 note
+2. 读取 `emails.md` 最后 100 行（与普通 case 相同）
+3. 读取 `ar.communicationMode` 和 `ar.scope`
+4. **内部模式**：
+   - 检查 notes-ar.md 最后一条 note 是谁写的
+   - 如果是 case owner → pending-engineer
+   - 如果是你 → pending-customer 或 researching
+5. **客户面向模式**：
+   - 分析 emails.md 最后几封邮件
+   - 如果客户最后发邮件且涉及 AR scope → pending-engineer
+   - 如果你最后发邮件（AR scope 回复）→ pending-customer
+6. ICM 查询逻辑与普通 case 相同
+
 ### 5. 计算 daysSinceLastContact
 最后一封**工程师发出邮件**到现在的自然日天数（用于 ≥3 天 follow-up 判断）。
 
@@ -63,6 +107,8 @@ allowed-tools:
 ```json
 { "actualStatus": "...", "daysSinceLastContact": 2, "statusJudgedAt": "ISO8601", "statusReasoning": "一句话推理 → {status}", "emailCountAtJudge": 14, "noteCountAtJudge": 2, "icmIdAtJudge": "12345 或空字符串" }
 ```
+
+> ⚠️ AR Mode 时，保留已有的 `isAR`、`mainCaseId`、`ar` 字段不覆盖。status-judge 只写入 `actualStatus`/`daysSinceLastContact`/`statusJudgedAt`/`statusReasoning`/`emailCountAtJudge`/`noteCountAtJudge`/`icmIdAtJudge`。
 - `statusReasoning`：含关键依据，以 `→ {actualStatus}` 结尾，≤200 字。
 - `emailCountAtJudge`：本次 judge 时 emails.md 的邮件总数（从文件头 `Emails (N)` 提取）。
 - `noteCountAtJudge`：本次 judge 时 notes.md 的 Note 总数（从文件头 `Notes (N)` 提取）。

@@ -27,6 +27,25 @@ D365 快照 + 邮件 + 笔记 + 附件 + ICM。
 ## 配置读取
 读取 `config.json` 获取 `casesRoot`，设置 `caseDir = {casesRoot}/active/{caseNumber}/`（绝对路径），`mkdir -p "{caseDir}"`。
 
+## AR Mode
+
+当 casework 传入 `isAR=true` 和 `mainCaseId={mainCaseNumber}` 时：
+
+- **数据源变化**：
+  - `case-info.md` / `emails.md` / `notes.md` / `attachments/` → 从 **main case** (`mainCaseId`) 拉取
+  - `notes-ar.md` → 从 **AR case** (`caseNumber`) 拉取
+- **跳过项**：
+  - `emails-office.md` — AR 不需要
+  - IR check — SLA 不是 AR owner 的责任
+- **PowerShell 命令**：
+  ```bash
+  pwsh -NoProfile -File skills/d365-case-ops/scripts/fetch-all-data.ps1 -TicketNumber {caseNumber} -OutputDir {casesRoot}/active -MainCaseNumber {mainCaseId} -CacheMinutes 10 -MetaDir {casesRoot}/active
+  ```
+  `-MainCaseNumber` 触发 AR 模式，脚本内部会：
+  1. 从 mainCaseNumber 拉取 snapshot/emails/notes → 存到 AR case 目录
+  2. 从 AR caseNumber 拉取 notes → 存为 `notes-ar.md`
+  3. 跳过 IR check
+
 ## ⚠️ D365 脚本参数约定
 - 参数名 **`-TicketNumber`**（不是 -CaseNumber）
 - **`-OutputDir` 传父目录 `{casesRoot}/active`**（不含 case number），脚本内部自动 Join-Path
@@ -62,6 +81,12 @@ pwsh -NoProfile -File skills/d365-case-ops/scripts/fetch-all-data.ps1 -TicketNum
 ```
 内部并行执行 snapshot + emails + notes，完成后执行 IR check（API 优先 ~2s，失败降级 UI scraping）。
 
+**AR Mode**:
+```bash
+pwsh -NoProfile -File skills/d365-case-ops/scripts/fetch-all-data.ps1 -TicketNumber {caseNumber} -OutputDir {casesRoot}/active -MainCaseNumber {mainCaseId} -CacheMinutes 10 -MetaDir {casesRoot}/active
+```
+内部会从 mainCaseId 拉取 snapshot + emails + notes 到 AR 目录，并从 AR caseNumber 拉取 notes-ar.md。IR check 自动跳过。
+
 ### 2. 附件下载（DTM）
 读 `{caseDir}/case-info.md` 检查 `DTM Attachments: N`。N=0 跳过。
 ```bash
@@ -69,6 +94,8 @@ pwsh -NoProfile -File skills/d365-case-ops/scripts/download-attachments.ps1 -Tic
 ```
 Token 优先级：① dtm-token-global.json → ② per-workspace 缓存 → ③ Playwright 截获。
 **附件下载失败必须明确记录失败原因**，不要静默跳过。
+
+**AR Mode**: 从 main case 下载附件（读 AR 目录下的 `case-info.md`，它来自 main case）。
 
 ### 3. ICM 数据拉取
 从 case-info.md 读 ICM Number。有 ICM 则用 `mcp__icm__get_ai_summary` + `get_incident_details_by_id`，结果写入 `{caseDir}/icm/`。无 ICM 跳过。
