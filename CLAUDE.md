@@ -86,7 +86,7 @@ tools: Bash, Read, Write
 - 新增或修改 agent.md 后需要**重启会话**或执行 `/agents` 才能生效
 - 不重启会导致 `Agent type 'xxx' not found` 错误
 
-**当前已注册的 7 个 agent：**
+**当前已注册的 8 个 agent：**
 | name | model | tools | mcpServers |
 |------|-------|-------|------------|
 | `casework` | opus | Bash, Read, Write, Edit, Glob, Grep, Agent | icm |
@@ -94,6 +94,7 @@ tools: Bash, Read, Write
 | `teams-search` | sonnet | Bash, Read, Write | teams |
 | `email-drafter` | opus | Read, Write, Bash | — |
 | `troubleshooter` | opus | Bash, Read, Write, Glob, Grep, WebSearch | kusto, msft-learn, icm, local-rag |
+| `challenger` | opus | Bash, Read, Write, Glob, Grep, WebSearch | msft-learn, local-rag |
 | `stage-worker` | opus | Bash, Read, Write, Glob, Grep, Agent | — |
 | `onenote-case-search` | sonnet | Bash, Read, Write, Glob, Grep | — |
 
@@ -112,6 +113,7 @@ tools: Bash, Read, Write
 - ⚠️ D365 写操作需用户确认（通过 Todo 勾选执行）
 - ✅ 读操作、分析、草稿生成可自动执行
 - 🚨 自动化测试安全红线详见 `playbooks/rules/test-safety-redlines.md`
+- 🚨 **永远不要对用户数据目录执行 `rm -rf`**——即使用户说"删了重建"，也必须先确认目标路径、列出内容、等用户逐项确认后再操作。误删 lancedb 4.7GB 向量库的教训（2026-04-02）。正确做法：先 `ls` 查看 → 展示内容 → 用户明确确认 → 再删除。
 
 ## 双层记忆架构
 
