@@ -13,11 +13,13 @@ import {
   useCaseTeams, useCaseMeta, useCaseAnalysis, useCaseOnenote,
   useCaseDrafts, useCaseInspection, useCaseTodo, useCaseTodoFile,
   useCaseTiming, useCaseLogs, useCaseAttachments,
-  useToggleCaseTodo
+  useToggleCaseTodo, useCaseClaims
 } from '../api/hooks'
 import MarkdownContent from '../components/common/MarkdownContent'
 import CaseAIPanel from '../components/CaseAIPanel'
+import { LaborEstimateCard } from '../components/LaborEstimateCard'
 import { NoteGapCard } from '../components/NoteGapCard'
+import EvidenceChainTab from '../components/EvidenceChainTab'
 
 export default function CaseDetail() {
   const { id } = useParams<{ id: string }>()
@@ -40,9 +42,14 @@ export default function CaseDetail() {
   const { data: inspectionData } = useCaseInspection(id || '')
   const toggleCaseTodo = useToggleCaseTodo(id || '')
   const { data: timingData } = useCaseTiming(activeTab === 'timing' ? (id || '') : '')
+  const { data: claimsData } = useCaseClaims(id || '')
 
   if (isLoading) return <Loading text="Loading case..." />
   if (error || !caseInfo) return <ErrorState message="Case not found" onRetry={() => navigate('/')} />
+
+  // Evidence chain: count claims with issues for badge
+  const claimsList = claimsData?.claims as Array<{ status: string }> | null | undefined
+  const evidenceCount = Array.isArray(claimsList) ? claimsList.length : undefined
 
   const tabs = [
     { id: 'summary', label: 'Summary', icon: '📋' },
@@ -52,6 +59,7 @@ export default function CaseDetail() {
     { id: 'teams', label: 'Teams', icon: '💬', count: teamsData?.total },
     { id: 'drafts', label: 'Drafts', icon: '✉️', count: draftsData?.total },
     { id: 'analysis', label: 'Analysis', icon: '🔍' },
+    { id: 'evidence', label: 'Evidence', icon: '🔗', count: evidenceCount },
     { id: 'onenote', label: 'OneNote', icon: '📓', count: onenoteData?.total },
     { id: 'timing', label: 'Timing', icon: '⏱️' },
     { id: 'logs', label: 'Logs', icon: '📄', count: logsData?.total },
@@ -209,6 +217,7 @@ export default function CaseDetail() {
             {activeTab === 'teams' && <TeamsTab chats={teamsData?.chats || []} />}
             {activeTab === 'drafts' && <DraftsTab drafts={draftsData?.drafts || []} caseNumber={id!} />}
             {activeTab === 'analysis' && <AnalysisTab content={analysisData?.content} exists={analysisData?.exists} />}
+            {activeTab === 'evidence' && <EvidenceChainTab caseId={id!} />}
             {activeTab === 'onenote' && <OnenoteTab files={onenoteData?.files || []} />}
             {activeTab === 'timing' && <TimingTab exists={timingData?.exists} timing={timingData?.timing} />}
             {activeTab === 'logs' && <LogsTab logs={logsData?.logs || []} />}
@@ -220,6 +229,7 @@ export default function CaseDetail() {
         {/* Right — AI Assistant sidebar (xl+ only, sticky) */}
         <div className="w-64 flex-shrink-0 hidden xl:block sticky top-4">
           <CaseAIPanel mode="compact" caseNumber={id!} onOpenFull={() => setActiveTab('ai')} skipRecovery />
+          <LaborEstimateCard caseNumber={id!} />
         </div>
       </div>
 

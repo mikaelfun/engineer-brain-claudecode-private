@@ -4,6 +4,7 @@
 import { useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiGet, apiPost, apiPatch, apiPut, apiDelete } from './client'
+import { useTriggerRunStore } from '../stores/triggerRunStore'
 
 // ===== Cases =====
 
@@ -148,6 +149,22 @@ export function useCaseAttachments(id: string) {
   })
 }
 
+export function useCaseClaims(id: string) {
+  return useQuery({
+    queryKey: ['cases', id, 'claims'],
+    queryFn: () => apiGet<any>(`/cases/${id}/claims`),
+    enabled: !!id,
+  })
+}
+
+export function useChallengeReport(id: string) {
+  return useQuery({
+    queryKey: ['cases', id, 'challenge-report'],
+    queryFn: () => apiGet<{ content: string | null }>(`/cases/${id}/challenge-report`),
+    enabled: !!id,
+  })
+}
+
 // ===== Todos =====
 
 export function useTodoList() {
@@ -223,12 +240,26 @@ export function useRunTrigger() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => apiPost<any>(`/agents/triggers/${id}/run`, {}),
+    onMutate: (id: string) => {
+      // Optimistic update: immediately show running state before SSE arrives
+      useTriggerRunStore.getState().onTriggerStarted(id)
+    },
     onSuccess: () => {
-      // Refetch after a short delay to pick up updated state
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: ['agents', 'triggers'] })
         queryClient.invalidateQueries({ queryKey: ['agents', 'cron-jobs'] })
       }, 2000)
+    },
+  })
+}
+
+export function useCancelTrigger() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => apiPost<any>(`/agents/triggers/${id}/cancel`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agents', 'triggers'] })
+      queryClient.invalidateQueries({ queryKey: ['agents', 'cron-jobs'] })
     },
   })
 }
@@ -1094,6 +1125,29 @@ export function useAllNoteGaps() {
     queryKey: ['note-gaps-all'],
     queryFn: () => apiGet<{ gaps: NoteGapItem[] }>('/note-gaps'),
     refetchInterval: 30_000,
+  })
+}
+
+export interface BatchCheckResult {
+  checked: number
+  gaps: number
+  generated: number
+  skipped: number
+  details: Array<{
+    caseNumber: string
+    status: 'gap' | 'ok' | 'no-notes' | 'already-has-draft'
+    gapDays?: number
+    lastNoteDate?: string
+  }>
+}
+
+export function useCheckAllNoteGaps() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () => apiPost<BatchCheckResult>('/note-gaps', {}),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['note-gaps-all'] })
+    },
   })
 }
 
