@@ -99,13 +99,53 @@ allowed-tools:
    - 如果你最后发邮件（AR scope 回复）→ pending-customer
 6. ICM 查询逻辑与普通 case 相同
 
+### 4b. 推荐下一步行动（recommendedActions）
+
+在判定 actualStatus 后，综合以下已读取的上下文推理最优行动：
+
+- `actualStatus` + `daysSinceLastContact`
+- `case-summary.md`（排查进展、关键发现、风险）
+- `emails.md` 最后几封邮件（沟通状态、是否已发送关键邮件）
+- `notes.md` / `notes-ar.md`（最新工作记录）
+- ICM 状态（如有 ICM：PG 是否在处理、是否有新回复）
+- `drafts/` 目录是否有未发送草稿（`ls {caseDir}/drafts/*.md 2>/dev/null | wc -l`）
+
+**推理指导**（非严格规则，LLM 应综合判断）：
+1. 排查已完成 + 邮件已发送 + ICM pending PG → `no-agent`（等 PG 即可）
+2. 有未发送草稿且内容仍相关 → `no-agent`（用户只需发送现有草稿）
+3. 排查完成但未告知客户/case owner → `email-drafter`（不需要 troubleshooter）
+4. 有新信息需要排查（客户新提供数据、PG 有新回复需要验证）→ `troubleshooter`
+5. 新 case + 需要初始排查和首次沟通 → `troubleshooter+email-drafter`
+6. 判断不确定 → 留空 `recommendedActions: []`（让 routing fallback 到路由表）
+
+**输出格式**：
+```json
+"recommendedActions": [
+  {
+    "action": "no-agent | troubleshooter | email-drafter | troubleshooter+email-drafter",
+    "reason": "≤100字，解释为什么推荐这个行动"
+  }
+]
+```
+
+**action 枚举**：
+| action | casework 行为 |
+|--------|-------------|
+| `no-agent` | 跳过 agent spawn，直接到 inspection |
+| `troubleshooter` | 仅 spawn troubleshooter |
+| `email-drafter` | 仅 spawn email-drafter |
+| `troubleshooter+email-drafter` | spawn 两者（先 troubleshooter 后 email-drafter） |
+
+> ⚠️ 仅在 CHANGED 路径（status-judge 实际执行时）输出。快速路径（cache hit）不输出 recommendedActions。
+> ⚠️ AR Mode 同样输出 recommendedActions，但推理时考虑 AR scope 和 communicationMode。
+
 ### 5. 计算 daysSinceLastContact
 最后一封**工程师发出邮件**到现在的自然日天数（用于 ≥3 天 follow-up 判断）。
 
 ### 6. Upsert casehealth-meta.json
 保留已有字段（compliance/irSla/fdr/fwr），添加/更新：
 ```json
-{ "actualStatus": "...", "daysSinceLastContact": 2, "statusJudgedAt": "ISO8601", "statusReasoning": "一句话推理 → {status}", "emailCountAtJudge": 14, "noteCountAtJudge": 2, "icmIdAtJudge": "12345 或空字符串" }
+{ "actualStatus": "...", "daysSinceLastContact": 2, "statusJudgedAt": "ISO8601", "statusReasoning": "一句话推理 → {status}", "emailCountAtJudge": 14, "noteCountAtJudge": 2, "icmIdAtJudge": "12345 或空字符串", "recommendedActions": [{"action": "...", "reason": "..."}] }
 ```
 
 > ⚠️ AR Mode 时，保留已有的 `isAR`、`mainCaseId`、`ar` 字段不覆盖。status-judge 只写入 `actualStatus`/`daysSinceLastContact`/`statusJudgedAt`/`statusReasoning`/`emailCountAtJudge`/`noteCountAtJudge`/`icmIdAtJudge`。
