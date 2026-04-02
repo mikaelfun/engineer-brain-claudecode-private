@@ -59,6 +59,8 @@ maxTurns: 15
 - `{caseDir}/casehealth-meta.json` — 读取 `ccEmails` 字段（RDSE CC 联系人）
 - `playbooks/guides/email-templates.md` — 邮件模板
 - `playbooks/guides/customer-communication.md` — 沟通规范
+- `{caseDir}/claims.json`（如存在）— 证据链声明状态
+- `{caseDir}/challenge-report.md`（如存在）— Challenger 审查报告
 - `playbooks/email-samples/` — 参考样本
 
 ### 2. 选择模板
@@ -79,6 +81,12 @@ maxTurns: 15
 - 遵循 customer-communication.md 中的语气和格式规范
 - 参考邮件历史延续上下文
 - 如有分析报告，引用关键结论
+- **claims.json 感知**（如存在）：
+  - `status: verified` 的 claim → 邮件中自信引用，使用确定性语气
+  - `status: challenged` 的 claim → 试探性语气表达（如 "Based on our initial analysis, it appears..." / "根据初步分析，可能是..."）
+  - `status: rejected` 的 claim → **不写入邮件**
+  - `status: pending` 的 claim → 按原有逻辑（向后兼容）
+  - 如 claims.json 不存在 → 按原有逻辑（向后兼容）
 
 ### 4. Humanizer 润色
 根据最终确定的语言（Step 0 自动检测或显式指定）选择 humanizer：
@@ -115,6 +123,16 @@ _Generated at {timestamp} | Humanized: ✅_
 - **仅在 `emailType` 为 `initial-response` 且 `casehealth-meta.json` 中存在 `ccEmails` 字段时**才添加 `**CC:**` 行
 - 其他邮件类型（follow-up、closure 等）或无 `ccEmails` 时，省略 `**CC:**` 行
 - CC 内容直接使用 `ccEmails` 的值（分号分隔的邮件列表）
+
+### 5a. Challenger 触发的 request-info 模式
+
+当由 casework auto-loop 触发（emailType 为 `request-info` 且 prompt 中包含 Challenger 审查信息）时：
+
+- 从 prompt 中提取 Challenger 发现的「需要的额外信息」列表
+- 邮件焦点：收集能验证或推翻待定结论的具体信息
+- 将技术问题转化为客户容易回答的具体问题
+- **不要暴露内部审查流程**（不要提到 Challenger、claims、evidence chain 等内部概念）
+- 语气自然，像正常的信息收集邮件
 
 ## 输出文件
 - `{caseDir}/drafts/YYYYMMDD-HHMM-{type}-{lang}-{recipient}.md` — 邮件草稿
