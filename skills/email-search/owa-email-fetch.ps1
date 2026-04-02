@@ -35,13 +35,13 @@ function Write-Log {
 }
 
 function Test-BrowserAlive {
-    $result = playwright-cli eval '({url: location.href, title: document.title})' 2>&1 | Out-String
+    $result = playwright-cli -s=owa eval '({url: location.href, title: document.title})' 2>&1 | Out-String
     return ($result -match "outlook\.office\.com" -or $result -match "Mail -")
 }
 
 function Start-OwaBrowser {
     Write-Log "OWA BROWSER | Starting persistent Edge session..."
-    $out = playwright-cli open --persistent --profile $OWA_PROFILE --browser msedge $OWA_URL 2>&1 | Out-String
+    $out = playwright-cli -s=owa open --persistent --profile $OWA_PROFILE --browser msedge $OWA_URL 2>&1 | Out-String
     if ($out -match "opened with pid") {
         Start-Sleep -Seconds 3
         if (Test-BrowserAlive) {
@@ -58,6 +58,9 @@ function Ensure-OwaBrowser {
         Write-Log "OWA BROWSER | Already running"
         return $true
     }
+    # Try to close stale session first
+    playwright-cli -s=owa close 2>&1 | Out-Null
+    Start-Sleep -Seconds 2
     return Start-OwaBrowser
 }
 
@@ -90,22 +93,29 @@ $t0 = $sw.ElapsedMilliseconds
 Write-Log "OWA STEP1 | Searching for case $CaseNumber"
 
 # Navigate to inbox (in case we're on a different page)
-playwright-cli goto $OWA_URL 2>&1 | Out-Null
-Start-Sleep -Seconds 2
+playwright-cli -s=owa goto $OWA_URL 2>&1 | Out-Null
+
+# Poll until inbox loaded (search box available)
+for ($nav = 0; $nav -lt 10; $nav++) {
+    Start-Sleep -Seconds 1
+    $navCheck = playwright-cli -s=owa eval '(document.querySelector("[role=search] [role=combobox]") ? "ready" : "waiting")' 2>&1 | Out-String
+    if ($navCheck -match "ready") { break }
+}
 
 # Focus search box + type + enter
-playwright-cli eval "(document.querySelector(`"[role=search] [role=combobox]`")?.focus(), document.querySelector(`"[role=search] [role=combobox]`")?.click(), `"ok`")" 2>&1 | Out-Null
+playwright-cli -s=owa eval "(document.querySelector(`"[role=search] [role=combobox]`")?.focus(), document.querySelector(`"[role=search] [role=combobox]`")?.click(), `"ok`")" 2>&1 | Out-Null
+Start-Sleep -Milliseconds 800
+playwright-cli -s=owa press "Control+a" 2>&1 | Out-Null
+Start-Sleep -Milliseconds 300
+playwright-cli -s=owa type $CaseNumber 2>&1 | Out-Null
 Start-Sleep -Milliseconds 500
-playwright-cli press "Control+a" 2>&1 | Out-Null
-playwright-cli type $CaseNumber 2>&1 | Out-Null
-Start-Sleep -Milliseconds 500
-playwright-cli press Enter 2>&1 | Out-Null
+playwright-cli -s=owa press Enter 2>&1 | Out-Null
 
 # Poll for search results instead of fixed sleep
 $found = $false
 for ($attempt = 0; $attempt -lt $SearchTimeout; $attempt++) {
     Start-Sleep -Seconds 1
-    $check = playwright-cli eval "
+    $check = playwright-cli -s=owa eval "
     (function(){
         var options = document.querySelectorAll(`"[role=option]`");
         for (var i = 0; i < options.length; i++) {
@@ -130,144 +140,22 @@ $t1 = $sw.ElapsedMilliseconds
 Write-Log "OWA STEP1 OK | Search results found ($($t1-$t0)ms)"
 
 # ══════════════════════════════════════════════════════════════════════
-# Step 2: Click first matching result
+# Step 2-4: Open all conversations, expand, load bodies, extract
+# Uses external JS file to avoid PowerShell escape hell
 # ══════════════════════════════════════════════════════════════════════
-$clickResult = playwright-cli eval "
-(function(){
-    var options = document.querySelectorAll(`"[role=option]`");
-    for (var i = 0; i < options.length; i++) {
-        if ((options[i].getAttribute(`"aria-label`") || `"`").indexOf(`"$CaseNumber`") > -1) {
-            options[i].click();
-            return `"clicked`";
-        }
-    }
-    return `"not_found`";
-})()
-" 2>&1 | Out-String
-Start-Sleep -Seconds 2
+$mode = if ($PreviewOnly) { "preview" } else { "full" }
+Write-Log "OWA STEP2 | Extracting ($mode mode, scrollDelay=${ScrollDelay}ms)"
 
-# Wait for conversation to load (poll for listitem or message body)
-for ($w = 0; $w -lt 5; $w++) {
-    $loaded = playwright-cli eval "
-    (function(){
-        var li = document.querySelectorAll(`"[role=listitem]`").length;
-        var mb = document.querySelectorAll(`"[aria-label=\`"Message body\`"]`").length;
-        return (li > 0 || mb > 0) ? `"loaded`" : `"waiting`";
-    })()
-    " 2>&1 | Out-String
-    if ($loaded -match "loaded") { break }
-    Start-Sleep -Seconds 1
-}
-$t2 = $sw.ElapsedMilliseconds
-Write-Log "OWA STEP2 OK | Conversation opened ($($t2-$t1)ms)"
+# Inject parameters into browser window
+playwright-cli -s=owa eval "(window.__OWA_CASE_NUMBER=`"$CaseNumber`", window.__OWA_MODE=`"$mode`", window.__OWA_SCROLL_DELAY=$ScrollDelay, `"params set`")" 2>&1 | Out-Null
 
-# ══════════════════════════════════════════════════════════════════════
-# Step 3: Expand conversation (if button exists)
-# ══════════════════════════════════════════════════════════════════════
-$expandResult = playwright-cli eval "
-(function(){
-    var btns = document.querySelectorAll(`"button`");
-    for (var i = 0; i < btns.length; i++) {
-        if ((btns[i].getAttribute(`"aria-label`") || `"`") === `"Expand conversation`") {
-            btns[i].click();
-            return `"expanded`";
-        }
-    }
-    return `"no_button`";
-})()
-" 2>&1 | Out-String
-if ($expandResult -match "expanded") {
-    Start-Sleep -Seconds 2
-    Write-Log "OWA STEP3 OK | Conversation expanded"
-} else {
-    Write-Log "OWA STEP3 SKIP | No expand button (single email or already expanded)"
-}
-$t3 = $sw.ElapsedMilliseconds
-
-# ══════════════════════════════════════════════════════════════════════
-# Step 4: Extract conversation
-# ══════════════════════════════════════════════════════════════════════
-if ($PreviewOnly) {
-    # ── Preview mode: just grab aria-label ──
-    Write-Log "OWA STEP4 | Preview mode — extracting aria-labels"
-    $extractResult = playwright-cli eval "
-    (function(){
-        var items = document.querySelectorAll(`"[role=listitem]`");
-        var emails = [];
-        for (var i = 0; i < items.length; i++) {
-            var label = (items[i].getAttribute(`"aria-label`") || `"`");
-            if (label.length > 30) emails.push(label);
-        }
-        // Build markdown
-        var md = `"# Emails (OWA) — Case $CaseNumber\n\n`";
-        md += `"> Generated: `" + new Date().toISOString() + `" | Total: `" + emails.length + `" emails | Source: OWA Preview\n\n---\n`";
-        for (var j = 0; j < emails.length; j++) {
-            var isExt = emails[j].indexOf(`"External sender`") > -1;
-            var clean = emails[j].replace(`"External sender `", `"`").replace(`"Flagged `", `"`").replace(`"Unread Expanded `", `"`").replace(`"Unread `", `"`");
-            var parts = clean.split(/\s{2,}/);
-            var sender = parts[0] || `"?`";
-            var icon = isExt ? `"📥 Received`" : `"📤 Sent`";
-            var body = parts.slice(1).join(`" `");
-            md += `"\n### `" + icon + `"\n**From:** `" + sender + `"\n\n`" + body + `"\n\n---\n`";
-        }
-        return JSON.stringify({count: emails.length, chars: md.length, md: md});
-    })()
-    " 2>&1 | Out-String
-
-} else {
-    # ── Full body mode: scrollIntoView + extract ──
-    Write-Log "OWA STEP4 | Full body mode — loading all email bodies"
-    $extractResult = playwright-cli eval "
-    (async function(){
-        var items = document.querySelectorAll(`"[role=listitem]`");
-        var emailItems = [];
-        for (var i = 0; i < items.length; i++) {
-            var label = (items[i].getAttribute(`"aria-label`") || `"`");
-            if (label.length > 30) emailItems.push({el: items[i], label: label});
-        }
-
-        function sleep(ms) { return new Promise(function(r){ setTimeout(r, ms); }); }
-
-        // Trigger all body loading via scrollIntoView + click
-        for (var j = 0; j < emailItems.length; j++) {
-            emailItems[j].el.scrollIntoView({behavior: `"instant`", block: `"center`"});
-            emailItems[j].el.click();
-            await sleep($ScrollDelay);
-        }
-        await sleep(800);
-
-        // Collect bodies — filter out nested quotes
-        var bodies = document.querySelectorAll(`"[aria-label=\`"Message body\`"]`");
-        var bodyTexts = [];
-        for (var k = 0; k < bodies.length; k++) {
-            var t = bodies[k].innerText || `"`";
-            if (t.length > 5 && t.substring(0, 3) !== `"发件人`" && t.substring(0, 5) !== `"From:`") {
-                bodyTexts.push(t);
-            }
-        }
-
-        // Build markdown — pair emails with bodies (best effort: same order)
-        var md = `"# Emails (OWA) — Case $CaseNumber\n\n`";
-        md += `"> Generated: `" + new Date().toISOString() + `" | Total: `" + emailItems.length + `" emails | Source: OWA Full Body\n\n---\n`";
-
-        for (var m = 0; m < emailItems.length; m++) {
-            var isExt = emailItems[m].label.indexOf(`"External sender`") > -1;
-            var clean = emailItems[m].label.replace(`"External sender `", `"`").replace(`"Flagged `", `"`").replace(`"Unread Expanded `", `"`").replace(`"Unread `", `"`");
-            var parts = clean.split(/\s{2,}/);
-            var sender = parts[0] || `"?`";
-            var timeStr = (parts[1] || `"`").split(`" `").slice(0, 3).join(`" `");
-            var icon = isExt ? `"📥 Received`" : `"📤 Sent`";
-
-            var body = (m < bodyTexts.length) ? bodyTexts[m] : `"(body not loaded)`";
-            md += `"\n### `" + icon + `" | `" + timeStr + `"\n**From:** `" + sender + `"\n\n`" + body + `"\n\n---\n`";
-        }
-
-        return JSON.stringify({count: emailItems.length, bodyCount: bodyTexts.length, chars: md.length, md: md});
-    })()
-    " 2>&1 | Out-String
-}
+# Execute extraction JS file (read content, pass as eval argument)
+$jsFile = Join-Path $PSScriptRoot "owa-extract-conversation.js"
+$jsContent = Get-Content $jsFile -Raw
+$extractResult = playwright-cli -s=owa eval $jsContent 2>&1 | Out-String
 
 $t4 = $sw.ElapsedMilliseconds
+Write-Log "OWA STEP2 OK | Extraction complete ($($t4-$t1)ms)"
 
 # ══════════════════════════════════════════════════════════════════════
 # Step 5: Parse result and write output
