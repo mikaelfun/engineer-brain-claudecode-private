@@ -26,6 +26,7 @@ ${casesRoot}/
 | `emails.md` | Markdown | d365-case-ops | 完整邮件历史（按时间倒序，D365 源） |
 | `emails-office.md` | Markdown | email-search | Outlook 邮件完整正文（按时间正序，Office Mail MCP 源，与 emails.md 互补） |
 | `notes.md` | Markdown | d365-case-ops | Note 历史（增量更新） |
+| `notes-ar.md` | Markdown | d365-case-ops (fetch-notes.ps1) | AR case 专属 notes（仅 AR case 有此文件）。与 `notes.md` 格式相同（reverse-chronological append），但仅包含 AR case 实体上的 notes，用于分离 AR 沟通和 main case 沟通。 |
 | `timing.json` | JSON | casework (Main Agent) | 各步骤执行耗时（见 `schemas/timing-schema.md`） |
 
 ## 子目录
@@ -154,3 +155,18 @@ YYYYMMDD-HHMM-{mail-type}-{lang}-{recipient}.md
 
 - 所有数据都是 Markdown 或 JSON，不依赖任何数据库
 - Web UI / Claude Code / 其他 agent 框架都可以直接读写
+
+## AR Case 目录
+
+AR (Assistance Request) case 的目录结构与普通 case 基本相同，区别：
+
+| 文件 | 来源 | 说明 |
+|------|------|------|
+| `case-info.md` | 从 **main case** 拉取 | AR 没有独立的 case-info |
+| `emails.md` | 从 **main case** 拉取 | AR 没有独立邮件 |
+| `notes.md` | 从 **main case** 拉取 | main case 的 notes |
+| `notes-ar.md` | 从 **AR case** 拉取 | AR 专属 notes（case owner 需求 + 你的工作记录） |
+| `attachments/` | 从 **main case** 拉取 | 附件在 main case 上 |
+| `emails-office.md` | **不拉取** | AR 不需要 Outlook 邮件 |
+
+AR case 通过 case number 后缀识别（3+ 位数字后缀，如 `2603300030003153001`）。`casehealth-meta.json` 中 `isAR=true`，`mainCaseId` 指向对应的 main case。
