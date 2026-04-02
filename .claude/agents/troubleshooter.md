@@ -187,6 +187,49 @@ az devops wiki page show --wiki "{wikiName}" --project "{project}" \
 - `{caseDir}/research/research.md` — 搜索到的文档/Wiki/KB 引用（增量）
 - `{caseDir}/kusto/{YYYYMMDD-HHMM}-{query-description}.md` — Kusto 查询结果
 - `skills/products/{product}/known-issues.jsonl` — 新发现的已知问题（增量）
+- `{caseDir}/claims.json` — 结构化证据链声明（schema 见 `playbooks/schemas/claims-schema.md`）
+
+### 5a. 证据链提取（写 claims.json）
+
+从刚写好的 analysis.md 中提取每个关键技术判断，生成 `{caseDir}/claims.json`。
+
+**提取规则**：
+- 「分析结论」section 中的每个根因判断 → `type: root-cause`
+- 支撑根因的因果链条 → `type: cause-chain`
+- 「建议方案」section 中的每个建议 → `type: recommendation`
+- 对客户环境的重要观察 → `type: observation`
+- 影响范围判断 → `type: impact`
+
+**Confidence 标注规则**（⚠️ 诚实自评是核心要求）：
+- `high`：≥2 个独立来源交叉验证（如 Kusto 结果 + 官方文档）
+- `medium`：单一可信来源支持（如仅有 Kusto 结果，或仅有文档说明）
+- `low`：有一定线索但证据不充分（如客户描述暗示但未确认）
+- `none`：纯推测，无任何证据支持
+
+> 对于无法找到文档支撑的推断，confidence 必须标为 low 或 none。标为 high 但实际无据是最严重的错误——Challenger 会发现并打回整个分析。诚实标注 low 不是失败，是负责任的行为。
+
+**Evidence 引用规则**：
+- `source` 使用相对于 caseDir 的路径（如 `kusto/20260402-1030-query.md`）
+- 可附加 `#section` anchor 指向文件内特定段落（如 `research/research.md#Microsoft Learn`）
+- `excerpt` 引用来源中支持 claim 的具体文本（不是整段复制，是关键句）
+- `sourceType` 从 enum 中选择：`kusto-result` / `official-doc` / `ado-wiki` / `onenote-team` / `onenote-personal` / `product-skill` / `customer-statement` / `icm-data` / `web-search`
+
+**overallConfidence 计算**：
+- 所有 claims 都是 high → `"high"`
+- 任何 claim 是 none → `"low"`
+- 任何 claim 是 low → `"low"`
+- 其余 → `"medium"`
+
+**triggerChallenge 计算**：
+- 存在任何 `confidence: "low"` 或 `confidence: "none"` 的 claim → `true`
+- 否则 → `false`
+
+Schema 详见 `playbooks/schemas/claims-schema.md`。
+
+**日志**：
+```
+[YYYY-MM-DD HH:MM:SS] STEP 5a OK | claims extracted: N total, H high, M medium, L low, X none | triggerChallenge={true|false}
+```
 
 ### 6. 排查后知识写回（自动）
 
