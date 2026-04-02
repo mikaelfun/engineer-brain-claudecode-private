@@ -32,6 +32,10 @@ t_sj_s=$(read_ts statusJudge_start)
 t_sj_e=$(read_ts statusJudge_end)
 t_rt_s=$(read_ts routing_start)
 t_rt_e=$(read_ts routing_end)
+t_ch_s=$(read_ts challenge_start)
+t_ch_e=$(read_ts challenge_end)
+t_tr_s=$(read_ts troubleshooterRetry_start)
+t_tr_e=$(read_ts troubleshooterRetry_end)
 t_in_s=$(read_ts inspection_start)
 
 total=$((t_end - t_start))
@@ -108,6 +112,12 @@ else
     p_routing=0
   fi
 
+  # challenge: routing结束 → challenge结束（可选，0 = 未触发）
+  p_challenge=$(safe_diff "$t_ch_s" "$t_ch_e")
+
+  # troubleshooterRetry: challenge后重试（可选，0 = 未触发）
+  p_retry=$(safe_diff "$t_tr_s" "$t_tr_e")
+
   # dataGathering: routing结束(或最后已知step结束) → inspection开始
   last_before_insp="$t_rt_e"
   [ "$last_before_insp" = "0" ] && last_before_insp="$t_sj_e"
@@ -118,7 +128,7 @@ else
 
   p_inspection=$((t_end - t_in_s))
 
-  p_sum=$((p_init + p_changegate + p_spawn + p_compliance + p_wait + p_judge + p_routing + p_datagather + p_inspection))
+  p_sum=$((p_init + p_changegate + p_spawn + p_compliance + p_wait + p_judge + p_routing + p_challenge + p_retry + p_datagather + p_inspection))
   p_drift=$((total - p_sum))
 
   # 后台 agent 实际耗时（FYI，不计入相位和，因为与前台步骤并行）
@@ -133,11 +143,13 @@ else
     "waitAgents":    { "seconds": $p_wait,          "label": "TaskOutput 等待 data-refresh + teams-search 完成" },
     "statusJudge":   { "seconds": $p_judge,         "label": "分析 emails/notes/Teams → 判断 actualStatus + daysSinceLastContact" },
     "routing":       { "seconds": $p_routing,        "label": "按 actualStatus 路由 → spawn troubleshooter/email-drafter" },
+    "challenge":     { "seconds": $p_challenge,  "label": "Challenger 审查 troubleshooter 分析的证据链" },
+    "troubleshooterRetry": { "seconds": $p_retry, "label": "Troubleshooter 重新排查（Challenger 打回后）" },
     "dataGathering": { "seconds": $p_datagather,    "label": "读 case-info + emails + notes + teams + meta → 构思 inspection 内容" },
     "inspection":    { "seconds": $p_inspection,     "label": "写 inspection 报告 + todo 清单 + timing.json" }
 PEOF
   )
-  PHASE_LINE="init=${p_init}s cg=${p_changegate}s spawn=${p_spawn}s comp=${p_compliance}s wait=${p_wait}s judge=${p_judge}s route=${p_routing}s data=${p_datagather}s insp=${p_inspection}s"
+  PHASE_LINE="init=${p_init}s cg=${p_changegate}s spawn=${p_spawn}s comp=${p_compliance}s wait=${p_wait}s judge=${p_judge}s route=${p_routing}s chal=${p_challenge}s retry=${p_retry}s data=${p_datagather}s insp=${p_inspection}s"
 
   # 追加后台 agent 信息
   PHASE_LINE="$PHASE_LINE | bg: dr=${bg_dr}s ts=${bg_ts}s"
