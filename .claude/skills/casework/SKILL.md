@@ -11,6 +11,7 @@ steps:
   - status-judge
   - teams-search
   - troubleshoot
+  - challenge
   - draft-email
   - note-gap
   - inspection-writer
@@ -221,6 +222,62 @@ compliance-check 完成后，读取 `casehealth-meta.json` 中 `compliance.entit
 | `ready-to-close` | email-drafter (closure) |
 
 spawn 时指定 `subagent_type: "troubleshooter"` / `"email-drafter"`，提示读取 `.claude/agents/{name}.md`。
+
+**B5a. Challenge Gate（troubleshooter 完成后，条件触发）**
+
+troubleshooter 完成后，Main Agent 读取 `{caseDir}/claims.json`：
+- `claims.json` 不存在 → 跳过（向后兼容，旧版 troubleshooter 不产出 claims.json）
+- `triggerChallenge === false` → 跳过，继续到 email-drafter
+- `triggerChallenge === true` → spawn Challenger agent（前台等待）
+
+```
+subagent_type: "challenger"
+description: "challenge {caseNumber}"
+run_in_background: false
+prompt: |
+  Case {caseNumber}，caseDir={caseDir}（绝对路径）。
+  产品域：{product}（从 case-info.md serviceTree 推断）。
+  请先读取 .claude/agents/challenger.md 获取完整执行步骤，然后执行。
+  ⏱ 第一个 Bash 调用中写 date +%s > "{caseDir}/logs/.t_challenge_start"
+  ⏱ 最后一个 Bash 调用中写 date +%s > "{caseDir}/logs/.t_challenge_end"
+```
+
+**B5b. Auto-loop（Challenger 完成后）**
+
+Challenger 返回后，Main Agent 读取更新后的 `{caseDir}/claims.json` 和 Challenger 返回文本中的 `ACTION:` 标记：
+
+| ACTION | 执行 |
+|--------|------|
+| `ACTION:pass` 或无 ACTION | → email-drafter（正常邮件类型，按 B5 路由表） |
+| `ACTION:request-info` | → email-drafter（emailType: `request-info`，prompt 附带 `{caseDir}/challenge-report.md` 中「需要的额外信息」section 内容） |
+| `ACTION:retry` | → 用 Edit 更新 `claims.json` 的 `retryCount` 为 1 → spawn troubleshooter retry（见下方 prompt）→ troubleshooter 完成后回到 B5a |
+| `ACTION:escalate` | → email-drafter（emailType: `request-info`，prompt 附带 challenge-report 中信息）+ 写 Todo 🔴：`⚠️ **分析证据不足** — Challenger 打回后重试仍无法确认根因，请审阅 challenge-report.md 并手动介入` |
+
+**Troubleshooter Retry Prompt**（仅 ACTION:retry 时使用）：
+
+```
+subagent_type: "troubleshooter"
+description: "troubleshooter-retry {caseNumber}"
+run_in_background: false
+prompt: |
+  Case {caseNumber}，caseDir={caseDir}（绝对路径）。
+  ⚠️ 这是 Challenger 打回后的重新排查（retry #1）。
+  请先读取 {caseDir}/challenge-report.md 了解被打回的原因。
+  被 reject 的 claims:
+  {从 claims.json 中 status=rejected 的 claims 列表，每个一行: id + claim 文本}
+
+  要求：
+  1. 不要沿用之前被 reject 的分析方向
+  2. 参考 challenge-report.md 的「建议替代方向」
+  3. 对新结论必须提供明确的证据引用（Step 5a）
+  4. 如果确实无法找到证据，诚实标注 confidence: none
+
+  请先读取 .claude/agents/troubleshooter.md 获取完整执行步骤，然后执行。
+  ⏱ 第一个 Bash 调用中写 date +%s > "{caseDir}/logs/.t_troubleshooterRetry_start"
+  ⏱ 最后一个 Bash 调用中写 date +%s > "{caseDir}/logs/.t_troubleshooterRetry_end"
+```
+
+> Retry 后的 troubleshooter 产出新的 analysis.md（新时间戳文件名）和更新 claims.json（retryCount 已递增），再次进入 B5a。
 
 ### Step 4. case-summary + todo + timing.json
 
