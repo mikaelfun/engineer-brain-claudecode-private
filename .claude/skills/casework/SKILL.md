@@ -83,7 +83,8 @@ fi
 
 如果 `IS_AR=true`：
 1. 读取/创建 `casehealth-meta.json`，upsert `isAR: true` 和 `mainCaseId`
-2. 后续步骤走 **AR PATH**（见下文 "AR PATH" 章节）
+2. **首次 AR 检测**（meta 中之前无 `isAR` 字段）→ 强制覆盖 changegate 为 `CHANGED`（旧数据可能来自 AR case 自身，需要从 main case 重新拉取）
+3. 后续步骤走 **AR PATH**（见下文 "AR PATH" 章节）
 
 如果 `IS_AR=false`：走现有路径（不变）。
 
