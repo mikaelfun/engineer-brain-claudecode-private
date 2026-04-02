@@ -55,13 +55,25 @@ function Start-OwaBrowser {
 
 function Ensure-OwaBrowser {
     if (Test-BrowserAlive) {
-        Write-Log "OWA BROWSER | Already running"
         return $true
     }
-    # Try to close stale session first
+    # Close stale session + kill any lingering edge processes from OWA profile
     playwright-cli -s=owa close 2>&1 | Out-Null
     Start-Sleep -Seconds 2
-    return Start-OwaBrowser
+
+    # Retry up to 2 times
+    for ($retry = 0; $retry -lt 2; $retry++) {
+        if (Start-OwaBrowser) { return $true }
+        Write-Log "OWA BROWSER | Retry $($retry+1) — killing stale processes..."
+        playwright-cli -s=owa close 2>&1 | Out-Null
+        # Kill any msedge using our profile
+        $procs = Get-Process msedge -ErrorAction SilentlyContinue | Where-Object {
+            try { $_.CommandLine -match "playwright-owa-profile" } catch { $false }
+        }
+        foreach ($p in $procs) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue }
+        Start-Sleep -Seconds 3
+    }
+    return $false
 }
 
 # ── EnsureBrowser mode ──
@@ -163,18 +175,17 @@ Write-Log "OWA STEP2 OK | Extraction complete ($($t4-$t1)ms)"
 # ══════════════════════════════════════════════════════════════════════
 
 # Parse metadata from eval result (format: "count|convs|bodies|chars")
-$metaMatch = [regex]::Match($extractResult, '"(\d+\|\d+\|\d+\|\d+)"')
+$metaMatch = [regex]::Match($extractResult, '(\d+)\|(\d+)\|(\d+)\|(\d+)')
 if (-not $metaMatch.Success) {
-    Write-Log "OWA ERROR | Unexpected extract result format"
+    Write-Log "OWA ERROR | Unexpected extract result format (len=$($extractResult.Length))"
+    Write-Log "OWA ERROR | First 200 chars: $($extractResult.Substring(0, [Math]::Min(200, $extractResult.Length)))"
     Write-Host "STATUS=EXTRACT_ERROR"
-    Write-Host "RAW_LENGTH=$($extractResult.Length)"
     exit 1
 }
-$metaParts = $metaMatch.Groups[1].Value -split '\|'
-$emailCount = [int]$metaParts[0]
-$convCount = [int]$metaParts[1]
-$bodyCount = [int]$metaParts[2]
-$mdChars = [int]$metaParts[3]
+$emailCount = [int]$metaMatch.Groups[1].Value
+$convCount = [int]$metaMatch.Groups[2].Value
+$bodyCount = [int]$metaMatch.Groups[3].Value
+$mdChars = [int]$metaMatch.Groups[4].Value
 
 # Read md content from browser textarea
 $mdContent = playwright-cli -s=owa eval 'document.getElementById("_owa_extract_md").value' 2>&1 | Out-String
