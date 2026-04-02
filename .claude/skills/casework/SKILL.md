@@ -211,15 +211,27 @@ compliance-check 完成后，读取 `casehealth-meta.json` 中 `compliance.entit
 - `JUDGE_CACHE_VALID` → 跳过，用 meta 已有 actualStatus/days
 - `JUDGE_CACHE_MISS` → 按 status-judge/SKILL.md 执行
 
-**B5. 按 actualStatus 路由** ⏱ `.t_routing_start/end`
+**B5. 智能路由** ⏱ `.t_routing_start/end`
 
-| actualStatus | 执行 |
+**优先读取 LLM 推荐行动**：
+
+1. 读取 `meta.recommendedActions`（由 status-judge Step 4b 写入）
+2. 如果 `recommendedActions` 存在且非空：
+   - `no-agent` → 跳过 agent spawn，记日志 `STEP B5 OK | LLM: no-agent — {reason}`
+   - `troubleshooter` → 仅 spawn troubleshooter
+   - `email-drafter` → 仅 spawn email-drafter
+   - `troubleshooter+email-drafter` → spawn 两者
+3. 如果 `recommendedActions` 不存在、为空、或为 null → **Fallback 到路由表**：
+
+| actualStatus | Fallback 执行 |
 |---|---|
 | `new` / `pending-engineer` | troubleshooter → email-drafter |
 | `pending-customer` | email-drafter（仅 days ≥ 3） |
 | `pending-pg` | 无额外 agent，仅记录 |
 | `researching` | troubleshooter |
 | `ready-to-close` | email-drafter (closure) |
+
+记日志 `STEP B5 OK | Fallback: {actualStatus} → {agents}`
 
 spawn 时指定 `subagent_type: "troubleshooter"` / `"email-drafter"`，提示读取 `.claude/agents/{name}.md`。
 
@@ -398,9 +410,15 @@ Upsert meta: ar.communicationMode, ar.caseOwnerEmail, ar.caseOwnerName
 
 按 status-judge/SKILL.md 的 AR Mode 部分执行。传入 `isAR=true` 上下文。
 
-**AR-B5. 按 actualStatus + communicationMode 路由** ⏱ `.t_routing_start/end`
+**AR-B5. 智能路由（AR）** ⏱ `.t_routing_start/end`
 
-| actualStatus | communicationMode | 执行 |
+**优先读取 LLM 推荐行动**（同 B5 逻辑）：
+
+1. 读取 `meta.recommendedActions`
+2. 如果存在且非空 → 按 action 执行（spawn 时 prompt 中包含 AR scope + communicationMode）
+3. 如果不存在/为空 → **Fallback 到 AR 路由表**：
+
+| actualStatus | communicationMode | Fallback 执行 |
 |---|---|---|
 | `new` | any | troubleshooter（AR scope 内诊断）→ email-drafter |
 | `pending-engineer` | `internal` | troubleshooter → email-drafter（收件人: case owner） |
