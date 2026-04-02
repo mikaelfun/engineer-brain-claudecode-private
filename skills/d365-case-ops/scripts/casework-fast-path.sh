@@ -8,6 +8,8 @@ CD="$1"
 CG_DETAIL="${2:-}"
 LOG="$CD/logs/casework.log"
 META="$CD/casehealth-meta.json"
+IS_AR=$(sed -n 's/.*"isAR":[[:space:]]*\(true\|false\).*/\1/p' "$META" 2>/dev/null | head -1)
+IS_AR=${IS_AR:-false}
 NOW=$(date +%s)
 
 # --- DR skip timestamps ---
@@ -97,7 +99,7 @@ fi
 
 # --- Final output ---
 if [ "$TEAMS_OK" = "true" ] && [ "$COMP_OK" = "true" ] && [ "$JUDGE_OK" = "true" ] && [ "$ROUTE_OK" = "true" ]; then
-  echo "FAST_PATH_OK|status=$ACTUAL_STATUS,days=$DAYS,teams=$TEAMS_DETAIL,judge=$JUDGE_DETAIL"
+  echo "FAST_PATH_OK|status=$ACTUAL_STATUS,days=$DAYS,teams=$TEAMS_DETAIL,judge=$JUDGE_DETAIL,isAR=$IS_AR"
 else
   BREAKS=""
   [ "$TEAMS_OK" != "true" ] && BREAKS="${BREAKS}teams=$TEAMS_DETAIL,"
