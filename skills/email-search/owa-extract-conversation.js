@@ -84,10 +84,20 @@
             await sleep(600);
         }
 
-        // Collect NEW bodies (incremental)
+        // Collect NEW bodies (incremental) — trim quoted reply history
         var curBodies = document.querySelectorAll('[aria-label="Message body"]');
         for (var n = prevBodyCount; n < curBodies.length; n++) {
             var text = curBodies[n].innerText || "";
+            if (text.length <= 5) continue;
+
+            // Trim quoted reply chain: cut at first "From: ... Sent: ..." pattern
+            // This removes nested email history that duplicates earlier messages
+            var quoteIdx = text.search(/\nFrom:\s.+\nSent:\s/);
+            if (quoteIdx === -1) quoteIdx = text.search(/\n发件人:\s.+\n发送时间:\s/);
+            if (quoteIdx > 20) {
+                text = text.substring(0, quoteIdx).trimEnd();
+            }
+
             if (text.length > 5) allBodies.push(text);
         }
     }
