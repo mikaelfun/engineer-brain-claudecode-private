@@ -66,6 +66,27 @@ date +%s > "$CASE_DIR/logs/.t_changegate_end"
 
 `--skip-data-refresh` 时跳过 changegate，记日志 `STEP 1 SKIP | --skip-data-refresh`。
 
+**AR 检测**：检查 case number 是否有 3+ 位后缀（AR case）。
+
+```bash
+# AR detection: case number with 3+ digit suffix
+CASE_NUM="{caseNumber}"
+# Main case is 16 digits. AR suffix adds 3+ more digits.
+if [ ${#CASE_NUM} -ge 19 ]; then
+  IS_AR="true"
+  MAIN_CASE_ID="${CASE_NUM:0:16}"
+else
+  IS_AR="false"
+  MAIN_CASE_ID=""
+fi
+```
+
+如果 `IS_AR=true`：
+1. 读取/创建 `casehealth-meta.json`，upsert `isAR: true` 和 `mainCaseId`
+2. 后续步骤走 **AR PATH**（见下文 "AR PATH" 章节）
+
+如果 `IS_AR=false`：走现有路径（不变）。
+
 ---
 
 #### 路径 A：NO_CHANGE → 快速路径
@@ -115,11 +136,16 @@ prompt: |
   完成后汇报各步骤成功/失败状态。
 ```
 
-**B2. Teams 预检 + 按需 spawn teams-search + onenote-case-search + 并行预读（同一条消息）**
+**B2. Teams 预检 + spawn teams-search / onenote-case-search + 并行预读（同一条消息）**
 
-> 快速路径已确认 Teams 缓存有效时跳过。
+两个搜索 agent 的缓存策略**不同**：
 
-Teams 缓存检查逻辑同 `casework-fast-path.sh` 中 Teams 段。过期/无缓存时 spawn：
+| Agent | 缓存机制 | 执行条件 |
+|-------|---------|---------|
+| teams-search | 有缓存（`teamsSearchCacheHours`） | 缓存过期或无缓存时 spawn |
+| onenote-case-search | **无缓存** | **每次 casework 都 spawn** |
+
+**teams-search**：缓存检查逻辑同 `casework-fast-path.sh` 中 Teams 段。快速路径已确认缓存有效时跳过。过期/无缓存时 spawn：
 
 ```
 subagent_type: "teams-search"
@@ -133,7 +159,7 @@ prompt: |
   ⏱ 最后一个 Bash 调用中写 date +%s > "{caseDir}/logs/.t_teamsSearch_end"
 ```
 
-同时 spawn onenote-case-search（与 teams-search 并行后台执行）：
+**onenote-case-search**（⚠️ 无缓存，每次都执行）：
 
 ```
 subagent_type: "onenote-case-search"
@@ -172,7 +198,12 @@ compliance-check 完成后，读取 `casehealth-meta.json` 中 `compliance.entit
 
 **B4. 等待后台 agent → status-judge**
 
-> ⚠️ **必须等 data-refresh + teams-search 都完成再执行 judge**（防止 statusJudgedAt < _cache-epoch 导致下次误判）。等待用 `TaskOutput`（timeout 180s），若 compaction 丢失 task ID，回退检查 `.t_*_end` 文件存在性（最多 3×10s）。
+> ⚠️ **必须等所有后台 agent 完成再执行 judge**（防止 statusJudgedAt < _cache-epoch 导致下次误判）。需等待的 agent：
+> - `data-refresh`（仅 CHANGED 时 spawn）
+> - `teams-search`（缓存过期时 spawn）
+> - `onenote-case-search`（每次都 spawn）
+>
+> 等待用 `TaskOutput`（timeout 180s），若 compaction 丢失 task ID，回退检查 `.t_*_end` 文件存在性（最多 3×10s）。
 
 等待完成后，status-judge 缓存预检逻辑同 `casework-fast-path.sh` 中 judge 段（额外在开头写 `.t_agentWait_end` + `.t_statusJudge_start`）。
 - `JUDGE_CACHE_VALID` → 跳过，用 meta 已有 actualStatus/days
@@ -229,6 +260,127 @@ bash skills/d365-case-ops/scripts/casework-timing.sh "{caseDir}" "{skippedStepsJ
 
 ---
 
+---
+
+## AR PATH（isAR = true 时的执行流程）
+
+当 Step 1 检测到 `IS_AR=true` 后，casework 切换到 AR PATH。复用大部分基础设施，但定制数据收集、状态判断、路由。
+
+### AR 路径 A：NO_CHANGE → AR 快速路径
+
+changegate 对 AR case 的检测方式：比较 main case + AR case 的 D365 状态变化。
+
+fast-path 脚本输出含 `isAR=true` 时，AR 快速路径行为与普通快速路径相同（生成 todo + timing），但 generate-todo.sh 会自动应用 AR 规则（跳过 SLA 等）。
+
+### AR 路径 B：CHANGED → AR 正常流程
+
+**AR-B0. 归档检测**
+
+同普通路径 B0，检测 main case 是否已归档。
+
+**AR-B1. spawn data-refresh（AR 模式）**
+
+```
+subagent_type: "data-refresh"
+description: "data-refresh AR {caseNumber}"
+run_in_background: true
+prompt: |
+  AR Case {caseNumber}，mainCaseId={mainCaseId}，caseDir={caseDir}（绝对路径），casesRoot={casesRoot}。
+  这是一个 AR Case，需要从 main case 拉取主要数据。
+  请先读取 .claude/skills/data-refresh/SKILL.md 获取完整执行步骤（关注 AR Mode 部分），然后执行。
+  ⚠️ casework changegate 已预热浏览器并缓存 incidentId，跳过 Step 0a 和 0b。
+  ⚠️ AR Mode: 使用 `-MainCaseNumber {mainCaseId}` 参数。不执行 IR check。
+  ⏱ 第一个 Bash 调用中写 date +%s > "{caseDir}/logs/.t_dataRefresh_start"
+  ⏱ 最后一个 Bash 调用中写 date +%s > "{caseDir}/logs/.t_dataRefresh_end"
+  完成后汇报各步骤成功/失败状态。
+```
+
+**AR-B2. Teams 预检 + spawn teams-search / onenote-case-search**
+
+Teams 搜索关键词根据沟通模式调整（由 casework 在 prompt 中传入）：
+- 沟通模式尚未确定时（首次处理），默认搜 case owner 名 + AR case number
+- `communicationMode = "internal"` → 搜 case owner 名 + AR ID
+- `communicationMode = "customer-facing"` → 搜客户名 + main case number
+
+OneNote 搜索：始终搜 AR case number（个人笔记）。
+
+**AR-B3. compliance-check（带缓存）**
+
+读取 `meta.compliance.entitlementOk`：
+- 有值（true 或 false）→ **跳过**，沿用缓存
+- 无值 → 执行 compliance-check（基于 main case 数据的 case-info.md）
+- `entitlementOk === false` → 🔴 阻断（同普通路径 B3a）
+
+**AR-B4. 等待后台 agent → AR Scope 提取 + 沟通模式检测 + status-judge**
+
+等待 data-refresh + teams-search + onenote-case-search 完成后：
+
+**AR-B4a. AR Scope 提取**（首次 or `ar.scopeConfirmed !== true`）
+
+```
+读取 {caseDir}/notes-ar.md + case-info.md（AR case title/description）
+LLM 提取 AR scope 一句话摘要
+Upsert meta: ar.scope = "{extracted_scope}", ar.scopeConfirmed = false
+```
+
+如果 `ar.scopeConfirmed === true`，跳过提取。
+
+**AR-B4b. 沟通模式检测**
+
+```
+读取 {caseDir}/emails.md 最近几封邮件的 To/CC 字段
+检查用户邮箱（fangkun@microsoft.com）是否在参与者中
+是 → communicationMode = "customer-facing"
+否 → communicationMode = "internal"
+提取 case owner 邮箱/名字（从 case-info.md 的 Owner 字段）
+Upsert meta: ar.communicationMode, ar.caseOwnerEmail, ar.caseOwnerName
+```
+
+**AR-B4c. AR Status Judge**
+
+按 status-judge/SKILL.md 的 AR Mode 部分执行。传入 `isAR=true` 上下文。
+
+**AR-B5. 按 actualStatus + communicationMode 路由** ⏱ `.t_routing_start/end`
+
+| actualStatus | communicationMode | 执行 |
+|---|---|---|
+| `new` | any | troubleshooter（AR scope 内诊断）→ email-drafter |
+| `pending-engineer` | `internal` | troubleshooter → email-drafter（收件人: case owner） |
+| `pending-engineer` | `customer-facing` | troubleshooter → email-drafter（收件人: 客户，仅 AR scope） |
+| `pending-customer` (days<3) | any | 无 agent |
+| `pending-customer` (days≥3) | `internal` | email-drafter（follow-up to case owner） |
+| `pending-customer` (days≥3) | `customer-facing` | email-drafter（follow-up to customer, AR scope only） |
+| `pending-pg` | any | 无 agent |
+| `researching` | any | troubleshooter（继续 AR scope 内诊断） |
+| `ready-to-close` | `internal` | email-drafter（AR 完成总结 to case owner） |
+| `ready-to-close` | `customer-facing` | email-drafter（AR scope 结论 to customer, CC case owner） |
+
+spawn troubleshooter 时，prompt 中明确 AR scope：
+```
+prompt: |
+  AR Case {caseNumber}，AR Scope: {ar.scope}
+  沟通模式: {communicationMode}
+  请只排查 AR scope 范围内的问题，不要排查 main case 的其他问题。
+  ...
+```
+
+spawn email-drafter 时，prompt 中明确收件人和 scope：
+```
+prompt: |
+  AR Case {caseNumber}，AR Scope: {ar.scope}
+  沟通模式: {communicationMode}
+  收件人: {根据模式选择 case owner email 或 客户 email}
+  [内部模式] 邮件发给 case owner，总结 AR scope 内的发现和建议
+  [客户面向模式] 邮件发给客户（reply-all from main case），仅回复 AR scope 内的问题
+  ...
+```
+
+### AR Step 4. case-summary + todo + timing.json
+
+按 inspection-writer/SKILL.md 的 AR 规则执行。case-summary.md 使用 AR 视角。generate-todo.sh 自动应用 AR 规则。
+
+---
+
 ## Bash 调用次数
 
 | 场景 | 调用 | 预计耗时 |
@@ -236,3 +388,5 @@ bash skills/d365-case-ops/scripts/casework-timing.sh "{caseDir}" "{skippedStepsJ
 | **快速路径**（全缓存 + summary 存在） | 3 次：changegate + fastpath + todo+timing | ~15-30s |
 | **快速路径**（全缓存 + summary 不存在） | 3 次：changegate + fastpath + todo+timing + Write summary | ~30-45s |
 | **正常流程**（有变化） | 5-8 次：changegate + B2~B5 + summary+todo+timing | ~120-240s |
+| **AR 快速路径**（全缓存 + summary 存在） | 3 次 | ~15-30s |
+| **AR 正常流程**（有变化） | 5-8 次：changegate + AR-B1~B5 + summary+todo+timing | ~120-240s |
