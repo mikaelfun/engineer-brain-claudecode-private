@@ -158,49 +158,54 @@ $t4 = $sw.ElapsedMilliseconds
 Write-Log "OWA STEP2 OK | Extraction complete ($($t4-$t1)ms)"
 
 # ══════════════════════════════════════════════════════════════════════
-# Step 5: Parse result and write output
+# Step 5: Read md from browser textarea + write output
+# JS stored md in textarea#_owa_extract_md, returns "count|convs|bodies|chars"
 # ══════════════════════════════════════════════════════════════════════
 
-# Extract JSON from playwright output — handle escape issues
-# playwright eval wraps result in quotes with \n etc
-$jsonMatch = [regex]::Match($extractResult, '"(\{.*\})"', [System.Text.RegularExpressions.RegexOptions]::Singleline)
-if ($jsonMatch.Success) {
-    $jsonStr = $jsonMatch.Groups[1].Value
-    # Fix escapes: \" → ", \n → newline, \\ → \
-    $jsonStr = $jsonStr -replace '\\\\', '%%BACKSLASH%%'
-    $jsonStr = $jsonStr -replace '\\n', "`n"
-    $jsonStr = $jsonStr -replace '\\t', "`t"
-    $jsonStr = $jsonStr -replace '\\"', '"'
-    $jsonStr = $jsonStr -replace '%%BACKSLASH%%', '\'
-    try {
-        $data = $jsonStr | ConvertFrom-Json
-        $emailCount = $data.count
-        $md = $data.md
-
-        # Ensure output dir exists
-        $outDir = Split-Path -Parent $OutputPath
-        if ($outDir -and -not (Test-Path $outDir)) { New-Item -ItemType Directory -Path $outDir -Force | Out-Null }
-
-        [System.IO.File]::WriteAllText($OutputPath, $md, [System.Text.UTF8Encoding]::new($false))
-        $sizeKB = [math]::Round((Get-Item $OutputPath).Length / 1024, 1)
-
-        $sw.Stop()
-        $mode = if ($PreviewOnly) { "preview" } else { "full" }
-        Write-Log "OWA DONE | $emailCount emails, ${sizeKB}KB, ${mode} mode, $($sw.ElapsedMilliseconds)ms total"
-        Write-Host "STATUS=OK"
-        Write-Host "EMAIL_COUNT=$emailCount"
-        Write-Host "SIZE_KB=$sizeKB"
-        Write-Host "DURATION_MS=$($sw.ElapsedMilliseconds)"
-    } catch {
-        Write-Log "OWA ERROR | JSON parse failed: $($_.Exception.Message)"
-        # Fallback: write raw extract result
-        [System.IO.File]::WriteAllText($OutputPath, $extractResult, [System.Text.UTF8Encoding]::new($false))
-        Write-Host "STATUS=PARSE_ERROR"
-        exit 1
-    }
-} else {
-    Write-Log "OWA ERROR | No JSON in extract result"
+# Parse metadata from eval result (format: "count|convs|bodies|chars")
+$metaMatch = [regex]::Match($extractResult, '"(\d+\|\d+\|\d+\|\d+)"')
+if (-not $metaMatch.Success) {
+    Write-Log "OWA ERROR | Unexpected extract result format"
     Write-Host "STATUS=EXTRACT_ERROR"
     Write-Host "RAW_LENGTH=$($extractResult.Length)"
     exit 1
 }
+$metaParts = $metaMatch.Groups[1].Value -split '\|'
+$emailCount = [int]$metaParts[0]
+$convCount = [int]$metaParts[1]
+$bodyCount = [int]$metaParts[2]
+$mdChars = [int]$metaParts[3]
+
+# Read md content from browser textarea
+$mdContent = playwright-cli -s=owa eval 'document.getElementById("_owa_extract_md").value' 2>&1 | Out-String
+
+# Extract the value (between first and last quote in ### Result section)
+$mdMatch = [regex]::Match($mdContent, '### Result\s*\n"(.*)"', [System.Text.RegularExpressions.RegexOptions]::Singleline)
+if ($mdMatch.Success) {
+    $md = $mdMatch.Groups[1].Value
+    # Unescape
+    $md = $md -replace '\\\\', '%%BACKSLASH%%'
+    $md = $md -replace '\\n', "`n"
+    $md = $md -replace '\\t', "`t"
+    $md = $md -replace '\\"', '"'
+    $md = $md -replace '%%BACKSLASH%%', '\'
+} else {
+    Write-Log "OWA ERROR | Cannot read md from textarea"
+    Write-Host "STATUS=EXTRACT_ERROR"
+    exit 1
+}
+
+# Ensure output dir exists
+$outDir = Split-Path -Parent $OutputPath
+if ($outDir -and -not (Test-Path $outDir)) { New-Item -ItemType Directory -Path $outDir -Force | Out-Null }
+
+[System.IO.File]::WriteAllText($OutputPath, $md, [System.Text.UTF8Encoding]::new($false))
+$sizeKB = [math]::Round((Get-Item $OutputPath).Length / 1024, 1)
+
+$sw.Stop()
+$mode = if ($PreviewOnly) { "preview" } else { "full" }
+Write-Log "OWA DONE | $emailCount emails ($convCount convs, $bodyCount bodies), ${sizeKB}KB, ${mode} mode, $($sw.ElapsedMilliseconds)ms total"
+Write-Host "STATUS=OK"
+Write-Host "EMAIL_COUNT=$emailCount"
+Write-Host "SIZE_KB=$sizeKB"
+Write-Host "DURATION_MS=$($sw.ElapsedMilliseconds)"

@@ -58,6 +58,18 @@
             }
         }
 
+        // Fallback: if no listitems found, use the option label itself as email metadata
+        if (items.length === 0 || allLabels.length === 0) {
+            var optLabel = matchOptions[c].getAttribute("aria-label") || "";
+            if (optLabel.length > 30) {
+                var isDup2 = false;
+                for (var d2 = 0; d2 < allLabels.length; d2++) {
+                    if (allLabels[d2] === optLabel) { isDup2 = true; break; }
+                }
+                if (!isDup2) allLabels.push(optLabel);
+            }
+        }
+
         // Full body mode: scroll each listitem to trigger lazy loading
         if (mode === "full") {
             var emailItems = [];
