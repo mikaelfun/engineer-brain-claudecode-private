@@ -623,6 +623,45 @@ cases.get('/:id/images/:filename', (c) => {
   })
 })
 
+// GET /api/cases/:id/claims — claims.json for evidence chain audit
+cases.get('/:id/claims', (c) => {
+  const caseNumber = validateCaseNumber(c)
+  if (!caseNumber) return c.json({ error: 'Invalid case number' }, 400)
+  const caseDir = getCaseDir(caseNumber)
+  const claimsPath = join(caseDir, 'claims.json')
+
+  if (!existsSync(claimsPath)) {
+    return c.json({ claims: null })
+  }
+
+  try {
+    const raw = readFileSync(claimsPath, 'utf-8')
+    const claims = JSON.parse(raw)
+    return c.json(claims)
+  } catch {
+    return c.json({ claims: null })
+  }
+})
+
+// GET /api/cases/:id/challenge-report — challenge report markdown
+cases.get('/:id/challenge-report', (c) => {
+  const caseNumber = validateCaseNumber(c)
+  if (!caseNumber) return c.json({ error: 'Invalid case number' }, 400)
+  const caseDir = getCaseDir(caseNumber)
+  const reportPath = join(caseDir, 'challenge-report.md')
+
+  if (!existsSync(reportPath)) {
+    return c.json({ content: null })
+  }
+
+  try {
+    const content = readFileSync(reportPath, 'utf-8')
+    return c.json({ content })
+  } catch {
+    return c.json({ content: null })
+  }
+})
+
 // GET /api/cases/:id/onenote — OneNote markdown files from case onenote/ directory
 cases.get('/:id/onenote', (c) => {
   const caseNumber = validateCaseNumber(c)
