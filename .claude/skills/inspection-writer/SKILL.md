@@ -46,6 +46,7 @@ allowed-tools:
 ### 2a. 首次生成 case-summary.md
 
 读取：`case-info.md`、`emails.md`、`notes.md`、`teams/*.md`（如有）。
+- `{caseDir}/claims.json`（如有，按下方 claims.json 感知规则过滤写入「关键发现」）
 - AR Case 额外读取：`notes-ar.md`（如存在）
 
 用 Write 工具生成完整 summary，格式：
@@ -91,6 +92,21 @@ allowed-tools:
   ```
 
 ### 2b. 增量追加 case-summary.md
+
+**claims.json 感知**（如 `{caseDir}/claims.json` 存在）：
+
+在写入「关键发现」section 前，读取 claims.json 中每个 claim 的 status：
+
+| claim status | 写入 case-summary 的方式 |
+|--------------|------------------------|
+| `verified` | 正常写入 |
+| `challenged` | 加 `[unverified]` 前缀，如：`- [unverified] 升级后 PSS 默认变更 — 需客户确认` |
+| `rejected` | **不写入** summary |
+| `pending` | 正常写入（向后兼容，未触发 Challenger 的场景） |
+
+**清理机制**：如 summary 中已有 `[unverified]` 标注的条目，且对应 claim 已变为 `verified` → Edit 移除 `[unverified]` 前缀。如 claim 变为 `rejected` → Edit 删除该条目。
+
+> 如 claims.json 不存在，全部按原有逻辑处理（向后兼容）。
 
 仅读取**新增内容**（自上次 inspection 后的新邮件、notes、teams 消息）。
 
