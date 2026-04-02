@@ -176,7 +176,12 @@ for ($attempt = 0; $attempt -le $maxRetries; $attempt++) {
 
     # Read md from textarea
     $mdContent = playwright-cli -s=owa eval 'document.getElementById("_owa_extract_md").value' 2>&1 | Out-String
-    $mdMatch = [regex]::Match($mdContent, '### Result\s*\n"(.*)"', [System.Text.RegularExpressions.RegexOptions]::Singleline)
+    # Read md from textarea — stop before "### Ran Playwright" footer
+    $mdMatch = [regex]::Match($mdContent, '### Result\s*\n"(.*?)"\s*\n### Ran', [System.Text.RegularExpressions.RegexOptions]::Singleline)
+    if (-not $mdMatch.Success) {
+        # Fallback: try without ### Ran anchor
+        $mdMatch = [regex]::Match($mdContent, '### Result\s*\n"(.*)"', [System.Text.RegularExpressions.RegexOptions]::Singleline)
+    }
     if (-not $mdMatch.Success) {
         Write-Log "OWA EXTRACT_ERROR | Cannot read textarea (attempt $attempt)"
         continue  # retry
