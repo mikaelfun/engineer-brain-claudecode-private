@@ -26,7 +26,8 @@ param(
     [switch]$Force,
     [int]$CacheMinutes = 10,
     [switch]$IncludeIrCheck,
-    [string]$MetaDir
+    [string]$MetaDir,
+    [string]$MainCaseNumber
 )
 
 . "$PSScriptRoot\_init.ps1"
@@ -49,30 +50,77 @@ Write-Host "🔵 Incident ID: $incidentId (cached)"
 # that breaks the subsequent IR check.
 Ensure-D365Tab
 
+# --- AR Mode: determine which case to fetch main data from ---
+$isAR = [bool]$MainCaseNumber
+$fetchCaseNumber = if ($isAR) { $MainCaseNumber } else { $TicketNumber }
+$arCaseNumber = $TicketNumber  # Always the AR case for AR-specific notes
+
+if ($isAR) {
+    Write-Host "🔵 AR Mode: fetching main data from $fetchCaseNumber, AR notes from $arCaseNumber"
+    # Pre-warm incident ID for the MAIN case (not the AR case)
+    Write-Host "🔵 Pre-warming incident ID for main case $fetchCaseNumber..."
+    $mainIncidentId = Get-IncidentId -TicketNumber $fetchCaseNumber
+    if (-not $mainIncidentId) {
+        Write-Error "❌ Main case $fetchCaseNumber not found"
+        exit 1
+    }
+    Write-Host "🔵 Main case incident ID: $mainIncidentId (cached)"
+}
+
 # Launch 3 parallel jobs
 Write-Host "🔵 Launching parallel: snapshot + emails + notes..."
 
 $jobSnapshot = Start-Job -ScriptBlock {
-    param($root, $tn, $outDir, $cache)
+    param($root, $tn, $outDir, $cache, $arDir)
     $env:D365_CASES_ROOT = Split-Path (Split-Path $outDir)
     & "$root\fetch-case-snapshot.ps1" -TicketNumber $tn -OutputDir $outDir -CacheMinutes $cache 2>&1 | Out-String
-} -ArgumentList $scriptRoot, $TicketNumber, $OutputDir, $CacheMinutes
+    # If AR mode, copy case-info.md from main case dir to AR dir
+    if ($arDir -and $arDir -ne $tn) {
+        $srcFile = Join-Path (Join-Path $outDir $tn) "case-info.md"
+        $dstDir = Join-Path $outDir $arDir
+        if (-not (Test-Path $dstDir)) { New-Item -ItemType Directory -Path $dstDir -Force | Out-Null }
+        if (Test-Path $srcFile) {
+            Copy-Item $srcFile (Join-Path $dstDir "case-info.md") -Force
+            Write-Host "🔵 Copied case-info.md from $tn to $arDir"
+        }
+    }
+} -ArgumentList $scriptRoot, $fetchCaseNumber, $OutputDir, $CacheMinutes, $(if ($isAR) { $arCaseNumber } else { $null })
 
 $jobEmails = Start-Job -ScriptBlock {
-    param($root, $tn, $outDir, $force)
+    param($root, $tn, $outDir, $force, $arDir)
     $env:D365_CASES_ROOT = Split-Path (Split-Path $outDir)
     $params = @{ TicketNumber = $tn; OutputDir = $outDir }
     if ($force) { $params.Force = $true }
     & "$root\fetch-emails.ps1" @params 2>&1 | Out-String
-} -ArgumentList $scriptRoot, $TicketNumber, $OutputDir, $Force.IsPresent
+    # If AR mode, copy emails.md from main case dir to AR dir
+    if ($arDir -and $arDir -ne $tn) {
+        $srcFile = Join-Path (Join-Path $outDir $tn) "emails.md"
+        $dstDir = Join-Path $outDir $arDir
+        if (-not (Test-Path $dstDir)) { New-Item -ItemType Directory -Path $dstDir -Force | Out-Null }
+        if (Test-Path $srcFile) {
+            Copy-Item $srcFile (Join-Path $dstDir "emails.md") -Force
+            Write-Host "🔵 Copied emails.md from $tn to $arDir"
+        }
+    }
+} -ArgumentList $scriptRoot, $fetchCaseNumber, $OutputDir, $Force.IsPresent, $(if ($isAR) { $arCaseNumber } else { $null })
 
 $jobNotes = Start-Job -ScriptBlock {
-    param($root, $tn, $outDir, $force)
+    param($root, $tn, $outDir, $force, $arDir)
     $env:D365_CASES_ROOT = Split-Path (Split-Path $outDir)
     $params = @{ TicketNumber = $tn; OutputDir = $outDir }
     if ($force) { $params.Force = $true }
     & "$root\fetch-notes.ps1" @params 2>&1 | Out-String
-} -ArgumentList $scriptRoot, $TicketNumber, $OutputDir, $Force.IsPresent
+    # If AR mode, copy notes.md from main case dir to AR dir
+    if ($arDir -and $arDir -ne $tn) {
+        $srcFile = Join-Path (Join-Path $outDir $tn) "notes.md"
+        $dstDir = Join-Path $outDir $arDir
+        if (-not (Test-Path $dstDir)) { New-Item -ItemType Directory -Path $dstDir -Force | Out-Null }
+        if (Test-Path $srcFile) {
+            Copy-Item $srcFile (Join-Path $dstDir "notes.md") -Force
+            Write-Host "🔵 Copied notes.md from $tn to $arDir"
+        }
+    }
+} -ArgumentList $scriptRoot, $fetchCaseNumber, $OutputDir, $Force.IsPresent, $(if ($isAR) { $arCaseNumber } else { $null })
 
 # Wait for all
 $null = Wait-Job $jobSnapshot, $jobEmails, $jobNotes -Timeout 120
@@ -107,8 +155,17 @@ foreach ($r in $results) {
 
 Remove-Job $jobSnapshot, $jobEmails, $jobNotes -Force -ErrorAction SilentlyContinue
 
+# --- AR Mode: fetch AR-specific notes into notes-ar.md ---
+if ($isAR) {
+    Write-Host "🔵 Fetching AR notes from $arCaseNumber..."
+    $arSw = [System.Diagnostics.Stopwatch]::StartNew()
+    & "$scriptRoot\fetch-notes.ps1" -TicketNumber $arCaseNumber -OutputDir $OutputDir -OutputFileName "notes-ar.md" -OutputSubDir $arCaseNumber
+    $arSw.Stop()
+    Write-Host "ar-notes: $([math]::Round($arSw.Elapsed.TotalSeconds, 1))s"
+}
+
 # --- Optional: IR check in same session (saves ~10s vs separate script) ---
-if ($IncludeIrCheck) {
+if ($IncludeIrCheck -and -not $isAR) {
     $irMetaDir = if ($MetaDir) { $MetaDir } else { $OutputDir }
     $irMetaFile = Join-Path (Join-Path $irMetaDir $TicketNumber) "casehealth-meta.json"
     $skipIr = $false
