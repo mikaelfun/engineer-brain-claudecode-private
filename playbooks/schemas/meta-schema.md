@@ -9,6 +9,8 @@
 - `compliance-check`：写入 `ccEmails` / `ccAccount` / `ccKnowMePage`（RDSE CC Finder，仅匹配时写入）
 - `status-judge`：写入 `actualStatus` / `daysSinceLastContact` / `statusJudgedAt`
 - `inspection-writer`：写入 `lastInspected`
+- `casework` (auto-detect)：写入 `isAR` / `mainCaseId`（case number 后缀检测）
+- `casework` (LLM/auto)：写入 `ar` 对象（scope 提取、沟通模式检测、case owner 信息）
 
 ## IR/FDR/FWR status 值
 
@@ -62,9 +64,47 @@
   },
   "ccEmails": "tam@microsoft.com; sdm@microsoft.com; mcpodvm@microsoft.com; mcccwl@microsoft.com",
   "ccAccount": "BMW (宝马)",
-  "ccKnowMePage": "https://dev.azure.com/..."
+  "ccKnowMePage": "https://dev.azure.com/...",
+  "isAR": false,
+  "mainCaseId": null,
+  "ar": null
 }
 ```
+
+### AR Case Example
+
+```json
+{
+  "caseNumber": "2603300030003153001",
+  "isAR": true,
+  "mainCaseId": "2603300030003153",
+  "lastInspected": "2026-04-02T18:30:00+08:00",
+  "actualStatus": "pending-engineer",
+  "daysSinceLastContact": 2,
+  "statusJudgedAt": "2026-04-02T18:30:00+08:00",
+  "statusReasoning": "Case owner asked about VM perf in notes, no reply yet → pending-engineer",
+  "emailCountAtJudge": 14,
+  "noteCountAtJudge": 2,
+  "icmIdAtJudge": "",
+  "compliance": {
+    "entitlementOk": true,
+    "serviceLevel": "Premier",
+    "serviceName": "Unfd AddOn | ProSv Ente - China Cld",
+    "contractCountry": "China",
+    "is21vConvert": false,
+    "warnings": []
+  },
+  "ar": {
+    "scope": "Azure VM performance troubleshooting",
+    "scopeConfirmed": true,
+    "communicationMode": "internal",
+    "caseOwnerEmail": "other.engineer@microsoft.com",
+    "caseOwnerName": "Other Engineer"
+  }
+}
+```
+
+> **Note**: AR cases do NOT have `irSla`/`fdr`/`fwr` fields — SLA is not the AR owner's responsibility.
 
 ## 字段说明
 
@@ -95,6 +135,14 @@
 | `ccEmails` | string\|undefined | compliance-check | RDSE CC 邮件列表（分号分隔），仅匹配时写入 |
 | `ccAccount` | string\|undefined | compliance-check | 匹配到的 RDSE 账号名 |
 | `ccKnowMePage` | string\|undefined | compliance-check | Know-Me Wiki 链接，仅非 null 时写入 |
+| `isAR` | boolean | casework (auto-detect) | Whether this is an AR (Assistance Request) case. Auto-detected from case number suffix (3+ digits). |
+| `mainCaseId` | string\|null | casework (auto-detect) | Main case number (without AR suffix). Null for non-AR cases. |
+| `ar` | object\|null | casework | AR-specific metadata. Null for non-AR cases. |
+| `ar.scope` | string | casework (LLM extract) | One-sentence summary of what the AR asks you to do |
+| `ar.scopeConfirmed` | boolean | user confirmation | Whether user has confirmed the extracted scope is accurate |
+| `ar.communicationMode` | string | casework (auto-detect) | `"internal"` (communicate with case owner) or `"customer-facing"` (pulled into customer email) |
+| `ar.caseOwnerEmail` | string | casework (auto-detect) | Main case owner's email address |
+| `ar.caseOwnerName` | string | casework (auto-detect) | Main case owner's display name |
 
 ## ⚠️ 禁止的字段名
 
