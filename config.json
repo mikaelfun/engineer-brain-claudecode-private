@@ -1,6 +1,6 @@
 {
   "casesRoot": "./cases",
-  "dataRoot": "C:\\Users\\fangkun\\Documents\\EngineerBrain-Data",
+  "dataRoot": "C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\data",
   "teamsSearchCacheHours": 4,
   "noteGapThresholdDays": 3,
   "podAlias": "mcpodvm@microsoft.com",
