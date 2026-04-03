@@ -1,9 +1,0 @@
-{
-  "testId": "arch-posix-paths-skill",
-  "round": 40,
-  "timestamp": "2026-03-31T00:38:25.000Z",
-  "status": "pass",
-  "assertions": [{"name":"No backslash Windows paths (C:\...) in skill bash blocks","pass":true,"expected":"0 violations","actual":"0 skills with backslash paths"},{"name":"No colon Windows paths (C:/..) in skill bash blocks","pass":true,"expected":"0 violations","actual":"0 skills with colon paths"}],
-  "error": null,
-  "duration_ms": 3923
-}

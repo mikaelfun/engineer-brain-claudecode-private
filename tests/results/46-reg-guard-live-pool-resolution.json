@@ -1,9 +1,0 @@
-{
-  "testId": "reg-guard-live-pool-resolution",
-  "round": 46,
-  "timestamp": "2026-03-31T23:34:36.000Z",
-  "status": "pass",
-  "assertions": [{"name":"select_live_case data_rich returns non-empty","pass":true,"expected":"exit 0","actual":"exit 0"},{"name":"live-cases.yaml exists","pass":true,"expected":"exit 0","actual":"exit 0"},{"name":"data_rich pool is defined in live-cases.yaml or env.yaml","pass":true,"expected":"exit 0","actual":"exit 0"}],
-  "error": null,
-  "duration_ms": 1775000076704
-}

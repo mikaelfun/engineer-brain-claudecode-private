@@ -1,9 +1,0 @@
-{
-  "testId": "api-case-process",
-  "round": 6,
-  "timestamp": "2026-03-28T19:10:54.000Z",
-  "status": "pass",
-  "assertions": [{"name":"GET /api/cases → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'cases':[{'caseNumber':'2601290030000748','title':'Teams request MFA, need check the reason','severity':'B','status':'Waiting for product team','cust"},{"name":"GET /api/cases → JSON response","pass":true,"expected":"JSON","actual":"JSON"},{"name":"GET /api/cases?limit=1 → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'cases':[{'caseNumber':'2601290030000748','title':'Teams request MFA, need check the reason','severity':'B','status':'Waiting for product team','cust"},{"name":"GET /api/cases?limit=1 → JSON response","pass":true,"expected":"JSON","actual":"JSON"},{"name":"POST /api/case/{first_case_id}/process → HTTP 202","pass":true,"expected":"200,202,400,404,409,503","actual":"202","note":"{'status':'started','caseNumber':'first_case_id'} "},{"name":"POST /api/case/{first_case_id}/process → JSON response","pass":true,"expected":"JSON","actual":"JSON"},{"name":"GET /api/operations/active → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'operations':[{'caseNumber':'first_case_id','operationType':'full-process','startedAt':'2026-03-28T19:10:46.575Z'}],'total':1} "},{"name":"GET /api/operations/active → JSON response","pass":true,"expected":"JSON","actual":"JSON"}],
-  "error": null,
-  "duration_ms": 24024
-}

@@ -1,1 +1,0 @@
-{"testId":"wf-iss115-progress-lifecycle","round":24,"timestamp":"2026-03-29T09:27:27Z","status":"pass","assertions":[{"name":"Content match: health-check.sh","pass":true,"expected":"progress","actual":"found"},{"name":"Content match: e2e-runner.sh","pass":true,"expected":"progress","actual":"found"}],"error":null,"duration_ms":523}

@@ -6,6 +6,8 @@ category: inline
 stability: beta
 requiredInput: caseNumber or "all"
 estimatedDuration: 30s per case
+promptTemplate: |
+  Execute /labor-estimate for Case {caseNumber}. Read .claude/skills/labor-estimate/SKILL.md for full instructions, then execute. Do NOT ask the user any questions — generate the estimate automatically and save to the labor directory.
 allowed-tools:
   - Bash
   - Read
@@ -49,6 +51,7 @@ cat skills/labor-estimate/calibration.json
 ### 3. 读取 Case 文件（单 case 模式）
 读取以下文件，**只关注目标日期的活动**：
 
+- `{caseDir}/labor.md` — **已有 D365 labor 记录**（由 data-refresh 生成）。解析表格，检查目标日期是否已有记录。如果当天已记录，记下已记录的总时长和分类。
 - `{caseDir}/case-summary.md` — 排查进展、关键发现
 - `{caseDir}/emails.md`（**只读最后 100 行**）— 当天邮件数量和复杂度
 - `{caseDir}/notes.md`（**只读最后 50 行**）— 当天 notes
@@ -82,6 +85,11 @@ ls -d {casesRoot}/active/*/
 **Description**：用英文简述当天活动（1-2 句）。
 
 如果当天没有任何活动 → 跳过此 case，不生成估算。
+
+**已有 labor 处理**：如果 `labor.md` 中显示目标日期已有 labor 记录：
+- 在估算结果中标注 `⚠️ Already recorded today: {X} min ({classification})`
+- 估算仍然正常生成（用户可能需要补充记录）
+- 在 Step 6 的 AskUserQuestion 中新增提示：`"⚠️ 当天已记录 {X} min，以下为追加估算"`
 
 ### 5. 保存估算结果
 ```bash

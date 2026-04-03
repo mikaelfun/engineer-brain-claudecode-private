@@ -79,7 +79,7 @@ const activeQueries = new Map<string, AbortController>()
 // leading to ~180s total wait. We add a connection-level timeout that
 // aborts the query if no first message arrives within CONNECTION_TIMEOUT_MS.
 const CONNECTION_TIMEOUT_MS = 120_000 // 120 seconds — MCP servers (13+) need time to initialize
-const RESUME_TIMEOUT_MS = 10_000 // 10 seconds — resume doesn't need MCP init, should be fast
+const RESUME_TIMEOUT_MS = 6_000 // 6 seconds — resume doesn't need MCP init, should be fast
 
 /**
  * Create a timer that auto-aborts the AbortController if no message arrives.
@@ -648,6 +648,7 @@ loadSessionMessages()
 // This catches cases where the SDK subprocess died but the async iterator never threw/completed.
 const STALE_SESSION_CHECK_INTERVAL_MS = 60_000 // check every 60s
 const STALE_SESSION_THRESHOLD_MS = 5 * 60_000  // 5 min without activity + no in-memory query → stale
+const RESUME_STALE_THRESHOLD_MS = 5 * 60_000   // 5 min — skip resume if session idle longer than this
 
 const staleSessionWatchdog = setInterval(() => {
   const now = Date.now()
@@ -773,7 +774,10 @@ function appendUserInput(caseNumber: string, type: string, content: string): voi
 export async function* processCaseSession(
   caseNumber: string,
   intent: string,
-  canUseTool?: CanUseTool
+  canUseTool?: CanUseTool,
+  mcpOverride?: Record<string, McpServerConfig>,
+  /** If true, don't register in caseIndex — session won't be resumed by Full Process */
+  ephemeral?: boolean,
 ): AsyncGenerator<SDKMessage & { sdkSessionId?: string }> {
   // Check if case already has a resumable session → reuse it (avoid orphan sessions)
   // But only if it was active recently (within 10 minutes). Stale sessions are likely dead
@@ -781,8 +785,7 @@ export async function* processCaseSession(
   const existingSessionId = caseIndex[caseNumber]
   if (existingSessionId && sessions[existingSessionId] && sessions[existingSessionId].status !== 'completed') {
     const lastActivity = sessions[existingSessionId].lastActivityAt
-    const staleThresholdMs = 10 * 60 * 1000 // 10 minutes
-    const isStale = lastActivity && (Date.now() - new Date(lastActivity).getTime() > staleThresholdMs)
+    const isStale = lastActivity && (Date.now() - new Date(lastActivity).getTime() > RESUME_STALE_THRESHOLD_MS)
     if (isStale) {
       // Mark stale session as completed so a fresh session is created
       sessions[existingSessionId].status = 'completed'
@@ -827,7 +830,7 @@ export async function* processCaseSession(
         // Case-relevant MCP servers are explicitly passed via mcpServers option (ISS-134).
         // Custom agents are explicitly loaded from .claude/agents/*.md (ISS-200).
         settingSources: ['user'] as Options['settingSources'],
-        mcpServers: getCaseMcpServers(),
+        mcpServers: mcpOverride ?? getCaseMcpServers(),
         agents: loadAgentDefinitions(),
         systemPrompt: {
           type: 'preset' as const,
@@ -861,7 +864,9 @@ export async function* processCaseSession(
           createdAt: now,
           lastActivityAt: now,
         }
-        caseIndex[caseNumber] = sdkSessionId
+        if (!ephemeral) {
+          caseIndex[caseNumber] = sdkSessionId
+        }
         saveSessionStore()
       }
 
@@ -1028,8 +1033,7 @@ export async function* stepCaseSession(
   const existingSessionId = caseIndex[caseNumber]
   if (existingSessionId && sessions[existingSessionId] && sessions[existingSessionId].status !== 'completed') {
     const lastActivity = sessions[existingSessionId].lastActivityAt
-    const staleThresholdMs = 10 * 60 * 1000 // 10 minutes
-    const isStale = lastActivity && (Date.now() - new Date(lastActivity).getTime() > staleThresholdMs)
+    const isStale = lastActivity && (Date.now() - new Date(lastActivity).getTime() > RESUME_STALE_THRESHOLD_MS)
     if (isStale) {
       // Mark stale session as completed so a fresh session is created
       sessions[existingSessionId].status = 'completed'
@@ -1052,8 +1056,12 @@ export async function* stepCaseSession(
     }
   }
 
-  // No existing session → create new one
-  yield* processCaseSession(caseNumber, prompt, options?.canUseTool)
+  // No existing session → create new one with step-specific MCP servers
+  // If step uses fewer MCPs than full set, mark as ephemeral (won't be reused by Full Process)
+  const stepMcp = getCaseMcpServers(stepName)
+  const allMcp = getCaseMcpServers()
+  const isSubset = Object.keys(stepMcp).length < Object.keys(allMcp).length
+  yield* processCaseSession(caseNumber, prompt, options?.canUseTool, stepMcp, isSubset)
 }
 
 /**
@@ -1113,8 +1121,7 @@ After verification, output a single JSON block on a line by itself:
   const existingSessionId = caseIndex[caseNumber]
   if (existingSessionId && sessions[existingSessionId] && sessions[existingSessionId].status !== 'completed') {
     const lastActivity = sessions[existingSessionId].lastActivityAt
-    const staleThresholdMs = 10 * 60 * 1000 // 10 minutes
-    const isStale = lastActivity && (Date.now() - new Date(lastActivity).getTime() > staleThresholdMs)
+    const isStale = lastActivity && (Date.now() - new Date(lastActivity).getTime() > RESUME_STALE_THRESHOLD_MS)
     if (isStale) {
       sessions[existingSessionId].status = 'completed'
       delete caseIndex[caseNumber]

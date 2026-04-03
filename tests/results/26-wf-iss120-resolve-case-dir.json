@@ -1,9 +1,0 @@
-{
-  "testId": "wf-iss120-resolve-case-dir",
-  "round": 26,
-  "timestamp": "2026-03-29T20:09:02.000Z",
-  "status": "pass",
-  "assertions": [{"name":"common.sh 中存在 resolve_case_dir 函数定义","pass":true,"expected":"exit 0","actual":"exit 0"},{"name":"resolve_case_dir 至少有函数定义和调用注释","pass":true,"expected":"exit 0","actual":"exit 0"}],
-  "error": null,
-  "duration_ms": 27115
-}

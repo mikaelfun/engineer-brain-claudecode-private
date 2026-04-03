@@ -53,8 +53,21 @@ FILE_AGE_HOURS=$(( ($(date +%s) - $(stat -c %Y "{CASE_DIR}/notes.md" 2>/dev/null
 - **过滤掉**含 `系统自动分配` 的系统 note
 - 取最新一条的日期，解析为 Date 对象
 
+**新 Case 检测：**
+- 如果过滤后无任何人工 note（notes.md 不存在、为空、或全是系统 note）→ 标记 `isNewCase = true`
+- 从 `{CASE_DIR}/casehealth-meta.json` 读取 `createdon` 字段，确认 case 是否当天创建
+- 如果 `isNewCase = true` 且 case 当天创建 → 进入 Step 4 新 case 分支
+
 ### Step 4: 判断 Gap
 
+**4a. 新 Case 分支（`isNewCase = true`）：**
+```
+if isNewCase:
+  输出: "📋 新 Case 检测 — 无历史 Note，生成日终操作记录"
+  跳过 gapDays 阈值检查，直接进入 Step 5
+```
+
+**4b. 常规分支（`isNewCase = false`，有人工 note）：**
 ```
 读取 config.json 的 noteGapThresholdDays（默认 3）
 gapDays = (now - lastNoteDate) 的天数（向下取整）
@@ -90,6 +103,27 @@ if gapDays <= threshold:
 
 ### Step 6: 读取最新进展
 
+**6a. 新 Case 模式（`isNewCase = true`）：**
+
+从多个数据源提取当天操作记录：
+
+1. **`{CASE_DIR}/casehealth-meta.json`**：
+   - `irSla.status` → `"Succeeded"` 时记录 `"met IR SLA"`
+   - `emails`（数量）→ >0 时记录 `"sent initial response / first quality response"`
+   - `actualStatus` → 当前状态描述
+
+2. **`{CASE_DIR}/case-summary.md`**（如存在）：
+   - 提取当天日期的条目
+   - 转为 note 格式
+
+3. **兜底**：如果以上都无内容，至少生成：
+   ```
+   YYMMDD--
+   - -new case received, initial assessment in progress.
+   ```
+
+**6b. 常规模式（`isNewCase = false`）：**
+
 从 `{CASE_DIR}/case-summary.md` 读取 "排查进展" 部分：
 - 提取 `lastNoteDate` 之后的条目（格式: `- [YYYY-MM-DD] ...`）
 - 如果有新进展 → 基于这些进展构建 note 内容
@@ -106,8 +140,9 @@ if gapDays <= threshold:
 title: "fangkun note"
 body: |
   {按 YYMMDD-- 格式组织，每天一组 bullet points}
-gapDays: {gapDays}
-lastNoteDate: "{lastNoteDate YYYY-MM-DD}"
+gapDays: {gapDays}  # 新 case 时为 0
+lastNoteDate: "{lastNoteDate YYYY-MM-DD}"  # 新 case 时为 "none"
+isNewCase: {true/false}
 generatedAt: "{now ISO8601}"
 ---
 ```

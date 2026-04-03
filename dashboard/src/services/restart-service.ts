@@ -8,6 +8,8 @@
  *          killPort before backend restart.
  * ISS-100: Fix --watch mode process kill + align spawn commands with
  *          package.json dev scripts.
+ * ISS-209: Pre-restart orphan scan — kill ALL dashboard-related cmd.exe/node.exe
+ *          zombies from previous restarts before spawning new processes.
  */
 import { exec, spawn } from 'child_process'
 import { promisify } from 'util'
@@ -29,6 +31,21 @@ const NODE_TREE_PROCESS_NAMES = new Set([
   'node.exe', 'cmd.exe', 'pwsh.exe', 'powershell.exe', 'npm.cmd', 'npx.cmd',
   'conhost.exe',
 ])
+
+/**
+ * Command-line patterns that identify dashboard-related processes.
+ * Used by cleanupOrphanedDashboardProcesses() to find zombies.
+ */
+const DASHBOARD_CMD_PATTERNS = [
+  'concurrently.*dev:server.*dev:web',
+  'npm run dev:server',
+  'npm run dev:web',
+  'node.*tsx.*watch.*src/index\\.ts',
+  'npx.*vite.*--port',
+  'vite.*--port',
+  // Also catch bare 'cd web && npm run dev' wrappers from concurrently
+  'cd web.*npm run dev',
+]
 
 /** Find PID listening on a given port (Windows) */
 async function findPidByPort(port: number): Promise<number | null> {
@@ -136,6 +153,91 @@ async function killPid(pid: number): Promise<void> {
 }
 
 /**
+ * ISS-209: Scan and kill ALL orphaned dashboard-related processes.
+ *
+ * When dashboard is started via `npm run dev` → `concurrently`, it creates
+ * a tree of cmd.exe/node.exe processes. The port-based kill only catches
+ * the leaf processes (vite, node tsx), leaving wrapper cmd.exe shells as
+ * zombies. Over multiple restarts, these accumulate.
+ *
+ * This function:
+ * 1. Lists all cmd.exe + node.exe processes with command lines
+ * 2. Matches against DASHBOARD_CMD_PATTERNS
+ * 3. Excludes the current process (our own PID) and its ancestors
+ * 4. Kills all matches with /F /T
+ *
+ * Called before each restart to ensure a clean slate.
+ */
+async function cleanupOrphanedDashboardProcesses(excludePids?: Set<number>): Promise<number> {
+  const myPid = process.pid
+  const exclude = excludePids ?? new Set<number>()
+  exclude.add(myPid)
+
+  // Also exclude our parent chain (Claude Code, terminal, etc.)
+  const processMap = await getAllProcessParentInfo()
+  let walkPid = myPid
+  for (let i = 0; i < 10; i++) {
+    const info = processMap.get(walkPid)
+    if (!info || info.parentPid <= 4) break
+    exclude.add(info.parentPid)
+    walkPid = info.parentPid
+  }
+
+  try {
+    // Get all cmd.exe and node.exe processes with command lines
+    const { stdout } = await execAsync(
+      `powershell -NoProfile -Command "Get-CimInstance Win32_Process -Filter \\"Name='cmd.exe' OR Name='node.exe'\\" | Select-Object ProcessId,CommandLine | ConvertTo-Csv -NoTypeInformation"`,
+      { maxBuffer: 5 * 1024 * 1024 }
+    )
+
+    const pidsToKill: number[] = []
+    const lines = stdout.trim().split('\n').filter(l => l.trim().length > 0)
+
+    for (const line of lines) {
+      if (line.startsWith('"ProcessId"')) continue // header
+      // Parse CSV: "12345","C:\...\cmd.exe /d /s /c concurrently ..."
+      const match = line.match(/^"(\d+)","(.+)"$/)
+      if (!match) continue
+
+      const pid = parseInt(match[1], 10)
+      const cmdLine = match[2]
+
+      if (exclude.has(pid)) continue
+      if (!cmdLine) continue
+
+      // Check if command line matches any dashboard pattern
+      const isDashboard = DASHBOARD_CMD_PATTERNS.some(pattern => {
+        try {
+          return new RegExp(pattern, 'i').test(cmdLine)
+        } catch {
+          return false
+        }
+      })
+
+      if (isDashboard) {
+        pidsToKill.push(pid)
+      }
+    }
+
+    if (pidsToKill.length > 0) {
+      console.log(`[restart] Cleaning up ${pidsToKill.length} orphaned dashboard processes: ${pidsToKill.join(', ')}`)
+      for (const pid of pidsToKill) {
+        await killPid(pid)
+      }
+      // Brief wait for processes to exit
+      await new Promise(r => setTimeout(r, 500))
+    } else {
+      console.log(`[restart] No orphaned dashboard processes found`)
+    }
+
+    return pidsToKill.length
+  } catch (err) {
+    console.error(`[restart] Orphan cleanup failed:`, err)
+    return 0
+  }
+}
+
+/**
  * Kill saved spawned process + port listener as fallback.
  * ISS-100: Walk up process tree to find and kill the root (--watch watcher).
  *          Retry port check after kill to handle watcher respawn race.
@@ -217,13 +319,15 @@ async function spawnBackend(): Promise<void> {
 }
 
 export async function restartFrontend(): Promise<{ success: boolean; message: string }> {
+  // ISS-209: Clean up orphaned dashboard processes before restart
+  const orphansKilled = await cleanupOrphanedDashboardProcesses()
   const killed = await killSavedAndPort(lastFrontendPid, FRONTEND_PORT)
   lastFrontendPid = null
   await spawnFrontend()
   return {
     success: true,
     message: killed
-      ? `Frontend (port ${FRONTEND_PORT}) restarted`
+      ? `Frontend (port ${FRONTEND_PORT}) restarted${orphansKilled > 0 ? ` (cleaned ${orphansKilled} orphans)` : ''}`
       : `Frontend spawned on port ${FRONTEND_PORT} (no existing process found)`,
   }
 }
@@ -232,6 +336,8 @@ export async function restartBackend(): Promise<{ success: boolean; message: str
   // Abort all active SDK queries before exiting (ISS-086)
   const aborted = abortAllQueries()
   console.log(`[restart] Aborted ${aborted} active queries before backend restart`)
+  // ISS-209: Clean up orphaned dashboard processes before restart
+  await cleanupOrphanedDashboardProcesses()
   // NOTE: Do NOT kill own port — we ARE the backend process on BACKEND_PORT.
   // taskkill /T on our own tree would kill us before spawn runs.
   // Instead: kill saved PID from previous restart (if any), spawn new backend,
@@ -256,6 +362,8 @@ export async function restartAll(): Promise<{ success: boolean; message: string 
   // Abort all active SDK queries before exiting (ISS-086)
   const aborted = abortAllQueries()
   console.log(`[restart] Aborted ${aborted} active queries before full restart`)
+  // ISS-209: Clean up ALL orphaned dashboard processes first
+  const orphansKilled = await cleanupOrphanedDashboardProcesses()
   // Kill frontend (safe — we are not the frontend process)
   await killSavedAndPort(lastFrontendPid, FRONTEND_PORT)
   lastFrontendPid = null
@@ -272,9 +380,9 @@ export async function restartAll(): Promise<{ success: boolean; message: string 
   setTimeout(() => process.exit(0), 500)
   return {
     success: true,
-    message: `All services restarting...`,
+    message: `All services restarting...${orphansKilled > 0 ? ` (cleaned ${orphansKilled} orphans)` : ''}`,
   }
 }
 
 // Export for testing
-export { lastFrontendPid, lastBackendPid, findPidByPort, killPid, killSavedAndPort, findProcessTreeRoot, getAllProcessParentInfo }
+export { lastFrontendPid, lastBackendPid, findPidByPort, killPid, killSavedAndPort, findProcessTreeRoot, getAllProcessParentInfo, cleanupOrphanedDashboardProcesses }

@@ -1,9 +1,9 @@
 {
-  "active": "2026-03-31T23:25:32Z",
+  "active": "2026-04-02T15:02:37Z",
   "step": "decide",
   "status": "running",
   "reasoning": {
-    "diagnose": "fixQualityDeclining=true, coverage trend mild decrease (80%), no recipe match, frequency-only coverage scanner, framework-fix-46 first attempt (unbound var)"
+    "diagnose": "Cycle 0, coverage 0%, no trends yet, frequency-only scan (coverage), no escalations, 2 directives for initial SCAN"
   },
   "selfHealEvent": null,
   "tick": 0

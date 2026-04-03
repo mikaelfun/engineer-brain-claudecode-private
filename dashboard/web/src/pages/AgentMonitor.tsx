@@ -7,7 +7,7 @@
 import { Card, CardHeader } from '../components/common/Card'
 import { Badge } from '../components/common/Badge'
 import { Loading, EmptyState } from '../components/common/Loading'
-import { useAgents, useCronJobs, usePatrolState, useCancelPatrol, useUnifiedSessions, useCaseMessages, useTriggers, useDeleteTrigger, useRunTrigger } from '../api/hooks'
+import { useAgents, useCronJobs, usePatrolState, useCancelPatrol, useUnifiedSessions, useCaseMessages, useTriggers, useDeleteTrigger, useRunTrigger, useCancelTrigger } from '../api/hooks'
 import type { UnifiedSession } from '../api/hooks'
 import { usePatrolStore } from '../stores/patrolStore'
 import { useCaseSessionStore, type CaseSessionMessage } from '../stores/caseSessionStore'
@@ -17,10 +17,11 @@ import { SessionMessageList } from '../components/session/SessionMessageList'
 import { QueueStatusIndicator } from '../components/session/QueueStatusIndicator'
 import { StepQuestionForm } from '../components/session/StepQuestionForm'
 import { useQueryClient } from '@tanstack/react-query'
-import { RefreshCw, ChevronDown, ChevronRight, Filter, Send, Square, Plus, Trash2, Play } from 'lucide-react'
+import { RefreshCw, ChevronDown, ChevronRight, Filter, Send, Square, Plus, Trash2, Play, Loader2, XCircle, CheckCircle2, AlertCircle } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { apiPost, apiDelete } from '../api/client'
 import { CreateTriggerDialog } from '../components/agents/CreateTriggerDialog'
+import { useTriggerRunStore } from '../stores/triggerRunStore'
 
 const EMPTY_MESSAGES: CaseSessionMessage[] = []
 
@@ -530,8 +531,13 @@ export default function AgentMonitor() {
   const { data: triggersData } = useTriggers()
   const deleteTrigger = useDeleteTrigger()
   const runTrigger = useRunTrigger()
+  const cancelTrigger = useCancelTrigger()
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  // Trigger run store
+  const triggerRuns = useTriggerRunStore((s) => s.runs)
+  const clearTriggerRun = useTriggerRunStore((s) => s.clearRun)
   const { data: patrol } = usePatrolState()
   const { data: unifiedData, isLoading: sessionsLoading } = useUnifiedSessions()
 
@@ -1087,7 +1093,12 @@ export default function AgentMonitor() {
           <EmptyState icon="⏰" title="No cron jobs" />
         ) : (
           <div className="space-y-3">
-            {cronJobs.map((job: any) => (
+            {cronJobs.map((job: any) => {
+              const triggerRun = triggerRuns[job.id]
+              const isJobRunning = triggerRun?.status === 'running' || job.running
+              const justFinished = triggerRun && triggerRun.status !== 'running'
+
+              return (
               <Card key={job.id}>
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1 min-w-0">
@@ -1096,6 +1107,38 @@ export default function AgentMonitor() {
                       <Badge variant={job.enabled ? 'success' : 'secondary'} size="xs">
                         {job.enabled ? 'Enabled' : 'Disabled'}
                       </Badge>
+                      {isJobRunning && (
+                        <Badge variant="primary" size="xs">
+                          <span className="flex items-center gap-1">
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                            Running
+                          </span>
+                        </Badge>
+                      )}
+                      {justFinished && triggerRun.status === 'completed' && (
+                        <Badge variant="success" size="xs">
+                          <span className="flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3" />
+                            Done ({Math.round(triggerRun.elapsedMs / 1000)}s)
+                          </span>
+                        </Badge>
+                      )}
+                      {justFinished && triggerRun.status === 'failed' && (
+                        <Badge variant="danger" size="xs">
+                          <span className="flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" />
+                            Failed
+                          </span>
+                        </Badge>
+                      )}
+                      {justFinished && triggerRun.status === 'cancelled' && (
+                        <Badge variant="secondary" size="xs">
+                          <span className="flex items-center gap-1">
+                            <XCircle className="w-3 h-3" />
+                            Cancelled
+                          </span>
+                        </Badge>
+                      )}
                     </div>
                     {(job as any).prompt && (job as any).prompt !== job.name && (
                       <p className="text-xs mt-0.5 font-mono truncate" style={{ color: 'var(--text-tertiary)' }}>
@@ -1112,15 +1155,27 @@ export default function AgentMonitor() {
                     <Badge variant="primary" size="xs">
                       {job.schedule?.kind === 'cron' ? job.schedule.expr : job.schedule?.kind}
                     </Badge>
-                    <button
-                      onClick={() => runTrigger.mutate(job.id)}
-                      disabled={runTrigger.isPending}
-                      className="p-1.5 rounded transition-colors hover:bg-[var(--bg-hover)]"
-                      style={{ color: 'var(--accent-green)' }}
-                      title="Run now"
-                    >
-                      <Play className="w-4 h-4" />
-                    </button>
+                    {isJobRunning ? (
+                      <button
+                        onClick={() => cancelTrigger.mutate(job.id)}
+                        disabled={cancelTrigger.isPending}
+                        className="p-1.5 rounded transition-colors hover:bg-[var(--bg-hover)]"
+                        style={{ color: 'var(--accent-red)' }}
+                        title="Cancel"
+                      >
+                        <Square className="w-4 h-4" />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => runTrigger.mutate(job.id)}
+                        disabled={runTrigger.isPending}
+                        className="p-1.5 rounded transition-colors hover:bg-[var(--bg-hover)]"
+                        style={{ color: 'var(--accent-green)' }}
+                        title="Run now"
+                      >
+                        <Play className="w-4 h-4" />
+                      </button>
+                    )}
                     {deletingId === job.id ? (
                       <div className="flex items-center gap-1">
                         <button
@@ -1141,8 +1196,9 @@ export default function AgentMonitor() {
                     ) : (
                       <button
                         onClick={() => setDeletingId(job.id)}
+                        disabled={isJobRunning}
                         className="p-1.5 rounded transition-colors hover:bg-[var(--bg-hover)]"
-                        style={{ color: 'var(--accent-red)' }}
+                        style={{ color: isJobRunning ? 'var(--text-tertiary)' : 'var(--accent-red)', cursor: isJobRunning ? 'not-allowed' : 'pointer' }}
                         title="Delete"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -1151,7 +1207,84 @@ export default function AgentMonitor() {
                   </div>
                 </div>
 
-                {job.state && (
+                {/* Live output during execution */}
+                {isJobRunning && triggerRun && (
+                  <div className="mt-2 rounded overflow-hidden" style={{ border: '1px solid var(--border-subtle)' }}>
+                    <div className="flex items-center justify-between px-3 py-1.5" style={{ background: 'var(--accent-blue-dim)' }}>
+                      <span className="text-xs font-medium flex items-center gap-1.5" style={{ color: 'var(--accent-blue)' }}>
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        Running... {triggerRun.elapsedMs > 0 && `(${Math.round(triggerRun.elapsedMs / 1000)}s)`}
+                      </span>
+                      <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                        {triggerRun.output.length > 0 ? `${triggerRun.output.length} chars` : 'Waiting for output...'}
+                      </span>
+                    </div>
+                    {triggerRun.output && (
+                      <pre
+                        className="px-3 py-2 text-xs overflow-auto whitespace-pre-wrap"
+                        style={{
+                          background: 'var(--bg-secondary)',
+                          color: 'var(--text-primary)',
+                          maxHeight: '200px',
+                        }}
+                      >
+                        {triggerRun.output}
+                      </pre>
+                    )}
+                  </div>
+                )}
+
+                {/* Finished run result (dismissible) */}
+                {justFinished && (
+                  <div className="mt-2 rounded overflow-hidden" style={{ border: '1px solid var(--border-subtle)' }}>
+                    <div
+                      className="flex items-center justify-between px-3 py-1.5"
+                      style={{
+                        background: triggerRun.status === 'completed' ? 'var(--accent-green-dim)' :
+                                    triggerRun.status === 'failed' ? 'var(--accent-red-dim)' : 'var(--bg-hover)',
+                      }}
+                    >
+                      <span
+                        className="text-xs font-medium flex items-center gap-1.5"
+                        style={{
+                          color: triggerRun.status === 'completed' ? 'var(--accent-green)' :
+                                 triggerRun.status === 'failed' ? 'var(--accent-red)' : 'var(--text-secondary)',
+                        }}
+                      >
+                        {triggerRun.status === 'completed' && <><CheckCircle2 className="w-3 h-3" /> Completed in {Math.round(triggerRun.elapsedMs / 1000)}s</>}
+                        {triggerRun.status === 'failed' && <><AlertCircle className="w-3 h-3" /> Failed after {Math.round(triggerRun.elapsedMs / 1000)}s</>}
+                        {triggerRun.status === 'cancelled' && <><XCircle className="w-3 h-3" /> Cancelled after {Math.round(triggerRun.elapsedMs / 1000)}s</>}
+                      </span>
+                      <button
+                        onClick={() => clearTriggerRun(job.id)}
+                        className="text-xs px-2 py-0.5 rounded hover:bg-[var(--bg-hover)]"
+                        style={{ color: 'var(--text-tertiary)' }}
+                      >
+                        Dismiss
+                      </button>
+                    </div>
+                    {triggerRun.output && (
+                      <pre
+                        className="px-3 py-2 text-xs overflow-auto whitespace-pre-wrap"
+                        style={{
+                          background: 'var(--bg-secondary)',
+                          color: 'var(--text-primary)',
+                          maxHeight: '200px',
+                        }}
+                      >
+                        {triggerRun.output}
+                      </pre>
+                    )}
+                    {triggerRun.error && (
+                      <div className="px-3 py-2 text-xs" style={{ color: 'var(--accent-red)' }}>
+                        {triggerRun.error}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Historical state (only show when not actively running/just finished) */}
+                {!isJobRunning && !justFinished && job.state && (
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs mt-3 pt-3 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
                     <div>
                       <span style={{ color: 'var(--text-tertiary)' }}>Last Run</span>
@@ -1192,7 +1325,7 @@ export default function AgentMonitor() {
                   </div>
                 )}
 
-                {job.state?.lastError && (
+                {!isJobRunning && !justFinished && job.state?.lastError && (
                   <div
                     className="mt-2 p-2 rounded text-xs break-all"
                     style={{ background: 'var(--accent-red-dim)', color: 'var(--accent-red)' }}
@@ -1201,7 +1334,7 @@ export default function AgentMonitor() {
                   </div>
                 )}
 
-                {job.state?.lastOutput && (
+                {!isJobRunning && !justFinished && job.state?.lastOutput && (
                   <details className="mt-2">
                     <summary
                       className="text-xs cursor-pointer select-none"
@@ -1223,7 +1356,8 @@ export default function AgentMonitor() {
                   </details>
                 )}
               </Card>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>

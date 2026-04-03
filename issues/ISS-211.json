@@ -1,0 +1,12 @@
+{
+  "id": "ISS-211",
+  "title": "casework 流程缺少拉取生成 labor.md，导致 labor-estimate 无法判断当天有无记录 labor",
+  "description": "casework data-refresh 阶段没有拉取 D365 的 labor 记录并生成 labor.md 文件。labor-estimate skill 依赖 labor.md 来判断当天是否已经记录过 labor，缺少该文件会导致 labor-estimate 每次都认为当天未记录，给出错误的估算建议。\n\n需要在 data-refresh 流程中增加拉取 labor 记录的步骤，生成 labor.md 到 case 目录。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "tracked",
+  "trackId": "labor-refresh_20260403",
+  "testLoopScan": true,
+  "createdAt": "2026-04-03T00:00:00+08:00",
+  "updatedAt": "2026-04-03T00:00:00+08:00"
+}

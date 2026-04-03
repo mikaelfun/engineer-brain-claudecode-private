@@ -1,8 +1,8 @@
 # Live Cases Pool — Active D365 Cases for Test Loop
 # Auto-refreshed by refresh-live-cases.sh
-# Last refresh: 2026-03-31T23:16:17Z
+# Last refresh: 2026-04-02T15:04:31Z
 
-lastRefreshed: "2026-03-31T23:16:17Z"
+lastRefreshed: "2026-04-02T15:04:31Z"
 refreshInterval: 86400  # 24 hours in seconds
 source: "scan-active-dir"
 
@@ -12,7 +12,7 @@ cases:
     severity: "B"
     pool: "data_rich"
     hasEmails: true
-    emailCount: 16
+    emailCount: 17
     hasICM: true
     tags: []
   - id: "2602130040001034"
@@ -20,19 +20,11 @@ cases:
     severity: "B"
     pool: "data_rich"
     hasEmails: true
-    emailCount: 32
+    emailCount: 35
     hasICM: false
     tags: []
-  - id: "2603060030001353"
-    title: "优化告警邮件收不到问题"
-    severity: "B"
-    pool: "data_rich"
-    hasEmails: true
-    emailCount: 18
-    hasICM: false
-    tags: []
-  - id: "2603190030000206"
-    title: "未拦截钓鱼邮件"
+  - id: "2603230010001900"
+    title: "Unified <SEV B> | PRC | 21V Teams | 苹果的 team 基于用户登记登录"
     severity: "B"
     pool: "data_rich"
     hasEmails: true
@@ -40,11 +32,11 @@ cases:
     hasICM: false
     tags: []
   - id: "2603230010001900001"
-    title: "Microsoft Entra certificate-based authentication"
+    title: "Unified <SEV B> | PRC | 21V Teams | 苹果的 team 基于用户登记登录"
     severity: "B"
-    pool: "minimal"
-    hasEmails: false
-    emailCount: 0
+    pool: "data_rich"
+    hasEmails: true
+    emailCount: 12
     hasICM: false
     tags: []
   - id: "2603250010001221"
@@ -52,15 +44,7 @@ cases:
     severity: "C"
     pool: "data_rich"
     hasEmails: true
-    emailCount: 9
-    hasICM: false
-    tags: []
-  - id: "2603260030005229"
-    title: "Azure  ALert Issue"
-    severity: "B"
-    pool: "data_sparse"
-    hasEmails: true
-    emailCount: 1
+    emailCount: 13
     hasICM: false
     tags: []
   - id: "2603300010000578"
@@ -68,7 +52,7 @@ cases:
     severity: "B"
     pool: "data_rich"
     hasEmails: true
-    emailCount: 6
+    emailCount: 7
     hasICM: false
     tags: []
   - id: "2603300030003153001"
@@ -77,13 +61,21 @@ cases:
     pool: "minimal"
     hasEmails: false
     emailCount: 0
-    hasICM: false
+    hasICM: true
     tags: []
   - id: "2603310010001969"
     title: "[MS-LED]创建告警无法指定订阅"
     severity: "B"
-    pool: "minimal"
-    hasEmails: false
-    emailCount: 0
+    pool: "data_sparse"
+    hasEmails: true
+    emailCount: 2
+    hasICM: false
+    tags: []
+  - id: "2604020010000708"
+    title: "[S500]aks 命名空间启用 PSS 策略"
+    severity: "C"
+    pool: "data_sparse"
+    hasEmails: true
+    emailCount: 1
     hasICM: false
     tags: []

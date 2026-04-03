@@ -1,9 +1,0 @@
-{
-  "testId": "df-retro-fix-context",
-  "round": 44,
-  "timestamp": "2026-03-31T22:08:23.000Z",
-  "status": "fail",
-  "assertions": [{"name":"FIX.md contains retroContext reference","pass":true,"expected":"exit 0","actual":"exit 0"},{"name":"fix-analyzer.sh handles retroContext","pass":false,"expected":"exit 0","actual":"non-zero exit"}],
-  "error": "1 of 2 assertions failed",
-  "duration_ms": 35005
-}

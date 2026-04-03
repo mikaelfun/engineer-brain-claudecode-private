@@ -1,9 +1,0 @@
-{
-  "testId": "df-theme-switch-persist",
-  "round": 43,
-  "timestamp": "2026-03-31T20:34:22.000Z",
-  "status": "pass",
-  "assertions": [{"name":"useTheme.ts should have multiple localStorage references with 'eb-theme' key","pass":true,"expected":">2","actual":"4"},{"name":"All three mode values (dark/light/system) must be present","pass":true,"expected":">2","actual":"17"},{"name":"Both setItem and getItem calls must exist for persistence","pass":true,"expected":">0","actual":"2"}],
-  "error": null,
-  "duration_ms": 57863
-}

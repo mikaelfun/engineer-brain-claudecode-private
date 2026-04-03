@@ -58,7 +58,10 @@ allowed-tools:
    ```
 
 3. **筛选需要处理的 Case**
-   对每个 case，读取 `{casesRoot}/active/{case-id}/casehealth-meta.json` 的 `lastInspected`。
+
+   **`--force` 模式**：如果用户传入 `--force`（或明确表示要强制巡检），跳过 `lastInspected` 检查，所有活跃 case 全部纳入处理。
+
+   **常规模式**：对每个 case，读取 `{casesRoot}/active/{case-id}/casehealth-meta.json` 的 `lastInspected`。
    满足以下**任一条件**即纳入处理：
    - `lastInspected` 距当前时间超过 24 小时（每日巡检，确保及时发现新邮件、客户长时间未回复等需跟进场景）
    - 无 `casehealth-meta.json` 或无 `lastInspected` 字段（新 case，首次巡检）

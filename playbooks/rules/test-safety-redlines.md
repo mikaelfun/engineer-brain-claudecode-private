@@ -23,12 +23,19 @@
 | 端点 | 风险说明 |
 |------|----------|
 | `POST /api/todo/:id/execute` | 直接执行 D365 写操作 |
+| `POST /api/labor-estimate/:caseNumber/submit` | Labor 提交到 D365（record-labor.ps1） |
+| `POST /api/labor-estimate/batch-submit` | Labor 批量提交到 D365 |
+| `POST /api/case/:id/note-gap/submit` | Note 写入 D365（add-note.ps1） |
 
 ### 禁止点击的 UI 元素
 
 | 页面 | 元素 | 原因 |
 |------|------|------|
 | TodoView | "Execute" 按钮 | 直接执行 D365 写操作 |
+| LaborEstimateCard | "Write to D365" 按钮 | Labor 提交到 D365 |
+| LaborEstimatePage | "Submit All" / 批量提交按钮 | Labor 批量提交到 D365 |
+| NoteGapCard | "写入 D365" 按钮 | Note 写入 D365 |
+| LaborEstimatePage（Note Gap 区域） | "📝 Write to D365" 按钮 | Note 写入 D365 |
 
 ## ✅ 允许执行（只读操作 + 本地文件操作）
 

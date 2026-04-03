@@ -1,0 +1,22 @@
+{
+  "id": "cron-args-bug_20260402",
+  "title": "Cron Job Prompt Arguments Not Passed to Skill",
+  "type": "bug",
+  "status": "complete",
+  "issueId": "ISS-207",
+  "created": "2026-04-02T16:35:00+08:00",
+  "updated": "2026-04-02T16:40:00+08:00",
+  "verification": {
+    "status": "skipped",
+    "reason": "mark-done",
+    "timestamp": "2026-04-02T16:41:00+08:00"
+  },
+  "phases": {
+    "total": 2,
+    "completed": 2
+  },
+  "tasks": {
+    "total": 5,
+    "completed": 5
+  }
+}

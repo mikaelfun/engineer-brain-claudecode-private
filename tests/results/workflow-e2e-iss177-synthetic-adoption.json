@@ -1,9 +1,0 @@
-{
-  "testId": "iss177-synthetic-adoption",
-  "round": workflow-e2e,
-  "timestamp": "2026-03-30T16:15:13.000Z",
-  "status": "pass",
-  "assertions": [{"name":"File exists: profiles.yaml","pass":true,"expected":"exists","actual":"exists"},{"name":"Dir count above 1: fixtures","pass":true,"expected":">1","actual":"2"},{"name":"JSON field: status = tracked","pass":true,"expected":"tracked","actual":"\"tracked\""}],
-  "error": null,
-  "duration_ms": 28025
-}

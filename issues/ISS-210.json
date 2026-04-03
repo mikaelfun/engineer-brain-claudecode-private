@@ -1,0 +1,11 @@
+{
+  "id": "ISS-210",
+  "title": "Cron Job slash command 参数丢失 — 去掉 formatPromptForPrintMode 改写",
+  "description": "**根因翻转**：实测 `claude -p '/onenote-export sync'`（pipe 和 arg 两种方式）都能正常执行！4492 个页面成功检查。\n\n之前的 formatPromptForPrintMode() 改写反而破坏了原始 slash command 格式，导致 Claude 收到的不是 `/onenote-export sync` 而是被改写后的自然语言，which 导致各种问题。\n\n**修复**：去掉 formatPromptForPrintMode()，prompt 直接透传给 `claude -p` stdin。同时改为 stdin pipe 方式传 prompt（避免 shell: true 截断长参数）。",
+  "type": "bug",
+  "priority": "P0",
+  "status": "implemented",
+  "testLoopScan": true,
+  "createdAt": "2026-04-02T21:30:00+08:00",
+  "updatedAt": "2026-04-02T22:00:00+08:00"
+}

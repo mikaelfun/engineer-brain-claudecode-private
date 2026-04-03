@@ -1,35 +1,10 @@
 {
+  "round": 0,
   "cumulative": {
-    "passed": 214,
-    "failed": 3,
-    "fixed": 22,
-    "skipped": 18
-  },
-  "observabilityStatus": {
-    "probesTotal": 9,
-    "probesRun": 0,
-    "probesPass": 0,
-    "probesFail": 0,
-    "staleCount": 0,
-    "lastResults": {}
-  },
-  "cycleStats": {
     "passed": 0,
     "failed": 0,
     "fixed": 0,
     "skipped": 0
   },
-  "scanStrategy": {
-    "recipesUsed": [
-      "regression-focused-scan.md"
-    ],
-    "scannersActivated": [
-      "coverage"
-    ],
-    "overrideReason": "regressionRate=55% triggered regression-focused-scan recipe; env_issue items exhausted into skipRegistry"
-  },
-  "passed": 219,
-  "failed": 3,
-  "skipped": 19,
-  "fixed": 21
+  "lastUpdated": ""
 }

@@ -29,8 +29,8 @@ echo '{"stages":{"TEST":{"status":"running","startedAt":"'$(date -u +%Y-%m-%dT%H
    | Category | Agent | Tools | Executor |
    |----------|-------|-------|----------|
    | backend-api | sonnet | Bash, Read, Write | `api-runner.sh {id} {cycle}` |
-   | ui-interaction | haiku | Playwright MCP only | `ui-runner.sh {id} {cycle}` |
-   | ui-visual | haiku | Playwright MCP only | `visual-runner.sh {id} {cycle}` |
+   | ui-interaction | opus | Playwright MCP only | `ui-runner.sh {id} {cycle}` |
+   | ui-visual | opus | Playwright MCP only | `visual-runner.sh {id} {cycle}` |
    | workflow-e2e | sonnet | Bash, Read, Write | `e2e-runner.sh {id} {cycle}` |
    | observability | sonnet | Bash, Read, Write | `observability-runner.sh {id} {cycle}` |
    | unit-test | sonnet | Bash, Read, Write | `unit-runner.sh {id} {cycle}` |

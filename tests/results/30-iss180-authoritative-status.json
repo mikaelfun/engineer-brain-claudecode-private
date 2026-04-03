@@ -1,9 +1,0 @@
-{
-  "testId": "iss180-authoritative-status",
-  "round": 30,
-  "timestamp": "2026-03-30T18:09:21.000Z",
-  "status": "pass",
-  "assertions": [{"name":"File exists: pipeline.json","pass":true,"expected":"exists","actual":"exists"},{"name":"File exists: supervisor.json","pass":true,"expected":"exists","actual":"exists"},{"name":"JSON field: pipelineStatus = [idle,running,paused]","pass":true,"expected":"[idle,running,paused]","actual":"\"idle\""},{"name":"JSON field: status in enum [idle  running  paused]","pass":true,"expected":"enum:idle  running  paused","actual":"running"}],
-  "error": null,
-  "duration_ms": 53000
-}

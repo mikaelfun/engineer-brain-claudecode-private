@@ -1,62 +1,7 @@
 {
-  "testQueue": [
-    "df-retro-fix-context",
-    "df-poll-detect-fix",
-    "df-synthetic-edge-profiles",
-    "iss-184-patrol-sse-content",
-    "iss-181-reopen-cleanup"
-  ],
+  "testQueue": [],
   "fixQueue": [],
   "verifyQueue": [],
   "regressionQueue": [],
-  "gaps": [
-    {
-      "type": "architecture",
-      "source": "arch-scan",
-      "category": "workflow-e2e",
-      "description": "SKILL.md has Windows-style paths (CLAUDE.md requires POSIX)",
-      "priority": "P2",
-      "testId": "arch-skill-windows-paths"
-    },
-    {
-      "type": "architecture",
-      "source": "arch-scan",
-      "category": "workflow-e2e",
-      "description": "architecture-scanner.sh has semicolon+var+pipe anti-pattern",
-      "priority": "P2",
-      "testId": "arch-scanner-var-pipe"
-    },
-    {
-      "type": "observability",
-      "source": "obs-scan",
-      "category": "workflow-e2e",
-      "description": "observability-runner.sh has hardcoded absolute paths — use $PROJECT_ROOT",
-      "priority": "P3",
-      "testId": "arch-obs-hardcoded-paths"
-    },
-    {
-      "type": "architecture",
-      "source": "arch-scan",
-      "category": "workflow-e2e",
-      "description": "architecture-scanner.sh has direct state.json write — use state-writer.sh",
-      "priority": "P2",
-      "testId": "arch-scanner-direct-state-write"
-    }
-  ],
-  "inProgress": [],
-  "skipRegistry": [
-    {
-      "testId": "iss-192-save-api",
-      "reason": "escalated:ISS-195",
-      "skippedAt": "2026-03-31T19:30:40Z",
-      "cycle": 42
-    },
-    {
-      "testId": "reg-guard-casework-deps",
-      "reason": "no-assertions",
-      "skippedAt": "2026-03-31T23:39:06Z",
-      "cycle": 46
-    }
-  ],
-  "currentTest": null
+  "gaps": []
 }

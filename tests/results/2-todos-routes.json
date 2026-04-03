@@ -1,9 +1,0 @@
-{
-  "testId": "todos-routes",
-  "round": 2,
-  "timestamp": "2026-03-28T16:41:24.000Z",
-  "status": "pass",
-  "assertions": [{"name":"GET /api/todos → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'files':[{'caseNumber':'2603130030004157','filename':'260328-1238.md','updatedAt':'2026-03-28T15:35:54.485Z'},{'caseNumber':'2603250010001221','filen"},{"name":"GET /api/todos → JSON response","pass":true,"expected":"JSON","actual":"JSON"},{"name":"GET /api/todos/all → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'todos':[{'caseNumber':'2603130030004157','filename':'260328-1238.md','content':'# Todo — 2603130030004157 — 2026-03-28 12:38\n\n## 🔴 需人�"},{"name":"GET /api/todos/all → JSON response","pass":true,"expected":"JSON","actual":"JSON"}],
-  "error": null,
-  "duration_ms": 9984
-}

@@ -1,9 +1,0 @@
-{
-  "testId": "iss-181-reopen-cleanup",
-  "round": 44,
-  "timestamp": "2026-03-31T22:11:36.000Z",
-  "status": "pass",
-  "assertions": [{"name":"Reopen logic exists in issue routes or skill","pass":true,"expected":"exit 0","actual":"exit 0"},{"name":"Reopen clears trackId","pass":true,"expected":"exit 0","actual":"exit 0"}],
-  "error": null,
-  "duration_ms": 38858
-}

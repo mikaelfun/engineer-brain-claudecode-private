@@ -1,9 +1,0 @@
-{
-  "testId": "error-recovery",
-  "round": 0,
-  "timestamp": "2026-03-28T11:01:59.000Z",
-  "status": "fail",
-  "assertions": [{"name":"Setup: backup created","pass":true,"expected":"backup exists","actual":"created at /tmp/e2e-backup-error-recovery-1774695072"},{"name":"POST /api/case/:id/process","pass":true,"expected":"200|202","actual":"202"},{"name":"Casework completed within timeout","pass":false,"expected":"completed","actual":"timeout after 600s"},{"name":"File exists: case-summary.md","pass":false,"expected":"exists","actual":"missing"},{"name":"Content match: casehealth-meta.json","pass":false,"expected":"valid_json  # 应该被修复","actual":"not found"}],
-  "error": "3 of 5 assertions failed",
-  "duration_ms": 659399
-}

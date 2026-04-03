@@ -1,9 +1,0 @@
-{
-  "testId": "auth-endpoints",
-  "round": 0,
-  "timestamp": "2026-03-28T08:12:49.000Z",
-  "status": "pass",
-  "assertions": [{"name":"GET /api/auth/status → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'isSetup':true} "},{"name":"GET /api/auth/status → JSON response","pass":true,"expected":"JSON","actual":"JSON"},{"name":"GET /api/auth/me → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'success':true,'user':'engineer'} "},{"name":"GET /api/auth/me → JSON response","pass":true,"expected":"JSON","actual":"JSON"}],
-  "error": null,
-  "duration_ms": 11488
-}

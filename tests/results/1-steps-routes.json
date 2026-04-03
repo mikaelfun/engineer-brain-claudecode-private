@@ -1,9 +1,0 @@
-{
-  "testId": "steps-routes",
-  "round": 1,
-  "timestamp": "2026-03-28T16:21:34.000Z",
-  "status": "pass",
-  "assertions": [{"name":"GET /api/case/{case_id}/step → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'caseNumber':'case_id','activeSession':null,'availableSteps':[{'name':'data-refresh','url':'/api/case/case_id/step/data-refresh'},{'name':'compliance"},{"name":"GET /api/case/{case_id}/step → JSON response","pass":true,"expected":"JSON","actual":"JSON"},{"name":"GET /api/case/{case_id}/step-progress → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'messages':[],'isActive':false,'pendingQuestion':null,'currentStep':null} "},{"name":"GET /api/case/{case_id}/step-progress → JSON response","pass":true,"expected":"JSON","actual":"JSON"}],
-  "error": null,
-  "duration_ms": 9859
-}

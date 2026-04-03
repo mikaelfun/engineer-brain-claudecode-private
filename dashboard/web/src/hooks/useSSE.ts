@@ -15,6 +15,7 @@ import { usePatrolStore } from '../stores/patrolStore'
 import { useCaseSessionStore } from '../stores/caseSessionStore'
 import { useIssueTrackStore } from '../stores/issueTrackStore'
 import { useTodoExecuteStore } from '../stores/todoExecuteStore'
+import { useTriggerRunStore } from '../stores/triggerRunStore'
 
 /** Safely parse JSON, returning null on failure */
 function safeParse(raw: string): any | null {
@@ -53,6 +54,13 @@ export function useSSE() {
   const clearVerify = useIssueTrackStore((s) => s.clearVerify)
   const todoExecSetProgress = useTodoExecuteStore((s) => s.setProgress)
   const todoExecSetResult = useTodoExecuteStore((s) => s.setResult)
+
+  // triggerRunStore actions
+  const triggerOnStarted = useTriggerRunStore((s) => s.onTriggerStarted)
+  const triggerOnProgress = useTriggerRunStore((s) => s.onTriggerProgress)
+  const triggerOnCompleted = useTriggerRunStore((s) => s.onTriggerCompleted)
+  const triggerOnFailed = useTriggerRunStore((s) => s.onTriggerFailed)
+  const triggerOnCancelled = useTriggerRunStore((s) => s.onTriggerCancelled)
 
   // caseSessionStore unified actions
   const sessionStoreSetStatus = useCaseSessionStore((s) => s.setSessionStatus)
@@ -746,6 +754,58 @@ export function useSSE() {
 
     es.addEventListener('runner-status-changed', () => {
       queryClient.invalidateQueries({ queryKey: ['tests', 'runner-status'] })
+    })
+
+    // ---- Trigger run SSE events ----
+    es.addEventListener('trigger-started', (e) => {
+      const data = parseAndTrack(e.data)
+      if (!data) return
+      const d = data.data || data
+      if (d.triggerId) {
+        triggerOnStarted(d.triggerId)
+      }
+    })
+
+    es.addEventListener('trigger-progress', (e) => {
+      const data = parseAndTrack(e.data)
+      if (!data) return
+      const d = data.data || data
+      if (d.triggerId) {
+        triggerOnProgress(d.triggerId, d.chunk || '', d.elapsedMs || 0)
+      }
+    })
+
+    es.addEventListener('trigger-completed', (e) => {
+      const data = parseAndTrack(e.data)
+      if (!data) return
+      const d = data.data || data
+      if (d.triggerId) {
+        triggerOnCompleted(d.triggerId, d.durationMs || 0, d.outputPreview)
+        queryClient.invalidateQueries({ queryKey: ['agents', 'triggers'] })
+        queryClient.invalidateQueries({ queryKey: ['agents', 'cron-jobs'] })
+      }
+    })
+
+    es.addEventListener('trigger-failed', (e) => {
+      const data = parseAndTrack(e.data)
+      if (!data) return
+      const d = data.data || data
+      if (d.triggerId) {
+        triggerOnFailed(d.triggerId, d.durationMs || 0, d.error)
+        queryClient.invalidateQueries({ queryKey: ['agents', 'triggers'] })
+        queryClient.invalidateQueries({ queryKey: ['agents', 'cron-jobs'] })
+      }
+    })
+
+    es.addEventListener('trigger-cancelled', (e) => {
+      const data = parseAndTrack(e.data)
+      if (!data) return
+      const d = data.data || data
+      if (d.triggerId) {
+        triggerOnCancelled(d.triggerId, d.durationMs || 0)
+        queryClient.invalidateQueries({ queryKey: ['agents', 'triggers'] })
+        queryClient.invalidateQueries({ queryKey: ['agents', 'cron-jobs'] })
+      }
     })
 
     es.onopen = () => {

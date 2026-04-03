@@ -87,6 +87,16 @@ pwsh -NoProfile -File skills/d365-case-ops/scripts/fetch-all-data.ps1 -TicketNum
 ```
 内部会从 mainCaseId 拉取 snapshot + emails + notes 到 AR 目录，并从 AR caseNumber 拉取 notes-ar.md。IR check 自动跳过。
 
+### 1.5. Labor 记录拉取
+```bash
+pwsh -NoProfile -File skills/d365-case-ops/scripts/view-labor.ps1 -TicketNumber {caseNumber} -OutputDir {casesRoot}/active
+```
+生成 `{caseDir}/labor.md`，供 `/labor-estimate` 判断当天是否已记录 labor。
+
+**AR Mode**: AR case 使用自身 caseNumber 拉取 labor（labor 是按 case 记录的，不跟 main case）。
+
+**错误处理**：labor 拉取失败记录 warning 到日志，不阻塞后续步骤。
+
 ### 2. 附件下载（DTM）
 读 `{caseDir}/case-info.md` 检查 `DTM Attachments: N`。N=0 跳过。
 ```bash

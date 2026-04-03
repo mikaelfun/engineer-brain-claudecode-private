@@ -1,9 +1,0 @@
-{
-  "testId": "agent-frontmatter-audit",
-  "round": 22,
-  "timestamp": "2026-03-29T06:27:25.000Z",
-  "status": "pass",
-  "assertions": [{"name":"All agents have name field","pass":true,"expected":"0 missing","actual":"0 missing"},{"name":"All agents have description field","pass":true,"expected":"0 missing","actual":"0 missing"},{"name":"Tools format is comma-separated (not JSON array)","pass":true,"expected":"0 bad format","actual":"0 bad format"},{"name":"Agent count under max (10)","pass":true,"expected":"<=10","actual":"7"}],
-  "error": null,
-  "duration_ms": 7499
-}

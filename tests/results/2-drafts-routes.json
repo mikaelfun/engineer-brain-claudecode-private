@@ -1,9 +1,0 @@
-{
-  "testId": "drafts-routes",
-  "round": 2,
-  "timestamp": "2026-03-28T16:40:34.000Z",
-  "status": "pass",
-  "assertions": [{"name":"GET /api/drafts → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'drafts':[{'caseNumber':'2603250010001221','filename':'20260328-1900-closure-confirm-zh-customer.md','content':'# Email Draft — closure-confirm\n\n"},{"name":"GET /api/drafts → JSON response","pass":true,"expected":"JSON","actual":"JSON"}],
-  "error": null,
-  "duration_ms": 6199
-}

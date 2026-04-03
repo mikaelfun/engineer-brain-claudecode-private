@@ -27,6 +27,7 @@ ${casesRoot}/
 | `emails-office.md` | Markdown | email-search | Outlook 邮件完整正文（按时间正序，Office Mail MCP 源，与 emails.md 互补） |
 | `notes.md` | Markdown | d365-case-ops | Note 历史（增量更新） |
 | `notes-ar.md` | Markdown | d365-case-ops (fetch-notes.ps1) | AR case 专属 notes（仅 AR case 有此文件）。与 `notes.md` 格式相同（reverse-chronological append），但仅包含 AR case 实体上的 notes，用于分离 AR 沟通和 main case 沟通。 |
+| `labor.md` | Markdown | d365-case-ops (view-labor.ps1) | D365 labor 记录快照（由 data-refresh Step 1.5 生成）。Markdown 表格格式，供 `/labor-estimate` 判断当天是否已记录 labor。 |
 | `timing.json` | JSON | casework (Main Agent) | 各步骤执行耗时（见 `schemas/timing-schema.md`） |
 | `claims.json` | JSON | troubleshooter → challenger | 结构化证据链声明（schema 见 `schemas/claims-schema.md`） |
 | `challenge-report.md` | Markdown | challenger | 证据链审查报告 |

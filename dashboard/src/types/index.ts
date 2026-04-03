@@ -290,6 +290,11 @@ export type SSEEventType =
   | 'test-directives-updated'
   | 'runner-status-changed'
   | 'skill-registry-updated'
+  | 'trigger-started'
+  | 'trigger-progress'
+  | 'trigger-completed'
+  | 'trigger-failed'
+  | 'trigger-cancelled'
 
 export interface SSEEvent {
   type: SSEEventType

@@ -10,6 +10,9 @@ import {
   deleteTrigger,
   runTriggerNow,
   toggleTrigger,
+  cancelTrigger,
+  isTriggerRunning,
+  getRunningTriggerIds,
 } from '../services/cron-manager.js'
 
 const agents = new Hono()
@@ -28,10 +31,16 @@ agents.get('/cron-jobs', (c) => {
 
 // ---- Trigger CRUD ----
 
-// GET /api/agents/triggers — List all triggers
+// GET /api/agents/triggers — List all triggers (with running state)
 agents.get('/triggers', (c) => {
   const triggers = listTriggers()
-  return c.json({ triggers, total: triggers.length })
+  const runningIds = getRunningTriggerIds()
+  // Attach running state to each trigger
+  const enriched = triggers.map(t => ({
+    ...t,
+    running: runningIds.includes(t.id),
+  }))
+  return c.json({ triggers: enriched, total: enriched.length })
 })
 
 // POST /api/agents/triggers — Create a new trigger
@@ -112,6 +121,16 @@ agents.patch('/triggers/:id', async (c) => {
   } catch (err: any) {
     return c.json({ error: err.message || 'Failed to update trigger' }, 500)
   }
+})
+
+// POST /api/agents/triggers/:id/cancel — Cancel a running trigger
+agents.post('/triggers/:id/cancel', (c) => {
+  const id = c.req.param('id')
+  const cancelled = cancelTrigger(id)
+  if (!cancelled) {
+    return c.json({ error: 'Trigger is not running or not found' }, 404)
+  }
+  return c.json({ success: true, message: 'Trigger cancellation requested', id })
 })
 
 // GET /api/agents/patrol-state — 巡检状态

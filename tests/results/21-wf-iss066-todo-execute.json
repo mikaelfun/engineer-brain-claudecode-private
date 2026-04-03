@@ -1,8 +1,0 @@
-{
-  "testId": "wf-iss066-todo-execute",
-  "round": 21,
-  "result": "pass",
-  "assertions": "5/5",
-  "timestamp": "2026-03-29T04:02:00Z",
-  "details": "AC1: case-routes.ts broadcasts todo-execute-progress and todo-execute-result SSE events. AC2: SSE types defined in index.ts. AC3: executing state shows spinner (button disabled). AC4: todoExecSetResult(key, d.success===true) - auto-check only on success. AC5: failed state shows 'Failed - Retry' button, not auto-checked."
-}

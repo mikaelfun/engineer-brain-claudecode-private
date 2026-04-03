@@ -1,9 +1,0 @@
-{
-  "testId": "test-supervisor-detail-endpoints",
-  "round": 38,
-  "timestamp": "2026-03-30T23:54:51.000Z",
-  "status": "pass",
-  "assertions": [{"name":"GET /api/tests/manifest → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'version':'1.0.0','lastScan':'2026-03-30T20:59:54.372Z','scanSources':['dashboard/src/routes/*.ts','dashboard/web/src/components/**/*.tsx','.claude/s"},{"name":"GET /api/tests/manifest → JSON response","pass":true,"expected":"JSON","actual":"JSON"},{"name":"GET /api/tests/registry → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'agents-routes':{'id':'agents-routes','name':'Agents API Routes — List + Cron Jobs + Patrol State','description':'验证 agents 相关 GET 端点�"},{"name":"GET /api/tests/registry → JSON response","pass":true,"expected":"JSON","actual":"JSON"},{"name":"GET /api/tests/result/0/core-endpoints → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'testId':'core-endpoints','round':0,'timestamp':'2026-03-28T04:24:52.000Z','status':'pass','assertions':[{'name':'GET /api/health → HTTP 200','pass"},{"name":"GET /api/tests/result/0/core-endpoints → JSON response","pass":true,"expected":"JSON","actual":"JSON"},{"name":"GET /api/tests/fix/auth-endpoints → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'testId':'auth-endpoints','content':'# Verify Result: auth-endpoints\n\n**Round:** 26 (previous failure: Round 25)\n**Category:** backend-api\n**Stat"},{"name":"GET /api/tests/fix/auth-endpoints → JSON response","pass":true,"expected":"JSON","actual":"JSON"}],
-  "error": null,
-  "duration_ms": 38040
-}

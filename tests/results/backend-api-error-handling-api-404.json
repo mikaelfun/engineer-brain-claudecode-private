@@ -1,9 +1,0 @@
-{
-  "testId": "error-handling-api-404",
-  "round": backend-api,
-  "timestamp": "2026-03-30T22:58:22.000Z",
-  "status": "pass",
-  "assertions": [{"name":"GET /api/tests/result/999/nonexistent-test-id → HTTP 404","pass":true,"expected":"404","actual":"404","note":"{'error':'Test result not found'} "},{"name":"GET /api/tests/result/999/nonexistent-test-id → JSON response","pass":true,"expected":"JSON","actual":"JSON"},{"name":"GET /api/tests/fix/nonexistent-test-id → HTTP 404","pass":true,"expected":"404","actual":"404","note":"{'error':'Fix details not found'} "},{"name":"GET /api/tests/fix/nonexistent-test-id → JSON response","pass":true,"expected":"JSON","actual":"JSON"},{"name":"GET /api/tests/state → HTTP 401","pass":true,"expected":"401","actual":"401","note":"{'error':'Unauthorized'} "},{"name":"GET /api/tests/state → JSON response","pass":true,"expected":"JSON","actual":"JSON"}],
-  "error": null,
-  "duration_ms": 30470
-}

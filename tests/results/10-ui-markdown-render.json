@@ -1,9 +1,0 @@
-{
-  "testId": "ui-markdown-render",
-  "round": 10,
-  "timestamp": "2026-03-28T20:09:07.000Z",
-  "status": "pass",
-  "assertions": [{"name":"Page loads: Navigate: /cases","pass":true,"expected":"200","actual":"200"},{"name":"API: cases data available","pass":true,"expected":"200","actual":"200"},{"name":"API: issues data available","pass":true,"expected":"200","actual":"200"}],
-  "error": null,
-  "duration_ms": 4544
-}

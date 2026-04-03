@@ -1,9 +1,0 @@
-{
-  "testId": "wf-inspection",
-  "round": 8,
-  "timestamp": "2026-03-28T19:50:48.000Z",
-  "status": "pass",
-  "assertions": [{"name":"Setup: backup created","pass":true,"expected":"backup exists","actual":"created at /tmp/e2e-backup-wf-inspection-1774727345"},{"name":"POST /api/case/:id/step/inspection","pass":true,"expected":"200|202","actual":"202"},{"name":"Step completed within timeout","pass":true,"expected":"completed","actual":"completed"},{"name":"Valid JSON: casehealth-meta.json","pass":true,"expected":"valid_json","actual":"valid"},{"name":"JSON field: actualStatus not null","pass":true,"expected":"not_null","actual":"\"pending-customer\""},{"name":"JSON field: lastInspected not null","pass":true,"expected":"not_null","actual":"\"2026-03-29T03:46:00+08:00\""},{"name":"File exists: inspection-writer.log","pass":true,"expected":"exists","actual":"exists"}],
-  "error": null,
-  "duration_ms": 114176
-}

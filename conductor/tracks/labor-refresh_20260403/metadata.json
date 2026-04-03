@@ -1,0 +1,21 @@
+{
+  "id": "labor-refresh_20260403",
+  "title": "data-refresh 增加拉取 D365 Labor 记录",
+  "type": "bug",
+  "status": "complete",
+  "created": "2026-04-03T00:00:00+08:00",
+  "updated": "2026-04-03T00:30:00+08:00",
+  "phases": {
+    "total": 3,
+    "completed": 3
+  },
+  "tasks": {
+    "total": 9,
+    "completed": 9
+  },
+  "verification": {
+    "status": "skipped",
+    "reason": "User marked done, skip tests",
+    "timestamp": "2026-04-03T00:30:00+08:00"
+  }
+}

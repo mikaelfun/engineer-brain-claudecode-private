@@ -1,9 +1,0 @@
-{
-  "testId": "df-synthetic-edge-profiles",
-  "round": 44,
-  "timestamp": "2026-03-31T22:10:20.000Z",
-  "status": "fail",
-  "assertions": [{"name":"edge-corrupted-meta profile defined","pass":false,"expected":"valid step ref","actual":"unparseable target: tests/fixtures/synthetic/profiles.yaml"},{"name":"edge-no-entitlement profile defined","pass":false,"expected":"valid step ref","actual":"unparseable target: tests/fixtures/synthetic/profiles.yaml"}],
-  "error": "2 of 2 assertions failed",
-  "duration_ms": 49379
-}

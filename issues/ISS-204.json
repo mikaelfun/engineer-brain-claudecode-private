@@ -1,0 +1,12 @@
+{
+  "id": "ISS-204",
+  "title": "Daily Ops NoteGap 批量检测 + 生成",
+  "description": "Daily Ops 页面的 Note Gaps 区域目前只展示已有的 note-draft.md 文件，缺少批量检测功能。需要新增 'Check All' 按钮，一键对所有活跃 Case 检测 note gap 并生成 drafts。\n\n需要：\n1. 后端 batch note-gap 检测 endpoint（读取每个 case 的 notes.md 判断 gap，对有 gap 的 case 调用 note-gap skill 生成 draft）\n2. 前端 'Check All' 按钮 + 进度状态展示\n3. 生成完成后自动刷新 gaps 列表",
+  "type": "feature",
+  "priority": "P1",
+  "status": "tracked",
+  "trackId": "notegap-batch-check_20260401",
+  "testLoopScan": true,
+  "createdAt": "2026-04-01T17:20:00+08:00",
+  "updatedAt": "2026-04-01T17:25:00+08:00"
+}

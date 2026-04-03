@@ -1,9 +1,0 @@
-{
-  "testId": "df-draft-card-unified",
-  "round": 43,
-  "timestamp": "2026-03-31T21:00:19.000Z",
-  "status": "pass",
-  "assertions": [{"name":"Page loads: Navigate: http://localhost:5173/drafts","pass":true,"expected":"200","actual":"200"},{"name":"API: cases data available","pass":true,"expected":"200","actual":"200"},{"name":"API: issues data available","pass":true,"expected":"200","actual":"200"}],
-  "error": null,
-  "duration_ms": 4419
-}

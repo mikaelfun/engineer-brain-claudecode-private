@@ -1,0 +1,12 @@
+{
+  "id": "ISS-207",
+  "title": "WebUI Agents Cron Job执行onenote-export时未带上sync参数",
+  "description": "在WebUI Agents页面添加了 onenote-export sync 的定时任务(cron job)，但任务执行日志显示实际执行时没有带上 sync 参数，导致执行的是默认行为而非增量同步。需要检查cron job的参数传递逻辑。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "tracked",
+  "testLoopScan": true,
+  "trackId": "cron-args-bug_20260402",
+  "createdAt": "2026-04-02T16:32:00+08:00",
+  "updatedAt": "2026-04-02T16:35:00+08:00"
+}

@@ -1,0 +1,11 @@
+{
+  "id": "ISS-206",
+  "title": "Dashboard点击Patrol直接显示Patrol Complete — 0 cases processed, 0 changed",
+  "description": "在Dashboard中点击Patrol按钮后，没有实际执行巡检流程，直接显示 'Patrol Complete — 0 cases processed, 0 changed'。预期应该遍历活跃Case并逐个执行casework流程。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "pending",
+  "testLoopScan": true,
+  "createdAt": "2026-04-02T16:30:00+08:00",
+  "updatedAt": "2026-04-02T16:30:00+08:00"
+}

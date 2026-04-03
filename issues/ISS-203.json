@@ -1,0 +1,12 @@
+{
+  "id": "ISS-203",
+  "title": "NoteGap 写入 D365 后无成功反馈且内容丢失",
+  "description": "NoteGap 点击写入 D365 后存在两个问题：\n1. 完成后直接隐藏窗口，用户无法确认是否成功写入（缺少成功/失败状态反馈）\n2. 最终写入 D365 的 note 内容比起 draft 阶段丢失了大量信息，内容不完整",
+  "type": "bug",
+  "priority": "P1",
+  "status": "tracked",
+  "trackId": "notegap-write-feedback_20260401",
+  "testLoopScan": true,
+  "createdAt": "2026-04-01T17:00:00+08:00",
+  "updatedAt": "2026-04-01T17:05:00+08:00"
+}

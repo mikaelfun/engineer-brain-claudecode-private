@@ -1,9 +1,0 @@
-{
-  "testId": "test-supervisor-analytics-endpoints",
-  "round": 36,
-  "timestamp": "2026-03-30T22:19:43.000Z",
-  "status": "pass",
-  "assertions": [{"name":"GET /api/tests/stats → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'cumulative':{'passed':195,'failed':3,'fixed':3,'skipped':13},'observabilityStatus':{'probesTotal':9,'probesRun':0,'probesPass':0,'probesFail':0,'sta"},{"name":"GET /api/tests/stats → JSON response","pass":true,"expected":"JSON","actual":"JSON"},{"name":"GET /api/tests/trends → HTTP 200","pass":true,"expected":"200","actual":"200","note":"[{'round':0,'timestamp':'2026-03-28T16:00:17Z','phase':'SCAN','stats':{'totalTests':19,'passed':9,'failed':9,'fixed':9,'skipped':3,'coverage':95},'que"},{"name":"GET /api/tests/trends → JSON response","pass":true,"expected":"JSON","actual":"JSON"},{"name":"GET /api/tests/discoveries → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'version':1,'generatedAt':'2026-03-30T21:24:20.995Z','generatedByRound':35,'summary':{'total':80,'verified':21,'fixedUnverified':16,'diagnosed':0,'re"},{"name":"GET /api/tests/discoveries → JSON response","pass":true,"expected":"JSON","actual":"JSON"},{"name":"GET /api/tests/evolution → HTTP 200","pass":true,"expected":"200","actual":"200","note":"[{'id':'EVO-001','date':'2026-03-28','issueId':'ISS-114','trackId':'test-framework_20260328','title':'自动化测试框架从零搭建','category':'a"},{"name":"GET /api/tests/evolution → JSON response","pass":true,"expected":"JSON","actual":"JSON"},{"name":"GET /api/tests/recent-events → HTTP 200","pass":true,"expected":"200","actual":"200","note":"[{'type':'test-pipeline-updated','data':{'currentStage':'VERIFY','cycle':36,'currentTest':null},'timestamp':'2026-03-30T22:07:22.922Z'},{'type':'test-"},{"name":"GET /api/tests/recent-events → JSON response","pass":true,"expected":"JSON","actual":"JSON"}],
-  "error": null,
-  "duration_ms": 30266
-}

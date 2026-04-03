@@ -147,3 +147,10 @@
 | [x] | onenote-sync-scope_20260401 | OneNote Sync 范围记忆 + Content Hash 增量校验 | 2026-04-01 | 2026-04-01 |
 | [x] | cron-exec-fix_20260401 | Fix Cron Job Execution — Replace SDK query() with CLI subprocess | 2026-04-01 | 2026-04-01 |
 | [x] | sdk-agents-fix_20260401 | SDK Session 加载自定义 Agent 定义 | 2026-04-01 | 2026-04-01 |
+| [x] | notegap-write-feedback_20260401 | NoteGap 写入 D365 后无成功反馈且内容丢失 | 2026-04-01 | 2026-04-01 |
+| [x] | notegap-batch-check_20260401 | Daily Ops NoteGap 批量检测 + 生成 | 2026-04-01 | 2026-04-01 |
+| [x] | cron-args-bug_20260402 | Cron Job Prompt Arguments Not Passed to Skill | 2026-04-02 | 2026-04-02 |
+| [x] | notegap-newcase-note_20260402 | NoteGap 新 Case 日终 Note 生成 | 2026-04-02 | 2026-04-02 |
+| [x] | trigger-ux-upgrade_20260402 | Trigger Run UX Upgrade + Dashboard Button Review | 2026-04-02 | 2026-04-02 |
+| [x] | labor-card_20260402 | Case 详情页 Labor 估算卡片 | 2026-04-02 | 2026-04-02 |
+| [x] | labor-refresh_20260403 | data-refresh 增加拉取 D365 Labor 记录 | 2026-04-03 | 2026-04-03 |

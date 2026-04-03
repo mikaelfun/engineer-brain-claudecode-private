@@ -1,9 +1,0 @@
-{
-  "testId": "wf-iss156-verify-bridge",
-  "round": 27,
-  "timestamp": "2026-03-29T22:43:14.000Z",
-  "status": "pass",
-  "assertions": [],
-  "error": null,
-  "duration_ms": 92943
-}

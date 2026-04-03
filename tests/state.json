@@ -1,144 +1,32 @@
 {
-  "phase": "TEST",
-  "round": 47,
+  "phase": "IDLE",
+  "round": 0,
   "stats": {
-    "passed": 214,
-    "failed": 3,
-    "fixed": 22,
-    "skipped": 18
-  },
-  "maxRounds": 80,
-  "roundJourney": {
-    "SCAN": {
-      "status": "done",
-      "summary": "5 issue gaps, 0 regression gaps (3 design-fidelity, 2 issue-driven)",
-      "duration_ms": 1775000761396,
-      "startedAt": "2026-03-31T23:42:51Z",
-      "completedAt": "2026-03-31T23:46:01Z"
-    },
-    "GENERATE": {
-      "status": "done",
-      "summary": "5 tests from 5 gaps (all pre-existing YAMLs re-queued)",
-      "duration_ms": 1775000841313,
-      "startedAt": "2026-03-31T23:46:45Z",
-      "completedAt": "2026-03-31T23:47:22Z",
-      "gapsProcessed": 5,
-      "testsGenerated": 0,
-      "testsRequeued": 5
-    },
-    "TEST": {
-      "status": "pending",
-      "summary": "",
-      "duration_ms": 504130,
-      "startedAt": "2026-03-31T23:30:52Z",
-      "completedAt": "2026-03-31T23:39:15Z",
-      "earlyExit": true,
-      "earlyExitReason": "same-cause catastrophic failure: STEP_OUTPUT_source unbound variable (100% failure rate, batch=3)"
-    },
-    "FIX": {
-      "status": "pending",
-      "summary": "",
-      "duration_ms": 46895,
-      "startedAt": "2026-03-31T23:39:50Z",
-      "completedAt": "2026-03-31T23:40:36Z"
-    },
-    "VERIFY": {
-      "status": "pending",
-      "summary": "",
-      "duration_ms": 48757,
-      "startedAt": "2026-03-31T23:41:08Z",
-      "completedAt": "2026-03-31T23:41:57Z",
-      "verifyProcessed": 11,
-      "regressionProcessed": 0,
-      "verifyPassed": 11,
-      "regressionPassed": 0
-    }
-  },
-  "testQueue": [
-    "df-retro-fix-context",
-    "df-poll-detect-fix",
-    "df-synthetic-edge-profiles",
-    "iss-184-patrol-sse-content",
-    "iss-181-reopen-cleanup"
-  ],
-  "fixQueue": [],
-  "verifyQueue": [],
-  "regressionQueue": [],
-  "gaps": [
-    {
-      "type": "architecture",
-      "source": "arch-scan",
-      "category": "workflow-e2e",
-      "description": "SKILL.md has Windows-style paths (CLAUDE.md requires POSIX)",
-      "priority": "P2",
-      "testId": "arch-skill-windows-paths"
-    },
-    {
-      "type": "architecture",
-      "source": "arch-scan",
-      "category": "workflow-e2e",
-      "description": "architecture-scanner.sh has semicolon+var+pipe anti-pattern",
-      "priority": "P2",
-      "testId": "arch-scanner-var-pipe"
-    },
-    {
-      "type": "observability",
-      "source": "obs-scan",
-      "category": "workflow-e2e",
-      "description": "observability-runner.sh has hardcoded absolute paths — use $PROJECT_ROOT",
-      "priority": "P3",
-      "testId": "arch-obs-hardcoded-paths"
-    },
-    {
-      "type": "architecture",
-      "source": "arch-scan",
-      "category": "workflow-e2e",
-      "description": "architecture-scanner.sh has direct state.json write — use state-writer.sh",
-      "priority": "P2",
-      "testId": "arch-scanner-direct-state-write"
-    }
-  ],
-  "currentTest": "",
-  "inProgress": [],
-  "skipRegistry": [
-    {
-      "testId": "iss-192-save-api",
-      "reason": "escalated:ISS-195",
-      "skippedAt": "2026-03-31T19:30:40Z",
-      "cycle": 42
-    },
-    {
-      "testId": "reg-guard-casework-deps",
-      "reason": "no-assertions",
-      "skippedAt": "2026-03-31T23:39:06Z",
-      "cycle": 46
-    }
-  ],
-  "phaseHistory": [],
-  "observabilityStatus": {
-    "probesTotal": 9,
-    "probesRun": 0,
-    "probesPass": 0,
-    "probesFail": 0,
-    "staleCount": 0,
-    "lastResults": {}
-  },
-  "roundStats": {
     "passed": 0,
     "failed": 0,
     "fixed": 0,
     "skipped": 0
   },
-  "scanStrategy": {
-    "recipesUsed": [
-      "regression-focused-scan.md"
-    ],
-    "scannersActivated": [
-      "coverage"
-    ],
-    "overrideReason": "regressionRate=55% triggered regression-focused-scan recipe; env_issue items exhausted into skipRegistry"
+  "maxRounds": 80,
+  "roundJourney": {
+    "SCAN": {
+      "status": "running",
+      "startedAt": "2026-04-02T15:03:28Z"
+    }
   },
-  "runnerActive": "2026-03-31T23:25:32Z",
+  "testQueue": [],
+  "fixQueue": [],
+  "verifyQueue": [],
+  "regressionQueue": [],
+  "gaps": [],
+  "currentTest": "",
+  "inProgress": [],
+  "skipRegistry": [],
+  "phaseHistory": [],
+  "observabilityStatus": {},
+  "roundStats": {},
+  "scanStrategy": {},
+  "runnerActive": "2026-04-02T15:02:37Z",
   "runnerStep": "decide",
   "phaseProgress": null,
   "status": "running"

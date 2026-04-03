@@ -1,0 +1,17 @@
+{
+  "id": "labor-card_20260402",
+  "title": "Case 详情页 Labor 估算卡片",
+  "type": "feature",
+  "status": "complete",
+  "created": "2026-04-02T18:35:00+08:00",
+  "updated": "2026-04-02T18:45:00+08:00",
+  "issueId": "ISS-210",
+  "phases": {
+    "total": 1,
+    "completed": 1
+  },
+  "tasks": {
+    "total": 3,
+    "completed": 3
+  }
+}

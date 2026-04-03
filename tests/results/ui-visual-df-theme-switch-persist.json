@@ -1,9 +1,0 @@
-{
-  "testId": "df-theme-switch-persist",
-  "round": ui-visual,
-  "timestamp": "2026-03-31T20:59:38.000Z",
-  "status": "pass",
-  "assertions": [{"name":"Page loads: ","pass":true,"expected":"200","actual":"200"},{"name":"Theme CSS present","pass":true,"expected":"theme references","actual":"found"},{"name":"Frontend JS assets","pass":true,"expected":"JS references","actual":"found"},{"name":"Viewport meta tag","pass":true,"expected":"present","actual":"found"}],
-  "error": null,
-  "duration_ms": 3183
-}

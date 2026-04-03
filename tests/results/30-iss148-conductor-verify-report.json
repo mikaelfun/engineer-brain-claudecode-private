@@ -1,9 +1,0 @@
-{
-  "testId": "iss148-conductor-verify-report",
-  "round": 30,
-  "timestamp": "2026-03-30T17:42:02.000Z",
-  "status": "pass",
-  "assertions": [{"name":"File exists: SKILL.md","pass":true,"expected":"exists","actual":"exists"},{"name":"JSON field: status = tracked","pass":true,"expected":"tracked","actual":"\"tracked\""}],
-  "error": null,
-  "duration_ms": 104681
-}

@@ -13,10 +13,14 @@
     pwsh scripts/add-note.ps1 -Title "Progress Update" -Body "Status: waiting for customer"
 #>
 param(
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$false)]
     [string]$Title,
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$false)]
     [string]$Body,
+    [Parameter(Mandatory=$false)]
+    [string]$TitleFile,
+    [Parameter(Mandatory=$false)]
+    [string]$BodyFile,
     [Parameter(Mandatory=$false)]
     [string]$TicketNumber,
     [Parameter(Mandatory=$false)]
@@ -26,10 +30,26 @@ param(
 . "$PSScriptRoot\_init.ps1"
 $ErrorActionPreference = "Stop"
 
+# Read from files if provided (avoids shell escaping issues with special chars)
+if ($TitleFile -and (Test-Path $TitleFile)) {
+    $Title = Get-Content -Path $TitleFile -Raw -Encoding UTF8
+    $Title = $Title.TrimEnd("`r", "`n")
+}
+if ($BodyFile -and (Test-Path $BodyFile)) {
+    $Body = Get-Content -Path $BodyFile -Raw -Encoding UTF8
+    $Body = $Body.TrimEnd("`r", "`n")
+}
+
+if (-not $Title -or -not $Body) {
+    throw "Title and Body are required. Provide via -Title/-Body or -TitleFile/-BodyFile parameters."
+}
+
 Write-Host "🔵 Adding Note: $Title"
 
 # ── API Mode ──
-$incidentId = Get-CurrentCaseId
+# 优先用传入的 TicketNumber 查询 incidentid（WebUI submit 场景）
+# 回退到 Get-CurrentCaseId（CLI 直接调用、浏览器上下文场景）
+$incidentId = if ($TicketNumber) { Get-IncidentId -TicketNumber $TicketNumber } else { Get-CurrentCaseId }
 if ($incidentId) {
     $bodyJson = @{
         subject = $Title

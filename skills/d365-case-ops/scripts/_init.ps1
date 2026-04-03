@@ -267,7 +267,36 @@ function Restart-D365Browser {
         Write-Host "✅ D365 browser ready"
         return $true
     }
-    Write-Host "⚠️ D365 browser may not be fully loaded (login page or timeout)"
+
+    # --- Login page detected: wait for user to complete authentication ---
+    if ($tabCheck -match 'login\.microsoftonline') {
+        Write-Host ""
+        Write-Host "🔐 D365 login required — please complete login in the browser window."
+        Write-Host "   Waiting for authentication (up to 120s)..."
+        Write-Host ""
+        $maxWait = 120
+        $elapsed = 0
+        $pollInterval = 3
+        while ($elapsed -lt $maxWait) {
+            Start-Sleep -Seconds $pollInterval
+            $elapsed += $pollInterval
+            $tabCheck2 = playwright-cli tab-list 2>&1 | Out-String
+            if ($tabCheck2 -match 'dynamics\.com' -and $tabCheck2 -notmatch 'login\.microsoftonline') {
+                $script:_d365TabVerified = $true
+                Write-Host "✅ D365 login successful! (took ${elapsed}s)"
+                return $true
+            }
+            # Progress indicator every 15s
+            if ($elapsed % 15 -eq 0) {
+                Write-Host "   ⏳ Still waiting... (${elapsed}s / ${maxWait}s)"
+            }
+        }
+        Write-Host "⚠️ D365 login timeout after ${maxWait}s. Script will continue but API calls may fail."
+        $script:_d365TabVerified = $false
+        return $false
+    }
+
+    Write-Host "⚠️ D365 browser may not be fully loaded (no tab detected)"
     $script:_d365TabVerified = $false
     return $false
 }

@@ -1,9 +1,0 @@
-{
-  "testId": "error-handling-api-404",
-  "round": 36,
-  "timestamp": "2026-03-30T22:22:17.000Z",
-  "status": "fail",
-  "assertions": [{"name":"GET /api/tests/result/999/nonexistent-test-id → HTTP 404","pass":false,"expected":"200","actual":"404","note":"{'error':'Test result not found'} "},{"name":"GET /api/tests/result/999/nonexistent-test-id → JSON response","pass":true,"expected":"JSON","actual":"JSON"},{"name":"GET /api/tests/fix/nonexistent-test-id → HTTP 404","pass":false,"expected":"200","actual":"404","note":"{'error':'Fix details not found'} "},{"name":"GET /api/tests/fix/nonexistent-test-id → JSON response","pass":true,"expected":"JSON","actual":"JSON"},{"name":"GET /api/tests/state → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'cycle':36,'maxCycles':80,'currentStage':'TEST','stages':{'SCAN':{'status':'done','summary':'Cycle 36: 32 issue-gaps, 15 regression-gaps, 3 observabi"},{"name":"GET /api/tests/state → JSON response","pass":true,"expected":"JSON","actual":"JSON"}],
-  "error": "2 of 6 assertions failed",
-  "duration_ms": 19928
-}

@@ -1,1 +1,0 @@
-{"testId":"framework-fix-27-spec-scanner","round":27,"result":"PASS","verifyType":"inline","timestamp":"2026-03-29T22:41:08Z","notes":"spec-scanner.sh ran successfully via Node.js batch matcher (no SIGABRT), found 13 gaps in 119 tracks"}

@@ -1,9 +1,0 @@
-{
-  "testId": "arch-hardcoded-paths",
-  "round": 32,
-  "timestamp": "2026-03-30T19:32:02.000Z",
-  "status": "pass",
-  "assertions": [{"name":"File exists: observability-runner.sh","pass":true,"expected":"exists","actual":"exists"}],
-  "error": null,
-  "duration_ms": 29017
-}

@@ -1,9 +1,0 @@
-{
-  "testId": "wf-iss117",
-  "round": 22,
-  "timestamp": "2026-03-29T04:31:46.000Z",
-  "status": "pass",
-  "assertions": [{"name":"GET /api/health → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'status':'ok','casesReady':true,'casesRoot':'C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain\\cases','timestamp':'2026-03-29T04:31"},{"name":"GET /api/health → JSON response","pass":true,"expected":"JSON","actual":"JSON"}],
-  "error": null,
-  "duration_ms": 11962
-}

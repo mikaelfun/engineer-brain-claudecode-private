@@ -1,9 +1,0 @@
-{
-  "testId": "issues-crud",
-  "round": 4,
-  "timestamp": "2026-03-28T18:39:55.000Z",
-  "status": "pass",
-  "assertions": [{"name":"GET /api/issues → 200","pass":true,"expected":"200","actual":"200"},{"name":"GET /api/issues → valid JSON","pass":true,"expected":"true","actual":"true"},{"name":"POST /api/issues → create","pass":true,"expected":"200|201","actual":"201"},{"name":"GET /api/issues/:id → read","pass":true,"expected":"200","actual":"200"},{"name":"GET /api/issues/:id → title match","pass":true,"expected":"contains TEST-AUTO","actual":"TEST-AUTO: API Runner Test Issue"},{"name":"PUT /api/issues/:id → update","pass":true,"expected":"200","actual":"200"},{"name":"DELETE /api/issues/:id → teardown","pass":true,"expected":"200|204","actual":"200"},{"name":"GET /api/issues/:id → verify deleted","pass":true,"expected":"404","actual":"404"}],
-  "error": null,
-  "duration_ms": 4781
-}

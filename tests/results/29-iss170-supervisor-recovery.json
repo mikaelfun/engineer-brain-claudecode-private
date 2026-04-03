@@ -1,9 +1,0 @@
-{
-  "testId": "iss170-supervisor-recovery",
-  "round": 29,
-  "timestamp": "2026-03-30T15:18:05.000Z",
-  "status": "pass",
-  "assertions": [],
-  "error": null,
-  "duration_ms": 31763
-}

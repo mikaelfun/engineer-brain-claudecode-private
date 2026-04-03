@@ -1,9 +1,0 @@
-{
-  "testId": "spec-recipe-arch-llm-flow",
-  "round": 31,
-  "timestamp": "2026-03-30T18:49:31.000Z",
-  "status": "pass",
-  "assertions": [],
-  "error": null,
-  "duration_ms": 28419
-}

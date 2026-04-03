@@ -1,0 +1,17 @@
+{
+  "id": "notegap-newcase-note_20260402",
+  "title": "NoteGap 新 Case 日终 Note 生成",
+  "type": "feature",
+  "status": "complete",
+  "created": "2026-04-02T18:10:00+08:00",
+  "updated": "2026-04-02T18:20:00+08:00",
+  "issueId": "ISS-208",
+  "phases": {
+    "total": 1,
+    "completed": 1
+  },
+  "tasks": {
+    "total": 3,
+    "completed": 3
+  }
+}

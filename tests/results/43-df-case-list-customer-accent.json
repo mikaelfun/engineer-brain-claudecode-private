@@ -1,9 +1,0 @@
-{
-  "testId": "df-case-list-customer-accent",
-  "round": 43,
-  "timestamp": "2026-03-31T20:55:42.000Z",
-  "status": "pass",
-  "assertions": [{"name":"Customer element must have accent color or font-semibold styling","pass":true,"expected":">0","actual":"3"},{"name":"CasesPage.tsx must use accent color variables","pass":true,"expected":">0","actual":"17"},{"name":"Customer name display element must reference accent color","pass":true,"expected":">0","actual":"4"}],
-  "error": null,
-  "duration_ms": 56018
-}

@@ -14,6 +14,7 @@ import {
   useAllNoteGaps,
   useSubmitNote,
   useDismissNoteGap,
+  useCheckAllNoteGaps,
   type LaborEstimateItem,
   type NoteGapItem,
 } from '../api/hooks'
@@ -123,9 +124,12 @@ export default function DailyOpsPage() {
   const updateEstimate = useLaborEstimateUpdate()
   const batchSubmit = useLaborBatchSubmit()
   const { data: allGaps, refetch: refetchGaps } = useAllNoteGaps()
+  const checkAllGaps = useCheckAllNoteGaps()
 
   const [rows, setRows] = useState<EditableRow[]>([])
   const [estimating, setEstimating] = useState(false)
+  const [checking, setChecking] = useState(false)
+  const [checkResult, setCheckResult] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [submitResults, setSubmitResults] = useState<Array<{ caseNumber: string; success: boolean; message: string }> | null>(null)
 
@@ -146,9 +150,30 @@ export default function DailyOpsPage() {
     )
   }, [])
 
+  const [estimateProgress, setEstimateProgress] = useState<string | null>(null)
+
   const handleEstimateAll = async () => {
     setEstimating(true)
     setSubmitResults(null)
+    setEstimateProgress('正在启动...')
+
+    // Listen for SSE progress events
+    const evtSource = new EventSource('/api/events')
+    const progressHandler = (e: MessageEvent) => {
+      try {
+        const data = JSON.parse(e.data)
+        if (data.type === 'labor-estimate-progress') {
+          const p = data.payload
+          if (p.status === 'estimating') {
+            setEstimateProgress(`正在估算 Case ${p.current}... (${p.completed + 1}/${p.total})`)
+          } else if (p.status === 'completed') {
+            setEstimateProgress(`完成！已估算 ${p.total} 个 Case`)
+          }
+        }
+      } catch {}
+    }
+    evtSource.addEventListener('message', progressHandler)
+
     try {
       const result = await estimateAll.mutateAsync()
       await refetch()
@@ -158,8 +183,11 @@ export default function DailyOpsPage() {
       initRowsFromEstimates(freshEstimates)
     } catch (err) {
       console.error('Estimation failed:', err)
+      setEstimateProgress('估算失败')
     } finally {
+      evtSource.close()
       setEstimating(false)
+      setTimeout(() => setEstimateProgress(null), 5000)
     }
   }
 
@@ -229,7 +257,7 @@ export default function DailyOpsPage() {
         {/* ===== Left: Note Gaps (always visible) ===== */}
         <div className="w-[400px] min-w-[360px] shrink-0 space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-medium text-foreground flex items-center gap-2">
+            <h2 className="text-base font-medium text-foreground flex items-center gap-2">
               ⚠️ Note Gaps
               {gapCount > 0 && (
                 <span className="text-xs px-1.5 py-0.5 rounded-full"
@@ -238,8 +266,41 @@ export default function DailyOpsPage() {
                 </span>
               )}
             </h2>
-            {/* TODO: "Check All" button to trigger batch /note-gap via SDK */}
+            <button
+              onClick={async () => {
+                setChecking(true)
+                setCheckResult(null)
+                try {
+                  const result = await checkAllGaps.mutateAsync()
+                  setCheckResult(`检测 ${result.checked} cases，发现 ${result.gaps} 个 gap，新生成 ${result.generated} 个 draft`)
+                  await refetchGaps()
+                } catch (e: any) {
+                  setCheckResult(`检测失败: ${e.message || '未知错误'}`)
+                } finally {
+                  setChecking(false)
+                }
+              }}
+              disabled={checking}
+              className="px-3 py-1.5 text-sm rounded-lg disabled:opacity-50 transition-colors flex items-center gap-1.5"
+              style={{ background: 'var(--accent-amber)', color: 'var(--text-inverse)' }}
+            >
+              {checking ? (
+                <><span className="animate-spin inline-block">⏳</span> 检测中...</>
+              ) : (
+                <>🔍 Check All</>
+              )}
+            </button>
           </div>
+
+          {checkResult && (
+            <div className="text-xs px-3 py-1.5 rounded"
+              style={{
+                background: checkResult.includes('失败') ? 'color-mix(in srgb, var(--accent-red) 10%, transparent)' : 'color-mix(in srgb, var(--accent-green) 10%, transparent)',
+                color: checkResult.includes('失败') ? 'var(--accent-red)' : 'var(--accent-green)',
+              }}>
+              {checkResult}
+            </div>
+          )}
 
           {gapCount > 0 ? (
             <div className="space-y-2">
@@ -253,7 +314,7 @@ export default function DailyOpsPage() {
               <div className="text-2xl mb-2">✅</div>
               <p className="text-sm text-muted">All notes up to date</p>
               <p className="text-xs text-muted mt-1">
-                Run <code className="px-1 py-0.5 rounded text-xs" style={{ background: 'var(--bg-tertiary)' }}>/note-gap</code> in CLI to check for gaps
+                Click <strong>Check All</strong> to scan for new gaps
               </p>
             </div>
           )}
@@ -262,7 +323,7 @@ export default function DailyOpsPage() {
         {/* ===== Right: Labor Estimates ===== */}
         <div className="flex-1 min-w-0 space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-medium text-foreground flex items-center gap-2">
+            <h2 className="text-base font-medium text-foreground flex items-center gap-2">
               ⏱️ Labor Estimates
             </h2>
             <div className="flex gap-2">
@@ -273,7 +334,7 @@ export default function DailyOpsPage() {
                 </button>
               )}
               <button onClick={handleEstimateAll} disabled={estimating}
-                className="px-3 py-1.5 text-xs rounded-lg disabled:opacity-50 transition-colors flex items-center gap-1.5"
+                className="px-3 py-1.5 text-sm rounded-lg disabled:opacity-50 transition-colors flex items-center gap-1.5"
                 style={{ background: 'var(--accent-blue)', color: 'var(--text-inverse)' }}>
                 {estimating ? (
                   <><span className="animate-spin inline-block">⏳</span> Estimating...</>
@@ -283,6 +344,19 @@ export default function DailyOpsPage() {
               </button>
             </div>
           </div>
+
+          {/* Estimate Progress */}
+          {estimateProgress && (
+            <div className="text-xs px-3 py-1.5 rounded"
+              style={{
+                background: estimateProgress.includes('失败')
+                  ? 'color-mix(in srgb, var(--accent-red) 10%, transparent)'
+                  : 'color-mix(in srgb, var(--accent-blue) 10%, transparent)',
+                color: estimateProgress.includes('失败') ? 'var(--accent-red)' : 'var(--accent-blue)',
+              }}>
+              {estimateProgress}
+            </div>
+          )}
 
           {/* Submit Results */}
           {submitResults && (

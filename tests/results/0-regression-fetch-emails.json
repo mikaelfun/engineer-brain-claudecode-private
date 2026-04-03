@@ -1,9 +1,0 @@
-{
-  "testId": "regression-fetch-emails",
-  "round": 0,
-  "timestamp": "2026-03-28T13:57:51.000Z",
-  "status": "pass",
-  "assertions": [{"name":"Setup: backup created","pass":true,"expected":"backup exists","actual":"created at /tmp/e2e-backup-regression-fetch-emails-1774706203"},{"name":"POST /api/case/:id/process","pass":true,"expected":"200|202","actual":"202"},{"name":"Casework completed within timeout","pass":true,"expected":"completed","actual":"completed"},{"name":"File exists: emails.md","pass":true,"expected":"exists","actual":"exists"},{"name":"Non-empty: emails.md","pass":true,"expected":"non_empty","actual":"41419 bytes"}],
-  "error": null,
-  "duration_ms": 78916
-}

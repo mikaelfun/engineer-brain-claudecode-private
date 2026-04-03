@@ -1,9 +1,0 @@
-{
-  "testId": "regression-entitlement-display",
-  "round": 0,
-  "timestamp": "2026-03-28T15:35:53.000Z",
-  "status": "pass",
-  "assertions": [{"name":"Setup: backup created","pass":true,"expected":"backup exists","actual":"created at /tmp/e2e-backup-regression-entitlement-display-1774712032"},{"name":"POST /api/case/:id/step/inspection","pass":true,"expected":"200|202","actual":"202"},{"name":"Step completed within timeout","pass":true,"expected":"completed","actual":"completed"},{"name":"File exists: case-summary.md","pass":true,"expected":"exists","actual":"exists"},{"name":"Not contains: case-summary.md","pass":true,"expected":"not_contains: 合规","actual":"not found"}],
-  "error": null,
-  "duration_ms": 132096
-}

@@ -108,6 +108,115 @@
 - Ghost: 透明底 + `border: 1px solid var(--border-default)`
 - 不用渐变按钮（保持克制）
 
+### Action Button 模式（⚠️ 所有异步操作必须遵循）
+
+异步操作按钮**必须**按以下模式实现，不允许 fire-and-forget。
+
+#### 质量等级
+
+| 等级 | 特征 | 适用场景 |
+|------|------|---------|
+| **A 级** (SSE 驱动) | Spinner + 实时输出 + Cancel + 状态 badge | 长时间后台任务：Full Process、Implement、Verify、Trigger Run |
+| **B 级** (Mutation 反馈) | Spinner + 文字变化 + disabled + toast/inline error | 短时间写操作：Create、Delete、Toggle、Submit |
+| **C 级** (最低标准) | disabled + cursor:not-allowed + 完成后刷新 | 极简操作：Refresh、inline 编辑 |
+
+**❌ 禁止**：点击后无任何视觉反馈（0 级）
+
+#### A 级模式 — SSE 驱动的长时间操作
+
+```
+[Start] → [Running... ■ Cancel] → [✅ Done (Xs) Dismiss]
+                                   [🔴 Failed Dismiss]
+                                   [⊗ Cancelled Dismiss]
+```
+
+**架构要求**：
+1. **后端**：操作函数广播 SSE 事件（`xxx-started`, `xxx-progress`, `xxx-completed`, `xxx-failed`）
+2. **前端 Store**：Zustand store 追踪运行状态 (`running | completed | failed | cancelled`)，存储实时输出和 elapsed time
+3. **前端 SSE Hook**：`useSSE.ts` 监听事件并更新 store
+4. **前端 UI**：
+   - **运行中**：Play → Square(Stop) 按钮切换 + `<Loader2 className="animate-spin" />` + "Running" badge + 实时输出面板（蓝色背景头 + 流式文本）
+   - **完成**：`<CheckCircle2 />` + 绿色 "Done (Xs)" badge + 可 dismiss 的结果面板
+   - **失败**：`<AlertCircle />` + 红色 "Failed" badge + 错误详情
+   - **取消**：`<XCircle />` + 灰色 "Cancelled" badge
+5. **防护**：
+   - 运行中禁止重复触发（double-run protection）
+   - 运行中禁止 Delete（`disabled` + `cursor: not-allowed`）
+   - 取消支持（Windows: `taskkill /F /T /PID`，Unix: `SIGTERM`）
+
+**参考实现**：
+- `stores/triggerRunStore.ts` — Zustand store 模板
+- `services/cron-manager.ts` → `executeCronPrompt()` — 后端 SSE 广播模板
+- `pages/AgentMonitor.tsx` — trigger 卡片 UI 模板
+- `components/issues/ImplementPanel.tsx` — Issue implement 模板（更复杂的 SSE 场景）
+
+#### B 级模式 — Mutation 反馈
+
+```tsx
+<button
+  onClick={() => mutation.mutate(id)}
+  disabled={mutation.isPending}
+  style={{ opacity: mutation.isPending ? 0.6 : 1, cursor: mutation.isPending ? 'not-allowed' : 'pointer' }}
+>
+  {mutation.isPending ? (
+    <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</>
+  ) : (
+    <><Icon className="w-4 h-4" /> Action</>
+  )}
+</button>
+```
+
+**必须包含**：
+- `disabled={mutation.isPending}`
+- Spinner 图标切换（`Loader2 animate-spin`）
+- 文字变化（"Create" → "Creating..."）
+- 错误展示（inline `<div style={{ background: 'var(--accent-red-dim)' }}>` 或 toast）
+
+#### C 级模式 — 最低标准
+
+```tsx
+<button
+  onClick={handleAction}
+  disabled={isLoading}
+  className="transition-colors"
+  style={{ cursor: isLoading ? 'not-allowed' : 'pointer' }}
+>
+  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+</button>
+```
+
+#### SSE 事件命名规范
+
+```
+{domain}-started     — 操作开始
+{domain}-progress    — 中间输出/状态更新
+{domain}-completed   — 成功完成
+{domain}-failed      — 失败
+{domain}-cancelled   — 用户取消（如适用）
+{domain}-question    — 需要用户输入（如适用）
+```
+
+已有 domain：`case-step`, `issue-track`, `issue-implement`, `issue-verify`, `trigger`, `todo-execute`, `patrol`
+
+#### 实时输出面板
+
+长时间操作的输出面板统一风格：
+
+```
+┌─ [accent-*-dim 背景] ──────────────────────┐
+│ 🔄 Running... (Xs)        [output length]  │  ← 状态头
+├────────────────────────────────────────────┤
+│ [bg-secondary]                             │
+│ 流式文本输出                                │  ← pre, whitespace-pre-wrap, max-height: 200px
+│ ...                                        │
+└────────────────────────────────────────────┘
+```
+
+- 运行中：蓝色头 `accent-blue-dim`
+- 完成：绿色头 `accent-green-dim` + Dismiss 按钮
+- 失败：红色头 `accent-red-dim` + 错误详情
+- 取消：默认灰 `bg-hover`
+
 ### 动画
 
 - 页面载入：`fadeInUp`（0.35s），交错延迟 0.04s

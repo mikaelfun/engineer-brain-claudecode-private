@@ -1,9 +1,0 @@
-{
-  "testId": "regression-days-contact",
-  "round": 0,
-  "timestamp": "2026-03-28T13:54:34.000Z",
-  "status": "pass",
-  "assertions": [{"name":"Setup: backup created","pass":true,"expected":"backup exists","actual":"created at /tmp/e2e-backup-regression-days-contact-1774706010"},{"name":"POST /api/case/:id/process","pass":true,"expected":"200|202","actual":"202"},{"name":"Casework completed within timeout","pass":true,"expected":"completed","actual":"completed"},{"name":"JSON field: daysSinceLastContact not null","pass":true,"expected":"not_null","actual":"8"},{"name":"File exists: todo","pass":true,"expected":"exists","actual":"exists"}],
-  "error": null,
-  "duration_ms": 74748
-}

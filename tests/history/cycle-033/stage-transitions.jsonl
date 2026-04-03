@@ -1,3 +1,0 @@
-{"stage":"TEST","action":"test_fail","testId":"iss180-stage-worker-status-write","cycle":33,"result":"3/4 pass","timestamp":"2026-03-30T20:03:41Z"}
-{"stage":"TEST","action":"test_pass","testId":"iss180-stage-worker-status-write","cycle":33,"assertions":"4/4","timestamp":"2026-03-30T20:09:54Z","note":"ISS-180: pipelineStatus management verified"}
-{"stage":"FIX","action":"fix_pass","testId":"framework-fix-33a","fixType":"framework_fix","cycle":33,"issueClassification":"infrastructure","description":"e2e-runner.sh: flush bash assertion on ANY type boundary (not just bash_*), preventing field bleed from json_field_enum into previous bash assertion","timestamp":"2026-03-30T20:09:54Z"}

@@ -1,9 +1,0 @@
-{
-  "testId": "iss180-health-check-authoritative",
-  "round": 34,
-  "timestamp": "2026-03-30T20:28:03.000Z",
-  "status": "pass",
-  "assertions": [{"name":"health-check.sh output must include pipelineStatus field (authoritative from pipeline.json)","pass":true,"expected":"contains 'HAS_FIELD'","actual":"contains 'HAS_FIELD'"},{"name":"health-check.sh must not unconditionally override stage status with done based on currentStage heuristic","pass":true,"expected":"not contains 'done'","actual":"not contains 'done'"}],
-  "error": null,
-  "duration_ms": 38847
-}

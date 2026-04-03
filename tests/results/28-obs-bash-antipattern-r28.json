@@ -1,9 +1,0 @@
-{
-  "testId": "obs-bash-antipattern-r28",
-  "round": 28,
-  "timestamp": "2026-03-30T02:06:20.000Z",
-  "status": "pass",
-  "assertions": [{"name":"No bash anti-patterns in executors (semicolon+var+pipe)","pass":true,"expected":"0 antipatterns","actual":"0 antipatterns found"}],
-  "error": null,
-  "duration_ms": 24575
-}

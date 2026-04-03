@@ -1,9 +1,0 @@
-{
-  "testId": "iss-192-save-api",
-  "round": backend-api,
-  "timestamp": "2026-03-31T19:26:43.000Z",
-  "status": "fail",
-  "assertions": [{"name":"GET /api/cases/2601290030000748/drafts → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'drafts':[{'caseNumber':'2601290030000748','filename':'20260320-0112-follow-up-en-customer.md','content':'# Email Draft — follow-up\n\n**To:** wwbi"},{"name":"GET /api/cases/2601290030000748/drafts → JSON response","pass":true,"expected":"JSON","actual":"JSON"},{"name":"No raw placeholders in API URL: PUT http://localhost:3010/api/drafts/2601290030000748/{draft_filename}","pass":false,"expected":"all resolved","actual":"raw: {draft_filename}"},{"name":"GET /api/cases/2601290030000748/drafts → HTTP 200","pass":true,"expected":"200","actual":"200","note":"{'drafts':[{'caseNumber':'2601290030000748','filename':'20260320-0112-follow-up-en-customer.md','content':'# Email Draft — follow-up\n\n**To:** wwbi"},{"name":"GET /api/cases/2601290030000748/drafts → JSON response","pass":true,"expected":"JSON","actual":"JSON"}],
-  "error": "1 of 5 assertions failed",
-  "duration_ms": 39683
-}

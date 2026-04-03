@@ -262,8 +262,9 @@ noteGapRoutes.get('/:id/note-gap', (c) => {
 })
 
 /**
- * POST /:id/note-gap/submit — Write note to D365
+ * POST /:id/note-gap/submit — Write note to D365 via add-note-safe.ps1
  * Body: { title: string, body: string }
+ * Uses base64 encoding to pass content safely, pre-write validation, post-write verification.
  */
 noteGapRoutes.post('/:id/note-gap/submit', async (c) => {
   const caseNumber = c.req.param('id')
@@ -278,34 +279,59 @@ noteGapRoutes.post('/:id/note-gap/submit', async (c) => {
 
   try {
     // Write title and body to temp files to avoid shell escaping issues
-    // (command-line passing truncates multi-line, special chars like $, `, ', ")
     const titleFile = join(caseDir, 'note-title.tmp')
     const bodyFile = join(caseDir, 'note-body.tmp')
     writeFileSync(titleFile, title, 'utf-8')
     writeFileSync(bodyFile, body, 'utf-8')
 
     try {
-      // Write note via add-note.ps1 using -TitleFile and -BodyFile
-      const addCmd = `pwsh "${join(scriptDir, 'add-note.ps1')}" -TicketNumber "${caseNumber}" -TitleFile "${titleFile}" -BodyFile "${bodyFile}" -OutputDir "${caseDir}"`
-      await execAsync(addCmd, { timeout: 60000 })
+      // Write note via add-note-safe.ps1 (safe version with validation)
+      const addCmd = `pwsh "${join(scriptDir, 'add-note-safe.ps1')}" -TicketNumber "${caseNumber}" -TitleFile "${titleFile}" -BodyFile "${bodyFile}"`
+      console.log(`[note-gap/submit] Running: ${addCmd}`)
+      const addResult = await execAsync(addCmd, { timeout: 90000 })
+      console.log(`[note-gap/submit] stdout: ${addResult.stdout}`)
+      if (addResult.stderr) console.error(`[note-gap/submit] stderr: ${addResult.stderr}`)
 
-      // Verify via fetch-notes.ps1
-      const fetchCmd = `pwsh "${join(scriptDir, 'fetch-notes.ps1')}" -TicketNumber "${caseNumber}" -OutputDir "${caseDir}" -Force`
-      await execAsync(fetchCmd, { timeout: 60000 })
+      // Parse last line as JSON result
+      const lines = addResult.stdout.trim().split('\n')
+      const lastLine = lines[lines.length - 1].trim()
+      let scriptResult: { success: boolean; error?: string; annotationId?: string }
 
-      // Clean up draft
+      try {
+        scriptResult = JSON.parse(lastLine)
+      } catch {
+        console.error(`[note-gap/submit] Failed to parse script result: ${lastLine}`)
+        return c.json({ success: false, error: `Script output not parseable: ${lastLine.substring(0, 200)}` }, 500)
+      }
+
+      if (!scriptResult.success) {
+        console.error(`[note-gap/submit] Script reported failure: ${scriptResult.error}`)
+        // Do NOT delete draft on failure — user can retry
+        return c.json({ success: false, error: scriptResult.error }, 500)
+      }
+
+      // Success — refresh notes and clean up draft
+      try {
+        const fetchCmd = `pwsh "${join(scriptDir, 'fetch-notes.ps1')}" -TicketNumber "${caseNumber}" -OutputDir "${caseDir}" -Force`
+        await execAsync(fetchCmd, { timeout: 60000 })
+      } catch (fetchErr: any) {
+        console.warn(`[note-gap/submit] fetch-notes failed (non-fatal): ${fetchErr.message}`)
+      }
+
+      // Clean up draft only on confirmed success
       const draftPath = getDraftPath(caseNumber)
       if (existsSync(draftPath)) {
         unlinkSync(draftPath)
       }
 
-      return c.json({ success: true, message: `Note "${title}" written to Case ${caseNumber}` })
+      return c.json({ success: true, message: `Note "${title}" written to Case ${caseNumber}`, annotationId: scriptResult.annotationId })
     } finally {
       // Always clean up temp files
       if (existsSync(titleFile)) unlinkSync(titleFile)
       if (existsSync(bodyFile)) unlinkSync(bodyFile)
     }
   } catch (err: any) {
+    console.error(`[note-gap/submit] Unhandled error: ${err.message}`)
     return c.json({ success: false, error: err.message }, 500)
   }
 })

@@ -192,7 +192,7 @@ export async function submitLaborToD365(
 
   const escapedDesc = description.replace(/'/g, "''")
   const escapedClass = classification.replace(/'/g, "''")
-  const cmd = `pwsh -NoProfile -File "${scriptPath}" -Minutes ${minutes} -Classification '${escapedClass}' -Description '${escapedDesc}'`
+  const cmd = `pwsh -NoProfile -File "${scriptPath}" -TicketNumber '${caseNumber}' -Minutes ${minutes} -Classification '${escapedClass}' -Description '${escapedDesc}'`
 
   try {
     const { stdout, stderr } = await execAsync(cmd, { timeout: 120000 })

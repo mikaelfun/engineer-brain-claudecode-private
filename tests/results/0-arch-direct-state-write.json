@@ -1,9 +1,0 @@
-{
-  "testId": "arch-direct-state-write",
-  "round": 0,
-  "timestamp": "2026-03-30T19:52:00.000Z",
-  "status": "pass",
-  "assertions": [{"name":"File exists: architecture-scanner.sh","pass":true,"expected":"exists","actual":"exists"},{"name":"No direct redirect writes to state/pipeline/queues JSON files","pass":true,"expected":"not contains '.json'","actual":"not contains '.json'"}],
-  "error": null,
-  "duration_ms": 31497
-}

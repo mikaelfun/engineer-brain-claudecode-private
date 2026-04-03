@@ -1,9 +1,0 @@
-{
-  "testId": "spec-remove-info-tab-header",
-  "round": 28,
-  "timestamp": "2026-03-30T01:51:27.000Z",
-  "status": "skip",
-  "assertions": [],
-  "error": "env_skip: backend not running",
-  "duration_ms": 188
-}

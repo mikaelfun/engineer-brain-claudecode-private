@@ -1,9 +1,0 @@
-{
-  "testId": "df-poll-detect-fix",
-  "round": 44,
-  "timestamp": "2026-03-31T22:09:06.000Z",
-  "status": "pass",
-  "assertions": [{"name":"poll_for_completion defined in common.sh","pass":true,"expected":"exit 0","actual":"exit 0"},{"name":"poll_for_completion checks for completion/idle status","pass":true,"expected":"exit 0","actual":"exit 0"},{"name":"e2e-runner uses poll_for_completion","pass":true,"expected":"exit 0","actual":"exit 0"}],
-  "error": null,
-  "duration_ms": 40581
-}

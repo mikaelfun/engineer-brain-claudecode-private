@@ -1,5 +1,0 @@
-{"stage":"SCAN","action":"skip_re_eval","count":9,"cycle":31}
-{"testId":"spec-recipe-arch-index-format","result":"PASS","duration_ms":33191}
-{"testId":"spec-recipe-arch-llm-flow","result":"PASS","duration_ms":28419}
-{"stage":"FIX","action":"fix_pass","testId":"iss154-dynamic-iteration","fixType":"logic_error","recipeUsed":null,"issueClassification":"infrastructure","issueCreated":null,"timestamp":"2026-03-30T19:06:12Z"}
-{"stage":"VERIFY","action":"verify_pass","testId":"iss154-dynamic-iteration","cycle":31,"fixType":"logic_error","timestamp":"2026-03-30T19:09:41Z"}

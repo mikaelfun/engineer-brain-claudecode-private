@@ -1,1 +1,0 @@
-{"testId":"wf-iss119-generate-from-spec","round":24,"timestamp":"2026-03-29T09:27:27Z","status":"pass","assertions":[{"name":"File exists: spec-scanner.sh","pass":true,"expected":"exists","actual":"exists"},{"name":"Content match: SKILL.md (spec-driven)","pass":true,"expected":"spec-driven","actual":"found"}],"error":null,"duration_ms":523}

@@ -1,0 +1,11 @@
+{
+  "id": "ISS-205",
+  "title": "Estimate All SDK 集成 — 批量 labor estimate 通过 SDK query 实际生成",
+  "description": "Daily Ops 的 Estimate All 按钮当前只是读取已有 labor-estimate.json 文件的 stub，不会实际生成新的 estimate。需要通过 SDK query() 串行调用 /labor-estimate skill 逐 case 生成，SSE 推送进度。",
+  "type": "feature",
+  "priority": "P1",
+  "status": "done",
+  "testLoopScan": true,
+  "createdAt": "2026-04-01T18:00:00+08:00",
+  "updatedAt": "2026-04-01T18:10:00+08:00"
+}

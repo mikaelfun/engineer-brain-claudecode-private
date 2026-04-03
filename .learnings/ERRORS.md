@@ -139,3 +139,15 @@
 - 核心原则：**主会话永远不直接 Read 截图文件**
 - 预防：规则写入 `conductor/workflow.md`（📸截图优化规则 + UI Screenshot Verification）和 `.claude/commands/conductor/verify.md`
 - 追加：`openviking add-memory` 提取 0 条，需用 `session new → add-message → commit` 手动流程才能写入记忆
+
+## 2026-04-02 | CC Finder 用 python3 在 Git Bash 中不可用
+- **问题**：compliance-check 的 CC Finder 步骤用 `python3` 命令解析 mooncake-cc.json，但 Git Bash (Windows) 只有 `python`
+- **影响**：CC Finder 静默失败（被 `2>/dev/null` 吞掉错误），返回 NO_MATCH
+- **修复**：改用 `python` 或 `python -c` 代替 `python3 -c`
+- **根因**：Windows Python 安装默认只注册 `python.exe`，不创建 `python3` 别名
+
+## 2026-04-02 | onenote-case-search 被错误跳过
+- **问题**：casework B2 中，当 teams-search 缓存有效时，错误地把整个 B2 跳过，包括 onenote-case-search
+- **事实**：onenote-case-search **没有缓存机制**，每次 casework 都应该 spawn 执行
+- **修正**：B2 中 teams-search 有缓存预检（teamsSearchCacheHours），onenote-case-search 无缓存，两者独立判断
+- **正确行为**：即使 teams 缓存有效跳过 teams-search，仍必须 spawn onenote-case-search

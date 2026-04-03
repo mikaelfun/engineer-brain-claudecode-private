@@ -126,6 +126,12 @@ api:
   blocked:
     - action: "POST /api/todo/:id/execute"
       reason: "直接执行 D365 写操作"
+    - action: "POST /api/labor-estimate/:caseNumber/submit"
+      reason: "Labor 提交到 D365 — 调用 record-labor.ps1"
+    - action: "POST /api/labor-estimate/batch-submit"
+      reason: "Labor 批量提交到 D365 — 调用 record-labor.ps1"
+    - action: "POST /api/case/:id/note-gap/submit"
+      reason: "Note 写入 D365 — 调用 add-note.ps1"
 
 # ============================================================
 # UI 操作（Playwright）
@@ -205,6 +211,12 @@ ui:
   blocked:
     - action: "click_execute_todo"
       reason: "直接执行 D365 写操作"
+    - action: "click_submit_labor"
+      reason: "Labor 提交到 D365 — LaborEstimateCard 'Write to D365' 按钮"
+    - action: "click_batch_submit_labor"
+      reason: "Labor 批量提交到 D365 — LaborEstimatePage 'Submit All' 按钮"
+    - action: "click_submit_note_gap"
+      reason: "Note 写入 D365 — NoteGapCard/LaborEstimatePage '写入 D365' / '📝 Write to D365' 按钮"
     - action: "browser_snapshot"
       reason: "输出巨大（数百行 YAML），撑爆会话 context，导致 compact 丢失关键上下文"
 

@@ -1,0 +1,12 @@
+{
+  "id": "ISS-208",
+  "title": "NoteGap 对新 Case 不生成 Note，应记录当天基础操作",
+  "description": "当前 note-gap 逻辑对当天新建的 Case 不记录 note（可能因为无历史 note 或 gap 阈值未达到）。但新 Case 在当天结束时仍需要记录简单的 note，包括：\n\n1. Meet IR（是否完成初始响应）\n2. 发了 First Quality Response\n3. 当天做了哪些排查/操作\n\n期望行为：note-gap 对新 Case（当天创建、无任何 note 记录）应在日终生成一条基础 note draft，汇总当天的操作记录。",
+  "type": "feature",
+  "priority": "P1",
+  "status": "tracked",
+  "trackId": "notegap-newcase-note_20260402",
+  "testLoopScan": true,
+  "createdAt": "2026-04-02T18:05:00+08:00",
+  "updatedAt": "2026-04-02T18:05:00+08:00"
+}

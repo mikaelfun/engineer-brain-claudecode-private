@@ -1,10 +1,13 @@
 <#
 .SYNOPSIS
-    在当前打开的 Case 上记录 Labor 工时。
+    在指定 Case 上记录 Labor 工时。
 .DESCRIPTION
-    自动导航到 Labor 标签页，创建新 Labor 记录，填写时长和分类。
-    Duration 控件使用 Increment/Decrement 按钮（不能直接输入）。
-    如果使用 -UseSessionTime，则使用 D365 Connector 自动计时的值。
+    自动通过 OData API 创建 Labor 记录。如 API 失败则回退到 Playwright UI 操作。
+    支持 -TicketNumber 参数指定目标 Case（推荐），不依赖浏览器上下文。
+    内置重复检查：同一天同一 Case 不会重复记录。
+.PARAMETER TicketNumber
+    目标 Case 编号。传入时使用 Get-IncidentId 查询，不依赖浏览器。
+    不传时回退到 Get-CurrentCaseId（浏览器上下文）。
 .PARAMETER Minutes
     工时分钟数。与 -UseSessionTime 互斥。
 .PARAMETER UseSessionTime
@@ -13,16 +16,20 @@
     分类，默认 Troubleshooting。
 .PARAMETER Description
     描述，默认 "See case notes"。
+.PARAMETER SkipDuplicateCheck
+    跳过当天重复检查（强制写入）。
 .EXAMPLE
-    pwsh scripts/record-labor.ps1 -Minutes 30
+    pwsh scripts/record-labor.ps1 -TicketNumber 2604020010000708 -Minutes 30
+    pwsh scripts/record-labor.ps1 -TicketNumber 2604020010000708 -Minutes 90 -Description "Migration support"
     pwsh scripts/record-labor.ps1 -UseSessionTime
-    pwsh scripts/record-labor.ps1 -Minutes 90 -Description "Migration support"
 #>
 param(
+    [string]$TicketNumber = "",
     [int]$Minutes = 0,
     [switch]$UseSessionTime,
     [string]$Classification = "Troubleshooting",
-    [string]$Description = "See case notes"
+    [string]$Description = "See case notes",
+    [switch]$SkipDuplicateCheck
 )
 
 . "$PSScriptRoot\_init.ps1"
@@ -44,8 +51,24 @@ if ($UseSessionTime) {
 
 # ── API Mode (only for manual minutes, not session time) ──
 if (-not $UseSessionTime) {
-    $incidentId = Get-CurrentCaseId
+    # Resolve incidentId: prefer TicketNumber param, fallback to browser context
+    $incidentId = if ($TicketNumber) { Get-IncidentId -TicketNumber $TicketNumber } else { Get-CurrentCaseId }
     if ($incidentId) {
+        # ── Duplicate check: query existing labor for today ──
+        if (-not $SkipDuplicateCheck) {
+            $todayStart = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddT00:00:00Z')
+            $todayEnd = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddT23:59:59Z')
+            $filter = "_msdfm_caseid_value eq $incidentId and msdfm_date ge $todayStart and msdfm_date le $todayEnd"
+            $existing = Invoke-D365Api -Method GET -Endpoint "/api/data/v9.0/msdfm_labors?`$filter=$filter&`$select=msdfm_laborid,msdfm_duration,msdfm_description"
+            if ($existing -and $existing.value -and $existing.value.Count -gt 0) {
+                $existMins = $existing.value[0].msdfm_duration
+                $existDesc = $existing.value[0].msdfm_description
+                Write-Host "⚠️ Duplicate detected: today already has labor ($existMins min, '$existDesc') for this case."
+                Write-Host "   Use -SkipDuplicateCheck to force write."
+                exit 2
+            }
+        }
+
         $classValue = 337818  # Troubleshooting (default)
         $dateStr = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddT00:00:00.000Z')
         $bodyJson = @{
@@ -60,7 +83,8 @@ if (-not $UseSessionTime) {
         } | ConvertTo-Json -Compress
         $result = Invoke-D365Api -Method POST -Endpoint "/api/data/v9.0/msdfm_labors" -Body $bodyJson
         if ($result -and ($result._status -eq 204 -or $result._entityId)) {
-            Write-Host "✅ Labor recorded: $Minutes minutes ($Classification) - $Description"
+            $caseLabel = if ($TicketNumber) { $TicketNumber } else { "current case" }
+            Write-Host "✅ Labor recorded: $Minutes minutes ($Classification) for $caseLabel - $Description"
             return
         }
         Write-Host "   (API failed, falling back to UI...)"

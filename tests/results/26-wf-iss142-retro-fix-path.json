@@ -1,9 +1,0 @@
-{
-  "testId": "wf-iss142-retro-fix-path",
-  "round": 26,
-  "timestamp": "2026-03-29T18:57:39.000Z",
-  "status": "pass",
-  "assertions": [{"name":"SKILL.md FIX 阶段包含 retroContext 识别逻辑","pass":true,"expected":"exit 0","actual":"exit 0"},{"name":"SKILL.md 包含 targetFile/targetLine 字段定义","pass":true,"expected":"exit 0","actual":"exit 0"},{"name":"retroContext 用于精准定位修复目标","pass":true,"expected":"exit 0","actual":"exit 0"}],
-  "error": null,
-  "duration_ms": 42115
-}
