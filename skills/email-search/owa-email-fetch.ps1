@@ -1,7 +1,9 @@
 # owa-email-fetch.ps1
 # OWA 邮件提取：通过 Playwright + OWA 搜索 Case 邮件，提取完整 conversation
+# 支持内联图片提取（默认开启）和纯文本模式（-NoImages）
 # 用法:
 #   pwsh -File owa-email-fetch.ps1 -CaseNumber "2603060030001353" -OutputPath "./emails-owa.md"
+#   pwsh -File owa-email-fetch.ps1 -CaseNumber "2603060030001353" -OutputPath "./emails-owa.md" -NoImages
 #   pwsh -File owa-email-fetch.ps1 -CaseNumber "2603060030001353" -OutputPath "./emails-owa.md" -PreviewOnly
 #   pwsh -File owa-email-fetch.ps1 -EnsureBrowser   # 仅启动/检查浏览器
 
@@ -9,6 +11,7 @@ param(
     [string]$CaseNumber,
     [string]$OutputPath,
     [switch]$PreviewOnly,       # 只提取 aria-label preview，不加载完整 body
+    [switch]$NoImages,          # 纯文本模式，不提取内联图片
     [switch]$EnsureBrowser,     # 仅确保浏览器就绪
     [string]$LogFile,
     [int]$ScrollDelay = 400,    # 每封邮件 scrollIntoView 后等待 ms
@@ -160,16 +163,21 @@ for ($attempt = 0; $attempt -le $maxRetries; $attempt++) {
 
     # Step 2-4: Extract
     $mode = if ($PreviewOnly) { "preview" } else { "full" }
-    Write-Log "OWA STEP2 | Extracting ($mode mode)"
-    playwright-cli -s=owa eval "(window.__OWA_CASE_NUMBER=`"$CaseNumber`", window.__OWA_MODE=`"$mode`", window.__OWA_SCROLL_DELAY=$ScrollDelay, `"params set`")" 2>&1 | Out-Null
+    $withImagesJs = if ($NoImages) { "false" } else { "true" }
+    Write-Log "OWA STEP2 | Extracting ($mode mode, images=$withImagesJs)"
+    playwright-cli -s=owa eval "(window.__OWA_CASE_NUMBER=`"$CaseNumber`", window.__OWA_MODE=`"$mode`", window.__OWA_WITH_IMAGES=$withImagesJs, window.__OWA_SCROLL_DELAY=$ScrollDelay, `"params set`")" 2>&1 | Out-Null
 
     $jsFile = Join-Path $PSScriptRoot "owa-extract-conversation.js"
     $jsContent = Get-Content $jsFile -Raw
     $extractResult = playwright-cli -s=owa eval $jsContent 2>&1 | Out-String
     $t4 = $sw.ElapsedMilliseconds
 
-    # Step 5: Parse metadata
-    $metaMatch = [regex]::Match($extractResult, '(\d+)\|(\d+)\|(\d+)\|(\d+)')
+    # Step 5: Parse metadata (format: labels|convs|bodies|images|mdLen|elapsed)
+    $metaMatch = [regex]::Match($extractResult, '(\d+)\|(\d+)\|(\d+)\|(\d+)\|(\d+)\|(\d+)')
+    if (-not $metaMatch.Success) {
+        # Fallback: try old 4-field format
+        $metaMatch = [regex]::Match($extractResult, '(\d+)\|(\d+)\|(\d+)\|(\d+)')
+    }
     if (-not $metaMatch.Success) {
         Write-Log "OWA EXTRACT_ERROR | Bad metadata format (attempt $attempt, len=$($extractResult.Length))"
         continue  # retry
@@ -177,6 +185,7 @@ for ($attempt = 0; $attempt -le $maxRetries; $attempt++) {
     $emailCount = [int]$metaMatch.Groups[1].Value
     $convCount = [int]$metaMatch.Groups[2].Value
     $bodyCount = [int]$metaMatch.Groups[3].Value
+    $imageCount = if ($metaMatch.Groups.Count -ge 5) { [int]$metaMatch.Groups[4].Value } else { 0 }
 
     # Read md from textarea
     $mdContent = playwright-cli -s=owa eval 'document.getElementById("_owa_extract_md").value' 2>&1 | Out-String
@@ -204,10 +213,43 @@ for ($attempt = 0; $attempt -le $maxRetries; $attempt++) {
     [System.IO.File]::WriteAllText($OutputPath, $md, [System.Text.UTF8Encoding]::new($false))
     $sizeKB = [math]::Round((Get-Item $OutputPath).Length / 1024, 1)
 
+    # Step 6: Save inline images (if not -NoImages and images were extracted)
+    $savedImageCount = 0
+    if (-not $NoImages -and $imageCount -gt 0) {
+        $imagesDir = Join-Path $outDir "images"
+        if (-not (Test-Path $imagesDir)) { New-Item -ItemType Directory -Path $imagesDir -Force | Out-Null }
+        Write-Log "OWA STEP6 | Saving $imageCount inline image(s)"
+
+        for ($imgIdx = 0; $imgIdx -lt $imageCount; $imgIdx++) {
+            # Get image filename
+            $imgNameResult = playwright-cli -s=owa eval "(function(){ return window.__OWA_IMAGES[$imgIdx].name; })()" 2>&1 | Out-String
+            $imgNameMatch = [regex]::Match($imgNameResult, '"(owa-img-\d+\.png)"')
+            $imgName = if ($imgNameMatch.Success) { $imgNameMatch.Groups[1].Value } else { "owa-img-$imgIdx.png" }
+
+            # Store base64 data in textarea to avoid stdout size limits
+            playwright-cli -s=owa eval "(function(){ var ta = document.getElementById('_owa_img_data') || document.createElement('textarea'); ta.id = '_owa_img_data'; ta.style.cssText = 'position:fixed;left:-9999px'; ta.value = window.__OWA_IMAGES[$imgIdx].dataUrl; if (!ta.parentElement) document.body.appendChild(ta); return 'stored'; })()" 2>&1 | Out-Null
+
+            $imgDataResult = playwright-cli -s=owa eval "document.getElementById('_owa_img_data').value" 2>&1 | Out-String
+            $imgDataMatch = [regex]::Match($imgDataResult, 'data:image/png;base64,([A-Za-z0-9+/=]+)', [System.Text.RegularExpressions.RegexOptions]::Singleline)
+
+            if ($imgDataMatch.Success) {
+                $bytes = [System.Convert]::FromBase64String($imgDataMatch.Groups[1].Value)
+                $imgPath = Join-Path $imagesDir $imgName
+                [System.IO.File]::WriteAllBytes($imgPath, $bytes)
+                $imgSizeKB = [math]::Round($bytes.Length / 1024, 1)
+                Write-Log "  Saved $imgName (${imgSizeKB}KB)"
+                $savedImageCount++
+            } else {
+                Write-Log "  SKIP $imgName (no base64 data)"
+            }
+        }
+    }
+
     $sw.Stop()
-    Write-Log "OWA DONE | $emailCount emails ($convCount convs, $bodyCount bodies), ${sizeKB}KB, ${mode} mode, $($sw.ElapsedMilliseconds)ms total"
+    Write-Log "OWA DONE | $emailCount emails ($convCount convs, $bodyCount bodies, $savedImageCount images), ${sizeKB}KB, ${mode} mode, $($sw.ElapsedMilliseconds)ms total"
     Write-Host "STATUS=OK"
     Write-Host "EMAIL_COUNT=$emailCount"
+    Write-Host "IMAGE_COUNT=$savedImageCount"
     Write-Host "SIZE_KB=$sizeKB"
     Write-Host "DURATION_MS=$($sw.ElapsedMilliseconds)"
     $success = $true
