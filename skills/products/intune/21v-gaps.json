@@ -1,0 +1,107 @@
+{
+  "product": "intune",
+  "lastUpdated": "2026-04-04",
+  "source": "OneNote Export/Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Intune/## China Intune Feature gaps.md",
+  "sourceModified": "2026-01-21T06:52:30.000Z",
+  "noGapDataFound": false,
+  "unsupportedFeatures": [
+    {
+      "feature": "Microsoft Tunnel",
+      "reason": "Microsoft Defender for Endpoint 依赖；国内 Tunnel VPN 只允许三大运营商做 VPN 服务"
+    },
+    {
+      "feature": "Microsoft Endpoint Manager / Endpoint Analytics / Log Analytics",
+      "reason": ""
+    },
+    {
+      "feature": "Tenant Attach",
+      "reason": ""
+    },
+    {
+      "feature": "Derived Credentials",
+      "reason": ""
+    },
+    {
+      "feature": "On-Premises Exchange Connector",
+      "reason": "Global 已于 CY22 EOL，永不会 GA 到 21v"
+    },
+    {
+      "feature": "Microsoft Store (new)",
+      "reason": "合规问题（win-get）；PM 确认不会支持 Mooncake"
+    },
+    {
+      "feature": "SafetyNet Device Attestation",
+      "reason": "依赖 Google Mobile Services"
+    },
+    {
+      "feature": "Managing apps from Google App Store",
+      "reason": "依赖 Google Mobile Services"
+    },
+    {
+      "feature": "Android Enterprise",
+      "reason": "依赖 Google Mobile Services"
+    },
+    {
+      "feature": "Android (AOSP) management for corporate devices",
+      "reason": "依赖 OEM 支持 AOSP；DCR-M365-6783 已提交"
+    },
+    {
+      "feature": "Partner device management integration with Jamf for macOS",
+      "reason": "依赖 Jamf Apple Management"
+    },
+    {
+      "feature": "Fencing",
+      "reason": ""
+    },
+    {
+      "feature": "Enterprise Application",
+      "reason": "Azure 功能依赖"
+    },
+    {
+      "feature": "Microsoft Edge sign in",
+      "reason": "AAD 相关依赖"
+    },
+    {
+      "feature": "Apple Business Manager with 21v Azure AD Federation",
+      "reason": "ABM app 在 21v AAD 中不可用"
+    },
+    {
+      "feature": "Microsoft Defender for Endpoint (include Tamper Protection)",
+      "reason": "依赖 MDE"
+    },
+    {
+      "feature": "Windows AutoPatch",
+      "reason": ""
+    },
+    {
+      "feature": "Cloud PKI",
+      "reason": "无 Intune Suite & Cloud PKI add-on 许可证；DCR 追踪中"
+    },
+    {
+      "feature": "AVD enroll with 21v Intune",
+      "reason": "Feature 15571094 追踪中"
+    },
+    {
+      "feature": "Windows Feature & Quality Update",
+      "reason": "2024.6 Dev team 确认无计划；DCR-M365-4825 已提交"
+    },
+    {
+      "feature": "Windows Update for Business Report",
+      "reason": "DCR-M365-6907 已提交"
+    }
+  ],
+  "partialFeatures": [
+    {
+      "feature": "Co-management",
+      "limitation": "由于 SCCM CMG + Azure Service 在 21v 不可用，仅支持 Hybrid AADJ + co-management，CMClient 只能通过本地 AD 完成认证"
+    },
+    {
+      "feature": "Windows Autopilot",
+      "limitation": "Autopilot v2 于 2409 GA in 21v；此前仅 v1"
+    },
+    {
+      "feature": "Android support",
+      "limitation": "仅支持 DA (Device Administrator) 模式，包含 Android 15；不支持 Android Enterprise / AOSP"
+    }
+  ]
+}

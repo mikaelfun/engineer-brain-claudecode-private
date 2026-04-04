@@ -54,7 +54,7 @@ Queue:     {productQueue.length} remaining — [{productQueue.join(', ')}]
 Completed: {completedProducts.join(', ') || 'none'}
 
 Product States:
-  {product}: 21v-gap={state} | onenote={state} | ado-wiki={state} | mslearn={state} | synthesized={bool}
+  {product}: 21v-gap={state} | onenote={state} | ado-wiki={state} | mslearn={state} | contentidea-kb={state} | synthesized={bool}
   ...
 
 Stats: {totalDiscovered} discovered, {totalDeduplicated} deduped
@@ -93,6 +93,14 @@ cat skills/products/enrich-state.json
 ```
 
 - `status === "complete"` → 输出 "✅ All products enriched and synthesized"，退出
+
+**分类前置检查**（在 per-product 流程之前）：
+- 检查 `classifyState.status`：
+  - 不存在或 `"pending"` → 初始化 `classifyState`，开始 Phase 0 page-classify
+  - `"scanning"` → 继续 Phase 0 page-classify（跳过 Step 1，直接执行 Phase 0 tick）
+  - `"exhausted"` → 分类完成，进入 per-product 流程（Step 1）
+- **Phase 0 运行时**：不执行任何 per-product 操作，每 tick 只做页面分类
+
 - `productQueue` 为空且 `currentProduct` 为空：
   - 检查哪些 `completedProducts` 的 `productStates[x].synthesized === false`
   - 有未 synthesize 的 → 自动触发 SYNTHESIZE（逐个）
@@ -105,11 +113,15 @@ cat skills/products/enrich-state.json
 2. 从 `productQueue` 中移除
 3. 初始化 `productStates[product]`：
    ```json
-   {"21v-gap":"pending","onenote":"pending","ado-wiki":"pending","mslearn":"pending","synthesized":false}
+   {"21v-gap":"pending","onenote":"pending","ado-wiki":"pending","mslearn":"pending","contentidea-kb":"pending","synthesized":false}
    ```
 4. 设 `currentSource` 为第一个 `"pending"` 的 source
 
-**Source 优先级顺序**：`21v-gap` → `onenote` → `ado-wiki` → `mslearn`
+**Source 优先级顺序**：`21v-gap` → `onenote` → `ado-wiki` → `mslearn` → `contentidea-kb`
+
+> 注意：`onenote` source 依赖 Phase 0 page-classify 完成。如果 `classifyState.status !== "exhausted"`，
+> 遇到 `onenote` 时跳过（保持 `pending`），优先执行不依赖分类的 source（`21v-gap`、`ado-wiki`、`mslearn`）。
+> 实际推荐运行顺序：先跑完 Phase 0 全量分类，再开始 per-product 流程。
 
 **Source 推进逻辑**：
 - 当前 source 已 `"exhausted"` → 找下一个 `"pending"` source
@@ -181,6 +193,95 @@ Queue: {remaining} products remaining
 
 ## Phase 执行指令（Agent 内部读取）
 
+### Phase 0: page-classify（全局页面分类）
+
+**目标**：遍历所有团队笔记本页面，用 LLM 分类每个页面所属的产品域（支持 0-N 个产品）。
+
+> ⚠️ 此 Phase 是全局操作，不属于任何特定产品。在所有 per-product Phase 之前运行。
+> 分类完成后产出 `page-classification.jsonl`，供后续 Phase 2 onenote-extract 使用。
+
+**状态**: `enrich-state.json → classifyState`
+```json
+{
+  "classifyState": {
+    "status": "pending|scanning|exhausted",
+    "totalPages": 0,
+    "classifiedPages": 0
+  }
+}
+```
+
+**流程**:
+
+1. **初始化**（首次运行时）：
+   - 读取 `config.json → onenote.teamNotebooks` 获取合法笔记本列表
+   - 遍历每个团队笔记本目录，列出所有 `.md` 文件：
+     ```bash
+     for notebook in teamNotebooks:
+       find "${ONENOTE_DIR}/{notebook}" -name "*.md" -type f
+     ```
+   - 将完整文件列表写入 `skills/products/page-list.txt`（一行一个路径，相对于 ONENOTE_DIR）
+   - 设 `classifyState.totalPages = len(page-list.txt)`
+   - 设 `classifyState.status = "scanning"`
+   - 如果 `page-classification.jsonl` 已存在，读取已分类的路径集合，从 `page-list.txt` 中排除
+
+2. **每 tick 处理 10 个页面**：
+   - 从 `page-list.txt` 中取下一批 10 个未分类页面（跳过已在 `page-classification.jsonl` 中的）
+   - 对每个页面：
+     - Read 文件内容（>3000 字符截取前 3000）
+     - LLM 分析：这个页面涉及哪些产品域？
+   - 产品域列表来自 `config.json → podProducts[*].id`
+   - LLM 判断依据：
+     - 页面内容涉及的 Azure 服务名（对照 `podProducts[*].services`）
+     - 排查的问题域（如 enrollment 相关 → intune，NSG 相关 → networking）
+     - 一个页面可以同时属于多个产品（如 Triage 会议记录、跨产品 TSG）
+     - 纯流程/人员/会议安排等非技术页面 → `products: []`（不属于任何产品）
+   - 每个分类结果 append 到 `skills/products/page-classification.jsonl`：
+     ```json
+     {"path":"MCVKB/Intune/Deploy Win32 exe.md","notebook":"MCVKB","products":["intune"],"confidence":"high","classifiedAt":"2026-04-04","snippet":"Win32 app EXE deployment config..."}
+     {"path":"MCVKB/Mooncake Triage/1.3 FY25 Dec.md","notebook":"MCVKB","products":["intune","vm","aks"],"confidence":"medium","classifiedAt":"2026-04-04","snippet":"Triage notes covering multiple products..."}
+     {"path":"MCVKB/General/Team Outing.md","notebook":"MCVKB","products":[],"confidence":"high","classifiedAt":"2026-04-04","snippet":"Non-technical content"}
+     ```
+   - `snippet`: 页面内容的一句话摘要（<100 字符），便于后续快速浏览
+
+3. **更新状态**：
+   - `classifyState.classifiedPages += 本轮处理数`
+   - 所有页面处理完 → `classifyState.status = "exhausted"`
+
+4. **输出摘要**：
+   ```
+   📋 Page Classification Tick
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Classified: 10 pages (total: {classifiedPages}/{totalPages})
+   Products found: intune×3, vm×2, aks×1, none×4
+   Progress: {percentage}%
+   ```
+
+**Agent spawn**:
+```
+Agent(
+  description: "classify 10 OneNote pages",
+  prompt: |
+    Phase: page-classify
+    项目根: {PROJECT_ROOT}
+    
+    读取 .claude/skills/product-learn/modes/auto-enrich.md 的 "Phase 0: page-classify" 部分执行。
+    
+    关键文件：
+    - page-list.txt: skills/products/page-list.txt
+    - page-classification.jsonl: skills/products/page-classification.jsonl
+    - config.json: 读取 podProducts 获取产品 ID 和 services 列表
+    
+    完成后返回:
+    1. classified: 本轮分类页面数
+    2. byProduct: 各产品命中数（如 {"intune":3,"vm":2}）
+    3. exhausted: true/false
+    4. 简要摘要 (<500 bytes)
+)
+```
+
+---
+
 ### 全局约束（所有 Phase 通用）
 
 - 每个 tick 最多处理 **10 个页面/文件**
@@ -188,7 +289,7 @@ Queue: {remaining} products remaining
 - 每个 tick 目标完成时间 **< 5 分钟**
 - **扫描前**必须先 Read `scanned-sources.json`，**扫描后**必须 append 本次处理的路径/URL
 - `known-issues.jsonl` 不存在 → 创建空文件后 append
-- `scanned-sources.json` 不存在 → 创建：`{"onenote":[],"ado-wiki":[],"mslearn":[]}`
+- `scanned-sources.json` 不存在 → 创建：`{"onenote":[],"ado-wiki":[],"mslearn":[],"contentidea-kb":[]}`
 
 ### JSONL 条目格式
 
@@ -266,40 +367,21 @@ Queue: {remaining} products remaining
 
 ---
 
-### Phase 2: onenote-scan
+### Phase 2: onenote-extract
 
-**目标**：从团队 OneNote 提取排查知识。
+**目标**：从 Phase 0 分类索引中取出属于当前产品的 OneNote 页面，深度提取排查知识。
 
-1. **读取 config.json** → `podProducts[product]`，取：
-   - `onenoteSection` — POD Notebook section 路径
-   - `mcvkbSection` — MCVKB section 路径
-   - `extraSections` — 额外 section 列表（可选）
+> ⚠️ **前置条件**：`classifyState.status === "exhausted"`（Phase 0 分类必须完成）。
+> 如果分类未完成，onenote source 保持 `"pending"` 状态，不会被执行。
 
-2. **Glob 搜索所有 .md 文件**：
-   ```bash
-   # MCVKB section（如果 mcvkbSection 非 null）
-   find "${MCVKB}/{mcvkbSection}" -name "*.md" -type f 2>/dev/null
-   # POD notebook section（如果 onenoteSection 非 null）
-   find "${POD_NB}/{onenoteSection}" -name "*.md" -type f 2>/dev/null
-   # Extra sections
-   for section in extraSections:
-     find "${MCVKB}/{section}" -name "*.md" -type f 2>/dev/null
-     find "${POD_NB}/{section}" -name "*.md" -type f 2>/dev/null
-   ```
-   - 所有 section 均为 null → 返回 `exhausted: true`
+1. **读取分类索引**：
+   过滤 `skills/products/page-classification.jsonl`，取所有 `products` 数组包含当前产品的条目。
 
-3. **排序**：按文件修改时间倒序（`ls -lt` 或 `stat`）
+2. **读取 `scanned-sources.json → onenote`**，排除已处理的页面路径。
 
-4. **新鲜度过滤**：
-   | 年龄 | 动作 | confidence |
-   |------|------|-----------|
-   | ≤ 2 年 | 读取 | high |
-   | 2-4 年 | 读取 | medium |
-   | > 4 年 | **跳过**（除非文件名含 `TSG`/`guide`/`troubleshoot`） | low |
+3. **取 top 10 未处理页面**（按 confidence 降序，high 优先）。
 
-5. **读取 `scanned-sources.json → onenote`**，过滤已扫描页面
-
-6. **取 top 10 未扫描页面**，对每个页面：
+4. **对每个页面**：
    - Read 文件内容（>5000 字符截取前 3000）
    - LLM 提取 symptom/rootCause/solution 三元组（一个页面可产出 0-5 个）
    - 去重检查（见去重规则）
@@ -309,6 +391,14 @@ Queue: {remaining} products remaining
      sourceRef: 相对于 ONENOTE_DIR 的路径（如 "MCVKB/VM+SCIM/.../page.md"）
      sourceUrl: null
      ```
+
+5. **更新 `scanned-sources.json → onenote`**：将本次处理的路径 append
+
+6. **Append** `evolution-log.md`
+
+7. **判断 exhausted**：
+   - 分类索引中该产品的所有页面均已在 `scanned-sources.json → onenote` 中 → `exhausted: true`
+   - 否则 → `exhausted: false`（下轮继续）
 
 7. **更新 `scanned-sources.json`**：将本次处理的 10 个路径 append 到 `onenote` 数组
 
@@ -404,6 +494,81 @@ Queue: {remaining} products remaining
 
 ---
 
+### Phase 5: contentidea-kb-scan
+
+**目标**：从 ContentIdea ADO 内部 KB 穷举已发布的结构化排查文章。
+
+> ⚠️ **与其他 Phase 的关键区别**：此 Phase **不需要 LLM 提取**。ContentIdea work items 已包含结构化字段
+> （`HelpArticleSummarySymptom`/`HelpArticleCause`/`HelpArticleResolution`），直接 strip HTML 即可写入 JSONL。
+> 质量审核留给 SYNTHESIZE 阶段用 LLM 做。
+
+1. **读取 config.json** → 取 `podProducts[product].contentIdeaKeywords`
+   - 为空数组 → 返回 `exhausted: true`（该产品无 ContentIdea 关键词）
+
+2. **WIQL 查询已发布 KB** — 对每个关键词执行：
+   ```bash
+   AZURE_CONFIG_DIR="$HOME/.azure-profiles/microsoft-fangkun" az boards query \
+     --wiql "SELECT [System.Id], [System.Title], [System.WorkItemType], [System.State] FROM workitems WHERE [System.TeamProject] = 'ContentIdea' AND [ECO.CI.KBArticleNumbers] <> '' AND [ECO.CI.CI.AppliesToProducts] CONTAINS '{keyword}'" \
+     --org https://dev.azure.com/ContentIdea --project ContentIdea -o json
+   ```
+   合并所有关键词结果，按 `System.Id` 去重。
+
+3. **读取 `scanned-sources.json → contentidea-kb`**，过滤已扫描的 work item ID
+
+4. **取 top 10 未扫描 ID**，对每个执行：
+   ```bash
+   AZURE_CONFIG_DIR="$HOME/.azure-profiles/microsoft-fangkun" az boards work-item show \
+     --id {workItemId} --org https://dev.azure.com/ContentIdea -o json
+   ```
+
+5. **直接提取三元组**（无需 LLM）：
+   ```python
+   import re
+   def strip_html(s): return re.sub(r'<[^>]+>', '', s or '').strip()
+
+   symptom    = strip_html(fields['ECO.CI.CI.HelpArticleSummarySymptom'])
+   rootCause  = strip_html(fields['ECO.CI.CI.HelpArticleCause'])
+   solution   = strip_html(fields['ECO.CI.CI.HelpArticleResolution'])
+   kb_number  = fields.get('ECO.CI.KBArticleNumbers', '')
+   ```
+
+   - symptom/rootCause/solution **全为空** → 跳过（老数据无结构化字段），仍标记已扫描
+   - 至少有 symptom → 构建 JSONL 条目
+
+6. **构建 JSONL 条目**：
+   ```json
+   {
+     "id": "{product}-{seq:03d}",
+     "date": "YYYY-MM-DD",
+     "symptom": "{stripped symptom}",
+     "rootCause": "{stripped rootCause}",
+     "solution": "{stripped solution}",
+     "source": "contentidea-kb",
+     "sourceRef": "ContentIdea#{workItemId}",
+     "sourceUrl": "https://support.microsoft.com/kb/{kb_number}",
+     "product": "{product}",
+     "confidence": "medium",
+     "quality": "raw",
+     "tags": ["{articleType}", "contentidea-kb"],
+     "21vApplicable": true,
+     "promoted": false
+   }
+   ```
+   - `kb_number` 含 `/` 时（如 `3072688/ja`）→ 取 `/` 前部分构造 URL
+   - `ECO.CI.O.ContentLink` 保留为备用内部链接（不写入 JSONL，仅在指南的来源注释中使用）
+
+7. **去重 → append** `known-issues.jsonl`（同标准去重规则）
+
+8. **更新 `scanned-sources.json → contentidea-kb`**：append 本次处理的 work item ID 字符串列表
+
+9. **Append** `evolution-log.md`
+
+10. **判断 exhausted**：
+    - 已无未扫描 ID → `exhausted: true`
+    - 否则 → `exhausted: false`
+
+---
+
 ## SYNTHESIZE — 综合指南生成
 
 **触发条件**：
@@ -470,6 +635,7 @@ Queue: {remaining} products remaining
 | OneNote | `[MCVKB/.../page.md](relative-path)` |
 | ADO Wiki | `[ADO Wiki](https://dev.azure.com/...)` |
 | MS Learn | `[MS Learn](https://learn.microsoft.com/...)` |
+| ContentIdea KB | `[KB{number}](https://support.microsoft.com/kb/{number})` |
 | Case | `[case:NNNN]` |
 
 #### 5. 生成索引

@@ -3,7 +3,7 @@ name: product-learn
 displayName: 产品学习
 category: inline
 stability: dev
-description: "从案例、OneNote、ADO Wiki、MS Learn 学习新知识，生成综合排查指南，演进产品排查 Skill。触发词：product-learn、学习、知识积累、复盘。"
+description: "从案例、OneNote、ADO Wiki、MS Learn、ContentIdea KB 学习新知识，生成综合排查指南，演进产品排查 Skill。触发词：product-learn、学习、知识积累、复盘。"
 allowed-tools:
   - Bash
   - Read
@@ -348,6 +348,7 @@ Read(".claude/skills/product-learn/modes/auto-enrich.md")
    - `onenote-tsg-scan` — 从团队 OneNote 提取排查知识（增量：对比 `scanned-sources.json` 的上次扫描时间）
    - `ado-wiki-scan` — 从 ADO Wiki 提取 TSG
    - `mslearn-scan` — 从 Microsoft Learn 补充官方文档
+   - `contentidea-kb-scan` — 从 ContentIdea ADO 穷举已发布 KB（结构化字段直接提取，无需 LLM）
    - `case-review-scan` — 自动扫描新归档案例
    - 每个来源扫描完成后更新 `scanned-sources.json`
 

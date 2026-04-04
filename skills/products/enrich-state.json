@@ -1,14 +1,22 @@
 {
-  "status": "idle",
-  "currentProduct": "",
-  "currentSource": "",
-  "productQueue": ["intune", "vm", "aks", "monitor", "entra-id", "networking", "disk", "acr", "arm", "avd", "purview", "eop", "defender", "automation"],
+  "status": "running",
+  "currentProduct": "intune",
+  "currentSource": "onenote",
+  "productQueue": ["vm", "aks", "monitor", "entra-id", "networking", "disk", "acr", "arm", "avd", "purview", "eop", "defender", "automation"],
   "completedProducts": [],
-  "productStates": {},
+  "productStates": {
+    "intune": {
+      "21v-gap": "exhausted",
+      "onenote": "scanning",
+      "ado-wiki": "pending",
+      "mslearn": "pending",
+      "synthesized": false
+    }
+  },
   "stats": {
-    "totalDiscovered": 0,
+    "totalDiscovered": 30,
     "totalDeduplicated": 0,
-    "bySource": {"onenote": 0, "ado-wiki": 0, "mslearn": 0, "21v-gap": 0},
-    "byProduct": {}
+    "bySource": {"onenote": 6, "ado-wiki": 0, "mslearn": 0, "21v-gap": 24},
+    "byProduct": {"intune": 30}
   }
 }

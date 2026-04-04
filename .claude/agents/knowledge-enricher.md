@@ -2,7 +2,6 @@
 name: knowledge-enricher
 description: "Execute one stage of product knowledge enrichment: extract from a source or synthesize guides"
 tools: Bash, Read, Write, Glob, Grep
-model: sonnet
 maxTurns: 30
 mcpServers:
   - local-rag
