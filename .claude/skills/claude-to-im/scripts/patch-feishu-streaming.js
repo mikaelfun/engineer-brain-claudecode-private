@@ -90,10 +90,20 @@ code = code.replace(
             });`
 );
 
-// 5. card.update field names: type/data → card
+// 5. card.update: wrap in { type: 'card_json', data: ... } structure
+// Original sends string directly or as object — API needs { card: { type, data } }
 code = code.replaceAll(
   `data: { type: 'card_json', data: finalCardJson, sequence: state.sequence }`,
-  `data: { card: finalCardJson, sequence: state.sequence }`
+  `data: { card: { type: 'card_json', data: finalCardJson }, sequence: state.sequence }`
+);
+// Also fix if already partially patched
+code = code.replaceAll(
+  `data: { card: finalCardJson, sequence: state.sequence }`,
+  `data: { card: { type: 'card_json', data: finalCardJson }, sequence: state.sequence }`
+);
+code = code.replaceAll(
+  `data: { card: JSON.parse(finalCardJson), sequence: state.sequence }`,
+  `data: { card: { type: 'card_json', data: finalCardJson }, sequence: state.sequence }`
 );
 
 // 6. Remove remaining hasV2 guards and ensure streaming_mode is always set
