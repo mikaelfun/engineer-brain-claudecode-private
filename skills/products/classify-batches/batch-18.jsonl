@@ -1,0 +1,14 @@
+{"line":875,"path":"MCVKB/VM+SCIM/=======5. Fabric=======/5.8 FABRIC_ VM STATE TRANSITIONS.md","product":"vm","confidence":"medium","reason":"Fabric context but covers VM state transitions"}
+{"line":880,"path":"MCVKB/VM+SCIM/=======6. Storage=======/6.0 Support matrix for Azure Storage resource reco/6.0.1 _MCVKB_ How to recover deleted ARM storage a.md","product":"arm","confidence":"high","reason":"Recover deleted ARM storage account - ARM resource recovery"}
+{"line":882,"path":"MCVKB/VM+SCIM/=======6. Storage=======/6.0 Support matrix for Azure Storage resource reco/6.0.3 _ MCVKB _ How to recover soft delete managed.md","product":"disk","confidence":"high","reason":"Soft delete managed disk recovery"}
+{"line":883,"path":"MCVKB/VM+SCIM/=======6. Storage=======/6.0 Support matrix for Azure Storage resource reco/6.0.4 _ MCVKB _ Blob recovery (blob, unmanaged dis.md","product":"disk","confidence":"medium","reason":"Blob and unmanaged disk recovery"}
+{"line":885,"path":"MCVKB/VM+SCIM/=======6. Storage=======/6.0 Support matrix for Azure Storage resource reco/6.0.6 _ MCVKB _ hard delete managed disk recovery.md","product":"disk","confidence":"high","reason":"Hard delete managed disk recovery"}
+{"line":890,"path":"MCVKB/VM+SCIM/=======6. Storage=======/6.14 [MCVKB] Owait of 20% on the guest.md","product":"vm","confidence":"medium","reason":"Guest OS I/O wait performance issue"}
+{"line":892,"path":"MCVKB/VM+SCIM/=======6. Storage=======/6.16 _ MCVKB _ Xstore _ IaaS Disk Failures TSG.md","product":"disk","confidence":"high","reason":"IaaS disk failures troubleshooting guide"}
+{"line":894,"path":"MCVKB/VM+SCIM/=======6. Storage=======/6.2 [Storage] 怎么修磁盘.md","product":"disk","confidence":"high","reason":"How to repair/fix disks"}
+{"line":897,"path":"MCVKB/VM+SCIM/=======6. Storage=======/6.22 _ Trim disks for Windows and Linux to release.md","product":"disk","confidence":"high","reason":"Disk trim for Windows/Linux"}
+{"line":903,"path":"MCVKB/VM+SCIM/=======6. Storage=======/6.29 [MCKVB] [Storage] [Appgw] Add StroageAccount.md","product":"networking","confidence":"medium","reason":"AppGw + Storage integration"}
+{"line":904,"path":"MCVKB/VM+SCIM/=======6. Storage=======/6.3 [Temporary Disk] How to disable temporary disk.md","product":"disk","confidence":"high","reason":"Temporary disk management"}
+{"line":910,"path":"MCVKB/VM+SCIM/=======6. Storage=======/_6.1 [Storage][Perf][Azure VM Storage Performance.md","product":"vm","confidence":"high","reason":"Azure VM storage performance tuning"}
+{"line":914,"path":"MCVKB/VM+SCIM/=======7. Tools========/7.11[MCVKB] [netmon]  How to decode the Vxlan payl.md","product":"networking","confidence":"high","reason":"Vxlan network packet decoding"}
+{"line":919,"path":"MCVKB/VM+SCIM/=======7. Tools========/7.4 [ASC _ HA] How to run HA through command line.md","product":"vm","confidence":"medium","reason":"ASC High Availability for VMs via CLI"}

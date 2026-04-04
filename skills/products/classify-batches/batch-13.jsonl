@@ -1,0 +1,50 @@
+{"line":621,"file":"MCVKB/VM+SCIM/======= 8. Kusto=======/8.3 [Kusto] How to determine if the VM's state has.md","product":"vm","confidence":"high","reason":"Kusto query to check VM state"}
+{"line":622,"file":"MCVKB/VM+SCIM/======= 8. Kusto=======/8.4 [Fabric] How to check the auditing information.md","product":"_skip","confidence":"high","reason":"Fabric auditing - no matching product ID"}
+{"line":623,"file":"MCVKB/VM+SCIM/======= 8. Kusto=======/8.5 [Kusto] Kusto Endpoints.md","product":"_skip","confidence":"high","reason":"Generic Kusto infrastructure - no matching product ID"}
+{"line":624,"file":"MCVKB/VM+SCIM/======= 8. Kusto=======/8.6 [Monitor] Kusto query to check the \"Activity L.md","product":"monitor","confidence":"high","reason":"Monitor Activity Log Kusto query"}
+{"line":625,"file":"MCVKB/VM+SCIM/======= 8. Kusto=======/8.7 How to check Iridias notification with Kusto.md","product":"_skip","confidence":"medium","reason":"Iridias notification - internal tooling, no matching product"}
+{"line":626,"file":"MCVKB/VM+SCIM/======= 8. Kusto=======/8.8 Fabric and VMA Kusto Query and case Study.md","product":"vm","confidence":"high","reason":"VMA (VM Agent) Kusto query and case study"}
+{"line":627,"file":"MCVKB/VM+SCIM/======= 8. Kusto=======/8.9 Kusto authentication failure.md","product":"_skip","confidence":"high","reason":"Generic Kusto auth failure - no matching product ID"}
+{"line":628,"file":"MCVKB/VM+SCIM/=======10. Monitor=======.md","product":"_skip","confidence":"high","reason":"Section header only"}
+{"line":629,"file":"MCVKB/VM+SCIM/=======10. Monitor=======/10.1 One workaround to integate global OMS with mo.md","product":"monitor","confidence":"high","reason":"OMS (Operations Management Suite) integration - Monitor"}
+{"line":630,"file":"MCVKB/VM+SCIM/=======10. Monitor=======/10.10 [OMS Agent]Couldn't open AzSecID file_ open.md","product":"monitor","confidence":"high","reason":"OMS Agent troubleshooting"}
+{"line":631,"file":"MCVKB/VM+SCIM/=======10. Monitor=======/10.11 [Alert]Fired alert couldn't be found.md","product":"monitor","confidence":"high","reason":"Monitor alert troubleshooting"}
+{"line":632,"file":"MCVKB/VM+SCIM/=======10. Monitor=======/10.12 CEF based security monitor in sentinel.md","product":"defender","confidence":"medium","reason":"Microsoft Sentinel CEF security monitoring"}
+{"line":633,"file":"MCVKB/VM+SCIM/=======10. Monitor=======/10.2 [VNet][VM][DEV] azure diagnostic log integrat.md","product":"monitor","confidence":"high","reason":"Azure diagnostic log integration for VNet/VM"}
+{"line":634,"file":"MCVKB/VM+SCIM/=======10. Monitor=======/10.3 [Log Analytics] Log Analytics Component Owner.md","product":"monitor","confidence":"high","reason":"Log Analytics component"}
+{"line":635,"file":"MCVKB/VM+SCIM/=======10. Monitor=======/10.4[Log Analysis] Some study on how log A custom.md","product":"monitor","confidence":"high","reason":"Log Analytics custom logs"}
+{"line":636,"file":"MCVKB/VM+SCIM/=======10. Monitor=======/10.5 Case triage summary about Metrics alert - SR_.md","product":"monitor","confidence":"high","reason":"Metrics alert case triage"}
+{"line":637,"file":"MCVKB/VM+SCIM/=======10. Monitor=======/10.6 _aggregate on_ field in Alert for custom log.md","product":"monitor","confidence":"high","reason":"Monitor alert aggregation for custom log"}
+{"line":638,"file":"MCVKB/VM+SCIM/=======10. Monitor=======/10.7[Log Analytics] How to track and troubleshoot.md","product":"monitor","confidence":"high","reason":"Log Analytics troubleshooting"}
+{"line":639,"file":"MCVKB/VM+SCIM/=======10. Monitor=======/10.8 [Host Metrics] How to get monitoring agent lo.md","product":"monitor","confidence":"high","reason":"Host Metrics monitoring agent"}
+{"line":640,"file":"MCVKB/VM+SCIM/=======10. Monitor=======/10.9 Log Analytics Query Best Practice.md","product":"monitor","confidence":"high","reason":"Log Analytics query best practices"}
+{"line":641,"file":"MCVKB/VM+SCIM/=======11. AAD=======.md","product":"_skip","confidence":"high","reason":"Section header only"}
+{"line":642,"file":"MCVKB/VM+SCIM/=======11. AAD=======/11.1 [Deprecated] How to determine AAD features ar.md","product":"entra-id","confidence":"high","reason":"AAD feature determination"}
+{"line":643,"file":"MCVKB/VM+SCIM/=======11. AAD=======/11.10 [B2C] AAD B2C password expiration.md","product":"entra-id","confidence":"high","reason":"AAD B2C password expiration"}
+{"line":644,"file":"MCVKB/VM+SCIM/=======11. AAD=======/11.11 [MFA] MFA with Authenticator app.md","product":"entra-id","confidence":"high","reason":"AAD MFA with Authenticator"}
+{"line":645,"file":"MCVKB/VM+SCIM/=======11. AAD=======/11.12 [Deprecated] [ADFS] Configure AAD Federated.md","product":"entra-id","confidence":"high","reason":"ADFS AAD federation configuration"}
+{"line":646,"file":"MCVKB/VM+SCIM/=======11. AAD=======/11.13 [ADFS] AD FS 2016 Refresh Token Lifetime.md","product":"entra-id","confidence":"high","reason":"ADFS refresh token lifetime"}
+{"line":647,"file":"MCVKB/VM+SCIM/=======11. AAD=======/11.14 [MFA on-prem] AAD MFA with NPS extension.md","product":"entra-id","confidence":"high","reason":"AAD MFA with NPS extension (on-prem)"}
+{"line":648,"file":"MCVKB/VM+SCIM/=======11. AAD=======/11.15 [ADFS] Configure 21V Azure MFA as auth provi.md","product":"entra-id","confidence":"high","reason":"ADFS + 21V Azure MFA configuration"}
+{"line":649,"file":"MCVKB/VM+SCIM/=======11. AAD=======/11.16 [ADFS] How to enable ADFS debug log and capt.md","product":"entra-id","confidence":"high","reason":"ADFS debug logging"}
+{"line":650,"file":"MCVKB/VM+SCIM/=======11. AAD=======/11.17 [B2C] How to register SendGrid account and i.md","product":"entra-id","confidence":"high","reason":"AAD B2C SendGrid integration"}
+{"line":651,"file":"MCVKB/VM+SCIM/=======11. AAD=======/11.19 [Deprecated][OIDC] How to get access (bearer.md","product":"entra-id","confidence":"high","reason":"AAD OIDC bearer token"}
+{"line":652,"file":"MCVKB/VM+SCIM/=======11. AAD=======/11.2 [Deprecated] Workaround for lacking AAD B2B.md","product":"entra-id","confidence":"high","reason":"AAD B2B workaround"}
+{"line":653,"file":"MCVKB/VM+SCIM/=======11. AAD=======/11.20 How to troubleshoot domain login failure on.md","product":"entra-id","confidence":"high","reason":"AAD domain login failure troubleshooting"}
+{"line":654,"file":"MCVKB/VM+SCIM/=======11. AAD=======/11.21 [HAADJ] Configure hybrid Azure Active Direct.md","product":"entra-id","confidence":"high","reason":"Hybrid AAD Join configuration"}
+{"line":655,"file":"MCVKB/VM+SCIM/=======11. AAD=======/11.22 [AADDS] Several useful queries for AADDS log.md","product":"entra-id","confidence":"high","reason":"AAD Domain Services log queries"}
+{"line":656,"file":"MCVKB/VM+SCIM/=======11. AAD=======/11.23 [SamlIdpSso] Integrating Okta (as IdP) with.md","product":"entra-id","confidence":"high","reason":"SAML IdP SSO - Okta integration with AAD"}
+{"line":657,"file":"MCVKB/VM+SCIM/=======11. AAD=======/11.24 [ADFS] How to set up ADFS environment using.md","product":"entra-id","confidence":"high","reason":"ADFS environment setup"}
+{"line":658,"file":"MCVKB/VM+SCIM/=======11. AAD=======/11.25 [HAADJ] How to enable hybrid AAD join for Mo.md","product":"entra-id","confidence":"high","reason":"Hybrid AAD Join for Mooncake"}
+{"line":659,"file":"MCVKB/VM+SCIM/=======11. AAD=======/11.26 [Migrated][AADC] Workaround to do group base.md","product":"entra-id","confidence":"high","reason":"AAD Connect group-based filtering"}
+{"line":660,"file":"MCVKB/VM+SCIM/=======11. AAD=======/11.27 [Process][MFA] How to disable MFA for only o.md","product":"entra-id","confidence":"high","reason":"AAD MFA per-user disable process"}
+{"line":661,"file":"MCVKB/VM+SCIM/=======11. AAD=======/11.28 [Migrated][AADC] How to migrate domain UPN f.md","product":"entra-id","confidence":"high","reason":"AAD Connect UPN domain migration"}
+{"line":662,"file":"MCVKB/VM+SCIM/=======11. AAD=======/11.29 [AADC] AAD Connect Upgrade from V1 to V2.md","product":"entra-id","confidence":"high","reason":"AAD Connect version upgrade"}
+{"line":663,"file":"MCVKB/VM+SCIM/=======11. AAD=======/11.3 [Deprecated] identity management across diffe.md","product":"entra-id","confidence":"high","reason":"AAD cross-directory identity management"}
+{"line":664,"file":"MCVKB/VM+SCIM/=======11. AAD=======/11.30 [MsGraph] How to get the device used in MFA.md","product":"entra-id","confidence":"high","reason":"MsGraph for MFA device info - AAD context"}
+{"line":665,"file":"MCVKB/VM+SCIM/=======11. AAD=======/11.31 [MsGraph] Microsoftgraph PS SDK.md","product":"entra-id","confidence":"medium","reason":"Microsoft Graph PowerShell SDK under AAD section"}
+{"line":666,"file":"MCVKB/VM+SCIM/=======11. AAD=======/11.32 [MsGraph] MCVKB _ AAD _ Use managed identity.md","product":"entra-id","confidence":"high","reason":"AAD managed identity via MsGraph"}
+{"line":667,"file":"MCVKB/VM+SCIM/=======11. AAD=======/11.33 [SamlAppSSO] MCVKB _ AAD _ Set up SAML SSO b.md","product":"entra-id","confidence":"high","reason":"AAD SAML App SSO setup"}
+{"line":668,"file":"MCVKB/VM+SCIM/=======11. AAD=======/11.34 [AppMgmt] customize attributes in OIDC(Acces.md","product":"entra-id","confidence":"high","reason":"AAD App Management OIDC token customization"}
+{"line":669,"file":"MCVKB/VM+SCIM/=======11. AAD=======/11.35 [AADC] how to find any hint attributes(onpre.md","product":"entra-id","confidence":"high","reason":"AAD Connect on-prem attribute hints"}
+{"line":670,"file":"MCVKB/VM+SCIM/=======11. AAD=======/11.36 [AAD] How to do user consent granting for sp.md","product":"entra-id","confidence":"high","reason":"AAD user consent for service principal"}

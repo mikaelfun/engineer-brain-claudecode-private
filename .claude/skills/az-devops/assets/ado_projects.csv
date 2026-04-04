@@ -1,0 +1,27 @@
+product_name,ado_org,ado_project,wiki_name
+Intune,Supportability,Intune,
+Virtual Machine,Supportability,AzureIaaSVM,
+Azure Kubernetes Service,Supportability,AzureContainers,
+Azure Monitor,Supportability,AzureMonitor,
+Azure Active Directory (Entra),Supportability,AzureAD,
+Azure Active Directory (Entra),Supportability,WindowsDirectoryServices,
+Azure Networking,Supportability,AzureNetworking,
+Azure Networking,Supportability,WindowsNetworking,
+Storage (IaaS),Supportability,AzureStorageDevices,
+Azure Container Registry/Instance,Supportability,AzureContainers,
+Azure Resource Manager,Supportability,AzureDev,
+Azure Resource Manager,Supportability,AzureAdaptiveCloud,
+Azure Virtual Desktop,Supportability,WindowsVirtualDesktop,
+Azure Virtual Desktop,Supportability,Windows365,
+Purview,Supportability,Azure Purview,
+Defender for Cloud,Supportability,CSS Azure AI,
+Azure China (shared),Supportability,AzureChina,
+SCIM Chat (shared),Supportability,SCIMChatWiki,
+EOP/Defender for M365,ASIM-Security,Messaging Protection,Messaging Protection Wiki
+Purview Compliance,ASIM-Security,Compliance,Data Loss Prevention
+Purview Compliance,ASIM-Security,Compliance,Information Protection
+Purview Information Protection,ASIM-Security,Information Protection,Information Protection Team Wiki
+Defender for Cloud,ASIM-Security,Infrastructure Solutions,Defender for Cloud
+Defender for Cloud,ASIM-Security,Infrastructure Solutions,Sentinel
+Endpoint Protection,ASIM-Security,Endpoint Protection,Endpoint Protection
+Endpoint Protection,ASIM-Security,Endpoint Protection,MDE TSG

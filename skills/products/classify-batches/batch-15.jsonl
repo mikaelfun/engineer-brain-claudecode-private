@@ -1,0 +1,50 @@
+{"line":721,"file":"MCVKB/VM+SCIM/=======14. PORTAL & ARM=======.md","product":"arm","confidence":"high","reason":"Section header for Portal & ARM"}
+{"line":722,"file":"MCVKB/VM+SCIM/=======14. PORTAL & ARM=======/14.1 How to find Azure portal extension ownership.md","product":"arm","confidence":"high","reason":"Azure portal extension ownership - ARM/Portal topic"}
+{"line":723,"file":"MCVKB/VM+SCIM/=======14. PORTAL & ARM=======/14.2[MCVKB]Mooncake MarketPlace contact informatio.md","product":"arm","confidence":"high","reason":"Mooncake Marketplace - ARM/Portal topic"}
+{"line":724,"file":"MCVKB/VM+SCIM/=======14. PORTAL & ARM=======/14.3 [MCVKB] Use Azure portal Extension Analyzer t.md","product":"arm","confidence":"high","reason":"Portal Extension Analyzer - ARM/Portal topic"}
+{"line":725,"file":"MCVKB/VM+SCIM/=======14. PORTAL & ARM=======/14.4 [ARM] ARM ID.md","product":"arm","confidence":"high","reason":"ARM ID topic"}
+{"line":726,"file":"MCVKB/VM+SCIM/=======14. PORTAL & ARM=======/14.5 How to query ARM requests to find out which I.md","product":"arm","confidence":"high","reason":"Query ARM requests"}
+{"line":727,"file":"MCVKB/VM+SCIM/=======14. PORTAL & ARM=======/14.6 [ARM]ARM Throttling.md","product":"arm","confidence":"high","reason":"ARM throttling"}
+{"line":728,"file":"MCVKB/VM+SCIM/=======15. Migration======.md","product":"vm","confidence":"high","reason":"Section header for VM migration (ASM to ARM)"}
+{"line":729,"file":"MCVKB/VM+SCIM/=======15. Migration======/15.1 [Migration]How to troubleshoot ASM to ARM mig.md","product":"vm","confidence":"high","reason":"ASM to ARM VM migration troubleshooting"}
+{"line":730,"file":"MCVKB/VM+SCIM/=======17. CDN=======.md","product":"networking","confidence":"medium","reason":"CDN section header - classified under networking"}
+{"line":731,"file":"MCVKB/VM+SCIM/=======17. CDN=======/17.1 [CDN] Jarvis for Mooncake CDN troubleshooting.md","product":"networking","confidence":"medium","reason":"CDN Jarvis troubleshooting - networking"}
+{"line":732,"file":"MCVKB/VM+SCIM/=======17. CDN=======/17.2 无法创建CDN profile，could not create the marketpl.md","product":"networking","confidence":"medium","reason":"CDN profile creation issue - networking"}
+{"line":733,"file":"MCVKB/VM+SCIM/=======17. CDN=======/17.3 [CDN] Jarvis for Mooncake CDN troubleshooting.md","product":"networking","confidence":"medium","reason":"CDN Jarvis troubleshooting - networking"}
+{"line":734,"file":"MCVKB/VM+SCIM/=======18. AKS=======.md","product":"aks","confidence":"high","reason":"AKS section header"}
+{"line":735,"file":"MCVKB/VM+SCIM/=======18. AKS=======/18.1 [AKS] The container service is in a failed st.md","product":"aks","confidence":"high","reason":"AKS container service failed state"}
+{"line":736,"file":"MCVKB/VM+SCIM/=======18. AKS=======/18.10 [AKS]AKS ARM_VMSS Throttling_429 Errors.md","product":"aks","confidence":"high","reason":"AKS VMSS throttling 429 errors"}
+{"line":737,"file":"MCVKB/VM+SCIM/=======18. AKS=======/18.11 [MCVKB][AKS]Easy method of accessing AKS nod.md","product":"aks","confidence":"high","reason":"Accessing AKS nodes"}
+{"line":738,"file":"MCVKB/VM+SCIM/=======18. AKS=======/18.12 How to get AKS JIT access with escort.md","product":"aks","confidence":"high","reason":"AKS JIT access"}
+{"line":739,"file":"MCVKB/VM+SCIM/=======18. AKS=======/18.13 Inappropriate DNS setting of NIC may affect.md","product":"aks","confidence":"high","reason":"DNS/NIC affecting AKS"}
+{"line":740,"file":"MCVKB/VM+SCIM/=======18. AKS=======/18.15 _ MCVKB _ How to recover deleted Azure Conta.md","product":"aks","confidence":"high","reason":"Recover deleted container - AKS context"}
+{"line":741,"file":"MCVKB/VM+SCIM/=======18. AKS=======/18.16 [MCVKB][VM][AKS] AAD pod identity in Mooncak.md","product":"aks","confidence":"high","reason":"AAD pod identity in AKS"}
+{"line":742,"file":"MCVKB/VM+SCIM/=======18. AKS=======/18.17 _ AKS _ Container log collection settings.md","product":"aks","confidence":"high","reason":"AKS container log collection"}
+{"line":743,"file":"MCVKB/VM+SCIM/=======18. AKS=======/18.18 [AKS] A quick way to set up Prometheus + Gra.md","product":"aks","confidence":"high","reason":"AKS Prometheus + Grafana setup"}
+{"line":744,"file":"MCVKB/VM+SCIM/=======18. AKS=======/18.2 [AKS Engine] A workaround for deploying compo.md","product":"aks","confidence":"high","reason":"AKS Engine deployment workaround"}
+{"line":745,"file":"MCVKB/VM+SCIM/=======18. AKS=======/18.20[MCVKB][AKS IO throttling] Node Not ready tro.md","product":"aks","confidence":"high","reason":"AKS IO throttling node not ready"}
+{"line":746,"file":"MCVKB/VM+SCIM/=======18. AKS=======/18.21[MCVKB]Reconcile and upgrade timer：2h40m.md","product":"aks","confidence":"high","reason":"AKS reconcile and upgrade timer"}
+{"line":747,"file":"MCVKB/VM+SCIM/=======18. AKS=======/18.22[MCVKB]Remediator.md","product":"aks","confidence":"high","reason":"AKS remediator"}
+{"line":748,"file":"MCVKB/VM+SCIM/=======18. AKS=======/18.23[MCVKB]track request from AKS RP to CRP_DRP.md","product":"aks","confidence":"high","reason":"Track AKS RP to CRP/DRP requests"}
+{"line":749,"file":"MCVKB/VM+SCIM/=======18. AKS=======/18.24 PID exhausting Debug and monitor.md","product":"aks","confidence":"high","reason":"AKS PID exhausting debug"}
+{"line":750,"file":"MCVKB/VM+SCIM/=======18. AKS=======/18.25 ephemeral OS disk.md","product":"aks","confidence":"high","reason":"AKS ephemeral OS disk"}
+{"line":751,"file":"MCVKB/VM+SCIM/=======18. AKS=======/18.26 SMB CSI Driver for Kubernetes (AKS).md","product":"aks","confidence":"high","reason":"AKS SMB CSI driver"}
+{"line":752,"file":"MCVKB/VM+SCIM/=======18. AKS=======/18.27 How to better understand the percentile in c.md","product":"aks","confidence":"high","reason":"AKS percentile understanding"}
+{"line":753,"file":"MCVKB/VM+SCIM/=======18. AKS=======/18.28 Modify AKS related VMSS.md","product":"aks","confidence":"high","reason":"Modify AKS VMSS"}
+{"line":754,"file":"MCVKB/VM+SCIM/=======18. AKS=======/18.29 [AKS] Upgrading_scaling down PDB.md","product":"aks","confidence":"high","reason":"AKS upgrading/scaling PDB"}
+{"line":755,"file":"MCVKB/VM+SCIM/=======18. AKS=======/18.3 [AKS] how to use istio to achieve communicati.md","product":"aks","confidence":"high","reason":"AKS Istio service mesh"}
+{"line":756,"file":"MCVKB/VM+SCIM/=======18. AKS=======/18.30 How to mount Blob NFS on AKS Pod.md","product":"aks","confidence":"high","reason":"Mount Blob NFS on AKS"}
+{"line":757,"file":"MCVKB/VM+SCIM/=======18. AKS=======/18.31 [MCVKB] Rotate AKS cluster certificate.md","product":"aks","confidence":"high","reason":"AKS certificate rotation"}
+{"line":758,"file":"MCVKB/VM+SCIM/=======18. AKS=======/18.32 [MCVKB] Rotate certificates failed due to cu.md","product":"aks","confidence":"high","reason":"AKS certificate rotation failure"}
+{"line":759,"file":"MCVKB/VM+SCIM/=======18. AKS=======/18.33 Notifications Cert expire issue.md","product":"aks","confidence":"high","reason":"AKS certificate expiry notifications"}
+{"line":760,"file":"MCVKB/VM+SCIM/=======18. AKS=======/18.34 AKS升级注意事项和最佳建议.md","product":"aks","confidence":"high","reason":"AKS upgrade best practices"}
+{"line":761,"file":"MCVKB/VM+SCIM/=======18. AKS=======/18.35 Docker Hub rate limit.md","product":"aks","confidence":"high","reason":"Docker Hub rate limit in AKS context"}
+{"line":762,"file":"MCVKB/VM+SCIM/=======18. AKS=======/18.36 How to monitor on docker.io image and do con.md","product":"aks","confidence":"high","reason":"Monitor docker.io images for AKS"}
+{"line":763,"file":"MCVKB/VM+SCIM/=======18. AKS=======/18.37[MCVKB][查找AKS涉及到的所有具体IP_FQDN].md","product":"aks","confidence":"high","reason":"Find all AKS IP/FQDN"}
+{"line":764,"file":"MCVKB/VM+SCIM/=======18. AKS=======/18.38 how to create a dynamic pv in an exist stora.md","product":"aks","confidence":"high","reason":"AKS dynamic PV creation"}
+{"line":765,"file":"MCVKB/VM+SCIM/=======18. AKS=======/18.39[AKS][GPU node][2209060030000142] How to use.md","product":"aks","confidence":"high","reason":"AKS GPU node usage"}
+{"line":766,"file":"MCVKB/VM+SCIM/=======18. AKS=======/18.40 AKS mount Azure Disk with Custom-managed key.md","product":"aks","confidence":"high","reason":"AKS mount Azure Disk with CMK"}
+{"line":767,"file":"MCVKB/VM+SCIM/=======18. AKS=======/18.41[MCVKB][AKS_KeyVault]Use Key Vault with workl.md","product":"aks","confidence":"high","reason":"AKS Key Vault workload identity"}
+{"line":768,"file":"MCVKB/VM+SCIM/=======18. AKS=======/18.42[MCVKB][AKS_AAD][AAD]OIDC issuer in AKS.md","product":"aks","confidence":"high","reason":"AKS OIDC issuer with AAD"}
+{"line":769,"file":"MCVKB/VM+SCIM/=======18. AKS=======/18.44 How to mount NFS share on AKS Pod.md","product":"aks","confidence":"high","reason":"Mount NFS share on AKS Pod"}
+{"line":770,"file":"MCVKB/VM+SCIM/=======18. AKS=======/18.45 Ubuntu daily update.md","product":"aks","confidence":"high","reason":"AKS Ubuntu node daily update"}

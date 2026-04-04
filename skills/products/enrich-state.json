@@ -1,22 +1,19 @@
 {
-  "status": "running",
-  "currentProduct": "intune",
-  "currentSource": "onenote",
-  "productQueue": ["vm", "aks", "monitor", "entra-id", "networking", "disk", "acr", "arm", "avd", "purview", "eop", "defender", "automation"],
+  "status": "classifying",
+  "currentProduct": "",
+  "currentSource": "",
+  "productQueue": ["intune", "vm", "aks", "monitor", "entra-id", "networking", "disk", "acr", "arm", "avd", "purview", "eop", "defender", "automation"],
   "completedProducts": [],
-  "productStates": {
-    "intune": {
-      "21v-gap": "exhausted",
-      "onenote": "scanning",
-      "ado-wiki": "pending",
-      "mslearn": "pending",
-      "synthesized": false
-    }
+  "productStates": {},
+  "classifyState": {
+    "status": "scanning",
+    "totalPages": 4241,
+    "classifiedPages": 0
   },
   "stats": {
     "totalDiscovered": 30,
     "totalDeduplicated": 0,
-    "bySource": {"onenote": 6, "ado-wiki": 0, "mslearn": 0, "21v-gap": 24},
+    "bySource": {"onenote": 6, "ado-wiki": 0, "mslearn": 0, "21v-gap": 24, "contentidea-kb": 0},
     "byProduct": {"intune": 30}
   }
 }
