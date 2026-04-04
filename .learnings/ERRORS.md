@@ -181,16 +181,11 @@ claude-to-im 库的飞书流式卡片功能写了 `cardkit.v2.card.xxx`，但飞
 | `cardkit.v2.card.settings.streamingMode.set({data:{streaming_mode}})` | `cardkit.v1.card.settings({data:{settings:JSON.stringify({config:{streaming_mode:false}}),sequence}})` | settings 字段必须是 **JSON 字符串**不是 object |
 | `cardkit.v2.card.update({data:{type,data}})` | `cardkit.v1.card.update({data:{card,sequence}})` | 字段名从 type/data 改为 card |
 
-### 飞书 CardKit 流式卡片正确 API 序列
-1. `POST /cardkit/v1/cards` — 创建卡片（config.streaming_mode=true）
-2. `POST /im/v1/messages` — 发送卡片消息（用户看到 Thinking...）
-3. `PUT /cardkit/v1/cards/:card_id/elements/:element_id/content` — 流式更新（全量文本，平台自动计算增量打字机效果）
-4. `PATCH /cardkit/v1/cards/:card_id/settings` — 关闭流式模式
+| `element.content` | `{ content: string, sequence: int }` | 普通字段 |
+| `card.settings` | `{ settings: "JSON字符串", sequence: int }` | settings 是 JSON 字符串 |
+| `card.update` | `{ card: { type: "card_json", data: "JSON字符串" }, sequence: int }` | card 是 object 包含 type+data |
 
-### 关键 API 格式陷阱
-- `element.content` 的 `sequence` 是 **required**，必须严格递增
-- `settings` 的 body 是 `{ settings: "{\"config\":{\"streaming_mode\":false}}", sequence: N }` — settings 值是 **JSON 字符串**
-- `card.update` 的 body 是 `{ card: "JSON字符串", sequence: N }` — card 值也是 JSON 字符串
+三个 API 三种格式，没有一致性。
 
 ### 修改位置
 必须改 `node_modules/claude-to-im/dist/lib/bridge/adapters/feishu-adapter.js`（esbuild 从 dist JS 打包，不是 src TS），改完 `npm run build` 重新打包。

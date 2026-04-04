@@ -87,6 +87,10 @@ If set to `text`, streaming cards are completely disabled (early return in `_doC
 | `cardkit.v2.card.create` | `cardkit.v1.card.create` |
 | `cardkit.v2.card.streamContent({data:{content,sequence}})` | `cardkit.v1.cardElement.content({path:{card_id,element_id:'streaming_content'},data:{content,sequence}})` |
 | `cardkit.v2.card.settings.streamingMode.set({data:{streaming_mode:false,sequence}})` | `cardkit.v1.card.settings({data:{settings:JSON.stringify({config:{streaming_mode:false}}),sequence}})` |
-| `cardkit.v2.card.update({data:{type,data,sequence}})` | `cardkit.v1.card.update({data:{card:finalCardJson,sequence}})` |
+| `cardkit.v2.card.update({data:{type,data,sequence}})` | `cardkit.v1.card.update({data:{card:{type:'card_json',data:finalCardJson},sequence}})` |
+| `if (!hasV2 && !hasV1)` | `if (!hasV1)` |
+| `...(hasV2 ? { streaming_mode: true } : {})` | `streaming_mode: true` |
+
+**Config requirement**: `~/.claude-to-im/config.env` must have `CTI_FEISHU_CARD_MODE=v1` (not `text`).
 
 After patching, run `npm run build` in the skill directory and restart the bridge.
