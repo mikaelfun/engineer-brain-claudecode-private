@@ -207,3 +207,10 @@ claude-to-im 库的飞书流式卡片功能写了 `cardkit.v2.card.xxx`，但飞
 1. **API 的确切签名是什么？** → 查官方文档，确认 URL/method/body schema
 2. **SDK 的运行时对象结构是什么？** → grep bundle 或 console.log 打印，确认命名空间层级
 3. **build 工具链怎么处理改动？** → 读 build config，确认改哪个文件才生效
+4. **config 里有没有功能开关？** → grep 环境变量/config 文件，确认没有 early return 把功能关掉
+
+### 追加（2026-04-04 晚）
+- 流式卡片修好后又失效，排查半天，根因是 `~/.claude-to-im/config.env` 里 `CTI_FEISHU_CARD_MODE=text`
+- 这个值在最初 setup 时设置，当时流式功能还没实现所以用 text 模式
+- 上游代码更新后新增了 `cardMode === 'text'` 的 early return 检查，config 没跟着改
+- **教训**：排查"功能突然不工作"时，第一步应该 grep 环境变量和 config 文件里的功能开关，而不是直接看代码逻辑

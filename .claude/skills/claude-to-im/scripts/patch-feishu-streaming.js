@@ -96,6 +96,14 @@ code = code.replaceAll(
   `data: { card: finalCardJson, sequence: state.sequence }`
 );
 
+// 6. Remove remaining hasV2 guards and ensure streaming_mode is always set
+// Pattern: "if (!hasV2 && !hasV1) {" → "if (!hasV1) {"
+code = code.replaceAll('if (!hasV2 && !hasV1) {', 'if (!hasV1) {');
+// Pattern: "...(hasV2 ? { streaming_mode: true } : {})," → "streaming_mode: true,"
+code = code.replaceAll('...(hasV2 ? { streaming_mode: true } : {}),', 'streaming_mode: true,');
+// Any leftover hasV2 references
+code = code.replaceAll('hasV2 ? ', 'false ? ');
+
 // Validate
 if (code === original) {
   console.log('[patch] No changes needed (already patched or source changed)');
@@ -106,8 +114,10 @@ const checks = {
   'cardElement.content': code.includes('cardkit.v1.cardElement.content'),
   'v1.card.settings':    code.includes('cardkit.v1.card.settings('),
   'settings as JSON':    code.includes('JSON.stringify({ config: { streaming_mode'),
+  'streaming_mode true': code.includes('streaming_mode: true,'),
   'no v2 references':    !code.match(/cardkit\.v2\.card\b/),
-  'valid JS syntax':     !code.match(/\)\(\),\s*;/) && !code.match(/;;\s*\n\s*\}/) // no stray semicolons
+  'no hasV2 guards':     !code.match(/if \(!hasV2 &&/) && !code.match(/hasV2 \? \{ streaming/),
+  'valid JS syntax':     !code.match(/\)\(\),\s*;/) && !code.match(/;;\s*\n\s*\}/)
 };
 
 writeFileSync(TARGET, code, 'utf8');

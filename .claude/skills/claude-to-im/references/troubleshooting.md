@@ -70,7 +70,13 @@ The daemon management script (`daemon.sh`) handles stale PID files automatically
 
 ## Streaming cards not working (Feishu)
 
-**Symptoms**: Card shows "Thinking..." but text never updates; or finalize fails with 400.
+**Symptoms**: Card shows "Thinking..." but text never updates; or no card at all, just plain text.
+
+**Check config first**: `~/.claude-to-im/config.env` must have:
+```
+CTI_FEISHU_CARD_MODE=v1
+```
+If set to `text`, streaming cards are completely disabled (early return in `_doCreateStreamingCard`).
 
 **Required permissions**: `cardkit:card:write`, `cardkit:card:read` (must publish a new app version after adding)
 
