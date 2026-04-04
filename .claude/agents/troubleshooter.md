@@ -39,6 +39,25 @@ mcpServers:
 - `teams/` — Teams 讨论（如有）
 - `icm/` — ICM 数据（如有）
 
+### 1.5. 查产品知识库
+
+在开始搜索和 Kusto 查询前，先检查是否已有预构建的排查指南。
+
+1. 确定产品域（从 case-info.md 的 SAP 路径推断）
+2. 检查 `skills/products/{product}/guides/_index.md` 是否存在且非空
+3. 如果存在：
+   - 读取 `_index.md`，根据 Step 1 理解到的症状关键词匹配最相关的 1-2 篇指南
+   - 读取匹配的指南，获得：
+     - 预构建的排查路径（可能可以跳过部分搜索）
+     - 已知根因列表（缩小 Kusto 查询范围）
+     - 21V 不适用标注（避免建议不支持的功能）
+   - 在 troubleshooter.log 记录：`[timestamp] STEP 1.5 OK | matched guide: {guide-name}`
+4. 如果不存在或未匹配：
+   - 记录：`[timestamp] STEP 1.5 SKIP | no matching guide found`
+   - 继续 Step 2，走正常搜索流程：
+     - 优先搜索团队 OneNote → ADO Wiki → MS Learn → Kusto skill queries
+     - 搜索汇总后才确定具体排查方法、Kusto 查询、向客户获取的关键证据
+
 ### 2. Kusto 查询
 
 **首选方式（Python 引擎）：**

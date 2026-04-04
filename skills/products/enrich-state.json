@@ -1,0 +1,14 @@
+{
+  "status": "idle",
+  "currentProduct": "",
+  "currentSource": "",
+  "productQueue": ["intune", "vm", "aks", "monitor", "entra-id", "networking", "disk", "acr", "arm", "avd", "purview", "eop", "defender", "automation"],
+  "completedProducts": [],
+  "productStates": {},
+  "stats": {
+    "totalDiscovered": 0,
+    "totalDeduplicated": 0,
+    "bySource": {"onenote": 0, "ado-wiki": 0, "mslearn": 0, "21v-gap": 0},
+    "byProduct": {}
+  }
+}

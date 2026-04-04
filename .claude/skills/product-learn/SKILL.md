@@ -3,7 +3,7 @@ name: product-learn
 displayName: 产品学习
 category: inline
 stability: dev
-description: "从案例、OneNote、ADO Wiki、手动输入学习新知识，演进产品排查 Skill。触发词：product-learn、学习、知识积累、复盘。"
+description: "从案例、OneNote、ADO Wiki、MS Learn 学习新知识，生成综合排查指南，演进产品排查 Skill。触发词：product-learn、学习、知识积累、复盘。"
 allowed-tools:
   - Bash
   - Read
@@ -17,7 +17,7 @@ allowed-tools:
 
 # /product-learn — 产品 Skill 知识学习
 
-从多种来源学习新知识，追加到产品 skill 的 `known-issues.jsonl`。
+从多种来源学习新知识，追加到产品 skill 的 `known-issues.jsonl`；并通过综合管线生成 Markdown 排查指南。
 
 ## 参数
 
@@ -27,8 +27,14 @@ allowed-tools:
   - `/product-learn case-review vm` — 复盘归档的 VM 案例
   - `/product-learn case-review 2603100030005863` — 复盘指定案例
   - `/product-learn add vm` — 手动添加一条 known-issue
+  - `/product-learn synthesize vm` — 手动触发指南综合生成
   - `/product-learn promote vm` — 查看候选提升条目
   - `/product-learn stats` — 各产品知识积累统计
+  - `/product-learn auto-enrich` — 自动富化（三段流水线：EXTRACT → SYNTHESIZE → REFRESH）
+  - `/product-learn auto-enrich status` — 查看自动富化进度
+  - `/product-learn auto-enrich reset` — 重置所有自动富化状态
+  - `/product-learn auto-enrich reset --reset-source {source}` — 仅重置指定来源的扫描记录（如 `onenote`、`ado-wiki`）
+  - `/product-learn auto-enrich skip` — 跳过当前产品
 
 ## 通用规则
 
@@ -174,6 +180,59 @@ append 前必须检查：
 
 3. **去重 + append**
 
+### synthesize — 手动综合生成
+
+```
+/product-learn synthesize {product}
+```
+
+将 `known-issues.jsonl` 中积累的知识点聚类、过滤，生成结构化的 Markdown 排查指南。
+
+**执行步骤**:
+
+1. **读取知识库**
+   读取 `skills/products/{product}/known-issues.jsonl`，加载全量条目。
+
+2. **主题聚类**
+   按 `symptom` 关键词 + `tags` 自动分组，合并同主题条目（如 "AllocationFailed"、"scale-out-stuck" 等聚为独立 topic）。
+
+3. **质量过滤**
+   - 丢弃 `confidence: "low"` 且无 `promoted: true` 的孤立条目
+   - 保留有 `relatedTo` 关联链或多来源佐证的条目
+   - 保留所有 `promoted: true` 条目
+
+4. **生成指南文件**
+   每个 topic 生成一个 Markdown 文件：
+   ```
+   skills/products/{product}/guides/{topic}.md
+   ```
+   格式：
+   ```markdown
+   # {topic} 排查指南
+   ## 症状
+   ## 根因分析
+   ## 排查步骤
+   ## 已知解决方案
+   ## 参考来源
+   ```
+
+5. **更新索引**
+   写入 `skills/products/{product}/guides/_index.md`，列出所有 topic 及一句话摘要，供 troubleshooter 快速匹配。
+
+6. **审计日志**
+   Append 到 `skills/products/{product}/synthesize-log.md`：
+   ```
+   | {date} | {product} | {topic-count} topics | {entry-count} entries → {guide-count} guides |
+   ```
+
+**路由实现**：
+
+```
+Read(".claude/skills/product-learn/modes/auto-enrich.md")
+```
+
+执行其中 **SYNTHESIZE** 阶段的逻辑（subargs = `synthesize {product}`）。
+
 ### promote — 知识提升
 
 ```
@@ -206,7 +265,8 @@ append 前必须检查：
 
 1. 读取所有产品的 `known-issues.jsonl`
 2. 统计：总条目数、按 source 分布、按 confidence 分布、promoted 比例
-3. 展示表格
+3. 读取各产品 `guides/_index.md` 统计已生成指南数
+4. 展示表格
 
 ---
 
@@ -233,12 +293,70 @@ append 前必须检查：
 
 ## 与 Troubleshooter 集成
 
-troubleshooter agent 排查完成后，执行知识写回：
+troubleshooter agent 在开始排查时，优先检查综合指南；排查完成后执行知识写回：
 
+**排查前（Step 1.5）**：
+1. 判断产品域
+2. 读取 `skills/products/{product}/guides/_index.md`（若存在）
+3. 匹配 symptom 关键词 → 若命中，优先阅读对应 `guides/{topic}.md` 作为排查起点
+4. 若 `_index.md` 不存在或无匹配 topic → fallback 到 RAG 搜索 + ms-learn
+
+**排查后（知识写回）**：
 1. 从 analysis report 提取发现
 2. 判断产品域
 3. 构建 known-issue 条目
 4. 调用去重逻辑
 5. Append 到对应产品的 `known-issues.jsonl`
 
-详见 troubleshooter.md Step 6（排查后写回）。
+详见 troubleshooter.md Step 1.5（指南优先）与 Step 6（排查后写回）。
+
+---
+
+## auto-enrich — 自动知识富化循环
+
+```
+/product-learn auto-enrich                          # 执行一轮（三段流水线，1 产品 1 阶段）
+/product-learn auto-enrich status                   # 查看进度
+/product-learn auto-enrich reset                    # 重置全部状态
+/product-learn auto-enrich reset --reset-source onenote   # 仅重置 onenote 扫描记录
+/product-learn auto-enrich skip                     # 跳过当前产品
+/loop 5m /product-learn auto-enrich                 # 持续循环（推荐）
+```
+
+**路由实现**：
+
+```
+Read(".claude/skills/product-learn/modes/auto-enrich.md")
+```
+
+按读到的内容执行。subargs（`status`/`reset`/`reset --reset-source {source}`/`skip`/空）传递给 mode 逻辑。
+
+**架构**：采用 test-supervisor 同款模式——thin router + state 文件 + agent spawn。
+每 tick 处理 1 个产品的 1 个阶段，耗尽驱动（无 maxCycles 上限），直到所有来源扫描完毕为止。
+
+**双重产出**：
+- `known-issues.jsonl` — 原子知识条目（EXTRACT 阶段产出）
+- `guides/{topic}.md` + `guides/_index.md` — 综合排查指南（SYNTHESIZE 阶段产出）
+
+**状态文件**：
+- `skills/products/enrich-state.json` — 流水线调度状态（当前产品、当前阶段、队列）
+- `skills/products/{product}/scanned-sources.json` — 各来源扫描记录（最后扫描时间、条目数、TTL）
+
+**三段流水线（EXTRACT → SYNTHESIZE → REFRESH）**：
+
+1. **EXTRACT** — 知识提取
+   - `onenote-tsg-scan` — 从团队 OneNote 提取排查知识（增量：对比 `scanned-sources.json` 的上次扫描时间）
+   - `ado-wiki-scan` — 从 ADO Wiki 提取 TSG
+   - `mslearn-scan` — 从 Microsoft Learn 补充官方文档
+   - `case-review-scan` — 自动扫描新归档案例
+   - 每个来源扫描完成后更新 `scanned-sources.json`
+
+2. **SYNTHESIZE** — 指南综合
+   - 当产品的所有 EXTRACT 阶段完成 → 触发 synthesize
+   - 执行与 `/product-learn synthesize {product}` 相同的逻辑
+   - 生成/更新 `guides/` 目录下的所有指南文件
+
+3. **REFRESH** — 增量刷新钩子
+   - OneNote sync hook：若 `onenote-export` 技能触发了新的同步，自动将对应产品重新入队 EXTRACT
+   - 已扫描来源按 `scanned-sources.json` 中的 TTL 到期后自动重新扫描（默认 30 天）
+   - 21v-gap-scan：建立 21V 不支持功能缓存（30 天 TTL）

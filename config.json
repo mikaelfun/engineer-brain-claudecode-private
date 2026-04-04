@@ -1,13 +1,31 @@
 {
   "casesRoot": "./cases",
-  "dataRoot": "C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\data",
+  "dataRoot": "../data",
   "teamsSearchCacheHours": 4,
   "noteGapThresholdDays": 3,
   "podAlias": "mcpodvm@microsoft.com",
   "onenote": {
     "personalNotebook": "Kun Fang OneNote",
-    "teamNotebooks": ["MCVKB"],
+    "teamNotebooks": ["MCVKB", "Mooncake POD Support Notebook"],
     "freshnessThresholdMonths": 12,
     "autoRagSync": true
-  }
+  },
+  "pod": "VM+SCIM",
+  "podProducts": [
+    {"id":"intune","services":["Intune"],"onenoteSection":"Intune/","mcvkbSection":null,"podServicesDir":"Intune"},
+    {"id":"vm","services":["Virtual Machine running Windows","Virtual Machine running Linux","Virtual Machine Scale Sets","Azure Dedicated Host"],"onenoteSection":"VM+SCIM/=======2. VM*","mcvkbSection":"VM+SCIM/=======2. VM*","podServicesDir":"VM","extraSections":["VM+SCIM/=======3. Linux*","VM+SCIM/=======5. Image*"]},
+    {"id":"aks","services":["Azure Kubernetes Service"],"onenoteSection":"VM+SCIM/=======18. AKS*","mcvkbSection":"VM+SCIM/=======18. AKS*","podServicesDir":"AKS"},
+    {"id":"monitor","services":["Monitor","Alerts","Log Analytics","Managed Grafana"],"onenoteSection":"VM+SCIM/=======10. Monitor*","mcvkbSection":"VM+SCIM/=======10. Monitor*","podServicesDir":"MONITOR"},
+    {"id":"entra-id","services":["Azure Active Directory (Entra)","O365 Identity"],"onenoteSection":"VM+SCIM/=======11. AAD*","mcvkbSection":"VM+SCIM/=======11. AAD*","podServicesDir":"Azure AD _ Ms Entra ID"},
+    {"id":"networking","services":[],"onenoteSection":null,"mcvkbSection":"Net/","podServicesDir":null},
+    {"id":"disk","services":["Storage (IaaS)","Azure Data Box"],"onenoteSection":"VM+SCIM/=======6. Storage*","mcvkbSection":"VM+SCIM/=======6. Storage*","podServicesDir":"Azure Shared Disks"},
+    {"id":"acr","services":["Azure Container Registry/Instance"],"onenoteSection":"VM+SCIM/=======18. AKS*","mcvkbSection":"VM+SCIM/=======18. AKS*","podServicesDir":"ACR"},
+    {"id":"arm","services":["Management Portal","Azure Arc enabled servers/K8S"],"onenoteSection":"VM+SCIM/=======14. PORTAL*ARM*","mcvkbSection":"VM+SCIM/=======14. PORTAL*ARM*","podServicesDir":"DEPLOYMENT"},
+    {"id":"avd","services":["Azure Virtual Desktop"],"onenoteSection":"VM+SCIM/=======9. AVD*","mcvkbSection":"VM+SCIM/=======9. AVD*","podServicesDir":"AVD"},
+    {"id":"purview","services":["Purview Information Protection","Microsoft Purview compliance"],"onenoteSection":null,"mcvkbSection":null,"podServicesDir":"M365 Purivew Compliance"},
+    {"id":"eop","services":["EOP, Defender for M365"],"onenoteSection":null,"mcvkbSection":null,"podServicesDir":"M365 MDO EOP"},
+    {"id":"defender","services":["Defender for Cloud","Azure Sentinel"],"onenoteSection":null,"mcvkbSection":null,"podServicesDir":null},
+    {"id":"automation","services":["Automation","Azure Update Manager"],"onenoteSection":null,"mcvkbSection":null,"podServicesDir":null}
+  ],
+  "enrichPriority": ["intune","vm","aks","monitor","entra-id","networking","disk","acr","arm","avd","purview","eop","defender","automation"]
 }
