@@ -29,9 +29,9 @@
     }
   },
   "classifyState": {
-    "status": "scanning",
+    "status": "exhausted",
     "totalPages": 4241,
-    "classifiedPages": 4030
+    "classifiedPages": 4002
   },
   "stats": {
     "totalDiscovered": 30,
