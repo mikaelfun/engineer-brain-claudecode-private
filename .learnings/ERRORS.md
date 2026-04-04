@@ -37,6 +37,15 @@
 - 预防：工具 schema 不等于后端真实能力，增量方案必须以实测为准。已记入 Teams skill 文档
 - 相关文件：`skills/teams-search/scripts/fetch-teams.ps1`（已废弃）
 
+### 2026-04-04 — playwright-cli 升级后无头模式无法登录 D365
+
+- 症状：`playwright-cli open --persistent --profile ... --browser msedge` 跳到 login.microsoftonline.com，等待 120 秒超时。用户看不到浏览器窗口无法手动登录
+- 原因：旧 `playwright-cli`（npm 包，已废弃）默认有头模式；新 `@playwright/cli` 默认无头模式，需显式加 `--headed`
+- 安装：`npm install -g @playwright/cli`（替代已废弃的 `playwright-cli`）
+- 解决：在 `_init.ps1` 的 `Restart-D365Browser` 中，检测到登录页后用 `Invoke-PlaywrightCode` 自动点击 `@microsoft.com` 账户 tile。无需 `--headed`，无头模式下 Playwright 可以直接操控页面元素完成登录
+- 关键：persistent profile 的 cookie 与 Edge default profile **完全隔离**，不共享。首次需要登录，之后 cookie 缓存在 `$TEMP/playwright-d365-profile` 目录复用
+- cookie 过期后需要重新自动选择账户登录（自动完成，约 3 秒）
+
 ### 2026-03-16 — playwright-cli Chrome not found + Edge 切换
 
 - 症状：`playwright-cli tab-list` 报 `Chromium distribution 'chrome' is not found at ...chrome.exe`
@@ -151,3 +160,50 @@
 - **事实**：onenote-case-search **没有缓存机制**，每次 casework 都应该 spawn 执行
 - **修正**：B2 中 teams-search 有缓存预检（teamsSearchCacheHours），onenote-case-search 无缓存，两者独立判断
 - **正确行为**：即使 teams 缓存有效跳过 teams-search，仍必须 spawn onenote-case-search
+
+## 2026-04-04 | claude-to-im 飞书流式卡片调试 — 10 轮盲改的教训
+
+### 症状
+飞书 bridge 发消息后长时间无反馈（只有最终一次性回复），用户要求流式进度显示。
+
+### 根因（多个）
+claude-to-im 库的飞书流式卡片功能写了 `cardkit.v2.card.xxx`，但飞书 SDK 里根本没有 v2 命名空间。SDK 实际结构：
+- `cardkit.v1.card` — card 级操作（create/update/settings）
+- `cardkit.v1.cardElement` — element 级操作（content/patch/create/delete）
+- **没有 `cardkit.v2`，也没有 `card.element`（是 `cardElement` 且和 `card` 同级）**
+
+### 修复（4 处 API 适配）
+
+| 原代码 | 修复后 | 说明 |
+|--------|--------|------|
+| `cardkit.v2.card.create(...)` | `cardkit.v1.card.create(...)` | v2 → v1 |
+| `cardkit.v2.card.streamContent({data:{content,sequence}})` | `cardkit.v1.cardElement.content({path:{card_id,element_id},data:{content,sequence}})` | streamContent 不存在，用 cardElement.content |
+| `cardkit.v2.card.settings.streamingMode.set({data:{streaming_mode}})` | `cardkit.v1.card.settings({data:{settings:JSON.stringify({config:{streaming_mode:false}}),sequence}})` | settings 字段必须是 **JSON 字符串**不是 object |
+| `cardkit.v2.card.update({data:{type,data}})` | `cardkit.v1.card.update({data:{card,sequence}})` | 字段名从 type/data 改为 card |
+
+### 飞书 CardKit 流式卡片正确 API 序列
+1. `POST /cardkit/v1/cards` — 创建卡片（config.streaming_mode=true）
+2. `POST /im/v1/messages` — 发送卡片消息（用户看到 Thinking...）
+3. `PUT /cardkit/v1/cards/:card_id/elements/:element_id/content` — 流式更新（全量文本，平台自动计算增量打字机效果）
+4. `PATCH /cardkit/v1/cards/:card_id/settings` — 关闭流式模式
+
+### 关键 API 格式陷阱
+- `element.content` 的 `sequence` 是 **required**，必须严格递增
+- `settings` 的 body 是 `{ settings: "{\"config\":{\"streaming_mode\":false}}", sequence: N }` — settings 值是 **JSON 字符串**
+- `card.update` 的 body 是 `{ card: "JSON字符串", sequence: N }` — card 值也是 JSON 字符串
+
+### 修改位置
+必须改 `node_modules/claude-to-im/dist/lib/bridge/adapters/feishu-adapter.js`（esbuild 从 dist JS 打包，不是 src TS），改完 `npm run build` 重新打包。
+
+### 过程中的方法论错误（导致 10 轮才修好）
+1. **没有先查飞书官方文档确认 API schema** — 每个字段的格式都是试出来的
+2. **没有先 grep SDK bundle 搞清楚命名空间** — v1/v2、card/cardElement 层级关系靠试错发现
+3. **不知道 esbuild 读的是 dist JS** — 改了 TS 源码 rebuild 无效，浪费一轮
+4. **每次只修一个问题** — 应该查完文档一次性改完所有 API 调用
+5. **sed -i 在 Git Bash 清空大文件** — 平台陷阱又踩了
+
+### 预防（调试第三方 SDK 适配的三问检查表）
+改代码之前必须先回答：
+1. **API 的确切签名是什么？** → 查官方文档，确认 URL/method/body schema
+2. **SDK 的运行时对象结构是什么？** → grep bundle 或 console.log 打印，确认命名空间层级
+3. **build 工具链怎么处理改动？** → 读 build config，确认改哪个文件才生效

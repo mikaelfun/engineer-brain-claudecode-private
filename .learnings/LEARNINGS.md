@@ -102,3 +102,17 @@
 - **问题**: `daysSinceLastContact` 在 judge 缓存命中跳过时不更新，随时间推移越来越不准确。
 - **修复**: 在 `generate-todo.sh` 中用 `statusJudgedAt` 日期与今天日期的日历差来修正缓存值。
 - **教训**: 带时间维度的缓存值需要在使用时加上时间衰减补偿，否则会导致触发条件延迟。
+
+### 2026-04-04 — 调试第三方 SDK 适配：先理解再动手
+
+- **上下文**：为 claude-to-im 飞书 bridge 启用流式卡片（CardKit API），库代码写了 v2 但 SDK 只有 v1
+- **发现**：
+  - 飞书 SDK 命名空间和文档 API path 不一致（`card.element` → SDK 里是 `cardElement` 且和 `card` 同级）
+  - 飞书多个 API 的 body 参数要传 **JSON 字符串**而非 object（`settings`、`card` 字段）
+  - esbuild 打包时从 `node_modules/xxx/dist/` 读 JS，不是 `src/` 的 TS
+- **教训**：调试第三方 SDK 适配时，**改代码之前**必须先完成三件事：
+  1. 查官方 API 文档确认每个接口的 request body schema
+  2. grep SDK bundle 确认运行时对象的命名空间结构
+  3. 读 build config 确认改哪个文件才能生效
+- **反模式**：看到错误 → 猜改法 → 改代码 → 重启 → 人肉测试 → 又有新错 → 再猜（循环 10 轮）
+- **正模式**：查文档 + grep SDK + 读 build config → 一次性改完 → 一轮验证
