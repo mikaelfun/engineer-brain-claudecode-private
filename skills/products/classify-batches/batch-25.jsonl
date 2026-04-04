@@ -1,0 +1,50 @@
+{"line":1221,"product":"avd","confidence":0.95,"reason":"AVD reboot via Azure Automation + Webhook"}
+{"line":1222,"product":"avd","confidence":0.95,"reason":"AVD remote desktop client Subscribe feed URL behavior in Mooncake"}
+{"line":1223,"product":"avd","confidence":0.92,"reason":"AVD user sign-in location restriction using AAD Conditional Access"}
+{"line":1224,"product":"avd","confidence":0.95,"reason":"AVD delete assigned user from personal session host via PowerShell"}
+{"line":1225,"product":"avd","confidence":0.93,"reason":"AVD AAD DS integration troubleshooting tips"}
+{"line":1226,"product":"avd","confidence":0.93,"reason":"AVD MFA failure on AADJ session host - legacy per-user MFA not supported"}
+{"line":1227,"product":"avd","confidence":0.93,"reason":"AVD cross dual-federation workaround for 21v usage"}
+{"line":1228,"product":"purview","confidence":0.88,"reason":"AIP encryption template troubleshooting (Azure Information Protection → Purview)"}
+{"line":1229,"product":"purview","confidence":0.88,"reason":"AIP change default RMS template name via PowerShell"}
+{"line":1230,"product":"purview","confidence":0.88,"reason":"AIP scanner auth issue with different UPN suffixes"}
+{"line":1231,"product":"purview","confidence":0.88,"reason":"AIP BYOK rekey/revoke key verification steps"}
+{"line":1232,"product":"entra-id","confidence":0.80,"reason":"Office product SKU, service plan and licensing via Graph API / Entra portal"}
+{"line":1233,"product":"arm","confidence":0.82,"reason":"403 forbidden using billing API to create Azure subscriptions via Automation managed identity"}
+{"line":1234,"product":"disk","confidence":0.85,"reason":"Support matrix for Azure Storage resource recovery including managed disks"}
+{"line":1235,"product":"disk","confidence":0.95,"reason":"How to recover soft delete managed disk via Kusto/ICM"}
+{"line":1236,"product":"disk","confidence":0.82,"reason":"Blob recovery for blob and unmanaged disk via ICM to PG"}
+{"line":1237,"product":null,"confidence":0.85,"reason":"Storage container recovery - pure Azure Storage, no matching product ID"}
+{"line":1238,"product":"disk","confidence":0.95,"reason":"Hard delete managed disk recovery process via ICM"}
+{"line":1239,"product":null,"confidence":0.90,"reason":"Azure storage versions and DefaultServiceVersion - pure storage topic"}
+{"line":1240,"product":null,"confidence":0.90,"reason":"Storage stamp and moniker mapping table - internal storage infrastructure"}
+{"line":1241,"product":null,"confidence":0.88,"reason":"Message Analyzer for storage diagnostic logs - storage tooling"}
+{"line":1242,"product":"disk","confidence":0.85,"reason":"P60 disk IO throttling and latency causing 20% Owait on guest VM"}
+{"line":1243,"product":null,"confidence":0.85,"reason":"Xstore high latency self-service analysis - storage platform topic"}
+{"line":1244,"product":"disk","confidence":0.88,"reason":"IaaS disk failures TSG - VM disks backed by storage page blobs"}
+{"line":1245,"product":null,"confidence":0.85,"reason":"Azure Storage latency TSG via XPortal - storage platform topic"}
+{"line":1246,"product":"disk","confidence":0.82,"reason":"How to repair disks (怎么修磁盘) - disk repair guide"}
+{"line":1247,"product":null,"confidence":0.88,"reason":"Xstore XDS log diagnose via JIT access - storage internal"}
+{"line":1248,"product":null,"confidence":0.90,"reason":"Azure Import/Export & Data Box case handling - not in product list"}
+{"line":1249,"product":"disk","confidence":0.85,"reason":"Trim disks for Windows/Linux to release storage space for page blob"}
+{"line":1250,"product":null,"confidence":0.90,"reason":"PowerShell construct storage account SAS token - pure storage"}
+{"line":1251,"product":null,"confidence":0.88,"reason":"Get audit logs of Azure storage account via Jarvis - storage diagnostics"}
+{"line":1252,"product":null,"confidence":0.90,"reason":"Get Azure Databox credential via PowerShell - Data Box service"}
+{"line":1253,"product":null,"confidence":0.88,"reason":"Storage Sync service tips when deleting server endpoint - Azure File Sync"}
+{"line":1254,"product":"disk","confidence":0.85,"reason":"Check Jarvis metrics for storage account of deleted managed disks"}
+{"line":1255,"product":"networking","confidence":0.82,"reason":"Add StorageAccount as Application Gateway backend - AppGW networking"}
+{"line":1256,"product":"vm","confidence":0.90,"reason":"How to disable temporary disk on Azure VM for Windows and Linux"}
+{"line":1257,"product":null,"confidence":0.88,"reason":"Azure Data Box Disks & Import/Export case handling process"}
+{"line":1258,"product":null,"confidence":0.85,"reason":"Extend 500TB limit or IOPS/GBPS throttle of storage account via ICM"}
+{"line":1259,"product":null,"confidence":0.88,"reason":"Storage Explorer V1.4.2 cannot display storage account content in Mooncake"}
+{"line":1260,"product":null,"confidence":0.85,"reason":"Azure File Service transaction and billing items mapping"}
+{"line":1261,"product":null,"confidence":0.88,"reason":"Storage account version and multiple conditional headers request"}
+{"line":1262,"product":"entra-id","confidence":0.78,"reason":"String resource lookup tool for identity projects debugging"}
+{"line":1263,"product":"entra-id","confidence":0.82,"reason":"Map Jarvis logs for Azure services - AAD Connect object deletion tracking"}
+{"line":1264,"product":"networking","confidence":0.90,"reason":"Decode Vxlan payload and VFP/Vmswitch trace in Netmon"}
+{"line":1265,"product":"arm","confidence":0.78,"reason":"Terraform connect to 21v Azure China - IaC/ARM provider configuration"}
+{"line":1266,"product":null,"confidence":0.85,"reason":"How to use Genie to get troubleshooting Kusto queries - general tooling"}
+{"line":1267,"product":"vm","confidence":0.85,"reason":"Node console process - JIT access to VM host for troubleshooting"}
+{"line":1268,"product":"vm","confidence":0.82,"reason":"Use Excel to make charts from host analyzer internal data for VM VP metrics"}
+{"line":1269,"product":"vm","confidence":0.88,"reason":"How to run Host Analyzer through command line for VM diagnostics"}
+{"line":1270,"product":null,"confidence":0.85,"reason":"Azcopy failure on servers using proxy - storage/azcopy tool issue"}

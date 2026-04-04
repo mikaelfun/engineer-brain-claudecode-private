@@ -1,0 +1,50 @@
+{"line":2671,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Arc/====Azure Arc for Kubernetes====/#Self-asessment.md","product":"azure-arc"}
+{"line":2672,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Arc/====Azure Arc for Kubernetes====/#TSG.md","product":"azure-arc"}
+{"line":2673,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Arc/====Azure Arc for Kubernetes====/#Tools.md","product":"azure-arc"}
+{"line":2674,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Arc/====Azure Arc for Kubernetes====/#kusto&jarvis.md","product":"azure-arc"}
+{"line":2675,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Arc/====Azure Arc for Kubernetes====/#logs collection.md","product":"azure-arc"}
+{"line":2676,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Arc/GA status：.md","product":"azure-arc"}
+{"line":2677,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Arc/Learning Resource.md","product":"azure-arc"}
+{"line":2678,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Arc/PG to contact.md","product":"azure-arc"}
+{"line":2679,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Migrate  (Deprecated)/## Case Study.md","product":"azure-migrate"}
+{"line":2680,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Migrate  (Deprecated)/## Case Study/[migrate] VMware Agentless _ initial replication q.md","product":"azure-migrate"}
+{"line":2681,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Migrate  (Deprecated)/## Concepts.md","product":"azure-migrate"}
+{"line":2682,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Migrate  (Deprecated)/## Concepts/Appliance Upgrade.md","product":"azure-migrate"}
+{"line":2683,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Migrate  (Deprecated)/## Concepts/Discovery and collection process.md","product":"azure-migrate"}
+{"line":2684,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Migrate  (Deprecated)/## Concepts/Network Requirement.md","product":"azure-migrate"}
+{"line":2685,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Migrate  (Deprecated)/## How To.md","product":"azure-migrate"}
+{"line":2686,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Migrate  (Deprecated)/## Lab Info.md","product":"azure-migrate"}
+{"line":2687,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Migrate  (Deprecated)/## Readiness Content.md","product":"azure-migrate"}
+{"line":2688,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Migrate  (Deprecated)/## Troubleshooting.md","product":"azure-migrate"}
+{"line":2689,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Migrate  (Deprecated)/## Troubleshooting/Appliance Onboarding TSG.md","product":"azure-migrate"}
+{"line":2690,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Migrate  (Deprecated)/## Troubleshooting/Assessment TSG.md","product":"azure-migrate"}
+{"line":2691,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Migrate  (Deprecated)/## Troubleshooting/ICM.md","product":"azure-migrate"}
+{"line":2692,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Migrate  (Deprecated)/## Troubleshooting/Kusto Query.md","product":"azure-migrate"}
+{"line":2693,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Migrate  (Deprecated)/## Troubleshooting/Kusto Query/Discovery (Apps and Dependency).md","product":"azure-migrate"}
+{"line":2694,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Migrate  (Deprecated)/## Troubleshooting/Kusto Query/Discovery (SQL).md","product":"azure-migrate"}
+{"line":2695,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Migrate  (Deprecated)/## Troubleshooting/Kusto Query/Discovery (VM).md","product":"azure-migrate"}
+{"line":2696,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Migrate  (Deprecated)/## Troubleshooting/Kusto Query/Onboarding.md","product":"azure-migrate"}
+{"line":2697,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Migrate  (Deprecated)/## Troubleshooting/Logs Collection.md","product":"azure-migrate"}
+{"line":2698,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Shared Disks/ICM.md","product":"disk"}
+{"line":2699,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Shared Disks/Multi-Writers.md","product":"disk"}
+{"line":2700,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Shared Disks/PM.md","product":"disk"}
+{"line":2701,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Shared Disks/Study Material.md","product":"disk"}
+{"line":2702,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Shared Disks/Teams Channel.md","product":"disk"}
+{"line":2703,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Shared Disks/Troubleshooting.md","product":"disk"}
+{"line":2704,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Update Manager/## Case Study.md","product":"azure-update-manager"}
+{"line":2705,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Update Manager/## Case Study/Enable updates for other Microsoft products.md","product":"azure-update-manager"}
+{"line":2706,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Update Manager/## ICM Template.md","product":"azure-update-manager"}
+{"line":2707,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Update Manager/## Know issue.md","product":"azure-update-manager"}
+{"line":2708,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Update Manager/## Know issue/AUM Azure Arc-enabled servers mis-leading message.md","product":"azure-update-manager"}
+{"line":2709,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Update Manager/## Know issue/Cannot enable orchestration with Manual in Mooncak.md","product":"azure-update-manager"}
+{"line":2710,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Update Manager/## Know issue/Windows Client is not supported.md","product":"azure-update-manager"}
+{"line":2711,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Update Manager/## Readiness.md","product":"azure-update-manager"}
+{"line":2712,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Update Manager/## Release info.md","product":"azure-update-manager"}
+{"line":2713,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Update Manager/## TSG.md","product":"azure-update-manager"}
+{"line":2714,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Update Manager/## TSG/TSG_ Is my machine supported for Azure Update Mana.md","product":"azure-update-manager"}
+{"line":2715,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Update Manager/## Tools.md","product":"azure-update-manager"}
+{"line":2716,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Azure Update Manager/Migrate to Azure Update Manager【2407010040000797】.md","product":"azure-update-manager"}
+{"line":2717,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/DEPLOYMENT/## Bicep.md","product":"arm"}
+{"line":2718,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/DEPLOYMENT/## Bicep/Concept.md","product":"arm"}
+{"line":2719,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/DEPLOYMENT/## Bicep/Config Env to Mooncake.md","product":"arm"}
+{"line":2720,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/DEPLOYMENT/## Common Scenarios.md","product":"arm"}

@@ -1,0 +1,49 @@
+{"line":3621,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Microsoft Defender for Cloud/## onboard_offboard ##/Offboard ASC.md","product":"microsoft-defender-for-cloud"}
+{"line":3622,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Microsoft Defender for Cloud/## onboard_offboard ##/Programmatically Onboard ASC.md","product":"microsoft-defender-for-cloud"}
+{"line":3623,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Microsoft Defender for Cloud/## onboard_offboard ##/Use Rest API to change workspace event collection.md","product":"microsoft-defender-for-cloud"}
+{"line":3624,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/New Service Checklist/Azure Dedicated Host (ADH) with VMSS.md","product":"azure-dedicated-host"}
+{"line":3625,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/New Service Checklist/Azure Dedicated Host (ADH) with VMSS/Bruce_ 11.18 not available.md","product":"azure-dedicated-host"}
+{"line":3626,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/New Service Checklist/Azure Dedicated Host (ADH) with VMSS/March 30, 2021.md","product":"azure-dedicated-host"}
+{"line":3627,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/New Service Checklist/Key features ask for Mooncake.md","product":"mooncake-general"}
+{"line":3628,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/New Service Checklist/VM POD New Service Tracking Page.md","product":"mooncake-general"}
+{"line":3629,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/New Service Checklist/VM POD New Service Tracking Page/Ask PG to grant Kusto permission to 21V support te.md","product":"mooncake-general"}
+{"line":3630,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/New Service Checklist/VM PoD Feature Gaps List.md","product":"mooncake-general"}
+{"line":3631,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Azure File Sync.md","product":"azure-file-sync"}
+{"line":3632,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Azure File Sync/Azure file sync performance.md","product":"azure-file-sync"}
+{"line":3633,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Azure File Sync/Azure file sync performance/Azcopy round 1.md","product":"azure-file-sync"}
+{"line":3634,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Azure File Sync/Azure file sync performance/Azcopy round 2.md","product":"azure-file-sync"}
+{"line":3635,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Azure File Sync/Azure file sync performance/File sync.md","product":"azure-file-sync"}
+{"line":3636,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Azure File Sync/Azure file sync performance/File to blob.md","product":"azure-file-sync"}
+{"line":3637,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Azure File Sync/Azure file sync performance/Robocopy (2).md","product":"azure-file-sync"}
+{"line":3638,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Azure File Sync/Azure file sync performance/Robocopy.md","product":"azure-file-sync"}
+{"line":3639,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Azure File Sync/Azure file sync performance/Summarize.md","product":"azure-file-sync"}
+{"line":3640,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Azure File Sync/Jarvis Logs - AzureFileSync.md","product":"azure-file-sync"}
+{"line":3641,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Azure Storage Basic Understanding.md","product":"azure-storage"}
+{"line":3642,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Azure Storage Basic Understanding/Architecture.md","product":"azure-storage"}
+{"line":3643,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Azure Storage Basic Understanding/Feature Gap.md","product":"azure-storage"}
+{"line":3644,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Azure Storage Basic Understanding/Training.md","product":"azure-storage"}
+{"line":3645,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Case Study.md","product":"azure-storage"}
+{"line":3646,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Case Study/[2508140040001237] Blobfuse2 can't run _rm -rf_.md","product":"azure-storage"}
+{"line":3647,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Case Study/[Account][Blob]Unable to upload data to Storage ac.md","product":"azure-storage"}
+{"line":3648,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Case Study/[Account][Network] Firewall setting blocked xstore.md","product":"azure-storage"}
+{"line":3649,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Case Study/[Account][Performance] storage account level Perfo.md","product":"azure-storage"}
+{"line":3650,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Case Study/[Account][Performance]Storage account latency trou.md","product":"azure-storage"}
+{"line":3651,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Case Study/[Account][SRP] Storage account access InternalErro.md","product":"azure-storage"}
+{"line":3652,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Case Study/[Account][SRP] Why premium storage account get acc.md","product":"azure-storage"}
+{"line":3653,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Case Study/[Account][SRP] storage resource provider registrat.md","product":"azure-storage"}
+{"line":3654,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Case Study/[AzureFileSync] 0x800B0109 _   The server failed t.md","product":"azure-file-sync"}
+{"line":3655,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Case Study/[AzureFileSync] File Recall Error - unsupported ch.md","product":"azure-file-sync"}
+{"line":3656,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Case Study/[AzureFileSync] High CPU after installing Azure Fi.md","product":"azure-file-sync"}
+{"line":3657,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Case Study/[AzureFileSync] How to check Enumeration ETA.md","product":"azure-file-sync"}
+{"line":3658,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Case Study/[Blob] AuthencationFailed Error when uploading blo.md","product":"azure-storage"}
+{"line":3659,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Case Study/[Blob]Capacity Calculation.md","product":"azure-storage"}
+{"line":3660,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Case Study/[Blob][Lifecycle Management]_how to troubleshot li.md","product":"azure-storage"}
+{"line":3661,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Case Study/[Disk][Performance] 做过一些Azure托管磁盘的技能测试，结果是在中国东部1和东.md","product":"azure-managed-disk"}
+{"line":3662,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Case Study/[Disk][Performance]Disk I_O high latency.md","product":"azure-managed-disk"}
+{"line":3663,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Case Study/[File] with AD DS Auth (cross-forest).md","product":"azure-storage"}
+{"line":3664,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Case Study/[File][NFS]AKS node failed to mount NFSv4.md","product":"azure-storage"}
+{"line":3665,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Case Study/[NFS]NFS4.1 Encryption in Transit(aznfs).md","product":"azure-storage"}
+{"line":3666,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Case Study/[NFS]NFS4.1 Encryption in Transit(aznfs)/Temp workaround before G2 cert migration completes.md","product":"azure-storage"}
+{"line":3667,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Case Study/[azcopy]The server that azcopy located has no corr.md","product":"azure-storage"}
+{"line":3668,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Customer Tools.md","product":"azure-storage"}
+{"line":3669,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/STORAGE/Customer Tools/Azcopy.md","product":"azure-storage"}

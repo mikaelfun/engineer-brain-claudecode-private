@@ -1,0 +1,50 @@
+{"line":2721,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/DEPLOYMENT/## Common Scenarios/1. Generalized_Specialized.md","product":"virtual-machines"}
+{"line":2722,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/DEPLOYMENT/## Common Scenarios/1. Generalized_Specialized/1.1 How to check the deployment method.md","product":"virtual-machines"}
+{"line":2723,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/DEPLOYMENT/## Common Scenarios/1. Generalized_Specialized/1.2 Generalized_Specialized mismatch.md","product":"virtual-machines"}
+{"line":2724,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/DEPLOYMENT/## Common Scenarios/2. Capacity and size limit.md","product":"virtual-machines"}
+{"line":2725,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/DEPLOYMENT/## Common Scenarios/3. Template issue.md","product":"virtual-machines"}
+{"line":2726,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/DEPLOYMENT/## Common Scenarios/4. Guest agent or extension timeout.md","product":"virtual-machines"}
+{"line":2727,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/DEPLOYMENT/## TSG & Case Sharing.md","product":"virtual-machines"}
+{"line":2728,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/DEPLOYMENT/## Training & Support Matrix.md","product":"virtual-machines"}
+{"line":2729,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/DEPLOYMENT/## Troubleshooting Flow.md","product":"virtual-machines"}
+{"line":2730,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/DEPLOYMENT/## Troubleshooting Tools.md","product":"virtual-machines"}
+{"line":2731,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/DEPLOYMENT/## Troubleshooting Tools/+++ ASC.md","product":"virtual-machines"}
+{"line":2732,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/DEPLOYMENT/## Troubleshooting Tools/+++ Jarvis.md","product":"virtual-machines"}
+{"line":2733,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/DEPLOYMENT/## Troubleshooting Tools/+++ Jarvis/1. How to check the operation trace for a hung dep.md","product":"virtual-machines"}
+{"line":2734,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/DEPLOYMENT/## Troubleshooting Tools/+++ Jarvis/2. How to check the client IP address for the spec.md","product":"virtual-machines"}
+{"line":2735,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/DEPLOYMENT/DiskRP Kusto.md","product":"virtual-machines"}
+{"line":2736,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Data Box/Data Box Disk/Data Box Disk process test.md","product":"data-box"}
+{"line":2737,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Data Box/Data Box Disk/Data Box Disk process test/#### Data Box Disk Import with MS-Managed Shipment.md","product":"data-box"}
+{"line":2738,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Data Box/Data Box Disk/Data Box Disk process test/#### Data Box Disk Import with MS-Managed Shipment/1. order.md","product":"data-box"}
+{"line":2739,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Data Box/Data Box Disk/Data Box Disk process test/#### Data Box Disk Import with MS-Managed Shipment/2. Processed.md","product":"data-box"}
+{"line":2740,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Data Box/Data Box Disk/Data Box Disk process test/#### Data Box Disk Import with MS-Managed Shipment/3. Received.md","product":"data-box"}
+{"line":2741,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Data Box/Data Box Disk/Data Box Disk process test/#### Data Box Disk Import with MS-Managed Shipment/4. Prepare Data.md","product":"data-box"}
+{"line":2742,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Data Box/Data Box Disk/Data Box Disk process test/#### Data Box Disk Import with MS-Managed Shipment/5. test MARS offline backup.md","product":"data-box"}
+{"line":2743,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Data Box/Data Box Disk/Data Box Disk process test/#### Data Box Disk Import with MS-Managed Shipment/6. return.md","product":"data-box"}
+{"line":2744,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Data Box/Data Box Disk/Data Box Disk process test/#### Data Box Disk Import with MS-Managed Shipment/7. Data Copy and verify upload.md","product":"data-box"}
+{"line":2745,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Data Box/Data Box Disk/Data Box Disk process test/#### Data Box Disk Import with MS-Managed Shipment/8. Validate MARS offline backup.md","product":"data-box"}
+{"line":2746,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Data Box/Data Box Disk/Data Box Disk process test/#### Data Box Disk Import with Self-Managed Shipme.md","product":"data-box"}
+{"line":2747,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Data Box/Data Box Disk/Data Box Disk process test/#### Data Box Disk Import with Self-Managed Shipme/1. ordered - create job.md","product":"data-box"}
+{"line":2748,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Data Box/Data Box Disk/Data Box Disk process test/#### Data Box Disk Import with Self-Managed Shipme/2. Processed - disk preparation.md","product":"data-box"}
+{"line":2749,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Data Box/Data Box Disk/Data Box Disk process test/#### Data Box Disk Import with Self-Managed Shipme/3. Schedule pickup.md","product":"data-box"}
+{"line":2750,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Data Box/Data Box Disk/Data Box Disk process test/#### Data Box Disk Import with Self-Managed Shipme/4. Pick up.md","product":"data-box"}
+{"line":2751,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Data Box/Data Box Disk/Data Box Disk process test/#### Data Box Disk Import with Self-Managed Shipme/5. prepare data.md","product":"data-box"}
+{"line":2752,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Data Box/Data Box Disk/Data Box Disk process test/#### Data Box Disk Import with Self-Managed Shipme/6. schedule drop-off.md","product":"data-box"}
+{"line":2753,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Data Box/Data Box Disk/Data Box Disk process test/#### Data Box Disk Import with Self-Managed Shipme/7. Drop off.md","product":"data-box"}
+{"line":2754,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Data Box/Data Box Disk/Data Box Disk process test/#### Data Box Disk Import with Self-Managed Shipme/8. Data Copy.md","product":"data-box"}
+{"line":2755,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Data Box/Data Box Disk/Data Box Disk process test/#### Data Box Disk Import with Self-Managed Shipme/9. Log analysis.md","product":"data-box"}
+{"line":2756,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Data Box/Data Box Disk/Data Box Disk process test/Doc verification.md","product":"data-box"}
+{"line":2757,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Data Box/Data Box Disk/Managing Data Box Disk.md","product":"data-box"}
+{"line":2758,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Data Box/Data Box Disk/Managing Data Box Disk/Connecting to and unlocking Data Box Disk.md","product":"data-box"}
+{"line":2759,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Data Box/Data Box Disk/Managing Data Box Disk/Copy data for import to Azure Files, blobs, or pag.md","product":"data-box"}
+{"line":2760,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Data Box/Data Box Disk/Managing Data Box Disk/Creating a Data Box Disk order and checking order.md","product":"data-box"}
+{"line":2761,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Data Box/Data Box Disk/Managing Data Box Disk/Import data to managed disks.md","product":"data-box"}
+{"line":2762,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Data Box/Data Box Disk/Managing Data Box Disk/Lab activities_ Order Data Box Disk, copy data, an.md","product":"data-box"}
+{"line":2763,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Data Box/Data Box Disk/Managing Data Box Disk/Returning Data Box Disk.md","product":"data-box"}
+{"line":2764,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Data Box/Data Box Disk/Managing Data Box Disk/Running validation.md","product":"data-box"}
+{"line":2765,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Data Box/Data Box Disk/Managing Data Box Disk/Using the Split Copy Tool.md","product":"data-box"}
+{"line":2766,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Data Box/Data Box Disk/Managing Data Box Disk/Verifying data after import.md","product":"data-box"}
+{"line":2767,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Data Box/Data Box Disk/Troubleshooting Data Box Disk.md","product":"data-box"}
+{"line":2768,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Data Box/Data Box Disk/Troubleshooting Data Box Disk/Data Box Disk Job Process Flow.md","product":"data-box"}
+{"line":2769,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Data Box/Data Box Disk/Troubleshooting Data Box Disk/Lab activities_ Troubleshoot upload issues using c.md","product":"data-box"}
+{"line":2770,"path":"Mooncake POD Support Notebook/POD/VMSCIM/4. Services/Data Box/Data Box Disk/Troubleshooting Data Box Disk/Troubleshooting - Data Copy(Data Upload ).md","product":"data-box"}
