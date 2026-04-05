@@ -41,6 +41,11 @@ function eventFingerprint(event: ActivityEvent): string | null {
       const status = d.status || event.action || ''
       return `runner:${status}`
     }
+    case 'supervisor-updated': {
+      // Deduplicate by step — only show once per step transition
+      const step = (d.step as string) || ''
+      return `supervisor:${step}`
+    }
     default:
       return null
   }
@@ -150,6 +155,25 @@ export function formatActivityMessage(event: ActivityEvent): { message: string; 
     case 'strategy': {
       const detail = (d.note as string) || (d.detail as string) || ''
       return { message: 'Strategy updated', detail }
+    }
+
+    case 'supervisor-updated': {
+      const step = (d.step as string) || ''
+      const reasoning = d.reasoning as Record<string, string> | undefined
+      const stepLabels: Record<string, string> = {
+        observe: '👁 Observe',
+        diagnose: '🔬 Diagnose',
+        decide: '🧠 Decide',
+        act: '⚡ Act',
+        reflect: '💬 Reflect',
+      }
+      const message = stepLabels[step] || (step ? `Supervisor: ${step}` : 'Supervisor idle')
+      // Show the latest reasoning entry as detail
+      let detail = ''
+      if (reasoning && step && reasoning[step]) {
+        detail = reasoning[step]
+      }
+      return { message, detail }
     }
 
     case 'connection': {
