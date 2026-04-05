@@ -1852,8 +1852,11 @@ export default function TestLab() {
               }
               return null
             })()}
-            <ActivityStream />
-            <QueuesPanel queuesData={queuesData} registry={reg} />
+            {/* Two-column: Activity left, Queues right */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', alignItems: 'start' }}>
+              <ActivityStream />
+              <QueuesPanel queuesData={queuesData} registry={reg} />
+            </div>
           </div>
         )}
 
