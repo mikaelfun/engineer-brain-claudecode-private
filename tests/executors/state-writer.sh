@@ -198,6 +198,12 @@ function deepMerge(base, overlay) {
   if (overlay.cumulative && base.cumulative) {
     result.cumulative = Object.assign({}, base.cumulative, overlay.cumulative);
   }
+  // Deep merge: reasoning (preserve previous steps when adding new ones)
+  // e.g. {observe:"A"} + {diagnose:"B"} → {observe:"A",diagnose:"B"}
+  // But empty {} means explicit reset (supervisor session start)
+  if (overlay.reasoning && base.reasoning && Object.keys(overlay.reasoning).length > 0) {
+    result.reasoning = Object.assign({}, base.reasoning, overlay.reasoning);
+  }
   return result;
 }
 
