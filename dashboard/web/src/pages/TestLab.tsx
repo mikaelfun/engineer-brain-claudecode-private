@@ -1056,90 +1056,88 @@ function ActivityStream() {
   }
 
   return (
-    <Card>
-      <CardHeader
-        title="Activity Stream"
-        subtitle={`${events.length} events`}
-        icon={<Zap className="w-4 h-4" style={{ color: 'var(--accent-amber)' }} />}
-        action={
-          events.length > 0 ? (
-            <button
-              onClick={handleClear}
-              className="flex items-center gap-1 px-2 py-1 rounded text-[11px] transition-colors"
-              style={{
-                color: 'var(--text-tertiary)',
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = 'var(--text-secondary)'
-                e.currentTarget.style.background = 'var(--hover-bg)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = 'var(--text-tertiary)'
-                e.currentTarget.style.background = 'transparent'
-              }}
-              title="Clear all activity"
-            >
-              <Trash2 className="w-3 h-3" />
-              Clear
-            </button>
-          ) : undefined
-        }
-      />
-      <div ref={containerRef} className="max-h-[260px] overflow-y-auto space-y-0">
-        {events.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-6 gap-2">
-            <span style={{ fontSize: '20px', opacity: 0.4 }}>📡</span>
-            <p className="text-[12px]" style={{ color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
-              Listening for pipeline events…
-            </p>
-          </div>
-        ) : (
-          events.map((evt, i) => (
-            <div
-              key={`${evt.timestamp}-${evt.type}-${i}`}
-              className="flex items-center gap-2 py-1.5 px-2"
-              style={{
-                borderBottom: i < events.length - 1 ? '1px solid var(--border-subtle)' : 'none',
-              }}
-            >
-              <span className="text-[12px] flex-shrink-0">{eventIcon(evt.type)}</span>
-              <span className="text-[10px] font-mono shrink-0 w-[56px]" style={{ color: 'var(--text-tertiary)' }}>
-                {formatTime(evt.timestamp)}
-              </span>
-              {evt.phase && (
-                <span
-                  className="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded shrink-0"
-                  style={{
-                    color: stageColorOf(evt.phase),
-                    background: `color-mix(in srgb, ${stageColorOf(evt.phase)} 15%, transparent)`,
-                  }}
-                >
-                  {evt.phase.toUpperCase().slice(0, 4)}
-                </span>
-              )}
-              {(() => {
-                const formatted = formatActivityMessage(evt)
-                return (
-                  <>
-                    <span className="text-[10px] font-mono shrink-0" style={{ color: 'var(--text-secondary)', maxWidth: '120px' }}>
-                      {formatted.message}
-                    </span>
-                    {formatted.detail && (
-                      <span className="text-[11px] truncate" style={{ color: 'var(--text-tertiary)' }} title={formatted.detail}>
-                        {formatted.detail}
-                      </span>
-                    )}
-                  </>
-                )
-              })()}
-            </div>
-          ))
+    <div style={{
+      ...glassCardStyle({ padding: 0 }),
+      overflow: 'hidden',
+    }}>
+      {/* Compact header */}
+      <div className="flex items-center justify-between px-3 py-2" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+        <div className="flex items-center gap-2">
+          <Zap className="w-3.5 h-3.5" style={{ color: 'var(--accent-amber)' }} />
+          <span className="text-[11px] font-bold testlab-display" style={{ color: 'var(--text-primary)' }}>Activity</span>
+          <span className="text-[10px] font-mono" style={{ color: 'var(--text-tertiary)' }}>{events.length}</span>
+        </div>
+        {events.length > 0 && (
+          <button
+            onClick={handleClear}
+            className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] transition-colors"
+            style={{ color: 'var(--text-tertiary)', background: 'transparent', border: 'none', cursor: 'pointer' }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-secondary)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-tertiary)' }}
+            title="Clear"
+          >
+            <Trash2 className="w-3 h-3" />
+          </button>
         )}
       </div>
-    </Card>
+
+      {/* Event log — monospace terminal style */}
+      <div ref={containerRef} className="overflow-y-auto" style={{ maxHeight: '280px', fontSize: '11px', fontFamily: 'var(--font-mono)' }}>
+        {events.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8 gap-1">
+            <span style={{ fontSize: '16px', opacity: 0.3 }}>📡</span>
+            <span className="text-[10px]" style={{ color: 'var(--text-tertiary)', fontStyle: 'italic' }}>Listening…</span>
+          </div>
+        ) : (
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <tbody>
+              {events.map((evt, i) => {
+                const formatted = formatActivityMessage(evt)
+                return (
+                  <tr
+                    key={`${evt.timestamp}-${evt.type}-${i}`}
+                    style={{
+                      borderBottom: i < events.length - 1 ? '1px solid var(--border-subtle)' : 'none',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+                  >
+                    {/* Time — fixed width */}
+                    <td style={{ padding: '4px 6px', color: 'var(--text-tertiary)', whiteSpace: 'nowrap', width: '60px', fontSize: '10px' }}>
+                      {formatTime(evt.timestamp)}
+                    </td>
+                    {/* Phase badge — fixed width */}
+                    <td style={{ padding: '4px 2px', width: '42px' }}>
+                      {evt.phase ? (
+                        <span style={{
+                          fontSize: '9px',
+                          fontWeight: 700,
+                          padding: '1px 4px',
+                          borderRadius: '4px',
+                          color: stageColorOf(evt.phase),
+                          background: `color-mix(in srgb, ${stageColorOf(evt.phase)} 12%, transparent)`,
+                        }}>
+                          {evt.phase.toUpperCase().slice(0, 4)}
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>{eventIcon(evt.type)}</span>
+                      )}
+                    </td>
+                    {/* Message + detail — fill remaining */}
+                    <td style={{ padding: '4px 6px', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 0 }}>
+                      <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{formatted.message}</span>
+                      {formatted.detail && (
+                        <span style={{ color: 'var(--text-tertiary)', marginLeft: '6px' }}>{formatted.detail}</span>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
   )
 }
 
