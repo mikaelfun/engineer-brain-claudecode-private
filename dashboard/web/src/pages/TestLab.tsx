@@ -1095,7 +1095,163 @@ function CurrentTestPanel({ pipelineData }: { pipelineData: any }) {
   )
 }
 
-// ============ Activity Stream ============
+// ============ Stage Progress Panel ============
+// Replaces generic Activity Stream with stage-aware progress display
+
+function StageProgressPanel({ pipelineData }: { pipelineData: any }) {
+  const stages = pipelineData?.stages || {}
+  const currentStage = (pipelineData?.currentStage || '').toUpperCase()
+  const stageProgress = pipelineData?.stageProgress || null
+  const currentTest = pipelineData?.currentTest || ''
+
+  // Build timeline: completed stages + current progress
+  const completedStages = STAGES.filter(s => {
+    const d = stages[s]
+    return d && (d.status === 'done' || d.status === 'completed')
+  })
+  const isActive = STAGES.some(s => s === currentStage && stages[s]?.status !== 'done')
+
+  return (
+    <div style={{
+      ...glassCardStyle({ padding: 0 }),
+      overflow: 'hidden',
+    }}>
+      {/* Header */}
+      <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+        <Activity className="w-3.5 h-3.5" style={{ color: 'var(--accent-amber)' }} />
+        <span className="text-[11px] font-bold testlab-display" style={{
+          color: 'var(--text-primary)',
+          letterSpacing: '0.06em',
+          textTransform: 'uppercase' as const,
+        }}>Stage Progress</span>
+      </div>
+
+      <div style={{ padding: '8px 0', fontFamily: 'var(--font-mono)', fontSize: '11px' }}>
+        {/* No activity yet */}
+        {completedStages.length === 0 && !isActive && (
+          <div className="flex items-center gap-2 px-4 py-4 justify-center">
+            <span style={{ fontSize: '14px', opacity: 0.3 }}>📡</span>
+            <span className="text-[10px]" style={{ color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
+              Waiting for pipeline to start…
+            </span>
+          </div>
+        )}
+
+        {/* Completed stages — summary lines */}
+        {completedStages.map(stage => {
+          const d = stages[stage]
+          const color = stageColorOf(stage)
+          const duration = d.duration_ms ? `${(d.duration_ms / 1000).toFixed(1)}s` : ''
+          return (
+            <div key={stage} className="flex items-center gap-2 px-4 py-1.5" style={{
+              borderBottom: '1px solid var(--border-subtle)',
+              animation: 'fadeIn 0.2s ease-out',
+            }}>
+              <span style={{ color: 'var(--accent-green)', fontSize: '10px', width: '14px', textAlign: 'center' }}>✓</span>
+              <span style={{
+                fontSize: '9px', fontWeight: 700, padding: '1px 5px', borderRadius: '4px',
+                color, background: `color-mix(in srgb, ${color} 12%, transparent)`,
+                width: '48px', textAlign: 'center',
+              }}>
+                {stage}
+              </span>
+              <span style={{ color: 'var(--text-secondary)', flex: 1 }}>
+                {d.summary || 'Done'}
+              </span>
+              {duration && (
+                <span style={{ color: 'var(--text-tertiary)', fontSize: '10px', flexShrink: 0 }}>
+                  {duration}
+                </span>
+              )}
+            </div>
+          )
+        })}
+
+        {/* Current stage — live progress */}
+        {isActive && currentStage && (
+          <div style={{
+            padding: '8px 14px',
+            background: `color-mix(in srgb, ${stageColorOf(currentStage)} 4%, transparent)`,
+            borderLeft: `3px solid ${stageColorOf(currentStage)}`,
+            animation: 'fadeIn 0.2s ease-out',
+          }}>
+            {/* Stage header with spinner */}
+            <div className="flex items-center gap-2 mb-1">
+              <span style={{
+                display: 'inline-block', width: '10px', height: '10px',
+                border: `2px solid color-mix(in srgb, ${stageColorOf(currentStage)} 20%, transparent)`,
+                borderTopColor: stageColorOf(currentStage),
+                borderRadius: '50%', animation: 'spin 0.75s linear infinite',
+              }} />
+              <span style={{
+                fontSize: '10px', fontWeight: 700, color: stageColorOf(currentStage),
+                letterSpacing: '0.05em',
+              }}>
+                {currentStage}
+              </span>
+              {stageProgress && (
+                <span style={{ color: 'var(--text-secondary)', fontSize: '10px' }}>
+                  {stageProgress.current}/{stageProgress.total}
+                </span>
+              )}
+            </div>
+
+            {/* Progress bar (when we have current/total) */}
+            {stageProgress?.total > 0 && (
+              <div style={{
+                height: '3px', borderRadius: '2px', background: 'var(--bg-inset)',
+                marginBottom: '6px', overflow: 'hidden',
+              }}>
+                <div style={{
+                  height: '100%', borderRadius: '2px',
+                  width: `${Math.round((stageProgress.current / stageProgress.total) * 100)}%`,
+                  background: stageColorOf(currentStage),
+                  transition: 'width 0.5s ease',
+                }} />
+              </div>
+            )}
+
+            {/* Current item description */}
+            {currentTest && (
+              <div style={{ color: 'var(--text-primary)', fontSize: '11px', fontWeight: 500 }}>
+                {STAGE_ICONS[currentStage]} {stageProgressDescription(currentStage, currentTest, stageProgress)}
+              </div>
+            )}
+
+            {/* Stage-specific context */}
+            {!currentTest && currentStage === 'SCAN' && (
+              <div style={{ color: 'var(--text-secondary)', fontSize: '10px' }}>
+                Scanning issues, specs, and code anchors for test gaps…
+              </div>
+            )}
+            {!currentTest && currentStage === 'GENERATE' && (
+              <div style={{ color: 'var(--text-secondary)', fontSize: '10px' }}>
+                Generating test YAMLs from discovered gaps…
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/** Generate human-readable description for current stage progress */
+function stageProgressDescription(stage: string, testId: string, progress: any): string {
+  const idx = progress?.current || '?'
+  const total = progress?.total || '?'
+  switch (stage) {
+    case 'SCAN': return `Scanning: ${testId}`
+    case 'GENERATE': return `Generating test ${idx}/${total}: ${testId}`
+    case 'TEST': return `Running test ${idx}/${total}: ${testId}`
+    case 'VALIDATE': return `Validating ${idx}/${total}: ${testId}`
+    case 'FIX': return `Fixing ${idx}/${total}: ${testId}`
+    case 'VERIFY': return `Verifying ${idx}/${total}: ${testId}`
+    default: return testId
+  }
+}
+
+// ============ Activity Stream (compact log) ============
 
 interface ActivityEvent {
   type: string
@@ -2035,8 +2191,11 @@ export default function TestLab() {
                 <CurrentTestPanel pipelineData={pipelineData} />
               </div>
             </div>
-            {/* Row 2: Activity Stream full width */}
-            <ActivityStream />
+            {/* Row 2: Stage Progress (primary) + Activity Log (secondary) */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', alignItems: 'start' }}>
+              <StageProgressPanel pipelineData={pipelineData} />
+              <ActivityStream />
+            </div>
           </div>
         )}
 

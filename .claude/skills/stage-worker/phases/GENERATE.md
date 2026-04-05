@@ -61,6 +61,10 @@ echo '{"stages":{"GENERATE":{"status":"running","startedAt":"'$(date -u +%Y-%m-%
      - Template: Compliance check test (grep/file analysis), automated fix possible
 
 4. For each gap (recipe-guided or hardcoded-classified):
+   - **Write stageProgress** before generating each test:
+     ```bash
+     echo '{"currentTest":"{gap_description}","stageProgress":{"current":'$((i+1))',"total":{TOTAL_GAPS},"testId":"{gap_description}"}}' | bash tests/executors/state-writer.sh --target pipeline --merge
+     ```
    - Check `tests/safety.yaml` for `safety_level`
    - Generate `tests/registry/{category}/{id}.yaml` per `tests/schemas/test-definition.yaml` format
    - If recipe-guided: follow recipe's YAML template structure and recommended assertions

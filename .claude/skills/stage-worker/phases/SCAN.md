@@ -38,6 +38,12 @@ If `tests/fixtures/live-cases.yaml` `lastRefreshed` > 24h, scan `cases/active/` 
 
 ### SCAN Steps 1-7: Discovery
 
+**Progress reporting**: Before each sub-step, write stageProgress so dashboard shows what's happening:
+```bash
+echo '{"stageProgress":{"current":STEP_NUM,"total":7,"testId":"STEP_DESCRIPTION"}}' | bash tests/executors/state-writer.sh --target pipeline --merge
+```
+Example: `{"stageProgress":{"current":1,"total":7,"testId":"Scanning API endpoints"}}`
+
 **1. Scan API endpoints**:
 ```bash
 grep -r "app\.\(get\|post\|put\|patch\|delete\)" dashboard/src/routes/*.ts
