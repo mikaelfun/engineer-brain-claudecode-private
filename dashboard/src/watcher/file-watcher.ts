@@ -290,6 +290,11 @@ export function startFileWatcher() {
               pipe.pipelineStatus = 'idle'
               pipe.stopReason = 'context_limit'
               pipe.stopDetail = `Stage-worker died during ${pipe.currentStage || 'unknown'} — no state update for ${Math.round(mostRecentAge)}s`
+              // Also mark the current stage as interrupted so UI stops showing spinner
+              if (pipe.currentStage && pipe.stages?.[pipe.currentStage]) {
+                pipe.stages[pipe.currentStage].status = 'interrupted'
+                pipe.stages[pipe.currentStage].summary = (pipe.stages[pipe.currentStage].summary || '') + ' (context_limit)'
+              }
               writeFileSync(pipelinePath, JSON.stringify(pipe, null, 2) + '\n')
               sseManager.broadcast('runner-status-changed' as SSEEventType, { status: 'idle', reason: 'context_limit', lastStage: pipe.currentStage })
             }
@@ -333,6 +338,10 @@ export function startFileWatcher() {
             pipe.pipelineStatus = 'idle'
             pipe.stopReason = 'context_limit'
             pipe.stopDetail = `No state file updates for ${Math.round(mostRecentAge)}s after ${sup.step || 'unknown'} step`
+            // Mark current stage as interrupted
+            if (pipe.currentStage && pipe.stages?.[pipe.currentStage]) {
+              pipe.stages[pipe.currentStage].status = 'interrupted'
+            }
             writeFileSync(pipelinePath, JSON.stringify(pipe, null, 2) + '\n')
           }
         } catch { /* pipeline write failed, supervisor already reset */ }

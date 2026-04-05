@@ -598,7 +598,7 @@ function StagePipeline({ pipelineData }: { pipelineData: any }) {
         const stageData = stages[stage] || {}
         // Only treat as running if pipeline is actually running AND this is the current stage
         const status = stageData.status || (stage === currentStage && pipelineRunning ? 'running' : 'pending')
-        const isDone = status === 'done' || status === 'completed'
+        const isDone = status === 'done' || status === 'completed' || status === 'interrupted'
         const isActive = (status === 'running' || status === 'in-progress') && pipelineRunning
         const isNext = !isDone && !isActive && stage === currentStage && !pipelineRunning
         const isPending = !isDone && !isActive && !isNext
@@ -680,7 +680,7 @@ function StagePipeline({ pipelineData }: { pipelineData: any }) {
 
               {/* Status indicator */}
               <div style={{ flexShrink: 0 }}>
-                {isDone && <span style={{ color: 'var(--accent-green)', fontSize: '10px', fontWeight: 600 }}>✓</span>}
+                {isDone && <span style={{ color: status === 'interrupted' ? 'var(--accent-amber)' : 'var(--accent-green)', fontSize: '10px', fontWeight: 600 }}>{status === 'interrupted' ? '⚠' : '✓'}</span>}
                 {isActive && !isDone && (
                   <span style={{
                     display: 'inline-block',
@@ -1237,7 +1237,7 @@ function StageProgressPanel({ pipelineData }: { pipelineData: any }) {
   // Build timeline: completed stages + current progress
   const completedStages = STAGES.filter(s => {
     const d = stages[s]
-    return d && (d.status === 'done' || d.status === 'completed')
+    return d && (d.status === 'done' || d.status === 'completed' || d.status === 'interrupted')
   })
   const isActive = STAGES.some(s => s === currentStage && (stages[s]?.status === 'running' || stages[s]?.status === 'in-progress'))
   const pipelineIdle = pipelineData?.pipelineStatus === 'idle' || !pipelineData?.pipelineStatus
@@ -1278,7 +1278,7 @@ function StageProgressPanel({ pipelineData }: { pipelineData: any }) {
               borderBottom: '1px solid var(--border-subtle)',
               animation: 'fadeIn 0.2s ease-out',
             }}>
-              <span style={{ color: 'var(--accent-green)', fontSize: '10px', width: '14px', textAlign: 'center' }}>✓</span>
+              <span style={{ color: d.status === 'interrupted' ? 'var(--accent-amber)' : 'var(--accent-green)', fontSize: '10px', width: '14px', textAlign: 'center' }}>{d.status === 'interrupted' ? '⚠' : '✓'}</span>
               <span style={{
                 fontSize: '9px', fontWeight: 700, padding: '1px 5px', borderRadius: '4px',
                 color, background: `color-mix(in srgb, ${color} 12%, transparent)`,
