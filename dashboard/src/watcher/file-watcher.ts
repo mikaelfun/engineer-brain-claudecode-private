@@ -271,86 +271,49 @@ export function startFileWatcher() {
 
   heartbeatInterval = setInterval(() => {
     try {
+      // Only check when something is supposed to be running
+      // Read pipeline first to see if anything is active
+      let pipe: any = null
+      try {
+        pipe = JSON.parse(readFileSync(pipelinePath, 'utf8'))
+      } catch { return }
+
+      // If pipeline is already idle, nothing to check — skip entirely
+      if (pipe.pipelineStatus !== 'running') return
+
       const raw = readFileSync(supervisorPath, 'utf8')
       const sup = JSON.parse(raw)
-      if (sup.status !== 'running') {
-        // Supervisor is idle — but check if pipeline is stuck in "running" (orphaned stage-worker)
-        try {
-          const pipeRaw = readFileSync(pipelinePath, 'utf8')
-          const pipe = JSON.parse(pipeRaw)
-          if (pipe.pipelineStatus === 'running') {
-            // Pipeline says running but supervisor is idle — check all state file ages
-            const queuesPath = join(config.projectRoot, 'tests', 'queues.json')
-            let mostRecentAge = Infinity
-            for (const f of [supervisorPath, pipelinePath, queuesPath]) {
-              try { mostRecentAge = Math.min(mostRecentAge, (Date.now() - statSync(f).mtimeMs) / 1000) } catch {}
-            }
-            if (mostRecentAge > SUPERVISOR_HEARTBEAT_TIMEOUT_S) {
-              console.log(`[watcher] ⚠️ Orphaned pipeline: supervisor idle but pipeline running, all files stale ${Math.round(mostRecentAge)}s. Auto-resetting.`)
-              pipe.pipelineStatus = 'idle'
-              pipe.stopReason = 'context_limit'
-              pipe.stopDetail = `Stage-worker died during ${pipe.currentStage || 'unknown'} — no state update for ${Math.round(mostRecentAge)}s`
-              // Also mark the current stage as interrupted so UI stops showing spinner
-              if (pipe.currentStage && pipe.stages?.[pipe.currentStage]) {
-                pipe.stages[pipe.currentStage].status = 'interrupted'
-                pipe.stages[pipe.currentStage].summary = (pipe.stages[pipe.currentStage].summary || '') + ' (context_limit)'
-              }
-              writeFileSync(pipelinePath, JSON.stringify(pipe, null, 2) + '\n')
-              sseManager.broadcast('runner-status-changed' as SSEEventType, { status: 'idle', reason: 'context_limit', lastStage: pipe.currentStage })
-            }
-          }
-        } catch {}
-        return
+
+      // Pipeline says "running" — check if any agent is actually alive
+      const queuesPath = join(config.projectRoot, 'tests', 'queues.json')
+      let mostRecentAge = Infinity
+      for (const f of [supervisorPath, pipelinePath, queuesPath]) {
+        try { mostRecentAge = Math.min(mostRecentAge, (Date.now() - statSync(f).mtimeMs) / 1000) } catch {}
       }
 
-      const supMtime = statSync(supervisorPath).mtimeMs
-      const supAge = (Date.now() - supMtime) / 1000
-
-      // Also check pipeline.json — stage-worker updates this, not supervisor.json
-      // If pipeline was recently modified, the stage-worker is alive (supervisor is just waiting)
-      let pipeAge = Infinity
-      try {
-        pipeAge = (Date.now() - statSync(pipelinePath).mtimeMs) / 1000
-      } catch { /* pipeline doesn't exist */ }
-
-      // Also check queues.json — stage-worker writes queue changes
-      const queuesPath = join(config.projectRoot, 'tests', 'queues.json')
-      let queuesAge = Infinity
-      try {
-        queuesAge = (Date.now() - statSync(queuesPath).mtimeMs) / 1000
-      } catch { /* queues doesn't exist */ }
-
-      // Use the most recent modification across all state files
-      const mostRecentAge = Math.min(supAge, pipeAge, queuesAge)
-
       if (mostRecentAge > SUPERVISOR_HEARTBEAT_TIMEOUT_S) {
-        console.log(`[watcher] ⚠️ Supervisor heartbeat timeout: supervisor=${Math.round(supAge)}s, pipeline=${Math.round(pipeAge)}s, queues=${Math.round(queuesAge)}s (step: ${sup.step}). Marking as context_limit.`)
+        const deadAgent = sup.status === 'running' ? 'Supervisor' : 'Stage-worker'
+        console.log(`[watcher] ⚠️ ${deadAgent} heartbeat timeout: ${Math.round(mostRecentAge)}s since last state update (stage: ${pipe.currentStage}, step: ${sup.step}). Auto-resetting.`)
 
-        // Mark supervisor as idle
-        const supData = { ...sup, status: 'idle', step: null, active: null }
-        writeFileSync(supervisorPath, JSON.stringify(supData, null, 2) + '\n')
+        // Reset supervisor if it claims to be running
+        if (sup.status === 'running') {
+          const supData = { ...sup, status: 'idle', step: null, active: null }
+          writeFileSync(supervisorPath, JSON.stringify(supData, null, 2) + '\n')
+        }
 
-        // Mark pipeline with stop reason
-        try {
-          const pipeRaw = readFileSync(pipelinePath, 'utf8')
-          const pipe = JSON.parse(pipeRaw)
-          if (pipe.pipelineStatus === 'running' || pipe.pipelineStatus === 'idle') {
-            pipe.pipelineStatus = 'idle'
-            pipe.stopReason = 'context_limit'
-            pipe.stopDetail = `No state file updates for ${Math.round(mostRecentAge)}s after ${sup.step || 'unknown'} step`
-            // Mark current stage as interrupted
-            if (pipe.currentStage && pipe.stages?.[pipe.currentStage]) {
-              pipe.stages[pipe.currentStage].status = 'interrupted'
-            }
-            writeFileSync(pipelinePath, JSON.stringify(pipe, null, 2) + '\n')
-          }
-        } catch { /* pipeline write failed, supervisor already reset */ }
+        // Reset pipeline
+        pipe.pipelineStatus = 'idle'
+        pipe.stopReason = 'context_limit'
+        pipe.stopDetail = `${deadAgent} stopped responding during ${pipe.currentStage || 'unknown'} (${Math.round(mostRecentAge)}s timeout)`
+        if (pipe.currentStage && pipe.stages?.[pipe.currentStage]?.status === 'running') {
+          pipe.stages[pipe.currentStage].status = 'interrupted'
+        }
+        writeFileSync(pipelinePath, JSON.stringify(pipe, null, 2) + '\n')
 
-        // Broadcast the change
         sseManager.broadcast('runner-status-changed' as SSEEventType, {
           status: 'idle',
           reason: 'context_limit',
-          lastStep: sup.step,
+          lastStage: pipe.currentStage,
         })
 
         lastSupervisorStatus = 'idle'
