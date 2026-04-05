@@ -8,7 +8,7 @@
  * 4. StatsBar — compact inline cumulative + cycle stats
  * 5. Tab content: Overview (Activity + Queues), Discoveries, Trends, Evolution
  */
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import {
@@ -19,12 +19,10 @@ import {
   useRunnerStatus,
   useRunnerStart,
   useRunnerStop,
-  useTestEvolution,
   useTestPipeline,
   useTestSupervisor,
   useTestQueues,
   useTestStats,
-  useTestStory,
   useFeatureMap,
 } from '../api/hooks'
 import { Card, CardHeader } from '../components/common/Card'
@@ -67,6 +65,8 @@ const STAGE_ICONS: Record<string, string> = {
 // ============ CSS Animation Injection ============
 
 const TESTLAB_KEYFRAMES = `
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;0,9..40,800;1,9..40,400&display=swap');
+
 @keyframes bar-pulse {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
@@ -80,19 +80,23 @@ const TESTLAB_KEYFRAMES = `
   50% { opacity: 0.25; }
 }
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-6px); }
+  from { opacity: 0; transform: translateY(-4px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeInStagger {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0); }
 }
 @keyframes stage-glow {
   0%, 100% {
-    box-shadow: 0 0 24px var(--glow-color, rgba(107,163,232,0.15)),
-                0 0 48px var(--glow-far, rgba(107,163,232,0.06)),
-                inset 0 1px 0 rgba(255,255,255,0.04);
+    box-shadow: 0 0 20px var(--glow-color, rgba(107,163,232,0.12)),
+                0 0 40px var(--glow-far, rgba(107,163,232,0.04)),
+                inset 0 1px 0 rgba(255,255,255,0.03);
   }
   50% {
-    box-shadow: 0 0 36px var(--glow-color, rgba(107,163,232,0.22)),
-                0 0 72px var(--glow-far, rgba(107,163,232,0.09)),
-                inset 0 1px 0 rgba(255,255,255,0.06);
+    box-shadow: 0 0 32px var(--glow-color, rgba(107,163,232,0.18)),
+                0 0 64px var(--glow-far, rgba(107,163,232,0.07)),
+                inset 0 1px 0 rgba(255,255,255,0.05);
   }
 }
 @keyframes spin {
@@ -101,11 +105,19 @@ const TESTLAB_KEYFRAMES = `
 }
 @keyframes float {
   0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-3px); }
+  50%      { transform: translateY(-2px); }
 }
 @keyframes connector-flow {
   0%   { background-position: 0% 50%; }
   100% { background-position: 200% 50%; }
+}
+@keyframes connector-dash {
+  0%   { stroke-dashoffset: 12; }
+  100% { stroke-dashoffset: 0; }
+}
+@keyframes connector-pulse {
+  0%, 100% { opacity: 0.5; }
+  50%      { opacity: 1; }
 }
 @keyframes shimmer-border {
   0%   { background-position: -300% 0; }
@@ -114,6 +126,31 @@ const TESTLAB_KEYFRAMES = `
 @keyframes pulse-ring {
   0%   { transform: scale(1); opacity: 0.6; }
   100% { transform: scale(2.2); opacity: 0; }
+}
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes rowReveal {
+  from { opacity: 0; transform: translateX(-4px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.testlab-display { font-family: 'DM Sans', var(--font-display); }
+.testlab-tab-active {
+  background: var(--accent-blue-dim) !important;
+  color: var(--accent-blue) !important;
+  border-radius: 8px 8px 0 0;
+}
+.testlab-stat-value {
+  animation: countUp 0.3s ease-out both;
+}
+.testlab-feature-row {
+  transition: all 0.15s ease;
+}
+.testlab-feature-row:hover {
+  background: var(--bg-hover, rgba(255,255,255,0.03)) !important;
+  border-left: 2px solid var(--accent-blue);
+  padding-left: 10px;
 }
 [data-theme="light"] {
   --glass-bg: rgba(255,255,255,0.82);
@@ -141,17 +178,18 @@ import type { CSSProperties } from 'react'
 function glassStyle(extra?: CSSProperties): CSSProperties {
   return {
     background: 'var(--glass-bg)',
-    backdropFilter: 'var(--glass-blur, blur(14px))',
-    WebkitBackdropFilter: 'var(--glass-blur, blur(14px))',
+    backdropFilter: 'var(--glass-blur, blur(16px))',
+    WebkitBackdropFilter: 'var(--glass-blur, blur(16px))',
     border: '1px solid var(--glass-border)',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.02)',
     ...extra,
   }
 }
 
 function glassCardStyle(extra?: CSSProperties): CSSProperties {
   return glassStyle({
-    borderRadius: 'var(--radius-lg, 16px)',
-    padding: '18px 20px',
+    borderRadius: 'var(--radius-lg, 14px)',
+    padding: '16px 18px',
     ...extra,
   })
 }
@@ -287,7 +325,7 @@ function TestLabHeader({ pipelineData, supervisorData }: { pipelineData: any; su
         {/* Left: Cycle info + Stage badge + Elapsed */}
         <div className="flex items-center gap-3 min-w-0">
           {/* Cycle counter */}
-          <span className="font-bold font-mono" style={{ fontSize: '20px', color: 'var(--text-primary)', whiteSpace: 'nowrap', letterSpacing: '-0.5px' }}>
+          <span className="font-bold font-mono testlab-display" style={{ fontSize: '19px', color: 'var(--text-primary)', whiteSpace: 'nowrap', letterSpacing: '-0.6px', fontWeight: 800 }}>
             Cycle {cycle}/{maxCycles}
           </span>
 
@@ -380,18 +418,32 @@ function TestLabHeader({ pipelineData, supervisorData }: { pipelineData: any; su
 
         {/* Right: Status + Controls */}
         <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Status indicator */}
-          <div
-            className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-            style={{
-              background: isRunning ? 'var(--accent-green)' :
-                isWaiting ? 'var(--accent-purple)' :
-                isExternal ? 'var(--accent-amber)' :
-                status === 'paused' ? 'var(--accent-amber)' : 'var(--text-tertiary)',
-              boxShadow: isActive ? `0 0 6px ${isWaiting ? 'var(--accent-purple)' : isExternal ? 'var(--accent-amber)' : 'var(--accent-green)'}` : 'none',
-              animation: isWaiting ? 'blink 1.5s ease-in-out infinite' : isExternal ? 'blink 2s ease-in-out infinite' : 'none',
-            }}
-          />
+          {/* Status indicator — idle: gray dot, running: green dot with pulse ring */}
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '16px', height: '16px', flexShrink: 0 }}>
+            {isActive && (
+              <div style={{
+                position: 'absolute',
+                width: '10px', height: '10px',
+                borderRadius: '50%',
+                border: `2px solid ${isWaiting ? 'var(--accent-purple)' : isExternal ? 'var(--accent-amber)' : 'var(--accent-green)'}`,
+                animation: 'pulse-ring 1.5s ease-out infinite',
+              }} />
+            )}
+            <div
+              className="rounded-full"
+              style={{
+                width: '8px', height: '8px',
+                background: isRunning ? 'var(--accent-green)' :
+                  isWaiting ? 'var(--accent-purple)' :
+                  isExternal ? 'var(--accent-amber)' :
+                  status === 'paused' ? 'var(--accent-amber)' : 'var(--text-tertiary)',
+                boxShadow: isActive ? `0 0 6px ${isWaiting ? 'var(--accent-purple)' : isExternal ? 'var(--accent-amber)' : 'var(--accent-green)'}` : 'none',
+                animation: isWaiting ? 'blink 1.5s ease-in-out infinite' : isExternal ? 'blink 2s ease-in-out infinite' : 'none',
+                position: 'relative',
+                zIndex: 1,
+              }}
+            />
+          </div>
           <span className="text-[12px] font-bold font-mono" style={{
             color: isRunning ? 'var(--accent-green)' :
               isWaiting ? 'var(--accent-purple)' :
@@ -418,6 +470,7 @@ function TestLabHeader({ pipelineData, supervisorData }: { pipelineData: any; su
                 disabled={startMutation.isPending}
                 className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[12px] font-bold transition-all hover:opacity-80 disabled:opacity-50"
                 style={{ background: 'var(--accent-green)', color: '#fff', boxShadow: '0 0 12px rgba(92,191,138,0.3)' }}
+                title="Start test cycle — click to choose single run or loop mode"
               >
                 <Play className="w-4 h-4" /> Start
                 <ChevronDown className="w-3.5 h-3.5" style={{ transform: showStartMenu ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }} />
@@ -437,6 +490,7 @@ function TestLabHeader({ pipelineData, supervisorData }: { pipelineData: any; su
                       style={{ color: 'var(--accent-green)', background: 'transparent', border: 'none', cursor: 'pointer' }}
                       onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--accent-green-dim)')}
                       onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                      title="Run one full scan-generate-test-validate-fix-verify cycle"
                     >
                       <Play className="w-3.5 h-3.5 inline mr-1.5" style={{ verticalAlign: 'middle' }} />
                       Single Run
@@ -530,7 +584,7 @@ function SelfHealBanner({ selfHealEvent }: { selfHealEvent?: any }) {
   )
 }
 
-// ============ Stage Pipeline ============
+// ============ Stage Pipeline (Vertical Sidebar) ============
 
 function StagePipeline({ pipelineData }: { pipelineData: any }) {
   const stages = pipelineData?.stages || {}
@@ -538,183 +592,132 @@ function StagePipeline({ pipelineData }: { pipelineData: any }) {
   const currentTest = pipelineData?.currentTest || ''
 
   return (
-    <div
-      style={glassCardStyle({ padding: '20px 24px' })}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 0, width: '100%' }}>
-        {STAGES.map((stage, i) => {
-          const stageData = stages[stage] || {}
-          const status = stageData.status || (stage === currentStage ? 'running' : 'pending')
-          const isDone = status === 'done' || status === 'completed'
-          const isActive = status === 'running' || status === 'in-progress' || stage === currentStage
-          const isPending = !isDone && !isActive
-          const color = isDone ? 'var(--accent-green)' : isActive ? stageColorOf(stage) : 'var(--text-tertiary)'
-          const summary = stageData.summary || ''
-          const stageCol = stageColorOf(stage)
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+      {STAGES.map((stage, i) => {
+        const stageData = stages[stage] || {}
+        const status = stageData.status || (stage === currentStage ? 'running' : 'pending')
+        const isDone = status === 'done' || status === 'completed'
+        const isActive = status === 'running' || status === 'in-progress' || stage === currentStage
+        const isPending = !isDone && !isActive
+        const stageCol = stageColorOf(stage)
+        const summary = stageData.summary || ''
 
-          // Compute glow CSS vars for active stage
-          const glowVars: Record<string, string> = {}
-          if (isActive && !isDone) {
-            if (stage === 'FIX') {
-              glowVars['--glow-color'] = 'rgba(212,164,74,0.16)'
-              glowVars['--glow-far'] = 'rgba(212,164,74,0.06)'
-            } else if (stage === 'VERIFY') {
-              glowVars['--glow-color'] = 'rgba(92,191,138,0.16)'
-              glowVars['--glow-far'] = 'rgba(92,191,138,0.06)'
-            } else if (stage === 'GENERATE') {
-              glowVars['--glow-color'] = 'rgba(158,140,199,0.16)'
-              glowVars['--glow-far'] = 'rgba(158,140,199,0.06)'
-            } else if (stage === 'TEST') {
-              glowVars['--glow-color'] = 'rgba(212,164,74,0.16)'
-              glowVars['--glow-far'] = 'rgba(212,164,74,0.06)'
-            } else if (stage === 'VALIDATE') {
-              glowVars['--glow-color'] = 'rgba(34,211,238,0.16)'
-              glowVars['--glow-far'] = 'rgba(34,211,238,0.06)'
-            } else {
-              glowVars['--glow-color'] = 'rgba(107,163,232,0.16)'
-              glowVars['--glow-far'] = 'rgba(107,163,232,0.06)'
-            }
+        // Glow vars for active
+        const glowVars: Record<string, string> = {}
+        if (isActive && !isDone) {
+          const glowMap: Record<string, [string, string]> = {
+            SCAN: ['rgba(107,163,232,0.16)', 'rgba(107,163,232,0.06)'],
+            GENERATE: ['rgba(158,140,199,0.16)', 'rgba(158,140,199,0.06)'],
+            TEST: ['rgba(212,164,74,0.16)', 'rgba(212,164,74,0.06)'],
+            VALIDATE: ['rgba(34,211,238,0.16)', 'rgba(34,211,238,0.06)'],
+            FIX: ['rgba(212,164,74,0.16)', 'rgba(212,164,74,0.06)'],
+            VERIFY: ['rgba(92,191,138,0.16)', 'rgba(92,191,138,0.06)'],
           }
+          const [gc, gf] = glowMap[stage] || glowMap.SCAN
+          glowVars['--glow-color'] = gc
+          glowVars['--glow-far'] = gf
+        }
 
-          // Connector state
-          const nextStage = i < STAGES.length - 1 ? STAGES[i + 1] : null
-          const nextData = nextStage ? (stages[nextStage] || {}) : {}
-          const nextStatus = nextData.status || (nextStage === currentStage ? 'running' : 'pending')
-          const nextActive = nextStatus === 'running' || nextStatus === 'in-progress' || nextStage === currentStage
-          const connectorLit = isDone
-          const connectorFlowing = isActive && !isDone
+        return (
+          <React.Fragment key={stage}>
+            {/* Stage row — compact horizontal */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '8px 10px',
+                borderRadius: '10px',
+                border: `1px solid ${isDone ? 'rgba(92,191,138,0.12)' : isActive ? `color-mix(in srgb, ${stageCol} 25%, transparent)` : 'var(--border-subtle)'}`,
+                background: isDone ? 'rgba(92,191,138,0.03)'
+                  : isActive ? `linear-gradient(135deg, color-mix(in srgb, ${stageCol} 6%, transparent) 0%, var(--bg-inset) 100%)`
+                  : 'var(--bg-inset)',
+                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                animation: isActive && !isDone ? 'stage-glow 2.8s ease-in-out infinite' : 'none',
+                opacity: isPending ? 0.4 : 1,
+                ...glowVars as any,
+              }}
+              title={summary || `${stage}: ${status}`}
+            >
+              {/* Icon */}
+              <span style={{
+                fontSize: '16px',
+                lineHeight: 1,
+                flexShrink: 0,
+                animation: isActive && !isDone ? 'float 2.2s ease-in-out infinite' : 'none',
+              }}>
+                {STAGE_ICONS[stage]}
+              </span>
 
-          return (
-            <div key={stage} style={{ display: 'contents' }}>
-              {/* Stage card */}
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '10px',
-                  padding: '26px 24px 22px',
-                  borderRadius: 'var(--radius-xl, 20px)',
-                  border: `1.5px solid ${isDone ? 'rgba(92,191,138,0.12)' : isActive ? `color-mix(in srgb, ${stageCol} 28%, transparent)` : 'var(--border-subtle)'}`,
-                  background: isDone ? 'rgba(92,191,138,0.03)'
-                    : isActive ? `linear-gradient(170deg, color-mix(in srgb, ${stageCol} 6%, transparent) 0%, var(--bg-inset) 100%)`
-                    : 'var(--bg-inset)',
-                  flex: 1,
-                  minWidth: '120px',
-                  maxWidth: '220px',
-                  position: 'relative',
-                  zIndex: 2,
-                  transition: 'all 0.45s cubic-bezier(0.4, 0, 0.2, 1)',
-                  transform: isActive && !isDone ? 'scale(1.06)' : 'scale(1)',
-                  animation: isActive && !isDone ? 'stage-glow 2.8s ease-in-out infinite' : 'none',
-                  opacity: isPending ? 0.38 : 1,
-                  ...glowVars as any,
-                }}
-                title={summary || `${stage}: ${status}`}
-              >
-                {/* Large icon */}
-                <span style={{
-                  fontSize: '36px',
-                  lineHeight: 1,
-                  transition: 'transform 0.3s',
-                  animation: isActive && !isDone ? 'float 2.2s ease-in-out infinite' : 'none',
-                }}>
-                  {STAGE_ICONS[stage]}
-                </span>
-
-                {/* Stage name */}
-                <span className="font-mono" style={{
-                  fontSize: '14px',
+              {/* Name + status */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="font-mono" style={{
+                  fontSize: '10px',
                   fontWeight: 700,
-                  letterSpacing: '1.8px',
-                  textTransform: 'uppercase',
-                  color: isDone ? 'var(--text-secondary)' : isActive ? 'var(--text-primary)' : isPending ? 'var(--text-tertiary)' : 'var(--text-primary)',
+                  letterSpacing: '0.5px',
+                  textTransform: 'uppercase' as const,
+                  color: isDone ? 'var(--text-secondary)' : isActive ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                  whiteSpace: 'nowrap',
                 }}>
                   {stage}
-                </span>
-
-                {/* Status text */}
-                <span className="font-mono" style={{
-                  fontSize: '12px',
-                  fontWeight: 500,
-                  color: 'var(--text-secondary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                }}>
-                  {isDone && <span style={{ color: 'var(--accent-green)' }}>{'\u2705'} Done</span>}
-                  {isActive && !isDone && (
-                    <>
-                      <span style={{
-                        display: 'inline-block',
-                        width: '12px', height: '12px',
-                        border: `2px solid color-mix(in srgb, ${stageCol} 18%, transparent)`,
-                        borderTopColor: stageCol,
-                        borderRadius: '50%',
-                        animation: 'spin 0.75s linear infinite',
-                      }} />
-                      Running
-                    </>
-                  )}
-                  {isPending && <span style={{ color: 'var(--text-tertiary)' }}>Pending</span>}
-                </span>
-
-                {/* Summary text */}
+                </div>
                 {summary && (
-                  <span className="font-mono" style={{
-                    fontSize: '10px',
+                  <div className="font-mono" style={{
+                    fontSize: '9px',
                     color: 'var(--text-tertiary)',
-                    textAlign: 'center',
-                    maxWidth: '160px',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
                   }} title={summary}>
                     {summary}
-                  </span>
+                  </div>
                 )}
               </div>
 
-              {/* Connector line — three states: lit / flowing / off */}
-              {i < STAGES.length - 1 && (
-                <div
-                  style={{
-                    flex: 1,
-                    minWidth: '24px',
-                    maxWidth: '80px',
-                    height: '2px',
-                    borderRadius: '1px',
-                    zIndex: 1,
-                    transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
-                    ...(connectorLit ? {
-                      background: `linear-gradient(90deg, var(--accent-green), rgba(92,191,138,0.25))`,
-                      boxShadow: '0 0 10px rgba(92,191,138,0.12)',
-                    } : connectorFlowing ? {
-                      background: stage === 'FIX' || stage === 'TEST' || stage === 'VALIDATE'
-                        ? 'linear-gradient(90deg, rgba(212,164,74,0.2), var(--accent-amber), rgba(212,164,74,0.2))'
-                        : 'linear-gradient(90deg, rgba(107,163,232,0.2), var(--accent-blue), rgba(107,163,232,0.2))',
-                      backgroundSize: '200% 100%',
-                      animation: 'connector-flow 1.6s linear infinite',
-                      boxShadow: stage === 'FIX' || stage === 'TEST' || stage === 'VALIDATE'
-                        ? '0 0 10px rgba(212,164,74,0.08)'
-                        : '0 0 10px rgba(107,163,232,0.08)',
-                    } : {
-                      background: 'rgba(255,255,255,0.05)',
-                    }),
-                  }}
-                />
-              )}
+              {/* Status indicator */}
+              <div style={{ flexShrink: 0 }}>
+                {isDone && <span style={{ color: 'var(--accent-green)', fontSize: '10px', fontWeight: 600 }}>✓</span>}
+                {isActive && !isDone && (
+                  <span style={{
+                    display: 'inline-block',
+                    width: '8px', height: '8px',
+                    border: `2px solid color-mix(in srgb, ${stageCol} 18%, transparent)`,
+                    borderTopColor: stageCol,
+                    borderRadius: '50%',
+                    animation: 'spin 0.75s linear infinite',
+                  }} />
+                )}
+                {isPending && <span style={{ color: 'var(--text-tertiary)', fontSize: '10px' }}>—</span>}
+              </div>
             </div>
-          )
-        })}
-      </div>
+
+            {/* Vertical connector line between stages */}
+            {i < STAGES.length - 1 && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                height: '8px',
+                position: 'relative',
+              }}>
+                <div style={{
+                  width: isDone ? '2px' : '1px',
+                  height: '100%',
+                  background: isDone ? 'var(--accent-green)' : isActive ? stageCol : 'var(--border-subtle)',
+                  opacity: isDone ? 0.5 : isActive ? 0.6 : 0.3,
+                  transition: 'all 0.4s',
+                }} />
+              </div>
+            )}
+          </React.Fragment>
+        )
+      })}
 
       {/* Current test indicator */}
       {currentTest && (
-        <div className="flex items-center gap-2 mt-2 pt-2" style={{ borderTop: '1px solid var(--border-subtle)' }}>
-          <span className="text-[10px] font-mono" style={{ color: 'var(--text-tertiary)' }}>Running:</span>
-          <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded truncate"
-            style={{ background: 'var(--accent-blue-dim)', color: 'var(--accent-blue)' }}>
+        <div className="flex items-center gap-2 mt-1 pt-2" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+          <span className="text-[9px] font-mono" style={{ color: 'var(--text-tertiary)' }}>Running:</span>
+          <span className="text-[10px] font-mono font-bold truncate"
+            style={{ color: 'var(--accent-blue)' }}>
             {currentTest}
           </span>
         </div>
@@ -729,35 +732,45 @@ function StatsBar({ statsData }: { statsData: any }) {
   const cumulative = statsData?.cumulative || {}
   const cycleStats = statsData?.cycleStats || {}
 
+  const totalSum = (cumulative.passed || 0) + (cumulative.failed || 0) + (cumulative.fixed || 0) + (cumulative.skipped || 0)
+  const cycleSum = (cycleStats.passed || 0) + (cycleStats.failed || 0) + (cycleStats.fixed || 0) + (cycleStats.skipped || 0)
+  const allZero = totalSum === 0 && cycleSum === 0
+
+  if (allZero) {
+    return (
+      <div style={{ textAlign: 'center' }}>
+        <span className="text-[10px]" style={{ color: 'var(--text-tertiary)', fontStyle: 'italic' }}>No results yet</span>
+      </div>
+    )
+  }
+
   return (
-    <div
-      className="flex items-center justify-between"
-      style={glassCardStyle({ padding: '10px 16px' })}
-    >
-      {/* Cumulative stats */}
-      <div className="flex items-center gap-4">
-        <span className="text-[10px] font-mono font-bold" style={{ color: 'var(--text-tertiary)' }}>TOTAL</span>
-        <div className="flex items-center gap-3">
-          <StatItem icon={<CheckCircle className="w-3.5 h-3.5" />} color="var(--accent-green)" value={cumulative.passed || 0} label="passed" />
-          <StatItem icon={<XCircle className="w-3.5 h-3.5" />} color="var(--accent-red)" value={cumulative.failed || 0} label="failed" />
-          <StatItem icon={<Wrench className="w-3.5 h-3.5" />} color="var(--accent-amber)" value={cumulative.fixed || 0} label="fixed" />
-          <StatItem icon={<SkipForward className="w-3.5 h-3.5" />} color="var(--accent-purple)" value={cumulative.skipped || 0} label="skipped" />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+      {/* Total stats */}
+      <div>
+        <span className="text-[9px] font-mono font-bold" style={{ color: 'var(--text-tertiary)', letterSpacing: '0.08em' }}>TOTAL</span>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', marginTop: '4px' }}>
+          <StatItem icon={<CheckCircle className="w-3 h-3" />} color="var(--accent-green)" value={cumulative.passed || 0} label="pass" />
+          <StatItem icon={<XCircle className="w-3 h-3" />} color="var(--accent-red)" value={cumulative.failed || 0} label="fail" />
+          <StatItem icon={<Wrench className="w-3 h-3" />} color="var(--accent-amber)" value={cumulative.fixed || 0} label="fix" />
+          <StatItem icon={<SkipForward className="w-3 h-3" />} color="var(--accent-purple)" value={cumulative.skipped || 0} label="skip" />
         </div>
       </div>
 
-      {/* Separator */}
-      <div style={{ width: '1px', height: '20px', background: 'var(--border-subtle)' }} />
-
-      {/* Cycle stats */}
-      <div className="flex items-center gap-4">
-        <span className="text-[10px] font-mono font-bold" style={{ color: 'var(--text-tertiary)' }}>CYCLE</span>
-        <div className="flex items-center gap-3">
-          <StatItem icon={<CheckCircle className="w-3.5 h-3.5" />} color="var(--accent-green)" value={cycleStats.passed || 0} label="passed" />
-          <StatItem icon={<XCircle className="w-3.5 h-3.5" />} color="var(--accent-red)" value={cycleStats.failed || 0} label="failed" />
-          <StatItem icon={<Wrench className="w-3.5 h-3.5" />} color="var(--accent-amber)" value={cycleStats.fixed || 0} label="fixed" />
-          <StatItem icon={<SkipForward className="w-3.5 h-3.5" />} color="var(--accent-purple)" value={cycleStats.skipped || 0} label="skipped" />
-        </div>
-      </div>
+      {cycleSum > 0 && (
+        <>
+          <div style={{ borderTop: '1px solid var(--border-subtle)' }} />
+          <div>
+            <span className="text-[9px] font-mono font-bold" style={{ color: 'var(--text-tertiary)', letterSpacing: '0.08em' }}>CYCLE</span>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', marginTop: '4px' }}>
+              <StatItem icon={<CheckCircle className="w-3 h-3" />} color="var(--accent-green)" value={cycleStats.passed || 0} label="pass" />
+              <StatItem icon={<XCircle className="w-3 h-3" />} color="var(--accent-red)" value={cycleStats.failed || 0} label="fail" />
+              <StatItem icon={<Wrench className="w-3 h-3" />} color="var(--accent-amber)" value={cycleStats.fixed || 0} label="fix" />
+              <StatItem icon={<SkipForward className="w-3 h-3" />} color="var(--accent-purple)" value={cycleStats.skipped || 0} label="skip" />
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
@@ -766,8 +779,8 @@ function StatItem({ icon, color, value, label }: { icon: React.ReactNode; color:
   return (
     <div className="flex items-center gap-1" style={{ color }}>
       {icon}
-      <span className="text-[13px] font-mono font-bold">{value}</span>
-      <span className="text-[10px] font-mono" style={{ color: 'var(--text-tertiary)' }}>{label}</span>
+      <span className="text-[13px] font-mono font-bold testlab-stat-value" key={value}>{value}</span>
+      <span className="text-[10px]" style={{ color: 'var(--text-tertiary)', letterSpacing: '0.02em' }}>{label}</span>
     </div>
   )
 }
@@ -797,9 +810,9 @@ function QueuesPanel({ queuesData, registry }: { queuesData: any; registry: Reco
 
   if (nonEmptyQueues.length === 0 && !gaps?.length && !inProgress?.length && !skipRegistry) {
     return (
-      <div className="flex items-center gap-2 px-4 py-3 rounded-lg text-[12px]"
+      <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-[11px]"
         style={{ background: 'var(--accent-green-dim)', color: 'var(--accent-green)' }}>
-        <CheckCircle className="w-4 h-4" />
+        <CheckCircle className="w-3.5 h-3.5" />
         <span className="font-medium">All queues empty</span>
       </div>
     )
@@ -1077,9 +1090,12 @@ function ActivityStream() {
       />
       <div ref={containerRef} className="max-h-[260px] overflow-y-auto space-y-0">
         {events.length === 0 ? (
-          <p className="text-center py-4 text-[12px]" style={{ color: 'var(--text-tertiary)' }}>
-            No events yet \u2014 events appear when a test run is active
-          </p>
+          <div className="flex flex-col items-center justify-center py-6 gap-2">
+            <span style={{ fontSize: '20px', opacity: 0.4 }}>📡</span>
+            <p className="text-[12px]" style={{ color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
+              Listening for pipeline events…
+            </p>
+          </div>
         ) : (
           events.map((evt, i) => (
             <div
@@ -1124,197 +1140,6 @@ function ActivityStream() {
         )}
       </div>
     </Card>
-  )
-}
-
-// ============ Story Narrative ============
-
-function StoryNarrative() {
-  const { data: story, isLoading } = useTestStory()
-
-  if (isLoading) return <Loading text="Loading story..." />
-  if (!story) return <EmptyState icon="\uD83D\uDCD6" title="No story yet" description="Run a test cycle first" />
-
-  const sectionStyle: React.CSSProperties = {
-    background: 'var(--card-bg)',
-    borderRadius: 10,
-    padding: '16px 20px',
-    border: '1px solid var(--border-subtle)',
-  }
-
-  const headingStyle: React.CSSProperties = {
-    fontSize: 14,
-    fontWeight: 700,
-    marginBottom: 10,
-    color: 'var(--text-primary)',
-  }
-
-  const bodyStyle: React.CSSProperties = {
-    fontSize: 13,
-    lineHeight: 1.7,
-    color: 'var(--text-secondary)',
-  }
-
-  const tagStyle = (color: string): React.CSSProperties => ({
-    display: 'inline-block',
-    fontSize: 11,
-    fontWeight: 600,
-    padding: '2px 8px',
-    borderRadius: 6,
-    background: color + '18',
-    color,
-    marginRight: 6,
-  })
-
-  return (
-    <div className="space-y-3" style={{ animation: 'fadeIn 0.2s ease-out' }}>
-      {/* Title */}
-      <div style={{ ...sectionStyle, background: 'linear-gradient(135deg, var(--card-bg), var(--surface-hover))' }}>
-        <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)' }}>
-          Test Framework Story — Cycle {story.cycle}/{story.maxCycles}
-        </div>
-        <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 4 }}>
-          Current stage: <span style={tagStyle('var(--accent-blue)')}>{story.currentStage}</span>
-        </div>
-      </div>
-
-      {/* Round Narrative */}
-      {story.roundNarrative.length > 0 && (
-        <div style={sectionStyle}>
-          <div style={headingStyle}>This Cycle</div>
-          <div style={bodyStyle}>
-            {story.roundNarrative.map((line: string, i: number) => (
-              <div key={i} style={{ marginBottom: 6 }} dangerouslySetInnerHTML={{
-                __html: line.replace(/\*\*(.+?)\*\*/g, '<strong style="color:var(--text-primary)">$1</strong>')
-              }} />
-            ))}
-            {story.scanStrategyNote && (
-              <div style={{ marginTop: 8, fontSize: 12, color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
-                Strategy: {story.scanStrategyNote}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Scorecard */}
-      <div style={sectionStyle}>
-        <div style={headingStyle}>Scorecard</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10 }}>
-          {[
-            { label: 'Fixed & Stable', value: story.scorecard.verified, color: '#22c55e', icon: '\u2705' },
-            { label: 'Fixed, Unverified', value: story.scorecard.fixedUnverified, color: '#3b82f6', icon: '\uD83D\uDD27' },
-            { label: 'Regressed', value: story.scorecard.regression, color: '#f59e0b', icon: '\uD83D\uDD04' },
-            { label: 'Retrying', value: story.scorecard.retryNeeded, color: '#ef4444', icon: '\uD83D\uDD01' },
-            { label: 'Total Found', value: story.scorecard.total, color: 'var(--text-secondary)', icon: '\uD83D\uDCCB' },
-          ].map(item => (
-            <div key={item.label} style={{
-              textAlign: 'center',
-              padding: '12px 8px',
-              borderRadius: 8,
-              background: item.color + '10',
-              border: `1px solid ${item.color}30`,
-            }}>
-              <div style={{ fontSize: 24, fontWeight: 800, color: item.color }}>{item.value}</div>
-              <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
-                {item.icon} {item.label}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Success Stories */}
-      <div style={sectionStyle}>
-        <div style={headingStyle}>{'\uD83C\uDFC6'} Successfully Fixed</div>
-        {story.successStories.length === 0 ? (
-          <div style={{ ...bodyStyle, fontStyle: 'italic' }}>No verified fixes yet</div>
-        ) : (
-          <div style={{ ...bodyStyle, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {story.successStories.map((s: any) => (
-              <div key={s.testId} style={{
-                padding: '8px 12px',
-                borderRadius: 6,
-                background: '#22c55e10',
-                borderLeft: '3px solid #22c55e',
-              }}>
-                <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{s.testId}</span>
-                <span style={{ margin: '0 6px', color: 'var(--text-tertiary)' }}>—</span>
-                {s.description}
-                {s.fixedRound != null && (
-                  <span style={{ fontSize: 11, color: 'var(--text-tertiary)', marginLeft: 6 }}>
-                    (verified R{s.fixedRound})
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Struggles */}
-      <div style={sectionStyle}>
-        <div style={headingStyle}>{'\u26A0\uFE0F'} Still Struggling</div>
-        {story.struggles.length === 0 ? (
-          <div style={{ ...bodyStyle, fontStyle: 'italic' }}>No regressions — all clear!</div>
-        ) : (
-          <div style={{ ...bodyStyle, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {story.struggles.map((s: any) => (
-              <div key={s.testId} style={{
-                padding: '8px 12px',
-                borderRadius: 6,
-                background: '#f59e0b10',
-                borderLeft: '3px solid #f59e0b',
-              }}>
-                <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{s.testId}</span>
-                {s.rootCause && (
-                  <span style={tagStyle('#f59e0b')}>{s.rootCause}</span>
-                )}
-                {s.foundRound != null && (
-                  <span style={{ fontSize: 11, color: 'var(--text-tertiary)', marginLeft: 6 }}>
-                    found R{s.foundRound}
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Learnings */}
-      {story.learnings.length > 0 && (
-        <div style={sectionStyle}>
-          <div style={headingStyle}>{'\uD83D\uDCDD'} Lessons Learned</div>
-          <div style={{ ...bodyStyle, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {story.learnings.map((l: any) => (
-              <div key={l.id} style={{
-                padding: '8px 12px',
-                borderRadius: 6,
-                background: 'var(--surface-hover)',
-              }}>
-                <div>
-                  <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{l.id}</span>
-                  <span style={tagStyle('var(--accent-blue)')}>{l.category}</span>
-                </div>
-                <div style={{ marginTop: 4 }}>{l.problem}</div>
-                {l.solution && (
-                  <div style={{ marginTop: 2, fontSize: 12, color: 'var(--text-tertiary)' }}>
-                    Fix: {l.solution}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Next Step */}
-      <div style={{ ...sectionStyle, borderColor: 'var(--accent-blue)30', background: 'var(--accent-blue)08' }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--accent-blue)' }}>
-          {'\u23ED\uFE0F'} Next: {story.nextStep}
-        </div>
-      </div>
-    </div>
   )
 }
 
@@ -1489,73 +1314,6 @@ function TrendChart({ trends }: { trends: any[] }) {
   )
 }
 
-// ============ Evolution Timeline ============
-
-function EvolutionTimeline() {
-  const { data: evolution } = useTestEvolution()
-  const [expanded, setExpanded] = useState(false)
-
-  if (!evolution || evolution.length === 0) return null
-
-  const displayItems = expanded ? evolution : evolution.slice(-5)
-
-  return (
-    <Card>
-      <CardHeader
-        title="Framework Evolution"
-        subtitle={`${evolution.length} milestones`}
-        icon={<Milestone className="w-4 h-4" style={{ color: 'var(--accent-purple)' }} />}
-      />
-      <div className="relative pl-6 space-y-3 py-2">
-        <div className="absolute left-[11px] top-2 bottom-2 w-[2px]" style={{ background: 'var(--border-subtle)' }} />
-        {displayItems.map((entry: any, i: number) => (
-          <div key={`${entry.timestamp || ''}-${entry.title || i}`} className="relative flex items-start gap-3">
-            <div
-              className="absolute left-[-17px] w-3 h-3 rounded-full border-2 flex-shrink-0 mt-1"
-              style={{
-                borderColor: entry.category === 'fix' ? 'var(--accent-red)' :
-                  entry.category === 'feature' ? 'var(--accent-green)' :
-                  entry.category === 'refactor' ? 'var(--accent-blue)' : 'var(--accent-purple)',
-                background: 'var(--bg-primary)',
-              }}
-            />
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <span className="text-[12px] font-bold" style={{ color: 'var(--text-primary)' }}>{entry.title}</span>
-                {entry.round && <Badge variant="secondary" size="xs">C{entry.round}</Badge>}
-                {entry.category && (
-                  <Badge variant={entry.category === 'fix' ? 'danger' : entry.category === 'feature' ? 'success' : 'primary'} size="xs">
-                    {entry.category}
-                  </Badge>
-                )}
-              </div>
-              {entry.impact && (
-                <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-secondary)' }}>
-                  {typeof entry.impact === 'string' ? entry.impact : `${entry.impact.files_changed || 0} files changed, ${entry.impact.components_added || 0} added, ${entry.impact.components_modified || 0} modified`}
-                </p>
-              )}
-              {entry.timestamp && (
-                <span className="text-[10px] font-mono" style={{ color: 'var(--text-tertiary)' }}>
-                  {new Date(entry.timestamp).toLocaleDateString('zh-CN')}
-                </span>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-      {evolution.length > 5 && (
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="w-full text-center py-2 text-[11px] font-bold transition-all hover:opacity-80"
-          style={{ color: 'var(--accent-blue)', borderTop: '1px solid var(--border-subtle)', background: 'transparent', border: 'none', cursor: 'pointer' }}
-        >
-          {expanded ? 'Collapse' : `Show all (${evolution.length})`}
-        </button>
-      )}
-    </Card>
-  )
-}
-
 // ============ Feature Map Panel ============
 
 interface FeatureMapEntry {
@@ -1588,36 +1346,66 @@ const FRESHNESS_COLORS: Record<string, { bg: string; text: string; label: string
 
 function FeatureMapPanel() {
   const { data, isLoading, error } = useFeatureMap()
+  const [expandedFeature, setExpandedFeature] = useState<string | null>(null)
 
   if (isLoading) return <Loading text="Loading feature map..." />
   if (error || !data) return (
-    <EmptyState
-      icon="\uD83D\uDDFA\uFE0F"
-      title="No feature map"
-      description={(error as any)?.message || 'Run feature-map generation first. Use /test-supervisor to scan features.'}
-    />
+    <div style={glassCardStyle({ padding: '28px 32px' })}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+        <span style={{ fontSize: '28px', lineHeight: 1, flexShrink: 0 }}>{'\uD83D\uDDFA\uFE0F'}</span>
+        <div>
+          <div style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '4px' }}>
+            No feature map yet
+          </div>
+          <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+            {(error as any)?.message || 'The feature map is generated during scan cycles.'}
+          </div>
+          <div style={{
+            fontSize: '11px',
+            color: 'var(--text-tertiary)',
+            padding: '8px 12px',
+            borderRadius: '8px',
+            background: 'var(--bg-inset)',
+            border: '1px solid var(--border-subtle)',
+          }}>
+            Run <code style={{ color: 'var(--accent-blue)', fontFamily: 'var(--font-mono)' }}>/test-supervisor run</code> to scan features and generate the map.
+          </div>
+        </div>
+      </div>
+    </div>
   )
 
   const features = Object.entries(data.features)
   const { summary } = data
 
+  // Parse coverage percentage for progress bar
+  function parseCoveragePercent(coverage: string): number {
+    const match = coverage.match(/(\d+)/)
+    return match ? parseInt(match[1], 10) : 0
+  }
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {/* Summary bar */}
       <Card>
-        <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)' }}>
+        <div style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+          <span className="testlab-display" style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.2px' }}>
             {summary.totalFeatures} Features
           </span>
-          <span style={{ fontSize: '11px', color: 'var(--accent-green)' }}>
-            {summary.fresh} fresh
-          </span>
-          <span style={{ fontSize: '11px', color: 'var(--accent-red)' }}>
-            {summary.stale} stale
-          </span>
-          <span style={{ fontSize: '11px', color: 'var(--accent-amber)' }}>
-            {summary.unknown} unknown
-          </span>
+          <div style={{ width: '1px', height: '14px', background: 'var(--border-subtle)' }} />
+          {[
+            { count: summary.fresh, color: 'var(--accent-green)', label: 'fresh', dimColor: 'var(--accent-green-dim)' },
+            { count: summary.stale, color: 'var(--accent-red)', label: 'stale', dimColor: 'var(--accent-red-dim)' },
+            { count: summary.unknown, color: 'var(--accent-amber)', label: 'unknown', dimColor: 'var(--accent-amber-dim)' },
+          ].map(item => (
+            <span key={item.label} style={{
+              fontSize: '11px', fontWeight: 600, color: item.color,
+              padding: '1px 8px', borderRadius: '6px',
+              background: item.dimColor,
+            }}>
+              {item.count} {item.label}
+            </span>
+          ))}
           <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginLeft: 'auto' }}>
             Coverage: <strong style={{ color: 'var(--text-primary)' }}>{summary.overallCoverage}</strong>
           </span>
@@ -1630,7 +1418,13 @@ function FeatureMapPanel() {
       {/* Feature table */}
       <Card>
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', tableLayout: 'fixed' }}>
+            <colgroup>
+              <col style={{ width: '50%' }} />
+              <col style={{ width: '15%' }} />
+              <col style={{ width: '15%' }} />
+              <col style={{ width: '20%' }} />
+            </colgroup>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                 {['Feature', 'Freshness', 'Tests', 'Coverage'].map(h => (
@@ -1652,64 +1446,155 @@ function FeatureMapPanel() {
               </tr>
             </thead>
             <tbody>
-              {features.map(([id, entry]) => {
+              {features.map(([id, entry]: [string, any]) => {
                 const fr = FRESHNESS_COLORS[entry.freshness] || FRESHNESS_COLORS.unknown
                 const anchorCount = entry.codeAnchors?.length || 0
+                const coveragePercent = parseCoveragePercent(entry.coverage)
+                const isExpanded = expandedFeature === id
+                const coverageColor = coveragePercent === 0 ? 'var(--accent-red)' : coveragePercent >= 80 ? 'var(--accent-green)' : coveragePercent >= 50 ? 'var(--accent-amber)' : 'var(--accent-red)'
+
                 return (
-                  <tr
-                    key={id}
-                    style={{
-                      borderBottom: '1px solid var(--border-subtle)',
-                      transition: 'background 0.1s',
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover, rgba(255,255,255,0.03))')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                  >
-                    {/* Feature */}
-                    <td style={{ padding: '10px 12px' }}>
-                      <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '2px' }}>
-                        {entry.title}
-                      </div>
-                      <div style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>
-                        {id} · {entry.issueStatus}
-                      </div>
-                    </td>
-                    {/* Freshness */}
-                    <td style={{ padding: '10px 12px' }}>
-                      <span
-                        style={{
-                          display: 'inline-block',
-                          padding: '2px 8px',
-                          borderRadius: '9999px',
-                          fontSize: '10px',
-                          fontWeight: 700,
-                          background: fr.bg,
-                          color: fr.text,
-                        }}
-                      >
-                        {fr.label}
-                      </span>
-                    </td>
-                    {/* Tests (anchor count) */}
-                    <td style={{ padding: '10px 12px', color: 'var(--text-secondary)' }}>
-                      {anchorCount} anchor{anchorCount !== 1 ? 's' : ''}
-                    </td>
-                    {/* Coverage */}
-                    <td style={{ padding: '10px 12px' }}>
-                      <span style={{
-                        fontWeight: 700,
-                        color: entry.coverage === '0%' ? 'var(--accent-red)' : 'var(--accent-green)',
-                      }}>
-                        {entry.coverage}
-                      </span>
-                    </td>
-                  </tr>
+                  <React.Fragment key={id}>
+                    <tr
+                      className="testlab-feature-row"
+                      style={{
+                        borderBottom: isExpanded ? 'none' : '1px solid var(--border-subtle)',
+                        cursor: (entry.criteria?.length || 0) > 0 ? 'pointer' : 'default',
+                        borderLeft: '2px solid transparent',
+                        animation: `rowReveal 0.2s ease-out ${0.03 * features.indexOf(features.find(f => f[0] === id)!)}s both`,
+                      }}
+                      onClick={() => {
+                        if ((entry.criteria?.length || 0) > 0) setExpandedFeature(isExpanded ? null : id)
+                      }}
+                    >
+                      {/* Feature */}
+                      <td style={{ padding: '8px 12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          {(entry.criteria?.length || 0) > 0 && (
+                            <span style={{ color: 'var(--text-tertiary)', fontSize: '10px', flexShrink: 0 }}>
+                              {isExpanded ? '\u25BC' : '\u25B6'}
+                            </span>
+                          )}
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '1px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {entry.title}
+                            </div>
+                            <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {id} · {entry.issueStatus}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      {/* Freshness */}
+                      <td style={{ padding: '8px 12px' }}>
+                        <span
+                          style={{
+                            display: 'inline-block',
+                            padding: '2px 8px',
+                            borderRadius: '9999px',
+                            fontSize: '10px',
+                            fontWeight: 700,
+                            background: fr.bg,
+                            color: fr.text,
+                          }}
+                        >
+                          {fr.label}
+                        </span>
+                      </td>
+                      {/* Tests (anchor count) */}
+                      <td style={{ padding: '8px 12px', color: 'var(--text-secondary)' }}>
+                        {anchorCount} anchor{anchorCount !== 1 ? 's' : ''}
+                      </td>
+                      {/* Coverage — progress bar */}
+                      <td style={{ padding: '8px 12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div style={{
+                            flex: 1,
+                            height: '6px',
+                            borderRadius: '3px',
+                            background: 'var(--bg-inset)',
+                            overflow: 'hidden',
+                            minWidth: '40px',
+                          }}>
+                            <div style={{
+                              height: '100%',
+                              width: `${coveragePercent}%`,
+                              borderRadius: '3px',
+                              background: coverageColor,
+                              transition: 'width 0.3s ease',
+                            }} />
+                          </div>
+                          <span style={{
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            fontFamily: 'var(--font-mono)',
+                            color: coverageColor,
+                            minWidth: '32px',
+                            textAlign: 'right',
+                          }}>
+                            {entry.coverage}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                    {/* Expanded row: criteria details */}
+                    {isExpanded && (entry.criteria?.length || 0) > 0 && (
+                      <tr>
+                        <td colSpan={4} style={{ padding: '0 12px 10px 40px', borderBottom: '1px solid var(--border-subtle)' }}>
+                          <div style={{
+                            background: 'var(--bg-inset)',
+                            borderRadius: '8px',
+                            padding: '8px 12px',
+                            animation: 'fadeIn 0.15s ease-out',
+                          }}>
+                            <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>
+                              Acceptance Criteria
+                            </div>
+                            {(entry.criteria as any[]).map((ac: any, idx: number) => (
+                              <div key={ac.testId || idx} style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px',
+                                padding: '4px 0',
+                                borderBottom: idx < (entry.criteria as any[]).length - 1 ? '1px solid var(--border-subtle)' : 'none',
+                                fontSize: '11px',
+                              }}>
+                                <span className="font-mono" style={{ color: 'var(--accent-blue)', fontWeight: 600, minWidth: '80px' }}>
+                                  {ac.testId || `AC-${idx + 1}`}
+                                </span>
+                                <span style={{
+                                  padding: '1px 6px',
+                                  borderRadius: '4px',
+                                  fontSize: '10px',
+                                  fontWeight: 700,
+                                  background: ac.lastResult === 'pass' ? 'rgba(52,211,153,0.15)' : ac.lastResult === 'fail' ? 'rgba(248,113,113,0.15)' : 'rgba(251,191,36,0.15)',
+                                  color: ac.lastResult === 'pass' ? 'var(--accent-green)' : ac.lastResult === 'fail' ? 'var(--accent-red)' : 'var(--accent-amber)',
+                                }}>
+                                  {ac.lastResult || 'untested'}
+                                </span>
+                                {ac.fixLevel && (
+                                  <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>
+                                    fix: {ac.fixLevel}
+                                  </span>
+                                )}
+                                {ac.description && (
+                                  <span style={{ color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    {ac.description}
+                                  </span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 )
               })}
               {features.length === 0 && (
                 <tr>
-                  <td colSpan={4} style={{ padding: '32px', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: '12px' }}>
-                    <div style={{ marginBottom: '4px' }}>🗺️ No features mapped yet</div>
+                  <td colSpan={4} style={{ padding: '24px', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: '12px' }}>
+                    <div style={{ marginBottom: '4px' }}>{'\uD83D\uDDFA\uFE0F'} No features mapped yet</div>
                     <div style={{ fontSize: '10px' }}>Run a scan cycle to populate the feature map</div>
                   </td>
                 </tr>
@@ -1724,15 +1609,13 @@ function FeatureMapPanel() {
 
 // ============ Main Page ============
 
-type TabKey = 'overview' | 'story' | 'discoveries' | 'trends' | 'evolution' | 'feature-map'
+type TabKey = 'overview' | 'discoveries' | 'trends' | 'feature-map'
 
 const TAB_DEFS: { key: TabKey; label: string; icon: string }[] = [
-  { key: 'overview', label: 'Overview', icon: '\uD83D\uDCCA' },
-  { key: 'story', label: 'Story', icon: '\uD83D\uDCD6' },
-  { key: 'discoveries', label: 'Discoveries', icon: '\uD83D\uDD0D' },
-  { key: 'trends', label: 'Trends', icon: '\uD83D\uDCC8' },
-  { key: 'evolution', label: 'Evolution', icon: '\uD83E\uDDEC' },
-  { key: 'feature-map', label: 'Feature Map', icon: '\uD83D\uDDFA\uFE0F' },
+  { key: 'overview', label: 'Overview', icon: '📊' },
+  { key: 'discoveries', label: 'Discoveries', icon: '🔍' },
+  { key: 'trends', label: 'Trends', icon: '📈' },
+  { key: 'feature-map', label: 'Feature Map', icon: '🗺️' },
 ]
 
 export default function TestLab() {
@@ -1797,73 +1680,181 @@ export default function TestLab() {
   // Determine if registry is empty (cleared)
   const registryEmpty = reg && Object.keys(reg).length === 0
 
-  // Show header + empty state when no data at all
-  if (!state && !pipeline) {
-    return (
-      <div className="space-y-3">
-        <TestLabHeader pipelineData={null} supervisorData={null} />
-        <EmptyState
-          icon={registryEmpty ? '\uD83D\uDDC3\uFE0F' : '\uD83E\uDDEA'}
-          title={registryEmpty ? 'Registry cleared — ready for fresh scan' : 'No test data yet'}
-          description={registryEmpty
-            ? 'Test registry has been reset. Click Start above or run /test-supervisor to scan and generate new tests.'
-            : 'Click Start in the header above or run /test-supervisor to begin testing'
-          }
-        />
-      </div>
-    )
-  }
-
   return (
-    <div className="space-y-3">
-      {/* 1. Header — compact one-line with supervisor status */}
+    <div className="space-y-2">
+      {/* 1. Header — full-width top bar */}
       <TestLabHeader pipelineData={pipelineData} supervisorData={supervisorData} />
 
       {/* 2. Self-heal banner — only shown when event exists */}
       <SelfHealBanner selfHealEvent={supervisorData?.selfHealEvent} />
 
-      {/* 3. Stage Pipeline — 6-stage horizontal flow */}
-      <StagePipeline pipelineData={pipelineData} />
+      {/* 3. Dual-column layout: Pipeline sidebar + Content area */}
+      <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+        {/* Left sidebar: Pipeline + Stats */}
+        <div style={{
+          width: '180px',
+          flexShrink: 0,
+          position: 'sticky',
+          top: '12px',
+        }}>
+          <div style={glassCardStyle({ padding: '12px' })}>
+            {/* Pipeline label */}
+            <div className="testlab-display" style={{
+              fontSize: '10px',
+              fontWeight: 700,
+              color: 'var(--text-tertiary)',
+              textTransform: 'uppercase' as const,
+              letterSpacing: '0.08em',
+              marginBottom: '8px',
+            }}>
+              Pipeline
+            </div>
 
-      {/* 4. Stats Bar — compact inline */}
-      <StatsBar statsData={statsData} />
+            {/* Vertical stage pipeline */}
+            <StagePipeline pipelineData={pipelineData} />
 
-      {/* 5. Tab Bar */}
-      <div className="flex gap-1 px-1" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-        {TAB_DEFS.map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className="flex items-center gap-1.5 px-3 py-2 text-[12px] font-bold transition-all"
-            style={{
-              color: activeTab === tab.key ? 'var(--accent-blue)' : 'var(--text-tertiary)',
-              borderBottom: activeTab === tab.key ? '2px solid var(--accent-blue)' : '2px solid transparent',
-              background: 'transparent',
-              border: 'none',
-              borderBottomWidth: '2px',
-              borderBottomStyle: 'solid',
-              borderBottomColor: activeTab === tab.key ? 'var(--accent-blue)' : 'transparent',
-              cursor: 'pointer',
-              marginBottom: '-1px',
-            }}
-          >
-            <span>{tab.icon}</span>
-            {tab.label}
-          </button>
-        ))}
-      </div>
+            {/* Stats divider */}
+            <div style={{ borderTop: '1px solid var(--border-subtle)', margin: '10px 0 8px' }} />
+
+            {/* Compact stats */}
+            <StatsBar statsData={statsData} />
+          </div>
+        </div>
+
+        {/* Right content: Tabs + Content */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {/* Tab Bar */}
+          {(() => {
+            const discoveriesCount = discoveries?.discoveries?.length || 0
+            const trendsCount = trends?.length || 0
+            const tabCounts: Record<TabKey, number> = {
+              overview: 0,
+              discoveries: discoveriesCount,
+              trends: trendsCount,
+              'feature-map': 0,
+            }
+
+            return (
+              <div className="flex gap-0.5 px-1" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                {TAB_DEFS.map(tab => {
+                  const count = tabCounts[tab.key]
+                  const isActive = activeTab === tab.key
+                  return (
+                    <button
+                      key={tab.key}
+                      onClick={() => setActiveTab(tab.key)}
+                      className="flex items-center gap-1.5 px-3.5 py-2 text-[12px] font-bold transition-all testlab-display"
+                      style={{
+                        color: isActive ? 'var(--accent-blue)' : 'var(--text-tertiary)',
+                        background: isActive ? 'var(--accent-blue-dim)' : 'transparent',
+                        border: 'none',
+                        borderBottom: `2px solid ${isActive ? 'var(--accent-blue)' : 'transparent'}`,
+                        borderRadius: '8px 8px 0 0',
+                        cursor: 'pointer',
+                        marginBottom: '-1px',
+                        letterSpacing: '0.01em',
+                      }}
+                      onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.color = 'var(--text-secondary)' }}
+                      onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.color = 'var(--text-tertiary)' }}
+                    >
+                      <span>{tab.icon}</span>
+                      {tab.label}
+                      {count > 0 && (
+                        <span
+                          className="font-mono"
+                          style={{
+                            fontSize: '9px',
+                            fontWeight: 700,
+                            padding: '1px 5px',
+                            borderRadius: '8px',
+                            background: isActive ? 'var(--accent-blue-dim)' : 'var(--bg-inset)',
+                            color: isActive ? 'var(--accent-blue)' : 'var(--text-tertiary)',
+                            marginLeft: '2px',
+                          }}
+                        >
+                          {count}
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            )
+          })()}
 
       {/* 6. Tab Content */}
       <div style={{ animation: 'fadeIn 0.15s ease-out' }}>
         {activeTab === 'overview' && (
           <div className="space-y-3">
+            {/* Onboarding guide — shown when pipeline has never run (cycle 0, no stages done) */}
+            {(() => {
+              const neverRun = !pipelineData?.cycle || pipelineData.cycle === 0
+              const noStageDone = !pipelineData?.stages || !Object.values(pipelineData.stages).some((s: any) => s?.status === 'done')
+              if (neverRun && noStageDone) {
+                return (
+                  <div style={{
+                    ...glassCardStyle({ padding: '24px 28px' }),
+                    animation: 'fadeIn 0.3s ease-out',
+                    background: 'linear-gradient(135deg, var(--glass-bg) 0%, color-mix(in srgb, var(--accent-blue) 3%, var(--glass-bg)) 100%)',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+                      <span style={{ fontSize: '28px', lineHeight: 1, flexShrink: 0, animation: 'float 3s ease-in-out infinite' }}>{registryEmpty ? '🗃️' : '🧪'}</span>
+                      <div style={{ flex: 1 }}>
+                        <div className="testlab-display" style={{ fontSize: '15px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '4px', letterSpacing: '-0.3px' }}>
+                          {registryEmpty ? 'Registry cleared — ready for first scan' : 'No test data yet'}
+                        </div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '14px' }}>
+                          Get started with the test pipeline in three steps:
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          {[
+                            { step: '1', icon: '▶️', text: 'Run /test-supervisor run', desc: 'or click the Start button above' },
+                            { step: '2', icon: '🔍', text: 'Watch pipeline progress', desc: 'SCAN → GENERATE → TEST → VALIDATE → FIX → VERIFY' },
+                            { step: '3', icon: '🗺️', text: 'Review Feature Map', desc: 'coverage and freshness for every feature' },
+                          ].map((item, idx) => (
+                            <div key={item.step} style={{
+                              display: 'flex', alignItems: 'center', gap: '12px',
+                              padding: '10px 14px', borderRadius: '10px',
+                              background: 'var(--bg-inset)', border: '1px solid var(--border-subtle)',
+                              animation: `fadeInStagger 0.3s ease-out ${0.1 + idx * 0.08}s both`,
+                              transition: 'border-color 0.2s, background 0.2s',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--accent-blue) 25%, transparent)'
+                              e.currentTarget.style.background = 'color-mix(in srgb, var(--accent-blue) 4%, var(--bg-inset))'
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.borderColor = 'var(--border-subtle)'
+                              e.currentTarget.style.background = 'var(--bg-inset)'
+                            }}
+                            >
+                              <span style={{
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                width: '22px', height: '22px', borderRadius: '50%',
+                                background: 'var(--accent-blue-dim)', color: 'var(--accent-blue)',
+                                fontSize: '11px', fontWeight: 800, fontFamily: 'var(--font-mono)', flexShrink: 0,
+                              }}>{item.step}</span>
+                              <div>
+                                <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                                  {item.icon} {item.text}
+                                </span>
+                                <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginLeft: '8px' }}>
+                                  {item.desc}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              }
+              return null
+            })()}
             <ActivityStream />
             <QueuesPanel queuesData={queuesData} registry={reg} />
           </div>
-        )}
-
-        {activeTab === 'story' && (
-          <StoryNarrative />
         )}
 
         {activeTab === 'discoveries' && (
@@ -1874,13 +1865,11 @@ export default function TestLab() {
           <TrendChart trends={trends || []} />
         )}
 
-        {activeTab === 'evolution' && (
-          <EvolutionTimeline />
-        )}
-
         {activeTab === 'feature-map' && (
           <FeatureMapPanel />
         )}
+      </div>
+        </div>
       </div>
     </div>
   )
