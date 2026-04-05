@@ -25,45 +25,43 @@ function eventFingerprint(event: ActivityEvent): string | null {
 
   switch (event.type) {
     case 'state-updated': {
-      // Deduplicate if same phase + same queue counts + same round
-      const q = d.queues as Record<string, number> | undefined
-      const qStr = q ? `${q.test},${q.fix},${q.verify},${q.regression}` : ''
-      return `state:${d.phase || ''}:${d.round ?? ''}:${qStr}`
+      // Unified stage fingerprint — dedups with pipeline-updated too
+      const phase = (d.phase as string || '').toUpperCase()
+      return `stage:${phase}:${d.round ?? ''}`
     }
     case 'pipeline-updated': {
-      // Deduplicate if same stage + same cycle
-      return `pipeline:${d.currentStage || ''}:${d.cycle ?? ''}`
+      // Same unified fingerprint as state-updated
+      const stage = (d.currentStage as string || '').toUpperCase()
+      return `stage:${stage}:${d.cycle ?? ''}`
     }
     case 'discoveries-updated':
     case 'evolution-updated':
-      // These are rare; deduplicate consecutive identical ones
       return `${event.type}`
     case 'runner-changed': {
-      // Deduplicate rapid-fire runner status changes (API broadcast + file-watcher)
       const status = d.status || event.action || ''
       return `runner:${status}`
     }
     default:
-      // result-updated, self-heal, learning, strategy, connection
-      // — never deduplicate these (each occurrence is meaningful)
       return null
   }
 }
 
 /**
- * Check if a new event is a duplicate of the last event in the list.
- * Returns true if the event should be skipped.
+ * Check if a new event is a duplicate of ANY recent event (last 3).
  */
 export function isDuplicateEvent(newEvent: ActivityEvent, prevEvents: ActivityEvent[]): boolean {
   if (prevEvents.length === 0) return false
 
   const newFp = eventFingerprint(newEvent)
-  if (newFp === null) return false // never-dedup types
+  if (newFp === null) return false
 
-  const last = prevEvents[prevEvents.length - 1]
-  const lastFp = eventFingerprint(last)
-
-  return newFp === lastFp
+  // Check last 3 events (not just last one) to catch interleaved duplicates
+  const recentCount = Math.min(3, prevEvents.length)
+  for (let i = prevEvents.length - 1; i >= prevEvents.length - recentCount; i--) {
+    const fp = eventFingerprint(prevEvents[i])
+    if (fp === newFp) return true
+  }
+  return false
 }
 
 /**
