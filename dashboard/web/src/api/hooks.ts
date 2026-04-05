@@ -829,7 +829,7 @@ export function useTestStats() {
       }
     },
     staleTime: 3_000,
-    refetchInterval: 15_000,
+    refetchInterval: 5_000,
     retry: (failureCount, error: any) => {
       if (error?.status === 404) return false
       return failureCount < 3

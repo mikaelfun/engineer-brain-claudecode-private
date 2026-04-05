@@ -1068,7 +1068,7 @@ function ReasoningNarrative({ supervisorData }: { supervisorData: any }) {
 
 // ============ Current Test Panel ============
 
-function CurrentTestPanel({ pipelineData, queuesData }: { pipelineData: any; queuesData: any }) {
+function CurrentTestPanel({ pipelineData, queuesData, statsData }: { pipelineData: any; queuesData: any; statsData: any }) {
   const currentTest = pipelineData?.currentTest || pipelineData?.stageProgress?.testId || ''
   const progress = pipelineData?.stageProgress || null
   const currentStage = (pipelineData?.currentStage || '').toUpperCase()
@@ -1185,6 +1185,27 @@ function CurrentTestPanel({ pipelineData, queuesData }: { pipelineData: any; que
                 ))}
               </div>
             )}
+            {/* Cycle results — mini scoreboard */}
+            {(() => {
+              const cs = statsData?.cycleStats || {}
+              const hasResults = (cs.passed || 0) + (cs.failed || 0) + (cs.fixed || 0) + (cs.skipped || 0) > 0
+              if (!hasResults) return null
+              return (
+                <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '6px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  {[
+                    { label: 'pass', value: cs.passed || 0, color: 'var(--accent-green)' },
+                    { label: 'fail', value: cs.failed || 0, color: 'var(--accent-red)' },
+                    { label: 'fix', value: cs.fixed || 0, color: 'var(--accent-amber)' },
+                    { label: 'skip', value: cs.skipped || 0, color: 'var(--text-tertiary)' },
+                  ].filter(s => s.value > 0).map(s => (
+                    <div key={s.label} className="flex items-center gap-1 text-[10px]">
+                      <span style={{ fontWeight: 700, color: s.color, fontFamily: 'var(--font-mono)' }}>{s.value}</span>
+                      <span style={{ color: 'var(--text-tertiary)' }}>{s.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )
+            })()}
           </div>
         ) : (
           <span className="text-[10px]" style={{ color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
@@ -2390,7 +2411,7 @@ export default function TestLab() {
               <ReasoningNarrative supervisorData={supervisorData} />
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <QueuesPanel queuesData={queuesData} registry={reg} />
-                <CurrentTestPanel pipelineData={pipelineData} queuesData={queuesData} />
+                <CurrentTestPanel pipelineData={pipelineData} queuesData={queuesData} statsData={statsData} />
               </div>
             </div>
             {/* Row 2: Stage Progress (primary) + Activity Log (secondary) */}
