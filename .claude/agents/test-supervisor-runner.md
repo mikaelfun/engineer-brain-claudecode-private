@@ -194,6 +194,14 @@ echo '{"reasoning":{"observe":"<one-line observation summary, e.g. Health OK, cy
 
 ### Step 2: Diagnose (Strategic Review)
 
+**🔴 Fast-path for early cycles**: If cycle ≤ 5 AND (coverage = 0% OR no completed test results exist), skip all of Step 2 and go directly to Step 3. Write minimal reasoning:
+```bash
+echo '{"step":"diagnose","reasoning":{"diagnose":"Fast-path: early cycle, no trend data yet. Direct to TEST."}}' | bash tests/executors/state-writer.sh --target supervisor --merge
+```
+This avoids reading trend-analyzer, recipes, scan-strategies, and fix histories when there's nothing to analyze — saving significant context for the actual test execution.
+
+**Full diagnose** (cycle > 5 OR coverage > 0%):
+
 运行 trend-analyzer.sh 获取趋势数据（含预计算结论）：
 
 ```bash
