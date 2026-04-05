@@ -1257,11 +1257,12 @@ function getStageContext(stage: string, queuesData: any, progress: any): { icon:
 // ============ Stage Progress Panel ============
 // Replaces generic Activity Stream with stage-aware progress display
 
-function StageProgressPanel({ pipelineData }: { pipelineData: any }) {
+function StageProgressPanel({ pipelineData, queuesData }: { pipelineData: any; queuesData: any }) {
   const stages = pipelineData?.stages || {}
   const currentStage = (pipelineData?.currentStage || '').toUpperCase()
   const stageProgress = pipelineData?.stageProgress || null
   const currentTest = pipelineData?.currentTest || ''
+  const [expandedStage, setExpandedStage] = useState<string | null>(null)
 
   // Build timeline: completed stages + current progress
   const completedStages = STAGES.filter(s => {
@@ -1297,31 +1298,100 @@ function StageProgressPanel({ pipelineData }: { pipelineData: any }) {
           </div>
         )}
 
-        {/* Completed stages — summary lines */}
+        {/* Completed stages — clickable summary lines */}
         {completedStages.map(stage => {
           const d = stages[stage]
           const color = stageColorOf(stage)
           const duration = d.duration_ms ? `${(d.duration_ms / 1000).toFixed(1)}s` : ''
+          const isExpanded = expandedStage === stage
+          // Determine if this stage has expandable details
+          const hasDetails = stage === 'TEST' || stage === 'VALIDATE' || stage === 'FIX'
           return (
-            <div key={stage} className="flex items-center gap-2 px-4 py-1.5" style={{
-              borderBottom: '1px solid var(--border-subtle)',
-              animation: 'fadeIn 0.2s ease-out',
-            }}>
-              <span style={{ color: d.status === 'interrupted' ? 'var(--accent-amber)' : 'var(--accent-green)', fontSize: '10px', width: '14px', textAlign: 'center' }}>{d.status === 'interrupted' ? '⚠' : '✓'}</span>
-              <span style={{
-                fontSize: '9px', fontWeight: 700, padding: '1px 5px', borderRadius: '4px',
-                color, background: `color-mix(in srgb, ${color} 12%, transparent)`,
-                width: '48px', textAlign: 'center',
-              }}>
-                {stage}
-              </span>
-              <span style={{ color: 'var(--text-secondary)', flex: 1 }}>
-                {d.summary || 'Done'}
-              </span>
-              {duration && (
-                <span style={{ color: 'var(--text-tertiary)', fontSize: '10px', flexShrink: 0 }}>
-                  {duration}
+            <div key={stage}>
+              <div
+                className="flex items-center gap-2 px-4 py-1.5"
+                style={{
+                  borderBottom: isExpanded ? 'none' : '1px solid var(--border-subtle)',
+                  animation: 'fadeIn 0.2s ease-out',
+                  cursor: hasDetails ? 'pointer' : 'default',
+                }}
+                onClick={() => hasDetails && setExpandedStage(isExpanded ? null : stage)}
+              >
+                <span style={{ color: d.status === 'interrupted' ? 'var(--accent-amber)' : 'var(--accent-green)', fontSize: '10px', width: '14px', textAlign: 'center' }}>{d.status === 'interrupted' ? '⚠' : '✓'}</span>
+                <span style={{
+                  fontSize: '9px', fontWeight: 700, padding: '1px 5px', borderRadius: '4px',
+                  color, background: `color-mix(in srgb, ${color} 12%, transparent)`,
+                  width: '48px', textAlign: 'center',
+                }}>
+                  {stage}
                 </span>
+                <span style={{ color: 'var(--text-secondary)', flex: 1 }}>
+                  {d.summary || 'Done'}
+                </span>
+                {duration && (
+                  <span style={{ color: 'var(--text-tertiary)', fontSize: '10px', flexShrink: 0 }}>
+                    {duration}
+                  </span>
+                )}
+                {hasDetails && (
+                  <span style={{ color: 'var(--text-tertiary)', fontSize: '9px', flexShrink: 0 }}>{isExpanded ? '▾' : '▸'}</span>
+                )}
+              </div>
+              {/* Expanded: show queue items for this stage */}
+              {isExpanded && (
+                <div style={{
+                  padding: '4px 16px 8px 74px',
+                  borderBottom: '1px solid var(--border-subtle)',
+                  background: 'var(--bg-inset)',
+                  animation: 'fadeIn 0.15s ease-out',
+                  fontSize: '10px',
+                  fontFamily: 'var(--font-mono)',
+                }}>
+                  {stage === 'TEST' && (() => {
+                    const fq = queuesData?.fixQueue || []
+                    const skipReg = queuesData?.skipRegistry
+                    const skipped = Array.isArray(skipReg) ? skipReg : Object.entries(skipReg || {}).map(([k,v]) => ({ testId: k, reason: String(v) }))
+                    return (
+                      <>
+                        {fq.length > 0 && (
+                          <div style={{ marginBottom: '4px' }}>
+                            <span style={{ color: 'var(--accent-red)', fontWeight: 700 }}>Failed ({fq.length}):</span>
+                            {fq.map((item: any) => (
+                              <div key={item.testId} style={{ color: 'var(--text-secondary)', paddingLeft: '8px', padding: '1px 0' }}>
+                                <span style={{ color: 'var(--accent-red)' }}>✗</span> {item.testId}
+                                {item.failReason && <span style={{ color: 'var(--text-tertiary)', marginLeft: '6px' }}>— {String(item.failReason).slice(0, 60)}</span>}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {skipped.length > 0 && (
+                          <div>
+                            <span style={{ color: 'var(--text-tertiary)', fontWeight: 700 }}>Skipped ({skipped.length}):</span>
+                            {skipped.slice(0, 5).map((item: any) => (
+                              <div key={item.testId} style={{ color: 'var(--text-tertiary)', paddingLeft: '8px', padding: '1px 0' }}>
+                                ⏭ {item.testId} {item.reason && `— ${String(item.reason).slice(0, 50)}`}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {fq.length === 0 && skipped.length === 0 && (
+                          <span style={{ color: 'var(--accent-green)' }}>All tests passed ✓</span>
+                        )}
+                      </>
+                    )
+                  })()}
+                  {(stage === 'VALIDATE' || stage === 'FIX') && (() => {
+                    const fq = queuesData?.fixQueue || []
+                    const vq = queuesData?.verifyQueue || []
+                    return (
+                      <>
+                        {fq.length > 0 && <div style={{ color: 'var(--accent-amber)' }}>Fix queue: {fq.map((i:any) => i.testId).join(', ')}</div>}
+                        {vq.length > 0 && <div style={{ color: 'var(--accent-green)' }}>Verify queue: {vq.map((i:any) => i.testId).join(', ')}</div>}
+                        {fq.length === 0 && vq.length === 0 && <span style={{ color: 'var(--text-tertiary)' }}>No items in queues</span>}
+                      </>
+                    )
+                  })()}
+                </div>
               )}
             </div>
           )
@@ -2416,7 +2486,7 @@ export default function TestLab() {
             </div>
             {/* Row 2: Stage Progress (primary) + Activity Log (secondary) */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', alignItems: 'start' }}>
-              <StageProgressPanel pipelineData={pipelineData} />
+              <StageProgressPanel pipelineData={pipelineData} queuesData={queuesData} />
               <ActivityStream />
             </div>
           </div>
