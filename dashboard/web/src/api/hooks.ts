@@ -444,7 +444,7 @@ const EMPTY_ACTIVE_SET = new Set<string>()
 
 export function useStartPatrol() {
   return useMutation({
-    mutationFn: () => apiPost<{ status: string }>('/patrol'),
+    mutationFn: (force?: boolean) => apiPost<{ status: string }>('/patrol', { force: force ?? true }),
   })
 }
 
@@ -767,8 +767,9 @@ export function useTestPipeline() {
         throw err
       }
     },
-    // No fixed polling — SSE invalidation drives refetch
+    // SSE invalidation is primary; polling is fallback when SSE disconnects
     staleTime: 10_000,
+    refetchInterval: 10_000,
     retry: (failureCount, error: any) => {
       if (error?.status === 404) return false
       return failureCount < 3
@@ -788,6 +789,7 @@ export function useTestSupervisor() {
       }
     },
     staleTime: 10_000,
+    refetchInterval: 10_000,
     retry: (failureCount, error: any) => {
       if (error?.status === 404) return false
       return failureCount < 3
@@ -807,6 +809,7 @@ export function useTestQueues() {
       }
     },
     staleTime: 10_000,
+    refetchInterval: 15_000,
     retry: (failureCount, error: any) => {
       if (error?.status === 404) return false
       return failureCount < 3
@@ -826,6 +829,7 @@ export function useTestStats() {
       }
     },
     staleTime: 10_000,
+    refetchInterval: 15_000,
     retry: (failureCount, error: any) => {
       if (error?.status === 404) return false
       return failureCount < 3
@@ -970,6 +974,26 @@ export function useTestStory() {
       }
     },
     staleTime: 30_000,
+    retry: (failureCount, error: any) => {
+      if (error?.status === 404) return false
+      return failureCount < 3
+    },
+  })
+}
+
+export function useFeatureMap() {
+  return useQuery({
+    queryKey: ['tests', 'feature-map'],
+    queryFn: async () => {
+      try {
+        return await apiGet<any>('/tests/feature-map')
+      } catch (err: any) {
+        if (err?.status === 404) return null
+        throw err
+      }
+    },
+    staleTime: 30_000,
+    refetchInterval: 60_000,
     retry: (failureCount, error: any) => {
       if (error?.status === 404) return false
       return failureCount < 3

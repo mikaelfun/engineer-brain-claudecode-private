@@ -4,7 +4,7 @@
  * V3 Design:
  * 1. TestLabHeader — cycle info + stage badge + elapsed + supervisor status badge + controls
  * 2. SelfHealBanner — amber alert, only shown when self-heal event exists
- * 3. StagePipeline — horizontal 5-stage flow (SCAN -> GENERATE -> TEST -> FIX -> VERIFY)
+ * 3. StagePipeline — horizontal 6-stage flow (SCAN -> GENERATE -> TEST -> VALIDATE -> FIX -> VERIFY)
  * 4. StatsBar — compact inline cumulative + cycle stats
  * 5. Tab content: Overview (Activity + Queues), Discoveries, Trends, Evolution
  */
@@ -25,6 +25,7 @@ import {
   useTestQueues,
   useTestStats,
   useTestStory,
+  useFeatureMap,
 } from '../api/hooks'
 import { Card, CardHeader } from '../components/common/Card'
 import { Badge } from '../components/common/Badge'
@@ -42,11 +43,12 @@ const STAGE_COLORS: Record<string, string> = {
   SCAN: 'var(--accent-blue)',
   GENERATE: 'var(--accent-purple)',
   TEST: 'var(--accent-amber)',
+  VALIDATE: 'var(--accent-cyan, #22d3ee)',
   FIX: 'var(--accent-red)',
   VERIFY: 'var(--accent-green)',
 }
 
-const STAGES = ['SCAN', 'GENERATE', 'TEST', 'FIX', 'VERIFY'] as const
+const STAGES = ['SCAN', 'GENERATE', 'TEST', 'VALIDATE', 'FIX', 'VERIFY'] as const
 
 function stageColorOf(stage?: string): string {
   if (!stage) return 'var(--text-tertiary)'
@@ -57,6 +59,7 @@ const STAGE_ICONS: Record<string, string> = {
   SCAN: '\uD83D\uDD0D',
   GENERATE: '\u2699\uFE0F',
   TEST: '\uD83E\uDDEA',
+  VALIDATE: '\uD83D\uDCCB',
   FIX: '\uD83D\uDD27',
   VERIFY: '\u2705',
 }
@@ -564,6 +567,9 @@ function StagePipeline({ pipelineData }: { pipelineData: any }) {
             } else if (stage === 'TEST') {
               glowVars['--glow-color'] = 'rgba(212,164,74,0.16)'
               glowVars['--glow-far'] = 'rgba(212,164,74,0.06)'
+            } else if (stage === 'VALIDATE') {
+              glowVars['--glow-color'] = 'rgba(34,211,238,0.16)'
+              glowVars['--glow-far'] = 'rgba(34,211,238,0.06)'
             } else {
               glowVars['--glow-color'] = 'rgba(107,163,232,0.16)'
               glowVars['--glow-far'] = 'rgba(107,163,232,0.06)'
@@ -684,12 +690,12 @@ function StagePipeline({ pipelineData }: { pipelineData: any }) {
                       background: `linear-gradient(90deg, var(--accent-green), rgba(92,191,138,0.25))`,
                       boxShadow: '0 0 10px rgba(92,191,138,0.12)',
                     } : connectorFlowing ? {
-                      background: stage === 'FIX' || stage === 'TEST'
+                      background: stage === 'FIX' || stage === 'TEST' || stage === 'VALIDATE'
                         ? 'linear-gradient(90deg, rgba(212,164,74,0.2), var(--accent-amber), rgba(212,164,74,0.2))'
                         : 'linear-gradient(90deg, rgba(107,163,232,0.2), var(--accent-blue), rgba(107,163,232,0.2))',
                       backgroundSize: '200% 100%',
                       animation: 'connector-flow 1.6s linear infinite',
-                      boxShadow: stage === 'FIX' || stage === 'TEST'
+                      boxShadow: stage === 'FIX' || stage === 'TEST' || stage === 'VALIDATE'
                         ? '0 0 10px rgba(212,164,74,0.08)'
                         : '0 0 10px rgba(107,163,232,0.08)',
                     } : {
@@ -1581,20 +1587,16 @@ const FRESHNESS_COLORS: Record<string, { bg: string; text: string; label: string
 }
 
 function FeatureMapPanel() {
-  const [data, setData] = useState<FeatureMapData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { data, isLoading, error } = useFeatureMap()
 
-  useEffect(() => {
-    setLoading(true)
-    apiGet<FeatureMapData>('/tests/feature-map')
-      .then(d => { setData(d); setError(null) })
-      .catch(err => setError(err.message || 'Failed to load feature map'))
-      .finally(() => setLoading(false))
-  }, [])
-
-  if (loading) return <Loading text="Loading feature map..." />
-  if (error || !data) return <EmptyState icon="\uD83D\uDDFA\uFE0F" title="No feature map" description={error || 'Run feature-map generation first'} />
+  if (isLoading) return <Loading text="Loading feature map..." />
+  if (error || !data) return (
+    <EmptyState
+      icon="\uD83D\uDDFA\uFE0F"
+      title="No feature map"
+      description={(error as any)?.message || 'Run feature-map generation first. Use /test-supervisor to scan features.'}
+    />
+  )
 
   const features = Object.entries(data.features)
   const { summary } = data
@@ -1706,8 +1708,9 @@ function FeatureMapPanel() {
               })}
               {features.length === 0 && (
                 <tr>
-                  <td colSpan={4} style={{ padding: '24px', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: '11px' }}>
-                    No features mapped yet
+                  <td colSpan={4} style={{ padding: '32px', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: '12px' }}>
+                    <div style={{ marginBottom: '4px' }}>🗺️ No features mapped yet</div>
+                    <div style={{ fontSize: '10px' }}>Run a scan cycle to populate the feature map</div>
                   </td>
                 </tr>
               )}
@@ -1791,15 +1794,21 @@ export default function TestLab() {
 
   if (stateLoading && !pipeline) return <Loading text="Loading test state..." />
 
+  // Determine if registry is empty (cleared)
+  const registryEmpty = reg && Object.keys(reg).length === 0
+
   // Show header + empty state when no data at all
   if (!state && !pipeline) {
     return (
       <div className="space-y-3">
         <TestLabHeader pipelineData={null} supervisorData={null} />
         <EmptyState
-          icon="\uD83E\uDDEA"
-          title="No test data yet"
-          description="Click Start in the header above or run /test-supervisor to begin testing"
+          icon={registryEmpty ? '\uD83D\uDDC3\uFE0F' : '\uD83E\uDDEA'}
+          title={registryEmpty ? 'Registry cleared — ready for fresh scan' : 'No test data yet'}
+          description={registryEmpty
+            ? 'Test registry has been reset. Click Start above or run /test-supervisor to scan and generate new tests.'
+            : 'Click Start in the header above or run /test-supervisor to begin testing'
+          }
         />
       </div>
     )
@@ -1813,7 +1822,7 @@ export default function TestLab() {
       {/* 2. Self-heal banner — only shown when event exists */}
       <SelfHealBanner selfHealEvent={supervisorData?.selfHealEvent} />
 
-      {/* 3. Stage Pipeline — 5-stage horizontal flow */}
+      {/* 3. Stage Pipeline — 6-stage horizontal flow */}
       <StagePipeline pipelineData={pipelineData} />
 
       {/* 4. Stats Bar — compact inline */}
