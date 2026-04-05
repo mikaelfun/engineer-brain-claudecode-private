@@ -330,17 +330,19 @@ function TestLabHeader({ pipelineData, supervisorData }: { pipelineData: any; su
           </span>
 
           {/* Stage badge */}
-          {currentStage ? (
+          {currentStage && currentStage !== 'COMPLETE' ? (
             <span
               className="text-[10px] font-bold font-mono px-2.5 py-1 rounded"
               style={{
-                color: stageColor,
-                background: `color-mix(in srgb, ${stageColor} 15%, transparent)`,
-                border: `1px solid color-mix(in srgb, ${stageColor} 30%, transparent)`,
+                color: isActive ? stageColor : 'var(--text-tertiary)',
+                background: isActive
+                  ? `color-mix(in srgb, ${stageColor} 15%, transparent)`
+                  : 'var(--bg-inset)',
+                border: `1px solid ${isActive ? `color-mix(in srgb, ${stageColor} 30%, transparent)` : 'var(--border-subtle)'}`,
                 whiteSpace: 'nowrap',
               }}
             >
-              {STAGE_ICONS[currentStage.toUpperCase()] || ''} {currentStage.toUpperCase()}
+              {isActive ? `${STAGE_ICONS[currentStage.toUpperCase()] || ''} ${currentStage.toUpperCase()}` : `next → ${currentStage.toUpperCase()}`}
             </span>
           ) : (
             <span className="text-[10px] font-mono px-2 py-1 rounded" style={{ color: 'var(--text-tertiary)', background: 'var(--bg-inset)' }}>
@@ -1109,7 +1111,8 @@ function StageProgressPanel({ pipelineData }: { pipelineData: any }) {
     const d = stages[s]
     return d && (d.status === 'done' || d.status === 'completed')
   })
-  const isActive = STAGES.some(s => s === currentStage && stages[s]?.status !== 'done')
+  const isActive = STAGES.some(s => s === currentStage && (stages[s]?.status === 'running' || stages[s]?.status === 'in-progress'))
+  const pipelineIdle = pipelineData?.pipelineStatus === 'idle' || !pipelineData?.pipelineStatus
 
   return (
     <div style={{
@@ -1229,6 +1232,23 @@ function StageProgressPanel({ pipelineData }: { pipelineData: any }) {
                 Generating test YAMLs from discovered gaps…
               </div>
             )}
+          </div>
+        )}
+
+        {/* Idle with pending next stage */}
+        {!isActive && pipelineIdle && currentStage && currentStage !== 'COMPLETE' && completedStages.length > 0 && (
+          <div style={{
+            padding: '8px 14px',
+            borderLeft: '3px solid var(--border-subtle)',
+            display: 'flex', alignItems: 'center', gap: '8px',
+          }}>
+            <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>💤</span>
+            <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>
+              Paused — next stage: <strong style={{ color: 'var(--text-secondary)' }}>{currentStage}</strong>
+            </span>
+            <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', marginLeft: 'auto' }}>
+              Click Start to continue
+            </span>
           </div>
         )}
       </div>
