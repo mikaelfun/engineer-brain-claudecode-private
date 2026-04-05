@@ -592,15 +592,18 @@ function StagePipeline({ pipelineData }: { pipelineData: any }) {
   const stages = pipelineData?.stages || {}
   const currentStage = (pipelineData?.currentStage || '').toUpperCase()
   const currentTest = pipelineData?.currentTest || ''
+  const pipelineRunning = pipelineData?.pipelineStatus === 'running'
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
       {STAGES.map((stage, i) => {
         const stageData = stages[stage] || {}
-        const status = stageData.status || (stage === currentStage ? 'running' : 'pending')
+        // Only treat as running if pipeline is actually running AND this is the current stage
+        const status = stageData.status || (stage === currentStage && pipelineRunning ? 'running' : 'pending')
         const isDone = status === 'done' || status === 'completed'
-        const isActive = status === 'running' || status === 'in-progress' || stage === currentStage
-        const isPending = !isDone && !isActive
+        const isActive = (status === 'running' || status === 'in-progress') && pipelineRunning
+        const isNext = !isDone && !isActive && stage === currentStage && !pipelineRunning
+        const isPending = !isDone && !isActive && !isNext
         const stageCol = stageColorOf(stage)
         const summary = stageData.summary || ''
 
@@ -630,13 +633,14 @@ function StagePipeline({ pipelineData }: { pipelineData: any }) {
                 gap: '8px',
                 padding: '8px 10px',
                 borderRadius: '10px',
-                border: `1px solid ${isDone ? 'rgba(92,191,138,0.12)' : isActive ? `color-mix(in srgb, ${stageCol} 25%, transparent)` : 'var(--border-subtle)'}`,
+                border: `1px solid ${isDone ? 'rgba(92,191,138,0.12)' : isActive ? `color-mix(in srgb, ${stageCol} 25%, transparent)` : isNext ? `color-mix(in srgb, ${stageCol} 15%, transparent)` : 'var(--border-subtle)'}`,
                 background: isDone ? 'rgba(92,191,138,0.03)'
                   : isActive ? `linear-gradient(135deg, color-mix(in srgb, ${stageCol} 6%, transparent) 0%, var(--bg-inset) 100%)`
+                  : isNext ? `color-mix(in srgb, ${stageCol} 3%, var(--bg-inset))`
                   : 'var(--bg-inset)',
                 transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                 animation: isActive && !isDone ? 'stage-glow 2.8s ease-in-out infinite' : 'none',
-                opacity: isPending ? 0.4 : 1,
+                opacity: isPending ? 0.4 : isNext ? 0.7 : 1,
                 ...glowVars as any,
               }}
               title={summary || `${stage}: ${status}`}
@@ -658,7 +662,7 @@ function StagePipeline({ pipelineData }: { pipelineData: any }) {
                   fontWeight: 700,
                   letterSpacing: '0.5px',
                   textTransform: 'uppercase' as const,
-                  color: isDone ? 'var(--text-secondary)' : isActive ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                  color: isDone ? 'var(--text-secondary)' : isActive ? 'var(--text-primary)' : isNext ? stageCol : 'var(--text-tertiary)',
                   whiteSpace: 'nowrap',
                 }}>
                   {stage}
@@ -689,6 +693,7 @@ function StagePipeline({ pipelineData }: { pipelineData: any }) {
                     animation: 'spin 0.75s linear infinite',
                   }} />
                 )}
+                {isNext && <span style={{ color: stageCol, fontSize: '10px' }}>⏸</span>}
                 {isPending && <span style={{ color: 'var(--text-tertiary)', fontSize: '10px' }}>—</span>}
               </div>
             </div>
