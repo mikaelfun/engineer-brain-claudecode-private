@@ -926,13 +926,13 @@ function ReasoningNarrative({ supervisorData }: { supervisorData: any }) {
         onClick={() => setCollapsed(!collapsed)}
       >
         <div className="flex items-center gap-2">
-          <span style={{ fontSize: '14px' }}>{isActive ? '🧠' : '💤'}</span>
+          <span style={{ fontSize: '14px' }}>{isActive ? '🧠' : hasContent ? '📋' : '💤'}</span>
           <span className="text-[11px] font-bold testlab-display" style={{
             color: 'var(--text-primary)',
             letterSpacing: '0.06em',
             textTransform: 'uppercase' as const,
           }}>
-            Reasoning Narrative
+            Reasoning{!isActive && hasContent ? ' (last run)' : ''}
           </span>
           {isActive && currentStep && (
             <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded" style={{

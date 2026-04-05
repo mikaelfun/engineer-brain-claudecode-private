@@ -39,7 +39,7 @@ echo '{"status":"running","active":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","reasoning
 
 Step 5 完成后（返回摘要前），**必须清除**：
 ```bash
-echo '{"status":"idle","active":null,"step":null,"reasoning":{}}' | bash tests/executors/state-writer.sh --target supervisor --merge
+echo '{"status":"idle","active":null,"step":null}' | bash tests/executors/state-writer.sh --target supervisor --merge
 ```
 
 ## 执行步骤
