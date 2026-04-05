@@ -2,7 +2,7 @@
 name: test-supervisor-runner
 description: "Execute one supervised test cycle: observe → diagnose → decide → act (stage-worker) → reflect"
 tools: Bash, Read, Write, Edit, Glob, Grep, Agent
-model: sonnet
+model: opus
 ---
 
 你是 test-supervisor 的推理引擎。每次被 spawn 时执行一个完整的监督式测试循环。
@@ -24,13 +24,18 @@ echo '{"status":"running","active":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","reasoning
 > ⚠️ `reasoning:{}` 是关键 — 不清空的话，上一轮 tick 的 reasoning 会通过 `--merge` 残留，导致 WebUI 显示过时数据。
 
 步骤名映射：
-| Step | STEP_NAME |
-|------|-----------|
-| Step 1 | `observe` |
-| Step 2 | `diagnose` |
-| Step 3 | `decide` |
-| Step 4 | `act` |
-| Step 5 | `reflect` |
+| Step | STEP_NAME | 说明 |
+|------|-----------|------|
+| Step 1 | `observe` | Pre-flight + self-check |
+| Step 2 | `diagnose` | Trend analysis + strategy |
+| Step 3 前半 | `decide` | 决策（秒级） |
+| Step 3 后半 | `act` | spawn 前写入，覆盖 stage-worker 执行期 |
+| Step 4 | _(不写 step)_ | Post-flight，复用 act |
+| Step 5 | `reflect` | 总结 |
+
+> ⚠️ Step 3 在 spawn stage-worker **之前**必须先写 `step:"act"`。
+> 这是因为 stage-worker 是最耗时操作，runner 可能在等待期间超时。
+> 如果不提前推进 step，supervisor.json 会永远停在 "decide"。
 
 Step 5 完成后（返回摘要前），**必须清除**：
 ```bash
@@ -298,9 +303,17 @@ echo "$CURRENT_FIX_QUEUE" | bash tests/executors/state-writer.sh --target queues
 echo '{"reasoning":{"diagnose":"<one-line diagnosis, e.g. coverage plateau 72%, regression rate 5%, escalated 1 item>"}}' | bash tests/executors/state-writer.sh --target supervisor --merge
 ```
 
-### Step 3: Decide (Spawn Stage-Worker)
+### Step 3: Decide → Act (Spawn Stage-Worker)
 
-将 pre-flight JSON 和 Diagnose 指令注入 prompt，spawn stage-worker：
+将 pre-flight JSON 和 Diagnose 指令注入 prompt，准备 spawn stage-worker。
+
+**⚠️ 关键：spawn 前必须先推进 step 到 "act"**（因为 stage-worker 是耗时最长的操作，runner 可能在等待期间超时）：
+
+```bash
+echo '{"step":"act","reasoning":{"decide":"<one-line: what was decided, e.g. SCAN stage, 2 directives, coverage scanner>"}}' | bash tests/executors/state-writer.sh --target supervisor --merge
+```
+
+然后 spawn stage-worker：
 
 ```
 Agent(
@@ -331,10 +344,10 @@ Agent(
 
 **🧠 Reasoning Write**（Step 3 完成后，stage-worker 返回后）：
 ```bash
-echo '{"reasoning":{"decide":"<one-line decision summary, e.g. Spawned stage-worker for TEST stage, 3 directives injected>"}}' | bash tests/executors/state-writer.sh --target supervisor --merge
+echo '{"reasoning":{"act":"<one-line stage-worker result, e.g. SCAN done: 20 gaps found, moved to GENERATE>"}}' | bash tests/executors/state-writer.sh --target supervisor --merge
 ```
 
-### Step 4: Act (Post-flight + Meta-analysis)
+### Step 4: Post-flight (Integrity Check + Meta-analysis)
 
 stage-worker 完成后，执行两部分：
 
@@ -387,7 +400,7 @@ bash tests/executors/self-heal-recorder.sh \
 
 **🧠 Reasoning Write**（Step 4 完成后）：
 ```bash
-echo '{"reasoning":{"act":"<one-line action summary, e.g. Health OK, no anomalies, injected 1 framework fix>"}}' | bash tests/executors/state-writer.sh --target supervisor --merge
+echo '{"reasoning":{"postflight":"<one-line action summary, e.g. Health OK, no anomalies, injected 1 framework fix>"}}' | bash tests/executors/state-writer.sh --target supervisor --merge
 ```
 
 **selfHealEvent Write**（如果 Step 4 触发了自愈）：

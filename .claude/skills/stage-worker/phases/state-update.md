@@ -79,10 +79,14 @@ Read updated pipeline.json:
 
 1. currentStage = COMPLETE → go to Step 2.5 (return)
 2. next = SCAN or GENERATE → ⚡ continue (back to stage execution)
-3. next = TEST and testQueue.length ≤ 2 → ⚡ continue
-4. next = VERIFY and verifyQueue.length ≤ 2 → ⚡ continue (note: fixType=framework_fix items are auto-accepted without test execution, so VERIFY is fast for these)
-5. Otherwise (large queue TEST/FIX/VERIFY) → return summary
+3. next = TEST and testQueue.length ≤ 8 → ⚡ continue
+4. next = VALIDATE and fixQueue.length ≤ 8 → ⚡ continue
+5. next = FIX and fixQueue.length ≤ 5 → ⚡ continue (FIX spawns agents, each costs more context)
+6. next = VERIFY and verifyQueue.length ≤ 8 → ⚡ continue (note: fixType=framework_fix items are auto-accepted without test execution, so VERIFY is fast for these)
+7. Otherwise (large queue) → return summary with stopReason
 ```
+
+**Rationale**: supervisor overhead (observe→diagnose→decide) costs ~20% of each tick. Higher thresholds = fewer ticks = less waste. Opus model context supports processing 8 items per stage comfortably.
 
 **Before returning** (cases 1 and 5, i.e., when NOT continuing), mark pipeline idle **with reason**:
 ```bash
