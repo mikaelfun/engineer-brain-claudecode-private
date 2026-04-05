@@ -1609,7 +1609,29 @@ function DiscoveryTable({ discoveries, registry }: { discoveries: any; registry:
 // ============ Trend Chart (SVG) ============
 
 function TrendChart({ trends }: { trends: any[] }) {
-  if (!trends || trends.length < 2) return null
+  if (!trends || trends.length === 0) return (
+    <div style={glassCardStyle({ padding: '24px' })}>
+      <div className="flex flex-col items-center gap-2 py-4">
+        <span style={{ fontSize: '20px', opacity: 0.3 }}>📈</span>
+        <span className="text-[11px]" style={{ color: 'var(--text-tertiary)', fontStyle: 'italic' }}>No trend data yet — complete a full cycle to see trends</span>
+      </div>
+    </div>
+  )
+
+  if (trends.length < 2) return (
+    <div style={glassCardStyle({ padding: '16px' })}>
+      <div className="flex items-center gap-3 mb-3">
+        <span style={{ fontSize: '14px' }}>📈</span>
+        <span className="text-[12px] font-bold testlab-display" style={{ color: 'var(--text-primary)' }}>Trend Data</span>
+        <span className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>1 data point — need ≥2 cycles for chart</span>
+      </div>
+      <div style={{ background: 'var(--bg-inset)', borderRadius: '8px', padding: '10px 14px' }}>
+        <div className="font-mono text-[11px]" style={{ color: 'var(--text-secondary)' }}>
+          Cycle {trends[0]?.round || '?'}: {trends[0]?.stats?.passed || 0} passed, {trends[0]?.stats?.failed || 0} failed, {trends[0]?.stats?.fixed || 0} fixed
+        </div>
+      </div>
+    </div>
+  )
 
   const WIDTH = 600
   const HEIGHT = 160
