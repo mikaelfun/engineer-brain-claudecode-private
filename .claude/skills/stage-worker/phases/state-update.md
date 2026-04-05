@@ -75,15 +75,16 @@ No anomaly analysis, no recipe checks, no framework fix injection — those are 
 **After state update + circuit breaker**, decide whether to continue or return:
 
 ```
-Read updated pipeline.json:
+Read updated pipeline.json + queues.json:
 
 1. currentStage = COMPLETE → go to Step 2.5 (return)
 2. next = SCAN or GENERATE → ⚡ continue (back to stage execution)
-3. next = TEST and testQueue.length ≤ 8 → ⚡ continue
-4. next = VALIDATE and fixQueue.length ≤ 8 → ⚡ continue
-5. next = FIX and fixQueue.length ≤ 5 → ⚡ continue (FIX spawns agents, each costs more context)
-6. next = VERIFY and verifyQueue.length ≤ 8 → ⚡ continue (note: fixType=framework_fix items are auto-accepted without test execution, so VERIFY is fast for these)
-7. Otherwise (large queue) → return summary with stopReason
+3. **🔴 After SCAN: if gaps[] is non-empty, currentStage MUST be set to GENERATE and continue. Never skip GENERATE when there are unprocessed gaps.**
+4. next = TEST and testQueue.length ≤ 8 → ⚡ continue
+5. next = VALIDATE and fixQueue.length ≤ 8 → ⚡ continue
+6. next = FIX and fixQueue.length ≤ 5 → ⚡ continue (FIX spawns agents, each costs more context)
+7. next = VERIFY and verifyQueue.length ≤ 8 → ⚡ continue (note: fixType=framework_fix items are auto-accepted without test execution, so VERIFY is fast for these)
+8. Otherwise (large queue) → return summary with stopReason
 ```
 
 **Rationale**: supervisor overhead (observe→diagnose→decide) costs ~20% of each tick. Higher thresholds = fewer ticks = less waste. Opus model context supports processing 8 items per stage comfortably.

@@ -178,6 +178,8 @@ bash tests/executors/event-writer.sh \
 
 ### SCAN Decision
 
-- Has untested features → set currentStage=GENERATE, write gaps to pipeline.json
-- No gap + testQueue non-empty (recycled items) → currentStage=TEST
-- No gap + testQueue empty → record `{ action: "no_work" }`, cycle++, currentStage=SCAN
+**🔴 Read queues.json gaps[] array. This is the authoritative source — not your judgment of "coverage".**
+
+- `gaps.length > 0` → **MUST** set currentStage=GENERATE. Do NOT skip GENERATE. Do NOT decide "existing tests cover this". The GENERATE phase will decide what to generate.
+- `gaps.length === 0` + testQueue non-empty (recycled items) → currentStage=TEST
+- `gaps.length === 0` + testQueue empty → record `{ action: "no_work" }`, cycle++, currentStage=SCAN
