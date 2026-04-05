@@ -791,10 +791,10 @@ function QueuesPanel({ queuesData, registry }: { queuesData: any; registry: Reco
   const [expandedQueue, setExpandedQueue] = useState<string | null>(null)
 
   const queueDefs: { key: string; label: string; color: string }[] = [
-    { key: 'testQueue', label: 'Test Queue', color: 'var(--accent-blue)' },
-    { key: 'fixQueue', label: 'Fix Queue', color: 'var(--accent-amber)' },
-    { key: 'verifyQueue', label: 'Verify Queue', color: 'var(--accent-green)' },
-    { key: 'regressionQueue', label: 'Regression Queue', color: 'var(--accent-red)' },
+    { key: 'testQueue', label: 'TEST', color: 'var(--accent-blue)' },
+    { key: 'fixQueue', label: 'FIX', color: 'var(--accent-red)' },
+    { key: 'verifyQueue', label: 'VERIFY', color: 'var(--accent-green)' },
+    { key: 'regressionQueue', label: 'REGRESS', color: 'var(--accent-amber)' },
   ]
 
   // Filter to non-empty queues
@@ -810,110 +810,283 @@ function QueuesPanel({ queuesData, registry }: { queuesData: any; registry: Reco
 
   if (nonEmptyQueues.length === 0 && !gaps?.length && !inProgress?.length && !skipRegistry) {
     return (
-      <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-[11px]"
-        style={{ background: 'var(--accent-green-dim)', color: 'var(--accent-green)' }}>
-        <CheckCircle className="w-3.5 h-3.5" />
-        <span className="font-medium">All queues empty</span>
+      <div style={glassCardStyle({ padding: 0 })}>
+        <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: 'none' }}>
+          <span style={{ fontSize: '12px' }}>📦</span>
+          <span className="text-[11px] font-bold testlab-display" style={{ color: 'var(--text-primary)', letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>Queues</span>
+        </div>
+        <div className="flex items-center gap-2 px-3 py-3 justify-center">
+          <CheckCircle className="w-3.5 h-3.5" style={{ color: 'var(--accent-green)' }} />
+          <span className="text-[11px]" style={{ color: 'var(--text-tertiary)' }}>All queues empty</span>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-2">
-      {/* Standard queues */}
-      {nonEmptyQueues.map(q => {
-        const items = queuesData[q.key] || []
-        const isExpanded = expandedQueue === q.key
+    <div style={glassCardStyle({ padding: 0 })}>
+      <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+        <span style={{ fontSize: '12px' }}>📦</span>
+        <span className="text-[11px] font-bold testlab-display" style={{ color: 'var(--text-primary)', letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>Queues</span>
+      </div>
+      <div style={{ padding: '4px 0' }}>
+        {/* All queues — show even empty ones as dim */}
+        {queueDefs.map(q => {
+          const items = queuesData?.[q.key] || []
+          const count = Array.isArray(items) ? items.length : 0
+          const isExpanded = expandedQueue === q.key
 
-        return (
-          <div key={q.key} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px' }}>
-            <button
-              onClick={() => setExpandedQueue(isExpanded ? null : q.key)}
-              className="w-full flex items-center justify-between px-3 py-2 transition-all hover:opacity-90"
-              style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-[12px] font-bold" style={{ color: q.color }}>{q.label}</span>
-                <Badge variant="primary" size="xs">{items.length}</Badge>
-              </div>
-              {isExpanded ? (
-                <ChevronUp className="w-3.5 h-3.5" style={{ color: 'var(--text-tertiary)' }} />
-              ) : (
-                <ChevronDown className="w-3.5 h-3.5" style={{ color: 'var(--text-tertiary)' }} />
+          return (
+            <div key={q.key}>
+              <button
+                onClick={() => count > 0 ? setExpandedQueue(isExpanded ? null : q.key) : undefined}
+                className="w-full flex items-center gap-2 px-3 py-1.5 transition-all"
+                style={{
+                  background: 'transparent', border: 'none',
+                  cursor: count > 0 ? 'pointer' : 'default',
+                  opacity: count === 0 ? 0.4 : 1,
+                }}
+              >
+                {/* Color bar */}
+                <div style={{
+                  width: '3px', height: '16px', borderRadius: '2px',
+                  background: q.color, flexShrink: 0,
+                }} />
+                <span className="text-[11px] font-bold font-mono" style={{ color: count > 0 ? 'var(--text-primary)' : 'var(--text-tertiary)', flex: 1, textAlign: 'left' }}>
+                  {q.label}
+                </span>
+                {/* Count badge */}
+                {count > 0 && (
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    minWidth: '22px', height: '18px', borderRadius: '9px',
+                    fontSize: '10px', fontWeight: 700, fontFamily: 'var(--font-mono)',
+                    background: `color-mix(in srgb, ${q.color} 18%, transparent)`,
+                    color: q.color,
+                  }}>
+                    {count}
+                  </span>
+                )}
+              </button>
+              {/* Expanded items */}
+              {isExpanded && count > 0 && (
+                <div className="px-3 pb-2 space-y-1 max-h-[120px] overflow-y-auto" style={{ animation: 'fadeIn 0.12s ease-out', marginLeft: '12px' }}>
+                  {items.map((item: any, idx: number) => (
+                    <div key={item.testId || idx} className="text-[10px] font-mono px-2 py-0.5 rounded truncate"
+                      style={{ background: 'var(--bg-inset)', color: 'var(--text-secondary)' }}>
+                      {item.testId}
+                    </div>
+                  ))}
+                </div>
               )}
-            </button>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
 
-            {isExpanded && (
-              <div className="px-3 pb-2 space-y-1 max-h-[200px] overflow-y-auto" style={{ animation: 'fadeIn 0.15s ease-out' }}>
-                {items.map((item: any, idx: number) => {
-                  const entry = registry[item.testId]
-                  return (
-                    <div key={item.testId || idx}
-                      className="flex items-center gap-2 px-2 py-1 rounded text-[11px]"
-                      style={{ background: 'var(--bg-inset)' }}>
-                      <span className="font-mono font-bold truncate" style={{ color: 'var(--text-primary)' }} title={item.testId}>
-                        {item.testId}
-                      </span>
-                      {entry?.name && (
-                        <span className="text-[10px] truncate" style={{ color: 'var(--text-tertiary)' }} title={entry.name}>
-                          {entry.name}
-                        </span>
+// ============ Reasoning Narrative ============
+
+const REASONING_STEPS = [
+  { key: 'observe', icon: '👁', label: 'OBSERVE', color: 'var(--accent-blue)' },
+  { key: 'diagnose', icon: '🔬', label: 'DIAGNOSE', color: 'var(--accent-purple)' },
+  { key: 'decide', icon: '🧠', label: 'DECIDE', color: 'var(--accent-amber)' },
+  { key: 'act', icon: '⚡', label: 'ACT', color: 'var(--accent-green)' },
+  { key: 'reflect', icon: '💬', label: 'REFLECT', color: 'var(--accent-cyan, #5ec4d4)' },
+] as const
+
+function ReasoningNarrative({ supervisorData }: { supervisorData: any }) {
+  const [collapsed, setCollapsed] = useState(false)
+  const reasoning = supervisorData?.reasoning || {}
+  const currentStep = supervisorData?.step || null
+  const isActive = supervisorData?.status === 'running'
+  const hasContent = Object.keys(reasoning).length > 0
+
+  // Find the index of the current step for the progress line
+  const currentStepIdx = REASONING_STEPS.findIndex(s => s.key === currentStep)
+
+  return (
+    <div style={{
+      ...glassCardStyle({ padding: 0 }),
+      overflow: 'hidden',
+    }}>
+      {/* Header */}
+      <div
+        className="flex items-center justify-between px-4 py-2.5"
+        style={{ borderBottom: '1px solid var(--border-subtle)', cursor: 'pointer' }}
+        onClick={() => setCollapsed(!collapsed)}
+      >
+        <div className="flex items-center gap-2">
+          <span style={{ fontSize: '14px' }}>{isActive ? '🧠' : '💤'}</span>
+          <span className="text-[11px] font-bold testlab-display" style={{
+            color: 'var(--text-primary)',
+            letterSpacing: '0.06em',
+            textTransform: 'uppercase' as const,
+          }}>
+            Reasoning Narrative
+          </span>
+          {isActive && currentStep && (
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded" style={{
+              color: REASONING_STEPS[currentStepIdx]?.color || 'var(--text-tertiary)',
+              background: `color-mix(in srgb, ${REASONING_STEPS[currentStepIdx]?.color || 'var(--text-tertiary)'} 12%, transparent)`,
+            }}>
+              {currentStep}
+            </span>
+          )}
+        </div>
+        <span className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
+          {collapsed ? 'expand' : 'collapse'}
+        </span>
+      </div>
+
+      {/* Content */}
+      {!collapsed && (
+        <div style={{ padding: '12px 16px', position: 'relative' }}>
+          {!hasContent && !isActive ? (
+            <div className="flex items-center gap-3 py-4" style={{ justifyContent: 'center' }}>
+              <span style={{ fontSize: '16px', opacity: 0.3 }}>🧠</span>
+              <span className="text-[11px]" style={{ color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
+                Waiting for supervisor to start reasoning…
+              </span>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', position: 'relative' }}>
+              {/* Vertical progress line */}
+              <div style={{
+                position: 'absolute',
+                left: '9px',
+                top: '12px',
+                bottom: '12px',
+                width: '2px',
+                background: 'var(--border-subtle)',
+                borderRadius: '1px',
+              }} />
+              {/* Progress fill */}
+              {currentStepIdx >= 0 && (
+                <div style={{
+                  position: 'absolute',
+                  left: '9px',
+                  top: '12px',
+                  height: `${Math.min(100, ((currentStepIdx + 1) / REASONING_STEPS.length) * 100)}%`,
+                  width: '2px',
+                  background: 'var(--accent-green)',
+                  borderRadius: '1px',
+                  transition: 'height 0.5s ease',
+                }} />
+              )}
+
+              {REASONING_STEPS.map((step, idx) => {
+                const text = reasoning[step.key] || null
+                const isCurrentStep = step.key === currentStep
+                const isDone = currentStepIdx > idx || (text && !isCurrentStep)
+                const isPending = !isDone && !isCurrentStep
+
+                return (
+                  <div key={step.key} style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '12px',
+                    padding: '6px 0 6px 24px',
+                    position: 'relative',
+                    opacity: isPending ? 0.35 : 1,
+                    transition: 'opacity 0.3s',
+                  }}>
+                    {/* Step dot */}
+                    <div style={{
+                      position: 'absolute',
+                      left: '4px',
+                      top: '10px',
+                      width: '12px',
+                      height: '12px',
+                      borderRadius: '50%',
+                      background: isDone ? 'var(--accent-green)' : isCurrentStep ? step.color : 'var(--bg-inset)',
+                      border: `2px solid ${isDone ? 'var(--accent-green)' : isCurrentStep ? step.color : 'var(--border-subtle)'}`,
+                      transition: 'all 0.3s',
+                      boxShadow: isCurrentStep ? `0 0 8px color-mix(in srgb, ${step.color} 30%, transparent)` : 'none',
+                    }}>
+                      {isCurrentStep && (
+                        <div style={{
+                          position: 'absolute',
+                          inset: '-4px',
+                          borderRadius: '50%',
+                          border: `2px solid ${step.color}`,
+                          animation: 'pulse-ring 1.5s ease-out infinite',
+                        }} />
                       )}
                     </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-        )
-      })}
 
-      {/* Gaps */}
-      {Array.isArray(gaps) && gaps.length > 0 && (
-        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px' }}>
-          <div className="flex items-center justify-between px-3 py-2">
-            <div className="flex items-center gap-2">
-              <span className="text-[12px] font-bold" style={{ color: 'var(--accent-purple)' }}>Coverage Gaps</span>
-              <Badge variant="purple" size="xs">{gaps.length}</Badge>
+                    {/* Content */}
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div className="flex items-center gap-2">
+                        <span style={{ fontSize: '11px' }}>{step.icon}</span>
+                        <span className="font-mono text-[10px] font-bold" style={{
+                          color: isDone ? 'var(--text-secondary)' : isCurrentStep ? step.color : 'var(--text-tertiary)',
+                          letterSpacing: '0.05em',
+                        }}>
+                          {step.label}
+                        </span>
+                      </div>
+                      {text && (
+                        <div className="font-mono text-[11px] mt-1" style={{
+                          color: 'var(--text-primary)',
+                          lineHeight: 1.5,
+                        }}>
+                          {text}
+                        </div>
+                      )}
+                      {isCurrentStep && !text && (
+                        <div className="flex items-center gap-2 mt-1">
+                          <span style={{
+                            display: 'inline-block', width: '8px', height: '8px',
+                            border: `2px solid color-mix(in srgb, ${step.color} 20%, transparent)`,
+                            borderTopColor: step.color, borderRadius: '50%',
+                            animation: 'spin 0.75s linear infinite',
+                          }} />
+                          <span className="text-[10px]" style={{ color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
+                            Processing…
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
-          </div>
-          <div className="px-3 pb-2 space-y-1 max-h-[150px] overflow-y-auto">
-            {gaps.map((gap: any, i: number) => (
-              <div key={i} className="text-[11px] font-mono px-2 py-1 rounded" style={{ background: 'var(--bg-inset)', color: 'var(--text-secondary)' }}>
-                {typeof gap === 'string' ? gap : gap.description || gap.area || JSON.stringify(gap)}
-              </div>
-            ))}
-          </div>
+          )}
         </div>
       )}
+    </div>
+  )
+}
 
-      {/* Skip registry */}
-      {skipRegistry && (Array.isArray(skipRegistry) ? skipRegistry.length > 0 : Object.keys(skipRegistry).length > 0) && (
-        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px' }}>
-          <div className="flex items-center gap-2 px-3 py-2">
-            <span className="text-[12px] font-bold" style={{ color: 'var(--text-tertiary)' }}>Skipped Tests</span>
-            <Badge variant="default" size="xs">{Array.isArray(skipRegistry) ? skipRegistry.length : Object.keys(skipRegistry).length}</Badge>
+// ============ Current Test Panel ============
+
+function CurrentTestPanel({ pipelineData }: { pipelineData: any }) {
+  const currentTest = pipelineData?.currentTest || ''
+
+  return (
+    <div style={glassCardStyle({ padding: 0 })}>
+      <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: currentTest ? '1px solid var(--border-subtle)' : 'none' }}>
+        <span style={{ fontSize: '12px' }}>⚙️</span>
+        <span className="text-[11px] font-bold testlab-display" style={{
+          color: 'var(--text-primary)',
+          letterSpacing: '0.06em',
+          textTransform: 'uppercase' as const,
+        }}>Current Test</span>
+      </div>
+      <div className="px-3 py-2">
+        {currentTest ? (
+          <div className="font-mono text-[11px] font-bold" style={{ color: 'var(--accent-blue)' }}>
+            {currentTest}
           </div>
-          <div className="px-3 pb-2 space-y-1 max-h-[150px] overflow-y-auto">
-            {(Array.isArray(skipRegistry)
-              ? skipRegistry.map((entry: any, idx: number) => (
-                  <div key={entry.testId || idx} className="flex items-center gap-2 text-[11px] font-mono px-2 py-1 rounded"
-                    style={{ background: 'var(--bg-inset)' }}>
-                    <span style={{ color: 'var(--text-primary)' }}>{entry.testId || `#${idx}`}</span>
-                    <span style={{ color: 'var(--text-tertiary)' }}>{entry.reason || ''}</span>
-                  </div>
-                ))
-              : Object.entries(skipRegistry).map(([testId, reason]) => (
-                  <div key={testId} className="flex items-center gap-2 text-[11px] font-mono px-2 py-1 rounded"
-                    style={{ background: 'var(--bg-inset)' }}>
-                    <span style={{ color: 'var(--text-primary)' }}>{testId}</span>
-                    <span style={{ color: 'var(--text-tertiary)' }}>{String(reason)}</span>
-                  </div>
-                ))
-            )}
-          </div>
-        </div>
-      )}
+        ) : (
+          <span className="text-[10px]" style={{ color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
+            No test running
+          </span>
+        )}
+      </div>
     </div>
   )
 }
@@ -1850,11 +2023,16 @@ export default function TestLab() {
               }
               return null
             })()}
-            {/* Two-column: Activity left, Queues right */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', alignItems: 'start' }}>
-              <ActivityStream />
-              <QueuesPanel queuesData={queuesData} registry={reg} />
+            {/* Row 1: Reasoning Narrative (left) + Queues & Current Test (right) */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '12px', alignItems: 'start' }}>
+              <ReasoningNarrative supervisorData={supervisorData} />
+              <div className="space-y-3">
+                <QueuesPanel queuesData={queuesData} registry={reg} />
+                <CurrentTestPanel pipelineData={pipelineData} />
+              </div>
             </div>
+            {/* Row 2: Activity Stream full width */}
+            <ActivityStream />
           </div>
         )}
 
