@@ -768,8 +768,8 @@ export function useTestPipeline() {
       }
     },
     // SSE invalidation is primary; polling is fallback when SSE disconnects
-    staleTime: 10_000,
-    refetchInterval: 10_000,
+    staleTime: 3_000,
+    refetchInterval: 3_000,
     retry: (failureCount, error: any) => {
       if (error?.status === 404) return false
       return failureCount < 3
@@ -788,8 +788,8 @@ export function useTestSupervisor() {
         throw err
       }
     },
-    staleTime: 10_000,
-    refetchInterval: 10_000,
+    staleTime: 3_000,
+    refetchInterval: 3_000,
     retry: (failureCount, error: any) => {
       if (error?.status === 404) return false
       return failureCount < 3
@@ -808,8 +808,8 @@ export function useTestQueues() {
         throw err
       }
     },
-    staleTime: 10_000,
-    refetchInterval: 15_000,
+    staleTime: 3_000,
+    refetchInterval: 5_000,
     retry: (failureCount, error: any) => {
       if (error?.status === 404) return false
       return failureCount < 3
@@ -828,7 +828,7 @@ export function useTestStats() {
         throw err
       }
     },
-    staleTime: 10_000,
+    staleTime: 3_000,
     refetchInterval: 15_000,
     retry: (failureCount, error: any) => {
       if (error?.status === 404) return false
