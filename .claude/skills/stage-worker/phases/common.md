@@ -55,7 +55,7 @@ echo '{"stages":{"'$STAGE'":{"status":"done","summary":"...","duration_ms":'$DUR
 
 **Step C: On cycle transition** (VERIFY/TEST → SCAN, cycle++) — reset ALL stages:
 ```bash
-echo '{"stages":{"SCAN":{"status":"pending"},"GENERATE":{"status":"pending"},"TEST":{"status":"pending"},"FIX":{"status":"pending"},"VERIFY":{"status":"pending"}}}' \
+echo '{"stages":{"SCAN":{"status":"pending"},"GENERATE":{"status":"pending"},"TEST":{"status":"pending"},"VALIDATE":{"status":"pending"},"FIX":{"status":"pending"},"VERIFY":{"status":"pending"}}}' \
   | bash tests/executors/state-writer.sh --target pipeline --merge
 ```
 ⚠️ This clears stale duration/status from previous cycle. Must happen BEFORE new SCAN starts.
@@ -85,7 +85,7 @@ Before executing stage logic, check `tests/directives.json`:
 | `add_requirement` | append to `gaps` array, mark processed |
 | `add_tests` | add to testQueue (dedup), set currentStage=TEST if needed, mark processed |
 | `prioritize` | move testId to testQueue head, mark processed |
-| `force_stage` | set currentStage (SCAN/TEST/FIX/VERIFY only), mark processed |
+| `force_stage` | set currentStage (SCAN/TEST/VALIDATE/FIX/VERIFY only), mark processed |
 | `adjust_config` | set state[key]=value (maxCycles/cycle only), mark processed |
 | `add_learning` | run learnings-writer.sh, mark processed |
 | `note` | acknowledge, mark processed |

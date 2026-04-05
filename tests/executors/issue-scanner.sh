@@ -22,6 +22,7 @@ log_info "=== Issue-Driven Test Gap Scanner ==="
 ISSUES_WIN=$(cygpath -w "$PROJECT_ROOT/issues" 2>/dev/null || echo "$PROJECT_ROOT/issues")
 TRACKS_WIN=$(cygpath -w "$PROJECT_ROOT/conductor/tracks" 2>/dev/null || echo "$PROJECT_ROOT/conductor/tracks")
 REGISTRY_WIN=$(cygpath -w "$REGISTRY_DIR" 2>/dev/null || echo "$REGISTRY_DIR")
+PROJECT_ROOT_WIN=$(cygpath -w "$PROJECT_ROOT" 2>/dev/null || echo "$PROJECT_ROOT")
 
 # Run the entire scan in a single Node.js process for performance
 # (avoids 400+ subprocess spawns for 135 issues × 3 fields each)
@@ -32,6 +33,13 @@ const path = require('path');
 const ISSUES_DIR = '$(echo "$ISSUES_WIN" | sed "s/\\\\/\\\\\\\\/g")';
 const TRACKS_DIR = '$(echo "$TRACKS_WIN" | sed "s/\\\\/\\\\\\\\/g")';
 const REGISTRY_DIR = '$(echo "$REGISTRY_WIN" | sed "s/\\\\/\\\\\\\\/g")';
+const PROJECT_ROOT = '$(echo "$PROJECT_ROOT_WIN" | sed "s/\\\\/\\\\\\\\/g")';
+
+// --- Freshness Checker Integration ---
+const { checkFreshness } = require(
+  path.join(PROJECT_ROOT, 'tests', 'executors', 'freshness-checker.js')
+);
+let staleCount = 0;
 
 // ============================================================
 // Load all registry YAML content into memory for fast matching
@@ -165,6 +173,17 @@ for (const f of files) {
         console.log('ISSUE_SKIP|' + id + '|spec not found: ' + trackId);
         break;
       }
+      // Freshness gate
+      const freshnessResult1 = checkFreshness(issue, PROJECT_ROOT);
+      if (freshnessResult1.freshness === 'stale') {
+        console.log('ISSUE_STALE|' + id + '|' + freshnessResult1.reason);
+        staleCount++;
+        break;
+      }
+      if (freshnessResult1.freshness === 'fresh') {
+        console.log('ISSUE_FRESH|' + id + '|' + freshnessResult1.anchors.length + ' anchors verified');
+      }
+      // freshness === 'unknown' → continue normally
       const acs = extractACs(specFile);
       for (const ac of acs) {
         if (!isCovered(ac)) {
@@ -187,6 +206,17 @@ for (const f of files) {
         console.log('ISSUE_SKIP|' + id + '|done but spec not found: ' + trackId);
         break;
       }
+      // Freshness gate
+      const freshnessResult2 = checkFreshness(issue, PROJECT_ROOT);
+      if (freshnessResult2.freshness === 'stale') {
+        console.log('ISSUE_STALE|' + id + '|' + freshnessResult2.reason);
+        staleCount++;
+        break;
+      }
+      if (freshnessResult2.freshness === 'fresh') {
+        console.log('ISSUE_FRESH|' + id + '|' + freshnessResult2.anchors.length + ' anchors verified');
+      }
+      // freshness === 'unknown' → continue normally
       const acs = extractACs(specFile);
       let localCovered = 0, localUncovered = 0;
       for (const ac of acs) {
@@ -218,7 +248,7 @@ for (const f of files) {
 }
 
 const totalGaps = gapCount + regressionGapCount;
-console.log('ISSUE_SCAN|' + totalGaps + '|gaps=' + gapCount + ' regression_gaps=' + regressionGapCount + ' covered=' + coveredCount + ' skipped=' + skipCount);
+console.log('ISSUE_SCAN|' + totalGaps + '|gaps=' + gapCount + ' regression_gaps=' + regressionGapCount + ' covered=' + coveredCount + ' skipped=' + skipCount + ' stale=' + staleCount);
 " 2>/dev/null
 
 EXIT_CODE=$?

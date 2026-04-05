@@ -800,6 +800,51 @@ export function readStory(): StoryData | null {
   }
 }
 
+// ============ Feature Map ============
+
+export interface FeatureMapCodeAnchor {
+  type: string
+  path: string
+  exists: boolean
+}
+
+export interface FeatureMapEntry {
+  title: string
+  issueStatus: string
+  freshness: 'fresh' | 'stale' | 'unknown'
+  codeAnchors: FeatureMapCodeAnchor[]
+  criteria: unknown[]
+  coverage: string
+}
+
+export interface FeatureMapSummary {
+  totalFeatures: number
+  fresh: number
+  stale: number
+  unknown: number
+  overallCoverage: string
+}
+
+export interface FeatureMap {
+  version: number
+  lastUpdated: string
+  features: Record<string, FeatureMapEntry>
+  summary: FeatureMapSummary
+}
+
+/** Read tests/feature-map.json */
+export function readFeatureMap(): FeatureMap | null {
+  const filePath = join(testsDir(), 'feature-map.json')
+  if (!existsSync(filePath)) return null
+  try {
+    const raw = readFileSync(filePath, 'utf-8')
+    return JSON.parse(raw) as FeatureMap
+  } catch (err) {
+    console.error('[test-reader] Failed to read feature-map.json:', err)
+    return null
+  }
+}
+
 // ============ Dashboard Data (Morning Report JSON) ============
 
 export interface DashboardEvent {

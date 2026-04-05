@@ -22,6 +22,7 @@ import {
   readStory,
   readDashboardReportDates,
   readDashboardData,
+  readFeatureMap,
 } from '../services/test-reader.js'
 import { sseManager } from '../watcher/sse-manager.js'
 
@@ -160,6 +161,15 @@ testSupervisorRoutes.get('/recent-events', (c) => {
   const limit = Number(c.req.query('limit')) || 50
   const events = sseManager.getRecentEvents(limit)
   return c.json(events)
+})
+
+// GET /api/tests/feature-map — Feature map with freshness and coverage
+testSupervisorRoutes.get('/feature-map', (c) => {
+  const featureMap = readFeatureMap()
+  if (!featureMap) {
+    return c.json({ error: 'No feature map found' }, 404)
+  }
+  return c.json(featureMap)
 })
 
 // GET /api/tests/report-dates — List available morning-report dates (newest first)

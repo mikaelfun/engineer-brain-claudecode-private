@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "lastUpdated": "2026-04-05T06:19:19.432Z",
+  "features": {
+    "ISS-192": {
+      "title": "WebUI 邮件草稿 Rich HTML 复制 + 编辑功能",
+      "issueStatus": "done",
+      "freshness": "fresh",
+      "codeAnchors": [
+        {
+          "type": "file",
+          "path": "dashboard/web/src/pages/CaseDetail.tsx",
+          "exists": true
+        },
+        {
+          "type": "route",
+          "path": "/api/cases/:id/drafts",
+          "exists": true
+        }
+      ],
+      "criteria": [],
+      "coverage": "0%"
+    }
+  },
+  "summary": {
+    "totalFeatures": 1,
+    "fresh": 1,
+    "stale": 0,
+    "unknown": 0,
+    "overallCoverage": "0%"
+  }
+}

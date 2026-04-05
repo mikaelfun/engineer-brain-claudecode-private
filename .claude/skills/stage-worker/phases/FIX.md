@@ -87,22 +87,60 @@ Sort fixQueue by `priority` (ascending, default 5). `category: "framework"` item
       3. Result: `matchedRecipe` (filename, e.g. `env-service-down.md`) or `null`
       - ⚠️ Recipe 查询是 advisory，文件不存在时静默跳过，等价于 `matchedRecipe = null`
 
+   c3. **Fix Level Determination**（Main Agent，fix-analyzer 返回后执行）：
+
+   从 `analysisFile`（fix-analyzer 输出的分析文件）中提取涉及的文件路径列表 `affectedFiles`。
+
+   **分级规则**（按优先级从高到低判定）：
+
+   | 条件 | Fix Level |
+   |------|-----------|
+   | **ALL** `affectedFiles` 在 `tests/` 下 | **L1** — 自动修，无限制 |
+   | **ANY** `affectedFiles` 在 `dashboard/src/routes/`、`skills/`、`.claude/`、`playbooks/` 下 | **L3** — 只报告不修 |
+   | **ANY** `affectedFiles` 在 `dashboard/web/src/` 下，且 **NONE** 在 `dashboard/src/routes/`、`skills/`、`.claude/` 下 | **L2** — 可修，单文件≤30行 |
+   | 以上均不匹配 | **L2**（Default） |
+
+   判定后记录：`fixLevel = "L1" | "L2" | "L3"`
+
    d. **Based on analysis + recipe**:
       - `isEnvIssue=true` → Main Agent handles directly (adjust config/env), call learnings-writer.sh _(unchanged)_
       - `isEnvIssue=false` AND `matchedRecipe != null` → **Recipe-guided fix**:
         1. Read `tests/recipes/fix/{matchedRecipe}` — follow 前置检查 + 执行步骤
         2. Execute: env/config recipes → Main Agent directly; code change recipes → spawn sonnet with recipe as context
         3. Record: `bash tests/executors/fix-recorder.sh <test-id> <fix-type> "<desc>" "<files>" "<matchedRecipe>"`
-      - `isEnvIssue=false` AND `matchedRecipe == null` → Spawn opus agent _(fallback, unchanged)_:
+      - `isEnvIssue=false` AND `matchedRecipe == null` → **按 fixLevel 分流**：
+        - **fixLevel === "L3"** → **不 spawn agent，Main Agent 直接处理**：
+          1. 读取 `tests/results/fixes/{id}-analysis.md`
+          2. 生成报告写入 `tests/results/fixes/{id}-report.md`（含根因、影响范围、建议修复方案）
+          3. 创建 Issue：`bash tests/executors/issue-creator.sh "<testId>" "<cycle>" "<title>" "<description>" "P1" "tests/results/fixes/<testId>-analysis.md"`
+          4. 调用：`bash tests/executors/fix-recorder.sh <test-id> "report_only" "<desc>" "<files>"`
+        - **fixLevel === "L1" 或 "L2"** → Spawn opus agent，prompt 中注入权限约束：
         ```
         你是一个 bug 修复工程师。
         读取 tests/results/fixes/{id}-analysis.md 了解根因。
         读取 tests/registry/{category}/{id}.yaml 了解测试定义。
         读取 tests/learnings.yaml 了解已知问题。
+
+        {fixLevelConstraint}
+
         修改完成后调用: bash tests/executors/fix-recorder.sh <test-id> <fix-type> "<desc>" "<files>"
         ```
 
+        其中 `{fixLevelConstraint}` 按 fixLevel 替换：
+        - **L1**: `"你的修改权限：✅ tests/ 目录下所有文件可自由修改。"`
+        - **L2**: `"你的修改权限：✅ tests/ 自由修改；⚠️ dashboard/web/src/ 单文件≤30行；❌ 后端/skills/.claude 禁止。如果 bug 在禁止区域，写报告+创建 Issue，返回 fixType=report_only。"`
+
    e. **fix-recorder.sh auto-actions**: records fix details, moves test fixQueue→verifyQueue, runs regression-tracker for code_bug, calls learnings-writer for env_issue.
+
+   e1. **report_only fixType 处理**（fixType === "report_only" 时执行，替代正常 verifyQueue 流程）：
+
+   `report_only` 表示因 fixLevel 限制（L3 或 L2 降级）未修改代码，只生成了报告和 Issue。
+
+   - **不进 verifyQueue**（没改代码，无需验证）
+   - Record stageHistory：`{ stage: "FIX", action: "report_only", testId, fixLevel, issueCreated: "ISS-XXX" }`
+   - Update feature-map：标记该 testId 的 `resolution: "issue_created"`、`fixLevel`
+   - 从 fixQueue 移除该 testId
+   - 跳过后续 e2（LLM 推理分类），直接进入下一个 fix
 
    e2. **LLM 推理分类：Infrastructure vs Product Bug**（仅 `code_bug` 类型触发）
 

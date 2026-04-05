@@ -1,10 +1,10 @@
 /**
- * TestLab.tsx — Test Supervisor Dashboard (V2: Flat Pipeline Model)
+ * TestLab.tsx — Test Supervisor Dashboard (V3: Compact Header + Pipeline)
  *
- * V2 Design (Cycle/Stage/Reasoning Steps):
- * 1. TestLabHeader — compact one-line: Cycle info + stage badge + elapsed + controls
- * 2. ReasoningNarrative — supervisor 5-step reasoning with smart fold
- * 3. StagePipeline — horizontal 5-stage flow (SCAN → GENERATE → TEST → FIX → VERIFY)
+ * V3 Design:
+ * 1. TestLabHeader — cycle info + stage badge + elapsed + supervisor status badge + controls
+ * 2. SelfHealBanner — amber alert, only shown when self-heal event exists
+ * 3. StagePipeline — horizontal 5-stage flow (SCAN -> GENERATE -> TEST -> FIX -> VERIFY)
  * 4. StatsBar — compact inline cumulative + cycle stats
  * 5. Tab content: Overview (Activity + Queues), Discoveries, Trends, Evolution
  */
@@ -31,9 +31,10 @@ import { Badge } from '../components/common/Badge'
 import { Loading, EmptyState } from '../components/common/Loading'
 import {
   CheckCircle, XCircle, Wrench, SkipForward, Activity,
-  Bug, Play, Square, Zap, Milestone, ChevronDown, ChevronUp,
+  Bug, Play, Square, Zap, Milestone, ChevronDown, ChevronUp, Trash2,
 } from 'lucide-react'
 import { BASE_URL, apiGet } from '../api/client'
+import { formatActivityMessage, isDuplicateEvent } from '../utils/activityFormatter'
 
 // ============ Stage Color Map ============
 
@@ -206,7 +207,7 @@ function useCountdown(nextRunAt: string | null | undefined): string {
 
 // ============ TestLabHeader ============
 
-function TestLabHeader({ pipelineData }: { pipelineData: any }) {
+function TestLabHeader({ pipelineData, supervisorData }: { pipelineData: any; supervisorData?: any }) {
   const { data: runnerStatus } = useRunnerStatus()
   const startMutation = useRunnerStart()
   const stopMutation = useRunnerStop()
@@ -216,8 +217,9 @@ function TestLabHeader({ pipelineData }: { pipelineData: any }) {
   const lastRunAt = runnerStatus?.lastRunAt
   const isRunning = status === 'running'
   const isWaiting = status === 'waiting'
-  // Detect external: either backend says 'external', or runner idle but pipeline has active stage
-  const isExternal = status === 'external' || (status === 'idle' && !!pipelineData?.currentStage)
+  // Detect external: backend says 'external', or runner idle but pipeline is actively running
+  // Note: pipelineData.currentStage persists from last run — check pipelineStatus instead
+  const isExternal = status === 'external' || (status === 'idle' && pipelineData?.pipelineStatus === 'running')
   const isActive = isRunning || isWaiting || isExternal
   const loopEnabled = runnerStatus?.loop || false
   const runsCompleted = runnerStatus?.runsCompleted || 0
@@ -315,6 +317,62 @@ function TestLabHeader({ pipelineData }: { pipelineData: any }) {
           <span className="text-[10px] font-mono" style={{ color: 'var(--text-tertiary)' }}>
             {isWaiting ? 'next run' : isRunning ? 'elapsed' : 'last run'}
           </span>
+
+          {/* Supervisor status badge — single-line indicator */}
+          {(() => {
+            const supStep = supervisorData?.step || ''
+            const supStatus = supervisorData?.status || 'idle'
+            const pipeComplete = currentStage === 'COMPLETE' || pipelineData?.pipelineStatus === 'complete'
+
+            // Activity description map
+            const actMap: Record<string, string> = {
+              observe: 'pre-flight',
+              diagnose: 'trends',
+              decide: 'strategy',
+              act: `worker: ${currentStage || 'running'}`,
+              reflect: 'summary',
+            }
+
+            let badgeIcon = ''
+            let badgeText = ''
+            let badgeColor = 'var(--text-tertiary)'
+
+            if (isExternal) {
+              badgeIcon = '\u26A1'
+              badgeText = `CLI: ${currentStage || 'running'}`
+              badgeColor = 'var(--accent-blue)'
+            } else if (isActive && supStep) {
+              badgeIcon = '\u26A1'
+              badgeText = actMap[supStep] || supStep
+              badgeColor = stageColor
+            } else if (pipeComplete) {
+              badgeIcon = '\u2705'
+              badgeText = 'cycle done'
+              badgeColor = 'var(--accent-green)'
+            } else if (currentStage) {
+              badgeIcon = '\uD83D\uDCA4'
+              badgeText = `next \u2192 ${currentStage}`
+              badgeColor = 'var(--text-tertiary)'
+            }
+
+            if (!badgeText) return null
+
+            return (
+              <>
+                <div style={{ width: '1px', height: '16px', background: 'var(--border-subtle)', flexShrink: 0 }} />
+                <span
+                  className="text-[11px] font-bold font-mono px-2 py-0.5 rounded"
+                  style={{
+                    color: badgeColor,
+                    background: `color-mix(in srgb, ${badgeColor} 10%, transparent)`,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {badgeIcon} {badgeText}
+                </span>
+              </>
+            )
+          })()}
         </div>
 
         {/* Right: Status + Controls */}
@@ -439,234 +497,32 @@ function TestLabHeader({ pipelineData }: { pipelineData: any }) {
   )
 }
 
-// ============ Reasoning Narrative ============
+// ============ Self-Heal Banner ============
 
-const REASONING_STEPS = ['observe', 'diagnose', 'decide', 'act', 'reflect'] as const
-const REASONING_LABELS: Record<string, { icon: string; label: string }> = {
-  observe: { icon: '\uD83D\uDC41\uFE0F', label: 'Observe' },
-  diagnose: { icon: '\uD83E\uDE7A', label: 'Diagnose' },
-  decide: { icon: '\uD83E\uDDE0', label: 'Decide' },
-  act: { icon: '\u26A1', label: 'Act' },
-  reflect: { icon: '\uD83D\uDCAD', label: 'Reflect' },
-}
+function SelfHealBanner({ selfHealEvent }: { selfHealEvent?: any }) {
+  if (!selfHealEvent) return null
 
-function ReasoningNarrative({ supervisorData, runnerStatus, pipelineData }: { supervisorData: any; runnerStatus?: any; pipelineData?: any }) {
-  const [manualToggle, setManualToggle] = useState<boolean | null>(null)
-
-  const reasoning = supervisorData?.reasoning || {}
-  const selfHealEvent = supervisorData?.selfHealEvent
-  const supervisorStep = supervisorData?.step || ''
-  const tick = supervisorData?.tick
-
-  // Detect external CLI run — supervisor.json is stale, pipeline.json is truth
-  const isExternal = runnerStatus?.status === 'external'
-  const externalStage = isExternal ? (pipelineData?.currentStage || runnerStatus?.supervisorStatus || '') : ''
-
-  // Smart fold: auto-expand on self-heal or reflect content
-  const shouldAutoExpand = !!(selfHealEvent || reasoning.reflect)
-  const isExpanded = manualToggle !== null ? manualToggle : shouldAutoExpand
-
-  // Derive collapsed summary text
-  const summaryText = useMemo(() => {
-    if (selfHealEvent) return `\uD83D\uDD27 Self-heal detected \u2014 ${typeof selfHealEvent === 'string' ? selfHealEvent : selfHealEvent?.description || 'intervention in progress'}`
-    if (reasoning.reflect) return `\uD83D\uDCAD Reflecting \u2014 ${typeof reasoning.reflect === 'string' ? reasoning.reflect.slice(0, 80) : 'analysis complete'}${typeof reasoning.reflect === 'string' && reasoning.reflect.length > 80 ? '...' : ''}`
-    // External CLI run — show active stage from pipeline instead of "idle"
-    if (isExternal) return `\u26A1 CLI Active \u2014 ${externalStage || 'running'}`
-    if (!supervisorData || supervisorData.status === 'idle') return '\uD83D\uDCA4 Supervisor idle'
-    if (supervisorStep) {
-      const meta = REASONING_LABELS[supervisorStep]
-      return `${meta?.icon || '\u2705'} ${meta?.label || supervisorStep} \u2014 step ${REASONING_STEPS.indexOf(supervisorStep as any) + 1}/5`
-    }
-    return '\u2705 Normal \u2014 all steps passed'
-  }, [supervisorData, selfHealEvent, reasoning.reflect, supervisorStep, isExternal, externalStage])
-
-  const summaryColor = selfHealEvent ? 'var(--accent-amber)' : isExternal ? 'var(--accent-blue)' : reasoning.reflect ? 'var(--accent-purple)' : 'var(--accent-green)'
-
-  // Count filled reasoning steps
-  const filledSteps = REASONING_STEPS.filter(s => reasoning[s]).length
+  const description = typeof selfHealEvent === 'string'
+    ? selfHealEvent
+    : selfHealEvent?.description || JSON.stringify(selfHealEvent)
 
   return (
     <div
       style={glassCardStyle({
-        padding: 0,
-        overflow: 'hidden',
-        borderColor: selfHealEvent ? 'color-mix(in srgb, var(--accent-amber) 30%, transparent)' : undefined,
+        padding: '11px 16px',
+        borderLeft: '3px solid var(--accent-amber)',
+        borderColor: 'color-mix(in srgb, var(--accent-amber) 30%, transparent)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px',
+        animation: 'fadeIn 0.35s ease-out',
       })}
     >
-      {/* Collapsed summary — always visible */}
-      <button
-        onClick={() => setManualToggle(prev => prev === null ? !shouldAutoExpand : !prev)}
-        className="w-full flex items-center justify-between px-5 py-3 transition-all hover:opacity-90"
-        style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
-      >
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="text-[12px] font-bold" style={{ color: summaryColor, whiteSpace: 'nowrap' }}>
-            {summaryText}
-          </span>
-          {tick != null && (
-            <span className="text-[10px] font-mono" style={{ color: 'var(--text-tertiary)' }}>
-              tick #{tick}
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {filledSteps > 0 && (
-            <span className="text-[10px] font-mono" style={{ color: 'var(--text-tertiary)' }}>
-              {filledSteps}/5 steps
-            </span>
-          )}
-          {isExpanded ? (
-            <ChevronUp className="w-3.5 h-3.5" style={{ color: 'var(--text-tertiary)' }} />
-          ) : (
-            <ChevronDown className="w-3.5 h-3.5" style={{ color: 'var(--text-tertiary)' }} />
-          )}
-        </div>
-      </button>
-
-      {/* Expanded 5-step narrative — vertical timeline */}
-      {isExpanded && (
-        <div
-          style={{ borderTop: '1px solid var(--border-subtle)', animation: 'fadeIn 0.25s ease-out', padding: '0 24px 18px' }}
-        >
-          {/* External run info banner */}
-          {isExternal && (
-            <div
-              style={{
-                marginTop: '14px',
-                padding: '10px 16px',
-                borderRadius: 'var(--radius-md, 10px)',
-                background: 'color-mix(in srgb, var(--accent-blue) 8%, transparent)',
-                border: '1px solid color-mix(in srgb, var(--accent-blue) 20%, transparent)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                animation: 'fadeIn 0.35s ease-out',
-              }}
-            >
-              <span style={{ fontSize: '15px', flexShrink: 0 }}>{'\u26A1'}</span>
-              <div>
-                <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--accent-blue)' }}>
-                  CLI Supervisor Active — {externalStage || 'Running'}
-                </div>
-                <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '1px' }}>
-                  Reasoning data below is from previous tick. Live status shown in pipeline.
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Self-heal banner — structured amber card */}
-          {selfHealEvent && (
-            <div
-              style={{
-                marginTop: '14px',
-                padding: '11px 16px',
-                borderRadius: 'var(--radius-md, 10px)',
-                background: 'rgba(212,164,74,0.07)',
-                border: '1px solid rgba(212,164,74,0.18)',
-                borderLeft: '3px solid var(--accent-amber)',
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: '10px',
-                animation: 'fadeIn 0.35s ease-out',
-              }}
-            >
-              <span style={{ fontSize: '17px', flexShrink: 0, marginTop: '1px' }}>{'🔧'}</span>
-              <div>
-                <div style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--accent-amber)' }}>Self-Heal Event</div>
-                <div style={{ fontSize: '12.5px', color: 'rgba(212,164,74,0.7)', marginTop: '2px' }}>
-                  {typeof selfHealEvent === 'string' ? selfHealEvent : selfHealEvent?.description || JSON.stringify(selfHealEvent)}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Reasoning steps — vertical timeline with left dots + connecting line */}
-          <div style={{ position: 'relative', marginTop: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {/* Vertical connecting line */}
-            <div style={{
-              position: 'absolute',
-              left: '5px',
-              top: '12px',
-              bottom: '12px',
-              width: '2px',
-              background: 'var(--border-subtle)',
-              borderRadius: '1px',
-            }} />
-
-            {REASONING_STEPS.map((step, idx) => {
-              const meta = REASONING_LABELS[step]
-              const content = reasoning[step]
-              const isCurrent = !isExternal && supervisorStep === step
-              const hasContent = !!content
-              // In external mode: stale reasoning shown dimmed (not green)
-              const dotColor = isCurrent ? 'var(--accent-blue)'
-                : (hasContent && !isExternal) ? 'var(--accent-green)'
-                : hasContent ? 'var(--text-secondary)'
-                : 'var(--text-tertiary)'
-
-              return (
-                <div
-                  key={step}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '14px',
-                    padding: '10px 14px',
-                    borderRadius: 'var(--radius-sm, 6px)',
-                    background: isCurrent ? 'color-mix(in srgb, var(--accent-blue) 8%, transparent)' : 'var(--bg-inset)',
-                    border: '1px solid var(--border-subtle)',
-                    opacity: hasContent || isCurrent ? 1 : 0.38,
-                    animation: `fadeIn 0.3s ease-out ${idx * 40}ms backwards`,
-                    position: 'relative',
-                  }}
-                >
-                  {/* Timeline dot */}
-                  <div style={{
-                    width: '12px',
-                    height: '12px',
-                    borderRadius: '50%',
-                    background: dotColor,
-                    flexShrink: 0,
-                    marginTop: '2px',
-                    boxShadow: isCurrent ? `0 0 8px ${dotColor}` : 'none',
-                    transition: 'all 0.3s',
-                  }} />
-
-                  {/* Icon + Label + Content */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ fontSize: '15px', flexShrink: 0 }}>{meta.icon}</span>
-                      <span className="font-mono" style={{
-                        fontSize: '10px',
-                        fontWeight: 700,
-                        textTransform: 'uppercase' as const,
-                        letterSpacing: '1.2px',
-                        color: isCurrent ? 'var(--accent-blue)' : hasContent ? 'var(--text-primary)' : 'var(--text-tertiary)',
-                      }}>
-                        {meta.label}
-                      </span>
-                      {isCurrent && (
-                        <span className="font-mono" style={{
-                          fontSize: '9px', fontWeight: 700, padding: '1px 6px',
-                          borderRadius: '4px', background: 'var(--accent-blue-dim)', color: 'var(--accent-blue)',
-                        }}>
-                          NOW
-                        </span>
-                      )}
-                    </div>
-                    {hasContent && (
-                      <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5, marginTop: '2px' }}>
-                        {typeof content === 'string' ? content : JSON.stringify(content)}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
+      <span style={{ fontSize: '15px', flexShrink: 0 }}>{'\uD83D\uDD27'}</span>
+      <div>
+        <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--accent-amber)' }}>Self-Heal</span>
+        <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginLeft: '8px' }}>{description}</span>
+      </div>
     </div>
   )
 }
@@ -1051,6 +907,7 @@ interface ActivityEvent {
   action?: string
   detail?: string
   timestamp: string
+  data?: Record<string, unknown>
 }
 
 function eventIcon(type: string): string {
@@ -1072,39 +929,46 @@ function eventIcon(type: string): string {
 function ActivityStream() {
   const containerRef = useRef<HTMLDivElement>(null)
   const [events, setEvents] = useState<ActivityEvent[]>([])
+  const CLEAR_KEY = 'activity-stream-cleared-at'
+
+  const handleClear = useCallback(() => {
+    setEvents([])
+    sessionStorage.setItem(CLEAR_KEY, new Date().toISOString())
+  }, [])
 
   // Load initial events from API
   useEffect(() => {
+    const clearedAt = sessionStorage.getItem(CLEAR_KEY)
+
     apiGet<any[]>('/tests/recent-events', { limit: 30 })
       .then((stored: any[]) => stored || [])
       .then((stored: any[]) => {
         // Filter to only test/runner events — exclude case-step, patrol, etc.
         const testEvents = stored.filter((evt: any) => {
           const t = evt.type || ''
-          return t.startsWith('test-') || t.startsWith('runner-')
+          if (!t.startsWith('test-') && !t.startsWith('runner-')) return false
+          // Skip events before user's last clear
+          if (clearedAt && evt.timestamp && evt.timestamp <= clearedAt) return false
+          return true
         })
         if (testEvents.length > 0) {
           const mapped = testEvents.map((evt: any) => {
             const d = evt.data || {}
             const eventType = (evt.type || '').replace('test-', '').replace('runner-', '')
-            let detail = d.testId || d.note || ''
-            if (eventType === 'state-updated' && d.phase) {
-              const parts: string[] = []
-              if (d.currentTest) parts.push(d.currentTest)
-              else if (d.testId) parts.push(d.testId)
-              if (d.queues) parts.push(`T:${d.queues.test} F:${d.queues.fix} V:${d.queues.verify} R:${d.queues.regression}`)
-              if (d.round !== undefined) parts.push(`C${d.round}`)
-              detail = parts.join(' \u00B7 ') || eventType
-            }
             return {
               type: eventType,
               phase: d.phase,
               action: d.action || (eventType === 'state-updated' ? d.phase : undefined),
-              detail,
+              detail: d.testId || d.note || '',
               timestamp: evt.timestamp || new Date().toISOString(),
+              data: d,
             }
           })
-          setEvents(mapped)
+          // Deduplicate consecutive identical events from history
+          const deduped = mapped.filter((evt: any, i: number) =>
+            i === 0 || !isDuplicateEvent(evt, mapped.slice(0, i))
+          )
+          setEvents(deduped)
         }
       })
       .catch(() => { /* silent */ })
@@ -1121,23 +985,18 @@ function ActivityStream() {
       try {
         const parsed = JSON.parse(e.data)
         const d = parsed.data || parsed
-        let detail = d.testId || d.note || ''
-        if (eventType === 'state-updated' && d.phase) {
-          const parts: string[] = []
-          if (d.currentTest) parts.push(d.currentTest)
-          else if (d.testId) parts.push(d.testId)
-          if (d.queues) parts.push(`T:${d.queues.test} F:${d.queues.fix} V:${d.queues.verify} R:${d.queues.regression}`)
-          if (d.round !== undefined) parts.push(`C${d.round}`)
-          detail = parts.join(' \u00B7 ') || eventType
-        }
         const newEvent: ActivityEvent = {
           type: eventType,
           phase: d.phase,
           action: d.action || (eventType === 'state-updated' ? d.phase : undefined),
-          detail,
+          detail: d.testId || d.note || '',
           timestamp: d.timestamp || new Date().toISOString(),
+          data: d,
         }
-        setEvents(prev => [...prev, newEvent].slice(-30))
+        setEvents(prev => {
+          if (isDuplicateEvent(newEvent, prev)) return prev
+          return [...prev, newEvent].slice(-30)
+        })
       } catch { /* ignore */ }
     }
 
@@ -1183,6 +1042,32 @@ function ActivityStream() {
         title="Activity Stream"
         subtitle={`${events.length} events`}
         icon={<Zap className="w-4 h-4" style={{ color: 'var(--accent-amber)' }} />}
+        action={
+          events.length > 0 ? (
+            <button
+              onClick={handleClear}
+              className="flex items-center gap-1 px-2 py-1 rounded text-[11px] transition-colors"
+              style={{
+                color: 'var(--text-tertiary)',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = 'var(--text-secondary)'
+                e.currentTarget.style.background = 'var(--hover-bg)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = 'var(--text-tertiary)'
+                e.currentTarget.style.background = 'transparent'
+              }}
+              title="Clear all activity"
+            >
+              <Trash2 className="w-3 h-3" />
+              Clear
+            </button>
+          ) : undefined
+        }
       />
       <div ref={containerRef} className="max-h-[260px] overflow-y-auto space-y-0">
         {events.length === 0 ? (
@@ -1213,12 +1098,21 @@ function ActivityStream() {
                   {evt.phase.toUpperCase().slice(0, 4)}
                 </span>
               )}
-              <span className="text-[10px] font-mono shrink-0 w-[70px]" style={{ color: 'var(--text-secondary)' }}>
-                {evt.action || evt.type}
-              </span>
-              <span className="text-[11px] truncate" style={{ color: 'var(--text-secondary)' }} title={evt.detail}>
-                {evt.detail || ''}
-              </span>
+              {(() => {
+                const formatted = formatActivityMessage(evt)
+                return (
+                  <>
+                    <span className="text-[10px] font-mono shrink-0" style={{ color: 'var(--text-secondary)', maxWidth: '120px' }}>
+                      {formatted.message}
+                    </span>
+                    {formatted.detail && (
+                      <span className="text-[11px] truncate" style={{ color: 'var(--text-tertiary)' }} title={formatted.detail}>
+                        {formatted.detail}
+                      </span>
+                    )}
+                  </>
+                )
+              })()}
             </div>
           ))
         )}
@@ -1656,9 +1550,178 @@ function EvolutionTimeline() {
   )
 }
 
+// ============ Feature Map Panel ============
+
+interface FeatureMapEntry {
+  title: string
+  issueStatus: string
+  freshness: 'fresh' | 'stale' | 'unknown'
+  codeAnchors: { type: string; path: string; exists: boolean }[]
+  criteria: unknown[]
+  coverage: string
+}
+
+interface FeatureMapData {
+  version: number
+  lastUpdated: string
+  features: Record<string, FeatureMapEntry>
+  summary: {
+    totalFeatures: number
+    fresh: number
+    stale: number
+    unknown: number
+    overallCoverage: string
+  }
+}
+
+const FRESHNESS_COLORS: Record<string, { bg: string; text: string; label: string }> = {
+  fresh:   { bg: 'rgba(52,211,153,0.15)', text: 'var(--accent-green)',  label: 'Fresh' },
+  stale:   { bg: 'rgba(248,113,113,0.15)', text: 'var(--accent-red)',    label: 'Stale' },
+  unknown: { bg: 'rgba(251,191,36,0.15)',  text: 'var(--accent-amber)',  label: 'Unknown' },
+}
+
+function FeatureMapPanel() {
+  const [data, setData] = useState<FeatureMapData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    setLoading(true)
+    apiGet<FeatureMapData>('/tests/feature-map')
+      .then(d => { setData(d); setError(null) })
+      .catch(err => setError(err.message || 'Failed to load feature map'))
+      .finally(() => setLoading(false))
+  }, [])
+
+  if (loading) return <Loading text="Loading feature map..." />
+  if (error || !data) return <EmptyState icon="\uD83D\uDDFA\uFE0F" title="No feature map" description={error || 'Run feature-map generation first'} />
+
+  const features = Object.entries(data.features)
+  const { summary } = data
+
+  return (
+    <div className="space-y-3">
+      {/* Summary bar */}
+      <Card>
+        <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)' }}>
+            {summary.totalFeatures} Features
+          </span>
+          <span style={{ fontSize: '11px', color: 'var(--accent-green)' }}>
+            {summary.fresh} fresh
+          </span>
+          <span style={{ fontSize: '11px', color: 'var(--accent-red)' }}>
+            {summary.stale} stale
+          </span>
+          <span style={{ fontSize: '11px', color: 'var(--accent-amber)' }}>
+            {summary.unknown} unknown
+          </span>
+          <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginLeft: 'auto' }}>
+            Coverage: <strong style={{ color: 'var(--text-primary)' }}>{summary.overallCoverage}</strong>
+          </span>
+          <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>
+            Updated: {new Date(data.lastUpdated).toLocaleString()}
+          </span>
+        </div>
+      </Card>
+
+      {/* Feature table */}
+      <Card>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                {['Feature', 'Freshness', 'Tests', 'Coverage'].map(h => (
+                  <th
+                    key={h}
+                    style={{
+                      padding: '8px 12px',
+                      textAlign: 'left',
+                      fontWeight: 700,
+                      color: 'var(--text-tertiary)',
+                      fontSize: '10px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                    }}
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {features.map(([id, entry]) => {
+                const fr = FRESHNESS_COLORS[entry.freshness] || FRESHNESS_COLORS.unknown
+                const anchorCount = entry.codeAnchors?.length || 0
+                return (
+                  <tr
+                    key={id}
+                    style={{
+                      borderBottom: '1px solid var(--border-subtle)',
+                      transition: 'background 0.1s',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover, rgba(255,255,255,0.03))')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    {/* Feature */}
+                    <td style={{ padding: '10px 12px' }}>
+                      <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '2px' }}>
+                        {entry.title}
+                      </div>
+                      <div style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>
+                        {id} · {entry.issueStatus}
+                      </div>
+                    </td>
+                    {/* Freshness */}
+                    <td style={{ padding: '10px 12px' }}>
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          padding: '2px 8px',
+                          borderRadius: '9999px',
+                          fontSize: '10px',
+                          fontWeight: 700,
+                          background: fr.bg,
+                          color: fr.text,
+                        }}
+                      >
+                        {fr.label}
+                      </span>
+                    </td>
+                    {/* Tests (anchor count) */}
+                    <td style={{ padding: '10px 12px', color: 'var(--text-secondary)' }}>
+                      {anchorCount} anchor{anchorCount !== 1 ? 's' : ''}
+                    </td>
+                    {/* Coverage */}
+                    <td style={{ padding: '10px 12px' }}>
+                      <span style={{
+                        fontWeight: 700,
+                        color: entry.coverage === '0%' ? 'var(--accent-red)' : 'var(--accent-green)',
+                      }}>
+                        {entry.coverage}
+                      </span>
+                    </td>
+                  </tr>
+                )
+              })}
+              {features.length === 0 && (
+                <tr>
+                  <td colSpan={4} style={{ padding: '24px', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: '11px' }}>
+                    No features mapped yet
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </div>
+  )
+}
+
 // ============ Main Page ============
 
-type TabKey = 'overview' | 'story' | 'discoveries' | 'trends' | 'evolution'
+type TabKey = 'overview' | 'story' | 'discoveries' | 'trends' | 'evolution' | 'feature-map'
 
 const TAB_DEFS: { key: TabKey; label: string; icon: string }[] = [
   { key: 'overview', label: 'Overview', icon: '\uD83D\uDCCA' },
@@ -1666,6 +1729,7 @@ const TAB_DEFS: { key: TabKey; label: string; icon: string }[] = [
   { key: 'discoveries', label: 'Discoveries', icon: '\uD83D\uDD0D' },
   { key: 'trends', label: 'Trends', icon: '\uD83D\uDCC8' },
   { key: 'evolution', label: 'Evolution', icon: '\uD83E\uDDEC' },
+  { key: 'feature-map', label: 'Feature Map', icon: '\uD83D\uDDFA\uFE0F' },
 ]
 
 export default function TestLab() {
@@ -1731,7 +1795,7 @@ export default function TestLab() {
   if (!state && !pipeline) {
     return (
       <div className="space-y-3">
-        <TestLabHeader pipelineData={null} />
+        <TestLabHeader pipelineData={null} supervisorData={null} />
         <EmptyState
           icon="\uD83E\uDDEA"
           title="No test data yet"
@@ -1743,11 +1807,11 @@ export default function TestLab() {
 
   return (
     <div className="space-y-3">
-      {/* 1. Header — compact one-line */}
-      <TestLabHeader pipelineData={pipelineData} />
+      {/* 1. Header — compact one-line with supervisor status */}
+      <TestLabHeader pipelineData={pipelineData} supervisorData={supervisorData} />
 
-      {/* 2. Reasoning Narrative — smart fold */}
-      <ReasoningNarrative supervisorData={supervisorData} runnerStatus={runnerStatus} pipelineData={pipelineData} />
+      {/* 2. Self-heal banner — only shown when event exists */}
+      <SelfHealBanner selfHealEvent={supervisorData?.selfHealEvent} />
 
       {/* 3. Stage Pipeline — 5-stage horizontal flow */}
       <StagePipeline pipelineData={pipelineData} />
@@ -1803,6 +1867,10 @@ export default function TestLab() {
 
         {activeTab === 'evolution' && (
           <EvolutionTimeline />
+        )}
+
+        {activeTab === 'feature-map' && (
+          <FeatureMapPanel />
         )}
       </div>
     </div>

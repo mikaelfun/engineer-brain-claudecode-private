@@ -72,5 +72,5 @@ echo '{"stages":{"TEST":{"status":"running","startedAt":"'$(date -u +%Y-%m-%dT%H
    f. Continue to next test
 
 3. **After loop — decide next phase**:
-   - fixQueue non-empty → currentStage=FIX
+   - fixQueue non-empty → currentStage=VALIDATE
    - fixQueue empty → cycle++, currentStage=SCAN

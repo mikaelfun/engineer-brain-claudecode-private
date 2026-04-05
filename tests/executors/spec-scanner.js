@@ -138,6 +138,7 @@ let skippedByCache = 0;
 // Step 5: Scan tracks (with delta optimization)
 // ============================================================
 let gapCount = 0;
+let staleCount = 0;
 
 // List tracks (skip _archived)
 let trackDirs;
@@ -187,6 +188,39 @@ for (const trackDir of trackDirs) {
     }
   }
 
+  // Freshness check: extract referenced file paths and verify they exist
+  const fileRefPattern = /(?:^|[\s`"'(])([a-zA-Z0-9_./-]+\.(?:ts|tsx|js|sh|md))\b/g;
+  const referencedFiles = [];
+  let fileMatch;
+  while ((fileMatch = fileRefPattern.exec(specContent)) !== null) {
+    const ref = fileMatch[1];
+    // Skip obvious non-paths (e.g. "v1.0.md", pure filenames without dir context)
+    if (ref.includes('/') || ref.includes('\\')) {
+      referencedFiles.push(ref);
+    }
+  }
+
+  if (referencedFiles.length > 0) {
+    let missingCount = 0;
+    const missingFiles = [];
+    for (const ref of referencedFiles) {
+      const absPath = path.resolve(PROJECT_ROOT, ref);
+      if (!fs.existsSync(absPath)) {
+        missingCount++;
+        missingFiles.push(ref);
+      }
+    }
+    const missingRatio = missingCount / referencedFiles.length;
+    if (missingRatio >= 0.5) {
+      const pct = Math.round(missingRatio * 100);
+      const reason = `${pct}% referenced files missing (${missingCount}/${referencedFiles.length}): ${missingFiles.slice(0, 3).join(', ')}${missingFiles.length > 3 ? '...' : ''}`;
+      process.stdout.write(`SPEC_STALE|${trackId}|${reason}\n`);
+      staleCount++;
+      log('WARN', `Track ${trackId}: stale spec — ${reason}`);
+      continue;
+    }
+  }
+
   const lines = specContent.split('\n');
   let inAcSection = false;
 
@@ -229,7 +263,7 @@ try {
   log('WARN', `Failed to write spec hash cache: ${e.message}`);
 }
 
-process.stdout.write(`SPEC_SCAN|${gapCount}|Scanned specs in ${TRACKS_DIR} (${skippedByCache} skipped by cache)\n`);
+process.stdout.write(`SPEC_SCAN|${gapCount}|Scanned specs in ${TRACKS_DIR} (${skippedByCache} skipped by cache, ${staleCount} stale)\n`);
 
 if (gapCount > 0) {
   log('WARN', `${gapCount} acceptance criteria not covered by existing tests`);

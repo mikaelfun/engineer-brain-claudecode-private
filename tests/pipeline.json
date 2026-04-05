@@ -1,12 +1,1 @@
-{
-  "currentStage": "",
-  "cycle": 0,
-  "maxCycles": 80,
-  "stages": {
-    "SCAN": {
-      "status": "running",
-      "startedAt": "2026-04-02T15:03:28Z"
-    }
-  },
-  "pipelineStatus": "running"
-}
+{}

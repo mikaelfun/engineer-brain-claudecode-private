@@ -17,6 +17,7 @@ After each stage completes:
    - SCAN: `"{issue_gaps} issue gaps, {regression_gaps} regression gaps"`
    - GENERATE: `"{count} tests from {issue_count} issues"`
    - TEST: `"{passed} passed, {failed} failed"`
+   - VALIDATE: `"{fix} fix, {stale} stale, {env} env_issue, {fw} framework, {review} reviewed"`
    - FIX: `"{fixed} fixed, {unfixable} unfixable"`
    - VERIFY: `"{verified} verified, {regressed} regressed, {fw_accepted} fw-auto-accepted"`
 
@@ -29,7 +30,7 @@ After each stage completes:
 4. **Cycle increment rule**: When full cycle ends (VERIFY/TEST → SCAN), cycle++
 5. **On cycle switch**: Reset stageHistory + stages + cycleStats:
    ```bash
-   echo '{"stageHistory":[],"stages":{"SCAN":{"status":"pending","summary":""},"GENERATE":{"status":"pending","summary":""},"TEST":{"status":"pending","summary":""},"FIX":{"status":"pending","summary":""},"VERIFY":{"status":"pending","summary":""}}}' \
+   echo '{"stageHistory":[],"stages":{"SCAN":{"status":"pending","summary":""},"GENERATE":{"status":"pending","summary":""},"TEST":{"status":"pending","summary":""},"VALIDATE":{"status":"pending","summary":""},"FIX":{"status":"pending","summary":""},"VERIFY":{"status":"pending","summary":""}}}' \
      | bash tests/executors/state-writer.sh --target pipeline --merge
    echo '{"cycleStats":{"passed":0,"failed":0,"fixed":0,"skipped":0}}' \
      | bash tests/executors/state-writer.sh --target stats --merge
