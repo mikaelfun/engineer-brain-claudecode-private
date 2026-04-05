@@ -84,11 +84,23 @@ Read updated pipeline.json:
 5. Otherwise (large queue TEST/FIX/VERIFY) → return summary
 ```
 
-**Before returning** (cases 1 and 5, i.e., when NOT continuing), mark pipeline idle:
+**Before returning** (cases 1 and 5, i.e., when NOT continuing), mark pipeline idle **with reason**:
 ```bash
-echo '{"pipelineStatus":"idle"}' | bash tests/executors/state-writer.sh --target pipeline --merge
+# Case 1 (COMPLETE):
+echo '{"pipelineStatus":"idle","stopReason":"cycle_complete","stopDetail":"Cycle finished all stages"}' | bash tests/executors/state-writer.sh --target pipeline --merge
+
+# Case 5 (large queue):
+echo '{"pipelineStatus":"idle","stopReason":"queue_handoff","stopDetail":"'{STAGE}' queue has '${QUEUE_SIZE}' items — returning for next tick"}' | bash tests/executors/state-writer.sh --target pipeline --merge
 ```
-⚠️ Only write `pipelineStatus:"idle"` when stage-worker is about to return to supervisor. Do NOT write it when continuing to next stage.
+For circuit breaker exits (Step 2.2), the stopReason is written there:
+```bash
+echo '{"pipelineStatus":"idle","stopReason":"circuit_breaker","stopDetail":"..."}' | bash tests/executors/state-writer.sh --target pipeline --merge
+```
+
+When **continuing** to next stage, clear any previous stopReason:
+```bash
+echo '{"pipelineStatus":"running","stopReason":null,"stopDetail":null}' | bash tests/executors/state-writer.sh --target pipeline --merge
+```
 
 **Design**: SCAN (~30s) + GENERATE (~1min) are short — don't waste a tick. Chain SCAN→GENERATE→TEST in one invocation.
 

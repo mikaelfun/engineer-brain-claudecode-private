@@ -1240,22 +1240,46 @@ function StageProgressPanel({ pipelineData }: { pipelineData: any }) {
           </div>
         )}
 
-        {/* Idle with pending next stage */}
-        {!isActive && pipelineIdle && currentStage && currentStage !== 'COMPLETE' && completedStages.length > 0 && (
-          <div style={{
-            padding: '8px 14px',
-            borderLeft: '3px solid var(--border-subtle)',
-            display: 'flex', alignItems: 'center', gap: '8px',
-          }}>
-            <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>💤</span>
-            <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>
-              Paused — next stage: <strong style={{ color: 'var(--text-secondary)' }}>{currentStage}</strong>
-            </span>
-            <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', marginLeft: 'auto' }}>
-              Click Start to continue
-            </span>
-          </div>
-        )}
+        {/* Idle with pending next stage — show stop reason */}
+        {!isActive && pipelineIdle && currentStage && currentStage !== 'COMPLETE' && completedStages.length > 0 && (() => {
+          const stopReason = pipelineData?.stopReason || null
+          const stopDetail = pipelineData?.stopDetail || null
+
+          // Map stopReason to user-friendly display
+          const reasonMap: Record<string, { icon: string; label: string; color: string }> = {
+            queue_handoff: { icon: '📋', label: 'Queue handoff', color: 'var(--accent-blue)' },
+            circuit_breaker: { icon: '🚨', label: 'Circuit breaker', color: 'var(--accent-red)' },
+            cycle_complete: { icon: '✅', label: 'Cycle complete', color: 'var(--accent-green)' },
+            context_limit: { icon: '⚠️', label: 'Context limit', color: 'var(--accent-amber)' },
+          }
+          const reason = stopReason ? (reasonMap[stopReason] || { icon: '💤', label: stopReason, color: 'var(--text-tertiary)' }) : null
+
+          return (
+            <div style={{
+              padding: '10px 14px',
+              borderLeft: `3px solid ${reason?.color || 'var(--border-subtle)'}`,
+              background: reason ? `color-mix(in srgb, ${reason.color} 4%, transparent)` : 'transparent',
+            }}>
+              <div className="flex items-center gap-2" style={{ marginBottom: stopDetail ? '4px' : 0 }}>
+                <span style={{ fontSize: '12px' }}>{reason?.icon || '💤'}</span>
+                <span style={{ fontSize: '11px', fontWeight: 600, color: reason?.color || 'var(--text-tertiary)' }}>
+                  {reason?.label || 'Paused'}
+                </span>
+                <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>
+                  — next: <strong style={{ color: 'var(--text-secondary)' }}>{currentStage}</strong>
+                </span>
+                <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', marginLeft: 'auto' }}>
+                  Click Start ▶
+                </span>
+              </div>
+              {stopDetail && (
+                <div className="font-mono" style={{ fontSize: '10px', color: 'var(--text-secondary)', paddingLeft: '22px' }}>
+                  {stopDetail}
+                </div>
+              )}
+            </div>
+          )
+        })()}
       </div>
     </div>
   )
