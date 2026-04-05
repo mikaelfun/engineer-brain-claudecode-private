@@ -13,9 +13,9 @@ After each stage completes:
    echo '{"stages":{"'$STAGE'":{"status":"done","summary":"...","duration_ms":'$DURATION_MS'}},"currentTest":"","stageProgress":null}' \
      | bash tests/executors/state-writer.sh --target pipeline --merge
    ```
-   Summary by stage:
-   - SCAN: `"{issue_gaps} issue gaps, {regression_gaps} regression gaps"`
-   - GENERATE: `"{count} tests from {issue_count} issues"`
+   Summary by stage (use actual queues.json data, not scanner raw output):
+   - SCAN: `"{gaps_count} uncovered gaps, {stale_count} stale skipped, {fresh_count} fresh"` — gaps_count = queues.json gaps[].length (NOT scanner total)
+   - GENERATE: `"{count} tests generated from {gaps_count} gaps"`
    - TEST: `"{passed} passed, {failed} failed"`
    - VALIDATE: `"{fix} fix, {stale} stale, {env} env_issue, {fw} framework, {review} reviewed"`
    - FIX: `"{fixed} fixed, {unfixable} unfixable"`
