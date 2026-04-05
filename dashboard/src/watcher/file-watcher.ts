@@ -275,11 +275,28 @@ export function startFileWatcher() {
       const sup = JSON.parse(raw)
       if (sup.status !== 'running') return // not active, nothing to check
 
-      const mtime = statSync(supervisorPath).mtimeMs
-      const ageSeconds = (Date.now() - mtime) / 1000
+      const supMtime = statSync(supervisorPath).mtimeMs
+      const supAge = (Date.now() - supMtime) / 1000
 
-      if (ageSeconds > SUPERVISOR_HEARTBEAT_TIMEOUT_S) {
-        console.log(`[watcher] ⚠️ Supervisor heartbeat timeout: ${Math.round(ageSeconds)}s since last update (step: ${sup.step}). Marking as context_limit.`)
+      // Also check pipeline.json — stage-worker updates this, not supervisor.json
+      // If pipeline was recently modified, the stage-worker is alive (supervisor is just waiting)
+      let pipeAge = Infinity
+      try {
+        pipeAge = (Date.now() - statSync(pipelinePath).mtimeMs) / 1000
+      } catch { /* pipeline doesn't exist */ }
+
+      // Also check queues.json — stage-worker writes queue changes
+      const queuesPath = join(config.projectRoot, 'tests', 'queues.json')
+      let queuesAge = Infinity
+      try {
+        queuesAge = (Date.now() - statSync(queuesPath).mtimeMs) / 1000
+      } catch { /* queues doesn't exist */ }
+
+      // Use the most recent modification across all state files
+      const mostRecentAge = Math.min(supAge, pipeAge, queuesAge)
+
+      if (mostRecentAge > SUPERVISOR_HEARTBEAT_TIMEOUT_S) {
+        console.log(`[watcher] ⚠️ Supervisor heartbeat timeout: supervisor=${Math.round(supAge)}s, pipeline=${Math.round(pipeAge)}s, queues=${Math.round(queuesAge)}s (step: ${sup.step}). Marking as context_limit.`)
 
         // Mark supervisor as idle
         const supData = { ...sup, status: 'idle', step: null, active: null }
@@ -292,7 +309,7 @@ export function startFileWatcher() {
           if (pipe.pipelineStatus === 'running' || pipe.pipelineStatus === 'idle') {
             pipe.pipelineStatus = 'idle'
             pipe.stopReason = 'context_limit'
-            pipe.stopDetail = `Supervisor agent stopped responding after ${sup.step || 'unknown'} step (${Math.round(ageSeconds)}s timeout)`
+            pipe.stopDetail = `No state file updates for ${Math.round(mostRecentAge)}s after ${sup.step || 'unknown'} step`
             writeFileSync(pipelinePath, JSON.stringify(pipe, null, 2) + '\n')
           }
         } catch { /* pipeline write failed, supervisor already reset */ }
