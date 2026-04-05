@@ -88,6 +88,8 @@ Read updated pipeline.json:
 
 **Rationale**: supervisor overhead (observe→diagnose→decide) costs ~20% of each tick. Higher thresholds = fewer ticks = less waste. Opus model context supports processing 8 items per stage comfortably.
 
+**🔴 CRITICAL RULE**: SCAN and GENERATE must NEVER be the last stage before returning. If you just completed SCAN or GENERATE, you MUST continue to the next stage — even if a cycle boundary was crossed. A single run that only scans but never tests is wasted work.
+
 **Before returning** (cases 1 and 5, i.e., when NOT continuing), mark pipeline idle **with reason**:
 ```bash
 # Case 1 (COMPLETE):

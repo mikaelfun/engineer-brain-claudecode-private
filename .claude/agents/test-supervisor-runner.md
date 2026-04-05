@@ -339,6 +339,7 @@ Agent(
     6. 返回简要摘要
 
     注意：状态写入必须用 bash tests/executors/state-writer.sh --merge（支持 --target pipeline|queues|stats）
+    🔴 关键规则：SCAN 和 GENERATE 完成后必须继续下一阶段，绝不在这两个阶段后返回。只 SCAN 不 TEST 是浪费。
 )
 ```
 
