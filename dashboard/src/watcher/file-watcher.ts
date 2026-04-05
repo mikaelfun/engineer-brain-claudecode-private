@@ -3,13 +3,18 @@
  */
 import chokidar from 'chokidar'
 import { join } from 'path'
-import { readFileSync } from 'fs'
+import { readFileSync, statSync, writeFileSync } from 'fs'
 import { config } from '../config.js'
 import { sseManager } from './sse-manager.js'
 import { getSkillRegistry } from '../services/skill-registry.js'
 import type { SSEEventType } from '../types/index.js'
 
 let watcher: ReturnType<typeof chokidar.watch> | null = null
+let heartbeatInterval: NodeJS.Timeout | null = null
+
+// Supervisor heartbeat timeout: if supervisor.json says "running" but
+// hasn't been modified for this many seconds, assume agent died (context limit)
+const SUPERVISOR_HEARTBEAT_TIMEOUT_S = 120
 
 // Track previous supervisor status for transition detection
 let lastSupervisorStatus: string | null = null
@@ -259,9 +264,57 @@ export function startFileWatcher() {
   })
 
   console.log('[watcher] File watcher started')
+
+  // Start supervisor heartbeat checker
+  const supervisorPath = join(config.projectRoot, 'tests', 'supervisor.json')
+  const pipelinePath = join(config.projectRoot, 'tests', 'pipeline.json')
+
+  heartbeatInterval = setInterval(() => {
+    try {
+      const raw = readFileSync(supervisorPath, 'utf8')
+      const sup = JSON.parse(raw)
+      if (sup.status !== 'running') return // not active, nothing to check
+
+      const mtime = statSync(supervisorPath).mtimeMs
+      const ageSeconds = (Date.now() - mtime) / 1000
+
+      if (ageSeconds > SUPERVISOR_HEARTBEAT_TIMEOUT_S) {
+        console.log(`[watcher] ⚠️ Supervisor heartbeat timeout: ${Math.round(ageSeconds)}s since last update (step: ${sup.step}). Marking as context_limit.`)
+
+        // Mark supervisor as idle
+        const supData = { ...sup, status: 'idle', step: null, active: null }
+        writeFileSync(supervisorPath, JSON.stringify(supData, null, 2) + '\n')
+
+        // Mark pipeline with stop reason
+        try {
+          const pipeRaw = readFileSync(pipelinePath, 'utf8')
+          const pipe = JSON.parse(pipeRaw)
+          if (pipe.pipelineStatus === 'running' || pipe.pipelineStatus === 'idle') {
+            pipe.pipelineStatus = 'idle'
+            pipe.stopReason = 'context_limit'
+            pipe.stopDetail = `Supervisor agent stopped responding after ${sup.step || 'unknown'} step (${Math.round(ageSeconds)}s timeout)`
+            writeFileSync(pipelinePath, JSON.stringify(pipe, null, 2) + '\n')
+          }
+        } catch { /* pipeline write failed, supervisor already reset */ }
+
+        // Broadcast the change
+        sseManager.broadcast('runner-status-changed' as SSEEventType, {
+          status: 'idle',
+          reason: 'context_limit',
+          lastStep: sup.step,
+        })
+
+        lastSupervisorStatus = 'idle'
+      }
+    } catch { /* supervisor.json doesn't exist or can't be read */ }
+  }, 30_000) // Check every 30 seconds
 }
 
 export function stopFileWatcher() {
+  if (heartbeatInterval) {
+    clearInterval(heartbeatInterval)
+    heartbeatInterval = null
+  }
   if (watcher) {
     watcher.close()
     watcher = null
