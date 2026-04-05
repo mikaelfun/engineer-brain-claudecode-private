@@ -329,20 +329,18 @@ function TestLabHeader({ pipelineData, supervisorData }: { pipelineData: any; su
             Cycle {cycle}/{maxCycles}
           </span>
 
-          {/* Stage badge */}
-          {currentStage && currentStage !== 'COMPLETE' ? (
+          {/* Stage badge — hide when idle (StageProgressPanel shows stop reason) */}
+          {currentStage && currentStage !== 'COMPLETE' && isActive ? (
             <span
               className="text-[10px] font-bold font-mono px-2.5 py-1 rounded"
               style={{
-                color: isActive ? stageColor : 'var(--text-tertiary)',
-                background: isActive
-                  ? `color-mix(in srgb, ${stageColor} 15%, transparent)`
-                  : 'var(--bg-inset)',
-                border: `1px solid ${isActive ? `color-mix(in srgb, ${stageColor} 30%, transparent)` : 'var(--border-subtle)'}`,
+                color: stageColor,
+                background: `color-mix(in srgb, ${stageColor} 15%, transparent)`,
+                border: `1px solid color-mix(in srgb, ${stageColor} 30%, transparent)`,
                 whiteSpace: 'nowrap',
               }}
             >
-              {isActive ? `${STAGE_ICONS[currentStage.toUpperCase()] || ''} ${currentStage.toUpperCase()}` : `next → ${currentStage.toUpperCase()}`}
+              {STAGE_ICONS[currentStage.toUpperCase()] || ''} {currentStage.toUpperCase()}
             </span>
           ) : (
             <span className="text-[10px] font-mono px-2 py-1 rounded" style={{ color: 'var(--text-tertiary)', background: 'var(--bg-inset)' }}>
@@ -1071,7 +1069,10 @@ function ReasoningNarrative({ supervisorData }: { supervisorData: any }) {
 // ============ Current Test Panel ============
 
 function CurrentTestPanel({ pipelineData }: { pipelineData: any }) {
-  const currentTest = pipelineData?.currentTest || ''
+  const currentTest = pipelineData?.currentTest || pipelineData?.stageProgress?.testId || ''
+  const progress = pipelineData?.stageProgress || null
+  const currentStage = (pipelineData?.currentStage || '').toUpperCase()
+  const pipelineRunning = pipelineData?.pipelineStatus === 'running'
 
   return (
     <div style={{
@@ -1079,18 +1080,44 @@ function CurrentTestPanel({ pipelineData }: { pipelineData: any }) {
       overflow: 'hidden',
       flex: 1,
     }}>
-      <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: currentTest ? '1px solid var(--border-subtle)' : 'none' }}>
-        <span style={{ fontSize: '12px' }}>⚙️</span>
+      <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+        <span style={{ fontSize: '12px' }}>{pipelineRunning ? '🔬' : '⚙️'}</span>
         <span className="text-[11px] font-bold testlab-display" style={{
           color: 'var(--text-primary)',
           letterSpacing: '0.06em',
           textTransform: 'uppercase' as const,
         }}>Current Test</span>
+        {progress?.current && progress?.total && (
+          <span className="font-mono text-[10px]" style={{ color: 'var(--text-tertiary)', marginLeft: 'auto' }}>
+            {progress.current}/{progress.total}
+          </span>
+        )}
       </div>
       <div className="px-3 py-2">
         {currentTest ? (
-          <div className="font-mono text-[11px] font-bold" style={{ color: 'var(--accent-blue)' }}>
-            {currentTest}
+          <div>
+            <div className="font-mono text-[11px] font-bold" style={{ color: 'var(--accent-blue)' }}>
+              {currentTest}
+            </div>
+            {currentStage && pipelineRunning && (
+              <div className="text-[10px] mt-1" style={{ color: 'var(--text-tertiary)' }}>
+                {stageProgressDescription(currentStage, currentTest, progress)}
+              </div>
+            )}
+            {/* Progress bar */}
+            {progress?.total > 0 && (
+              <div style={{
+                height: '3px', borderRadius: '2px', background: 'var(--bg-inset)',
+                marginTop: '6px', overflow: 'hidden',
+              }}>
+                <div style={{
+                  height: '100%', borderRadius: '2px',
+                  width: `${Math.round((progress.current / progress.total) * 100)}%`,
+                  background: stageColorOf(currentStage),
+                  transition: 'width 0.5s ease',
+                }} />
+              </div>
+            )}
           </div>
         ) : (
           <span className="text-[10px]" style={{ color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
