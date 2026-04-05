@@ -1076,6 +1076,24 @@ function CurrentTestPanel({ pipelineData, queuesData }: { pipelineData: any; que
   const stageData = pipelineData?.stages?.[currentStage] || {}
   const stageColor = stageColorOf(currentStage)
 
+  // Track how long current stage has been running
+  const stageStarted = stageData?.startedAt
+  const stageElapsed = useElapsedTimer(stageStarted, pipelineRunning)
+
+  // Detect stale progress (same data for > 60s means agent might be doing LLM work)
+  const [lastProgressKey, setLastProgressKey] = useState('')
+  const [staleSeconds, setStaleSeconds] = useState(0)
+  useEffect(() => {
+    const key = `${progress?.current}:${progress?.total}:${currentTest}`
+    if (key !== lastProgressKey) {
+      setLastProgressKey(key)
+      setStaleSeconds(0)
+    }
+    if (!pipelineRunning) return
+    const id = setInterval(() => setStaleSeconds(s => s + 1), 1000)
+    return () => clearInterval(id)
+  }, [progress?.current, progress?.total, currentTest, pipelineRunning, lastProgressKey])
+
   // Stage-specific context
   const stageContext = getStageContext(currentStage, queuesData, progress)
 
@@ -1099,6 +1117,14 @@ function CurrentTestPanel({ pipelineData, queuesData }: { pipelineData: any; que
             {progress.current}/{progress.total}
           </span>
         )}
+        {/* Elapsed time for current stage */}
+        {pipelineRunning && stageElapsed && stageElapsed !== '—' && (
+          <span className="font-mono text-[10px]" style={{
+            color: staleSeconds > 120 ? 'var(--accent-amber)' : 'var(--text-tertiary)',
+          }}>
+            {stageElapsed}
+          </span>
+        )}
       </div>
 
       <div className="px-3 py-2" style={{ fontSize: '11px' }}>
@@ -1113,6 +1139,19 @@ function CurrentTestPanel({ pipelineData, queuesData }: { pipelineData: any; que
                 <div className="text-[10px] mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
                   {stageProgressDescription(currentStage, currentTest, progress)}
                 </div>
+              </div>
+            )}
+
+            {/* Staleness warning */}
+            {staleSeconds > 60 && (
+              <div className="flex items-center gap-1.5 text-[10px]" style={{
+                color: staleSeconds > 180 ? 'var(--accent-red)' : 'var(--accent-amber)',
+                animation: staleSeconds > 180 ? 'blink 2s ease-in-out infinite' : 'none',
+              }}>
+                <span>{staleSeconds > 180 ? '⚠️' : '⏳'}</span>
+                <span>No progress update for {Math.floor(staleSeconds / 60)}m{staleSeconds % 60}s
+                  {staleSeconds > 120 ? ' — agent may be doing LLM analysis' : ''}
+                </span>
               </div>
             )}
 
