@@ -1067,7 +1067,11 @@ function CurrentTestPanel({ pipelineData }: { pipelineData: any }) {
   const currentTest = pipelineData?.currentTest || ''
 
   return (
-    <div style={glassCardStyle({ padding: 0 })}>
+    <div style={{
+      ...glassCardStyle({ padding: 0 }),
+      overflow: 'hidden',
+      flex: 1,
+    }}>
       <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: currentTest ? '1px solid var(--border-subtle)' : 'none' }}>
         <span style={{ fontSize: '12px' }}>⚙️</span>
         <span className="text-[11px] font-bold testlab-display" style={{
@@ -2024,9 +2028,9 @@ export default function TestLab() {
               return null
             })()}
             {/* Row 1: Reasoning Narrative (left) + Queues & Current Test (right) */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '12px', alignItems: 'start' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 260px', gap: '12px', alignItems: 'stretch' }}>
               <ReasoningNarrative supervisorData={supervisorData} />
-              <div className="space-y-3">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <QueuesPanel queuesData={queuesData} registry={reg} />
                 <CurrentTestPanel pipelineData={pipelineData} />
               </div>
