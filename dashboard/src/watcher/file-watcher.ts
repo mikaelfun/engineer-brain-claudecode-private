@@ -304,7 +304,12 @@ export function startFileWatcher() {
         // Reset pipeline
         pipe.pipelineStatus = 'idle'
         pipe.stopReason = 'context_limit'
-        pipe.stopDetail = `${deadAgent} stopped responding during ${pipe.currentStage || 'unknown'} (${Math.round(mostRecentAge)}s timeout)`
+        // Build accurate stopDetail from stageProgress
+        const progress = pipe.stageProgress
+        const progressInfo = progress?.current && progress?.total
+          ? ` (was processing item ${progress.current}/${progress.total}: ${progress.testId || 'unknown'})`
+          : ''
+        pipe.stopDetail = `${deadAgent} stopped responding during ${pipe.currentStage || 'unknown'}${progressInfo} — ${Math.round(mostRecentAge)}s timeout`
         if (pipe.currentStage && pipe.stages?.[pipe.currentStage]?.status === 'running') {
           pipe.stages[pipe.currentStage].status = 'interrupted'
         }

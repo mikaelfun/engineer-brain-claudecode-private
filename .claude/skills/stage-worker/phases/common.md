@@ -30,11 +30,19 @@ echo '{"currentStage":"TEST","stats":{"passed":10}}' | bash tests/executors/stat
 
 **Environment**: Use `process.env.STATE_PATH` in node, not hardcoded paths.
 
+### 🔴 Checkpoint Rule (NEW — for heartbeat monitoring)
+
+After completing each individual item in a batch stage (TEST, VALIDATE, FIX, VERIFY), you MUST write stageProgress to pipeline.json. This serves as a heartbeat that tells the dashboard you're still alive:
+```bash
+echo '{"stageProgress":{"current":'$((i+1))',"total":{TOTAL},"testId":"{testId}"},"currentTest":"{testId}"}' | bash tests/executors/state-writer.sh --target pipeline --merge
+```
+If the backend detects no file updates for 120s, it will assume you crashed and mark the pipeline as `context_limit`. Writing stageProgress after each item prevents false timeouts.
+
 ### 🔴 stages Update Pattern (MANDATORY — every stage)
 
 **Step A-pre: BEFORE any stage logic** — mark pipeline as running (authoritative status):
 ```bash
-echo '{"pipelineStatus":"running"}' | bash tests/executors/state-writer.sh --target pipeline --merge
+echo '{"pipelineStatus":"running","stopReason":null,"stopDetail":null}' | bash tests/executors/state-writer.sh --target pipeline --merge
 ```
 ⚠️ This tells all consumers (dashboard, WebUI, health-check) that stage-worker is actively executing. Only write this once at the start of the first stage in a session; skip if already running.
 
