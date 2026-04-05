@@ -1083,16 +1083,24 @@ function CurrentTestPanel({ pipelineData, queuesData }: { pipelineData: any; que
   // Detect stale progress (same data for > 60s means agent might be doing LLM work)
   const [lastProgressKey, setLastProgressKey] = useState('')
   const [staleSeconds, setStaleSeconds] = useState(0)
+  const [wasRunning, setWasRunning] = useState(false)
   useEffect(() => {
+    // Reset on pipeline start or progress change
+    if (pipelineRunning && !wasRunning) {
+      setStaleSeconds(0)
+      setLastProgressKey('')
+    }
+    setWasRunning(pipelineRunning)
+
     const key = `${progress?.current}:${progress?.total}:${currentTest}`
     if (key !== lastProgressKey) {
       setLastProgressKey(key)
       setStaleSeconds(0)
     }
-    if (!pipelineRunning) return
+    if (!pipelineRunning) { setStaleSeconds(0); return }
     const id = setInterval(() => setStaleSeconds(s => s + 1), 1000)
     return () => clearInterval(id)
-  }, [progress?.current, progress?.total, currentTest, pipelineRunning, lastProgressKey])
+  }, [progress?.current, progress?.total, currentTest, pipelineRunning, lastProgressKey, wasRunning])
 
   // Stage-specific context
   const stageContext = getStageContext(currentStage, queuesData, progress)
