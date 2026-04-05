@@ -1068,65 +1068,122 @@ function ReasoningNarrative({ supervisorData }: { supervisorData: any }) {
 
 // ============ Current Test Panel ============
 
-function CurrentTestPanel({ pipelineData }: { pipelineData: any }) {
+function CurrentTestPanel({ pipelineData, queuesData }: { pipelineData: any; queuesData: any }) {
   const currentTest = pipelineData?.currentTest || pipelineData?.stageProgress?.testId || ''
   const progress = pipelineData?.stageProgress || null
   const currentStage = (pipelineData?.currentStage || '').toUpperCase()
   const pipelineRunning = pipelineData?.pipelineStatus === 'running'
+  const stageData = pipelineData?.stages?.[currentStage] || {}
+  const stageColor = stageColorOf(currentStage)
+
+  // Stage-specific context
+  const stageContext = getStageContext(currentStage, queuesData, progress)
 
   return (
     <div style={{
       ...glassCardStyle({ padding: 0 }),
       overflow: 'hidden',
       flex: 1,
+      borderLeft: pipelineRunning ? `3px solid ${stageColor}` : 'none',
     }}>
+      {/* Header: stage icon + name + progress counter */}
       <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-        <span style={{ fontSize: '12px' }}>{pipelineRunning ? '🔬' : '⚙️'}</span>
+        <span style={{ fontSize: '12px' }}>{pipelineRunning ? STAGE_ICONS[currentStage] || '⚙️' : '💤'}</span>
         <span className="text-[11px] font-bold testlab-display" style={{
-          color: 'var(--text-primary)',
+          color: pipelineRunning ? stageColor : 'var(--text-tertiary)',
           letterSpacing: '0.06em',
           textTransform: 'uppercase' as const,
-        }}>Current Test</span>
-        {progress?.current && progress?.total && (
-          <span className="font-mono text-[10px]" style={{ color: 'var(--text-tertiary)', marginLeft: 'auto' }}>
+        }}>{pipelineRunning ? currentStage || 'Idle' : 'Idle'}</span>
+        {progress?.current != null && progress?.total != null && (
+          <span className="font-mono text-[10px] font-bold" style={{ color: stageColor, marginLeft: 'auto' }}>
             {progress.current}/{progress.total}
           </span>
         )}
       </div>
-      <div className="px-3 py-2">
-        {currentTest ? (
-          <div>
-            <div className="font-mono text-[11px] font-bold" style={{ color: 'var(--accent-blue)' }}>
-              {currentTest}
-            </div>
-            {currentStage && pipelineRunning && (
-              <div className="text-[10px] mt-1" style={{ color: 'var(--text-tertiary)' }}>
-                {stageProgressDescription(currentStage, currentTest, progress)}
+
+      <div className="px-3 py-2" style={{ fontSize: '11px' }}>
+        {pipelineRunning && currentStage ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            {/* Current item */}
+            {currentTest && (
+              <div>
+                <div className="font-mono font-bold" style={{ color: 'var(--text-primary)' }}>
+                  {currentTest}
+                </div>
+                <div className="text-[10px] mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
+                  {stageProgressDescription(currentStage, currentTest, progress)}
+                </div>
               </div>
             )}
+
             {/* Progress bar */}
             {progress?.total > 0 && (
-              <div style={{
-                height: '3px', borderRadius: '2px', background: 'var(--bg-inset)',
-                marginTop: '6px', overflow: 'hidden',
-              }}>
+              <div style={{ height: '3px', borderRadius: '2px', background: 'var(--bg-inset)', overflow: 'hidden' }}>
                 <div style={{
                   height: '100%', borderRadius: '2px',
                   width: `${Math.round((progress.current / progress.total) * 100)}%`,
-                  background: stageColorOf(currentStage),
-                  transition: 'width 0.5s ease',
+                  background: stageColor, transition: 'width 0.5s ease',
                 }} />
+              </div>
+            )}
+
+            {/* Stage-specific context lines */}
+            {stageContext.length > 0 && (
+              <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '6px' }}>
+                {stageContext.map((line, i) => (
+                  <div key={i} className="flex items-center gap-2 text-[10px] py-0.5" style={{ color: 'var(--text-secondary)' }}>
+                    <span style={{ color: 'var(--text-tertiary)', width: '12px', textAlign: 'center', flexShrink: 0 }}>{line.icon}</span>
+                    <span>{line.text}</span>
+                  </div>
+                ))}
               </div>
             )}
           </div>
         ) : (
           <span className="text-[10px]" style={{ color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
-            No test running
+            Waiting for next stage…
           </span>
         )}
       </div>
     </div>
   )
+}
+
+/** Generate stage-specific context lines for the Live Task panel */
+function getStageContext(stage: string, queuesData: any, progress: any): { icon: string; text: string }[] {
+  const lines: { icon: string; text: string }[] = []
+  const tq = queuesData?.testQueue?.length || 0
+  const fq = queuesData?.fixQueue?.length || 0
+  const vq = queuesData?.verifyQueue?.length || 0
+
+  switch (stage) {
+    case 'SCAN':
+      lines.push({ icon: '📋', text: `Discovering test gaps from issues, specs, and code` })
+      if (tq > 0) lines.push({ icon: '📊', text: `${tq} tests already queued` })
+      break
+    case 'GENERATE':
+      lines.push({ icon: '📝', text: `Creating test YAML definitions from gaps` })
+      if (tq > 0) lines.push({ icon: '📊', text: `${tq} tests in queue after generation` })
+      break
+    case 'TEST':
+      lines.push({ icon: '🏃', text: `Executing tests via Playwright / API / CLI` })
+      if (tq > 0) lines.push({ icon: '📊', text: `${tq - (progress?.current || 0)} remaining in queue` })
+      break
+    case 'VALIDATE':
+      lines.push({ icon: '🔎', text: `Checking if failures are real bugs or stale tests` })
+      lines.push({ icon: '📊', text: `3-layer filter: anchors → patterns → LLM review` })
+      break
+    case 'FIX':
+      lines.push({ icon: '🔧', text: `Attempting code fixes for validated failures` })
+      if (fq > 0) lines.push({ icon: '📊', text: `${fq} items in fix queue` })
+      lines.push({ icon: '🛡️', text: `L1: auto-fix tests / L2: UI ≤30 lines / L3: report only` })
+      break
+    case 'VERIFY':
+      lines.push({ icon: '✅', text: `Re-running fixed tests to confirm resolution` })
+      if (vq > 0) lines.push({ icon: '📊', text: `${vq} fixes to verify` })
+      break
+  }
+  return lines
 }
 
 // ============ Stage Progress Panel ============
@@ -2286,7 +2343,7 @@ export default function TestLab() {
               <ReasoningNarrative supervisorData={supervisorData} />
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <QueuesPanel queuesData={queuesData} registry={reg} />
-                <CurrentTestPanel pipelineData={pipelineData} />
+                <CurrentTestPanel pipelineData={pipelineData} queuesData={queuesData} />
               </div>
             </div>
             {/* Row 2: Stage Progress (primary) + Activity Log (secondary) */}
