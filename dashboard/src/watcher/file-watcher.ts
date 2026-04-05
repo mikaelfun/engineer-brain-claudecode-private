@@ -273,7 +273,30 @@ export function startFileWatcher() {
     try {
       const raw = readFileSync(supervisorPath, 'utf8')
       const sup = JSON.parse(raw)
-      if (sup.status !== 'running') return // not active, nothing to check
+      if (sup.status !== 'running') {
+        // Supervisor is idle — but check if pipeline is stuck in "running" (orphaned stage-worker)
+        try {
+          const pipeRaw = readFileSync(pipelinePath, 'utf8')
+          const pipe = JSON.parse(pipeRaw)
+          if (pipe.pipelineStatus === 'running') {
+            // Pipeline says running but supervisor is idle — check all state file ages
+            const queuesPath = join(config.projectRoot, 'tests', 'queues.json')
+            let mostRecentAge = Infinity
+            for (const f of [supervisorPath, pipelinePath, queuesPath]) {
+              try { mostRecentAge = Math.min(mostRecentAge, (Date.now() - statSync(f).mtimeMs) / 1000) } catch {}
+            }
+            if (mostRecentAge > SUPERVISOR_HEARTBEAT_TIMEOUT_S) {
+              console.log(`[watcher] ⚠️ Orphaned pipeline: supervisor idle but pipeline running, all files stale ${Math.round(mostRecentAge)}s. Auto-resetting.`)
+              pipe.pipelineStatus = 'idle'
+              pipe.stopReason = 'context_limit'
+              pipe.stopDetail = `Stage-worker died during ${pipe.currentStage || 'unknown'} — no state update for ${Math.round(mostRecentAge)}s`
+              writeFileSync(pipelinePath, JSON.stringify(pipe, null, 2) + '\n')
+              sseManager.broadcast('runner-status-changed' as SSEEventType, { status: 'idle', reason: 'context_limit', lastStage: pipe.currentStage })
+            }
+          }
+        } catch {}
+        return
+      }
 
       const supMtime = statSync(supervisorPath).mtimeMs
       const supAge = (Date.now() - supMtime) / 1000
