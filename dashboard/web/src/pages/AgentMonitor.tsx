@@ -943,9 +943,9 @@ export default function AgentMonitor() {
                         {cp.status === 'completed' && <span style={{ color: 'var(--accent-green)' }}>✓</span>}
                         {cp.status === 'failed' && <span style={{ color: 'var(--accent-red)' }}>✗</span>}
                         {cp.caseNumber.slice(-6)}
-                        {cp.status === 'processing' && cp.lastTool && (
-                          <span className="font-sans text-[10px] opacity-70 max-w-[60px] truncate">
-                            {cp.lastTool.replace(/^mcp__/, '').split('__')[0]}
+                        {cp.status === 'processing' && cp.currentStep && (
+                          <span className="font-sans text-[10px] opacity-70 max-w-[80px] truncate">
+                            {cp.currentStep}
                           </span>
                         )}
                       </span>

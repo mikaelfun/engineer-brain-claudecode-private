@@ -43,16 +43,41 @@ export default function Dashboard() {
 
   const isPatrolActive = patrolRunning || startPatrol.isPending
 
-  // Recover patrol running state on page load/refresh (ISS-094)
-  // Only set store if backend says running AND we haven't received SSE events yet
+  // Recover patrol state on page load/refresh (ISS-094)
+  // Hydrate from backend: running state + last run results
   useEffect(() => {
     if (patrolRunning) return // Store already knows patrol is running (from SSE)
     let cancelled = false
-    apiGet<{ running: boolean }>('/patrol/status').then((res) => {
+    apiGet<{ running: boolean; lastRun?: any }>('/patrol/status').then((res) => {
       if (cancelled) return
       if (res.running) {
         // Backend says patrol running — set minimal state, SSE events will fill details
         usePatrolStore.getState().onPatrolProgress({ phase: 'processing' })
+      } else if (res.lastRun && !usePatrolStore.getState().phase) {
+        // Not running, but we have persisted last run — hydrate store
+        const lr = res.lastRun
+        usePatrolStore.getState().onPatrolProgress({
+          phase: lr.phase || 'completed',
+          totalCases: lr.totalCases,
+          changedCases: lr.changedCases,
+          processedCases: lr.processedCases,
+          error: lr.error,
+        })
+        // Hydrate case-level results
+        if (lr.caseResults?.length) {
+          for (const cr of lr.caseResults) {
+            // Add as processing first (to register), then complete
+            usePatrolStore.getState().onPatrolProgress({ phase: lr.phase, currentCase: cr.caseNumber })
+            usePatrolStore.getState().onPatrolCaseCompleted({ caseNumber: cr.caseNumber, error: cr.error })
+          }
+          // Re-set the final phase (hydration complete)
+          usePatrolStore.getState().onPatrolProgress({
+            phase: lr.phase || 'completed',
+            totalCases: lr.totalCases,
+            changedCases: lr.changedCases,
+            processedCases: lr.processedCases,
+          })
+        }
       }
     }).catch(() => { /* ignore */ })
     return () => { cancelled = true }
@@ -212,7 +237,12 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* Per-case progress cards */}
+          {/* Detail text (warmup results, discovering info, etc.) */}
+          {patrolDetail && patrolPhase !== 'completed' && (
+            <p className="text-[10px] mb-1.5" style={{ color: 'var(--text-tertiary)' }}>{patrolDetail}</p>
+          )}
+
+          {/* Per-case progress cards — show whenever there are cases */}
           {patrolCaseProgress.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5 mt-1">
               {patrolCaseProgress.map((cp) => (
@@ -242,12 +272,10 @@ export default function Dashboard() {
                     {cp.caseNumber.slice(-6)}
                   </span>
 
-                  {/* Current step / tool info */}
-                  {cp.status === 'processing' && (cp.lastTool || cp.currentStep) && (
-                    <span className="truncate" style={{ color: 'var(--text-tertiary)' }} title={`${cp.currentStep || ''} → ${cp.lastTool || ''}`}>
-                      {cp.lastTool
-                        ? cp.lastTool.replace(/^mcp__/, '').split('__')[0]
-                        : cp.currentStep}
+                  {/* Current sub-step (data-refresh, compliance-check, troubleshoot, etc.) */}
+                  {cp.status === 'processing' && cp.currentStep && (
+                    <span className="truncate text-[10px]" style={{ color: 'var(--text-tertiary)' }} title={cp.currentStep}>
+                      {cp.currentStep}
                     </span>
                   )}
 

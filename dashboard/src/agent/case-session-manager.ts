@@ -1728,6 +1728,7 @@ async function _runPatrol(
     changedCases: casesToProcess.length,
     processedCases: processedCount,
     todoSummary,
+    caseResults,
   })
 
   return todoSummary

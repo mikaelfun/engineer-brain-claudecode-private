@@ -390,6 +390,7 @@ export interface PatrolProgress {
   error?: string
   detail?: string
   todoSummary?: PatrolTodoSummary
+  caseResults?: Array<{ caseNumber: string; status: string; error?: string }>
 }
 
 export interface PatrolTodoSummary {

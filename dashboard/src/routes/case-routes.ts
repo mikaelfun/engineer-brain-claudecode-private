@@ -47,6 +47,28 @@ import type { ToolCallRecord, ExecutionSummary } from '../types/index.js'
 
 const caseRoutes = new Hono()
 
+// ---- Patrol Last Run Persistence ----
+const __filename_case = fileURLToPath(import.meta.url)
+const __dirname_case = dirname(__filename_case)
+const PATROL_LAST_RUN_PATH = join(resolve(__dirname_case, '..', '..'), '.patrol-last-run.json')
+
+function savePatrolLastRun(data: Record<string, unknown>): void {
+  try {
+    writeFileSync(PATROL_LAST_RUN_PATH, JSON.stringify(data, null, 2), 'utf-8')
+  } catch (err) {
+    console.warn('[patrol] Failed to save last run:', err)
+  }
+}
+
+function loadPatrolLastRun(): Record<string, unknown> | null {
+  try {
+    if (existsSync(PATROL_LAST_RUN_PATH)) {
+      return JSON.parse(readFileSync(PATROL_LAST_RUN_PATH, 'utf-8'))
+    }
+  } catch { /* ignore */ }
+  return null
+}
+
 // ---- Helpers ----
 
 const __filename = fileURLToPath(import.meta.url)
@@ -257,6 +279,14 @@ caseRoutes.post('/patrol', async (c) => {
           // 广播实时进度
           sseManager.broadcast('patrol-progress' as any, { ...progress } as Record<string, unknown>)
 
+          if (progress.phase === 'completed' || progress.phase === 'failed') {
+            // Persist for page-refresh hydration
+            savePatrolLastRun({
+              ...progress,
+              completedAt: new Date().toISOString(),
+            })
+          }
+
           if (progress.phase === 'completed') {
             sseManager.broadcast('patrol-updated' as any, {
               todoSummary: progress.todoSummary,
@@ -268,14 +298,10 @@ caseRoutes.post('/patrol', async (c) => {
         }, { force })
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : String(err)
-        sseManager.broadcast('patrol-progress' as any, {
-          phase: 'failed',
-          error: errorMsg,
-        })
-        sseManager.broadcast('case-session-failed', {
-          type: 'patrol',
-          error: errorMsg,
-        })
+        const failData = { phase: 'failed' as const, error: errorMsg, completedAt: new Date().toISOString() }
+        sseManager.broadcast('patrol-progress' as any, failData)
+        sseManager.broadcast('case-session-failed', { type: 'patrol', error: errorMsg })
+        savePatrolLastRun(failData)
       }
     }
 
@@ -296,9 +322,12 @@ caseRoutes.post('/patrol/cancel', (c) => {
   return c.json({ success: cancelled, message: cancelled ? 'Patrol cancellation requested' : 'Failed to cancel' })
 })
 
-// GET /patrol/status — 查询 patrol 运行状态
+// GET /patrol/status — 查询 patrol 运行状态 + 上次运行结果
 caseRoutes.get('/patrol/status', (c) => {
-  return c.json({ running: isPatrolRunning() })
+  return c.json({
+    running: isPatrolRunning(),
+    lastRun: loadPatrolLastRun(),
+  })
 })
 
 // ---- SDK Queue Status ----

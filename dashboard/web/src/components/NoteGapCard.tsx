@@ -135,9 +135,9 @@ export function NoteGapCard({ caseId }: NoteGapCardProps) {
           <div className="flex items-center gap-1.5">
             <ClipboardCheck size={14} style={{ color: 'var(--text-tertiary)' }} />
             <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>Note Gap</span>
-            {data?.gapDays != null && (
-              <span className="text-xs" style={{ color: data.gapDays >= 3 ? 'var(--accent-amber)' : 'var(--text-tertiary)' }}>
-                · {data.gapDays}d ago
+            {data?.draft?.gapDays != null && (
+              <span className="text-xs" style={{ color: data.draft.gapDays >= 3 ? 'var(--accent-amber)' : 'var(--text-tertiary)' }}>
+                · {data.draft.gapDays}d ago
               </span>
             )}
           </div>

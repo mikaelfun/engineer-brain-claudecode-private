@@ -43,7 +43,7 @@ ${casesRoot}/
 | `kusto/` | Kusto 查询结果 | troubleshooter |
 | `teams/` | Teams 聊天记录（按会话分文件） | teams-search |
 | `images/` | 邮件内联图片（自动提取） | d365-case-ops (fetch-emails.ps1) |
-| `icm/` | ICM 数据（summary/details/impact） | data-refresh |
+| `icm/` | ICM 数据（summary/details/impact/discussions） | data-refresh, icm-discussion |
 | `logs/` | subagent 执行日志（每个 agent 一个 .log 文件） | 各 subagent 自动写入 |
 | `context/` | 用户补充的上下文 | 用户交互 / Main Agent |
 | `kb/` | 关单时生成的 KB 文章 | Main Agent |
