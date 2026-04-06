@@ -18,6 +18,9 @@ tools/
 # CC-Connect cache
 .cc-connect/
 
+# Runtime state (session-scoped, regenerable)
+.claude/state/
+
 # Screenshots (all regenerable via scripts/tests)
 scripts/screenshots/
 tests/results/screenshots/
