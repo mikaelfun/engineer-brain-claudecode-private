@@ -4,7 +4,7 @@
   "sourceStates": {
     "21v-gap": "exhausted",
     "onenote": "exhausted",
-    "ado-wiki": "scanning",
+    "ado-wiki": "exhausted",
     "mslearn": "exhausted",
     "contentidea-kb": "exhausted"
   },
@@ -15,5 +15,5 @@
     "synthesizedEntryIds": [],
     "topicPlanHash": null
   },
-  "adoWikiBlast": "running"
+  "adoWikiBlast": "stopped"
 }

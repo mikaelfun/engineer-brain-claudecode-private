@@ -179,6 +179,49 @@ cat skills/products/enrich-state.json
 
 - `status === "complete"` → 输出 "✅ All products enriched and synthesized"，退出
 
+### Step 0a: sourceStates 对账（磁盘真相 > 内存标记）
+
+> 修复自链式 agent exhausted 信号丢失和 session 中断导致的标记不一致。
+> 在 spawn 任何 agent 之前执行，单线程无并发风险。
+
+对每个 `activeProducts` + `completedProducts` 中的产品：
+
+```python
+for product in activeProducts + completedProducts:
+    progress = read(f'{product}/.enrich/progress.json')
+    changed = False
+    
+    for source in ['ado-wiki', 'mslearn']:  # 有 index 的源，可以算 unscanned
+        scanned_file = f'{product}/.enrich/scanned-{source}.json'
+        if not exists(scanned_file): continue
+        data = read_json(scanned_file)
+        index_keys = set(to_key(i) for i in data.get('index', []))
+        scanned_keys = set(to_key(s) for s in data.get('scanned', []))
+        skipped_keys = set(to_key(s) for s in data.get('skipped', []))
+        unscanned = index_keys - scanned_keys - skipped_keys
+        
+        current = progress['sourceStates'].get(source, 'pending')
+        if len(unscanned) == 0 and len(index_keys) > 0 and current != 'exhausted':
+            progress['sourceStates'][source] = 'exhausted'
+            changed = True
+            log(f'RECONCILED: {product}/{source} scanning→exhausted (unscanned=0)')
+    
+    # blast 标记清理：如果 ado-wiki 已 exhausted 但 adoWikiBlast 还是 running
+    if progress.get('adoWikiBlast') in ('running', 'paused'):
+        if progress['sourceStates'].get('ado-wiki') == 'exhausted':
+            progress['adoWikiBlast'] = 'stopped'
+            changed = True
+            log(f'RECONCILED: {product}/adoWikiBlast running→stopped')
+    
+    if changed:
+        write(f'{product}/.enrich/progress.json', progress)
+```
+
+**规则**：
+- 只对有 index 的源（ado-wiki, mslearn）做对账——其他源（onenote, contentidea-kb, 21v-gap）无 index 无法从磁盘判断
+- `index` 为空（len=0）时不标记 exhausted——可能是还没建索引
+- 只做 `scanning→exhausted` 方向的修正，不做反向（防止误把正在扫的标记回退）
+
 ### Step 0.5: Phase 0 分类前置检查
 - `classifyState.status !== "exhausted"` → 仅执行 Phase 0 page-classify tick，不进入 per-product 流程
 - `classifyState.status === "exhausted"` → 进入 Step 1
