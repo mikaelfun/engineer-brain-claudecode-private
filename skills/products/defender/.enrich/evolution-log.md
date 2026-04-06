@@ -288,3 +288,9 @@
 - **discovered**: 13 | **deduplicated**: 0
 - **IDs**: defender-ado-wiki-b-r18-001..013
 - **Pages**: Canned responses, AzComm Service Health, CRI handling guidelines, Escalation flow, Noise/LQ CRI, One pager reference, RCA provisioning, SLA/KPIs, Support data access, Terminology
+
+## 2026-04-06 blast-batch-b r1
+- batchId: b | pages: 10 | extracted: 7 (4 Track-A + 3 Track-B guide-draft) | skipped: 3 (1 template, 2 WIP)
+- Track A: defender-for-api-TSG, agentless-manager-failure, agentless-missingPermission(EKS/GKE), azure-missingPermission(AKS)
+- Track B guides: defender-for-api-billing-tsg, defender-for-arm-technical-knowledge, attack-path-k8s-investigation
+- dedup: 0 (fresh batch)

@@ -33,7 +33,7 @@ mcpServers:
 
 ## 输出（per-source 隔离写入）
 - 新知识条目 → append 到 `skills/products/{product}/.enrich/known-issues-{source}.jsonl`（**不是** `known-issues.jsonl`）
-- 扫描记录 → 更新 `skills/products/{product}/.enrich/scanned-{source}.json`（**不是** `scanned-sources.json`）
+- 扫描记录 → 更新 `skills/products/{product}/.enrich/scanned-{source}.json`
 - ID 格式 → `{product}-{source}-{seq:03d}`（如 `intune-mslearn-001`）
 - 去重范围 → 仅在自己的 per-source 文件内去重
 - 草稿文件名 → `guides/drafts/{source}-{sanitized-title}.md`

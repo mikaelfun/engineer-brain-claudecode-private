@@ -418,3 +418,9 @@
 - **ID range**: vm-ado-wiki-b-r13-001 ~ vm-ado-wiki-b-r13-010
 - **Topics**: Guest Agent TSGs - deprecated GA versions, Dynatrace DLL injection, EaserSoft/TortoiseSvn MSI interference, GoalState XML missing, NoneType status reporting, aggregate status null message, registry key loss after reboot, ACL IdentityNotMappedException, firewall blocking WireServer, NullReferenceException from 3rd party software
 - **Files**: .enrich/known-issues-ado-wiki-b.jsonl, .enrich/scanned-ado-wiki-b.json
+
+## 2026-04-06 — batch-a (blast-batch r1)
+- batchId: a | pages: 10 | discovered: 10 | deduplicated: 0
+- Track A (5): TSG174-AFS-diagnostics, ImageValidation, IsolatedBuilds, InternalSubscription, CustomizationLog
+- Track B guides (5): AFS-Missing-Telemetry, AFS-Delete-ESE-DB, AFS-Workflow-Overview, AIB-Home, Create-AIB-Template
+- JSONL: known-issues-ado-wiki-a.jsonl | scanned: scanned-ado-wiki-a.json

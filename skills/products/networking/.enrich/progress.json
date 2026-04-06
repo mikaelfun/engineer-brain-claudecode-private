@@ -1,0 +1,19 @@
+{
+  "product": "networking",
+  "status": "paused",
+  "sourceStates": {
+    "21v-gap": "exhausted",
+    "onenote": "scanning",
+    "ado-wiki": "scanning",
+    "mslearn": "exhausted",
+    "contentidea-kb": "exhausted"
+  },
+  "synthesized": false,
+  "synthesizeState": {
+    "lastSynthesizedAt": null,
+    "lastEntryCount": 0,
+    "synthesizedEntryIds": [],
+    "topicPlanHash": null
+  },
+  "adoWikiBlast": "paused"
+}

@@ -1,0 +1,19 @@
+{
+  "product": "purview",
+  "status": "complete",
+  "sourceStates": {
+    "21v-gap": "exhausted",
+    "onenote": "exhausted",
+    "ado-wiki": "exhausted",
+    "mslearn": "exhausted",
+    "contentidea-kb": "exhausted"
+  },
+  "synthesized": false,
+  "synthesizeState": {
+    "lastSynthesizedAt": null,
+    "lastEntryCount": 0,
+    "synthesizedEntryIds": [],
+    "topicPlanHash": null
+  },
+  "adoWikiBlast": "stopped"
+}

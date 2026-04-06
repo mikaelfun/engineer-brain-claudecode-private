@@ -1,0 +1,13 @@
+{
+  "product": "aks",
+  "status": "extracting",
+  "sourceStates": {
+    "21v-gap": "exhausted",
+    "onenote": "scanning",
+    "ado-wiki": "scanning",
+    "mslearn": "exhausted",
+    "contentidea-kb": "exhausted"
+  },
+  "synthesized": false,
+  "adoWikiBlast": "running"
+}

@@ -93,8 +93,9 @@ Phase 2（每 topic 双 Agent 并行）：
   - 按 rootCause 或 tags 二次聚类
 
 **Draft → topic 映射**：
-- 从 JSONL 中 `solution` 字段包含 `"guides/drafts/"` 的条目提取 draft 路径
-- 该条目的 entryId 归属哪个 topic → draft 就归属哪个 topic
+- **直接扫描 `guides/drafts/` 目录**发现所有 draft 文件（不依赖 JSONL 指引条目）
+- 从每个 draft 的 frontmatter 读取 `source`、`sourceRef`、`type` 等元数据
+- 聚类 agent 按 frontmatter 的 `sourceRef`、标题和内容语义匹配到最近 topic
 - 不与任何 JSONL 条目关联的 draft 文件 → 聚类 agent 按 frontmatter 语义匹配到最近 topic
 
 **Kusto query → topic 映射**：

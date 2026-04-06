@@ -2078,3 +2078,12 @@
 - **Files**: .enrich/known-issues-ado-wiki-a.jsonl, .enrich/scanned-ado-wiki-a.json
 - **Guides**: ado-wiki-a-OverlaymgrReconcileError-noisy-neighbouring.md, ado-wiki-a-429-Throttling.md, ado-wiki-a-AKS-cluster-stuck-on-starting.md
 - Topics: OverlaymgrReconcileError (kyverno webhook deadlock, noisy neighbor), PDB drain failures, resource locks, Log Analytics Workspace deletion, disk IO/IOPS throttling, AKS RP token bucket throttling, ARM 429 investigation, Azure Backup extension (MCR connectivity, Azure Policy, vendored SDK), cluster stuck on starting
+
+## 2026-04-06 | ado-wiki | batch-a round-2 | batchId=a
+
+- Pages processed: 10 (VM Restart TSG, VM SKU Not Available, VM Storage/Fileshare TSG, Windows Docker Deprecation, Windows Gen2 VMs, Windows Node Extension, Windows Node Troubleshooting Tips, Windows On AKS, Windows Retirements, kubelet crash different memory arch)
+- Track A entries: 11 (aks-ado-wiki-a-r2-001 to 011)
+- Track B guide drafts: 5 (VM Restart TSG, VM Storage Perf TSG, Windows Node Extension, Windows Node Tips, Windows On AKS)
+- Track B indicator entries: 5 (aks-ado-wiki-a-r2-012 to 016)
+- Deduplicated: 1 (VM SKU not available -- overlaps with existing aks-ado-wiki-a-r12-009 and aks-ado-wiki-b-r12-009)
+- Total JSONL written: 16 entries to .enrich/known-issues-ado-wiki-a.jsonl

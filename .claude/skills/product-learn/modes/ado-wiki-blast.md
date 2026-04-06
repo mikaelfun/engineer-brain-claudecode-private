@@ -152,8 +152,9 @@ for slot_id in available_batch_ids[:product_slots]:
 # 1. Merge temp files (with dedup)
 merge_batch(product, batchId)
 #    - scanned-ado-wiki-{batchId}.json → merge into scanned-ado-wiki.json
-#    - known-issues-ado-wiki-{batchId}.jsonl → **dedup against** main known-issues.jsonl
+#    - known-issues-ado-wiki-{batchId}.jsonl → **dedup against** .enrich/known-issues-ado-wiki.jsonl (per-source)
 #      对比 symptom[:100]+rootCause[:100] 指纹，>80% 重叠则跳过
+#    - **append 到 per-source 文件**（不直接写 main known-issues.jsonl）
 #    - delete temp files
 
 # 2. Update claimed: remove merged pages
@@ -197,10 +198,11 @@ else:
 读取 .claude/skills/product-learn/phases/phase3-ado-wiki.md 执行 "3b-blast" 分支。
 
 隔离规则：
-- JSONL: skills/products/{product}/.enrich/known-issues-ado-wiki-{batchId}.jsonl
-- 扫描记录: skills/products/{product}/.enrich/scanned-ado-wiki-{batchId}.json
+- JSONL: skills/products/{product}/.enrich/blast-temp/known-issues-ado-wiki-{batchId}.jsonl
+- 扫描记录: skills/products/{product}/.enrich/blast-temp/scanned-ado-wiki-{batchId}.json
 - ID 格式: {product}-ado-wiki-{batchId}-r{round}-{seq:03d}（round 从已有 JSONL 最大 round+1 开始，无已有则 r1）
 - 草稿前缀: skills/products/{product}/guides/drafts/ado-wiki-{batchId}-{title}.md
+- ⚠️ Temp 文件写到 `.enrich/blast-temp/` 子目录（不是 `.enrich/` 根目录）
 - ❌ 不执行自链续跑
 - 去重范围: 仅在 per-batch 文件内去重 + 对比主 known-issues.jsonl 的 symptom 前 100 字符（>80% 重叠则跳过）
 - ⚠️ 写入 scanned 时使用完整 key 格式（与 index path 一致）
@@ -245,10 +247,17 @@ pagesToProcess ({N} 个页面):
 |------|------|------|
 | `scanned-ado-wiki.json` | `.enrich/` | 主扫描记录（index + scanned + skipped） |
 | `claimed-pages.json` | `.enrich/` | 已分配但未完成的页面（防重复） |
-| `blast-batches.json` | `.enrich/` | 可选，用于 status 展示 |
+| `wiki-scope.json` | `.enrich/` | Wiki 路径 scope 规则（pathScope/excludeScope） |
 | `progress.json` | `.enrich/` | adoWikiBlast 标记 + sourceStates |
-| `scanned-ado-wiki-{bid}.json` | `.enrich/` | batch temp file（agent 写，main merge 后删） |
-| `known-issues-ado-wiki-{bid}.jsonl` | `.enrich/` | batch temp JSONL（agent 写，main merge 后删） |
+| `scanned-ado-wiki-{bid}.json` | `.enrich/blast-temp/` | batch temp file（agent 写，main merge 后删） |
+| `known-issues-ado-wiki-{bid}.jsonl` | `.enrich/blast-temp/` | batch temp JSONL（agent 写，main merge 后删） |
+
+**临时文件管理规则**：
+- Agent 产出的 temp 文件统一写到 `.enrich/blast-temp/` 子目录
+- 调度器的页面分配文件也写到同一目录：`.enrich/blast-temp/batch-{product}-{bid}.json`
+- Merge 完成后立即删除对应 temp 文件
+- Session 结束前执行一次 sweep：merge 所有残留 temp 文件
+- **禁止在 `skills/products/` 根目录写任何临时文件**
 
 ---
 
@@ -318,9 +327,21 @@ pagesToProcess ({N} 个页面):
    > 常见错误：直接使用 `$page.path`（wiki 相对路径）而忘记拼接 `{org}/{project}/{wiki_name}:` 前缀。
 
    **pathScope 过滤**（关键步骤！）：
-   如果 `config.json → adoWikis` 配置中该 wiki 有 `pathScope` 字段：
+   从 `skills/products/{product}/.enrich/wiki-scope.json` 读取对应 wiki 的 scope 规则（不再从 config.json 读取）：
    ```python
-   path_scope = wiki_config.get("pathScope", None)
+   # 读取 scope 配置
+   scope_file = f'skills/products/{product}/.enrich/wiki-scope.json'
+   path_scope, exclude_scope = None, None
+   if os.path.exists(scope_file):
+       with open(scope_file) as f:
+           scopes = json.load(f).get('scopes', [])
+       wiki_key = f'{org}/{project}'  # 或含 wiki name
+       for s in scopes:
+           if s['wikiKey'] in wiki_key or wiki_key in s['wikiKey']:
+               path_scope = s.get('pathScope')
+               exclude_scope = s.get('excludeScope')
+               break
+   
    if path_scope:
        # 只保留 path 以 pathScope 中任一前缀开头的叶子页面
        filtered_leaves = [
@@ -331,9 +352,8 @@ pagesToProcess ({N} 个页面):
    ```
    
    **excludeScope 过滤**（pathScope 之后应用）：
-   如果 `config.json → adoWikis` 配置中该 wiki 有 `excludeScope` 字段：
+   从同一个 `wiki-scope.json` 中读取（已在 pathScope 步骤中加载）：
    ```python
-   exclude_scope = wiki_config.get("excludeScope", None)
    if exclude_scope:
        # 排除 path 以 excludeScope 中任一前缀开头的叶子页面
        filtered_leaves = [

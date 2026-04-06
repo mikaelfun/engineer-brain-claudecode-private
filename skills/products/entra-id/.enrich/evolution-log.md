@@ -977,3 +977,19 @@
 | 2026-04-06 | ado-wiki | blast batch-a r12: 10 pages processed, 0 discovered (3 redirects/404, 7 Content Development meta-docs with no TSG value) | Supportability/AzureAD/AzureAD:/Authentication/WHfB + Content Development/* || 2026-04-06 | ado-wiki blast-b-r11 | +5 break/fix (Customer Lockbox: PIM timing, inherited owner, stuck pending, APIRunner501, runner no-logs) +5 guide drafts (Kusto queries, Debug RAE, JIT details, Runners, email tracking). 10 pages processed, 2 skipped (minimal content). | Supportability/AzureAD/AzureAD:/Customer LockBox/* |
 
 | 2026-04-06 | ado-wiki blast-a-r15 | +6 break/fix (Customer Lockbox: PIM notification failure, inherited owner role, stuck pending 4d, APIRunner501, runner no-logs/JIT policy, auto-approve internal sub) +9 guide drafts (Kusto queries, workflow/permissions, Debug RAE, JIT details, Runners mgmt, Service Logging, MS Graph endpoint, email tracking, debugging no-logs). 10 pages processed. | Supportability/AzureAD/AzureAD:/Customer LockBox/* |
+## 2026-04-06 | ado-wiki blast-batch-c
+
+- batchId: c | pagesProcessed: 10 | discovered: 10 | deduplicated: 0
+- Track A (Break/Fix): 5 entries (seq 001-005)
+  - B2C self-asserted page version mismatch after update
+  - B2C SUSI user flow Undefined error (page layout < 2.1.19)
+  - B2C users redirected to wrong IDP after session expiry (shared Session Mgmt TP)
+  - B2C phone MFA blocked: subscription requirement (May 2023 change)
+  - B2C custom policy: ApplicationObjectId missing in TechnicalProfile Metadata
+- Track B (guides): 5 drafts written to guides/drafts/ado-wiki-c-{name}.md
+  - TSG AFD <> B2C 504 errors (3-scenario Kusto-based decision tree)
+  - TSG AppInsights integration with B2C (2-scenario: policy troubleshooting + user activity)
+  - B2C embedded pages in iframe (feature guide + limitations + config)
+  - B2C phone signup signin builtin policy (configuration how-to)
+  - B2C Custom OIDC Identity Providers for Built-in Policies (setup guide)
+- Files: known-issues-ado-wiki-c.jsonl, scanned-ado-wiki-c.json

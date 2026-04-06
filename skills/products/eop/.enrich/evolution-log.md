@@ -208,3 +208,18 @@
 - **21v tagging**: Item 011 marked 21vApplicable=false (TABL Sender Allow required for mitigation)
 - **Deduplicated (per-batch)**: 0
 - **Files**: `.enrich/known-issues-ado-wiki-a.jsonl` (20 entries), `.enrich/scanned-ado-wiki-a.json` (10 pages), 6 new guide-draft files
+
+## 2026-04-06 eop ado-wiki batch-a
+- Pages processed: 10 (2 not found: /Announcements, /Drafts/DRAFT - GetRCA Process Customer Talking Points)
+- Pages with content: 8 (all /Contribute to this Wiki/* - wiki meta/admin guides)
+- Extracted entries: 0 (no EOP/MDO troubleshooting content in any page)
+- Classification: all pages are wiki contribution management guides (how to create/edit/delete pages, PR workflows, analytics)
+- Deduplication: N/A (no entries)
+- Output: known-issues-ado-wiki-a.jsonl (empty), scanned-ado-wiki-a.json (10 pages)
+
+## 2026-04-06 ado-wiki batch-a (blast-batch)
+- Pages processed: 10 (ASIM-Security/Messaging Protection Wiki - CPE Handbook + Case Assignment)
+- Track A entries: 1 (eop-ado-wiki-a-005, RED flags for low CPE)
+- Track B guide-drafts: 9 (CPE Scenarios 7/8/9, DDX Guidelines, References, CARE, Top Indicators x2, Case Assignment)
+- Deduped: 0 (no overlap with main JSONL - all CPE process content)
+- Note: batch-a-pages.json had corrupted paths (em-dashes/apostrophes stripped); resolved via wiki tree enumeration

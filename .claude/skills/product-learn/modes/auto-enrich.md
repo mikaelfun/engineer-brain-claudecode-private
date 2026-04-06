@@ -57,7 +57,7 @@ skills/products/{product}/
 
 **Agent 写入规则**：
 - JSONL 写入目标：`.enrich/known-issues-{source}.jsonl`（不是 `known-issues.jsonl`）
-- 扫描记录：`.enrich/scanned-{source}.json`（不是 `.enrich/scanned-sources.json`）
+- 扫描记录：`.enrich/scanned-{source}.json`
 - ID 格式：`{product}-{source}-{seq:03d}`（如 `vm-onenote-001`），MERGE 时统一重编为 `{product}-{seq:03d}`
 - 去重范围：仅在自己的 per-source 文件内去重（跨 source 去重留给 MERGE）
 - 草稿文件名：`guides/drafts/{source}-{sanitized-title}.md`（source 前缀避冲突）
@@ -75,13 +75,7 @@ skills/products/{product}/
   "productQueue": ["monitor", "entra-id", ...],
   "completedProducts": ["intune"],
   "maxAgentsPerTick": 20,
-  "classifyState": { "status": "exhausted", "totalPages": 4241, "classifiedPages": 4002 },
-  "stats": {
-    "totalDiscovered": 61,
-    "totalDeduplicated": 0,
-    "bySource": { "21v-gap": 55, "onenote": 6, ... },
-    "byProduct": { "intune": 30, "entra-id": 31 }
-  }
+  "classifyState": { "status": "exhausted", "totalPages": 4241, "classifiedPages": 4002 }
 }
 ```
 
@@ -108,8 +102,7 @@ skills/products/{product}/
     "lastEntryCount": 0,
     "synthesizedEntryIds": [],
     "topicPlanHash": null
-  },
-  "stats": { "discovered": 0, "deduplicated": 0 }
+  }
 }
 ```
 
@@ -256,7 +249,7 @@ Agent(
     
     ⚠️ 并行隔离规则（v3）：
     - 写入 JSONL: skills/products/{product}/.enrich/known-issues-{source}.jsonl（不是 known-issues.jsonl）
-    - 扫描记录: skills/products/{product}/.enrich/scanned-{source}.json（不是 scanned-sources.json）
+    - 扫描记录: skills/products/{product}/.enrich/scanned-{source}.json
     - ID 格式: {product}-{source}-{seq:03d}（在 per-source 文件内递增）
     - 去重范围: 仅在 known-issues-{source}.jsonl 内去重
     - 草稿前缀: guides/drafts/{source}-{title}.md
@@ -284,14 +277,10 @@ spawn 后立即输出摘要表格并结束 tick，**不等待 agent 完成**。
 
 1. **更新 per-product 进度**（`.enrich/progress.json`）：
    - `sourceStates[source]` = agent.exhausted ? `"exhausted"` : `"scanning"`
-   - `stats.discovered += agent.discovered`
-   - `stats.deduplicated += agent.deduplicated`
+   - ❌ **不再写 stats**——stats 只从磁盘文件计算（`/product-learn stats` 命令）
 
-2. **更新全局 stats**（`enrich-state.json`）：
-   - `stats.totalDiscovered += agent.discovered`
-   - `stats.totalDeduplicated += agent.deduplicated`
-   - `stats.bySource[source] += agent.discovered`
-   - `stats.byProduct[product] += agent.discovered`
+2. **更新全局状态**（`enrich-state.json`）：
+   - ❌ **不再写 stats**——stats 只从磁盘文件计算
 
 3. **检查产品完成**：
    对每个 activeProduct：
@@ -371,19 +360,7 @@ Active: {activeProducts} | Queue: {remaining} remaining
 
 5. **写入 `known-issues.jsonl`**（最终合并文件）
 
-6. **合并 scanned 文件** → `.enrich/scanned-sources.json`（向后兼容）：
-   ```json
-   {
-     "onenote": [...from .enrich/scanned-onenote.json...],
-     "ado-wiki": [...from .enrich/scanned-ado-wiki.json...],
-     "ado-wiki-index": [...],
-     "mslearn": [...from .enrich/scanned-mslearn.json...],
-     "mslearn-index": [...],
-     "contentidea-kb": [...from .enrich/scanned-contentidea-kb.json...]
-   }
-   ```
-
-7. **更新 `.enrich/progress.json → status = "synthesizing"`**
+6. **更新 `.enrich/progress.json → status = "synthesizing"`**
 
 ---
 
@@ -490,7 +467,7 @@ Agent(
 - **大文件写入规则**：任何预计超过 5KB 的 JSON 文件（如 `.enrich/topic-plan.json`、`.enrich/scanned-*.json` 含大量条目时），**禁止用 Write 工具**，必须通过 `Bash` + `python3 -c "import json; ..."` 写入。原因：Write 工具把文件内容作为 output token 生成，大 JSON 会超 max_tokens 导致参数截断死循环。
 - **v3 并行写入规则**：
   - 写 JSONL → `.enrich/known-issues-{source}.jsonl`（不是 `known-issues.jsonl`）
-  - 写扫描记录 → `.enrich/scanned-{source}.json`（不是 `.enrich/scanned-sources.json`）
+  - 写扫描记录 → `.enrich/scanned-{source}.json`
   - ID 格式 → `{product}-{source}-{seq:03d}`（在 per-source 文件内递增）
   - 去重范围 → 仅在自己的 per-source 文件内去重（跨 source 去重留给 MERGE）
   - 草稿文件名 → `guides/drafts/{source}-{sanitized-title}.md`

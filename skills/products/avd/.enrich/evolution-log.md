@@ -1516,3 +1516,14 @@
 
 **Skipped (pointer-only)**: 3 pages (DeploymentFailed-InvalidResourceReference, Admin-Username, Unauthorized — just links to MS Docs)
 **Deduplicated**: 0
+
+## 2026-04-06 - phase3-ado-wiki blast-batch batchId=b
+
+- mode: blast-batch
+- pagesProcessed: 10 (9 with content, 1 empty: SSL Inspection Troubleshooting)
+- discovered: 14 (11 Track A + 3 Track B guide-drafts)
+- deduplicated: 0
+- wiki path issue resolved: W365 wiki uses emoji path /Features/🤝Dependencies/ (not /Features/Dependencies/)
+- Track A entries: avd-ado-wiki-b-r1-001 to avd-ado-wiki-b-r1-011
+- Track B drafts: ado-wiki-b-avd-media-optimization-troubleshooting.md, ado-wiki-b-custom-shortpath-gpo-setting.md, ado-wiki-b-outbound-connection-cloud-pc.md
+- files: .enrich/known-issues-ado-wiki-b.jsonl, .enrich/scanned-ado-wiki-b.json

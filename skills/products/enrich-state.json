@@ -24,32 +24,5 @@
     "status": "exhausted",
     "totalPages": 4241,
     "classifiedPages": 4002
-  },
-  "stats": {
-    "totalDiscovered": 6839,
-    "totalDeduplicated": 307,
-    "bySource": {
-      "onenote": 1870,
-      "ado-wiki": 2527,
-      "mslearn": 1640,
-      "21v-gap": 109,
-      "contentidea-kb": 634
-    },
-    "byProduct": {
-      "intune": 838,
-      "vm": 730,
-      "aks": 504,
-      "monitor": 330,
-      "entra-id": 776,
-      "disk": 391,
-      "networking": 174,
-      "acr": 122,
-      "purview": 243,
-      "automation": 86,
-      "eop": 292,
-      "defender": 358,
-      "arm": 264,
-      "avd": 276
-    }
   }
 }
