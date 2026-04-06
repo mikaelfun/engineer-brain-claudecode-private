@@ -1,0 +1,32 @@
+# Test: labor-estimate SKILL.md 读取 `labor.md`，如果当天已有记录则提示并跳过或调整估算
+# Generated: Cycle 0 | Source: spec-driven
+# Recipe: none
+
+id: "labor-refresh_20260403-gap-37"
+name: "labor-estimate SKILL.md 读取 `labor.md`，如果当天已有记录则提示并跳过或调整估算"
+category: "workflow-e2e"
+source: "spec-driven"
+description: "labor-estimate SKILL.md 读取 `labor.md`，如果当天已有记录则提示并跳过或调整估算"
+safety_level: "safe"
+priority: "high"
+impact: "P1"
+impactReason: "Spec AC 未覆盖"
+tags: ["spec-driven","labor-refresh"]
+
+steps:
+  - action: "validate"
+    params:
+      description: "labor-estimate SKILL.md 读取 `labor.md`，如果当天已有记录则提示并跳过或调整估算"
+
+assertions:
+  - type: "file_exists"
+    target: "cases/"
+    expected: "true"
+    description: "labor-estimate SKILL.md 读取 `labor.md`，如果当天已有记录则提示并跳过或调整估算"
+
+timeout_seconds: 30
+metadata:
+  generatedAt: "2026-04-05T00:45:22.682Z"
+  round: 0
+  gapId: "labor-refresh_20260403-gap-37"
+  recipeUsed: null

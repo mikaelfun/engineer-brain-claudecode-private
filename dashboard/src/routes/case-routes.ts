@@ -37,15 +37,12 @@ import {
   getSessionMessages,
   clearSessionMessages,
   writeStepLog,
-  buildExecutionSummary,
   getCaseMcpServerNames,
 } from '../agent/case-session-manager.js'
 import { sseManager } from '../watcher/sse-manager.js'
 import { sdkQueue } from '../utils/sdk-queue.js'
 import { reloadConfig, config as appConfig } from '../config.js'
 import { getSSEEventType, formatMessageForSSE, getPersistedMessageType } from '../utils/sse-helpers.js'
-import { broadcastSDKMessages } from '../utils/sdk-message-broadcaster.js'
-import type { CanUseTool } from '@anthropic-ai/claude-agent-sdk'
 import type { ToolCallRecord, ExecutionSummary } from '../types/index.js'
 
 const caseRoutes = new Hono()
@@ -82,152 +79,22 @@ function saveConfig(config: Record<string, any>): void {
  * REPL-only tools that hang in headless SDK mode.
  * Must be denied in automated SDK sessions to prevent hangs (ISS-079).
  */
-const REPL_ONLY_TOOLS: ReadonlySet<string> = new Set([
-  'TodoWrite', 'TodoRead', 'TaskCreate', 'TaskUpdate', 'TaskList', 'TaskGet',
-  'EnterPlanMode', 'ExitPlanMode',
-])
 
-/**
- * Create a canUseTool callback for automated (non-interactive) sessions.
- * Denies REPL-only tools and AskUserQuestion.
- */
-function createAutoCanUseTool(): CanUseTool {
-  return async (toolName) => {
-    if (REPL_ONLY_TOOLS.has(toolName)) {
-      return {
-        behavior: 'deny' as const,
-        message: 'Task tracking tools are not available in automated SDK sessions. Skip and proceed.',
-      }
-    }
-    if (toolName === 'AskUserQuestion') {
-      return {
-        behavior: 'deny' as const,
-        message: 'This is an automated process. Do not ask for approval — proceed autonomously.',
-      }
-    }
-    return { behavior: 'allow' as const }
-  }
-}
-
-/**
- * Deep-parse SDK messages and broadcast semantic SSE events.
- * Shared implementation in utils/sdk-message-broadcaster.ts.
- * Imported as broadcastSDKMessages above.
- */
-
-// POST /case/:id/process — 完整 Case 处理
+// POST /case/:id/process — 完整 Case 处理（backward compat → 转发到 step/casework）
 caseRoutes.post('/case/:id/process', async (c) => {
   const caseNumber = c.req.param('id')
-  const body = await c.req.json<{ intent?: string }>().catch(() => ({ intent: undefined }))
-  const defaultIntent = '执行完整 casework 流程。请读取 .claude/skills/casework/SKILL.md 获取完整执行步骤。'
-  const intent = (body.intent && body.intent !== 'Full casework processing' && !body.intent.includes('Full casework processing'))
-    ? body.intent
-    : defaultIntent
-
-  // Check if case already has an active operation (prevent duplicate spawn)
-  const existingOp = getActiveCaseOperation(caseNumber)
-  if (existingOp) {
-    return c.json({
-      error: 'Case already has an active operation',
-      activeOperation: existingOp,
-    }, 409)
-  }
-
-  // Acquire operation lock
-  if (!acquireCaseOperationLock(caseNumber, 'full-process')) {
-    return c.json({
-      error: 'Failed to acquire operation lock (race condition)',
-      activeOperation: getActiveCaseOperation(caseNumber),
-    }, 409)
-  }
-
-  try {
-    // Start processing asynchronously
-    const processAsync = async () => {
-      const processStartedAt = new Date().toISOString()
-
-      // Broadcast process-started event
-      sseManager.broadcast('case-step-started' as any, {
-        caseNumber,
-        step: 'full-process',
-        startedAt: processStartedAt,
-      })
-      // Notify Agent Monitor to refresh session list
-      sseManager.broadcast('sessions-changed' as any, { reason: 'step-started', caseNumber, step: 'full-process' })
-
-      // Clear previous messages for fresh run
-      clearSessionMessages(caseNumber)
-      appendSessionMessage(caseNumber, {
-        type: 'system',
-        content: 'Full process started',
-        step: 'full-process',
-        timestamp: processStartedAt,
-      })
-
-      try {
-        const canUseTool = createAutoCanUseTool()
-        const result = await broadcastSDKMessages(
-          caseNumber,
-          'full-process',
-          processCaseSession(caseNumber, intent, canUseTool),
-        )
-
-        const executionSummary = buildExecutionSummary(
-          result.toolCalls,
-          'full-process',
-          result.turns,
-        )
-
-        sseManager.broadcast('case-step-completed' as any, {
-          caseNumber,
-          sessionId: result.sessionId,
-          step: 'full-process',
-          executionSummary,
-        })
-        // Notify Agent Monitor to refresh session list
-        sseManager.broadcast('sessions-changed' as any, { reason: 'step-completed', caseNumber, step: 'full-process' })
-        appendSessionMessage(caseNumber, {
-          type: 'completed',
-          content: 'Full process completed',
-          step: 'full-process',
-          timestamp: new Date().toISOString(),
-        })
-
-        // Write step log on completion
-        writeStepLog(caseNumber, 'full-process', {
-          status: 'completed',
-          startedAt: processStartedAt,
-          messageCount: result.messageCount,
-        })
-      } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : String(err)
-        sseManager.broadcast('case-session-failed', {
-          caseNumber,
-          step: 'full-process',
-          error: errorMsg,
-        })
-        // Notify Agent Monitor to refresh session list
-        sseManager.broadcast('sessions-changed' as any, { reason: 'step-failed', caseNumber, step: 'full-process' })
-
-        // Write step log on failure
-        writeStepLog(caseNumber, 'full-process', {
-          status: 'failed',
-          startedAt: processStartedAt,
-          error: errorMsg,
-        })
-      } finally {
-        // Always release the lock when operation finishes
-        releaseCaseOperationLock(caseNumber)
-      }
-    }
-
-    sdkQueue.enqueue(processAsync, 'casework:' + caseNumber, caseNumber) // Fire and forget via SDK queue
-    return c.json({ status: 'started', caseNumber }, 202)
-  } catch (err) {
-    releaseCaseOperationLock(caseNumber)
-    const msg = err instanceof Error ? err.message : String(err)
-    return c.json({ error: msg }, 500)
-  }
+  // Internally redirect to the unified step route
+  const stepUrl = new URL(`/api/case/${caseNumber}/step/casework`, `http://localhost:${appConfig.port}`)
+  const res = await fetch(stepUrl.toString(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': c.req.header('Authorization') || '',
+    },
+    body: '{}',
+  })
+  const data = await res.json()
+  return c.json(data, res.status as any)
 })
 
 // POST /case/:id/chat — 交互式反馈
@@ -381,6 +248,9 @@ caseRoutes.get('/case/:id/sessions', (c) => {
 // POST /patrol — 批量巡检 (TypeScript 编排器 + per-case SDK sessions)
 caseRoutes.post('/patrol', async (c) => {
   try {
+    let force = false
+    try { const body = await c.req.json<{ force?: boolean }>(); force = !!body?.force } catch { /* no body = default */ }
+
     const patrolAsync = async () => {
       try {
         await patrolCoordinator((progress) => {
@@ -395,7 +265,7 @@ caseRoutes.post('/patrol', async (c) => {
               totalCases: progress.totalCases,
             } as Record<string, unknown>)
           }
-        })
+        }, { force })
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : String(err)
         sseManager.broadcast('patrol-progress' as any, {

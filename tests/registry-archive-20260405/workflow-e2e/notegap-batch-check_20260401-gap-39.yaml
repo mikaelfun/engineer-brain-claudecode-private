@@ -1,0 +1,32 @@
+# Test: 检测过程中显示进度（检测中... X/Y cases）
+# Generated: Cycle 0 | Source: spec-driven
+# Recipe: none
+
+id: "notegap-batch-check_20260401-gap-39"
+name: "检测过程中显示进度（检测中... X/Y cases）"
+category: "workflow-e2e"
+source: "spec-driven"
+description: "检测过程中显示进度（检测中... X/Y cases）"
+safety_level: "safe"
+priority: "medium"
+impact: "P2"
+impactReason: "Spec AC 未覆盖"
+tags: ["spec-driven","notegap-batch-check"]
+
+steps:
+  - action: "validate"
+    params:
+      description: "检测过程中显示进度（检测中... X/Y cases）"
+
+assertions:
+  - type: "file_exists"
+    target: "cases/"
+    expected: "true"
+    description: "检测过程中显示进度（检测中... X/Y cases）"
+
+timeout_seconds: 30
+metadata:
+  generatedAt: "2026-04-05T00:45:22.682Z"
+  round: 0
+  gapId: "notegap-batch-check_20260401-gap-39"
+  recipeUsed: null

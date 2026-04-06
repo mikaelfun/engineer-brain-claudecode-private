@@ -1,0 +1,26 @@
+# Test: ISS-154: Dynamic Iteration Limit
+# Generated: Round 28 | Source: issues/ISS-154.json
+# Recipe: none
+
+id: "iss154-dynamic-iteration"
+name: "ISS-154: Dynamic Iteration Limit"
+category: "workflow-e2e"
+source: "issues/ISS-154.json"
+safety_level: "safe"
+description: "Verify troubleshooter recipe can define 1-5 iteration limit, default 3"
+
+steps:
+  - action: "validate"
+    params:
+      description: "Verify troubleshooter recipe can define 1-5 iteration limit, default 3"
+
+assertions:
+  - type: "file_exists"
+    target: ".claude/skills/troubleshoot/SKILL.md"
+    expected: ""
+
+metadata:
+  generatedAt: "2026-03-30T00:10:15.934Z"
+  round: 28
+  gapId: "iss154-dynamic-iteration"
+  recipeUsed: null

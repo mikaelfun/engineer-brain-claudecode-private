@@ -1,0 +1,9 @@
+{
+  "testId": "view-labor-script",
+  "round": 2,
+  "timestamp": "2026-04-05T10:17:46.000Z",
+  "status": "fail",
+  "assertions": [{"name":"File exists: labor.md","pass":false,"expected":"exists","actual":"missing"}],
+  "error": "1 of 1 assertions failed",
+  "duration_ms": 34364
+}

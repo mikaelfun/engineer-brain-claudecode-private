@@ -1,0 +1,20 @@
+id: "unit-server"
+name: "Backend Unit Tests — npm run test:server"
+category: "unit-test"
+description: "Run backend-only Vitest unit tests (dashboard/src/**/*.test.ts)"
+safety_level: "safe"
+priority: "high"
+tags: ["unit", "vitest", "backend"]
+
+npm_command: "test:server"
+npm_prefix:
+expected_exit: "0"
+timeout_seconds: 60
+
+assertions:
+  - type: "npm_exit_code"
+    expected: "0"
+  - type: "no_test_failures"
+    expected: "0"
+  - type: "tests_executed"
+    expected: ">0"

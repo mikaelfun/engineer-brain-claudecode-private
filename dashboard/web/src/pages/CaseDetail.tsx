@@ -9,7 +9,7 @@ import { Card, CardHeader } from '../components/common/Card'
 import { SeverityBadge, CaseStatusBadge, SlaBadge, Badge, HealthScoreBadge, EntitlementWarningBanner, RdseBadge } from '../components/common/Badge'
 import { Loading, ErrorState, EmptyState } from '../components/common/Loading'
 import {
-  useCaseDetail, useCaseEmails, useCaseNotes,
+  useCaseDetail, useCaseEmails, useCaseNotes, useCaseLaborRecords,
   useCaseTeams, useCaseMeta, useCaseAnalysis, useCaseOnenote,
   useCaseDrafts, useCaseInspection, useCaseTodo, useCaseTodoFile,
   useCaseTiming, useCaseLogs, useCaseAttachments,
@@ -30,6 +30,7 @@ export default function CaseDetail() {
   // Always-fetch: key tab data for badge counts (lightweight — only returns arrays)
   const { data: emailsData } = useCaseEmails(id || '')
   const { data: notesData } = useCaseNotes(id || '')
+  const { data: laborRecordsData } = useCaseLaborRecords(id || '')
   const { data: todoData } = useCaseTodo(id || '')
   const { data: draftsData } = useCaseDrafts(id || '')
   const { data: logsData } = useCaseLogs(id || '')
@@ -45,7 +46,7 @@ export default function CaseDetail() {
   const { data: claimsData } = useCaseClaims(id || '')
 
   if (isLoading) return <Loading text="Loading case..." />
-  if (error || !caseInfo) return <ErrorState message="Case not found" onRetry={() => navigate('/')} />
+  if (error || !caseInfo) return <ErrorState message="Case not found" onRetry={() => navigate('/cases')} />
 
   // Evidence chain: count claims with issues for badge
   const claimsList = claimsData?.claims as Array<{ status: string }> | null | undefined
@@ -55,7 +56,7 @@ export default function CaseDetail() {
     { id: 'summary', label: 'Summary', icon: '📋' },
     { id: 'todo', label: 'Todo', icon: '📌', count: todoData?.total },
     { id: 'emails', label: 'Emails', icon: '📧', count: emailsData?.total },
-    { id: 'notes', label: 'Notes', icon: '📝', count: notesData?.total },
+    { id: 'notes', label: 'Notes & Labor', icon: '📝', count: (notesData?.total || 0) + (laborRecordsData?.total || 0) || undefined },
     { id: 'teams', label: 'Teams', icon: '💬', count: teamsData?.total },
     { id: 'drafts', label: 'Drafts', icon: '✉️', count: draftsData?.total },
     { id: 'analysis', label: 'Analysis', icon: '🔍' },
@@ -77,7 +78,7 @@ export default function CaseDetail() {
         {/* Row 1: Back + Title + Health Score */}
         <div className="flex items-start gap-3">
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/cases')}
             className="mt-1 p-1 rounded-lg flex-shrink-0"
             onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
             onMouseLeave={e => e.currentTarget.style.background = ''}
@@ -207,13 +208,12 @@ export default function CaseDetail() {
       <div className="flex gap-4 items-start">
         {/* Left — Information area */}
         <div className="flex-1 min-w-0 space-y-4">
-          <NoteGapCard caseId={id!} />
           <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
           <div>
             {activeTab === 'summary' && <InspectionTab content={inspectionData?.content} exists={inspectionData?.exists} filename={inspectionData?.filename} updatedAt={inspectionData?.updatedAt} />}
             {activeTab === 'todo' && <CaseTodoTab caseId={id!} latest={todoData?.latest || null} files={todoData?.files || []} toggleTodo={toggleCaseTodo} />}
             {activeTab === 'emails' && <EmailsTab emails={emailsData?.emails || []} caseNumber={id!} />}
-            {activeTab === 'notes' && <NotesTab notes={notesData?.notes || []} />}
+            {activeTab === 'notes' && <NotesAndLaborTab notes={notesData?.notes || []} laborRecords={laborRecordsData?.records || []} caseId={id!} />}
             {activeTab === 'teams' && <TeamsTab chats={teamsData?.chats || []} />}
             {activeTab === 'drafts' && <DraftsTab drafts={draftsData?.drafts || []} caseNumber={id!} />}
             {activeTab === 'analysis' && <AnalysisTab content={analysisData?.content} exists={analysisData?.exists} />}
@@ -229,7 +229,6 @@ export default function CaseDetail() {
         {/* Right — AI Assistant sidebar (xl+ only, sticky) */}
         <div className="w-64 flex-shrink-0 hidden xl:block sticky top-4">
           <CaseAIPanel mode="compact" caseNumber={id!} onOpenFull={() => setActiveTab('ai')} skipRecovery />
-          <LaborEstimateCard caseNumber={id!} />
         </div>
       </div>
 
@@ -340,24 +339,162 @@ function EmailsTab({ emails, caseNumber }: { emails: any[]; caseNumber: string }
   )
 }
 
-function NotesTab({ notes }: { notes: any[] }) {
-  if (notes.length === 0) return <EmptyState icon="📝" title="No notes" />
+function NotesAndLaborTab({ notes, laborRecords, caseId }: { notes: any[]; laborRecords: any[]; caseId: string }) {
+  const hasNotes = notes.length > 0
+  const hasLabor = laborRecords.length > 0
+  const [expandedNotes, setExpandedNotes] = useState<Set<number>>(new Set(hasNotes ? [0] : []))
+  const [expandedLabor, setExpandedLabor] = useState<Set<number>>(new Set())
+
+  const toggleNote = (i: number) => {
+    const next = new Set(expandedNotes)
+    next.has(i) ? next.delete(i) : next.add(i)
+    setExpandedNotes(next)
+  }
+  const toggleLabor = (i: number) => {
+    const next = new Set(expandedLabor)
+    next.has(i) ? next.delete(i) : next.add(i)
+    setExpandedLabor(next)
+  }
+
+  // Truncate body to ~2 lines for preview
+  const previewText = (text: string, maxLen = 120) => {
+    if (!text) return ''
+    const oneLine = text.replace(/\n/g, ' ').trim()
+    return oneLine.length > maxLen ? oneLine.slice(0, maxLen) + '...' : oneLine
+  }
+
+  // Labor classification color map
+  const classificationColor = (cls: string): 'primary' | 'purple' | 'success' | 'warning' | 'info' => {
+    const lower = (cls || '').toLowerCase()
+    if (lower.includes('troubleshoot')) return 'primary'
+    if (lower.includes('research')) return 'purple'
+    if (lower.includes('communi')) return 'success'
+    if (lower.includes('remote') || lower.includes('session')) return 'warning'
+    return 'info'
+  }
 
   return (
-    <div className="space-y-3">
-      {notes.map((note, i) => (
-        <Card key={note.id || i} padding="sm">
-          <div className="flex items-center gap-2 mb-2">
-            <span>📝</span>
-            <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{note.date}</span>
-            <Badge variant="secondary" size="xs">{note.author}</Badge>
-          </div>
-          {note.title && note.title !== '(no title)' && (
-            <p className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>{note.title}</p>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+      {/* Left column — Notes */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold flex items-center gap-1.5 mb-1" style={{ color: 'var(--text-primary)' }}>
+          <span className="text-base">📝</span> Notes
+          {hasNotes && (
+            <Badge variant="secondary" size="xs">{notes.length}</Badge>
           )}
-          <p className="text-sm whitespace-pre-wrap mt-1" style={{ color: 'var(--text-secondary)' }}>{note.body}</p>
-        </Card>
-      ))}
+        </h3>
+        <NoteGapCard caseId={caseId} />
+        {!hasNotes ? (
+          <EmptyState icon="📝" title="No notes" />
+        ) : (
+          notes.map((note, i) => {
+            const isOpen = expandedNotes.has(i)
+            return (
+              <Card key={note.id || i} padding="sm" hover>
+                <div
+                  className="cursor-pointer"
+                  onClick={() => toggleNote(i)}
+                >
+                  {/* Row 1: icon + meta */}
+                  <div className="flex items-start gap-2.5">
+                    <span className="text-base flex-shrink-0 mt-0.5">📝</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge variant="info" size="xs">{note.author}</Badge>
+                        <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{note.date}</span>
+                      </div>
+                      {/* Row 2: title */}
+                      {note.title && note.title !== '(no title)' && (
+                        <p className="font-medium text-sm mt-1 truncate" style={{ color: 'var(--text-primary)' }}>{note.title}</p>
+                      )}
+                      {/* Row 3: preview (collapsed) */}
+                      {!isOpen && note.body && (
+                        <p className="text-xs mt-1 line-clamp-2" style={{ color: 'var(--text-tertiary)' }}>
+                          {previewText(note.body, 150)}
+                        </p>
+                      )}
+                    </div>
+                    <ChevronDown
+                      className={`w-4 h-4 flex-shrink-0 mt-1 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                      style={{ color: 'var(--text-tertiary)' }}
+                    />
+                  </div>
+                </div>
+                {/* Expanded body */}
+                {isOpen && (
+                  <div
+                    className="mt-3 pt-3 text-sm whitespace-pre-wrap"
+                    style={{ borderTop: '1px solid var(--border-subtle)', color: 'var(--text-secondary)' }}
+                  >
+                    {note.body}
+                  </div>
+                )}
+              </Card>
+            )
+          })
+        )}
+      </div>
+
+      {/* Right column — Labor */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold flex items-center gap-1.5 mb-1" style={{ color: 'var(--text-primary)' }}>
+          <span className="text-base">⏱️</span> Labor
+          {hasLabor && (
+            <Badge variant="secondary" size="xs">{laborRecords.length}</Badge>
+          )}
+        </h3>
+        <LaborEstimateCard caseNumber={caseId} />
+        {!hasLabor ? (
+          <EmptyState icon="⏱️" title="No labor records" />
+        ) : (
+          laborRecords.map((record, i) => {
+            const isOpen = expandedLabor.has(i)
+            return (
+              <Card key={i} padding="sm" hover>
+                <div
+                  className="cursor-pointer"
+                  onClick={() => toggleLabor(i)}
+                >
+                  {/* Row 1: icon + meta */}
+                  <div className="flex items-start gap-2.5">
+                    <span className="text-base flex-shrink-0 mt-0.5">⏱️</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge variant={classificationColor(record.classification)} size="xs">
+                          {record.classification}
+                        </Badge>
+                        <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{record.date}</span>
+                        <span className="text-sm font-semibold ml-auto" style={{ color: 'var(--accent-blue)' }}>
+                          {record.durationMin} min
+                        </span>
+                      </div>
+                      {/* Row 2: preview (collapsed) */}
+                      {!isOpen && record.description && (
+                        <p className="text-xs mt-1 line-clamp-2" style={{ color: 'var(--text-tertiary)' }}>
+                          {previewText(record.description, 150)}
+                        </p>
+                      )}
+                    </div>
+                    <ChevronDown
+                      className={`w-4 h-4 flex-shrink-0 mt-1 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                      style={{ color: 'var(--text-tertiary)' }}
+                    />
+                  </div>
+                </div>
+                {/* Expanded body */}
+                {isOpen && (
+                  <div
+                    className="mt-3 pt-3 text-sm whitespace-pre-wrap"
+                    style={{ borderTop: '1px solid var(--border-subtle)', color: 'var(--text-secondary)' }}
+                  >
+                    {record.description || '(No description)'}
+                  </div>
+                )}
+              </Card>
+            )
+          })
+        )}
+      </div>
     </div>
   )
 }

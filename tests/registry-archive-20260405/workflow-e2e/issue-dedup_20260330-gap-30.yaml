@@ -1,0 +1,32 @@
+# Test: 合并/Reopen 场景提供描述处理选项：追加 / 替换 / 手动编辑
+# Generated: Cycle 0 | Source: spec-driven
+# Recipe: none
+
+id: "issue-dedup_20260330-gap-30"
+name: "合并/Reopen 场景提供描述处理选项：追加 / 替换 / 手动编辑"
+category: "workflow-e2e"
+source: "spec-driven"
+description: "合并/Reopen 场景提供描述处理选项：追加 / 替换 / 手动编辑"
+safety_level: "safe"
+priority: "medium"
+impact: "P2"
+impactReason: "Spec AC 未覆盖"
+tags: ["spec-driven","issue-dedup"]
+
+steps:
+  - action: "validate"
+    params:
+      description: "合并/Reopen 场景提供描述处理选项：追加 / 替换 / 手动编辑"
+
+assertions:
+  - type: "file_exists"
+    target: "cases/"
+    expected: "true"
+    description: "合并/Reopen 场景提供描述处理选项：追加 / 替换 / 手动编辑"
+
+timeout_seconds: 30
+metadata:
+  generatedAt: "2026-04-05T00:45:22.682Z"
+  round: 0
+  gapId: "issue-dedup_20260330-gap-30"
+  recipeUsed: null

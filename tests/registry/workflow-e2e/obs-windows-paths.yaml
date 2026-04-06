@@ -1,0 +1,17 @@
+id: obs-windows-paths
+name: "Windows Paths in Scripts"
+category: workflow-e2e
+source: "observability-scanner"
+impact: P3
+impactReason: "Cross-platform"
+safety_level: safe
+recipe_used: none
+steps:
+  - action: bash_command
+    params:
+      command: "grep -r 'C:\\Users' tests/executors/*.sh 2>/dev/null | wc -l"
+      description: "Check for hardcoded Windows paths"
+assertions:
+  - type: bash_exit_zero
+    target: "test $(grep -r 'C:\\\\Users' tests/executors/*.sh 2>/dev/null | wc -l | tr -d ' ') -eq 0"
+    description: "No hardcoded Windows paths in scripts"

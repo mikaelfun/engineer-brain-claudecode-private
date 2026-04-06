@@ -1,0 +1,24 @@
+id: "wf-iss094"
+name: "ISS-094 — start patrol后进度没有实时显示，没有sse"
+category: "workflow-e2e"
+source: "issues/ISS-094.json"
+description: "验证 ISS-094（tracked）的验收标准：页面刷新后如果 patrol 仍在运行，能恢复显示进度状态"
+safety_level: "safe"
+data_source: live
+live_pool: "data_rich"
+priority: "medium"
+tags: ["issue-driven", "iss-094", "tracked"]
+
+steps:
+  - action: "run_skill"
+    params:
+      skill: "data-refresh"
+      case_id: "{live_case_id}"
+    safety_check: "scripts.safe[data-refresh]"
+
+assertions:
+  - type: "file_exists"
+    target: "cases/active/{test_case_id}/case-summary.md"
+    description: "页面刷新后如果 patrol 仍在运行，能恢复显示进度状态"
+
+timeout_seconds: 120

@@ -1,0 +1,1 @@
+{"ts":"2026-04-05T00:40:48Z","type":"bug_discovered","impact":"P2","area":"framework","detail":"SCAN cycle 0: 发现 51 个测试覆盖 gaps (20 issue-driven, 31 spec-driven, 其中 2 个 P1)"}

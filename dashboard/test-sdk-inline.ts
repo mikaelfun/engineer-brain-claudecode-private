@@ -5,7 +5,7 @@ try {
   for await (const msg of query({
     prompt: 'Say hello and nothing else',
     options: {
-      cwd: 'C:\Users\fangkun\Documents\Claude Code Projects\EngineerBrain',
+      cwd: process.cwd(),
       settingSources: ['user', 'project'] as any,
       systemPrompt: { type: 'preset' as const, preset: 'claude_code' as const, append: 'Test only' },
       allowedTools: ['Read'],

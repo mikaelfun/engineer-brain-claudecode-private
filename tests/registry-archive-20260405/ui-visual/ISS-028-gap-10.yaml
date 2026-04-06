@@ -1,0 +1,35 @@
+# Test: 排版使用 Plus Jakarta Sans + JetBrains Mono 字体
+# Generated: Cycle 0 | Source: issue-driven
+# Recipe: issue-driven-ui
+
+id: "ISS-028-gap-10"
+name: "排版使用 Plus Jakarta Sans + JetBrains Mono 字体"
+category: "ui-visual"
+source: "issue-driven"
+description: "排版使用 Plus Jakarta Sans + JetBrains Mono 字体"
+safety_level: "safe"
+priority: "medium"
+impact: "P2"
+impactReason: "缺失测试覆盖：regression 功能"
+tags: ["issue-driven","ISS-028"]
+
+steps:
+  - action: "navigate"
+    params:
+      description: "Open dashboard"
+  - action: "validate"
+    params:
+      description: "排版使用 Plus Jakarta Sans + JetBrains Mono 字体"
+
+assertions:
+  - type: "text_contains"
+    target: "page"
+    expected: ""
+    description: "排版使用 Plus Jakarta Sans + JetBrains Mono 字体"
+
+timeout_seconds: 30
+metadata:
+  generatedAt: "2026-04-05T00:45:22.682Z"
+  round: 0
+  gapId: "ISS-028-gap-10"
+  recipeUsed: null

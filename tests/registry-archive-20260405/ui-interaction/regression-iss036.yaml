@@ -1,0 +1,40 @@
+id: "regression-iss036"
+name: "Regression: ISS-036 — Track Created 后实时状态窗口应自动折叠，可展开查看历史状态流"
+category: "ui-interaction"
+source: "issues/ISS-036.json"
+description: "回归测试：验证 ISS-036 实现的功能未退化"
+safety_level: "safe"
+priority: "medium"
+tags: ["regression", "issue-driven", "iss-036"]
+regression_for: "ISS-036"
+
+steps:
+  - action: "navigate"
+    params:
+      url: "{frontend_url}"
+    safety_check: "ui.safe[navigate_to_page]"
+  - action: "verify_element"
+    params:
+      selector: "body"
+      expected: "visible"
+      timeout: 5000
+
+assertions:
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "Header 右侧有展开/折叠按钮，点击可查看之前的完整状态流记录"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "创建进行中（isActive）和等待问题（pendingQuestion）时保持展开"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "Error 状态保持展开（需要看到错误信息和 Retry 按钮）"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "TypeScript 编译通过"
+
+timeout_seconds: 60

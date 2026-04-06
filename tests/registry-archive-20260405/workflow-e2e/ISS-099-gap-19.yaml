@@ -1,0 +1,32 @@
+# Test: 移动前记录日志（case number、原因、目标目录），移动后不再对该 case 执行后续 casework 步骤
+# Generated: Cycle 0 | Source: issue-driven
+# Recipe: none
+
+id: "ISS-099-gap-19"
+name: "移动前记录日志（case number、原因、目标目录），移动后不再对该 case 执行后续 casework 步骤"
+category: "workflow-e2e"
+source: "issue-driven"
+description: "移动前记录日志（case number、原因、目标目录），移动后不再对该 case 执行后续 casework 步骤"
+safety_level: "safe"
+priority: "high"
+impact: "P1"
+impactReason: "缺失测试覆盖：workflow-e2e 功能"
+tags: ["issue-driven","ISS-099"]
+
+steps:
+  - action: "validate"
+    params:
+      description: "移动前记录日志（case number、原因、目标目录），移动后不再对该 case 执行后续 casework 步骤"
+
+assertions:
+  - type: "file_exists"
+    target: "cases/"
+    expected: "true"
+    description: "移动前记录日志（case number、原因、目标目录），移动后不再对该 case 执行后续 casework 步骤"
+
+timeout_seconds: 30
+metadata:
+  generatedAt: "2026-04-05T00:45:22.682Z"
+  round: 0
+  gapId: "ISS-099-gap-19"
+  recipeUsed: null

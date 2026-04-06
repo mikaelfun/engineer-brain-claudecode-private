@@ -1,0 +1,32 @@
+# Test: Explicit language parameter still overrides auto-detection
+# Generated: Cycle 0 | Source: spec-driven
+# Recipe: none
+
+id: "email-lang-detect_20260401-gap-29"
+name: "Explicit language parameter still overrides auto-detection"
+category: "workflow-e2e"
+source: "spec-driven"
+description: "Explicit language parameter still overrides auto-detection"
+safety_level: "safe"
+priority: "medium"
+impact: "P2"
+impactReason: "Spec AC 未覆盖"
+tags: ["spec-driven","email-lang-detect"]
+
+steps:
+  - action: "validate"
+    params:
+      description: "Explicit language parameter still overrides auto-detection"
+
+assertions:
+  - type: "file_exists"
+    target: "cases/"
+    expected: "true"
+    description: "Explicit language parameter still overrides auto-detection"
+
+timeout_seconds: 30
+metadata:
+  generatedAt: "2026-04-05T00:45:22.682Z"
+  round: 0
+  gapId: "email-lang-detect_20260401-gap-29"
+  recipeUsed: null

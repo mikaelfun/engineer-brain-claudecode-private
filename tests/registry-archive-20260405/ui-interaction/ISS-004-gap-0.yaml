@@ -1,0 +1,35 @@
+# Test: 元数据行显示：Case号 · SR号(如有) · Severity · Status · Owner · 已开天数 · 创建时间 · 更新时间
+# Generated: Cycle 0 | Source: issue-driven
+# Recipe: issue-driven-ui
+
+id: "ISS-004-gap-0"
+name: "元数据行显示：Case号 · SR号(如有) · Severity · Status · Owner · 已开天数 · 创建时间 · 更新时间"
+category: "ui-interaction"
+source: "issue-driven"
+description: "元数据行显示：Case号 · SR号(如有) · Severity · Status · Owner · 已开天数 · 创建时间 · 更新时间"
+safety_level: "safe"
+priority: "medium"
+impact: "P2"
+impactReason: "缺失测试覆盖：regression 功能"
+tags: ["issue-driven","ISS-004"]
+
+steps:
+  - action: "navigate"
+    params:
+      description: "Open dashboard"
+  - action: "validate"
+    params:
+      description: "元数据行显示：Case号 · SR号(如有) · Severity · Status · Owner · 已开天数 · 创建时间 · 更新时间"
+
+assertions:
+  - type: "text_contains"
+    target: "page"
+    expected: ""
+    description: "元数据行显示：Case号 · SR号(如有) · Severity · Status · Owner · 已开天数 · 创建时间 · 更新时间"
+
+timeout_seconds: 30
+metadata:
+  generatedAt: "2026-04-05T00:45:22.682Z"
+  round: 0
+  gapId: "ISS-004-gap-0"
+  recipeUsed: null

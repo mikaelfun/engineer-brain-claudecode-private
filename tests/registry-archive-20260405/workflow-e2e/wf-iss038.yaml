@@ -1,0 +1,24 @@
+id: "wf-iss038"
+name: "ISS-038 — Implemented Issue 增加 Mark Done 按钮，人工验证后标记完成并同步状态"
+category: "workflow-e2e"
+source: "issues/ISS-038.json"
+description: "验证 ISS-038（implemented）的验收标准：Implementation completion sets issue status to `implemented`"
+safety_level: "safe"
+data_source: live
+live_pool: "data_rich"
+priority: "high"
+tags: ["issue-driven", "iss-038", "implemented"]
+
+steps:
+  - action: "run_skill"
+    params:
+      skill: "data-refresh"
+      case_id: "{live_case_id}"
+    safety_check: "scripts.safe[data-refresh]"
+
+assertions:
+  - type: "file_exists"
+    target: "cases/active/{test_case_id}/case-summary.md"
+    description: "Implementation completion sets issue status to `implemented` (not `done`)"
+
+timeout_seconds: 120

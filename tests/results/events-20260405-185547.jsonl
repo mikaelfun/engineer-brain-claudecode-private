@@ -1,0 +1,4 @@
+{"ts":"2026-04-05T10:15:29Z","type":"feature_verified","impact":"P1","area":"workflow-e2e","detail":"cron-job-param-passing skipped: no assertions executed, runner cannot handle verify_cron_param action","result":"fail"}
+{"ts":"2026-04-05T10:16:13Z","type":"feature_verified","impact":"P1","area":"workflow-e2e","detail":"preset-args-passing skipped: no assertions executed, runner cannot handle verify_preset_params action","result":"fail"}
+{"ts":"2026-04-05T10:17:06Z","type":"feature_verified","impact":"P1","area":"workflow-e2e","detail":"new-case-note-draft failed: note-draft.md file not found","result":"fail"}
+{"ts":"2026-04-05T10:17:51Z","type":"feature_verified","impact":"P1","area":"workflow-e2e","detail":"view-labor-script failed: labor.md file not found","result":"fail"}

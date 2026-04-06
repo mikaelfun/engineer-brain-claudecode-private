@@ -1,0 +1,69 @@
+{
+  "lastUpdated": "2026-04-05",
+  "product": "purview",
+  "unsupportedFeatures": [
+    {
+      "feature": "Compliance Manager (Compliance Score)",
+      "note": "Not available in 21V/Gallatin; available in Global"
+    },
+    {
+      "feature": "Alerts (Purview Compliance Portal)",
+      "note": "Not available in 21V/Gallatin; available in Global"
+    },
+    {
+      "feature": "eDiscovery Premium",
+      "note": "E5 feature; not available in Gallatin, available in Global"
+    },
+    {
+      "feature": "Retention Label / Label Policy",
+      "note": "Not available in 21V; available in Global"
+    },
+    {
+      "feature": "SPO Document Library Default Label",
+      "note": "Not supported in Gallatin; PM confirmed no plan to support (legacy label tech)"
+    },
+    {
+      "feature": "Audit Log Retention Policy (Custom)",
+      "note": "Not available in Gallatin; PM confirmed no plan to enable"
+    },
+    {
+      "feature": "Microsoft Purview Customer Key",
+      "note": "E5 feature; not available in Gallatin"
+    },
+    {
+      "feature": "Auto-labeling (Sensitivity Labels)",
+      "note": "Not supported in Gallatin and no plan per PM; impacts McKinsey/Deloitte"
+    },
+    {
+      "feature": "Audit Manager",
+      "note": "Not supported in 21V Purview"
+    },
+    {
+      "feature": "CMK for eDiscovery",
+      "note": "Not supported in Gallatin; was planned for July 2025 per PG (RFC 4677588)"
+    }
+  ],
+  "partialFeatures": [
+    {
+      "feature": "DLP Alert",
+      "note": "Infra not ready in Gallatin (ICM 673053756)"
+    },
+    {
+      "feature": "DLP Policy - Evaluate Predicate For",
+      "note": "Option not available in Gallatin; available in Global (RFC 4787238)"
+    },
+    {
+      "feature": "Sensitivity Label for SharePoint",
+      "note": "Audit activity 'DocumentSensitivityMismatchDetected' works but no auto email notification in Gallatin"
+    },
+    {
+      "feature": "Retention Policy for Teams",
+      "note": "Messages work; files partially impacted as some Teams files stored in OneDrive (OneDrive retention has issues)"
+    },
+    {
+      "feature": "Retention for OneDrive",
+      "note": "Cannot add custom OneDrive account in retention policy; tracked with PG"
+    }
+  ],
+  "noGapDataFound": false
+}

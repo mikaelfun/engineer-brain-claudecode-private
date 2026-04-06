@@ -28,9 +28,10 @@ After each stage completes:
    ```
 
 4. **Cycle increment rule**: When full cycle ends (VERIFY/TEST → SCAN), cycle++
-5. **On cycle switch**: Reset stageHistory + stages + cycleStats:
+5. **On cycle switch**: Reset stageHistory + stages + cycleStats.
+   **🔴 MUST null out all temporal fields** (startedAt, completedAt, duration_ms) — deep merge preserves old values otherwise:
    ```bash
-   echo '{"stageHistory":[],"stages":{"SCAN":{"status":"pending","summary":""},"GENERATE":{"status":"pending","summary":""},"TEST":{"status":"pending","summary":""},"VALIDATE":{"status":"pending","summary":""},"FIX":{"status":"pending","summary":""},"VERIFY":{"status":"pending","summary":""}}}' \
+   echo '{"stageHistory":[],"stages":{"SCAN":{"status":"pending","summary":null,"startedAt":null,"completedAt":null,"duration_ms":null},"GENERATE":{"status":"pending","summary":null,"startedAt":null,"completedAt":null,"duration_ms":null},"TEST":{"status":"pending","summary":null,"startedAt":null,"completedAt":null,"duration_ms":null},"VALIDATE":{"status":"pending","summary":null,"startedAt":null,"completedAt":null,"duration_ms":null},"FIX":{"status":"pending","summary":null,"startedAt":null,"completedAt":null,"duration_ms":null},"VERIFY":{"status":"pending","summary":null,"startedAt":null,"completedAt":null,"duration_ms":null}}}' \
      | bash tests/executors/state-writer.sh --target pipeline --merge
    echo '{"cycleStats":{"passed":0,"failed":0,"fixed":0,"skipped":0}}' \
      | bash tests/executors/state-writer.sh --target stats --merge

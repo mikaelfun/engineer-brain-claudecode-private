@@ -1,0 +1,18 @@
+id: note-draft-content-quality
+name: "Draft Content from Case Summary"
+category: workflow-e2e
+source: "ISS-208"
+impact: P2
+impactReason: "Content quality"
+safety_level: safe
+recipe_used: none
+steps:
+  - action: bash_command
+    params:
+      command: "cat .claude/skills/note-gap/SKILL.md"
+      description: "Check note-gap skill for case-summary content extraction"
+assertions:
+  - type: text_contains
+    target: step1_output
+    expected: "case-summary"
+    description: "Skill references case-summary extraction"

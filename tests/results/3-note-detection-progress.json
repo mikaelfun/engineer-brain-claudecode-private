@@ -1,0 +1,9 @@
+{
+  "testId": "note-detection-progress",
+  "round": 3,
+  "timestamp": "2026-04-05T11:23:26.000Z",
+  "status": "skip",
+  "assertions": [],
+  "error": "no assertions executed (phantom pass prevention)",
+  "duration_ms": 27546
+}

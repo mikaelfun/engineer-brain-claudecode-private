@@ -1,0 +1,32 @@
+# Test: ISS-180 — health-check.sh reads authoritative pipelineStatus field
+# Generated: Cycle 34 | Source: issue-driven:ISS-180
+# Recipe: none
+
+id: "iss180-health-check-authoritative"
+name: "State tracking: health-check.sh output includes authoritative pipelineStatus field from pipeline.json"
+category: "workflow-e2e"
+source: "issue-driven:ISS-180"
+safety_level: "safe"
+description: "Verify health-check.sh reads the authoritative pipelineStatus field from pipeline.json and includes it in diagnostic output, rather than inferring running state from currentStage heuristics"
+
+steps:
+  - action: "validate"
+    params:
+      description: "Run health-check.sh and verify output contains authoritative pipelineStatus field"
+
+assertions:
+  - type: "bash_output_contains"
+    target: "bash tests/executors/health-check.sh 2>/dev/null | node -e \"let d=''; process.stdin.on('data',c=>d+=c); process.stdin.on('end',()=>{ try{ const o=JSON.parse(d); console.log('pipelineStatus' in o ? 'HAS_FIELD' : 'MISSING_FIELD'); }catch(e){console.log('PARSE_ERROR');}});\""
+    expected: "HAS_FIELD"
+    description: "health-check.sh output must include pipelineStatus field (authoritative from pipeline.json)"
+  - type: "bash_output_not_contains"
+    target: "grep -n \"currentStage === 'TEST' ? 'running' : 'done'\" tests/executors/health-check.sh 2>/dev/null || grep -n 'currentStage.*===.*FIX.*done\\|currentStage.*===.*VERIFY.*done' tests/executors/health-check.sh 2>/dev/null || echo ''"
+    expected: "done"
+    description: "health-check.sh must not unconditionally override stage status with done based on currentStage heuristic"
+
+metadata:
+  generatedAt: "2026-03-31T12:15:00.000Z"
+  cycle: 34
+  gapId: "ISS-180-gap-health-check"
+  issueId: "ISS-180"
+  recipeUsed: null

@@ -1,0 +1,9 @@
+{
+  "testId": "cron-job-param-passing",
+  "round": 2,
+  "timestamp": "2026-04-05T10:15:13.000Z",
+  "status": "skip",
+  "assertions": [],
+  "error": "no assertions executed (phantom pass prevention)",
+  "duration_ms": 37702
+}

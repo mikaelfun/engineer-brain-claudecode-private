@@ -1,0 +1,33 @@
+id: "wf-iss120"
+name: "ISS-120 — Test Loop 双层数据源：Live + Synthetic 分离"
+category: "workflow-e2e"
+source: "issues/ISS-120.json"
+description: "验证 ISS-120（tracked）的验收标准：新增 `tests/fixtures/synthetic/` 目录结构，包含 profiles.yaml、generat"
+safety_level: "safe"
+data_source: live
+live_pool: "data_rich"
+priority: "medium"
+tags: ["issue-driven", "iss-120", "tracked"]
+
+steps:
+  - action: "run_skill"
+    params:
+      skill: "data-refresh"
+      case_id: "{live_case_id}"
+    safety_check: "scripts.safe[data-refresh]"
+
+assertions:
+  - type: "file_exists"
+    target: "cases/active/{test_case_id}/case-summary.md"
+    description: "新增 `tests/fixtures/synthetic/` 目录结构，包含 profiles.yaml、generator.sh、templates/"
+  - type: "file_exists"
+    target: "cases/active/{test_case_id}/case-summary.md"
+    description: "generator.sh 能根据 profile + seed 生成完整 case 目录（case-info.md、casehealth-meta.json、e"
+  - type: "file_exists"
+    target: "cases/active/{test_case_id}/case-summary.md"
+    description: "Synthetic profiles 覆盖 12+ 场景：normal、empty、heavy、compliance-ok-china-cld、complian"
+  - type: "file_exists"
+    target: "cases/active/{test_case_id}/case-summary.md"
+    description: "test-definition.yaml schema 增加 `data_source` 字段（live / synthetic），支持 `synthetic_"
+
+timeout_seconds: 120

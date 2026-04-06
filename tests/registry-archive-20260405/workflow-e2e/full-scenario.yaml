@@ -1,0 +1,52 @@
+id: "e2e-full-scenario"
+name: "Full Scenario — 模拟首次处理"
+category: "workflow-e2e"
+source: "playbooks/guides/casework-evolution-loop.md — Scenario A"
+description: "备份 case 目录 → 删除部分/全部本地数据 → 跑 casework → 验证输出完整性 → 恢复备份"
+safety_level: "safe"
+priority: "high"
+tags: ["evolution-loop", "scenario-a", "smoke", "regression"]
+
+test_case_id: "2603100030005863"  # Data-sparse, 适合全量测试
+
+setup:
+  - action: "backup_case"
+    params:
+      source: "{cases_root}/active/{test_case_id}"
+      dest: "{backup_dir}/{test_case_id}"
+  - action: "delete_local_data"
+    params:
+      target: "{cases_root}/active/{test_case_id}"
+      keep: ["case-info.md"]  # 只保留基本信息
+
+steps:
+  - action: "run_casework"
+    params:
+      case_id: "{test_case_id}"
+    safety_check: "scripts.safe[casework]"
+    timeout_seconds: 300
+
+assertions:
+  - type: "file_exists"
+    target: "{cases_root}/active/{test_case_id}/case-summary.md"
+    expected: true
+  - type: "file_exists"
+    target: "{cases_root}/active/{test_case_id}/casehealth-meta.json"
+    expected: true
+  - type: "file_exists"
+    target: "{cases_root}/active/{test_case_id}/timing.json"
+    expected: true
+  - type: "file_content"
+    target: "{cases_root}/active/{test_case_id}/timing.json"
+    expected: "valid_json"
+  - type: "file_exists"
+    target: "{cases_root}/active/{test_case_id}/todo/"
+    expected: true
+
+teardown:
+  - action: "restore_case"
+    params:
+      source: "{backup_dir}/{test_case_id}"
+      dest: "{cases_root}/active/{test_case_id}"
+
+timeout_seconds: 900

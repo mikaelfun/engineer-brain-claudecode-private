@@ -1,0 +1,20 @@
+id: "unit-all"
+name: "All Unit Tests — npm test"
+category: "unit-test"
+description: "Run all Vitest unit tests (backend + frontend) via npm test"
+safety_level: "safe"
+priority: "critical"
+tags: ["unit", "vitest", "regression"]
+
+npm_command: "test"
+npm_prefix:
+expected_exit: "0"
+timeout_seconds: 120
+
+assertions:
+  - type: "npm_exit_code"
+    expected: "0"
+  - type: "no_test_failures"
+    expected: "0"
+  - type: "tests_executed"
+    expected: ">0"

@@ -1,0 +1,51 @@
+{
+  "lastUpdated": "2026-04-05",
+  "product": "avd",
+  "unsupportedFeatures": [
+    {
+      "feature": "Android Client",
+      "description": "AVD Android 客户端在 Mooncake 不可用"
+    },
+    {
+      "feature": "iOS Client",
+      "description": "AVD iOS 客户端在 Mooncake 不可用"
+    },
+    {
+      "feature": "macOS Client",
+      "description": "AVD macOS 客户端在 Mooncake 不可用"
+    },
+    {
+      "feature": "Microsoft Store Client",
+      "description": "Microsoft Store 版 AVD 客户端在 Mooncake 不可用"
+    },
+    {
+      "feature": "Thin Client",
+      "description": "AVD Thin Client 在 Mooncake 不可用"
+    },
+    {
+      "feature": "Autoscale / Auto Scaling Plan",
+      "description": "AVD 自动缩放计划在 Mooncake 不可用"
+    },
+    {
+      "feature": "Azure Virtual Desktop for Azure Stack HCI",
+      "description": "Azure Stack HCI 上的 AVD 在 Mooncake 不可用"
+    },
+    {
+      "feature": "Windows App",
+      "description": "Windows App（新一代远程桌面客户端）在 Mooncake 不可用，需使用传统 Remote Desktop Client 替代"
+    }
+  ],
+  "partialFeatures": [
+    {
+      "feature": "App attach",
+      "description": "MSIX app attach 已支持，但通用 App attach 状态未明确标注"
+    },
+    {
+      "feature": "Intune enrollment",
+      "description": "AVD session host 的 Intune 注册状态未明确标注"
+    }
+  ],
+  "noGapDataFound": false,
+  "sourceRef": "Mooncake POD Support Notebook/POD/VMSCIM/4. Services/AVD/## Feature Gap.md",
+  "sourceModified": "2026-01-16T08:21:10.000Z"
+}

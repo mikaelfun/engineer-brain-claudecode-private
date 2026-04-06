@@ -1,0 +1,9 @@
+{
+  "testId": "obs-agent-count",
+  "round": observability,
+  "timestamp": "2026-04-05T11:52:34.000Z",
+  "status": "fail",
+  "assertions": [{"name":"Valid probe type","pass":false,"expected":"metric|stability|audit","actual":""}],
+  "error": null,
+  "duration_ms": 603
+}

@@ -95,7 +95,7 @@ Sync 模式的 exclude 列表存放在**项目级** `config.json`（不是 skill
 ```json
 {
   "onenote": {
-    "syncExclude": ["Mooncake POD Support Notebook"],
+    "syncExclude": [],
     "autoRagSync": true
   }
 }
@@ -112,13 +112,22 @@ Sync 模式的 exclude 列表存放在**项目级** `config.json`（不是 skill
 
 ### 1. 读取配置 + Onboarding
 
+**优先从项目 `config.json` 的 `dataRoot` 派生**，skill 自己的 config.json 仅作 override：
+
 ```bash
+# 1. 先尝试从项目 config.json 派生
+node -e "const c=JSON.parse(require('fs').readFileSync('config.json','utf-8'));const p=require('path');const dr=c.dataRoot||'./data';const abs=p.isAbsolute(dr)?dr:p.resolve(dr);console.log(p.join(abs,'OneNote Export'))"
+```
+
+```bash
+# 2. 如果 skill 自己的 config.json 存在，用它 override
 cat .claude/skills/onenote-export/config.json
 ```
 
-检查文件是否存在且包含 `outputDir`：
-- **存在** → 提取 `outputDir` 作为 `$OutputBase`，继续
-- **不存在（首次使用）** → 执行 onboarding：
+解析优先级：
+- **skill config.json 存在且有 `outputDir`** → 用 skill 的 `outputDir` 作为 `$OutputBase`
+- **不存在 skill config.json，但项目 `config.json` 有 `dataRoot`** → 用 `{dataRoot}/OneNote Export` 作为 `$OutputBase`
+- **两者都没有（首次使用）** → 执行 onboarding：
   1. 用 `AskUserQuestion` 询问导出目录路径（提示示例：`C:\Users\你的用户名\Documents\OneNote Export`）
   2. 用户提供路径后，写入 `.claude/skills/onenote-export/config.json`：`{"outputDir": "用户输入的路径"}`
   3. 用该路径作为 `$OutputBase` 继续执行
@@ -541,6 +550,30 @@ node .claude/skills/rag-sync/manifest.mjs build "$OUTPUT_DIR"
 
 > **注意**: 大批量首次 embed（如 479 个文件）可能需要 5-10 分钟。
 > 如需关闭自动同步，修改 `config.json` 的 `onenote.autoRagSync` 为 `false`。
+
+### 7. 通知 auto-enrich（知识库增量更新联动）
+
+如果本次 sync 有变更文件（`new[]` + `modified[]` 非空），写入通知文件供 `/product-learn auto-enrich` 的 REFRESH 机制消费：
+
+**文件位置**：`skills/products/onenote-changes.json`
+
+```json
+{
+  "syncedAt": "2026-04-05T15:00:00Z",
+  "notebook": "MCVKB",
+  "changedFiles": ["Intune/Deploy Win32 exe.md", "VM+SCIM/.../page.md"],
+  "newFiles": ["Intune/New enrollment TSG.md"],
+  "deletedFiles": []
+}
+```
+
+**规则**：
+- 路径格式：相对于 `ONENOTE_DIR`（如 `MCVKB/Intune/xxx.md`）
+- `changedFiles` = `modified[]` 的相对路径
+- `newFiles` = `new[]` 的相对路径
+- 如果文件已存在（上次 sync 后 auto-enrich 还没处理），**merge** 而非覆盖：append 到已有列表，去重
+- 仅团队笔记本（`config.json → onenote.teamNotebooks`）的变更写入，个人笔记本跳过
+- 无变更时不写入（不创建空文件）
 
 ## 输出目录结构
 

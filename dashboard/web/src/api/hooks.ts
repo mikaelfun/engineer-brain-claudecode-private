@@ -48,6 +48,14 @@ export function useCaseNotes(id: string) {
   })
 }
 
+export function useCaseLaborRecords(id: string) {
+  return useQuery({
+    queryKey: ['cases', id, 'labor-records'],
+    queryFn: () => apiGet<{ records: any[]; total: number }>(`/cases/${id}/labor-records`),
+    enabled: !!id,
+  })
+}
+
 export function useCaseTeams(id: string) {
   return useQuery({
     queryKey: ['cases', id, 'teams'],
@@ -1129,6 +1137,29 @@ export function useDismissNoteGap(caseId: string) {
     mutationFn: () => apiDelete(`/case/${caseId}/note-gap`),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['note-gap', caseId] })
+    },
+  })
+}
+
+/** Trigger note gap check for a single case — fast API path (local file parsing, ~1s) */
+export function useNoteGapCheck() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (caseId: string) => apiPost(`/case/${caseId}/note-gap/check`, {}),
+    onSuccess: (_data, caseId) => {
+      qc.invalidateQueries({ queryKey: ['note-gap', caseId] })
+    },
+  })
+}
+
+/** Trigger note gap check via AI SDK session — slower but smarter (reads multiple sources, ~15-20s) */
+export function useNoteGapCheckAI() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (caseId: string) => apiPost(`/case/${caseId}/step/note-gap`, {}),
+    onSuccess: (_data, caseId) => {
+      // Give AI a moment to write draft, then invalidate
+      setTimeout(() => qc.invalidateQueries({ queryKey: ['note-gap', caseId] }), 3000)
     },
   })
 }

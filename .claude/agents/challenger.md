@@ -170,7 +170,13 @@ echo "[$(date '+%Y-%m-%d %H:%M:%S')] === challenger START ===" >> "$LOG"
 1. **microsoft_docs_search**（msft-learn MCP）— 搜索 `"{product} {claim keywords}"`
 2. **mcp__local-rag__query_documents**（local-rag MCP）— 搜索 OneNote 团队知识库
 3. **Read** `skills/products/{product}/known-issues.jsonl` — 检查是否有匹配的已知问题
-4. **WebSearch** — 公共资源（最后手段，信噪比最低）
+4. **Read** `skills/products/{product}/guides/_index.md` — 检查是否有匹配的合成指南
+   - 如匹配 → 读取对应 `guides/{topic}.md`，利用打分信息：
+     - 🟢 8+ 分条目支持 claim → 强证据（`sourceType: "synthesized-guide"`, 注明分数）
+     - 🔵 5-7 分条目 → 中等证据
+     - 🟡 <5 分条目 → 弱证据，不能单独验证 claim
+   - 如需更详细原文 → 读 `guides/details/{topic}.md`
+5. **WebSearch** — 公共资源（最后手段，信噪比最低）
 
 **基于搜索结果判定：**
 

@@ -1,0 +1,18 @@
+id: data-refresh-labor-step
+name: "Data Refresh Add Labor Step"
+category: workflow-e2e
+source: "ISS-211"
+impact: P2
+impactReason: "Data refresh completeness"
+safety_level: safe
+recipe_used: none
+steps:
+  - action: bash_command
+    params:
+      command: "cat .claude/skills/data-refresh/SKILL.md"
+      description: "Check data-refresh skill for labor step"
+assertions:
+  - type: text_contains
+    target: step1_output
+    expected: "labor"
+    description: "data-refresh skill includes labor step"

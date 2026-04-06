@@ -1,0 +1,32 @@
+# Test: When no language is explicitly specified, email-drafter reads `{caseDir}/emails.
+# Generated: Cycle 0 | Source: spec-driven
+# Recipe: none
+
+id: "email-lang-detect_20260401-gap-26"
+name: "When no language is explicitly specified, email-drafter reads `{caseDir}/emails."
+category: "workflow-e2e"
+source: "spec-driven"
+description: "When no language is explicitly specified, email-drafter reads `{caseDir}/emails.md` and detects the dominant language of customer emails"
+safety_level: "safe"
+priority: "high"
+impact: "P1"
+impactReason: "Spec AC 未覆盖"
+tags: ["spec-driven","email-lang-detect"]
+
+steps:
+  - action: "validate"
+    params:
+      description: "When no language is explicitly specified, email-drafter reads `{caseDir}/emails.md` and detects the "
+
+assertions:
+  - type: "file_exists"
+    target: "cases/"
+    expected: "true"
+    description: "When no language is explicitly specified, email-drafter reads `{caseDir}/emails."
+
+timeout_seconds: 30
+metadata:
+  generatedAt: "2026-04-05T00:45:22.682Z"
+  round: 0
+  gapId: "email-lang-detect_20260401-gap-26"
+  recipeUsed: null

@@ -1,0 +1,44 @@
+id: "regression-iss104"
+name: "Regression: ISS-104 — Agent Session SSE Message Filtering"
+category: "ui-interaction"
+source: "issues/ISS-104.json"
+description: "回归测试：验证 ISS-104 实现的功能未退化"
+safety_level: "safe"
+priority: "medium"
+tags: ["regression", "issue-driven", "iss-104"]
+regression_for: "ISS-104"
+
+steps:
+  - action: "navigate"
+    params:
+      url: "{frontend_url}"
+    safety_check: "ui.safe[navigate_to_page]"
+  - action: "verify_element"
+    params:
+      selector: "body"
+      expected: "visible"
+      timeout: 5000
+
+assertions:
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "tool-call 和 tool-result 消息默认折叠为一行简洁状态（如 '🔧 Running Bash...' / '✅ Bash done'）"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "连续多条 tool-call/tool-result 合并为一个 'Thinking...' 动画（带工具名轮播或计数）"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "关键状态消息始终显示：system（步骤开始）、completed、failed"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "用户可以点击展开查看完整的 verbose 详情（可选，不阻挡 MVP）"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "消息面板滚动行为保持正常（自动滚到底部）"
+
+timeout_seconds: 60

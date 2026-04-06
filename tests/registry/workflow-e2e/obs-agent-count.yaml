@@ -1,0 +1,17 @@
+id: obs-agent-count
+name: "Agent Count Within Limit"
+category: workflow-e2e
+source: "observability-scanner"
+impact: P3
+impactReason: "Code quality"
+safety_level: safe
+recipe_used: none
+steps:
+  - action: bash_command
+    params:
+      command: "ls .claude/agents/*.md 2>/dev/null | wc -l"
+      description: "Count agent definition files"
+assertions:
+  - type: bash_exit_zero
+    target: "test $(ls .claude/agents/*.md 2>/dev/null | wc -l | tr -d ' ') -le 10"
+    description: "Agent count should not exceed 10"

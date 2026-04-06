@@ -282,28 +282,24 @@ const hdr = '  \ud83e\uddea Test Supervisor   C'+cycle+'/'+maxCycles+' \u2502 '+
 O.push('\u2502'+hdr.padEnd(W-2)+'\u2502');
 O.push('\u251c'+'\u2500'.repeat(W-2)+'\u2524');
 O.push(ln(''));
-// ---- Supervisor reasoning progress ----
+// ---- Supervisor single-line status (Option A) ----
 if (runnerActive && supStep) {
-  const RS = ['observe','diagnose','decide','act','reflect'];
-  const RSL = {observe:'Observe',diagnose:'Diagnose',decide:'Decide',act:'Act',reflect:'Reflect'};
-  const rsi = RS.indexOf(supStep);
-  const rpLine = RS.map((s,i) => {
-    const label = RSL[s]||s;
-    if (rsi >= 0 && i < rsi) return '\u2705'+label;
-    if (i === rsi) return '\ud83d\udd36'+label;
-    return '\u2b1c'+label;
-  }).join(' \u2192 ');
+  // Running: show elapsed + current activity
   const elapsed = Math.round((now - new Date(sup.active).getTime())/1000);
-  const eStr = elapsed < 60 ? elapsed+'s' : Math.floor(elapsed/60)+'m'+elapsed%60+'s';
-  O.push(ln('\ud83e\udd16 Supervisor  '+eStr));
-  O.push(ln(rpLine));
+  const eStr = elapsed < 60 ? elapsed+'s' : Math.floor(elapsed/60)+'m'+String(elapsed%60).padStart(2,'0')+'s';
+  const actMap = {observe:'pre-flight check',diagnose:'analyzing trends',decide:'preparing strategy',act:'worker: '+(currentStage||'executing'),reflect:'summarizing results'};
+  const activity = actMap[supStep] || supStep;
+  O.push(ln('\ud83e\udd16 Supervisor \u26a1 '+eStr+' \u2014 '+activity+'...'));
   O.push(ln(''));
-} else if (supStatus === 'idle' && sup.reasoning && Object.keys(sup.reasoning).length > 0) {
-  // Supervisor completed all steps and is idle — show last reasoning summary
-  const lastKey = Object.keys(sup.reasoning).pop();
-  const lastVal = sup.reasoning[lastKey] || '';
-  const summary = lastVal.length > 60 ? lastVal.substring(0, 57) + '...' : lastVal;
-  O.push(ln('\ud83e\udd16 Supervisor  idle \u2502 last: ' + summary));
+} else {
+  // Idle: distinguish work-pending vs cycle-complete
+  const pipeComplete = currentStage === 'COMPLETE' || pl.pipelineStatus === 'complete' || (cycle > 0 && currentStage === 'IDLE');
+  if (pipeComplete) {
+    O.push(ln('\ud83e\udd16 \u2705 cycle '+cycle+' complete'));
+  } else {
+    const nextStage = currentStage || 'SCAN';
+    O.push(ln('\ud83e\udd16 \ud83d\udca4 idle \u2014 /test-supervisor run \u2192 '+nextStage));
+  }
   O.push(ln(''));
 }
 O.push(ln(pLine));
@@ -356,7 +352,7 @@ O.push(ln('\ud83d\udd0d Recipes: '+recipesUsed));
 O.push(ln('\ud83e\uddec Evolution: '+evoCnt+' iterations \u2502 last: '+evoLast));
 // ---- Last Reasoning ----
 const reas = sup.reasoning || {};
-const lastReas = reas.reflect || reas.act || reas.decide || reas.diagnose || reas.observe || null;
+const lastReas = reas.reflect || reas.postflight || reas.act || reas.decide || reas.diagnose || reas.observe || null;
 if (lastReas) {
   O.push(ln(''));
   O.push(ln('\ud83e\udde0 Last Reasoning'));

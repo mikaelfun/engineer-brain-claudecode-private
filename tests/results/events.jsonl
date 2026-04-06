@@ -1,0 +1,10 @@
+{"ts":"2026-04-05T11:53:12Z","type":"bug_fixed","impact":"P3","area":"workflow-e2e","detail":"note-draft-content-quality 修复验证通过","method":"direct"}
+{"ts":"2026-04-05T11:53:12Z","type":"bug_fixed","impact":"P3","area":"workflow-e2e","detail":"data-refresh-labor-step 修复验证通过","method":"direct"}
+{"ts":"2026-04-05T11:53:13Z","type":"fix_failed","impact":"P3","area":"workflow-e2e","detail":"note-draft-generation 修复验证失败 (retry 1)"}
+{"ts":"2026-04-05T11:53:13Z","type":"fix_failed","impact":"P3","area":"observability","detail":"obs-agent-count 修复验证失败 (retry 1)"}
+{"ts":"2026-04-05T11:53:14Z","type":"fix_failed","impact":"P3","area":"observability","detail":"obs-bash-antipattern 修复验证失败 (retry 1)"}
+{"ts":"2026-04-05T11:53:14Z","type":"fix_failed","impact":"P3","area":"observability","detail":"obs-windows-paths 修复验证失败 (retry 1)"}
+{"ts":"2026-04-05T12:00:53Z","type":"bug_fixed","impact":"P3","area":"workflow-e2e","detail":"note-draft-generation 修复验证通过 (pass 2)","method":"direct"}
+{"ts":"2026-04-05T12:00:54Z","type":"bug_fixed","impact":"P3","area":"workflow-e2e","detail":"obs-bash-antipattern 修复验证通过 (pass 2)","method":"direct"}
+{"ts":"2026-04-05T12:00:54Z","type":"bug_fixed","impact":"P3","area":"workflow-e2e","detail":"obs-windows-paths 修复验证通过 (pass 2)","method":"direct"}
+{"ts":"2026-04-05T12:00:54Z","type":"fix_failed","impact":"P3","area":"workflow-e2e","detail":"obs-agent-count real finding: 12 agents > 10 limit (retry 2)"}

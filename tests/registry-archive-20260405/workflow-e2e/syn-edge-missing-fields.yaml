@@ -1,0 +1,33 @@
+id: "syn-edge-missing-fields"
+name: "Synthetic — Edge: Missing Fields (no severity, status, contact)"
+category: "workflow-e2e"
+source: "issues/ISS-177.json"
+description: "Generate edge-missing-fields synthetic case → verify case-info.md exists but with empty/missing critical fields"
+safety_level: "safe"
+priority: "medium"
+tags: ["synthetic", "edge-case", "iss-177"]
+
+data_source: synthetic
+synthetic_profile: edge-missing-fields
+
+steps:
+  - action: "run_script"
+    params:
+      command: "echo 'Synthetic case generated at {case_dir}'"
+
+assertions:
+  - type: "file_exists"
+    target: "{case_dir}/case-info.md"
+    expected: true
+    description: "case-info.md generated even with missing fields"
+  - type: "file_content"
+    target: "{case_dir}/casehealth-meta.json"
+    expected: "valid_json"
+    description: "casehealth-meta.json is valid JSON"
+  - type: "json_field"
+    target: "{case_dir}/casehealth-meta.json"
+    field: "actualStatus"
+    expected: "new"
+    description: "Status defaults to new when fields are missing"
+
+timeout_seconds: 30

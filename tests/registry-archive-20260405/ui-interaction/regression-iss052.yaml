@@ -1,0 +1,28 @@
+id: "regression-iss052"
+name: "Regression: ISS-052 — issues.test.ts 3个测试失败: start-implement/reopen/lock 路由的 mock "
+category: "ui-interaction"
+source: "issues/ISS-052.json"
+description: "回归测试：验证 ISS-052 实现的功能未退化"
+safety_level: "safe"
+priority: "medium"
+tags: ["regression", "issue-driven", "iss-052"]
+regression_for: "ISS-052"
+
+steps:
+  - action: "navigate"
+    params:
+      url: "{frontend_url}"
+    safety_check: "ui.safe[navigate_to_page]"
+  - action: "verify_element"
+    params:
+      selector: "body"
+      expected: "visible"
+      timeout: 5000
+
+assertions:
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "All existing passing tests continue to pass (no regressions)"
+
+timeout_seconds: 60

@@ -1,0 +1,54 @@
+# Test Definition: arch-scanner-direct-state-write
+# Generated from architecture scanner gap
+# Category: workflow-e2e (framework compliance)
+# Priority: P2
+
+id: arch-scanner-direct-state-write
+category: workflow-e2e
+title: Architecture scanner should use state-writer.sh instead of direct writes
+description: |
+  common.md requires ALL state writes to use state-writer.sh --merge for atomicity.
+  architecture-scanner.sh currently writes directly to state.json, which can cause
+  corruption (truncated JSON, trailing commas).
+
+  This test verifies the scanner uses the state-writer.sh tool.
+
+acceptance_criteria:
+  - No direct writes to state.json (echo >, heredoc, Write tool)
+  - All state updates use state-writer.sh --merge
+  - Compliant with common.md state writer rule
+
+source: arch-scan
+type: architecture
+priority: P2
+safety_level: SAFE
+
+assertions:
+  - type: file_content
+    description: Scan for direct state.json writes
+    command: |
+      if grep -E 'echo.*>.*state\.json|cat.*>.*state\.json|tee.*state\.json' tests/executors/architecture-scanner.sh; then
+        echo "FAIL: Found direct state.json write"
+        exit 1
+      else
+        echo "PASS"
+      fi
+    expected_output: "PASS"
+
+  - type: file_content
+    description: Check for state-writer.sh usage
+    command: |
+      grep -q 'state-writer.sh' tests/executors/architecture-scanner.sh && echo "PASS" || echo "FAIL: No state-writer.sh usage"
+    expected_output: "PASS"
+
+fix_hint: |
+  Replace direct writes with state-writer.sh:
+
+  # ❌ Wrong:
+  echo '{"field":"value"}' > tests/state.json
+
+  # ✅ Correct:
+  echo '{"field":"value"}' | bash tests/executors/state-writer.sh --target pipeline --merge
+
+recipe_used: none
+created_at: 2026-04-01T09:32:00Z

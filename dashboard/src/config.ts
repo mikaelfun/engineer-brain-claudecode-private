@@ -6,7 +6,7 @@
  *   2. config.json（casesRoot / dataRoot 等可配置路径）
  *   3. dashboard/.runtime/（dashboard 自管理的运行时文件）
  */
-import { existsSync, readFileSync } from 'fs'
+import { existsSync, readFileSync, mkdirSync } from 'fs'
 import { join, resolve, isAbsolute, dirname } from 'path'
 import { fileURLToPath } from 'url'
 
@@ -66,8 +66,13 @@ function resolveConfigPath(configValue: string): string {
 const projectRoot = resolveProjectRoot()
 const runtimeDir = join(projectRoot, 'dashboard', '.runtime')
 
+// Ensure runtime directory exists on startup
+if (!existsSync(runtimeDir)) {
+  mkdirSync(runtimeDir, { recursive: true })
+}
+
 export const config = {
-  port: parseInt(process.env.PORT || '3001', 10),
+  port: parseInt(process.env.PORT || '3010', 10),
   jwtSecret: process.env.JWT_SECRET || 'engineer-brain-dev-secret',
   projectRoot,
 
@@ -103,4 +108,8 @@ export const config = {
     return join(runtimeDir, 'agent-sessions')
   },
   agentMaxConcurrency: 1,
+
+  get noteGapThresholdDays(): number {
+    return (readProjectConfig() as any).noteGapThresholdDays ?? 3
+  },
 }

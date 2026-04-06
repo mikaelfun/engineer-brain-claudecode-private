@@ -1,0 +1,32 @@
+# Test: Prompt 中增加明确的 "DO NOT use AskUserQuestion" 指示，强制 agent 自主决策
+# Generated: Cycle 0 | Source: issue-driven
+# Recipe: none
+
+id: "ISS-020-gap-9"
+name: "Prompt 中增加明确的 'DO NOT use AskUserQuestion' 指示，强制 agent 自主决策"
+category: "workflow-e2e"
+source: "issue-driven"
+description: "Prompt 中增加明确的 'DO NOT use AskUserQuestion' 指示，强制 agent 自主决策"
+safety_level: "safe"
+priority: "medium"
+impact: "P2"
+impactReason: "缺失测试覆盖：regression 功能"
+tags: ["issue-driven","ISS-020"]
+
+steps:
+  - action: "validate"
+    params:
+      description: "Prompt 中增加明确的 "DO NOT use AskUserQuestion" 指示，强制 agent 自主决策"
+
+assertions:
+  - type: "file_exists"
+    target: "cases/"
+    expected: "true"
+    description: "Prompt 中增加明确的 'DO NOT use AskUserQuestion' 指示，强制 agent 自主决策"
+
+timeout_seconds: 30
+metadata:
+  generatedAt: "2026-04-05T00:45:22.682Z"
+  round: 0
+  gapId: "ISS-020-gap-9"
+  recipeUsed: null

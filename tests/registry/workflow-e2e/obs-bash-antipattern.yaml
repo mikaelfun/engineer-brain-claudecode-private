@@ -1,0 +1,17 @@
+id: obs-bash-antipattern
+name: "Bash Anti-pattern Detection"
+category: workflow-e2e
+source: "observability-scanner"
+impact: P3
+impactReason: "Code quality"
+safety_level: safe
+recipe_used: none
+steps:
+  - action: bash_command
+    params:
+      command: "grep -r 'echo.*>.*state.json' tests/executors/*.sh 2>/dev/null | wc -l"
+      description: "Check for direct state writes bypassing state-writer"
+assertions:
+  - type: bash_exit_zero
+    target: "test $(grep -r 'echo.*>.*state.json' tests/executors/*.sh 2>/dev/null | wc -l | tr -d ' ') -eq 0"
+    description: "No direct state.json writes in executors"

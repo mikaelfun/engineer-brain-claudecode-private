@@ -82,7 +82,7 @@ const path = require('path');
 
 // Parse inputs
 const healthData = JSON.parse(process.argv[1]);
-const autoRepaired = process.env.AUTO_REPAIRED === 'true';
+let autoRepaired = process.env.AUTO_REPAIRED === 'true';
 
 // Read from split files (primary), fall back to state.json (legacy)
 let currentStage, cycle, maxCycles, testQueue, fixQueue, verifyQueue, regressionQueue;
@@ -96,6 +96,32 @@ try {
   fixQueue = queuesData.fixQueue || [];
   verifyQueue = queuesData.verifyQueue || [];
   regressionQueue = queuesData.regressionQueue || [];
+  // ---- Stage staleness auto-repair ----
+  // Detect stages whose completedAt predates the current cycle's SCAN start
+  // (residual from previous cycle due to deep-merge not clearing temporal fields)
+  const stages = pipeline.stages || {};
+  const scanStart = stages.SCAN && stages.SCAN.startedAt ? new Date(stages.SCAN.startedAt).getTime() : 0;
+  if (scanStart > 0) {
+    const ORDERED = ['VALIDATE', 'FIX', 'VERIFY'];
+    let repaired = false;
+    for (const p of ORDERED) {
+      const s = stages[p];
+      if (s && s.status === 'pending' && s.completedAt) {
+        const ct = new Date(s.completedAt).getTime();
+        if (ct < scanStart) {
+          // Stale data from previous cycle — clear temporal fields
+          s.summary = null; s.startedAt = null; s.completedAt = null; s.duration_ms = null;
+          repaired = true;
+        }
+      }
+    }
+    if (repaired) {
+      // Write repaired stages back to pipeline.json
+      pipeline.stages = stages;
+      fs.writeFileSync(process.env.PIPELINE_PATH, JSON.stringify(pipeline, null, 2));
+      autoRepaired = true;
+    }
+  }
 } catch(e) {
   const state = JSON.parse(fs.readFileSync(process.env.STATE_PATH, 'utf8'));
   currentStage = state.phase || 'UNKNOWN';

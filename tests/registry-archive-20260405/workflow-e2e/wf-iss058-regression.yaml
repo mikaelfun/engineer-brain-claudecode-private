@@ -1,0 +1,40 @@
+id: "wf-iss058-regression"
+name: "ISS-058 — conductor new-track plan 包含 Verification Plan 章节（回归检查）"
+category: "workflow-e2e"
+source: "issues/ISS-058.json"
+description: "回归验证 ISS-058 AC：conductor:new-track 命令（~/.claude/commands/conductor/new-track.md）包含 ## Verification Plan 章节。注意：命令在全局目录，不在项目 .claude/skills/ 下。"
+safety_level: "safe"
+priority: "medium"
+tags: ["regression", "iss-058", "conductor", "plan-template"]
+recipe_used: "none"
+
+# 实际路径：new-track 是全局 conductor 命令，位于 ~/.claude/commands/conductor/new-track.md
+# 不在 .claude/skills/conductor/new-track/SKILL.md（该路径不存在）
+
+steps:
+  - action: "bash_command"
+    params:
+      command: "grep -c 'Verification Plan\\|verification plan' \"$HOME/.claude/commands/conductor/new-track.md\" 2>/dev/null; true"
+    description: "检查 new-track.md 包含 Verification Plan 章节"
+
+  - action: "bash_command"
+    params:
+      command: "grep -rn 'Verification Plan' conductor/tracks/*/spec.md 2>/dev/null | wc -l"
+    description: "验证现有 conductor tracks 的 spec.md 包含 Verification Plan（已有数据中检查）"
+
+assertions:
+  - type: "bash_exit_zero"
+    command: "test -f \"$HOME/.claude/commands/conductor/new-track.md\""
+    description: "new-track.md 文件存在（全局 conductor 命令目录）"
+
+  - type: "bash_output"
+    command: "grep -c 'Verification Plan\\|verification plan' \"$HOME/.claude/commands/conductor/new-track.md\" 2>/dev/null; true"
+    expected_min: "1"
+    description: "new-track.md 包含 Verification Plan 章节"
+
+  - type: "bash_output"
+    command: "grep -rn 'Verification Plan' conductor/tracks/*/spec.md 2>/dev/null | wc -l"
+    expected_min: "1"
+    description: "至少 1 个 conductor track spec.md 包含 Verification Plan（现有数据验证）"
+
+timeout_seconds: 30

@@ -1,0 +1,32 @@
+# Test: Daily Ops 页面 Note Gaps 区域显示 "Check All" 按钮
+# Generated: Cycle 0 | Source: spec-driven
+# Recipe: none
+
+id: "notegap-batch-check_20260401-gap-38"
+name: "Daily Ops 页面 Note Gaps 区域显示 'Check All' 按钮"
+category: "workflow-e2e"
+source: "spec-driven"
+description: "Daily Ops 页面 Note Gaps 区域显示 'Check All' 按钮"
+safety_level: "safe"
+priority: "medium"
+impact: "P2"
+impactReason: "Spec AC 未覆盖"
+tags: ["spec-driven","notegap-batch-check"]
+
+steps:
+  - action: "validate"
+    params:
+      description: "Daily Ops 页面 Note Gaps 区域显示 "Check All" 按钮"
+
+assertions:
+  - type: "file_exists"
+    target: "cases/"
+    expected: "true"
+    description: "Daily Ops 页面 Note Gaps 区域显示 'Check All' 按钮"
+
+timeout_seconds: 30
+metadata:
+  generatedAt: "2026-04-05T00:45:22.682Z"
+  round: 0
+  gapId: "notegap-batch-check_20260401-gap-38"
+  recipeUsed: null

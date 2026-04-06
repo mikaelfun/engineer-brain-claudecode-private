@@ -1,0 +1,31 @@
+id: "drafts-routes"
+name: "Drafts API Routes — List + Read Draft"
+category: "backend-api"
+source: "dashboard/src/routes/drafts.ts"
+description: "验证邮件草稿 GET 端点返回 200 + 正确 JSON 结构"
+safety_level: "safe"
+priority: "medium"
+tags: ["api", "drafts", "round-2"]
+
+steps:
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/drafts"
+      auth: true
+    safety_check: "api.safe[GET /api/drafts]"
+
+assertions:
+  - type: "status_code"
+    target: "GET /api/drafts"
+    expected: 200
+  - type: "json_field"
+    target: "GET /api/drafts"
+    field: "drafts"
+    expected_type: "array"
+  - type: "json_field"
+    target: "GET /api/drafts"
+    field: "total"
+    expected_type: "number"
+
+timeout_seconds: 30

@@ -14,7 +14,7 @@
 
 set -u
 
-PROJECT_ROOT="/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 SAFETY_FILE="$PROJECT_ROOT/tests/safety.yaml"
 
 CATEGORY="${1:?Usage: safety-gate.sh <category> <action>}"

@@ -1,0 +1,18 @@
+id: note-detection-progress
+name: "Note Gap Detection Progress Display"
+category: workflow-e2e
+source: "ISS-204"
+impact: P2
+impactReason: "UX improvement"
+safety_level: safe
+recipe_used: none
+steps:
+  - action: http_request
+    params:
+      method: GET
+      url: "http://localhost:3010/api/cases"
+      description: "Verify cases API returns list for progress tracking"
+assertions:
+  - type: status_code
+    expected: 200
+    description: "Cases API responds"

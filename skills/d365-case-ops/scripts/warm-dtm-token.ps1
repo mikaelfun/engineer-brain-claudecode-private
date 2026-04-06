@@ -115,67 +115,61 @@ if (Test-Path $globalCacheFile) {
     } catch { }
 }
 
-# ── 3. 确保浏览器在 D365 页面（不在 DTM），记录当前 URL ──
-Write-Host "🔑 Acquiring DTM Bearer Token via Playwright..."
-$tabOutput = playwright-cli tab-list 2>&1
-$currentLine = $tabOutput | Select-String "\(current\)" | Select-Object -First 1
-$currentUrl = if ($currentLine) { ($currentLine.ToString() -replace '.*\]\(', '' -replace '\).*', '') } else { $null }
+# ── 3-4. 获取 DTM token ──
+# playwright-cli run-code 在 DTM 登录页会挂死进程（@playwright/cli bug）。
+# 用 Node.js + playwright-core 直接控制 Edge，稳定可靠。
+Write-Host "🔑 Acquiring DTM Bearer Token..."
 
-# 如果浏览器已经在 DTM 上，先导航回 D365（否则 goto DTM 不会触发新请求）
-if ($currentUrl -and $currentUrl -match "dtmnebula") {
-    Write-Host "  Browser already on DTM, navigating to D365 first..."
-    playwright-cli run-code "async page => { await page.goto('https://onesupport.crm.dynamics.com/', { waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => {}); }" 2>&1 | Out-Null
-    Start-Sleep -Seconds 1
-}
+$profilePath = $script:D365BrowserProfile
 
-# ── 4. Playwright 导航 DTM + 截获 Authorization header ──
-$tokenScript = @"
-async (page) => {
-    let token = '';
-    const handler = req => {
-        if (req.url().includes('api.dtmnebula')) {
-            const auth = req.headers()['authorization'];
-            if (auth && auth.length > 100) token = auth;
-        }
-    };
-    page.on('request', handler);
-    await page.goto('$dtmUrl', {waitUntil: 'domcontentloaded', timeout: 30000});
-    for (let i = 0; i < 16 && !token; i++) { await page.waitForTimeout(500); }
-    page.off('request', handler);
-    await page.evaluate(t => document.title = t, token || 'NO_TOKEN');
-}
+$nodeScriptFile = Join-Path $env:TEMP "dtm-token-acquire.js"
+$nodeScriptContent = @"
+const path = require('path');
+const pw = require(path.join(process.env.APPDATA, 'npm', 'node_modules', '@playwright', 'cli', 'node_modules', 'playwright-core'));
+const PROFILE = '$($profilePath -replace '\\', '\\\\')';
+const DTM_URL = '$dtmUrl';
+(async () => {
+  const ctx = await pw.chromium.launchPersistentContext(PROFILE, { channel: 'msedge', headless: false });
+  const page = ctx.pages()[0] || await ctx.newPage();
+  let token = '';
+  page.on('request', req => {
+    if (req.url().includes('api.dtmnebula')) {
+      const auth = req.headers()['authorization'];
+      if (auth && auth.length > 100) token = auth;
+    }
+  });
+  await page.goto(DTM_URL, { waitUntil: 'domcontentloaded', timeout: 15000 }).catch(e => {});
+  await page.waitForTimeout(3000);
+  if (page.url().includes('login.microsoftonline')) {
+    const tiles = await page.locator('[data-test-id]').all();
+    for (const t of tiles) {
+      const txt = await t.textContent().catch(() => '');
+      if (txt && txt.includes('@microsoft.com')) { await t.click(); break; }
+    }
+    try { await page.waitForURL('**/client.dtmnebula**', { timeout: 20000 }); } catch(e) {}
+    for (let i = 0; i < 30 && !token; i++) await page.waitForTimeout(500);
+  }
+  if (!token) {
+    await page.reload({ waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => {});
+    for (let i = 0; i < 20 && !token; i++) await page.waitForTimeout(500);
+  }
+  await ctx.close();
+  console.log(token ? 'DTM_TOKEN:' + token : 'DTM_TOKEN:NO_TOKEN');
+})();
 "@
-$tokenResult = playwright-cli run-code ($tokenScript -replace "`r`n", " " -replace "`n", " ") 2>&1
+Set-Content -Path $nodeScriptFile -Value $nodeScriptContent -Encoding UTF8
 
-# Token 提取：优先从 run-code 输出的 "Page Title:" 读取，fallback 到 tab-list
+$nodeOutput = node $nodeScriptFile 2>&1 | Out-String
 $token = $null
-
-# 方法 1: Page Title: 行
-$titleLine = $tokenResult | Select-String "Page Title:" | Select-Object -Last 1
-if ($titleLine) {
-    $candidate = ($titleLine.ToString() -replace ".*Page Title:\s*", "").Trim()
-    if ($candidate -and $candidate -ne "NO_TOKEN" -and $candidate.Length -gt 100) {
+if ($nodeOutput -match 'DTM_TOKEN:(Bearer .+)') {
+    $candidate = $Matches[1].Trim()
+    if ($candidate -ne 'NO_TOKEN' -and $candidate.Length -gt 100) {
         $token = $candidate
     }
 }
 
-# 方法 2: tab-list 中 [Bearer eyJ...](url) 格式
 if (-not $token) {
-    $tabOutput2 = playwright-cli tab-list 2>&1
-    $tokenTab = $tabOutput2 | Select-String "Bearer eyJ" | Select-Object -First 1
-    if ($tokenTab) {
-        $line = $tokenTab.ToString()
-        if ($line -match "\[([^\]]+)\]\(") {
-            $candidate = $Matches[1]
-            if ($candidate.Length -gt 100) {
-                $token = $candidate
-            }
-        }
-    }
-}
-
-if (-not $token) {
-    Write-Host "❌ Failed to acquire DTM token via Playwright"
+    Write-Host "❌ Failed to acquire DTM token"
     $sw.Stop()
     Write-Host "⏱️ warm-dtm-token: $([math]::Round($sw.Elapsed.TotalSeconds, 1))s (FAILED)"
     exit 1
@@ -190,13 +184,7 @@ $cacheData | ConvertTo-Json | Set-Content $globalCacheFile -Encoding UTF8
 Write-Host "✅ Global DTM token cached (length: $($token.Length))"
 Write-Host "📁 Cache: $globalCacheFile"
 
-# ── 6. 导航回 D365 ──
-Write-Host "🔄 Switching back to D365..."
-if ($currentUrl -and $currentUrl -match "onesupport") {
-    playwright-cli run-code "async page => { await page.goto('$currentUrl', { waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => {}); }" 2>&1 | Out-Null
-} else {
-    playwright-cli run-code "async page => { await page.goto('https://onesupport.crm.dynamics.com/', { waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => {}); }" 2>&1 | Out-Null
-}
+# ── 6. Done (Node.js 方案自己管理浏览器，无需导航回 D365) ──
 
 $sw.Stop()
 Write-Host "⏱️ warm-dtm-token: $([math]::Round($sw.Elapsed.TotalSeconds, 1))s"

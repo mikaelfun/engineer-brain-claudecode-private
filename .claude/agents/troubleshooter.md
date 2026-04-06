@@ -43,20 +43,58 @@ mcpServers:
 
 在开始搜索和 Kusto 查询前，先检查是否已有预构建的排查指南。
 
-1. 确定产品域（从 case-info.md 的 SAP 路径推断）
+1. 确定产品域（多策略匹配）：
+   - **优先**：从 case-info.md 的 SAP 服务路径匹配 `config.json → podProducts[*].services`
+   - **次选**：从 case-info.md 的问题描述/标题关键词匹配 `config.json → podProducts[*].matchKeywords`
+     - 读取 config.json，遍历所有产品的 `matchKeywords` 数组
+     - 大小写不敏感匹配（如 "Blob Storage" 匹配 `disk` 产品的 `"blob"` 关键词）
+     - 多个产品匹配时，取 SAP 路径最接近的
+   - **兜底**：从排查中查询的 Kusto 集群推断（azcrpmc → vm, mcakshuba → aks 等）
+
 2. 检查 `skills/products/{product}/guides/_index.md` 是否存在且非空
-3. 如果存在：
-   - 读取 `_index.md`，根据 Step 1 理解到的症状关键词匹配最相关的 1-2 篇指南
-   - 读取匹配的指南，获得：
-     - 预构建的排查路径（可能可以跳过部分搜索）
-     - 已知根因列表（缩小 Kusto 查询范围）
-     - 21V 不适用标注（避免建议不支持的功能）
-   - 在 troubleshooter.log 记录：`[timestamp] STEP 1.5 OK | matched guide: {guide-name}`
-4. 如果不存在或未匹配：
+
+3. 如果存在 → 读取 `_index.md`，注意 **类型** 列：
+   - `📋 融合` — 有完整排查流程（含嵌入的 Kusto 查询模板）
+   - `📊 速查` — 仅三元组速查表
+
+4. 按症状关键词匹配最相关的 1-2 篇指南，**根据类型分流加载**：
+
+   #### 路径 A：融合型指南（📋 融合）
+   
+   直接读取 `guides/details/{topic}.md`：
+   - 定位 `## 排查流程` section → **按 Phase 步骤执行排查**
+   - guide 中嵌入的 KQL 可直接使用（含集群 URI 和数据库名）
+   - **跳过 Step 2** 中该场景的 Kusto 查询构建（已嵌入 guide）
+   - 如果 guide 中有 `Kusto` 列 > 0 → KQL 已预构建，无需再读 Kusto skill query 文件
+   - 利用打分决定验证级别：
+     - 🟢 8-10 分步骤 → 可直接采信，跳过验证
+     - 🔵 5-7 分步骤 → 作为排查方向参考，验证关键步骤
+     - 🟡/⚪ <5 分步骤 → 仅供参考，必须独立验证
+   - 定位 `## 已知问题速查` section → 按症状匹配三元组
+   
+   #### 路径 B：速查型指南（📊 速查）
+   
+   读取 `guides/{topic}.md` 速查表（现有逻辑）：
+   - 症状速查表匹配
+   - 预构建的排查路径
+   - 已知根因列表
+   - 21V 不适用标注
+   - 利用打分决定后续动作（同上）
+   - 如果需要深入 → 读取 `guides/details/{topic}.md`（三元组展开版）
+   - **Step 2 正常构建 Kusto 查询**（速查型无嵌入 KQL）
+   
+   #### 日志记录
+   `[timestamp] STEP 1.5 OK | matched guide: {guide-name}, type: {fusion|compact}, top score: {score}`
+
+5. 如果不存在或未匹配：
    - 记录：`[timestamp] STEP 1.5 SKIP | no matching guide found`
-   - 继续 Step 2，走正常搜索流程：
-     - 优先搜索团队 OneNote → ADO Wiki → MS Learn → Kusto skill queries
-     - 搜索汇总后才确定具体排查方法、Kusto 查询、向客户获取的关键证据
+   - **Fallback 到 Kusto skill 完整流程**：
+     - 读 `skills/kusto/{product}/SKILL.md` 获取排查思路
+     - 读 `skills/kusto/{product}/references/queries/` 下的 query 文件
+     - Step 2 正常构建 Kusto 查询
+   - 继续 Step 3 知识库搜索：
+     - 优先搜索团队 OneNote → ADO Wiki → MS Learn
+     - 搜索汇总后确定具体排查方法
 
 ### 2. Kusto 查询
 
@@ -250,39 +288,22 @@ Schema 详见 `playbooks/schemas/claims-schema.md`。
 [YYYY-MM-DD HH:MM:SS] STEP 5a OK | claims extracted: N total, H high, M medium, L low, X none | triggerChallenge={true|false}
 ```
 
-### 6. 排查后知识写回（自动）
+### 6. 排查后知识写回提示
 
-排查完成写好分析报告后，**必须执行知识写回**：
+排查完成写好分析报告后，**不自动写回 known-issues.jsonl**（避免循环写回——分析本身可能就来自 product skill）。
 
-1. **判断产品域**
-   从 case-info.md 的 serviceTree 或排查中查询的集群推断产品：
-   - 查了 azcrpmc / azurecm / azcore → `vm`
-   - 查了 mcakshuba → `aks`
-   - 以此类推
+改为在分析报告末尾和 troubleshooter.log 中记录提示：
 
-2. **提取发现**
-   从刚写好的分析报告中提取：
-   - symptom: 问题概述
-   - rootCause: 分析结论中的根因
-   - solution: 建议方案
+```
+[timestamp] STEP 6 OK | analysis complete. To promote findings to product skill, user can run:
+  /product-learn promote-case {caseNumber}
+```
 
-3. **去重检查**
-   读取 `skills/products/{product}/known-issues.jsonl`，检查是否已有相同 symptom+rootCause。
-
-4. **Append 新条目**（如果不重复）
-   ```bash
-   # 获取下一个 ID
-   LAST_ID=$(tail -1 skills/products/{product}/known-issues.jsonl 2>/dev/null | python -c "import sys,json; print(json.loads(sys.stdin.read()).get('id',''))" 2>/dev/null)
-   # 构建并 append JSON line
-   ```
-
-   条目格式：
-   ```json
-   {"id":"{product}-{seq}","date":"YYYY-MM-DD","symptom":"...","rootCause":"...","solution":"...","source":"case","sourceRef":"{caseNumber}","product":"{product}","confidence":"medium","promoted":false}
-   ```
-
-5. **记录 evolution-log**
-   Append 到 `skills/products/{product}/evolution-log.md`
+**何时有写回价值**（在分析报告的「改进建议」section 中标注）：
+- ✅ 解决方案来自 product skill 之外（PG、客户自行发现、手动调查等）
+- ✅ 发现了 product skill 中错误或过时的条目
+- ✅ 新的有效 Kusto 查询路径
+- ❌ 分析完全依赖已有 product skill 指南解决 → 无增量，无需写回
 
 ### Research 引用文件
 排查过程中搜索到的相关文档、Wiki、KB 链接统一保存到 `{caseDir}/research/research.md`。

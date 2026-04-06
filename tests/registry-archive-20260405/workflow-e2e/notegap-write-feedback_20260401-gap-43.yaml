@@ -1,0 +1,32 @@
+# Test: 长内容（>2000 字符）的 note 能完整写入不截断
+# Generated: Cycle 0 | Source: spec-driven
+# Recipe: none
+
+id: "notegap-write-feedback_20260401-gap-43"
+name: "长内容（>2000 字符）的 note 能完整写入不截断"
+category: "workflow-e2e"
+source: "spec-driven"
+description: "长内容（>2000 字符）的 note 能完整写入不截断"
+safety_level: "safe"
+priority: "medium"
+impact: "P2"
+impactReason: "Spec AC 未覆盖"
+tags: ["spec-driven","notegap-write-feedback"]
+
+steps:
+  - action: "validate"
+    params:
+      description: "长内容（>2000 字符）的 note 能完整写入不截断"
+
+assertions:
+  - type: "file_exists"
+    target: "cases/"
+    expected: "true"
+    description: "长内容（>2000 字符）的 note 能完整写入不截断"
+
+timeout_seconds: 30
+metadata:
+  generatedAt: "2026-04-05T00:45:22.682Z"
+  round: 0
+  gapId: "notegap-write-feedback_20260401-gap-43"
+  recipeUsed: null

@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { existsSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from 'fs'
+import { existsSync, readFileSync, readdirSync, unlinkSync, writeFileSync, statSync } from 'fs'
 import { join, resolve } from 'path'
 import { exec } from 'child_process'
 import { promisify } from 'util'
@@ -144,9 +144,9 @@ function parseLatestNoteDate(notesPath: string): Date | null {
       const match = line.match(/^### 📝\s+(\d{1,2}\/\d{1,2}\/\d{4}\s+\d{1,2}:\d{2}\s+[AP]M)\s*\|\s*(.+)/)
       if (!match) continue
 
-      // Skip system notes
+      // Skip system notes (aligned with CLI skill + note-reader.ts)
       const author = match[2].trim()
-      if (author.includes('系统自动分配') || author.includes('System')) continue
+      if (author.includes('系统自动分配') || author.includes('System') || author === 'CrmGlobal-DFM-MSaaS') continue
 
       try {
         const dateStr = match[1]
@@ -232,6 +232,83 @@ function generateDraftBody(
   return lines.join('\n')
 }
 
+/** Write draft file in YAML frontmatter format */
+function writeDraftFile(
+  draftPath: string, title: string, body: string,
+  gapDays: number, lastNoteDate: string, isNewCase: boolean, now: Date
+): void {
+  const draftContent = [
+    '---',
+    `title: "${title}"`,
+    `body: |`,
+    ...body.split('\n').map(l => `  ${l}`),
+    `gapDays: ${gapDays}`,
+    `lastNoteDate: "${lastNoteDate}"`,
+    `isNewCase: ${isNewCase}`,
+    `generatedAt: "${now.toISOString()}"`,
+    '---',
+  ].join('\n')
+  writeFileSync(draftPath, draftContent, 'utf-8')
+}
+
+/**
+ * Generate first-day note draft for new cases (no human notes yet).
+ * Reads meta + case-summary to construct an initial record.
+ * Aligned with CLI SKILL.md Step 4a + Step 6a.
+ */
+function generateNewCaseDraft(
+  caseNumber: string, caseDir: string, metaPath: string, summaryPath: string, now: Date
+): { title: string; body: string } | null {
+  const yy = String(now.getFullYear()).slice(2)
+  const mm = String(now.getMonth() + 1).padStart(2, '0')
+  const dd = String(now.getDate()).padStart(2, '0')
+  const todayYYMMDD = `${yy}${mm}${dd}`
+
+  const bullets: string[] = []
+
+  // Read meta for IR SLA, email count, actualStatus
+  if (existsSync(metaPath)) {
+    try {
+      const meta = JSON.parse(readFileSync(metaPath, 'utf-8'))
+      if (meta.irSla?.status === 'Succeeded') {
+        bullets.push('- -met IR SLA.')
+      }
+      // Check if emails exist (implies initial response sent)
+      const emailCount = meta.emails_count ?? meta.emailCountAtJudge ?? 0
+      if (emailCount > 0) {
+        bullets.push('- -sent initial response to customer.')
+      }
+      if (meta.actualStatus) {
+        bullets.push(`- -case status: ${meta.actualStatus}.`)
+      }
+    } catch {}
+  }
+
+  // Read case-summary for today's entries
+  if (existsSync(summaryPath)) {
+    const progress = extractProgressAfter(summaryPath, new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)) // last 7 days
+    for (const entry of progress) {
+      for (const item of entry.items) {
+        const cleaned = item.replace(/^[-•]\s*/, '').trim()
+        const bullet = `- -${cleaned}`
+        if (!bullets.includes(bullet)) {
+          bullets.push(bullet)
+        }
+      }
+    }
+  }
+
+  // Fallback — at least one entry
+  if (bullets.length === 0) {
+    bullets.push('- -new case received, initial assessment in progress.')
+  }
+
+  return {
+    title: 'fangkun note',
+    body: `${todayYYMMDD}--\n${bullets.join('\n')}`,
+  }
+}
+
 /**
  * GET /:id/note-gap — Get current note gap status + draft if exists
  */
@@ -240,7 +317,13 @@ noteGapRoutes.get('/:id/note-gap', (c) => {
   const draftPath = getDraftPath(caseNumber)
 
   if (!existsSync(draftPath)) {
-    return c.json({ hasGap: false, draft: null })
+    // Also return gap info even without a draft (for the "Check" button state)
+    const caseDir = join(config.activeCasesDir, caseNumber)
+    const notesPath = join(caseDir, 'notes.md')
+    const latestDate = existsSync(notesPath) ? parseLatestNoteDate(notesPath) : null
+    const now = new Date()
+    const gapDays = latestDate ? Math.floor((now.getTime() - latestDate.getTime()) / (1000 * 60 * 60 * 24)) : null
+    return c.json({ hasGap: false, draft: null, gapDays, lastNoteDate: latestDate ? fmtDate(latestDate) : null })
   }
 
   try {
@@ -259,6 +342,102 @@ noteGapRoutes.get('/:id/note-gap', (c) => {
   } catch {
     return c.json({ hasGap: false, draft: null })
   }
+})
+
+/**
+ * POST /:id/note-gap/check — Trigger note gap check for a single case (fast API path)
+ *
+ * Aligned with CLI skill logic:
+ *   Step 2: Auto-refresh notes.md if >24h old
+ *   Step 3: Parse latest human note, filter system notes (CrmGlobal-DFM-MSaaS + 系统自动分配)
+ *   Step 4: New Case detection (no human notes → generate first-day record from meta)
+ *   Step 5-7: Generate draft in fangkun note format
+ */
+noteGapRoutes.post('/:id/note-gap/check', async (c) => {
+  const caseNumber = c.req.param('id')
+  const caseDir = join(config.activeCasesDir, caseNumber)
+
+  if (!existsSync(caseDir)) {
+    return c.json({ error: 'Case not found' }, 404)
+  }
+
+  const notesPath = join(caseDir, 'notes.md')
+  const summaryPath = join(caseDir, 'case-summary.md')
+  const metaPath = join(caseDir, 'casehealth-meta.json')
+  const draftPath = getDraftPath(caseNumber)
+  const now = new Date()
+  const threshold = config.noteGapThresholdDays ?? 3
+
+  // ── Step 2: Auto-refresh notes.md if stale (>24h) ──
+  let notesRefreshed = false
+  if (existsSync(notesPath)) {
+    const ageMs = now.getTime() - statSync(notesPath).mtimeMs
+    const ageHours = ageMs / (1000 * 60 * 60)
+    if (ageHours > 24) {
+      try {
+        const fetchCmd = `pwsh "${join(config.scriptsDir, 'fetch-notes.ps1')}" -TicketNumber "${caseNumber}" -OutputDir "${caseDir}" -Force`
+        await execAsync(fetchCmd, { timeout: 60000 })
+        notesRefreshed = true
+      } catch (e: any) {
+        console.warn(`[note-gap/check] fetch-notes refresh failed (non-fatal): ${e.message}`)
+      }
+    }
+  } else {
+    // notes.md doesn't exist — fetch it
+    try {
+      const fetchCmd = `pwsh "${join(config.scriptsDir, 'fetch-notes.ps1')}" -TicketNumber "${caseNumber}" -OutputDir "${caseDir}"`
+      await execAsync(fetchCmd, { timeout: 60000 })
+      notesRefreshed = true
+    } catch (e: any) {
+      console.warn(`[note-gap/check] fetch-notes failed (non-fatal): ${e.message}`)
+    }
+  }
+
+  // ── Step 3: Parse latest human note ──
+  const latestDate = existsSync(notesPath) ? parseLatestNoteDate(notesPath) : null
+
+  // ── Step 4: New Case detection ──
+  if (!latestDate) {
+    // No human notes found — check if this is a new case
+    const newCaseDraft = generateNewCaseDraft(caseNumber, caseDir, metaPath, summaryPath, now)
+    if (newCaseDraft) {
+      writeDraftFile(draftPath, newCaseDraft.title, newCaseDraft.body, 0, 'none', true, now)
+      return c.json({
+        hasGap: true,
+        gapDays: 0,
+        lastNoteDate: null,
+        isNewCase: true,
+        notesRefreshed,
+        draft: { title: newCaseDraft.title, body: newCaseDraft.body, gapDays: 0, lastNoteDate: 'none', generatedAt: now.toISOString() },
+        message: 'New case detected — first-day record draft generated.',
+      })
+    }
+    return c.json({ hasGap: false, gapDays: null, isNewCase: true, notesRefreshed, message: 'No notes found, could not generate draft' })
+  }
+
+  // ── Step 4b: Regular gap check ──
+  const gapDays = Math.floor((now.getTime() - latestDate.getTime()) / (1000 * 60 * 60 * 24))
+
+  if (gapDays < threshold) {
+    return c.json({ hasGap: false, gapDays, lastNoteDate: fmtDate(latestDate), notesRefreshed, message: `No gap (${gapDays}d < ${threshold}d threshold)` })
+  }
+
+  // ── Steps 5-7: Generate draft ──
+  const progress = extractProgressAfter(summaryPath, latestDate)
+  const body = generateDraftBody(progress, latestDate, now)
+  const title = 'fangkun note'
+
+  writeDraftFile(draftPath, title, body, gapDays, fmtDate(latestDate), false, now)
+
+  return c.json({
+    hasGap: true,
+    gapDays,
+    lastNoteDate: fmtDate(latestDate),
+    isNewCase: false,
+    notesRefreshed,
+    draft: { title, body, gapDays, lastNoteDate: fmtDate(latestDate), generatedAt: now.toISOString() },
+    message: `Gap detected: ${gapDays} days. Draft generated.`,
+  })
 })
 
 /**

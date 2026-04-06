@@ -1,0 +1,9 @@
+{
+  "testId": "new-case-note-draft",
+  "round": 2,
+  "timestamp": "2026-04-05T10:17:01.000Z",
+  "status": "fail",
+  "assertions": [{"name":"File exists: note-draft.md","pass":false,"expected":"exists","actual":"missing"}],
+  "error": "1 of 1 assertions failed",
+  "duration_ms": 41270
+}

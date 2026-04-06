@@ -23,17 +23,22 @@ mcpServers:
 ## 执行
 读取 `.claude/skills/product-learn/modes/auto-enrich.md` 获取当前 source/阶段的完整执行步骤。
 
-## 关键行为
-1. EXTRACT 前：读取 `scanned-sources.json` 过滤已扫描页面
-2. EXTRACT 后：将新扫描的页面路径/URL append 到 `scanned-sources.json`
-3. SYNTHESIZE：读取 `known-issues.jsonl` → 聚类 → 生成 `guides/*.md` + `_index.md` + `synthesize-log.md`
+## 关键行为（v3 文件隔离）
 
-## 输出
-- 新知识条目 → append 到 `skills/products/{product}/known-issues.jsonl`
-- 扫描记录 → 更新 `skills/products/{product}/scanned-sources.json`
-- 综合指南 → 生成 `skills/products/{product}/guides/*.md`（仅 synthesize）
+⚠️ **并行隔离规则**：每个 source 写独立文件，避免并发覆盖。
+
+1. EXTRACT 前：读取 `.enrich/scanned-{source}.json` 过滤已扫描页面
+2. EXTRACT 后：将新扫描的页面路径/URL append 到 `.enrich/scanned-{source}.json`
+3. MERGE + SYNTHESIZE：读取所有 `known-issues-*.jsonl` → 跨源去重 → 合并为 `known-issues.jsonl` → 聚类 → 生成 `guides/*.md`
+
+## 输出（per-source 隔离写入）
+- 新知识条目 → append 到 `skills/products/{product}/.enrich/known-issues-{source}.jsonl`（**不是** `known-issues.jsonl`）
+- 扫描记录 → 更新 `skills/products/{product}/.enrich/scanned-{source}.json`（**不是** `scanned-sources.json`）
+- ID 格式 → `{product}-{source}-{seq:03d}`（如 `intune-mslearn-001`）
+- 去重范围 → 仅在自己的 per-source 文件内去重
+- 草稿文件名 → `guides/drafts/{source}-{sanitized-title}.md`
 - 21V gap 缓存 → 写入 `skills/products/{product}/21v-gaps.json`（仅 21v-gap）
-- 审计日志 → append 到 `skills/products/{product}/evolution-log.md`
+- 审计日志 → append 到 `skills/products/{product}/.enrich/evolution-log.md`
 
 ## 返回值
 完成后必须返回以下信息供调用方更新状态：

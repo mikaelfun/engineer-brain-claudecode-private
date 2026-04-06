@@ -1,0 +1,32 @@
+# Test: Non-initial-response drafts do not include CC line even if `ccEmails` exists
+# Generated: Cycle 0 | Source: spec-driven
+# Recipe: none
+
+id: "cc-finder_20260320-gap-22"
+name: "Non-initial-response drafts do not include CC line even if `ccEmails` exists"
+category: "backend-api"
+source: "spec-driven"
+description: "Non-initial-response drafts do not include CC line even if `ccEmails` exists"
+safety_level: "safe"
+priority: "medium"
+impact: "P2"
+impactReason: "Spec AC 未覆盖"
+tags: ["spec-driven","cc-finder"]
+
+steps:
+  - action: "http_request"
+    params:
+      description: "Verify backend is reachable"
+
+assertions:
+  - type: "status_code"
+    target: "response"
+    expected: "200"
+    description: "Non-initial-response drafts do not include CC line even if `ccEmails` exists"
+
+timeout_seconds: 30
+metadata:
+  generatedAt: "2026-04-05T00:45:22.682Z"
+  round: 0
+  gapId: "cc-finder_20260320-gap-22"
+  recipeUsed: null

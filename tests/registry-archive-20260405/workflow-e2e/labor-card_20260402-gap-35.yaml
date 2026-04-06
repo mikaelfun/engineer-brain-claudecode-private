@@ -1,0 +1,32 @@
+# Test: 暗色/浅色主题适配
+# Generated: Cycle 0 | Source: spec-driven
+# Recipe: none
+
+id: "labor-card_20260402-gap-35"
+name: "暗色/浅色主题适配"
+category: "workflow-e2e"
+source: "spec-driven"
+description: "暗色/浅色主题适配"
+safety_level: "safe"
+priority: "medium"
+impact: "P2"
+impactReason: "Spec AC 未覆盖"
+tags: ["spec-driven","labor-card"]
+
+steps:
+  - action: "validate"
+    params:
+      description: "暗色/浅色主题适配"
+
+assertions:
+  - type: "file_exists"
+    target: "cases/"
+    expected: "true"
+    description: "暗色/浅色主题适配"
+
+timeout_seconds: 30
+metadata:
+  generatedAt: "2026-04-05T00:45:22.682Z"
+  round: 0
+  gapId: "labor-card_20260402-gap-35"
+  recipeUsed: null

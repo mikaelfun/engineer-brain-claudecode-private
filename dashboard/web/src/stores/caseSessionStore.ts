@@ -60,6 +60,8 @@ interface CaseSessionStoreState {
   addMessage: (caseNumber: string, message: CaseSessionMessage) => void
   /** Clear messages for a specific case */
   clearMessages: (caseNumber: string) => void
+  /** Clear only messages for a specific step within a case (other steps' messages preserved) */
+  clearStepMessages: (caseNumber: string, step: string) => void
   /** Add a message to a specific session */
   addSessionMessage: (caseNumber: string, sessionId: string, message: CaseSessionMessage) => void
   /** Get messages for a specific session */
@@ -131,6 +133,14 @@ export const useCaseSessionStore = create<CaseSessionStoreState>()((set, get) =>
       const next = { ...state.messages }
       delete next[caseNumber]
       return { messages: next }
+    }),
+
+  clearStepMessages: (caseNumber, step) =>
+    set((state) => {
+      const existing = state.messages[caseNumber]
+      if (!existing) return state
+      const filtered = existing.filter(m => m.step !== step)
+      return { messages: { ...state.messages, [caseNumber]: filtered } }
     }),
 
   addSessionMessage: (caseNumber, sessionId, message) =>

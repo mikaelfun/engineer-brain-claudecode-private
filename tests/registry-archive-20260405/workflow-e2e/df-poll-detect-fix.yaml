@@ -1,0 +1,38 @@
+id: "df-poll-detect-fix"
+name: "Design Fidelity: poll-dependent E2E tests detect completion correctly"
+category: "workflow-e2e"
+source: "design-fidelity"
+description: "Verifies poll-detect-fix spec: 所有依赖 poll 的 E2E 测试不再因完成检测失败而超时"
+safety_level: "safe"
+priority: "high"
+tags: ["design-fidelity", "poll-detect", "infrastructure"]
+recipe_used: "design-fidelity-test.md"
+
+steps:
+  - action: "bash_command"
+    params:
+      command: |
+        # Verify poll_for_completion function exists and has proper completion detection
+        source tests/executors/common.sh
+        if type poll_for_completion >/dev/null 2>&1; then
+          echo "PASS: poll_for_completion function exists"
+        else
+          echo "FAIL: poll_for_completion not found"
+          exit 1
+        fi
+    description: "Verify poll_for_completion infrastructure"
+
+assertions:
+  - type: "bash_exit_zero"
+    target: "grep -q 'poll_for_completion' tests/executors/common.sh"
+    description: "poll_for_completion defined in common.sh"
+
+  - type: "bash_exit_zero"
+    target: "grep -q 'operation.*complete\\|status.*completed\\|idle' tests/executors/common.sh"
+    description: "poll_for_completion checks for completion/idle status"
+
+  - type: "bash_exit_zero"
+    target: "grep -c 'poll_for_completion' tests/executors/e2e-runner.sh | xargs test 0 -lt"
+    description: "e2e-runner uses poll_for_completion"
+
+timeout_seconds: 15

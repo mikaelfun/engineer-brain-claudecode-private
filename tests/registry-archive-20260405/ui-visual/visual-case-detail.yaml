@@ -1,0 +1,76 @@
+id: "visual-case-detail"
+name: "Visual: Case Detail 页面视觉布局"
+category: "ui-visual"
+source: "dashboard/web/src/pages/CaseDetail.tsx"
+description: "验证 Case Detail 页面视觉布局：Tabs（Inspection/Emails/Notes/Teams/Attachments）、AI Panel 区域、双主题下的整体视觉稳定性"
+safety_level: "safe"
+priority: "medium"
+tags: ["ui", "visual", "case-detail", "layout", "round-7"]
+
+steps:
+  # Step 1: 导航至 Dashboard
+  - action: "navigate"
+    params:
+      url: "{frontend_url}"
+
+  # Step 2: 进入 Cases 列表
+  - action: "click"
+    params:
+      target: "Cases nav item"
+
+  # Step 3: 等待列表加载
+  - action: "check_element"
+    params:
+      selector: "table tbody tr, [class*='case-row']"
+      timeout: 5000
+
+  # Step 4: 点击第一个 case
+  - action: "click"
+    params:
+      target: "first case row"
+      selector: "table tbody tr:first-child, [class*='case-row']:first-child"
+
+  # Step 5: 等待详情页加载
+  - action: "check_element"
+    params:
+      selector: "main, [class*='case-detail']"
+      timeout: 5000
+
+  # Step 6: 截图 — 默认视图（Inspection Tab 或首个 Tab）
+  - action: "screenshot"
+    params:
+      selector: "main"
+      filename: "visual-case-detail-main.jpg"
+
+  # Step 7: 检查 Tab 导航存在
+  - action: "check_element"
+    params:
+      selector: "[role='tablist'], [class*='tab-nav'], [class*='tabs']"
+      timeout: 3000
+      optional: true
+
+  # Step 8: 截图 — 全页面
+  - action: "screenshot"
+    params:
+      selector: "body"
+      filename: "visual-case-detail-full.jpg"
+
+assertions:
+  # 页面正常加载
+  - type: "page_load"
+    target: "/cases/"
+    expected: "loaded"
+    description: "Case 详情页加载"
+
+  # 主内容区域存在
+  - type: "element_present"
+    target: "main content"
+    selector: "main"
+    description: "主内容区域存在"
+
+  # 无严重控制台错误
+  - type: "no_console_errors"
+    target: "page"
+    description: "页面无 JS 错误"
+
+timeout_seconds: 40

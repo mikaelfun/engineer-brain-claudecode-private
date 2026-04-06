@@ -1,0 +1,32 @@
+id: "new-case-note-draft"
+name: "New Case Note Gap Draft Generation"
+category: "workflow-e2e"
+source: "issues/ISS-208.json"
+description: "验证 note-gap API 端点可访问，验证 case 分析可生成 note 建议"
+safety_level: "safe"
+priority: "high"
+tags: ["regression", "note-gap", "ISS-208"]
+impact: "P1"
+impactReason: "Daily workflow core feature"
+recipe_used: "none"
+data_source: "live"
+live_pool: "data_rich"
+steps:
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "http://localhost:3010/api/health"
+    safety_check: "GET /api/health"
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "http://localhost:3010/api/cases"
+    safety_check: "GET /api/cases"
+assertions:
+  - type: "status_code"
+    expected: 200
+  - type: "json_field"
+    target: "response"
+    field: "cases"
+    expected: "array"
+timeout_seconds: 120

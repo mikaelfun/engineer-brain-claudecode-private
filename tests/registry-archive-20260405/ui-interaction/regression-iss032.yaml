@@ -1,0 +1,36 @@
+id: "regression-iss032"
+name: "Regression: ISS-032 — Case 页面 Info Tab 与 Inspection 数据重复，考虑移除"
+category: "ui-interaction"
+source: "issues/ISS-032.json"
+description: "回归测试：验证 ISS-032 实现的功能未退化"
+safety_level: "safe"
+priority: "medium"
+tags: ["regression", "issue-driven", "iss-032"]
+regression_for: "ISS-032"
+
+steps:
+  - action: "navigate"
+    params:
+      url: "{frontend_url}"
+    safety_check: "ui.safe[navigate_to_page]"
+  - action: "verify_element"
+    params:
+      selector: "body"
+      expected: "visible"
+      timeout: 5000
+
+assertions:
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "inspection-writer skill 模板确保 Contact 完整信息（含 phone、preferred method）"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "移除 Info tab 相关代码（InfoTab 函数、tab 定义）"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "TypeScript 编译通过，无引用残留"
+
+timeout_seconds: 60

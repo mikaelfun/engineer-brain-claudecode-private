@@ -1,0 +1,9 @@
+{
+  "testId": "note-draft-generation",
+  "round": 3,
+  "timestamp": "2026-04-05T11:58:36.000Z",
+  "status": "pass",
+  "assertions": [{"name":"note-gap skill references Note Gap detection and generation","pass":true,"expected":"Note Gap","actual":"found"}],
+  "error": null,
+  "duration_ms": 66217
+}

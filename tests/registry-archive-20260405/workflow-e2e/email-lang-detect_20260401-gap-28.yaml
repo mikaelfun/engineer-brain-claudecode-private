@@ -1,0 +1,32 @@
+# Test: Correct humanizer is selected based on detected language (humanizer for en, huma
+# Generated: Cycle 0 | Source: spec-driven
+# Recipe: none
+
+id: "email-lang-detect_20260401-gap-28"
+name: "Correct humanizer is selected based on detected language (humanizer for en, huma"
+category: "workflow-e2e"
+source: "spec-driven"
+description: "Correct humanizer is selected based on detected language (humanizer for en, humanizer-zh for zh)"
+safety_level: "safe"
+priority: "medium"
+impact: "P2"
+impactReason: "Spec AC 未覆盖"
+tags: ["spec-driven","email-lang-detect"]
+
+steps:
+  - action: "validate"
+    params:
+      description: "Correct humanizer is selected based on detected language (humanizer for en, humanizer-zh for zh)"
+
+assertions:
+  - type: "file_exists"
+    target: "cases/"
+    expected: "true"
+    description: "Correct humanizer is selected based on detected language (humanizer for en, huma"
+
+timeout_seconds: 30
+metadata:
+  generatedAt: "2026-04-05T00:45:22.682Z"
+  round: 0
+  gapId: "email-lang-detect_20260401-gap-28"
+  recipeUsed: null

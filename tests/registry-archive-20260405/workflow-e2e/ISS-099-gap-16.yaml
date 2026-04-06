@@ -1,0 +1,32 @@
+# Test: 新建 `list-closed-cases.ps1` 脚本，查询 D365 `statecode=1` (Resolved) 或 `statecode=2` (
+# Generated: Cycle 0 | Source: issue-driven
+# Recipe: none
+
+id: "ISS-099-gap-16"
+name: "新建 `list-closed-cases.ps1` 脚本，查询 D365 `statecode=1` (Resolved) 或 `statecode=2` ("
+category: "workflow-e2e"
+source: "issue-driven"
+description: "新建 `list-closed-cases.ps1` 脚本，查询 D365 `statecode=1` (Resolved) 或 `statecode=2` (Cancelled) 且原分配给当前工程师的 case"
+safety_level: "safe"
+priority: "medium"
+impact: "P2"
+impactReason: "缺失测试覆盖：workflow-e2e 功能"
+tags: ["issue-driven","ISS-099"]
+
+steps:
+  - action: "validate"
+    params:
+      description: "新建 `list-closed-cases.ps1` 脚本，查询 D365 `statecode=1` (Resolved) 或 `statecode=2` (Cancelled) 且原分配给当前工程"
+
+assertions:
+  - type: "file_exists"
+    target: "cases/"
+    expected: "true"
+    description: "新建 `list-closed-cases.ps1` 脚本，查询 D365 `statecode=1` (Resolved) 或 `statecode=2` ("
+
+timeout_seconds: 30
+metadata:
+  generatedAt: "2026-04-05T00:45:22.682Z"
+  round: 0
+  gapId: "ISS-099-gap-16"
+  recipeUsed: null

@@ -1,0 +1,32 @@
+# Test: 检测完成后自动刷新 gaps 列表
+# Generated: Cycle 0 | Source: spec-driven
+# Recipe: none
+
+id: "notegap-batch-check_20260401-gap-40"
+name: "检测完成后自动刷新 gaps 列表"
+category: "workflow-e2e"
+source: "spec-driven"
+description: "检测完成后自动刷新 gaps 列表"
+safety_level: "safe"
+priority: "medium"
+impact: "P2"
+impactReason: "Spec AC 未覆盖"
+tags: ["spec-driven","notegap-batch-check"]
+
+steps:
+  - action: "validate"
+    params:
+      description: "检测完成后自动刷新 gaps 列表"
+
+assertions:
+  - type: "file_exists"
+    target: "cases/"
+    expected: "true"
+    description: "检测完成后自动刷新 gaps 列表"
+
+timeout_seconds: 30
+metadata:
+  generatedAt: "2026-04-05T00:45:22.682Z"
+  round: 0
+  gapId: "notegap-batch-check_20260401-gap-40"
+  recipeUsed: null

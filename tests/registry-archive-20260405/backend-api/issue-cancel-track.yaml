@@ -1,0 +1,58 @@
+id: "issue-cancel-track"
+name: "Issue Cancel Track Endpoint — POST /api/issues/:id/cancel-track"
+category: "backend-api"
+source: "dashboard/src/routes/issues.ts"
+description: "验证 cancel-track 端点行为：无活跃 track 时返回 400，issue 不存在时返回 404"
+safety_level: "safe"
+priority: "medium"
+tags: ["api", "issues", "track", "cancel", "round-13"]
+
+steps:
+  # Step 1: Try cancel-track on non-existent issue — expect 404
+  - action: "http_request"
+    params:
+      method: "POST"
+      url: "{api_base}/api/issues/ISS-NONEXISTENT/cancel-track"
+      auth: true
+      expected_status: [404]
+    safety_check: "api.safe[POST /api/issues/:id/cancel-track]"
+
+  # Step 2: GET issues list to find a real issue
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/issues"
+      auth: true
+      expected_status: [200]
+    safety_check: "api.safe[GET /api/issues]"
+
+  # Step 3: Try cancel-track on a real issue that is NOT in tracking state — expect 400
+  # (Most issues are in pending/tracked/implemented/done — not actively tracking)
+  - action: "http_request"
+    params:
+      method: "POST"
+      url: "{api_base}/api/issues/ISS-001/cancel-track"
+      auth: true
+      expected_status: [400, 404]
+    safety_check: "api.safe[POST /api/issues/:id/cancel-track]"
+
+assertions:
+  - type: "status_code"
+    target: "POST /api/issues/ISS-NONEXISTENT/cancel-track"
+    expected: [404]
+    description: "不存在的 issue 返回 404"
+
+  - type: "json_field"
+    target: "step1.body.error"
+    expected: "not null"
+    description: "404 响应包含 error 字段"
+
+  - type: "status_code"
+    target: "POST /api/issues/ISS-001/cancel-track"
+    expected: [400, 404]
+    description: "非 tracking 状态的 issue cancel-track 返回 400 或 404"
+
+  - type: "json_field"
+    target: "step3.body.error"
+    expected: "not null"
+    description: "错误响应包含 error 字段"

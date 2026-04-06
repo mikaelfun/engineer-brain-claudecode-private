@@ -29,7 +29,7 @@ D365 快照 + 邮件 + 笔记 + 附件 + ICM。
 
 ## AR Mode
 
-当 casework 传入 `isAR=true` 和 `mainCaseId={mainCaseNumber}` 时：
+当检测到 `isAR=true` 和 `mainCaseId={mainCaseNumber}` 时：
 
 - **数据源变化**：
   - `case-info.md` / `emails.md` / `notes.md` / `attachments/` → 从 **main case** (`mainCaseId`) 拉取

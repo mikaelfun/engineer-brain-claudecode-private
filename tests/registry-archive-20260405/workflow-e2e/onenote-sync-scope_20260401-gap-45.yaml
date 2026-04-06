@@ -1,0 +1,32 @@
+# Test: timestamp 不同时，脚本计算本地文件 content hash 与新导出内容的 hash 比较
+# Generated: Cycle 0 | Source: spec-driven
+# Recipe: none
+
+id: "onenote-sync-scope_20260401-gap-45"
+name: "timestamp 不同时，脚本计算本地文件 content hash 与新导出内容的 hash 比较"
+category: "workflow-e2e"
+source: "spec-driven"
+description: "timestamp 不同时，脚本计算本地文件 content hash 与新导出内容的 hash 比较"
+safety_level: "safe"
+priority: "medium"
+impact: "P2"
+impactReason: "Spec AC 未覆盖"
+tags: ["spec-driven","onenote-sync-scope"]
+
+steps:
+  - action: "validate"
+    params:
+      description: "timestamp 不同时，脚本计算本地文件 content hash 与新导出内容的 hash 比较"
+
+assertions:
+  - type: "file_exists"
+    target: "cases/"
+    expected: "true"
+    description: "timestamp 不同时，脚本计算本地文件 content hash 与新导出内容的 hash 比较"
+
+timeout_seconds: 30
+metadata:
+  generatedAt: "2026-04-05T00:45:22.682Z"
+  round: 0
+  gapId: "onenote-sync-scope_20260401-gap-45"
+  recipeUsed: null

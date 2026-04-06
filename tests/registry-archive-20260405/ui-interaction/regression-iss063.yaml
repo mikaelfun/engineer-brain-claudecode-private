@@ -1,0 +1,36 @@
+id: "regression-iss063"
+name: "Regression: ISS-063 — Dashboard Case 列表优化：隐藏 FWR、客户名用 Customer 字段、名称突出显示"
+category: "ui-interaction"
+source: "issues/ISS-063.json"
+description: "回归测试：验证 ISS-063 实现的功能未退化"
+safety_level: "safe"
+priority: "medium"
+tags: ["regression", "issue-driven", "iss-063"]
+regression_for: "ISS-063"
+
+steps:
+  - action: "navigate"
+    params:
+      url: "{frontend_url}"
+    safety_check: "ui.safe[navigate_to_page]"
+  - action: "verify_element"
+    params:
+      selector: "body"
+      expected: "visible"
+      timeout: 5000
+
+assertions:
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "Case 卡片不再显示 FWR SLA 徽章（IR 和 Health Score 保留）"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "客户名称（c.customer）使用正确的 Customer 字段（已确认正确，保持不变）"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "客户名称使用 accent 颜色（如 `--accent-blue` 或 `--accent-cyan`）+ `font-semibold` 加粗，在列表中一眼"
+
+timeout_seconds: 60

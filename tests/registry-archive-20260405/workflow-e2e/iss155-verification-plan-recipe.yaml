@@ -1,0 +1,26 @@
+# Test: ISS-155: Verification Plan Recipe Column
+# Generated: Round 28 | Source: issues/ISS-155.json
+# Recipe: none
+
+id: "iss155-verification-plan-recipe"
+name: "ISS-155: Verification Plan Recipe Column"
+category: "workflow-e2e"
+source: "issues/ISS-155.json"
+safety_level: "safe"
+description: "Verify generated Verification Plan table includes Recipe column"
+
+steps:
+  - action: "validate"
+    params:
+      description: "Verify generated Verification Plan table includes Recipe column"
+
+assertions:
+  - type: "file_contains"
+    target: "conductor/tracks/"
+    expected: "Recipe"
+
+metadata:
+  generatedAt: "2026-03-30T00:10:15.936Z"
+  round: 28
+  gapId: "iss155-verification-plan-recipe"
+  recipeUsed: null

@@ -268,25 +268,42 @@ function Restart-D365Browser {
         return $true
     }
 
-    # --- Login page detected: wait for user to complete authentication ---
+    # --- Login page detected: auto-select microsoft.com account, then wait ---
     if ($tabCheck -match 'login\.microsoftonline') {
-        Write-Host ""
-        Write-Host "🔐 D365 login required — please complete login in the browser window."
-        Write-Host "   Waiting for authentication (up to 120s)..."
-        Write-Host ""
-        $maxWait = 120
+        Write-Host "🔐 Login page detected. Attempting auto-select microsoft.com account..."
+
+        $autoLoginJs = @'
+async page => {
+  await page.waitForTimeout(2000);
+  const tiles = await page.locator('[data-test-id]').all();
+  for (const t of tiles) {
+    const txt = await t.textContent().catch(() => '');
+    if (txt && txt.includes('@microsoft.com')) { await t.click(); return 'CLICKED:' + txt.trim().substring(0, 60); }
+  }
+  const els = await page.locator('text=@microsoft.com').all();
+  for (const e of els) { await e.click(); return 'CLICKED_TEXT'; }
+  return 'NO_ACCOUNT_FOUND';
+}
+'@
+        $clickResult = Invoke-PlaywrightCode -Code $autoLoginJs
+        if ($clickResult -and $clickResult.StartsWith('CLICKED')) {
+            Write-Host "   ✅ Auto-selected: $clickResult"
+        } else {
+            Write-Host "   ⚠️ Auto-select failed ($clickResult). Waiting for manual login..."
+        }
+
+        # Wait for D365 to load (up to 60s)
+        $maxWait = 60
         $elapsed = 0
-        $pollInterval = 3
         while ($elapsed -lt $maxWait) {
-            Start-Sleep -Seconds $pollInterval
-            $elapsed += $pollInterval
+            Start-Sleep -Seconds 3
+            $elapsed += 3
             $tabCheck2 = playwright-cli tab-list 2>&1 | Out-String
             if ($tabCheck2 -match 'dynamics\.com' -and $tabCheck2 -notmatch 'login\.microsoftonline') {
                 $script:_d365TabVerified = $true
                 Write-Host "✅ D365 login successful! (took ${elapsed}s)"
                 return $true
             }
-            # Progress indicator every 15s
             if ($elapsed % 15 -eq 0) {
                 Write-Host "   ⏳ Still waiting... (${elapsed}s / ${maxWait}s)"
             }

@@ -17,7 +17,7 @@ import { SessionMessageList } from '../components/session/SessionMessageList'
 import { QueueStatusIndicator } from '../components/session/QueueStatusIndicator'
 import { StepQuestionForm } from '../components/session/StepQuestionForm'
 import { useQueryClient } from '@tanstack/react-query'
-import { RefreshCw, ChevronDown, ChevronRight, Filter, Send, Square, Plus, Trash2, Play, Loader2, XCircle, CheckCircle2, AlertCircle } from 'lucide-react'
+import { RefreshCw, ChevronDown, ChevronRight, Filter, Send, Square, Plus, Trash2, Play, Loader2, XCircle, CheckCircle2, AlertCircle, Trash } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { apiPost, apiDelete } from '../api/client'
 import { CreateTriggerDialog } from '../components/agents/CreateTriggerDialog'
@@ -550,6 +550,21 @@ export default function AgentMonitor() {
   const currentCase = usePatrolStore((s) => s.currentCase)
   const caseProgress = usePatrolStore((s) => s.caseProgress)
   const patrolError = usePatrolStore((s) => s.error)
+  const patrolDetail = usePatrolStore((s) => s.detail)
+  const lastCompletedAt = usePatrolStore((s) => s.lastCompletedAt)
+  const resetPatrolStore = usePatrolStore((s) => s.reset)
+
+  // Auto-collapse patrol card when completed (not hide — keep visible)
+  const [patrolCollapsed, setPatrolCollapsed] = useState(false)
+  useEffect(() => {
+    if (isRunning) {
+      setPatrolCollapsed(false) // Expand when patrol starts
+    } else if (['completed', 'failed'].includes(phase)) {
+      // Auto-collapse 10s after completion
+      const timer = setTimeout(() => setPatrolCollapsed(true), 10_000)
+      return () => clearTimeout(timer)
+    }
+  }, [isRunning, phase])
 
   // Global queue status
   const queueStatus = useCaseSessionStore((s) => s.queueStatus)
@@ -568,6 +583,10 @@ export default function AgentMonitor() {
 
   // Stop All state
   const [stoppingAll, setStoppingAll] = useState(false)
+
+  // Cleanup state
+  const [cleaning, setCleaning] = useState(false)
+  const [cleanupResult, setCleanupResult] = useState<{ purged: number; remaining: number } | null>(null)
 
   // Collapsed groups
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({
@@ -661,6 +680,30 @@ export default function AgentMonitor() {
     }
   }
 
+  const handleCleanup = async () => {
+    setCleaning(true)
+    setCleanupResult(null)
+    try {
+      const res = await apiPost('/sessions/cleanup')
+      setCleanupResult(res as { purged: number; remaining: number })
+      refreshSessions()
+      // Auto-hide result after 5s
+      setTimeout(() => setCleanupResult(null), 5000)
+    } catch { /* ignore */ } finally {
+      setCleaning(false)
+    }
+  }
+
+  // Count stale sessions (completed/failed older than 1h, or paused older than 15min)
+  const now = Date.now()
+  const staleSessions = allSessions.filter(s => {
+    const age = now - new Date(s.lastActivityAt).getTime()
+    return (
+      ((s.status === 'completed' || s.status === 'failed') && age > 60 * 60 * 1000) ||
+      (s.status === 'paused' && age > 15 * 60 * 1000)
+    )
+  })
+
   // Group ordering
   const typeOrder = ['case', 'implement', 'verify', 'track-creation']
 
@@ -696,6 +739,23 @@ export default function AgentMonitor() {
             <Filter className="w-4 h-4" />
             Filter
           </button>
+          {staleSessions.length > 0 && (
+            <button
+              onClick={handleCleanup}
+              disabled={cleaning}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm border rounded-lg transition-colors disabled:opacity-50"
+              style={{ color: 'var(--accent-amber)', background: 'var(--accent-amber-dim)', borderColor: 'var(--accent-amber)' }}
+              title={`Clean up ${staleSessions.length} expired session(s)`}
+            >
+              <Trash className={`w-4 h-4 ${cleaning ? 'animate-pulse' : ''}`} />
+              Clean up ({staleSessions.length})
+            </button>
+          )}
+          {cleanupResult && (
+            <span className="text-xs px-2 py-1 rounded" style={{ background: 'var(--accent-green-dim)', color: 'var(--accent-green)' }}>
+              Purged {cleanupResult.purged}, {cleanupResult.remaining} left
+            </span>
+          )}
           <button
             onClick={handleRefresh}
             disabled={refreshing}
@@ -748,99 +808,160 @@ export default function AgentMonitor() {
         </div>
       )}
 
-      {/* Patrol Progress (real-time, SSE-driven) */}
-      {(isRunning || phase) && (
+      {/* Patrol Progress — always shown when there's data, auto-collapses after completion */}
+      {phase && (
         <Card>
-          <div className="flex items-center justify-between mb-3">
-            <CardHeader
-              title="Patrol Progress"
-              icon={<span>{isRunning ? '🔄' : '✅'}</span>}
-              subtitle={phase}
-            />
-            {isRunning && (
-              <button
-                onClick={() => cancelPatrol.mutate()}
-                disabled={cancelPatrol.isPending}
-                className="px-3 py-1 text-xs font-medium rounded-lg disabled:opacity-50 transition-colors"
-                style={{ color: 'var(--accent-red)', background: 'var(--accent-red-dim)' }}
-              >
-                {cancelPatrol.isPending ? 'Cancelling...' : 'Cancel Patrol'}
-              </button>
-            )}
-          </div>
-
-          {changedCases > 0 && (
-            <div className="mb-3">
-              <div className="flex justify-between text-xs mb-1" style={{ color: 'var(--text-tertiary)' }}>
-                <span>{processedCases} / {changedCases} cases</span>
-                <span>{Math.round((processedCases / changedCases) * 100)}%</span>
-              </div>
-              <div className="w-full rounded-full h-2" style={{ background: 'var(--bg-active)' }}>
-                <div
-                  className="rounded-full h-2 transition-all duration-500"
-                  style={{ width: `${(processedCases / changedCases) * 100}%`, background: 'var(--accent-blue)' }}
-                />
-              </div>
-            </div>
-          )}
-
-          <div className="flex items-center gap-2">
-            {isRunning && (
-              <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: 'var(--accent-blue)' }} />
-            )}
-            <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-              {phase === 'discovering' && `Discovering active cases... ${totalCases ? `(${totalCases} found)` : ''}`}
-              {phase === 'filtering' && `Found ${totalCases} cases, ${changedCases} changed`}
-              {phase === 'processing' && `Processing ${changedCases} cases in parallel${currentCase ? ` (latest: ${currentCase})` : ''}...`}
-              {phase === 'aggregating' && 'Aggregating todos...'}
-              {phase === 'completed' && `Patrol complete. ${processedCases}/${totalCases || processedCases} cases processed.`}
-              {phase === 'failed' && `Patrol failed: ${patrolError}`}
-            </span>
-          </div>
-
-          {caseProgress.length > 0 && (
-            <div className="mt-3 pt-3 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Cases ({caseProgress.filter(c => c.status === 'completed').length}/{caseProgress.length} done):</span>
-                {caseProgress.filter(c => c.status === 'processing').length > 0 && (
-                  <span className="text-xs font-medium" style={{ color: 'var(--accent-blue)' }}>
-                    {caseProgress.filter(c => c.status === 'processing').length} running in parallel
-                  </span>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-1.5 mt-1">
-                {caseProgress.map((cp) => (
-                  <span
-                    key={cp.caseNumber}
-                    className="px-1.5 py-0.5 rounded text-xs font-mono flex items-center gap-1"
-                    style={{
-                      background: cp.status === 'completed' ? 'var(--accent-green-dim)'
-                        : cp.status === 'processing' ? 'var(--accent-blue-dim)'
-                        : cp.status === 'failed' ? 'var(--accent-red-dim)'
-                        : 'var(--bg-inset)',
-                      color: cp.status === 'completed' ? 'var(--accent-green)'
-                        : cp.status === 'processing' ? 'var(--accent-blue)'
-                        : cp.status === 'failed' ? 'var(--accent-red)'
-                        : 'var(--text-secondary)',
-                    }}
-                    title={cp.error || cp.status}
-                  >
-                    {cp.status === 'processing' && <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--accent-blue)' }} />}
-                    {cp.status === 'completed' && <span style={{ color: 'var(--accent-green)' }}>✓</span>}
-                    {cp.status === 'failed' && <span style={{ color: 'var(--accent-red)' }}>✗</span>}
-                    {cp.caseNumber.slice(-6)}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {patrolError && (
-            <div
-              className="mt-2 p-2 rounded text-xs"
-              style={{ background: 'var(--accent-red-dim)', color: 'var(--accent-red)' }}
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => setPatrolCollapsed(!patrolCollapsed)}
+              className="flex items-center gap-2 text-left"
             >
-              {patrolError}
+              {patrolCollapsed
+                ? <ChevronRight className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
+                : <ChevronDown className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
+              }
+              <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                {isRunning ? '🔄' : phase === 'failed' ? '❌' : '✅'} Patrol
+              </span>
+              {/* Inline summary when collapsed */}
+              <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                {phase === 'completed' && `${processedCases}/${changedCases || processedCases} done`}
+                {phase === 'failed' && 'failed'}
+                {phase === 'processing' && `${processedCases}/${changedCases} processing...`}
+                {phase === 'discovering' && 'discovering...'}
+                {phase === 'filtering' && 'filtering...'}
+                {phase === 'warming-up' && 'warming up...'}
+                {phase === 'aggregating' && 'aggregating...'}
+              </span>
+              {/* Case result chips inline when collapsed */}
+              {patrolCollapsed && caseProgress.length > 0 && (
+                <span className="flex gap-1 ml-1">
+                  {caseProgress.filter(c => c.status === 'completed').length > 0 && (
+                    <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'var(--accent-green-dim)', color: 'var(--accent-green)' }}>
+                      ✓{caseProgress.filter(c => c.status === 'completed').length}
+                    </span>
+                  )}
+                  {caseProgress.filter(c => c.status === 'failed').length > 0 && (
+                    <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'var(--accent-red-dim)', color: 'var(--accent-red)' }}>
+                      ✗{caseProgress.filter(c => c.status === 'failed').length}
+                    </span>
+                  )}
+                  {caseProgress.filter(c => c.status === 'processing').length > 0 && (
+                    <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'var(--accent-blue-dim)', color: 'var(--accent-blue)' }}>
+                      ⟳{caseProgress.filter(c => c.status === 'processing').length}
+                    </span>
+                  )}
+                </span>
+              )}
+            </button>
+            <div className="flex items-center gap-2">
+              {lastCompletedAt && !isRunning && (
+                <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                  {new Date(lastCompletedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                </span>
+              )}
+              {isRunning && (
+                <button
+                  onClick={() => cancelPatrol.mutate()}
+                  disabled={cancelPatrol.isPending}
+                  className="px-3 py-1 text-xs font-medium rounded-lg disabled:opacity-50 transition-colors"
+                  style={{ color: 'var(--accent-red)', background: 'var(--accent-red-dim)' }}
+                >
+                  {cancelPatrol.isPending ? 'Cancelling...' : 'Cancel'}
+                </button>
+              )}
+            </div>
+          </div>
+
+          {!patrolCollapsed && (
+            <div className="mt-3">
+              {changedCases > 0 && (
+                <div className="mb-3">
+                  <div className="flex justify-between text-xs mb-1" style={{ color: 'var(--text-tertiary)' }}>
+                    <span>{processedCases} / {changedCases} cases</span>
+                    <span>{Math.round((processedCases / changedCases) * 100)}%</span>
+                  </div>
+                  <div className="w-full rounded-full h-2" style={{ background: 'var(--bg-active)' }}>
+                    <div
+                      className="rounded-full h-2 transition-all duration-500"
+                      style={{ width: `${(processedCases / changedCases) * 100}%`, background: isRunning ? 'var(--accent-blue)' : 'var(--accent-green)' }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2">
+                {isRunning && (
+                  <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: 'var(--accent-blue)' }} />
+                )}
+                <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                  {phase === 'discovering' && `Discovering active cases... ${totalCases ? `(${totalCases} found)` : ''}`}
+                  {phase === 'filtering' && `Found ${totalCases} cases, filtering...`}
+                  {phase === 'warming-up' && `Warming up (DTM token + IR batch)...`}
+                  {phase === 'processing' && `Processing ${changedCases} cases in parallel...`}
+                  {phase === 'aggregating' && 'Aggregating todos...'}
+                  {phase === 'completed' && `Patrol complete. ${processedCases}/${changedCases || processedCases} cases processed.`}
+                  {phase === 'failed' && `Patrol failed: ${patrolError}`}
+                </span>
+              </div>
+
+              {/* Detail line — real-time sub-phase info */}
+              {patrolDetail && (
+                <div className="text-xs mt-1 ml-4" style={{ color: 'var(--text-tertiary)' }}>
+                  {patrolDetail}
+                </div>
+              )}
+
+              {caseProgress.length > 0 && (
+                <div className="mt-3 pt-3 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Cases ({caseProgress.filter(c => c.status === 'completed').length}/{caseProgress.length} done):</span>
+                    {caseProgress.filter(c => c.status === 'processing').length > 0 && (
+                      <span className="text-xs font-medium" style={{ color: 'var(--accent-blue)' }}>
+                        {caseProgress.filter(c => c.status === 'processing').length} running
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    {caseProgress.map((cp) => (
+                      <span
+                        key={cp.caseNumber}
+                        className="px-1.5 py-0.5 rounded text-xs font-mono flex items-center gap-1"
+                        style={{
+                          background: cp.status === 'completed' ? 'var(--accent-green-dim)'
+                            : cp.status === 'processing' ? 'var(--accent-blue-dim)'
+                            : cp.status === 'failed' ? 'var(--accent-red-dim)'
+                            : 'var(--bg-inset)',
+                          color: cp.status === 'completed' ? 'var(--accent-green)'
+                            : cp.status === 'processing' ? 'var(--accent-blue)'
+                            : cp.status === 'failed' ? 'var(--accent-red)'
+                            : 'var(--text-secondary)',
+                        }}
+                        title={cp.error || `${cp.currentStep || ''}${cp.lastTool ? ' → ' + cp.lastTool : ''}` || cp.status}
+                      >
+                        {cp.status === 'processing' && <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--accent-blue)' }} />}
+                        {cp.status === 'completed' && <span style={{ color: 'var(--accent-green)' }}>✓</span>}
+                        {cp.status === 'failed' && <span style={{ color: 'var(--accent-red)' }}>✗</span>}
+                        {cp.caseNumber.slice(-6)}
+                        {cp.status === 'processing' && cp.lastTool && (
+                          <span className="font-sans text-[10px] opacity-70 max-w-[60px] truncate">
+                            {cp.lastTool.replace(/^mcp__/, '').split('__')[0]}
+                          </span>
+                        )}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {patrolError && (
+                <div
+                  className="mt-2 p-2 rounded text-xs"
+                  style={{ background: 'var(--accent-red-dim)', color: 'var(--accent-red)' }}
+                >
+                  {patrolError}
+                </div>
+              )}
             </div>
           )}
         </Card>

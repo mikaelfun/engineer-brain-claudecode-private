@@ -5,7 +5,7 @@
  *   GET /sessions/all — Aggregate all session types into a unified view
  */
 import { Hono } from 'hono'
-import { listCaseSessions } from '../agent/case-session-manager.js'
+import { listCaseSessions, purgeExpiredSessions } from '../agent/case-session-manager.js'
 import { getAllImplementSessions } from '../agent/implement-session-manager.js'
 import { getAllVerifySessions } from '../agent/verify-session-manager.js'
 import { issueTrackState } from '../services/issue-track-state.js'
@@ -101,4 +101,10 @@ sessionRoutes.get('/all', (c) => {
   filtered.sort((a, b) => new Date(b.lastActivityAt).getTime() - new Date(a.lastActivityAt).getTime())
 
   return c.json({ sessions: filtered, total: filtered.length })
+})
+
+// POST /sessions/cleanup — Manually trigger expired session purge
+sessionRoutes.post('/cleanup', (c) => {
+  const result = purgeExpiredSessions()
+  return c.json(result)
 })

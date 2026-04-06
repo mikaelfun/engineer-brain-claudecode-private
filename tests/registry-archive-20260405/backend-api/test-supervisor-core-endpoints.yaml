@@ -1,0 +1,51 @@
+id: "test-supervisor-core-endpoints"
+name: "Test Supervisor Core State Endpoints"
+category: "backend-api"
+source: "dashboard/src/routes/test-supervisor.ts"
+description: "Verify GET /api/tests/state, /pipeline, /supervisor, /queues return 200 with valid JSON"
+safety_level: "safe"
+priority: "high"
+tags: ["testlab", "api", "plateau-breaking"]
+
+steps:
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/tests/state"
+      auth: true
+    safety_check: "api.safe[GET /api/health]"
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/tests/pipeline"
+      auth: true
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/tests/supervisor"
+      auth: true
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/tests/queues"
+      auth: true
+
+assertions:
+  - type: "status_code"
+    target: "GET /api/tests/state"
+    expected: 200
+  - type: "json_field"
+    target: "GET /api/tests/state"
+    field: "round"
+    expected: "number"
+  - type: "status_code"
+    target: "GET /api/tests/pipeline"
+    expected: 200
+  - type: "status_code"
+    target: "GET /api/tests/supervisor"
+    expected: 200
+  - type: "status_code"
+    target: "GET /api/tests/queues"
+    expected: 200
+
+timeout_seconds: 30

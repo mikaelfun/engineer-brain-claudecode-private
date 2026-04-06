@@ -1,0 +1,32 @@
+# Test: sync 模式读取 `.export-scope.json`，按记录的 sections 传 `-SectionPath` 给脚本
+# Generated: Cycle 0 | Source: spec-driven
+# Recipe: none
+
+id: "onenote-sync-scope_20260401-gap-44"
+name: "sync 模式读取 `.export-scope.json`，按记录的 sections 传 `-SectionPath` 给脚本"
+category: "workflow-e2e"
+source: "spec-driven"
+description: "sync 模式读取 `.export-scope.json`，按记录的 sections 传 `-SectionPath` 给脚本"
+safety_level: "safe"
+priority: "medium"
+impact: "P2"
+impactReason: "Spec AC 未覆盖"
+tags: ["spec-driven","onenote-sync-scope"]
+
+steps:
+  - action: "validate"
+    params:
+      description: "sync 模式读取 `.export-scope.json`，按记录的 sections 传 `-SectionPath` 给脚本"
+
+assertions:
+  - type: "file_exists"
+    target: "cases/"
+    expected: "true"
+    description: "sync 模式读取 `.export-scope.json`，按记录的 sections 传 `-SectionPath` 给脚本"
+
+timeout_seconds: 30
+metadata:
+  generatedAt: "2026-04-05T00:45:22.682Z"
+  round: 0
+  gapId: "onenote-sync-scope_20260401-gap-44"
+  recipeUsed: null

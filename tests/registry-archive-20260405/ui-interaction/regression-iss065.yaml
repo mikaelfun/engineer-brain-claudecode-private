@@ -1,0 +1,36 @@
+id: "regression-iss065"
+name: "Regression: ISS-065 — Todo仅通知项标记完成后字体未划掉，影响阅读"
+category: "ui-interaction"
+source: "issues/ISS-065.json"
+description: "回归测试：验证 ISS-065 实现的功能未退化"
+safety_level: "safe"
+priority: "medium"
+tags: ["regression", "issue-driven", "iss-065"]
+regression_for: "ISS-065"
+
+steps:
+  - action: "navigate"
+    params:
+      url: "{frontend_url}"
+    safety_check: "ui.safe[navigate_to_page]"
+  - action: "verify_element"
+    params:
+      selector: "body"
+      expected: "visible"
+      timeout: 5000
+
+assertions:
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "TodoView.tsx 中 ✅ 仅通知项勾选后文本显示 line-through 删除线"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "未勾选项文本保持正常样式（无删除线）"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "已勾选项文本颜色变淡（text-tertiary）与未勾选项有明显区分"
+
+timeout_seconds: 60

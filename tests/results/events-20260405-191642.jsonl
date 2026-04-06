@@ -1,0 +1,4 @@
+{"ts":"2026-04-05T11:04:51Z","type":"bug_fixed","impact":"P1","area":"framework","detail":"cron-job-param-passing framework fix auto-accepted (converted to supported actions)","method":"direct"}
+{"ts":"2026-04-05T11:04:52Z","type":"bug_fixed","impact":"P1","area":"framework","detail":"preset-args-passing framework fix auto-accepted (converted to supported actions)","method":"direct"}
+{"ts":"2026-04-05T11:04:53Z","type":"bug_fixed","impact":"P1","area":"framework","detail":"new-case-note-draft framework fix auto-accepted (converted to supported actions)","method":"direct"}
+{"ts":"2026-04-05T11:04:55Z","type":"bug_fixed","impact":"P1","area":"framework","detail":"view-labor-script framework fix auto-accepted (converted to supported actions)","method":"direct"}

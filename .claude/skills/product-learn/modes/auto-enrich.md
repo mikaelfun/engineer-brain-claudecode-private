@@ -1,13 +1,13 @@
-# Auto-Enrich Mode v2 — 产品知识自动富化
+# Auto-Enrich Mode v3 — 双层并行产品知识自动富化
 
-每次执行处理 **1 个产品的 1 个数据源**（EXTRACT tick），全部数据源穷尽后自动触发 SYNTHESIZE。
+**并行模型**：多产品同时跑 × 产品内多 source 同时扫描。每个 product×source 组合 spawn 独立 agent，通过 per-source 文件隔离消除写冲突。
 
 ## 常量
 
 ```
 PROJECT_ROOT = /c/Users/fangkun/Documents/Projects/EngineerBrain/src
 ONENOTE_DIR  = /c/Users/fangkun/Documents/Projects/EngineerBrain/data/OneNote Export
-STATE_FILE   = skills/products/enrich-state.json
+MANIFEST     = skills/products/enrich-state.json
 MCVKB        = ${ONENOTE_DIR}/MCVKB
 POD_NB       = ${ONENOTE_DIR}/Mooncake POD Support Notebook
 SERVICES_DIR = ${POD_NB}/POD/VMSCIM/4. Services
@@ -29,64 +29,156 @@ SERVICES_DIR = ${POD_NB}/POD/VMSCIM/4. Services
 
 ---
 
+## 文件隔离架构
+
+每个 source 写独立文件，MERGE 阶段合并。消除并发写冲突。
+
+```
+skills/products/{product}/
+  known-issues.jsonl                ← MERGE 产出（SYNTHESIZE 读这个）
+  21v-gaps.json                     ← Phase 1 独占写（不变）
+  guides/drafts/*.md                ← Track B 草稿（agent 写，文件名含 source 前缀避冲突）
+  .enrich/
+    progress.json                   ← 产品级进度（调度器读写，agent 不写）
+    known-issues-21v-gap.jsonl      ← Phase 1 agent 独占写
+    known-issues-onenote.jsonl      ← Phase 2 agent 独占写
+    known-issues-ado-wiki.jsonl     ← Phase 3 agent 独占写
+    known-issues-mslearn.jsonl      ← Phase 4 agent 独占写
+    known-issues-contentidea-kb.jsonl ← Phase 5 agent 独占写
+    scanned-onenote.json            ← Phase 2 agent 独占写（路径数组）
+    scanned-ado-wiki.json           ← Phase 3 agent 独占写（含 index + 已扫描）
+    scanned-mslearn.json            ← Phase 4 agent 独占写（含 index + 已扫描）
+    scanned-contentidea-kb.json     ← Phase 5 agent 独占写
+    evolution-log.md                ← 审计日志
+    synthesize-log.md               ← 合成审计日志
+    topic-plan.json                 ← 主题聚类计划
+    synthesize-temp/                ← Map-Reduce 临时文件
+```
+
+**Agent 写入规则**：
+- JSONL 写入目标：`.enrich/known-issues-{source}.jsonl`（不是 `known-issues.jsonl`）
+- 扫描记录：`.enrich/scanned-{source}.json`（不是 `.enrich/scanned-sources.json`）
+- ID 格式：`{product}-{source}-{seq:03d}`（如 `vm-onenote-001`），MERGE 时统一重编为 `{product}-{seq:03d}`
+- 去重范围：仅在自己的 per-source 文件内去重（跨 source 去重留给 MERGE）
+- 草稿文件名：`guides/drafts/{source}-{sanitized-title}.md`（source 前缀避冲突）
+
+---
+
+## 状态文件
+
+### enrich-state.json（全局 manifest）
+
+```json
+{
+  "status": "running|complete",
+  "activeProducts": ["vm", "aks"],
+  "productQueue": ["monitor", "entra-id", ...],
+  "completedProducts": ["intune"],
+  "maxAgentsPerTick": 20,
+  "classifyState": { "status": "exhausted", "totalPages": 4241, "classifiedPages": 4002 },
+  "stats": {
+    "totalDiscovered": 61,
+    "totalDeduplicated": 0,
+    "bySource": { "21v-gap": 55, "onenote": 6, ... },
+    "byProduct": { "intune": 30, "entra-id": 31 }
+  }
+}
+```
+
+不再有 `currentProduct` / `currentSource` 单槽——改用 `activeProducts` 数组。
+
+### progress.json（per-product，新增）
+
+路径：`skills/products/{product}/.enrich/progress.json`
+
+```json
+{
+  "product": "vm",
+  "status": "extracting|merging|synthesizing|complete",
+  "sourceStates": {
+    "21v-gap": "pending|scanning|exhausted|error",
+    "onenote": "pending|scanning|exhausted|error",
+    "ado-wiki": "pending|scanning|exhausted|error",
+    "mslearn": "pending|scanning|exhausted|error",
+    "contentidea-kb": "pending|scanning|exhausted|error"
+  },
+  "synthesized": false,
+  "synthesizeState": {
+    "lastSynthesizedAt": null,
+    "lastEntryCount": 0,
+    "synthesizedEntryIds": [],
+    "topicPlanHash": null
+  },
+  "stats": { "discovered": 0, "deduplicated": 0 }
+}
+```
+
+---
+
 ## 子命令路由
 
 | 用户输入 | 动作 |
 |---------|------|
-| `auto-enrich` 或 `auto-enrich run` | 执行一轮 EXTRACT tick |
-| `auto-enrich status` | 显示进度 |
+| `auto-enrich` 或 `auto-enrich run` | 执行一轮并行 EXTRACT tick |
+| `auto-enrich status` | 显示并行进度 |
 | `auto-enrich reset` | 重置状态（可选 `--reset-source {source}` 仅重置单个数据源） |
-| `auto-enrich skip` | 跳过当前产品 |
-| `synthesize {product}` | 手动触发 SYNTHESIZE（从 SKILL.md 路由过来） |
+| `auto-enrich skip` | 跳过指定产品（或全部 activeProducts） |
+| `synthesize {product}` | 手动触发 MERGE + SYNTHESIZE |
 
 ---
 
 ## `status` — 显示进度
 
-读取 `enrich-state.json`，展示：
+读取 `enrich-state.json` + 所有 `activeProducts` 的 `.enrich/progress.json`，展示：
 
 ```
-📚 Knowledge Enrichment Status
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📚 Knowledge Enrichment Status (Parallel Mode)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Status:    {status}
-Current:   {currentProduct} → {currentSource}
+Active:    {activeProducts.length} products running in parallel
 Queue:     {productQueue.length} remaining — [{productQueue.join(', ')}]
 Completed: {completedProducts.join(', ') || 'none'}
 
-Product States:
-  {product}: 21v-gap={state} | onenote={state} | ado-wiki={state} | mslearn={state} | contentidea-kb={state} | synthesized={bool}
-  ...
+Active Products:
+  🔄 vm:       21v-gap=✅ | onenote=🔄 | ado-wiki=🔄 | mslearn=⏳ | contentidea-kb=⏳ | [12 discovered]
+  🔄 aks:      21v-gap=✅ | onenote=⏳ | ado-wiki=🔄 | mslearn=⏳ | contentidea-kb=⏳ | [5 discovered]
+  🔄 intune:   21v-gap=✅ | onenote=✅ | ado-wiki=🔄 | mslearn=⏳ | contentidea-kb=⏳ | [30 discovered]
 
 Stats: {totalDiscovered} discovered, {totalDeduplicated} deduped
-  21v-gap:  {bySource.21v-gap}
-  OneNote:  {bySource.onenote}
-  ADO Wiki: {bySource.ado-wiki}
-  MS Learn: {bySource.mslearn}
+  21v-gap: {N} | OneNote: {N} | ADO Wiki: {N} | MS Learn: {N} | ContentIdea: {N}
 ```
+
+图例：✅=exhausted ⏳=pending 🔄=scanning ❌=error
 
 ## `reset` — 重置状态
 
 **完全重置**（`auto-enrich reset`）：
-1. 将 `enrich-state.json` 重写为初始值（从 `config.json → enrichPriority` 填充 `productQueue`）
+1. 将 `enrich-state.json` 重写为初始值（从 `config.json → enrichPriority` 填充 `productQueue`，`activeProducts` 清空）
 2. 保留 `stats` 作为历史记录
-3. 清空所有产品的 `scanned-sources.json`（允许重新全量扫描）
+3. 删除所有产品的 `.enrich/progress.json` 和 `.enrich/scanned-*.json`（允许重新全量扫描）
+4. 保留 `.enrich/known-issues-*.jsonl`（不删除已提取的知识）
 
 **单源重置**（`auto-enrich reset --reset-source {source}`）：
-1. 仅将指定 source 的 `productStates[*].{source}` 重置为 `"pending"`
-2. 清空各产品 `scanned-sources.json` 中对应 source 的数组
-3. 不影响其他 source 的状态
+1. 对所有产品：将 `.enrich/progress.json → sourceStates[source]` 重置为 `"pending"`
+2. 删除各产品的 `.enrich/scanned-{source}.json` 和 `.enrich/known-issues-{source}.jsonl`
+3. 不影响其他 source
 
-## `skip` — 跳过当前产品
+## `skip` — 跳过产品
 
-1. 将 `currentProduct` 移入 `completedProducts`（标记跳过）
-2. 清空 `currentProduct` 和 `currentSource`
-3. 下一次 `run` 将自动取 `productQueue[0]`
+```
+auto-enrich skip              # 跳过所有 activeProducts
+auto-enrich skip {product}    # 跳过指定产品
+```
+
+1. 将目标产品从 `activeProducts` 移入 `completedProducts`
+2. 标记 `.enrich/progress.json → status = "skipped"`
+3. 下一次 `run` 将自动从 `productQueue` 补充
 
 ---
 
-## `run` — EXTRACT 流程
+## `run` — 并行 EXTRACT 流程
 
-### Step 0: 读取状态
+### Step 0: 读取状态 + 前置检查
 
 ```bash
 cat skills/products/enrich-state.json
@@ -94,61 +186,87 @@ cat skills/products/enrich-state.json
 
 - `status === "complete"` → 输出 "✅ All products enriched and synthesized"，退出
 
-**分类前置检查**（在 per-product 流程之前）：
-- 检查 `classifyState.status`：
-  - 不存在或 `"pending"` → 初始化 `classifyState`，开始 Phase 0 page-classify
-  - `"scanning"` → 继续 Phase 0 page-classify（跳过 Step 1，直接执行 Phase 0 tick）
-  - `"exhausted"` → 分类完成，进入 per-product 流程（Step 1）
-- **Phase 0 运行时**：不执行任何 per-product 操作，每 tick 只做页面分类
+### Step 0.5: Phase 0 分类前置检查
+- `classifyState.status !== "exhausted"` → 仅执行 Phase 0 page-classify tick，不进入 per-product 流程
+- `classifyState.status === "exhausted"` → 进入 Step 1
 
-- `productQueue` 为空且 `currentProduct` 为空：
-  - 检查哪些 `completedProducts` 的 `productStates[x].synthesized === false`
-  - 有未 synthesize 的 → 自动触发 SYNTHESIZE（逐个）
-  - 全部已 synthesize → 设 `status = "complete"`，输出完成报告
+**全部完成检查**：
+- `activeProducts` 为空且 `productQueue` 为空：
+  - 检查 `completedProducts` 中是否有 `synthesized === false` 的产品
+  - 有 → 逐个触发 MERGE + SYNTHESIZE
+  - 全部已 synthesize → 设 `status = "complete"`
 
-### Step 1: 确定 currentProduct + currentSource
+### Step 1: 动态填充 activeProducts
 
-**如果 `currentProduct` 为空**：
-1. 取 `productQueue[0]`，设为 `currentProduct`
-2. 从 `productQueue` 中移除
-3. 初始化 `productStates[product]`：
+**无固定上限**——将 `productQueue` 中所有产品一次性拉入 `activeProducts`。
+`maxAgentsPerTick` 控制并发 agent 总数，不限制 active product 数量。
+产品多但 source 少（已 exhausted）时，调度器自然只 spawn 有工作可做的任务。
+
+从 `productQueue` 全量取出：
+
+对每个新加入的产品：
+1. 从 `productQueue` 移除
+2. 加入 `activeProducts`
+3. 创建 `.enrich/progress.json`（如不存在）：
    ```json
-   {"21v-gap":"pending","onenote":"pending","ado-wiki":"pending","mslearn":"pending","contentidea-kb":"pending","synthesized":false}
+   {"product":"{id}","status":"extracting","sourceStates":{"21v-gap":"pending","onenote":"pending","ado-wiki":"pending","mslearn":"pending","contentidea-kb":"pending"},"synthesized":false,"stats":{"discovered":0,"deduplicated":0}}
    ```
-4. 设 `currentSource` 为第一个 `"pending"` 的 source
+4. 更新 `enrich-state.json`（activeProducts + productQueue）
 
-**Source 优先级顺序**：`21v-gap` → `onenote` → `ado-wiki` → `mslearn` → `contentidea-kb`
+### Step 2: 收集待执行任务
 
-> 注意：`onenote` source 依赖 Phase 0 page-classify 完成。如果 `classifyState.status !== "exhausted"`，
-> 遇到 `onenote` 时跳过（保持 `pending`），优先执行不依赖分类的 source（`21v-gap`、`ado-wiki`、`mslearn`）。
-> 实际推荐运行顺序：先跑完 Phase 0 全量分类，再开始 per-product 流程。
+对每个 `activeProduct`，读取其 `.enrich/progress.json`：
+- 收集所有 `sourceStates[source] === "pending" || "scanning"` 的 source
+- onenote source 需要 `classifyState.status === "exhausted"` → 否则跳过
+- **ado-wiki source 互斥检查**：读取 `.enrich/progress.json → adoWikiBlast`，值为 `"running"` → 跳过此 source（由独立 `/product-learn ado-wiki-blast` 模式处理）
+- 每个 (product, source) 组合 = 1 个待执行任务
 
-**Source 推进逻辑**：
-- 当前 source 已 `"exhausted"` → 找下一个 `"pending"` source
-- 如果所有 4 个 source 都 `"exhausted"` → 产品 EXTRACT 完成：
-  1. 将 `currentProduct` 移入 `completedProducts`
-  2. 清空 `currentProduct` 和 `currentSource`
-  3. 自动触发 SYNTHESIZE（见 Part 6）
-  4. 退出本 tick
+**ADO Wiki 并发分批**：当 source 为 `ado-wiki` 且已有索引时，可将未扫描页面拆分为多个 batch，每个 batch 作为独立任务：
+- 读取 `.enrich/scanned-ado-wiki.json`，计算未扫描页面列表
+- 按动态分配规则（Step 3b 的 15K 字符凑批）或固定 5 页/batch 拆分
+- 每个 batch 分配不重叠的页面范围，在 prompt 中明确指定页面列表
+- ID 前缀区分：`{product}-ado-wiki-a-{seq}`, `{product}-ado-wiki-b-{seq}`, ...
+- 最多 3 个 batch/产品（避免 API 限流）
 
-### Step 2: Spawn Knowledge Enricher Agent
+**总数上限**：`maxAgentsPerTick`。超过时按优先级截取：
+- 优先级排序：先按产品在 `enrichPriority` 中的顺序，再按 source 优先级（`21v-gap` > `onenote` > `ado-wiki` > `mslearn` > `contentidea-kb`）
+
+### Step 3: 并行 Spawn Agents（全部 background）
+
+**在一条消息中同时发出所有 Agent 调用**（Claude Code 原生并行），所有 agent 使用 `run_in_background: true`：
 
 ```
+对每个 (product, source) 任务：
+
 Agent(
-  subagent_type: "knowledge-enricher",
-  description: "enrich {currentProduct} source {currentSource}",
+  description: "enrich {product} from {source}",
+  run_in_background: true,
   prompt: |
-    产品: {currentProduct}
-    数据源: {currentSource}
+    产品: {product}
+    数据源: {source}
     项目根: {PROJECT_ROOT}
     
-    读取 .claude/skills/product-learn/modes/auto-enrich.md 的 "Phase: {currentSource}" 部分执行。
+    读取 .claude/skills/product-learn/phases/{phaseFile} 执行。
+    
+    Phase 文件映射：
+    - onenote → phases/phase2-onenote.md
+    - ado-wiki → phases/phase3-ado-wiki.md
+    - mslearn → phases/phase4-mslearn.md
+    - contentidea-kb → phases/phase5-contentidea.md
+    
+    ⚠️ 并行隔离规则（v3）：
+    - 写入 JSONL: skills/products/{product}/.enrich/known-issues-{source}.jsonl（不是 known-issues.jsonl）
+    - 扫描记录: skills/products/{product}/.enrich/scanned-{source}.json（不是 scanned-sources.json）
+    - ID 格式: {product}-{source}-{seq:03d}（在 per-source 文件内递增）
+    - 去重范围: 仅在 known-issues-{source}.jsonl 内去重
+    - 草稿前缀: guides/drafts/{source}-{title}.md
+    - 21v-gaps.json 不存在时: 设 21vApplicable=null（MERGE 阶段补标）
     
     关键文件：
-    - known-issues.jsonl: skills/products/{currentProduct}/known-issues.jsonl
-    - scanned-sources.json: skills/products/{currentProduct}/scanned-sources.json
-    - 21v-gaps.json: skills/products/{currentProduct}/21v-gaps.json (如果存在)
-    - config.json: 读取 podProducts 获取 OneNote 目录映射
+    - known-issues-{source}.jsonl: skills/products/{product}/.enrich/known-issues-{source}.jsonl
+    - scanned-{source}.json: skills/products/{product}/.enrich/scanned-{source}.json
+    - 21v-gaps.json: skills/products/{product}/21v-gaps.json (如果存在)
+    - config.json: 读取 podProducts 获取目录映射
     
     完成后返回:
     1. discovered: 新发现条目数
@@ -158,40 +276,121 @@ Agent(
 )
 ```
 
-### Step 3: 更新状态
+spawn 后立即输出摘要表格并结束 tick，**不等待 agent 完成**。
 
-解析 Agent 返回结果：
+### Step 4: 异步结果收集（agent 完成通知触发）
 
-1. **更新 stats**：
-   - `stats.totalDiscovered += discovered`
-   - `stats.totalDeduplicated += deduplicated`
-   - `stats.bySource[currentSource] += discovered`
-   - `stats.byProduct[currentProduct] = (stats.byProduct[currentProduct] || 0) + discovered`
+当收到 `<task-notification>` 时，逐个处理：
 
-2. **更新 source 状态**：
-   - Agent 报告 `exhausted: true` → 设 `productStates[product][source] = "exhausted"`
-   - 否则保持 `"scanning"`（下轮继续扫描该 source）
+1. **更新 per-product 进度**（`.enrich/progress.json`）：
+   - `sourceStates[source]` = agent.exhausted ? `"exhausted"` : `"scanning"`
+   - `stats.discovered += agent.discovered`
+   - `stats.deduplicated += agent.deduplicated`
 
-3. **检查产品是否完成**：
-   - 所有 4 个 source 都 `"exhausted"` → 自动触发 SYNTHESIZE
+2. **更新全局 stats**（`enrich-state.json`）：
+   - `stats.totalDiscovered += agent.discovered`
+   - `stats.totalDeduplicated += agent.deduplicated`
+   - `stats.bySource[source] += agent.discovered`
+   - `stats.byProduct[product] += agent.discovered`
 
-4. **写回 `enrich-state.json`**（用 Write 工具直接写）
+3. **检查产品完成**：
+   对每个 activeProduct：
+   - 所有 5 个 source 都 `"exhausted"` → 自动触发 MERGE + SYNTHESIZE：
+     1. 设 `.enrich/progress.json → status = "merging"`
+     2. 执行 MERGE（见下方 MERGE 阶段）
+     3. 执行 SYNTHESIZE
+     4. 从 `activeProducts` 移入 `completedProducts`
 
-### Step 4: 输出摘要
+4. **写回状态文件**
+
+5. **即时补位（Refill）**：
+   - 计算当前活跃 agent 数 = 已 spawn 但未完成的 agent 数
+   - 空闲 slot = `maxAgentsPerTick - 活跃 agent 数`
+   - 如果空闲 slot > 0 且仍有未完成的 (product, source) 任务：
+     - 按 Step 2 相同的优先级规则收集待执行任务
+     - 立即 spawn 新 agent 填满空位（同样 `run_in_background: true`）
+     - 输出简短补位日志：`🔄 Refill: spawned {N} replacement agents`
+   - 如果无待执行任务 → 不补位，等所有 agent 完成后进入 MERGE/SYNTHESIZE
+
+> **关键**：这意味着 agent 完成通知不仅触发状态更新，还触发新 agent spawn。
+> 效果：slot 利用率从 ~60%（5 分钟 cron 周期内 agent 平均 3 分钟完成）提升到 ~95%。
+> cron tick 的作用从"唯一调度点"降级为"兜底检查"——确保即使通知丢失也能恢复。
+
+> **批量通知处理**：如果多个 agent 同时完成通知到达，先批量更新状态，再一次性 spawn 所有补位 agent。
+
+### Step 6: 输出摘要（spawn 后立即输出）
 
 ```
-📚 Enrichment Tick Complete
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-Product: {product} | Source: {source}
-Discovered: {N} new | Deduped: {M}
-Source status: {exhausted ? "✅ exhausted" : "🔄 more pages remaining"}
-Next: {nextProduct} → {nextSource}
-Queue: {remaining} products remaining
+📚 Parallel Enrichment Tick — {N} Agents Spawned
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+| Product | onenote | ado-wiki | mslearn | contentidea-kb | 21v-gap |
+|---------|---------|----------|---------|----------------|---------|
+| intune  | 🔄      | 🔄       | ✅ idx  | 🔄             | ✅      |
+| vm      | 🔄      | 🔄       | ✅ idx  | 🔄             | ✅      |
+...
+
+Active: {N} products | Queue: {M} remaining
+Cumulative: {totalDiscovered} discovered
+
+Total: +18 discovered, 2 deduped
+Active: {activeProducts} | Queue: {remaining} remaining
 ```
 
 ---
 
+## MERGE 阶段（SYNTHESIZE 前置步骤）
+
+**触发条件**：某产品全部 5 个 source 均 `"exhausted"` 后自动触发。
+也可手动触发：`/product-learn synthesize {product}` 会先执行 MERGE。
+
+### 流程
+
+1. **读取所有 per-source JSONL 文件**：
+   ```
+   .enrich/known-issues-21v-gap.jsonl
+   .enrich/known-issues-onenote.jsonl
+   .enrich/known-issues-ado-wiki.jsonl
+   .enrich/known-issues-mslearn.jsonl
+   .enrich/known-issues-contentidea-kb.jsonl
+   ```
+
+2. **跨 source 去重**：
+   - 对比所有条目的 `symptom` + `rootCause` 关键词
+   - ≥80% 重叠 → 保留 confidence 更高的，丢弃另一个（`stats.deduplicated++`）
+   - 50-80% 重叠 → 保留两个，互标 `relatedTo`
+   - <50% → 保留
+
+3. **21V 补标**：
+   - 读取 `21v-gaps.json`（如存在）
+   - 对所有 `21vApplicable === null` 的条目：检查 solution 是否涉及 unsupported feature → 标记
+
+4. **统一重编 ID**：
+   - 所有保留条目按 source 优先级排序（21v-gap → onenote → ado-wiki → mslearn → contentidea-kb），source 内按原序
+   - 重编为 `{product}-001`, `{product}-002`, ...
+
+5. **写入 `known-issues.jsonl`**（最终合并文件）
+
+6. **合并 scanned 文件** → `.enrich/scanned-sources.json`（向后兼容）：
+   ```json
+   {
+     "onenote": [...from .enrich/scanned-onenote.json...],
+     "ado-wiki": [...from .enrich/scanned-ado-wiki.json...],
+     "ado-wiki-index": [...],
+     "mslearn": [...from .enrich/scanned-mslearn.json...],
+     "mslearn-index": [...],
+     "contentidea-kb": [...from .enrich/scanned-contentidea-kb.json...]
+   }
+   ```
+
+7. **更新 `.enrich/progress.json → status = "synthesizing"`**
+
+---
+
 ## Phase 执行指令（Agent 内部读取）
+
+> ⚠️ **v3 并行隔离规则**：所有 Phase 写入目标均为 per-source 文件（见"文件隔离架构"节）。
+> Agent 从 prompt 中获取 `{source}` 参数，决定写入哪个文件。
 
 ### Phase 0: page-classify（全局页面分类）
 
@@ -284,12 +483,41 @@ Agent(
 
 ### 全局约束（所有 Phase 通用）
 
-- 每个 tick 最多处理 **10 个页面/文件**
-- 单个文件超长（>5000 字符）时截取前 **3000 字符** 提取
+- 每个 tick 最多处理 **10 个页面/文件**（ADO Wiki 使用动态批量分配，见 Phase 3 Step 3b）
+- **不截取页面内容**——通过动态分配（ADO Wiki）或每批 10 页（OneNote 本地文件）控制总量，确保 agent 有足够 token 完成提取+写入
+- OneNote 页面：读取完整全文，不截取
 - 每个 tick 目标完成时间 **< 5 分钟**
-- **扫描前**必须先 Read `scanned-sources.json`，**扫描后**必须 append 本次处理的路径/URL
-- `known-issues.jsonl` 不存在 → 创建空文件后 append
-- `scanned-sources.json` 不存在 → 创建：`{"onenote":[],"ado-wiki":[],"mslearn":[],"contentidea-kb":[]}`
+- **大文件写入规则**：任何预计超过 5KB 的 JSON 文件（如 `.enrich/topic-plan.json`、`.enrich/scanned-*.json` 含大量条目时），**禁止用 Write 工具**，必须通过 `Bash` + `python3 -c "import json; ..."` 写入。原因：Write 工具把文件内容作为 output token 生成，大 JSON 会超 max_tokens 导致参数截断死循环。
+- **v3 并行写入规则**：
+  - 写 JSONL → `.enrich/known-issues-{source}.jsonl`（不是 `known-issues.jsonl`）
+  - 写扫描记录 → `.enrich/scanned-{source}.json`（不是 `.enrich/scanned-sources.json`）
+  - ID 格式 → `{product}-{source}-{seq:03d}`（在 per-source 文件内递增）
+  - 去重范围 → 仅在自己的 per-source 文件内去重（跨 source 去重留给 MERGE）
+  - 草稿文件名 → `guides/drafts/{source}-{sanitized-title}.md`
+- **扫描前**必须先 Read `.enrich/scanned-{source}.json`，**扫描后**必须 append 本次处理的路径/URL
+- `.enrich/known-issues-{source}.jsonl` 不存在 → 创建空文件后 append
+- `.enrich/scanned-{source}.json` 不存在 → 创建合适的初始结构（见各 Phase 说明）
+
+### 双轨提取规则（Phase 2/3/4 通用）
+
+所有需要 LLM 提取的 Phase（onenote/ado-wiki/mslearn）均采用双轨处理：
+
+- **Track A — Break/Fix 型**：有明确的错误现象 + 原因或解决方案 → 提取三元组写 `known-issues.jsonl`
+- **Track B — 排查指南型**：决策树、多步诊断、操作手册、参考表 → 保存为 `guides/drafts/{title}.md` 草稿 + 在 JSONL 写一条 `quality: "guide-draft"` 的指引条目
+
+**分类判断**：LLM 在一次 prompt 中同时完成分类和提取。能提出至少一组 symptom + (rootCause 或 solution) → Track A，否则 → Track B。
+
+**SYNTHESIZE 阶段处理 drafts/**：
+- 三元组 + 同主题草稿 → 融合：三元组补充到草稿的对应 section
+- 纯草稿 → 清洗格式后生成正式指南（写入 `guides/`）
+- **草稿永远保留**：`guides/drafts/` 中的原始文件不删除、不移动
+  - 用途 1：增量更新时对比原始内容与合成结果
+  - 用途 2：重新合成时作为输入源
+  - 用途 3：溯源验证——正式指南引用草稿路径，可追查原文
+- `guides/drafts/` 中的文件不进入 `_index.md`，只有正式指南才索引
+- 正式指南的 frontmatter 中记录来源草稿路径：`draftSources: ["drafts/onenote-xxx.md", "drafts/ado-wiki-yyy.md"]`
+
+Phase 3 (ado-wiki-scan) 的双轨细节见该 Phase 内的"内容分类 + 双轨处理"section。Phase 2 和 Phase 4 遵循相同规则，仅 `source` 和 `sourceRef` 格式不同。
 
 ### JSONL 条目格式
 
@@ -338,7 +566,7 @@ Agent(
 
 3. **Glob 搜索 Feature Gap 文件**：
    ```bash
-   find "${SERVICES_DIR}/{podServicesDir}" -maxdepth 2 \( -name "*Feature*Gap*" -o -name "*Feature*List*Gap*" \)
+   find "${SERVICES_DIR}/{podServicesDir}" -maxdepth 2 \( -iname "*Feature*Gap*" -o -iname "*Feature*List*Gap*" -o -iname "*feature*parity*" \)
    ```
 
 4. **读取文件**（通常 1-2 个），LLM 提取：
@@ -360,7 +588,7 @@ Agent(
    }
    ```
 
-7. **Append** `evolution-log.md`：`[{date}] 21v-gap-scan: {N} unsupported, {M} partial features`
+7. **Append** `.enrich/evolution-log.md`：`[{date}] 21v-gap-scan: {N} unsupported, {M} partial features`
 
 8. 返回 `{discovered: N+M, deduplicated: 0, exhausted: true}`
    > 21v-gap-scan 始终一次完成（scope 小），总是返回 `exhausted: true`。
@@ -369,345 +597,101 @@ Agent(
 
 ### Phase 2: onenote-extract
 
-**目标**：从 Phase 0 分类索引中取出属于当前产品的 OneNote 页面，深度提取排查知识。
-
-> ⚠️ **前置条件**：`classifyState.status === "exhausted"`（Phase 0 分类必须完成）。
-> 如果分类未完成，onenote source 保持 `"pending"` 状态，不会被执行。
-
-1. **读取分类索引**：
-   过滤 `skills/products/page-classification.jsonl`，取所有 `products` 数组包含当前产品的条目。
-
-2. **读取 `scanned-sources.json → onenote`**，排除已处理的页面路径。
-
-3. **取 top 10 未处理页面**（按 confidence 降序，high 优先）。
-
-4. **对每个页面**：
-   - Read 文件内容（>5000 字符截取前 3000）
-   - LLM 提取 symptom/rootCause/solution 三元组（一个页面可产出 0-5 个）
-   - 去重检查（见去重规则）
-   - 新条目 append 到 `known-issues.jsonl`：
-     ```
-     source: "onenote"
-     sourceRef: 相对于 ONENOTE_DIR 的路径（如 "MCVKB/VM+SCIM/.../page.md"）
-     sourceUrl: null
-     ```
-
-5. **更新 `scanned-sources.json → onenote`**：将本次处理的路径 append
-
-6. **Append** `evolution-log.md`
-
-7. **判断 exhausted**：
-   - 分类索引中该产品的所有页面均已在 `scanned-sources.json → onenote` 中 → `exhausted: true`
-   - 否则 → `exhausted: false`（下轮继续）
-
-7. **更新 `scanned-sources.json`**：将本次处理的 10 个路径 append 到 `onenote` 数组
-
-8. **Append** `evolution-log.md`
-
-9. **判断 exhausted**：
-   - 已无未扫描页面 → `exhausted: true`
-   - 否则 → `exhausted: false`（下轮继续）
+> 📄 **已拆分到独立文件**：`phases/phase2-onenote.md`
+> Agent prompt 引用：`读取 .claude/skills/product-learn/phases/phase2-onenote.md 执行`
+> 前置条件：`classifyState.status === "exhausted"`（Phase 0 分类必须完成）
 
 ---
 
 ### Phase 3: ado-wiki-scan
 
-**目标**：从 ADO Wiki 提取 TSG 文档。
-
-1. **搜索 ADO Wiki**：
-   ```bash
-   pwsh -NoProfile -File scripts/ado-search.ps1 -Type wiki -Query "{product} troubleshooting" -Org msazure -Top 20
-   ```
-
-2. **读取 `scanned-sources.json → ado-wiki`**，过滤已扫描的 wiki 路径
-
-3. **取 top 8 未扫描结果**
-
-4. **对每个结果读取内容**：
-   ```bash
-   az devops wiki page show --wiki "{wikiName}" --path "{pagePath}" --org "https://dev.azure.com/msazure"
-   ```
-   - 超长（>5000 字符）→ 截取前 3000 字符
-
-5. **LLM 提取三元组**
-
-6. **21V 标记**：读取 `21v-gaps.json`
-   - solution 涉及 unsupported feature → 添加 tag `"21v-unsupported"`
-   - 设 `21vApplicable: false`
-
-7. **去重 → append** `known-issues.jsonl`：
-   ```
-   source: "ado-wiki"
-   sourceRef: "{wikiName}:{pagePath}"
-   sourceUrl: "https://dev.azure.com/msazure/{project}/_wiki/wikis/{wikiName}/{pageId}/{pagePath}"
-   ```
-
-8. **更新 `scanned-sources.json → ado-wiki`**
-
-9. **Append** `evolution-log.md`
-
-10. **判断 exhausted**：
-    - 已无未扫描结果 → `exhausted: true`
-    - 否则 → `exhausted: false`
+> 📄 **已拆分到独立文件**：`phases/phase3-ado-wiki.md`
+> Agent prompt 引用：`读取 .claude/skills/product-learn/phases/phase3-ado-wiki.md 执行`
 
 ---
 
 ### Phase 4: mslearn-scan
 
-**目标**：从 Microsoft Learn 补充官方文档。
-
-1. **搜索 MS Learn**（两组查询）：
-   ```
-   mcp__msft-learn__microsoft_docs_search(query: "Azure {product} troubleshoot common issues")
-   mcp__msft-learn__microsoft_docs_search(query: "Azure {product} error codes")
-   ```
-
-2. **读取 `scanned-sources.json → mslearn`**，过滤已扫描 URL
-
-3. **取 top 8 未扫描结果**
-
-4. **Fetch 全文**：
-   ```
-   mcp__msft-learn__microsoft_docs_fetch(url: "{resultUrl}")
-   ```
-
-5. **LLM 提取三元组**（官方文档通常更结构化，提取质量更高）
-
-6. **21V 标记**：同 ado-wiki-scan 逻辑
-
-7. **去重 → append** `known-issues.jsonl`：
-   ```
-   source: "mslearn"
-   sourceRef: null
-   sourceUrl: "{fullUrl}"
-   citeable: true
-   confidence: "medium"（官方文档不区分 21V 环境差异）
-   ```
-
-8. **更新 `scanned-sources.json → mslearn`**
-
-9. **Append** `evolution-log.md`
-
-10. **判断 exhausted**：
-    - 已无未扫描 URL → `exhausted: true`
-    - 否则 → `exhausted: false`
+> 📄 **已拆分到独立文件**：`phases/phase4-mslearn.md`
+> Agent prompt 引用：`读取 .claude/skills/product-learn/phases/phase4-mslearn.md 执行`
+> 范围：只扫描 `support/` 路径下的 troubleshoot 文档，不扫描产品概念/架构文档
 
 ---
 
 ### Phase 5: contentidea-kb-scan
 
-**目标**：从 ContentIdea ADO 内部 KB 穷举已发布的结构化排查文章。
-
-> ⚠️ **与其他 Phase 的关键区别**：此 Phase **不需要 LLM 提取**。ContentIdea work items 已包含结构化字段
-> （`HelpArticleSummarySymptom`/`HelpArticleCause`/`HelpArticleResolution`），直接 strip HTML 即可写入 JSONL。
-> 质量审核留给 SYNTHESIZE 阶段用 LLM 做。
-
-1. **读取 config.json** → 取 `podProducts[product].contentIdeaKeywords`
-   - 为空数组 → 返回 `exhausted: true`（该产品无 ContentIdea 关键词）
-
-2. **WIQL 查询已发布 KB** — 对每个关键词执行：
-   ```bash
-   AZURE_CONFIG_DIR="$HOME/.azure-profiles/microsoft-fangkun" az boards query \
-     --wiql "SELECT [System.Id], [System.Title], [System.WorkItemType], [System.State] FROM workitems WHERE [System.TeamProject] = 'ContentIdea' AND [ECO.CI.KBArticleNumbers] <> '' AND [ECO.CI.CI.AppliesToProducts] CONTAINS '{keyword}'" \
-     --org https://dev.azure.com/ContentIdea --project ContentIdea -o json
-   ```
-   合并所有关键词结果，按 `System.Id` 去重。
-
-3. **读取 `scanned-sources.json → contentidea-kb`**，过滤已扫描的 work item ID
-
-4. **取 top 10 未扫描 ID**，对每个执行：
-   ```bash
-   AZURE_CONFIG_DIR="$HOME/.azure-profiles/microsoft-fangkun" az boards work-item show \
-     --id {workItemId} --org https://dev.azure.com/ContentIdea -o json
-   ```
-
-5. **直接提取三元组**（无需 LLM）：
-   ```python
-   import re
-   def strip_html(s): return re.sub(r'<[^>]+>', '', s or '').strip()
-
-   symptom    = strip_html(fields['ECO.CI.CI.HelpArticleSummarySymptom'])
-   rootCause  = strip_html(fields['ECO.CI.CI.HelpArticleCause'])
-   solution   = strip_html(fields['ECO.CI.CI.HelpArticleResolution'])
-   kb_number  = fields.get('ECO.CI.KBArticleNumbers', '')
-   ```
-
-   - symptom/rootCause/solution **全为空** → 跳过（老数据无结构化字段），仍标记已扫描
-   - 至少有 symptom → 构建 JSONL 条目
-
-6. **构建 JSONL 条目**：
-   ```json
-   {
-     "id": "{product}-{seq:03d}",
-     "date": "YYYY-MM-DD",
-     "symptom": "{stripped symptom}",
-     "rootCause": "{stripped rootCause}",
-     "solution": "{stripped solution}",
-     "source": "contentidea-kb",
-     "sourceRef": "ContentIdea#{workItemId}",
-     "sourceUrl": "https://support.microsoft.com/kb/{kb_number}",
-     "product": "{product}",
-     "confidence": "medium",
-     "quality": "raw",
-     "tags": ["{articleType}", "contentidea-kb"],
-     "21vApplicable": true,
-     "promoted": false
-   }
-   ```
-   - `kb_number` 含 `/` 时（如 `3072688/ja`）→ 取 `/` 前部分构造 URL
-   - `ECO.CI.O.ContentLink` 保留为备用内部链接（不写入 JSONL，仅在指南的来源注释中使用）
-
-7. **去重 → append** `known-issues.jsonl`（同标准去重规则）
-
-8. **更新 `scanned-sources.json → contentidea-kb`**：append 本次处理的 work item ID 字符串列表
-
-9. **Append** `evolution-log.md`
-
-10. **判断 exhausted**：
-    - 已无未扫描 ID → `exhausted: true`
-    - 否则 → `exhausted: false`
+> 📄 **已拆分到独立文件**：`phases/phase5-contentidea.md`
+> Agent prompt 引用：`读取 .claude/skills/product-learn/phases/phase5-contentidea.md 执行`
+> 特点：不需要 LLM 提取，ContentIdea work items 已有结构化字段，直接 strip HTML 写入 JSONL
 
 ---
 
 ## SYNTHESIZE — 综合指南生成
 
-**触发条件**：
-- **自动**：某产品全部 4 个 source 均 `"exhausted"` 后自动触发
-- **手动**：`/product-learn synthesize {product}`
+> 📄 **已拆分到独立文件**：`modes/synthesize.md`
+> 调度器引用：`Read(".claude/skills/product-learn/modes/synthesize.md")`
+> 手动触发：`/product-learn synthesize {product}`
 
-### 流程
-
-#### 1. 读取数据
-
-读取 `skills/products/{product}/known-issues.jsonl` 全部条目。
-
-#### 2. LLM 主题聚类
-
-按 symptom 语义相似度分组：
-- 同类症状（如不同错误信息但同一根因）归为一组
-- 每组取一个代表性主题名（英文 slug 用于文件名，中文用于标题）
-
-#### 3. 质量过滤
-
-| 条件 | 动作 |
-|------|------|
-| 只有 symptom，无 rootCause **且** 无 solution | 丢弃（半成品） |
-| 超过 4 年旧 + 无 case 验证 | 丢弃（过时） |
-| 单数据源条目 | 保留，标记 confidence: low |
-| 多数据源交叉验证 | 保留，提升 confidence: high |
-
-#### 4. 生成排查指南
-
-对每个主题簇 → 生成 `skills/products/{product}/guides/{topic-slug}.md`：
-
-```markdown
-# {Product} {Topic} — 综合排查指南
-
-**来源数**: {N} 条 JSONL 条目合并
-**置信度**: {high|medium|low} | **21V 适用**: {全部|部分|不适用}
-**最后更新**: {date}
-
-## 症状
-- {symptom1}
-  > 来源: [{sourceRef}]({link})
-- {symptom2}
-  > 来源: [{sourceRef}]({link})
-
-## 根因分类
-1. **{cause1}** — {description}
-   > 来源: [{sourceRef}]({link})
-2. **{cause2}** — {description}
-
-## 排查步骤
-1. {step1}
-   ⚠️ **21V 不支持**: {feature} （如适用）
-2. {step2}
-
-## 解决方案
-- 方案 A: {solution}
-  > 来源: [{sourceRef}]({link})
-- 方案 B: {solution}
-```
-
-**来源注释格式**：
-| 来源类型 | 注释格式 |
-|---------|---------|
-| OneNote | `[MCVKB/.../page.md](relative-path)` |
-| ADO Wiki | `[ADO Wiki](https://dev.azure.com/...)` |
-| MS Learn | `[MS Learn](https://learn.microsoft.com/...)` |
-| ContentIdea KB | `[KB{number}](https://support.microsoft.com/kb/{number})` |
-| Case | `[case:NNNN]` |
-
-#### 5. 生成索引
-
-Write `skills/products/{product}/guides/_index.md`：
-
-```markdown
-# {Product} 排查指南索引
-
-| 指南 | 关键词 | 来源数 | 置信度 |
-|------|--------|--------|--------|
-| [{topic}](topic-slug.md) | keyword1, keyword2 | {N} | {high/medium/low} |
-| ... | ... | ... | ... |
-
-最后更新: {date}
-```
-
-#### 6. 写审计日志
-
-Write `skills/products/{product}/synthesize-log.md`：
-
-```markdown
-# Synthesize Log — {product} — {date}
-
-## 保留条目
-| ID | 原因 |
-|----|------|
-| {id} | 多源验证 / 高置信度 / ... |
-
-## 丢弃条目
-| ID | 原因 |
-|----|------|
-| {id} | 半成品（无根因无方案） / 过时 / ... |
-
-## 合并分组
-| 指南 | 合并的 IDs |
-|------|-----------|
-| {topic-slug} | {id1}, {id2}, {id3} |
-```
-
-#### 7. 更新状态
-
-- `enrich-state.json → productStates[product].synthesized = true`
-- Append `evolution-log.md`：`[{date}] SYNTHESIZE: {N} guides generated, {M} entries kept, {K} discarded`
+触发条件、并行架构、打分体系、分层生成、增量合成逻辑详见 `synthesize.md`。
 
 ---
 
 ## REFRESH — 增量维护
 
-**触发条件**：OneNote 同步 hook（`onenote-export` 同步团队笔记本后输出 `changedFiles[]`）
+**触发条件**：
+- **自动**：`onenote-export` 同步后写入 `skills/products/onenote-changes.json`
+- **手动**：`auto-enrich reset --reset-source onenote`
 
-### 流程
+### onenote-export 联动
 
-1. **匹配变更文件**：
-   - 对 `changedFiles[]` 中每个路径，检查是否属于某产品的 OneNote 映射目录
-   - 同时检查 `scanned-sources.json → onenote` 是否包含该路径
+`onenote-export` sync 完成后，自动写入变更通知文件：
+```
+skills/products/onenote-changes.json
+```
+```json
+{
+  "syncedAt": "2026-04-05T15:00:00Z",
+  "changedFiles": [
+    "MCVKB/Intune/Deploy Win32 exe.md",
+    "MCVKB/VM+SCIM/=======2. VM & VMSS=======/New known issue.md"
+  ],
+  "newFiles": [
+    "MCVKB/Intune/New enrollment TSG.md"
+  ]
+}
+```
 
-2. **标记重扫**：
-   - 匹配到的文件 → 从 `scanned-sources.json → onenote` 中移除（标记为待重扫）
+### auto-enrich tick 开始时的 REFRESH 检查
 
-3. **增量 EXTRACT**：
-   - 仅对这些特定页面执行 onenote-scan（不走正常队列，直接指定文件列表）
-   - 如果提取出的知识与已有 JSONL 条目冲突 → 更新已有条目（保留 ID，更新内容和日期）
+**Step 0 新增**：在读取 enrich-state.json 后、spawn agents 前：
 
-4. **增量 SYNTHESIZE**：
-   - 仅对受影响的产品重新运行 SYNTHESIZE
+1. 检查 `skills/products/onenote-changes.json` 是否存在
+2. 存在 → 读取 `changedFiles` + `newFiles`
+3. 对每个变更文件：
+   - 通过 `page-classification.jsonl` 查找所属产品（可能属于多个产品）
+   - 从对应产品的 `.enrich/scanned-onenote.json → scanned` 中**移除**该路径
+   - 同时在 `.enrich/known-issues-onenote.jsonl` 中标记相关条目为 `"stale": true`（下次提取会覆盖）
+4. 对每个新文件：
+   - 如果不在 `page-classification.jsonl` 中 → 自动加入分类队列（走 Phase 0 分类）
+   - 如果已分类 → 直接加入对应产品的待扫描列表
+5. 处理完毕 → **删除** `onenote-changes.json`（防止重复处理）
+6. 受影响的产品如果 `onenote` source 已标记 `"exhausted"` → 重置为 `"scanning"`
+
+### 已有条目更新（stale 处理）
+
+当 onenote-extract agent 处理一个被标记 stale 的页面时：
+- 提取新三元组
+- 与 `stale: true` 的旧条目对比 `sourceRef`
+- 匹配到 → **原地更新**（保留 ID，更新 symptom/rootCause/solution/date，清除 stale 标记）
+- 未匹配 → 正常 append 新条目
+- 旧 stale 条目未被更新覆盖 → 保留但降低 confidence（可能页面内容被删减了）
 
 ### 规则
 
 - **仅团队笔记本**触发 REFRESH（`config.json → onenote.teamNotebooks` 列出的笔记本）
 - ADO Wiki / MS Learn：**不自动 REFRESH**，需手动 `auto-enrich reset --reset-source ado-wiki` 触发重扫
 - 个人笔记本变更不触发任何操作
+- REFRESH 处理完成后，如果受影响产品已有合成指南 → 标记 `synthesizeState` 需要增量重合成
 
 ---
 
@@ -720,7 +704,7 @@ Write `skills/products/{product}/synthesize-log.md`：
 | msft-learn MCP 不可用 | 跳过 mslearn source，设 `productStates[product].mslearn = "error"` |
 | LLM 提取 0 个三元组 | 正常现象，日志记录 "no knowledge extracted"，仍标记页面为已扫描 |
 | SYNTHESIZE 聚类失败 | 降级：按 source 分组（而非按主题），仍生成指南 |
-| `scanned-sources.json` 损坏 | 从 `known-issues.jsonl` 的 `sourceRef` 字段重建 |
+| `.enrich/scanned-{source}.json` 损坏 | 从 `.enrich/known-issues-{source}.jsonl` 的 `sourceRef` 字段重建 |
 | `known-issues.jsonl` 不存在 | 创建空文件，正常执行 |
 | Agent spawn 失败 | 记录 error，不更新状态（下次 run 会重试同一 product+source） |
 | config.json 中产品无映射目录 | 该 source 直接标记 `exhausted`（如 `defender` 无 OneNote section） |

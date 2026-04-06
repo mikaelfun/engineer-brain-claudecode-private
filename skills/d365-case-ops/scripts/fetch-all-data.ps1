@@ -155,6 +155,42 @@ foreach ($r in $results) {
 
 Remove-Job $jobSnapshot, $jobEmails, $jobNotes -Force -ErrorAction SilentlyContinue
 
+# --- AR Mode: clean up the temp main case directory ---
+if ($isAR) {
+    $mainCaseDir = Join-Path $OutputDir $fetchCaseNumber
+    if ((Test-Path $mainCaseDir) -and $fetchCaseNumber -ne $arCaseNumber) {
+        Remove-Item $mainCaseDir -Recurse -Force -ErrorAction SilentlyContinue
+        Write-Host "🔵 Cleaned up temp main case dir: $mainCaseDir"
+    }
+}
+
+# --- AR Mode: patch case-info.md with AR case's own title + case number ---
+if ($isAR) {
+    $arCaseInfoFile = Join-Path (Join-Path $OutputDir $arCaseNumber) "case-info.md"
+    if (Test-Path $arCaseInfoFile) {
+        Write-Host "🔵 Patching case-info.md with AR title..."
+        # Fetch AR case's own title via OData
+        $arIncidentId = Get-IncidentId -TicketNumber $arCaseNumber
+        if ($arIncidentId) {
+            $arInc = Invoke-D365Api -Endpoint "/api/data/v9.0/incidents($arIncidentId)?`$select=title"
+            if ($arInc -and $arInc.title) {
+                $arTitle = $arInc.title
+                $content = Get-Content $arCaseInfoFile -Raw -Encoding UTF8
+                # Replace header: "# Case {mainCaseNumber}" → "# Case {arCaseNumber} (AR)"
+                $content = $content -replace "^# Case $fetchCaseNumber", "# Case $arCaseNumber (AR of $fetchCaseNumber)"
+                # Replace Title row: "| Title | ... |" → AR title
+                $content = $content -replace "(\| Title \|)[^\r\n]+", "| Title | $arTitle |"
+                # Replace Case Number row: "| Case Number | ... |" → AR case number
+                $content = $content -replace "(\| Case Number \|)[^\r\n]+", "| Case Number | $arCaseNumber (AR of $fetchCaseNumber) |"
+                [System.IO.File]::WriteAllText($arCaseInfoFile, $content, [System.Text.UTF8Encoding]::new($false))
+                Write-Host "🔵 Patched: title='$arTitle', case=$arCaseNumber"
+            } else {
+                Write-Host "⚠️ Could not fetch AR title, keeping main case title"
+            }
+        }
+    }
+}
+
 # --- AR Mode: fetch AR-specific notes into notes-ar.md ---
 if ($isAR) {
     Write-Host "🔵 Fetching AR notes from $arCaseNumber..."

@@ -1,0 +1,27 @@
+# Test: Learnings Coverage Check R28
+# Generated: Round 28 | Source: observability-scanner.sh
+# Recipe: none
+
+id: "obs-uncovered-learnings-r28"
+name: "Learnings Coverage Check R28"
+category: "observability"
+probe_type: "metric"
+source: "observability-scanner.sh"
+safety_level: "safe"
+description: "Track uncovered learnings ratio — target < 50% uncovered"
+
+steps:
+  - action: "validate"
+    params:
+      description: "Track uncovered learnings ratio — target < 50% uncovered"
+
+assertions:
+  - type: "metric_below"
+    target: "uncovered_learnings"
+    expected: "50"
+
+metadata:
+  generatedAt: "2026-03-30T00:10:15.942Z"
+  round: 28
+  gapId: "obs-uncovered-learnings-r28"
+  recipeUsed: null

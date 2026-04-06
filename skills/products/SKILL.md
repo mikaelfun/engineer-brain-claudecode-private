@@ -71,7 +71,8 @@
 skills/products/{product}/
 ├── SKILL.md                 ← 精炼知识（决策树 + 已知问题表）
 ├── known-issues.jsonl       ← 原始积累（结构化，append-only）
-└── evolution-log.md         ← 审计日志
+└── .enrich/
+    └── evolution-log.md     ← 审计日志
 ```
 
 ### known-issues.jsonl 格式
@@ -109,7 +110,7 @@ skills/products/{product}/
 2. 与 `known-issues.jsonl` 去重（按 symptom + rootCause 相似度）
 3. 新发现 → append 到 `known-issues.jsonl`
 4. 已有条目 → 增加 confidence（多次遇到 = high）
-5. 记录到 `evolution-log.md`
+5. 记录到 `.enrich/evolution-log.md`
 
 #### ② OneNote 团队知识库扫描（手动触发）
 

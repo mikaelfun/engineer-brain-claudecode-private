@@ -1,0 +1,49 @@
+id: "wf-iss114-discovery-features"
+name: "ISS-114 — 测试框架需求驱动发现与经验固化验证"
+category: "workflow-e2e"
+source: "issues/ISS-114.json"
+description: "验证 ISS-114 AC：需求驱动发现（SCAN 扫描 issues/、conductor/tracks/、.claude/skills/）和经验固化（env.yaml、learnings.yaml 存在且结构完整）"
+safety_level: "safe"
+priority: "medium"
+tags: ["issue-driven", "iss-114", "framework", "discovery"]
+
+steps:
+  - action: "bash_command"
+    params:
+      command: "ls tests/env.yaml tests/learnings.yaml tests/safety.yaml tests/manifest.json 2>&1"
+    description: "检查 env.yaml、learnings.yaml、safety.yaml、manifest.json 存在"
+
+  - action: "bash_command"
+    params:
+      command: "bash tests/executors/issue-scanner.sh 2>&1 | grep -c 'ISSUE_'"
+    description: "需求驱动发现：issue-scanner.sh 能扫描 issues/ 目录输出结果"
+
+  - action: "bash_command"
+    params:
+      command: "bash tests/executors/spec-scanner.sh 2>&1 | grep -c 'SPEC_SCAN'"
+    description: "需求驱动发现：spec-scanner.sh 能扫描 conductor/tracks/ spec.md"
+
+  - action: "bash_command"
+    params:
+      command: "cat tests/learnings.yaml | grep -c 'solution'"
+    description: "经验固化：learnings.yaml 包含 solution 字段"
+
+assertions:
+  - type: "file_exists"
+    target: "tests/env.yaml"
+    description: "env.yaml 存环境常量（端口/密码/URL）"
+
+  - type: "file_exists"
+    target: "tests/learnings.yaml"
+    description: "learnings.yaml 存踩坑解决方案，每轮开始自动读取"
+
+  - type: "file_exists"
+    target: "tests/safety.yaml"
+    description: "safety.yaml 存安全清单"
+
+  - type: "file_content"
+    target: "tests/learnings.yaml"
+    expected: "solution"
+    description: "learnings.yaml 包含结构化 solution 字段"
+
+timeout_seconds: 60

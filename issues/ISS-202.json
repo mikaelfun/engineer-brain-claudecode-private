@@ -5,7 +5,7 @@
   "type": "bug",
   "priority": "P1",
   "status": "pending",
-  "testLoopScan": true,
+  "testLoopScan": false,
   "createdAt": "2026-04-01T09:47:09.563Z",
-  "updatedAt": "2026-04-01T09:47:09.563Z"
+  "updatedAt": "2026-04-05T00:35:40.718Z"
 }

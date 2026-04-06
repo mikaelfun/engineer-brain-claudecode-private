@@ -1,0 +1,41 @@
+id: "wf-iss119-conductor-directives"
+name: "ISS-119 — Conductor:Verify 通过 directives.json 提交补测请求"
+category: "workflow-e2e"
+source: "issues/ISS-119.json"
+description: "验证 ISS-119 AC：Conductor:Verify 通过 directives.json 提交请求不碰 state.json；保留 verify/mark-done/reopen lifecycle；test-loop 运行中不导致 state.json 损坏"
+safety_level: "safe"
+priority: "high"
+tags: ["issue-driven", "iss-119", "conductor", "directives", "lifecycle", "concurrent-safety"]
+
+steps:
+  - action: "bash_command"
+    params:
+      command: "grep -c 'directives' .claude/skills/test-loop/SKILL.md 2>/dev/null || echo 0"
+    description: "SKILL.md 包含 directives.json 处理逻辑"
+
+  - action: "bash_command"
+    params:
+      command: "grep -c 'add_tests\\|directives' .claude/skills/conductor/*/SKILL.md 2>/dev/null || grep -rl 'add_tests' .claude/skills/ | wc -l"
+    description: "conductor 技能包含 add_tests directive 支持"
+
+  - action: "bash_command"
+    params:
+      command: "grep -c 'metadata\\.json\\|verification' .claude/skills/conductor/*/SKILL.md 2>/dev/null || echo 0"
+    description: "conductor:verify SKILL.md 包含 metadata.json verification 字段写入"
+
+  - action: "bash_command"
+    params:
+      command: "bash tests/executors/state-writer.sh --help 2>&1 | head -3 || echo 'state-writer exists'"
+    description: "state-writer.sh 存在（保证并发安全原子写入）"
+
+assertions:
+  - type: "file_content"
+    target: ".claude/skills/test-loop/SKILL.md"
+    expected: "directives"
+    description: "Conductor:Verify 需要补测时，通过 directives.json 提交请求（不碰 state.json）"
+
+  - type: "file_exists"
+    target: "tests/executors/state-writer.sh"
+    description: "并发安全：test-loop 运行中时 conductor:verify 不会导致 state.json 损坏（原子写入保证）"
+
+timeout_seconds: 30

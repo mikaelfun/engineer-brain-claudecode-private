@@ -1,0 +1,32 @@
+# Test: hash 不同 → 真正重导出（正常路径）
+# Generated: Cycle 0 | Source: spec-driven
+# Recipe: none
+
+id: "onenote-sync-scope_20260401-gap-47"
+name: "hash 不同 → 真正重导出（正常路径）"
+category: "workflow-e2e"
+source: "spec-driven"
+description: "hash 不同 → 真正重导出（正常路径）"
+safety_level: "safe"
+priority: "medium"
+impact: "P2"
+impactReason: "Spec AC 未覆盖"
+tags: ["spec-driven","onenote-sync-scope"]
+
+steps:
+  - action: "validate"
+    params:
+      description: "hash 不同 → 真正重导出（正常路径）"
+
+assertions:
+  - type: "file_exists"
+    target: "cases/"
+    expected: "true"
+    description: "hash 不同 → 真正重导出（正常路径）"
+
+timeout_seconds: 30
+metadata:
+  generatedAt: "2026-04-05T00:45:22.682Z"
+  round: 0
+  gapId: "onenote-sync-scope_20260401-gap-47"
+  recipeUsed: null

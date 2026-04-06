@@ -1,0 +1,220 @@
+# Learnings Regression — 验证已修复问题未复发
+# 对应问题: 曾经修复的环境/配置问题可能悄悄复发
+# Probe 类型: stability (对每条 learning 生成验证命令)
+
+id: "learnings-regression"
+name: "Learnings Regression Check"
+category: "observability"
+source: "tests/learnings.yaml"
+description: "读取 learnings.yaml 中每条经验，验证 solution 条件仍然成立"
+safety_level: "safe"
+priority: "high"
+tags: ["observability", "stability", "regression"]
+
+probe_type: "stability"
+baseline_ref: "bash_stability"
+
+stability_config:
+  min_runs: 1
+  min_success_rate: 1.0
+  learnings_checks:
+    - learning_id: "path-format-git-bash"
+      check_command: |
+        echo "/c/Users/fangkun" | grep -q "^/[a-z]/" && echo "PASS" || echo "FAIL"
+      description: "POSIX 路径格式仍然有效"
+
+    - learning_id: "agent-name-required"
+      check_command: |
+        MISSING=0
+        for f in .claude/agents/*.md; do
+          head -20 "$f" | grep -q "^name:" || MISSING=$((MISSING+1))
+        done
+        [ "$MISSING" -eq 0 ] && echo "PASS" || echo "FAIL:$MISSING agents missing name"
+      description: "所有 agent 都有 name 字段"
+
+    - learning_id: "playwright-msedge-only"
+      check_command: |
+        grep -q "msedge" .mcp.json && echo "PASS" || echo "FAIL"
+      description: "Playwright 配置仍然使用 msedge"
+
+    - learning_id: "browser-snapshot-ban"
+      check_command: |
+        grep -q "browser_snapshot" tests/safety.yaml && echo "PASS" || echo "FAIL"
+      description: "browser_snapshot 仍在 safety.yaml blocked 列表中"
+
+    - learning_id: "node-kill-safety"
+      check_command: |
+        grep -q "taskkill.*node.exe" tests/safety.yaml 2>/dev/null && echo "FAIL" || echo "PASS"
+      description: "taskkill node.exe 不在 safe 操作列表中"
+
+    - learning_id: "dashboard-port-check"
+      check_command: |
+        grep -q "3333\|port" tests/env.yaml && echo "PASS" || echo "FAIL"
+      description: "Dashboard 端口配置在 env.yaml 中存在"
+
+    - learning_id: "jwt-auth-token"
+      check_command: |
+        grep -q "jwt\|JWT" tests/env.yaml && echo "PASS" || echo "FAIL"
+      description: "JWT 配置在 env.yaml 中存在"
+
+    - learning_id: "variable-pipe-gotcha"
+      check_command: |
+        BAD=$(grep -r "; [A-Z_]*=" tests/executors/*.sh 2>/dev/null | grep "|" | grep -v "^#" | wc -l)
+        [ "$BAD" -eq 0 ] && echo "PASS" || echo "FAIL:$BAD anti-pattern lines found"
+      description: "bash executors 无 variable+pipe 反模式"
+
+    - learning_id: "state-json-atomic-write"
+      check_command: |
+        [ -f "tests/executors/state-writer.sh" ] && echo "PASS" || echo "FAIL"
+      description: "state-writer.sh 仍然存在"
+
+    - learning_id: "node-posix-path"
+      check_command: |
+        BAD=$(grep -r "readFileSync.*'/c/" tests/executors/*.sh 2>/dev/null | grep -v "env\." | wc -l)
+        [ "$BAD" -eq 0 ] && echo "PASS" || echo "FAIL:$BAD hardcoded POSIX paths in node scripts"
+      description: "node 脚本中无硬编码 POSIX 路径（应用 env var 传递）"
+
+    - learning_id: "screenshot-accumulation"
+      check_command: |
+        [ -d "tests/results/screenshots" ] && echo "PASS" || echo "FAIL"
+      description: "截图目录存在（screenshots 统一存储）"
+
+    - learning_id: "obs-runner-unknown-probe"
+      check_command: |
+        grep -q "unknown.*probe\|unknown_probe\|UNKNOWN_PROBE" tests/executors/observability-runner.sh 2>/dev/null && echo "PASS" || echo "FAIL"
+      description: "observability-runner.sh 处理 unknown probe 情况"
+
+    - learning_id: "agent-prompt-slim"
+      check_command: |
+        BIG=0
+        for f in .claude/agents/*.md; do
+          SIZE=$(wc -c < "$f" 2>/dev/null || echo 0)
+          [ "$SIZE" -gt 5000 ] && BIG=$((BIG+1))
+        done
+        [ "$BIG" -eq 0 ] && echo "PASS" || echo "WARN:$BIG agents >5KB (check for injected content)"
+      description: "agent.md 文件无大段注入内容（保持精简）"
+
+    - learning_id: "timing-json-stale-fallback"
+      check_command: |
+        grep -q "stale\|fallback\|STALE" tests/executors/observability-runner.sh 2>/dev/null && echo "PASS" || echo "SKIP"
+      description: "observability-runner 处理 timing.json 过时的 fallback"
+
+    - learning_id: "local-outside-function"
+      check_command: |
+        BAD=$(grep -rn "^local " tests/executors/*.sh 2>/dev/null | wc -l)
+        [ "$BAD" -eq 0 ] && echo "PASS" || echo "FAIL:$BAD 'local' used outside function"
+      description: "bash executors 无在函数外使用 local 的情况"
+
+    - learning_id: "e2e-single-step-runner-design"
+      check_command: |
+        [ -f "tests/executors/e2e-runner.sh" ] && echo "PASS" || echo "FAIL"
+      description: "e2e-runner.sh 存在（单步测试设计基础）"
+
+    - learning_id: "inspection-writer-changepath-standalone"
+      check_command: |
+        grep -q "inspection-writer\|changepath" .claude/skills/inspection-writer/SKILL.md 2>/dev/null && echo "PASS" || echo "FAIL"
+      description: "inspection-writer SKILL.md 包含 changepath 相关处理"
+
+    - learning_id: "playwright-profile-path"
+      check_command: |
+        grep -q '"--profile"' .mcp.json 2>/dev/null && grep -q '"--profile", "\.' .mcp.json && echo "FAIL:relative profile path in mcp.json" || echo "PASS"
+      description: "Playwright MCP 未使用相对 --profile 路径"
+
+    - learning_id: "d365-tab-guard"
+      check_command: |
+        [ -f "skills/d365-case-ops/scripts/_init.ps1" ] && echo "PASS" || echo "FAIL:_init.ps1 missing"
+      description: "D365 脚本入口 _init.ps1 存在（含 tab 守卫逻辑）"
+
+    - learning_id: "d365-param-name"
+      check_command: |
+        BAD=$(grep -r "\-CaseNumber" skills/d365-case-ops/scripts/*.ps1 2>/dev/null | wc -l)
+        [ "$BAD" -eq 0 ] && echo "PASS" || echo "FAIL:$BAD scripts still using -CaseNumber"
+      description: "D365 脚本使用 -TicketNumber 而非 -CaseNumber"
+
+    - learning_id: "teams-filter-unsupported"
+      check_command: |
+        grep -q "SearchTeams\|Search.*Teams\|teams.*search" .claude/skills/teams-search/SKILL.md 2>/dev/null && echo "PASS" || echo "WARN:SearchTeams not found in teams-search SKILL"
+      description: "teams-search SKILL 使用 SearchTeams 而非 filter/orderby"
+
+    - learning_id: "fetch-emails-false-positive"
+      check_command: |
+        grep -q "tail" tests/executors/e2e-runner.sh 2>/dev/null && echo "PASS" || echo "FAIL:e2e-runner not using tail for output detection"
+      description: "e2e-runner.sh 用 tail 取最后几行判断 PASS/FAIL（避免邮件正文误报）"
+
+    - learning_id: "casework-fresh-cache-slow"
+      check_command: |
+        BAD=$(grep -l "rm -rf.*context\|delete.*emails\|clean.*cache\|fresh.cache" tests/registry/workflow-e2e/*.yaml 2>/dev/null | wc -l)
+        [ "$BAD" -eq 0 ] && echo "PASS" || echo "WARN:$BAD e2e tests may use fresh-cache setup (slow)"
+      description: "workflow-e2e 测试不使用 fresh-cache 清除设置（避免超时）"
+
+    - learning_id: "fix-incremental"
+      check_command: |
+        grep -q "1200\|1800" tests/registry/workflow-e2e/incremental.yaml 2>/dev/null && echo "PASS" || echo "FAIL:incremental.yaml timeout not updated"
+      description: "incremental.yaml 已更新超时到 1200s/1800s"
+
+    - learning_id: "fix-state-routing"
+      check_command: |
+        grep -q "900\|1200" tests/registry/workflow-e2e/state-routing.yaml 2>/dev/null && echo "PASS" || echo "FAIL:state-routing.yaml timeout not updated"
+      description: "state-routing.yaml 已更新超时到 900s/1200s"
+
+    - learning_id: "fix-error-recovery"
+      check_command: |
+        grep -q "900\|1200" tests/registry/workflow-e2e/error-recovery.yaml 2>/dev/null && echo "PASS" || echo "FAIL:error-recovery.yaml timeout not updated"
+      description: "error-recovery.yaml 已更新超时到 900s/1200s"
+
+    - learning_id: "judge-field-paths"
+      check_command: |
+        BAD=$(grep -r "json_field.*judge\." tests/registry/workflow-e2e/*.yaml 2>/dev/null | wc -l)
+        [ "$BAD" -eq 0 ] && echo "PASS" || echo "FAIL:$BAD test assertions still using judge. prefix"
+      description: "workflow-e2e 测试断言不使用 judge. 前缀（字段在顶层）"
+
+    - learning_id: "auto-heal-20260328-1538"
+      check_command: |
+        STALE=$(find tests/results -name ".progress-*.json" -mmin +30 2>/dev/null | wc -l)
+        [ "$STALE" -eq 0 ] && echo "PASS" || echo "WARN:$STALE stale progress files (>30min) detected"
+      description: "无 stale progress 文件（超过 30 分钟的 .progress-*.json）"
+
+    - learning_id: "read-yaml-value-indent-bug"
+      check_command: |
+        grep -q "\[\[:space:\]\]" tests/executors/common.sh 2>/dev/null && echo "PASS" || echo "FAIL:common.sh read_yaml_value not using [[:space:]] pattern"
+      description: "common.sh read_yaml_value 使用 [[:space:]]* 支持顶层和缩进 YAML key"
+
+    - learning_id: "wf-iss-context-path"
+      check_command: |
+        BAD=$(grep -r "context/case-summary.md" tests/registry/workflow-e2e/*.yaml 2>/dev/null | wc -l)
+        [ "$BAD" -eq 0 ] && echo "PASS" || echo "FAIL:$BAD tests still using deprecated context/case-summary.md path"
+      description: "wf-iss* 测试断言目标使用正确路径（案例根目录的 case-summary.md，非 context/ 子目录）"
+
+    - learning_id: "state-writer-truncation-guard-20260329"
+      check_command: |
+        grep -q "truncation\|TRUNCATION\|field.*loss\|50%" tests/executors/state-writer.sh 2>/dev/null && echo "PASS" || echo "FAIL:state-writer.sh missing truncation guard"
+      description: "state-writer.sh 包含截断守卫（拒绝字段数超过 50% 减少的写入）"
+
+    - learning_id: "state-truncation-automerge-20260329-142317"
+      check_command: |
+        grep -q "\-\-merge\|auto.*merge\|downgrade.*merge" tests/executors/state-writer.sh 2>/dev/null && echo "PASS" || echo "FAIL:state-writer.sh missing --merge mode"
+      description: "state-writer.sh 支持 --merge 模式（caller 应显式使用 --merge 而非依赖自动降级）"
+
+    - learning_id: "corrupt-fixqueue-undefined-testid"
+      check_command: |
+        BAD=$(python3 -c "import json; state=json.load(open('tests/state.json',encoding='utf-8')); fq=state.get('fixQueue',[]); bad=[x for x in fq if not x.get('testId')]; print(len(bad))" 2>/dev/null || echo 0)
+        [ "$BAD" -eq 0 ] && echo "PASS" || echo "FAIL:$BAD fixQueue entries with no testId detected"
+      description: "fixQueue 中无缺少 testId 字段的损坏条目"
+
+steps:
+  - action: "load_learnings"
+    params:
+      file: "tests/learnings.yaml"
+  - action: "run_learning_checks"
+    params:
+      checks_ref: "stability_config.learnings_checks"
+
+assertions:
+  - type: "all_learnings_valid"
+    expected: true
+    description: "所有 learning 的 solution 条件仍然成立"
+  - type: "no_regression"
+    expected: true
+    description: "已修复的问题未复发"
+
+timeout_seconds: 60

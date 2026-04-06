@@ -1,0 +1,44 @@
+id: "regression-iss029"
+name: "Regression: ISS-029 — ISS-018 从网页 Create Track 失败 — 交互问题窗口不弹出"
+category: "ui-interaction"
+source: "issues/ISS-029.json"
+description: "回归测试：验证 ISS-029 实现的功能未退化"
+safety_level: "safe"
+priority: "medium"
+tags: ["regression", "issue-driven", "iss-029"]
+regression_for: "ISS-029"
+
+steps:
+  - action: "navigate"
+    params:
+      url: "{frontend_url}"
+    safety_check: "ui.safe[navigate_to_page]"
+  - action: "verify_element"
+    params:
+      selector: "body"
+      expected: "visible"
+      timeout: 5000
+
+assertions:
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "Question dialog always appears when AskUserQuestion is intercepted, regardless o"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "Backend always stores pendingQuestion even when sessionId is not yet available"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "Answer submission works correctly even when sessionId was initially missing (bac"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "Recovery endpoint always returns current pendingQuestion state"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "TrackProgressPanel recovery correctly handles all edge cases (question-before-mo"
+
+timeout_seconds: 60

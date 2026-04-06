@@ -6,10 +6,10 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 LIVE_CASES_FILE="$PROJECT_ROOT/tests/fixtures/live-cases.yaml"
 # Node.js needs Windows-style path for fs.readFileSync
-WIN_PROJECT_ROOT="C:/Users/fangkun/Documents/Claude Code Projects/EngineerBrain"
+WIN_PROJECT_ROOT=$(echo "$PROJECT_ROOT" | sed 's|^/\([a-z]\)/|\U\1:/|; s|/|\\\\|g')
 CASES_ROOT=$(node -e "console.log(JSON.parse(require('fs').readFileSync('${WIN_PROJECT_ROOT}/config.json','utf8')).casesRoot || '')" 2>/dev/null || echo "")
 CASES_ROOT=$(echo "$CASES_ROOT" | sed 's|\\|/|g; s|^\([A-Z]\):|/\L\1|')
 # Fallback if config.json read fails

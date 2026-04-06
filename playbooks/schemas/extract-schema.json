@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ExtractResult",
+  "description": "Sub-agent 从 draft/Kusto query 文件中提取的结构化内容。用于 SYNTHESIZE Phase 2 Map-Reduce 模式中 sub-agent → Agent-B 的接口。",
+  "type": "object",
+  "required": ["sourceFile", "sourceType", "originalSource", "importDate", "summary", "steps"],
+  "properties": {
+    "sourceFile": {
+      "type": "string",
+      "description": "原始文件名（不含路径前缀）",
+      "examples": ["onenote-backup-dos-limits-investigation.md", "service-healing.md"]
+    },
+    "sourceType": {
+      "type": "string",
+      "enum": ["draft", "kusto-query"],
+      "description": "文件来源类型：draft = guides/drafts/ 下的草稿文件，kusto-query = skills/kusto/{product}/references/queries/ 下的查询文件"
+    },
+    "originalSource": {
+      "type": "string",
+      "enum": ["onenote", "ado-wiki", "mslearn", "contentidea-kb", "case", "kusto-skill"],
+      "description": "draft 的原始来源（从 frontmatter 的 source 字段提取）；kusto-query 固定为 kusto-skill"
+    },
+    "importDate": {
+      "type": "string",
+      "format": "date",
+      "description": "内容导入日期（从 frontmatter 的 importDate 提取）",
+      "examples": ["2026-04-04"]
+    },
+    "summary": {
+      "type": "string",
+      "description": "一句话描述该文件的内容主题和排查价值",
+      "maxLength": 200
+    },
+    "steps": {
+      "type": "array",
+      "description": "排查步骤列表，按执行顺序排列",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "content"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^s\\d+$",
+            "description": "步骤 ID，格式 s1, s2, ...",
+            "examples": ["s1", "s2"]
+          },
+          "title": {
+            "type": "string",
+            "description": "步骤标题",
+            "examples": ["获取 ARM Correlation ID", "Kusto 查询 TraceLogMessage"]
+          },
+          "content": {
+            "type": "string",
+            "description": "步骤描述（纯文本，不含 KQL）"
+          },
+          "kql": {
+            "type": ["string", "null"],
+            "description": "KQL 查询语句（完整可执行版本），无则 null",
+            "default": null
+          },
+          "cluster": {
+            "type": ["string", "null"],
+            "description": "Kusto 集群 URI，无则 null",
+            "examples": ["mabprodmc.kusto.chinacloudapi.cn"],
+            "default": null
+          },
+          "database": {
+            "type": ["string", "null"],
+            "description": "数据库名，无则 null",
+            "examples": ["MABKustoProd"],
+            "default": null
+          }
+        }
+      }
+    },
+    "decisions": {
+      "type": "array",
+      "description": "决策分支（条件判断 + 不同路径）",
+      "default": [],
+      "items": {
+        "type": "object",
+        "required": ["condition", "branches"],
+        "properties": {
+          "condition": {
+            "type": "string",
+            "description": "判断条件描述",
+            "examples": ["判断 DoS limit 类型", "确认是否为 Service Healing"]
+          },
+          "branches": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["if", "action"],
+              "properties": {
+                "if": {
+                  "type": "string",
+                  "description": "条件值",
+                  "examples": ["Soft limit (操作频率限制)", "Hard limit (资源数量上限)"]
+                },
+                "action": {
+                  "type": "string",
+                  "description": "对应动作或后续步骤",
+                  "examples": ["等待 24 小时后自动重置", "→ Phase 3 查硬件故障"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "references": {
+      "type": "array",
+      "description": "参考表格、参数表、链接等辅助信息",
+      "default": [],
+      "items": {
+        "type": "object",
+        "required": ["type", "title", "content"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["table", "parameter", "link", "note"],
+            "description": "参考类型"
+          },
+          "title": {
+            "type": "string",
+            "description": "参考标题"
+          },
+          "content": {
+            "type": "string",
+            "description": "参考内容（Markdown 格式）"
+          }
+        }
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "description": "21V 限制、过时警告、已知问题等",
+      "default": [],
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

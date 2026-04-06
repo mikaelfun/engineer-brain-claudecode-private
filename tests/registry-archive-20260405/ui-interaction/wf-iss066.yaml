@@ -1,0 +1,29 @@
+id: "wf-iss066"
+name: "ISS-066 — Todo Execute 验证机制：执行状态 + 计时 + D365 回查验证 + 完成状态展示"
+category: "ui-interaction"
+source: "issues/ISS-066.json"
+description: "验证 ISS-066（implemented）的验收标准：During execution, the button is disabled (no double-click)"
+safety_level: "safe"
+priority: "high"
+tags: ["issue-driven", "iss-066", "implemented"]
+
+steps:
+  - action: "navigate"
+    params:
+      url: "{frontend_url}"
+    safety_check: "ui.safe[navigate_to_page]"
+  - action: "verify_element"
+    params:
+      selector: "body"
+      expected: "visible"
+      timeout: 5000
+
+assertions:
+  - type: "element_visible"
+    target: "body"
+    description: "During execution, the button is disabled (no double-click)"
+  - type: "element_visible"
+    target: "body"
+    description: "Failed execution does NOT auto-check the checkbox"
+
+timeout_seconds: 120

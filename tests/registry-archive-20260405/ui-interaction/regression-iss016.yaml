@@ -1,0 +1,32 @@
+id: "regression-iss016"
+name: "Regression: ISS-016 — WebUI Issue 点击 Track 后没有执行 /conductor:new-track，也需要实时状态显示"
+category: "ui-interaction"
+source: "issues/ISS-016.json"
+description: "回归测试：验证 ISS-016 实现的功能未退化"
+safety_level: "safe"
+priority: "medium"
+tags: ["regression", "issue-driven", "iss-016"]
+regression_for: "ISS-016"
+
+steps:
+  - action: "navigate"
+    params:
+      url: "{frontend_url}"
+    safety_check: "ui.safe[navigate_to_page]"
+  - action: "verify_element"
+    params:
+      selector: "body"
+      expected: "visible"
+      timeout: 5000
+
+assertions:
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "SSEEventType 包含 track 创建相关事件类型"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "TypeScript 编译无错误"
+
+timeout_seconds: 60

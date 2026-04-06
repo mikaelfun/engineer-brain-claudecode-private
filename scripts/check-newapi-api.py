@@ -191,7 +191,7 @@ def main():
     log(f"Log entries: {len(results['logs']) if isinstance(results['logs'], list) else 'N/A'}")
 
     # Save results
-    output_file = "/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain/.playwright-output/newapi-check-results.json"
+    output_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".playwright-output", "newapi-check-results.json")
     with open(output_file, 'w') as f:
         json.dump(results, f, indent=2, default=str)
     log(f"\n✓ Results saved to {output_file}")

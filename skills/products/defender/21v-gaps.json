@@ -1,0 +1,35 @@
+{
+  "lastUpdated": "2026-04-05",
+  "product": "defender",
+  "noGapDataFound": false,
+  "unsupportedFeatures": [
+    { "feature": "Defender CSPM", "note": "ETA CY25 Jan, ICM-538068922" },
+    { "feature": "Recommendation exemption rules", "note": "Foundational CSPM feature" },
+    { "feature": "Adaptive network hardening", "note": "Defender for Servers feature" },
+    { "feature": "Integrated vulnerability assessment for machines", "note": "Defender for Servers feature, requires MDE" },
+    { "feature": "Microsoft Defender for Endpoint (MDE)", "note": "Not available in 21V; all MDE-dependent capabilities lack replacement" },
+    { "feature": "Connect AWS account", "note": "Multi-cloud not supported" },
+    { "feature": "Connect GCP account", "note": "Multi-cloud not supported" },
+    { "feature": "Azure Defender for Storage (under Servers)", "note": "" },
+    { "feature": "Arc-enabled Kubernetes clusters", "note": "Also blocks AWS EKS support" },
+    { "feature": "Run-time protection for AKS (security profile)", "note": "Preview in Global Azure" },
+    { "feature": "Microsoft Defender for Cosmos DB", "note": "ETA Mid CY25, ICM-538070628" },
+    { "feature": "Microsoft Defender for Key Vault", "note": "ETA Mid CY25, ICM-538069963" },
+    { "feature": "Microsoft Defender for Identity (ATP)", "note": "" },
+    { "feature": "Microsoft Defender for Storage (new plan)", "note": "No ETA" },
+    { "feature": "HIPAA compliance standard", "note": "Regulatory compliance" },
+    { "feature": "NIST SP 800 53 R4 compliance standard", "note": "Regulatory compliance" },
+    { "feature": "Canada Federal PBMM compliance standard", "note": "Regulatory compliance" },
+    { "feature": "SWIFT CSP CSCF v2020 compliance standard", "note": "Regulatory compliance" },
+    { "feature": "Azure CIS 1.1.0 (New) compliance standard", "note": "Regulatory compliance" },
+    { "feature": "Agentless scanning (Defender Vulnerability Management)", "note": "Requires MDE which is unavailable in 21V" },
+    { "feature": "Defender for Servers (entire plan retiring in 21V)", "note": "Retired August 2025; MDE onboarding via Global tenant is workaround" }
+  ],
+  "partialFeatures": [
+    { "feature": "Data exporting (Continuous Export)", "note": "Only to Event Hub; export to Log Analytics not available" },
+    { "feature": "Defender for container registries (deprecated)", "note": "Only scan-on-push supported; recently pulled and on-import not available" },
+    { "feature": "ACR image scan", "note": "Only scan-on-push; recently-pulled and on-import triggers unavailable" },
+    { "feature": "Microsoft Defender for SQL", "note": "Only SQLi alerts; other alert types not available" },
+    { "feature": "Microsoft Defender for Storage (Classic)", "note": "Only available via CLI, PowerShell and API; no portal GA as of 2024/09" }
+  ]
+}

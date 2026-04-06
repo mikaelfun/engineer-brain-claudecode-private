@@ -7,7 +7,7 @@ set -u  # no -e/-o pipefail: we handle errors via assertions
 # ============================================================
 # Paths
 # ============================================================
-PROJECT_ROOT="/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 TESTS_ROOT="$PROJECT_ROOT/tests"
 RESULTS_DIR="$TESTS_ROOT/results"
 SCREENSHOTS_DIR="$RESULTS_DIR/screenshots"

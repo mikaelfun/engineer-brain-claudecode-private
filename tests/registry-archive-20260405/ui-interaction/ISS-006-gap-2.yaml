@@ -1,0 +1,35 @@
+# Test: Issue 详情页显示完整描述，关联的 conductor track ID（如有）
+# Generated: Cycle 0 | Source: issue-driven
+# Recipe: issue-driven-ui
+
+id: "ISS-006-gap-2"
+name: "Issue 详情页显示完整描述，关联的 conductor track ID（如有）"
+category: "ui-interaction"
+source: "issue-driven"
+description: "Issue 详情页显示完整描述，关联的 conductor track ID（如有）"
+safety_level: "safe"
+priority: "medium"
+impact: "P2"
+impactReason: "缺失测试覆盖：regression 功能"
+tags: ["issue-driven","ISS-006"]
+
+steps:
+  - action: "navigate"
+    params:
+      description: "Open dashboard"
+  - action: "validate"
+    params:
+      description: "Issue 详情页显示完整描述，关联的 conductor track ID（如有）"
+
+assertions:
+  - type: "text_contains"
+    target: "page"
+    expected: ""
+    description: "Issue 详情页显示完整描述，关联的 conductor track ID（如有）"
+
+timeout_seconds: 30
+metadata:
+  generatedAt: "2026-04-05T00:45:22.682Z"
+  round: 0
+  gapId: "ISS-006-gap-2"
+  recipeUsed: null

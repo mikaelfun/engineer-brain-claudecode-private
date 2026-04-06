@@ -1,0 +1,26 @@
+# Test: Spec: Playwright UI Interaction Tests
+# Generated: Round 28 | Source: conductor/tracks/test-framework_20260328/spec.md
+# Recipe: none
+
+id: "spec-playwright-ui-tests"
+name: "Spec: Playwright UI Interaction Tests"
+category: "ui-interaction"
+source: "conductor/tracks/test-framework_20260328/spec.md"
+safety_level: "safe"
+description: "Verify UI interaction tests use Playwright for nav/click/input/theme/workflow"
+
+steps:
+  - action: "validate"
+    params:
+      description: "Verify UI interaction tests use Playwright for nav/click/input/theme/workflow"
+
+assertions:
+  - type: "registry_count_above"
+    target: "tests/registry/ui-interaction/"
+    expected: "50"
+
+metadata:
+  generatedAt: "2026-03-30T00:10:15.949Z"
+  round: 28
+  gapId: "spec-playwright-ui-tests"
+  recipeUsed: null

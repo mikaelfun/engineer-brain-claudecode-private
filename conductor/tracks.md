@@ -154,3 +154,6 @@
 | [x] | trigger-ux-upgrade_20260402 | Trigger Run UX Upgrade + Dashboard Button Review | 2026-04-02 | 2026-04-02 |
 | [x] | labor-card_20260402 | Case 详情页 Labor 估算卡片 | 2026-04-02 | 2026-04-02 |
 | [x] | labor-refresh_20260403 | data-refresh 增加拉取 D365 Labor 记录 | 2026-04-03 | 2026-04-03 |
+| [x] | case-back-nav_20260404 | Case 页面返回按钮导航到 Cases 列表 | 2026-04-04 | 2026-04-04 |
+| [~] | ar-ir-display_20260404 | AR Case 显示 Main Case 的 IR 状态 (abandoned: 21V KPI N/A) | 2026-04-04 | 2026-04-04 |
+| [x] | activity-stream-ux_20260405 | TestLab Activity Stream UX Improvement | 2026-04-05 | 2026-04-05 |

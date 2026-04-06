@@ -1,0 +1,40 @@
+id: "regression-iss077"
+name: "Regression: ISS-077 — AI Assistant Session 消息流体验问题（时间戳、过程细节、状态释放、交互）"
+category: "ui-interaction"
+source: "issues/ISS-077.json"
+description: "回归测试：验证 ISS-077 实现的功能未退化"
+safety_level: "safe"
+priority: "medium"
+tags: ["regression", "issue-driven", "iss-077"]
+regression_for: "ISS-077"
+
+steps:
+  - action: "navigate"
+    params:
+      url: "{frontend_url}"
+    safety_check: "ui.safe[navigate_to_page]"
+  - action: "verify_element"
+    params:
+      selector: "body"
+      expected: "visible"
+      timeout: 5000
+
+assertions:
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "步骤完成后，操作锁释放，其他按钮恢复可点击"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "消息气泡显示时间戳（HH:MM:SS 格式）"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "过程消息默认展开显示（不折叠 tool-call 和 thinking），保留手动折叠能力"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "步骤完成后，chat input 可用，支持向同一 session 发送消息进行交互"
+
+timeout_seconds: 60

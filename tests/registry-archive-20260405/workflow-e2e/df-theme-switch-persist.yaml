@@ -1,0 +1,39 @@
+id: "df-theme-switch-persist"
+name: "Design Fidelity: 主题切换支持 dark/light/system + localStorage 持久化"
+category: "workflow-e2e"
+source: "design-fidelity"
+description: "验证 useTheme.ts 实现三种主题模式（dark/light/system）并通过 localStorage 持久化用户偏好"
+safety_level: "safe"
+priority: "high"
+recipe_used: "design-fidelity-test.md"
+tags: ["design-fidelity", "design-system-integration", "theme"]
+
+steps:
+  - action: "bash_command"
+    params:
+      command: "grep -n \"localStorage\\|eb-theme\\|STORAGE_KEY\" dashboard/web/src/hooks/useTheme.ts | wc -l"
+    safety_check: "scripts.safe[compliance-check]"
+  - action: "bash_command"
+    params:
+      command: "grep -c \"'dark'\\|'light'\\|'system'\" dashboard/web/src/hooks/useTheme.ts"
+    safety_check: "scripts.safe[compliance-check]"
+  - action: "bash_command"
+    params:
+      command: "grep -n \"localStorage.setItem\\|localStorage.getItem\" dashboard/web/src/hooks/useTheme.ts | wc -l"
+    safety_check: "scripts.safe[compliance-check]"
+
+assertions:
+  - type: "text_gt"
+    target: "step1_output"
+    expected: "2"
+    description: "useTheme.ts should have multiple localStorage references with 'eb-theme' key"
+  - type: "text_gt"
+    target: "step2_output"
+    expected: "2"
+    description: "All three mode values (dark/light/system) must be present"
+  - type: "text_gt"
+    target: "step3_output"
+    expected: "0"
+    description: "Both setItem and getItem calls must exist for persistence"
+
+timeout_seconds: 30

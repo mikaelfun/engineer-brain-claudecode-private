@@ -1,0 +1,39 @@
+{
+  "lastUpdated": "2026-04-04",
+  "product": "vm",
+  "noGapDataFound": false,
+  "unsupportedFeatures": [
+    {
+      "feature": "Terraform plan block for 3rd-party Marketplace images",
+      "description": "Mooncake ARM does not support the 'plan' argument block used for 3rd-party Marketplace images in Terraform (azurerm_virtual_machine). When included, ARM calls storeapi.azure.com which is a public Azure service inaccessible from Mooncake, causing HTTP 500 InternalServerError. Resolution: remove the plan block from Terraform config.",
+      "sourceRef": "POD/VMSCIM/4. Services/VM/SME Topics/2. Azure VM/2-7 Deployment failure, 500 internal server error.md"
+    },
+    {
+      "feature": "storeapi.azure.com (Azure Marketplace Store API)",
+      "description": "storeapi.azure.com is hosted in public Azure and Mooncake ARM instances are not supported by it and are not supposed to reach it. Any deployment flow that triggers a call to this endpoint will fail with 500 or 403 errors.",
+      "sourceRef": "POD/VMSCIM/4. Services/VM/SME Topics/2. Azure VM/2-7 Deployment failure, 500 internal server error.md"
+    },
+    {
+      "feature": "Windows 10 WinClient gallery images (VS Subscription gated)",
+      "description": "Windows 10 client images (e.g., Windows 10 Enterprise, Windows 10 Pro from Azure gallery) that require Visual Studio Subscription verification are not published to Mooncake (or Fairfax). The system has no ability to control/verify VS Subscriptions. Windows 10 GA images are available, but subscription-gated WinClient images are not.",
+      "sourceRef": "POD/VMSCIM/4. Services/VM/SME Topics/5. Windows on Azure/5.4-Windows 10 image support policy.md"
+    },
+    {
+      "feature": "NVIDIA GPU Driver Extension (automated driver installation via Azure VM Extension)",
+      "description": "The NVIDIA GPU Driver Extension for automatic driver installation is not available on Azure China (Mooncake). Drivers (CUDA/GRID) must be manually installed by downloading and running installer scripts. This applies to both N-series (NC/NV) VMs.",
+      "sourceRef": "POD/VMSCIM/4. Services/VM/SME Topics/4. Linux on Azure/4.11-Enable CUDA on NVadsA10v5 Series VM running U.md"
+    },
+    {
+      "feature": "NVIDIA GRID driver v550 on Mooncake",
+      "description": "The latest NVIDIA GRID driver version 550 is not working in Mooncake. Customers should use GRID driver version 535 instead (download: https://download.microsoft.com/download/8/d/a/8da4fb8e-3a9b-4e6a-bc9a-72ff64d7a13c/NVIDIA-Linux-x86_64-535.161.08-grid-azure.run).",
+      "sourceRef": "POD/VMSCIM/4. Services/VM/SME Topics/4. Linux on Azure/4.11-Enable CUDA on NVadsA10v5 Series VM running U.md"
+    }
+  ],
+  "partialFeatures": [
+    {
+      "feature": "Azure Disk Encryption (ADE) on Mooncake RHEL images from 云角 (CloudAngle)",
+      "description": "Mooncake RHEL images are provided by 云角 (CloudAngle, a 3rd-party provider) where the OS disk is configured as an LVM volume mounted at /root (/dev/mapper/rhel-root). The ADE extension falsely detects the OS disk as already encrypted because it matches two conditions: (1) mount source contains '/dev/mapper', (2) mount target is '/root'. This is a Mooncake-specific issue; CentOS and Global Azure RHEL images use first-party images without LVM OS disks and are unaffected. Workaround: the issue is in the ADE extension logic misidentifying LVM-based OS disks.",
+      "sourceRef": "POD/VMSCIM/4. Services/VM/SME Topics/4. Linux on Azure/4.1-118121719461691 - 云角redhat磁盘加密问题 -Jessie.md"
+    }
+  ]
+}

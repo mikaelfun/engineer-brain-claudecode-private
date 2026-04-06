@@ -1,0 +1,13 @@
+{
+  "lastUpdated": "2026-04-05",
+  "product": "acr",
+  "unsupportedFeatures": [
+    {
+      "feature": "ACR Task Agent Pools",
+      "description": "Task agent pools haven't been supported in Mooncake Cloud. No exact plan or ETA.",
+      "icmRef": "IcM#570372647"
+    }
+  ],
+  "partialFeatures": [],
+  "noGapDataFound": false
+}

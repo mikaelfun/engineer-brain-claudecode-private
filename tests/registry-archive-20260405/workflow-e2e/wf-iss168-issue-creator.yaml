@@ -1,0 +1,38 @@
+id: "wf-iss168-issue-creator"
+name: "ISS-168 — FIX 阶段产品 Bug 自动创建 Issue（LLM 推理分类）"
+category: "workflow-e2e"
+source: "issues/ISS-168.json"
+description: "验证 ISS-168 AC：test-loop FIX 阶段完成修复后，issue-creator.sh 工具可调用，discoveries.json 支持 issueId 字段；同一 testId 不重复创建 Issue"
+safety_level: "safe"
+priority: "high"
+tags: ["issue-driven", "iss-168", "issue-creator", "dedup"]
+recipe_used: "none"
+
+steps:
+  - action: "bash_command"
+    params:
+      command: "test -f tests/executors/issue-creator.sh && echo 1 || echo 0"
+    description: "检查 issue-creator.sh 脚本存在"
+
+  - action: "bash_command"
+    params:
+      command: "node -e \"const d=JSON.parse(require('fs').readFileSync('tests/discoveries.json','utf8')); const items=Object.values(d.discoveries||{}); const hasIssueIdField=items.some(v=>Object.prototype.hasOwnProperty.call(v,'issueId')); console.log(hasIssueIdField?'1':'0')\""
+    description: "验证 discoveries.json 中至少一个条目有 issueId 字段（schema 支持）"
+
+  - action: "bash_command"
+    params:
+      command: "grep -c 'ISSUE_CREATED\\|ISSUE_EXISTS\\|issue-creator' .claude/skills/test-loop/phases/FIX.md 2>/dev/null || echo 0"
+    description: "FIX.md 包含 issue-creator 调用逻辑"
+
+assertions:
+  - type: "bash_output"
+    command: "test -f tests/executors/issue-creator.sh && echo 1 || echo 0"
+    expected: "1"
+    description: "issue-creator.sh 脚本存在"
+
+  - type: "bash_output"
+    command: "grep -c 'ISSUE_CREATED\\|ISSUE_EXISTS\\|issue-creator' .claude/skills/test-loop/phases/FIX.md 2>/dev/null || echo 0"
+    expected_min: "1"
+    description: "FIX.md 包含 issue-creator 调用引用"
+
+timeout_seconds: 30

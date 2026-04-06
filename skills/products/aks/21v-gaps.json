@@ -1,0 +1,104 @@
+{
+  "lastUpdated": "2026-04-04",
+  "product": "aks",
+  "sourceFiles": [
+    "Mooncake POD Support Notebook/POD/VMSCIM/4. Services/AKS/###Feature Landing Status###.md",
+    "Mooncake POD Support Notebook/POD/VMSCIM/4. Services/AKS/##FY25/2024_09_05.md",
+    "Mooncake POD Support Notebook/POD/VMSCIM/4. Services/AKS/##FY25/2024_10_17.md",
+    "Mooncake POD Support Notebook/POD/VMSCIM/4. Services/AKS/##FY26/2025_11_13.md",
+    "Mooncake POD Support Notebook/POD/VMSCIM/4. Services/AKS/##FY26/2025_8_21.md",
+    "Mooncake POD Support Notebook/POD/VMSCIM/4. Services/AKS/##FY26/2026_3_5.md"
+  ],
+  "unsupportedFeatures": [
+    {
+      "feature": "Azure Active Directory pod-managed identities",
+      "detail": "Marked 'NA' in Feature Landing Status. AAD pod-managed identities are not available in Azure China. Use Workload Identity instead.",
+      "confirmedDate": "2023-06-14",
+      "replacement": "Workload Identity (OIDC) - verified in Mooncake"
+    },
+    {
+      "feature": "Microsoft Defender for cloud-native security agent for AKS (Defender for Containers)",
+      "detail": "AzureDefenderFeatureFlagNotEnabled error: 'AzureDefender installation is not allowed since feature Microsoft.ContainerService/AKS-AzureDefender is not enabled'. Defender Security profile addon is not supported in 21V.",
+      "confirmedDate": "2024-10-17",
+      "replacement": "Azure Policy addon can be used as partial workaround"
+    },
+    {
+      "feature": "AKS Fleet Manager",
+      "detail": "Explicit 'Feature Gap' for Mooncake noted in PG sync 2025/11/13. Fleet Manager for multi-cluster management is not available in Azure China.",
+      "confirmedDate": "2025-11-13",
+      "replacement": null
+    },
+    {
+      "feature": "Azure Container Storage",
+      "detail": "Customer asked for ETA in Mooncake in 2024/09, no landing date confirmed. Azure Container Storage (ACSTOR) is not available in Azure China.",
+      "confirmedDate": "2024-09-05",
+      "replacement": "Azure Disk CSI, Azure File CSI, Azure Blob CSI drivers are available"
+    },
+    {
+      "feature": "In-tree Cloud Controller Manager (legacy CCM)",
+      "detail": "Marked 'NA' in Feature Landing Status. The legacy in-tree CCM is deprecated. Out-of-tree Cloud Controller Manager is verified and supported.",
+      "confirmedDate": "2023-06-14",
+      "replacement": "Out-of-tree Cloud Controller Manager (verified in Mooncake)"
+    }
+  ],
+  "partialFeatures": [
+    {
+      "feature": "API Server VNet Integration (private API server via subnet delegation)",
+      "detail": "Status: 'Pending on Net feature in Mooncake'. Not yet GA in Azure China as of the last Feature Landing Status update. TSG shared by Icy.",
+      "confirmedDate": "2023-06-14",
+      "status": "pending"
+    },
+    {
+      "feature": "Istio service mesh addon",
+      "detail": "Listed in Feature Landing Status with empty GA date — no Mooncake landing confirmation. Global feature, Mooncake availability unknown.",
+      "confirmedDate": "2023-06-14",
+      "status": "unknown"
+    },
+    {
+      "feature": "KMS (Key Management Service for etcd secret encryption)",
+      "detail": "Was in public preview globally ~03/31/2023. No Mooncake landing date confirmed in notes.",
+      "confirmedDate": "2023-06-14",
+      "status": "unknown"
+    },
+    {
+      "feature": "Private cluster V2",
+      "detail": "Listed in Feature Landing Status with empty GA date. Mooncake availability unclear. Private cluster V1 is verified.",
+      "confirmedDate": "2023-06-14",
+      "status": "unknown"
+    },
+    {
+      "feature": "Scale-down mode",
+      "detail": "PreGA in Mooncake as of mid-2023 (Icy verified). Full GA status in 21V not confirmed.",
+      "confirmedDate": "2023-06-14",
+      "status": "preview"
+    },
+    {
+      "feature": "Auto-upgrade channel",
+      "detail": "PreGA in Mooncake (Icy verified). Cluster auto-upgrade channel configuration may not be fully GA in 21V.",
+      "confirmedDate": "2023-06-14",
+      "status": "preview"
+    },
+    {
+      "feature": "Customize node configuration for AKS node pools",
+      "detail": "PreGA in Mooncake, partially verified. Not all kubelet/OS parameters may be supported.",
+      "confirmedDate": "2023-06-14",
+      "status": "preview-partial"
+    },
+    {
+      "feature": "Virtual Machines (VMs) node pools",
+      "detail": "New node pool type (non-VMSS) available in global. In Mooncake there was a bug noted (2026/3). Key limitations: Cluster Autoscaler not supported, Node pool snapshot not supported, max 5 VM sizes per pool (same family only).",
+      "confirmedDate": "2026-03-05",
+      "status": "ga-with-limitations",
+      "limitations": [
+        "Cluster Autoscaler is not supported with VMs node pools",
+        "Node pool snapshot is not supported",
+        "Max 5 VM sizes per node pool, must be same VM family"
+      ]
+    }
+  ],
+  "notes": [
+    "MCR image pull endpoint changed from mcr.azk8s.cn to mcr.azure.cn",
+    "OIDC issuer cannot be disabled once enabled on a cluster"
+  ],
+  "noGapDataFound": false
+}

@@ -1,0 +1,9 @@
+{
+  "testId": "obs-agent-count",
+  "round": 3,
+  "timestamp": "2026-04-05T11:59:26.000Z",
+  "status": "fail",
+  "assertions": [{"name":"Agent count should not exceed 10","pass":false,"expected":"exit 0","actual":"non-zero exit"}],
+  "error": "1 of 1 assertions failed",
+  "duration_ms": 37688
+}

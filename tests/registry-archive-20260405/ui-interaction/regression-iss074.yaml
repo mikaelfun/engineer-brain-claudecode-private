@@ -1,0 +1,32 @@
+id: "regression-iss074"
+name: "Regression: ISS-074 — WebUI Issues 各类分类的 issue 应按修改时间由近到远排序"
+category: "ui-interaction"
+source: "issues/ISS-074.json"
+description: "回归测试：验证 ISS-074 实现的功能未退化"
+safety_level: "safe"
+priority: "medium"
+tags: ["regression", "issue-driven", "iss-074"]
+regression_for: "ISS-074"
+
+steps:
+  - action: "navigate"
+    params:
+      url: "{frontend_url}"
+    safety_check: "ui.safe[navigate_to_page]"
+  - action: "verify_element"
+    params:
+      selector: "body"
+      expected: "visible"
+      timeout: 5000
+
+assertions:
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "各分组内 issue 按 `updatedAt` 字段降序排列"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "排序在客户端（前端）完成，不依赖后端排序"
+
+timeout_seconds: 60

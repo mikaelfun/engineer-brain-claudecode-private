@@ -1,0 +1,9 @@
+{
+  "testId": "note-draft-content-quality",
+  "round": 3,
+  "timestamp": "2026-04-05T11:51:44.000Z",
+  "status": "pass",
+  "assertions": [{"name":"Skill references case-summary extraction","pass":true,"expected":"case-summary","actual":"found"}],
+  "error": null,
+  "duration_ms": 28460
+}

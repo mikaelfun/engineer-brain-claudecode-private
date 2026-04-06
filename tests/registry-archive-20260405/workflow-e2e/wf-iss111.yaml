@@ -1,0 +1,33 @@
+id: "wf-iss111"
+name: "ISS-111 — Patrol SDK query 无响应 — session 不创建、SSE 无事件、标志卡死"
+category: "workflow-e2e"
+source: "issues/ISS-111.json"
+description: "验证 ISS-111（tracked）的验收标准：Patrol 开始前执行预热阶段（DTM token + IR batch check）"
+safety_level: "safe"
+data_source: live
+live_pool: "data_rich"
+priority: "medium"
+tags: ["issue-driven", "iss-111", "tracked"]
+
+steps:
+  - action: "run_skill"
+    params:
+      skill: "data-refresh"
+      case_id: "{live_case_id}"
+    safety_check: "scripts.safe[data-refresh]"
+
+assertions:
+  - type: "file_exists"
+    target: "cases/active/{test_case_id}/case-summary.md"
+    description: "Patrol 开始前执行预热阶段（DTM token + IR batch check）"
+  - type: "file_exists"
+    target: "cases/active/{test_case_id}/case-summary.md"
+    description: "Prompt 指向 `casework/SKILL.md`（不是 `patrol/SKILL.md`）"
+  - type: "file_exists"
+    target: "cases/active/{test_case_id}/case-summary.md"
+    description: "进度 SSE 事件正常广播（patrol-progress / patrol-case-completed）"
+  - type: "file_exists"
+    target: "cases/active/{test_case_id}/case-summary.md"
+    description: "`patrolRunning` 标志在 patrol 结束/失败后正确清除"
+
+timeout_seconds: 120

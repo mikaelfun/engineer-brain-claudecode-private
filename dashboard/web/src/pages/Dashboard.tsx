@@ -4,7 +4,7 @@
  */
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Briefcase, ShieldAlert, UserCheck, Clock, Activity, Play, Loader2, AlertTriangle, TrendingUp, BarChart3, X, Square, Ban } from 'lucide-react'
+import { Briefcase, ShieldAlert, UserCheck, Clock, Activity, Play, Loader2, AlertTriangle, TrendingUp, BarChart3, X, Square, Ban, CheckCircle2, XCircle, Wrench } from 'lucide-react'
 import { Card, CardHeader } from '../components/common/Card'
 import { Loading, ErrorState, EmptyState } from '../components/common/Loading'
 import { useCases, usePatrolState, useStartPatrol, useCancelPatrol } from '../api/hooks'
@@ -35,6 +35,8 @@ export default function Dashboard() {
   const patrolCurrentCase = usePatrolStore((s) => s.currentCase)
   const patrolError = usePatrolStore((s) => s.error)
   const patrolLastCompleted = usePatrolStore((s) => s.lastCompletedAt)
+  const patrolCaseProgress = usePatrolStore((s) => s.caseProgress)
+  const patrolDetail = usePatrolStore((s) => s.detail)
 
   // Show completed summary for 15 seconds after patrol finishes
   const showCompleted = !patrolRunning && patrolPhase === 'completed' && patrolLastCompleted
@@ -132,7 +134,7 @@ export default function Dashboard() {
             </button>
           )}
           <button
-            onClick={() => startPatrol.mutate()}
+            onClick={() => startPatrol.mutate(true)}
             disabled={isPatrolActive}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
             style={{ background: 'var(--accent-blue)', color: 'var(--text-inverse)', boxShadow: 'var(--shadow-card)' }}
@@ -182,10 +184,10 @@ export default function Dashboard() {
                       : patrolPhase === 'warming-up'
                         ? `Warming up... ${patrolChanged > 0 ? `${patrolChanged} cases to process` : ''}`
                         : patrolPhase === 'processing'
-                        ? `Processing ${patrolCurrentCase || '...'}${patrolChanged > 0 ? ` (${patrolProcessed}/${patrolChanged})` : patrolTotal > 0 ? ` (${patrolProcessed}/${patrolTotal})` : ''}`
+                        ? `Processing${patrolChanged > 0 ? ` (${patrolProcessed}/${patrolChanged})` : patrolTotal > 0 ? ` (${patrolProcessed}/${patrolTotal})` : '...'}`
                         : patrolPhase === 'aggregating'
                           ? 'Aggregating todos...'
-                          : 'Patrol running...'
+                          : patrolDetail || 'Patrol running...'
                 }
               </span>
             </div>
@@ -198,7 +200,7 @@ export default function Dashboard() {
 
           {/* Progress bar */}
           {patrolRunning && patrolChanged > 0 && (
-            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--bg-inset)' }}>
+            <div className="h-1.5 rounded-full overflow-hidden mb-2" style={{ background: 'var(--bg-inset)' }}>
               <div
                 className="h-full rounded-full transition-all duration-500"
                 style={{
@@ -207,6 +209,56 @@ export default function Dashboard() {
                   minWidth: patrolProcessed > 0 ? '8px' : '0',
                 }}
               />
+            </div>
+          )}
+
+          {/* Per-case progress cards */}
+          {patrolCaseProgress.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5 mt-1">
+              {patrolCaseProgress.map((cp) => (
+                <div
+                  key={cp.caseNumber}
+                  className="flex items-center gap-2 px-2 py-1.5 rounded-md text-[11px]"
+                  style={{
+                    background: cp.status === 'completed' ? 'var(--accent-green-dim)'
+                      : cp.status === 'failed' ? 'var(--accent-red-dim)'
+                      : 'var(--bg-surface)',
+                    border: '1px solid var(--border-subtle)',
+                  }}
+                >
+                  {/* Status icon */}
+                  {cp.status === 'processing' && <Loader2 className="w-3 h-3 animate-spin flex-shrink-0" style={{ color: 'var(--accent-blue)' }} />}
+                  {cp.status === 'completed' && <CheckCircle2 className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--accent-green)' }} />}
+                  {cp.status === 'failed' && <XCircle className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--accent-red)' }} />}
+                  {cp.status === 'pending' && <Clock className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--text-tertiary)' }} />}
+
+                  {/* Case number */}
+                  <span
+                    className="font-mono truncate cursor-pointer"
+                    style={{ color: 'var(--text-primary)', maxWidth: '110px' }}
+                    onClick={() => navigate(`/cases/${cp.caseNumber}`)}
+                    title={cp.caseNumber}
+                  >
+                    {cp.caseNumber.slice(-6)}
+                  </span>
+
+                  {/* Current step / tool info */}
+                  {cp.status === 'processing' && (cp.lastTool || cp.currentStep) && (
+                    <span className="truncate" style={{ color: 'var(--text-tertiary)' }} title={`${cp.currentStep || ''} → ${cp.lastTool || ''}`}>
+                      {cp.lastTool
+                        ? cp.lastTool.replace(/^mcp__/, '').split('__')[0]
+                        : cp.currentStep}
+                    </span>
+                  )}
+
+                  {/* Error */}
+                  {cp.status === 'failed' && cp.error && (
+                    <span className="truncate" style={{ color: 'var(--accent-red)' }} title={cp.error}>
+                      {cp.error.slice(0, 30)}
+                    </span>
+                  )}
+                </div>
+              ))}
             </div>
           )}
 

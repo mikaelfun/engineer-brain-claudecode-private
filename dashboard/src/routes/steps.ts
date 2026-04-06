@@ -29,7 +29,7 @@ import {
   releaseCaseOperationLock,
   getActiveCaseOperation,
   appendSessionMessage,
-  clearSessionMessages,
+  clearStepSessionMessages,
   writeStepLog,
   endSession,
   abortQuery,
@@ -557,8 +557,8 @@ stepRoutes.post('/case/:id/step/:step', async (c) => {
         timestamp: stepStartedAt,
       })
 
-      // Clear previous persisted messages (backward compat)
-      clearSessionMessages(caseNumber)
+      // Clear previous persisted messages for this step only (other steps preserved)
+      clearStepSessionMessages(caseNumber, stepName)
       appendSessionMessage(caseNumber, {
         type: 'system',
         content: `Step "${stepName}"${stepName === 'draft-email' ? emailTypeLabel : ''} started`,

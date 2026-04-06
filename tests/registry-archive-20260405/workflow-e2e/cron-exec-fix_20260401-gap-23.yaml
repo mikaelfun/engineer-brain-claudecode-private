@@ -1,0 +1,32 @@
+# Test: Job execution captures real duration, exit code, and output summary
+# Generated: Cycle 0 | Source: spec-driven
+# Recipe: none
+
+id: "cron-exec-fix_20260401-gap-23"
+name: "Job execution captures real duration, exit code, and output summary"
+category: "workflow-e2e"
+source: "spec-driven"
+description: "Job execution captures real duration, exit code, and output summary"
+safety_level: "safe"
+priority: "medium"
+impact: "P2"
+impactReason: "Spec AC 未覆盖"
+tags: ["spec-driven","cron-exec-fix"]
+
+steps:
+  - action: "validate"
+    params:
+      description: "Job execution captures real duration, exit code, and output summary"
+
+assertions:
+  - type: "file_exists"
+    target: "cases/"
+    expected: "true"
+    description: "Job execution captures real duration, exit code, and output summary"
+
+timeout_seconds: 30
+metadata:
+  generatedAt: "2026-04-05T00:45:22.682Z"
+  round: 0
+  gapId: "cron-exec-fix_20260401-gap-23"
+  recipeUsed: null

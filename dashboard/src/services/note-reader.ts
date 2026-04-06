@@ -47,5 +47,12 @@ export function parseNotes(caseNumber: string): Note[] {
     notes.push({ id, date, author, title, body })
   }
 
+  // Filter out system notes (CrmGlobal-DFM-MSaaS) and sort newest first
   return notes
+    .filter(n => n.author !== 'CrmGlobal-DFM-MSaaS')
+    .sort((a, b) => {
+      const da = new Date(a.date).getTime()
+      const db = new Date(b.date).getTime()
+      return db - da // descending (newest first)
+    })
 }

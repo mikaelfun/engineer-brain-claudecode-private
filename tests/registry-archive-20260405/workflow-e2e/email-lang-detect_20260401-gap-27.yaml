@@ -1,0 +1,32 @@
+# Test: Detected language is logged in `email-drafter.log` (e.g., `STEP 0 OK 
+# Generated: Cycle 0 | Source: spec-driven
+# Recipe: none
+
+id: "email-lang-detect_20260401-gap-27"
+name: "Detected language is logged in `email-drafter.log` (e.g., `STEP 0 OK "
+category: "workflow-e2e"
+source: "spec-driven"
+description: "Detected language is logged in `email-drafter.log` (e.g., `STEP 0 OK "
+safety_level: "safe"
+priority: "high"
+impact: "P1"
+impactReason: "Spec AC 未覆盖"
+tags: ["spec-driven","email-lang-detect"]
+
+steps:
+  - action: "validate"
+    params:
+      description: "Detected language is logged in `email-drafter.log` (e.g., `STEP 0 OK "
+
+assertions:
+  - type: "file_exists"
+    target: "cases/"
+    expected: "true"
+    description: "Detected language is logged in `email-drafter.log` (e.g., `STEP 0 OK "
+
+timeout_seconds: 30
+metadata:
+  generatedAt: "2026-04-05T00:45:22.682Z"
+  round: 0
+  gapId: "email-lang-detect_20260401-gap-27"
+  recipeUsed: null

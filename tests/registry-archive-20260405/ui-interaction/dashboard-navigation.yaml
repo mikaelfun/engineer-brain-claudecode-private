@@ -1,0 +1,56 @@
+id: "ui-dashboard-navigation"
+name: "Dashboard Navigation — 侧边栏 + 页面切换"
+category: "ui-interaction"
+source: "playbooks/guides/casework-evolution-loop.md — Scenario G Step 2"
+description: "验证 Dashboard 侧边栏导航、页面加载、Case 列表渲染"
+safety_level: "safe"
+priority: "critical"
+tags: ["evolution-loop", "scenario-g", "ui", "smoke"]
+
+steps:
+  - action: "navigate"
+    params:
+      url: "{frontend_url}"
+    safety_check: "ui.safe[navigate_to_page]"
+  - action: "verify_element"
+    params:
+      selector: "sidebar"
+      expected: "visible"
+    safety_check: "ui.safe[verify_element_exists]"
+  - action: "click"
+    params:
+      target: "Cases nav item"
+    safety_check: "ui.safe[click_sidebar_nav]"
+  - action: "verify_element"
+    params:
+      selector: "case list table"
+      expected: "visible"
+  - action: "click"
+    params:
+      target: "Issues nav item"
+    safety_check: "ui.safe[click_sidebar_nav]"
+  - action: "verify_element"
+    params:
+      selector: "issues list"
+      expected: "visible"
+  - action: "click"
+    params:
+      target: "Dashboard nav item"
+    safety_check: "ui.safe[click_sidebar_nav]"
+  - action: "verify_element"
+    params:
+      selector: "dashboard stats"
+      expected: "visible"
+
+assertions:
+  - type: "element_visible"
+    target: "sidebar navigation"
+    expected: true
+  - type: "element_visible"
+    target: "case list table"
+    expected: true
+  - type: "element_visible"
+    target: "issues list"
+    expected: true
+
+timeout_seconds: 60

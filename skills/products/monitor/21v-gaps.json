@@ -1,0 +1,16 @@
+{
+  "lastUpdated": "2026-04-05",
+  "product": "monitor",
+  "unsupportedFeatures": [
+    {"feature": "Custom metrics", "category": "Metrics", "description": "Custom metrics not available in Azure China"},
+    {"feature": "Storage Account logs", "category": "Log Analytics", "description": "Storage Account logs collection not available in Azure China"},
+    {"feature": "Service Map", "category": "Solutions", "description": "Service Map solution not available in Azure China"},
+    {"feature": "SCOM integration", "category": "Integration", "description": "System Center Operations Manager integration not available in Azure China"},
+    {"feature": "Virtual machine insights", "category": "Insights", "description": "VM Insights not available in Azure China"}
+  ],
+  "partialFeatures": [
+    {"feature": "Change Tracking", "category": "Solutions", "description": "Partial - only for Security Center File Integrity Monitoring"},
+    {"feature": "Azure resource diagnostics settings", "category": "Log Analytics", "description": "GA but availability depends on specific resource types"}
+  ],
+  "noGapDataFound": false
+}

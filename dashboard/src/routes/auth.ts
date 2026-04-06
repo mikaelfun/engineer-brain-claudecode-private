@@ -2,7 +2,8 @@
  * auth.ts — 简化 JWT 认证路由 (本地单用户)
  */
 import { Hono } from 'hono'
-import { readFileSync, writeFileSync, existsSync } from 'fs'
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
+import { dirname } from 'path'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { config } from '../config.js'
@@ -24,6 +25,8 @@ function readAuthData(): AuthData | null {
 }
 
 function writeAuthData(data: AuthData) {
+  const dir = dirname(config.authFile)
+  if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
   writeFileSync(config.authFile, JSON.stringify(data, null, 2), 'utf-8')
 }
 

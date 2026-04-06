@@ -1,1 +1,15 @@
-{}
+{
+  "gaps": [],
+  "testQueue": [],
+  "fixQueue": [],
+  "verifyQueue": [],
+  "skipRegistry": [
+    {
+      "testId": "obs-agent-count",
+      "reason": "real-finding: 12 agents exceeds 10 limit, requires human decision (prune agents or raise threshold)",
+      "skippedAt": "2026-04-05T12:01:17Z",
+      "cycle": 3,
+      "reviewable": true
+    }
+  ]
+}

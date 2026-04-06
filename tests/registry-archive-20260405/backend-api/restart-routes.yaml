@@ -1,0 +1,24 @@
+id: "restart-routes"
+name: "Restart API Routes — Frontend/Backend/All Restart"
+category: "backend-api"
+source: "dashboard/src/routes/restart.ts"
+description: "验证 restart 端点存在并响应。注意：实际重启不执行（会中断测试），仅检查端点可达性"
+safety_level: "review"
+priority: "low"
+tags: ["api", "restart", "round-1"]
+
+steps:
+  - action: "http_request"
+    params:
+      method: "POST"
+      url: "{api_base}/api/restart/frontend"
+      auth: true
+      dry_run: true
+    safety_check: "api.safe[POST /api/restart/frontend]"
+
+assertions:
+  - type: "status_code"
+    target: "POST /api/restart/frontend"
+    expected_one_of: [200, 202, 403]
+
+timeout_seconds: 30

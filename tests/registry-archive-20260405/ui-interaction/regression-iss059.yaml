@@ -1,0 +1,40 @@
+id: "regression-iss059"
+name: "Regression: ISS-059 — Agent Monitor case session展开后有大量空的system消息，需要过滤或隐藏"
+category: "ui-interaction"
+source: "issues/ISS-059.json"
+description: "回归测试：验证 ISS-059 实现的功能未退化"
+safety_level: "safe"
+priority: "medium"
+tags: ["regression", "issue-driven", "iss-059"]
+regression_for: "ISS-059"
+
+steps:
+  - action: "navigate"
+    params:
+      url: "{frontend_url}"
+    safety_check: "ui.safe[navigate_to_page]"
+  - action: "verify_element"
+    params:
+      selector: "body"
+      expected: "visible"
+      timeout: 5000
+
+assertions:
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "持久化层过滤：`appendSessionMessage()` 不再写入空内容消息"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "渲染层过滤：`SessionMessageList` 不渲染空内容的 system 消息"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "类型一致性：`steps.ts` 使用 `getPersistedMessageType()` 而非原始 messageType"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "现有有内容的 system 消息仍正常显示"
+
+timeout_seconds: 60

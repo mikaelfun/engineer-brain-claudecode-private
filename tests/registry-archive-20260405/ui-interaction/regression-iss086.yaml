@@ -1,0 +1,44 @@
+id: "regression-iss086"
+name: "Regression: ISS-086 — SDK session 进程泄漏 — endSession/cancel/restart 未实际终止子进程树"
+category: "ui-interaction"
+source: "issues/ISS-086.json"
+description: "回归测试：验证 ISS-086 实现的功能未退化"
+safety_level: "safe"
+priority: "medium"
+tags: ["regression", "issue-driven", "iss-086"]
+regression_for: "ISS-086"
+
+steps:
+  - action: "navigate"
+    params:
+      url: "{frontend_url}"
+    safety_check: "ui.safe[navigate_to_page]"
+  - action: "verify_element"
+    params:
+      selector: "body"
+      expected: "visible"
+      timeout: 5000
+
+assertions:
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "每个 query() 调用传入 AbortController，存储在活跃操作注册表中"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "endSession() 调用 abortController.abort() 终止底层进程"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "index.ts 添加 SIGINT/SIGTERM handler，shutdown 时 abort 所有活跃 session"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "restartBackend() 先 abort 所有活跃 session 再退出"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "单元测试覆盖 abort 注册/清理逻辑"
+
+timeout_seconds: 60

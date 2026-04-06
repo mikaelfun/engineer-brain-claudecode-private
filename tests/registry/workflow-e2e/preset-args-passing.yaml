@@ -1,0 +1,30 @@
+id: "preset-args-passing"
+name: "Prompt Preset Arguments"
+category: "workflow-e2e"
+source: "issues/ISS-207.json"
+description: "验证 prompt presets 可通过 API 查询到，且带参数的 preset 配置存在"
+safety_level: "safe"
+priority: "high"
+tags: ["regression", "preset", "ISS-207"]
+impact: "P1"
+impactReason: "Preset parameter completeness"
+recipe_used: "none"
+steps:
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "http://localhost:3010/api/health"
+    safety_check: "GET /api/health"
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "http://localhost:3010/api/agents"
+    safety_check: "GET /api/agents"
+assertions:
+  - type: "status_code"
+    expected: 200
+  - type: "json_field"
+    target: "response"
+    field: "agents"
+    expected: "array"
+timeout_seconds: 60

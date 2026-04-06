@@ -1,0 +1,40 @@
+id: "api-patrol-cancel"
+name: "Patrol Cancel Endpoint — POST /api/patrol/cancel"
+category: "backend-api"
+source: "dashboard/src/routes/case-routes.ts — POST /patrol/cancel"
+description: "验证 patrol cancel 端点可达性：在没有活跃 patrol 时调用返回 200/404/409，确认接口响应符合预期"
+safety_level: "safe"
+priority: "medium"
+tags: ["api", "patrol", "cancel", "round-11"]
+
+steps:
+  # Step 1: Check patrol status first
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/patrol/status"
+      auth: true
+      expected_status: [200]
+    safety_check: "api.safe[GET /api/patrol/status]"
+
+  # Step 2: Call cancel (no active patrol returns 404, active patrol returns 200)
+  - action: "http_request"
+    params:
+      method: "POST"
+      url: "{api_base}/api/patrol/cancel"
+      auth: true
+      expected_status: [200, 404, 409]
+    safety_check: "api.safe[POST /api/case/:id/step/*]"
+
+assertions:
+  - type: "status_code"
+    target: "GET /api/patrol/status"
+    expected: 200
+    description: "patrol status 端点正常响应"
+
+  - type: "status_code"
+    target: "POST /api/patrol/cancel"
+    expected: [200, 404, 409]
+    description: "patrol cancel 端点返回有效状态码（200=已取消, 404=无活跃 patrol, 409=冲突）"
+
+timeout_seconds: 15

@@ -5,34 +5,29 @@
       "args": ["/c", "npx", "@playwright/mcp@latest", "--browser", "msedge", "--output-dir", ".playwright-output"]
     },
     "icm": {
-      "command": "C:\\Users\\fangkun\\AppData\\Roaming\\agency\\CurrentVersion\\agency.exe",
-      "args": ["mcp", "icm"]
+      "command": "cmd",
+      "args": ["/c", "%APPDATA%\\agency\\CurrentVersion\\agency.exe", "mcp", "icm"]
     },
     "teams": {
-      "command": "C:\\Users\\fangkun\\AppData\\Roaming\\agency\\CurrentVersion\\agency.exe",
-      "args": ["mcp", "teams"]
+      "command": "cmd",
+      "args": ["/c", "%APPDATA%\\agency\\CurrentVersion\\agency.exe", "mcp", "teams"]
     },
     "kusto": {
-      "command": "C:\\Users\\fangkun\\AppData\\Roaming\\agency\\CurrentVersion\\agency.exe",
-      "args": ["mcp", "kusto", "--service-uri", "https://mcakshuba.chinaeast2.kusto.chinacloudapi.cn", "--database", "AKSprod"],
-      "env": {
-        "AZURE_CONFIG_DIR": "C:\\Users\\fangkun\\.azure-profiles\\cme-fangkun"
-      }
+      "command": "cmd",
+      "args": ["/c", "set AZURE_CONFIG_DIR=%USERPROFILE%\\.azure-profiles\\cme-fangkun&&%APPDATA%\\agency\\CurrentVersion\\agency.exe", "mcp", "kusto", "--service-uri", "https://mcakshuba.chinaeast2.kusto.chinacloudapi.cn", "--database", "AKSprod"]
     },
     "msft-learn": {
-      "command": "C:\\Users\\fangkun\\AppData\\Roaming\\agency\\CurrentVersion\\agency.exe",
-      "args": ["mcp", "msft-learn"]
+      "command": "cmd",
+      "args": ["/c", "%APPDATA%\\agency\\CurrentVersion\\agency.exe", "mcp", "msft-learn"]
     },
     "mail": {
-      "command": "C:\\Users\\fangkun\\AppData\\Roaming\\agency\\CurrentVersion\\agency.exe",
-      "args": ["mcp", "mail"]
+      "command": "cmd",
+      "args": ["/c", "%APPDATA%\\agency\\CurrentVersion\\agency.exe", "mcp", "mail"]
     },
     "local-rag": {
       "command": "node",
-      "args": ["C:\\Users\\fangkun\\.claude\\mcp-servers\\local-rag\\dist\\index.js"],
+      "args": ["scripts/launch-local-rag.js"],
       "env": {
-        "BASE_DIR": "C:\\Users\\fangkun\\Documents\\EngineerBrain-Data\\OneNote Export",
-        "DB_PATH": "C:\\Users\\fangkun\\Documents\\EngineerBrain-Data\\lancedb",
         "EMBEDDING_PROVIDER": "openai",
         "OPENAI_API_KEY": "sk-vXY3OWzBgtQGxFry1cZerQB0bpLojgbkdyWt7wnsHMDeQ3uw",
         "OPENAI_BASE_URL": "https://kunnewapi.net/v1",

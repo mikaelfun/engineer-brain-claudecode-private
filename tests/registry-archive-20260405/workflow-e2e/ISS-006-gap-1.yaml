@@ -1,0 +1,32 @@
+# Test: CLI skill `/issue "描述"` 可直接创建 issue（Dashboard 挂了也能记录）
+# Generated: Cycle 0 | Source: issue-driven
+# Recipe: none
+
+id: "ISS-006-gap-1"
+name: "CLI skill `/issue '描述'` 可直接创建 issue（Dashboard 挂了也能记录）"
+category: "workflow-e2e"
+source: "issue-driven"
+description: "CLI skill `/issue '描述'` 可直接创建 issue（Dashboard 挂了也能记录）"
+safety_level: "safe"
+priority: "medium"
+impact: "P2"
+impactReason: "缺失测试覆盖：regression 功能"
+tags: ["issue-driven","ISS-006"]
+
+steps:
+  - action: "validate"
+    params:
+      description: "CLI skill `/issue "描述"` 可直接创建 issue（Dashboard 挂了也能记录）"
+
+assertions:
+  - type: "file_exists"
+    target: "cases/"
+    expected: "true"
+    description: "CLI skill `/issue '描述'` 可直接创建 issue（Dashboard 挂了也能记录）"
+
+timeout_seconds: 30
+metadata:
+  generatedAt: "2026-04-05T00:45:22.682Z"
+  round: 0
+  gapId: "ISS-006-gap-1"
+  recipeUsed: null

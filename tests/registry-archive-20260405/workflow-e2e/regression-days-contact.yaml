@@ -1,0 +1,41 @@
+id: "regression-days-since-contact"
+name: "回归: daysSinceLastContact 不更新"
+category: "workflow-e2e"
+source: "cases/test-results/evolution-log.md — Bug #3"
+description: "casework 应该包含 inspection-writer 重新计算 daysSinceLastContact"
+safety_level: "safe"
+priority: "critical"
+tags: ["regression", "fixed-bug"]
+regression_for: "evolution-finding-3"
+
+test_case_id: "2603090040000814"
+
+setup:
+  - action: "backup_case"
+    params:
+      source: "{cases_root}/active/{test_case_id}"
+      dest: "{backup_dir}/{test_case_id}"
+
+steps:
+  - action: "run_casework"
+    params:
+      case_id: "{test_case_id}"
+    safety_check: "scripts.safe[casework]"
+    timeout_seconds: 300
+
+assertions:
+  - type: "json_field"
+    target: "{cases_root}/active/{test_case_id}/casehealth-meta.json"
+    field: "daysSinceLastContact"
+    expected: "not_null"  # 应该是数字，不是 null
+  - type: "file_exists"
+    target: "{cases_root}/active/{test_case_id}/todo/"
+    expected: true
+
+teardown:
+  - action: "restore_case"
+    params:
+      source: "{backup_dir}/{test_case_id}"
+      dest: "{cases_root}/active/{test_case_id}"
+
+timeout_seconds: 360

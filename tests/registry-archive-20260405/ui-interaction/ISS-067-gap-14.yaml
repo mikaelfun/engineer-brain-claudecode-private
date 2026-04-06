@@ -1,0 +1,35 @@
+# Test: AI Assistant tab 和精简侧栏共享同一个 session 状态（不会出现两套独立状态）
+# Generated: Cycle 0 | Source: issue-driven
+# Recipe: issue-driven-ui
+
+id: "ISS-067-gap-14"
+name: "AI Assistant tab 和精简侧栏共享同一个 session 状态（不会出现两套独立状态）"
+category: "ui-interaction"
+source: "issue-driven"
+description: "AI Assistant tab 和精简侧栏共享同一个 session 状态（不会出现两套独立状态）"
+safety_level: "safe"
+priority: "medium"
+impact: "P2"
+impactReason: "缺失测试覆盖：regression 功能"
+tags: ["issue-driven","ISS-067"]
+
+steps:
+  - action: "navigate"
+    params:
+      description: "Open dashboard"
+  - action: "validate"
+    params:
+      description: "AI Assistant tab 和精简侧栏共享同一个 session 状态（不会出现两套独立状态）"
+
+assertions:
+  - type: "text_contains"
+    target: "page"
+    expected: ""
+    description: "AI Assistant tab 和精简侧栏共享同一个 session 状态（不会出现两套独立状态）"
+
+timeout_seconds: 30
+metadata:
+  generatedAt: "2026-04-05T00:45:22.682Z"
+  round: 0
+  gapId: "ISS-067-gap-14"
+  recipeUsed: null

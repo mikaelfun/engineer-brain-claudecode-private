@@ -1,0 +1,40 @@
+{
+  "lastUpdated": "2026-04-04",
+  "product": "entra-id",
+  "noGapDataFound": false,
+  "unsupportedFeatures": [
+    {"feature": "Cloud app discovery (Microsoft Defender for Cloud Apps)", "notes": "Not available in Mooncake"},
+    {"feature": "Delegated administration - built-in roles", "notes": "Not available"},
+    {"feature": "Microsoft Identity Manager user CAL", "notes": "Not available"},
+    {"feature": "Self-service sign-in activity search and reporting", "notes": "Not available"},
+    {"feature": "SMS Sign-in / SMS as primary authentication", "notes": "No plans to support (confirmed by PG March 2025)"},
+    {"feature": "Azure AD Join: self-service BitLocker recovery, enterprise state roaming", "notes": "Requires EMS/Intune license, not available"},
+    {"feature": "B2B direct connect", "notes": "Not available"},
+    {"feature": "Self-service sign-up (User flows)", "notes": "Not available"},
+    {"feature": "Multi-tenant organization", "notes": "Not available"},
+    {"feature": "Identity Protection (risk-based Conditional Access, sign-in/user risk)", "notes": "No ETA. PM: Tracy Shi, PG: Winston Howard"},
+    {"feature": "Vulnerabilities and risky accounts", "notes": "Depends on Identity Protection"},
+    {"feature": "Risk events investigation / SIEM connectivity", "notes": "Depends on Identity Protection"},
+    {"feature": "Advanced security and usage reports", "notes": "Depends on Identity Protection"},
+    {"feature": "SIEM connectivity (standalone)", "notes": "Not available"},
+    {"feature": "Automated user provisioning to on-premises apps", "notes": "PM: Chetan Desai"},
+    {"feature": "Automated group provisioning to apps", "notes": "PM: Chetan Desai"},
+    {"feature": "Machine learning assisted access certifications and reviews", "notes": "Entra ID Governance feature"},
+    {"feature": "Entitlement management - separation of duties", "notes": "PM: Debashis Choudhury"},
+    {"feature": "Entitlement management with Verified ID", "notes": "PM: Debashis Choudhury"},
+    {"feature": "CIAM (Customer Identity and Access Management)", "notes": "ETA: FY27, PM: Travis Querec"}
+  ],
+  "partialFeatures": [
+    {"feature": "Cloud authentication (Pass-through authentication)", "notes": "Password hash sync works; Pass-through auth NOT available"},
+    {"feature": "Single sign-on (SSO) unlimited", "notes": "Public preview - Seamless SSO works with PowerShell but not officially announced"},
+    {"feature": "Passwordless authentication", "notes": "WHfB GA, Certificate-based Auth preview; Microsoft Authenticator does NOT support passwordless in Mooncake"},
+    {"feature": "B2B SAML/WS-Fed IdP federation", "notes": "Preview, still has issues"},
+    {"feature": "Continuous access evaluation (CAE)", "notes": "Planning - UI has configuration but does NOT work properly"},
+    {"feature": "Tenant Restriction v1", "notes": "Can use but NOT officially supported"},
+    {"feature": "Tenant Restriction v2", "notes": "Public preview"},
+    {"feature": "Entra Connect Health", "notes": "Planning, ETA H2 CY24 (may be delayed)"},
+    {"feature": "HR-driven provisioning", "notes": "Planning, PM: Chetan Desai"},
+    {"feature": "Automated user provisioning (SCIM) to SaaS apps", "notes": "Only available for non-gallery apps; PG working on gallery app support"},
+    {"feature": "Cross-cloud user synchronization", "notes": "GA for global→China direction only; China→global no ETA, customers can request preview"}
+  ]
+}

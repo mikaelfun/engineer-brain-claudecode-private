@@ -1,0 +1,32 @@
+# Test: Matched CC emails are written to `casehealth-meta.json` (fields: `ccEmails`, `cc
+# Generated: Cycle 0 | Source: issue-driven
+# Recipe: none
+
+id: "ISS-009-gap-4"
+name: "Matched CC emails are written to `casehealth-meta.json` (fields: `ccEmails`, `cc"
+category: "workflow-e2e"
+source: "issue-driven"
+description: "Matched CC emails are written to `casehealth-meta.json` (fields: `ccEmails`, `ccAccount`, `ccKnowMePage`)"
+safety_level: "safe"
+priority: "medium"
+impact: "P2"
+impactReason: "缺失测试覆盖：workflow-e2e 功能"
+tags: ["issue-driven","ISS-009"]
+
+steps:
+  - action: "validate"
+    params:
+      description: "Matched CC emails are written to `casehealth-meta.json` (fields: `ccEmails`, `ccAccount`, `ccKnowMeP"
+
+assertions:
+  - type: "file_exists"
+    target: "cases/"
+    expected: "true"
+    description: "Matched CC emails are written to `casehealth-meta.json` (fields: `ccEmails`, `cc"
+
+timeout_seconds: 30
+metadata:
+  generatedAt: "2026-04-05T00:45:22.682Z"
+  round: 0
+  gapId: "ISS-009-gap-4"
+  recipeUsed: null

@@ -279,15 +279,16 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull, ski
 
     setIsProcessing(true)
     setError(null)
-    // Reset for new action: clear previous messages and status
-    useCaseSessionStore.getState().clearAll(caseNumber)
-    setActiveStepFilter(null)
+    // Only clear messages for the step being re-run (other steps preserved)
+    const stepName = action === 'process' ? 'casework' : action
+    useCaseSessionStore.getState().clearStepMessages(caseNumber, stepName)
+    setActiveStepFilter(stepName)
 
     try {
       if (action === 'process') {
-        await apiPost<{ status: string; caseNumber: string }>(
-          `/case/${caseNumber}/process`,
-          { intent: 'Full casework processing' }
+        // Unified: Full Process goes through step/casework (same as all other skills)
+        await apiPost<{ status: string; caseNumber: string; step: string }>(
+          `/case/${caseNumber}/step/casework`, {}
         )
       } else {
         const body: Record<string, string> = {}

@@ -1,0 +1,32 @@
+# Test: `conductor:new-track` SKILL.md plan template includes a `## Verification Plan` s
+# Generated: Cycle 0 | Source: issue-driven
+# Recipe: none
+
+id: "ISS-058-gap-12"
+name: "`conductor:new-track` SKILL.md plan template includes a `## Verification Plan` s"
+category: "workflow-e2e"
+source: "issue-driven"
+description: "`conductor:new-track` SKILL.md plan template includes a `## Verification Plan` section"
+safety_level: "safe"
+priority: "medium"
+impact: "P2"
+impactReason: "缺失测试覆盖：regression 功能"
+tags: ["issue-driven","ISS-058"]
+
+steps:
+  - action: "validate"
+    params:
+      description: "`conductor:new-track` SKILL.md plan template includes a `## Verification Plan` section"
+
+assertions:
+  - type: "file_exists"
+    target: "cases/"
+    expected: "true"
+    description: "`conductor:new-track` SKILL.md plan template includes a `## Verification Plan` s"
+
+timeout_seconds: 30
+metadata:
+  generatedAt: "2026-04-05T00:45:22.682Z"
+  round: 0
+  gapId: "ISS-058-gap-12"
+  recipeUsed: null

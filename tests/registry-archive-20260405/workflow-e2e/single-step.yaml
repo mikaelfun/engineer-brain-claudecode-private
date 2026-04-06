@@ -1,0 +1,68 @@
+id: "e2e-single-step"
+name: "Single Step — 各子 skill 独立执行"
+category: "workflow-e2e"
+source: "playbooks/guides/casework-evolution-loop.md — Scenario F"
+description: "分别执行 data-refresh、compliance-check、status-judge、inspection-writer → 验证独立执行正确性"
+safety_level: "safe"
+priority: "medium"
+tags: ["evolution-loop", "scenario-f", "regression"]
+
+test_case_id: "2603190030000206"  # Data-rich
+
+setup:
+  - action: "backup_case"
+    params:
+      source: "{cases_root}/active/{test_case_id}"
+      dest: "{backup_dir}/{test_case_id}"
+
+steps:
+  - action: "run_skill"
+    params:
+      skill: "data-refresh"
+      case_id: "{test_case_id}"
+    safety_check: "scripts.safe[data-refresh]"
+    timeout_seconds: 120
+
+  - action: "run_skill"
+    params:
+      skill: "compliance-check"
+      case_id: "{test_case_id}"
+    safety_check: "scripts.safe[compliance-check]"
+    timeout_seconds: 60
+
+  - action: "run_skill"
+    params:
+      skill: "status-judge"
+      case_id: "{test_case_id}"
+    safety_check: "scripts.safe[status-judge]"
+    timeout_seconds: 60
+
+  - action: "run_skill"
+    params:
+      skill: "inspection-writer"
+      case_id: "{test_case_id}"
+    safety_check: "scripts.safe[inspection-writer]"
+    timeout_seconds: 120
+
+assertions:
+  - type: "file_exists"
+    target: "{cases_root}/active/{test_case_id}/case-info.md"
+    expected: true
+  - type: "file_content"
+    target: "{cases_root}/active/{test_case_id}/casehealth-meta.json"
+    expected: "valid_json"
+  - type: "json_field"
+    target: "{cases_root}/active/{test_case_id}/casehealth-meta.json"
+    field: "actualStatus"
+    expected: "not_null"
+  - type: "file_exists"
+    target: "{cases_root}/active/{test_case_id}/case-summary.md"
+    expected: true
+
+teardown:
+  - action: "restore_case"
+    params:
+      source: "{backup_dir}/{test_case_id}"
+      dest: "{cases_root}/active/{test_case_id}"
+
+timeout_seconds: 480

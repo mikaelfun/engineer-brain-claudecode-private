@@ -1,0 +1,32 @@
+# Test: Unmatched customers are silently skipped (no CC fields written)
+# Generated: Cycle 0 | Source: spec-driven
+# Recipe: none
+
+id: "cc-finder_20260320-gap-21"
+name: "Unmatched customers are silently skipped (no CC fields written)"
+category: "workflow-e2e"
+source: "spec-driven"
+description: "Unmatched customers are silently skipped (no CC fields written)"
+safety_level: "safe"
+priority: "medium"
+impact: "P2"
+impactReason: "Spec AC 未覆盖"
+tags: ["spec-driven","cc-finder"]
+
+steps:
+  - action: "validate"
+    params:
+      description: "Unmatched customers are silently skipped (no CC fields written)"
+
+assertions:
+  - type: "file_exists"
+    target: "cases/"
+    expected: "true"
+    description: "Unmatched customers are silently skipped (no CC fields written)"
+
+timeout_seconds: 30
+metadata:
+  generatedAt: "2026-04-05T00:45:22.682Z"
+  round: 0
+  gapId: "cc-finder_20260320-gap-21"
+  recipeUsed: null

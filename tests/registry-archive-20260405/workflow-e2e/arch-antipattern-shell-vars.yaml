@@ -1,0 +1,30 @@
+# Test: Architecture compliance — no semicolon+var+pipe antipattern
+# Generated: Round 32 | Source: arch-scan:antipattern
+# Recipe: none
+
+id: "arch-antipattern-shell-vars"
+name: "Architecture: architecture-scanner.sh must not use semicolon+var+pipe antipattern"
+category: "workflow-e2e"
+source: "arch-scan:antipattern"
+safety_level: "safe"
+description: "Verify architecture-scanner.sh does not have the VAR='value' ; cmd | pipe pattern which silently discards variable assignments. CLAUDE.md rule: variable assignment before pipe must use newline separation."
+
+steps:
+  - action: "validate"
+    params:
+      description: "Check architecture-scanner.sh for shell variable+pipe antipattern"
+
+assertions:
+  - type: "file_exists"
+    target: "tests/executors/architecture-scanner.sh"
+    expected: "true"
+  - type: "bash_output_not_contains"
+    target: "grep -nP '^[A-Z_]+=.*; *(bash|node|cat|grep|echo).*\\|' tests/executors/architecture-scanner.sh 2>/dev/null || echo ''"
+    expected: "architecture-scanner"
+    description: "No lines with VAR=val ; cmd | pipe pattern (silent variable loss)"
+
+metadata:
+  generatedAt: "2026-03-31T19:09:00.000Z"
+  round: 32
+  gapId: "arch-scan:antipattern"
+  recipeUsed: null

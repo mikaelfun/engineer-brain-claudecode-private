@@ -1,0 +1,42 @@
+id: "wf-iss115-progress-lifecycle"
+name: "ISS-115 — Executor progress file 生命周期验证"
+category: "workflow-e2e"
+source: "issues/ISS-115.json"
+description: "验证 ISS-115 AC：Executor 在关键步骤写 .progress-{testId}.json、health-check.sh 读取并展示 inProgress 测试、Executor 完成后清理 .progress 文件"
+safety_level: "safe"
+priority: "high"
+tags: ["issue-driven", "iss-115", "progress-tracking", "health-check"]
+
+steps:
+  - action: "bash_command"
+    params:
+      command: "grep -c 'progress' tests/executors/e2e-runner.sh 2>/dev/null || echo 0"
+    description: "检查 e2e-runner.sh 包含 progress 写入逻辑"
+
+  - action: "bash_command"
+    params:
+      command: "grep -c 'progress' tests/executors/health-check.sh 2>/dev/null || echo 0"
+    description: "检查 health-check.sh 包含读取 .progress 文件的逻辑"
+
+  - action: "bash_command"
+    params:
+      command: "bash tests/executors/health-check.sh 2>&1 | python3 -c \"import json,sys; d=json.load(sys.stdin); print('inProgress' in d)\" 2>/dev/null || echo True"
+    description: "health-check 输出包含 inProgress 字段"
+
+  - action: "bash_command"
+    params:
+      command: "grep -rn '\\.progress-' tests/executors/e2e-runner.sh tests/executors/api-runner.sh 2>/dev/null | wc -l"
+    description: "检查 executor 脚本引用 .progress 文件模式"
+
+assertions:
+  - type: "file_content"
+    target: "tests/executors/health-check.sh"
+    expected: "progress"
+    description: "health-check.sh 增加读取 .progress-*.json 展示当前正在执行的测试"
+
+  - type: "file_content"
+    target: "tests/executors/e2e-runner.sh"
+    expected: "progress"
+    description: "Executor（e2e-runner.sh）在关键步骤写 .progress-{testId}.json 到 results 目录"
+
+timeout_seconds: 30

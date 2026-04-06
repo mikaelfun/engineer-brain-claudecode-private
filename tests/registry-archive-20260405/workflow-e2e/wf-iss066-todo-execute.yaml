@@ -1,0 +1,92 @@
+id: "wf-iss066-todo-execute"
+name: "ISS-066 — Todo Execute 验证机制：SSE 事件 + 状态机 + 源码验证"
+category: "workflow-e2e"
+source: "ISS-066 / dashboard/src/routes/case-routes.ts — POST /todo/:id/execute"
+description: |
+  验证 Todo Execute 功能实现完整：
+  1. POST /todo/:id/execute 端点存在且广播 SSE 事件
+  2. todo-execute-progress 和 todo-execute-result SSE 事件类型已定义
+  3. 执行期间有 disabled 状态（前端组件层）
+  4. 验证通过后才 auto-check（通过 SSE result 事件驱动）
+  5. 失败时 NOT auto-check（通过 result.success=false 标识）
+  使用源码检查方式（避免触发 D365 写操作）。
+safety_level: "safe"
+priority: "high"
+tags: ["todo", "execute", "sse", "verification", "ISS-066"]
+
+source_type: "issue-driven"
+issueId: "ISS-066"
+trackId: "todo-execute-verify_20260322"
+
+steps:
+  # Step 1: 验证 POST /todo/:id/execute 端点存在并广播 SSE 事件
+  - action: "run_bash"
+    params:
+      command: "grep -n 'todo-execute-progress\\|todo-execute-result\\|executeTodoAction' dashboard/src/routes/case-routes.ts | head -20"
+      cwd: "{project_root}"
+    safety_check: "scripts.safe[read-only]"
+
+  # Step 2: 验证 SSE 事件类型在 types/index.ts 中已定义
+  - action: "run_bash"
+    params:
+      command: "grep -n 'todo-execute' dashboard/src/types/index.ts"
+      cwd: "{project_root}"
+    safety_check: "scripts.safe[read-only]"
+
+  # Step 3: 验证前端 TodoView 有 disabled/executing 状态处理
+  - action: "run_bash"
+    params:
+      command: "grep -n 'disabled\\|executing\\|isExecuting\\|spinner\\|loading' dashboard/web/src/components/TodoView.tsx 2>/dev/null || grep -rn 'disabled\\|isExecuting' dashboard/web/src/components/Todo*.tsx 2>/dev/null | head -15"
+      cwd: "{project_root}"
+    safety_check: "scripts.safe[read-only]"
+
+  # Step 4: 验证 auto-check 逻辑绑定到 execute-result success
+  - action: "run_bash"
+    params:
+      command: "grep -n 'auto.*check\\|checkbox.*auto\\|todo-execute-result\\|success.*check\\|checked' dashboard/web/src/components/TodoView.tsx 2>/dev/null | head -15"
+      cwd: "{project_root}"
+    safety_check: "scripts.safe[read-only]"
+
+  # Step 5: 验证失败时有 failed 状态（不 auto-check）
+  - action: "run_bash"
+    params:
+      command: "grep -n 'failed\\|failure\\|success.*false\\|error' dashboard/src/routes/case-routes.ts | grep -i 'todo\\|execute\\|result' | head -15"
+      cwd: "{project_root}"
+    safety_check: "scripts.safe[read-only]"
+
+assertions:
+  # AC1: 端点实现 — execute endpoint 存在 + 广播 SSE 事件
+  - type: "stdout_contains"
+    target: "step1"
+    expected: "todo-execute-progress"
+    description: "case-routes.ts 广播 todo-execute-progress SSE 事件"
+
+  - type: "stdout_contains"
+    target: "step1"
+    expected: "todo-execute-result"
+    description: "case-routes.ts 广播 todo-execute-result SSE 事件"
+
+  # AC2: SSE 事件类型已在 types/index.ts 定义
+  - type: "stdout_contains"
+    target: "step2"
+    expected: "todo-execute"
+    description: "SSE 类型枚举包含 todo-execute 系列事件"
+
+  # AC3: 前端有执行中 disabled 状态
+  - type: "stdout_contains"
+    target: "step3"
+    expected: "disabled"
+    description: "TodoView 组件包含 disabled 状态（执行期间按钮禁用）"
+
+  # AC5: 失败路径有 failed 状态标识（不会 auto-check）
+  - type: "stdout_contains"
+    target: "step5"
+    expected: "failed"
+    description: "执行失败时有 failed 标识（对应不 auto-check 的判断条件）"
+
+timeout_seconds: 30
+notes: |
+  此测试使用源码检查而非运行时执行，因为：
+  1. 实际 Todo Execute 会触发 D365 写操作（safety.yaml BLOCKED）
+  2. 源码检查足以验证 ISS-066 的核心 AC（状态机/SSE 事件/failed 路径）
+  3. 前端 auto-check 的完整行为需 UI 测试覆盖（另行规划）

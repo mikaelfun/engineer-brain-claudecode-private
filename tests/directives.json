@@ -71,11 +71,5 @@
     "createdAt": "2026-03-31T04:26:43.177Z",
     "processedAt": "2026-03-31T04:32:45.406Z",
     "processedResult": "paused=false, resumed from cycle 40"
-  },
-  {
-    "type": "pause",
-    "status": "pending",
-    "createdAt": "2026-04-03T01:10:27.503Z",
-    "source": "webui-external-stop"
   }
 ]

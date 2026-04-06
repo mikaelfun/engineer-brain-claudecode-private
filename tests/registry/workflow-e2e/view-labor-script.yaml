@@ -1,0 +1,28 @@
+id: "view-labor-script"
+name: "View Labor Script Parameters"
+category: "workflow-e2e"
+source: "issues/ISS-211.json"
+description: "验证 view-labor.ps1 脚本存在且 labor API 端点可用"
+safety_level: "safe"
+priority: "high"
+tags: ["regression", "labor", "ISS-211"]
+impact: "P1"
+impactReason: "Labor data view core feature"
+recipe_used: "none"
+steps:
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "http://localhost:3010/api/health"
+    safety_check: "GET /api/health"
+  - action: "bash_command"
+    params:
+      command: "test -f skills/casework/view-labor.ps1 && echo 'EXISTS' || echo 'MISSING'"
+      expected_output: "EXISTS"
+assertions:
+  - type: "status_code"
+    expected: 200
+  - type: "text_contains"
+    target: "stdout"
+    expected: "EXISTS"
+timeout_seconds: 60

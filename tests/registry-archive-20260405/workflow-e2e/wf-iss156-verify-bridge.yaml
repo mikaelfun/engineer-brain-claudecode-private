@@ -1,0 +1,45 @@
+id: "wf-iss156-verify-bridge"
+name: "ISS-156 — verify.md 桥接模式验证（消除双实现，指向 SKILL.md）"
+category: "workflow-e2e"
+source: "issues/ISS-156.json"
+description: "验证 ISS-156 AC：verify.md 改为桥接模式，只做 pre-flight 然后指向 SKILL.md；不再包含旧的 npm test / Playwright 双实现。verify.md 位于全局命令目录 ~/.claude/commands/conductor/verify.md"
+safety_level: "safe"
+priority: "medium"
+tags: ["issue-driven", "iss-156", "conductor-verify", "bridge-mode"]
+recipe_used: "none"
+
+# 实际路径：verify.md 是全局 conductor 命令，位于 ~/.claude/commands/conductor/verify.md
+# 不在项目本地 .claude/commands/ 目录
+
+steps:
+  - action: "bash_command"
+    params:
+      command: "cat .claude/skills/casework/SKILL.md | grep -c 'verify\\|SKILL\\.md' || echo 0"
+    description: "检查 casework SKILL.md 包含 verify 引用"
+
+  - action: "bash_command"
+    params:
+      command: "VERIFY_MD=\"$HOME/.claude/commands/conductor/verify.md\"; grep -c 'npm test\\|playwright\\|unitTest\\|uiTest' \"$VERIFY_MD\" 2>/dev/null || echo 0"
+    description: "验证 verify.md 不再包含旧的双实现关键词"
+
+  - action: "bash_command"
+    params:
+      command: "VERIFY_MD=\"$HOME/.claude/commands/conductor/verify.md\"; grep -c 'SKILL\\|skill\\|bridge\\|pre-flight' \"$VERIFY_MD\" 2>/dev/null || echo 0"
+    description: "验证 verify.md 包含桥接模式关键词"
+
+assertions:
+  - type: "bash_exit_zero"
+    command: "test -f \"$HOME/.claude/commands/conductor/verify.md\""
+    description: "verify.md 文件存在（全局 conductor 命令目录）"
+
+  - type: "bash_output"
+    command: "VERIFY_MD=\"$HOME/.claude/commands/conductor/verify.md\"; grep -c 'unitTest\\|uiTest\\|Mode.*npm test' \"$VERIFY_MD\" 2>/dev/null; true"
+    expected: "0"
+    description: "verify.md 不包含旧双实现的 unitTest/uiTest 字段或旧模式结构"
+
+  - type: "bash_output"
+    command: "VERIFY_MD=\"$HOME/.claude/commands/conductor/verify.md\"; grep -c 'SKILL\\|skill\\|bridge\\|pre-flight' \"$VERIFY_MD\" 2>/dev/null; true"
+    expected_min: "1"
+    description: "verify.md 包含 SKILL.md 桥接关键词"
+
+timeout_seconds: 30

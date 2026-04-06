@@ -1,0 +1,81 @@
+{
+  "lastUpdated": "2026-04-05",
+  "product": "eop",
+  "unsupportedFeatures": [
+    {
+      "feature": "Built-in protection preset security policy",
+      "description": "Safe Attachments and Safe Links default protection in Defender for Office 365 not available in 21V"
+    },
+    {
+      "feature": "Safe Attachments",
+      "description": "Entire Safe Attachments feature unavailable in 21V"
+    },
+    {
+      "feature": "Safe Links",
+      "description": "Entire Safe Links feature unavailable in 21V"
+    },
+    {
+      "feature": "Tenant Allow/Block Lists",
+      "description": "Manage allows and blocks via Tenant Allow/Block List unavailable in 21V"
+    },
+    {
+      "feature": "Advanced delivery",
+      "description": "Third-party phishing simulations and email delivery to SecOps mailboxes unavailable in 21V"
+    },
+    {
+      "feature": "Evaluation mode",
+      "description": "Try/evaluate Defender for Office 365 unavailable in 21V"
+    },
+    {
+      "feature": "Automated Investigation and Response (AIR)",
+      "description": "Investigations feature (automated investigation and response) unavailable in 21V"
+    },
+    {
+      "feature": "Threat Explorer / Real-time Detections",
+      "description": "Explorer feature for threat investigation unavailable in 21V"
+    },
+    {
+      "feature": "Campaigns",
+      "description": "Campaigns view in Microsoft Defender for Office 365 unavailable in 21V"
+    },
+    {
+      "feature": "Threat Tracker",
+      "description": "Threat Trackers (New and Noteworthy) unavailable in 21V"
+    },
+    {
+      "feature": "Attack simulation training",
+      "description": "Attack simulation training feature unavailable in 21V"
+    },
+    {
+      "feature": "Advanced phishing thresholds",
+      "description": "Cannot set custom phishing thresholds in 21V"
+    },
+    {
+      "feature": "Client-side report phishing/junk",
+      "description": "Users cannot report phishing and junk from client in 21V"
+    },
+    {
+      "feature": "User reported settings page",
+      "description": "User reported settings feature unavailable in 21V China; backend infra unavailable (Bug 5529973, no ETA)"
+    }
+  ],
+  "partialFeatures": [
+    {
+      "feature": "Preset security policies",
+      "description": "Available but missing built-in protection preset security policy"
+    },
+    {
+      "feature": "Anti-malware / Anti-spam / Anti-phishing policies",
+      "description": "Available but missing ZAP (Zero-hour Auto Purge), Spoof Intelligence, and Impersonation protection"
+    },
+    {
+      "feature": "Email authentication settings",
+      "description": "Available but cannot add trusted ARC sealers; DKIM configuration available"
+    },
+    {
+      "feature": "Quarantine policies",
+      "description": "Available but custom notification has restrictions in 21V"
+    }
+  ],
+  "noGapDataFound": false
+}

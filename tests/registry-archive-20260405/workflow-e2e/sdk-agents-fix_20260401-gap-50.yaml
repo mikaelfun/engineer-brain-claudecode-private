@@ -1,0 +1,32 @@
+# Test: 解析失败的单个 agent 文件不阻塞整体（跳过 + 日志警告）
+# Generated: Cycle 0 | Source: spec-driven
+# Recipe: none
+
+id: "sdk-agents-fix_20260401-gap-50"
+name: "解析失败的单个 agent 文件不阻塞整体（跳过 + 日志警告）"
+category: "workflow-e2e"
+source: "spec-driven"
+description: "解析失败的单个 agent 文件不阻塞整体（跳过 + 日志警告）"
+safety_level: "safe"
+priority: "medium"
+impact: "P2"
+impactReason: "Spec AC 未覆盖"
+tags: ["spec-driven","sdk-agents-fix"]
+
+steps:
+  - action: "validate"
+    params:
+      description: "解析失败的单个 agent 文件不阻塞整体（跳过 + 日志警告）"
+
+assertions:
+  - type: "file_exists"
+    target: "cases/"
+    expected: "true"
+    description: "解析失败的单个 agent 文件不阻塞整体（跳过 + 日志警告）"
+
+timeout_seconds: 30
+metadata:
+  generatedAt: "2026-04-05T00:45:22.682Z"
+  round: 0
+  gapId: "sdk-agents-fix_20260401-gap-50"
+  recipeUsed: null

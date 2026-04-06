@@ -1,8 +1,8 @@
 # Live Cases Pool — Active D365 Cases for Test Loop
 # Auto-refreshed by refresh-live-cases.sh
-# Last refresh: 2026-04-02T15:04:31Z
+# Last refresh: 2026-04-05T00:34:49Z
 
-lastRefreshed: "2026-04-02T15:04:31Z"
+lastRefreshed: "2026-04-05T00:34:49Z"
 refreshInterval: 86400  # 24 hours in seconds
 source: "scan-active-dir"
 
@@ -12,39 +12,15 @@ cases:
     severity: "B"
     pool: "data_rich"
     hasEmails: true
-    emailCount: 17
+    emailCount: 18
     hasICM: true
     tags: []
-  - id: "2602130040001034"
-    title: "Unified <Sev B> | PRC | Azure container registry | ACR requirements so that image push or pull is restricted to the production environment"
-    severity: "B"
-    pool: "data_rich"
-    hasEmails: true
-    emailCount: 35
-    hasICM: false
-    tags: []
-  - id: "2603230010001900"
-    title: "Unified <SEV B> | PRC | 21V Teams | 苹果的 team 基于用户登记登录"
-    severity: "B"
-    pool: "data_rich"
-    hasEmails: true
-    emailCount: 12
-    hasICM: false
-    tags: []
   - id: "2603230010001900001"
-    title: "Unified <SEV B> | PRC | 21V Teams | 苹果的 team 基于用户登记登录"
+    title: "Microsoft Entra certificate-based authentication"
     severity: "B"
     pool: "data_rich"
     hasEmails: true
     emailCount: 12
-    hasICM: false
-    tags: []
-  - id: "2603250010001221"
-    title: "[S500]3月20日为什么报警？3月22日为什么提示升级失败？"
-    severity: "C"
-    pool: "data_rich"
-    hasEmails: true
-    emailCount: 13
     hasICM: false
     tags: []
   - id: "2603300010000578"
@@ -58,9 +34,9 @@ cases:
   - id: "2603300030003153001"
     title: "Need assistance with alert trigger"
     severity: "B"
-    pool: "minimal"
-    hasEmails: false
-    emailCount: 0
+    pool: "data_rich"
+    hasEmails: true
+    emailCount: 17
     hasICM: true
     tags: []
   - id: "2603310010001969"
@@ -76,6 +52,6 @@ cases:
     severity: "C"
     pool: "data_sparse"
     hasEmails: true
-    emailCount: 1
+    emailCount: 2
     hasICM: false
     tags: []

@@ -1,0 +1,40 @@
+id: "regression-iss039"
+name: "Regression: ISS-039 — 执行过 Verify 的 Issue 应可展开查看测试项目和结果"
+category: "ui-interaction"
+source: "issues/ISS-039.json"
+description: "回归测试：验证 ISS-039 实现的功能未退化"
+safety_level: "safe"
+priority: "medium"
+tags: ["regression", "issue-driven", "iss-039"]
+regression_for: "ISS-039"
+
+steps:
+  - action: "navigate"
+    params:
+      url: "{frontend_url}"
+    safety_check: "ui.safe[navigate_to_page]"
+  - action: "verify_element"
+    params:
+      selector: "body"
+      expected: "visible"
+      timeout: 5000
+
+assertions:
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "折叠区域显示各测试步骤的 PASS/FAIL/SKIPPED 状态 + 可展开的 output"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "刷新页面后测试结果仍可查看"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "TypeScript 编译通过"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "现有测试通过"
+
+timeout_seconds: 60

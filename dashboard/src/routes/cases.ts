@@ -6,6 +6,7 @@ import { listActiveCases, listArCases } from '../services/workspace.js'
 import { parseCaseInfo, readTeamsLastMessageTime } from '../services/case-reader.js'
 import { parseEmails } from '../services/email-reader.js'
 import { parseNotes } from '../services/note-reader.js'
+import { parseLaborRecords } from '../services/labor-reader.js'
 import { readCaseMeta, readPatrolState } from '../services/meta-reader.js'
 import { readCaseDrafts } from '../services/draft-reader.js'
 import { toggleCaseTodoItem } from '../services/todo-writer.js'
@@ -177,6 +178,14 @@ cases.get('/:id/notes', (c) => {
   if (!caseNumber) return c.json({ error: 'Invalid case number' }, 400)
   const notes = parseNotes(caseNumber)
   return c.json({ notes, total: notes.length })
+})
+
+// GET /api/cases/:id/labor-records
+cases.get('/:id/labor-records', (c) => {
+  const caseNumber = validateCaseNumber(c)
+  if (!caseNumber) return c.json({ error: 'Invalid case number' }, 400)
+  const records = parseLaborRecords(caseNumber)
+  return c.json({ records, total: records.length })
 })
 
 // GET /api/cases/:id/teams

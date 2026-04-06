@@ -1,0 +1,32 @@
+# Test: frontmatter 增加 `content_hash:` 字段，存储正文部分的 hash
+# Generated: Cycle 0 | Source: spec-driven
+# Recipe: none
+
+id: "onenote-sync-scope_20260401-gap-48"
+name: "frontmatter 增加 `content_hash:` 字段，存储正文部分的 hash"
+category: "workflow-e2e"
+source: "spec-driven"
+description: "frontmatter 增加 `content_hash:` 字段，存储正文部分的 hash"
+safety_level: "safe"
+priority: "medium"
+impact: "P2"
+impactReason: "Spec AC 未覆盖"
+tags: ["spec-driven","onenote-sync-scope"]
+
+steps:
+  - action: "validate"
+    params:
+      description: "frontmatter 增加 `content_hash:` 字段，存储正文部分的 hash"
+
+assertions:
+  - type: "file_exists"
+    target: "cases/"
+    expected: "true"
+    description: "frontmatter 增加 `content_hash:` 字段，存储正文部分的 hash"
+
+timeout_seconds: 30
+metadata:
+  generatedAt: "2026-04-05T00:45:22.682Z"
+  round: 0
+  gapId: "onenote-sync-scope_20260401-gap-48"
+  recipeUsed: null

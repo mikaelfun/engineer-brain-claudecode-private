@@ -1,0 +1,22 @@
+id: note-draft-generation
+name: "Note Draft Auto-Generation for Gap Cases"
+category: workflow-e2e
+source: "ISS-204"
+impact: P2
+impactReason: "Note gap helper"
+safety_level: safe
+recipe_used: none
+steps:
+  - action: bash_command
+    params:
+      command: "ls cases/active/ | head -3"
+      description: "List active cases to verify pool"
+  - action: bash_command
+    params:
+      command: "cat .claude/skills/note-gap/SKILL.md | head -20"
+      description: "Verify note-gap skill exists and has rules"
+assertions:
+  - type: text_contains
+    target: step2_output
+    expected: "Note Gap"
+    description: "note-gap skill references Note Gap detection and generation"

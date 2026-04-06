@@ -521,6 +521,15 @@ export function clearSessionMessages(caseNumber: string): void {
   saveSessionMessages()
 }
 
+/**
+ * Clear persisted messages for a specific step only (other steps preserved).
+ */
+export function clearStepSessionMessages(caseNumber: string, stepName: string): void {
+  if (!sessionMessages[caseNumber]) return
+  sessionMessages[caseNumber] = sessionMessages[caseNumber].filter(m => m.step !== stepName)
+  saveSessionMessages()
+}
+
 // ---- Step-Level Log Writer ----
 
 /**
@@ -679,6 +688,97 @@ const staleSessionWatchdog = setInterval(() => {
 
 // Don't let the watchdog prevent Node from exiting
 staleSessionWatchdog.unref()
+
+// ---- Expired Session Purge ----
+// Remove completed/failed sessions after TTL, paused sessions after SDK expiry,
+// and sessions for cases no longer in active/ directory (archived).
+const COMPLETED_TTL_MS = 24 * 60 * 60 * 1000 // 24 hours — keep until next patrol cycle
+const PAUSED_TTL_MS = 15 * 60 * 1000         // 15 min for paused (SDK session expired)
+const PURGE_INTERVAL_MS = 30 * 60 * 1000     // run every 30 min
+const MESSAGE_TTL_MS = 2 * 60 * 60 * 1000    // 2 hours — purge messages earlier than sessions
+
+/**
+ * Purge expired / orphaned sessions from the store.
+ * - completed/failed older than 1 hour
+ * - paused older than 15 min (SDK can't resume)
+ * - any session whose case is no longer in cases/active/
+ */
+export function purgeExpiredSessions(): { purged: number; remaining: number } {
+  const now = Date.now()
+  // Build a Set of active case numbers for O(1) lookup
+  let activeCases: Set<string> | null = null
+  try {
+    const casesRoot = getCasesRoot()
+    if (casesRoot) {
+      const activeCasesDir = join(resolve(getProjectRoot(), casesRoot), 'active')
+      if (existsSync(activeCasesDir)) {
+        activeCases = new Set(readdirSync(activeCasesDir, { withFileTypes: true })
+          .filter(e => e.isDirectory()).map(e => e.name))
+      }
+    }
+  } catch { /* if workspace not ready, skip archive check */ }
+
+  let purged = 0
+  const sidsToPurge: string[] = []
+
+  for (const [sid, info] of Object.entries(sessions)) {
+    const age = now - new Date(info.lastActivityAt).getTime()
+    const isTerminal = info.status === 'completed' || info.status === 'failed'
+    const isPausedExpired = info.status === 'paused' && age > PAUSED_TTL_MS
+    const isTerminalExpired = isTerminal && age > COMPLETED_TTL_MS
+    const isCaseArchived = activeCases !== null && !activeCases.has(info.caseNumber)
+
+    if (isTerminalExpired || isPausedExpired || (isCaseArchived && !isActiveQuery(info.caseNumber))) {
+      sidsToPurge.push(sid)
+    }
+  }
+
+  // Separately purge old messages (shorter TTL than sessions)
+  let messagesPurged = 0
+  for (const [sid, info] of Object.entries(sessions)) {
+    if (sidsToPurge.includes(sid)) continue // will be fully deleted anyway
+    const age = now - new Date(info.lastActivityAt).getTime()
+    const isTerminal = info.status === 'completed' || info.status === 'failed'
+    if (isTerminal && age > MESSAGE_TTL_MS && sessionMessages[info.caseNumber]) {
+      delete sessionMessages[info.caseNumber]
+      messagesPurged++
+    }
+  }
+
+  for (const sid of sidsToPurge) {
+    const info = sessions[sid]
+    if (caseIndex[info.caseNumber] === sid) {
+      delete caseIndex[info.caseNumber]
+    }
+    // Clean session messages keyed by caseNumber (only if no other session exists for this case)
+    const otherSessionsForCase = Object.values(sessions).filter(s => s.caseNumber === info.caseNumber && s.sessionId !== sid)
+    if (otherSessionsForCase.length === 0) {
+      delete sessionMessages[info.caseNumber]
+    }
+    delete sessions[sid]
+    purged++
+  }
+
+  if (purged > 0 || messagesPurged > 0) {
+    saveSessionStore()
+    saveSessionMessages()
+    console.log(`[session-purge] Purged ${purged} session(s), ${messagesPurged} message cache(s), ${Object.keys(sessions).length} remaining`)
+  }
+
+  return { purged, remaining: Object.keys(sessions).length }
+}
+
+/** Check if a case has an active in-memory SDK query */
+function isActiveQuery(caseNumber: string): boolean {
+  return activeQueries.has(caseNumber)
+}
+
+// Run purge on startup (after loadSessionStore already ran)
+purgeExpiredSessions()
+
+// Periodic purge
+const purgeTimer = setInterval(purgeExpiredSessions, PURGE_INTERVAL_MS)
+purgeTimer.unref()
 
 // ---- System Prompt Builder ----
 
@@ -1183,7 +1283,8 @@ After verification, output a single JSON block on a line by itself:
  */
 export function filterCasesByLastInspected(
   allCases: string[],
-  casesRootResolved: string
+  casesRootResolved: string,
+  force?: boolean
 ): { filtered: string[]; skipped: string[] } {
   const now = Date.now()
   const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000
@@ -1203,7 +1304,7 @@ export function filterCasesByLastInspected(
         continue
       }
       const lastInspected = new Date(meta.lastInspected).getTime()
-      if (now - lastInspected > TWENTY_FOUR_HOURS) {
+      if (force || now - lastInspected > TWENTY_FOUR_HOURS) {
         filtered.push(caseNumber) // Stale — needs re-inspection
       } else {
         skipped.push(caseNumber) // Recently inspected, skip
@@ -1313,13 +1414,14 @@ export function isPatrolRunning(): boolean {
 }
 
 export async function patrolCoordinator(
-  onProgress: (progress: PatrolProgress) => void
+  onProgress: (progress: PatrolProgress) => void,
+  options?: { force?: boolean }
 ): Promise<PatrolTodoSummary> {
   patrolCancelled = false
   patrolRunning = true
 
   try {
-    return await _runPatrol(onProgress)
+    return await _runPatrol(onProgress, options?.force)
   } finally {
     patrolRunning = false
     patrolCancelled = false
@@ -1327,40 +1429,135 @@ export async function patrolCoordinator(
 }
 
 async function _runPatrol(
-  onProgress: (progress: PatrolProgress) => void
+  onProgress: (progress: PatrolProgress) => void,
+  force?: boolean
 ): Promise<PatrolTodoSummary> {
   const projectRoot = getProjectRoot()
   const casesRoot = getCasesRoot()
   const casesRootResolved = resolve(projectRoot, casesRoot)
   const activeCasesDir = join(casesRootResolved, 'active')
 
-  // Phase 1: Discover active cases
+  // Phase 1: Discover active cases via D365 API (same as CLI patrol)
   onProgress({ phase: 'discovering' })
+  sseManager.broadcast('patrol-progress' as any, { phase: 'discovering', detail: 'Querying D365 for active cases...' })
 
   let allCases: string[] = []
   try {
-    if (existsSync(activeCasesDir)) {
+    const script = join(projectRoot, 'skills', 'd365-case-ops', 'scripts', 'list-active-cases.ps1')
+    if (existsSync(script)) {
+      const output = execSync(
+        `pwsh -NoProfile -File "${script}" -OutputJson`,
+        { cwd: projectRoot, timeout: 60000, stdio: 'pipe', encoding: 'utf-8' }
+      )
+      // Parse JSON output — find the JSON array line from stdout
+      const jsonLine = output.split('\n').find(l => l.trim().startsWith('['))
+      if (jsonLine) {
+        const parsed = JSON.parse(jsonLine)
+        allCases = parsed.map((c: any) => c.ticketnumber).filter(Boolean)
+      }
+    }
+    // Fallback: if script fails or no results, use local directory
+    if (allCases.length === 0 && existsSync(activeCasesDir)) {
       allCases = readdirSync(activeCasesDir, { withFileTypes: true })
         .filter(e => e.isDirectory())
         .map(e => e.name)
         .sort()
     }
-  } catch {
-    onProgress({ phase: 'failed', error: 'Cannot read active cases directory' })
-    return { red: [], yellow: [], green: [] }
+  } catch (err) {
+    // Fallback to local directory on script error
+    console.warn('[patrol] list-active-cases.ps1 failed, falling back to local dir:', err instanceof Error ? err.message : err)
+    sseManager.broadcast('patrol-progress' as any, { phase: 'discovering', detail: 'D365 query failed, using local directory...' })
+    try {
+      if (existsSync(activeCasesDir)) {
+        allCases = readdirSync(activeCasesDir, { withFileTypes: true })
+          .filter(e => e.isDirectory())
+          .map(e => e.name)
+          .sort()
+      }
+    } catch {
+      onProgress({ phase: 'failed', error: 'Cannot discover active cases' })
+      return { red: [], yellow: [], green: [] }
+    }
   }
 
   onProgress({ phase: 'discovering', totalCases: allCases.length })
+  sseManager.broadcast('patrol-progress' as any, { phase: 'discovering', totalCases: allCases.length, detail: `Found ${allCases.length} active cases in D365` })
 
   if (allCases.length === 0) {
     onProgress({ phase: 'completed', totalCases: 0, processedCases: 0 })
     return { red: [], yellow: [], green: [] }
   }
 
-  // Phase 2: Filter by lastInspected (only cases needing re-inspection)
+  // Phase 1.5: Archive/Transfer detection (same as CLI patrol)
+  sseManager.broadcast('patrol-progress' as any, { phase: 'discovering', detail: 'Detecting archived/transferred cases...' })
+
+  try {
+    const detectScript = join(projectRoot, 'skills', 'd365-case-ops', 'scripts', 'detect-case-status.ps1')
+    if (existsSync(detectScript)) {
+      const detectOutput = execSync(
+        `pwsh -NoProfile -File "${detectScript}" -CasesRoot "${casesRootResolved}" -SkipClosureCheck`,
+        { cwd: projectRoot, timeout: 60000, stdio: 'pipe', encoding: 'utf-8' }
+      )
+      const detectJsonLine = detectOutput.split('\n').find(l => l.trim().startsWith('['))
+      if (detectJsonLine) {
+        const detected: Array<{ caseNumber: string; status: string; reason: string }> = JSON.parse(detectJsonLine)
+        if (detected.length > 0) {
+          // Auto-move archived/transferred cases
+          const archivedDir = join(casesRootResolved, 'archived')
+          const transferDir = join(casesRootResolved, 'transfer')
+          mkdirSync(archivedDir, { recursive: true })
+          mkdirSync(transferDir, { recursive: true })
+
+          for (const item of detected) {
+            const src = join(activeCasesDir, item.caseNumber)
+            if (!existsSync(src)) continue
+
+            const dest = item.status === 'transferred'
+              ? join(transferDir, item.caseNumber)
+              : join(archivedDir, item.caseNumber)
+
+            try {
+              execSync(`mv "${src}" "${dest}"`, { cwd: projectRoot, timeout: 10000, stdio: 'pipe' })
+
+              // Log to archive-log.jsonl
+              const logEntry = JSON.stringify({
+                timestamp: new Date().toISOString(),
+                caseNumber: item.caseNumber,
+                status: item.status,
+                reason: item.reason,
+                from: 'active/',
+                to: item.status === 'transferred' ? 'transfer/' : 'archived/',
+              })
+              appendFileSync(join(casesRootResolved, 'archive-log.jsonl'), logEntry + '\n', 'utf-8')
+
+              sseManager.broadcast('patrol-progress' as any, {
+                phase: 'discovering',
+                detail: `📦 ${item.status}: ${item.caseNumber} — ${item.reason}`,
+              })
+            } catch (mvErr) {
+              console.warn(`[patrol] Failed to move case ${item.caseNumber}:`, mvErr)
+            }
+          }
+
+          // Remove archived/transferred cases from allCases
+          const removedSet = new Set(detected.map(d => d.caseNumber))
+          allCases = allCases.filter(c => !removedSet.has(c))
+          sseManager.broadcast('patrol-progress' as any, {
+            phase: 'discovering',
+            totalCases: allCases.length,
+            detail: `Archived/transferred ${detected.length} case(s), ${allCases.length} remaining`,
+          })
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[patrol] detect-case-status.ps1 failed (non-blocking):', err instanceof Error ? err.message : err)
+  }
+
+  // Phase 2: Filter by lastInspected
   onProgress({ phase: 'filtering', totalCases: allCases.length })
 
-  const { filtered: casesToProcess, skipped } = filterCasesByLastInspected(allCases, casesRootResolved)
+  const { filtered: casesToProcess, skipped } = filterCasesByLastInspected(allCases, casesRootResolved, force)
 
   if (casesToProcess.length === 0) {
     onProgress({
@@ -1372,14 +1569,33 @@ async function _runPatrol(
     return aggregateTodos(casesRootResolved)
   }
 
-  // Phase 3: Warm-up (DTM token + IR batch)
+  // Phase 3: Warm-up (DTM token + IR batch) — with SSE progress
   onProgress({
     phase: 'warming-up' as PatrolProgress['phase'],
     totalCases: allCases.length,
     changedCases: casesToProcess.length,
   })
+  sseManager.broadcast('patrol-progress' as any, {
+    phase: 'warming-up',
+    totalCases: allCases.length,
+    changedCases: casesToProcess.length,
+    detail: 'Running DTM token + IR batch warmup...',
+  })
 
   const warmupResult = await runPatrolWarmup(casesRootResolved)
+
+  // Broadcast warmup results
+  const warmupDetails: string[] = []
+  if (warmupResult.irBatch.success) warmupDetails.push('IR batch ✅')
+  else warmupDetails.push(`IR batch ❌ ${warmupResult.irBatch.error || ''}`)
+  if (warmupResult.dtmToken.success) warmupDetails.push('DTM token ✅')
+  else warmupDetails.push(`DTM token ❌ ${warmupResult.dtmToken.error || ''}`)
+
+  sseManager.broadcast('patrol-progress' as any, {
+    phase: 'warming-up',
+    detail: `Warmup complete: ${warmupDetails.join(' | ')}`,
+  })
+
   if (warmupResult.irBatch.error) {
     console.warn('[patrol] IR batch warmup warning:', warmupResult.irBatch.error)
   }
@@ -1392,7 +1608,7 @@ async function _runPatrol(
     return aggregateTodos(casesRootResolved)
   }
 
-  // Phase 4: Process cases via processCaseSession (semaphore-limited concurrency)
+  // Phase 4: Process ALL cases in full parallel (no concurrency limit)
   onProgress({
     phase: 'processing',
     totalCases: allCases.length,
@@ -1401,126 +1617,106 @@ async function _runPatrol(
   })
 
   let processedCount = 0
-  const CONCURRENCY_LIMIT = 5
   const CASE_TIMEOUT_MS = 15 * 60 * 1000 // 15 minutes per case
-
-  // Semaphore for concurrency control
-  let activeCount = 0
-  const queue = [...casesToProcess]
   const caseResults: Array<{ caseNumber: string; status: 'completed' | 'failed' | 'timeout'; error?: string }> = []
 
-  const processNextCase = async (): Promise<void> => {
-    while (queue.length > 0) {
-      if (patrolCancelled) return
+  // Broadcast all cases as starting
+  for (const cn of casesToProcess) {
+    sseManager.broadcast('patrol-progress' as any, {
+      phase: 'processing',
+      currentCase: cn,
+      totalCases: allCases.length,
+      changedCases: casesToProcess.length,
+      processedCases: processedCount,
+    })
+  }
 
-      const caseNumber = queue.shift()!
-      activeCount++
-      patrolActiveCases.add(caseNumber)
+  // Launch ALL cases in parallel — each case gets its own SDK session
+  const casePromises = casesToProcess.map(async (caseNumber) => {
+    if (patrolCancelled) return
 
-      // Acquire operation lock (prevents user from starting full-process on same case)
-      const lockAcquired = acquireCaseOperationLock(caseNumber, 'patrol')
-      if (!lockAcquired) {
-        // Case already has an active operation — skip it
-        caseResults.push({ caseNumber, status: 'failed', error: 'Case already has active operation' })
-        processedCount++
-        activeCount--
-        patrolActiveCases.delete(caseNumber)
-        continue
+    patrolActiveCases.add(caseNumber)
+
+    // Acquire operation lock
+    const lockAcquired = acquireCaseOperationLock(caseNumber, 'patrol')
+    if (!lockAcquired) {
+      caseResults.push({ caseNumber, status: 'failed', error: 'Case already has active operation' })
+      processedCount++
+      patrolActiveCases.delete(caseNumber)
+      sseManager.broadcast('patrol-case-completed' as any, {
+        caseNumber,
+        processedCases: processedCount,
+        error: 'Case already has active operation',
+      })
+      return
+    }
+
+    // Notify Agent Monitor
+    sseManager.broadcast('sessions-changed' as any, { reason: 'patrol-case-started', caseNumber })
+
+    try {
+      const patrolIntent = `对 Case ${caseNumber} 执行完整 casework 流程。caseDir: ${join(casesRootResolved, 'active', caseNumber)}/。请读取 .claude/skills/casework/SKILL.md 获取完整执行步骤。`
+
+      const sessionGen = processCaseSession(caseNumber, patrolIntent)
+
+      const timeoutPromise = new Promise<'timeout'>((resolve) =>
+        setTimeout(() => resolve('timeout'), CASE_TIMEOUT_MS)
+      )
+
+      const processPromise = (async () => {
+        // Emit case-step-started for frontend step-grouped display
+        sseManager.broadcast('case-step-started' as any, {
+          caseNumber,
+          step: 'casework',
+          startedAt: new Date().toISOString(),
+        })
+
+        // Use shared deep-parser — same as single-case processing (full SSE per case)
+        await broadcastSDKMessages(caseNumber, 'casework', sessionGen)
+        return 'completed' as const
+      })()
+
+      const result = await Promise.race([processPromise, timeoutPromise])
+
+      if (result === 'timeout') {
+        abortQuery(caseNumber)
+        caseResults.push({ caseNumber, status: 'timeout', error: 'Case processing timed out (15 min)' })
+      } else {
+        caseResults.push({ caseNumber, status: 'completed' })
       }
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : String(err)
+      caseResults.push({ caseNumber, status: 'failed', error: errorMsg })
+    } finally {
+      processedCount++
+      releaseCaseOperationLock(caseNumber)
+      patrolActiveCases.delete(caseNumber)
 
-      // Broadcast per-case start
+      // Emit case-step-completed for frontend step-grouped display
+      const lastResult = caseResults.find(r => r.caseNumber === caseNumber)
+      sseManager.broadcast('case-step-completed' as any, {
+        caseNumber,
+        step: 'casework',
+        error: lastResult?.error,
+      })
+      // Broadcast per-case completion (patrol-level progress)
+      sseManager.broadcast('patrol-case-completed' as any, {
+        caseNumber,
+        processedCases: processedCount,
+        error: lastResult?.error,
+      })
+      sseManager.broadcast('sessions-changed' as any, { reason: 'patrol-case-completed', caseNumber })
+
       onProgress({
         phase: 'processing',
         totalCases: allCases.length,
         changedCases: casesToProcess.length,
         processedCases: processedCount,
-        currentCase: caseNumber,
       })
-
-      sseManager.broadcast('patrol-progress' as any, {
-        phase: 'processing',
-        currentCase: caseNumber,
-        totalCases: allCases.length,
-        changedCases: casesToProcess.length,
-        processedCases: processedCount,
-      })
-
-      // Notify Agent Monitor
-      sseManager.broadcast('sessions-changed' as any, { reason: 'patrol-case-started', caseNumber })
-
-      try {
-        const patrolIntent = `对 Case ${caseNumber} 执行完整 casework 流程。caseDir: ${join(casesRootResolved, 'active', caseNumber)}/。请读取 .claude/skills/casework/SKILL.md 获取完整执行步骤。`
-
-        // Use processCaseSession — this registers the session in sessions map + caseIndex
-        // and makes it visible in Agent Monitor and Case detail page
-        const sessionGen = processCaseSession(caseNumber, patrolIntent)
-
-        // Consume the AsyncGenerator with timeout
-        let caseSessionId: string | undefined
-        const timeoutPromise = new Promise<'timeout'>((resolve) =>
-          setTimeout(() => resolve('timeout'), CASE_TIMEOUT_MS)
-        )
-
-        const processPromise = (async () => {
-          // Emit case-step-started for frontend step-grouped display
-          sseManager.broadcast('case-step-started' as any, {
-            caseNumber,
-            step: 'patrol',
-            startedAt: new Date().toISOString(),
-          })
-
-          // Use shared deep-parser — same as single-case processing
-          const broadcastResult = await broadcastSDKMessages(caseNumber, 'patrol', sessionGen)
-          caseSessionId = broadcastResult.sessionId
-          return 'completed' as const
-        })()
-
-        const result = await Promise.race([processPromise, timeoutPromise])
-
-        if (result === 'timeout') {
-          // Abort the timed-out session
-          abortQuery(caseNumber)
-          caseResults.push({ caseNumber, status: 'timeout', error: 'Case processing timed out (15 min)' })
-        } else {
-          caseResults.push({ caseNumber, status: 'completed' })
-        }
-      } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : String(err)
-        caseResults.push({ caseNumber, status: 'failed', error: errorMsg })
-      } finally {
-        processedCount++
-        releaseCaseOperationLock(caseNumber)
-        patrolActiveCases.delete(caseNumber)
-        activeCount--
-
-        // Emit case-step-completed for frontend step-grouped display
-        const lastResult = caseResults[caseResults.length - 1]
-        sseManager.broadcast('case-step-completed' as any, {
-          caseNumber,
-          step: 'patrol',
-          error: lastResult?.error,
-        })
-        // Broadcast per-case completion (patrol-level progress)
-        sseManager.broadcast('patrol-case-completed' as any, {
-          caseNumber,
-          processedCases: processedCount,
-          error: lastResult?.error,
-        })
-        sseManager.broadcast('sessions-changed' as any, { reason: 'patrol-case-completed', caseNumber })
-
-        onProgress({
-          phase: 'processing',
-          totalCases: allCases.length,
-          changedCases: casesToProcess.length,
-          processedCases: processedCount,
-        })
-      }
     }
-  }
+  })
 
-  // Launch CONCURRENCY_LIMIT workers
-  const workers = Array.from({ length: Math.min(CONCURRENCY_LIMIT, casesToProcess.length) }, () => processNextCase())
-  await Promise.allSettled(workers)
+  await Promise.allSettled(casePromises)
 
   // Phase 5: Aggregate todos
   onProgress({ phase: 'aggregating' })

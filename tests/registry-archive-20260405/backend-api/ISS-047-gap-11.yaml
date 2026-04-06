@@ -1,0 +1,32 @@
+# Test: 前端无感知变化 — 返回的 issue 对象结构不变（status + verifyResult 由后端派生填充）
+# Generated: Cycle 0 | Source: issue-driven
+# Recipe: issue-driven-api
+
+id: "ISS-047-gap-11"
+name: "前端无感知变化 — 返回的 issue 对象结构不变（status + verifyResult 由后端派生填充）"
+category: "backend-api"
+source: "issue-driven"
+description: "前端无感知变化 — 返回的 issue 对象结构不变（status + verifyResult 由后端派生填充）"
+safety_level: "safe"
+priority: "medium"
+impact: "P2"
+impactReason: "缺失测试覆盖：regression 功能"
+tags: ["issue-driven","ISS-047"]
+
+steps:
+  - action: "http_request"
+    params:
+      description: "Verify backend is reachable"
+
+assertions:
+  - type: "status_code"
+    target: "response"
+    expected: "200"
+    description: "前端无感知变化 — 返回的 issue 对象结构不变（status + verifyResult 由后端派生填充）"
+
+timeout_seconds: 30
+metadata:
+  generatedAt: "2026-04-05T00:45:22.682Z"
+  round: 0
+  gapId: "ISS-047-gap-11"
+  recipeUsed: "issue-driven-api"

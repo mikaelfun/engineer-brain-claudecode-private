@@ -1,0 +1,57 @@
+# Test Definition: arch-obs-hardcoded-paths
+# Generated from observability scanner gap
+# Category: workflow-e2e (code quality)
+# Priority: P3
+
+id: arch-obs-hardcoded-paths
+category: workflow-e2e
+title: Observability runner should use $PROJECT_ROOT instead of hardcoded paths
+description: |
+  observability-runner.sh contains hardcoded absolute paths instead of using
+  $PROJECT_ROOT environment variable for portability.
+
+  This test checks that the script uses relative or $PROJECT_ROOT-based paths.
+
+acceptance_criteria:
+  - No hardcoded /c/Users/... paths in observability-runner.sh
+  - Uses $PROJECT_ROOT or relative paths
+  - Script is portable across environments
+
+source: obs-scan
+type: observability
+priority: P3
+safety_level: SAFE
+
+assertions:
+  - type: file_content
+    description: Scan for hardcoded absolute paths
+    command: |
+      if grep -E '/c/Users/[^/]+/Documents/Claude Code Projects/EngineerBrain' tests/executors/observability-runner.sh; then
+        echo "FAIL: Found hardcoded absolute path"
+        exit 1
+      else
+        echo "PASS"
+      fi
+    expected_output: "PASS"
+
+  - type: file_content
+    description: Check for $PROJECT_ROOT usage
+    command: |
+      grep -q 'PROJECT_ROOT' tests/executors/observability-runner.sh && echo "PASS" || echo "WARN: No $PROJECT_ROOT found"
+    expected_output: "PASS"
+
+fix_hint: |
+  Replace hardcoded paths with $PROJECT_ROOT:
+
+  # ❌ Wrong:
+  /c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain/tests/...
+
+  # ✅ Correct:
+  $PROJECT_ROOT/tests/...
+
+  Or use relative paths:
+  cd "$PROJECT_ROOT"
+  ./tests/...
+
+recipe_used: none
+created_at: 2026-04-01T09:32:00Z

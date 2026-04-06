@@ -1,5 +1,17 @@
 # 查询模板格式定义 (queries/)
 
+> **⚠️ Fusion Guide 整合通知**
+> 
+> 本目录中的 KQL 查询模板已被整合到 Product Skill 的融合排查指南中：
+> `skills/products/{product}/guides/details/*.md`
+> 
+> **Troubleshooter 加载优先级**：
+> 1. 优先读取 `skills/products/{product}/guides/` 中的融合指南（含嵌入的 KQL）
+> 2. 融合指南未覆盖的场景 → fallback 到本目录的查询文件
+> 
+> 本目录保留作为 fallback 和历史参考，不会被删除。
+> 各查询文件的 frontmatter 中 `deprecated: true` 表示已被融合，`fusedTo` 指向对应指南。
+
 本目录存放 KQL 查询模板文件，每个文件对应一个或一组相关查询。
 
 ## 文件命名规范

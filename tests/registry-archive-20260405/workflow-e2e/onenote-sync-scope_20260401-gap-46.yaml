@@ -1,0 +1,32 @@
+# Test: hash 相同 → 仅更新 frontmatter `modified:` 和 `content_hash:`，不重写正文（快速路径）
+# Generated: Cycle 0 | Source: spec-driven
+# Recipe: none
+
+id: "onenote-sync-scope_20260401-gap-46"
+name: "hash 相同 → 仅更新 frontmatter `modified:` 和 `content_hash:`，不重写正文（快速路径）"
+category: "workflow-e2e"
+source: "spec-driven"
+description: "hash 相同 → 仅更新 frontmatter `modified:` 和 `content_hash:`，不重写正文（快速路径）"
+safety_level: "safe"
+priority: "medium"
+impact: "P2"
+impactReason: "Spec AC 未覆盖"
+tags: ["spec-driven","onenote-sync-scope"]
+
+steps:
+  - action: "validate"
+    params:
+      description: "hash 相同 → 仅更新 frontmatter `modified:` 和 `content_hash:`，不重写正文（快速路径）"
+
+assertions:
+  - type: "file_exists"
+    target: "cases/"
+    expected: "true"
+    description: "hash 相同 → 仅更新 frontmatter `modified:` 和 `content_hash:`，不重写正文（快速路径）"
+
+timeout_seconds: 30
+metadata:
+  generatedAt: "2026-04-05T00:45:22.682Z"
+  round: 0
+  gapId: "onenote-sync-scope_20260401-gap-46"
+  recipeUsed: null

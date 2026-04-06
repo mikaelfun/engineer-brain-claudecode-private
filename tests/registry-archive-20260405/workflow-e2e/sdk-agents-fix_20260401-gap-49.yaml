@@ -1,0 +1,32 @@
+# Test: `query()` 调用中通过 `agents` option 注入解析后的 agent 定义
+# Generated: Cycle 0 | Source: spec-driven
+# Recipe: none
+
+id: "sdk-agents-fix_20260401-gap-49"
+name: "`query()` 调用中通过 `agents` option 注入解析后的 agent 定义"
+category: "workflow-e2e"
+source: "spec-driven"
+description: "`query()` 调用中通过 `agents` option 注入解析后的 agent 定义"
+safety_level: "safe"
+priority: "medium"
+impact: "P2"
+impactReason: "Spec AC 未覆盖"
+tags: ["spec-driven","sdk-agents-fix"]
+
+steps:
+  - action: "validate"
+    params:
+      description: "`query()` 调用中通过 `agents` option 注入解析后的 agent 定义"
+
+assertions:
+  - type: "file_exists"
+    target: "cases/"
+    expected: "true"
+    description: "`query()` 调用中通过 `agents` option 注入解析后的 agent 定义"
+
+timeout_seconds: 30
+metadata:
+  generatedAt: "2026-04-05T00:45:22.682Z"
+  round: 0
+  gapId: "sdk-agents-fix_20260401-gap-49"
+  recipeUsed: null

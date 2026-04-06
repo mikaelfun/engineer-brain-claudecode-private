@@ -1,0 +1,9 @@
+{
+  "testId": "obs-bash-antipattern",
+  "round": 3,
+  "timestamp": "2026-04-05T12:00:11.000Z",
+  "status": "pass",
+  "assertions": [{"name":"No direct state.json writes in executors","pass":true,"expected":"exit 0","actual":"exit 0"}],
+  "error": null,
+  "duration_ms": 23116
+}

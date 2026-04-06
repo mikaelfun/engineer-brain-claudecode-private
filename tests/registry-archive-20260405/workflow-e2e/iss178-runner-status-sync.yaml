@@ -1,0 +1,36 @@
+# Test: ISS-178 TestLab Runner Status Sync
+# Generated: Round 30 | Source: issues/ISS-178.json
+# Recipe: none
+
+id: "iss178-runner-status-sync"
+name: "TestLab runner control bar recovers idle state when external run completes"
+category: "workflow-e2e"
+source: "issues/ISS-178.json"
+safety_level: "safe"
+description: "Verify that supervisor.json status field returns to 'idle' after test-supervisor-runner completes, ensuring TestLab dashboard runner control bar shows correct state"
+
+steps:
+  - action: "validate"
+    params:
+      description: "Verify supervisor status field is in a valid state (idle/running)"
+
+assertions:
+  - type: "file_exists"
+    target: "tests/supervisor.json"
+    expected: "true"
+  - type: "json_field_enum"
+    target: "tests/supervisor.json"
+    field: "status"
+    expected: ["idle", "running"]
+  - type: "json_field"
+    target: "issues/ISS-178.json"
+    field: "status"
+    expected: "tracked"
+
+metadata:
+  generatedAt: "2026-03-30T17:20:00.000Z"
+  round: 30
+  gapId: "ISS-178"
+  issueId: "ISS-178"
+  trackId: null
+  recipeUsed: null

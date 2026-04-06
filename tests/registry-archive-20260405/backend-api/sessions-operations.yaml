@@ -1,0 +1,41 @@
+id: "sessions-operations"
+name: "Sessions & Operations API — Active Sessions + Operations"
+category: "backend-api"
+source: "dashboard/src/routes/case-routes.ts + sessions.ts"
+description: "验证 sessions/operations GET 端点返回 200 + 正确 JSON 结构"
+safety_level: "safe"
+priority: "medium"
+tags: ["api", "sessions", "operations", "round-2"]
+
+steps:
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/sessions"
+      auth: true
+    safety_check: "api.safe[GET /api/sessions]"
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/sessions/all"
+      auth: true
+    safety_check: "api.safe[GET /api/sessions]"
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "{api_base}/api/operations/active"
+      auth: true
+    safety_check: "api.safe[GET /api/operations/active]"
+
+assertions:
+  - type: "status_code"
+    target: "GET /api/sessions"
+    expected: 200
+  - type: "status_code"
+    target: "GET /api/sessions/all"
+    expected: 200
+  - type: "status_code"
+    target: "GET /api/operations/active"
+    expected: 200
+
+timeout_seconds: 30

@@ -1,0 +1,33 @@
+id: "wf-iss113"
+name: "ISS-113 — Inspection 重构：case-summary 增量叙事 + 规则化 todo 替代 inspection"
+category: "workflow-e2e"
+source: "issues/ISS-113.json"
+description: "验证 ISS-113（tracked）的验收标准：`case-summary.md` 在首次 casework 时由 LLM 生成完整摘要"
+safety_level: "safe"
+data_source: live
+live_pool: "data_rich"
+priority: "medium"
+tags: ["issue-driven", "iss-113", "tracked"]
+
+steps:
+  - action: "run_skill"
+    params:
+      skill: "data-refresh"
+      case_id: "{live_case_id}"
+    safety_check: "scripts.safe[data-refresh]"
+
+assertions:
+  - type: "file_exists"
+    target: "cases/active/{test_case_id}/case-summary.md"
+    description: "`case-summary.md` 在首次 casework 时由 LLM 生成完整摘要"
+  - type: "file_exists"
+    target: "cases/active/{test_case_id}/case-summary.md"
+    description: "`case-summary.md` 在 CHANGED 时由 LLM 增量追加新进展（Edit，不全量重写）"
+  - type: "file_exists"
+    target: "cases/active/{test_case_id}/case-summary.md"
+    description: "`case-summary.md` 在 NO_CHANGE 时完全跳过（0 reads, 0 writes）"
+  - type: "file_exists"
+    target: "cases/active/{test_case_id}/case-summary.md"
+    description: "`generate-todo.sh` 根据 meta.json 规则矩阵生成 todo（无 LLM）"
+
+timeout_seconds: 120

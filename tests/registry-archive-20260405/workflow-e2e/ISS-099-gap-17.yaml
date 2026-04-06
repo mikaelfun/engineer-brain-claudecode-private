@@ -1,0 +1,32 @@
+# Test: 辅助证据链：检查 case 最新工程师邮件是否为 closure 邮件，作为关闭状态的辅证（D365 状态为主）
+# Generated: Cycle 0 | Source: issue-driven
+# Recipe: none
+
+id: "ISS-099-gap-17"
+name: "辅助证据链：检查 case 最新工程师邮件是否为 closure 邮件，作为关闭状态的辅证（D365 状态为主）"
+category: "workflow-e2e"
+source: "issue-driven"
+description: "辅助证据链：检查 case 最新工程师邮件是否为 closure 邮件，作为关闭状态的辅证（D365 状态为主）"
+safety_level: "safe"
+priority: "medium"
+impact: "P2"
+impactReason: "缺失测试覆盖：workflow-e2e 功能"
+tags: ["issue-driven","ISS-099"]
+
+steps:
+  - action: "validate"
+    params:
+      description: "辅助证据链：检查 case 最新工程师邮件是否为 closure 邮件，作为关闭状态的辅证（D365 状态为主）"
+
+assertions:
+  - type: "file_exists"
+    target: "cases/"
+    expected: "true"
+    description: "辅助证据链：检查 case 最新工程师邮件是否为 closure 邮件，作为关闭状态的辅证（D365 状态为主）"
+
+timeout_seconds: 30
+metadata:
+  generatedAt: "2026-04-05T00:45:22.682Z"
+  round: 0
+  gapId: "ISS-099-gap-17"
+  recipeUsed: null

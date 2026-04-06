@@ -1,1 +1,88 @@
-{}
+{
+  "phase": "SCAN",
+  "round": 4,
+  "stats": {
+    "failed": 6,
+    "passed": 0,
+    "fixed": 4,
+    "skipped": 1
+  },
+  "maxRounds": 50,
+  "roundJourney": {
+    "SCAN": {
+      "status": "pending",
+      "startedAt": "2026-04-05T11:18:43Z",
+      "summary": "11 gaps (4 P1, 4 P2, 3 P3) from issues + observability",
+      "duration_ms": 111148,
+      "completedAt": "2026-04-05T11:20:34Z"
+    },
+    "GENERATE": {
+      "status": "pending",
+      "startedAt": "2026-04-05T11:20:45Z",
+      "summary": "7 tests generated (4 P2 workflow-e2e, 3 P3 observability)",
+      "duration_ms": 70416,
+      "completedAt": "2026-04-05T11:21:56Z"
+    },
+    "TEST": {
+      "status": "pending",
+      "summary": "7 tests: 0 pass, 6 fail, 1 skip. Test definitions need format fixes.",
+      "startedAt": "2026-04-05T11:22:06Z",
+      "duration_ms": 193268,
+      "completedAt": "2026-04-05T11:25:19Z"
+    },
+    "VALIDATE": {
+      "status": "pending",
+      "summary": "6/6 items validated as fix (3 assertion-format, 3 unknown-probe-type)",
+      "startedAt": "2026-04-05T11:41:52Z",
+      "duration_ms": 57765,
+      "completedAt": "2026-04-05T11:42:50Z"
+    },
+    "FIX": {
+      "status": "pending",
+      "summary": "4/4 fixes applied (1 assertion fix, 3 directory moves)",
+      "startedAt": "2026-04-05T11:54:16Z",
+      "duration_ms": 165478,
+      "completedAt": "2026-04-05T11:57:02Z"
+    },
+    "VERIFY": {
+      "status": "pending",
+      "summary": "Pass 2: 3 pass, 1 skip (real finding). Total: 5 fixed, 2 skipped.",
+      "startedAt": "2026-04-05T11:57:10Z",
+      "duration_ms": 256306,
+      "completedAt": "2026-04-05T12:01:27Z"
+    }
+  },
+  "testQueue": [],
+  "fixQueue": [],
+  "verifyQueue": [],
+  "regressionQueue": [],
+  "gaps": [],
+  "currentTest": "",
+  "inProgress": [],
+  "skipRegistry": [
+    {
+      "testId": "obs-agent-count",
+      "reason": "real-finding: 12 agents exceeds 10 limit, requires human decision (prune agents or raise threshold)",
+      "skippedAt": "2026-04-05T12:01:17Z",
+      "cycle": 3,
+      "reviewable": true
+    }
+  ],
+  "phaseHistory": [],
+  "observabilityStatus": {},
+  "roundStats": {
+    "passed": 5,
+    "failed": 1,
+    "fixed": 4,
+    "skipped": 1
+  },
+  "scanStrategy": {},
+  "runnerActive": null,
+  "runnerStep": null,
+  "phaseProgress": {
+    "current": 4,
+    "total": 4,
+    "testId": "obs-windows-paths"
+  },
+  "status": "idle"
+}

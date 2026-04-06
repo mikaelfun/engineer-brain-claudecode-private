@@ -1,0 +1,40 @@
+id: "regression-iss100"
+name: "Regression: ISS-100 — Dashboard 重启按钮实现逻辑不完善：spawn 命令与 dev 脚本不一致，无法正确杀死 --watch 模式进"
+category: "ui-interaction"
+source: "issues/ISS-100.json"
+description: "回归测试：验证 ISS-100 实现的功能未退化"
+safety_level: "safe"
+priority: "medium"
+tags: ["regression", "issue-driven", "iss-100"]
+regression_for: "ISS-100"
+
+steps:
+  - action: "navigate"
+    params:
+      url: "{frontend_url}"
+    safety_check: "ui.safe[navigate_to_page]"
+  - action: "verify_element"
+    params:
+      selector: "body"
+      expected: "visible"
+      timeout: 5000
+
+assertions:
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "点击 BE 重启按钮能干净杀掉 --watch 模式的整个进程树（包括 watcher 父进程）"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "重启后后端以 `--watch` 模式运行，保持热重载能力"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "点击 FE 重启按钮能干净杀掉 vite 进程并以相同参数重启"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "restart service 的 spawn 命令与 package.json dev 脚本保持一致"
+
+timeout_seconds: 60

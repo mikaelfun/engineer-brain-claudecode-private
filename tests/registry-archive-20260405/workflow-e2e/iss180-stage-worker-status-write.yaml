@@ -1,0 +1,42 @@
+# Test: ISS-180 — stage-worker writes pipelineStatus authoritative field
+# Generated: Cycle 33 | Source: issue-driven:ISS-180
+# Recipe: none
+
+id: "iss180-stage-worker-status-write"
+name: "State tracking: stage-worker writes pipelineStatus:running and pipelineStatus:idle via state-writer.sh"
+category: "workflow-e2e"
+source: "issue-driven:ISS-180"
+safety_level: "safe"
+description: "Verify stage-worker phase code correctly writes pipelineStatus via state-writer.sh --merge (not direct JSON write), and pipeline.json reflects authoritative running/idle status"
+
+steps:
+  - action: "validate"
+    params:
+      description: "Check that stage-worker phases write pipelineStatus via state-writer.sh, not direct file write"
+
+assertions:
+  - type: "bash_output_not_contains"
+    target: "grep -rn 'pipelineStatus' .claude/skills/stage-worker/phases/ 2>/dev/null | grep -v 'state-writer.sh\|# ' | grep -E '> tests/pipeline.json|tee tests/pipeline.json' || echo ''"
+    expected: "pipeline.json"
+    description: "stage-worker phases must not directly write pipelineStatus to pipeline.json"
+  - type: "bash_output_contains"
+    target: "grep -rn 'pipelineStatus.*running\|running.*pipelineStatus' .claude/skills/stage-worker/phases/ 2>/dev/null | head -3 || echo 'NOT_FOUND'"
+    expected: "running"
+    description: "stage-worker phases must reference pipelineStatus:running"
+  - type: "bash_output_contains"
+    target: "grep -rn 'pipelineStatus.*idle\|idle.*pipelineStatus' .claude/skills/stage-worker/phases/ 2>/dev/null | head -3 || echo 'NOT_FOUND'"
+    expected: "idle"
+    description: "stage-worker phases must reference pipelineStatus:idle (on return)"
+  - type: "json_field_enum"
+    target: "tests/pipeline.json"
+    field: "pipelineStatus"
+    expected: ["idle", "running", "paused"]
+    description: "pipeline.json must have valid pipelineStatus value"
+
+metadata:
+  generatedAt: "2026-03-31T19:55:00.000Z"
+  cycle: 33
+  gapId: "ISS-180-gap3"
+  issueId: "ISS-180"
+  trackId: "state-authority_20260330"
+  recipeUsed: null

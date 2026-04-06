@@ -29,9 +29,11 @@ dashboard/test-screenshots-*/
 *.jpg
 *.jpeg
 
-# Environment files
+# Environment files & secrets
 .env
 .env.local
+.mcp.json
+config.json
 
 # OS files
 .DS_Store

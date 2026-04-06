@@ -1,0 +1,32 @@
+# Test: 折叠的历史 draft 显示基本信息（类型、时间）便于识别
+# Generated: Cycle 0 | Source: spec-driven
+# Recipe: none
+
+id: "draft-collapse_20260331-gap-24"
+name: "折叠的历史 draft 显示基本信息（类型、时间）便于识别"
+category: "workflow-e2e"
+source: "spec-driven"
+description: "折叠的历史 draft 显示基本信息（类型、时间）便于识别"
+safety_level: "safe"
+priority: "medium"
+impact: "P2"
+impactReason: "Spec AC 未覆盖"
+tags: ["spec-driven","draft-collapse"]
+
+steps:
+  - action: "validate"
+    params:
+      description: "折叠的历史 draft 显示基本信息（类型、时间）便于识别"
+
+assertions:
+  - type: "file_exists"
+    target: "cases/"
+    expected: "true"
+    description: "折叠的历史 draft 显示基本信息（类型、时间）便于识别"
+
+timeout_seconds: 30
+metadata:
+  generatedAt: "2026-04-05T00:45:22.682Z"
+  round: 0
+  gapId: "draft-collapse_20260331-gap-24"
+  recipeUsed: null

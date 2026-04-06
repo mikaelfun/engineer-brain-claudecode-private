@@ -7,7 +7,7 @@ import { query } from '@anthropic-ai/claude-agent-sdk';
     for await (const msg of query({
       prompt: 'What project is this? Read CLAUDE.md and tell me the project name briefly.',
       options: {
-        cwd: 'C:\\Users\\fangkun\\Documents\\Claude Code Projects\\EngineerBrain',
+        cwd: process.cwd(),
         settingSources: ['user', 'project'] as any,
         systemPrompt: { type: 'preset' as const, preset: 'claude_code' as const, append: 'Be brief.' },
         tools: ['Bash', 'Read', 'Write', 'Edit', 'Glob', 'Grep', 'Agent'],

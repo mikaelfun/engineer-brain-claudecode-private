@@ -1,0 +1,9 @@
+{
+  "testId": "obs-windows-paths",
+  "round": 3,
+  "timestamp": "2026-04-05T12:00:41.000Z",
+  "status": "pass",
+  "assertions": [{"name":"No hardcoded Windows paths in scripts","pass":true,"expected":"exit 0","actual":"exit 0"}],
+  "error": null,
+  "duration_ms": 21514
+}

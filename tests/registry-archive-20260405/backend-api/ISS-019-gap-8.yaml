@@ -1,0 +1,32 @@
+# Test: agent 完成后 SSE 事件附带 plan.md 概要（前 2000 字符）
+# Generated: Cycle 0 | Source: issue-driven
+# Recipe: issue-driven-api
+
+id: "ISS-019-gap-8"
+name: "agent 完成后 SSE 事件附带 plan.md 概要（前 2000 字符）"
+category: "backend-api"
+source: "issue-driven"
+description: "agent 完成后 SSE 事件附带 plan.md 概要（前 2000 字符）"
+safety_level: "safe"
+priority: "medium"
+impact: "P2"
+impactReason: "缺失测试覆盖：regression 功能"
+tags: ["issue-driven","ISS-019"]
+
+steps:
+  - action: "http_request"
+    params:
+      description: "Verify backend is reachable"
+
+assertions:
+  - type: "status_code"
+    target: "response"
+    expected: "200"
+    description: "agent 完成后 SSE 事件附带 plan.md 概要（前 2000 字符）"
+
+timeout_seconds: 30
+metadata:
+  generatedAt: "2026-04-05T00:45:22.682Z"
+  round: 0
+  gapId: "ISS-019-gap-8"
+  recipeUsed: "issue-driven-api"

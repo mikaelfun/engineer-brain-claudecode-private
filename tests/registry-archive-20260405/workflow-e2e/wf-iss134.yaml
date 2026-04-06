@@ -1,0 +1,27 @@
+id: "wf-iss134"
+name: "ISS-134 — Dashboard case-session-manager spawn session 未传 mcpServers"
+category: "workflow-e2e"
+source: "issues/ISS-134.json"
+description: "验证 ISS-134（implemented）的验收标准：不影响现有 session 功能"
+safety_level: "safe"
+data_source: live
+live_pool: "data_rich"
+priority: "high"
+tags: ["issue-driven", "iss-134", "implemented"]
+
+steps:
+  - action: "run_skill"
+    params:
+      skill: "data-refresh"
+      case_id: "{live_case_id}"
+    safety_check: "scripts.safe[data-refresh]"
+
+assertions:
+  - type: "file_exists"
+    target: "cases/active/{test_case_id}/case-summary.md"
+    description: "不影响现有 session 功能"
+  - type: "file_exists"
+    target: "cases/active/{test_case_id}/case-summary.md"
+    description: "单元测试覆盖 mcpServers 参数传递"
+
+timeout_seconds: 120

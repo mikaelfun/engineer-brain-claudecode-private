@@ -39,6 +39,7 @@ export function useSSE() {
   // Use stable refs for Zustand store actions to avoid effect re-runs
   const patrolOnProgress = usePatrolStore((s) => s.onPatrolProgress)
   const patrolOnCaseCompleted = usePatrolStore((s) => s.onPatrolCaseCompleted)
+  const patrolOnCaseStepUpdate = usePatrolStore((s) => s.onCaseStepUpdate)
   const addCaseSessionMessage = useCaseSessionStore((s) => s.addMessage)
   const addCaseSessionPerSession = useCaseSessionStore((s) => s.addSessionMessage)
   const addIssueTrackMessage = useIssueTrackStore((s) => s.addMessage)
@@ -237,6 +238,9 @@ export function useSSE() {
 
         // Immediately invalidate operation query so UI reflects active operation
         queryClient.invalidateQueries({ queryKey: ['case-operation', caseNumber] })
+
+        // Update patrol store if patrol is running (per-case sub-step tracking)
+        if (d.step) patrolOnCaseStepUpdate(caseNumber, { step: d.step })
       }
     })
 
@@ -267,6 +271,9 @@ export function useSSE() {
             if (d.step) sessionStoreSetCurrentStep(caseNumber, d.step)
           }
         }
+
+        // Update patrol store per-case tool/step tracking
+        if (d.toolName) patrolOnCaseStepUpdate(caseNumber, { tool: d.toolName })
       }
     })
 

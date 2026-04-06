@@ -87,6 +87,15 @@ export interface Note {
   body: string
 }
 
+// ============ Labor Record 相关 ============
+
+export interface LaborRecord {
+  date: string
+  durationMin: number
+  classification: string
+  description: string
+}
+
 // ============ Todo 相关 ============
 
 export interface TodoFile {
@@ -379,6 +388,7 @@ export interface PatrolProgress {
   processedCases?: number
   currentCase?: string
   error?: string
+  detail?: string
   todoSummary?: PatrolTodoSummary
 }
 

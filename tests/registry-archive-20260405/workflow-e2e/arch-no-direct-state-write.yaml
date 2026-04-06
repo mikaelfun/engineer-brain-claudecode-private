@@ -1,0 +1,30 @@
+# Test: Architecture Compliance — No Direct state.json Writes
+# Generated: Round 30 | Source: arch-scan
+# Recipe: none
+
+id: "arch-no-direct-state-write"
+name: "Executor scripts use state-writer.sh (no direct state.json writes)"
+category: "workflow-e2e"
+source: "tests/executors/architecture-scanner.sh"
+safety_level: "safe"
+description: "Verify executor scripts do not directly write to state.json — must use state-writer.sh for atomic writes. Checks architecture-scanner.sh specifically."
+
+steps:
+  - action: "validate"
+    params:
+      description: "Check that state-writer.sh is the canonical state write path"
+
+assertions:
+  - type: "file_exists"
+    target: "tests/executors/state-writer.sh"
+    expected: "true"
+  - type: "text_not_contains"
+    target: "tests/executors/architecture-scanner.sh"
+    expected: "state.json\""
+
+metadata:
+  generatedAt: "2026-03-30T17:20:00.000Z"
+  round: 30
+  gapId: "arch-direct-state-write"
+  source: "arch-scan"
+  recipeUsed: null

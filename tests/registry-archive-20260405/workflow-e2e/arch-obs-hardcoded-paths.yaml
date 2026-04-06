@@ -1,0 +1,29 @@
+id: "arch-obs-hardcoded-paths"
+name: "Architecture — Observability runner uses $PROJECT_ROOT instead of hardcoded paths"
+category: "workflow-e2e"
+source: "arch-scan"
+description: "Verify that observability-runner.sh uses $PROJECT_ROOT variable for fallback defaults instead of hardcoded absolute paths."
+safety_level: "safe"
+priority: "P3"
+tags: ["architecture", "observability", "paths", "cycle-41"]
+
+steps:
+  # Check for hardcoded paths in fallback assignments (the real portability issue)
+  # Pattern: VARNAME="/c/Users/..." after "if [ -z" check - these should use $PROJECT_ROOT
+  # Excludes: test fixtures in 'bash -c' subshells which are intentional test data
+  - action: "bash_command"
+    params:
+      command: |
+        # Find hardcoded fallback defaults - pattern: standalone assignment with hardcoded path
+        # The problematic pattern is: VARNAME="/c/Users/..." NOT inside bash -c
+        # We check for lines that are direct variable fallbacks (not inside quotes)
+        grep -n 'CASES_ROOT="/c/Users' tests/executors/observability-runner.sh 2>/dev/null | wc -l
+    safety_check: "scripts.safe[compliance-check]"
+
+assertions:
+  - type: "text_equals"
+    target: "command_output"
+    expected: "0"
+    description: "No hardcoded CASES_ROOT fallback (should use $PROJECT_ROOT/cases)"
+
+timeout_seconds: 30

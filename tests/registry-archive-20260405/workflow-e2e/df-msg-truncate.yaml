@@ -1,0 +1,39 @@
+id: "df-msg-truncate"
+name: "Design Fidelity: MessageBubble 正常模式500字符截断，compact模式展开显示完整内容"
+category: "workflow-e2e"
+source: "design-fidelity"
+description: "验证 SessionMessageList.tsx MessageBubble 在正常模式截断 500 字符，compact 模式截断 200 字符，均可展开查看完整内容"
+safety_level: "safe"
+priority: "high"
+recipe_used: "design-fidelity-test.md"
+tags: ["design-fidelity", "session-msg-truncate", "message-bubble"]
+
+steps:
+  - action: "bash_command"
+    params:
+      command: "grep -n \"maxLen\\|500\\|200\\|compact\" dashboard/web/src/components/session/SessionMessageList.tsx | grep -v \"//\" | wc -l"
+    safety_check: "scripts.safe[compliance-check]"
+  - action: "bash_command"
+    params:
+      command: "grep -c \"compact ? 200 : 500\\|maxLen = compact\" dashboard/web/src/components/session/SessionMessageList.tsx"
+    safety_check: "scripts.safe[compliance-check]"
+  - action: "bash_command"
+    params:
+      command: "grep -c \"expanded\\|setExpanded\\|展开\" dashboard/web/src/components/session/SessionMessageList.tsx"
+    safety_check: "scripts.safe[compliance-check]"
+
+assertions:
+  - type: "text_gt"
+    target: "step1_output"
+    expected: "0"
+    description: "maxLen/500/200/compact references must exist"
+  - type: "text_gt"
+    target: "step2_output"
+    expected: "0"
+    description: "compact mode must use 200 char limit, normal mode 500"
+  - type: "text_gt"
+    target: "step3_output"
+    expected: "0"
+    description: "expand/collapse state management must be implemented"
+
+timeout_seconds: 30

@@ -1,0 +1,46 @@
+id: "regression-fetch-emails-falsepositive"
+name: "回归: fetch-emails FAIL 误报"
+category: "workflow-e2e"
+source: "cases/test-results/evolution-log.md — Bug #1"
+description: "邮件正文中的 ❌ 触发 FAIL 误报 — 修复为只扫描最后 5 行"
+safety_level: "safe"
+priority: "critical"
+tags: ["regression", "fixed-bug"]
+regression_for: "evolution-finding-1"
+
+test_case_id: "2603090040000814"  # 该 case 有含 ❌ 的邮件正文
+
+setup:
+  - action: "backup_case"
+    params:
+      source: "{cases_root}/active/{test_case_id}"
+      dest: "{backup_dir}/{test_case_id}"
+
+steps:
+  - action: "run_skill"
+    params:
+      skill: "data-refresh"
+      case_id: "{test_case_id}"
+    safety_check: "scripts.safe[data-refresh]"
+    timeout_seconds: 120
+
+assertions:
+  # data-refresh 应该 PASS，即使邮件正文有 ❌ 符号
+  - type: "file_exists"
+    target: "{cases_root}/active/{test_case_id}/emails.md"
+    expected: true
+  - type: "file_content"
+    target: "{cases_root}/active/{test_case_id}/emails.md"
+    expected: "non_empty"
+  # 不应该有误报的 FAIL 标记
+  - type: "text_contains"
+    target: "execution_log"
+    expected: "not_contains: FAIL"
+
+teardown:
+  - action: "restore_case"
+    params:
+      source: "{backup_dir}/{test_case_id}"
+      dest: "{cases_root}/active/{test_case_id}"
+
+timeout_seconds: 180

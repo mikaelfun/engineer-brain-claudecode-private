@@ -1,0 +1,32 @@
+# Test: casework 单 case 处理时，在 data-refresh 后检测当前 case 是否已不在 active list，如已归档/转移则提前终止并归档
+# Generated: Cycle 0 | Source: issue-driven
+# Recipe: none
+
+id: "ISS-099-gap-18"
+name: "casework 单 case 处理时，在 data-refresh 后检测当前 case 是否已不在 active list，如已归档/转移则提前终止并归档"
+category: "workflow-e2e"
+source: "issue-driven"
+description: "casework 单 case 处理时，在 data-refresh 后检测当前 case 是否已不在 active list，如已归档/转移则提前终止并归档"
+safety_level: "safe"
+priority: "high"
+impact: "P1"
+impactReason: "缺失测试覆盖：workflow-e2e 功能"
+tags: ["issue-driven","ISS-099"]
+
+steps:
+  - action: "validate"
+    params:
+      description: "casework 单 case 处理时，在 data-refresh 后检测当前 case 是否已不在 active list，如已归档/转移则提前终止并归档"
+
+assertions:
+  - type: "file_exists"
+    target: "cases/"
+    expected: "true"
+    description: "casework 单 case 处理时，在 data-refresh 后检测当前 case 是否已不在 active list，如已归档/转移则提前终止并归档"
+
+timeout_seconds: 30
+metadata:
+  generatedAt: "2026-04-05T00:45:22.682Z"
+  round: 0
+  gapId: "ISS-099-gap-18"
+  recipeUsed: null

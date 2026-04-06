@@ -1,0 +1,44 @@
+id: "regression-iss024"
+name: "Regression: ISS-024 — webui issues支持搜索关键词"
+category: "ui-interaction"
+source: "issues/ISS-024.json"
+description: "回归测试：验证 ISS-024 实现的功能未退化"
+safety_level: "safe"
+priority: "medium"
+tags: ["regression", "issue-driven", "iss-024"]
+regression_for: "ISS-024"
+
+steps:
+  - action: "navigate"
+    params:
+      url: "{frontend_url}"
+    safety_check: "ui.safe[navigate_to_page]"
+  - action: "verify_element"
+    params:
+      selector: "body"
+      expected: "visible"
+      timeout: 5000
+
+assertions:
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "A search input box is visible on the Issues page alongside existing filters"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "Typing a keyword filters the issue list in real-time (case-insensitive)"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "Search matches against issue title, description, and ID (e.g. 'ISS-021')"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "Search works in combination with existing status/type filters"
+  - type: "text_contains"
+    target: "page"
+    expected: "visible"
+    description: "Clearing the search box restores the full filtered list"
+
+timeout_seconds: 60

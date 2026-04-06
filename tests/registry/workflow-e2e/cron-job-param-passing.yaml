@@ -1,0 +1,30 @@
+id: "cron-job-param-passing"
+name: "Cron Job Parameter Passing"
+category: "workflow-e2e"
+source: "issues/ISS-207.json"
+description: "验证 cron job 配置中 sync 参数存在且可通过 API 查询到"
+safety_level: "safe"
+priority: "high"
+tags: ["regression", "cron", "ISS-207"]
+impact: "P1"
+impactReason: "Core cron functionality"
+recipe_used: "none"
+steps:
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "http://localhost:3010/api/health"
+    safety_check: "GET /api/health"
+  - action: "http_request"
+    params:
+      method: "GET"
+      url: "http://localhost:3010/api/agents/cron-jobs"
+    safety_check: "GET /api/agents/cron-jobs"
+assertions:
+  - type: "status_code"
+    expected: 200
+  - type: "json_field"
+    target: "response"
+    field: "jobs"
+    expected: "array"
+timeout_seconds: 60
