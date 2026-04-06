@@ -5,7 +5,6 @@ displayName: 数据刷新
 category: inline
 stability: stable
 requiredInput: caseNumber
-mcpServers: [icm]
 estimatedDuration: 30s
 promptTemplate: |
   Execute data-refresh for Case {caseNumber}. Read .claude/skills/data-refresh/SKILL.md for full instructions, then execute.
@@ -13,8 +12,11 @@ allowed-tools:
   - Bash
   - Read
   - Write
-  - mcp__icm__get_incident_details_by_id
-  - mcp__icm__get_ai_summary
+  - mcp__playwright__browser_navigate
+  - mcp__playwright__browser_run_code
+  - mcp__playwright__browser_click
+  - mcp__playwright__browser_snapshot
+  - mcp__playwright__browser_wait_for
 ---
 
 # /data-refresh — 拉取 Case 最新数据
@@ -107,11 +109,59 @@ Token 优先级：① dtm-token-global.json → ② per-workspace 缓存 → ③
 
 **AR Mode**: 从 main case 下载附件（读 AR 目录下的 `case-info.md`，它来自 main case）。
 
-### 3. ICM 数据拉取
-从 case-info.md 读 ICM Number。有 ICM 则用 `mcp__icm__get_ai_summary` + `get_incident_details_by_id`，结果写入 `{caseDir}/icm/`。无 ICM 跳过。
+### 3. ICM 数据拉取（Playwright 拦截）
+
+从 `case-info.md` 读 ICM Number。无 ICM 则跳过。有 ICM 则通过 Playwright 拦截 ICM portal 内部 API，一次拿到所有数据。
+
+**方法**：使用 `browser_run_code` 设置 `page.route()` 拦截两个 API，然后导航到 ICM summary 页面：
+
+```javascript
+async (page) => {
+  let details = null;
+  let discussions = null;
+  
+  await page.route('**/GetIncidentDetails*', async (route) => {
+    const response = await route.fetch();
+    const body = await response.text();
+    details = body;
+    await route.fulfill({ response, body });
+  });
+  
+  await page.route('**/getdescriptionentries*', async (route) => {
+    const response = await route.fetch();
+    const body = await response.text();
+    discussions = body;
+    await route.fulfill({ response, body });
+  });
+  
+  await page.goto(`https://portal.microsofticm.com/imp/v5/incidents/details/${ICM_ID}/summary`);
+  await page.waitForTimeout(10000);
+  
+  // ... parse and return JSON (see icm-discussion/SKILL.md for full code)
+}
+```
+
+**SSO 登录**：如果被重定向到 `IdentityProviderSelection.html`，选择 Entra ID → fangkun@microsoft.com。
+
+**从 `GetIncidentDetails` 提取**（写入 `{caseDir}/icm/icm-summary.md`）：
+- 基础 meta：Title, State, Severity, OwningTeam, Owner, dates
+- Authored Summary：`Description` 字段（HTML → 纯文本）
+- Manage Access：`AccessRestrictedToClaims` 数组
+  - 每个 claim 的 team name 通过 `mcp__icm__get_team_by_id` 解析（可选，也可直接输出 team ID）
+  - **检查**：是否包含 `CSS Mooncake` 相关 team（team name 含 "CSS Mooncake"）且 Role 为 Owners/Contributors
+  - 检查结果写入 `icm-summary.md` 末尾的 `## Manage Access` 段
+
+**从 `getdescriptionentries` 提取**（写入 `{caseDir}/icm/icm-discussions.md`）：
+- `Items[]` 数组，按时间正序，每条含 Date/Author/Cause/Text
+- HTML strip → 纯文本
+- 格式见 `icm-discussion/SKILL.md`
+
+**旧文件清理**：如果存在 `icm/{icmId}.md` 或 `icm/icm-details.md`（旧格式），删除替换。
+
+**错误处理**：Playwright 拦截失败（登录过期、页面超时）→ 记录 warning 到日志，跳过 ICM 步骤，不阻塞。
 
 ## 错误处理
 - D365 脚本失败 → 记录错误，继续其他步骤
 - 附件下载失败 → 明确记录原因（DTM token 失败等）
-- ICM MCP 不可用 → 跳过，记录警告
+- ICM Playwright 失败 → 跳过，记录警告
 - 所有步骤完成后汇报各步成功/失败状态

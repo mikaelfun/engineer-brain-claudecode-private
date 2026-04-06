@@ -5,7 +5,6 @@ displayName: 状态判断
 category: inline
 stability: stable
 requiredInput: caseNumber
-mcpServers: [icm]
 estimatedDuration: 15s
 promptTemplate: |
   Execute status-judge for Case {caseNumber}. Read .claude/skills/status-judge/SKILL.md for full instructions, then execute.
@@ -13,8 +12,6 @@ allowed-tools:
   - Bash
   - Read
   - Write
-  - mcp__icm__get_incident_details_by_id
-  - mcp__icm__get_ai_summary
 ---
 
 # /status-judge — Case 状态判断
@@ -51,8 +48,10 @@ allowed-tools:
   ```
   > AR Mode 时必须读取此文件。
 
-### 3. ICM 动态查询（如有）
-有 ICM → 用 `get_ai_summary` + `get_incident_details_by_id` 查当前状态。
+### 3. ICM 状态读取（如有）
+有 ICM → 读取 `{caseDir}/icm/icm-summary.md`（由 data-refresh 生成）获取 ICM 当前状态（State/Severity/最新 discussion）。
+如果 `icm-summary.md` 不存在 → 读 `{caseDir}/icm/` 下任意 `.md` 文件获取基础状态。
+如果 `icm/` 目录不存在或为空 → 跳过 ICM 部分。
 **有 ICM ≠ pending-pg**：PG 仍处理→pending-pg，PG 已完成→可能 pending-engineer。
 
 ### 4. 综合判断 actualStatus

@@ -172,9 +172,67 @@ I'm waiting for logs access of China cloud...
 
 ### 4. 写入 case 目录（如指定 caseNumber）
 
+**两个输出文件**：
+
 ```
-{casesRoot}/active/{caseNumber}/icm/icm-discussions.md
+{casesRoot}/active/{caseNumber}/icm/icm-summary.md     ← meta + authored summary + manage access
+{casesRoot}/active/{caseNumber}/icm/icm-discussions.md  ← discussion timeline
 ```
+
+**`icm-summary.md` 格式**：
+
+```markdown
+# ICM {incidentId} — Summary
+
+> Fetched: {date} | Source: Playwright portal intercept
+
+## Basic Info
+
+| Field | Value |
+|-------|-------|
+| Title | ... |
+| State | ACTIVE / RESOLVED |
+| Severity | 3 |
+| Team | {owningTeamName} ({owningTenantName}) |
+| Owner | {ownerDisplayName} ({ownerAlias}) |
+| Created | {date} by {createdBy} |
+| Mitigated | {date} by {mitigatedBy} |
+| Resolved | {date} by {resolvedBy} |
+| CRI Status | {customField value} |
+| Tags | {tags} |
+
+## Authored Summary
+
+{Description field, HTML stripped to plain text}
+
+## Manage Access
+
+| Role | Type | ID | Name |
+|------|------|----|------|
+| Owners | Team | 86843 | Observability T1 Support |
+| Owners | Team | 137863 | CSS Mooncake VM&SCIM support team |
+| Owners | Contact | 571948 | Kun Fang (fangkun) |
+
+### CSS Mooncake Access Check
+- ✅ CSS Mooncake team found: **CSS Mooncake VM&SCIM support team** (ID 137863) — Role: Owners
+```
+
+或当 CSS team 不在时：
+
+```markdown
+### CSS Mooncake Access Check
+- ❌ **No CSS Mooncake team found in Manage Access** — 需要在 ICM 中添加 team 的 Owner/Contributor 权限
+```
+
+### 5. CSS Mooncake Access 检查逻辑
+
+从 `GetIncidentDetails` 的 `AccessRestrictedToClaims` 数组中：
+1. 筛选 `ClaimType === 'MemberOfIcmTeamId'` 的条目
+2. 对每个 team ID，用 ICM MCP `get_team_by_id` 查名称（或直接用 `publicId` 判断）
+3. 检查是否有 team 名称包含 `CSS Mooncake`（不区分大小写）
+4. 记录检查结果到 `icm-summary.md` 的 `### CSS Mooncake Access Check` 段
+
+**注意**：team 名称中的 `&amp;` 是 HTML 编码的 `&`，匹配时需处理。
 
 ## 数据结构
 

@@ -80,6 +80,18 @@ fi
 if [ "$ENTITLEMENT_OK" = "false" ]; then
   RED_ITEMS+=("Entitlement 异常，需确认客户合同状态")
 fi
+
+# ICM Manage Access check: verify CSS Mooncake team has access
+ICM_SUMMARY="$CD/icm/icm-summary.md"
+if [ -f "$ICM_SUMMARY" ]; then
+  if grep -qi "CSS Mooncake Access Check" "$ICM_SUMMARY" 2>/dev/null; then
+    if grep -q "❌.*No CSS Mooncake team found" "$ICM_SUMMARY" 2>/dev/null; then
+      RED_ITEMS+=("ICM Manage Access 缺少 CSS Mooncake team 的 Owner/Contributor 权限，需在 ICM 中添加")
+    elif grep -q "✅.*CSS Mooncake team found" "$ICM_SUMMARY" 2>/dev/null; then
+      GREEN_ITEMS+=("ICM Manage Access: CSS Mooncake team 已授权")
+    fi
+  fi
+fi
 if [ "$ACTUAL_STATUS" = "pending-engineer" ] && [ "$DAYS" -ge 2 ] 2>/dev/null; then
   if [ "$IS_AR" = "true" ]; then
     if [ "$COMM_MODE" = "internal" ]; then

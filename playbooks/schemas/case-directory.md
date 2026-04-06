@@ -107,6 +107,16 @@ teams/
 - ICM State / Severity（如可获取）
 - Owning Team / Owning Team ID（如可获取）
 
+## icm/ 目录结构
+
+```text
+icm/
+  icm-summary.md          # 基础 meta + authored summary + manage access 状态（data-refresh 生成）
+  icm-discussions.md       # 完整 discussion timeline（data-refresh / icm-discussion 生成）
+```
+
+> **迁移说明**：旧格式文件 `{incidentId}.md`、`icm-details.md`、`incident-details.md` 已废弃，data-refresh 生成新文件时会自动清理。
+
 ## analysis/ 目录
 
 ### 文件命名

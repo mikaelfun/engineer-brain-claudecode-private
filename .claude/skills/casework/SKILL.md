@@ -24,8 +24,6 @@ allowed-tools:
   - Glob
   - Grep
   - Agent
-  - mcp__icm__get_incident_details_by_id
-  - mcp__icm__get_ai_summary
 ---
 
 # /casework — Case 全流程处理
