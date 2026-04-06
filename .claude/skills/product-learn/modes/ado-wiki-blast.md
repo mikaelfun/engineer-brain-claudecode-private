@@ -17,9 +17,25 @@
 ```
 PROJECT_ROOT    = /c/Users/fangkun/Documents/Projects/EngineerBrain/src
 MAX_AGENTS      = 15              # maxAgentsPerTick（enrich-state.json 配置）
-PAGES_PER_BATCH = 10              # 每 batch 处理的页数
+PAGES_PER_BATCH = 10              # 默认每 batch 处理的页数
 BATCH_IDS       = a,b,c,d,e,f,g,h # 最多 8 个 slot per product
 ```
+
+### 动态 Batch Size（v3 新增）
+
+部分产品 wiki 页面内容特别大，10 页/batch 容易导致 agent context 耗尽。
+按产品成功率动态调整 batch size：
+
+| 产品 | 默认 batch size | 原因 |
+|------|----------------|------|
+| aks, purview, eop | 10 | 页面短小，成功率 100% |
+| vm, arm | 8 | 部分大页面（Azure Files TSGs、Stack Hub） |
+| entra-id | 6 | 页面内容丰富（B2C/SAML 多子问题） |
+| avd | 5 | emoji 路径消耗额外 turns |
+| defender | 5 | 零宽空格路径 + 大页面 |
+
+调度器在 `Step 2: 分配页面` 时，读取 `config.json → podProducts[product].blastBatchSize`（如有），
+否则使用上表默认值。可通过 config 覆盖。
 
 ## 核心机制：滑动窗口 + Claimed Set
 
@@ -188,6 +204,7 @@ else:
 - ❌ 不执行自链续跑
 - 去重范围: 仅在 per-batch 文件内去重 + 对比主 known-issues.jsonl 的 symptom 前 100 字符（>80% 重叠则跳过）
 - ⚠️ 写入 scanned 时使用完整 key 格式（与 index path 一致）
+- ⚡ Write-Early: 第一步写 scanned，第二步写 JSONL，最后写 drafts
 
 pagesToProcess ({N} 个页面):
 [{pages JSON}]
@@ -312,21 +329,50 @@ pagesToProcess ({N} 个页面):
        ]
        crawled_leaves = filtered_leaves
    ```
+   
+   **excludeScope 过滤**（pathScope 之后应用）：
+   如果 `config.json → adoWikis` 配置中该 wiki 有 `excludeScope` 字段：
+   ```python
+   exclude_scope = wiki_config.get("excludeScope", None)
+   if exclude_scope:
+       # 排除 path 以 excludeScope 中任一前缀开头的叶子页面
+       filtered_leaves = [
+           key for key in crawled_leaves
+           if not any(key.split(":")[1].startswith(ex) for ex in exclude_scope)
+       ]
+       crawled_leaves = filtered_leaves
+   ```
+   > pathScope 用于有效 section 少的情况（白名单），excludeScope 用于噪音 section 少的情况（黑名单）。
+   > 两者可以同时使用（先 include 再 exclude）。
    > 例如 VM 配置 `pathScope: ["/SME Topics"]`，则只保留 path 以 `/SME Topics` 开头的页面，
    > 排除 `/Tip of the Day`、`/Processes`、`/Announcements` 等低价值子树。
    > 
    > 如果没有 `pathScope` → 不过滤，保留全量叶子页面（向后兼容）。
 
-4. **合并到 index**
+4. **合并到 index**（含安全门）
    ```python
    old_index = scanned_ado_wiki["index"]  # 旧索引
    new_pages = crawled_leaves             # 新 crawl 的叶子页面
    
-   # 合并：保留旧 index 中还存在的 + 添加新 index 中新增的
-   merged_index = new_pages  # 直接替换为新的完整索引
+   # ⛔ 安全门 1: 空结果保护
+   if len(new_pages) == 0:
+       print(f"ABORT: crawl returned 0 leaves for {product}, keeping old index")
+       continue  # 跳过该产品，不写入
+   
+   # ⛔ 安全门 2: 骤降保护（>50% 缩减需人工确认）
+   if len(old_index) > 0 and len(new_pages) < len(old_index) * 0.5:
+       print(f"WARNING: index shrunk by >50% ({len(old_index)} -> {len(new_pages)})")
+       print(f"  This may indicate a crawl failure. Confirm before writing.")
+       # 仍然写入，但保留 scanned 不做清洗
+   
+   # 合并：直接替换为新的完整索引
+   merged_index = new_pages
    
    scanned_ado_wiki["index"] = merged_index
    scanned_ado_wiki["indexUpdatedAt"] = now_iso
+   
+   # scanned 清洗：只移除不在新 index 中的旧记录
+   # 注意：不要在 new_pages 为空时清洗 scanned（已被安全门 1 拦截）
    ```
 
 5. **计算增量**

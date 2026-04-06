@@ -12,7 +12,10 @@
   Wiki name. If not specified, auto-detects from project.
 
 .PARAMETER PathScope
-  JSON array of path prefixes to filter. If empty, all pages included.
+  JSON array of path prefixes to INCLUDE. If empty, all pages included.
+
+.PARAMETER ExcludeScope
+  JSON array of path prefixes to EXCLUDE. Applied after PathScope.
 
 .PARAMETER SegmentedCrawl
   If set, crawl top-level first then each subtree separately (for large wikis).
@@ -31,6 +34,8 @@ param(
     [string]$Wiki = "",
 
     [string]$PathScope = "[]",
+
+    [string]$ExcludeScope = "[]",
 
     [switch]$SegmentedCrawl
 )
@@ -61,6 +66,12 @@ $prefix = "$Org/$Project/${Wiki}:"
 $scopes = @()
 if ($PathScope -ne "[]") {
     $scopes = $PathScope | ConvertFrom-Json
+}
+
+# Parse ExcludeScope
+$excludes = @()
+if ($ExcludeScope -ne "[]") {
+    $excludes = $ExcludeScope | ConvertFrom-Json
 }
 
 function Get-Leaves {
@@ -214,6 +225,29 @@ if ($scopes.Count -gt 0) {
     }
     $allLeaves = $filtered
     [Console]::Error.WriteLine("After pathScope filter: $($allLeaves.Count)")
+}
+
+# Apply excludeScope filter
+if ($excludes.Count -gt 0) {
+    $beforeExclude = $allLeaves.Count
+    $filtered = @()
+    foreach ($key in $allLeaves) {
+        $parts = $key -split ":", 2
+        if ($parts.Count -lt 2) { continue }
+        $wikiPath = $parts[1]
+        $excluded = $false
+        foreach ($ex in $excludes) {
+            if ($wikiPath.StartsWith($ex)) {
+                $excluded = $true
+                break
+            }
+        }
+        if (-not $excluded) {
+            $filtered += $key
+        }
+    }
+    $allLeaves = $filtered
+    [Console]::Error.WriteLine("After excludeScope filter: $($allLeaves.Count) (removed $($beforeExclude - $allLeaves.Count))")
 }
 
 # Validate keys (must contain ":")
