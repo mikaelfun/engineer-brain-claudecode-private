@@ -1,0 +1,1738 @@
+{
+  "product": "purview",
+  "generatedAt": "2026-04-07",
+  "topics": [
+    {
+      "slug": "scan-connectivity-credentials",
+      "title": "扫描连接与凭据问题",
+      "entryIds": [
+        "purview-ado-wiki-085",
+        "purview-ado-wiki-120",
+        "purview-ado-wiki-136",
+        "purview-ado-wiki-139",
+        "purview-ado-wiki-141",
+        "purview-ado-wiki-142",
+        "purview-ado-wiki-144",
+        "purview-ado-wiki-145",
+        "purview-ado-wiki-198",
+        "purview-ado-wiki-202",
+        "purview-ado-wiki-255",
+        "purview-ado-wiki-256",
+        "purview-ado-wiki-357",
+        "purview-ado-wiki-379",
+        "purview-ado-wiki-381",
+        "purview-ado-wiki-387",
+        "purview-ado-wiki-421",
+        "purview-ado-wiki-b-r4-001",
+        "purview-ado-wiki-a-r4-001",
+        "purview-ado-wiki-a-r4-002",
+        "purview-ado-wiki-c-r1-003",
+        "purview-mslearn-016",
+        "purview-mslearn-017",
+        "purview-ado-wiki-200"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-configure-azure-sql-db-sql-auth.md",
+        "guides/drafts/ado-wiki-salesforce-test-connection-failure.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "3rd-party",
+        "account-name",
+        "adls-gen2",
+        "ads",
+        "authentication",
+        "azure-ir",
+        "azure-sql",
+        "connection-failure"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "scan-shir-setup",
+      "title": "SHIR 安装注册与运行时",
+      "entryIds": [
+        "purview-ado-wiki-019",
+        "purview-ado-wiki-042",
+        "purview-ado-wiki-104",
+        "purview-ado-wiki-105",
+        "purview-ado-wiki-156",
+        "purview-ado-wiki-164",
+        "purview-ado-wiki-165",
+        "purview-ado-wiki-166",
+        "purview-ado-wiki-174",
+        "purview-ado-wiki-194",
+        "purview-ado-wiki-197",
+        "purview-ado-wiki-204",
+        "purview-ado-wiki-211",
+        "purview-ado-wiki-214",
+        "purview-ado-wiki-244",
+        "purview-ado-wiki-267",
+        "purview-ado-wiki-384",
+        "purview-ado-wiki-391",
+        "purview-ado-wiki-393",
+        "purview-ado-wiki-394",
+        "purview-ado-wiki-399",
+        "purview-ado-wiki-414",
+        "purview-ado-wiki-415",
+        "purview-ado-wiki-419",
+        "purview-ado-wiki-a-r7-008",
+        "purview-ado-wiki-a-r7-012",
+        "purview-ado-wiki-a-r7-013",
+        "purview-mslearn-002",
+        "purview-mslearn-005",
+        "purview-mslearn-006",
+        "purview-mslearn-008",
+        "purview-mslearn-009",
+        "purview-mslearn-010",
+        "purview-mslearn-011",
+        "purview-mslearn-012",
+        "purview-mslearn-013",
+        "purview-mslearn-014",
+        "purview-mslearn-015"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-change-log-level-k8s-shir.md",
+        "guides/drafts/ado-wiki-collect-logs-shir-k8s.md",
+        "guides/drafts/ado-wiki-collect-process-monitor-logs.md",
+        "guides/drafts/ado-wiki-get-logs-from-shir-scan.md",
+        "guides/drafts/ado-wiki-on-premise-sql-shir-log-filter.md",
+        "guides/drafts/ado-wiki-shir-connectivity.md",
+        "guides/drafts/ado-wiki-shir-k8s-setup.md",
+        "guides/drafts/ado-wiki-shir-k8s-upgrade-delete.md",
+        "guides/drafts/ado-wiki-shir-log-collection.md",
+        "guides/drafts/ado-wiki-shir-proxy-registration.md",
+        "guides/drafts/ado-wiki-shir-reportid-sanity-check.md",
+        "guides/drafts/ado-wiki-shir-setup.md",
+        "guides/drafts/ado-wiki-shir-troubleshooting-package.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "3804",
+        "adf",
+        "assembly",
+        "authentication-key",
+        "azure-policy",
+        "azure-sql",
+        "certificate",
+        "connectivity"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "scan-private-endpoint-network",
+      "title": "扫描私有终结点与网络",
+      "entryIds": [
+        "purview-ado-wiki-021",
+        "purview-ado-wiki-107",
+        "purview-ado-wiki-140",
+        "purview-ado-wiki-157",
+        "purview-ado-wiki-161",
+        "purview-ado-wiki-186",
+        "purview-ado-wiki-187",
+        "purview-ado-wiki-188",
+        "purview-ado-wiki-189",
+        "purview-ado-wiki-195",
+        "purview-ado-wiki-203",
+        "purview-ado-wiki-206",
+        "purview-ado-wiki-219",
+        "purview-ado-wiki-221",
+        "purview-ado-wiki-284",
+        "purview-ado-wiki-299",
+        "purview-ado-wiki-402",
+        "purview-ado-wiki-404",
+        "purview-ado-wiki-405",
+        "purview-ado-wiki-418",
+        "purview-ado-wiki-420",
+        "purview-ado-wiki-492",
+        "purview-ado-wiki-a-r1-001",
+        "purview-ado-wiki-a-r3-003",
+        "purview-ado-wiki-a-r5-001",
+        "purview-ado-wiki-a-r1-003",
+        "purview-ado-wiki-a-r1-004",
+        "purview-ado-wiki-a-r1-005",
+        "purview-mslearn-001",
+        "purview-mslearn-003",
+        "purview-mslearn-004",
+        "purview-mslearn-007"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-networking.md",
+        "guides/drafts/ado-wiki-check-managed-vnet-ir-version.md",
+        "guides/drafts/ado-wiki-managed-vnet-ir.md",
+        "guides/drafts/ado-wiki-multi-region-managed-vnet-ir.md",
+        "guides/drafts/ado-wiki-pe-network-troubleshooting.md",
+        "guides/drafts/ado-wiki-private-endpoints-overview.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "409-error",
+        "account-pe",
+        "adf",
+        "authorization",
+        "azure-policy",
+        "azure-rms",
+        "azure-sql",
+        "azure-sql-db"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "scan-third-party",
+      "title": "第三方数据源扫描",
+      "entryIds": [
+        "purview-ado-wiki-078",
+        "purview-ado-wiki-102",
+        "purview-ado-wiki-138",
+        "purview-ado-wiki-149",
+        "purview-ado-wiki-162",
+        "purview-ado-wiki-175",
+        "purview-ado-wiki-210",
+        "purview-ado-wiki-216",
+        "purview-ado-wiki-220",
+        "purview-ado-wiki-224",
+        "purview-ado-wiki-225",
+        "purview-ado-wiki-237",
+        "purview-ado-wiki-238",
+        "purview-ado-wiki-240",
+        "purview-ado-wiki-390",
+        "purview-ado-wiki-392",
+        "purview-ado-wiki-423",
+        "purview-ado-wiki-a-r5-007",
+        "purview-ado-wiki-a-r7-001",
+        "purview-ado-wiki-a-r7-004",
+        "purview-ado-wiki-a-r7-014",
+        "purview-mslearn-021",
+        "purview-mslearn-022"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-aws-data-sources.md",
+        "guides/drafts/ado-wiki-a-current-purview-governance-sap.md",
+        "guides/drafts/ado-wiki-a-lab-setup-new-environment.md",
+        "guides/drafts/ado-wiki-a-m365-tenant-access.md",
+        "guides/drafts/ado-wiki-a-saps-skillgroup-mapping.md",
+        "guides/drafts/ado-wiki-aws-s3-scan-failure-diagnostic.md",
+        "guides/drafts/ado-wiki-salesforce-scan-troubleshooting.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "3p-datasource",
+        "authentication",
+        "aws",
+        "aws-s3",
+        "azure-ir",
+        "basic-auth",
+        "basic-auth-only",
+        "billing"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "scan-fabric-powerbi",
+      "title": "Fabric 与 Power BI 扫描",
+      "entryIds": [
+        "purview-ado-wiki-005",
+        "purview-ado-wiki-011",
+        "purview-ado-wiki-012",
+        "purview-ado-wiki-015",
+        "purview-ado-wiki-091",
+        "purview-ado-wiki-118",
+        "purview-ado-wiki-163",
+        "purview-ado-wiki-199",
+        "purview-ado-wiki-208",
+        "purview-ado-wiki-215",
+        "purview-ado-wiki-223",
+        "purview-ado-wiki-385",
+        "purview-ado-wiki-395",
+        "purview-ado-wiki-409",
+        "purview-ado-wiki-a-r2-002",
+        "purview-ado-wiki-a-r2-003",
+        "purview-ado-wiki-a-r2-004",
+        "purview-ado-wiki-a-r1-006",
+        "purview-ado-wiki-a-r5-008",
+        "purview-ado-wiki-a-r7-005",
+        "purview-mslearn-036",
+        "purview-mslearn-037",
+        "purview-mslearn-042"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-protection-policy-fabric.md",
+        "guides/drafts/ado-wiki-allow-list-private-purview-fabric-onelake.md",
+        "guides/drafts/ado-wiki-fabric-powerbi-scanning.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "adls",
+        "adls-gen2",
+        "admin-settings",
+        "collection",
+        "data-policy",
+        "data-profiling",
+        "data-quality",
+        "duplicate-assets"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "scan-performance-stuck",
+      "title": "扫描性能与异常终止",
+      "entryIds": [
+        "purview-ado-wiki-076",
+        "purview-ado-wiki-090",
+        "purview-ado-wiki-172",
+        "purview-ado-wiki-306",
+        "purview-ado-wiki-408",
+        "purview-ado-wiki-431",
+        "purview-ado-wiki-a-r7-003",
+        "purview-mslearn-020"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-scan-performance-diagnosis.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "adls-gen2",
+        "azure-files",
+        "cancelled",
+        "csv",
+        "data-map",
+        "executor",
+        "export",
+        "glossary"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "scan-missing-assets",
+      "title": "扫描后资产丢失",
+      "entryIds": [
+        "purview-ado-wiki-137",
+        "purview-ado-wiki-265",
+        "purview-ado-wiki-300",
+        "purview-ado-wiki-301",
+        "purview-ado-wiki-302",
+        "purview-ado-wiki-303",
+        "purview-ado-wiki-304",
+        "purview-ado-wiki-305",
+        "purview-ado-wiki-a-r2-001",
+        "purview-onenote-031"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-convertedentities-scan-log-queries.md",
+        "guides/drafts/ado-wiki-activity-explorer-search-audit-log-missing-event.md",
+        "guides/drafts/ado-wiki-label-missing-on-asset.md",
+        "guides/drafts/ado-wiki-missing-assets-diagnostic.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "asset-deletion",
+        "audit log",
+        "data-map",
+        "deleted-asset",
+        "export",
+        "full-scan",
+        "hot-tier",
+        "ingest-failure"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "classification-datamap",
+      "title": "Data Map 分类标注",
+      "entryIds": [
+        "purview-ado-wiki-059",
+        "purview-ado-wiki-061",
+        "purview-ado-wiki-062",
+        "purview-ado-wiki-063",
+        "purview-ado-wiki-065",
+        "purview-ado-wiki-066",
+        "purview-ado-wiki-067",
+        "purview-ado-wiki-072",
+        "purview-ado-wiki-074",
+        "purview-ado-wiki-155",
+        "purview-ado-wiki-239",
+        "purview-ado-wiki-242",
+        "purview-ado-wiki-310",
+        "purview-ado-wiki-316",
+        "purview-ado-wiki-322",
+        "purview-ado-wiki-349",
+        "purview-mslearn-050"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-classification-insights.md",
+        "guides/drafts/ado-wiki-a-creating-custom-classifications.md",
+        "guides/drafts/ado-wiki-classification-kusto-query-bank.md",
+        "guides/drafts/ado-wiki-cri-subclassification.md",
+        "guides/drafts/ado-wiki-missing-classifications-on-asset.md",
+        "guides/drafts/ado-wiki-scan-performance-classification-rules.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "403-forbidden",
+        "acl",
+        "asset-deletion",
+        "classification",
+        "cross-schema",
+        "csv",
+        "custom-classification",
+        "data-map"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "schema-resource-set",
+      "title": "Schema 与资源集",
+      "entryIds": [
+        "purview-ado-wiki-004",
+        "purview-ado-wiki-201",
+        "purview-ado-wiki-207",
+        "purview-ado-wiki-217",
+        "purview-ado-wiki-263",
+        "purview-ado-wiki-264",
+        "purview-ado-wiki-309",
+        "purview-ado-wiki-311",
+        "purview-ado-wiki-312",
+        "purview-ado-wiki-313",
+        "purview-ado-wiki-a-r7-006",
+        "purview-ado-wiki-a-r7-011",
+        "purview-mslearn-018"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-check-ars-enabled.md",
+        "guides/drafts/ado-wiki-custom-tables-schema-lineage.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "1mb",
+        "ars",
+        "by-design",
+        "classification",
+        "configuration",
+        "data-map",
+        "data-product",
+        "database"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "data-map-api-operations",
+      "title": "Data Map API 与资产操作",
+      "entryIds": [
+        "purview-ado-wiki-080",
+        "purview-ado-wiki-103",
+        "purview-ado-wiki-193",
+        "purview-ado-wiki-249",
+        "purview-ado-wiki-266",
+        "purview-ado-wiki-318",
+        "purview-ado-wiki-320",
+        "purview-ado-wiki-321",
+        "purview-ado-wiki-325",
+        "purview-ado-wiki-326",
+        "purview-ado-wiki-328",
+        "purview-ado-wiki-329",
+        "purview-ado-wiki-330",
+        "purview-ado-wiki-331",
+        "purview-ado-wiki-347",
+        "purview-ado-wiki-348",
+        "purview-ado-wiki-352",
+        "purview-ado-wiki-353",
+        "purview-ado-wiki-355",
+        "purview-ado-wiki-377",
+        "purview-ado-wiki-c-r1-004",
+        "purview-mslearn-024"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-rest-api-unified-catalog-training.md",
+        "guides/drafts/ado-wiki-configure-vscode-for-rest-api.md",
+        "guides/drafts/ado-wiki-delete-hierarchy-api.md",
+        "guides/drafts/ado-wiki-new-experience-endpoint.md",
+        "guides/drafts/ado-wiki-query-api-asset-details-batch.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "api",
+        "api-version",
+        "asset-count",
+        "asset-deletion",
+        "atlas",
+        "azure-policy",
+        "bearer-token",
+        "browse"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "data-map-collections",
+      "title": "集合管理与元数据策略",
+      "entryIds": [
+        "purview-ado-wiki-234",
+        "purview-ado-wiki-314",
+        "purview-ado-wiki-315",
+        "purview-ado-wiki-a-r1-002"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-policy-store-collection-webhook-failures.md",
+        "guides/drafts/ado-wiki-process-dump-collection.md",
+        "guides/drafts/ado-wiki-request-increase-collections.md",
+        "guides/drafts/ado-wiki-scoping-initial-data-collection.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "409-error",
+        "collection",
+        "collections",
+        "data-map",
+        "deletion",
+        "dev-prod",
+        "multiple-accounts",
+        "rest-api"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "data-quality",
+      "title": "数据质量扫描",
+      "entryIds": [
+        "purview-ado-wiki-006",
+        "purview-ado-wiki-007",
+        "purview-ado-wiki-008",
+        "purview-ado-wiki-010",
+        "purview-ado-wiki-205",
+        "purview-ado-wiki-218",
+        "purview-ado-wiki-222",
+        "purview-ado-wiki-241",
+        "purview-ado-wiki-a-r7-009"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-dq-roadmap.md",
+        "guides/drafts/ado-wiki-handling-data-profiling-issues.md",
+        "guides/drafts/handling-data-profiling-issues.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "500-error",
+        "data-profile",
+        "data-quality",
+        "databricks",
+        "dataqualityinternalerror",
+        "dq-scan",
+        "feature-gap",
+        "portal"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "azure-data-share",
+      "title": "Azure Data Share (ADS)",
+      "entryIds": [
+        "purview-ado-wiki-317",
+        "purview-ado-wiki-333",
+        "purview-ado-wiki-334",
+        "purview-ado-wiki-335",
+        "purview-ado-wiki-336",
+        "purview-ado-wiki-337",
+        "purview-ado-wiki-338",
+        "purview-ado-wiki-339",
+        "purview-ado-wiki-340",
+        "purview-ado-wiki-341",
+        "purview-ado-wiki-342",
+        "purview-ado-wiki-343",
+        "purview-ado-wiki-359",
+        "purview-ado-wiki-360",
+        "purview-ado-wiki-361",
+        "purview-ado-wiki-362",
+        "purview-ado-wiki-364",
+        "purview-ado-wiki-365",
+        "purview-ado-wiki-366",
+        "purview-ado-wiki-367",
+        "purview-ado-wiki-b-r1-005",
+        "purview-ado-wiki-c-r1-001"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-ads-snapshot-issues.md",
+        "guides/drafts/ado-wiki-a-data-share-kusto-debug.md",
+        "guides/drafts/ado-wiki-a-sla-alert.md",
+        "guides/drafts/ado-wiki-ads-kusto-tables-reference.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "ads",
+        "authentication",
+        "blob-missing",
+        "data-share",
+        "firewall",
+        "icm",
+        "invitation",
+        "metrics"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "purview-data-sharing",
+      "title": "Purview 数据共享",
+      "entryIds": [
+        "purview-ado-wiki-369",
+        "purview-ado-wiki-371",
+        "purview-ado-wiki-372",
+        "purview-ado-wiki-373",
+        "purview-ado-wiki-374",
+        "purview-ado-wiki-375",
+        "purview-ado-wiki-376",
+        "purview-ado-wiki-378",
+        "purview-ado-wiki-b-r1-002",
+        "purview-ado-wiki-b-r1-003",
+        "purview-ado-wiki-b-r1-004",
+        "purview-ado-wiki-b-r1-006",
+        "purview-ado-wiki-b-r1-007",
+        "purview-ado-wiki-c-r1-002"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "access",
+        "asset",
+        "asset-mapping",
+        "attach",
+        "attach-share",
+        "catalog",
+        "create-share",
+        "cross-tenant"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "lineage-adf-synapse",
+      "title": "ADF / Synapse 血缘",
+      "entryIds": [
+        "purview-ado-wiki-079",
+        "purview-ado-wiki-092",
+        "purview-ado-wiki-096",
+        "purview-ado-wiki-106",
+        "purview-ado-wiki-113",
+        "purview-ado-wiki-209"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-adf-related-lineage-tsg.md",
+        "guides/drafts/ado-wiki-adb-lineage-openlineage-solution-accelerator.md",
+        "guides/drafts/ado-wiki-sql-server-lineage-issues.md",
+        "guides/drafts/ado-wiki-troubleshooting-data-factory-lineage-issues.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "adf",
+        "connection",
+        "data-factory",
+        "databricks",
+        "lineage",
+        "missing-lineage",
+        "sql",
+        "sql-provenance"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "sensitivity-labels-visibility",
+      "title": "敏感度标签可见性与策略",
+      "entryIds": [
+        "purview-ado-wiki-068",
+        "purview-ado-wiki-212",
+        "purview-ado-wiki-495",
+        "purview-ado-wiki-502",
+        "purview-ado-wiki-512",
+        "purview-ado-wiki-513",
+        "purview-ado-wiki-526",
+        "purview-ado-wiki-528",
+        "purview-ado-wiki-529",
+        "purview-ado-wiki-532",
+        "purview-ado-wiki-533",
+        "purview-ado-wiki-534",
+        "purview-ado-wiki-535",
+        "purview-ado-wiki-536",
+        "purview-ado-wiki-537",
+        "purview-ado-wiki-541",
+        "purview-ado-wiki-544",
+        "purview-ado-wiki-545",
+        "purview-ado-wiki-546",
+        "purview-ado-wiki-547",
+        "purview-ado-wiki-549",
+        "purview-ado-wiki-550",
+        "purview-ado-wiki-551",
+        "purview-ado-wiki-0803",
+        "purview-ado-wiki-0840",
+        "purview-ado-wiki-b-r1-001",
+        "purview-mslearn-025",
+        "purview-mslearn-026",
+        "purview-mslearn-047",
+        "purview-mslearn-048",
+        "purview-mslearn-051",
+        "purview-mslearn-053",
+        "purview-mslearn-054",
+        "purview-mslearn-055",
+        "purview-onenote-009",
+        "purview-onenote-049",
+        "purview-onenote-068"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-msoaid-gather-fiddler.md",
+        "guides/drafts/ado-wiki-a-verify-mip-pdf.md",
+        "guides/drafts/ado-wiki-b-identify-ownership-sensitivity-label-issues.md",
+        "guides/drafts/ado-wiki-b-required-information-sensitivity-labels.md",
+        "guides/drafts/ado-wiki-b-see-sensitivity-label.md",
+        "guides/drafts/ado-wiki-b-support-boundaries-sensitivity-labels.md",
+        "guides/drafts/ado-wiki-b-when-to-reproduce-sensitivity-label-issues.md",
+        "guides/drafts/ado-wiki-unable-to-remove-sensitivity-label-powershell.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "12mb-limit",
+        "activity-explorer",
+        "aip",
+        "aip-add-in",
+        "aip2mip",
+        "auto-labeling",
+        "auto-upgrade",
+        "by-design"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "sensitivity-labels-encryption",
+      "title": "敏感度标签加密与权限",
+      "entryIds": [
+        "purview-ado-wiki-542",
+        "purview-ado-wiki-543",
+        "purview-ado-wiki-0725",
+        "purview-mslearn-045",
+        "purview-onenote-025",
+        "purview-onenote-034",
+        "purview-onenote-062"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-learn-exo-powershell-pme.md",
+        "guides/drafts/ado-wiki-b-message-header-analyzer-tool.md",
+        "guides/drafts/ado-wiki-b-required-information-pme.md",
+        "guides/drafts/ado-wiki-check-encryption-method.md",
+        "guides/drafts/ado-wiki-check-label-encryption-enabled.md"
+      ],
+      "kustoQueryFiles": [
+        "mip-request-analysis.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "aipservice",
+        "b2b",
+        "cmk",
+        "cross-cloud",
+        "customer-key",
+        "dynamic-watermark",
+        "ediscovery",
+        "encryption"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "auto-labeling",
+      "title": "自动标签 (客户端 / 服务端)",
+      "entryIds": [
+        "purview-ado-wiki-468",
+        "purview-ado-wiki-469",
+        "purview-ado-wiki-473",
+        "purview-ado-wiki-474",
+        "purview-ado-wiki-475",
+        "purview-ado-wiki-478",
+        "purview-ado-wiki-479",
+        "purview-ado-wiki-0763",
+        "purview-ado-wiki-0764",
+        "purview-ado-wiki-0765"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-client-side-auto-labeling-support-boundaries.md",
+        "guides/drafts/ado-wiki-a-required-information-server-side-auto-labeling.md",
+        "guides/drafts/ado-wiki-a-server-side-auto-labeling-simulation-not-showing.md",
+        "guides/drafts/ado-wiki-a-server-side-auto-labeling-support-boundaries.md",
+        "guides/drafts/ado-wiki-a-test-dlppolicies-auto-labeling-report.md",
+        "guides/drafts/ado-wiki-b-client-side-auto-labeling-required-information.md",
+        "guides/drafts/ado-wiki-client-side-auto-labeling-not-applying.md",
+        "guides/drafts/ado-wiki-server-side-auto-labeling-not-applying.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "100-file-limit",
+        "auto-labeling",
+        "client-side",
+        "custom-sit",
+        "exchange",
+        "label-override",
+        "licensing",
+        "owa"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "mpip-client",
+      "title": "MPIP 客户端 (AIP Client)",
+      "entryIds": [
+        "purview-ado-wiki-491",
+        "purview-ado-wiki-493",
+        "purview-ado-wiki-496",
+        "purview-ado-wiki-498",
+        "purview-ado-wiki-501",
+        "purview-ado-wiki-503",
+        "purview-ado-wiki-504",
+        "purview-ado-wiki-505",
+        "purview-ado-wiki-506",
+        "purview-ado-wiki-507",
+        "purview-ado-wiki-508",
+        "purview-ado-wiki-511",
+        "purview-ado-wiki-0786",
+        "purview-ado-wiki-0787",
+        "purview-ado-wiki-0799",
+        "purview-ado-wiki-0804"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-decrypt-pst-with-powershell.md",
+        "guides/drafts/ado-wiki-b-complianceutility-label-reset.md",
+        "guides/drafts/ado-wiki-b-mpip-add-in-for-outlook.md",
+        "guides/drafts/ado-wiki-b-mpip-client-co-authoring.md",
+        "guides/drafts/ado-wiki-b-mpip-client-collect-analyze-log.md",
+        "guides/drafts/ado-wiki-b-mpip-client-support-boundaries.md",
+        "guides/drafts/ado-wiki-required-information-mpip-client.md",
+        "guides/drafts/ado-wiki-unable-to-remove-label-right-click.md",
+        "guides/drafts/ado-wiki-update-mpip-client.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "ad-rms",
+        "aip-add-in",
+        "co-authoring",
+        "conflict",
+        "content-markings",
+        "context-menu",
+        "encryption-label",
+        "excluded-folders"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "mpip-scanner",
+      "title": "MPIP / AIP Scanner",
+      "entryIds": [
+        "purview-ado-wiki-516",
+        "purview-ado-wiki-518",
+        "purview-ado-wiki-0812",
+        "purview-ado-wiki-0813",
+        "purview-ado-wiki-0820",
+        "purview-ado-wiki-0821",
+        "purview-mslearn-019",
+        "purview-onenote-023"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-collect-mpip-scanner-logs.md",
+        "guides/drafts/ado-wiki-b-enable-trace-level-logging.md",
+        "guides/drafts/ado-wiki-b-learn-mpip-scanner.md",
+        "guides/drafts/ado-wiki-b-read-scanner-reports.md",
+        "guides/drafts/ado-wiki-b-required-information-mpip-scanner.md",
+        "guides/drafts/ado-wiki-b-support-boundaries-mpip-scanner.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "aip",
+        "authentication",
+        "cpu",
+        "dlp",
+        "information-protection",
+        "mpip scanner",
+        "mpip-scanner",
+        "network"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "irm-rms-pme",
+      "title": "IRM / RMS / 邮件加密",
+      "entryIds": [
+        "purview-ado-wiki-025",
+        "purview-ado-wiki-146",
+        "purview-ado-wiki-176",
+        "purview-ado-wiki-307",
+        "purview-ado-wiki-386",
+        "purview-ado-wiki-465",
+        "purview-ado-wiki-519",
+        "purview-ado-wiki-521",
+        "purview-ado-wiki-522",
+        "purview-ado-wiki-525",
+        "purview-ado-wiki-530",
+        "purview-ado-wiki-0826",
+        "purview-ado-wiki-0829",
+        "purview-ado-wiki-0830",
+        "purview-ado-wiki-0831",
+        "purview-ado-wiki-0832",
+        "purview-ado-wiki-0833",
+        "purview-ado-wiki-0834",
+        "purview-ado-wiki-0835",
+        "purview-ado-wiki-0836",
+        "purview-ado-wiki-0837",
+        "purview-ado-wiki-0853",
+        "purview-ado-wiki-0854",
+        "purview-ado-wiki-0855",
+        "purview-ado-wiki-0856",
+        "purview-ado-wiki-0857",
+        "purview-ado-wiki-0862",
+        "purview-ado-wiki-0864",
+        "purview-mslearn-043",
+        "purview-mslearn-044",
+        "purview-mslearn-046",
+        "purview-mslearn-067",
+        "purview-onenote-005",
+        "purview-onenote-030"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-feature-request-customer-communication.md",
+        "guides/drafts/ado-wiki-a-how-customers-raise-tickets.md",
+        "guides/drafts/ado-wiki-b-verify-set-irm-configuration-pme.md",
+        "guides/drafts/ado-wiki-common-kusto-logs-1st-party-connectors.md",
+        "guides/drafts/ado-wiki-ecr-drill-certificate-issues.md",
+        "guides/drafts/ado-wiki-get-har-file.md",
+        "guides/drafts/ado-wiki-policy-triage-ui-issues.md"
+      ],
+      "kustoQueryFiles": [
+        "mip-request-analysis.md",
+        "rms-auth-tracking.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "550",
+        "554",
+        "aad-groups",
+        "activity-explorer",
+        "adc-gen1",
+        "aip",
+        "branding-template",
+        "by-design"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "aip-service-byok",
+      "title": "AIP Service / BYOK / TPD 管理",
+      "entryIds": [
+        "purview-ado-wiki-440",
+        "purview-ado-wiki-441",
+        "purview-ado-wiki-442",
+        "purview-ado-wiki-447",
+        "purview-ado-wiki-455",
+        "purview-ado-wiki-456",
+        "purview-ado-wiki-457",
+        "purview-ado-wiki-458",
+        "purview-ado-wiki-548",
+        "purview-ado-wiki-0702",
+        "purview-ado-wiki-0714",
+        "purview-ado-wiki-0721",
+        "purview-ado-wiki-0722",
+        "purview-ado-wiki-0723",
+        "purview-ado-wiki-0724",
+        "purview-ado-wiki-0726",
+        "purview-ado-wiki-0727",
+        "purview-ado-wiki-0728",
+        "purview-onenote-018",
+        "purview-onenote-020"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-dke-consume-protected-content.md",
+        "guides/drafts/ado-wiki-a-mapping-aip-keys-to-imported-tpds.md",
+        "guides/drafts/ado-wiki-activate-aipservice-keys-byok-mmk.md",
+        "guides/drafts/ado-wiki-aip-tenant-migrations.md",
+        "guides/drafts/ado-wiki-b-aip-service-ps-commands.md",
+        "guides/drafts/ado-wiki-b-document-tracking.md",
+        "guides/drafts/ado-wiki-b-dsr-delete-request.md",
+        "guides/drafts/ado-wiki-b-rms-v1-export-tuds-tpds.md",
+        "guides/drafts/ado-wiki-b-tpd-aip-key-requests.md",
+        "guides/drafts/ado-wiki-b-track-and-revoke.md",
+        "guides/drafts/ado-wiki-connect-aipservice-fails.md",
+        "guides/drafts/ado-wiki-migrate-aip-byok-key-vault.md"
+      ],
+      "kustoQueryFiles": [
+        "mip-request-analysis.md",
+        "rms-auth-tracking.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "ad-rms",
+        "aip",
+        "aip-service",
+        "aipservice",
+        "azure-key-vault",
+        "byok",
+        "complete-migration",
+        "connect-aipservice"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "rms-connector-adrms",
+      "title": "RMS Connector 与 AD RMS",
+      "entryIds": [
+        "purview-ado-wiki-055",
+        "purview-ado-wiki-056",
+        "purview-ado-wiki-433",
+        "purview-ado-wiki-434",
+        "purview-ado-wiki-435",
+        "purview-ado-wiki-436",
+        "purview-ado-wiki-437",
+        "purview-ado-wiki-454",
+        "purview-ado-wiki-524",
+        "purview-ado-wiki-b-r2-002"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-connector-spns.md",
+        "guides/drafts/ado-wiki-a-default-iis-settings-rms-connector.md",
+        "guides/drafts/ado-wiki-a-ds-lookup-caching.md",
+        "guides/drafts/ado-wiki-a-fiddler-trace-rms-connector.md",
+        "guides/drafts/ado-wiki-a-iis-kerberos-configuration-for-ad-rms.md",
+        "guides/drafts/ado-wiki-a-restore-ad-rms-databases.md",
+        "guides/drafts/ado-wiki-a-rms-connector-tsg.md",
+        "guides/drafts/ado-wiki-a-view-ad-rms-certificates-in-iis.md",
+        "guides/drafts/ado-wiki-b-learn-default-iis-settings.md",
+        "guides/drafts/ado-wiki-b-rms-v1-cluster-key-password.md",
+        "guides/drafts/ado-wiki-b-rms-v1-configuration.md",
+        "guides/drafts/ado-wiki-b-rms-v1-install.md",
+        "guides/drafts/onenote-rms-connector-troubleshooting.md"
+      ],
+      "kustoQueryFiles": [
+        "rms-auth-tracking.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "ad-rms",
+        "aip",
+        "aip-template",
+        "caching",
+        "dotnet",
+        "dotnet-framework",
+        "enterprise-admin",
+        "global-catalog"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "dke-double-key",
+      "title": "Double Key Encryption (DKE)",
+      "entryIds": [
+        "purview-ado-wiki-0731",
+        "purview-ado-wiki-0732",
+        "purview-ado-wiki-0733",
+        "purview-ado-wiki-0734",
+        "purview-ado-wiki-0735"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "authentication",
+        "case-sensitive",
+        "connectivity",
+        "dke",
+        "double-key-encryption",
+        "flighting",
+        "sensitivity-label"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "cross-cloud-mip",
+      "title": "跨云 / 跨租户 MIP 标签",
+      "entryIds": [
+        "purview-mslearn-052",
+        "purview-onenote-024",
+        "purview-onenote-026",
+        "purview-onenote-027",
+        "purview-onenote-061"
+      ],
+      "draftPaths": [
+        "guides/drafts/onenote-purview-cross-cloud-labeling-config.md"
+      ],
+      "kustoQueryFiles": [
+        "mip-request-analysis.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "cross-cloud",
+        "cross-tenant",
+        "external-user",
+        "guest-account",
+        "label",
+        "labeling",
+        "mip",
+        "mip-viewer"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "mip-sdk",
+      "title": "MIP SDK 集成",
+      "entryIds": [
+        "purview-ado-wiki-488"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-licensing-redirection.md",
+        "guides/drafts/ado-wiki-a-mip-sdk-escalating-to-engineering.md",
+        "guides/drafts/ado-wiki-a-office-mip-logging.md",
+        "guides/drafts/ado-wiki-a-required-information-mip-sdk.md",
+        "guides/drafts/ado-wiki-mip-client-versions.md",
+        "guides/drafts/onenote-mip-sdk-oauth2-testing.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "encryption",
+        "mip-sdk",
+        "office"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "ediscovery",
+      "title": "eDiscovery 搜索与保留",
+      "entryIds": [
+        "purview-mslearn-028",
+        "purview-mslearn-029",
+        "purview-mslearn-030",
+        "purview-mslearn-031",
+        "purview-mslearn-033",
+        "purview-mslearn-034",
+        "purview-mslearn-035",
+        "purview-mslearn-040",
+        "purview-mslearn-041",
+        "purview-mslearn-070",
+        "purview-mslearn-071",
+        "purview-onenote-029",
+        "purview-onenote-033",
+        "purview-onenote-039",
+        "purview-onenote-044",
+        "purview-onenote-075"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "scc-rbac-logs.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "ambiguous-location",
+        "bulk-update",
+        "compliance-boundaries",
+        "content search",
+        "content-search",
+        "ediscovery",
+        "export",
+        "failedtoopencontainer"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "activity-content-explorer",
+      "title": "Activity Explorer 与 Content Explorer",
+      "entryIds": [
+        "purview-ado-wiki-448",
+        "purview-ado-wiki-449",
+        "purview-ado-wiki-459",
+        "purview-ado-wiki-460",
+        "purview-ado-wiki-461",
+        "purview-ado-wiki-462",
+        "purview-ado-wiki-463",
+        "purview-ado-wiki-464",
+        "purview-ado-wiki-466",
+        "purview-ado-wiki-467",
+        "purview-ado-wiki-480",
+        "purview-ado-wiki-481",
+        "purview-ado-wiki-482",
+        "purview-ado-wiki-483",
+        "purview-ado-wiki-484",
+        "purview-ado-wiki-485",
+        "purview-ado-wiki-486"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-activity-explorer-capture-network-trace.md",
+        "guides/drafts/ado-wiki-a-activity-explorer-search-audit-log-event.md",
+        "guides/drafts/ado-wiki-a-item-not-visible-content-explorer.md",
+        "guides/drafts/ado-wiki-b-activity-explorer-event-not-showing-tsg.md",
+        "guides/drafts/ado-wiki-b-activity-explorer-required-information.md",
+        "guides/drafts/ado-wiki-b-activity-explorer-support-boundaries.md",
+        "guides/drafts/ado-wiki-b-capture-network-trace-content-explorer.md",
+        "guides/drafts/ado-wiki-b-export-activityexplorerdata-cmdlet-tsg.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "activity-explorer",
+        "admin-unit",
+        "aggregation",
+        "audit-log",
+        "by-design",
+        "content-explorer",
+        "count",
+        "customize-columns"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "retention-records",
+      "title": "保留策略与记录管理",
+      "entryIds": [
+        "purview-mslearn-059",
+        "purview-mslearn-060",
+        "purview-mslearn-061",
+        "purview-mslearn-062",
+        "purview-mslearn-063",
+        "purview-mslearn-064",
+        "purview-mslearn-065",
+        "purview-mslearn-068",
+        "purview-mslearn-072",
+        "purview-onenote-040",
+        "purview-onenote-041"
+      ],
+      "draftPaths": [
+        "guides/drafts/onenote-retention-policy-distribution-jarvis.md"
+      ],
+      "kustoQueryFiles": [
+        "dlm-elc-operations.md",
+        "dlm-policy-sync.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "activedirectorysyncerror",
+        "archive",
+        "archive-quota",
+        "audit",
+        "auto-expanding",
+        "exo",
+        "forcedeletion",
+        "hold"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "dlp-policies",
+      "title": "DLP 策略与告警",
+      "entryIds": [
+        "purview-mslearn-027",
+        "purview-mslearn-038",
+        "purview-onenote-069"
+      ],
+      "draftPaths": [
+        "guides/drafts/mslearn-dlp-policy-tip-har-diagnostic.md",
+        "guides/drafts/onenote-dlp-blocked-email-jarvis.md",
+        "guides/drafts/onenote-dlp-sharepoint-rule-match-jarvis.md"
+      ],
+      "kustoQueryFiles": [
+        "dlm-policy-sync.md",
+        "dlp-jarvis-urls.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "china-id-card",
+        "defender",
+        "dlp",
+        "endpoint-dlp",
+        "outlook",
+        "policy-sync",
+        "policy-tips",
+        "sensitive-information-type"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "audit-log",
+      "title": "审计日志",
+      "entryIds": [
+        "purview-mslearn-032",
+        "purview-mslearn-039",
+        "purview-mslearn-069",
+        "purview-onenote-038",
+        "purview-onenote-076"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "api",
+        "audit",
+        "audit-log",
+        "deleted-email",
+        "mailbox",
+        "management-activity-api",
+        "missing-email",
+        "move"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "account-provisioning",
+      "title": "账户创建 / 升级 / 合并 / 配额",
+      "entryIds": [
+        "purview-ado-wiki-022",
+        "purview-ado-wiki-037",
+        "purview-ado-wiki-093",
+        "purview-ado-wiki-098",
+        "purview-ado-wiki-109",
+        "purview-ado-wiki-115",
+        "purview-ado-wiki-117",
+        "purview-ado-wiki-227",
+        "purview-ado-wiki-228",
+        "purview-ado-wiki-229",
+        "purview-ado-wiki-230",
+        "purview-ado-wiki-231",
+        "purview-ado-wiki-232",
+        "purview-ado-wiki-233",
+        "purview-ado-wiki-235",
+        "purview-ado-wiki-245",
+        "purview-ado-wiki-248",
+        "purview-ado-wiki-250",
+        "purview-ado-wiki-251",
+        "purview-ado-wiki-257",
+        "purview-ado-wiki-258",
+        "purview-ado-wiki-259",
+        "purview-ado-wiki-260",
+        "purview-ado-wiki-261",
+        "purview-ado-wiki-262",
+        "purview-ado-wiki-273",
+        "purview-ado-wiki-274",
+        "purview-ado-wiki-278",
+        "purview-ado-wiki-a-r1-007"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-request-azure-subscription.md",
+        "guides/drafts/ado-wiki-provisioning-managed-event-hub.md",
+        "guides/drafts/ado-wiki-purview-account-concepts.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "account",
+        "account-creation",
+        "account-deletion",
+        "account-limit",
+        "account-migration",
+        "administration",
+        "azure-policy",
+        "by-design"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "account-region-migration",
+      "title": "账户区域变更与迁移",
+      "entryIds": [
+        "purview-ado-wiki-253"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "account-move",
+        "region-move",
+        "subscription-transfer"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "billing-pricing",
+      "title": "计费与定价",
+      "entryIds": [
+        "purview-ado-wiki-001",
+        "purview-ado-wiki-003",
+        "purview-ado-wiki-089",
+        "purview-ado-wiki-116",
+        "purview-ado-wiki-133",
+        "purview-ado-wiki-135",
+        "purview-ado-wiki-276",
+        "purview-ado-wiki-277",
+        "purview-ado-wiki-279",
+        "purview-ado-wiki-280",
+        "purview-ado-wiki-281",
+        "purview-ado-wiki-283",
+        "purview-ado-wiki-295",
+        "purview-ado-wiki-296",
+        "purview-ado-wiki-297",
+        "purview-ado-wiki-a-r5-003",
+        "purview-ado-wiki-a-r7-010"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-ame-access-setup.md",
+        "guides/drafts/ado-wiki-a-billing-roadmap.md",
+        "guides/drafts/ado-wiki-b-required-information-data-explorer.md",
+        "guides/drafts/ado-wiki-b-support-boundaries-data-explorer.md",
+        "guides/drafts/ado-wiki-billing-troubleshooting-guideline.md",
+        "guides/drafts/ado-wiki-look-up-billing-charges.md",
+        "guides/drafts/ado-wiki-migration-managed-to-ingestion-storage.md",
+        "guides/drafts/ado-wiki-ms-security-copilot-offering.md",
+        "guides/drafts/ado-wiki-security-options.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "adf",
+        "billing",
+        "capacity-unit",
+        "classic-billing",
+        "consent",
+        "cu",
+        "data-estate-health",
+        "data-map"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "permissions-rbac",
+      "title": "权限与 RBAC",
+      "entryIds": [
+        "purview-ado-wiki-002",
+        "purview-ado-wiki-013",
+        "purview-ado-wiki-014",
+        "purview-ado-wiki-018",
+        "purview-ado-wiki-122",
+        "purview-ado-wiki-129",
+        "purview-ado-wiki-167",
+        "purview-ado-wiki-236",
+        "purview-ado-wiki-358",
+        "purview-ado-wiki-363",
+        "purview-ado-wiki-370",
+        "purview-ado-wiki-380",
+        "purview-ado-wiki-382",
+        "purview-ado-wiki-527",
+        "purview-ado-wiki-0863",
+        "purview-ado-wiki-a-r3-001",
+        "purview-ado-wiki-a-r3-002",
+        "purview-ado-wiki-a-r3-004",
+        "purview-ado-wiki-a-r5-005",
+        "purview-ado-wiki-b-r1-008",
+        "purview-mslearn-023",
+        "purview-mslearn-066"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-local-test-role-permission-issue.md",
+        "guides/drafts/ado-wiki-purview-roles-permissions.md",
+        "guides/drafts/ado-wiki-roles-update-request-permission-issue.md"
+      ],
+      "kustoQueryFiles": [
+        "scc-rbac-logs.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "401",
+        "access",
+        "admin-role",
+        "admin-units",
+        "ads",
+        "attach",
+        "authentication",
+        "collection-admin"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "portal-access-ux",
+      "title": "门户访问与 UX",
+      "entryIds": [
+        "purview-ado-wiki-110",
+        "purview-ado-wiki-182",
+        "purview-ado-wiki-183",
+        "purview-ado-wiki-444",
+        "purview-ado-wiki-445",
+        "purview-ado-wiki-a-r13-001",
+        "purview-ado-wiki-a-r7-002",
+        "purview-ado-wiki-a-r7-007"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-getting-access-new-purview-unified-portal.md",
+        "guides/drafts/ado-wiki-a-new-purview-portal-trainings.md",
+        "guides/drafts/ado-wiki-c-portal-cant-be-opened-via-private-endpoint.md",
+        "guides/drafts/ado-wiki-check-entity-payload-from-ux.md",
+        "guides/drafts/ado-wiki-faq-new-purview-enterprise-portal.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "azure-subscription",
+        "browser-compatibility",
+        "business-assets",
+        "chrome",
+        "deleted-assets",
+        "deployment",
+        "edge",
+        "error-500"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "data-governance-catalog",
+      "title": "数据治理与统一目录",
+      "entryIds": [
+        "purview-ado-wiki-020",
+        "purview-ado-wiki-070",
+        "purview-ado-wiki-081",
+        "purview-ado-wiki-082",
+        "purview-ado-wiki-083",
+        "purview-ado-wiki-094",
+        "purview-ado-wiki-126",
+        "purview-ado-wiki-275",
+        "purview-ado-wiki-b-r4-002",
+        "purview-ado-wiki-a-r5-006",
+        "purview-ado-wiki-a-r7-015"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-2025-jan-fr-known-issues.md",
+        "guides/drafts/ado-wiki-a-connectors-roadmap.md",
+        "guides/drafts/ado-wiki-a-cri-backlog-review.md",
+        "guides/drafts/ado-wiki-a-critical-functionality-loss.md",
+        "guides/drafts/ado-wiki-a-critical-risk-alert.md",
+        "guides/drafts/ado-wiki-a-deh-roadmap.md",
+        "guides/drafts/ado-wiki-a-eudb.md",
+        "guides/drafts/ado-wiki-a-governance-skill-reference-guide.md",
+        "guides/drafts/ado-wiki-a-retagging-support-cases.md",
+        "guides/drafts/ado-wiki-a-unified-catalog-roadmap.md",
+        "guides/drafts/ado-wiki-arm-logs-migrating-to-new-clusters.md",
+        "guides/drafts/ado-wiki-deleted-asset-not-going-away.md",
+        "guides/drafts/ado-wiki-l1-l2-l3-scan-troubleshooting.md",
+        "guides/drafts/ado-wiki-macula-purview-automate-glossary-migration.md",
+        "guides/drafts/ado-wiki-support-l1-l2-l3-scan.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "412",
+        "access-loss",
+        "bulk-delete",
+        "classic-to-new",
+        "csv",
+        "custom-attribute",
+        "data-governance",
+        "date"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "policy-store-enforcement",
+      "title": "策略存储与执行",
+      "entryIds": [
+        "purview-ado-wiki-099",
+        "purview-ado-wiki-100",
+        "purview-ado-wiki-101",
+        "purview-ado-wiki-119",
+        "purview-ado-wiki-121",
+        "purview-ado-wiki-124",
+        "purview-ado-wiki-125",
+        "purview-ado-wiki-127",
+        "purview-ado-wiki-130",
+        "purview-ado-wiki-131",
+        "purview-ado-wiki-243"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-policy-change-removing-corp-access.md",
+        "guides/drafts/ado-wiki-get-tenant-xml-scc-labeling-policy.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "access-policy",
+        "adls-gen2",
+        "artifact-store",
+        "azure-sql",
+        "bindings",
+        "client-certificate",
+        "cnfcondition",
+        "container"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "workflow-approval",
+      "title": "工作流审批",
+      "entryIds": [
+        "purview-ado-wiki-429",
+        "purview-ado-wiki-430"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-access-workflows-roadmap.md",
+        "guides/drafts/ado-wiki-a-workflow-queries.md",
+        "guides/drafts/ado-wiki-asset-ingestion-workflow.md",
+        "guides/drafts/ado-wiki-workflow-kusto-queries.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "approval",
+        "email",
+        "outlook",
+        "workflow"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "21v-feature-gaps",
+      "title": "21Vianet 功能差异与缺失",
+      "entryIds": [
+        "purview-ado-wiki-043",
+        "purview-ado-wiki-213",
+        "purview-ado-wiki-383",
+        "purview-ado-wiki-a-r5-002",
+        "purview-ado-wiki-a-r5-004",
+        "purview-onenote-002",
+        "purview-onenote-003",
+        "purview-onenote-011",
+        "purview-onenote-014",
+        "purview-onenote-022",
+        "purview-onenote-028",
+        "purview-onenote-032",
+        "purview-onenote-035",
+        "purview-onenote-036",
+        "purview-onenote-037",
+        "purview-onenote-050",
+        "purview-onenote-051",
+        "purview-onenote-052",
+        "purview-onenote-053",
+        "purview-onenote-054",
+        "purview-onenote-058",
+        "purview-onenote-059",
+        "purview-onenote-060",
+        "purview-onenote-063",
+        "purview-onenote-067",
+        "purview-onenote-070",
+        "purview-onenote-074",
+        "purview-onenote-077"
+      ],
+      "draftPaths": [
+        "guides/drafts/onenote-21v-scc-ido-escalation-process.md",
+        "guides/drafts/onenote-aip-scanner-troubleshooting.md",
+        "guides/drafts/onenote-azure-rms-mooncake-operations.md",
+        "guides/drafts/onenote-jarvis-scc-log-reference.md",
+        "guides/drafts/onenote-mip-sdk-mooncake-setup.md",
+        "guides/drafts/onenote-purview-compliance-21v-feature-gap.md",
+        "guides/drafts/onenote-purview-compliance-21v-roadmap.md",
+        "guides/drafts/onenote-purview-gallatin-feature-verification.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "21v",
+        "aip",
+        "alert",
+        "archive-quota",
+        "audit",
+        "audit-log",
+        "audit-manager",
+        "audit-reader"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "sovereign-cloud-tooling",
+      "title": "Sovereign Cloud 工具与访问",
+      "entryIds": [
+        "purview-ado-wiki-044",
+        "purview-ado-wiki-045",
+        "purview-ado-wiki-a-r14-001",
+        "purview-ado-wiki-b-r14-001",
+        "purview-ado-wiki-b-r14-002",
+        "purview-ado-wiki-a-r18-001",
+        "purview-ado-wiki-a-r18-002",
+        "purview-ado-wiki-a-r6-001"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-css-alias-sovereign-cloud.md",
+        "guides/drafts/ado-wiki-a-jit-access-gov-cloud.md",
+        "guides/drafts/ado-wiki-gov-cloud-overview.md",
+        "guides/drafts/ado-wiki-sovereign-cloud-faqs.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "corp-access",
+        "dfm-access",
+        "dsts",
+        "dsts-enforcement",
+        "eu-data-boundary",
+        "eudb",
+        "fairfax",
+        "geneva-actions"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "support-internal-tooling",
+      "title": "工程师内部工具 (DTM/rCRI/ICM)",
+      "entryIds": [
+        "purview-ado-wiki-b-r3-002",
+        "purview-ado-wiki-a-r7-016",
+        "purview-ado-wiki-a-r7-017",
+        "purview-ado-wiki-a-r7-018",
+        "purview-ado-wiki-a-r7-019",
+        "purview-ado-wiki-a-r7-020",
+        "purview-ado-wiki-177",
+        "purview-ado-wiki-178",
+        "purview-ado-wiki-b-r12-001",
+        "purview-mslearn-049"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-case-management-acronyms.md",
+        "guides/drafts/ado-wiki-a-case-management-basics.md",
+        "guides/drafts/ado-wiki-a-citizen-alliance-support-program.md",
+        "guides/drafts/ado-wiki-a-cri-creation-through-asc.md",
+        "guides/drafts/ado-wiki-a-cri-escalation-framework.md",
+        "guides/drafts/ado-wiki-a-dfm-introduction.md",
+        "guides/drafts/ado-wiki-a-guidance-for-internal-non-css.md",
+        "guides/drafts/ado-wiki-a-handling-feature-requests.md",
+        "guides/drafts/ado-wiki-a-icm-process.md",
+        "guides/drafts/ado-wiki-a-icm-terminology.md",
+        "guides/drafts/ado-wiki-a-icm-waiting-customer-or-css.md",
+        "guides/drafts/ado-wiki-a-logs-required-for-escalation-3p-data-source-scan.md",
+        "guides/drafts/ado-wiki-a-mapping-purview-components-icm.md",
+        "guides/drafts/ado-wiki-a-rca-escalation-process.md",
+        "guides/drafts/ado-wiki-a-supportability-restricted-cris.md",
+        "guides/drafts/ado-wiki-a-teams-sharing-dos-and-donts.md",
+        "guides/drafts/ado-wiki-ava-process-escalation-data-collection.md",
+        "guides/drafts/ado-wiki-b-ICM-Quality-Step-by-Step-Flow.md",
+        "guides/drafts/ado-wiki-b-azure-support-center-asc.md",
+        "guides/drafts/ado-wiki-b-duplicate-case-best-practices.md",
+        "guides/drafts/ado-wiki-collaboration-support-boundary.md",
+        "guides/drafts/ado-wiki-get-adf-datascan-activityids.md",
+        "guides/drafts/ado-wiki-internal-system-error-connectivity-scripts.md",
+        "guides/drafts/ado-wiki-kusto-datascanagent-event-migration.md",
+        "guides/drafts/ado-wiki-logs-required-for-escalation.md",
+        "guides/drafts/ado-wiki-system-error-launch-datascan-process.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "access-denied",
+        "accesscheck",
+        "asc",
+        "azure-subscription",
+        "camelcase",
+        "column-name",
+        "dtm",
+        "eu-dfm"
+      ],
+      "confidence": "high"
+    }
+  ],
+  "discarded": []
+}

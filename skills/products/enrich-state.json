@@ -1,25 +1,24 @@
 {
-  "status": "running",
-  "activeProducts": [
-    "aks",
-    "monitor",
-    "entra-id",
-    "disk",
-    "arm",
-    "eop",
-    "defender"
-  ],
+  "status": "complete",
+  "activeProducts": [],
   "productQueue": [],
   "completedProducts": [
-    "vm",
     "automation",
-    "acr",
+    "monitor",
+    "defender",
+    "entra-id",
+    "arm",
+    "disk",
+    "eop",
+    "aks",
+    "networking",
     "intune",
-    "avd",
+    "acr",
     "purview",
-    "networking"
+    "avd",
+    "vm"
   ],
-  "maxAgentsPerTick": 20,
+  "maxAgentsPerTick": 12,
   "classifyState": {
     "status": "exhausted",
     "totalPages": 4241,

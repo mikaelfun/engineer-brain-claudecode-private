@@ -1,0 +1,75 @@
+# VM Vm Provisioning E — 综合排查指南
+
+**条目数**: 30 | **草稿融合数**: 1 | **Kusto 查询融合**: 1
+**来源草稿**: [ado-wiki-a-Pre-Provisioning-Service.md](../../guides/drafts/ado-wiki-a-Pre-Provisioning-Service.md)
+**Kusto 引用**: [provisioning-timeout.md](../../../kusto/vm/references/queries/provisioning-timeout.md)
+**生成日期**: 2026-04-07
+
+---
+
+## 排查流程
+
+### Phase 1: 数据收集
+> 来源: Kusto skill
+
+1. 执行 Kusto 查询 `[工具: Kusto skill — provisioning-timeout.md]`
+
+### Phase 2: 排查与诊断
+> 来源: ADO Wiki
+
+1. 参照 [ado-wiki-a-Pre-Provisioning-Service.md](../../guides/drafts/ado-wiki-a-Pre-Provisioning-Service.md) 排查流程
+
+### Phase 3: 根因判断与解决
+
+**判断逻辑**：
+
+| 条件 | 含义 | 后续动作 |
+|------|------|---------|
+| The managed identity associated with the storage a | 1 条相关 | Regenerate the managed identity: Set-AzStorageAccount -Ident... |
+| Key rotation policy created a new key version in K | 1 条相关 | Customer should rotate the key manually (docs: https://learn... |
+| Previous system-assigned managed identity associat | 1 条相关 | 1) Engage AAD Team to verify the system-assigned managed ide... |
+| ADE extension was removed (Remove-AzVMDiskEncrypti | 1 条相关 | Always run Disable-AzVMDiskEncryption first to unencrypt the... |
+| ADE decryption commands executed in wrong order: R | 1 条相关 | Always follow correct sequence: 1) Disable-AzVMDiskEncryptio... |
+| Dual Pass ADE (legacy) requires an AAD Application | 1 条相关 | Create AAD App: az ad sp create-for-rbac --name AppName --ro... |
+| Internal resource limitations on the Azure platfor | 1 条相关 | Mount a VHD on the file share and perform file operations ag... |
+| Direct conversion between standard and premium Azu | 1 条相关 | Create a new file share in the target tier and manually copy... |
+| The AD account (service logon or computer account) | 1 条相关 | Run Update-AzStorageAccountADObjectPassword -RotateToKerbKey... |
+| Known Azure platform internal resource limitations | 1 条相关 | Create a VHD on the Azure File Share and mount it from the c... |
+
+---
+
+## 已知问题速查
+
+| # | 症状 | 根因 | 方案 | 分数 | 来源 |
+|---|------|------|------|------|------|
+| 1 | CMK storage account update fails with ManagedServiceIdentityNotFound error after the associated mana... | The managed identity associated with the storage account for CMK encryption was ... | Regenerate the managed identity: Set-AzStorageAccount -IdentityType None, then s... | 🔵 6.0 | ADO Wiki |
+| 2 | SSE+CMK auto key rotation fails: Key Vault rotation policy creates new key version but DES does not ... | Key rotation policy created a new key version in Key Vault but the Disk Encrypti... | Customer should rotate the key manually (docs: https://learn.microsoft.com/en-us... | 🔵 6.0 | ADO Wiki |
+| 3 | Disk Encryption Set provisioning failed: Previous identity update is in failed state. Cannot update ... | Previous system-assigned managed identity associated with the DES was soft-delet... | 1) Engage AAD Team to verify the system-assigned managed identity is soft-delete... | 🔵 6.0 | ADO Wiki |
+| 4 | After removing ADE extension, platform cannot report encryption status or provision VM properly | ADE extension was removed (Remove-AzVMDiskEncryptionExtension) before disk encry... | Always run Disable-AzVMDiskEncryption first to unencrypt the disk, then Remove-A... | 🔵 7.0 | ADO Wiki |
+| 5 | After removing ADE extension, Azure portal shows incorrect encryption status and VM provisioning fai... | ADE decryption commands executed in wrong order: Remove-AzVMDiskEncryptionExtens... | Always follow correct sequence: 1) Disable-AzVMDiskEncryption -ResourceGroupName... | 🔵 7.0 | ADO Wiki |
+| 6 | ADE Dual Pass encryption setup fails or customer is confused about AAD App and Service Principal req... | Dual Pass ADE (legacy) requires an AAD Application registration with Service Pri... | Create AAD App: az ad sp create-for-rbac --name AppName --role Contributor --sco... | 🔵 7.0 | ADO Wiki |
+| 7 | Azure File Share shows high latency and slow performance for metadata-heavy operations (createfile, ... | Internal resource limitations on the Azure platform side cause higher latency fo... | Mount a VHD on the file share and perform file operations against the VHD. In Di... | 🔵 7.0 | ADO Wiki |
+| 8 | Cannot directly convert between standard file share and premium file share in Azure Files | Direct conversion between standard and premium Azure Files tiers is not supporte... | Create a new file share in the target tier and manually copy data using Robocopy... | 🔵 7.0 | ADO Wiki |
+| 9 | Azure Files AD DS authentication fails after a period of time; storage account Kerberos key expired ... | The AD account (service logon or computer account) representing the storage acco... | Run Update-AzStorageAccountADObjectPassword -RotateToKerbKey kerb2 -ResourceGrou... | 🔵 7.0 | ADO Wiki |
+| 10 | High latency and slow performance on Azure File Share during metadata-heavy operations (createfile, ... | Known Azure platform internal resource limitations cause metadata operations to ... | Create a VHD on the Azure File Share and mount it from the client. The client-ow... | 🔵 7.0 | ADO Wiki |
+| 11 | Customer wants to convert existing standard file share to premium (or vice versa) but no direct conv... | Azure Files does not support direct conversion between standard and premium file... | Create a new file share in the desired tier, then manually copy data using Roboc... | 🔵 7.0 | ADO Wiki |
+| 12 | Unable to mount Azure File Share with Entra Kerberos. Entra sign-in logs show errorCode 50158: "Exte... | External security challenge (terms of use, third-party MFA provider, or conditio... | Disable MFA on the Microsoft Entra app representing the storage account. Create ... | 🔵 7.0 | ADO Wiki |
+| 13 | On-premises domain not visible in "From this location" when setting NTFS permissions on Azure File S... | Known transient issue after initial domain join of storage account to AD DS | Wait a few hours and retry. If persists beyond a few hours, create ICM to Azure ... | 🔵 7.0 | ADO Wiki |
+| 14 | Cannot mount/map Azure File Share drive to macOS. Connection fails when using Finder and storage acc... | macOS Finder does not properly handle the forward slash (/) character in the sto... | Mount in 2-stage process via Terminal: 1. Create mount point (mkdir share_name).... | 🔵 7.0 | ADO Wiki |
+| 15 | Error 1396 with AAD DS storage account - mount fails after SRP automatic Kerberos key rotation (~30 ... | Customer followed AD DS steps to manually create objects in AAD DS domain. SRP r... | 1) Verify AAD DS in ASC Resource Explorer. 2) Check setspn -Q - if object not in... | 🔵 7.0 | ADO Wiki |
+| 16 | Users unable to access Azure Files shares configured for AD DS authentication from machines where Mi... | Client machine is configured to use Cloud Kerberos (Microsoft Entra Kerberos) an... | Create Realm-To-Host mapping for each storage account joined to AD DS. Options: ... | 🔵 7.0 | ADO Wiki |
+| 17 | Error NfsFileShare is not supported for the account when creating NFS file shares in newly created s... | Storage account created right after NFS feature enablement may land on stamp whe... | Verify stamp via nslookup. If not NFS-supported, recreate storage account. | 🔵 7.0 | ADO Wiki |
+| 18 | Azure File Sync cloud endpoint creation fails with MgmtForbidden - Failed to provision a replica gro... | Storage Account Firewall public network access is set to Disabled, blocking AFS ... | Set Storage Account Firewall to Enabled from all networks, or Enabled from selec... | 🔵 7.0 | ADO Wiki |
+| 19 | Azure File Sync cloud endpoint provisioning fails with MgmtStorageAccountInaccessible when storage a... | Bicep template omits networkAcls parameter. Default networkAcls has defaultActio... | Add networkAcls to Bicep template: networkAcls: { bypass: AzureServices, default... | 🔵 7.0 | ADO Wiki |
+| 20 | Azure File Sync download errors with ERROR_ALREADY_EXISTS and ECS_E_SYNC_MERGE_TOMBSTONE_CHECKS_FAIL... | ERROR_ALREADY_EXISTS: cannot create a file when it already exists (name collisio... | Run FileSyncErrorReport.ps1 to identify specific files. Resolve ERROR_ALREADY_EX... | 🔵 7.0 | ADO Wiki |
+| 21 | Azure File Sync reports widespread ECS_E_DIRECTORY_RENAME_FAILED per-item errors in upload direction... | XFiles bug causes leaked marker handles in the cloud share. These leaked handles... | Contact XSMBDev and Daniewo for the dev tool to clean up leaked marker handles. ... | 🔵 7.0 | ADO Wiki |
+| 22 | AIB build fails with InternalOperationError. Kusto AsyncContextActivity/PackerizerContextActivity lo... | Customer had Azure Policy adding NSG rules to the subnet used by AIB container i... | Remove the restrictive policy or add an exception for Azure Image Builder resour... | 🔵 7.0 | ADO Wiki |
+| 23 | AIB build fails early with NoCustomizerScript provisioning error code. No customization.log file is ... | Azure Policy restricts creation of AIB staging resources (IT_ staging resource g... | Check subscription-level Operations tab in ASC, filter by resource group to find... | 🔵 7.0 | ADO Wiki |
+| 24 | AIB build fails with InternalOperationError. Kusto AsyncContextActivity and PackerizerContextActivit... | Customer had an Azure Policy that added NSG rules to the NSG attached to the AIB... | Remove the restrictive policy or add an exception for Azure Image Builder resour... | 🔵 7.0 | ADO Wiki |
+| 25 | AIB build fails early with NoCustomizerScript error code. No customization.log file is created. ASC ... | Azure Policy restricts creation of necessary AIB staging resources (IT_ staging ... | Check subscription Operations tab filtered by the image template resource group ... | 🔵 7.0 | ADO Wiki |
+| 26 | AIB provisioning fails with PrivateLinkService Network Policy is not disabled for the given subnet w... | Subnet has privateLinkServiceNetworkPolicies set to Enabled. Azure Portal only e... | Disable via CLI (cannot be done via Portal): az network vnet subnet update --nam... | 🔵 7.0 | ADO Wiki |
+| 27 | Domain Controller VM fails to boot with error 0xC00002E2 STATUS_DS_INIT_FAILURE; VM cannot access lo... | Active Directory database corruption, the volume/disk associated with AD databas... | Boot VM into DSRM (Directory Services Restore Mode) by setting safeboot to dsrep... | 🔵 7.0 | ADO Wiki |
+| 28 | Azure VM default display resolution is 1024x768. Customer needs higher native display resolution for... | Azure VMs default to 1024x768 native display resolution. The MSTSC client resolu... | Workaround 1: Use MSTSC client Options > Display to change RDP session resolutio... | 🔵 7.0 | ADO Wiki |
+| 29 | Linux VM has network connectivity issues because the guest OS is not configured to use DHCP for IP a... | The network interface config file (ifcfg-eth0) has BOOTPROTO set to static inste... | Attach OS disk to recovery VM, mount, edit /etc/sysconfig/network-scripts/ifcfg-... | 🔵 7.0 | ADO Wiki |
+| 30 | Linux VM loses network connectivity. Static IP in guest OS instead of DHCP causes network issues aft... | ifcfg-eth0 has BOOTPROTO set to static instead of dhcp. | Attach OS disk to rescue VM, edit /recoverymnt/etc/sysconfig/network-scripts/ifc... | 🔵 7.0 | ADO Wiki |
+

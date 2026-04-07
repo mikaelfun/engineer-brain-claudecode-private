@@ -1,0 +1,63 @@
+# ENTRA-ID Azure AD B2C — Quick Reference
+
+**Entries**: 89 | **21V**: Partial (81/89)
+**Last updated**: 2026-04-07
+**Keywords**: b2c, custom-policy, error-code, end-of-sale, user-flow, subscription
+
+> This topic has a fusion guide with detailed troubleshooting flow
+> → [Full troubleshooting flow](details/b2c.md)
+
+## Issue Quick Reference
+
+| # | Symptom | Root Cause | Solution | Score | Source |
+|---|---------|-----------|----------|-------|--------|
+| 1 📋 | Cannot create new Azure AD B2C tenant after B2C End of Sale (May 2025). Portal creation blocked f... | B2C End of Sale policy blocks new tenant creation. Only existing B2C customer... | If customer has business justification, work with account manager to submit a... | 🟢 10.0 | OneNote |
+| 2 📋 | Azure AD B2C local account passwords expire after 90 days unexpectedly. Users cannot sign in with... | B2C local accounts created via custom policy or Azure AD Graph API do not hav... | Run PowerShell: Connect-AzureAD → Get-AzureADUser -All $true / Set-AzureADUse... | 🟢 9.0 | OneNote |
+| 3 📋 | Azure AD B2C End of Sale: new customers cannot purchase B2C after May 1, 2025. B2C P2 tier retire... | Microsoft product lifecycle decision. B2C is being replaced by Microsoft Entr... | Existing customers: continue using B2C (P1 only for new tenants). New custome... | 🟢 9.0 | OneNote |
+| 4 📋 | Unable to restore deleted B2C user. Error: 'A conflicting object with one or more of the specifie... | The deleted B2C user's AlternativeSecurityId (AltSecID) conflicts with an exi... | 1) Check MSODS Kusto logs (IfxAuditLoggingCommon + IfxUlsEvents) using correl... | 🟢 9.0 | OneNote |
+| 5 📋 | Azure AD B2C user flow does not return 'emails' claim in token for some users. Users created via ... | Users created via Graph API without proper 'identities' attribute are not rec... | When creating B2C users via Graph API, use Example 2 from MS docs (Create use... | 🟢 9.0 | OneNote |
+| 6 📋 | Cannot create VM or enable AADDS inside Azure AD B2C tenant. | B2C tenants are consumer identity (CIAM) only. No infrastructure resource sup... | B2C only supports user flows, custom policies, identity providers. Use standa... | 🟢 9.0 | OneNote |
+| 7 📋 | Azure AD B2C returns HTTP 429 throttling error — customer traffic exceeds per-tenant or per-IP RP... | B2C request rate exceeds Azure AD B2C service throttling limits. Two types: G... | 1) Collect tenant ID, policy name, timestamps + correlation IDs of 429 errors... | 🟢 8.5 | ADO Wiki |
+| 8 📋 | Azure AD B2C custom policy XML file exceeds 1024 KB (1 MB) size limit — unable to upload policy | Single B2C custom policy file exceeds the default 1024 KB maximum policy file... | Raise ICM to request policy file size increase to 2 MB. No additional cost to... | 🟢 8.5 | ADO Wiki |
+| 9 📋 | Azure AD B2C tenant count per subscription exceeds default limit of 20 — cannot create more B2C t... | Default Azure AD B2C tenant creation limit is 20 per subscription | Raise ICM to request B2C tenant creation limit increase. Example ICM: inciden... | 🟢 8.5 | ADO Wiki |
+| 10 📋 | App management policy to restrict password secret lifetime (maxLifetime) is not enforced; older a... | If the app was created before the date in restrictForAppsCreatedAfterDateTime... | Set restrictForAppsCreatedAfterDateTime to an earlier date to cover affected ... | 🟢 8.5 | ADO Wiki |
+| 11 📋 | IDX10205: Issuer validation failed. The iss claim in the access token does not match validationPa... | The iss claim in the token does not match the expected issuer in the applicat... | Ensure the Authority URL matches the token version. For v1 tokens: issuer is ... | 🟢 8.5 | ADO Wiki |
+| 12 📋 | Customer wants to use Managed Identity with Azure AD B2C but it is not available or does not work... | Managed Identity does not support Azure AD B2C. B2C is not listed in the serv... | Managed Identity is not supported for B2C. Use alternative authentication met... | 🟢 8.5 | ADO Wiki |
+| 13 📋 | Groups claim is not available in Azure AD B2C user flow policy tokens. No groups are returned reg... | Azure AD B2C user flow policies do not support the groups claim by design. | Use B2C custom policies instead of user flows to include groups claim, or ret... | 🟢 8.5 | ADO Wiki |
+| 14 📋 | Azure AD Reporting API (auditLogs/signIns) returns 403 with Authentication_RequestFromNonPremiumT... | Three possible causes: (1) Tenant is B2C which cannot use Reporting API, (2) ... | Verify tenant has Azure AD Premium P1 or P2 subscription. For application (cl... | 🟢 8.5 | ADO Wiki |
+| 15 📋 | User clicks Forgot password link during Azure AD B2C sign-in and app receives error AADB2C90118 i... | By design B2C redirects back to app with error AADB2C90118 when user clicks f... | In MSAL.js subscribe to msal:loginFailure, check for AADB2C90118, then loginR... | 🟢 8.5 | ADO Wiki |
+| 16 📋 | MSAL prompt parameter (select_account or login) is ignored during Azure AD B2C authentication wit... | B2C does not pass prompt parameter from MSAL to federated IdP by default. Use... | Configure B2C custom policy: Add ClaimType aadPrompt with PartnerClaimType=pr... | 🟢 8.5 | ADO Wiki |
+| 17 📋 | Claims from external IdP not mapped correctly to Azure AD B2C tokens - e.g. unique_name not appea... | B2C does not automatically map all claims from federated IdPs; requires custo... | In Trust Framework policy: add ClaimType under ClaimsSchema, then OutputClaim... | 🟢 8.5 | ADO Wiki |
+| 18 📋 | Need to pass extra query parameters like login_hint from Azure AD B2C to federated IdP but user f... | B2C standard user flows do not support passing custom query parameters to fed... | Use B2C custom policy: Add ClaimType LoginHint, then InputClaim with PartnerC... | 🟢 8.5 | ADO Wiki |
+| 19 📋 | MSAL returns id_token and refresh_token but no access_token when acquiring token from Azure AD B2C | Invalid scope passed or API permission scopes not created/consented on the B2... | Create scopes on API app reg, grant permissions on client app reg, pass corre... | 🟢 8.5 | ADO Wiki |
+| 20 📋 | MSAL B2C: No account matching the specified username / No matching account found in token cache | B2C custom policy includes tid claim in OutputClaims which conflicts with MSA... | Remove tid claim from B2C custom policy OutputClaims. Use alternative claim (... | 🟢 8.5 | ADO Wiki |
+| 21 📋 | MSAL.js ClientAuthError: endpoints_resolution_error - "Endpoints cannot be resolved". Cloud Disco... | Authority URL malformed or not recognized. For B2C/CIAM/third-party IdP, know... | Entra ID: authority = https://login.microsoftonline.com/{tenant}. B2C: author... | 🟢 8.5 | ADO Wiki |
+| 22 📋 | X-Frame-Options deny during B2C authentication with SAML SSO, third-party IdP, or MFA. B2C custom... | B2C custom policies involving SAML SSO, external IdP redirects, or MFA trigge... | Use loginPopup/acquireTokenPopup. For SAML SSO: configure HTTP Redirect (GET)... | 🟢 8.5 | ADO Wiki |
+| 23 📋 | B2C tenant quota error creating users but Graph API shows total quota below 100% | B2C has 1 company segment + 4 data segments with individual 250K limits. Indi... | Check per-segment quotas via DS Explorer. Add/verify custom domain to raise l... | 🟢 8.5 | ADO Wiki |
+| 24 📋 | B2C custom policy RestfulProvider API calls timing out after April 2025; previously working APIs ... | RestfulProvider timeout reduced from 30s to 10s as of April 2025. PG no longe... | Optimize REST API to respond within 10s. Use Kusto (AllIfxRequestEvent in CPI... | 🟢 8.5 | ADO Wiki |
+| 25 📋 | B2C tenant DDoS via default b2clogin.com domain causing throttling; need to block default domain | b2clogin.com default domain publicly accessible, targetable by DDoS without W... | 1) Configure custom domain via AFD + WAF. 2) Verify no legit traffic on b2clo... | 🟢 8.5 | ADO Wiki |
+| 26 📋 | Error AADB2C90080: The provided grant has expired when using a refresh token to obtain a new acce... | The refresh token being used has expired. B2C refresh tokens have a sliding w... | Add error handling in the application to detect expired grant errors and prom... | 🟢 8.5 | ADO Wiki |
+| 27 📋 | Error AADB2C90088: The provided grant has not been issued for this endpoint. Actual Value: B2C_1A... | The B2C policy used to acquire the authorization code differs from the policy... | Ensure the same B2C custom policy is used for both acquiring the authorizatio... | 🟢 8.5 | ADO Wiki |
+| 28 📋 | Error AADB2C90240: Token malformed - B2C cannot verify the signature of the token from an externa... | The external IDP signed the token but B2C could not verify the signature beca... | Verify the client_secret is correctly configured and referenced in the B2C po... | 🟢 8.5 | ADO Wiki |
+| 29 📋 | Error AADB2C90289: We encountered an error connecting to the identity provider - caused by AADSTS... | The client_secret in the B2C policy key for the external Entra ID identity pr... | Generate a new client secret on the external tenant app registration (https:/... | 🟢 8.5 | ADO Wiki |
+| 30 📋 | Error AADB2C90289: We encountered an error connecting to the identity provider - caused by AADSTS... | The external app has custom signing keys due to claims-mapping configuration ... | Update the metadata URL in B2C identity provider configuration to include app... | 🟢 8.5 | ADO Wiki |
+| 31 📋 | Azure AD B2C policy is being throttled with category Cpim.TPEngine.RequestPerPolicyTenantWithDevMode | The B2C custom policy has DeploymentMode set to Development, which imposes a ... | Remove or change the DeploymentMode from Development in the TrustFrameworkPol... | 🟢 8.5 | ADO Wiki |
+| 32 📋 | AADB2C90019: The key container with id in tenant does not have a valid key. Custom policy fails w... | The IEF Policy Key container referenced by StorageReferenceId in custom polic... | Use Kusto query "Find Everything With Correlation ID" to locate the invalid k... | 🟢 8.5 | ADO Wiki |
+| 33 📋 | AADB2C90031: Policy does not specify a default user journey. Error during B2C custom policy execu... | The relying party policy XML is missing a DefaultUserJourney element or the r... | Add <DefaultUserJourney ReferenceId="X"> to the relying party policy and ensu... | 🟢 8.5 | ADO Wiki |
+| 34 📋 | AADB2C90063: Unable to create new IEF Policy key in B2C portal. Error: The key has failed to be c... | The B2C_1A_AdminClientEncryptionKeyContainer has been accidentally modified t... | Delete the B2C_1A_AdminClientEncryptionKeyContainer (which has multiple keys)... | 🟢 8.5 | ADO Wiki |
+| 35 📋 | AADB2C90063: Unable to create custom authentication extension in B2C. Error: There is a problem w... | The Enterprise App "Azure Active Directory Authentication Extensions" (AppId ... | Create the service principal: Connect-MgGraph then New-MgServicePrincipal -Ap... | 🟢 8.5 | ADO Wiki |
+| 36 📋 | Azure AD B2C Sign in with Apple ID stops working after ~6 months. Users cannot authenticate via A... | Apple client secrets expire every 6 months. If not renewed, the federation br... | Renew the Apple client secret before expiration. Admin receives a warning 1 m... | 🟢 8.5 | ADO Wiki |
+| 37 📋 | Azure AD B2C with Apple IDP: Apple does not return email, firstName, lastName claims on sign-up. ... | Apple only sends user profile information (first name, last name, email) on t... | Use Custom Policies instead of User Flows. Configure email as an output claim... | 🟢 8.5 | ADO Wiki |
+| 38 📋 | Azure AD B2C Custom OIDC IDP returns 404 error when doing POST to /authresp endpoint. RouteExcept... | The redirect URL from the external IDP back to B2C does not contain the corre... | Collect HAR trace from customer. Check AllIfxRequestEvent logs with correlati... | 🟢 8.5 | ADO Wiki |
+| 39 📋 | B2C custom policies: Continue/Create button not grayed during email verification (Signup/Forgot P... | Missing Display Controls (VerificationControl) with SSPR-based email verifica... | Add: 1) verificationCode ClaimType, 2) emailVerificationControl/emailVerifica... | 🟢 8.5 | ADO Wiki |
+| 40 📋 | B2C GenerateJson produces escaped double quotes in JSON array values. dest shows as escaped strin... | CreateJsonArray intermediate step then GenerateJson causes double-encoding. F... | Remove CreateJsonArray. Pass original claim directly to GenerateJson. Test wi... | 🟢 8.5 | ADO Wiki |
+| ... | *49 more entries* | | | | |
+
+## Quick Troubleshooting Path
+
+1. Check **b2c** related issues (17 entries) `[onenote]`
+2. Check **custom-policy** related issues (3 entries) `[ado-wiki]`
+3. Check **msal** related issues (3 entries) `[ado-wiki]`
+4. Check **end-of-sale** related issues (2 entries) `[onenote]`
+5. Check **tenant-creation** related issues (2 entries) `[onenote]`
+6. Check **user-flow** related issues (2 entries) `[onenote]`

@@ -1,0 +1,29 @@
+# AKS ACI 网络与 DNS — vnet -- Quick Reference
+
+**Sources**: 1 | **21V**: Partial | **Entries**: 11
+**Last updated**: 2026-04-06
+
+## Symptom Quick Reference
+
+| # | Symptom | Root Cause | Solution | Score | Source |
+|---|---------|-----------|----------|-------|--------|
+| 1 | Unable to delete subnet, error InUseSubnetCannotBeDeleted due to service associa... | Subnet has active serviceAssociationLinks created by Azure C... | Use Azure REST API to delete the service association link fi... | [G] 9.5 | [ADO Wiki](https://dev.azure.com/Supportability/AzureContainers/_wiki/wikis/Containers%20Wiki?pagePath=%2FAzure%20Kubernetes%20Service%20Wiki%2FACI%2FTSG%2F%5BTSG%5D%20Subnet%20Deletion%20Error%3A%20InUseSubnetCannotBeDeleted) |
+| 2 | Cannot delete subnet or VNet used by ACI. Error: Subnet is in use by Microsoft.N... | ACI network profile created during container group deploymen... | Delete orphaned network profile: (1) Show hidden types in re... | [G] 9.5 | [ADO Wiki](https://dev.azure.com/Supportability/AzureContainers/_wiki/wikis/Containers%20Wiki?pagePath=/Azure%20Kubernetes%20Service%20Wiki/ACI/TSG/Unable%20to%20delete%20ACI%20Subnet%20or%20VNet%20Subnet%20is%20in%20use) |
+| 3 | Cannot delete ACI subnet or VNet — error 'Subnet requires delegations [Microsoft... | Dangling ACI Service Association Link (acisal) remains on su... | 1) Try explicit subnet deletion from Portal or CLI (not casc... | [G] 9.5 | [ADO Wiki](https://dev.azure.com/Supportability/AzureContainers/_wiki/wikis/Containers%20Wiki?pagePath=%2FAzure%20Kubernetes%20Service%20Wiki%2FACI%2FTSG%2F%5BTSG%5D%20Cannot%20delete%20ACI%20Vnet%20or%20Subnet%20due%20to%20dangling%20Service%20Association%20Link) |
+| 4 | Cannot delete RG/VNET/Subnet due to ACI Service Association Link (SAL) blocking ... | ACI Service Association Link (acisal) blocks resource deleti... | 1) Follow TSG for CSS/Cx mitigations; 2) If all fail, escala... | [B] 7.5 | [ADO Wiki](https://dev.azure.com/Supportability/AzureContainers/_wiki/wikis/Containers%20Wiki?pagePath=%2FAzure%20Kubernetes%20Service%20Wiki%2FACI%2FList%20of%20ACI%20issues%20where%20IcM%20is%20required) |
+| 5 | ACI container group in VNet goes into restart loop; Private Link or Private DNS ... | Race condition bug in NMAgent (Azure networking service) cau... | 1. Query Kusto SubscriptionDeployments with containerGroup r... | [B] 7.5 | [ADO Wiki](https://dev.azure.com/Supportability/AzureContainers/_wiki/wikis/Containers%20Wiki?pagePath=/Azure%20Kubernetes%20Service%20Wiki/ACI/TSG/Private%20Link%20or%20Private%20DNS%20are%20resolving%20to%20azure%20resource%27s%20Public%20IP%20instead%20of%20private%20IP) |
+| 6 | Cannot delete RG/VNET/Subnet due to orphan NICs in Network Profile | Container Groups deleted but NICs remain in Network Profile ... | 1) Verify CGs deleted via ASC; 2) Confirm lingering NICs in ... | [B] 7.5 | [ADO Wiki](https://dev.azure.com/Supportability/AzureContainers/_wiki/wikis/Containers%20Wiki?pagePath=%2FAzure%20Kubernetes%20Service%20Wiki%2FACI%2FList%20of%20ACI%20issues%20where%20IcM%20is%20required) |
+| 7 | Cannot find VNET for ACI container group, network profile shows NetworkProfileId... | Container groups created with API version >= 2021-07-01 use ... | Use Kusto query on cluster('accprod').database('accprod').Su... | [B] 7.5 | [ADO Wiki](https://dev.azure.com/Supportability/AzureContainers/_wiki/wikis/Containers%20Wiki?pagePath=%2FAzure%20Kubernetes%20Service%20Wiki%2FACI%2FHow%20To%2FView%20VNET%20used%20by%20ACI) |
+| 8 | ACI Spot container deployment fails with unsupported feature error (GPU, VNET, o... | ACI Spot Containers only support Standard SKU without GPU, V... | Remove GPU, VNET, and PublicIP configurations from Spot cont... | [B] 7.5 | [ADO Wiki](https://dev.azure.com/Supportability/AzureContainers/_wiki/wikis/Containers%20Wiki?pagePath=%2FAzure%20Kubernetes%20Service%20Wiki%2FACI%2FTSG%2FACI%20Spot%20Containers) |
+| 9 | Azure Image Builder (AIB) ACI container hangs and fails with FailedMountAzureFil... | NSG policy modifying the VNet/subnet on creation, adding den... | 1) Check ARM logs for policy modifications to VNet; 2) Metho... | [B] 7.5 | [ADO Wiki](https://dev.azure.com/Supportability/AzureContainers/_wiki/wikis/Containers%20Wiki?pagePath=%2FAzure%20Kubernetes%20Service%20Wiki%2FACI%2FTSG%2F%5BTSG%5D%20Azure%20Image%20Builder%20ACI%20Troubleshooting) |
+| 10 | Azure Image Builder (AIB) container in ACI fails to start with FailedMountAzureF... | NSG policy automatically adds a deny-all rule to the AIB-cre... | 1) Add policy exemption to the AIB resource group to prevent... | [B] 7.5 | [ADO Wiki](https://dev.azure.com/Supportability/AzureContainers/_wiki/wikis/Containers%20Wiki?pagePath=%2FAzure%20Kubernetes%20Service%20Wiki%2FACI%2FTSG%2F%5BTSG%5D%20Azure%20Image%20Builder%20ACI%20Troubleshooting) |
+| 11 | ACI container group private IP changes after stop/start or restart, causing DNS ... | ACI does not support static IP addresses for VNet container ... | Use an ACI init container to automate DNS updates on restart... | [B] 5.5 | [ADO Wiki](https://dev.azure.com/Supportability/AzureContainers/_wiki/wikis/Containers%20Wiki?pagePath=%2FAzure%20Kubernetes%20Service%20Wiki%2FACI%2FHow%20To%2FSync%20Container%20Group%20Private%20IP%20Changes%20With%20Customer%20DNS%20records) |
+
+## Quick Troubleshooting Path
+
+1. Check: Use Azure REST API to delete the service association link first: az rest --method delete --uri https `[source: ado-wiki]`
+2. Check: Delete orphaned network profile: (1) Show hidden types in resource group, find and delete the networ `[source: ado-wiki]`
+3. Check: 1) Try explicit subnet deletion from Portal or CLI (not cascaded from VNet/RG) `[source: ado-wiki]`
+
+> This topic has a fusion troubleshooting guide with complete workflow and Kusto query templates
+> -> [Complete Troubleshooting Flow](details/aci-networking-vnet.md)

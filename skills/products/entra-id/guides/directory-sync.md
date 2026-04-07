@@ -1,0 +1,64 @@
+# ENTRA-ID Directory Sync (Connect/Cloud Sync/PTA) — Quick Reference
+
+**Entries**: 223 | **21V**: Partial (205/223)
+**Last updated**: 2026-04-07
+**Keywords**: aad-connect, entra-connect, pta, cloud-sync, contentidea-kb, installation
+
+> This topic has a fusion guide with detailed troubleshooting flow
+> → [Full troubleshooting flow](details/directory-sync.md)
+
+## Issue Quick Reference
+
+| # | Symptom | Root Cause | Solution | Score | Source |
+|---|---------|-----------|----------|-------|--------|
+| 1 📋 | Synced user has unwanted secondary proxyAddress with 4 random digits in initial domain suffix (e.... | ProxyCalc generates UPN from MailNickname + Initial Domain when ShadowUPN and... | Workaround using AutoReconcileProxyConflicts: 1) Pause AAD Connect sync sched... | 🟢 10.0 | OneNote |
+| 2 📋 | Cloud Sync Provisioning Agent MSI installation fails with error during package installation. Serv... | Local Security Policy Log on as a service does not have NT Service\ALL SERVIC... | Open secpol.msc > Local Policies > User Rights Assignment > Log on as a servi... | 🟢 9.5 | ADO Wiki |
+| 3 📋 | Need to change AAD Connect synced domain UPN suffix (e.g. contoso.com to contoso.cn). No document... | AADC does not natively support changing domain suffix for already-synced obje... | 1) Add new verified domain. 2) If ADFS, add as federation domain. 3) For O365... | 🟢 9.0 | OneNote |
+| 4 📋 | AAD Connect V2 requires Windows Server 2016+. Customer needs to upgrade from V1 to V2 with new se... | AADC V2 dropped support for Windows Server 2008R2/2012/2012R2. | 1) Export existing settings. 2) Install latest AADC on new server in staging ... | 🟢 9.0 | OneNote |
+| 5 📋 | Entra Connect 2.4.129.0: custom domain UPN admin cannot login AADC wizard in Mooncake. Error: Una... | Bug in 2.4.129.0 DomainSuffixMapping - does not recognize custom MOERA domain... | Workaround: use user@*.partner.onmschina.cn to trigger login redirect to 21v,... | 🟢 9.0 | OneNote |
+| 6 📋 | AAD Connect export fails with Insufficient access rights for Exchange hybrid writeback attributes | MSOL connector account missing Write Property on Exchange attrs for user/iNet... | Grant permissions using dsacls for proxyAddresses, msExch* attrs on all objec... | 🟢 9.0 | OneNote |
+| 7 📋 | After AAD Connect upgrade, export fails error 8344 Insufficient rights for multiple users | New version needs additional writeback permissions not yet granted to sync ac... | Use Delegate Control wizard to grant Read+Write All Properties for Contact/Gr... | 🟢 9.0 | OneNote |
+| 8 📋 | Need to remove on-premises AD connector from AAD Connect | Customer no longer needs to sync a specific AD forest/domain | SSM > Connectors > Delete. Stops sync, removes connector space and all sync r... | 🟢 9.0 | OneNote |
+| 9 📋 | Unexpected extension_{GUID}_extensionAttribute<N> on Azure AD users, need to find source app | AAD Connect syncs extensionAttribute1-15 in two forms; Tenant Schema Extensio... | Extract GUID from attr name, reformat, search as App ID in Enterprise Applica... | 🟢 9.0 | OneNote |
+| 10 📋 | AAD Connect Directory Extension 配置时无法选择 on-prem AD 中某些扩展属性类型（如 Case insensitive string），导致自定义属性无法... | Directory Extension 功能仅支持特定属性类型：Single-valued String (Unicode String)、Boolean... | 确保 on-prem AD 扩展属性为支持的类型（如 Unicode String）。同步后 AAD 中属性名称格式为 extension_{AppCli... | 🟢 9.0 | OneNote |
+| 11 📋 | AAD Connect export slow with 503 Server Unavailable errors. Application log shows ServerDownExcep... | Two network issues: (1) Proxy not allowing *.partner.microsoftonline.cn traff... | 1. Open *.partner.microsoftonline.cn on proxy; 2. Fix backbone routing loop. ... | 🟢 9.0 | OneNote |
+| 12 📋 | AAD Connect export extremely slow with delays between export iterations (e.g. Iteration 70 to 71 ... | AAD Connect using Named Pipes protocol to connect to external SQL server, and... | 1. Disable Named Pipes in SQL Server configuration (3 settings); 2. Change SQ... | 🟢 9.0 | OneNote |
+| 13 📋 | AAD Connect Delta Synchronization takes ~3 hours even with no object updates. Huge number of disc... | DEV AAD Connect server configured with PROD AAD tenant. Objects from PROD AAD... | Correct AAD Connect config to point to the correct AAD tenant. Troubleshootin... | 🟢 9.0 | OneNote |
+| 14 📋 | Azure AD Sync scheduler is not working. Synchronization does not run automatically. | SyncCycleEnabled is set to False in the ADSync scheduler configuration. | Run Set-ADSyncScheduler -SyncCycleEnabled $True. Verify with Get-ADSyncSchedu... | 🟢 9.0 | OneNote |
+| 15 📋 | LargeObject error during AAD Connect export: The provisioned object is too large. Other attribute... | Azure AD enforces max 15 certificate values on userCertificate attribute. Obj... | Options: 1. Upgrade AADC to 1.1.524.0+ (OOB rules skip >15 certs); 2. Outboun... | 🟢 9.0 | OneNote |
+| 16 📋 | AAD Connect synchronization stopped working with connectivity/authentication failure errors. | MFA was enabled for the AAD Connect sync service account, blocking non-intera... | Disable MFA for the synchronization service account in Azure AD / Entra ID po... | 🟢 9.0 | OneNote |
+| 17 📋 | SMTP proxy address with unverified domain suffix not visible in O365 portal for migrated mailbox ... | ProxyCal filters unverified domain addresses when user has Exchange license a... | Workaround: Delete MSExchRemoteRecipientType value in on-prem AD using ADSIED... | 🟢 9.0 | OneNote |
+| 18 📋 | On-prem AD account with expired accountExpires attribute remains enabled in Azure AD. accountExpi... | AAD Connect does not sync accountExpires. Only UserAccountControl (enabled/di... | Scheduled PowerShell script: Search-ADAccount -AccountExpired to find, Disabl... | 🟢 9.0 | OneNote |
+| 19 📋 | SMTP proxy address synced to shadowProxyAddresses but not in final proxyAddresses. ProxyCal disca... | Hidden/invisible bad characters in SMTP proxy address in on-prem AD (after @ ... | 1. Paste SMTP value into CMD to reveal hidden chars; 2. Re-enter value cleanl... | 🟢 9.0 | OneNote |
+| 20 📋 | Mail attribute in Azure AD shows onmicrosoft.com value instead of correct on-prem mail. Shadow ma... | EXO BackSync writes mail@tenant.onmicrosoft.com to AAD mail attribute, overri... | Manually re-sync: 1. Change on-prem primary SMTP to onmicrosoft.com, add real... | 🟢 9.0 | OneNote |
+| 21 📋 | Some PTA users get smart-locked out by AAD while others sign in successfully; AADSTS50126 Invalid... | Missing four attributes (including OnPremisesUserPrincipalName) in AAD for pr... | Verify sync rule Out to AAD - User Join in Synchronization Rule Editor includ... | 🟢 9.0 | OneNote |
+| 22 📋 | Seamless SSO fails with AADSTS81011 Failed to find user by on prem sid; OnPremise security identi... | Source anchor changed to adminDescription (non-default) which was null in ADU... | Fix source anchor configuration, ensure adminDescription has correct value, r... | 🟢 9.0 | OneNote |
+| 23 📋 | AAD Connect v1.x stops syncing after Microsoft decommissioned v1 connectivity. Sync breaks withou... | Microsoft deprecated AAD Connect v1.x (since Aug 2022) and began blocking v1.... | Upgrade to AAD Connect v2.x immediately. The decommission is rolling - some t... | 🟢 9.0 | OneNote |
+| 24 📋 | AAD Connect v1.x stops syncing after retirement. Connection to Admin Web Service (AWS) blocked in... | Microsoft deprecated AAD Connect v1.x (retired Aug 31, 2022) due to SQL Serve... | Upgrade to AAD Connect v2.x. Note: v2 requires Windows Server 2016+; cannot i... | 🟢 9.0 | OneNote |
+| 25 📋 | Cloud-only user cannot log on to VM joined to AADDS managed domain after enabling AADDS. Authenti... | Cloud-only users need password hash synced to AADDS. Must change/reset passwo... | Have cloud-only users change password after AADDS enabled to trigger hash syn... | 🟢 9.0 | OneNote |
+| 26 📋 | HAADJ device stuck in pending registration with error 0x801c005a | cloudUserCertificate attribute excluded from AAD Connect sync scope | Include cloudUserCertificate in AAD Connect Azure AD Attributes wizard | 🟢 8.5 | ADO Wiki |
+| 27 📋 | AAD Connect sync errors after hybrid devices are soft-deleted — sync attempts to create duplicate... | Admin Web Service (AWS) may fail to detect soft-deleted object when AAD Conne... | Verify soft delete restore logic is active for the tenant (preview). AWS shou... | 🟢 8.5 | ADO Wiki |
+| 28 📋 | Entra Connect upgrade fails at 'Connect to Microsoft Entra' step with MSAL error: 'authentication... | PKCS registry key exists under HKLM\SYSTEM\CurrentControlSet\Control\Security... | 1) Back up the registry; 2) Delete the 'PKCS' key at HKLM\SYSTEM\CurrentContr... | 🟢 8.5 | ADO Wiki |
+| 29 📋 | Mobile phone attribute for an AAD user does not get updated via AD Connect sync even though attri... | When an admin uses MsOnline/AzureAD PowerShell or the user updates mobile in ... | Use the BypassDirSyncOverrides feature (released Nov 2022) to turn off DirSyn... | 🟢 8.5 | ADO Wiki |
+| 30 📋 | AD Connect Sync Service not running after swing migration or new installation; Synchronization Se... | Group Writeback was previously enabled on the source server (causing Entra ID... | Enable the Group Writeback feature on the new/migrated Entra Connect server. ... | 🟢 8.5 | ADO Wiki |
+| 31 📋 | Expired Active Directory user accounts can still sign in to Azure AD and Office applications (Out... | The on-premises accountExpires attribute is NOT synchronized to Azure AD. In ... | Use a scheduled PowerShell script with Set-ADUser cmdlet to disable (not just... | 🟢 8.5 | ADO Wiki |
+| 32 📋 | Windows 10 devices fail to complete Hybrid Azure AD Join in a targeted deployment; devices remain... | Three compounding issues: (1) user account missing Intune license, (2) GPO fo... | 1. Apply Intune license to affected user accounts; 2. Create GPO with SCP cli... | 🟢 8.5 | ADO Wiki |
+| 33 📋 | Devices in pending registration state with error 0x801c005a in 'dsregcmd /status' output during m... | The 'cloudUserCertificate' attribute was excluded from the sync scope in AAD ... | In AAD Connect, ensure the 'cloudUserCertificate' attribute is NOT excluded f... | 🟢 8.5 | ADO Wiki |
+| 34 📋 | Hybrid Azure AD Join (HAADJ) not completing for Windows 10 devices; devices remain in Pending sta... | Multiple root causes: (1) user account lacks Intune license if Intune enrollm... | 1) Verify user has Intune license if Intune enrollment is required. 2) Create... | 🟢 8.5 | ADO Wiki |
+| 35 📋 | Password Hash Sync not syncing passwords after on-premises password change in Connect Sync. Passw... | Password changed in local AD with 'User must change password at next logon' e... | Enable 'Synchronize temporary passwords' feature in Entra Connect. See https:... | 🟢 8.5 | ADO Wiki |
+| 36 📋 | Password Hash Synchronization (PHS) fails after switching Azure AD Connect from staging to active... | FIPS (Federal Information Processing Standards) policy enabled on the Azure A... | Disable FIPS enforcement in the Azure AD Connect config: 1) Navigate to %Prog... | 🟢 8.5 | ADO Wiki |
+| 37 📋 | Entra Connect in-place upgrade or fresh install fails: The directory synchronization state of the... | MSOnline retirement causes DirectorySynchronizationStatus=Other. Connect wiza... | Use MS Graph PowerShell: Connect-MgGraph then Update-MgOrganization -Organiza... | 🟢 8.5 | ADO Wiki |
+| 38 📋 | Entra Connect cannot switch Staging mode via wizard after MSOnline PowerShell retirement | Older Entra Connect versions (<2.4.18.0) depend on MSOnline for wizard operat... | Install ADSyncTools module: Install-Module ADSyncTools; Import-Module ADSyncT... | 🟢 8.5 | ADO Wiki |
+| 39 📋 | Azure AD Connect, Azure PowerShell, or Azure CLI fails to authenticate for US Government users af... | Client tool uses outdated authority endpoint (login.microsoftonline.com) inst... | Update the client tool to the latest version supporting login.microsoftonline... | 🟢 8.5 | ADO Wiki |
+| 40 📋 | On-premises AD accounts being locked out due to cloud password spray/brute-force attacks when usi... | Azure AD Smart Lockout and on-premises AD account lockout policies are not co... | Configure: 1) On-prem AD account lockout threshold to be 2-3x greater than AA... | 🟢 8.5 | ADO Wiki |
+| ... | *183 more entries* | | | | |
+
+## Quick Troubleshooting Path
+
+1. Check **aad-connect** related issues (14 entries) `[onenote]`
+2. Check **aadc** related issues (4 entries) `[onenote]`
+3. Check **proxycalc** related issues (3 entries) `[onenote]`
+4. Check **upgrade** related issues (2 entries) `[onenote]`
+5. Check **permission** related issues (2 entries) `[onenote]`
+6. Check **export-slow** related issues (2 entries) `[onenote]`
+7. Check **proxyaddresses** related issues (2 entries) `[onenote]`

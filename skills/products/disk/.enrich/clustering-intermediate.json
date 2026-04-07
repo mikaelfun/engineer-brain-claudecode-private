@@ -1,0 +1,869 @@
+{
+  "topic_entries": {
+    "ade-bitlocker": [
+      "disk-001",
+      "disk-210",
+      "disk-262",
+      "disk-275",
+      "disk-276",
+      "disk-277",
+      "disk-278",
+      "disk-279",
+      "disk-280",
+      "disk-291",
+      "disk-292",
+      "disk-299",
+      "disk-303",
+      "disk-313",
+      "disk-314",
+      "disk-315",
+      "disk-316",
+      "disk-317",
+      "disk-318",
+      "disk-344"
+    ],
+    "disk-recovery": [
+      "disk-002",
+      "disk-003",
+      "disk-008",
+      "disk-294"
+    ],
+    "disk-failure-event17": [
+      "disk-004",
+      "disk-108"
+    ],
+    "disk-performance": [
+      "disk-005",
+      "disk-006",
+      "disk-009",
+      "disk-010",
+      "disk-013",
+      "disk-045",
+      "disk-088",
+      "disk-100",
+      "disk-254",
+      "disk-264",
+      "disk-265",
+      "disk-266",
+      "disk-273",
+      "disk-281",
+      "disk-284",
+      "disk-295",
+      "disk-311",
+      "disk-418"
+    ],
+    "disk-management": [
+      "disk-007",
+      "disk-249",
+      "disk-252",
+      "disk-257",
+      "disk-282",
+      "disk-283",
+      "disk-296",
+      "disk-297",
+      "disk-308",
+      "disk-309",
+      "disk-310",
+      "disk-312",
+      "disk-326"
+    ],
+    "aks-disk": [
+      "disk-011",
+      "disk-090",
+      "disk-093",
+      "disk-097",
+      "disk-250",
+      "disk-267",
+      "disk-268",
+      "disk-270",
+      "disk-271",
+      "disk-272"
+    ],
+    "blob-tools": [
+      "disk-012",
+      "disk-075",
+      "disk-086",
+      "disk-087",
+      "disk-091"
+    ],
+    "data-box-disk-validation": [
+      "disk-014",
+      "disk-016",
+      "disk-017",
+      "disk-018",
+      "disk-020",
+      "disk-021",
+      "disk-052",
+      "disk-053",
+      "disk-055",
+      "disk-060",
+      "disk-061",
+      "disk-068",
+      "disk-069",
+      "disk-070",
+      "disk-071",
+      "disk-127",
+      "disk-231",
+      "disk-234"
+    ],
+    "data-box-disk-setup": [
+      "disk-015",
+      "disk-019",
+      "disk-051",
+      "disk-057",
+      "disk-058",
+      "disk-059",
+      "disk-066",
+      "disk-122",
+      "disk-123",
+      "disk-124",
+      "disk-128",
+      "disk-129",
+      "disk-130",
+      "disk-232",
+      "disk-235",
+      "disk-236",
+      "disk-237",
+      "disk-327",
+      "disk-328"
+    ],
+    "data-box-pod-ordering": [
+      "disk-022",
+      "disk-023",
+      "disk-024",
+      "disk-025",
+      "disk-029",
+      "disk-036",
+      "disk-041",
+      "disk-043",
+      "disk-044",
+      "disk-047",
+      "disk-131",
+      "disk-132",
+      "disk-152",
+      "disk-155",
+      "disk-169",
+      "disk-170",
+      "disk-173",
+      "disk-176",
+      "disk-177",
+      "disk-178",
+      "disk-179",
+      "disk-180",
+      "disk-181",
+      "disk-184",
+      "disk-192",
+      "disk-193",
+      "disk-194",
+      "disk-195",
+      "disk-196",
+      "disk-198",
+      "disk-199",
+      "disk-240",
+      "disk-243",
+      "disk-244"
+    ],
+    "data-box-pod-copy": [
+      "disk-026",
+      "disk-027",
+      "disk-030",
+      "disk-138",
+      "disk-139",
+      "disk-140",
+      "disk-144",
+      "disk-145",
+      "disk-149",
+      "disk-168",
+      "disk-330",
+      "disk-334"
+    ],
+    "data-box-pod-prepare": [
+      "disk-028",
+      "disk-190",
+      "disk-191",
+      "disk-197",
+      "disk-245",
+      "disk-246",
+      "disk-247",
+      "disk-331"
+    ],
+    "data-box-pod-hardware": [
+      "disk-031",
+      "disk-033",
+      "disk-034",
+      "disk-157",
+      "disk-182",
+      "disk-183",
+      "disk-185",
+      "disk-186",
+      "disk-187",
+      "disk-188",
+      "disk-189"
+    ],
+    "data-box-pod-connectivity": [
+      "disk-032",
+      "disk-035",
+      "disk-037",
+      "disk-038",
+      "disk-039",
+      "disk-040",
+      "disk-042",
+      "disk-141",
+      "disk-148",
+      "disk-150",
+      "disk-151",
+      "disk-153",
+      "disk-156",
+      "disk-158",
+      "disk-159",
+      "disk-160",
+      "disk-162",
+      "disk-163",
+      "disk-164",
+      "disk-165",
+      "disk-167",
+      "disk-171",
+      "disk-172",
+      "disk-174",
+      "disk-241",
+      "disk-242",
+      "disk-332",
+      "disk-333"
+    ],
+    "shared-disk": [
+      "disk-046",
+      "disk-056",
+      "disk-269",
+      "disk-298"
+    ],
+    "data-box-disk-upload": [
+      "disk-048",
+      "disk-062",
+      "disk-063",
+      "disk-126"
+    ],
+    "data-box-disk-copy": [
+      "disk-049",
+      "disk-065",
+      "disk-067",
+      "disk-125",
+      "disk-233",
+      "disk-329",
+      "disk-335",
+      "disk-336",
+      "disk-337"
+    ],
+    "data-box-disk-logistics": [
+      "disk-050",
+      "disk-064"
+    ],
+    "data-box-disk-mars": [
+      "disk-054"
+    ],
+    "azure-files-sync": [
+      "disk-072",
+      "disk-073",
+      "disk-074",
+      "disk-084",
+      "disk-085",
+      "disk-089",
+      "disk-092"
+    ],
+    "storage-account": [
+      "disk-076",
+      "disk-077",
+      "disk-078",
+      "disk-079",
+      "disk-082",
+      "disk-083",
+      "disk-094",
+      "disk-095",
+      "disk-096",
+      "disk-102",
+      "disk-104",
+      "disk-105",
+      "disk-106",
+      "disk-255"
+    ],
+    "boot-failure": [
+      "disk-080",
+      "disk-251",
+      "disk-253",
+      "disk-261",
+      "disk-274",
+      "disk-304",
+      "disk-305",
+      "disk-306",
+      "disk-307",
+      "disk-370",
+      "disk-377",
+      "disk-379",
+      "disk-391",
+      "disk-393",
+      "disk-414",
+      "disk-425"
+    ],
+    "cmk-sse-encryption": [
+      "disk-081",
+      "disk-256",
+      "disk-339",
+      "disk-340",
+      "disk-341"
+    ],
+    "tls-security": [
+      "disk-098",
+      "disk-103",
+      "disk-383",
+      "disk-444",
+      "disk-449"
+    ],
+    "mooncake-ops": [
+      "disk-099"
+    ],
+    "disk-backup-restore": [
+      "disk-101",
+      "disk-259",
+      "disk-260",
+      "disk-286",
+      "disk-287",
+      "disk-288",
+      "disk-289",
+      "disk-290",
+      "disk-293",
+      "disk-300",
+      "disk-301",
+      "disk-302",
+      "disk-343"
+    ],
+    "avere-hpc-cache": [
+      "disk-109",
+      "disk-110",
+      "disk-111",
+      "disk-112",
+      "disk-113",
+      "disk-114",
+      "disk-115",
+      "disk-116",
+      "disk-117"
+    ],
+    "acsa": [
+      "disk-118",
+      "disk-119",
+      "disk-120",
+      "disk-121"
+    ],
+    "data-box-gateway": [
+      "disk-133",
+      "disk-134",
+      "disk-135",
+      "disk-136",
+      "disk-154",
+      "disk-238",
+      "disk-239"
+    ],
+    "data-box-pod-metadata": [
+      "disk-137",
+      "disk-142",
+      "disk-143",
+      "disk-146",
+      "disk-147",
+      "disk-161",
+      "disk-166"
+    ],
+    "import-export": [
+      "disk-200",
+      "disk-201",
+      "disk-224"
+    ],
+    "ase-hardware": [
+      "disk-203",
+      "disk-209",
+      "disk-225",
+      "disk-228"
+    ],
+    "ase-networking": [
+      "disk-204",
+      "disk-208",
+      "disk-211",
+      "disk-212",
+      "disk-213",
+      "disk-214",
+      "disk-216",
+      "disk-217",
+      "disk-222",
+      "disk-223",
+      "disk-226",
+      "disk-227",
+      "disk-229",
+      "disk-248"
+    ],
+    "ase-compute": [
+      "disk-205",
+      "disk-206",
+      "disk-207",
+      "disk-220",
+      "disk-221",
+      "disk-230"
+    ],
+    "ase-storage": [
+      "disk-215",
+      "disk-218",
+      "disk-219"
+    ],
+    "ultra-premium-disk": [
+      "disk-263",
+      "disk-285",
+      "disk-322",
+      "disk-338"
+    ],
+    "temp-ephemeral-disk": [
+      "disk-319",
+      "disk-320",
+      "disk-321"
+    ],
+    "disk-export-upload": [
+      "disk-323",
+      "disk-324",
+      "disk-325"
+    ],
+    "windows-misc": [
+      "disk-347",
+      "disk-349",
+      "disk-385",
+      "disk-386",
+      "disk-407",
+      "disk-408",
+      "disk-413",
+      "disk-420",
+      "disk-437",
+      "disk-446",
+      "disk-447",
+      "disk-459"
+    ],
+    "storage-spaces": [
+      "disk-394",
+      "disk-395",
+      "disk-400",
+      "disk-402",
+      "disk-416"
+    ],
+    "misc-disk-issues": [
+      "disk-107",
+      "disk-175",
+      "disk-202",
+      "disk-258",
+      "disk-342"
+    ]
+  },
+  "topic_titles": {
+    "ade-bitlocker": "Azure Disk Encryption (ADE) & BitLocker",
+    "disk-recovery": "Managed Disk Recovery",
+    "disk-performance": "Disk Performance & Throttling",
+    "disk-failure-event17": "IaaS Disk Failure (Event 17)",
+    "disk-management": "Disk Management (Attach/Detach/Resize)",
+    "disk-backup-restore": "Disk Backup, Restore & Snapshots",
+    "boot-failure": "VM Boot Failures",
+    "shared-disk": "Azure Shared Disk",
+    "aks-disk": "AKS Persistent Volume & Disk",
+    "temp-ephemeral-disk": "Temporary & Ephemeral OS Disk",
+    "cmk-sse-encryption": "CMK & SSE Encryption",
+    "disk-export-upload": "Disk Export, Upload & Access",
+    "ultra-premium-disk": "Ultra Disk, Premium SSD v2 & NVMe",
+    "data-box-disk-setup": "Data Box Disk: Unlock & Hardware",
+    "data-box-disk-validation": "Data Box Disk: Validation & Naming",
+    "data-box-disk-copy": "Data Box Disk: Data Copy & Import",
+    "data-box-disk-upload": "Data Box Disk: DC Upload & Errors",
+    "data-box-disk-logistics": "Data Box Disk: Shipping & Mooncake",
+    "data-box-disk-mars": "Data Box Disk: MARS Offline Backup",
+    "data-box-pod-ordering": "Data Box POD: Ordering & Shipping",
+    "data-box-pod-connectivity": "Data Box POD: Connectivity & Access",
+    "data-box-pod-copy": "Data Box POD: Data Copy & Performance",
+    "data-box-pod-prepare": "Data Box POD: Prepare to Ship",
+    "data-box-pod-metadata": "Data Box POD: Metadata & ACL",
+    "data-box-pod-hardware": "Data Box POD: Hardware & Error Codes",
+    "data-box-export": "Data Box: Export Orders",
+    "data-box-gateway": "Data Box Gateway",
+    "import-export": "Azure Import/Export Service",
+    "ase-networking": "Azure Stack Edge: Networking",
+    "ase-compute": "Azure Stack Edge: VM & Kubernetes",
+    "ase-storage": "Azure Stack Edge: Storage & Upload",
+    "ase-hardware": "Azure Stack Edge: Device Management",
+    "avere-hpc-cache": "Avere vFXT & HPC Cache",
+    "acsa": "Azure Container Storage (Arc)",
+    "storage-account": "Storage Account Issues",
+    "azure-files-sync": "Azure Files, File Sync & NFS",
+    "blob-tools": "Blob Storage & Transfer Tools",
+    "tls-security": "TLS, Certificates & Security",
+    "mooncake-ops": "Mooncake Operations",
+    "storage-spaces": "Storage Spaces & S2D",
+    "windows-misc": "Windows Server Misc KB",
+    "misroute": "Case Misroute",
+    "misc-disk-issues": "Miscellaneous Disk Issues"
+  },
+  "discarded": [
+    {
+      "id": "disk-345",
+      "reason": "half-complete"
+    },
+    {
+      "id": "disk-346",
+      "reason": "half-complete"
+    },
+    {
+      "id": "disk-348",
+      "reason": "half-complete"
+    },
+    {
+      "id": "disk-350",
+      "reason": "half-complete"
+    },
+    {
+      "id": "disk-351",
+      "reason": "half-complete"
+    },
+    {
+      "id": "disk-352",
+      "reason": "half-complete"
+    },
+    {
+      "id": "disk-353",
+      "reason": "half-complete"
+    },
+    {
+      "id": "disk-381",
+      "reason": "half-complete"
+    },
+    {
+      "id": "disk-401",
+      "reason": "half-complete"
+    },
+    {
+      "id": "disk-431",
+      "reason": "half-complete"
+    },
+    {
+      "id": "disk-434",
+      "reason": "half-complete"
+    },
+    {
+      "id": "disk-436",
+      "reason": "half-complete"
+    },
+    {
+      "id": "disk-438",
+      "reason": "half-complete"
+    },
+    {
+      "id": "disk-455",
+      "reason": "half-complete"
+    },
+    {
+      "id": "disk-354",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-355",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-356",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-357",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-358",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-359",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-360",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-361",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-362",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-363",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-364",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-365",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-366",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-367",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-368",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-369",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-371",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-372",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-373",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-374",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-375",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-376",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-378",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-380",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-382",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-384",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-387",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-388",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-389",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-390",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-392",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-396",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-397",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-398",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-399",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-403",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-404",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-405",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-406",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-409",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-410",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-411",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-412",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-415",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-417",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-419",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-421",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-422",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-423",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-424",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-426",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-427",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-428",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-429",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-430",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-432",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-433",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-435",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-439",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-440",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-441",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-442",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-443",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-445",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-448",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-450",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-451",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-452",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-453",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-454",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-456",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-457",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-458",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-460",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-461",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-462",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-463",
+      "reason": "off-topic contentidea-kb entry"
+    }
+  ]
+}

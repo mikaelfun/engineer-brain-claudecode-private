@@ -1,0 +1,22 @@
+{
+  "description": "Wiki path scope rules. Auto-managed by scan history. Manual edits OK.",
+  "scopes": [
+    {
+      "wikiKey": "Supportability/AzureDev",
+      "pathScope": [
+        "/[ARM] Azure Resource Manager (ARM)",
+        "/GeneralPages",
+        "/Shared"
+      ]
+    },
+    {
+      "wikiKey": "Supportability/AzureAdaptiveCloud",
+      "pathScope": [
+        "/Azure Local Disconnected Operations",
+        "/Azure Local Nexus",
+        "/Azure Local Rack Scale",
+        "/Azure Local Small Form Factor"
+      ]
+    }
+  ]
+}

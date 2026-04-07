@@ -1,13 +1,20 @@
 {
   "product": "monitor",
-  "status": "extracting",
+  "status": "complete",
   "sourceStates": {
     "21v-gap": "exhausted",
     "onenote": "exhausted",
-    "ado-wiki": "scanning",
+    "ado-wiki": "exhausted",
     "mslearn": "exhausted",
     "contentidea-kb": "exhausted"
   },
-  "synthesized": false,
-  "adoWikiBlast": "running"
+  "synthesized": true,
+  "adoWikiBlast": "stopped",
+  "synthesizeState": {
+    "lastSynthesizedAt": "2026-04-07",
+    "lastEntryCount": 1209,
+    "synthesizedEntryIds": 1206,
+    "topicPlanHash": "merge-synth-20260407",
+    "mode": "full"
+  }
 }

@@ -1,0 +1,45 @@
+# ENTRA-ID Audit Logs — Quick Reference
+
+**Entries**: 21 | **21V**: All applicable
+**Last updated**: 2026-04-07
+**Keywords**: audit-logs, jarvis, gbl, group-based-licensing, conflicting-service-plans, e3
+
+> This topic has a fusion guide with detailed troubleshooting flow
+> → [Full troubleshooting flow](details/audit-logs.md)
+
+## Issue Quick Reference
+
+| # | Symptom | Root Cause | Solution | Score | Source |
+|---|---------|-----------|----------|-------|--------|
+| 1 📋 | PIM eligible assignment extend request fails with RoleAssignmentRequestPolicyValidationFailed in ... | The extend request duration exceeds the PIM policy MaximumGrantPeriod (defaul... | 1) Check Jarvis logs with timestamp + correlation ID to see detailed failure ... | 🟢 9.0 | OneNote |
+| 2 📋 | Group-based licensing (GBL) fails with 'Conflicting service plans' error when assigning E5 licens... | Service plans Exchange Online Plan 2, SharePoint Online Plan 2, Skype for Bus... | 1) Disable conflicting service plans on E3 direct assignment before applying ... | 🟢 8.5 | ADO Wiki |
+| 3 📋 | GBL fails with Conflicting service plans error when E5 assigned to group while users have E3 | Service plans from E3 and E5 (Exchange/SharePoint/Skype Plan 2) cannot coexis... | Disable conflicting plans on E3 before applying E5, or modify E5 group assign... | 🟢 8.5 | ADO Wiki |
+| 4 📋 | IT admin sees mass 'Update User' events in Azure AD audit logs with no Actor information, causing... | Backend ProxyCalc (Proxy Address sanitization) task triggered by VerifiedDoma... | Check audit logs for an 'Add verified domain' or 'Remove verified domain' eve... | 🟢 8.5 | ADO Wiki |
+| 5 📋 | User is unable to register for MFA; Azure AD audit logs show 'Update User' activity with exceptio... | Another Azure AD object has the same proxy address value as the user trying t... | Check Azure AD Audit Logs for the user (AAD > Users > Audit Logs, filter by U... | 🟢 8.5 | ADO Wiki |
+| 6 📋 | User is prompted for password instead of Temporary Access Pass (TAP) passcode after admin configu... | TAP policy not enabled for user, TAP not yet active (up to 10 min activation ... | Verify: 1) TAP policy is enabled and user is assigned, 2) TAP has not expired... | 🟢 8.5 | ADO Wiki |
+| 7 📋 | User is prompted for password instead of TAP passcode after entering UPN | TAP policy not enabled for user, TAP not yet activated (up to 10 min delay), ... | 1) Verify TAP policy is Enabled and user is assigned. 2) Wait up to 10 min af... | 🟢 8.5 | ADO Wiki |
+| 8 📋 | Microsoft Graph Reporting API returns 429 'Too Many Requests' or 'UnknownError' with message 'Thi... | Reporting API throttling: 5 req/10s per app per tenant, 122/10s across all te... | 1. Retry with Retry-After header. 2. Reduce $top (start 900, decrease by 100)... | 🟢 8.5 | ADO Wiki |
+| 9 📋 | Audit records show app@sharepoint as the user performing file activities (search queries, file ac... | The application has SharePoint App-Only access, performing organization-wide ... | This is expected behavior. Check ApplicationDisplayName and EventData fields ... | 🟢 8.5 | ADO Wiki |
+| 10 📋 | Audit records show app@sharepoint as the user who performed file activities, search queries, or l... | SharePoint App-Only access mechanism: applications with granted permissions p... | Check ApplicationDisplayName and EventData fields in the audit record to iden... | 🟢 8.5 | ADO Wiki |
+| 11 📋 | User registered authentication method not appearing in User Registration Details report | User Registration Details is not real-time; updates take up to 36 hours, rare... | Wait at least 60 hours. Check Audit logs for timestamp. If still missing, sub... | 🟢 8.5 | ADO Wiki |
+| 12 📋 | Audit logs for actions initiated by Microsoft Online Services (e.g., Add service principal, Delet... | Known issue. These actions are performed by Microsoft Online Services backend... | Inform customer this is a known limitation for system-initiated operations. F... | 🟢 8.5 | ADO Wiki |
+| 13 📋 | Customer sees "Set Company Information" audit log entries performed by a Global Admin account wit... | When a Rave engineer runs a troubleshooting flow, a backend process impersona... | Verify by running Kusto query on GlobalIfxUlsEvents checking for "SetApplicat... | 🟢 8.5 | ADO Wiki |
+| 14 📋 | "Update company" audit log shows company display name changed but no actor ("initiated by" is emp... | Known issue. "Update company" event has no actor but has modified properties.... | Check if both "Update company" and "Set Company Information" entries exist at... | 🟢 8.5 | ADO Wiki |
+| 15 📋 | Unfamiliar audit log activities appear such as Features_GetFeaturesAsync, GroupsODataV4_Get, Grou... | These activities are logged by the Self-Service Group Management (SSGM) servi... | These are normal internal service activities and can be safely ignored. Refer... | 🟢 8.5 | ADO Wiki |
+| 16 📋 | Unfamiliar audit log entries: Features_GetFeaturesAsync, Features_IsFeatureEnabledAsync, Group_Ge... | Generated by SSGM service during normal operations (MyApps/MyGroups/Azure Por... | Expected internal service activities, safely ignored. Ref: https://learn.micr... | 🟢 8.5 | ADO Wiki |
+| 17 📋 | Cannot identify who enabled or disabled report privacy settings (concealed user/group/site names)... | Microsoft 365 Admin Center does not provide native audit logs for report sett... | Use Microsoft Purview Audit solution: 1) Ensure audit log search is enabled (... | 🟢 8.5 | ADO Wiki |
+| 18 📋 | Set IsExchangeCloudManaged to True and edited Exchange attribute in EXO but change did not take e... | SOA transfer for Exchange attributes to Exchange Online takes up to 24 hours ... | Wait 24 hours. Then check Azure Audit logs for the change (Actor: Microsoft S... | 🟢 8.5 | ADO Wiki |
+| 19 📋 | Cannot access AAD sign-in/audit logs in Mooncake portal (requires Premium license) | Mooncake only has AAD Free. MS Graph was unavailable, PG migrated reporting t... | [DEPRECATED] Use AAD Graph API beta: graph.chinacloudapi.cn/<tenant>/activiti... | 🟢 8.0 | OneNote |
+| 20 📋 | Audit logs show incorrect Client IP Address (gateway IP instead of original client IP) or missing... | Known issue. The reported IP was sometimes the gateway IP of the Azure Servic... | Known limitation tracked by Epic 2483429. No current workaround for missing/i... | 🔵 7.5 | ADO Wiki |
+| 21 📋 | Individual user account disabled and cannot authenticate. Audit log shows: "Core Directory, User ... | User is subject to government trade sanctions. The PTSS (trade screening) app... | Verify via audit log (look for PTSS as disabling app) or CMAT portal (cmat.az... | 🔵 5.5 | ADO Wiki |
+
+## Quick Troubleshooting Path
+
+1. Check **audit-logs** related issues (10 entries) `[ado-wiki]`
+2. Check **gbl** related issues (2 entries) `[ado-wiki]`
+3. Check **group-based-licensing** related issues (2 entries) `[ado-wiki]`
+4. Check **conflicting-service-plans** related issues (2 entries) `[ado-wiki]`
+5. Check **tap** related issues (2 entries) `[ado-wiki]`
+6. Check **passwordless** related issues (2 entries) `[ado-wiki]`
+7. Check **sharepoint** related issues (2 entries) `[ado-wiki]`
+8. Check **missing-actor** related issues (2 entries) `[ado-wiki]`

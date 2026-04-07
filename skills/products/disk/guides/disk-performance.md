@@ -1,0 +1,39 @@
+# Disk Disk Performance & Throttling — 排查速查
+
+**来源数**: 18 | **21V**: 部分适用
+**最后更新**: 2026-04-07
+**关键词**: 30-minutes, 4k, 512e, 512gib, 513gib, 64kib, alldisksabc, alldisksinstripe, background-copy, backup
+
+## 症状速查
+
+| # | 症状 | 根因 | 方案 | 分数 | 来源 |
+|---|------|------|------|------|------|
+| 1 📋 | Standard storage billing higher than expected - customer charged for full disk size even after deleting data | Azure thin-provisioning: deleted data marks blocks as free in file system but does not notify backen | Linux: use discard mount option or run fstrim manually/crontab. For md RAID on RHEL/CentOS 7.x, set raid0.devices_discar | 🟢 9 | [MCVKB] |
+| 2 📋 | TRIM/fstrim does not release space on Windows with dynamic disks; defrag RETRIM fails | Defrag RETRIM checks if storage supports TRIM query before performing, but dynamic disks do not supp | Workaround: create large file to fill volume (fsutil file createnew D:\bigfile.bin <size>; fsutil file seteof D:\bigfile | 🟢 9 | [MCVKB] |
+| 3 📋 | Azure VM data disk performance drops dramatically (P30 to 0.11M/s) when temporary disk under heavy IO | VM-level cached IO throttling: temp disk shares cached throughput limit with cached data disks. Heav | 1) Disable disk cache on mission-critical disks when temp disk used. 2) Ensure total cached throughput < VM cached max.  | 🟢 9 | [MCVKB] |
+| 4 📋 | Azure Premium disk sync IO only achieves ~500 IOPS despite P30 supporting 5000 IOPS | Sync IO limited by disk latency (~2ms/IO), not IOPS limit. Single outstanding sync IO = 1000ms/2ms = | 1) Increase outstanding IOs/queue depth (10 needed to fully utilize P30). 2) Use async IO where possible. 3) For SQL: tu | 🟢 9 | [MCVKB] |
+| 5 📋 | Premium SSD disk I/O latency spikes to 1800ms (await), IOPS appears within disk limits but throughput hits VM-level cap | VM-level uncached disk throughput throttling. Application writes large I/O blocks (~500KB) at 1300-1 | 1) Resize VM to support higher throughput (e.g. DS15_v2 for ~1000MBps). 2) Use disk striping (e.g. 2x P60) to distribute | 🟢 9 | [MCVKB] |
+| 6 📋 | Managed disk (Standard SSD) performance significantly worse in China East vs China East 2 with same VM size | VM in CE on RDSSD node (AllDisksInStripe) - cache policy forced to None. VM in CE2 on AllDisksAbc no | Use premium-enabled VM SKU (e.g. DS15_v2) to land on AllDisksAbc node. Or change region. Kusto: LogNodeSnapshot.diskConf | 🟢 9 | [MCVKB] |
+| 7 📋 | Standard disk VM hitting 500 IOPS limit causing high CPU load and kworker IO wait; application performance degrades at r | Standard managed disk has 500 IOPS limit per disk. Application (open-falcon Graph) receives too many | 1) Check VM disk metrics to verify disk IOPS hitting 500 limit. 2) Upgrade disk tier (Standard to Premium) or resize dis | 🟢 9 | [MCVKB] |
+| 8 📋 | Azure Premium SSD Shared Disk experiencing throttling or performance issues requiring PG escalation | Shared disk backend storage issues require Xstore team investigation. Performance throttling may occ | ICM escalation path: Xstore/Triage (template: k26O2f). Include blob URL of impacted disk(s). Alternative path: Support - | 🟢 8.5 | [MCVKB] |
+| 9 📋 | Disk performance degradation: high latency, slow IO. VM Cached/Uncached IOPS Consumed Percentage or Data Disk IOPS/Bandw | Workload exceeds the IOPS or throughput limits of the VM size (VM-level throttling) or the provision | For VM-level throttling: resize VM to a larger size with higher IOPS/bandwidth caps (e.g., memory-optimized Ebdsv5/M-ser | 🔵 7.5 | [MS Learn] |
+| 10 📋 | Disk performance drops to baseline after ~30 minutes of high IO. Credit-based bursting credits exhausted. Burst metrics  | Credit-based bursting (enabled by default on Premium SSD ≤512 GiB and Standard SSD ≤1024 GiB) allows | 1) For sustained high IO: upgrade disk tier (e.g., P20→P30) for higher baseline IOPS. 2) For Premium SSD >512 GiB: enabl | 🔵 7.5 | [MS Learn] |
+| 11 📋 | Cannot enable Performance Plus on an existing disk. Feature is greyed out or API returns error. Performance Plus only av | Performance Plus (which increases IOPS/throughput limits for Premium SSD, Standard SSD, and Standard | Workaround: 1) Create a snapshot of the existing disk. 2) Create a new disk from the snapshot with Performance Plus enab | 🔵 7.5 | [MS Learn] |
+| 12 📋 | Unexpected high disk read latency (lasting hours to ~24h) after performing control plane operations on managed disks — s | Control plane operations may trigger background data copy that moves the disk between storage locati | Plan control plane operations during maintenance windows. No way to avoid the background copy — it's platform behavior.  | 🔵 7.5 | [MS Learn] |
+| 13 📋 | Ultra Disk configured with high IOPS (e.g., 40,000) but VM only achieves much lower IOPS (e.g., 12,800). Disk not reachi | VM-level IO throttle limits total IOPS a VM can drive, independent of individual disk limits. The VM | 1) Check VM size uncached IOPS limit to ensure >= total IOPS needed across all disks. 2) Upgrade to larger VM size suppo | 🔵 7.5 | [MS Learn] |
+| 14 📋 | Cannot enable on-demand disk bursting on Premium SSD. Operation fails or option not available. Error when trying to enab | On-demand bursting constraints: 1) Cannot enable on Premium SSD <= 512 GiB (always credit-based). 2) | 1) Ensure disk size > 512 GiB. 2) Stop/deallocate VM or detach disk before enabling. 3) Portal: Disk > Configuration > E | 🔵 7.5 | [MS Learn] |
+| 15 📋 | PhysicalDisk and LogicalDisk performance counters missing in Perfmon. Error: 'Unable to add these counters: \PhysicalDis | 'Disable Performance Counters' registry value was set to 1, disabling disk performance counters. | 1. Set 'Disable Performance Counters' registry value to 0. 2. Stop and restart Performance Logs and Alerts service. 3. S | 🔵 7.5 | [KB] |
+| 16 📋 | VSS shadow copy provider times out during backup: 'The shadow copy provider timed out while holding writes to the volume | Excessive IOPS activity on the disk during backup window causes VSS shadow copy provider to time out | 1) Distribute IO load across multiple VM disks. 2) Schedule backup during off-peak hours. 3) Upgrade to higher IOPS disk | 🔵 7.0 | [MS Learn] |
+| 17 📋 | Ultra Disk deployment on VMSS with Uniform orchestration fails. Setting IOPS or throughput values that exceed the deploy | During deployment of Ultra Disks with Uniform VMSS, different (stricter) formulas apply: max IOPS =  | During initial VMSS Uniform deployment, set conservative IOPS/throughput within the deployment formulas (max 300 IOPS/Gi | 🔵 6.0 | [MS Learn] |
+| 18 📋 | Write Accelerator cannot be enabled on non-M-series VM. Feature unavailable or deployment fails. | Write Accelerator M-series only. Cache must be None/ReadOnly. Only IO<=64KiB accelerated. Snapshots  | Verify M-series VM. Set cache None/ReadOnly. For non-M-series use Ultra Disk for low-latency writes. | 🔵 6.0 | [MS Learn] |
+
+## 快速排查路径
+
+1. Standard storage billing higher than expected - customer charged for full disk s → Linux: use discard mount option or run fstrim manually/crontab `[来源: onenote]`
+2. TRIM/fstrim does not release space on Windows with dynamic disks; defrag RETRIM  → Workaround: create large file to fill volume (fsutil file createnew D:\bigfile `[来源: onenote]`
+3. Azure VM data disk performance drops dramatically (P30 to 0.11M/s) when temporar → 1) Disable disk cache on mission-critical disks when temp disk used `[来源: onenote]`
+4. Azure Premium disk sync IO only achieves ~500 IOPS despite P30 supporting 5000 I → 1) Increase outstanding IOs/queue depth (10 needed to fully utilize P30) `[来源: onenote]`
+5. Premium SSD disk I/O latency spikes to 1800ms (await), IOPS appears within disk  → 1) Resize VM to support higher throughput (e `[来源: onenote]`
+
+> 本 topic 有融合排查指南，含完整排查流程和 Kusto 查询模板
+> → [完整排查流程](details/disk-performance.md#排查流程)

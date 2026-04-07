@@ -1,0 +1,80 @@
+# Purview 第三方数据源扫描 -- Comprehensive Troubleshooting Guide
+
+**Entries**: 23 | **Drafts fused**: 7 | **Kusto queries fused**: 0
+**Source drafts**: [ado-wiki-a-aws-data-sources.md](..\guides/drafts/ado-wiki-a-aws-data-sources.md), [ado-wiki-a-current-purview-governance-sap.md](..\guides/drafts/ado-wiki-a-current-purview-governance-sap.md), [ado-wiki-a-lab-setup-new-environment.md](..\guides/drafts/ado-wiki-a-lab-setup-new-environment.md), [ado-wiki-a-m365-tenant-access.md](..\guides/drafts/ado-wiki-a-m365-tenant-access.md), [ado-wiki-a-saps-skillgroup-mapping.md](..\guides/drafts/ado-wiki-a-saps-skillgroup-mapping.md), [ado-wiki-aws-s3-scan-failure-diagnostic.md](..\guides/drafts/ado-wiki-aws-s3-scan-failure-diagnostic.md), [ado-wiki-salesforce-scan-troubleshooting.md](..\guides/drafts/ado-wiki-salesforce-scan-troubleshooting.md)
+**Generated**: 2026-04-07
+
+---
+
+## Troubleshooting Workflow
+
+### Phase 1: Initial Diagnosis
+> Sources: ado-wiki-a-aws-data-sources.md, ado-wiki-a-current-purview-governance-sap.md
+
+1. AWS Data Sources for Purview Scanning `[source: ado-wiki-a-aws-data-sources.md]`
+2. 1. Amazon S3 Bucket `[source: ado-wiki-a-aws-data-sources.md]`
+3. 2. AWS Account (Multi-resource scan) `[source: ado-wiki-a-aws-data-sources.md]`
+4. Purview SAP Tree `[source: ado-wiki-a-current-purview-governance-sap.md]`
+5. Below is a table of the current SAP tree for Microsoft Purview Governance `[source: ado-wiki-a-current-purview-governance-sap.md]`
+6. How to setup new Lab environment `[source: ado-wiki-a-lab-setup-new-environment.md]`
+7. Pre-requisite `[source: ado-wiki-a-lab-setup-new-environment.md]`
+8. Join security group **adflabenvgrp** via IDWeb `[source: ado-wiki-a-lab-setup-new-environment.md]`
+9. Setup Cloud Shell: run `Dismount-CloudDrive` if popup does not show `[source: ado-wiki-a-lab-setup-new-environment.md]`
+10. Choose PowerShell option `[source: ado-wiki-a-lab-setup-new-environment.md]`
+
+### Phase 2: Data Collection (KQL)
+
+```kusto
+// Execute: https://babylon.eastus2.kusto.windows.net/MultiCloud
+MultiCloudIRLog
+| where Message contains "<RunIdFromUI>" and Message contains "PipelineId"
+| extend parsedMessage = parse_json(Message)
+| extend PipelineId = parsedMessage["PipelineId"]
+| project ActivityId, PipelineId
+```
+`[tool: ado-wiki-aws-s3-scan-failure-diagnostic.md]`
+
+### Phase 3: Decision Logic
+
+| Condition | Meaning | Action |
+|-----------|---------|--------|
+| MITI scan completes but assets are missing from scan results for 3P data sources... | Purview scan user/credential does not have permission to acc... | Ask customer to run SELECT command on the missing asset using the same credentia... |
+| AWS S3 test connection fails with error about missing external ID in AWS role co... | AWS IAM role trust relationship does not include the Externa... | Go to Purview credential page, copy External ID. In AWS IAM, Roles, select role,... |
+| Hive source scan returns partial/oscillating asset count across runs; not all as... | Insufficient memory allocated for the Hive scan process; def... | Increase 'Maximum memory available' in the Hive scan configuration (under scan s... |
+| Oracle stored procedures not appearing in Purview scan or lineage results | Microsoft Purview does not support query or stored procedure... | Inform customer this is a known limitation. Purview only supports table and view... |
+| Assets not visible in Browse page after scan completes; customer clicks 'Browse ... | Scoped scans have a 3-4 hour delay before assets appear in B... | Use Search functionality (keyword + filters) as interim workaround. For scoped s... |
+| Classification is not supported for PostgreSQL and Azure PostgreSQL Flexible Ser... | By design. Classification not implemented for PostgreSQL con... | No workaround. Feature request FR-2780. |
+| Snowflake stored procedure lineage aggregated under single entity. Cannot distin... | By design. Export bridge aggregates all SP lineage under one... | No workaround. FR-2847 for granular SP lineage. |
+| AWS S3 scan in Purview has a 7-day limit. Customer with 55 million files cannot ... | Product limitation: AWS S3 scans have a 7-day time limit and... | Feature request FR-2719 to increase scan limit or speed up process. Workaround: ... |
+
+`[conclusion: 🔵 7.0/10]`
+
+---
+
+## Known Issues Lookup
+
+| # | Symptom | Root Cause | Solution | Score | Source |
+|---|---------|-----------|----------|-------|--------|
+| 1 | MITI scan completes but assets are missing from scan results for 3P data sources (Snowflake, Postgre... | Purview scan user/credential does not have permission to access the missing asse... | Ask customer to run SELECT command on the missing asset using the same credentials configured in Pur... | 🔵 7.0 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview?pagePath=/Troubleshooting%20Guides%20(TSGs)/Known%20Issues/3P%20and%20MITI%20Data%20Sources%20Issues) |
+| 2 | AWS S3 test connection fails with error about missing external ID in AWS role configuration | AWS IAM role trust relationship does not include the ExternalId condition requir... | Go to Purview credential page, copy External ID. In AWS IAM, Roles, select role, Trust relationships... | 🔵 7.0 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview?pagePath=%2FTroubleshooting%20Guides%20(TSGs)%2FScanning%2FCreating%20Data%20sources%2FAWS%20S3%20test%20connection%20failures) |
+| 3 | Hive source scan returns partial/oscillating asset count across runs; not all assets discovered | Insufficient memory allocated for the Hive scan process; default is only 1 GB | Increase 'Maximum memory available' in the Hive scan configuration (under scan settings). See: https... | 🔵 7.0 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview?pagePath=%2FTroubleshooting%20Guides%20(TSGs)%2FScanning%2FHive%20not%20finding%20assets) |
+| 4 | Oracle stored procedures not appearing in Purview scan or lineage results | Microsoft Purview does not support query or stored procedure for lineage or scan... | Inform customer this is a known limitation. Purview only supports table and view sources for Oracle ... | 🔵 7.0 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview?pagePath=%2FTroubleshooting%20Guides%20(TSGs)%2FScanning%2FScan%20fails%20with%20an%20error%2FOracle) |
+| 5 | Assets not visible in Browse page after scan completes; customer clicks 'Browse by Asset Type' but c... | Scoped scans have a 3-4 hour delay before assets appear in Browse; full scans sh... | Use Search functionality (keyword + filters) as interim workaround. For scoped scans, wait 3-4 hours... | 🔵 7.0 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview?pagePath=%2FTroubleshooting%20Guides%20(TSGs)%2FSearch%20and%20Browse%2FCannot%20find%20my%20assets%20in%20Browse%2FBrowse%20cannot%20find%20expected%20assets) |
+| 6 | Classification is not supported for PostgreSQL and Azure PostgreSQL Flexible Server connectors in Pu... | By design. Classification not implemented for PostgreSQL connectors. | No workaround. Feature request FR-2780. | 🔵 7.0 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview?pagePath=%2F%5BNew%20wiki%20structure%5DPurview%20Data%20Governance%2FKnown%20Issues%2F2025%20Feb%20FR%20Known%20Issues) |
+| 7 | Snowflake stored procedure lineage aggregated under single entity. Cannot distinguish lineage per ou... | By design. Export bridge aggregates all SP lineage under one entity. Confirmed b... | No workaround. FR-2847 for granular SP lineage. | 🔵 7.0 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview?pagePath=%2F%5BNew%20wiki%20structure%5DPurview%20Data%20Governance%2FKnown%20Issues%2F2025%20Feb%20FR%20Known%20Issues) |
+| 8 | AWS S3 scan in Purview has a 7-day limit. Customer with 55 million files cannot scan all assets at o... | Product limitation: AWS S3 scans have a 7-day time limit and cannot handle very ... | Feature request FR-2719 to increase scan limit or speed up process. Workaround: scope the scan to sm... | 🔵 7.0 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview?pagePath=%2F%5BNew%20wiki%20structure%5DPurview%20Data%20Governance%2FKnown%20Issues%2F2025%20Jan%20FR%20Known%20Issues) |
+| 9 | Only Basic authentication is supported for scanning PostgreSQL in Purview. Azure AD and certificate-... | Product limitation: PostgreSQL connector only supports Basic authentication. See... | Feature requests FR-2745 and FR-2767 for Azure AD and certificate-based auth support. Use Basic auth... | 🔵 7.0 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview?pagePath=%2F%5BNew%20wiki%20structure%5DPurview%20Data%20Governance%2FKnown%20Issues%2F2025%20Jan%20FR%20Known%20Issues) |
+| 10 | SAP HANA Cloud is not a supported data source in Microsoft Purview. Cannot register or scan SAP HANA... | Product limitation: SAP HANA Cloud connector does not exist in Purview. Only on-... | Feature request FR-2752. S500 customer request for priority. No workaround currently available. | 🔵 7.0 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview?pagePath=%2F%5BNew%20wiki%20structure%5DPurview%20Data%20Governance%2FKnown%20Issues%2F2025%20Jan%20FR%20Known%20Issues) |
+| 11 | Cannot use Azure AD or certificate-based authentication to scan PostgreSQL data source in Purview; o... | PostgreSQL connector only supports Basic authentication; Azure AD and certificat... | Must use Basic authentication (username/password) for PostgreSQL scans. Feature request FR 2745/2767... | 🔵 7.0 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview?pagePath=%2F%5BNew%20wiki%20structure%5DPurview%20Data%20Governance%2FKnown%20Issues%2F2025%20Jan%20FR%20Known%20Issues) |
+| 12 | Cannot scan all assets in very large AWS S3 buckets (55M+ files); scan times out after 7 days withou... | AWS S3 scan has a 7-day time limit; extremely large buckets cannot complete full... | Must scope the scan to reduce asset count. No option to remove or extend the 7-day limit. Feature re... | 🔵 7.0 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview?pagePath=%2F%5BNew%20wiki%20structure%5DPurview%20Data%20Governance%2FKnown%20Issues%2F2025%20Jan%20FR%20Known%20Issues) |
+| 13 | SAP HANA Cloud is not a supported data source in Purview; cannot register or scan SAP HANA Cloud | SAP HANA Cloud connector not available in Purview; only on-premises SAP HANA sup... | No workaround. SAP HANA Cloud not supported. Feature request FR 2752 logged (S500 customer priority)... | 🔵 7.0 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview?pagePath=%2F%5BNew%20wiki%20structure%5DPurview%20Data%20Governance%2FKnown%20Issues%2F2025%20Jan%20FR%20Known%20Issues) |
+| 14 | Hive scan with Databricks shows missing lineage, missing assets, missing schema in Purview | Databricks version lower than 8.0; 3rd party provider only supports DB 8.0+ for ... | Check Databricks version — must be 8.0 or higher. Older versions may show partial results. PG will n... | 🔵 7.0 | ado-wiki |
+| 15 | Teradata or Oracle scan completes with no assets; SHIR logs show FATAL: The Model is not consistent ... | Inconsistent model caused by stored procedure lineage generation in MITI bridge | Option A (if SP lineage needed): Install private SHIR (irWithImportBackup.msi), rerun scan, collect ... | 🔵 7.0 | ado-wiki |
+| 16 | Snowflake scans may fail after November 2025 when Snowflake disables single-factor basic authenticat... | Snowflake deprecated single-factor password authentication starting November 202... | 1. Transition to OAuth 2.0 (preferred) or Key Pair authentication. 2. As interim measure, alter exis... | 🔵 7.0 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview?pagePath=%2F%5BNew%20wiki%20structure%5DPurview%20Data%20Governance%2FTroubleshooting%20Guides%20(TSGs)%2FScan%2FSnowflake%20Authentication%20update) |
+| 17 | Unable to scope scan for Oracle database in Purview. No option to selectively choose specific tables... | Purview Oracle connector does not support granular scan scope filtering by table... | Feature gap (FR #2870): Scoped scan for Oracle not yet supported. All objects in schema are included... | 🔵 7.0 | ado-wiki |
+| 18 | Data transfer tasks fail with ExecutionTaskCommon Internal Server Error. Test connection returns err... | Backend issue with AKV secret resolution causing SSL connection failures. Affect... | Engineering investigating with highest priority. Attach support tickets to ICM 713775125 for trackin... | 🔵 7.0 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview?pagePath=/%5BNew%20wiki%20structure%5DPurview%20Data%20Governance/Processes/Known%20Issues) |
+| 19 | Snowflake scans using Azure IR fail with JDBC driver internal error: /home/guest/snowflake_jdbc0.log... | JDBC driver internal error in Azure IR environment affecting Snowflake scans acr... | Engineering investigating with highest priority (ICM 712598380). Attach related support tickets to I... | 🔵 7.0 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview?pagePath=/%5BNew%20wiki%20structure%5DPurview%20Data%20Governance/Processes/Known%20Issues) |
+| 20 | Creating new Oracle scans fails with "The version of the linked service is not supported". Test conn... | Linked service version compatibility issue affecting new Oracle scan configurati... | Attach case to ICM 51000000934177. ETA was March 31. | 🔵 7.0 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview?pagePath=/%5BNew%20wiki%20structure%5DPurview%20Data%20Governance/Processes/Known%20Issues) |
+| 21 | Customer reports unexpected extra charges on their AWS bill after running Purview scans on AWS S3 da... | Purview scanning of AWS S3 incurs three categories of AWS-side charges: (1) data... | Explain the AWS cost components: 1) Data transfer: ~$0.02/GB for cross-region (US/EU). 2) S3 LIST re... | 🔵 5.5 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview?pagePath=/Troubleshooting%20Guides%20(TSGs)/Purview%20Billing/AWS%20Extra%20charges%20on%20customer%20account) |
+| 22 | Amazon S3 scan fails: bucket encrypted with KMS and scan returns errors | AWS role used by Purview scanner is missing KMS Decrypt permissions for encrypte... | Add KMS Decrypt permission to the AWS IAM role used by Purview. Create a new KMS policy allowing Dec... | 🟡 4.5 | [MS Learn](https://learn.microsoft.com/purview/register-scan-amazon-s3) |
+| 23 | Amazon S3 scan connection failure: 'Error found with the Role ARN' or role configuration errors | AWS role missing required permissions (AmazonS3ReadOnlyAccess), incorrect Micros... | Verify: 1) AWS role has AmazonS3ReadOnlyAccess or minimum S3 read permissions. 2) Trust relationship... | 🟡 4.5 | [MS Learn](https://learn.microsoft.com/purview/register-scan-amazon-s3) |

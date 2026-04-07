@@ -47,3 +47,49 @@ EOP 排查不使用 Kusto MCP，而是通过 **PowerShell 邮件头解析**：
 | SCL=9 | Content Filter 高置信度 | 创建 Transport Rule 放行 |
 | DIMP | 域模拟攻击检测 | 加 Anti-phishing policy 白名单 |
 | SPOOF | 发件人欺骗 | 配置 SPF/DKIM/DMARC |
+
+---
+
+## Knowledge Base Assets
+
+> Auto-enriched from 5 sources: ADO Wiki, MS Learn, OneNote, ContentIdea KB, 21V Gap Analysis.
+> Last synthesized: 2026-04-07
+
+### Directory Structure
+
+```
+skills/products/eop/
+  known-issues.jsonl          288 entries (structured break/fix triples)
+  guides/
+    _index.md                 Topic index (37 topics)
+    {topic-slug}.md           37 speed-reference tables (symptom/cause/solution + scores)
+    details/{topic-slug}.md   37 fusion troubleshooting guides (full KQL + decision trees)
+    drafts/*.md               109 raw extraction drafts (source material, do not delete)
+    conflict-report.md        Cross-source contradiction report
+  .enrich/                    Enrichment state (progress, scanned records, evolution log)
+```
+
+### How to Use
+
+**Troubleshooter Integration (Step 1.5)**:
+1. Read `guides/_index.md` to find matching topic by symptom keywords
+2. Read the speed-reference `guides/{topic}.md` for quick symptom-cause-solution lookup
+3. If the topic has a fusion guide, read `guides/details/{topic}.md` for full KQL queries and decision trees
+4. Fallback to `known-issues.jsonl` keyword search if no topic matches
+5. Final fallback: RAG / MS Learn search
+
+**Score Legend** (in speed-reference tables):
+| Score | Icon | Meaning |
+|-------|------|---------|
+| 8-10  | Green circle  | Directly trustworthy |
+| 5-7.9 | Blue circle  | Reference, verify key steps |
+| 3-4.9 | Yellow circle  | Directional only |
+| 0-2.9 | White circle  | Possibly outdated |
+
+**Source Priority**: OneNote(5) > ADO Wiki(4) > ContentIdea KB(3) > MS Learn(2) > Case(1)
+
+### Maintenance
+
+- New knowledge: `/product-learn add eop` or auto-enriched via `/product-learn auto-enrich`
+- Re-synthesize after significant new entries: `/product-learn synthesize eop`
+- Promote high-confidence entries to this SKILL.md: `/product-learn promote eop`

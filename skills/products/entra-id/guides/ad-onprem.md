@@ -1,0 +1,64 @@
+# ENTRA-ID On-Premises AD/LDAP — Quick Reference
+
+**Entries**: 183 | **21V**: Partial (176/183)
+**Last updated**: 2026-04-07
+**Keywords**: ldap, dfsr, ad-replication, domain-controller, dc-promotion, domain-join
+
+> This topic has a fusion guide with detailed troubleshooting flow
+> → [Full troubleshooting flow](details/ad-onprem.md)
+
+## Issue Quick Reference
+
+| # | Symptom | Root Cause | Solution | Score | Source |
+|---|---------|-----------|----------|-------|--------|
+| 1 📋 | AD replication error 8451: the domain controller encounters a problem with the Active Directory d... | Active Directory database (ntds.dit) corruption or inconsistency on the affec... | 1) Try semantic database analysis (ntdsutil) to check database integrity. 2) ... | 🟢 9.5 | ADO Wiki |
+| 2 📋 | Domain join fails with error 0xaac (NERR_AccountReuseBlockedByPolicy) when trying to re-use an ex... | Windows updates from October 2022+ (CVE-2022-38042) block computer account re... | 1) Use same account that created the computer account. 2) Delete stale comput... | 🟢 9.5 | ADO Wiki |
+| 3 📋 | AADLoginForWindows VM extension fails with exit code -2145648523 (DSREG_SECURE_VM_DEVICE_IS_DOMAI... | VM is joined to Active Directory and cannot switch to Secure VM state for AAD... | AAD login via extension not supported on domain-joined VMs. Consider Hybrid A... | 🟢 8.5 | ADO Wiki |
+| 4 📋 | Provisioning Agent fails with LdapException: The operation was aborted because the client side ti... | Provisioning Agent unable to get timely responses from AD domain controller, ... | Increase timeout via registry: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Azure AD... | 🟢 8.5 | ADO Wiki |
+| 5 📋 | Group name claims (sAMAccountName format) not working for cloud-only groups or cloud-only users -... | Group name claims in sAMAccountName/NetbiosDomain/DNSDomain format only work ... | For cloud-only groups, use group ObjectID format in claims, or add 'cloud_dis... | 🟢 8.5 | ADO Wiki |
+| 6 📋 | TAP not immediately available as sign-in option, up to 10 minute delay after creation | Activation delay during Private Preview; replication latency for TAP credenti... | Wait up to 10 minutes after TAP creation. This delay was addressed in Public ... | 🟢 8.5 | ADO Wiki |
+| 7 📋 | RDP from non-MEDS-joined client to MEDS-joined server fails when NTLM password hash sync is disab... | Customer hardened MEDS security by disabling NTLM hash sync. Non-domain-joine... | Workarounds: (1) Domain-join the client machine, (2) Re-enable NTLM password ... | 🟢 8.5 | ADO Wiki |
+| 8 📋 | Higher total authentication latency (400-500ms vs 200-300ms) when user signs in from geo-location... | AAD Gateway nearest to user proxies request to ESTS in tenant residency locat... | Expected behavior by design. Check GatewayDC and env_cloud_deploymentUnit in ... | 🟢 8.5 | ADO Wiki |
+| 9 📋 | New-ADServiceAccount -CreateDelegatedServiceAccount fails with error "Key does not exist" when cr... | KDC Root Key (KdsRootKey) has not been created in the Active Directory enviro... | Create a KDC Root Key by running: Add-KdsRootKey -EffectiveTime ((Get-Date).A... | 🟢 8.5 | ADO Wiki |
+| 10 📋 | LDAP clients fail to connect or authenticate after deploying/upgrading to Windows Server 2025 dom... | Windows Server 2025 enforces LDAP Signing by default for all new AD deploymen... | Check GPO LDAP server signing requirements Enforcement (Default Domain Contro... | 🟢 8.5 | ADO Wiki |
+| 11 📋 | Domain controller restore fails after enabling Database 32k pages optional feature in Active Dire... | Enabling the Database 32K pages optional feature is irreversible; once enable... | Before enabling 32K pages: 1) Ensure ALL DCs in forest run Windows Server 202... | 🟢 8.5 | ADO Wiki |
+| 12 📋 | AD object creation or modification fails because multi-valued attribute (e.g., servicePrincipalNa... | JET 8K page database architecture limits the number of multi-valued attribute... | Upgrade all domain controllers to Windows Server 2025 and enable JET 32K page... | 🟢 8.5 | ADO Wiki |
+| 13 📋 | Name/SID resolution fails for domain accounts; unable to add domain users to file share ACL permi... | LSARPC network ports (RPC endpoint mapper port 135 and ephemeral RPC ports 49... | 1) Verify connectivity: Test-NetConnection -ComputerName <DC> -Port 135. 2) E... | 🟢 8.5 | ADO Wiki |
+| 14 📋 | Domain Controller fails to boot with stop code 0xc00002e1 or 0xc00002e2. AD database (ntds.dit) i... | ESE/JET database is dirty - transactions remain in transaction log files and ... | Boot into DS Restore Mode. Dump database header with esentutl /mh ntds.dit to... | 🟢 8.5 | ADO Wiki |
+| 15 📋 | AD replication fails or is blocked by a corrupted/bad object. Events may include NTDS ISAM errors... | A corrupted or inconsistent object in the Active Directory database (ntds.dit... | Delete the bad object to unblock replication. Use online dumpdatabase feature... | 🟢 8.5 | ADO Wiki |
+| 16 📋 | Domain controller fails to boot with blue screen error 0xc00002e1 or 0xc00002e2. NTDS.DIT is plac... | NTDS.DIT database file is placed on storage drives (SAN/NAS/iSCSI) that are n... | Ensure NTDS.DIT is placed on drives available at boot time. See KB2004725 for... | 🟢 8.5 | ADO Wiki |
+| 17 📋 | AD database corruption detected via integrity checks or semantic analysis. Secondary index corrup... | Secondary index corruption in the ntds.dit ESE database, commonly caused by h... | 1) Collect data: event logs (Application, System, Directory Services, DFS Rep... | 🟢 8.5 | ADO Wiki |
+| 18 📋 | AD replication fails with error 8464 (Synchronization attempt failed). Global Catalog DCs have st... | The partialAttributeSet on read-only partitions became out of sync with the s... | Use Get-PAS.ps1 script or repadmin /showattr to compare each GC partition cAt... | 🟢 8.5 | ADO Wiki |
+| 19 📋 | AD replication error 1256 (Remote Server is Unavailable) logged in repadmin /showrepl output alon... | Error 1256 is a secondary/cascading error. It occurs when a prior partition r... | Ignore error 1256 and focus on resolving the other replication errors (common... | 🟢 8.5 | ADO Wiki |
+| 20 📋 | AD replication fails with error 1726 (RPC call cancelled) or error 1727 (RPC call failed). The tw... | Network-related failure where an intermediate network device (firewall, IDS/I... | Capture two-sided simultaneous network traces on both domain controllers, the... | 🟢 8.5 | ADO Wiki |
+| 21 📋 | AD replication error 8606: Insufficient attributes were given to create an object. Source DC send... | Lingering objects exist on the source domain controller. An object was delete... | 1) Use Lingering Object Liquidator (LOL) tool to identify and remove lingerin... | 🟢 8.5 | ADO Wiki |
+| 22 📋 | AD replication error 1908: Could not find the domain controller for this domain. Netlogon cannot ... | Broken DNS delegation for the child domain. DNS queries for _kerberos._tcp.dc... | 1) Enable verbose Netlogon logging: nltest /dbflag:2080ffff. 2) Review Netlog... | 🟢 8.5 | ADO Wiki |
+| 23 📋 | AD replication error 8453: Replication access was denied. RODC fails to advertise as Global Catal... | Enterprise Read-Only Domain Controllers security group is missing the Replica... | 1) Open ADSIEDIT.msc on a writable DC hosting the affected partition. 2) Righ... | 🟢 8.5 | ADO Wiki |
+| 24 📋 | USN rollback detected on domain controller. Event ID 2095 logged in Directory Service event log. ... | Domain controller was restored using an unsupported method (e.g., VM snapshot... | The supported recovery method is to forcefully demote the affected DC (dcprom... | 🟢 8.5 | ADO Wiki |
+| 25 📋 | Domain Controller becomes unresponsive or enters a hung state. Users cannot authenticate, applica... | Third-party components hooking into the LSASS I/O path or security subsystem ... | 1) Check if any third-party security/audit software was recently installed or... | 🟢 8.5 | ADO Wiki |
+| 26 📋 | LSASS.exe exhibits a handle and memory leak on a Domain Controller or member server. Handle count... | Logon session leak caused by an application or service repeatedly creating ne... | 1) Collect ADPerf Scenario 5 data (WPR Handle trace + perfmon). 2) Open LSASS... | 🟢 8.5 | ADO Wiki |
+| 27 📋 | ADLDS replication fails, instances cannot authenticate to each other for replication despite corr... | msDS-ReplAuthenticationMode values differ between ADAM/ADLDS instances in the... | Use ADSIEDIT to connect to each ADLDS configuration partition and verify all ... | 🟢 8.5 | ADO Wiki |
+| 28 📋 | ADLDS replication fails with access denied or permission errors between replication partners | Computer accounts or service accounts for LDS instances are not members of CN... | Add the computer account SID or service account of the problem LDS instance t... | 🟢 8.5 | ADO Wiki |
+| 29 📋 | After installing June 2024 (6B.2024) cumulative update on Active Directory domain controllers, LS... | Memory leak bug in kdcsvc service introduced in the June 2024 cumulative upda... | Install a later cumulative update that contains the fix for the kdcsvc memory... | 🟢 8.5 | ADO Wiki |
+| 30 📋 | Small memory leak in LSASS on Windows Server 2016 and older domain controllers after installing A... | PAC hardening protections in April 2024 (4B.24) Windows Update cause memory l... | Install the fix from May 2024 (5B.24) cumulative update which resolves the PA... | 🟢 8.5 | ADO Wiki |
+| 31 📋 | LDAP Arena Heap and SAM RSO queue memory leak in LSASS on April 9, 2024 patched domain controller... | RSO worker thread fails to clear SAM RSO queue, exposed by NTLM auth forwardi... | Install the fix that addresses the RSO queue memory leak on DCs with hyper-sc... | 🟢 8.5 | ADO Wiki |
+| 32 📋 | LSASS on Windows Server 2012 R2 and 2016 domain controllers consumes all available memory, become... | Multiple arena heap bugs in LDAP processing on WS2012R2/2016 cause memory gro... | Identify LDAP clients generating load via 1644 events using Event1644Reader.p... | 🟢 8.5 | ADO Wiki |
+| 33 📋 | Domain Controllers enter reboot loop after installing January 2022 Windows updates (January B/12B... | January 2022 security updates (KB5009557 for Server 2019, etc.) introduced a ... | Install the out-of-band (OOB) release from January 17, 2022. KB by OS: Server... | 🟢 8.5 | ADO Wiki |
+| 34 📋 | LDAP paged search fails with error '00000057: LdapErr: DSID-xxxxxxxx, comment: Error processing c... | LDAP server cookie pool exceeded administrator limits (MaxResultSetSize defau... | Enable NTDS diagnostics category 16 (LDAP Interface) at level 2 to get events... | 🟢 8.5 | ADO Wiki |
+| 35 📋 | Domain Controllers experience random high CPU (90%+) in LSASS process; end-users and application ... | Multiple clients simultaneously running costly LDAP queries using LDAP_MATCHI... | 1) Collect AD Data Collector Set (TSS) during high CPU state. 2) Analyze HTML... | 🟢 8.5 | ADO Wiki |
+| 36 📋 | Domain Controller experiences high CPU (75%+) in LSASS during peak logon times (e.g. 9-10AM); LDA... | Applications (e.g. Cisco Jabber VoIP) performing LDAP queries against non-ind... | 1) Collect AD Data Collector Set during high CPU window. 2) Analyze HTML repo... | 🟢 8.5 | ADO Wiki |
+| 37 📋 | Domain Controllers experience random high CPU (80%+) in LSASS process; LSA LookupSids consuming 6... | Application(s) on one or more clients sending excessive LsarLookupSids2 (opnu... | 1) Collect AD Data Collector Set during high CPU. 2) Analyze HTML report: che... | 🟢 8.5 | ADO Wiki |
+| 38 📋 | LSASS.exe high CPU on domain controller caused by excessive SAM EnumUsersInDomain calls originati... | Third-party product CheckPoint firewall with Identity Awareness feature enabl... | Identify source IP from Xperf call stacks (OSF_SCALL frame shows Client Endpo... | 🟢 8.5 | ADO Wiki |
+| 39 📋 | Domain Controller fails to start due to hardware failure, BugCheck (BSOD), ransomware attack, or ... | Physical hardware damage, OS-level crash (BugCheck/BSOD), ransomware encrypti... | Option A (preferred, when multiple DCs exist and no unique data/roles on fail... | 🟢 8.5 | ADO Wiki |
+| 40 📋 | Active Directory Administrative Center (ADAC) cannot display all deleted objects in large enterpr... | ADAC uses client-side filtering which cannot handle displaying more than appr... | Right-click the Deleted Objects container > select 'Search under this node' >... | 🟢 8.5 | ADO Wiki |
+| ... | *143 more entries* | | | | |
+
+## Quick Troubleshooting Path
+
+1. Check **ad-replication** related issues (4 entries) `[ado-wiki]`
+2. Check **ad-database** related issues (3 entries) `[ado-wiki]`
+3. Check **ntds.dit** related issues (3 entries) `[ado-wiki]`
+4. Check **domain-join** related issues (2 entries) `[ado-wiki]`
+5. Check **windows-server-2025** related issues (2 entries) `[ado-wiki]`
+6. Check **jet-32k** related issues (2 entries) `[ado-wiki]`
+7. Check **dc-boot-failure** related issues (2 entries) `[ado-wiki]`

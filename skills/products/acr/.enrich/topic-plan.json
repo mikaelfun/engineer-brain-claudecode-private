@@ -1,0 +1,547 @@
+{
+  "product": "acr",
+  "generatedAt": "2026-04-07",
+  "topics": [
+    {
+      "slug": "connected-registry",
+      "title": "Connected Registry 与 Arc 扩展",
+      "entryIds": [
+        "acr-ado-wiki-001",
+        "acr-ado-wiki-002",
+        "acr-ado-wiki-003"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "connected-registry",
+        "arc-extension",
+        "pvc",
+        "connection-string",
+        "already-activated"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "api-deprecation",
+      "title": "ACR API 版本弃用",
+      "entryIds": [
+        "acr-ado-wiki-004",
+        "acr-ado-wiki-005"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "rp-activity.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "api-deprecation",
+        "preview-api",
+        "policy-scan",
+        "migration"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "authentication-login",
+      "title": "ACR 认证与登录",
+      "entryIds": [
+        "acr-ado-wiki-026",
+        "acr-ado-wiki-029",
+        "acr-ado-wiki-068",
+        "acr-ado-wiki-070",
+        "acr-ado-wiki-084",
+        "acr-mslearn-001",
+        "acr-mslearn-002",
+        "acr-mslearn-003",
+        "acr-mslearn-004"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-acr-health-check-command.md"
+      ],
+      "kustoQueryFiles": [
+        "authentication-errors.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "authentication",
+        "login",
+        "401",
+        "403",
+        "unauthorized",
+        "credential-manager",
+        "expose-token",
+        "anonymous-pull"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "firewall-network-rules",
+      "title": "防火墙与网络规则",
+      "entryIds": [
+        "acr-ado-wiki-006",
+        "acr-ado-wiki-041",
+        "acr-ado-wiki-045",
+        "acr-ado-wiki-052",
+        "acr-ado-wiki-0146",
+        "acr-ado-wiki-a-r1-001",
+        "acr-mslearn-005",
+        "acr-onenote-003"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "activity-errors.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "firewall",
+        "network-rules",
+        "ip-allowlist",
+        "selected-networks",
+        "service-tag",
+        "data-proxy"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "private-endpoint-dns",
+      "title": "Private Endpoint 与 DNS 解析",
+      "entryIds": [
+        "acr-ado-wiki-030",
+        "acr-ado-wiki-032",
+        "acr-ado-wiki-044",
+        "acr-ado-wiki-051",
+        "acr-ado-wiki-085",
+        "acr-ado-wiki-0145",
+        "acr-mslearn-006",
+        "acr-mslearn-007",
+        "acr-mslearn-008",
+        "acr-mslearn-010"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-acr-private-link-troubleshooting-questions.md",
+        "guides/drafts/ado-wiki-acr-private-link.md",
+        "guides/drafts/onenote-acr-proxy-troubleshooting.md"
+      ],
+      "kustoQueryFiles": [
+        "registry-info.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "private-endpoint",
+        "private-link",
+        "dns",
+        "private-dns-zone",
+        "vnet-link",
+        "virtual-wan",
+        "proxy"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "pull-timeout-connectivity",
+      "title": "Pull 超时与连接问题",
+      "entryIds": [
+        "acr-ado-wiki-022",
+        "acr-ado-wiki-059",
+        "acr-ado-wiki-067",
+        "acr-onenote-013",
+        "acr-mslearn-014",
+        "acr-mslearn-015",
+        "acr-mslearn-016",
+        "acr-mslearn-020"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "pull-performance.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "pull-failure",
+        "timeout",
+        "io-timeout",
+        "context-deadline-exceeded",
+        "mcr",
+        "nsg",
+        "storage-endpoint"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "content-trust-notation",
+      "title": "Content Trust 与 Notation 签名",
+      "entryIds": [
+        "acr-ado-wiki-009",
+        "acr-ado-wiki-010",
+        "acr-ado-wiki-072",
+        "acr-ado-wiki-073",
+        "acr-ado-wiki-074",
+        "acr-ado-wiki-075",
+        "acr-onenote-009"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-acr-content-trust-delegation.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "content-trust",
+        "notation",
+        "notary",
+        "signing",
+        "verify",
+        "trust-policy",
+        "trust-store",
+        "dct-deprecation"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "acr-tasks-build",
+      "title": "ACR Tasks 与构建",
+      "entryIds": [
+        "acr-ado-wiki-019",
+        "acr-ado-wiki-042",
+        "acr-ado-wiki-043",
+        "acr-ado-wiki-065",
+        "acr-ado-wiki-066",
+        "acr-onenote-002",
+        "acr-onenote-006",
+        "acr-onenote-010"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-acr-buildkit-secrets.md"
+      ],
+      "kustoQueryFiles": [
+        "acr-task.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "acr-tasks",
+        "acr-build",
+        "buildhost-trace",
+        "agent-pool",
+        "continuous-patching",
+        "network-bypass"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "image-deletion-forensics",
+      "title": "镜像删除调查与审计",
+      "entryIds": [
+        "acr-ado-wiki-015",
+        "acr-ado-wiki-049",
+        "acr-ado-wiki-078",
+        "acr-onenote-011"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-acr-audit-logs.md",
+        "guides/drafts/ado-wiki-a-acr-change-analysis.md",
+        "guides/drafts/ado-wiki-acr-find-user-of-manifest-event.md",
+        "guides/drafts/ado-wiki-acr-investigate-bulk-image-tag-deletions.md",
+        "guides/drafts/onenote-acr-kusto-queries.md"
+      ],
+      "kustoQueryFiles": [
+        "manifest-statistics.md",
+        "activity-errors.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "image-deletion",
+        "manifest-event",
+        "audit-logs",
+        "operator-ip",
+        "bulk-deletion",
+        "forensics"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "image-lock-repository",
+      "title": "镜像锁定与仓库管理",
+      "entryIds": [
+        "acr-ado-wiki-020",
+        "acr-ado-wiki-055",
+        "acr-mslearn-009",
+        "acr-mslearn-012",
+        "acr-mslearn-017"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "image-lock",
+        "write-enabled",
+        "delete-enabled",
+        "immutable",
+        "NAME_UNKNOWN",
+        "tag-not-found"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "throttling-intermittent",
+      "title": "限流与间歇性错误",
+      "entryIds": [
+        "acr-ado-wiki-021",
+        "acr-ado-wiki-023",
+        "acr-ado-wiki-069",
+        "acr-ado-wiki-0150"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-acr-kusto-queries.md"
+      ],
+      "kustoQueryFiles": [
+        "throttling-analysis.md",
+        "storage-layer-performance.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "throttling",
+        "429",
+        "502",
+        "503",
+        "egress",
+        "rate-limit",
+        "storage-reboot"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "rbac-authorization",
+      "title": "RBAC 与权限管理",
+      "entryIds": [
+        "acr-ado-wiki-033",
+        "acr-ado-wiki-057",
+        "acr-ado-wiki-077",
+        "acr-onenote-005",
+        "acr-onenote-012",
+        "acr-onenote-014"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-rbac-abac-tsg.md",
+        "guides/drafts/ado-wiki-a-set-up-aks-acr-cross-tenant.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "rbac",
+        "abac",
+        "scope-map",
+        "token",
+        "custom-role",
+        "cross-tenant",
+        "role-assignment"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "aks-image-pull",
+      "title": "AKS 拉取 ACR 镜像",
+      "entryIds": [
+        "acr-ado-wiki-034",
+        "acr-ado-wiki-047",
+        "acr-ado-wiki-050",
+        "acr-ado-wiki-058"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "aks",
+        "image-pull",
+        "managed-identity",
+        "AcrPull",
+        "service-principal",
+        "attach-acr"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "push-storage-limit",
+      "title": "Push 失败与存储限制",
+      "entryIds": [
+        "acr-ado-wiki-035",
+        "acr-ado-wiki-038",
+        "acr-ado-wiki-039",
+        "acr-ado-wiki-040",
+        "acr-ado-wiki-0148",
+        "acr-mslearn-021"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "push-performance.md",
+        "storage-layer-performance.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "push-failure",
+        "storage-limit",
+        "40tib",
+        "quarantine",
+        "geo-replication",
+        "replication-stuck"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "soft-delete",
+      "title": "软删除与恢复冲突",
+      "entryIds": [
+        "acr-ado-wiki-080",
+        "acr-ado-wiki-081",
+        "acr-ado-wiki-082",
+        "acr-ado-wiki-083"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "soft-delete",
+        "recycle-bin",
+        "metadata-conflict",
+        "force-restore",
+        "geo-replication"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "recovery-restore",
+      "title": "注册表恢复与还原",
+      "entryIds": [
+        "acr-ado-wiki-031",
+        "acr-ado-wiki-048",
+        "acr-ado-wiki-076",
+        "acr-ado-wiki-0147",
+        "acr-onenote-001"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-jarvis-actions.md",
+        "guides/drafts/ado-wiki-a-technical-advisors-actions.md"
+      ],
+      "kustoQueryFiles": [
+        "registry-info.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "recovery",
+        "undelete",
+        "jarvis",
+        "icm",
+        "registry-recovery",
+        "disabled"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "retention-cleanup-defender",
+      "title": "保留策略、清理与 Defender 扫描",
+      "entryIds": [
+        "acr-ado-wiki-054",
+        "acr-ado-wiki-056",
+        "acr-ado-wiki-071",
+        "acr-mslearn-011"
+      ],
+      "draftPaths": [
+        "guides/drafts/mslearn-acr-vulnerability-scanning.md"
+      ],
+      "kustoQueryFiles": [
+        "manifest-statistics.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "retention-policy",
+        "purge",
+        "untagged-manifest",
+        "defender",
+        "vulnerability-scan",
+        "layer-deduplication"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "caching-cache-rules",
+      "title": "ACR 缓存规则",
+      "entryIds": [
+        "acr-ado-wiki-060",
+        "acr-ado-wiki-061",
+        "acr-ado-wiki-062",
+        "acr-ado-wiki-063"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-acr-caching.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "caching",
+        "cache-rule",
+        "upstream-registry",
+        "credential-set",
+        "key-vault",
+        "quota"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "dns-registry-creation",
+      "title": "DNS 与注册表创建",
+      "entryIds": [
+        "acr-ado-wiki-027",
+        "acr-ado-wiki-028"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-acr-custom-domain.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "dns",
+        "cname",
+        "registry-creation",
+        "name-reservation",
+        "custom-domain"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "platform-integration",
+      "title": "平台集成（Web App / Container Apps / Webhook）",
+      "entryIds": [
+        "acr-ado-wiki-046",
+        "acr-ado-wiki-064",
+        "acr-mslearn-018",
+        "acr-mslearn-019",
+        "acr-onenote-004"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-acr-kusto-access.md",
+        "guides/drafts/ado-wiki-a-troubleshooting-using-asi.md",
+        "guides/drafts/ado-wiki-acr-escalation-process.md",
+        "guides/drafts/ado-wiki-a-acr-devops-cases-template.md",
+        "guides/drafts/ado-wiki-a-acr-feedback-forum-post.md",
+        "guides/drafts/ado-wiki-a-acr-pg-teams-channel.md"
+      ],
+      "kustoQueryFiles": [
+        "rp-activity.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "webhook",
+        "web-app",
+        "container-apps",
+        "migration",
+        "escalation",
+        "tooling"
+      ],
+      "confidence": "medium"
+    }
+  ],
+  "discarded": [
+    {
+      "id": "acr-contentidea-kb-001",
+      "reason": "半成品（无 rootCause 且无 solution，仅有 symptom 描述）"
+    }
+  ]
+}

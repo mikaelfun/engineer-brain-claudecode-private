@@ -1,0 +1,63 @@
+# ENTRA-ID MSAL Auth Libraries — Quick Reference
+
+**Entries**: 58 | **21V**: Partial (56/58)
+**Last updated**: 2026-04-07
+**Keywords**: msal, oneauth, android, msal-js, conditional-access, broker
+
+> This topic has a fusion guide with detailed troubleshooting flow
+> → [Full troubleshooting flow](details/msal.md)
+
+## Issue Quick Reference
+
+| # | Symptom | Root Cause | Solution | Score | Source |
+|---|---------|-----------|----------|-------|--------|
+| 1 📋 | Android device authentication fails - sign-in logs show no device properties (IsManaged/IsComplia... | Application does not support broker authentication (ADAL/MSAL + broker), cann... | Check app broker support via ASC Authentication troubleshooter > Expert view ... | 🟢 8.5 | ADO Wiki |
+| 2 📋 | Android authentication fails intermittently, SSO breaks, broker IPC errors in logs | Power savings/battery optimization interferes with background IPC between cli... | Exclude both Company Portal and Microsoft Authenticator from power savings/ba... | 🟢 8.5 | ADO Wiki |
+| 3 📋 | MSAL Obj-C SDK returns expired id_tokens to developer application | MSAL refreshes tokens based on access token lifetime (60-90min random) which ... | [Preferred] Use access tokens instead of id_tokens for resource access. [Alte... | 🟢 8.5 | ADO Wiki |
+| 4 📋 | LAPS Azure discovery fails. Event ID 10025 Azure discovery failed with error code 0x80072EE7 ERRO... | Network connectivity issue - enterpriseregistration.windows.net endpoint is u... | Verify network connectivity: run curl https://enterpriseregistration.windows.... | 🟢 8.5 | ADO Wiki |
+| 5 📋 | ADAL to MSAL Recommendations API (adalToMsalMigration) no longer available in Microsoft Entra Rec... | The ADAL to MSAL Recommendations API was officially retired on December 15, 2025 | Use Microsoft Graph API directly to identify applications still using ADAL. S... | 🟢 8.5 | ADO Wiki |
+| 6 📋 | Users getting prompted to sign in repeatedly in New Outlook for Mac with OneAuth error 965ya (inv... | SIF Conditional Access policy causing interactive prompt every 18 hours. CA c... | Review and adjust tenant CA policies (SIF CA policy). If prompts are infreque... | 🟢 8.5 | ADO Wiki |
+| 7 📋 | During Intune enrollment on Linux, user sees blank screen (no password prompt) after entering UPN... | No default keyring/password has been set on the machine prior to running Intu... | Open Edge browser — a 'Choose password for new keyring' prompt will appear. S... | 🟢 8.5 | ADO Wiki |
+| 8 📋 | Applications using Azure AD Graph API (https://graph.windows.net) stop working or return errors a... | Azure AD Graph API Stage 1 retirement commenced June 30, 2025 (announced June... | Migrate applications to Microsoft Graph API (graph.microsoft.com). Refer to i... | 🟢 8.5 | ADO Wiki |
+| 9 📋 | `dpkg -i intune-portal` fails with dependency errors: missing msalsdk-dbusclient, microsoft-ident... | Linux SSO package stack has a strict dependency chain: intune-portal → msalsd... | Install dependencies in order: 1) `sudo apt install default-jre` 2) `sudo apt... | 🟢 8.5 | ADO Wiki |
+| 10 📋 | MSAL Python app needs broker authentication on WSL or standalone Linux, or app falls back to non-... | enable_broker_on_linux flag not set in MSAL Python, or on standalone Linux th... | Set `enable_broker_on_linux=True` in MSAL Python config. For WSL-only activat... | 🟢 8.5 | ADO Wiki |
+| 11 📋 | .NET application throws 'Could not load file or assembly' error (e.g., Microsoft.Identity.Client,... | The application has a dependency on a specific version of an assembly (e.g., ... | 1) Verify assembly exists in bin folder, reinstall via NuGet 2) Ensure all pr... | 🟢 8.5 | ADO Wiki |
+| 12 📋 | MSAL AcquireToken calls appear to hang or freeze the .NET application, especially in WinForm/WPF ... | Async/await deadlock caused by blocking calls (.Result, .Wait()) on async met... | Method 1: Use async/await all the way up (avoid .Result/.Wait()). Method 2: C... | 🟢 8.5 | ADO Wiki |
+| 13 📋 | Python Flask web app generates HTTP redirect URIs instead of HTTPS when using MSAL/Entra authenti... | Flask url_for() generates HTTP URLs by default, especially when behind a reve... | Use url_for('authorization', _external=True, _scheme='https') to force HTTPS ... | 🟢 8.5 | ADO Wiki |
+| 14 📋 | MSAL .NET throws "No account or login hint was passed to the AcquireTokenSilent call" in ASP.NET/... | MSAL token cache is empty (in-memory by default) when AcquireTokenSilent is c... | Option 1: Implement persistent token cache (SQL, distributed, or file-based).... | 🟢 8.5 | ADO Wiki |
+| 15 📋 | Compilation errors in MSAL Android project due to misconfigured JDK version - build failures acro... | MSAL Android SDK requires JDK 11; any other version causes compilation failures | Android Studio > Preferences > Build Tools > Gradle > set Gradle JDK to 11.0.... | 🟢 8.5 | ADO Wiki |
+| 16 📋 | MSAL Android compilation errors after accepting Android Studio prompt to update Gradle version fr... | Updating Gradle version from 6.8 breaks dependencies in MSAL Android project | File > Project Structure > Project > set Gradle Version to 6.8. Ignore all up... | 🟢 8.5 | ADO Wiki |
+| 17 📋 | Error insufficient memory for Java Runtime Environment when building MSAL Android project | Default JVM memory allocation insufficient for MSAL Android build | In gradle.properties add: org.gradle.jvmargs=-Xmx2048m -XX:MaxPermSize=512m -... | 🟢 8.5 | ADO Wiki |
+| 18 📋 | Gradle daemon keeps restarting or never starts when building MSAL Android project | Mismatch between Android Studio JDK and system JDK, or Gradle version reset f... | Verify Gradle 6.8. Download JBR 11 from JetBrains, replace Android Studio/jbr... | 🟢 8.5 | ADO Wiki |
+| 19 📋 | Error 401 Unauthorized accessing identitydivision.pkgs.visualstudio.com maven feed when building ... | vstsMavenAccessToken in gradle.properties missing or incorrect for IdentityDi... | Create PAT at identitydivision.visualstudio.com with Org=IdentityDivision Sco... | 🟢 8.5 | ADO Wiki |
+| 20 📋 | Could not load file or assembly Microsoft.Identity.Client - system cannot find the file specified | Required MSAL DLL version missing from deployment or version mismatch with bi... | Reinstall NuGet package, update binding redirects in web.config, clean+rebuil... | 🟢 8.5 | ADO Wiki |
+| 21 📋 | MSAL.NET System.Security.Cryptography.CryptographicException: Keyset does not exist when using ce... | Private key not persisted in certificate store - X509Certificate2 loaded with... | Use X509KeyStorageFlags.PersistKeySet / Exportable when creating X509Certific... | 🟢 8.5 | ADO Wiki |
+| 22 📋 | MSAL Android: User is automatically signed in after explicitly signing out. Logout does not clear... | On non-shared devices, MSAL Android logout does not clear Microsoft Authentic... | Expected behavior. For full sign-out across apps, configure Shared Device Mod... | 🟢 8.5 | ADO Wiki |
+| 23 📋 | Angular app throws "Maximum call stack size exceeded" error when loading MSAL configuration from ... | HttpClient injection in MSAL config factory triggers all HTTP_INTERCEPTORS in... | Use HttpBackend instead of HttpClient in the config service constructor to by... | 🟢 8.5 | ADO Wiki |
+| 24 📋 | MSAL.js error: "Interaction is currently in progress. Please ensure that this interaction has bee... | MSAL login methods called multiple times before previous attempt completes. C... | Call handleRedirectPromise() before any interactive login. Check for existing... | 🟢 8.5 | ADO Wiki |
+| 25 📋 | MSAL Angular: MsalGuard not activating or protecting routes. Users can access guarded routes with... | initialNavigation property in RouterModule.forRoot() set to enabledNonBlockin... | Change initialNavigation from enabledNonBlocking to enabledBlocking in app-ro... | 🟢 8.5 | ADO Wiki |
+| 26 📋 | MSAL React hooks (useMsalAuthentication, useIsAuthenticated) return incorrect state - user report... | MsalProvider renders before react-router-dom v6 completes first navigation. M... | Wrap MsalProvider in ClientSideNavigation component that delays rendering usi... | 🟢 8.5 | ADO Wiki |
+| 27 📋 | MSAL.js redirect results in infinite loop between app and login.microsoftonline.com. Browser keep... | App endpoint not in same trusted zone as login.microsoftonline.com (IE/Edge).... | Ensure app domain and login.microsoftonline.com in same browser trusted zone.... | 🟢 8.5 | ADO Wiki |
+| 28 📋 | MSAL.js CDN endpoint https://secure.aadcdn.microsoftonline-p.com returns HTTP 404. Auth library J... | CDN endpoint https://secure.aadcdn.microsoftonline-p.com/* deprecated. Micros... | Replace with https://alcdn.msauth.net/lib/{version}/js/ or https://alcdn.msft... | 🟢 8.5 | ADO Wiki |
+| 29 📋 | Third-party security scanner flags Entra ID cookies as missing HttpOnly flag. Security audit repo... | Entra ID intentionally sets some cookies without HttpOnly because JavaScript ... | Expected behavior, by design. Document as accepted risk. Reference: "Web brow... | 🟢 8.5 | ADO Wiki |
+| 30 📋 | Angular app with Ivy compiler fails to use MsalModule.forRoot(). Compilation or runtime error dur... | MsalModule.forRoot() incompatible with Angular Ivy compiler due to how Ivy ha... | Use FactoryProvider pattern instead of MsalModule.forRoot(). Create factory f... | 🟢 8.5 | ADO Wiki |
+| 31 📋 | AADSTS100033: Regional Cache Auth Service token requests for flows needing CA policy evaluation a... | App uses ESTSR regional endpoint instead of global ESTS. CA blocked on region... | (1) Switch to login.microsoftonline.com, (2) Check App Service REGION_NAME an... | 🟢 8.5 | ADO Wiki |
+| 32 📋 | ROPC (Resource Owner Password Credentials) OAuth grant flow throws exceptions after Azure mandato... | ROPC inherently incompatible with MFA. ROPC-based APIs in MSAL/Azure Identity... | Migrate from ROPC to interactive auth. MSAL: https://learn.microsoft.com/en-u... | 🟢 8.5 | ADO Wiki |
+| 33 📋 | User stuck in authentication loop when configuring CA for Protected Actions, especially after msa... | Authentication Context is linked to a Protected Action but there is no corres... | Use temporary mitigation URL https://aka.ms/MSALProtectedActions to unblock. ... | 🟢 8.5 | ADO Wiki |
+| 34 📋 | Users are getting prompted to sign in repeatedly in New Outlook for Mac with OneAuth MSAL error t... | SIF (Sign-In Frequency) Conditional Access policy causes interactive prompt e... | Review the tenant Conditional Access policies for Sign-In Frequency settings.... | 🟢 8.5 | ADO Wiki |
+| 35 📋 | Work Profile Error encountered after domain password change with OneAuth MSAL error tag 5pa42 ind... | The error originates from the Android broker side during SSL handshake (tag 5... | Route to Mobile broker team for diagnosis and resolution. This is an Android ... | 🟢 8.5 | ADO Wiki |
+| 36 📋 | After the latest Android OS version 14 update, users cannot access Teams, OneDrive with OneAuth M... | Android broker returns CANCEL status (tag 5ssab) after OS update. This is an ... | Route to Mobile broker team for investigation. The issue is on the Android br... | 🟢 8.5 | ADO Wiki |
+| 37 📋 | User sees Something went wrong window with OneAuth MSAL error tag 5objn on Android, corresponding... | Tag 5objn corresponds to Android broker returning INVALID_REQUEST. This can b... | Route to Android broker team for investigation. Since INVALID_REQUEST comes f... | 🟢 8.5 | ADO Wiki |
+| 38 📋 | Android Edge app Conditional Access does not prompt to register device, OneAuth MSAL error tag 5s... | Tag 5sr96 indicates an interaction required error from the Android broker. In... | Check the customer Conditional Access policies. Use Logsminer to search for t... | 🟢 8.5 | ADO Wiki |
+| 39 📋 | Getting invalid account (2201) errors when using SSO to sign into Edge on Android Shared Device M... | Under SDM, Edge uses SignInSilently to load the current user profile. The acc... | Upgrade to OneAuth 6.2.1 or later which introduces partial success status for... | 🟢 8.5 | ADO Wiki |
+| 40 📋 | Linux Broker sign-in silently is not working as expected: device-bound PRT is downgraded by eSTS ... | eSTS server bug: the device-bound PRT should not be downgraded to a device-le... | This is a server-side (eSTS) bug. File/reference bug 3300735 in Identity Divi... | 🟢 8.5 | ADO Wiki |
+| ... | *18 more entries* | | | | |
+
+## Quick Troubleshooting Path
+
+1. Check **msal** related issues (12 entries) `[ado-wiki]`
+2. Check **android** related issues (7 entries) `[ado-wiki]`
+3. Check **linux-sso** related issues (3 entries) `[ado-wiki]`
+4. Check **broker** related issues (2 entries) `[ado-wiki]`
+5. Check **deprecation** related issues (2 entries) `[ado-wiki]`
+6. Check **dotnet** related issues (2 entries) `[ado-wiki]`

@@ -1,0 +1,2543 @@
+{
+  "product": "avd",
+  "generatedAt": "2026-04-07",
+  "topics": [
+    {
+      "slug": "w365-provisioning-1",
+      "title": "W365 Provisioning 配置 (Part 1)",
+      "entryIds": [
+        "avd-ado-wiki-011",
+        "avd-ado-wiki-a-r10-001",
+        "avd-ado-wiki-020",
+        "avd-ado-wiki-023",
+        "avd-ado-wiki-027",
+        "avd-ado-wiki-028",
+        "avd-ado-wiki-029",
+        "avd-ado-wiki-030",
+        "avd-ado-wiki-033",
+        "avd-ado-wiki-034",
+        "avd-ado-wiki-039",
+        "avd-ado-wiki-043",
+        "avd-ado-wiki-065",
+        "avd-ado-wiki-140",
+        "avd-ado-wiki-207"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-sso-aadj-haadj-provisioning-policy.md",
+        "guides/drafts/ado-wiki-ai-enabled-cloud-pcs-scoping-questions.md",
+        "guides/drafts/ado-wiki-ai-enabled-cloud-pcs-troubleshooting.md",
+        "guides/drafts/ado-wiki-b-cpc-relocation-troubleshooting.md",
+        "guides/drafts/ado-wiki-b-outbound-connection-cloud-pc.md",
+        "guides/drafts/ado-wiki-cloud-pc-passive-deletion-scoping-questions.md",
+        "guides/drafts/ado-wiki-cloudprofile-agent-troubleshooting.md",
+        "guides/drafts/ado-wiki-cpc-wdac-provisioning-troubleshooting.md",
+        "guides/drafts/ado-wiki-post-provisioning-advanced-kusto-checks.md",
+        "guides/drafts/ado-wiki-provisioning-overview.md",
+        "guides/drafts/ado-wiki-reservation-error-list.md",
+        "guides/drafts/ado-wiki-reserve-user-provisioning-scoping.md",
+        "guides/drafts/ado-wiki-reserve-user-provisioning-setup.md",
+        "guides/drafts/ado-wiki-reserve-user-provisioning-troubleshooting.md",
+        "guides/drafts/ado-wiki-w365-cpc-cogs-optimization-tsg.md",
+        "guides/drafts/ado-wiki-w365-find-cpc-with-vip.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "0x801c001d",
+        "active-directory",
+        "ad-unjoin",
+        "agent-conflict",
+        "applocker",
+        "azure-ad",
+        "azure-arc",
+        "bluetooth",
+        "by-design",
+        "candidate"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "w365-provisioning-2",
+      "title": "W365 Provisioning 配置 (Part 2)",
+      "entryIds": [
+        "avd-ado-wiki-239",
+        "avd-ado-wiki-248",
+        "avd-ado-wiki-249",
+        "avd-ado-wiki-290",
+        "avd-ado-wiki-305",
+        "avd-ado-wiki-307",
+        "avd-ado-wiki-334",
+        "avd-ado-wiki-371",
+        "avd-ado-wiki-377",
+        "avd-ado-wiki-386",
+        "avd-ado-wiki-b-r6-007",
+        "avd-ado-wiki-a-r11-005",
+        "avd-ado-wiki-a-r12-006",
+        "avd-ado-wiki-a-r14-005",
+        "avd-ado-wiki-a-r16-010"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-sso-aadj-haadj-provisioning-policy.md",
+        "guides/drafts/ado-wiki-ai-enabled-cloud-pcs-scoping-questions.md",
+        "guides/drafts/ado-wiki-ai-enabled-cloud-pcs-troubleshooting.md",
+        "guides/drafts/ado-wiki-b-cpc-relocation-troubleshooting.md",
+        "guides/drafts/ado-wiki-b-outbound-connection-cloud-pc.md",
+        "guides/drafts/ado-wiki-cloud-pc-passive-deletion-scoping-questions.md",
+        "guides/drafts/ado-wiki-cloudprofile-agent-troubleshooting.md",
+        "guides/drafts/ado-wiki-cpc-wdac-provisioning-troubleshooting.md",
+        "guides/drafts/ado-wiki-post-provisioning-advanced-kusto-checks.md",
+        "guides/drafts/ado-wiki-provisioning-overview.md",
+        "guides/drafts/ado-wiki-reservation-error-list.md",
+        "guides/drafts/ado-wiki-reserve-user-provisioning-scoping.md",
+        "guides/drafts/ado-wiki-reserve-user-provisioning-setup.md",
+        "guides/drafts/ado-wiki-reserve-user-provisioning-troubleshooting.md",
+        "guides/drafts/ado-wiki-w365-cpc-cogs-optimization-tsg.md",
+        "guides/drafts/ado-wiki-w365-find-cpc-with-vip.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "admin-username",
+        "anti-fraud",
+        "bitlocker",
+        "black-screen",
+        "bootloader",
+        "bprt",
+        "bulk-token",
+        "business",
+        "by-design",
+        "cloud-pc"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "w365-provisioning-3",
+      "title": "W365 Provisioning 配置 (Part 3)",
+      "entryIds": [
+        "avd-ado-wiki-a-r1-004",
+        "avd-ado-wiki-a-r1-006",
+        "avd-ado-wiki-a-r1-007",
+        "avd-ado-wiki-a-r1-008",
+        "avd-ado-wiki-a-r1-009",
+        "avd-ado-wiki-a-r1-010",
+        "avd-ado-wiki-b-r1-001",
+        "avd-ado-wiki-b-r1-001",
+        "avd-ado-wiki-b-r1-006",
+        "avd-ado-wiki-b-r1-008",
+        "avd-ado-wiki-b-r1-009",
+        "avd-ado-wiki-b-r1-010",
+        "avd-ado-wiki-b-r1-011",
+        "avd-ado-wiki-b-r1-002",
+        "avd-ado-wiki-a-r1-002"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-sso-aadj-haadj-provisioning-policy.md",
+        "guides/drafts/ado-wiki-ai-enabled-cloud-pcs-scoping-questions.md",
+        "guides/drafts/ado-wiki-ai-enabled-cloud-pcs-troubleshooting.md",
+        "guides/drafts/ado-wiki-b-cpc-relocation-troubleshooting.md",
+        "guides/drafts/ado-wiki-b-outbound-connection-cloud-pc.md",
+        "guides/drafts/ado-wiki-cloud-pc-passive-deletion-scoping-questions.md",
+        "guides/drafts/ado-wiki-cloudprofile-agent-troubleshooting.md",
+        "guides/drafts/ado-wiki-cpc-wdac-provisioning-troubleshooting.md",
+        "guides/drafts/ado-wiki-post-provisioning-advanced-kusto-checks.md",
+        "guides/drafts/ado-wiki-provisioning-overview.md",
+        "guides/drafts/ado-wiki-reservation-error-list.md",
+        "guides/drafts/ado-wiki-reserve-user-provisioning-scoping.md",
+        "guides/drafts/ado-wiki-reserve-user-provisioning-setup.md",
+        "guides/drafts/ado-wiki-reserve-user-provisioning-troubleshooting.md",
+        "guides/drafts/ado-wiki-w365-cpc-cogs-optimization-tsg.md",
+        "guides/drafts/ado-wiki-w365-find-cpc-with-vip.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "activation",
+        "ad-sync",
+        "app-categories",
+        "app-sharing",
+        "automount",
+        "call-drop",
+        "citrix",
+        "cloud-pc",
+        "cmd-agent",
+        "default-route"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "avd-custom-image-1",
+      "title": "AVD 自定义镜像 (Part 1)",
+      "entryIds": [
+        "avd-ado-wiki-012",
+        "avd-ado-wiki-430",
+        "avd-ado-wiki-a-r6-003",
+        "avd-ado-wiki-b-r6-003",
+        "avd-ado-wiki-a-r14-001",
+        "avd-onenote-045",
+        "avd-contentidea-kb-004",
+        "avd-contentidea-kb-079",
+        "avd-contentidea-kb-111",
+        "avd-mslearn-031",
+        "avd-mslearn-032",
+        "avd-mslearn-033",
+        "avd-mslearn-035",
+        "avd-mslearn-062",
+        "avd-mslearn-065"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-custom-image-upload-failure.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "agent",
+        "agent-registration",
+        "antivirus",
+        "backup",
+        "cdpsvc",
+        "compute-gallery",
+        "connectivity",
+        "container-instance",
+        "custom-image",
+        "deployment"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "avd-domain-join-1",
+      "title": "AVD 域加入 (Part 1)",
+      "entryIds": [
+        "avd-ado-wiki-013",
+        "avd-ado-wiki-150",
+        "avd-ado-wiki-198",
+        "avd-ado-wiki-199",
+        "avd-contentidea-kb-054",
+        "avd-ado-wiki-0856",
+        "avd-ado-wiki-b-r1-002",
+        "avd-ado-wiki-b-r1-003",
+        "avd-ado-wiki-b-r1-004",
+        "avd-ado-wiki-b-r1-005",
+        "avd-ado-wiki-a-r12-005",
+        "avd-ado-wiki-a-r12-007",
+        "avd-ado-wiki-a-r12-011",
+        "avd-contentidea-kb-090",
+        "avd-mslearn-024"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-domain-join-failure.md",
+        "guides/drafts/ado-wiki-create-w365-enterprise-haadj-lab.md",
+        "guides/drafts/ado-wiki-secure-channel-domain-trust-failed.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "aadj",
+        "app-sharing",
+        "authentication",
+        "azure-ad-joined",
+        "basic-auth",
+        "blank-screen",
+        "citrix",
+        "citrix-hdx-plus",
+        "cloud-pc",
+        "connectivity"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "avd-deployment-arm-1",
+      "title": "AVD ARM 部署 (Part 1)",
+      "entryIds": [
+        "avd-ado-wiki-015",
+        "avd-ado-wiki-0885",
+        "avd-ado-wiki-0886",
+        "avd-ado-wiki-0887",
+        "avd-ado-wiki-0888",
+        "avd-ado-wiki-0889",
+        "avd-ado-wiki-0890",
+        "avd-ado-wiki-0891",
+        "avd-ado-wiki-b-r1-006",
+        "avd-ado-wiki-b-r1-007",
+        "avd-ado-wiki-b-r1-008",
+        "avd-ado-wiki-b-r1-009",
+        "avd-ado-wiki-b-r1-010",
+        "avd-ado-wiki-a-r1-001",
+        "avd-ado-wiki-a-r1-004"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-template-deployment-failed-multiple-errors.md",
+        "guides/drafts/ado-wiki-b-template-validation-error.md",
+        "guides/drafts/ado-wiki-b-troubleshoot-arm-deployment-asc-kusto.md"
+      ],
+      "kustoQueryFiles": [
+        "deployment-info.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "403",
+        "app-group",
+        "app-sharing",
+        "arm",
+        "call-drop",
+        "citrix",
+        "classic-avd",
+        "classic-resources",
+        "cloud-pc",
+        "cmd-agent"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "avd-session-host-1",
+      "title": "AVD Session Host (Part 1)",
+      "entryIds": [
+        "avd-contentidea-kb-045",
+        "avd-contentidea-kb-053",
+        "avd-contentidea-kb-074",
+        "avd-contentidea-kb-076",
+        "avd-contentidea-kb-084",
+        "avd-contentidea-kb-098",
+        "avd-contentidea-kb-101",
+        "avd-contentidea-kb-103",
+        "avd-contentidea-kb-113",
+        "avd-contentidea-kb-114",
+        "avd-contentidea-kb-118",
+        "avd-contentidea-kb-120",
+        "avd-contentidea-kb-126",
+        "avd-contentidea-kb-134",
+        "avd-contentidea-kb-135"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-determine-session-host-image-type.md"
+      ],
+      "kustoQueryFiles": [
+        "health-check.md",
+        "heartbeat.md",
+        "session-host.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [],
+      "confidence": "medium"
+    },
+    {
+      "slug": "avd-session-host-2",
+      "title": "AVD Session Host (Part 2)",
+      "entryIds": [
+        "avd-contentidea-kb-137",
+        "avd-contentidea-kb-139",
+        "avd-contentidea-kb-142",
+        "avd-contentidea-kb-144",
+        "avd-contentidea-kb-145",
+        "avd-contentidea-kb-056",
+        "avd-contentidea-kb-064",
+        "avd-contentidea-kb-065",
+        "avd-mslearn-028",
+        "avd-mslearn-029",
+        "avd-mslearn-045",
+        "avd-mslearn-054",
+        "avd-mslearn-066",
+        "avd-onenote-025",
+        "avd-onenote-039"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-determine-session-host-image-type.md"
+      ],
+      "kustoQueryFiles": [
+        "health-check.md",
+        "heartbeat.md",
+        "session-host.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "0x3000046",
+        "169.254.169.254",
+        "aadds",
+        "agent-reinstall",
+        "authentication",
+        "delete",
+        "deployment",
+        "diffdiskplacement",
+        "dns",
+        "domain-trust"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "avd-fslogix-1",
+      "title": "AVD FSLogix 配置文件 (Part 1)",
+      "entryIds": [
+        "avd-ado-wiki-151",
+        "avd-ado-wiki-152",
+        "avd-ado-wiki-153",
+        "avd-ado-wiki-154",
+        "avd-ado-wiki-0855",
+        "avd-contentidea-kb-036",
+        "avd-contentidea-kb-122",
+        "avd-contentidea-kb-062",
+        "avd-mslearn-064",
+        "avd-onenote-009",
+        "avd-onenote-024",
+        "avd-onenote-033",
+        "avd-onenote-034",
+        "avd-onenote-038",
+        "avd-onenote-071"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-fslogix-create-azure-files-share.md",
+        "guides/drafts/onenote-avd-fslogix-gpo.md",
+        "guides/drafts/onenote-avd-fslogix-scenario-tsg.md",
+        "guides/drafts/onenote-fslogix-profile-roaming-faq.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "00000002",
+        "0x80000003",
+        "80070002",
+        "aadj",
+        "app-crash",
+        "auto-signout",
+        "azure-ad-join",
+        "azure-files",
+        "black-screen",
+        "cloud-cache"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "avd-msix-appattach-misc",
+      "title": "AVD MSIX App Attach - 杂项",
+      "entryIds": [
+        "avd-contentidea-kb-037",
+        "avd-contentidea-kb-038",
+        "avd-contentidea-kb-039",
+        "avd-contentidea-kb-040",
+        "avd-contentidea-kb-041",
+        "avd-contentidea-kb-046",
+        "avd-contentidea-kb-088",
+        "avd-contentidea-kb-124",
+        "avd-contentidea-kb-133",
+        "avd-onenote-003",
+        "avd-onenote-006",
+        "avd-onenote-016",
+        "avd-onenote-087",
+        "avd-onenote-088",
+        "avd-onenote-089"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-msix-appattach-setup-guide.md",
+        "guides/drafts/mslearn-app-attach-troubleshooting.md",
+        "guides/drafts/onenote-avd-msix-app-attach-setup.md"
+      ],
+      "kustoQueryFiles": [
+        "msix-appattach.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "aadds",
+        "accesspaths",
+        "app-attach",
+        "appxdeploymentserver",
+        "appxmanifest",
+        "arm-throttling",
+        "azure-ad-ds",
+        "azure-files",
+        "deregistration",
+        "disconnected-session"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "avd-authentication-sso-1",
+      "title": "AVD 认证与 SSO (Part 1)",
+      "entryIds": [
+        "avd-ado-wiki-165",
+        "avd-ado-wiki-179",
+        "avd-ado-wiki-185",
+        "avd-ado-wiki-180",
+        "avd-ado-wiki-181",
+        "avd-ado-wiki-186",
+        "avd-ado-wiki-183",
+        "avd-ado-wiki-184",
+        "avd-ado-wiki-a-r1-002",
+        "avd-ado-wiki-a-r1-003",
+        "avd-ado-wiki-a-r3-009",
+        "avd-ado-wiki-a-r11-002",
+        "avd-ado-wiki-a-r16-005",
+        "avd-contentidea-kb-081",
+        "avd-contentidea-kb-117"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-enable-schannel-logging.md",
+        "guides/drafts/ado-wiki-a-host-pool-aad-auth-context-setup.md",
+        "guides/drafts/ado-wiki-azure-ad-rdp-authentication-overview.md",
+        "guides/drafts/onenote-avd-adfs-sso.md",
+        "guides/drafts/onenote-avd-authentication-protocols.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "aad-auth",
+        "aadj",
+        "auth-loop",
+        "authentication",
+        "authentication-loop",
+        "browser",
+        "client-certificate",
+        "cloudap",
+        "connection-error",
+        "connectivity"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "w365-automation-graph-1",
+      "title": "W365 Graph API 自动化 (Part 1)",
+      "entryIds": [
+        "avd-ado-wiki-230",
+        "avd-ado-wiki-231",
+        "avd-ado-wiki-309",
+        "avd-ado-wiki-0864",
+        "avd-ado-wiki-0882",
+        "avd-ado-wiki-0883",
+        "avd-ado-wiki-0884",
+        "avd-ado-wiki-a-r10-005",
+        "avd-ado-wiki-c-r1-001",
+        "avd-contentidea-kb-058",
+        "avd-contentidea-kb-110",
+        "avd-contentidea-kb-112",
+        "avd-mslearn-020",
+        "avd-mslearn-021",
+        "avd-mslearn-022"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-automation-solutions.md",
+        "guides/drafts/ado-wiki-cloudpc-retargeting-oce-api.md",
+        "guides/drafts/ado-wiki-w365-power-state-events-query.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "401",
+        "403",
+        "403-forbidden",
+        "5xx",
+        "ad-ds",
+        "admin-highlights",
+        "arm",
+        "authentication",
+        "az-module",
+        "azure-files"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "avd-host-pool-scaling-1",
+      "title": "AVD Host Pool 与缩放 (Part 1)",
+      "entryIds": [
+        "avd-contentidea-kb-006",
+        "avd-contentidea-kb-010",
+        "avd-contentidea-kb-011",
+        "avd-contentidea-kb-050",
+        "avd-contentidea-kb-051",
+        "avd-contentidea-kb-091",
+        "avd-contentidea-kb-094",
+        "avd-contentidea-kb-106",
+        "avd-contentidea-kb-027",
+        "avd-contentidea-kb-055",
+        "avd-contentidea-kb-061",
+        "avd-contentidea-kb-063",
+        "avd-mslearn-001",
+        "avd-mslearn-003",
+        "avd-mslearn-039"
+      ],
+      "draftPaths": [
+        "guides/drafts/mslearn-host-pool-setup-troubleshooting.md",
+        "guides/drafts/onenote-add-vm-to-host-pool-manually.md",
+        "guides/drafts/onenote-avd-scaling-plan-reference.md",
+        "guides/drafts/onenote-avd-session-limit-management.md",
+        "guides/drafts/onenote-avd-start-vm-on-connect.md"
+      ],
+      "kustoQueryFiles": [
+        "deployment-info.md",
+        "hostpool-info.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "0x8024401c",
+        "400-error",
+        "add-vm",
+        "alert",
+        "api",
+        "by-design",
+        "cbs-corruption",
+        "classic-to-arm",
+        "delete-failed",
+        "deployment"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "avd-agent-sxs-1",
+      "title": "AVD Agent 与 SxS Stack (Part 1)",
+      "entryIds": [
+        "avd-contentidea-kb-083",
+        "avd-contentidea-kb-086",
+        "avd-contentidea-kb-116",
+        "avd-contentidea-kb-125",
+        "avd-mslearn-004",
+        "avd-mslearn-005",
+        "avd-mslearn-006",
+        "avd-mslearn-007",
+        "avd-mslearn-008",
+        "avd-onenote-054",
+        "avd-mslearn-009",
+        "avd-mslearn-010",
+        "avd-mslearn-011",
+        "avd-mslearn-012",
+        "avd-mslearn-013"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-agent-cant-talk-to-broker.md",
+        "guides/drafts/ado-wiki-a-geneva-monitoring-agent.md",
+        "guides/drafts/ado-wiki-a-sxs-stack-manual-reinstall.md",
+        "guides/drafts/ado-wiki-b-agent-upgrade-failure-check.md",
+        "guides/drafts/ado-wiki-b-avd-listener-check.md",
+        "guides/drafts/ado-wiki-b-geneva-monitoring-agent-check.md",
+        "guides/drafts/ado-wiki-b-reinstall-avd-applications.md",
+        "guides/drafts/ado-wiki-geneva-agent-troubleshooter.md"
+      ],
+      "kustoQueryFiles": [
+        "heartbeat.md",
+        "session-host.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "agent",
+        "broker",
+        "dns",
+        "dotnet",
+        "endpoint",
+        "event-3019",
+        "event-3277",
+        "event-3389",
+        "event-3703",
+        "firewall"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "avd-firewall-network",
+      "title": "AVD 防火墙与网络",
+      "entryIds": [
+        "avd-ado-wiki-a-r3-006",
+        "avd-ado-wiki-a-r11-011",
+        "avd-ado-wiki-a-r12-001",
+        "avd-ado-wiki-b-r1-012",
+        "avd-ado-wiki-b-r1-013",
+        "avd-ado-wiki-a-r1-001",
+        "avd-ado-wiki-c-r1-004",
+        "avd-contentidea-kb-013",
+        "avd-contentidea-kb-014",
+        "avd-contentidea-kb-070",
+        "avd-contentidea-kb-123",
+        "avd-contentidea-kb-132",
+        "avd-onenote-036",
+        "avd-onenote-052",
+        "avd-onenote-052"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-provisioned-with-warnings-policy-firewall.md",
+        "guides/drafts/ado-wiki-a-use-network-trace-to-determine-disconnection.md",
+        "guides/drafts/ado-wiki-a-wan-flaps-moby-dc-mapping.md",
+        "guides/drafts/ado-wiki-azure-firewall-health-availability.md",
+        "guides/drafts/ado-wiki-b-outbound-connection-issue.md",
+        "guides/drafts/ado-wiki-b-wan-flaps-server-side-disconnects.md",
+        "guides/drafts/ado-wiki-b-whitelist-ips.md"
+      ],
+      "kustoQueryFiles": [
+        "url-access-check.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "aadcdn",
+        "authentication",
+        "azure-vm",
+        "china",
+        "connection-failure",
+        "connectivity",
+        "disconnections",
+        "firewall",
+        "geneva-agent",
+        "hip-checks"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "contentidea-kb-legacy-1",
+      "title": "ContentIdea KB Legacy (Part 1)",
+      "entryIds": [
+        "avd-contentidea-kb-008",
+        "avd-contentidea-kb-012",
+        "avd-contentidea-kb-015",
+        "avd-contentidea-kb-016",
+        "avd-contentidea-kb-019",
+        "avd-contentidea-kb-035",
+        "avd-contentidea-kb-044",
+        "avd-contentidea-kb-047",
+        "avd-contentidea-kb-048",
+        "avd-contentidea-kb-049",
+        "avd-contentidea-kb-102",
+        "avd-contentidea-kb-108",
+        "avd-contentidea-kb-127",
+        "avd-contentidea-kb-128",
+        "avd-contentidea-kb-029"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "lmcompatibilitylevel",
+        "ntlmv2",
+        "organization-laptop"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "avd-teams-multimedia-misc",
+      "title": "AVD Teams 多媒体 - 杂项",
+      "entryIds": [
+        "avd-ado-wiki-259",
+        "avd-ado-wiki-b-r1-002",
+        "avd-ado-wiki-b-r1-003",
+        "avd-ado-wiki-b-r1-005",
+        "avd-ado-wiki-b-r1-007",
+        "avd-ado-wiki-b-r1-007",
+        "avd-ado-wiki-b-r1-006",
+        "avd-ado-wiki-b-r1-009",
+        "avd-contentidea-kb-087",
+        "avd-contentidea-kb-119",
+        "avd-mslearn-047",
+        "avd-mslearn-048",
+        "avd-onenote-023",
+        "avd-onenote-100"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-mmr-technical-solution.md",
+        "guides/drafts/ado-wiki-screenshot-capture-teams-macos-scoping-questions.md",
+        "guides/drafts/ado-wiki-screenshot-capture-teams-macos-setup-guide.md",
+        "guides/drafts/ado-wiki-teams-channel-collaboration-template.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "avd-insights",
+        "blank-screen",
+        "call-drop",
+        "citrix-hdx-plus",
+        "cloud-pc",
+        "cmd.exe",
+        "device-model",
+        "devicelock",
+        "hid",
+        "host-analyzer"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "general-other",
+      "title": "其他杂项",
+      "entryIds": [
+        "avd-ado-wiki-079",
+        "avd-ado-wiki-0861",
+        "avd-ado-wiki-0862",
+        "avd-mslearn-019",
+        "avd-mslearn-036",
+        "avd-mslearn-037",
+        "avd-mslearn-040",
+        "avd-mslearn-041",
+        "avd-mslearn-051",
+        "avd-mslearn-052",
+        "avd-onenote-007",
+        "avd-onenote-066",
+        "avd-onenote-106"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-azure-academy.md",
+        "guides/drafts/ado-wiki-a-demystifying-avd-introduction.md",
+        "guides/drafts/ado-wiki-a-eee-mapping.md",
+        "guides/drafts/ado-wiki-a-welcome.md",
+        "guides/drafts/ado-wiki-admin-highlights-setup.md",
+        "guides/drafts/ado-wiki-admin-highlights-troubleshooting.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "activation",
+        "ad-ds",
+        "api-deprecation",
+        "application-group",
+        "applocker",
+        "auto-scaling",
+        "automation",
+        "azure-files",
+        "azure-health",
+        "billing"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "w365-link-device-misc",
+      "title": "W365 Link 设备 - 杂项",
+      "entryIds": [
+        "avd-ado-wiki-106",
+        "avd-ado-wiki-108",
+        "avd-ado-wiki-107",
+        "avd-ado-wiki-109",
+        "avd-ado-wiki-110",
+        "avd-ado-wiki-111",
+        "avd-ado-wiki-114",
+        "avd-ado-wiki-116",
+        "avd-ado-wiki-118",
+        "avd-ado-wiki-123",
+        "avd-ado-wiki-124",
+        "avd-ado-wiki-219",
+        "avd-ado-wiki-220"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-w365-link-bug-handling-process.md",
+        "guides/drafts/ado-wiki-w365-link-collaboration-routing.md",
+        "guides/drafts/ado-wiki-w365-link-hardware-issues.md",
+        "guides/drafts/ado-wiki-w365-link-manually-trigger-updates.md",
+        "guides/drafts/ado-wiki-w365-link-nfc-readers.md",
+        "guides/drafts/ado-wiki-w365-link-peripherals.md",
+        "guides/drafts/ado-wiki-w365-link-prerequisites.md",
+        "guides/drafts/ado-wiki-w365-link-screen-timeout.md",
+        "guides/drafts/ado-wiki-w365-link-setup-guide.md",
+        "guides/drafts/ado-wiki-w365-link-update-behavior.md",
+        "guides/drafts/ado-wiki-w365-link-where-things-happen.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "4b-update",
+        "cloud-pc",
+        "conditional-access",
+        "configuration",
+        "consent-prompt",
+        "device-registration",
+        "device-restriction",
+        "display",
+        "enrollment",
+        "entra"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "avd-fslogix-2",
+      "title": "AVD FSLogix 配置文件 (Part 2)",
+      "entryIds": [
+        "avd-onenote-042",
+        "avd-onenote-057",
+        "avd-onenote-057",
+        "avd-onenote-060",
+        "avd-onenote-061",
+        "avd-onenote-061",
+        "avd-onenote-081",
+        "avd-onenote-082",
+        "avd-onenote-092",
+        "avd-onenote-093",
+        "avd-onenote-094",
+        "avd-onenote-099",
+        "avd-onenote-102"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-fslogix-create-azure-files-share.md",
+        "guides/drafts/onenote-avd-fslogix-gpo.md",
+        "guides/drafts/onenote-avd-fslogix-scenario-tsg.md",
+        "guides/drafts/onenote-fslogix-profile-roaming-faq.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "00000002",
+        "80070002",
+        "access-denied",
+        "ad-domain-join",
+        "auto-signout",
+        "azure-files",
+        "chkdsk",
+        "cleanupinvalidsessions",
+        "cloud cache",
+        "corrupt-profile"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "w365-anc",
+      "title": "W365 ANC 网络连接",
+      "entryIds": [
+        "avd-ado-wiki-001",
+        "avd-ado-wiki-002",
+        "avd-ado-wiki-004",
+        "avd-ado-wiki-006",
+        "avd-ado-wiki-007",
+        "avd-ado-wiki-008",
+        "avd-ado-wiki-010",
+        "avd-ado-wiki-189",
+        "avd-ado-wiki-a-r1-002",
+        "avd-ado-wiki-a-r14-004",
+        "avd-ado-wiki-a-r1-005"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-anc-device-filter-troubleshooting.md",
+        "guides/drafts/ado-wiki-anc-domain-credential-management.md",
+        "guides/drafts/ado-wiki-anc-ip-availability-intune-setup.md",
+        "guides/drafts/ado-wiki-anc-limit-increase.md",
+        "guides/drafts/ado-wiki-change-anc-limitation.md"
+      ],
+      "kustoQueryFiles": [
+        "health-check.md",
+        "url-access-check.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "allsigned",
+        "anc",
+        "byon",
+        "cname",
+        "conditional-forwarders",
+        "deletion",
+        "dns",
+        "domain-join",
+        "dsc",
+        "endpoint-connectivity"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "w365-government",
+      "title": "W365 Government (GCC/GCCH)",
+      "entryIds": [
+        "avd-ado-wiki-089",
+        "avd-ado-wiki-096",
+        "avd-ado-wiki-097",
+        "avd-ado-wiki-102",
+        "avd-ado-wiki-104",
+        "avd-ado-wiki-301",
+        "avd-ado-wiki-392",
+        "avd-ado-wiki-393",
+        "avd-ado-wiki-394",
+        "avd-ado-wiki-431",
+        "avd-onenote-014"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-downgrade-from-gcc-to-fedramp.md",
+        "guides/drafts/ado-wiki-government-support-guidelines.md",
+        "guides/drafts/ado-wiki-restricted-region-exception.md",
+        "guides/drafts/ado-wiki-set-up-pme-account.md",
+        "guides/drafts/ado-wiki-w365-enterprise-for-gcc.md",
+        "guides/drafts/ado-wiki-w365-gov-saw-gcch-setup.md",
+        "guides/drafts/ado-wiki-w365-government-identify-tenant-type.md",
+        "guides/drafts/ado-wiki-w365-government-offerings.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "aadj",
+        "anc",
+        "autopatch",
+        "brazil-south",
+        "byon",
+        "capacity",
+        "connectivity",
+        "cookies",
+        "dev-box",
+        "dtm"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "w365-link-device-windows-365-link",
+      "title": "W365 Link 设备 - windows-365-link",
+      "entryIds": [
+        "avd-ado-wiki-120",
+        "avd-ado-wiki-128",
+        "avd-ado-wiki-132",
+        "avd-ado-wiki-133",
+        "avd-ado-wiki-134",
+        "avd-ado-wiki-135",
+        "avd-ado-wiki-136",
+        "avd-ado-wiki-137",
+        "avd-ado-wiki-138",
+        "avd-ado-wiki-216",
+        "avd-ado-wiki-217"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "0x80073712",
+        "authentication",
+        "auto-enrollment",
+        "clock",
+        "connection",
+        "connection-error",
+        "device-join",
+        "entra-id",
+        "intune",
+        "intune-policy"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "avd-usb-peripheral",
+      "title": "AVD USB 与外设重定向",
+      "entryIds": [
+        "avd-ado-wiki-175",
+        "avd-ado-wiki-227",
+        "avd-ado-wiki-276",
+        "avd-ado-wiki-b-r3-002",
+        "avd-ado-wiki-b-r3-003",
+        "avd-ado-wiki-a-r3-002",
+        "avd-ado-wiki-a-r3-003",
+        "avd-contentidea-kb-052",
+        "avd-contentidea-kb-089",
+        "avd-contentidea-kb-131",
+        "avd-onenote-098"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-drag-drop-setup.md",
+        "guides/drafts/ado-wiki-a-drag-drop-troubleshooting.md",
+        "guides/drafts/ado-wiki-b-com-port-redirection.md",
+        "guides/drafts/ado-wiki-b-remotefx-device-redirection-in-avd-session.md",
+        "guides/drafts/ado-wiki-b-usb-drive-redirection.md",
+        "guides/drafts/ado-wiki-b-usb-redirection.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "audiomode",
+        "camera",
+        "cipher",
+        "citrix",
+        "click",
+        "connectivity",
+        "context-based-redirection",
+        "epic",
+        "file-copy",
+        "firewall"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "avd-connection-general",
+      "title": "AVD 连接通用",
+      "entryIds": [
+        "avd-ado-wiki-255",
+        "avd-ado-wiki-a-r3-004",
+        "avd-ado-wiki-a-r12-002",
+        "avd-ado-wiki-a-r12-003",
+        "avd-contentidea-kb-009",
+        "avd-contentidea-kb-067",
+        "avd-contentidea-kb-072",
+        "avd-contentidea-kb-130",
+        "avd-contentidea-kb-136",
+        "avd-mslearn-061",
+        "avd-onenote-051"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-determine-disconnection-source.md",
+        "guides/drafts/ado-wiki-a-w365-avd-error-code-mapping.md",
+        "guides/drafts/ado-wiki-b-avd-vs-mstsc-connection-flows.md",
+        "guides/drafts/ado-wiki-b-connection-failed-no-resources.md",
+        "guides/drafts/ado-wiki-cloudpc-redeploying.md",
+        "guides/drafts/ado-wiki-cloudpc-restart-oce.md",
+        "guides/drafts/ado-wiki-connection-flows-websocket-and-udp.md",
+        "guides/drafts/ado-wiki-dump-cloudpc.md",
+        "guides/drafts/ado-wiki-rename-cloudpc.md"
+      ],
+      "kustoQueryFiles": [
+        "connection-tracking.md",
+        "gateway-broker.md",
+        "rdp-core-events.md",
+        "user-activity.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "aad-join",
+        "aad-joined",
+        "ad-connect",
+        "authentication",
+        "backend-error",
+        "by-design",
+        "connectivity",
+        "connector",
+        "disconnect",
+        "disconnected-session"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "avd-windows-app-misc",
+      "title": "AVD Windows App 客户端 - 杂项",
+      "entryIds": [
+        "avd-contentidea-kb-104",
+        "avd-contentidea-kb-115",
+        "avd-contentidea-kb-121",
+        "avd-contentidea-kb-138",
+        "avd-contentidea-kb-140",
+        "avd-contentidea-kb-141",
+        "avd-contentidea-kb-143",
+        "avd-contentidea-kb-146",
+        "avd-mslearn-068",
+        "avd-onenote-019"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-entra-auth-urls-windows-app.md",
+        "guides/drafts/ado-wiki-avd-client-traces.md",
+        "guides/drafts/ado-wiki-b-switching-to-unified-client.md",
+        "guides/drafts/ado-wiki-b-unified-client-architecture-notes.md",
+        "guides/drafts/ado-wiki-b-unified-client-setup-guides.md",
+        "guides/drafts/ado-wiki-b-unified-windows-app.md",
+        "guides/drafts/ado-wiki-rdp-connection-flow-msrdc-mstsc.md",
+        "guides/drafts/ado-wiki-windows-app-branding-scoping-questions.md",
+        "guides/drafts/ado-wiki-windows-app-branding-setup-guide.md",
+        "guides/drafts/ado-wiki-windows-app-branding-troubleshooting.md",
+        "guides/drafts/ado-wiki-windows-app-data-collection.md",
+        "guides/drafts/ado-wiki-windows-app-gov-cloud-support.md",
+        "guides/drafts/onenote-avd-windows-app-migration.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "ctrl+win+l",
+        "eol",
+        "keyboard",
+        "live-captions",
+        "migration",
+        "mooncake",
+        "msi",
+        "msrdc",
+        "remote-desktop-client",
+        "retirement"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "w365-frontline-misc",
+      "title": "W365 Frontline 一线员工 - 杂项",
+      "entryIds": [
+        "avd-ado-wiki-026",
+        "avd-ado-wiki-080",
+        "avd-ado-wiki-082",
+        "avd-ado-wiki-083",
+        "avd-ado-wiki-088",
+        "avd-ado-wiki-396",
+        "avd-ado-wiki-422",
+        "avd-ado-wiki-a-r5-003",
+        "avd-ado-wiki-a-r5-004",
+        "avd-ado-wiki-a-r11-009"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-autopilot-dpp-w365-setup-guide.md",
+        "guides/drafts/ado-wiki-citrix-hdx-frontline-dedicated.md",
+        "guides/drafts/ado-wiki-cloud-apps-dpp-fls-setup-guide.md",
+        "guides/drafts/ado-wiki-fls-devices-automatically-reset-scoping-questions.md",
+        "guides/drafts/ado-wiki-fls-dpp-successful-event-kusto.md",
+        "guides/drafts/ado-wiki-fls-provisioning-policy-details-kusto.md",
+        "guides/drafts/ado-wiki-frontline-shared-dpp-troubleshooting.md",
+        "guides/drafts/ado-wiki-resize-frontline-dedicated-scoping-questions.md",
+        "guides/drafts/ado-wiki-resize-frontline-dedicated-setup-guide.md",
+        "guides/drafts/ado-wiki-session-state-retention-fld-scoping-questions.md",
+        "guides/drafts/ado-wiki-session-state-retention-fld-setup-guide.md",
+        "guides/drafts/ado-wiki-session-state-retention-fld-troubleshooting.md",
+        "guides/drafts/ado-wiki-w365-fls-devices-reset-setup-guide.md",
+        "guides/drafts/ado-wiki-w365-frontline-concurrency-report.md",
+        "guides/drafts/ado-wiki-w365-frontline-intelligent-prestart.md",
+        "guides/drafts/ado-wiki-w365-frontline-oce-api.md",
+        "guides/drafts/ado-wiki-w365-frontline-shared-overview.md",
+        "guides/drafts/ado-wiki-w365-frontline-worker-tsg.md",
+        "guides/drafts/ado-wiki-windows-365-frontline-overview.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "allocationfailed",
+        "anc",
+        "autopilot",
+        "autopilot-v2",
+        "capacity",
+        "cogs",
+        "concurrency-report",
+        "customer-request",
+        "cylance",
+        "data-access"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "w365-connector-3rdparty",
+      "title": "W365 第三方连接器 (Citrix/VMware/HP)",
+      "entryIds": [
+        "avd-ado-wiki-045",
+        "avd-ado-wiki-055",
+        "avd-ado-wiki-060",
+        "avd-ado-wiki-a-r3-002",
+        "avd-ado-wiki-b-r1-004",
+        "avd-ado-wiki-b-r1-008",
+        "avd-ado-wiki-b-r1-003",
+        "avd-contentidea-kb-026",
+        "avd-contentidea-kb-082",
+        "avd-contentidea-kb-096"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-citrix-hdx-plus-resources.md",
+        "guides/drafts/ado-wiki-b-hp-anyware-resources.md",
+        "guides/drafts/ado-wiki-b-vmware-blast-resources.md",
+        "guides/drafts/ado-wiki-citrix-connector-status-check.md",
+        "guides/drafts/ado-wiki-citrix-hdx-connectivity-check.md",
+        "guides/drafts/ado-wiki-citrix-hdx-license-status-check.md",
+        "guides/drafts/ado-wiki-citrix-hdx-provision-status-check.md",
+        "guides/drafts/ado-wiki-citrix-tenant-onboard-offboard-check.md",
+        "guides/drafts/ado-wiki-hp-anyware-connectivity-status-check.md",
+        "guides/drafts/ado-wiki-hp-anyware-provision-status-check.md",
+        "guides/drafts/ado-wiki-hp-anyware-tenant-onboard-offboard-status.md",
+        "guides/drafts/ado-wiki-vmware-blast-connectivity-status-check.md",
+        "guides/drafts/ado-wiki-vmware-blast-general-troubleshooting-tools.md",
+        "guides/drafts/ado-wiki-vmware-blast-provision-status-check.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "agent-installation",
+        "app-sharing",
+        "blast-enablement",
+        "citrix",
+        "citrix-hdx",
+        "citrix-hdx-plus",
+        "connectivity",
+        "connector",
+        "devicelock",
+        "feed-discovery"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "avd-black-screen",
+      "title": "AVD 黑屏",
+      "entryIds": [
+        "avd-ado-wiki-076",
+        "avd-ado-wiki-b-r3-004",
+        "avd-ado-wiki-a-r3-004",
+        "avd-ado-wiki-a-r11-006",
+        "avd-ado-wiki-a-r11-007",
+        "avd-ado-wiki-a-r14-003",
+        "avd-contentidea-kb-059",
+        "avd-contentidea-kb-085",
+        "avd-contentidea-kb-092",
+        "avd-onenote-048"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "0x10b",
+        "0x3",
+        "4005-event",
+        "agent-update",
+        "appreadiness",
+        "black-screen",
+        "boot-policy",
+        "by-design",
+        "connection-failure",
+        "connectivity"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "w365-general",
+      "title": "W365 通用管理",
+      "entryIds": [
+        "avd-ado-wiki-233",
+        "avd-ado-wiki-242",
+        "avd-ado-wiki-243",
+        "avd-ado-wiki-244",
+        "avd-ado-wiki-247",
+        "avd-ado-wiki-254",
+        "avd-ado-wiki-278",
+        "avd-ado-wiki-279",
+        "avd-ado-wiki-0841",
+        "avd-ado-wiki-a-r14-006"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "401",
+        "403",
+        "admin-highlights",
+        "asr",
+        "automatic-cleanup",
+        "cleanup-not-running",
+        "cloudpc.readwrite.all",
+        "configuration",
+        "connection-monitor",
+        "connector"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "avd-web-client-misc",
+      "title": "AVD Web 客户端 - 杂项",
+      "entryIds": [
+        "avd-contentidea-kb-018",
+        "avd-contentidea-kb-042",
+        "avd-contentidea-kb-077",
+        "avd-contentidea-kb-078",
+        "avd-contentidea-kb-095",
+        "avd-contentidea-kb-107",
+        "avd-contentidea-kb-024",
+        "avd-onenote-027",
+        "avd-onenote-035",
+        "avd-onenote-086"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-unified-web-client.md",
+        "guides/drafts/ado-wiki-b-unified-web-portal.md",
+        "guides/drafts/ado-wiki-web-portal-connection-flow.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "0x80090016",
+        "aadsts1400002",
+        "aadsts50105",
+        "capi2",
+        "certificate",
+        "client-side",
+        "connection-failure",
+        "defaultfeedurl",
+        "digital-guardian",
+        "enterprise-app"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "avd-agent-sxs-2",
+      "title": "AVD Agent 与 SxS Stack (Part 2)",
+      "entryIds": [
+        "avd-mslearn-014",
+        "avd-mslearn-016",
+        "avd-mslearn-017",
+        "avd-mslearn-018",
+        "avd-mslearn-030",
+        "avd-mslearn-059",
+        "avd-onenote-049",
+        "avd-onenote-097",
+        "avd-onenote-101",
+        "avd-onenote-103"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-agent-cant-talk-to-broker.md",
+        "guides/drafts/ado-wiki-a-geneva-monitoring-agent.md",
+        "guides/drafts/ado-wiki-a-sxs-stack-manual-reinstall.md",
+        "guides/drafts/ado-wiki-b-agent-upgrade-failure-check.md",
+        "guides/drafts/ado-wiki-b-avd-listener-check.md",
+        "guides/drafts/ado-wiki-b-geneva-monitoring-agent-check.md",
+        "guides/drafts/ado-wiki-b-reinstall-avd-applications.md",
+        "guides/drafts/ado-wiki-geneva-agent-troubleshooter.md"
+      ],
+      "kustoQueryFiles": [
+        "heartbeat.md",
+        "session-host.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "agent",
+        "agent-install",
+        "bitsadmin",
+        "broker",
+        "deployment",
+        "disableregistrytools",
+        "disk-space",
+        "downloadmsiexception",
+        "dsc",
+        "duplicate"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "w365-provisioning-provisioning-policy",
+      "title": "W365 Provisioning 配置 - provisioning-policy",
+      "entryIds": [
+        "avd-ado-wiki-022",
+        "avd-ado-wiki-339",
+        "avd-ado-wiki-342",
+        "avd-ado-wiki-345",
+        "avd-ado-wiki-346",
+        "avd-ado-wiki-350",
+        "avd-ado-wiki-354",
+        "avd-ado-wiki-389",
+        "avd-ado-wiki-c-r1-002"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "active-deletion",
+        "cloud-pc",
+        "cpcd",
+        "deletion",
+        "deprovisioning",
+        "gbl",
+        "grace-period",
+        "license",
+        "migration-api",
+        "provisioning-policy"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "avd-deployment-arm-2",
+      "title": "AVD ARM 部署 (Part 2)",
+      "entryIds": [
+        "avd-ado-wiki-a-r3-001",
+        "avd-ado-wiki-a-r3-007",
+        "avd-ado-wiki-a-r8-001",
+        "avd-contentidea-kb-007",
+        "avd-contentidea-kb-020",
+        "avd-mslearn-043",
+        "avd-mslearn-044",
+        "avd-mslearn-067",
+        "avd-onenote-065"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-template-deployment-failed-multiple-errors.md",
+        "guides/drafts/ado-wiki-b-template-validation-error.md",
+        "guides/drafts/ado-wiki-b-troubleshoot-arm-deployment-asc-kusto.md"
+      ],
+      "kustoQueryFiles": [
+        "deployment-info.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "arm-template",
+        "azure-monitor",
+        "configuration-workbook",
+        "connectivity",
+        "deployment",
+        "deployment-validation",
+        "dns",
+        "download",
+        "dsc",
+        "ephemeral-os-disk"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "w365-resize",
+      "title": "W365 Resize 调整",
+      "entryIds": [
+        "avd-ado-wiki-031",
+        "avd-ado-wiki-040",
+        "avd-ado-wiki-256",
+        "avd-ado-wiki-257",
+        "avd-ado-wiki-258",
+        "avd-ado-wiki-267",
+        "avd-ado-wiki-a-r10-002",
+        "avd-ado-wiki-a-r10-003",
+        "avd-ado-wiki-a-r11-008"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-resize-failing-vm-agent-unavailable.md",
+        "guides/drafts/ado-wiki-b-ssd-migration-8vcpu.md",
+        "guides/drafts/ado-wiki-group-based-license-resize.md",
+        "guides/drafts/ado-wiki-resize-v2-scoping-questions.md",
+        "guides/drafts/ado-wiki-resize-v2-setup-guide.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "403-forbidden",
+        "blob-storage",
+        "blockresizeforgen1vm",
+        "by-design",
+        "cse-handler",
+        "customscriptextension",
+        "disk-expansion",
+        "disk-full",
+        "disk-size",
+        "diskpart"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "avd-authentication-sso-2",
+      "title": "AVD 认证与 SSO (Part 2)",
+      "entryIds": [
+        "avd-mslearn-027",
+        "avd-onenote-010",
+        "avd-onenote-044",
+        "avd-onenote-059",
+        "avd-onenote-059",
+        "avd-onenote-062",
+        "avd-onenote-074",
+        "avd-onenote-068",
+        "avd-onenote-067"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-enable-schannel-logging.md",
+        "guides/drafts/ado-wiki-a-host-pool-aad-auth-context-setup.md",
+        "guides/drafts/ado-wiki-azure-ad-rdp-authentication-overview.md",
+        "guides/drafts/onenote-avd-adfs-sso.md",
+        "guides/drafts/onenote-avd-authentication-protocols.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "0x80072f7d",
+        "aadds",
+        "aadj",
+        "adfs",
+        "adfs-sso",
+        "aes128-sha256",
+        "authentication",
+        "azure-front-door",
+        "certificate",
+        "cipher-mismatch"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "w365-frontline-frontline-shared",
+      "title": "W365 Frontline 一线员工 - frontline-shared",
+      "entryIds": [
+        "avd-ado-wiki-085",
+        "avd-ado-wiki-086",
+        "avd-ado-wiki-087",
+        "avd-ado-wiki-403",
+        "avd-ado-wiki-408",
+        "avd-ado-wiki-413",
+        "avd-ado-wiki-418",
+        "avd-ado-wiki-425"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "autopilot",
+        "autopilot-v2",
+        "cloud-apps",
+        "dpp",
+        "dppnotenabled",
+        "fls",
+        "frontline-shared",
+        "intune",
+        "preparing-stuck",
+        "provisioning"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "avd-licensing",
+      "title": "AVD 许可证",
+      "entryIds": [
+        "avd-ado-wiki-167",
+        "avd-ado-wiki-205",
+        "avd-ado-wiki-206",
+        "avd-ado-wiki-208",
+        "avd-ado-wiki-a-r3-006",
+        "avd-contentidea-kb-023",
+        "avd-mslearn-038",
+        "avd-onenote-002"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-billing-solution.md",
+        "guides/drafts/onenote-avd-licensing-reference.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "asr",
+        "azure-ad",
+        "billing",
+        "blocked-state",
+        "cost",
+        "entra-id",
+        "geneva-agent",
+        "internal-process",
+        "kusto",
+        "license"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "avd-rdp-shortpath",
+      "title": "AVD RDP Shortpath",
+      "entryIds": [
+        "avd-ado-wiki-0825",
+        "avd-ado-wiki-0826",
+        "avd-ado-wiki-0880",
+        "avd-contentidea-kb-093",
+        "avd-contentidea-kb-105",
+        "avd-contentidea-kb-109",
+        "avd-mslearn-049",
+        "avd-mslearn-050"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-rdp-shortpath-public-script.md",
+        "guides/drafts/ado-wiki-b-custom-shortpath-gpo-setting.md",
+        "guides/drafts/ado-wiki-b-custom-shortpath-gpo.md",
+        "guides/drafts/mslearn-rdp-shortpath-troubleshooting.md",
+        "guides/drafts/onenote-avd-rdp-shortpath.md"
+      ],
+      "kustoQueryFiles": [
+        "rdp-core-events.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "azure-stack-hci",
+        "client",
+        "gpo",
+        "heartbeat",
+        "kusto",
+        "networking",
+        "rdp-shortpath",
+        "rdpcoretseventlog",
+        "session-host",
+        "stun"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "avd-domain-join-2",
+      "title": "AVD 域加入 (Part 2)",
+      "entryIds": [
+        "avd-mslearn-042",
+        "avd-mslearn-057",
+        "avd-onenote-043",
+        "avd-onenote-085",
+        "avd-onenote-058",
+        "avd-onenote-058",
+        "avd-onenote-084"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-domain-join-failure.md",
+        "guides/drafts/ado-wiki-create-w365-enterprise-haadj-lab.md",
+        "guides/drafts/ado-wiki-secure-channel-domain-trust-failed.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "0x5",
+        "ad",
+        "ad-join",
+        "addusertordugroup",
+        "azfileshybrid",
+        "azure-files",
+        "computer-object",
+        "connection-failure",
+        "deployment",
+        "dns"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "avd-performance",
+      "title": "AVD 性能",
+      "entryIds": [
+        "avd-ado-wiki-063",
+        "avd-ado-wiki-064",
+        "avd-ado-wiki-215",
+        "avd-ado-wiki-232",
+        "avd-ado-wiki-a-r3-007",
+        "avd-contentidea-kb-032",
+        "avd-contentidea-kb-097"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-resource-performance.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "admin-highlights",
+        "connection-quality",
+        "endpoint-analytics",
+        "endpoints",
+        "excel",
+        "geneva-agent",
+        "intune",
+        "monitoring",
+        "multi-session",
+        "performance"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "avd-conditional-access-conditional-access",
+      "title": "AVD 条件访问与 MFA - conditional-access",
+      "entryIds": [
+        "avd-ado-wiki-0857",
+        "avd-ado-wiki-a-r16-006",
+        "avd-ado-wiki-a-r16-009",
+        "avd-mslearn-002",
+        "avd-mslearn-025",
+        "avd-onenote-026",
+        "avd-onenote-056"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "aadj",
+        "application-group",
+        "authentication",
+        "autologon",
+        "block",
+        "browser",
+        "conditional-access",
+        "credentials",
+        "desktop-logon",
+        "entra-join"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "avd-printing",
+      "title": "AVD 打印重定向",
+      "entryIds": [
+        "avd-ado-wiki-174",
+        "avd-ado-wiki-0843",
+        "avd-ado-wiki-0844",
+        "avd-ado-wiki-0853",
+        "avd-ado-wiki-0854",
+        "avd-contentidea-kb-057",
+        "avd-onenote-064"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-twain-faq.md",
+        "guides/drafts/ado-wiki-a-twain-setup-guide.md",
+        "guides/drafts/ado-wiki-b-printer-redirection-on-avd-from-print-server.md",
+        "guides/drafts/ado-wiki-b-raw-printing-setup-guide.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "custom-image",
+        "default-device",
+        "dell-wyse",
+        "device-redirection",
+        "epic",
+        "feature-limitation",
+        "feature-on-demand",
+        "firmware",
+        "fod",
+        "healthcare"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "data-collection-escalation",
+      "title": "数据收集与升级流程",
+      "entryIds": [
+        "avd-ado-wiki-321",
+        "avd-ado-wiki-366",
+        "avd-ado-wiki-428",
+        "avd-ado-wiki-b-r4-003",
+        "avd-ado-wiki-b-r6-004",
+        "avd-contentidea-kb-068",
+        "avd-contentidea-kb-073"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-assist-365-request-access.md",
+        "guides/drafts/ado-wiki-assist365-usage.md",
+        "guides/drafts/ado-wiki-css-saaf-cat-collaboration-escalation-flows.md",
+        "guides/drafts/ado-wiki-escalation-workflow-w365.md",
+        "guides/drafts/ado-wiki-extra-goodies-scripts-powershell-python.md",
+        "guides/drafts/ado-wiki-msrd-collect.md",
+        "guides/drafts/ado-wiki-sfi-compliance.md",
+        "guides/drafts/ado-wiki-share-customer-data-with-pg.md",
+        "guides/drafts/ado-wiki-vm-os-dump-from-azure-host.md",
+        "guides/drafts/ado-wiki-w365-css-mcaps-subscription-lab.md",
+        "guides/drafts/ado-wiki-w365-lab-visual-studio-subscription.md",
+        "guides/drafts/ado-wiki-w365-saaf-cri-review-process.md",
+        "guides/drafts/ado-wiki-windows-error-dump.md",
+        "guides/drafts/ado-wiki-wpr-logs-collection.md",
+        "guides/drafts/mslearn-setup-overview-escalation.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "aad-join",
+        "aad-joined",
+        "access-denied",
+        "activation",
+        "agent-crash",
+        "asc",
+        "compliance",
+        "configmgr",
+        "dump",
+        "event-id-1000"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "avd-session-host-3",
+      "title": "AVD Session Host (Part 3)",
+      "entryIds": [
+        "avd-onenote-041",
+        "avd-onenote-050",
+        "avd-onenote-054",
+        "avd-onenote-065",
+        "avd-onenote-072",
+        "avd-onenote-076"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-determine-session-host-image-type.md"
+      ],
+      "kustoQueryFiles": [
+        "health-check.md",
+        "heartbeat.md",
+        "session-host.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "ad trust",
+        "arm-template",
+        "azure-monitor",
+        "broker",
+        "browser",
+        "configuration-workbook",
+        "connectionfailedadtrustedrelationshipfailure",
+        "deployment",
+        "deployment-validation",
+        "domain controller"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "avd-conditional-access-misc",
+      "title": "AVD 条件访问与 MFA - 杂项",
+      "entryIds": [
+        "avd-contentidea-kb-017",
+        "avd-contentidea-kb-043",
+        "avd-contentidea-kb-075",
+        "avd-mslearn-026",
+        "avd-mslearn-056",
+        "avd-mslearn-058"
+      ],
+      "draftPaths": [
+        "guides/drafts/onenote-avd-mfa-conditional-access.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "agent",
+        "authentication",
+        "boot-loader",
+        "domain-join",
+        "dsc",
+        "entra-join",
+        "logon-failed",
+        "mfa",
+        "pku2u",
+        "timeout"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "avd-monitoring-diagnostics",
+      "title": "AVD 监控与诊断",
+      "entryIds": [
+        "avd-ado-wiki-429",
+        "avd-ado-wiki-0819",
+        "avd-ado-wiki-0820",
+        "avd-ado-wiki-0852",
+        "avd-contentidea-kb-002",
+        "avd-onenote-067"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-insights-confirm-dcr-la-workspace.md",
+        "guides/drafts/ado-wiki-ama-deployment-issues.md",
+        "guides/drafts/ado-wiki-dcrs-feature-requests.md",
+        "guides/drafts/ado-wiki-deprecated-data-collection.md",
+        "guides/drafts/ado-wiki-portal-related-issue-data-collection.md",
+        "guides/drafts/ado-wiki-remoting-connection-report.md",
+        "guides/drafts/mslearn-insights-troubleshooting.md",
+        "guides/drafts/onenote-avd-diagnostic-logs-tools.md",
+        "guides/drafts/onenote-avd-diagnostics-log-analytics.md",
+        "guides/drafts/onenote-avd-log-analytics-queries.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "adfs",
+        "alphanumerical-sort",
+        "asc",
+        "asc-tracing",
+        "avdi",
+        "azure-ad-ds",
+        "cookie",
+        "data-collection-rule",
+        "dcr",
+        "dfm-eu"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "avd-private-link",
+      "title": "AVD Private Link",
+      "entryIds": [
+        "avd-ado-wiki-0797",
+        "avd-ado-wiki-0798",
+        "avd-ado-wiki-0821",
+        "avd-ado-wiki-0822",
+        "avd-ado-wiki-0823",
+        "avd-mslearn-034"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-private-link-asc-feature-tracking.md",
+        "guides/drafts/ado-wiki-b-private-link-collect-info-guide.md",
+        "guides/drafts/ado-wiki-b-private-link-feed-connection-scenarios.md",
+        "guides/drafts/ado-wiki-b-private-link-kusto-queries.md",
+        "guides/drafts/ado-wiki-private-link-configuration.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "asc",
+        "azure-activity-log",
+        "connection",
+        "connection-failure",
+        "custom-image",
+        "feed",
+        "feed-failure",
+        "hostpool",
+        "msrdc",
+        "network-access-policy"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "w365-provisioning-deprovisioned",
+      "title": "W365 Provisioning 配置 - deprovisioned",
+      "entryIds": [
+        "avd-ado-wiki-238",
+        "avd-ado-wiki-372",
+        "avd-ado-wiki-378",
+        "avd-ado-wiki-381",
+        "avd-ado-wiki-387"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "abuse",
+        "anti-fraud",
+        "deallocated",
+        "deprovisioned",
+        "fraud",
+        "frog",
+        "hit",
+        "ice",
+        "provisioning",
+        "tenant-score"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "avd-intune",
+      "title": "AVD Intune 管理",
+      "entryIds": [
+        "avd-ado-wiki-073",
+        "avd-ado-wiki-226",
+        "avd-ado-wiki-a-r1-003",
+        "avd-contentidea-kb-080",
+        "avd-contentidea-kb-100"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "context-based-redirection",
+        "custom-script-extension",
+        "drive-redirection",
+        "hotfix-pending",
+        "intune",
+        "known-limitation",
+        "local-admin",
+        "onedrive",
+        "sharepoint",
+        "troubleshooting"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "w365-switch",
+      "title": "W365 Switch",
+      "entryIds": [
+        "avd-ado-wiki-139",
+        "avd-ado-wiki-141",
+        "avd-ado-wiki-142",
+        "avd-ado-wiki-143",
+        "avd-ado-wiki-144"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-w365-switch-setup-guide.md",
+        "guides/drafts/ado-wiki-w365-switch-troubleshooting-guide.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "black-screen",
+        "disconnect",
+        "hostapp",
+        "local-pc-missing",
+        "navigation",
+        "reconnect",
+        "sign-in",
+        "stale-cpc",
+        "task-view",
+        "windows-365-switch"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "w365-provisioning-tenant-score",
+      "title": "W365 Provisioning 配置 - tenant-score",
+      "entryIds": [
+        "avd-ado-wiki-370",
+        "avd-ado-wiki-374",
+        "avd-ado-wiki-376",
+        "avd-ado-wiki-380"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "abuse",
+        "anti-fraud",
+        "fraud",
+        "kusto",
+        "provisioning",
+        "slow-lane",
+        "tenant-score",
+        "trust-level",
+        "windows-365"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "avd-custom-image-2",
+      "title": "AVD 自定义镜像 (Part 2)",
+      "entryIds": [
+        "avd-onenote-037",
+        "avd-onenote-073",
+        "avd-onenote-077",
+        "avd-onenote-078"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-custom-image-upload-failure.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "agent-registration",
+        "cd-rom",
+        "custom image",
+        "custom script extension",
+        "custom-image",
+        "deployment stuck",
+        "dism",
+        "golden-image",
+        "language-pack",
+        "oobe"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "avd-deployment-arm-deployment-failure",
+      "title": "AVD ARM 部署 - deployment-failure",
+      "entryIds": [
+        "avd-ado-wiki-b-r3-001",
+        "avd-ado-wiki-a-r6-001",
+        "avd-ado-wiki-b-r6-001",
+        "avd-mslearn-063"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "arm-template",
+        "deployment-failure",
+        "eosd",
+        "ephemeral-os-disk",
+        "invalidcontentlink",
+        "storage-blob",
+        "vm-size"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "w365-intune-policy",
+      "title": "W365 Intune 策略",
+      "entryIds": [
+        "avd-ado-wiki-069",
+        "avd-ado-wiki-280",
+        "avd-ado-wiki-281",
+        "avd-ado-wiki-282"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-issues-routing-and-escalation-guide.md",
+        "guides/drafts/ado-wiki-settings-framework-faq.md",
+        "guides/drafts/ado-wiki-settings-framework-troubleshooting.md",
+        "guides/drafts/ado-wiki-ues-automatic-cleanup-faq.md",
+        "guides/drafts/ado-wiki-ues-automatic-cleanup-scoping-questions.md",
+        "guides/drafts/ado-wiki-ues-automatic-cleanup-setup-guide.md",
+        "guides/drafts/ado-wiki-ues-disks-auto-expand-faq.md",
+        "guides/drafts/ado-wiki-ues-disks-expand-scoping-questions.md",
+        "guides/drafts/ado-wiki-ues-disks-expand-setup-guide.md",
+        "guides/drafts/ado-wiki-user-experience-sync-faq.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "ai-enabled",
+        "cloud-device-agent",
+        "disk-expansion",
+        "edge-case",
+        "hyper-v",
+        "nested-virtualization",
+        "not-expanding",
+        "partial-expansion",
+        "semantic-search",
+        "storage-full"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "avd-gpo-config",
+      "title": "AVD GPO 配置",
+      "entryIds": [
+        "avd-ado-wiki-432",
+        "avd-ado-wiki-a-r16-002",
+        "avd-contentidea-kb-033",
+        "avd-mslearn-060"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-track-power-on-events.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "0x80072f7d",
+        "drive-redirection",
+        "ecc-cipher",
+        "file-transfer",
+        "gpo",
+        "group-policy",
+        "intune",
+        "licensing",
+        "maxconnectiontime",
+        "maxidletime"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "avd-host-pool-scaling-scaling-plan",
+      "title": "AVD Host Pool 与缩放 - scaling-plan",
+      "entryIds": [
+        "avd-ado-wiki-0870",
+        "avd-ado-wiki-0873",
+        "avd-ado-wiki-0874",
+        "avd-ado-wiki-0875"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "autoscale",
+        "host-pool",
+        "personal",
+        "region",
+        "scaling-plan",
+        "schedule"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "avd-migration-classic",
+      "title": "AVD Classic 迁移",
+      "entryIds": [
+        "avd-ado-wiki-c-r1-003",
+        "avd-ado-wiki-c-r1-005",
+        "avd-contentidea-kb-030",
+        "avd-contentidea-kb-069"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "authorization",
+        "avd-classic",
+        "drive-redirection",
+        "file-upload",
+        "migration-api",
+        "rate-limit",
+        "rdp-property",
+        "snapshot-import",
+        "throttling",
+        "validation"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "w365-provisioning-disk-recovery",
+      "title": "W365 Provisioning 配置 - disk-recovery",
+      "entryIds": [
+        "avd-ado-wiki-348",
+        "avd-ado-wiki-357",
+        "avd-ado-wiki-390"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "cloud-pc",
+        "disk-recovery",
+        "hard-delete",
+        "icm",
+        "kusto",
+        "managed-disk",
+        "soft-delete"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "avd-msix-appattach-deprecated-fixed",
+      "title": "AVD MSIX App Attach - deprecated-fixed",
+      "entryIds": [
+        "avd-ado-wiki-155",
+        "avd-ado-wiki-157",
+        "avd-ado-wiki-160"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "bsod",
+        "cimfs",
+        "crash",
+        "deprecated-fixed",
+        "deregistration",
+        "image-format",
+        "msix-app-attach",
+        "multi-session",
+        "remote-app",
+        "vhdx"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "avd-teams-multimedia-multimedia-redirecti",
+      "title": "AVD Teams 多媒体 - multimedia-redirection",
+      "entryIds": [
+        "avd-ado-wiki-163",
+        "avd-ado-wiki-a-r14-007",
+        "avd-mslearn-046"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "camera-redirection",
+        "heap-memory",
+        "memory-leak",
+        "mmr",
+        "multimedia-redirection",
+        "rdpcorecdv",
+        "salesforce",
+        "termservice",
+        "voip"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "avd-authentication-sso-conditional-access",
+      "title": "AVD 认证与 SSO - conditional-access",
+      "entryIds": [
+        "avd-mslearn-053",
+        "avd-onenote-055",
+        "avd-onenote-056"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "autologon",
+        "conditional-access",
+        "entra-id",
+        "error-70044",
+        "firewall",
+        "prt",
+        "seamless-sso",
+        "sign-in-frequency",
+        "sso"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "avd-conditional-access-context-based-redire",
+      "title": "AVD 条件访问与 MFA - context-based-redirection",
+      "entryIds": [
+        "avd-ado-wiki-171",
+        "avd-ado-wiki-172",
+        "avd-ado-wiki-0799"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "acrs",
+        "authentication-context",
+        "block-based",
+        "by-design",
+        "clipboard",
+        "conditional-access",
+        "context-based-redirection",
+        "mid-session",
+        "unsupported"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "w365-automation-graph-2",
+      "title": "W365 Graph API 自动化 (Part 2)",
+      "entryIds": [
+        "avd-mslearn-023",
+        "avd-onenote-028",
+        "avd-onenote-066"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-automation-solutions.md",
+        "guides/drafts/ado-wiki-cloudpc-retargeting-oce-api.md",
+        "guides/drafts/ado-wiki-w365-power-state-events-query.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "application-group",
+        "assigned-user",
+        "auto-scaling",
+        "automation",
+        "createorupdateazautoaccount",
+        "dns-resolution",
+        "host-pool",
+        "location-mismatch",
+        "log-analytics",
+        "mooncake"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "w365-provisioning-4",
+      "title": "W365 Provisioning 配置 (Part 4)",
+      "entryIds": [
+        "avd-onenote-017",
+        "avd-onenote-063"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-sso-aadj-haadj-provisioning-policy.md",
+        "guides/drafts/ado-wiki-ai-enabled-cloud-pcs-scoping-questions.md",
+        "guides/drafts/ado-wiki-ai-enabled-cloud-pcs-troubleshooting.md",
+        "guides/drafts/ado-wiki-b-cpc-relocation-troubleshooting.md",
+        "guides/drafts/ado-wiki-b-outbound-connection-cloud-pc.md",
+        "guides/drafts/ado-wiki-cloud-pc-passive-deletion-scoping-questions.md",
+        "guides/drafts/ado-wiki-cloudprofile-agent-troubleshooting.md",
+        "guides/drafts/ado-wiki-cpc-wdac-provisioning-troubleshooting.md",
+        "guides/drafts/ado-wiki-post-provisioning-advanced-kusto-checks.md",
+        "guides/drafts/ado-wiki-provisioning-overview.md",
+        "guides/drafts/ado-wiki-reservation-error-list.md",
+        "guides/drafts/ado-wiki-reserve-user-provisioning-scoping.md",
+        "guides/drafts/ado-wiki-reserve-user-provisioning-setup.md",
+        "guides/drafts/ado-wiki-reserve-user-provisioning-troubleshooting.md",
+        "guides/drafts/ado-wiki-w365-cpc-cogs-optimization-tsg.md",
+        "guides/drafts/ado-wiki-w365-find-cpc-with-vip.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "ad-ds",
+        "adds",
+        "dns",
+        "domain-join",
+        "error-1355",
+        "host-pool",
+        "msix",
+        "provisioning"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "w365-monitoring-radar",
+      "title": "W365 Monitoring & Radar",
+      "entryIds": [
+        "avd-ado-wiki-295",
+        "avd-ado-wiki-296"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-w365-monitoring-radar-function-use.md",
+        "guides/drafts/ado-wiki-w365-monitoring-radar-scoping-questions.md",
+        "guides/drafts/ado-wiki-w365-scope-tags-intunegeosync.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "display-bug",
+        "filters",
+        "os-version",
+        "radar",
+        "ui-bug",
+        "w365-monitoring"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "w365-deletion-fraud",
+      "title": "W365 删除与防欺诈",
+      "entryIds": [
+        "avd-ado-wiki-383",
+        "avd-ado-wiki-384"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-mount-vhd-after-place-under-review.md",
+        "guides/drafts/ado-wiki-place-under-review-setup-guide.md",
+        "guides/drafts/ado-wiki-w365-anti-fraud-abuse-process.md",
+        "guides/drafts/ado-wiki-windows-365-customer-lockbox-faqs.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "403",
+        "clb",
+        "customer-lockbox",
+        "dms-client",
+        "oce",
+        "permission",
+        "torus"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "avd-host-pool-scaling-2",
+      "title": "AVD Host Pool 与缩放 (Part 2)",
+      "entryIds": [
+        "avd-onenote-053",
+        "avd-onenote-053"
+      ],
+      "draftPaths": [
+        "guides/drafts/mslearn-host-pool-setup-troubleshooting.md",
+        "guides/drafts/onenote-add-vm-to-host-pool-manually.md",
+        "guides/drafts/onenote-avd-scaling-plan-reference.md",
+        "guides/drafts/onenote-avd-session-limit-management.md",
+        "guides/drafts/onenote-avd-start-vm-on-connect.md"
+      ],
+      "kustoQueryFiles": [
+        "deployment-info.md",
+        "hostpool-info.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "ase",
+        "deployment",
+        "host-pool",
+        "paas",
+        "subnet",
+        "vnet-integration"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "w365-cloud-apps",
+      "title": "W365 Cloud Apps",
+      "entryIds": [
+        "avd-ado-wiki-a-r11-001",
+        "avd-contentidea-kb-099"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-cloud-app-from-file-path-setup.md",
+        "guides/drafts/ado-wiki-cloud-apps-escalation-paths.md",
+        "guides/drafts/ado-wiki-cloud-apps-kusto-troubleshooting.md",
+        "guides/drafts/ado-wiki-cloud-apps-support-boundaries.md",
+        "guides/drafts/ado-wiki-w365-cloudapps-technical-specs.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "conditional-access",
+        "connectivity",
+        "w365-app"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "contentidea-kb-legacy-2",
+      "title": "ContentIdea KB Legacy (Part 2)",
+      "entryIds": [
+        "avd-contentidea-kb-034",
+        "avd-contentidea-kb-060"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "client-settings",
+        "connection-bar",
+        "overlapping-icons",
+        "rdp-property",
+        "remoteapp",
+        "screenshot-prevention",
+        "taskbar"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "w365-boot",
+      "title": "W365 Boot 启动模式",
+      "entryIds": [
+        "avd-mslearn-015"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-captive-portal-setup.md",
+        "guides/drafts/ado-wiki-boot-to-cloud-btc-troubleshooting.md",
+        "guides/drafts/ado-wiki-w365-boot-dedicated-pc-mode.md",
+        "guides/drafts/ado-wiki-w365-boot-guided-scenario.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "agent",
+        "boot",
+        "delayed-start",
+        "servicespipetimeout",
+        "timeout"
+      ],
+      "confidence": "low"
+    }
+  ],
+  "discarded": [
+    {
+      "id": "avd-contentidea-kb-003",
+      "reason": "No rootCause and no solution"
+    },
+    {
+      "id": "avd-contentidea-kb-021",
+      "reason": "No rootCause and no solution"
+    },
+    {
+      "id": "avd-contentidea-kb-129",
+      "reason": "No rootCause and no solution"
+    }
+  ]
+}

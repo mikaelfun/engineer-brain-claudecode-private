@@ -1,13 +1,20 @@
 {
   "product": "entra-id",
-  "status": "extracting",
+  "status": "complete",
   "sourceStates": {
     "21v-gap": "exhausted",
     "onenote": "exhausted",
-    "ado-wiki": "scanning",
+    "ado-wiki": "exhausted",
     "mslearn": "exhausted",
     "contentidea-kb": "exhausted"
   },
-  "synthesized": false,
-  "adoWikiBlast": "running"
+  "synthesized": true,
+  "adoWikiBlast": "stopped",
+  "synthesizeState": {
+    "lastSynthesizedAt": "2026-04-07",
+    "lastEntryCount": 3640,
+    "synthesizedEntryIds": 3640,
+    "topicPlanHash": "merge-synth-2026-04-07",
+    "mode": "full"
+  }
 }

@@ -1,0 +1,250 @@
+{
+  "product": "avd",
+  "generatedAt": "2026-04-07",
+  "totalConflicts": 9,
+  "conflicts": [
+    {
+      "id": "conflict-001",
+      "topic": "avd-domain-join-1",
+      "type": "21v_conflict",
+      "severity": "high",
+      "entryA": {
+        "id": "avd-ado-wiki-199",
+        "source": "ado-wiki",
+        "date": "2026-04-05",
+        "symptom": "Connection to Azure AD joined VM fails with error 'We couldn't connect to the remote PC because of a security error'",
+        "rootCause": "Missing RDP property targetisaadjoined:i:1 on host pool AND/OR user not assigned Virtual Machine User Login or Virtual Machine Administrator Login role on the VM.",
+        "solution": "1) Add RDP property targetisaadjoined:i:1 to host pool custom RDP properties. 2) Assign user the 'Virtual Machine User Login' or 'Virtual Machine Administrator Login' role on the VM resource."
+      },
+      "entryB": {
+        "id": "avd-mslearn-024",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "Entra joined VM: 'Your account is configured to prevent you from using this device'",
+        "rootCause": "User account not assigned Virtual Machine User Login RBAC role on the VM",
+        "solution": "Assign Virtual Machine User Login role to user on the VM or resource group"
+      },
+      "symptomSimilarity": 0.36,
+      "judgment": "context_dependent",
+      "reasoning": "21vApplicable differs: avd-ado-wiki-199=True, avd-mslearn-024=False",
+      "recommendation": "Annotate with 21V applicability conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-002",
+      "topic": "avd-host-pool-scaling-1",
+      "type": "rootcause_conflict",
+      "severity": "medium",
+      "entryA": {
+        "id": "avd-contentidea-kb-010",
+        "source": "contentidea-kb",
+        "date": "2026-04-05",
+        "symptom": "WVD host pool deployment fails with ResourceDeploymentFailure WinRM related.",
+        "rootCause": "GPO Allow remote server management through WinRM had restrictive filters.",
+        "solution": "Change IPv4/IPv6 filter to * in GPO."
+      },
+      "entryB": {
+        "id": "avd-mslearn-039",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "Host pool deployment fails with Exceeding quota limit",
+        "rootCause": "VM core quota exceeded for SKU in subscription/region",
+        "solution": "Create host pool with fewer VMs or submit quota increase request"
+      },
+      "symptomSimilarity": 0.62,
+      "judgment": "context_dependent",
+      "reasoning": "Same symptom (sim=0.62) but different root causes",
+      "recommendation": "Prefer contentidea-kb (weight 3), mark other as alt",
+      "resolved": true
+    },
+    {
+      "id": "conflict-003",
+      "topic": "avd-host-pool-scaling-1",
+      "type": "rootcause_conflict",
+      "severity": "medium",
+      "entryA": {
+        "id": "avd-contentidea-kb-011",
+        "source": "contentidea-kb",
+        "date": "2026-04-05",
+        "symptom": "WVD host pool deployment fails: User not authorized and Host pool does not exist in Tenant.",
+        "rootCause": "Incorrect tenant name in host pool wizard.",
+        "solution": "Deploy with correct tenant name."
+      },
+      "entryB": {
+        "id": "avd-mslearn-039",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "Host pool deployment fails with Exceeding quota limit",
+        "rootCause": "VM core quota exceeded for SKU in subscription/region",
+        "solution": "Create host pool with fewer VMs or submit quota increase request"
+      },
+      "symptomSimilarity": 0.53,
+      "judgment": "context_dependent",
+      "reasoning": "Same symptom (sim=0.53) but different root causes",
+      "recommendation": "Prefer contentidea-kb (weight 3), mark other as alt",
+      "resolved": true
+    },
+    {
+      "id": "conflict-004",
+      "topic": "general-other",
+      "type": "21v_conflict",
+      "severity": "high",
+      "entryA": {
+        "id": "avd-ado-wiki-0861",
+        "source": "ado-wiki",
+        "date": "2026-04-06",
+        "symptom": "Error message when navigating to AVD Per-User Access Pricing page in Azure portal, or after trying to enroll a subscription in per-user access pricing",
+        "rootCause": "Insufficient RBAC permissions to manage Azure resources within the subscription — user lacks permission to view or change enrollment status",
+        "solution": "Ensure the user has RBAC permissions to manage Azure resources within the subscription (e.g., Owner or Contributor role on the subscription)"
+      },
+      "entryB": {
+        "id": "avd-mslearn-040",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "User assignments not visible after moving subscription between Entra tenants",
+        "rootCause": "Old assignments tied to previous tenant",
+        "solution": "Reassign users to application groups in new tenant"
+      },
+      "symptomSimilarity": 0.36,
+      "judgment": "context_dependent",
+      "reasoning": "21vApplicable differs: avd-ado-wiki-0861=False, avd-mslearn-040=True",
+      "recommendation": "Annotate with 21V applicability conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-005",
+      "topic": "general-other",
+      "type": "21v_conflict",
+      "severity": "high",
+      "entryA": {
+        "id": "avd-ado-wiki-0862",
+        "source": "ado-wiki",
+        "date": "2026-04-06",
+        "symptom": "Customer enrolled an Azure subscription in AVD per-user access pricing but the Azure portal still shows 'Enrolling' state",
+        "rootCause": "Enrollment can take up to 1 hour after user clicks Enroll before status changes to Enrolled; no notification is sent when enrollment completes",
+        "solution": "Advise customer to wait up to 1 hour after initiating enrollment, then refresh the Azure portal page to see the updated enrollment status"
+      },
+      "entryB": {
+        "id": "avd-mslearn-040",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "User assignments not visible after moving subscription between Entra tenants",
+        "rootCause": "Old assignments tied to previous tenant",
+        "solution": "Reassign users to application groups in new tenant"
+      },
+      "symptomSimilarity": 0.37,
+      "judgment": "context_dependent",
+      "reasoning": "21vApplicable differs: avd-ado-wiki-0862=False, avd-mslearn-040=True",
+      "recommendation": "Annotate with 21V applicability conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-006",
+      "topic": "general-other",
+      "type": "21v_conflict",
+      "severity": "high",
+      "entryA": {
+        "id": "avd-ado-wiki-0862",
+        "source": "ado-wiki",
+        "date": "2026-04-06",
+        "symptom": "Customer enrolled an Azure subscription in AVD per-user access pricing but the Azure portal still shows 'Enrolling' state",
+        "rootCause": "Enrollment can take up to 1 hour after user clicks Enroll before status changes to Enrolled; no notification is sent when enrollment completes",
+        "solution": "Advise customer to wait up to 1 hour after initiating enrollment, then refresh the Azure portal page to see the updated enrollment status"
+      },
+      "entryB": {
+        "id": "avd-mslearn-052",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "User loses feed after subscription moved between Entra tenants",
+        "rootCause": "Assignments tied to old tenant or CSP transfer",
+        "solution": "Reassign users; re-register DesktopVirtualization RP for CSP"
+      },
+      "symptomSimilarity": 0.37,
+      "judgment": "context_dependent",
+      "reasoning": "21vApplicable differs: avd-ado-wiki-0862=False, avd-mslearn-052=True",
+      "recommendation": "Annotate with 21V applicability conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-007",
+      "topic": "avd-deployment-arm-2",
+      "type": "21v_conflict",
+      "severity": "high",
+      "entryA": {
+        "id": "avd-contentidea-kb-007",
+        "source": "contentidea-kb",
+        "date": "2026-04-05",
+        "symptom": "WVD Deployment failed with DSC extension error. User is not authorized to query the management service.",
+        "rootCause": "SPN was missing role assignment.",
+        "solution": "Create service principal role assignment per docs."
+      },
+      "entryB": {
+        "id": "avd-mslearn-043",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "Deployment fails Unauthorized - scale operation not allowed for subscription in region",
+        "rootCause": "Subscription type (MSDN/Free/Education) lacks VM features in region",
+        "solution": "Change subscription type or deploy to different region"
+      },
+      "symptomSimilarity": 0.42,
+      "judgment": "context_dependent",
+      "reasoning": "21vApplicable differs: avd-contentidea-kb-007=True, avd-mslearn-043=False",
+      "recommendation": "Annotate with 21V applicability conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-008",
+      "topic": "avd-conditional-access-conditional-access",
+      "type": "21v_conflict",
+      "severity": "high",
+      "entryA": {
+        "id": "avd-ado-wiki-0857",
+        "source": "ado-wiki",
+        "date": "2026-04-06",
+        "symptom": "Unable to sign in to Azure AD-joined VMs from non-Windows clients when multifactor authentication (MFA) is enabled",
+        "rootCause": "MFA not configured correctly for AADJ VM connections from non-Windows clients; MFA blocks sign-in from non-Windows clients by default",
+        "solution": "Disable MFA for AADJ VM access or configure MFA properly per: https://docs.microsoft.com/azure/virtual-desktop/deploy-azure-ad-joined-vm#enabling-mfa-for-azure-ad-joined-vms"
+      },
+      "entryB": {
+        "id": "avd-mslearn-002",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "Cannot add user assignments to application group - Azure portal shows 'Session Ending' or 'Experiencing Authentication Issues' warning",
+        "rootCause": "Conditional Access policy 'Microsoft Office 365 Data Storage Terms of Use' blocks token acquisition for Microsoft Graph; user hasn't accepted Terms of Use via SharePoint",
+        "solution": "Admin must first sign in to SharePoint and accept Terms of Use before accessing Azure portal"
+      },
+      "symptomSimilarity": 0.4,
+      "judgment": "context_dependent",
+      "reasoning": "21vApplicable differs: avd-ado-wiki-0857=True, avd-mslearn-002=False",
+      "recommendation": "Annotate with 21V applicability conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-009",
+      "topic": "avd-conditional-access-conditional-access",
+      "type": "21v_conflict",
+      "severity": "high",
+      "entryA": {
+        "id": "avd-mslearn-002",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "Cannot add user assignments to application group - Azure portal shows 'Session Ending' or 'Experiencing Authentication Issues' warning",
+        "rootCause": "Conditional Access policy 'Microsoft Office 365 Data Storage Terms of Use' blocks token acquisition for Microsoft Graph; user hasn't accepted Terms of Use via SharePoint",
+        "solution": "Admin must first sign in to SharePoint and accept Terms of Use before accessing Azure portal"
+      },
+      "entryB": {
+        "id": "avd-onenote-026",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Legacy per-user MFA enabled on Azure AD cloud user causes login failure on AADJ AVD session host desktop. AAD Operational event log shows MFA cannot be performed during authentication",
+        "rootCause": "Legacy per-user MFA is not supported for AADJ session host desktop logon. Both RD client logon and desktop logon interact with AAD, but desktop logon cannot complete MFA challenge interactively on AAD",
+        "solution": "Replace legacy per-user MFA with Conditional Access policy-based MFA. CA MFA only triggers on AVD client sign-in (not desktop logon), allowing successful desktop authentication. For local admin logon "
+      },
+      "symptomSimilarity": 0.44,
+      "judgment": "context_dependent",
+      "reasoning": "21vApplicable differs: avd-mslearn-002=False, avd-onenote-026=True",
+      "recommendation": "Annotate with 21V applicability conditions",
+      "resolved": true
+    }
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "product": "acr",
+  "generatedAt": "2026-04-07",
+  "totalConflicts": 3,
+  "conflicts": [
+    {
+      "id": "conflict-001",
+      "topic": "content-trust-notation",
+      "type": "version_superseded",
+      "severity": "medium",
+      "entryA": {
+        "id": "acr-ado-wiki-009",
+        "source": "ado-wiki",
+        "date": "2026-04-05",
+        "symptom": "Content Trust signing fails when using ACR admin account as signer - permission error during docker ",
+        "solution": "Use a Service Principal with AcrImageSigner and AcrPush RBAC roles instead of admin account. Grant signer permission as per: https://docs.microsoft.co"
+      },
+      "entryB": {
+        "id": "acr-onenote-009",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Docker Content Trust (DCT) is being deprecated in ACR; new registries cannot enable DCT after 2026-0",
+        "solution": "1) Migrate to Notary Project-based signing with Azure Key Vault: https://docs.azure.cn/zh-cn/container-registry/container-registry-tutorial-sign-build"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "ado-wiki-009 describes DCT signing with admin account (still valid for existing DCT users), while onenote-009 describes DCT deprecation and migration to Notation. Both are valid: one for legacy users, one for new adoption.",
+      "recommendation": "Both entries retained. Guide should note DCT is deprecated (per onenote-009) and recommend Notation for new implementations, while keeping DCT troubleshooting for legacy users.",
+      "resolved": false
+    },
+    {
+      "id": "conflict-002",
+      "topic": "firewall-network-rules",
+      "type": "context_dependent",
+      "severity": "low",
+      "entryA": {
+        "id": "acr-onenote-003",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "az acr build fails with error: 'client with IP x.x.x.x is not allowed access' even though 'Allow tru",
+        "solution": "1) Retrieve AzureContainerRegistry service tag IPs for your region: $serviceTags = Get-AzNetworkServiceTag -Location $region; ($serviceTags.Values | W"
+      },
+      "entryB": {
+        "id": "acr-ado-wiki-a-r1-001",
+        "source": "ado-wiki",
+        "date": "2026-04-06",
+        "symptom": "az acr build fails with \"denied: client with IP X.X.X.X is not allowed access\" when ACR has public n",
+        "solution": "Option A (recommended, strict private-only): Create an ACR Dedicated Agent Pool injected into the VNet: az acr agentpool create --registry <acrName> -"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Both describe ACR build failing with IP not allowed. onenote-003 focuses on service tag and firewall rules; ado-wiki-a-r1-001 focuses on private endpoint with public network disabled. Different network configs, different solutions.",
+      "recommendation": "Both retained. Guide should present as different network scenarios with distinct troubleshooting paths.",
+      "resolved": false
+    },
+    {
+      "id": "conflict-003",
+      "topic": "firewall-network-rules",
+      "type": "version_superseded",
+      "severity": "medium",
+      "entryA": {
+        "id": "acr-onenote-002",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "ACR Task fails to run when the registry has public access disabled (network-restricted ACR)",
+        "solution": "1) Enable 'Allow trusted Microsoft services to access this container registry' on the ACR. 2) Create ACR task with --assign-identity (system-assigned "
+      },
+      "entryB": {
+        "id": "acr-ado-wiki-041",
+        "source": "ado-wiki",
+        "date": "2026-04-05",
+        "symptom": "ACR Tasks fail with 403 Forbidden errors after June 2025 — tasks that previously worked with network",
+        "solution": "1) Explicitly enable the new flag: az acr update --name <registry-name> --set networkRuleBypassAllowedForTasks=true. 2) Alternatively, use ACR Agent P"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "onenote-002 is general guidance for Tasks on network-restricted ACR (use managed identity + trusted service). ado-wiki-041 describes a specific June 2025 security change that broke existing Tasks. Both are valid but ado-wiki-041 has newer context about the security change.",
+      "recommendation": "Both retained. ado-wiki-041 should be presented first as it includes the latest security change context. onenote-002 provides the general solution pattern.",
+      "resolved": false
+    }
+  ]
+}

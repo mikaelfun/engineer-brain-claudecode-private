@@ -4,6 +4,7 @@
 
 | Date | Source | Change | Case/Link |
 |------|--------|--------|-----------|
+| 2026-04-07 | onenote | +1 break/fix (aks-onenote-291): PV/PVC disk mount 403 LinkedAuthorizationFailed when disk in different RG—grant SP Contributor or use node RG. +1 guide-draft: AKS CRUD Operations Log Tracing (combined 6 pages: Fabric/NRP/NSM/ARM/RNM/VMA Kusto tables). 1 dedup (Calico ImagePullBackOff ≥80% overlap w/ aks-onenote-007). 2 pages skipped (triage index, generic monitoring advisory). Scanned 402/464. | Case Triage 2019 + CRUD Ops logs |
 | 2026-04-06 | ado-wiki (blast-a r8) | +9 break/fix (aks-ado-wiki-a-r8-004~012): blobfuse kernel cache sync, vmssCSE exit codes 50/51/52/25/31, AKSCapacityError constrained region, AgentBaker ConfigVersionError, DiskControllerType NVMe mismatch. +3 guide-drafts: AGIC health-probe, AGIC main-workflow, AGIC SSL. 10 pages (2 empty skipped), 0 dedup. | Containers Wiki AGIC+CRUD TSGs |
 | 2026-04-06 | ado-wiki (blast-b) | +6 break/fix (aks-ado-wiki-b-r5-001~009): virtual node UDR subnet error, AGIC 404 path-prefix, AGIC 502 rolling-update, AGIC 504 timeout, AGIC ARM dial-timeout, AGIC RBAC auth-failed. +5 guide-drafts: Istio latency diagnosis, AGIC routing verification, AGIC config-updates check, AGIC pod-not-healthy, AGIC backend-app-issues. 10 pages processed, 0 dedup. | Containers Wiki /AKS/TSG/Network+AGIC |
 | 2026-04-05 | onenote | +9 entries (aks-onenote-226~234): control plane deallocation after 30d, CoreDNS upgrade w/o notification, Az CLI Mooncake version gaps, node NotReady DNS resolution, Terraform NSG conflict, system nodepool constraints, pod eviction CPU spike, metrics-server CrashLoopBackOff, cross-product ownership guide-draft. 3 dedup skips (authorized IP, Calico, kubectl-node-shell). Scanned 342/464. | FY20-FY21 PG Sync meeting notes |
@@ -2087,3 +2088,56 @@
 - Track B indicator entries: 5 (aks-ado-wiki-a-r2-012 to 016)
 - Deduplicated: 1 (VM SKU not available -- overlaps with existing aks-ado-wiki-a-r12-009 and aks-ado-wiki-b-r12-009)
 - Total JSONL written: 16 entries to .enrich/known-issues-ado-wiki-a.jsonl
+
+### 2026-04-07 onenote batch (pages 403-412)
+- Scanned: 10 pages (LSI_known Issue + Readiness Plan sections)
+- Discovered: 7 new entries (aks-onenote-292 ~ 298)
+- Deduplicated: 1 (Azure Files secret namespace bug, matches aks-onenote-249)
+- Skipped: 3 pages no content (Zabbix alerts/CVE links/wiki links), 1 insufficient (snapshot screenshots)
+- Topics: aks-log-collector disk pressure, D4ds/AzSm allocation failure, deprecated preview API retirement, PV node affinity labels in 1.26, uptime-SLA SKU mismatch, helm crash cloud-provider-config, CSI driver Mooncake rollout
+- Progress: 412/464 scanned (52 remaining)
+
+## 2026-04-07 onenote batch (422/464)
+- Processed 10 wiki_migration pages (18.26, 18.29, 18.31, 18.34, 18.37, 18.5, 18.8, 18.20, 18.24, 18.3)
+- 7 pages: content-duplicate of already-extracted MCVKB originals → dedup skip
+- 2 pages: originals scanned with 0 triplets (18.34 best-practice guide, 18.3 istio how-to covered by aks-onenote-025)
+- 1 page: 18.5 reconcile TSG → **new entry aks-onenote-299** (AKS cluster stuck in Failed state → reconcile methods)
+- discovered: 1 | deduplicated: 9 | exhausted: false
+
+### 2026-04-07 15:58 SGT — onenote batch (pages 423-432)
+- **Scanned**: 10 pages (3 non-technical/missing, 7 wiki_migration duplicates)
+- **New entries**: 0 (all 7 technical pages already extracted from MCVKB originals)
+- **Duplicates skipped**: 7 (aks-onenote-024, 001, 002, 026, 003, 004, 005)
+- **Progress**: 432/464 scanned, 32 remaining
+- **Pages**: AKS Wave2 training plan (skip), LSI-MC dashboard (missing), Hid mock lab (skip), 8.1 CoreDNS (dup), 8.3 kubectl logs (dup), 8.4 subnet IP (dup), 8.5 VMSS scale-down (dup), 8.6 containerd capture (dup), 18.1 ContainerInsights failed (dup), 18.10 ARM throttling (dup)
+
+## 2026-04-07 onenote batch (pages 433-444)
+- Scanned: 12 pages (2 empty low-conf + 10 wiki_migration 18.x series)
+- Discovered: 1 (aks-onenote-300: DaemonSet/initContainer workaround for persisting node OS customization across VMSS reimage)
+- Deduplicated: 11 (node access→028, JIT→029, DNS NIC→006, AAD pod identity→010, log collection→012, Prometheus→030, ImagePullBackOff→007, RP tracking→031, ephemeral disk→032, VMSS modify partially→220)
+- Total known-issues-onenote: 272 | Scanned: 444/464 | Remaining: 20
+## 2026-04-07 onenote batch (pages 445-464) FINAL
+
+### Batch 1 (pages 445-454)
+- Scanned: 10 pages (18.30-18.42 series)
+- Discovered: 2
+  - aks-onenote-301: Monitor docker.io image dependencies via Log Analytics + Flux GitOps migration
+  - aks-onenote-302: Secrets Store CSI Driver with workload identity for Key Vault access
+- Deduplicated: 8 (blob-nfs=139, rotate-certs-curl=017, cert-expire=016/018, docker-hub-rate-limit=019, dynamic-pv=021, gpu-node=023, disk-encrypt=022, oidc-issuer=046)
+
+### Batch 2 (pages 455-464)
+- Scanned: 10 pages (18.44-18.50, 18.4, 18.6, 18.9)
+- Discovered: 5
+  - aks-onenote-303: Azure Files NFS mount with private endpoint setup in Mooncake
+  - aks-onenote-304: Ubuntu unattended daily upgrade causes network restart at UTC 06:00
+  - aks-onenote-305: Upgrade node image to specific version via node pool snapshot
+  - aks-onenote-306: How to check CVE package fix status in AKS node image
+  - aks-onenote-307: Docker login D-Bus error with docker-compose on Ubuntu 18.04
+- Deduplicated: 4 (dns-kernel=050, delete-node=052, blobfuse=060, kubectl-cp=skip)
+- Skipped: 1 (18.6 kubectl cp - tips article, no symptom/rootCause/solution triple)
+
+### Summary
+- **Total known-issues-onenote entries: 279** (272 + 7 new)
+- **Scanned: 464/464 | Remaining: 0 | EXHAUSTED**
+| 2026-04-07 | MERGE | 1326 loaded, 1326 kept, 0 discarded, 69 relatedTo pairs, 101 21V tagged |
+| 2026-04-07 | SYNTHESIZE | 187 topics (135 fusion, 52 compact), 1324 entries, 18 Kusto queries fused |

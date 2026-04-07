@@ -1,0 +1,30 @@
+# VM Vm Encryption — 排查速查
+
+**来源数**: 3 | **21V**: 未标注
+**条目数**: 20 | **关键词**: encryption
+**最后更新**: 2026-04-07
+
+## 症状速查
+
+| # | 症状 | 根因 | 方案 | 分数 | 来源 |
+|---|------|------|------|------|------|
+| 1 | Customer reports CVE-2021-44228 (Log4j RCE 0-day) affecting Java/Apache services running on Azure VM... | Apache Log4j2 versions 2.0-beta9 through 2.15.0 do not protect against attacker-... | Upgrade Log4j2 to version 2.16.0+; if on 2.10+, set log4j2.formatMsgNoLookups=tr... | 🟢 8.0 | ADO Wiki |
+| 2 | Engineer needs overview of Sovereign Cloud support coverage (Azure Government, Mooncake, Black Fores... |  | Sovereign Cloud includes Azure Government (Fairfax), Azure China 21Vianet (Moonc... | 🟢 8.0 | ADO Wiki |
+| 3 | Azure Windows VM stuck in reboot loop after Windows Update showing Preparing to configure windows or... | At restart, boot critical drivers load and registry reads Pending.xml location w... | Offline repair: create rescue VM with nested virtualization, boot from recovery ... | 🟢 8.0 | ADO Wiki |
+| 4 | Black screen on RDP that disconnects after about 1 minute; VM shows high resource/performance usage;... | VM is experiencing a performance spike or virtual memory exhaustion due to appli... | Identify resource-heavy processes via Task Manager or Get-Process. Reduce memory... | 🟢 8.0 | ADO Wiki |
+| 5 | RDP shows black screen then disconnects; explorer.exe crashes with Application Error Event ID 1000 (... | Explorer.exe process crashes due to TwinUI.dll fault, preventing the desktop she... | Run SFC /scannow and DISM /online /cleanup-image /restorehealth to repair the co... | 🟢 8.0 | ADO Wiki |
+| 6 | Azure Advisor REST API shows different cost savings totals and affected resource counts compared to ... | API does not have a time filter functionality. Portal may show recommendations f... | Currently no time filter in Advisor API. Customer can use ARG API to query Advis... | 🟢 8.0 | ADO Wiki |
+| 7 | Customer subscription is not shown in Azure Advisor despite having multiple subscriptions | The subscription is not selected in the Azure Portal global subscription filter ... | Navigate to Portal Settings (gear icon) > expand Subscriptions > ensure the desi... | 🟢 8.0 | ADO Wiki |
+| 8 | Azure Advisor recommendation is still listed after customer has implemented remediation steps; recom... | Either incomplete remediation by customer (not all required steps completed), or... | First confirm 24h refresh period has passed; validate customer completed ALL rem... | 🟢 8.0 | ADO Wiki |
+| 9 | ADE encryption fails with 0xc142506f RUNTIME_E_KEYVAULT_SECRET_WRAP_WITH_KEK_FAILED or Bad Length er... | KEK (Key Encryption Key) in Key Vault is expired or disabled, preventing ADE fro... | Check Key Vault key status: if expired, renew the key; if disabled, re-enable it... | 🟢 8.0 | ADO Wiki |
+| 10 | ADE encryption fails with error: Keyvault not found in the directory. | The Key Vault is not in the same Azure AD tenant as the AD Application used for ... | Ensure the Key Vault and the AD Application are in the same Azure AD tenant. | 🔵 7.0 | ADO Wiki |
+| 11 | Azure Files AAD Kerberos mount prompts for credentials repeatedly. klist returns error 0x80090342 SE... | RC4 encryption is not enabled on the customer domain, causing Kerberos ticket re... | Enable RC4 encryption on the domain. See related TSG: 1396 - The target account ... | 🟢 8.0 | ADO Wiki |
+| 12 | Net use error code 1326 'The username or password is incorrect' when accessing Azure File Share with... | Applications running as SYSTEM/Network Service use computer account SID which ha... | Computer accounts require default share level permissions for AD Auth. Configure... | 🟢 8.0 | ADO Wiki |
+| 13 | Error 0x800705AA (Insufficient system resources exist to complete the requested service) when renami... | Bug in AFS agent version 20.0.0.0 where renames fail when filesyncsvc is not con... | Upgrade AFS agent to version 21.2 or later from Microsoft Update Catalog. Collec... | 🟢 8.0 | ADO Wiki |
+| 14 | Azure File Sync shows ECS_E_SYNC_CONSTRAINT_CONFLICT and ECS_E_SYNC_FILE_IN_USE upload errors in por... | ECS_E_SYNC_CONSTRAINT_CONFLICT occurs when another error (FILE_IN_USE, INVALID_N... | Upgrade to latest File Sync agent. Run FileSyncErrorReport.ps1 to identify locke... | 🟢 8.0 | ADO Wiki |
+| 15 | Azure File Sync agent update (MSP) fails with error 1603. Log shows CompareProductVersion custom act... | The agent update package version is the same or older than the currently install... | Verify the currently installed agent version and ensure the update package is a ... | 🟢 8.0 | ADO Wiki |
+| 16 | Azure File Sync reports per-item error ECS_E_DIRECTORY_RENAME_FAILED on a directory in upload direct... | When syncing a directory rename (e.g., \A -> \B), the cloud share has an open fi... | Customer must close all open file handles under the directory that failed to ren... | 🟢 8.0 | ADO Wiki |
+| 17 | Azure VM screenshot shows: This is not a bootable disk. Please insert a bootable floppy and press an... | The OS boot process could not locate an active system partition - the system par... | Cannot troubleshoot online (Guest OS not operational). Use OFFLINE approach: att... | 🟢 8.0 | ADO Wiki |
+| 18 | When attempting to upgrade to SCVMM 2016 from SCVMM 2012 R2, you are presented with a dialog that in... | During upgrade we check the Database version in the tbl_GlobalSetting table. The... | To upgrade from 2012R2 to 2016, you can modify the setting in the database with ... | 🔵 7.5 | KB |
+| 19 | Windows VM login fails with error 'The user profile service service failed the logon. User profile c... | User profile corruption or permission issues on profile-related files/folders, e... | 1) Follow KB947215 troubleshooting steps; 2) Check Event Log for related errors;... | 🟢 8.5 | OneNote |
+| 20 | NVv3 VM (Nvidia Tesla M60) GPU issues with GRID driver version 17.x — driver incompatibility | GRID Driver version 17.x is incompatible with NVv3 series VMs using Tesla M60 GP... | Follow TSG: AzureIaaSVM wiki 'NVv3 (Nvidia Tesla M60) GRID Driver version 17.x I... | 🟢 8.5 | OneNote |

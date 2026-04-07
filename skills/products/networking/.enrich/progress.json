@@ -1,6 +1,6 @@
 {
   "product": "networking",
-  "status": "paused",
+  "status": "complete",
   "sourceStates": {
     "21v-gap": "exhausted",
     "onenote": "scanning",
@@ -8,12 +8,14 @@
     "mslearn": "exhausted",
     "contentidea-kb": "exhausted"
   },
-  "synthesized": false,
+  "synthesized": true,
   "synthesizeState": {
-    "lastSynthesizedAt": null,
-    "lastEntryCount": 0,
-    "synthesizedEntryIds": [],
-    "topicPlanHash": null
+    "lastSynthesizedAt": "2026-04-07",
+    "lastEntryCount": 386,
+    "synthesizedEntryIds": 386,
+    "topicPlanHash": "a539ec71b162",
+    "draftHashes": {},
+    "mode": "full"
   },
   "adoWikiBlast": "paused"
 }

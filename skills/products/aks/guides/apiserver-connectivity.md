@@ -1,0 +1,33 @@
+# AKS API Server 连接与隧道 -- Quick Reference
+
+**Sources**: 3 | **21V**: All | **Entries**: 15
+**Last updated**: 2026-04-07
+
+## Symptom Quick Reference
+
+| # | Symptom | Root Cause | Solution | Score | Source |
+|---|---------|-----------|----------|-------|--------|
+| 1 | kubectl logs returns EOF error, konnectivity-agent pod not Running, liveness/rea... | AKS only rotates control plane certificates but not konnecti... | 1) Rotate cluster certificates; 2) Or upgrade AKS cluster. D... | [G] 8.0 | [onenote: Mooncake POD Support Notebook/POD/VMSCIM] |
+| 2 | AKS API server becomes unreachable or intermittently unavailable even when uptim... | Underlay infrastructure update on the Azure platform can cau... | 1) Confirm SLA is enabled (uptime-sla). 2) If recurring, rai... | [B] 7.5 | [onenote: Mooncake POD Support Notebook/POD/VMSCIM] |
+| 3 | AKS control plane resource limits unknown; API server perf issues under heavy lo... | With Uptime SLA, master nodes get fixed CPU/Mem with 12GB me... | Enable AKS Uptime SLA for fixed control plane resources (12G... | [B] 7.5 | [onenote: POD/VMSCIM/4. Services/AKS/##Regular Syn] |
+| 4 | Kubernetes namespace stuck in Terminating state; kubectl delete --force --grace-... | Finalizers on the namespace (e.g. kubernetes finalizer) prev... | 1) Export namespace JSON: kubectl get namespace <ns> -o json... | [B] 7.5 | [ADO Wiki](https://dev.azure.com/Supportability/AzureContainers/_wiki/wikis/Containers%20Wiki?pagePath=/Azure%20Kubernetes%20Service%20Wiki/AKS/How%20Tos/Cluster%20Management/Deleting%20namespaces%20stuck%20in%20terminating%20state) |
+| 5 | Kubernetes namespace stuck in Terminating state, cannot be deleted even with kub... | Finalizers on the namespace (e.g. kubernetes finalizer) prev... | Export namespace to JSON (kubectl get namespace <ns> -o json... | [B] 7.5 | [ADO Wiki](https://dev.azure.com/Supportability/AzureContainers/_wiki/wikis/Containers%20Wiki?pagePath=%2FAzure%20Kubernetes%20Service%20Wiki%2FAKS%2FHow%20Tos%2FCluster%20Management%2FDeleting%20namespaces%20stuck%20in%20terminating%20state) |
+| 6 | Cannot collect container logs via kubectl logs when AKS tunnel/konnectivity is d... | When the AKS tunnel (konnectivity/SSH) connection is unavail... | Collect logs directly from the node's kubelet API: 1) Find n... | [B] 7.5 | [ADO Wiki](https://dev.azure.com/Supportability/AzureContainers/_wiki/wikis/Containers%20Wiki?pagePath=%2FAzure%20Kubernetes%20Service%20Wiki%2FAKS%2FHow%20Tos%2FMonitoring%2FCollect%20container%20logs%20directly%20from%20a%20node%27s%20kubelet%20(i.e.%20when%20tunnel%20is%20down)) |
+| 7 | Kubernetes system pod logs lost after master node reboot — kubectl logs only sho... | Kubelet spins up a new set of system pods after reboot. The ... | Docker daemon preserves logs of previous container instances... | [B] 7.5 | [ADO Wiki](https://dev.azure.com/Supportability/AzureContainers/_wiki/wikis/Containers%20Wiki?pagePath=%2FAzure%20Kubernetes%20Service%20Wiki%2FAKS%2FHow%20Tos%2FMonitoring%2FCollect%20Kubernetes%20POD%20logs%20prior%20to%20last%20reboot) |
+| 8 | KMS deadlock: AKS cluster with KMS private keyvault + konnectivity gets stuck af... | Circular dependency: konnectivity requires apiserver, apiser... | Enable API Server VNet Integration: az aks update --enable-a... | [B] 7.5 | [ADO Wiki](https://dev.azure.com/Supportability/AzureContainers/_wiki/wikis/Containers%20Wiki?pagePath=/Azure%20Kubernetes%20Service%20Wiki/AKS/Platform%20and%20Tools/Feature%20Specific/KMS%20etcd%20Encryption) |
+| 9 | After migrating AKS KMS from v1 to v2, kubectl get secrets returns unable to tra... | Customer did not complete storage migration after KMS v1 to ... | Escalate to AKS PG via IcM. PG will: 1) access underlay via ... | [B] 7.5 | [ADO Wiki](https://dev.azure.com/Supportability/AzureContainers/_wiki/wikis/Containers%20Wiki?pagePath=%2FAzure%20Kubernetes%20Service%20Wiki%2FAKS%2FTSG%2FCluster%20Management%2FKMS%20list%20secrets%20error%20after%20migration) |
+| 10 | When trying to enable AppArmor profile on AKS node using kubectl debug, user get... | The kubectl debug command does not provide sufficient privil... | Use node-shell or establish a direct SSH connection to the A... | [B] 7.5 | [ADO Wiki](https://dev.azure.com/Supportability/AzureContainers/_wiki/wikis/Containers%20Wiki?pagePath=/Azure%20Kubernetes%20Service%20Wiki/AKS/TSG/Security%20and%20Identity/AKS%20cluster%20security%20AppArmor%20Linux%20kernel%20security%20module) |
+| 11 | AKS API server returns HTTP 429 (Too Many Requests) to client requests; customer... | Kubernetes API server has built-in request throttling (Prior... | Diagnose via Kusto kube-audit query: ControlPlaneEventsNonSh... | [B] 6.0 | [onenote: Mooncake POD Support Notebook/POD/VMSCIM] |
+| 12 | 'Error from server: error dialing backend: dial tcp' when running kubectl top po... | The Kubernetes service (e.g. metrics-server, admission webho... | Check the error message to identify the affected service. Ve... | [B] 6.0 | [MS Learn](https://learn.microsoft.com/en-us/troubleshoot/azure/azure-kubernetes/connectivity/error-from-server-error-dialing-backend-dial-tcp) |
+| 13 | High rate of HTTP 429 errors from API server; 'The server is currently unable to... | AKS applied managed API server guard (aks-managed-apiserver-... | Identify unoptimized clients via kube-audit logs. Tune API c... | [B] 6.0 | [MS Learn](https://learn.microsoft.com/en-us/troubleshoot/azure/azure-kubernetes/create-upgrade-delete/troubleshoot-apiserver-etcd) |
+| 14 | Managed namespace: cannot use system namespace names; cannot modify via kubectl ... | Reserved system namespace names blocked; managed namespaces ... | Use non-reserved namespace names; manage through ARM API, Az... | [B] 6.0 | [MS Learn](https://learn.microsoft.com/en-us/troubleshoot/azure/azure-kubernetes/extensions/troubleshoot-managed-namespaces) |
+| 15 | AKS API server returns error: rpctypes.EtcdError{code:0xe, desc:"etcdserver: lea... | Etcd leader election event occurred. This is typically trans... | 1) Check if the error is transient or persistent. 2) Collect... | [B] 5.5 | [onenote: Mooncake POD Support Notebook/POD/VMSCIM] |
+
+## Quick Troubleshooting Path
+
+1. Check: 1) Rotate cluster certificates; 2) Or upgrade AKS cluster `[source: onenote]`
+2. Check: 1) Confirm SLA is enabled (uptime-sla) `[source: onenote]`
+3. Check: Enable AKS Uptime SLA for fixed control plane resources (12GB mem) `[source: onenote]`
+
+> This topic has a fusion troubleshooting guide with complete workflow and Kusto query templates
+> -> [Complete Troubleshooting Flow](details/apiserver-connectivity.md)

@@ -1,0 +1,643 @@
+purview-ado-wiki-001|ado-wiki|billing,pricing,consent,kusto,data-governance|Customer wants to check if their Purview account has consented to the new Data Governance billing model (new pricing)
+purview-ado-wiki-002|ado-wiki|permissions,data-governance,admin-role,upgrade,classic-to-unified|User navigates to new Data Catalog > Roles and permissions and sees 'You need permission to access this' error after upg
+purview-ado-wiki-003|ado-wiki|billing,DGPU,data-estate-health,DEH,unexpected-charges|Customer observes unexpected charges under 'Data Management Basic Data Governance Processing Unit (DGPU)' despite not ru
+purview-ado-wiki-004|ado-wiki|data-product,invalid-characters,schema,data-map,400-error|When trying to add data assets to a data product, request fails with status code 400 and error message: The name contain
+purview-ado-wiki-005|ado-wiki|data-quality,private-purview,fabric,onelake,allow-list|Customer needs to use Fabric Lakehouse for Data Quality scans with Private Purview / Purview Data Map and Fabric OneLake
+purview-ado-wiki-006|ado-wiki|data-quality,scan-failure,DataQualityInternalError,NullType,column-mismatch|Data Quality scan fails with error: Profiling job failed / DataQualityInternalError / Internal service error occurred. K
+purview-ado-wiki-007|ado-wiki|data-quality,data-profile,scan-failure,delta-lake,version-incompatibility|Purview Data Quality and Data Profile scans fail after customer upgraded Delta Lake beyond version 2.2. Scan/Profile opt
+purview-ado-wiki-008|ado-wiki|data-quality,scan-failure,unsupported-region,MaxRetryCount,region|DQ scan fails with error: Max Retry Count Reached. Ending Workflow. Current Task HandleError. Backend logs show: The giv
+purview-ado-wiki-010|ado-wiki|data-quality,DQ-scan,unsupported-region,region|DQ scan fails with Max Retry Count Reached and Kusto logs show The given key northcentralus was not present in the dicti
+purview-ado-wiki-011|ado-wiki|data-quality,fabric,lakehouse,private-preview,allowlisting|Data Quality scans on Fabric Lakehouse tables fail with Not found (Asset path not found) or DQ Internal Error when scann
+purview-ado-wiki-012|ado-wiki|data-quality,data-profiling,fabric,power-bi,permissions|Data profiling of Fabric or Power BI fails with error: Unable to submit job to PFS with exception: Unexpected character 
+purview-ado-wiki-013|ado-wiki|permissions,roles,data-governance,data-catalog,rbac|Error You need permission to access this on Role groups and app permissions page in Data Governance, user is already Pur
+purview-ado-wiki-014|ado-wiki|metrics,monitoring,permissions,azure-monitor,classic|Purview metrics (Data Map Capacity Units, Storage Size) not visible on main page or metrics page in Azure portal
+purview-ado-wiki-015|ado-wiki|data-quality,fabric,workspace-name,invalid-characters,archived|DQ scan of Fabric assets fails with DataQualityInternalError due to invalid characters (brackets) in Fabric workspace na
+purview-ado-wiki-018|ado-wiki|access,permissions,collection-admin,rest-api,private-endpoint|Unable to access Purview Governance Portal or manage account: missing roles, Collection Admin unavailable after creator 
+purview-ado-wiki-019|ado-wiki|shir,data-source,connectivity,dns,firewall|Data source missing or scan fails via Self-hosted Integration Runtime (SHIR): connectivity errors, schema missing, scan 
+purview-ado-wiki-020|ado-wiki|governance-domain,delete,data-governance,data-products,copilot-tsg|Delete option greyed out for governance domain in Microsoft Purview Data Governance
+purview-ado-wiki-021|ado-wiki|portal,private-endpoint,dns,networking,private-link|Purview Governance Portal inaccessible: site cant be reached, web.purview.azure.com server IP address could not be found
+purview-ado-wiki-022|ado-wiki|disaster-recovery,account-deletion,restore,backup,copilot-tsg|Customer wants to restore a deleted Microsoft Purview account
+purview-ado-wiki-025|ado-wiki|adc-gen1,migration,deprecation|Customer asks about migrating from Azure Data Catalog (ADC) Gen 1 to Purview; no migration path available
+purview-ado-wiki-037|ado-wiki|priva,reports,provisioning,resource-not-found|Microsoft Priva Reports/Overview section shows 'Your account is still being provisioned. Try again', 'Resource not found
+purview-ado-wiki-042|ado-wiki|SHIR,registration,network,permission|Customer is unable to register SHIR successfully in Purview
+purview-ado-wiki-043|ado-wiki|sovereign-cloud,mooncake,fairfax,feature-limitation,multi-cloud|Customer reports Multi-cloud scanning (AWS etc.), Azure Information Protection (AIP), or Purview Data Share features not
+purview-ado-wiki-044|ado-wiki|sovereign-cloud,mooncake,kusto,dSTS,ASC|Engineer cannot access Purview Kusto logs in Mooncake sovereign cloud using standard connection method
+purview-ado-wiki-045|ado-wiki|sovereign-cloud,fairfax,gov-cloud,kusto,JIT|Engineer needs to access Purview/ADF Kusto logs in Fairfax sovereign cloud for troubleshooting
+purview-ado-wiki-055|ado-wiki|ad-rms,reports,dotnet-framework,report-viewer|AD RMS management console Health and Troubleshooting reports unavailable; link in GUI tries to access non-existent locat
+purview-ado-wiki-056|ado-wiki|ad-rms,caching,group-membership,directory-services,iisreset|AD RMS group membership changes not reflected; users cannot access protected content despite being added to authorized g
+purview-ado-wiki-059|ado-wiki|classification,custom-classification,scan,scan-ruleset|Custom classification tags not applied after running scan - changes to classification rules made while scan is already r
+purview-ado-wiki-061|ado-wiki|classification,single-asset,threshold,distinct-values|Classification missing on single asset (non-resource set) - system classification not applied even though data appears t
+purview-ado-wiki-062|ado-wiki|classification,asset-deletion,incremental-scan,full-scan,data-map|Deleted asset from data source still appears in Purview catalog with classifications after scan completes
+purview-ado-wiki-063|ado-wiki|classification,mce,us-drivers-license,sensitive-info-types,formatting|MCE classification (e.g., US Driver's License) not applied or incorrectly classified on data
+purview-ado-wiki-065|ado-wiki|classification,csv,resource-set,sampling,threshold|First Name, Last Name or other classification tags missing on columns in CSV resource set files after successful Purview
+purview-ado-wiki-066|ado-wiki|classification,threshold,min-samples,confidence,opinfo|Classification tags missing on asset despite data appearing to match classification rules (threshold issue)
+purview-ado-wiki-067|ado-wiki|classification,ACL,403-forbidden,find-module,data-source-access|Classification tags missing from scanned asset; OpInfo not emitted for the asset in DataScanAgentLinuxEvent logs
+purview-ado-wiki-068|ado-wiki|sensitivity-label,auto-labeling,custom-sit,limitation,data-map|Sensitivity label not auto-applied to asset; customer is using custom Sensitive Information Types (SITs) in auto-labelin
+purview-ado-wiki-070|ado-wiki|glossary,service-principal,people-contact,limitation|Importing/exporting service principal as people contact in glossary terms is unsupported; only manual assignment via UI 
+purview-ado-wiki-072|ado-wiki|oracle,classification,cross-schema,ORA-00942,credential|Oracle scan classification fails with ORA-00942 table or view does not exist when scanning tables owned by a different s
+purview-ado-wiki-074|ado-wiki|editing-asset,manual-edit,scan-overwrite,limitation,by-design|Manual edits to asset (description, glossary term, classification) in Purview Governance Portal are overwritten or lost 
+purview-ado-wiki-076|ado-wiki|glossary,export,csv,browser-settings,timeout|Cannot export or download glossary terms as CSV files from Purview portal; export button appears stuck or download does 
+purview-ado-wiki-078|ado-wiki|MITI,3P-datasource,scan,missing-assets,permissions|MITI scan completes but assets are missing from scan results for 3P data sources (Snowflake, PostgreSQL, MySQL, Oracle, 
+purview-ado-wiki-079|ado-wiki|databricks,lineage,missing-lineage,NOTEBOOK,system-table|Azure Databricks lineage missing in Purview after scan completes; lineage tab shows no data
+purview-ado-wiki-080|ado-wiki|glossary,api,timeout,pagination|GET Glossaries API returns RequestTimeout error when listing glossary terms; large glossary causes single API call to ex
+purview-ado-wiki-081|ado-wiki|glossary,import,csv,term-template|Glossary CSV import fails: Some values of Term template names are not in [] or [Attribute][TermTemplateName]AttributeNam
+purview-ado-wiki-082|ado-wiki|glossary,import,csv,duplicate,special-characters|Glossary term CSV import fails with duplicate term names warning
+purview-ado-wiki-083|ado-wiki|glossary,entity,412,concurrent-update,etag|HTTP 412 Pre-condition check failed when editing glossary term or entity in Purview portal
+purview-ado-wiki-085|ado-wiki|azure-ir,connection-failure,firewall,authentication|Azure Integration Runtime connection failures: timeout errors, authentication failures when connecting to data sources
+purview-ado-wiki-089|ado-wiki|billing,insights,zombie-job,AtlasAnalytics,PJS-timeout|Customer reports billing spike caused by Purview Insights reports; AtlasAnalytics job stuck in Submitting status (zombie
+purview-ado-wiki-090|ado-wiki|scan-failure,azure-files,adls-gen2,stuck-scan,parser|Purview scan for Azure Files or ADLS Gen2 fails with Scan_TerminatedStuckScan error; scan runs for extended period then 
+purview-ado-wiki-091|ado-wiki|scan-failure,fabric,lakehouse,capacity,metadata|Purview scan for Fabric Lakehouse sub-artifact metadata fails or returns incomplete results; error messages unclear or a
+purview-ado-wiki-092|ado-wiki|lineage,sql-provenance,adf,rpc,azure-sql-db|Lineage not appearing for stored procedures invoked from Azure Data Factory (ADF) in Azure SQL DB lineage scan; SQL prov
+purview-ado-wiki-093|ado-wiki|account-deletion,resource-lock,administration|Purview account deletion fails with error 'Failed to delete Purview account' in Azure Portal
+purview-ado-wiki-094|ado-wiki|workflow,glossary,bulk-delete,SDK-workaround,data-governance|Glossary terms are deleted directly without workflow approval when multi-selection (bulk delete) is applied. Single glos
+purview-ado-wiki-096|ado-wiki|lineage,SQL,view-lineage,scan,MITI|View lineage not rendered after SQL DB metadata scan. Customer does not see view lineage for scanned SQL databases.
+purview-ado-wiki-098|ado-wiki|account-creation,CRUD-failure,RP-logs,Jarvis,Kusto|Purview account creation or deletion fails (Babylon RP CRUD failure); IcM shows callback faulted or partner service fail
+purview-ado-wiki-099|ado-wiki|policy,policy-publish,known-bug|Policy publish allows binding policies to data sources that are not part of the asset being governed. Customer can assoc
+purview-ado-wiki-100|ado-wiki|policy,policy-publish,policy-enforcement|Created a Purview access policy but it is not getting enforced / policy not executing on the target data source.
+purview-ado-wiki-101|ado-wiki|policy,policy-deletion,bindings|Policy deletion fails with error: 'Deletion of policy with bindings is not allowed'.
+purview-ado-wiki-102|ado-wiki|billing,aws,s3-scanning,cost|Customer reports unexpected extra charges on their AWS bill after running Purview scans on AWS S3 data sources.
+purview-ado-wiki-103|ado-wiki|search,browse,duplicate-assets|Duplicate assets in Purview Browse/Search: Azure SQL DB shown as Synapse Analytics, Azure Files appear in search despite
+purview-ado-wiki-104|ado-wiki|lineage,adf,shir,fips|ADF copy activity using SHIR does not generate lineage; FIPS enabled on SHIR machine interferes with MD5
+purview-ado-wiki-105|ado-wiki|lineage,adf,shir,cannotconnect|ADF copy lineage status 'CannotConnect': SHIR cannot reach Purview endpoint
+purview-ado-wiki-106|ado-wiki|lineage,synapse,adf,connection|Synapse Analytics lineage missing despite successful ADF dataflow; ADF-Purview linking incorrect
+purview-ado-wiki-107|ado-wiki|lineage,adf,private-endpoint,network,dns|ADF lineage error: 'The catalog provided for lineage reporting cannot be connected'; network/DNS issue with Private Endp
+purview-ado-wiki-109|ado-wiki|deployment,conflict,quota,storage,eventhub|Purview account deployment fails with Conflict error due to Storage Account or EventHub namespace quota limits exceeded 
+purview-ado-wiki-110|ado-wiki|deployment,marketplace,portal,create-account|Error "Could not create the marketplace item" when creating Microsoft Purview account directly from Azure portal
+purview-ado-wiki-113|ado-wiki|lineage,data-factory,connection,data-curator,root-collection|Data factory disappears from the Purview portal Lineage connection list
+purview-ado-wiki-115|ado-wiki|account-creation,validation,naming|Purview account creation fails preflight validation due to invalid account name
+purview-ado-wiki-116|ado-wiki|vcore,billing,scan,calculation|Customer asks how to calculate VCoreHour consumption for a specific Purview scan
+purview-ado-wiki-117|ado-wiki|account-creation,quota,error-2005,tenant-limit,kusto|Purview account creation fails with error: 2005 - The Tenant with xx resources has surpassed its resource quota 20 for r
+purview-ado-wiki-118|ado-wiki|data-policy,reader-policy,ADLS-Gen2,storage-explorer,power-bi|User cannot access ADLS Gen2 or Azure Blob Storage asset from Storage Explorer, PowerBI Desktop, or Azure Portal after c
+purview-ado-wiki-119|ado-wiki|data-policy,ADLS-Gen2,policy-replication,ACL-precedence,AAD-authentication|ADLS Gen2 data policy created via Purview Data Governance is not working as expected
+purview-ado-wiki-120|ado-wiki|policy-store,authentication,managed-identity,canary|AuthenticationFailedException 'DefaultAzureCredential authentication failed due to an unhandled exception' in Purview Po
+purview-ado-wiki-121|ado-wiki|policy-store,artifact-store,data-factory|Policy Store calls to Artifact Store fail with 'ArtifactStoreError_PurviewAuthzPolicy' and 'ArtifactStoreErrorCode: Data
+purview-ado-wiki-122|ado-wiki|policy,data-governance,rbac,policy-author,data-source-admin|Customer cannot create or publish a policy in Purview Data Governance
+purview-ado-wiki-124|ado-wiki|policy-store,artifact-store,propagation,timeout|Policy Store CRUD operations fail with ErrorResponseException/ArtifactStoreException 'The reference does not exist or is
+purview-ado-wiki-125|ado-wiki|policy-store,client-certificate,whitelist,gateway,401|500 Internal Server Error from Gateway during policy CRUD operations, or 401 Unauthorized when Policy Store clients atte
+purview-ado-wiki-126|ado-wiki|data-governance,migration,classic-to-new,macula,glossary|Customer needs to migrate glossaries, glossary terms, or metadata from classic Azure Purview Data Catalog to the new Dat
+purview-ado-wiki-127|ado-wiki|policy-store,migration,cnfCondition,old-account|Old Purview accounts throw error: cnfCondition in AttributeRule not supported. PolicyStoreException in logs with message
+purview-ado-wiki-129|ado-wiki|policy-store,401,unauthorized,roles,permissions|401 Error from policystore API in collection/role permissions. Caller not authorized with missing Microsoft.Purview/acco
+purview-ado-wiki-130|ado-wiki|policy,ADLS-Gen2,container,access,scan|ADLS Gen2 container not visible in Asset section when creating a new policy in Purview
+purview-ado-wiki-131|ado-wiki|policy,access-policy,region,storage,propagation-delay|Purview access policy not taking effect even after waiting 2 hours
+purview-ado-wiki-133|ado-wiki|billing,classic-billing,incomplete-scan,vcore|Customer billed for a scan that did not complete successfully (Classic Billing Model)
+purview-ado-wiki-135|ado-wiki|billing,ingestion,lineage,ADF,synapse|Purview Ingestion Service billing charges unexpectedly high; customer does not have many scanning jobs but sees large in
+purview-ado-wiki-136|ado-wiki|scanning,salesforce,3rd-party,credential,key-vault|Salesforce scan fails in Purview; test connection or credential errors when scanning Salesforce data source
+purview-ado-wiki-137|ado-wiki|scanning,asset-deletion,scope,auto-detect,catalog|Asset deleted from data source is not automatically removed from Purview catalog after subsequent scan
+purview-ado-wiki-138|ado-wiki|scanning,AWS,S3,external-id,IAM|AWS S3 test connection fails with error about missing external ID in AWS role configuration
+purview-ado-wiki-139|ado-wiki|scanning,key-vault,credential,MSI,permissions|Purview scan credential test fails with Key Vault authentication issues; misconfigured Key Vault URI, secret name, or MS
+purview-ado-wiki-140|ado-wiki|scanning,key-vault,private-endpoint,VNET,trusted-services|Purview cannot connect to Key Vault behind private endpoint; AKV connection issues in private network
+purview-ado-wiki-141|ado-wiki|scanning,synapse,private-endpoint,SHIR,RBAC|Purview (private network) scan of Azure Synapse dedicated pool (public endpoint) fails with Internal system error when u
+purview-ado-wiki-142|ado-wiki|scanning,key-vault,credentials,test-connection,access-policy|Purview scan test connection fails with "Failed to access the [Data Source] account with the given credentials" when usi
+purview-ado-wiki-144|ado-wiki|scanning,test-connection,kusto,credentials,AKV|Purview scan test-connectivity fails; general debugging approach using Kusto ScanningLog queries and correlation IDs to 
+purview-ado-wiki-145|ado-wiki|scanning,adls-gen2,msi,firewall,authentication|ADLS Gen 2 scan with MSI authentication fails when storage account firewall is enabled; connection fails with firewall +
+purview-ado-wiki-146|ado-wiki|scanning,databricks,metastore,connection,migration|Azure Databricks connection issues after metastore ID migration; ADB scan or connection not working after November 2024 
+purview-ado-wiki-149|ado-wiki|scan,hive,memory,partial-assets,oscillating|Hive source scan returns partial/oscillating asset count across runs; not all assets discovered
+purview-ado-wiki-155|ado-wiki|scanning,classification,schema,attachedSchema,tabular_schema|Classifications missing on schema for delimited file types (CSV/TSV/SSV/PSV) or Parquet file assets; classifications ass
+purview-ado-wiki-156|ado-wiki|scanning,SHIR,dll-not-found,known-issue|Scan failure with DLL not found error on Self-Hosted Integration Runtime (SHIR) version 5.41.8901.3
+purview-ado-wiki-157|ado-wiki|scanning,private-endpoint,public-network-access,Auto-Resolved-IR,managed-vnet|Scan fails with Internal system error after disabling public network access in Purview portal
+purview-ado-wiki-161|ado-wiki|scanning,sql-database,firewall,client-ip,networking|Scan fails with Client IP Not Allowed error when scanning Azure SQL database with firewall enabled
+purview-ado-wiki-162|ado-wiki|scanning,oracle,stored-procedure,lineage,limitation|Oracle stored procedures not appearing in Purview scan or lineage results
+purview-ado-wiki-163|ado-wiki|scanning,powerbi,error-3870,service-principal,authentication|PowerBI scan fails with error 3870: Unable to access the PowerBI tenant with the specified connection parameters
+purview-ado-wiki-164|ado-wiki|scanning,scan-configuration,connectivity,SHIR,decryption|Scan fails with Reading Scan Configuration Data failed or Decrypting Scan Configuration Data failed error
+purview-ado-wiki-165|ado-wiki|scanning,SHIR,private-endpoint,catalog-not-found|Scan fails with error: 'Content: Catalog Not Found, or is an invalid state' when using Self-Hosted Integration Runtime (
+purview-ado-wiki-166|ado-wiki|scanning,SHIR,internal-system-error,corrupted-installation,assembly-load-failure|Scan fails with Internal System Error; SHIR logs show 'Module atlas-ingestion-write initialize failed' and 'Could not lo
+purview-ado-wiki-167|ado-wiki|scanning,synapse-workspace,permissions,MSI,serverless-sql|Purview scan of Synapse Workspace fails; serverless database enumeration works but scan does not complete successfully
+purview-ado-wiki-172|ado-wiki|scanning,executor,queued,Azure-Batch,capacity|Scan executor task stuck in queued state for days, scan never starts or completes
+purview-ado-wiki-174|ado-wiki|scan-failure,on-premise-sql,named-instance,SHIR,version-upgrade|Unable to complete scan of on-premise SQL Server Named Instance with System Error, connectivity test succeeds
+purview-ado-wiki-175|ado-wiki|browse,scan,scoped-scan,data-map,asset-visibility|Assets not visible in Browse page after scan completes; customer clicks 'Browse by Asset Type' but cannot find server/ac
+purview-ado-wiki-176|ado-wiki|search,http-400,syntax-error,special-characters|Search returns HTTP 400 error 'The search request is invalid' when searching keywords
+purview-ado-wiki-177|ado-wiki|search,column-name,known-limitation|Search by column name does not return column entities in search results; searching 'address' returns entities containing
+purview-ado-wiki-178|ado-wiki|search,keyword,camelCase,wildcard,relevance|Search does not return expected assets when searching by keyword or applying filters
+purview-ado-wiki-182|ado-wiki|portal-access,incognito,browser-compatibility|Purview Governance Portal shows compliance popup or fails to load in Incognito/InPrivate mode
+purview-ado-wiki-183|ado-wiki|portal-access,error-500,multiple-accounts,gateway|Request failed with status code 500 when opening Purview Governance Portal especially with multiple Purview accounts
+purview-ado-wiki-186|ado-wiki|private-endpoint,portal,dns,migration|Portal Private Endpoint not working after Purview GA: customer cannot open Purview portal in VNET; deprecated PE DNS zon
+purview-ado-wiki-187|ado-wiki|private-endpoint,proxy,shir,networking|Cannot access Purview portal with Private Endpoints when using proxy: error says account is behind PE, please access fro
+purview-ado-wiki-188|ado-wiki|private-endpoint,browser-cache,portal|Browser cache conflict causes Not Authorized error after enabling Private Endpoints on Purview account
+purview-ado-wiki-189|ado-wiki|private-endpoint,dns,custom-dns,403,networking|403 Not Authorized when accessing Purview portal with Private Endpoints even when client is in same VNET
+purview-ado-wiki-193|ado-wiki|tags,azure-policy,managed-resources,409|Cannot add tags on Purview account: HTTP 409 error with deny assignment and policy violation on managed resources
+purview-ado-wiki-194|ado-wiki|snowflake,jdbc,scan,dns,shir|Snowflake scan URL mismatch: JDBC driver translates underscores to hyphens in Snowflake account URL causing connection f
+purview-ado-wiki-195|ado-wiki|synapse,private-endpoint,trusted-services,firewall|Azure Synapse Analytics scan fails when using Allowed Trusted Services with Private Purview: trusted service connection 
+purview-ado-wiki-197|ado-wiki|scan,shir,scan-level,integration-runtime,limitation|Customer cannot set custom scan level when using Self-Hosted Integration Runtime (SHIR) in Purview. Scan level configura
+purview-ado-wiki-198|ado-wiki|scan,databricks,unity-catalog,uami,authentication|UAMI (User Assigned Managed Identity) authentication is not supported for scanning Azure Databricks Unity Catalog data s
+purview-ado-wiki-199|ado-wiki|scan,fabric,powerbi,duplicate-assets|Fabric/PowerBI scans generate duplicate assets in Purview, causing confusion. Multiple duplicate entries appear for the 
+purview-ado-wiki-200|ado-wiki|scan,synapse,serverless,views,limitation|Scanning views on Azure Synapse Serverless SQL database is not supported in Purview. Only tables are scanned; views are 
+purview-ado-wiki-201|ado-wiki|scan,json,nested-fields,schema,classification|Purview scanning captures top-level JSON fields but does not recognize nested fields/objects during scanning. Nested JSO
+purview-ado-wiki-202|ado-wiki|scan,databricks,unity-catalog,mpe,msi|Azure Databricks Unity Catalog connector in Purview does not support Managed Private Endpoint (MPE) or MSI credential. C
+purview-ado-wiki-203|ado-wiki|data-quality,databricks,vnet,mpe,scan-failure|Data Quality (DQ) scans fail for VNet-enabled Azure Databricks data source, even after enabling public endpoint access. 
+purview-ado-wiki-204|ado-wiki|powerbi,private-endpoint,scan,shir,azure-ir|PowerBI scan using Azure IR does not support Private Endpoints; scan fails when Purview account uses private connectivit
+purview-ado-wiki-205|ado-wiki|data-quality,databricks,vnet,managed-private-endpoint,scan-failure|Data Quality (DQ) and Profiling scans fail for VNet-enabled Azure Databricks data source even after enabling public endp
+purview-ado-wiki-206|ado-wiki|lineage,azure-sql,private-endpoint,known-limitation|Lineage is not extracted when scanning Azure SQL data source using Private Endpoint
+purview-ado-wiki-207|ado-wiki|scan,json,nested-fields,schema,classification|Purview scanner captures top-level JSON fields in schema but does not recognize nested JSON structures during scanning; 
+purview-ado-wiki-208|ado-wiki|fabric,powerbi,duplicate-assets,scan,known-limitation|Scans for Fabric/PowerBI data sources generate duplicate assets in Purview, causing confusion for customers
+purview-ado-wiki-209|ado-wiki|lineage,databricks,unity-catalog,feature-gap|Cross-workspace lineage for Databricks Unity Catalog is not supported in Purview.
+purview-ado-wiki-210|ado-wiki|classification,postgresql,scan,feature-gap|Classification is not supported for PostgreSQL and Azure PostgreSQL Flexible Server connectors in Purview.
+purview-ado-wiki-211|ado-wiki|oracle,scan,shir,java,feature-gap|Oracle scans in Purview require Java 11 (EOL). Java 21 is not supported for SHIR-based Oracle scans.
+purview-ado-wiki-212|ado-wiki|sensitivity-label,data-map,classification,feature-gap|Sensitivity labeling in Data Map limited to select Azure sources. Not available for SQL Server, Oracle, Snowflake.
+purview-ado-wiki-213|ado-wiki|bcdr,unified-portal,disaster-recovery,feature-gap|BCDR not supported for Unified Portal. Must downgrade to classic Purview for disaster recovery.
+purview-ado-wiki-214|ado-wiki|azure-sql,shir,scan-level,feature-gap|Azure SQL level scans not supported with SHIR. Only Azure IR or Managed IR supported.
+purview-ado-wiki-215|ado-wiki|powerbi,scan,metadata,access-governance,feature-gap|Purview does not ingest metadata from Power BI Applications including audiences. Reports show Workspace users instead of
+purview-ado-wiki-216|ado-wiki|lineage,snowflake,stored-procedure,feature-gap|Snowflake stored procedure lineage aggregated under single entity. Cannot distinguish lineage per output table.
+purview-ado-wiki-217|ado-wiki|resource-set,ars,configuration,feature-gap|Advanced Resource Set (ARS) is all-or-none at account level. Cannot configure per data source.
+purview-ado-wiki-218|ado-wiki|data-quality,rules,feature-gap|Data Quality rules cannot be reused across different data assets. Each asset needs its own rule definitions.
+purview-ado-wiki-219|ado-wiki|private-endpoint,azure-sql-mi,limit,feature-request|Error when creating more than 10 Azure SQL Managed Instance private endpoints in Purview. Limit is set to 10.
+purview-ado-wiki-220|ado-wiki|aws-s3,scan-limit,performance,feature-request|AWS S3 scan in Purview has a 7-day limit. Customer with 55 million files cannot scan all assets at once; scan process to
+purview-ado-wiki-221|ado-wiki|private-endpoint,fabric,feature-request,roadmap|Cannot configure Purview and Fabric through private access / private endpoints. Private access enablement for Fabric sou
+purview-ado-wiki-222|ado-wiki|data-quality,snowflake,restrictive-access,feature-request|Data Quality (DQ) scans fail for Snowflake data source with restrictive access policy enabled. Data Map scans succeed bu
+purview-ado-wiki-223|ado-wiki|fabric-lakehouse,unsupported-file-types,scan-exception,feature-request|Purview scan of Fabric Lakehouse completes with exceptions due to unsupported file types (.md, .whl, .created). Customer
+purview-ado-wiki-224|ado-wiki|postgresql,authentication,basic-auth-only,feature-request|Only Basic authentication is supported for scanning PostgreSQL in Purview. Azure AD and certificate-based authentication
+purview-ado-wiki-225|ado-wiki|sap-hana-cloud,unsupported-data-source,feature-request|SAP HANA Cloud is not a supported data source in Microsoft Purview. Cannot register or scan SAP HANA Cloud.
+purview-ado-wiki-227|ado-wiki|quota,account,provisioning,collections,administration|Customer requests Purview account quota increase but is denied.
+purview-ado-wiki-228|ado-wiki|merge,account,workflow,administration|Merge button is not present in Purview despite having the right permissions. Customer cannot merge Purview accounts.
+purview-ado-wiki-229|ado-wiki|merge,account,conflicts,scan-rule-set,adf|Purview account merge fails with conflicts: scan rule sets with same name, ADF/Synapse connections in both accounts, ter
+purview-ado-wiki-230|ado-wiki|gcc,upgrade,free-tier,enterprise-tier,administration|Customer unable to upgrade Purview from Free-Tier to Enterprise-Tier in GCC M365 tenant.
+purview-ado-wiki-231|ado-wiki|upgrade,enterprise-tier,rollback,account,administration|Customer chose wrong Purview account for enterprise upgrade. Needs to switch to a different account.
+purview-ado-wiki-232|ado-wiki|upgrade,permissions,enterprise-tier,portal,administration|Customer cannot see Purview account in Azure Portal after upgrade to enterprise account.
+purview-ado-wiki-233|ado-wiki|region-change,free-tier,enterprise-tier,data-loss,administration|Customer wants to change region for Free-Tier or Enterprise-Tier Purview account after creation.
+purview-ado-wiki-234|ado-wiki|dev-prod,multiple-accounts,tenant,collections,administration|Customer wants separate Purview accounts for dev and prod environments but single-account-per-tenant model prevents this
+purview-ado-wiki-235|ado-wiki|gcc,gov-cloud,upgrade,enterprise-tier,product-limitation|GCC tenant customer unable to upgrade Purview from free tier to enterprise tier for new Purview experience
+purview-ado-wiki-236|ado-wiki|rbac,data-catalog-reader,governance-domain-reader,draft-visibility,permissions|Users with Data Catalog Reader or Governance Domain Reader role can see unpublished/draft governance domains, data produ
+purview-ado-wiki-237|ado-wiki|postgresql,authentication,basic-auth,scan,product-limitation|Cannot use Azure AD or certificate-based authentication to scan PostgreSQL data source in Purview; only Basic authentica
+purview-ado-wiki-238|ado-wiki|aws-s3,scan-timeout,large-bucket,scan-limit,product-limitation|Cannot scan all assets in very large AWS S3 buckets (55M+ files); scan times out after 7 days without completing
+purview-ado-wiki-239|ado-wiki|oracle,classification,permissions,owner-privilege,product-limitation|Oracle classification requires Table Owner privilege; customer wants to classify without owner role
+purview-ado-wiki-240|ado-wiki|sap-hana-cloud,data-source,not-supported,product-limitation|SAP HANA Cloud is not a supported data source in Purview; cannot register or scan SAP HANA Cloud
+purview-ado-wiki-241|ado-wiki|snowflake,data-quality,restrictive-access,scan,product-limitation|Data Quality scans fail for Snowflake data source with restrictive access policy; data map scans succeed but DQ scans do
+purview-ado-wiki-242|ado-wiki|json,nested-fields,schema,classification,scan|Purview scanner captures top-level JSON fields but does not recognize nested JSON fields/objects during scanning and cla
+purview-ado-wiki-243|ado-wiki|policies,azure-sql,region-availability,uk-west,product-limitation|Purview Policies enforcement on Azure SQL not supported in UK West region
+purview-ado-wiki-244|ado-wiki|fips,shir,scan-failure,gov-cloud,cryptography|Scan fails with FIPS-related error when using SHIR on a machine with FIPS enabled
+purview-ado-wiki-245|ado-wiki|quota,account-limit,single-tenant,collab-request|Customer requests quota increase for Purview accounts or encounters quota limit exceeded error when creating new Purview
+purview-ado-wiki-248|ado-wiki|error-35001,free-tier,enterprise-tier,account-creation,provisioning|Error 35001: Unable to create Purview account. "A Tenant-level Purview Account already exists for tenant".
+purview-ado-wiki-249|ado-wiki|event-hub,managed-event-hub,deprecated,provisioning,rest-api|Managed Event Hub not available on Purview account. Customer needs secure Event Hub connectivity but managed EH was depr
+purview-ado-wiki-250|ado-wiki|error-35001,free-tier,account-creation,unified-portal,upgrade|Error Code 35001: Unable to create Purview account - A Tenant-level Purview Account already exists for tenant. Customer 
+purview-ado-wiki-251|ado-wiki|free-tier,unified-portal,support-limitation,how-to|Purview free tier customers asking How-To questions about the new Unified Portal experience. Free tier does not support 
+purview-ado-wiki-253|ado-wiki|account-move,subscription-transfer,region-move,not-supported,managed-storage|Customer wants to move Purview account across subscriptions or resource groups. Or error when trying to move across regi
+purview-ado-wiki-255|ado-wiki|tenant-migration,managed-identity,identity-not-found,msi-reset,scan-broken|After Azure subscription migration to another tenant, Purview Managed Identity (MI) shows Identity not found error. Old 
+purview-ado-wiki-256|ado-wiki|rename,account-name,friendly-name,classic-portal,component-rename|Customer wants to rename Purview account. Cannot rename account after creation.
+purview-ado-wiki-257|ado-wiki|upgrade,free-tier,region-mismatch,kusto-query,enterprise-tier|Azure Purview upgrade to enterprise fails due to region mismatch between existing free tier account and intended enterpr
+purview-ado-wiki-258|ado-wiki|merge,reconcile,un-reconcile,data-loss,billing-model|Azure Purview account merge failure when merging classic Azure Purview account into Enterprise Account (Unified Purview)
+purview-ado-wiki-259|ado-wiki|upgrade,reconcile,unreconcile,enterprise-account,data-loss|Wrong Purview account was upgraded to enterprise account, need to unreconcile and switch to correct account
+purview-ado-wiki-260|ado-wiki|upgrade,free-tier,region-mismatch,enterprise-account,kusto|Azure Purview upgrade failure when attempting to create enterprise account; free tier account blocks upgrade
+purview-ado-wiki-261|ado-wiki|region-change,provisioning,compliance,ICM,data-loss|Customer wants to change Purview region (free-tier or enterprise account)
+purview-ado-wiki-262|ado-wiki|quota,collection-limit,account-limit,BCDR,provisioning|Customer needs collection limit increase or additional Purview accounts beyond quota
+purview-ado-wiki-263|ado-wiki|schema-missing,sampling,by-design,single-asset|Schema of an asset is missing after successful scan due to sampling failure. Purview attempts to sample 128 rows per col
+purview-ado-wiki-264|ado-wiki|schema-missing,payload-size-limit,1MB,800-columns,scan-limits|Asset schema or entire table missing from Purview catalog after scan due to entity payload exceeding size limits (1MB pa
+purview-ado-wiki-265|ado-wiki|deleted-asset,scan-scope,full-scan,parent-scope|Deleted asset still visible in Purview catalog after running scan. Scan scope was not set to include the direct parent o
+purview-ado-wiki-266|ado-wiki|asset-count,REST-API,filter-payload,root-collection|Asset count mismatch between Purview UI and REST API query results for Root Collection. Sub-collection counts match but 
+purview-ado-wiki-267|ado-wiki|parquet,SHIR,jvm.dll,schema-missing,classification-missing|Parquet files schema and classification missing after successful scan using SHIR. Error: System.DllNotFoundException Una
+purview-ado-wiki-273|ado-wiki|region-change,account-migration,provisioning,PM-approval|Customer requests to change Purview account region to a different Azure region
+purview-ado-wiki-274|ado-wiki|region-change,Central-US,by-design,provisioning|Customer requests Purview account region change to Central US
+purview-ado-wiki-275|ado-wiki|unified-catalog,data-governance,migration,discovery,tenant-migration|Recently created data products not found in Unified Catalog (Data Governance) discovery experience after tenant account 
+purview-ado-wiki-276|ado-wiki|CU,capacity-unit,scan-performance,SHIR,throttling|Customer requests CU (Capacity Unit) upgrade due to slow scan performance in Purview Data Map
+purview-ado-wiki-277|ado-wiki|CU,capacity-unit,downgrade,not-supported,by-design|Customer requests to downgrade Purview CU (Capacity Unit) quota
+purview-ado-wiki-278|ado-wiki|region-change,provisioning,free-tier,compliance,ICM|Customer requests to change Purview account region; free tier deployed to auto-assigned region based on M365/PowerBI ten
+purview-ado-wiki-279|ado-wiki|CU,capacity-unit,performance,quota,SHIR|Customer requests CU (Capacity Unit) upgrade for Purview Data Map due to perceived performance issues
+purview-ado-wiki-280|ado-wiki|billing,classic-billing,CU,data-map,ingestion|Customer reports unexpectedly high Purview billing charges (Classic Billing Model)
+purview-ado-wiki-281|ado-wiki|billing,lineage,ADF,Synapse,PowerBI|Customer reports high Purview billing but few scanning jobs configured; unexpected ingestion charges from ADF/Synapse li
+purview-ado-wiki-283|ado-wiki|billing,offline-tier,resource-set,kusto,PAV2|Need to check billing quantity for Purview Offline Tier (Resource Set) jobs to investigate vCore-hrs charges
+purview-ado-wiki-284|ado-wiki|lineage,ADF,Synapse,timeout,private-endpoint|ADF/Synapse copy or dataflow activity reports lineage error: Failed to report lineage to Catalog in 2 min (timeout)
+purview-ado-wiki-295|ado-wiki|billing,lineage,ADF,Synapse,classic-purview|Unexpectedly high Purview billing charges despite few scanning jobs configured
+purview-ado-wiki-296|ado-wiki|billing,data-map,capacity-unit,metadata,classic-purview|High Data Map capacity unit (CU) billing charges in Classic Purview
+purview-ado-wiki-297|ado-wiki|billing,ingestion,scanning,lineage,classic-purview|High Ingestion Service billing charges in Classic Purview
+purview-ado-wiki-299|ado-wiki|lineage,ADF,Synapse,private-endpoint,timeout|ADF/Synapse copy or dataflow activity fails to report lineage to Purview with error 'Failed to report lineage to Catalog
+purview-ado-wiki-300|ado-wiki|data-map,missing-assets,scan,classification,atlas-behavior|Assets or classifications missing after scan in Purview Data Map. Scan completes successfully but certain assets do not 
+purview-ado-wiki-301|ado-wiki|data-map,missing-assets,ingest-failure,timeout,bulk-entity|Assets missing after scan. Scan OpInfo shows assets were emitted, but they do not appear in the catalog. OfflineTierWarm
+purview-ado-wiki-302|ado-wiki|data-map,missing-assets,hot-tier,data-loss,pipeline|Assets or classifications missing. Scan emitted assets correctly (OpInfo confirms), but assets not found in Hot Tier ing
+purview-ado-wiki-303|ado-wiki|data-map,missing-assets,scan-emission,opinfo,schema|Assets or classifications missing after scan. Need to verify if scan actually emitted the entities.
+purview-ado-wiki-304|ado-wiki|data-map,scan,missing-assets,kusto-diagnostic|Assets or classifications missing after scan completes in Microsoft Purview Data Map; entities not appearing in catalog
+purview-ado-wiki-305|ado-wiki|data-map,hot-tier,missing-assets,ingestion|Assets or classifications missing after scan — scan emitted correctly but entities not in catalog
+purview-ado-wiki-306|ado-wiki|data-map,ingestion-failure,timeout,kusto-diagnostic|Asset import failure: 0 resources processed, 0 resources successfully imported, N resources failed while importing in Of
+purview-ado-wiki-307|ado-wiki|data-map,scan,by-design,asset-modification|Scan does not update asset schema or classifications even though scan data is correct; previously scanned asset no longe
+purview-ado-wiki-309|ado-wiki|data-map,resource-set,classification,ARS,advanced-resource-sets|Classification is missing or incorrect for assets in a Resource Set. Schema not updated after scan.
+purview-ado-wiki-310|ado-wiki|data-map,resource-set,classification,sampling-label,distinct-values|System classification not applied to columns in Resource Set despite scan completing successfully.
+purview-ado-wiki-311|ado-wiki|data-map,resource-set,ARS,advanced-resource-sets,pattern-rules|Resource Set details, pattern rules, and aggregation are not visible in Purview Governance Portal.
+purview-ado-wiki-312|ado-wiki|data-map,resource-set,schema,ingestion,kusto-diagnostic|Schema is missing or incorrect in Resource Set after scan. Resource Set asset shows wrong or no columns.
+purview-ado-wiki-313|ado-wiki|data-map,resource-set,schema,parquet,unsupported-type|Scan fails to read file schema with error about unsupported Parquet column type (e.g., non-primitive type in column). Sc
+purview-ado-wiki-314|ado-wiki|data-map,collections,REST-API,metadata-policy,stale-policy|Error Code 15602 "Stale Policy Update. New version already exists, please refresh" when using PUT API to update collecti
+purview-ado-wiki-315|ado-wiki|data-map,collections,REST-API,metadata-policy,404|HTTP 404 "Collection {name} not found" (Error Code 6000) when calling Purview Metadata Policy API for a sub-collection.
+purview-ado-wiki-316|ado-wiki|data-map,schema,migration,user-defined-content,classification|After enabling new schema feature for delimited/parquet files in Purview, user-defined content (classifications, glossar
+purview-ado-wiki-317|ado-wiki|data-share,ADS,metrics,alert,monitoring|Azure Data Share (ADS) metrics alert rule created but notification not fired when condition is met (e.g., Received Share
+purview-ado-wiki-318|ado-wiki|data-map,REST-API,bearer-token,app-registration,authentication|Error generating bearer token for Purview REST API when using app registration with wrong account type selected.
+purview-ado-wiki-320|ado-wiki|data-map,sdk-api,rest-api,delete,throttling|Cannot delete assets via REST API — returns HTTP 408 (timeout), 429 (throttling), or 500+ (server error) when performing
+purview-ado-wiki-321|ado-wiki|data-map,sdk-api,delete,cascade-delete,parent-asset|Parent asset reappears in Purview catalog the next day after deleting it from the UI
+purview-ado-wiki-322|ado-wiki|data-map,scan,manual-edit,by-design,asset-modification|Manually edited asset in Purview (description, classification, glossary term) is not updated by subsequent scan runs
+purview-ado-wiki-325|ado-wiki|data-map,sdk-api,rest-api,search,filter|Purview Search/Discovery API startswith operator does not work as expected — does not always match from the first charac
+purview-ado-wiki-326|ado-wiki|data-map,sdk-api,rest-api,search,filter|Purview Search API contains operator returns too many irrelevant results or misses expected assets — case-insensitive, s
+purview-ado-wiki-328|ado-wiki|data-map,sdk-api,rest-api,pagination,100k-limit|Cannot retrieve more than 100,000 assets via Purview REST API Search/Discovery pagination — offset limit is 100,000
+purview-ado-wiki-329|ado-wiki|data-map,asset-deletion,REST-API,cascade-delete,hierarchy|Deleting an asset via REST API times out even with fewer than 1000 requests, because the asset has many dependent or rel
+purview-ado-wiki-330|ado-wiki|data-map,typedef,atlas,limitation,REST-API|Cannot delete a custom typedef (e.g., business metadata typedef) in Purview even though it is no longer needed.
+purview-ado-wiki-331|ado-wiki|data-map,search,discovery-query,selectionList,REST-API|Search/Discovery Query API does not support specifying which attributes to return in the response. All default attribute
+purview-ado-wiki-333|ado-wiki|data-share,ads,authentication,sql,managed-identity|Azure Data Share (ADS) snapshot or dataset operation fails with authentication/permission error on SQL-based datasource 
+purview-ado-wiki-334|ado-wiki|data-share,ads,authentication,storage-account,managed-identity|Azure Data Share (ADS) operation fails with permission error on storage account or data lake
+purview-ado-wiki-335|ado-wiki|data-share,ads,firewall,selected-networks,storage-account|Error adding DataSet in Azure Data Share when storage uses selected networks — Failed to retrieve containers, not author
+purview-ado-wiki-336|ado-wiki|data-share,ads,invitation,domain-verification,azure-ad|Cannot accept/reject Azure Data Share invitation — User Domain Verification Failed
+purview-ado-wiki-337|ado-wiki|data-share,ads,icm,feature-request,policy|Azure Data Share no longer under active development — do not create ICM for feature requests
+purview-ado-wiki-338|ado-wiki|data-share,ads,blob-missing,conditional-access|Azure Data Share snapshot fails: Blob is missing or cannot be located
+purview-ado-wiki-339|ado-wiki|data-share,ads,permission,rbac|ADS snapshot fails: permission missing even after assigning Owner role
+purview-ado-wiki-340|ado-wiki|data-share,ads,snapshot-schedule,by-design|ADS snapshot schedule not working after adding new dataset
+purview-ado-wiki-341|ado-wiki|data-share,ads,snapshot-schedule,by-design|ADS snapshots stopped after scheduled time change
+purview-ado-wiki-342|ado-wiki|data-share,ads,sql,network,ports|Unable to view SQL Azure tables in Azure Data Share
+purview-ado-wiki-343|ado-wiki|data-share,ads,firewall,paas|Customer asks about adding firewall to Azure Data Share
+purview-ado-wiki-347|ado-wiki|data-map,sdk-api,delete,throttling,timeout|Cannot delete assets via REST API - HTTP 408/429/500+ during bulk delete
+purview-ado-wiki-348|ado-wiki|data-map,delete,cascade-delete,parent-asset|Parent asset reappears in Purview catalog next day after deleting from UI
+purview-ado-wiki-349|ado-wiki|data-map,scan,manual-edit,by-design|Manually edited asset not updated by subsequent scan runs
+purview-ado-wiki-352|ado-wiki|data-map,sdk-api,search,filter,startswith|Purview Search API startswith operator does not match from first character of qualifiedName
+purview-ado-wiki-353|ado-wiki|data-map,sdk-api,search,filter,contains-operator|Purview Search API contains operator returns irrelevant results - matches any word, splits by symbol
+purview-ado-wiki-355|ado-wiki|data-map,sdk-api,pagination,100k-limit,scrolling-pattern|Cannot retrieve more than 100K assets via REST API pagination - offset limit is 100000
+purview-ado-wiki-357|ado-wiki|data-share,ads,authentication,sql,managed-identity|ADS auth failure on SQL datasource - MI missing db_datareader/db_datawriter/db_ddladmin roles
+purview-ado-wiki-358|ado-wiki|data-share,ads,authentication,storage-account,rbac|ADS auth failure on storage - MI missing Storage Blob Data Reader/Contributor
+purview-ado-wiki-359|ado-wiki|data-share,ads,firewall,selected-networks|Error adding DataSet in ADS when storage uses selected networks - not authorized
+purview-ado-wiki-360|ado-wiki|data-share,ads,invitation,domain-verification,azure-ad|Cannot accept/reject ADS invitation - User Domain Verification Failed
+purview-ado-wiki-361|ado-wiki|data-share,ads,icm,feature-request,policy|ADS no longer under active development - do not create ICM for feature requests
+purview-ado-wiki-362|ado-wiki|data-share,ads,blob-missing,conditional-access|ADS snapshot fails: Blob is missing - conditional access blocking OAuth
+purview-ado-wiki-363|ado-wiki|data-share,ads,permission,rbac|ADS: Failed to synchronize because permission is missing - Owner role insufficient
+purview-ado-wiki-364|ado-wiki|data-share,ads,snapshot-schedule,by-design|ADS snapshot schedule not working after adding new dataset
+purview-ado-wiki-365|ado-wiki|data-share,ads,snapshot-schedule,by-design|ADS snapshots stopped after scheduled time change
+purview-ado-wiki-366|ado-wiki|data-share,ads,sql,network,ports|Unable to view SQL Azure tables in ADS - ports 443/1443 blocked
+purview-ado-wiki-367|ado-wiki|data-share,ads,firewall,paas|ADS is PaaS - no firewall configuration option
+purview-ado-wiki-369|ado-wiki|purview-share,storage-account,catalog,register,data-source|Purview Share: storage account not available in Catalog or error when creating a share
+purview-ado-wiki-370|ado-wiki|purview-share,view-shares,permissions,reader-role|Purview Share: View shares shows error message
+purview-ado-wiki-371|ado-wiki|purview-share,shared-data,access,api-version,attach|Purview Share: cannot access shared data in the target data store after attaching share
+purview-ado-wiki-372|ado-wiki|purview-share,target-storage,catalog,register,attach|Purview Share: cannot see target storage account in Catalog or cannot attach shares
+purview-ado-wiki-373|ado-wiki|purview-share,manage-shares,attach,permissions,owner-role|Purview Share: cannot view or manage shares to attach to a storage account in the catalog
+purview-ado-wiki-374|ado-wiki|purview-share,attach-share,asset-mapping,sharing-limits|Failed to attach share in Purview Data Sharing
+purview-ado-wiki-375|ado-wiki|purview-share,lineage,cross-tenant,received-share|Cannot view full share lineage in received share in the catalog
+purview-ado-wiki-376|ado-wiki|purview-share,lineage,cross-tenant,sent-share|Cannot view full share lineage in sent share in the catalog
+purview-ado-wiki-377|ado-wiki|purview-share,shared-data,storage-api-version,propagation-delay|Cannot access shared data in the target data store after attaching share
+purview-ado-wiki-378|ado-wiki|purview-share,storage-account,attach-share,prerequisites,registration|Cannot select target storage account when attaching share - storage account not listed
+purview-ado-wiki-379|ado-wiki|scan,azure-sql,managed-identity,principal-type,CREATE-USER|Creating user for Purview Managed Identity in Azure SQL Database fails with error: This principal type is not supported 
+purview-ado-wiki-380|ado-wiki|scan,metadata,parquet,ReadData,datetime|Purview scan completes with metadata read errors: System Error ReadData (invalid datetime Ticks) or Operation Failed Rea
+purview-ado-wiki-381|ado-wiki|scan,azure-sql,managed-identity,SAMI,CREATE-USER|Creating user for Purview managed identity in Azure SQL fails: This principal type is not supported in Azure SQL Databas
+purview-ado-wiki-382|ado-wiki|scan,parquet,ReadData,metadata,datetime|Purview scan fails with System Error or Operation Failed ReadData on Parquet files — invalid datetime Ticks value or uns
+purview-ado-wiki-383|ado-wiki|scan,parquet,complex-types,feature-gap,private-preview|Purview scan ReadData error: Parquet file contains non-primitive type not yet supported — complex Parquet data types cau
+purview-ado-wiki-384|ado-wiki|scan,SHIR,linkedservice,Snowflake,MySQL|Scan save fails with error: The version of the linkedservice is not supported — during SHIR scan configuration
+purview-ado-wiki-385|ado-wiki|scan,PowerBI,schema,dataset,scanner-api|Missing schema (table/column) details for Power BI dataset after scanning in Purview — no columns or tables shown
+purview-ado-wiki-386|ado-wiki|scan,Synapse,views,columns,binding-errors|Purview scan does not pick up new columns added to Synapse views or tables — column mismatch between Synapse and Purview
+purview-ado-wiki-387|ado-wiki|scan,test-connection,key-vault,20500,access-policy|Scan test connection fails with Error 20500: Failed to access the provided secret in Azure key vault — Account Key authe
+purview-ado-wiki-390|ado-wiki|scan,Hive,Databricks,lineage,assets|Hive scan with Databricks shows missing lineage, missing assets, missing schema in Purview
+purview-ado-wiki-391|ado-wiki|scan,Oracle,3804,SHIR,JDBC|Oracle scan fails with Error 3804: Unable to access the data source with the given credentials and/or configurations
+purview-ado-wiki-392|ado-wiki|scan,Oracle,Teradata,MITI,model-inconsistent|Teradata or Oracle scan completes with no assets; SHIR logs show FATAL: The Model is not consistent (MITI exception)
+purview-ado-wiki-393|ado-wiki|scan,SAP-ECC,SHIR,OOM,memory|SAP ECC scan fails with internal server error or Error 3818 Connector Exception — JRE out of memory on SHIR machine
+purview-ado-wiki-394|ado-wiki|scan,Snowflake,OCSP,certificate,SHIR|Snowflake scan fails or stuck in queue; SHIR logs show OCSP certificate revocation warning using fail-open connect
+purview-ado-wiki-395|ado-wiki|scan,Lakehouse,OneLake,Fabric,tenant-permission|Unable to retrieve Lakehouse table metadata after scan in Purview — scan completes with exceptions, assets not visible
+purview-ado-wiki-399|ado-wiki|MongoDB,scan-failure,SHIR,Error-3818,JVM|MongoDB scan fails with Error 3818 Connector Exception: No available collections to import. Underlying error: Cannot sta
+purview-ado-wiki-402|ado-wiki|lineage,scan,azure-sql-db,test-connection,5522|Test connection fails with error '(5522) Test connection failed for lineage scan' or '(5521)' when enabling Lineage extr
+purview-ado-wiki-404|ado-wiki|managed-vnet,IR,race-condition,private-endpoint,REST-API|Managed VNET creation appears successful but IR and private endpoints are not established. IR creation fails silently du
+purview-ado-wiki-405|ado-wiki|managed-vnet,private-endpoint,networking,scan-failure,kusto|Scan fails with 'Name or service not known' or connection errors when using Managed Vnet IR with Private Endpoints. Data
+purview-ado-wiki-408|ado-wiki|scan,synapse,sql,timeout,completed-with-exceptions|On-prem SQL or Azure Synapse dedicated pool scan completes with exceptions — test connection succeeds but scan fails wit
+purview-ado-wiki-409|ado-wiki|scan,power-bi,collection,root-collection,asset-ingestion|PBI (Power BI) scan causes external assets such as SQL server tables to be ingested into root collection instead of the 
+purview-ado-wiki-414|ado-wiki|shir,tls,ssl,certificate,trust|SHIR scan fails with error 9011: Could not establish trust relationship for the SSL/TLS secure channel. Remote certifica
+purview-ado-wiki-415|ado-wiki|shir,registration,firewall,tls,network|Self-Hosted Integration Runtime (SHIR) fails to register on new on-prem machine. Event Viewer shows: Refresh service tok
+purview-ado-wiki-418|ado-wiki|shir,private-endpoint,pe,dns,403|SHIR scan fails with 403 Forbidden or Internal Server Error after enabling Private Endpoint and disabling public network
+purview-ado-wiki-419|ado-wiki|integration-runtime,delete,linked-service,leaked-resources,400|Delete self-hosted or managed VNet integration runtime fails with 400 BadRequest: The document cannot be deleted since i
+purview-ado-wiki-420|ado-wiki|SHIR,DNS,private-endpoint,ADLS-Gen2,error-119|ADLS Gen2 scan via SHIR fails with error code 119: System error while attempting to launch datascan process. Portal show
+purview-ado-wiki-421|ado-wiki|SHIR,test-connection,TLS,firewall,network-trace|SHIR test connection to data source fails with "The underlying connection was closed: An unexpected error occurred on a 
+purview-ado-wiki-423|ado-wiki|Snowflake,authentication,OAuth,key-pair,deprecation|Snowflake scans may fail after November 2025 when Snowflake disables single-factor basic authentication for non-LEGACY_S
+purview-ado-wiki-429|ado-wiki|workflow,approval,email,403,public-access|Workflow approval via actionable email in Outlook shows 403 error.
+purview-ado-wiki-430|ado-wiki|workflow,approval,Outlook,404,tenant-mismatch|Workflow approval from Outlook returns HTTP 404 error. Same request works from Purview portal.
+purview-ado-wiki-431|ado-wiki|performance,timeout,slow-response,network,data-map|Purview service experiences slow response time and timeouts: browsing/clicking assets timeout, data map not loading, ran
+purview-ado-wiki-433|ado-wiki|AD-RMS,group-lookup,global-catalog,universal-group,domain-global-group|AD RMS rights granted to a universal group containing domain global groups work intermittently. Some users get access, o
+purview-ado-wiki-434|ado-wiki|AD-RMS,SCP,Enterprise-Admin,ADSI-Edit,service-connection-point|AD RMS Service Connection Point (SCP) fails to register. Error when attempting to register SCP in AD RMS console.
+purview-ado-wiki-435|ado-wiki|AD-RMS,installation,SQL,compression,NTFS|AD RMS configuration fails with SQL error: The File DRMS_Config.mdf is compressed but does not reside in a read-only dat
+purview-ado-wiki-436|ado-wiki|AD-RMS,service-account,permissions,admin-share|Unable to change AD RMS Service account or password. Permission errors when attempting the change.
+purview-ado-wiki-437|ado-wiki|AD-RMS,TLS-1.2,StrongCrypto,MSIPC,error-12157|AD RMS clients fail to connect after disabling TLS 1.0/1.1. MSIPC log shows Send Request Failed with status=12157.
+purview-ado-wiki-440|ado-wiki|AIP,encryption,OCP,onboarding-control-policy,RMS-license|Users unable to apply AIP/MIP encryption to documents. Desktop apps fail to encrypt content. OCP error. Web apps and ope
+purview-ado-wiki-441|ado-wiki|AIP,super-user,UPN,SMTP,decryption|AIP Service super user cannot decrypt content despite being configured. Super user feature not working as expected.
+purview-ado-wiki-442|ado-wiki|AIP,Connect-AipService,Global-Admin,RBAC,PowerShell|Connect-AipService fails or access denied. User has Global Admin role via group membership but cannot connect to AIP Ser
+purview-ado-wiki-444|ado-wiki|UX,deleted-assets,search-store-sync,API,404|Assets deleted via Purview API still appear in the Purview portal. Clicking deleted assets shows no metadata and returns
+purview-ado-wiki-445|ado-wiki|UX,portal-language,M365-settings,by-design|Purview Portal displays in a foreign language even after user switches to English in MyAccount settings.
+purview-ado-wiki-447|ado-wiki|AIP,BYOK,Azure-Key-Vault,key-migration|Need to migrate AIP Service BYOK key from one Azure Key Vault to another (e.g., subscription migration).
+purview-ado-wiki-448|ado-wiki|Activity-Explorer,audit-log,DLP,sensitivity-label,admin-unit|Event not showing in Activity Explorer, DLP alert missing, or label event not visible.
+purview-ado-wiki-449|ado-wiki|Activity-Explorer,admin-unit,by-design,visibility|Activity Explorer shows no events or limited events for users with Admin Unit (AU) assignments.
+purview-ado-wiki-454|ado-wiki|AIP,AD-RMS,migration,MIP-SDK,MSIPC|After migrating from AD RMS to AIP, newer Office clients using MIP SDK fail licensing redirection; users cannot open pre
+purview-ado-wiki-455|ado-wiki|AIP,tenant-migration,partial-migration,ad-hoc-protection,superuser|After partial tenant migration (users only, email domain retained in old tenant), migrated users cannot decrypt files/em
+purview-ado-wiki-456|ado-wiki|AIP,tenant-migration,complete-migration,licensing-redirection,DNS|After complete tenant migration (users + DNS domains + AIP config), users cannot open/decrypt AIP-protected files from t
+purview-ado-wiki-457|ado-wiki|AIP,TPD,Import-AipServiceTpd,password,AD-RMS|Import-AipServiceTpd fails with password error when importing TPD (Trusted Publishing Domain) to AIP Service.
+purview-ado-wiki-458|ado-wiki|AIP,TPD,Import-AipServiceTpd,multi-tenant|Import-AipServiceTpd fails when importing a TPD that was already imported to another AIP tenant.
+purview-ado-wiki-459|ado-wiki|Activity-Explorer,Export-ActivityExplorerData,PowerShell,ExchangePowerShell,Connect-IPPSSession|Export-ActivityExplorerData command is not recognized or fails to connect in PowerShell.
+purview-ado-wiki-460|ado-wiki|Activity-Explorer,Export-ActivityExplorerData,filters,data-mismatch|Export-ActivityExplorerData returns error with filters, no data, or incorrect/unexpected data.
+purview-ado-wiki-461|ado-wiki|activity-explorer,content-explorer,label-count,by-design|Activity Explorer shows different labeled item count than Content Explorer
+purview-ado-wiki-462|ado-wiki|activity-explorer,HowApplied,by-design|HowApplied field shows value 'none' in Activity Explorer
+purview-ado-wiki-463|ado-wiki|activity-explorer,LabelEventType,by-design|LabelEventType field shows value 'none' in Activity Explorer
+purview-ado-wiki-464|ado-wiki|activity-explorer,FileName,Exchange,DLP,by-design|FileName field in Activity Explorer shows email subject instead of file name
+purview-ado-wiki-465|ado-wiki|activity-explorer,endpoint,DLP,IRM,policy|Policy and Rule columns are blank for Endpoint events in Activity Explorer
+purview-ado-wiki-466|ado-wiki|activity-explorer,deleted-label,GUID,known-behavior|Activity Explorer shows label GUIDs instead of label names for deleted labels
+purview-ado-wiki-467|ado-wiki|activity-explorer,filter,customize-columns|Filter not working in Activity Explorer; unable to filter by a specific column
+purview-ado-wiki-468|ado-wiki|auto-labeling,client-side,licensing,MIP_S_CLP2,21v-unsupported|Client Side Auto Labeling not applying in Outlook, Word, or Excel Online; label not recommended or auto-applied.
+purview-ado-wiki-469|ado-wiki|auto-labeling,client-side,OWA,network-trace,AugLoop|Client Side Auto Labeling configured correctly and SIT matches, but label not auto-applied in OWA.
+purview-ado-wiki-473|ado-wiki|server-side-auto-labeling,simulation,sharepoint,onedrive,21v-unsupported|Document not showing in Server Side Auto Labeling simulation Items for Review after document was modified
+purview-ado-wiki-474|ado-wiki|server-side-auto-labeling,simulation,custom-sit,classification,21v-unsupported|Custom SIT not matching document in Server Side Auto Labeling simulation
+purview-ado-wiki-475|ado-wiki|server-side-auto-labeling,simulation,100-file-limit,by-design,21v-unsupported|Not all matching documents shown in Server Side Auto Labeling simulation results
+purview-ado-wiki-478|ado-wiki|auto-labeling,server-side,simulation,stuck,21v-unsupported|Server Side Auto Labeling policy simulation is stuck and never completes.
+purview-ado-wiki-479|ado-wiki|auto-labeling,server-side,simulation,metrics,count|Server Side Auto Labeling simulation metrics are incorrect; Files to be labeled count not correct.
+purview-ado-wiki-480|ado-wiki|Content-Explorer,count,aggregation,delay|Content Explorer count of Sensitivity Labels or Sensitive Info Types is incorrect or items not showing.
+purview-ado-wiki-481|ado-wiki|Content-Explorer,search,permissions,role|Error while searching an item in Content Explorer; search returns error for Exchange, Teams, or SPO/ODB data.
+purview-ado-wiki-482|ado-wiki|Content-Explorer,search,partial-email,error|Content Explorer search returns error when using partial email address or partial site name.
+purview-ado-wiki-483|ado-wiki|Content-Explorer,Export-ContentExplorerData,PowerShell|Export-ContentExplorerData command not recognized or fails to run.
+purview-ado-wiki-484|ado-wiki|Content-Explorer,Export-ContentExplorerData,pagination,PageCookie|Export-ContentExplorerData returns incomplete data or fails with large datasets.
+purview-ado-wiki-485|ado-wiki|Content-Explorer,encrypted,preview,by-design|Unable to preview file or email content in Content Explorer; encrypted file content not visible in preview pane.
+purview-ado-wiki-486|ado-wiki|Content-Explorer,item-not-visible,labeling,SIT,delay|Item with sensitivity label or SIT not visible in Content Explorer.
+purview-ado-wiki-488|ado-wiki|mip-sdk,office,encryption,cache,mipsdk|Office MIP SDK encryption fails, inconsistent behavior across builds/users, or first-time encryption error
+purview-ado-wiki-491|ado-wiki|mpip-client,powershell,module,installation|MPIP PowerShell cmdlets not recognized or error running PurviewInformationProtection module commands
+purview-ado-wiki-492|ado-wiki|mpip-client,azure-rms,tls,connectivity,proxy|MPIP client cannot connect to Azure RMS service, TLS connection terminated before reaching service
+purview-ado-wiki-493|ado-wiki|mpip-client,sensitivity-labels,sign-in,authentication,clear-authentication|User unable to apply sensitivity labels using MPIP client, wrong account signed in or sign-in failure
+purview-ado-wiki-495|ado-wiki|mpip-client,sensitivity-labels,encryption,purview-portal|Need to verify if a sensitivity label has encryption (protection) enabled
+purview-ado-wiki-496|ado-wiki|mpip-client,update,installation,wsus,sccm|Need to update MPIP client or disable automatic updates
+purview-ado-wiki-498|ado-wiki|mpip-client,co-authoring,metadata-migration,sensitivity-labels|Labels appear inconsistent or documents show different labels across Office Clients, Web Apps, and SPO after enabling co
+purview-ado-wiki-501|ado-wiki|mpip-client,content-markings,sensitivity-labels,by-design|Content markings (header, footer, watermark) not visible after applying sensitivity label via MPIP right-click or PowerS
+purview-ado-wiki-502|ado-wiki|AIP-add-in,policy-download,MPIP,sensitivity-labels,AIP-retirement|AIP Office add-in or MPIP client fails to download sensitivity label policy; log shows Policy sync failed with HttpRespo
+purview-ado-wiki-503|ado-wiki|mpip-client,aip-add-in,conflict,outlook,coexistence|MPIP Add-in and AIP Add-in conflict when both installed on the same machine; labeling not working properly
+purview-ado-wiki-504|ado-wiki|mpip-client,outlook,office-perpetual,ltsc,m365-requirement|MPIP Add-in for Outlook is not supported with Office Perpetual or Office LTSC
+purview-ado-wiki-505|ado-wiki|mpip-client,ad-rms,migration,dns-srv,rmsdisc|MPIP client fails to open AD RMS protected files after migration to AIP; EndUserLicenses request routed to on-premise AD
+purview-ado-wiki-506|ado-wiki|mpip-client,context-menu,right-click,registry,windows-upgrade|MPIP right-click context menu missing or shows as Microsoft.Azip.RightClick instead of Apply Sensitivity Label with Micr
+purview-ado-wiki-507|ado-wiki|mpip-client,context-menu,right-click,file-association-error,program-file|Error: This file does not have an app associated with it when right-clicking Apply Sensitivity Label with Microsoft Purv
+purview-ado-wiki-508|ado-wiki|MPIP-client,excluded-folders,sensitivity-labels,by-design|Cannot apply sensitivity label to files in Windows, Program Files, ProgramData, or AppData folders using MPIP right-clic
+purview-ado-wiki-511|ado-wiki|mpip-client,powershell,Remove-FileLabel,PST,encryption|Unable to remove encryption from emails inside PST file using Remove-FileLabel PowerShell command
+purview-ado-wiki-512|ado-wiki|mpip-client,encryption,permissions,Full-Control,Super-User|Unable to remove or change sensitivity label on encrypted file using PowerShell or MPIP right-click — user lacks permiss
+purview-ado-wiki-513|ado-wiki|mpip-client,mandatory-labeling,delete-label,grayed-out,by-design|Delete Label button grayed out in MPIP client right-click context menu — cannot remove sensitivity label from file
+purview-ado-wiki-516|ado-wiki|mpip-scanner,trace-logging,registry,diagnostics,msipscanner.iplog|Need to enable trace level logging for MPIP Scanner to get detailed diagnostic data
+purview-ado-wiki-518|ado-wiki|mpip-scanner,DLP,scanner-dlp,by-design,enforcement-action|MPIP Scanner DLP policy runs but does not work — no files blocked or quarantined despite policy matching
+purview-ado-wiki-519|ado-wiki|PME,branding-template,OME,AuthAs-Anonymous,connector|Wrong or default branding template applied to OME encrypted message — recipient sees default template instead of custom 
+purview-ado-wiki-521|ado-wiki|PME,journaling,IRM,JournalReportDecryptionEnabled|Journaled encrypted email missing decrypted attachment — JournalReportDecryptionEnabled is False
+purview-ado-wiki-522|ado-wiki|PME,journaling,ETR,OME-branding,transport-rule|Journaled encrypted email missing decrypted attachment — ETR with explicit OME branding applied to message
+purview-ado-wiki-524|ado-wiki|rms-connector,aip-template,scoped,legacy-apps|RMS template present in AIP but not visible to on-premises Exchange/FCI via RMS Connector; scoped template not showing i
+purview-ado-wiki-525|ado-wiki|rms-connector,sharepoint,irm,performance,msipc-redirect|SharePoint takes 30-90 seconds to download files from IRM-enabled document library via RMS Connector; very slow encrypti
+purview-ado-wiki-526|ado-wiki|sensitivity-label,localization,powershell,locale-settings|Sensitivity Label display name or tooltip not shown in localized Office language; labels appear only in default language
+purview-ado-wiki-527|ado-wiki|sensitivity-label,rbac,admin-units,purview-portal|Admin cannot see sensitivity label or label policy in Purview portal; label or policy appears missing
+purview-ado-wiki-528|ado-wiki|sensitivity-label,pending-deletion,escalation,backend|Sensitivity Label or Label Policy stuck in PendingDeletion state for more than 24 hours; label cannot be fully deleted
+purview-ado-wiki-529|ado-wiki|sensitivity-label,delete,content-type,powershell,misconfiguration|Cannot edit or delete Sensitivity Label; error: The default content label GUID cannot be set because its content type Si
+purview-ado-wiki-530|ado-wiki|PME,revocation,by-design,OWA,single-recipient|Cannot revoke encrypted message despite having Premium license; revoke button not shown for multi-recipient or O365-reci
+purview-ado-wiki-532|ado-wiki|sensitivity-label,configuration,rule-blob,size-limit|Error 'The generated rule blob is too long' when configuring or saving sensitivity label
+purview-ado-wiki-533|ado-wiki|sensitivity-label,name,by-design,configuration|Cannot change sensitivity label Name in Purview portal; Name field is not editable
+purview-ado-wiki-534|ado-wiki|sensitivity-label,auto-labeling,activity-explorer,reply,forward|Sensitivity Label appears auto-applied in Activity Explorer but user did not manually label; label applied event on repl
+purview-ado-wiki-535|ado-wiki|sensitivity-label,copilot,auto-upgrade,by-design,priority|M365 Copilot automatically upgrades sensitivity label on email draft to higher priority label from referenced content
+purview-ado-wiki-536|ado-wiki|sensitivity-label,content-marking,watermark,by-design,mpip-scanner|Content marking (header/footer/watermark) not applied when sensitivity label is applied externally via MPIP client, MPIP
+purview-ado-wiki-537|ado-wiki|sensitivity-label,not-showing,diagnostic,label-policy,licensing|Sensitivity label not visible in Office apps (Word, Excel, Outlook, Teams) despite being configured in Purview portal
+purview-ado-wiki-541|ado-wiki|sensitivity-labels,content-marking,external-labeling,by-design,mpip-scanner|Sensitivity Label content marking not applied to documents labeled externally (via MPIP client, MPIP scanner, or auto-la
+purview-ado-wiki-542|ado-wiki|sensitivity-labels,encryption,reply-attachment,usage-rights,edit-save|Protected email replies become attachments instead of inline in message thread when using Sensitivity Label encryption
+purview-ado-wiki-543|ado-wiki|sensitivity-labels,encryption,dynamic-watermark,client-version,access-denied|Cannot access document with Dynamic Watermark enabled; access denied on unsupported Office client version
+purview-ado-wiki-544|ado-wiki|sensitivity-labels,configuration,rule-blob,size-limit|Error 'The generated rule blob is too long' when configuring Sensitivity Label
+purview-ado-wiki-545|ado-wiki|sensitivity-labels,udp,office-online,not-showing,by-design|Sensitivity Label with 'Let users assign permissions' (UDP) not showing in Office Online apps (Word/Excel/PowerPoint Onl
+purview-ado-wiki-546|ado-wiki|sensitivity-labels,parent-label,sub-label,not-showing,label-policy|Parent Sensitivity Label published without child sub-labels cannot be applied; label appears but is not selectable
+purview-ado-wiki-547|ado-wiki|sensitivity-labels,unified-group,hidden-membership,label-policy,not-showing|Sensitivity Labels not shown to members of a Unified Group with hidden group membership scoped in label policy
+purview-ado-wiki-548|ado-wiki|sensitivity-labels,aip-service,irm-template,onboarding-control,disabled|Applying encryption label fails: 'We were not able to find the Information Rights Management template' or 'No logged on 
+purview-ado-wiki-549|ado-wiki|sensitivity-labels,locale-settings,display-name,wrong-name|Sensitivity Label shows wrong name in client application; label name differs from expected display
+purview-ado-wiki-550|ado-wiki|sensitivity-labels,auto-labeling,false-positive,activity-explorer,reply-forward|Sensitivity Label appears auto-applied but user did not manually label; false positive auto-labeling event in Activity E
+purview-ado-wiki-551|ado-wiki|sensitivity-labels,copilot,label-inheritance,by-design,m365|M365 Copilot Chat/prompts unexpectedly apply higher sensitivity label to email draft or conversation
+purview-ado-wiki-0702|ado-wiki|ad-rms,aip,templates,migration,powershell|Set-AipServiceTemplateProperty fails with error when attempting to set AD RMS-imported templates to Published status in 
+purview-ado-wiki-0714|ado-wiki|aip-service,dotnet,tls,powershell,connection-failure|PowerShell module (AIPService, or other Microsoft cloud PS modules) fails to connect to Microsoft cloud endpoints with T
+purview-ado-wiki-0721|ado-wiki|AIPService,PowerShell,Connect-AIPService,module-install|Connect-AIPService PowerShell command fails or not found; AIPService module missing or outdated
+purview-ado-wiki-0722|ado-wiki|AIPService,PowerShell,Connect-AIPService,PowerShell7,compatibility|Connect-AIPService fails when run from PowerShell 7
+purview-ado-wiki-0723|ado-wiki|AIPService,Connect-AIPService,GlobalAdmin,RBAC,direct-membership|Connect-AIPService fails with authentication error; user has Global Administrator role but connection still denied
+purview-ado-wiki-0724|ado-wiki|AIPService,Connect-AIPService,TLS,SSL,network|Connect-AIPService fails with SSL or network error; credential prompt never appears (discover.aadrm.com unreachable); TL
+purview-ado-wiki-0725|ado-wiki|AIPService,encryption,group,ObjectID,cache|Users in a group that was deleted and recreated with the same email/UPN cannot open encrypted or protected files; group 
+purview-ado-wiki-0726|ado-wiki|AIPService,BYOK,KeyVault,key-activation,Use-AipServiceKeyVaultKey|Use-AipServiceKeyVaultKey or Set-AipServiceKeyProperties fails when switching to or activating a BYOK key; the BYOK key 
+purview-ado-wiki-0727|ado-wiki|AIPService,BYOK,KeyVault,permissions,key-authorization|Use-AipServiceKeyVaultKey fails; AIP service cannot access BYOK key in Azure Key Vault even though the key exists
+purview-ado-wiki-0728|ado-wiki|AIPService,BYOK,key-length,Use-AipServiceKeyVaultKey|Use-AipServiceKeyVaultKey fails; BYOK key in Key Vault is present but activation fails
+purview-ado-wiki-0731|ado-wiki|DKE,double-key-encryption,authentication,appsettings,AAD-app-registration|User cannot open DKE (Double Key Encryption) protected file; authentication fails when consuming DKE protected content
+purview-ado-wiki-0732|ado-wiki|DKE,double-key-encryption,flighting,registry,MSIPC|Cannot save DKE (Double Key Encryption) protected Office file; error: 'Word cannot save or create this file'; MSIPC log 
+purview-ado-wiki-0733|ado-wiki|DKE,double-key-encryption,connectivity,firewall,service-url|Cannot save DKE protected file; save operation fails; client cannot browse the DKE service URL
+purview-ado-wiki-0734|ado-wiki|DKE,double-key-encryption,case-sensitive,JwtAudience,appsettings|Cannot save DKE protected file; DKE URL configuration appears correct but save still fails
+purview-ado-wiki-0735|ado-wiki|DKE,double-key-encryption,sensitivity-label,key-name,URL-configuration|Cannot save DKE protected file; DKE service URL is configured in the sensitivity label but save fails
+purview-ado-wiki-0763|ado-wiki|auto-labeling,server-side,sharepoint,admin-units,policy-configuration|Server Side Auto Labeling policy scoped to SharePoint/OneDrive (SPO/ODB) with Admin Units assigned is broken or not appl
+purview-ado-wiki-0764|ado-wiki|auto-labeling,server-side,exchange,policy-scope,simulation-mode|Server Side Auto Labeling Exchange policy not evaluating emails at all — policy missing from AgentInfo in Extended Messa
+purview-ado-wiki-0765|ado-wiki|auto-labeling,server-side,label-override,exchange,sharepoint|Server Side Auto Labeling policy matched (confirmed via AgentInfo or Test-DlpPolicies report) but existing manually-appl
+purview-ado-wiki-0786|ado-wiki|mpip-client,pst,remove-protection,powershell,enablecontainersupport|Remove-FileLabel -RemoveProtection 无法从 PST 中移除加密保护
+purview-ado-wiki-0787|ado-wiki|mpip-client,pst,external-tenant,aip-super-user,cross-tenant|AIP Super User 无法解密外部租户加密的邮件（PST 中包含其他租户发送的加密邮件）
+purview-ado-wiki-0799|ado-wiki|mpip-client,installation,msi,error-2753,registry|AIP/MPIP client installation fails with MSI Error 2753
+purview-ado-wiki-0803|ado-wiki|mpip-client,powershell,set-filelabel,label-policy,sensitivity-label|Unable to apply sensitivity label on files using Set-FileLabel PowerShell command; label not found or command returns er
+purview-ado-wiki-0804|ado-wiki|mpip-client,encryption-label,onboarding-control-policy,aip-template,license|Unable to apply encryption-enabled sensitivity label using Set-FileLabel or right-click MPIP client; encryption label ap
+purview-ado-wiki-0812|ado-wiki|mpip-scanner,proxy,network,connectivity,service-account|MPIP Scanner connection fails with NetworkError/HTTP failure even though proxy is configured on the server. Errors inclu
+purview-ado-wiki-0813|ado-wiki|mpip-scanner,sql,upgrade,database,aipscanner|Purview Portal reports DB error for AIP Scanner after upgrade. Error: 'The database owner SID recorded in the master dat
+purview-ado-wiki-0820|ado-wiki|MPIP Scanner,authentication,token,policy download,Set-AIPAuthentication|MPIP Scanner policy download fails with 'provided uri is invalid' error when syncing policy from PsorWebService endpoint
+purview-ado-wiki-0821|ado-wiki|MPIP Scanner,performance,CPU,high CPU,registry|MPIP Scanner server reaches 100% CPU usage and high memory usage while running scan jobs
+purview-ado-wiki-0826|ado-wiki|PME,OME,IRM,RMS templates,LicensingLocation|Get-RMSTemplate returns no results in Exchange Online; TemplateNotFound errors in Extended Message Trace (EMT) when send
+purview-ado-wiki-0829|ado-wiki|IRM,OWA,sensitivity-labels,encryption-templates,PME|OWA (Outlook on the Web) 中 Sensitivity 标签或加密模板不可见、不可选；Sensitivity 按钮缺失或灰显
+purview-ado-wiki-0830|ado-wiki|IRM,transport-rules,ETR,DLP,encryption-templates|EXO Transport Rules (ETR) 中无法选择加密模板（Do Not Forward / Encrypt-Only 不显示）；DLP 加密动作无法执行
+purview-ado-wiki-0831|ado-wiki|IRM,licensing-location,RMS-templates,sync,PME|IRM 模板无法同步到 Exchange，或 RMS 模板突然消失；Get-RMSTemplate 返回空或报错；存在多个 LicensingLocation 值
+purview-ado-wiki-0832|ado-wiki|IRM,Teams,AAD-groups,sensitivity-labels,AutomaticServiceUpdate|Microsoft Teams 或 AAD 分组（Groups）中敏感度标签不显示；Teams 用户无法看到或应用标签
+purview-ado-wiki-0833|ado-wiki|AIP,IRM,FunctionalState,IPCv3,encryption-disabled|Get-AipServiceConfiguration 显示 FunctionalState 或 IPCv3ServiceFunctionalState 为 Disabled；所有依赖 AIP 加密的功能均失效（IRM、标签加密、EO/DN
+purview-ado-wiki-0834|ado-wiki|IRM,PDF,encryption,EO,EnablePdfEncryption|使用 Encrypt-Only (EO) 模板发送加密邮件时，PDF 附件未被加密（收件人可直接打开）
+purview-ado-wiki-0835|ado-wiki|IRM,journaling,decryption,JournalReportDecryption,PME|邮件日志（Journaling）的副本收件人收到的 journal 邮件仍然加密，没有附带可直接读取的解密副本
+purview-ado-wiki-0836|ado-wiki|IRM,OWA,DNF,EO,Do-Not-Forward|OWA 中默认的 Do Not Forward 或 Encrypt-Only 选项不可用（被禁用）
+purview-ado-wiki-0837|ado-wiki|NDR,550,RmsSvcAgent,IRM,encryption-disabled|发送加密邮件时收到 NDR："550 5.3.101 RmsSvcAgent; Cannot RMS protect the message because Encryption is disabled in Microsoft Excha
+purview-ado-wiki-0840|ado-wiki|ComplianceUtility,UnifiedLabelingSupportTool,sensitivity-labels,label-reset,Office-desktop|本地 Office 桌面应用（Word/Excel/PowerPoint/Outlook Classic）中 Sensitivity 按钮消失、灰显，或敏感度标签不显示、显示信息不是最新的
+purview-ado-wiki-0853|ado-wiki|purview-message-encryption,encrypted-attachment,conditional-access,external-user,guest-account|Recipient cannot open encrypted attachment (Word/Excel/PowerPoint); error occurs when attempting to open encrypted file
+purview-ado-wiki-0854|ado-wiki|purview-message-encryption,otp,one-time-passcode,ome-configuration,external-recipient|External recipient (Gmail/Yahoo) not receiving One Time Passcode (OTP) to open encrypted message; OTP option not shown
+purview-ado-wiki-0855|ado-wiki|purview-message-encryption,otp,spam,quarantine,message-trace|External recipient (Gmail/Yahoo/365) cannot find the OTP email in inbox; OTP email seems lost
+purview-ado-wiki-0856|ado-wiki|purview-message-encryption,otp,forward,inbox-rule,by-design|Recipient set up inbox rule to forward OTP email to another mailbox; forwarded OTP does not work
+purview-ado-wiki-0857|ado-wiki|purview-message-encryption,ndr,554,publishing-license,too-large|NDR 554 5.2.0 STOREDRV.Deliver.Exception or NDR 550 5.7.162 when sending encrypted email; encrypted message fails to del
+purview-ado-wiki-0862|ado-wiki|purview-message-encryption,office-online,preview,wep,conditional-access|Error shown when attempting to preview Word/Excel/PowerPoint documents from Purview encrypted messages in OWA or OME por
+purview-ado-wiki-0863|ado-wiki|purview-message-encryption,dlp,rms-template,rbac,permissions|DLP rule encryption template dropdown is empty; user cannot select RMS template when creating or editing a DLP rule in P
+purview-ado-wiki-0864|ado-wiki|purview-message-encryption,dlp,rms-template,irm-configuration,azurerms|Get-RMSTemplate returns no templates; DLP rule template dropdown remains empty even though user has cmdlet access
+purview-ado-wiki-b-r1-001|ado-wiki|sensitivity-labels,mip-cache,label-visibility,office-client|Sensitivity label not visible in Office apps (Word/Excel/PowerPoint/Outlook). User reports label is missing.
+purview-ado-wiki-b-r1-002|ado-wiki|sensitivity-labels,label-policy,policy-priority,mandatory-labeling,default-label|Label policy settings (default label, mandatory labeling) not applying as expected despite being configured in a label p
+purview-ado-wiki-b-r1-003|ado-wiki|sensitivity-labels,diagnostics,email-encryption,false-positive,purview-portal|Purview Portal built-in diagnostic 'Email encryption isn't working as expected' shows a failed check for 'This test case
+purview-ado-wiki-b-r1-004|ado-wiki|sensitivity-labels,external-labels,encryption,multi-tenant,owa|User in New Outlook or OWA cannot apply or change a sensitivity label on a reply to an encrypted email received from an 
+purview-ado-wiki-b-r1-005|ado-wiki|sensitivity-labels,labeling-method,privileged,standard,attachment-action|Outlook automatic label inheritance from email attachments does not work — a more sensitive attachment label is not auto
+purview-ado-wiki-b-r1-006|ado-wiki|sensitivity-labels,dynamic-watermarks,access-denied,office-version,encryption|User receives 'access denied' when trying to open a Word/Excel/PowerPoint document that has a sensitivity label with dyn
+purview-ado-wiki-a-r1-001|ado-wiki|rms-connector,exchange,cryptographic-mode,VerifyMachineCertificateChainFailedException,IRM|Test-IRMConfiguration fails with VerifyMachineCertificateChainFailedException when configuring on-premises Exchange to u
+purview-ado-wiki-a-r1-002|ado-wiki|rms-connector,tls,SchUseStrongCrypto,dotnet,IIS|RMS Connector stops working after disabling TLS 1.0 and/or TLS 1.1 on the server. Also applicable to AD RMS. Connector e
+purview-ado-wiki-a-r1-003|ado-wiki|sensitivity-label,DRMEncryptProperty,DLP,metadata-encryption,auto-labeling|DLP Endpoint cannot detect sensitivity labels on files. DLP for EXO/SPO/ODB and auto-labeling have difficulties detectin
+purview-ado-wiki-a-r2-002|ado-wiki|protection-policy,fabric,admin-settings,sensitivity-labels|Protection Policy created for Fabric but not applying protection to labeled data assets in Fabric workspaces
+purview-ado-wiki-a-r2-003|ado-wiki|protection-policy,fabric,mutual-exclusivity,scope-limitation|Cannot scope Protection Policy to both Microsoft Fabric and Azure/Amazon data sources in the same policy
+purview-ado-wiki-a-r2-004|ado-wiki|protection-policy,sensitivity-labels,label-scope,access-control,fabric|Sensitivity label does not appear as available option when creating a Protection Policy for Fabric workspaces
+purview-ado-wiki-b-r2-002|ado-wiki|rms-connector,tls,dotnet,strong-crypto,iis|RMS Connector stops working after disabling TLS 1.0 and/or TLS 1.1 on the server. Also applies to AD RMS.
+purview-ado-wiki-a-r3-001|ado-wiki|DTM,authentication,InPrivate|Engineer receives 'Silent authentication was denied. The user must first sign in and if needed grant the client applicat
+purview-ado-wiki-a-r3-002|ado-wiki|DTM,case-closure,workspace-access|After case is closed, customer accesses DTM workspace URL and receives confusing error messages: 'Connection error: Plea
+purview-ado-wiki-a-r3-003|ado-wiki|DTM,access-denied,file-sharing|Customer cannot access DTM shared files or receives access denied when trying to open DTM workspace
+purview-ado-wiki-b-r3-002|ado-wiki|DTM,file-sharing,access-denied,case-contact|Customer cannot access files shared via DTM workspace, receives access denied or empty workspace
+purview-ado-wiki-b-r4-001|ado-wiki|databricks,data-quality,test-connection,access-token,key-vault|Databricks Data Quality connector "Test Connection" fails with Error 403: "The Databricks access token has expired"
+purview-ado-wiki-b-r4-002|ado-wiki|governance-domains,glossary-terms,discovery,data-governance,business-concepts|Glossary terms not showing up in Discovery experience after enabling new Data Governance experience
+purview-ado-wiki-a-r4-001|ado-wiki|databricks,data-quality,test-connection,access-token,error-403|Databricks DQ connector 'Test Connection' failure with Error 403: 'The Databricks access token has expired'
+purview-ado-wiki-a-r4-002|ado-wiki|databricks,data-quality,test-connection,key-vault,MSI|Databricks DQ connector 'Test Connection' failure with permission errors when using Azure Key Vault for credentials
+purview-ado-wiki-a-r13-001|ado-wiki|azure-subscription,ipv6,login-error,external-subscription|Login error when first accessing a newly deployed external Azure subscription for Purview testing/repro. Unable to sign 
+purview-ado-wiki-b-r12-001|ado-wiki|azure-subscription,login-error,IPv6,external-subscription,engineer-tooling|After deploying External Azure Subscription (via MCAPS), engineer cannot login — browser returns error on first access a
+purview-ado-wiki-a-r14-001|ado-wiki|SHIR,sovereign-cloud,fairfax,mooncake,government|Self-hosted integration runtime (SHIR) fails to connect in Azure Government (Fairfax) or Azure China (Mooncake) environm
+purview-ado-wiki-b-r14-001|ado-wiki|geneva-actions,dsts-enforcement,corp-access,saw,ame|Geneva Actions operations fail with Corp credentials; unable to publish packages or execute operations after dSTS enforc
+purview-ado-wiki-b-r14-002|ado-wiki|sovereign-cloud,fairfax,mooncake,jit,escort|Engineers unable to access Purview tools (Kusto, Geneva, subscription resources) in Sovereign clouds (Fairfax & Mooncake
+purview-ado-wiki-a-r18-001|ado-wiki|geneva-actions,dsts,corp-access,saw,ame|Geneva Actions operations fail with Corp credentials after dSTS enforcement; publishing new GA extension packages with C
+purview-ado-wiki-a-r18-002|ado-wiki|sovereign-cloud,fairfax,mooncake,21v,jit|Cannot access Purview tools or Microsoft domain resources in Sovereign clouds (Fairfax/Mooncake)
+purview-ado-wiki-a-r1-001|ado-wiki|lineage,adf,private-endpoint,shir,networking|ADF copy activity lineage not being pushed or appearing in Purview after pipeline execution; lineage tab shows no data f
+purview-ado-wiki-a-r1-002|ado-wiki|lineage,ssis,product-limitation|SSIS lineage in Purview only shows source and destination assets; no transformation, query, or stored procedure lineage 
+purview-ado-wiki-a-r1-003|ado-wiki|lineage,power-bi,product-limitation|Power BI column lineage not showing in Purview; only dataset-level lineage is displayed but column-level lineage is miss
+purview-ado-wiki-a-r1-004|ado-wiki|lineage,power-bi,cross-workspace,product-limitation|Power BI cross-workspace dataset lineage not appearing in Purview; workspace with a report from a shared dataset does no
+purview-ado-wiki-a-r1-005|ado-wiki|lineage,power-bi,external-sources,product-limitation|Power BI lineage in Purview only shows limited external data sources; external sources other than ADLSGen1/Gen2, Azure S
+purview-ado-wiki-a-r1-006|ado-wiki|lineage,power-bi,workaround,schema|Power BI lineage not appearing in Purview until source schema is hard-coded with *** (e.g., Azure SQL DB source); lineag
+purview-ado-wiki-a-r1-007|ado-wiki|purview-account,azure-policy,managed-resources,conflict-error,provisioning|Purview account creation or deletion fails with Conflict error and RequestDisallowedByPolicy in Azure Portal; Azure Poli
+purview-ado-wiki-a-r2-001|ado-wiki|scanning,kusto,OpInfo,ConvertedEntities,scan-logs|Scan log queries using OpInfo keyword return no results after Microsoft removed OpInfo structure from Purview scan logs
+purview-ado-wiki-a-r3-001|ado-wiki|portal-access,rbac,legacy-account,collection-admin|Users unable to access Purview Governance Portal despite having Owner, Data Curator, Data Source Admin, and Reader roles
+purview-ado-wiki-a-r3-002|ado-wiki|portal-access,collection-admin,rest-api,service-principal,recovery|Only Collection Admin has left the organization. Remaining users cannot access Purview Governance Portal or assign roles
+purview-ado-wiki-a-r3-003|ado-wiki|portal-access,private-endpoint,vnet,not-authorized|Purview Governance Portal shows Not Authorized error when Purview account is configured with Private Endpoints (VNET). C
+purview-ado-wiki-a-r3-004|ado-wiki|external-connections,data-factory,data-share,roles,permissions|Customer unable to see Data Factory or Data Share under External Connections in Purview Governance Portal. External Conn
+purview-ado-wiki-a-r5-001|ado-wiki|live-view,private-endpoint,firewall,403-forbidden,feature-gap|Live View feature in Purview Data Governance fails with 403 Forbidden (AuthorizationFailure) when ADLS Gen2 storage acco
+purview-ado-wiki-a-r5-002|ado-wiki|databricks,partition,scan,feature-gap|Databricks table partition information columns are not showing in Purview portal after scan. Partition metadata not extr
+purview-ado-wiki-a-r5-003|ado-wiki|billing,DGPU,governed-assets,enterprise,feature-gap|DGPU and governed assets billing metrics not visible in Azure portal when using Enterprise version of Purview Data Gover
+purview-ado-wiki-a-r5-004|ado-wiki|databricks,storage-location,scan,feature-gap|Storage location property for Azure Databricks tables not visible in Purview portal after scanning.
+purview-ado-wiki-a-r5-005|ado-wiki|data-catalog-reader,local-catalog-reader,global-catalog-reader,role-change,access-loss|After April 2025 role change rollout, users previously assigned Data Catalog Reader role can no longer see artifacts acr
+purview-ado-wiki-a-r5-006|ado-wiki|governance-domain-reader,role-removal,access-loss,breaking-change|Users assigned Governance Domain Reader role lose access after April 2025 role change. Role no longer exists in Purview 
+purview-ado-wiki-a-r5-007|ado-wiki|oracle,scan-scope,feature-gap|Unable to scope scan for Oracle database in Purview. No option to selectively choose specific tables or Oracle object ty
+purview-ado-wiki-a-r5-008|ado-wiki|self-service-policy,fabric,workflow,feature-gap|Cannot provide self-service data access on Microsoft Fabric workspace assets from Purview using workflow. Self-service p
+purview-ado-wiki-a-r6-001|ado-wiki|eudb,eu-data-boundary,dfm-access,saw,avd|Unable to access EU DFM (EU Data Boundary DFM) after Nov 18th policy change. Access denied when not using SAW machine or
+purview-ado-wiki-a-r7-001|ado-wiki|scanning,SHIR,SSL,AKV,internal-server-error|Data transfer tasks fail with ExecutionTaskCommon Internal Server Error. Test connection returns error 8806. SHIR logs s
+purview-ado-wiki-a-r7-002|ado-wiki|portal,Chrome,Edge,LNA,browser|Purview portal fails to load in Chrome v142+ or Edge v142+. Browser Local Network Access (LNA) setting blocks portal net
+purview-ado-wiki-a-r7-003|ado-wiki|scanning,cancelled,ingestion,queue-saturation,resolved|Scan jobs initiated in late November run for unusually long time and transition to Cancelled status in portal without di
+purview-ado-wiki-a-r7-004|ado-wiki|scanning,Snowflake,Azure-IR,JDBC,deprecated|Snowflake scans using Azure IR fail with JDBC driver internal error: /home/guest/snowflake_jdbc0.log.0.lck. MBI_JDBC4_D0
+purview-ado-wiki-a-r7-005|ado-wiki|data-quality,error-records,ADLS,Fabric,multi-region|Data Quality error records no longer publishing to configured Fabric or ADLS Gen2 storage location after November 26.
+purview-ado-wiki-a-r7-006|ado-wiki|scanning,parquet,schema,log4j,Azure-IR|Schema tab missing for Resource sets when scanning parquet files using Azure IR or Managed VNET IR (Jan 2026). Error: No
+purview-ado-wiki-a-r7-007|ado-wiki|portal,business-assets,HTML,display,deprecated|Business assets Description shows raw HTML code (div, span, p tags) instead of rendered content (Feb 2026).
+purview-ado-wiki-a-r7-008|ado-wiki|scanning,SHIR,SQL-on-prem,zero-assets,SHIR-5.51|SQL on-premises scans using SHIR 5.51 complete successfully but ingest zero assets. Logs show FileLoadException: Could n
+purview-ado-wiki-a-r7-009|ado-wiki|data-quality,portal,500-error,connection,resolved|Data Quality connection page in new unified portal throws 500 errors; DQ connections not displayed (Feb 2026).
+purview-ado-wiki-a-r7-010|ado-wiki|data-map,unified-catalog,portal,subscription,billing|Cannot access Datamap and Unified Catalog in new portal. Error: To access Data Map an Azure subscription must first be l
+purview-ado-wiki-a-r7-011|ado-wiki|scanning,parquet,schema,ParquetSharp,Azure-IR|Schema tab missing for Resource sets using Azure IR/MvnetIR (Feb 2026). Error: InvalidCastException Unable to cast Parqu
+purview-ado-wiki-a-r7-012|ado-wiki|SHIR,expired,SHIR-5.50,scanning|SHIR version 5.50 expired on March 4, 2026 causing all scans to stop working.
+purview-ado-wiki-a-r7-013|ado-wiki|SHIR,K8s,IRCTL,certificate,TLS|K8s SHIR registration and de-registration fails using IRCTL 1.4.0 with certificate error: tls: failed to verify certific
+purview-ado-wiki-a-r7-014|ado-wiki|scanning,Oracle,linked-service,configuration|Creating new Oracle scans fails with error "The version of the linked service is not supported" while saving configurati
+purview-ado-wiki-a-r7-015|ado-wiki|portal,custom-attribute,date,data-product,display|Business Custom Attribute with Date datatype shows Invalid Date on Custom Attributes page after saving value from Data P
+purview-ado-wiki-a-r7-016|ado-wiki|rCRI,ICM,EU-DfM,access,cross-boundary|EU DfM case linked to WW ICM RCRI: transferred/second case owner or collab case owner cannot access RCRI via CheckAccess
+purview-ado-wiki-a-r7-017|ado-wiki|rCRI,ICM,AccessCheck,JIT,case-owner|After taking ownership of a DFM case or receiving JIT approval, unable to view linked RCRI despite AccessCheck.
+purview-ado-wiki-a-r7-018|ado-wiki|rCRI,ICM,multiple-cases,design-limitation|Access issues when multiple DFM cases linked to a single RCRI.
+purview-ado-wiki-a-r7-019|ado-wiki|rCRI,ASC,TSE,AME,ACL|Cannot see or access RCRI contents after creating via ASC using TSE/MID/AME account (post Oct 22).
+purview-ado-wiki-a-r7-020|ado-wiki|rCRI,ICM,impact-assessment,UI|Support case added to Impact Assessment section of RCRI but not visible.
+purview-ado-wiki-a-r7-008|ado-wiki|scanning,SHIR,SQL-on-prem,zero-assets,SHIR-5.51|SQL on-prem scans using SHIR 5.51 complete successfully but ingest zero assets. Logs show FileLoadException: Could not l
+purview-ado-wiki-a-r7-010|ado-wiki|data-map,unified-catalog,portal,subscription,billing|Cannot access Datamap and Unified Catalog in new portal. Error: Azure subscription must first be linked for pay-as-you-g
+purview-ado-wiki-a-r7-013|ado-wiki|SHIR,K8s,IRCTL,certificate,TLS|K8s SHIR registration/de-registration fails using IRCTL 1.4.0 with certificate error: x509: certificate signed by unknow
+purview-ado-wiki-a-r7-014|ado-wiki|scanning,Oracle,linked-service,configuration|Creating new Oracle scans fails with "The version of the linked service is not supported". Test connection succeeds. Exi
+purview-ado-wiki-a-r7-016|ado-wiki|rCRI,ICM,EU-DfM,access,cross-boundary|EU DfM case linked to WW ICM RCRI: transferred/second case owner cannot access RCRI via CheckAccess API.
+purview-ado-wiki-a-r7-017|ado-wiki|rCRI,ICM,AccessCheck,JIT,case-owner|After taking ownership of DFM case or receiving JIT approval, unable to view linked RCRI despite AccessCheck.
+purview-ado-wiki-b-r1-001|ado-wiki|data-share,purview-share,catalog,rbac,collection-permission|Cannot view storage account with previously created shares in the Purview Catalog; registered storage asset not visible 
+purview-ado-wiki-b-r1-002|ado-wiki|data-share,purview-share,recipients,sent-share|Cannot re-add a recipient to a sent share in Purview Data Sharing; re-add fails immediately after recipient was removed
+purview-ado-wiki-b-r1-003|ado-wiki|data-share,purview-share,recipients,sent-share,expiration|Previously added recipient is no longer visible in the sent share in Purview Data Sharing; recipient disappears from sha
+purview-ado-wiki-b-r1-004|ado-wiki|data-share,purview-share,catalog,visibility,rbac|Cannot view sent share or received share in the Purview Catalog after creating or receiving a share
+purview-ado-wiki-b-r1-005|ado-wiki|data-share,purview-share,invitation,guest-user,email-verification|Cannot view share invitation in Microsoft Purview as a guest user of the tenant
+purview-ado-wiki-b-r1-006|ado-wiki|data-share,purview-share,asset,sharing-limits,storage-constraint|Failed to add or update asset in Purview Data Sharing; error when adding or modifying assets in a sent share
+purview-ado-wiki-b-r1-007|ado-wiki|data-share,purview-share,create-share,rbac,owner-permission|Create share button is disabled in Purview Data Sharing; cannot initiate a new sent share
+purview-ado-wiki-b-r1-008|ado-wiki|data-share,purview-share,edit-share,rbac,owner-permission|Edit share options are disabled in Purview Data Sharing; cannot modify existing share settings or share content
+purview-ado-wiki-a-r1-001|ado-wiki|data-map,collection-delete,409,orphan-scan,artifact-store|Collection deletion fails with HTTP 409 error: The collection is being referenced by other resources and cannot be delet
+purview-ado-wiki-a-r1-002|ado-wiki|data-map,adf-lineage,root-collection,by-design|Unexpected assets appear at root collection level despite no scan configured at root. Assets reappear after customer del
+purview-ado-wiki-a-r1-003|ado-wiki|data-share,snapshot,blob-missing,conditional-access,rbac|Azure Data Share snapshot fails with error: Failed because Blob is missing or cannot be located. Please check the blob n
+purview-ado-wiki-c-r1-001|ado-wiki|data-share,share-invitation,purview-share|User cannot view Purview Data Share invitation despite receiving email notification
+purview-ado-wiki-c-r1-002|ado-wiki|data-share,purview-share,attach-share,storage|Failed to attach or receive a share in Microsoft Purview Data Sharing
+purview-ado-wiki-c-r1-003|ado-wiki|scan,dedicated-sql-pool,synapse,managed-identity,test-connection|Scan test connection fails for Azure Dedicated SQL Pool; Error 3801/3881: Failed to access the Azure Dedicated SQL pool 
+purview-ado-wiki-c-r1-004|ado-wiki|collection,delete,ux,hidden-assets,409-error|Purview collection deletion fails with HTTP 409: The collection is being referenced by assets and cannot be deleted, eve
+purview-ado-wiki-a-r1-001|ado-wiki|collection,deletion,409-error,hidden-assets,UX|Collection cannot be deleted with error 409: 'The collection is being referenced by assets and can't be deleted' even th
+purview-ado-wiki-a-r1-002|ado-wiki|collection,deletion,409-error,resource-reference|Collection cannot be deleted with error: 'is being referenced by other resources and can't be deleted' (Error 409). This
+purview-ado-wiki-a-r1-003|ado-wiki|private-endpoint,portal,DNS,networking,ERR_NAME_NOT_RESOLVED|Purview Portal is totally inaccessible (ERR_NAME_NOT_RESOLVED) when accessing via Private Endpoint in VNET. Browser show
+purview-ado-wiki-a-r1-004|ado-wiki|private-endpoint,portal,account-PE,networking,AxiosError|Purview Portal partially loaded with 'Initialization failed' and 'AxiosError: Network Error' when using Private Endpoint
+purview-ado-wiki-a-r1-005|ado-wiki|private-endpoint,portal,DNS,certificate,ERR_CERT_COMMON_NAME_INVALID|ERR_CERT_COMMON_NAME_INVALID error in browser console when opening Purview Portal via Private Endpoint. The error affect
+purview-mslearn-001|mslearn|private-endpoint,SHIR,DNS,scan-failure|Purview scan fails with 'Internal system error. Please contact support with correlationId' when using private endpoint
+purview-mslearn-002|mslearn|SHIR,upgrade,scan-failure,StorageException|Scan fails with StorageException 404 Not Found: 'Unable to setup config overrides for this scan'
+purview-mslearn-003|mslearn|private-endpoint,Azure-Policy,deployment|Purview private endpoint deployment fails with Azure Policy validation error
+purview-mslearn-004|mslearn|private-endpoint,authorization,public-network-access|'Not authorized to access this Microsoft Purview account. This account is behind a private endpoint.'
+purview-mslearn-005|mslearn|SHIR,FIPS,SQL-scan,cryptography|SQL scan via SHIR fails with 'This implementation is not part of the Windows Platform FIPS validated cryptographic algor
+purview-mslearn-006|mslearn|scan-failure,credentials,Azure-Policy,SHIR|Purview scans that previously worked are now failing
+purview-mslearn-007|mslearn|scan-failure,NSG,private-endpoint,VNet|Test connection passes but scan fails with connection error when using private endpoints or VNets
+purview-mslearn-008|mslearn|SHIR,JDK,JRE,scan-failure|JDK error (UserErrorJreNotFound) when scanning data sources using SHIR
+purview-mslearn-009|mslearn|SHIR,OOM,memory,scan-failure|OutOfMemoryException (OOM) error when running scan with self-hosted IR
+purview-mslearn-010|mslearn|SHIR,DLL,assembly,System.ValueTuple|SHIR error: 'Could not load file or assembly System.ValueTuple, Version=4.0.2.0'
+purview-mslearn-011|mslearn|SHIR,authentication-key,offline|Self-hosted IR goes offline with 'Authentication Key is not assigned yet'
+purview-mslearn-012|mslearn|SHIR,certificate,private-key,encryption|SHIR certificate error: 'Failed to change intranet communication encryption mode... private key missing'
+purview-mslearn-013|mslearn|SHIR,registration,service-account,permissions|SHIR registration error after changing service account: 'Integration Runtime (Self-hosted) node has encountered an error
+purview-mslearn-014|mslearn|SHIR,SSL,TLS,certificate,DigiCert|SHIR can't connect to cloud service / SSL/TLS trust relationship error: 'Could not establish trust relationship for the 
+purview-mslearn-015|mslearn|SHIR,certificate,KSP,CSP|SHIR certificate error 103: 'Failed to grant Integration Runtime service account the access of to the certificate'
+purview-mslearn-016|mslearn|information-protection,scanner,authentication,Entra-ID|Information Protection Scanner: 'The service didn't accept the auth token' (AccessDeniedException)
+purview-mslearn-017|mslearn|information-protection,scanner,authentication,token|Information Protection Scanner: 'NoAuthTokenException: Client application failed to provide authentication token' or 'us
+purview-mslearn-018|mslearn|information-protection,scanner,database,schema|Information Protection Scanner: 'SchemaMismatchException' or 'DB schema is not up to date'
+purview-mslearn-019|mslearn|information-protection,scanner,TLS,connection|Information Protection Scanner: 'The underlying connection was closed: An unexpected error occurred on a send' with IOEx
+purview-mslearn-020|mslearn|information-protection,scanner,stuck,ports,SharePoint|Information Protection Scanner process stuck / times out while scanning large repositories
+purview-mslearn-021|mslearn|S3,AWS,KMS,scan-failure,encryption|Amazon S3 scan fails: bucket encrypted with KMS and scan returns errors
+purview-mslearn-022|mslearn|S3,AWS,Role-ARN,IAM,scan-failure|Amazon S3 scan connection failure: 'Error found with the Role ARN' or role configuration errors
+purview-mslearn-023|mslearn|data-sharing,attach,storage,permissions|Purview Data Sharing: 'Failed to attach share' when receiving shared data
+purview-mslearn-024|mslearn|data-sharing,API-version,storage,access|Can't access shared data in target data store after share attaching succeeds
+purview-mslearn-025|mslearn|sensitivity-labels,Outlook,missing,registry,AIP|Sensitivity labels missing in Outlook: Sensitivity button not available or labels not displayed
+purview-mslearn-026|mslearn|sensitivity-labels,OWA,Exchange,label-policy|Sensitivity labels missing in Outlook on the web (OWA): labels not appearing when composing email
+purview-mslearn-027|mslearn|DLP,policy-tips,Outlook,MailTips,Fiddler|DLP policy tips not showing in Outlook/OWA despite policy being configured
+purview-mslearn-028|mslearn|eDiscovery,search-error,ambiguous-location,PowerShell|eDiscovery search error: The location is ambiguous
+purview-mslearn-029|mslearn|eDiscovery,search-error,recipient,sync-delay|eDiscovery search error: Recipient not found
+purview-mslearn-030|mslearn|eDiscovery,export,job-limit,concurrent|eDiscovery search/export error: Maximum number of jobs for your organization are currently running
+purview-mslearn-031|mslearn|eDiscovery,export,SharePoint,file-not-found,reindex|eDiscovery export error: File was not exported because it does not exist or File Not Found for SharePoint/OneDrive conte
+purview-mslearn-032|mslearn|audit-log,RBAC,role-assignment,Exchange|Audit log search error: Your request could not be completed. Please try again in Security and Compliance Center
+purview-mslearn-033|mslearn|eDiscovery,hold,PolicySyncTimeout,retry|eDiscovery hold error: PolicySyncTimeout - It is taking longer than expected to deploy the policy
+purview-mslearn-034|mslearn|eDiscovery,hold,FailedToOpenContainer,mailbox,SharePoint|eDiscovery hold error: FailedToOpenContainer - The mailbox or SharePoint site may not exist
+purview-mslearn-035|mslearn|eDiscovery,hold,SiteOutOfQuota,SharePoint,storage|eDiscovery hold error: SiteOutOfQuota - SharePoint site does not have enough quota for hold
+purview-mslearn-036|mslearn|sensitivity-labels,Power-BI,licensing,AIP,unified-labeling|Cannot enable sensitivity labels on Power BI tenant or sensitivity labels not working in Power BI
+purview-mslearn-037|mslearn|sensitivity-labels,Power-BI,greyed-out,usage-rights,license|Sensitivity label greyed out in Power BI Desktop or Service, cannot apply label
+purview-mslearn-038|mslearn|endpoint-DLP,policy-sync,Defender,device-onboarding|Endpoint DLP policy not syncing to device: configuration status shows Not updated or Not available
+purview-mslearn-039|mslearn|audit-log,mailbox,non-E5,AuditEnabled|Mailbox audit events not appearing in audit log search for non-E5 users
+purview-mslearn-040|mslearn|eDiscovery,hold,RecipientTypeNotAllowed,mailbox|eDiscovery hold error: RecipientTypeNotAllowed - The Recipient Type is not allowed for holds
+purview-mslearn-041|mslearn|eDiscovery,hold,bulk-update,pending-state,PowerShell|eDiscovery hold deployment fails repeatedly with bulk updates: hold policy stuck in pending state
+purview-mslearn-042|mslearn|sensitivity-labels,Power-BI,export,encryption,data-leakage|Sensitivity label not protecting exported file from Power BI, data exported without encryption
+purview-mslearn-043|mslearn|OME,message-encryption,encrypt-button,IRM,Azure-RMS|Users cannot open/send encrypted emails or the Encrypt button is missing in Outlook and Outlook on the web
+purview-mslearn-044|mslearn|OME,external-recipient,conditional-access,MFA,AIP-endpoint|External recipient cannot open encrypted email using Purview Message Encryption - message body is blank or shows Read th
+purview-mslearn-045|mslearn|eDiscovery,RMS-Decrypt,encryption,decryption,role-assignment|eDiscovery cannot preview, review, or export files encrypted with Microsoft encryption technologies (Azure RMS / sensiti
+purview-mslearn-046|mslearn|eDiscovery,OME,custom-branding,decryption,limitation|eDiscovery cannot search or decrypt email messages sent with Purview Message Encryption custom branding template
+purview-mslearn-047|mslearn|eDiscovery,sensitivity-label,encryption-expiration,DKE,decryption-limitation|eDiscovery cannot preview or review encrypted files in SharePoint/OneDrive when sensitivity label has user access expira
+purview-mslearn-048|mslearn|MIP-client,S-MIME,digital-signature,third-party-encryption|MIP client cannot label, protect, or decrypt files/emails digitally signed or encrypted with S/MIME or other third-party
+purview-mslearn-049|mslearn|MIP-client,PowerShell-7,Object-reference-null|MIP PowerShell module throws Object reference not set to an instance of an object error on PowerShell 7
+purview-mslearn-050|mslearn|MIP-Scanner,msg-files,trainable-classifiers,EDM,password-protected|MIP Scanner cannot scan .msg files with signed PDFs, files matching Trainable Classifiers or EDM SITs, or password-prote
+purview-mslearn-051|mslearn|sensitivity-label,coauthoring,policy-update,Office-restart|Applying sensitivity labels fails with error after labeling policy is updated while Office app is open (coauthoring enab
+purview-mslearn-052|mslearn|MIP-Viewer,external-user,guest-account,Adobe-Acrobat|External user with Entra ID guest account gets error 'selected user account does not exist in the tenant' when opening p
+purview-mslearn-053|mslearn|SharePoint,OneDrive,sensitivity-label,Power-Query,custom-XML|SharePoint/OneDrive cannot process labeled+encrypted files containing Power Query, custom add-ins, custom XML parts, cov
+purview-mslearn-054|mslearn|SharePoint,OneDrive,sensitivity-label,pre-existing-files,re-upload|Sensitivity labels applied to documents before enabling sensitivity labels for SharePoint/OneDrive are not recognized an
+purview-mslearn-055|mslearn|SharePoint,sensitivity-label,12MB-limit,cross-site|Labeled+encrypted Office file larger than 12 MB after copy/move to different SharePoint site - Sensitivity column blank,
+purview-mslearn-059|mslearn|retention,ActiveDirectorySyncError,RetryDistribution|Retention policy error We cannot process your policy with ActiveDirectorySyncError
+purview-mslearn-060|mslearn|retention,PolicyNotifyError,RetryDistribution|Retention policy error Something went wrong with PolicyNotifyError
+purview-mslearn-061|mslearn|retention,InternalError,RetryDistribution|Retention policy error We ran into a problem with InternalError
+purview-mslearn-062|mslearn|retention,PolicySyncTimeout,RetryDistribution|Retention policy We are still processing with PolicySyncTimeout
+purview-mslearn-063|mslearn|retention,RecipientTypeNotAllowed,hold|Retention policy You cannot apply a hold here with RecipientTypeNotAllowed
+purview-mslearn-064|mslearn|retention,PendingDeletion,ForceDeletion|Retention policy stuck in PendingDeletion state
+purview-mslearn-065|mslearn|retention,hybrid,mailbox-migration,RetentionHoldEnabled|Retention policy not working after mailbox migrated from on-prem to EXO (hybrid)
+purview-mslearn-066|mslearn|records-management,disposition,RBAC,401-error|401 RBAC check failed when managing disposition reviews
+purview-mslearn-067|mslearn|message-encryption,OME,external-recipient,conditional-access|External recipient cannot open encrypted email - blank body or Read the message link
+purview-mslearn-068|mslearn|audit,missing-events,retention,E5-license|Audit log events missing even with mailbox auditing on by default
+purview-mslearn-069|mslearn|audit,deleted-email,missing-email,investigation|Identify who deleted emails or why emails missing from mailbox
+purview-mslearn-070|mslearn|eDiscovery,compliance-boundaries,search-permissions,UPN-change|eDiscovery compliance boundaries not enforced after UPN/site changes
+purview-mslearn-071|mslearn|eDiscovery,hold,status-errors,distribution-group|eDiscovery hold errors: dist group >1000, invalid email, mailbox not found, site inaccessible
+purview-mslearn-072|mslearn|MRM,retention-tags,archive,deletion|MRM retention tags not archiving/deleting emails as expected
+purview-onenote-002|onenote|MIP SDK,service principal,21v,Mooncake,Sync Service|MIP SDK fails because 'Microsoft Information Protection Sync Service' service principal does not exist in 21Vianet tenan
+purview-onenote-003|onenote|MIP SDK,service principal,21v,Mooncake,disabled|MIP SDK fails because 'Microsoft Information Protection Sync Service' resource is disabled in 21Vianet tenant
+purview-onenote-005|onenote|RMS,connector,SharePoint,IRM|Cannot enable SharePoint IRM when using RMS connector server — error during configuration
+purview-onenote-009|onenote|AIP,retirement,AIP2MIP,labeling,Office|Customer loses sensitivity labeling capability in Office after AIP Unified Labeling add-in retirement — label policy dow
+purview-onenote-011|onenote|MIP SDK,SyncFile,dataservice,endpoint,Mooncake|MIP SDK SyncFile API call fails or returns wrong data in Mooncake — using incorrect dataservice endpoint
+purview-onenote-014|onenote|SCC,PowerShell,21v,Mooncake,Connect-IPPSSession|Cannot connect to Security & Compliance Center (SCC) PowerShell from 21Vianet Mooncake environment — default endpoint no
+purview-onenote-018|onenote|AIP,BYOK,Key Vault,key expiration,rekey|Cannot protect new files with AIP after BYOK key expires in Azure Key Vault — error 'key is not available'
+purview-onenote-020|onenote|AIP,BYOK,rekey,Archived,Active|Concern about old protected content accessibility after AIP BYOK rekey — will old documents become inaccessible?
+purview-onenote-022|onenote|AIP,RMS,template,rename,Set-AipServiceTemplateProperty|Customer wants to change default RMS protection template names (e.g., Highly Confidential / All Employees) in 21Vianet M
+purview-onenote-023|onenote|AIP,Scanner,UPN,MSAL,authentication|AIP Scanner Start-AIPScan fails with MSAL error unknown_user_type when on-prem UPN suffix differs from AAD UPN
+purview-onenote-024|onenote|MIP,cross-cloud,label,token,verified_primary_email|Cross-cloud MIP label decryption fails - bearer token missing verified_primary_email claim
+purview-onenote-025|onenote|MIP,cross-cloud,B2B,label,access denied|Cross-cloud B2B user gets access denied when opening MIP-labeled content from api.aadrm.cn
+purview-onenote-026|onenote|MIP,cross-cloud,MSIPC,MIPSDK,PreferredRmsPackage|Cross-cloud encrypted file fails to open on some devices - works on newer Office but not older builds
+purview-onenote-027|onenote|MIP,cross-cloud,cross-tenant,Entra,outbound|Cross-tenant MIP label access fails - no access token for aadrm.com, Entra cross-tenant outbound settings block Azure RM
+purview-onenote-028|onenote|Purview,content search,eDiscovery,mailbox,21v|Purview content search cannot find exchange mailbox users in 21Vianet Gallatin - search returns nothing when selecting m
+purview-onenote-029|onenote|eDiscovery,content search,OneDrive,21v,ComplianceWorkbenchApp|eDiscovery content search returns no results for OneDrive for Business in 21Vianet - SharePoint search works but OneDriv
+purview-onenote-030|onenote|IRM,OWA,sensitivity label,encryption,21v|Cannot open encrypted email (sensitivity label) in OWA - shows 'This message is protected with Microsoft Information Pro
+purview-onenote-031|onenote|Purview,audit log,export,CSV,BOM|Audit log export from Purview does not display Chinese/Unicode characters correctly in Excel - garbled CSV
+purview-onenote-032|onenote|Purview,content search,Chinese,keyword,tokenization|Purview Content Search using 2+ Chinese characters as keyword returns no results in 21Vianet
+purview-onenote-033|onenote|eDiscovery,content search,preview,sample review,401|eDiscovery content search preview/sample review returns 401, 400, or 503 in 21Vianet Gallatin
+purview-onenote-034|onenote|IRM,Office,sensitivity label,encryption,MSIPC|IRM errors in Word/Excel/PowerPoint when applying sensitivity label with encryption in Mooncake
+purview-onenote-035|onenote|auto-labeling,sensitivity-label,21v,feature-gap,Gallatin|Auto-labeling (automatic sensitivity label policies) is not available in 21Vianet (Gallatin) environment
+purview-onenote-036|onenote|eDiscovery,Premium,Standard,21v,feature-gap|eDiscovery Premium (Advanced) is not available in 21Vianet environment — only eDiscovery Standard is supported
+purview-onenote-037|onenote|SCC,IDO,SAP,VDM,case-routing|SCC/IDO case transferred from MW queue to Mooncake without changing SAP first causes Mooncake member VDM profile to beco
+purview-onenote-038|onenote|audit-log,mailbox,Move,audit-owner,PowerShell|Mailbox message Move action not appearing in Purview audit logs — moved message to another folder but cannot find the ac
+purview-onenote-039|onenote|content-search,purge,SoftDelete,Recoverable-Items,Deletions|Content Search purge (New-ComplianceSearchAction -purge -purgetype SoftDelete) only deletes 10 items on first run, subse
+purview-onenote-040|onenote|archive-quota,migration,EXO,Gallatin,ICM|EXO Archive Quota increase request during mailbox migration from Global to Gallatin — need temporary quota beyond 100GB 
+purview-onenote-041|onenote|inactive-mailbox,restore,auto-expanding,archive,migration|Restoring inactive mailbox with auto-expanding archive enabled is not supported — migration plan blocked
+purview-onenote-044|onenote|ediscovery,content-search,folderid,powershell,mailbox|eDiscovery content search by folderid fails or returns no results — the FolderID obtained from Get-MailboxFolderStatisti
+purview-onenote-049|onenote|sensitivity-label,label-policy,publishing-delay,21v|Sensitivity labels not visible to users after creating/publishing label policy in Purview - users cannot see newly publi
+purview-onenote-050|onenote|dlp,alert,feature-gap,21v,icm-673053756|DLP alert feature not functional in 21Vianet (Gallatin) - DLP policies work but alert dashboard/notifications do not tri
+purview-onenote-051|onenote|retention-label,label-policy,feature-gap,21v,data-lifecycle|Retention Label and Retention Label Policy features not available in 21Vianet (Gallatin) - cannot create or apply retent
+purview-onenote-052|onenote|sharepoint,retention-label,document-library,feature-gap,21v|SharePoint document library default retention label not available in 21Vianet - cannot set default label for a document 
+purview-onenote-053|onenote|audit-log,retention-policy,feature-gap,21v,no-plan|Audit log retention policy not available in 21Vianet - cannot configure custom retention periods for audit log data
+purview-onenote-054|onenote|archive-quota,mailbox-migration,exchange-2016,21v,eee-escalation|Archive mailbox migration from Exchange 2016 on-prem to EXO fails due to ArchiveQuota 100GB limit
+purview-onenote-058|onenote|sensitivity-label,sharepoint,email-notification,feature-gap,21v|Sensitivity label for SharePoint sites - audit activity DocumentSensitivityMismatchDetected works but automatic email no
+purview-onenote-059|onenote|dlp,evaluate-predicate,feature-gap,21v,ado-4787238|DLP policy 'evaluate predicate for' option not available in Gallatin - available in Global but missing in 21V DLP policy
+purview-onenote-060|onenote|retention,onedrive,teams,feature-gap,21v|Retention for OneDrive not available in Gallatin - cannot add custom OneDrive account in retention policy, also impacts 
+purview-onenote-061|onenote|cross-cloud,labeling,xtap,limitation,public-preview|Cross-cloud labeling (Purview) only supports offline Word/Excel/PowerPoint files - email (all Outlook clients) is NOT su
+purview-onenote-062|onenote|cmk,customer-key,sharepoint,onedrive,e5-license|Register-SPODataEncryptionPolicy (CMK for SPO/ODB) fails with error 'Please ensure that every user in the tenancy has th
+purview-onenote-063|onenote|sensitivity-label,groups-sites,enable-mip-labels,powershell,21v|Cannot select Groups & Sites scope when creating sensitivity labels in 21V Purview - option greyed out or unavailable
+purview-onenote-067|onenote|content-search,onedrive,service-principal,ComplianceWorkbenchApp,21v|Content search returns no results for OneDrive but works for SharePoint in 21Vianet - search shows 0 items for OneDrive 
+purview-onenote-068|onenote|sensitivity-label,sublabel,publishing,label-policy|Sensitivity sublabels not visible to users after publishing - only parent label appears in Office apps
+purview-onenote-069|onenote|dlp,sensitive-information-type,china-id-card,confidence-level,sit|DLP policy with China Resident Identity Card (PRC) SIT at High confidence does not trigger - only 18-digit ID number pre
+purview-onenote-070|onenote|audit,audit-manager,audit-reader,rbac,feature-gap|Audit Manager and Audit Reader roles not available in 21V Purview portal - cannot assign granular audit log search permi
+purview-onenote-074|onenote|ediscovery,classic-experience,retirement,21v,feature-gap|Gallatin still uses classic eDiscovery experience - new eDiscovery UX not available, no plan or ETA for migration in 21V
+purview-onenote-075|onenote|ediscovery,sample-review,preview,retirement|eDiscovery sample/preview review function retired - cannot preview content search results inline, function removed from 
+purview-onenote-076|onenote|management-activity-api,audit-log,api,21v,endpoints|O365 Management Activity API fails in 21V when using Global endpoints - audit log retrieval via API returns errors
+purview-onenote-077|onenote|scc-powershell,exchangeonlinemanagement,module-bug,21v,connection|ExchangeOnlineManagement module v3.7.1 fails with login error when connecting to SCC PowerShell in 21V

@@ -1527,3 +1527,4 @@
 - Track A entries: avd-ado-wiki-b-r1-001 to avd-ado-wiki-b-r1-011
 - Track B drafts: ado-wiki-b-avd-media-optimization-troubleshooting.md, ado-wiki-b-custom-shortpath-gpo-setting.md, ado-wiki-b-outbound-connection-cloud-pc.md
 - files: .enrich/known-issues-ado-wiki-b.jsonl, .enrich/scanned-ado-wiki-b.json
+| 2026-04-07 | SYNTHESIZE | 71 topics (52 fusion, 19 compact), 694 entries, 28 Kusto queries fused |

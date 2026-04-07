@@ -1,6 +1,6 @@
 {
   "product": "disk",
-  "status": "extracting",
+  "status": "complete",
   "sourceStates": {
     "21v-gap": "exhausted",
     "onenote": "exhausted",
@@ -8,12 +8,13 @@
     "mslearn": "exhausted",
     "contentidea-kb": "exhausted"
   },
-  "synthesized": false,
+  "synthesized": true,
   "synthesizeState": {
-    "lastSynthesizedAt": null,
-    "lastEntryCount": 0,
-    "synthesizedEntryIds": [],
-    "topicPlanHash": null
+    "lastSynthesizedAt": "2026-04-07",
+    "lastEntryCount": 463,
+    "synthesizedEntryIds": 372,
+    "topicPlanHash": null,
+    "mode": "full"
   },
   "adoWikiBlast": "stopped"
 }

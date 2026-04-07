@@ -993,3 +993,5 @@
   - B2C phone signup signin builtin policy (configuration how-to)
   - B2C Custom OIDC Identity Providers for Built-in Policies (setup guide)
 - Files: known-issues-ado-wiki-c.jsonl, scanned-ado-wiki-c.json
+
+| 2026-04-07 | MERGE+SYNTHESIZE | 37 topics (36 fusion, 1 compact), 3640 entries, 8 Kusto queries fused, 713 drafts mapped |

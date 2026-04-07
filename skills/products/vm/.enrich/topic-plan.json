@@ -1,0 +1,2896 @@
+{
+  "product": "vm",
+  "generatedAt": "2026-04-07",
+  "topics": [
+    {
+      "slug": "vm-allocation-a",
+      "title": "Vm Allocation A",
+      "entryIds": [
+        "vm-ado-wiki-001",
+        "vm-ado-wiki-003",
+        "vm-ado-wiki-004",
+        "vm-ado-wiki-006",
+        "vm-ado-wiki-007",
+        "vm-ado-wiki-011",
+        "vm-ado-wiki-016",
+        "vm-ado-wiki-017",
+        "vm-ado-wiki-032",
+        "vm-ado-wiki-037",
+        "vm-ado-wiki-038",
+        "vm-ado-wiki-040",
+        "vm-ado-wiki-041",
+        "vm-ado-wiki-044",
+        "vm-ado-wiki-045",
+        "vm-ado-wiki-057",
+        "vm-ado-wiki-058",
+        "vm-ado-wiki-060",
+        "vm-ado-wiki-063",
+        "vm-ado-wiki-064",
+        "vm-ado-wiki-065",
+        "vm-ado-wiki-072",
+        "vm-ado-wiki-0735",
+        "vm-ado-wiki-0740",
+        "vm-ado-wiki-0741",
+        "vm-ado-wiki-0744",
+        "vm-ado-wiki-0778",
+        "vm-ado-wiki-0789",
+        "vm-ado-wiki-0810",
+        "vm-ado-wiki-0818"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "allocation",
+        "a"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-allocation-b",
+      "title": "Vm Allocation B",
+      "entryIds": [
+        "vm-ado-wiki-0836",
+        "vm-ado-wiki-0845",
+        "vm-ado-wiki-0846",
+        "vm-ado-wiki-0863",
+        "vm-ado-wiki-0881",
+        "vm-ado-wiki-0889",
+        "vm-ado-wiki-0890",
+        "vm-ado-wiki-0964",
+        "vm-ado-wiki-0975",
+        "vm-ado-wiki-0976",
+        "vm-ado-wiki-b-r10-001",
+        "vm-ado-wiki-a-r21-005",
+        "vm-ado-wiki-b-r18-001",
+        "vm-ado-wiki-f-r1-005",
+        "vm-ado-wiki-a-r2-001",
+        "vm-ado-wiki-a-r2-002",
+        "vm-ado-wiki-e-r2-001",
+        "vm-ado-wiki-e-r2-002",
+        "vm-ado-wiki-e-r2-011",
+        "vm-ado-wiki-b-r2-001",
+        "vm-ado-wiki-d-r2-004",
+        "vm-ado-wiki-c-r2-001",
+        "vm-ado-wiki-a-r3-007",
+        "vm-ado-wiki-a-r3-008",
+        "vm-ado-wiki-a-r3-011",
+        "vm-ado-wiki-a-r3-013",
+        "vm-ado-wiki-e-r3-007",
+        "vm-ado-wiki-b-r3-001",
+        "vm-ado-wiki-b-r3-003",
+        "vm-ado-wiki-b-r3-004"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "allocation",
+        "b"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-allocation-c",
+      "title": "Vm Allocation C",
+      "entryIds": [
+        "vm-ado-wiki-b-r3-009",
+        "vm-ado-wiki-b-r3-010",
+        "vm-ado-wiki-b-r3-018",
+        "vm-ado-wiki-d-r3-002",
+        "vm-ado-wiki-d-r3-004",
+        "vm-ado-wiki-c-r3-002",
+        "vm-ado-wiki-c-r3-010",
+        "vm-ado-wiki-c-r3-011",
+        "vm-ado-wiki-a-r4-004",
+        "vm-ado-wiki-a-r4-008",
+        "vm-ado-wiki-f-r4-004",
+        "vm-ado-wiki-a-r5-006",
+        "vm-ado-wiki-a-r5-008",
+        "vm-ado-wiki-e-r5-005",
+        "vm-ado-wiki-e-r5-007",
+        "vm-ado-wiki-f-r5-007",
+        "vm-ado-wiki-c-r6-002",
+        "vm-ado-wiki-b-r6-002",
+        "vm-ado-wiki-a-r7-002",
+        "vm-ado-wiki-e-r7-004",
+        "vm-ado-wiki-e-r7-005",
+        "vm-ado-wiki-f-r6-003",
+        "vm-ado-wiki-f-r6-004",
+        "vm-ado-wiki-c-r7-002",
+        "vm-ado-wiki-e-r8-003",
+        "vm-ado-wiki-e-r8-004",
+        "vm-ado-wiki-e-r8-005",
+        "vm-ado-wiki-b-r7-001",
+        "vm-ado-wiki-c-r8-001",
+        "vm-ado-wiki-d-r8-001"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "allocation",
+        "c"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-allocation-d",
+      "title": "Vm Allocation D",
+      "entryIds": [
+        "vm-ado-wiki-f-r8-006",
+        "vm-ado-wiki-c-r10-002",
+        "vm-ado-wiki-d-r9-004",
+        "vm-ado-wiki-d-r10-002",
+        "vm-ado-wiki-f-r10-005",
+        "vm-ado-wiki-f-r10-009",
+        "vm-ado-wiki-f-r11-005",
+        "vm-ado-wiki-c-r13-004",
+        "vm-ado-wiki-f-r12-003",
+        "vm-ado-wiki-c-r18-009",
+        "vm-ado-wiki-f-r19-008",
+        "vm-ado-wiki-a-r1-012",
+        "vm-ado-wiki-c-r1-001",
+        "vm-ado-wiki-d-r1-006",
+        "vm-ado-wiki-b-r1-005",
+        "vm-ado-wiki-a-r1-003",
+        "vm-ado-wiki-a-r1-006",
+        "vm-ado-wiki-a-r1-009",
+        "vm-ado-wiki-a-r1-014",
+        "vm-contentidea-kb-026",
+        "vm-contentidea-kb-035",
+        "vm-mslearn-006",
+        "vm-mslearn-022",
+        "vm-mslearn-026",
+        "vm-mslearn-045",
+        "vm-mslearn-055",
+        "vm-mslearn-107",
+        "vm-mslearn-141",
+        "vm-mslearn-179",
+        "vm-mslearn-180"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "allocation",
+        "d"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-allocation-e",
+      "title": "Vm Allocation E",
+      "entryIds": [
+        "vm-mslearn-181",
+        "vm-mslearn-182",
+        "vm-mslearn-183",
+        "vm-mslearn-211",
+        "vm-mslearn-226",
+        "vm-mslearn-228",
+        "vm-mslearn-242",
+        "vm-mslearn-261",
+        "vm-mslearn-266",
+        "vm-mslearn-268",
+        "vm-mslearn-266",
+        "vm-mslearn-269",
+        "vm-mslearn-311",
+        "vm-mslearn-324",
+        "vm-onenote-001",
+        "vm-onenote-036",
+        "vm-onenote-046",
+        "vm-onenote-064",
+        "vm-onenote-077",
+        "vm-onenote-079",
+        "vm-onenote-087",
+        "vm-onenote-098",
+        "vm-onenote-115",
+        "vm-onenote-116",
+        "vm-onenote-127",
+        "vm-onenote-135",
+        "vm-onenote-158",
+        "vm-onenote-162",
+        "vm-onenote-172",
+        "vm-onenote-173"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "allocation",
+        "e"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-allocation-f",
+      "title": "Vm Allocation F",
+      "entryIds": [
+        "vm-onenote-174",
+        "vm-onenote-195",
+        "vm-onenote-210",
+        "vm-onenote-211",
+        "vm-onenote-216",
+        "vm-onenote-223",
+        "vm-onenote-242",
+        "vm-onenote-248"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "allocation",
+        "f"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-disk-storage-a",
+      "title": "Vm Disk Storage A",
+      "entryIds": [
+        "vm-ado-wiki-002",
+        "vm-ado-wiki-021",
+        "vm-ado-wiki-022",
+        "vm-ado-wiki-059",
+        "vm-ado-wiki-0803",
+        "vm-ado-wiki-0805",
+        "vm-ado-wiki-0821",
+        "vm-ado-wiki-0937",
+        "vm-ado-wiki-0978",
+        "vm-ado-wiki-0979",
+        "vm-ado-wiki-0980",
+        "vm-ado-wiki-0982",
+        "vm-ado-wiki-0983",
+        "vm-ado-wiki-b-r3-003",
+        "vm-ado-wiki-a-r4-002",
+        "vm-ado-wiki-a-r7-002",
+        "vm-ado-wiki-a-r7-003",
+        "vm-ado-wiki-a-r7-006",
+        "vm-ado-wiki-b-r6-002",
+        "vm-ado-wiki-b-r6-008",
+        "vm-ado-wiki-a-r8-001",
+        "vm-ado-wiki-a-r8-002",
+        "vm-ado-wiki-a-r8-003",
+        "vm-ado-wiki-a-r9-008",
+        "vm-ado-wiki-b-r7-002",
+        "vm-ado-wiki-b-r7-003",
+        "vm-ado-wiki-b-r7-004",
+        "vm-ado-wiki-b-r7-007",
+        "vm-ado-wiki-b-r8-010",
+        "vm-ado-wiki-b-r15-010"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-f-adds-hybrid-storage-aadj-haadj.md",
+        "guides/drafts/ado-wiki-f-debug-azstorage-account-auth.md",
+        "guides/drafts/onenote-vm-storage-performance-throttling.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "disk",
+        "storage",
+        "a"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-disk-storage-b",
+      "title": "Vm Disk Storage B",
+      "entryIds": [
+        "vm-ado-wiki-a-r17-005",
+        "vm-ado-wiki-a-r20-011",
+        "vm-ado-wiki-e-r1-008",
+        "vm-ado-wiki-d-r2-006",
+        "vm-ado-wiki-a-r3-004",
+        "vm-ado-wiki-c-r3-008",
+        "vm-ado-wiki-e-r4-001",
+        "vm-ado-wiki-d-r4-002",
+        "vm-ado-wiki-b-r4-003",
+        "vm-ado-wiki-f-r4-006",
+        "vm-ado-wiki-a-r5-003",
+        "vm-ado-wiki-a-r5-005",
+        "vm-ado-wiki-a-r5-010",
+        "vm-ado-wiki-c-r4-001",
+        "vm-ado-wiki-c-r4-006",
+        "vm-ado-wiki-c-r4-007",
+        "vm-ado-wiki-c-r4-010",
+        "vm-ado-wiki-c-r4-011",
+        "vm-ado-wiki-e-r5-002",
+        "vm-ado-wiki-d-r5-003",
+        "vm-ado-wiki-d-r5-006",
+        "vm-ado-wiki-b-r5-005",
+        "vm-ado-wiki-b-r5-007",
+        "vm-ado-wiki-c-r5-002",
+        "vm-ado-wiki-a-r6-004",
+        "vm-ado-wiki-b-r6-005",
+        "vm-ado-wiki-b-r6-006",
+        "vm-ado-wiki-b-r6-007",
+        "vm-ado-wiki-e-r7-002",
+        "vm-ado-wiki-e-r7-003"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-f-adds-hybrid-storage-aadj-haadj.md",
+        "guides/drafts/ado-wiki-f-debug-azstorage-account-auth.md",
+        "guides/drafts/onenote-vm-storage-performance-throttling.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "disk",
+        "storage",
+        "b"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-disk-storage-c",
+      "title": "Vm Disk Storage C",
+      "entryIds": [
+        "vm-ado-wiki-d-r7-002",
+        "vm-ado-wiki-d-r7-003",
+        "vm-ado-wiki-d-r7-004",
+        "vm-ado-wiki-d-r7-005",
+        "vm-ado-wiki-c-r7-001",
+        "vm-ado-wiki-c-r7-003",
+        "vm-ado-wiki-c-r7-004",
+        "vm-ado-wiki-c-r7-006",
+        "vm-ado-wiki-c-r7-008",
+        "vm-ado-wiki-f-r7-007",
+        "vm-ado-wiki-a-r8-001",
+        "vm-ado-wiki-a-r8-004",
+        "vm-ado-wiki-a-r8-006",
+        "vm-ado-wiki-b-r7-005",
+        "vm-ado-wiki-b-r7-007",
+        "vm-ado-wiki-b-r7-008",
+        "vm-ado-wiki-b-r7-009",
+        "vm-ado-wiki-b-r7-011",
+        "vm-ado-wiki-b-r7-012",
+        "vm-ado-wiki-b-r7-014",
+        "vm-ado-wiki-b-r7-015",
+        "vm-ado-wiki-b-r7-017",
+        "vm-ado-wiki-c-r8-002",
+        "vm-ado-wiki-c-r8-005",
+        "vm-ado-wiki-c-r8-008",
+        "vm-ado-wiki-d-r8-002",
+        "vm-ado-wiki-d-r8-004",
+        "vm-ado-wiki-d-r8-009",
+        "vm-ado-wiki-c-r9-002",
+        "vm-ado-wiki-f-r8-001"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-f-adds-hybrid-storage-aadj-haadj.md",
+        "guides/drafts/ado-wiki-f-debug-azstorage-account-auth.md",
+        "guides/drafts/onenote-vm-storage-performance-throttling.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "disk",
+        "storage",
+        "c"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-disk-storage-d",
+      "title": "Vm Disk Storage D",
+      "entryIds": [
+        "vm-ado-wiki-d-r9-003",
+        "vm-ado-wiki-d-r9-005",
+        "vm-ado-wiki-c-r11-001",
+        "vm-ado-wiki-d-r10-004",
+        "vm-ado-wiki-f-r10-002",
+        "vm-ado-wiki-c-r12-001",
+        "vm-ado-wiki-c-r12-003",
+        "vm-ado-wiki-c-r12-004",
+        "vm-ado-wiki-c-r12-005",
+        "vm-ado-wiki-c-r12-007",
+        "vm-ado-wiki-c-r12-009",
+        "vm-ado-wiki-c-r12-011",
+        "vm-ado-wiki-c-r12-013",
+        "vm-ado-wiki-c-r12-015",
+        "vm-ado-wiki-c-r13-006",
+        "vm-ado-wiki-f-r12-004",
+        "vm-ado-wiki-f-r12-005",
+        "vm-ado-wiki-f-r20-007",
+        "vm-ado-wiki-c-r24-007",
+        "vm-ado-wiki-c-r24-009",
+        "vm-ado-wiki-d-r1-001",
+        "vm-ado-wiki-d-r1-002",
+        "vm-ado-wiki-d-r1-005",
+        "vm-ado-wiki-d-r1-008",
+        "vm-ado-wiki-b-r1-002",
+        "vm-ado-wiki-b-r1-003",
+        "vm-ado-wiki-b-r1-004",
+        "vm-ado-wiki-b-r1-007",
+        "vm-ado-wiki-c-r1-006",
+        "vm-ado-wiki-a-r1-001"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-f-adds-hybrid-storage-aadj-haadj.md",
+        "guides/drafts/ado-wiki-f-debug-azstorage-account-auth.md",
+        "guides/drafts/onenote-vm-storage-performance-throttling.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "disk",
+        "storage",
+        "d"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-disk-storage-e",
+      "title": "Vm Disk Storage E",
+      "entryIds": [
+        "vm-ado-wiki-a-r1-004",
+        "vm-ado-wiki-a-r1-009",
+        "vm-ado-wiki-a-r1-015",
+        "vm-ado-wiki-d-r1-008",
+        "vm-mslearn-005",
+        "vm-mslearn-081",
+        "vm-mslearn-089",
+        "vm-mslearn-098",
+        "vm-mslearn-100",
+        "vm-mslearn-101",
+        "vm-mslearn-103",
+        "vm-mslearn-105",
+        "vm-mslearn-140",
+        "vm-mslearn-142",
+        "vm-mslearn-186",
+        "vm-mslearn-204",
+        "vm-mslearn-275",
+        "vm-mslearn-276",
+        "vm-mslearn-282",
+        "vm-mslearn-320",
+        "vm-mslearn-325",
+        "vm-onenote-002",
+        "vm-onenote-015",
+        "vm-onenote-019",
+        "vm-onenote-020",
+        "vm-onenote-047",
+        "vm-onenote-060",
+        "vm-onenote-062",
+        "vm-onenote-084",
+        "vm-onenote-205"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-f-adds-hybrid-storage-aadj-haadj.md",
+        "guides/drafts/ado-wiki-f-debug-azstorage-account-auth.md",
+        "guides/drafts/onenote-vm-storage-performance-throttling.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "disk",
+        "storage",
+        "e"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-disk-storage-f",
+      "title": "Vm Disk Storage F",
+      "entryIds": [
+        "vm-onenote-219",
+        "vm-onenote-221",
+        "vm-onenote-222",
+        "vm-onenote-228"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-f-adds-hybrid-storage-aadj-haadj.md",
+        "guides/drafts/ado-wiki-f-debug-azstorage-account-auth.md",
+        "guides/drafts/onenote-vm-storage-performance-throttling.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "disk",
+        "storage",
+        "f"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-start-stop-a",
+      "title": "Vm Start Stop A",
+      "entryIds": [
+        "vm-ado-wiki-008",
+        "vm-ado-wiki-012",
+        "vm-ado-wiki-013",
+        "vm-ado-wiki-036",
+        "vm-ado-wiki-052",
+        "vm-ado-wiki-056",
+        "vm-ado-wiki-061",
+        "vm-ado-wiki-066",
+        "vm-ado-wiki-071",
+        "vm-ado-wiki-070",
+        "vm-ado-wiki-077",
+        "vm-ado-wiki-080",
+        "vm-ado-wiki-0804",
+        "vm-ado-wiki-0840",
+        "vm-ado-wiki-0841",
+        "vm-ado-wiki-0854",
+        "vm-ado-wiki-0855",
+        "vm-ado-wiki-0977",
+        "vm-ado-wiki-a-r4-003",
+        "vm-ado-wiki-a-r4-004",
+        "vm-ado-wiki-a-r5-001",
+        "vm-ado-wiki-a-r5-002",
+        "vm-ado-wiki-b-r4-001",
+        "vm-ado-wiki-b-r4-002",
+        "vm-ado-wiki-b-r4-003",
+        "vm-ado-wiki-a-r6-001",
+        "vm-ado-wiki-a-r6-009",
+        "vm-ado-wiki-b-r5-001",
+        "vm-ado-wiki-b-r5-007",
+        "vm-ado-wiki-b-r5-009"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-f-startbuild-fail-avdimage-languagepack.md",
+        "guides/drafts/mslearn-start-vm-last-known-good.md",
+        "guides/drafts/onenote-script-vm-restart-events.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "start",
+        "stop",
+        "a"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-start-stop-b",
+      "title": "Vm Start Stop B",
+      "entryIds": [
+        "vm-ado-wiki-a-r7-005",
+        "vm-ado-wiki-a-r7-007",
+        "vm-ado-wiki-a-r7-011",
+        "vm-ado-wiki-b-r6-009",
+        "vm-ado-wiki-b-r6-011",
+        "vm-ado-wiki-b-r6-013",
+        "vm-ado-wiki-a-r8-005",
+        "vm-ado-wiki-a-r8-009",
+        "vm-ado-wiki-a-r8-013",
+        "vm-ado-wiki-a-r9-009",
+        "vm-ado-wiki-a-r9-011",
+        "vm-ado-wiki-a-r9-012",
+        "vm-ado-wiki-b-r7-006",
+        "vm-ado-wiki-b-r7-008",
+        "vm-ado-wiki-b-r7-012",
+        "vm-ado-wiki-a-r10-004",
+        "vm-ado-wiki-b-r8-011",
+        "vm-ado-wiki-b-r8-013",
+        "vm-ado-wiki-b-r8-014",
+        "vm-ado-wiki-b-r8-015",
+        "vm-ado-wiki-a-r11-002",
+        "vm-ado-wiki-a-r11-008",
+        "vm-ado-wiki-a-r11-009",
+        "vm-ado-wiki-b-r9-002",
+        "vm-ado-wiki-b-r9-008",
+        "vm-ado-wiki-b-r9-009",
+        "vm-ado-wiki-b-r10-002",
+        "vm-ado-wiki-b-r10-003",
+        "vm-ado-wiki-b-r10-009",
+        "vm-ado-wiki-b-r10-010"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-f-startbuild-fail-avdimage-languagepack.md",
+        "guides/drafts/mslearn-start-vm-last-known-good.md",
+        "guides/drafts/onenote-script-vm-restart-events.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "start",
+        "stop",
+        "b"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-start-stop-c",
+      "title": "Vm Start Stop C",
+      "entryIds": [
+        "vm-ado-wiki-b-r10-011",
+        "vm-ado-wiki-b-r10-014",
+        "vm-ado-wiki-a-r14-001",
+        "vm-ado-wiki-a-r14-007",
+        "vm-ado-wiki-a-r14-008",
+        "vm-ado-wiki-a-r14-009",
+        "vm-ado-wiki-a-r14-012",
+        "vm-ado-wiki-a-r14-002",
+        "vm-ado-wiki-a-r14-008",
+        "vm-ado-wiki-a-r14-009",
+        "vm-ado-wiki-a-r14-011",
+        "vm-ado-wiki-b-r11-001",
+        "vm-ado-wiki-b-r11-002",
+        "vm-ado-wiki-b-r11-008",
+        "vm-ado-wiki-b-r11-012",
+        "vm-ado-wiki-b-r12-001",
+        "vm-ado-wiki-b-r12-002",
+        "vm-ado-wiki-b-r12-005",
+        "vm-ado-wiki-b-r12-007",
+        "vm-ado-wiki-a-r15-001",
+        "vm-ado-wiki-a-r15-002",
+        "vm-ado-wiki-a-r15-007",
+        "vm-ado-wiki-a-r16-002",
+        "vm-ado-wiki-a-r16-006",
+        "vm-ado-wiki-a-r16-008",
+        "vm-ado-wiki-b-r14-002",
+        "vm-ado-wiki-b-r14-004",
+        "vm-ado-wiki-b-r14-005",
+        "vm-ado-wiki-b-r14-006",
+        "vm-ado-wiki-b-r14-007"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-f-startbuild-fail-avdimage-languagepack.md",
+        "guides/drafts/mslearn-start-vm-last-known-good.md",
+        "guides/drafts/onenote-script-vm-restart-events.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "start",
+        "stop",
+        "c"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-start-stop-d",
+      "title": "Vm Start Stop D",
+      "entryIds": [
+        "vm-ado-wiki-b-r14-008",
+        "vm-ado-wiki-b-r14-010",
+        "vm-ado-wiki-a-r17-002",
+        "vm-ado-wiki-a-r17-004",
+        "vm-ado-wiki-a-r17-005",
+        "vm-ado-wiki-a-r17-006",
+        "vm-ado-wiki-a-r17-007",
+        "vm-ado-wiki-a-r17-008",
+        "vm-ado-wiki-a-r17-010",
+        "vm-ado-wiki-b-r15-001",
+        "vm-ado-wiki-b-r15-002",
+        "vm-ado-wiki-b-r15-003",
+        "vm-ado-wiki-b-r15-004",
+        "vm-ado-wiki-b-r15-005",
+        "vm-ado-wiki-b-r15-006",
+        "vm-ado-wiki-b-r15-007",
+        "vm-ado-wiki-b-r15-008",
+        "vm-ado-wiki-a-r17-002",
+        "vm-ado-wiki-a-r17-004",
+        "vm-ado-wiki-a-r17-006",
+        "vm-ado-wiki-a-r17-007",
+        "vm-ado-wiki-a-r17-008",
+        "vm-ado-wiki-a-r17-010",
+        "vm-ado-wiki-a-r20-001",
+        "vm-ado-wiki-a-r20-002",
+        "vm-ado-wiki-a-r20-003",
+        "vm-ado-wiki-a-r20-004",
+        "vm-ado-wiki-a-r20-005",
+        "vm-ado-wiki-a-r20-007",
+        "vm-ado-wiki-a-r20-008"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-f-startbuild-fail-avdimage-languagepack.md",
+        "guides/drafts/mslearn-start-vm-last-known-good.md",
+        "guides/drafts/onenote-script-vm-restart-events.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "start",
+        "stop",
+        "d"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-start-stop-e",
+      "title": "Vm Start Stop E",
+      "entryIds": [
+        "vm-ado-wiki-a-r20-009",
+        "vm-ado-wiki-b-r17-001",
+        "vm-ado-wiki-b-r17-006",
+        "vm-ado-wiki-b-r17-007",
+        "vm-ado-wiki-b-r17-008",
+        "vm-ado-wiki-b-r17-010",
+        "vm-ado-wiki-a-r21-001",
+        "vm-ado-wiki-a-r21-009",
+        "vm-ado-wiki-a-r21-010",
+        "vm-ado-wiki-a-r21-011",
+        "vm-ado-wiki-a-r21-012",
+        "vm-ado-wiki-a-r22-001",
+        "vm-ado-wiki-a-r22-006",
+        "vm-ado-wiki-a-r22-007",
+        "vm-ado-wiki-a-r22-008",
+        "vm-ado-wiki-a-r22-010",
+        "vm-ado-wiki-b-r18-002",
+        "vm-ado-wiki-b-r18-003",
+        "vm-ado-wiki-b-r18-009",
+        "vm-ado-wiki-b-r18-010",
+        "vm-ado-wiki-a-r23-001",
+        "vm-ado-wiki-a-r23-007",
+        "vm-ado-wiki-a-r23-009",
+        "vm-ado-wiki-d-r1-008",
+        "vm-ado-wiki-a-r1-003",
+        "vm-ado-wiki-a-r1-004",
+        "vm-ado-wiki-a-r1-005",
+        "vm-ado-wiki-a-r1-007",
+        "vm-ado-wiki-a-r1-008",
+        "vm-ado-wiki-a-r1-009"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-f-startbuild-fail-avdimage-languagepack.md",
+        "guides/drafts/mslearn-start-vm-last-known-good.md",
+        "guides/drafts/onenote-script-vm-restart-events.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "start",
+        "stop",
+        "e"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-start-stop-f",
+      "title": "Vm Start Stop F",
+      "entryIds": [
+        "vm-ado-wiki-a-r1-010",
+        "vm-ado-wiki-b-r1-001",
+        "vm-ado-wiki-b-r1-002",
+        "vm-ado-wiki-b-r1-005",
+        "vm-ado-wiki-b-r1-007",
+        "vm-ado-wiki-b-r1-008",
+        "vm-ado-wiki-b-r1-009",
+        "vm-ado-wiki-b-r1-010",
+        "vm-ado-wiki-c-r1-001",
+        "vm-ado-wiki-c-r1-002",
+        "vm-ado-wiki-c-r1-003",
+        "vm-ado-wiki-c-r1-004",
+        "vm-ado-wiki-c-r1-005",
+        "vm-ado-wiki-f-r1-004",
+        "vm-ado-wiki-e-r2-003",
+        "vm-ado-wiki-e-r2-009",
+        "vm-ado-wiki-b-r2-006",
+        "vm-ado-wiki-b-r2-009",
+        "vm-ado-wiki-d-r2-001",
+        "vm-ado-wiki-c-r2-004",
+        "vm-ado-wiki-a-r3-001",
+        "vm-ado-wiki-a-r3-006",
+        "vm-ado-wiki-e-r3-005",
+        "vm-ado-wiki-e-r3-011",
+        "vm-ado-wiki-b-r3-005",
+        "vm-ado-wiki-b-r3-011",
+        "vm-ado-wiki-b-r3-013",
+        "vm-ado-wiki-d-r3-003",
+        "vm-ado-wiki-d-r3-006",
+        "vm-ado-wiki-c-r3-006"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-f-startbuild-fail-avdimage-languagepack.md",
+        "guides/drafts/mslearn-start-vm-last-known-good.md",
+        "guides/drafts/onenote-script-vm-restart-events.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "start",
+        "stop",
+        "f"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-start-stop-g",
+      "title": "Vm Start Stop G",
+      "entryIds": [
+        "vm-ado-wiki-c-r3-007",
+        "vm-ado-wiki-a-r4-001",
+        "vm-ado-wiki-a-r4-002",
+        "vm-ado-wiki-d-r4-001",
+        "vm-ado-wiki-d-r4-004",
+        "vm-ado-wiki-d-r4-005",
+        "vm-ado-wiki-b-r4-001",
+        "vm-ado-wiki-b-r4-002",
+        "vm-ado-wiki-f-r4-001",
+        "vm-ado-wiki-f-r4-002",
+        "vm-ado-wiki-f-r4-003",
+        "vm-ado-wiki-f-r4-005",
+        "vm-ado-wiki-f-r4-007",
+        "vm-ado-wiki-a-r5-001",
+        "vm-ado-wiki-a-r5-004",
+        "vm-ado-wiki-a-r5-007",
+        "vm-ado-wiki-a-r5-009",
+        "vm-ado-wiki-e-r5-001",
+        "vm-ado-wiki-e-r5-004",
+        "vm-ado-wiki-e-r5-006",
+        "vm-ado-wiki-e-r5-008",
+        "vm-ado-wiki-e-r5-010",
+        "vm-ado-wiki-d-r5-002",
+        "vm-ado-wiki-d-r5-004",
+        "vm-ado-wiki-d-r5-007",
+        "vm-ado-wiki-b-r5-002",
+        "vm-ado-wiki-b-r5-003",
+        "vm-ado-wiki-b-r5-004",
+        "vm-ado-wiki-f-r5-005",
+        "vm-ado-wiki-f-r5-006"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-f-startbuild-fail-avdimage-languagepack.md",
+        "guides/drafts/mslearn-start-vm-last-known-good.md",
+        "guides/drafts/onenote-script-vm-restart-events.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "start",
+        "stop",
+        "g"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-start-stop-h",
+      "title": "Vm Start Stop H",
+      "entryIds": [
+        "vm-ado-wiki-f-r5-008",
+        "vm-ado-wiki-f-r5-009",
+        "vm-ado-wiki-f-r5-010",
+        "vm-ado-wiki-a-r6-002",
+        "vm-ado-wiki-a-r6-003",
+        "vm-ado-wiki-a-r6-005",
+        "vm-ado-wiki-a-r6-006",
+        "vm-ado-wiki-e-r6-002",
+        "vm-ado-wiki-e-r6-003",
+        "vm-ado-wiki-e-r6-004",
+        "vm-ado-wiki-e-r6-005",
+        "vm-ado-wiki-e-r6-006",
+        "vm-ado-wiki-d-r6-001",
+        "vm-ado-wiki-d-r6-003",
+        "vm-ado-wiki-d-r6-004",
+        "vm-ado-wiki-d-r6-005",
+        "vm-ado-wiki-d-r6-006",
+        "vm-ado-wiki-c-r6-004",
+        "vm-ado-wiki-a-r7-004",
+        "vm-ado-wiki-a-r7-006",
+        "vm-ado-wiki-e-r7-006",
+        "vm-ado-wiki-e-r7-007",
+        "vm-ado-wiki-f-r6-001",
+        "vm-ado-wiki-f-r6-002",
+        "vm-ado-wiki-d-r7-001",
+        "vm-ado-wiki-c-r7-007",
+        "vm-ado-wiki-f-r7-002",
+        "vm-ado-wiki-f-r7-006",
+        "vm-ado-wiki-f-r7-009",
+        "vm-ado-wiki-e-r8-002"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-f-startbuild-fail-avdimage-languagepack.md",
+        "guides/drafts/mslearn-start-vm-last-known-good.md",
+        "guides/drafts/onenote-script-vm-restart-events.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "start",
+        "stop",
+        "h"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-start-stop-i",
+      "title": "Vm Start Stop I",
+      "entryIds": [
+        "vm-ado-wiki-e-r8-008",
+        "vm-ado-wiki-e-r8-011",
+        "vm-ado-wiki-a-r8-003",
+        "vm-ado-wiki-a-r8-005",
+        "vm-ado-wiki-b-r7-002",
+        "vm-ado-wiki-b-r7-004",
+        "vm-ado-wiki-b-r7-013",
+        "vm-ado-wiki-c-r8-006",
+        "vm-ado-wiki-c-r8-007",
+        "vm-ado-wiki-c-r8-009",
+        "vm-ado-wiki-c-r8-010",
+        "vm-ado-wiki-d-r8-007",
+        "vm-ado-wiki-d-r8-008",
+        "vm-ado-wiki-d-r8-010",
+        "vm-ado-wiki-d-r8-011",
+        "vm-ado-wiki-f-r8-003",
+        "vm-ado-wiki-f-r8-005",
+        "vm-ado-wiki-c-r10-001",
+        "vm-ado-wiki-c-r10-003",
+        "vm-ado-wiki-c-r10-004",
+        "vm-ado-wiki-c-r10-005",
+        "vm-ado-wiki-d-r9-001",
+        "vm-ado-wiki-d-r9-006",
+        "vm-ado-wiki-f-r9-001",
+        "vm-ado-wiki-f-r9-002",
+        "vm-ado-wiki-f-r9-003",
+        "vm-ado-wiki-c-r11-002",
+        "vm-ado-wiki-c-r11-003",
+        "vm-ado-wiki-c-r11-004",
+        "vm-ado-wiki-c-r11-005"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-f-startbuild-fail-avdimage-languagepack.md",
+        "guides/drafts/mslearn-start-vm-last-known-good.md",
+        "guides/drafts/onenote-script-vm-restart-events.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "start",
+        "stop",
+        "i"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-start-stop-j",
+      "title": "Vm Start Stop J",
+      "entryIds": [
+        "vm-ado-wiki-d-r10-010",
+        "vm-ado-wiki-f-r10-003",
+        "vm-ado-wiki-f-r10-006",
+        "vm-ado-wiki-f-r10-007",
+        "vm-ado-wiki-f-r10-008",
+        "vm-ado-wiki-c-r12-002",
+        "vm-ado-wiki-c-r12-014",
+        "vm-ado-wiki-f-r11-001",
+        "vm-ado-wiki-f-r11-002",
+        "vm-ado-wiki-f-r11-004",
+        "vm-ado-wiki-f-r11-006",
+        "vm-ado-wiki-c-r13-001",
+        "vm-ado-wiki-c-r13-005",
+        "vm-ado-wiki-f-r12-001",
+        "vm-ado-wiki-f-r12-002",
+        "vm-ado-wiki-f-r13-004",
+        "vm-ado-wiki-c-r14-004",
+        "vm-ado-wiki-f-r14-001",
+        "vm-ado-wiki-f-r14-002",
+        "vm-ado-wiki-f-r14-003",
+        "vm-ado-wiki-f-r14-004",
+        "vm-ado-wiki-c-r16-002",
+        "vm-ado-wiki-f-r16-001",
+        "vm-ado-wiki-f-r16-003",
+        "vm-ado-wiki-c-r17-001",
+        "vm-ado-wiki-c-r17-003",
+        "vm-ado-wiki-f-r17-001",
+        "vm-ado-wiki-f-r17-003",
+        "vm-ado-wiki-f-r17-004",
+        "vm-ado-wiki-f-r17-006"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-f-startbuild-fail-avdimage-languagepack.md",
+        "guides/drafts/mslearn-start-vm-last-known-good.md",
+        "guides/drafts/onenote-script-vm-restart-events.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "start",
+        "stop",
+        "j"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-start-stop-k",
+      "title": "Vm Start Stop K",
+      "entryIds": [
+        "vm-ado-wiki-f-r17-007",
+        "vm-ado-wiki-c-r20-001",
+        "vm-ado-wiki-c-r20-002",
+        "vm-ado-wiki-c-r20-005",
+        "vm-ado-wiki-c-r20-006",
+        "vm-ado-wiki-c-r20-007",
+        "vm-ado-wiki-c-r20-008",
+        "vm-ado-wiki-c-r20-009",
+        "vm-ado-wiki-f-r18-003",
+        "vm-ado-wiki-f-r18-004",
+        "vm-ado-wiki-f-r18-005",
+        "vm-ado-wiki-f-r18-008",
+        "vm-ado-wiki-f-r18-010",
+        "vm-ado-wiki-c-r18-004",
+        "vm-ado-wiki-c-r18-007",
+        "vm-ado-wiki-c-r18-008",
+        "vm-ado-wiki-f-r19-001",
+        "vm-ado-wiki-f-r19-002",
+        "vm-ado-wiki-f-r19-004",
+        "vm-ado-wiki-f-r19-005",
+        "vm-ado-wiki-f-r19-006",
+        "vm-ado-wiki-f-r19-009",
+        "vm-ado-wiki-f-r19-010",
+        "vm-ado-wiki-c-r22-002",
+        "vm-ado-wiki-f-r20-001",
+        "vm-ado-wiki-f-r20-002",
+        "vm-ado-wiki-f-r20-004",
+        "vm-ado-wiki-f-r20-005",
+        "vm-ado-wiki-f-r20-008",
+        "vm-ado-wiki-f-r20-009"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-f-startbuild-fail-avdimage-languagepack.md",
+        "guides/drafts/mslearn-start-vm-last-known-good.md",
+        "guides/drafts/onenote-script-vm-restart-events.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "start",
+        "stop",
+        "k"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-start-stop-l",
+      "title": "Vm Start Stop L",
+      "entryIds": [
+        "vm-ado-wiki-f-r20-011",
+        "vm-ado-wiki-c-r23-003",
+        "vm-ado-wiki-c-r23-004",
+        "vm-ado-wiki-c-r23-005",
+        "vm-ado-wiki-c-r23-009",
+        "vm-ado-wiki-c-r23-010",
+        "vm-ado-wiki-c-r23-011",
+        "vm-ado-wiki-c-r24-001",
+        "vm-ado-wiki-c-r24-004",
+        "vm-ado-wiki-c-r24-006",
+        "vm-ado-wiki-c-r24-011",
+        "vm-ado-wiki-f-r21-001",
+        "vm-ado-wiki-f-r21-002",
+        "vm-ado-wiki-f-r21-004",
+        "vm-ado-wiki-f-r21-006",
+        "vm-ado-wiki-f-r21-007",
+        "vm-ado-wiki-f-r21-008",
+        "vm-ado-wiki-f-r21-013",
+        "vm-ado-wiki-a-r1-001",
+        "vm-ado-wiki-a-r1-003",
+        "vm-ado-wiki-a-r1-011",
+        "vm-ado-wiki-c-r1-002",
+        "vm-ado-wiki-c-r1-003",
+        "vm-ado-wiki-c-r1-004",
+        "vm-ado-wiki-c-r1-005",
+        "vm-ado-wiki-c-r1-007",
+        "vm-ado-wiki-b-r1-001",
+        "vm-ado-wiki-b-r1-008",
+        "vm-ado-wiki-b-r1-009",
+        "vm-ado-wiki-b-r1-010"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-f-startbuild-fail-avdimage-languagepack.md",
+        "guides/drafts/mslearn-start-vm-last-known-good.md",
+        "guides/drafts/onenote-script-vm-restart-events.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "start",
+        "stop",
+        "l"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-start-stop-m",
+      "title": "Vm Start Stop M",
+      "entryIds": [
+        "vm-ado-wiki-b-r1-011",
+        "vm-ado-wiki-a-r1-001",
+        "vm-ado-wiki-a-r1-008",
+        "vm-ado-wiki-a-r1-001",
+        "vm-ado-wiki-a-r1-007",
+        "vm-ado-wiki-a-r1-008",
+        "vm-ado-wiki-a-r1-009",
+        "vm-ado-wiki-a-r1-010",
+        "vm-ado-wiki-b-r1-002",
+        "vm-ado-wiki-b-r1-004",
+        "vm-ado-wiki-d-r1-001",
+        "vm-ado-wiki-d-r1-002",
+        "vm-ado-wiki-d-r1-003",
+        "vm-ado-wiki-d-r1-004",
+        "vm-ado-wiki-d-r1-007",
+        "vm-ado-wiki-d-r1-008",
+        "vm-ado-wiki-b-r1-002",
+        "vm-ado-wiki-b-r1-007",
+        "vm-ado-wiki-c-r1-001",
+        "vm-ado-wiki-c-r1-003",
+        "vm-ado-wiki-c-r1-001",
+        "vm-ado-wiki-c-r1-002",
+        "vm-ado-wiki-c-r1-003",
+        "vm-ado-wiki-c-r1-004",
+        "vm-ado-wiki-c-r1-005",
+        "vm-ado-wiki-c-r1-006",
+        "vm-ado-wiki-c-r1-007",
+        "vm-ado-wiki-c-r1-008",
+        "vm-ado-wiki-d-r1-001",
+        "vm-ado-wiki-d-r1-002"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-f-startbuild-fail-avdimage-languagepack.md",
+        "guides/drafts/mslearn-start-vm-last-known-good.md",
+        "guides/drafts/onenote-script-vm-restart-events.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "start",
+        "stop",
+        "m"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-start-stop-n",
+      "title": "Vm Start Stop N",
+      "entryIds": [
+        "vm-ado-wiki-d-r1-003",
+        "vm-ado-wiki-d-r1-004",
+        "vm-ado-wiki-d-r1-005",
+        "vm-ado-wiki-d-r1-007",
+        "vm-ado-wiki-a-r1-002",
+        "vm-ado-wiki-a-r1-003",
+        "vm-ado-wiki-a-r1-004",
+        "vm-ado-wiki-a-r1-005",
+        "vm-ado-wiki-e-r1-001",
+        "vm-ado-wiki-a-r1-001",
+        "vm-ado-wiki-a-r1-002",
+        "vm-ado-wiki-a-r1-004",
+        "vm-ado-wiki-a-r1-008",
+        "vm-ado-wiki-a-r1-009",
+        "vm-ado-wiki-a-r1-010",
+        "vm-ado-wiki-b-r1-001",
+        "vm-ado-wiki-b-r1-002",
+        "vm-ado-wiki-b-r1-005",
+        "vm-ado-wiki-b-r1-006",
+        "vm-ado-wiki-b-r1-007",
+        "vm-ado-wiki-c-r1-002",
+        "vm-ado-wiki-c-r1-003",
+        "vm-ado-wiki-c-r1-005",
+        "vm-ado-wiki-c-r1-008",
+        "vm-ado-wiki-c-r1-009",
+        "vm-ado-wiki-c-r1-010",
+        "vm-ado-wiki-c-r1-011",
+        "vm-ado-wiki-d-r1-004",
+        "vm-ado-wiki-d-r1-007",
+        "vm-ado-wiki-d-r1-008"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-f-startbuild-fail-avdimage-languagepack.md",
+        "guides/drafts/mslearn-start-vm-last-known-good.md",
+        "guides/drafts/onenote-script-vm-restart-events.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "start",
+        "stop",
+        "n"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-start-stop-o",
+      "title": "Vm Start Stop O",
+      "entryIds": [
+        "vm-ado-wiki-d-r1-009",
+        "vm-ado-wiki-d-r1-012",
+        "vm-ado-wiki-e-r1-003",
+        "vm-ado-wiki-e-r1-005",
+        "vm-ado-wiki-e-r1-008",
+        "vm-ado-wiki-e-r1-010",
+        "vm-ado-wiki-e-r1-011",
+        "vm-contentidea-kb-003",
+        "vm-contentidea-kb-008",
+        "vm-contentidea-kb-022",
+        "vm-contentidea-kb-025",
+        "vm-contentidea-kb-027",
+        "vm-contentidea-kb-031",
+        "vm-contentidea-kb-042",
+        "vm-contentidea-kb-045",
+        "vm-mslearn-007",
+        "vm-mslearn-013",
+        "vm-mslearn-015",
+        "vm-mslearn-023",
+        "vm-mslearn-024",
+        "vm-mslearn-025",
+        "vm-mslearn-028",
+        "vm-mslearn-033",
+        "vm-mslearn-034",
+        "vm-mslearn-037",
+        "vm-mslearn-038",
+        "vm-mslearn-039",
+        "vm-mslearn-040",
+        "vm-mslearn-046",
+        "vm-mslearn-049"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-f-startbuild-fail-avdimage-languagepack.md",
+        "guides/drafts/mslearn-start-vm-last-known-good.md",
+        "guides/drafts/onenote-script-vm-restart-events.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "start",
+        "stop",
+        "o"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-start-stop-p",
+      "title": "Vm Start Stop P",
+      "entryIds": [
+        "vm-mslearn-050",
+        "vm-mslearn-054",
+        "vm-mslearn-056",
+        "vm-mslearn-064",
+        "vm-mslearn-069",
+        "vm-mslearn-071",
+        "vm-mslearn-072",
+        "vm-mslearn-073",
+        "vm-mslearn-076",
+        "vm-mslearn-077",
+        "vm-mslearn-080",
+        "vm-mslearn-082",
+        "vm-mslearn-083",
+        "vm-mslearn-084",
+        "vm-mslearn-085",
+        "vm-mslearn-086",
+        "vm-mslearn-087",
+        "vm-mslearn-088",
+        "vm-mslearn-092",
+        "vm-mslearn-093",
+        "vm-mslearn-094",
+        "vm-mslearn-096",
+        "vm-mslearn-097",
+        "vm-mslearn-099",
+        "vm-mslearn-104",
+        "vm-mslearn-109",
+        "vm-mslearn-114",
+        "vm-mslearn-116",
+        "vm-mslearn-122",
+        "vm-mslearn-123"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-f-startbuild-fail-avdimage-languagepack.md",
+        "guides/drafts/mslearn-start-vm-last-known-good.md",
+        "guides/drafts/onenote-script-vm-restart-events.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "start",
+        "stop",
+        "p"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-start-stop-q",
+      "title": "Vm Start Stop Q",
+      "entryIds": [
+        "vm-mslearn-124",
+        "vm-mslearn-127",
+        "vm-mslearn-128",
+        "vm-mslearn-130",
+        "vm-mslearn-131",
+        "vm-mslearn-132",
+        "vm-mslearn-133",
+        "vm-mslearn-144",
+        "vm-mslearn-146",
+        "vm-mslearn-147",
+        "vm-mslearn-148",
+        "vm-mslearn-149",
+        "vm-mslearn-153",
+        "vm-mslearn-154",
+        "vm-mslearn-159",
+        "vm-mslearn-161",
+        "vm-mslearn-164",
+        "vm-mslearn-166",
+        "vm-mslearn-168",
+        "vm-mslearn-169",
+        "vm-mslearn-174",
+        "vm-mslearn-175",
+        "vm-mslearn-176",
+        "vm-mslearn-177",
+        "vm-mslearn-178",
+        "vm-mslearn-192",
+        "vm-mslearn-193",
+        "vm-mslearn-195",
+        "vm-mslearn-200",
+        "vm-mslearn-208"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-f-startbuild-fail-avdimage-languagepack.md",
+        "guides/drafts/mslearn-start-vm-last-known-good.md",
+        "guides/drafts/onenote-script-vm-restart-events.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "start",
+        "stop",
+        "q"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-start-stop-r",
+      "title": "Vm Start Stop R",
+      "entryIds": [
+        "vm-mslearn-216",
+        "vm-mslearn-220",
+        "vm-mslearn-221",
+        "vm-mslearn-248",
+        "vm-mslearn-255",
+        "vm-mslearn-263",
+        "vm-mslearn-265",
+        "vm-mslearn-263",
+        "vm-mslearn-265",
+        "vm-mslearn-277",
+        "vm-mslearn-280",
+        "vm-mslearn-281",
+        "vm-mslearn-283",
+        "vm-mslearn-284",
+        "vm-mslearn-285",
+        "vm-mslearn-286",
+        "vm-mslearn-287",
+        "vm-mslearn-292",
+        "vm-mslearn-293",
+        "vm-mslearn-295",
+        "vm-mslearn-300",
+        "vm-mslearn-302",
+        "vm-mslearn-305",
+        "vm-mslearn-308",
+        "vm-mslearn-309",
+        "vm-mslearn-323",
+        "vm-onenote-004",
+        "vm-onenote-005",
+        "vm-onenote-007",
+        "vm-onenote-011"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-f-startbuild-fail-avdimage-languagepack.md",
+        "guides/drafts/mslearn-start-vm-last-known-good.md",
+        "guides/drafts/onenote-script-vm-restart-events.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "start",
+        "stop",
+        "r"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-start-stop-s",
+      "title": "Vm Start Stop S",
+      "entryIds": [
+        "vm-onenote-016",
+        "vm-onenote-018",
+        "vm-onenote-022",
+        "vm-onenote-029",
+        "vm-onenote-032",
+        "vm-onenote-033",
+        "vm-onenote-037",
+        "vm-onenote-038",
+        "vm-onenote-039",
+        "vm-onenote-040",
+        "vm-onenote-041",
+        "vm-onenote-042",
+        "vm-onenote-044",
+        "vm-onenote-045",
+        "vm-onenote-055",
+        "vm-onenote-056",
+        "vm-onenote-063",
+        "vm-onenote-065",
+        "vm-onenote-067",
+        "vm-onenote-072",
+        "vm-onenote-073",
+        "vm-onenote-097",
+        "vm-onenote-102",
+        "vm-onenote-103",
+        "vm-onenote-104",
+        "vm-onenote-105",
+        "vm-onenote-112",
+        "vm-onenote-114",
+        "vm-onenote-126",
+        "vm-onenote-128"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-f-startbuild-fail-avdimage-languagepack.md",
+        "guides/drafts/mslearn-start-vm-last-known-good.md",
+        "guides/drafts/onenote-script-vm-restart-events.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "start",
+        "stop",
+        "s"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-start-stop-t",
+      "title": "Vm Start Stop T",
+      "entryIds": [
+        "vm-onenote-145",
+        "vm-onenote-148",
+        "vm-onenote-152",
+        "vm-onenote-153",
+        "vm-onenote-154",
+        "vm-onenote-159",
+        "vm-onenote-161",
+        "vm-onenote-164",
+        "vm-onenote-167",
+        "vm-onenote-169",
+        "vm-onenote-180",
+        "vm-onenote-193",
+        "vm-onenote-194",
+        "vm-onenote-196",
+        "vm-onenote-198",
+        "vm-onenote-201",
+        "vm-onenote-203",
+        "vm-onenote-204",
+        "vm-onenote-207",
+        "vm-onenote-215",
+        "vm-onenote-217",
+        "vm-onenote-247"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-f-startbuild-fail-avdimage-languagepack.md",
+        "guides/drafts/mslearn-start-vm-last-known-good.md",
+        "guides/drafts/onenote-script-vm-restart-events.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "start",
+        "stop",
+        "t"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-provisioning-a",
+      "title": "Vm Provisioning A",
+      "entryIds": [
+        "vm-ado-wiki-014",
+        "vm-ado-wiki-020",
+        "vm-ado-wiki-026",
+        "vm-ado-wiki-028",
+        "vm-ado-wiki-029",
+        "vm-ado-wiki-030",
+        "vm-ado-wiki-031",
+        "vm-ado-wiki-033",
+        "vm-ado-wiki-035",
+        "vm-ado-wiki-039",
+        "vm-ado-wiki-050",
+        "vm-ado-wiki-054",
+        "vm-ado-wiki-055",
+        "vm-ado-wiki-071",
+        "vm-ado-wiki-077",
+        "vm-ado-wiki-078",
+        "vm-ado-wiki-0726",
+        "vm-ado-wiki-0727",
+        "vm-ado-wiki-0728",
+        "vm-ado-wiki-0729",
+        "vm-ado-wiki-0734",
+        "vm-ado-wiki-0736",
+        "vm-ado-wiki-0815",
+        "vm-ado-wiki-0816",
+        "vm-ado-wiki-0817",
+        "vm-ado-wiki-0819",
+        "vm-ado-wiki-0820",
+        "vm-ado-wiki-0822",
+        "vm-ado-wiki-0823",
+        "vm-ado-wiki-0824"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Pre-Provisioning-Service.md"
+      ],
+      "kustoQueryFiles": [
+        "provisioning-timeout.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "provisioning",
+        "a"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-provisioning-b",
+      "title": "Vm Provisioning B",
+      "entryIds": [
+        "vm-ado-wiki-0825",
+        "vm-ado-wiki-0837",
+        "vm-ado-wiki-0839",
+        "vm-ado-wiki-0891",
+        "vm-ado-wiki-0901",
+        "vm-ado-wiki-0948",
+        "vm-ado-wiki-b-r3-001",
+        "vm-ado-wiki-b-r3-002",
+        "vm-ado-wiki-b-r3-004",
+        "vm-ado-wiki-a-r4-001",
+        "vm-ado-wiki-a-r6-004",
+        "vm-ado-wiki-a-r6-007",
+        "vm-ado-wiki-b-r5-004",
+        "vm-ado-wiki-b-r5-006",
+        "vm-ado-wiki-a-r7-001",
+        "vm-ado-wiki-a-r7-010",
+        "vm-ado-wiki-b-r6-005",
+        "vm-ado-wiki-b-r6-012",
+        "vm-ado-wiki-a-r8-012",
+        "vm-ado-wiki-a-r9-001",
+        "vm-ado-wiki-a-r9-004",
+        "vm-ado-wiki-a-r9-005",
+        "vm-ado-wiki-a-r9-007",
+        "vm-ado-wiki-b-r7-001",
+        "vm-ado-wiki-b-r7-009",
+        "vm-ado-wiki-b-r7-011",
+        "vm-ado-wiki-b-r8-001",
+        "vm-ado-wiki-b-r8-005",
+        "vm-ado-wiki-a-r11-010",
+        "vm-ado-wiki-a-r11-011"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Pre-Provisioning-Service.md"
+      ],
+      "kustoQueryFiles": [
+        "provisioning-timeout.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "provisioning",
+        "b"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-provisioning-c",
+      "title": "Vm Provisioning C",
+      "entryIds": [
+        "vm-ado-wiki-b-r10-005",
+        "vm-ado-wiki-b-r12-010",
+        "vm-ado-wiki-a-r15-010",
+        "vm-ado-wiki-a-r16-011",
+        "vm-ado-wiki-b-r15-009",
+        "vm-ado-wiki-a-r20-010",
+        "vm-ado-wiki-b-r17-005",
+        "vm-ado-wiki-a-r21-007",
+        "vm-ado-wiki-a-r22-005",
+        "vm-ado-wiki-a-r22-009",
+        "vm-ado-wiki-a-r23-004",
+        "vm-ado-wiki-a-r1-006",
+        "vm-ado-wiki-a-r1-011",
+        "vm-ado-wiki-b-r1-003",
+        "vm-ado-wiki-b-r1-004",
+        "vm-ado-wiki-f-r1-006",
+        "vm-ado-wiki-f-r1-008",
+        "vm-ado-wiki-e-r2-010",
+        "vm-ado-wiki-b-r2-002",
+        "vm-ado-wiki-b-r2-003",
+        "vm-ado-wiki-b-r2-005",
+        "vm-ado-wiki-b-r2-007",
+        "vm-ado-wiki-b-r2-008",
+        "vm-ado-wiki-d-r2-008",
+        "vm-ado-wiki-c-r2-003",
+        "vm-ado-wiki-c-r2-005",
+        "vm-ado-wiki-a-r3-003",
+        "vm-ado-wiki-a-r3-005",
+        "vm-ado-wiki-a-r3-009",
+        "vm-ado-wiki-a-r3-010"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Pre-Provisioning-Service.md"
+      ],
+      "kustoQueryFiles": [
+        "provisioning-timeout.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "provisioning",
+        "c"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-provisioning-d",
+      "title": "Vm Provisioning D",
+      "entryIds": [
+        "vm-ado-wiki-a-r3-012",
+        "vm-ado-wiki-a-r3-014",
+        "vm-ado-wiki-a-r3-015",
+        "vm-ado-wiki-a-r3-016",
+        "vm-ado-wiki-e-r3-001",
+        "vm-ado-wiki-e-r3-009",
+        "vm-ado-wiki-b-r3-002",
+        "vm-ado-wiki-b-r3-006",
+        "vm-ado-wiki-b-r3-007",
+        "vm-ado-wiki-b-r3-008",
+        "vm-ado-wiki-b-r3-014",
+        "vm-ado-wiki-b-r3-015",
+        "vm-ado-wiki-b-r3-016",
+        "vm-ado-wiki-b-r3-017",
+        "vm-ado-wiki-d-r3-005",
+        "vm-ado-wiki-c-r3-001",
+        "vm-ado-wiki-c-r3-003",
+        "vm-ado-wiki-c-r3-004",
+        "vm-ado-wiki-c-r3-005",
+        "vm-ado-wiki-a-r4-003",
+        "vm-ado-wiki-a-r4-005",
+        "vm-ado-wiki-e-r4-002",
+        "vm-ado-wiki-e-r4-003",
+        "vm-ado-wiki-d-r4-003",
+        "vm-ado-wiki-a-r5-011",
+        "vm-ado-wiki-c-r4-003",
+        "vm-ado-wiki-c-r4-004",
+        "vm-ado-wiki-c-r4-009",
+        "vm-ado-wiki-d-r5-010",
+        "vm-ado-wiki-d-r5-012"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Pre-Provisioning-Service.md"
+      ],
+      "kustoQueryFiles": [
+        "provisioning-timeout.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "provisioning",
+        "d"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-provisioning-e",
+      "title": "Vm Provisioning E",
+      "entryIds": [
+        "vm-ado-wiki-f-r5-002",
+        "vm-ado-wiki-f-r5-003",
+        "vm-ado-wiki-f-r5-004",
+        "vm-ado-wiki-a-r6-001",
+        "vm-ado-wiki-e-r6-001",
+        "vm-ado-wiki-e-r6-007",
+        "vm-ado-wiki-c-r6-001",
+        "vm-ado-wiki-c-r6-003",
+        "vm-ado-wiki-b-r6-001",
+        "vm-ado-wiki-a-r7-001",
+        "vm-ado-wiki-a-r7-005",
+        "vm-ado-wiki-d-r7-006",
+        "vm-ado-wiki-c-r7-009",
+        "vm-ado-wiki-e-r8-009",
+        "vm-ado-wiki-b-r7-016",
+        "vm-ado-wiki-c-r9-001",
+        "vm-ado-wiki-f-r8-002",
+        "vm-ado-wiki-d-r10-006",
+        "vm-ado-wiki-d-r10-008",
+        "vm-ado-wiki-f-r10-011",
+        "vm-ado-wiki-f-r11-008",
+        "vm-ado-wiki-f-r13-002",
+        "vm-ado-wiki-f-r13-007",
+        "vm-ado-wiki-c-r14-002",
+        "vm-ado-wiki-c-r14-007",
+        "vm-ado-wiki-f-r14-005",
+        "vm-ado-wiki-f-r15-001",
+        "vm-ado-wiki-c-r16-001",
+        "vm-ado-wiki-f-r16-004",
+        "vm-ado-wiki-c-r17-004"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Pre-Provisioning-Service.md"
+      ],
+      "kustoQueryFiles": [
+        "provisioning-timeout.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "provisioning",
+        "e"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-provisioning-f",
+      "title": "Vm Provisioning F",
+      "entryIds": [
+        "vm-ado-wiki-c-r20-010",
+        "vm-ado-wiki-f-r18-006",
+        "vm-ado-wiki-c-r22-001",
+        "vm-ado-wiki-c-r22-003",
+        "vm-ado-wiki-c-r22-004",
+        "vm-ado-wiki-c-r22-005",
+        "vm-ado-wiki-c-r22-006",
+        "vm-ado-wiki-c-r22-007",
+        "vm-ado-wiki-c-r22-008",
+        "vm-ado-wiki-c-r22-009",
+        "vm-ado-wiki-c-r22-010",
+        "vm-ado-wiki-c-r23-001",
+        "vm-ado-wiki-c-r23-002",
+        "vm-ado-wiki-c-r23-008",
+        "vm-ado-wiki-c-r23-012",
+        "vm-ado-wiki-c-r24-002",
+        "vm-ado-wiki-c-r24-010",
+        "vm-ado-wiki-f-r21-010",
+        "vm-ado-wiki-f-r21-011",
+        "vm-ado-wiki-f-r21-012",
+        "vm-ado-wiki-a-r1-002",
+        "vm-ado-wiki-a-r1-004",
+        "vm-ado-wiki-a-r1-007",
+        "vm-ado-wiki-a-r1-008",
+        "vm-ado-wiki-a-r1-009",
+        "vm-ado-wiki-a-r1-010",
+        "vm-ado-wiki-c-r1-006",
+        "vm-ado-wiki-c-r1-001",
+        "vm-ado-wiki-a-r1-002",
+        "vm-ado-wiki-a-r1-005"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Pre-Provisioning-Service.md"
+      ],
+      "kustoQueryFiles": [
+        "provisioning-timeout.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "provisioning",
+        "f"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-provisioning-g",
+      "title": "Vm Provisioning G",
+      "entryIds": [
+        "vm-ado-wiki-a-r1-010",
+        "vm-ado-wiki-d-r1-005",
+        "vm-ado-wiki-c-r1-002",
+        "vm-ado-wiki-a-r1-003",
+        "vm-ado-wiki-a-r1-008",
+        "vm-ado-wiki-e-r1-004",
+        "vm-ado-wiki-e-r1-005",
+        "vm-contentidea-kb-005",
+        "vm-contentidea-kb-034",
+        "vm-contentidea-kb-040",
+        "vm-mslearn-018",
+        "vm-mslearn-021",
+        "vm-mslearn-090",
+        "vm-mslearn-095",
+        "vm-mslearn-102",
+        "vm-mslearn-106",
+        "vm-mslearn-108",
+        "vm-mslearn-110",
+        "vm-mslearn-111",
+        "vm-mslearn-112",
+        "vm-mslearn-113",
+        "vm-mslearn-138",
+        "vm-mslearn-160",
+        "vm-mslearn-163",
+        "vm-mslearn-167",
+        "vm-mslearn-173",
+        "vm-mslearn-199",
+        "vm-mslearn-202",
+        "vm-mslearn-205",
+        "vm-mslearn-210"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Pre-Provisioning-Service.md"
+      ],
+      "kustoQueryFiles": [
+        "provisioning-timeout.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "provisioning",
+        "g"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-provisioning-h",
+      "title": "Vm Provisioning H",
+      "entryIds": [
+        "vm-mslearn-219",
+        "vm-mslearn-230",
+        "vm-mslearn-245",
+        "vm-mslearn-246",
+        "vm-mslearn-252",
+        "vm-mslearn-253",
+        "vm-mslearn-260",
+        "vm-mslearn-270",
+        "vm-mslearn-288",
+        "vm-mslearn-294",
+        "vm-mslearn-296",
+        "vm-mslearn-315",
+        "vm-mslearn-317",
+        "vm-onenote-021",
+        "vm-onenote-035",
+        "vm-onenote-043",
+        "vm-onenote-057",
+        "vm-onenote-074",
+        "vm-onenote-078",
+        "vm-onenote-080",
+        "vm-onenote-085",
+        "vm-onenote-093",
+        "vm-onenote-094",
+        "vm-onenote-129",
+        "vm-onenote-146",
+        "vm-onenote-157",
+        "vm-onenote-178",
+        "vm-onenote-179",
+        "vm-onenote-183",
+        "vm-onenote-187"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Pre-Provisioning-Service.md"
+      ],
+      "kustoQueryFiles": [
+        "provisioning-timeout.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "provisioning",
+        "h"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-provisioning-i",
+      "title": "Vm Provisioning I",
+      "entryIds": [
+        "vm-onenote-191",
+        "vm-onenote-206",
+        "vm-onenote-220",
+        "vm-onenote-225",
+        "vm-onenote-243",
+        "vm-onenote-244",
+        "vm-onenote-249"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Pre-Provisioning-Service.md"
+      ],
+      "kustoQueryFiles": [
+        "provisioning-timeout.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "provisioning",
+        "i"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-linux-os",
+      "title": "Vm Linux Os",
+      "entryIds": [
+        "vm-ado-wiki-024",
+        "vm-ado-wiki-0984",
+        "vm-ado-wiki-0985",
+        "vm-ado-wiki-b-r9-005",
+        "vm-ado-wiki-e-r7-008",
+        "vm-ado-wiki-f-r7-005",
+        "vm-ado-wiki-e-r8-007",
+        "vm-ado-wiki-a-r1-010",
+        "vm-mslearn-218",
+        "vm-mslearn-243",
+        "vm-mslearn-256",
+        "vm-mslearn-264",
+        "vm-mslearn-269",
+        "vm-mslearn-261",
+        "vm-mslearn-264",
+        "vm-mslearn-268",
+        "vm-mslearn-303",
+        "vm-mslearn-304",
+        "vm-mslearn-314",
+        "vm-mslearn-319",
+        "vm-mslearn-321",
+        "vm-mslearn-322",
+        "vm-mslearn-326",
+        "vm-onenote-202"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Best-Practices-Managing-extensions-enabled-Linux.md",
+        "guides/drafts/ado-wiki-b-Linux-GA-Guide.md",
+        "guides/drafts/ado-wiki-b-Linux-Security-Cases-Process.md",
+        "guides/drafts/ado-wiki-b-Unlock-Encrypted-Linux-Disk.md",
+        "guides/drafts/ado-wiki-c-monitoring-extension-linux-manual-upgrade.md",
+        "guides/drafts/ado-wiki-capture-linux-ga-callstack.md",
+        "guides/drafts/mslearn-collect-perf-metrics-linux.md",
+        "guides/drafts/mslearn-cpu-perf-troubleshoot-linux.md",
+        "guides/drafts/mslearn-create-swap-file-linux-vm.md",
+        "guides/drafts/mslearn-linux-grub-rescue-troubleshooting.md",
+        "guides/drafts/mslearn-linux-kernel-panic-troubleshooting.md",
+        "guides/drafts/mslearn-linux-support-scope.md",
+        "guides/drafts/mslearn-memory-perf-troubleshoot-linux.md",
+        "guides/drafts/mslearn-performance-bottlenecks-linux.md",
+        "guides/drafts/mslearn-redeploy-linux-vm-new-node.md",
+        "guides/drafts/mslearn-reset-linux-password.md",
+        "guides/drafts/onenote-clamav-linux-vm.md",
+        "guides/drafts/onenote-enable-cuda-on-nv-series-linux.md",
+        "guides/drafts/onenote-linux-perf-commands-reference.md",
+        "guides/drafts/onenote-linux-slow-network-troubleshooting.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "linux",
+        "os"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-maintenance",
+      "title": "Vm Maintenance",
+      "entryIds": [
+        "vm-ado-wiki-027",
+        "vm-ado-wiki-b-r2-010",
+        "vm-ado-wiki-c-r8-004",
+        "vm-ado-wiki-d-r8-005",
+        "vm-ado-wiki-c-r13-002",
+        "vm-contentidea-kb-044"
+      ],
+      "draftPaths": [
+        "guides/drafts/onenote-fabric-maintenance-migration-check.md",
+        "guides/drafts/onenote-maintenance-notification-node-list.md",
+        "guides/drafts/onenote-scheduled-maintenance-troubleshooting.md",
+        "guides/drafts/onenote-tor-maintenance-investigation.md"
+      ],
+      "kustoQueryFiles": [
+        "vm-maintenance.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "maintenance"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-image-gallery",
+      "title": "Vm Image Gallery",
+      "entryIds": [
+        "vm-ado-wiki-034",
+        "vm-ado-wiki-043",
+        "vm-ado-wiki-0733",
+        "vm-ado-wiki-0856",
+        "vm-ado-wiki-0935",
+        "vm-ado-wiki-f-r1-002",
+        "vm-ado-wiki-f-r1-007",
+        "vm-ado-wiki-e-r2-004",
+        "vm-ado-wiki-e-r2-005",
+        "vm-ado-wiki-e-r2-007",
+        "vm-ado-wiki-a-r3-017",
+        "vm-ado-wiki-e-r3-002",
+        "vm-ado-wiki-e-r3-003",
+        "vm-ado-wiki-e-r3-004",
+        "vm-ado-wiki-e-r3-010",
+        "vm-ado-wiki-d-r3-001",
+        "vm-ado-wiki-c-r4-005",
+        "vm-ado-wiki-b-r6-004",
+        "vm-ado-wiki-e-r8-001",
+        "vm-ado-wiki-d-r10-009",
+        "vm-ado-wiki-c-r12-017",
+        "vm-ado-wiki-f-r13-001",
+        "vm-ado-wiki-f-r13-006",
+        "vm-ado-wiki-c-r14-001",
+        "vm-ado-wiki-f-r14-006",
+        "vm-ado-wiki-c-r18-003",
+        "vm-mslearn-240",
+        "vm-mslearn-244",
+        "vm-mslearn-270",
+        "vm-onenote-023",
+        "vm-onenote-101",
+        "vm-onenote-144",
+        "vm-onenote-218",
+        "vm-onenote-242"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-attributes-for-image-gallery-definition-version-acg.md",
+        "guides/drafts/ado-wiki-a-Jarvis-Actions-for-Shared-Image-Gallery-ACG.md",
+        "guides/drafts/ado-wiki-b-Copy-SIG-Images-Across-Tenants-ACG.md",
+        "guides/drafts/ado-wiki-b-Deploy-VM-From-Community-Gallery-Image-ACG.md",
+        "guides/drafts/ado-wiki-b-Share-Gallery-with-Community-ACG.md",
+        "guides/drafts/ado-wiki-c-AutomaticImageCreation-AIB.md",
+        "guides/drafts/ado-wiki-e-Image-Version-Encryption-ACG.md",
+        "guides/drafts/ado-wiki-f-azure-compute-gallery-home.md",
+        "guides/drafts/ado-wiki-f-startbuild-fail-avdimage-languagepack.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "image",
+        "gallery"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-encryption",
+      "title": "Vm Encryption",
+      "entryIds": [
+        "vm-ado-wiki-042",
+        "vm-ado-wiki-0963",
+        "vm-ado-wiki-d-r1-003",
+        "vm-ado-wiki-d-r1-004",
+        "vm-ado-wiki-d-r1-006",
+        "vm-ado-wiki-f-r1-003",
+        "vm-ado-wiki-e-r2-006",
+        "vm-ado-wiki-d-r2-002",
+        "vm-ado-wiki-c-r4-002",
+        "vm-ado-wiki-e-r5-003",
+        "vm-ado-wiki-a-r8-002",
+        "vm-ado-wiki-b-r7-006",
+        "vm-ado-wiki-d-r10-011",
+        "vm-ado-wiki-f-r10-010",
+        "vm-ado-wiki-f-r11-003",
+        "vm-ado-wiki-f-r11-007",
+        "vm-ado-wiki-a-r1-005",
+        "vm-contentidea-kb-001",
+        "vm-onenote-214",
+        "vm-onenote-245"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "encryption"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-performance",
+      "title": "Vm Performance",
+      "entryIds": [
+        "vm-ado-wiki-051",
+        "vm-ado-wiki-079",
+        "vm-ado-wiki-0730",
+        "vm-ado-wiki-0737",
+        "vm-ado-wiki-0835",
+        "vm-ado-wiki-a-r6-002",
+        "vm-ado-wiki-b-r5-002",
+        "vm-ado-wiki-b-r18-004",
+        "vm-ado-wiki-e-r2-008",
+        "vm-ado-wiki-d-r2-003",
+        "vm-ado-wiki-a-r4-007",
+        "vm-ado-wiki-d-r6-002",
+        "vm-ado-wiki-f-r7-001",
+        "vm-ado-wiki-f-r8-004",
+        "vm-ado-wiki-b-r1-006",
+        "vm-ado-wiki-a-r1-002",
+        "vm-mslearn-001",
+        "vm-mslearn-115",
+        "vm-mslearn-117",
+        "vm-mslearn-118",
+        "vm-mslearn-119",
+        "vm-mslearn-120",
+        "vm-mslearn-139",
+        "vm-mslearn-227",
+        "vm-mslearn-297",
+        "vm-onenote-054",
+        "vm-onenote-075",
+        "vm-onenote-113",
+        "vm-onenote-143",
+        "vm-onenote-166",
+        "vm-onenote-168",
+        "vm-onenote-226"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-afs-recall-performance.md",
+        "guides/drafts/ado-wiki-b-Defender-Performance-Issues-Process.md",
+        "guides/drafts/ado-wiki-c-sync-performance-investigation.md",
+        "guides/drafts/mslearn-performance-bottlenecks-linux.md",
+        "guides/drafts/onenote-sar-linux-performance-monitoring.md",
+        "guides/drafts/onenote-vm-performance-metrics-dashboard.md",
+        "guides/drafts/onenote-vm-storage-performance-throttling.md"
+      ],
+      "kustoQueryFiles": [
+        "vm-disk-performance-analysis.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "performance"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-networking-a",
+      "title": "Vm Networking A",
+      "entryIds": [
+        "vm-ado-wiki-070",
+        "vm-ado-wiki-073",
+        "vm-ado-wiki-0838",
+        "vm-ado-wiki-a-r6-003",
+        "vm-ado-wiki-b-r5-003",
+        "vm-ado-wiki-a-r9-006",
+        "vm-ado-wiki-b-r8-006",
+        "vm-ado-wiki-b-r10-012",
+        "vm-ado-wiki-a-r14-010",
+        "vm-ado-wiki-a-r14-010",
+        "vm-ado-wiki-b-r12-003",
+        "vm-ado-wiki-b-r12-009",
+        "vm-ado-wiki-a-r15-009",
+        "vm-ado-wiki-a-r16-010",
+        "vm-ado-wiki-b-r14-009",
+        "vm-ado-wiki-a-r20-006",
+        "vm-ado-wiki-f-r2-001",
+        "vm-ado-wiki-c-r3-009",
+        "vm-ado-wiki-a-r5-002",
+        "vm-ado-wiki-b-r6-003",
+        "vm-ado-wiki-a-r7-003",
+        "vm-ado-wiki-c-r7-005",
+        "vm-ado-wiki-c-r8-003",
+        "vm-ado-wiki-d-r8-003",
+        "vm-ado-wiki-d-r9-002",
+        "vm-ado-wiki-d-r10-001",
+        "vm-ado-wiki-f-r13-003",
+        "vm-ado-wiki-c-r14-003",
+        "vm-ado-wiki-f-r17-005",
+        "vm-ado-wiki-d-r1-003"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "networking",
+        "a"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-networking-b",
+      "title": "Vm Networking B",
+      "entryIds": [
+        "vm-ado-wiki-d-r1-007",
+        "vm-ado-wiki-b-r1-006",
+        "vm-ado-wiki-a-r1-005",
+        "vm-ado-wiki-a-r1-006",
+        "vm-ado-wiki-a-r1-011",
+        "vm-ado-wiki-a-r1-013",
+        "vm-contentidea-kb-017",
+        "vm-contentidea-kb-038",
+        "vm-mslearn-070",
+        "vm-mslearn-162",
+        "vm-mslearn-203",
+        "vm-mslearn-209",
+        "vm-mslearn-217",
+        "vm-mslearn-222",
+        "vm-mslearn-238",
+        "vm-mslearn-239",
+        "vm-mslearn-241",
+        "vm-mslearn-260",
+        "vm-mslearn-291",
+        "vm-mslearn-301",
+        "vm-mslearn-312",
+        "vm-mslearn-313",
+        "vm-onenote-014",
+        "vm-onenote-030",
+        "vm-onenote-048",
+        "vm-onenote-118"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "networking",
+        "b"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-extension-a",
+      "title": "Vm Extension A",
+      "entryIds": [
+        "vm-ado-wiki-076",
+        "vm-ado-wiki-076",
+        "vm-ado-wiki-a-r6-006",
+        "vm-ado-wiki-a-r6-008",
+        "vm-ado-wiki-b-r5-008",
+        "vm-ado-wiki-a-r7-004",
+        "vm-ado-wiki-a-r7-008",
+        "vm-ado-wiki-b-r6-004",
+        "vm-ado-wiki-b-r6-010",
+        "vm-ado-wiki-a-r8-004",
+        "vm-ado-wiki-a-r8-010",
+        "vm-ado-wiki-a-r9-003",
+        "vm-ado-wiki-a-r9-010",
+        "vm-ado-wiki-b-r7-005",
+        "vm-ado-wiki-a-r10-001",
+        "vm-ado-wiki-a-r10-003",
+        "vm-ado-wiki-b-r8-002",
+        "vm-ado-wiki-b-r8-003",
+        "vm-ado-wiki-b-r8-004",
+        "vm-ado-wiki-b-r8-007",
+        "vm-ado-wiki-b-r8-008",
+        "vm-ado-wiki-b-r8-009",
+        "vm-ado-wiki-b-r8-012",
+        "vm-ado-wiki-a-r11-001",
+        "vm-ado-wiki-a-r11-003",
+        "vm-ado-wiki-a-r11-004",
+        "vm-ado-wiki-a-r11-005",
+        "vm-ado-wiki-a-r11-007",
+        "vm-ado-wiki-b-r9-001",
+        "vm-ado-wiki-b-r9-003"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "extension",
+        "a"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-extension-b",
+      "title": "Vm Extension B",
+      "entryIds": [
+        "vm-ado-wiki-b-r9-004",
+        "vm-ado-wiki-b-r9-007",
+        "vm-ado-wiki-b-r10-006",
+        "vm-ado-wiki-b-r10-007",
+        "vm-ado-wiki-a-r14-004",
+        "vm-ado-wiki-a-r14-005",
+        "vm-ado-wiki-a-r14-006",
+        "vm-ado-wiki-a-r14-004",
+        "vm-ado-wiki-a-r14-005",
+        "vm-ado-wiki-b-r11-004",
+        "vm-ado-wiki-b-r11-005",
+        "vm-ado-wiki-b-r11-006",
+        "vm-ado-wiki-b-r12-004",
+        "vm-ado-wiki-b-r12-006",
+        "vm-ado-wiki-b-r12-008",
+        "vm-ado-wiki-a-r15-003",
+        "vm-ado-wiki-a-r15-005",
+        "vm-ado-wiki-a-r15-006",
+        "vm-ado-wiki-a-r16-005",
+        "vm-ado-wiki-a-r16-007",
+        "vm-ado-wiki-a-r16-009",
+        "vm-ado-wiki-b-r14-001",
+        "vm-ado-wiki-b-r14-003",
+        "vm-ado-wiki-a-r17-001",
+        "vm-ado-wiki-a-r17-003",
+        "vm-ado-wiki-a-r17-001",
+        "vm-ado-wiki-a-r17-003",
+        "vm-ado-wiki-a-r17-009",
+        "vm-ado-wiki-b-r17-002",
+        "vm-ado-wiki-b-r17-009"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "extension",
+        "b"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-extension-c",
+      "title": "Vm Extension C",
+      "entryIds": [
+        "vm-ado-wiki-a-r21-002",
+        "vm-ado-wiki-a-r22-002",
+        "vm-ado-wiki-a-r22-003",
+        "vm-ado-wiki-b-r18-005",
+        "vm-ado-wiki-b-r18-006",
+        "vm-ado-wiki-b-r18-007",
+        "vm-ado-wiki-b-r18-008",
+        "vm-ado-wiki-a-r23-002",
+        "vm-ado-wiki-d-r1-001",
+        "vm-ado-wiki-d-r1-002",
+        "vm-ado-wiki-d-r1-007",
+        "vm-ado-wiki-a-r1-002",
+        "vm-ado-wiki-b-r1-006",
+        "vm-ado-wiki-f-r2-002",
+        "vm-ado-wiki-c-r2-002",
+        "vm-ado-wiki-c-r4-008",
+        "vm-ado-wiki-e-r5-009",
+        "vm-ado-wiki-d-r5-005",
+        "vm-ado-wiki-d-r5-008",
+        "vm-ado-wiki-d-r5-011",
+        "vm-mslearn-032",
+        "vm-mslearn-145",
+        "vm-mslearn-156",
+        "vm-mslearn-184",
+        "vm-mslearn-185",
+        "vm-mslearn-254",
+        "vm-mslearn-310",
+        "vm-onenote-003",
+        "vm-onenote-147",
+        "vm-onenote-155"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "extension",
+        "c"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-extension-d",
+      "title": "Vm Extension D",
+      "entryIds": [
+        "vm-onenote-156",
+        "vm-onenote-163"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "extension",
+        "d"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-scale-set",
+      "title": "Vm Scale Set",
+      "entryIds": [
+        "vm-ado-wiki-0811",
+        "vm-ado-wiki-b-r2-004",
+        "vm-ado-wiki-d-r2-005",
+        "vm-mslearn-262",
+        "vm-onenote-117",
+        "vm-onenote-243"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-c-setup-user-mode-dump.md",
+        "guides/drafts/ado-wiki-f-check-set-service-powershell.md",
+        "guides/drafts/ado-wiki-f-check-set-service-registry.md",
+        "guides/drafts/mslearn-availability-set-supportability.md",
+        "guides/drafts/mslearn-display-encryption-settings.md",
+        "guides/drafts/mslearn-offline-password-reset.md",
+        "guides/drafts/mslearn-reset-linux-password.md",
+        "guides/drafts/onenote-dsc-for-vm-setup.md",
+        "guides/drafts/onenote-vmss-autoscale-guest-metrics.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "scale",
+        "set"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-boot-diagnostics",
+      "title": "Vm Boot Diagnostics",
+      "entryIds": [
+        "vm-ado-wiki-0857",
+        "vm-ado-wiki-0939",
+        "vm-ado-wiki-0956",
+        "vm-ado-wiki-b-r17-003",
+        "vm-ado-wiki-a-r21-003",
+        "vm-ado-wiki-c-r18-001",
+        "vm-ado-wiki-c-r18-002",
+        "vm-ado-wiki-f-r20-010",
+        "vm-ado-wiki-c-r24-008",
+        "vm-ado-wiki-a-r1-012",
+        "vm-ado-wiki-c-r1-004",
+        "vm-mslearn-289",
+        "vm-mslearn-316",
+        "vm-mslearn-318",
+        "vm-onenote-050"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "boot",
+        "diagnostics"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-arc",
+      "title": "Vm Arc",
+      "entryIds": [
+        "vm-ado-wiki-0873",
+        "vm-ado-wiki-a-r1-007",
+        "vm-onenote-049"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "arc"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-connectivity-rdp-a",
+      "title": "Vm Connectivity Rdp A",
+      "entryIds": [
+        "vm-ado-wiki-0938",
+        "vm-ado-wiki-b-r10-004",
+        "vm-ado-wiki-a-r14-003",
+        "vm-ado-wiki-b-r11-003",
+        "vm-ado-wiki-d-r6-007",
+        "vm-ado-wiki-c-r14-005",
+        "vm-ado-wiki-f-r15-002",
+        "vm-ado-wiki-f-r15-003",
+        "vm-ado-wiki-f-r16-002",
+        "vm-ado-wiki-c-r17-002",
+        "vm-ado-wiki-f-r17-002",
+        "vm-ado-wiki-c-r20-003",
+        "vm-ado-wiki-c-r20-004",
+        "vm-ado-wiki-f-r18-001",
+        "vm-ado-wiki-f-r18-002",
+        "vm-ado-wiki-f-r18-007",
+        "vm-ado-wiki-f-r18-009",
+        "vm-ado-wiki-c-r18-005",
+        "vm-ado-wiki-c-r18-006",
+        "vm-ado-wiki-f-r19-003",
+        "vm-ado-wiki-f-r19-011",
+        "vm-ado-wiki-c-r23-006",
+        "vm-ado-wiki-c-r23-007",
+        "vm-ado-wiki-f-r21-005",
+        "vm-ado-wiki-f-r21-009",
+        "vm-ado-wiki-b-r1-001",
+        "vm-ado-wiki-b-r1-003",
+        "vm-ado-wiki-d-r1-006",
+        "vm-ado-wiki-a-r1-001",
+        "vm-ado-wiki-e-r1-003"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-Clone-Disk-PowerShell-RDP-SSH.md",
+        "guides/drafts/ado-wiki-b-Collect-Logs-Inspect-IaaS-Disk-RDP-SSH.md",
+        "guides/drafts/ado-wiki-b-Collect-Procmon-Traces-RDP-SSH.md",
+        "guides/drafts/ado-wiki-b-Collecting-VHD-RDP-SSH.md",
+        "guides/drafts/ado-wiki-c-identify-thumbprint-of-rdp-listener-cert.md",
+        "guides/drafts/ado-wiki-c-recreate-rdp-listener.md",
+        "guides/drafts/ado-wiki-d-Connect-Using-Bastion-RDP-SSH.md",
+        "guides/drafts/ado-wiki-d-Query-or-Change-Registry-RDP-SSH.md",
+        "guides/drafts/ado-wiki-f-Registry-Key-References-RDP.md",
+        "guides/drafts/ado-wiki-f-Run-RDP-Portrait-Mode.md",
+        "guides/drafts/mslearn-rdp-troubleshooting-guide.md",
+        "guides/drafts/onenote-enable-local-admin-without-rdp.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "connectivity",
+        "rdp",
+        "a"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-connectivity-rdp-b",
+      "title": "Vm Connectivity Rdp B",
+      "entryIds": [
+        "vm-ado-wiki-a-r1-003",
+        "vm-ado-wiki-a-r1-005",
+        "vm-ado-wiki-a-r1-006",
+        "vm-ado-wiki-b-r1-003",
+        "vm-ado-wiki-b-r1-004",
+        "vm-ado-wiki-b-r1-008",
+        "vm-ado-wiki-c-r1-001",
+        "vm-ado-wiki-c-r1-007",
+        "vm-ado-wiki-c-r1-012",
+        "vm-ado-wiki-d-r1-001",
+        "vm-ado-wiki-d-r1-002",
+        "vm-ado-wiki-d-r1-005",
+        "vm-ado-wiki-d-r1-006",
+        "vm-ado-wiki-d-r1-010",
+        "vm-ado-wiki-e-r1-001",
+        "vm-ado-wiki-e-r1-002",
+        "vm-ado-wiki-e-r1-004",
+        "vm-ado-wiki-e-r1-007",
+        "vm-ado-wiki-e-r1-009",
+        "vm-contentidea-kb-037",
+        "vm-mslearn-027",
+        "vm-mslearn-029",
+        "vm-mslearn-030",
+        "vm-mslearn-031",
+        "vm-mslearn-035",
+        "vm-mslearn-041",
+        "vm-mslearn-044",
+        "vm-mslearn-047",
+        "vm-mslearn-048",
+        "vm-mslearn-053"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-Clone-Disk-PowerShell-RDP-SSH.md",
+        "guides/drafts/ado-wiki-b-Collect-Logs-Inspect-IaaS-Disk-RDP-SSH.md",
+        "guides/drafts/ado-wiki-b-Collect-Procmon-Traces-RDP-SSH.md",
+        "guides/drafts/ado-wiki-b-Collecting-VHD-RDP-SSH.md",
+        "guides/drafts/ado-wiki-c-identify-thumbprint-of-rdp-listener-cert.md",
+        "guides/drafts/ado-wiki-c-recreate-rdp-listener.md",
+        "guides/drafts/ado-wiki-d-Connect-Using-Bastion-RDP-SSH.md",
+        "guides/drafts/ado-wiki-d-Query-or-Change-Registry-RDP-SSH.md",
+        "guides/drafts/ado-wiki-f-Registry-Key-References-RDP.md",
+        "guides/drafts/ado-wiki-f-Run-RDP-Portrait-Mode.md",
+        "guides/drafts/mslearn-rdp-troubleshooting-guide.md",
+        "guides/drafts/onenote-enable-local-admin-without-rdp.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "connectivity",
+        "rdp",
+        "b"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-connectivity-rdp-c",
+      "title": "Vm Connectivity Rdp C",
+      "entryIds": [
+        "vm-mslearn-057",
+        "vm-mslearn-091",
+        "vm-mslearn-187",
+        "vm-mslearn-194",
+        "vm-mslearn-196",
+        "vm-mslearn-197",
+        "vm-mslearn-198",
+        "vm-mslearn-201",
+        "vm-mslearn-223",
+        "vm-mslearn-229",
+        "vm-mslearn-231",
+        "vm-onenote-028",
+        "vm-onenote-125",
+        "vm-onenote-165",
+        "vm-onenote-246"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-Clone-Disk-PowerShell-RDP-SSH.md",
+        "guides/drafts/ado-wiki-b-Collect-Logs-Inspect-IaaS-Disk-RDP-SSH.md",
+        "guides/drafts/ado-wiki-b-Collect-Procmon-Traces-RDP-SSH.md",
+        "guides/drafts/ado-wiki-b-Collecting-VHD-RDP-SSH.md",
+        "guides/drafts/ado-wiki-c-identify-thumbprint-of-rdp-listener-cert.md",
+        "guides/drafts/ado-wiki-c-recreate-rdp-listener.md",
+        "guides/drafts/ado-wiki-d-Connect-Using-Bastion-RDP-SSH.md",
+        "guides/drafts/ado-wiki-d-Query-or-Change-Registry-RDP-SSH.md",
+        "guides/drafts/ado-wiki-f-Registry-Key-References-RDP.md",
+        "guides/drafts/ado-wiki-f-Run-RDP-Portrait-Mode.md",
+        "guides/drafts/mslearn-rdp-troubleshooting-guide.md",
+        "guides/drafts/onenote-enable-local-admin-without-rdp.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "connectivity",
+        "rdp",
+        "c"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-connectivity-ssh",
+      "title": "Vm Connectivity Ssh",
+      "entryIds": [
+        "vm-ado-wiki-a-r7-009",
+        "vm-ado-wiki-a-r8-011",
+        "vm-ado-wiki-b-r7-010",
+        "vm-ado-wiki-b-r10-008",
+        "vm-ado-wiki-f-r13-005",
+        "vm-onenote-130"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-Clone-Disk-PowerShell-RDP-SSH.md",
+        "guides/drafts/ado-wiki-b-Collect-Logs-Inspect-IaaS-Disk-RDP-SSH.md",
+        "guides/drafts/ado-wiki-b-Collect-Procmon-Traces-RDP-SSH.md",
+        "guides/drafts/ado-wiki-b-Collecting-VHD-RDP-SSH.md",
+        "guides/drafts/ado-wiki-c-openssh.md",
+        "guides/drafts/ado-wiki-d-Connect-Using-Bastion-RDP-SSH.md",
+        "guides/drafts/ado-wiki-d-Query-or-Change-Registry-RDP-SSH.md",
+        "guides/drafts/mslearn-detailed-ssh-troubleshoot.md",
+        "guides/drafts/mslearn-ssh-troubleshoot.md",
+        "guides/drafts/onenote-asr-srsshoeboxevent-kusto-reference.md",
+        "guides/drafts/onenote-ssh-into-aks-vmss-nodes.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "connectivity",
+        "ssh"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-identity",
+      "title": "Vm Identity",
+      "entryIds": [
+        "vm-ado-wiki-d-r1-005",
+        "vm-onenote-160"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-c-AFS-System-Managed-Identity.md",
+        "guides/drafts/ado-wiki-c-managed-identity-smb-howto.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "identity"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-gpu",
+      "title": "Vm Gpu",
+      "entryIds": [
+        "vm-ado-wiki-e-r7-001"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-flickering-nvidia-gpu.md",
+        "guides/drafts/onenote-gpu-extension-tsg-index.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "gpu"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-migration",
+      "title": "Vm Migration",
+      "entryIds": [
+        "vm-ado-wiki-f-r7-008",
+        "vm-ado-wiki-e-r8-010",
+        "vm-ado-wiki-f-r10-001"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-vm-unreachable-after-migration-staticnic-grub-bls.md",
+        "guides/drafts/ado-wiki-c-ADE-Migration-FAQ.md",
+        "guides/drafts/onenote-fabric-maintenance-migration-check.md"
+      ],
+      "kustoQueryFiles": [
+        "live-migration.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "migration"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-monitoring",
+      "title": "Vm Monitoring",
+      "entryIds": [
+        "vm-ado-wiki-f-r9-004"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-c-monitoring-extension-linux-manual-upgrade.md",
+        "guides/drafts/ado-wiki-c-monitoring-extension-windows-manual-upgrade.md",
+        "guides/drafts/mslearn-vm-perf-monitoring-portal.md",
+        "guides/drafts/onenote-host-monitoring-agent-logs.md",
+        "guides/drafts/onenote-sar-linux-performance-monitoring.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "monitoring"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-windows-os",
+      "title": "Vm Windows Os",
+      "entryIds": [
+        "vm-ado-wiki-c-r12-010",
+        "vm-ado-wiki-d-r1-004",
+        "vm-mslearn-262"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-Guest-Agent-Event-Logs-Reference-Guide-WindowsOS.md",
+        "guides/drafts/ado-wiki-b-Unlock-Encrypted-Windows-Disk.md",
+        "guides/drafts/ado-wiki-c-aad-login-extension-for-windows.md",
+        "guides/drafts/ado-wiki-c-monitoring-extension-windows-manual-upgrade.md",
+        "guides/drafts/ado-wiki-c-windows-partitions-non-boot.md",
+        "guides/drafts/ado-wiki-d-access-file-share-from-windows.md",
+        "guides/drafts/ado-wiki-e-Encrypt-a-Windows-VM.md",
+        "guides/drafts/ado-wiki-f-Search-Windows-Events-From-SAC.md",
+        "guides/drafts/mslearn-windows-activation-troubleshoot.md",
+        "guides/drafts/mslearn-windows-vm-deployment-faqs.md",
+        "guides/drafts/onenote-windows-server-eos-esu-policy.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "windows",
+        "os"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-backup-recovery",
+      "title": "Vm Backup Recovery",
+      "entryIds": [
+        "vm-mslearn-247",
+        "vm-mslearn-267",
+        "vm-mslearn-267",
+        "vm-onenote-017",
+        "vm-onenote-052",
+        "vm-onenote-058",
+        "vm-onenote-059",
+        "vm-onenote-061",
+        "vm-onenote-066"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "backup",
+        "recovery"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "vm-general",
+      "title": "Vm General",
+      "entryIds": [
+        "vm-ado-wiki-046",
+        "vm-ado-wiki-0874",
+        "vm-ado-wiki-0949",
+        "vm-ado-wiki-0981",
+        "vm-ado-wiki-a-r21-006",
+        "vm-ado-wiki-f-r1-001",
+        "vm-ado-wiki-d-r2-007",
+        "vm-ado-wiki-a-r4-006",
+        "vm-ado-wiki-a-r4-009",
+        "vm-ado-wiki-d-r10-003",
+        "vm-ado-wiki-f-r10-004",
+        "vm-ado-wiki-c-r12-016",
+        "vm-ado-wiki-c-r13-003",
+        "vm-ado-wiki-f-r12-006",
+        "vm-ado-wiki-c-r14-006",
+        "vm-ado-wiki-a-r1-006",
+        "vm-contentidea-kb-010",
+        "vm-onenote-051",
+        "vm-onenote-053",
+        "vm-onenote-175"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-VMApps-Kusto-and-General-Troubleshooting-Info.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "general"
+      ],
+      "confidence": "medium"
+    }
+  ],
+  "discarded": [
+    {
+      "id": "vm-contentidea-kb-002",
+      "reason": "no rootCause and no solution"
+    },
+    {
+      "id": "vm-contentidea-kb-004",
+      "reason": "no rootCause and no solution"
+    },
+    {
+      "id": "vm-contentidea-kb-006",
+      "reason": "no rootCause and no solution"
+    },
+    {
+      "id": "vm-contentidea-kb-007",
+      "reason": "no rootCause and no solution"
+    },
+    {
+      "id": "vm-contentidea-kb-009",
+      "reason": "no rootCause and no solution"
+    },
+    {
+      "id": "vm-contentidea-kb-011",
+      "reason": "no rootCause and no solution"
+    },
+    {
+      "id": "vm-contentidea-kb-012",
+      "reason": "no rootCause and no solution"
+    },
+    {
+      "id": "vm-contentidea-kb-013",
+      "reason": "no rootCause and no solution"
+    },
+    {
+      "id": "vm-contentidea-kb-014",
+      "reason": "no rootCause and no solution"
+    },
+    {
+      "id": "vm-contentidea-kb-015",
+      "reason": "no rootCause and no solution"
+    },
+    {
+      "id": "vm-contentidea-kb-016",
+      "reason": "no rootCause and no solution"
+    },
+    {
+      "id": "vm-contentidea-kb-018",
+      "reason": "no rootCause and no solution"
+    },
+    {
+      "id": "vm-contentidea-kb-019",
+      "reason": "no rootCause and no solution"
+    },
+    {
+      "id": "vm-contentidea-kb-020",
+      "reason": "no rootCause and no solution"
+    },
+    {
+      "id": "vm-contentidea-kb-021",
+      "reason": "no rootCause and no solution"
+    },
+    {
+      "id": "vm-contentidea-kb-023",
+      "reason": "no rootCause and no solution"
+    },
+    {
+      "id": "vm-contentidea-kb-024",
+      "reason": "no rootCause and no solution"
+    },
+    {
+      "id": "vm-contentidea-kb-028",
+      "reason": "no rootCause and no solution"
+    },
+    {
+      "id": "vm-contentidea-kb-029",
+      "reason": "no rootCause and no solution"
+    },
+    {
+      "id": "vm-contentidea-kb-030",
+      "reason": "no rootCause and no solution"
+    },
+    {
+      "id": "vm-contentidea-kb-032",
+      "reason": "no rootCause and no solution"
+    },
+    {
+      "id": "vm-contentidea-kb-033",
+      "reason": "no rootCause and no solution"
+    },
+    {
+      "id": "vm-contentidea-kb-036",
+      "reason": "no rootCause and no solution"
+    },
+    {
+      "id": "vm-contentidea-kb-039",
+      "reason": "no rootCause and no solution"
+    },
+    {
+      "id": "vm-contentidea-kb-041",
+      "reason": "no rootCause and no solution"
+    },
+    {
+      "id": "vm-contentidea-kb-043",
+      "reason": "no rootCause and no solution"
+    }
+  ]
+}

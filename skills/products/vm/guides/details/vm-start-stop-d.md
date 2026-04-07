@@ -1,0 +1,71 @@
+# VM Vm Start Stop D — 综合排查指南
+
+**条目数**: 30 | **草稿融合数**: 3 | **Kusto 查询融合**: 0
+**来源草稿**: [ado-wiki-f-startbuild-fail-avdimage-languagepack.md](../../guides/drafts/ado-wiki-f-startbuild-fail-avdimage-languagepack.md), [mslearn-start-vm-last-known-good.md](../../guides/drafts/mslearn-start-vm-last-known-good.md), [onenote-script-vm-restart-events.md](../../guides/drafts/onenote-script-vm-restart-events.md)
+**生成日期**: 2026-04-07
+
+---
+
+## 排查流程
+
+### Phase 2: 排查与诊断
+> 来源: ADO Wiki
+
+1. 参照 [ado-wiki-f-startbuild-fail-avdimage-languagepack.md](../../guides/drafts/ado-wiki-f-startbuild-fail-avdimage-languagepack.md) 排查流程
+2. 参照 [mslearn-start-vm-last-known-good.md](../../guides/drafts/mslearn-start-vm-last-known-good.md) 排查流程
+3. 参照 [onenote-script-vm-restart-events.md](../../guides/drafts/onenote-script-vm-restart-events.md) 排查流程
+
+### Phase 3: 根因判断与解决
+
+**判断逻辑**：
+
+| 条件 | 含义 | 后续动作 |
+|------|------|---------|
+| ALL APPLICATION PACKAGES group added to C:\Windows | 3 条相关 | 1) Log in as local/Domain Admin; 2) Go to C:\Packages and C:... |
+| Third-party software (anti-virus etc.) on the VM i | 1 条相关 | 1) Collect Host Analyzer to verify WireServer responded corr... |
+| Dynatrace OneAgent injects oneagentproc.dll into t | 2 条相关 | Uninstall Dynatrace OneAgent or work with Dynatrace support ... |
+| Corrupted or missing GoalState XML files in /var/l | 2 条相关 | Run: sudo rm -f /var/lib/waagent/*.[0-9]*.xml && sudo servic... |
+| Outdated Linux Guest Agent version (2.3.1.1) with  | 1 条相关 | Manually update Linux GA: 1) waagent --version, 2) Enable Au... |
+| An extension incorrectly populates its status file | 2 条相关 | Find offending extension .Status file in C:\Packages\Plugins... |
+| After VM reboot, message Registry Key under HKLM\S | 2 条相关 | Delete Registry Key LatestExpectedVersion under HKLM\SOFTWAR... |
+| 3rd party software (anti-virus etc.) on the VM int | 2 条相关 | Collect Host Analyzer to verify WireServer communication. Co... |
+| VM did not receive new goal state after RDFE-to-CA | 1 条相关 | Trigger new goal state via 'az vm reapply' or PowerShell Set... |
+| machine.config file at C:\Windows\Microsoft.NET\Fr | 1 条相关 | Copy machine.config from a working VM to C:\Windows\Microsof... |
+
+---
+
+## 已知问题速查
+
+| # | 症状 | 根因 | 方案 | 分数 | 来源 |
+|---|------|------|------|------|------|
+| 1 | Windows Guest Agent fails at startup with FATAL: Failed to set access rules for agent directories. E... | ALL APPLICATION PACKAGES group added to C:\WindowsAzure or C:\Packages folder pe... | 1) Log in as local/Domain Admin; 2) Go to C:\Packages and C:\WindowsAzure -> Pro... | 🔵 7.0 | ADO Wiki |
+| 2 | Windows Guest Agent failing with Goal state processing encountered an exception: System.NullReferenc... | Third-party software (anti-virus etc.) on the VM intercepting and closing WireSe... | 1) Collect Host Analyzer to verify WireServer responded correctly; 2) Collect Wi... | 🔵 7.0 | ADO Wiki |
+| 3 | Windows Azure Guest Agent service hangs during stop/start operations. Extensions not functioning. Dy... | Dynatrace OneAgent injects oneagentproc.dll into the WindowsAzureGuestAgent.exe ... | Uninstall Dynatrace OneAgent or work with Dynatrace support to stop DLL injectio... | 🔵 7.0 | ADO Wiki |
+| 4 | Linux VM DMESG: Exception retrieving extension handlers: [ProtocolError] /var/lib/waagent/GoalState.... | Corrupted or missing GoalState XML files in /var/lib/waagent/ directory | Run: sudo rm -f /var/lib/waagent/*.[0-9]*.xml && sudo service walinuxagent resta... | 🔵 7.0 | ADO Wiki |
+| 5 | waagent.log flooded with Failed to report status: NoneType object is not iterable. Agent version stu... | Outdated Linux Guest Agent version (2.3.1.1) with bug in status reporting (_proc... | Manually update Linux GA: 1) waagent --version, 2) Enable AutoUpdate in /etc/waa... | 🔵 7.0 | ADO Wiki |
+| 6 | WaAppAgent.log: Failed to serialize aggregate status - DataMember IsRequired conflict, member messag... | An extension incorrectly populates its status file with null formattedMessage.me... | Find offending extension .Status file in C:\Packages\Plugins\<Ext>\<Ver>\Status\... | 🔵 7.0 | ADO Wiki |
+| 7 | Windows Azure Guest Agent unresponsive after reboot. WaAppAgent.log: Failed to serialize aggregate s... | After VM reboot, message Registry Key under HKLM\SOFTWARE\Microsoft\Windows Azur... | Delete Registry Key LatestExpectedVersion under HKLM\SOFTWARE\Microsoft\Windows ... | 🔵 7.0 | ADO Wiki |
+| 8 | Windows Guest Agent FATAL: Failed to set access rules for agent directories. IdentityNotMappedExcept... | ALL APPLICATION PACKAGES group added to C:\WindowsAzure or C:\Packages folder pe... | Remove ALL APPLICATION PACKAGES from C:\Packages and C:\WindowsAzure Security pe... | 🔵 7.0 | ADO Wiki |
+| 9 | Windows Guest Agent: Goal state processing exception System.NullReferenceException and IMDS connecti... | 3rd party software (anti-virus etc.) on the VM intercepting and closing connecti... | Collect Host Analyzer to verify WireServer communication. Collect WinGuestAnalyz... | 🔵 7.0 | ADO Wiki |
+| 10 | Linux Guest Agent waagent.log grows abnormally large with repeated HTTP 404 errors fetching from sta... | VM did not receive new goal state after RDFE-to-CAPS migration, causing agent to... | Trigger new goal state via 'az vm reapply' or PowerShell Set-AzVM -Reapply. For ... | 🔵 7.0 | ADO Wiki |
+| 11 | Windows Azure Guest Agent and RdAgent services crash on startup with ConfigurationErrorsException / ... | machine.config file at C:\Windows\Microsoft.NET\Framework64\v4.0.30319\Config\ma... | Copy machine.config from a working VM to C:\Windows\Microsoft.NET\Framework64\v4... | 🔵 7.0 | ADO Wiki |
+| 12 | Windows Guest Agent not auto-upgrading despite being Ready and services running; TransparentInstalle... | ManifestTimeStamp registry value (HKLM\Software\Microsoft\GuestAgent) retains ti... | Delete ManifestTimeStamp registry value from HKLM\Software\Microsoft\GuestAgent,... | 🔵 7.0 | ADO Wiki |
+| 13 | Azure Portal shows incorrect OS distribution/version for Linux VM after in-place OS upgrade (e.g., C... | Multiple or outdated OS release files (/etc/os-release, /etc/redhat-release, etc... | Remove or move outdated OS release files from /etc/ keeping only the file matchi... | 🔵 7.0 | ADO Wiki |
+| 14 | Guest Agent fails TLS connections with 'The remote certificate is invalid according to the validatio... | Missing Baltimore CyberTrust Root certificate in Trusted Root Certification Auth... | Install Baltimore CyberTrust Root certificate from DigiCert or copy from a worki... | 🔵 7.0 | ADO Wiki |
+| 15 | Linux Guest Agent fails to start with 'No such file or directory' error referring to Python in waage... | Python symbolic link at /usr/bin/python is broken or pointing to a non-existent ... | Remove broken symlink (rm /usr/bin/python), create correct link (ln -s /usr/bin/... | 🔵 7.0 | ADO Wiki |
+| 16 | Linux Guest Agent fails to start with Python import errors (IsADirectoryError on /etc/motd, missing ... | Python3 binaries or packages are missing from the system, causing walinuxagent t... | Reinstall python3: apt install -f --reinstall python3 byobu ubuntu-server. If dp... | 🔵 7.0 | ADO Wiki |
+| 17 | WALinuxAgent fails to start after zonal migration with PermissionError removing extension config fil... | Stale file handles in /var/lib/waagent from previous extension configurations ca... | Stop waagent (systemctl stop waagent.service), backup waagent dir (mv /var/lib/w... | 🔵 7.0 | ADO Wiki |
+| 18 | Windows Azure Guest Agent service hangs during stop/start operations. Extensions not functioning. Dy... | Dynatrace OneAgent injects oneagentproc.dll into the WindowsAzureGuestAgent.exe ... | Uninstall Dynatrace OneAgent or work with Dynatrace support to stop DLL injectio... | 🔵 7.0 | ADO Wiki |
+| 19 | Linux VM DMESG: Exception retrieving extension handlers: [ProtocolError] /var/lib/waagent/GoalState.... | Corrupted or missing GoalState XML files in /var/lib/waagent/ directory | Run: sudo rm -f /var/lib/waagent/*.[0-9]*.xml && sudo service walinuxagent resta... | 🔵 7.0 | ADO Wiki |
+| 20 | WaAppAgent.log: Failed to serialize aggregate status - DataMember IsRequired conflict, member messag... | An extension incorrectly populates its status file with null formattedMessage.me... | Find offending extension .Status file in C:\Packages\Plugins\<Ext>\<Ver>\Status\... | 🔵 7.0 | ADO Wiki |
+| 21 | Windows Azure Guest Agent unresponsive after reboot. WaAppAgent.log: Failed to serialize aggregate s... | After VM reboot, message Registry Key under HKLM\SOFTWARE\Microsoft\Windows Azur... | Delete Registry Key LatestExpectedVersion under HKLM\SOFTWARE\Microsoft\Windows ... | 🔵 7.0 | ADO Wiki |
+| 22 | Windows Guest Agent FATAL: Failed to set access rules for agent directories. IdentityNotMappedExcept... | ALL APPLICATION PACKAGES group added to C:\WindowsAzure or C:\Packages folder pe... | Remove ALL APPLICATION PACKAGES from C:\Packages and C:\WindowsAzure Security pe... | 🔵 7.0 | ADO Wiki |
+| 23 | Windows Guest Agent: Goal state processing exception System.NullReferenceException and IMDS connecti... | 3rd party software (anti-virus etc.) on the VM intercepting and closing connecti... | Collect Host Analyzer to verify WireServer communication. Collect WinGuestAnalyz... | 🔵 7.0 | ADO Wiki |
+| 24 | Linux VM Guest Agent logs (waagent.log/syslog) growing excessively large with repeated 404 errors fe... | VMs not migrated from RDFE to CAPS still reference old RDFE manifest URIs. Agent... | Trigger a new goal state via 'az vm reapply' to update manifests from RDFE to CA... | 🔵 7.0 | ADO Wiki |
+| 25 | Windows Azure Guest Agent and/or RdAgent services crash on startup. Application Event Log shows Even... | The .NET machine.config file at C:\Windows\Microsoft.NET\Framework64\v4.0.30319\... | Copy machine.config from a working VM to the same path, then restart Guest Agent... | 🔵 7.0 | ADO Wiki |
+| 26 | Windows Guest Agent is Ready and services are running, but the agent is not auto-upgrading. Transpar... | A previous failed upgrade attempt updated the ManifestTimeStamp registry value, ... | Delete the ManifestTimeStamp value from registry key HKLM\Software\Microsoft\Gue... | 🔵 7.0 | ADO Wiki |
+| 27 | Azure Portal Properties page shows incorrect OS distribution/version after an in-place OS upgrade (e... | Multiple or outdated OS release files (/etc/os-release, /etc/redhat-release, etc... | Remove or relocate outdated OS release files in /etc/ (keep only the one matchin... | 🔵 7.0 | ADO Wiki |
+| 28 | WaAppAgent.log shows 'The remote certificate is invalid according to the validation procedure' (Syst... | Baltimore CyberTrust Root certificate is missing from the Trusted Root Certifica... | Install the Baltimore CyberTrust Root certificate from DigiCert Root Certificate... | 🔵 7.0 | ADO Wiki |
+| 29 | Linux Guest Agent fails with 'No such file or directory' in waagent.log when launching with 'python ... | The /usr/bin/python symbolic link is broken or pointing to a non-existent Python... | Remove the broken symlink (rm /usr/bin/python), recreate it pointing to correct ... | 🔵 7.0 | ADO Wiki |
+| 30 | Linux Guest Agent fails to start with 'IsADirectoryError: [Errno 21] Is a directory: /etc/motd' or '... | Python3 binaries are missing or corrupt on the system, preventing walinuxagent f... | Reinstall python3: apt install -f --reinstall python3 byobu ubuntu-server. If dp... | 🔵 7.0 | ADO Wiki |
+

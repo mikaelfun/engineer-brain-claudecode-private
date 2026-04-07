@@ -1,0 +1,39 @@
+# DEFENDER CSPM / DCSPM 云安全态势管理 — Troubleshooting Quick Reference
+
+**Entries**: 19 | **21V**: 13/19 applicable
+**Sources**: ado-wiki, mslearn | **Last updated**: 2026-04-07
+
+> This topic has a fusion troubleshooting guide with complete workflow
+> → [Full troubleshooting workflow](details/defender-cspm.md)
+
+## Symptom Quick Reference
+
+| # | Symptom | Root Cause | Solution | Score | Source |
+|---|---------|-----------|----------|-------|--------|
+| 1 | Customer onboarded to Defender CSPM/DCSPM but still sees onboarding experience for Attack Paths | Scope issue or subscription not registered to the CloudPosture/DefenderCspm bundle in the selecte... | Verify onboard status using Kusto query on GetCurrentEnvironmentsPricing table (clusters: mdcenti... | 🟢 8.5 | ADO Wiki |
+| 2 | No Attack Paths displayed or Attack Path count decreased to zero (especially after September 2025) | What-Now refinement released September 15, 2025: Attack Paths now only display when entry point i... | Use CloudMapV2.AttackPaths query on cusdefautprepkustoprd.centralus.kusto.windows.net to check if... | 🟢 8.5 | ADO Wiki |
+| 3 | Attack Paths show limited permissions content — some nodes do not have context or display incompl... | Three possible causes: 1) Insufficient DCSPM plan for target or entry subscription/security conne... | Check subscription plan via EnvironmentsPricing Kusto table, check environment plan via GetCurren... | 🟢 8.5 | ADO Wiki |
+| 4 | Attack Path is visible but no recommendations are shown for the affected resources | Insufficient Defender CSPM plan on the target or entry subscription — attack path spans subscript... | (1) Verify CSPM plan enabled on ALL involved subscriptions using Kusto: cluster('mdcentitystorepr... | 🟢 8.5 | ADO Wiki |
+| 5 | Attack Path is visible but no recommendations are shown; resource has an exemption applied | Recommendation exemption at resource or subscription level. Exempting a recommendation does NOT r... | Check for exemptions at resource/subscription level. If exemption is present, absence of recommen... | 🟢 8.5 | ADO Wiki |
+| 6 | Customer onboarded Defender CSPM but still sees the onboarding experience / zero Attack Paths | Scope issue — onboarding only applied to some subscriptions; not all relevant subscriptions are r... | (1) Verify onboard status for each subscription: cluster('mdcentitystoreprodus.centralus.kusto.wi... | 🟢 8.5 | ADO Wiki |
+| 7 | Customer reports decrease in Attack Path numbers or zero Attack Paths after September 2025 | 'What-Now' refinement released September 15, 2025 — Attack Paths now only displayed when entry po... | Confirm by Kusto query: cluster('cusdefautprepkustoprd.centralus.kusto.windows.net').database('Cl... | 🟢 8.5 | ADO Wiki |
+| 8 | Need to access MDC Entity Store Kusto clusters (mdcentitystoreprodus / ascentitystoreprdeu) or At... | MDC Kusto clusters require JIT access to elevated Security Group (MDC-EntityStore-Prod-Viewers) d... | Prerequisites: SAW device + AME account + CSS-IS-MDCKustoAccess AME group membership. JIT request... | 🟢 8.5 | ADO Wiki |
+| 9 | DCSPM K8s agentless AgentlessManager service fails to process discoveryData or add MDC IPs to EKS... | AgentlessManager service encounters error during ProcessMessagesAsync; non-ClientError = backend ... | Run Kusto on mdcprd.centralus.kusto.windows.net/Detection Span table filtered by env_cloud_role=a... | 🟢 8.5 | ADO Wiki |
+| 10 | MEPM Permissions Management enablement fails in Azure portal - error assigning Reader role to MEP... | Logged-in user lacks permissions to assign Reader role to MEPM first party app (Cloud Infrastruct... | Ask user with Owner/User Access Administrator permissions to enable the extension. If still fails... | 🔵 7.0 | ADO Wiki |
+| 11 | Defender for Cloud Recommendation Risk Level not being evaluated or showing as empty for resources | Risk Level (One Queue) requires Defender Cloud Security Posture Management (CSPM) plan to be enab... | 1) Verify Defender CSPM is enabled using Kusto: cluster('Rometelemetrydata').database('RomeTeleme... | 🔵 7.0 | ADO Wiki |
+| 12 | Agentless secret scanning results not appearing for Azure VMs or disks - no findings in Defender ... | Multiple possible causes: 1) Defender CSPM not enabled for the subscription (prerequisite). 2) Di... | Diagnose step by step using Kusto queries on cluster romelogs.kusto.windows.net database Rome3Pro... | 🔵 7.0 | ADO Wiki |
+| 13 | Customer does not see vulnerability recommendations for WebApp/Azure Function on Windows (App Ser... | The app does not have public access enabled, blocking Defender for Cloud from scanning. | Customer needs to allow the service tag AzureSecurityCenter in the app networking settings (Advan... | 🔵 5.5 | ADO Wiki |
+| 14 | Customer does not see vulnerability recommendations for WebApp. Kusto Span table shows Name or se... | The WebApp is running in an App Service Environment (ASE), which is not supported for vulnerabili... | By design limitation. Inform customer that App Service Environment is not supported for serverles... | 🔵 5.5 | ADO Wiki |
+| 15 | Customer does not see vulnerability recommendations for Function App on Linux Consumption Plan. S... | Function app runs with deployment package using identity access, which is not supported for vulne... | By design limitation. Deployment package with identity access on Linux Consumption Plan is curren... | 🔵 5.5 | ADO Wiki |
+| 16 | Customer does not see vulnerability recommendations for Function App on Flex Consumption Plan. Sp... | Flex Consumption Plan with blobcontainer storage using managed identity (system or user assigned)... | By design limitation. Flex Consumption Plan with blobcontainer + managed identity storage is curr... | 🔵 5.5 | ADO Wiki |
+| 17 | Attack path analysis page shows empty in Defender for Cloud - no attack paths displayed despite h... | Expected behavior after Microsoft updated attack path analysis to focus on real, externally drive... | This is expected behavior. Ensure: 1) Defender CSPM is enabled with agentless scanning, 2) Resour... | 🔵 5.0 | MS Learn |
+| 18 | Defender for Cloud secrets scanning not detecting secrets on VMs or cloud deployments - no secret... | Secrets scanning requires specific plan enablement: Defender CSPM plan for cloud deployment and c... | Verify: 1) Defender CSPM plan is enabled for cloud deployment and code scanning, 2) Defender for ... | 🔵 5.0 | MS Learn |
+| 19 | Defender for Cloud CIEM recommendations not appearing - no identity risk insights or overprovisio... | CIEM capabilities require the Defender Cloud Security Posture Management (CSPM) plan to be enable... | Enable the Defender CSPM plan. CIEM supports: Microsoft Entra ID users/groups/service principals,... | 🔵 5.0 | MS Learn |
+
+## Quick Troubleshooting Path
+
+1. Verify onboard status using Kusto query on GetCurrentEnvironmentsPricing table (clusters: mdcentitystoreprodus.centralus.kusto.windows.net / ascentitystoreprdeu.westeurope.kusto.windows.net, databa... `[Source: ADO Wiki]`
+2. Use CloudMapV2.AttackPaths query on cusdefautprepkustoprd.centralus.kusto.windows.net to check if ATPs exist but are filtered. Query checks isExposedToInternet and allowsPublicAccess fields. If ATP... `[Source: ADO Wiki]`
+3. Check subscription plan via EnvironmentsPricing Kusto table, check environment plan via GetCurrentDefenderCspmEnvironments(). Verify customer permissions per MS Learn prerequisites. If plans and pe... `[Source: ADO Wiki]`
+4. (1) Verify CSPM plan enabled on ALL involved subscriptions using Kusto: cluster('mdcentitystoreprodus.centralus.kusto.windows.net').database('MDCGlobalData').EnvironmentsPricing / where Scope == '/... `[Source: ADO Wiki]`
+5. Check for exemptions at resource/subscription level. If exemption is present, absence of recommendations is expected (by design). If no exemption found, investigate plan/permissions (see defender-a... `[Source: ADO Wiki]`

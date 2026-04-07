@@ -1,0 +1,87 @@
+# Monitor AMA 数据收集规则 (DCR) - Comprehensive Troubleshooting Guide
+
+**Entries**: 41 | **Drafts fused**: 2 | **Kusto queries**: 0
+**Draft sources**: ado-wiki-a-ama-ht-list-associated-dcrs-dces.md, ado-wiki-a-ama-ht-list-dcrs-by-immutableid.md
+**Generated**: 2026-04-07
+
+---
+
+## Quick Troubleshooting Path
+
+### Step 1: AMA Send data to Storage Account/Event Hub preview feature not working or being deprecated.
+
+**Solution**: Inform customer feature is deprecated. For Storage: migrate to Log Analytics Auxiliary tier. For Event Hub: use ADX as destination. Troubleshooting: check AMA running, UAI with Storage Blob Data Contributor, DCR association, syslog path, network.
+
+`[Source: OneNote, Score: 9.0]`
+
+### Step 2: DCR validation failure when creating custom log table or Data Collection Rule
+
+**Solution**: Rename variables at source to comply with naming rules: must start with a letter, max 45 alphanumeric characters and underscores, no special characters, avoid reserved names. The _CL suffix is auto-added via portal but must be manually added via API.
+
+`[Source: ADO Wiki, Score: 8.5]`
+
+### Step 3: DCR update or creation fails because transformkql parse command has more than 10 columns
+
+**Solution**: Split the parse command into multiple statements, each with ≤10 columns. See: https://learn.microsoft.com/azure/azure-monitor/logs/query-optimization#break-up-large-parse-commands
+
+`[Source: ADO Wiki, Score: 8.5]`
+
+### Step 4: DCR update/creation fails because transformkql parse command has more than 10 columns
+
+**Solution**: Split parse command into multiple statements with <=10 columns. See: https://learn.microsoft.com/azure/azure-monitor/logs/query-optimization#break-up-large-parse-commands
+
+`[Source: ADO Wiki, Score: 8.5]`
+
+### Step 5: Container Insights with Managed Identity authentication shows no data in Log Analytics; checking DCR associations reveals no DCR is associated with the AKS cluster
+
+**Solution**: Disable Container Insights on the AKS cluster and re-onboard to create proper DCR and DCR Association. Verify via Azure Portal (Monitor > Data Collection Rules > Resources) or Azure Support Center Resource Explorer.
+
+`[Source: ADO Wiki, Score: 8.5]`
+
+---
+
+## All Known Issues
+
+| # | Symptom | Root Cause | Solution | Score | Source |
+|---|---------|-----------|----------|-------|--------|
+| 1 | AMA Send data to Storage Account/Event Hub preview feature not working or bei... | PG confirmed AMA direct-upload-to-Storage/EventHub preview will be entirely r... | Inform customer feature is deprecated. For Storage: migrate to Log Analytics ... | 9.0 | OneNote |
+| 2 | DCR validation failure when creating custom log table or Data Collection Rule | Custom column names or DCR input stream field names contain special character... | Rename variables at source to comply with naming rules: must start with a let... | 8.5 | ADO Wiki |
+| 3 | DCR update or creation fails because transformkql parse command has more than... | The parse command in transformkql is limited to 10 columns per statement due ... | Split the parse command into multiple statements, each with ≤10 columns. See:... | 8.5 | ADO Wiki |
+| 4 | DCR update/creation fails because transformkql parse command has more than 10... | parse command in transformkql limited to 10 columns per statement. Enforced f... | Split parse command into multiple statements with <=10 columns. See: https://... | 8.5 | ADO Wiki |
+| 5 | Container Insights with Managed Identity authentication shows no data in Log ... | DCR Association is missing while the Container Insights agent is configured t... | Disable Container Insights on the AKS cluster and re-onboard to create proper... | 8.5 | ADO Wiki |
+| 6 | Container Insights agent cannot change Log Analytics Workspace because the pr... | When the Log Analytics Workspace is deleted, the Container Insights agent sti... | Delete the DCR associated with the cluster (named MSCI-{region}-{clusterName}... | 8.5 | ADO Wiki |
+| 7 | Associating more than 30 ContainerLogV2 DCRs to an AKS cluster in Container I... | Known limitation in Container Insights multi-tenancy logging feature - exceed... | Keep the number of ContainerLogV2 DCR associations per AKS cluster at or belo... | 8.5 | ADO Wiki |
+| 8 | Syslog data not appearing in Log Analytics after enabling syslog collection i... | Syslog onboarding did not complete successfully, or DCR was modified after on... | 1) Verify DCR has syslog data source and is associated with cluster. 2) Check... | 8.5 | ADO Wiki |
+| 9 | After deleting Azure Monitor Workspace (AMW), it still shows under Insights >... | The Data Collection Rule (DCR) associated with the AKS cluster for Prometheus... | 1) Navigate to Data Collection Rules 2) Find DCR named MSProm-(region)-(clust... | 8.5 | ADO Wiki |
+| 10 | VM Insights Map feature (Processes and dependencies) not available after enab... | Customer enabled VM Insights without selecting Processes and dependencies (Ma... | Recommended: Delete the existing VM Insights DCR and re-onboard VM Insights w... | 8.5 | ADO Wiki |
+| 11 | VM Insights Dependency Agent not sending data via AMA after migration from Lo... | After migrating from Log Analytics Agent to AMA, the Dependency Agent config ... | 1) Log into affected system as Administrator 2) Edit C:\Program Files\Microso... | 8.5 | ADO Wiki |
+| 12 | Azure Monitor Pipeline extension heartbeat fails with 403 error: Error respon... | The Azure Monitor Pipeline Arc extension does not have the Monitoring Metrics... | 1) Run az k8s-extension show to get extension principal ID 2) Assign Monitori... | 8.5 | ADO Wiki |
+| 13 | Observability data sent to Azure Monitor Pipeline endpoint but no data arrive... | Multiple possible causes: 1) Looking at wrong LA workspace - workspace in DCR... | 1) Verify correct LA workspace from DCR JSON view > destinations key (match i... | 8.5 | ADO Wiki |
+| 14 | Self-managed Prometheus running on on-premises server or Azure VM sends metri... | The identity (managed identity or Entra ID app registration) used for remote_... | 1) Verify prometheus.yml remote_write section has correct AMW metrics ingesti... | 8.5 | ADO Wiki |
+| 15 | BadRequest (400) when trying to create a Data Collection Rule (DCR) for Event... | The target Log Analytics workspace is not linked to a dedicated cluster or do... | Link the workspace to a dedicated cluster or set the workspace SKU to Capacit... | 8.5 | ADO Wiki |
+| 16 | Data stops flowing from Event Hub to Log Analytics after customer moves subsc... | The DCR Managed Service Identity (MSI) and RBAC permissions become invalid af... | Customer needs to recreate the DCR MSI and reassign the permissions (Azure Ev... | 8.5 | ADO Wiki |
+| 17 | Event Hub data ingestion to Log Analytics: data flows but lands only in TimeG... | The DCR does not include a transformKql to extract and map Event Hub JSON fie... | Update the DCR to include a transformKql that parses the incoming JSON and ma... | 8.5 | ADO Wiki |
+| 18 | DCRA creation for Event Hub to Log Analytics fails or data does not flow afte... | The DCR managed identity (system or user-assigned) has not been granted RBAC ... | Go to the event hub or event hub namespace, grant Azure Event Hubs Data Recei... | 8.5 | ADO Wiki |
+| 19 | Custom Logs V2 (Log Ingestion API): data accepted with HTTP 200/204 but Proce... | The body of the API call is not a JSON array. The Logs Ingestion API requires... | Ensure the request body is a valid JSON array (e.g., [{...}] for a single item). | 8.5 | ADO Wiki |
+| 20 | Custom Logs V2 (Log Ingestion API): data accepted with HTTP 200/204 but Proce... | The configured custom table does not exist on the target Log Analytics worksp... | Verify that the custom table exists on the target Log Analytics workspace. If... | 8.5 | ADO Wiki |
+| 21 | Syslog messages in Log Analytics Syslog table appear truncated - data is cut ... | OMS agent bug - colon character in syslog message is incorrectly detected as ... | 1) Verify by running tcpdump on port 25224 on the agent machine and comparing... | 8.5 | ADO Wiki |
+| 22 | Linux VM metrics configured in DCR Perf data source appear with different nam... | AMA Linux uses Telegraf internally with an intermediate.json mapping file tha... | Check the intermediate.json file at /var/lib/waagent/Microsoft.Azure.Monitor.... | 8.5 | ADO Wiki |
+| 23 | Azure Support Center (ASC) shows error when trying to find Data Collection Ru... | ASC's built-in DCR lookup under Microsoft.Insights service provider only work... | Use Azure Resource Graph (ARG) query in ASC: Navigate to the VM's subscriptio... | 8.5 | ADO Wiki |
+| 24 | VMInsight DCR performance counters stop collecting data after customer modifi... | Customer manually modified the VMInsight-created DCR's performance counter st... | 1) Export the DCR template from Azure portal (Automation > Export Template) 2... | 8.5 | ADO Wiki |
+| 25 | Second Data Collection Rule (DCR) association replaces the first when two DCR... | Expected behavior (by design). The Azure portal UX defaults the association n... | This is a known platform limitation, not a bug. Workarounds: 1) Rename one of... | 8.5 | ADO Wiki |
+| 26 | Deploying Container Insights DCR with ingestion time transformations (KQL tra... | Container Insights DCRs use StreamGroups feature which groups multiple data s... | 1) Remove the KQL transform from the DCR if stream groups are in place (recom... | 8.5 | ADO Wiki |
+| 27 | After migrating from MMA/OMS to AMA, VMInsights or File Integrity Monitor (FI... | MMA/OMS agent reports the Computer value as hostname+domainName (e.g. server1... | 1) Identify all queries, dashboards, alerts, and workbooks that filter on the... | 8.5 | ADO Wiki |
+| 28 | Customer has Free Health Check Assessment solutions (Active Directory Health ... | Free Health Check Assessment solutions via MMA (Microsoft Monitoring Agent) a... | 1) Inform customer that Free Health Check solutions are deprecated and must b... | 8.5 | ADO Wiki |
+| 29 | Custom columns in Log Analytics custom table are not being populated with dat... | Data type mismatch between KQL transform output and custom table column defin... | 1) Check table schema via ASC Kusto query: <TableName> / getschema 2) Or via ... | 8.5 | ADO Wiki |
+| 30 | CT&I V2 Linux: Inventory and Change Tracking blades appear empty/blank in Azu... | CTv2 extension is installed on the machine but no Data Collection Rule (DCR) ... | Manually associate the machine to a CT V2 DCR. DCR creation is part of the CT... | 8.5 | ADO Wiki |
+| 31 | Legacy monitoring agent (MMA/OMS) automatically reinstalls and resumes data i... | Azure Policy or Defender for Cloud auto-provisioning is enabled for the subsc... | 1) Check Azure Policy: go to Azure Policy > Assignments > search for Log Anal... | 8.5 | ADO Wiki |
+| 32 | After migrating from legacy MMA to AMA, the Event table UserName field shows ... | Schema mismatch between MMA and AMA: AMA returns the Event table UserName pro... | 1) Known issue with pending bug fix (ADO Bug 28861140) - monitor AMA release ... | 8.5 | ADO Wiki |
+| 33 | For VM and Arc machines, Inventory and Change Tracking blades appear empty/bl... | CT&I v2 extension has been installed on the machine but no Data Collection Ru... | Manually associate the machine to a CT&I v2 DCR. DCR creation is part of the ... | 8.5 | ADO Wiki |
+| 34 | Windows registry values defined in DCR are not collected by Change Tracking v... | DCR registry configuration has the full path including valueName in the keyNa... | Fix the DCR registry configuration: split the path so keyName contains only t... | 8.5 | ADO Wiki |
+| 35 | Customer reports metrics not being exported as configured through DCR (Data C... | Metrics with hourly granularity (time grain PT1H) are not supported for expor... | 1) Verify resource type is in supported list (VM, VMSS, Redis Cache, AKS, Key... | 8.5 | ADO Wiki |
+| 36 | ASC Test Connectivity diagnostic shows "Traffic ALLOWED" for Azure VM outboun... | VM NIC is part of an internal load balancer and has a user-defined route (UDR... | Review Azure Load Balancer outbound rules documentation (Scenario 5). Options... | 7.5 | ADO Wiki |
+| 37 | Error 'Cannot read properties of undefined (reading length)' when creating cu... | JSON structure issue or DCR configuration conflict — using an existing DCR th... | 1) Validate JSON format; 2) Create a NEW dedicated DCR for custom log table (... | 6.5 | MS Learn |
+| 38 | Customer receives notification about Azure Monitor Logs Custom Fields feature... | Microsoft is retiring the Custom Fields feature in Azure Monitor Logs. Custom... | Transition to DCR-based KQL transformations before March 31, 2026. Migration ... | 6.0 | ADO Wiki |
+| 39 | Query execution fails on a table where schema was recently altered (usually v... | By design - internal caching mechanisms cause query failures for up to 1 hour... | No immediate resolution - customer must wait up to 1 hour for the internal ca... | 6.0 | ADO Wiki |
+| 40 | AMA data ingestion stops after Private Link ODS fix enforcement. Public traff... | ODS fix (rolled out April 2023) enforces strict Private Link validation for A... | Check Network Isolation settings for LA Workspace and DCE. Either set 'Accept... | 6.0 | ADO Wiki |
+| 41 | Performance logs not populating in Azure Government when setting up VM insigh... | Alert scope defaults to DCR instead of Log Analytics workspace — DCR cannot a... | Set the alert scope to the Log Analytics workspace associated with the DCR (n... | 5.5 | MS Learn |

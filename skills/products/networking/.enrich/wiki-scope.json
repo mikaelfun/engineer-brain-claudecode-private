@@ -1,0 +1,33 @@
+{
+  "description": "Wiki path scope rules. Auto-managed by scan history. Manual edits OK.",
+  "scopes": [
+    {
+      "wikiKey": "Supportability/AzureNetworking",
+      "excludeScope": [
+        "/Deprecated Content",
+        "/Process and Ramp Up",
+        "/Beta",
+        "/Delivery Partner",
+        "/Service TA Corner",
+        "/Wiki Documentation",
+        "/.LabBoxRepo",
+        "/.agictraininglab",
+        "/.buildPipelineData",
+        "/.config",
+        "/TA OnPoint",
+        "/README",
+        "/Welcome"
+      ]
+    },
+    {
+      "wikiKey": "Supportability/WindowsNetworking",
+      "excludeScope": [
+        "/Newsletter Archive",
+        "/Sandbox",
+        "/WiKi getting started content",
+        "/Tags",
+        "/New Starters start here"
+      ]
+    }
+  ]
+}

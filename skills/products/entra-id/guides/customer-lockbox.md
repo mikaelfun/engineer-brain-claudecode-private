@@ -1,0 +1,60 @@
+# ENTRA-ID Customer Lockbox — Quick Reference
+
+**Entries**: 38 | **21V**: All applicable
+**Last updated**: 2026-04-06
+**Keywords**: customer-lockbox, entra-lockbox, tenant-add, alert, alternate-email, pim
+
+> This topic has a fusion guide with detailed troubleshooting flow
+> → [Full troubleshooting flow](details/customer-lockbox.md)
+
+## Issue Quick Reference
+
+| # | Symptom | Root Cause | Solution | Score | Source |
+|---|---------|-----------|----------|-------|--------|
+| 1 📋 | User with inherited Owner role on a subscription does not receive Azure Customer Lockbox notifica... | An inherited Owner role (e.g., from a management group) is NOT recognized by ... | Assign the Owner role (or Azure Customer Lockbox Approver role) directly at t... | 🟢 9.5 | ADO Wiki |
+| 2 📋 | Customer claims they never received or cannot see a pending Azure Customer Lockbox consent reques... | For Tenant-scoped Lockbox requests (ResourceType=2), only active Entra Global... | 1) In ASC, use F12 Dev Tools to capture GetLockboxConsentRequestStatus API re... | 🟢 8.5 | ADO Wiki |
+| 3 📋 | User assigned the Azure Customer Lockbox Approver role cannot see pending Lockbox requests or rec... | The Azure Customer Lockbox Approver role must be assigned and active on the u... | Ensure Azure Customer Lockbox Approver or Owner role is active at subscriptio... | 🟢 8.5 | ADO Wiki |
+| 4 📋 | Duplicate Lockbox notification emails are sent when primary email and Other Emails field contain ... | Azure Lockbox Alternate Email sends notifications to both primary and other e... | Known issue. Ensure primary email and Other Emails values are different to av... | 🟢 8.5 | ADO Wiki |
+| 5 📋 | Lockbox notification emails only sent to first email in Other Emails despite multiple alternate a... | Azure Lockbox Alternate Email feature only sends notifications to the first e... | Known issue. Place the most important alternate email as the first entry in O... | 🟢 8.5 | ADO Wiki |
+| 6 📋 | Two identical Lockbox notification emails sent to alternate email when primary email field is emp... | When primary email not set and only Other Emails is configured, the Lockbox n... | Known issue. Set a primary email on the user account to avoid duplicate notif... | 🟢 8.5 | ADO Wiki |
+| 7 📋 | User not receiving Azure Lockbox notification email for pending consent requests despite alternat... | Owner/Global Administrator/Azure Customer Lockbox Approver role must be appli... | Confirm Lockbox is enabled for the tenant. Verify alternate email in Other Em... | 🟢 8.5 | ADO Wiki |
+| 8 📋 | Entra Customer Lockbox Tenant Add in ASC error: The tenant is not in the same region as the suppo... | Case region is determined by EUDB onboarding status, not tenant location. Non... | Customer must create a separate support case directly from the resource tenan... | 🟢 8.5 | ADO Wiki |
+| 9 📋 | Entra Customer Lockbox Tenant Add in ASC error: Tenant access check request failed with status co... | The support case is not open or not assigned to the engineer attempting the t... | Verify the support case is still open and the engineer performing Tenant Add ... | 🟢 8.5 | ADO Wiki |
+| 10 📋 | Entra Customer Lockbox Tenant Add in ASC error: Support case creator is not authorized to approve... | The customer who opened the support case does not have an external identity (... | Case contact must have an external identity in the remote tenant with an appr... | 🟢 8.5 | ADO Wiki |
+| 11 📋 | Entra Customer Lockbox Tenant Add in ASC error: Diagnostic data not approved. | Customer did not allow collection of diagnostic information when creating the... | Ask customer to navigate to their support case page in Azure Portal and give ... | 🟢 8.5 | ADO Wiki |
+| 12 📋 | Customer reports they cannot see pending Customer Lockbox consent request in Azure Portal (Pendin... | For tenant-scoped requests, only active Entra Global Administrators at the ti... | 1) Use browser DevTools (F12->Network) on ASC Refresh button to inspect GetLo... | 🟢 8.5 | ADO Wiki |
+| 13 📋 | Customer receives duplicate Lockbox notification emails when primary email and Other Emails field... | Known product issue: Lockbox Alternate Email feature sends separate notificat... | Known issue, no workaround. Ensure primary email and Other Emails values are ... | 🟢 8.5 | ADO Wiki |
+| 14 📋 | Lockbox notifications are sent only to the first email address in Other Emails field despite mult... | Known product issue: Lockbox Alternate Email feature only reads the first ent... | Known issue. Workaround: place the most important alternate email address as ... | 🟢 8.5 | ADO Wiki |
+| 15 📋 | Two duplicate Lockbox notification emails sent to alternate email address when primary email is n... | Known product issue: when primary email is empty and Other Email is set, the ... | Known issue. Workaround: set a primary email on the account to avoid duplicat... | 🟢 8.5 | ADO Wiki |
+| 16 📋 | Customer Lockbox alternate email notification not received by the configured alternate email address | Required roles (Owner/Global Administrator/Azure Customer Lockbox Approver) w... | Verify: 1) Lockbox is enabled for the tenant. 2) Alternate email is correctly... | 🟢 8.5 | ADO Wiki |
+| 17 📋 | Entra Lockbox Tenant Add fails with error: The tenant is not in the same region as the support case | EUDB data boundary restriction. If customer is not onboarded to EUDB, the cas... | Customer must create a separate support case directly from the resource tenan... | 🟢 8.5 | ADO Wiki |
+| 18 📋 | Entra Lockbox Tenant Add fails with error: Tenant access check request failed with status code Fo... | The support case is not open or is not assigned to the engineer attempting to... | Verify the support case is still open and assigned to the current engineer. R... | 🟢 8.5 | ADO Wiki |
+| 19 📋 | Entra Lockbox Tenant Add fails with error: Support case creator is not authorized to approve acce... | The customer who opened the support case does not have an external identity w... | Customer needs to create a guest account in the remote tenant with one of the... | 🟢 8.5 | ADO Wiki |
+| 20 📋 | Entra Lockbox Tenant Add fails with error: Insufficient case information | System cannot retrieve information about the case creator from the support ca... | Escalate via ICM to Azure LockBox\Triage with case details, tenant IDs, and t... | 🟢 8.5 | ADO Wiki |
+| 21 📋 | Entra Lockbox Tenant Add fails with error: Diagnostic data not approved | Customer did not consent to collection of diagnostic information when creatin... | Ask customer to give consent in Advanced diagnostic information in their supp... | 🟢 8.5 | ADO Wiki |
+| 22 📋 | Customer using PIM (Privileged Identity Management) cannot see pending Azure Customer Lockbox req... | When PIM is enabled, the user must have active (elevated) Owner or Global Adm... | 1) Customer activates GA role (for tenant requests) or Owner/Lockbox Approver... | 🟢 8.5 | ADO Wiki |
+| 23 📋 | Lockbox runner failure for a request but no corresponding lockbox logs found for that request ID. | The issue is at JIT processing level. JIT evaluates the request against DSCM ... | 1) Query JIT Kusto logs by request ID to check request status. 2) Check DSCM ... | 🟢 8.5 | ADO Wiki |
+| 24 📋 | Customer with PIM enabled does not receive Customer Lockbox notification email; pending request n... | When PIM is enabled, if a Microsoft employee requests lockbox access before t... | Customer must first activate GA (for tenant requests) or Owner/GA/Azure Custo... | 🟢 8.5 | ADO Wiki |
+| 25 📋 | Customer Lockbox request stuck in pending for 4 days with no notification after PIM was enabled p... | If a Microsoft engineer submits a lockbox request before PIM is enabled (or b... | Wait for the stuck request to timeout (4 days). Then: 1) Customer activates G... | 🟢 8.5 | ADO Wiki |
+| 26 📋 | Runner failure for a lockbox request with no corresponding logs in Lockbox service; request appea... | The issue is at the JIT (Just-In-Time access) layer. JIT evaluates the reques... | 1) Query JIT logs for the request ID, 2) Check policy evaluation at https://j... | 🟢 8.5 | ADO Wiki |
+| 27 📋 | Lockbox request is auto-approved without ever reaching customer notified state; customer never re... | The subscription is associated with an internal Microsoft service in Service ... | 1) Check Service Tree (https://aka.ms/servicetree) for the subscription ID to... | 🟢 8.5 | ADO Wiki |
+| 28 📋 | Customer using PIM (Privileged Identity Management) with Customer Lockbox for Azure does not rece... | Customer Lockbox notifications and pending request visibility require the Own... | This is expected behavior by design. The customer must activate their Owner/G... | 🟢 8.5 | ADO Wiki |
+| 29 📋 | Customer Lockbox alert 'IncorrectRequestProcessing' fires when requests are consistently seen in ... | Request processing logic changed and terminated request before notifying cust... | Investigate LockboxApiRequestProcessing alert first if concurrent. Use Reques... | 🟢 8.5 | ADO Wiki |
+| 30 📋 | Customer Lockbox alert 'JIT-RequestSubmitted-SLA' fires when JIT pipeline fails to process new Lo... | JIT pipeline encountered an error processing Lockbox requests, preventing suc... | Use dashboard linked in ICM to narrow time range to 10-minute window where mi... | 🟢 8.5 | ADO Wiki |
+| 31 📋 | Customer Lockbox alert 'JITRunnerHeartbeatFailure' fires when a JIT Runner region has not reporte... | Runners in the affected region were manually turned off, or an exception in r... | If runners are manually turned off, disable the monitor to suppress the alert... | 🟢 8.5 | ADO Wiki |
+| 32 📋 | Customer Lockbox alert 'JITRunnerIterationFailure' fires when there is a runner failure in any of... | JIT runner instance encountered a failure during its iteration cycle. | Check JIT Runner Dashboard in Jarvis. Review ICM logs (available ~15 minutes ... | 🟢 8.5 | ADO Wiki |
+| 33 📋 | Customer Lockbox alert 'LockboxApiRequestProcessing' fires when post-processing of requests creat... | Unexpected exception during post-processing of API-created Lockbox requests. | Use RequestProcessingSummary logs query in ICM enhancement to drill down to e... | 🟢 8.5 | ADO Wiki |
+| 34 📋 | Customer Lockbox alert 'RequestController500' fires when the number of HTTP 500 responses increas... | Server-side error in the Lockbox Requests Controller causing HTTP 500 responses. | Use FailedRequestSummary query from ICM to get sample log lines. Select the w... | 🟢 8.5 | ADO Wiki |
+| 35 📋 | Customer Lockbox alert 'RunnerTrafficLoss' fires when there are no metrics reported by a runner o... | Lockbox runner instance stopped reporting metrics, causing a gap in availabil... | Use RunnerDrillDown dashboard link from ICM to identify which specific runner... | 🟢 8.5 | ADO Wiki |
+| 36 📋 | Entra Customer Lockbox Tenant Add in ASC error: Insufficient case information. | System cannot retrieve case creator information and is unable to send Entra L... | Verify case has complete contact information. If persists, escalate via ICM t... | 🔵 7.5 | ADO Wiki |
+| 37 📋 | APIRunner501 alert triggered: API Runner is not receiving at least two 501 NotImplemented respons... | Expected behavior is one 501 response per ContextType (tenant, subscription) ... | Investigate why expected 501 responses are missing. Check if runner scenarios... | 🔵 7.5 | ADO Wiki |
+| 38 📋 | APIRunner501 alert is triggered for Customer Lockbox API Runner | The API Runner is not receiving at least two 501 NotImplemented responses eve... | Verify that the API Runner health check scenario (GetContextNotInWhitelist) i... | 🔵 7.5 | ADO Wiki |
+
+## Quick Troubleshooting Path
+
+1. Check **customer-lockbox** related issues (20 entries) `[ado-wiki]`
+2. Check **alternate-email** related issues (8 entries) `[ado-wiki]`
+3. Check **entra-lockbox** related issues (8 entries) `[ado-wiki]`
+4. Check **tenant-add** related issues (8 entries) `[ado-wiki]`
+5. Check **known-issue** related issues (3 entries) `[ado-wiki]`
+6. Check **duplicate-notification** related issues (2 entries) `[ado-wiki]`

@@ -1,0 +1,71 @@
+# VM Vm Start Stop Q — 综合排查指南
+
+**条目数**: 30 | **草稿融合数**: 3 | **Kusto 查询融合**: 0
+**来源草稿**: [ado-wiki-f-startbuild-fail-avdimage-languagepack.md](../../guides/drafts/ado-wiki-f-startbuild-fail-avdimage-languagepack.md), [mslearn-start-vm-last-known-good.md](../../guides/drafts/mslearn-start-vm-last-known-good.md), [onenote-script-vm-restart-events.md](../../guides/drafts/onenote-script-vm-restart-events.md)
+**生成日期**: 2026-04-07
+
+---
+
+## 排查流程
+
+### Phase 2: 排查与诊断
+> 来源: MS Learn
+
+1. 参照 [ado-wiki-f-startbuild-fail-avdimage-languagepack.md](../../guides/drafts/ado-wiki-f-startbuild-fail-avdimage-languagepack.md) 排查流程
+2. 参照 [mslearn-start-vm-last-known-good.md](../../guides/drafts/mslearn-start-vm-last-known-good.md) 排查流程
+3. 参照 [onenote-script-vm-restart-events.md](../../guides/drafts/onenote-script-vm-restart-events.md) 排查流程
+
+### Phase 3: 根因判断与解决
+
+**判断逻辑**：
+
+| 条件 | 含义 | 后续动作 |
+|------|------|---------|
+| NTFS file system error found after unexpected VM r | 1 条相关 | If VM is stuck and not progressing: 1. Snapshot OS disk as b... |
+| Original cluster hosting the VM does not have free | 1 条相关 | For start failure: stop all VMs in the availability set → re... |
+| Problem allocating or updating network resources d | 1 条相关 | Reapply the VM state: navigate to VM → Help → Redeploy + rea... |
+| Windows shutdown process is performing system main | 1 条相关 | 1. Use Serial Console to identify stuck service with Get-Ser... |
+| VM extensions have 90-minute provisioning timeout. | 1 条相关 | 1. Check extension status in portal VM blade. 2. Check Guest... |
+| Large number of VHDs in single storage account cau | 1 条相关 | Distribute VHDs across multiple storage accounts. Max 40 dis... |
+| Custom image has Windows on partition 1 without Sy | 1 条相关 | 1. Stop VM, snapshot OS disk. 2. Resize to larger SKU. 3. Ex... |
+| Guest Agent hangs during shutdown due to extension | 1 条相关 | A: Restart RdAgent, wait 5min, kill WindowsAzureGuest.exe. B... |
+| machine.config missing/corrupted or has WCF profil | 1 条相关 | Remove ServiceModelSink entries from machine.config, restart... |
+| SYSTEM account lacks Full Control on Crypto folder | 1 条相关 | Grant SYSTEM Full Control on C:\ProgramData\Microsoft\Crypto... |
+
+---
+
+## 已知问题速查
+
+| # | 症状 | 根因 | 方案 | 分数 | 来源 |
+|---|------|------|------|------|------|
+| 1 | Azure Windows VM stuck on 'Checking file system on C:' or 'Scanning and repairing drive (C:)' during... | NTFS file system error found after unexpected VM restart or abrupt shutdown. Win... | If VM is stuck and not progressing: 1. Snapshot OS disk as backup. 2. Attach OS ... | 🔵 6.0 | MS Learn |
+| 2 | Azure VM start or resize fails with allocation failure error. Stopped VM cannot be restarted, or exi... | Original cluster hosting the VM does not have free space or does not support the... | For start failure: stop all VMs in the availability set → restart each VM (relea... | 🔵 6.0 | MS Learn |
+| 3 | Azure VM stop/start/restart/redeploy fails with error: 'An unexpected error occurred while processin... | Problem allocating or updating network resources during VM lifecycle operation. | Reapply the VM state: navigate to VM → Help → Redeploy + reapply → select Reappl... | 🔵 6.0 | MS Learn |
+| 4 | Azure Windows VM shutdown is stuck on Restarting, Shutting Down, or Stopping services screen. Boot d... | Windows shutdown process is performing system maintenance (updates, role/feature... | 1. Use Serial Console to identify stuck service with Get-Service / Where-Object ... | 🔵 6.0 | MS Learn |
+| 5 | Azure VM Start or Redeploy operations take much longer than expected. Guest OS is active but Azure p... | VM extensions have 90-minute provisioning timeout. Failed extensions are re-prov... | 1. Check extension status in portal VM blade. 2. Check Guest Agent status. 3. Re... | 🔵 6.0 | MS Learn |
+| 6 | Azure VM with many attached VHDs in same storage account reboots unexpectedly. Storage metrics show ... | Large number of VHDs in single storage account causes IOPS/throughput to exceed ... | Distribute VHDs across multiple storage accounts. Max 40 disks per account recom... | 🔵 6.0 | MS Learn |
+| 7 | Cannot extend encrypted OS volume (C:) on Azure Windows VM. Extend Volume grayed out in Disk Managem... | Custom image has Windows on partition 1 without System Reserved. ADE/BitLocker a... | 1. Stop VM, snapshot OS disk. 2. Resize to larger SKU. 3. Extend System Reserved... | 🔵 6.0 | MS Learn |
+| 8 | Guest Agent stuck in Stopping state. NullReferenceException at GoalStateExecutorBase.WaitForExtensio... | Guest Agent hangs during shutdown due to extension workflow not completing. | A: Restart RdAgent, wait 5min, kill WindowsAzureGuest.exe. B: Uninstall and rein... | 🔵 6.0 | MS Learn |
+| 9 | WindowsAzureGuestAgent.exe crashes on startup with ConfigurationErrorsException. Event 1026. | machine.config missing/corrupted or has WCF profiling entries (ServiceModelSink.... | Remove ServiceModelSink entries from machine.config, restart services. Or copy m... | 🔵 6.0 | MS Learn |
+| 10 | Guest Agent PFXImportCertStore failed, null handle, Error Code 86. Extensions not working. | SYSTEM account lacks Full Control on Crypto folders. | Grant SYSTEM Full Control on C:\ProgramData\Microsoft\Crypto\Keys, \RSA, \System... | 🔵 6.0 | MS Learn |
+| 11 | Guest Agent RdCrypt Initialization failed, Error -2147023143. Cannot get transport certificate. | CNG Key Isolation (KeyIso) service not running. RPC endpoint not registered. | portqry -n VMName -e 135. Start KeyIso service, restart WaAppAgent.exe. | 🔵 6.0 | MS Learn |
+| 12 | Guest Agent BadImageFormatException (0x8007000B). Agent not responding. | Enable64Bit registry set to 0. 64-bit apps treated as 32-bit by third-party modi... | Set Enable64Bit to 1 under HKLM\SOFTWARE\Microsoft\.NETFramework. Restart VM. | 🔵 6.0 | MS Learn |
+| 13 | Multiple 'Windows Azure CRP Certificate Generator' certificates accumulate in VM certificate store a... | Each VM stop/start cycle on a new host issues a new transport certificate for ex... | 1) Delete old certificates manually (keep only latest). VM agent re-creates if n... | 🔵 6.0 | MS Learn |
+| 14 | VM extension fails with FailedToDecryptProtectedSettings. Errors include: 'Keyset does not exist', '... | Transport certificate used to decrypt extension protected settings is missing, e... | 1) Delete 'Windows Azure CRP Certificate Generator' cert from Certificates snap-... | 🔵 6.0 | MS Learn |
+| 15 | Windows activation stops working on Azure VM. Error 0xC004F074: No KMS could be contacted. Previousl... | Azure KMS IP addresses changed in July 2022. azkms.core.windows.net now points t... | 1) Test-NetConnection azkms.core.windows.net -Port 1688, also test 20.118.99.224... | 🔵 6.0 | MS Learn |
+| 16 | Windows activation fails with duplicate Client Machine ID (CMID) error when using self-hosted KMS se... | Azure Marketplace Windows Server images use Sysprep with SkipRearm=1, so VMs fro... | For already deployed VMs: run slmgr /rearm from elevated prompt, restart VM, ver... | 🔵 6.0 | MS Learn |
+| 17 | Windows Server 2022/2025 Datacenter Azure Edition shows activation watermark on desktop despite KMS ... | Two possible causes: (1) VM cannot reach Azure IMDS endpoint (169.254.169.254) d... | Cause 1 (IMDS): Bypass web proxies for 169.254.169.254, verify route table entry... | 🔵 6.0 | MS Learn |
+| 18 | Allocation failure when deploying VM from custom/gallery/marketplace image. New VM request fails bec... | New VM allocation request is pinned to a cluster that either does not support th... | Cause 1 (size not supported): Retry with smaller size, or stop all VMs in availa... | 🔵 6.0 | MS Learn |
+| 19 | Cannot attach data disk to VM. Error: AttachDiskWhileBeingDetached — disk is currently being detache... | Previous data disk detach operation failed, leaving the disk in a transitional '... | PowerShell: Get-AzVM, set $vm.StorageProfile.DataDisks[n].ToBeDetached = $true, ... | 🔵 6.0 | MS Learn |
+| 20 | Cannot deploy VM or VMSS (Uniform) with Capacity Reservation. Deployment fails or reservation is not... | Multiple possible causes: (1) Unsupported constraints — Proximity Placement Grou... | Remove unsupported constraints (PPG, UltraSSD, Spot, Dedicated Host, Availabilit... | 🔵 6.0 | MS Learn |
+| 21 | VM deployment fails with cluster cannot support the requested VM size — AllocationFailed or Overcons... | The hardware cluster backing the availability set or region does not have capaci... | 1) Retry with a smaller VM size. 2) Stop all VMs in the availability set, then c... | 🔵 6.0 | MS Learn |
+| 22 | Cannot attach data disk to VM — error AttachDiskWhileBeingDetached: disk is currently being detached... | Previous data disk detach operation failed, leaving the disk in a transitional s... | Set the toBeDetached flag to true on the failing disk via PowerShell (Update-AzV... | 🔵 6.0 | MS Learn |
+| 23 | VM deployment fails with InvalidVhd error — uploaded VHD not supported, disk expected to have cookie... | The VHD does not comply with the 1 MB alignment (offset) requirement. Supported ... | Resize the disk to comply with 1 MB alignment: Windows use Resize-VHD PowerShell... | 🔵 6.0 | MS Learn |
+| 24 | Cannot deploy VM or VMSS with Capacity Reservation — deployment fails due to unsupported constraints... | Multiple possible causes: (1) Using unsupported features with capacity reservati... | Verify constraints are supported. Explicitly add capacity reservation as a VM/VM... | 🔵 6.0 | MS Learn |
+| 25 | Cannot resize VM to a different size family — VM size family not visible when resizing | Running VMs are deployed to physical server clusters with specific hardware. Res... | For Resource Manager VMs: stop all VMs in the availability set before changing t... | 🔵 6.0 | MS Learn |
+| 26 | Azure Serial Console: Pressing Enter after connection banner does not show sign-in prompt. No SAC pr... | Custom VM, hardened appliance, or incorrect boot config causing Windows to fail ... | For older/custom images, enable EMS manually: bcdedit /ems {current} on && bcded... | 🔵 6.0 | MS Learn |
+| 27 | Azure Serial Console: Only health information shown when connecting to Windows VM. SAC prompt does n... | Special Administration Console (SAC) has not been enabled for the Windows image.... | Enable SAC manually via RDP: bcdedit /ems {current} on && bcdedit /emssettings E... | 🔵 6.0 | MS Learn |
+| 28 | Azure Serial Console: Pasting into PowerShell in SAC results in extra/third character when original ... | Known issue with PSReadLine module running in PowerShell session within SAC. | Run Remove-Module PSReadLine to unload PSReadLine from the current session. | 🔵 6.0 | MS Learn |
+| 29 | Azure Serial Console connects but no output displayed and user input unresponsive after live migrati... | Serial Console and logs become unavailable after live migration for Gen2 VMs wit... | Perform a guest OS restart to restore Serial Console functionality. | 🔵 6.0 | MS Learn |
+| 30 | Computer name of Azure VM using specialized disk is blank in portal/PowerShell/CLI. OS profile prope... | When creating a VM from an existing or specialized disk, the OSProfile settings ... | This is a known Azure platform limitation. The VM name provided during resource ... | 🔵 6.0 | MS Learn |
+

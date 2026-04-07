@@ -298,3 +298,4 @@
   - Arista/Cisco/Juniper MSEE Commands (internal-only), AS Path Prepend diagnostic guide, Connection Monitor TSG
 - Deduplication: 0 deduplicated (new batch file)
 - Output: known-issues-ado-wiki-b.jsonl (15 entries), scanned-ado-wiki-b.json (10 paths)
+| 2026-04-07 | SYNTHESIZE | 22 topics (18 fusion, 4 compact), 386 entries, 14 Kusto queries fused |

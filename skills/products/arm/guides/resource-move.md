@@ -1,0 +1,26 @@
+# ARM 资源移动与跨区域迁移 — 排查速查
+
+**来源数**: 13 | **21V**: 全部
+**最后更新**: 2026-04-07
+
+## 症状速查
+| # | 症状 | 根因 | 方案 | 分数 | 来源 |
+|---|------|------|------|------|------|
+| 1 | Resource move (NIC between resource groups) fails with HTTP 409 ResourceMoveProviderValidationFaile… | ARM resource move validation checks ALL resources in the same VNet. If any resource has an ongoing … | 1) Use Kusto FrontendOperationEtwEvent to find the blocker operationId from the 409 error correlati… | 🟢 8.5 — onenote+21V适用 | [MCVKB/CN1_CE1 Migration 防坑指南 - Migration Plan - Resource.md] |
+| 2 | Resource group location property shows CN1/CE1 even though all resources are in CN3/CE3 after migra… | ARM does not support changing the location property of a resource group after creation. This is a p… | 1) Use PG-provided PowerShell scripts (project-scrub-jay) to change RG location via Resource Mover … | 🟢 8.5 — onenote+21V适用 | [MCVKB/CN1_CE1 Migration 防坑指南 - Migration Plan - Resource.md] |
+| 3 | After moving a Log Analytics Workspace to a new resource group, linked services (Diagnostic Setting… | Moving a LAW to a new resource group changes its ARM Resource ID. All dependent services referencin… | 1) Stop or disable all dependent services BEFORE the move: Diagnostic Settings, AKS Insights, DCR a… | 🟢 8.5 — onenote+21V适用 | [MCVKB/CN1_CE1 Migration 防坑指南 - Migration Plan - Resource.md] |
+| 4 | MySQL Flexible Server with VNet injection: cannot move the VNet of a VNet-injected server to anothe… | ARM Resource Mover does not support moving VNets that have PaaS resources (MySQL flex) deployed int… | For VNet-injected MySQL: only move the server itself (works, no downtime). Do not attempt to move t… | 🟢 8.5 — onenote+21V适用 | [MCVKB/CN1_CE1 Migration 防坑指南 - Migration Plan - Resource.md] |
+| 5 | Azure Data Explorer (ADX/Kusto) cluster with Private Endpoint cannot be moved to another resource g… | ARM resource move validation does not support moving ADX clusters that have associated Private Endp… | Move single ADX cluster without PE (works with no significant interruption, only some query delay o… | 🟢 8.5 — onenote+21V适用 | [MCVKB/CN1_CE1 Migration 防坑指南 - Migration Plan - Resource.md] |
+| 6 | App Service/Function App restarts after resource group move when Application Insights is configured… | Moving an App Service with Application Insights configured triggers a restart of the App Service/Fu… | Plan for brief downtime during move. Check all dependencies before moving: https://learn.microsoft.… | 🟢 8.5 — onenote+21V适用 | [MCVKB/CN1_CE1 Migration 防坑指南 - Migration Plan - Resource.md] |
+| 7 | ContainerApps with VNET Integration cannot use Resource Mover for cross-region migration in Azure C… | ContainerApps with VNET Integration do not support Resource Mover. Azure China does not support Res… | Only option is to rebuild ContainerApps in the new region. For customers needing Resource Mover sup… | 🟢 8.5 — onenote+21V适用 | [MCVKB/CN1_CE1 Migration 防坑指南 - Migration Plan - Service.md] |
+| 8 | Customer wants to move Azure resources from one tenant/directory to another | There is no direct functionality to move resources across directories/tenants | Use a temporary subscription (subscription X in tenant 1): 1) Move resources from subscription A to… | 🔵 7.5 — ado-wiki+21V适用 | [ADO Wiki] |
+| 9 | Customer attempts to move Azure resources from one Azure Active Directory tenant (directory) to ano… | Resources cannot be moved across directories (tenants) in ARM. Cross-directory resource move is not… | Resources cannot be moved directly across tenants. As a workaround, a subscription's directory (ten… | 🔵 7.5 — ado-wiki+21V适用 | [ADO Wiki] |
+| 10 | Customer requests help moving Azure resources from one Azure region to another and the case is rout… | Moving resources across regions is handled by the Azure Resource Mover team, not the ARM team. ARM … | Route or escalate the case to the Azure Resource Mover team for cross-region move support. ARM team… | 🔵 7.5 — ado-wiki+21V适用 | [ADO Wiki] |
+| 11 | 资源移动（Move）失败报错 MoveCannotProceedWithResourcesNotInSucceededState：无法移动资源因为依赖资源不在 Succeeded 状态 | 源或目标资源组中包含 VNet 时，ARM 会检查所有直接和间接依赖该 VNet 的资源的 provisioningState。任何资源不在 Succeeded 状态都会阻止整个移动操作，即使该资源… | 1) 检查并修复所有 Failed 状态的资源（对 Network 资源可用 Get+Set PowerShell cmdlet 恢复 Succeeded 状态）；2) 将资源移动到不包含 VNet… | 🔵 6.0 — mslearn+21V适用 | [mslearn] |
+| 12 | 资源移动失败报错 MissingMoveDependentResources：依赖资源未包含在移动请求中或不存在于目标资源组 | 移动资源时，其依赖资源必须已存在于目标资源组/订阅，或包含在同一移动请求中。例如移动 VM 需要同时移动 NIC、磁盘、NSG、VNet、公共 IP 等 7 种资源类型 | 1) 根据错误消息找到缺失的依赖资源并加入移动请求；2) 跨订阅移动前先将所有依赖资源合并到同一资源组；3) VNet Gateway 必须和 VNet 在同一 RG，不可分开移动 | 🔵 6.0 — mslearn+21V适用 | [mslearn] |
+| 13 | 资源移动（Move）期间资源组被锁定长达 4 小时：无法在源/目标资源组中创建、删除或更新资源（含修改 VM 大小等操作） | ARM 移动操作分两个阶段执行，源和目标资源组在整个过程中被锁定。允许最长 4 小时完成。如果 RP 在任一阶段失败，ARM 会在 4 小时内持续重试。此外两个资源组不能同时参与多个 move 操作… | 1) 预期并等待移动操作完成（大多数远少于 4 小时）；2) 不要在移动期间尝试修改源/目标 RG 中的资源；3) 避免对同一 RG 发起并发 move 操作；4) 如果 4 小时后移动失败，成功的… | 🔵 6.0 — mslearn+21V适用 | [mslearn] |
+
+## 快速排查路径
+1. 1) Use Kusto FrontendOperationEtwEvent to find the blocker operationId from the… `[来源: onenote]`
+2. 1) Use PG-provided PowerShell scripts (project-scrub-jay) to change RG location… `[来源: onenote]`
+3. 1) Stop or disable all dependent services BEFORE the move: Diagnostic Settings,… `[来源: onenote]`

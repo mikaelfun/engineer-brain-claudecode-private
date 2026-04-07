@@ -1,0 +1,18 @@
+{
+  "description": "Wiki path scope rules. Auto-managed by scan history. Manual edits OK.",
+  "scopes": [
+    {
+      "wikiKey": "Supportability/AzureMonitor",
+      "pathScope": [
+        "/Application Insights",
+        "/Log Analytics",
+        "/Alerts",
+        "/Monitor Agents",
+        "/Monitoring Essentials",
+        "/AMPLS (Azure Monitor Private Link Scope)",
+        "/Insights, Workbooks and Managed Products",
+        "/Azure Monitor"
+      ]
+    }
+  ]
+}

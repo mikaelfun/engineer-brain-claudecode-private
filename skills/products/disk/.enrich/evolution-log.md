@@ -422,3 +422,4 @@
 - **Skipped**: 5 pages (ASD Training Manual = link only, Common Misroutes = internal SAP routing, Getting Started/Wiki Tips = wiki meta, WebApps Data capturing = unrelated product)
 - **Deduplicated**: 0 within batch
 - **Isolation**: JSONL→.enrich/known-issues-ado-wiki-a.jsonl, scanned→.enrich/scanned-ado-wiki-a.json
+| 2026-04-07 | SYNTHESIZE | 41 topics (27 fusion, 14 compact), 372 entries, 15 Kusto queries fused |

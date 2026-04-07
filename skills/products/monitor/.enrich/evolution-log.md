@@ -492,3 +492,6 @@
 - Pages 7-9: Training templates (Lab/Objective/Pre-req) — placeholder text, skipped
 - Page 10: TLS 1.0/1.1 deprecation TSG — **3 Track A entries extracted** (availability test TLS failure, ingestion global endpoint TLS retirement, post-migration TLS negotiation failure)
 - IDs: monitor-ado-wiki-a-r19-001 ~ 003
+
+| 2026-04-07 | MERGE | Merged 4 per-source JSONL files → 1209 entries (0 cross-source dedup, 81 21V补标). Sources: onenote=51, ado-wiki=1080, mslearn=73, contentidea-kb=5. IDs renumbered monitor-001 to monitor-1209. | known-issues.jsonl |
+| 2026-04-07 | SYNTHESIZE | Full synthesis: 50 topics (35 fusion, 15 compact), 1206 entries retained, 3 discarded. 86 guide files generated (50 quick-ref + 35 detail + 1 index). 5 Kusto query files mapped to 4 topics. 0 cross-source conflicts detected. | guides/_index.md |

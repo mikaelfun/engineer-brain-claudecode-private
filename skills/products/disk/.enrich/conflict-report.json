@@ -1,0 +1,81 @@
+{
+  "product": "disk",
+  "generatedAt": "2026-04-07",
+  "totalConflicts": 3,
+  "falseAlarms": 13,
+  "candidatesScanned": 16,
+  "conflicts": [
+    {
+      "id": "conflict-001",
+      "topic": "data-box-disk-setup",
+      "type": "solution_conflict",
+      "severity": "medium",
+      "entryA": {
+        "id": "disk-015",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Data Box Disk cannot be opened after unlock - filesystem errors or RAW partition",
+        "solution": "Disk is unusable. Collect diagnostic data, submit to PG, arrange re-shipment of replacement disk."
+      },
+      "entryB": {
+        "id": "disk-122",
+        "source": "ado-wiki",
+        "date": "2026-04-05",
+        "symptom": "Azure Data Box Disk not mounted or accessible on Linux after rsync/system restart; NTFS partition corruption",
+        "solution": "Run 'ntfsfix /dev/sdX' on the NTFS volume to fix common NTFS problems and reset journal, then remount and resume copy"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "两个方案针对不同严重程度：ntfsfix 可修复日志损坏等轻度问题；若物理损坏或严重文件系统错误则需替换磁盘。两者并不互斥。",
+      "recommendation": "指南中两个都保留，标注条件：轻度损坏先尝试 ntfsfix，严重损坏/物理故障则安排换盘",
+      "resolved": true
+    },
+    {
+      "id": "conflict-002",
+      "topic": "data-box-disk-setup",
+      "type": "solution_conflict",
+      "severity": "low",
+      "entryA": {
+        "id": "disk-019",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Data Box Disk unlock tool fails on Red Hat Enterprise Linux 7.x",
+        "solution": "Refer to internal KB. Verify OS requirements, PowerShell version, prerequisites. Try alternative supported OS."
+      },
+      "entryB": {
+        "id": "disk-128",
+        "source": "ado-wiki",
+        "date": "2026-04-05",
+        "symptom": "Unlocking Data Box Disk on RHEL 7.x fails with passkey error; dislocker-file not created",
+        "solution": "Manually download epel-release RPM from valid URL, install dependencies, then re-run unlock tool"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "OneNote 给出通用指引（换 OS），ADO Wiki 给出具体修复（修复脚本中的 broken URL）。两个方案在不同场景下都有效。",
+      "recommendation": "指南中先列 ADO Wiki 具体修复方案，OneNote 的换 OS 作为 fallback",
+      "resolved": true
+    },
+    {
+      "id": "conflict-003",
+      "topic": "data-box-pod-prepare",
+      "type": "rootCause_conflict",
+      "severity": "low",
+      "entryA": {
+        "id": "disk-028",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Data Box POD Prepare to Ship fails with 'Scan completed with errors'",
+        "solution": "Unlock device, download issues list from Connect and Copy page, resolve each error per naming/size conventions"
+      },
+      "entryB": {
+        "id": "disk-246",
+        "source": "ado-wiki",
+        "date": "2026-04-05",
+        "symptom": "Data Box Prepare to Ship error shows StorageRequestFailed",
+        "solution": "Scenario 1: Follow KB for file rename issue. Scenario 2: Disable legal hold/immutable policy on destination SA"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "同为 PtS 失败但根因不同：OneNote 描述通用数据不合规，ADO Wiki 描述特定的文件重命名冲突和 Legal Hold 策略。不同根因对应不同场景。",
+      "recommendation": "指南中按根因分支列出，均保留",
+      "resolved": true
+    }
+  ]
+}

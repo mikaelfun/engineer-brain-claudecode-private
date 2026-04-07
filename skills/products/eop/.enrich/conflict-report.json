@@ -1,0 +1,1855 @@
+{
+  "product": "eop",
+  "generatedAt": "2026-04-07",
+  "totalConflicts": 77,
+  "conflicts": [
+    {
+      "id": "conflict-001",
+      "topic": "ndr-outbound-sender-blocks",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-001",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Outbound emails fail with NDR 550 5.7.750 - Client blocked from sending from unregistered domain",
+        "solution": "add and validate all sending domains in m365; use certificate-based outbound connector with accepted domain; check for unusual connectors and compromi"
+      },
+      "entryB": {
+        "id": "eop-100",
+        "source": "ado-wiki",
+        "date": "2026-04-06",
+        "symptom": "NDR 5.7.750 - unregistered domain blocked",
+        "solution": "validate domain health diagnostic. add accepted domains. check compromise. release diagnostic."
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-002",
+      "topic": "ndr-outbound-sender-blocks",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-001",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Outbound emails fail with NDR 550 5.7.750 - Client blocked from sending from unregistered domain",
+        "solution": "add and validate all sending domains in m365; use certificate-based outbound connector with accepted domain; check for unusual connectors and compromi"
+      },
+      "entryB": {
+        "id": "eop-126",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "发件人收到 NDR 5.1.8 'Access denied, bad outbound sender'，无法发送邮件",
+        "solution": "1) 确认并修复账户安全问题; 2) 重置账户凭据; 3) 联系 microsoft support 恢复发送能力"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-003",
+      "topic": "ndr-outbound-sender-blocks",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-001",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Outbound emails fail with NDR 550 5.7.750 - Client blocked from sending from unregistered domain",
+        "solution": "add and validate all sending domains in m365; use certificate-based outbound connector with accepted domain; check for unusual connectors and compromi"
+      },
+      "entryB": {
+        "id": "eop-127",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "发件人收到 NDR 5.7.501/502/503 'Access denied, spam abuse detected / banned sender'",
+        "solution": "1) 验证账户安全问题已解决; 2) 重置凭据; 3) 联系 microsoft support 通过常规渠道恢复发送能力"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-004",
+      "topic": "ndr-outbound-sender-blocks",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-001",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Outbound emails fail with NDR 550 5.7.750 - Client blocked from sending from unregistered domain",
+        "solution": "add and validate all sending domains in m365; use certificate-based outbound connector with accepted domain; check for unusual connectors and compromi"
+      },
+      "entryB": {
+        "id": "eop-231",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "租户外发邮件被拒绝，收到 NDR 5.7.705 tenant has exceeded threshold 或 5.7.708 traffic not accepted from this IP",
+        "solution": "1) 确认并修复所有 compromised 账户和 open relay；2) 通过常规支持渠道联系 microsoft support 解除封禁；3) 参考 fix email delivery issues for error codes 5.7.700 through 5.7.750"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-005",
+      "topic": "ndr-outbound-sender-blocks",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-001",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Outbound emails fail with NDR 550 5.7.750 - Client blocked from sending from unregistered domain",
+        "solution": "add and validate all sending domains in m365; use certificate-based outbound connector with accepted domain; check for unusual connectors and compromi"
+      },
+      "entryB": {
+        "id": "eop-232",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "租户外发邮件被拒绝，收到 NDR 5.7.750 Client blocked from sending from unregistered domains",
+        "solution": "在 microsoft 365 admin center 中添加并验证所有用于发送邮件的域名。参考 fix email delivery issues for error codes 5.7.700 through 5.7.750"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-006",
+      "topic": "ndr-outbound-sender-blocks",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-001",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Outbound emails fail with NDR 550 5.7.750 - Client blocked from sending from unregistered domain",
+        "solution": "add and validate all sending domains in m365; use certificate-based outbound connector with accepted domain; check for unusual connectors and compromi"
+      },
+      "entryB": {
+        "id": "eop-285",
+        "source": "contentidea-kb",
+        "date": "2026-04-05",
+        "symptom": "Email to Office 365 receives NDR: 550 5.7.750 Service unavailable. Client blocked from sending from ",
+        "solution": "eop pg can whitelist ip from safe tenant block list. prevention: (1) add sending/receiving domain to accepted domains, or (2) change connector to cert"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-007",
+      "topic": "ndr-outbound-sender-blocks",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-004",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Outbound emails fail with NDR 550 5.1.8 Access denied bad outbound sender",
+        "solution": "check if account is compromised; if compromised follow responding to a compromised email account guide; admin unblocks account on restricted entities "
+      },
+      "entryB": {
+        "id": "eop-098",
+        "source": "ado-wiki",
+        "date": "2026-04-06",
+        "symptom": "Sender restricted - NDR 5.1.8",
+        "solution": "remove from restricted users. remediate compromise. adjust policy. shared mailbox: apply to all users."
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-008",
+      "topic": "ndr-outbound-sender-blocks",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-004",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Outbound emails fail with NDR 550 5.1.8 Access denied bad outbound sender",
+        "solution": "check if account is compromised; if compromised follow responding to a compromised email account guide; admin unblocks account on restricted entities "
+      },
+      "entryB": {
+        "id": "eop-126",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "发件人收到 NDR 5.1.8 'Access denied, bad outbound sender'，无法发送邮件",
+        "solution": "1) 确认并修复账户安全问题; 2) 重置账户凭据; 3) 联系 microsoft support 恢复发送能力"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-009",
+      "topic": "ndr-outbound-sender-blocks",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-004",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Outbound emails fail with NDR 550 5.1.8 Access denied bad outbound sender",
+        "solution": "check if account is compromised; if compromised follow responding to a compromised email account guide; admin unblocks account on restricted entities "
+      },
+      "entryB": {
+        "id": "eop-127",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "发件人收到 NDR 5.7.501/502/503 'Access denied, spam abuse detected / banned sender'",
+        "solution": "1) 验证账户安全问题已解决; 2) 重置凭据; 3) 联系 microsoft support 通过常规渠道恢复发送能力"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-010",
+      "topic": "ndr-outbound-sender-blocks",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-004",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Outbound emails fail with NDR 550 5.1.8 Access denied bad outbound sender",
+        "solution": "check if account is compromised; if compromised follow responding to a compromised email account guide; admin unblocks account on restricted entities "
+      },
+      "entryB": {
+        "id": "eop-142",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "用户被阻止发送邮件，出现在 Restricted entities 页面，收到 NDR 5.1.8 'Access denied, bad outbound sender'",
+        "solution": "1) 先按 compromised account 流程处理：重置密码、启用 mfa、扫描恶意软件、检查 inbox rules 和 delegates; 2) 管理员在 defender portal → restricted entities 页面解除限制; 3) 或使用 powershell:"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-011",
+      "topic": "ndr-outbound-sender-blocks",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-004",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Outbound emails fail with NDR 550 5.1.8 Access denied bad outbound sender",
+        "solution": "check if account is compromised; if compromised follow responding to a compromised email account guide; admin unblocks account on restricted entities "
+      },
+      "entryB": {
+        "id": "eop-231",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "租户外发邮件被拒绝，收到 NDR 5.7.705 tenant has exceeded threshold 或 5.7.708 traffic not accepted from this IP",
+        "solution": "1) 确认并修复所有 compromised 账户和 open relay；2) 通过常规支持渠道联系 microsoft support 解除封禁；3) 参考 fix email delivery issues for error codes 5.7.700 through 5.7.750"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-012",
+      "topic": "ndr-outbound-sender-blocks",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-004",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Outbound emails fail with NDR 550 5.1.8 Access denied bad outbound sender",
+        "solution": "check if account is compromised; if compromised follow responding to a compromised email account guide; admin unblocks account on restricted entities "
+      },
+      "entryB": {
+        "id": "eop-232",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "租户外发邮件被拒绝，收到 NDR 5.7.750 Client blocked from sending from unregistered domains",
+        "solution": "在 microsoft 365 admin center 中添加并验证所有用于发送邮件的域名。参考 fix email delivery issues for error codes 5.7.700 through 5.7.750"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-013",
+      "topic": "ndr-outbound-sender-blocks",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-004",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Outbound emails fail with NDR 550 5.1.8 Access denied bad outbound sender",
+        "solution": "check if account is compromised; if compromised follow responding to a compromised email account guide; admin unblocks account on restricted entities "
+      },
+      "entryB": {
+        "id": "eop-285",
+        "source": "contentidea-kb",
+        "date": "2026-04-05",
+        "symptom": "Email to Office 365 receives NDR: 550 5.7.750 Service unavailable. Client blocked from sending from ",
+        "solution": "eop pg can whitelist ip from safe tenant block list. prevention: (1) add sending/receiving domain to accepted domains, or (2) change connector to cert"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-014",
+      "topic": "ndr-outbound-sender-blocks",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-005",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Outbound emails fail with NDR 5.1.90 - reached daily limit for message recipients",
+        "solution": "verify account not compromised; wait for daily limit reset; review sending patterns against exchange online sending limits; refer to troubleshooting b"
+      },
+      "entryB": {
+        "id": "eop-099",
+        "source": "ado-wiki",
+        "date": "2026-04-06",
+        "symptom": "NDR 5.1.90/5.2.0 - exceeded Recipient Rate Limit",
+        "solution": "wait 24h. adjust policy (use 0 not 10000). check compromise. bulk relay: use third-party."
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-015",
+      "topic": "ndr-outbound-sender-blocks",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-005",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Outbound emails fail with NDR 5.1.90 - reached daily limit for message recipients",
+        "solution": "verify account not compromised; wait for daily limit reset; review sending patterns against exchange online sending limits; refer to troubleshooting b"
+      },
+      "entryB": {
+        "id": "eop-126",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "发件人收到 NDR 5.1.8 'Access denied, bad outbound sender'，无法发送邮件",
+        "solution": "1) 确认并修复账户安全问题; 2) 重置账户凭据; 3) 联系 microsoft support 恢复发送能力"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-016",
+      "topic": "ndr-outbound-sender-blocks",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-005",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Outbound emails fail with NDR 5.1.90 - reached daily limit for message recipients",
+        "solution": "verify account not compromised; wait for daily limit reset; review sending patterns against exchange online sending limits; refer to troubleshooting b"
+      },
+      "entryB": {
+        "id": "eop-127",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "发件人收到 NDR 5.7.501/502/503 'Access denied, spam abuse detected / banned sender'",
+        "solution": "1) 验证账户安全问题已解决; 2) 重置凭据; 3) 联系 microsoft support 通过常规渠道恢复发送能力"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-017",
+      "topic": "ndr-outbound-sender-blocks",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-005",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Outbound emails fail with NDR 5.1.90 - reached daily limit for message recipients",
+        "solution": "verify account not compromised; wait for daily limit reset; review sending patterns against exchange online sending limits; refer to troubleshooting b"
+      },
+      "entryB": {
+        "id": "eop-231",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "租户外发邮件被拒绝，收到 NDR 5.7.705 tenant has exceeded threshold 或 5.7.708 traffic not accepted from this IP",
+        "solution": "1) 确认并修复所有 compromised 账户和 open relay；2) 通过常规支持渠道联系 microsoft support 解除封禁；3) 参考 fix email delivery issues for error codes 5.7.700 through 5.7.750"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-018",
+      "topic": "ndr-outbound-sender-blocks",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-005",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Outbound emails fail with NDR 5.1.90 - reached daily limit for message recipients",
+        "solution": "verify account not compromised; wait for daily limit reset; review sending patterns against exchange online sending limits; refer to troubleshooting b"
+      },
+      "entryB": {
+        "id": "eop-232",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "租户外发邮件被拒绝，收到 NDR 5.7.750 Client blocked from sending from unregistered domains",
+        "solution": "在 microsoft 365 admin center 中添加并验证所有用于发送邮件的域名。参考 fix email delivery issues for error codes 5.7.700 through 5.7.750"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-019",
+      "topic": "ndr-outbound-sender-blocks",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-005",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Outbound emails fail with NDR 5.1.90 - reached daily limit for message recipients",
+        "solution": "verify account not compromised; wait for daily limit reset; review sending patterns against exchange online sending limits; refer to troubleshooting b"
+      },
+      "entryB": {
+        "id": "eop-285",
+        "source": "contentidea-kb",
+        "date": "2026-04-05",
+        "symptom": "Email to Office 365 receives NDR: 550 5.7.750 Service unavailable. Client blocked from sending from ",
+        "solution": "eop pg can whitelist ip from safe tenant block list. prevention: (1) add sending/receiving domain to accepted domains, or (2) change connector to cert"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-020",
+      "topic": "ndr-outbound-sender-blocks",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-006",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "All outbound emails from tenant blocked with NDR 550 5.7.705 Access denied tenant has exceeded thres",
+        "solution": "1) check for fraud (do not run diagnostic if fraud); 2) run validate eop domain health diagnostic; 3) stop compromise: reset all admin passwords, enab"
+      },
+      "entryB": {
+        "id": "eop-102",
+        "source": "ado-wiki",
+        "date": "2026-04-06",
+        "symptom": "NDR 5.7.705 - Tenant exceeded outbound threshold",
+        "solution": "follow aka.ms/mdofraud."
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-021",
+      "topic": "ndr-outbound-sender-blocks",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-006",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "All outbound emails from tenant blocked with NDR 550 5.7.705 Access denied tenant has exceeded thres",
+        "solution": "1) check for fraud (do not run diagnostic if fraud); 2) run validate eop domain health diagnostic; 3) stop compromise: reset all admin passwords, enab"
+      },
+      "entryB": {
+        "id": "eop-126",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "发件人收到 NDR 5.1.8 'Access denied, bad outbound sender'，无法发送邮件",
+        "solution": "1) 确认并修复账户安全问题; 2) 重置账户凭据; 3) 联系 microsoft support 恢复发送能力"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-022",
+      "topic": "ndr-outbound-sender-blocks",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-006",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "All outbound emails from tenant blocked with NDR 550 5.7.705 Access denied tenant has exceeded thres",
+        "solution": "1) check for fraud (do not run diagnostic if fraud); 2) run validate eop domain health diagnostic; 3) stop compromise: reset all admin passwords, enab"
+      },
+      "entryB": {
+        "id": "eop-127",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "发件人收到 NDR 5.7.501/502/503 'Access denied, spam abuse detected / banned sender'",
+        "solution": "1) 验证账户安全问题已解决; 2) 重置凭据; 3) 联系 microsoft support 通过常规渠道恢复发送能力"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-023",
+      "topic": "ndr-outbound-sender-blocks",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-006",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "All outbound emails from tenant blocked with NDR 550 5.7.705 Access denied tenant has exceeded thres",
+        "solution": "1) check for fraud (do not run diagnostic if fraud); 2) run validate eop domain health diagnostic; 3) stop compromise: reset all admin passwords, enab"
+      },
+      "entryB": {
+        "id": "eop-231",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "租户外发邮件被拒绝，收到 NDR 5.7.705 tenant has exceeded threshold 或 5.7.708 traffic not accepted from this IP",
+        "solution": "1) 确认并修复所有 compromised 账户和 open relay；2) 通过常规支持渠道联系 microsoft support 解除封禁；3) 参考 fix email delivery issues for error codes 5.7.700 through 5.7.750"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-024",
+      "topic": "ndr-outbound-sender-blocks",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-006",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "All outbound emails from tenant blocked with NDR 550 5.7.705 Access denied tenant has exceeded thres",
+        "solution": "1) check for fraud (do not run diagnostic if fraud); 2) run validate eop domain health diagnostic; 3) stop compromise: reset all admin passwords, enab"
+      },
+      "entryB": {
+        "id": "eop-232",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "租户外发邮件被拒绝，收到 NDR 5.7.750 Client blocked from sending from unregistered domains",
+        "solution": "在 microsoft 365 admin center 中添加并验证所有用于发送邮件的域名。参考 fix email delivery issues for error codes 5.7.700 through 5.7.750"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-025",
+      "topic": "ndr-outbound-sender-blocks",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-006",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "All outbound emails from tenant blocked with NDR 550 5.7.705 Access denied tenant has exceeded thres",
+        "solution": "1) check for fraud (do not run diagnostic if fraud); 2) run validate eop domain health diagnostic; 3) stop compromise: reset all admin passwords, enab"
+      },
+      "entryB": {
+        "id": "eop-285",
+        "source": "contentidea-kb",
+        "date": "2026-04-05",
+        "symptom": "Email to Office 365 receives NDR: 550 5.7.750 Service unavailable. Client blocked from sending from ",
+        "solution": "eop pg can whitelist ip from safe tenant block list. prevention: (1) add sending/receiving domain to accepted domains, or (2) change connector to cert"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-026",
+      "topic": "ndr-outbound-sender-blocks",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-056",
+        "source": "ado-wiki",
+        "date": "2026-04-05",
+        "symptom": "GoDaddy tenant blocked with 5.7.705 Tenant Exceeded Threshold error",
+        "solution": "1) all correspondence via email only - do not call. 2) run diagnostics with add alternate tenant using partnerendcustomer tenant id. 3) run eop domain"
+      },
+      "entryB": {
+        "id": "eop-231",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "租户外发邮件被拒绝，收到 NDR 5.7.705 tenant has exceeded threshold 或 5.7.708 traffic not accepted from this IP",
+        "solution": "1) 确认并修复所有 compromised 账户和 open relay；2) 通过常规支持渠道联系 microsoft support 解除封禁；3) 参考 fix email delivery issues for error codes 5.7.700 through 5.7.750"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-027",
+      "topic": "ndr-outbound-sender-blocks",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-098",
+        "source": "ado-wiki",
+        "date": "2026-04-06",
+        "symptom": "Sender restricted - NDR 5.1.8",
+        "solution": "remove from restricted users. remediate compromise. adjust policy. shared mailbox: apply to all users."
+      },
+      "entryB": {
+        "id": "eop-126",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "发件人收到 NDR 5.1.8 'Access denied, bad outbound sender'，无法发送邮件",
+        "solution": "1) 确认并修复账户安全问题; 2) 重置账户凭据; 3) 联系 microsoft support 恢复发送能力"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-028",
+      "topic": "ndr-outbound-sender-blocks",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-098",
+        "source": "ado-wiki",
+        "date": "2026-04-06",
+        "symptom": "Sender restricted - NDR 5.1.8",
+        "solution": "remove from restricted users. remediate compromise. adjust policy. shared mailbox: apply to all users."
+      },
+      "entryB": {
+        "id": "eop-142",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "用户被阻止发送邮件，出现在 Restricted entities 页面，收到 NDR 5.1.8 'Access denied, bad outbound sender'",
+        "solution": "1) 先按 compromised account 流程处理：重置密码、启用 mfa、扫描恶意软件、检查 inbox rules 和 delegates; 2) 管理员在 defender portal → restricted entities 页面解除限制; 3) 或使用 powershell:"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-029",
+      "topic": "ndr-outbound-sender-blocks",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-100",
+        "source": "ado-wiki",
+        "date": "2026-04-06",
+        "symptom": "NDR 5.7.750 - unregistered domain blocked",
+        "solution": "validate domain health diagnostic. add accepted domains. check compromise. release diagnostic."
+      },
+      "entryB": {
+        "id": "eop-232",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "租户外发邮件被拒绝，收到 NDR 5.7.750 Client blocked from sending from unregistered domains",
+        "solution": "在 microsoft 365 admin center 中添加并验证所有用于发送邮件的域名。参考 fix email delivery issues for error codes 5.7.700 through 5.7.750"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-030",
+      "topic": "ndr-outbound-sender-blocks",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-100",
+        "source": "ado-wiki",
+        "date": "2026-04-06",
+        "symptom": "NDR 5.7.750 - unregistered domain blocked",
+        "solution": "validate domain health diagnostic. add accepted domains. check compromise. release diagnostic."
+      },
+      "entryB": {
+        "id": "eop-285",
+        "source": "contentidea-kb",
+        "date": "2026-04-05",
+        "symptom": "Email to Office 365 receives NDR: 550 5.7.750 Service unavailable. Client blocked from sending from ",
+        "solution": "eop pg can whitelist ip from safe tenant block list. prevention: (1) add sending/receiving domain to accepted domains, or (2) change connector to cert"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-031",
+      "topic": "ndr-outbound-sender-blocks",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-102",
+        "source": "ado-wiki",
+        "date": "2026-04-06",
+        "symptom": "NDR 5.7.705 - Tenant exceeded outbound threshold",
+        "solution": "follow aka.ms/mdofraud."
+      },
+      "entryB": {
+        "id": "eop-231",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "租户外发邮件被拒绝，收到 NDR 5.7.705 tenant has exceeded threshold 或 5.7.708 traffic not accepted from this IP",
+        "solution": "1) 确认并修复所有 compromised 账户和 open relay；2) 通过常规支持渠道联系 microsoft support 解除封禁；3) 参考 fix email delivery issues for error codes 5.7.700 through 5.7.750"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-032",
+      "topic": "ndr-outbound-sender-blocks",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-126",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "发件人收到 NDR 5.1.8 'Access denied, bad outbound sender'，无法发送邮件",
+        "solution": "1) 确认并修复账户安全问题; 2) 重置账户凭据; 3) 联系 microsoft support 恢复发送能力"
+      },
+      "entryB": {
+        "id": "eop-285",
+        "source": "contentidea-kb",
+        "date": "2026-04-05",
+        "symptom": "Email to Office 365 receives NDR: 550 5.7.750 Service unavailable. Client blocked from sending from ",
+        "solution": "eop pg can whitelist ip from safe tenant block list. prevention: (1) add sending/receiving domain to accepted domains, or (2) change connector to cert"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-033",
+      "topic": "ndr-outbound-sender-blocks",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-127",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "发件人收到 NDR 5.7.501/502/503 'Access denied, spam abuse detected / banned sender'",
+        "solution": "1) 验证账户安全问题已解决; 2) 重置凭据; 3) 联系 microsoft support 通过常规渠道恢复发送能力"
+      },
+      "entryB": {
+        "id": "eop-285",
+        "source": "contentidea-kb",
+        "date": "2026-04-05",
+        "symptom": "Email to Office 365 receives NDR: 550 5.7.750 Service unavailable. Client blocked from sending from ",
+        "solution": "eop pg can whitelist ip from safe tenant block list. prevention: (1) add sending/receiving domain to accepted domains, or (2) change connector to cert"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-034",
+      "topic": "ndr-outbound-sender-blocks",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-231",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "租户外发邮件被拒绝，收到 NDR 5.7.705 tenant has exceeded threshold 或 5.7.708 traffic not accepted from this IP",
+        "solution": "1) 确认并修复所有 compromised 账户和 open relay；2) 通过常规支持渠道联系 microsoft support 解除封禁；3) 参考 fix email delivery issues for error codes 5.7.700 through 5.7.750"
+      },
+      "entryB": {
+        "id": "eop-285",
+        "source": "contentidea-kb",
+        "date": "2026-04-05",
+        "symptom": "Email to Office 365 receives NDR: 550 5.7.750 Service unavailable. Client blocked from sending from ",
+        "solution": "eop pg can whitelist ip from safe tenant block list. prevention: (1) add sending/receiving domain to accepted domains, or (2) change connector to cert"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-035",
+      "topic": "ndr-outbound-sender-blocks",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-232",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "租户外发邮件被拒绝，收到 NDR 5.7.750 Client blocked from sending from unregistered domains",
+        "solution": "在 microsoft 365 admin center 中添加并验证所有用于发送邮件的域名。参考 fix email delivery issues for error codes 5.7.700 through 5.7.750"
+      },
+      "entryB": {
+        "id": "eop-285",
+        "source": "contentidea-kb",
+        "date": "2026-04-05",
+        "symptom": "Email to Office 365 receives NDR: 550 5.7.750 Service unavailable. Client blocked from sending from ",
+        "solution": "eop pg can whitelist ip from safe tenant block list. prevention: (1) add sending/receiving domain to accepted domains, or (2) change connector to cert"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-036",
+      "topic": "ndr-ip-throttling-reputation",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-003",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Emails rejected with NDR 4.7.500 Server busy or 5.7.708 with various AS codes (AS77712/AS77713/AS780",
+        "solution": "run release tenant ip server busy diagnostic in eop diagnostics to whitelist ip for up to 30 days; check ip spam percentage via eop ip health diagnost"
+      },
+      "entryB": {
+        "id": "eop-101",
+        "source": "ado-wiki",
+        "date": "2026-04-06",
+        "symptom": "NDR 5.7.708 - IP blocked, traffic not accepted",
+        "solution": "verify no spam. release tenant ip diagnostic."
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-037",
+      "topic": "ndr-ip-throttling-reputation",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-003",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Emails rejected with NDR 4.7.500 Server busy or 5.7.708 with various AS codes (AS77712/AS77713/AS780",
+        "solution": "run release tenant ip server busy diagnostic in eop diagnostics to whitelist ip for up to 30 days; check ip spam percentage via eop ip health diagnost"
+      },
+      "entryB": {
+        "id": "eop-125",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "发件人收到 NDR 451 4.7.500-699 (ASxxx) 错误，邮件被退回",
+        "solution": "配置 eop inbound connector 标识可信发件服务器：1) on-prem relay 场景配置 connector from email server to m365; 2) 第三方服务场景配置 secure mail flow connector。新发件人需要建立发送历史后自动恢"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-038",
+      "topic": "ndr-ip-throttling-reputation",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-003",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Emails rejected with NDR 4.7.500 Server busy or 5.7.708 with various AS codes (AS77712/AS77713/AS780",
+        "solution": "run release tenant ip server busy diagnostic in eop diagnostics to whitelist ip for up to 30 days; check ip spam percentage via eop ip health diagnost"
+      },
+      "entryB": {
+        "id": "eop-143",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "外部发件人向 M365 收件人发邮件被退回，收到 NDR 550 5.7.606-649 Access denied, banned sending IP",
+        "solution": "1) 访问 office 365 anti-spam ip delist portal (https://sender.office.com/); 2) 输入收到 ndr 的邮箱地址和被封锁的 ip 地址; 3) 提交后查收确认邮件并点击确认链接; 4) 在 portal 中选择 delist ip"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-039",
+      "topic": "ndr-ip-throttling-reputation",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-003",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Emails rejected with NDR 4.7.500 Server busy or 5.7.708 with various AS codes (AS77712/AS77713/AS780",
+        "solution": "run release tenant ip server busy diagnostic in eop diagnostics to whitelist ip for up to 30 days; check ip spam percentage via eop ip health diagnost"
+      },
+      "entryB": {
+        "id": "eop-144",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "外部发件人收到 NDR 550 5.7.511 Access denied, banned sender，无法使用 delist portal 自助解除",
+        "solution": "1) 将收到的完整 ndr（包含错误代码和 ip 地址）转发到 delist@microsoft.com; 2) microsoft 将在 48 小时内联系提供后续步骤; 3) 不能使用 https://sender.office.com/ 自助解除"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-040",
+      "topic": "ndr-ip-throttling-reputation",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-003",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Emails rejected with NDR 4.7.500 Server busy or 5.7.708 with various AS codes (AS77712/AS77713/AS780",
+        "solution": "run release tenant ip server busy diagnostic in eop diagnostics to whitelist ip for up to 30 days; check ip spam percentage via eop ip health diagnost"
+      },
+      "entryB": {
+        "id": "eop-149",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "外部邮件服务器发邮件被拒绝，收到 NDR 5.7.1 Unable To Relay: Blocked by Customer Allow list，但 NDR 中未显示具体 blocklist 名称",
+        "solution": "1) 从 connection filtering 的 ip allow list 中移除该外部邮件服务器的 ip; 2) 移除后再次发送测试邮件，此时 ndr 会包含具体的 blocklist 名称; 3) 根据 blocklist 名称联系对应的 rbl 提供商申请解除; 4) 最佳实践：仅将 "
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-041",
+      "topic": "ndr-ip-throttling-reputation",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-003",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Emails rejected with NDR 4.7.500 Server busy or 5.7.708 with various AS codes (AS77712/AS77713/AS780",
+        "solution": "run release tenant ip server busy diagnostic in eop diagnostics to whitelist ip for up to 30 days; check ip spam percentage via eop ip health diagnost"
+      },
+      "entryB": {
+        "id": "eop-186",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "外部发件人收到 NDR 5.7.1 Service unavailable; Client host [IP] blocked using Blocklist 1，邮件被 EOP 拒绝",
+        "solution": "发件人将 ndr 完整邮件转发到 delist@microsoft.com 请求移除。也可使用 delist portal (https://sender.office.com) 自助提交移除请求。admin 侧可检查 connection filter policy 是否有 ip allow li"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-042",
+      "topic": "ndr-ip-throttling-reputation",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-009",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Outbound emails rejected with NDR 550 5.0.350 Address rejected due to sender IP poor reputation",
+        "solution": "file fp escalation via assist 365 with sender ip and ndr details; request ip reputation review and whitelisting; enterprise: eee uses get-manuallist t"
+      },
+      "entryB": {
+        "id": "eop-125",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "发件人收到 NDR 451 4.7.500-699 (ASxxx) 错误，邮件被退回",
+        "solution": "配置 eop inbound connector 标识可信发件服务器：1) on-prem relay 场景配置 connector from email server to m365; 2) 第三方服务场景配置 secure mail flow connector。新发件人需要建立发送历史后自动恢"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-043",
+      "topic": "ndr-ip-throttling-reputation",
+      "type": "21v_contradiction",
+      "severity": "low",
+      "entryA": {
+        "id": "eop-009",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Outbound emails rejected with NDR 550 5.0.350 Address rejected due to sender IP poor reputation",
+        "21vApplicable": true
+      },
+      "entryB": {
+        "id": "eop-143",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "外部发件人向 M365 收件人发邮件被退回，收到 NDR 550 5.7.606-649 Access denied, banned sending IP",
+        "21vApplicable": false
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different 21v applicability for related symptoms - likely different feature scopes",
+      "recommendation": "Both valid - annotate 21v conditions per entry",
+      "resolved": true
+    },
+    {
+      "id": "conflict-044",
+      "topic": "ndr-ip-throttling-reputation",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-009",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Outbound emails rejected with NDR 550 5.0.350 Address rejected due to sender IP poor reputation",
+        "solution": "file fp escalation via assist 365 with sender ip and ndr details; request ip reputation review and whitelisting; enterprise: eee uses get-manuallist t"
+      },
+      "entryB": {
+        "id": "eop-143",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "外部发件人向 M365 收件人发邮件被退回，收到 NDR 550 5.7.606-649 Access denied, banned sending IP",
+        "solution": "1) 访问 office 365 anti-spam ip delist portal (https://sender.office.com/); 2) 输入收到 ndr 的邮箱地址和被封锁的 ip 地址; 3) 提交后查收确认邮件并点击确认链接; 4) 在 portal 中选择 delist ip"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-045",
+      "topic": "ndr-ip-throttling-reputation",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-009",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Outbound emails rejected with NDR 550 5.0.350 Address rejected due to sender IP poor reputation",
+        "solution": "file fp escalation via assist 365 with sender ip and ndr details; request ip reputation review and whitelisting; enterprise: eee uses get-manuallist t"
+      },
+      "entryB": {
+        "id": "eop-144",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "外部发件人收到 NDR 550 5.7.511 Access denied, banned sender，无法使用 delist portal 自助解除",
+        "solution": "1) 将收到的完整 ndr（包含错误代码和 ip 地址）转发到 delist@microsoft.com; 2) microsoft 将在 48 小时内联系提供后续步骤; 3) 不能使用 https://sender.office.com/ 自助解除"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-046",
+      "topic": "ndr-ip-throttling-reputation",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-009",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Outbound emails rejected with NDR 550 5.0.350 Address rejected due to sender IP poor reputation",
+        "solution": "file fp escalation via assist 365 with sender ip and ndr details; request ip reputation review and whitelisting; enterprise: eee uses get-manuallist t"
+      },
+      "entryB": {
+        "id": "eop-149",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "外部邮件服务器发邮件被拒绝，收到 NDR 5.7.1 Unable To Relay: Blocked by Customer Allow list，但 NDR 中未显示具体 blocklist 名称",
+        "solution": "1) 从 connection filtering 的 ip allow list 中移除该外部邮件服务器的 ip; 2) 移除后再次发送测试邮件，此时 ndr 会包含具体的 blocklist 名称; 3) 根据 blocklist 名称联系对应的 rbl 提供商申请解除; 4) 最佳实践：仅将 "
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-047",
+      "topic": "ndr-ip-throttling-reputation",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-009",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Outbound emails rejected with NDR 550 5.0.350 Address rejected due to sender IP poor reputation",
+        "solution": "file fp escalation via assist 365 with sender ip and ndr details; request ip reputation review and whitelisting; enterprise: eee uses get-manuallist t"
+      },
+      "entryB": {
+        "id": "eop-186",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "外部发件人收到 NDR 5.7.1 Service unavailable; Client host [IP] blocked using Blocklist 1，邮件被 EOP 拒绝",
+        "solution": "发件人将 ndr 完整邮件转发到 delist@microsoft.com 请求移除。也可使用 delist portal (https://sender.office.com) 自助提交移除请求。admin 侧可检查 connection filter policy 是否有 ip allow li"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-048",
+      "topic": "ndr-ip-throttling-reputation",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-011",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Slow mail delivery to EXO after batch resend from gateway - new sending IP gets deferred with 452 4.",
+        "solution": "pg adds new ip to allowlist for 1 month to build reputation via icm; ensure messages are attributed to a dedicated inbound connector (check receive li"
+      },
+      "entryB": {
+        "id": "eop-103",
+        "source": "ado-wiki",
+        "date": "2026-04-06",
+        "symptom": "NDR 4.7.500 - Server busy, gray-listed",
+        "solution": "configure inbound connector. release tenant ip server busy diagnostic (14-day exclusion)."
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-049",
+      "topic": "ndr-ip-throttling-reputation",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-013",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "451 4.7.500 Access denied without AS code in response - back pressure message not from MDO antispam ",
+        "solution": "if no as code present, this is transport-layer back pressure, not mdo throttling - release tenant ip diagnostic will not help; sending server should i"
+      },
+      "entryB": {
+        "id": "eop-103",
+        "source": "ado-wiki",
+        "date": "2026-04-06",
+        "symptom": "NDR 4.7.500 - Server busy, gray-listed",
+        "solution": "configure inbound connector. release tenant ip server busy diagnostic (14-day exclusion)."
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-050",
+      "topic": "ndr-ip-throttling-reputation",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-105",
+        "source": "ado-wiki",
+        "date": "2026-04-06",
+        "symptom": "NDR 5.7.606-649 - Sender IP banned",
+        "solution": "self-delist via sender.office.com. if 24h fail, escalate to antispam engineering."
+      },
+      "entryB": {
+        "id": "eop-143",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "外部发件人向 M365 收件人发邮件被退回，收到 NDR 550 5.7.606-649 Access denied, banned sending IP",
+        "solution": "1) 访问 office 365 anti-spam ip delist portal (https://sender.office.com/); 2) 输入收到 ndr 的邮箱地址和被封锁的 ip 地址; 3) 提交后查收确认邮件并点击确认链接; 4) 在 portal 中选择 delist ip"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-051",
+      "topic": "ndr-ip-throttling-reputation",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-106",
+        "source": "ado-wiki",
+        "date": "2026-04-06",
+        "symptom": "NDR 5.7.511 - Sender IP banned, self-delist NOT available",
+        "solution": "forward full ndr to delist@microsoft.com. 48h response. escalate with full history if needed."
+      },
+      "entryB": {
+        "id": "eop-144",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "外部发件人收到 NDR 550 5.7.511 Access denied, banned sender，无法使用 delist portal 自助解除",
+        "solution": "1) 将收到的完整 ndr（包含错误代码和 ip 地址）转发到 delist@microsoft.com; 2) microsoft 将在 48 小时内联系提供后续步骤; 3) 不能使用 https://sender.office.com/ 自助解除"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-052",
+      "topic": "relay-forwarding-outbound",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-104",
+        "source": "ado-wiki",
+        "date": "2026-04-06",
+        "symptom": "NDR 5.7.520 - External forwarding restricted",
+        "solution": "custom policy for specific users with forwarding on. default off."
+      },
+      "entryB": {
+        "id": "eop-167",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "用户自动转发邮件给外部收件人时收到 NDR 5.7.520 Access denied, Your organization does not allow external forwarding",
+        "solution": "1) 如需允许特定用户转发：创建新 outbound spam filter policy → automatic forwarding=on → 仅 scope 到需要转发的用户/组; 2) 如需限制转发目标域：使用 remote domain 的 autoforwardenabled 设置按域控"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-053",
+      "topic": "hybrid-mail-flow",
+      "type": "21v_contradiction",
+      "severity": "low",
+      "entryA": {
+        "id": "eop-162",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "Exchange 2010 hybrid 环境中 M365 发送的邮件被 on-premises 拒绝，发件人收到 NDR，且 NDR 频率随时间增加",
+        "21vApplicable": false
+      },
+      "entryB": {
+        "id": "eop-278",
+        "source": "contentidea-kb",
+        "date": "2026-04-05",
+        "symptom": "When running the Exchange Hybrid Connectivity Wizard, warning during mail flow connector creation. I",
+        "21vApplicable": true
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different 21v applicability for related symptoms - likely different feature scopes",
+      "recommendation": "Both valid - annotate 21v conditions per entry",
+      "resolved": true
+    },
+    {
+      "id": "conflict-054",
+      "topic": "hybrid-mail-flow",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-162",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "Exchange 2010 hybrid 环境中 M365 发送的邮件被 on-premises 拒绝，发件人收到 NDR，且 NDR 频率随时间增加",
+        "solution": "重新运行 hybrid configuration wizard 自动更新 ip（推荐），或手动更新 on-prem receive connector 的 remoteipranges。注意：exchange 2013+ 无需此 receive connector"
+      },
+      "entryB": {
+        "id": "eop-278",
+        "source": "contentidea-kb",
+        "date": "2026-04-05",
+        "symptom": "When running the Exchange Hybrid Connectivity Wizard, warning during mail flow connector creation. I",
+        "solution": "(preferred) add the domain used on the certificate to the office 365 tenant via settings > domains. or have the certificate re-issued with a name matc"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-055",
+      "topic": "hybrid-mail-flow",
+      "type": "21v_contradiction",
+      "severity": "low",
+      "entryA": {
+        "id": "eop-163",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "发送邮件收到 NDR 554 5.4.6 (on-premises) 或 5.4.14 (Exchange Online) Hop count exceeded - possible mail loo",
+        "21vApplicable": false
+      },
+      "entryB": {
+        "id": "eop-278",
+        "source": "contentidea-kb",
+        "date": "2026-04-05",
+        "symptom": "When running the Exchange Hybrid Connectivity Wizard, warning during mail flow connector creation. I",
+        "21vApplicable": true
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different 21v applicability for related symptoms - likely different feature scopes",
+      "recommendation": "Both valid - annotate 21v conditions per entry",
+      "resolved": true
+    },
+    {
+      "id": "conflict-056",
+      "topic": "hybrid-mail-flow",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-163",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "发送邮件收到 NDR 554 5.4.6 (on-premises) 或 5.4.14 (Exchange Online) Hop count exceeded - possible mail loo",
+        "solution": "1) 重新运行 hybrid configuration wizard; 2) 确认 hybrid connector 使用 smart host routing 且指向 on-prem exchange fqdn; 3) 确认 on-premises 类型 connector 未被 scope 到"
+      },
+      "entryB": {
+        "id": "eop-278",
+        "source": "contentidea-kb",
+        "date": "2026-04-05",
+        "symptom": "When running the Exchange Hybrid Connectivity Wizard, warning during mail flow connector creation. I",
+        "solution": "(preferred) add the domain used on the certificate to the office 365 tenant via settings > domains. or have the certificate re-issued with a name matc"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-057",
+      "topic": "hybrid-mail-flow",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-234",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "Public folder 迁移到 Exchange Online 后，发送邮件到 mail-enabled public folder (MEPF) 收到 NDR 554 5.4.14 Hop co",
+        "solution": "1) 检查 get-outboundconnector 是否启用了 centralized mail transport，如是则通过 hcw 禁用。2) exchange online 侧：set-organizationconfig -remotepublicfoldermailboxes $nu"
+      },
+      "entryB": {
+        "id": "eop-278",
+        "source": "contentidea-kb",
+        "date": "2026-04-05",
+        "symptom": "When running the Exchange Hybrid Connectivity Wizard, warning during mail flow connector creation. I",
+        "solution": "(preferred) add the domain used on the certificate to the office 365 tenant via settings > domains. or have the certificate re-issued with a name matc"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-058",
+      "topic": "hybrid-mail-flow",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-235",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "Hybrid 环境中 unverified domain 的用户主 SMTP 地址显示为 user@contoso.onmicrosoft.com，外部邮件收到 NDR 554 5.4.14 Hop ",
+        "solution": "在 microsoft 365 admin center 中添加并验证所有缺失的域名。验证完成后 smtp 地址将自动更新。如果此方法不适用于业务需求，联系 support 获取进一步帮助"
+      },
+      "entryB": {
+        "id": "eop-278",
+        "source": "contentidea-kb",
+        "date": "2026-04-05",
+        "symptom": "When running the Exchange Hybrid Connectivity Wizard, warning during mail flow connector creation. I",
+        "solution": "(preferred) add the domain used on the certificate to the office 365 tenant via settings > domains. or have the certificate re-issued with a name matc"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-059",
+      "topic": "dbeb-recipient-validation",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-002",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Inbound emails to non-existent recipients rejected with NDR 5.4.1 when DBEB is enabled",
+        "solution": "review dbeb configuration; ensure all valid recipients exist in exchange online directory; disable dbeb if causing issues with valid mail flow"
+      },
+      "entryB": {
+        "id": "eop-138",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "发送邮件收到 NDR 550 5.1.1 至 5.1.20 错误，提示收件人不存在或找不到",
+        "solution": "1) 确认收件人地址拼写正确; 2) 清除 outlook auto-complete (nickname cache) 中的无效条目; 3) 检查收件人是否有错误的转发规则; 4) 管理员验证域 mx 记录正确指向 *.mail.protection.outlook.com; 5) 检查 sent"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-060",
+      "topic": "dbeb-recipient-validation",
+      "type": "21v_contradiction",
+      "severity": "low",
+      "entryA": {
+        "id": "eop-002",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Inbound emails to non-existent recipients rejected with NDR 5.4.1 when DBEB is enabled",
+        "21vApplicable": true
+      },
+      "entryB": {
+        "id": "eop-165",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "Hybrid 迁移场景中外部发件人发邮件给 on-premises 收件人收到 NDR 550 5.4.1 Recipient address rejected: Access denied",
+        "21vApplicable": false
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different 21v applicability for related symptoms - likely different feature scopes",
+      "recommendation": "Both valid - annotate 21v conditions per entry",
+      "resolved": true
+    },
+    {
+      "id": "conflict-061",
+      "topic": "dbeb-recipient-validation",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-002",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Inbound emails to non-existent recipients rejected with NDR 5.4.1 when DBEB is enabled",
+        "solution": "review dbeb configuration; ensure all valid recipients exist in exchange online directory; disable dbeb if causing issues with valid mail flow"
+      },
+      "entryB": {
+        "id": "eop-165",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "Hybrid 迁移场景中外部发件人发邮件给 on-premises 收件人收到 NDR 550 5.4.1 Recipient address rejected: Access denied",
+        "solution": "1) 迁移期间保持 accepted domain 类型为 internal relay，直到所有收件人都已同步到 m365; 2) 使用 aad connect 或手动创建 mail users/mail contacts 将所有 on-prem 收件人同步到 m365; 3) 确认所有收件人都已"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-062",
+      "topic": "dbeb-recipient-validation",
+      "type": "21v_contradiction",
+      "severity": "low",
+      "entryA": {
+        "id": "eop-002",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Inbound emails to non-existent recipients rejected with NDR 5.4.1 when DBEB is enabled",
+        "21vApplicable": true
+      },
+      "entryB": {
+        "id": "eop-166",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "Hybrid 环境中发往 on-premises dynamic distribution group 的邮件被 DBEB 拒绝，收到 NDR 550 5.4.1",
+        "21vApplicable": false
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different 21v applicability for related symptoms - likely different feature scopes",
+      "recommendation": "Both valid - annotate 21v conditions per entry",
+      "resolved": true
+    },
+    {
+      "id": "conflict-063",
+      "topic": "dbeb-recipient-validation",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-002",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Inbound emails to non-existent recipients rejected with NDR 5.4.1 when DBEB is enabled",
+        "solution": "review dbeb configuration; ensure all valid recipients exist in exchange online directory; disable dbeb if causing issues with valid mail flow"
+      },
+      "entryB": {
+        "id": "eop-166",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "Hybrid 环境中发往 on-premises dynamic distribution group 的邮件被 DBEB 拒绝，收到 NDR 550 5.4.1",
+        "solution": "在 exchange online 中创建与 on-prem dynamic distribution group 相同外部邮箱地址的 mail contact 作为代理收件人，使 dbeb 识别该地址为有效收件人"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-064",
+      "topic": "dbeb-recipient-validation",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-002",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Inbound emails to non-existent recipients rejected with NDR 5.4.1 when DBEB is enabled",
+        "solution": "review dbeb configuration; ensure all valid recipients exist in exchange online directory; disable dbeb if causing issues with valid mail flow"
+      },
+      "entryB": {
+        "id": "eop-170",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "发送邮件收到 NDR 550 5.1.10，收件人地址不存在或无法找到，或收到大量 backscatter NDR（自己未发送的邮件）",
+        "solution": "1) 删除 outlook autocomplete 中的旧条目重新输入地址; 2) 检查收件人 inbox rules 和 account forwarding 设置; 3) 如为 backscatter → 安全忽略，建议配置 spf hard fail (-all) 防止被伪造; 4) 管理员"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-065",
+      "topic": "dbeb-recipient-validation",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-002",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Inbound emails to non-existent recipients rejected with NDR 5.4.1 when DBEB is enabled",
+        "solution": "review dbeb configuration; ensure all valid recipients exist in exchange online directory; disable dbeb if causing issues with valid mail flow"
+      },
+      "entryB": {
+        "id": "eop-183",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "发送邮件到 distribution group 收到 NDR 550 5.7.124 Sender not in allowed-senders list，邮件被拒绝",
+        "solution": "方法一：group owner 或 admin 在 eac recipients groups delivery management 中将发件人添加到 allowed senders list。方法二：选择 allow messages from people inside and outside"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-066",
+      "topic": "dbeb-recipient-validation",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-002",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Inbound emails to non-existent recipients rejected with NDR 5.4.1 when DBEB is enabled",
+        "solution": "review dbeb configuration; ensure all valid recipients exist in exchange online directory; disable dbeb if causing issues with valid mail flow"
+      },
+      "entryB": {
+        "id": "eop-184",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "外部发件人向 distribution group 发邮件收到 NDR 550 5.7.133 Sender not authenticated for group，group 拒绝来自组织外部的邮件",
+        "solution": "方法一：eac recipients groups settings delivery management 选择 allow messages from people inside and outside my organization。方法二：保留限制但将特定外部发件人添加到 allowed s"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-067",
+      "topic": "dbeb-recipient-validation",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-002",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Inbound emails to non-existent recipients rejected with NDR 5.4.1 when DBEB is enabled",
+        "solution": "review dbeb configuration; ensure all valid recipients exist in exchange online directory; disable dbeb if causing issues with valid mail flow"
+      },
+      "entryB": {
+        "id": "eop-185",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "外部发件人向 Exchange Online mail-enabled public folder 发邮件收到 NDR 5.7.1 RESOLVER.RST.AuthRequired; authent",
+        "solution": "eac public folders 选择该 public folder edit mail flow settings message delivery restrictions accept messages from 取消勾选 require that all senders are auth"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-068",
+      "topic": "dbeb-recipient-validation",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-002",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Inbound emails to non-existent recipients rejected with NDR 5.4.1 when DBEB is enabled",
+        "solution": "review dbeb configuration; ensure all valid recipients exist in exchange online directory; disable dbeb if causing issues with valid mail flow"
+      },
+      "entryB": {
+        "id": "eop-233",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "外部发件人向 M365 收件人发邮件被拒绝，收到 NDR 5.7.12 Sender was not authenticated by organization",
+        "solution": "收件人管理员需检查并修改该收件人（通常是 distribution group/shared mailbox）的 delivery management 设置，允许外部发件人发送。参考 fix email delivery issues for error code 5.7.12"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-069",
+      "topic": "dbeb-recipient-validation",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-002",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Inbound emails to non-existent recipients rejected with NDR 5.4.1 when DBEB is enabled",
+        "solution": "review dbeb configuration; ensure all valid recipients exist in exchange online directory; disable dbeb if causing issues with valid mail flow"
+      },
+      "entryB": {
+        "id": "eop-287",
+        "source": "contentidea-kb",
+        "date": "2026-04-05",
+        "symptom": "External emails to Dynamic Distribution groups fail with 550 5.4.1 All recipient addresses rejected:",
+        "solution": "(1) change ddg primary smtp (e.g., ddl@domain.com to ddl1@domain.com). (2) create static dl with original smtp address. (3) set-distributiongroup -req"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-070",
+      "topic": "dbeb-recipient-validation",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-138",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "发送邮件收到 NDR 550 5.1.1 至 5.1.20 错误，提示收件人不存在或找不到",
+        "solution": "1) 确认收件人地址拼写正确; 2) 清除 outlook auto-complete (nickname cache) 中的无效条目; 3) 检查收件人是否有错误的转发规则; 4) 管理员验证域 mx 记录正确指向 *.mail.protection.outlook.com; 5) 检查 sent"
+      },
+      "entryB": {
+        "id": "eop-287",
+        "source": "contentidea-kb",
+        "date": "2026-04-05",
+        "symptom": "External emails to Dynamic Distribution groups fail with 550 5.4.1 All recipient addresses rejected:",
+        "solution": "(1) change ddg primary smtp (e.g., ddl@domain.com to ddl1@domain.com). (2) create static dl with original smtp address. (3) set-distributiongroup -req"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-071",
+      "topic": "dbeb-recipient-validation",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-165",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "Hybrid 迁移场景中外部发件人发邮件给 on-premises 收件人收到 NDR 550 5.4.1 Recipient address rejected: Access denied",
+        "solution": "1) 迁移期间保持 accepted domain 类型为 internal relay，直到所有收件人都已同步到 m365; 2) 使用 aad connect 或手动创建 mail users/mail contacts 将所有 on-prem 收件人同步到 m365; 3) 确认所有收件人都已"
+      },
+      "entryB": {
+        "id": "eop-287",
+        "source": "contentidea-kb",
+        "date": "2026-04-05",
+        "symptom": "External emails to Dynamic Distribution groups fail with 550 5.4.1 All recipient addresses rejected:",
+        "solution": "(1) change ddg primary smtp (e.g., ddl@domain.com to ddl1@domain.com). (2) create static dl with original smtp address. (3) set-distributiongroup -req"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-072",
+      "topic": "dbeb-recipient-validation",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-170",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "发送邮件收到 NDR 550 5.1.10，收件人地址不存在或无法找到，或收到大量 backscatter NDR（自己未发送的邮件）",
+        "solution": "1) 删除 outlook autocomplete 中的旧条目重新输入地址; 2) 检查收件人 inbox rules 和 account forwarding 设置; 3) 如为 backscatter → 安全忽略，建议配置 spf hard fail (-all) 防止被伪造; 4) 管理员"
+      },
+      "entryB": {
+        "id": "eop-287",
+        "source": "contentidea-kb",
+        "date": "2026-04-05",
+        "symptom": "External emails to Dynamic Distribution groups fail with 550 5.4.1 All recipient addresses rejected:",
+        "solution": "(1) change ddg primary smtp (e.g., ddl@domain.com to ddl1@domain.com). (2) create static dl with original smtp address. (3) set-distributiongroup -req"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-073",
+      "topic": "dbeb-recipient-validation",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-183",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "发送邮件到 distribution group 收到 NDR 550 5.7.124 Sender not in allowed-senders list，邮件被拒绝",
+        "solution": "方法一：group owner 或 admin 在 eac recipients groups delivery management 中将发件人添加到 allowed senders list。方法二：选择 allow messages from people inside and outside"
+      },
+      "entryB": {
+        "id": "eop-287",
+        "source": "contentidea-kb",
+        "date": "2026-04-05",
+        "symptom": "External emails to Dynamic Distribution groups fail with 550 5.4.1 All recipient addresses rejected:",
+        "solution": "(1) change ddg primary smtp (e.g., ddl@domain.com to ddl1@domain.com). (2) create static dl with original smtp address. (3) set-distributiongroup -req"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-074",
+      "topic": "dbeb-recipient-validation",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-184",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "外部发件人向 distribution group 发邮件收到 NDR 550 5.7.133 Sender not authenticated for group，group 拒绝来自组织外部的邮件",
+        "solution": "方法一：eac recipients groups settings delivery management 选择 allow messages from people inside and outside my organization。方法二：保留限制但将特定外部发件人添加到 allowed s"
+      },
+      "entryB": {
+        "id": "eop-287",
+        "source": "contentidea-kb",
+        "date": "2026-04-05",
+        "symptom": "External emails to Dynamic Distribution groups fail with 550 5.4.1 All recipient addresses rejected:",
+        "solution": "(1) change ddg primary smtp (e.g., ddl@domain.com to ddl1@domain.com). (2) create static dl with original smtp address. (3) set-distributiongroup -req"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-075",
+      "topic": "dbeb-recipient-validation",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-185",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "外部发件人向 Exchange Online mail-enabled public folder 发邮件收到 NDR 5.7.1 RESOLVER.RST.AuthRequired; authent",
+        "solution": "eac public folders 选择该 public folder edit mail flow settings message delivery restrictions accept messages from 取消勾选 require that all senders are auth"
+      },
+      "entryB": {
+        "id": "eop-287",
+        "source": "contentidea-kb",
+        "date": "2026-04-05",
+        "symptom": "External emails to Dynamic Distribution groups fail with 550 5.4.1 All recipient addresses rejected:",
+        "solution": "(1) change ddg primary smtp (e.g., ddl@domain.com to ddl1@domain.com). (2) create static dl with original smtp address. (3) set-distributiongroup -req"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-076",
+      "topic": "dbeb-recipient-validation",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-233",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "外部发件人向 M365 收件人发邮件被拒绝，收到 NDR 5.7.12 Sender was not authenticated by organization",
+        "solution": "收件人管理员需检查并修改该收件人（通常是 distribution group/shared mailbox）的 delivery management 设置，允许外部发件人发送。参考 fix email delivery issues for error code 5.7.12"
+      },
+      "entryB": {
+        "id": "eop-287",
+        "source": "contentidea-kb",
+        "date": "2026-04-05",
+        "symptom": "External emails to Dynamic Distribution groups fail with 550 5.4.1 All recipient addresses rejected:",
+        "solution": "(1) change ddg primary smtp (e.g., ddl@domain.com to ddl1@domain.com). (2) create static dl with original smtp address. (3) set-distributiongroup -req"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    },
+    {
+      "id": "conflict-077",
+      "topic": "backscatter-ndr",
+      "type": "solution_divergence",
+      "severity": "medium",
+      "entryA": {
+        "id": "eop-024",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Valid NDR (bounce message) detected as backscatter by EOP and delivered to recipient's junk folder i",
+        "solution": "request pg to add tenant to anti-backscatter rule allow list via icm escalation; reference known issue task 4273311 (improve ndr backscatter fix to no"
+      },
+      "entryB": {
+        "id": "eop-139",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "收到大量自己未发送的邮件的 NDR 退信通知（backscatter），用户误以为账户被入侵",
+        "solution": "1) 检查 sent items 确认无异常发送的邮件，如无异常则可忽略 backscatter; 2) 如发现异常邮件则按账户被入侵流程处理（重置密码、扫描恶意软件）; 3) 配置 spf 记录防止域名被伪造; 4) asf 设置中有 backscatter ndr 检测选项但在 m365 exo"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different sources provide divergent solutions for similar NDR - likely complementary approaches for different scenarios",
+      "recommendation": "Include both, annotate applicable conditions",
+      "resolved": true
+    }
+  ]
+}

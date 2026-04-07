@@ -1,0 +1,1169 @@
+{
+  "product": "eop",
+  "generatedAt": "2026-04-07",
+  "topics": [
+    {
+      "slug": "ndr-outbound-sender-blocks",
+      "title": "外发邮件被阻止 - 发件人/租户限制 (5.1.8/5.1.90/5.7.705/5.7.750)",
+      "entryIds": [
+        "eop-001",
+        "eop-004",
+        "eop-005",
+        "eop-006",
+        "eop-056",
+        "eop-098",
+        "eop-099",
+        "eop-100",
+        "eop-102",
+        "eop-126",
+        "eop-127",
+        "eop-142",
+        "eop-202",
+        "eop-231",
+        "eop-232",
+        "eop-285"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Blocked-Senders.md",
+        "guides/drafts/ado-wiki-a-investigate-fraud-recover-mail-flow.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "NDR",
+        "5.1.8",
+        "5.1.90",
+        "5.7.705",
+        "5.7.750",
+        "outbound-spam",
+        "restricted-entities",
+        "tenant-blocked"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "ndr-ip-throttling-reputation",
+      "title": "IP 限流与信誉阻止 (4.7.500/5.7.708/AS codes)",
+      "entryIds": [
+        "eop-003",
+        "eop-009",
+        "eop-011",
+        "eop-013",
+        "eop-040",
+        "eop-101",
+        "eop-103",
+        "eop-105",
+        "eop-106",
+        "eop-125",
+        "eop-143",
+        "eop-144",
+        "eop-145",
+        "eop-149",
+        "eop-186"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Connection-Filter-Spamhaus.md",
+        "guides/drafts/ado-wiki-a-delist-microsoft-ips.md",
+        "guides/drafts/ado-wiki-a-ip-throttle-override-gcc.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "4.7.500",
+        "5.7.708",
+        "AS-code",
+        "IP-throttling",
+        "graylisting",
+        "server-busy",
+        "delist"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "ip-blocklist-spamhaus",
+      "title": "外部 IP 黑名单 (Spamhaus/DNSBL) 与 Delist",
+      "entryIds": [
+        "eop-007",
+        "eop-012",
+        "eop-019",
+        "eop-035",
+        "eop-092",
+        "eop-094"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Connection-Filter-Spamhaus.md",
+        "guides/drafts/ado-wiki-a-Reverse-DNS.md",
+        "guides/drafts/ado-wiki-a-delist-microsoft-ips.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "Spamhaus",
+        "DNSBL",
+        "IP-blocklist",
+        "delist",
+        "CSS",
+        "PTR",
+        "reverse-DNS"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "email-auth-spf",
+      "title": "SPF 认证失败与配置",
+      "entryIds": [
+        "eop-016",
+        "eop-020",
+        "eop-065",
+        "eop-067",
+        "eop-070",
+        "eop-071",
+        "eop-072",
+        "eop-073",
+        "eop-129",
+        "eop-276",
+        "eop-277",
+        "eop-284"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-email-authentication-spf-dkim-dmarc.md",
+        "guides/drafts/ado-wiki-a-quantifying-auth-results-advanced-hunting.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "SPF",
+        "permerror",
+        "DNS-lookup",
+        "temperror",
+        "softfail",
+        "hardfail",
+        "macro-spf"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "email-auth-dkim",
+      "title": "DKIM 签名验证失败与配置",
+      "entryIds": [
+        "eop-068",
+        "eop-069",
+        "eop-130",
+        "eop-181",
+        "eop-182",
+        "eop-220",
+        "eop-239",
+        "eop-241"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-email-authentication-spf-dkim-dmarc.md",
+        "guides/drafts/mslearn-email-authentication-troubleshoot.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "DKIM",
+        "body-hash",
+        "signature-verify",
+        "CnameMissing",
+        "key-rotation",
+        "selector"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "email-auth-dmarc-compauth",
+      "title": "DMARC/CompAuth 与 ARC 信任链",
+      "entryIds": [
+        "eop-017",
+        "eop-064",
+        "eop-066",
+        "eop-114",
+        "eop-128",
+        "eop-217",
+        "eop-218",
+        "eop-219"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-email-authentication-spf-dkim-dmarc.md",
+        "guides/drafts/ado-wiki-a-Spoofing-Impersonation.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "DMARC",
+        "CompAuth",
+        "ARC",
+        "auto-forwarding",
+        "SRS",
+        "bestguesspass"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "spoofing-impersonation",
+      "title": "仿冒与用户/域名冒充检测",
+      "entryIds": [
+        "eop-015",
+        "eop-089",
+        "eop-090",
+        "eop-146",
+        "eop-240"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Spoofing-Impersonation.md",
+        "guides/drafts/mslearn-spoof-intelligence-management.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "spoofing",
+        "impersonation",
+        "UIMP",
+        "SPOOF",
+        "spoof-intelligence",
+        "CompAuth"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "false-positive-spam",
+      "title": "合法邮件误判为垃圾邮件/钓鱼 (FP)",
+      "entryIds": [
+        "eop-008",
+        "eop-010",
+        "eop-052",
+        "eop-074",
+        "eop-082",
+        "eop-116",
+        "eop-117",
+        "eop-122",
+        "eop-131",
+        "eop-141"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Troubleshooting-FP-FN.md",
+        "guides/drafts/ado-wiki-a-Triage-FPFN-Diagnostics.md",
+        "guides/drafts/ado-wiki-b-Advanced-Spam-Filtering.md",
+        "guides/drafts/ado-wiki-a-Safety-Tips.md",
+        "guides/drafts/ado-wiki-a-fnfp-pcms-reviews.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "false-positive",
+        "FP",
+        "SCL",
+        "quarantine",
+        "SFV",
+        "high-confidence-phish",
+        "ASF"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "false-negative-bypass",
+      "title": "恶意邮件绕过过滤 (FN) 与投递覆盖",
+      "entryIds": [
+        "eop-132",
+        "eop-150",
+        "eop-152",
+        "eop-154",
+        "eop-155",
+        "eop-158",
+        "eop-169"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Troubleshooting-FP-FN.md",
+        "guides/drafts/mslearn-eop-recommended-settings.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "false-negative",
+        "FN",
+        "bypass",
+        "override",
+        "Safe-Senders",
+        "IP-Allow-List",
+        "submission"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "fp-fn-escalation",
+      "title": "FP/FN 调查与升级流程",
+      "entryIds": [
+        "eop-018",
+        "eop-043",
+        "eop-156",
+        "eop-157"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Troubleshooting-FP-FN.md",
+        "guides/drafts/ado-wiki-a-Triage-FPFN-Diagnostics.md",
+        "guides/drafts/onenote-fnfp-escalation-process.md",
+        "guides/drafts/ado-wiki-a-fnfp-pcms-reviews.md",
+        "guides/drafts/ado-wiki-b-emea-fp-fn-communication-template.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "FP-escalation",
+        "FN-escalation",
+        "Sonar",
+        "FPFN",
+        "submission",
+        "GCC"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "quarantine-operations",
+      "title": "隔离区操作、通知与释放",
+      "entryIds": [
+        "eop-023",
+        "eop-042",
+        "eop-097",
+        "eop-118",
+        "eop-119",
+        "eop-137",
+        "eop-221",
+        "eop-222",
+        "eop-223"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Quarantine-Operations.md",
+        "guides/drafts/ado-wiki-a-Quarantine-Release-Without-Interaction.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "quarantine",
+        "notification",
+        "release",
+        "re-quarantine",
+        "ESNEnabled",
+        "shared-mailbox"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "zap-post-delivery",
+      "title": "ZAP 与投递后邮件移动",
+      "entryIds": [
+        "eop-027",
+        "eop-028",
+        "eop-047",
+        "eop-096",
+        "eop-148"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Messages-Moved-Post-Delivery.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "ZAP",
+        "zero-hour-auto-purge",
+        "post-delivery",
+        "junk-movement",
+        "reverse-ZAP"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "tabl-allow-block",
+      "title": "租户允许/阻止列表 (TABL) 管理",
+      "entryIds": [
+        "eop-029",
+        "eop-030",
+        "eop-031",
+        "eop-032",
+        "eop-033",
+        "eop-034",
+        "eop-177",
+        "eop-178",
+        "eop-179",
+        "eop-180"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-tabl-faq.md",
+        "guides/drafts/mslearn-sender-allow-block-management.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "TABL",
+        "Tenant-Allow-Block-List",
+        "URL",
+        "spoof",
+        "IPv4",
+        "allow-entry",
+        "auto-expire"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "connection-filter-ipv6",
+      "title": "连接筛选与 IPv6 入站限制",
+      "entryIds": [
+        "eop-091",
+        "eop-093",
+        "eop-151",
+        "eop-205",
+        "eop-206",
+        "eop-207"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Connection-Filter-Spamhaus.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "connection-filter",
+        "IP-Allow-List",
+        "IPv6",
+        "IPV:CAL",
+        "cross-forest",
+        "PTR"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "enhanced-filtering",
+      "title": "增强筛选 (EFC/Skip Listing) 配置",
+      "entryIds": [
+        "eop-075",
+        "eop-107",
+        "eop-108",
+        "eop-109",
+        "eop-133"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "Enhanced-Filtering",
+        "EFC",
+        "skip-listing",
+        "EFUsers",
+        "third-party-SEG",
+        "dual-use"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "junk-email-config",
+      "title": "邮箱垃圾邮件配置与限制",
+      "entryIds": [
+        "eop-078",
+        "eop-079",
+        "eop-080",
+        "eop-081",
+        "eop-110",
+        "eop-111",
+        "eop-112",
+        "eop-113"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Blocked-Senders.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "junk-email",
+        "Set-MailboxJunkEmailConfiguration",
+        "hash-limit",
+        "510KB",
+        "TrustedSenders"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "transport-rules",
+      "title": "传输规则 (Mail Flow Rules) 问题",
+      "entryIds": [
+        "eop-053",
+        "eop-159",
+        "eop-173",
+        "eop-174",
+        "eop-175",
+        "eop-176",
+        "eop-204"
+      ],
+      "draftPaths": [
+        "guides/drafts/mslearn-mail-flow-rules-set-scl.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "transport-rule",
+        "mail-flow-rule",
+        "disclaimer",
+        "AND-OR-logic",
+        "SentTo",
+        "slow-rules"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "anti-spam-policy",
+      "title": "反垃圾邮件策略配置与优先级",
+      "entryIds": [
+        "eop-039",
+        "eop-041",
+        "eop-054",
+        "eop-147",
+        "eop-203"
+      ],
+      "draftPaths": [
+        "guides/drafts/mslearn-eop-anti-spam-filtering-guide.md",
+        "guides/drafts/mslearn-eop-recommended-settings.md",
+        "guides/drafts/ado-wiki-b-Bulk-Confidence-Level.md",
+        "guides/drafts/ado-wiki-a-Spam-Confidence-Level.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "anti-spam-policy",
+        "preset-security-policy",
+        "BCL",
+        "bulk-email",
+        "policy-priority"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "advanced-delivery-phishsim",
+      "title": "Advanced Delivery 与钓鱼模拟",
+      "entryIds": [
+        "eop-049",
+        "eop-050",
+        "eop-051",
+        "eop-062",
+        "eop-063"
+      ],
+      "draftPaths": [
+        "guides/drafts/mslearn-advanced-delivery-policy.md",
+        "guides/drafts/ado-wiki-b-Attack-Simulation-Training-FAQ.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "Advanced-Delivery",
+        "phishing-simulation",
+        "SecOps",
+        "IntraOrg",
+        "AST"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "safe-links",
+      "title": "Safe Links (安全链接) 问题",
+      "entryIds": [
+        "eop-046",
+        "eop-095",
+        "eop-213",
+        "eop-214",
+        "eop-215"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-URL-Click-Alerts.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "Safe-Links",
+        "URL-rewriting",
+        "time-of-click",
+        "API-only",
+        "mcasproxy"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "safe-attachments",
+      "title": "Safe Attachments (安全附件) 问题",
+      "entryIds": [
+        "eop-083",
+        "eop-209",
+        "eop-210",
+        "eop-211",
+        "eop-212",
+        "eop-237"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-malware-tsg.md",
+        "guides/drafts/mslearn-anti-malware-common-attachments.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "Safe-Attachments",
+        "Dynamic-Delivery",
+        "ZAP",
+        "SharePoint",
+        "Exclaimer"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "spo-odb-malware",
+      "title": "SharePoint/OneDrive 恶意软件检测",
+      "entryIds": [
+        "eop-036",
+        "eop-037",
+        "eop-038",
+        "eop-045"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-Anti-malware-in-SPO-and-ODB.md",
+        "guides/drafts/ado-wiki-anti-malware-spo-odb.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "SPO",
+        "ODB",
+        "malware",
+        "MSAV",
+        "ATP",
+        "false-positive",
+        "30-day-retention"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "relay-forwarding-outbound",
+      "title": "中继/转发/外发路由与 HRDP",
+      "entryIds": [
+        "eop-055",
+        "eop-087",
+        "eop-088",
+        "eop-104",
+        "eop-134",
+        "eop-135",
+        "eop-136",
+        "eop-140",
+        "eop-167",
+        "eop-168"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Relay-Pools.md",
+        "guides/drafts/mslearn-email-forwarding-alert-investigation.md",
+        "guides/drafts/mslearn-email-delivery-troubleshooting.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "relay-pool",
+        "forwarding",
+        "HRDP",
+        "SRS",
+        "5.7.367",
+        "5.7.23",
+        "5.7.520",
+        "remote-domain"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "connector-delivery-errors",
+      "title": "Connector 投递错误 (4xx/TLS/DNS)",
+      "entryIds": [
+        "eop-196",
+        "eop-197",
+        "eop-198",
+        "eop-199",
+        "eop-200",
+        "eop-201",
+        "eop-208",
+        "eop-216",
+        "eop-238"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "connector",
+        "4.4.312",
+        "4.4.315",
+        "4.4.316",
+        "4.4.317",
+        "4.4.318",
+        "4.7.320",
+        "DNS",
+        "mail-loop"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "smtp-auth-device-sending",
+      "title": "SMTP AUTH 设备/应用发送与认证",
+      "entryIds": [
+        "eop-120",
+        "eop-268",
+        "eop-269",
+        "eop-270",
+        "eop-271",
+        "eop-272",
+        "eop-273",
+        "eop-274",
+        "eop-275"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Recipient-Rate-Limit.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "SMTP-AUTH",
+        "5.7.57",
+        "5.7.64",
+        "5.2.251",
+        "TLS-1.2",
+        "Send-As",
+        "federated-STS"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "hve-high-volume-email",
+      "title": "HVE 高量邮件发送 (OAuth/SMTP)",
+      "entryIds": [
+        "eop-188",
+        "eop-189",
+        "eop-190",
+        "eop-191",
+        "eop-192",
+        "eop-193"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "HVE",
+        "OAuth",
+        "XOAUTH2",
+        "535-5.7.3",
+        "API-permissions"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "dane-dnssec-mtasts",
+      "title": "DANE/DNSSEC/MTA-STS 出站验证",
+      "entryIds": [
+        "eop-224",
+        "eop-225",
+        "eop-226",
+        "eop-227",
+        "eop-228",
+        "eop-229",
+        "eop-230",
+        "eop-236"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "DANE",
+        "DNSSEC",
+        "MTA-STS",
+        "TLSA",
+        "certificate",
+        "starttls"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "hybrid-mail-flow",
+      "title": "Hybrid 混合部署邮件流",
+      "entryIds": [
+        "eop-160",
+        "eop-161",
+        "eop-162",
+        "eop-163",
+        "eop-164",
+        "eop-171",
+        "eop-194",
+        "eop-195",
+        "eop-234",
+        "eop-235",
+        "eop-278",
+        "eop-280",
+        "eop-282",
+        "eop-283",
+        "eop-288"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "hybrid",
+        "on-premises",
+        "centralized-mail",
+        "Exchange-2010",
+        "HCW",
+        "ATTR36",
+        "Proofpoint",
+        "mail-loop"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "dbeb-recipient-validation",
+      "title": "DBEB 边缘阻止与收件人验证 NDR",
+      "entryIds": [
+        "eop-002",
+        "eop-138",
+        "eop-165",
+        "eop-166",
+        "eop-170",
+        "eop-183",
+        "eop-184",
+        "eop-185",
+        "eop-233",
+        "eop-287"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "DBEB",
+        "5.4.1",
+        "5.1.1",
+        "5.1.10",
+        "5.7.124",
+        "5.7.133",
+        "recipient-not-found",
+        "distribution-group"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "21v-feature-gaps",
+      "title": "21Vianet/Gallatin 功能差异与限制",
+      "entryIds": [
+        "eop-014",
+        "eop-021",
+        "eop-022",
+        "eop-025",
+        "eop-044"
+      ],
+      "draftPaths": [
+        "guides/drafts/onenote-21v-eop-feature-gaps.md",
+        "guides/drafts/onenote-21v-eop-readiness-portals.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "21v",
+        "Gallatin",
+        "Assist-365",
+        "feature-gap",
+        "diagnostic",
+        "SCC",
+        "API"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "mdo-portal-permissions",
+      "title": "MDO 门户权限与 UI 问题",
+      "entryIds": [
+        "eop-026",
+        "eop-076",
+        "eop-077",
+        "eop-084",
+        "eop-085",
+        "eop-086"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-mdo-permissions-tsg.md",
+        "guides/drafts/ado-wiki-a-how-to-check-user-permissions.md",
+        "guides/drafts/ado-wiki-a-securitypermissionschecker-tool.md",
+        "guides/drafts/ado-wiki-a-permissions-mapping.md",
+        "guides/drafts/ado-wiki-a-get-rolesfromhar-script.md",
+        "guides/drafts/ado-wiki-a-mdo-advanced-hunting.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "portal",
+        "permissions",
+        "RBAC",
+        "URBAC",
+        "PIM",
+        "licensing",
+        "detonation-tree"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "backscatter-ndr",
+      "title": "Backscatter NDR 误判",
+      "entryIds": [
+        "eop-024",
+        "eop-139"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "backscatter",
+        "NDR",
+        "false-positive",
+        "Message-ID",
+        "bounce"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "image-download-outlook",
+      "title": "Outlook 图片自动下载",
+      "entryIds": [
+        "eop-057",
+        "eop-058"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-automatic-image-download-in-outlook.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "image-download",
+        "outlook",
+        "safe-senders",
+        "authas-internal"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "admin-submissions-overrides",
+      "title": "管理员提交与第三方网关覆盖",
+      "entryIds": [
+        "eop-153",
+        "eop-172"
+      ],
+      "draftPaths": [
+        "guides/drafts/mslearn-admin-submissions-workflow.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "submission",
+        "organizational-overrides",
+        "third-party-gateway",
+        "TLS",
+        "certificate"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "escalation-case-routing",
+      "title": "升级流程与案例路由",
+      "entryIds": [
+        "eop-048",
+        "eop-059",
+        "eop-060",
+        "eop-061",
+        "eop-121",
+        "eop-123",
+        "eop-124"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-collaboration-guidelines-mdo-exo.md",
+        "guides/drafts/ado-wiki-a-when-to-collab-and-when-to-transfer.md",
+        "guides/drafts/ado-wiki-a-deprecating-working-with-mdo-pre-breach-escalations-non-spam-analyst.md",
+        "guides/drafts/ado-wiki-a-handling-dcr-and-code-fixes.md",
+        "guides/drafts/ado-wiki-a-migration-to-icm.md",
+        "guides/drafts/ado-wiki-a-icm-remediation-details.md",
+        "guides/drafts/ado-wiki-b-SEV-B-24x7-Engagement-Escalation-Guidelines.md",
+        "guides/drafts/ado-wiki-b-MDO-Escalations-Prerequisites-Checklist.md",
+        "guides/drafts/ado-wiki-a-temporarily-lowered-critical-cases.md",
+        "guides/drafts/ado-wiki-a-Defender-for-Cloud-Apps-MDA-Determining-Scope.md",
+        "guides/drafts/ado-wiki-a-Defender-for-Identity-Scoping.md",
+        "guides/drafts/ado-wiki-a-Exchange-On-Premise-Scope.md",
+        "guides/drafts/ado-wiki-a-Exchange-Online-Determining-Scope.md",
+        "guides/drafts/ado-wiki-a-Outlook-Desktop-Determining-Scope.md",
+        "guides/drafts/ado-wiki-a-SIEM-Connectors-Determining-Scope.md",
+        "guides/drafts/ado-wiki-a-SharePoint-OneDrive-Determining-Scope.md",
+        "guides/drafts/ado-wiki-b-Case-Misroutes-Advanced-Hunting-Determining-Scope.md",
+        "guides/drafts/ado-wiki-b-Case-Misroutes-Alerts-Determining-Scope.md",
+        "guides/drafts/ado-wiki-b-Case-Misroutes-Azure-Permissions.md",
+        "guides/drafts/ado-wiki-b-Case-Misroutes-CIRT-Determining-Scope.md",
+        "guides/drafts/ado-wiki-a-handling-consumer-mailflow-issues.md",
+        "guides/drafts/ado-wiki-a-delivery-partners-contacts.md",
+        "guides/drafts/ado-wiki-a-partner-support-cases.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "escalation",
+        "ADO",
+        "ICM",
+        "case-routing",
+        "misroute",
+        "CritSit",
+        "severity"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "mdo-cross-product",
+      "title": "MDO 跨产品功能 (Teams/MDA/Graph)",
+      "entryIds": [
+        "eop-115",
+        "eop-187"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-mdo-protection-for-teams.md",
+        "guides/drafts/ado-wiki-a-secops-best-practices.md",
+        "guides/drafts/ado-wiki-a-graph-api-oauth-concepts.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "Teams",
+        "MDA",
+        "Graph-API",
+        "BCC-alerting",
+        "disabled-account"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "user-reporting-misc",
+      "title": "用户报告与杂项 NDR",
+      "entryIds": [
+        "eop-281",
+        "eop-286"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-User-Reporting-Submissions.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "user-reporting",
+        "submission",
+        "Client-Allow-List",
+        "moderation"
+      ],
+      "confidence": "medium"
+    }
+  ],
+  "discarded": [
+    {
+      "id": "eop-242",
+      "reason": "half-baked (no rootCause and no solution)"
+    },
+    {
+      "id": "eop-243",
+      "reason": "half-baked (no rootCause and no solution)"
+    },
+    {
+      "id": "eop-244",
+      "reason": "half-baked (no rootCause and no solution)"
+    },
+    {
+      "id": "eop-245",
+      "reason": "half-baked (no rootCause and no solution)"
+    },
+    {
+      "id": "eop-246",
+      "reason": "half-baked (no rootCause and no solution)"
+    },
+    {
+      "id": "eop-247",
+      "reason": "half-baked (no rootCause and no solution)"
+    },
+    {
+      "id": "eop-248",
+      "reason": "half-baked (no rootCause and no solution)"
+    },
+    {
+      "id": "eop-249",
+      "reason": "half-baked (no rootCause and no solution)"
+    },
+    {
+      "id": "eop-250",
+      "reason": "half-baked (no rootCause and no solution)"
+    },
+    {
+      "id": "eop-251",
+      "reason": "half-baked (no rootCause and no solution)"
+    },
+    {
+      "id": "eop-252",
+      "reason": "half-baked (no rootCause and no solution)"
+    },
+    {
+      "id": "eop-253",
+      "reason": "half-baked (no rootCause and no solution)"
+    },
+    {
+      "id": "eop-254",
+      "reason": "half-baked (no rootCause and no solution)"
+    },
+    {
+      "id": "eop-255",
+      "reason": "half-baked (no rootCause and no solution)"
+    },
+    {
+      "id": "eop-256",
+      "reason": "half-baked (no rootCause and no solution)"
+    },
+    {
+      "id": "eop-257",
+      "reason": "half-baked (no rootCause and no solution)"
+    },
+    {
+      "id": "eop-258",
+      "reason": "half-baked (no rootCause and no solution)"
+    },
+    {
+      "id": "eop-259",
+      "reason": "half-baked (no rootCause and no solution)"
+    },
+    {
+      "id": "eop-260",
+      "reason": "half-baked (no rootCause and no solution)"
+    },
+    {
+      "id": "eop-261",
+      "reason": "half-baked (no rootCause and no solution)"
+    },
+    {
+      "id": "eop-262",
+      "reason": "half-baked (no rootCause and no solution)"
+    },
+    {
+      "id": "eop-263",
+      "reason": "half-baked (no rootCause and no solution)"
+    },
+    {
+      "id": "eop-264",
+      "reason": "half-baked (no rootCause and no solution)"
+    },
+    {
+      "id": "eop-265",
+      "reason": "half-baked (no rootCause and no solution)"
+    },
+    {
+      "id": "eop-266",
+      "reason": "half-baked (no rootCause and no solution)"
+    },
+    {
+      "id": "eop-267",
+      "reason": "half-baked (no rootCause and no solution)"
+    },
+    {
+      "id": "eop-279",
+      "reason": "half-baked (no rootCause and no solution)"
+    }
+  ]
+}

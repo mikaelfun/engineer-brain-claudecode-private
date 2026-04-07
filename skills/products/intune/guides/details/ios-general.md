@@ -1,0 +1,153 @@
+# Intune iOS/iPadOS 通用问题 — 综合排查指南
+
+**条目数**: 78 | **草稿融合数**: 0 | **Kusto 查询融合**: 1
+**Kusto 引用**: apple-device.md
+**生成日期**: 2026-04-07
+
+---
+
+## ⚠️ 已知矛盾 (17 条)
+
+- **solution_conflict** (high): intune-ado-wiki-033 vs intune-contentidea-kb-088 — context_dependent: 不同来源给出不同方案，可能适用不同场景
+- **solution_conflict** (high): intune-ado-wiki-033 vs intune-contentidea-kb-348 — context_dependent: 不同来源给出不同方案，可能适用不同场景
+- **solution_conflict** (high): intune-ado-wiki-179 vs intune-contentidea-kb-597 — context_dependent: 不同来源给出不同方案，可能适用不同场景
+- **solution_conflict** (high): intune-ado-wiki-179 vs intune-contentidea-kb-603 — context_dependent: 不同来源给出不同方案，可能适用不同场景
+- **solution_conflict** (high): intune-contentidea-kb-088 vs intune-mslearn-113 — context_dependent: 不同来源给出不同方案，可能适用不同场景
+
+## 排查流程
+
+### Phase 1: Kusto 诊断查询
+
+#### apple-device.md
+`[工具: Kusto skill — apple-device.md]`
+
+```kql
+let _deviceId = '{deviceId}';
+
+IntuneEvent
+| where env_time > ago(6h)
+| where env_cloud_name == "CNPASU01"
+| where DeviceId == _deviceId
+| where EventUniqueName in ("ExternalAppleHttpCallRequestBody", "ExternalAppleHttpCallResponseBody")
+| extend _body = iff(EventUniqueName == "ExternalAppleHttpCallRequestBody", Col5, Col4)
+| extend _url = iff(EventUniqueName == "ExternalAppleHttpCallRequestBody", Col4, Col3)
+| extend _durationMs = iff(EventUniqueName == "ExternalAppleHttpCallRequestBody", parse_json(Col6).durationMs, "(response has no duration)")
+| extend _json = parse_json(_body)
+| project env_time, cV, _url, _durationMs, _json, DeviceId
+| order by env_time asc
+```
+
+```kql
+IOSEnrollmentService 
+| where env_time > ago(30d)
+| where ActivityId == '{deviceId}'
+| project env_time, userId, callerMethod, message, deviceTypeAsString, 
+    serialNumber, siteCode, ActivityId, relatedActivityId2
+```
+
+```kql
+let accountId = '{accountId}';
+
+DeviceLifecycle
+| where env_time > ago(90d)
+| where accountId == accountId
+| where platform in ("7", "8", "10")  // iPhone, iPad, macOS
+| where deviceId != ""
+| summarize 
+    LastSeen=max(env_time),
+    FirstSeen=min(env_time)
+  by deviceId, platform
+| extend PlatformName = case(
+    platform=="7", "iPhone",
+    platform=="8", "iPad",
+    platform=="10", "macOS",
+    platform)
+| order by LastSeen desc
+| limit 1000
+```
+
+
+---
+
+## 已知问题速查
+
+| # | 症状 | 根因 | 方案 | 分数 | 来源 |
+|---|------|------|------|------|------|
+| 1 | iOS/iPadOS devices display compliance status as '未评估' (Not Evaluated) in Intune admin portal afte... | Same root cause as Azure AD Registered = false issue. Device did not complete... | Use Just in Time (JIT) deployment for new ABM enrollments. Already affected devices likely requir... | 🟢 9.0 | OneNote |
+| 2 | iOS device cannot exit old AppLock (Kiosk single-app mode) when switching to a new AppLock policy... | When old AppLock policy is unassigned and new AppLock policy is assigned in t... | Split into two check-ins: (1) First check-in: unassign old AppLock policy only, do NOT assign new... | 🟢 9.0 | OneNote |
+| 3 | Apple Configurator fails to add iOS device to ABM after Intune wipe. Device shows activation lock... | Intune remote wipe does not remove Find My iPhone (activation lock). The acti... | Before using Apple Configurator, erase the device locally via iOS Settings > General > Transfer o... | 🟢 9.0 | OneNote |
+| 4 | DEP device sync disabled in Intune. Sync status shows Terms and Conditions not accepted even afte... | Apple released new Terms and Conditions causing Intune to stop DEP sync. Re-a... | Use Graph Explorer to manually trigger sync: POST https://graph.microsoft.com/BETA/deviceManageme... | 🟢 9.0 | OneNote |
+| 5 | Need to convert an unsupervised iOS managed device to supervised mode without losing user data an... | Supervision state is tied to the enrollment method. Directly supervising an e... | Workaround: (1) Backup Device A via iTunes/iCloud, (2) Restore to temp Device B, (3) Backup Devic... | 🟢 9.0 | OneNote |
+| 6 | VPP app license assignment fails with error code 9616 (regUsersAlreadyAssigned). Some apps instal... | The user Apple ID is already associated with the VPP sToken by another Intune... | Options: (1) Move to device licensing that does not involve user Apple ID, (2) Create a brand new... | 🟢 9.0 | OneNote |
+| 7 | iOS/iPadOS enrollment fails with error NoEnrollmentPolicy - no enrollment policy found. Device ca... | Apple Push Notification Service (APNs) certificate is missing, invalid, or ex... | 1. Verify APNs certificate status in Intune > Tenant administration > Apple MDM Push certificate.... | 🟢 9.0 | OneNote |
+| 8 | ADE (Automated Device Enrollment) sync between Intune and Apple fails with Expired or invalid tok... | The ADE/DEP token uploaded to Intune has expired (tokens expire annually), be... | 1. If expired: renew token in ABM/ASM, download new token, upload to Intune. 2. If invalid: creat... | 🟢 9.0 | OneNote |
+| 9 | ADE sync fails with Access denied error. Intune cannot communicate with Apple for device enrollme... | Intune has been removed from the MDM server list in Apple Business Manager/Ap... | 1. Log into ABM/ASM and verify Intune is still listed as MDM server. 2. If removed, re-add Intune... | 🟢 9.0 | OneNote |
+| 10 | ADE sync fails with Terms and conditions not accepted error in Intune. | Apple has updated their Terms and Conditions in ABM/ASM, and an admin with Ad... | Log into ABM or ASM with an account that has the Administrator role (not just Device Enrollment M... | 🟢 9.0 | OneNote |
+| 11 | VPP app installation prompts user for Apple ID credentials. Confusion about when Apple ID prompt ... | VPP user-based licensing requires Apple ID association. Each Apple ID can onl... | Switch to VPP device-based licensing to avoid Apple ID prompts. For user-based licensing, ensure ... | 🟢 9.0 | OneNote |
+| 12 | Customer wants to prohibit or defer users from seeing/upgrading to the latest iOS version after A... | By default iOS devices see new OS updates immediately. Intune provides config... | Create iOS/iPadOS Configuration Profile: (1) Setting Catalog (preferred): set Force Delayed Softw... | 🟢 9.0 | OneNote |
+| 13 | Apple Push Notification (APN) certificate has expired in Intune. Concern about whether iOS/macOS ... | APN certificate can still be renewed even after expiration. The renewal proce... | 1) Do NOT delete the existing APN certificate in Intune. 2) Go to https://identity.apple.com/push... | 🟢 9.0 | OneNote |
+| 14 | iOS VPP app is not ready for install. Kusto DeviceManagementProvider shows iOSPlugin[IsVppAppRead... | User has not accepted the VPP invite. If user did not receive invite, Apple A... | 1. Verify user has accepted VPP invite. 2. If invite was not received, check if Apple App Store i... | 🟢 9.0 | OneNote |
+| 15 | VPP apps are not automatically updating on iOS devices even though the tenant has auto-update set... | VPP auto-update is not supported for devices with iOS version below 11.3. App... | Update the iOS device to 11.3 or later to enable VPP app auto-update. For devices that cannot be ... | 🟢 9.0 | OneNote |
+| 16 | iOS LOB/IPA 应用从 Company Portal 安装失败，提示安装错误 | 常见原因：IPA 以 Ad Hoc（而非 Corporate/Enterprise）方式导出、.ipa 与 plist 文件不匹配、签名证书过期 | 1. 确认 IPA 以 Corporate/Enterprise 方式导出（非 Ad Hoc）；2. 验证 .ipa 和 plist 文件匹配；3. 检查 Apple 签名证书是否过期；4. 先... | 🟢 8.5 | ADO Wiki |
+| 17 | 无法将 iOS/iPadOS 应用的管理类型从 MDM 切换到 DDM（或反之），创建后选项灰显不可更改 | Intune 设计限制：应用创建时选择的管理类型（DDM 或 MDM）为不可变属性 | 必须创建一个新的应用条目并选择目标管理类型（DDM 或 MDM），无法修改现有应用的管理类型 | 🟢 8.5 | ADO Wiki |
+| 18 | iOS App Wrapping Tool 报 An invalid signing certificate was specified，即使证书看起来有效 | Keychain 中存在多个同名证书副本、证书已过期、证书不受信任、或缺少中间证书 | 1. Keychain Access 搜索所有签名证书，确保只有一份；2. 验证证书未过期且受信任；3. 在 System 和 login keychain 都安装中间证书；4. 如仍失败则从 ... | 🟢 8.5 | ADO Wiki |
+| 19 | Email profile 部署到 device group 后出现错误和延迟，或目标为 all iOS/iPadOS devices 的 email profile 未下发 | Email profile 部署到 device group 时，如果组内设备没有关联用户（primary user），profile 无法下发；且 em... | 1. 将 email profile 分配给 user group 而非 device group；2. 如使用 user certificate 认证，必须分配到 user group 以建立... | 🟢 8.5 | ADO Wiki |
+| 20 | iOS/macOS 设备上出现重复的 SCEP 证书 | Apple 平台设计行为：iOS/macOS 会为每个 dependent profile 安装一份 SCEP 证书副本 | By design。参见 Microsoft 文档: Create and assign SCEP certificate profiles in Intune，末尾 NOTE 说明。无需修复，... | 🟢 8.5 | ADO Wiki |
+| 21 | iOS or macOS device stops receiving Intune push notifications or policy updates. Device appears t... | APNs response code 1211 (InvalidDeviceCredentials) returned by Apple Notifica... | Query Kusto: `IntuneEvent \| where ServiceName == "AppleNotificationRelayService" \| where EventU... | 🟢 8.0 | OneNote |
+| 22 | VPP 应用在 iOS/iPadOS/macOS 设备上弹出 'In-App Purchase Disabled' 通知 | VPP 应用的 license 分配方式或设备限制策略与 In-App Purchase 设置冲突 | 1. 确认设备限制策略是否禁用了 In-App Purchase；2. 检查 VPP 应用的 license 类型（Device vs User）；3. 参考内部 KB 文章排查具体原因 | 🔵 7.5 | ADO Wiki |
+| 23 | Cannot uninstall iOS apps installed from Apple App Store using Intune - only MDM-deployed apps ca... | By design: Intune can only uninstall apps deployed through the MDM channel. A... | 1) Add the apps to Intune and assign as Available or Required (prompts user to allow Intune manag... | 🔵 7.5 | MS Learn |
+| 24 | 'Safari cannot open the page because the address is invalid' error when opening a web app on iOS ... | Web app policy has 'Require a managed browser to open this link' set to Yes, ... | Either install the Intune Managed Browser on the iOS device, or set 'Require a managed browser to... | 🔵 7.5 | MS Learn |
+| 25 | iOS Personal Hotspot restriction policy does not block on iOS 12.1 or earlier. | Personal Hotspot restriction only enforced starting iOS 12.2. | Upgrade to iOS 12.2 or later. | 🔵 7.5 | MS Learn |
+| 26 | iOS/iPadOS devices not checking in with Intune: Management State Unhealthy, cannot receive polici... | Device cannot successfully sync with Intune; may not be properly enrolled or ... | Open Company Portal app - auto-detects lost contact and syncs. If Unable to sync, tap Set up to r... | 🔵 7.5 | MS Learn |
+| 27 | iOS/iPadOS device stuck on enrollment screen 10+ min: Awaiting final configuration or Guided Acce... | VPP token issue (expired, out of licenses, used by another service/tenant, de... | Check VPP token in Intune. Fix token issues. Filter blocked devices. Remotely wipe. Users restart... | 🔵 7.5 | MS Learn |
+| 28 | iOS/iPadOS Profile Installation Failed: Network Error, Connection to server (corporate restrictio... | Multiple: iOS corruption; device type restriction; previous enrollment not cl... | Network error: backup, recovery restore, re-enroll. Connection: check restrictions, re-enroll via... | 🔵 7.5 | MS Learn |
+| 29 | iOS VPP app install fails with VPP error code 9632: Too many recent calls to manage licenses with... | Too many devices for one user or too many Apple IDs making requests from the ... | Switch to device-based VPP licensing instead of user-based licensing to avoid per-user Apple ID c... | 🔵 7.5 | OneNote |
+| 30 | All iOS VPP app installs fail for a given user with LicenseNotFound. Intune says license exists b... | The user updated their Apple ID on one of their devices. Apple system records... | 1) Log back in with the original Apple ID used when the user first accepted Apple VPP agreement. ... | 🔵 7.5 | OneNote |
+| 31 | DEP token shows warning and sync between Intune and Apple ABM fails. Kusto IntuneEvent shows Sess... | Customer downloaded the DEP token from ABM portal which caused the existing t... | 1. Renew the DEP token: download a new token from ABM and re-upload to Intune. 2. Ensure DEP toke... | 🔵 7.5 | OneNote |
+| 32 | When a customer is seeing Intune SilverLight Dashboard errors for devices showing as "currently b... | These can be caused for the following reasons:a. The device already has the E... | [When you see the following errors in the Intune SilverLight Dashboard for devices]An error occur... | 🔵 7.0 | ContentIdea KB |
+| 33 | An Apple iPhone is successfully managed by Intune, however when connected to a computer a message... | This occurs when using Apple�s Device Enrollment Program (DEP) and the policy... | To fix this problem, complete these steps:1. Open the Intune portal at http://manage.microsoft.co... | 🔵 7.0 | ContentIdea KB |
+| 34 | Customer wants advisory for the following two areas:1. Recommended practices when pushing applica... | Advisory | This advisory is written to address not only the two questions below, but application deployment ... | 🔵 7.0 | ContentIdea KB |
+| 35 | You may experience the error: &quot;Error when wrapping an iOS app&quot;When attempting to wrap t... | This issue is resolved in the next iOS SDK/Wrapper. | This issue is resolved in the next iOS SDK/Wrapper. | 🔵 7.0 | ContentIdea KB |
+| 36 | Blocking Applications (whitelist/blacklist) on iOS Devices with Microsoft Intune requires devices... | To block the installation of applications on iOS devices it is required for d... | The resolution at this time requires that the device(s) be placed in Supervised Mode&nbsp;by bein... | 🔵 7.0 | ContentIdea KB |
+| 37 | The information below can be used when troubleshooting enrollment failures with iOS corporate own... |  | DEP enrollment failures can be caused by many different reasons. Note that you will need access t... | 🔵 7.0 | ContentIdea KB |
+| 38 | Customer reporting that all iOS devices they have tried to enroll are hanging during the complian... | APN is expired or revoked even though it shows valid in Viewpoint | Check the Apple APN portal at https://identity.apple.com/pushcert/ and verify that the APN shows ... | 🔵 7.0 | ContentIdea KB |
+| 39 | An iOS device fails to enroll in Intune and generates the following error message: "Profile Insta... | This can occur if there is an unspecified issue with iOS on the device. | To resolve the issue, put the devices into DFU mode (Device Firmware Update mode) and restore iOS... | 🔵 7.0 | ContentIdea KB |
+| 40 | You are unable to enroll DEP devices when prompting for User Affinity and Conditional Access is n... | We have found that, on some devices that arrive from Apple/DEP vendors, they ... | To resolve this problem, check this VKB first: https://internal.support.services.microsoft.com/en... | 🔵 7.0 | ContentIdea KB |
+| 41 | When downloading OneNote for iOS deep link app deployed "As Available" it gets stuck in "Pending ... | URL on app was set to Canada - https://itunes.apple.com/ca/app/microsoft-onen... |  | 🔵 7.0 | ContentIdea KB |
+| 42 | When a user enrolls an iPad device into the Intune Service and is targeted by Conditional Access,... |  | iPhone devices work, but with the iPad, the customer will need to download the Microsoft Authenti... | 🔵 7.0 | ContentIdea KB |
+| 43 | Customer cannot manage iOS and Android devices in Intune for Education portal(http://intuneeducat... | By Design.  Intune for Education manages Windows 10 devices.  However, custom... | Follow the Intune documentation for managing iOS and Android devices: https://docs.microsoft.com/... | 🔵 7.0 | ContentIdea KB |
+| 44 | Customer reports that on iOS 11.x when sending a corporate file from a managed app to another the... | This is expected behavior for iOS 11.x that has been confirmed by the Product... | This is now expected behavior, please note to the customer that Intune encrypts files before hand... | 🔵 7.0 | ContentIdea KB |
+| 45 | If you target the Skype for Business (SfB) app with an Intune App Protection Policy (MAM policy) ... | This can occur if "Hybrid Modern Authentication" for Hybrid and On-Premises S... | To resolve this problem, enable hybrid modern authentication. To enable Hybrid Modern Auth, use t... | 🔵 7.0 | ContentIdea KB |
+| 46 | In February 2018, Intune introduced a new experience to make it easier for customers to manage iO... |  |  | 🔵 7.0 | ContentIdea KB |
+| 47 | After configuring and assigning a managed iOS app from the App Store, the installation fails on a... | This can occur if the URL for the app is malformed or incorrect. For example,... | To resolve this problem, correct the URL in the app package. | 🔵 7.0 | ContentIdea KB |
+| 48 | User's iPhone is removed from Intune. In the new Azure portal, there are no iOS devices listed fo... | User account had MFA configured with the Authenticator app. The credentials w... | Remove O365 account from authenticator app and re-added it. Error in Company Portal app went away... | 🔵 7.0 | ContentIdea KB |
+| 49 | When a device restriction policy for Show or Hide Apps is configured to show certain apps and is ... | This is by design. The Hidden Apps list and the Visible Apps list only suppor... | There are two potential workarounds for this: 1. Use a bundle ID of com.apple.webapp. It has been... | 🔵 7.0 | ContentIdea KB |
+| 50 | When a user attempts to setup a DEP device and enroll in Intune, if the device is running iOS 11.... | This can occur if the device has not been assigned an enrollment profile. Thi... | To resolve this issue, manually assign the device an enrollment profile. If this resolves the iss... | 🔵 7.0 | ContentIdea KB |
+| 51 | When attempting to enroll an Apple DEP device, the device is powered up, and when the DEP splash ... | This is often caused by an issue with the device itself. If the customer expe... | You should exhaust all other troubleshooting first, but as a last resort, do a factory reset on t... | 🔵 7.0 | ContentIdea KB |
+| 52 | When you setup a new DEP Profile, using the New Interface, there is an option when you select &qu... | This is currently expected behavior, and considered by-design. | This is currently by-design.When you enroll, using the above method, we do not use VPP - we use a... | 🔵 7.0 | ContentIdea KB |
+| 53 | When configuring iOS Device Restrictions such as single app mode or Home screen layout under Intu... | Every iOS app requires a Bundle ID (e.g. com.microsoft.CompanyPortal). There ... | Find the app in iTunes store, copy the number after id in the URL, navigate to https://itunes.app... | 🔵 7.0 | ContentIdea KB |
+| 54 | You can collect iOS Xcode/Console logs from a Windows PC. The link for the iOSLogInfo tool did no... | Old iOSLogInfo link did not support iOS 11.3, new link needed | Use SDSiOSLogInfo from Blackberry.com. Connect iOS device via USB, open admin Command Prompt, run... | 🔵 7.0 | ContentIdea KB |
+| 55 | When you enroll an iOS device via Apple's Device Enrollment Program with User Affinity, it will t... | When the device is enrolled, there is no user information, so the device reco... | Resolved: Code change to change\patch EnrolledByUser property on deviceProvider was released on 7... | 🔵 7.0 | ContentIdea KB |
+| 56 | When deploying Intune managed iOS store apps with assignment types of Required, Available for enr... | This can occur if the user is using iOS 11.3.x - 12.x, and the device has ena... | This issue has been fixed by Apple in iOS 12 Beta 6. To resolve this problem, update the iOS devi... | 🔵 7.0 | ContentIdea KB |
+| 57 | Attempting to enroll an iOS device into Microsoft Intune fails with the following error: This Ser... | This problem can occur if an Apple MDM push certificate is not configured in ... | If your MDM push certificate is not configured, follow the steps to configure it. If your MDM pus... | 🔵 7.0 | ContentIdea KB |
+| 58 | Attempting to enroll an iOS device fails with the following error: Profile Installation Failed. T... | This can occur if a management profile is already installed on the device. | To resolve this issue, complete the follow:1. Open Settings on the iOS device, go to General -> D... | 🔵 7.0 | ContentIdea KB |
+| 59 | Attempting to enroll an iOS device fails with the following error: Couldn�t Enroll Device Contact... | This problem can occur if an Apple MDM push certificate isn't configured in I... | To resolve this issue, perform one of the following:If your MDM push certificate is not configure... | 🔵 7.0 | ContentIdea KB |
+| 60 | Attempting to enroll an iOs device fails with the following error: This service is not supported ... | This problem can occur if an Apple MDM push certificate isn't configured in I... | To resolve this issue, perform one of the following:If your MDM push certificate is not configure... | 🔵 7.0 | ContentIdea KB |
+| 61 | Email access issue on iOS 12 targeted by an Intune iOS Email Profile. User impact: iOS 12 users a... | This issue was caused by Intune deploying email profiles with a new iOS 12 op... | For new Email profile deployments, the issue was resolved for all impacted customers. This would ... | 🔵 7.0 | ContentIdea KB |
+| 62 | When creating an App Configuration Policy for iOS and in Configuration Settings > for Designer, y... | The limitation in the UI is due to the limitations of Apple aka their apps\xm... | There are two options for solution for this to align with Apple's requirements:Solution 1: Use th... | 🔵 7.0 | ContentIdea KB |
+| 63 | Creating iOS App Configuration Policy with SSO URL containing ampersand (&) gives error: invalid ... | Apple limitation: iOS apps/xml do not support & characters in configuration v... | Use short URL (e.g. bit.ly) or use &amp; instead of & in the URL. | 🔵 7.0 | ContentIdea KB |
+| 64 | After applying a Configuration Policy that restricts what apps are hidden from the user, the user... | There is a policy that is configured to hide the phone app, com.apple.mobilep... | Do not apply a configuration policy that is configured to hide the phone app and Setting app | 🔵 7.0 | ContentIdea KB |
+| 65 | Users are unable to save contacts from the managed Outlook app for iOS to the local contacts app ... | This can occur if there is an iOS device restriction policy that blocks the s... | Microsoft is working with Apple on this issue. In the meantime, the current recommendation would ... | 🔵 7.0 | ContentIdea KB |
+| 66 | When deploying custom VPN profile to iOS devices, it fails with Error -2016341110 (iOS device has... | There is a formatting error in the XML. | Load the file in Apple Configurator to verify if it is formatted correctly or check XML for any f... | 🔵 7.0 | ContentIdea KB |
+| 67 | Deployed configuration with Autonomous Single App Mode (ASAM) is not locking down the targeted ap... | Application does not support the Autonomous Single App Mode feature. | App must use UIAccessibilityRequestGuidedAccessSession() call. Known supported apps: TestNav, Saf... | 🔵 7.0 | ContentIdea KB |
+| 68 | When querying for devices based on Corporate ownership, the value Corporate no longer shows the c... | The Corporate value is no longer used for the deviceOwnership attribute. | To work around this issue, replace Corporate with Company to query for corporate owned devices. F... | 🔵 7.0 | ContentIdea KB |
+| 69 | After deploying an IOS update and setting a window when devices can updates, the targeted devices... | This appears to be a known issue where devices will not update when the devic... | As a workaround, end users can manually install updates on their devices from Settings > General ... | 🔵 7.0 | ContentIdea KB |
+| 70 | You see the following error after deploying the iOS Home Screen Layout device feature configurati... | There are 2 main settings in the Home Screen Layout policy: DockPages While t... | **Important: Other than the error in the console, this issue has no impact on targeted devices. T... | 🔵 7.0 | ContentIdea KB |
+| 71 | After updating to or installing the latest version of the Company Portal app for iOS and macOS (r... | This occurs because the latest update to the Intune Company Portal app now en... | To resolve this issue, make sure that all your network connections configured for use within the ... | 🔵 7.0 | ContentIdea KB |
+| 72 | Approximately 1% of iOS 13+ devices enrolled in Intune cannot perform password reset - the passco... | Apple bug in iOS 13 where the token needed to allow password reset is not ret... | 1) Update device to iOS 13.3.1 or later. 2) Remove and re-enroll the device in Intune. Use PowerS... | 🔵 6.5 | MS Learn |
+| 73 | Profile error 'Invalid Profile: The configuration for your iPad/iPhone could not be downloaded' w... | Invalid enrollment URL used in Apple Configurator setup. | See workaround in Intune Customer Success blog post for correcting the enrollment URL. | 🔵 6.5 | MS Learn |
+| 74 | iTunes Encrypt local backup option automatically selected and cannot be deselected for Intune-man... | Intune certificate profile causes iTunes to force backup encryption. Certific... | Expected behavior by Apple security design. No workaround available. | 🔵 6.5 | MS Learn |
+| 75 | Cannot access company resources on ADE (Apple Automated Device Enrollment) device enrolled in Int... | Enrollment profile has Authentication method set to Setup Assistant and Compa... | Solution 1: Change Authentication method to Company Portal in enrollment profile (Devices > iOS/i... | 🔵 6.5 | MS Learn |
+| 76 | VPP app with device licensing keeps prompting iOS users to click Upgrade even though the app is a... | After a new app version is released in Apple App Store, Intune initially dete... | 1. Issue is typically transient and resolves after 1-2 weeks. 2. Verify via Apple lookup API: htt... | 🔵 6.5 | OneNote |
+| 77 | iOS device enrolled in Apple ADE does not start Intune enrollment process when turned on | Enrollment profile created before ADE token upload to Intune, or no MDM profi... | Ensure enrollment profile exists and is assigned; edit profile to update modification time; sync ... | 🔵 5.5 | MS Learn |
+| 78 | Disable Activation Lock code not visible in Hardware overview for iOS/iPadOS device | Code expired and cleared from service or device not Supervised with Device Re... | Check code via Graph Explorer GET /beta/deviceManagement/manageddevices(deviceId)?$select=activat... | 🔵 5.5 | MS Learn |

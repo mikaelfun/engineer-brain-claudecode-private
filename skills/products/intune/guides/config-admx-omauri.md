@@ -1,0 +1,41 @@
+# Intune ADMX / OMA-URI / Settings Catalog — 排查速查
+
+**来源数**: 4 | **21V**: 部分适用
+**条目数**: 23 | **最后更新**: 2026-04-07
+
+## 症状速查
+| # | 症状 | 根因 | 方案 | 分数 | 来源 |
+|---|------|------|------|------|------|
+| 1 | Intune Device Restriction policy for password complexity (DeviceLock/MinDevicePasswordComplexChar... | Password complexity value 4 ('Digits, lowercase letters, uppercase letters, a... | Change password complexity setting to a supported value (1, 2, or 3) for Windows desktop devices.... | 🟢 9.0 | OneNote |
+| 2 | Custom OMA-URI device configuration policies may stop working or show unexpected behavior after I... | Microsoft is migrating Windows device configuration policies to unified setti... | Check if the custom OMA-URI setting is already available in Settings Catalog. If yes, migrate to ... | 🟢 9.0 | OneNote |
+| 3 | Need to restrict which users can log on locally to Windows devices managed by Intune; want to blo... | Windows allows any valid credential holder to log on locally by default. Intu... | Create Intune custom profile: OMA-URI: ./Device/Vendor/MSFT/Policy/Config/UserRights/AllowLocalLo... | 🟢 9.0 | OneNote |
+| 4 | Need to restrict domain user local logon on Intune-managed Windows 10 AADJ device. Want to allow ... | No built-in Intune UI for AllowLocalLogOn user rights assignment. Must use cu... | Create custom profile: OMA-URI ./Device/Vendor/MSFT/Policy/Config/UserRights/AllowLocalLogOn, Dat... | 🟢 9.0 | OneNote |
+| 5 | After applying AllowLocalLogOn CSP via Intune custom profile, unassigning or setting policy to No... | Windows design limitation - AllowLocalLogOn CSP is a tattooed policy that per... | Must manually fix on device with local admin: Open gpedit.msc -> Allow log on locally -> remove I... | 🟢 9.0 | OneNote |
+| 6 | Windows Device Configuration policy 显示 error (Remediation Failed) 但设备实际行为符合预期，设置已确认在 MDMDiagRepor... | CSP 不支持 Get 操作。Intune 下发 Add/Replace 操作后，通过 Get 操作验证值，如果 Get 返回值与下发值不匹配或 CSP ... | 确认 CSP 文档中是否支持 Add/Get/Replace/Delete 操作。如果 CSP 不支持 Get 操作（如 Account CSP），设置会报 failed 但实际已生效，属于预期... | 🟢 8.5 | ADO Wiki |
+| 7 | macOS custom profile (DLP/TCC payload) fails with error 'The profile must be a system profile. Us... | Profile was deployed to a user group instead of a device group. TCC and certa... | Reassign the custom configuration profile to a device group instead of a user group. TCC/Privacy ... | 🟢 8.5 | ADO Wiki |
+| 8 | Security baseline shows 'Error' status; setting fails to apply due to scope or applicability issue | Setting either assigned to wrong scope (user vs device) or device does not su... | 1) Check error code in Intune portal for explanation. 2) Review CSP pre-requirements for each fai... | 🟢 8.5 | ADO Wiki |
+| 9 | Unhealthy Endpoint Report shows incorrect device status in MEM Admin Center; mismatch between por... | Multiple possible causes: 1) Defender AV agent reporting incorrect status (MD... | 1) Run Get-MpComputerStatus on device to get actual ComputerState/AMRunningMode/DefenderSignature... | 🟢 8.5 | ADO Wiki |
+| 10 | Security baseline profile shows 'Error' status — security setting failed to apply on device | Typically related to scope (wrong assignment to user vs device group) or appl... | 1) Review CSP pre-requirements for each security setting 2) Check if device supports the setting ... | 🟢 8.5 | ADO Wiki |
+| 11 | TargetReleaseVersion CSP and Feature Update policy behave differently for controlling Windows fea... | TargetReleaseVersion CSP is client-side control; Feature Update policy is ser... | Use TargetReleaseVersion CSP (OMA-URI ./Vendor/MSFT/Policy/Config/Update/TargetReleaseVersion) as... | 🟢 8.0 | OneNote |
+| 12 | Intune Endpoint Security firewall rule deployment fails with error 0x80070057 (E_INVALIDARG); one... | Common causes: 1) Invalid file path with typos in environment variables (e.g.... | 1) Identify the failing rule via Event Log EventID 404 under DeviceManagement-Enterprise-Diagnost... | 🟢 8.0 | OneNote |
+| 13 | Intune policy RemovableDiskDenyWriteAccess deployed successfully (registry and policy manager con... | Registry key HKLM\SYSTEM\CurrentControlSet\Control\Storage\HotplugSecureOpen ... | 1. Check if HotplugSecureOpen registry key exists: HKLM\SYSTEM\CurrentControlSet\Control\Storage\... | 🔵 7.5 | OneNote |
+| 14 | Issue:  Windows 10 Enterprise Mobile devices are assigned the CSP Policies as such:     Shows the... | The CSP is being ignored and is currently BUG: Bug 11941212 | Currently there is no work around for this issue, and the BUG is being worked on at this time, pl... | 🔵 7.0 | ContentIdea KB |
+| 15 | OMA-URI ./Vendor/MSFT/Policy/Config/Start/HideAppList policy is not applying to MDM enrolled Wind... | This is a client side bug fixed in Windows 10 RS3. | Upgrade to Windows 10 RS3. ICM 43249767. | 🔵 7.0 | ContentIdea KB |
+| 16 | When configuring the option "Use private store only" in the Intune for EDU portal the policy show... | Targeted computers have Windows PRO Education which does not support the Requ... | The RequirePrivateStoreOnly CSP policy is not supported on Windows 10 PRO Education because it is... | 🔵 7.0 | ContentIdea KB |
+| 17 | After creating a Windows 10 configuration profile and supplying the URL to an image to be used as... | This can occur if SetEduPolicies is not set to TRUE. Managing the desktop ima... | To resolve this prob lem complete the following:1. Login to portal.azure.com. 2. On the Intune bl... | 🔵 7.0 | ContentIdea KB |
+| 18 | �         The �Windows Defender Security Center� is showing unexpected results on Windows 10 1703... | The �Enable user access to Windows Defender� is not working correctly. Settin... | The workaround, until a fix is implemented to resolve the CSP being set incorrectly, can be found... | 🔵 7.0 | ContentIdea KB |
+| 19 | After creating and assigning a Device Configuration profile that defines a custom VPN connection ... | This occurs because in certain scenarios, the response sent by the Windows 10... | You can ignore this error as the connection does work as expected. Alternatively, you can&nbsp;us... | 🔵 7.0 | ContentIdea KB |
+| 20 | Cannot apply Windows 10 Custom Setting to set IE DisableHomePageChange via OMA-URI. Result: (0x80... | Quotation marks in the policy value XML string are not in UTF-8 unicode (smar... | Edit the OMA-URI and modify its string value ensuring standard UTF-8 quotation marks are used in ... | 🔵 7.0 | ContentIdea KB |
+| 21 | OneDrive KFM (Known Folder Move) allows you to redirect common Windows folders (Desktop, Document... | Protect Critical Data With OneDrive & Known Folder Move (KFM)https://blogs.te... | To setup OneDrive for Business KFM, you will need to perform the following actions:1. Make sure O... | 🔵 7.0 | ContentIdea KB |
+| 22 | ADMX-backed custom OMA-URI policy deployed via Intune shows 'Not applicable' or fails on Windows ... | Certain Policy CSPs (e.g., AppVirtualization) used in ADMX-backed policies ar... | Verify CSP edition support at docs.microsoft.com/windows/client-management/mdm/policy-csp-* befor... | 🔵 7.0 | OneNote |
+| 23 | RemoteWipe doWipe fails on Windows 10 with Event ID 400 The request is not supported (0x80070032) | Windows Recovery Environment (WinRE) is disabled. RemoteWipe CSP requires WinRE. | Run Reagentc /info as admin to check WinRE status. If Disabled troubleshoot and re-enable WinRE. | 🔵 6.5 | MS Learn |
+
+## 快速排查路径
+1. Change password complexity setting to a supported value (1, 2, or 3) for Windows desktop devices. Value 4 is only supported on mobile. Use Windows LAP `[来源: OneNote]`
+2. Check if the custom OMA-URI setting is already available in Settings Catalog. If yes, migrate to Settings Catalog policy and remove the custom policy. `[来源: OneNote]`
+3. Create Intune custom profile: OMA-URI: ./Device/Vendor/MSFT/Policy/Config/UserRights/AllowLocalLogOn. For specific user: Value = 'AzureAD\user@domain. `[来源: OneNote]`
+4. Create custom profile: OMA-URI ./Device/Vendor/MSFT/Policy/Config/UserRights/AllowLocalLogOn, Data Type String, use CDATA tag with SIDs (e.g. *S-1-5-1 `[来源: OneNote]`
+5. Must manually fix on device with local admin: Open gpedit.msc -> Allow log on locally -> remove Intune-deployed values -> restore original values. Can `[来源: OneNote]`
+
+> 本 topic 有融合排查指南，含完整排查流程和 Kusto 查询模板
+> → [完整排查流程](details/config-admx-omauri.md#排查流程)

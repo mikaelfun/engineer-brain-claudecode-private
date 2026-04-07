@@ -1,0 +1,1753 @@
+{
+  "product": "disk",
+  "generatedAt": "2026-04-07",
+  "topics": [
+    {
+      "slug": "acsa",
+      "title": "Azure Container Storage (Arc)",
+      "entryIds": [
+        "disk-118",
+        "disk-119",
+        "disk-120",
+        "disk-121"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-acsa-faq.md",
+        "guides/drafts/ado-wiki-a-acsa-troubleshooting-guide.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "acsa",
+        "azure-container-storage-arc",
+        "cloud-ingest",
+        "configmap",
+        "crashloopbackoff",
+        "createcontainerconfigerror",
+        "kubernetes",
+        "limitation",
+        "networking",
+        "pending-pod"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "ade-bitlocker",
+      "title": "Azure Disk Encryption (ADE) & BitLocker",
+      "entryIds": [
+        "disk-001",
+        "disk-210",
+        "disk-262",
+        "disk-275",
+        "disk-276",
+        "disk-277",
+        "disk-278",
+        "disk-279",
+        "disk-280",
+        "disk-291",
+        "disk-292",
+        "disk-299",
+        "disk-303",
+        "disk-313",
+        "disk-314",
+        "disk-315",
+        "disk-316",
+        "disk-317",
+        "disk-318",
+        "disk-344"
+      ],
+      "draftPaths": [
+        "guides/drafts/mslearn-unlock-encrypted-disk-offline.md",
+        "guides/drafts/onenote-nfs41-encryption-in-transit-aznfs.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "14.04",
+        "ade",
+        "azure-stack-edge",
+        "backup",
+        "bdehdcfg",
+        "bek",
+        "bek-volume",
+        "bitlocker",
+        "bmc",
+        "boot-error"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "aks-disk",
+      "title": "AKS Persistent Volume & Disk",
+      "entryIds": [
+        "disk-011",
+        "disk-090",
+        "disk-093",
+        "disk-097",
+        "disk-250",
+        "disk-267",
+        "disk-268",
+        "disk-270",
+        "disk-271",
+        "disk-272"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "afs",
+        "aks",
+        "attach",
+        "authorizationfailed",
+        "availability-zone",
+        "aznfs",
+        "azure-files",
+        "blobfuse",
+        "config-priority",
+        "containercreating"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "ase-compute",
+      "title": "Azure Stack Edge: VM & Kubernetes",
+      "entryIds": [
+        "disk-205",
+        "disk-206",
+        "disk-207",
+        "disk-220",
+        "disk-221",
+        "disk-230"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-identifying-ap5gc-cases-rerouting.md",
+        "guides/drafts/ado-wiki-ase-collect-vm-logs.md",
+        "guides/drafts/ado-wiki-ase-gpu-drivers-rhel.md",
+        "guides/drafts/ado-wiki-ase-k8s-admin-access.md",
+        "guides/drafts/ado-wiki-ase-k8s-memory-processor-limits.md",
+        "guides/drafts/ado-wiki-common-errors-kubernetes.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "aks",
+        "ap5gc",
+        "azure-for-operators",
+        "azure-stack-edge",
+        "bmc",
+        "boot-failure",
+        "hardware",
+        "idrac",
+        "ip-conflict",
+        "kubernetes"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "ase-hardware",
+      "title": "Azure Stack Edge: Device Management",
+      "entryIds": [
+        "disk-203",
+        "disk-209",
+        "disk-225",
+        "disk-228"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-ase-bmc-connection.md",
+        "guides/drafts/ado-wiki-ase-device-replacement.md",
+        "guides/drafts/ado-wiki-ase-disable-mps.md",
+        "guides/drafts/ado-wiki-ase-move-subscription.md",
+        "guides/drafts/ado-wiki-ase-performance-logs.md",
+        "guides/drafts/ado-wiki-ase-reseat-replace-data-drive.md",
+        "guides/drafts/ado-wiki-ase-return-process.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "403-error",
+        "activation-key",
+        "automation",
+        "az.stackedge",
+        "azure-policy",
+        "azure-stack-edge",
+        "bios",
+        "clusterperformancehistory",
+        "no_param",
+        "powershell"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "ase-networking",
+      "title": "Azure Stack Edge: Networking",
+      "entryIds": [
+        "disk-204",
+        "disk-208",
+        "disk-211",
+        "disk-212",
+        "disk-213",
+        "disk-214",
+        "disk-216",
+        "disk-217",
+        "disk-222",
+        "disk-223",
+        "disk-226",
+        "disk-227",
+        "disk-229",
+        "disk-248"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-changing-network-interface-mtu-value.md",
+        "guides/drafts/ado-wiki-a-using-az-stackedge-cmdlets.md",
+        "guides/drafts/ado-wiki-ase-elevated-support-session.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "403",
+        "azure-stack-edge",
+        "blobdownloadfailed",
+        "bmc",
+        "bug",
+        "bug-7297787",
+        "certificates",
+        "clustered-state",
+        "compute",
+        "configuring-device"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "ase-storage",
+      "title": "Azure Stack Edge: Storage & Upload",
+      "entryIds": [
+        "disk-215",
+        "disk-218",
+        "disk-219"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "alternate-data-streams",
+        "azure-stack-edge",
+        "copy-error-665",
+        "datadata",
+        "error-2998",
+        "error-665",
+        "readonly",
+        "refs",
+        "robocopy",
+        "storage-gateway"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "avere-hpc-cache",
+      "title": "Avere vFXT & HPC Cache",
+      "entryIds": [
+        "disk-109",
+        "disk-110",
+        "disk-111",
+        "disk-112",
+        "disk-113",
+        "disk-114",
+        "disk-115",
+        "disk-116",
+        "disk-117"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-avere-cli-cmdlets.md",
+        "guides/drafts/ado-wiki-a-avere-fxt-vfxt-main-links.md",
+        "guides/drafts/ado-wiki-a-avere-hpc-cache-restart-services.md",
+        "guides/drafts/ado-wiki-a-avere-scoping-general.md",
+        "guides/drafts/ado-wiki-a-avere-scoping-performance.md",
+        "guides/drafts/ado-wiki-a-avere-scoping-system-failure.md",
+        "guides/drafts/ado-wiki-a-avere-top-customer-scenarios-dfm.md",
+        "guides/drafts/ado-wiki-a-basic-connectivity-testing.md",
+        "guides/drafts/ado-wiki-a-basic-troubleshooting-steps.md",
+        "guides/drafts/ado-wiki-a-hpc-quick-reference-sheet.md",
+        "guides/drafts/ado-wiki-avere-vfxt-quick-reference-sheet.md",
+        "guides/drafts/ado-wiki-rpc-slot-exhaustion-nfs.md",
+        "guides/drafts/ado-wiki-how-to-get-logs-and-packet-captures.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "avere-vfxt",
+        "backend",
+        "cache-full",
+        "cache-policy",
+        "core-filer",
+        "destroy-recreate",
+        "diagnostics",
+        "differential-diagnosis",
+        "hpc-cache",
+        "latency"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "azure-files-sync",
+      "title": "Azure Files, File Sync & NFS",
+      "entryIds": [
+        "disk-072",
+        "disk-073",
+        "disk-074",
+        "disk-084",
+        "disk-085",
+        "disk-089",
+        "disk-092"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Slow-NFS-Transfer-Rate-Linux-DataBox.md",
+        "guides/drafts/ado-wiki-a-Unable-to-mount-NFS-share-of-Azure-Data-Box.md",
+        "guides/drafts/onenote-afs-enumeration-eta.md",
+        "guides/drafts/onenote-azure-file-sync-troubleshooting.md",
+        "guides/drafts/onenote-azure-files-ad-ds-cross-forest.md",
+        "guides/drafts/onenote-azure-files-adds-cross-forest.md",
+        "guides/drafts/onenote-nfs41-vs-smb-protocol-comparison.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "0x80070032",
+        "21v",
+        "agent-v15",
+        "azcopy",
+        "aznfs",
+        "azure-file-sync",
+        "azure-files",
+        "certificate",
+        "digicert",
+        "encryption-in-transit"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "blob-tools",
+      "title": "Blob Storage & Transfer Tools",
+      "entryIds": [
+        "disk-012",
+        "disk-075",
+        "disk-086",
+        "disk-087",
+        "disk-091"
+      ],
+      "draftPaths": [
+        "guides/drafts/onenote-azcopy-support-reference.md",
+        "guides/drafts/onenote-blob-capacity-calculation.md",
+        "guides/drafts/onenote-blobfuse-logging.md",
+        "guides/drafts/onenote-blobfuse2-csi-setup.md",
+        "guides/drafts/onenote-blobfuse2-static-mount-msi.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "403",
+        "adls",
+        "aks",
+        "authenticationfailed",
+        "azcopy",
+        "blob",
+        "blobfuse",
+        "blobfuse2",
+        "cache",
+        "certificate"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "boot-failure",
+      "title": "VM Boot Failures",
+      "entryIds": [
+        "disk-080",
+        "disk-251",
+        "disk-253",
+        "disk-261",
+        "disk-274",
+        "disk-304",
+        "disk-305",
+        "disk-306",
+        "disk-307",
+        "disk-370",
+        "disk-377",
+        "disk-379",
+        "disk-391",
+        "disk-393",
+        "disk-414",
+        "disk-425"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-support-operations-reboot-cache.md",
+        "guides/drafts/mslearn-kernel-boot-issues-linux.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "0xc00000ba",
+        "0xc0000225",
+        "2tb-limit",
+        "active-partition",
+        "auditd",
+        "bcd",
+        "bcdboot",
+        "bcdedit",
+        "boot-error",
+        "boot-failure"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "cmk-sse-encryption",
+      "title": "CMK & SSE Encryption",
+      "entryIds": [
+        "disk-081",
+        "disk-256",
+        "disk-339",
+        "disk-340",
+        "disk-341"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "auto-shutdown",
+        "cmk",
+        "copy-disk",
+        "cross-tenant",
+        "customer-managed-key",
+        "diskencryptionset",
+        "encryption",
+        "entra-id",
+        "identity",
+        "incremental-snapshot"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "data-box-disk-copy",
+      "title": "Data Box Disk: Data Copy & Import",
+      "entryIds": [
+        "disk-049",
+        "disk-065",
+        "disk-067",
+        "disk-125",
+        "disk-233",
+        "disk-329",
+        "disk-335",
+        "disk-336",
+        "disk-337"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-data-box-disk-faqs.md",
+        "guides/drafts/ado-wiki-data-box-disk-internal-error-portal.md",
+        "guides/drafts/ado-wiki-databox-disk-upload-to-container.md",
+        "guides/drafts/ado-wiki-write-protected-error-data-box-disk.md",
+        "guides/drafts/onenote-databox-disk-data-preparation.md",
+        "guides/drafts/onenote-databox-disk-process-flow.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "409",
+        "5tib",
+        "asc",
+        "bitlocker",
+        "blob",
+        "blob-size",
+        "conversion",
+        "copy-stuck",
+        "data-box-disk",
+        "data-copy"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "data-box-disk-logistics",
+      "title": "Data Box Disk: Shipping & Mooncake",
+      "entryIds": [
+        "disk-050",
+        "disk-064"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "contact",
+        "data-box-disk",
+        "label",
+        "mooncake",
+        "phone-unreachable",
+        "return",
+        "shipping"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "data-box-disk-mars",
+      "title": "Data Box Disk: MARS Offline Backup",
+      "entryIds": [
+        "disk-054"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "data-box-disk",
+        "mars",
+        "mmc-crash",
+        "offline-backup"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "data-box-disk-setup",
+      "title": "Data Box Disk: Unlock & Hardware",
+      "entryIds": [
+        "disk-015",
+        "disk-019",
+        "disk-051",
+        "disk-057",
+        "disk-058",
+        "disk-059",
+        "disk-066",
+        "disk-122",
+        "disk-123",
+        "disk-124",
+        "disk-128",
+        "disk-129",
+        "disk-130",
+        "disk-232",
+        "disk-235",
+        "disk-236",
+        "disk-237",
+        "disk-327",
+        "disk-328"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-generic-access-denied-validation-tool.md",
+        "guides/drafts/ado-wiki-a-usbtreeview-troubleshoot-undetected-disk-unlocking.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "azcopy",
+        "bitlocker",
+        "blob-upload",
+        "compatibility",
+        "corrupt",
+        "customer-error",
+        "data-box-disk",
+        "data-copy",
+        "data-copy-azure",
+        "data-loss"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "data-box-disk-upload",
+      "title": "Data Box Disk: DC Upload & Errors",
+      "entryIds": [
+        "disk-048",
+        "disk-062",
+        "disk-063",
+        "disk-126"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "data-box-disk",
+        "delay",
+        "icm",
+        "logistics",
+        "mailbox",
+        "mooncake",
+        "notification",
+        "order-status",
+        "pickup-delay",
+        "preparation-sla"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "data-box-disk-validation",
+      "title": "Data Box Disk: Validation & Naming",
+      "entryIds": [
+        "disk-014",
+        "disk-016",
+        "disk-017",
+        "disk-018",
+        "disk-020",
+        "disk-021",
+        "disk-052",
+        "disk-053",
+        "disk-055",
+        "disk-060",
+        "disk-061",
+        "disk-068",
+        "disk-069",
+        "disk-070",
+        "disk-071",
+        "disk-127",
+        "disk-231",
+        "disk-234"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "256-chars",
+        "azcopy",
+        "azure-files",
+        "bad-request",
+        "blockblob",
+        "checksum",
+        "completed-with-errors",
+        "container",
+        "copy-log",
+        "data-box-disk"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "data-box-gateway",
+      "title": "Data Box Gateway",
+      "entryIds": [
+        "disk-133",
+        "disk-134",
+        "disk-135",
+        "disk-136",
+        "disk-154",
+        "disk-238",
+        "disk-239"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-expand-data-disk-data-box-gateway.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "archived-blob",
+        "authentication",
+        "azure-stack-edge",
+        "by-design",
+        "copy-failure",
+        "data-box",
+        "data-box-gateway",
+        "datadata",
+        "directory-name",
+        "error-0x8007003a"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "data-box-pod-connectivity",
+      "title": "Data Box POD: Connectivity & Access",
+      "entryIds": [
+        "disk-032",
+        "disk-035",
+        "disk-037",
+        "disk-038",
+        "disk-039",
+        "disk-040",
+        "disk-042",
+        "disk-141",
+        "disk-148",
+        "disk-150",
+        "disk-151",
+        "disk-153",
+        "disk-156",
+        "disk-158",
+        "disk-159",
+        "disk-160",
+        "disk-162",
+        "disk-163",
+        "disk-164",
+        "disk-165",
+        "disk-167",
+        "disk-171",
+        "disk-172",
+        "disk-174",
+        "disk-241",
+        "disk-242",
+        "disk-332",
+        "disk-333"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Unable-to-Access-DataBox-Local-WebUI.md",
+        "guides/drafts/ado-wiki-connecting-support-session-data-box.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "3rd-party",
+        "access",
+        "access-denied",
+        "account-disabled",
+        "account-lockout",
+        "adb_pack",
+        "authentication",
+        "authenticationfailed",
+        "azure-files",
+        "azure-portal"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "data-box-pod-copy",
+      "title": "Data Box POD: Data Copy & Performance",
+      "entryIds": [
+        "disk-026",
+        "disk-027",
+        "disk-030",
+        "disk-138",
+        "disk-139",
+        "disk-140",
+        "disk-144",
+        "disk-145",
+        "disk-149",
+        "disk-168",
+        "disk-330",
+        "disk-334"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-data-box-copy-not-yet-started.md",
+        "guides/drafts/ado-wiki-a-data-copy-slow-data-box.md",
+        "guides/drafts/onenote-databox-pod-requirements-limits.md",
+        "guides/drafts/onenote-databox-pod-support-package-analysis.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "512-byte-aligned",
+        "512-byte-alignment",
+        "acl",
+        "azcopy",
+        "azure-files",
+        "by-design",
+        "certificate",
+        "certificate_verify_failed",
+        "copy-job",
+        "data-box"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "data-box-pod-hardware",
+      "title": "Data Box POD: Hardware & Error Codes",
+      "entryIds": [
+        "disk-031",
+        "disk-033",
+        "disk-034",
+        "disk-157",
+        "disk-182",
+        "disk-183",
+        "disk-185",
+        "disk-186",
+        "disk-187",
+        "disk-188",
+        "disk-189"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-data-box-hardware-faq.md",
+        "guides/drafts/ado-wiki-a-hardware-6k-diagram.md",
+        "guides/drafts/ado-wiki-a-local-ui-error-codes.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "cable",
+        "cables",
+        "cluster-resource",
+        "connectivity",
+        "data-box",
+        "data-box-pod",
+        "doa",
+        "error-code",
+        "failed-state",
+        "firmware"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "data-box-pod-metadata",
+      "title": "Data Box POD: Metadata & ACL",
+      "entryIds": [
+        "disk-137",
+        "disk-142",
+        "disk-143",
+        "disk-146",
+        "disk-147",
+        "disk-161",
+        "disk-166"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-applying-acl-permissions-data-box.md",
+        "guides/drafts/ado-wiki-a-metadata-preservation-permissions-data-box.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "acl",
+        "azure-files",
+        "backup-operator",
+        "blob-storage",
+        "by-design",
+        "data-box",
+        "delete-files",
+        "file-attributes",
+        "invalid-characters",
+        "metadata"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "data-box-pod-ordering",
+      "title": "Data Box POD: Ordering & Shipping",
+      "entryIds": [
+        "disk-022",
+        "disk-023",
+        "disk-024",
+        "disk-025",
+        "disk-029",
+        "disk-036",
+        "disk-041",
+        "disk-043",
+        "disk-044",
+        "disk-047",
+        "disk-131",
+        "disk-132",
+        "disk-152",
+        "disk-155",
+        "disk-169",
+        "disk-170",
+        "disk-173",
+        "disk-176",
+        "disk-177",
+        "disk-178",
+        "disk-179",
+        "disk-180",
+        "disk-181",
+        "disk-184",
+        "disk-192",
+        "disk-193",
+        "disk-194",
+        "disk-195",
+        "disk-196",
+        "disk-198",
+        "disk-199",
+        "disk-240",
+        "disk-243",
+        "disk-244"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-data-box-ordering-faqs.md",
+        "guides/drafts/ado-wiki-data-box-refund-waiver.md",
+        "guides/drafts/ado-wiki-erase-data-box-pod-cli.md",
+        "guides/drafts/ado-wiki-xml-file-creation-export.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "5-active-orders",
+        "502-error",
+        "5tb-limit",
+        "account-lockout",
+        "acl",
+        "address-change",
+        "address-validation",
+        "archive-tier",
+        "asc",
+        "audit-log"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "data-box-pod-prepare",
+      "title": "Data Box POD: Prepare to Ship",
+      "entryIds": [
+        "disk-028",
+        "disk-190",
+        "disk-191",
+        "disk-197",
+        "disk-245",
+        "disk-246",
+        "disk-247",
+        "disk-331"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-change-shipping-address-data-box.md",
+        "guides/drafts/ado-wiki-prepare-to-ship-phases.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "base64",
+        "bom",
+        "data-box",
+        "data-box-pod",
+        "download-file-list",
+        "dynamic-vhd",
+        "error_blob_or_file_name_character_illegal",
+        "error_blob_or_file_type_unsupported",
+        "file-naming",
+        "immutable-storage"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "disk-backup-restore",
+      "title": "Disk Backup, Restore & Snapshots",
+      "entryIds": [
+        "disk-101",
+        "disk-259",
+        "disk-260",
+        "disk-286",
+        "disk-287",
+        "disk-288",
+        "disk-289",
+        "disk-290",
+        "disk-293",
+        "disk-300",
+        "disk-301",
+        "disk-302",
+        "disk-343"
+      ],
+      "draftPaths": [
+        "guides/drafts/mslearn-backup-dr-managed-disks.md",
+        "guides/drafts/mslearn-vm-restore-point-troubleshooting.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "403",
+        "500",
+        "60-day-limit",
+        "application-consistency",
+        "asr",
+        "backup",
+        "backup-vault",
+        "cmk",
+        "commvault",
+        "delete"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "disk-export-upload",
+      "title": "Disk Export, Upload & Access",
+      "entryIds": [
+        "disk-323",
+        "disk-324",
+        "disk-325"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "100-limit",
+        "azure-advisor",
+        "billing",
+        "cleanup",
+        "cost",
+        "delete",
+        "denyall",
+        "disk-access",
+        "download",
+        "encryption-set"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "disk-failure-event17",
+      "title": "IaaS Disk Failure (Event 17)",
+      "entryIds": [
+        "disk-004",
+        "disk-108"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "io-errors.md",
+        "xdisk-counters.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "disk-failure",
+        "e17",
+        "event17",
+        "iaasxstorageoutage",
+        "rca",
+        "triage",
+        "vhddiskprt",
+        "vm-reboot",
+        "vma",
+        "xdiskblobnotfound"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "disk-management",
+      "title": "Disk Management (Attach/Detach/Resize)",
+      "entryIds": [
+        "disk-007",
+        "disk-249",
+        "disk-252",
+        "disk-257",
+        "disk-282",
+        "disk-283",
+        "disk-296",
+        "disk-297",
+        "disk-308",
+        "disk-309",
+        "disk-310",
+        "disk-312",
+        "disk-326"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "dcm-disk-inventory.md",
+        "disk-api-qos.md",
+        "disk-lifecycle.md",
+        "disk-metadata.md",
+        "rdos-disk-config.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "4tib",
+        "attach",
+        "attachdiskwhilebeingdetached",
+        "blob",
+        "blobcache",
+        "boot-failure",
+        "caching",
+        "cloud-init",
+        "convert",
+        "data-disk"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "disk-performance",
+      "title": "Disk Performance & Throttling",
+      "entryIds": [
+        "disk-005",
+        "disk-006",
+        "disk-009",
+        "disk-010",
+        "disk-013",
+        "disk-045",
+        "disk-088",
+        "disk-100",
+        "disk-254",
+        "disk-264",
+        "disk-265",
+        "disk-266",
+        "disk-273",
+        "disk-281",
+        "disk-284",
+        "disk-295",
+        "disk-311",
+        "disk-418"
+      ],
+      "draftPaths": [
+        "guides/drafts/mslearn-disk-benchmarking-guide.md",
+        "guides/drafts/mslearn-disk-performance-metrics-reference.md",
+        "guides/drafts/onenote-storage-latency-troubleshooting.md"
+      ],
+      "kustoQueryFiles": [
+        "io-errors.md",
+        "io-latency.md",
+        "io-performance.md",
+        "io-throttling.md",
+        "xdisk-counters.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "30-minutes",
+        "4k",
+        "512e",
+        "512gib",
+        "513gib",
+        "64kib",
+        "alldisksabc",
+        "alldisksinstripe",
+        "background-copy",
+        "backup"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "disk-recovery",
+      "title": "Managed Disk Recovery",
+      "entryIds": [
+        "disk-002",
+        "disk-003",
+        "disk-008",
+        "disk-294"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "disk-lifecycle.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "asr",
+        "backup",
+        "blob-recovery",
+        "disk-recovery",
+        "diskrp",
+        "eee",
+        "extensionfailedsnapshotlimitreachederror",
+        "geneva-action",
+        "hard-delete",
+        "icm"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "import-export",
+      "title": "Azure Import/Export Service",
+      "entryIds": [
+        "disk-200",
+        "disk-201",
+        "disk-224"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "azure-storage-devices",
+        "export-job",
+        "import-export",
+        "import-job",
+        "incorrect-files",
+        "journal-file",
+        "misroute",
+        "routing",
+        "sap",
+        "snapshots"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "misc-disk-issues",
+      "title": "Miscellaneous Disk Issues",
+      "entryIds": [
+        "disk-107",
+        "disk-175",
+        "disk-202",
+        "disk-258",
+        "disk-342"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-dump-collection-debug-diag-tool.md",
+        "guides/drafts/ado-wiki-a-initial-questions.md",
+        "guides/drafts/ado-wiki-a-kusto-queries.md",
+        "guides/drafts/ado-wiki-a-support-operations-collect-traces.md",
+        "guides/drafts/ado-wiki-a-support-operations-get-cache-plus.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "access",
+        "acquirediskleasefailed",
+        "blob",
+        "config-hub",
+        "coreidentity",
+        "data-box",
+        "data-operator",
+        "data-size-mismatch",
+        "diskblobalreadyinusebyanotherdisk",
+        "download"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "mooncake-ops",
+      "title": "Mooncake Operations",
+      "entryIds": [
+        "disk-099"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "escort-access",
+        "fairfax",
+        "geneva-action",
+        "mooncake",
+        "national-cloud",
+        "psa",
+        "rbac",
+        "security"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "shared-disk",
+      "title": "Azure Shared Disk",
+      "entryIds": [
+        "disk-046",
+        "disk-056",
+        "disk-269",
+        "disk-298"
+      ],
+      "draftPaths": [
+        "guides/drafts/mslearn-shared-disk-limitations-reference.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "aks",
+        "azure-files",
+        "csv",
+        "deallocate",
+        "expand",
+        "failover-cluster",
+        "kusto",
+        "limitation",
+        "mooncake",
+        "multi-attach"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "storage-account",
+      "title": "Storage Account Issues",
+      "entryIds": [
+        "disk-076",
+        "disk-077",
+        "disk-078",
+        "disk-079",
+        "disk-082",
+        "disk-083",
+        "disk-094",
+        "disk-095",
+        "disk-096",
+        "disk-102",
+        "disk-104",
+        "disk-105",
+        "disk-106",
+        "disk-255"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-copying-managed-disk-to-storage-account.md"
+      ],
+      "kustoQueryFiles": [
+        "disk-api-qos.md",
+        "xstore-storage.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "20000",
+        "404",
+        "409-conflict",
+        "503",
+        "access-tier",
+        "account-migration",
+        "accountpendingmigrationtosrp",
+        "api-throttling",
+        "arm",
+        "authorizationfailed"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "storage-spaces",
+      "title": "Storage Spaces & S2D",
+      "entryIds": [
+        "disk-394",
+        "disk-395",
+        "disk-400",
+        "disk-402",
+        "disk-416"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "nullsessionshares",
+        "registry-type-mismatch",
+        "smb",
+        "sofs"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "temp-ephemeral-disk",
+      "title": "Temporary & Ephemeral OS Disk",
+      "entryIds": [
+        "disk-319",
+        "disk-320",
+        "disk-321"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "cache",
+        "d-drive",
+        "data-loss",
+        "deallocate",
+        "deployment-failure",
+        "eosd",
+        "ephemeral",
+        "ephemeral-os-disk",
+        "maintenance",
+        "reimage"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "tls-security",
+      "title": "TLS, Certificates & Security",
+      "entryIds": [
+        "disk-098",
+        "disk-103",
+        "disk-383",
+        "disk-444",
+        "disk-449"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "3des",
+        "asc",
+        "audit",
+        "cipher-suite",
+        "client-ip",
+        "false-positive",
+        "ipv4",
+        "ipv6",
+        "nrp",
+        "private-endpoint"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "ultra-premium-disk",
+      "title": "Ultra Disk, Premium SSD v2 & NVMe",
+      "entryIds": [
+        "disk-263",
+        "disk-285",
+        "disk-322",
+        "disk-338"
+      ],
+      "draftPaths": [
+        "guides/drafts/onenote-azure-storage-feature-gap-21v.md",
+        "guides/drafts/onenote-ultra-disk-feature-readiness.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "availability-zone",
+        "azure-compute-gallery",
+        "completionpercent",
+        "cross-region",
+        "data-disk-only",
+        "disk-controller",
+        "gen2",
+        "instant-access-snapshot",
+        "latency",
+        "limitation"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "windows-misc",
+      "title": "Windows Server Misc KB",
+      "entryIds": [
+        "disk-347",
+        "disk-349",
+        "disk-385",
+        "disk-386",
+        "disk-407",
+        "disk-408",
+        "disk-413",
+        "disk-420",
+        "disk-437",
+        "disk-446",
+        "disk-447",
+        "disk-459"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "print-to-pdf",
+        "printer-driver",
+        "registry"
+      ],
+      "confidence": "high"
+    }
+  ],
+  "discarded": [
+    {
+      "id": "disk-345",
+      "reason": "half-complete"
+    },
+    {
+      "id": "disk-346",
+      "reason": "half-complete"
+    },
+    {
+      "id": "disk-348",
+      "reason": "half-complete"
+    },
+    {
+      "id": "disk-350",
+      "reason": "half-complete"
+    },
+    {
+      "id": "disk-351",
+      "reason": "half-complete"
+    },
+    {
+      "id": "disk-352",
+      "reason": "half-complete"
+    },
+    {
+      "id": "disk-353",
+      "reason": "half-complete"
+    },
+    {
+      "id": "disk-381",
+      "reason": "half-complete"
+    },
+    {
+      "id": "disk-401",
+      "reason": "half-complete"
+    },
+    {
+      "id": "disk-431",
+      "reason": "half-complete"
+    },
+    {
+      "id": "disk-434",
+      "reason": "half-complete"
+    },
+    {
+      "id": "disk-436",
+      "reason": "half-complete"
+    },
+    {
+      "id": "disk-438",
+      "reason": "half-complete"
+    },
+    {
+      "id": "disk-455",
+      "reason": "half-complete"
+    },
+    {
+      "id": "disk-354",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-355",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-356",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-357",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-358",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-359",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-360",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-361",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-362",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-363",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-364",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-365",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-366",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-367",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-368",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-369",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-371",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-372",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-373",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-374",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-375",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-376",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-378",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-380",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-382",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-384",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-387",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-388",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-389",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-390",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-392",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-396",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-397",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-398",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-399",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-403",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-404",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-405",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-406",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-409",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-410",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-411",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-412",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-415",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-417",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-419",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-421",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-422",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-423",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-424",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-426",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-427",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-428",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-429",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-430",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-432",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-433",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-435",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-439",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-440",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-441",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-442",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-443",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-445",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-448",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-450",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-451",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-452",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-453",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-454",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-456",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-457",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-458",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-460",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-461",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-462",
+      "reason": "off-topic contentidea-kb entry"
+    },
+    {
+      "id": "disk-463",
+      "reason": "off-topic contentidea-kb entry"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "source": "mslearn",
+  "product": "automation",
+  "tocPaths": ["azure/automation"],
+  "index": [
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/automation/runbooks/error-running-powershell-runbook",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/automation/runbooks/error-running-python-runbook",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/automation/runbooks/issues-setting-up-hybrid-runbook-worker",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/automation/runbooks/job-not-start-as-expected",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/automation/runbooks/powershell-job-script-cmdlets-not-working",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/automation/runbooks/runbook-fails-on-hybrid-worker",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/automation/runbooks/runbook-job-suspended",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/automation/runbooks/troubleshoot-runbook-execution-issues"
+  ],
+  "scanned": [
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/automation/runbooks/error-running-powershell-runbook",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/automation/runbooks/error-running-python-runbook",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/automation/runbooks/issues-setting-up-hybrid-runbook-worker",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/automation/runbooks/job-not-start-as-expected",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/automation/runbooks/powershell-job-script-cmdlets-not-working",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/automation/runbooks/runbook-fails-on-hybrid-worker",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/automation/runbooks/runbook-job-suspended",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/automation/runbooks/troubleshoot-runbook-execution-issues"
+  ],
+  "lastUpdated": "2026-04-05"
+}

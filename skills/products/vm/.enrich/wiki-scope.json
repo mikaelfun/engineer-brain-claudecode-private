@@ -1,0 +1,11 @@
+{
+  "description": "Wiki path scope rules. Auto-managed by scan history. Manual edits OK.",
+  "scopes": [
+    {
+      "wikiKey": "Supportability/AzureIaaSVM",
+      "pathScope": [
+        "/SME Topics"
+      ]
+    }
+  ]
+}

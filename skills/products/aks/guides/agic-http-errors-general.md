@@ -1,0 +1,25 @@
+# AKS AGIC HTTP 错误码排查 — general -- Quick Reference
+
+**Sources**: 2 | **21V**: All | **Entries**: 10
+**Last updated**: 2026-04-06
+
+## Symptom Quick Reference
+
+| # | Symptom | Root Cause | Solution | Score | Source |
+|---|---------|-----------|----------|-------|--------|
+| 1 | App Gateway with AKS internal LB IP as backend; cert rotation may change iLB IP ... | AKS cert rotation triggers node reimaging which may recreate... | Workaround: 1) Rotate CCP certs only; 2) Scale up new nodes;... | [G] 8.0 | [onenote: Mooncake POD Support Notebook/POD/VMSCIM] |
+| 2 | Customer cannot control AGIC add-on version independently; experienced issue wit... | AGIC add-on is a managed service; version is tied to AKS clu... | Must upgrade AKS cluster to get newer AGIC add-on version. A... | [B] 7.5 | [onenote: Mooncake POD Support Notebook/POD/VMSCIM] |
+| 3 | AGIC pod logs show 'Ignore mutating App Gateway as it is not mutable' and 'Appli... | Application Gateway is in Stopped operational state (custome... | Start the Application Gateway: `az network application-gatew... | [B] 7.5 | [ADO Wiki](https://dev.azure.com/Supportability/AzureContainers/_wiki/wikis/Containers%20Wiki/%2FAzure%20Kubernetes%20Service%20Wiki%2FAKS%2FTSG%2FAKS%20Network%20Troubleshooting%20Methodology%2F%5BTSG%5D%20AGIC%2F%5BTSG%5D%20AGIC%20Troubleshooting%20AGIC%20AppGw%20Integration%20Issues) |
+| 4 | AGIC pod logs: ErrorGetApplicationGatewayError / Failed fetching configuration f... | AGIC pod lacks TCP/443 connectivity to management.azure.com.... | Check: 1) NVA/Firewall rules for management.azure.com:443. 2... | [B] 7.5 | [ADO Wiki](https://dev.azure.com/Supportability/AzureContainers/_wiki/wikis/Containers%20Wiki?pagePath=/Azure%20Kubernetes%20Service%20Wiki/AKS/TSG/AKS%20Network%20Troubleshooting%20Methodology/%5BTSG%5D%20AGIC/%5BTSG%5D%20AGIC%20Troubleshooting%20AGIC%20AppGw%20Integration%20Issues) |
+| 5 | AGIC pod logs: Ignore mutating App Gateway as it is not mutable / Application Ga... | Application Gateway is in Stopped state. AGIC requires Runni... | Start AppGW: az network application-gateway start -g <RG> -n... | [B] 7.5 | [ADO Wiki](https://dev.azure.com/Supportability/AzureContainers/_wiki/wikis/Containers%20Wiki?pagePath=/Azure%20Kubernetes%20Service%20Wiki/AKS/TSG/AKS%20Network%20Troubleshooting%20Methodology/%5BTSG%5D%20AGIC/%5BTSG%5D%20AGIC%20Troubleshooting%20AGIC%20AppGw%20Integration%20Issues) |
+| 6 | AGIC 场景下通过 Application Gateway 访问后端应用返回 HTTP 502 Bad Gateway，特别是在 K8s 工作负载滚动更新期间... | Application Gateway 后端池中没有健康的后端成员。在 K8s rolling update 期间旧 P... | 1. 检查 AppGW Backend Health 确认后端健康状态。2. 如果 502 在 rolling upda... | [B] 7.5 | [ADO Wiki](https://dev.azure.com/Supportability/AzureContainers/_wiki/wikis/Containers%20Wiki?pagePath=%2FAzure%20Kubernetes%20Service%20Wiki%2FAKS%2FTSG%2FAKS%20Network%20Troubleshooting%20Methodology%2F%5BTSG%5D%20AGIC%2F%5BTSG%5D%20AGIC%20Troubleshooting%20502%20Bad%20Gateway) |
+| 7 | AGIC 场景下通过 Application Gateway 访问后端应用返回 HTTP 504 Gateway Timeout，响应时间与配置的 reques... | Application Gateway 的 request timeout（默认 30s）过短，后端应用处理请求耗时超过... | 在 ingress resource 上设置 appgw.ingress.kubernetes.io/request-t... | [B] 7.5 | [ADO Wiki](https://dev.azure.com/Supportability/AzureContainers/_wiki/wikis/Containers%20Wiki?pagePath=%2FAzure%20Kubernetes%20Service%20Wiki%2FAKS%2FTSG%2FAKS%20Network%20Troubleshooting%20Methodology%2F%5BTSG%5D%20AGIC%2F%5BTSG%5D%20AGIC%20Troubleshooting%20504%20Gateway%20Timeout) |
+| 8 | AGIC pod 日志显示 ErrorGetApplicationGatewayError: Failed fetching configuration for... | AGIC pod 无法通过 TCP 443 连接到 Azure Resource Manager (management... | 1. 如 outbound type 为 UDR，检查 NVA/Firewall 规则是否允许到 management.... | [B] 7.5 | [ADO Wiki](https://dev.azure.com/Supportability/AzureContainers/_wiki/wikis/Containers%20Wiki?pagePath=%2FAzure%20Kubernetes%20Service%20Wiki%2FAKS%2FTSG%2FAKS%20Network%20Troubleshooting%20Methodology%2F%5BTSG%5D%20AGIC%2F%5BTSG%5D%20AGIC%20Troubleshooting%20AGIC%20AppGw%20Integration%20Issues) |
+| 9 | AGIC/AppGW returns HTTP 502 Bad Gateway during Kubernetes rolling deployments | During rolling updates, old pods are terminated before AppGW... | Implement 'Minimizing Downtime During Deployments' recommend... | [B] 7.5 | [ADO Wiki](https://dev.azure.com/Supportability/AzureContainers/_wiki/wikis/Containers%20Wiki?pagePath=%2FAzure%20Kubernetes%20Service%20Wiki%2FAKS%2FTSG%2FAKS%20Network%20Troubleshooting%20Methodology%2F%5BTSG%5D%20AGIC%2F%5BTSG%5D%20AGIC%20Troubleshooting%20502%20Bad%20Gateway) |
+| 10 | AKS node scale-out takes 30+ minutes; VMSS PUT operation abnormally long | During VMSS scale-out, CRP calls NRP to update associated ne... | 1) Trace ARM->CRP->NRP chain via Kusto (armmcadx->azcrpmc->N... | [B] 6.5 | [onenote: Mooncake POD Support Notebook/POD/VMSCIM] |
+
+## Quick Troubleshooting Path
+
+1. Check: Workaround: 1) Rotate CCP certs only; 2) Scale up new nodes; 3) Cordon/drain old nodes; 4) Delete ol `[source: onenote]`
+2. Check: Must upgrade AKS cluster to get newer AGIC add-on version `[source: onenote]`
+3. Check: Start the Application Gateway: `az network application-gateway start -g <RG> -n <NAME>` `[source: ado-wiki]`

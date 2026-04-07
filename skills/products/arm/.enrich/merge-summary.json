@@ -1,0 +1,12 @@
+{
+  "mergedEntries": 508,
+  "deduplicated": 0,
+  "patched21v": 31,
+  "sourceCounts": {
+    "21v-gap": 0,
+    "onenote": 38,
+    "ado-wiki": 369,
+    "mslearn": 58,
+    "contentidea-kb": 43
+  }
+}

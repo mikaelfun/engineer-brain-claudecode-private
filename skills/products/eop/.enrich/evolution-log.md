@@ -223,3 +223,4 @@
 - Track B guide-drafts: 9 (CPE Scenarios 7/8/9, DDX Guidelines, References, CARE, Top Indicators x2, Case Assignment)
 - Deduped: 0 (no overlap with main JSONL - all CPE process content)
 - Note: batch-a-pages.json had corrupted paths (em-dashes/apostrophes stripped); resolved via wiki tree enumeration
+| 2026-04-07 | SYNTHESIZE | 37 topics (30 fusion, 7 compact), 261 entries, 0 Kusto queries fused |

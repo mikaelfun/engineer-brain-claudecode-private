@@ -173,3 +173,5 @@
   - ACR recovery, role assignment SP issues
   - Slow pull/push performance guide, Soft Delete errors
   - CORS portal issue (large AAD groups), private ACR via proxy
+
+| 2026-04-07 | SYNTHESIZE | 20 topics (15 fusion, 5 compact), 108 entries, 10 Kusto queries fused |

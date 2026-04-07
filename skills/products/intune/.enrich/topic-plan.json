@@ -1,0 +1,3583 @@
+{
+  "product": "intune",
+  "generatedAt": "2026-04-07",
+  "topics": [
+    {
+      "slug": "21v-feature-gaps",
+      "title": "21V 功能差异与不支持特性",
+      "entryIds": [
+        "intune-21v-gap-001",
+        "intune-21v-gap-002",
+        "intune-21v-gap-003",
+        "intune-21v-gap-004",
+        "intune-21v-gap-005",
+        "intune-21v-gap-006",
+        "intune-21v-gap-007",
+        "intune-21v-gap-008",
+        "intune-21v-gap-009",
+        "intune-21v-gap-010",
+        "intune-21v-gap-011",
+        "intune-21v-gap-012",
+        "intune-21v-gap-013",
+        "intune-21v-gap-014",
+        "intune-21v-gap-015",
+        "intune-21v-gap-017",
+        "intune-21v-gap-018",
+        "intune-21v-gap-019",
+        "intune-21v-gap-021",
+        "intune-21v-gap-024",
+        "intune-ado-wiki-050",
+        "intune-ado-wiki-066",
+        "intune-ado-wiki-296",
+        "intune-onenote-000",
+        "intune-onenote-001",
+        "intune-onenote-002",
+        "intune-onenote-018",
+        "intune-onenote-019",
+        "intune-onenote-020",
+        "intune-onenote-023",
+        "intune-onenote-037",
+        "intune-onenote-043",
+        "intune-onenote-050",
+        "intune-onenote-065",
+        "intune-onenote-080",
+        "intune-onenote-118",
+        "intune-onenote-133",
+        "intune-onenote-141",
+        "intune-onenote-165",
+        "intune-onenote-180",
+        "intune-onenote-218",
+        "intune-onenote-242",
+        "intune-onenote-285",
+        "intune-onenote-286",
+        "intune-onenote-289",
+        "intune-onenote-330",
+        "intune-onenote-336",
+        "intune-onenote-346",
+        "intune-onenote-348",
+        "intune-onenote-362",
+        "intune-onenote-374",
+        "intune-onenote-384",
+        "intune-onenote-396",
+        "intune-onenote-400",
+        "intune-onenote-403",
+        "intune-onenote-407"
+      ],
+      "draftPaths": [
+        "guides/drafts/onenote-android-app-store-china.md",
+        "guides/drafts/onenote-android-in-china.md",
+        "guides/drafts/onenote-autopilot-v2-setup-21v.md",
+        "guides/drafts/onenote-china-intune-feature-gaps.md",
+        "guides/drafts/onenote-intune-21v-kusto-access.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "21v-unsupported",
+        "21v",
+        "mooncake",
+        "enrollment",
+        "android",
+        "china",
+        "ios",
+        "feature-gap"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "autopilot-v2",
+      "title": "Autopilot v2 / Device Preparation",
+      "entryIds": [
+        "intune-ado-wiki-080",
+        "intune-ado-wiki-081",
+        "intune-ado-wiki-082",
+        "intune-ado-wiki-085",
+        "intune-ado-wiki-086",
+        "intune-ado-wiki-087",
+        "intune-ado-wiki-092",
+        "intune-ado-wiki-092",
+        "intune-ado-wiki-1950",
+        "intune-onenote-369",
+        "intune-onenote-406"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-Autopilot-Amazon-Workspaces.md",
+        "guides/drafts/ado-wiki-Autopilot-HAADJ-User-Driven.md",
+        "guides/drafts/ado-wiki-Autopilot-v2-Device-Preparation.md",
+        "guides/drafts/ado-wiki-Autopilot.md",
+        "guides/drafts/ado-wiki-ESP-Install-Updates.md",
+        "guides/drafts/mslearn-entra-device-registration-autopilot.md",
+        "guides/drafts/mslearn-esp-troubleshooting.md",
+        "guides/drafts/onenote-apv2-client-troubleshooting-deep-dive.md",
+        "guides/drafts/onenote-autopilot-azure-ad-branding.md",
+        "guides/drafts/onenote-autopilot-etw-trace-analysis.md",
+        "guides/drafts/onenote-autopilot-v1-troubleshooting-100-200.md",
+        "guides/drafts/onenote-autopilot-v2-client-side-troubleshooting.md",
+        "guides/drafts/onenote-autopilot-v2-client-troubleshooting.md",
+        "guides/drafts/onenote-autopilot-v2-setup.md",
+        "guides/drafts/onenote-autopilot-v2-tsg.md",
+        "guides/drafts/onenote-esp-phases-overview.md",
+        "guides/drafts/onenote-esp-phases-steps.md",
+        "guides/drafts/onenote-windows-autopilot-branding.md"
+      ],
+      "kustoQueryFiles": [
+        "autopilot.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "autopilot",
+        "ap-dp",
+        "apv2",
+        "autopilot-v2",
+        "oobe",
+        "local-admin",
+        "provisioning-skipped",
+        "intune-provisioning-client"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "autopilot-esp",
+      "title": "Autopilot ESP 与预配置",
+      "entryIds": [
+        "intune-ado-wiki-080",
+        "intune-ado-wiki-091",
+        "intune-ado-wiki-091",
+        "intune-ado-wiki-101"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "autopilot.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "autopilot",
+        "pre-provisioning",
+        "white-glove",
+        "entra-join",
+        "dsregcmd",
+        "by-design",
+        "ap-dp",
+        "apv2"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "autopilot-hybrid",
+      "title": "Autopilot Hybrid AADJ 与域加入",
+      "entryIds": [
+        "intune-ado-wiki-081",
+        "intune-ado-wiki-083",
+        "intune-ado-wiki-098",
+        "intune-ado-wiki-100",
+        "intune-ado-wiki-103",
+        "intune-ado-wiki-106",
+        "intune-ado-wiki-107",
+        "intune-ado-wiki-108",
+        "intune-ado-wiki-110",
+        "intune-ado-wiki-111",
+        "intune-ado-wiki-112",
+        "intune-ado-wiki-113",
+        "intune-ado-wiki-114",
+        "intune-ado-wiki-115",
+        "intune-ado-wiki-118",
+        "intune-ado-wiki-283",
+        "intune-ado-wiki-306",
+        "intune-contentidea-kb-615",
+        "intune-mslearn-129",
+        "intune-onenote-105",
+        "intune-onenote-162",
+        "intune-onenote-323"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "autopilot.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "autopilot",
+        "haadj",
+        "odj-connector",
+        "hybrid-aadj",
+        "hybrid-join",
+        "windows",
+        "prt",
+        "deployment-profile"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "autopilot-general",
+      "title": "Autopilot 通用问题",
+      "entryIds": [
+        "intune-21v-gap-023",
+        "intune-ado-wiki-082",
+        "intune-ado-wiki-089",
+        "intune-ado-wiki-090",
+        "intune-ado-wiki-094",
+        "intune-ado-wiki-095",
+        "intune-ado-wiki-096",
+        "intune-ado-wiki-089",
+        "intune-ado-wiki-090",
+        "intune-ado-wiki-094",
+        "intune-ado-wiki-095",
+        "intune-ado-wiki-096",
+        "intune-ado-wiki-104",
+        "intune-ado-wiki-105",
+        "intune-ado-wiki-131",
+        "intune-ado-wiki-294",
+        "intune-ado-wiki-349",
+        "intune-ado-wiki-391",
+        "intune-contentidea-kb-002",
+        "intune-contentidea-kb-492",
+        "intune-contentidea-kb-548",
+        "intune-contentidea-kb-558",
+        "intune-contentidea-kb-558",
+        "intune-contentidea-kb-599",
+        "intune-contentidea-kb-604",
+        "intune-contentidea-kb-601",
+        "intune-contentidea-kb-677",
+        "intune-mslearn-065",
+        "intune-mslearn-117",
+        "intune-mslearn-118",
+        "intune-mslearn-127",
+        "intune-mslearn-128",
+        "intune-mslearn-135",
+        "intune-mslearn-137",
+        "intune-onenote-038",
+        "intune-onenote-176",
+        "intune-onenote-177",
+        "intune-onenote-245",
+        "intune-onenote-275"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "autopilot.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "autopilot",
+        "icm-678596064",
+        "windows",
+        "enrollment",
+        "omadmclient",
+        "oobe",
+        "kusto",
+        "bitlocker"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "cert-scep-ndes",
+      "title": "SCEP / NDES 证书部署与排查",
+      "entryIds": [
+        "intune-ado-wiki-232",
+        "intune-ado-wiki-248",
+        "intune-ado-wiki-250",
+        "intune-ado-wiki-251",
+        "intune-ado-wiki-252",
+        "intune-ado-wiki-253",
+        "intune-ado-wiki-255",
+        "intune-ado-wiki-258",
+        "intune-ado-wiki-259",
+        "intune-ado-wiki-260",
+        "intune-ado-wiki-262",
+        "intune-ado-wiki-263",
+        "intune-ado-wiki-264",
+        "intune-ado-wiki-268",
+        "intune-ado-wiki-1924",
+        "intune-contentidea-kb-007",
+        "intune-contentidea-kb-020",
+        "intune-contentidea-kb-049",
+        "intune-contentidea-kb-093",
+        "intune-contentidea-kb-133",
+        "intune-contentidea-kb-156",
+        "intune-contentidea-kb-211",
+        "intune-contentidea-kb-222",
+        "intune-contentidea-kb-240",
+        "intune-contentidea-kb-290",
+        "intune-contentidea-kb-345",
+        "intune-contentidea-kb-354",
+        "intune-contentidea-kb-355",
+        "intune-contentidea-kb-359",
+        "intune-contentidea-kb-363",
+        "intune-contentidea-kb-370",
+        "intune-contentidea-kb-392",
+        "intune-contentidea-kb-393",
+        "intune-contentidea-kb-418",
+        "intune-contentidea-kb-442",
+        "intune-contentidea-kb-449",
+        "intune-contentidea-kb-465",
+        "intune-contentidea-kb-515",
+        "intune-contentidea-kb-528",
+        "intune-contentidea-kb-674",
+        "intune-contentidea-kb-686",
+        "intune-contentidea-kb-687",
+        "intune-contentidea-kb-689",
+        "intune-contentidea-kb-695",
+        "intune-mslearn-040",
+        "intune-mslearn-047",
+        "intune-mslearn-048",
+        "intune-mslearn-049",
+        "intune-mslearn-050",
+        "intune-mslearn-052",
+        "intune-mslearn-055",
+        "intune-mslearn-063",
+        "intune-mslearn-064",
+        "intune-onenote-086",
+        "intune-onenote-087",
+        "intune-onenote-089",
+        "intune-onenote-097",
+        "intune-onenote-098",
+        "intune-onenote-099",
+        "intune-onenote-138",
+        "intune-onenote-290",
+        "intune-onenote-296",
+        "intune-onenote-297",
+        "intune-onenote-298",
+        "intune-onenote-299",
+        "intune-onenote-337",
+        "intune-onenote-347",
+        "intune-onenote-367",
+        "intune-onenote-368",
+        "intune-onenote-385",
+        "intune-onenote-387",
+        "intune-onenote-398",
+        "intune-onenote-399"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-Kusto-SCEP-PKCS-Troubleshooting.md",
+        "guides/drafts/ado-wiki-NDES-SCEP-Overview.md",
+        "guides/drafts/ado-wiki-SCEP-Android-Troubleshooting.md",
+        "guides/drafts/ado-wiki-SCEP-Apple-Troubleshooting.md",
+        "guides/drafts/ado-wiki-SCEP-Windows-Troubleshooting.md",
+        "guides/drafts/onenote-SCEP-NDES-Workflow.md",
+        "guides/drafts/onenote-macos-scep-renewal-kusto.md",
+        "guides/drafts/onenote-ndes-scep-configuration-guide.md",
+        "guides/drafts/onenote-ndes-scep-configuration.md",
+        "guides/drafts/onenote-ndes-scep-lab-setup.md",
+        "guides/drafts/onenote-scep-ndes-architecture.md",
+        "guides/drafts/onenote-scep-ndes-troubleshooting.md",
+        "guides/drafts/onenote-scep-ndes-workflow-reference.md",
+        "guides/drafts/onenote-scep-renew-vpn-log-analysis.md",
+        "guides/drafts/onenote-scep-troubleshooting-workflow.md"
+      ],
+      "kustoQueryFiles": [
+        "certificate.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "scep",
+        "ndes",
+        "certificate",
+        "iis",
+        "certificate-connector",
+        "ios",
+        "connector",
+        "connectivity"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "cert-pkcs-pfx",
+      "title": "PKCS / PFX 证书部署",
+      "entryIds": [
+        "intune-ado-wiki-227",
+        "intune-ado-wiki-228",
+        "intune-ado-wiki-230",
+        "intune-ado-wiki-256",
+        "intune-ado-wiki-257",
+        "intune-ado-wiki-271",
+        "intune-ado-wiki-272",
+        "intune-ado-wiki-274",
+        "intune-ado-wiki-275",
+        "intune-ado-wiki-287",
+        "intune-ado-wiki-288",
+        "intune-ado-wiki-289",
+        "intune-contentidea-kb-099",
+        "intune-contentidea-kb-154",
+        "intune-contentidea-kb-255",
+        "intune-contentidea-kb-360",
+        "intune-contentidea-kb-361",
+        "intune-contentidea-kb-451",
+        "intune-contentidea-kb-503",
+        "intune-contentidea-kb-713",
+        "intune-mslearn-056",
+        "intune-mslearn-057",
+        "intune-mslearn-058",
+        "intune-mslearn-059",
+        "intune-mslearn-060",
+        "intune-mslearn-061",
+        "intune-mslearn-062",
+        "intune-onenote-073",
+        "intune-onenote-074"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-PKCS-Overview.md",
+        "guides/drafts/onenote-PFX-PKCS-Configuration-Troubleshooting.md",
+        "guides/drafts/onenote-pfx-pkcs-configuration.md"
+      ],
+      "kustoQueryFiles": [
+        "certificate.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "pkcs",
+        "certificate",
+        "pending",
+        "pfx",
+        "scep",
+        "certificate-connector",
+        "imported-pfx",
+        "san"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "cert-whfb",
+      "title": "Windows Hello for Business 与 KDC",
+      "entryIds": [
+        "intune-ado-wiki-298",
+        "intune-ado-wiki-300",
+        "intune-ado-wiki-302",
+        "intune-ado-wiki-303",
+        "intune-ado-wiki-304",
+        "intune-ado-wiki-305",
+        "intune-ado-wiki-307",
+        "intune-ado-wiki-376",
+        "intune-onenote-088",
+        "intune-onenote-186"
+      ],
+      "draftPaths": [
+        "guides/drafts/onenote-whfb-kerberos-cloud-trust-intune.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "whfb",
+        "provisioning",
+        "wam",
+        "cloudexperiencehost",
+        "cxh",
+        "adfs",
+        "0x801c044f",
+        "on-premises"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "cert-general",
+      "title": "证书通用问题与 Cloud PKI",
+      "entryIds": [
+        "intune-ado-wiki-218",
+        "intune-ado-wiki-219",
+        "intune-ado-wiki-220",
+        "intune-ado-wiki-231",
+        "intune-ado-wiki-249",
+        "intune-ado-wiki-265",
+        "intune-ado-wiki-299",
+        "intune-ado-wiki-301",
+        "intune-ado-wiki-327",
+        "intune-contentidea-kb-009",
+        "intune-contentidea-kb-024",
+        "intune-contentidea-kb-035",
+        "intune-contentidea-kb-062",
+        "intune-contentidea-kb-092",
+        "intune-contentidea-kb-117",
+        "intune-contentidea-kb-201",
+        "intune-contentidea-kb-256",
+        "intune-contentidea-kb-272",
+        "intune-contentidea-kb-284",
+        "intune-contentidea-kb-372",
+        "intune-contentidea-kb-376",
+        "intune-contentidea-kb-396",
+        "intune-contentidea-kb-422",
+        "intune-contentidea-kb-433",
+        "intune-contentidea-kb-440",
+        "intune-contentidea-kb-443",
+        "intune-contentidea-kb-461",
+        "intune-contentidea-kb-582",
+        "intune-mslearn-003",
+        "intune-mslearn-004",
+        "intune-mslearn-041",
+        "intune-mslearn-051",
+        "intune-mslearn-072",
+        "intune-mslearn-081",
+        "intune-mslearn-105",
+        "intune-mslearn-116",
+        "intune-mslearn-121",
+        "intune-onenote-185",
+        "intune-onenote-194",
+        "intune-onenote-228",
+        "intune-onenote-247",
+        "intune-onenote-301",
+        "intune-onenote-343"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-PKCS-Certificate-Troubleshooting.md",
+        "guides/drafts/ado-wiki-View-Certificates.md",
+        "guides/drafts/mslearn-troubleshoot-scep-certificate-delivery.md",
+        "guides/drafts/mslearn-troubleshoot-scep-certificate-deployment.md",
+        "guides/drafts/mslearn-troubleshoot-scep-certificate-profiles.md"
+      ],
+      "kustoQueryFiles": [
+        "certificate.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "certificate",
+        "enrollment",
+        "scep",
+        "macos",
+        "cloud-pki",
+        "trusted-root",
+        "ssl",
+        "android"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "mam-android",
+      "title": "Android MAM 与 App Protection",
+      "entryIds": [
+        "intune-ado-wiki-144"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-Android-App-Deployment.md",
+        "guides/drafts/ado-wiki-Android-Device-Config.md",
+        "guides/drafts/ado-wiki-App-Protection-Android.md",
+        "guides/drafts/ado-wiki-App-Protection-Policies.md",
+        "guides/drafts/ado-wiki-App-Protection-iOS.md",
+        "guides/drafts/ado-wiki-App-SDK-for-Android.md",
+        "guides/drafts/ado-wiki-App-SDK-for-iOS.md",
+        "guides/drafts/ado-wiki-App-Wrapping-Tool-Android.md",
+        "guides/drafts/ado-wiki-App-Wrapping-Tool-iOS.md",
+        "guides/drafts/ado-wiki-Teams-Android-Collecting-Logs.md",
+        "guides/drafts/ado-wiki-WIP-App-Protection.md",
+        "guides/drafts/ado-wiki-Windows-MAM.md",
+        "guides/drafts/ado-wiki-Zebra-Support.md",
+        "guides/drafts/ado-wiki-a-teams-devices-android-assorted.md",
+        "guides/drafts/ado-wiki-b-Android-Bug-Report.md",
+        "guides/drafts/mslearn-troubleshoot-app-protection-policy-deployment.md",
+        "guides/drafts/mslearn-troubleshoot-mam-user-issues.md",
+        "guides/drafts/onenote-android-debug-log-collection.md",
+        "guides/drafts/onenote-android-log-collection-guide.md",
+        "guides/drafts/onenote-app-protection-edge-windows.md",
+        "guides/drafts/onenote-app-sdk-vs-wrapping-tool.md",
+        "guides/drafts/onenote-ios-mam-logs-3rd-party-app.md",
+        "guides/drafts/onenote-mam-applied-kusto-queries.md",
+        "guides/drafts/onenote-mam-edge-windows.md",
+        "guides/drafts/onenote-mam-log-analysis-keywords.md",
+        "guides/drafts/onenote-mam-logs-3rd-party-ios.md",
+        "guides/drafts/onenote-mam-timeout-setting.md",
+        "guides/drafts/onenote-wrap-android-apk.md"
+      ],
+      "kustoQueryFiles": [
+        "mam-policy.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "app-sdk",
+        "android",
+        "mam",
+        "gradle",
+        "build-failure"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "mam-windows",
+      "title": "Windows MAM 与 WIP / Edge",
+      "entryIds": [
+        "intune-ado-wiki-053",
+        "intune-ado-wiki-055",
+        "intune-ado-wiki-056",
+        "intune-ado-wiki-060",
+        "intune-ado-wiki-062",
+        "intune-ado-wiki-063",
+        "intune-ado-wiki-064",
+        "intune-ado-wiki-065",
+        "intune-ado-wiki-067",
+        "intune-contentidea-kb-150",
+        "intune-contentidea-kb-377"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "windows-mam",
+        "wip",
+        "edge",
+        "device-registration",
+        "dlp",
+        "direct-access",
+        "csp",
+        "0x807c0003"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "mam-general",
+      "title": "MAM 通用策略与 App SDK",
+      "entryIds": [
+        "intune-ado-wiki-037",
+        "intune-ado-wiki-041",
+        "intune-ado-wiki-042",
+        "intune-ado-wiki-043",
+        "intune-ado-wiki-045",
+        "intune-ado-wiki-046",
+        "intune-ado-wiki-047",
+        "intune-ado-wiki-048",
+        "intune-ado-wiki-049",
+        "intune-ado-wiki-051",
+        "intune-ado-wiki-069",
+        "intune-ado-wiki-070",
+        "intune-ado-wiki-071",
+        "intune-ado-wiki-072",
+        "intune-ado-wiki-073",
+        "intune-ado-wiki-074",
+        "intune-ado-wiki-075",
+        "intune-ado-wiki-076",
+        "intune-ado-wiki-077",
+        "intune-ado-wiki-078",
+        "intune-ado-wiki-145",
+        "intune-ado-wiki-147",
+        "intune-ado-wiki-154",
+        "intune-ado-wiki-155",
+        "intune-ado-wiki-156",
+        "intune-ado-wiki-159",
+        "intune-ado-wiki-171",
+        "intune-ado-wiki-172",
+        "intune-ado-wiki-173",
+        "intune-ado-wiki-174",
+        "intune-ado-wiki-175",
+        "intune-ado-wiki-177",
+        "intune-ado-wiki-178",
+        "intune-ado-wiki-180",
+        "intune-ado-wiki-181",
+        "intune-ado-wiki-199",
+        "intune-ado-wiki-a-r1-003",
+        "intune-ado-wiki-a-r1-004",
+        "intune-ado-wiki-a-r1-005",
+        "intune-contentidea-kb-001",
+        "intune-contentidea-kb-003",
+        "intune-contentidea-kb-013",
+        "intune-contentidea-kb-046",
+        "intune-contentidea-kb-081",
+        "intune-contentidea-kb-116",
+        "intune-contentidea-kb-131",
+        "intune-contentidea-kb-141",
+        "intune-contentidea-kb-165",
+        "intune-contentidea-kb-176",
+        "intune-contentidea-kb-178",
+        "intune-contentidea-kb-207",
+        "intune-contentidea-kb-220",
+        "intune-contentidea-kb-226",
+        "intune-contentidea-kb-227",
+        "intune-contentidea-kb-241",
+        "intune-contentidea-kb-245",
+        "intune-contentidea-kb-247",
+        "intune-contentidea-kb-267",
+        "intune-contentidea-kb-300",
+        "intune-contentidea-kb-302",
+        "intune-contentidea-kb-312",
+        "intune-contentidea-kb-321",
+        "intune-contentidea-kb-351",
+        "intune-contentidea-kb-373",
+        "intune-contentidea-kb-394",
+        "intune-contentidea-kb-407",
+        "intune-contentidea-kb-416",
+        "intune-contentidea-kb-420",
+        "intune-contentidea-kb-432",
+        "intune-contentidea-kb-446",
+        "intune-contentidea-kb-478",
+        "intune-contentidea-kb-480",
+        "intune-contentidea-kb-511",
+        "intune-contentidea-kb-275",
+        "intune-contentidea-kb-274",
+        "intune-contentidea-kb-600",
+        "intune-contentidea-kb-598",
+        "intune-contentidea-kb-599",
+        "intune-contentidea-kb-640",
+        "intune-contentidea-kb-646",
+        "intune-contentidea-kb-668",
+        "intune-contentidea-kb-676",
+        "intune-contentidea-kb-697",
+        "intune-mslearn-008",
+        "intune-mslearn-016",
+        "intune-mslearn-017",
+        "intune-mslearn-018",
+        "intune-mslearn-024",
+        "intune-mslearn-025",
+        "intune-mslearn-028",
+        "intune-mslearn-032",
+        "intune-mslearn-039",
+        "intune-onenote-009",
+        "intune-onenote-010",
+        "intune-onenote-011",
+        "intune-onenote-012",
+        "intune-onenote-013",
+        "intune-onenote-017",
+        "intune-onenote-029",
+        "intune-onenote-030",
+        "intune-onenote-031",
+        "intune-onenote-036",
+        "intune-onenote-063",
+        "intune-onenote-066",
+        "intune-onenote-067",
+        "intune-onenote-112",
+        "intune-onenote-131",
+        "intune-onenote-260",
+        "intune-onenote-277",
+        "intune-onenote-405"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "mam-policy.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "mam",
+        "ios",
+        "android",
+        "app-protection",
+        "app-wrapping-tool",
+        "outlook",
+        "app-sdk",
+        "company-portal"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "app-win32",
+      "title": "Win32 应用部署与 IME",
+      "entryIds": [
+        "intune-ado-wiki-024",
+        "intune-ado-wiki-025",
+        "intune-ado-wiki-026",
+        "intune-ado-wiki-027",
+        "intune-ado-wiki-117",
+        "intune-ado-wiki-162",
+        "intune-ado-wiki-331",
+        "intune-ado-wiki-336",
+        "intune-ado-wiki-350",
+        "intune-ado-wiki-367",
+        "intune-ado-wiki-382",
+        "intune-ado-wiki-383",
+        "intune-ado-wiki-1951",
+        "intune-ado-wiki-a-r3-001",
+        "intune-contentidea-kb-149",
+        "intune-contentidea-kb-177",
+        "intune-contentidea-kb-187",
+        "intune-contentidea-kb-250",
+        "intune-contentidea-kb-260",
+        "intune-contentidea-kb-322",
+        "intune-contentidea-kb-406",
+        "intune-contentidea-kb-415",
+        "intune-contentidea-kb-457",
+        "intune-contentidea-kb-475",
+        "intune-contentidea-kb-496",
+        "intune-contentidea-kb-500",
+        "intune-contentidea-kb-276",
+        "intune-contentidea-kb-550",
+        "intune-contentidea-kb-579",
+        "intune-contentidea-kb-580",
+        "intune-contentidea-kb-587",
+        "intune-contentidea-kb-595",
+        "intune-contentidea-kb-601",
+        "intune-contentidea-kb-622",
+        "intune-contentidea-kb-692",
+        "intune-onenote-034",
+        "intune-onenote-040",
+        "intune-onenote-041",
+        "intune-onenote-042",
+        "intune-onenote-051",
+        "intune-onenote-070",
+        "intune-onenote-071",
+        "intune-onenote-093",
+        "intune-onenote-108",
+        "intune-onenote-145",
+        "intune-onenote-146",
+        "intune-onenote-147",
+        "intune-onenote-155",
+        "intune-onenote-156",
+        "intune-onenote-157",
+        "intune-onenote-158",
+        "intune-onenote-187",
+        "intune-onenote-248",
+        "intune-onenote-266",
+        "intune-onenote-274",
+        "intune-onenote-328",
+        "intune-onenote-338",
+        "intune-onenote-344",
+        "intune-onenote-349",
+        "intune-onenote-364",
+        "intune-onenote-370",
+        "intune-onenote-404",
+        "intune-onenote-416"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-Intune-SideCar.md",
+        "guides/drafts/ado-wiki-Win32-App-Deployment.md",
+        "guides/drafts/ado-wiki-a-Time-Zone-Mismatch-End-of-Shift.md",
+        "guides/drafts/ado-wiki-b-Enrollment-Time-Grouping.md",
+        "guides/drafts/onenote-deploy-ps-as-win32.md",
+        "guides/drafts/onenote-deploy-wechat-win32-app.md",
+        "guides/drafts/onenote-deploy-wechat-win32.md",
+        "guides/drafts/onenote-ime-log-interpreter-tool.md",
+        "guides/drafts/onenote-macos-sidecar-agent-workflow.md",
+        "guides/drafts/onenote-petri-ime-tool.md",
+        "guides/drafts/onenote-win32-chocolatey-ime-tsg.md",
+        "guides/drafts/onenote-win32-deployment-troubleshooting.md",
+        "guides/drafts/onenote-win32-ime-ps-tsg.md",
+        "guides/drafts/onenote-win32-ime-sample-logs.md"
+      ],
+      "kustoQueryFiles": [
+        "app-install.md",
+        "ime-extension.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "ime",
+        "win32",
+        "win32-app",
+        "powershell",
+        "windows",
+        "kusto",
+        "registry",
+        "cdn"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "app-ios",
+      "title": "iOS 应用部署与 VPP",
+      "entryIds": [
+        "intune-ado-wiki-029",
+        "intune-ado-wiki-030",
+        "intune-ado-wiki-032",
+        "intune-ado-wiki-034",
+        "intune-contentidea-kb-045",
+        "intune-contentidea-kb-090",
+        "intune-contentidea-kb-104",
+        "intune-contentidea-kb-169",
+        "intune-contentidea-kb-216",
+        "intune-contentidea-kb-225",
+        "intune-contentidea-kb-362",
+        "intune-contentidea-kb-368",
+        "intune-contentidea-kb-519",
+        "intune-onenote-134",
+        "intune-onenote-211",
+        "intune-onenote-212",
+        "intune-onenote-214",
+        "intune-onenote-215",
+        "intune-onenote-216",
+        "intune-onenote-217",
+        "intune-onenote-234",
+        "intune-onenote-322"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-Apple-DDM-Apps.md",
+        "guides/drafts/ado-wiki-iOS-Device-Config.md",
+        "guides/drafts/ado-wiki-iOS-iPadOS-App-Deployment.md",
+        "guides/drafts/onenote-apple-mdm-protocol-apns.md",
+        "guides/drafts/onenote-apple-mdm-protocol.md",
+        "guides/drafts/onenote-building-ios-app-intune-sdk.md",
+        "guides/drafts/onenote-collecting-vpp-licenses.md",
+        "guides/drafts/onenote-intune-ios-vpp-app-deployment.md",
+        "guides/drafts/onenote-ios-ade-console-log-analysis.md",
+        "guides/drafts/onenote-ios-app-bundle-id-reference.md",
+        "guides/drafts/onenote-ios-app-crash-log.md",
+        "guides/drafts/onenote-ios-app-deploy-response-codes.md",
+        "guides/drafts/onenote-ios-app-install-prompts.md",
+        "guides/drafts/onenote-ios-app-types-and-deployments.md",
+        "guides/drafts/onenote-ios-app-types.md",
+        "guides/drafts/onenote-ios-checkin-troubleshooting.md",
+        "guides/drafts/onenote-ios-error-codes.md",
+        "guides/drafts/onenote-ios-fiddler-proxy-capture.md",
+        "guides/drafts/onenote-ios-fiddler-trace-capture.md",
+        "guides/drafts/onenote-ios-iexplorer-log.md",
+        "guides/drafts/onenote-ios-log-collection-methods.md",
+        "guides/drafts/onenote-ios-log-collection.md",
+        "guides/drafts/onenote-ios-mdm-error-codes.md",
+        "guides/drafts/onenote-ios-mdm-response-codes.md",
+        "guides/drafts/onenote-ios-sso-and-debug.md",
+        "guides/drafts/onenote-ios-sysdiagnose-assistivetouch.md",
+        "guides/drafts/onenote-ios-vpp-license-collection.md",
+        "guides/drafts/onenote-vpp-app-deployment.md",
+        "guides/drafts/onenote-vpp-app-install-tsg.md",
+        "guides/drafts/onenote-vpp-app-sync-issues-tsg.md",
+        "guides/drafts/onenote-xiaohongshu-ipad-applock-kiosk-migration.md"
+      ],
+      "kustoQueryFiles": [
+        "app-install.md",
+        "apple-device.md",
+        "vpp-token.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "vpp",
+        "ios",
+        "abm",
+        "apple",
+        "license-revoke",
+        "9625",
+        "token-revoked",
+        "duplicate-token"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "app-android",
+      "title": "Android 应用部署",
+      "entryIds": [
+        "intune-ado-wiki-007",
+        "intune-ado-wiki-363",
+        "intune-ado-wiki-364",
+        "intune-ado-wiki-365",
+        "intune-contentidea-kb-114",
+        "intune-contentidea-kb-223",
+        "intune-contentidea-kb-347",
+        "intune-contentidea-kb-428",
+        "intune-contentidea-kb-574",
+        "intune-contentidea-kb-606",
+        "intune-contentidea-kb-706",
+        "intune-mslearn-027",
+        "intune-mslearn-100"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "app-install.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "android",
+        "mgp",
+        "managed-google-play",
+        "upgrade",
+        "enrollment",
+        "app-management",
+        "install-failed",
+        "omadm"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "app-macos",
+      "title": "macOS 应用部署",
+      "entryIds": [
+        "intune-ado-wiki-039",
+        "intune-ado-wiki-183",
+        "intune-ado-wiki-205",
+        "intune-mslearn-020",
+        "intune-onenote-287",
+        "intune-onenote-302",
+        "intune-onenote-331"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-macOS-App-Deployment.md",
+        "guides/drafts/ado-wiki-macOS-Device-Config.md",
+        "guides/drafts/onenote-intune-macos-update-kusto.md",
+        "guides/drafts/onenote-macos-app-deployment-overview.md",
+        "guides/drafts/onenote-macos-enrollment-renewal-kusto.md",
+        "guides/drafts/onenote-macos-extension-management.md",
+        "guides/drafts/onenote-macos-filevault-troubleshooting.md",
+        "guides/drafts/onenote-macos-log-collection-methods.md",
+        "guides/drafts/onenote-macos-log-collection.md",
+        "guides/drafts/onenote-macos-preference-domain-names.md",
+        "guides/drafts/onenote-macos-preference-domain-reference.md",
+        "guides/drafts/onenote-macos-shell-script-troubleshooting.md",
+        "guides/drafts/onenote-macos-shell-script-ts.md",
+        "guides/drafts/onenote-macos-system-extension-deployment.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "macos",
+        "lob",
+        "pkg",
+        "install-location",
+        "uninstall",
+        "install-as-managed",
+        "app-wrapping-tool",
+        "packageinfo"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "app-office",
+      "title": "Office / M365 应用部署",
+      "entryIds": [
+        "intune-ado-wiki-016",
+        "intune-ado-wiki-018",
+        "intune-ado-wiki-019",
+        "intune-ado-wiki-020",
+        "intune-ado-wiki-022",
+        "intune-ado-wiki-093",
+        "intune-ado-wiki-093",
+        "intune-ado-wiki-116",
+        "intune-ado-wiki-124",
+        "intune-ado-wiki-165",
+        "intune-ado-wiki-167",
+        "intune-ado-wiki-168",
+        "intune-ado-wiki-169",
+        "intune-contentidea-kb-010",
+        "intune-contentidea-kb-021",
+        "intune-contentidea-kb-029",
+        "intune-contentidea-kb-040",
+        "intune-contentidea-kb-055",
+        "intune-contentidea-kb-061",
+        "intune-contentidea-kb-224",
+        "intune-contentidea-kb-231",
+        "intune-contentidea-kb-269",
+        "intune-contentidea-kb-276",
+        "intune-contentidea-kb-320",
+        "intune-contentidea-kb-329",
+        "intune-contentidea-kb-336",
+        "intune-contentidea-kb-344",
+        "intune-contentidea-kb-367",
+        "intune-contentidea-kb-408",
+        "intune-contentidea-kb-518",
+        "intune-contentidea-kb-590",
+        "intune-contentidea-kb-591",
+        "intune-contentidea-kb-699",
+        "intune-mslearn-022",
+        "intune-mslearn-023",
+        "intune-mslearn-066",
+        "intune-mslearn-123",
+        "intune-onenote-032",
+        "intune-onenote-039"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-Office-C2R-Deployment.md",
+        "guides/drafts/onenote-m365-office-proplus-deployment-tsg.md",
+        "guides/drafts/onenote-office365-proplus-deployment-tsg.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "office-c2r",
+        "autopilot",
+        "hard-block",
+        "odt",
+        "timeout",
+        "certificate",
+        "office-365",
+        "bing-search"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "app-general",
+      "title": "应用部署通用问题",
+      "entryIds": [
+        "intune-ado-wiki-008",
+        "intune-ado-wiki-015",
+        "intune-ado-wiki-222",
+        "intune-ado-wiki-223",
+        "intune-ado-wiki-323",
+        "intune-ado-wiki-1954",
+        "intune-ado-wiki-a-r1-001",
+        "intune-ado-wiki-a-r1-002",
+        "intune-contentidea-kb-004",
+        "intune-contentidea-kb-015",
+        "intune-contentidea-kb-053",
+        "intune-contentidea-kb-057",
+        "intune-contentidea-kb-074",
+        "intune-contentidea-kb-077",
+        "intune-contentidea-kb-078",
+        "intune-contentidea-kb-146",
+        "intune-contentidea-kb-161",
+        "intune-contentidea-kb-168",
+        "intune-contentidea-kb-205",
+        "intune-contentidea-kb-304",
+        "intune-contentidea-kb-305",
+        "intune-contentidea-kb-319",
+        "intune-contentidea-kb-334",
+        "intune-contentidea-kb-380",
+        "intune-contentidea-kb-382",
+        "intune-contentidea-kb-436",
+        "intune-contentidea-kb-464",
+        "intune-contentidea-kb-486",
+        "intune-contentidea-kb-516",
+        "intune-contentidea-kb-556",
+        "intune-contentidea-kb-557",
+        "intune-contentidea-kb-556",
+        "intune-contentidea-kb-568",
+        "intune-contentidea-kb-575",
+        "intune-contentidea-kb-589",
+        "intune-contentidea-kb-596",
+        "intune-contentidea-kb-621",
+        "intune-contentidea-kb-680",
+        "intune-mslearn-001",
+        "intune-mslearn-002",
+        "intune-mslearn-019",
+        "intune-mslearn-031",
+        "intune-onenote-003",
+        "intune-onenote-004",
+        "intune-onenote-033",
+        "intune-onenote-035",
+        "intune-onenote-075",
+        "intune-onenote-085",
+        "intune-onenote-103",
+        "intune-onenote-166",
+        "intune-onenote-171",
+        "intune-onenote-172",
+        "intune-onenote-227",
+        "intune-onenote-279",
+        "intune-onenote-280",
+        "intune-onenote-295",
+        "intune-onenote-304",
+        "intune-onenote-306",
+        "intune-onenote-320",
+        "intune-onenote-332",
+        "intune-onenote-373",
+        "intune-onenote-430"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-Company-Portal-GCC-H.md",
+        "guides/drafts/ado-wiki-a-Web-Company-Portal.md"
+      ],
+      "kustoQueryFiles": [
+        "app-install.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "company-portal",
+        "ios",
+        "android",
+        "app-deployment",
+        "lob",
+        "macos",
+        "lob-app",
+        "windows"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "enrollment-ios",
+      "title": "iOS/iPadOS 注册与 ADE/DEP",
+      "entryIds": [
+        "intune-contentidea-kb-266",
+        "intune-contentidea-kb-301",
+        "intune-mslearn-114",
+        "intune-onenote-203"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-Dual-Enrollment-MMPC.md",
+        "guides/drafts/ado-wiki-b-Linux-Enrollment.md",
+        "guides/drafts/mslearn-gp-auto-enrollment-troubleshooting.md",
+        "guides/drafts/onenote-apple-configurator-enrollment.md",
+        "guides/drafts/onenote-apple-configurator-iphone-enrollment.md",
+        "guides/drafts/onenote-apple-enrollment-program-token-setup.md",
+        "guides/drafts/onenote-comanagement-autoenroll-vs-gpo.md",
+        "guides/drafts/onenote-comanagement-autoenrollment-process.md",
+        "guides/drafts/onenote-company-portal-ios-enrollment-log-analysis.md",
+        "guides/drafts/onenote-configure-gpo-auto-enroll.md",
+        "guides/drafts/onenote-device-enrollment-tsg.md",
+        "guides/drafts/onenote-enroll-after-aadj-methods.md",
+        "guides/drafts/onenote-gp-auto-enrollment-tsg.md",
+        "guides/drafts/onenote-ios-company-portal-enrollment-log.md",
+        "guides/drafts/onenote-iphone-enroll-logs.md",
+        "guides/drafts/onenote-kusto-ios-enrollment.md",
+        "guides/drafts/onenote-kusto-windows-enrollment.md",
+        "guides/drafts/onenote-mdm-enrollment-error-codes.md",
+        "guides/drafts/onenote-windows-oobe-enrollment-cap.md"
+      ],
+      "kustoQueryFiles": [
+        "apple-device.md",
+        "enrollment.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "dep",
+        "ios",
+        "enrollment",
+        "ade",
+        "xpc_type_error",
+        "network",
+        "quick-start",
+        "backup-restore"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "enrollment-windows",
+      "title": "Windows 注册与 Auto-Enrollment",
+      "entryIds": [
+        "intune-contentidea-kb-048",
+        "intune-contentidea-kb-180",
+        "intune-contentidea-kb-358",
+        "intune-contentidea-kb-369",
+        "intune-contentidea-kb-381",
+        "intune-mslearn-070",
+        "intune-mslearn-122",
+        "intune-mslearn-126",
+        "intune-mslearn-134",
+        "intune-onenote-107",
+        "intune-onenote-424"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "enrollment.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "enrollment",
+        "auto-enrollment",
+        "co-management",
+        "windows",
+        "upn",
+        "dsregcmd",
+        "mfa",
+        "0xcaa2000c"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "enrollment-general",
+      "title": "注册通用问题",
+      "entryIds": [
+        "intune-ado-wiki-158",
+        "intune-ado-wiki-224",
+        "intune-ado-wiki-322",
+        "intune-ado-wiki-332",
+        "intune-ado-wiki-339",
+        "intune-ado-wiki-360",
+        "intune-ado-wiki-361",
+        "intune-ado-wiki-392",
+        "intune-ado-wiki-397",
+        "intune-ado-wiki-398",
+        "intune-ado-wiki-400",
+        "intune-ado-wiki-1953",
+        "intune-contentidea-kb-042",
+        "intune-contentidea-kb-079",
+        "intune-contentidea-kb-087",
+        "intune-contentidea-kb-124",
+        "intune-contentidea-kb-143",
+        "intune-contentidea-kb-159",
+        "intune-contentidea-kb-163",
+        "intune-contentidea-kb-164",
+        "intune-contentidea-kb-170",
+        "intune-contentidea-kb-171",
+        "intune-contentidea-kb-181",
+        "intune-contentidea-kb-182",
+        "intune-contentidea-kb-196",
+        "intune-contentidea-kb-228",
+        "intune-contentidea-kb-275",
+        "intune-contentidea-kb-281",
+        "intune-contentidea-kb-287",
+        "intune-contentidea-kb-296",
+        "intune-contentidea-kb-338",
+        "intune-contentidea-kb-339",
+        "intune-contentidea-kb-340",
+        "intune-contentidea-kb-342",
+        "intune-contentidea-kb-352",
+        "intune-contentidea-kb-400",
+        "intune-contentidea-kb-437",
+        "intune-contentidea-kb-438",
+        "intune-contentidea-kb-450",
+        "intune-contentidea-kb-452",
+        "intune-contentidea-kb-476",
+        "intune-contentidea-kb-498",
+        "intune-contentidea-kb-499",
+        "intune-contentidea-kb-512",
+        "intune-contentidea-kb-279",
+        "intune-contentidea-kb-565",
+        "intune-contentidea-kb-617",
+        "intune-contentidea-kb-626",
+        "intune-contentidea-kb-637",
+        "intune-contentidea-kb-714",
+        "intune-mslearn-073",
+        "intune-mslearn-082",
+        "intune-mslearn-090",
+        "intune-mslearn-094",
+        "intune-mslearn-101",
+        "intune-mslearn-106",
+        "intune-mslearn-115",
+        "intune-mslearn-124",
+        "intune-mslearn-125",
+        "intune-mslearn-131",
+        "intune-mslearn-132",
+        "intune-mslearn-138",
+        "intune-mslearn-148",
+        "intune-mslearn-160",
+        "intune-mslearn-171",
+        "intune-onenote-049",
+        "intune-onenote-064",
+        "intune-onenote-076",
+        "intune-onenote-096",
+        "intune-onenote-106",
+        "intune-onenote-113",
+        "intune-onenote-128",
+        "intune-onenote-130",
+        "intune-onenote-159",
+        "intune-onenote-178",
+        "intune-onenote-181",
+        "intune-onenote-226",
+        "intune-onenote-229",
+        "intune-onenote-230",
+        "intune-onenote-253",
+        "intune-onenote-254",
+        "intune-onenote-291",
+        "intune-onenote-312",
+        "intune-onenote-365",
+        "intune-onenote-377"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "device-checkin.md",
+        "effective-group.md",
+        "enrollment.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "enrollment",
+        "ios",
+        "mdm-authority",
+        "windows",
+        "macos",
+        "device-limit",
+        "license",
+        "android"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "config-admx-omauri",
+      "title": "ADMX / OMA-URI / Settings Catalog",
+      "entryIds": [
+        "intune-ado-wiki-282",
+        "intune-ado-wiki-316",
+        "intune-ado-wiki-346",
+        "intune-ado-wiki-352",
+        "intune-ado-wiki-375",
+        "intune-contentidea-kb-080",
+        "intune-contentidea-kb-203",
+        "intune-contentidea-kb-215",
+        "intune-contentidea-kb-246",
+        "intune-contentidea-kb-291",
+        "intune-contentidea-kb-463",
+        "intune-contentidea-kb-481",
+        "intune-contentidea-kb-571",
+        "intune-mslearn-147",
+        "intune-onenote-119",
+        "intune-onenote-120",
+        "intune-onenote-198",
+        "intune-onenote-267",
+        "intune-onenote-271",
+        "intune-onenote-272",
+        "intune-onenote-335",
+        "intune-onenote-401",
+        "intune-onenote-415"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-SyncML-Viewer.md",
+        "guides/drafts/mslearn-deploy-oma-uris-csp.md",
+        "guides/drafts/onenote-admx-backed-policy-deployment.md",
+        "guides/drafts/onenote-admx-backed-policy.md",
+        "guides/drafts/onenote-chrome-homepage-admx-intune.md",
+        "guides/drafts/onenote-chrome-homepage-admx-omauri.md",
+        "guides/drafts/onenote-chrome-homepage-admx-policy.md",
+        "guides/drafts/onenote-syncml-diagnostic-tools.md",
+        "guides/drafts/onenote-syncml-status-codes.md",
+        "guides/drafts/onenote-vpn-custom-oma-uri.md"
+      ],
+      "kustoQueryFiles": [
+        "policy-error.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "csp",
+        "windows",
+        "oma-uri",
+        "allowlocallogon",
+        "device-config",
+        "by-design",
+        "custom-profile",
+        "security-baselines"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "config-security-baseline",
+      "title": "Security Baseline 与策略冲突",
+      "entryIds": [
+        "intune-ado-wiki-284",
+        "intune-ado-wiki-345",
+        "intune-ado-wiki-374",
+        "intune-ado-wiki-377",
+        "intune-contentidea-kb-667"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-Security-Baselines.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "security-baselines",
+        "pending",
+        "check-in",
+        "windows",
+        "security-baseline",
+        "rdp",
+        "miracast",
+        "remote-desktop"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "config-general",
+      "title": "设备配置通用问题",
+      "entryIds": [
+        "intune-ado-wiki-099",
+        "intune-ado-wiki-130",
+        "intune-ado-wiki-319",
+        "intune-ado-wiki-337",
+        "intune-ado-wiki-344",
+        "intune-ado-wiki-373",
+        "intune-ado-wiki-379",
+        "intune-contentidea-kb-058",
+        "intune-contentidea-kb-082",
+        "intune-contentidea-kb-085",
+        "intune-contentidea-kb-086",
+        "intune-contentidea-kb-112",
+        "intune-contentidea-kb-157",
+        "intune-contentidea-kb-179",
+        "intune-contentidea-kb-186",
+        "intune-contentidea-kb-238",
+        "intune-contentidea-kb-252",
+        "intune-contentidea-kb-257",
+        "intune-contentidea-kb-469",
+        "intune-contentidea-kb-276",
+        "intune-contentidea-kb-539",
+        "intune-contentidea-kb-540",
+        "intune-contentidea-kb-584",
+        "intune-contentidea-kb-645",
+        "intune-contentidea-kb-681",
+        "intune-mslearn-089",
+        "intune-mslearn-098",
+        "intune-mslearn-099",
+        "intune-mslearn-173",
+        "intune-onenote-044",
+        "intune-onenote-057",
+        "intune-onenote-114",
+        "intune-onenote-179",
+        "intune-onenote-188",
+        "intune-onenote-193",
+        "intune-onenote-288",
+        "intune-onenote-431"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "policy-error.md",
+        "policy-status.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "device-configuration",
+        "kusto",
+        "macos",
+        "security-baselines",
+        "conflict",
+        "policy-conflict",
+        "co-management",
+        "work-profile"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "compliance-policy",
+      "title": "设备合规策略",
+      "entryIds": [
+        "intune-ado-wiki-120",
+        "intune-ado-wiki-122",
+        "intune-ado-wiki-123",
+        "intune-ado-wiki-189",
+        "intune-ado-wiki-204",
+        "intune-ado-wiki-209",
+        "intune-ado-wiki-210",
+        "intune-ado-wiki-211",
+        "intune-ado-wiki-212",
+        "intune-ado-wiki-214",
+        "intune-ado-wiki-215",
+        "intune-ado-wiki-216",
+        "intune-ado-wiki-321",
+        "intune-ado-wiki-330",
+        "intune-ado-wiki-342",
+        "intune-ado-wiki-371",
+        "intune-ado-wiki-451",
+        "intune-ado-wiki-1932",
+        "intune-ado-wiki-1955",
+        "intune-ado-wiki-1956",
+        "intune-contentidea-kb-008",
+        "intune-contentidea-kb-076",
+        "intune-contentidea-kb-109",
+        "intune-contentidea-kb-213",
+        "intune-contentidea-kb-230",
+        "intune-contentidea-kb-233",
+        "intune-contentidea-kb-264",
+        "intune-contentidea-kb-280",
+        "intune-contentidea-kb-286",
+        "intune-contentidea-kb-303",
+        "intune-contentidea-kb-326",
+        "intune-contentidea-kb-327",
+        "intune-contentidea-kb-328",
+        "intune-contentidea-kb-383",
+        "intune-contentidea-kb-398",
+        "intune-contentidea-kb-414",
+        "intune-contentidea-kb-426",
+        "intune-contentidea-kb-427",
+        "intune-contentidea-kb-462",
+        "intune-contentidea-kb-508",
+        "intune-contentidea-kb-510",
+        "intune-contentidea-kb-583",
+        "intune-contentidea-kb-616",
+        "intune-contentidea-kb-620",
+        "intune-contentidea-kb-671",
+        "intune-contentidea-kb-682",
+        "intune-contentidea-kb-684",
+        "intune-contentidea-kb-693",
+        "intune-mslearn-005",
+        "intune-mslearn-156",
+        "intune-mslearn-157",
+        "intune-mslearn-166",
+        "intune-mslearn-167",
+        "intune-mslearn-168",
+        "intune-mslearn-170",
+        "intune-mslearn-177",
+        "intune-onenote-028",
+        "intune-onenote-046",
+        "intune-onenote-058",
+        "intune-onenote-059",
+        "intune-onenote-062",
+        "intune-onenote-072",
+        "intune-onenote-127",
+        "intune-onenote-163",
+        "intune-onenote-164",
+        "intune-onenote-173",
+        "intune-onenote-174",
+        "intune-onenote-238",
+        "intune-onenote-239",
+        "intune-onenote-255",
+        "intune-onenote-313",
+        "intune-onenote-375",
+        "intune-onenote-397",
+        "intune-onenote-432"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-Compliance-Calculation.md",
+        "guides/drafts/ado-wiki-Device-Compliance.md",
+        "guides/drafts/ado-wiki-MDE-Compliance.md",
+        "guides/drafts/onenote-partner-compliance-kusto.md"
+      ],
+      "kustoQueryFiles": [
+        "compliance.md",
+        "policy-status.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "compliance",
+        "conditional-access",
+        "ios",
+        "windows",
+        "android",
+        "encryption",
+        "kusto",
+        "bitlocker"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "conditional-access",
+      "title": "条件访问",
+      "entryIds": [
+        "intune-ado-wiki-102",
+        "intune-ado-wiki-121",
+        "intune-ado-wiki-127",
+        "intune-ado-wiki-201",
+        "intune-ado-wiki-203",
+        "intune-ado-wiki-295",
+        "intune-ado-wiki-320",
+        "intune-ado-wiki-362",
+        "intune-ado-wiki-399",
+        "intune-contentidea-kb-108",
+        "intune-contentidea-kb-120",
+        "intune-contentidea-kb-237",
+        "intune-contentidea-kb-263",
+        "intune-contentidea-kb-278",
+        "intune-contentidea-kb-555",
+        "intune-contentidea-kb-555",
+        "intune-contentidea-kb-650",
+        "intune-mslearn-097",
+        "intune-mslearn-130",
+        "intune-onenote-102",
+        "intune-onenote-191",
+        "intune-onenote-382"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-conditional-access.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "conditional-access",
+        "windows",
+        "mfa",
+        "office",
+        "device-actions",
+        "enrollment",
+        "compliance",
+        "autopilot"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "vpn-ms-tunnel",
+      "title": "Microsoft Tunnel VPN",
+      "entryIds": [
+        "intune-ado-wiki-234",
+        "intune-ado-wiki-235",
+        "intune-ado-wiki-236",
+        "intune-ado-wiki-237",
+        "intune-ado-wiki-238",
+        "intune-ado-wiki-240",
+        "intune-ado-wiki-241",
+        "intune-ado-wiki-242",
+        "intune-ado-wiki-244",
+        "intune-ado-wiki-245"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-MS-Tunnel-VPN.md",
+        "guides/drafts/ado-wiki-VPN-Profiles.md",
+        "guides/drafts/mslearn-troubleshoot-vpn-profiles.md",
+        "guides/drafts/onenote-ms-tunnel-log-collection.md",
+        "guides/drafts/onenote-ms-tunnel-network-trace.md",
+        "guides/drafts/onenote-windows-vpn-custom-policy.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "ms-tunnel",
+        "vpn",
+        "proxy",
+        "ios",
+        "android",
+        "networking",
+        "ssl-inspection",
+        "split-tunnel"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "vpn-general",
+      "title": "VPN 配置",
+      "entryIds": [
+        "intune-ado-wiki-1935",
+        "intune-contentidea-kb-332",
+        "intune-contentidea-kb-521",
+        "intune-mslearn-108"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "myworkspace",
+        "jit",
+        "activate",
+        "disabled",
+        "modernrdp",
+        "workaround",
+        "android 13",
+        "edge"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "wifi-profiles",
+      "title": "Wi-Fi 配置",
+      "entryIds": [
+        "intune-onenote-081"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-WiFi-Profiles.md",
+        "guides/drafts/mslearn-troubleshoot-wi-fi-profiles.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "scep",
+        "wifi",
+        "eap-tls",
+        "peap",
+        "onboarding",
+        "network-connectivity",
+        "clearpass"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "email-profiles",
+      "title": "邮件配置与 Exchange",
+      "entryIds": [
+        "intune-contentidea-kb-005",
+        "intune-contentidea-kb-018",
+        "intune-contentidea-kb-259",
+        "intune-contentidea-kb-298",
+        "intune-contentidea-kb-439",
+        "intune-contentidea-kb-501",
+        "intune-contentidea-kb-504",
+        "intune-mslearn-084",
+        "intune-mslearn-095",
+        "intune-mslearn-150",
+        "intune-mslearn-151",
+        "intune-mslearn-152",
+        "intune-mslearn-153"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-Email-Profiles.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "exchange-connector",
+        "email-profile",
+        "proxy",
+        "on-premise",
+        "version",
+        "configuration",
+        "images",
+        "third-party-apps"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "windows-bitlocker",
+      "title": "BitLocker 加密管理",
+      "entryIds": [
+        "intune-ado-wiki-195",
+        "intune-ado-wiki-313",
+        "intune-ado-wiki-348",
+        "intune-ado-wiki-351",
+        "intune-mslearn-074",
+        "intune-mslearn-139",
+        "intune-mslearn-158",
+        "intune-mslearn-159",
+        "intune-onenote-144",
+        "intune-onenote-160",
+        "intune-onenote-161",
+        "intune-onenote-307",
+        "intune-onenote-378"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-Bitlocker-Recovery-Key.md",
+        "guides/drafts/onenote-mbam-bitlocker-migration-to-mem.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "bitlocker",
+        "tpm",
+        "silent-encryption",
+        "wipe",
+        "windows",
+        "recovery-key",
+        "recovery key",
+        "aad"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "windows-laps",
+      "title": "Windows LAPS",
+      "entryIds": [
+        "intune-ado-wiki-354",
+        "intune-ado-wiki-355",
+        "intune-ado-wiki-356",
+        "intune-ado-wiki-357",
+        "intune-ado-wiki-358"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Windows-LAPS-Cloud-LAPS.md",
+        "guides/drafts/onenote-laps-automatic-account-management.md",
+        "guides/drafts/onenote-laps-azure-ad-support-guide.md",
+        "guides/drafts/onenote-laps-event-log-troubleshooting.md",
+        "guides/drafts/onenote-windows-laps-azure-ad-configuration.md",
+        "guides/drafts/onenote-windows-laps-azure-ad.md",
+        "guides/drafts/onenote-windows-laps-kusto-queries.md",
+        "guides/drafts/onenote-windows-laps-support-boundaries.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "laps",
+        "windows-laps",
+        "event-10059",
+        "azure-ad",
+        "device-settings",
+        "password-backup",
+        "0x80070190",
+        "event-10028"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "windows-update",
+      "title": "Windows Update / Update Rings / WUFB",
+      "entryIds": [
+        "intune-21v-gap-020",
+        "intune-contentidea-kb-316",
+        "intune-contentidea-kb-366",
+        "intune-contentidea-kb-711",
+        "intune-onenote-021",
+        "intune-onenote-135",
+        "intune-onenote-175",
+        "intune-onenote-195",
+        "intune-onenote-196",
+        "intune-onenote-197",
+        "intune-onenote-363"
+      ],
+      "draftPaths": [
+        "guides/drafts/mslearn-troubleshoot-update-rings.md",
+        "guides/drafts/onenote-kusto-feature-update-policy.md",
+        "guides/drafts/onenote-windows-update-ring-logs.md",
+        "guides/drafts/onenote-wufb-log-collection.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "wufb",
+        "windows-update",
+        "feature-update",
+        "quality-update",
+        "21v-unsupported",
+        "windows",
+        "update-ring",
+        "wsus"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "windows-kiosk",
+      "title": "Windows Kiosk 模式",
+      "entryIds": [
+        "intune-onenote-189",
+        "intune-onenote-190",
+        "intune-onenote-311"
+      ],
+      "draftPaths": [
+        "guides/drafts/onenote-windows-kiosk-mode-guide.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "kiosk",
+        "sid-mapping",
+        "user-account",
+        "profile-deployment",
+        "assigned-access",
+        "start-layout",
+        "lnk-shortcut",
+        "app-visibility"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "windows-defender",
+      "title": "Defender for Endpoint 集成",
+      "entryIds": [
+        "intune-21v-gap-016",
+        "intune-ado-wiki-368",
+        "intune-ado-wiki-369",
+        "intune-ado-wiki-a-r2-003"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Microsoft-Defender-for-Endpoint.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "mde",
+        "mde-attach",
+        "endpoint-security",
+        "defender",
+        "tamper-protection",
+        "21v-unsupported",
+        "licensing",
+        "intune_defender"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "macos-filevault",
+      "title": "macOS FileVault 加密",
+      "entryIds": [
+        "intune-onenote-084"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "macos",
+        "filevault",
+        "encryption",
+        "device-configuration"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "macos-scripts",
+      "title": "macOS Shell 脚本与 Sidecar Agent",
+      "entryIds": [
+        "intune-ado-wiki-317",
+        "intune-mslearn-021",
+        "intune-mslearn-175",
+        "intune-onenote-095"
+      ],
+      "draftPaths": [
+        "guides/drafts/onenote-powershell-script-deploy-troubleshooting.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "macos",
+        "shell-script",
+        "powershell",
+        "encoding",
+        "unicode",
+        "ansi",
+        "upload-error",
+        "11.2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "macos-update",
+      "title": "macOS 软件更新 / DDM",
+      "entryIds": [
+        "intune-ado-wiki-036",
+        "intune-ado-wiki-417",
+        "intune-onenote-282",
+        "intune-onenote-329"
+      ],
+      "draftPaths": [
+        "guides/drafts/onenote-macos-ios-software-update-ddm.md",
+        "guides/drafts/onenote-macos-software-update-monitoring.md",
+        "guides/drafts/onenote-macos-software-update-troubleshooting.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "ddm",
+        "macos",
+        "status-report",
+        "error-configuration-cannot-be-applied",
+        "os-version",
+        "kusto",
+        "software-updates",
+        "mdm"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "comanagement",
+      "title": "Co-Management / SCCM / ConfigMgr",
+      "entryIds": [
+        "intune-21v-gap-022",
+        "intune-ado-wiki-097",
+        "intune-ado-wiki-097",
+        "intune-ado-wiki-1925",
+        "intune-contentidea-kb-036",
+        "intune-contentidea-kb-037",
+        "intune-contentidea-kb-056",
+        "intune-contentidea-kb-139",
+        "intune-contentidea-kb-184",
+        "intune-contentidea-kb-194",
+        "intune-contentidea-kb-198",
+        "intune-contentidea-kb-261",
+        "intune-contentidea-kb-488",
+        "intune-contentidea-kb-547",
+        "intune-contentidea-kb-572",
+        "intune-contentidea-kb-634",
+        "intune-mslearn-069",
+        "intune-mslearn-071",
+        "intune-mslearn-075",
+        "intune-mslearn-076",
+        "intune-mslearn-077",
+        "intune-mslearn-078",
+        "intune-mslearn-079",
+        "intune-mslearn-080",
+        "intune-mslearn-093",
+        "intune-mslearn-136",
+        "intune-onenote-022",
+        "intune-onenote-244",
+        "intune-onenote-246",
+        "intune-onenote-366",
+        "intune-onenote-376",
+        "intune-onenote-380",
+        "intune-onenote-381",
+        "intune-onenote-421",
+        "intune-onenote-422",
+        "intune-onenote-423",
+        "intune-onenote-429"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-Tenant-Attach.md",
+        "guides/drafts/onenote-comanagement-admin-guide.md",
+        "guides/drafts/onenote-comanagement-workload-flags.md",
+        "guides/drafts/onenote-deploy-sccm-via-intune-cmg.md",
+        "guides/drafts/onenote-sccm-verbose-log-collection.md"
+      ],
+      "kustoQueryFiles": [
+        "comanagement.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "co-management",
+        "sccm",
+        "cmg",
+        "windows",
+        "registry",
+        "enrollment",
+        "configmgr",
+        "hybrid-aadj"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "device-actions",
+      "title": "设备操作（擦除/锁定/重置等）",
+      "entryIds": [
+        "intune-ado-wiki-126",
+        "intune-ado-wiki-194",
+        "intune-ado-wiki-196",
+        "intune-ado-wiki-197",
+        "intune-ado-wiki-198",
+        "intune-ado-wiki-200",
+        "intune-ado-wiki-202",
+        "intune-contentidea-kb-129",
+        "intune-contentidea-kb-142",
+        "intune-contentidea-kb-197",
+        "intune-contentidea-kb-314",
+        "intune-contentidea-kb-315",
+        "intune-contentidea-kb-349",
+        "intune-contentidea-kb-365",
+        "intune-contentidea-kb-530",
+        "intune-mslearn-140",
+        "intune-mslearn-141",
+        "intune-onenote-047"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-Device-Actions-Troubleshooting.md",
+        "guides/drafts/ado-wiki-Device-Actions.md",
+        "guides/drafts/onenote-remote-action-windows.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "device-actions",
+        "wipe",
+        "retire",
+        "pending",
+        "android",
+        "greyed-out",
+        "device-admin",
+        "google-limitation"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "graph-api",
+      "title": "Graph API 与 PowerShell 自动化",
+      "entryIds": [
+        "intune-ado-wiki-001",
+        "intune-ado-wiki-002",
+        "intune-ado-wiki-003",
+        "intune-ado-wiki-151",
+        "intune-ado-wiki-152",
+        "intune-ado-wiki-188",
+        "intune-ado-wiki-190",
+        "intune-ado-wiki-191",
+        "intune-ado-wiki-388",
+        "intune-ado-wiki-389",
+        "intune-ado-wiki-390",
+        "intune-contentidea-kb-106",
+        "intune-contentidea-kb-199",
+        "intune-contentidea-kb-435",
+        "intune-contentidea-kb-554",
+        "intune-contentidea-kb-554",
+        "intune-mslearn-144",
+        "intune-mslearn-154",
+        "intune-onenote-402"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-Graph-API.md",
+        "guides/drafts/onenote-intune-graph-api-report-pagination.md",
+        "guides/drafts/onenote-powershell-graph-api-intune-policy-query.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "graph-api",
+        "admin-ui",
+        "rbac",
+        "403",
+        "powershell",
+        "permission",
+        "throttling",
+        "429"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "copilot-intune",
+      "title": "Security Copilot for Intune",
+      "entryIds": [
+        "intune-ado-wiki-129",
+        "intune-ado-wiki-132",
+        "intune-ado-wiki-136",
+        "intune-ado-wiki-137",
+        "intune-ado-wiki-138",
+        "intune-ado-wiki-139",
+        "intune-ado-wiki-140",
+        "intune-ado-wiki-141",
+        "intune-ado-wiki-142",
+        "intune-ado-wiki-148",
+        "intune-ado-wiki-149",
+        "intune-ado-wiki-150"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-Security-Copilot.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "copilot",
+        "security-copilot",
+        "policy-configuration-agent",
+        "content-filter",
+        "scu",
+        "capacity",
+        "banner-error",
+        "agent-run-failed"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "reporting-diagnostics",
+      "title": "报告与诊断日志收集",
+      "entryIds": [
+        "intune-ado-wiki-333",
+        "intune-ado-wiki-406",
+        "intune-ado-wiki-407",
+        "intune-contentidea-kb-098",
+        "intune-contentidea-kb-598",
+        "intune-onenote-341",
+        "intune-onenote-342"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-PowerLift.md",
+        "guides/drafts/onenote-intune-kusto-diagnostic-queries.md",
+        "guides/drafts/onenote-offline-mobile-log-collection.md"
+      ],
+      "kustoQueryFiles": [
+        "device-info.md",
+        "intune-events-general.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "diagnostics",
+        "update-readiness",
+        "epm",
+        "elevation-reporting",
+        "sensor-log",
+        "devicehealthmonitoring",
+        "reports",
+        "device-diagnostics"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "ios-general",
+      "title": "iOS/iPadOS 通用问题",
+      "entryIds": [
+        "intune-ado-wiki-031",
+        "intune-ado-wiki-033",
+        "intune-ado-wiki-035",
+        "intune-ado-wiki-179",
+        "intune-ado-wiki-225",
+        "intune-ado-wiki-267",
+        "intune-contentidea-kb-060",
+        "intune-contentidea-kb-063",
+        "intune-contentidea-kb-065",
+        "intune-contentidea-kb-071",
+        "intune-contentidea-kb-072",
+        "intune-contentidea-kb-075",
+        "intune-contentidea-kb-088",
+        "intune-contentidea-kb-134",
+        "intune-contentidea-kb-151",
+        "intune-contentidea-kb-162",
+        "intune-contentidea-kb-204",
+        "intune-contentidea-kb-265",
+        "intune-contentidea-kb-273",
+        "intune-contentidea-kb-274",
+        "intune-contentidea-kb-282",
+        "intune-contentidea-kb-317",
+        "intune-contentidea-kb-348",
+        "intune-contentidea-kb-425",
+        "intune-contentidea-kb-447",
+        "intune-contentidea-kb-453",
+        "intune-contentidea-kb-466",
+        "intune-contentidea-kb-479",
+        "intune-contentidea-kb-497",
+        "intune-contentidea-kb-506",
+        "intune-contentidea-kb-529",
+        "intune-contentidea-kb-588",
+        "intune-contentidea-kb-592",
+        "intune-contentidea-kb-593",
+        "intune-contentidea-kb-594",
+        "intune-contentidea-kb-597",
+        "intune-contentidea-kb-603",
+        "intune-contentidea-kb-600",
+        "intune-contentidea-kb-609",
+        "intune-contentidea-kb-618",
+        "intune-contentidea-kb-630",
+        "intune-contentidea-kb-635",
+        "intune-contentidea-kb-644",
+        "intune-contentidea-kb-651",
+        "intune-contentidea-kb-669",
+        "intune-contentidea-kb-670",
+        "intune-mslearn-006",
+        "intune-mslearn-007",
+        "intune-mslearn-015",
+        "intune-mslearn-030",
+        "intune-mslearn-096",
+        "intune-mslearn-110",
+        "intune-mslearn-111",
+        "intune-mslearn-112",
+        "intune-mslearn-113",
+        "intune-mslearn-143",
+        "intune-mslearn-146",
+        "intune-mslearn-169",
+        "intune-onenote-045",
+        "intune-onenote-094",
+        "intune-onenote-202",
+        "intune-onenote-208",
+        "intune-onenote-209",
+        "intune-onenote-210",
+        "intune-onenote-213",
+        "intune-onenote-225",
+        "intune-onenote-231",
+        "intune-onenote-232",
+        "intune-onenote-233",
+        "intune-onenote-269",
+        "intune-onenote-283",
+        "intune-onenote-284",
+        "intune-onenote-319",
+        "intune-onenote-321",
+        "intune-onenote-326",
+        "intune-onenote-327",
+        "intune-onenote-333",
+        "intune-onenote-334"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "apple-device.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "ios",
+        "vpp",
+        "enrollment",
+        "dep",
+        "abm",
+        "ade",
+        "macos",
+        "certificate"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "android-general",
+      "title": "Android 通用问题",
+      "entryIds": [
+        "intune-ado-wiki-125",
+        "intune-ado-wiki-193",
+        "intune-ado-wiki-457",
+        "intune-contentidea-kb-011",
+        "intune-contentidea-kb-094",
+        "intune-contentidea-kb-130",
+        "intune-contentidea-kb-183",
+        "intune-contentidea-kb-278",
+        "intune-contentidea-kb-330",
+        "intune-contentidea-kb-379",
+        "intune-contentidea-kb-390",
+        "intune-contentidea-kb-484",
+        "intune-contentidea-kb-551",
+        "intune-contentidea-kb-648",
+        "intune-mslearn-009",
+        "intune-mslearn-026",
+        "intune-mslearn-083",
+        "intune-mslearn-142",
+        "intune-onenote-241"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "android",
+        "work-profile",
+        "reset-token",
+        "samsung",
+        "conditional-access",
+        "non-knox",
+        "quarantine",
+        "device-actions"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "macos-general",
+      "title": "macOS 通用问题",
+      "entryIds": [
+        "intune-ado-wiki-184",
+        "intune-ado-wiki-185",
+        "intune-ado-wiki-186",
+        "intune-contentidea-kb-505",
+        "intune-contentidea-kb-577"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "app-wrapping-tool",
+        "macos",
+        "detection",
+        "dynamic-library",
+        "mdm",
+        "download-queue",
+        "storedownloadd",
+        "blocked"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "windows-general",
+      "title": "Windows 通用问题",
+      "entryIds": [
+        "intune-ado-wiki-006",
+        "intune-ado-wiki-285",
+        "intune-ado-wiki-291",
+        "intune-ado-wiki-380",
+        "intune-contentidea-kb-023",
+        "intune-contentidea-kb-028",
+        "intune-contentidea-kb-030",
+        "intune-contentidea-kb-033",
+        "intune-contentidea-kb-054",
+        "intune-contentidea-kb-070",
+        "intune-contentidea-kb-153",
+        "intune-contentidea-kb-195",
+        "intune-contentidea-kb-242",
+        "intune-contentidea-kb-258",
+        "intune-contentidea-kb-343",
+        "intune-contentidea-kb-353",
+        "intune-contentidea-kb-374",
+        "intune-contentidea-kb-576",
+        "intune-contentidea-kb-586",
+        "intune-contentidea-kb-703",
+        "intune-mslearn-010",
+        "intune-mslearn-092",
+        "intune-onenote-169",
+        "intune-onenote-170"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "windows",
+        "wns",
+        "device-inventory",
+        "resource-explorer",
+        "advanced-analytics",
+        "endpoint-security",
+        "firewall",
+        "port"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "license-tenant",
+      "title": "许可证与租户",
+      "entryIds": [
+        "intune-ado-wiki-157",
+        "intune-ado-wiki-208",
+        "intune-ado-wiki-338",
+        "intune-ado-wiki-387",
+        "intune-ado-wiki-1856",
+        "intune-ado-wiki-1910",
+        "intune-ado-wiki-1911",
+        "intune-contentidea-kb-006",
+        "intune-contentidea-kb-014",
+        "intune-contentidea-kb-039",
+        "intune-contentidea-kb-043",
+        "intune-contentidea-kb-044",
+        "intune-contentidea-kb-064",
+        "intune-contentidea-kb-066",
+        "intune-contentidea-kb-089",
+        "intune-contentidea-kb-113",
+        "intune-contentidea-kb-229",
+        "intune-contentidea-kb-299",
+        "intune-contentidea-kb-335",
+        "intune-contentidea-kb-341",
+        "intune-contentidea-kb-391",
+        "intune-contentidea-kb-458",
+        "intune-contentidea-kb-491",
+        "intune-contentidea-kb-560",
+        "intune-contentidea-kb-560",
+        "intune-contentidea-kb-569",
+        "intune-contentidea-kb-602",
+        "intune-contentidea-kb-688",
+        "intune-contentidea-kb-690",
+        "intune-mslearn-155",
+        "intune-mslearn-174",
+        "intune-mslearn-179",
+        "intune-onenote-420"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "license-status.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "license",
+        "rbac",
+        "test-tenant",
+        "mcaps",
+        "permissions",
+        "app-sdk",
+        "ios",
+        "policy-not-applied"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "intune-general",
+      "title": "Intune 其他/未分类问题",
+      "entryIds": [
+        "intune-ado-wiki-004",
+        "intune-ado-wiki-005",
+        "intune-ado-wiki-153",
+        "intune-ado-wiki-161",
+        "intune-ado-wiki-378",
+        "intune-ado-wiki-381",
+        "intune-ado-wiki-408",
+        "intune-ado-wiki-409",
+        "intune-ado-wiki-1890",
+        "intune-ado-wiki-1912",
+        "intune-ado-wiki-1913",
+        "intune-ado-wiki-1930",
+        "intune-ado-wiki-1931",
+        "intune-ado-wiki-1933",
+        "intune-ado-wiki-1934",
+        "intune-ado-wiki-1936",
+        "intune-contentidea-kb-012",
+        "intune-contentidea-kb-031",
+        "intune-contentidea-kb-032",
+        "intune-contentidea-kb-047",
+        "intune-contentidea-kb-073",
+        "intune-contentidea-kb-095",
+        "intune-contentidea-kb-107",
+        "intune-contentidea-kb-110",
+        "intune-contentidea-kb-158",
+        "intune-contentidea-kb-189",
+        "intune-contentidea-kb-200",
+        "intune-contentidea-kb-208",
+        "intune-contentidea-kb-232",
+        "intune-contentidea-kb-253",
+        "intune-contentidea-kb-285",
+        "intune-contentidea-kb-318",
+        "intune-contentidea-kb-371",
+        "intune-contentidea-kb-409",
+        "intune-contentidea-kb-419",
+        "intune-contentidea-kb-421",
+        "intune-contentidea-kb-431",
+        "intune-contentidea-kb-489",
+        "intune-contentidea-kb-502",
+        "intune-contentidea-kb-509",
+        "intune-contentidea-kb-280",
+        "intune-contentidea-kb-281",
+        "intune-contentidea-kb-578",
+        "intune-contentidea-kb-584",
+        "intune-contentidea-kb-585",
+        "intune-contentidea-kb-605",
+        "intune-contentidea-kb-607",
+        "intune-contentidea-kb-636",
+        "intune-contentidea-kb-666",
+        "intune-contentidea-kb-712",
+        "intune-mslearn-033",
+        "intune-mslearn-034",
+        "intune-mslearn-085",
+        "intune-mslearn-145",
+        "intune-mslearn-176",
+        "intune-mslearn-178",
+        "intune-onenote-048",
+        "intune-onenote-126",
+        "intune-onenote-139",
+        "intune-onenote-142"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "general"
+      ],
+      "confidence": "low"
+    }
+  ],
+  "discarded": [
+    {
+      "id": "intune-contentidea-kb-016",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-017",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-019",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-022",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-025",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-026",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-027",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-034",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-038",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-041",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-050",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-051",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-052",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-059",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-067",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-068",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-069",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-083",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-084",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-096",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-097",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-100",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-101",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-102",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-105",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-111",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-115",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-118",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-119",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-121",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-122",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-123",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-125",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-126",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-127",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-128",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-132",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-135",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-136",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-137",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-138",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-140",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-144",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-145",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-147",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-148",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-152",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-155",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-160",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-166",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-167",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-172",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-173",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-185",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-188",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-190",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-191",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-192",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-193",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-202",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-206",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-209",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-210",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-212",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-214",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-217",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-218",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-219",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-221",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-234",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-235",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-236",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-239",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-243",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-244",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-248",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-249",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-251",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-254",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-262",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-268",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-270",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-271",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-277",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-279",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-283",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-288",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-289",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-292",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-293",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-294",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-295",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-297",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-306",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-307",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-308",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-309",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-310",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-311",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-313",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-323",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-324",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-325",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-331",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-333",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-337",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-346",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-350",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-356",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-364",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-375",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-378",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-384",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-385",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-386",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-387",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-388",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-389",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-395",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-397",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-399",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-401",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-402",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-403",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-404",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-405",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-410",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-411",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-413",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-417",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-423",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-424",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-429",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-430",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-434",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-441",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-444",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-445",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-448",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-454",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-455",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-456",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-459",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-460",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-467",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-468",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-470",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-471",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-472",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-473",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-474",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-477",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-482",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-483",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-485",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-487",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-490",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-493",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-494",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-495",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-507",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-513",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-514",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-517",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-520",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-522",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-523",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-524",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-525",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-526",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-527",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-531",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-532",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-533",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-534",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-535",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-536",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-537",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-274",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-277",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-278",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-279",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-280",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-281",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-282",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-541",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-542",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-544",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-275",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-277",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-549",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-552",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-553",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-559",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-559",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-561",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-562",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-563",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-564",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-566",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-567",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-570",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-573",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-581",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-583",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-608",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-610",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-611",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-612",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-613",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-614",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-619",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-623",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-624",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-625",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-627",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-628",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-629",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-631",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-632",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-633",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-638",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-639",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-641",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-642",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-643",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-647",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-649",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-652",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-653",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-654",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-655",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-656",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-657",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-658",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-659",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-660",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-661",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-662",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-663",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-664",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-672",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-673",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-675",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-678",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-679",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-683",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-685",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-691",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-694",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-696",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-698",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-700",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-701",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-702",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-704",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-705",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-708",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-710",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-contentidea-kb-717",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "intune-onenote-082",
+      "reason": "半成品（无根因无方案）"
+    }
+  ]
+}

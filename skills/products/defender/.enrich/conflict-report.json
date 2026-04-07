@@ -1,0 +1,31 @@
+{
+  "product": "defender",
+  "generatedAt": "2026-04-07",
+  "totalConflicts": 1,
+  "conflicts": [
+    {
+      "id": "conflict-001",
+      "topic": "sentinel-data-lake",
+      "type": "solution_conflict",
+      "severity": "medium",
+      "entryA": {
+        "id": "defender-801",
+        "source": "ado-wiki",
+        "date": "2026-04-07",
+        "symptom": "KQL interactive query on Microsoft Sentinel data lake times out or returns data size exceeded error",
+        "solution": "For queries exceeding 30,000 rows or hitting timeout/size limits, submit a KQL job instead of running interactive queries. KQL jobs run asynchronously and promote results into a custom table in the An"
+      },
+      "entryB": {
+        "id": "defender-997",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "Sentinel data lake KQL query returns 401-Unauthorized error",
+        "solution": "Reauthenticate to refresh the token and verify that the user has the correct RBAC roles for the Sentinel data lake database"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Solutions differ but may apply to different scenarios",
+      "recommendation": "Both preserved with context annotations",
+      "resolved": true
+    }
+  ]
+}

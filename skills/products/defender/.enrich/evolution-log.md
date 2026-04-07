@@ -294,3 +294,12 @@
 - Track A: defender-for-api-TSG, agentless-manager-failure, agentless-missingPermission(EKS/GKE), azure-missingPermission(AKS)
 - Track B guides: defender-for-api-billing-tsg, defender-for-arm-technical-knowledge, attack-path-k8s-investigation
 - dedup: 0 (fresh batch)
+
+### 2026-04-07 10:47 — ado-wiki blast batch-b r7
+- Pages processed: 5
+- Track A: 2 entries (GitHub Enterprise Audit Log 403/404, Jamf connector delete failure)
+- Skip: 3 pages (ICM notification redirect, escalation IcM template, PG contacts lookup)
+- Track B: 0
+- Deduped: 0
+- IDs: defender-ado-wiki-b-r7-001 ~ 002
+| 2026-04-07 | MERGE+SYNTHESIZE | 41 topics (40 fusion, 1 compact), 1109 entries, 0 Kusto queries fused |

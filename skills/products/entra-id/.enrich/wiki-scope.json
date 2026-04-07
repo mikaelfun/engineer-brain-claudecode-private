@@ -1,0 +1,25 @@
+{
+  "description": "Wiki path scope rules. Auto-managed by scan history. Manual edits OK.",
+  "scopes": [
+    {
+      "wikiKey": "Supportability/AzureAD",
+      "pathScope": [
+        "/Authentication",
+        "/Developer",
+        "/GeneralPages",
+        "/Kerberos",
+        "/Sync Provisioning",
+        "/Windows Hello and Modern Credential Providers",
+        "/M365 Identity",
+        "/ACE Identity TSGs"
+      ]
+    },
+    {
+      "wikiKey": "Supportability/WindowsDirectoryServices",
+      "excludeScope": [
+        "/Sandbox",
+        "/ DS Pod NewsFlash"
+      ]
+    }
+  ]
+}

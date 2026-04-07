@@ -8,12 +8,14 @@
     "mslearn": "exhausted",
     "contentidea-kb": "exhausted"
   },
-  "synthesized": false,
+  "synthesized": true,
   "synthesizeState": {
-    "lastSynthesizedAt": null,
-    "lastEntryCount": 0,
-    "synthesizedEntryIds": [],
-    "topicPlanHash": null
+    "lastSynthesizedAt": "2026-04-07",
+    "lastEntryCount": 1481,
+    "synthesizedEntryIds": 1232,
+    "topicPlanHash": "28ec52d0d2e2",
+    "draftHashes": {},
+    "mode": "full"
   },
   "adoWikiBlast": "stopped"
 }

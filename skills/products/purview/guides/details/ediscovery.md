@@ -1,0 +1,65 @@
+# Purview eDiscovery 搜索与保留 -- Comprehensive Troubleshooting Guide
+
+**Entries**: 16 | **Drafts fused**: 0 | **Kusto queries fused**: 1
+**Kusto references**: [scc-rbac-logs.md](../../kusto/purview/references/queries/scc-rbac-logs.md)
+**Generated**: 2026-04-07
+
+---
+
+## Troubleshooting Workflow
+
+### Phase 1: Data Collection (KQL)
+
+```kusto
+let starttime = datetime({starttime});
+let endtime = datetime({endtime});
+let tenantid = "{tenantId}";
+let sessionid = "{sessionId}";
+let timediff_minutes = datetime_diff('minute', endtime, starttime);
+let scc_rbac_logs = iff(isempty(tenantid), "Need Tenant ID to fullfil geneva link",
+    strcat("https://portal.microsoftgeneva.com/logs/dgrep?be=DGrep&time=", starttime,
+           "&offset=", timediff_minutes,
+           '&offsetUnit=Minutes&UTC=true&ep=CA%20Mooncake&ns=ProtectionCenterPROD&en=ServerEventLog,TraceEventLog&conditions=[["TenantId","%3D%3D","', tenantid,
+           '"],["SessionId","contains","', sessionid,
+           '"]]&aggregates=["Count%20by%20domainStatus","Count%20by%20domainName","Count%20by%20resultType"]'));
+print scc_rbac_logs
+```
+`[tool: Kusto skill -- scc-rbac-logs.md]`
+
+### Phase 2: Decision Logic
+
+| Condition | Meaning | Action |
+|-----------|---------|--------|
+| eDiscovery content search returns no results for OneDrive for Business in 21Vian... | Missing ComplianceWorkbenchApp service principal (AppId: 928... | Create SP: Connect-AzureAD -TenantId <tid> -AzureEnvironmentName AzureChinaCloud... |
+| eDiscovery content search preview/sample review returns 401, 400, or 503 in 21Vi... | PG bugs in Gallatin eDiscovery sample preview (Bug 5962548, ... | PG fix deployed for Bug 6051857. If preview still fails, use Export as workaroun... |
+| Content Search purge (New-ComplianceSearchAction -purge -purgetype SoftDelete) o... | Soft-deleted items are moved to the Recoverable Items Deleti... | Exclude the Deletions subfolder from content search by using folderid filter: ru... |
+| eDiscovery content search by folderid fails or returns no results — the FolderID... | Get-MailboxFolderStatistics returns FolderID in Base64 forma... | Use PowerShell script to convert Base64 FolderID to 48-char hex format: decode B... |
+| eDiscovery sample/preview review function retired - cannot preview content searc... | Microsoft retired the sample review (preview) function in eD... | Sample review is no longer available. Use Export instead to review search result... |
+| eDiscovery compliance boundaries not enforced after UPN/site changes | Attribute re-indexing takes up to 3 days. OneDrive rehoming ... | Wait 3 days. Set attributes via Set-Mailbox/Invoke-ComplianceSecurityFilterActio... |
+| eDiscovery hold errors: dist group >1000, invalid email, mailbox not found, site... | Data source config issues: oversized groups, stale reference... | Split groups >1000. Verify addresses. Check EXO mailbox. Contact SPO admin. Retr... |
+| eDiscovery search error: The location is ambiguous | Mailbox identifier in search locations used by duplicate or ... | Connect to Security and Compliance PowerShell, run Get-Recipient -Identity to fi... |
+
+`[conclusion: 🟢 8.0/10]`
+
+---
+
+## Known Issues Lookup
+
+| # | Symptom | Root Cause | Solution | Score | Source |
+|---|---------|-----------|----------|-------|--------|
+| 1 | eDiscovery content search returns no results for OneDrive for Business in 21Vianet - SharePoint sear... | Missing ComplianceWorkbenchApp service principal (AppId: 92876b03-76a3-4da8-ad6a... | Create SP: Connect-AzureAD -TenantId <tid> -AzureEnvironmentName AzureChinaCloud; New-AzureADService... | 🟢 8.0 | MCVKB/Content search eDiscovery tool in the 21V Purview.md |
+| 2 | eDiscovery content search preview/sample review returns 401, 400, or 503 in 21Vianet Gallatin | PG bugs in Gallatin eDiscovery sample preview (Bug 5962548, Bug 6051857). Sample... | PG fix deployed for Bug 6051857. If preview still fails, use Export as workaround. PG: sample previe... | 🟢 8.0 | MCVKB/e-Discovery content search preview error 401_400_5.md |
+| 3 | Content Search purge (New-ComplianceSearchAction -purge -purgetype SoftDelete) only deletes 10 items... | Soft-deleted items are moved to the Recoverable Items Deletions subfolder which ... | Exclude the Deletions subfolder from content search by using folderid filter: run Get-MailboxFolderS... | 🟢 8.0 | MCVKB/Soft purge using content search.md |
+| 4 | eDiscovery content search by folderid fails or returns no results — the FolderID obtained from Get-M... | Get-MailboxFolderStatistics returns FolderID in Base64 format, but Purview conte... | Use PowerShell script to convert Base64 FolderID to 48-char hex format: decode Base64, skip first 23... | 🟢 8.0 | MCVKB/Purview_Search email by folderid.md |
+| 5 | eDiscovery sample/preview review function retired - cannot preview content search results inline, fu... | Microsoft retired the sample review (preview) function in eDiscovery and content... | Sample review is no longer available. Use Export instead to review search results. Reference: https:... | 🔵 7.5 | MCVKB/Retirement of sample review function in eDiscovery.md |
+| 6 | eDiscovery compliance boundaries not enforced after UPN/site changes | Attribute re-indexing takes up to 3 days. OneDrive rehoming breaks enforcement | Wait 3 days. Set attributes via Set-Mailbox/Invoke-ComplianceSecurityFilterAction. No hold/DLP suppo... | 🔵 6.0 | [MS Learn](https://learn.microsoft.com/purview/edisc-compliance-boundaries#compliance-boundary-considerations) |
+| 7 | eDiscovery hold errors: dist group >1000, invalid email, mailbox not found, site inaccessible | Data source config issues: oversized groups, stale references, access restrictio... | Split groups >1000. Verify addresses. Check EXO mailbox. Contact SPO admin. Retry policy | 🔵 6.0 | [MS Learn](https://learn.microsoft.com/purview/edisc-hold-manage#manage-hold-status-errors) |
+| 8 | eDiscovery search error: The location is ambiguous | Mailbox identifier in search locations used by duplicate or conflicting objects ... | Connect to Security and Compliance PowerShell, run Get-Recipient -Identity to find duplicates, then ... | 🟡 4.5 | [MS Learn](https://learn.microsoft.com/troubleshoot/microsoft-365/purview/ediscovery/resolve-ediscovery-issues) |
+| 9 | eDiscovery search error: Recipient not found | Synchronization delays in Microsoft 365 prevent the system from finding the reci... | Run Get-Recipient -Identity to verify sync status. Wait 30 minutes for synchronization, verify recip... | 🟡 4.5 | [MS Learn](https://learn.microsoft.com/troubleshoot/microsoft-365/purview/ediscovery/resolve-ediscovery-issues) |
+| 10 | eDiscovery search/export error: Maximum number of jobs for your organization are currently running | Organization reached the limit of 50 concurrent eDiscovery jobs; export jobs typ... | List running exports via Get-ComplianceSearchAction -Export. Wait for jobs to complete or remove unn... | 🟡 4.5 | [MS Learn](https://learn.microsoft.com/troubleshoot/microsoft-365/purview/ediscovery/resolve-ediscovery-issues) |
+| 11 | eDiscovery export error: File was not exported because it does not exist or File Not Found for Share... | File was renamed, moved, or deleted after search completed but before SharePoint... | Reindex the SharePoint Online or OneDrive location via Manually request crawling and reindexing. Rer... | 🟡 4.5 | [MS Learn](https://learn.microsoft.com/troubleshoot/microsoft-365/purview/ediscovery/resolve-ediscovery-issues) |
+| 12 | eDiscovery hold error: PolicySyncTimeout - It is taking longer than expected to deploy the policy | Hold policy distribution timed out during sync process | Run Set-CaseHoldPolicy policyname -RetryDistribution to redeploy. Or select Retry in the case hold p... | 🟡 4.5 | [MS Learn](https://learn.microsoft.com/troubleshoot/microsoft-365/purview/ediscovery/resolve-ediscovery-hold-issues) |
+| 13 | eDiscovery hold error: FailedToOpenContainer - The mailbox or SharePoint site may not exist | Mailbox or SharePoint site specified in hold policy no longer exists or URL chan... | Verify mailbox exists with Get-Mailbox, verify site exists with Get-SPOSite, check if site URL chang... | 🟡 4.5 | [MS Learn](https://learn.microsoft.com/troubleshoot/microsoft-365/purview/ediscovery/resolve-ediscovery-hold-issues) |
+| 14 | eDiscovery hold error: SiteOutOfQuota - SharePoint site does not have enough quota for hold | SharePoint site reached its storage quota, preventing hold policy deployment | Add more storage to the site collection via Manage site collection storage limits, then redeploy wit... | 🟡 4.5 | [MS Learn](https://learn.microsoft.com/troubleshoot/microsoft-365/purview/ediscovery/resolve-ediscovery-hold-issues) |
+| 15 | eDiscovery hold error: RecipientTypeNotAllowed - The Recipient Type is not allowed for holds | An Exchange location assigned to the hold policy is not a valid mailbox (e.g., d... | Run Get-Recipient in Exchange Online PowerShell to verify the SMTP address is a valid mailbox. Remov... | 🟡 4.5 | [MS Learn](https://learn.microsoft.com/troubleshoot/microsoft-365/purview/ediscovery/resolve-ediscovery-hold-issues) |
+| 16 | eDiscovery hold deployment fails repeatedly with bulk updates: hold policy stuck in pending state | Script updates hold policy one user at a time in a loop; first update triggers p... | Merge updates into single bulk request: Set-CaseHoldPolicy -Identity policyname -AddExchangeLocation... | 🟡 4.5 | [MS Learn](https://learn.microsoft.com/troubleshoot/microsoft-365/purview/ediscovery/resolve-ediscovery-hold-issues) |

@@ -194,15 +194,25 @@ for slot_id in available_batch_ids[:product_slots]:
 
 ### Step 4: Agent 完成时（task-notification）
 
+> 🚨 **红线：只在收到 `<task-notification>` 后才执行 merge。**
+> 禁止基于 temp 文件存在做 merge——agent 按 Write-Early 顺序写文件（scanned → JSONL → drafts），
+> temp scanned 文件存在 ≠ agent 完成。过早 merge 会：
+> 1. 删除 agent 还在写的 temp 文件，导致 agent 报错重试、浪费 tool calls
+> 2. 遗漏尚未写入的 JSONL 条目
+> 3. 错误释放 slot → 提前 spawn 新 agent → 超出并发限制
+
 收到 `<task-notification>` 时执行：
 
 ```python
-# 0. 更新 registry（第一步！在 merge 之前）
+# 0. 确认是 task-notification（不是自己扫描 temp 目录！）
+assert trigger == "task-notification"  # 绝不基于 temp 文件存在触发
+
+# 1. 更新 registry（第一步！在 merge 之前）
 registry = read_json(registry_path)
 registry["agents"] = [a for a in registry["agents"] if a.get("taskId") != completed_task_id]
 write(registry_path, registry)
 
-# 1. Merge temp files (with dedup)
+# 2. Merge temp files (with dedup)
 merge_batch(product, batchId)
 #    - scanned-ado-wiki-{batchId}.json → merge into scanned-ado-wiki.json
 #    - known-issues-ado-wiki-{batchId}.jsonl → **dedup against** .enrich/known-issues-ado-wiki.jsonl (per-source)
@@ -210,11 +220,11 @@ merge_batch(product, batchId)
 #    - **append 到 per-source 文件**（不直接写 main known-issues.jsonl）
 #    - delete temp files
 
-# 2. Update claimed: remove merged pages
+# 3. Update claimed: remove merged pages
 merged_pages = [pages that were in the temp file]
 claimed["pages"] = [p for p in claimed["pages"] if p not in merged_pages]
 
-# 3. 续跑：从 registry 计算 available slots（不是从 context 记忆！）
+# 4. 续跑：从 registry 计算 available slots（不是从 context 记忆！）
 registry = read_json(registry_path)  # 重新读，确保是最新
 running = len(registry["agents"])
 available = max_agents - running
@@ -240,10 +250,14 @@ else:
 
 `/product-learn ado-wiki-blast all` 被 cron 触发时：
 
-1. 对每个非 exhausted 产品执行一次 merge sweep（合并所有可用 temp 文件）
-2. 更新 claimed（移除已 merge 的页面）
-3. 检查空闲 slot，spawn 新 agent 填满
-4. 不需要等待 —— merge + spawn 后立即返回
+> 🚨 **Cron tick 不做 bulk merge sweep。**
+> 只处理已收到 task-notification 的 agent（即 registry 中已被移除的 slot）。
+> 不扫描 temp 目录来判断 agent 是否完成。
+
+1. 读取 registry，计算空闲 slot（= maxAgents - len(registry.agents)）
+2. 如果有空闲 slot，为非 exhausted 产品分配新 batch + spawn
+3. **仅在 session 恢复（Step 0）时**才允许基于 temp 文件做 merge（此时无 running agent）
+4. 不需要等待 —— spawn 后立即返回
 
 ---
 
@@ -312,8 +326,11 @@ pagesToProcess ({N} 个页面):
 **临时文件管理规则**：
 - Agent 产出的 temp 文件统一写到 `.enrich/blast-temp/` 子目录
 - 调度器的页面分配文件也写到同一目录：`.enrich/blast-temp/batch-{product}-{bid}.json`
+- **Merge 时机**：仅在收到 task-notification 后才 merge 对应 batch 的 temp 文件（Step 4）
+- **禁止 bulk sweep**：运行中不得扫描 temp 目录做批量 merge（Write-Early 陷阱：scanned 先写，JSONL/drafts 后写）
+- **Session 恢复例外**：Step 0 中可基于 temp 文件做 merge（此时无 running agent，文件已稳定）
 - Merge 完成后立即删除对应 temp 文件
-- Session 结束前执行一次 sweep：merge 所有残留 temp 文件
+- Session 结束前执行一次 sweep：merge 所有残留 temp 文件（仅当确认所有 agent 已退出）
 - **禁止在 `skills/products/` 根目录写任何临时文件**
 
 ---
@@ -326,7 +343,8 @@ pagesToProcess ({N} 个页面):
 | batch agent 失败 | claimed 中的页面会在下次 session 恢复时清空，自动重试 |
 | ADO API 限流 | agent 内部 retry，调度器不干预 |
 | 中途退出 session | 下次 session Step 0 检测 claimed 残留，清空后重新分配 |
-| temp 文件存在但无 agent | merge temp → 移除 claimed → 正常续跑 |
+| temp 文件存在但无 agent | **仅在 session 恢复（Step 0）时**允许 merge，运行中禁止扫 temp 目录做 merge |
+| 过早 merge（Write-Early 陷阱） | ❌ 已禁止。agent 按 scanned→JSONL→drafts 顺序写入，scanned 存在≠完成。必须等 task-notification |
 
 ## `rebuild-index` 子命令
 

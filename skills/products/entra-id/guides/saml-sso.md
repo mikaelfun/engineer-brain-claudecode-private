@@ -1,0 +1,63 @@
+# ENTRA-ID SAML SSO — Quick Reference
+
+**Entries**: 136 | **21V**: Partial (132/136)
+**Last updated**: 2026-04-07
+**Keywords**: saml, sso, federation, b2c, certificate, aws
+
+> This topic has a fusion guide with detailed troubleshooting flow
+> → [Full troubleshooting flow](details/saml-sso.md)
+
+## Issue Quick Reference
+
+| # | Symptom | Root Cause | Solution | Score | Source |
+|---|---------|-----------|----------|-------|--------|
+| 1 📋 | AADSTS50107: "The requested federation realm object does not exist" for federated domain with thi... | Third-party IdP returns an incorrect IssuerURI in the SAML response. Entra ID... | Option 1: Contact third-party IdP to fix the IssuerURI. Option 2: Update Issu... | 🟢 9.5 | ADO Wiki |
+| 2 📋 | AADSTS50011 error 'The reply URL specified in the request does not match the reply URLs configure... | The External URL of the Application Proxy app is not configured as a Reply UR... | Add the App Proxy External URL as a Reply URL: Entra Portal > Enterprise Appl... | 🟢 9.5 | ADO Wiki |
+| 3 📋 | One specific federated user cannot access SharePoint Online. SAML token IssuerURI contains traili... | User UPN in Active Directory stored in Base64-encoded format (ldifde export s... | Revert user UPN in Active Directory from Base64-encoded format to normal plai... | 🟢 9.0 | OneNote |
+| 4 📋 | Mooncake myapps portal (myapps.windowsazure.cn) cannot launch SAML SSO applications. Error AADSTS... | Mooncake myapps portal does not support launching SAML SSO apps the same way ... | Forge SAML sign-in URL manually: 1) Capture SAMLRequest from global AAD test ... | 🟢 9.0 | OneNote |
+| 5 📋 | Picturepark SAML-based SSO integration fails. SSO does not work after following the official Micr... | Picturepark only supports WS-Federation protocol, not SAML. The official Micr... | Change the SAML endpoint to WS-Federation endpoint in the Azure AD enterprise... | 🟢 9.0 | OneNote |
+| 6 📋 | SAML SSO fails with AADSTS75011: Authentication method WindowsIntegrated does not match requested... | SaaS app SAML request has RequestedAuthnContext Comparison="exact" requesting... | Contact SaaS app vendor to: 1) Change RequestedAuthnContext Comparison from "... | 🟢 9.0 | OneNote |
+| 7 📋 | AADSTS65005: Invalid resource error when accessing SaaS application via SAML SSO. Client requeste... | The Identifier (Entity ID) URL was not configured in the Enterprise Applicati... | Go to Enterprise Application SSO configuration page > Advanced URL settings, ... | 🟢 9.0 | OneNote |
+| 8 📋 | Enterprise application SAML SSO failure with redirect loop. User sign-in redirects cyclically bet... | Duplicate application registrations in the directory. The configured Enterpri... | 1) Check App Registrations for duplicate apps with same name. 2) Delete dupli... | 🟢 9.0 | OneNote |
+| 9 📋 | SaaS application (Replicon) SAML SSO fails with Azure AD. Error shows permission issue from a dif... | The Identifier URL in SAML request was missing a path segment (/saml2/). Mism... | Capture Fiddler trace of SAML SSO flow. Compare SAML request identifier with ... | 🟢 9.0 | OneNote |
+| 10 📋 | Optional claims customization not taking effect or being overwritten. Claims configured in Azure ... | Azure AD has 3 hierarchical levels for claims customization: Level 1 (App Man... | Check all 3 levels: 1) App Registration > Token configuration (manifest). 2) ... | 🟢 9.0 | OneNote |
+| 11 📋 | Unable to save user provisioning configuration in G Suite app; error The credentials could not be... | Azure AD per-application storage limit (1KB max) for certificates/credentials... | Use two separate G Suite apps (one for SSO, one for provisioning), or reduce ... | 🟢 9.0 | OneNote |
+| 12 📋 | SSO fails with SAML assertion too old error. Application rejects AuthnInstant timestamp as stale ... | Mismatch between Azure AD SSO session token lifetime and application Max Auth... | Align application Max Authentication Age with Azure AD token lifetime. For pe... | 🟢 9.0 | OneNote |
+| 13 📋 | AAD SAML SSO application uses tenant-level certificate instead of application-level certificate. ... | UseCustomTokenSigningKey attribute is missing for the application in backend.... | In Azure portal: go to application Single sign-on page → Create new certifica... | 🟢 9.0 | OneNote |
+| 14 📋 | SAML SSO fails: application rejects AuthnStatement as too old. SAML response AuthnInstant timesta... | Mismatch between Azure AD SSO session token lifetime (persistent=180d, nonper... | Align application Max Authentication Age with Azure AD token lifetime. E.g., ... | 🟢 9.0 | OneNote |
+| 15 📋 | AAD SAML SSO application periodically breaks (e.g., monthly). SAML signing certificate uses tenan... | Application backend is missing UseCustomTokenSigningKey attribute, likely bec... | 1) Azure Portal > Enterprise Apps > Single sign-on > Create new certificate. ... | 🟢 9.0 | OneNote |
+| 16 📋 | Microsoft Single Sign On Chrome extension shows 'Access requested' and SSO does not work; chrome_... | Chrome extension permissions not properly granted by admin policy; extension ... | Customer must work with their admin (or Google) to grant correct permissions ... | 🟢 8.5 | ADO Wiki |
+| 17 📋 | AWS provisioning Test Connection fails with 'DiceCredentialValidationFailure: We are unable to au... | The AWS user account used for provisioning is required by AWS policy to perfo... | Exclude the AWS service account from the AWS MFA policy so that programmatic ... | 🟢 8.5 | ADO Wiki |
+| 18 📋 | User clicking AWS Single-Account Access app from MyApps gets 'invalid SAML response' error. The S... | Managed users were added to the Users and groups blade of the AWS Single-Acco... | Navigate to Users and groups blade of the AWS Single-Account Access applicati... | 🟢 8.5 | ADO Wiki |
+| 19 📋 | AWS CLI returns 'ExpiredTokenException: Token must be redeemed within 5 minutes of issuance' or '... | For the 5-minute error: user did not select their AWS role and press ENTER wi... | Re-run MSEntraAuthAWSCLI.exe and complete role selection promptly. To extend ... | 🟢 8.5 | ADO Wiki |
+| 20 📋 | SAML request signature verification errors: 76020 (Application configured to use only protocols w... | These errors occur when SAML request signing is enabled on an application (re... | 76020: Use only /saml2 endpoint. 76021: Sign the SAML request or avoid /commo... | 🟢 8.5 | ADO Wiki |
+| 21 📋 | SAML multi-instancing SP-initiated errors: 76031 (This endpoint does not support SAML request sig... | 76031: SP-Initiated workflow is not supported when SAML request signing (isSi... | 76031: Either set isSignedRequestRequired to false, or use the regular /saml2... | 🟢 8.5 | ADO Wiki |
+| 22 📋 | User clicking AWS Single-Account Access app from MyApps gets invalid SAML response. Missing https... | Managed users added before AWS role provisioning was enabled got Default Acce... | Edit user assignment in Users and groups blade, select a provisioned AWS role... | 🟢 8.5 | ADO Wiki |
+| 23 📋 | AWS CLI returns ExpiredTokenException (token must be redeemed within 5 minutes) or ExpiredToken (... | 5-min error: user did not select role in time. SessionDuration error: default... | Re-run MSEntraAuthAWSCLI.exe. To extend token lifetime, edit SessionDuration ... | 🟢 8.5 | ADO Wiki |
+| 24 📋 | SAML request signature verification errors: 76020 (only signed protocols), 76021 (accept only sig... | SAML request signing enabled (requestSignatureVerification.isSignedRequestReq... | 76020: Use /saml2 endpoint. 76021: Sign request or avoid /common. 76022: Add ... | 🟢 8.5 | ADO Wiki |
+| 25 📋 | SAML multi-instancing SP-initiated errors: 76031 (endpoint does not support SAML request signing)... | 76031: SP-Initiated not supported with SAML request signing enabled. 76032: U... | 76031: Set isSignedRequestRequired to false or use regular /saml2 endpoint. 7... | 🟢 8.5 | ADO Wiki |
+| 26 📋 | Cannot reliably enumerate all SAML SSO apps. Get-MgServicePrincipal filter on preferredSingleSign... | PreferredSingleSignOnMode attribute introduced in later API update. Older SPs... | Filter on PreferredSingleSignOnMode for most apps. For null-value apps, check... | 🟢 8.5 | ADO Wiki |
+| 27 📋 | Failed to add identifier URI error: 'All newly added URIs must contain a tenant verified domain, ... | Identifier URI protection enforcement (deployed May 19, 2025) blocks non-defa... | Options: (1) Use default URI format: api://{appId} or api://{tenantId}/{appId... | 🟢 8.5 | ADO Wiki |
+| 28 📋 | SAML Token Encryption certificate upload fails when configuring token encryption for an enterpris... | Wrong certificate format used for upload. The certificate must be an X.509 ce... | Export/obtain the certificate as an X.509 .cer file (public key only). For ap... | 🟢 8.5 | ADO Wiki |
+| 29 📋 | SAML token encryption configured but tokens are not being encrypted, or application fails to decr... | TokenEncryptionKeyID attribute in the application manifest is not set or does... | Verify tokenEncryptionKeyId in the app manifest matches the keyId of the acti... | 🟢 8.5 | ADO Wiki |
+| 30 📋 | SAML SSO fails — token is sent encrypted by Azure AD but the application cannot decrypt it. User ... | Key mismatch: the public key certificate uploaded to Azure AD for encryption ... | 1) Use Fiddler to capture the SAML response and verify the token is encrypted... | 🟢 8.5 | ADO Wiki |
+| 31 📋 | Failed to add identifier URI: All newly added URIs must contain tenant verified domain, tenant ID... | Identifier URI protection enforcement (May 2025) blocks non-default URIs. def... | (1) Use default URI: api://{appId}. (2) Switch to v2 tokens. (3) Use SAML. (4... | 🟢 8.5 | ADO Wiki |
+| 32 📋 | Password-based SSO app launches but hangs on loading spinner, fails to submit credentials to the ... | SSO mode is set to Microsoft Entra ID single sign-on disabled instead of pass... | Navigate to Enterprise Applications > select the app > Single sign-on > chang... | 🟢 8.5 | ADO Wiki |
+| 33 📋 | Salesforce SSO fails with device activation requirement after Salesforce security hardening; SAML... | eSTS picks first auth type claim for AuthnContextClassRef. For Password+MFA, ... | As of 2026-01-30, Salesforce updated to accept multipleauthn and mfa values. ... | 🟢 8.5 | ADO Wiki |
+| 34 📋 | Custom Claims Provider attribute selected as NameID source in SAML SSO causes NameID format to un... | Custom claims provider attributes cannot be used as NameID source. Entra ID f... | Use a supported native Entra ID directory attribute (userPrincipalName, mail,... | 🟢 8.5 | ADO Wiki |
+| 35 📋 | Global Admin unable to add specific gallery applications in Enterprise Apps - Create button greye... | By design: apps supporting only Linked/Password SSO are not identity-integrat... | Expected behavior. These apps cannot be added from the gallery. If SSO integr... | 🟢 8.5 | ADO Wiki |
+| 36 📋 | SAML claim sourced from onPremisesUserPrincipalName is empty in SAML Response; ASC shows "No valu... | onPremisesUserPrincipalName is only projected into token context when tenant ... | If enabling Alternate Login ID is not acceptable, populate a supported extens... | 🟢 8.5 | ADO Wiki |
+| 37 📋 | SAML SSO Claims Transformation window does not appear when editing a claim that has a known trans... | UI bug in SAML SSO claims configuration page (ICM 693586805) | Select either the Attribute or Directory Extensions radio button first, then ... | 🟢 8.5 | ADO Wiki |
+| 38 📋 | SAML NameID IfEmpty() claim transformation produces persistent identifier instead of fallback val... | Known PG bug: Parameter 3 is calculated first, then Transform is evaluated. I... | Use IfNotEmpty() transformation instead of IfEmpty(). IfNotEmpty() works corr... | 🟢 8.5 | ADO Wiki |
+| 39 📋 | AADSTS7500525 XML error in SAML message when identifierUris is non-URI format (e.g. "test123") co... | Non-URI identifiers not supported as issuer URL for SAML IdP-initiated SSO | Use actual URIs (https:// or api://) for identifierUris, or update Identifier... | 🟢 8.5 | ADO Wiki |
+| 40 📋 | Failed to delete SAML application: "Property appId is invalid" or "identifierUris is invalid" or ... | App ID URI has trailing slash, uses unverified domain, or SAML app misconfigu... | Fix App ID URI format (remove trailing slash, use verified domain). For publi... | 🟢 8.5 | ADO Wiki |
+| ... | *96 more entries* | | | | |
+
+## Quick Troubleshooting Path
+
+1. Check **saml** related issues (13 entries) `[ado-wiki]`
+2. Check **sso** related issues (12 entries) `[onenote]`
+3. Check **aws** related issues (3 entries) `[ado-wiki]`
+4. Check **issueruri** related issues (2 entries) `[ado-wiki]`
+5. Check **provisioning** related issues (2 entries) `[onenote]`
+6. Check **token-lifetime** related issues (2 entries) `[onenote]`

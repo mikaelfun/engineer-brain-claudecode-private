@@ -891,3 +891,4 @@
   - 📘 Kusto Query Repository/Intune Kusto Cluster Reference → guide-draft (66 KQL queries)
 - **IDs**: intune-ado-wiki-a-r5-001 ~ 002
 - **files**: known-issues-ado-wiki-a.jsonl, scanned-ado-wiki-a.json, 2 guide drafts
+| 2026-04-07 | SYNTHESIZE | 49 topics (42 fusion, 7 compact), 1232 entries, 32 Kusto queries fused |

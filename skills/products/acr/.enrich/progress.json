@@ -10,10 +10,11 @@
   },
   "synthesized": true,
   "synthesizeState": {
-    "lastSynthesizedAt": null,
-    "lastEntryCount": 0,
-    "synthesizedEntryIds": [],
-    "topicPlanHash": null
+    "lastSynthesizedAt": "2026-04-07",
+    "lastEntryCount": 109,
+    "synthesizedEntryIds": 108,
+    "topicPlanHash": "263fbf98d0c3",
+    "mode": "full"
   },
   "adoWikiBlast": "stopped"
 }

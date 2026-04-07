@@ -1,0 +1,71 @@
+# VM Vm Start Stop F — 综合排查指南
+
+**条目数**: 30 | **草稿融合数**: 3 | **Kusto 查询融合**: 0
+**来源草稿**: [ado-wiki-f-startbuild-fail-avdimage-languagepack.md](../../guides/drafts/ado-wiki-f-startbuild-fail-avdimage-languagepack.md), [mslearn-start-vm-last-known-good.md](../../guides/drafts/mslearn-start-vm-last-known-good.md), [onenote-script-vm-restart-events.md](../../guides/drafts/onenote-script-vm-restart-events.md)
+**生成日期**: 2026-04-07
+
+---
+
+## 排查流程
+
+### Phase 2: 排查与诊断
+> 来源: ADO Wiki
+
+1. 参照 [ado-wiki-f-startbuild-fail-avdimage-languagepack.md](../../guides/drafts/ado-wiki-f-startbuild-fail-avdimage-languagepack.md) 排查流程
+2. 参照 [mslearn-start-vm-last-known-good.md](../../guides/drafts/mslearn-start-vm-last-known-good.md) 排查流程
+3. 参照 [onenote-script-vm-restart-events.md](../../guides/drafts/onenote-script-vm-restart-events.md) 排查流程
+
+### Phase 3: 根因判断与解决
+
+**判断逻辑**：
+
+| 条件 | 含义 | 后续动作 |
+|------|------|---------|
+| VMware Image Customization Initialization module i | 1 条相关 | OFFLINE approach: attach OS disk to rescue VM. Disable VMwar... |
+| Windows is processing and applying Group Policies. | 1 条相关 | Wait up to 1 hour for Group Policy processing to complete. I... |
+| Local Session Manager service is stuck during star | 1 条相关 | Use online hang scenario troubleshooting: backup OS disk, co... |
+| Machine is performing first boot of a generalized  | 1 条相关 | Image is unrecoverable. Customer must recreate the generaliz... |
+| When VM is shutdown from Azure portal, Windows Upd | 1 条相关 | Offline troubleshooting required: attach OS disk to repair V... |
+| During KB installation or rollback, OS needs time  | 1 条相关 | Wait for update to complete (can take hours). If stuck in lo... |
+| The Key Vault secret (certificate) referenced by t | 1 条相关 | In Azure Portal: navigate to Key Vault > Secrets > find the ... |
+| The Key Vault key configured in the Disk Encryptio | 1 条相关 | 1. Navigate to Key Vault in the error message. 2. Keys > sel... |
+| CloudLink encryption uses a Linux-based machine to | 1 条相关 | Engage CloudLink support to troubleshoot key retrieval. If B... |
+| When the EFI partition is deleted and recreated at | 1 条相关 | Deallocate VM, download VHD, upload to new storage account, ... |
+
+---
+
+## 已知问题速查
+
+| # | 症状 | 根因 | 方案 | 分数 | 来源 |
+|---|------|------|------|------|------|
+| 1 | Azure VM screenshot shows VMWare image customization is in progress message on every boot, delaying ... | VMware Image Customization Initialization module is enabled on the VM (similar t... | OFFLINE approach: attach OS disk to rescue VM. Disable VMware Customization modu... | 🔵 7.0 | ADO Wiki |
+| 2 | Azure VM screenshot shows 'Please wait for the Group Policy Client' - OS hangs waiting for Group Pol... | Windows is processing and applying Group Policies. Many or complex policies can ... | Wait up to 1 hour for Group Policy processing to complete. If VM is still stuck ... | 🔵 7.0 | ADO Wiki |
+| 3 | Azure VM screenshot shows 'Please wait for the Local Session Manager' - OS hangs waiting for Local S... | Local Session Manager service is stuck during startup. Root cause depends on mem... | Use online hang scenario troubleshooting: backup OS disk, collect memory dump vi... | 🔵 7.0 | ADO Wiki |
+| 4 | Azure VM screenshot shows 'Windows could not complete the installation. To install Windows in this c... | Machine is performing first boot of a generalized image and failed to complete t... | Image is unrecoverable. Customer must recreate the generalized image. Change sup... | 🔵 7.0 | ADO Wiki |
+| 5 | Azure VM enters reboot loop or goes to Stopped state after installing Windows cumulative updates (e.... | When VM is shutdown from Azure portal, Windows Updates get applied during shutdo... | Offline troubleshooting required: attach OS disk to repair VM, uninstall the pro... | 🔵 7.0 | ADO Wiki |
+| 6 | Azure VM screenshot shows Windows Update in progress ('Working on updates ##% complete') or revertin... | During KB installation or rollback, OS needs time to process updates. Large numb... | Wait for update to complete (can take hours). If stuck in loop: offline troubles... | 🔵 7.0 | ADO Wiki |
+| 7 | VM fails to start with error: KeyVaultSecretDoesNotExist -- The Key Vault secret with URL ... does n... | The Key Vault secret (certificate) referenced by the VM has been disabled. CRP c... | In Azure Portal: navigate to Key Vault > Secrets > find the referenced secret > ... | 🔵 7.0 | ADO Wiki |
+| 8 | VM fails to start with error: KeyVaultKeyNotEnabled -- The key vault key used for disk encryption se... | The Key Vault key configured in the Disk Encryption Set was disabled. Azure cann... | 1. Navigate to Key Vault in the error message. 2. Keys > select the key > open C... | 🔵 7.0 | ADO Wiki |
+| 9 | Windows VM screenshot shows Linux/Grub boot process instead of Windows boot - the VM is encrypted wi... | CloudLink encryption uses a Linux-based machine to manage encryption keys. If th... | Engage CloudLink support to troubleshoot key retrieval. If Bitlocker team involv... | 🔵 7.0 | ADO Wiki |
+| 10 | Windows 11 Trusted Launch VM fails to boot with error 'The boot loader did not load an operating sys... | When the EFI partition is deleted and recreated at a different location, the VM ... | Deallocate VM, download VHD, upload to new storage account, create new managed d... | 🔵 7.0 | ADO Wiki |
+| 11 | Windows VM fails to boot with 'The boot loader did not load an operating system' after converting fr... | Converting from Gen 1 to Gen 2 and rebuilding BCD can result in improper boot co... | Deallocate VM, download VHD, create new managed disk with Trusted Launch securit... | 🔵 7.0 | ADO Wiki |
+| 12 | VM screenshot shows 'Working on features ##% complete Don't turn off your computer' and VM is stuck ... | Customer added or removed a Windows Server role or feature, and the operation is... | Take multiple screenshots to validate if progress is being made. Only intercede ... | 🔵 7.0 | ADO Wiki |
+| 13 | RHEL 7/8 Gen 2 Azure VM fails to boot with 'Failed to open \EFI\redhat\grubx64.efi Not Found' - rebo... | Missing grubx64.efi file from the EFI system partition. Can be caused by misconf... | Create RHEL Gen2 rescue VM with same distro, attach broken OS disk copy, mount a... | 🔵 7.0 | ADO Wiki |
+| 14 | Azure Advisor cost savings recommendation shows potential savings higher than actual resource cost. ... | Advisor calculates savings using retail pricing and assumes 24/7 resource usage.... | Explain methodology: retail pricing x 24/7 assumption. For actual savings, use C... | 🔵 7.0 | ADO Wiki |
+| 15 | Columns missing or data not matching when downloading Azure Advisor recommendations in CSV or PDF fo... | Known issues: (1) Certain cost recommendations do not support cost-saving price ... | Compare data across Portal, CSV, and PDF. If discrepancy is only in cost/pricing... | 🔵 7.0 | ADO Wiki |
+| 16 | Azure Advisor commitments filter (Term and Look-back Period) does not change or filter right-sizing/... | The commitments filter only applies to savings plan and reserved instances (RI) ... | Inform customer the commitments filter is only for savings plan/RI. For right-si... | 🔵 7.0 | ADO Wiki |
+| 17 | ACSS Install deployment fails with zypper return code 7: System management is locked by the applicat... | System management (zypper) is locked by another running zypper process on the SL... | Restart the VM and retry the install. If issue persists, collect Ansible install... | 🔵 7.0 | ADO Wiki |
+| 18 | ACSS registration fails with MisconfiguredSapSystem error: more than one ASCS instance found for the... | Multiple ASCS instances are present in the SAP system configuration, which is no... | Reconfigure SAP system to have only one ASCS instance: 1) Stop sapstartsrv (sapc... | 🔵 7.0 | ADO Wiki |
+| 19 | Azure Advisor shows outdated or stale recommendations older than 72 hours, or recommendations refere... | Advisor auto-refresh occurs every 24 hours by design; bug in Advisor Recommender... | Verify last refresh date on Advisor dashboard; if recommendation is for a delete... | 🔵 7.0 | ADO Wiki |
+| 20 | SAP instance start/stop automation via Logic App and ARM template fails with AuthorizationFailed err... | The Managed Identity associated with the Logic App did not have the Azure Center... | Assign the Azure Center for SAP Solutions Administrator role to the Logic App Ma... | 🔵 7.0 | ADO Wiki |
+| 21 | Cannot update Purchase Plan information (name, publisher, product) on an existing Azure Compute Gall... | Purchase Plan properties are immutable after the Image Definition is created. Tw... | Specify correct Purchase Plan info at Image Definition creation time (Portal Pub... | 🔵 7.0 | ADO Wiki |
+| 22 | Cannot create Image Definition - 400 Bad Request: entity name invalid per validation rule; must matc... | Image Definition name contains invalid characters. Only uppercase/lowercase lett... | Rename using only allowed characters. Must not start with underscore/non-word ch... | 🔵 7.0 | ADO Wiki |
+| 23 | Failed to stop replication of image version in Azure Compute Gallery from Azure Portal. Customers tr... | Safety profile feature (allowDeletionOfReplicatedLocations=false) is enabled by ... | Set allowDeletionOfReplicatedLocations=true using Azure CLI: az sig image-versio... | 🔵 7.0 | ADO Wiki |
+| 24 | Image version creation fails with InternalOperationError: Replication failed in this region due to C... | Mismatch in security type between the image definition and the source image. The... | Recreate the image definition with the correct security type set to Trusted Laun... | 🔵 7.0 | ADO Wiki |
+| 25 | Customer needs to uninstall VM Application from a virtual machine while keeping the application in t... |  | Use PowerShell: 1) $vm = Get-AzVM -ResourceGroupName <rg> -Name <vm>  2) Remove-... | 🔵 7.0 | ADO Wiki |
+| 26 | VM Application deployment fails during archive extraction: 'Expand-Archive: The path <AppName>.zip e... | The VM Application extension does not always preserve the original file extensio... | Update the install command to rename the file before extraction: powershell -Exe... | 🔵 7.0 | ADO Wiki |
+| 27 | Cannot create VM Application Definition in Azure Compute Gallery due to invalid name. Error: 'The en... | The VM Application Definition name contains invalid characters. Names must start... | Use only valid characters for the definition name: uppercase/lowercase letters, ... | 🔵 7.0 | ADO Wiki |
+| 28 | VM Application version publishing fails with SAS URI is not valid error when using Az.Storage PowerS... | Known bug in Az.Storage PowerShell module version 3.12.0 that generates invalid ... | Downgrade Az.Storage to version 3.11.0: 1) Uninstall-Module Az.Storage, 2) Close... | 🔵 7.0 | ADO Wiki |
+| 29 | VM deployment from Azure Compute Gallery image fails with VMMarketplaceInvalidInput: Creating a virt... | Purchase Plan information is missing or incorrectly specified when deploying a V... | Specify purchase plan information in the deployment template: add purchasePlan b... | 🔵 7.0 | ADO Wiki |
+| 30 | Incorrect Elastic SAN billing continues after Elastic SAN resource is deleted | In rare cases, Elastic SAN billing meters are not stopped upon resource deletion... | Verify billing usage via Kusto (xstore.kusto.windows.net / xdataanalytics). If b... | 🔵 7.0 | ADO Wiki |
+

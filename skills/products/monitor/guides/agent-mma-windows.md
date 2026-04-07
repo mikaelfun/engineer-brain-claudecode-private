@@ -1,0 +1,34 @@
+# Monitor agent-mma-windows
+
+**Entries**: 25 | **21V**: ALL | **Sources**: 2
+**Last updated**: 2026-04-07
+
+## Symptom Quick Reference
+
+| # | Symptom | Root Cause | Solution | Score | Source |
+|---|---------|-----------|----------|-------|--------|
+| 1 | Log Analytics Agent for Windows versions not supporting SHA-2 code signing wi... | Azure Log Analytics team deprecated SHA-1 code signing for Windows agent. Age... | Upgrade Log Analytics Agent (MMA) for Windows to a version that supports SHA-... | 9.0 | OneNote |
+| 2 | MMA Windows custom logs upload delayed to Log Analytics workspace. Significan... | Application writing the custom logs is not flushing content to disk, so no fi... | Use FileListenerTool.exe to verify file system notifications are being genera... | 8.5 | ADO Wiki |
+| 3 | MMA Windows custom logs upload delayed | App not flushing to disk - no FS notifications | Use FileListenerTool.exe to verify | 8.5 | ADO Wiki |
+| 4 | Azure VM Resource ID is missing in Heartbeat table - VM shows as 'Unhealthy' ... | Azure Instance Metadata Service (IMDS) at 169.254.169.254 is not accessible f... | 1) Query Heartbeat table for ResourceId field 2) Test IMDS access: PowerShell... | 8.5 | ADO Wiki |
+| 5 | MMA (Microsoft Monitoring Agent) Windows agent loses data or shows gaps in Lo... | MMA Windows agent buffers data locally with a default max of 100MB (configura... | 1) Restore network connectivity to Log Analytics workspace 2) Increase buffer... | 8.5 | ADO Wiki |
+| 6 | Customer observes an unknown/unrecognized workspace ID configured on the Micr... | The workspace was auto-provisioned by Azure Policy, Defender for Cloud auto-p... | 1) Query workspace details using Azure Data Explorer (oibeftprd.kusto.windows... | 8.5 | ADO Wiki |
+| 7 | Cannot install or uninstall MMA agent due to partial/corrupted previous insta... | Previous MMA version left partial/corrupted installation artifacts in Windows... | 1) Run Get-WmiObject -Class Win32_Product -Filter Name=Microsoft Monitoring A... | 8.5 | ADO Wiki |
+| 8 | Cloned Windows VMs all have the same SourceComputerId (Agent ID) for Microsof... | When a VM is cloned from a golden/master image that had MMA installed and con... | 1) Stop HealthService 2) Rename 'Health Service State' folder 3) Rename 'Azur... | 8.5 | ADO Wiki |
+| 9 | Events from Microsoft-Windows-DNSServer Analytic channel are not collected by... | MMA agent does not support collecting events from Analytic or Debug channels ... | Currently there is no workaround to collect events from Analytic/Debug channe... | 8.5 | ADO Wiki |
+| 10 | MMA agent fails to apply configuration with HealthService Event ID 7022 error... | The server was cloned from a golden/master image that had MMA agent installed... | 1) Stop HealthService (Stop-Service HealthService -Force) 2) Rename 'C:\Progr... | 8.5 | ADO Wiki |
+| 11 | MMA (Windows) agent stops reporting data/heartbeat to Log Analytics after Jun... | Log Analytics backend switched from Baltimore CyberTrust CA Root to DigiCert ... | 1) Upgrade Log Analytics branch MMA to version 10.20.18053+ (Bundle) or 1.0.1... | 8.5 | ADO Wiki |
+| 12 | MMA agent installation/uninstallation fails with Error 0x80070643 Fatal error... | Windows Update store/cache corruption, pending reboots, or pending Windows up... | 1) Ensure no pending Windows updates remain 2) Reboot the machine properly 3)... | 8.5 | ADO Wiki |
+| 13 | MMA/SCOM agent installation fails with Error 25211 Failed to install performa... | Windows Performance Counter registry corruption prevents the MMA installer fr... | 1) Run lodctr.exe /R from %windir%\system32 and %windir%\sysWOW64 to rebuild ... | 8.5 | ADO Wiki |
+| 14 | MMA agent on Virtual Desktop (RDS/AVD) cannot connect to Log Analytics worksp... | Group Policy Time zone redirection is disabled (Computer Configuration > Admi... | 1) Run gpresult /h c:\reports.html to identify Time zone redirection GPO 2) E... | 8.5 | ADO Wiki |
+| 15 | MMA (Windows) agent stops uploading data to Log Analytics after April 14 2023... | Log Analytics backend deprecated SSL V1 certificate support as of April 14 20... | 1) Upgrade MMA to latest version (Bundle >= 10.20.18053 / Extension >= 1.0.18... | 8.5 | ADO Wiki |
+| 16 | MMA agent MSI installation fails with Error 1402 Could not open key: UNKNOWN\... | Registry permissions on HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Instal... | 1) Open Registry Editor 2) Navigate to HKLM\SOFTWARE\Microsoft\Windows\Curren... | 8.5 | ADO Wiki |
+| 17 | MMA extension uninstallation fails - extension status shows provisioning fail... | Either the Guest Agent did not attempt the uninstall, or the uninstall proces... | 1) Check C:\WindowsAzure\Logs\Plugins\...\MMAExtensionUninstall[N].log 2) If ... | 8.5 | ADO Wiki |
+| 18 | Windows MMA Agent stops uploading heartbeats after 1-4 days. Restarting Micro... | PowerShell transcription is enabled to C:\Windows\System32\LogFiles\PowerShel... | 1) Check PowerShell transcription setting via registry HKLM\Software\Policies... | 8.5 | ADO Wiki |
+| 19 | MMA on legacy OS (Windows 7 SP1, Server 2008 R2 SP1, Server 2008 SP2) stops r... | MMA Management Packs changed from dual-signed (SHA-1 + SHA-2) to single-signe... | 1) Install latest MMA build (10.20.18029.0 or later) 2) Install Windows patch... | 8.5 | ADO Wiki |
+| 20 | MMA agent logs Event ID 3009 (loading private key for client auth certificate... | The Windows CNG Key Isolation service is stopped on the agent machine, preven... | Start the CNG Key Isolation service. Investigate why it stopped with Windows ... | 6.0 | ADO Wiki |
+| 21 | MMA agent logs Event ID 4004: HTTP operation failed with error 'The Server se... | The Windows Server service (LanmanServer) is stopped on the agent machine. | Start the Windows Server service (LanmanServer). Investigate why it stopped w... | 6.0 | ADO Wiki |
+| 22 | Windows Security Event IDs (e.g., Event 4647 user-initiated logoff) generated... | MMA agent only looks back 1 hour when restarted or when connectivity is resto... | Upgrade to the latest MMA version (post July 2022 release) which extends the ... | 6.0 | ADO Wiki |
+| 23 | After MMA agent restart, only SecurityEventIDs with EventSourceName Microsoft... | The MaxExpressionDepth registry value (used for regex matching of security ev... | Apply KB3004791: increase MaxExpressionDepth registry value from default 2000... | 6.0 | ADO Wiki |
+| 24 | MMA (Log Analytics or SCOM agent) installation fails with error 'ConvertStrin... | The Security descriptor for the Windows Security Event Log has a custom/corru... | From an elevated PowerShell, export and reset the CustomSD registry value und... | 6.0 | ADO Wiki |
+| 25 | MMA (Log Analytics or SCOM agent) installation fails with 'Error 25211. Faile... | Windows Performance Counter registry corruption prevents the MMA installer fr... | Run '%windir%\system32\lodctr.exe /R' and '%windir%\sysWOW64\lodctr.exe /R' f... | 6.0 | ADO Wiki |

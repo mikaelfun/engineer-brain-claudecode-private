@@ -1,0 +1,89 @@
+# Purview 扫描连接与凭据问题 -- Comprehensive Troubleshooting Guide
+
+**Entries**: 24 | **Drafts fused**: 2 | **Kusto queries fused**: 0
+**Source drafts**: [ado-wiki-configure-azure-sql-db-sql-auth.md](..\guides/drafts/ado-wiki-configure-azure-sql-db-sql-auth.md), [ado-wiki-salesforce-test-connection-failure.md](..\guides/drafts/ado-wiki-salesforce-test-connection-failure.md)
+**Generated**: 2026-04-07
+
+---
+
+## Troubleshooting Workflow
+
+### Phase 1: Initial Diagnosis
+> Sources: ado-wiki-salesforce-test-connection-failure.md
+
+1. Data Collection `[source: ado-wiki-salesforce-test-connection-failure.md]`
+2. **HAR File** - Collect a HAR file from the browser to capture the correlation ID. `[source: ado-wiki-salesforce-test-connection-failure.md]`
+3. **Correlation ID** - Use the correlation ID from the HAR file to query logs. `[source: ado-wiki-salesforce-test-connection-failure.md]`
+4. Log Analysis `[source: ado-wiki-salesforce-test-connection-failure.md]`
+5. Sample Log Output `[source: ado-wiki-salesforce-test-connection-failure.md]`
+6. Verification Checklist `[source: ado-wiki-salesforce-test-connection-failure.md]`
+7. **Registration URL** - Enter the Salesforce sign-in endpoint URL as Domain URL: `[source: ado-wiki-salesforce-test-connection-failure.md]`
+8. **Password & Security Token**: `[source: ado-wiki-salesforce-test-connection-failure.md]`
+9. **User Login History** - Verify user's login attempts and failures in Salesforce `[source: ado-wiki-salesforce-test-connection-failure.md]`
+10. Token Generation Test via API Client `[source: ado-wiki-salesforce-test-connection-failure.md]`
+
+### Phase 2: Data Collection (KQL)
+
+```kusto
+ScanningLog
+| where CorrelationId == "<Correlation_ID>"
+
+QueryPackageActivityEvent  // need to run on local cluster
+| where CorrelationId == "<Correlation_ID>"
+```
+`[tool: ado-wiki-salesforce-test-connection-failure.md]`
+
+```kusto
+ScanningLog
+| where CorrelationId == "<Correlation_ID>"
+
+cluster('azuredmprod.kusto.windows.net').database('AzureDataMovement').TraceGatewayLocalEventLog
+| where UserReportId == "UserReportid"
+```
+`[tool: ado-wiki-salesforce-test-connection-failure.md]`
+
+### Phase 3: Decision Logic
+
+| Condition | Meaning | Action |
+|-----------|---------|--------|
+| Azure Integration Runtime connection failures: timeout errors, authentication fa... | Incorrect credentials, network issues, or firewall/NSG setti... | 1) Verify credentials are correct. 2) Confirm data source is accessible from Azu... |
+| AuthenticationFailedException 'DefaultAzureCredential authentication failed due ... | Bad node in the pod cannot connect to managed identity; issu... | Follow steps to delete the bad node that cannot connect to managed identity (see... |
+| Salesforce scan fails in Purview; test connection or credential errors when scan... | Salesforce connector uses REST API with app created in Sales... | Verify Salesforce app has OAuth enabled and correct IP restrictions. Check 2 KV ... |
+| Purview scan credential test fails with Key Vault authentication issues; misconf... | Multiple possible misconfigurations: wrong KV URI, Purview M... | Verify: (1) Key Vault URI matches actual AKV, (2) Purview MSI has Get+List secre... |
+| Purview (private network) scan of Azure Synapse dedicated pool (public endpoint)... | Auto-resolve IR cannot connect from a private-network Purvie... | 7-step fix: (1) Add Purview MSI as Reader on Synapse workspace IAM, (2) Grant St... |
+| Purview scan test connection fails with "Failed to access the [Data Source] acco... | Key Vault firewall blocking Purview access, VNET misconfigur... | Verify 7 items: (1) Key Vault has no firewall blocking Purview, (2) VNET config ... |
+| Purview scan test-connectivity fails; general debugging approach using Kusto Sca... | Most common: credentials not properly added to AKV (mistyped... | Use Kusto queries: (1) Find accountId via ScanningLog where Message contains acc... |
+| ADLS Gen 2 scan with MSI authentication fails when storage account firewall is e... | ADLS Gen 2 Storage RP MSI resource match is case-sensitive a... | Use Account Key authentication instead of MSI when ADLS Gen 2 firewall is enable... |
+
+`[conclusion: 🔵 7.0/10]`
+
+---
+
+## Known Issues Lookup
+
+| # | Symptom | Root Cause | Solution | Score | Source |
+|---|---------|-----------|----------|-------|--------|
+| 1 | Azure Integration Runtime connection failures: timeout errors, authentication failures when connecti... | Incorrect credentials, network issues, or firewall/NSG settings blocking traffic... | 1) Verify credentials are correct. 2) Confirm data source is accessible from Azure IR. 3) Check NSG ... | 🔵 7.0 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview?pagePath=%2FTroubleshooting%20Guides%20(TSGs)%2FIR%20Troubleshooting) |
+| 2 | AuthenticationFailedException 'DefaultAzureCredential authentication failed due to an unhandled exce... | Bad node in the pod cannot connect to managed identity; issue observed primarily... | Follow steps to delete the bad node that cannot connect to managed identity (see linked guide: Pod c... | 🔵 7.0 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview/Troubleshooting%20Guides%20(TSGs)/Policy/Policy%20-%20Customer%20Issues/Bad%20node%20throwing%20authentication%20failed%20errors) |
+| 3 | Salesforce scan fails in Purview; test connection or credential errors when scanning Salesforce data... | Salesforce connector uses REST API with app created in Salesforce (not Azure). C... | Verify Salesforce app has OAuth enabled and correct IP restrictions. Check 2 KV secrets: Secret 1 = ... | 🔵 7.0 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview?pagePath=%2FTroubleshooting%20Guides%20(TSGs)%2FScanning%2F3P%20Data%20Source%20Salesforce) |
+| 4 | Purview scan credential test fails with Key Vault authentication issues; misconfigured Key Vault URI... | Multiple possible misconfigurations: wrong KV URI, Purview MSI lacks Get/List se... | Verify: (1) Key Vault URI matches actual AKV, (2) Purview MSI has Get+List secret permissions in AKV... | 🔵 7.0 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview?pagePath=%2FTroubleshooting%20Guides%20(TSGs)%2FScanning%2FCreating%20Data%20sources%2FKeyVault%20Auth%20Issues) |
+| 5 | Purview (private network) scan of Azure Synapse dedicated pool (public endpoint) fails with Internal... | Auto-resolve IR cannot connect from a private-network Purview to a public-endpoi... | 7-step fix: (1) Add Purview MSI as Reader on Synapse workspace IAM, (2) Grant Storage Blob Data Read... | 🔵 7.0 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview?pagePath=%2FTroubleshooting%20Guides%20(TSGs)%2FScanning%2FCreating%20or%20using%20Credentials%2FConnect%20Purview%20(Private%20Network)%20to%20Azure%20Synapse%20Workspace%20(Public%20Network)) |
+| 6 | Purview scan test connection fails with "Failed to access the [Data Source] account with the given c... | Key Vault firewall blocking Purview access, VNET misconfiguration, incorrect cre... | Verify 7 items: (1) Key Vault has no firewall blocking Purview, (2) VNET config allows connectivity,... | 🔵 7.0 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview?pagePath=%2FTroubleshooting%20Guides%20(TSGs)%2FScanning%2FCreating%20or%20using%20Credentials%2FKey%20Vault%20Authentication) |
+| 7 | Purview scan test-connectivity fails; general debugging approach using Kusto ScanningLog queries and... | Most common: credentials not properly added to AKV (mistyped key), or Purview MS... | Use Kusto queries: (1) Find accountId via ScanningLog where Message contains account name, (2) Find ... | 🔵 7.0 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview?pagePath=%2FTroubleshooting%20Guides%20(TSGs)%2FScanning%2FCreating%20Data%20sources%2FTest%20Connection%20Issues) |
+| 8 | ADLS Gen 2 scan with MSI authentication fails when storage account firewall is enabled; connection f... | ADLS Gen 2 Storage RP MSI resource match is case-sensitive and does not match th... | Use Account Key authentication instead of MSI when ADLS Gen 2 firewall is enabled. MSI+all networks ... | 🔵 7.0 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview?pagePath=%2FTroubleshooting%20Guides%20(TSGs)%2FScanning%2FCreating%20or%20using%20Credentials%2FProduct%20Specific%20Security%20(MSI%2C%20AKV%2C%20PE%2C%20SHIR%2C%20VNET)) |
+| 9 | UAMI (User Assigned Managed Identity) authentication is not supported for scanning Azure Databricks ... | By design. UAMI authentication has not been implemented for the ADB Unity Catalo... | Use supported authentication methods for Unity Catalog scan (e.g., Access Token). Feature request fi... | 🔵 7.0 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview?pagePath=%2F%5BNew%20wiki%20structure%5DPurview%20Data%20Governance%2FKnown%20Issues%2F2025%20Feb%20FR%20Known%20Issues) |
+| 10 | Azure Databricks Unity Catalog connector in Purview does not support Managed Private Endpoint (MPE) ... | By design limitation. Unity Catalog connector only supports Access Token authent... | Use Access Token authentication for Unity Catalog scans. For private network scenarios, consider Hiv... | 🔵 7.0 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview?pagePath=%2F%5BNew%20wiki%20structure%5DPurview%20Data%20Governance%2FKnown%20Issues%2F2025%20Feb%20FR%20Known%20Issues) |
+| 11 | After Azure subscription migration to another tenant, Purview Managed Identity (MI) shows Identity n... | ARM automatically removes MSI associated with Purview account during tenant swit... | 1) Edit the Purview account in Azure portal (make any subtle change and save) to recreate a new MSI ... | 🔵 7.0 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview?pagePath=%2F%5BNew%20wiki%20structure%5DPurview%20Data%20Governance%2FTroubleshooting%20Guides%20(TSGs)%2FAdministration%20(Provisioning%20%26%20RBAC)%2FPurview%20Upgrade%20and%20Migration%2FPurview%20account%20migration%20across%20tenants) |
+| 12 | Customer wants to rename Purview account. Cannot rename account after creation. | Backend limitation: Purview account name is immutable after creation. | Classic portal: Set a friendly name via Purview Studio → Management tab → Change friendly name. Note... | 🔵 7.0 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview?pagePath=%2F%5BNew%20wiki%20structure%5DPurview%20Data%20Governance%2FTroubleshooting%20Guides%20(TSGs)%2FAdministration%20(Provisioning%20%26%20RBAC)%2FRenaming%20components%20in%20Purview%20portal) |
+| 13 | ADS auth failure on SQL datasource - MI missing db_datareader/db_datawriter/db_ddladmin roles | ADS MI lacks required SQL roles. Security group not supported for SQL. | Grant roles directly to ADS MI: db_datareader (share), +db_datawriter+db_ddladmin (receive). | 🔵 7.0 | ado-wiki |
+| 14 | Creating user for Purview Managed Identity in Azure SQL Database fails with error: This principal ty... | Azure SQL Server unable to perform AzureAD lookup with just the Purview MSI name... | Use the OBJECT_ID syntax: CREATE USER [AzureADUser] FROM EXTERNAL PROVIDER WITH OBJECT_ID = '<object... | 🔵 7.0 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview?pagePath=%2F%5BNew%20wiki%20structure%5DPurview%20Data%20Governance%2FTroubleshooting%20Guides%20(TSGs)%2FData%20Sources%2FFail%20to%20add%20Purview%20SAMI%20on%20Azure%20SQL) |
+| 15 | Creating user for Purview managed identity in Azure SQL fails: This principal type is not supported ... | Azure SQL unable to perform Azure AD lookup with Purview MSI name alone using st... | Use Object_ID syntax: CREATE USER [name] FROM EXTERNAL PROVIDER WITH OBJECT_ID = object_id; find obj... | 🔵 7.0 | ado-wiki |
+| 16 | Scan test connection fails with Error 20500: Failed to access the provided secret in Azure key vault... | Key Vault Access Policy specifies both objectId and applicationId; non-OBO auth ... | In Key Vault Access Policy, only provide Purview MSI Object ID in Select principal; do NOT add Appli... | 🔵 7.0 | ado-wiki |
+| 17 | SHIR test connection to data source fails with "The underlying connection was closed: An unexpected ... | SHIR must connect to managed storage account before establishing connection to d... | 1. Run nslookup to verify DNS resolution to correct IP. 2. Run telnet <FQDN> <Port> to test connecti... | 🔵 7.0 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview?pagePath=%2F%5BNew%20wiki%20structure%5DPurview%20Data%20Governance%2FTroubleshooting%20Guides%20(TSGs)%2FScan%2FSelf-Hosted%20IR%20in%20Windows%2FTest%20Connection%20to%20Data%20Source%20Failed) |
+| 18 | Databricks Data Quality connector "Test Connection" fails with Error 403: "The Databricks access tok... | Azure Databricks access token expired (valid for 90 days by default), or Purview... | 1) Create new Databricks access token and update the linked service (tokens expire after 90 days). 2... | 🔵 7.0 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview?pagePath=/EEEs%20Section/CoPilot%20Troubleshooting%20Guides%20(AI%20generated%20TSGs)%20-%20Need%20further%20review/Databricks%20DQ%20connector%20%22Test%20Connection%22%20failure) |
+| 19 | Databricks DQ connector 'Test Connection' failure with Error 403: 'The Databricks access token has e... | Azure Databricks access token expired (default validity is 90 days) | Create a new Databricks access token and update the linked service/connection with the new token | 🔵 7.0 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview?pagePath=%2FEEEs%20Section%2FCoPilot%20Troubleshooting%20Guides%20(AI%20generated%20TSGs)%20-%20Need%20further%20review%2FDatabricks%20DQ%20connector%20%22Test%20Connection%22%20failure) |
+| 20 | Databricks DQ connector 'Test Connection' failure with permission errors when using Azure Key Vault ... | Purview Managed Service Identity (MSI) lacks required permissions in Azure Key V... | Grant Purview MSI the required permissions in Key Vault Access Policy. Use only the Purview MSI Obje... | 🔵 7.0 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview?pagePath=%2FEEEs%20Section%2FCoPilot%20Troubleshooting%20Guides%20(AI%20generated%20TSGs)%20-%20Need%20further%20review%2FDatabricks%20DQ%20connector%20%22Test%20Connection%22%20failure) |
+| 21 | Scan test connection fails for Azure Dedicated SQL Pool; Error 3801/3881: Failed to access the Azure... | Purview Managed Identity (MSI) missing Reader role in SQL Server IAM; SQL Server... | (1) Add Purview MSI as Reader in SQL Server Access Control (IAM); (2) Enable Allow Azure services ac... | 🔵 7.0 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview?pagePath=%2F%5BNew%20wiki%20structure%5DPurview%20Data%20Governance%2FTroubleshooting%20Guides%20%28TSGs%29%2FData%20Sources%2FAzure%20Dedicated%20SQL%20Pool%20-%20Scan%20Test%20Connection%20Failed) |
+| 22 | Scanning views on Azure Synapse Serverless SQL database is not supported in Purview. Only tables are... | By design limitation. Purview scanner does not support scanning views on Synapse... | Not supported. Use alternative approaches (e.g., materialize views as tables) if view metadata is re... | 🔵 7.0 | [ADO Wiki](https://dev.azure.com/Supportability/Azure%20Purview/_wiki/wikis/Microsoft%20Purview?pagePath=%2F%5BNew%20wiki%20structure%5DPurview%20Data%20Governance%2FKnown%20Issues%2F2025%20Feb%20FR%20Known%20Issues) |
+| 23 | Information Protection Scanner: 'The service didn't accept the auth token' (AccessDeniedException) | Set-Authentication command failed due to incorrect permissions in Azure portal f... | Verify permissions are defined correctly in Azure portal. Follow 'Create and configure Microsoft Ent... | 🟡 4.5 | [MS Learn](https://learn.microsoft.com/troubleshoot/microsoft-365/purview/information-protection-scanner/resolve-deployment-issues) |
+| 24 | Information Protection Scanner: 'NoAuthTokenException: Client application failed to provide authenti... | Scanner running non-interactively without a valid authentication token | Authenticate using Set-Authentication cmdlet with token parameter on behalf of the scanner service a... | 🟡 4.5 | [MS Learn](https://learn.microsoft.com/troubleshoot/microsoft-365/purview/information-protection-scanner/resolve-deployment-issues) |

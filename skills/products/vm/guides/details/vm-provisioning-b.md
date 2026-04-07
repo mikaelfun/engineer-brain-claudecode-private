@@ -1,0 +1,75 @@
+# VM Vm Provisioning B — 综合排查指南
+
+**条目数**: 30 | **草稿融合数**: 1 | **Kusto 查询融合**: 1
+**来源草稿**: [ado-wiki-a-Pre-Provisioning-Service.md](../../guides/drafts/ado-wiki-a-Pre-Provisioning-Service.md)
+**Kusto 引用**: [provisioning-timeout.md](../../../kusto/vm/references/queries/provisioning-timeout.md)
+**生成日期**: 2026-04-07
+
+---
+
+## 排查流程
+
+### Phase 1: 数据收集
+> 来源: Kusto skill
+
+1. 执行 Kusto 查询 `[工具: Kusto skill — provisioning-timeout.md]`
+
+### Phase 2: 排查与诊断
+> 来源: ADO Wiki
+
+1. 参照 [ado-wiki-a-Pre-Provisioning-Service.md](../../guides/drafts/ado-wiki-a-Pre-Provisioning-Service.md) 排查流程
+
+### Phase 3: 根因判断与解决
+
+**判断逻辑**：
+
+| 条件 | 含义 | 后续动作 |
+|------|------|---------|
+| Disk provisioning operation has not yet completed; | 1 条相关 | Wait for disk provisioning to finish before attaching to VM.... |
+| ESU MAK installation and activation issues are han | 1 条相关 | Route to Devices and Deployment team. Support paths: (1) Pre... |
+| Ultra Disk billing model changed from tiered billi | 1 条相关 | No customer action required; billing switched automatically ... |
+| The IR SLA email was created from Outlook instead  | 1 条相关 | Always create the IR SLA email from within DfM (not from Out... |
+| *ME accounts that are inactive for more than 90 da | 1 条相关 | Recreate the *ME account following steps at https://dev.azur... |
+| Unknown | 2 条相关 | Use ICM portal search at https://portal.microsofticm.com/imp... |
+| Replication times out when gallery image version c | 1 条相关 | 1) Check if disks really need to be that large. 2) Keep sour... |
+| The source VM was created from a Marketplace image | 1 条相关 | Re-create the Image Definition with the correct purchase pla... |
+| The subscription is not enabled/registered for the | 1 条相关 | Create a collaboration task and engage the Quota Team (SAP: ... |
+| iSCSI initiator session timeout (LinkDownTime) def | 1 条相关 | Increase iSCSI initiator session timeout (LinkDownTime) to 3... |
+
+---
+
+## 已知问题速查
+
+| # | 症状 | 根因 | 方案 | 分数 | 来源 |
+|---|------|------|------|------|------|
+| 1 | Cannot attach Ultra/Premium V2 disk to VM while disk is still being provisioned/created from a snaps... | Disk provisioning operation has not yet completed; disk is still being created a... | Wait for disk provisioning to finish before attaching to VM. This was a known li... | 🔵 7.0 | ADO Wiki |
+| 2 | Cannot install prerequisite hotfixes for ESU on Windows Server 2008/R2, or cannot install/activate E... | ESU MAK installation and activation issues are handled by the Devices and Deploy... | Route to Devices and Deployment team. Support paths: (1) Prerequisite hotfixes: ... | 🔵 7.0 | ADO Wiki |
+| 3 | Customer questions unexpected Ultra Disk billing charges or notices billing amount changed after Oct... | Ultra Disk billing model changed from tiered billing to per-GiB billing effectiv... | No customer action required; billing switched automatically on October 15, 2025.... | 🔵 7.0 | ADO Wiki |
+| 4 | IR SLA email is not recognized by DfM in a timely manner — delays of up to 15 minutes before DfM reg... | The IR SLA email was created from Outlook instead of from within DfM. Emails sen... | Always create the IR SLA email from within DfM (not from Outlook). Requirements:... | 🔵 7.0 | ADO Wiki |
+| 5 | Support engineer's GME/AME (*ME) account is not found, disabled, or cannot be located | *ME accounts that are inactive for more than 90 days are automatically disabled,... | Recreate the *ME account following steps at https://dev.azure.com/msazure/AzureW... | 🔵 7.0 | ADO Wiki |
+| 6 | Need to search previous IcMs by error message, support ticket ID, title, or alias to find related es... |  | Use ICM portal search at https://portal.microsofticm.com/imp/v3/incidents/search... | 🔵 7.0 | ADO Wiki |
+| 7 | Azure Compute Gallery image version replication fails with ReplicationJobsTimedOut error when source... | Replication times out when gallery image version contains large disks (>100GB). ... | 1) Check if disks really need to be that large. 2) Keep source and destination r... | 🔵 7.0 | ADO Wiki |
+| 8 | Creating Azure Compute Gallery image version via Capture fails with Conflict error: 'The resource ha... | The source VM was created from a Marketplace image with a purchase plan, but the... | Re-create the Image Definition with the correct purchase plan information (name,... | 🔵 7.0 | ADO Wiki |
+| 9 | Publishing image to Azure Compute Gallery fails with SubscriptionNotRegistered error: 'Cannot specif... | The subscription is not enabled/registered for the specific target region. The M... | Create a collaboration task and engage the Quota Team (SAP: Azure/Service and su... | 🔵 7.0 | ADO Wiki |
+| 10 | Elastic SAN disk unexpectedly unmounts during Windows Failover Cluster restart. iSCSI initiator fail... | iSCSI initiator session timeout (LinkDownTime) defaults to 15 seconds, which is ... | Increase iSCSI initiator session timeout (LinkDownTime) to 30 seconds. See: http... | 🔵 7.0 | ADO Wiki |
+| 11 | Need to determine if a VM uses Dual Pass or Single Pass Azure Disk Encryption (ADE) |  | Check ADE extension version in VM Extensions blade: Windows - version 1.x = Dual... | 🔵 7.0 | ADO Wiki |
+| 12 | Custom Script Extension (CSE) fails on AKS VMSS with ExitCode 50 ('Connection reset by peer') or Exi... | Firewalls, NSGs, or bad networking routing block outbound connectivity from AKS ... | 1. Check DNS resolution, routing table, and NSG rules for blocked connectivity. ... | 🔵 7.0 | ADO Wiki |
+| 13 | Attaching data disk or updating VM fails with "User encryption settings in the VM model are not supp... | VM was previously encrypted with Dual Pass ADE. After disabling Dual Pass and re... | Clear encryption settings via PowerShell (only after confirming: DP fully disabl... | 🔵 6.0 | ADO Wiki |
+| 14 | Custom Script Extension (CSE) fails to provision with Exceeded maximum file download time timeout. H... | CSE has a hard-coded 30-minute maximum download time for script files. The custo... | Inform customer of the 30-minute hard-coded download time limit. Advise to reduc... | 🔵 7.0 | ADO Wiki |
+| 15 | High latency and slow performance on Azure File Share during metadata-heavy operations (createfile, ... | Known Azure platform internal resource limitations cause metadata operations to ... | Create a VHD on the Azure File Share and mount it from the client. The client-ow... | 🔵 7.0 | ADO Wiki |
+| 16 | VM extension deployment fails with 'RequestDisallowedByPolicy: Resource <ExtensionName> was disallow... | Azure Policy assignment 'Only approved VM extensions should be installed' (polic... | Navigate to Azure Portal > Policy > Assignments > find the policy > Edit assignm... | 🔵 7.0 | ADO Wiki |
+| 17 | Azure Files Kerberos authentication fails; storage account SPN (cifs/storageaccount.file.core.window... | Storage account was not properly domain-joined to ADDS via Join-AzStorageAccount... | 1) Verify SPN exists: setspn -q cifs/<storageaccount>.file.core.windows.net. If ... | 🔵 7.0 | ADO Wiki |
+| 18 | VM deployment or extension installation fails with error 'Resource was disallowed by policy' / 'Requ... | An Azure Policy assignment ('Only approved VM extensions should be installed') i... | 1) Navigate to Azure Portal > Policy > Assignments > find the policy. 2) Click '... | 🔵 7.0 | ADO Wiki |
+| 19 | VM deployment or extension installation fails with RequestDisallowedByPolicy error: Resource was dis... | An Azure Policy assignment restricts which VM extensions can be installed. The e... | 1. Navigate to Azure Portal > Policy > Assignments. 2. Search for the blocking p... | 🔵 7.0 | ADO Wiki |
+| 20 | Customer cannot remove FixLinuxDiagnostic extension from Linux VM; removal command fails because the... | The ARM relationship for the FixLinuxDiagnostic extension is broken, preventing ... | First reinstall the extension to recreate the ARM relationship using one of thes... | 🔵 7.0 | ADO Wiki |
+| 21 | VM extension deployment fails with 'Publisher and type are not supported for OS type', 'The specifie... | Extension is incompatible with the VM's operating system — using a Linux extensi... | Use the correct OS-specific extension version. Windows: Microsoft.Compute.Custom... | 🔵 7.0 | ADO Wiki |
+| 22 | JsonADDomainExtension domain join fails with error code 1332: 'No mapping between account names and ... | The 'Options' parameter value used for domain join is incorrect. Using option 1 ... | Use Options value 3 (NetSetupJoinDomain + NetSetupAcctCreate) instead of 1 in th... | 🔵 7.0 | ADO Wiki |
+| 23 | JsonADDomainExtension domain join fails with error code 2732: 'An account with the same name exists ... | A computer account with the same name already exists in Active Directory, and th... | Ask the customer's AD team to remove the existing computer name from the Active ... | 🔵 7.0 | ADO Wiki |
+| 24 | Join-AzStorageAccountforAuth fails with 'The directory service was unable to allocate a relative ide... | RID Master domain controller is unavailable or was removed from domain and resto... | Verify all DCs in Active Directory Users and Computers > Domain Controllers cont... | 🔵 7.0 | ADO Wiki |
+| 25 | System error 5 'Access is denied' when mounting Azure File Share due to SMB cipher order mismatch (W... | Windows 11/Server 2022 default SMB cipher order (e.g. AES-128-CCM first) conflic... | Change cipher order on client: Set-SmbClientConfiguration -EncryptionCiphers 'AE... | 🔵 7.0 | ADO Wiki |
+| 26 | Access denied (0xc0000022) when mounting Azure File Share - XDS log shows 'Account does not list SMB... | Client attempting to connect with SMB version not in storage account allowed SMB... | Configure client SMB version via registry: HKLM\SYSTEM\CurrentControlSet\Service... | 🔵 7.0 | ADO Wiki |
+| 27 | Unable to remove FixLinuxDiagnostic extension from Linux VM; ARM relationship is broken preventing s... | The ARM relationship for the FixLinuxDiagnostic extension is corrupted or missin... | Reinstall the extension first using Set-AzureRmVMExtension to recreate the ARM r... | 🔵 7.0 | ADO Wiki |
+| 28 | JsonADDomainExtension fails to join domain with error code 1332: 'No mapping between account names a... | The domain join option parameter is incorrect. Option 1 (NetSetupJoinDomain only... | Use join option 3 instead of 1 in the Set-AzureRmVMExtension or ARM template Set... | 🔵 7.0 | ADO Wiki |
+| 29 | RunCommand v2 (Managed RunCommand) upgrade fails with 'InternalExecutionError/FabricInternalOperatio... | Upgrade from RunCommand v2 extension (Windows 2.0.4->2.0.5, Linux 1.3.1->1.3.2) ... | Delete all RunCommand v2 resources: Get-AzVmRunCommand then loop Remove-AzVMRunC... | 🔵 7.0 | ADO Wiki |
+| 30 | Extension provisioning fails with 'Timed out waiting for extension [ExtensionName] to reach a termin... | Extension did not update status file with terminal state within 90-minute timeou... | Investigate handler/extension logs and involve the extension team. Check CRP Con... | 🔵 7.0 | ADO Wiki |
+

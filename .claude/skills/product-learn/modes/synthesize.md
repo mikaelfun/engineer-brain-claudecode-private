@@ -168,6 +168,85 @@ Phase 2（每 topic 双 Agent 并行）：
 
 **草稿不过滤**——全部参与融合。质量信号内嵌到最终 guide 的评分中。
 
+### 3.5 跨源矛盾检测（Phase 1.5 — Conflict Scan）
+
+> 在聚类（Phase 1）之后、生成（Phase 2）之前，对同 topic 内的跨源条目做矛盾扫描。
+> 4,000+ 条知识库中不同来源对同一问题可能给出矛盾的 rootCause 或 solution，
+> 若不提前检测，会导致生成的指南自相矛盾。
+
+**输入**：`.enrich/topic-plan.json` + 全量 JSONL 条目
+**输出**：`.enrich/conflict-report.json` + `guides/conflict-report.md`（人工审核用）
+
+#### 检测逻辑
+
+对 `topic-plan.json` 中每个 topic 的 `entryIds`：
+
+1. **按 symptom 分组**：同 topic 内 symptom 相似度 > 70% 的条目归为一组（同一问题）
+2. **跨源对比**：同组内来自不同 source 的条目，比较 rootCause 和 solution：
+
+| 矛盾类型 | 检测规则 | 示例 |
+|----------|---------|------|
+| **rootCause 矛盾** | 同 symptom 但 rootCause 语义相反或不兼容 | OneNote 说"权限不足"，ADO Wiki 说"服务限制 by design" |
+| **solution 矛盾** | 同 symptom 但 solution 互斥 | OneNote 说"加权限"，MS Learn 说"不支持，换方案" |
+| **时效性矛盾** | 旧条目的 solution 在新版本已失效 | 2023 年 OneNote 说用 MMA，2025 年 ADO Wiki 说 MMA 已废弃用 AMA |
+| **21V 矛盾** | 一条标注 21vApplicable=true，另一条同 symptom 标注 false | ADO Wiki 全局适用，OneNote 标注 Mooncake 不可用 |
+
+3. **LLM 判断**：将每组可疑矛盾对输入 LLM，判断：
+   - `"real_conflict"` — 真矛盾，需人工裁定
+   - `"version_superseded"` — 旧版本信息被新版本取代（按日期取新）
+   - `"context_dependent"` — 两个都对，适用场景不同（标注条件）
+   - `"false_alarm"` — 表述不同但含义一致
+
+#### 输出格式
+
+**.enrich/conflict-report.json**：
+```json
+{
+  "product": "{product}",
+  "generatedAt": "2026-04-07",
+  "totalConflicts": 5,
+  "conflicts": [
+    {
+      "id": "conflict-001",
+      "topic": "vm-start-stop",
+      "type": "solution_conflict",
+      "severity": "high",
+      "entryA": {"id": "vm-onenote-012", "source": "onenote", "date": "2024-08-15", "symptom": "...", "solution": "..."},
+      "entryB": {"id": "vm-ado-wiki-045", "source": "ado-wiki", "date": "2025-11-20", "symptom": "...", "solution": "..."},
+      "judgment": "version_superseded",
+      "reasoning": "MMA 已在 2024-08 废弃，onenote 条目的 solution 已过时",
+      "recommendation": "保留 ado-wiki 版本，标注 onenote 版本为 deprecated",
+      "resolved": false
+    }
+  ]
+}
+```
+
+**guides/conflict-report.md**（人工审核用，可读格式）：
+```markdown
+# {Product} — 知识矛盾检测报告
+
+| # | Topic | 类型 | 来源A | 来源B | 判断 | 建议 |
+|---|-------|------|-------|-------|------|------|
+| 1 | vm-start-stop | solution | onenote-012 | ado-wiki-045 | 版本取代 | 用 ado-wiki |
+```
+
+#### 矛盾处理规则
+
+| 判断 | Phase 2 处理 |
+|------|-------------|
+| `version_superseded` | 自动：保留新条目，旧条目标记 `deprecated: true`，不参与指南生成 |
+| `context_dependent` | 自动：两个都保留，指南中标注适用条件 |
+| `real_conflict` | **阻断**：该 topic 的 Phase 2 生成暂停，等人工在 conflict-report.json 中设 `resolved: true` + 选择保留哪个 |
+| `false_alarm` | 自动：忽略，正常融合 |
+
+#### 性能考虑
+
+- 矛盾检测只在 topic 内做（不做全局 N² 对比），复杂度 = O(topic 数 × topic 内条目数²)
+- 对大 topic（>15 条目），先按 source 分组再做 cross-source 对比，减少比较次数
+- 整个 Phase 1.5 用单个 agent 串行执行（矛盾检测不适合并行，需要全局视角）
+- 预计每产品 1-3 分钟（大部分条目不会触发矛盾检测）
+
 ### 4. 分层生成排查指南（Phase 2 — 双 Agent）
 
 对每个 topic，spawn 两个 agent 并行工作：
@@ -279,9 +358,14 @@ Sub-agent 从每个文件中提取：
 4. **决策树结构化**：多个文件的 `decisions[]` 合并为表格或分支路径
 5. **去重**：多个文件描述同一步骤 → 保留最完整版本，标注所有来源
 6. **21V 标注**：`warnings[]` 中的 21V 限制嵌入对应步骤
-7. **冲突处理**：
-   - 同 topic 内不同来源的 solution 不一致时：
-     - 按来源权重 OneNote(5) > ADO Wiki(4) > ContentIdea KB(3) > MS Learn(2) > Case(1)
+7. **冲突处理**（基于 Phase 1.5 矛盾检测结果）：
+   - **已裁定矛盾**：读取 `.enrich/conflict-report.json`，按判断结果处理：
+     - `version_superseded` → 排除旧条目，仅用新条目
+     - `context_dependent` → 两个都保留，标注 `📌 适用条件: {条件}`
+     - `real_conflict` + `resolved: true` → 按人工裁定结果处理
+     - `real_conflict` + `resolved: false` → **跳过该 topic**（不生成，等人工裁定）
+   - **未检测到矛盾的 topic**：按来源权重兜底处理：
+     - 权重 OneNote(5) > ADO Wiki(4) > ContentIdea KB(3) > MS Learn(2) > Case(1)
      - 高权重优先，低权重标注 `⚠️ 另有不同说法`
      - 权重相同 → 都保留，标注 `多种方案，视场景选择`
 

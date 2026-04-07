@@ -1,0 +1,127 @@
+{
+  "product": "networking",
+  "generatedAt": "2026-04-07",
+  "totalConflicts": 5,
+  "conflicts": [
+    {
+      "id": "conflict-001",
+      "topic": "dns",
+      "type": "21v_conflict",
+      "severity": "high",
+      "entryA": {
+        "id": "networking-ado-wiki-0377",
+        "source": "ado-wiki",
+        "date": "2026-04-06",
+        "symptom": "Mac P2S VPN client cannot resolve Azure VM names using DNS suffixes; hostname resolution fails from Mac client even afte",
+        "solution": "Workaround: Use full IP address or complete FQDN from Mac P2S clients instead of short hostnames. Monitor ADO Bug 140394"
+      },
+      "entryB": {
+        "id": "networking-mslearn-032",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "P2S VPN client cannot resolve FQDNs of on-premises resources - DNS queries fail for local domain names",
+        "solution": "Configure DNS Forwarders or Conditional Forwarders on Azure DNS for on-prem domains. Or use Azure Private Resolver with "
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different 21V applicability reflects different feature availability in Mooncake vs Global",
+      "recommendation": "Preserve both, annotate 21V conditions in guide",
+      "resolved": true
+    },
+    {
+      "id": "conflict-006",
+      "topic": "expressroute",
+      "type": "21v_conflict",
+      "severity": "high",
+      "entryA": {
+        "id": "networking-ado-wiki-0493",
+        "source": "ado-wiki",
+        "date": "2026-04-06",
+        "symptom": "ExpressRoute Gateway CSES-to-VMSS migration fails with error ERGWMigrationServerConnectedCircuitError",
+        "solution": "Deallocate the dedicated HSM before proceeding with gateway migration. Refer to Microsoft documentation for HSM dealloca"
+      },
+      "entryB": {
+        "id": "networking-mslearn-055",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "ExpressRoute gateway migration fails at Validate stage - GatewaySubnet too small for deploying second gateway",
+        "solution": "Delete and recreate the GatewaySubnet as /27 or shorter prefix (e.g., /26 or /25) before initiating migration."
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different 21V applicability reflects different feature availability in Mooncake vs Global",
+      "recommendation": "Preserve both, annotate 21V conditions in guide",
+      "resolved": true
+    },
+    {
+      "id": "conflict-007",
+      "topic": "expressroute",
+      "type": "21v_conflict",
+      "severity": "high",
+      "entryA": {
+        "id": "networking-ado-wiki-0494",
+        "source": "ado-wiki",
+        "date": "2026-04-06",
+        "symptom": "ExpressRoute Gateway CSES-to-VMSS migration fails with error ERGWMigrationIPInGREConnectionError",
+        "solution": "Delete all connections to the gateway and recreate them before proceeding with migration. Refer to the migration documen"
+      },
+      "entryB": {
+        "id": "networking-mslearn-055",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "ExpressRoute gateway migration fails at Validate stage - GatewaySubnet too small for deploying second gateway",
+        "solution": "Delete and recreate the GatewaySubnet as /27 or shorter prefix (e.g., /26 or /25) before initiating migration."
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different 21V applicability reflects different feature availability in Mooncake vs Global",
+      "recommendation": "Preserve both, annotate 21V conditions in guide",
+      "resolved": true
+    },
+    {
+      "id": "conflict-008",
+      "topic": "expressroute",
+      "type": "21v_conflict",
+      "severity": "high",
+      "entryA": {
+        "id": "networking-ado-wiki-0496",
+        "source": "ado-wiki",
+        "date": "2026-04-06",
+        "symptom": "ExpressRoute Gateway CSES-to-VMSS migration validation fails or migration step results in error; resources stuck in erro",
+        "solution": "Perform GET and SET on failed resources per https://learn.microsoft.com/en-us/azure/networking/troubleshoot-failed-state"
+      },
+      "entryB": {
+        "id": "networking-mslearn-056",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "ExpressRoute gateway migration blocked by legacy connections (pre-2017) or resources in failed state",
+        "solution": "For legacy connections: delete and recreate all connections before migration. For failed state: perform GET+SET on affec"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different 21V applicability reflects different feature availability in Mooncake vs Global",
+      "recommendation": "Preserve both, annotate 21V conditions in guide",
+      "resolved": true
+    },
+    {
+      "id": "conflict-013",
+      "topic": "vpn",
+      "type": "21v_conflict",
+      "severity": "high",
+      "entryA": {
+        "id": "networking-mslearn-028",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "P2S VPN Error 798 - A certificate could not be found that can be used with this Extensible Authentication Protocol",
+        "solution": "Open certmgr.msc. Verify AzureClient.pfx in Current User Personal Certificates, AzureRoot.cer in Local Computer Trusted "
+      },
+      "entryB": {
+        "id": "networking-onenote-013",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "P2S VPN client gets Error 798: A certificate could not be found that can be used with this Extensible Authentication Pro",
+        "solution": "Use Windows SDK 7.1A or later to generate root and client certificates. Certs created with 7.1A will auto-install root c"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "Different 21V applicability reflects different feature availability in Mooncake vs Global",
+      "recommendation": "Preserve both, annotate 21V conditions in guide",
+      "resolved": true
+    }
+  ]
+}

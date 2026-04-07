@@ -1,0 +1,13 @@
+{
+  "description": "Wiki path scope rules. Auto-managed by scan history. Manual edits OK.",
+  "scopes": [
+    {
+      "wikiKey": "Supportability/AzureContainers",
+      "pathScope": [
+        "/Azure Kubernetes Service Wiki/AKS",
+        "/Azure Kubernetes Service Wiki/ACI",
+        "/Azure Kubernetes Service Wiki/Fleet Manager"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,247 @@
+{
+  "product": "purview",
+  "generatedAt": "2026-04-07",
+  "totalConflicts": 10,
+  "conflicts": [
+    {
+      "id": "conflict-001",
+      "topic": "scan-shir-setup",
+      "type": "rootcause_conflict",
+      "severity": "medium",
+      "entryA": {
+        "id": "purview-ado-wiki-166",
+        "source": "ado-wiki",
+        "date": "2026-04-05",
+        "symptom": "Scan fails with Internal System Error; SHIR logs show 'Module atlas-ingestion-write initialize failed' and 'Could not load file or assembly Microsoft.DataTransfer.Common.RetryPolicies - The system can",
+        "solution": "Uninstall current SHIR and install latest version from https://www.microsoft.com/en-us/download/details.aspx?id=39717"
+      },
+      "entryB": {
+        "id": "purview-mslearn-010",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "SHIR error: 'Could not load file or assembly System.ValueTuple, Version=4.0.2.0'",
+        "solution": "Copy System.ValueTuple.dll from C:\\Program Files\\Microsoft Integration Runtime\\4.0\\Gateway\\DataScan to C:\\Program Files\\Microsoft Integration Runtime\\4.0\\Gateway"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "rootCause+solution both differ (rc=0.05, sol=0.07)",
+      "recommendation": "Review contexts",
+      "resolved": false
+    },
+    {
+      "id": "conflict-002",
+      "topic": "scan-shir-setup",
+      "type": "rootcause_conflict",
+      "severity": "medium",
+      "entryA": {
+        "id": "purview-ado-wiki-384",
+        "source": "ado-wiki",
+        "date": "2026-04-05",
+        "symptom": "Scan save fails with error: The version of the linkedservice is not supported — during SHIR scan configuration",
+        "solution": "Install private build of SHIR (whitelisted for tenant); uninstall old SHIR with keep-data or use new VM; create new scans with new SHIR. Fix only for Snowflake, MySQL, Postgres. Contact pemar/yazanabu"
+      },
+      "entryB": {
+        "id": "purview-mslearn-005",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "SQL scan via SHIR fails with 'This implementation is not part of the Windows Platform FIPS validated cryptographic algorithms'",
+        "solution": "Disable FIPS mode on the self-hosted integration runtime server"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "rootCause+solution both differ (rc=0.00, sol=0.00)",
+      "recommendation": "Review contexts",
+      "resolved": false
+    },
+    {
+      "id": "conflict-003",
+      "topic": "scan-private-endpoint-network",
+      "type": "rootcause_conflict",
+      "severity": "medium",
+      "entryA": {
+        "id": "purview-ado-wiki-195",
+        "source": "ado-wiki",
+        "date": "2026-04-05",
+        "symptom": "Azure Synapse Analytics scan fails when using Allowed Trusted Services with Private Purview: trusted service connection insufficient",
+        "solution": "Add a Firewall rule in Azure Synapse Network settings to allow Purview IP/VNET. Alternatively use Managed VNet IR with managed PE for Synapse."
+      },
+      "entryB": {
+        "id": "purview-mslearn-007",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "Test connection passes but scan fails with connection error when using private endpoints or VNets",
+        "solution": "Confirm network settings and review NSG rules. Ensure all required ports and endpoints are allowed in NSG."
+      },
+      "judgment": "context_dependent",
+      "reasoning": "rootCause+solution both differ (rc=0.00, sol=0.09)",
+      "recommendation": "Review contexts",
+      "resolved": false
+    },
+    {
+      "id": "conflict-004",
+      "topic": "scan-private-endpoint-network",
+      "type": "rootcause_conflict",
+      "severity": "medium",
+      "entryA": {
+        "id": "purview-ado-wiki-402",
+        "source": "ado-wiki",
+        "date": "2026-04-05",
+        "symptom": "Test connection fails with error '(5522) Test connection failed for lineage scan' or '(5521)' when enabling Lineage extraction for Azure SQL DB scan in Purview",
+        "solution": "Set 'Allow Azure services and resources to access this server' to Yes on Azure SQL DB firewall. Lineage extraction does not support servers that disable public access. Ref: https://learn.microsoft.com"
+      },
+      "entryB": {
+        "id": "purview-mslearn-007",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "Test connection passes but scan fails with connection error when using private endpoints or VNets",
+        "solution": "Confirm network settings and review NSG rules. Ensure all required ports and endpoints are allowed in NSG."
+      },
+      "judgment": "context_dependent",
+      "reasoning": "rootCause+solution both differ (rc=0.03, sol=0.02)",
+      "recommendation": "Review contexts",
+      "resolved": false
+    },
+    {
+      "id": "conflict-005",
+      "topic": "scan-private-endpoint-network",
+      "type": "rootcause_conflict",
+      "severity": "medium",
+      "entryA": {
+        "id": "purview-ado-wiki-405",
+        "source": "ado-wiki",
+        "date": "2026-04-05",
+        "symptom": "Scan fails with 'Name or service not known' or connection errors when using Managed Vnet IR with Private Endpoints. DataScanAgentLinuxEvent logs show HttpRequestException for storage endpoint.",
+        "solution": "1) Use Kusto to extract jobId from ScanningLog, then check DataScanAgentLinuxEvent for networking errors. 2) Ask customer to check PE status in Azure portal (Networking > Private endpoint connections)"
+      },
+      "entryB": {
+        "id": "purview-mslearn-007",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "Test connection passes but scan fails with connection error when using private endpoints or VNets",
+        "solution": "Confirm network settings and review NSG rules. Ensure all required ports and endpoints are allowed in NSG."
+      },
+      "judgment": "context_dependent",
+      "reasoning": "rootCause+solution both differ (rc=0.00, sol=0.04)",
+      "recommendation": "Review contexts",
+      "resolved": false
+    },
+    {
+      "id": "conflict-006",
+      "topic": "scan-private-endpoint-network",
+      "type": "rootcause_conflict",
+      "severity": "medium",
+      "entryA": {
+        "id": "purview-ado-wiki-a-r1-004",
+        "source": "ado-wiki",
+        "date": "2026-04-06",
+        "symptom": "Purview Portal partially loaded with 'Initialization failed' and 'AxiosError: Network Error' when using Private Endpoint. The Microsoft Purview header/chrome loads but content initialization fails.",
+        "solution": "Open browser console (Network tab), check failed API requests: If URL contains {accountname}.purview.azure.com -> Account PE or account service issue (verify Account PE is configured for this specific"
+      },
+      "entryB": {
+        "id": "purview-mslearn-001",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "Purview scan fails with 'Internal system error. Please contact support with correlationId' when using private endpoint",
+        "solution": "Validate name resolution between SHIR VM and Purview managed blob queue / Event Hubs through port 443 using private IP addresses. Use Test-NetConnection to verify."
+      },
+      "judgment": "context_dependent",
+      "reasoning": "rootCause+solution both differ (rc=0.07, sol=0.06)",
+      "recommendation": "Review contexts",
+      "resolved": false
+    },
+    {
+      "id": "conflict-007",
+      "topic": "scan-third-party",
+      "type": "21v_conflict",
+      "severity": "medium",
+      "entryA": {
+        "id": "purview-ado-wiki-138",
+        "source": "ado-wiki",
+        "date": "2026-04-05",
+        "symptom": "AWS S3 test connection fails with error about missing external ID in AWS role configuration",
+        "solution": "Go to Purview credential page, copy External ID. In AWS IAM, Roles, select role, Trust relationships, edit, add Condition: {StringEquals: {sts:ExternalId: copied-id}}. Save and retest."
+      },
+      "entryB": {
+        "id": "purview-mslearn-022",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "Amazon S3 scan connection failure: 'Error found with the Role ARN' or role configuration errors",
+        "solution": "Verify: 1) AWS role has AmazonS3ReadOnlyAccess or minimum S3 read permissions. 2) Trust relationship has correct Microsoft account ID and external ID. 3) Bucket URL uses correct format s3://<BucketNam"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "21vApplicable mismatch: A=True, B=False",
+      "recommendation": "Both valid, annotate 21V applicability conditions",
+      "resolved": false
+    },
+    {
+      "id": "conflict-008",
+      "topic": "data-map-api-operations",
+      "type": "21v_conflict",
+      "severity": "medium",
+      "entryA": {
+        "id": "purview-ado-wiki-377",
+        "source": "ado-wiki",
+        "date": "2026-04-05",
+        "symptom": "Cannot access shared data in the target data store after attaching share",
+        "solution": "Wait a few minutes for data propagation. Ensure you are using storage API version February 2020 or later. Use latest version of storage SDK, PowerShell, CLI, and Azure Storage Explorer."
+      },
+      "entryB": {
+        "id": "purview-mslearn-024",
+        "source": "mslearn",
+        "date": "2026-04-05",
+        "symptom": "Can't access shared data in target data store after share attaching succeeds",
+        "solution": "Wait a few minutes for data to appear. Ensure using storage SDK/PowerShell/CLI/Azure Storage Explorer with API version February 2020 or later. AzCopy, ADF, and Power BI are not supported for accessing"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "21vApplicable mismatch: A=True, B=False",
+      "recommendation": "Both valid, annotate 21V applicability conditions",
+      "resolved": false
+    },
+    {
+      "id": "conflict-009",
+      "topic": "sensitivity-labels-visibility",
+      "type": "rootcause_conflict",
+      "severity": "medium",
+      "entryA": {
+        "id": "purview-ado-wiki-547",
+        "source": "ado-wiki",
+        "date": "2026-04-05",
+        "symptom": "Sensitivity Labels not shown to members of a Unified Group with hidden group membership scoped in label policy",
+        "solution": "Disable hidden group membership on the Unified Group, or use a different scoping mechanism (individual users, non-hidden groups, or 'all users')."
+      },
+      "entryB": {
+        "id": "purview-onenote-049",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Sensitivity labels not visible to users after creating/publishing label policy in Purview - users cannot see newly published labels in Office apps",
+        "solution": "Wait up to 24 hours for label policy propagation. Verify label policy assignment scope includes target users/groups. Check label policy priority order. For 21V, verify bootstrap and endpoint config fo"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "rootCause+solution both differ (rc=0.08, sol=0.05)",
+      "recommendation": "Review contexts",
+      "resolved": false
+    },
+    {
+      "id": "conflict-010",
+      "topic": "aip-service-byok",
+      "type": "rootcause_conflict",
+      "severity": "medium",
+      "entryA": {
+        "id": "purview-ado-wiki-0727",
+        "source": "ado-wiki",
+        "date": "2026-04-06",
+        "symptom": "Use-AipServiceKeyVaultKey fails; AIP service cannot access BYOK key in Azure Key Vault even though the key exists",
+        "solution": "Verify and grant AIP service the correct Key Vault permissions. Reference: https://learn.microsoft.com/en-us/azure/information-protection/byok-price-restrictions#enabling-key-authorization-using-power"
+      },
+      "entryB": {
+        "id": "purview-onenote-018",
+        "source": "onenote",
+        "date": "2026-04-05",
+        "symptom": "Cannot protect new files with AIP after BYOK key expires in Azure Key Vault — error 'key is not available'",
+        "solution": "Generate or import a new key in Azure Key Vault, then use Use-AipServiceKeyVaultKey to register it and Set-AipServiceKeyProperties to set it as Active. Ensure Key Vault keys are renewed before expirat"
+      },
+      "judgment": "context_dependent",
+      "reasoning": "rootCause+solution both differ (rc=0.10, sol=0.10)",
+      "recommendation": "Review contexts",
+      "resolved": false
+    }
+  ]
+}

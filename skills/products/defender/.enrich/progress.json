@@ -1,19 +1,20 @@
 {
   "product": "defender",
-  "status": "extracting",
+  "status": "complete",
   "sourceStates": {
     "21v-gap": "exhausted",
     "onenote": "exhausted",
-    "ado-wiki": "scanning",
+    "ado-wiki": "exhausted",
     "mslearn": "exhausted",
     "contentidea-kb": "exhausted"
   },
-  "synthesized": false,
+  "synthesized": true,
   "synthesizeState": {
-    "lastSynthesizedAt": null,
-    "lastEntryCount": 0,
-    "synthesizedEntryIds": [],
-    "topicPlanHash": null
+    "lastSynthesizedAt": "2026-04-07",
+    "lastEntryCount": 1109,
+    "synthesizedEntryIds": 1109,
+    "topicPlanHash": "2021625882989353561",
+    "mode": "full"
   },
-  "adoWikiBlast": "running"
+  "adoWikiBlast": "stopped"
 }

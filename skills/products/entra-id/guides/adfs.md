@@ -1,0 +1,65 @@
+# ENTRA-ID ADFS Config & Troubleshooting — Quick Reference
+
+**Entries**: 155 | **21V**: Partial (140/155)
+**Last updated**: 2026-04-07
+**Keywords**: adfs, federation, wap, contentidea-kb, claim-rules, certificate
+
+> This topic has a fusion guide with detailed troubleshooting flow
+> → [Full troubleshooting flow](details/adfs.md)
+
+## Issue Quick Reference
+
+| # | Symptom | Root Cause | Solution | Score | Source |
+|---|---------|-----------|----------|-------|--------|
+| 1 📋 | ADFS claim rule for x-ms-forwarded-client-ip does not work. MDM managed devices cannot access Exc... | ADFS claim rule parameters (x-ms-*) are case-sensitive. Uppercase letters cau... | Ensure exact lowercase for claim type URIs. Use regex with word boundaries fo... | 🟢 10.0 | OneNote |
+| 2 📋 | Chrome cannot access ADFS sign-in page from external network (via WAP/ADFS proxy). IE and other b... | After a Windows update to Windows Server 2012 R2, the ADFS proxy server negot... | 1) Disable weak cipher suites (especially 3DES-based) on the ADFS proxy/WAP s... | 🟢 10.0 | OneNote |
+| 3 📋 | SAML authentication to ADFS RP fails when POST binding is used and the SAML request does not cont... | For POST binding, ADFS expects the signing certificate embedded in the SAML r... | Ensure RP includes signing certificate in the SAML request body. For Redirect... | 🟢 10.0 | OneNote |
+| 4 📋 | WAP configuration wizard fails with 401 Unauthorized. WAP proxy cannot download configuration fro... | Exact IP:port SSL bindings on ADFS server take precedence over ADFS hostname:... | Remove exact IP:port SSL bindings on ADFS/WAP servers. Add IP wildcard bindin... | 🟢 10.0 | OneNote |
+| 5 📋 | ADFS service fails to start after SSL certificate replacement. Event 133: certificate private key... | ADFS does not support CNG (Cryptographic Next Generation) keys. Certificate w... | Replace certificate with one NOT using CNG keys. Check with: certutil -v -sto... | 🟢 10.0 | OneNote |
+| 6 📋 | ADFS service running but /adfs/services/trust/mex returns 503. Office client SSO fails. IDP-initi... | Certificate KeySpec=2 (AT_SIGNATURE) instead of AT_KEYEXCHANGE. Cannot be see... | Delete certificate and reimport with: certutil -importpfx certfile.pfx AT_KEY... | 🟢 10.0 | OneNote |
+| 7 📋 | ADFS alternate login ID with Employee Number fails. Set-AdfsClaimsProviderTrust succeeds but auth... | Alternate login ID attribute must conform to UPN format (e.g., 5555@domain.co... | 1) Ensure AD attribute is GC-replicated (AD Schema snap-in, check Replicate t... | 🟢 10.0 | OneNote |
+| 8 📋 | ADFS Extranet Lockout feature does not work for user accounts from a trusted (resource) domain. O... | Extranet Lockout requires PDC of the user's domain to be reachable. Cross-dom... | 1) Ensure PDC of each trusted domain is reachable from ADFS servers. 2) Check... | 🟢 10.0 | OneNote |
+| 9 📋 | After AAD Connect upgrade, federated domain authentication fails. IssuerID in ADFS claim rule is ... | AAD Connect upgrade process replaces the 'Issue the IssuerID when it is not a... | Manually fix the ADFS claim rule. Replace the corrupted regex with: regexrepl... | 🟢 10.0 | OneNote |
+| 10 📋 | After AAD Connect upgrade, ADFS federated SSO breaks. IssuerID claim rule regex changed, causing ... | AAD Connect upgrade replaces the IssuerID claim rule regex from simple UPN-ba... | Manually revert the 'Issue the IssuerID when it is not a computer account' cl... | 🟢 10.0 | OneNote |
+| 11 📋 | Verified ID Issuance: "token_validation.invalid_openid_token" / "No OpenId token claim found matc... | B2C user account does not have First/Last name populated. Credential rules de... | Edit user account properties to supply First name and Last name, then re-atte... | 🟢 9.5 | ADO Wiki |
+| 12 📋 | AADSTS50107: "The requested federation realm object does not exist" with multiple federated domai... | Issuance Transform Rule is missing or outdated, or the AD FS issuer does not ... | Review and fix the issuerid claim issuance transform rules in AD FS. See ADO ... | 🟢 9.5 | ADO Wiki |
+| 13 📋 | SSL inspection/termination breaks auth for Azure services (AVD, AIP, ADFS, App Proxy, Kusto) | SSL inspection intercepts and re-signs TLS traffic, breaking certificate pinn... | Bypass SSL inspection for Azure service domains. Use Fiddler to test and iden... | 🟢 9.0 | OneNote |
+| 14 📋 | Convert-MsolDomainToFederated fails with Service not available in 21V. SOAP fault: TrustedRealm n... | MSOL deprecated. Backend returns TrustedRealm not found for new unfederated d... | Use Graph PowerShell New-MgDomainFederationConfiguration. Requires Domain.Rea... | 🟢 9.0 | OneNote |
+| 15 📋 | AADSTS500082: SAML assertion is not present in the token — when converting ADFS-AAD federation fr... | ADFS returns InvalidNameIDPolicy because it cannot provide NameID in the form... | 1) Remove extra RPID, keep only urn:federation:partner.microsoftonline.cn. 2)... | 🟢 9.0 | OneNote |
+| 16 📋 | ADFS SSO for AVD fails during user login with certificate authentication error. | Certificate Authentication not enabled in ADFS. ADFS SSO for AVD uses virtual... | Enable Certificate Authentication in ADFS. Verify: Enterprise CA templates, K... | 🟢 9.0 | OneNote |
+| 17 📋 | Sudden ADFS service outage; system log shows Event 4231 from Tcpip source indicating all ephemera... | AAD Connect Health Agent for ADFS version 3.0.244.0 has a connection buffer l... | Upgrade AAD Connect Health Agent for ADFS to version 3.1.2.0 or later. Immedi... | 🟢 9.0 | OneNote |
+| 18 📋 | ADFS issues windowsaccountname claim with different case than AD samAccountName; case-sensitive a... | ADFS reads windowsaccountname from Windows/Kerberos logon session context, pr... | Configure additional ADFS claim rules to query AD directly for sAMAccountName... | 🟢 9.0 | OneNote |
+| 19 📋 | AD FS 2016 with Azure MFA does not support Alternate Login ID. Authentication fails when using al... | Known limitation by design: ADFS 2016 Azure MFA adapter does not support alte... | Known limitation. Workaround: use UPN instead of alternate login ID, or use a... | 🟢 9.0 | OneNote |
+| 20 📋 | Connect-EXOPSSession with -Credential uses basic auth (usernamemixed endpoint) to ADFS despite be... | Get-Credential + -Credential sends creds to ADFS usernamemixed endpoint (basi... | Use Connect-EXOPSSession without -Credential to trigger browser-based modern ... | 🟢 9.0 | OneNote |
+| 21 📋 | WAP resets TLS client hello from applications. Application cannot establish SSL connection to ADF... | Application/WAF does not include SNI extension in TLS Client Hello. Http.sys ... | Add fallback certificate to 0.0.0.0:443 on every ADFS and WAP: netsh http sho... | 🟢 9.0 | OneNote |
+| 22 📋 | ADFS Extranet Smart Lockout (ESL) cmdlets (Get-ADFSAccountActivity, Set-ADFSAccountActivity, Rese... | ESL REST endpoint requires ADFS local administrator privilege executed locall... | Use PowerShell Just Enough Administration (JEA) to delegate ESL commands to s... | 🟢 9.0 | OneNote |
+| 23 📋 | ADFS federation service fails to start after replacing SSL certificate. ADFS Admin log shows erro... | ADFS 2.0/2.1 has no Set-AdfsSslCertificate cmdlet; certificate replacement mu... | 1) Use IIS Management Console to replace ADFS SSL cert (not PowerShell). 2) F... | 🟢 9.0 | OneNote |
+| 24 📋 | Chrome and Firefox cannot access ADFS IDP-initiated page with connection reset error. IE works fi... | A local Group Policy SSL Cipher Suite Order was configured on the ADFS server... | 1) On ADFS server open gpedit.msc - Computer Configuration - Administrative T... | 🟢 9.0 | OneNote |
+| 25 📋 | Login failure in 2-farm ADFS scenario (account provider + resource provider, both ADFS 2016) when... | Known bug in ADFS 2016 Token Binding feature. In 2-farm scenarios, the Token ... | Disable Token Binding on ADFS 2016: Set-AdfsProperties -EnableTokenBinding $f... | 🟢 9.0 | OneNote |
+| 26 📋 | Cross-forest users can sign in to ADFS with DomainBIOS\User but fail with UPN. Error: incorrect u... | UPN suffix routing is not enabled for the external forest domains. Without UP... | Enable UPN suffix routing for external domains: 1) Open Active Directory Doma... | 🟢 9.0 | OneNote |
+| 27 📋 | Application requires HS256 (symmetric key) JWT token signing algorithm from ADFS 2016 but gets RS... | ADFS 2016 only supports RS256 (RSA-SHA256) for JWT token signing using the pr... | Redesign the application to accept RS256 signed JWT tokens from ADFS. If HS25... | 🟢 9.0 | OneNote |
+| 28 📋 | Third-party desktop app prompts for credentials when authenticating via ADFS SSO, while browser-b... | ADFS ExtendedProtectionTokenCheck set to Required blocks desktop apps not usi... | Set-ADFSProperties -ExtendedProtectionTokenCheck None. Alt: enable Form-based... | 🟢 9.0 | OneNote |
+| 29 📋 | Cannot convert federated domain to managed after ADFS server uninstalled. Set-MsolADFSContext fails. | ADFS server removed before domain conversion. Standard cmdlets require active... | Use Set-MsolDomainAuthentication or Get-MsolUser / Convert-MsolFederatedUser ... | 🟢 9.0 | OneNote |
+| 30 📋 | Cannot add child federated domain with New-MsolFederatedDomain when parent uses third-party STS (... | New-MsolFederatedDomain only works with AD FS as IDP. Fails for 3rd-party IdPs. | Use New-MsolDomain -Name child.domain -Authentication Federated. For non-ADFS... | 🟢 9.0 | OneNote |
+| 31 📋 | Update-MsolFederatedDomain -SupportMultipleDomain fails. IssuerUri mismatch between ADFS service ... | First federated domain set up without -SupportMultipleDomain. HAADJ script wi... | Delete claim rules, rerun with multipleVerifiedDomainNames=false. Or reconfig... | 🟢 9.0 | OneNote |
+| 32 📋 | SAML auth to ADFS RP fails with Event ID 364/303: MSIS0038 SAML Message has wrong signature. | Mismatch between signing cert in SAML request and cert in ADFS RP Trust confi... | Verify ADFS via IDP-initiated page. Capture Fiddler + Debug logs. Compare cer... | 🟢 9.0 | OneNote |
+| 33 📋 | ADFS Health Agent synthetic transactions fail with 503 on /adfs/probe. Test-AdfsServerHealth repo... | /adfs/probe endpoint not listened. Known .NET Framework bug (fixed in 4.7). | Restart AD FS service. Upgrade .NET to 4.7+. Use ETL trace script to diagnose. | 🟢 9.0 | OneNote |
+| 34 📋 | adfshelp.microsoft.com GenerateClaims tool produces invalid RegEx for IssuerURI claim rule when m... | Bug in adfshelp tool: generates RegEx with consecutive asterisks instead of p... | Validate generated RegEx at regex101.com before deploying. Fix by replacing c... | 🟢 9.0 | OneNote |
+| 35 📋 | WAP client certificate authentication fails with CERT_E_UNTRUSTEDROOT (-2146762487) when SendTrus... | Non-self-signed certificate (e.g., Intermediate CA) installed in Local Comput... | Remove/move non-self-signed certificates from Local Computer Trusted Root Cer... | 🟢 9.0 | OneNote |
+| 36 📋 | ADFS Relying Party requires claim value (e.g., username) in all uppercase. No built-in ADFS funct... | ADFS claim language has no native toUpper/toLower function. Requires custom a... | Deploy StringProcessingAttributeStore DLL to C:\windows\ADFS on all ADFS serv... | 🟢 9.0 | OneNote |
+| 37 📋 | ADFS Windows Integrated Authentication (WIA) fails for workgroup (non-domain-joined) machines acc... | ADFS checks WIASupportedUserAgents property against the client user agent. If... | Use Group Policy to set a specific custom user agent on domain-joined machine... | 🟢 9.0 | OneNote |
+| 38 📋 | User is prompted with login form instead of SSO in intranet when accessing O365 through federated... | The application sends prompt=login parameter to AAD. AAD translates this to w... | Set ADFS PromptLoginBehavior to Disabled so ADFS ignores the wauth/wfresh par... | 🟢 9.0 | OneNote |
+| 39 📋 | ADFS configuration to authenticate users stored in AD LDS (LDAP directories) fails when using Get... | The official Microsoft documentation PowerShell example for creating LDAP ser... | Use PSCredential directly: $ldapuser='CN=admin,OU=...'; $ldappassword=Convert... | 🟢 9.0 | OneNote |
+| 40 📋 | Update-MsolFederatedDomain fails with 'Invalid length for a Base-64 char array or string' when tr... | When ADFS metadata is not publicly accessible from the internet, the O365 RPT... | Use Set-MsolDomainFederationSettings as workaround: 1) Export token-signing c... | 🟢 9.0 | OneNote |
+| ... | *115 more entries* | | | | |
+
+## Quick Troubleshooting Path
+
+1. Check **adfs** related issues (17 entries) `[onenote]`
+2. Check **claim-rules** related issues (3 entries) `[onenote]`
+3. Check **wap** related issues (2 entries) `[onenote]`
+4. Check **saml** related issues (2 entries) `[onenote]`
+5. Check **certificate** related issues (2 entries) `[onenote]`
+6. Check **alternate-login-id** related issues (2 entries) `[onenote]`
+7. Check **aadc** related issues (2 entries) `[onenote]`
+8. Check **federation** related issues (2 entries) `[ado-wiki]`

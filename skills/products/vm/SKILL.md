@@ -254,3 +254,49 @@ mcp__msft-learn__microsoft_docs_search: "Azure VM troubleshoot start failure"
 | Extension 失败 | CRP ApiQosEvent | Host GuestAgent... | msft-learn |
 | 计划维护 | Fabric TMMgmt... | RCA VMA | 告知客户 |
 | 磁盘故障 | DCM dcmInventory... | Fabric LogNode... | DCM RdmResource... |
+
+---
+
+## Knowledge Base Assets
+
+> Auto-enriched from 5 sources: ADO Wiki, MS Learn, OneNote, ContentIdea KB, 21V Gap Analysis.
+> Last synthesized: 2026-04-07
+
+### Directory Structure
+
+```
+skills/products/vm/
+  known-issues.jsonl          1585 entries (structured break/fix triples)
+  guides/
+    _index.md                 Topic index (66 topics)
+    {topic-slug}.md           66 speed-reference tables (symptom/cause/solution + scores)
+    details/{topic-slug}.md   50 fusion troubleshooting guides (full KQL + decision trees)
+    drafts/*.md               425 raw extraction drafts (source material, do not delete)
+    conflict-report.md        Cross-source contradiction report
+  .enrich/                    Enrichment state (progress, scanned records, evolution log)
+```
+
+### How to Use
+
+**Troubleshooter Integration (Step 1.5)**:
+1. Read `guides/_index.md` to find matching topic by symptom keywords
+2. Read the speed-reference `guides/{topic}.md` for quick symptom-cause-solution lookup
+3. If the topic has a fusion guide, read `guides/details/{topic}.md` for full KQL queries and decision trees
+4. Fallback to `known-issues.jsonl` keyword search if no topic matches
+5. Final fallback: RAG / MS Learn search
+
+**Score Legend** (in speed-reference tables):
+| Score | Icon | Meaning |
+|-------|------|---------|
+| 8-10  | Green circle  | Directly trustworthy |
+| 5-7.9 | Blue circle  | Reference, verify key steps |
+| 3-4.9 | Yellow circle  | Directional only |
+| 0-2.9 | White circle  | Possibly outdated |
+
+**Source Priority**: OneNote(5) > ADO Wiki(4) > ContentIdea KB(3) > MS Learn(2) > Case(1)
+
+### Maintenance
+
+- New knowledge: `/product-learn add vm` or auto-enriched via `/product-learn auto-enrich`
+- Re-synthesize after significant new entries: `/product-learn synthesize vm`
+- Promote high-confidence entries to this SKILL.md: `/product-learn promote vm`

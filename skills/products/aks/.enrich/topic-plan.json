@@ -1,0 +1,5690 @@
+{
+  "product": "aks",
+  "generatedAt": "2026-04-07",
+  "topics": [
+    {
+      "slug": "aci-networking-acr",
+      "title": "ACI 网络与 DNS — acr",
+      "entryIds": [
+        "aks-330",
+        "aks-340",
+        "aks-450"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "aci",
+        "acr",
+        "rate-limit",
+        "toomanyrequests",
+        "docker-hub",
+        "artifact-cache",
+        "registry-error",
+        "inaccessible-image"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "aci-networking-confidential-containers",
+      "title": "ACI 网络与 DNS — confidential-containers",
+      "entryIds": [
+        "aks-322",
+        "aks-323",
+        "aks-324",
+        "aks-325",
+        "aks-384",
+        "aks-385",
+        "aks-386",
+        "aks-387"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-confidential-containers-kata-cc.md",
+        "guides/drafts/ado-wiki-aci-spot-containers-evictions.md",
+        "guides/drafts/ado-wiki-aci-spot-containers.md",
+        "guides/drafts/ado-wiki-querying-logs-from-customer-la-workspaces.md"
+      ],
+      "kustoQueryFiles": [
+        "controlplane-logs.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "aci",
+        "confidential-containers",
+        "cce-policy",
+        "device-hash",
+        "cached-image",
+        "scsi",
+        "framework-svn",
+        "overlay"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "aci-networking-deployment-failure",
+      "title": "ACI 网络与 DNS — deployment-failure",
+      "entryIds": [
+        "aks-304",
+        "aks-310",
+        "aks-320",
+        "aks-321",
+        "aks-339",
+        "aks-599",
+        "aks-601"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-aci-msi-token-request-failure.md",
+        "guides/drafts/ado-wiki-b-Application-Failure-Tooling-Guide.md",
+        "guides/drafts/ado-wiki-b-check-aci-quota-for-subscription.md",
+        "guides/drafts/ado-wiki-b-collaborate-with-automation-account-team.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "aci",
+        "deployment-failure",
+        "confidential-containers",
+        "cce-policy",
+        "fraud-detection",
+        "service-unavailable",
+        "insufficient-capacity",
+        "regional"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "aci-networking-escalation",
+      "title": "ACI 网络与 DNS — escalation",
+      "entryIds": [
+        "aks-296",
+        "aks-301",
+        "aks-303",
+        "aks-305",
+        "aks-311"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-aci-kusto-helpers.md",
+        "guides/drafts/ado-wiki-b-aci-kusto-queries.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "aci",
+        "escalation",
+        "icm",
+        "asc",
+        "cri",
+        "pg-escalation",
+        "delete-failure",
+        "internal-error"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "aci-networking-general",
+      "title": "ACI 网络与 DNS — general",
+      "entryIds": [
+        "aks-171",
+        "aks-288",
+        "aks-289",
+        "aks-290",
+        "aks-294",
+        "aks-295",
+        "aks-300",
+        "aks-307",
+        "aks-308",
+        "aks-312",
+        "aks-313",
+        "aks-314",
+        "aks-315",
+        "aks-319",
+        "aks-326",
+        "aks-327",
+        "aks-329",
+        "aks-332",
+        "aks-333",
+        "aks-334",
+        "aks-335",
+        "aks-336",
+        "aks-337",
+        "aks-338",
+        "aks-343",
+        "aks-344",
+        "aks-345",
+        "aks-370",
+        "aks-407",
+        "aks-431",
+        "aks-437",
+        "aks-456",
+        "aks-457",
+        "aks-471",
+        "aks-600",
+        "aks-605",
+        "aks-607",
+        "aks-610",
+        "aks-612",
+        "aks-613",
+        "aks-615",
+        "aks-742",
+        "aks-851",
+        "aks-897",
+        "aks-948",
+        "aks-1002",
+        "aks-1314"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-aci-troubleshooting-with-asi.md",
+        "guides/drafts/ado-wiki-aci-troubleshooting-asi.md",
+        "guides/drafts/ado-wiki-aci-vulnerability-container-tenant-escape.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "aci",
+        "kusto",
+        "icm",
+        "byovnet",
+        "service-fabric",
+        "deployment-timeout",
+        "capacity",
+        "network-profile"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "aci-networking-managed-identity",
+      "title": "ACI 网络与 DNS — managed-identity",
+      "entryIds": [
+        "aks-291",
+        "aks-292",
+        "aks-293",
+        "aks-302",
+        "aks-306",
+        "aks-328",
+        "aks-341",
+        "aks-342",
+        "aks-602",
+        "aks-604"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-acr-escalation-process.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "managed-identity",
+        "aci",
+        "acr",
+        "image-pull",
+        "deployment-failure",
+        "rbac",
+        "keyvault",
+        "msi"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "aci-networking-networking",
+      "title": "ACI 网络与 DNS — networking",
+      "entryIds": [
+        "aks-655",
+        "aks-858",
+        "aks-876"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "networking",
+        "virtual-node",
+        "aci",
+        "udr",
+        "swift",
+        "azure-cni",
+        "pod-subnet",
+        "ip-allocation"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "aci-networking-subnet",
+      "title": "ACI 网络与 DNS — subnet",
+      "entryIds": [
+        "aks-470",
+        "aks-778",
+        "aks-788",
+        "aks-968",
+        "aks-1163"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "pod-subnet-sharing.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "subnet",
+        "networking",
+        "ip-exhaustion",
+        "failed-state",
+        "subnetisfull",
+        "aci",
+        "deletion",
+        "inusesubnetcannotbedeleted"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "aci-networking-vnet",
+      "title": "ACI 网络与 DNS — vnet",
+      "entryIds": [
+        "aks-297",
+        "aks-298",
+        "aks-299",
+        "aks-316",
+        "aks-317",
+        "aks-318",
+        "aks-331",
+        "aks-404",
+        "aks-406",
+        "aks-451",
+        "aks-598"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-aci-find-app-provision-deletion-flow.md",
+        "guides/drafts/ado-wiki-a-aci-how-to-find-vm-id-for-aci-cg.md",
+        "guides/drafts/ado-wiki-aci-billing-issues.md",
+        "guides/drafts/ado-wiki-aci-diagnostic-tools.md",
+        "guides/drafts/ado-wiki-aci-dns-label-reuse.md",
+        "guides/drafts/ado-wiki-aci-keep-connection-alive.md",
+        "guides/drafts/ado-wiki-aci-sbz-verifier-failures.md",
+        "guides/drafts/ado-wiki-aci-sync-cg-ip-dns.md",
+        "guides/drafts/ado-wiki-aci-terminologies.md",
+        "guides/drafts/ado-wiki-azure-copilot-aci-handlers.md",
+        "guides/drafts/ado-wiki-b-view-vnet-used-by-aci.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "aci",
+        "vnet",
+        "subnet",
+        "service-association-link",
+        "delete-failure",
+        "network-profile",
+        "escalation",
+        "aib"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "aci-provisioning-lifecycle",
+      "title": "ACI 部署与生命周期",
+      "entryIds": [
+        "aks-043",
+        "aks-161",
+        "aks-274",
+        "aks-473",
+        "aks-484",
+        "aks-574",
+        "aks-659",
+        "aks-714",
+        "aks-718",
+        "aks-900",
+        "aks-904",
+        "aks-1148",
+        "aks-1211",
+        "aks-1313"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "capacity",
+        "nap",
+        "ea-subscription",
+        "crg",
+        "capacity-reservation",
+        "karpenter",
+        "node-autoprovision",
+        "quota"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "acr-authentication-rbac-aks",
+      "title": "ACR 认证与 RBAC — aks",
+      "entryIds": [
+        "aks-405",
+        "aks-913",
+        "aks-985"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-aks-acr-msi-bring-your-own-identities.md",
+        "guides/drafts/ado-wiki-b-aad-integrated-aks-cluster-authorization-authentication.md",
+        "guides/drafts/ado-wiki-b-aks-acr-cross-tenant-auth.md",
+        "guides/drafts/ado-wiki-integrating-aks-and-acr-across-tenants.md",
+        "guides/drafts/onenote-aks-aad-rbac-configuration.md",
+        "guides/drafts/onenote-aks-acr-aad-multi-tenant.md",
+        "guides/drafts/onenote-aks-rbac-authorization-modes.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "acr",
+        "aks",
+        "service-principal",
+        "role-assignment",
+        "authorization",
+        "aad",
+        "directory-readers",
+        "graph-api"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "acr-authentication-rbac-connected-registry",
+      "title": "ACR 认证与 RBAC — connected-registry",
+      "entryIds": [
+        "aks-347",
+        "aks-349",
+        "aks-490",
+        "aks-492"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-acr-connected-registry-troubleshooting.md",
+        "guides/drafts/ado-wiki-azure-arc-enabled-kubernetes.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "acr",
+        "connected-registry",
+        "already-activated",
+        "deactivate",
+        "arc-extension",
+        "arc",
+        "extension",
+        "pvc"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "acr-authentication-rbac-general",
+      "title": "ACR 认证与 RBAC — general",
+      "entryIds": [
+        "aks-019",
+        "aks-059",
+        "aks-281",
+        "aks-287",
+        "aks-350",
+        "aks-351",
+        "aks-353",
+        "aks-355",
+        "aks-357",
+        "aks-358",
+        "aks-363",
+        "aks-364",
+        "aks-366",
+        "aks-367",
+        "aks-374",
+        "aks-375",
+        "aks-376",
+        "aks-377",
+        "aks-380",
+        "aks-381",
+        "aks-382",
+        "aks-383",
+        "aks-388",
+        "aks-389",
+        "aks-390",
+        "aks-391",
+        "aks-392",
+        "aks-395",
+        "aks-396",
+        "aks-408",
+        "aks-409",
+        "aks-410",
+        "aks-411",
+        "aks-422",
+        "aks-425",
+        "aks-480",
+        "aks-481",
+        "aks-482",
+        "aks-483",
+        "aks-485",
+        "aks-533",
+        "aks-857"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-acr-connectivity-with-token.md",
+        "guides/drafts/ado-wiki-b-acr-audit-logs.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "acr",
+        "cache-rule",
+        "slow",
+        "push",
+        "icm",
+        "network",
+        "continuous-patching",
+        "cssc"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "acr-authentication-rbac-image-pull",
+      "title": "ACR 认证与 RBAC — image-pull",
+      "entryIds": [
+        "aks-027",
+        "aks-084",
+        "aks-146",
+        "aks-346",
+        "aks-362",
+        "aks-368",
+        "aks-371",
+        "aks-373",
+        "aks-378",
+        "aks-379",
+        "aks-420",
+        "aks-421",
+        "aks-496",
+        "aks-497",
+        "aks-532",
+        "aks-852",
+        "aks-915",
+        "aks-1003",
+        "aks-1109",
+        "aks-1110",
+        "aks-1111",
+        "aks-1112",
+        "aks-1113",
+        "aks-1114",
+        "aks-1115",
+        "aks-1273",
+        "aks-1274"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-acr-build-image-docker-buildkit-secret.md",
+        "guides/drafts/ado-wiki-a-acr-define-idea-for-feedback-forum.md",
+        "guides/drafts/ado-wiki-a-acr-enable-image-deletion-with-locks.md",
+        "guides/drafts/ado-wiki-a-acr-health-check-command-background.md",
+        "guides/drafts/ado-wiki-acr-behind-firewall.md",
+        "guides/drafts/ado-wiki-acr-find-user-of-manifest-event.md",
+        "guides/drafts/ado-wiki-acr-image-or-repository-recovery.md",
+        "guides/drafts/ado-wiki-acr-investigate-bulk-image-tag-deletions.md",
+        "guides/drafts/ado-wiki-acr-list-old-images-script.md",
+        "guides/drafts/ado-wiki-b-acr-authorization-rbac-abac.md",
+        "guides/drafts/ado-wiki-b-acr-change-analysis.md",
+        "guides/drafts/ado-wiki-b-acr-continuous-patching-workflow-tsg.md",
+        "guides/drafts/ado-wiki-b-acr-custom-domain-configuration.md",
+        "guides/drafts/ado-wiki-b-acr-devops-cases-template.md",
+        "guides/drafts/ado-wiki-b-acr-seek-pg-assistance-teams.md",
+        "guides/drafts/ado-wiki-container-instance-deployment-firewall-acr.md"
+      ],
+      "kustoQueryFiles": [
+        "image-integrity.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "image-pull",
+        "acr",
+        "networking",
+        "private-endpoint",
+        "firewall",
+        "401",
+        "rate-limit",
+        "service-principal"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "acr-authentication-rbac-kusto",
+      "title": "ACR 认证与 RBAC — kusto",
+      "entryIds": [
+        "aks-352",
+        "aks-354",
+        "aks-356",
+        "aks-369",
+        "aks-614"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-acr-caching-kusto-logging.md",
+        "guides/drafts/ado-wiki-acr-kusto-access.md",
+        "guides/drafts/ado-wiki-acr-kusto-login-issues.md",
+        "guides/drafts/ado-wiki-acr-kusto-queries.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "acr",
+        "kusto",
+        "icm",
+        "acr-tasks",
+        "buildhosttrace",
+        "diagnostics",
+        "throttling",
+        "toomanyrequests"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "acr-authentication-rbac-notation",
+      "title": "ACR 认证与 RBAC — notation",
+      "entryIds": [
+        "aks-397",
+        "aks-398",
+        "aks-399",
+        "aks-400",
+        "aks-401",
+        "aks-402",
+        "aks-403"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "acr",
+        "notation",
+        "verification",
+        "signing",
+        "certificate",
+        "trust-policy",
+        "authentication",
+        "401"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "acr-authentication-rbac-private-endpoint",
+      "title": "ACR 认证与 RBAC — private-endpoint",
+      "entryIds": [
+        "aks-365",
+        "aks-372",
+        "aks-905",
+        "aks-1275"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-acr-private-link-troubleshooting-questions.md",
+        "guides/drafts/ado-wiki-acr-private-link.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "acr",
+        "private-endpoint",
+        "dns",
+        "virtual-wan",
+        "403",
+        "firewall",
+        "function-app",
+        "vnet"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "acr-authentication-rbac-soft-delete",
+      "title": "ACR 认证与 RBAC — soft-delete",
+      "entryIds": [
+        "aks-361",
+        "aks-412",
+        "aks-413",
+        "aks-414",
+        "aks-415",
+        "aks-416",
+        "aks-417",
+        "aks-418",
+        "aks-419"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-acr-soft-delete.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "acr",
+        "soft-delete",
+        "cli",
+        "manifest-restore",
+        "geo-replication",
+        "image-recovery",
+        "repository-deletion",
+        "kusto"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "acr-authentication-rbac-unauthorized",
+      "title": "ACR 认证与 RBAC — unauthorized",
+      "entryIds": [
+        "aks-180",
+        "aks-348",
+        "aks-359",
+        "aks-360",
+        "aks-394",
+        "aks-491"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "acr",
+        "unauthorized",
+        "connected-registry",
+        "arc-extension",
+        "connection-string",
+        "docker-push",
+        "wincred",
+        "docker-desktop"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "acr-replication-geo",
+      "title": "ACR 复制与地理分布",
+      "entryIds": [
+        "aks-651"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "networking",
+        "packet-capture",
+        "multi-node",
+        "diagnostics",
+        "linux"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "agic-http-errors-general",
+      "title": "AGIC HTTP 错误码排查 — general",
+      "entryIds": [
+        "aks-047",
+        "aks-120",
+        "aks-144",
+        "aks-866",
+        "aks-878",
+        "aks-884",
+        "aks-1009",
+        "aks-1011",
+        "aks-1013",
+        "aks-1018"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "application-gateway",
+        "agic",
+        "arm",
+        "operational-state",
+        "egress",
+        "firewall",
+        "nsg",
+        "502"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "agic-http-errors-ingress",
+      "title": "AGIC HTTP 错误码排查 — ingress",
+      "entryIds": [
+        "aks-253",
+        "aks-517",
+        "aks-518",
+        "aks-1007",
+        "aks-1016",
+        "aks-1020",
+        "aks-1061",
+        "aks-1281"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-AGIC-Support-Boundary.md",
+        "guides/drafts/ado-wiki-a-agic-appgw-config-update-verification.md",
+        "guides/drafts/ado-wiki-a-agic-backend-app-issues.md",
+        "guides/drafts/ado-wiki-agic-multiple-apps-one-appgw.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "agic",
+        "ingress",
+        "application-gateway",
+        "addon",
+        "404",
+        "backend-path-prefix",
+        "appgw",
+        "oom"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "agic-http-errors-managed-identity",
+      "title": "AGIC HTTP 错误码排查 — managed-identity",
+      "entryIds": [
+        "aks-862",
+        "aks-880",
+        "aks-1014",
+        "aks-1023"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "agic",
+        "rbac",
+        "authorization",
+        "managed-identity",
+        "application-gateway",
+        "role-assignment",
+        "appgw"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "agic-http-errors-networking",
+      "title": "AGIC HTTP 错误码排查 — networking",
+      "entryIds": [
+        "aks-860",
+        "aks-1058",
+        "aks-1060",
+        "aks-1062",
+        "aks-1063"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-agic-request-routing-verification.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "networking",
+        "agic",
+        "application-gateway",
+        "arm-connectivity",
+        "egress",
+        "agc",
+        "nsg",
+        "routing"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "agic-http-errors-service-principal",
+      "title": "AGIC HTTP 错误码排查 — service-principal",
+      "entryIds": [
+        "aks-864",
+        "aks-882",
+        "aks-1025"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "agic",
+        "service-principal",
+        "application-gateway",
+        "authentication",
+        "secret-expired",
+        "credential-expiry",
+        "appgw"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "agic-http-errors-upgrade",
+      "title": "AGIC HTTP 错误码排查 — upgrade",
+      "entryIds": [
+        "aks-775",
+        "aks-787",
+        "aks-966"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "auto-upgrade.md",
+        "scale-upgrade-operations.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "upgrade",
+        "overlay",
+        "agic",
+        "oec",
+        "finalizer",
+        "failedtowaitforoverlayextensionconfigcleanup",
+        "dnc",
+        "crud"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "apiserver-connectivity",
+      "title": "API Server 连接与隧道",
+      "entryIds": [
+        "aks-096",
+        "aks-105",
+        "aks-106",
+        "aks-111",
+        "aks-227",
+        "aks-464",
+        "aks-467",
+        "aks-609",
+        "aks-611",
+        "aks-656",
+        "aks-843",
+        "aks-859",
+        "aks-1122",
+        "aks-1175",
+        "aks-1272"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-aks-cluster-stuck-on-starting.md",
+        "guides/drafts/onenote-aks-fault-domain-kusto.md",
+        "guides/drafts/onenote-aks-kusto-queries-reference.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "api-server",
+        "konnectivity",
+        "kubectl-logs",
+        "kubectl",
+        "etcd",
+        "throttling",
+        "429",
+        "namespace"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "backup-migration",
+      "title": "备份恢复与迁移",
+      "entryIds": [
+        "aks-087",
+        "aks-927"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "region-retirement",
+        "migration",
+        "ce1",
+        "cn1",
+        "china-north-3",
+        "azure-backup",
+        "ossku-migration",
+        "feature-flag"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "capacity-allocation",
+      "title": "容量与可用性区域",
+      "entryIds": [
+        "aks-923",
+        "aks-1183"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-VM-VMSS-Allocation-or-Capacity-Errors.md",
+        "guides/drafts/ado-wiki-b-Node-scaling-allocation-capacity-issues.md",
+        "guides/drafts/ado-wiki-b-atlas-creation-flow.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "aks",
+        "host-ports",
+        "allocation-failed",
+        "port-exhaustion",
+        "availability-zone",
+        "sku",
+        "restriction",
+        "region"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "cilium-network-policy",
+      "title": "Cilium 网络策略与可观测性",
+      "entryIds": [
+        "aks-465",
+        "aks-468",
+        "aks-512",
+        "aks-557",
+        "aks-629",
+        "aks-933",
+        "aks-935",
+        "aks-937",
+        "aks-939",
+        "aks-941",
+        "aks-943",
+        "aks-988",
+        "aks-990",
+        "aks-1088",
+        "aks-1089"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Cilium-L3-L4-Network-Policies.md",
+        "guides/drafts/ado-wiki-a-Cilium-L7-Network-Policies.md",
+        "guides/drafts/ado-wiki-a-cilium-fqdn-policy.md",
+        "guides/drafts/ado-wiki-acr-tasks-network-bypass-policy.md",
+        "guides/drafts/ado-wiki-intro-to-cilium-and-aks.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "cilium",
+        "aks",
+        "network-policy",
+        "migration",
+        "network-observability",
+        "calico",
+        "hubble",
+        "kubenet"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "cluster-creation-config",
+      "title": "集群创建与初始配置",
+      "entryIds": [
+        "aks-199",
+        "aks-446",
+        "aks-658",
+        "aks-684",
+        "aks-690",
+        "aks-979",
+        "aks-980",
+        "aks-1156"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "cluster-snapshot.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "managed-namespaces",
+        "preview",
+        "cluster-creation",
+        "terraform",
+        "kubedashboard",
+        "mooncake",
+        "addon-unsupported",
+        "fleet-manager"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "crud-reconcile-failedstate-cluster-creation",
+      "title": "CRUD 操作与 Failed State 恢复 — cluster-creation",
+      "entryIds": [
+        "aks-771",
+        "aks-1193",
+        "aks-1195"
+      ],
+      "draftPaths": [
+        "guides/drafts/mslearn-aks-cluster-creation-troubleshooting.md",
+        "guides/drafts/onenote-aks-reconcile-cluster.md"
+      ],
+      "kustoQueryFiles": [
+        "cluster-snapshot.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "cluster-creation",
+        "crud",
+        "quotaexceeded",
+        "managedclustercountexceedsquotalimit",
+        "cluster-quota",
+        "quota-increase",
+        "missingsubscriptionregistration",
+        "resource-provider"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "crud-reconcile-failedstate-failed-state",
+      "title": "CRUD 操作与 Failed State 恢复 — failed-state",
+      "entryIds": [
+        "aks-012",
+        "aks-174",
+        "aks-279",
+        "aks-619",
+        "aks-776",
+        "aks-779",
+        "aks-791",
+        "aks-967",
+        "aks-969"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-reconcile-managed-cluster-failed-state.md",
+        "guides/drafts/ado-wiki-a-serial-access-console-when-jarvis-failing.md",
+        "guides/drafts/ado-wiki-a-test-traffic-jarvis-vfp.md",
+        "guides/drafts/ado-wiki-acr-jarvis-actions.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "failed-state",
+        "monitoring",
+        "log-analytics",
+        "container-insights",
+        "reconcile",
+        "crud",
+        "addon",
+        "resource-provider"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "crud-reconcile-failedstate-general",
+      "title": "CRUD 操作与 Failed State 恢复 — general",
+      "entryIds": [
+        "aks-097",
+        "aks-149",
+        "aks-206",
+        "aks-207",
+        "aks-493",
+        "aks-637",
+        "aks-640",
+        "aks-667",
+        "aks-730",
+        "aks-746",
+        "aks-758",
+        "aks-832",
+        "aks-936",
+        "aks-938",
+        "aks-951",
+        "aks-962",
+        "aks-1182"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "support-policy",
+        "log-analytics",
+        "provisioning-state",
+        "kube-system",
+        "user-workload",
+        "metrics-server",
+        "operation-abort",
+        "lsi"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "crud-reconcile-failedstate-reconcile",
+      "title": "CRUD 操作与 Failed State 恢复 — reconcile",
+      "entryIds": [
+        "aks-052",
+        "aks-195",
+        "aks-277",
+        "aks-795",
+        "aks-973"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-c-Update-or-Disable-SSH-Key.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "reconcile",
+        "update",
+        "delete",
+        "concurrent-operation",
+        "addon-manager",
+        "kube-system",
+        "resource-deleted",
+        "namespace"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "extension-arc",
+      "title": "Azure Arc",
+      "entryIds": [
+        "aks-1310",
+        "aks-1324"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "extension-manager.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "contentidea-kb"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "extension-flux-gitops",
+      "title": "Flux / GitOps",
+      "entryIds": [
+        "aks-654"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Microsoft-Flux-Extension-Installation-TSG.md"
+      ],
+      "kustoQueryFiles": [
+        "extension-manager.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "flux",
+        "fluxconfiguration",
+        "crd",
+        "gitops",
+        "cluster-management"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "extension-general",
+      "title": "扩展与插件通用",
+      "entryIds": [
+        "aks-205",
+        "aks-701",
+        "aks-1261"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "extension-manager.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "osba",
+        "open-service-broker",
+        "mooncake",
+        "environment-config",
+        "helm",
+        "cost-analysis",
+        "addon",
+        "scraper"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "fleet-manager",
+      "title": "Fleet Manager",
+      "entryIds": [
+        "aks-448"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-aks-fleet-manager-debug-gates-approvals.md",
+        "guides/drafts/ado-wiki-aks-fleet-manager-geneva-actions.md",
+        "guides/drafts/ado-wiki-aks-fleet-manager-overview.md",
+        "guides/drafts/ado-wiki-b-aks-fleet-manager-kusto-tables.md",
+        "guides/drafts/ado-wiki-b-aks-fleet-manager-support-tools.md",
+        "guides/drafts/ado-wiki-b-fleet-manager-faq.md"
+      ],
+      "kustoQueryFiles": [
+        "extension-manager.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "aks-fleet-manager",
+        "gates",
+        "approvals",
+        "update-run",
+        "async",
+        "servicebus"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "general-troubleshooting-agentic-cli",
+      "title": "通用排查 — agentic-cli",
+      "entryIds": [
+        "aks-693",
+        "aks-698",
+        "aks-703"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "agentic-cli",
+        "az-aks-agent",
+        "llm",
+        "context-window",
+        "azure-openai",
+        "deployment",
+        "temperature"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "general-troubleshooting-api",
+      "title": "通用排查 — api",
+      "entryIds": [
+        "aks-717",
+        "aks-840",
+        "aks-841",
+        "aks-842"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "api-throttling-analysis.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "api",
+        "etag",
+        "client-error",
+        "if-match",
+        "if-none-match",
+        "precondition-failed",
+        "delete-machines",
+        "agentpool"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "general-troubleshooting-dfm",
+      "title": "通用排查 — dfm",
+      "entryIds": [
+        "aks-627",
+        "aks-638",
+        "aks-650"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "dfm",
+        "email",
+        "access-denied",
+        "workaround",
+        "dynamics-365",
+        "entitlement",
+        "severity",
+        "case-management"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "general-troubleshooting-general",
+      "title": "通用排查 — general",
+      "entryIds": [
+        "aks-129",
+        "aks-217",
+        "aks-219",
+        "aks-237",
+        "aks-254",
+        "aks-259",
+        "aks-263",
+        "aks-458",
+        "aks-459",
+        "aks-509",
+        "aks-576",
+        "aks-595",
+        "aks-622",
+        "aks-649",
+        "aks-674",
+        "aks-683",
+        "aks-685",
+        "aks-688",
+        "aks-691",
+        "aks-736",
+        "aks-1090",
+        "aks-1149",
+        "aks-1271",
+        "aks-1285"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-Logrotate-Conflicts.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "timezone",
+        "pod-configuration",
+        "hostpath",
+        "advisory",
+        "security",
+        "stop-start",
+        "ghost-pods",
+        "1.26"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "general-troubleshooting-pod-sandboxing",
+      "title": "通用排查 — pod-sandboxing",
+      "entryIds": [
+        "aks-708",
+        "aks-944",
+        "aks-946"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-Pod-Sandboxing-Kata.md",
+        "guides/drafts/mslearn-pod-crashloopbackoff-troubleshooting.md"
+      ],
+      "kustoQueryFiles": [
+        "pod-restart-analysis.md",
+        "pod-subnet-sharing.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "pod-sandboxing",
+        "kata",
+        "arm64",
+        "cvm",
+        "trusted-launch",
+        "stuck-running",
+        "succeeded",
+        "intermittent"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "general-troubleshooting-ssh",
+      "title": "通用排查 — ssh",
+      "entryIds": [
+        "aks-178",
+        "aks-236",
+        "aks-474"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "ssh",
+        "vmas",
+        "agent-pool",
+        "feature-limitation",
+        "security",
+        "node-access",
+        "chroot",
+        "troubleshooting"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "gpu-workloads",
+      "title": "GPU 工作负载",
+      "entryIds": [
+        "aks-699",
+        "aks-1248"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "mixed-sku",
+        "virtual-machines",
+        "vm-size",
+        "validation",
+        "kaito",
+        "ai-toolchain-operator",
+        "workspace",
+        "gpu"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "icm-escalation",
+      "title": "ICM 与升级",
+      "entryIds": [
+        "aks-108",
+        "aks-138",
+        "aks-190",
+        "aks-700",
+        "aks-942"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Microsoft-KubernetesConfiguration-Escalation.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "icm",
+        "ephemeral-disk",
+        "remediator",
+        "node-recovery",
+        "os-disk",
+        "mariner",
+        "azure-linux",
+        "cbl-mariner"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "identity-aad-integration-aad",
+      "title": "AAD 集成与认证 — aad",
+      "entryIds": [
+        "aks-081",
+        "aks-102",
+        "aks-502",
+        "aks-524",
+        "aks-525",
+        "aks-526",
+        "aks-871",
+        "aks-1006",
+        "aks-1008",
+        "aks-1140"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-Troubleshooting-AAD-Integration-Token-Issues.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "aad",
+        "kubelogin",
+        "authentication",
+        "permissions",
+        "rbac",
+        "1.24",
+        "exec-format",
+        "azure-auth-plugin-removed"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "identity-aad-integration-authentication",
+      "title": "AAD 集成与认证 — authentication",
+      "entryIds": [
+        "aks-051",
+        "aks-447",
+        "aks-669",
+        "aks-879"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "authentication",
+        "aks-dashboard",
+        "aad-integration",
+        "unauthorized",
+        "dashboard",
+        "aks-fleet-manager",
+        "kubeconfig",
+        "device-code-auth"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "identity-aad-integration-general",
+      "title": "AAD 集成与认证 — general",
+      "entryIds": [
+        "aks-157",
+        "aks-874",
+        "aks-1012",
+        "aks-1226",
+        "aks-1315"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-c-Trusted-Access.md",
+        "guides/drafts/onenote-aks-jit-access-escort.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "defender",
+        "jit",
+        "access",
+        "customerdataadministrator",
+        "saw",
+        "process-change",
+        "publisher",
+        "403"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "identity-managed-identity",
+      "title": "托管标识 (MSI)",
+      "entryIds": [
+        "aks-462",
+        "aks-645",
+        "aks-664",
+        "aks-830",
+        "aks-1015"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "managed-identity",
+        "kms",
+        "etcd-encryption",
+        "conditional-access",
+        "service-principal",
+        "aadsts53003",
+        "keyvault",
+        "access-policy"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "identity-service-principal",
+      "title": "服务主体",
+      "entryIds": [
+        "aks-116",
+        "aks-224",
+        "aks-231",
+        "aks-527",
+        "aks-1021"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "service-principal",
+        "reset-sp",
+        "node-image",
+        "latest-mode",
+        "portal",
+        "expired",
+        "migration",
+        "api-server-ip"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "identity-workload-identity",
+      "title": "Workload Identity / OIDC",
+      "entryIds": [
+        "aks-001",
+        "aks-018",
+        "aks-054",
+        "aks-115",
+        "aks-189",
+        "aks-729",
+        "aks-854",
+        "aks-928",
+        "aks-930",
+        "aks-1215",
+        "aks-1270",
+        "aks-1283"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Azure-Copilot-AKS-Handlers.md",
+        "guides/drafts/ado-wiki-a-Azure-Dedicated-Host-On-AKS.md",
+        "guides/drafts/ado-wiki-a-CICD-using-AKS-and-Jenkins-TSG.md",
+        "guides/drafts/ado-wiki-a-Microsoft.Flux-AKS-Extensions.md",
+        "guides/drafts/ado-wiki-a-aks-communication-manager.md",
+        "guides/drafts/ado-wiki-a-aks-event-grid.md",
+        "guides/drafts/ado-wiki-a-azure-managed-lustre-with-aks.md",
+        "guides/drafts/ado-wiki-a-coredns-testing-in-aks-clusters.md",
+        "guides/drafts/ado-wiki-aks-ado-support-boundary.md",
+        "guides/drafts/ado-wiki-aks-emerging-issues-reporting.md",
+        "guides/drafts/ado-wiki-aks-enable-swap-memory.md",
+        "guides/drafts/ado-wiki-aks-ml-azure-machine-learning-tsg.md",
+        "guides/drafts/ado-wiki-aks-platform-diagrams.md",
+        "guides/drafts/ado-wiki-aks-tcpdump-instructions.md",
+        "guides/drafts/ado-wiki-aks-track-fix-rollout-progress.md",
+        "guides/drafts/ado-wiki-b-AKS-Remediator.md",
+        "guides/drafts/ado-wiki-b-E2E-AKS-Cluster-Provisioning-Tracing.md",
+        "guides/drafts/ado-wiki-b-Service-Connector-with-AKS.md",
+        "guides/drafts/ado-wiki-b-aks-backup-troubleshooting.md",
+        "guides/drafts/ado-wiki-b-validating-azure-policies-in-aks.md",
+        "guides/drafts/ado-wiki-c-IP-Address-Allocation-AKS.md",
+        "guides/drafts/ado-wiki-capturing-memory-dumps-aks-nodes.md",
+        "guides/drafts/ado-wiki-check-overlake-enabled-aks-nodes.md",
+        "guides/drafts/ado-wiki-coredns-nodelocaldns-aks.md",
+        "guides/drafts/ado-wiki-disable-environment-variables-globally-on-aks.md",
+        "guides/drafts/ado-wiki-keda-implementation-aks.md",
+        "guides/drafts/ado-wiki-logging-aad-users-operation-on-aks.md",
+        "guides/drafts/ado-wiki-network-connection-monitor-in-aks.md",
+        "guides/drafts/ado-wiki-publish-aks-services-private-link-front-door.md",
+        "guides/drafts/ado-wiki-pull-private-registry-images-from-aks-nodes.md",
+        "guides/drafts/mslearn-aks-error-codes-reference.md",
+        "guides/drafts/mslearn-connection-issues-app-hosted-aks.md",
+        "guides/drafts/onenote-aks-best-practices-faq.md",
+        "guides/drafts/onenote-aks-cross-product-ownership.md",
+        "guides/drafts/onenote-aks-dockerhub-gitops-migration.md",
+        "guides/drafts/onenote-aks-ephemeral-os-disk.md",
+        "guides/drafts/onenote-aks-keyvault-workload-identity.md",
+        "guides/drafts/onenote-aks-mooncake-support-tools.md"
+      ],
+      "kustoQueryFiles": [
+        "msi-connector.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "workload-identity",
+        "oidc",
+        "mooncake",
+        "authentication",
+        "aad",
+        "pod-identity",
+        "aad-pod-identity",
+        "managed-identity"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "ingress-nginx",
+      "title": "Nginx Ingress Controller",
+      "entryIds": [
+        "aks-035",
+        "aks-053",
+        "aks-185",
+        "aks-204",
+        "aks-511",
+        "aks-513",
+        "aks-519",
+        "aks-1282"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-multiple-nginx-ingress-controller-setup.md",
+        "guides/drafts/ado-wiki-upgrading-ingress-nginx-specific-version.md",
+        "guides/drafts/mslearn-deploy-unmanaged-nginx-ingress.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "nginx-ingress",
+        "ingress",
+        "mooncake",
+        "app-routing",
+        "nginx",
+        "keyvault",
+        "csi-driver",
+        "cert-rotation"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "ingress-tls-cert",
+      "title": "TLS 证书与 Cert-Manager",
+      "entryIds": [
+        "aks-024",
+        "aks-150",
+        "aks-175",
+        "aks-200",
+        "aks-495",
+        "aks-617",
+        "aks-628",
+        "aks-678",
+        "aks-702",
+        "aks-868",
+        "aks-875",
+        "aks-1004",
+        "aks-1100",
+        "aks-1176",
+        "aks-1319"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-aci-standby-pools-error-guide.md",
+        "guides/drafts/ado-wiki-b-automatic-cert-rotation.md",
+        "guides/drafts/ado-wiki-c-Lets-Encrypt-Cert-Manager-Ingress.md",
+        "guides/drafts/onenote-nginx-ingress-kv-cert-autorotation.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "certificate",
+        "x509",
+        "expired",
+        "certificate-rotation",
+        "rotate-certs",
+        "resource-lock",
+        "failed-state",
+        "mc-rg"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "internal-ops",
+      "title": "内部运维流程",
+      "entryIds": [
+        "aks-621",
+        "aks-623",
+        "aks-642"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "jit",
+        "jarvis",
+        "saw",
+        "lockbox",
+        "customer-data-access",
+        "access-denied",
+        "oneidentity",
+        "ame"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "istio-installation-gateway-api",
+      "title": "Istio 安装与配置 — gateway-api",
+      "entryIds": [
+        "aks-104",
+        "aks-520",
+        "aks-521",
+        "aks-522",
+        "aks-652",
+        "aks-668",
+        "aks-1231"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Application-Routing-nginx.md",
+        "guides/drafts/ado-wiki-a-Istio-Egress-Gateway.md",
+        "guides/drafts/ado-wiki-a-Managed-Istio.md",
+        "guides/drafts/ado-wiki-a-Managed-NAT-Gateway.md",
+        "guides/drafts/ado-wiki-a-kubernetes-managed-gateway-api.md",
+        "guides/drafts/ado-wiki-a-tsg-diagnosing-istio-latency.md",
+        "guides/drafts/ado-wiki-b-apim-backend-tls-trust-failures.md",
+        "guides/drafts/ado-wiki-c-E2E-TLS-AppGW-to-AKS-Certificate-Chain.md",
+        "guides/drafts/ado-wiki-c-Scheduler-Customization-kube-scheduler.md",
+        "guides/drafts/ado-wiki-c-Secure-TLS-Bootstrapping.md",
+        "guides/drafts/ado-wiki-c-TLS-Troubleshooting-Guide.md",
+        "guides/drafts/ado-wiki-managed-gateway-api-istio.md",
+        "guides/drafts/ado-wiki-update-ingress-ca-certificates-with-pfx.md",
+        "guides/drafts/ado-wiki-using-multiple-ingress-controllers.md",
+        "guides/drafts/mslearn-managed-gateway-api-troubleshooting.md"
+      ],
+      "kustoQueryFiles": [
+        "api-throttling-analysis.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "gateway-api",
+        "istio",
+        "app-routing",
+        "migration",
+        "certificate",
+        "ingress-nginx",
+        "retirement",
+        "appgw-for-containers"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "istio-installation-general",
+      "title": "Istio 安装与配置 — general",
+      "entryIds": [
+        "aks-537",
+        "aks-538",
+        "aks-630",
+        "aks-1134",
+        "aks-1227",
+        "aks-1228",
+        "aks-1229",
+        "aks-1230",
+        "aks-1234",
+        "aks-1235"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Istio-CNI-Plugin.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "istio",
+        "sidecar",
+        "azure-policy",
+        "non-compliant",
+        "cni",
+        "egress-gateway",
+        "pod-security-standards",
+        "net-admin"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "istio-installation-key-vault",
+      "title": "Istio 安装与配置 — key-vault",
+      "entryIds": [
+        "aks-1236",
+        "aks-1241",
+        "aks-1242",
+        "aks-1243"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "istio",
+        "key-vault",
+        "plug-in-ca",
+        "ingress-gateway",
+        "tls",
+        "secret",
+        "403",
+        "managed-identity"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "istio-installation-meshconfig",
+      "title": "Istio 安装与配置 — meshconfig",
+      "entryIds": [
+        "aks-844",
+        "aks-1232",
+        "aks-1233",
+        "aks-1237",
+        "aks-1238"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "istio",
+        "meshconfig",
+        "envoy",
+        "sidecar",
+        "redis",
+        "geo-replication",
+        "port-conflict",
+        "memory"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "istio-installation-service-mesh",
+      "title": "Istio 安装与配置 — service-mesh",
+      "entryIds": [
+        "aks-006",
+        "aks-033",
+        "aks-548",
+        "aks-696"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Pod-to-Pod-Proxy-Issues.md",
+        "guides/drafts/ado-wiki-b-Troubleshooting-database-connectivity.md",
+        "guides/drafts/ado-wiki-connectivity-troubleshooting.md",
+        "guides/drafts/ado-wiki-tsg-check-apiserver-proxy-logs.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "istio",
+        "service-mesh",
+        "addon",
+        "21v-gap",
+        "mtls",
+        "encryption",
+        "deprecated",
+        "pod-communication"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "istio-installation-upgrade",
+      "title": "Istio 安装与配置 — upgrade",
+      "entryIds": [
+        "aks-618",
+        "aks-1239",
+        "aks-1240"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-CrashLoopBackOff-Status.md"
+      ],
+      "kustoQueryFiles": [
+        "auto-upgrade.md",
+        "scale-upgrade-operations.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "istio",
+        "upgrade",
+        "crashloopbackoff",
+        "third-party",
+        "helm-chart",
+        "ingress",
+        "canary",
+        "revision-label"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "istio-networking",
+      "title": "Istio 网络与流量管理",
+      "entryIds": [
+        "aks-636"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "support-scope",
+        "third-party",
+        "oss",
+        "best-effort",
+        "unsupported"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "monitoring-container-insights",
+      "title": "Container Insights 与 Log Analytics",
+      "entryIds": [
+        "aks-048",
+        "aks-232",
+        "aks-695"
+      ],
+      "draftPaths": [
+        "guides/drafts/onenote-container-insights-log-collection.md"
+      ],
+      "kustoQueryFiles": [
+        "blackbox-monitoring.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "container-insights",
+        "fluent-bit",
+        "monitoring",
+        "missing-logs",
+        "latency",
+        "mem-buf-overlimit",
+        "configmap",
+        "ama-agent"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "monitoring-diagnostic",
+      "title": "诊断与日志收集",
+      "entryIds": [
+        "aks-203",
+        "aks-1312"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "blackbox-monitoring.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "monitoring",
+        "insightsmetrics",
+        "mooncake",
+        "feature-gap",
+        "azure-monitor",
+        "contentidea-kb"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "mooncake-21v-gaps",
+      "title": "Mooncake 21V 功能差异",
+      "entryIds": [
+        "aks-003",
+        "aks-007",
+        "aks-445",
+        "aks-453"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-in-transit-encryption-using-wireguard.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "21v-unsupported",
+        "fleet-manager",
+        "multi-cluster",
+        "kms",
+        "encryption",
+        "secrets",
+        "21v-gap",
+        "hub-cluster"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "mooncake-operations",
+      "title": "Mooncake 运维特殊处理",
+      "entryIds": [
+        "aks-147",
+        "aks-216"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "scale-upgrade-operations.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "lts",
+        "long-term-support",
+        "premium-tier",
+        "pricing",
+        "kubernetes-version",
+        "lifecycle",
+        "container-registry",
+        "gcr"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "networking-cni-overlay-azure-cni",
+      "title": "CNI 与 Overlay 网络 — azure-cni",
+      "entryIds": [
+        "aks-010",
+        "aks-258",
+        "aks-469",
+        "aks-500",
+        "aks-504",
+        "aks-552",
+        "aks-996",
+        "aks-1055",
+        "aks-1125"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Upgrade-to-Azure-CNI-Cilium-Supportability.md",
+        "guides/drafts/ado-wiki-a-agic-pod-not-healthy.md",
+        "guides/drafts/ado-wiki-a-aks-dynamic-pod-ip-allocation.md",
+        "guides/drafts/ado-wiki-aks-cni-dynamic-ip-cns-prometheus-monitoring.md",
+        "guides/drafts/ado-wiki-aks-ssh-helper-pod-node-access.md",
+        "guides/drafts/ado-wiki-b-CLI-correlationID-to-useful-correlationID.md",
+        "guides/drafts/ado-wiki-b-azure-cni-overlay.md",
+        "guides/drafts/ado-wiki-byo-cni-with-aks.md",
+        "guides/drafts/ado-wiki-c-VNet-Scaling-StaticBlock.md",
+        "guides/drafts/ado-wiki-configuring-timezone-settings-for-a-pod.md",
+        "guides/drafts/ado-wiki-create-azure-cni-transparent-mode-cluster.md",
+        "guides/drafts/ado-wiki-d-Hubble-CLI.md",
+        "guides/drafts/ado-wiki-hubble-relay-pod-tsg.md",
+        "guides/drafts/ado-wiki-migrate-kubenet-to-cni-overlay-cilium.md",
+        "guides/drafts/mslearn-packet-capture-pod-level.md",
+        "guides/drafts/onenote-aks-upgrade-checklist.md",
+        "guides/drafts/onenote-tcpdump-on-aks-pod.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "azure-cni",
+        "ip-exhaustion",
+        "networking",
+        "upgrade",
+        "subnet",
+        "failedcreatepodsandbox",
+        "cns",
+        "kubenet"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "networking-cni-overlay-cni-overlay",
+      "title": "CNI 与 Overlay 网络 — cni-overlay",
+      "entryIds": [
+        "aks-188",
+        "aks-754",
+        "aks-949"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-NAP-FAQs.md",
+        "guides/drafts/ado-wiki-b-Node-Autoprovision-Karpenter.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "cni-overlay",
+        "subnet",
+        "vnet",
+        "getvneterror",
+        "node-pool",
+        "ip-exhaustion",
+        "nap",
+        "karpenter"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "networking-cni-overlay-general",
+      "title": "CNI 与 Overlay 网络 — general",
+      "entryIds": [
+        "aks-122",
+        "aks-167",
+        "aks-169",
+        "aks-1072"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "kubenet",
+        "cni",
+        "pod-cidr",
+        "insufficient-pod-cidr",
+        "networking",
+        "ip-exhaustion",
+        "address-range",
+        "cidr"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "networking-cni-overlay-upgrade",
+      "title": "CNI 与 Overlay 网络 — upgrade",
+      "entryIds": [
+        "aks-810",
+        "aks-811",
+        "aks-824"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-OverlaymgrReconcileError-noisy-neighbouring.md",
+        "guides/drafts/ado-wiki-a-OverlaymgrReconcileError-troubleshooting.md"
+      ],
+      "kustoQueryFiles": [
+        "auto-upgrade.md",
+        "scale-upgrade-operations.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "overlaymgr",
+        "upgrade",
+        "kyverno",
+        "webhook",
+        "crud",
+        "overlaymgrreconcileerror",
+        "noisy-neighbor",
+        "underlay"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "networking-connectivity-general-api-server",
+      "title": "网络连通性通用 — api-server",
+      "entryIds": [
+        "aks-220",
+        "aks-1108",
+        "aks-1117",
+        "aks-1131",
+        "aks-1171",
+        "aks-1174"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-aks-network-performance-troubleshooting.md",
+        "guides/drafts/ado-wiki-aks-api-connectivity-hands-on-labs.md",
+        "guides/drafts/ado-wiki-c-Monitoring-API-Server-performance.md",
+        "guides/drafts/ado-wiki-c-VM-Performance-Troubleshooting-Guideline.md",
+        "guides/drafts/ado-wiki-d-API-Server-VNet-Integration.md",
+        "guides/drafts/ado-wiki-network-capture-kubectl-plugin.md",
+        "guides/drafts/mslearn-api-server-connection-basic-troubleshooting.md"
+      ],
+      "kustoQueryFiles": [
+        "api-throttling-analysis.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "api-server",
+        "authorized-ip",
+        "i/o-timeout",
+        "connectivity",
+        "tls-handshake",
+        "timeout",
+        "kubectl",
+        "network"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "networking-connectivity-general-general",
+      "title": "网络连通性通用 — general",
+      "entryIds": [
+        "aks-039",
+        "aks-086",
+        "aks-159",
+        "aks-170",
+        "aks-225",
+        "aks-233",
+        "aks-268",
+        "aks-523",
+        "aks-571",
+        "aks-583",
+        "aks-584",
+        "aks-588",
+        "aks-597",
+        "aks-624",
+        "aks-662",
+        "aks-755",
+        "aks-805",
+        "aks-898",
+        "aks-955",
+        "aks-983",
+        "aks-1010",
+        "aks-1046",
+        "aks-1049",
+        "aks-1050",
+        "aks-1051",
+        "aks-1078",
+        "aks-1086",
+        "aks-1087",
+        "aks-1123",
+        "aks-1126",
+        "aks-1130",
+        "aks-1133",
+        "aks-1139",
+        "aks-1164",
+        "aks-1192",
+        "aks-1201",
+        "aks-1212",
+        "aks-1316",
+        "aks-1317"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-container-debug-tools.md",
+        "guides/drafts/ado-wiki-a-kubelet-serving-cert-rotation.md",
+        "guides/drafts/ado-wiki-analyzing-journalctl-logs-for-oom-kills.md",
+        "guides/drafts/ado-wiki-use-nsenter-to-debug-pods.md"
+      ],
+      "kustoQueryFiles": [
+        "arm-crp-tracking.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "oom",
+        "notready",
+        "vmsscse",
+        "cni-overlay",
+        "cse",
+        "npm",
+        "network-policy",
+        "node-provisioning"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "networking-connectivity-general-kubectl",
+      "title": "网络连通性通用 — kubectl",
+      "entryIds": [
+        "aks-110",
+        "aks-694",
+        "aks-1118"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "kubectl",
+        "mirror",
+        "mooncake",
+        "install-cli",
+        "404",
+        "download-failed",
+        "managed-namespaces",
+        "webhook"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "networking-connectivity-general-mooncake",
+      "title": "网络连通性通用 — mooncake",
+      "entryIds": [
+        "aks-056",
+        "aks-077",
+        "aks-140",
+        "aks-284"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "mooncake",
+        "ubuntu",
+        "daily-update",
+        "auto-upgrade",
+        "connection-timeout",
+        "unattended-upgrades",
+        "node-image",
+        "kusto"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "networking-connectivity-general-network-observability",
+      "title": "网络连通性通用 — network-observability",
+      "entryIds": [
+        "aks-515",
+        "aks-516",
+        "aks-987",
+        "aks-989",
+        "aks-991"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Network-Observability-Kappie.md",
+        "guides/drafts/ado-wiki-aks-network-observability-byo-prometheus-grafana.md",
+        "guides/drafts/ado-wiki-b-Planned-Maintenance-Windows.md",
+        "guides/drafts/ado-wiki-collecting-procdumps-from-windows-pods.md",
+        "guides/drafts/ado-wiki-d-Retina-Operator.md",
+        "guides/drafts/ado-wiki-windows-host-process-container.md",
+        "guides/drafts/mslearn-capture-container-dump-windows.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "network-observability",
+        "acns",
+        "retina",
+        "hubble-ui",
+        "unsupported",
+        "hubble-metrics",
+        "lost-packets",
+        "non-cilium"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "networking-connectivity-general-networking",
+      "title": "网络连通性通用 — networking",
+      "entryIds": [
+        "aks-009",
+        "aks-262",
+        "aks-506",
+        "aks-536",
+        "aks-547",
+        "aks-549",
+        "aks-551",
+        "aks-585",
+        "aks-641",
+        "aks-670",
+        "aks-1059",
+        "aks-1070",
+        "aks-1076",
+        "aks-1198",
+        "aks-1200",
+        "aks-1204"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-aks-networking-connectivity-baseline-template.md",
+        "guides/drafts/ado-wiki-b-run-tcpdump-in-container-group.md",
+        "guides/drafts/mslearn-capture-tcpdump-linux.md",
+        "guides/drafts/mslearn-capture-tcpdump-windows.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "networking",
+        "vnet",
+        "tcp",
+        "keepalive",
+        "timeout",
+        "kubectl",
+        "tunnel",
+        "tunnelfront"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "networking-connectivity-general-upgrade",
+      "title": "网络连通性通用 — upgrade",
+      "entryIds": [
+        "aks-017",
+        "aks-125",
+        "aks-1178"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "auto-upgrade.md",
+        "scale-upgrade-operations.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "upgrade",
+        "pdb",
+        "operation-timeout",
+        "reconcile",
+        "2h40m",
+        "reimage",
+        "kusto",
+        "calico"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "networking-connectivity-general-vmss",
+      "title": "网络连通性通用 — vmss",
+      "entryIds": [
+        "aks-026",
+        "aks-070",
+        "aks-572",
+        "aks-577",
+        "aks-1045"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-Container-Network-Metrics-Dynamic.md",
+        "guides/drafts/ado-wiki-b-common-network-issues.md",
+        "guides/drafts/ado-wiki-b-network-deployment-types.md",
+        "guides/drafts/ado-wiki-c-Network-Isolated-Cluster.md",
+        "guides/drafts/ado-wiki-capture-network-trace-veth.md",
+        "guides/drafts/ado-wiki-d-Container-Network-Logs.md",
+        "guides/drafts/ado-wiki-enable-create-gpu-in-fdpo-subscription.md",
+        "guides/drafts/ado-wiki-network-troubleshoot-tools.md",
+        "guides/drafts/ado-wiki-network-troubleshooting-checklist.md",
+        "guides/drafts/onenote-aks-rp-to-crp-kusto-trace.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "vmss",
+        "certificate-expiry",
+        "x509",
+        "cert-rotation",
+        "tls-bootstrapping",
+        "bbm",
+        "kusto",
+        "reconcile-control-plane"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "networking-connectivity-general-vnet",
+      "title": "网络连通性通用 — vnet",
+      "entryIds": [
+        "aks-172",
+        "aks-250",
+        "aks-743"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-acr-content-trust-delegation.md",
+        "guides/drafts/ado-wiki-agic-private-ip-only-workaround.md",
+        "guides/drafts/mslearn-same-vnet-connectivity.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "vnet",
+        "subnet",
+        "cidr",
+        "ip-address",
+        "workaround",
+        "resources-azure-com",
+        "delegation",
+        "managed-cluster"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "networking-dns-resolution-coredns",
+      "title": "DNS 解析排查 — coredns",
+      "entryIds": [
+        "aks-023",
+        "aks-072",
+        "aks-208",
+        "aks-212",
+        "aks-677",
+        "aks-1066",
+        "aks-1217"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-LocalDNS.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "coredns",
+        "upgrade",
+        "403",
+        "networking",
+        "scale-down",
+        "pdb",
+        "pod-disruption-budget",
+        "drain"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "networking-dns-resolution-dns",
+      "title": "DNS 解析排查 — dns",
+      "entryIds": [
+        "aks-014",
+        "aks-032",
+        "aks-078",
+        "aks-166",
+        "aks-173",
+        "aks-218",
+        "aks-226",
+        "aks-460",
+        "aks-461",
+        "aks-475",
+        "aks-544",
+        "aks-545",
+        "aks-555",
+        "aks-560",
+        "aks-561",
+        "aks-569",
+        "aks-626",
+        "aks-634",
+        "aks-646",
+        "aks-657",
+        "aks-665",
+        "aks-672",
+        "aks-803",
+        "aks-1064",
+        "aks-1096",
+        "aks-1098",
+        "aks-1103",
+        "aks-1120",
+        "aks-1136",
+        "aks-1160",
+        "aks-1186",
+        "aks-1207",
+        "aks-1210",
+        "aks-1266",
+        "aks-1278"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-aks-troubleshooting-dns-performance-lab.md",
+        "guides/drafts/ado-wiki-custom-logging-with-fluentbit.md",
+        "guides/drafts/ado-wiki-troubleshoot-nsg-common-scenarios.md",
+        "guides/drafts/mslearn-dns-resolution-troubleshooting.md",
+        "guides/drafts/mslearn-realtime-dns-analysis.md",
+        "guides/drafts/onenote-coredns-logging-enable.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "dns",
+        "private-cluster",
+        "coredns",
+        "custom-dns",
+        "api-server",
+        "networking",
+        "localdns",
+        "cse"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "networking-dns-resolution-dns-resolution",
+      "title": "DNS 解析排查 — dns-resolution",
+      "entryIds": [
+        "aks-210",
+        "aks-245",
+        "aks-424",
+        "aks-992"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-ampls-how-to-guide.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "dns-resolution",
+        "node-notready",
+        "api-server",
+        "fqdn",
+        "custom-dns",
+        "stop-start",
+        "cse-error-52",
+        "apiserver"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "networking-dns-resolution-general",
+      "title": "DNS 解析排查 — general",
+      "entryIds": [
+        "aks-223",
+        "aks-494",
+        "aks-510",
+        "aks-539",
+        "aks-559",
+        "aks-589",
+        "aks-845",
+        "aks-945",
+        "aks-1001",
+        "aks-1132",
+        "aks-1252",
+        "aks-1255"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-AGIC-Troubleshooting-Guide.md",
+        "guides/drafts/ado-wiki-a-AGIC-Troubleshooting-SSL-Configuration-Issues.md",
+        "guides/drafts/ado-wiki-a-AKS-Storage-Troubleshooting-Methodology.md",
+        "guides/drafts/ado-wiki-a-CIFS-Credits-Troubleshooting.md",
+        "guides/drafts/ado-wiki-a-VM-Restart-Troubleshooting-guideline.md",
+        "guides/drafts/ado-wiki-a-Windows-Node-Troubleshooting-Tips.md",
+        "guides/drafts/ado-wiki-a-Windows-On-AKS.md",
+        "guides/drafts/ado-wiki-a-aci-terminologies-troubleshooting.md",
+        "guides/drafts/ado-wiki-a-agic-troubleshooting-404.md",
+        "guides/drafts/ado-wiki-a-agic-troubleshooting-502.md",
+        "guides/drafts/ado-wiki-a-agic-troubleshooting-504.md",
+        "guides/drafts/ado-wiki-acr-troubleshooting-using-asi.md",
+        "guides/drafts/ado-wiki-agic-troubleshooting-wrong-backend.md",
+        "guides/drafts/ado-wiki-aks-collect-cpu-usage-node-pod-mapping.md",
+        "guides/drafts/ado-wiki-aks-dns-troubleshooting-workflow.md",
+        "guides/drafts/ado-wiki-aks-kusto-node-info-metrics-dashboards.md",
+        "guides/drafts/ado-wiki-aks-network-troubleshooting-methodology-overview.md",
+        "guides/drafts/ado-wiki-aks-per-node-publicip-use-examples.md",
+        "guides/drafts/ado-wiki-aks-troubleshooting-dns-issues-lab.md",
+        "guides/drafts/ado-wiki-aks-troubleshooting-egress-issues.md",
+        "guides/drafts/ado-wiki-b-AKS-AD-First-Basic-troubleshooting-steps.md",
+        "guides/drafts/ado-wiki-b-aci-troubleshooting-basics.md",
+        "guides/drafts/ado-wiki-b-troubleshooting-k8s-service-account-tokens.md",
+        "guides/drafts/ado-wiki-c-Static-Egress-Gateway-IP.md",
+        "guides/drafts/ado-wiki-c-VM-Availability-Troubleshooting-guideline.md",
+        "guides/drafts/ado-wiki-collaborations-aks-network-troubleshooting.md",
+        "guides/drafts/ado-wiki-customizing-node-hosts-file.md",
+        "guides/drafts/ado-wiki-preserving-node-logs-rca.md",
+        "guides/drafts/ado-wiki-ssl-certificate-validation-in-aks.md",
+        "guides/drafts/mslearn-aks-cluster-startup-troubleshooting.md",
+        "guides/drafts/mslearn-basic-troubleshooting-outbound-connections.md",
+        "guides/drafts/onenote-aks-node-access-methods.md",
+        "guides/drafts/onenote-aks-node-log-collection.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "azure-firewall",
+        "vmsscse",
+        "fqdn",
+        "extension",
+        "version",
+        "external-dns",
+        "migration",
+        "underlay"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "networking-dns-resolution-private-cluster",
+      "title": "DNS 解析排查 — private-cluster",
+      "entryIds": [
+        "aks-242",
+        "aks-540",
+        "aks-570",
+        "aks-587",
+        "aks-782",
+        "aks-793",
+        "aks-906",
+        "aks-971",
+        "aks-1026",
+        "aks-1155",
+        "aks-1184",
+        "aks-1185"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-aci-sync-ip-private-dns.md"
+      ],
+      "kustoQueryFiles": [
+        "cluster-snapshot.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "private-cluster",
+        "private-dns",
+        "vnet-link",
+        "upgrade",
+        "private-dns-zone",
+        "api-server",
+        "custom-dns",
+        "private-endpoint"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "networking-egress-outbound",
+      "title": "出站连接",
+      "entryIds": [
+        "aks-089",
+        "aks-542",
+        "aks-580",
+        "aks-738",
+        "aks-1080",
+        "aks-1094",
+        "aks-1208",
+        "aks-1209"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "vmextensionerror",
+        "oraspull",
+        "network-isolated",
+        "cve",
+        "openssh",
+        "security",
+        "node-image",
+        "ssh"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "networking-firewall-proxy-api-server",
+      "title": "防火墙与代理 — api-server",
+      "entryIds": [
+        "aks-1159",
+        "aks-1206",
+        "aks-1269"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "api-throttling-analysis.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "api-server",
+        "firewall",
+        "authorized-ip",
+        "connection-failure",
+        "exit-51",
+        "vmextensionerror",
+        "connection-fail",
+        "exit-code-51"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "networking-firewall-proxy-general",
+      "title": "防火墙与代理 — general",
+      "entryIds": [
+        "aks-025",
+        "aks-028",
+        "aks-164",
+        "aks-393",
+        "aks-423",
+        "aks-581",
+        "aks-633",
+        "aks-643",
+        "aks-846",
+        "aks-997",
+        "aks-1044",
+        "aks-1137",
+        "aks-1138",
+        "aks-1158",
+        "aks-1205",
+        "aks-1264"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-KMS-Addon.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "firewall",
+        "upgrade",
+        "egress",
+        "network",
+        "image-pull",
+        "azure-firewall",
+        "nva",
+        "iptables"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "networking-firewall-proxy-http-proxy",
+      "title": "防火墙与代理 — http-proxy",
+      "entryIds": [
+        "aks-503",
+        "aks-579",
+        "aks-1082",
+        "aks-1083",
+        "aks-1084",
+        "aks-1085"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Troubleshooting-HTTP-Proxy-Feature.md",
+        "guides/drafts/ado-wiki-aks-http-proxy-walkthrough.md",
+        "guides/drafts/ado-wiki-d-HTTP-Proxy-Feature.md",
+        "guides/drafts/mslearn-http-response-codes.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "http-proxy",
+        "windows",
+        "cse",
+        "certificate",
+        "provisioning",
+        "noproxy",
+        "node-image-upgrade",
+        "mitmproxy"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "networking-firewall-proxy-mcr",
+      "title": "防火墙与代理 — mcr",
+      "entryIds": [
+        "aks-098",
+        "aks-099",
+        "aks-235",
+        "aks-828"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-mcr-client-firewall-rules.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "mcr",
+        "firewall",
+        "mooncake",
+        "image-pull",
+        "endpoint-change",
+        "mcr.azure.cn",
+        "mcr.azk8s.cn",
+        "fqdn-rename"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "networking-firewall-proxy-networking",
+      "title": "防火墙与代理 — networking",
+      "entryIds": [
+        "aks-269",
+        "aks-541",
+        "aks-940"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-troubleshoot-nva-and-routing.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "firewall",
+        "networking",
+        "authorized-ip-ranges",
+        "service-cidr",
+        "subnet-conflict",
+        "private-cluster",
+        "private-endpoint",
+        "udr"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "networking-lb-external-aks",
+      "title": "外部负载均衡器与 SNAT — aks",
+      "entryIds": [
+        "aks-899",
+        "aks-903",
+        "aks-907",
+        "aks-909",
+        "aks-911"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-aks-networking-known-scenarios.md",
+        "guides/drafts/ado-wiki-aks-networking-troubleshooting-tools.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "aks",
+        "agentpool",
+        "rollback",
+        "blue-green",
+        "upgrade",
+        "no-history",
+        "version-mismatch",
+        "expired"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "networking-lb-external-general",
+      "title": "外部负载均衡器与 SNAT — general",
+      "entryIds": [
+        "aks-015",
+        "aks-071",
+        "aks-136",
+        "aks-191",
+        "aks-257",
+        "aks-596",
+        "aks-673",
+        "aks-726",
+        "aks-745",
+        "aks-847",
+        "aks-850",
+        "aks-901",
+        "aks-986"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-aci-service-unavailable-error.md",
+        "guides/drafts/ado-wiki-c-Service-Allowed-IP-Ranges-Annotation.md",
+        "guides/drafts/ado-wiki-capture-incoming-service-traffic.md",
+        "guides/drafts/ado-wiki-runbook-automation-vmss-windows.md",
+        "guides/drafts/ado-wiki-using-service-principals-deploy-with-ado.md",
+        "guides/drafts/mslearn-internal-pod-service-connectivity.md",
+        "guides/drafts/mslearn-pods-namespaces-terminating.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "imagepullbackoff",
+        "mooncake",
+        "vmss",
+        "public-ip",
+        "kube-proxy",
+        "gcr",
+        "registry",
+        "china-proxy"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "networking-lb-external-image-pull",
+      "title": "外部负载均衡器与 SNAT — image-pull",
+      "entryIds": [
+        "aks-062",
+        "aks-744",
+        "aks-806",
+        "aks-950",
+        "aks-1024",
+        "aks-1077"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-ErrImagePull-ImagePullBackOff-Status.md",
+        "guides/drafts/ado-wiki-a-image-cleaner.md"
+      ],
+      "kustoQueryFiles": [
+        "image-integrity.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "image-pull",
+        "x509",
+        "kube-proxy",
+        "ssl-inspection",
+        "firewall",
+        "windows",
+        "container-registry",
+        "proxy"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "networking-lb-external-networking",
+      "title": "外部负载均衡器与 SNAT — networking",
+      "entryIds": [
+        "aks-247",
+        "aks-252",
+        "aks-553",
+        "aks-562",
+        "aks-568",
+        "aks-679",
+        "aks-1040"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-SNAT-Port-Exhaustion.md",
+        "guides/drafts/ado-wiki-aks-traffic-analytics-nsg-flow-logs.md",
+        "guides/drafts/mslearn-snat-port-exhaustion-diagnostic.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "networking",
+        "snat",
+        "outbound",
+        "basic-lb",
+        "multiple-nodepools",
+        "standard-lb",
+        "migration",
+        "kubenet"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "networking-lb-internal-cloud-controller-manager",
+      "title": "内部负载均衡器 — cloud-controller-manager",
+      "entryIds": [
+        "aks-074",
+        "aks-256",
+        "aks-707"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "extension-manager.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "load-balancer",
+        "cloud-controller-manager",
+        "umi",
+        "managed-identity",
+        "rbac",
+        "authorizationfailed",
+        "lb",
+        "vmas-to-vmss"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "networking-lb-internal-cluster-delete",
+      "title": "内部负载均衡器 — cluster-delete",
+      "entryIds": [
+        "aks-592",
+        "aks-1150",
+        "aks-1151"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "cluster-snapshot.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "cluster-delete",
+        "load-balancer",
+        "public-ip",
+        "arm-cache",
+        "arm-sync",
+        "nrp-out-of-sync",
+        "jarvis-action",
+        "subnet"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "networking-lb-internal-external-ip",
+      "title": "内部负载均衡器 — external-ip",
+      "entryIds": [
+        "aks-563",
+        "aks-564",
+        "aks-565"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-ip-based-load-balancer.md",
+        "guides/drafts/ado-wiki-aci-static-ip-lb-auto-sync.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "load-balancer",
+        "external-ip",
+        "pending",
+        "authentication",
+        "service-principal",
+        "401",
+        "authorization",
+        "rbac"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "networking-lb-internal-general",
+      "title": "内部负载均衡器 — general",
+      "entryIds": [
+        "aks-142",
+        "aks-168",
+        "aks-194",
+        "aks-246",
+        "aks-455",
+        "aks-566",
+        "aks-616",
+        "aks-777",
+        "aks-848",
+        "aks-1190",
+        "aks-1191"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-aks-restrict-ingress-loadbalancersourceranges.md",
+        "guides/drafts/ado-wiki-b-Blue-Green-NodePool-Upgrade.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "load-balancer",
+        "kube-proxy",
+        "managed-tags",
+        "node-resource-group",
+        "ip-lease",
+        "service-principal",
+        "ilb",
+        "aadsts70002"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "networking-lb-internal-health-probe",
+      "title": "内部负载均衡器 — health-probe",
+      "entryIds": [
+        "aks-131",
+        "aks-558",
+        "aks-666",
+        "aks-1091"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-AGIC-Troubleshooting-Backend-Health-Probe-Issues.md",
+        "guides/drafts/ado-wiki-custom-health-probes-lb.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "health-probe",
+        "load-balancer",
+        "upgrade",
+        "nginx-ingress",
+        "1.24",
+        "npm",
+        "network-policy",
+        "iptables"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "networking-lb-internal-internal-lb",
+      "title": "内部负载均衡器 — internal-lb",
+      "entryIds": [
+        "aks-049",
+        "aks-075",
+        "aks-728",
+        "aks-1144"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "internal-lb",
+        "timeout",
+        "nginx-ingress",
+        "ilb",
+        "azure-cni",
+        "ip-overlap",
+        "helm",
+        "load-balancer"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "networking-lb-internal-networking",
+      "title": "内部负载均衡器 — networking",
+      "entryIds": [
+        "aks-265",
+        "aks-550",
+        "aks-556",
+        "aks-960",
+        "aks-1043",
+        "aks-1079"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "load-balancer",
+        "networking",
+        "snat",
+        "slb",
+        "outbound-pool",
+        "notready",
+        "sku-upgrade",
+        "basic-to-standard"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "networking-lb-internal-snat",
+      "title": "内部负载均衡器 — snat",
+      "entryIds": [
+        "aks-567",
+        "aks-763",
+        "aks-769",
+        "aks-1188"
+      ],
+      "draftPaths": [
+        "guides/drafts/mslearn-outbound-connectivity-troubleshooting.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "load-balancer",
+        "snat",
+        "outbound-ports",
+        "scale",
+        "invalidloadbalancerprofileallocatedoutboundports",
+        "outbound",
+        "port-exhaustion",
+        "connectivity"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "networking-nsg-rules-firewall",
+      "title": "NSG 规则排查 — firewall",
+      "entryIds": [
+        "aks-543",
+        "aks-586",
+        "aks-1099",
+        "aks-1124",
+        "aks-1161",
+        "aks-1172",
+        "aks-1180"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "firewall",
+        "nsg",
+        "egress",
+        "outbound-connectivity",
+        "mcr",
+        "cse",
+        "api-server",
+        "openvpn"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "networking-nsg-rules-general",
+      "title": "NSG 规则排查 — general",
+      "entryIds": [
+        "aks-193",
+        "aks-211",
+        "aks-249",
+        "aks-454",
+        "aks-590",
+        "aks-591",
+        "aks-751",
+        "aks-1119",
+        "aks-1121",
+        "aks-1197",
+        "aks-1277"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "nsg",
+        "subnet",
+        "cluster-delete",
+        "kubenet",
+        "custom-vnet",
+        "routetable",
+        "network-connectivity",
+        "mooncake"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "networking-nsg-rules-networking",
+      "title": "NSG 规则排查 — networking",
+      "entryIds": [
+        "aks-507",
+        "aks-508",
+        "aks-546",
+        "aks-740",
+        "aks-1068"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "nsg",
+        "networking",
+        "loadbalancer",
+        "loadbalancersourceranges",
+        "service-tags",
+        "iptables",
+        "outbound",
+        "nodeport"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "networking-nsg-rules-vmss",
+      "title": "NSG 规则排查 — vmss",
+      "entryIds": [
+        "aks-741",
+        "aks-1042",
+        "aks-1166"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "nsg",
+        "vmss",
+        "host-network",
+        "asg",
+        "cleanup",
+        "cse",
+        "custom-script-extension",
+        "udr"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "networking-private-cluster",
+      "title": "私有集群网络",
+      "entryIds": [
+        "aks-005",
+        "aks-240",
+        "aks-834",
+        "aks-873",
+        "aks-877",
+        "aks-881",
+        "aks-998",
+        "aks-1037",
+        "aks-1116"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-AzureML-AKS-Extension.md",
+        "guides/drafts/ado-wiki-a-Dapr-AKS-Extension.md",
+        "guides/drafts/ado-wiki-a-aks-private-cluster.md",
+        "guides/drafts/ado-wiki-aks-private-cluster-jumpbox-managed-identity.md",
+        "guides/drafts/ado-wiki-c-Check-cluster-diagnostic-settings.md",
+        "guides/drafts/ado-wiki-c-VM-Guest-Agent-and-Extension-Troubleshooting-guideline.md",
+        "guides/drafts/ado-wiki-multiple-apps-multiple-appgws-1-cluster.md",
+        "guides/drafts/onenote-aks-workload-protection-defender.md"
+      ],
+      "kustoQueryFiles": [
+        "cluster-snapshot.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "private-cluster",
+        "api-server",
+        "private-endpoint",
+        "command-invoke",
+        "vnet-integration",
+        "21v-gap",
+        "start-stop",
+        "disconnected"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "networking-udr-routing-authentication",
+      "title": "UDR 与路由 — authentication",
+      "entryIds": [
+        "aks-709",
+        "aks-731",
+        "aks-870",
+        "aks-959",
+        "aks-1199",
+        "aks-1284"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "authentication",
+        "jwt",
+        "claim-mapping",
+        "cel",
+        "agentic-cli",
+        "az-aks-agent",
+        "azure-openai",
+        "external-idp"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "networking-udr-routing-general",
+      "title": "UDR 与路由 — general",
+      "entryIds": [
+        "aks-061",
+        "aks-139",
+        "aks-186",
+        "aks-276",
+        "aks-449",
+        "aks-575",
+        "aks-578",
+        "aks-647",
+        "aks-653",
+        "aks-661",
+        "aks-689",
+        "aks-712",
+        "aks-719",
+        "aks-721",
+        "aks-800",
+        "aks-839",
+        "aks-921",
+        "aks-929",
+        "aks-1000",
+        "aks-1054",
+        "aks-1127",
+        "aks-1257"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Multiple-Standard-Load-Balancers.md",
+        "guides/drafts/ado-wiki-b-fleet-automated-deployments.md",
+        "guides/drafts/ado-wiki-fleet-resourceplacement-tsg.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "api-version",
+        "vmss",
+        "addon",
+        "gpu",
+        "api",
+        "extension",
+        "certificate-expired",
+        "invalidgalleryimageref"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "networking-udr-routing-ossku",
+      "title": "UDR 与路由 — ossku",
+      "entryIds": [
+        "aks-644",
+        "aks-735",
+        "aks-737",
+        "aks-739",
+        "aks-947",
+        "aks-981",
+        "aks-982"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-resolv-conf-generation-aks-ubuntu-2204.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "ossku",
+        "cvm",
+        "flatcar",
+        "fips",
+        "ubuntu",
+        "invalidossku",
+        "node-pool",
+        "ubuntu2404"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "networking-udr-routing-route-table",
+      "title": "UDR 与路由 — route-table",
+      "entryIds": [
+        "aks-239",
+        "aks-1067",
+        "aks-1187"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-move-pv-data-between-clusters.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "route-table",
+        "networking",
+        "vnet",
+        "resource-group",
+        "move",
+        "cloudconfig",
+        "kubenet",
+        "failedtocreateroute"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "networking-udr-routing-scale",
+      "title": "UDR 与路由 — scale",
+      "entryIds": [
+        "aks-762",
+        "aks-765",
+        "aks-768",
+        "aks-772",
+        "aks-963"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "scale-upgrade-operations.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "scale",
+        "crud",
+        "upgrade",
+        "image-not-found",
+        "invalidauthenticationtoken",
+        "getskustoreerror",
+        "service-principal",
+        "outdated-version"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "networking-udr-routing-service-principal",
+      "title": "UDR 与路由 — service-principal",
+      "entryIds": [
+        "aks-1157",
+        "aks-1167",
+        "aks-1189"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "service-principal",
+        "cluster-creation",
+        "aadsts7000222",
+        "expired-secret",
+        "managed-identity",
+        "entra-id",
+        "propagation",
+        "invalid-parameter"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "networking-udr-routing-udr",
+      "title": "UDR 与路由 — udr",
+      "entryIds": [
+        "aks-093",
+        "aks-143",
+        "aks-255",
+        "aks-660",
+        "aks-849"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-imds-restriction.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "udr",
+        "kubenet",
+        "bgp",
+        "azure-policy",
+        "route-table",
+        "preflight-validation",
+        "subnet",
+        "bug"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "node-not-ready",
+      "title": "节点 NotReady",
+      "entryIds": [
+        "aks-022",
+        "aks-126",
+        "aks-477",
+        "aks-1041",
+        "aks-1095",
+        "aks-1097",
+        "aks-1101"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Managed-Prometheus.md",
+        "guides/drafts/mslearn-node-not-ready-basic-troubleshooting.md"
+      ],
+      "kustoQueryFiles": [
+        "node-fabric-info.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "pthread_create",
+        "node-not-ready",
+        "pid-exhaustion",
+        "eviction",
+        "containerd",
+        "kubelet",
+        "notready",
+        "node-notready"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "node-os-kernel",
+      "title": "节点 OS 与内核",
+      "entryIds": [
+        "aks-201",
+        "aks-1038",
+        "aks-1048"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "node-fabric-info.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "kernel-parameters",
+        "sysctl",
+        "by-design",
+        "node-config",
+        "ubuntu-24.04",
+        "file-descriptor",
+        "containerd",
+        "crashloopbackoff"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "node-performance-resource-general",
+      "title": "节点性能与资源管理 — general",
+      "entryIds": [
+        "aks-121",
+        "aks-213",
+        "aks-498",
+        "aks-995",
+        "aks-1047",
+        "aks-1104",
+        "aks-1106",
+        "aks-1202"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "node-fabric-info.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "throttling",
+        "pending",
+        "exit-code-137",
+        "mlocate",
+        "updatedb",
+        "io-spike",
+        "cron",
+        "node-performance"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "node-performance-resource-memory",
+      "title": "节点性能与资源管理 — memory",
+      "entryIds": [
+        "aks-472",
+        "aks-476",
+        "aks-478",
+        "aks-1092",
+        "aks-1135",
+        "aks-1214"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-Map-processes-to-pods-resource-usage.md",
+        "guides/drafts/ado-wiki-c-Using-ASI-to-Check-Node-Performance.md",
+        "guides/drafts/ado-wiki-calculating-allocatable-memory-linux-node.md",
+        "guides/drafts/ado-wiki-la-query-aks-node-cpu-memory-alerts.md",
+        "guides/drafts/ado-wiki-tsg-resource-exhaustion.md"
+      ],
+      "kustoQueryFiles": [
+        "node-fabric-info.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "memory",
+        "oom-kill",
+        "cgroup",
+        "exit-code-137",
+        "journalctl",
+        "container-limit",
+        "node-level-oom",
+        "kernel-oom"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "node-performance-resource-oom",
+      "title": "节点性能与资源管理 — oom",
+      "entryIds": [
+        "aks-044",
+        "aks-162",
+        "aks-238",
+        "aks-663"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "node-fabric-info.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "oom",
+        "kube-state-metrics",
+        "ksm",
+        "crashloopbackoff",
+        "v1beta1",
+        "api-deprecation",
+        "compatibility",
+        "container-insights"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "node-performance-resource-vpa",
+      "title": "节点性能与资源管理 — vpa",
+      "entryIds": [
+        "aks-1053",
+        "aks-1073",
+        "aks-1102"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "node-fabric-info.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "vpa",
+        "metrics-server",
+        "monitoring",
+        "cpu-throttling",
+        "addon-resizer",
+        "runtime",
+        "recommendation",
+        "oomkilled"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "node-provisioning-errors",
+      "title": "节点配置错误",
+      "entryIds": [
+        "aks-038",
+        "aks-715",
+        "aks-732",
+        "aks-1052",
+        "aks-1249"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-Non-Cilium-Metrics-Basic.md",
+        "guides/drafts/ado-wiki-d-Basic-Metrics-TSG.md",
+        "guides/drafts/ado-wiki-d-Cilium-Metrics-Basic.md",
+        "guides/drafts/ado-wiki-d-Metrics-Cilium-Advanced.md",
+        "guides/drafts/ado-wiki-d-Metrics-Non-Cilium-Advanced.md",
+        "guides/drafts/ado-wiki-d-Windows-GPU.md",
+        "guides/drafts/ado-wiki-time-slicing-gpu-aks.md",
+        "guides/drafts/mslearn-custom-kubelet-windows-known-issues.md",
+        "guides/drafts/onenote-aks-prometheus-grafana-setup.md"
+      ],
+      "kustoQueryFiles": [
+        "node-fabric-info.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "kaito",
+        "gpu",
+        "node-provisioning",
+        "prometheus",
+        "grafana",
+        "monitoring",
+        "helm",
+        "observability"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "node-vmss-cse-extension",
+      "title": "VMSS CSE 与节点启动 — extension",
+      "entryIds": [
+        "aks-055",
+        "aks-130",
+        "aks-535",
+        "aks-686",
+        "aks-1251",
+        "aks-1253",
+        "aks-1254",
+        "aks-1256",
+        "aks-1262"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Marketplace-Kubernetes-Apps.md",
+        "guides/drafts/ado-wiki-a-Windows-Node-Extension.md",
+        "guides/drafts/ado-wiki-vmss-cse-exit-codes.md"
+      ],
+      "kustoQueryFiles": [
+        "extension-manager.md",
+        "node-fabric-info.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "extension",
+        "dapr",
+        "mooncake",
+        "app-configuration",
+        "helm",
+        "region",
+        "aks-preview",
+        "azure-cli"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "node-vmss-cse-general",
+      "title": "VMSS CSE 与节点启动 — general",
+      "entryIds": [
+        "aks-151",
+        "aks-234",
+        "aks-582",
+        "aks-1165",
+        "aks-1216",
+        "aks-1219",
+        "aks-1307",
+        "aks-1308"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "node-fabric-info.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "vmsscse",
+        "cluster-extension",
+        "byok",
+        "key-vault",
+        "diskencryptionset",
+        "ssh",
+        "node-access",
+        "kubectl-debug"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "node-vmss-cse-vmss",
+      "title": "VMSS CSE 与节点启动 — vmss",
+      "entryIds": [
+        "aks-036",
+        "aks-063",
+        "aks-160",
+        "aks-625"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "node-fabric-info.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "vmss",
+        "troubleshooting",
+        "node-access",
+        "ssh",
+        "kubectl",
+        "node-shell",
+        "snapshot",
+        "log-collection"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "outage-incident",
+      "title": "故障与事件",
+      "entryIds": [
+        "aks-648",
+        "aks-1247"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "rca",
+        "best-effort",
+        "support-scope",
+        "case-handling",
+        "third-party-scanner",
+        "prisma",
+        "runtime-host-incident",
+        "security-alert"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "pod-containerd",
+      "title": "containerd 运行时",
+      "entryIds": [
+        "aks-011",
+        "aks-092",
+        "aks-251"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "pod-restart-analysis.md",
+        "pod-subnet-sharing.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "containerd",
+        "docker",
+        "crictl",
+        "nsenter",
+        "packet-capture",
+        "runtime",
+        "docker-bridge-cidr",
+        "api-deprecation"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "pod-crashloop-restart",
+      "title": "Pod CrashLoopBackOff / 重启",
+      "entryIds": [
+        "aks-119",
+        "aks-202",
+        "aks-214",
+        "aks-260",
+        "aks-994",
+        "aks-1173"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "pod-restart-analysis.md",
+        "pod-subnet-sharing.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "crashloopbackoff",
+        "api-server",
+        "product-issue",
+        "restart",
+        "metrics-server",
+        "etcd",
+        "quorum-loss",
+        "control-plane"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "pod-image-pull-errors",
+      "title": "镜像拉取失败",
+      "entryIds": [
+        "aks-734",
+        "aks-1250"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "image-integrity.md",
+        "pod-restart-analysis.md",
+        "pod-subnet-sharing.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "kaito",
+        "image-pull",
+        "inference",
+        "gpu",
+        "inference-image",
+        "large-image",
+        "private-access"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "pod-scheduling-eviction",
+      "title": "Pod 调度与驱逐",
+      "entryIds": [
+        "aks-176",
+        "aks-183",
+        "aks-215",
+        "aks-833",
+        "aks-922",
+        "aks-984",
+        "aks-1056",
+        "aks-1057",
+        "aks-1107"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "pod-restart-analysis.md",
+        "pod-subnet-sharing.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "taint",
+        "aks",
+        "kube-scheduler",
+        "control-plane",
+        "node-scheduling",
+        "cordon",
+        "ready-not-scheduling",
+        "resource-pressure"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "portal-cli-tools",
+      "title": "Portal CLI 与工具",
+      "entryIds": [
+        "aks-248",
+        "aks-639",
+        "aks-681",
+        "aks-831",
+        "aks-1177"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "portal",
+        "role-assignment",
+        "409",
+        "alerting",
+        "asc",
+        "customer-data",
+        "consent",
+        "non-portal-case"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "scale-cluster-autoscaler-autoscaler",
+      "title": "Cluster Autoscaler — autoscaler",
+      "entryIds": [
+        "aks-008",
+        "aks-118",
+        "aks-753",
+        "aks-1141",
+        "aks-1168"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-cluster-upgrades-using-arm.md",
+        "guides/drafts/ado-wiki-getting-container-throttling-values.md"
+      ],
+      "kustoQueryFiles": [
+        "autoscaler-analysis.md",
+        "cluster-snapshot.md",
+        "scale-upgrade-operations.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "autoscaler",
+        "node-pool",
+        "vms",
+        "snapshot",
+        "21v-gap",
+        "scale-fluctuation",
+        "1.24",
+        "preview"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "scale-cluster-autoscaler-cluster-autoscaler",
+      "title": "Cluster Autoscaler — cluster-autoscaler",
+      "entryIds": [
+        "aks-243",
+        "aks-603",
+        "aks-835",
+        "aks-836",
+        "aks-918",
+        "aks-1154"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "autoscaler-analysis.md",
+        "cluster-snapshot.md",
+        "scale-upgrade-operations.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "cluster-autoscaler",
+        "scale-down",
+        "min-count",
+        "scale-up",
+        "pending-pods",
+        "aks",
+        "job",
+        "safe-to-evict"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "scale-cluster-autoscaler-general",
+      "title": "Cluster Autoscaler — general",
+      "entryIds": [
+        "aks-109",
+        "aks-505",
+        "aks-534",
+        "aks-593",
+        "aks-767",
+        "aks-838",
+        "aks-869"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-CAS-Scaling-Conditions.md",
+        "guides/drafts/ado-wiki-b-HPA-not-scaling-pods.md"
+      ],
+      "kustoQueryFiles": [
+        "autoscaler-analysis.md",
+        "cluster-snapshot.md",
+        "scale-upgrade-operations.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "node-bootstrap",
+        "control-plane",
+        "scale-up",
+        "service-bug",
+        "backend-restart",
+        "duplicate-processing",
+        "free-tier",
+        "high-availability"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "scale-cluster-autoscaler-vmss",
+      "title": "Cluster Autoscaler — vmss",
+      "entryIds": [
+        "aks-034",
+        "aks-076",
+        "aks-127",
+        "aks-228",
+        "aks-270",
+        "aks-489",
+        "aks-774",
+        "aks-837",
+        "aks-925",
+        "aks-1152"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Kusto-queries-Cluster-AutoScaler.md",
+        "guides/drafts/ado-wiki-a-cluster-autoscaler-vms-agent-pool.md",
+        "guides/drafts/ado-wiki-b-Audit-query-with-Kusto.md",
+        "guides/drafts/ado-wiki-b-aci-atlas-investigation-flow-kusto.md",
+        "guides/drafts/onenote-vmss-scaledown-kusto-tracking.md"
+      ],
+      "kustoQueryFiles": [
+        "autoscaler-analysis.md",
+        "cluster-snapshot.md",
+        "scale-upgrade-operations.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "vmss",
+        "cluster-autoscaler",
+        "autoscaler",
+        "scale-down",
+        "mooncake",
+        "scale-up",
+        "scale",
+        "kusto"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "scale-karpenter-nap",
+      "title": "Karpenter / NAP",
+      "entryIds": [
+        "aks-908",
+        "aks-910",
+        "aks-914",
+        "aks-1276",
+        "aks-1279",
+        "aks-1280"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "scale-upgrade-operations.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "karpenter",
+        "nap",
+        "node-autoprovision",
+        "stuck",
+        "provisioning",
+        "instance-type",
+        "sku",
+        "nodeclaim"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "scale-nodepool-fips",
+      "title": "节点池扩缩容 — fips",
+      "entryIds": [
+        "aks-711",
+        "aks-865",
+        "aks-867"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "scale-upgrade-operations.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "fips",
+        "arm64",
+        "azure-linux",
+        "azurelinux",
+        "os-sku",
+        "mariner",
+        "nodepool"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "scale-nodepool-general",
+      "title": "节点池扩缩容 — general",
+      "entryIds": [
+        "aks-094",
+        "aks-112",
+        "aks-209",
+        "aks-267",
+        "aks-272",
+        "aks-632",
+        "aks-704",
+        "aks-713",
+        "aks-720",
+        "aks-750",
+        "aks-917",
+        "aks-919",
+        "aks-924",
+        "aks-931",
+        "aks-953",
+        "aks-1218"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "scale-upgrade-operations.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "mooncake",
+        "portal",
+        "node-pool",
+        "disable",
+        "omsagent",
+        "log-analytics",
+        "workspace-key",
+        "mmaextension"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "scale-nodepool-scale",
+      "title": "节点池扩缩容 — scale",
+      "entryIds": [
+        "aks-747",
+        "aks-757",
+        "aks-759",
+        "aks-764",
+        "aks-932",
+        "aks-965"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "scale-upgrade-operations.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "scale",
+        "subscription-limit",
+        "controlplaneaddonsnotready",
+        "kube-system",
+        "user-pods",
+        "namespace",
+        "skunotavailable",
+        "vm-size"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "scale-nodepool-vm-size",
+      "title": "节点池扩缩容 — vm-size",
+      "entryIds": [
+        "aks-273",
+        "aks-756",
+        "aks-956",
+        "aks-1039"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-check-physical-zone-logical-zone-mapping.md"
+      ],
+      "kustoQueryFiles": [
+        "scale-upgrade-operations.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "vm-size",
+        "capacity",
+        "azsm",
+        "allocation-failure",
+        "ephemeral-disk",
+        "mooncake",
+        "overconstrained",
+        "d4ds_v5"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "scale-nodepool-vmss",
+      "title": "节点池扩缩容 — vmss",
+      "entryIds": [
+        "aks-013",
+        "aks-060",
+        "aks-079",
+        "aks-197",
+        "aks-722"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "scale-upgrade-operations.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "vmss",
+        "429",
+        "scaling",
+        "throttling",
+        "arm",
+        "controller-manager",
+        "go-sdk",
+        "node-delete"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "scale-nodepool-windows",
+      "title": "节点池扩缩容 — windows",
+      "entryIds": [
+        "aks-705",
+        "aks-802",
+        "aks-807",
+        "aks-1074",
+        "aks-1075"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "scale-upgrade-operations.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "windows",
+        "windows2025",
+        "nodepool",
+        "nodepool-creation",
+        "arm64",
+        "unsupported",
+        "gen2",
+        "windows2019"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "security-azure-policy-failed-state",
+      "title": "Azure Policy — failed-state",
+      "entryIds": [
+        "aks-780",
+        "aks-789",
+        "aks-970"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "failed-state",
+        "azure-policy",
+        "requestdisallowedbypolicy",
+        "governance",
+        "crud",
+        "request-disallowed"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "security-azure-policy-gatekeeper",
+      "title": "Azure Policy — gatekeeper",
+      "entryIds": [
+        "aks-671",
+        "aks-675",
+        "aks-1128",
+        "aks-1222",
+        "aks-1223",
+        "aks-1224"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-Gathering-Azure-Policy-Logs.md",
+        "guides/drafts/ado-wiki-a-container-taking-long-time-to-provision-failing.md",
+        "guides/drafts/ado-wiki-azure-network-policy-manager-tsg.md",
+        "guides/drafts/ado-wiki-how-to-collect-container-logs.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "gatekeeper",
+        "azure-policy",
+        "image-integrity",
+        "ratify",
+        "security",
+        "addon",
+        "opa",
+        "constraint-template"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "security-azure-policy-general",
+      "title": "Azure Policy — general",
+      "entryIds": [
+        "aks-156",
+        "aks-266",
+        "aks-723",
+        "aks-829",
+        "aks-861",
+        "aks-1022",
+        "aks-1220",
+        "aks-1221",
+        "aks-1225",
+        "aks-1244",
+        "aks-1245",
+        "aks-1246",
+        "aks-1322"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "azure-policy",
+        "upgrade",
+        "custom-policy",
+        "portal",
+        "mooncake",
+        "disable-addon",
+        "sig",
+        "shared-image-gallery"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "security-defender",
+      "title": "Microsoft Defender",
+      "entryIds": [
+        "aks-002",
+        "aks-068",
+        "aks-117",
+        "aks-153",
+        "aks-154",
+        "aks-155",
+        "aks-514",
+        "aks-760",
+        "aks-761",
+        "aks-958"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-tcpdump-using-sidecar-containers.md",
+        "guides/drafts/mslearn-avoid-running-as-root-containers.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "defender",
+        "log-analytics",
+        "mooncake",
+        "monitoring-addon",
+        "security",
+        "21v-unsupported",
+        "resourcenotfound",
+        "containers"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "security-rbac-authz-authorization",
+      "title": "RBAC 与授权 — authorization",
+      "entryIds": [
+        "aks-676",
+        "aks-716",
+        "aks-1260"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-determining-subscription-for-public-ip.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "authorization",
+        "resource-provider",
+        "flux",
+        "subscription",
+        "cluster-management",
+        "crg",
+        "capacity-reservation",
+        "permission"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "security-rbac-authz-general",
+      "title": "RBAC 与授权 — general",
+      "entryIds": [
+        "aks-037",
+        "aks-181",
+        "aks-182",
+        "aks-198",
+        "aks-682",
+        "aks-872",
+        "aks-1019"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "mooncake",
+        "vmss",
+        "reconciliation",
+        "scaling",
+        "jit-access",
+        "escort",
+        "jarvis",
+        "geneva-actions"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "security-rbac-authz-rbac",
+      "title": "RBAC 与授权 — rbac",
+      "entryIds": [
+        "aks-148",
+        "aks-177",
+        "aks-710",
+        "aks-999",
+        "aks-1129",
+        "aks-1309"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "rbac",
+        "forbidden",
+        "authorization",
+        "azure-rbac",
+        "kubernetes-rbac",
+        "access-control",
+        "mode-switch",
+        "helm"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "storage-acstor-21v-unsupported",
+      "title": "Azure Container Storage — 21v-unsupported",
+      "entryIds": [
+        "aks-004",
+        "aks-426",
+        "aks-427",
+        "aks-428",
+        "aks-432"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-VM-Storage-Fileshare-Performance-Troubleshooting.md",
+        "guides/drafts/ado-wiki-a-acstor-escalation-steps.md",
+        "guides/drafts/ado-wiki-acstor-geneva-actions.md",
+        "guides/drafts/ado-wiki-acstor-geneva-logs.md",
+        "guides/drafts/ado-wiki-b-Trident-Storage-NetApp.md",
+        "guides/drafts/ado-wiki-b-acstor-error-codes.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "acstor",
+        "21v-unsupported",
+        "persistent-volume",
+        "storage-pool",
+        "container-storage",
+        "csi",
+        "storage",
+        "readonly"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "storage-acstor-general",
+      "title": "Azure Container Storage — general",
+      "entryIds": [
+        "aks-145",
+        "aks-309",
+        "aks-433",
+        "aks-434",
+        "aks-435",
+        "aks-436",
+        "aks-438",
+        "aks-439",
+        "aks-440",
+        "aks-442",
+        "aks-443"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-recovery-of-azure-container-registry.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "acstor",
+        "data-integrity",
+        "diskpool",
+        "deletion",
+        "pvc",
+        "etcd",
+        "elastic-san",
+        "mooncake"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "storage-acstor-nvme",
+      "title": "Azure Container Storage — nvme",
+      "entryIds": [
+        "aks-430",
+        "aks-441",
+        "aks-444"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "acstor",
+        "nvme",
+        "storage-pool",
+        "ephemeral-disk",
+        "vm-size",
+        "kernel-modules",
+        "reboot",
+        "linux-upgrade"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "storage-azure-disk-csi",
+      "title": "Azure Disk CSI — csi",
+      "entryIds": [
+        "aks-030",
+        "aks-114",
+        "aks-1306"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-azure-disk-csi-driver-v2.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "azure-disk",
+        "csi",
+        "snapshot",
+        "pvc",
+        "cmk",
+        "customer-managed-key",
+        "diskencryptionset",
+        "attachvolume"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "storage-azure-disk-general",
+      "title": "Azure Disk CSI — general",
+      "entryIds": [
+        "aks-040",
+        "aks-271",
+        "aks-275",
+        "aks-429",
+        "aks-1288",
+        "aks-1289",
+        "aks-1290",
+        "aks-1291",
+        "aks-1292",
+        "aks-1293",
+        "aks-1300"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "azure-disk",
+        "ephemeral-disk",
+        "node-pool",
+        "pv",
+        "rbac",
+        "os-disk",
+        "vmss",
+        "disk-type"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "storage-azure-disk-storage",
+      "title": "Azure Disk CSI — storage",
+      "entryIds": [
+        "aks-045",
+        "aks-529",
+        "aks-635",
+        "aks-822",
+        "aks-890",
+        "aks-896",
+        "aks-1027",
+        "aks-1032",
+        "aks-1033",
+        "aks-1035"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-backup-restore-aks-velero.md",
+        "guides/drafts/ado-wiki-expand-or-resize-persistent-volume.md",
+        "guides/drafts/ado-wiki-migrating-disks-lrs-to-zrs.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "storage",
+        "azure-disk",
+        "availability-zone",
+        "backup",
+        "4tib",
+        "storageclass",
+        "statefulset",
+        "lrs"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "storage-azure-files-nfs",
+      "title": "Azure Files NFS",
+      "entryIds": [
+        "aks-135",
+        "aks-479",
+        "aks-530",
+        "aks-894",
+        "aks-1304",
+        "aks-1305"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-using-nfs-for-pod-storage.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "nfs",
+        "storage",
+        "azure-blob",
+        "blob-nfs",
+        "nfs3",
+        "private-endpoint",
+        "aznfs",
+        "mount"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "storage-azure-files-smb-csi-driver",
+      "title": "Azure Files SMB — csi-driver",
+      "entryIds": [
+        "aks-065",
+        "aks-067",
+        "aks-069",
+        "aks-283"
+      ],
+      "draftPaths": [
+        "guides/drafts/onenote-aks-smb-csi-driver.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "azure-files",
+        "csi-driver",
+        "managed-identity",
+        "mooncake",
+        "storage-account",
+        "oidc",
+        "mount-failure",
+        "dynamic-provisioning"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "storage-azure-files-smb-general",
+      "title": "Azure Files SMB — general",
+      "entryIds": [
+        "aks-066",
+        "aks-100",
+        "aks-229",
+        "aks-488",
+        "aks-1287",
+        "aks-1295",
+        "aks-1296",
+        "aks-1297",
+        "aks-1298",
+        "aks-1299",
+        "aks-1301"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "azure-files",
+        "csi",
+        "permission-denied",
+        "key-rotation",
+        "kubernetes-secret",
+        "vnet",
+        "smb-security",
+        "managed-identity"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "storage-azure-files-smb-smb",
+      "title": "Azure Files SMB — smb",
+      "entryIds": [
+        "aks-058",
+        "aks-192",
+        "aks-196",
+        "aks-487",
+        "aks-1294"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "azure-files",
+        "smb",
+        "port-445",
+        "nsg",
+        "dns",
+        "kernel-regression",
+        "host-is-down",
+        "storage-migration"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "storage-azure-files-smb-storage",
+      "title": "Azure Files SMB — storage",
+      "entryIds": [
+        "aks-041",
+        "aks-815",
+        "aks-888",
+        "aks-889",
+        "aks-1028",
+        "aks-1029",
+        "aks-1030",
+        "aks-1031",
+        "aks-1286"
+      ],
+      "draftPaths": [
+        "guides/drafts/mslearn-mountoptions-azure-files.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "storage",
+        "azure-files",
+        "smb",
+        "csi-driver",
+        "cifs",
+        "nfs",
+        "persistent-volume",
+        "readwritemany"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "storage-blob-blobfuse-blob-csi",
+      "title": "Blob CSI / BlobFuse — blob-csi",
+      "entryIds": [
+        "aks-057",
+        "aks-819",
+        "aks-883"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "blob-csi",
+        "storage",
+        "blobfuse-proxy",
+        "crashloopbackoff",
+        "open-source-driver",
+        "managed-csi",
+        "context-deadline-exceeded",
+        "volume-mount"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "storage-blob-blobfuse-blobfuse",
+      "title": "Blob CSI / BlobFuse — blobfuse",
+      "entryIds": [
+        "aks-046",
+        "aks-064",
+        "aks-158",
+        "aks-486",
+        "aks-528",
+        "aks-821",
+        "aks-891",
+        "aks-1302",
+        "aks-1303"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-aci-automate-sync-ip-appgw-backend-pool.md",
+        "guides/drafts/onenote-blobfuse2-csi-setup.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "blobfuse",
+        "storage",
+        "cache",
+        "pvc",
+        "azure-blob",
+        "hns",
+        "adls",
+        "dfs"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "storage-blob-blobfuse-blobfuse2",
+      "title": "Blob CSI / BlobFuse — blobfuse2",
+      "entryIds": [
+        "aks-042",
+        "aks-165",
+        "aks-892",
+        "aks-893"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "blobfuse2",
+        "hns",
+        "storage",
+        "upgrade",
+        "blob-csi",
+        "dfs",
+        "private-endpoint",
+        "403"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "storage-blob-blobfuse-general",
+      "title": "Blob CSI / BlobFuse — general",
+      "entryIds": [
+        "aks-594",
+        "aks-885",
+        "aks-887",
+        "aks-902"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "blob-storage",
+        "private-endpoint",
+        "firewall",
+        "nodepool-delete",
+        "vmss",
+        "crp-race-condition",
+        "disk-lease",
+        "blob-lease"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "storage-pv-pvc-configmap",
+      "title": "PV/PVC 与卷管理 — configmap",
+      "entryIds": [
+        "aks-020",
+        "aks-501",
+        "aks-809"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "configmap",
+        "container-insights",
+        "log-analytics",
+        "omsagent",
+        "stdout",
+        "stderr",
+        "log-cost",
+        "azure-monitor"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "storage-pv-pvc-contentidea-kb",
+      "title": "PV/PVC 与卷管理 — contentidea-kb",
+      "entryIds": [
+        "aks-1318",
+        "aks-1323",
+        "aks-1325"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "contentidea-kb"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "storage-pv-pvc-csi",
+      "title": "PV/PVC 与卷管理 — csi",
+      "entryIds": [
+        "aks-029",
+        "aks-107",
+        "aks-1263",
+        "aks-1265",
+        "aks-1267",
+        "aks-1268"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "csi",
+        "key-vault",
+        "secrets-store",
+        "secretproviderclass",
+        "azure-file",
+        "pvc",
+        "storageclass",
+        "azurefile-csi"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "storage-pv-pvc-csi-driver",
+      "title": "PV/PVC 与卷管理 — csi-driver",
+      "entryIds": [
+        "aks-088",
+        "aks-278",
+        "aks-282",
+        "aks-1213"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-blob-csi-driver.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "csi-driver",
+        "mooncake",
+        "cve",
+        "kube-system",
+        "mcr",
+        "node-image",
+        "security",
+        "1.21"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "storage-pv-pvc-daemonset",
+      "title": "PV/PVC 与卷管理 — daemonset",
+      "entryIds": [
+        "aks-050",
+        "aks-280",
+        "aks-606"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-linking-linux-azure-kernel-ubuntu-versions.md",
+        "guides/drafts/ado-wiki-linux-kernel-dump-crash-analysis.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "daemonset",
+        "sysctl",
+        "omsagent",
+        "pod-not-running",
+        "volume-mount",
+        "container-creating",
+        "kubelet",
+        "vmss"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "storage-pv-pvc-general",
+      "title": "PV/PVC 与卷管理 — general",
+      "entryIds": [
+        "aks-016",
+        "aks-080",
+        "aks-085",
+        "aks-133",
+        "aks-222",
+        "aks-573",
+        "aks-608",
+        "aks-697",
+        "aks-727",
+        "aks-752",
+        "aks-853",
+        "aks-863",
+        "aks-954",
+        "aks-993",
+        "aks-1005",
+        "aks-1017",
+        "aks-1105",
+        "aks-1258"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-crictl-ctr-operations-aks-nodes.md",
+        "guides/drafts/onenote-aks-crud-operations-log-tracing.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "ephemeral-disk",
+        "no-space-left",
+        "kubelet",
+        "nodepool",
+        "node-registration",
+        "hostpath",
+        "node-notready",
+        "io-throttling"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "storage-pv-pvc-networking",
+      "title": "PV/PVC 与卷管理 — networking",
+      "entryIds": [
+        "aks-554",
+        "aks-1065",
+        "aks-1069"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "networking",
+        "azure-firewall",
+        "snat-port-reuse",
+        "connectivity",
+        "application-rules",
+        "dns",
+        "coredns",
+        "bufsize"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "storage-pv-pvc-storage",
+      "title": "PV/PVC 与卷管理 — storage",
+      "entryIds": [
+        "aks-163",
+        "aks-531",
+        "aks-680",
+        "aks-725",
+        "aks-816",
+        "aks-817",
+        "aks-818",
+        "aks-820",
+        "aks-823",
+        "aks-886",
+        "aks-895",
+        "aks-1034"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "storage",
+        "rbac",
+        "csi",
+        "timeout",
+        "vmss",
+        "etcd",
+        "monitoring",
+        "control-plane"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "throttling-quota",
+      "title": "限流与配额",
+      "entryIds": [
+        "aks-499"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "api-throttling-analysis.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "api-throttling",
+        "429",
+        "token-bucket",
+        "rate-limiting",
+        "put-agentpool"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "upgrade-auto-maintenance",
+      "title": "自动升级与维护窗口",
+      "entryIds": [
+        "aks-152"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-auto-upgrade-scheduled-maintenance.md"
+      ],
+      "kustoQueryFiles": [
+        "auto-upgrade.md",
+        "maintenance-window.md",
+        "scale-upgrade-operations.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "auto-upgrade",
+        "maintenance-window",
+        "planned-maintenance",
+        "node-surge",
+        "upgrade-channel"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "upgrade-cluster-version-auto-upgrade",
+      "title": "集群版本升级 — auto-upgrade",
+      "entryIds": [
+        "aks-101",
+        "aks-134",
+        "aks-452"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "auto-upgrade.md",
+        "cluster-snapshot.md",
+        "lts-status.md",
+        "scale-upgrade-operations.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "auto-upgrade",
+        "platform-support",
+        "k8s-version",
+        "maintenance-window",
+        "node-os-upgrade",
+        "canonical",
+        "unattended-updates",
+        "security-patch"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "upgrade-cluster-version-crud",
+      "title": "集群版本升级 — crud",
+      "entryIds": [
+        "aks-770",
+        "aks-773",
+        "aks-781",
+        "aks-783",
+        "aks-784",
+        "aks-785",
+        "aks-786",
+        "aks-812",
+        "aks-813",
+        "aks-814",
+        "aks-964",
+        "aks-976",
+        "aks-977",
+        "aks-978"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-a-ignore-pdb-on-delete.md"
+      ],
+      "kustoQueryFiles": [
+        "auto-upgrade.md",
+        "cluster-snapshot.md",
+        "scale-upgrade-operations.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "crud",
+        "upgrade",
+        "scale",
+        "resource-lock",
+        "reconcile",
+        "vmextensionhandlernontransienterror",
+        "dependencyagent",
+        "vmss"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "upgrade-cluster-version-deprecated-api",
+      "title": "集群版本升级 — deprecated-api",
+      "entryIds": [
+        "aks-091",
+        "aks-137",
+        "aks-733"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "api-throttling-analysis.md",
+        "auto-upgrade.md",
+        "cluster-snapshot.md",
+        "deprecated-apis.md",
+        "scale-upgrade-operations.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "upgrade",
+        "deprecated-api",
+        "kube-audit",
+        "validation-error",
+        "force-upgrade",
+        "api-migration",
+        "breaking-change",
+        "auto-stop"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "upgrade-cluster-version-dotnet",
+      "title": "集群版本升级 — dotnet",
+      "entryIds": [
+        "aks-082",
+        "aks-128",
+        "aks-855",
+        "aks-1146"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "auto-upgrade.md",
+        "cluster-snapshot.md",
+        "scale-upgrade-operations.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "dotnet",
+        "upgrade",
+        "cgroups-v2",
+        "1.25",
+        "memory-saturation",
+        "oom",
+        "java",
+        "memory"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "upgrade-cluster-version-general",
+      "title": "集群版本升级 — general",
+      "entryIds": [
+        "aks-095",
+        "aks-124",
+        "aks-141",
+        "aks-187",
+        "aks-264",
+        "aks-285",
+        "aks-463",
+        "aks-466",
+        "aks-620",
+        "aks-631",
+        "aks-687",
+        "aks-724",
+        "aks-748",
+        "aks-790",
+        "aks-792",
+        "aks-808",
+        "aks-826",
+        "aks-827",
+        "aks-920",
+        "aks-926",
+        "aks-1036",
+        "aks-1071",
+        "aks-1145",
+        "aks-1181",
+        "aks-1194",
+        "aks-1196"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "auto-upgrade.md",
+        "cluster-snapshot.md",
+        "scale-upgrade-operations.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "upgrade",
+        "arm-template",
+        "surge-node",
+        "race-condition",
+        "linuxprofile",
+        "propertychangenotallowed",
+        "kubernetes-version",
+        "cluster-management"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "upgrade-cluster-version-pdb",
+      "title": "集群版本升级 — pdb",
+      "entryIds": [
+        "aks-184",
+        "aks-221",
+        "aks-241",
+        "aks-825",
+        "aks-916",
+        "aks-934",
+        "aks-1143",
+        "aks-1162",
+        "aks-1203",
+        "aks-1259"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-maxUnavailable-Setting.md"
+      ],
+      "kustoQueryFiles": [
+        "auto-upgrade.md",
+        "cluster-snapshot.md",
+        "scale-upgrade-operations.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "pdb",
+        "upgrade",
+        "pod-disruption-budget",
+        "drain",
+        "node-drain",
+        "eviction",
+        "cordon",
+        "quarantine"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "upgrade-cluster-version-scale",
+      "title": "集群版本升级 — scale",
+      "entryIds": [
+        "aks-749",
+        "aks-1142",
+        "aks-1147",
+        "aks-1153",
+        "aks-1179"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "auto-upgrade.md",
+        "cluster-snapshot.md",
+        "scale-upgrade-operations.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "scale",
+        "upgrade",
+        "getsurgedvms_countnotmatch",
+        "autoscaler",
+        "surge-node",
+        "race-condition",
+        "quota",
+        "large-cluster"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "upgrade-cluster-version-scheduling",
+      "title": "集群版本升级 — scheduling",
+      "entryIds": [
+        "aks-796",
+        "aks-804",
+        "aks-974",
+        "aks-975"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "auto-upgrade.md",
+        "cluster-snapshot.md",
+        "scale-upgrade-operations.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "upgrade",
+        "scheduling",
+        "taint",
+        "node-pool",
+        "node-selector",
+        "nodeselector",
+        "windows",
+        "gen2"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "upgrade-cluster-version-vmss",
+      "title": "集群版本升级 — vmss",
+      "entryIds": [
+        "aks-123",
+        "aks-794",
+        "aks-952",
+        "aks-972"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "auto-upgrade.md",
+        "cluster-snapshot.md",
+        "scale-upgrade-operations.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "upgrade",
+        "vmss",
+        "disk-size",
+        "os-disk",
+        "availability-zone",
+        "surge",
+        "createvmssagentpoolfailed",
+        "surge-node"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "upgrade-general",
+      "title": "升级通用问题",
+      "entryIds": [
+        "aks-244",
+        "aks-692",
+        "aks-961",
+        "aks-1170"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "auto-upgrade.md",
+        "scale-upgrade-operations.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "docker-in-docker",
+        "dind",
+        "containerd",
+        "runtime",
+        "1.19",
+        "buildkit",
+        "image-pull",
+        "performance"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "upgrade-node-image-general",
+      "title": "节点镜像升级 — general",
+      "entryIds": [
+        "aks-021",
+        "aks-031",
+        "aks-073",
+        "aks-103",
+        "aks-113",
+        "aks-179",
+        "aks-230",
+        "aks-261",
+        "aks-766",
+        "aks-856",
+        "aks-957",
+        "aks-1081",
+        "aks-1093",
+        "aks-1169"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [
+        "auto-upgrade.md",
+        "image-integrity.md",
+        "node-fabric-info.md",
+        "remediator-events.md",
+        "scale-upgrade-operations.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "remediator",
+        "node-auto-repair",
+        "reimage",
+        "gpu",
+        "node-upgrade",
+        "node-image-upgrade",
+        "vmss",
+        "redeploy"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "upgrade-node-image-node-image",
+      "title": "节点镜像升级 — node-image",
+      "entryIds": [
+        "aks-083",
+        "aks-090",
+        "aks-132",
+        "aks-286",
+        "aks-801",
+        "aks-912"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-b-Who-triggered-auto-node-upgrade.md",
+        "guides/drafts/ado-wiki-c-Upgrade-Undrainable-Node-Behavior-Cordon.md"
+      ],
+      "kustoQueryFiles": [
+        "auto-upgrade.md",
+        "image-integrity.md",
+        "node-fabric-info.md",
+        "scale-upgrade-operations.md"
+      ],
+      "hasFusionGuide": true,
+      "keywords": [
+        "node-image",
+        "cve",
+        "security",
+        "ubuntu-1804",
+        "retirement",
+        "deprecation",
+        "root-password",
+        "runc"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "windows-nodes-general",
+      "title": "Windows 节点通用",
+      "entryIds": [
+        "aks-706",
+        "aks-797",
+        "aks-798",
+        "aks-799",
+        "aks-1311",
+        "aks-1326"
+      ],
+      "draftPaths": [
+        "guides/drafts/ado-wiki-installing-scoop-windows-nodes.md",
+        "guides/drafts/ado-wiki-tcpdump-on-windows-nodes.md",
+        "guides/drafts/ado-wiki-troubleshooting-aks-windows-nodes.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "windows",
+        "containerd",
+        "docker-deprecation",
+        "contentidea-kb",
+        "agentic-cli",
+        "az-aks-agent",
+        "installation",
+        "runasusername"
+      ],
+      "confidence": "medium"
+    }
+  ],
+  "discarded": [
+    {
+      "id": "aks-1320",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "aks-1321",
+      "reason": "半成品（无根因无方案）"
+    }
+  ]
+}

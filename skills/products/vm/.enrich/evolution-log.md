@@ -424,3 +424,5 @@
 - Track A (5): TSG174-AFS-diagnostics, ImageValidation, IsolatedBuilds, InternalSubscription, CustomizationLog
 - Track B guides (5): AFS-Missing-Telemetry, AFS-Delete-ESE-DB, AFS-Workflow-Overview, AIB-Home, Create-AIB-Template
 - JSONL: known-issues-ado-wiki-a.jsonl | scanned: scanned-ado-wiki-a.json
+
+| 2026-04-07 | SYNTHESIZE | 66 topics (50 fusion, 16 compact), 1559 entries, 5 Kusto queries fused |

@@ -1,0 +1,94 @@
+# Monitor 告警综合问题 - Comprehensive Troubleshooting Guide
+
+**Entries**: 48 | **Drafts fused**: 50 | **Kusto queries**: 0
+**Draft sources**: ado-wiki-a-asc-metricalerts-properties-tab.md, ado-wiki-a-troubleshooting-log-to-metric-alert-false-alert.md, ado-wiki-a-troubleshooting-metric-alert-didnt-resolve.md, ado-wiki-a-troubleshooting-query-metric-alert-missed.md, ado-wiki-activity-log-alert-changes-all-asc.md, ado-wiki-activity-log-alert-changes-specific-asc.md, ado-wiki-activity-log-alert-crud-kusto.md, ado-wiki-activity-log-alert-details-asc.md, ado-wiki-activity-log-alert-evaluation-asc.md, ado-wiki-activity-log-alert-fired-with-delay.md
+**Generated**: 2026-04-07
+
+---
+
+## Quick Troubleshooting Path
+
+### Step 1: Customer wants to use Python SDK to list all alert rules configured in subscriptions but cannot find the right MonitorManagementClient function.
+
+**Solution**: Use MonitorManagementClient with different methods per alert type: metric_alerts.list_by_subscription() for metric alerts, scheduled_query_rules.list_by_subscription() for log alerts, activity_log_alerts.list_by_subscription_id() for activity log alerts, alert_rules.list_by_subscription() for cla...
+
+`[Source: OneNote, Score: 9.0]`
+
+### Step 2: Log search alert with metric measurement triggers multiple/unexpected alert emails per evaluation. Only one VM exists but two alerts fire each time.
+
+**Solution**: Add a dimension variable (e.g., Computer) to the 'summarize ... by' clause, then select that variable under 'aggregate on' instead of timestamp. This groups results by the meaningful dimension so each Computer is treated as one entity across all time bins.
+
+`[Source: OneNote, Score: 9.0]`
+
+### Step 3: Log search alert (LSA) v1 shows confusing value and deviation in alert summary page. Numbers appear incorrect compared to actual query results.
+
+**Solution**: Migrate to LSA v2: export the alert rule to ARM template, then re-import it. The newly created rule will use v2 API (2021-08-01+) which shows actual values. No official v1 deprecation plan exists currently.
+
+`[Source: OneNote, Score: 9.0]`
+
+### Step 4: Custom metrics on Azure VM/VMSS in Mooncake are viewable in Azure Portal (fetched from storage account), but cannot be queried via az monitor metrics list-namespaces or used for alert rules. Custom...
+
+**Solution**: In Mooncake, use WAD/LAD diagnostics extension to collect VM/VMSS performance metrics to Storage Account. Metrics viewable in portal via storage SAS-based fetch but alert rules on custom metrics not supported. Consider log-based alerts via Log Analytics as alternative.
+
+`[Source: OneNote, Score: 9.0]`
+
+### Step 5: Log Search Alert (LSA) fires false alerts or misses alerts due to late arriving data - ingestion delay causes inconsistent evaluation results
+
+**Solution**: LSA uses sliding window optimization: the query is automatically modified to cover multiple windows of timespans in a single execution, simulating additional retries. Each result appears in multiple executions but alerts fire only once per bucket (both stateful and stateless). The cutoff time for...
+
+`[Source: ADO Wiki, Score: 8.5]`
+
+---
+
+## All Known Issues
+
+| # | Symptom | Root Cause | Solution | Score | Source |
+|---|---------|-----------|----------|-------|--------|
+| 1 | Customer wants to use Python SDK to list all alert rules configured in subscr... | Azure Monitor has multiple alert rule types (metric, log, activity log, class... | Use MonitorManagementClient with different methods per alert type: metric_ale... | 9.0 | OneNote |
+| 2 | Log search alert with metric measurement triggers multiple/unexpected alert e... | When KQL 'summarize by' only contains bin(TimeGenerated, 5m), the 'aggregate ... | Add a dimension variable (e.g., Computer) to the 'summarize ... by' clause, t... | 9.0 | OneNote |
+| 3 | Log search alert (LSA) v1 shows confusing value and deviation in alert summar... | LSA v1 (created with API version 2018-04-16) displays the number of rows that... | Migrate to LSA v2: export the alert rule to ARM template, then re-import it. ... | 9.0 | OneNote |
+| 4 | Custom metrics on Azure VM/VMSS in Mooncake are viewable in Azure Portal (fet... | Custom metrics Sinks feature (sends metrics to Azure Monitor backend for CLI/... | In Mooncake, use WAD/LAD diagnostics extension to collect VM/VMSS performance... | 9.0 | OneNote |
+| 5 | Log Search Alert (LSA) fires false alerts or misses alerts due to late arrivi... | Ingestion delay of logs to Kusto causes data to arrive after the alert evalua... | LSA uses sliding window optimization: the query is automatically modified to ... | 8.5 | ADO Wiki |
+| 6 | Log search alert rule evaluation fails with 403 Forbidden 'InsufficientAccess... | Alert rule is not part of the same Network Security Perimeter (NSP) as the Lo... | Add the log search alert rule to the same NSP as the Log Analytics workspace.... | 8.5 | ADO Wiki |
+| 7 | Log search alert rule evaluation succeeds but returns no data - data is hidde... | Log Analytics workspace access control mode is 'Require workspace permissions... | Grant the alert rule identity Reader role on the Log Analytics workspace, or ... | 8.5 | ADO Wiki |
+| 8 | Log Search Alert Resource Health shows Unavailable with NO_REASON for alert r... | Alert rules that run less frequently than every 15 minutes will not provide h... | This is expected behavior, not a real issue. Verify the alert rule evaluation... | 8.5 | ADO Wiki |
+| 9 | Log Search Alert Resource Health shows Degraded - Setting up resource health ... | Newly created alert rules need time for the first evaluation to complete befo... | Wait until the first evaluation of the alert rule completes. This is a transi... | 8.5 | ADO Wiki |
+| 10 | Log Search Alert Resource Health shows Degraded - Query validation error (DRA... | Most commonly caused by customer attempting to create an alert rule targeting... | Check if the target table uses Basic Logs data plan. If so, switch the table ... | 8.5 | ADO Wiki |
+| 11 | Log Search Alert Resource Health shows Degraded - Workspace not found (DRAFT_... | The alert scope resource (Log Analytics workspace or Application Insights) wa... | Recreate the alert rule with a valid target Log Analytics workspace or Applic... | 8.5 | ADO Wiki |
+| 12 | Log Search Alert Resource Health shows Degraded - Query is throttled (DRAFT_T... | The alert rule KQL query exceeds Log Analytics query rate limits or concurren... | Review and optimize the query to reduce resource consumption. Check query lim... | 8.5 | ADO Wiki |
+| 13 | Log Search Alert evaluation fails with Active alerts limit exceeded (LIMIT_DA... | A single alert rule can fire up to 12,000 times within 48 hours (documented a... | Reduce the number of fired alerts by: (1) adjusting alert threshold to reduce... | 8.5 | ADO Wiki |
+| 14 | Log Search Alert evaluation fails with Dimension combinations limit exceeded ... | The alert query returns too many unique dimension value combinations exceedin... | Reduce the number of dimension combinations by: (1) reducing the number of di... | 8.5 | ADO Wiki |
+| 15 | Log Search Alert Resource Health shows Degraded - NSP validation failed (DRAF... | The Log Analytics workspace is configured with Network Security Perimeter (NS... | Adjust NSP settings: either include the log search alert rule in the perimete... | 8.5 | ADO Wiki |
+| 16 | Service Health Alert rules do not fire as expected; alerts configured with in... | A bug allowed customers to create Service Health alert rules with invalid/out... | PG deployed a fix (rollout started Dec 2023, completed ~Feb 2024): (1) Valida... | 8.5 | ADO Wiki |
+| 17 | Alert processing rules with filters on non-common alert schema fields (e.g., ... | Bug in alert processing rules allowed filtering on non-common alert schema fi... | Migrate alert processing rule filters to use alternative filter types: Platfo... | 8.5 | ADO Wiki |
+| 18 | Need to query fired alert instances programmatically at scale across multiple... | - | Use Azure Resource Graph (ARG) via Resource Graph Explorer in Azure Portal. Q... | 8.5 | ADO Wiki |
+| 19 | Log search alerts fire with delay; customer observes 'delay in mins' value in... | Log Search Alerts have built-in retry mechanism (30s, 5min, 30min intervals) ... | 1. Check Execution History in ASC for the fired alert. 2. Find the Operation ... | 8.5 | ADO Wiki |
+| 20 | Customer wants to restore deleted alert rules or action groups | Most Azure Monitor alert resource types (Log Search Alert, Activity Log Alert... | For deleted Action Groups: request restoration via ICM to PG. For deleted ale... | 8.5 | ADO Wiki |
+| 21 | Log to Metric (LAMI) alert fired when it shouldn't have - metric value observ... | Ingestion latency in Northstar pipeline or LogToMetric-to-MDM pipeline caused... | Step 1: Verify corresponding log alert for data ingestion exists. Step 2: Rev... | 8.5 | ADO Wiki |
+| 22 | Cannot create tenant-level Service Health alert rule - unauthorized error 'No... | User lacks tenant admin access. Creating tenant-level SH alert rules requires... | Ensure the user has tenant admin access per docs: Roles with tenant admin acc... | 8.5 | ADO Wiki |
+| 23 | Fired tenant-level Service Health alerts are not shown in the Azure portal al... | By design - current release does not support displaying fired tenant-level SH... | This is expected behavior. Advise customer to view tenant-level events direct... | 8.5 | ADO Wiki |
+| 24 | Tenant-level Service Health alert rule didn't fire for subscription-level Ser... | Tenant-level SH events only cover tenant-related (Entra) issues. They are sep... | Customer needs to create separate alert rules with different scopes: (1) A Se... | 8.5 | ADO Wiki |
+| 25 | Resource Health alert didn't fire — activity log event exists but payload doe... | Alert rule condition specifies a specific cause (e.g., PlatformInitiated) but... | Compare the activity log event payload against the alert rule condition JSON.... | 8.5 | ADO Wiki |
+| 26 | ITSM connector incident not mapped to configuration item — CI field in Servic... | Query results don't contain a Resource/Computer column, or the configuration ... | 1) Update query to return resource/computer column. 2) Add missing CIs to cmd... | 8.5 | ADO Wiki |
+| 27 | Log to Metric (LAMI) alert fired false alert - metric value does not match ev... | Ingestion latency in Northstar pipeline or LogToMetric-to-MDM pipeline caused... | Verify corresponding log alert exists. Review metric chart. Compare with eval... | 8.5 | ADO Wiki |
+| 28 | Cannot create tenant-level Service Health alert rule - unauthorized error No ... | User lacks tenant admin access. Creating tenant-level SH alert rules requires... | Ensure user has tenant admin access per docs: Roles with tenant admin access.... | 8.5 | ADO Wiki |
+| 29 | Tenant-level Service Health alert rule did not fire for subscription-level ev... | Tenant-level SH events only cover tenant-related (Entra) issues. Separate fro... | Create separate alert rules: (1) SH alert scoped to tenant for tenant-level e... | 8.5 | ADO Wiki |
+| 30 | SQL ATP alerts stop being generated after upgrading to AMA v1.25.0. Alert not... | AMA v1.25.0 changed encoding of resource IDs in ODS request headers. SQL ATP ... | Revert AMA to version 1.24.0 as temporary workaround. See ADO wiki: How-To-fo... | 8.5 | ADO Wiki |
+| 31 | Application Insights availability tests failing from 1-2 specific regions spo... | Backend VMs running web tests in specific regions may have connectivity issue... | Configure at least 5 test locations with alert threshold = locations - 2; ver... | 8.5 | ADO Wiki |
+| 32 | In Metrics Explorer, Apply Splitting button is disabled (greyed out) when cha... | Custom metric has no dimensions, or App Insights not configured to send custo... | Go to App Insights > Usage and estimated costs > Custom Metrics (Preview) > S... | 8.5 | ADO Wiki |
+| 33 | No notification received for expiring or invalid SSL certificate from Standar... | SSL validation and proactive lifetime checks require explicit enablement. Ale... | Verify SSL validation checkbox is enabled on the Standard test. Confirm proac... | 8.5 | ADO Wiki |
+| 34 | Alert or Smart Detection case created under Application Insights SAP instead ... | Alert and Smart Detection features are supported by the Alerts and Action Gro... | Change SAP to Azure > Alerts and Action Groups > appropriate sub-topic. For S... | 8.5 | ADO Wiki |
+| 35 | Cannot delete Failure Anomalies (Smart Detection) alert rule from Azure Porta... | No UI in Azure Portal to delete Smart Detection alert rules. | To delete: use az resource delete CLI (https://docs.microsoft.com/cli/azure/r... | 8.5 | ADO Wiki |
+| 36 | Log Analytics workspace Resource Health shows Degraded for ingestion latency ... | One or more monitored P0Type tables have estimated ingestion latency (max P90... | 1) Check Service Health for corresponding outage affecting the workspace regi... | 8.5 | ADO Wiki |
+| 37 | Log Analytics workspace Resource Health shows Degraded for query success rate... | Query success rate for user queries (excludes S2S/internal queries like Senti... | 1) Check Service Health for corresponding outage. 2) Use AvailabilityRate_Que... | 8.5 | ADO Wiki |
+| 38 | Need to verify whether an alert rule actually fired and search historical ale... | - | Use Jarvis link (jarvis-west-int.cloudapp.net/A6F1405E) with ScopeID set to t... | 8.0 | OneNote |
+| 39 | Activity log alert fired with delay; delay observed between event occurrence ... | Resource Provider submitted the event into Activity Log (OBO) with delay. Exp... | Open a collaboration task with the applicable resource provider support team ... | 7.0 | ADO Wiki |
+| 40 | Activity log alert fired with delay; delay between Activity Log ingestion (st... | OBO ingestion delay in Activity Logs pipeline. Expected delay: < 1 minute. | Escalate to Activity Logs PG via CRI. Use Azure Monitor / Activity Logs escal... | 7.0 | ADO Wiki |
+| 41 | Activity log alert fired with delay; delay between LA workspace data availabl... | Log Analytics ingestion latency. Expected delay: 30 seconds to 3 minutes. | Escalate to LA ingestion PG via CRI. Use Azure Log Analytics / Ingestion esca... | 7.0 | ADO Wiki |
+| 42 | Activity log alert fired with delay; delay between query availability (step 4... | Activity Log Alerts evaluation engine processing delay. Expected delay: up to... | Escalate to Alerts data plane team via CRI. Use Azure Monitor / Activity Log ... | 7.0 | ADO Wiki |
+| 43 | Activity log alert fired with delay; delay between AMP receiving alert (step ... | Alerts Management Platform (AMP) component processing delay. Expected delay: ... | Escalate to AMP PG via CRI. Use Azure Monitor / Alert Management Platform (AM... | 7.0 | ADO Wiki |
+| 44 | Failure Anomalies (Smart Detection) alert did not fire - detector run log sho... | Application failure ratio did not exceed the baseline minimum value determine... | Check azalertsprodweu/DeepInsights traces for SmartDetectorId=FailureAnomalie... | 7.0 | ADO Wiki |
+| 45 | Failure Anomalies (Smart Detection) alert did not fire - detector run log sho... | Failure spike rate was below the 3-Sigma threshold (baseline average rate + 3... | Check azalertsprodweu/DeepInsights traces for SmartDetectorId=FailureAnomalie... | 7.0 | ADO Wiki |
+| 46 | Azure Monitor Investigation (AIOps) fails with 'No access' result. User canno... | User lacks required role assignment. Must have Issue Contributor, Monitoring ... | Assign the user Issue Contributor, Monitoring Contributor, or Contributor rol... | 7.0 | ADO Wiki |
+| 47 | Azure Monitor Investigation returns 'No findings' result. AIOps investigation... | Investigation did not detect any anomalies in metrics, logs, or monitored dat... | Expected behavior - no anomalies detected in current data. Does not rule out ... | 7.0 | ADO Wiki |
+| 48 | Azure Monitor Investigation shows OpenAI failure error. Investigation summary... | Azure Monitor Investigation depends on OpenAI for generating summaries. OpenA... | Refresh page and run investigation again from scratch. While OpenAI is unavai... | 7.0 | ADO Wiki |
