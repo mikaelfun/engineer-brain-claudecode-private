@@ -276,13 +276,24 @@ cases.get('/:id/teams', (c) => {
         chatId,
         content,
         relevance: (chatRelevance?.relevance as string) || 'unknown',
+        chatType: (chatRelevance?.chatType as string) || undefined,
         reason: chatRelevance?.reason || undefined,
       }
     })
 
-    // Sort: high first, then low, then unknown
-    const order: Record<string, number> = { high: 0, low: 1, unknown: 2 }
-    chats.sort((a, b) => (order[a.relevance] ?? 2) - (order[b.relevance] ?? 2))
+    // Sort: customer-high first, then internal-high, then low, then unknown
+    chats.sort((a, b) => {
+      const relOrder: Record<string, number> = { high: 0, low: 1, unknown: 2 }
+      const relA = relOrder[a.relevance] ?? 2
+      const relB = relOrder[b.relevance] ?? 2
+      if (relA !== relB) return relA - relB
+      // Within high: customer before internal
+      if (a.relevance === 'high' && b.relevance === 'high') {
+        const typeOrder: Record<string, number> = { customer: 0, internal: 1 }
+        return (typeOrder[a.chatType ?? ''] ?? 1) - (typeOrder[b.chatType ?? ''] ?? 1)
+      }
+      return 0
+    })
 
     return c.json({ digest, chats, total: chats.length })
   } catch {

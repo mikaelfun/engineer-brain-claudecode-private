@@ -89,6 +89,7 @@ interface TeamsChat {
   chatId: string
   content: string
   relevance: 'high' | 'low' | 'unknown'
+  chatType?: 'customer' | 'internal'
   reason?: string
 }
 

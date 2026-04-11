@@ -279,8 +279,15 @@ Agent 已在内存中持有 Step 3-4 的所有 chat 内容。结合 case context
   "chats": {
     "{filename-without-md}": {
       "relevance": "high",
+      "chatType": "customer",
       "reason": "{为什么相关的一句话}",
       "keyFacts": ["{fact1}", "{fact2}"]
+    },
+    "{filename-without-md}": {
+      "relevance": "high",
+      "chatType": "internal",
+      "reason": "{为什么相关的一句话}",
+      "keyFacts": ["{fact1}"]
     },
     "{filename-without-md}": {
       "relevance": "low",
@@ -289,6 +296,8 @@ Agent 已在内存中持有 Step 3-4 的所有 chat 内容。结合 case context
   }
 }
 ```
+
+> `chatType`：`customer`（与客户/客户同事直接沟通）| `internal`（内部团队讨论）。仅 `high` 需要标注。
 
 #### `teams-digest.md` 格式
 

@@ -1,7 +1,7 @@
 /**
  * CaseDetail — Case 详情页 (多 tab)
  */
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, CheckCircle2, Circle, AlertTriangle, FolderOpen, Clock, RefreshCw, ChevronDown, ChevronRight, Copy, Check, Pencil, X, Save } from 'lucide-react'
 import { Tabs } from '../components/common/Tabs'
@@ -571,6 +571,10 @@ function TeamsTab({ chats, digest }: { chats: any[]; digest: { scoredAt: string;
     )
   }
 
+  const scrollRef = useCallback((node: HTMLDivElement | null) => {
+    if (node) node.scrollTop = node.scrollHeight
+  }, [])
+
   const renderChat = (chat: any, i: number) => (
     <Card key={chat.chatId || i} padding="sm">
       <div className="flex items-center justify-between mb-2">
@@ -578,13 +582,16 @@ function TeamsTab({ chats, digest }: { chats: any[]; digest: { scoredAt: string;
           <h4 className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>
             {chat.chatId?.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) || `Chat ${i + 1}`}
           </h4>
+          {chat.chatType === 'customer' && (
+            <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ background: 'var(--accent-blue-dim)', color: 'var(--accent-blue)' }}>customer</span>
+          )}
           {chat.relevance === 'high' && (
             <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ background: 'var(--accent-green-dim)', color: 'var(--accent-green)' }}>relevant</span>
           )}
         </div>
         {chat.reason && <span className="text-xs truncate max-w-48" style={{ color: 'var(--text-tertiary)' }}>{chat.reason}</span>}
       </div>
-      <div className="text-sm whitespace-pre-wrap max-h-96 overflow-y-auto" style={{ color: 'var(--text-secondary)' }}>
+      <div ref={scrollRef} className="text-sm whitespace-pre-wrap max-h-96 overflow-y-auto" style={{ color: 'var(--text-secondary)' }}>
         {searchTerm ? highlightText(chat.content || '') : chat.content}
       </div>
     </Card>
