@@ -47,6 +47,7 @@ allowed-tools:
 
 读取：`case-info.md`、`emails.md`、`notes.md`、`teams/teams-digest.md`（如有；不存在则回退读 `teams/*.md`）。
 - `{caseDir}/claims.json`（如有，按下方 claims.json 感知规则过滤写入「关键发现」）
+- `{caseDir}/onenote/personal-notes.md`（如有）——**仅引用 `[fact]` 条目**，`[analysis]` 条目加 `[unverified]` 前缀后写入
 - AR Case 额外读取：`notes-ar.md`（如存在）
 
 用 Write 工具生成完整 summary，格式：

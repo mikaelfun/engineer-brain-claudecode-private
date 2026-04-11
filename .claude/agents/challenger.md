@@ -59,8 +59,11 @@ echo "[$(date '+%Y-%m-%d %H:%M:%S')] === challenger START ===" >> "$LOG"
 | Microsoft Learn | `official-doc` | 最高（注意 global vs 21v 差异） |
 | ADO Wiki / TSG | `ado-wiki` | 高（可能过时） |
 | OneNote 团队知识库 | `onenote-team` | 高（注意 modified 日期） |
+| OneNote 个人笔记 `[fact]` | `onenote-personal` | 中高（有原始来源支撑） |
 | Product SKILL.md | `product-skill` | 高（项目内维护） |
 | known-issues.jsonl | `product-skill` | 中（历史案例积累） |
+| teams-digest.md | `customer-statement` | 中（LLM 摘要，原始证据在 teams/*.md） |
+| OneNote 个人笔记 `[analysis]` | `onenote-personal` | 中低（LLM 分析，需验证） |
 | WebSearch | `web-search` | 低（信噪比最低） |
 
 ### 推断源（需审查的对象，不能用于自证）
