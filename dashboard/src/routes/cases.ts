@@ -248,9 +248,9 @@ cases.get('/:id/teams', (c) => {
     if (existsSync(digestPath) && relevanceData) {
       const digestContent = readFileSync(digestPath, 'utf-8')
       // Extract key facts from "## 关键事实（Key Facts）" section
-      const factsMatch = digestContent.match(/## 关键事实（Key Facts）\n\n([\s\S]*?)(?=\n## |$)/)
+      const factsMatch = digestContent.match(/## 关键事实（Key Facts）\r?\n\r?\n([\s\S]*?)(?=\r?\n## |$)/)
       const keyFacts = factsMatch
-        ? factsMatch[1].split('\n').filter((l: string) => l.startsWith('- ')).map((l: string) => l.slice(2))
+        ? factsMatch[1].split(/\r?\n/).filter((l: string) => l.startsWith('- ')).map((l: string) => l.slice(2))
         : []
 
       const chatsObj = relevanceData.chats || {}
