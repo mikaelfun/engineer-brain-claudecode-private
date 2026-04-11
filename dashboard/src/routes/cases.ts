@@ -312,6 +312,23 @@ cases.get('/:id/meta', (c) => {
   return c.json(meta)
 })
 
+// GET /api/cases/:id/agent-cache — Pre-check if search agents need spawning
+cases.get('/:id/agent-cache', (c) => {
+  const caseNumber = validateCaseNumber(c)
+  if (!caseNumber) return c.json({ error: 'Invalid case number' }, 400)
+  const caseDir = getCaseDir(caseNumber)
+
+  try {
+    const { execSync } = require('child_process')
+    const projectRoot = join(caseDir, '..', '..', '..')
+    const script = join(projectRoot, 'skills', 'd365-case-ops', 'scripts', 'agent-cache-check.sh')
+    const result = execSync(`bash "${script}" "${caseDir}" 8 "${projectRoot}"`, { encoding: 'utf-8', timeout: 5000 }).trim()
+    return c.json(JSON.parse(result))
+  } catch (e: any) {
+    return c.json({ teams: { spawn: true, reason: 'CHECK_FAILED' }, onenote: { spawn: true, reason: 'CHECK_FAILED' } })
+  }
+})
+
 // GET /api/cases/:id/analysis
 cases.get('/:id/analysis', (c) => {
   const caseNumber = validateCaseNumber(c)

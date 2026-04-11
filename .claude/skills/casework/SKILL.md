@@ -99,6 +99,11 @@ date +%s > "{caseDir}/logs/.t_fastpath_start" ; bash skills/d365-case-ops/script
 
 - `FAST_PATH_OK|status=...,days=...` → **跳到 Step 4**。仅预读 `casehealth-meta.json` + `case-summary.md`（如存在）
 - `FAST_PATH_BREAK|teams=...,judge=...` → 回退路径 B，从 BREAK 的步骤开始
+- `AR_MAIN_ARCHIVED|mainCase=...`（仅 AR case）→ **main case 已归档，AR 跟随归档**：
+  1. 确保 `{casesRoot}/archived/` 目录存在
+  2. 移动目录：`mv "{casesRoot}/active/{caseNumber}" "{casesRoot}/archived/{caseNumber}"`
+  3. 记录日志到 `{casesRoot}/archive-log.jsonl`：`{"status":"archived","reason":"AR cascade: main case {mainCaseId} archived"}`
+  4. **提前终止 casework**，输出：`⚠️ AR Case {caseNumber} 的 main case {mainCaseId} 已归档，AR 跟随归档`
 
 ---
 
@@ -136,16 +141,28 @@ prompt: |
   完成后汇报各步骤成功/失败状态。
 ```
 
-**B2. Teams 预检 + spawn teams-search / onenote-case-search + 并行预读（同一条消息）**
+**B2. 搜索 Agent 预检 + 条件 spawn + 并行预读（同一条消息）**
 
-两个搜索 agent 的缓存策略**不同**：
+**预检脚本**（1 次 Bash，~0.5s）：在 spawn 任何搜索 agent 前，先运行缓存检查脚本判断是否需要 spawn：
 
-| Agent | 缓存机制 | 执行条件 |
-|-------|---------|---------|
-| teams-search | 有缓存（`teamsSearchCacheHours`） | 缓存过期或无缓存时 spawn |
-| onenote-case-search | **无缓存** | **每次 casework 都 spawn** |
+```bash
+CACHE_HOURS=$(python3 -c "import json; print(json.load(open('config.json')).get('teamsSearchCacheHours', 8))" 2>/dev/null || echo 8)
+RESULT=$(bash skills/d365-case-ops/scripts/agent-cache-check.sh "{caseDir}" "$CACHE_HOURS" "{projectRoot}")
+echo "$RESULT"
+```
 
-**teams-search**：缓存检查逻辑同 `casework-fast-path.sh` 中 Teams 段。快速路径已确认缓存有效时跳过。过期/无缓存时 spawn：
+输出示例：`{"teams":{"spawn":false,"reason":"CACHED(1h15m)"},"onenote":{"spawn":true,"reason":"SOURCE_NEWER"}}`
+
+**根据预检结果条件 spawn**：
+
+| 预检结果 | 操作 |
+|---------|------|
+| `teams.spawn=false` | 跳过 teams-search，记日志 `STEP B2 SKIP teams-search \| {reason}` |
+| `teams.spawn=true` | spawn teams-search（后台） |
+| `onenote.spawn=false` | 跳过 onenote-case-search，记日志 `STEP B2 SKIP onenote \| {reason}` |
+| `onenote.spawn=true` | spawn onenote-case-search（后台） |
+
+**teams-search**（仅 `teams.spawn=true` 时）：
 
 ```
 subagent_type: "teams-search"
@@ -155,11 +172,12 @@ prompt: |
   Case {caseNumber}，caseDir={caseDir}（绝对路径）。
   contactName={contactName}，contactEmail={contactEmail}。
   请先读取 .claude/skills/teams-search/SKILL.md 获取完整执行步骤，然后执行。
+  ⚠️ 缓存预检已通过（{reason}），直接从 Step 0.5 开始，跳过 Step 0 缓存检查。
   ⏱ 第一个 Bash 调用中写 date +%s > "{caseDir}/logs/.t_teamsSearch_start"
   ⏱ 最后一个 Bash 调用中写 date +%s > "{caseDir}/logs/.t_teamsSearch_end"
 ```
 
-**onenote-case-search**（⚠️ 无缓存，每次都执行）：
+**onenote-case-search**（仅 `onenote.spawn=true` 时）：
 
 ```
 subagent_type: "onenote-case-search"
@@ -202,8 +220,31 @@ compliance-check 完成后，读取 `casehealth-meta.json` 中 `compliance.entit
 > - `data-refresh`（仅 CHANGED 时 spawn）
 > - `teams-search`（缓存过期时 spawn）
 > - `onenote-case-search`（每次都 spawn）
->
-> 等待用 `TaskOutput`（timeout 180s），若 compaction 丢失 task ID，回退检查 `.t_*_end` 文件存在性（最多 3×10s）。
+
+**等待策略（分级超时）**：
+
+1. **先等 60s**，检查 teams-search 日志中是否有 `STEP 0.5 OK`（MCP 健康检查通过）：
+   ```bash
+   # 60s 后检查 teams-search MCP 健康状态
+   LOG="{caseDir}/logs/teams-search.log"
+   if grep -q "STEP 0.5 OK" "$LOG" 2>/dev/null; then
+     echo "TEAMS_MCP_HEALTHY"
+   elif grep -q "STEP 0.5 FAIL" "$LOG" 2>/dev/null; then
+     echo "TEAMS_MCP_FAILED"
+   else
+     echo "TEAMS_MCP_NO_SIGNAL"
+   fi
+   ```
+
+2. **根据结果决定等待时间**：
+   - `TEAMS_MCP_HEALTHY` → 继续等，总共最多 **180s**（MCP 正常，搜索需要时间）
+   - `TEAMS_MCP_FAILED` → **立即停止等待 teams-search**，记日志 `STEP B4 WARN | teams-search MCP unavailable, skipping`，继续下一步
+   - `TEAMS_MCP_NO_SIGNAL` → **立即 kill teams-search agent**（TaskStop），记日志 `STEP B4 WARN | teams-search no MCP signal in 60s, killed`，写 `.t_teamsSearch_end`，继续下一步
+
+3. **kill 后的补偿**：teams-search 被 kill 不影响 casework 流程。status-judge 和路由都不依赖 Teams 数据。下次 patrol 会重新尝试。
+
+> 等待 data-refresh 和 onenote-case-search 仍用 `TaskOutput`（timeout 180s）。
+> 若 compaction 丢失 task ID，回退检查 `.t_*_end` 文件存在性（最多 3×10s）。
 
 等待完成后，status-judge 缓存预检逻辑同 `casework-fast-path.sh` 中 judge 段（额外在开头写 `.t_agentWait_end` + `.t_statusJudge_start`）。
 - `JUDGE_CACHE_VALID` → 跳过，用 meta 已有 actualStatus/days
@@ -218,22 +259,34 @@ compliance-check 完成后，读取 `casehealth-meta.json` 中 `compliance.entit
    - `no-agent` → 跳过 agent spawn，记日志 `STEP B5 OK | LLM: no-agent — {reason}`
    - `troubleshooter` → 仅 spawn troubleshooter
    - `email-drafter` → 仅 spawn email-drafter
-   - `troubleshooter+email-drafter` → spawn 两者
+   - `troubleshooter+email-drafter` → 按 **IR-first 规则**执行（见下方）
 3. 如果 `recommendedActions` 不存在、为空、或为 null → **Fallback 到路由表**：
 
 | actualStatus | Fallback 执行 |
 |---|---|
-| `new` / `pending-engineer` | troubleshooter → email-drafter |
+| `new` / `pending-engineer` | **email-drafter (IR, 前台)** → troubleshooter (后台) |
 | `pending-customer` | email-drafter（仅 days ≥ 3） |
 | `pending-pg` | 无额外 agent，仅记录 |
 | `researching` | troubleshooter |
 | `ready-to-close` | email-drafter (closure) |
 
-记日志 `STEP B5 OK | Fallback: {actualStatus} → {agents}`
+**IR-first 规则**（适用于 `new` / `pending-engineer` 且需同时执行 troubleshooter + email-drafter）：
+
+1. **先 spawn email-drafter（前台等待）**：emailType = `initial-response`，告知客户「已收到，将根据提供的信息做初步排查，有进展会及时更新」
+2. email-drafter 完成 → 展示 IR 草稿给用户
+3. **再 spawn troubleshooter（后台 `run_in_background: true`）**：troubleshooter 独立完成排查，产出 analysis + claims.json
+4. casework **不等待** troubleshooter 完成，直接进入 B6 inspection
+5. troubleshooter 后台完成后的 challenge gate 和后续邮件，延迟到下次 casework/patrol 运行时处理
+
+> 原因：新 case 的首要任务是让客户知道我们已接手在看，技术排查可以并行进行，下次巡检时再根据排查结果跟进。
+
+记日志 `STEP B5 OK | Fallback: {actualStatus} → {agents}`（IR-first 时记 `IR-first: email-drafter(fg) + troubleshooter(bg)`）
 
 spawn 时指定 `subagent_type: "troubleshooter"` / `"email-drafter"`，提示读取 `.claude/agents/{name}.md`。
 
 **B5a. Challenge Gate（troubleshooter 完成后，条件触发）**
+
+> **IR-first 模式说明**：若 troubleshooter 是后台 spawn（`run_in_background: true`），本次 casework 不等待其完成，B5a/B5b 跳过。下次 casework/patrol 运行时，检测到 `{caseDir}/claims.json` 已存在，再执行 challenge gate 和后续邮件。
 
 troubleshooter 完成后，Main Agent 读取 `{caseDir}/claims.json`：
 - `claims.json` 不存在 → 跳过（向后兼容，旧版 troubleshooter 不产出 claims.json）
@@ -342,9 +395,9 @@ fast-path 脚本输出含 `isAR=true` 时，AR 快速路径行为与普通快速
 
 ### AR 路径 B：CHANGED → AR 正常流程
 
-**AR-B0. 归档检测**
+**AR-B0. 归档检测（含 main case 级联）**
 
-同普通路径 B0，检测 main case 是否已归档。
+同普通路径 B0，但 `detect-case-status.ps1` 会自动检测 main case 是否已归档（Step 3a AR 级联逻辑）。当 main case 不在 D365 active case 列表中（已 resolved/cancelled）时，AR case 会被标记为 archived（reason: "AR cascade: main case {mainCaseId} not in D365 active list"）。注意：AR 级联归档基于 D365 API 数据判断，不依赖本地 `cases/active/` 目录——main case 可能从未被 pull 到本地。
 
 **AR-B1. spawn data-refresh（AR 模式）**
 
