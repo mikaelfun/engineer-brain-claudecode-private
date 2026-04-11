@@ -23,6 +23,38 @@ mcpServers:
 ## 前置条件
 需要 `{caseDir}/case-info.md`、`{caseDir}/emails.md`、`{caseDir}/notes.md` 已存在。
 
+### Kusto 认证前置检查（必须在 Step 2 之前完成）
+
+**在 Step 1.5 完成后、Step 2 开始前**，必须执行 Kusto 认证验证：
+
+```bash
+AZURE_CONFIG_DIR="/c/Users/fangkun/.azure-profiles/cme-fangkun" \
+  az account get-access-token --resource "https://kusto.chinacloudapi.cn" 2>&1
+```
+
+**判断逻辑**：
+- ✅ 返回 JSON 含 `accessToken` → 认证有效，继续 Step 2
+- ❌ 返回 `does not exist in MSAL token cache` / `Run az login` → **立即停止排查流程**
+
+**认证失败时的行为**：
+1. 写日志：`[timestamp] STEP 1.9 FAIL | Kusto auth check failed — token expired or missing`
+2. **不要继续执行 Step 2-6**（不要浪费时间构建查询文件，没有数据的排查没有意义）
+3. **不要写分析报告**（没有 Kusto 数据的报告是空中楼阁）
+4. 返回明确错误信息给调用者：
+   ```
+   [TROUBLESHOOTER-BLOCKED] Kusto 认证失败，无法执行诊断查询。
+   请先在终端执行以下命令完成登录：
+   AZURE_CONFIG_DIR="/c/Users/fangkun/.azure-profiles/cme-fangkun" az login --tenant a55a4d5b-9241-49b1-b4ff-befa8db00269
+   登录完成后重新触发排查。
+   ```
+5. Step 1 和 Step 1.5 的结果仍然保留（已读取的 case 信息和产品知识库匹配不浪费）
+
+**VMAInsight (Public Cloud) 额外检查**（如需要查 VMA 表）：
+```bash
+az account get-access-token --resource "https://kusto.windows.net" 2>&1
+```
+如果 Mooncake token 有效但 Public Cloud token 失败，可以跳过 VMA 查询但继续其他 Mooncake 集群的排查。
+
 ## 执行日志
 
 **每个步骤执行前后都必须写入日志文件 `{caseDir}/logs/troubleshooter.log`。**
@@ -36,67 +68,122 @@ mcpServers:
 - `case-info.md` — 基本信息 + customerStatement
 - `emails.md` — 邮件历史（关注客户描述的问题）
 - `notes.md` — 内部笔记
-- `teams/` — Teams 讨论（如有）
+- `teams/teams-digest.md` — Teams 相关对话摘要（如有；不存在则回退读 `teams/*.md`）
 - `icm/` — ICM 数据（如有）
 
-### 1.5. 查产品知识库
+### 1.5. 深度探索产品知识库
 
-在开始搜索和 Kusto 查询前，先检查是否已有预构建的排查指南。
+> ⚠️ 这一步的目标不是"查一下有没有现成答案"，而是**从产品知识体系中构建排查框架**。
+> 产品 Skill 包含决策树、已知问题、排查流程、来源草稿、Kusto 模板——这些是团队积累的排查经验，
+> 必须深度利用，而不是浅读一遍条目列表就跳过。
 
-1. 确定产品域（多策略匹配）：
-   - **优先**：从 case-info.md 的 SAP 服务路径匹配 `config.json → podProducts[*].services`
-   - **次选**：从 case-info.md 的问题描述/标题关键词匹配 `config.json → podProducts[*].matchKeywords`
-     - 读取 config.json，遍历所有产品的 `matchKeywords` 数组
-     - 大小写不敏感匹配（如 "Blob Storage" 匹配 `disk` 产品的 `"blob"` 关键词）
-     - 多个产品匹配时，取 SAP 路径最接近的
-   - **兜底**：从排查中查询的 Kusto 集群推断（azcrpmc → vm, mcakshuba → aks 等）
+#### 1.5.1 确定产品域
 
-2. 检查 `skills/products/{product}/guides/_index.md` 是否存在且非空
+多策略匹配：
+- **优先**：从 case-info.md 的 SAP 服务路径匹配 `config.json → podProducts[*].services`
+- **次选**：从问题描述/标题关键词匹配 `config.json → podProducts[*].matchKeywords`
+- **兜底**：从排查中查询的 Kusto 集群推断（azcrpmc → vm, mcakshuba → aks 等）
 
-3. 如果存在 → 读取 `_index.md`，注意 **类型** 列：
-   - `📋 融合` — 有完整排查流程（含嵌入的 Kusto 查询模板）
-   - `📊 速查` — 仅三元组速查表
+#### 1.5.2 读产品 SKILL.md — 获取决策树和诊断架构
 
-4. 按症状关键词匹配最相关的 1-2 篇指南，**根据类型分流加载**：
+**必读** `skills/products/{product}/SKILL.md`：
+- 理解**诊断层级架构**（如 VM 的 6 层：ARM → CRP → Fabric → Host → DCM → RCA）
+- 定位**决策树**中与当前症状匹配的分支 → 这决定了 Step 2 查哪些层、查哪些表
+- 提取**跨层参数传递规则**（如 correlationId → operationId → containerId → nodeId）
+- 了解**可用工具链**（Kusto 集群、ADO Wiki 搜索词模板等）
 
-   #### 路径 A：融合型指南（📋 融合）
-   
-   直接读取 `guides/details/{topic}.md`：
-   - 定位 `## 排查流程` section → **按 Phase 步骤执行排查**
-   - guide 中嵌入的 KQL 可直接使用（含集群 URI 和数据库名）
-   - **跳过 Step 2** 中该场景的 Kusto 查询构建（已嵌入 guide）
-   - 如果 guide 中有 `Kusto` 列 > 0 → KQL 已预构建，无需再读 Kusto skill query 文件
+**日志**：`[timestamp] STEP 1.5.2 OK | product SKILL.md read, decision tree branch: {branch}`
+
+#### 1.5.3 读排查指南 — 获取排查流程和已知问题
+
+检查 `skills/products/{product}/guides/_index.md` → 按症状关键词匹配最相关的指南。
+
+**根据类型分流**：
+
+##### 路径 A：融合型指南（📋 融合）
+
+融合型指南由三个文件组成（对应 synthesize 的三 Agent 产出）：
+
+| 文件 | 内容 | troubleshooter 用法 |
+|------|------|-------------------|
+| `guides/{topic}.md` | 速查表（三元组表格 + 打分） | 快速匹配已知问题 |
+| `guides/details/{topic}.md` | 已知问题详情（三元组展开版） | 参考根因和方案的详细说明 |
+| `guides/workflows/{topic}.md` | **排查工作流**（Scenario + 嵌入 KQL） | ⭐ **主要排查指引** |
+
+**按以下顺序读取**：
+
+1. **优先读 `guides/workflows/{topic}.md`**（排查工作流）：
+   - 定位与当前症状匹配的 **Scenario** → **按 Scenario 步骤执行排查**
+   - Scenario 中嵌入的 KQL 可直接替换参数执行（含集群 URI 和数据库名）
+   - **跳过 Step 2** 中该 Scenario 覆盖的 Kusto 查询构建
+   - 注意每个 Scenario 的 21V 适用性标注（Mooncake ✅ / Global-only ❌）
+   - 利用 Scenario 中的**判断逻辑表格**构建排查分支
+   - ⚠️ 如果 `workflows/` 文件不存在（尚未生成或 Agent-C 跳过），回退读 `details/`
+
+2. **次读 `guides/details/{topic}.md`**（已知问题详情）：
+   - 已知问题的详细根因和方案说明
+   - 作为 Step 4 交叉验证的**对照表**
    - 利用打分决定验证级别：
-     - 🟢 8-10 分步骤 → 可直接采信，跳过验证
-     - 🔵 5-7 分步骤 → 作为排查方向参考，验证关键步骤
-     - 🟡/⚪ <5 分步骤 → 仅供参考，必须独立验证
-   - 定位 `## 已知问题速查` section → 按症状匹配三元组
-   
-   #### 路径 B：速查型指南（📊 速查）
-   
-   读取 `guides/{topic}.md` 速查表（现有逻辑）：
-   - 症状速查表匹配
-   - 预构建的排查路径
-   - 已知根因列表
-   - 21V 不适用标注
-   - 利用打分决定后续动作（同上）
-   - 如果需要深入 → 读取 `guides/details/{topic}.md`（三元组展开版）
-   - **Step 2 正常构建 Kusto 查询**（速查型无嵌入 KQL）
-   
-   #### 日志记录
-   `[timestamp] STEP 1.5 OK | matched guide: {guide-name}, type: {fusion|compact}, top score: {score}`
+     - 🟢 8-10 分 → 可直接采信
+     - 🔵 5-7 分 → 作为排查方向参考，验证关键步骤
+     - 🟡/⚪ <5 分 → 仅供参考，必须独立验证
 
-5. 如果不存在或未匹配：
-   - 记录：`[timestamp] STEP 1.5 SKIP | no matching guide found`
-   - **Fallback 到 Kusto skill 完整流程**：
-     - 读 `skills/kusto/{product}/SKILL.md` 获取排查思路
-     - 读 `skills/kusto/{product}/references/queries/` 下的 query 文件
-     - Step 2 正常构建 Kusto 查询
-   - 继续 Step 3 知识库搜索：
-     - 优先搜索团队 OneNote → ADO Wiki → MS Learn
-     - 搜索汇总后确定具体排查方法
+3. **读来源草稿**（workflows 或 details frontmatter 中列出的 `guides/drafts/*.md` 文件）：
+   - 这些是指南背后的**原始详细知识**（来自 OneNote/ADO Wiki/MS Learn）
+   - **必须读取与当前症状最相关的 2-3 个草稿文件**，从中获取：
+     - 具体排查步骤和命令（如 Jarvis Dashboard URL 模板）
+     - 技术原理说明（如 throttling 的 50ms 窗口检查机制）
+     - 可用的诊断工具（如 PerfInsights、Host Analyzer）
+     - Mooncake 特殊限制和 feature gap
+   - 不需要全读——根据标题和当前症状选读最相关的
+
+4. **读 Kusto 查询引用**（workflows frontmatter 的 `Kusto 引用` 字段，或 `_index.md` 的 `Kusto` 列 > 0）：
+   - 读取 `skills/kusto/{product}/references/queries/{query}.md` 获取完整 KQL 和参数说明
+   - 如果 workflow 中已嵌入该 KQL → 不需要重复读取
+   - 如果 workflow 中标注 `[工具: Kusto skill — {file}]` → 去 Kusto skill 读取原文件
+
+##### 路径 B：速查型指南（📊 速查）
+
+1. 读 `guides/{topic}.md` 速查表 → 症状匹配 → 已知根因列表
+2. 如果需要深入 → 读 `guides/details/{topic}.md`（三元组展开版）
+3. **Step 2 正常构建 Kusto 查询**（速查型无嵌入 KQL）
+
+##### 未匹配时
+
+- 记录：`[timestamp] STEP 1.5 SKIP | no matching guide found`
+- **Fallback 到 Kusto skill 完整流程**：
+  - 读 `skills/kusto/{product}/SKILL.md` 获取查询模板列表
+  - 读 `skills/kusto/{product}/references/queries/` 下匹配的 query 文件
+  - Step 2 正常构建 Kusto 查询
+- 继续 Step 3 知识库搜索
+
+#### 1.5.4 输出：排查框架
+
+Step 1.5 结束后，必须形成明确的**排查框架**（写入分析报告的「排查过程」section 开头）：
+
+```markdown
+## 排查框架（来自 Product Skill）
+- **产品域**: {product}
+- **决策树分支**: {SKILL.md 中匹配的场景，如 "2.3 VM 性能问题 → Live Migration 卡顿"}
+- **诊断层级**: {需要查询的层，如 "Layer 3 Fabric + Layer 4 Host"}
+- **匹配指南**: {guide name} ({type})
+- **排查工作流**: {workflows/{topic}.md 是否存在？匹配的 Scenario 编号}
+- **来源草稿已读**: {列出实际读取的 drafts 文件名}
+- **嵌入 KQL**: {workflow 中可直接使用的 KQL 数量}
+- **初步匹配的已知问题**: {条目编号和简述，来自 details/ 或速查表}
+```
+
+**日志**：
+```
+[timestamp] STEP 1.5 OK | product: {product}, guide: {guide}, type: {fusion|compact}
+  drafts read: {N} files, kusto refs: {M}, known issues matched: {K}
+  decision tree branch: {branch}
+```
 
 ### 2. Kusto 查询
+
+> 查询计划必须基于 Step 1.5 的排查框架——不是随意构建查询，而是按决策树分支和指南 Phase 步骤执行。
+> 如果 Step 1.5 的融合型指南已嵌入 KQL，直接替换参数执行；否则按下面的流程构建。
 
 **首选方式（Python 引擎）：**
 1. 先读 `skills/products/{product}/SKILL.md` 获取排查思路和决策树
@@ -201,11 +288,48 @@ az devops wiki page show --wiki "{wikiName}" --project "{project}" \
   --path "{pagePath}" --org "https://dev.azure.com/{org}" --detect false
 ```
 
-### 4. 交叉分析
-综合所有信息来源，产出分析结论：
-- 根本原因分析
-- 解决方案建议
+### 4. 交叉分析（Kusto 数据 × Product Skill 二次验证）
+
+> ⚠️ 这一步不是简单"综合一下"——必须用 Kusto 数据回头验证 Step 1.5 的已知问题匹配，
+> 同时用 Product Skill 的知识解释 Kusto 数据中的异常。两个方向都要做。
+
+#### 4a. Kusto → Product Skill 验证（数据驱动）
+
+拿到 Kusto 查询结果后，**回到 Step 1.5 匹配的已知问题表**，逐条验证：
+
+1. 遍历 Step 1.5 初步匹配的已知问题条目
+2. 用 Kusto 数据检查每个条目的前提条件是否成立：
+   - 条目说"IO throttling 导致 disk timeout" → Kusto 性能计数器是否显示 IOPS 触顶？
+   - 条目说"Host CPU 争用" → HighCpuCounterNodeTable 是否有数据？
+   - 条目说"Live Migration 卡顿" → TMMgmtTenantEventsEtwTable 是否有 migration 事件？
+3. 标记验证结果：
+   - `✅ Confirmed` — Kusto 数据支持此已知问题
+   - `❌ Ruled out` — Kusto 数据排除此已知问题
+   - `⚠️ Inconclusive` — 数据不足以判断
+
+#### 4b. Product Skill → Kusto 解释（知识驱动）
+
+用 Product Skill 的知识来**解释 Kusto 数据中发现的异常**：
+
+1. 列出 Kusto 数据中的所有异常发现（如"Reboot 事件"/"周期性 Disk Write 峰值"）
+2. 在 Product Skill 中搜索解释：
+   - **决策树**：异常是否落在某个决策分支中？（如 SKILL.md 的 "2.2 VM 意外重启" 分支）
+   - **已知问题表**：是否有条目描述过类似异常？
+   - **来源草稿**：草稿中是否有关于该异常的技术原理说明？
+3. 如果 Product Skill 中找不到解释 → 标记为"知识缺口"，在分析报告的「改进建议」中提出
+
+#### 4c. 综合判断
+
+基于 4a 和 4b，产出分析结论：
+- 根本原因分析（每个结论必须注明数据来源和知识来源）
+- 解决方案建议（优先引用 Product Skill 中已有的方案）
 - 后续步骤建议
+
+**日志**：
+```
+[timestamp] STEP 4 OK | known issues: X confirmed, Y ruled out, Z inconclusive
+  kusto anomalies explained: A by skill, B unexplained (knowledge gap)
+```
 
 ### 5. 写分析报告
 输出到 `{caseDir}/analysis/YYYYMMDD-HHMM-{topic}.md`：

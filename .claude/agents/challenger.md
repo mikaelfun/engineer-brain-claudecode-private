@@ -46,7 +46,7 @@ echo "[$(date '+%Y-%m-%d %H:%M:%S')] === challenger START ===" >> "$LOG"
 | `case-info.md` | — | D365 系统数据 |
 | `emails.md` / `emails-office.md` | `customer-statement` | 客户原话 |
 | `notes.md` | — | D365 系统记录 |
-| `teams/*.md` | `customer-statement` | 实时沟通记录 |
+| `teams/teams-digest.md` | `customer-statement` | 实时沟通记录（已筛选；回退 `teams/*.md`） |
 | `kusto/*.md` | `kusto-result` | 系统遥测数据 |
 | `icm/` | `icm-data` | 事件管理系统数据 |
 | `attachments/` | — | 客户提供的原始材料 |
@@ -84,7 +84,7 @@ echo "[$(date '+%Y-%m-%d %H:%M:%S')] === challenger START ===" >> "$LOG"
 2. `{caseDir}/emails.md` — 客户邮件原文
 3. `{caseDir}/kusto/*.md` — Kusto 遥测结果（Glob 找到所有文件，逐一读取）
 4. `{caseDir}/research/research.md` — 已有研究材料
-5. `{caseDir}/teams/*.md` — Teams 沟通记录（如存在）
+5. `{caseDir}/teams/teams-digest.md` — Teams 相关对话摘要（如存在；不存在则读 `teams/*.md`）
 6. `{caseDir}/onenote/personal-notes.md` — OneNote 个人笔记（如存在）
 7. `skills/products/{product}/SKILL.md` — 产品排查技能定义
 8. `skills/products/{product}/known-issues.jsonl` — 已知问题库

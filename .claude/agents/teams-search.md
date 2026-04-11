@@ -3,7 +3,7 @@ name: teams-search
 description: "Teams 消息搜索 + 落盘"
 tools: Bash, Read, Write
 model: sonnet
-maxTurns: 20
+maxTurns: 25
 mcpServers:
   - teams
 ---

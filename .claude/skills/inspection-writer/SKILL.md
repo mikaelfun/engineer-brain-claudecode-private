@@ -45,7 +45,7 @@ allowed-tools:
 
 ### 2a. 首次生成 case-summary.md
 
-读取：`case-info.md`、`emails.md`、`notes.md`、`teams/*.md`（如有）。
+读取：`case-info.md`、`emails.md`、`notes.md`、`teams/teams-digest.md`（如有；不存在则回退读 `teams/*.md`）。
 - `{caseDir}/claims.json`（如有，按下方 claims.json 感知规则过滤写入「关键发现」）
 - AR Case 额外读取：`notes-ar.md`（如存在）
 
@@ -108,7 +108,7 @@ allowed-tools:
 
 > 如 claims.json 不存在，全部按原有逻辑处理（向后兼容）。
 
-仅读取**新增内容**（自上次 inspection 后的新邮件、notes、teams 消息）。
+仅读取**新增内容**（自上次 inspection 后的新邮件、notes、`teams/teams-digest.md` 的 Key Facts）。
 
 用 **Edit 工具**追加：
 1. 在「排查进展」末尾追加 1-2 行新事件
