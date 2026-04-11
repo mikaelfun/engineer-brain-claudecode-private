@@ -2,7 +2,7 @@
 name: onenote-case-search
 description: "Search personal OneNote for case-specific notes"
 tools: Bash, Read, Write, Glob, Grep
-model: sonnet
+model: haiku
 maxTurns: 15
 ---
 
@@ -57,6 +57,20 @@ Read the top 5 matched files (typically 1-3 pages exist per case). For each file
   - What action items or next steps were noted?
   - Any technical findings (error messages, resource states, etc.)
 
+**对每条 finding 标注信息类型**（`[fact]` 或 `[analysis]`）：
+
+| 类型 | 标签 | 含义 | 示例 |
+|------|------|------|------|
+| 事实记录 | `[fact]` | 客户确认、截图记录、远程观察、系统状态、配置值、错误消息 | "客户确认只有 Reader 权限"、"Alert 状态为 CONDITION NOT MET" |
+| 分析记录 | `[analysis]` | LLM 推理、排查假设、待验证的结论、推测性判断 | "怀疑是 CAE 策略导致"、"可能需要升级 PG" |
+
+**判断规则**：
+- 能追溯到具体来源（截图、客户原话、系统输出、API 响应）→ `[fact]`
+- 包含 "怀疑"、"可能"、"建议"、"分析"、"推测" 等推断性语言 → `[analysis]`
+- OneNote 中记录的 CLI/Portal 截图描述 → `[fact]`
+- OneNote 中记录的 LLM 分析结论或排查思路 → `[analysis]`
+- 不确定时标 `[analysis]`（宁可低估确定性）
+
 ### 5. Write Structured Summary
 Write to `{caseDir}/onenote/personal-notes.md`:
 
@@ -66,16 +80,38 @@ Write to `{caseDir}/onenote/personal-notes.md`:
 > Searched: {YYYY-MM-DD HH:MM} | Source: {personalNotebook}
 > Matched pages: {count}
 
-## {Page Title 1}
+## 事实记录（Facts）
+
+以下信息来自远程截图、客户确认、系统输出等可追溯来源，下游消费者可直接引用。
+
+- [fact] {客户确认的信息或截图记录}
+- [fact] {系统状态或配置值}
+
+## 分析记录（Analysis）
+
+以下信息来自 LLM 分析、排查假设等，可能不准确，下游消费者应验证后再引用。
+
+- [analysis] {推理性结论}
+- [analysis] {待验证的假设}
+
+## 详细页面
+
+### {Page Title 1}
 - **Modified**: {date from frontmatter}
 - **Section**: {notebook/section path}
 - **Key findings**:
-  - {extracted insight 1}
-  - {extracted insight 2}
+  - [fact] {extracted fact 1}
+  - [fact] {extracted fact 2}
+  - [analysis] {extracted analysis 1}
 
 ## Summary
 {1-2 sentence synthesis of what the personal notes tell us about this case}
 ```
+
+> **输出格式要点**：
+> - 顶部 "事实记录" section 汇聚所有 `[fact]`，是下游消费者的首选入口
+> - "分析记录" section 汇聚所有 `[analysis]`，下游消费者可参考但不应盲目引用
+> - 详细页面保留完整上下文，每条 finding 仍带标签
 
 ### 6. No-Match Behavior
 If no pages match any identifier, write:

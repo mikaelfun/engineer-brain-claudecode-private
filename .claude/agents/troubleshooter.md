@@ -241,7 +241,7 @@ acr / aks / arm / avd / disk / entra-id / eop / intune / monitor / networking / 
   - ⚠️ 可能过时 — 最后修改 2024-01-15（如适用）
 ```
 
-如有匹配，还需读取 `{caseDir}/onenote/personal-notes.md`（如存在，由 onenote-case-search agent 在 casework B2 生成），将个人笔记信息纳入排查上下文。
+如有匹配，还需读取 `{caseDir}/onenote/personal-notes.md`（如存在，由 onenote-case-search agent 在 casework B2 生成），将个人笔记信息纳入排查上下文。**注意区分 `[fact]`（可直接引用）和 `[analysis]`（需验证，可能不准确）标签**——优先使用 "事实记录" section 的内容。
 
 #### 3b. ADO Wiki / Knowledge Base
 

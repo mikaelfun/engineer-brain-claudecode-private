@@ -70,7 +70,7 @@ echo "[$(date '+%Y-%m-%d %H:%M:%S')] === challenger START ===" >> "$LOG"
 | `analysis/*.md` | troubleshooter 分析报告 |
 | `drafts/*.md` | email-drafter 邮件草稿 |
 | `case-summary.md` | 混合事实+推断的摘要 |
-| `onenote/personal-notes.md` 中的 CLI 分析 | 可能包含之前 AI 分析的结论 |
+| `onenote/personal-notes.md` 中的 `[analysis]` 标签条目 | AI 分析结论，需验证。`[fact]` 标签条目可信 |
 
 ## 执行步骤
 
