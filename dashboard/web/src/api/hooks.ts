@@ -56,10 +56,52 @@ export function useCaseLaborRecords(id: string) {
   })
 }
 
+export function useRefreshNotes() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (caseId: string) =>
+      apiPost<{ notes: any[]; total: number }>(`/cases/${caseId}/notes/refresh`),
+    onSuccess: (_data, caseId) => {
+      queryClient.invalidateQueries({ queryKey: ['cases', caseId, 'notes'] })
+    },
+  })
+}
+
+export function useRefreshLaborRecords() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (caseId: string) =>
+      apiPost<{ records: any[]; total: number }>(`/cases/${caseId}/labor-records/refresh`),
+    onSuccess: (_data, caseId) => {
+      queryClient.invalidateQueries({ queryKey: ['cases', caseId, 'labor-records'] })
+    },
+  })
+}
+
+interface TeamsDigest {
+  scoredAt: string
+  keyFacts: string[]
+  relevantCount: number
+  irrelevantCount: number
+}
+
+interface TeamsChat {
+  chatId: string
+  content: string
+  relevance: 'high' | 'low' | 'unknown'
+  reason?: string
+}
+
+interface TeamsResponse {
+  digest: TeamsDigest | null
+  chats: TeamsChat[]
+  total: number
+}
+
 export function useCaseTeams(id: string) {
   return useQuery({
     queryKey: ['cases', id, 'teams'],
-    queryFn: () => apiGet<{ chats: any[]; total: number }>(`/cases/${id}/teams`),
+    queryFn: () => apiGet<TeamsResponse>(`/cases/${id}/teams`),
     enabled: !!id,
   })
 }
@@ -208,6 +250,7 @@ export function useCronJobs() {
   return useQuery({
     queryKey: ['agents', 'cron-jobs'],
     queryFn: () => apiGet<{ jobs: any[]; total: number }>('/agents/cron-jobs'),
+    refetchInterval: 30_000, // Poll every 30s to keep status in sync
   })
 }
 
@@ -277,19 +320,38 @@ export function usePatrolState() {
     queryKey: ['agents', 'patrol-state'],
     queryFn: async () => {
       try {
-        return await apiGet<any>('/agents/patrol-state')
-      } catch (err: any) {
-        // 404 = no patrol state file yet, treat as "no data" rather than error
-        if (err?.status === 404) return null
-        throw err
-      }
+        const state = await apiGet<any>('/agents/patrol-state')
+        if (state && !state.error) return state
+      } catch { /* fallback below */ }
+      // Fallback: read from patrol/status lastRun
+      try {
+        const status = await apiGet<any>('/patrol/status')
+        if (status?.lastRun) {
+          const lr = status.lastRun
+          return {
+            lastPatrol: lr.completedAt || new Date().toISOString(),
+            currentPatrolStartedAt: lr.startedAt || null,
+            patrolType: lr.phase === 'completed' ? 'full' : lr.phase,
+            summary: {
+              pendingEngineer: lr.caseResults?.filter((r: any) => r.status === 'pending-engineer').length || 0,
+              pendingCustomer: lr.caseResults?.filter((r: any) => r.status === 'pending-customer').length || 0,
+              waitingPG: lr.caseResults?.filter((r: any) => r.status === 'pending-pg').length || 0,
+              ar: lr.caseResults?.filter((r: any) => r.status === 'ar').length || 0,
+              normal: lr.caseResults?.filter((r: any) => r.status === 'completed').length || 0,
+            },
+            lastRunTiming: {
+              caseCount: lr.totalCases || 0,
+              wallClockMinutes: lr.wallClockMinutes || (lr.startedAt && lr.completedAt
+                ? Math.round((new Date(lr.completedAt).getTime() - new Date(lr.startedAt).getTime()) / 60000)
+                : 0),
+              bottlenecks: lr.caseResults?.filter((r: any) => r.error).map((r: any) => `${r.caseNumber}: ${r.error}`) || [],
+            },
+          }
+        }
+      } catch { /* ignore */ }
+      return null
     },
     refetchInterval: 15_000,
-    retry: (failureCount, error: any) => {
-      // Don't retry on 404 (expected when no patrol state exists)
-      if (error?.status === 404) return false
-      return failureCount < 3
-    },
   })
 }
 
@@ -1120,8 +1182,13 @@ export function useSubmitNote(caseId: string) {
   return useMutation({
     mutationFn: (data: { title: string; body: string }) =>
       apiPost(`/case/${caseId}/note-gap/submit`, data),
-    // Don't invalidate immediately — let the component show success state first
-    // Component calls delayedInvalidate() after showing feedback
+    onSuccess: () => {
+      // Refresh notes list so the new note shows immediately
+      // Note gap card invalidation is handled separately by component (delayed for UX)
+      setTimeout(() => {
+        qc.invalidateQueries({ queryKey: ['cases', caseId, 'notes'] })
+      }, 2000) // slight delay to allow D365 to process
+    },
   })
 }
 
@@ -1168,6 +1235,7 @@ export function useNoteGapCheckAI() {
 
 export interface NoteGapItem {
   caseNumber: string
+  caseTitle: string
   title: string
   body: string
   gapDays: number
@@ -1247,8 +1315,9 @@ export function useLaborEstimateTrigger() {
   return useMutation({
     mutationFn: (caseNumber: string) =>
       apiPost<{ success: boolean; estimate: LaborEstimateItem | null }>(`/labor-estimate/${caseNumber}`),
-    onSuccess: () => {
+    onSuccess: (_data, caseNumber) => {
       queryClient.invalidateQueries({ queryKey: ['labor-estimates'] })
+      queryClient.invalidateQueries({ queryKey: ['labor-estimate', caseNumber] })
     },
   })
 }
@@ -1277,6 +1346,30 @@ export function useLaborEstimateUpdate() {
       classification?: string
       description?: string
     }) => apiPut<{ success: boolean; estimate: LaborEstimateItem }>(`/labor-estimate/${caseNumber}`, body),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['labor-estimates'] })
+      queryClient.invalidateQueries({ queryKey: ['labor-estimate', variables.caseNumber] })
+    },
+  })
+}
+
+export function useLaborEstimateDiscard() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (caseNumber: string) =>
+      apiDelete<{ success: boolean }>(`/labor-estimate/${caseNumber}`),
+    onSuccess: (_data, caseNumber) => {
+      queryClient.invalidateQueries({ queryKey: ['labor-estimates'] })
+      queryClient.invalidateQueries({ queryKey: ['labor-estimate', caseNumber] })
+    },
+  })
+}
+
+export function useLaborEstimateDiscardAll() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () =>
+      apiDelete<{ success: boolean; discarded: number }>('/labor-estimate/all'),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['labor-estimates'] })
     },
@@ -1292,8 +1385,11 @@ export function useLaborSubmit() {
       classification: string
       description: string
     }) => apiPost<{ success: boolean; message: string }>(`/labor-estimate/${caseNumber}/submit`, body),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['labor-estimates'] })
+      queryClient.invalidateQueries({ queryKey: ['labor-estimate', variables.caseNumber] })
+      // Refresh labor records so the new entry shows immediately
+      queryClient.invalidateQueries({ queryKey: ['cases', variables.caseNumber, 'labor-records'] })
     },
   })
 }

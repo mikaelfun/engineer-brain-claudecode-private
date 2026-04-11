@@ -10,6 +10,7 @@ import { SeverityBadge, CaseStatusBadge, SlaBadge, Badge, HealthScoreBadge, Enti
 import { Loading, ErrorState, EmptyState } from '../components/common/Loading'
 import {
   useCaseDetail, useCaseEmails, useCaseNotes, useCaseLaborRecords,
+  useRefreshNotes, useRefreshLaborRecords,
   useCaseTeams, useCaseMeta, useCaseAnalysis, useCaseOnenote,
   useCaseDrafts, useCaseInspection, useCaseTodo, useCaseTodoFile,
   useCaseTiming, useCaseLogs, useCaseAttachments,
@@ -24,7 +25,8 @@ import EvidenceChainTab from '../components/EvidenceChainTab'
 export default function CaseDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState('summary')
+  const searchParams = new URLSearchParams(window.location.search)
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'summary')
 
   const { data: caseInfo, isLoading, error } = useCaseDetail(id || '')
   // Always-fetch: key tab data for badge counts (lightweight — only returns arrays)
@@ -214,7 +216,7 @@ export default function CaseDetail() {
             {activeTab === 'todo' && <CaseTodoTab caseId={id!} latest={todoData?.latest || null} files={todoData?.files || []} toggleTodo={toggleCaseTodo} />}
             {activeTab === 'emails' && <EmailsTab emails={emailsData?.emails || []} caseNumber={id!} />}
             {activeTab === 'notes' && <NotesAndLaborTab notes={notesData?.notes || []} laborRecords={laborRecordsData?.records || []} caseId={id!} />}
-            {activeTab === 'teams' && <TeamsTab chats={teamsData?.chats || []} />}
+            {activeTab === 'teams' && <TeamsTab chats={teamsData?.chats || []} digest={teamsData?.digest || null} />}
             {activeTab === 'drafts' && <DraftsTab drafts={draftsData?.drafts || []} caseNumber={id!} />}
             {activeTab === 'analysis' && <AnalysisTab content={analysisData?.content} exists={analysisData?.exists} />}
             {activeTab === 'evidence' && <EvidenceChainTab caseId={id!} />}
@@ -323,6 +325,7 @@ function EmailsTab({ emails, caseNumber }: { emails: any[]; caseNumber: string }
               </div>
               <p className="font-medium text-sm mt-1 truncate" style={{ color: 'var(--text-primary)' }}>{email.subject}</p>
               {email.from && <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>From: {email.from}</p>}
+              {email.cc && <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>CC: {email.cc}</p>}
             </div>
           </div>
           {expanded.has(email.id || String(i)) && (
@@ -344,6 +347,10 @@ function NotesAndLaborTab({ notes, laborRecords, caseId }: { notes: any[]; labor
   const hasLabor = laborRecords.length > 0
   const [expandedNotes, setExpandedNotes] = useState<Set<number>>(new Set(hasNotes ? [0] : []))
   const [expandedLabor, setExpandedLabor] = useState<Set<number>>(new Set())
+  const refreshNotes = useRefreshNotes()
+  const refreshLabor = useRefreshLaborRecords()
+  const [notesMsg, setNotesMsg] = useState<string | null>(null)
+  const [laborMsg, setLaborMsg] = useState<string | null>(null)
 
   const toggleNote = (i: number) => {
     const next = new Set(expandedNotes)
@@ -382,6 +389,25 @@ function NotesAndLaborTab({ notes, laborRecords, caseId }: { notes: any[]; labor
           {hasNotes && (
             <Badge variant="secondary" size="xs">{notes.length}</Badge>
           )}
+          <button
+            className="ml-auto p-1 rounded hover:bg-white/10 transition-colors disabled:opacity-40"
+            title="Refresh notes from D365"
+            disabled={refreshNotes.isPending}
+            onClick={() => {
+              const oldCount = notes.length
+              refreshNotes.mutate(caseId, {
+                onSuccess: (data: any) => {
+                  const newCount = data?.total ?? data?.notes?.length ?? 0
+                  setNotesMsg(newCount > oldCount ? `Updated: ${newCount} notes (+${newCount - oldCount})` : `Up to date (${newCount} notes)`)
+                  setTimeout(() => setNotesMsg(null), 3000)
+                },
+                onError: () => { setNotesMsg('Refresh failed'); setTimeout(() => setNotesMsg(null), 3000) },
+              })
+            }}
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${refreshNotes.isPending ? 'animate-spin' : ''}`} style={{ color: 'var(--text-tertiary)' }} />
+          </button>
+          {notesMsg && <span className="text-[10px] ml-1" style={{ color: 'var(--accent-green)' }}>{notesMsg}</span>}
         </h3>
         <NoteGapCard caseId={caseId} />
         {!hasNotes ? (
@@ -442,8 +468,30 @@ function NotesAndLaborTab({ notes, laborRecords, caseId }: { notes: any[]; labor
           {hasLabor && (
             <Badge variant="secondary" size="xs">{laborRecords.length}</Badge>
           )}
+          <button
+            className="ml-auto p-1 rounded hover:bg-white/10 transition-colors disabled:opacity-40"
+            title="Refresh labor from D365"
+            disabled={refreshLabor.isPending}
+            onClick={() => {
+              const oldCount = laborRecords.length
+              refreshLabor.mutate(caseId, {
+                onSuccess: (data: any) => {
+                  const newCount = data?.total ?? data?.records?.length ?? 0
+                  setLaborMsg(newCount > oldCount ? `Updated: ${newCount} records (+${newCount - oldCount})` : `Up to date (${newCount} records)`)
+                  setTimeout(() => setLaborMsg(null), 3000)
+                },
+                onError: () => { setLaborMsg('Refresh failed'); setTimeout(() => setLaborMsg(null), 3000) },
+              })
+            }}
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${refreshLabor.isPending ? 'animate-spin' : ''}`} style={{ color: 'var(--text-tertiary)' }} />
+          </button>
+          {laborMsg && <span className="text-[10px] ml-1" style={{ color: 'var(--accent-green)' }}>{laborMsg}</span>}
         </h3>
-        <LaborEstimateCard caseNumber={caseId} />
+        <LaborEstimateCard caseNumber={caseId} hasLaborToday={laborRecords.some((r: any) => {
+          const d = r.performedOn || r.date
+          return d && new Date(d).toDateString() === new Date().toDateString()
+        })} />
         {!hasLabor ? (
           <EmptyState icon="⏱️" title="No labor records" />
         ) : (
@@ -499,14 +547,19 @@ function NotesAndLaborTab({ notes, laborRecords, caseId }: { notes: any[]; labor
   )
 }
 
-function TeamsTab({ chats }: { chats: any[] }) {
+function TeamsTab({ chats, digest }: { chats: any[]; digest: { scoredAt: string; keyFacts: string[]; relevantCount: number; irrelevantCount: number } | null }) {
   const [searchTerm, setSearchTerm] = useState('')
+  const [showOther, setShowOther] = useState(false)
 
   if (chats.length === 0) return <EmptyState icon="💬" title="No Teams chats" description="Teams data will appear after running casework or teams-search" />
 
   const filteredChats = searchTerm
     ? chats.filter(c => c.content?.toLowerCase().includes(searchTerm.toLowerCase()) || c.chatId?.toLowerCase().includes(searchTerm.toLowerCase()))
     : chats
+
+  const relevantChats = filteredChats.filter(c => c.relevance === 'high')
+  const otherChats = filteredChats.filter(c => c.relevance !== 'high')
+  const hasScoring = digest !== null
 
   const highlightText = (text: string) => {
     if (!searchTerm) return text
@@ -518,8 +571,41 @@ function TeamsTab({ chats }: { chats: any[] }) {
     )
   }
 
+  const renderChat = (chat: any, i: number) => (
+    <Card key={chat.chatId || i} padding="sm">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <h4 className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>
+            {chat.chatId?.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) || `Chat ${i + 1}`}
+          </h4>
+          {chat.relevance === 'high' && (
+            <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ background: 'var(--accent-green-dim)', color: 'var(--accent-green)' }}>relevant</span>
+          )}
+        </div>
+        {chat.reason && <span className="text-xs truncate max-w-48" style={{ color: 'var(--text-tertiary)' }}>{chat.reason}</span>}
+      </div>
+      <div className="text-sm whitespace-pre-wrap max-h-96 overflow-y-auto" style={{ color: 'var(--text-secondary)' }}>
+        {searchTerm ? highlightText(chat.content || '') : chat.content}
+      </div>
+    </Card>
+  )
+
   return (
     <div className="space-y-3">
+      {/* Key Facts Card */}
+      {digest && digest.keyFacts.length > 0 && (
+        <Card padding="sm" style={{ borderLeft: '3px solid var(--accent-amber)' }}>
+          <h4 className="font-medium text-sm mb-2" style={{ color: 'var(--accent-amber)' }}>🔑 关键事实（Key Facts）</h4>
+          <ul className="text-sm space-y-1 list-disc list-inside" style={{ color: 'var(--text-secondary)' }}>
+            {digest.keyFacts.map((fact, i) => <li key={i}>{fact}</li>)}
+          </ul>
+          <p className="text-xs mt-2" style={{ color: 'var(--text-tertiary)' }}>
+            相关对话: {digest.relevantCount} / {digest.relevantCount + digest.irrelevantCount} · 评分时间: {new Date(digest.scoredAt).toLocaleString()}
+          </p>
+        </Card>
+      )}
+
+      {/* Search */}
       {chats.length > 1 && (
         <input
           type="text"
@@ -533,54 +619,64 @@ function TeamsTab({ chats }: { chats: any[] }) {
 
       {filteredChats.length === 0 ? (
         <p className="text-sm text-center py-4" style={{ color: 'var(--text-tertiary)' }}>No matches for &ldquo;{searchTerm}&rdquo;</p>
+      ) : hasScoring && !searchTerm ? (
+        <>
+          {/* Relevant Chats Section */}
+          {relevantChats.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-tertiary)' }}>
+                📌 相关对话 ({relevantChats.length})
+              </h3>
+              {relevantChats.map(renderChat)}
+            </div>
+          )}
+
+          {/* Other Chats Section — collapsed by default */}
+          {otherChats.length > 0 && (
+            <div>
+              <button
+                onClick={() => setShowOther(!showOther)}
+                className="flex items-center gap-1 text-xs font-medium uppercase tracking-wider w-full py-2 hover:opacity-80 transition-opacity"
+                style={{ color: 'var(--text-tertiary)', background: 'none', border: 'none', cursor: 'pointer' }}
+              >
+                <span style={{ display: 'inline-block', transform: showOther ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▶</span>
+                其他对话 ({otherChats.length})
+              </button>
+              {showOther && (
+                <div className="space-y-2 mt-1">
+                  {otherChats.map(renderChat)}
+                </div>
+              )}
+            </div>
+          )}
+        </>
       ) : (
-        filteredChats.map((chat, i) => (
-          <Card key={chat.chatId || i} padding="sm">
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>Chat: {chat.chatId}</h4>
-              <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{chat.content?.split('\n').length || 0} messages</span>
-            </div>
-            <div className="text-sm whitespace-pre-wrap max-h-96 overflow-y-auto" style={{ color: 'var(--text-secondary)' }}>
-              {searchTerm ? highlightText(chat.content || '') : chat.content}
-            </div>
-          </Card>
-        ))
+        /* Flat layout: no scoring data OR user is searching */
+        filteredChats.map(renderChat)
       )}
     </div>
   )
 }
 
+/** Strip YAML frontmatter (--- ... ---) from markdown. */
+function stripFrontmatter(md: string): string {
+  const lines = md.split('\n')
+  if (lines[0]?.trim() !== '---') return md
+  for (let i = 1; i < lines.length; i++) {
+    if (lines[i].trim() === '---') return lines.slice(i + 1).join('\n').replace(/^\n+/, '')
+  }
+  return md
+}
+
 function DraftCard({ draft, defaultExpanded, caseNumber }: { draft: any; defaultExpanded: boolean; caseNumber: string }) {
   const [expanded, setExpanded] = useState(defaultExpanded)
   const [copied, setCopied] = useState(false)
-  const [ccCopied, setCcCopied] = useState(false)
   const [editing, setEditing] = useState(false)
   const [editContent, setEditContent] = useState('')
 
-  const cleanContent = draft.content?.replace(/\n{3,}/g, '\n\n') || ''
-
-  // Extract CC line from draft content
-  const ccMatch = cleanContent.match(/\*\*CC:\*\*\s*(.+)/i)
-  const ccEmails = ccMatch ? ccMatch[1].trim() : null
-
-  const handleCopyCC = async (e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (!ccEmails) return
-    try {
-      await navigator.clipboard.writeText(ccEmails)
-      setCcCopied(true)
-      setTimeout(() => setCcCopied(false), 1500)
-    } catch {
-      const textarea = document.createElement('textarea')
-      textarea.value = ccEmails
-      document.body.appendChild(textarea)
-      textarea.select()
-      document.execCommand('copy')
-      document.body.removeChild(textarea)
-      setCcCopied(true)
-      setTimeout(() => setCcCopied(false), 1500)
-    }
-  }
+  const cleanContent = stripFrontmatter((draft.content || '')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/^(\*\*(?:To|CC|Subject|Language|Type):.*$)/gm, '$1\n'))
 
   const handleCopy = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -669,28 +765,6 @@ function DraftCard({ draft, defaultExpanded, caseNumber }: { draft: any; default
           className="border-t pt-3 mt-3"
           style={{ borderColor: 'var(--border-subtle)' }}
         >
-          {ccEmails && (
-            <div
-              className="flex items-center gap-2 px-3 py-2 rounded mb-3 text-xs"
-              style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-subtle)' }}
-            >
-              <span style={{ color: 'var(--text-secondary)' }}>
-                <strong>CC:</strong> {ccEmails}
-              </span>
-              <button
-                onClick={handleCopyCC}
-                className="flex items-center gap-1 px-1.5 py-0.5 rounded transition-colors shrink-0"
-                style={{
-                  color: ccCopied ? 'var(--accent-green)' : 'var(--text-tertiary)',
-                  background: ccCopied ? 'var(--accent-green-dim)' : undefined,
-                }}
-                title="Copy CC list"
-              >
-                {ccCopied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                {ccCopied ? '✓' : 'Copy CC'}
-              </button>
-            </div>
-          )}
           {editing ? (
             <div className="space-y-2">
               <textarea
@@ -730,6 +804,8 @@ function DraftCard({ draft, defaultExpanded, caseNumber }: { draft: any; default
 }
 
 function DraftsTab({ drafts, caseNumber }: { drafts: any[]; caseNumber: string }) {
+  const [ccCopied, setCcCopied] = useState(false)
+
   if (drafts.length === 0) return <EmptyState icon="✉️" title="No drafts" />
 
   // Sort by createdAt descending — latest first
@@ -737,8 +813,48 @@ function DraftsTab({ drafts, caseNumber }: { drafts: any[]; caseNumber: string }
     new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   )
 
+  // CC: RDSE case shows customer-specific CC, otherwise default
+  const myEmail = 'fangkun@microsoft.com'
+  const defaultCC = 'mcpodvm@microsoft.com;fangkun@microsoft.com'
+  const sample = sorted[0]
+  const isRDSE = sample?.ccAccount && sample?.ccList
+  const ccEmails = isRDSE
+    ? (sample.ccList.toLowerCase().includes(myEmail) ? sample.ccList : `${sample.ccList};${myEmail}`)
+    : defaultCC
+  const ccLabel = isRDSE ? `RDSE: ${sample.ccAccount.split('/')[0].trim()}` : null
+  const handleCopyCC = async () => {
+    try { await navigator.clipboard.writeText(ccEmails) } catch {
+      const ta = document.createElement('textarea'); ta.value = ccEmails
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta)
+    }
+    setCcCopied(true); setTimeout(() => setCcCopied(false), 1500)
+  }
+
   return (
     <div className="space-y-3">
+      <div
+        className="flex items-start gap-2 px-3 py-2 rounded text-xs"
+        style={{
+          background: 'var(--bg-tertiary)',
+          border: '1px solid var(--border-subtle)',
+        }}
+      >
+        <span className="min-w-0 break-all" style={{ color: 'var(--text-secondary)' }}>
+          <strong style={isRDSE ? { color: 'var(--accent-blue)' } : undefined}>CC{ccLabel ? ` (${ccLabel})` : ''}:</strong> {ccEmails}
+        </span>
+        <button
+          onClick={handleCopyCC}
+          className="flex items-center gap-1 px-1.5 py-0.5 rounded transition-colors shrink-0"
+          style={{
+            color: ccCopied ? 'var(--accent-green)' : 'var(--text-tertiary)',
+            background: ccCopied ? 'var(--accent-green-dim)' : undefined,
+          }}
+          title="Copy CC list"
+        >
+          {ccCopied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+          {ccCopied ? '✓' : 'Copy CC'}
+        </button>
+      </div>
       {sorted.map((draft, i) => (
         <DraftCard key={i} draft={draft} defaultExpanded={i === 0} caseNumber={caseNumber} />
       ))}

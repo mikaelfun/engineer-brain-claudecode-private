@@ -2,9 +2,14 @@
  * cases.ts — Case 数据读取路由
  */
 import { Hono } from 'hono'
+import { execFile } from 'child_process'
+import { promisify } from 'util'
 import { listActiveCases, listArCases } from '../services/workspace.js'
 import { parseCaseInfo, readTeamsLastMessageTime } from '../services/case-reader.js'
 import { parseEmails } from '../services/email-reader.js'
+import { config } from '../config.js'
+
+const execFileAsync = promisify(execFile)
 import { parseNotes } from '../services/note-reader.js'
 import { parseLaborRecords } from '../services/labor-reader.js'
 import { readCaseMeta, readPatrolState } from '../services/meta-reader.js'
@@ -180,12 +185,40 @@ cases.get('/:id/notes', (c) => {
   return c.json({ notes, total: notes.length })
 })
 
+// POST /api/cases/:id/notes/refresh — fetch latest notes from D365
+cases.post('/:id/notes/refresh', async (c) => {
+  const caseNumber = validateCaseNumber(c)
+  if (!caseNumber) return c.json({ error: 'Invalid case number' }, 400)
+  try {
+    await execFileAsync('pwsh', ['-NoProfile', '-File', join(config.scriptsDir, 'fetch-notes.ps1'), '-TicketNumber', caseNumber, '-OutputDir', config.activeCasesDir, '-Force'], { timeout: 60000 })
+    const notes = parseNotes(caseNumber)
+    return c.json({ notes, total: notes.length })
+  } catch (e: any) {
+    console.error(`[cases/notes/refresh] failed for ${caseNumber}:`, e.message)
+    return c.json({ error: 'Failed to refresh notes', detail: e.message }, 500)
+  }
+})
+
 // GET /api/cases/:id/labor-records
 cases.get('/:id/labor-records', (c) => {
   const caseNumber = validateCaseNumber(c)
   if (!caseNumber) return c.json({ error: 'Invalid case number' }, 400)
   const records = parseLaborRecords(caseNumber)
   return c.json({ records, total: records.length })
+})
+
+// POST /api/cases/:id/labor-records/refresh — fetch latest labor from D365
+cases.post('/:id/labor-records/refresh', async (c) => {
+  const caseNumber = validateCaseNumber(c)
+  if (!caseNumber) return c.json({ error: 'Invalid case number' }, 400)
+  try {
+    await execFileAsync('pwsh', ['-NoProfile', '-File', join(config.scriptsDir, 'view-labor.ps1'), '-TicketNumber', caseNumber, '-OutputDir', config.activeCasesDir], { timeout: 60000 })
+    const records = parseLaborRecords(caseNumber)
+    return c.json({ records, total: records.length })
+  } catch (e: any) {
+    console.error(`[cases/labor/refresh] failed for ${caseNumber}:`, e.message)
+    return c.json({ error: 'Failed to refresh labor records', detail: e.message }, 500)
+  }
 })
 
 // GET /api/cases/:id/teams
@@ -196,21 +229,64 @@ cases.get('/:id/teams', (c) => {
   const teamsDir = join(caseDir, 'teams')
 
   if (!existsSync(teamsDir)) {
-    return c.json({ chats: [], total: 0 })
+    return c.json({ digest: null, chats: [], total: 0 })
   }
 
   try {
-    const files = readdirSync(teamsDir).filter((f: string) => f.endsWith('.md') && !f.startsWith('_'))
+    // Read relevance metadata if available
+    const relevancePath = join(teamsDir, '_relevance.json')
+    let relevanceData: Record<string, any> | null = null
+    if (existsSync(relevancePath)) {
+      try {
+        relevanceData = JSON.parse(readFileSync(relevancePath, 'utf-8'))
+      } catch { /* ignore parse errors */ }
+    }
+
+    // Read digest key facts if available
+    let digest: { scoredAt: string; keyFacts: string[]; relevantCount: number; irrelevantCount: number } | null = null
+    const digestPath = join(teamsDir, 'teams-digest.md')
+    if (existsSync(digestPath) && relevanceData) {
+      const digestContent = readFileSync(digestPath, 'utf-8')
+      // Extract key facts from "## 关键事实（Key Facts）" section
+      const factsMatch = digestContent.match(/## 关键事实（Key Facts）\n\n([\s\S]*?)(?=\n## |$)/)
+      const keyFacts = factsMatch
+        ? factsMatch[1].split('\n').filter((l: string) => l.startsWith('- ')).map((l: string) => l.slice(2))
+        : []
+
+      const chatsObj = relevanceData.chats || {}
+      const relevantCount = Object.values(chatsObj).filter((v: any) => v.relevance === 'high').length
+      const irrelevantCount = Object.values(chatsObj).filter((v: any) => v.relevance === 'low').length
+
+      digest = {
+        scoredAt: relevanceData._scoredAt || '',
+        keyFacts,
+        relevantCount,
+        irrelevantCount,
+      }
+    }
+
+    // Read chat files (exclude underscore-prefixed metadata files and digest)
+    const files = readdirSync(teamsDir)
+      .filter((f: string) => f.endsWith('.md') && !f.startsWith('_') && f !== 'teams-digest.md')
     const chats = files.map((f: string) => {
+      const chatId = f.replace('.md', '')
       const content = readFileSync(join(teamsDir, f), 'utf-8')
+      const chatRelevance = relevanceData?.chats?.[chatId]
       return {
-        chatId: f.replace('.md', ''),
+        chatId,
         content,
+        relevance: (chatRelevance?.relevance as string) || 'unknown',
+        reason: chatRelevance?.reason || undefined,
       }
     })
-    return c.json({ chats, total: chats.length })
+
+    // Sort: high first, then low, then unknown
+    const order: Record<string, number> = { high: 0, low: 1, unknown: 2 }
+    chats.sort((a, b) => (order[a.relevance] ?? 2) - (order[b.relevance] ?? 2))
+
+    return c.json({ digest, chats, total: chats.length })
   } catch {
-    return c.json({ chats: [], total: 0 })
+    return c.json({ digest: null, chats: [], total: 0 })
   }
 })
 
