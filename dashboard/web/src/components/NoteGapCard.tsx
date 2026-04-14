@@ -24,6 +24,7 @@ export function NoteGapCard({ caseId }: NoteGapCardProps) {
 
   const [aiLoading, setAiLoading] = useState(false)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const checkStartRef = useRef<number>(0)  // track when AI check started
 
   // Multi-version drafts
   const [drafts, setDrafts] = useState<DraftVersion[]>([])
@@ -31,6 +32,8 @@ export function NoteGapCard({ caseId }: NoteGapCardProps) {
   const [editTitle, setEditTitle] = useState('')
   const [editBody, setEditBody] = useState('')
   const [showSuccess, setShowSuccess] = useState(false)
+
+  const [checkResult, setCheckResult] = useState<string | null>(null)
 
   // Sync active draft to edit fields
   useEffect(() => {
@@ -63,17 +66,34 @@ export function NoteGapCard({ caseId }: NoteGapCardProps) {
     return () => { if (pollRef.current) clearInterval(pollRef.current) }
   }, [])
 
-  // Stop polling when draft appears
+  // Stop polling when result arrives (either draft or no-gap)
+  // Guard: don't accept hasGap=false until at least 12s elapsed (AI step session takes ~15-20s)
+  // SSE case-step-completed will also invalidate the note-gap query when done
   useEffect(() => {
-    if (aiLoading && data?.hasGap && data?.draft) {
-      setAiLoading(false)
-      if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null }
+    if (aiLoading && data) {
+      if (data.hasGap && data.draft) {
+        // Gap found with draft — accept immediately
+        setAiLoading(false)
+        setCheckResult(null)
+        if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null }
+      } else if (data.hasGap === false) {
+        // No gap — but only accept after minimum wait (AI may still be running)
+        const elapsed = Date.now() - checkStartRef.current
+        if (elapsed >= 12000) {
+          setAiLoading(false)
+          setCheckResult('No note gap detected')
+          setTimeout(() => setCheckResult(null), 5000)
+          if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null }
+        }
+        // else: keep polling, AI step is likely still running
+      }
     }
   }, [aiLoading, data?.hasGap, data?.draft])
 
   // Trigger AI check via SDK step session + poll for result
   const handleCheck = useCallback(() => {
     setAiLoading(true)
+    checkStartRef.current = Date.now()
     checkGapAI.mutate(caseId, {
       onError: () => setAiLoading(false),
     })
@@ -154,123 +174,105 @@ export function NoteGapCard({ caseId }: NoteGapCardProps) {
             )}
           </button>
         </div>
+        {checkResult && (
+          <div className="mt-2 flex items-center gap-1.5">
+            <CheckCircle size={12} style={{ color: 'var(--accent-green)' }} />
+            <span className="text-xs" style={{ color: 'var(--accent-green)' }}>{checkResult}</span>
+          </div>
+        )}
       </div>
     )
   }
 
-  // ── Has drafts — multi-version editor ──
+  // ── Has drafts — compact editor (matching Daily Ops design) ──
   const activeDraft = drafts[activeIdx]
   const isSubmitting = submitNote.isPending
 
   return (
-    <div className="rounded-lg p-4"
+    <div className="rounded-lg px-3 py-2"
       style={{
         border: `1px solid ${submitNote.isError ? 'var(--accent-red)' : 'var(--accent-amber)'}`,
         background: 'var(--bg-secondary)',
       }}>
 
-      {/* Header */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <AlertTriangle size={16} style={{ color: 'var(--accent-amber)' }} />
-          <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-            Note Gap: {activeDraft?.gapDays ?? data?.draft?.gapDays ?? '?'} 天未更新
-          </span>
-        </div>
+      {/* Row 1: icon + gap info + version tabs + actions */}
+      <div className="flex items-center gap-2 mb-1.5">
+        <AlertTriangle size={14} style={{ color: 'var(--accent-amber)' }} />
+        <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>
+          Note Gap
+        </span>
+        <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0"
+          style={{ background: 'var(--accent-amber-dim)', color: 'var(--accent-amber)' }}>
+          {activeDraft?.gapDays ?? data?.draft?.gapDays ?? '?'}d
+        </span>
+        {drafts.length > 1 && (
+          <div className="flex items-center gap-0.5">
+            {drafts.map((_, i) => (
+              <button key={i}
+                onClick={() => setActiveIdx(i)}
+                className="px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors"
+                style={{
+                  background: i === activeIdx ? 'var(--accent-purple-dim)' : 'transparent',
+                  color: i === activeIdx ? 'var(--accent-purple)' : 'var(--text-tertiary)',
+                }}>
+                V{i + 1}
+              </button>
+            ))}
+          </div>
+        )}
+        <span className="flex-1" />
         <button
           onClick={handleCheck}
           disabled={aiLoading}
-          className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors disabled:opacity-50"
-          style={{ color: 'var(--accent-purple)', border: '1px solid var(--border-default)' }}
+          className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] transition-colors disabled:opacity-50"
+          style={{ color: 'var(--accent-purple)' }}
           title="生成另一个版本"
         >
-          {aiLoading ? (
-            <><Sparkles size={12} className="animate-pulse" /> 生成中...</>
-          ) : (
-            <><Plus size={12} /> 再生成</>
-          )}
+          {aiLoading ? <Sparkles size={10} className="animate-pulse" /> : <Plus size={10} />}
         </button>
+        <button
+          onClick={() => dismissDraft(activeIdx)}
+          className="p-0.5 rounded transition-colors flex-shrink-0"
+          style={{ color: 'var(--text-tertiary)' }}
+          title="Dismiss"
+        >✕</button>
       </div>
-
-      {/* Version tabs — only when >1 */}
-      {drafts.length > 1 && (
-        <div className="flex items-center gap-1 mb-3 flex-wrap">
-          {drafts.map((d, i) => (
-            <div key={d.id} className="flex items-center">
-              <button
-                onClick={() => setActiveIdx(i)}
-                className={`flex items-center gap-1 px-2 py-1 rounded-l text-xs font-medium transition-colors ${i === activeIdx ? '' : 'opacity-60'}`}
-                style={{
-                  background: i === activeIdx ? 'var(--accent-purple-dim)' : 'var(--bg-tertiary)',
-                  color: i === activeIdx ? 'var(--accent-purple)' : 'var(--text-secondary)',
-                  border: `1px solid ${i === activeIdx ? 'var(--accent-purple)' : 'var(--border-default)'}`,
-                  borderRight: 'none',
-                }}
-              >
-                <Sparkles size={10} />
-                V{i + 1}
-              </button>
-              <button
-                onClick={() => dismissDraft(i)}
-                className="flex items-center px-1 py-1 rounded-r text-xs transition-colors"
-                style={{
-                  background: i === activeIdx ? 'var(--accent-purple-dim)' : 'var(--bg-tertiary)',
-                  color: 'var(--text-tertiary)',
-                  border: `1px solid ${i === activeIdx ? 'var(--accent-purple)' : 'var(--border-default)'}`,
-                }}
-                title={`删除版本 ${i + 1}`}
-              >
-                <X size={10} />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
 
       {/* Editor */}
       {activeDraft && (
         <>
           <input
             type="text" value={editTitle} onChange={e => setEditTitle(e.target.value)}
-            className="w-full px-3 py-1.5 rounded text-sm mb-2"
-            style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-default)', color: 'var(--text-primary)' }}
-            placeholder="Note Title"
+            className="w-full px-2 py-1 text-xs bg-surface border border-border rounded focus:outline-none text-foreground mb-1"
+            placeholder="Note title..."
+            onFocus={e => (e.currentTarget.style.borderColor = 'var(--accent-amber)')}
+            onBlur={e => (e.currentTarget.style.borderColor = '')}
           />
           <textarea
-            value={editBody} onChange={e => setEditBody(e.target.value)} rows={5}
-            className="w-full px-3 py-2 rounded text-sm mb-3 resize-y"
-            style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-default)', color: 'var(--text-primary)', fontFamily: 'inherit' }}
-            placeholder="Note Body"
+            value={editBody} onChange={e => setEditBody(e.target.value)} rows={4}
+            className="w-full px-2 py-1 text-xs bg-surface border border-border rounded focus:outline-none text-foreground resize-y font-mono min-h-[60px] mb-1.5"
+            placeholder="Note body..."
+            onFocus={e => (e.currentTarget.style.borderColor = 'var(--accent-amber)')}
+            onBlur={e => (e.currentTarget.style.borderColor = '')}
           />
-          <div className="flex items-center gap-2 mb-3">
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium"
-              style={{ background: 'var(--accent-purple-dim)', color: 'var(--accent-purple)' }}>
-              <Sparkles size={9} /> AI
-            </span>
-            <span className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
-              {new Date(activeDraft.generatedAt).toLocaleTimeString()}
-            </span>
-          </div>
         </>
       )}
 
       {/* Actions */}
-      <div className="flex justify-between">
+      <div className="flex justify-end gap-1.5">
         <button
           onClick={() => { setDrafts([]); dismissGap.mutate() }}
-          className="flex items-center gap-1 px-2 py-1.5 rounded text-xs transition-colors"
-          style={{ color: 'var(--text-tertiary)' }} title="全部忽略"
+          className="px-2 py-1 text-[10px] rounded border border-border text-muted hover:text-foreground transition-colors"
         >
-          <X size={12} /> 忽略
+          Dismiss All
         </button>
         <button
           onClick={handleSubmit}
           disabled={isSubmitting || !editTitle.trim() || !editBody.trim()}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium transition-colors disabled:opacity-50"
-          style={{ background: 'var(--accent-blue)', color: 'white' }}
+          className="px-3 py-1 text-[10px] rounded disabled:opacity-50 transition-colors"
+          style={{ background: 'var(--accent-amber)', color: 'var(--text-inverse)' }}
         >
-          <Send size={14} />
-          {isSubmitting ? '写入中...' : '写入 D365'}
+          {isSubmitting ? 'Writing...' : '📝 Write to D365'}
         </button>
       </div>
 

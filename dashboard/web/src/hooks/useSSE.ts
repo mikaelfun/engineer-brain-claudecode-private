@@ -272,8 +272,8 @@ export function useSSE() {
           }
         }
 
-        // Update patrol store per-case tool/step tracking
-        if (d.toolName) patrolOnCaseStepUpdate(caseNumber, { tool: d.toolName })
+        // Update patrol store per-case substep tracking (only meaningful steps, not raw tool names)
+        if (d.substep) patrolOnCaseStepUpdate(caseNumber, { step: d.substep })
       }
     })
 
@@ -329,6 +329,10 @@ export function useSSE() {
         queryClient.invalidateQueries({ queryKey: ['case-sessions', caseNumber] })
         queryClient.invalidateQueries({ queryKey: ['cases', caseNumber] })
         queryClient.invalidateQueries({ queryKey: ['cases', caseNumber, 'todo'] })
+        // Invalidate note-gap query when note-gap step completes so NoteGapCard picks up the result
+        if (d.step === 'note-gap') {
+          queryClient.invalidateQueries({ queryKey: ['note-gap', caseNumber] })
+        }
       }
     })
 
