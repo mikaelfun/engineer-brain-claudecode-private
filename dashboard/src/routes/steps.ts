@@ -146,6 +146,9 @@ function startPipelinePoller(caseNumber: string, sessionId?: string) {
       const startTs = readTimingMarker(logsDir, agent.startMarker)
       const endTs = readTimingMarker(logsDir, agent.endMarker)
 
+      // If start == end (0s), the agent was cache-skipped, not actually spawned — skip it
+      if (startTs && endTs && endTs - startTs === 0) continue
+
       let newStatus: string
       if (endTs) {
         newStatus = 'completed'
@@ -764,9 +767,52 @@ stepRoutes.post('/case/:id/step/:step', async (c) => {
 
   if (!isBackground) {
     // Clean up stale/paused sessions from previous operations (ISS-210)
-    // This prevents "session residual blocking" where a previous step's
-    // paused session blocks new casework from starting.
     cleanupStaleSessions(caseNumber)
+
+    // Pre-check: for casework, detect if case is Resolved/Cancelled in D365 → auto-archive
+    if (stepName === 'casework') {
+      try {
+        const detectScript = join(config.projectRoot, 'skills', 'd365-case-ops', 'scripts', 'detect-case-status.ps1')
+        if (existsSync(detectScript)) {
+          const { execSync } = await import('child_process')
+          const detectOutput = execSync(
+            `pwsh -NoProfile -File "${detectScript}" -CasesRoot "${config.casesDir}" -CaseNumbers "${caseNumber}" -SkipClosureCheck`,
+            { cwd: config.projectRoot, encoding: 'utf-8', timeout: 30_000 },
+          )
+          const jsonMatch = detectOutput.match(/\[[\s\S]*\]/)
+          if (jsonMatch) {
+            const entries = JSON.parse(jsonMatch[0])
+            if (entries.length > 0) {
+              const entry = entries[0]
+              // Case is no longer active in D365 — archive it
+              const srcDir = join(config.activeCasesDir, caseNumber)
+              const targetBase = entry.targetFolder === 'transfer'
+                ? join(config.casesDir, 'transfer')
+                : join(config.casesDir, 'archived')
+              const { mkdirSync, renameSync } = await import('fs')
+              if (!existsSync(targetBase)) mkdirSync(targetBase, { recursive: true })
+              const destDir = join(targetBase, caseNumber)
+              renameSync(srcDir, destDir)
+              console.log(`[step-precheck] Archived ${caseNumber} → ${entry.targetFolder} (${entry.reason})`)
+
+              // Broadcast update
+              sseManager.broadcast('case-updated' as any, { caseNumber, action: 'archived', reason: entry.reason })
+
+              return c.json({
+                status: 'archived',
+                caseNumber,
+                reason: entry.reason,
+                targetFolder: entry.targetFolder,
+                message: `Case ${caseNumber} has been ${entry.targetFolder === 'transfer' ? 'transferred' : 'archived'} (${entry.reason}). No casework needed.`,
+              }, 200)
+            }
+          }
+        }
+      } catch (err) {
+        // Pre-check failed — non-blocking, continue with casework
+        console.warn(`[step-precheck] detect-case-status failed for ${caseNumber}:`, (err as Error).message)
+      }
+    }
 
     // Check if case already has an active operation (prevent duplicate spawn)
     const existingOp = getActiveCaseOperation(caseNumber)
@@ -919,6 +965,8 @@ stepRoutes.post('/case/:id/step/:step', async (c) => {
           for (const agent of AGENT_SPAWNS) {
             const startTs = readTimingMarker(logsDir, agent.startMarker)
             const endTs = readTimingMarker(logsDir, agent.endMarker)
+            // Skip cache-skipped agents (start == end, 0s duration)
+            if (startTs && endTs && endTs - startTs === 0) continue
             if (startTs) {
               sseManager.broadcast('case-agent-spawn' as any, {
                 caseNumber,
