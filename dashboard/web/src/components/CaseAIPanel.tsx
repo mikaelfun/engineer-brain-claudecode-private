@@ -21,6 +21,7 @@ import { StepQuestionForm } from './session/StepQuestionForm'
 import { StepFilterTabs } from './session/StepFilterTabs'
 import { StallWarningBanner } from './session/StallWarningBanner'
 import { QueueStatusIndicator } from './session/QueueStatusIndicator'
+import { CaseworkPipeline, type PipelineStep, DEFAULT_CASEWORK_STEPS } from './pipeline/CaseworkPipeline'
 
 interface CaseAIPanelProps {
   caseNumber: string
@@ -109,6 +110,63 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull, ski
 
   // Queue status (global) from caseSessionStore
   const queueStatus = useCaseSessionStore((s) => s.queueStatus)
+
+  // Pipeline steps for casework visualization (ISS-210)
+  const pipelineSteps = useCaseSessionStore((s) => s.pipelineSteps[caseNumber])
+  const agentSpawns = useCaseSessionStore((s) => s.agentSpawns[caseNumber])
+  const isCaseworkRunning = currentStep === 'casework' && isStepActive
+
+  // Auto-initialize pipeline steps when casework starts but no SSE pipeline event was received
+  // (e.g. page refresh, late SSE connection)
+  // ISS-210 v2: Don't try to infer from old messages — just init all as pending.
+  // The backend timing marker poller will fill in accurate states.
+  useEffect(() => {
+    if (isCaseworkRunning && !pipelineSteps) {
+      const initPipeline = useCaseSessionStore.getState().initPipelineSteps
+      initPipeline(caseNumber, DEFAULT_CASEWORK_STEPS.map(s => ({ ...s })))
+    }
+  }, [isCaseworkRunning, pipelineSteps, caseNumber])
+
+  // Clear stale pipeline when casework is NOT running but pipeline shows
+  // (prevents ghost pipeline from previous runs)
+  useEffect(() => {
+    if (!isCaseworkRunning && !isStepActive && pipelineSteps) {
+      // Check if all steps are completed/skipped/failed — if so, keep for 30s then clear
+      const allDone = pipelineSteps.every(s => s.status === 'completed' || s.status === 'skipped' || s.status === 'failed')
+      if (allDone) {
+        const timer = setTimeout(() => {
+          useCaseSessionStore.getState().clearPipelineSteps(caseNumber)
+        }, 30_000)
+        return () => clearTimeout(timer)
+      }
+      // If pipeline has pending/active steps but casework isn't running, it's stale — clear now
+      const hasActive = pipelineSteps.some(s => s.status === 'active' || s.status === 'pending')
+      if (hasActive) {
+        useCaseSessionStore.getState().clearPipelineSteps(caseNumber)
+      }
+    }
+  }, [isCaseworkRunning, isStepActive, pipelineSteps, caseNumber])
+
+  // Compute elapsed time for pipeline
+  const [pipelineElapsed, setPipelineElapsed] = useState<number | undefined>(undefined)
+  const pipelineStartRef = useRef<number | null>(null)
+  useEffect(() => {
+    if (isCaseworkRunning && !pipelineStartRef.current) {
+      pipelineStartRef.current = Date.now()
+    }
+    if (!isCaseworkRunning && pipelineStartRef.current) {
+      setPipelineElapsed(Date.now() - pipelineStartRef.current)
+      pipelineStartRef.current = null
+      return
+    }
+    if (!isCaseworkRunning) return
+    const timer = setInterval(() => {
+      if (pipelineStartRef.current) {
+        setPipelineElapsed(Date.now() - pipelineStartRef.current)
+      }
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [isCaseworkRunning])
 
   // Stall detection: compare lastHeartbeatAt with current time every 5s
   const lastHeartbeat = useCaseSessionStore((s) => s.lastHeartbeatAt[caseNumber])
@@ -291,9 +349,13 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull, ski
           `/case/${caseNumber}/step/casework`, {}
         )
       } else {
-        const body: Record<string, string> = {}
+        const body: Record<string, any> = {}
         if (action === 'draft-email' && emailType) {
           body.emailType = emailType
+        }
+        // Teams search from UI always skips cache (force refresh)
+        if (action === 'teams-search') {
+          body.forceRefresh = true
         }
         await apiPost<{ status: string; caseNumber: string; step: string }>(
           `/case/${caseNumber}/step/${action}`,
@@ -929,6 +991,55 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull, ski
           <button onClick={() => setError(null)} className="flex-shrink-0">
             <X className="w-3 h-3" style={{ color: 'var(--accent-red)' }} />
           </button>
+        </div>
+      )}
+
+      {/* Casework Pipeline Stepper — shown when casework is running or recently completed (ISS-210) */}
+      {pipelineSteps && pipelineSteps.length > 0 && (
+        <div
+          className="px-5 py-3 flex-shrink-0"
+          style={{ borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-inset)' }}
+        >
+          <CaseworkPipeline
+            steps={pipelineSteps as PipelineStep[]}
+            elapsedMs={pipelineElapsed}
+            isRunning={isCaseworkRunning}
+          />
+          {/* Agent spawn badges */}
+          {agentSpawns && agentSpawns.length > 0 && agentSpawns.some(a => a.status !== 'idle') && (
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
+              <span className="text-[10px] font-medium" style={{ color: 'var(--text-tertiary)' }}>Agents:</span>
+              {agentSpawns.filter(a => a.status !== 'idle').map(agent => {
+                const color = agent.status === 'completed' ? 'var(--accent-green)'
+                  : agent.status === 'running' ? 'var(--accent-blue)'
+                  : agent.status === 'timeout' ? 'var(--accent-amber)'
+                  : 'var(--accent-red)'
+                const bg = agent.status === 'completed' ? 'var(--accent-green-dim)'
+                  : agent.status === 'running' ? 'var(--accent-blue-dim)'
+                  : agent.status === 'timeout' ? 'var(--accent-amber-dim)'
+                  : 'var(--accent-red-dim)'
+                const icon = agent.status === 'completed' ? '✓'
+                  : agent.status === 'running' ? '⟳'
+                  : agent.status === 'timeout' ? '⏱'
+                  : '✗'
+                const dur = agent.durationMs
+                  ? agent.durationMs < 60000 ? `${Math.round(agent.durationMs / 1000)}s`
+                    : `${Math.floor(agent.durationMs / 60000)}m ${Math.round((agent.durationMs % 60000) / 1000)}s`
+                  : ''
+                return (
+                  <span
+                    key={agent.id}
+                    className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium ${agent.status === 'running' ? 'animate-pulse' : ''}`}
+                    style={{ color, background: bg }}
+                    title={`${agent.label}: ${agent.status}${dur ? ` (${dur})` : ''}`}
+                  >
+                    {icon} {agent.label}
+                    {dur && <span className="font-mono opacity-70">{dur}</span>}
+                  </span>
+                )
+              })}
+            </div>
+          )}
         </div>
       )}
 

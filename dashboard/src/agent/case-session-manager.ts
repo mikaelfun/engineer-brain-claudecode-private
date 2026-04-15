@@ -8,19 +8,19 @@
  *   - chatCaseSession: 交互式反馈（resume 已有 session）
  *   - stepCaseSession: 单步执行（在已有 session 中 resume 或新建）
  *   - executeTodoAction: 执行单个 Todo 动作
- *   - patrolCoordinator: 单个 SDK session 执行 /patrol SKILL.md，与 CLI 一致
+ *   - Patrol is now delegated to CLI via cli-patrol-manager.ts (thin shell)
  *
  * 注意: @anthropic-ai/claude-agent-sdk 提供 query() 函数
  */
 import { query, type Options, type SDKMessage, type CanUseTool, type McpServerConfig, type AgentDefinition } from '@anthropic-ai/claude-agent-sdk'
-import { readFileSync, existsSync, writeFileSync, mkdirSync, appendFileSync, readdirSync } from 'fs'
+import { readFileSync, existsSync, writeFileSync, mkdirSync, appendFileSync, readdirSync, unlinkSync } from 'fs'
 import { join, resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { execSync } from 'child_process'
 import { sseManager } from '../watcher/sse-manager.js'
 import { getSkillRegistry } from '../services/skill-registry.js'
 import { broadcastSDKMessages } from '../utils/sdk-message-broadcaster.js'
-import type { PatrolProgress, PatrolTodoSummary, ExecutionSummary, ToolCallRecord } from '../types/index.js'
+import type { ExecutionSummary, ToolCallRecord } from '../types/index.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -200,7 +200,10 @@ function getCasesRoot(): string {
   if (existsSync(configPath)) {
     try {
       const config = JSON.parse(readFileSync(configPath, 'utf-8'))
-      return config.casesRoot || ''
+      const raw = config.casesRoot || ''
+      // Always resolve to absolute path based on project root
+      // so file operations work regardless of process.cwd()
+      return raw ? resolve(getProjectRoot(), raw) : ''
     } catch {
       // fall through
     }
@@ -549,9 +552,7 @@ export function writeStepLog(
 ): void {
   try {
     const casesRoot = getCasesRoot()
-    const projectRoot = getProjectRoot()
-    const casesRootResolved = resolve(projectRoot, casesRoot)
-    const logsDir = join(casesRootResolved, 'active', caseNumber, 'logs')
+    const logsDir = join(casesRoot, 'active', caseNumber, 'logs')
 
     if (!existsSync(logsDir)) {
       mkdirSync(logsDir, { recursive: true })
@@ -692,7 +693,7 @@ staleSessionWatchdog.unref()
 // ---- Expired Session Purge ----
 // Remove completed/failed sessions after TTL, paused sessions after SDK expiry,
 // and sessions for cases no longer in active/ directory (archived).
-const COMPLETED_TTL_MS = 24 * 60 * 60 * 1000 // 24 hours — keep until next patrol cycle
+const COMPLETED_TTL_MS = 5 * 60 * 1000       // 5 min — completed sessions purged quickly
 const PAUSED_TTL_MS = 15 * 60 * 1000         // 15 min for paused (SDK session expired)
 const PURGE_INTERVAL_MS = 30 * 60 * 1000     // run every 30 min
 const MESSAGE_TTL_MS = 2 * 60 * 60 * 1000    // 2 hours — purge messages earlier than sessions
@@ -710,7 +711,7 @@ export function purgeExpiredSessions(): { purged: number; remaining: number } {
   try {
     const casesRoot = getCasesRoot()
     if (casesRoot) {
-      const activeCasesDir = join(resolve(getProjectRoot(), casesRoot), 'active')
+      const activeCasesDir = join(casesRoot, 'active')
       if (existsSync(activeCasesDir)) {
         activeCases = new Set(readdirSync(activeCasesDir, { withFileTypes: true })
           .filter(e => e.isDirectory()).map(e => e.name))
@@ -818,7 +819,20 @@ function buildCaseAppendPrompt(caseNumber: string): string {
     }
   }
 
-  return `${claudeMd}\nYou are processing Case ${caseNumber}.\nCase directory: ${caseDir}\n${caseSummary}`
+  return `${claudeMd}\nYou are processing Case ${caseNumber}.\nCase directory: ${caseDir}\n${caseSummary}
+
+## CRITICAL SAFETY RULES — D365 Write Operations BLOCKED
+
+You are running in automated patrol/casework mode. The following actions are ABSOLUTELY FORBIDDEN:
+
+1. **NEVER call d365-case-ops email scripts**: \`new-email.ps1\`, \`reply-email.ps1\`, \`edit-draft.ps1\`, \`open-draft.ps1\`, \`delete-draft.ps1\`
+2. **NEVER use Mail MCP write tools**: \`CreateDraftMessage\`, \`SendDraftMessage\`, \`SendEmailWithAttachments\`, \`ReplyToMessage\`, \`ForwardMessage\`, \`ReplyAllToMessage\`
+3. **NEVER create, send, or modify emails in D365 or Outlook** — email drafts must ONLY be saved as local markdown files in \`{caseDir}/drafts/\`
+4. **NEVER call d365-case-ops write scripts**: \`add-note.ps1\`, \`add-phonecall.ps1\`, \`record-labor.ps1\` — these require explicit user confirmation
+
+Email drafts go to: \`{caseDir}/drafts/YYYYMMDD-HHMM-{type}-{lang}-{recipient}.md\` (local files only).
+The user will review drafts and send manually.
+`
 }
 
 // ---- SDK Session ID Extraction ----
@@ -941,7 +955,7 @@ export async function* processCaseSession(
         allowedTools: ['Read', 'Write', 'Bash', 'Edit', 'Glob', 'Grep', 'Agent'],
         permissionMode: 'bypassPermissions',
         allowDangerouslySkipPermissions: true,
-        maxTurns: 100,
+        maxTurns: 200,
         stderr: (data: string) => console.error(`[SDK:stderr:${caseNumber}]`, data.trim()),
         ...(canUseTool ? { canUseTool } : {}),
       },
@@ -973,6 +987,13 @@ export async function* processCaseSession(
       // Update activity timestamp
       if (sdkSessionId && sessions[sdkSessionId]) {
         sessions[sdkSessionId].lastActivityAt = new Date().toISOString()
+      }
+
+      // Detect maxTurns exhaustion — break out to avoid hang
+      if ((message as any).subtype === 'error_max_turns') {
+        console.warn(`[SDK] maxTurns exhausted for case ${caseNumber} — ending session`)
+        yield { ...message, sdkSessionId } as any
+        break
       }
 
       yield { ...message, sdkSessionId } as any
@@ -1128,6 +1149,28 @@ export async function* stepCaseSession(
     throw new Error(`Unknown step: ${stepName}. Available: ${available.join(', ')}`)
   }
 
+  // Performance optimization (ISS-210): For orchestrator/complex skills, inject the SKILL.md
+  // content directly into the prompt so the agent doesn't waste a tool call reading it.
+  // This saves ~10-15s per casework execution.
+  const skill = getSkillRegistry().getSkill(stepName)
+  const skillPath = join(getProjectRoot(), '.claude', 'skills', stepName, 'SKILL.md')
+  if (existsSync(skillPath)) {
+    try {
+      const skillContent = readFileSync(skillPath, 'utf-8')
+      // Strip frontmatter (between --- markers)
+      const bodyMatch = skillContent.match(/^---[\s\S]*?---\s*\n([\s\S]*)$/)
+      const skillBody = bodyMatch ? bodyMatch[1] : skillContent
+      if (skill?.category === 'orchestrator' || stepName === 'casework') {
+        prompt = `Process Case ${caseNumber}. Follow ALL steps below precisely.\n\n${skillBody}`
+      } else {
+        // For non-orchestrator skills, inject as reference but keep original prompt as primary directive
+        prompt = `${prompt}\n\n## Skill Reference (already loaded — do NOT re-read SKILL.md)\n\n${skillBody}`
+      }
+    } catch {
+      // Fallback to original prompt if read fails
+    }
+  }
+
   // Check if case already has a session → resume in that session
   // But only if it was active recently (within 10 minutes). Stale sessions cause SDK to hang.
   const existingSessionId = caseIndex[caseNumber]
@@ -1162,6 +1205,13 @@ export async function* stepCaseSession(
   const allMcp = getCaseMcpServers()
   const isSubset = Object.keys(stepMcp).length < Object.keys(allMcp).length
   yield* processCaseSession(caseNumber, prompt, options?.canUseTool, stepMcp, isSubset)
+
+  // Step sessions are one-shot — mark completed so they don't show as "running"
+  const stepSessionId = caseIndex[caseNumber]
+  if (stepSessionId && sessions[stepSessionId] && sessions[stepSessionId].status === 'paused') {
+    sessions[stepSessionId].status = 'completed'
+    saveSessionStore()
+  }
 }
 
 /**
@@ -1274,530 +1324,6 @@ After verification, output a single JSON block on a line by itself:
   }
 }
 
-// ---- Patrol Helpers ----
-
-/**
- * Filter cases by lastInspected — only include cases that:
- * 1. Have no casehealth-meta.json or no lastInspected field (new case)
- * 2. lastInspected is older than 24 hours
- */
-export function filterCasesByLastInspected(
-  allCases: string[],
-  casesRootResolved: string,
-  force?: boolean
-): { filtered: string[]; skipped: string[] } {
-  const now = Date.now()
-  const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000
-  const filtered: string[] = []
-  const skipped: string[] = []
-
-  for (const caseNumber of allCases) {
-    const metaPath = join(casesRootResolved, 'active', caseNumber, 'casehealth-meta.json')
-    try {
-      if (!existsSync(metaPath)) {
-        filtered.push(caseNumber) // New case, no meta
-        continue
-      }
-      const meta = JSON.parse(readFileSync(metaPath, 'utf-8'))
-      if (!meta.lastInspected) {
-        filtered.push(caseNumber) // No lastInspected field
-        continue
-      }
-      const lastInspected = new Date(meta.lastInspected).getTime()
-      if (force || now - lastInspected > TWENTY_FOUR_HOURS) {
-        filtered.push(caseNumber) // Stale — needs re-inspection
-      } else {
-        skipped.push(caseNumber) // Recently inspected, skip
-      }
-    } catch {
-      filtered.push(caseNumber) // Parse error → treat as needing inspection
-    }
-  }
-
-  return { filtered, skipped }
-}
-
-/**
- * Run patrol warm-up phase — parallel execution of:
- * 1. check-ir-status-batch.ps1 -SaveMeta (IR/FDR/FWR batch pre-fill)
- * 2. warm-dtm-token.ps1 (DTM token cache warming)
- *
- * Failures are logged but don't block patrol.
- */
-export async function runPatrolWarmup(casesRootResolved: string): Promise<{
-  irBatch: { success: boolean; error?: string }
-  dtmToken: { success: boolean; error?: string }
-}> {
-  const projectRoot = getProjectRoot()
-  const results = {
-    irBatch: { success: false } as { success: boolean; error?: string },
-    dtmToken: { success: false } as { success: boolean; error?: string },
-  }
-
-  // Run both warmup tasks in parallel
-  const [irResult, dtmResult] = await Promise.allSettled([
-    // IR/FDR/FWR batch check
-    new Promise<void>((resolve, reject) => {
-      try {
-        const script = join(projectRoot, 'skills', 'd365-case-ops', 'scripts', 'check-ir-status-batch.ps1')
-        if (existsSync(script)) {
-          execSync(
-            `pwsh -NoProfile -File "${script}" -SaveMeta -MetaDir "${join(casesRootResolved, 'active')}"`,
-            { cwd: projectRoot, timeout: 30000, stdio: 'pipe' }
-          )
-        }
-        resolve()
-      } catch (err) {
-        reject(err)
-      }
-    }),
-    // DTM token warming
-    new Promise<void>((resolve, reject) => {
-      try {
-        const script = join(projectRoot, 'skills', 'd365-case-ops', 'scripts', 'warm-dtm-token.ps1')
-        if (existsSync(script)) {
-          execSync(
-            `pwsh -NoProfile -File "${script}" -CasesRoot "${casesRootResolved}"`,
-            { cwd: projectRoot, timeout: 60000, stdio: 'pipe' }
-          )
-        }
-        resolve()
-      } catch (err) {
-        reject(err)
-      }
-    }),
-  ])
-
-  results.irBatch.success = irResult.status === 'fulfilled'
-  if (irResult.status === 'rejected') {
-    results.irBatch.error = irResult.reason instanceof Error ? irResult.reason.message : String(irResult.reason)
-  }
-
-  results.dtmToken.success = dtmResult.status === 'fulfilled'
-  if (dtmResult.status === 'rejected') {
-    results.dtmToken.error = dtmResult.reason instanceof Error ? dtmResult.reason.message : String(dtmResult.reason)
-  }
-
-  return results
-}
-
-/**
- * Run patrol (batch inspection) — 并行 per-case SDK sessions
- *
- * 两阶段架构:
- *   Phase 1: Discover active cases and determine which have changes
- *   Phase 2: Process changed cases in parallel (Promise.allSettled)
- *
- * 每个 case 独立一个 SDK session，互不阻塞。
- * 进度通过 onProgress + SSE 广播给前端。
- */
-
-// Patrol cancellation flag
-let patrolCancelled = false
-let patrolRunning = false
-const patrolActiveCases = new Set<string>() // Track active patrol case sessions for cancel
-
-export function cancelPatrol(): boolean {
-  if (!patrolRunning) return false
-  patrolCancelled = true
-  // Abort all active patrol case sessions
-  for (const caseNumber of patrolActiveCases) {
-    abortQuery(caseNumber)
-    releaseCaseOperationLock(caseNumber)
-  }
-  patrolActiveCases.clear()
-  return true
-}
-
-export function isPatrolRunning(): boolean {
-  return patrolRunning
-}
-
-export async function patrolCoordinator(
-  onProgress: (progress: PatrolProgress) => void,
-  options?: { force?: boolean }
-): Promise<PatrolTodoSummary> {
-  patrolCancelled = false
-  patrolRunning = true
-
-  try {
-    return await _runPatrol(onProgress, options?.force)
-  } finally {
-    patrolRunning = false
-    patrolCancelled = false
-  }
-}
-
-async function _runPatrol(
-  onProgress: (progress: PatrolProgress) => void,
-  force?: boolean
-): Promise<PatrolTodoSummary> {
-  const projectRoot = getProjectRoot()
-  const casesRoot = getCasesRoot()
-  const casesRootResolved = resolve(projectRoot, casesRoot)
-  const activeCasesDir = join(casesRootResolved, 'active')
-
-  // Phase 1: Discover active cases via D365 API (same as CLI patrol)
-  onProgress({ phase: 'discovering' })
-  sseManager.broadcast('patrol-progress' as any, { phase: 'discovering', detail: 'Querying D365 for active cases...' })
-
-  let allCases: string[] = []
-  try {
-    const script = join(projectRoot, 'skills', 'd365-case-ops', 'scripts', 'list-active-cases.ps1')
-    if (existsSync(script)) {
-      const output = execSync(
-        `pwsh -NoProfile -File "${script}" -OutputJson`,
-        { cwd: projectRoot, timeout: 60000, stdio: 'pipe', encoding: 'utf-8' }
-      )
-      // Parse JSON output — find the JSON array line from stdout
-      const jsonLine = output.split('\n').find(l => l.trim().startsWith('['))
-      if (jsonLine) {
-        const parsed = JSON.parse(jsonLine)
-        allCases = parsed.map((c: any) => c.ticketnumber).filter(Boolean)
-      }
-    }
-    // Fallback: if script fails or no results, use local directory
-    if (allCases.length === 0 && existsSync(activeCasesDir)) {
-      allCases = readdirSync(activeCasesDir, { withFileTypes: true })
-        .filter(e => e.isDirectory())
-        .map(e => e.name)
-        .sort()
-    }
-  } catch (err) {
-    // Fallback to local directory on script error
-    console.warn('[patrol] list-active-cases.ps1 failed, falling back to local dir:', err instanceof Error ? err.message : err)
-    sseManager.broadcast('patrol-progress' as any, { phase: 'discovering', detail: 'D365 query failed, using local directory...' })
-    try {
-      if (existsSync(activeCasesDir)) {
-        allCases = readdirSync(activeCasesDir, { withFileTypes: true })
-          .filter(e => e.isDirectory())
-          .map(e => e.name)
-          .sort()
-      }
-    } catch {
-      onProgress({ phase: 'failed', error: 'Cannot discover active cases' })
-      return { red: [], yellow: [], green: [] }
-    }
-  }
-
-  onProgress({ phase: 'discovering', totalCases: allCases.length })
-  sseManager.broadcast('patrol-progress' as any, { phase: 'discovering', totalCases: allCases.length, detail: `Found ${allCases.length} active cases in D365` })
-
-  if (allCases.length === 0) {
-    onProgress({ phase: 'completed', totalCases: 0, processedCases: 0 })
-    return { red: [], yellow: [], green: [] }
-  }
-
-  // Phase 1.5: Archive/Transfer detection (same as CLI patrol)
-  sseManager.broadcast('patrol-progress' as any, { phase: 'discovering', detail: 'Detecting archived/transferred cases...' })
-
-  try {
-    const detectScript = join(projectRoot, 'skills', 'd365-case-ops', 'scripts', 'detect-case-status.ps1')
-    if (existsSync(detectScript)) {
-      const detectOutput = execSync(
-        `pwsh -NoProfile -File "${detectScript}" -CasesRoot "${casesRootResolved}" -SkipClosureCheck`,
-        { cwd: projectRoot, timeout: 60000, stdio: 'pipe', encoding: 'utf-8' }
-      )
-      const detectJsonLine = detectOutput.split('\n').find(l => l.trim().startsWith('['))
-      if (detectJsonLine) {
-        const detected: Array<{ caseNumber: string; status: string; reason: string }> = JSON.parse(detectJsonLine)
-        if (detected.length > 0) {
-          // Auto-move archived/transferred cases
-          const archivedDir = join(casesRootResolved, 'archived')
-          const transferDir = join(casesRootResolved, 'transfer')
-          mkdirSync(archivedDir, { recursive: true })
-          mkdirSync(transferDir, { recursive: true })
-
-          for (const item of detected) {
-            const src = join(activeCasesDir, item.caseNumber)
-            if (!existsSync(src)) continue
-
-            const dest = item.status === 'transferred'
-              ? join(transferDir, item.caseNumber)
-              : join(archivedDir, item.caseNumber)
-
-            try {
-              execSync(`mv "${src}" "${dest}"`, { cwd: projectRoot, timeout: 10000, stdio: 'pipe' })
-
-              // Log to archive-log.jsonl
-              const logEntry = JSON.stringify({
-                timestamp: new Date().toISOString(),
-                caseNumber: item.caseNumber,
-                status: item.status,
-                reason: item.reason,
-                from: 'active/',
-                to: item.status === 'transferred' ? 'transfer/' : 'archived/',
-              })
-              appendFileSync(join(casesRootResolved, 'archive-log.jsonl'), logEntry + '\n', 'utf-8')
-
-              sseManager.broadcast('patrol-progress' as any, {
-                phase: 'discovering',
-                detail: `📦 ${item.status}: ${item.caseNumber} — ${item.reason}`,
-              })
-            } catch (mvErr) {
-              console.warn(`[patrol] Failed to move case ${item.caseNumber}:`, mvErr)
-            }
-          }
-
-          // Remove archived/transferred cases from allCases
-          const removedSet = new Set(detected.map(d => d.caseNumber))
-          allCases = allCases.filter(c => !removedSet.has(c))
-          sseManager.broadcast('patrol-progress' as any, {
-            phase: 'discovering',
-            totalCases: allCases.length,
-            detail: `Archived/transferred ${detected.length} case(s), ${allCases.length} remaining`,
-          })
-        }
-      }
-    }
-  } catch (err) {
-    console.warn('[patrol] detect-case-status.ps1 failed (non-blocking):', err instanceof Error ? err.message : err)
-  }
-
-  // Phase 2: Filter by lastInspected
-  onProgress({ phase: 'filtering', totalCases: allCases.length })
-
-  const { filtered: casesToProcess, skipped } = filterCasesByLastInspected(allCases, casesRootResolved, force)
-
-  if (casesToProcess.length === 0) {
-    onProgress({
-      phase: 'completed',
-      totalCases: allCases.length,
-      changedCases: 0,
-      processedCases: 0,
-    })
-    return aggregateTodos(casesRootResolved)
-  }
-
-  // Phase 3: Warm-up (DTM token + IR batch) — with SSE progress
-  onProgress({
-    phase: 'warming-up' as PatrolProgress['phase'],
-    totalCases: allCases.length,
-    changedCases: casesToProcess.length,
-  })
-  sseManager.broadcast('patrol-progress' as any, {
-    phase: 'warming-up',
-    totalCases: allCases.length,
-    changedCases: casesToProcess.length,
-    detail: 'Running DTM token + IR batch warmup...',
-  })
-
-  const warmupResult = await runPatrolWarmup(casesRootResolved)
-
-  // Broadcast warmup results
-  const warmupDetails: string[] = []
-  if (warmupResult.irBatch.success) warmupDetails.push('IR batch ✅')
-  else warmupDetails.push(`IR batch ❌ ${warmupResult.irBatch.error || ''}`)
-  if (warmupResult.dtmToken.success) warmupDetails.push('DTM token ✅')
-  else warmupDetails.push(`DTM token ❌ ${warmupResult.dtmToken.error || ''}`)
-
-  sseManager.broadcast('patrol-progress' as any, {
-    phase: 'warming-up',
-    detail: `Warmup complete: ${warmupDetails.join(' | ')}`,
-  })
-
-  if (warmupResult.irBatch.error) {
-    console.warn('[patrol] IR batch warmup warning:', warmupResult.irBatch.error)
-  }
-  if (warmupResult.dtmToken.error) {
-    console.warn('[patrol] DTM token warmup warning:', warmupResult.dtmToken.error)
-  }
-
-  if (patrolCancelled) {
-    onProgress({ phase: 'completed', totalCases: allCases.length, changedCases: casesToProcess.length, processedCases: 0 })
-    return aggregateTodos(casesRootResolved)
-  }
-
-  // Phase 4: Process ALL cases in full parallel (no concurrency limit)
-  onProgress({
-    phase: 'processing',
-    totalCases: allCases.length,
-    changedCases: casesToProcess.length,
-    processedCases: 0,
-  })
-
-  let processedCount = 0
-  const CASE_TIMEOUT_MS = 15 * 60 * 1000 // 15 minutes per case
-  const caseResults: Array<{ caseNumber: string; status: 'completed' | 'failed' | 'timeout'; error?: string }> = []
-
-  // Broadcast all cases as starting
-  for (const cn of casesToProcess) {
-    sseManager.broadcast('patrol-progress' as any, {
-      phase: 'processing',
-      currentCase: cn,
-      totalCases: allCases.length,
-      changedCases: casesToProcess.length,
-      processedCases: processedCount,
-    })
-  }
-
-  // Launch ALL cases in parallel — each case gets its own SDK session
-  const casePromises = casesToProcess.map(async (caseNumber) => {
-    if (patrolCancelled) return
-
-    patrolActiveCases.add(caseNumber)
-
-    // Acquire operation lock
-    const lockAcquired = acquireCaseOperationLock(caseNumber, 'patrol')
-    if (!lockAcquired) {
-      caseResults.push({ caseNumber, status: 'failed', error: 'Case already has active operation' })
-      processedCount++
-      patrolActiveCases.delete(caseNumber)
-      sseManager.broadcast('patrol-case-completed' as any, {
-        caseNumber,
-        processedCases: processedCount,
-        error: 'Case already has active operation',
-      })
-      return
-    }
-
-    // Notify Agent Monitor
-    sseManager.broadcast('sessions-changed' as any, { reason: 'patrol-case-started', caseNumber })
-
-    try {
-      const patrolIntent = `对 Case ${caseNumber} 执行完整 casework 流程。caseDir: ${join(casesRootResolved, 'active', caseNumber)}/。请读取 .claude/skills/casework/SKILL.md 获取完整执行步骤。`
-
-      const sessionGen = processCaseSession(caseNumber, patrolIntent)
-
-      const timeoutPromise = new Promise<'timeout'>((resolve) =>
-        setTimeout(() => resolve('timeout'), CASE_TIMEOUT_MS)
-      )
-
-      const processPromise = (async () => {
-        // Emit case-step-started for frontend step-grouped display
-        sseManager.broadcast('case-step-started' as any, {
-          caseNumber,
-          step: 'casework',
-          startedAt: new Date().toISOString(),
-        })
-
-        // Use shared deep-parser — same as single-case processing (full SSE per case)
-        await broadcastSDKMessages(caseNumber, 'casework', sessionGen)
-        return 'completed' as const
-      })()
-
-      const result = await Promise.race([processPromise, timeoutPromise])
-
-      if (result === 'timeout') {
-        abortQuery(caseNumber)
-        caseResults.push({ caseNumber, status: 'timeout', error: 'Case processing timed out (15 min)' })
-      } else {
-        caseResults.push({ caseNumber, status: 'completed' })
-      }
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : String(err)
-      caseResults.push({ caseNumber, status: 'failed', error: errorMsg })
-    } finally {
-      processedCount++
-      releaseCaseOperationLock(caseNumber)
-      patrolActiveCases.delete(caseNumber)
-
-      // Emit case-step-completed for frontend step-grouped display
-      const lastResult = caseResults.find(r => r.caseNumber === caseNumber)
-      sseManager.broadcast('case-step-completed' as any, {
-        caseNumber,
-        step: 'casework',
-        error: lastResult?.error,
-      })
-      // Broadcast per-case completion (patrol-level progress)
-      sseManager.broadcast('patrol-case-completed' as any, {
-        caseNumber,
-        processedCases: processedCount,
-        error: lastResult?.error,
-      })
-      sseManager.broadcast('sessions-changed' as any, { reason: 'patrol-case-completed', caseNumber })
-
-      onProgress({
-        phase: 'processing',
-        totalCases: allCases.length,
-        changedCases: casesToProcess.length,
-        processedCases: processedCount,
-      })
-    }
-  })
-
-  await Promise.allSettled(casePromises)
-
-  // Phase 5: Aggregate todos
-  onProgress({ phase: 'aggregating' })
-  const todoSummary = aggregateTodos(casesRootResolved)
-
-  onProgress({
-    phase: 'completed',
-    totalCases: allCases.length,
-    changedCases: casesToProcess.length,
-    processedCases: processedCount,
-    todoSummary,
-    caseResults,
-  })
-
-  return todoSummary
-}
-
-// ---- Helpers: Todo aggregation ----
-
-function aggregateTodos(casesRoot: string): PatrolTodoSummary {
-  const activeCasesDir = join(casesRoot, 'active')
-  const summary: PatrolTodoSummary = { red: [], yellow: [], green: [] }
-
-  if (!existsSync(activeCasesDir)) return summary
-
-  let caseDirs: string[]
-  try {
-    caseDirs = readdirSync(activeCasesDir)
-  } catch {
-    return summary
-  }
-
-  for (const caseId of caseDirs) {
-    const todoDir = join(activeCasesDir, caseId, 'todo')
-    if (!existsSync(todoDir)) continue
-
-    try {
-      const todoFiles = readdirSync(todoDir)
-        .filter(f => f.endsWith('.md'))
-        .sort()
-        .reverse()
-
-      if (todoFiles.length === 0) continue
-
-      const content = readFileSync(join(todoDir, todoFiles[0]), 'utf-8')
-      const items = parseTodoContent(content)
-
-      if (items.red.length > 0) {
-        summary.red.push({ caseNumber: caseId, items: items.red })
-      }
-      if (items.yellow.length > 0) {
-        summary.yellow.push({ caseNumber: caseId, items: items.yellow })
-      }
-      if (items.green.length > 0) {
-        summary.green.push({ caseNumber: caseId, items: items.green })
-      }
-    } catch {
-      // Skip unreadable todo dirs
-    }
-  }
-
-  return summary
-}
-
-function parseTodoContent(content: string): { red: string[]; yellow: string[]; green: string[] } {
-  const result = { red: [] as string[], yellow: [] as string[], green: [] as string[] }
-  let currentSection: 'red' | 'yellow' | 'green' | null = null
-
-  for (const line of content.split('\n')) {
-    if (line.includes('🔴')) currentSection = 'red'
-    else if (line.includes('🟡')) currentSection = 'yellow'
-    else if (line.includes('✅')) currentSection = 'green'
-
-    if (currentSection && line.trimStart().startsWith('- [')) {
-      result[currentSection].push(line.trim())
-    }
-  }
-
-  return result
-}
-
 /**
  * End a session
  */
@@ -1846,6 +1372,38 @@ export function getActiveSessionForCase(caseNumber: string): string | null {
 }
 
 /**
+ * Clean up stale/paused sessions for a case before starting a new operation.
+ * Marks all non-active sessions as 'completed' and clears the caseIndex.
+ * This prevents "session residual blocking" where a previous step's paused
+ * session blocks new casework from starting (ISS-210).
+ */
+export function cleanupStaleSessions(caseNumber: string): number {
+  let cleaned = 0
+  for (const [sid, session] of Object.entries(sessions)) {
+    if (session.caseNumber === caseNumber && session.status !== 'completed') {
+      // Check if session is stale (no activity in last 2 minutes)
+      const lastActivity = new Date(session.lastActivityAt).getTime()
+      const isStale = Date.now() - lastActivity > 2 * 60 * 1000
+      if (isStale || session.status === 'paused' || session.status === 'failed') {
+        sessions[sid].status = 'completed'
+        cleaned++
+      }
+    }
+  }
+  if (caseIndex[caseNumber]) {
+    const indexedSession = sessions[caseIndex[caseNumber]]
+    if (!indexedSession || indexedSession.status === 'completed') {
+      delete caseIndex[caseNumber]
+    }
+  }
+  if (cleaned > 0) {
+    saveSessionStore()
+    console.log(`[cleanupStaleSessions] Cleaned ${cleaned} stale sessions for case ${caseNumber}`)
+  }
+  return cleaned
+}
+
+/**
  * List all sessions
  */
 export function listCaseSessions(): CaseSessionInfo[] {
@@ -1861,4 +1419,55 @@ export function getCaseSessions(caseNumber: string): CaseSessionInfo[] {
   return Object.values(sessions)
     .filter((s) => s.caseNumber === caseNumber)
     .sort((a, b) => new Date(b.lastActivityAt).getTime() - new Date(a.lastActivityAt).getTime())
+}
+
+/**
+ * Register an externally-created session (e.g. from patrol-orchestrator).
+ * If sessionId is already registered, updates lastActivityAt and status.
+ * Set ephemeral=true to skip caseIndex registration (won't be resumed).
+ */
+export function registerCaseSession(
+  sessionId: string,
+  caseNumber: string,
+  intent: string,
+  ephemeral = true,
+): void {
+  const now = new Date().toISOString()
+  if (sessions[sessionId]) {
+    sessions[sessionId].lastActivityAt = now
+    sessions[sessionId].status = 'active'
+  } else {
+    sessions[sessionId] = {
+      sessionId,
+      caseNumber,
+      intent,
+      status: 'active',
+      createdAt: now,
+      lastActivityAt: now,
+    }
+  }
+  if (!ephemeral) {
+    caseIndex[caseNumber] = sessionId
+  }
+  saveSessionStore()
+}
+
+/**
+ * Update a session's status (e.g. mark as completed/failed after patrol finishes).
+ */
+export function updateCaseSessionStatus(
+  sessionId: string,
+  status: CaseSessionInfo['status'],
+): void {
+  if (sessions[sessionId]) {
+    sessions[sessionId].status = status
+    sessions[sessionId].lastActivityAt = new Date().toISOString()
+    if (status === 'completed' || status === 'failed') {
+      const cn = sessions[sessionId].caseNumber
+      if (caseIndex[cn] === sessionId) {
+        delete caseIndex[cn]
+      }
+    }
+    saveSessionStore()
+  }
 }

@@ -33,8 +33,8 @@ export function useSSE() {
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const retryCountRef = useRef(0)
   const lastSeqRef = useRef<number>(0)
-  const MAX_RETRIES = 10
-  const BASE_DELAY_MS = 2000
+  const MAX_RETRIES = 30
+  const BASE_DELAY_MS = 1000
 
   // Use stable refs for Zustand store actions to avoid effect re-runs
   const patrolOnProgress = usePatrolStore((s) => s.onPatrolProgress)
@@ -71,6 +71,10 @@ export function useSSE() {
   const sessionStoreClearPendingQuestion = useCaseSessionStore((s) => s.clearPendingQuestion)
   const sessionStoreSetHeartbeat = useCaseSessionStore((s) => s.setLastHeartbeatAt)
   const sessionStoreSetQueueStatus = useCaseSessionStore((s) => s.setQueueStatus)
+  const sessionStoreInitPipeline = useCaseSessionStore((s) => s.initPipelineSteps)
+  const sessionStoreUpdatePipeline = useCaseSessionStore((s) => s.updatePipelineStep)
+  const sessionStoreInitAgentSpawns = useCaseSessionStore((s) => s.initAgentSpawns)
+  const sessionStoreUpdateAgentSpawn = useCaseSessionStore((s) => s.updateAgentSpawn)
 
   const connect = useCallback(() => {
     const token = localStorage.getItem('eb_token')
@@ -239,6 +243,15 @@ export function useSSE() {
         // Immediately invalidate operation query so UI reflects active operation
         queryClient.invalidateQueries({ queryKey: ['case-operation', caseNumber] })
 
+        // Initialize pipeline steps if casework (ISS-210)
+        if (d.pipelineSteps && Array.isArray(d.pipelineSteps)) {
+          sessionStoreInitPipeline(caseNumber, d.pipelineSteps)
+        }
+        // Initialize agent spawns if casework (ISS-210 v2)
+        if (d.agentSpawns && Array.isArray(d.agentSpawns)) {
+          sessionStoreInitAgentSpawns(caseNumber, d.agentSpawns)
+        }
+
         // Update patrol store if patrol is running (per-case sub-step tracking)
         if (d.step) patrolOnCaseStepUpdate(caseNumber, { step: d.step })
       }
@@ -323,6 +336,23 @@ export function useSSE() {
         addCaseSessionMessage(caseNumber, completedMsg)
         if (d.sessionId) addCaseSessionPerSession(caseNumber, d.sessionId, completedMsg)
 
+        // Clear pipeline steps on casework completion (ISS-210)
+        // Mark all remaining pending/active steps as completed, then clear after 60s
+        if (d.step === 'casework') {
+          const steps = useCaseSessionStore.getState().pipelineSteps[caseNumber]
+          if (steps) {
+            for (const s of steps) {
+              if (s.status === 'active' || s.status === 'pending') {
+                sessionStoreUpdatePipeline(caseNumber, s.id, s.status === 'active' ? 'completed' : 'skipped')
+              }
+            }
+            // Clear pipeline after 60s so user can see final state
+            setTimeout(() => {
+              useCaseSessionStore.getState().clearPipelineSteps(caseNumber)
+            }, 60_000)
+          }
+        }
+
         // Invalidate + force refetch operation query so buttons are released immediately
         queryClient.invalidateQueries({ queryKey: ['case-operation', caseNumber] })
         queryClient.refetchQueries({ queryKey: ['case-operation', caseNumber] })
@@ -333,6 +363,28 @@ export function useSSE() {
         if (d.step === 'note-gap') {
           queryClient.invalidateQueries({ queryKey: ['note-gap', caseNumber] })
         }
+      }
+    })
+
+    // Pipeline step status updates for casework (ISS-210)
+    es.addEventListener('case-pipeline-step', (e) => {
+      const data = parseAndTrack(e.data)
+      if (!data) return
+      const d = data.data || data
+      const caseNumber = d.caseNumber
+      if (caseNumber && d.pipelineStep && d.status) {
+        sessionStoreUpdatePipeline(caseNumber, d.pipelineStep, d.status, d.durationMs)
+      }
+    })
+
+    // Agent spawn status updates for casework (ISS-210 v2)
+    es.addEventListener('case-agent-spawn', (e) => {
+      const data = parseAndTrack(e.data)
+      if (!data) return
+      const d = data.data || data
+      const caseNumber = d.caseNumber
+      if (caseNumber && d.agentId && d.status) {
+        sessionStoreUpdateAgentSpawn(caseNumber, d.agentId, d.status, d.durationMs)
       }
     })
 
@@ -823,6 +875,17 @@ export function useSSE() {
       // Reset retry count on successful connection
       retryCountRef.current = 0
       console.log('[SSE] Connection opened, lastSeq:', lastSeqRef.current)
+
+      // Reconcile patrol store with backend truth on (re)connect
+      // Fixes stuck "patrolling" state when SSE missed the completion event
+      fetch('/api/patrol/status').then(r => r.json()).then((status: any) => {
+        const store = usePatrolStore.getState()
+        if (store.isRunning && !status.running) {
+          // Backend says patrol is NOT running, but store thinks it is → force complete
+          console.log('[SSE] Patrol store reconciliation: backend not running, forcing completed')
+          patrolOnProgress({ phase: 'completed', ...(status.lastRun || {}) })
+        }
+      }).catch(() => { /* ignore */ })
     }
 
     es.onerror = () => {

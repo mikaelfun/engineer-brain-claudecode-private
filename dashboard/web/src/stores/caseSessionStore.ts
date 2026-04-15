@@ -28,6 +28,25 @@ export interface CaseSessionMessage {
 
 export type SessionStatus = 'idle' | 'active' | 'waiting-input' | 'completed' | 'failed'
 
+/** Pipeline step status for casework visualization */
+export type PipelineStepStatus = 'pending' | 'active' | 'completed' | 'failed' | 'skipped'
+
+export interface PipelineStepState {
+  id: string
+  label: string
+  status: PipelineStepStatus
+  startedAt?: string
+  completedAt?: string
+  durationMs?: number
+}
+
+export interface AgentSpawnState {
+  id: string
+  label: string
+  status: 'idle' | 'running' | 'completed' | 'timeout' | 'failed'
+  durationMs?: number
+}
+
 export interface PendingQuestion {
   sessionId: string
   questions: StepQuestion[]
@@ -55,6 +74,11 @@ interface CaseSessionStoreState {
     queueLength: number
     queueLabels: string[]
   } | null
+
+  /** Per-case pipeline steps for casework visualization */
+  pipelineSteps: Record<string, PipelineStepState[]>
+  /** Per-case agent spawn tracking */
+  agentSpawns: Record<string, AgentSpawnState[]>
 
   /** Add a message for a specific case (unified timeline) */
   addMessage: (caseNumber: string, message: CaseSessionMessage) => void
@@ -91,6 +115,22 @@ interface CaseSessionStoreState {
   /** Set global SDK queue status */
   setQueueStatus: (status: CaseSessionStoreState['queueStatus']) => void
 
+  /** Initialize pipeline steps for a case (from casework start event) */
+  initPipelineSteps: (caseNumber: string, steps: Array<{ id: string; label: string; status: PipelineStepStatus }>) => void
+  /** Update a single pipeline step status */
+  updatePipelineStep: (caseNumber: string, stepId: string, status: PipelineStepStatus, durationMs?: number) => void
+  /** Get pipeline steps for a case */
+  getPipelineSteps: (caseNumber: string) => PipelineStepState[]
+  /** Clear pipeline steps for a case */
+  clearPipelineSteps: (caseNumber: string) => void
+
+  /** Initialize agent spawns for a case */
+  initAgentSpawns: (caseNumber: string, spawns: Array<{ id: string; label: string; status: string }>) => void
+  /** Update an agent spawn status */
+  updateAgentSpawn: (caseNumber: string, agentId: string, status: AgentSpawnState['status'], durationMs?: number) => void
+  /** Get agent spawns for a case */
+  getAgentSpawns: (caseNumber: string) => AgentSpawnState[]
+
   /** Clear all state for a case */
   clearAll: (caseNumber: string) => void
 }
@@ -119,6 +159,8 @@ export const useCaseSessionStore = create<CaseSessionStoreState>()((set, get) =>
   currentStep: {},
   lastHeartbeatAt: {},
   queueStatus: null,
+  pipelineSteps: {},
+  agentSpawns: {},
 
   addMessage: (caseNumber, message) =>
     set((state) => {
@@ -210,6 +252,80 @@ export const useCaseSessionStore = create<CaseSessionStoreState>()((set, get) =>
   setQueueStatus: (status) =>
     set(() => ({ queueStatus: status })),
 
+  // ---- Pipeline Steps ----
+  initPipelineSteps: (caseNumber, steps) =>
+    set((state) => ({
+      pipelineSteps: {
+        ...state.pipelineSteps,
+        [caseNumber]: steps.map(s => ({ ...s, startedAt: undefined, completedAt: undefined, durationMs: undefined })),
+      },
+    })),
+
+  updatePipelineStep: (caseNumber, stepId, status, externalDurationMs) =>
+    set((state) => {
+      const steps = state.pipelineSteps[caseNumber]
+      if (!steps) return state
+      const now = new Date().toISOString()
+      const updated = steps.map(s => {
+        if (s.id !== stepId) return s
+        const startedAt = status === 'active' ? now : s.startedAt
+        const completedAt = (status === 'completed' || status === 'failed' || status === 'skipped') ? now : s.completedAt
+        // Use external durationMs from timing markers if provided, otherwise compute
+        const durationMs = externalDurationMs ?? (startedAt && completedAt
+          ? new Date(completedAt).getTime() - new Date(startedAt).getTime()
+          : s.durationMs)
+        return { ...s, status, startedAt, completedAt, durationMs }
+      })
+      return { pipelineSteps: { ...state.pipelineSteps, [caseNumber]: updated } }
+    }),
+
+  getPipelineSteps: (caseNumber) => get().pipelineSteps[caseNumber] || [],
+
+  clearPipelineSteps: (caseNumber) =>
+    set((state) => {
+      const next = { ...state.pipelineSteps }
+      delete next[caseNumber]
+      const nextA = { ...state.agentSpawns }
+      delete nextA[caseNumber]
+      return { pipelineSteps: next, agentSpawns: nextA }
+    }),
+
+  // ---- Agent Spawns ----
+  initAgentSpawns: (caseNumber, spawns) =>
+    set((state) => ({
+      agentSpawns: {
+        ...state.agentSpawns,
+        [caseNumber]: spawns.map(s => ({ ...s, status: s.status as AgentSpawnState['status'], durationMs: undefined })),
+      },
+    })),
+
+  updateAgentSpawn: (caseNumber, agentId, status, durationMs) =>
+    set((state) => {
+      const spawns = state.agentSpawns[caseNumber]
+      if (!spawns) {
+        // Auto-create if not initialized (agent spawned before pipeline init)
+        return {
+          agentSpawns: {
+            ...state.agentSpawns,
+            [caseNumber]: [{ id: agentId, label: agentId, status, durationMs }],
+          },
+        }
+      }
+      const existing = spawns.find(s => s.id === agentId)
+      if (existing) {
+        const updated = spawns.map(s => s.id === agentId ? { ...s, status, durationMs } : s)
+        return { agentSpawns: { ...state.agentSpawns, [caseNumber]: updated } }
+      }
+      return {
+        agentSpawns: {
+          ...state.agentSpawns,
+          [caseNumber]: [...spawns, { id: agentId, label: agentId, status, durationMs }],
+        },
+      }
+    }),
+
+  getAgentSpawns: (caseNumber) => get().agentSpawns[caseNumber] || [],
+
   // ---- Cleanup ----
   clearAll: (caseNumber) =>
     set((state) => {
@@ -238,6 +354,12 @@ export const useCaseSessionStore = create<CaseSessionStoreState>()((set, get) =>
       const lhb = { ...state.lastHeartbeatAt }
       delete lhb[caseNumber]
 
+      const ps = { ...state.pipelineSteps }
+      delete ps[caseNumber]
+
+      const as2 = { ...state.agentSpawns }
+      delete as2[caseNumber]
+
       return {
         messages: msgs,
         sessionMessages: sessMsgs,
@@ -246,6 +368,8 @@ export const useCaseSessionStore = create<CaseSessionStoreState>()((set, get) =>
         activeSessionId: asid,
         currentStep: cs,
         lastHeartbeatAt: lhb,
+        pipelineSteps: ps,
+        agentSpawns: as2,
       }
     }),
 }))

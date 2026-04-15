@@ -7,7 +7,7 @@
 import { Card, CardHeader } from '../components/common/Card'
 import { Badge } from '../components/common/Badge'
 import { Loading, EmptyState } from '../components/common/Loading'
-import { useAgents, useCronJobs, usePatrolState, useCancelPatrol, useUnifiedSessions, useCaseMessages, useTriggers, useDeleteTrigger, useRunTrigger, useCancelTrigger } from '../api/hooks'
+import { useAgents, useCronJobs, usePatrolState, useCancelPatrol, useUnifiedSessions, useCaseMessages, useTriggers, useDeleteTrigger, useRunTrigger, useCancelTrigger, useToggleTrigger } from '../api/hooks'
 import type { UnifiedSession } from '../api/hooks'
 import { usePatrolStore } from '../stores/patrolStore'
 import { useCaseSessionStore, type CaseSessionMessage } from '../stores/caseSessionStore'
@@ -17,11 +17,12 @@ import { SessionMessageList } from '../components/session/SessionMessageList'
 import { QueueStatusIndicator } from '../components/session/QueueStatusIndicator'
 import { StepQuestionForm } from '../components/session/StepQuestionForm'
 import { useQueryClient } from '@tanstack/react-query'
-import { RefreshCw, ChevronDown, ChevronRight, Filter, Send, Square, Plus, Trash2, Play, Loader2, XCircle, CheckCircle2, AlertCircle, Trash } from 'lucide-react'
+import { RefreshCw, ChevronDown, ChevronRight, Filter, Send, Square, Plus, Trash2, Play, Loader2, XCircle, CheckCircle2, AlertCircle, Trash, Pencil, Power } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { apiPost, apiDelete } from '../api/client'
-import { CreateTriggerDialog } from '../components/agents/CreateTriggerDialog'
+import { CreateTriggerDialog, type TriggerEditData } from '../components/agents/CreateTriggerDialog'
 import { useTriggerRunStore } from '../stores/triggerRunStore'
+import { CaseworkPipeline, DEFAULT_CASEWORK_STEPS, type PipelineStep, type StepStatus } from '../components/pipeline/CaseworkPipeline'
 
 const EMPTY_MESSAGES: CaseSessionMessage[] = []
 
@@ -29,6 +30,7 @@ const EMPTY_MESSAGES: CaseSessionMessage[] = []
 
 const SESSION_TYPE_CONFIG: Record<string, { label: string; icon: string; bg: string; color: string }> = {
   case: { label: 'Case', icon: '📋', bg: 'var(--accent-blue-dim)', color: 'var(--accent-blue)' },
+  queue: { label: 'Queue', icon: '🔄', bg: 'var(--accent-purple-dim, var(--accent-blue-dim))', color: 'var(--accent-purple, var(--accent-blue))' },
   implement: { label: 'Implement', icon: '🔧', bg: 'var(--accent-purple-dim, var(--accent-blue-dim))', color: 'var(--accent-purple, var(--accent-blue))' },
   verify: { label: 'Verify', icon: '🧪', bg: 'var(--accent-amber-dim)', color: 'var(--accent-amber)' },
   'track-creation': { label: 'Track', icon: '📝', bg: 'var(--accent-teal-dim, var(--accent-green-dim))', color: 'var(--accent-teal, var(--accent-green))' },
@@ -532,7 +534,9 @@ export default function AgentMonitor() {
   const deleteTrigger = useDeleteTrigger()
   const runTrigger = useRunTrigger()
   const cancelTrigger = useCancelTrigger()
+  const toggleTrigger = useToggleTrigger()
   const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [editingTrigger, setEditingTrigger] = useState<TriggerEditData | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   // Trigger run store
@@ -626,10 +630,12 @@ export default function AgentMonitor() {
   const cronJobs = cronData?.jobs || []
   const allSessions: UnifiedSession[] = unifiedData?.sessions || []
 
-  // Apply filters
-  const filteredSessions = allSessions.filter((s) => {
-    if (typeFilter !== 'all' && s.type !== typeFilter) return false
-    if (statusFilter !== 'all' && s.status !== statusFilter) return false
+  // Apply filters — reclassify internal sessions as 'queue' type
+  const filteredSessions = allSessions
+    .map((s) => s.context?.startsWith('__') ? { ...s, type: 'queue' as const } : s)
+    .filter((s) => {
+      if (typeFilter !== 'all' && s.type !== typeFilter) return false
+      if (statusFilter !== 'all' && s.status !== statusFilter) return false
     return true
   })
 
@@ -705,7 +711,7 @@ export default function AgentMonitor() {
   })
 
   // Group ordering
-  const typeOrder = ['case', 'implement', 'verify', 'track-creation']
+  const typeOrder = ['case', 'queue', 'implement', 'verify', 'track-creation']
 
   return (
     <div className="space-y-6">
@@ -922,34 +928,89 @@ export default function AgentMonitor() {
                       </span>
                     )}
                   </div>
-                  <div className="flex flex-wrap gap-1.5 mt-1">
-                    {caseProgress.map((cp) => (
-                      <span
-                        key={cp.caseNumber}
-                        className="px-1.5 py-0.5 rounded text-xs font-mono flex items-center gap-1"
-                        style={{
-                          background: cp.status === 'completed' ? 'var(--accent-green-dim)'
-                            : cp.status === 'processing' ? 'var(--accent-blue-dim)'
-                            : cp.status === 'failed' ? 'var(--accent-red-dim)'
-                            : 'var(--bg-inset)',
-                          color: cp.status === 'completed' ? 'var(--accent-green)'
-                            : cp.status === 'processing' ? 'var(--accent-blue)'
-                            : cp.status === 'failed' ? 'var(--accent-red)'
-                            : 'var(--text-secondary)',
-                        }}
-                        title={cp.error || `${cp.currentStep || ''}${cp.lastTool ? ' → ' + cp.lastTool : ''}` || cp.status}
-                      >
-                        {cp.status === 'processing' && <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--accent-blue)' }} />}
-                        {cp.status === 'completed' && <span style={{ color: 'var(--accent-green)' }}>✓</span>}
-                        {cp.status === 'failed' && <span style={{ color: 'var(--accent-red)' }}>✗</span>}
-                        {cp.caseNumber.slice(-6)}
-                        {cp.status === 'processing' && cp.currentStep && (
-                          <span className="font-sans text-[10px] opacity-70 max-w-[80px] truncate">
-                            {cp.currentStep}
+                  {/* Per-case rows with mini pipeline */}
+                  <div className="space-y-1 mt-2">
+                    {caseProgress.map((cp) => {
+                      // Build mini pipeline steps from case progress
+                      const miniSteps: PipelineStep[] = DEFAULT_CASEWORK_STEPS.map(s => {
+                        let stepStatus: StepStatus = 'pending'
+                        if (cp.status === 'completed') stepStatus = 'completed'
+                        else if (cp.status === 'failed') {
+                          // All steps up to the current one are completed, current one failed
+                          stepStatus = 'completed'
+                        }
+                        else if (cp.currentStep) {
+                          const idx = DEFAULT_CASEWORK_STEPS.findIndex(ds => ds.id === s.id)
+                          const currentIdx = DEFAULT_CASEWORK_STEPS.findIndex(ds =>
+                            cp.currentStep?.toLowerCase().includes(ds.id.replace('-', ''))
+                            || cp.currentStep?.toLowerCase().includes(ds.label.toLowerCase().replace(' ', '-'))
+                          )
+                          if (currentIdx >= 0) {
+                            if (idx < currentIdx) stepStatus = 'completed'
+                            else if (idx === currentIdx) stepStatus = 'active'
+                          }
+                        }
+                        return { ...s, status: stepStatus }
+                      })
+
+                      const durationStr = cp.durationMs
+                        ? cp.durationMs < 60000 ? `${Math.round(cp.durationMs / 1000)}s` : `${Math.floor(cp.durationMs / 60000)}m ${Math.round((cp.durationMs % 60000) / 1000)}s`
+                        : ''
+
+                      return (
+                        <div
+                          key={cp.caseNumber}
+                          className="flex items-center gap-3 px-2 py-1.5 rounded-lg"
+                          style={{ background: 'var(--bg-inset)' }}
+                        >
+                          {/* Status indicator */}
+                          <span className={`w-2 h-2 rounded-full flex-shrink-0 ${cp.status === 'processing' ? 'animate-pulse' : ''}`}
+                            style={{
+                              background: cp.status === 'completed' ? 'var(--accent-green)'
+                                : cp.status === 'processing' ? 'var(--accent-blue)'
+                                : cp.status === 'failed' ? 'var(--accent-red)'
+                                : 'var(--text-tertiary)',
+                            }}
+                          />
+                          {/* Case number */}
+                          <span className="text-xs font-mono flex-shrink-0 w-16"
+                            style={{
+                              color: cp.status === 'completed' ? 'var(--accent-green)'
+                                : cp.status === 'processing' ? 'var(--accent-blue)'
+                                : cp.status === 'failed' ? 'var(--accent-red)'
+                                : 'var(--text-secondary)',
+                            }}
+                          >
+                            {cp.caseNumber.slice(-6)}
                           </span>
-                        )}
-                      </span>
-                    ))}
+                          {/* Mini pipeline */}
+                          <div className="flex-1 min-w-0">
+                            <CaseworkPipeline
+                              steps={miniSteps}
+                              isRunning={cp.status === 'processing'}
+                              compact
+                            />
+                          </div>
+                          {/* Step label + Duration */}
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {cp.status === 'processing' && cp.currentStep && (
+                              <span className="text-[10px] font-mono max-w-[80px] truncate"
+                                style={{ color: 'var(--accent-blue)' }}
+                              >
+                                {cp.currentStep}
+                              </span>
+                            )}
+                            {durationStr && (
+                              <span className="text-[10px] font-mono"
+                                style={{ color: 'var(--text-tertiary)' }}
+                              >
+                                {durationStr}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
               )}
@@ -1124,7 +1185,7 @@ export default function AgentMonitor() {
           <CardHeader
             title="Last Patrol"
             icon={<span>🔄</span>}
-            subtitle={`${patrol.patrolType} | ${new Date(patrol.lastPatrol).toLocaleString()}`}
+            subtitle={`${patrol.patrolType} | ${new Date(patrol.lastPatrol).toLocaleString('en-US', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Singapore' })}`}
           />
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
             <div>
@@ -1141,7 +1202,7 @@ export default function AgentMonitor() {
             </div>
             <div>
               <span style={{ color: 'var(--text-tertiary)' }}>Started</span>
-              <p className="font-bold text-xs">{patrol.currentPatrolStartedAt ? new Date(patrol.currentPatrolStartedAt).toLocaleString() : '-'}</p>
+              <p className="font-bold text-xs">{patrol.currentPatrolStartedAt ? new Date(patrol.currentPatrolStartedAt).toLocaleString('en-US', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Singapore' }) : '-'}</p>
             </div>
           </div>
           {patrol.lastRunTiming?.bottlenecks?.length > 0 && (
@@ -1271,11 +1332,45 @@ export default function AgentMonitor() {
                         {(job as any).description}
                       </p>
                     )}
+                    {job.state?.lastRunAtMs && (
+                      <p className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
+                        Last: {new Date(job.state.lastRunAtMs).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                        {job.state.lastDurationMs ? ` → ${new Date(job.state.lastRunAtMs + job.state.lastDurationMs).toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit' })}` : ''}
+                        {job.state.lastDurationMs ? ` (${Math.round(job.state.lastDurationMs / 1000)}s)` : ''}
+                        {job.state.lastStatus && job.state.lastStatus !== 'success' ? ` · ${job.state.lastStatus}` : ''}
+                      </p>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 ml-3 flex-shrink-0">
                     <Badge variant="primary" size="xs">
                       {job.schedule?.kind === 'cron' ? job.schedule.expr : job.schedule?.kind}
                     </Badge>
+                    {/* Toggle enabled/disabled */}
+                    <button
+                      onClick={() => toggleTrigger.mutate({ id: job.id, enabled: !job.enabled })}
+                      disabled={toggleTrigger.isPending || isJobRunning}
+                      className="p-1.5 rounded transition-colors hover:bg-[var(--bg-hover)]"
+                      style={{ color: job.enabled ? 'var(--accent-green)' : 'var(--text-tertiary)', cursor: isJobRunning ? 'not-allowed' : 'pointer' }}
+                      title={job.enabled ? 'Disable' : 'Enable'}
+                    >
+                      <Power className="w-4 h-4" />
+                    </button>
+                    {/* Edit */}
+                    <button
+                      onClick={() => setEditingTrigger({
+                        id: job.id,
+                        name: job.name,
+                        prompt: (job as any).prompt || '',
+                        cron: job.schedule?.expr || '',
+                        description: (job as any).description || '',
+                      })}
+                      disabled={isJobRunning}
+                      className="p-1.5 rounded transition-colors hover:bg-[var(--bg-hover)]"
+                      style={{ color: isJobRunning ? 'var(--text-tertiary)' : 'var(--text-secondary)', cursor: isJobRunning ? 'not-allowed' : 'pointer' }}
+                      title="Edit"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
                     {isJobRunning ? (
                       <button
                         onClick={() => cancelTrigger.mutate(job.id)}
@@ -1289,10 +1384,10 @@ export default function AgentMonitor() {
                     ) : (
                       <button
                         onClick={() => runTrigger.mutate(job.id)}
-                        disabled={runTrigger.isPending}
+                        disabled={runTrigger.isPending || !job.enabled}
                         className="p-1.5 rounded transition-colors hover:bg-[var(--bg-hover)]"
-                        style={{ color: 'var(--accent-green)' }}
-                        title="Run now"
+                        style={{ color: !job.enabled ? 'var(--text-tertiary)' : 'var(--accent-green)', cursor: !job.enabled ? 'not-allowed' : 'pointer' }}
+                        title={job.enabled ? 'Run now' : 'Enable first to run'}
                       >
                         <Play className="w-4 h-4" />
                       </button>
@@ -1484,7 +1579,11 @@ export default function AgentMonitor() {
       </div>
 
       {/* Create Trigger Dialog */}
-      <CreateTriggerDialog isOpen={showCreateDialog} onClose={() => setShowCreateDialog(false)} />
+      <CreateTriggerDialog
+        isOpen={showCreateDialog || !!editingTrigger}
+        onClose={() => { setShowCreateDialog(false); setEditingTrigger(null) }}
+        editData={editingTrigger}
+      />
     </div>
   )
 }
