@@ -6,7 +6,7 @@ category: inline
 stability: stable
 requiredInput: caseNumber
 estimatedDuration: 25s
-model: haiku
+model: sonnet
 promptTemplate: |
   Execute teams-search for Case {caseNumber}{forceRefresh}. Read .claude/skills/teams-search/SKILL.md for full instructions, then execute.
 ---
@@ -25,22 +25,22 @@ promptTemplate: |
 - `contactName`, `contactEmail`（调用方传入，省去读 case-info.md）
 - 可选 `--force-refresh`：忽略缓存 TTL，强制执行搜索（跳过 Step 0 缓存检查）
 
-## ⚠️ Tool Call 预算：最多 20 次
+## ⚠️ Tool Call 预算：最多 18 次
 
-整个流程严格控制在 **20 次 tool call 以内**（含 Read SKILL.md）。
+整个流程严格控制在 **18 次 tool call 以内**（含 Read SKILL.md）。
 禁止为 debug、路径检查、中间日志发起额外调用。
 
 | 步骤 | 预算 | 说明 |
 |------|------|------|
 | Read SKILL.md | 1 | 必须 |
-| Step 0 Bash | 1 | 缓存+时间戳+deadline |
+| Step 0 Bash | 1 | 缓存+时间戳+chatId 分类 |
 | Step 0.5 MCP + Bash | 2 | 健康检查 + 日志（casework 存活信号） |
-| Step 2 MCP ×3 | 3 | Q1+Q2+Q3 **同一条消息** |
-| Step 3 MCP ×N | 4-8 | ListChatMessages 分 1-2 批 |
+| Step 2+3 MCP ×(3+H) | 3+H | Q1+Q2+Q3 + HIGH chatId 拉取，**同一条消息** |
+| Step 3b MCP ×M | 0-M | 仅全新 chatId（排除 LOW），一条消息 |
 | Step 4 Write（≥4 chat） | 0-1 | _input.json（≤3 chat 用 heredoc 省掉） |
 | Step 4 Bash | 1 | write-teams.ps1 + 全部日志 + end marker |
 | Step 5 Bash(es) | 1-3 | 读 context + 写 digest + 写 relevance |
-| **合计** | **14-20** | |
+| **合计** | **10-16** | 比原流程减少 1-2 轮消息往返 |
 
 **禁止的多余调用**：
 - ❌ Read case-info.md（caller 已传 contactName/contactEmail）
@@ -50,6 +50,66 @@ promptTemplate: |
 - ❌ Read _input.json（直接 Write/heredoc，不需要先 Read）
 
 ---
+
+## QUEUE_MODE 路径（patrol 队列模式）
+
+当 prompt 中包含 `QUEUE_MODE` 时，MCP 搜索由 patrol 的 teams-queue agent 负责，本 agent 只做后处理。
+
+**流程**（4-6 次 tool call）：
+
+1. **等待 `_mcp-raw.json`**（1 次 Bash）：
+   ```bash
+   CASE_DIR="{caseDir}"
+   mkdir -p "$CASE_DIR/logs" "$CASE_DIR/teams"
+   date +%s > "$CASE_DIR/logs/.t_teamsSearch_start"
+   MAX_WAIT=180
+   WAITED=0
+   while [ $WAITED -lt $MAX_WAIT ]; do
+     if [ -f "$CASE_DIR/teams/_mcp-raw.json" ]; then
+       echo "RAW_READY|waited=${WAITED}s"
+       break
+     fi
+     sleep 10
+     WAITED=$((WAITED + 10))
+   done
+   if [ $WAITED -ge $MAX_WAIT ]; then
+     echo "RAW_TIMEOUT|waited=${MAX_WAIT}s"
+   fi
+   ```
+
+   - `RAW_READY` → 继续 Step 2
+   - `RAW_TIMEOUT` → 构造空结果，跳到 cleanup
+
+2. **build-input + write-teams.ps1**（1 次 Bash）：
+   ```bash
+   CASE_DIR="{caseDir}"
+   LOG="$CASE_DIR/logs/teams-search.log"
+   # build _input.json from raw MCP data
+   BUILD=$(python3 .claude/skills/teams-search/scripts/build-input-from-raw.py "$CASE_DIR" 2>&1)
+   echo "[$(date '+%Y-%m-%d %H:%M:%S')] QUEUE_MODE STEP 4 | build: $BUILD" >> "$LOG"
+   # run write-teams.ps1
+   RESULT=$(pwsh -NoProfile -File .claude/skills/teams-search/scripts/write-teams.ps1 -OutputDir "$CASE_DIR/teams" -InputFile "$CASE_DIR/teams/_input.json" 2>&1)
+   echo "[$(date '+%Y-%m-%d %H:%M:%S')] QUEUE_MODE STEP 4 | write-teams: $RESULT" >> "$LOG"
+   echo "WRITE_DONE|$BUILD"
+   ```
+
+3. **Step 5（relevance + digest）**：同 DIRECT_MODE 的 Step 5（见下方），使用 `_input.json` 中的 chat 数据做评分。
+
+4. **Cleanup**（1 次 Bash）：
+   ```bash
+   CASE_DIR="{caseDir}"
+   date +%s > "$CASE_DIR/logs/.t_teamsSearch_end"
+   echo "[$(date '+%Y-%m-%d %H:%M:%S')] QUEUE_MODE DONE" >> "$CASE_DIR/logs/teams-search.log"
+   echo "TEAMS_SEARCH_DONE|QUEUE_MODE"
+   ```
+
+> QUEUE_MODE 下**不做 MCP 调用**，不做 Step 0 缓存检查，不做 Step 0.5 MCP 健康检查。
+
+---
+
+## DIRECT_MODE 路径（单 case 模式，默认）
+
+以下是 DIRECT_MODE 的完整流程（自行做 MCP 搜索 + 后处理）。
 
 ## Step 0: 缓存检查 + 初始化（1 次 Bash）
 
@@ -62,6 +122,30 @@ mkdir -p "$CASE_DIR/logs" "$CASE_DIR/teams"
 date +%s > "$CASE_DIR/logs/.t_teamsSearch_start"
 DEADLINE=$(($(date +%s) + 120))
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] STEP 0 SKIP | --force-refresh | DEADLINE=$(date -d @$DEADLINE '+%H:%M:%S' 2>/dev/null || date -r $DEADLINE '+%H:%M:%S' 2>/dev/null || echo $DEADLINE)" >> "$LOG"
+# 输出缓存 chatId 分类（高相关/低相关）
+python3 -c "
+import json, sys, os
+idx_path = '$CASE_DIR/teams/_chat-index.json'
+rel_path = '$CASE_DIR/teams/_relevance.json'
+if not os.path.exists(idx_path):
+    print('CACHED_HIGH='); print('CACHED_LOW='); sys.exit()
+idx = json.load(open(idx_path))
+chat_ids = [k for k in idx if not k.startswith('_')]
+rel = {}
+if os.path.exists(rel_path):
+    rj = json.load(open(rel_path))
+    for fname, info in rj.get('chats', {}).items():
+        rel[fname] = info.get('relevance', 'high')
+high_ids, low_ids = [], []
+for cid in chat_ids:
+    fname = idx[cid].get('fileName', '').replace('.md', '')
+    if rel.get(fname) == 'low':
+        low_ids.append(cid)
+    else:
+        high_ids.append(cid)
+print('CACHED_HIGH=' + '|'.join(high_ids))
+print('CACHED_LOW=' + '|'.join(low_ids))
+" 2>/dev/null || { echo "CACHED_HIGH="; echo "CACHED_LOW="; }
 echo "CACHE_EXPIRED|force"
 ```
 
@@ -92,6 +176,32 @@ if [ -f "$CACHE_FILE" ]; then
 else
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] STEP 0 OK | No cache file" >> "$LOG"
   echo "NO_CACHE"
+fi
+# 缓存过期或首次：输出 chatId 分类（高相关/低相关）
+if [ ! -f "$CACHE_FILE" ] || [ $AGE_SECS -ge $THRESHOLD ] 2>/dev/null; then
+  python3 -c "
+import json, sys, os
+idx_path = '$CASE_DIR/teams/_chat-index.json'
+rel_path = '$CASE_DIR/teams/_relevance.json'
+if not os.path.exists(idx_path):
+    print('CACHED_HIGH='); print('CACHED_LOW='); sys.exit()
+idx = json.load(open(idx_path))
+chat_ids = [k for k in idx if not k.startswith('_')]
+rel = {}
+if os.path.exists(rel_path):
+    rj = json.load(open(rel_path))
+    for fname, info in rj.get('chats', {}).items():
+        rel[fname] = info.get('relevance', 'high')
+high_ids, low_ids = [], []
+for cid in chat_ids:
+    fname = idx[cid].get('fileName', '').replace('.md', '')
+    if rel.get(fname) == 'low':
+        low_ids.append(cid)
+    else:
+        high_ids.append(cid)
+print('CACHED_HIGH=' + '|'.join(high_ids))
+print('CACHED_LOW=' + '|'.join(low_ids))
+" 2>/dev/null || { echo "CACHED_HIGH="; echo "CACHED_LOW="; }
 fi
 ```
 
@@ -126,52 +236,114 @@ date +%s > "{caseDir}/logs/.t_teamsSearch_end"
 
 ---
 
-## Step 2: KQL 并行搜索（3 次 MCP，同一条消息）
+## Step 2+3: 并行搜索 + 缓存拉取（合并步骤）
 
 **跳过 Step 1**——联系人信息由 caller 传入，不需要额外 Read。
 
-**在一条 assistant 消息中同时发出 3 个 tool_use**：
+解析 Step 0 输出的 `CACHED_HIGH` 和 `CACHED_LOW`，按 `|` 分割为列表。
 
-**Q1** — caseNumber：
+### 情况 A：有缓存 HIGH chatId（patrol 常态）
+
+**在一条 assistant 消息中同时发出 所有搜索 + HIGH chatId 拉取**：
+
+```
+# 搜索查询（发现新 chatId）
+SearchTeamMessagesQueryParameters(queryString="{caseNumber}", size=25)           # Q1
+SearchTeamMessagesQueryParameters(queryString="from:{contactEmail}", size=5)     # Q2
+ListChats(userUpns=["fangkun@microsoft.com"], topic="{caseNumber}", top=50)     # Q3
+
+# 同时拉取 HIGH 相关性的缓存 chatId（仅 CACHED_HIGH，跳过 CACHED_LOW）
+ListChatMessages(chatId="{high_id_1}", top=20)
+ListChatMessages(chatId="{high_id_2}", top=20)
+# ... 对每个 CACHED_HIGH 中的 chatId
+```
+
+> ⚠️ 不拉取 CACHED_LOW 中的 chatId——已知不相关，节省 API 调用。
+> Q2 备注：`size=5` 足够发现私聊 chatId。如果无 contactEmail 则用 `{caseNumber} OR {firstName}`。
+
+### 情况 B：无缓存（CACHED_HIGH 和 CACHED_LOW 都为空）
+
+回退到仅搜索模式——**一条消息发出 Q1+Q2+Q3**：
+
 ```
 SearchTeamMessagesQueryParameters(queryString="{caseNumber}", size=25)
-```
-
-**Q2** — 联系人（发现私聊用）：
-```
 SearchTeamMessagesQueryParameters(queryString="from:{contactEmail}", size=5)
-```
-
-**Q3** — Meeting chat：
-```
 ListChats(userUpns=["fangkun@microsoft.com"], topic="{caseNumber}", top=50)
 ```
 
-**Q2 备注**：`size=5` 足够发现私聊 chatId。如果无 contactEmail 则用 `{caseNumber} OR {firstName}`。
+等搜索结果返回后，提取所有唯一 chatId，再发 ListChatMessages（见 Step 3b）。
 
-从结果中提取所有唯一 chatId，记住每个 chatId 的来源（Q1→`case-number`，Q2→`contact-name`，Q3→`meeting-topic`）。
+### 结果处理
+
+从 Q1+Q2+Q3 中提取所有唯一 chatId，记住来源（Q1→`case-number`，Q2→`contact-name`，Q3→`meeting-topic`）。
 
 ---
 
-## Step 3: 并行拉取消息（N 次 MCP，分批）
+## Step 3b: 增量拉取新发现的 chatId
 
-对所有唯一 chatId 拉取消息，**一条消息中发出多个 ListChatMessages**：
+对比搜索发现的 chatId 与 **CACHED_HIGH + CACHED_LOW 的并集**：
 
+- **在 CACHED_HIGH 中** → 消息已在 Step 2+3 中并行拉取，无需操作
+- **在 CACHED_LOW 中** → 已知不相关，**跳过拉取**（不浪费 API 调用）
+- **全新 chatId**（不在 HIGH 也不在 LOW 中）→ 需要拉取
+
+> 关键：CACHED_LOW 的 chatId 即使被搜索重新发现，也**不会被当作"新"chatId**而重复拉取。只有真正从未见过的 chatId 才会触发拉取。
+
+**有全新 chatId 时**（或情况 B 首次搜索），发一条消息拉取：
+
+```
+ListChatMessages(chatId="{new_id_1}", top=20)
+ListChatMessages(chatId="{new_id_2}", top=20)
+// ... 同一条消息
+```
+
+**无全新 chatId** → 跳过，直接 Step 4。
+
+**批次规则**（适用于情况 B 和新 chatId 拉取）：
 - **1-4 个 chatId** → 1 条消息，全部并行
 - **5-8 个 chatId** → 2 条消息，每条 4 个
 - **9+ 个 chatId** → 3 条消息，每条 3-4 个
 
-```
-ListChatMessages(chatId="{chatId1}", top=20)
-ListChatMessages(chatId="{chatId2}", top=20)
-// ... 同一条消息
-```
-
-**超时处理**：如果 Step 2+3 的 MCP 调用累计已接近 deadline（在 Step 3 第二批之前检查），跳过剩余 chatId，用已有数据继续到 Step 4。
+**超时处理**：如果 MCP 调用累计已接近 deadline，跳过剩余 chatId，用已有数据继续到 Step 4。
 
 ---
 
 ## Step 4: 写入 + 全部日志（1-2 次调用）
+
+### ⚠️ _input.json 精确 Schema（必须严格遵循）
+
+```json
+{
+  "caseNumber": "260xxx",
+  "searchResults": [
+    { "keyword": "搜索关键词", "status": "success", "chatIds": ["19:..."] }
+  ],
+  "chats": [
+    {
+      "chatId": "19:xxx@thread.v2",
+      "displayName": "Chat Display Name",
+      "source": "search",
+      "messages": [
+        {
+          "id": "msg-id",
+          "createdDateTime": "2026-04-15T11:39:52Z",
+          "from": { "displayName": "User Name" },
+          "body": { "contentType": "Html", "content": "<p>消息内容</p>" }
+        }
+      ]
+    }
+  ],
+  "searchMode": "full",
+  "fallbackTriggered": false,
+  "elapsed": 25.0
+}
+```
+
+**⚠️ 关键格式要求**（write-teams.ps1 严格校验）：
+- `from` **必须是 object** `{ "displayName": "..." }`，**不能是 string**
+- `body` **必须是 object** `{ "contentType": "Html"|"Text", "content": "..." }`，**不能只写 content string**
+- MCP `ListChatMessages` 返回的 `from` 是 `{ "user": { "displayName": "..." } }`，需要转换为 `{ "displayName": "..." }`
+- MCP 返回的 `body` 已经是正确格式 `{ "contentType": "...", "content": "..." }`，直接保留
 
 ### ⚠️ JSON 大小决定写入方式
 
@@ -225,14 +397,14 @@ echo "DONE|chats={n},elapsed={elapsed}s"
 
 ## 错误处理
 
-- **Step 2 MCP 全部失败** → 构造空 JSON（chats: []），仍执行 Step 4
-- **Step 3 部分 chatId 超时** → 用已拉到的数据继续，跳过失败的 chatId
+- **Step 2+3 MCP 全部失败** → 构造空 JSON（chats: []），仍执行 Step 4
+- **Step 3b 部分 chatId 超时** → 用已拉到的数据继续，跳过失败的 chatId
 - **任何异常** → 确保 Step 4 Bash 执行（写 end marker 是最高优先级）
 
 ## 超时保护
 
 - Step 0 设 `DEADLINE=$(($(date +%s) + 120))`
-- Step 3 第二批前：如果 `$(date +%s) > DEADLINE`，跳过剩余，直接 Step 4
+- Step 3b 前：如果 `$(date +%s) > DEADLINE`，跳过剩余，直接 Step 4
 - MCP 无响应 → 记录 timeout，用空结果继续
 - **无论如何 Step 4 必须执行**——end marker 是 casework 等待的信号
 
@@ -260,7 +432,10 @@ echo "$INFO"
 
 ### 5b. 评分 + 写入（1-2 次 Bash/Write）
 
-Agent 已在内存中持有 Step 3-4 的所有 chat 内容。结合 case context，对每个 chat 评分：
+Agent 已在内存中持有 Step 2+3/3b 的所有 chat 内容。结合 case context，对每个**新拉取的** chat 评分：
+
+> ⚠️ 已有 `_relevance.json` 中标记为 `low` 的 chat **不重新评分**——它们在 Step 2+3 中被跳过，保持原评分。
+> 仅对 HIGH chatId（可能有新消息）和全新 chatId 进行评分。评分时可参考已有 `_relevance.json` 中的 HIGH 条目保持一致性。
 
 **分类标准**：
 - `high`：讨论本 case 技术问题、客户沟通、排查步骤、PG 协作、团队讨论本 case 解决方案
