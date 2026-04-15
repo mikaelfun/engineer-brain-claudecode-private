@@ -1149,25 +1149,27 @@ export async function* stepCaseSession(
     throw new Error(`Unknown step: ${stepName}. Available: ${available.join(', ')}`)
   }
 
-  // Performance optimization (ISS-210): For orchestrator/complex skills, inject the SKILL.md
-  // content directly into the prompt so the agent doesn't waste a tool call reading it.
-  // This saves ~10-15s per casework execution.
+  // Performance optimization (ISS-210): For simple inline skills, inject the SKILL.md
+  // content directly so the agent doesn't waste a tool call reading it.
+  // EXCEPTION: orchestrator skills (casework, patrol) are NOT injected — their SKILL.md
+  // contains complex bash templates with variable references ({CD}, {CASE_DIR}) that
+  // confuse the agent when injected as prompt text. The agent needs to Read them itself
+  // to properly understand CWD and file paths.
   const skill = getSkillRegistry().getSkill(stepName)
-  const skillPath = join(getProjectRoot(), '.claude', 'skills', stepName, 'SKILL.md')
-  if (existsSync(skillPath)) {
-    try {
-      const skillContent = readFileSync(skillPath, 'utf-8')
-      // Strip frontmatter (between --- markers)
-      const bodyMatch = skillContent.match(/^---[\s\S]*?---\s*\n([\s\S]*)$/)
-      const skillBody = bodyMatch ? bodyMatch[1] : skillContent
-      if (skill?.category === 'orchestrator' || stepName === 'casework') {
-        prompt = `Process Case ${caseNumber}. Follow ALL steps below precisely.\n\n${skillBody}`
-      } else {
-        // For non-orchestrator skills, inject as reference but keep original prompt as primary directive
+  const SKIP_INJECTION = new Set(['casework', 'patrol'])
+  if (!SKIP_INJECTION.has(stepName)) {
+    const skillPath = join(getProjectRoot(), '.claude', 'skills', stepName, 'SKILL.md')
+    if (existsSync(skillPath)) {
+      try {
+        const skillContent = readFileSync(skillPath, 'utf-8')
+        // Strip frontmatter (between --- markers)
+        const bodyMatch = skillContent.match(/^---[\s\S]*?---\s*\n([\s\S]*)$/)
+        const skillBody = bodyMatch ? bodyMatch[1] : skillContent
+        // Inject as reference — agent doesn't need to Read SKILL.md
         prompt = `${prompt}\n\n## Skill Reference (already loaded — do NOT re-read SKILL.md)\n\n${skillBody}`
+      } catch {
+        // Fallback to original prompt if read fails
       }
-    } catch {
-      // Fallback to original prompt if read fails
     }
   }
 
