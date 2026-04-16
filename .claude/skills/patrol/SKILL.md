@@ -107,10 +107,10 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
 
    **`--force` 模式**：如果用户传入 `--force`（或明确表示要强制巡检），跳过 `lastInspected` 检查，所有活跃 case 全部纳入处理。
 
-   **常规模式**：读取 `config.json` 中 `patrolSkipHours`（默认 3 小时）。对每个 case，读取 `{casesRoot}/active/{case-id}/casehealth-meta.json` 的 `lastInspected`。
+   **常规模式**：读取 `config.json` 中 `patrolSkipHours`（默认 3 小时）。对每个 case，读取 `{casesRoot}/active/{case-id}/casework-meta.json` 的 `lastInspected`。
    满足以下**任一条件**即纳入处理：
    - `lastInspected` 距当前时间超过 `patrolSkipHours` 小时
-   - 无 `casehealth-meta.json` 或无 `lastInspected` 字段（新 case，首次巡检）
+   - 无 `casework-meta.json` 或无 `lastInspected` 字段（新 case，首次巡检）
 
    > **设计说明**：不使用 D365 `modifiedon` 作为筛选条件，因为新邮件是独立 Email Activity，不一定更新 Case 实体的 `modifiedon`，会导致漏检。
 

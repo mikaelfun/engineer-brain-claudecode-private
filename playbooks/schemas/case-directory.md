@@ -20,7 +20,7 @@ ${casesRoot}/
 | 文件 | 格式 | 写入者 | 说明 |
 |------|------|--------|------|
 | `case-info.md` | Markdown | d365-case-ops | Case 快照（基本信息、联系人、Entitlement 等） |
-| `casehealth-meta.json` | JSON | caseworker / IR 脚本 | 巡检元数据（见 `schemas/meta-schema.md`） |
+| `casework-meta.json` | JSON | caseworker / IR 脚本 | 巡检元数据（见 `schemas/meta-schema.md`） |
 | `case-summary.md` | Markdown | inspection-writer | 增量叙事摘要（问题描述/排查进展/关键发现/风险） |
 | `inspection-YYYYMMDD.md` | Markdown | ~~inspection-writer~~ | **废弃（legacy，保留不删）**。已由 `case-summary.md` + `todo/*.md` 替代 |
 | `emails.md` | Markdown | d365-case-ops | 完整邮件历史（按时间倒序，D365 源） |
@@ -182,4 +182,4 @@ AR (Assistance Request) case 的目录结构与普通 case 基本相同，区别
 | `attachments/` | 从 **main case** 拉取 | 附件在 main case 上 |
 | `emails-office.md` | **不拉取** | AR 不需要 Outlook 邮件 |
 
-AR case 通过 case number 后缀识别（3+ 位数字后缀，如 `2603300030003153001`）。`casehealth-meta.json` 中 `isAR=true`，`mainCaseId` 指向对应的 main case。
+AR case 通过 case number 后缀识别（3+ 位数字后缀，如 `2603300030003153001`）。`casework-meta.json` 中 `isAR=true`，`mainCaseId` 指向对应的 main case。

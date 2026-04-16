@@ -14,9 +14,9 @@
     注意：API 不提供 "Nearing" 状态（仅 UI timer 有），但返回
     remaining 和 expirationTime 字段供上层判断。
 .PARAMETER SaveMeta
-    将结果写入各 case 的 casehealth-meta.json（upsert）。
+    将结果写入各 case 的 casework-meta.json（upsert）。
 .PARAMETER MetaDir
-    casehealth-meta.json 所在的 cases 根目录（如 cases/active）。
+    casework-meta.json 所在的 cases 根目录（如 cases/active）。
     默认：$env:D365_CASES_ROOT\active（fallback: 读取 config.json 的 casesRoot）
 .PARAMETER TicketNumbers
     可选：仅查询指定的 ticket numbers（逗号分隔或数组）。
@@ -169,14 +169,14 @@ foreach ($c in $cases) {
     Write-Host "  $ticket  IR:$irIcon $irStatus  FDR:$fdrIcon $fdrStatus  FWR:$fwrIcon $fwrStatus$(if($is24x7){' [24x7]'})"
 }
 
-# --- Save to casehealth-meta.json if requested ---
+# --- Save to casework-meta.json if requested ---
 if ($SaveMeta) {
     $savedCount = 0
     foreach ($entry in $output) {
         $ticket = $entry.ticketnumber
         $caseMetaDir = Join-Path $MetaDir $ticket
         if (-not (Test-Path $caseMetaDir)) { New-Item -ItemType Directory -Path $caseMetaDir -Force | Out-Null }
-        $metaFile = Join-Path $caseMetaDir "casehealth-meta.json"
+        $metaFile = Join-Path $caseMetaDir "casework-meta.json"
 
         # Load existing or create new
         $meta = @{}

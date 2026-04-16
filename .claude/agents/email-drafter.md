@@ -57,7 +57,7 @@ maxTurns: 200
 - `{caseDir}/case-info.md` — 客户信息、联系方式
 - `{caseDir}/emails.md` — 邮件历史（延续语气和上下文）
 - `{caseDir}/analysis/` — 分析报告（如有，引用结论）
-- `{caseDir}/casehealth-meta.json` — 读取 `ccEmails` 字段（RDSE CC 联系人）
+- `{caseDir}/casework-meta.json` — 读取 `ccEmails` 字段（RDSE CC 联系人）
 - `playbooks/guides/email-templates.md` — 邮件模板
 - `playbooks/guides/customer-communication.md` — 沟通规范
 - `{caseDir}/claims.json`（如存在）— 证据链声明状态
@@ -66,7 +66,7 @@ maxTurns: 200
 
 ### 2. 选择模板
 如果 `emailType` 是 `auto`：
-1. 读 `{caseDir}/casehealth-meta.json` 获取 `actualStatus`
+1. 读 `{caseDir}/casework-meta.json` 获取 `actualStatus`
 2. 读邮件历史判断最近沟通方向
 3. 自动选择：
    - `new` → `initial-response`
@@ -113,7 +113,7 @@ maxTurns: 200
 # Email Draft — {type}
 
 **To:** {recipient email}
-**CC:** {ccEmails from casehealth-meta.json}
+**CC:** {ccEmails from casework-meta.json}
 **Subject:** {subject line}
 **Language:** {en|zh}
 **Type:** {emailType}
@@ -128,7 +128,7 @@ _Generated at {timestamp} | Humanized: ✅_
 ```
 
 **CC 行规则：**
-- **仅在 `emailType` 为 `initial-response` 且 `casehealth-meta.json` 中存在 `ccEmails` 字段时**才添加 `**CC:**` 行
+- **仅在 `emailType` 为 `initial-response` 且 `casework-meta.json` 中存在 `ccEmails` 字段时**才添加 `**CC:**` 行
 - 其他邮件类型（follow-up、closure 等）或无 `ccEmails` 时，省略 `**CC:**` 行
 - CC 内容直接使用 `ccEmails` 的值（分号分隔的邮件列表）
 

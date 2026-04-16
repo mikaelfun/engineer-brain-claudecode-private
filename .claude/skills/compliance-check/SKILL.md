@@ -1,5 +1,5 @@
 ---
-description: "Entitlement 合规检查 + 21v Convert 检测 + RDSE CC Finder + SAP 路径检测，upsert casehealth-meta.json。可独立调用 /compliance-check {caseNumber}，也被 casework 内联执行。"
+description: "Entitlement 合规检查 + 21v Convert 检测 + RDSE CC Finder + SAP 路径检测，upsert casework-meta.json。可独立调用 /compliance-check {caseNumber}，也被 casework 内联执行。"
 name: compliance-check
 displayName: 合规检查
 category: inline
@@ -25,7 +25,7 @@ Entitlement 合规检查 + 21v Convert 检测。
 读取 `config.json` 获取 `casesRoot`，设置 `caseDir = {casesRoot}/active/{caseNumber}/`（绝对路径）。
 
 ## 缓存跳过
-读 `{caseDir}/casehealth-meta.json`：
+读 `{caseDir}/casework-meta.json`：
 - `compliance.entitlementOk === true` **且** `ccAccount` 字段已存在（非 undefined）**且** `compliance.sapOk` 字段已存在（非 undefined）→ **跳过**，沿用缓存
 - 否则执行未缓存的检查项（已缓存的项可跳过，仅执行缺失的检查）
 
@@ -44,7 +44,7 @@ AR case 的 compliance 缓存更积极：
 
 ### 1. 读取数据
 - `{caseDir}/case-info.md`
-- `{caseDir}/casehealth-meta.json`（保留已有 irSla/fdr/fwr 等）
+- `{caseDir}/casework-meta.json`（保留已有 irSla/fdr/fwr 等）
 
 ### 2. Entitlement 合规检查
 从 case-info.md 的 Entitlement 表读 Service Name、Schedule、Contract Country。
@@ -78,7 +78,7 @@ AR case 的 compliance 缓存更积极：
 **匹配成功**时：
 1. 提取 `cc` 字段（分号分隔的邮件列表）
 2. 将 `<Replace with POD alias>` 替换为 `podAlias` 配置值
-3. 在 casehealth-meta.json 中写入：
+3. 在 casework-meta.json 中写入：
    - `ccEmails`: 处理后的完整 CC 列表
    - `ccAccount`: 匹配到的账号名
    - `ccKnowMePage`: Know-Me Wiki 链接（仅当非 null 时写入）
@@ -120,7 +120,7 @@ AR case 的 compliance 缓存更积极：
 - `sapOk: true` — `sapMooncake && sapInPod && !sapMismatch`
 - `sapOk: false` — 任一检测不通过
 
-### 5. Upsert casehealth-meta.json
+### 5. Upsert casework-meta.json
 保留已有字段，合并 compliance：
 ```json
 { "compliance": { "entitlementOk": true, "serviceLevel": "Premier", "serviceName": "...", "schedule": "CustomerName - China Cld Premier (ContractId)", "contractCountry": "China", "is21vConvert": false, "21vCaseId": null, "21vCaseOwner": null, "sapOk": true, "sapMooncake": true, "sapInPod": true, "sapMismatch": false, "sapPath": "Azure/21Vianet Mooncake/...", "sapMatchedService": "Log Analytics", "warnings": [] } }

@@ -1,5 +1,5 @@
 ---
-description: "判断 Case 的 actualStatus 和 daysSinceLastContact，upsert 到 casehealth-meta.json。可独立调用 /status-judge {caseNumber}，也被 casework 内联执行。"
+description: "判断 Case 的 actualStatus 和 daysSinceLastContact，upsert 到 casework-meta.json。可独立调用 /status-judge {caseNumber}，也被 casework 内联执行。"
 name: status-judge
 displayName: 状态判断
 category: inline
@@ -167,7 +167,7 @@ allowed-tools:
 ### 5. 计算 daysSinceLastContact
 最后一封**工程师发出邮件**到现在的自然日天数（用于 ≥3 天 follow-up 判断）。
 
-### 6. Upsert casehealth-meta.json
+### 6. Upsert casework-meta.json
 保留已有字段（compliance/irSla/fdr/fwr），添加/更新：
 ```json
 { "actualStatus": "...", "daysSinceLastContact": 2, "statusJudgedAt": "ISO8601", "statusReasoning": "一句话推理 → {status}", "emailCountAtJudge": 14, "noteCountAtJudge": 2, "icmIdAtJudge": "12345 或空字符串", "recommendedActions": [{"action": "...", "reason": "..."}] }

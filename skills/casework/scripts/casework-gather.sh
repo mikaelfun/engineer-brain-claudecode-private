@@ -88,10 +88,10 @@ fi
 
 # ── 前台: compliance-check (从 meta 缓存读取，LLM skill 无法在 bash 内调用) ──
 COMPLIANCE_RESULT=""
-if [ -f "$CASE_DIR/casehealth-meta.json" ]; then
+if [ -f "$CASE_DIR/casework-meta.json" ]; then
   COMPLIANCE_RESULT=$(python3 -c "
 import json, os
-meta = json.load(open('$CASE_DIR/casehealth-meta.json'))
+meta = json.load(open('$CASE_DIR/casework-meta.json'))
 c = meta.get('compliance', {})
 if c.get('entitlementOk') is not None and meta.get('ccAccount', 'MISSING') != 'MISSING' and c.get('sapOk') is not None:
     sl = c.get('serviceLevel', 'Unknown')
@@ -111,7 +111,7 @@ fi
 CONTACT_INFO=$(python3 -c "
 import re, json, os
 ci = '$CASE_DIR/case-info.md'
-meta = '$CASE_DIR/casehealth-meta.json'
+meta = '$CASE_DIR/casework-meta.json'
 name, email = '', ''
 if os.path.exists(ci):
     txt = open(ci, encoding='utf-8').read()
@@ -128,8 +128,8 @@ print(json.dumps({'n':name,'e':email}))
 
 # ── 后台 4: Teams 搜索（直接 agency HTTP proxy，不走 MCP agent queue） ──
 TEAMS_NEEDED="false"
-if [ -f "$CD/skills/d365-case-ops/scripts/agent-cache-check.sh" ]; then
-  CACHE_CHECK=$(bash "$CD/skills/d365-case-ops/scripts/agent-cache-check.sh" "$CASE_DIR" "$TEAMS_CACHE_HOURS" "$CD" 2>/dev/null | head -1)
+if [ -f "$CD/skills/casework/scripts/agent-cache-check.sh" ]; then
+  CACHE_CHECK=$(bash "$CD/skills/casework/scripts/agent-cache-check.sh" "$CASE_DIR" "$TEAMS_CACHE_HOURS" "$CD" 2>/dev/null | head -1)
   TEAMS_NEEDED=$(python3 -c "
 import json
 try:
@@ -187,7 +187,7 @@ fi
 
 # ── 运行 extract-delta.sh 提取增量内容 ──
 DELTA_RESULT=""
-DELTA_SCRIPT="$CD/skills/d365-case-ops/scripts/extract-delta.sh"
+DELTA_SCRIPT="$CD/skills/casework/scripts/extract-delta.sh"
 if [ -f "$DELTA_SCRIPT" ]; then
   DELTA_RESULT=$(bash "$DELTA_SCRIPT" --case-dir "$CASE_DIR" 2>&1 | tail -1)
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] STEP 2 OK | delta: $DELTA_RESULT" >> "$LOG"

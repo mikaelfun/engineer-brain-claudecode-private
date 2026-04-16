@@ -34,7 +34,7 @@ Manager: [Manager Name]
 
 RDSE 客户的 Initial Response 邮件必须 CC 对应的 TAM/SDM。
 - CC 列表来源：`mooncake-cc.json`（由 `fetch-powerbi-cc.js` 从 PowerBI 抓取）
-- compliance-check 会自动查找并写入 `casehealth-meta.json → ccEmails`
+- compliance-check 会自动查找并写入 `casework-meta.json → ccEmails`
 - email-drafter 在生成 initial-response 时自动添加 `CC:` header 行
 - 工程师在 Outlook 发送邮件时，需将 CC 列表粘贴到 CC 栏
 

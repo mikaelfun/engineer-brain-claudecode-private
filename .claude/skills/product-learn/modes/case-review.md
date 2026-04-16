@@ -17,7 +17,7 @@
    - `context/case-summary.md` — 问题概述和关键发现
    - `emails.md` — 最后几封邮件（特别是 closure email 中的解决方案）
    - `analysis/*.md` — 排查报告中的根因和发现
-   - `casehealth-meta.json` — 案例状态
+   - `casework-meta.json` — 案例状态
 
 3. **提取学习点**
    从每个案例中提取：

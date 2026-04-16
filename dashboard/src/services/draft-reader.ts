@@ -37,11 +37,11 @@ export function readCaseDrafts(caseNumber: string): Draft[] {
 
   if (!existsSync(draftsDir)) return []
 
-  // Read casehealth-meta.json for ccAccount
+  // Read casework-meta.json for ccAccount
   let ccAccount: string | undefined
   let ccList: string | undefined
   try {
-    const metaPath = join(caseDir, 'casehealth-meta.json')
+    const metaPath = join(caseDir, 'casework-meta.json')
     if (existsSync(metaPath)) {
       const meta = JSON.parse(readFileSync(metaPath, 'utf-8'))
       ccAccount = meta.ccAccount

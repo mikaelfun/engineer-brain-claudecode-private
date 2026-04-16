@@ -153,7 +153,7 @@ cases.get('/:id', (c) => {
 
   // Compute modifiedAt: latest mtime of key files in case directory
   const caseDir = getCaseDir(caseNumber)
-  const keyFiles = ['case-info.md', 'emails.md', 'notes.md', 'casehealth-meta.json']
+  const keyFiles = ['case-info.md', 'emails.md', 'notes.md', 'casework-meta.json']
   let latestMtime = 0
   for (const f of keyFiles) {
     const p = join(caseDir, f)
@@ -321,7 +321,7 @@ cases.get('/:id/agent-cache', (c) => {
   try {
     const { execSync } = require('child_process')
     const projectRoot = join(caseDir, '..', '..', '..')
-    const script = join(projectRoot, 'skills', 'd365-case-ops', 'scripts', 'agent-cache-check.sh')
+    const script = join(projectRoot, 'skills', 'casework', 'scripts', 'agent-cache-check.sh')
     const result = execSync(`bash "${script}" "${caseDir}" 8 "${projectRoot}"`, { encoding: 'utf-8', timeout: 5000 }).trim()
     return c.json(JSON.parse(result))
   } catch (e: any) {

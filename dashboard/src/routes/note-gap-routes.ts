@@ -51,7 +51,7 @@ noteGapBatchRoutes.get('/', (c) => {
 
   for (const dir of dirs) {
     // Skip AR cases
-    const metaPath = join(casesDir, dir, 'casehealth-meta.json')
+    const metaPath = join(casesDir, dir, 'casework-meta.json')
     if (existsSync(metaPath)) {
       try {
         const meta = JSON.parse(readFileSync(metaPath, 'utf-8'))
@@ -67,7 +67,7 @@ noteGapBatchRoutes.get('/', (c) => {
       let caseTitle = caseInfo?.title || ''
       if (!caseTitle) {
         try {
-          const metaPath = join(casesDir, dir, 'casehealth-meta.json')
+          const metaPath = join(casesDir, dir, 'casework-meta.json')
           if (existsSync(metaPath)) {
             const meta = JSON.parse(readFileSync(metaPath, 'utf-8'))
             caseTitle = meta.caseTitle || meta.title || ''
@@ -128,7 +128,7 @@ noteGapBatchRoutes.post('/', async (c) => {
       continue
     }
     // Skip AR cases — AR notes should be managed separately, not via batch note-gap
-    const metaPath = join(casesDir, caseNumber, 'casehealth-meta.json')
+    const metaPath = join(casesDir, caseNumber, 'casework-meta.json')
     if (existsSync(metaPath)) {
       try {
         const meta = JSON.parse(readFileSync(metaPath, 'utf-8'))
@@ -414,7 +414,7 @@ noteGapRoutes.post('/:id/note-gap/check', async (c) => {
 
   const notesPath = join(caseDir, 'notes.md')
   const summaryPath = join(caseDir, 'case-summary.md')
-  const metaPath = join(caseDir, 'casehealth-meta.json')
+  const metaPath = join(caseDir, 'casework-meta.json')
   const draftPath = getDraftPath(caseNumber)
   const now = new Date()
   const threshold = config.noteGapThresholdDays ?? 3

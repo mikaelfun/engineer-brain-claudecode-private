@@ -58,7 +58,7 @@ FILE_AGE_HOURS=$(( ($(date +%s) - $(stat -c %Y "{CASE_DIR}/notes.md" 2>/dev/null
 
 **新 Case 检测：**
 - 如果过滤后无任何人工 note（notes.md 不存在、为空、或全是系统 note）→ 标记 `isNewCase = true`
-- 从 `{CASE_DIR}/casehealth-meta.json` 读取 `createdon` 字段，确认 case 是否当天创建
+- 从 `{CASE_DIR}/casework-meta.json` 读取 `createdon` 字段，确认 case 是否当天创建
 - 如果 `isNewCase = true` 且 case 当天创建 → 进入 Step 4 新 case 分支
 
 ### Step 4: 判断 Gap
@@ -127,7 +127,7 @@ if gapDays <= threshold:
 
 从多个数据源提取当天操作记录：
 
-1. **`{CASE_DIR}/casehealth-meta.json`**：
+1. **`{CASE_DIR}/casework-meta.json`**：
    - `irSla.status` → `"Succeeded"` 时记录 `"met IR SLA"`
    - `emails`（数量）→ >0 时记录 `"sent initial response / first quality response"`
    - `actualStatus` → 当前状态描述

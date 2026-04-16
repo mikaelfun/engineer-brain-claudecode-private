@@ -90,4 +90,4 @@
 - 并行步骤（dataRefresh + teamsSearch）使用各自的实际开始/结束时间
 - `skippedSteps` 和 `steps` 互斥
 - `errors` 记录执行中的异常摘要，不含敏感信息
-- 此文件仅用于性能分析，不影响 `casehealth-meta.json` 中的合规数据
+- 此文件仅用于性能分析，不影响 `casework-meta.json` 中的合规数据

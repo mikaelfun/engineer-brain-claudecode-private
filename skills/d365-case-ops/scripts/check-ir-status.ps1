@@ -5,14 +5,14 @@
     优先通过 OData API 查询 msdfm_caseperfattributes 实体（~2s），
     API 失败时自动降级到 Playwright UI scraping（~15-20s）。
 
-    如果指定 -SaveMeta，将结果 upsert 到 casehealth-meta.json。
+    如果指定 -SaveMeta，将结果 upsert 到 casework-meta.json。
 .PARAMETER TicketNumber
     Case 编号。如果提供，会先搜索并打开该 Case。
     如果不提供，假设当前已在 Case Form 上（仅 UI 模式可用）。
 .PARAMETER SaveMeta
-    将 IR/FDR/FWR 结果写入 {MetaDir}/{TicketNumber}/casehealth-meta.json（upsert）。
+    将 IR/FDR/FWR 结果写入 {MetaDir}/{TicketNumber}/casework-meta.json（upsert）。
 .PARAMETER MetaDir
-    casehealth-meta.json 所在的 cases 根目录。
+    casework-meta.json 所在的 cases 根目录。
     默认：$env:D365_CASES_ROOT\active（fallback: 读取 config.json 的 casesRoot）
 .PARAMETER UseApi
     是否优先使用 API 查询。默认 $true。设为 $false 强制用 UI scraping。
@@ -314,14 +314,14 @@ $outputObj = @{
 }
 $outputObj | ConvertTo-Json -Compress
 
-# --- Save to casehealth-meta.json if requested ---
+# --- Save to casework-meta.json if requested ---
 if ($SaveMeta -and $TicketNumber) {
     # MetaDir should normally be the parent cases root (e.g. ...\cases\active).
     # Harden against callers accidentally passing the case directory itself.
     $leafName = Split-Path $MetaDir -Leaf
     $caseMetaDir = if ($leafName -eq $TicketNumber) { $MetaDir } else { Join-Path $MetaDir $TicketNumber }
     if (-not (Test-Path $caseMetaDir)) { New-Item -ItemType Directory -Path $caseMetaDir -Force | Out-Null }
-    $metaFile = Join-Path $caseMetaDir "casehealth-meta.json"
+    $metaFile = Join-Path $caseMetaDir "casework-meta.json"
 
     # Load existing or create new
     $meta = @{}

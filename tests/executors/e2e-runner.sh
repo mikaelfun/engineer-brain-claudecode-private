@@ -155,7 +155,7 @@ restore_e2e_backup() {
   if [ -n "${BACKUP_DIR:-}" ] && [ -d "${BACKUP_DIR:-}" ]; then
     log_info "--- Teardown: Restoring backup ---"
     # Restore backed up files
-    for item in case-summary.md casehealth-meta.json timing.json; do
+    for item in case-summary.md casework-meta.json timing.json; do
       if [ -f "$BACKUP_DIR/$item" ]; then
         cp "$BACKUP_DIR/$item" "$CASE_DIR/$item" 2>/dev/null || true
       fi
@@ -180,7 +180,7 @@ if $HAS_SETUP && [ -n "$TEST_CASE_ID" ]; then
   mkdir -p "$BACKUP_DIR"
 
   # Backup key files
-  for item in case-summary.md casehealth-meta.json timing.json todo context; do
+  for item in case-summary.md casework-meta.json timing.json todo context; do
     if [ -e "$CASE_DIR/$item" ]; then
       cp -r "$CASE_DIR/$item" "$BACKUP_DIR/" 2>/dev/null || true
     fi

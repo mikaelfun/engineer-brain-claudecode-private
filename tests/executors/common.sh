@@ -447,7 +447,7 @@ poll_for_completion() {
 # Casework creates .t_*_start / .t_*_end files in logs/ during execution.
 # Phase order: init → changegate → fastpath|spawnAndPrep → compliance →
 #              waitAgents → statusJudge → routing → dataGathering → inspection
-# Also checks file modifications (casehealth-meta.json, case-summary.md, todo/)
+# Also checks file modifications (casework-meta.json, case-summary.md, todo/)
 #
 # Usage: infer_casework_phase <case_dir>
 # Output: phase name string (e.g. "changegate", "waitAgents", "inspection")
@@ -503,7 +503,7 @@ infer_casework_phase() {
     fi
   fi
 
-  if [ -f "$cdir/casehealth-meta.json" ]; then
+  if [ -f "$cdir/casework-meta.json" ]; then
     # meta exists → at least past compliance/judge
     echo "post-judge"
     return

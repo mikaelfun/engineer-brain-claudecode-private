@@ -49,7 +49,7 @@ function classifyChange(filePath: string): { type: SSEEventType; data: Record<st
     if (normalized.includes('/todo/')) {
       return { type: 'todo-updated', data: { caseNumber } }
     }
-    if (normalized.endsWith('casehealth-meta.json') || normalized.endsWith('case-info.md')) {
+    if (normalized.endsWith('casework-meta.json') || normalized.endsWith('case-info.md')) {
       return { type: 'case-updated', data: { caseNumber } }
     }
     if (normalized.includes('/drafts/')) {

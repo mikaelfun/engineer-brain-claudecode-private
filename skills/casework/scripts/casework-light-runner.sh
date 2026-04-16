@@ -76,7 +76,7 @@ echo "[$(date '+%Y-%m-%d %H:%M:%S')] STEP 1 OK | changegate=$CHANGE_RESULT isAR=
 # ═══════════════════════════════════════════
 if echo "$CHANGE_RESULT" | grep -qiE "^(NO_CHANGE|UNCHANGED)"; then
   # Read meta for current status
-  META_FILE="$CASE_DIR/casehealth-meta.json"
+  META_FILE="$CASE_DIR/casework-meta.json"
   if [ -f "$META_FILE" ]; then
     # Write python to temp file to avoid Windows 8191-char command line limit
     FAST_PY=$(mktemp /tmp/casework-fast-XXXXXX.py)
@@ -306,7 +306,7 @@ fi
 # ═══════════════════════════════════════════
 
 # --- Run casework-gather.sh (parallel data-refresh + onenote + compliance + teams request) ---
-GATHER_RESULT=$(bash "$CD/skills/d365-case-ops/scripts/casework-gather.sh" \
+GATHER_RESULT=$(bash "$CD/skills/casework/scripts/casework-gather.sh" \
   --case-number "$CASE_NUMBER" \
   --case-dir "$CASE_DIR" \
   --project-root "$CD" \
@@ -375,11 +375,11 @@ except: print('')
 ICM_NEEDS_REFRESH="false"
 ICM_CACHED_STATE=""
 
-if [ -n "$ICM_NUMBER" ] && [ -f "$CASE_DIR/casehealth-meta.json" ]; then
+if [ -n "$ICM_NUMBER" ] && [ -f "$CASE_DIR/casework-meta.json" ]; then
   ICM_CACHED_STATE=$(python3 -c "
 import json, time
 try:
-    meta = json.load(open('$CASE_DIR/casehealth-meta.json'))
+    meta = json.load(open('$CASE_DIR/casework-meta.json'))
     icm = meta.get('icm', {})
     state = icm.get('state', '')
     fetched = icm.get('fetchedAt', '')
@@ -503,7 +503,7 @@ if latest_date_str:
 
 # Collect context based on delta status (slim when DELTA_EMPTY)
 context = {}
-full_meta = read_json(os.path.join(case_dir, 'casehealth-meta.json'))
+full_meta = read_json(os.path.join(case_dir, 'casework-meta.json'))
 
 if delta_status == 'DELTA_EMPTY':
     # SLIM MODE: only decision-critical fields (saves ~7KB of LLM input tokens)

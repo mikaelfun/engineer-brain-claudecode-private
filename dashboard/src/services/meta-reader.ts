@@ -9,7 +9,7 @@ import type { CaseHealthMeta, PatrolState } from '../types/index.js'
 
 export function readCaseMeta(caseNumber: string): CaseHealthMeta | null {
   const caseDir = getCaseDir(caseNumber)
-  const filePath = join(caseDir, 'casehealth-meta.json')
+  const filePath = join(caseDir, 'casework-meta.json')
 
   if (!existsSync(filePath)) return null
 

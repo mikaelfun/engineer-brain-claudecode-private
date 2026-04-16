@@ -6,7 +6,7 @@
 set -euo pipefail
 
 CD="$1"
-META="$CD/casehealth-meta.json"
+META="$CD/casework-meta.json"
 
 if [ ! -f "$META" ]; then
   echo "ERROR|meta not found: $META" >&2

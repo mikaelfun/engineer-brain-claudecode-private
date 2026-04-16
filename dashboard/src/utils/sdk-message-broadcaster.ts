@@ -71,7 +71,7 @@ export function inferCaseworkSubstep(toolName: string, toolContent: string): str
   }
   // Write to specific outputs
   if ((toolName === 'Write' || toolName === 'Edit') && c.includes('case-summary')) return 'inspection-writer'
-  if ((toolName === 'Write' || toolName === 'Edit') && c.includes('casehealth-meta')) return 'status-judge'
+  if ((toolName === 'Write' || toolName === 'Edit') && c.includes('casework-meta')) return 'status-judge'
   if ((toolName === 'Write' || toolName === 'Edit') && c.includes('note-draft')) return 'note-gap'
   // MCP tools
   if (toolName.startsWith('mcp__icm__')) return 'icm-check'

@@ -112,7 +112,7 @@ ready-to-close
 
 ## AR (Assistance Request) Case
 
-AR 是其他 case owner 发来的协助请求，和普通 Case **统一放在 `active/`**，通过 `casehealth-meta.json` 的 `isAR: true` + `mainCaseId` 区分。
+AR 是其他 case owner 发来的协助请求，和普通 Case **统一放在 `active/`**，通过 `casework-meta.json` 的 `isAR: true` + `mainCaseId` 区分。
 
 ### 状态判断
 

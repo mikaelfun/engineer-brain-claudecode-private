@@ -451,11 +451,11 @@ if (noteCount > 0) {
 const notesMd = `# Notes — Case ${CASE_NUMBER}\n\n> Generated: ${NOW} (UTC) | Total: ${noteCount} notes\n\n${noteEntries}`;
 fs.writeFileSync(path.join(OUT_DIR, 'notes.md'), notesMd);
 
-// ── casehealth-meta.json ──
+// ── casework-meta.json ──
 const isCorrupt = data._corruptMeta === true;
 
 if (isCorrupt) {
-  fs.writeFileSync(path.join(OUT_DIR, 'casehealth-meta.json'),
+  fs.writeFileSync(path.join(OUT_DIR, 'casework-meta.json'),
     '{\n  "caseNumber": "CORRUPTED",\n  "fwr": { "status": "In Progress", "remaining\n  INVALID JSON\n  "compliance": { entitlementOk: MISSING_QUOTES }\n}');
 } else {
   const cm = data.casehealthMeta || {};
@@ -520,7 +520,7 @@ if (isCorrupt) {
     icmIdAtJudge: data.icm?.linked ? data.icm.incidentId : null,
   };
 
-  fs.writeFileSync(path.join(OUT_DIR, 'casehealth-meta.json'), JSON.stringify(meta, null, 2));
+  fs.writeFileSync(path.join(OUT_DIR, 'casework-meta.json'), JSON.stringify(meta, null, 2));
 }
 
 // ─── Output ──────────────────────────────────────────────

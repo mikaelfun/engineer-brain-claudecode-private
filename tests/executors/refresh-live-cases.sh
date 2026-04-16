@@ -94,9 +94,9 @@ for case_dir in "$ACTIVE_DIR"/*/; do
 
   # Check for ICM
   HAS_ICM="false"
-  if [[ -f "$case_dir/casehealth-meta.json" ]]; then
+  if [[ -f "$case_dir/casework-meta.json" ]]; then
     # Convert POSIX path to Windows for Node
-    win_meta_path=$(echo "${case_dir}/casehealth-meta.json" | sed 's|^/\([a-z]\)/|\U\1:/|; s|/|\\\\|g')
+    win_meta_path=$(echo "${case_dir}/casework-meta.json" | sed 's|^/\([a-z]\)/|\U\1:/|; s|/|\\\\|g')
     ICM_ID=$(node -e "
       try {
         const m = JSON.parse(require('fs').readFileSync('${win_meta_path}','utf8'));

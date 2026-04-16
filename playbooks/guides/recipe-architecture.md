@@ -166,7 +166,7 @@ Step D: 输出 + 记录匹配结果
 | 领域 | Recipe 目录 | Context 来源 | Recipe 粒度 | 演进信号 |
 |------|------------|-------------|-------------|---------|
 | **Verification** | `verification-recipes/` | spec.md AC + 代码变更 | 按验证类型（UI/CLI/API/File） | 重试>=2, 脚本>10行 |
-| **Todo** | `todo-recipes/` | casehealth-meta + severity + 邮件 + ICM | 按 case 状态 × severity | 用户编辑 todo, 规则漏判 |
+| **Todo** | `todo-recipes/` | casework-meta + severity + 邮件 + ICM | 按 case 状态 × severity | 用户编辑 todo, 规则漏判 |
 | **Routing** | `routing-recipes/` | actualStatus + 邮件历史 + severity + ICM | 按路由场景（首次/跟进/升级） | 路由错误需人工纠正 |
 | **Email** | `email-recipes/` | actualStatus × emailHistory × severity | 按邮件类型（initial/follow-up/closure） | draft vs sent diff > 30% |
 | **Patrol** | 无独立 recipe 目录 | severity + SLA + lastInspected + recentEmail | 评分公式参数 | 评分结果与人工排序不一致 |

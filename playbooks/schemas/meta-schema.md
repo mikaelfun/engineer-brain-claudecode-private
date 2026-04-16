@@ -1,4 +1,4 @@
-# casehealth-meta.json Schema
+# casework-meta.json Schema
 
 机器可读的 Case 元数据，用于快速判断 Case 状态（不需要解析 Markdown）。
 

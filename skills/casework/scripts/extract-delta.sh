@@ -22,7 +22,7 @@ if [ -z "$CASE_DIR" ]; then
   exit 1
 fi
 
-META="$CASE_DIR/casehealth-meta.json"
+META="$CASE_DIR/casework-meta.json"
 EMAILS_FILE="$CASE_DIR/emails.md"
 NOTES_FILE="$CASE_DIR/notes.md"
 OUTPUT="$CASE_DIR/logs/delta-since-last-judge.md"

@@ -7,7 +7,7 @@ set -euo pipefail
 CD="$1"
 CG_DETAIL="${2:-}"
 LOG="$CD/logs/casework.log"
-META="$CD/casehealth-meta.json"
+META="$CD/casework-meta.json"
 IS_AR=$(sed -n 's/.*"isAR":[[:space:]]*\(true\|false\).*/\1/p' "$META" 2>/dev/null | head -1)
 IS_AR=${IS_AR:-false}
 NOW=$(date +%s)

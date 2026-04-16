@@ -114,7 +114,7 @@ fi
 ```
 
 如果 `IS_AR=true`：
-1. 读取/创建 `casehealth-meta.json`，upsert `isAR: true` 和 `mainCaseId`
+1. 读取/创建 `casework-meta.json`，upsert `isAR: true` 和 `mainCaseId`
 2. **首次 AR 检测**（meta 中之前无 `isAR` 字段）→ 强制覆盖 changegate 为 `CHANGED`（旧数据可能来自 AR case 自身，需要从 main case 重新拉取）
 3. 后续步骤走 **AR PATH**（见下文 "AR PATH" 章节）
 
@@ -127,10 +127,10 @@ fi
 单次 Bash 完成 DR-skip + Teams/compliance/judge/routing 全部缓存检查（⏱ 包裹 `.t_fastpath_start/end`）：
 
 ```bash
-date +%s > "{caseDir}/logs/.t_fastpath_start" ; bash skills/d365-case-ops/scripts/casework-fast-path.sh "{caseDir}" "{changegateDetail}" ; date +%s > "{caseDir}/logs/.t_fastpath_end"
+date +%s > "{caseDir}/logs/.t_fastpath_start" ; bash skills/casework/scripts/casework-fast-path.sh "{caseDir}" "{changegateDetail}" ; date +%s > "{caseDir}/logs/.t_fastpath_end"
 ```
 
-- `FAST_PATH_OK|status=...,days=...` → **跳到 Step 4**。仅预读 `casehealth-meta.json` + `case-summary.md`（如存在）
+- `FAST_PATH_OK|status=...,days=...` → **跳到 Step 4**。仅预读 `casework-meta.json` + `case-summary.md`（如存在）
 - `FAST_PATH_BREAK|teams=...,judge=...` → 回退路径 B，从 BREAK 的步骤开始
 - `AR_MAIN_ARCHIVED|mainCase=...`（仅 AR case）→ **main case 已归档，AR 跟随归档**：
   1. 确保 `{casesRoot}/archived/` 目录存在
@@ -180,7 +180,7 @@ prompt: |
 
 ```bash
 CACHE_HOURS=$(python3 -c "import json; print(json.load(open('config.json')).get('teamsSearchCacheHours', 8))" 2>/dev/null || echo 8)
-RESULT=$(bash skills/d365-case-ops/scripts/agent-cache-check.sh "{caseDir}" "$CACHE_HOURS" "{projectRoot}")
+RESULT=$(bash skills/casework/scripts/agent-cache-check.sh "{caseDir}" "$CACHE_HOURS" "{projectRoot}")
 echo "$RESULT"
 ```
 
@@ -272,13 +272,13 @@ prompt: |
   ⏱ 最后一个 Bash 调用中写 date +%s > "{caseDir}/logs/.t_onenoteSearch_end"
 ```
 
-同一消息并行预读：`compliance-check/SKILL.md`、`status-judge/SKILL.md`、`casehealth-meta.json`、`case-summary.md`（如存在）、`playbooks/rules/case-lifecycle.md`。后续不再重复 Read。
+同一消息并行预读：`compliance-check/SKILL.md`、`status-judge/SKILL.md`、`casework-meta.json`、`case-summary.md`（如存在）、`playbooks/rules/case-lifecycle.md`。后续不再重复 Read。
 
 **B3. compliance-check**：按 compliance-check/SKILL.md 执行。⏱ `.t_compliance_start/end` 合并到工作命令。
 
 **B3a. Entitlement 阻断检测**
 
-compliance-check 完成后，读取 `casehealth-meta.json` 中 `compliance.entitlementOk`：
+compliance-check 完成后，读取 `casework-meta.json` 中 `compliance.entitlementOk`：
 
 - `entitlementOk === true` → 继续正常流程
 - `entitlementOk === false` → **⚠️ 阻断 casework**：
@@ -454,8 +454,8 @@ prompt: |
 ```bash
 # generate-todo + timing 合并为单次 Bash：
 date +%s > "{caseDir}/logs/.t_inspection_start"
-bash skills/d365-case-ops/scripts/generate-todo.sh "{caseDir}"
-bash skills/d365-case-ops/scripts/casework-timing.sh "{caseDir}" "{skippedStepsJson}" "{errorsJson}" '{"bash":N,"tools":N,"agents":N}'
+bash skills/casework/scripts/generate-todo.sh "{caseDir}"
+bash skills/casework/scripts/casework-timing.sh "{caseDir}" "{skippedStepsJson}" "{errorsJson}" '{"bash":N,"tools":N,"agents":N}'
 ```
 
 > `N` 由 Main Agent 在整个流程中累计替换。`bash` = Bash 工具调用次数，`tools` = 所有工具调用次数（Bash+Read+Glob+Grep+Edit+Agent+MCP），`agents` = Agent spawn 次数。

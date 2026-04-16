@@ -110,7 +110,7 @@ function addDismissedItem(todoDir: string, itemText: string): void {
 
 /** Handle meta side effects when certain todo items are dismissed */
 function handleMetaSideEffects(caseDir: string, itemText: string): void {
-  const metaPath = join(caseDir, 'casehealth-meta.json')
+  const metaPath = join(caseDir, 'casework-meta.json')
   if (!existsSync(metaPath)) return
 
   try {

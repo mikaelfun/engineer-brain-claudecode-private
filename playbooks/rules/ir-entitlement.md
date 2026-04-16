@@ -73,7 +73,7 @@
 
 ## IR/FDR/FWR 状态（data-refresh 负责，与 compliance-check 无关）
 
-IR/FDR/FWR 由 **data-refresh**（`fetch-all-data.ps1 -IncludeIrCheck`）通过 `check-ir-status.ps1` 获取，写入 `casehealth-meta.json` 的 `irSla`/`fdr`/`fwr` 字段。
+IR/FDR/FWR 由 **data-refresh**（`fetch-all-data.ps1 -IncludeIrCheck`）通过 `check-ir-status.ps1` 获取，写入 `casework-meta.json` 的 `irSla`/`fdr`/`fwr` 字段。
 
 **⚠️ compliance-check 不负责 IR/FDR/FWR**，它只检查 Entitlement + 21v Convert。
 

@@ -44,13 +44,13 @@
 - 备份 case 目录 → 删除部分/全部本地数据 → 跑 /casework {caseId} → 验证输出完整性 → 恢复备份
 
 **B. 增量场景**（模拟有更新）
-- 修改 casehealth-meta.json 的 lastFetchTime 为 1 天前 → 跑 /casework {caseId} → 验证增量检测正确
+- 修改 casework-meta.json 的 lastFetchTime 为 1 天前 → 跑 /casework {caseId} → 验证增量检测正确
 
 **C. 快速路径场景**（模拟无变化）
 - 确保本地数据完整且新鲜 → 跑 /casework {caseId} → 验证 changegate=NO_CHANGE + 快速路径命中
 
 **D. 状态路由场景**（模拟不同 actualStatus）
-- 修改 casehealth-meta.json 的 actualStatus 为 new/pending-customer/pending-engineer/researching/ready-to-close → 跑 /casework → 验证路由到正确 agent
+- 修改 casework-meta.json 的 actualStatus 为 new/pending-customer/pending-engineer/researching/ready-to-close → 跑 /casework → 验证路由到正确 agent
 
 **E. 错误恢复场景**
 - 故意制造异常（如清空 emails.md 但保留 meta、损坏 JSON 文件、删除 logs/ 目录）→ 跑 /casework → 验证不崩溃、能恢复

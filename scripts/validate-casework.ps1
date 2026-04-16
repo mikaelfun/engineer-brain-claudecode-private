@@ -30,7 +30,7 @@ $requiredFiles = @(
     "case-info.md",
     "emails.md",
     "notes.md",
-    "casehealth-meta.json"
+    "casework-meta.json"
 )
 foreach ($f in $requiredFiles) {
     $exists = Test-Path (Join-Path $CaseDir $f)
@@ -85,8 +85,8 @@ if (Test-Path $attDir) {
     Warn "attachments:dir_missing" "attachments/ directory not created (may be OK if no DTM attachments)"
 }
 
-# === 7. casehealth-meta.json 内容检查 ===
-$metaFile = Join-Path $CaseDir "casehealth-meta.json"
+# === 7. casework-meta.json 内容检查 ===
+$metaFile = Join-Path $CaseDir "casework-meta.json"
 if (Test-Path $metaFile) {
     try {
         $meta = Get-Content $metaFile -Raw | ConvertFrom-Json

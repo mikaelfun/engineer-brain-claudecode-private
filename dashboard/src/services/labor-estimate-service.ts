@@ -207,7 +207,7 @@ export async function submitLaborToD365(
 
   // AR cases: labor must be recorded on the main case (D365 doesn't support labor on AR cases)
   let targetTicket = caseNumber
-  const metaPath = join(config.activeCasesDir, caseNumber, 'casehealth-meta.json')
+  const metaPath = join(config.activeCasesDir, caseNumber, 'casework-meta.json')
   if (existsSync(metaPath)) {
     try {
       const meta = JSON.parse(readFileSync(metaPath, 'utf-8'))

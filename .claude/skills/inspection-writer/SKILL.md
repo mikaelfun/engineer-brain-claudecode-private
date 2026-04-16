@@ -35,7 +35,7 @@ allowed-tools:
 
 ### 1. 判断 case-summary.md 更新策略
 
-读取 `{caseDir}/case-summary.md`（如存在）+ `{caseDir}/casehealth-meta.json`。
+读取 `{caseDir}/case-summary.md`（如存在）+ `{caseDir}/casework-meta.json`。
 
 **决策树**：
 - **NO_CHANGE + case-summary.md 已存在** → 跳过 summary，直接到 Step 3
@@ -135,7 +135,7 @@ allowed-tools:
    - SAP 叶子与问题描述的技术领域是否一致？
    - 例：SAP 是 `Monitor` 但问题是 ACR 镜像推拉 → **不匹配**
    - 例：SAP 是 `Microsoft Entra Sign-ln and Multi-Factor Authentication` 但问题是删除 Entra 用户 → **匹配**（同属 Entra 领域）
-3. 判断结果写入 `casehealth-meta.json`：
+3. 判断结果写入 `casework-meta.json`：
 
 ```json
 {
@@ -178,14 +178,14 @@ allowed-tools:
 调用 bash 脚本：
 
 ```bash
-bash skills/d365-case-ops/scripts/generate-todo.sh "{caseDir}"
+bash skills/casework/scripts/generate-todo.sh "{caseDir}"
 ```
 
 输出 `TODO_OK|red=N,yellow=N,green=N`。
 
 ### 4. 更新 Meta
 
-用 Edit 工具更新 `casehealth-meta.json` 的 `lastInspected` 字段为当前时间。
+用 Edit 工具更新 `casework-meta.json` 的 `lastInspected` 字段为当前时间。
 
 ### 5. 日志
 

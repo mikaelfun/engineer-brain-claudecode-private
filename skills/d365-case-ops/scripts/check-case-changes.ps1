@@ -17,7 +17,7 @@
     输出根目录（默认读 config.json 的 casesRoot）
 
 .PARAMETER MetaDir
-    casehealth-meta.json 所在目录（默认 = OutputDir）
+    casework-meta.json 所在目录（默认 = OutputDir）
 
 .EXAMPLE
     pwsh -NoProfile -File check-case-changes.ps1 -TicketNumber 2603260030005229 -OutputDir ./cases/active
@@ -44,7 +44,7 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 $caseDir = Join-Path $OutputDir $TicketNumber
 $snapshotFile = Join-Path $caseDir "case-info.md"
 if (-not $MetaDir) { $MetaDir = $OutputDir }
-$metaFile = Join-Path (Join-Path $MetaDir $TicketNumber) "casehealth-meta.json"
+$metaFile = Join-Path (Join-Path $MetaDir $TicketNumber) "casework-meta.json"
 
 # --- 1. Read local baseline from case-info.md ---
 $localEmailCount = -1

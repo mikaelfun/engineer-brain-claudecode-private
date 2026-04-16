@@ -177,7 +177,7 @@ if ($isAR) {
 # --- Optional: IR check in same session (saves ~10s vs separate script) ---
 if ($IncludeIrCheck -and -not $isAR) {
     $irMetaDir = if ($MetaDir) { $MetaDir } else { $OutputDir }
-    $irMetaFile = Join-Path (Join-Path $irMetaDir $TicketNumber) "casehealth-meta.json"
+    $irMetaFile = Join-Path (Join-Path $irMetaDir $TicketNumber) "casework-meta.json"
     $skipIr = $false
 
     # Skip if meta already has IR SLA = Succeeded (terminal state, won't change)

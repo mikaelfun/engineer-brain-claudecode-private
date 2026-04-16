@@ -39,7 +39,7 @@ Patrol 专用的轻量编排器。**一次 Bash 调用**完成所有数据收集
 调用一体化 runner 脚本，完成 changegate → data-refresh → compliance → onenote → teams → ICM 缓存检查 → context 收集：
 
 ```bash
-bash "{projectRoot}/skills/d365-case-ops/scripts/casework-light-runner.sh" \
+bash "{projectRoot}/skills/casework/scripts/casework-light-runner.sh" \
   --case-number {caseNumber} \
   --case-dir "{caseDir}" \
   --project-root "{projectRoot}" \
@@ -137,7 +137,7 @@ reasoning = '{reasoning}'
 case_dir = '{caseDir}'
 
 # Update meta
-meta_path = os.path.join(case_dir, 'casehealth-meta.json')
+meta_path = os.path.join(case_dir, 'casework-meta.json')
 meta = json.load(open(meta_path)) if os.path.exists(meta_path) else {}
 meta['actualStatus'] = actual_status
 meta['daysSinceLastContact'] = days
