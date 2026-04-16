@@ -71,15 +71,27 @@ allowed-tools:
 
 **A3. 内容搜索**：用 `Grep` 搜索 `{outputDir}/` 下所有 `.md` 文件内容（`files_with_matches` 模式）。
 
-#### 通道 B：向量语义搜索（语义匹配）
+#### 通道 B：向量语义搜索（多查询合并）
 
-调用 `mcp__local-rag__query_documents`：
+**复用通道 A 的关键词改写结果**，生成 2-3 组语义查询（不是原始关键词拼接，而是自然语言描述）：
+
 ```
-query: "{用户原始查询}"
-limit: 15
+# Q1: 用户原始查询
+query_documents(query="{用户原始查询}", limit=10)
+
+# Q2: 基于关键词改写的语义变体（侧重症状/错误描述）
+query_documents(query="{改写后的自然语言描述}", limit=10)
+
+# Q3（可选）: 侧重解决方案/操作步骤
+query_documents(query="{solution-oriented 描述}", limit=5)
 ```
 
-向量搜索返回的每条结果包含 `source`（文件路径）和 `score`（0=最相关）。
+**示例**（用户输入 `delta import stopped-server-down`）：
+- Q1: `delta import stopped-server-down`
+- Q2: `AAD Connect export error stopped server down batch size`（基于改写：关联到 export 阶段 + batch size）
+- Q3: `AAD Connect sync ServerDownException 0x80230735 batch`
+
+**多查询并行发出**（同一条消息内），结果按 `filePath` 去重，保留最低 score。
 
 **⚠️ 如果 local-rag MCP 不可用**（超时/报错），跳过通道 B，仅用通道 A 结果。在报告中提示 "向量搜索不可用，仅显示关键词搜索结果"。
 
