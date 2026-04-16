@@ -88,6 +88,24 @@ from datetime import datetime as _dt
 meta = json.load(open('$META_FILE'))
 status = meta.get('actualStatus', 'pending-engineer')
 days = meta.get('daysSinceLastContact', 0)
+
+# --- Recalculate daysSinceLastContact from email/note dates (NO_CHANGE path too) ---
+import re as _re2
+from datetime import date as _date2
+_latest = None
+for _fp in ['$CASE_DIR/emails.md', '$CASE_DIR/notes.md']:
+    try:
+        _txt = open(_fp, encoding='utf-8').read()
+        _ds = _re2.findall(r'(\d{4}-\d{2}-\d{2})', _txt)
+        if _ds:
+            _d = max(_ds)
+            if _latest is None or _d > _latest:
+                _latest = _d
+    except: pass
+if _latest:
+    _p = _latest.split('-')
+    days = (_date2.today() - _date2(int(_p[0]), int(_p[1]), int(_p[2]))).days
+
 reasoning = meta.get('statusReasoning', '')
 email_count = meta.get('emailCountAtJudge', 0)
 note_count = meta.get('noteCountAtJudge', 0)
@@ -163,8 +181,13 @@ if recommended:
 if rec_action_str:
     rec = rec_action_str.lower().strip()
     if rec == 'no-agent':
-        no_action_reason = f'NO_CHANGE: LLM recommended no-agent. {rec_reason}'
-        routing_source = 'recommendedActions'
+        # Override: pending-customer + days>=3 should still trigger follow-up even if LLM said no-agent
+        if status == 'pending-customer' and isinstance(days, (int, float)) and days >= 3:
+            no_action_reason = None  # let rule-table handle it
+            routing_source = 'rule-table-override'
+        else:
+            no_action_reason = f'NO_CHANGE: LLM recommended no-agent. {rec_reason}'
+            routing_source = 'recommendedActions'
     elif 'troubleshooter' in rec and 'email' in rec:
         actions = [{'type':'troubleshooter','priority':1,'status':'pending',
                     'context':f'LLM recommended: {rec_reason}'},
