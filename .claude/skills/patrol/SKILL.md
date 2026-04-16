@@ -347,6 +347,14 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
    rm -f "{casesRoot}/.patrol/teams-queue-active" "{casesRoot}/.patrol/teams-queue-stop"
    ```
 
+   **清理孤儿 request.json**（drain 超时时必须执行）：
+   ```bash
+   # Remove orphaned Teams request.json files that the queue never processed
+   find "{casesRoot}/active" -path "*/teams/request.json" -type f -delete 2>/dev/null
+   ORPHANS_CLEANED=$?
+   echo "ORPHAN_CLEANUP|removed=$(find '{casesRoot}/active' -path '*/teams/request.json' -type f 2>/dev/null | wc -l) remaining"
+   ```
+
    **停止 ICM Discussion Daemon**：
    ```bash
    echo "$(date +%s)" > "{casesRoot}/.patrol/icm-queue-stop"
