@@ -66,9 +66,10 @@ PID_LABOR=$!
 ONENOTE_DIR=$(python3 -c "
 import json, os
 try:
-    cfg = json.load(open('$CD/.claude/skills/onenote-export/config.json'))
-    nb = json.load(open('$CD/config.json')).get('onenote',{}).get('personalNotebook','Kun Fang OneNote')
-    d = os.path.join(cfg.get('outputDir','../data/onenote'), nb)
+    cfg = json.load(open('$CD/config.json'))
+    dr = cfg.get('dataRoot', '../data')
+    nb = cfg.get('onenote',{}).get('personalNotebook','Kun Fang OneNote')
+    d = os.path.join(dr, 'OneNote Export', nb)
     print(d if os.path.isdir(d) else '')
 except: print('')
 " 2>/dev/null)
