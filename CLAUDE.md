@@ -89,10 +89,7 @@ actualStatus 有效值：`pending-engineer` | `pending-customer` | `pending-pg` 
 
 ## 关键配置（config.json）
 
-- `casesRoot`: `./cases` — Case 数据根目录
-- `dataRoot`: `../data` — 外部数据目录
-- `noteGapThresholdDays`: 3 — 超过 3 天未记录 → 提示补 Note/Labor
-- `teamsSearchCacheHours`: 8 — 8 小时内不重复搜索 Teams（从 config.json 动态读取）
+所有运行时配置均在 `config.json` 中定义（casesRoot、dataRoot、teamsSearchCacheHours 等），按需读取该文件获取实际值。
 
 ## 记忆规则
 - 会话开始读 `memory/MEMORY.md`

@@ -18,11 +18,11 @@ Patrol 专用的轻量编排器。**一次 Bash 调用**完成所有数据收集
 **❌ 禁止使用 Agent tool（depth=1，无法 spawn）。**
 **❌ 禁止使用 Teams MCP（由 patrol 的 teams-search-queue 串行处理）。**
 **❌ 禁止使用 Write tool。** 所有文件写入通过 Bash + python3。
-**⚠️ 路径红线**：python3 `open()` 中**必须用相对路径**（`./cases/...`）或 Windows 格式（`C:/Users/...`）。绝对禁止 POSIX `/c/Users/...` 格式。
+**⚠️ 路径红线**：python3 `open()` 中**必须用相对路径**或 Windows 格式（`C:/Users/...`）。绝对禁止 POSIX `/c/Users/...` 格式。**必须使用 spawn prompt 中传入的 caseDir 和 casesRoot 原始值**，禁止替换为 `./cases/...` 等硬编码路径。
 
 ## 输入
 - `caseNumber`: Case 编号
-- `caseDir`: Case 数据目录（相对路径，如 `./cases/active/260...`）
+- `caseDir`: Case 数据目录（使用 spawn 传入的原始路径，禁止自行修改）
 - `projectRoot`: 项目根目录
 - `casesRoot`: Cases 根目录
 - `isAR`: 是否 AR case（`true`/`false`）

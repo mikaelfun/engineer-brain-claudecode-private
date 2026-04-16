@@ -1,6 +1,6 @@
 {
-  "casesRoot": "./cases",
-  "dataRoot": "../data",
+  "casesRoot": "../EngineerBrain-Data/cases",
+  "dataRoot": "../EngineerBrain-Data",
   "teamsSearchCacheHours": 8,
   "patrolSkipHours": 3,
   "noteGapThresholdDays": 3,
