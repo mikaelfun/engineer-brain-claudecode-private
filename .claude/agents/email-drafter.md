@@ -98,12 +98,14 @@ maxTurns: 200
 根据最终确定的语言（Step 0 自动检测或显式指定）选择 humanizer：
 - English: 调用 humanizer skill
   ```
-  读取 skills/humanizer/SKILL.md 获取使用说明，按说明润色草稿
+  读取 {projectRoot}/skills/humanizer/SKILL.md 获取使用说明，按说明润色草稿
   ```
 - Chinese: 调用 humanizer-zh skill
   ```
-  读取 skills/humanizer-zh/SKILL.md 获取使用说明，按说明润色草稿
+  读取 {projectRoot}/skills/humanizer-zh/SKILL.md 获取使用说明，按说明润色草稿
   ```
+
+> ⚠️ humanizer 在 `skills/` 目录下（不是 `.claude/skills/`）。如果 Read 报 file not found，尝试 `./skills/humanizer-zh/SKILL.md`。
 
 ### 5. 保存草稿
 输出到 `{caseDir}/drafts/YYYYMMDD-HHMM-{type}-{lang}-{recipient}.md`：
