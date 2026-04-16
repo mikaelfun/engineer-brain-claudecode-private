@@ -3,6 +3,7 @@ name: email-batch-worker
 description: "批量邮件搜索 worker — 从任务池拉取 Case 号，搜索并保存邮件"
 tools: Bash, Read, Write
 model: opus
+maxTurns: 200
 mcpServers:
   - mail
 ---

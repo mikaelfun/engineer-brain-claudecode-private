@@ -65,6 +65,8 @@ if ($incidentId) {
 }
 
 # ── UI Fallback ──
+Enter-PlaywrightLock
+try {
 Write-Host "   → Switching to Summary tab..."
 Ensure-CaseFormContext -Tab Summary
 
@@ -101,3 +103,6 @@ Write-Host "   → Checking for popups..."
 playwright-cli run-code "async page => { try { const d = page.getByRole('dialog', { name: 'Change status for this case' }); await d.waitFor({ timeout: 5000 }); await d.getByRole('button', { name: 'Cancel' }).click(); return 'Popup dismissed'; } catch { return 'No popup'; } }" 2>&1 | Out-Null
 
 Write-Host "✅ Note added: $Title"
+} finally {
+    Exit-PlaywrightLock
+}

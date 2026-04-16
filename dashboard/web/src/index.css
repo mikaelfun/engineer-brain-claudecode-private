@@ -6,90 +6,90 @@
    CSS VARIABLES — DUAL THEME
    ============================ */
 :root {
-  --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-display: 'Rubik', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace;
   --theme-transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
   --sidebar-width: 220px;
 }
 
-/* DARK THEME — softer, lower contrast */
+/* DARK THEME — Sentry Dark inspired (purple-black) */
 .dark {
-  --bg-base: #1a1d24;
-  --bg-surface: #22262f;
-  --bg-elevated: #282d38;
-  --bg-hover: #2e3340;
-  --bg-active: #353b4a;
-  --bg-inset: #1e2129;
+  --bg-base: #1f1633;
+  --bg-surface: #150f23;
+  --bg-elevated: #2a2145;
+  --bg-hover: #362d59;
+  --bg-active: #422082;
+  --bg-inset: #180e2a;
 
-  --border-subtle: rgba(255,255,255,0.05);
-  --border-default: rgba(255,255,255,0.08);
-  --border-strong: rgba(255,255,255,0.13);
+  --border-subtle: #362d59;
+  --border-default: #584674;
+  --border-strong: #6e6e82;
 
-  --text-primary: #c9cdd6;
-  --text-secondary: #8b919e;
-  --text-tertiary: #5e6370;
-  --text-inverse: #1a1d24;
+  --text-primary: #ffffff;
+  --text-secondary: #e5e7eb;
+  --text-tertiary: #6e6e82;
+  --text-inverse: #1f1633;
 
-  --accent-blue: #6ba3e8;
-  --accent-blue-dim: rgba(107,163,232,0.10);
-  --accent-green: #5cbf8a;
-  --accent-green-dim: rgba(92,191,138,0.10);
-  --accent-amber: #d4a44a;
-  --accent-amber-dim: rgba(212,164,74,0.10);
-  --accent-red: #d47272;
-  --accent-red-dim: rgba(212,114,114,0.10);
-  --accent-purple: #9e8cc7;
-  --accent-purple-dim: rgba(158,140,199,0.10);
-  --accent-cyan: #5ec4d4;
-  --accent-cyan-dim: rgba(94,196,212,0.10);
+  --accent-blue: #6a5fc1;
+  --accent-blue-dim: rgba(106,95,193,0.15);
+  --accent-green: #4ade80;
+  --accent-green-dim: rgba(74,222,128,0.15);
+  --accent-amber: #fbbf24;
+  --accent-amber-dim: rgba(251,191,36,0.15);
+  --accent-red: #f87171;
+  --accent-red-dim: rgba(248,113,113,0.15);
+  --accent-purple: #a78bfa;
+  --accent-purple-dim: rgba(167,139,250,0.15);
+  --accent-cyan: #67e8f9;
+  --accent-cyan-dim: rgba(103,232,249,0.15);
 
-  --glow-blue: 0 0 12px rgba(107,163,232,0.08);
-  --glow-green: 0 0 12px rgba(92,191,138,0.08);
-  --glow-amber: 0 0 12px rgba(212,164,74,0.08);
-  --glow-red: 0 0 12px rgba(212,114,114,0.08);
+  --glow-blue: 0 0 12px rgba(106,95,193,0.15);
+  --glow-green: 0 0 12px rgba(74,222,128,0.12);
+  --glow-amber: 0 0 12px rgba(251,191,36,0.12);
+  --glow-red: 0 0 12px rgba(248,113,113,0.12);
 
-  --shadow-card: 0 1px 3px rgba(0,0,0,0.2);
-  --shadow-elevated: 0 4px 20px rgba(0,0,0,0.25);
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-elevated: rgba(22,15,36,0.9) 0 4px 4px 9px, rgba(0,0,0,0.4) 0 24px 48px;
 }
 
-/* LIGHT THEME */
+/* LIGHT THEME — Sentry Light inspired (warm purple-white) */
 .light {
-  --bg-base: #f4f6fa;
+  --bg-base: #faf9fb;
   --bg-surface: #ffffff;
   --bg-elevated: #ffffff;
-  --bg-hover: #f0f2f7;
-  --bg-active: #e6e9f0;
-  --bg-inset: #f0f1f5;
+  --bg-hover: #f3f1f5;
+  --bg-active: #ebe8ef;
+  --bg-inset: #f5f3f7;
 
-  --border-subtle: rgba(0,0,0,0.05);
-  --border-default: rgba(0,0,0,0.08);
-  --border-strong: rgba(0,0,0,0.14);
+  --border-subtle: #e8e3f0;
+  --border-default: #d4ccdf;
+  --border-strong: #b0a8c0;
 
-  --text-primary: #2c3040;
-  --text-secondary: #5a6478;
-  --text-tertiary: #8b95a9;
+  --text-primary: #1f1633;
+  --text-secondary: #3e3554;
+  --text-tertiary: #9e95b0;
   --text-inverse: #ffffff;
 
-  --accent-blue: #3b7dd8;
-  --accent-blue-dim: rgba(59,125,216,0.07);
-  --accent-green: #2d9a62;
-  --accent-green-dim: rgba(45,154,98,0.07);
-  --accent-amber: #b8862e;
-  --accent-amber-dim: rgba(184,134,46,0.07);
-  --accent-red: #c05050;
-  --accent-red-dim: rgba(192,80,80,0.07);
-  --accent-purple: #7c5fbf;
-  --accent-purple-dim: rgba(124,95,191,0.07);
+  --accent-blue: #6a5fc1;
+  --accent-blue-dim: rgba(106,95,193,0.10);
+  --accent-green: #16a34a;
+  --accent-green-dim: rgba(22,163,74,0.10);
+  --accent-amber: #d97706;
+  --accent-amber-dim: rgba(217,119,6,0.10);
+  --accent-red: #dc2626;
+  --accent-red-dim: rgba(220,38,38,0.10);
+  --accent-purple: #7c3aed;
+  --accent-purple-dim: rgba(124,58,237,0.10);
   --accent-cyan: #0e9bae;
-  --accent-cyan-dim: rgba(14,155,174,0.07);
+  --accent-cyan-dim: rgba(14,155,174,0.10);
 
-  --glow-blue: none;
-  --glow-green: none;
-  --glow-amber: none;
-  --glow-red: none;
+  --glow-blue: rgba(106,95,193,0.10) 0 4px 16px;
+  --glow-green: rgba(22,163,74,0.08) 0 4px 16px;
+  --glow-amber: rgba(217,119,6,0.08) 0 4px 16px;
+  --glow-red: rgba(220,38,38,0.08) 0 4px 16px;
 
-  --shadow-card: 0 1px 3px rgba(0,0,0,0.05), 0 0 0 1px var(--border-subtle);
-  --shadow-elevated: 0 4px 20px rgba(0,0,0,0.06);
+  --shadow-card: rgba(0,0,0,0.04) 0 1px 3px;
+  --shadow-elevated: rgba(31,22,51,0.15) 0 24px 48px, rgba(0,0,0,0.06) 0 0 0 1px;
 }
 
 /* ============================
@@ -106,7 +106,7 @@ body {
   line-height: 1.5;
 }
 
-/* Subtle ambient glow in dark mode */
+/* Subtle ambient glow in dark mode — purple-tinted */
 .dark body::before {
   content: '';
   position: fixed;
@@ -114,8 +114,8 @@ body {
   pointer-events: none;
   z-index: 0;
   background:
-    radial-gradient(ellipse at 20% 0%, rgba(107,163,232,0.03) 0%, transparent 60%),
-    radial-gradient(ellipse at 80% 100%, rgba(158,140,199,0.02) 0%, transparent 60%);
+    radial-gradient(ellipse at 20% 0%, rgba(106,95,193,0.05) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 100%, rgba(250,122,170,0.03) 0%, transparent 60%);
 }
 
 /* All themed elements get smooth transitions */
@@ -156,6 +156,14 @@ input, textarea, select, button {
   background-color: var(--bg-hover);
 }
 
+/* Global table header style — Sentry Light */
+th {
+  text-transform: uppercase;
+  letter-spacing: 0.25px;
+  font-size: 0.6875rem;     /* 11px */
+  font-weight: 600;
+}
+
 .prose tbody tr:nth-child(even) {
   background-color: var(--bg-inset);
 }
@@ -194,6 +202,65 @@ input, textarea, select, button {
   --tw-prose-pre-bg: var(--bg-inset);
   --tw-prose-th-borders: var(--border-strong);
   --tw-prose-td-borders: var(--border-default);
+}
+
+/* ============================
+   SCROLLBAR STYLING (dark mode)
+   ============================ */
+
+/* ============================
+   SENTRY LIGHT — COMPONENT UTILITIES
+   ============================ */
+
+/* Primary Button: Sentry Purple, pill, uppercase, inset highlight */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 13px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
+  background: var(--accent-blue);
+  color: var(--text-inverse);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), var(--shadow-card);
+  transition: opacity 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
+  border: none;
+}
+.btn-primary:hover:not(:disabled) {
+  opacity: 0.9;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), rgba(106,95,193,0.18) 0 4px 16px;
+}
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Ghost Button: frosted glass, backdrop blur */
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 13px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-subtle);
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+.btn-ghost:hover:not(:disabled) {
+  background: var(--bg-active);
+  border-color: var(--border-default);
+  box-shadow: rgba(106,95,193,0.1) 0 4px 16px;
 }
 
 /* ============================

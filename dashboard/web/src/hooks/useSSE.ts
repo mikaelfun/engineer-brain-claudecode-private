@@ -346,10 +346,7 @@ export function useSSE() {
                 sessionStoreUpdatePipeline(caseNumber, s.id, s.status === 'active' ? 'completed' : 'skipped')
               }
             }
-            // Clear pipeline after 60s so user can see final state
-            setTimeout(() => {
-              useCaseSessionStore.getState().clearPipelineSteps(caseNumber)
-            }, 60_000)
+            // Keep completed pipeline visible for review — cleared on next run start
           }
         }
 

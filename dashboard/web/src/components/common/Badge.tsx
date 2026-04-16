@@ -37,8 +37,8 @@ export function Badge({ children, variant = 'default', size = 'sm', className = 
   const v = variantStyles[variant]
   return (
     <span
-      className={`inline-flex items-center gap-1 font-bold font-mono rounded-[5px] whitespace-nowrap ${sizeStyles[size]} ${className}`}
-      style={{ background: v.bg, color: v.color, letterSpacing: '0.02em' }}
+      className={`inline-flex items-center gap-1 font-semibold font-mono rounded-[18px] uppercase whitespace-nowrap ${sizeStyles[size]} ${className}`}
+      style={{ background: v.bg, color: v.color, letterSpacing: '0.2px' }}
     >
       {children}
     </span>
@@ -170,11 +170,12 @@ export function EntitlementWarningBadge({ compliance }: { compliance: any }) {
   if (!compliance || compliance.entitlementOk !== false) return null
   return (
     <span
-      className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold font-mono rounded-[5px] whitespace-nowrap"
+      className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold font-mono rounded-[18px] uppercase whitespace-nowrap"
       style={{
         background: 'color-mix(in srgb, var(--accent-red) 15%, transparent)',
         color: 'var(--accent-red)',
         border: '1px solid color-mix(in srgb, var(--accent-red) 30%, transparent)',
+        letterSpacing: '0.2px',
       }}
       title={`Service: ${compliance.serviceName || 'N/A'} | Schedule: ${compliance.schedule || 'N/A'} | Country: ${compliance.contractCountry || 'N/A'}`}
     >
@@ -188,11 +189,12 @@ export function RdseBadge({ ccAccount }: { ccAccount?: string }) {
   if (!ccAccount) return null
   return (
     <span
-      className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold font-mono rounded-[5px] whitespace-nowrap"
+      className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold font-mono rounded-[18px] uppercase whitespace-nowrap"
       style={{
         background: 'var(--accent-purple-dim)',
         color: 'var(--accent-purple)',
         border: '1px solid color-mix(in srgb, var(--accent-purple) 25%, transparent)',
+        letterSpacing: '0.2px',
       }}
       title={`RDSE Customer: ${ccAccount}`}
     >

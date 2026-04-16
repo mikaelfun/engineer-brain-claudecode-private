@@ -9,38 +9,28 @@ import { useDrafts } from '../api/hooks'
 import MarkdownContent from '../components/common/MarkdownContent'
 import { useNavigate } from 'react-router-dom'
 
+/**
+ * Strip YAML frontmatter (--- ... ---) from markdown content.
+ */
+function stripFrontmatter(md: string): string {
+  const lines = md.split('\n')
+  if (lines[0]?.trim() !== '---') return md
+  for (let i = 1; i < lines.length; i++) {
+    if (lines[i].trim() === '---') {
+      return lines.slice(i + 1).join('\n').replace(/^\n+/, '')
+    }
+  }
+  return md
+}
+
 function DraftCard({ draft, showCaseNumber = false }: { draft: any; showCaseNumber?: boolean }) {
   const navigate = useNavigate()
   const [expanded, setExpanded] = useState(false)
   const [copied, setCopied] = useState(false)
-  const [ccCopied, setCcCopied] = useState(false)
   const [editing, setEditing] = useState(false)
   const [editContent, setEditContent] = useState('')
 
-  const cleanContent = draft.content?.replace(/\n{3,}/g, '\n\n') || ''
-
-  // Extract CC line from draft content
-  const ccMatch = cleanContent.match(/\*\*CC:\*\*\s*(.+)/i)
-  const ccEmails = ccMatch ? ccMatch[1].trim() : null
-
-  const handleCopyCC = async (e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (!ccEmails) return
-    try {
-      await navigator.clipboard.writeText(ccEmails)
-      setCcCopied(true)
-      setTimeout(() => setCcCopied(false), 1500)
-    } catch {
-      const textarea = document.createElement('textarea')
-      textarea.value = ccEmails
-      document.body.appendChild(textarea)
-      textarea.select()
-      document.execCommand('copy')
-      document.body.removeChild(textarea)
-      setCcCopied(true)
-      setTimeout(() => setCcCopied(false), 1500)
-    }
-  }
+  const cleanContent = stripFrontmatter(draft.content?.replace(/\n{3,}/g, '\n\n') || '')
 
   const handleCopy = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -136,28 +126,6 @@ function DraftCard({ draft, showCaseNumber = false }: { draft: any; showCaseNumb
           className="border-t pt-3 mt-3"
           style={{ borderColor: 'var(--border-subtle)' }}
         >
-          {ccEmails && (
-            <div
-              className="flex items-center gap-2 px-3 py-2 rounded mb-3 text-xs"
-              style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-subtle)' }}
-            >
-              <span style={{ color: 'var(--text-secondary)' }}>
-                <strong>CC:</strong> {ccEmails}
-              </span>
-              <button
-                onClick={handleCopyCC}
-                className="flex items-center gap-1 px-1.5 py-0.5 rounded transition-colors shrink-0"
-                style={{
-                  color: ccCopied ? 'var(--accent-green)' : 'var(--text-tertiary)',
-                  background: ccCopied ? 'var(--accent-green-dim)' : undefined,
-                }}
-                title="Copy CC list"
-              >
-                {ccCopied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                {ccCopied ? '✓' : 'Copy CC'}
-              </button>
-            </div>
-          )}
           {editing ? (
             <div className="space-y-2">
               <textarea

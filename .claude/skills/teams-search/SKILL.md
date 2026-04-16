@@ -23,6 +23,7 @@ promptTemplate: |
 ## 输入
 - `caseNumber`, `caseDir`（绝对路径）
 - `contactName`, `contactEmail`（调用方传入，省去读 case-info.md）
+- `icmNumber`（可选，调用方传入或从 case-info.md 解析）
 - 可选 `--force-refresh`：忽略缓存 TTL，强制执行搜索（跳过 Step 0 缓存检查）
 
 ## ⚠️ Tool Call 预算：最多 18 次
@@ -35,7 +36,7 @@ promptTemplate: |
 | Read SKILL.md | 1 | 必须 |
 | Step 0 Bash | 1 | 缓存+时间戳+chatId 分类 |
 | Step 0.5 MCP + Bash | 2 | 健康检查 + 日志（casework 存活信号） |
-| Step 2+3 MCP ×(3+H) | 3+H | Q1+Q2+Q3 + HIGH chatId 拉取，**同一条消息** |
+| Step 2+3 MCP ×(3-4+H) | 3-4+H | Q1+Q2+Q3+(Q4 if ICM) + HIGH chatId 增量拉取，**同一条消息** |
 | Step 3b MCP ×M | 0-M | 仅全新 chatId（排除 LOW），一条消息 |
 | Step 4 Write（≥4 chat） | 0-1 | _input.json（≤3 chat 用 heredoc 省掉） |
 | Step 4 Bash | 1 | write-teams.ps1 + 全部日志 + end marker |
@@ -122,13 +123,13 @@ mkdir -p "$CASE_DIR/logs" "$CASE_DIR/teams"
 date +%s > "$CASE_DIR/logs/.t_teamsSearch_start"
 DEADLINE=$(($(date +%s) + 120))
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] STEP 0 SKIP | --force-refresh | DEADLINE=$(date -d @$DEADLINE '+%H:%M:%S' 2>/dev/null || date -r $DEADLINE '+%H:%M:%S' 2>/dev/null || echo $DEADLINE)" >> "$LOG"
-# 输出缓存 chatId 分类（高相关/低相关）
+# 输出缓存 chatId 分类（高相关/低相关）+ 增量时间戳
 python3 -c "
 import json, sys, os
 idx_path = '$CASE_DIR/teams/_chat-index.json'
 rel_path = '$CASE_DIR/teams/_relevance.json'
 if not os.path.exists(idx_path):
-    print('CACHED_HIGH='); print('CACHED_LOW='); sys.exit()
+    print('CACHED_HIGH='); print('CACHED_LOW='); print('CACHED_TIMESTAMPS='); sys.exit()
 idx = json.load(open(idx_path))
 chat_ids = [k for k in idx if not k.startswith('_')]
 rel = {}
@@ -136,16 +137,20 @@ if os.path.exists(rel_path):
     rj = json.load(open(rel_path))
     for fname, info in rj.get('chats', {}).items():
         rel[fname] = info.get('relevance', 'high')
-high_ids, low_ids = [], []
+high_ids, low_ids, timestamps = [], [], []
 for cid in chat_ids:
-    fname = idx[cid].get('fileName', '').replace('.md', '')
+    meta = idx[cid] if isinstance(idx[cid], dict) else {}
+    fname = meta.get('fileName', '').replace('.md', '')
+    lmt = meta.get('lastMessageTime', '')
     if rel.get(fname) == 'low':
         low_ids.append(cid)
     else:
         high_ids.append(cid)
+        timestamps.append(f'{cid}={lmt}' if lmt else cid)
 print('CACHED_HIGH=' + '|'.join(high_ids))
 print('CACHED_LOW=' + '|'.join(low_ids))
-" 2>/dev/null || { echo "CACHED_HIGH="; echo "CACHED_LOW="; }
+print('CACHED_TIMESTAMPS=' + '|'.join(timestamps))
+" 2>/dev/null || { echo "CACHED_HIGH="; echo "CACHED_LOW="; echo "CACHED_TIMESTAMPS="; }
 echo "CACHE_EXPIRED|force"
 ```
 
@@ -184,7 +189,7 @@ import json, sys, os
 idx_path = '$CASE_DIR/teams/_chat-index.json'
 rel_path = '$CASE_DIR/teams/_relevance.json'
 if not os.path.exists(idx_path):
-    print('CACHED_HIGH='); print('CACHED_LOW='); sys.exit()
+    print('CACHED_HIGH='); print('CACHED_LOW='); print('CACHED_TIMESTAMPS='); sys.exit()
 idx = json.load(open(idx_path))
 chat_ids = [k for k in idx if not k.startswith('_')]
 rel = {}
@@ -192,16 +197,20 @@ if os.path.exists(rel_path):
     rj = json.load(open(rel_path))
     for fname, info in rj.get('chats', {}).items():
         rel[fname] = info.get('relevance', 'high')
-high_ids, low_ids = [], []
+high_ids, low_ids, timestamps = [], [], []
 for cid in chat_ids:
-    fname = idx[cid].get('fileName', '').replace('.md', '')
+    meta = idx[cid] if isinstance(idx[cid], dict) else {}
+    fname = meta.get('fileName', '').replace('.md', '')
+    lmt = meta.get('lastMessageTime', '')
     if rel.get(fname) == 'low':
         low_ids.append(cid)
     else:
         high_ids.append(cid)
+        timestamps.append(f'{cid}={lmt}' if lmt else cid)
 print('CACHED_HIGH=' + '|'.join(high_ids))
 print('CACHED_LOW=' + '|'.join(low_ids))
-" 2>/dev/null || { echo "CACHED_HIGH="; echo "CACHED_LOW="; }
+print('CACHED_TIMESTAMPS=' + '|'.join(timestamps))
+" 2>/dev/null || { echo "CACHED_HIGH="; echo "CACHED_LOW="; echo "CACHED_TIMESTAMPS="; }
 fi
 ```
 
@@ -240,24 +249,30 @@ date +%s > "{caseDir}/logs/.t_teamsSearch_end"
 
 **跳过 Step 1**——联系人信息由 caller 传入，不需要额外 Read。
 
-解析 Step 0 输出的 `CACHED_HIGH` 和 `CACHED_LOW`，按 `|` 分割为列表。
+解析 Step 0 输出的 `CACHED_HIGH`、`CACHED_LOW` 和 `CACHED_TIMESTAMPS`，按 `|` 分割为列表。
+`CACHED_TIMESTAMPS` 格式为 `chatId=2026-04-10T03:15:22Z|chatId2=...`，用于增量拉取。
 
 ### 情况 A：有缓存 HIGH chatId（patrol 常态）
 
-**在一条 assistant 消息中同时发出 所有搜索 + HIGH chatId 拉取**：
+**在一条 assistant 消息中同时发出 所有搜索 + HIGH chatId 增量拉取**：
 
 ```
 # 搜索查询（发现新 chatId）
 SearchTeamMessagesQueryParameters(queryString="{caseNumber}", size=25)           # Q1
 SearchTeamMessagesQueryParameters(queryString="from:{contactEmail}", size=5)     # Q2
 ListChats(userUpns=["fangkun@microsoft.com"], topic="{caseNumber}", top=50)     # Q3
+# Q4: ICM 号搜索（仅当 icmNumber 非空时发出）
+SearchTeamMessagesQueryParameters(queryString="{icmNumber}", size=10)            # Q4（可选）
 
-# 同时拉取 HIGH 相关性的缓存 chatId（仅 CACHED_HIGH，跳过 CACHED_LOW）
+# 增量拉取 HIGH chatId — 不限条数，拉完整历史
+# ⚠️ 超长消息（日志/XML/代码）在 Step 4 构建 _input.json 时会被截断，不会撑爆 token
 ListChatMessages(chatId="{high_id_1}", top=20)
 ListChatMessages(chatId="{high_id_2}", top=20)
 # ... 对每个 CACHED_HIGH 中的 chatId
 ```
 
+> ⚠️ 不限制消息条数（保持 top=20），但对**超长消息体**做截断（见 Step 4 截断规则）
+> write-teams.ps1 的 `lastMessageTime` 对比机制会自动跳过已缓存的旧消息，只 append 新增的
 > ⚠️ 不拉取 CACHED_LOW 中的 chatId——已知不相关，节省 API 调用。
 > Q2 备注：`size=5` 足够发现私聊 chatId。如果无 contactEmail 则用 `{caseNumber} OR {firstName}`。
 
@@ -275,7 +290,9 @@ ListChats(userUpns=["fangkun@microsoft.com"], topic="{caseNumber}", top=50)
 
 ### 结果处理
 
-从 Q1+Q2+Q3 中提取所有唯一 chatId，记住来源（Q1→`case-number`，Q2→`contact-name`，Q3→`meeting-topic`）。
+从 Q1+Q2+Q3+Q4 中提取所有唯一 chatId，记住来源（Q1→`case-number`，Q2→`contact-name`，Q3→`meeting-topic`，Q4→`icm-number`）。
+
+> Q4 备注：ICM 号搜索能发现与 PG 讨论 incident 的 channel/chat，这些对话通常包含 root cause 分析和修复进展。如果 `icmNumber` 为空，跳过 Q4。
 
 ---
 
@@ -344,6 +361,18 @@ ListChatMessages(chatId="{new_id_2}", top=20)
 - `body` **必须是 object** `{ "contentType": "Html"|"Text", "content": "..." }`，**不能只写 content string**
 - MCP `ListChatMessages` 返回的 `from` 是 `{ "user": { "displayName": "..." } }`，需要转换为 `{ "displayName": "..." }`
 - MCP 返回的 `body` 已经是正确格式 `{ "contentType": "...", "content": "..." }`，直接保留
+
+### ⚠️ 超长消息截断规则（防止 token 爆炸）
+
+构建 `_input.json` 时，对每条消息的 `body.content` 检查长度：
+
+- **≤ 2000 字符** → 保持原样
+- **> 2000 字符** → 截断到 2000 字符，末尾追加 `...[truncated, original {N} chars]`
+- **纯图片消息**（仅含 `<img>` / `<attachment>` 标签，无文字）→ 替换为 `[image/attachment]`
+
+> 这确保单条消息不超过 ~500 tokens，20 条消息 × 10 个 chat = 最多 ~100k tokens
+> 日志、XML、代码截图等超长内容被截断后不影响 write-teams.ps1 的处理（它保留完整 HTML）
+> ⚠️ 截断只影响 `_input.json`（LLM context），不影响写入磁盘的 `.md` 文件——那些由 MCP 原始数据直接写入
 
 ### ⚠️ JSON 大小决定写入方式
 

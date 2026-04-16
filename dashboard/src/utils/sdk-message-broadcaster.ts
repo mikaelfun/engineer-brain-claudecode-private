@@ -33,6 +33,55 @@ export function summarizeToolInput(toolName: string, input: any): string {
   return ''
 }
 
+/**
+ * Infer casework sub-step from tool-call context.
+ * Returns a human-readable step name if detectable, or null for generic tool calls.
+ */
+export function inferCaseworkSubstep(toolName: string, toolContent: string): string | null {
+  const c = toolContent.toLowerCase()
+  // Agent spawns → subagent type is the step
+  if (toolName === 'Agent') {
+    if (c.includes('troubleshoot')) return 'troubleshoot'
+    if (c.includes('email-drafter') || c.includes('draft-email')) return 'draft-email'
+    if (c.includes('teams-search')) return 'teams-search'
+    if (c.includes('onenote')) return 'onenote-search'
+    if (c.includes('challenge')) return 'challenge'
+  }
+  // Bash → script names
+  if (toolName === 'Bash') {
+    if (c.includes('fetch-all-data') || c.includes('fetch-notes') || c.includes('fetch-emails')) return 'data-refresh'
+    if (c.includes('check-ir-status') || c.includes('check-entitlement') || c.includes('mooncake-cc')) return 'compliance-check'
+    if (c.includes('check-case-changes') || c.includes('changegate') || c.includes('fast-path')) return 'changegate'
+    if (c.includes('detect-case-status')) return 'archive-detect'
+    if (c.includes('record-timing') || c.includes('.t_')) {
+      if (c.includes('agentwait') || c.includes('agent_wait')) return 'waiting-agents'
+      return null  // timing markers are internal, don't change displayed step
+    }
+    if (c.includes('view-labor') || c.includes('download-attachment')) return 'data-refresh'
+    if (c.includes('casework-fast-path')) return 'fast-path'
+  }
+  // Read SKILL.md → init
+  if (toolName === 'Read' && c.includes('skill.md')) {
+    if (c.includes('casework')) return 'init'
+    if (c.includes('compliance')) return 'compliance-check'
+    if (c.includes('status-judge')) return 'status-judge'
+    if (c.includes('inspection')) return 'inspection-writer'
+    if (c.includes('note-gap')) return 'note-gap'
+    if (c.includes('data-refresh')) return 'data-refresh'
+  }
+  // Write to specific outputs
+  if ((toolName === 'Write' || toolName === 'Edit') && c.includes('case-summary')) return 'inspection-writer'
+  if ((toolName === 'Write' || toolName === 'Edit') && c.includes('casehealth-meta')) return 'status-judge'
+  if ((toolName === 'Write' || toolName === 'Edit') && c.includes('note-draft')) return 'note-gap'
+  // MCP tools
+  if (toolName.startsWith('mcp__icm__')) return 'icm-check'
+  if (toolName.startsWith('mcp__kusto__')) return 'troubleshoot'
+  if (toolName.startsWith('mcp__teams__')) return 'teams-search'
+  if (toolName.startsWith('mcp__mail__')) return 'email-search'
+  if (toolName.startsWith('mcp__msft-learn__')) return 'troubleshoot'
+  return null
+}
+
 export interface BroadcastResult {
   sessionId: string | undefined
   messageCount: number
@@ -80,6 +129,7 @@ export async function broadcastSDKMessages(
           if (block.type === 'tool_use') {
             const toolContent = summarizeToolInput((block as any).name, (block as any).input)
             lastToolName = (block as any).name
+            const substep = inferCaseworkSubstep(lastToolName!, toolContent)
             // Track tool call (mark as pending; will be resolved by tool_result)
             toolCalls.push({ name: lastToolName!, success: true })
             messageCount++
@@ -90,6 +140,7 @@ export async function broadcastSDKMessages(
               kind: 'tool-call',
               toolName: lastToolName,
               content: toolContent,
+              ...(substep ? { substep } : {}),
               timestamp: new Date().toISOString(),
             })
             appendSessionMessage(caseNumber, {

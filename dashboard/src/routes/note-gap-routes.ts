@@ -1,13 +1,25 @@
 import { Hono } from 'hono'
 import { existsSync, readFileSync, readdirSync, unlinkSync, writeFileSync, statSync } from 'fs'
 import { join, resolve } from 'path'
-import { exec } from 'child_process'
+import { exec, execFile } from 'child_process'
 import { promisify } from 'util'
 import { config } from '../config.js'
+import { parseCaseInfo } from '../services/case-reader.js'
 import matter from 'gray-matter'
 import { batchParallelQuery, type BatchTask } from '../agent/batch-orchestrator.js'
 
 const execAsync = promisify(exec)
+const execFileAsync = promisify(execFile)
+
+/** Refresh notes.md from D365 for a case (non-fatal) */
+async function refreshNotes(caseNumber: string): Promise<void> {
+  try {
+    await execFileAsync('pwsh', ['-NoProfile', '-File', join(config.scriptsDir, 'fetch-notes.ps1'), '-TicketNumber', caseNumber, '-OutputDir', config.activeCasesDir, '-Force'], { timeout: 60000 })
+  } catch (e: any) {
+    console.warn(`[note-gap] refresh notes failed for ${caseNumber} (non-fatal): ${e.message}`)
+  }
+}
+
 const noteGapRoutes = new Hono()
 const noteGapBatchRoutes = new Hono()
 
@@ -29,6 +41,7 @@ noteGapBatchRoutes.get('/', (c) => {
 
   const gaps: Array<{
     caseNumber: string
+    caseTitle: string
     title: string
     body: string
     gapDays: number
@@ -37,13 +50,33 @@ noteGapBatchRoutes.get('/', (c) => {
   }> = []
 
   for (const dir of dirs) {
+    // Skip AR cases
+    const metaPath = join(casesDir, dir, 'casehealth-meta.json')
+    if (existsSync(metaPath)) {
+      try {
+        const meta = JSON.parse(readFileSync(metaPath, 'utf-8'))
+        if (meta.isAR === true) continue
+      } catch {}
+    }
     const draftPath = join(casesDir, dir, 'note-draft.md')
     if (!existsSync(draftPath)) continue
     try {
       const content = readFileSync(draftPath, 'utf-8')
       const { data } = matter(content)
+      const caseInfo = parseCaseInfo(dir)
+      let caseTitle = caseInfo?.title || ''
+      if (!caseTitle) {
+        try {
+          const metaPath = join(casesDir, dir, 'casehealth-meta.json')
+          if (existsSync(metaPath)) {
+            const meta = JSON.parse(readFileSync(metaPath, 'utf-8'))
+            caseTitle = meta.caseTitle || meta.title || ''
+          }
+        } catch {}
+      }
       gaps.push({
         caseNumber: dir,
+        caseTitle,
         title: data.title || '',
         body: data.body || '',
         gapDays: data.gapDays || 0,
@@ -71,6 +104,12 @@ noteGapBatchRoutes.post('/', async (c) => {
     .filter(d => d.isDirectory())
     .map(d => d.name)
 
+  // Step 0: Refresh notes.md from D365 for all active cases (parallel, non-fatal)
+  // Skip cases that also exist in archived/ (stale directory remnants)
+  const archivedDir = join(config.casesDir, 'archived')
+  const activeDirs = dirs.filter(cn => !existsSync(join(archivedDir, cn)))
+  await Promise.all(activeDirs.map(cn => refreshNotes(cn)))
+
   const details: Array<{
     caseNumber: string
     status: 'gap' | 'ok' | 'no-notes' | 'already-has-draft' | 'checked'
@@ -79,16 +118,28 @@ noteGapBatchRoutes.post('/', async (c) => {
   }> = []
   let skipped = 0
 
-  // Pre-check: only skip cases that already have a draft
+  // Pre-check: skip cases that already have a draft or are AR cases
   const casesToCheck: string[] = []
   for (const caseNumber of dirs) {
     const draftPath = join(casesDir, caseNumber, 'note-draft.md')
     if (existsSync(draftPath)) {
       details.push({ caseNumber, status: 'already-has-draft' })
       skipped++
-    } else {
-      casesToCheck.push(caseNumber)
+      continue
     }
+    // Skip AR cases — AR notes should be managed separately, not via batch note-gap
+    const metaPath = join(casesDir, caseNumber, 'casehealth-meta.json')
+    if (existsSync(metaPath)) {
+      try {
+        const meta = JSON.parse(readFileSync(metaPath, 'utf-8'))
+        if (meta.isAR === true) {
+          details.push({ caseNumber, status: 'ok' as const })
+          skipped++
+          continue
+        }
+      } catch {}
+    }
+    casesToCheck.push(caseNumber)
   }
 
   if (casesToCheck.length > 0) {
@@ -368,30 +419,9 @@ noteGapRoutes.post('/:id/note-gap/check', async (c) => {
   const now = new Date()
   const threshold = config.noteGapThresholdDays ?? 3
 
-  // ── Step 2: Auto-refresh notes.md if stale (>24h) ──
-  let notesRefreshed = false
-  if (existsSync(notesPath)) {
-    const ageMs = now.getTime() - statSync(notesPath).mtimeMs
-    const ageHours = ageMs / (1000 * 60 * 60)
-    if (ageHours > 24) {
-      try {
-        const fetchCmd = `pwsh "${join(config.scriptsDir, 'fetch-notes.ps1')}" -TicketNumber "${caseNumber}" -OutputDir "${caseDir}" -Force`
-        await execAsync(fetchCmd, { timeout: 60000 })
-        notesRefreshed = true
-      } catch (e: any) {
-        console.warn(`[note-gap/check] fetch-notes refresh failed (non-fatal): ${e.message}`)
-      }
-    }
-  } else {
-    // notes.md doesn't exist — fetch it
-    try {
-      const fetchCmd = `pwsh "${join(config.scriptsDir, 'fetch-notes.ps1')}" -TicketNumber "${caseNumber}" -OutputDir "${caseDir}"`
-      await execAsync(fetchCmd, { timeout: 60000 })
-      notesRefreshed = true
-    } catch (e: any) {
-      console.warn(`[note-gap/check] fetch-notes failed (non-fatal): ${e.message}`)
-    }
-  }
+  // ── Step 2: Always refresh notes.md from D365 before checking ──
+  await refreshNotes(caseNumber)
+  const notesRefreshed = true
 
   // ── Step 3: Parse latest human note ──
   const latestDate = existsSync(notesPath) ? parseLatestNoteDate(notesPath) : null
@@ -471,15 +501,27 @@ noteGapRoutes.post('/:id/note-gap/submit', async (c) => {
       console.log(`[note-gap/submit] stdout: ${addResult.stdout}`)
       if (addResult.stderr) console.error(`[note-gap/submit] stderr: ${addResult.stderr}`)
 
-      // Parse last line as JSON result
+      // Parse result JSON — scan from last line backwards (skip lock-release / non-JSON lines)
       const lines = addResult.stdout.trim().split('\n')
-      const lastLine = lines[lines.length - 1].trim()
-      let scriptResult: { success: boolean; error?: string; annotationId?: string }
+      let scriptResult: { success: boolean; error?: string; annotationId?: string } | null = null
 
-      try {
-        scriptResult = JSON.parse(lastLine)
-      } catch {
-        console.error(`[note-gap/submit] Failed to parse script result: ${lastLine}`)
+      for (let i = lines.length - 1; i >= 0; i--) {
+        const line = lines[i].trim()
+        if (!line || !line.startsWith('{')) continue
+        try {
+          const parsed = JSON.parse(line)
+          if (typeof parsed.success === 'boolean') {
+            scriptResult = parsed
+            break
+          }
+        } catch {
+          // not JSON, keep scanning
+        }
+      }
+
+      if (!scriptResult) {
+        const lastLine = lines[lines.length - 1]?.trim() || ''
+        console.error(`[note-gap/submit] No JSON result found in script output`)
         return c.json({ success: false, error: `Script output not parseable: ${lastLine.substring(0, 200)}` }, 500)
       }
 
@@ -491,7 +533,7 @@ noteGapRoutes.post('/:id/note-gap/submit', async (c) => {
 
       // Success — refresh notes and clean up draft
       try {
-        const fetchCmd = `pwsh "${join(scriptDir, 'fetch-notes.ps1')}" -TicketNumber "${caseNumber}" -OutputDir "${caseDir}" -Force`
+        const fetchCmd = `pwsh "${join(scriptDir, 'fetch-notes.ps1')}" -TicketNumber "${caseNumber}" -OutputDir "${config.activeCasesDir}" -Force`
         await execAsync(fetchCmd, { timeout: 60000 })
       } catch (fetchErr: any) {
         console.warn(`[note-gap/submit] fetch-notes failed (non-fatal): ${fetchErr.message}`)

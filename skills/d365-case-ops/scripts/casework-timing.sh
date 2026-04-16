@@ -176,8 +176,10 @@ $PHASES_JSON
 }
 TJEOF
 
-# 清理里程碑文件
-rm -f "$CD/logs/.t_"*
+# 保留 timing markers（供 patrol-monitor.sh 和下次 casework fast-path 使用）
+# 旧设计会 rm -f "$CD/logs/.t_"* 清理，但这导致 patrol 监控失效
+# 仅写 .t_done marker 标记 casework 完成
+date +%s > "$CD/logs/.t_done"
 
 # 一行汇总
 echo "timing: total=${total}s ${PHASE_LINE} drift=${p_drift}s | calls: bash=$s_bash tools=$s_tools agents=$s_agents"

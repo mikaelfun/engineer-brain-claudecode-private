@@ -29,11 +29,11 @@ status: active
 | TriggerType | string | 触发类型 |
 | TriggerObjectId | string | 触发对象 ID |
 | TenantName | string | 租户名称 |
-| FaultCode | string | 故障代码 |
+| FaultCode | long | 故障代码 📝 2026-04-07 type changed: string → long |
 | FaultReason | string | 故障原因 |
 | FaultInfoFabricOperation | string | Fabric 操作信息 |
 | FaultInfoCorrelationGuid | string | 故障关联 GUID |
-| AffectedUpdateDomain | string | 受影响的更新域 |
+| AffectedUpdateDomain | long | 受影响的更新域 📝 2026-04-07 type changed: string → long |
 | RoleInstanceName | string | 角色实例名称 (VM 名称) |
 | SourceNodeId | string | 源节点 ID |
 
@@ -58,18 +58,18 @@ status: active
 cluster('azurecm.chinanorth2.kusto.chinacloudapi.cn').database('azurecm').ServiceHealingTriggerEtwTable
 | where TenantName == "{tenantName}"
 | where PreciseTimeStamp > datetime({starttime}) and PreciseTimeStamp < datetime({endtime})
-| project PreciseTimeStamp, TenantName, TriggerType, FaultReason, RoleInstanceName, NodeId, FaultCode
+| project PreciseTimeStamp, TenantName, TriggerType, FaultReason, RoleInstanceName, SourceNodeId, FaultCode
 ```
 
 ### 按节点查询
 
 ```kql
 cluster('azurecm.chinanorth2.kusto.chinacloudapi.cn').database('azurecm').ServiceHealingTriggerEtwTable 
-| where NodeId == "{nodeId}" 
+| where SourceNodeId == "{nodeId}" 
 | where TenantName == "{tenantName}" 
 | where PreciseTimeStamp >= datetime({starttime}) 
 | where PreciseTimeStamp < datetime({endtime})
-| project PreciseTimeStamp, TenantName, TriggerType, FaultReason, NodeId, FaultCode
+| project PreciseTimeStamp, TenantName, TriggerType, FaultReason, SourceNodeId, FaultCode
 ```
 
 ### 配合 AzSMTenantStatemachineEvents 查询
@@ -93,3 +93,9 @@ cluster('azurecm.chinanorth2.kusto.chinacloudapi.cn').database('azurecm').AzSMTe
 - Service Healing 是 Azure 自动将 VM 从故障节点迁移到健康节点的机制
 - `FaultCode` 可用于关联 DCM FaultCodeTeamMapping 表获取更详细的故障说明
 - 必须先从 LogContainerSnapshot 获取 tenantName
+- ⚠️ 示例查询中使用 `SourceNodeId` 而非 `NodeId`（NodeId 在此表不存在）
+
+## Changelog
+- 2026-04-07: [auto] Column `FaultCode` type changed: string → long (SCHEMA_MISMATCH in troubleshooter run)
+- 2026-04-07: [auto] Column `AffectedUpdateDomain` type changed: string → long (SCHEMA_MISMATCH in troubleshooter run)
+- 2026-04-07: [auto] Example queries updated: `NodeId` → `SourceNodeId` (SCHEMA_MISMATCH in troubleshooter run)

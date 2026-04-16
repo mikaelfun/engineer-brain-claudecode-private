@@ -66,8 +66,10 @@ cd dashboard && npm run dev
 
 ## 安全红线
 - ❌ 不直接发邮件给客户
-- ⚠️ D365 写操作需用户确认
-- ✅ 读操作、分析、草稿生成可自动执行
+- ❌ **禁止在自动流程（patrol/casework agent）中调用 D365 邮件脚本**（`new-email.ps1`、`reply-email.ps1`、`edit-draft.ps1`）——邮件草稿只保存到本地 `{caseDir}/drafts/` 目录
+- ❌ **禁止在自动流程中调用 Mail MCP 写入工具**（`CreateDraftMessage`、`SendDraftMessage`、`SendEmailWithAttachments`、`ReplyToMessage`、`ForwardMessage`）
+- ⚠️ D365 写操作（add-note、record-labor 等）需用户确认
+- ✅ 读操作、分析、草稿生成（本地文件）可自动执行
 - 🚨 **永远不要 `rm -rf` 用户数据目录**——先 `ls` → 展示 → 用户确认 → 再删
 - 🚨 **禁止 `pkill -f node`**——会杀掉 Claude Code 自身进程，用 `taskkill /PID xxx /F`
 
@@ -90,7 +92,7 @@ actualStatus 有效值：`pending-engineer` | `pending-customer` | `pending-pg` 
 - `casesRoot`: `./cases` — Case 数据根目录
 - `dataRoot`: `../data` — 外部数据目录
 - `noteGapThresholdDays`: 3 — 超过 3 天未记录 → 提示补 Note/Labor
-- `teamsSearchCacheHours`: 4 — 4 小时内不重复搜索 Teams
+- `teamsSearchCacheHours`: 8 — 8 小时内不重复搜索 Teams（从 config.json 动态读取）
 
 ## 记忆规则
 - 会话开始读 `memory/MEMORY.md`
@@ -101,8 +103,11 @@ actualStatus 有效值：`pending-engineer` | `pending-customer` | `pending-pg` 
 
 ## 平台规则
 - **路径**：Bash 中必须用 POSIX 格式 `/c/a/b`（不是 `C:\a\b`）
+- **⚠️ Agent spawn 路径**：spawn subagent 的 prompt 中**必须用相对路径**（`casesRoot=./cases`），禁止 resolve 成 Windows 绝对路径（`C:\Users\...`），反斜杠在 Bash 中会被当转义符
+- **⚠️ python3 路径陷阱**：Bash 用 POSIX `/c/Users/...`，但 python3 的 `open('/c/...')` 会把 `/c/` 当**字面目录**写到 `C:\c\Users\...`。**规则**：python3 -c 内部用**相对路径**（`./cases/...`）或 Windows 格式（`C:/Users/...`），绝对禁止 `/c/` 格式
 - **Playwright**：必须 Edge，禁止 `browser_snapshot`，截图分析走 subagent
 - **变量**：赋值不要和 `|` pipe 同行（会被静默丢弃）
+- **Write Tool 已知 Bug**：Write/Edit 覆盖已有文件后，后续 Bash 命令可能触发文件缓存还原，导致修改静默丢失（[#42383](https://github.com/anthropics/claude-code/issues/42383)）。**Workaround**：用 Bash 写文件绕过缓存：`python3 -c "open('file','w').write(content)"`，或 Write 后立即 `git commit`
 - 详细规则 → `playbooks/guides/platform-gotchas.md`
 
 ## 索引（按需读取）

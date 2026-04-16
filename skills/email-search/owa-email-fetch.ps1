@@ -1,34 +1,44 @@
 # owa-email-fetch.ps1
-# OWA 邮件提取：通过 Playwright + OWA 搜索 Case 邮件，提取完整 conversation
-# 支持内联图片提取（默认开启）和纯文本模式（-NoImages）
-# 用法:
+# OWA email extraction v3: optimized with mega JS architecture (search wait + extract in one eval)
+# Ported efficiency patterns from owa-search-and-extract.js version
+# Outputs: MD (default) + optional JSON + inline images
+#
+# Usage:
 #   pwsh -File owa-email-fetch.ps1 -CaseNumber "2603060030001353" -OutputPath "./emails-owa.md"
 #   pwsh -File owa-email-fetch.ps1 -CaseNumber "2603060030001353" -OutputPath "./emails-owa.md" -NoImages
-#   pwsh -File owa-email-fetch.ps1 -CaseNumber "2603060030001353" -OutputPath "./emails-owa.md" -PreviewOnly
-#   pwsh -File owa-email-fetch.ps1 -EnsureBrowser   # 仅启动/检查浏览器
+#   pwsh -File owa-email-fetch.ps1 -CaseNumber "2603060030001353" -OutputPath "./emails-owa.md" -Headed
+#   pwsh -File owa-email-fetch.ps1 -CaseNumber "2603060030001353" -OutputPath "./emails-owa.md" -JsonOutput
+#   pwsh -File owa-email-fetch.ps1 -EnsureBrowser
 
 param(
     [string]$CaseNumber,
     [string]$OutputPath,
-    [switch]$PreviewOnly,       # 只提取 aria-label preview，不加载完整 body
-    [switch]$NoImages,          # 纯文本模式，不提取内联图片
-    [switch]$EnsureBrowser,     # 仅确保浏览器就绪
+    [switch]$PreviewOnly,       # only extract aria-label previews, no full body
+    [switch]$NoImages,          # text-only mode, skip image extraction
+    [switch]$EnsureBrowser,     # only ensure browser is ready
+    [switch]$JsonOutput,        # also output JSON (emails-owa.json)
+    [switch]$Headed,            # run browser in headed mode for debugging
     [string]$LogFile,
-    [int]$ScrollDelay = 400,    # 每封邮件 scrollIntoView 后等待 ms
-    [int]$SearchTimeout = 15    # 搜索结果等待超时 s
+    [int]$ScrollDelay = 150,    # per-email scroll delay ms (v3: down from 400)
+    [int]$SearchTimeout = 15    # search result wait timeout s
 )
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
 $ErrorActionPreference = "Stop"
 
-$OWA_URL = "https://outlook.office.com/mail/0/"
+$OWA_URL = "https://outlook.cloud.microsoft/mail/0/"
 $OWA_PROFILE = Join-Path $env:TEMP "playwright-owa-profile"
 
+if (-not $LogFile -and $OutputPath) {
+    $outDir = Split-Path -Parent $OutputPath
+    if ($outDir) { $LogFile = Join-Path $outDir ("owa-extract-" + (Get-Date -Format "yyyy-MM-dd") + ".log") }
+}
+
 function Write-Log {
-    param([string]$Message)
+    param([string]$Message, [string]$Level = "INFO")
     $ts = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    $line = "[$ts] $Message"
+    $line = "[$ts] [$Level] $Message"
     Write-Host $line
     if ($LogFile) {
         $logDir = Split-Path -Parent $LogFile
@@ -39,41 +49,61 @@ function Write-Log {
 
 function Test-BrowserAlive {
     try {
-        $result = playwright-cli -s=owa eval '({url: location.href, title: document.title})' 2>&1 | Out-String
-        return ($result -match "outlook\.office\.com" -or $result -match "Mail -")
+        $result = playwright-cli -s=owa eval '1+1' 2>&1 | Out-String
+        return ($result -match "2")
     } catch {
         return $false
     }
 }
 
 function Start-OwaBrowser {
-    Write-Log "OWA BROWSER | Starting persistent Edge session..."
-    $out = playwright-cli -s=owa open --persistent --profile $OWA_PROFILE --browser msedge $OWA_URL 2>&1 | Out-String
+    Write-Log "Starting persistent Edge session$(if ($Headed) { ' (headed)' } else { '' })..."
+    $openArgs = @('-s=owa', 'open', '--persistent', '--profile', $OWA_PROFILE, '--browser', 'msedge')
+    if ($Headed) { $openArgs += '--headed' }
+    $openArgs += $OWA_URL
+    $out = & playwright-cli @openArgs 2>&1 | Out-String
     if ($out -match "opened with pid") {
         Start-Sleep -Seconds 3
-        if (Test-BrowserAlive) {
-            Write-Log "OWA BROWSER | Ready"
-            return $true
+        # Persistent profile may restore old session with about:blank tab
+        $curUrl = playwright-cli -s=owa eval 'location.href' 2>&1 | Out-String
+        if ($curUrl -match "about:blank" -or -not ($curUrl -match "outlook")) {
+            Write-Log "Current tab not on OWA, navigating..."
+            playwright-cli -s=owa goto $OWA_URL 2>&1 | Out-Null
+        }
+        # Wait for OWA to fully load (search box present)
+        for ($w = 0; $w -lt 12; $w++) {
+            Start-Sleep -Seconds 2
+            $check = playwright-cli -s=owa eval '(function(){var h=location.href;if(!/outlook/i.test(h))return "NOT_OWA|"+h;var sb=document.querySelector("[role=search] [role=combobox]")||document.getElementById("topSearchInput");if(!sb)return "NO_SEARCHBOX|"+h;return "READY|"+h})()' 2>&1 | Out-String
+            if ($check -match "READY\|") {
+                Write-Log "Browser ready"
+                return $true
+            }
+            if ($check -match "NOT_OWA") {
+                playwright-cli -s=owa goto $OWA_URL 2>&1 | Out-Null
+            }
         }
     }
-    Write-Log "OWA BROWSER | Failed to start: $($out.Substring(0, [Math]::Min(200, $out.Length)))"
+    Write-Log "Browser start failed" "ERROR"
     return $false
 }
 
 function Ensure-OwaBrowser {
     if (Test-BrowserAlive) {
+        # Browser alive but might be on about:blank from persistent profile
+        $urlCheck = playwright-cli -s=owa eval 'location.href' 2>&1 | Out-String
+        if ($urlCheck -match "about:blank") {
+            Write-Log "Browser on about:blank, navigating to OWA..."
+            playwright-cli -s=owa goto $OWA_URL 2>&1 | Out-Null
+            Start-Sleep -Seconds 3
+        }
         return $true
     }
-    # Close stale session + kill any lingering edge processes from OWA profile
     playwright-cli -s=owa close 2>&1 | Out-Null
     Start-Sleep -Seconds 2
-
-    # Retry up to 2 times
     for ($retry = 0; $retry -lt 2; $retry++) {
         if (Start-OwaBrowser) { return $true }
-        Write-Log "OWA BROWSER | Retry $($retry+1) — killing stale processes..."
+        Write-Log "Retry $($retry+1) - killing stale processes..." "WARN"
         playwright-cli -s=owa close 2>&1 | Out-Null
-        # Kill any msedge using our profile
         $procs = Get-Process msedge -ErrorAction SilentlyContinue | Where-Object {
             try { $_.CommandLine -match "playwright-owa-profile" } catch { $false }
         }
@@ -95,61 +125,86 @@ if (-not $CaseNumber) { Write-Host "ERROR: -CaseNumber required"; exit 1 }
 if (-not $OutputPath) { Write-Host "ERROR: -OutputPath required"; exit 1 }
 
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
-
-# ══════════════════════════════════════════════════════════════════════
-# Main extraction with retry (covers EXTRACT_ERROR + BROWSER_FAILED)
-# ══════════════════════════════════════════════════════════════════════
 $maxRetries = 2
-$success = $false
 
 for ($attempt = 0; $attempt -le $maxRetries; $attempt++) {
     if ($attempt -gt 0) {
-        Write-Log "OWA RETRY $attempt | Restarting browser and retrying..."
+        Write-Log "Restarting browser, retry $attempt..." "WARN"
         playwright-cli -s=owa close 2>&1 | Out-Null
         Start-Sleep -Seconds 3
     }
 
     # Step 0: Ensure browser
     if (-not (Ensure-OwaBrowser)) {
-        Write-Log "OWA FAILED | Browser not available (attempt $attempt)"
+        Write-Log "Browser not available (attempt $attempt)" "ERROR"
         continue
     }
     $t0 = $sw.ElapsedMilliseconds
 
-    # Step 1: Navigate + Search
-    Write-Log "OWA STEP1 | Searching for case $CaseNumber"
-    playwright-cli -s=owa goto $OWA_URL 2>&1 | Out-Null
-    for ($nav = 0; $nav -lt 10; $nav++) {
-        Start-Sleep -Seconds 1
-        $navCheck = playwright-cli -s=owa eval '(document.querySelector("[role=search] [role=combobox]") ? "ready" : "waiting")' 2>&1 | Out-String
-        if ($navCheck -match "ready") { break }
+    # Step 1: Wait for OWA ready (search box present)
+    # Smart nav: don't re-goto if already on OWA
+    Write-Log "Waiting for OWA ready..."
+    $owaReady = $false
+    for ($w = 0; $w -lt 10; $w++) {
+        $prepResult = playwright-cli -s=owa eval '(function(){if(!/outlook/i.test(location.href))return "NEED_NAV";var sb=document.querySelector("[role=search] [role=combobox]")||document.getElementById("topSearchInput");if(!sb)return "NO_SEARCH_BOX";return "ready|"+sb.value})()' 2>&1 | Out-String
+        if ($prepResult -match "ready\|") { $owaReady = $true; break }
+        if ($prepResult -match "NEED_NAV") {
+            Write-Log "Not on OWA, navigating..."
+            playwright-cli -s=owa goto $OWA_URL 2>&1 | Out-Null
+        }
+        Start-Sleep -Seconds 2
     }
+    if (-not $owaReady) {
+        Write-Log "OWA not ready after 20s (attempt $attempt)" "ERROR"
+        continue
+    }
+    $t1 = $sw.ElapsedMilliseconds
+    Write-Log "OWA ready ($($t1-$t0)ms)"
 
-    playwright-cli -s=owa eval "(document.querySelector(`"[role=search] [role=combobox]`")?.focus(), document.querySelector(`"[role=search] [role=combobox]`")?.click(), `"ok`")" 2>&1 | Out-Null
-    Start-Sleep -Milliseconds 800
-    playwright-cli -s=owa press "Control+a" 2>&1 | Out-Null
-    Start-Sleep -Milliseconds 300
+    # Step 2: Search — focus + set all JS params in one eval, then type/press
+    Write-Log "Searching for case $CaseNumber"
+    $mode = if ($PreviewOnly) { "preview" } else { "full" }
+    $withImagesJs = if ($NoImages) { "false" } else { "true" }
+
+    # Combined: focus search box + set all JS params (saves process calls)
+    playwright-cli -s=owa eval "(function(){var sb=document.querySelector('[role=search] [role=combobox]')||document.getElementById('topSearchInput');if(sb){sb.focus();sb.click()}window.__OWA_CASE_NUMBER='$CaseNumber';window.__OWA_MODE='$mode';window.__OWA_WITH_IMAGES=$withImagesJs;window.__OWA_SCROLL_DELAY=$ScrollDelay;return 'ready'})()" 2>&1 | Out-Null
+    playwright-cli -s=owa press Control+a 2>&1 | Out-Null
     playwright-cli -s=owa type $CaseNumber 2>&1 | Out-Null
-    Start-Sleep -Milliseconds 500
     playwright-cli -s=owa press Enter 2>&1 | Out-Null
 
-    $found = $false
-    for ($s = 0; $s -lt $SearchTimeout; $s++) {
-        Start-Sleep -Seconds 1
-        $check = playwright-cli -s=owa eval "
-        (function(){
-            var options = document.querySelectorAll(`"[role=option]`");
-            for (var i = 0; i < options.length; i++) {
-                if ((options[i].getAttribute(`"aria-label`") || `"`").length > 40) return `"found`";
-            }
-            return `"waiting`";
-        })()
-        " 2>&1 | Out-String
-        if ($check -match "found") { $found = $true; break }
-    }
+    # Step 3: Run mega JS (search wait + extraction in one eval, no polling loop)
+    # Retry JS extraction up to 2 times in-place (don't kill browser for parse failures)
+    $jsFile = Join-Path $PSScriptRoot "owa-extract-conversation.js"
+    $jsContent = Get-Content $jsFile -Raw
+    $metaMatch = $null
+    for ($jsRetry = 0; $jsRetry -lt 3; $jsRetry++) {
+        if ($jsRetry -gt 0) {
+            Write-Log "Retrying JS extraction in-place ($jsRetry/2)..." "WARN"
+            Start-Sleep -Seconds 2
+        }
+        $extractResult = playwright-cli -s=owa eval $jsContent 2>&1 | Out-String
+        $t2 = $sw.ElapsedMilliseconds
 
-    if (-not $found) {
-        Write-Log "OWA STEP1 EMPTY | No results for $CaseNumber"
+        # Step 4: Parse metadata (format: OK|labels|convs|bodies|images|mdLen|elapsed)
+        $metaMatch = [regex]::Match($extractResult, '(OK|EMPTY)\|(\d+)\|(\d+)\|(\d+)\|(\d+)\|(\d+)\|(\d+)')
+        if ($metaMatch.Success) { break }
+        Write-Log "Bad metadata format (jsRetry $jsRetry, attempt $attempt, len=$($extractResult.Length))" "WARN"
+        if ($extractResult.Length -lt 500) { Write-Log "Raw: $extractResult" "DEBUG" }
+    }
+    if (-not $metaMatch -or -not $metaMatch.Success) {
+        Write-Log "JS extraction failed after 3 tries (attempt $attempt)" "ERROR"
+        continue
+    }
+    $status = $metaMatch.Groups[1].Value
+    $emailCount = [int]$metaMatch.Groups[2].Value
+    $convCount = [int]$metaMatch.Groups[3].Value
+    $bodyCount = [int]$metaMatch.Groups[4].Value
+    $imageCount = [int]$metaMatch.Groups[5].Value
+    $mdLen = [int]$metaMatch.Groups[6].Value
+    $jsElapsed = [int]$metaMatch.Groups[7].Value
+
+    if ($status -eq "EMPTY") {
+        Write-Log "No search results for $CaseNumber"
         $emptyContent = "# Emails (OWA) — Case $CaseNumber`n`n> No emails found | $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')`n"
         $outDir = Split-Path -Parent $OutputPath
         if ($outDir -and -not (Test-Path $outDir)) { New-Item -ItemType Directory -Path $outDir -Force | Out-Null }
@@ -158,46 +213,18 @@ for ($attempt = 0; $attempt -le $maxRetries; $attempt++) {
         Write-Host "EMAIL_COUNT=0"
         exit 0
     }
-    $t1 = $sw.ElapsedMilliseconds
-    Write-Log "OWA STEP1 OK | Search results found ($($t1-$t0)ms)"
 
-    # Step 2-4: Extract
-    $mode = if ($PreviewOnly) { "preview" } else { "full" }
-    $withImagesJs = if ($NoImages) { "false" } else { "true" }
-    Write-Log "OWA STEP2 | Extracting ($mode mode, images=$withImagesJs)"
-    playwright-cli -s=owa eval "(window.__OWA_CASE_NUMBER=`"$CaseNumber`", window.__OWA_MODE=`"$mode`", window.__OWA_WITH_IMAGES=$withImagesJs, window.__OWA_SCROLL_DELAY=$ScrollDelay, `"params set`")" 2>&1 | Out-Null
+    Write-Log "JS extraction done: $emailCount labels, $convCount convs, $bodyCount bodies, $imageCount images, ${mdLen}B, ${jsElapsed}ms JS + $($t2-$t0)ms total"
 
-    $jsFile = Join-Path $PSScriptRoot "owa-extract-conversation.js"
-    $jsContent = Get-Content $jsFile -Raw
-    $extractResult = playwright-cli -s=owa eval $jsContent 2>&1 | Out-String
-    $t4 = $sw.ElapsedMilliseconds
-
-    # Step 5: Parse metadata (format: labels|convs|bodies|images|mdLen|elapsed)
-    $metaMatch = [regex]::Match($extractResult, '(\d+)\|(\d+)\|(\d+)\|(\d+)\|(\d+)\|(\d+)')
-    if (-not $metaMatch.Success) {
-        # Fallback: try old 4-field format
-        $metaMatch = [regex]::Match($extractResult, '(\d+)\|(\d+)\|(\d+)\|(\d+)')
-    }
-    if (-not $metaMatch.Success) {
-        Write-Log "OWA EXTRACT_ERROR | Bad metadata format (attempt $attempt, len=$($extractResult.Length))"
-        continue  # retry
-    }
-    $emailCount = [int]$metaMatch.Groups[1].Value
-    $convCount = [int]$metaMatch.Groups[2].Value
-    $bodyCount = [int]$metaMatch.Groups[3].Value
-    $imageCount = if ($metaMatch.Groups.Count -ge 5) { [int]$metaMatch.Groups[4].Value } else { 0 }
-
-    # Read md from textarea
-    $mdContent = playwright-cli -s=owa eval 'document.getElementById("_owa_extract_md").value' 2>&1 | Out-String
-    # Read md from textarea — stop before "### Ran Playwright" footer
-    $mdMatch = [regex]::Match($mdContent, '### Result\s*\n"(.*?)"\s*\n### Ran', [System.Text.RegularExpressions.RegexOptions]::Singleline)
+    # Step 5: Read MD from textarea
+    $mdRaw = playwright-cli -s=owa eval 'document.getElementById("_owa_extract_md").value' 2>&1 | Out-String
+    $mdMatch = [regex]::Match($mdRaw, '### Result\s*\n"(.*?)"\s*\n### Ran', [System.Text.RegularExpressions.RegexOptions]::Singleline)
     if (-not $mdMatch.Success) {
-        # Fallback: try without ### Ran anchor
-        $mdMatch = [regex]::Match($mdContent, '### Result\s*\n"(.*)"', [System.Text.RegularExpressions.RegexOptions]::Singleline)
+        $mdMatch = [regex]::Match($mdRaw, '### Result\s*\n"(.*)"', [System.Text.RegularExpressions.RegexOptions]::Singleline)
     }
     if (-not $mdMatch.Success) {
-        Write-Log "OWA EXTRACT_ERROR | Cannot read textarea (attempt $attempt)"
-        continue  # retry
+        Write-Log "Cannot read MD textarea (attempt $attempt)" "ERROR"
+        continue
     }
 
     $md = $mdMatch.Groups[1].Value
@@ -207,21 +234,43 @@ for ($attempt = 0; $attempt -le $maxRetries; $attempt++) {
     $md = $md -replace '\\"', '"'
     $md = $md -replace '%%BACKSLASH%%', '\'
 
-    # Write output
+    # Write MD output
     $outDir = Split-Path -Parent $OutputPath
     if ($outDir -and -not (Test-Path $outDir)) { New-Item -ItemType Directory -Path $outDir -Force | Out-Null }
     [System.IO.File]::WriteAllText($OutputPath, $md, [System.Text.UTF8Encoding]::new($false))
     $sizeKB = [math]::Round((Get-Item $OutputPath).Length / 1024, 1)
+
+    # Step 5b: Write JSON output if requested
+    if ($JsonOutput) {
+        $jsonPath = $OutputPath -replace '\.md$', '.json'
+        $lenResult = playwright-cli -s=owa eval 'document.getElementById("_owa_extract_json").value.length' 2>&1 | Out-String
+        $lenMatch = [regex]::Match($lenResult, '(\d+)')
+        if ($lenMatch.Success) {
+            $jsonLen = [int]$lenMatch.Groups[1].Value
+            $chunkSize = 60000
+            $fullB64 = ""
+            for ($offset = 0; $offset -lt $jsonLen; $offset += $chunkSize) {
+                $b64Chunk = playwright-cli -s=owa eval "(function(){ var v = document.getElementById('_owa_extract_json').value.substring($offset, $($offset + $chunkSize)); return btoa(unescape(encodeURIComponent(v))); })()" 2>&1 | Out-String
+                $b64Match = [regex]::Match($b64Chunk, '"([A-Za-z0-9+/=]+)"')
+                if ($b64Match.Success) { $fullB64 += $b64Match.Groups[1].Value }
+            }
+            if ($fullB64.Length -gt 0) {
+                $jsonBytes = [System.Convert]::FromBase64String($fullB64)
+                $jsonStr = [System.Text.Encoding]::UTF8.GetString($jsonBytes)
+                [System.IO.File]::WriteAllText($jsonPath, $jsonStr, [System.Text.UTF8Encoding]::new($false))
+                Write-Log "JSON saved to $jsonPath ($([math]::Round($jsonBytes.Length/1024,1))KB)"
+            }
+        }
+    }
 
     # Step 6: Save inline images (if not -NoImages and images were extracted)
     $savedImageCount = 0
     if (-not $NoImages -and $imageCount -gt 0) {
         $imagesDir = Join-Path $outDir "images"
         if (-not (Test-Path $imagesDir)) { New-Item -ItemType Directory -Path $imagesDir -Force | Out-Null }
-        Write-Log "OWA STEP6 | Saving $imageCount inline image(s)"
+        Write-Log "Saving $imageCount inline image(s)"
 
         for ($imgIdx = 0; $imgIdx -lt $imageCount; $imgIdx++) {
-            # Get image filename
             $imgNameResult = playwright-cli -s=owa eval "(function(){ return window.__OWA_IMAGES[$imgIdx].name; })()" 2>&1 | Out-String
             $imgNameMatch = [regex]::Match($imgNameResult, '"(owa-img-\d+\.png)"')
             $imgName = if ($imgNameMatch.Success) { $imgNameMatch.Groups[1].Value } else { "owa-img-$imgIdx.png" }
@@ -246,18 +295,15 @@ for ($attempt = 0; $attempt -le $maxRetries; $attempt++) {
     }
 
     $sw.Stop()
-    Write-Log "OWA DONE | $emailCount emails ($convCount convs, $bodyCount bodies, $savedImageCount images), ${sizeKB}KB, ${mode} mode, $($sw.ElapsedMilliseconds)ms total"
+    Write-Log "Done: $emailCount emails ($convCount convs, $bodyCount bodies, $savedImageCount images), ${sizeKB}KB, $mode mode, $($sw.ElapsedMilliseconds)ms total"
     Write-Host "STATUS=OK"
     Write-Host "EMAIL_COUNT=$emailCount"
     Write-Host "IMAGE_COUNT=$savedImageCount"
     Write-Host "SIZE_KB=$sizeKB"
     Write-Host "DURATION_MS=$($sw.ElapsedMilliseconds)"
-    $success = $true
-    break
+    exit 0
 }
 
-if (-not $success) {
-    Write-Log "OWA FAILED | All $($maxRetries+1) attempts failed for case $CaseNumber"
-    Write-Host "STATUS=FAILED"
-    exit 1
-}
+Write-Log "All $($maxRetries+1) attempts failed for case $CaseNumber" "ERROR"
+Write-Host "STATUS=FAILED"
+exit 1

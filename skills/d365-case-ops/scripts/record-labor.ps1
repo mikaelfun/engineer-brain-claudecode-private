@@ -69,7 +69,19 @@ if (-not $UseSessionTime) {
             }
         }
 
-        $classValue = 337818  # Troubleshooting (default)
+        # Map classification string to D365 picklist value
+        $classMap = @{
+            'Admin Review'       = 726521
+            'Communications'     = 337790
+            'Recovery & Billing' = 726522
+            'Research'           = 333036
+            'Scoping'            = 337805
+            'Tech Review'        = 337798
+            'Troubleshooting'    = 337818
+            'Long Runner'        = 337792
+            'Post Mortem'        = 337803
+        }
+        $classValue = if ($classMap.ContainsKey($Classification)) { $classMap[$Classification] } else { 337818 }
         $dateStr = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddT00:00:00.000Z')
         $bodyJson = @{
             msdfm_classification = $classValue
@@ -87,11 +99,45 @@ if (-not $UseSessionTime) {
             Write-Host "✅ Labor recorded: $Minutes minutes ($Classification) for $caseLabel - $Description"
             return
         }
-        Write-Host "   (API failed, falling back to UI...)"
+
+        # ── Plugin timeout recovery: check if record was actually created ──
+        # D365 PostOpLaborCreate plugin may timeout (0x80040224) but the record
+        # might still have been created. Re-query before falling back to UI.
+        Write-Host "   API returned error. Checking if record was created despite plugin timeout..."
+        Start-Sleep -Seconds 3
+        $verifyFilter = "_msdfm_caseid_value eq $incidentId and msdfm_date ge $todayStart and msdfm_date le $todayEnd"
+        $verify = Invoke-D365Api -Method GET -Endpoint "/api/data/v9.0/msdfm_labors?`$filter=$verifyFilter&`$select=msdfm_laborid,msdfm_duration,msdfm_description"
+        if ($verify -and $verify.value -and $verify.value.Count -gt 0) {
+            $createdMins = $verify.value[0].msdfm_duration
+            $createdDesc = $verify.value[0].msdfm_description
+            Write-Host "✅ Labor was actually created despite plugin timeout: $createdMins min - $createdDesc"
+            return
+        }
+        Write-Host "   Record not found. Falling back to UI..."
     }
 }
 
 # ── UI Fallback ──
+Enter-PlaywrightLock
+try {
+# Navigate to the case first if TicketNumber is provided
+if ($TicketNumber) {
+    Write-Host "   → Navigating to Case $TicketNumber..."
+    $switchJs = @"
+async page => {
+  const url = 'https://onesupport.crm.dynamics.com/main.aspx?forceUCI=1&appid=101acb62-8d00-eb11-a813-000d3a8b3117&pagetype=entityrecord&etn=incident&id=${incidentId}';
+  await page.goto(url);
+  for (let i = 0; i < 15; i++) {
+    await page.waitForTimeout(2000);
+    const tab = page.locator('[role=tab][aria-label=Summary]');
+    if (await tab.count() > 0) return 'OK';
+  }
+  return 'TIMEOUT';
+}
+"@
+    $navResult = Invoke-PlaywrightCode -Code $switchJs
+    if ($navResult -ne 'OK') { Write-Host "⚠️ Navigation to case may have timed out, continuing..." }
+}
 Write-Host "   → Opening Labor tab..."
 Ensure-CaseFormContext
 $jsOpenLabor = @"
@@ -223,4 +269,7 @@ if ($UseSessionTime) {
     Write-Host "✅ Labor recorded: session time ($Classification) - $Description"
 } else {
     Write-Host "✅ Labor recorded: $Minutes minutes ($Classification) - $Description"
+}
+} finally {
+    Exit-PlaywrightLock
 }

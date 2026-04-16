@@ -3,7 +3,8 @@ name: email-drafter
 description: "写邮件草稿 + humanizer 润色"
 tools: Read, Write, Bash
 model: opus
-maxTurns: 15
+maxTurns: 200
+
 ---
 
 # Email Drafter Agent
@@ -81,6 +82,11 @@ maxTurns: 15
 - 遵循 customer-communication.md 中的语气和格式规范
 - 参考邮件历史延续上下文
 - 如有分析报告，引用关键结论
+- **视角：工程师写给客户**，不是给第三方描述客户：
+  - ✅ "Hi John," / "您好 张先生,"（从 case-info.md 或邮件历史提取客户名）
+  - ❌ "客户xxx反馈了…" / "The customer reported…"
+  - 使用 "you / your" 或 "您" 直接称呼客户，不用 "客户" "the customer" 等第三人称
+  - 签名使用 Kun Fang（从 case-info.md 的 ownerName 取）
 - **claims.json 感知**（如存在）：
   - `status: verified` 的 claim → 邮件中自信引用，使用确定性语气
   - `status: challenged` 的 claim → 试探性语气表达（如 "Based on our initial analysis, it appears..." / "根据初步分析，可能是..."）

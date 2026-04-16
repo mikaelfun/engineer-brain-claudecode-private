@@ -1,9 +1,9 @@
 /**
- * CreateTriggerDialog — Modal form for creating a new cron job trigger
+ * CreateTriggerDialog — Modal form for creating or editing a cron job trigger
  */
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
-import { useCreateTrigger } from '../../api/hooks'
+import { useCreateTrigger, useUpdateTrigger } from '../../api/hooks'
 
 const CRON_PRESETS = [
   { label: 'Every 1 hour', value: '0 */1 * * *' },
@@ -25,12 +25,21 @@ const PROMPT_PRESETS = [
   { label: 'Test Supervisor Run', value: '/test-supervisor run' },
 ]
 
+export interface TriggerEditData {
+  id: string
+  name: string
+  prompt: string
+  cron: string
+  description: string
+}
+
 interface Props {
   isOpen: boolean
   onClose: () => void
+  editData?: TriggerEditData | null  // If provided, dialog is in edit mode
 }
 
-export function CreateTriggerDialog({ isOpen, onClose }: Props) {
+export function CreateTriggerDialog({ isOpen, onClose, editData }: Props) {
   const [name, setName] = useState('')
   const [prompt, setPrompt] = useState('')
   const [cronExpr, setCronExpr] = useState('0 */3 * * *')
@@ -39,6 +48,29 @@ export function CreateTriggerDialog({ isOpen, onClose }: Props) {
   const [error, setError] = useState('')
 
   const createTrigger = useCreateTrigger()
+  const updateTrigger = useUpdateTrigger()
+
+  const isEditing = !!editData
+
+  // Populate form when editing
+  useEffect(() => {
+    if (editData) {
+      setName(editData.name)
+      setPrompt(editData.prompt)
+      setCronExpr(editData.cron)
+      setDescription(editData.description)
+      // Check if cron matches a preset
+      const matchedPreset = CRON_PRESETS.find(p => p.value === editData.cron)
+      setSelectedPreset(matchedPreset ? matchedPreset.value : '')
+    } else {
+      setName('')
+      setPrompt('')
+      setCronExpr('0 */3 * * *')
+      setSelectedPreset('0 */3 * * *')
+      setDescription('')
+    }
+    setError('')
+  }, [editData, isOpen])
 
   if (!isOpen) return null
 
@@ -78,12 +110,22 @@ export function CreateTriggerDialog({ isOpen, onClose }: Props) {
     }
 
     try {
-      await createTrigger.mutateAsync({
-        name: name.trim(),
-        prompt: prompt.trim(),
-        cron: cronExpr.trim(),
-        description: description.trim() || undefined,
-      })
+      if (isEditing) {
+        await updateTrigger.mutateAsync({
+          id: editData!.id,
+          name: name.trim(),
+          prompt: prompt.trim(),
+          cron: cronExpr.trim(),
+          description: description.trim() || undefined,
+        })
+      } else {
+        await createTrigger.mutateAsync({
+          name: name.trim(),
+          prompt: prompt.trim(),
+          cron: cronExpr.trim(),
+          description: description.trim() || undefined,
+        })
+      }
       // Reset form and close
       setName('')
       setPrompt('')
@@ -92,9 +134,11 @@ export function CreateTriggerDialog({ isOpen, onClose }: Props) {
       setDescription('')
       onClose()
     } catch (err: any) {
-      setError(err.message || 'Failed to create trigger')
+      setError(err.message || `Failed to ${isEditing ? 'update' : 'create'} trigger`)
     }
   }
+
+  const isPending = isEditing ? updateTrigger.isPending : createTrigger.isPending
 
   return (
     <div
@@ -109,7 +153,7 @@ export function CreateTriggerDialog({ isOpen, onClose }: Props) {
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
-            New Cron Job
+            {isEditing ? 'Edit Cron Job' : 'New Cron Job'}
           </h3>
           <button
             onClick={onClose}
@@ -146,19 +190,21 @@ export function CreateTriggerDialog({ isOpen, onClose }: Props) {
             <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
               Prompt / Command *
             </label>
-            <select
-              onChange={(e) => handlePromptPreset(e.target.value)}
-              className="w-full px-3 py-2 rounded text-sm mb-2"
-              style={{
-                background: 'var(--bg-base)',
-                border: '1px solid var(--border-default)',
-                color: 'var(--text-secondary)',
-              }}
-            >
-              {PROMPT_PRESETS.map((p) => (
-                <option key={p.value} value={p.value}>{p.label}</option>
-              ))}
-            </select>
+            {!isEditing && (
+              <select
+                onChange={(e) => handlePromptPreset(e.target.value)}
+                className="w-full px-3 py-2 rounded text-sm mb-2"
+                style={{
+                  background: 'var(--bg-base)',
+                  border: '1px solid var(--border-default)',
+                  color: 'var(--text-secondary)',
+                }}
+              >
+                {PROMPT_PRESETS.map((p) => (
+                  <option key={p.value} value={p.value}>{p.label}</option>
+                ))}
+              </select>
+            )}
             <input
               type="text"
               value={prompt}
@@ -246,15 +292,15 @@ export function CreateTriggerDialog({ isOpen, onClose }: Props) {
             </button>
             <button
               onClick={handleSubmit}
-              disabled={createTrigger.isPending}
+              disabled={isPending}
               className="px-4 py-2 rounded text-sm font-medium"
               style={{
                 background: 'var(--accent-blue)',
                 color: 'white',
-                opacity: createTrigger.isPending ? 0.6 : 1,
+                opacity: isPending ? 0.6 : 1,
               }}
             >
-              {createTrigger.isPending ? 'Creating...' : 'Create'}
+              {isPending ? (isEditing ? 'Saving...' : 'Creating...') : (isEditing ? 'Save' : 'Create')}
             </button>
           </div>
         </div>

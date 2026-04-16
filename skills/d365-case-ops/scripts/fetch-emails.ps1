@@ -29,12 +29,13 @@ param(
         $cr = if ([IO.Path]::IsPathRooted($cfg.casesRoot)) { $cfg.casesRoot } else { Join-Path $projRoot $cfg.casesRoot }
         "$cr\active"
     }),
-    [switch]$Force
+    [switch]$Force,
+    [string]$OutputSubDir  # Override output subdirectory name (default: TicketNumber). Used by AR mode.
 )
 
 . "$PSScriptRoot\_init.ps1"
 
-$caseDir = Join-Path $OutputDir $TicketNumber
+$caseDir = Join-Path $OutputDir $(if ($OutputSubDir) { $OutputSubDir } else { $TicketNumber })
 if (-not (Test-Path $caseDir)) { New-Item -ItemType Directory -Path $caseDir -Force | Out-Null }
 $emailsFile = Join-Path $caseDir "emails.md"
 $imagesDir = Join-Path $caseDir "images"
@@ -92,6 +93,7 @@ $emailFetch = @"
     <attribute name="activityid"/>
     <attribute name="subject"/>
     <attribute name="to"/>
+    <attribute name="cc"/>
     <attribute name="from"/>
     <attribute name="statuscode"/>
     <attribute name="directioncode"/>
@@ -150,6 +152,12 @@ foreach ($e in $allEmails) {
     }
     if (Test-SystemEmail -Subject $e.subject) {
         $skippedSystem++
+        continue
+    }
+    # Skip Draft emails (statuscode=1) — only include Sent/Completed (statuscode=2+)
+    if ($e.statuscode -eq 1) {
+        $skippedSystem++
+        Write-Host "   ⏭️ Skipped Draft: $($e.subject)"
         continue
     }
     $newEmails += $e
@@ -336,17 +344,40 @@ function Format-EmailEntry {
     $subj = $Email.subject
     $id = $Email.activityid
 
-    # from/to 是 party list (数组)，提取名称
+    # Parse from/to/cc from email_activity_parties (participationtypemask: 1=From, 2=To, 3=CC, 4=BCC)
+    $parties = $Email.email_activity_parties
     $fromStr = ""
-    if ($Email.from) {
+    $toStr = ""
+    $ccStr = ""
+    if ($parties) {
+        $formatParty = { param($p)
+            $a = if ($p.addressused) { $p.addressused } else { "" }
+            # Try to get display name from _partyid_value formatted value
+            $n = ""
+            $fvKey = "_partyid_value@OData.Community.Display.V1.FormattedValue"
+            if ($p.$fvKey) { $n = $p.$fvKey }
+            if ($n -and $a) { "$n <$a>" } elseif ($a) { $a } elseif ($n) { $n } else { "Unknown" }
+        }
+        $fromStr = ($parties | Where-Object { $_.participationtypemask -eq 1 } | ForEach-Object { & $formatParty $_ }) -join ", "
+        $toStr = ($parties | Where-Object { $_.participationtypemask -eq 2 } | ForEach-Object { & $formatParty $_ }) -join ", "
+        # CC: email-only, semicolon-separated (for CC Finder detection)
+        $ccStr = ($parties | Where-Object { $_.participationtypemask -eq 3 } | ForEach-Object {
+            if ($_.addressused) { $_.addressused } else { "" }
+        } | Where-Object { $_ }) -join "; "
+    }
+    # Fallback: try legacy from/to/cc fields (older D365 API versions)
+    if (-not $fromStr -and $Email.from) {
         $fromStr = ($Email.from | ForEach-Object {
-            if ($_.name) { $_.name } elseif ($_.addressused) { $_.addressused } else { "Unknown" }
+            $n = if ($_.name) { $_.name } else { "" }
+            $a = if ($_.addressused) { $_.addressused } else { "" }
+            if ($n -and $a) { "$n <$a>" } elseif ($a) { $a } elseif ($n) { $n } else { "Unknown" }
         }) -join ", "
     }
-    $toStr = ""
-    if ($Email.to) {
+    if (-not $toStr -and $Email.to) {
         $toStr = ($Email.to | ForEach-Object {
-            if ($_.name) { $_.name } elseif ($_.addressused) { $_.addressused } else { "Unknown" }
+            $n = if ($_.name) { $_.name } else { "" }
+            $a = if ($_.addressused) { $_.addressused } else { "" }
+            if ($n -and $a) { "$n <$a>" } elseif ($a) { $a } elseif ($n) { $n } else { "Unknown" }
         }) -join ", "
     }
 
@@ -447,7 +478,7 @@ function Format-EmailEntry {
 <!-- id: $id -->
 ### $dir | $time
 **Subject:** $subj
-**From:** $fromStr
+**From:** $fromStr$(if ($ccStr) { " | **CC:** $ccStr" })
 **To:** $toStr
 
 $body

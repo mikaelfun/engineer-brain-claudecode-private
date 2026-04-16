@@ -10,6 +10,7 @@ import {
   deleteTrigger,
   runTriggerNow,
   toggleTrigger,
+  updateTrigger,
   cancelTrigger,
   isTriggerRunning,
   getRunningTriggerIds,
@@ -117,6 +118,21 @@ agents.patch('/triggers/:id', async (c) => {
       return c.json({ error: 'Trigger not found' }, 404)
     }
 
+    return c.json(updated)
+  } catch (err: any) {
+    return c.json({ error: err.message || 'Failed to update trigger' }, 500)
+  }
+})
+
+// PUT /api/agents/triggers/:id — Update trigger fields (name, prompt, cron, description)
+agents.put('/triggers/:id', async (c) => {
+  const id = c.req.param('id')
+  try {
+    const body = await c.req.json<{ name?: string; prompt?: string; cron?: string; description?: string }>()
+    const updated = updateTrigger(id, body)
+    if (!updated) {
+      return c.json({ error: 'Trigger not found' }, 404)
+    }
     return c.json(updated)
   } catch (err: any) {
     return c.json({ error: err.message || 'Failed to update trigger' }, 500)

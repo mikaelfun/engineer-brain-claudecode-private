@@ -247,9 +247,16 @@ Phase 2（每 topic 双 Agent 并行）：
 - 整个 Phase 1.5 用单个 agent 串行执行（矛盾检测不适合并行，需要全局视角）
 - 预计每产品 1-3 分钟（大部分条目不会触发矛盾检测）
 
-### 4. 分层生成排查指南（Phase 2 — 双 Agent）
+### 4. 分层生成排查指南（Phase 2 — 三 Agent）
 
-对每个 topic，spawn 两个 agent 并行工作：
+对每个 topic，spawn 最多三个 agent 并行工作：
+
+```
+Phase 2（每 topic 三 Agent 并行）：
+  ┌── Agent-A：速查表（只读三元组 → guides/{topic}.md）
+  ├── Agent-B：三元组展开（guides/details/{topic}.md）
+  └── Agent-C：排查工作流（guides/workflows/{topic}.md）← 仅 hasFusionGuide=true 时 spawn
+```
 
 #### 4a. Agent-A — 速查表生成
 
@@ -262,8 +269,9 @@ Phase 2（每 topic 双 Agent 并行）：
 - 有 draft 引用的条目标记 `📋`
 - 速查表底部追加：
   ```markdown
-  > 本 topic 有融合排查指南，含完整排查流程和 Kusto 查询模板
-  > → [完整排查流程](details/{topic-slug}.md#排查流程)
+  > 本 topic 有排查工作流，含完整排查场景和 Kusto 查询模板
+  > → [排查工作流](workflows/{topic-slug}.md)
+  > → [已知问题详情](details/{topic-slug}.md)
   ```
 
 **多维度打分制**（满分 10 分，与之前一致）：
@@ -303,118 +311,173 @@ Phase 2（每 topic 双 Agent 并行）：
 > 本 topic 有融合排查指南 → [完整排查流程](details/{topic-slug}.md#排查流程)
 ```
 
-#### 4b. Agent-B — 融合详情生成
+#### 4b. Agent-B — 三元组详情展开
 
-**三层输入**：
-1. 三元组（`entryIds` → 从 JSONL 提取）— 证据层
-2. Draft 全文（`draftPaths` → 读 `guides/drafts/`）— 证据层
-3. Kusto query 文件全文（`kustoQueryFiles` → 读 `skills/kusto/{product}/references/queries/`）— 工具层
+> ⚠️ Agent-B 仅负责三元组展开和已知问题详情。排查工作流由 Agent-C 生成。
+
+**输入**：
+1. 三元组（`entryIds` → 从 JSONL 提取）— 主要输入
+2. Draft 文件的 **frontmatter 和摘要**（不读全文，仅获取来源信息用于评分）
 
 **输出**：`skills/products/{product}/guides/details/{topic-slug}.md`
 
+**职责边界**：
+- ✅ 三元组逐条展开为可读格式（symptom + rootCause + solution 详细版）
+- ✅ 多维度打分（来源质量 + 时效性 + 验证强度 + 21V 适用性）
+- ✅ 冲突处理（基于 conflict-report.json）
+- ❌ **不生成 `## 排查流程` section**（由 Agent-C 负责）
+- ❌ **不读 draft 全文**（节省 token，全文阅读交给 Agent-C）
+- ❌ **不嵌入 KQL 查询**（由 Agent-C 负责）
+
+##### Agent-B 详情输出格式
+
+```markdown
+# {Product} {Topic} — 已知问题详情
+
+**条目数**: {N} | **生成日期**: {date}
+
+---
+
+## Quick Troubleshooting Path
+
+### Step 1: {最高分条目的 symptom}
+**Solution**: {solution 详细版}
+`[Source: {source}, Score: {score}]`
+
+### Step 2: ...
+
+---
+
+## All Known Issues
+
+| # | Symptom | Root Cause | Solution | Score | Source |
+|---|---------|-----------|----------|-------|--------|
+| 1 | ... | ... | ... | 🟢 9.5 | ... |
+```
+
+**冲突处理规则**（不变，基于 Phase 1.5 矛盾检测结果）：
+- `version_superseded` → 排除旧条目，仅用新条目
+- `context_dependent` → 两个都保留，标注适用条件
+- `real_conflict` + `resolved: true` → 按人工裁定结果处理
+- `real_conflict` + `resolved: false` → **跳过该 topic**
+
+---
+
+#### 4c. Agent-C — 排查工作流生成
+
+> 🆕 专职从 draft 文件和 Kusto 查询模板中提取排查工作流。
+> 只在 `hasFusionGuide == true` 时 spawn。
+
+**输入**：
+1. Draft 全文（`draftPaths` → 读 `guides/drafts/`）— 主要输入，**必须完整读取**
+2. Kusto query 文件全文（`kustoQueryFiles` → 读 `skills/kusto/{product}/references/queries/`）
+3. 三元组（`entryIds` → 从 JSONL 提取）— 仅作上下文参考
+
+**输出**：`skills/products/{product}/guides/workflows/{topic-slug}.md`
+
+**执行条件**：
+- `hasFusionGuide == true` → spawn Agent-C
+- `hasFusionGuide == false` → 不 spawn
+
+##### 提取规则
+
+1. **HTML 展开**：`<details>` / `<summary>` 标签必须展开读取内部内容（ADO Wiki 常用折叠）
+2. **Scenario 识别**：从 draft 中识别所有排查场景：
+   - `<summary><b>Scenario N: ...</b></summary>` 格式（ADO Wiki）
+   - `## Scenario` / `### 排查步骤` / `# Troubleshooting` 格式（各种来源）
+   - 编号列表中的 if/then/else 逻辑
+3. **KQL 完整保留**：所有代码块（\`\`\`kql / \`\`\`bash / \`\`\` 无标记）完整保留
+   - 如果代码块来自 Kusto query 文件 → 标注 `[工具: Kusto skill — {file}]`
+   - 如果代码块来自 draft → 标注 `[来源: {draft-filename}]`
+4. **Portal 路径提取**：Azure Portal 操作路径提取为 `Portal 路径:` 字段
+5. **决策树结构化**：if/then/else 逻辑转为判断逻辑表格
+6. **跨 draft 合并**：多个 draft 描述同一场景 → 合并为最完整版本，标注所有来源
+7. **21V 适用性标注**：每个 Scenario 标注是否适用 Mooncake
+
 ##### 小 topic 路径（≤8 个 draft + Kusto 文件）
 
-Agent-B 直接读取所有输入，一次性融合生成。
+Agent-C 直接读取所有输入，一次性生成。
 
 ##### 大 topic 路径（>8 个文件）— Map-Reduce
 
 ```
-Agent-B (编排器 + 融合者)
-  ├─ 评估: len(draftPaths) + len(kustoQueryFiles) > 8
+Agent-C (编排器 + 融合者)
   ├─ Map 阶段: spawn sub-agents（每个读 3-5 个文件，并行执行）
-  │    ├─ sub-1: drafts 1-4 → .enrich/synthesize-temp/{topic}/extract-draft-1.json
-  │    ├─ sub-2: drafts 5-8 → .enrich/synthesize-temp/{topic}/extract-draft-2.json
-  │    ├─ sub-3: drafts 9-12 → .enrich/synthesize-temp/{topic}/extract-draft-3.json
-  │    └─ sub-4: kusto queries → .enrich/synthesize-temp/{topic}/extract-kusto-1.json
+  │    ├─ sub-1: drafts 1-4 → .enrich/synthesize-temp/{topic}/extract-workflow-1.json
+  │    ├─ sub-2: drafts 5-8 → .enrich/synthesize-temp/{topic}/extract-workflow-2.json
+  │    └─ sub-3: kusto queries → .enrich/synthesize-temp/{topic}/extract-kusto-1.json
   │
-  └─ Reduce 阶段: Agent-B 读取所有 extract-*.json + 三元组
-       → 融合生成 details/{topic-slug}.md
+  └─ Reduce 阶段: Agent-C 读取所有 extract-workflow-*.json
+       → 融合生成 workflows/{topic-slug}.md
 ```
 
 **分批规则**：
 - Draft 文件：每 4 个一批
-- Kusto query 文件：每 3 个一批（通常一个 topic 关联 1-3 个 query 文件，一批就够）
+- Kusto query 文件：每 3 个一批
 - 单个 draft 超过 500 行：单独一个 sub-agent 处理
 
 **Sub-agent 模型**：继承父级 Opus 模型
 
-**extract.json schema**：见 `playbooks/schemas/extract-schema.json`
-
 Sub-agent 从每个文件中提取：
-- `steps[]`: 排查步骤（含 KQL、集群、数据库信息）
+- `scenarios[]`: 排查场景（标题 + 步骤列表 + 嵌入 KQL）
 - `decisions[]`: 决策分支（条件 + 各路径）
-- `references[]`: 参考表格、参数表
+- `kql_blocks[]`: 独立 KQL 代码块（含用途说明、集群、数据库）
+- `portal_paths[]`: Azure Portal 操作路径
 - `warnings[]`: 21V 限制、过时警告
 
-**extract.json 存储**：`skills/products/{product}/.enrich/synthesize-temp/{topic-slug}/`
-- 合成完成后保留（增量合成时可复用无变化的 extract）
-- `synthesizeState.extractHashes` 记录每个 extract 文件的 hash
-
-##### Agent-B 融合规则
-
-1. **排查流程优先**：从 extract.json 的 `steps[]` 和 `decisions[]` 中提取骨架，按诊断逻辑组织为 Phase 结构
-2. **KQL 完整嵌入**：`steps[].kql` 完整保留（含 cluster/database），标注 `[工具: Kusto skill — {file}]`
-3. **证据标注**：每个结论/判断标注来源评分（仅证据层参与，KQL 不评分）
-4. **决策树结构化**：多个文件的 `decisions[]` 合并为表格或分支路径
-5. **去重**：多个文件描述同一步骤 → 保留最完整版本，标注所有来源
-6. **21V 标注**：`warnings[]` 中的 21V 限制嵌入对应步骤
-7. **冲突处理**（基于 Phase 1.5 矛盾检测结果）：
-   - **已裁定矛盾**：读取 `.enrich/conflict-report.json`，按判断结果处理：
-     - `version_superseded` → 排除旧条目，仅用新条目
-     - `context_dependent` → 两个都保留，标注 `📌 适用条件: {条件}`
-     - `real_conflict` + `resolved: true` → 按人工裁定结果处理
-     - `real_conflict` + `resolved: false` → **跳过该 topic**（不生成，等人工裁定）
-   - **未检测到矛盾的 topic**：按来源权重兜底处理：
-     - 权重 OneNote(5) > ADO Wiki(4) > ContentIdea KB(3) > MS Learn(2) > Case(1)
-     - 高权重优先，低权重标注 `⚠️ 另有不同说法`
-     - 权重相同 → 都保留，标注 `多种方案，视场景选择`
-
-##### 融合输出格式
+##### Agent-C 输出格式
 
 ```markdown
-# {Product} {Topic} — 综合排查指南
+# {Product} {Topic} — 排查工作流
 
-**条目数**: {N} | **草稿融合数**: {M} | **Kusto 查询融合**: {K}
 **来源草稿**: [draft1.md], [draft2.md], ...
-**Kusto 引用**: [query1.md], [query2.md], ...
+**Kusto 引用**: [query1.md], ...
+**场景数**: {N}
 **生成日期**: {date}
 
 ---
 
-## 排查流程
+## Scenario 1: {场景标题}
+> 来源: {source} | 适用: Mooncake ✅ / Global-only ❌
 
-### Phase 1: {阶段标题}
-> 来源: {source1} + {source2}
+### 排查步骤
 
 1. {步骤描述}
-   ```kusto
-   {KQL 查询，完整可执行}
-   ```
-   `[工具: Kusto skill — {query-file}]`
+   - 操作: {具体操作}
+   - Portal 路径: Azure Portal → {路径}
 
 2. {步骤描述}
+   ```kql
+   // {查询用途}
+   // Cluster: {cluster URI} | Database: {db}
+   {完整可执行的 KQL}
+   ```
+   `[来源: {draft-filename}]`
 
-**判断逻辑**：
-| 条件 | 含义 | 后续动作 |
-|------|------|---------|
-| {condition1} | {meaning} | → Phase 2a |
-| {condition2} | {meaning} | → Phase 2b |
-
-`[结论: 🟢 9/10 — {评分理由}]`
-
-### Phase 2a: {条件分支 A}
-> 来源: {source}
-
-...
+3. **判断逻辑**：
+   | 结果 | 含义 | 下一步 |
+   |------|------|--------|
+   | {condition1} | {meaning} | → Scenario 2 |
+   | {condition2} | {meaning} | → 关单 |
 
 ---
 
-## 已知问题速查
+## Scenario N: ...
 
-| # | 症状 | 根因 | 方案 | 分数 | 来源 |
-|---|------|------|------|------|------|
-| 1 | ... | ... | ... | 🟢 9 | ... |
-...（三元组表格，与速查表一致）
+---
+
+## 关联已知问题
+| 症状 | 方案 | 指向 |
+|------|------|------|
+| {symptom} | {solution} | → [details/{topic}.md#N](details/{topic}.md) |
+```
+
+##### 无排查工作流的 topic
+
+如果 draft 中没有可提取的排查场景/步骤（纯描述性文档、概念说明等）：
+- **不生成** workflows/ 文件
+- 记录：`[Agent-C] SKIP {topic} | drafts contain no extractable workflow`
+- `_index.md` 的 Workflow 列标记 `—`
 ```
 
 **长度控制**：

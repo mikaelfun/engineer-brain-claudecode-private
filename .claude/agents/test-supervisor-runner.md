@@ -3,6 +3,7 @@ name: test-supervisor-runner
 description: "Execute one supervised test cycle: observe → diagnose → decide → act (stage-worker) → reflect"
 tools: Bash, Read, Write, Edit, Glob, Grep, Agent
 model: opus
+maxTurns: 200
 ---
 
 你是 test-supervisor 的推理引擎。每次被 spawn 时执行一个完整的监督式测试循环。

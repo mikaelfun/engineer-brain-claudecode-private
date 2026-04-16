@@ -20,8 +20,12 @@ export default function TodoView() {
 
   if (isLoading) return <Loading text="Loading todos..." />
 
-  // Per-case todos from useTodoAll
-  const perCaseTodos = todoAllData?.todos || []
+  // Per-case todos from useTodoAll — filter out notification-only todos
+  const perCaseTodos = (todoAllData?.todos || []).filter((todo: any) => {
+    const sections = parseTodoContent(todo.content || '')
+    // Keep only todos that have unchecked items in 🔴 or 🟡 sections
+    return sections.some(s => (s.type === 'red' || s.type === 'yellow') && s.items.some(i => !i.checked))
+  })
 
   if (perCaseTodos.length > 0) {
     return <PerCaseTodoView todos={perCaseTodos} navigate={navigate} />
@@ -217,7 +221,7 @@ function PerCaseTodoView({ todos, navigate }: { todos: any[]; navigate: any }) {
   const totalYellow = allSections.reduce((sum, c) => sum + c.sections.filter(s => s.type === 'yellow').reduce((s2, sec) => s2 + sec.items.filter(i => !i.checked).length, 0), 0)
   const totalGreen = allSections.reduce((sum, c) => sum + c.sections.filter(s => s.type === 'green').reduce((s2, sec) => s2 + sec.items.length, 0), 0)
   const totalItems = totalRed + totalYellow + totalGreen
-  const totalChecked = allSections.reduce((sum, c) => sum + c.sections.reduce((s2, sec) => s2 + sec.items.filter(i => i.checked).length, 0), 0)
+  const totalChecked = allSections.reduce((sum, c) => sum + c.sections.filter(s => s.type === 'red' || s.type === 'yellow').reduce((s2, sec) => s2 + sec.items.filter(i => i.checked).length, 0), 0)
   const actionableTotal = totalRed + totalYellow
   const progress = actionableTotal > 0 ? Math.round((totalChecked / actionableTotal) * 100) : 100
 
@@ -394,7 +398,20 @@ function CaseTodoCard({ todo, navigate, toggleTodo, executeTodoAction }: {
                         {section.type === 'red' && !item.checked && (
                           <AlertTriangle className="w-3.5 h-3.5 inline mr-1" style={{ color: 'var(--accent-red)' }} />
                         )}
-                        {item.text}
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            p: ({ children }) => <span>{children}</span>,
+                            a: ({ href, children }) => (
+                              <a
+                                href={href}
+                                onClick={(e) => { if (href?.startsWith('/')) { e.preventDefault(); navigate(href) } }}
+                                className="underline"
+                                style={{ color: 'var(--accent-blue)' }}
+                              >{children}</a>
+                            ),
+                          }}
+                        >{item.text}</ReactMarkdown>
                       </p>
                     </div>
                     {item.isActionable && !item.checked && (

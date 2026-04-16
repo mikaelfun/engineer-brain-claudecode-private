@@ -32,7 +32,7 @@ export function Card({
 
   return (
     <div
-      className={`rounded-[10px] ${hoverClasses} ${paddingClasses} ${className}`}
+      className={`rounded-[12px] ${hoverClasses} ${paddingClasses} ${className}`}
       style={{
         background: 'var(--bg-surface)',
         border: '1px solid var(--border-subtle)',
@@ -42,11 +42,13 @@ export function Card({
       onClick={onClick}
       onMouseEnter={hover || onClick ? (e) => {
         (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-default)';
-        (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'
+        (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)';
+        (e.currentTarget as HTMLElement).style.boxShadow = 'rgba(106,95,193,0.1) 0 4px 16px'
       } : undefined}
       onMouseLeave={hover || onClick ? (e) => {
         (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-subtle)';
-        (e.currentTarget as HTMLElement).style.background = 'var(--bg-surface)'
+        (e.currentTarget as HTMLElement).style.background = 'var(--bg-surface)';
+        (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card)'
       } : undefined}
     >
       {children}
@@ -109,7 +111,7 @@ export function StatCard({
 
   return (
     <div
-      className={`rounded-[10px] p-4 md:p-5 relative overflow-hidden group ${hoverEffect}`}
+      className={`rounded-[12px] p-4 md:p-5 relative overflow-hidden group ${hoverEffect}`}
       style={{
         background: 'var(--bg-surface)',
         border: '1px solid var(--border-subtle)',

@@ -1,0 +1,12 @@
+{
+  "id": "ISS-212",
+  "title": "Case 页面点击返回应回到 Cases 列表而非 Dashboard",
+  "description": "从 Case 详情页面点击返回按钮，当前行为是回到 Dashboard 首页，期望行为是回到 Cases 列表页。需要修改 Case 详情页的返回导航逻辑，使其指向 /cases 路由。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "pending",
+  "trackId": "case-back-nav_20260404",
+  "testLoopScan": true,
+  "createdAt": "2026-04-04T16:00:00+08:00",
+  "updatedAt": "2026-04-04T16:00:00+08:00"
+}

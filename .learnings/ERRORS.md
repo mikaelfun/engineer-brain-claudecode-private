@@ -209,3 +209,47 @@ claude-to-im 库的飞书流式卡片功能写了 `cardkit.v2.card.xxx`，但飞
 - 这个值在最初 setup 时设置，当时流式功能还没实现所以用 text 模式
 - 上游代码更新后新增了 `cardMode === 'text'` 的 early return 检查，config 没跟着改
 - **教训**：排查"功能突然不工作"时，第一步应该 grep 环境变量和 config 文件里的功能开关，而不是直接看代码逻辑
+
+## 2026-04-11 | claude-to-im bridge "native binary not found" + 进程静默死亡
+
+### 症状
+飞书 bridge 发消息报错 `Claude Code native binary not found at C:\...`。bridge 进程在 4/7 后静默死亡，autostart.ps1 重启循环也挂了。
+
+### 根因（两个）
+
+**1. CLI 路径过时**：`~/.claude-to-im/config.env` 里 `CTI_CLAUDE_CODE_EXECUTABLE` 指向 npm 版 `cli.js`，但 Claude Agent SDK 更新后要求 native binary（`claude.exe`）。
+- ❌ 旧值：`C:\Users\fangkun\AppData\Roaming\npm\node_modules\@anthropic-ai\claude-code\cli.js`
+- ✅ 新值：`C:\Users\fangkun\.local\bin\claude.exe`
+
+**2. autostart.ps1 日志锁文件**：`Out-File -Append` 以独占方式打开 `bridge.log`，node daemon 启动后也要写同一个文件 → `EBUSY` → 崩溃循环。
+
+### 修复
+1. `config.env` 的 `CTI_CLAUDE_CODE_EXECUTABLE` 改为 native binary 路径 `~/.local/bin/claude.exe`
+2. 绕过 autostart.ps1，用独立 launcher.ps1 启动（写到不同日志文件）
+
+### 教训
+- **Claude Code 升级后（npm update），检查 `~/.claude-to-im/config.env` 的 CLI 路径是否还有效**
+- native binary 安装在 `~/.local/bin/claude.exe`，npm 版在 `AppData/Roaming/npm/.../cli.js`，两者不同
+- PowerShell `Out-File -Append` 会锁文件，多进程写同一个日志时应改用 `Add-Content` 或写不同文件
+
+## Teams Search Queue 空转耗尽 tool call 预算 (2026-04-13)
+
+**问题**：patrol 的 teams-search-queue agent（haiku）在 casework 还没写 request.json 时就开始扫描，每次空扫描回到 agent 生成大段解释文字，80 次 tool call 预算在 ~5 分钟空转中耗尽，request.json 从未被处理。
+
+**根因**：Step 1a/1b 用 agent 级循环（每次 scan 一个 tool call + sleep 一个 tool call），haiku 还在中间插入解释文字消耗 token。casework 约 5 分钟后才写 request.json，queue 已经用完预算。
+
+**修复**：将 Step 1a/1b 改为 bash 级 `while` 循环（`sleep 15` + `find`），空等时不回到 agent，只有找到 request 或 stop 信号才跳出 bash。一次 Bash 调用覆盖整个等待期，tool call 预算留给实际 MCP 搜索。
+
+**文件**：`.claude/skills/teams-search-queue/SKILL.md` Step 1a+1b
+
+## Subagent 嵌套 Agent tool 确定性不可用 (2026-04-13)
+
+**问题**：patrol spawn 的 casework agent（subagent）无法使用 Agent tool，即使 agent 定义中声明了 `tools: [..., Agent]`。
+
+**诊断**：在 casework SKILL.md Step 1 后加 Agent probe 诊断，4/6 case 记录 `DIAG | Agent tool UNAVAILABLE`。grep casework output 确认 0 次 Agent tool 调用。
+
+**结论**：Claude Code runtime 会过滤 subagent 的 Agent tool——subagent 不能嵌套 spawn subagent。这是确定性行为，不是偶发的。历史日志中的"成功 spawn"来自 main session 直接运行 /casework（非 patrol subagent）。
+
+**影响**：casework 在 patrol 模式下无法 spawn teams-search / onenote-search / troubleshooter / email-drafter 等子 agent。目前降级策略：teams 只写 request.json（由 queue 处理），onenote 用缓存。
+
+**待办**：重构 casework 的子任务执行方式，消除对嵌套 Agent tool 的依赖。

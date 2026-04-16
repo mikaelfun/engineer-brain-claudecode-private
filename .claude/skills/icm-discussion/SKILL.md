@@ -22,6 +22,37 @@ allowed-tools:
 
 从 ICM portal 抓取 incident 的完整 discussion timeline（含 enrichment、transfer、resolve 记录）。
 
+## 执行模式
+
+### CLI 模式（推荐，用于 `/icm-discussion` 和 `/casework`）
+
+直接调用 Node.js daemon 的 `--single` 模式，不走 MCP Playwright：
+
+```bash
+node .claude/skills/icm-discussion/scripts/icm-discussion-daemon.js \
+  --single {incidentId} --case-dir {caseDir}
+```
+
+输出 `ICM_OK|{id}|entries=N` 表示成功，结果写入 `{caseDir}/icm/_icm-portal-raw.json`。
+使用独立 Playwright profile（`$TEMP/pw-icm-discussion-profile`），headless 模式，不影响其他浏览器。
+
+### Patrol 队列模式
+
+由 patrol Phase 0.5 启动 daemon 常驻进程：
+```bash
+bash .claude/skills/icm-discussion/scripts/icm-discussion-warm.sh {casesRoot}
+```
+
+casework-light-runner.sh 检测到 ICM 需要刷新时自动提交 request 到队列：
+```bash
+bash .claude/skills/icm-discussion/scripts/icm-queue-submit.sh {icmId} {caseDir} {caseNumber} {casesRoot}
+```
+
+### MCP Playwright 模式（回落）
+
+如果 CLI 模式不可用（Node.js 环境问题），可回落到 MCP Playwright 的 `browser_run_code` 方式。
+详见下方「技术原理」章节。
+
 ## 输入
 
 - `incidentId`: ICM incident ID（纯数字，如 `51000000887562`）

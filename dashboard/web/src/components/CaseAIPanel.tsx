@@ -127,17 +127,15 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull, ski
     }
   }, [isCaseworkRunning, pipelineSteps, caseNumber])
 
-  // Clear stale pipeline when casework is NOT running but pipeline shows
-  // (prevents ghost pipeline from previous runs)
+  // Clear stale pipeline when casework is NOT running but pipeline shows active/pending steps
+  // (prevents ghost pipeline from previous crashed runs — but KEEP completed pipelines for review)
   useEffect(() => {
     if (!isCaseworkRunning && !isStepActive && pipelineSteps) {
-      // Check if all steps are completed/skipped/failed — if so, keep for 30s then clear
+      // Completed/failed pipelines are kept — user can review them until next run
       const allDone = pipelineSteps.every(s => s.status === 'completed' || s.status === 'skipped' || s.status === 'failed')
       if (allDone) {
-        const timer = setTimeout(() => {
-          useCaseSessionStore.getState().clearPipelineSteps(caseNumber)
-        }, 30_000)
-        return () => clearTimeout(timer)
+        // Don't auto-clear completed pipeline — keep it visible for review
+        return
       }
       // If pipeline has pending/active steps but casework isn't running, it's stale — clear now
       const hasActive = pipelineSteps.some(s => s.status === 'active' || s.status === 'pending')
@@ -340,6 +338,10 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull, ski
     // Only clear messages for the step being re-run (other steps preserved)
     const stepName = action === 'process' ? 'casework' : action
     useCaseSessionStore.getState().clearStepMessages(caseNumber, stepName)
+    // Clear old pipeline when starting a new Full Process (fresh start)
+    if (action === 'process') {
+      useCaseSessionStore.getState().clearPipelineSteps(caseNumber)
+    }
     setActiveStepFilter(stepName)
 
     try {

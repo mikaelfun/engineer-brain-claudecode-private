@@ -120,6 +120,59 @@ allowed-tools:
 
 **AR Case**：增量追加逻辑相同，但只关注 AR scope 相关的新事件。如 `ar.communicationMode` 或 `ar.scopeConfirmed` 有变化，更新「AR 信息」section。
 
+### 2.5. SAP 准确性检查
+
+在完成 summary 更新后（已读完 case-info.md + case-summary.md），判断当前 SAP 是否与 case 实际内容匹配。
+
+**输入**：
+- `case-info.md` 中的 `| SAP | {path} |`（当前 SAP）
+- `case-summary.md` 的「问题描述」+「关键发现」（case 实际内容）
+- SAP scope 参考：`{dataRoot}/sap-scope.json` 的 `podServices` 列表
+
+**判断规则**：
+1. 提取 SAP 叶子节点（最后一个 `/` 后的部分，如 `Monitor`、`Azure Container Registry`）
+2. 对比 case-summary 的「问题描述」：
+   - SAP 叶子与问题描述的技术领域是否一致？
+   - 例：SAP 是 `Monitor` 但问题是 ACR 镜像推拉 → **不匹配**
+   - 例：SAP 是 `Microsoft Entra Sign-ln and Multi-Factor Authentication` 但问题是删除 Entra 用户 → **匹配**（同属 Entra 领域）
+3. 判断结果写入 `casehealth-meta.json`：
+
+```json
+{
+  "sapCheck": {
+    "currentSap": "Azure/Mooncake .../Monitor",
+    "isAccurate": true,
+    "suggestedSap": null,
+    "reason": null,
+    "checkedAt": "ISO8601"
+  }
+}
+```
+
+如果不匹配：
+```json
+{
+  "sapCheck": {
+    "currentSap": "Azure/21Vianet Mooncake/21Vianet China Azure Database for PostgreSQL",
+    "isAccurate": false,
+    "suggestedSap": "Azure/Mooncake Support Escalation/Mooncake - VM PoD/Monitor",
+    "reason": "Case 实际问题是 Monitor alert rule 不触发，与 PostgreSQL 不符",
+    "checkedAt": "ISO8601"
+  }
+}
+```
+
+**suggestedSap 格式**：
+- 如果是 Mooncake Support Escalation 下的产品：`Azure/Mooncake Support Escalation/Mooncake - VM PoD/{产品名}`
+- 如果是 21Vianet Mooncake 下的产品：`Azure/21Vianet Mooncake/21Vianet China Azure {产品名}`
+- 不确定完整路径时只写产品名，如 `suggestedSap: "Monitor (具体路径需确认)"`
+
+**跳过条件**：
+- `sapCheck.checkedAt` 距今 < 24 小时 且 `isAccurate` 值已存在 → 跳过重复检查
+- AR Case → 跳过（SAP 由 main case owner 管理）
+
+**不增加额外 tool call**：LLM 在 Step 2 已读完 case-info + summary，此处只需用一次 Edit/Bash 更新 meta。
+
 ### 3. 规则化生成 todo
 
 调用 bash 脚本：

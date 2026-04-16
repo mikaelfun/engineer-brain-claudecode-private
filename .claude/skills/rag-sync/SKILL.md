@@ -128,7 +128,7 @@ eval $(cat .mcp.json | node -e "
 1. 删除 lancedb 目录
 2. 用 CLI 执行全量 ingest（**不加 `--skip-existing`**，这是唯一不加的场景）：
    ```bash
-   node dist/index.js ingest "{outputDir}"
+   node dist/index.js ingest --base-dir "{dataRoot_absolute}" "{outputDir}"
    ```
    ⚠️ 后台运行（`run_in_background: true`），大量文件可能需要 1-2 小时。
 3. 完成后运行 `manifest.mjs build` 构建 manifest
@@ -169,16 +169,17 @@ node .claude/skills/rag-sync/manifest.mjs diff "{outputDir}"
 
 **4a. 处理新增 + 修改文件**：
 
-⚠️ **所有 ingest 调用必须加 `--skip-existing`**，确保只处理新增文件，不重跑已有文件。
+⚠️ **所有 ingest 调用必须加 `--skip-existing` 和 `--base-dir "{dataRoot}"`**。
+`--base-dir` 从项目 `config.json` 的 `dataRoot` 解析绝对路径（CLI 默认 BASE_DIR 是自身安装目录，无法 ingest 外部文件）。
 
 **少量文件（≤ 20 个）**：逐个 CLI 调用，每个 1-2s
 ```bash
-node dist/index.js ingest --skip-existing "{file1_absolute_path}"
+node dist/index.js ingest --skip-existing --base-dir "{dataRoot_absolute}" "{file1_absolute_path}"
 ```
 
 **大量文件（> 20 个）**：按目录批量 ingest，后台运行
 ```bash
-INGEST_CONCURRENCY=10 node dist/index.js ingest --skip-existing "{outputDir}/{notebook-name}"
+INGEST_CONCURRENCY=10 node dist/index.js ingest --skip-existing --base-dir "{dataRoot_absolute}" "{outputDir}/{notebook-name}"
 ```
 CLI 会自动查询 vectordb，跳过已 ingest 的文件，只处理新增文件。
 

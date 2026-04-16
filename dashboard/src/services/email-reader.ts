@@ -34,6 +34,7 @@ export function parseEmails(caseNumber: string): Email[] {
     const lines = block.split('\n')
     let subject = ''
     let from = ''
+    let cc = ''
     let to = ''
     let bodyStartIdx = -1
 
@@ -42,7 +43,16 @@ export function parseEmails(caseNumber: string): Email[] {
       if (line.startsWith('**Subject:**')) {
         subject = line.replace('**Subject:**', '').trim()
       } else if (line.startsWith('**From:**')) {
-        from = line.replace('**From:**', '').trim()
+        // Format: **From:** Name <email> | **CC:** a@b.com; c@d.com
+        const fromLine = line.replace('**From:**', '').trim()
+        const ccSplit = fromLine.split('| **CC:**')
+        from = ccSplit[0].trim()
+        if (ccSplit.length > 1) {
+          cc = ccSplit[1].trim()
+        }
+      } else if (line.startsWith('**CC:**')) {
+        // Legacy format: **CC:** on its own line
+        cc = line.replace('**CC:**', '').trim()
       } else if (line.startsWith('**To:**')) {
         to = line.replace('**To:**', '').trim()
         bodyStartIdx = i + 1
@@ -64,7 +74,7 @@ export function parseEmails(caseNumber: string): Email[] {
     from = from.replace(/\|+\s*$/, '').trim()
     to = to.replace(/\|+\s*$/, '').trim()
 
-    emails.push({ id, direction, date, subject, from, to, body })
+    emails.push({ id, direction, date, subject, from, to, cc, body })
   }
 
   return emails

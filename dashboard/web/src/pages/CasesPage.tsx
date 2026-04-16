@@ -221,7 +221,7 @@ export default function CasesPage() {
                       <h4 className="font-medium mt-1 text-[13px] truncate" style={{ color: 'var(--text-primary)' }} title={c.title || 'Untitled'}>{c.title || 'Untitled'}</h4>
                       <p className="text-xs mt-0.5 flex items-center gap-1.5 flex-wrap">
                         <span
-                          className="inline-block text-xs px-2 py-0.5 rounded-md border"
+                          className="inline-block text-[10px] px-2.5 py-0.5 rounded-[18px] border font-semibold"
                           style={{
                             color: 'color-mix(in srgb, var(--accent-cyan) 75%, var(--text-secondary))',
                             background: 'color-mix(in srgb, var(--accent-cyan) 8%, transparent)',
@@ -259,11 +259,12 @@ export default function CasesPage() {
                         <button
                           onClick={(e) => handleCaseAction(c.caseNumber, 'refresh', e)}
                           disabled={isBusy}
-                          className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded border transition-all disabled:opacity-40 hover:brightness-110"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-semibold uppercase rounded-[13px] border transition-all disabled:opacity-40 hover:brightness-110"
                           style={{
                             color: 'var(--accent-blue)',
                             background: 'var(--accent-blue-dim)',
                             borderColor: 'color-mix(in srgb, var(--accent-blue) 25%, transparent)',
+                            letterSpacing: '0.2px',
                           }}
                           title="Refresh case data"
                         >
@@ -273,11 +274,12 @@ export default function CasesPage() {
                         <button
                           onClick={(e) => handleCaseAction(c.caseNumber, 'process', e)}
                           disabled={isBusy}
-                          className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded border transition-all disabled:opacity-40 hover:brightness-110"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-semibold uppercase rounded-[13px] border transition-all disabled:opacity-40 hover:brightness-110"
                           style={{
                             color: 'var(--accent-green)',
                             background: 'var(--accent-green-dim)',
                             borderColor: 'color-mix(in srgb, var(--accent-green) 25%, transparent)',
+                            letterSpacing: '0.2px',
                           }}
                           title="Full casework processing"
                         >

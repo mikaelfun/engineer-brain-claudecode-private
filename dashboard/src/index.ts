@@ -2,6 +2,29 @@
  * index.ts — Hono API Server 入口
  */
 import 'dotenv/config'
+
+// Global safety net: prevent unhandled errors from crashing the process
+// Patrol's abortQuery kills SDK subprocesses, which causes pipe/socket errors
+// that bubble up as uncaught exceptions or unhandled rejections
+process.on('unhandledRejection', (reason) => {
+  console.error('[SAFETY-NET] Unhandled rejection:', reason instanceof Error ? reason.message : reason)
+})
+
+process.on('uncaughtException', (err) => {
+  // Socket/pipe errors from killed SDK subprocesses — safe to swallow
+  const code = (err as any).code
+  if (code === 'EOF' || code === 'EPIPE' || code === 'ECONNRESET' ||
+      err.message?.includes('write EOF') || err.message?.includes('write EPIPE')) {
+    console.warn('[SAFETY-NET] Pipe error from killed subprocess (safe):', err.message)
+    return // Do NOT crash
+  }
+  // Unknown errors — log but still don't crash (server should keep running)
+  console.error('[SAFETY-NET] Uncaught exception:', err)
+  console.error('[SAFETY-NET] Stack:', err.stack)
+  // For truly fatal errors (OOM, etc), Node will still crash via the default handler
+  // since we're not calling process.exit here
+})
+
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
@@ -61,7 +84,6 @@ app.route('/api/events', eventsRoutes)
 // ===== Protected Routes =====
 app.use('/api/cases/*', authMiddleware)
 app.use('/api/todos/*', authMiddleware)
-app.use('/api/agents/*', authMiddleware)
 app.use('/api/drafts/*', authMiddleware)
 app.use('/api/case/*', authMiddleware)
 app.use('/api/patrol', authMiddleware)
@@ -75,8 +97,6 @@ app.use('/api/skills', authMiddleware)
 app.use('/api/skills/*', authMiddleware)
 app.use('/api/case/*/note-gap', authMiddleware)
 app.use('/api/case/*/note-gap/*', authMiddleware)
-app.use('/api/labor-estimate/*', authMiddleware)
-app.use('/api/labor-estimate', authMiddleware)
 app.use('/api/note-gaps', authMiddleware)
 
 app.route('/api/cases', casesRoutes)

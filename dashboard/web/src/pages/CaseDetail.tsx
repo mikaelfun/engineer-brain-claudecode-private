@@ -218,7 +218,7 @@ export default function CaseDetail() {
             {activeTab === 'notes' && <NotesAndLaborTab notes={notesData?.notes || []} laborRecords={laborRecordsData?.records || []} caseId={id!} />}
             {activeTab === 'teams' && <TeamsTab chats={teamsData?.chats || []} digest={teamsData?.digest || null} />}
             {activeTab === 'drafts' && <DraftsTab drafts={draftsData?.drafts || []} caseNumber={id!} />}
-            {activeTab === 'analysis' && <AnalysisTab content={analysisData?.content} exists={analysisData?.exists} />}
+            {activeTab === 'analysis' && <AnalysisTab content={analysisData?.content} exists={analysisData?.exists} files={analysisData?.files} />}
             {activeTab === 'evidence' && <EvidenceChainTab caseId={id!} />}
             {activeTab === 'onenote' && <OnenoteTab files={onenoteData?.files || []} />}
             {activeTab === 'timing' && <TimingTab exists={timingData?.exists} timing={timingData?.timing} />}
@@ -551,6 +551,10 @@ function TeamsTab({ chats, digest }: { chats: any[]; digest: { scoredAt: string;
   const [searchTerm, setSearchTerm] = useState('')
   const [showOther, setShowOther] = useState(false)
 
+  const scrollRef = useCallback((node: HTMLDivElement | null) => {
+    if (node) node.scrollTop = node.scrollHeight
+  }, [])
+
   if (chats.length === 0) return <EmptyState icon="💬" title="No Teams chats" description="Teams data will appear after running casework or teams-search" />
 
   const filteredChats = searchTerm
@@ -570,10 +574,6 @@ function TeamsTab({ chats, digest }: { chats: any[]; digest: { scoredAt: string;
         : part
     )
   }
-
-  const scrollRef = useCallback((node: HTMLDivElement | null) => {
-    if (node) node.scrollTop = node.scrollHeight
-  }, [])
 
   const renderChat = (chat: any, i: number) => (
     <Card key={chat.chatId || i} padding="sm">
@@ -869,13 +869,73 @@ function DraftsTab({ drafts, caseNumber }: { drafts: any[]; caseNumber: string }
   )
 }
 
-function AnalysisTab({ content, exists }: { content?: string; exists?: boolean }) {
+function AnalysisTab({ content, exists, files }: {
+  content?: string
+  exists?: boolean
+  files?: Array<{ filename: string; content: string; updatedAt: string; size: number }>
+}) {
   if (!exists || !content) return <EmptyState icon="🔍" title="No analysis report" description="Run the troubleshooter agent to generate an analysis" />
 
+  // If we have individual files, render with collapse (latest expanded, older collapsed)
+  if (files && files.length > 1) {
+    return <AnalysisFileList files={files} />
+  }
+
+  // Single file or legacy format — render as-is
   return (
     <Card>
       <MarkdownContent>{content}</MarkdownContent>
     </Card>
+  )
+}
+
+function AnalysisFileList({ files }: { files: Array<{ filename: string; content: string; updatedAt: string; size: number }> }) {
+  // Latest file is first (sorted by mtime desc from backend)
+  const [expanded, setExpanded] = useState<string>(files[0]?.filename || '')
+
+  return (
+    <div className="space-y-3">
+      {files.map((f, idx) => {
+        const isLatest = idx === 0
+        const isExpanded = expanded === f.filename
+        return (
+          <Card key={f.filename}>
+            <button
+              onClick={() => setExpanded(isExpanded ? '' : f.filename)}
+              className="w-full flex items-center justify-between text-left"
+            >
+              <div className="flex items-center gap-2">
+                {isLatest && (
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase"
+                    style={{ background: 'var(--accent-blue-dim)', color: 'var(--accent-blue)' }}>
+                    Latest
+                  </span>
+                )}
+                <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                  {f.filename.replace(/\.md$/, '').replace(/\.txt$/, '')}
+                </span>
+                <span className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>
+                  {(f.size / 1024).toFixed(1)}KB
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                  {new Date(f.updatedAt).toLocaleString()}
+                </span>
+                {isExpanded
+                  ? <ChevronDown className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
+                  : <ChevronRight className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />}
+              </div>
+            </button>
+            {isExpanded && (
+              <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+                <MarkdownContent>{f.content}</MarkdownContent>
+              </div>
+            )}
+          </Card>
+        )
+      })}
+    </div>
   )
 }
 

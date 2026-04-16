@@ -1,0 +1,11 @@
+{
+  "id": "ISS-215",
+  "title": "local-rag: 存储绝对路径导致 DB 不可迁移，改为相对路径",
+  "description": "## 问题\n\nlocal-rag ingest 时将文件的绝对路径直接写入 lancedb 的 filePath 字段（cli/ingest.js L245）。\n导致：\n1. 换目录/换机器后，DB 中的路径全部失效，必须全量重建（~5000 文件，30-60 分钟）\n2. 当前 99,242/99,249 条记录使用旧路径 EngineerBrain-Data，仅 7 条是新路径\n3. list_files MCP 用当前 BASE_DIR 遍历磁盘后与 DB 匹配 → 全部 mismatch → ingested: false\n\n## 方案\n\nDB 中只存相对于 BASE_DIR 的相对路径，查询时运行时拼接：\n\n### 写入时（ingest.js L245）\n\n\n### 查询返回时（MCP tools query/list）\n\n\n### 删除时（vectordb/index.js deleteChunks）\nfilePath = '''\n\n### Migration\n- 新增 CLI 子命令 ：批量把 DB 中旧绝对路径替换为相对路径\n- 或在首次启动时自动检测并迁移（检查第一条记录是否绝对路径）\n\n## 改动文件\n-  — 写入相对路径\n-  — deleteChunks 用相对路径匹配\n-  — MCP tools 返回时拼接 BASE_DIR\n-  — 新增 migrate-paths 子命令",
+  "type": "feature",
+  "priority": "P1",
+  "status": "pending",
+  "testLoopScan": true,
+  "createdAt": "2026-04-14T20:31:14.112545+08:00",
+  "updatedAt": "2026-04-14T20:31:14.112613+08:00"
+}

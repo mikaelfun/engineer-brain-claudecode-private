@@ -12,6 +12,7 @@
 - `inspection-writer`：写入 `lastInspected`
 - `casework` (auto-detect)：写入 `isAR` / `mainCaseId`（case number 后缀检测）
 - `casework` (LLM/auto)：写入 `ar` 对象（scope 提取、沟通模式检测、case owner 信息）
+- `casework-light`：写入 `icm` 对象（ICM 缓存指纹，避免重复拉取）
 
 ## IR/FDR/FWR status 值
 
@@ -74,9 +75,27 @@
   "ccKnowMePage": "https://dev.azure.com/...",
   "isAR": false,
   "mainCaseId": null,
-  "ar": null
+  "ar": null,
+  "icm": {
+    "fingerprint": "ACTIVE|3|453794|fangkun|Pending PG",
+    "state": "ACTIVE",
+    "fetchedAt": "2026-04-13T14:21:00+08:00"
+  }
 }
 ```
+
+### ICM 缓存字段说明
+
+| 字段 | 说明 |
+|------|------|
+| `icm.fingerprint` | `{state}\|{severity}\|{assignedTo}\|{modifiedBy}\|{criStatus}` 拼接的指纹字符串 |
+| `icm.state` | ICM 当前状态（ACTIVE / MITIGATED / RESOLVED），用于快速判断 |
+| `icm.fetchedAt` | 上次完整拉取（含 AI summary）的时间戳，TTL 基准 |
+
+缓存策略：
+- RESOLVED 且 icm-summary.md 存在 → 跳过 `get_ai_summary`（1 MCP 探测确认 state）
+- ACTIVE + 指纹一致 + cacheAge < 4h → 跳过 `get_ai_summary`（1 MCP 探测）
+- 指纹变化 或 TTL 过期 → 全量刷新（2 MCP）
 
 ### AR Case Example
 

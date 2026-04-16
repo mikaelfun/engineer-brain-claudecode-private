@@ -1,0 +1,47 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "cmd",
+      "args": ["/c", "npx", "@playwright/mcp@latest", "--browser", "msedge", "--output-dir", ".playwright-output"]
+    },
+    "icm": {
+      "command": "${AGENCY_EXE}",
+      "args": ["mcp", "icm"]
+    },
+    "teams": {
+      "command": "${AGENCY_EXE}",
+      "args": ["mcp", "teams"]
+    },
+    "kusto": {
+      "command": "${AGENCY_EXE}",
+      "args": ["mcp", "kusto", "--service-uri", "${KUSTO_CLUSTER_URI}", "--database", "${KUSTO_DATABASE}"],
+      "env": {
+        "AZURE_CONFIG_DIR": "${AZURE_CONFIG_DIR}"
+      }
+    },
+    "msft-learn": {
+      "command": "${AGENCY_EXE}",
+      "args": ["mcp", "msft-learn"]
+    },
+    "mail": {
+      "command": "${AGENCY_EXE}",
+      "args": ["mcp", "mail"]
+    },
+    "local-rag": {
+      "command": "node",
+      "args": ["${HOME}/.claude/mcp-servers/local-rag/dist/index.js"],
+      "env": {
+        "BASE_DIR": "${DATA_ROOT}/OneNote Export",
+        "DB_PATH": "${DATA_ROOT}/lancedb",
+        "EMBEDDING_PROVIDER": "openai",
+        "OPENAI_API_KEY": "${OPENAI_API_KEY}",
+        "OPENAI_BASE_URL": "${OPENAI_BASE_URL}",
+        "MODEL_NAME": "text-embedding-3-small",
+        "FALLBACK_PROVIDER": "azure",
+        "FALLBACK_API_KEY": "${AZURE_EMBEDDING_API_KEY}",
+        "FALLBACK_BASE_URL": "${AZURE_EMBEDDING_BASE_URL}",
+        "FALLBACK_API_VERSION": "2023-05-15"
+      }
+    }
+  }
+}

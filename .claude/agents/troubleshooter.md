@@ -3,6 +3,7 @@ name: troubleshooter
 description: "技术排查 + 写分析报告"
 tools: Bash, Read, Write, Glob, Grep, WebSearch
 model: opus
+maxTurns: 200
 mcpServers:
   - kusto
   - msft-learn
@@ -381,6 +382,8 @@ az devops wiki page show --wiki "{wikiName}" --project "{project}" \
 - 对客户环境的重要观察 → `type: observation`
 - 影响范围判断 → `type: impact`
 
+**⚠️ 字段名硬约束**：每个 claim 对象的文本描述字段**必须**命名为 `"claim"`（不是 `"statement"`、`"text"` 或其他变体）。违反此约束会导致 Dashboard 前端崩溃。
+
 **Confidence 标注规则**（⚠️ 诚实自评是核心要求）：
 - `high`：≥2 个独立来源交叉验证（如 Kusto 结果 + 官方文档）
 - `medium`：单一可信来源支持（如仅有 Kusto 结果，或仅有文档说明）
@@ -406,6 +409,19 @@ az devops wiki page show --wiki "{wikiName}" --project "{project}" \
 - 否则 → `false`
 
 Schema 详见 `playbooks/schemas/claims-schema.md`。
+
+**Claim 对象必须严格遵循此结构**（字段名不可替换）：
+```json
+{
+  "id": "C1",
+  "claim": "技术判断的自然语言描述",
+  "type": "root-cause",
+  "confidence": "high",
+  "evidence": [{"source": "...", "excerpt": "...", "sourceType": "..."}],
+  "status": "pending"
+}
+```
+> ⚠️ 文本字段是 `"claim"`，不是 `"statement"`、`"text"` 或 `"description"`。
 
 **日志**：
 ```

@@ -1,0 +1,17 @@
+{
+  "id": "case-back-nav_20260404",
+  "title": "Case 页面返回按钮导航到 Cases 列表",
+  "type": "bug",
+  "status": "complete",
+  "issueId": "ISS-212",
+  "created": "2026-04-04T16:00:00+08:00",
+  "updated": "2026-04-04T16:01:00+08:00",
+  "phases": {
+    "total": 1,
+    "completed": 1
+  },
+  "tasks": {
+    "total": 2,
+    "completed": 2
+  }
+}

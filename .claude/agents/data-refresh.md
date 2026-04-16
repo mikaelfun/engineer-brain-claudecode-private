@@ -3,7 +3,8 @@ name: data-refresh
 description: "拉取 Case 最新数据 + ICM 信息"
 tools: Bash, Read, Write
 model: sonnet
-maxTurns: 15
+maxTurns: 200
+
 mcpServers:
   - icm
 ---

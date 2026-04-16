@@ -1,0 +1,18 @@
+{
+  "id": "ar-ir-display_20260404",
+  "title": "AR Case 显示 Main Case 的 IR 状态",
+  "type": "feature",
+  "status": "abandoned",
+  "issueId": "ISS-213",
+  "created": "2026-04-04T16:05:00+08:00",
+  "updated": "2026-04-04T16:50:00+08:00",
+  "closedReason": "21V case KPI data unavailable via API — AR IR query returns unknown same as Main Case. Reverted all changes.",
+  "phases": {
+    "total": 1,
+    "completed": 0
+  },
+  "tasks": {
+    "total": 2,
+    "completed": 0
+  }
+}

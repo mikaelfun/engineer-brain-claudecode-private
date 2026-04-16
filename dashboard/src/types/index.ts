@@ -74,6 +74,7 @@ export interface Email {
   subject: string
   from: string
   to: string
+  cc: string
   body: string
 }
 
@@ -245,6 +246,8 @@ export interface Draft {
   filename: string
   content: string
   createdAt: string
+  ccAccount?: string   // RDSE customer name from meta.json
+  ccList?: string      // matched CC list from mooncake-cc.json
 }
 
 // ============ SSE 事件 ============

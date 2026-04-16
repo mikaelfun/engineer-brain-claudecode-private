@@ -370,10 +370,16 @@ cases.get('/:id/analysis', (c) => {
       allFiles.sort((a, b) => b.mtime - a.mtime)
 
       if (allFiles.length > 0) {
-        const content = allFiles
-          .map(f => readFileSync(f.path, 'utf-8'))
-          .join('\n\n---\n\n')
-        return c.json({ content, exists: true, fileCount: allFiles.length })
+        // Return individual files with metadata for frontend to render with collapse
+        const files = allFiles.map(f => ({
+          filename: f.name,
+          content: readFileSync(f.path, 'utf-8'),
+          updatedAt: new Date(f.mtime).toISOString(),
+          size: statSync(f.path).size,
+        }))
+        // Also provide concatenated content for backward compatibility
+        const content = files.map(f => f.content).join('\n\n---\n\n')
+        return c.json({ content, exists: true, fileCount: allFiles.length, files })
       }
     } catch {
       // fall through
@@ -504,8 +510,11 @@ cases.get('/:id/todo', (c) => {
         }
       : null
 
+    // Only return the 3 most recent todo files
+    const recentFiles = files.slice(0, 3)
+
     return c.json({
-      files: files.map(f => ({
+      files: recentFiles.map(f => ({
         filename: f.filename,
         updatedAt: new Date(f.mtime).toISOString(),
       })),

@@ -1,0 +1,12 @@
+{
+  "id": "ISS-214",
+  "title": "TestLab Activity Stream 信息质量差 + 缺少清除按钮",
+  "description": "当前 TestLab 的 Activity Stream 存在两个问题：\n\n1. **消息无参考性**：Activity Stream 中显示的消息大多没有实际价值，缺乏有用的上下文信息（如具体的测试进度、错误摘要、关键决策等），用户很难从中获取有意义的状态了解。\n\n2. **无法清除缓存的 Activity**：没有按键/按钮可以清除当前已缓存的 activity 条目，导致旧的无用消息持续堆积，影响阅读体验。应提供 Clear/Reset 按钮让用户可以一键清空当前 activity 列表。",
+  "type": "feature",
+  "priority": "P1",
+  "status": "pending",
+  "testLoopScan": true,
+  "trackId": "activity-stream-ux_20260405",
+  "createdAt": "2026-04-05T00:00:00+08:00",
+  "updatedAt": "2026-04-05T00:00:00+08:00"
+}

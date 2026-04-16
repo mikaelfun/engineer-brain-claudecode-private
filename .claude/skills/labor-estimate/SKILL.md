@@ -7,7 +7,7 @@ stability: beta
 requiredInput: caseNumber or "all"
 estimatedDuration: 30s per case
 promptTemplate: |
-  Execute /labor-estimate for Case {caseNumber}. Read .claude/skills/labor-estimate/SKILL.md for full instructions, then execute. Do NOT ask the user any questions — generate the estimate automatically and save to the labor directory.
+  Execute /labor-estimate for Case {caseNumber}. Read .claude/skills/labor-estimate/SKILL.md for full instructions, then execute. Do NOT ask the user any questions — generate the estimate automatically and save to the labor directory. If there is NO actual activity for today, do NOT create the estimate file — skip silently. Never generate 0-minute estimates.
 allowed-tools:
   - Bash
   - Read
@@ -82,9 +82,28 @@ ls -d {casesRoot}/active/*/
 
 **Classification 选择**：根据占比最大的 effort 类型选择对应 D365 classification。
 
-**Description**：用英文简述当天活动（1-2 句）。
+**Description 写法规则（必须严格遵守）：**
+- 用英文，1 句话，最多 15 个词
+- 以工程师视角描述**做了什么技术工作**，而不是产出了什么文件
+- 聚焦：排查了什么问题、研究了什么方向、回复了客户什么问题
+- ✅ 好的例子：
+  - `Investigated VM boot failure via boot diagnostics`
+  - `Researched NSG rule conflict causing connectivity issue`
+  - `Replied to customer with RCA and next steps`
+  - `Analyzed storage throttling with Kusto logs`
+  - `Followed up on PG response regarding quota limit`
+- ❌ 禁止的写法：
+  - `Produced 3 analysis reports`（流水账，客户不关心你产出几个文件）
+  - `Updated case notes and sent email`（太泛，没有技术内容）
+  - `Worked on case today`（废话）
+  - `No action needed today`（不应生成估算）
+  - 任何包含 "produced"、"generated"、"created X reports" 的表述
 
-如果当天没有任何活动 → 跳过此 case，不生成估算。
+**⚠️ 零活动跳过规则（必须严格执行）：**
+- 如果当天没有任何实际活动（无排查、无邮件、无分析、无沟通） → **必须跳过此 case，不生成 labor-estimate.json 文件**
+- 禁止生成 `totalMinutes: 0` 的估算
+- 禁止在 description 中写 "no action needed today"、"no activity"、"nothing to report" 等空话
+- 只有当确实存在实际工作内容时才生成估算文件
 
 **已有 labor 处理**：如果 `labor.md` 中显示目标日期已有 labor 记录：
 - 在估算结果中标注 `⚠️ Already recorded today: {X} min ({classification})`

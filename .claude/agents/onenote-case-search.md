@@ -3,7 +3,8 @@ name: onenote-case-search
 description: "Search personal OneNote for case-specific notes"
 tools: Bash, Read, Write, Glob, Grep
 model: haiku
-maxTurns: 15
+maxTurns: 200
+
 ---
 
 # OneNote Case Search Agent

@@ -2108,7 +2108,9 @@
         "guides/drafts/ado-wiki-e-ingestion-time-transformation.md",
         "guides/drafts/ado-wiki-h-ingestion-pipeline-architecture.md",
         "guides/drafts/mslearn-high-data-ingestion-troubleshoot.md",
-        "guides/drafts/onenote-log-analytics-ingestion-flow.md"
+        "guides/drafts/onenote-log-analytics-ingestion-flow.md",
+        "guides/drafts/ado-wiki-a-Troubleshoot-Log-Analytics-billing.md",
+        "guides/drafts/ado-wiki-c-Cluster-Ingestion-Volume-BillingStatistics-Detector.md"
       ],
       "kustoQueryFiles": [],
       "hasFusionGuide": true,

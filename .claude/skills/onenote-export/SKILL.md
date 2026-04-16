@@ -135,9 +135,38 @@ cat .claude/skills/onenote-export/config.json
 ### 2. 解析参数
 
 判断 `$ARGUMENTS` 内容：
-- 如果是 `sync`（不区分大小写）→ 进入 **Sync 模式**（见 Step 2.1）
+- 如果是 `sync`（不区分大小写）→ 进入 **Sync 模式** — 同步所有 notebook（见 Step 2.1）
+- 如果是 `sync {notebookName}`（如 `sync MCVKB`）→ 进入 **单 Notebook Sync 模式** — 只同步指定 notebook（见 Step 2.1b）
 - 如果看起来像 URL（包含 `onenote:` 或 `http` 或 `.one`）→ 作为 `-Link` 参数传入
 - 否则 → 解析具名参数（`-NotebookName`、`-SectionPath`、`-PageName`、`-Force`）
+
+### 2.1b. 单 Notebook Sync 模式
+
+当 `$ARGUMENTS` 为 `sync {notebookName}` 时（如 `sync MCVKB`），只同步该 notebook：
+
+**a. 从 `.export-scope.json` 读取 scope**
+
+```bash
+SCOPE_FILE="{outputDir}/{notebookName}/.export-scope.json"
+if [ -f "$SCOPE_FILE" ]; then
+  cat "$SCOPE_FILE"
+else
+  echo "NO_SCOPE_FILE"
+fi
+```
+
+- `NO_SCOPE_FILE` → 没有 scope 文件，执行全量增量同步
+- 有 scope 文件 → 按 `sections` 和 `pages` 字段执行范围内增量同步（逻辑与 Step 2.1c 完全一致）
+
+**b. 按 scope 执行**
+
+- `sections` 为 `null` 且 `pages` 为 `null`/`[]` → 全量增量同步
+- `sections` 为数组 → 对每个 section 调用 `-SectionPath "{section}"`
+- `pages` 为数组 → 对每个条目调用 `-SectionPath "{section}" -PageName "^{page}$"`
+
+之后流程同 Step 2.1（结果汇总、scope 文件更新、RAG 同步等）。
+
+> **数据源唯一性**：scope 定义只存在于 `{outputDir}/{notebookName}/.export-scope.json`，不在 `config.json` 中重复维护。`config.json` 的 `teamNotebooks` 仅作为 notebook 名称列表（字符串数组），不含 scope。
 
 ### 2.1. Sync 模式（批量增量同步）
 
@@ -487,13 +516,13 @@ manifest diff 返回三类文件，需要不同处理策略：
 少量（≤ 20）逐个调用：
 ```bash
 cd "$HOME/.claude/mcp-servers/local-rag" && \
-  node dist/index.js ingest --skip-existing "{absolute_path_to_file}"
+  node dist/index.js ingest --skip-existing --base-dir "{dataRoot_absolute}" "{absolute_path_to_file}"
 ```
 
 大量（> 20）按目录批量，后台运行：
 ```bash
 cd "$HOME/.claude/mcp-servers/local-rag" && \
-  INGEST_CONCURRENCY=10 node dist/index.js ingest --skip-existing "{outputDir}/{notebook-name}"
+  INGEST_CONCURRENCY=10 node dist/index.js ingest --skip-existing --base-dir "{dataRoot_absolute}" "{outputDir}/{notebook-name}"
 ```
 
 **处理 `modified[]` — 内容变更文件（不加 `--skip-existing`）**：
@@ -503,14 +532,14 @@ cd "$HOME/.claude/mcp-servers/local-rag" && \
 少量（≤ 20）逐个调用：
 ```bash
 cd "$HOME/.claude/mcp-servers/local-rag" && \
-  node dist/index.js ingest "{absolute_path_to_modified_file}"
+  node dist/index.js ingest --base-dir "{dataRoot_absolute}" "{absolute_path_to_modified_file}"
 ```
 
 大量（> 20）逐个调用（⚠️ 不能用目录级 ingest，否则会重跑所有文件）：
 ```bash
 # 逐个文件，不加 --skip-existing
 for f in "{file1}" "{file2}" ...; do
-  cd "$HOME/.claude/mcp-servers/local-rag" && node dist/index.js ingest "$f"
+  cd "$HOME/.claude/mcp-servers/local-rag" && node dist/index.js ingest --base-dir "{dataRoot_absolute}" "$f"
 done
 ```
 

@@ -12,6 +12,18 @@ IS_AR=$(sed -n 's/.*"isAR":[[:space:]]*\(true\|false\).*/\1/p' "$META" 2>/dev/nu
 IS_AR=${IS_AR:-false}
 NOW=$(date +%s)
 
+# --- AR main case liveness check ---
+if [ "$IS_AR" = "true" ]; then
+  CASE_NUM=$(basename "$CD")
+  MAIN_ID="${CASE_NUM:0:16}"
+  CASES_ROOT=$(dirname "$(dirname "$CD")")  # {casesRoot}/active/{caseNum} → {casesRoot}
+  if [ ! -d "$CASES_ROOT/active/$MAIN_ID" ]; then
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] AR ARCHIVE | main case $MAIN_ID no longer in active/" >> "$LOG"
+    echo "AR_MAIN_ARCHIVED|mainCase=$MAIN_ID"
+    exit 0
+  fi
+fi
+
 # --- DR skip timestamps ---
 echo "$NOW" > "$CD/logs/.t_dataRefresh_start"
 echo "$NOW" > "$CD/logs/.t_dataRefresh_end"

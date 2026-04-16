@@ -15,7 +15,6 @@ import type { CronJob } from '../types/index.js'
 // ---- In-memory state ----
 
 let jobs: CronJob[] = []
-let timers: Map<string, ReturnType<typeof setInterval>> = new Map()
 /** Track running trigger subprocesses for cancellation */
 let runningProcesses: Map<string, ChildProcess> = new Map()
 
@@ -38,33 +37,69 @@ function saveJobs(): void {
   writeFileSync(config.cronJobsFile, JSON.stringify({ jobs }, null, 2), 'utf-8')
 }
 
-// ---- Cron expression → interval ms ----
+// ---- Cron expression matching ----
 
-function cronToIntervalMs(expr: string): number | null {
-  // Support basic cron patterns: */N * * * * (every N minutes), 0 */N * * * (every N hours)
+/** Parse cron expression into structured fields */
+interface CronFields {
+  minute: number[] | null  // null = wildcard
+  hour: number[] | null
+}
+
+function parseCronExpr(expr: string): CronFields | null {
   const parts = expr.trim().split(/\s+/)
   if (parts.length !== 5) return null
 
-  const [minute, hour] = parts
+  return {
+    minute: parseField(parts[0], 0, 59),
+    hour: parseField(parts[1], 0, 23),
+  }
+}
 
-  // */N * * * * → every N minutes
-  if (minute.startsWith('*/') && hour === '*') {
-    const n = parseInt(minute.slice(2))
-    if (!isNaN(n) && n > 0) return n * 60 * 1000
+function parseField(field: string, min: number, max: number): number[] | null {
+  if (field === '*') return null // wildcard
+
+  // */N — step
+  if (field.startsWith('*/')) {
+    const step = parseInt(field.slice(2))
+    if (isNaN(step) || step <= 0) return null
+    const vals: number[] = []
+    for (let i = min; i <= max; i += step) vals.push(i)
+    return vals
   }
 
-  // 0 */N * * * → every N hours
-  if (minute === '0' && hour.startsWith('*/')) {
-    const n = parseInt(hour.slice(2))
-    if (!isNaN(n) && n > 0) return n * 60 * 60 * 1000
+  // Single number
+  if (/^\d+$/.test(field)) {
+    const n = parseInt(field)
+    if (n >= min && n <= max) return [n]
+    return null
   }
 
-  // N * * * * → specific minute, treat as hourly
-  if (/^\d+$/.test(minute) && hour === '*') {
-    return 60 * 60 * 1000
-  }
+  return null // unsupported
+}
 
-  // Fallback: unsupported pattern → null (won't auto-schedule)
+/** Check if a Date matches a cron expression */
+function cronMatches(expr: string, date: Date): boolean {
+  const fields = parseCronExpr(expr)
+  if (!fields) return false
+
+  const m = date.getMinutes()
+  const h = date.getHours()
+
+  if (fields.minute !== null && !fields.minute.includes(m)) return false
+  if (fields.hour !== null && !fields.hour.includes(h)) return false
+
+  return true
+}
+
+/** Calculate next matching time for display in UI */
+function nextCronMatch(expr: string): number | null {
+  const now = new Date()
+  // Scan up to 48 hours ahead
+  for (let i = 1; i <= 48 * 60; i++) {
+    const candidate = new Date(now.getTime() + i * 60 * 1000)
+    candidate.setSeconds(0, 0)
+    if (cronMatches(expr, candidate)) return candidate.getTime()
+  }
   return null
 }
 
@@ -108,7 +143,7 @@ async function executeCronPrompt(triggerId: string, prompt: string): Promise<Exe
     const errChunks: Buffer[] = []
     let outputSoFar = ''
 
-    const child = spawn('claude', ['-p'], {
+    const child = spawn('claude', ['-p', '--output-format', 'stream-json', '--verbose'], {
       cwd: config.projectRoot,
       shell: true,
       timeout: CRON_TIMEOUT_MS,
@@ -122,18 +157,68 @@ async function executeCronPrompt(triggerId: string, prompt: string): Promise<Exe
     // Track for cancellation
     runningProcesses.set(triggerId, child)
 
-    // Stream stdout in real-time
+    // Stream stdout as NDJSON — parse each line and extract readable text
+    let lineBuf = ''
+
     child.stdout.on('data', (data: Buffer) => {
       chunks.push(data)
-      const newText = data.toString('utf-8')
-      outputSoFar += newText
-      // Broadcast progress with latest output chunk
-      sseManager.broadcast('trigger-progress', {
-        triggerId,
-        chunk: newText,
-        elapsedMs: Date.now() - startMs,
-        outputLength: outputSoFar.length,
-      })
+      lineBuf += data.toString('utf-8')
+      const lines = lineBuf.split('\n')
+      lineBuf = lines.pop() || '' // keep incomplete trailing line
+
+      for (const line of lines) {
+        if (!line.trim()) continue
+        try {
+          const msg = JSON.parse(line)
+          let text = ''
+
+          if (msg.type === 'assistant' && msg.message?.content) {
+            const parts: string[] = []
+            for (const block of msg.message.content) {
+              if (block.type === 'text' && block.text) {
+                parts.push(block.text)
+              } else if (block.type === 'tool_use') {
+                // Show tool invocation as progress indicator
+                const input = block.input || {}
+                const summary = input.command || input.description || input.pattern || input.file_path || ''
+                parts.push(`\n▶ ${block.name}${summary ? ': ' + String(summary).slice(0, 120) : ''}\n`)
+              }
+            }
+            text = parts.join('')
+          } else if (msg.type === 'user' && msg.message?.content) {
+            // Tool results come back as synthetic user messages
+            const contents = Array.isArray(msg.message.content) ? msg.message.content : []
+            for (const block of contents) {
+              if (block.type === 'tool_result' && block.content) {
+                // Extract first 200 chars of tool output as progress
+                const resultText = typeof block.content === 'string'
+                  ? block.content
+                  : Array.isArray(block.content)
+                    ? block.content.filter((c: any) => c.type === 'text').map((c: any) => c.text).join('')
+                    : ''
+                if (resultText) {
+                  text += resultText.slice(0, 200) + (resultText.length > 200 ? '...' : '') + '\n'
+                }
+              }
+            }
+          } else if (msg.type === 'result' && msg.subtype === 'success' && msg.result) {
+            // Final result — use as definitive output
+            text = msg.result
+          }
+
+          if (text) {
+            outputSoFar += text
+            sseManager.broadcast('trigger-progress', {
+              triggerId,
+              chunk: text,
+              elapsedMs: Date.now() - startMs,
+              outputLength: outputSoFar.length,
+            })
+          }
+        } catch {
+          // Non-JSON line — skip
+        }
+      }
     })
 
     child.stderr.on('data', (data: Buffer) => errChunks.push(data))
@@ -141,9 +226,9 @@ async function executeCronPrompt(triggerId: string, prompt: string): Promise<Exe
     child.on('close', (code, signal) => {
       runningProcesses.delete(triggerId)
       const durationMs = Date.now() - startMs
-      const stdout = Buffer.concat(chunks).toString('utf-8')
       const stderr = Buffer.concat(errChunks).toString('utf-8')
-      const output = (stdout || stderr).slice(-MAX_OUTPUT_LENGTH)
+      // Use parsed human-readable text (outputSoFar) instead of raw NDJSON
+      const output = (outputSoFar || stderr).slice(-MAX_OUTPUT_LENGTH)
       const cancelled = signal === 'SIGTERM' || signal === 'SIGKILL'
 
       if (cancelled) {
@@ -195,59 +280,67 @@ async function executeCronPrompt(triggerId: string, prompt: string): Promise<Exe
   })
 }
 
-// ---- Scheduler ----
+// ---- Scheduler (true cron: 1-minute tick) ----
 
-function scheduleJob(job: CronJob): void {
-  if (!job.enabled) return
+/** Set of job IDs currently executing (prevent double-run) */
+const executingJobs = new Set<string>()
+/** Track last fired minute per job to avoid double-fire within same minute */
+const lastFiredMinute = new Map<string, string>()
 
-  const intervalMs = cronToIntervalMs(job.schedule.expr || '')
-  if (!intervalMs) {
-    console.log(`[cron-manager] Cannot schedule job ${job.id}: unsupported cron expression "${job.schedule.expr}"`)
-    return
-  }
+let cronTickTimer: ReturnType<typeof setInterval> | null = null
 
-  // Clear existing timer if any
-  if (timers.has(job.id)) {
-    clearInterval(timers.get(job.id)!)
-  }
+function startCronTick(): void {
+  if (cronTickTimer) return
 
-  // Calculate next run
-  job.state = job.state || {}
-  job.state.nextRunAtMs = Date.now() + intervalMs
+  cronTickTimer = setInterval(() => {
+    const now = new Date()
+    const minuteKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}`
 
-  const timer = setInterval(async () => {
-    const prompt = (job as any).prompt || job.name
-    console.log(`[cron-manager] Executing job: ${job.name} (${job.id}) — prompt: "${prompt}"`)
+    for (const job of jobs) {
+      if (!job.enabled) continue
+      if (executingJobs.has(job.id)) continue
+      if (lastFiredMinute.get(job.id) === minuteKey) continue
 
-    const result = await executeCronPrompt(job.id, prompt)
+      const expr = job.schedule.expr || ''
+      if (!cronMatches(expr, now)) continue
 
-    job.state = job.state || {}
-    job.state.lastRunAtMs = Date.now() - result.durationMs
-    job.state.lastDurationMs = result.durationMs
-    job.state.lastStatus = result.cancelled ? 'cancelled' : result.success ? 'success' : 'error'
-    job.state.lastError = result.error
-    job.state.lastOutput = result.output
-    job.state.consecutiveErrors = result.success ? 0 : (job.state.consecutiveErrors || 0) + 1
-    job.state.nextRunAtMs = Date.now() + intervalMs
+      // Match! Fire this job
+      lastFiredMinute.set(job.id, minuteKey)
+      executingJobs.add(job.id)
 
-    if (!result.success && !result.cancelled) {
-      console.error(`[cron-manager] Job ${job.id} failed (exit ${result.exitCode}): ${result.error}`)
-    } else {
-      console.log(`[cron-manager] Job ${job.id} ${result.cancelled ? 'cancelled' : 'succeeded'} in ${(result.durationMs / 1000).toFixed(1)}s`)
+      const prompt = (job as any).prompt || job.name
+      console.log(`[cron-manager] Cron fired: ${job.name} (${job.id}) at ${now.toLocaleTimeString()} — prompt: "${prompt}"`)
+
+      executeCronPrompt(job.id, prompt).then((result) => {
+        executingJobs.delete(job.id)
+
+        job.state = job.state || {}
+        job.state.lastRunAtMs = Date.now() - result.durationMs
+        job.state.lastDurationMs = result.durationMs
+        job.state.lastStatus = result.cancelled ? 'cancelled' : result.success ? 'success' : 'error'
+        job.state.lastError = result.error
+        job.state.lastOutput = result.output
+        job.state.consecutiveErrors = result.success ? 0 : (job.state.consecutiveErrors || 0) + 1
+        job.state.nextRunAtMs = nextCronMatch(expr) || undefined
+
+        if (!result.success && !result.cancelled) {
+          console.error(`[cron-manager] Job ${job.id} failed (exit ${result.exitCode}): ${result.error}`)
+        } else {
+          console.log(`[cron-manager] Job ${job.id} ${result.cancelled ? 'cancelled' : 'succeeded'} in ${(result.durationMs / 1000).toFixed(1)}s`)
+        }
+
+        saveJobs()
+      })
     }
+  }, 60 * 1000) // Check every 60 seconds
 
-    saveJobs()
-  }, intervalMs)
-
-  timers.set(job.id, timer)
-  console.log(`[cron-manager] Scheduled job ${job.id}: "${job.name}" every ${intervalMs / 1000}s`)
+  console.log('[cron-manager] Cron tick started (60s interval)')
 }
 
-function unscheduleJob(jobId: string): void {
-  const timer = timers.get(jobId)
-  if (timer) {
-    clearInterval(timer)
-    timers.delete(jobId)
+function stopCronTick(): void {
+  if (cronTickTimer) {
+    clearInterval(cronTickTimer)
+    cronTickTimer = null
   }
 }
 
@@ -255,12 +348,14 @@ function unscheduleJob(jobId: string): void {
 
 export function initCronManager(): void {
   jobs = loadJobs()
-  // Schedule all enabled jobs
+  // Calculate next run times for all enabled jobs
   for (const job of jobs) {
     if (job.enabled) {
-      scheduleJob(job)
+      job.state = job.state || {}
+      job.state.nextRunAtMs = nextCronMatch(job.schedule.expr || '') || undefined
     }
   }
+  startCronTick()
   console.log(`[cron-manager] Initialized with ${jobs.length} jobs (${jobs.filter(j => j.enabled).length} enabled)`)
 }
 
@@ -321,7 +416,7 @@ export function createTrigger(input: CreateTriggerInput): CronJob {
 
   jobs.push(job)
   saveJobs()
-  scheduleJob(job)
+  // No per-job timer needed — global cron tick handles all jobs
 
   return job
 }
@@ -332,7 +427,6 @@ export function deleteTrigger(id: string): boolean {
 
   // Cancel if running
   cancelTrigger(id)
-  unscheduleJob(id)
   jobs.splice(idx, 1)
   saveJobs()
 
@@ -399,10 +493,29 @@ export function toggleTrigger(id: string, enabled: boolean): CronJob | null {
   job.updatedAtMs = Date.now()
 
   if (enabled) {
-    scheduleJob(job)
-  } else {
-    unscheduleJob(id)
+    job.state = job.state || {}
+    job.state.nextRunAtMs = nextCronMatch(job.schedule.expr || '') || undefined
   }
+
+  saveJobs()
+  return job
+}
+
+export function updateTrigger(id: string, updates: { name?: string; prompt?: string; cron?: string; description?: string }): CronJob | null {
+  const job = jobs.find(j => j.id === id)
+  if (!job) return null
+
+  if (updates.name) job.name = updates.name
+  if (updates.prompt !== undefined) (job as any).prompt = updates.prompt
+  if (updates.description !== undefined) (job as any).description = updates.description
+  if (updates.cron) {
+    job.schedule.expr = updates.cron
+    if (job.enabled) {
+      job.state = job.state || {}
+      job.state.nextRunAtMs = nextCronMatch(updates.cron) || undefined
+    }
+  }
+  job.updatedAtMs = Date.now()
 
   saveJobs()
   return job

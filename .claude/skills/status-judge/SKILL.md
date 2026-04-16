@@ -42,11 +42,24 @@ allowed-tools:
   ```
   > 以上命令合并到单次 Bash 调用中
 
+- `{caseDir}/notes.md` — 工程师 D365 timeline notes（工作记录），**只读最后 30 行**：
+  ```bash
+  tail -30 "{caseDir}/notes.md" 2>/dev/null || echo "(no notes)"
+  ```
+  > Notes 记录了工程师的排查行动和关键决策，是判断 actualStatus 的重要信号（如"已发邮件给客户"、"已联系PG"等）。
+
 - `{caseDir}/notes-ar.md`（如存在）— **只读最后 50 行**（AR notes 通常较少）：
   ```bash
   tail -50 "{caseDir}/notes-ar.md" 2>/dev/null || echo "(no AR notes)"
   ```
   > AR Mode 时必须读取此文件。
+
+- `{caseDir}/teams/teams-digest.md`（如存在）— Teams 对话摘要，包含 Key Facts：
+  ```bash
+  head -40 "{caseDir}/teams/teams-digest.md" 2>/dev/null || echo "(no teams digest)"
+  ```
+  > Teams 对话常包含邮件里没有的关键信息（客户口头确认、PG 回复、约会安排等），对 status 判断至关重要。
+  > 只读 Key Facts 和相关对话概要部分（前 40 行），不需要完整消息内容。
 
 ### 3. ICM 状态读取（如有）
 有 ICM → 读取 `{caseDir}/icm/icm-summary.md`（由 data-refresh 生成）获取 ICM 当前状态（State/Severity/最新 discussion）。
@@ -59,6 +72,11 @@ allowed-tools:
 枚举值：`new` | `pending-engineer` | `pending-customer` | `pending-pg` | `researching` | `ready-to-close`
 
 **判断原则**：① 不依赖 D365 Status 字段 ② ICM 状态需动态查询 ③ 最后邮件方向≠状态，需结合内容理解意图
+
+**信号分层**：actualStatus 是对**实际沟通状态**的事实判断，仅基于已发生的沟通事实推理：
+- ✅ 输入信号：邮件方向+内容（谁发的、说了什么）、Notes 记录、ICM 当前状态、Teams 对话 Key Facts
+- ❌ 不作为输入：`drafts/` 未发送草稿、`analysis/` 排查文件、todo 待办项
+- 这些"待办"信号属于 Step 4b recommendedActions 的输入，不应回流污染 actualStatus 的判断
 
 ### AR Mode 判断原则
 
@@ -100,14 +118,16 @@ allowed-tools:
 
 ### 4b. 推荐下一步行动（recommendedActions）
 
-在判定 actualStatus 后，综合以下已读取的上下文推理最优行动：
+在判定 actualStatus 后，综合以下已读取的上下文推理最优行动。注意：这里的输入范围**比 Step 4 更广**，可以考虑待办信号：
 
-- `actualStatus` + `daysSinceLastContact`
+- `actualStatus` + `daysSinceLastContact`（来自 Step 4 的输出）
 - `case-summary.md`（排查进展、关键发现、风险）
 - `emails.md` 最后几封邮件（沟通状态、是否已发送关键邮件）
 - `notes.md` / `notes-ar.md`（最新工作记录）
 - ICM 状态（如有 ICM：PG 是否在处理、是否有新回复）
 - `drafts/` 目录是否有未发送草稿（`ls {caseDir}/drafts/*.md 2>/dev/null | wc -l`）
+
+> ⚠️ **分层原则**：`drafts/` 和 `analysis/` 是"待办"信号，只在这里（recommendedActions）使用，不应在 Step 4（actualStatus）中使用。actualStatus 是沟通事实，recommendedActions 是行动建议，二者独立。
 
 **推理指导**（非严格规则，LLM 应综合判断）：
 1. 排查已完成 + 邮件已发送 + ICM pending PG → `no-agent`（等 PG 即可）

@@ -3,7 +3,8 @@ name: casework
 description: "Case 全流程编排：data-refresh → compliance → status-judge → routing → inspection"
 tools: Bash, Read, Write, Edit, Glob, Grep, Agent
 model: opus
-maxTurns: 100
+maxTurns: 200
+
 mcpServers:
   - icm
 ---

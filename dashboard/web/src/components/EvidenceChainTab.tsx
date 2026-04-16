@@ -17,13 +17,19 @@ interface Evidence {
 
 interface Claim {
   id: string
-  claim: string
+  claim?: string
+  statement?: string  // legacy: some troubleshooter runs used 'statement' instead of 'claim'
   type: string
   confidence: string
-  evidence: Evidence[]
+  evidence?: Evidence[]
   status: string
   note?: string
   challengerNote?: string
+}
+
+// Helper: get claim text from either 'claim' or 'statement' field
+function getClaimText(claim: Claim): string {
+  return claim.claim || claim.statement || '(no text)'
 }
 
 interface ClaimsData {
@@ -127,15 +133,15 @@ function ClaimRow({ claim }: { claim: Claim }) {
           </div>
         </td>
         <td className="px-3 py-2.5 text-sm" style={{ color: 'var(--text-primary)' }}>
-          <span title={claim.claim}>
-            {claim.claim.length > 80 ? claim.claim.slice(0, 80) + '...' : claim.claim}
+          <span title={getClaimText(claim)}>
+            {getClaimText(claim).length > 80 ? getClaimText(claim).slice(0, 80) + '...' : getClaimText(claim)}
           </span>
         </td>
         <td className="px-3 py-2.5"><TypeBadge type={claim.type} /></td>
         <td className="px-3 py-2.5"><ConfidenceBadge confidence={claim.confidence} /></td>
         <td className="px-3 py-2.5"><StatusBadge status={claim.status} /></td>
         <td className="px-3 py-2.5 text-sm text-center" style={{ color: 'var(--text-secondary)' }}>
-          {claim.evidence.length}
+          {claim.evidence?.length ?? 0}
         </td>
       </tr>
 
@@ -150,17 +156,17 @@ function ClaimRow({ claim }: { claim: Claim }) {
               {/* Full claim text */}
               <div>
                 <span className="text-xs font-medium" style={{ color: 'var(--text-tertiary)' }}>Claim:</span>
-                <p className="mt-0.5" style={{ color: 'var(--text-primary)' }}>{claim.claim}</p>
+                <p className="mt-0.5" style={{ color: 'var(--text-primary)' }}>{getClaimText(claim)}</p>
               </div>
 
               {/* Evidence list */}
-              {claim.evidence.length > 0 && (
+              {(claim.evidence?.length ?? 0) > 0 && (
                 <div>
                   <span className="text-xs font-medium" style={{ color: 'var(--text-tertiary)' }}>
-                    Evidence ({claim.evidence.length}):
+                    Evidence ({claim.evidence?.length ?? 0}):
                   </span>
                   <div className="mt-1 space-y-2">
-                    {claim.evidence.map((ev, i) => (
+                    {(claim.evidence || []).map((ev, i) => (
                       <div
                         key={i}
                         className="p-2 rounded"

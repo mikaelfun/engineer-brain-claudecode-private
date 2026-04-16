@@ -1,0 +1,13 @@
+{
+  "casesRoot": "./cases",
+  "dataRoot": "<ABSOLUTE_PATH_TO_DATA_DIR>",
+  "teamsSearchCacheHours": 4,
+  "noteGapThresholdDays": 3,
+  "podAlias": "<YOUR_POD_ALIAS>@microsoft.com",
+  "onenote": {
+    "personalNotebook": "<YOUR_ONENOTE_NOTEBOOK_NAME>",
+    "teamNotebooks": ["MCVKB"],
+    "freshnessThresholdMonths": 12,
+    "autoRagSync": true
+  }
+}

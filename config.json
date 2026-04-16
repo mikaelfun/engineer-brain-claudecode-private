@@ -1,7 +1,8 @@
 {
   "casesRoot": "./cases",
   "dataRoot": "../data",
-  "teamsSearchCacheHours": 4,
+  "teamsSearchCacheHours": 8,
+  "patrolSkipHours": 3,
   "noteGapThresholdDays": 3,
   "podAlias": "mcpodvm@microsoft.com",
   "onenote": {

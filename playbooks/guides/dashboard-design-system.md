@@ -8,43 +8,58 @@
 - Tailwind CSS（dark mode via `class` strategy）
 - Zustand（client state）、TanStack Query（server state）
 - lucide-react icons
-- 字体：Plus Jakarta Sans（UI）+ JetBrains Mono（数据/代码）
+- 字体：Rubik（UI）+ JetBrains Mono（数据/代码）
+- 设计灵感：Sentry Light — 淡紫底色、紫色强调、uppercase 标签、毛玻璃卡片
 
 ## 双主题系统
 
-通过 CSS 变量 + Tailwind `dark:` 前缀实现，默认暗色。
+通过 CSS 变量 + Tailwind `dark:` 前缀实现，默认浅色（Sentry Light）。
 
-### 暗色主题色值（柔和低对比度，非纯黑）
+### 浅色主题色值（默认 — Sentry Light 灵感）
 
 | Token | 值 | 用途 |
 |-------|-----|------|
-| `--bg-base` | `#1a1d24` | 页面底色（温暖深灰） |
-| `--bg-surface` | `#22262f` | 卡片/面板底色 |
-| `--bg-elevated` | `#282d38` | 弹窗/浮层 |
-| `--bg-hover` | `#2e3340` | 悬浮状态 |
-| `--bg-active` | `#353b4a` | 按下/选中状态 |
-| `--bg-inset` | `#1e2129` | 凹陷区域（如 AI session 区） |
-| `--text-primary` | `#c9cdd6` | 主文字（柔和灰白，非纯白） |
-| `--text-secondary` | `#8b919e` | 次要文字 |
-| `--text-tertiary` | `#5e6370` | 辅助/占位文字 |
-| `--border-subtle` | `rgba(255,255,255,0.05)` | 分隔线 |
-| `--border-default` | `rgba(255,255,255,0.08)` | 默认边框 |
+| `--bg-base` | `#faf9fb` | 页面底色（淡紫白，带紫色调） |
+| `--bg-surface` | `#ffffff` | 卡片/面板底色 |
+| `--bg-elevated` | `#ffffff` | 弹窗/浮层 |
+| `--bg-hover` | `#f3f1f5` | 悬浮状态（淡紫灰） |
+| `--bg-active` | `#ebe8ef` | 按下/选中状态 |
+| `--bg-inset` | `#f5f3f7` | 凹陷区域（如 AI session 区） |
+| `--text-primary` | `#1f1633` | 主文字（紫色调深黑） |
+| `--text-secondary` | `#3e3554` | 次要文字（暖紫灰） |
+| `--text-tertiary` | `#9e95b0` | 辅助/占位文字 |
+| `--border-subtle` | `#e8e3f0` | 分隔线（紫色调淡边框） |
+| `--border-default` | `#d4ccdf` | 默认边框 |
 
-### 强调色（降饱和度，暗色模式下不刺眼）
+### 暗色主题色值（Sentry Dark 灵感）
 
-| Token | 暗色值 | 语义 |
-|-------|--------|------|
-| `--accent-blue` | `#6ba3e8` | 主操作、链接、选中 |
-| `--accent-green` | `#5cbf8a` | 成功、SLA OK、健康 |
-| `--accent-amber` | `#d4a44a` | 警告、SEV B、待处理 |
-| `--accent-red` | `#d47272` | 错误、SEV A、紧急 |
-| `--accent-purple` | `#9e8cc7` | 特殊状态（WPG、Teams） |
+| Token | 值 | 用途 |
+|-------|-----|------|
+| `--bg-base` | `#1f1633` | 页面底色（紫色调深黑） |
+| `--bg-surface` | `#150f23` | 卡片/面板底色（更深紫黑） |
+| `--bg-elevated` | `#2a2145` | 弹窗/浮层 |
+| `--bg-hover` | `#362d59` | 悬浮状态 |
+| `--bg-active` | `#422082` | 按下/选中状态 |
+| `--bg-inset` | `#180e2a` | 凹陷区域 |
+| `--text-primary` | `#ffffff` | 主文字 |
+| `--text-secondary` | `#e5e7eb` | 次要文字 |
+| `--text-tertiary` | `#6e6e82` | 辅助/占位文字 |
+| `--border-subtle` | `#362d59` | 分隔线 |
+| `--border-default` | `#584674` | 默认边框 |
 
-每种强调色有对应 `-dim` 变体（`opacity: 0.10`），用于背景色。
+### 强调色
 
-### 浅色主题
+| Token | 浅色值 | 暗色值 | 语义 |
+|-------|--------|--------|------|
+| `--accent-blue` | `#6a5fc1` | `#6a5fc1` | 主操作、链接、选中（Sentry Purple） |
+| `--accent-green` | `#16a34a` | `#4ade80` | 成功、SLA OK、健康 |
+| `--accent-amber` | `#d97706` | `#fbbf24` | 警告、SEV B、待处理 |
+| `--accent-red` | `#dc2626` | `#f87171` | 错误、SEV A、紧急 |
+| `--accent-purple` | `#7c3aed` | `#a78bfa` | 特殊状态（WPG、Teams） |
 
-所有 token 有对应浅色值（详见 `index.css`），通过 `<html class="light">` 切换。
+每种强调色有对应 `-dim` 变体（浅色 `opacity: 0.10`，暗色 `opacity: 0.15`），用于背景色。
+
+**注意**：`--accent-blue` 实际为 Sentry Purple `#6a5fc1`，在语义上仍代表"主操作"。
 
 ## 布局规范
 
@@ -83,17 +98,20 @@
 
 ### 卡片
 
-- `border-radius: 10px`
+- `border-radius: 12px`
 - `border: 1px solid var(--border-subtle)`
 - `padding: 18px`
-- 无明显 shadow（暗色模式下用微弱 shadow）
+- 浅色模式：`box-shadow: rgba(0,0,0,0.04) 0 1px 3px`
+- 暗色模式：`backdrop-filter: blur(18px) saturate(180%)`（毛玻璃效果）
+- hover: `border-color: var(--border-default)` + 紫色调 shadow `rgba(106,95,193,0.1) 0 4px 16px`
 - 统计卡片顶部有 2px 彩色条（`opacity: 0.7`），hover 时微弱发光
 
 ### Badge
 
-- `border-radius: 5px`
-- `font-family: var(--font-mono)`
-- `font-size: 10px; font-weight: 700`
+- `border-radius: 18px`（pill 形）
+- `font-family: var(--font-display)`
+- `font-size: 12px; font-weight: 600`
+- `text-transform: uppercase; letter-spacing: 0.2px`
 - 颜色用 `accent-*-dim` 背景 + `accent-*` 文字
 
 ### 表格
@@ -104,9 +122,10 @@
 
 ### 按钮
 
-- Primary: `background: var(--accent-blue)`，hover 时 `brightness(1.1)`
-- Ghost: 透明底 + `border: 1px solid var(--border-default)`
-- 不用渐变按钮（保持克制）
+- Primary: `background: var(--accent-blue)`（Sentry Purple），`border: 1px solid rgba(0,0,0,0.1)`，`border-radius: 13px`，`text-transform: uppercase`，`letter-spacing: 0.2px`，`font-weight: 700`，`box-shadow: rgba(0,0,0,0.06) 0 1px 3px 0 inset`（触感 inset shadow）
+- Primary hover: `box-shadow: rgba(0,0,0,0.12) 0 4px 12px`
+- Ghost: 透明底 + `backdrop-filter: blur(18px) saturate(180%)` + `box-shadow: rgba(0,0,0,0.08) 0 2px 8px`（毛玻璃按钮）
+- Ghost hover: `background: rgba(106,95,193,0.06)`
 
 ### Action Button 模式（⚠️ 所有异步操作必须遵循）
 
@@ -226,25 +245,32 @@
 
 ## 排版
 
-| 元素 | 字体 | 大小 | 粗细 |
-|------|------|------|------|
-| 页面标题 | Jakarta Sans | 20px | 800, letter-spacing: -0.03em |
-| 副标题/mono | JetBrains Mono | 12px | 400 |
-| 卡片标题 | Jakarta Sans | 13px | 700 |
-| 正文 | Jakarta Sans | 13px | 500 |
-| 表格头 | Jakarta Sans | 10px | 700, uppercase, letter-spacing: 0.05em |
-| Badge | JetBrains Mono | 10px | 700 |
-| 统计数字 | JetBrains Mono | 26px | 800 |
+| 元素 | 字体 | 大小 | 粗细 | 备注 |
+|------|------|------|------|------|
+| 页面标题 | Rubik | 20px | 600 | letter-spacing: -0.3px |
+| 副标题/mono | JetBrains Mono | 12px | 400 | |
+| 卡片标题 | Rubik | 14px | 600 | |
+| 正文 | Rubik | 14px | 400 | line-height: 1.5 |
+| 表格头 | Rubik | 10px | 600 | uppercase, letter-spacing: 0.25px |
+| Badge | Rubik | 12px | 600 | uppercase, letter-spacing: 0.2px |
+| 统计数字 | Rubik | 32px | 600 | |
+| 按钮 | Rubik | 14px | 700 | uppercase, letter-spacing: 0.2px |
+| 导航 | Rubik | 15px | 500 | |
+| 代码/Case ID | JetBrains Mono | 12px | 500 | |
 
 ## 设计原则
 
-1. **柔和对比度**：暗色模式不用纯黑/纯白，文字用 `#c9cdd6` 而非 `#ffffff`
-2. **颜色降饱和**：所有强调色比标准色降低饱和度，避免刺眼
-3. **减少视觉噪音**：边框用极低透明度，shadow 几乎不可见
-4. **信息密度优先**：表格视图而非卡片列表，每行一个 case
-5. **AI 融入不突出**：AI Panel 是页面的自然延伸，不是贴上去的独立组件
-6. **背景有呼吸感**：极淡的噪点纹理 + 微弱径向渐变，不用实线网格
+1. **紫色调温暖**：浅色模式底色 `#faf9fb` 带淡紫色调，暗色模式底色 `#1f1633` 为紫黑，区别于冷灰
+2. **Uppercase 系统化**：按钮、Badge、表格头、微标签统一使用 `text-transform: uppercase` + `letter-spacing: 0.2px`
+3. **触感按钮**：Primary 按钮使用 inset shadow 创造"按入表面"的质感，hover 时外阴影浮起
+4. **毛玻璃层叠**：暗色模式的卡片和 Ghost 按钮使用 `backdrop-filter: blur(18px) saturate(180%)`
+5. **pill 形 Badge**：状态标签使用 18px radius pill 形，更圆润柔和
+6. **信息密度优先**：表格视图而非卡片列表，每行一个 case
+7. **AI 融入不突出**：AI Panel 是页面的自然延伸，不是贴上去的独立组件
+8. **紫色为品牌**：`#6a5fc1` 作为唯一品牌强调色，hover 时 `#6a5fc1`，focus 时紫色光晕
 
 ## 参考预览
 
-设计预览文件：`dashboard/design-preview.html`（可直接浏览器打开）
+- 浅色模式预览：`../awesome-design-md/sentry-light.html`
+- 暗色模式预览：`../awesome-design-md/sentry-preview.html`
+- 设计灵感来源：`../awesome-design-md/design-md/sentry/DESIGN.md`

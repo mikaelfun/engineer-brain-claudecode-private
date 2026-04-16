@@ -43,6 +43,16 @@ if [ -z "$CASE_NUMBER" ] || [ -z "$CASE_DIR" ] || [ -z "$PROJECT_ROOT" ]; then
   exit 1
 fi
 
+# Path guard: reject absolute Windows paths (causes files to land in wrong locations)
+if echo "$CASE_DIR" | grep -qE "^[A-Z]:|^/[a-z]/"; then
+  echo "ERROR|CASE_DIR contains absolute path: $CASE_DIR. Must use relative path like ./cases/active/..." >&2
+  exit 1
+fi
+if echo "$CASES_ROOT" | grep -qE "^[A-Z]:|^/[a-z]/"; then
+  echo "ERROR|CASES_ROOT contains absolute path: $CASES_ROOT. Must use relative path like ./cases" >&2
+  exit 1
+fi
+
 CD="$PROJECT_ROOT"
 LOG="$CASE_DIR/logs/casework-light.log"
 T_START=$(date +%s)
@@ -56,6 +66,8 @@ echo "$T_START" > "$CASE_DIR/logs/.t_start"
 # ═══════════════════════════════════════════
 CHANGE_RESULT=$(pwsh -NoProfile -File "$CD/skills/d365-case-ops/scripts/check-case-changes.ps1" \
   -TicketNumber "$CASE_NUMBER" -OutputDir "$CASES_ROOT/active" 2>&1 | tail -1)
+# Strip trailing \r from pwsh CRLF output to prevent Python SyntaxError
+CHANGE_RESULT="${CHANGE_RESULT%$'\r'}"
 
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] STEP 1 OK | changegate=$CHANGE_RESULT isAR=$IS_AR" >> "$LOG"
 
@@ -66,8 +78,11 @@ if echo "$CHANGE_RESULT" | grep -qiE "^(NO_CHANGE|UNCHANGED)"; then
   # Read meta for current status
   META_FILE="$CASE_DIR/casehealth-meta.json"
   if [ -f "$META_FILE" ]; then
-    PLAN_DATA=$(python3 -c "
-import json, time, os, re as _re
+    # Write python to temp file to avoid Windows 8191-char command line limit
+    FAST_PY=$(mktemp /tmp/casework-fast-XXXXXX.py)
+    trap "rm -f '$FAST_PY'" EXIT
+    cat > "$FAST_PY" << PYEOF
+import json, time, os, re as _re, sys
 from datetime import datetime as _dt
 
 meta = json.load(open('$META_FILE'))
@@ -88,8 +103,8 @@ case_owner_name = ar_meta.get('caseOwnerName', '') if is_ar else None
 
 # --- Helper: check if a draft of given type is still valid ---
 def check_draft_valid(draft_type, days_since_contact):
-    \"\"\"Check if a draft exists and is still valid (not stale).
-    Returns (has_valid, stale_info_or_None)\"\"\"
+    """Check if a draft exists and is still valid (not stale).
+    Returns (has_valid, stale_info_or_None)"""
     drafts_dir = os.path.join('$CASE_DIR', 'drafts')
     if not os.path.isdir(drafts_dir):
         return False, None
@@ -110,7 +125,7 @@ def check_draft_valid(draft_type, days_since_contact):
                     reasons.append(f'new interaction after draft (draft={draft_age_days:.0f}d old, lastContact={days_since_contact}d ago)')
                 if draft_age_days > 7:
                     reasons.append(f'draft too old ({draft_age_days:.0f}d)')
-                return False, f'{f}: {\"; \".join(reasons)}'
+                return False, f'{f}: {"; ".join(reasons)}'
             except:
                 pass
         break  # only check the most recent draft of this type
@@ -252,7 +267,9 @@ with open(plan_path, 'w', encoding='utf-8') as f:
     json.dump(plan, f, indent=2, ensure_ascii=False)
 
 print(f'NO_CHANGE|plan_written|actualStatus={status}|days={days}|actions={len(actions)}')
-" 2>&1)
+PYEOF
+    PLAN_DATA=$(python3 "$FAST_PY" 2>&1)
+    rm -f "$FAST_PY"
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] FAST_PATH | $PLAN_DATA" >> "$LOG"
     echo "$PLAN_DATA"
     exit 0
@@ -371,6 +388,15 @@ except Exception as e:
   fi
 fi
 
+# --- Submit ICM discussion queue request (if ICM needs refresh) ---
+if [ "$ICM_NEEDS_REFRESH" = "true" ] && [ -n "$ICM_NUMBER" ]; then
+  ICM_SUBMIT_SCRIPT="$CD/.claude/skills/icm-discussion/scripts/icm-queue-submit.sh"
+  if [ -f "$ICM_SUBMIT_SCRIPT" ]; then
+    bash "$ICM_SUBMIT_SCRIPT" "$ICM_NUMBER" "$CASE_DIR" "$CASE_NUMBER" "$CASES_ROOT" 2>/dev/null
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] ICM discussion queue: submitted $ICM_NUMBER" >> "$LOG"
+  fi
+fi
+
 # --- Collect ALL context for LLM status-judge ---
 DELTA_STATUS=$(python3 -c "
 s = '$GATHER_RESULT'
@@ -450,3 +476,4 @@ print(f'CHANGED|runner_output_written|delta={delta_status}|icm_needs_refresh=$IC
 
 FINAL_LINE=$(tail -1 "$CASE_DIR/context/runner-output.json" 2>/dev/null | head -c 1)
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] RUNNER COMPLETE | delta=$DELTA_STATUS icm_refresh=$ICM_NEEDS_REFRESH teams=$TEAMS_STATUS" >> "$LOG"
+echo "CHANGED|runner_output_written|delta=$DELTA_STATUS|icm_needs_refresh=$ICM_NEEDS_REFRESH|teams=$TEAMS_STATUS"

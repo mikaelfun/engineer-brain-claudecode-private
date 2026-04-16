@@ -86,7 +86,7 @@ export const config = {
     return join(this.casesDir, 'AR')
   },
   get patrolStateFile() {
-    return join(this.casesDir, 'casehealth-state.json')
+    return join(this.casesDir, '.patrol', 'casehealth-state.json')
   },
   /** @deprecated Todo files are now per-case (cases/active/{id}/todo/). Kept for backward compat. */
   get todoDir() {
@@ -106,6 +106,10 @@ export const config = {
   },
   get agentSessionsDir() {
     return join(runtimeDir, 'agent-sessions')
+  },
+  get dataDir() {
+    const dr = readProjectConfig().dataRoot
+    return dr ? resolveConfigPath(dr) : resolve(projectRoot, '..', 'data')
   },
   agentMaxConcurrency: 1,
 

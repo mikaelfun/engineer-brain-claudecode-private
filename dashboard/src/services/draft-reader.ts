@@ -5,13 +5,49 @@ import { readFileSync, writeFileSync, existsSync, readdirSync, statSync } from '
 import { join } from 'path'
 import { getCaseDir } from './workspace.js'
 import { listActiveCases } from './workspace.js'
+import { config } from '../config.js'
 import type { Draft } from '../types/index.js'
+
+/** Cached mooncake-cc.json accounts */
+let _ccCache: { account: string; cc: string }[] | null = null
+
+function loadMooncakeCC(): { account: string; cc: string }[] {
+  if (_ccCache) return _ccCache
+  try {
+    const ccPath = join(config.dataDir, 'mooncake-cc.json')
+    const raw = JSON.parse(readFileSync(ccPath, 'utf-8'))
+    _ccCache = raw.accounts || []
+    return _ccCache!
+  } catch {
+    _ccCache = []
+    return []
+  }
+}
+
+function findCCForAccount(accountName: string): string | undefined {
+  const accounts = loadMooncakeCC()
+  const lower = accountName.toLowerCase()
+  const match = accounts.find(a => a.account.toLowerCase().includes(lower) || lower.includes(a.account.split('/')[0].trim().toLowerCase()))
+  return match?.cc
+}
 
 export function readCaseDrafts(caseNumber: string): Draft[] {
   const caseDir = getCaseDir(caseNumber)
   const draftsDir = join(caseDir, 'drafts')
 
   if (!existsSync(draftsDir)) return []
+
+  // Read casehealth-meta.json for ccAccount
+  let ccAccount: string | undefined
+  let ccList: string | undefined
+  try {
+    const metaPath = join(caseDir, 'casehealth-meta.json')
+    if (existsSync(metaPath)) {
+      const meta = JSON.parse(readFileSync(metaPath, 'utf-8'))
+      ccAccount = meta.ccAccount
+      ccList = meta.ccEmails
+    }
+  } catch { /* ignore */ }
 
   try {
     const files = readdirSync(draftsDir).filter(f => f.endsWith('.md'))
@@ -24,6 +60,7 @@ export function readCaseDrafts(caseNumber: string): Draft[] {
         filename,
         content,
         createdAt: stat.mtime.toISOString(),
+        ...(ccAccount ? { ccAccount, ccList } : {}),
       }
     })
   } catch {

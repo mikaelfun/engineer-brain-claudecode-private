@@ -78,12 +78,61 @@ foreach ($cn in $localCases) {
 }
 
 if ($notActive.Count -eq 0) {
-    Write-Host "✅ All local cases are still active in D365."
+    Write-Host "✅ All local cases are still active in D365. Checking AR cascade..."
+}
+
+# ── Step 3a: AR cascade — archive AR cases whose main case is being archived ──
+$arCascaded = @()
+$casesToCheck = if ($CaseNumbers) { $localCases } else {
+    # When scanning all: check cases that ARE still in D365 active list
+    @($localCases | Where-Object { $activeTickets.ContainsKey($_) })
+}
+
+foreach ($cn in $casesToCheck) {
+    if ($cn.Length -ge 19) {
+        # This is an AR case — extract main case ID (first 16 digits)
+        $mainId = $cn.Substring(0, 16)
+
+        # Check 1: main case is being archived in THIS run
+        $mainInNotActive = $notActive -contains $mainId
+
+        # Check 2: main case already archived (resolved/closed) previously
+        # NOTE: transfer/ does NOT trigger cascade — main case transferred to another engineer
+        # does not mean the AR case should be archived (AR may still be owned by us)
+        $mainInArchived = $false
+        $archivedDir = Join-Path $CasesRoot "archived" $mainId
+        if (Test-Path $archivedDir) {
+            $mainInArchived = $true
+        }
+
+        # Check 3: Only cascade if Check 1 or Check 2 confirmed.
+        # Do NOT cascade based on active list alone — main case may be assigned to another engineer
+        # and not appear in our active list. Querying D365 API for statecode is too slow for batch operations.
+        # The AR case itself will be detected as resolved when it leaves our active list in a future patrol.
+
+        if ($mainInNotActive -or $mainInArchived) {
+            if ($notActive -notcontains $cn) {
+                $notActive += $cn
+                $arCascaded += $cn
+                $reason = if ($mainInNotActive) { "main case $mainId being archived in this run" }
+                          else { "main case $mainId already in archived/transfer" }
+                Write-Host "   🔗 AR $cn → cascaded archive ($reason)"
+            }
+        }
+    }
+}
+
+if ($arCascaded.Count -gt 0) {
+    Write-Host "   🔗 AR cascade: $($arCascaded.Count) AR case(s) will be archived with their main case"
+}
+
+if ($notActive.Count -eq 0) {
+    Write-Host "✅ No cases need archiving."
     Write-Output "[]"
     exit 0
 }
 
-Write-Host "⚠️ Found $($notActive.Count) case(s) NOT in D365 active list: $($notActive -join ', ')"
+Write-Host "⚠️ Total $($notActive.Count) case(s) to archive/transfer: $($notActive -join ', ')"
 
 # ── Step 4: Query closed cases to classify ──
 Write-Host "🔵 Step 4: Fetching D365 closed case list for classification..."
@@ -117,7 +166,12 @@ foreach ($cn in $notActive) {
         closureEmailEvidence = $null
     }
 
-    if ($closedTickets.ContainsKey($cn)) {
+    if ($arCascaded -contains $cn) {
+        # AR cascade: main case archived → AR follows
+        $mainId = $cn.Substring(0, 16)
+        $entry.status = "archived"
+        $entry.reason = "AR cascade: main case $mainId resolved/archived"
+    } elseif ($closedTickets.ContainsKey($cn)) {
         $entry.status = "archived"
         $entry.reason = "D365 status: $($closedTickets[$cn].statuscode) (closed on $($closedTickets[$cn].modifiedon))"
     } else {

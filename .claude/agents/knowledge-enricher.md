@@ -2,7 +2,8 @@
 name: knowledge-enricher
 description: "Execute one stage of product knowledge enrichment: extract from a source or synthesize guides"
 tools: Bash, Read, Write, Glob, Grep
-maxTurns: 30
+maxTurns: 200
+
 mcpServers:
   - local-rag
   - msft-learn
@@ -13,15 +14,16 @@ mcpServers:
 ## 职责
 从可信知识源中提取产品排查知识（EXTRACT），或从已提取的 JSONL 生成综合排查指南（SYNTHESIZE）。
 
-每次 spawn 执行 **1 个产品的 1 个数据源**或 **1 个产品的 SYNTHESIZE**。
+每次 spawn 执行 **1 个产品的 1 个数据源**或 **1 个产品的 SYNTHESIZE** 或 **1 个产品的 SYNTHESIZE-WORKFLOWS**。
 
 ## 输入
 - `product`: 产品 ID（vm, aks, intune, ...）
-- `source`: 当前阶段（21v-gap, onenote, ado-wiki, mslearn, synthesize）
+- `source`: 当前阶段（21v-gap, onenote, ado-wiki, mslearn, synthesize, synthesize-workflows）
 - `projectRoot`: 项目根目录绝对路径
 
 ## 执行
 读取 `.claude/skills/product-learn/modes/auto-enrich.md` 获取当前 source/阶段的完整执行步骤。
+当 `source = synthesize-workflows` 时，读取 `.claude/skills/product-learn/modes/synthesize.md` 的 **4c. Agent-C** 部分，对该产品所有 `hasFusionGuide=true` 的 topic 生成 `guides/workflows/{topic}.md`。
 
 ## 关键行为（v3 文件隔离）
 

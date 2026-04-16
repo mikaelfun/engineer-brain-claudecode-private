@@ -118,7 +118,12 @@ export function useCaseMeta(id: string) {
 export function useCaseAnalysis(id: string) {
   return useQuery({
     queryKey: ['cases', id, 'analysis'],
-    queryFn: () => apiGet<{ content: string; exists: boolean }>(`/cases/${id}/analysis`),
+    queryFn: () => apiGet<{
+      content: string
+      exists: boolean
+      fileCount?: number
+      files?: Array<{ filename: string; content: string; updatedAt: string; size: number }>
+    }>(`/cases/${id}/analysis`),
     enabled: !!id,
   })
 }
@@ -281,6 +286,30 @@ export function useDeleteTrigger() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => apiDelete<any>(`/agents/triggers/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agents', 'triggers'] })
+      queryClient.invalidateQueries({ queryKey: ['agents', 'cron-jobs'] })
+    },
+  })
+}
+
+export function useToggleTrigger() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, enabled }: { id: string; enabled: boolean }) =>
+      apiPatch<any>(`/agents/triggers/${id}`, { enabled }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agents', 'triggers'] })
+      queryClient.invalidateQueries({ queryKey: ['agents', 'cron-jobs'] })
+    },
+  })
+}
+
+export function useUpdateTrigger() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...data }: { id: string; name?: string; prompt?: string; cron?: string; description?: string }) =>
+      apiPut<any>(`/agents/triggers/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['agents', 'triggers'] })
       queryClient.invalidateQueries({ queryKey: ['agents', 'cron-jobs'] })
@@ -469,7 +498,7 @@ export function useAllSessions(status?: string) {
 
 export interface UnifiedSession {
   id: string
-  type: 'case' | 'implement' | 'verify' | 'track-creation'
+  type: 'case' | 'queue' | 'implement' | 'verify' | 'track-creation'
   status: 'active' | 'paused' | 'completed' | 'failed'
   context: string
   intent: string

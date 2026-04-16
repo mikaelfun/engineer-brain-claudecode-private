@@ -642,7 +642,15 @@ if ($SectionPath) {
     Write-Host "Filter by section: $SectionPath -> $($allPages.Count) pages" -ForegroundColor Yellow
 }
 if ($PageName) {
-    $matchedPages = @($allPages | Where-Object { $_.Name -match $PageName })
+    # Escape regex special chars in page name (e.g. [Team] → \[Team\])
+    # but preserve ^ and $ anchors if the caller provided them for exact matching
+    $coreName = $PageName
+    $prefix = ''
+    $suffix = ''
+    if ($coreName.StartsWith('^')) { $prefix = '^'; $coreName = $coreName.Substring(1) }
+    if ($coreName.EndsWith('$')) { $suffix = '$'; $coreName = $coreName.Substring(0, $coreName.Length - 1) }
+    $escapedPageName = $prefix + [regex]::Escape($coreName) + $suffix
+    $matchedPages = @($allPages | Where-Object { $_.Name -match $escapedPageName })
     # Forward scan: include sub-pages (higher pageLevel) following each matched page
     $expandedPages = [System.Collections.Generic.List[object]]::new()
     foreach ($matched in $matchedPages) {
@@ -753,12 +761,15 @@ for ($i = 0; $i -lt $allPages.Count; $i++) {
 
         # --- Incremental check: skip if page unchanged (unless -Force) ---
         if (-not $Force) {
-            $localModified = Get-FrontmatterModified $outFile
-            if ($localModified -and $page.ModifiedTime -and $localModified -eq $page.ModifiedTime) {
-                Write-Host " SKIP (unchanged)" -ForegroundColor DarkGray
-                $skipCount++
-                continue
+            if (Test-Path -LiteralPath $outFile) {
+                $localModified = Get-FrontmatterModified $outFile
+                if ($localModified -and $page.ModifiedTime -and $localModified -eq $page.ModifiedTime) {
+                    Write-Host " SKIP (unchanged)" -ForegroundColor DarkGray
+                    $skipCount++
+                    continue
+                }
             }
+            # If file doesn't exist, fall through to export (new page)
         }
 
         # --- Fetch page content (expensive: includes image binary data) ---

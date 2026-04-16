@@ -22,9 +22,6 @@ import {
   processCaseSession,
   chatCaseSession,
   executeTodoAction,
-  patrolCoordinator,
-  cancelPatrol,
-  isPatrolRunning,
   endSession,
   getActiveSessionForCase,
   listCaseSessions,
@@ -39,6 +36,8 @@ import {
   writeStepLog,
   getCaseMcpServerNames,
 } from '../agent/case-session-manager.js'
+import { startCliPatrol, cancelCliPatrol, isCliPatrolRunning, loadPatrolLastRun } from '../agent/cli-patrol-manager.js'
+import { runSdkPatrol, isSdkPatrolRunning, cancelSdkPatrol, loadPatrolLastRun as loadSdkPatrolLastRun } from '../agent/patrol-orchestrator.js'
 import { sseManager } from '../watcher/sse-manager.js'
 import { sdkQueue } from '../utils/sdk-queue.js'
 import { reloadConfig, config as appConfig } from '../config.js'
@@ -47,29 +46,10 @@ import type { ToolCallRecord, ExecutionSummary } from '../types/index.js'
 
 const caseRoutes = new Hono()
 
-// ---- Patrol Last Run Persistence ----
+// ---- Helpers ----
+
 const __filename_case = fileURLToPath(import.meta.url)
 const __dirname_case = dirname(__filename_case)
-const PATROL_LAST_RUN_PATH = join(resolve(__dirname_case, '..', '..'), '.patrol-last-run.json')
-
-function savePatrolLastRun(data: Record<string, unknown>): void {
-  try {
-    writeFileSync(PATROL_LAST_RUN_PATH, JSON.stringify(data, null, 2), 'utf-8')
-  } catch (err) {
-    console.warn('[patrol] Failed to save last run:', err)
-  }
-}
-
-function loadPatrolLastRun(): Record<string, unknown> | null {
-  try {
-    if (existsSync(PATROL_LAST_RUN_PATH)) {
-      return JSON.parse(readFileSync(PATROL_LAST_RUN_PATH, 'utf-8'))
-    }
-  } catch { /* ignore */ }
-  return null
-}
-
-// ---- Helpers ----
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -265,47 +245,23 @@ caseRoutes.get('/case/:id/sessions', (c) => {
   return c.json({ sessions, activeSession })
 })
 
-// ---- Patrol Route ----
+// ---- Patrol Route (SDK-based orchestration) ----
 
-// POST /patrol — 批量巡检 (TypeScript 编排器 + per-case SDK sessions)
+// POST /patrol — 启动 SDK patrol
 caseRoutes.post('/patrol', async (c) => {
   try {
-    let force = false
-    try { const body = await c.req.json<{ force?: boolean }>(); force = !!body?.force } catch { /* no body = default */ }
+    let force = true
+    try { const body = await c.req.json<{ force?: boolean }>(); force = body?.force !== false } catch { /* no body = default force */ }
 
-    const patrolAsync = async () => {
-      try {
-        await patrolCoordinator((progress) => {
-          // 广播实时进度
-          sseManager.broadcast('patrol-progress' as any, { ...progress } as Record<string, unknown>)
-
-          if (progress.phase === 'completed' || progress.phase === 'failed') {
-            // Persist for page-refresh hydration
-            savePatrolLastRun({
-              ...progress,
-              completedAt: new Date().toISOString(),
-            })
-          }
-
-          if (progress.phase === 'completed') {
-            sseManager.broadcast('patrol-updated' as any, {
-              todoSummary: progress.todoSummary,
-              processedCases: progress.processedCases,
-              changedCases: progress.changedCases,
-              totalCases: progress.totalCases,
-            } as Record<string, unknown>)
-          }
-        }, { force })
-      } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : String(err)
-        const failData = { phase: 'failed' as const, error: errorMsg, completedAt: new Date().toISOString() }
-        sseManager.broadcast('patrol-progress' as any, failData)
-        sseManager.broadcast('case-session-failed', { type: 'patrol', error: errorMsg })
-        savePatrolLastRun(failData)
-      }
+    if (isSdkPatrolRunning()) {
+      return c.json({ error: 'Patrol already running' }, 409)
     }
 
-    sdkQueue.enqueue(patrolAsync, 'patrol', 'patrol') // Fire and forget via SDK queue
+    // Fire and forget — patrol runs in background
+    runSdkPatrol(force).catch(err => {
+      console.error('[patrol] SDK patrol failed:', err instanceof Error ? err.message : err)
+    })
+
     return c.json({ status: 'started' }, 202)
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
@@ -315,18 +271,18 @@ caseRoutes.post('/patrol', async (c) => {
 
 // POST /patrol/cancel — 取消正在运行的 patrol
 caseRoutes.post('/patrol/cancel', (c) => {
-  if (!isPatrolRunning()) {
+  if (!isSdkPatrolRunning()) {
     return c.json({ error: 'No patrol is currently running' }, 404)
   }
-  const cancelled = cancelPatrol()
+  const cancelled = cancelSdkPatrol()
   return c.json({ success: cancelled, message: cancelled ? 'Patrol cancellation requested' : 'Failed to cancel' })
 })
 
 // GET /patrol/status — 查询 patrol 运行状态 + 上次运行结果
 caseRoutes.get('/patrol/status', (c) => {
   return c.json({
-    running: isPatrolRunning(),
-    lastRun: loadPatrolLastRun(),
+    running: isSdkPatrolRunning(),
+    lastRun: loadSdkPatrolLastRun(),
   })
 })
 

@@ -1,22 +1,22 @@
 /**
  * DailyOpsPage — Daily Operations: note gap detection & labor estimation
  *
- * Layout: Left-right split
+ * Layout: Left-right equal split (50/50)
  * - Left: Note Gaps (always visible, empty state when no gaps)
- * - Right: Labor Estimates (table with batch submit)
+ * - Right: Labor Estimates (cards with batch submit)
  */
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   useLaborEstimates,
   useLaborEstimateAll,
   useLaborEstimateUpdate,
+  useLaborEstimateDiscard,
+  useLaborEstimateDiscardAll,
   useLaborBatchSubmit,
   useAllNoteGaps,
-  useSubmitNote,
-  useDismissNoteGap,
   useCheckAllNoteGaps,
   type LaborEstimateItem,
-  type NoteGapItem,
 } from '../api/hooks'
 
 const CLASSIFICATIONS = [
@@ -29,78 +29,16 @@ const CLASSIFICATIONS = [
   'Admin Review',
 ]
 
-// ===== NoteGapEditCard =====
+// ===== NoteGapRow (managed by parent) =====
 
-function NoteGapEditCard({ gap, onUpdate }: { gap: NoteGapItem; onUpdate: () => void }) {
-  const [title, setTitle] = useState(gap.title)
-  const [body, setBody] = useState(gap.body)
-  const [submitted, setSubmitted] = useState(false)
-  const submitNote = useSubmitNote(gap.caseNumber)
-  const dismissGap = useDismissNoteGap(gap.caseNumber)
-
-  const handleSubmit = async () => {
-    await submitNote.mutateAsync({ title, body })
-    setSubmitted(true)
-    setTimeout(() => onUpdate(), 1500)
-  }
-
-  const handleDismiss = async () => {
-    await dismissGap.mutateAsync()
-    onUpdate()
-  }
-
-  if (submitted) {
-    return (
-      <div className="rounded-lg p-3 text-center text-sm"
-        style={{ border: '1px solid var(--accent-green)', background: 'var(--accent-green-dim)', color: 'var(--accent-green)' }}>
-        ✅ Note submitted for {gap.caseNumber}
-      </div>
-    )
-  }
-
-  return (
-    <div className="rounded-lg p-3 space-y-2"
-      style={{ border: '1px solid var(--accent-amber)', background: 'var(--bg-secondary)' }}>
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-xs font-medium text-foreground">{gap.caseNumber}</span>
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
-            style={{ background: 'var(--accent-amber-dim)', color: 'var(--accent-amber)' }}>
-            {gap.gapDays}d
-          </span>
-        </div>
-        <span className="text-[10px] text-muted">Last: {gap.lastNoteDate}</span>
-      </div>
-
-      {/* Title */}
-      <input type="text" value={title} onChange={e => setTitle(e.target.value)}
-        className="w-full px-2 py-1 text-xs bg-surface border border-border rounded focus:outline-none text-foreground"
-        placeholder="Note title..."
-        onFocus={e => (e.currentTarget.style.borderColor = 'var(--accent-amber)')}
-        onBlur={e => (e.currentTarget.style.borderColor = '')} />
-
-      {/* Body */}
-      <textarea value={body} onChange={e => setBody(e.target.value)} rows={4}
-        className="w-full px-2 py-1 text-xs bg-surface border border-border rounded focus:outline-none text-foreground resize-none font-mono"
-        placeholder="Note body..."
-        onFocus={e => (e.currentTarget.style.borderColor = 'var(--accent-amber)')}
-        onBlur={e => (e.currentTarget.style.borderColor = '')} />
-
-      {/* Actions */}
-      <div className="flex items-center gap-2 justify-end">
-        <button onClick={handleDismiss} disabled={dismissGap.isPending}
-          className="px-2 py-1 text-[10px] rounded border border-border text-muted hover:text-foreground hover:bg-surface-hover transition-colors disabled:opacity-50">
-          Dismiss
-        </button>
-        <button onClick={handleSubmit} disabled={submitNote.isPending || !title.trim() || !body.trim()}
-          className="px-3 py-1 text-[10px] rounded disabled:opacity-50 transition-colors"
-          style={{ background: 'var(--accent-amber)', color: 'var(--text-inverse)' }}>
-          {submitNote.isPending ? 'Writing...' : '📝 Write to D365'}
-        </button>
-      </div>
-    </div>
-  )
+interface NoteGapRow {
+  caseNumber: string
+  caseTitle?: string
+  gapDays: number
+  lastNoteDate: string
+  title: string
+  body: string
+  selected: boolean
 }
 
 // ===== EditableRow =====
@@ -114,14 +52,19 @@ interface EditableRow {
   originalMinutes: number
   selected: boolean
   status: string
+  daysSinceLastLabor?: number
+  lastLaborDate?: string
 }
 
 // ===== DailyOpsPage =====
 
 export default function DailyOpsPage() {
+  const navigate = useNavigate()
   const { data, isLoading, refetch } = useLaborEstimates()
   const estimateAll = useLaborEstimateAll()
   const updateEstimate = useLaborEstimateUpdate()
+  const discardOne = useLaborEstimateDiscard()
+  const discardAll = useLaborEstimateDiscardAll()
   const batchSubmit = useLaborBatchSubmit()
   const { data: allGaps, refetch: refetchGaps } = useAllNoteGaps()
   const checkAllGaps = useCheckAllNoteGaps()
@@ -133,10 +76,94 @@ export default function DailyOpsPage() {
   const [submitting, setSubmitting] = useState(false)
   const [submitResults, setSubmitResults] = useState<Array<{ caseNumber: string; success: boolean; message: string }> | null>(null)
 
+  // Note Gap state (lifted from NoteGapEditCard)
+  const [gapRows, setGapRows] = useState<NoteGapRow[]>([])
+  const [submittingNotes, setSubmittingNotes] = useState(false)
+  const [noteSubmitResults, setNoteSubmitResults] = useState<Array<{ caseNumber: string; success: boolean; message: string }> | null>(null)
+
+  // Sync gapRows from allGaps data
+  useEffect(() => {
+    if (allGaps?.gaps && allGaps.gaps.length > 0) {
+      setGapRows(prev => {
+        // Merge: keep edited values for existing rows, add new ones
+        const existing = new Map(prev.map(r => [r.caseNumber, r]))
+        return allGaps.gaps.map(g => {
+          const ex = existing.get(g.caseNumber)
+          return ex || {
+            caseNumber: g.caseNumber,
+            caseTitle: (g as any).caseTitle,
+            gapDays: g.gapDays,
+            lastNoteDate: g.lastNoteDate,
+            title: g.title,
+            body: g.body,
+            selected: true,
+          }
+        })
+      })
+    } else {
+      setGapRows([])
+    }
+  }, [allGaps?.gaps])
+
+  const updateGapRow = (idx: number, field: keyof NoteGapRow, value: any) => {
+    setGapRows(prev => {
+      const next = [...prev]
+      next[idx] = { ...next[idx], [field]: value }
+      return next
+    })
+  }
+
+  const toggleSelectAllGaps = () => {
+    const allSelected = gapRows.every(r => r.selected)
+    setGapRows(prev => prev.map(r => ({ ...r, selected: !allSelected })))
+  }
+
+  const selectedGapCount = gapRows.filter(r => r.selected).length
+
+  const handleBatchSubmitNotes = async () => {
+    const selected = gapRows.filter(r => r.selected && r.title.trim() && r.body.trim())
+    if (selected.length === 0) return
+
+    setSubmittingNotes(true)
+    setNoteSubmitResults(null)
+    const results: Array<{ caseNumber: string; success: boolean; message: string }> = []
+
+    for (const gap of selected) {
+      try {
+        const res = await fetch(`/api/case/${gap.caseNumber}/note-gap/submit`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('eb_token')}` },
+          body: JSON.stringify({ title: gap.title, body: gap.body }),
+        })
+        const data = await res.json()
+        results.push({ caseNumber: gap.caseNumber, success: res.ok, message: res.ok ? 'Note written' : (data.error || 'Failed') })
+      } catch (e: any) {
+        results.push({ caseNumber: gap.caseNumber, success: false, message: e.message || 'Network error' })
+      }
+    }
+
+    setNoteSubmitResults(results)
+    const succeededCases = new Set(results.filter(r => r.success).map(r => r.caseNumber))
+    setGapRows(prev => prev.filter(r => !succeededCases.has(r.caseNumber)))
+    await refetchGaps()
+    setSubmittingNotes(false)
+  }
+
+  const handleDismissGap = async (caseNumber: string, idx: number) => {
+    try {
+      await fetch(`/api/case/${caseNumber}/note-gap`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('eb_token')}` },
+      })
+    } catch {}
+    setGapRows(prev => prev.filter((_, i) => i !== idx))
+    refetchGaps()
+  }
+
   const initRowsFromEstimates = useCallback((estimates: LaborEstimateItem[]) => {
     setRows(
       estimates
-        .filter(e => e.status !== 'submitted')
+        .filter(e => e.status !== 'submitted' && (e as any).daysSinceLastLabor !== 0 && e.estimated.totalMinutes > 0)
         .map(e => ({
           caseNumber: e.caseNumber,
           caseTitle: (e as any).caseTitle,
@@ -146,16 +173,30 @@ export default function DailyOpsPage() {
           originalMinutes: e.estimated.totalMinutes,
           selected: true,
           status: e.status,
+          daysSinceLastLabor: (e as any).daysSinceLastLabor,
+          lastLaborDate: (e as any).lastLaborDate,
         }))
     )
   }, [])
+
+  // Auto-load rows from cache when returning to page
+  const autoLoaded = useRef(false)
+  useEffect(() => {
+    if (!autoLoaded.current && data?.estimates && data.estimates.length > 0 && rows.length === 0) {
+      const pending = data.estimates.filter(e => e.status !== 'submitted')
+      if (pending.length > 0) {
+        initRowsFromEstimates(data.estimates)
+        autoLoaded.current = true
+      }
+    }
+  }, [data?.estimates])
 
   const [estimateProgress, setEstimateProgress] = useState<string | null>(null)
 
   const handleEstimateAll = async () => {
     setEstimating(true)
     setSubmitResults(null)
-    setEstimateProgress('正在启动...')
+    setEstimateProgress(null)
 
     // Listen for SSE progress events
     const evtSource = new EventSource('/api/events')
@@ -239,7 +280,6 @@ export default function DailyOpsPage() {
   const totalMinutes = rows.reduce((sum, r) => sum + (r.selected ? r.totalMinutes : 0), 0)
   const selectedCount = rows.filter(r => r.selected).length
   const pendingEstimates = data?.estimates?.filter(e => e.status !== 'submitted') ?? []
-  const gapCount = allGaps?.gaps?.length ?? 0
 
   return (
     <div className="space-y-4">
@@ -251,45 +291,70 @@ export default function DailyOpsPage() {
         </p>
       </div>
 
-      {/* Left-Right Split */}
-      <div className="flex gap-4 items-start">
+      {/* Left-Right Split — equal 50/50 */}
+      <div className="grid grid-cols-2 gap-4 items-start">
 
         {/* ===== Left: Note Gaps (always visible) ===== */}
-        <div className="w-[400px] min-w-[360px] shrink-0 space-y-3">
+        <div className="min-w-0 space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-medium text-foreground flex items-center gap-2">
               ⚠️ Note Gaps
-              {gapCount > 0 && (
+              {gapRows.length > 0 && (
                 <span className="text-xs px-1.5 py-0.5 rounded-full"
                   style={{ background: 'var(--accent-amber-dim)', color: 'var(--accent-amber)' }}>
-                  {gapCount}
+                  {gapRows.length}
                 </span>
               )}
             </h2>
-            <button
-              onClick={async () => {
-                setChecking(true)
-                setCheckResult(null)
-                try {
-                  const result = await checkAllGaps.mutateAsync()
-                  setCheckResult(`检测 ${result.checked} cases，发现 ${result.gaps} 个 gap，新生成 ${result.generated} 个 draft`)
-                  await refetchGaps()
-                } catch (e: any) {
-                  setCheckResult(`检测失败: ${e.message || '未知错误'}`)
-                } finally {
-                  setChecking(false)
-                }
-              }}
-              disabled={checking}
-              className="px-3 py-1.5 text-sm rounded-lg disabled:opacity-50 transition-colors flex items-center gap-1.5"
-              style={{ background: 'var(--accent-amber)', color: 'var(--text-inverse)' }}
-            >
-              {checking ? (
-                <><span className="animate-spin inline-block">⏳</span> 检测中...</>
-              ) : (
-                <>🔍 Check All</>
+            <div className="flex gap-2">
+              {gapRows.length > 0 && (
+                <button onClick={async () => {
+                  for (const gap of gapRows) {
+                    try { await fetch(`/api/case/${gap.caseNumber}/note-gap`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('eb_token')}` } }) } catch {}
+                  }
+                  setGapRows([])
+                  refetchGaps()
+                }}
+                  className="px-3 py-1.5 text-xs rounded-lg border border-border text-muted hover:text-foreground hover:bg-surface-hover transition-colors">
+                  Dismiss All
+                </button>
               )}
-            </button>
+              {selectedGapCount > 0 && (
+                <button onClick={handleBatchSubmitNotes} disabled={submittingNotes}
+                  className="px-3 py-1.5 text-xs rounded-lg disabled:opacity-50 transition-colors flex items-center gap-1.5"
+                  style={{ background: 'var(--accent-green)', color: 'var(--text-inverse)' }}>
+                  {submittingNotes ? (
+                    <><span className="animate-spin inline-block">⏳</span> Submitting...</>
+                  ) : (
+                    <>📤 Submit ({selectedGapCount})</>
+                  )}
+                </button>
+              )}
+              <button
+                onClick={async () => {
+                  setChecking(true)
+                  setCheckResult(null)
+                  try {
+                    const result = await checkAllGaps.mutateAsync()
+                    setCheckResult(`检测 ${result.checked} cases，发现 ${result.gaps} 个 gap，新生成 ${result.generated} 个 draft`)
+                    await refetchGaps()
+                  } catch (e: any) {
+                    setCheckResult(`检测失败: ${e.message || '未知错误'}`)
+                  } finally {
+                    setChecking(false)
+                  }
+                }}
+                disabled={checking}
+                className="px-3 py-1.5 text-sm rounded-lg disabled:opacity-50 transition-colors flex items-center gap-1.5"
+                style={{ background: 'var(--accent-amber)', color: 'var(--text-inverse)' }}
+              >
+                {checking ? (
+                  <><span className="animate-spin inline-block">⏳</span> 检测中...</>
+                ) : (
+                  <>🔍 Check All</>
+                )}
+              </button>
+            </div>
           </div>
 
           {checkResult && (
@@ -302,12 +367,90 @@ export default function DailyOpsPage() {
             </div>
           )}
 
-          {gapCount > 0 ? (
-            <div className="space-y-2">
-              {allGaps!.gaps.map(gap => (
-                <NoteGapEditCard key={gap.caseNumber} gap={gap} onUpdate={() => refetchGaps()} />
+          {/* Note Submit Results */}
+          {noteSubmitResults && (
+            <div className="p-3 rounded-lg border text-sm"
+              style={noteSubmitResults.every(r => r.success)
+                ? { borderColor: 'var(--accent-green)', background: 'var(--accent-green-dim)' }
+                : { borderColor: 'var(--accent-amber)', background: 'var(--accent-amber-dim)' }}>
+              {noteSubmitResults.map((r, i) => (
+                <div key={i} className="text-foreground">
+                  {r.success ? '✅' : '❌'} Case {r.caseNumber}: {r.message}
+                </div>
               ))}
             </div>
+          )}
+
+          {gapRows.length > 0 ? (
+            <>
+              {/* Select All */}
+              <div className="flex items-center justify-between px-1">
+                <label className="flex items-center gap-1.5 text-xs cursor-pointer" style={{ color: 'var(--text-secondary)' }}>
+                  <input type="checkbox"
+                    checked={gapRows.length > 0 && gapRows.every(r => r.selected)}
+                    onChange={toggleSelectAllGaps} className="rounded" />
+                  Select All
+                </label>
+                <span className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>
+                  {selectedGapCount}/{gapRows.length}
+                </span>
+              </div>
+
+              {/* Gap Cards */}
+              <div className="space-y-2">
+                {gapRows.map((gap, idx) => (
+                  <div key={gap.caseNumber}
+                    className="rounded-lg px-3 py-2 transition-colors"
+                    style={{
+                      border: gap.selected ? '1px solid var(--accent-amber)' : '1px solid var(--border-default)',
+                      background: 'var(--bg-secondary)',
+                    }}>
+                    {/* Row 1: checkbox + caseID + title + gap badge + dismiss */}
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <input type="checkbox" checked={gap.selected}
+                        onChange={() => updateGapRow(idx, 'selected', !gap.selected)} className="rounded flex-shrink-0" />
+                      <span className="font-mono text-xs font-medium cursor-pointer hover:underline flex-shrink-0"
+                        style={{ color: 'var(--accent-blue)' }}
+                        onClick={() => navigate(`/case/${gap.caseNumber}?tab=notes`)}>
+                        {gap.caseNumber}
+                      </span>
+                      {gap.caseTitle && (
+                        <span className="text-xs truncate min-w-0" style={{ color: 'var(--text-tertiary)' }} title={gap.caseTitle}>
+                          {gap.caseTitle.includes('|') ? gap.caseTitle.split('|').pop()!.trim() : gap.caseTitle}
+                        </span>
+                      )}
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0"
+                        style={{ background: 'var(--accent-amber-dim)', color: 'var(--accent-amber)' }}>
+                        {gap.gapDays}d
+                      </span>
+                      <button
+                        onClick={() => handleDismissGap(gap.caseNumber, idx)}
+                        className="ml-auto p-0.5 rounded transition-colors flex-shrink-0"
+                        style={{ color: 'var(--text-tertiary)' }}
+                        title="Dismiss"
+                      >✕</button>
+                    </div>
+
+                    {/* Row 2: title input */}
+                    <input type="text" value={gap.title}
+                      onChange={e => updateGapRow(idx, 'title', e.target.value)}
+                      className="w-full px-2 py-1 text-xs bg-surface border border-border rounded focus:outline-none text-foreground mb-1"
+                      placeholder="Note title..."
+                      onFocus={e => (e.currentTarget.style.borderColor = 'var(--accent-amber)')}
+                      onBlur={e => (e.currentTarget.style.borderColor = '')} />
+
+                    {/* Row 3: body textarea */}
+                    <textarea value={gap.body}
+                      onChange={e => updateGapRow(idx, 'body', e.target.value)}
+                      rows={4}
+                      className="w-full px-2 py-1 text-xs bg-surface border border-border rounded focus:outline-none text-foreground resize-y font-mono min-h-[60px]"
+                      placeholder="Note body..."
+                      onFocus={e => (e.currentTarget.style.borderColor = 'var(--accent-amber)')}
+                      onBlur={e => (e.currentTarget.style.borderColor = '')} />
+                  </div>
+                ))}
+              </div>
+            </>
           ) : (
             <div className="rounded-lg p-6 text-center"
               style={{ border: '1px dashed var(--border-default)', background: 'var(--bg-secondary)' }}>
@@ -321,12 +464,34 @@ export default function DailyOpsPage() {
         </div>
 
         {/* ===== Right: Labor Estimates ===== */}
-        <div className="flex-1 min-w-0 space-y-3">
+        <div className="min-w-0 space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-medium text-foreground flex items-center gap-2">
               ⏱️ Labor Estimates
             </h2>
             <div className="flex gap-2">
+              {(pendingEstimates.length > 0 || rows.length > 0) && (
+                <button onClick={async () => {
+                  await discardAll.mutateAsync()
+                  setRows([])
+                  await refetch()
+                }}
+                  disabled={discardAll.isPending}
+                  className="px-3 py-1.5 text-xs rounded-lg border border-border text-muted hover:text-foreground hover:bg-surface-hover transition-colors disabled:opacity-50">
+                  {discardAll.isPending ? 'Discarding...' : 'Discard All'}
+                </button>
+              )}
+              {selectedCount > 0 && (
+                <button onClick={handleBatchSubmit} disabled={submitting || selectedCount === 0}
+                  className="px-3 py-1.5 text-xs rounded-lg disabled:opacity-50 transition-colors flex items-center gap-1.5"
+                  style={{ background: 'var(--accent-green)', color: 'var(--text-inverse)' }}>
+                  {submitting ? (
+                    <><span className="animate-spin inline-block">⏳</span> Submitting...</>
+                  ) : (
+                    <>📤 Submit ({selectedCount})</>
+                  )}
+                </button>
+              )}
               {pendingEstimates.length > 0 && rows.length === 0 && (
                 <button onClick={handleLoadExisting}
                   className="px-3 py-1.5 text-xs rounded-lg border border-border text-foreground hover:bg-surface-hover transition-colors">
@@ -372,80 +537,99 @@ export default function DailyOpsPage() {
             </div>
           )}
 
-          {/* Labor Table */}
+          {/* Labor Cards */}
           {rows.length > 0 ? (
             <>
-              <div className="border border-border rounded-lg overflow-hidden">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-surface-secondary text-xs text-muted uppercase tracking-wider">
-                      <th className="p-2 text-left w-8">
-                        <input type="checkbox"
-                          checked={rows.length > 0 && rows.every(r => r.selected)}
-                          onChange={toggleSelectAll} className="rounded" />
-                      </th>
-                      <th className="p-2 text-left">Case</th>
-                      <th className="p-2 text-left w-20">Min</th>
-                      <th className="p-2 text-left w-40">Classification</th>
-                      <th className="p-2 text-left">Description</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {rows.map((row, idx) => (
-                      <tr key={row.caseNumber} className="hover:bg-surface-hover transition-colors">
-                        <td className="p-2">
-                          <input type="checkbox" checked={row.selected}
-                            onChange={() => updateRow(idx, 'selected', !row.selected)} className="rounded" />
-                        </td>
-                        <td className="p-2">
-                          <div className="font-mono text-xs text-foreground">{row.caseNumber}</div>
-                          {row.caseTitle && (
-                            <div className="text-[10px] text-muted truncate max-w-[180px]">{row.caseTitle}</div>
-                          )}
-                        </td>
-                        <td className="p-2">
+              {/* Select All + Summary Bar */}
+              <div className="flex items-center justify-between px-1">
+                <label className="flex items-center gap-1.5 text-xs cursor-pointer" style={{ color: 'var(--text-secondary)' }}>
+                  <input type="checkbox"
+                    checked={rows.length > 0 && rows.every(r => r.selected)}
+                    onChange={toggleSelectAll} className="rounded" />
+                  Select All
+                </label>
+                <span className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>
+                  {selectedCount}/{rows.length} · {totalMinutes} min
+                </span>
+              </div>
+
+              {/* Cards */}
+              <div className="space-y-2">
+                {rows.map((row, idx) => (
+                  <div key={row.caseNumber}
+                    className="rounded-lg px-3 py-2 transition-colors"
+                    style={{
+                      border: row.selected ? '1px solid var(--accent-blue)' : '1px solid var(--border-default)',
+                      background: 'var(--bg-secondary)',
+                    }}>
+                    {/* Row 1: checkbox + caseID + title + days badge + discard */}
+                    <div className="flex items-center gap-2 mb-1.5 min-w-0">
+                      <input type="checkbox" checked={row.selected}
+                        onChange={() => updateRow(idx, 'selected', !row.selected)} className="rounded flex-shrink-0" />
+                      <span className="font-mono text-xs font-medium cursor-pointer hover:underline flex-shrink-0"
+                        style={{ color: 'var(--accent-blue)' }}
+                        onClick={() => navigate(`/case/${row.caseNumber}?tab=notes`)}>
+                        {row.caseNumber}
+                      </span>
+                      {row.caseTitle && (
+                        <span className="text-xs truncate flex-1 min-w-0" style={{ color: 'var(--text-tertiary)' }} title={row.caseTitle}>
+                          {row.caseTitle.includes('|') ? row.caseTitle.split('|').pop()!.trim() : row.caseTitle}
+                        </span>
+                      )}
+                      {row.daysSinceLastLabor != null && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0"
+                          style={{
+                            background: row.daysSinceLastLabor === 0 ? 'var(--accent-green-dim)' : row.daysSinceLastLabor >= 3 ? 'var(--accent-red-dim)' : 'var(--accent-blue-dim)',
+                            color: row.daysSinceLastLabor === 0 ? 'var(--accent-green)' : row.daysSinceLastLabor >= 3 ? 'var(--accent-red)' : 'var(--accent-blue)',
+                          }}
+                          title={row.lastLaborDate ? `Last labor: ${row.lastLaborDate}` : undefined}>
+                          {row.daysSinceLastLabor === 0 ? '✓ today' : `${row.daysSinceLastLabor}d`}
+                        </span>
+                      )}
+                      <button
+                        onClick={async () => {
+                          await discardOne.mutateAsync(row.caseNumber)
+                          setRows(prev => prev.filter((_, i) => i !== idx))
+                          await refetch()
+                        }}
+                        className="p-0.5 rounded transition-colors flex-shrink-0"
+                        style={{ color: 'var(--text-tertiary)' }}
+                        title="Discard"
+                      >✕</button>
+                    </div>
+
+                    {/* Row 2: left (min + classification) | right (description) — equal height */}
+                    <div className="flex items-stretch gap-3">
+                      {/* Left: time + classification stacked */}
+                      <div className="flex-shrink-0 space-y-1" style={{ width: '140px' }}>
+                        <div className="flex items-center gap-1.5">
                           <input type="number" value={row.totalMinutes}
                             onChange={e => updateRow(idx, 'totalMinutes', parseInt(e.target.value) || 0)}
                             min={0} max={480}
-                            className="w-16 px-1.5 py-1 text-xs bg-surface border border-border rounded focus:outline-none text-foreground"
+                            className="w-14 px-1 py-0.5 text-sm font-semibold bg-surface border border-border rounded focus:outline-none text-foreground text-center"
                             onFocus={e => (e.currentTarget.style.borderColor = 'var(--accent-blue)')}
                             onBlur={e => (e.currentTarget.style.borderColor = '')} />
-                        </td>
-                        <td className="p-2">
-                          <select value={row.classification}
-                            onChange={e => updateRow(idx, 'classification', e.target.value)}
-                            className="w-full px-1.5 py-1 text-xs bg-surface border border-border rounded focus:outline-none text-foreground">
-                            {CLASSIFICATIONS.map(c => (
-                              <option key={c} value={c}>{c}</option>
-                            ))}
-                          </select>
-                        </td>
-                        <td className="p-2">
-                          <input type="text" value={row.description}
-                            onChange={e => updateRow(idx, 'description', e.target.value)}
-                            className="w-full px-1.5 py-1 text-xs bg-surface border border-border rounded focus:outline-none text-foreground"
-                            placeholder="Description..." />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                          <span className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>min</span>
+                        </div>
+                        <select value={row.classification}
+                          onChange={e => updateRow(idx, 'classification', e.target.value)}
+                          className="w-full px-1 py-0.5 text-[10px] bg-surface border border-border rounded focus:outline-none text-foreground">
+                          {CLASSIFICATIONS.map(c => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
+                        </select>
+                      </div>
 
-              {/* Footer */}
-              <div className="flex items-center justify-between">
-                <div className="text-xs text-muted">
-                  {selectedCount} selected · Total: <span className="font-mono font-medium text-foreground">{totalMinutes}</span> min
-                </div>
-                <button onClick={handleBatchSubmit} disabled={submitting || selectedCount === 0}
-                  className="px-4 py-1.5 text-xs rounded-lg disabled:opacity-50 transition-colors flex items-center gap-1.5"
-                  style={{ background: 'var(--accent-green)', color: 'var(--text-inverse)' }}>
-                  {submitting ? (
-                    <><span className="animate-spin inline-block">⏳</span> Submitting...</>
-                  ) : (
-                    <>📤 Submit Selected ({selectedCount})</>
-                  )}
-                </button>
+                      {/* Right: description — stretches to match left height */}
+                      <textarea value={row.description}
+                        onChange={e => updateRow(idx, 'description', e.target.value)}
+                        className="flex-1 min-w-0 px-2 py-1 text-xs bg-surface border border-border rounded focus:outline-none text-foreground resize-none"
+                        placeholder="Description..."
+                        onFocus={e => (e.currentTarget.style.borderColor = 'var(--accent-blue)')}
+                        onBlur={e => (e.currentTarget.style.borderColor = '')} />
+                    </div>
+                  </div>
+                ))}
               </div>
             </>
           ) : (
@@ -454,7 +638,7 @@ export default function DailyOpsPage() {
               <div className="text-2xl mb-2">🧮</div>
               <p className="text-sm text-muted">No labor estimates</p>
               <p className="text-xs text-muted mt-1">
-                Click "Estimate All" or run <code className="px-1 py-0.5 rounded text-xs" style={{ background: 'var(--bg-tertiary)' }}>/labor-estimate all</code> in CLI
+                Click <strong>Estimate All</strong> to scan for new estimates
               </p>
               {pendingEstimates.length > 0 && (
                 <p className="text-xs text-muted mt-1">

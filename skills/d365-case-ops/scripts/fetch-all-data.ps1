@@ -71,55 +71,29 @@ if ($isAR) {
 Write-Host "🔵 Launching parallel: snapshot + emails + notes..."
 
 $jobSnapshot = Start-Job -ScriptBlock {
-    param($root, $tn, $outDir, $cache, $arDir)
+    param($root, $tn, $outDir, $cache, $subDir)
     $env:D365_CASES_ROOT = Split-Path (Split-Path $outDir)
-    & "$root\fetch-case-snapshot.ps1" -TicketNumber $tn -OutputDir $outDir -CacheMinutes $cache 2>&1 | Out-String
-    # If AR mode, copy case-info.md from main case dir to AR dir
-    if ($arDir -and $arDir -ne $tn) {
-        $srcFile = Join-Path (Join-Path $outDir $tn) "case-info.md"
-        $dstDir = Join-Path $outDir $arDir
-        if (-not (Test-Path $dstDir)) { New-Item -ItemType Directory -Path $dstDir -Force | Out-Null }
-        if (Test-Path $srcFile) {
-            Copy-Item $srcFile (Join-Path $dstDir "case-info.md") -Force
-            Write-Host "🔵 Copied case-info.md from $tn to $arDir"
-        }
-    }
+    $params = @{ TicketNumber = $tn; OutputDir = $outDir; CacheMinutes = $cache }
+    if ($subDir) { $params.OutputSubDir = $subDir }
+    & "$root\fetch-case-snapshot.ps1" @params 2>&1 | Out-String
 } -ArgumentList $scriptRoot, $fetchCaseNumber, $OutputDir, $CacheMinutes, $(if ($isAR) { $arCaseNumber } else { $null })
 
 $jobEmails = Start-Job -ScriptBlock {
-    param($root, $tn, $outDir, $force, $arDir)
+    param($root, $tn, $outDir, $force, $subDir)
     $env:D365_CASES_ROOT = Split-Path (Split-Path $outDir)
     $params = @{ TicketNumber = $tn; OutputDir = $outDir }
     if ($force) { $params.Force = $true }
+    if ($subDir) { $params.OutputSubDir = $subDir }
     & "$root\fetch-emails.ps1" @params 2>&1 | Out-String
-    # If AR mode, copy emails.md from main case dir to AR dir
-    if ($arDir -and $arDir -ne $tn) {
-        $srcFile = Join-Path (Join-Path $outDir $tn) "emails.md"
-        $dstDir = Join-Path $outDir $arDir
-        if (-not (Test-Path $dstDir)) { New-Item -ItemType Directory -Path $dstDir -Force | Out-Null }
-        if (Test-Path $srcFile) {
-            Copy-Item $srcFile (Join-Path $dstDir "emails.md") -Force
-            Write-Host "🔵 Copied emails.md from $tn to $arDir"
-        }
-    }
 } -ArgumentList $scriptRoot, $fetchCaseNumber, $OutputDir, $Force.IsPresent, $(if ($isAR) { $arCaseNumber } else { $null })
 
 $jobNotes = Start-Job -ScriptBlock {
-    param($root, $tn, $outDir, $force, $arDir)
+    param($root, $tn, $outDir, $force, $subDir)
     $env:D365_CASES_ROOT = Split-Path (Split-Path $outDir)
     $params = @{ TicketNumber = $tn; OutputDir = $outDir }
     if ($force) { $params.Force = $true }
+    if ($subDir) { $params.OutputSubDir = $subDir }
     & "$root\fetch-notes.ps1" @params 2>&1 | Out-String
-    # If AR mode, copy notes.md from main case dir to AR dir
-    if ($arDir -and $arDir -ne $tn) {
-        $srcFile = Join-Path (Join-Path $outDir $tn) "notes.md"
-        $dstDir = Join-Path $outDir $arDir
-        if (-not (Test-Path $dstDir)) { New-Item -ItemType Directory -Path $dstDir -Force | Out-Null }
-        if (Test-Path $srcFile) {
-            Copy-Item $srcFile (Join-Path $dstDir "notes.md") -Force
-            Write-Host "🔵 Copied notes.md from $tn to $arDir"
-        }
-    }
 } -ArgumentList $scriptRoot, $fetchCaseNumber, $OutputDir, $Force.IsPresent, $(if ($isAR) { $arCaseNumber } else { $null })
 
 # Wait for all
@@ -155,12 +129,12 @@ foreach ($r in $results) {
 
 Remove-Job $jobSnapshot, $jobEmails, $jobNotes -Force -ErrorAction SilentlyContinue
 
-# --- AR Mode: clean up the temp main case directory ---
+# --- AR Mode: safety check — remove main case dir if somehow created (shouldn't happen with OutputSubDir) ---
 if ($isAR) {
     $mainCaseDir = Join-Path $OutputDir $fetchCaseNumber
     if ((Test-Path $mainCaseDir) -and $fetchCaseNumber -ne $arCaseNumber) {
         Remove-Item $mainCaseDir -Recurse -Force -ErrorAction SilentlyContinue
-        Write-Host "🔵 Cleaned up temp main case dir: $mainCaseDir"
+        Write-Host "⚠️ Cleaned up unexpected main case dir: $mainCaseDir"
     }
 }
 

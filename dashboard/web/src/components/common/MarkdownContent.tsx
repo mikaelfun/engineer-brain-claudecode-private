@@ -31,8 +31,8 @@ const markdownComponents = {
   ),
   th: ({ children, ...props }: any) => (
     <th
-      className="px-3 py-2 text-left font-semibold text-xs uppercase tracking-wider"
-      style={{ border: '1px solid var(--border-default)', color: 'var(--text-secondary)' }}
+      className="px-3 py-2 text-left font-semibold text-[11px] uppercase"
+      style={{ border: '1px solid var(--border-default)', color: 'var(--text-secondary)', letterSpacing: '0.25px' }}
       {...props}
     >
       {children}
@@ -159,7 +159,7 @@ const markdownComponents = {
 
   // Paragraphs
   p: ({ children, ...props }: any) => (
-    <p className="my-2 leading-relaxed" style={{ color: 'var(--text-primary)' }} {...props}>
+    <p className="my-2 leading-relaxed" style={{ color: 'var(--text-primary)', overflowWrap: 'anywhere' }} {...props}>
       {children}
     </p>
   ),

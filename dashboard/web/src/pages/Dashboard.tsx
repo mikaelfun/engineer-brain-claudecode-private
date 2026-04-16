@@ -45,8 +45,10 @@ export default function Dashboard() {
 
   // Recover patrol state on page load/refresh (ISS-094)
   // Hydrate from backend: running state + last run results
+  // Also runs when phase is 'starting' (set by startNew()) to recover if SSE is broken
   useEffect(() => {
-    if (patrolRunning) return // Store already knows patrol is running (from SSE)
+    const { phase } = usePatrolStore.getState()
+    if (patrolRunning && phase !== 'starting') return // Store already knows patrol is running (from SSE)
     let cancelled = false
     apiGet<{ running: boolean; lastRun?: any }>('/patrol/status').then((res) => {
       if (cancelled) return
@@ -68,7 +70,7 @@ export default function Dashboard() {
           for (const cr of lr.caseResults) {
             // Add as processing first (to register), then complete
             usePatrolStore.getState().onPatrolProgress({ phase: lr.phase, currentCase: cr.caseNumber })
-            usePatrolStore.getState().onPatrolCaseCompleted({ caseNumber: cr.caseNumber, error: cr.error })
+            usePatrolStore.getState().onPatrolCaseCompleted({ caseNumber: cr.caseNumber, durationMs: cr.durationMs, error: cr.error })
           }
           // Re-set the final phase (hydration complete)
           usePatrolStore.getState().onPatrolProgress({
@@ -143,7 +145,7 @@ export default function Dashboard() {
           <h2 className="text-xl font-extrabold" style={{ color: 'var(--text-primary)', letterSpacing: '-0.03em' }}>Dashboard</h2>
           <p className="text-xs mt-1 font-mono" style={{ color: 'var(--text-tertiary)' }}>
             {cases.length} active cases
-            {patrol && ` · patrol ${new Date(patrol.lastPatrol).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' })} ${new Date(patrol.lastPatrol).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}`}
+            {patrol && ` · patrol ${new Date(patrol.lastPatrol).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', timeZone: 'Asia/Singapore' })} ${new Date(patrol.lastPatrol).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Singapore' })}`}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -151,18 +153,42 @@ export default function Dashboard() {
             <button
               onClick={() => cancelPatrol.mutate()}
               disabled={cancelPatrol.isPending}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
-              style={{ background: 'var(--accent-red-dim)', color: 'var(--accent-red)' }}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-[13px] uppercase hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-semibold"
+              style={{ background: 'var(--accent-red-dim)', color: 'var(--accent-red)', backdropFilter: 'blur(8px)', letterSpacing: '0.2px' }}
             >
               <Square className="w-3.5 h-3.5" />
               {cancelPatrol.isPending ? 'Cancelling...' : 'Cancel'}
             </button>
           )}
           <button
-            onClick={() => startPatrol.mutate(true)}
+            onClick={() => {
+              usePatrolStore.getState().startNew()
+              startPatrol.mutate(true)
+              // Fallback: if SSE is broken and no progress arrives within 15s,
+              // poll backend to recover actual state
+              setTimeout(() => {
+                const s = usePatrolStore.getState()
+                if (s.phase === 'starting') {
+                  apiGet<{ running: boolean; lastRun?: any }>('/patrol/status').then((res) => {
+                    if (!res.running && res.lastRun) {
+                      // Patrol already finished — hydrate from lastRun
+                      usePatrolStore.getState().onPatrolProgress({
+                        phase: res.lastRun.phase || 'completed',
+                        totalCases: res.lastRun.totalCases,
+                        changedCases: res.lastRun.changedCases,
+                        processedCases: res.lastRun.processedCases,
+                        error: res.lastRun.error,
+                      })
+                    } else if (res.running) {
+                      usePatrolStore.getState().onPatrolProgress({ phase: 'processing' })
+                    }
+                  }).catch(() => {})
+                }
+              }, 15_000)
+            }}
             disabled={isPatrolActive}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
-            style={{ background: 'var(--accent-blue)', color: 'var(--text-inverse)', boxShadow: 'var(--shadow-card)' }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-[13px] uppercase hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-semibold"
+            style={{ background: 'var(--accent-blue)', color: 'var(--text-inverse)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.15), var(--shadow-card)', letterSpacing: '0.2px' }}
           >
             {isPatrolActive ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -204,7 +230,9 @@ export default function Dashboard() {
                   ? 'Patrol Failed'
                   : showCompleted
                     ? `Patrol Complete — ${patrolProcessed} cases processed, ${patrolChanged} changed`
-                    : patrolPhase === 'filtering'
+                    : patrolPhase === 'starting' || patrolPhase === 'discovering'
+                      ? 'Discovering cases...'
+                      : patrolPhase === 'filtering'
                       ? `Filtering... ${patrolTotal > 0 ? `${patrolTotal} cases` : ''}`
                       : patrolPhase === 'warming-up'
                         ? `Warming up... ${patrolChanged > 0 ? `${patrolChanged} cases to process` : ''}`
@@ -242,47 +270,37 @@ export default function Dashboard() {
             <p className="text-[10px] mb-1.5" style={{ color: 'var(--text-tertiary)' }}>{patrolDetail}</p>
           )}
 
-          {/* Per-case progress cards — show whenever there are cases */}
+          {/* Per-case progress — compact grid */}
           {patrolCaseProgress.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5 mt-1">
+            <div className="flex flex-wrap gap-1 mt-1.5">
               {patrolCaseProgress.map((cp) => (
                 <div
                   key={cp.caseNumber}
-                  className="flex items-center gap-2 px-2 py-1.5 rounded-md text-[11px]"
+                  className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px]"
                   style={{
                     background: cp.status === 'completed' ? 'var(--accent-green-dim)'
                       : cp.status === 'failed' ? 'var(--accent-red-dim)'
                       : 'var(--bg-surface)',
                     border: '1px solid var(--border-subtle)',
                   }}
+                  title={cp.error || cp.caseNumber}
                 >
-                  {/* Status icon */}
                   {cp.status === 'processing' && <Loader2 className="w-3 h-3 animate-spin flex-shrink-0" style={{ color: 'var(--accent-blue)' }} />}
                   {cp.status === 'completed' && <CheckCircle2 className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--accent-green)' }} />}
                   {cp.status === 'failed' && <XCircle className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--accent-red)' }} />}
                   {cp.status === 'pending' && <Clock className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--text-tertiary)' }} />}
-
-                  {/* Case number */}
                   <span
-                    className="font-mono truncate cursor-pointer"
-                    style={{ color: 'var(--text-primary)', maxWidth: '110px' }}
+                    className="font-mono cursor-pointer"
+                    style={{ color: 'var(--text-primary)' }}
                     onClick={() => navigate(`/cases/${cp.caseNumber}`)}
-                    title={cp.caseNumber}
                   >
                     {cp.caseNumber.slice(-6)}
                   </span>
-
-                  {/* Current sub-step (data-refresh, compliance-check, troubleshoot, etc.) */}
-                  {cp.status === 'processing' && cp.currentStep && (
-                    <span className="truncate text-[10px]" style={{ color: 'var(--text-tertiary)' }} title={cp.currentStep}>
-                      {cp.currentStep}
-                    </span>
-                  )}
-
-                  {/* Error */}
-                  {cp.status === 'failed' && cp.error && (
-                    <span className="truncate" style={{ color: 'var(--accent-red)' }} title={cp.error}>
-                      {cp.error.slice(0, 30)}
+                  {(cp.status === 'completed' || cp.status === 'failed') && cp.durationMs != null && (
+                    <span className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
+                      {cp.durationMs < 60000
+                        ? `${Math.round(cp.durationMs / 1000)}s`
+                        : `${(cp.durationMs / 60000).toFixed(1)}m`}
                     </span>
                   )}
                 </div>
@@ -309,11 +327,12 @@ export default function Dashboard() {
             <ClickableStat label="Awaiting Others" value={statCounts.awaitingOthers} color="green" filter="awaiting-others" />
           </div>
 
-          {/* Entitlement & RDSE Alerts */}
+          {/* Entitlement & RDSE & Patrol */}
           {(() => {
             const entitlementCases = cases.filter((c: any) => c.meta?.compliance?.entitlementOk === false)
             const rdseCases = cases.filter((c: any) => c.meta?.ccAccount)
-            if (entitlementCases.length === 0 && rdseCases.length === 0) return null
+            const hasAlerts = entitlementCases.length > 0 || rdseCases.length > 0 || patrol
+            if (!hasAlerts) return null
             return (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {entitlementCases.length > 0 && (
@@ -375,7 +394,7 @@ export default function Dashboard() {
                           <button
                             key={c.caseNumber}
                             onClick={() => navigate(`/case/${c.caseNumber}`)}
-                            className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-mono transition-colors"
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[18px] text-[10px] font-mono font-semibold uppercase transition-colors"
                             style={{
                               background: 'color-mix(in srgb, var(--accent-purple) 10%, transparent)',
                               border: '1px solid color-mix(in srgb, var(--accent-purple) 15%, transparent)',
@@ -390,6 +409,52 @@ export default function Dashboard() {
                         )
                       })}
                     </div>
+                  </div>
+                )}
+                {patrol && (
+                  <div
+                    className="rounded-xl px-4 py-3 border"
+                    style={{
+                      background: 'color-mix(in srgb, var(--accent-blue) 6%, var(--bg-surface))',
+                      borderColor: 'color-mix(in srgb, var(--accent-blue) 20%, transparent)',
+                    }}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <Activity className="w-3.5 h-3.5" style={{ color: 'var(--accent-blue)' }} />
+                      <span className="text-xs font-bold" style={{ color: 'var(--accent-blue)' }}>
+                        Patrol
+                      </span>
+                      <span className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
+                        {patrol.patrolType} · {patrol.lastRunTiming?.caseCount || 0} cases · {patrol.lastRunTiming?.wallClockMinutes || 0}min
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-5 gap-1.5 text-xs">
+                      <div className="px-2 py-1.5 rounded-lg text-center" style={{ background: 'var(--accent-red-dim)' }}>
+                        <p className="font-bold" style={{ color: 'var(--accent-red)' }}>{patrol.summary?.pendingEngineer || 0}</p>
+                        <span className="text-[9px]" style={{ color: 'var(--text-tertiary)' }}>PE</span>
+                      </div>
+                      <div className="px-2 py-1.5 rounded-lg text-center" style={{ background: 'var(--accent-amber-dim)' }}>
+                        <p className="font-bold" style={{ color: 'var(--accent-amber)' }}>{patrol.summary?.pendingCustomer || 0}</p>
+                        <span className="text-[9px]" style={{ color: 'var(--text-tertiary)' }}>PC</span>
+                      </div>
+                      <div className="px-2 py-1.5 rounded-lg text-center" style={{ background: 'var(--accent-blue-dim)' }}>
+                        <p className="font-bold" style={{ color: 'var(--accent-blue)' }}>{patrol.summary?.waitingPG || 0}</p>
+                        <span className="text-[9px]" style={{ color: 'var(--text-tertiary)' }}>PG</span>
+                      </div>
+                      <div className="px-2 py-1.5 rounded-lg text-center" style={{ background: 'var(--accent-purple-dim)' }}>
+                        <p className="font-bold" style={{ color: 'var(--accent-purple)' }}>{patrol.summary?.ar || 0}</p>
+                        <span className="text-[9px]" style={{ color: 'var(--text-tertiary)' }}>AR</span>
+                      </div>
+                      <div className="px-2 py-1.5 rounded-lg text-center" style={{ background: 'var(--accent-green-dim)' }}>
+                        <p className="font-bold" style={{ color: 'var(--accent-green)' }}>{patrol.summary?.normal || 0}</p>
+                        <span className="text-[9px]" style={{ color: 'var(--text-tertiary)' }}>OK</span>
+                      </div>
+                    </div>
+                    {patrol.lastRunTiming?.bottlenecks?.length > 0 && (
+                      <div className="mt-1.5 text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
+                        Bottlenecks: {patrol.lastRunTiming.bottlenecks.join(' | ')}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -513,44 +578,6 @@ export default function Dashboard() {
               </div>
             </div>
           </Card>
-
-          {/* Patrol Status */}
-          {patrol && (
-            <Card>
-              <CardHeader
-                title="Patrol Status"
-                icon={<Activity className="w-5 h-5" style={{ color: 'var(--accent-blue)' }} />}
-                subtitle={`Type: ${patrol.patrolType} | ${patrol.lastRunTiming?.caseCount || 0} cases in ${patrol.lastRunTiming?.wallClockMinutes || 0} min`}
-              />
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
-                <div className="px-3 py-2 rounded-lg" style={{ background: 'var(--accent-red-dim)' }}>
-                  <span style={{ color: 'var(--text-secondary)' }}>Pending Engineer</span>
-                  <p className="font-bold" style={{ color: 'var(--accent-red)' }}>{patrol.summary?.pendingEngineer || 0}</p>
-                </div>
-                <div className="px-3 py-2 rounded-lg" style={{ background: 'var(--accent-amber-dim)' }}>
-                  <span style={{ color: 'var(--text-secondary)' }}>Pending Customer</span>
-                  <p className="font-bold" style={{ color: 'var(--accent-amber)' }}>{patrol.summary?.pendingCustomer || 0}</p>
-                </div>
-                <div className="px-3 py-2 rounded-lg" style={{ background: 'var(--accent-blue-dim)' }}>
-                  <span style={{ color: 'var(--text-secondary)' }}>Waiting PG</span>
-                  <p className="font-bold" style={{ color: 'var(--accent-blue)' }}>{patrol.summary?.waitingPG || 0}</p>
-                </div>
-                <div className="px-3 py-2 rounded-lg" style={{ background: 'var(--accent-purple-dim)' }}>
-                  <span style={{ color: 'var(--text-secondary)' }}>AR</span>
-                  <p className="font-bold" style={{ color: 'var(--accent-purple)' }}>{patrol.summary?.ar || 0}</p>
-                </div>
-                <div className="px-3 py-2 rounded-lg" style={{ background: 'var(--accent-green-dim)' }}>
-                  <span style={{ color: 'var(--text-secondary)' }}>Normal</span>
-                  <p className="font-bold" style={{ color: 'var(--accent-green)' }}>{patrol.summary?.normal || 0}</p>
-                </div>
-              </div>
-              {patrol.lastRunTiming?.bottlenecks?.length > 0 && (
-                <div className="mt-3 text-xs" style={{ color: 'var(--text-secondary)' }}>
-                  Bottlenecks: {patrol.lastRunTiming.bottlenecks.join(' | ')}
-                </div>
-              )}
-            </Card>
-          )}
         </>
       )}
     </div>

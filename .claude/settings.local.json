@@ -5,7 +5,8 @@
       "Read(//mnt/c/Users/fangkun/AppData/Local/**)",
       "Bash(pwsh *)",
       "Bash(pwsh -NoProfile *)",
-      "Bash(playwright-cli *)"
+      "Bash(playwright-cli *)",
+      "Bash(agent-browser --version)"
     ]
   }
 }

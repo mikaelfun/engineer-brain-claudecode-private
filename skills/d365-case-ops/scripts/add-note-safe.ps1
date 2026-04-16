@@ -209,6 +209,8 @@ async page => {
 "@
 
 # Ensure we're on a D365 page
+Enter-PlaywrightLock
+try {
 Ensure-D365Tab
 
 $raw = playwright-cli run-code $js 2>&1 | Out-String
@@ -264,3 +266,6 @@ if ($annotationId) {
 Write-Host "✅ Note added to Case $TicketNumber"
 Write-NoteLog -CaseNumber $TicketNumber -Status "SUCCESS" -Title $Title -Body $Body -IncidentId $incidentId -AnnotationId $annotationId
 Write-Result @{ success = $true; annotationId = $annotationId; ticketNumber = $TicketNumber; title = $Title }
+} finally {
+    Exit-PlaywrightLock
+}

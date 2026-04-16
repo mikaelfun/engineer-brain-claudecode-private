@@ -56,12 +56,45 @@ allowed-tools:
 CD="{projectRoot}"
 CASE_DIR="$CD/cases/active/{caseNumber}"
 mkdir -p "$CASE_DIR/logs"
+# 清理上轮残留的 timing markers（防止旧 markers 干扰 patrol-monitor）
+rm -f "$CASE_DIR/logs/.t_"*
 date +%s > "$CASE_DIR/logs/.t_start"
 date +%s > "$CASE_DIR/logs/.t_changegate_start"
 pwsh -NoProfile -File "$CD/skills/d365-case-ops/scripts/check-case-changes.ps1" \
   -TicketNumber {caseNumber} -OutputDir "$CD/cases/active" 2>&1 | tail -1
 date +%s > "$CASE_DIR/logs/.t_changegate_end"
 ```
+
+**Agent tool 诊断（Step 1 之后，B2 之前）**：
+
+> casework 必须在首次需要 spawn 之前探测 Agent tool 可用性并记录。
+> 这帮助诊断 patrol → casework → sub-agent 嵌套 spawn 的稳定性问题。
+
+尝试 spawn 一个最小的诊断 agent（`subagent_type` 留空，用 general-purpose，只输出一行）。记录成功/失败到日志：
+
+```
+# 诊断 spawn：尝试 Agent tool
+Agent({
+  description: "agent-probe {caseNumber}",
+  prompt: "Reply with exactly: AGENT_PROBE_OK"
+})
+```
+
+- **成功**（收到 `AGENT_PROBE_OK`）→ 记日志：
+  ```bash
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] DIAG | Agent tool AVAILABLE (probe OK)" >> "{caseDir}/logs/casework.log"
+  ```
+- **失败**（tool 不存在 / 报错 / 超时）→ 记日志 + 设标志：
+  ```bash
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] DIAG | Agent tool UNAVAILABLE (probe failed)" >> "{caseDir}/logs/casework.log"
+  echo "NO_AGENT" > "{caseDir}/logs/.agent-probe"
+  ```
+
+后续 B2 spawn 前先检查 `.agent-probe`：
+```bash
+[ -f "{caseDir}/logs/.agent-probe" ] && echo "AGENT_DISABLED" || echo "AGENT_OK"
+```
+`AGENT_DISABLED` → 跳过所有 spawn，直接降级（inline 执行或跳过）。避免每次 spawn 都失败浪费 turn。
 
 `--skip-data-refresh` 时跳过 changegate，记日志 `STEP 1 SKIP | --skip-data-refresh`。
 
@@ -155,27 +188,76 @@ echo "$RESULT"
 
 **根据预检结果条件 spawn**：
 
-| 预检结果 | 操作 |
-|---------|------|
-| `teams.spawn=false` | 跳过 teams-search，记日志 `STEP B2 SKIP teams-search \| {reason}` |
-| `teams.spawn=true` | spawn teams-search（后台） |
-| `onenote.spawn=false` | 跳过 onenote-case-search，记日志 `STEP B2 SKIP onenote \| {reason}` |
-| `onenote.spawn=true` | spawn onenote-case-search（后台） |
+先检查 Agent tool 可用性（Step 1 诊断结果）：
+```bash
+AGENT_OK=$( [ -f "{caseDir}/logs/.agent-probe" ] && echo "false" || echo "true" )
+echo "AGENT_AVAILABLE=$AGENT_OK"
+```
+
+| 预检结果 | AGENT_OK=true | AGENT_OK=false |
+|---------|---------------|----------------|
+| `teams.spawn=false` | 跳过，记 `STEP B2 SKIP teams-search \| {reason}` | 同左 |
+| `teams.spawn=true` | spawn teams-search（后台） | **降级**：只写 request.json（QUEUE_MODE）或跳过（DIRECT_MODE），记 `STEP B2 DEGRADE teams-search \| Agent unavailable` |
+| `onenote.spawn=false` | 跳过，记 `STEP B2 SKIP onenote \| {reason}` | 同左 |
+| `onenote.spawn=true` | spawn onenote-case-search（后台） | **降级**：跳过，记 `STEP B2 DEGRADE onenote \| Agent unavailable, using cached data` |
 
 **teams-search**（仅 `teams.spawn=true` 时）：
 
+**检测 patrol 队列模式**：
+```bash
+[ -f "{casesRoot}/.patrol/teams-queue-active" ] && echo "QUEUE_MODE" || echo "DIRECT_MODE"
 ```
-subagent_type: "teams-search"
-description: "teams-search {caseNumber}"
-run_in_background: true
-prompt: |
-  Case {caseNumber}，caseDir={caseDir}（绝对路径）。
-  contactName={contactName}，contactEmail={contactEmail}。
-  请先读取 .claude/skills/teams-search/SKILL.md 获取完整执行步骤，然后执行。
-  ⚠️ 缓存预检已通过（{reason}），直接从 Step 0.5 开始，跳过 Step 0 缓存检查。
-  ⏱ 第一个 Bash 调用中写 date +%s > "{caseDir}/logs/.t_teamsSearch_start"
-  ⏱ 最后一个 Bash 调用中写 date +%s > "{caseDir}/logs/.t_teamsSearch_end"
-```
+
+- **QUEUE_MODE**（patrol 已启动队列 agent）→ 写 request.json + spawn teams-search agent（QUEUE_MODE）：
+  ```bash
+  mkdir -p "{caseDir}/teams"
+  cat > "{caseDir}/teams/request.json" << 'REQEOF'
+  {
+    "_version": 1,
+    "_requestedAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+    "caseNumber": "{caseNumber}",
+    "caseDir": "{caseDir}",
+    "contactName": "{contactName}",
+    "contactEmail": "{contactEmail}",
+    "forceRefresh": false
+  }
+  REQEOF
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] STEP B2 OK | teams-search queued (request.json written)" >> "{caseDir}/logs/casework.log"
+  ```
+
+  然后 spawn teams-search agent（后台），它会等 queue 写好 `_mcp-raw.json` 后自行做后处理：
+  ```
+  subagent_type: "teams-search"
+  description: "teams-search {caseNumber}"
+  run_in_background: true
+  prompt: |
+    Case {caseNumber}，caseDir={caseDir}（绝对路径）。
+    contactName={contactName}，contactEmail={contactEmail}。
+    ⚠️ QUEUE_MODE：MCP 搜索由 patrol teams-queue agent 负责，你不做 MCP 调用。
+    请读取 .claude/skills/teams-search/SKILL.md，执行 QUEUE_MODE 路径：
+    1. 等待 {caseDir}/teams/_mcp-raw.json 出现（每 10s 检查，最多等 180s）
+    2. 运行 python3 .claude/skills/teams-search/scripts/build-input-from-raw.py "{caseDir}" 生成 _input.json
+    3. 运行 write-teams.ps1 -InputFile _input.json
+    4. 执行 Step 5（relevance + digest）
+    ⏱ 第一个 Bash 调用中写 date +%s > "{caseDir}/logs/.t_teamsSearch_start"
+    ⏱ 最后一个 Bash 调用中写 date +%s > "{caseDir}/logs/.t_teamsSearch_end"
+  ```
+
+  > 冷启动时间（30-60s）与 queue MCP 搜索时间重叠，不增加总耗时。
+
+- **DIRECT_MODE**（单 case 模式）→ spawn teams-search agent（现有行为）：
+  ```
+  subagent_type: "teams-search"
+  description: "teams-search {caseNumber}"
+  run_in_background: true
+  prompt: |
+    Case {caseNumber}，caseDir={caseDir}（绝对路径）。
+    contactName={contactName}，contactEmail={contactEmail}。
+    请先读取 .claude/skills/teams-search/SKILL.md 获取完整执行步骤，然后执行。
+    ⚠️ 缓存预检已通过（{reason}），直接从 Step 0.5 开始，跳过 Step 0 缓存检查。
+    ⏱ 第一个 Bash 调用中写 date +%s > "{caseDir}/logs/.t_teamsSearch_start"
+    ⏱ 最后一个 Bash 调用中写 date +%s > "{caseDir}/logs/.t_teamsSearch_end"
+  ```
 
 **onenote-case-search**（仅 `onenote.spawn=true` 时）：
 
@@ -216,12 +298,14 @@ compliance-check 完成后，读取 `casehealth-meta.json` 中 `compliance.entit
 
 **B4. 等待后台 agent → status-judge**
 
-> ⚠️ **必须等所有后台 agent 完成再执行 judge**（防止 statusJudgedAt < _cache-epoch 导致下次误判）。需等待的 agent：
+> ⚠️ **必须等 data-refresh 和 onenote 完成再执行 judge**（防止 statusJudgedAt < _cache-epoch 导致下次误判）。
 > - `data-refresh`（仅 CHANGED 时 spawn）
-> - `teams-search`（缓存过期时 spawn）
-> - `onenote-case-search`（每次都 spawn）
+> - `onenote-case-search`（SOURCE_NEWER 时 spawn）
+> - `teams-search`：**QUEUE_MODE 和 DIRECT_MODE 统一处理** — 都是等 teams-search agent 完成（B2 已 spawn）。QUEUE_MODE 下 agent 内部等 `_mcp-raw.json`，对 casework 透明。
 
-**等待策略（分级超时）**：
+**等待策略（QUEUE_MODE 和 DIRECT_MODE 统一）**：
+
+等待 teams-search agent 完成（已在 B2 spawn）。使用与 DIRECT_MODE 相同的分级超时逻辑：
 
 1. **先等 60s**，检查 teams-search 日志中是否有 `STEP 0.5 OK`（MCP 健康检查通过）：
    ```bash

@@ -113,6 +113,125 @@ if ($disableHygiene -ne '1') {
 
 # ── 公共辅助函数 ──
 
+# ── Playwright 文件锁（跨进程互斥）──
+# 防止多个脚本同时操作同一个 Playwright profile 导致冲突。
+# 锁粒度：per-profile（默认 d365）。
+# 用法：
+#   Enter-PlaywrightLock [-ProfileKey "d365"]   # 获取锁，如已被占则轮询等待
+#   Exit-PlaywrightLock  [-ProfileKey "d365"]   # 释放锁
+#   Invoke-WithPlaywrightLock { ... }           # 自动获取+释放（推荐）
+
+$script:_pwLockAcquired = @{}  # 跟踪当前进程持有的锁
+
+function Get-PlaywrightLockPath {
+    param([string]$ProfileKey = "d365")
+    return Join-Path $env:TEMP ".claude-playwright-$ProfileKey.lock"
+}
+
+<#
+.SYNOPSIS
+    获取 Playwright profile 锁。如锁被占用则轮询等待。
+.PARAMETER ProfileKey
+    锁的 profile 标识（默认 d365）。不同 profile 互不阻塞。
+.PARAMETER TimeoutSeconds
+    最大等待时间（秒），超时则强制抢锁。默认 120。
+.PARAMETER PollIntervalSeconds
+    轮询间隔（秒）。默认 3。
+#>
+function Enter-PlaywrightLock {
+    param(
+        [string]$ProfileKey = "d365",
+        [int]$TimeoutSeconds = 120,
+        [int]$PollIntervalSeconds = 3
+    )
+    $lockPath = Get-PlaywrightLockPath -ProfileKey $ProfileKey
+    $started = Get-Date
+    $warned = $false
+
+    while (Test-Path $lockPath) {
+        # 检查锁文件是否僵死（超过 5 分钟）
+        try {
+            $lockAge = (Get-Date) - (Get-Item $lockPath -ErrorAction Stop).LastWriteTime
+            if ($lockAge.TotalMinutes -gt 5) {
+                $staleContent = Get-Content $lockPath -Raw -ErrorAction SilentlyContinue
+                Write-Host "⚠️ Stale Playwright lock detected (age: $([int]$lockAge.TotalMinutes)m, content: $staleContent). Force-releasing."
+                Remove-Item $lockPath -Force -ErrorAction SilentlyContinue
+                break
+            }
+        } catch {
+            # 锁文件在检查过程中被释放了
+            break
+        }
+
+        # 检查是否超时
+        $elapsed = ((Get-Date) - $started).TotalSeconds
+        if ($elapsed -gt $TimeoutSeconds) {
+            $staleContent = Get-Content $lockPath -Raw -ErrorAction SilentlyContinue
+            Write-Host "⚠️ Playwright lock wait timeout ($TimeoutSeconds`s). Force-acquiring. (held by: $staleContent)"
+            Remove-Item $lockPath -Force -ErrorAction SilentlyContinue
+            break
+        }
+
+        if (-not $warned) {
+            $holderInfo = Get-Content $lockPath -Raw -ErrorAction SilentlyContinue
+            Write-Host "⏳ Waiting for Playwright lock [$ProfileKey]... (held by: $holderInfo)"
+            $warned = $true
+        }
+        Start-Sleep -Seconds $PollIntervalSeconds
+    }
+
+    # 写入锁文件：PID + 脚本名 + 时间戳
+    $callerScript = if ($MyInvocation.ScriptName) { Split-Path -Leaf $MyInvocation.ScriptName } else { "unknown" }
+    "$PID | $callerScript | $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" | Out-File $lockPath -Encoding utf8 -NoNewline
+    $script:_pwLockAcquired[$ProfileKey] = $true
+    Write-Host "🔒 Playwright lock acquired [$ProfileKey] by PID $PID"
+}
+
+<#
+.SYNOPSIS
+    释放 Playwright profile 锁。
+#>
+function Exit-PlaywrightLock {
+    param([string]$ProfileKey = "d365")
+    $lockPath = Get-PlaywrightLockPath -ProfileKey $ProfileKey
+
+    # 只释放自己持有的锁
+    if ($script:_pwLockAcquired[$ProfileKey]) {
+        Remove-Item $lockPath -Force -ErrorAction SilentlyContinue
+        $script:_pwLockAcquired.Remove($ProfileKey)
+        Write-Host "🔓 Playwright lock released [$ProfileKey]"
+    }
+}
+
+<#
+.SYNOPSIS
+    在锁保护下执行 ScriptBlock。自动获取+释放锁，异常时也保证释放。
+.EXAMPLE
+    Invoke-WithPlaywrightLock { record-labor-via-playwright }
+    Invoke-WithPlaywrightLock -ProfileKey "dtm" { warm-dtm-token }
+#>
+function Invoke-WithPlaywrightLock {
+    param(
+        [Parameter(Mandatory=$true, Position=0)]
+        [ScriptBlock]$Action,
+        [string]$ProfileKey = "d365"
+    )
+    Enter-PlaywrightLock -ProfileKey $ProfileKey
+    try {
+        & $Action
+    } finally {
+        Exit-PlaywrightLock -ProfileKey $ProfileKey
+    }
+}
+
+# 注册进程退出时自动释放所有锁（防止 Ctrl+C 僵死）
+Register-EngineEvent -SourceIdentifier PowerShell.Exiting -Action {
+    foreach ($key in @($script:_pwLockAcquired.Keys)) {
+        $lp = Join-Path $env:TEMP ".claude-playwright-$key.lock"
+        Remove-Item $lp -Force -ErrorAction SilentlyContinue
+    }
+} -SupportEvent 2>$null
+
 <#
 .SYNOPSIS
     执行 playwright-cli run-code 并返回 Result 字符串。

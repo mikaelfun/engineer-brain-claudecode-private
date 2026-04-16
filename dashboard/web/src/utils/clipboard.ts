@@ -4,26 +4,63 @@ import { marked } from 'marked'
 marked.use({ async: false })
 
 /**
+ * Strip YAML frontmatter from markdown content.
+ * Frontmatter is delimited by --- on the first line and a closing ---.
+ * Returns the content after the closing --- with leading blank lines trimmed.
+ */
+function stripFrontmatter(markdown: string): string {
+  const lines = markdown.split('\n')
+  // YAML frontmatter must start with --- on the very first line
+  if (lines[0]?.trim() !== '---') return markdown
+
+  // Find closing ---
+  for (let i = 1; i < lines.length; i++) {
+    if (lines[i].trim() === '---') {
+      // Return everything after the closing ---
+      return lines.slice(i + 1).join('\n').replace(/^\n+/, '')
+    }
+  }
+  // No closing --- found, return as-is
+  return markdown
+}
+
+/**
  * Extract email body from draft markdown.
- * Strips: metadata header (before first ---), signature (from Best Regards), footer (after last ---)
+ * Strips: YAML frontmatter, legacy metadata header, signature block, footer.
  *
- * Draft format:
- *   # Email Draft — {type}
- *   **To:** ...
- *   **Subject:** ...
- *   ---
- *   Hi xxx,
- *   {body}
- *   Best Regards,
- *   Kun Fang
- *   ...
- *   ---
- *   _Generated at ..._
+ * Supported draft formats:
+ *
+ *   Format A (YAML frontmatter — current):
+ *     ---
+ *     type: closure
+ *     case: 2603300010000578
+ *     to: user@example.com
+ *     subject: "Re: ..."
+ *     ---
+ *     Hi xxx,
+ *     {body}
+ *     Best Regards,
+ *     Kun Fang
+ *
+ *   Format B (legacy header — older drafts):
+ *     # Email Draft — {type}
+ *     **To:** ...
+ *     **Subject:** ...
+ *     ---
+ *     Hi xxx,
+ *     {body}
+ *     Best Regards,
+ *     Kun Fang
+ *     ---
+ *     _Generated at ..._
  */
 function extractEmailBody(markdown: string): string {
-  const lines = markdown.split('\n')
+  // Step 1: strip YAML frontmatter if present
+  let content = stripFrontmatter(markdown)
 
-  // Find --- separators
+  const lines = content.split('\n')
+
+  // Step 2: find remaining --- separators (for legacy format or footer)
   const separators: number[] = []
   for (let i = 0; i < lines.length; i++) {
     if (lines[i].trim() === '---') {
@@ -35,16 +72,24 @@ function extractEmailBody(markdown: string): string {
   let bodyEnd = lines.length
 
   if (separators.length >= 2) {
+    // Legacy format: header --- body --- footer
     bodyStart = separators[0] + 1
     bodyEnd = separators[separators.length - 1]
   } else if (separators.length === 1) {
-    bodyStart = separators[0] + 1
+    // Single separator: either header end or footer start
+    // If separator is near the top (within first 10 lines), it's a header end
+    if (separators[0] < 10) {
+      bodyStart = separators[0] + 1
+    } else {
+      bodyEnd = separators[0]
+    }
   }
+  // No separators: entire content is body (frontmatter already stripped)
 
-  // Extract body lines
+  // Step 3: extract body lines
   const bodyLines = lines.slice(bodyStart, bodyEnd)
 
-  // Find signature start — "Best Regards" or similar patterns
+  // Step 4: find signature start — "Best Regards" or similar patterns
   let sigStart = bodyLines.length
   for (let i = 0; i < bodyLines.length; i++) {
     const line = bodyLines[i].trim().toLowerCase()

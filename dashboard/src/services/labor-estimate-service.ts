@@ -8,11 +8,13 @@
  */
 import { existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync, statSync } from 'fs'
 import { join } from 'path'
-import { exec } from 'child_process'
+import { execFile } from 'child_process'
 import { promisify } from 'util'
 import { config } from '../config.js'
+import { parseLaborRecords } from './labor-reader.js'
+import { parseCaseInfo } from './case-reader.js'
 
-const execAsync = promisify(exec)
+const execFileAsync = promisify(execFile)
 
 // ===== Types =====
 
@@ -76,30 +78,43 @@ export function readLaborEstimate(caseNumber: string): LaborEstimate | null {
   }
 }
 
-export function readAllLaborEstimates(): Array<LaborEstimate & { caseTitle?: string }> {
+export function readAllLaborEstimates(): Array<LaborEstimate & { caseTitle?: string; daysSinceLastLabor?: number; lastLaborDate?: string }> {
   const activeCasesDir = config.activeCasesDir
   if (!existsSync(activeCasesDir)) return []
 
-  const results: Array<LaborEstimate & { caseTitle?: string }> = []
+  const results: Array<LaborEstimate & { caseTitle?: string; daysSinceLastLabor?: number; lastLaborDate?: string }> = []
   const caseDirs = readdirSync(activeCasesDir).filter(d => {
     const fullPath = join(activeCasesDir, d)
     try { return statSync(fullPath).isDirectory() } catch { return false }
   })
 
+  const now = new Date()
+
   for (const caseNumber of caseDirs) {
     const estimate = readLaborEstimate(caseNumber)
     if (estimate) {
-      // Try to read case title from case-info.md
-      let caseTitle: string | undefined
-      const caseInfoPath = join(activeCasesDir, caseNumber, 'case-info.md')
-      if (existsSync(caseInfoPath)) {
-        try {
-          const content = readFileSync(caseInfoPath, 'utf-8')
-          const titleMatch = content.match(/^#\s+(.+)/m)
-          if (titleMatch) caseTitle = titleMatch[1]
-        } catch { /* ignore */ }
-      }
-      results.push({ ...estimate, caseTitle })
+      // Skip zero-minute estimates — these are worthless "no action" entries
+      if (!estimate.estimated || estimate.estimated.totalMinutes <= 0) continue
+
+      // Read case title using shared parser (handles | in title correctly)
+      const caseInfo = parseCaseInfo(caseNumber)
+      const caseTitle = caseInfo?.title || undefined
+
+      // Compute days since last labor from labor.md
+      let daysSinceLastLabor: number | undefined
+      let lastLaborDate: string | undefined
+      try {
+        const records = parseLaborRecords(caseNumber)
+        if (records.length > 0) {
+          lastLaborDate = records[0].date // already sorted newest first
+          const lastDate = new Date(lastLaborDate)
+          if (!isNaN(lastDate.getTime())) {
+            daysSinceLastLabor = Math.floor((now.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24))
+          }
+        }
+      } catch { /* ignore */ }
+
+      results.push({ ...estimate, caseTitle, daysSinceLastLabor, lastLaborDate })
     }
   }
 
@@ -190,12 +205,31 @@ export async function submitLaborToD365(
     return { success: false, message: `Script not found: ${scriptPath}` }
   }
 
+  // AR cases: labor must be recorded on the main case (D365 doesn't support labor on AR cases)
+  let targetTicket = caseNumber
+  const metaPath = join(config.activeCasesDir, caseNumber, 'casehealth-meta.json')
+  if (existsSync(metaPath)) {
+    try {
+      const meta = JSON.parse(readFileSync(metaPath, 'utf-8'))
+      if (meta.isAR === true && meta.mainCaseId) {
+        console.log(`[labor] AR case ${caseNumber} → recording labor on main case ${meta.mainCaseId}`)
+        targetTicket = meta.mainCaseId
+      }
+    } catch {}
+  }
+
   const escapedDesc = description.replace(/'/g, "''")
   const escapedClass = classification.replace(/'/g, "''")
-  const cmd = `pwsh -NoProfile -File "${scriptPath}" -TicketNumber '${caseNumber}' -Minutes ${minutes} -Classification '${escapedClass}' -Description '${escapedDesc}'`
+  const args = [
+    '-NoProfile', '-File', scriptPath,
+    '-TicketNumber', targetTicket,
+    '-Minutes', String(minutes),
+    '-Classification', escapedClass,
+    '-Description', escapedDesc,
+  ]
 
   try {
-    const { stdout, stderr } = await execAsync(cmd, { timeout: 120000 })
+    const { stdout, stderr } = await execFileAsync('pwsh', args, { timeout: 120000 })
     const output = (stdout + stderr).trim()
 
     // Update the labor-estimate.json status
@@ -217,7 +251,13 @@ export async function submitLaborToD365(
 
     return { success: true, message: output || `Labor ${minutes}min recorded for Case ${caseNumber}` }
   } catch (err: any) {
-    return { success: false, message: err.message }
+    const stdout = err.stdout || ''
+    const stderr = err.stderr || ''
+    // Extract meaningful message from script output
+    const output = (stdout + stderr).replace(/\r\n/g, '\n').trim()
+    const dupMatch = output.match(/Duplicate detected:.*/)
+    const reason = dupMatch ? dupMatch[0] : (output || err.message)
+    return { success: false, message: reason }
   }
 }
 

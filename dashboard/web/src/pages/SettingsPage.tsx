@@ -17,6 +17,7 @@ interface PathValidation {
 export default function SettingsPage() {
   const [casesRoot, setCasesRoot] = useState('')
   const [teamsSearchCacheHours, setTeamsSearchCacheHours] = useState(4)
+  const [patrolSkipHours, setPatrolSkipHours] = useState(3)
   const [podAlias, setPodAlias] = useState('mcpodvm@microsoft.com')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -37,6 +38,7 @@ export default function SettingsPage() {
       const config = await apiGet<Record<string, any>>('/settings')
       setCasesRoot(config.casesRoot || '')
       setTeamsSearchCacheHours(config.teamsSearchCacheHours ?? 4)
+      setPatrolSkipHours(config.patrolSkipHours ?? 3)
       setPodAlias(config.podAlias || 'mcpodvm@microsoft.com')
       // Validate the initial path
       if (config.casesRoot) {
@@ -77,7 +79,7 @@ export default function SettingsPage() {
     setSaved(false)
     setSaveError(null)
     try {
-      await apiPut('/settings', { casesRoot, teamsSearchCacheHours, podAlias })
+      await apiPut('/settings', { casesRoot, teamsSearchCacheHours, patrolSkipHours, podAlias })
       setSaved(true)
       // Re-validate after save to refresh resolved path
       validatePath(casesRoot)
@@ -214,6 +216,29 @@ export default function SettingsPage() {
             max={72}
             value={teamsSearchCacheHours}
             onChange={(e) => setTeamsSearchCacheHours(Number(e.target.value))}
+            className="w-24 px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 font-mono"
+            style={{ borderColor: 'var(--border-default)' }}
+          />
+          <span className="text-sm" style={{ color: 'var(--text-tertiary)' }}>hours</span>
+        </div>
+      </Card>
+
+      {/* Patrol Skip Window */}
+      <Card>
+        <CardHeader
+          title="Patrol Skip Window"
+          icon={<Clock className="w-4 h-4" style={{ color: 'var(--accent-blue)' }} />}
+        />
+        <p className="text-sm mb-3" style={{ color: 'var(--text-tertiary)' }}>
+          Skip case during patrol if last inspected within this many hours. Use <code className="px-1 py-0.5 rounded text-xs" style={{ background: 'var(--bg-hover)' }}>--force</code> to override.
+        </p>
+        <div className="flex gap-2 items-center">
+          <input
+            type="number"
+            min={0}
+            max={72}
+            value={patrolSkipHours}
+            onChange={(e) => setPatrolSkipHours(Number(e.target.value))}
             className="w-24 px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 font-mono"
             style={{ borderColor: 'var(--border-default)' }}
           />

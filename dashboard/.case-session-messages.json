@@ -1589,5 +1589,51 @@
       "step": "patrol",
       "timestamp": "2026-03-31T01:26:45.945Z"
     }
+  ],
+  "2604080040001744": [
+    {
+      "type": "system",
+      "content": "Step \"casework\" started",
+      "step": "casework",
+      "timestamp": "2026-04-15T11:41:27.483Z"
+    },
+    {
+      "type": "completed",
+      "content": "The project structure is essentially empty — the only files present are the timing markers I just created in Step 1. The required infrastructure is missing:\n\n- ❌ **No scripts**: `skills/d365-case-ops/scripts/check-case-changes.ps1`, `casework-fast-path.sh`, `agent-cache-check.sh`, `generate-todo.sh`, `casework-timing.sh`, `detect-case-status.ps1`\n- ❌ **No skill files**: `.claude/skills/data-refresh/SKILL.md`, `.claude/skills/teams-search/SKILL.md`, `.claude/skills/compliance-check/SKILL.md`, `.claude/skills/status-judge/SKILL.md`, `.claude/skills/inspection-writer/SKILL.md`\n- ❌ **No agent definitions**: `.claude/agents/troubleshooter.md`, `.claude/agents/email-drafter.md`, `.claude/agents/challenger.md`, `.claude/agents/onenote-case-search.md`\n- ❌ **No config**: `config.json`\n- ❌ **No playbooks**: `playbooks/rules/case-lifecycle.md`\n- ❌ **No case data**: no `casehealth-meta.json`, `case-info.md`, `case-summary.md`, `emails.md`, etc.\n\n**⚠️ Cannot process Case 2604080040001744.** The EngineerBrain project directory at `/c/Users/fangkun/Documents/Claude Code Projects/EngineerBrain` contains only an empty case folder structure. All required scripts, skill definitions, agent configs, and playbook rules are missing.\n\n**To proceed, you need to either:**\n1. **Restore/clone the full project** (scripts, skills, agents, playbooks, config) into the project root\n2. **Point me to the correct project root** if it's located elsewhere\n3. **Set up the project from scratch** if this is a new environment\n\nWould you like me to help with any of these?",
+      "step": "casework",
+      "timestamp": "2026-04-15T11:43:37.115Z"
+    },
+    {
+      "type": "completed",
+      "content": "Step \"casework\" completed",
+      "step": "casework",
+      "timestamp": "2026-04-15T11:43:38.310Z"
+    },
+    {
+      "type": "system",
+      "content": "Step \"note-gap\" started",
+      "step": "note-gap",
+      "timestamp": "2026-04-15T11:48:20.960Z"
+    },
+    {
+      "type": "completed",
+      "content": "Now let me analyze the data:\n\n**Step 2**: `notes.md` exists and is 21 hours old (< 24h) → use directly ✅\n\n**Step 3**: Parse notes and filter:\n- `4/8/2026 8:28 AM | CrmGlobal-DFM-MSaaS` → 系统自动分配 → **filtered out**\n- `4/8/2026 8:42 AM | CrmGlobal-DFM-MSaaS` → 系统自动分配 → **filtered out**\n- `4/9/2026 8:53 AM | Kun Fang` → ✅ human note\n- `4/14/2026 8:17 AM | Kun Fang` → ✅ human note (latest)\n\n**Last human note**: 2026-04-14 by **Kun Fang**\n→ `isNewCase = false` (has human notes)\n\n**Step 4b** (常规分支):\n- Severity: **C** (non-Sev A → use standard threshold)\n- Threshold: **3 days** (from config.json)\n- Gap: today (2026-04-15) - lastNoteDate (2026-04-14) = **1 day**\n- 1 ≤ 3 → **No gap**\n\n---\n\n```\n✅ Note 正常，距上次 Note 1 天（阈值 3 天），无需补充。\n```\n\nCase 2604080040001744 的最近一条人工 Note 是 **4/14/2026 by Kun Fang**，距今仅 **1 天**，未超过 3 天阈值。且 Case 状态已为 **Resolved / ready-to-close**，客户已主动申请关单，无需补充 Note。",
+      "step": "note-gap",
+      "timestamp": "2026-04-15T11:49:09.476Z"
+    },
+    {
+      "type": "completed",
+      "content": "Step \"note-gap\" completed",
+      "step": "note-gap",
+      "timestamp": "2026-04-15T11:49:09.953Z"
+    }
+  ],
+  "2603310010001969": [
+    {
+      "type": "system",
+      "content": "Step \"teams-search\" started",
+      "step": "teams-search",
+      "timestamp": "2026-04-15T12:14:26.209Z"
+    }
   ]
 }

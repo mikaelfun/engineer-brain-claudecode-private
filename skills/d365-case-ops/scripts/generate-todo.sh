@@ -13,6 +13,36 @@ if [ ! -f "$META" ]; then
   exit 1
 fi
 
+# --- dismissed.json: 用户已确认/忽略的 todo 项，不再重复生成 ---
+# 格式: {"patterns": ["AR Scope:.*请确认", "修改 SAP:.*"], "items": ["完整文本"]}
+DISMISSED_FILE="$CD/todo/dismissed.json"
+DISMISSED_PATTERNS=""
+if [ -f "$DISMISSED_FILE" ]; then
+  DISMISSED_PATTERNS=$(python3 -c "
+import json, sys
+try:
+    d = json.load(open('$DISMISSED_FILE'))
+    patterns = d.get('patterns', [])
+    items = d.get('items', [])
+    # items 转为精确匹配 regex（转义特殊字符）
+    import re
+    for item in items:
+        patterns.append(re.escape(item))
+    print('|'.join(patterns) if patterns else '')
+except:
+    print('')
+" 2>/dev/null)
+fi
+
+# 函数: 检查某个 todo 项是否已被 dismissed
+is_dismissed() {
+  local item="$1"
+  if [ -z "$DISMISSED_PATTERNS" ]; then
+    return 1  # 没有 dismissed 项
+  fi
+  echo "$item" | grep -qE "$DISMISSED_PATTERNS" 2>/dev/null
+}
+
 # --- 解析 meta.json（纯 sed，不依赖 jq） ---
 ACTUAL_STATUS=$(sed -n 's/.*"actualStatus":[[:space:]]*"\([^"]*\)".*/\1/p' "$META" | head -1)
 DAYS=$(sed -n 's/.*"daysSinceLastContact":[[:space:]]*\([0-9]*\).*/\1/p' "$META" | head -1)
@@ -108,11 +138,62 @@ fi
 if [ "$ACTUAL_STATUS" = "pending-engineer" ] && [ "$DAYS" -lt 2 ] 2>/dev/null; then
   YELLOW_ITEMS+=("客户等待工程师回复（${DAYS} 天），需安排跟进")
 fi
-# Check for unsent drafts
+
+# SAP 准确性检查（从 meta.sapCheck 读取 LLM 判断结果）
+SAP_ACCURATE=$(python3 -c "
+import json, os
+try:
+    meta = json.load(open('$META'))
+    sc = meta.get('sapCheck', {})
+    if not sc or sc.get('isAccurate', True):
+        print('OK')
+    else:
+        suggested = sc.get('suggestedSap', '未知')
+        reason = sc.get('reason', '')
+        current = sc.get('currentSap', '')
+        print(f'MISMATCH|{current}|{suggested}|{reason}')
+except:
+    print('OK')
+" 2>/dev/null)
+if echo "$SAP_ACCURATE" | grep -q "^MISMATCH"; then
+  SAP_CURRENT=$(echo "$SAP_ACCURATE" | cut -d'|' -f2)
+  SAP_SUGGESTED=$(echo "$SAP_ACCURATE" | cut -d'|' -f3)
+  SAP_REASON=$(echo "$SAP_ACCURATE" | cut -d'|' -f4)
+  YELLOW_ITEMS+=("修改 SAP: 当前 \`${SAP_CURRENT##*/}\` 可能不准确，建议改为 \`${SAP_SUGGESTED}\`（${SAP_REASON}）")
+fi
+
+# Check for unsent drafts — only consider the LATEST draft, compare against sent emails
 if [ -d "$CD/drafts" ]; then
-  DRAFT_COUNT=$(ls "$CD/drafts/"*.md 2>/dev/null | wc -l)
-  if [ "$DRAFT_COUNT" -gt 0 ] 2>/dev/null; then
-    YELLOW_ITEMS+=("有 ${DRAFT_COUNT} 封邮件草稿待审阅发送")
+  LATEST_DRAFT=$(ls -t "$CD/drafts/"*.md 2>/dev/null | head -1)
+  if [ -n "$LATEST_DRAFT" ]; then
+    DRAFT_BASENAME=$(basename "$LATEST_DRAFT")
+    # Extract draft type from filename: YYYYMMDD-HHMM-{type}-{lang}-{recipient}.md
+    DRAFT_TYPE=$(echo "$DRAFT_BASENAME" | sed -n 's/^[0-9]*-[0-9]*-\([a-z-]*\)-[a-z]*-.*\.md$/\1/p')
+    DRAFT_TYPE=${DRAFT_TYPE:-email}
+    DRAFT_SENT=false
+    # Check if a similar email was already sent after the draft was created
+    if [ -f "$CD/emails.md" ]; then
+      DRAFT_MTIME=$(stat -c %Y "$LATEST_DRAFT" 2>/dev/null || stat -f %m "$LATEST_DRAFT" 2>/dev/null || echo 0)
+      DRAFT_DATE=$(date -d "@$DRAFT_MTIME" '+%Y-%m-%d' 2>/dev/null || date -r "$DRAFT_MTIME" '+%Y-%m-%d' 2>/dev/null || echo "")
+      # Extract draft subject line (first # heading or Subject: line)
+      DRAFT_SUBJECT=$(grep -m1 -E '^(#\s|Subject:)' "$LATEST_DRAFT" 2>/dev/null | sed 's/^#\s*//;s/^Subject:\s*//' | head -1)
+      if [ -n "$DRAFT_SUBJECT" ] && [ -n "$DRAFT_DATE" ]; then
+        # Check if emails.md contains a sent email with similar subject after draft date
+        # emails.md format: ### 📧 {date} | {from} → {to} \n **{subject}**
+        # Look for our outgoing email (from: kfang) with matching subject keywords
+        SUBJ_KEYWORDS=$(echo "$DRAFT_SUBJECT" | sed 's/[^a-zA-Z0-9 ]//g' | tr ' ' '\n' | sort -u | head -5 | tr '\n' '|' | sed 's/|$//')
+        if [ -n "$SUBJ_KEYWORDS" ]; then
+          if grep -qi "kfang\|kun.fang\|kunfang" "$CD/emails.md" 2>/dev/null && grep -qiE "$SUBJ_KEYWORDS" "$CD/emails.md" 2>/dev/null; then
+            DRAFT_SENT=true
+          fi
+        fi
+      fi
+    fi
+    if [ "$DRAFT_SENT" = "true" ]; then
+      GREEN_ITEMS+=("邮件草稿已发送: $DRAFT_BASENAME")
+    else
+      YELLOW_ITEMS+=("审阅并发送最新邮件草稿: [$DRAFT_BASENAME](/case/$CASE_NUMBER?tab=drafts)")
+    fi
   fi
 fi
 if [ "$ACTUAL_STATUS" = "pending-customer" ] && [ "$DAYS" -ge 5 ] 2>/dev/null; then
@@ -123,13 +204,26 @@ fi
 if [ "$ACTUAL_STATUS" = "ready-to-close" ]; then
   YELLOW_ITEMS+=("准备关单，发 closure email")
 fi
-# CC Finder reminder for RDSE customers
+# CC Finder reminder for RDSE customers — auto-check if IR already sent with CC
 if [ -n "$CC_EMAILS" ]; then
   CC_REMINDER="发送 Initial Response 时请 CC: \`${CC_EMAILS}\`"
   if [ -n "$CC_KNOW_ME" ]; then
     CC_REMINDER="${CC_REMINDER} | [Know-Me Wiki](${CC_KNOW_ME})"
   fi
-  YELLOW_ITEMS+=("$CC_REMINDER")
+  # Check if we already sent an email that CC'd this address
+  CC_ALREADY_SENT=false
+  if [ -f "$CD/emails.md" ]; then
+    # Extract first CC email (before comma/semicolon) for matching
+    CC_FIRST=$(echo "$CC_EMAILS" | sed 's/[,;].*//' | xargs)
+    if [ -n "$CC_FIRST" ] && grep -qi "$CC_FIRST" "$CD/emails.md" 2>/dev/null; then
+      CC_ALREADY_SENT=true
+    fi
+  fi
+  if [ "$CC_ALREADY_SENT" = "true" ]; then
+    GREEN_ITEMS+=("已 CC ${CC_EMAILS} 发送邮件")
+  else
+    YELLOW_ITEMS+=("$CC_REMINDER")
+  fi
 fi
 
 # AR-specific YELLOW rules
@@ -193,6 +287,17 @@ if [ "$IS_AR" = "true" ]; then
   fi
 fi
 
+# --- 过滤 dismissed 项 ---
+FILTERED_RED=()
+FILTERED_YELLOW=()
+for item in "${RED_ITEMS[@]}"; do
+  is_dismissed "$item" || FILTERED_RED+=("$item")
+done
+for item in "${YELLOW_ITEMS[@]}"; do
+  is_dismissed "$item" || FILTERED_YELLOW+=("$item")
+done
+# GREEN 项不过滤（仅通知，无 actionable）
+
 # --- 生成 todo 文件 ---
 TODO_DIR="$CD/todo"
 mkdir -p "$TODO_DIR"
@@ -205,20 +310,20 @@ NOW_DISPLAY=$(date '+%Y-%m-%d %H:%M')
   echo ""
   echo "## 🔴 需人工决策"
   echo ""
-  if [ ${#RED_ITEMS[@]} -eq 0 ]; then
+  if [ ${#FILTERED_RED[@]} -eq 0 ]; then
     echo "（无）"
   else
-    for item in "${RED_ITEMS[@]}"; do
+    for item in "${FILTERED_RED[@]}"; do
       echo "- [ ] $item"
     done
   fi
   echo ""
   echo "## 🟡 待确认执行"
   echo ""
-  if [ ${#YELLOW_ITEMS[@]} -eq 0 ]; then
+  if [ ${#FILTERED_YELLOW[@]} -eq 0 ]; then
     echo "（无）"
   else
-    for item in "${YELLOW_ITEMS[@]}"; do
+    for item in "${FILTERED_YELLOW[@]}"; do
       echo "- [ ] $item"
     done
   fi
@@ -234,5 +339,11 @@ NOW_DISPLAY=$(date '+%Y-%m-%d %H:%M')
   fi
 } > "$TODO_FILE"
 
+# --- 清理旧 todo：只保留最近 7 个 .md 文件（不含 dismissed.json）---
+TODO_COUNT=$(ls -1 "$TODO_DIR"/*.md 2>/dev/null | wc -l)
+if [ "$TODO_COUNT" -gt 7 ]; then
+  ls -1t "$TODO_DIR"/*.md | tail -n +8 | xargs rm -f
+fi
+
 # --- stdout 汇总 ---
-echo "TODO_OK|red=${#RED_ITEMS[@]},yellow=${#YELLOW_ITEMS[@]},green=${#GREEN_ITEMS[@]}"
+echo "TODO_OK|red=${#FILTERED_RED[@]},yellow=${#FILTERED_YELLOW[@]},green=${#GREEN_ITEMS[@]}"

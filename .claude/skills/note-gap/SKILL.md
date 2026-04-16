@@ -50,7 +50,10 @@ FILE_AGE_HOURS=$(( ($(date +%s) - $(stat -c %Y "{CASE_DIR}/notes.md" 2>/dev/null
 
 从 `notes.md` 中提取所有 note 时间戳：
 - 格式: `### 📝 {M/D/YYYY H:MM AM|PM} | {author}`
-- **过滤掉**含 `系统自动分配` 的系统 note
+- **过滤掉**以下非实质 note：
+  - 含 `系统自动分配` 的系统 note
+  - 含 `Transfer summary` 的转接 note（不区分大小写）
+  - author 为 `CrmGlobal-DFM-MSaaS` 的自动化 note
 - 取最新一条的日期，解析为 Date 对象
 
 **新 Case 检测：**
@@ -70,6 +73,23 @@ if isNewCase:
 **4b. 常规分支（`isNewCase = false`，有人工 note）：**
 ```
 读取 config.json 的 noteGapThresholdDays（默认 3）
+读取 case-info.md 的 Severity 字段
+
+# Sev A 独立阈值：只要当天有新进展就生成
+if severity == "A":
+  # 检查 case-summary.md 是否有 lastNoteDate 之后的新进展
+  hasNewProgress = case-summary.md 中有 lastNoteDate 之后的条目
+                   OR analysis/ 目录有 lastNoteDate 之后的文件
+                   OR drafts/ 目录有 lastNoteDate 之后的文件
+                   OR emails.md 有 lastNoteDate 之后的新邮件
+  if hasNewProgress:
+    输出: "🔴 Sev A Case — 检测到新进展，生成 Note"
+    跳过阈值检查，直接进入 Step 5
+  else:
+    输出: "✅ Sev A Case — 暂无新进展，无需补充。"
+    结束
+
+# 非 Sev A：使用常规阈值
 gapDays = (now - lastNoteDate) 的天数（向下取整）
 
 if gapDays <= threshold:

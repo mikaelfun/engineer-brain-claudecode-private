@@ -38,12 +38,13 @@ param(
         "$cr\active"
     }),
     [int]$CacheMinutes = 10,
-    [switch]$IncrementalIfCached
+    [switch]$IncrementalIfCached,
+    [string]$OutputSubDir  # Override output subdirectory name (default: TicketNumber). Used by AR mode to write directly to AR case dir.
 )
 
 . "$PSScriptRoot\_init.ps1"
 
-$caseDir = Join-Path $OutputDir $TicketNumber
+$caseDir = Join-Path $OutputDir $(if ($OutputSubDir) { $OutputSubDir } else { $TicketNumber })
 $snapshotFile = Join-Path $caseDir "case-info.md"
 $timelineFile = Join-Path $caseDir "timeline.md"
 $hasLocalCache = (Test-Path $snapshotFile)

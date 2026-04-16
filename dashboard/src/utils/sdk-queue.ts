@@ -1,9 +1,11 @@
 /**
- * sdk-queue.ts -- Serial SDK execution queue
+ * sdk-queue.ts -- Concurrent SDK execution queue
  *
- * Enforces one-at-a-time SDK execution globally. All SDK query() calls
- * are funneled through this queue so concurrent triggers (casework + patrol)
- * don't collide. Broadcasts queue status changes via SSE.
+ * Enforces a configurable concurrency limit on SDK query() calls.
+ * All SDK operations are funneled through this queue so concurrent triggers
+ * (casework + patrol) don't overwhelm resources. Broadcasts queue status via SSE.
+ *
+ * Default: maxConcurrency=3 (allows patrol to process multiple cases in parallel)
  */
 
 import { sseManager } from '../watcher/sse-manager.js'
@@ -13,7 +15,10 @@ import { sseManager } from '../watcher/sse-manager.js'
 
 export interface QueueStatus {
   running: boolean
+  runningCount: number
+  maxConcurrency: number
   currentLabel: string | null
+  currentLabels: string[]
   queueLength: number
   queueLabels: string[]
 }
@@ -31,13 +36,17 @@ interface QueueItem {
 
 export class SdkQueue {
   private queue: QueueItem[] = []
-  private running = false
-  private currentLabel: string | null = null
-  private currentKey: string | null = null
+  private runningCount = 0
+  private runningItems: { label: string; key: string }[] = []
+  private maxConcurrency: number
+
+  constructor(maxConcurrency = 3) {
+    this.maxConcurrency = maxConcurrency
+  }
 
   /**
-   * Enqueue an SDK operation for serial execution.
-   * If nothing is running, executes immediately. Otherwise queues.
+   * Enqueue an SDK operation for execution.
+   * If slots are available, executes immediately. Otherwise queues.
    * @param fn - The async operation to execute
    * @param label - Human-readable description for logging/UI
    * @param key - Unique key for dequeue-by-key matching (defaults to label)
@@ -53,7 +62,7 @@ export class SdkQueue {
             resolve(result)
           } catch (err) {
             reject(err)
-            throw err // re-throw so _runNext catch path fires
+            throw err // re-throw so _onComplete catch path fires
           }
         },
         label,
@@ -64,18 +73,18 @@ export class SdkQueue {
 
       this.queue.push(item)
 
-      if (!this.running) {
-        this._runNext()
+      if (this.runningCount < this.maxConcurrency) {
+        this._startNext()
       } else {
         this._broadcastStatus()
-        console.log(`[sdk-queue] Operation queued: ${label} (key=${effectiveKey}, queueLength=${this.queue.length})`)
+        console.log(`[sdk-queue] Operation queued: ${label} (key=${effectiveKey}, running=${this.runningCount}/${this.maxConcurrency}, queued=${this.queue.length})`)
       }
     })
   }
 
   /**
    * Remove all queued (not-yet-started) items matching the given key.
-   * Does NOT affect the currently running operation.
+   * Does NOT affect currently running operations.
    * @returns true if any items were removed
    */
   dequeue(key: string): boolean {
@@ -106,52 +115,63 @@ export class SdkQueue {
   /** Get current queue status snapshot */
   getStatus(): QueueStatus {
     return {
-      running: this.running,
-      currentLabel: this.currentLabel,
+      running: this.runningCount > 0,
+      runningCount: this.runningCount,
+      maxConcurrency: this.maxConcurrency,
+      currentLabel: this.runningItems[0]?.label ?? null,
+      currentLabels: this.runningItems.map(r => r.label),
       queueLength: this.queue.length,
       queueLabels: this.queue.map(q => q.label),
     }
   }
 
-  /** Whether an operation is currently executing */
+  /** Whether any operation is currently executing */
   isRunning(): boolean {
-    return this.running
+    return this.runningCount > 0
   }
 
-  /** Label of the currently executing operation, or null */
+  /** Label of the first currently executing operation, or null (backward compat) */
   getCurrentLabel(): string | null {
-    return this.currentLabel
+    return this.runningItems[0]?.label ?? null
   }
 
-  /** Key of the currently executing operation, or null */
+  /** Key of the first currently executing operation, or null (backward compat) */
   getCurrentKey(): string | null {
-    return this.currentKey
+    return this.runningItems[0]?.key ?? null
   }
 
-  private async _runNext(): Promise<void> {
-    const item = this.queue.shift()
-
-    if (!item) {
-      this.running = false
-      this.currentLabel = null
-      this.currentKey = null
-      this._broadcastStatus()
-      return
+  /** Update max concurrency at runtime */
+  setMaxConcurrency(n: number): void {
+    this.maxConcurrency = Math.max(1, n)
+    // If slots freed up, start queued items
+    while (this.runningCount < this.maxConcurrency && this.queue.length > 0) {
+      this._startNext()
     }
+  }
 
-    this.running = true
-    this.currentLabel = item.label
-    this.currentKey = item.key
-    console.log(`[sdk-queue] Operation started: ${item.label}`)
+  private _startNext(): void {
+    const item = this.queue.shift()
+    if (!item) return
+
+    this.runningCount++
+    this.runningItems.push({ label: item.label, key: item.key })
+    console.log(`[sdk-queue] Operation started: ${item.label} (running=${this.runningCount}/${this.maxConcurrency}, queued=${this.queue.length})`)
     this._broadcastStatus()
 
-    try {
-      await item.execute()
-    } catch {
-      // Error already forwarded to the caller's promise via reject in execute()
-    } finally {
-      this._runNext()
-    }
+    // Execute and handle completion
+    item.execute()
+      .catch(() => { /* error already forwarded via reject */ })
+      .finally(() => {
+        this.runningCount--
+        this.runningItems = this.runningItems.filter(r => r.key !== item.key || r.label !== item.label)
+
+        // Start next queued item if slot available
+        if (this.queue.length > 0 && this.runningCount < this.maxConcurrency) {
+          this._startNext()
+        } else {
+          this._broadcastStatus()
+        }
+      })
   }
 
   private _broadcastStatus(): void {
@@ -162,4 +182,4 @@ export class SdkQueue {
 
 // ===== Singleton =====
 
-export const sdkQueue = new SdkQueue()
+export const sdkQueue = new SdkQueue(15)

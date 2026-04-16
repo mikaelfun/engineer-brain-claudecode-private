@@ -1,0 +1,21 @@
+{
+  "id": "activity-stream-ux_20260405",
+  "title": "TestLab Activity Stream UX Improvement",
+  "type": "feature",
+  "status": "complete",
+  "issueId": "ISS-214",
+  "created": "2026-04-05T00:00:00+08:00",
+  "updated": "2026-04-05T00:35:00+08:00",
+  "phases": {
+    "total": 2,
+    "completed": 2
+  },
+  "tasks": {
+    "total": 7,
+    "completed": 7
+  },
+  "verification": {
+    "status": "skipped",
+    "method": "manual"
+  }
+}
