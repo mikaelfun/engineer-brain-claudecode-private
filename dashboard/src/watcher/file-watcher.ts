@@ -3,7 +3,7 @@
  */
 import chokidar from 'chokidar'
 import { join } from 'path'
-import { readFileSync, statSync, writeFileSync } from 'fs'
+import { readFileSync, statSync, writeFileSync, existsSync } from 'fs'
 import { config } from '../config.js'
 import { sseManager } from './sse-manager.js'
 import { getSkillRegistry } from '../services/skill-registry.js'
@@ -63,14 +63,26 @@ function classifyChange(filePath: string): { type: SSEEventType; data: Record<st
     return { type: 'todo-updated', data: {} }
   }
 
-  // Patrol state
-  if (normalized.includes('patrol-state.json') || normalized.includes('casehealth-state.json')) {
+  // Patrol state (final result)
+  if (normalized.includes('patrol-state.json')) {
     return { type: 'patrol-updated', data: {} }
   }
 
-  // Patrol phase file — CLI patrol writes this to signal current phase
+  // Patrol lock (running/stopped)
+  if (normalized.endsWith('patrol.lock')) {
+    try {
+      if (existsSync(filePath)) {
+        const lock = JSON.parse(readFileSync(filePath, 'utf-8'))
+        return { type: 'patrol-progress' as SSEEventType, data: { phase: 'starting', source: lock.source } }
+      } else {
+        return { type: 'patrol-progress' as SSEEventType, data: { phase: 'idle' } }
+      }
+    } catch { return null }
+  }
+
+  // Patrol phase file — written by /patrol skill
   // Format: "processing" or "processing|3/6" (phase with progress)
-  if (normalized.endsWith('/phase') && normalized.includes('.patrol')) {
+  if (normalized.endsWith('patrol-phase')) {
     try {
       const raw = readFileSync(filePath, 'utf-8').trim()
       const [phase, progress] = raw.split('|')
@@ -85,11 +97,26 @@ function classifyChange(filePath: string): { type: SSEEventType; data: Record<st
     } catch { return null }
   }
 
-  // Patrol result file — CLI patrol writes this on completion
+  // Patrol result file — written by /patrol skill on completion
   if (normalized.endsWith('/result.json') && normalized.includes('.patrol')) {
     try {
       const result = JSON.parse(readFileSync(filePath, 'utf-8'))
       return { type: 'patrol-progress' as SSEEventType, data: { ...result, phase: result.phase || 'completed' } }
+    } catch { return null }
+  }
+
+  // Per-case phase — written by casework-light agent
+  if (normalized.endsWith('case-phase.json')) {
+    try {
+      const casePhase = JSON.parse(readFileSync(filePath, 'utf-8'))
+      // Extract case number from path: .../active/{caseNumber}/case-phase.json
+      const parts = normalized.split('/')
+      const activeIdx = parts.indexOf('active')
+      const caseNumber = activeIdx >= 0 ? parts[activeIdx + 1] : 'unknown'
+      return {
+        type: 'case-progress' as SSEEventType,
+        data: { caseNumber, ...casePhase },
+      }
     } catch { return null }
   }
 
@@ -244,7 +271,8 @@ export function startFileWatcher() {
     join(config.activeCasesDir, '**', '*.{md,json,log}'),
     join(config.todoDir, '*.md'),
     config.patrolStateFile,
-    join(config.patrolDir, 'phase'),
+    join(config.patrolDir, 'patrol.lock'),
+    join(config.patrolDir, 'patrol-phase'),
     join(config.patrolDir, 'result.json'),
     config.cronJobsFile,
     join(config.projectRoot, 'tests', 'state.json'),

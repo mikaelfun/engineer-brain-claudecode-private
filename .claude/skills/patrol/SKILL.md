@@ -64,10 +64,27 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
 
 ## 执行步骤
 
-1. **读取配置**
+1. **读取配置 + 互斥检查**
    读取 `config.json` 获取 `casesRoot` 和 `patrolDir`。**直接使用原始值，不做任何路径解析。**
    - `casesRoot` 默认 `./cases`
    - `patrolDir` 默认 `{casesRoot}/.patrol`（如果 config.json 未配置 patrolDir）
+
+   **🔒 互斥检查**：检查 `{patrolDir}/patrol.lock` 是否存在：
+   ```bash
+   if [ -f "{patrolDir}/patrol.lock" ]; then
+     LOCK_SOURCE=$(python3 -c "import json; print(json.load(open('{patrolDir}/patrol.lock'))['source'])")
+     echo "ERROR: Patrol already running (source=$LOCK_SOURCE). Abort."
+     exit 1
+   fi
+   ```
+   如果 lock 存在，输出错误并终止。
+
+   **写 lock 文件**：
+   检测 prompt 中是否包含 `source=webui`，如果包含则 source 为 `webui`，否则为 `cli`。
+   ```bash
+   mkdir -p "{patrolDir}"
+   echo '{"source":"cli","pid":'"$$"',"startedAt":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'","force":FORCE_VALUE}' > "{patrolDir}/patrol.lock"
+   ```
 
    **🚨 路径硬规则（反复出问题，必须严格遵守）**：
    - `casesRoot` = `./cases`（直接用 config.json 原始值）
@@ -78,7 +95,7 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
 
 2. **写 phase 文件（discovering）**
    ```bash
-   echo "discovering" > "{patrolDir}/phase"
+   echo "discovering" > "{patrolDir}/patrol-phase"
    ```
 
 3. **获取活跃 Case 列表**
@@ -128,7 +145,7 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
 
    写 phase 文件：
    ```bash
-   echo "warming-up" > "{patrolDir}/phase"
+   echo "warming-up" > "{patrolDir}/patrol-phase"
    ```
 
    两个预热任务可并行执行：
@@ -204,7 +221,7 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
 6. **阶段 0.6：写 phase 文件（processing）**
 
    ```bash
-   echo "processing" > "{patrolDir}/phase"
+   echo "processing" > "{patrolDir}/patrol-phase"
    ```
 
 7. **Streaming Pipeline：启动 casework-light + 统一轮询推进**
@@ -390,14 +407,14 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
 
    写阶段文件：
    ```bash
-   echo "aggregating" > "{patrolDir}/phase"
+   echo "aggregating" > "{patrolDir}/patrol-phase"
    ```
 
    从各 case 的 `todo/` 目录提取最新 Todo 文件，按 🔴🟡✅ 分级汇总展示。
 
    从各 case 的 `logs/casework.log` 读取最后一行判断 status（`STEP B5 OK` / `STEP B6 OK` / `phase completed` → completed，否则 failed）。
 
-   写结构化结果文件 `{patrolDir}/result.json`：
+   写结构化结果文件 `{patrolDir}/result.json`（兼容旧格式）和 `{patrolDir}/patrol-state.json`（WebUI 读取）：
    ```json
    {
      "startedAt": "ISO",
@@ -412,11 +429,19 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
      ]
    }
    ```
+   **两个文件内容相同**，用 `cp` 复制即可。`patrol-state.json` 是 WebUI Dashboard 的唯一数据源。
 
    写最终阶段：
    ```bash
-   echo "completed" > "{patrolDir}/phase"
+   echo "completed" > "{patrolDir}/patrol-phase"
    ```
+
+   **🔒 释放互斥锁**：
+   ```bash
+   rm -f "{patrolDir}/patrol.lock"
+   ```
+
+   > ⚠️ 如果 patrol 中途异常退出，lock 文件不会被删除。WebUI 和下次 CLI 启动时会检测 stale lock（PID 不存在或 lock 超过 60 分钟）并自动清理。
 
 ## 注意
 - patrol session 负责：列表获取 → 过滤 → 预热 → 启动 teams-queue → 全量并行 casework-light → **streaming pipeline 轮询**（plan ready → 立即 spawn action → action done → 立即 spawn inspection） → 停止 teams-queue → 读 todo 汇总 → 写结构化输出

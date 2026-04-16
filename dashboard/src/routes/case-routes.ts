@@ -36,8 +36,7 @@ import {
   writeStepLog,
   getCaseMcpServerNames,
 } from '../agent/case-session-manager.js'
-import { startCliPatrol, cancelCliPatrol, isCliPatrolRunning, loadPatrolLastRun } from '../agent/cli-patrol-manager.js'
-import { runSdkPatrol, isSdkPatrolRunning, cancelSdkPatrol, loadPatrolLastRun as loadSdkPatrolLastRun, getSdkPatrolLiveProgress } from '../agent/patrol-orchestrator.js'
+import { runSdkPatrol, isSdkPatrolRunning, cancelSdkPatrol, loadPatrolLastRun, getSdkPatrolLiveProgress } from '../agent/patrol-orchestrator.js'
 import { sseManager } from '../watcher/sse-manager.js'
 import { sdkQueue } from '../utils/sdk-queue.js'
 import { reloadConfig, config as appConfig } from '../config.js'
@@ -284,7 +283,7 @@ caseRoutes.get('/patrol/status', (c) => {
   return c.json({
     running,
     liveProgress: running ? getSdkPatrolLiveProgress() : null,
-    lastRun: loadSdkPatrolLastRun(),
+    lastRun: loadPatrolLastRun(),
   })
 })
 
