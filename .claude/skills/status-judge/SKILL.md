@@ -73,6 +73,10 @@ allowed-tools:
 
 **判断原则**：① 不依赖 D365 Status 字段 ② ICM 状态需动态查询 ③ 最后邮件方向≠状态，需结合内容理解意图
 
+**⚠️ `new` 的使用极其严格**：只有当 emails.md 中**完全没有工程师（fangkun / support@mail.support.microsoft.com）发出的邮件**时，才判定为 `new`。如果已有工程师发出的任何邮件（IR、排查结果、follow-up），则 case 不是 `new`——根据最后一封工程师邮件的内容和时间判定 `pending-customer` / `pending-engineer` / `researching`。
+
+**首次运行常见陷阱**：首次 status-judge 运行时没有 meta 历史状态，但 case 可能已被工程师手动处理过（发了 IR、做了远程、记了 note）。**必须先看邮件和 notes 的实际内容再判定状态，不能因为没有历史 meta 就默认 `new`。**
+
 **信号分层**：actualStatus 是对**实际沟通状态**的事实判断，仅基于已发生的沟通事实推理：
 - ✅ 输入信号：邮件方向+内容（谁发的、说了什么）、Notes 记录、ICM 当前状态、Teams 对话 Key Facts
 - ❌ 不作为输入：`drafts/` 未发送草稿、`analysis/` 排查文件、todo 待办项
@@ -134,8 +138,10 @@ allowed-tools:
 2. 有未发送草稿且内容仍相关 → `no-agent`（用户只需发送现有草稿）
 3. 排查完成但未告知客户/case owner → `email-drafter`（不需要 troubleshooter）
 4. 有新信息需要排查（客户新提供数据、PG 有新回复需要验证）→ `troubleshooter`
-5. 新 case + 需要初始排查和首次沟通 → `troubleshooter+email-drafter`
+5. 新 case（`new` 状态，emails.md 中确认没有工程师发出的邮件）+ 需要初始排查和首次沟通 → `troubleshooter+email-drafter`
 6. 判断不确定 → 留空 `recommendedActions: []`（让 routing fallback 到路由表）
+
+> ⚠️ **邮件去重**：推荐 `email-drafter` 前，检查 emails.md 中是否已有同类型邮件（IR/follow-up/closure）。如果工程师已发过 IR 邮件（含 21v convert IR），不再推荐 email-drafter(initial-response)。
 
 **输出格式**：
 ```json
