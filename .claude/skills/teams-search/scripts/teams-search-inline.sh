@@ -163,10 +163,13 @@ q2 = load_resp('q2.json')
 # Extract all chatIds
 all_ids = extract_chat_ids(q1) | extract_chat_ids(q2)
 
-# Fetch messages for each chat
-chat_messages = {}
-for i, cid in enumerate(sorted(all_ids)):
-    resp = mcp_call(20 + i, 'ListChatMessages', {'chatId': cid, 'top': 20})
+# Fetch messages for each chat — PARALLEL via ThreadPoolExecutor
+# Single proxy handles concurrent requests fine (verified: 1 proxy = N proxy speed)
+import concurrent.futures
+
+def fetch_one_chat(args):
+    call_id, chat_id = args
+    resp = mcp_call(call_id, 'ListChatMessages', {'chatId': chat_id, 'top': 20})
     msgs = []
     if resp:
         for c in resp.get('result', {}).get('content', []):
@@ -176,7 +179,17 @@ for i, cid in enumerate(sorted(all_ids)):
                 break
             except:
                 pass
-    chat_messages[cid] = msgs
+    return chat_id, msgs
+
+chat_messages = {}
+sorted_ids = sorted(all_ids)
+if sorted_ids:
+    tasks = [(20 + i, cid) for i, cid in enumerate(sorted_ids)]
+    with concurrent.futures.ThreadPoolExecutor(max_workers=min(len(tasks), 8)) as ex:
+        for chat_id, msgs in ex.map(fetch_one_chat, tasks):
+            chat_messages[chat_id] = msgs
+else:
+    pass  # no chats found
 
 # Build search results
 search_results = [{'keyword': case_number, 'status': 'success' if q1 else 'error',

@@ -5,7 +5,7 @@ displayName: Teams 搜索
 category: inline
 stability: stable
 requiredInput: caseNumber
-estimatedDuration: 25s
+estimatedDuration: 15s
 model: sonnet
 promptTemplate: |
   Execute teams-search for Case {caseNumber}{forceRefresh}. Read .claude/skills/teams-search/SKILL.md for full instructions, then execute.
@@ -22,7 +22,7 @@ promptTemplate: |
 **由 `casework-gather.sh` 自动调用，不需要 LLM agent。**
 
 `teams-search-inline.sh` 直接通过 agency.exe HTTP proxy 调 MCP，完全绕过 LLM。
-每个 case 独立实例，天然并行安全。
+每个 case 独立 proxy 实例，天然跨 case 并行安全。
 
 ```bash
 bash .claude/skills/teams-search/scripts/teams-search-inline.sh \
@@ -31,29 +31,40 @@ bash .claude/skills/teams-search/scripts/teams-search-inline.sh \
   --contact-email {email}
 ```
 
-**性能**：15-25s/case（vs DIRECT_MODE 25s + LLM overhead，vs QUEUE_MODE 2.6min/case）
+**性能**：10-15s/case（search 3s + parallel fetch ~7s + startup ~5s）
 
 **输出**：`{caseDir}/teams/_mcp-raw.json`（v2 schema）
 **后处理**：`casework-gather.sh` 自动调用 `build-input-from-raw.py` + `write-teams.ps1`
 
-**原理**：
-1. 启动 `agency.exe mcp teams --transport http --port {port}` 本地 HTTP proxy
-2. 通过 curl POST JSON-RPC 调用 MCP tools（SearchTeamMessagesQueryParameters / ListChatMessages）
-3. Python 解析响应、提取 chatIds、拉取消息、dump `_mcp-raw.json`
-4. 完成后自动杀掉 proxy
+**架构**（基于实测数据）：
+1. 启动 `agency.exe mcp teams --transport http --port {port}` 本地 HTTP proxy（~5s）
+2. curl 搜索（SearchTeamMessagesQueryParameters）（~3s）
+3. **并行** curl 拉取所有 chatId 的消息（ThreadPoolExecutor，单 proxy 即可并行）（~6-7s）
+4. Python 解析 → dump `_mcp-raw.json`
+5. 完成后自动杀掉 proxy
 
-### 2. DIRECT_MODE（单 case 手动调用）
+**并行实测结论**：
 
-~~由 LLM agent 通过 Teams MCP 直接搜索。保留用于 `/teams-search {caseNumber}` 手动调用。~~
+| 架构 | 8 chat fetch 耗时 | 说明 |
+|------|-------------------|------|
+| 1 proxy 串行 for 循环 | 22.6s | 旧版，逐个调用 |
+| **1 proxy 并行 ThreadPool** | **7.5s** | ✅ 当前版本 |
+| 2 proxy 并行 | 7.5s | 无额外收益 |
+| 4 proxy 并行 | 7.2s | 无额外收益 |
 
-**⚠️ DEPRECATED** — 推荐改用 INLINE_HTTP 模式。DIRECT_MODE 的 MCP 搜索逻辑已被 `teams-search-inline.sh` 完全替代。
-仅保留 Step 5（relevance scoring + digest generation）供 casework 内联使用。
+> 单个 Teams proxy 完全支持并发 ListChatMessages 请求。
+> 多 proxy 只增加启动开销，不提速。每 case 1 个 proxy 是最优架构。
+>
+> ⚠️ 跨 case 共享单 proxy 会丢数据（SearchTeamMessages 并发冲突），
+> 所以跨 case 必须独立 proxy。
 
-### 3. QUEUE_MODE（patrol 批量模式）
+### 2. DIRECT_MODE（DEPRECATED）
 
-~~由 patrol 的 `teams-search-queue` agent 串行处理。~~
+**⚠️ DEPRECATED** — 推荐改用 INLINE_HTTP 模式。
 
-**⚠️ DEPRECATED** — `casework-gather.sh` 现在直接后台调用 `teams-search-inline.sh`，
+### 3. QUEUE_MODE（DEPRECATED）
+
+**⚠️ DEPRECATED** — `casework-gather.sh` 直接后台调用 `teams-search-inline.sh`，
 每个 case 独立 agency proxy 实例，天然并行，不再需要 queue 机制。
 
 ---
