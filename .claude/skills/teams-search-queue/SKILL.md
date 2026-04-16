@@ -44,7 +44,7 @@ Queue 只做必须串行的部分（MCP 调用），剩余工作交回 casework 
 SearchTeamMessagesQueryParameters(queryString="test", size=1)
 ```
 
-**成功** → Bash 写日志 + 激活信号：
+**成功**（返回 JSON 结果）→ Bash 写日志 + 激活信号：
 ```bash
 CASES_ROOT="{casesRoot}"
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] QUEUE START | Teams MCP healthy" >> "$CASES_ROOT/.patrol/teams-queue.log"
@@ -52,15 +52,22 @@ date +%s > "$CASES_ROOT/.patrol/teams-queue-active"
 echo "MCP_READY|proceed to queue loop"
 ```
 
-**失败** → 为所有 pending case 清理后退出：
+**失败**（`Connection closed` / `MCP error` / 任何非 JSON 响应）→ 清理所有 pending request + 写状态文件 + 退出：
 ```bash
 CASES_ROOT="{casesRoot}"
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] QUEUE FAIL | Teams MCP unavailable" >> "$CASES_ROOT/.patrol/teams-queue.log"
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] QUEUE FAIL | Teams MCP unavailable — 请运行 /mcp 重启 Teams MCP" >> "$CASES_ROOT/.patrol/teams-queue.log"
+echo "TEAMS_MCP_UNAVAILABLE" > "$CASES_ROOT/.patrol/teams-mcp-status"
 for req in "$CASES_ROOT"/active/*/teams/request.json; do
   [ -f "$req" ] || continue
   rm -f "$req"
 done
+echo "MCP_FAIL|cleaned all request.json|请用户运行 /mcp 重启 Teams MCP server"
 ```
+写完后 **立即退出**（不进入主循环）。patrol 主 agent 会在汇总阶段看到 `teams-mcp-status` 文件并报告。
+
+> ⚠️ **已知问题**：MCP 调用可能永远不返回（server 进程挂死），此时 agent 会无限等待。
+> 这是 Claude Code 平台限制（MCP 调用无 timeout）。patrol 主 agent 的预检机制是第一道防线。
+> 如果预检通过但 queue agent 仍卡死，patrol drain 超时后会清理 orphan request.json。
 
 ---
 

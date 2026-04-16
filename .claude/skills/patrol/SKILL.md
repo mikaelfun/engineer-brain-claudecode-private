@@ -150,10 +150,26 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
    在预热完成后、casework 启动前，spawn 一个后台 agent 串行处理 Teams 搜索请求。
    这避免多个 casework agent 同时调用 Teams MCP 导致排队/超时。
 
-   先清理上次残留的信号文件：
+   **⚠️ MCP 预检（主 agent 执行，不是 subagent）**：
+
+   在 spawn queue agent 之前，主 agent 先调用一次 Teams MCP 验证可用性：
+   ```
+   SearchTeamMessagesQueryParameters(queryString="test", size=1)
+   ```
+
+   - **成功返回**（有 JSON 结果）→ Teams MCP 可用，继续 spawn queue agent
+   - **返回错误**（`Connection closed` / `MCP error` / timeout）→ **跳过 Teams 搜索**：
+     ```bash
+     echo "TEAMS_MCP_UNAVAILABLE" > "{casesRoot}/.patrol/teams-mcp-status"
+     echo "⚠️ Teams MCP 不可用，跳过本次 Teams 搜索。请运行 /mcp 重启 Teams MCP server。"
+     ```
+     不 spawn queue agent，直接进入阶段 0.6。后续 casework-light 的 Teams request.json 不会被处理，
+     patrol 结束时通过 orphan cleanup 清理。**在最终汇总中输出 Teams MCP 状态警告。**
+
+   **预检通过后**，清理上次残留的信号文件：
    ```bash
    mkdir -p "{casesRoot}/.patrol"
-   rm -f "{casesRoot}/.patrol/teams-queue-active" "{casesRoot}/.patrol/teams-queue-stop"
+   rm -f "{casesRoot}/.patrol/teams-queue-active" "{casesRoot}/.patrol/teams-queue-stop" "{casesRoot}/.patrol/teams-mcp-status"
    ```
 
    读取 `config.json` 中 `teamsSearchCacheHours`（默认 8）。
