@@ -1,13 +1,18 @@
 {
   "casesRoot": "./cases",
-  "dataRoot": "<ABSOLUTE_PATH_TO_DATA_DIR>",
-  "teamsSearchCacheHours": 4,
+  "dataRoot": "../data",
+  "teamsSearchCacheHours": 8,
+  "patrolSkipHours": 3,
   "noteGapThresholdDays": 3,
-  "podAlias": "<YOUR_POD_ALIAS>@microsoft.com",
+  "podAlias": "<your-pod-alias>@microsoft.com",
   "onenote": {
-    "personalNotebook": "<YOUR_ONENOTE_NOTEBOOK_NAME>",
-    "teamNotebooks": ["MCVKB"],
+    "personalNotebook": "<Your Personal Notebook Name>",
+    "teamNotebooks": [
+      "<Team Notebook 1>",
+      "<Team Notebook 2>"
+    ],
     "freshnessThresholdMonths": 12,
     "autoRagSync": true
-  }
+  },
+  "pod": "<your-pod-name>"
 }
