@@ -262,59 +262,70 @@ if not filtered:
     sys.exit(0)
 
 # ═══════════════════════════════════════════
-# Step 2: Extract bodies from search results + fetch missing via GetMessage
+# Step 2: Extract body from latest email(s) only
 # ═══════════════════════════════════════════
 
-log(f'STEP 2 START | Extracting bodies from search results')
+log(f'STEP 2 START | Extracting body from latest emails')
 
-# $search results often include full body already — use them directly
+# Sort by receivedDateTime asc
+sorted_msgs = sorted(filtered, key=lambda m: m.get('receivedDateTime', ''))
+
+# Email replies nest the full conversation history.
+# The latest email's body contains ALL previous exchanges.
+# Strategy: only extract full body for the last 2 emails (latest sent + latest received),
+# which gives complete coverage. All other emails are listed as timeline index only.
+
+# Find the latest email, plus the latest from the OTHER direction
+latest = sorted_msgs[-1] if sorted_msgs else None
+latest_id = latest.get('id', '') if latest else ''
+latest_from = ''
+if latest and isinstance(latest.get('from'), dict):
+    latest_from = latest['from'].get('emailAddress', {}).get('address', '')
+latest_dir = 'sent' if '@microsoft.com' in latest_from else 'received'
+
+# Find the latest email from the opposite direction
+second_id = ''
+for msg in reversed(sorted_msgs[:-1]):
+    from_addr = ''
+    if isinstance(msg.get('from'), dict):
+        from_addr = msg['from'].get('emailAddress', {}).get('address', '')
+    msg_dir = 'sent' if '@microsoft.com' in from_addr else 'received'
+    if msg_dir != latest_dir:
+        second_id = msg.get('id', '')
+        break
+
+expand_ids = {latest_id}
+if second_id:
+    expand_ids.add(second_id)
+
+# Extract bodies for expanded emails
 fetched_bodies = {}
-msgs_with_body = 0
-msgs_without_body = 0
-
-for msg in filtered:
+for msg in sorted_msgs:
     msg_id = msg.get('id', '')
-    if not msg_id:
+    if msg_id not in expand_ids:
         continue
     body_obj = msg.get('body', {})
     body_content = body_obj.get('content', '') if isinstance(body_obj, dict) else ''
     if body_content and len(body_content) > 300:
-        # Body already in search result — save to temp file
         suffix = msg_id[-10:] if len(msg_id) >= 10 else msg_id
         body_file = os.path.join(tmp_dir, f'body-{suffix}.html')
         with open(body_file, 'w', encoding='utf-8') as f:
             f.write(body_content)
         fetched_bodies[msg_id] = body_file
-        msgs_with_body += 1
-    else:
-        msgs_without_body += 1
 
-# For messages without body in search results, fetch top 2-3 via GetMessage
-fetch_ok = 0
-fetch_fail = 0
-if msgs_without_body > 0:
-    no_body = [m for m in filtered if m.get('id','') not in fetched_bodies]
-    by_preview = sorted(no_body, key=lambda m: len(m.get('bodyPreview','') or ''), reverse=True)
-    to_fetch = by_preview[:min(3, len(by_preview))]
-
-    for i, msg in enumerate(to_fetch):
-        msg_id = msg.get('id', '')
-        if not msg_id:
-            continue
-        resp = mcp_call(20 + i, "GetMessage", {"id": msg_id, "preferHtml": True})
+# Fallback: if body not in search results, try GetMessage
+for msg_id in expand_ids:
+    if msg_id and msg_id not in fetched_bodies:
+        resp = mcp_call(20, "GetMessage", {"id": msg_id, "preferHtml": True})
         parsed = extract_single_message(resp)
         if parsed and parsed.get('body', {}).get('content'):
-            body_html = parsed['body']['content']
             suffix = msg_id[-10:] if len(msg_id) >= 10 else msg_id
             body_file = os.path.join(tmp_dir, f'body-{suffix}.html')
             with open(body_file, 'w', encoding='utf-8') as f:
-                f.write(body_html)
+                f.write(parsed['body']['content'])
             fetched_bodies[msg_id] = body_file
-            fetch_ok += 1
-        else:
-            fetch_fail += 1
 
-log(f'STEP 2 OK    | {msgs_with_body} from search, {fetch_ok} via GetMessage ({fetch_fail} failed), {len(fetched_bodies)} total bodies')
+log(f'STEP 2 OK    | {len(fetched_bodies)} bodies extracted (expanding {len(expand_ids)} of {len(sorted_msgs)} emails)')
 
 # ═══════════════════════════════════════════
 # Step 3: Generate emails-office.md
@@ -322,31 +333,14 @@ log(f'STEP 2 OK    | {msgs_with_body} from search, {fetch_ok} via GetMessage ({f
 
 log(f'STEP 3 START | Generating emails-office.md')
 
-# Sort by receivedDateTime asc
-sorted_msgs = sorted(filtered, key=lambda m: m.get('receivedDateTime', ''))
-
-ts = time.strftime('%Y-%m-%d %H:%M:%S')
-lines = [
-    f'# Emails (Outlook) — Case {case_number}',
-    '',
-    f'> Generated: {ts} | Total: {len(sorted_msgs)} emails | Source: Agency Mail HTTP',
-    '',
-    '---'
-]
-
-success_count = 0
-fallback_count = 0
-
-for msg in sorted_msgs:
-    msg_id = msg.get('id', '')
-    subj = msg.get('subject', '') or '(no subject)'
+def format_msg_meta(msg):
+    """Extract metadata fields from a message"""
     from_addr = ''
     from_name = ''
     if isinstance(msg.get('from'), dict):
         ea = msg['from'].get('emailAddress', {})
         from_addr = ea.get('address', '')
         from_name = ea.get('name', '')
-
     to_list = []
     for r in (msg.get('toRecipients') or []):
         ea = r.get('emailAddress', {})
@@ -355,13 +349,45 @@ for msg in sorted_msgs:
     for r in (msg.get('ccRecipients') or []):
         ea = r.get('emailAddress', {})
         cc_list.append(f"{ea.get('name','')} <{ea.get('address','')}>")
-
     dt_str = msg.get('receivedDateTime', '')[:19].replace('T', ' ')
     direction = 'Sent' if '@microsoft.com' in from_addr else 'Received'
-    icon = '📤' if direction == 'Sent' else '📥'
+    icon = '\U0001f4e4' if direction == 'Sent' else '\U0001f4e5'
+    return from_addr, from_name, to_list, cc_list, dt_str, direction, icon
+
+ts = time.strftime('%Y-%m-%d %H:%M:%S')
+lines = [
+    f'# Emails (Outlook) \u2014 Case {case_number}',
+    '',
+    f'> Generated: {ts} | Total: {len(sorted_msgs)} emails | Source: Agency Mail HTTP',
+    '',
+    '## Timeline',
+    '',
+    '| # | Time | Direction | From | Subject |',
+    '|---|------|-----------|------|---------|',
+]
+
+# Timeline index (all emails, one line each)
+for i, msg in enumerate(sorted_msgs):
+    from_addr, from_name, _, _, dt_str, direction, icon = format_msg_meta(msg)
+    subj = (msg.get('subject', '') or '')[:60]
+    expanded = ' **\u2190 full body below**' if msg.get('id', '') in expand_ids else ''
+    display_name = from_name.split()[0] if from_name else from_addr.split('@')[0]
+    lines.append(f'| {i+1} | {dt_str} | {icon} {direction} | {display_name} | {subj}{expanded} |')
+
+lines.append('')
+lines.append('---')
+
+# Full body for expanded emails only
+for msg in sorted_msgs:
+    msg_id = msg.get('id', '')
+    if msg_id not in expand_ids:
+        continue
+
+    from_addr, from_name, to_list, cc_list, dt_str, direction, icon = format_msg_meta(msg)
+    subj = msg.get('subject', '') or '(no subject)'
 
     lines.append('')
-    lines.append(f'### {icon} {direction} | {dt_str}')
+    lines.append(f'## {icon} {direction} | {dt_str}')
     lines.append(f'**Subject:** {subj}')
     lines.append(f'**From:** {from_name} <{from_addr}>')
     lines.append(f'**To:** {"; ".join(to_list)}')
@@ -369,21 +395,14 @@ for msg in sorted_msgs:
         lines.append(f'**Cc:** {"; ".join(cc_list)}')
     lines.append('')
 
-    # Use full body if fetched, otherwise bodyPreview
     body_file = fetched_bodies.get(msg_id)
     if body_file and os.path.exists(body_file):
         with open(body_file, encoding='utf-8') as f:
             html_body = f.read()
         cleaned = clean_html(html_body)
-        if cleaned:
-            lines.append(cleaned)
-            success_count += 1
-        else:
-            lines.append(msg.get('bodyPreview', '') or '')
-            fallback_count += 1
+        lines.append(cleaned if cleaned else (msg.get('bodyPreview', '') or ''))
     else:
         lines.append(msg.get('bodyPreview', '') or '')
-        fallback_count += 1
 
     lines.append('')
     lines.append('---')
@@ -398,7 +417,7 @@ shutil.rmtree(tmp_dir, ignore_errors=True)
 
 file_size = os.path.getsize(office_md) / 1024
 elapsed = int(time.time()) - t0
-log(f'STEP 3 OK    | emails-office.md saved ({len(sorted_msgs)} emails, {file_size:.1f}KB, {fallback_count} used bodyPreview fallback)')
+log(f'STEP 3 OK    | emails-office.md saved ({len(sorted_msgs)} emails, {len(expand_ids)} expanded, {file_size:.1f}KB)')
 
-print(f'EMAIL_OK|emails={len(sorted_msgs)}|fetched={fetch_ok}|elapsed={elapsed}s')
+print(f'EMAIL_OK|emails={len(sorted_msgs)}|expanded={len(expand_ids)}|elapsed={elapsed}s')
 PYEOF
