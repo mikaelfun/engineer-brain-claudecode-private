@@ -22,6 +22,12 @@ tools/
 .claude/state/
 .claude/scheduled_tasks.lock
 
+# Dashboard runtime state (regenerable on startup)
+dashboard/.runtime/
+dashboard/.case-sessions.json
+dashboard/.case-session-messages.json
+dashboard/.patrol-last-run.json
+
 # Screenshots (all regenerable via scripts/tests)
 scripts/screenshots/
 tests/results/screenshots/
