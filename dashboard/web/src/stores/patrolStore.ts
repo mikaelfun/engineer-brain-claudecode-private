@@ -48,12 +48,12 @@ function loadFromStorage(): PatrolStatePersist | null {
 }
 
 // Load initial state from localStorage
-// If restored state says running but is stale (>10min), treat as not running
+// If restored state says running but is stale (>30min), treat as not running
 const _restored = loadFromStorage()
 const restored = _restored?.isRunning && _restored.savedAt
   ? (() => {
       const age = Date.now() - new Date(_restored.savedAt as string).getTime()
-      if (age > 10 * 60 * 1000) {
+      if (age > 30 * 60 * 1000) {
         // Stale running state — patrol must have completed/failed while browser was closed
         return { ..._restored, isRunning: false, phase: _restored.phase || 'completed' }
       }

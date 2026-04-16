@@ -37,7 +37,7 @@ import {
   getCaseMcpServerNames,
 } from '../agent/case-session-manager.js'
 import { startCliPatrol, cancelCliPatrol, isCliPatrolRunning, loadPatrolLastRun } from '../agent/cli-patrol-manager.js'
-import { runSdkPatrol, isSdkPatrolRunning, cancelSdkPatrol, loadPatrolLastRun as loadSdkPatrolLastRun } from '../agent/patrol-orchestrator.js'
+import { runSdkPatrol, isSdkPatrolRunning, cancelSdkPatrol, loadPatrolLastRun as loadSdkPatrolLastRun, getSdkPatrolLiveProgress } from '../agent/patrol-orchestrator.js'
 import { sseManager } from '../watcher/sse-manager.js'
 import { sdkQueue } from '../utils/sdk-queue.js'
 import { reloadConfig, config as appConfig } from '../config.js'
@@ -278,10 +278,12 @@ caseRoutes.post('/patrol/cancel', (c) => {
   return c.json({ success: cancelled, message: cancelled ? 'Patrol cancellation requested' : 'Failed to cancel' })
 })
 
-// GET /patrol/status — 查询 patrol 运行状态 + 上次运行结果
+// GET /patrol/status — 查询 patrol 运行状态 + 当前进度 + 上次运行结果
 caseRoutes.get('/patrol/status', (c) => {
+  const running = isSdkPatrolRunning()
   return c.json({
-    running: isSdkPatrolRunning(),
+    running,
+    liveProgress: running ? getSdkPatrolLiveProgress() : null,
     lastRun: loadSdkPatrolLastRun(),
   })
 })

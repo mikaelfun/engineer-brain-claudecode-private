@@ -44,16 +44,41 @@ export default function Dashboard() {
   const isPatrolActive = patrolRunning || startPatrol.isPending
 
   // Recover patrol state on page load/refresh (ISS-094)
-  // Hydrate from backend: running state + last run results
+  // Hydrate from backend: running state + live progress + last run results
   // Also runs when phase is 'starting' (set by startNew()) to recover if SSE is broken
   useEffect(() => {
     const { phase } = usePatrolStore.getState()
     if (patrolRunning && phase !== 'starting') return // Store already knows patrol is running (from SSE)
     let cancelled = false
-    apiGet<{ running: boolean; lastRun?: any }>('/patrol/status').then((res) => {
+    apiGet<{ running: boolean; liveProgress?: any; lastRun?: any }>('/patrol/status').then((res) => {
       if (cancelled) return
-      if (res.running) {
-        // Backend says patrol running — set minimal state, SSE events will fill details
+      if (res.running && res.liveProgress) {
+        // Backend says patrol running with live progress — hydrate full state
+        const lp = res.liveProgress
+        usePatrolStore.getState().onPatrolProgress({
+          phase: lp.phase || 'processing',
+          totalCases: lp.totalCases,
+          changedCases: lp.changedCases,
+          processedCases: lp.processedCases,
+          caseList: lp.caseList,
+          detail: lp.detail,
+        })
+        // Hydrate completed case results
+        if (lp.caseResults?.length) {
+          for (const cr of lp.caseResults) {
+            usePatrolStore.getState().onPatrolProgress({ phase: lp.phase, currentCase: cr.caseNumber })
+            usePatrolStore.getState().onPatrolCaseCompleted({ caseNumber: cr.caseNumber, durationMs: cr.durationMs, error: cr.error })
+          }
+          // Re-set phase after hydration
+          usePatrolStore.getState().onPatrolProgress({
+            phase: lp.phase || 'processing',
+            totalCases: lp.totalCases,
+            changedCases: lp.changedCases,
+            processedCases: lp.processedCases,
+          })
+        }
+      } else if (res.running) {
+        // Backend says patrol running but no live progress — set minimal state
         usePatrolStore.getState().onPatrolProgress({ phase: 'processing' })
       } else if (res.lastRun && !usePatrolStore.getState().phase) {
         // Not running, but we have persisted last run — hydrate store
@@ -288,7 +313,7 @@ export default function Dashboard() {
                   {cp.status === 'processing' && <Loader2 className="w-3 h-3 animate-spin flex-shrink-0" style={{ color: 'var(--accent-blue)' }} />}
                   {cp.status === 'completed' && <CheckCircle2 className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--accent-green)' }} />}
                   {cp.status === 'failed' && <XCircle className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--accent-red)' }} />}
-                  {cp.status === 'pending' && <Clock className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--text-tertiary)' }} />}
+                  {(cp.status === 'pending' || cp.status === 'queued') && <Clock className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--text-tertiary)' }} />}
                   <span
                     className="font-mono cursor-pointer"
                     style={{ color: 'var(--text-primary)' }}
@@ -296,6 +321,11 @@ export default function Dashboard() {
                   >
                     {cp.caseNumber.slice(-6)}
                   </span>
+                  {cp.status === 'processing' && cp.currentStep && (
+                    <span className="text-[10px] truncate max-w-[80px]" style={{ color: 'var(--text-tertiary)' }}>
+                      {cp.currentStep}
+                    </span>
+                  )}
                   {(cp.status === 'completed' || cp.status === 'failed') && cp.durationMs != null && (
                     <span className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
                       {cp.durationMs < 60000

@@ -32,7 +32,14 @@ export function useSSE() {
   const eventSourceRef = useRef<EventSource | null>(null)
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const retryCountRef = useRef(0)
-  const lastSeqRef = useRef<number>(0)
+  // Persist lastSeq to sessionStorage so page refresh can replay missed events
+  const initialSeq = (() => {
+    try {
+      const v = sessionStorage.getItem('sse-last-seq')
+      return v ? parseInt(v, 10) || 0 : 0
+    } catch { return 0 }
+  })()
+  const lastSeqRef = useRef<number>(initialSeq)
   const MAX_RETRIES = 30
   const BASE_DELAY_MS = 1000
 
@@ -94,6 +101,7 @@ export function useSSE() {
     function updateLastSeq(data: Record<string, unknown> | null) {
       if (data && typeof (data as any).seq === 'number' && (data as any).seq > lastSeqRef.current) {
         lastSeqRef.current = (data as any).seq
+        try { sessionStorage.setItem('sse-last-seq', String(lastSeqRef.current)) } catch { /* ignore */ }
       }
     }
 
@@ -427,6 +435,9 @@ export function useSSE() {
         }
         addCaseSessionMessage(caseNumber, msg)
         if (data.data?.sessionId) addCaseSessionPerSession(caseNumber, data.data.sessionId, msg)
+        // Release Zustand store state so AI Assistant button is re-enabled
+        sessionStoreSetStatus(caseNumber, 'completed')
+        sessionStoreClearPendingQuestion(caseNumber)
         queryClient.invalidateQueries({ queryKey: ['cases', caseNumber] })
         queryClient.invalidateQueries({ queryKey: ['cases', caseNumber, 'todo'] })
         queryClient.invalidateQueries({ queryKey: ['case-sessions', caseNumber] })
@@ -450,6 +461,9 @@ export function useSSE() {
         }
         addCaseSessionMessage(caseNumber, msg)
         if (data.data?.sessionId) addCaseSessionPerSession(caseNumber, data.data.sessionId, msg)
+        // Release Zustand store state so AI Assistant button is re-enabled
+        sessionStoreSetStatus(caseNumber, 'failed')
+        sessionStoreClearPendingQuestion(caseNumber)
         queryClient.invalidateQueries({ queryKey: ['case-sessions', caseNumber] })
         queryClient.invalidateQueries({ queryKey: ['case-operation', caseNumber] })
         queryClient.refetchQueries({ queryKey: ['case-operation', caseNumber] })
@@ -875,12 +889,32 @@ export function useSSE() {
 
       // Reconcile patrol store with backend truth on (re)connect
       // Fixes stuck "patrolling" state when SSE missed the completion event
+      // Also hydrates live progress for page-refresh recovery
       fetch('/api/patrol/status').then(r => r.json()).then((status: any) => {
         const store = usePatrolStore.getState()
         if (store.isRunning && !status.running) {
           // Backend says patrol is NOT running, but store thinks it is → force complete
           console.log('[SSE] Patrol store reconciliation: backend not running, forcing completed')
           patrolOnProgress({ phase: 'completed', ...(status.lastRun || {}) })
+        } else if (status.running && status.liveProgress && !store.isRunning) {
+          // Backend says running with progress, but store lost it (stale localStorage) → hydrate
+          console.log('[SSE] Patrol store reconciliation: hydrating live progress from backend')
+          const lp = status.liveProgress
+          patrolOnProgress({
+            phase: lp.phase || 'processing',
+            totalCases: lp.totalCases,
+            changedCases: lp.changedCases,
+            processedCases: lp.processedCases,
+            caseList: lp.caseList,
+            detail: lp.detail,
+          })
+          // Hydrate completed case results
+          if (lp.caseResults?.length) {
+            for (const cr of lp.caseResults) {
+              patrolOnProgress({ phase: lp.phase, currentCase: cr.caseNumber })
+              patrolOnCaseCompleted({ caseNumber: cr.caseNumber, durationMs: cr.durationMs, error: cr.error })
+            }
+          }
         }
       }).catch(() => { /* ignore */ })
     }

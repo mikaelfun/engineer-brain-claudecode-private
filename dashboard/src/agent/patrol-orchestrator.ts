@@ -79,6 +79,21 @@ let patrolAbortController: AbortController | null = null
 /** Counter for processed cases (updated during processing phase) */
 let processedCount = 0
 
+/**
+ * In-flight patrol progress snapshot.
+ * Updated as patrol progresses; read by `/patrol/status` API for page-refresh recovery.
+ */
+let patrolLiveProgress: {
+  phase: string
+  totalCases: number
+  changedCases: number
+  processedCases: number
+  caseList: string[]
+  caseResults: PatrolResult['caseResults']
+  startedAt: string
+  detail?: string
+} | null = null
+
 
 // ============================================================
 // Public API
@@ -104,6 +119,16 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
   sseManager.broadcast('sessions-changed' as any, { reason: 'patrol-started' })
   const startedAt = new Date().toISOString()
   const startMs = Date.now()
+
+  patrolLiveProgress = {
+    phase: 'starting',
+    totalCases: 0,
+    changedCases: 0,
+    processedCases: 0,
+    caseList: [],
+    caseResults: [],
+    startedAt,
+  }
 
   const result: PatrolResult = {
     phase: 'completed',
@@ -145,6 +170,14 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
       caseList: filteredCases,
     })
 
+    // Update live progress snapshot for API consumers
+    if (patrolLiveProgress) {
+      patrolLiveProgress.phase = 'discovering'
+      patrolLiveProgress.totalCases = activeCases.length
+      patrolLiveProgress.changedCases = filteredCases.length
+      patrolLiveProgress.caseList = filteredCases
+    }
+
     console.log(`[sdk-patrol] Discovered ${activeCases.length} active cases, ${filteredCases.length} need processing (force=${force})`)
 
     if (filteredCases.length === 0) {
@@ -156,11 +189,13 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
 
     // ---- Phase 2: Warming up ----
     checkAborted()
+    if (patrolLiveProgress) patrolLiveProgress.phase = 'warming-up'
     broadcastPhase('warming-up')
     await warmUp()
 
     // ---- Phase 3: Processing ----
     checkAborted()
+    if (patrolLiveProgress) patrolLiveProgress.phase = 'processing'
     broadcastPhase('processing', { changedCases: filteredCases.length })
 
     const casePromises = filteredCases.map(caseNumber => {
@@ -170,6 +205,12 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
         result.caseResults.push(caseResult)
         processedCount++
         result.processedCases = processedCount
+
+        // Update live progress snapshot
+        if (patrolLiveProgress) {
+          patrolLiveProgress.processedCases = processedCount
+          patrolLiveProgress.caseResults = [...result.caseResults]
+        }
 
         broadcastPhase('processing', {
           changedCases: filteredCases.length,
@@ -181,6 +222,7 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
     await Promise.allSettled(casePromises)
 
     // ---- Phase 4: Aggregating ----
+    if (patrolLiveProgress) patrolLiveProgress.phase = 'aggregating'
     broadcastPhase('aggregating')
 
     // Check if all cases failed
@@ -214,12 +256,22 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
   } finally {
     patrolRunning = false
     patrolAbortController = null
+    patrolLiveProgress = null
   }
 }
 
 /** Check if a patrol is currently running */
 export function isSdkPatrolRunning(): boolean {
   return patrolRunning
+}
+
+/**
+ * Get a snapshot of the current patrol progress.
+ * Returns null when no patrol is running.
+ * Used by `/patrol/status` API for page-refresh recovery.
+ */
+export function getSdkPatrolLiveProgress() {
+  return patrolLiveProgress
 }
 
 /**
@@ -395,25 +447,43 @@ async function warmUp(): Promise<void> {
   const irScript = join(config.projectRoot, 'skills', 'd365-case-ops', 'scripts', 'check-ir-status-batch.ps1')
   const warmScript = join(config.projectRoot, 'skills', 'd365-case-ops', 'scripts', 'warm-dtm-token.ps1')
 
+  const tasks: string[] = []
+  if (existsSync(irScript)) tasks.push('IR batch')
+  if (existsSync(warmScript)) tasks.push('DTM token')
+
+  broadcastPhase('warming-up', { detail: `Starting: ${tasks.join(' + ')}...` })
+
   const promises: Promise<unknown>[] = []
 
   if (existsSync(irScript)) {
+    broadcastPhase('warming-up', { detail: 'IR batch status check running...' })
     promises.push(
       execAsync(
         `pwsh -NoProfile -File "${irScript}" -SaveMeta -MetaDir "${config.activeCasesDir}"`,
         { cwd: config.projectRoot, timeout: 60_000 },
-      ).catch(err => console.warn('[sdk-patrol] check-ir-status-batch failed:',
-        (err as Error).message)),
+      ).then(() => {
+        broadcastPhase('warming-up', { detail: 'IR batch ✓' })
+        console.log('[sdk-patrol] IR batch check completed')
+      }).catch(err => {
+        broadcastPhase('warming-up', { detail: 'IR batch ✗ (non-blocking)' })
+        console.warn('[sdk-patrol] check-ir-status-batch failed:', (err as Error).message)
+      }),
     )
   }
 
   if (existsSync(warmScript)) {
+    broadcastPhase('warming-up', { detail: 'DTM token warm-up running...' })
     promises.push(
       execAsync(
         `pwsh -NoProfile -File "${warmScript}" -CasesRoot "${config.casesDir}"`,
         { cwd: config.projectRoot, timeout: 60_000 },
-      ).catch(err => console.warn('[sdk-patrol] warm-dtm-token failed:',
-        (err as Error).message)),
+      ).then(() => {
+        broadcastPhase('warming-up', { detail: 'DTM token ✓' })
+        console.log('[sdk-patrol] DTM token warm-up completed')
+      }).catch(err => {
+        broadcastPhase('warming-up', { detail: 'DTM token ✗ (non-blocking)' })
+        console.warn('[sdk-patrol] warm-dtm-token failed:', (err as Error).message)
+      }),
     )
   }
 
@@ -421,6 +491,7 @@ async function warmUp(): Promise<void> {
     await Promise.all(promises)
   }
 
+  broadcastPhase('warming-up', { detail: 'Warm-up complete ✓' })
   console.log('[sdk-patrol] Warm-up completed')
 }
 

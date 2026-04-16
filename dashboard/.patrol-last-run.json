@@ -1,42 +1,36 @@
 {
   "phase": "completed",
-  "totalCases": 5,
-  "changedCases": 5,
-  "processedCases": 5,
+  "totalCases": 4,
+  "changedCases": 4,
+  "processedCases": 4,
   "archivedCases": [],
   "caseResults": [
-    {
-      "caseNumber": "2604140040001804",
-      "status": "completed",
-      "actions": "none",
-      "durationMs": 167956
-    },
-    {
-      "caseNumber": "2603300030003153001",
-      "status": "completed",
-      "actions": "none",
-      "durationMs": 201283
-    },
     {
       "caseNumber": "2602130040001034",
       "status": "completed",
       "actions": "none",
-      "durationMs": 233673
+      "durationMs": 121961
+    },
+    {
+      "caseNumber": "2604140040001804",
+      "status": "completed",
+      "actions": "none",
+      "durationMs": 163386
     },
     {
       "caseNumber": "2601290030000748",
       "status": "completed",
       "actions": "none",
-      "durationMs": 339376
+      "durationMs": 242631
     },
     {
-      "caseNumber": "2603310010001969",
+      "caseNumber": "2603300030003153001",
       "status": "completed",
-      "actions": "email-drafter",
-      "durationMs": 693838
+      "actions": "no-action",
+      "durationMs": 344341
     }
   ],
-  "wallClockMinutes": 12,
-  "startedAt": "2026-04-15T09:11:08.975Z",
-  "completedAt": "2026-04-15T09:23:00.732Z"
+  "wallClockMinutes": 6,
+  "startedAt": "2026-04-16T06:38:36.740Z",
+  "completedAt": "2026-04-16T06:44:34.809Z"
 }

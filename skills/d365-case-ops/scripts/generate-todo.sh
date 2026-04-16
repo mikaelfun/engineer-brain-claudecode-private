@@ -140,18 +140,22 @@ if [ "$ACTUAL_STATUS" = "pending-engineer" ] && [ "$DAYS" -lt 2 ] 2>/dev/null; t
 fi
 
 # SAP 准确性检查（从 meta.sapCheck 读取 LLM 判断结果）
+# AR Case → 跳过 SAP 检查（AR 的 SAP 按产品路径判断，由 main case owner 管理）
 SAP_ACCURATE=$(python3 -c "
 import json, os
 try:
     meta = json.load(open('$META'))
-    sc = meta.get('sapCheck', {})
-    if not sc or sc.get('isAccurate', True):
-        print('OK')
+    if meta.get('isAR', False):
+        print('OK')  # AR case: skip SAP check
     else:
-        suggested = sc.get('suggestedSap', '未知')
-        reason = sc.get('reason', '')
-        current = sc.get('currentSap', '')
-        print(f'MISMATCH|{current}|{suggested}|{reason}')
+        sc = meta.get('sapCheck', {})
+        if not sc or sc.get('isAccurate', True):
+            print('OK')
+        else:
+            suggested = sc.get('suggestedSap', '未知')
+            reason = sc.get('reason', '')
+            current = sc.get('currentSap', '')
+            print(f'MISMATCH|{current}|{suggested}|{reason}')
 except:
     print('OK')
 " 2>/dev/null)

@@ -1635,5 +1635,1090 @@
       "step": "teams-search",
       "timestamp": "2026-04-15T12:14:26.209Z"
     }
+  ],
+  "2603300030003153001": [
+    {
+      "type": "tool-call",
+      "content": ".claude/**/*.md",
+      "toolName": "Glob",
+      "step": "no-action",
+      "timestamp": "2026-04-16T06:41:39.215Z"
+    },
+    {
+      "type": "thinking",
+      "content": "The `.claude/agents/no-action.md` file doesn't exist. There's no `agents` folder under `.claude`. Let me check what's available in the `.claude` directory at the top level, and also read the case files to understand the context.",
+      "step": "no-action",
+      "timestamp": "2026-04-16T06:41:44.209Z"
+    },
+    {
+      "type": "thinking",
+      "content": "The `agents` folder doesn't exist under `.claude`. Let me check the available `.claude` structure and read the key case files in parallel.",
+      "step": "no-action",
+      "timestamp": "2026-04-16T06:41:45.146Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "ls C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\.claude\\",
+      "toolName": "Bash",
+      "step": "no-action",
+      "timestamp": "2026-04-16T06:41:45.731Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "./cases/active/2603300030003153001/case-info.md",
+      "toolName": "Read",
+      "step": "no-action",
+      "timestamp": "2026-04-16T06:41:46.668Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "./cases/active/2603300030003153001/case-summary.md",
+      "toolName": "Read",
+      "step": "no-action",
+      "timestamp": "2026-04-16T06:41:47.168Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "ls \".claude/\"",
+      "toolName": "Bash",
+      "step": "no-action",
+      "timestamp": "2026-04-16T06:41:50.618Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "ls \".claude/agents/\"",
+      "toolName": "Bash",
+      "step": "no-action",
+      "timestamp": "2026-04-16T06:41:54.981Z"
+    },
+    {
+      "type": "thinking",
+      "content": "There's no `no-action.md` in the agents directory. The available agents are listed. The user asked me to read `.claude/agents/no-action.md` but it doesn't exist. Let me inform the user about this and ask them what to do.\n\nWait, let me also check the case files to understand what \"no-action\" means in context. Let me read the case files and also check if there's any no-action related content elsewhere.",
+      "step": "no-action",
+      "timestamp": "2026-04-16T06:42:02.331Z"
+    },
+    {
+      "type": "thinking",
+      "content": "`.claude/agents/no-action.md` 文件不存在。当前 `.claude/agents/` 目录中有以下 agent 文件，但没有 `no-action.md`：\n\n```\ncasework-light.md\ncasework.md\nchallenger.md\ndata-refresh.md\nemail-batch-worker.md\nemail-drafter.md\nknowledge-enricher.md\nnote-gap-checker.md\nonenote-case-search.md\nstage-worker.md\nteams-search-queue.md\nteams-search.md\ntest-supervisor-runner.md\ntroubleshooter.md\n```\n\n**问题：** `no-action.md` agent 文件缺失，无法按步骤执行。\n\n请问您是否：\n1. **提供 `no-action.md` 的内容**，我来创建该文件后执行？\n2. **手动描述 no-action 的执行步骤**，我来直接执行？\n3. **使用",
+      "step": "no-action",
+      "timestamp": "2026-04-16T06:42:06.115Z"
+    },
+    {
+      "type": "completed",
+      "content": "`.claude/agents/no-action.md` 文件不存在。当前 `.claude/agents/` 目录中有以下 agent 文件，但没有 `no-action.md`：\n\n```\ncasework-light.md\ncasework.md\nchallenger.md\ndata-refresh.md\nemail-batch-worker.md\nemail-drafter.md\nknowledge-enricher.md\nnote-gap-checker.md\nonenote-case-search.md\nstage-worker.md\nteams-search-queue.md\nteams-search.md\ntest-supervisor-runner.md\ntroubleshooter.md\n```\n\n**问题：** `no-action.md` agent 文件缺失，无法按步骤执行。\n\n请问您是否：\n1. **提供 `no-action.md` 的内容**，我来创建该文件后执行？\n2. **手动描述 no-action 的执行步骤**，我来直接执行？\n3. **使用现有某个 agent** 作为替代（例如 `casework-light.md` 或 `casework.md`）？\n\n请指示如何继续。",
+      "step": "no-action",
+      "timestamp": "2026-04-16T06:42:06.237Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Let me read the SKILL.md file to understand the execution steps for the inspection-writer skill.",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:42:11.922Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "/root/cases/.claude/skills/inspection-writer/SKILL.md",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:42:12.666Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\.claude/skills/inspection-writer/SKILL.md",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:42:16.069Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Now I need to read the case directory to understand what files are available and then execute the inspection-writer steps. Let me read the relevant files.\n\nThe caseDir is `./cases/active/2603300030003153001/` - I need to find the absolute path. The current working directory is `C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src`, so the caseDir would be `C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\cases\\active\\2603300030003153001\\`.\n\nWait, the user mentioned `./cases/active/26033000",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:42:22.580Z"
+    },
+    {
+      "type": "thinking",
+      "content": "好的，读取 SKILL.md 完成。开始执行 inspection-writer for Case **2603300030003153001**。\n\n首先读取配置和 case 目录中的相关文件：",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:42:23.947Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "cases/active/2603300030003153001/**/*",
+      "toolName": "Glob",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:42:24.541Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\config.json",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:42:24.856Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Now let me read the key files for this case - case-info.md, case-summary.md (already exists), casehealth-meta.json, emails.md, notes.md, teams/teams-digest.md, notes-ar.md, and onenote/personal-notes.md.",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:42:29.874Z"
+    },
+    {
+      "type": "thinking",
+      "content": "`case-summary.md` 已存在。读取必要文件判断更新策略：",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:42:30.454Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\cases\\active\\2603300030003153001\\case-summary.md",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:42:31.972Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\cases\\active\\2603300030003153001\\casehealth-meta.json",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:42:32.464Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\cases\\active\\2603300030003153001\\case-info.md",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:42:32.852Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Now let me read the emails.md, notes.md, notes-ar.md, teams/teams-digest.md, and onenote/personal-notes.md to determine what's new since the last inspection (lastInspected: 2026-04-16T14:38:50).\n\nWait, lastInspected is 2026-04-16T14:38:50 - that's today (2026-04-16). The current time is... today is 2026-04-16 and we're doing inspection now. The case-summary.md already has a comprehensive entry with [2026-04-16] already included.\n\n\nSince the last inspection was already today, I need to check the ",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:42:43.974Z"
+    },
+    {
+      "type": "thinking",
+      "content": "`case-summary.md` 已存在，`lastInspected` 为今日 `2026-04-16T14:38:50`。读取新增内容判断是否需要增量更新：",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:42:44.097Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\cases\\active\\2603300030003153001\\logs\\delta-since-last-judge.md",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:42:44.163Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\cases\\active\\2603300030003153001\\logs\\inspection-writer.log",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:42:44.314Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\cases\\active\\2603300030003153001\\teams\\teams-digest.md",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:42:44.904Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Now let me check the notes-ar.md and emails.md and onenote/personal-notes.md to see if there's anything new since the last inspection (14:38 today).\n\nActually, wait. The delta says: \"Emails: 22 → 22 (no change) | Notes: 8 → 8 (no change)\". And the last inspection-writer log shows \"case-summary=skipped(no-new-content) todo=0r/0y/5g\" at 14:21:40, followed by a \"case-summary=updated todo=0r/1y/5g\" at 14:03:50.\n \nLooking at the timeline more carefully, the delta was judged at 14:18:57 with no change",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:43:06.373Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Delta 显示 emails=22→22, notes=8→8（无变化）。检查 notes-ar.md 和 ICM 状态：",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:43:06.411Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\cases\\active\\2603300030003153001\\notes-ar.md",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:43:06.434Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\cases\\active\\2603300030003153001\\onenote\\personal-notes.md",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:43:06.465Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\cases\\active\\2603300030003153001\\icm\\icm-discussions.md",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:43:06.480Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Now I have a comprehensive understanding of the case. Let me assess the situation:\n\n**Decision Tree**:\n- `lastInspected`: 2026-04-16T14:38:50 (today, ~20 minutes ago based on context)\n- Delta: No new emails, no new notes\n- case-summary.md already exists and is up to date\n- ICM discussions fetched at 2026-04-15 23:18 SGT - so the latest is 4/14 from fangkun (no new reply from PG)\n\n**Conclusion**: This is effectively \"NO_CHANGE + case-summary.md exists\" → **skip Step 2**, go directly to Step 3.\n\n\n",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:43:29.965Z"
+    },
+    {
+      "type": "thinking",
+      "content": "**判断结果**：\n- case-summary.md 已存在 + delta 无新内容（emails=22→22, notes=8→8）→ **跳过 Step 2，直接 Step 3**\n- AR Case（`isAR: true`）→ SAP check **跳过**\n\n执行 Step 3 — generate-todo.sh：",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:43:30.007Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "cd \"C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\" && bash skills/d365-case-ops/scripts/generate-todo.sh \"./cases/active/2603300030003153001/\"",
+      "toolName": "Bash",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:43:30.048Z"
+    },
+    {
+      "type": "thinking",
+      "content": "generate-todo.sh returned `TODO_OK|red=0,yellow=0,green=5`. Now let me check what todo file was created.",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:43:38.780Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Step 3 完成：`TODO_OK|red=0,yellow=0,green=5`\n\nStep 4 — 更新 `lastInspected`：",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:43:39.579Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\cases\\active\\2603300030003153001\\todo\\260416-1421.md",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:43:40.485Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Now let me check the new todo file generated by the generate-todo.sh script. Let me look for files created after the last run (260416-1421.md exists). The new one should be more recent.",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:43:47.322Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "cases/active/2603300030003153001/todo/*.md",
+      "toolName": "Glob",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:43:47.685Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\cases\\active\\2603300030003153001\\todo\\260416-1443.md",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:43:52.338Z"
+    },
+    {
+      "type": "thinking",
+      "content": "新 todo 已生成：`260416-1443.md`（red=0, yellow=0, green=5）。\n\nStep 4 — 更新 `casehealth-meta.json` 的 `lastInspected`：",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:43:59.078Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "powershell -Command \"Get-Date -Format 'yyyy-MM-ddTHH:mm:ss.fffffffzzz'\"",
+      "toolName": "Bash",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:44:00.139Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\cases\\active\\2603300030003153001\\casehealth-meta.json",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:44:07.106Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "powershell -Command \"(Get-Content 'C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\cases\\active\\2603300030003153001\\casehealth-meta.json') -replace '\\\"lastInspected\\\": \\\"[^\\\"]*\\\"', '\\\"lastInspected\\\": \\\"2026-04-16T14:44:01.8527954+08:00\\\"' | Set-Content 'C:\\Users\\fangkun\\Documents\\Projects\\Eng",
+      "toolName": "Bash",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:44:13.607Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Step 5 — 写入日志：",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:44:19.270Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] inspection-writer OK | case-summary=skipped(no-new-content) todo=0r/0y/5g\" >> \"C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\cases\\active\\2603300030003153001\\logs\\inspection-writer.log\"",
+      "toolName": "Bash",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:44:21.655Z"
+    },
+    {
+      "type": "thinking",
+      "content": "---\n\n## ✅ inspection-writer 执行完成 — Case 2603300030003153001\n\n### 执行摘要\n\n| 步骤 | 结果 |\n|------|------|\n| **Step 1** 决策树判断 | `NO_CHANGE + case-summary.md 已存在` → 跳过 Step 2 |\n| **Step 2** Summary 更新 | **skipped**（无新邮件/notes；delta: emails=22→22, notes=8→8） |\n| **Step 2.5** SAP Check | **skipped**（AR Case，SAP 由 main case owner 管理） |\n| **Step 3** generate-todo.sh | ✅ `TODO_OK | red=0, yellow=0, green=5` |\n| **Step 4** 更新 lastInspected | ✅ `2026-04-16T14:44:01+08:00` |\n| **Step 5** 日志 | ✅ `case-summary=ski",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:44:34.218Z"
+    },
+    {
+      "type": "completed",
+      "content": "---\n\n## ✅ inspection-writer 执行完成 — Case 2603300030003153001\n\n### 执行摘要\n\n| 步骤 | 结果 |\n|------|------|\n| **Step 1** 决策树判断 | `NO_CHANGE + case-summary.md 已存在` → 跳过 Step 2 |\n| **Step 2** Summary 更新 | **skipped**（无新邮件/notes；delta: emails=22→22, notes=8→8） |\n| **Step 2.5** SAP Check | **skipped**（AR Case，SAP 由 main case owner 管理） |\n| **Step 3** generate-todo.sh | ✅ `TODO_OK | red=0, yellow=0, green=5` |\n| **Step 4** 更新 lastInspected | ✅ `2026-04-16T14:44:01+08:00` |\n| **Step 5** 日志 | ✅ `case-summary=skipped(no-new-content) todo=0r/0y/5g` |\n\n### 新 Todo 文件\n📄 `todo/260416-1443.md`\n\n**✅ 仅通知（5 条）：**\n- 邮件草稿已发送：`20260416-1156-customer-update-zh-customer.md`\n- 等待 PG 回复（ICM 51000000969736）\n- Entitlement 合规（Premier）\n- AR Case | Main: 2603300030003153 | Mode: customer-facing\n- AR Scope 已确认\n\n> **无 🔴 红色 / 🟡 黄色待办**，当前状态 `pending-pg | no-action`，ICM 仍等待 PG（Kokkanti Himaja）回复 4/14 fangkun 的结论询问。",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:44:34.337Z"
+    }
+  ],
+  "2602130040001034": [
+    {
+      "type": "thinking",
+      "content": "The user wants me to read the casework-light.md file to get the full execution steps for a lightweight casework task for Case 2602130040001034.",
+      "step": "patrol",
+      "timestamp": "2026-04-16T06:39:04.190Z"
+    },
+    {
+      "type": "tool-call",
+      "content": ".claude/agents/casework-light.md",
+      "toolName": "Read",
+      "step": "patrol",
+      "timestamp": "2026-04-16T06:39:04.458Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Now I have the execution steps. Let me follow the steps:\n\n### Step 1: Runner Script（1 次 Bash）\n\nI need to run the casework-light-runner.sh script with the provided parameters.",
+      "step": "patrol",
+      "timestamp": "2026-04-16T06:39:09.093Z"
+    },
+    {
+      "type": "thinking",
+      "content": "已读取执行步骤。开始 **Step 1**：运行一体化 Runner Script。\n\n---",
+      "step": "patrol",
+      "timestamp": "2026-04-16T06:39:10.223Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "bash \"./skills/d365-case-ops/scripts/casework-light-runner.sh\" \\\n  --case-number \"2602130040001034\" \\\n  --case-dir \"./cases/active/2602130040001034/\" \\\n  --project-root \".\" \\\n  --cases-root \"./cases\" \\\n  --is-ar false \\\n  --main-case-id \"\" \\\n  --teams-cache-hours 8",
+      "toolName": "Bash",
+      "step": "patrol",
+      "timestamp": "2026-04-16T06:39:12.796Z"
+    },
+    {
+      "type": "thinking",
+      "content": "The runner returned `NO_CHANGE|plan_written|...`, which means the execution-plan.json has already been automatically written. I can complete without doing further steps.\n\nThe result is:\n- `actualStatus=pending-customer`\n- `days=1`\n- `actions=0`\n\nThis means no action is needed since the case is pending-customer and it's only been 1 day.",
+      "step": "patrol",
+      "timestamp": "2026-04-16T06:39:29.371Z"
+    },
+    {
+      "type": "thinking",
+      "content": "---\n\n## ✅ Casework-Light 完成\n\nRunner 返回 `NO_CHANGE`，execution-plan.json **已自动写入**，无需后续步骤。\n\n### 📋 结果摘要\n\n| 字段 | 值 |\n|---|---|\n| **Case** | 2602130040001034 |\n| **actualStatus** | `pending-customer` |\n| **Days since last contact** | 1 天 |\n| **Actions** | 0（无需操作） |\n| **Path** | NO_CHANGE（数据无变化，快速继承） |\n\n### 🔍 判断逻辑\n\n根据路由决策表：\n- `pending-customer` + `days < 3` → **no-action**\n- 客户邮件刚发出 1 天，等待客户回复中，无需跟进。",
+      "step": "patrol",
+      "timestamp": "2026-04-16T06:39:32.041Z"
+    },
+    {
+      "type": "completed",
+      "content": "---\n\n## ✅ Casework-Light 完成\n\nRunner 返回 `NO_CHANGE`，execution-plan.json **已自动写入**，无需后续步骤。\n\n### 📋 结果摘要\n\n| 字段 | 值 |\n|---|---|\n| **Case** | 2602130040001034 |\n| **actualStatus** | `pending-customer` |\n| **Days since last contact** | 1 天 |\n| **Actions** | 0（无需操作） |\n| **Path** | NO_CHANGE（数据无变化，快速继承） |\n\n### 🔍 判断逻辑\n\n根据路由决策表：\n- `pending-customer` + `days < 3` → **no-action**\n- 客户邮件刚发出 1 天，等待客户回复中，无需跟进。",
+      "step": "patrol",
+      "timestamp": "2026-04-16T06:39:32.157Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Let me read the SKILL.md file to understand the execution steps for the inspection-writer skill.",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:39:40.430Z"
+    },
+    {
+      "type": "tool-call",
+      "content": ".claude/skills/inspection-writer/SKILL.md",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:39:40.877Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Now I need to read the case files to understand the current state of the case. Let me start by reading the key files.",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:39:45.290Z"
+    },
+    {
+      "type": "thinking",
+      "content": "好的，开始执行。先读取 Case 目录结构和关键文件。",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:39:45.838Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "ls ./cases/active/2602130040001034/",
+      "toolName": "Bash",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:39:46.814Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "./cases/active/2602130040001034/case-summary.md",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:39:51.950Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "./cases/active/2602130040001034/casehealth-meta.json",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:39:52.157Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "./cases/active/2602130040001034/case-info.md",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:39:52.650Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Now let me check the emails.md and notes.md to see if there are any new updates since the last inspection (2026-04-16T14:38:50). The lastInspected is 2026-04-16T14:38:50+08:00, so I need to check if there are new events after that.\n\nWait, looking at the case-summary.md, the last entry is [2026-04-15] which matches the status in casehealth-meta.json. The lastInspected is today (2026-04-16T14:38:50), but the summary was written as of 4/15.\n \nSo the inspection happened today, but there haven't been",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:40:06.108Z"
+    },
+    {
+      "type": "thinking",
+      "content": "现在读取 emails.md 和 notes.md 检查新内容。",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:40:06.110Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "tail -100 ./cases/active/2602130040001034/emails.md",
+      "toolName": "Bash",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:40:06.152Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "./cases/active/2602130040001034/notes.md",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:40:06.180Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Now I have all the context I need. Let me analyze:\n\n1. **case-summary.md 存在** - already has content\n2. **lastInspected**: 2026-04-16T14:38:50+08:00 (today)\n3. **Summary last event**: [2026-04-15] - already captured all the latest emails\n\nLooking at the latest emails:\n- 4/15/2026 6:58 AM: Customer: staging deployment, will close in next couple of days\n- 4/15/2026 8:43 AM: Kun Fang: close by Friday if things go well, otherwise temp close\n\n\n- The case-summary is already up to date with these events",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:40:28.879Z"
+    },
+    {
+      "type": "thinking",
+      "content": "**分析结果**：\n- `case-summary.md` 已存在，最新事件 [2026-04-15] 与邮件最新记录一致\n- `lastInspected`: 2026-04-16T14:38:50+08:00（今日），无新增内容\n- `sapCheck.checkedAt`: 2026-04-15T23:30 (< 24h)，且 `isAccurate: true` → 跳过 SAP 检查\n\n→ **NO_CHANGE + summary 已存在** → 跳过 Step 2，直接执行 Step 3 (generate-todo)\n\n### Step 3 — 生成 Todo",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:40:29.035Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "bash skills/d365-case-ops/scripts/generate-todo.sh \"./cases/active/2602130040001034/\"",
+      "toolName": "Bash",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:40:29.078Z"
+    },
+    {
+      "type": "thinking",
+      "content": "The todo generated successfully: red=0, yellow=0, green=4. Let me now update the lastInspected field in casehealth-meta.json and write the log.",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:40:37.408Z"
+    },
+    {
+      "type": "thinking",
+      "content": "### Step 4 — 更新 Meta (lastInspected)",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:40:37.700Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "NOW=$(date -u +\"%Y-%m-%dT%H:%M:%S.0000000+08:00\") && python3 -c \"\nimport json, sys\nwith open('./cases/active/2602130040001034/casehealth-meta.json', 'r') as f:\n    d = json.load(f)\nd['lastInspected'] = '$(TZ=Asia/Shanghai date +\\\"%Y-%m-%dT%H:%M:%S+08:00\\\")'\nwith open('./cases/active/2602130040001034",
+      "toolName": "Bash",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:40:39.965Z"
+    },
+    {
+      "type": "thinking",
+      "content": "### Step 5 — 写日志",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:40:43.170Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] inspection-writer OK | case-summary=skipped todo=0r/0y/4g\" >> \"./cases/active/2602130040001034/logs/inspection-writer.log\"",
+      "toolName": "Bash",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:40:44.883Z"
+    },
+    {
+      "type": "thinking",
+      "content": "### 执行完成 ✅\n\n| 步骤 | 结果 |\n|------|------|\n| **case-summary.md** | `skipped`（NO_CHANGE，内容已包含 [2026-04-15] 最新事件，无新增） |\n| **SAP 检查** | 跳过（`checkedAt` < 24h，`isAccurate: true`） |\n| **generate-todo** | `TODO_OK \\| red=0, yellow=0, green=4` |\n| **Meta 更新** | `lastInspected` 已刷新 |\n| **日志** | 已写入 `logs/inspection-writer.log` |\n\n**Todo 摘要**：green=4，无红/黄项，Case 当前处于 `pending-customer` 状态，等待客户 staging 测试完成后关单（预计 4/18 前后）。",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:40:51.800Z"
+    },
+    {
+      "type": "completed",
+      "content": "### 执行完成 ✅\n\n| 步骤 | 结果 |\n|------|------|\n| **case-summary.md** | `skipped`（NO_CHANGE，内容已包含 [2026-04-15] 最新事件，无新增） |\n| **SAP 检查** | 跳过（`checkedAt` < 24h，`isAccurate: true`） |\n| **generate-todo** | `TODO_OK \\| red=0, yellow=0, green=4` |\n| **Meta 更新** | `lastInspected` 已刷新 |\n| **日志** | 已写入 `logs/inspection-writer.log` |\n\n**Todo 摘要**：green=4，无红/黄项，Case 当前处于 `pending-customer` 状态，等待客户 staging 测试完成后关单（预计 4/18 前后）。",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:40:51.936Z"
+    }
+  ],
+  "2601290030000748": [
+    {
+      "type": "thinking",
+      "content": "The user wants me to read the casework-light.md file to get the full execution steps for a lightweight casework task.",
+      "step": "patrol",
+      "timestamp": "2026-04-16T06:39:05.952Z"
+    },
+    {
+      "type": "tool-call",
+      "content": ".claude/agents/casework-light.md",
+      "toolName": "Read",
+      "step": "patrol",
+      "timestamp": "2026-04-16T06:39:06.273Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Now I need to execute Step 1: run the casework-light-runner.sh script.",
+      "step": "patrol",
+      "timestamp": "2026-04-16T06:39:11.510Z"
+    },
+    {
+      "type": "thinking",
+      "content": "好的，按照步骤执行。先运行 Step 1 的 runner 脚本。\n\n### Step 1: Runner Script",
+      "step": "patrol",
+      "timestamp": "2026-04-16T06:39:12.309Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "bash \"./skills/d365-case-ops/scripts/casework-light-runner.sh\" \\\n  --case-number 2601290030000748 \\\n  --case-dir \"./cases/active/2601290030000748/\" \\\n  --project-root \".\" \\\n  --cases-root \"./cases\" \\\n  --is-ar false \\\n  --main-case-id \"\" \\\n  --teams-cache-hours 8",
+      "toolName": "Bash",
+      "step": "patrol",
+      "timestamp": "2026-04-16T06:39:14.833Z"
+    },
+    {
+      "type": "thinking",
+      "content": "The runner returned `CHANGED|runner_output_written|delta=DELTA_EMPTY|icm_needs_refresh=false|teams=DONE|elapsed=51s`. This means:\n- Continue to Step 2 (but `icm_needs_refresh=false`, so skip ICM refresh)\n- `delta=DELTA_EMPTY` → 快速继承模式\n- Proceed to Step 3\n\nLet me read the runner-output.json to get the context.",
+      "step": "patrol",
+      "timestamp": "2026-04-16T06:40:13.057Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Runner 返回 `CHANGED|DELTA_EMPTY|icm_needs_refresh=false`。ICM 无需刷新，直接进入 **Step 3**。先读 runner-output.json。",
+      "step": "patrol",
+      "timestamp": "2026-04-16T06:40:13.769Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "./cases/active/2601290030000748/context/runner-output.json",
+      "toolName": "Read",
+      "step": "patrol",
+      "timestamp": "2026-04-16T06:40:14.302Z"
+    },
+    {
+      "type": "thinking",
+      "content": "DELTA_EMPTY, so I use quick inheritance:\n- actualStatus: `pending-customer`\n- daysSinceLastContact: 1 (< 3 days)\n- ICM: RESOLVED, no need to check ICM discussions\n\nRouting table:\n- `pending-customer` + days < 3 → no-action\n\nPrevious reasoning confirms: waiting for customer to reply after PG fix version 6.8.45 (~4/20 release), 1 day < 3 day threshold → no-action.\n\nNo ICM discussions to check (ICM is RESOLVED, icm_needs_refresh=false).\n\n\nNow I'm generating the execution-plan.json file with the no-",
+      "step": "patrol",
+      "timestamp": "2026-04-16T06:40:23.179Z"
+    },
+    {
+      "type": "thinking",
+      "content": "**DELTA_EMPTY** — 快速继承：\n- `actualStatus`: `pending-customer`\n- `daysSinceLastContact`: 1 天（< 3天阈值）\n- 路由：→ **no-action**\n- ICM 已 RESOLVED，无需 Discussion 检查\n\n### Step 3: Write execution-plan.json",
+      "step": "patrol",
+      "timestamp": "2026-04-16T06:40:23.333Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "python3 -c \"\nimport json, time, os, re\n\nactual_status = 'pending-customer'\ndays = 1\nactions = []\nno_action_reason = 'DELTA_EMPTY: 无新邮件/Note，状态继承 pending-customer。daysSinceLastContact=1 < 3天阈值，等客户回复 PG 修复版本 6.8.45（~4/20 发布）后跟进。'\nreasoning = 'DELTA_EMPTY：无新邮件/Note，状态继承 pending-customer，等客户回复 PG 修复版本 6",
+      "toolName": "Bash",
+      "step": "patrol",
+      "timestamp": "2026-04-16T06:40:34.952Z"
+    },
+    {
+      "type": "thinking",
+      "content": "✅ **Casework-Light 完成** — Case `2601290030000748`\n\n---\n\n### 📋 执行摘要\n\n| 项目 | 值 |\n|---|---|\n| **Delta** | `DELTA_EMPTY`（无新邮件/Note） |\n| **Status** | `pending-customer`（继承） |\n| **daysSinceLastContact** | 1 天 |\n| **ICM** | `RESOLVED`（无需刷新） |\n| **Actions** | **no-action** |\n| **路由依据** | pending-customer + days=1 < 3天阈值 → 无需操作 |\n\n### 💡 No-Action 原因\n今日已通知客户 PG 修复版本 **6.8.45**（预计 ~4/20 发布），等客户确认验证结果。1天未超3天阈值，正常等待中。\n\n**execution-plan.json 已写入** `./cases/active/2601290030000748/execution-plan.json`",
+      "step": "patrol",
+      "timestamp": "2026-04-16T06:40:43.719Z"
+    },
+    {
+      "type": "completed",
+      "content": "✅ **Casework-Light 完成** — Case `2601290030000748`\n\n---\n\n### 📋 执行摘要\n\n| 项目 | 值 |\n|---|---|\n| **Delta** | `DELTA_EMPTY`（无新邮件/Note） |\n| **Status** | `pending-customer`（继承） |\n| **daysSinceLastContact** | 1 天 |\n| **ICM** | `RESOLVED`（无需刷新） |\n| **Actions** | **no-action** |\n| **路由依据** | pending-customer + days=1 < 3天阈值 → 无需操作 |\n\n### 💡 No-Action 原因\n今日已通知客户 PG 修复版本 **6.8.45**（预计 ~4/20 发布），等客户确认验证结果。1天未超3天阈值，正常等待中。\n\n**execution-plan.json 已写入** `./cases/active/2601290030000748/execution-plan.json`",
+      "step": "patrol",
+      "timestamp": "2026-04-16T06:40:43.846Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Let me read the SKILL.md file to understand the execution steps for the inspection-writer skill.",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:40:50.380Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "/root/repo/.claude/skills/inspection-writer/SKILL.md",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:40:50.964Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "**/.claude/skills/inspection-writer/SKILL.md",
+      "toolName": "Glob",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:40:54.292Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\.claude\\skills\\inspection-writer\\SKILL.md",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:40:58.184Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Now let me read the case directory and required files to understand the case. Let me first check what files exist in the case directory.",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:41:02.056Z"
+    },
+    {
+      "type": "thinking",
+      "content": "好的，已读取 SKILL.md。现在开始读取 Case 2601290030000748 的相关文件。",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:41:03.518Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "ls \"C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\cases\\active\\2601290030000748\\\"",
+      "toolName": "Bash",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:41:04.517Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "cases/active/2601290030000748/**/*",
+      "toolName": "Glob",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:41:12.625Z"
+    },
+    {
+      "type": "thinking",
+      "content": "The case directory has many files. I need to read the key files:\n1. `case-summary.md` (already exists, so this is a CHANGED/incremental update scenario)\n2. `casehealth-meta.json`\n3. `case-info.md`\n4. `emails.md`\n5. `notes.md`\n6. `teams/teams-digest.md`\n7. `claims.json`\n8. `onenote/personal-notes.md`\n\nLet me also check the delta files to determine what changed since last inspection.\n\nActually, since the user just says to execute inspection-writer with changePath not specified, I need to determine",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:41:23.591Z"
+    },
+    {
+      "type": "thinking",
+      "content": "case-summary.md 已存在，需读取相关文件判断增量更新。并行读取所有关键文件：",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:41:23.677Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\cases\\active\\2601290030000748\\case-summary.md",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:41:23.811Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\cases\\active\\2601290030000748\\casehealth-meta.json",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:41:23.815Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\cases\\active\\2601290030000748\\case-info.md",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:41:23.872Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\cases\\active\\2601290030000748\\claims.json",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:41:24.313Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\cases\\active\\2601290030000748\\logs\\delta-since-last-judge.md",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:41:25.020Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Now let me look at the delta and casehealth-meta to determine the update strategy:\n\n1. `case-summary.md` already exists\n2. From the delta file: \"No new emails or notes since last judge. Status unchanged.\" — Emails: 20→20 (no change), Notes: 12→12 (no change)\n3. `lastInspected` in casehealth-meta.json: \"2026-04-16T14:38:50.2559122+08:00\"\n\nSince there's no change (delta is empty), and case-summary.md already exists, per SKILL.md decision tree:\n\n\n- **NO_CHANGE + case-summary.md 已存在** → 跳过 summary，直",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:41:54.383Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Delta 为空，NO_CHANGE + summary 已存在 → 跳过 summary 更新，直接执行 Step 3（generate-todo）。先找到脚本路径：",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:41:54.436Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "**/generate-todo.sh",
+      "toolName": "Glob",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:41:54.448Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "cd \"C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\" && bash skills/d365-case-ops/scripts/generate-todo.sh \"./cases/active/2601290030000748/\"",
+      "toolName": "Bash",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:42:00.101Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Great, the generate-todo.sh ran successfully with `TODO_OK|red=0,yellow=0,green=5`.\n\nNow let me check what the new todo file looks like.",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:42:07.982Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Todo 生成成功：`TODO_OK|red=0,yellow=0,green=5`。现在读取最新生成的 todo 文件，然后更新 meta + 写日志：",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:42:09.078Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "cases/active/2601290030000748/todo/*.md",
+      "toolName": "Glob",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:42:09.732Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\cases\\active\\2601290030000748\\todo\\260416-1442.md",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:42:14.052Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Now I need to:\n1. Update `lastInspected` in `casehealth-meta.json` (Step 4)\n2. Write the log entry (Step 5)\n\nThe current lastInspected is \"2026-04-16T14:38:50.2559122+08:00\". I need to update it to the current time. Let me get the current time.",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:42:19.110Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Todo 已生成。现在执行 Step 4（更新 meta）和 Step 5（写日志）：",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:42:19.693Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "date '+%Y-%m-%dT%H:%M:%S+08:00'",
+      "toolName": "Bash",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:42:20.141Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\cases\\active\\2601290030000748\\casehealth-meta.json",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:42:24.712Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "cd \"C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\" && echo \"[$(date '+%Y-%m-%d %H:%M:%S')] inspection-writer OK | case-summary=skipped todo=0r/0y/5g\" >> \"cases/active/2601290030000748/logs/inspection-writer.log\"",
+      "toolName": "Bash",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:42:31.588Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Now update `lastInspected` in casehealth-meta.json:",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:42:36.463Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "cd \"C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\" && node -e \"\nconst fs = require('fs');\nconst path = 'cases/active/2601290030000748/casehealth-meta.json';\nconst meta = JSON.parse(fs.readFileSync(path, 'utf8'));\nmeta.lastInspected = '2026-04-16T14:42:20+08:00';\nfs.writeFileSync(path, JSON.s",
+      "toolName": "Bash",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:42:38.202Z"
+    },
+    {
+      "type": "thinking",
+      "content": "✅ **inspection-writer 执行完毕 — Case 2601290030000748**\n\n---\n\n### 执行结果汇总\n\n| 步骤 | 操作 | 结果 |\n|------|------|------|\n| Step 1 | 判断更新策略 | **NO_CHANGE + case-summary.md 已存在** → 跳过 summary 更新 |\n| Step 2 | case-summary 更新 | **SKIPPED**（delta 为空：emails 20→20，notes 12→12，无新内容） |\n| Step 2.5 | SAP 准确性检查 | **SKIPPED**（checkedAt 距今 < 24h，isAccurate=true） |\n| Step 3 | generate-todo.sh | **TODO_OK \\| red=0, yellow=0, green=5** |\n| Step 4 | 更新 lastInspected | `2026-04-16T14:42:20+08:00` ✅ |\n| Step 5 | 写日志 | `inspe",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:42:52.526Z"
+    },
+    {
+      "type": "completed",
+      "content": "✅ **inspection-writer 执行完毕 — Case 2601290030000748**\n\n---\n\n### 执行结果汇总\n\n| 步骤 | 操作 | 结果 |\n|------|------|------|\n| Step 1 | 判断更新策略 | **NO_CHANGE + case-summary.md 已存在** → 跳过 summary 更新 |\n| Step 2 | case-summary 更新 | **SKIPPED**（delta 为空：emails 20→20，notes 12→12，无新内容） |\n| Step 2.5 | SAP 准确性检查 | **SKIPPED**（checkedAt 距今 < 24h，isAccurate=true） |\n| Step 3 | generate-todo.sh | **TODO_OK \\| red=0, yellow=0, green=5** |\n| Step 4 | 更新 lastInspected | `2026-04-16T14:42:20+08:00` ✅ |\n| Step 5 | 写日志 | `inspection-writer.log` ✅ |\n\n---\n\n### 最新 Todo（260416-1442.md）\n\n- 🔴 **需人工决策**：（无）\n- 🟡 **待确认执行**：（无）\n- ✅ **仅通知（5项）**：\n  - 邮件草稿已发送（20260415-2310-follow-up-zh-customer）\n  - 已 CC 相关人员发送邮件\n  - IR SLA 已完成\n  - 等待客户回复（1 天）\n  - Entitlement 合规（Premier）\n\n---\n\n**当前状态**：`pending-customer`，无需主动行动。等待客户在 ~4/20 Authenticator **6.8.45** 发布后更新并验证，同时等待客户例会关单讨论结论。",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:42:52.642Z"
+    }
+  ],
+  "2604140040001804": [
+    {
+      "type": "thinking",
+      "content": "The user wants me to read the casework-light.md file to get the full execution steps.",
+      "step": "patrol",
+      "timestamp": "2026-04-16T06:39:08.197Z"
+    },
+    {
+      "type": "tool-call",
+      "content": ".claude/agents/casework-light.md",
+      "toolName": "Read",
+      "step": "patrol",
+      "timestamp": "2026-04-16T06:39:08.230Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Now I need to execute the casework-light runner script as described in Step 1.",
+      "step": "patrol",
+      "timestamp": "2026-04-16T06:39:11.402Z"
+    },
+    {
+      "type": "thinking",
+      "content": "已读取执行步骤。开始 **Step 1：Runner Script**。",
+      "step": "patrol",
+      "timestamp": "2026-04-16T06:39:12.195Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "bash \"./skills/d365-case-ops/scripts/casework-light-runner.sh\" \\\n  --case-number \"2604140040001804\" \\\n  --case-dir \"./cases/active/2604140040001804/\" \\\n  --project-root \".\" \\\n  --cases-root \"./cases\" \\\n  --is-ar false \\\n  --main-case-id \"\" \\\n  --teams-cache-hours 8",
+      "toolName": "Bash",
+      "step": "patrol",
+      "timestamp": "2026-04-16T06:39:14.572Z"
+    },
+    {
+      "type": "thinking",
+      "content": "The runner returned `NO_CHANGE|plan_written|...` which means the execution-plan.json has been automatically written. I should complete without further steps.",
+      "step": "patrol",
+      "timestamp": "2026-04-16T06:39:32.766Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Runner 返回 `NO_CHANGE` — execution-plan.json 已**自动写入**，无需后续步骤。\n\n---\n\n## ✅ Casework-Light 完成\n\n| 字段 | 值 |\n|---|---|\n| **Case** | 2604140040001804 |\n| **结果** | `NO_CHANGE`（数据无变更，直接继承） |\n| **actualStatus** | `pending-customer` |\n| **daysSinceLastContact** | 2 天 |\n| **actions** | 0（无需操作） |\n\n**结论**：Case 状态为 `pending-customer`，距上次联系仅 2 天（< 3 天阈值），无需发送跟进邮件。execution-plan.json 已就绪。",
+      "step": "patrol",
+      "timestamp": "2026-04-16T06:39:35.898Z"
+    },
+    {
+      "type": "completed",
+      "content": "Runner 返回 `NO_CHANGE` — execution-plan.json 已**自动写入**，无需后续步骤。\n\n---\n\n## ✅ Casework-Light 完成\n\n| 字段 | 值 |\n|---|---|\n| **Case** | 2604140040001804 |\n| **结果** | `NO_CHANGE`（数据无变更，直接继承） |\n| **actualStatus** | `pending-customer` |\n| **daysSinceLastContact** | 2 天 |\n| **actions** | 0（无需操作） |\n\n**结论**：Case 状态为 `pending-customer`，距上次联系仅 2 天（< 3 天阈值），无需发送跟进邮件。execution-plan.json 已就绪。",
+      "step": "patrol",
+      "timestamp": "2026-04-16T06:39:36.008Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Let me read the SKILL.md file first to understand the execution steps.",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:39:42.530Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "/Users/user/dev/fw-ai-workspace/.claude/skills/inspection-writer/SKILL.md",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:39:43.327Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "**/.claude/skills/inspection-writer/SKILL.md",
+      "toolName": "Glob",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:39:46.741Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\.claude\\skills\\inspection-writer\\SKILL.md",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:39:51.024Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Now let me read the case directory and understand the structure. Let me look at the config.json to understand the casesRoot, and then read the relevant files for this case.",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:39:55.113Z"
+    },
+    {
+      "type": "thinking",
+      "content": "现在读取 config.json 和 case 目录的相关文件。",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:39:55.308Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "config.json",
+      "toolName": "Glob",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:39:55.420Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "cases/active/2604140040001804/**/*",
+      "toolName": "Glob",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:39:56.173Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Now let me read all the relevant files in parallel: case-info.md, case-summary.md, casehealth-meta.json, emails.md, notes.md, teams/teams-digest.md, onenote/personal-notes.md",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:40:00.891Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\cases\\active\\2604140040001804\\case-info.md",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:40:01.368Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\cases\\active\\2604140040001804\\case-summary.md",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:40:01.957Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\cases\\active\\2604140040001804\\casehealth-meta.json",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:40:02.285Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Now I need to check if there are new emails/notes since the last inspection. Let me read emails.md, notes.md, and teams/teams-digest.md to see if there's new content since the last inspection (2026-04-16T14:38:50).\n\nLooking at the decision tree:\n- case-summary.md exists already\n- The context doesn't specify changePath (NO_CHANGE vs CHANGED), so I need to determine if there are new contents\n\nLet me check what the last inspection noted (2026-04-16T14:38:50) and compare with the case-summary.md con",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:40:12.748Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\cases\\active\\2604140040001804\\emails.md",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:40:12.756Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\cases\\active\\2604140040001804\\notes.md",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:40:12.792Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\cases\\active\\2604140040001804\\teams\\teams-digest.md",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:40:12.821Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\cases\\active\\2604140040001804\\onenote\\personal-notes.md",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:40:12.836Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Now let me analyze the situation:\n\n1. case-summary.md already exists\n2. The last inspection was at 2026-04-16T14:38:50 (per casehealth-meta.json)\n3. The case-summary.md is already well-written and comprehensive\n\nLooking at the current emails.md, notes.md, teams-digest.md, and onenote/personal-notes.md:\n- emails.md was \"Generated: 2026-04-14 13:38:16\" - 3 emails total, same as what's in the summary\n- notes.md was \"Generated: 2026-04-14 21:37:59\" - 6 notes total\n\n\n- The summary already contains al",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:40:42.583Z"
+    },
+    {
+      "type": "thinking",
+      "content": "已读取所有核心文件。分析如下：\n- **case-summary.md** 已存在，内容完整覆盖 4/14 所有事件\n- 最近邮件/Notes/Teams 均为 4/14，无新内容需追加\n- SAP check 在今天 11:54 已完成（isAccurate=true，< 24h → 跳过）\n\n→ **Step 2b**：无增量内容，summary 无需修改  \n→ **Step 2.5**：SAP check 已有且 < 24h，跳过  \n→ **Step 3**：执行 generate-todo.sh",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:40:42.764Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "cd \"C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\" && bash skills/d365-case-ops/scripts/generate-todo.sh \"cases/active/2604140040001804/\"",
+      "toolName": "Bash",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:40:43.447Z"
+    },
+    {
+      "type": "thinking",
+      "content": "Great, generate-todo.sh completed successfully with red=0, yellow=0, green=5.\n\nNow I need to:\n- Step 4: Update lastInspected in casehealth-meta.json\n- Step 5: Log\n\nLet me update the meta and log.",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:40:53.930Z"
+    },
+    {
+      "type": "thinking",
+      "content": "generate-todo 成功：`red=0, yellow=0, green=5`\n\n现在执行 **Step 4**（更新 lastInspected）和 **Step 5**（写日志）：",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:40:54.641Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "node -e \"\nconst fs = require('fs');\nconst metaPath = 'C:/Users/fangkun/Documents/Projects/EngineerBrain/src/cases/active/2604140040001804/casehealth-meta.json';\nconst meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));\nmeta.lastInspected = new Date().toISOString();\nfs.writeFileSync(metaPath, JSON.",
+      "toolName": "Bash",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:40:56.127Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] inspection-writer OK | case-summary=skipped(no new content) todo=0r/0y/5g\" >> \"C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\cases\\active\\2604140040001804\\logs\\inspection-writer.log\"",
+      "toolName": "Bash",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:41:07.228Z"
+    },
+    {
+      "type": "thinking",
+      "content": "让我确认最新生成的 todo 文件内容：",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:41:13.149Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "ls -t \"C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\cases\\active\\2604140040001804\\todo\\\" | head -3",
+      "toolName": "Bash",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:41:14.370Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "cases/active/2604140040001804/todo/*.md",
+      "toolName": "Glob",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:41:18.399Z"
+    },
+    {
+      "type": "tool-call",
+      "content": "C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\src\\cases\\active\\2604140040001804\\todo\\260416-1440.md",
+      "toolName": "Read",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:41:22.704Z"
+    },
+    {
+      "type": "thinking",
+      "content": "✅ **inspection-writer 执行完成** — Case 2604140040001804\n\n---\n\n### 执行结果摘要\n\n| 步骤 | 结果 |\n|------|------|\n| **Step 1 判断策略** | case-summary.md 已存在，无新增邮件/Notes（末次活动 4/14），→ 增量检查 |\n| **Step 2b 增量更新** | 无新内容，**skipped**（summary 已完整覆盖所有 4/14 事件） |\n| **Step 2.5 SAP Check** | 今日 11:54 已检查，isAccurate=true，< 24h，**�ipped** |\n| **Step 3 generate-todo** | ✅ `TODO_OK` — 🔴 0 / 🟡 0 / ✅ 5 |\n| **Step 4 lastInspected** | 已更新 → `2026-04-16T06:40:56Z` |\n| **Step 5 日志** | 已写入 `logs/inspection-writer.log` |\n\n### Todo 内容（",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:41:33.144Z"
+    },
+    {
+      "type": "completed",
+      "content": "✅ **inspection-writer 执行完成** — Case 2604140040001804\n\n---\n\n### 执行结果摘要\n\n| 步骤 | 结果 |\n|------|------|\n| **Step 1 判断策略** | case-summary.md 已存在，无新增邮件/Notes（末次活动 4/14），→ 增量检查 |\n| **Step 2b 增量更新** | 无新内容，**skipped**（summary 已完整覆盖所有 4/14 事件） |\n| **Step 2.5 SAP Check** | 今日 11:54 已检查，isAccurate=true，< 24h，**�ipped** |\n| **Step 3 generate-todo** | ✅ `TODO_OK` — 🔴 0 / 🟡 0 / ✅ 5 |\n| **Step 4 lastInspected** | 已更新 → `2026-04-16T06:40:56Z` |\n| **Step 5 日志** | 已写入 `logs/inspection-writer.log` |\n\n### Todo 内容（260416-1440.md）\n- 🔴 需人工决策：**无**\n- 🟡 待确认执行：**无**\n- ✅ 仅通知（5 条）：邮件草稿已发、CC 已设、IR SLA 完成、等待客户回复（2天）、Entitlement 合规\n\n当前 case 状态良好，RCA 已完成、D365 已 Mitigated，等待客户按步骤恢复 Role Assignment 后反馈即可。",
+      "step": "inspection",
+      "timestamp": "2026-04-16T06:41:33.347Z"
+    },
+    {
+      "type": "system",
+      "content": "Step \"draft-email\" (follow-up) started",
+      "step": "draft-email",
+      "timestamp": "2026-04-16T06:43:15.485Z"
+    },
+    {
+      "type": "completed",
+      "content": "草稿已生成完毕，以下是完整内容供您审阅：\n\n---\n\n**📧 Follow-up 邮件草稿 — Case 2604140040001804**\n\n| 字段 | 内容 |\n|------|------|\n| **To** | haitao.liu@partner.bmw-brilliance.cn |\n| **Subject** | Re: [S500]应用注册正常使用，突然报权限不足，申请排查 - TrackingID#2604140040001804 |\n| **Language** | 中文 (自动检测) |\n| **Type** | follow-up |\n\n---\n\n> Hi Haitao,\n> \n> 来信想跟您简单跟进下工单的最新状况。\n> \n> 上次排查中我们定位到是 App d86d9846 的自动化流程误删了 Tenant Root Management Group 级别的 Role Assignment，并提供了恢复建议。想确认下您这边是否已经完成了角色分配的恢复操作？恢复后相关应用和用户的权限是否已恢复正常？\n> \n> 如果还有任何问题或者需要我协助操作，请随时联系。若问题已解决，我们可以安排关闭工单。\n> \n> Best Regards,\n> Kun Fang\n\n---\n\n📁 草稿文件：`drafts/20260416-1500-follow-up-zh-customer.md`\n\n请审阅，确认后可手动发送。如需调整内容或语气，请告知。",
+      "step": "draft-email",
+      "timestamp": "2026-04-16T06:46:12.185Z"
+    },
+    {
+      "type": "completed",
+      "content": "Step \"draft-email\" completed",
+      "step": "draft-email",
+      "timestamp": "2026-04-16T06:46:12.474Z"
+    }
   ]
 }
