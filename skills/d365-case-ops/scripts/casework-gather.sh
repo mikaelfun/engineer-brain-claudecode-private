@@ -107,14 +107,14 @@ else
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] STEP 2 SKIP | compliance: no meta.json, needs LLM skill" >> "$LOG"
 fi
 
-# ── 写 teams request.json (不等 data-refresh) ──
+# ── 提取 contact info（Teams 搜索需要） ──
 CONTACT_INFO=$(python3 -c "
 import re, json, os
 ci = '$CASE_DIR/case-info.md'
 meta = '$CASE_DIR/casehealth-meta.json'
 name, email = '', ''
 if os.path.exists(ci):
-    txt = open(ci).read()
+    txt = open(ci, encoding='utf-8').read()
     m = re.search(r'Contact Name.*?[|:]\s*(.+)', txt)
     if m: name = m.group(1).strip()
     m = re.search(r'Contact Email.*?[|:]\s*(.+)', txt)
@@ -126,6 +126,7 @@ if not name and os.path.exists(meta):
 print(json.dumps({'n':name,'e':email}))
 " 2>/dev/null || echo '{"n":"","e":""}')
 
+# ── 后台 4: Teams 搜索（直接 agency HTTP proxy，不走 MCP agent queue） ──
 TEAMS_NEEDED="false"
 if [ -f "$CD/skills/d365-case-ops/scripts/agent-cache-check.sh" ]; then
   CACHE_CHECK=$(bash "$CD/skills/d365-case-ops/scripts/agent-cache-check.sh" "$CASE_DIR" "$TEAMS_CACHE_HOURS" "$CD" 2>/dev/null | head -1)
@@ -138,13 +139,17 @@ except: print('true')
 " 2>/dev/null || echo "true")
 fi
 
+PID_TEAMS=""
 if [ "$TEAMS_NEEDED" = "true" ]; then
   CN=$(python3 -c "import json; d=json.loads('$CONTACT_INFO'); print(d['n'])" 2>/dev/null || echo "")
   CE=$(python3 -c "import json; d=json.loads('$CONTACT_INFO'); print(d['e'])" 2>/dev/null || echo "")
-  cat > "$CASE_DIR/teams/request.json" << REQEOF
-{"caseNumber":"$CASE_NUMBER","caseDir":"$CASE_DIR","contactName":"$CN","contactEmail":"$CE"}
-REQEOF
-  echo "[$(date '+%Y-%m-%d %H:%M:%S')] STEP 2 OK | teams: request.json written" >> "$LOG"
+  bash "$CD/.claude/skills/teams-search/scripts/teams-search-inline.sh" \
+    --case-number "$CASE_NUMBER" \
+    --case-dir "$CASE_DIR" \
+    --contact-email "$CE" \
+    > "$CASE_DIR/logs/teams-search-stdout.log" 2>&1 &
+  PID_TEAMS=$!
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] STEP 2 OK | teams: inline search started (pid=$PID_TEAMS)" >> "$LOG"
 else
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] STEP 2 SKIP | teams: cache hit" >> "$LOG"
 fi
@@ -162,6 +167,22 @@ wait $PID_LABOR 2>/dev/null
 if [ -n "$PID_ON" ]; then
   wait $PID_ON 2>/dev/null
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] STEP 2 OK | onenote-search done" >> "$LOG"
+fi
+
+# ── 等待 Teams 搜索完成 + 后处理 ──
+TEAMS_RESULT="skip"
+if [ -n "$PID_TEAMS" ]; then
+  wait $PID_TEAMS 2>/dev/null
+  TEAMS_EXIT=$?
+  TEAMS_RESULT=$(tail -1 "$CASE_DIR/logs/teams-search-stdout.log" 2>/dev/null || echo "TEAMS_FAIL|unknown")
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] STEP 2 OK | teams: $TEAMS_RESULT" >> "$LOG"
+  # 后处理: build-input + write-teams (如果 _mcp-raw.json 存在)
+  if [ -f "$CASE_DIR/teams/_mcp-raw.json" ]; then
+    python3 "$CD/.claude/skills/teams-search/scripts/build-input-from-raw.py" "$CASE_DIR" > /dev/null 2>&1
+    pwsh -NoProfile -File "$CD/.claude/skills/teams-search/scripts/write-teams.ps1" \
+      -OutputDir "$CASE_DIR/teams" -InputFile "$CASE_DIR/teams/_input.json" > /dev/null 2>&1
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] STEP 2 OK | teams: write-teams done" >> "$LOG"
+  fi
 fi
 
 # ── 运行 extract-delta.sh 提取增量内容 ──
