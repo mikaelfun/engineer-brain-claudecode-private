@@ -93,9 +93,21 @@ icm_data = {'state':'{state}','severity':{sev},'criStatus':'{cri}','blocked':'{b
 
 | deltaStatus | 分析方式 |
 |---|---|
-| `DELTA_EMPTY` | **快速继承**：actualStatus 不变，daysSinceLastContact 已由 runner 计算好（读 runner-output.json 顶层 `daysSinceLastContact` 字段），直接套路由表写 plan。**禁止**重读 emails.md 或 notes.md 来重算天数。如果 ICM 刷新了（Step 2），仅判断 ICM 变化是否改变 action（如 PG 回复 → 需要 email-drafter），不重新判断 status。 |
+| `DELTA_EMPTY` | **快速继承**：actualStatus 不变，daysSinceLastContact 已由 runner 计算好（读 runner-output.json 顶层 `daysSinceLastContact`），直接套路由表写 plan。**禁止**重读 emails.md。**例外**：如果 context 中包含 `_icmLastDiscCSS=true` 或 `icmDiscussions`，说明 ICM Discussion 有近期活动，必须做 ICM Discussion 时间线分析（见下方 ICM Override 规则），可能 override 继承的 status。 |
 | `DELTA_OK` | 增量分析：上次 status=X，新增内容是否改变判断？ |
 | `DELTA_FIRST_RUN` | 全量分析：读 emailsTail + notes |
+
+**ICM Discussion Override 规则**（优先于路由表）：
+
+当 context 中包含 `icmDiscussions` 时，检查 Discussion 时间线最后几条：
+
+| ICM Discussion 最后一条 | 结论 | 原因 |
+|---|---|---|
+| **CSS 发的**（fangkun 在追问 PG） | `pending-pg` + no-action（或 days>2 → follow-up PG） | 球在 PG 侧，CSS 在等回复 |
+| **PG 发了实质回复**（提供数据/结论） | `pending-engineer` + email-drafter | PG 回复了，需通知客户 |
+| **PG 说 mitigating/closing** | 检查后续是否有 CSS reactivation | 如果有 → 忽略 mitigate，按后续最后一条判断 |
+
+⚠️ **关键**：ICM 结构化字段（RootCause, Blocked, Resolution）可能是**旧的**——PG 可能在 mitigate 后不更新字段。**Discussion 时间线是真相**，结构化字段仅供参考。
 
 **路由决策表**：
 
@@ -104,7 +116,8 @@ icm_data = {'state':'{state}','severity':{sev},'criStatus':'{cri}','blocked':'{b
 | `pending-engineer` | — | troubleshooter + email-drafter |
 | `pending-customer` | days < 3 | no-action |
 | `pending-customer` | days >= 3 | email-drafter(follow-up) |
-| `pending-pg` | — | no-action |
+| `pending-pg` | days <= 2 | no-action |
+| `pending-pg` | days > 2 | email-drafter(pg-follow-up) + todo: Teams follow-up PG |
 | `researching` | — | troubleshooter |
 | `ready-to-close` | — | email-drafter(closure) |
 

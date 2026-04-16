@@ -363,11 +363,36 @@ try:
     fp = icm.get('fingerprint', '')
     has_summary = __import__('os').path.exists('$CASE_DIR/icm/icm-summary.md')
 
+    # Check if ICM discussions have newer activity than last fetch
+    import os, re as _re
+    disc_file = os.path.join('$CASE_DIR', 'icm', 'icm-discussions.md')
+    disc_newer = False
+    last_disc_author = ''
+    last_disc_date = ''
+    if os.path.exists(disc_file):
+        disc_text = open(disc_file, encoding='utf-8').read()
+        # Extract last discussion entry: ### [YYYY-MM-DD HH:MM] ... — Author (alias)
+        disc_entries = _re.findall(r'\[(\d{4}-\d{2}-\d{2})\s+\d{2}:\d{2}\].*?—\s+(.+?)(?:\s*\(|$)', disc_text)
+        if disc_entries:
+            last_disc_date, last_disc_author = disc_entries[-1]
+            # Check if last discussion is after fetchedAt
+            if fetched:
+                fetch_date = fetched[:10]  # YYYY-MM-DD
+                if last_disc_date > fetch_date:
+                    disc_newer = True
+            # Check if last discussion author is CSS (fangkun) → means we asked PG, waiting for reply
+            if 'fangkun' in last_disc_author.lower() or 'kun fang' in last_disc_author.lower():
+                last_disc_author = 'CSS'
+            else:
+                last_disc_author = 'PG'
+
     # Determine if refresh needed
     if not fp or not has_summary:
         print(f'NEEDS_REFRESH|state={state}')
     elif state == 'RESOLVED' and has_summary:
         print(f'RESOLVED_SKIP|state={state}')
+    elif disc_newer:
+        print(f'NEEDS_REFRESH|state={state}|disc_newer_than_fetch|last_disc={last_disc_date}|by={last_disc_author}')
     else:
         # Check TTL (4 hours)
         from datetime import datetime, timezone
@@ -376,7 +401,13 @@ try:
             if age_hours > 4:
                 print(f'NEEDS_REFRESH|state={state}|age={age_hours:.1f}h')
             else:
-                print(f'CACHE_HIT|state={state}|age={age_hours:.1f}h')
+                # Even if cache is fresh, check if last discussion is CSS asking PG with no reply
+                if last_disc_author == 'CSS' and last_disc_date:
+                    from datetime import date
+                    days_waiting = (date.today() - date.fromisoformat(last_disc_date)).days
+                    print(f'CACHE_HIT|state={state}|age={age_hours:.1f}h|css_waiting_pg={days_waiting}d|last_disc={last_disc_date}')
+                else:
+                    print(f'CACHE_HIT|state={state}|age={age_hours:.1f}h')
         else:
             print(f'NEEDS_REFRESH|state={state}|no_fetchedAt')
 except Exception as e:
@@ -466,7 +497,27 @@ if delta_status == 'DELTA_EMPTY':
         'fwr': {'status': full_meta.get('fwr',{}).get('status')},
     }
     context['deltaContent'] = read_file(os.path.join(case_dir, 'logs', 'delta-since-last-judge.md'), 20)
-    # Skip: caseInfoHead, teamsDigest, onenoteNotes, icmSummary (unchanged data)
+    # DELTA_EMPTY but ICM has recent discussions → keep ICM context for accurate status-judge
+    icm_disc_path = os.path.join(case_dir, 'icm', 'icm-discussions.md')
+    icm_sum_path = os.path.join(case_dir, 'icm', 'icm-summary.md')
+    _keep_icm = False
+    _css_waiting = False
+    if os.path.exists(icm_disc_path):
+        _disc_text = open(icm_disc_path, encoding='utf-8').read()
+        _disc_entries = _re.findall(r'\[(\d{4}-\d{2}-\d{2})\s+\d{2}:\d{2}\].*?—\s+(.+?)(?:\s*\(|$)', _disc_text)
+        if _disc_entries:
+            _last_date, _last_author = _disc_entries[-1]
+            _days_ago = (_date.today() - _date.fromisoformat(_last_date)).days
+            if _days_ago <= 5:  # discussion activity in last 5 days → keep context
+                _keep_icm = True
+            if ('fangkun' in _last_author.lower() or 'kun fang' in _last_author.lower()) and _days_ago <= 5:
+                _css_waiting = True
+                context['meta']['_icmLastDiscCSS'] = True
+                context['meta']['_icmLastDiscDate'] = _last_date
+                context['meta']['_icmCSSWaitingDays'] = _days_ago
+    if _keep_icm:
+        context['icmSummary'] = read_file(icm_sum_path, 20)
+        context['icmDiscussions'] = read_file(icm_disc_path, 40)  # last 40 lines of discussion
 else:
     # FULL MODE: DELTA_OK or DELTA_FIRST_RUN — include all context for deep analysis
     if fresh_days is not None:
