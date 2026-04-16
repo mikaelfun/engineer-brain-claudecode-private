@@ -87,18 +87,35 @@ os.makedirs(d,exist_ok=True)
 print(d)
 ")
 
-# Search by case number
-curl -s --max-time 30 -X POST "http://localhost:$PORT/" \
-  -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" \
-  -d "{\"jsonrpc\":\"2.0\",\"id\":10,\"method\":\"tools/call\",\"params\":{\"name\":\"SearchTeamMessagesQueryParameters\",\"arguments\":{\"queryString\":\"$CASE_NUMBER\",\"size\":25}}}" \
-  2>/dev/null | grep -o 'data: {.*}' | sed 's/^data: //' | head -1 > "$WD/q1.json"
+# mcp_search_with_retry <req-id> <query-string> <size> <outfile>
+# Issues a tools/call; if the output is empty (curl timeout / auth hiccup),
+# retries ONCE on the same proxy instance. Auth token is typically hot after
+# the first attempt, so retry cost is ~1-2s even when the first call timed out.
+mcp_search_with_retry() {
+  local rid="$1" qs="$2" size="$3" outfile="$4"
+  local body="{\"jsonrpc\":\"2.0\",\"id\":$rid,\"method\":\"tools/call\",\"params\":{\"name\":\"SearchTeamMessagesQueryParameters\",\"arguments\":{\"queryString\":\"$qs\",\"size\":$size}}}"
+  local attempt=0
+  while [ $attempt -lt 2 ]; do
+    curl -s --max-time 30 -X POST "http://localhost:$PORT/" \
+      -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" \
+      -d "$body" 2>/dev/null | grep -o 'data: {.*}' | sed 's/^data: //' | head -1 > "$outfile"
+    # Success criterion: file non-empty AND contains a JSON-RPC result (not an error wrapper)
+    if [ -s "$outfile" ] && grep -q '"result"' "$outfile"; then
+      [ $attempt -gt 0 ] && echo "  ↻ search retry succeeded for qs='$qs'" >&2
+      return 0
+    fi
+    attempt=$((attempt + 1))
+    [ $attempt -lt 2 ] && echo "  ⚠ search attempt $attempt empty/error for qs='$qs', retrying…" >&2
+  done
+  return 1
+}
+
+# Search by case number (with 1 retry on transient auth failure)
+mcp_search_with_retry 10 "$CASE_NUMBER" 25 "$WD/q1.json" || true
 
 # Search by contact email (optional)
 if [ -n "$CONTACT_EMAIL" ]; then
-  curl -s --max-time 30 -X POST "http://localhost:$PORT/" \
-    -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" \
-    -d "{\"jsonrpc\":\"2.0\",\"id\":11,\"method\":\"tools/call\",\"params\":{\"name\":\"SearchTeamMessagesQueryParameters\",\"arguments\":{\"queryString\":\"from:$CONTACT_EMAIL\",\"size\":5}}}" \
-    2>/dev/null | grep -o 'data: {.*}' | sed 's/^data: //' | head -1 > "$WD/q2.json"
+  mcp_search_with_retry 11 "from:$CONTACT_EMAIL" 5 "$WD/q2.json" || true
 fi
 
 # Python: parse chatIds → fetch messages → dump _mcp-raw.json
@@ -271,6 +288,15 @@ with open(out_path, 'w', encoding='utf-8') as f:
     json.dump(raw, f, indent=2, ensure_ascii=False)
 
 total_msgs = sum(len(v) for v in chat_messages.values())
+
+# Contract: if EVERY search returned error, treat as failure so the
+# event layer writes status=failed (not a false 'completed|chats=0').
+# A genuine "no results" case has status=success with empty chatIds.
+if search_results and all(sr.get('status') == 'error' for sr in search_results):
+    reasons = '+'.join(sr['keyword'] for sr in search_results)
+    print(f'TEAMS_FAIL|reason=all {len(search_results)} search(es) errored ({reasons})|elapsed={elapsed}s')
+    import sys; sys.exit(1)
+
 print(f'TEAMS_OK|chats={len(chat_messages)}|msgs={total_msgs}|elapsed={elapsed}s')
 PYEOF
 )
