@@ -37,10 +37,10 @@ bash .claude/skills/email-search/scripts/email-search-inline.sh \
 
 **原理**：
 1. 启动 `agency.exe mcp mail --transport http --port {port}` 本地 HTTP proxy
-2. 通过 curl POST JSON-RPC 调用 `SearchMessagesQueryParameters`（$filter + contains(subject, caseNumber)）
+2. 通过 curl POST JSON-RPC 调用 `SearchMessagesQueryParameters`（`$search` 全文搜索）
 3. Python 解析 rawResponse → 去重（subject+sentDateTime）→ 过滤自动回复
-4. 对 bodyPreview 最长的 2-3 封调用 `GetMessage`（preferHtml）获取完整 body
-5. HTML 清洗 → 生成 `emails-office.md`
+4. `$search` 结果自带完整 body，直接提取最后一封（含完整嵌套对话历史）
+5. HTML 清洗 → 生成 `emails-office.md`（Timeline 索引 + 最后 1 封展开）
 6. 完成后自动杀掉 proxy
 
 **可选参数**：
@@ -54,6 +54,47 @@ bash .claude/skills/email-search/scripts/email-search-inline.sh \
 多轮 MCP 调用 + LLM 推理 + 大 JSON 在 context 中传递，开销大。
 
 **⚠️ DEPRECATED** — 推荐改用 INLINE_HTTP 模式。
+
+## 并发性能
+
+### 架构：每 case 独立 agency proxy
+
+当前 `email-search-inline.sh` 每次调用启动独立的 `agency.exe mcp mail` HTTP proxy。
+天然并行安全，但高并发时 agency.exe 进程数 = 并发数。
+
+### 实测吞吐（226 case 批量压测）
+
+| 并发度 | 总时间 | 吞吐 | 单 case 均时 | 失败率 | 最慢单 case |
+|--------|--------|------|-------------|--------|------------|
+| 1（串行） | — | 4/min | 14.6s | 0% | — |
+| 5 | 16s | 19/min | 3.2s | 0% | 16s |
+| 10 | 25s | 24/min | 2.5s | 0% | 24s |
+| **20** | **30s** | **40/min** | **1.5s** | **0%** | 28s |
+| 40 | 56s | 42/min | 1.4s | 0% | 55s |
+
+### 并发建议
+
+- **casework 单 case**：直接调用，不需要考虑并发
+- **patrol 批量**（5-20 case）：`--port` 指定不同端口，并行安全
+- **大批量**（20+ case）：推荐并发 **10-20**，Graph API 是瓶颈（非 agency）
+  - 20→40 吞吐仅 40→42/min（+5%），但最慢 case 从 28s→55s（+96%）
+  - 20 并发是**吞吐/延迟最优平衡点**
+- **⚠️ 端口范围**：默认 9860-9889（30 个），超过 30 并发会端口冲突
+  - 冲突时后启动的进程复用已有 proxy（Graph API 无状态，不影响正确性）
+  - 但先完成的 case 杀 proxy 会中断后续 case → 真正安全上限 ~20 并发
+
+### 批量最佳实践
+
+226 case 全量，推荐分批 + 共享 proxy（未来优化）：
+
+```bash
+# 当前：直接并行（20 并发，~6 分钟跑完 226 case）
+cat case-ids.txt | xargs -P20 -I{} bash email-search-inline.sh \
+  --case-number {} --case-dir ./cases/active/{} --project-root .
+
+# 未来：共享 proxy 模式（参考 teams-search-http.sh）
+# 一个 agency proxy + 多 worker 共享同端口，消除 N 个启动开销
+```
 
 ## 参数
 - `$ARGUMENTS` — Case 编号（如 `2603230030001513`）
@@ -100,16 +141,34 @@ PID_EMAIL=$!
 
 ### 搜索方式
 
-使用 `$filter` + `contains(subject, caseNumber)` + `$orderby=receivedDateTime desc`：
-- 支持时间排序（`$search` 不支持）
-- 支持增量（`receivedDateTime ge {lastFetchTime}`）
+首次搜索：`$search`（全文搜索，可找到 TrackingID# 格式），`$filter` 作为 fallback。
+增量搜索：`$filter` + `receivedDateTime ge` + `contains(subject, caseNumber)`。
+
+> `$filter` + `contains()` 对长数字字符串匹配不可靠，`$search` 更准确但不支持 `$orderby`。
 
 ### 结果处理
 
 1. **去重**：subject + sentDateTime 相同的只保留第一个
 2. **过滤自动回复**：subject 含"自动回复/Automatic reply/Out of Office"
-3. **智能 body 拉取**：只拉 bodyPreview 最长的 2-3 封（邮件回复嵌套了完整历史）
+3. **只展开最后 1 封 body**：邮件回复嵌套完整历史，最后一封 = 完整对话
 4. **HTML 清洗**：strip style/script → br/p→换行 → 去标签 → unescape
+
+### 输出格式
+
+```markdown
+# Emails (Outlook) — Case {caseNumber}
+> Generated: ... | Total: N emails | Source: Agency Mail HTTP
+
+## Timeline
+| # | Time | Direction | From | Subject |
+|---|------|-----------|------|---------|
+| 1 | 2026-04-13 06:53 | 📥 Received | Chris | ... |
+| ... | ... | ... | ... | ... |
+| N | 2026-04-16 12:09 | 📤 Sent | Chris | ... ← full body below |
+
+## 📤 Sent | 2026-04-16 12:09:47
+(完整 body，含嵌套的全部历史对话)
+```
 
 ## 输出文件
 
