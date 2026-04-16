@@ -53,38 +53,47 @@ bash "{projectRoot}/skills/d365-case-ops/scripts/casework-light-runner.sh" \
 - `NO_CHANGE|plan_written|...` → execution-plan.json **已自动写入**，直接完成，不需要后续步骤
 - `CHANGED|runner_output_written|...` → 继续 Step 2
 
-### Step 2: ICM 刷新（0-2 次 MCP + discussion 合并，仅当 runner 输出 `icm_needs_refresh=true`）
+### Step 2: ICM 刷新（仅当 `icm_needs_refresh=true`）
 
-读 `{caseDir}/context/runner-output.json` 获取 ICM 编号。
+读 `{caseDir}/context/runner-output.json`，仅当 `icm.needsRefresh=true` 时执行。否则跳过。
 
 ```
-# 仅当 icm.needsRefresh=true 时：
 MCP: get_incident_details_by_id(incidentId={icmNumber})
-# 从返回值提取 state, severity, criStatus
-# 如果 state != RESOLVED：
-MCP: get_ai_summary(incidentId="{icmNumber}")
-
-# 等待 ICM discussion daemon 完成（patrol 模式下 daemon 已启动）
-# 轮询 {caseDir}/icm/_icm-portal-raw.json 是否存在（最多等 30s）
-# 如果 _icm-portal-raw.json 存在：
-#   读取 discussions.Items → 提取最近 5 条 discussion entries 的摘要
-#   合并到 icm-summary.md 的分析中（discussion 内容优先于 structured 字段）
-# 如果不存在（daemon 未启动或超时）：仅用 MCP 数据
-
-# 写 icm/icm-summary.md + icm/icm-discussions.md
 ```
 
-如果 `icm_needs_refresh=false`，跳过此步。
+**⚠️ 只提取以下字段**（customFields 中大量垃圾字段如 Documentation Feedback / AskBrain question / Efforts，**全部忽略**）：
+- 顶层：`state`, `severity`, `howFixed`
+- customFields 中（按 Name 匹配）：`CRI Status`, `Blocked?`, `RootCause`, `Resolution`（Resolution 的 StringValue 含 HTML，strip tags 取纯文本）
+
+如果 `state != RESOLVED`：
+```
+MCP: get_ai_summary(incidentId="{icmNumber}")
+```
+只提取 `Summary.BriefSummary`（一段话）。忽略其他字段。
+
+等待 ICM discussion daemon（轮询 `{caseDir}/icm/_icm-portal-raw.json`，最多 30s）：
+- 存在 → 提取最近 5 条 discussion entries 摘要
+- 不存在 → 仅用 MCP 数据
+
+用 **一次 Bash + python3** 写精简 icm-summary.md + 更新 meta.icm：
+```python
+# Agent 填入从 MCP 提取的字段值（不要在 thinking 中逐字段分析 customFields）
+icm_data = {'state':'{state}','severity':{sev},'criStatus':'{cri}','blocked':'{blocked}','rootCause':'{rc}','howFixed':'{hf}','resolution':'{res_text}','briefSummary':'{brief}'}
+# → 写 icm/icm-summary.md（~500 chars）
+# → 更新 meta.icm.fingerprint = f"{state}|{severity}|{assignedTo}|{contactAlias}|{blocked}"
+```
+
+**禁止**在 thinking 中遍历分析 customFields JSON——只按 Name 提取上述 4 个字段，其余丢弃。
 
 ### Step 3: Status-Judge + Write Plan（1 次 Bash）
 
-读 `{caseDir}/context/runner-output.json` 中的 `context` 字段（已包含 case-info、delta、teams、onenote、ICM 等所有数据）。
+读 `{caseDir}/context/runner-output.json` 中的 `context` 字段。
 
 **LLM 分析**（根据 deltaStatus 决定深度）：
 
 | deltaStatus | 分析方式 |
 |---|---|
-| `DELTA_EMPTY` | 继承上次 actualStatus，仅重算 daysSinceLastContact |
+| `DELTA_EMPTY` | **快速继承**：actualStatus 不变，daysSinceLastContact 已由 runner 计算好（读 runner-output.json 顶层 `daysSinceLastContact` 字段），直接套路由表写 plan。**禁止**重读 emails.md 或 notes.md 来重算天数。如果 ICM 刷新了（Step 2），仅判断 ICM 变化是否改变 action（如 PG 回复 → 需要 email-drafter），不重新判断 status。 |
 | `DELTA_OK` | 增量分析：上次 status=X，新增内容是否改变判断？ |
 | `DELTA_FIRST_RUN` | 全量分析：读 emailsTail + notes |
 

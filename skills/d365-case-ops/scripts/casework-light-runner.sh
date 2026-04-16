@@ -429,24 +429,59 @@ def read_json(path):
     except:
         return {}
 
-# Collect context based on delta status
+# --- Calculate fresh daysSinceLastContact from email/note dates ---
+import re as _re
+from datetime import date as _date
+latest_date_str = None
+for _fpath in [os.path.join(case_dir, 'emails.md'), os.path.join(case_dir, 'notes.md')]:
+    try:
+        _text = open(_fpath, encoding='utf-8').read()
+        _dates = _re.findall(r'(\d{4}-\d{2}-\d{2})', _text)
+        if _dates:
+            _d = max(_dates)
+            if latest_date_str is None or _d > latest_date_str:
+                latest_date_str = _d
+    except: pass
+fresh_days = None
+if latest_date_str:
+    _parts = latest_date_str.split('-')
+    fresh_days = (_date.today() - _date(int(_parts[0]), int(_parts[1]), int(_parts[2]))).days
+
+# Collect context based on delta status (slim when DELTA_EMPTY)
 context = {}
-context['meta'] = read_json(os.path.join(case_dir, 'casehealth-meta.json'))
-context['caseInfoHead'] = read_file(os.path.join(case_dir, 'case-info.md'), 50)
+full_meta = read_json(os.path.join(case_dir, 'casehealth-meta.json'))
 
 if delta_status == 'DELTA_EMPTY':
+    # SLIM MODE: only decision-critical fields (saves ~7KB of LLM input tokens)
+    context['meta'] = {
+        'actualStatus': full_meta.get('actualStatus'),
+        'daysSinceLastContact': fresh_days if fresh_days is not None else full_meta.get('daysSinceLastContact', 0),
+        'statusReasoning': full_meta.get('statusReasoning', ''),
+        'icm': full_meta.get('icm', {}),
+        'ar': full_meta.get('ar'),
+        'recommendedActions': full_meta.get('recommendedActions'),
+        'compliance': {'entitlementOk': full_meta.get('compliance',{}).get('entitlementOk'), 'sapOk': full_meta.get('compliance',{}).get('sapOk')},
+        'irSla': {'status': full_meta.get('irSla',{}).get('status')},
+        'fdr': {'status': full_meta.get('fdr',{}).get('status')},
+        'fwr': {'status': full_meta.get('fwr',{}).get('status')},
+    }
     context['deltaContent'] = read_file(os.path.join(case_dir, 'logs', 'delta-since-last-judge.md'), 20)
-elif delta_status == 'DELTA_OK':
-    context['deltaContent'] = read_file(os.path.join(case_dir, 'logs', 'delta-since-last-judge.md'), 80)
+    # Skip: caseInfoHead, teamsDigest, onenoteNotes, icmSummary (unchanged data)
 else:
-    context['emailsTail'] = read_file(os.path.join(case_dir, 'emails.md'), 100)
-    context['notes'] = read_file(os.path.join(case_dir, 'notes.md'), 60)
-
-context['teamsDigest'] = read_file(os.path.join(case_dir, 'teams', 'teams-digest.md'), 40)
-context['onenoteNotes'] = read_file(os.path.join(case_dir, 'onenote', 'personal-notes.md'), 30)
-
-if icm_number:
-    context['icmSummary'] = read_file(os.path.join(case_dir, 'icm', 'icm-summary.md'), 30)
+    # FULL MODE: DELTA_OK or DELTA_FIRST_RUN — include all context for deep analysis
+    if fresh_days is not None:
+        full_meta['daysSinceLastContact'] = fresh_days
+    context['meta'] = full_meta
+    context['caseInfoHead'] = read_file(os.path.join(case_dir, 'case-info.md'), 50)
+    if delta_status == 'DELTA_OK':
+        context['deltaContent'] = read_file(os.path.join(case_dir, 'logs', 'delta-since-last-judge.md'), 80)
+    else:
+        context['emailsTail'] = read_file(os.path.join(case_dir, 'emails.md'), 100)
+        context['notes'] = read_file(os.path.join(case_dir, 'notes.md'), 60)
+    context['teamsDigest'] = read_file(os.path.join(case_dir, 'teams', 'teams-digest.md'), 40)
+    context['onenoteNotes'] = read_file(os.path.join(case_dir, 'onenote', 'personal-notes.md'), 30)
+    if icm_number:
+        context['icmSummary'] = read_file(os.path.join(case_dir, 'icm', 'icm-summary.md'), 30)
 
 output = {
     'caseNumber': '$CASE_NUMBER',
@@ -458,6 +493,7 @@ output = {
     'deltaStatus': delta_status,
     'attachCount': int('$ATTACH_COUNT'),
     'teamsStatus': '$TEAMS_STATUS',
+    'daysSinceLastContact': fresh_days if fresh_days is not None else full_meta.get('daysSinceLastContact', 0),
     'icm': {
         'number': icm_number,
         'needsRefresh': '$ICM_NEEDS_REFRESH' == 'true',
