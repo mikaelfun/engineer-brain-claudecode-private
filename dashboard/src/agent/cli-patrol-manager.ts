@@ -17,7 +17,7 @@ let patrolStartedAt: string | null = null
 let phasePollerInterval: NodeJS.Timeout | null = null
 
 // ---- Patrol result persistence ----
-const PATROL_LAST_RUN_PATH = join(resolve(config.projectRoot, 'dashboard'), '.patrol-last-run.json')
+const PATROL_LAST_RUN_PATH = config.patrolLastRunFile
 
 function savePatrolLastRun(data: Record<string, unknown>): void {
   try {

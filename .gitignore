@@ -24,9 +24,6 @@ tools/
 
 # Dashboard runtime state (regenerable on startup)
 dashboard/.runtime/
-dashboard/.case-sessions.json
-dashboard/.case-session-messages.json
-dashboard/.patrol-last-run.json
 
 # Screenshots (all regenerable via scripts/tests)
 scripts/screenshots/

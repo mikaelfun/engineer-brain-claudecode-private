@@ -107,6 +107,15 @@ export const config = {
   get agentSessionsDir() {
     return join(runtimeDir, 'agent-sessions')
   },
+  get caseSessionsFile() {
+    return join(runtimeDir, 'case-sessions.json')
+  },
+  get caseSessionMessagesFile() {
+    return join(runtimeDir, 'case-session-messages.json')
+  },
+  get patrolLastRunFile() {
+    return join(runtimeDir, 'patrol-last-run.json')
+  },
   get dataDir() {
     const dr = readProjectConfig().dataRoot
     return dr ? resolveConfigPath(dr) : resolve(projectRoot, '..', 'data')

@@ -21,6 +21,7 @@ import { sseManager } from '../watcher/sse-manager.js'
 import { getSkillRegistry } from '../services/skill-registry.js'
 import { broadcastSDKMessages } from '../utils/sdk-message-broadcaster.js'
 import type { ExecutionSummary, ToolCallRecord } from '../types/index.js'
+import { config } from '../config.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -421,8 +422,8 @@ export function clearAgentDefinitionsCache(): void {
   _agentDefinitionsCache = null
 }
 
-const sessionStorePath = join(getProjectRoot(), 'dashboard', '.case-sessions.json')
-const sessionMessagesPath = join(getProjectRoot(), 'dashboard', '.case-session-messages.json')
+const sessionStorePath = config.caseSessionsFile
+const sessionMessagesPath = config.caseSessionMessagesFile
 let sessions: SessionStore = {}
 let caseIndex: CaseSessionIndex = {}
 let sessionMessages: SessionMessageStore = {}

@@ -841,7 +841,7 @@ function buildQueryOptions(stepName: string): { cwd: string } & Options {
 // Persistence
 // ============================================================
 
-const PATROL_LAST_RUN_PATH = join(resolve(config.projectRoot, 'dashboard'), '.patrol-last-run.json')
+const PATROL_LAST_RUN_PATH = config.patrolLastRunFile
 
 /**
  * Save patrol result for dashboard consumption.
