@@ -265,38 +265,18 @@ if not filtered:
 # Step 2: Extract body from latest email(s) only
 # ═══════════════════════════════════════════
 
-log(f'STEP 2 START | Extracting body from latest emails')
+log(f'STEP 2 START | Extracting body from latest email')
 
 # Sort by receivedDateTime asc
 sorted_msgs = sorted(filtered, key=lambda m: m.get('receivedDateTime', ''))
 
 # Email replies nest the full conversation history.
 # The latest email's body contains ALL previous exchanges.
-# Strategy: only extract full body for the last 2 emails (latest sent + latest received),
-# which gives complete coverage. All other emails are listed as timeline index only.
-
-# Find the latest email, plus the latest from the OTHER direction
+# Only expand the single latest email — it has the complete thread.
 latest = sorted_msgs[-1] if sorted_msgs else None
 latest_id = latest.get('id', '') if latest else ''
-latest_from = ''
-if latest and isinstance(latest.get('from'), dict):
-    latest_from = latest['from'].get('emailAddress', {}).get('address', '')
-latest_dir = 'sent' if '@microsoft.com' in latest_from else 'received'
 
-# Find the latest email from the opposite direction
-second_id = ''
-for msg in reversed(sorted_msgs[:-1]):
-    from_addr = ''
-    if isinstance(msg.get('from'), dict):
-        from_addr = msg['from'].get('emailAddress', {}).get('address', '')
-    msg_dir = 'sent' if '@microsoft.com' in from_addr else 'received'
-    if msg_dir != latest_dir:
-        second_id = msg.get('id', '')
-        break
-
-expand_ids = {latest_id}
-if second_id:
-    expand_ids.add(second_id)
+expand_ids = {latest_id} if latest_id else set()
 
 # Extract bodies for expanded emails
 fetched_bodies = {}
