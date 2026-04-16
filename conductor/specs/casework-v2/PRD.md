@@ -51,9 +51,9 @@ Claude Code CLI 的 subagent 不能嵌套（depth=1 限制）。Patrol spawn cas
 │  Step 1: DATA REFRESH (data-refresh.sh)                  │
 │  ├── D365 data    (fetch-all-data.ps1)           ─┐     │
 │  ├── Labor        (view-labor.ps1)                │     │
-│  ├── Teams        (teams-search-parallel.sh)      │ bg  │
+│  ├── Teams        (teams-search-inline.sh)         │ bg  │
 │  ├── OneNote      (onenote-search-inline.py)      │     │
-│  ├── ICM          (icm-refresh-inline.js)         │     │
+│  ├── ICM          (icm-discussion-ab.js)           │     │
 │  ├── Attachments  (download-attachments.ps1)      ─┘     │
 │  └── Delta        (extract-delta.sh)                     │
 │      OUTPUT: data-refresh-output.json                    │
@@ -100,8 +100,8 @@ Claude Code CLI 的 subagent 不能嵌套（depth=1 限制）。Patrol spawn cas
 |--------|---------------|
 | **fetch-emails.ps1** | 增量拉取时已知新邮件数和内容，直接输出 `{"newEmails": 3, "content": "..."}` |
 | **fetch-notes.ps1** | 同上，输出新增 notes |
-| **teams-search-parallel.sh** | 对比 `_chat-index.json` 的 `lastMessageTime`，输出有新消息的 chat 和内容 |
-| **icm-refresh-inline.js** | 增量对比后输出新 entry 内容 |
+| **teams-search-inline.sh** | 对比 `_chat-index.json` 的 `lastMessageTime`，输出有新消息的 chat 和内容 |
+| **icm-discussion-ab.js** | 增量对比后输出新 entry 内容 |
 | **onenote-search-inline.py** | mtime 变化时输出新增/变化内容 |
 | **fetch-case-snapshot.ps1** | 覆盖前 diff 关键字段（status/severity/owner），输出变化 |
 | **download-attachments.ps1** | 输出 downloaded vs skipped 文件列表 |
@@ -148,17 +148,23 @@ Claude Code CLI 的 subagent 不能嵌套（depth=1 限制）。Patrol spawn cas
 ```
 teams-search-inline.sh (每 case 1 个 agency proxy):
 
-  Phase 1: 搜索（串行，~3s）
-    └── curl → SearchTeamMessagesQueryParameters("{caseNumber}")
-    └── curl → SearchTeamMessagesQueryParameters("from:{email}")  (optional)
+  Phase 1: 全并行（KQL 搜索 + cached chatId 拉消息同时进行，ThreadPoolExecutor）
+    ├── thread: KQL("{caseNumber}")                   ─┐
+    ├── thread: KQL("from:{contactEmail}")              │
+    ├── thread: KQL("{icmId}")  (如有 ICM)              │
+    ├── thread: ListChatMessages(cachedChat_1)         │ 全部并行
+    ├── thread: ListChatMessages(cachedChat_2)         │ 通过同一个 proxy
+    └── ...（cached chatIds 从 _chat-index.json）     ─┘
+    wait all → 合并 KQL 结果，识别新 chatId
 
-  Phase 2: 拉取消息（ThreadPoolExecutor 并行，~7s for 8 chats）
-    ├── thread_1 → ListChatMessages(chatId_1)  ─┐
-    ├── thread_2 → ListChatMessages(chatId_2)   │ 全部通过同一个 proxy
-    ├── thread_3 → ListChatMessages(chatId_3)   │ concurrent.futures.ThreadPoolExecutor
-    └── ...                                     ─┘
+  Phase 2: 增量拉取（仅全新 chatId，ThreadPoolExecutor 并行）
+    新 chatId = KQL 搜索结果 - _chat-index.json 已有
+    如果无新 chatId → 跳过 Phase 2
+    ├── thread: ListChatMessages(newChat_1)            ─┐
+    └── thread: ListChatMessages(newChat_2)             │ 并行
+    wait all
 
-  Cleanup: kill agency → dump _mcp-raw.json
+  Cleanup: kill agency → 合并结果 → 更新 _chat-index.json → dump _mcp-raw.json
 ```
 
 **端口分配**：`9900 + hash(case_number) % 100`。跨 case 端口可能冲突但后启动的会复用已有 proxy（Graph API 无状态），功能正确。
@@ -290,14 +296,16 @@ AR casework 完全独立为 `casework-ar/SKILL.md`：
 - 调用 data-refresh.sh 的参数说明
 - data-refresh-output.json 输出 schema
 - 各数据源的增量机制说明
+- Teams 数据在此步只完成到 `write-teams.ps1`（raw → input → 每 chat 独立 .md 文件 + 更新 _chat-index.json）。Relevance scoring 和 digest 生成由 Step 2 的 LLM 完成
 - WebUI alias: `data-refresh`
 
 #### casework/assess/SKILL.md
 - 读取 `.casework/data-refresh-output.json` 中的 delta + context
 - actualStatus 枚举值和判断原则（从 status-judge/SKILL.md 提取）
 - Compliance gate（仅 cache miss 时做 LLM 推理，结果永久缓存到 casework-meta.json）
+- **Teams relevance scoring + digest 生成**：LLM 读取 teams/*.md 的消息内容，结合 case context 做 high/low 评分，提取 key facts，写 `_relevance.json` + `teams-digest.md`（仅当 Teams 数据有更新时）
 - recommendedActions 输出格式
-- DELTA_EMPTY 快速路径：复用上次 meta，不调 LLM
+- DELTA_EMPTY 快速路径：复用上次 meta，不调 LLM（包括跳过 Teams scoring）
 - 输出：更新 casework-meta.json + 写 `.casework/execution-plan.json`
 - WebUI alias: `assess`
 
@@ -459,12 +467,12 @@ data-refresh-output.json   (DELTA_OK/DELTA_EMPTY/DELTA_FIRST_RUN)
 内部并行启动：
 1. `fetch-all-data.ps1`（bg）— D365 snapshot + emails + notes
 2. `view-labor.ps1`（bg）— labor 记录
-3. `teams-search-parallel.sh`（bg）— 多 agency 并行 Teams 搜索
+3. `teams-search-inline.sh`（bg）— Teams 搜索（单 proxy + ThreadPoolExecutor 并行拉取）
 4. `onenote-search-inline.py`（bg）— OneNote 本地搜索
-5. `icm-refresh-inline.js`（bg）— ICM discussion 增量
+5. `icm-discussion-ab.js`（bg）— ICM discussion 增量（已有脚本，直接调用）
 6. `download-attachments.ps1`（bg）— 附件下载
 
-wait all → `extract-delta.sh` → 打包 `data-refresh-output.json`
+wait all → 汇总各源 delta 报告 → 打包 `data-refresh-output.json`
 
 ### 5.2 teams-search-inline.sh 优化（保留，不新建 parallel.sh）
 
@@ -498,10 +506,18 @@ Phase 2: 并行拉取 (~7s for 8 chats)
 
 ### 6.1 迁移步骤
 
+0. **重命名 meta 文件**
+   - `casehealth-meta.json` → `casework-meta.json`（改名，不并存）
+   - 批量重命名现有 case 目录：`for d in {casesRoot}/active/*/; do [ -f "$d/casehealth-meta.json" ] && mv "$d/casehealth-meta.json" "$d/casework-meta.json"; done`
+   - 全局搜索替换所有引用 `casehealth-meta.json` 的脚本（PowerShell / Bash / Python / SKILL.md）
+   - archived/transfer 目录中的旧文件不迁移（已归档，不再被读取）
+
 1. **新建脚本**
    - `data-refresh.sh` — 统一调度（基于 casework-gather.sh 改造）
-   - `teams-search-parallel.sh` — 多 agency 并行（基于 teams-search-inline.sh 改造）
-   - `icm-refresh-inline.js` — 内联增量（基于 icm-discussion-daemon.js 精简）
+
+2. **优化现有脚本**
+   - `teams-search-inline.sh` — 加 ThreadPoolExecutor 并行拉取 + cached chatId + ICM KQL
+   - `icm-discussion-ab.js` — 已完成，直接复用
 
 2. **创建 subskills 目录 + 提取子文件**
    - 从 casework/SKILL.md 提取四个 subskill markdown
@@ -582,6 +598,29 @@ Phase 2: 并行拉取 (~7s for 8 chats)
 - ❌ 不合并 troubleshooter/email-drafter agent——它们是独立领域，保持分离
 - ❌ 不做 Dashboard 适配（Dashboard 读 patrol-state.json 和 todo，这些不变）
 
+## 8.1 Post-V2: Skill 目录整理（V2 完成后执行）
+
+V2 完成后统一整理 skill 目录结构。当前状态（60 个组件散布 3 个目录）：
+
+| 目录 | 数量 | 定位 |
+|------|------|------|
+| `.claude/skills/` | 33 | slash commands（SKILL.md） |
+| `skills/` | 13 | 脚本能力包（部分有 SKILL.md，部分纯脚本） |
+| `.claude/agents/` | 14 | agent 定义 |
+
+**问题**：
+- 同名重叠 3 处（casework、email-search、labor-estimate 在两个目录都有）
+- 功能重复（owa-email-search + owa-email-search-md）
+- 死代码未清理（teams-search-queue、casework-light 已 DEPRECATED）
+- 找功能不知道去哪个目录
+
+**整理原则**：
+- `.claude/skills/` = 唯一 skill 注册表（slash commands + SKILL.md）
+- `skills/` = 纯脚本库（无 SKILL.md，被 `.claude/skills/` 引用）
+- `.claude/agents/` = agent 定义（被 skill spawn）
+- V2 删除的 skill（status-judge/compliance-check/inspection-writer/data-refresh/teams-search-queue）在 V2 中直接清理
+- 重叠和重复在 V2 完成后统一处理
+
 ---
 
 ## 9. Assumptions
@@ -602,7 +641,6 @@ Phase 2: 并行拉取 (~7s for 8 chats)
 - `fetch-case-snapshot.ps1`（缓存跳过 + 增量更新）
 - `view-labor.ps1`（labor 拉取）
 - `download-attachments.ps1`（DTM 附件下载）
-- `extract-delta.sh`（delta 提取）
 - `generate-todo.sh`（todo 生成）
 - `onenote-search-inline.py`（OneNote 搜索）
 - `build-input-from-raw.py` + `write-teams.ps1`（Teams 后处理）
@@ -610,7 +648,6 @@ Phase 2: 并行拉取 (~7s for 8 chats)
 
 **新增的**：
 - `data-refresh.sh`（统一调度）
-- `icm-refresh-inline.js`（内联 ICM 增量）
 
 **优化的（不新建）**：
 - `teams-search-inline.sh`（已改为 ThreadPoolExecutor 并行拉取，不再需要 parallel.sh）
