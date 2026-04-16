@@ -16,11 +16,21 @@
  *   - getSdkPatrolLiveProgress(): Read patrol-phase for API
  *   - loadPatrolLastRun(): Read patrol-state.json
  */
-import { query } from '@anthropic-ai/claude-agent-sdk'
+import { query, type Options } from '@anthropic-ai/claude-agent-sdk'
 import { existsSync, readFileSync, writeFileSync, mkdirSync, unlinkSync, statSync } from 'fs'
-import { join } from 'path'
+import { join, resolve } from 'path'
+import { fileURLToPath } from 'url'
+import { dirname } from 'path'
 import { config } from '../config.js'
 import { sseManager } from '../watcher/sse-manager.js'
+import { loadAgentDefinitions } from './case-session-manager.js'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+
+function getProjectRoot(): string {
+  return resolve(__dirname, '..', '..', '..')
+}
 
 // ============================================================
 // Types
@@ -149,14 +159,46 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
       : 'Execute /patrol. source=webui'
 
     // Single SDK query that runs the entire patrol
-    const result = await query({
+    // Uses same config pattern as case-session-manager.ts processCaseSession()
+    const projectRoot = getProjectRoot()
+    const claudeMdPath = join(projectRoot, 'CLAUDE.md')
+    const claudeMdContent = existsSync(claudeMdPath) ? readFileSync(claudeMdPath, 'utf-8') : ''
+
+    for await (const message of query({
       prompt: promptText,
       options: {
-        maxTurns: 200,
         abortController,
-        allowedTools: ['Bash', 'Read', 'Write', 'Glob', 'Grep', 'Agent', 'Edit'],
-      } as any,
-    })
+        cwd: projectRoot,
+        settingSources: ['user'] as Options['settingSources'],
+        agents: loadAgentDefinitions(),
+        systemPrompt: {
+          type: 'preset' as const,
+          preset: 'claude_code' as const,
+          append: claudeMdContent,
+        },
+        tools: ['Bash', 'Read', 'Write', 'Edit', 'Glob', 'Grep', 'Agent'],
+        allowedTools: ['Bash', 'Read', 'Write', 'Edit', 'Glob', 'Grep', 'Agent'],
+        permissionMode: 'bypassPermissions',
+        allowDangerouslySkipPermissions: true,
+        maxTurns: 200,
+        stderr: (data: string) => console.error(`[SDK:stderr:patrol]`, data.trim()),
+      },
+    })) {
+      // Broadcast SDK messages for real-time SSE (thinking, tool calls, etc.)
+      if (message.type === 'assistant' && message.message) {
+        const content = message.message.content
+        if (Array.isArray(content)) {
+          for (const block of content) {
+            if (block.type === 'text' && block.text) {
+              sseManager.broadcast('patrol-progress' as any, {
+                phase: 'processing',
+                detail: block.text.slice(0, 200),
+              })
+            }
+          }
+        }
+      }
+    }
 
     console.log(`[sdk-patrol] SDK query completed`)
 
