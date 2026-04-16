@@ -387,17 +387,84 @@ for msg in sorted_msgs:
     lines.append('')
     lines.append('---')
 
-# Write output
+# Write .md output
 with open(office_md, 'w', encoding='utf-8') as f:
     f.write('\n'.join(lines))
+
+# Write .json output (structured, machine-readable)
+office_json = os.path.join(case_dir, 'emails-office.json')
+
+def build_email_record(msg, is_expanded=False):
+    """Build structured record for one email"""
+    from_addr = ''
+    from_name = ''
+    if isinstance(msg.get('from'), dict):
+        ea = msg['from'].get('emailAddress', {})
+        from_addr = ea.get('address', '')
+        from_name = ea.get('name', '')
+    to_addrs = []
+    for r in (msg.get('toRecipients') or []):
+        ea = r.get('emailAddress', {})
+        to_addrs.append({'name': ea.get('name',''), 'address': ea.get('address','')})
+    cc_addrs = []
+    for r in (msg.get('ccRecipients') or []):
+        ea = r.get('emailAddress', {})
+        cc_addrs.append({'name': ea.get('name',''), 'address': ea.get('address','')})
+    direction = 'sent' if '@microsoft.com' in from_addr else 'received'
+
+    record = {
+        'id': msg.get('id', ''),
+        'conversationId': msg.get('conversationId', ''),
+        'subject': msg.get('subject', ''),
+        'from': {'name': from_name, 'address': from_addr},
+        'to': to_addrs,
+        'cc': cc_addrs,
+        'direction': direction,
+        'receivedDateTime': msg.get('receivedDateTime', ''),
+        'sentDateTime': msg.get('sentDateTime', ''),
+        'importance': msg.get('importance', 'normal'),
+        'hasAttachments': msg.get('hasAttachments', False),
+        'isRead': msg.get('isRead', True),
+        'bodyPreview': msg.get('bodyPreview', '')[:255],
+    }
+
+    if is_expanded:
+        msg_id = msg.get('id', '')
+        body_file = fetched_bodies.get(msg_id)
+        if body_file and os.path.exists(body_file):
+            with open(body_file, encoding='utf-8') as bf:
+                record['bodyHtml'] = bf.read()
+            record['bodyText'] = clean_html(record['bodyHtml'])
+        else:
+            record['bodyHtml'] = ''
+            record['bodyText'] = msg.get('bodyPreview', '')
+
+    return record
+
+json_output = {
+    '_version': 1,
+    '_generatedAt': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
+    '_source': 'agency-mail-http',
+    'caseNumber': case_number,
+    'totalEmails': len(sorted_msgs),
+    'expandedCount': len(expand_ids),
+    'emails': [
+        build_email_record(msg, is_expanded=(msg.get('id','') in expand_ids))
+        for msg in sorted_msgs
+    ]
+}
+
+with open(office_json, 'w', encoding='utf-8') as f:
+    json.dump(json_output, f, indent=2, ensure_ascii=False)
 
 # Cleanup temp dir
 import shutil
 shutil.rmtree(tmp_dir, ignore_errors=True)
 
-file_size = os.path.getsize(office_md) / 1024
+md_size = os.path.getsize(office_md) / 1024
+json_size = os.path.getsize(office_json) / 1024
 elapsed = int(time.time()) - t0
-log(f'STEP 3 OK    | emails-office.md saved ({len(sorted_msgs)} emails, {len(expand_ids)} expanded, {file_size:.1f}KB)')
+log(f'STEP 3 OK    | emails-office.md ({md_size:.1f}KB) + .json ({json_size:.1f}KB) | {len(sorted_msgs)} emails, {len(expand_ids)} expanded')
 
 print(f'EMAIL_OK|emails={len(sorted_msgs)}|expanded={len(expand_ids)}|elapsed={elapsed}s')
 PYEOF
