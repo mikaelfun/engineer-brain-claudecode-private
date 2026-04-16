@@ -20,6 +20,7 @@ tools/
 
 # Runtime state (session-scoped, regenerable)
 .claude/state/
+.claude/scheduled_tasks.lock
 
 # Screenshots (all regenerable via scripts/tests)
 scripts/screenshots/
@@ -37,6 +38,15 @@ dashboard/test-screenshots-*/
 .env.local
 .mcp.json
 config.json
+
+# Build artifacts & compiled output
+dist/
+*.zip
+
+# Temp directories & files
+tmp/
+lancedb/
+.agents/
 
 # OS files
 .DS_Store
