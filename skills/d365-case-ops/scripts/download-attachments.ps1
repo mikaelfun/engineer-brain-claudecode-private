@@ -25,10 +25,38 @@ param(
         "$cr\active"
     }),
 
-    [switch]$Force
+    [switch]$Force,
+
+    # Optional: when set, write atomic events/attachments.json (active/progress/completed/failed)
+    # for the casework-v2 Step 1 observability pipeline. Safe to omit.
+    [string]$EventDir = ""
 )
 
 . "$PSScriptRoot\_init.ps1"
+
+# ── Event helpers (no-op if -EventDir not supplied) ──
+$script:EventStartTs = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+$script:EventStartMs = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
+
+function Write-AttachmentEvent {
+    param([hashtable]$Payload)
+    if (-not $EventDir) { return }
+    try {
+        if (-not (Test-Path $EventDir)) {
+            New-Item -Path $EventDir -ItemType Directory -Force | Out-Null
+        }
+        $Payload["task"] = "attachments"
+        $json = $Payload | ConvertTo-Json -Compress -Depth 5
+        $final = Join-Path $EventDir "attachments.json"
+        $tmp = "$final.tmp.$PID.$((Get-Random))"
+        Set-Content -Path $tmp -Value $json -Encoding UTF8 -NoNewline
+        Move-Item -Path $tmp -Destination $final -Force
+    } catch {
+        # event emission must never break the real work
+    }
+}
+
+Write-AttachmentEvent @{ status = "active"; startedAt = $script:EventStartTs }
 
 # ── 1-2. 获取附件元数据（优先读 snapshot 缓存，否则走 D365 OData） ──
 $metaCacheFile = Join-Path $OutputDir "$TicketNumber\attachments-meta.json"
@@ -247,6 +275,8 @@ $jobs = $toDownload | ForEach-Object {
 $results = $jobs | Wait-Job | Receive-Job
 $jobs | Remove-Job -Force
 
+$totalForProgress = $toDownload.Count
+$doneForProgress = 0
 $downloaded = 0
 $failed = 0
 foreach ($r in $results) {
@@ -257,6 +287,12 @@ foreach ($r in $results) {
     } else {
         Write-Host "  ❌ $($r.FileName) — failed after $($r.Attempts) attempt(s): $($r.Error)"
         $failed++
+    }
+    $doneForProgress++
+    Write-AttachmentEvent @{
+        status    = "active"
+        startedAt = $script:EventStartTs
+        progress  = @{ done = $doneForProgress; total = $totalForProgress }
     }
 }
 
@@ -274,3 +310,24 @@ if ($currentUrl) {
 Write-Host ""
 Write-Host "📋 Summary: $downloaded downloaded, $skipped skipped, $failed failed (of $($filesResp.Count) total)"
 Write-Host "📁 Location: $attachDir"
+
+# ── 9. Final event (casework-v2 Step 1) ──
+$endTs = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+$durMs = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() - $script:EventStartMs
+if ($failed -eq 0) {
+    Write-AttachmentEvent @{
+        status       = "completed"
+        startedAt    = $script:EventStartTs
+        completedAt  = $endTs
+        durationMs   = $durMs
+        delta        = @{ downloaded = $downloaded; skipped = $skipped; total = $filesResp.Count }
+    }
+} else {
+    Write-AttachmentEvent @{
+        status      = "failed"
+        startedAt   = $script:EventStartTs
+        durationMs  = $durMs
+        error       = "$failed file(s) failed"
+        delta       = @{ downloaded = $downloaded; skipped = $skipped; failed = $failed; total = $filesResp.Count }
+    }
+}
