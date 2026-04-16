@@ -34,7 +34,7 @@ BATCH_IDS       = a,b,c,d,e,f,g,h # 最多 8 个 slot per product
 | avd | 5 | emoji 路径消耗额外 turns |
 | defender | 5 | 零宽空格路径 + 大页面 |
 
-调度器在 `Step 2: 分配页面` 时，读取 `config.json → podProducts[product].blastBatchSize`（如有），
+调度器在 `Step 2: 分配页面` 时，读取 `playbooks/product-registry.json → podProducts[product].blastBatchSize`（如有），
 否则使用上表默认值。可通过 config 覆盖。
 
 ## 核心机制：滑动窗口 + Claimed Set
@@ -358,7 +358,7 @@ pagesToProcess ({N} 个页面):
 ### 执行步骤
 
 1. **读取产品的 adoWikis 配置**
-   从 `config.json → podProducts → [{product}].adoWikis` 获取 wiki 列表：
+   从 `playbooks/product-registry.json → podProducts → [{product}].adoWikis` 获取 wiki 列表：
    ```json
    [{"org": "Supportability", "project": "AzureAD"}]
    ```

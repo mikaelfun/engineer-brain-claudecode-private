@@ -35,6 +35,7 @@ function resolveProjectRoot(): string {
 interface ProjectConfig {
   casesRoot: string
   dataRoot?: string
+  patrolDir?: string
 }
 
 /** Cached config — avoids re-reading config.json on every property access */
@@ -85,8 +86,12 @@ export const config = {
   get arCasesDir() {
     return join(this.casesDir, 'AR')
   },
+  get patrolDir() {
+    const pd = readProjectConfig().patrolDir
+    return pd ? resolveConfigPath(pd) : join(this.casesDir, '.patrol')
+  },
   get patrolStateFile() {
-    return join(this.casesDir, '.patrol', 'casehealth-state.json')
+    return join(this.patrolDir, 'patrol-state.json')
   },
   /** @deprecated Todo files are now per-case (cases/active/{id}/todo/). Kept for backward compat. */
   get todoDir() {
@@ -114,7 +119,7 @@ export const config = {
     return join(runtimeDir, 'case-session-messages.json')
   },
   get patrolLastRunFile() {
-    return join(runtimeDir, 'patrol-last-run.json')
+    return join(this.patrolDir, 'patrol-state.json')
   },
   get dataDir() {
     const dr = readProjectConfig().dataRoot

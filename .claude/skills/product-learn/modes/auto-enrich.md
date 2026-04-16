@@ -15,7 +15,7 @@ SERVICES_DIR = ${POD_NB}/POD/VMSCIM/4. Services
 
 ## 产品 → OneNote 目录映射
 
-**不要硬编码**——运行时从 `config.json → podProducts` 读取。每个产品条目包含：
+**不要硬编码**——运行时从 `playbooks/product-registry.json → podProducts` 读取。每个产品条目包含：
 
 | 字段 | 说明 |
 |------|------|
@@ -25,7 +25,7 @@ SERVICES_DIR = ${POD_NB}/POD/VMSCIM/4. Services
 | `podServicesDir` | POD Services 目录名（Feature Gap 文件在此） |
 | `extraSections` | 可选，额外 OneNote section 列表 |
 
-用法：`config.podProducts.find(p => p.id === currentProduct)` 取映射。
+用法：`registry.podProducts.find(p => p.id === currentProduct)` 取映射。
 
 ---
 
@@ -146,7 +146,7 @@ Stats: {totalDiscovered} discovered, {totalDeduplicated} deduped
 ## `reset` — 重置状态
 
 **完全重置**（`auto-enrich reset`）：
-1. 将 `enrich-state.json` 重写为初始值（从 `config.json → enrichPriority` 填充 `productQueue`，`activeProducts` 清空）
+1. 将 `enrich-state.json` 重写为初始值（从 `playbooks/product-registry.json → enrichPriority` 填充 `productQueue`，`activeProducts` 清空）
 2. 保留 `stats` 作为历史记录
 3. 删除所有产品的 `.enrich/progress.json` 和 `.enrich/scanned-*.json`（允许重新全量扫描）
 4. 保留 `.enrich/known-issues-*.jsonl`（不删除已提取的知识）
@@ -302,7 +302,7 @@ Agent(
     - known-issues-{source}.jsonl: skills/products/{product}/.enrich/known-issues-{source}.jsonl
     - scanned-{source}.json: skills/products/{product}/.enrich/scanned-{source}.json
     - 21v-gaps.json: skills/products/{product}/21v-gaps.json (如果存在)
-    - config.json: 读取 podProducts 获取目录映射
+    - playbooks/product-registry.json: 读取 podProducts 获取目录映射
     
     完成后返回:
     1. discovered: 新发现条目数
@@ -449,7 +449,7 @@ Active: {activeProducts} | Queue: {remaining} remaining
    - 对每个页面：
      - Read 文件内容（>3000 字符截取前 3000）
      - LLM 分析：这个页面涉及哪些产品域？
-   - 产品域列表来自 `config.json → podProducts[*].id`
+   - 产品域列表来自 `playbooks/product-registry.json → podProducts[*].id`
    - LLM 判断依据：
      - 页面内容涉及的 Azure 服务名（对照 `podProducts[*].services`）
      - 排查的问题域（如 enrollment 相关 → intune，NSG 相关 → networking）
@@ -489,7 +489,7 @@ Agent(
     关键文件：
     - page-list.txt: skills/products/page-list.txt
     - page-classification.jsonl: skills/products/page-classification.jsonl
-    - config.json: 读取 podProducts 获取产品 ID 和 services 列表
+    - playbooks/product-registry.json: 读取 podProducts 获取产品 ID 和 services 列表
     
     完成后返回:
     1. classified: 本轮分类页面数
@@ -581,7 +581,7 @@ Phase 3 (ado-wiki-scan) 的双轨细节见该 Phase 内的"内容分类 + 双轨
 1. **检查缓存**：读取 `skills/products/{product}/21v-gaps.json`
    - 存在且 `lastUpdated` 距今 < 30 天 → 跳过，返回 `{discovered:0, deduplicated:0, exhausted:true, summary:"cache valid"}`
 
-2. **读取 config.json**，找到 `podProducts[product].podServicesDir`
+2. **读取 playbooks/product-registry.json**，找到 `podProducts[product].podServicesDir`
    - 为 null → 返回 `exhausted:true`，写空 21v-gaps.json
 
 3. **Glob 搜索 Feature Gap 文件**：

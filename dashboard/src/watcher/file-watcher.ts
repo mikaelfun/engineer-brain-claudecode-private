@@ -64,13 +64,13 @@ function classifyChange(filePath: string): { type: SSEEventType; data: Record<st
   }
 
   // Patrol state
-  if (normalized.includes('casehealth-state.json')) {
+  if (normalized.includes('patrol-state.json') || normalized.includes('casehealth-state.json')) {
     return { type: 'patrol-updated', data: {} }
   }
 
   // Patrol phase file — CLI patrol writes this to signal current phase
   // Format: "processing" or "processing|3/6" (phase with progress)
-  if (normalized.endsWith('.patrol/phase') || normalized.endsWith('.patrol-phase')) {
+  if (normalized.endsWith('/phase') && normalized.includes('.patrol')) {
     try {
       const raw = readFileSync(filePath, 'utf-8').trim()
       const [phase, progress] = raw.split('|')
@@ -86,7 +86,7 @@ function classifyChange(filePath: string): { type: SSEEventType; data: Record<st
   }
 
   // Patrol result file — CLI patrol writes this on completion
-  if (normalized.endsWith('.patrol/result.json') || normalized.endsWith('.patrol-result.json')) {
+  if (normalized.endsWith('/result.json') && normalized.includes('.patrol')) {
     try {
       const result = JSON.parse(readFileSync(filePath, 'utf-8'))
       return { type: 'patrol-progress' as SSEEventType, data: { ...result, phase: result.phase || 'completed' } }
@@ -244,8 +244,8 @@ export function startFileWatcher() {
     join(config.activeCasesDir, '**', '*.{md,json,log}'),
     join(config.todoDir, '*.md'),
     config.patrolStateFile,
-    join(config.casesDir, '.patrol', 'phase'),
-    join(config.casesDir, '.patrol', 'result.json'),
+    join(config.patrolDir, 'phase'),
+    join(config.patrolDir, 'result.json'),
     config.cronJobsFile,
     join(config.projectRoot, 'tests', 'state.json'),
     join(config.projectRoot, 'tests', 'pipeline.json'),

@@ -143,8 +143,8 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
   }
 
   try {
-    // Ensure .patrol directory exists
-    const patrolDir = join(config.casesDir, '.patrol')
+    // Ensure patrol directory exists
+    const patrolDir = config.patrolDir
     if (!existsSync(patrolDir)) {
       mkdirSync(patrolDir, { recursive: true })
     }
@@ -250,7 +250,7 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
 
     console.error(`[sdk-patrol] Patrol ${isAbort ? 'cancelled' : 'failed'}:`, errorMsg)
     broadcastPhase('failed', { error: result.error })
-    savePatrolLastRun(result as unknown as Record<string, unknown>)
+    savePatrolState(result as unknown as Record<string, unknown>)
 
     return result
   } finally {
@@ -841,23 +841,10 @@ function buildQueryOptions(stepName: string): { cwd: string } & Options {
 // Persistence
 // ============================================================
 
-const PATROL_LAST_RUN_PATH = config.patrolLastRunFile
-
 /**
- * Save patrol result for dashboard consumption.
- *
- * Writes two files:
- *   1. dashboard/.patrol-last-run.json — full result for the Last Patrol API
- *   2. cases/.patrol/casehealth-state.json — summary for the Dashboard card
+ * Save patrol result to unified patrol-state.json.
  */
-function savePatrolLastRun(data: Record<string, unknown>): void {
-  try {
-    writeFileSync(PATROL_LAST_RUN_PATH, JSON.stringify(data, null, 2), 'utf-8')
-  } catch (err) {
-    console.warn('[sdk-patrol] Failed to save last run:', err)
-  }
-
-  // Also write casehealth-state.json for Dashboard Last Patrol card
+function savePatrolState(data: Record<string, unknown>): void {
   try {
     const stateFile = config.patrolStateFile
     const stateDir = dirname(stateFile)
@@ -865,6 +852,7 @@ function savePatrolLastRun(data: Record<string, unknown>): void {
 
     const stateData: Record<string, unknown> = {
       lastPatrol: data.completedAt || data.startedAt || new Date().toISOString(),
+      source: 'webui',
       currentPatrolStartedAt: data.startedAt,
       patrolType: data.phase === 'completed' ? 'full' : String(data.phase || 'unknown'),
       lastRunTiming: {
@@ -873,6 +861,8 @@ function savePatrolLastRun(data: Record<string, unknown>): void {
         computeSeconds: 0,
         bottlenecks: [],
       },
+      // Preserve full result data for API consumers
+      ...data,
     }
     writeFileSync(stateFile, JSON.stringify(stateData, null, 2), 'utf-8')
   } catch (err) {
@@ -883,8 +873,9 @@ function savePatrolLastRun(data: Record<string, unknown>): void {
 /** Load the last patrol run result (for API consumers) */
 export function loadPatrolLastRun(): Record<string, unknown> | null {
   try {
-    if (existsSync(PATROL_LAST_RUN_PATH)) {
-      return JSON.parse(readFileSync(PATROL_LAST_RUN_PATH, 'utf-8'))
+    const stateFile = config.patrolStateFile
+    if (existsSync(stateFile)) {
+      return JSON.parse(readFileSync(stateFile, 'utf-8'))
     }
   } catch { /* ignore */ }
   return null
@@ -922,7 +913,7 @@ function finalizePatrol(result: PatrolResult): void {
   // Notify Agent Monitor that patrol sessions are done
   sseManager.broadcast('sessions-changed' as any, { reason: 'patrol-completed' })
 
-  savePatrolLastRun(result as unknown as Record<string, unknown>)
+  savePatrolState(result as unknown as Record<string, unknown>)
   console.log(
     `[sdk-patrol] Patrol completed: ${result.processedCases}/${result.changedCases} cases in ${result.wallClockMinutes}min`,
   )

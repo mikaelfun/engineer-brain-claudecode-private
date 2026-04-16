@@ -179,6 +179,7 @@ export interface SlaStatus {
 
 export interface PatrolState {
   lastPatrol: string
+  source?: 'cli' | 'webui'
   activeCases: string[]
   arCases: string[]
   todoFile: string

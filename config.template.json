@@ -1,6 +1,7 @@
 {
   "casesRoot": "./cases",
   "dataRoot": "../data",
+  "patrolDir": "../data/.patrol",
   "teamsSearchCacheHours": 8,
   "patrolSkipHours": 3,
   "noteGapThresholdDays": 3,

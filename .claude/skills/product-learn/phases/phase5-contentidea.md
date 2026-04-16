@@ -8,7 +8,7 @@
 > （`HelpArticleSummarySymptom`/`HelpArticleCause`/`HelpArticleResolution`），直接 strip HTML 即可写入 JSONL。
 > 质量审核留给 SYNTHESIZE 阶段用 LLM 做。
 
-1. **读取 config.json** → 取 `podProducts[product].contentIdeaKeywords`
+1. **读取 playbooks/product-registry.json** → 取 `podProducts[product].contentIdeaKeywords`
    - 为空数组 → 返回 `exhausted: true`（该产品无 ContentIdea 关键词）
 
 2. **WIQL 查询已发布 KB** — 对每个关键词执行：

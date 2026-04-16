@@ -11,7 +11,7 @@
 
 **条件**：`.enrich/scanned-mslearn.json → index` 不存在或为空。
 
-1. **读取 config.json** → 取 `podProducts[product].mslearnTocPaths` 数组
+1. **读取 playbooks/product-registry.json** → 取 `podProducts[product].mslearnTocPaths` 数组
    - 为空数组 → 返回 `exhausted: true`（无 toc.yml 映射，退回搜索模式）
 
 2. **对每个 tocPath，下载 toc.yml**：

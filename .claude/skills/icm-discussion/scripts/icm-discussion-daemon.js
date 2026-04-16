@@ -31,6 +31,7 @@ const singleMode = singleIdx !== -1;
 const singleIncidentId = singleMode ? args[singleIdx + 1] : null;
 const singleCaseDir = caseDirIdx !== -1 ? args[caseDirIdx + 1] : null;
 const casesRoot = process.env.CASES_ROOT || './cases';
+const patrolDir = process.env.PATROL_DIR || path.join(casesRoot, '.patrol');
 
 function log(msg) {
   const ts = new Date().toISOString().replace('T', ' ').substring(0, 19);
@@ -38,7 +39,7 @@ function log(msg) {
 }
 
 function appendLog(msg) {
-  const logPath = path.join(casesRoot, '.patrol', 'icm-queue.log');
+  const logPath = path.join(patrolDir, 'icm-queue.log');
   const ts = new Date().toLocaleString('sv-SE').replace(',', '');
   fs.appendFileSync(logPath, `[${ts}] ${msg}\n`);
 }
@@ -175,9 +176,9 @@ async function runSingle() {
 
 // --- 队列模式 ---
 async function runQueue() {
-  const queueDir = path.join(casesRoot, '.patrol', 'icm-queue');
-  const activeFile = path.join(casesRoot, '.patrol', 'icm-queue-active');
-  const stopFile = path.join(casesRoot, '.patrol', 'icm-queue-stop');
+  const queueDir = path.join(patrolDir, 'icm-queue');
+  const activeFile = path.join(patrolDir, 'icm-queue-active');
+  const stopFile = path.join(patrolDir, 'icm-queue-stop');
 
   fs.mkdirSync(queueDir, { recursive: true });
 

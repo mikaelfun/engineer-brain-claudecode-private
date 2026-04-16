@@ -81,8 +81,8 @@ az account get-access-token --resource "https://kusto.windows.net" 2>&1
 #### 1.5.1 确定产品域
 
 多策略匹配：
-- **优先**：从 case-info.md 的 SAP 服务路径匹配 `config.json → podProducts[*].services`
-- **次选**：从问题描述/标题关键词匹配 `config.json → podProducts[*].matchKeywords`
+- **优先**：从 case-info.md 的 SAP 服务路径匹配 `playbooks/product-registry.json → podProducts[*].services`
+- **次选**：从问题描述/标题关键词匹配 `playbooks/product-registry.json → podProducts[*].matchKeywords`
 - **兜底**：从排查中查询的 Kusto 集群推断（azcrpmc → vm, mcakshuba → aks 等）
 
 #### 1.5.2 读产品 SKILL.md — 获取决策树和诊断架构

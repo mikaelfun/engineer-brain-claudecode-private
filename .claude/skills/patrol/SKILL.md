@@ -65,7 +65,9 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
 ## 执行步骤
 
 1. **读取配置**
-   读取 `config.json` 获取 `casesRoot`。**直接使用 `./cases`，不做任何路径解析。**
+   读取 `config.json` 获取 `casesRoot` 和 `patrolDir`。**直接使用原始值，不做任何路径解析。**
+   - `casesRoot` 默认 `./cases`
+   - `patrolDir` 默认 `{casesRoot}/.patrol`（如果 config.json 未配置 patrolDir）
 
    **🚨 路径硬规则（反复出问题，必须严格遵守）**：
    - `casesRoot` = `./cases`（直接用 config.json 原始值）
@@ -76,7 +78,7 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
 
 2. **写 phase 文件（discovering）**
    ```bash
-   echo "discovering" > "{casesRoot}/.patrol/phase"
+   echo "discovering" > "{patrolDir}/phase"
    ```
 
 3. **获取活跃 Case 列表**
@@ -116,7 +118,7 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
      # transferred case
      mv "{casesRoot}/active/{caseNumber}" "{casesRoot}/transfer/{caseNumber}"
      ```
-   - 记录日志到 `{casesRoot}/.patrol/archive-log.jsonl`（append）：
+   - 记录日志到 `{patrolDir}/archive-log.jsonl`（append）：
      ```json
      {"timestamp":"ISO","caseNumber":"...","status":"archived|transferred","reason":"...","closureEmailEvidence":"...","from":"active/","to":"archived/|transfer/"}
      ```
@@ -126,7 +128,7 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
 
    写 phase 文件：
    ```bash
-   echo "warming-up" > "{casesRoot}/.patrol/phase"
+   echo "warming-up" > "{patrolDir}/phase"
    ```
 
    两个预热任务可并行执行：
@@ -160,7 +162,7 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
    - **成功返回**（有 JSON 结果）→ Teams MCP 可用，继续 spawn queue agent
    - **返回错误**（`Connection closed` / `MCP error` / timeout）→ **跳过 Teams 搜索**：
      ```bash
-     echo "TEAMS_MCP_UNAVAILABLE" > "{casesRoot}/.patrol/teams-mcp-status"
+     echo "TEAMS_MCP_UNAVAILABLE" > "{patrolDir}/teams-mcp-status"
      echo "⚠️ Teams MCP 不可用，跳过本次 Teams 搜索。请运行 /mcp 重启 Teams MCP server。"
      ```
      不 spawn queue agent，直接进入阶段 0.6。后续 casework-light 的 Teams request.json 不会被处理，
@@ -168,8 +170,8 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
 
    **预检通过后**，清理上次残留的信号文件：
    ```bash
-   mkdir -p "{casesRoot}/.patrol"
-   rm -f "{casesRoot}/.patrol/teams-queue-active" "{casesRoot}/.patrol/teams-queue-stop" "{casesRoot}/.patrol/teams-mcp-status"
+   mkdir -p "{patrolDir}"
+   rm -f "{patrolDir}/teams-queue-active" "{patrolDir}/teams-queue-stop" "{patrolDir}/teams-mcp-status"
    ```
 
    读取 `config.json` 中 `teamsSearchCacheHours`（默认 8）。
@@ -202,7 +204,7 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
 6. **阶段 0.6：写 phase 文件（processing）**
 
    ```bash
-   echo "processing" > "{casesRoot}/.patrol/phase"
+   echo "processing" > "{patrolDir}/phase"
    ```
 
 7. **Streaming Pipeline：启动 casework-light + 统一轮询推进**
@@ -352,7 +354,7 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
 
    排空后（或超时后），发送停止信号：
    ```bash
-   echo "$(date +%s)" > "{casesRoot}/.patrol/teams-queue-stop"
+   echo "$(date +%s)" > "{patrolDir}/teams-queue-stop"
    ```
 
    使用 `TaskOutput` 等待 teams-queue agent 退出（最多 5 分钟）。
@@ -360,7 +362,7 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
 
    清理信号文件：
    ```bash
-   rm -f "{casesRoot}/.patrol/teams-queue-active" "{casesRoot}/.patrol/teams-queue-stop"
+   rm -f "{patrolDir}/teams-queue-active" "{patrolDir}/teams-queue-stop"
    ```
 
    **清理孤儿 request.json**（drain 超时时必须执行）：
@@ -373,33 +375,34 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
 
    **停止 ICM Discussion Daemon**：
    ```bash
-   echo "$(date +%s)" > "{casesRoot}/.patrol/icm-queue-stop"
-   ICM_PID=$(cat "{casesRoot}/.patrol/icm-queue-pid" 2>/dev/null)
+   echo "$(date +%s)" > "{patrolDir}/icm-queue-stop"
+   ICM_PID=$(cat "{patrolDir}/icm-queue-pid" 2>/dev/null)
    if [ -n "$ICM_PID" ]; then
      for i in $(seq 1 30); do
        kill -0 $ICM_PID 2>/dev/null || break
        sleep 1
      done
    fi
-   rm -f "{casesRoot}/.patrol/icm-queue-active" "{casesRoot}/.patrol/icm-queue-stop" "{casesRoot}/.patrol/icm-queue-pid"
+   rm -f "{patrolDir}/icm-queue-active" "{patrolDir}/icm-queue-stop" "{patrolDir}/icm-queue-pid"
    ```
 
 10. **汇总 Todo + 结构化输出**
 
    写阶段文件：
    ```bash
-   echo "aggregating" > "{casesRoot}/.patrol/phase"
+   echo "aggregating" > "{patrolDir}/phase"
    ```
 
    从各 case 的 `todo/` 目录提取最新 Todo 文件，按 🔴🟡✅ 分级汇总展示。
 
    从各 case 的 `logs/casework.log` 读取最后一行判断 status（`STEP B5 OK` / `STEP B6 OK` / `phase completed` → completed，否则 failed）。
 
-   写结构化结果文件 `{casesRoot}/.patrol/result.json`：
+   写结构化结果文件 `{patrolDir}/result.json`：
    ```json
    {
      "startedAt": "ISO",
      "completedAt": "ISO",
+     "source": "cli",
      "totalCases": 10,
      "changedCases": 5,
      "processedCases": 5,
@@ -412,7 +415,7 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
 
    写最终阶段：
    ```bash
-   echo "completed" > "{casesRoot}/.patrol/phase"
+   echo "completed" > "{patrolDir}/phase"
    ```
 
 ## 注意
@@ -447,7 +450,7 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
 
 ## Phase 文件协议
 
-Patrol 在各阶段写 `{casesRoot}/.patrol/phase`（单行文本），供 WebUI Dashboard 监听：
+Patrol 在各阶段写 `{patrolDir}/phase`（单行文本），供 WebUI Dashboard 监听：
 - `discovering` → `filtering` → `warming-up` → `processing` → `aggregating` → `completed`
 
-Patrol 结束写 `{casesRoot}/.patrol/result.json`（结构化 JSON），包含 startedAt, completedAt, caseResults 等。
+Patrol 结束写 `{patrolDir}/result.json`（结构化 JSON），包含 startedAt, completedAt, caseResults 等。

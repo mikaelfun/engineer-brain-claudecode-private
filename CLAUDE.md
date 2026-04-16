@@ -120,4 +120,5 @@ actualStatus 有效值：`pending-engineer` | `pending-customer` | `pending-pg` 
 | Todo 格式与规则 | `playbooks/schemas/todo-format.md` |
 | Case 生命周期 | `playbooks/rules/case-lifecycle.md` |
 | 测试安全红线 | `playbooks/rules/test-safety-redlines.md` |
+| 产品注册表（product-learn / troubleshooter） | `playbooks/product-registry.json` |
 | 环境搭建 / 依赖安装 | `SETUP.md` |

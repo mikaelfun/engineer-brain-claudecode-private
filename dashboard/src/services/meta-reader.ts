@@ -23,7 +23,7 @@ export function readCaseMeta(caseNumber: string): CaseHealthMeta | null {
 
 export function readPatrolState(): PatrolState | null {
   const stateFile = config.patrolStateFile
-  const resultFile = join(config.casesDir, '.patrol', 'result.json')
+  const resultFile = join(config.patrolDir, 'result.json')
   const stateExists = existsSync(stateFile)
   const resultExists = existsSync(resultFile)
 

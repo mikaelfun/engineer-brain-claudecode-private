@@ -3,7 +3,7 @@
  *
  * Instead of orchestrating patrol logic in TypeScript (500+ lines of race conditions),
  * we delegate everything to `claude -p "/patrol"` which follows SKILL.md.
- * WebUI only monitors file system changes (.patrol-phase, .patrol-result.json)
+ * WebUI only monitors file system changes (patrol phase, patrol result)
  * and broadcasts SSE events to the frontend.
  */
 import { spawn, ChildProcess } from 'child_process'
@@ -17,19 +17,14 @@ let patrolStartedAt: string | null = null
 let phasePollerInterval: NodeJS.Timeout | null = null
 
 // ---- Patrol result persistence ----
-const PATROL_LAST_RUN_PATH = config.patrolLastRunFile
 
-function savePatrolLastRun(data: Record<string, unknown>): void {
-  try {
-    writeFileSync(PATROL_LAST_RUN_PATH, JSON.stringify(data, null, 2), 'utf-8')
-  } catch (err) {
-    console.warn('[cli-patrol] Failed to save last run:', err)
-  }
-  // Also write casehealth-state.json for Dashboard "Last Patrol" card
+function savePatrolState(data: Record<string, unknown>): void {
+  // Write unified patrol-state.json (replaces both patrol-last-run.json and casehealth-state.json)
   try {
     const stateFile = config.patrolStateFile
     const stateData: Record<string, unknown> = {
       lastPatrol: data.completedAt || data.startedAt || new Date().toISOString(),
+      source: 'webui',
       currentPatrolStartedAt: data.startedAt,
       patrolType: data.phase === 'completed' ? 'full' : String(data.phase || 'unknown'),
       lastRunTiming: {
@@ -38,6 +33,8 @@ function savePatrolLastRun(data: Record<string, unknown>): void {
         computeSeconds: 0,
         bottlenecks: [],
       },
+      // Preserve full result data for API consumers
+      ...data,
     }
     writeFileSync(stateFile, JSON.stringify(stateData, null, 2), 'utf-8')
   } catch (err) {
@@ -47,8 +44,9 @@ function savePatrolLastRun(data: Record<string, unknown>): void {
 
 export function loadPatrolLastRun(): Record<string, unknown> | null {
   try {
-    if (existsSync(PATROL_LAST_RUN_PATH)) {
-      return JSON.parse(readFileSync(PATROL_LAST_RUN_PATH, 'utf-8'))
+    const stateFile = config.patrolStateFile
+    if (existsSync(stateFile)) {
+      return JSON.parse(readFileSync(stateFile, 'utf-8'))
     }
   } catch { /* ignore */ }
   return null
@@ -64,14 +62,14 @@ export function startCliPatrol(force: boolean): boolean {
 
   patrolStartedAt = new Date().toISOString()
 
-  // Ensure .patrol directory exists
-  const patrolDir = join(config.casesDir, '.patrol')
+  // Ensure patrol directory exists
+  const patrolDir = config.patrolDir
   try {
     if (!existsSync(patrolDir)) {
       mkdirSync(patrolDir, { recursive: true })
     }
   } catch (err) {
-    console.warn('[cli-patrol] Failed to create .patrol dir:', err)
+    console.warn('[cli-patrol] Failed to create patrol dir:', err)
   }
 
   // Delete stale result.json from previous run to avoid false-positive completion
@@ -85,7 +83,7 @@ export function startCliPatrol(force: boolean): boolean {
 
   // Write initial phase file so file-watcher can broadcast immediately
   try {
-    writeFileSync(join(config.casesDir, '.patrol', 'phase'), 'starting', 'utf-8')
+    writeFileSync(join(config.patrolDir, 'phase'), 'starting', 'utf-8')
   } catch { /* ignore */ }
 
   // Broadcast initial state via SSE
@@ -113,7 +111,7 @@ export function startCliPatrol(force: boolean): boolean {
 
   // Poll phase file every 5s as backup for file-watcher (Windows can miss overwrites)
   let lastPolledPhase = 'starting'
-  const phaseFile = join(config.casesDir, '.patrol', 'phase')
+  const phaseFile = join(config.patrolDir, 'phase')
   phasePollerInterval = setInterval(() => {
     try {
       if (!existsSync(phaseFile)) return
@@ -162,7 +160,7 @@ export function startCliPatrol(force: boolean): boolean {
     console.log(`[cli-patrol] Process exited (code=${code}, signal=${signal}, duration=${Math.round(durationMs / 1000)}s)`)
 
     // Read result.json with retry — file may still be flushing when process exits
-    const resultFile = join(config.casesDir, '.patrol', 'result.json')
+    const resultFile = join(config.patrolDir, 'result.json')
     const savedStartedAt = patrolStartedAt
 
     const tryReadAndBroadcast = (attempt: number) => {
@@ -181,7 +179,7 @@ export function startCliPatrol(force: boolean): boolean {
           completedAt,
           wallClockMinutes: Math.round(durationMs / 60000),
         }
-        savePatrolLastRun(persistData)
+        savePatrolState(persistData)
         sseManager.broadcast('patrol-progress' as any, {
           phase: 'completed',
           ...result,
@@ -211,13 +209,13 @@ export function startCliPatrol(force: boolean): boolean {
           completedAt,
           wallClockMinutes: Math.round(durationMs / 60000),
         }
-        savePatrolLastRun(failData)
+        savePatrolState(failData)
         sseManager.broadcast('patrol-progress' as any, failData)
       }
 
       // Clean up phase file
       try {
-        writeFileSync(join(config.casesDir, '.patrol', 'phase'), code === 0 ? 'completed' : 'failed', 'utf-8')
+        writeFileSync(join(config.patrolDir, 'phase'), code === 0 ? 'completed' : 'failed', 'utf-8')
       } catch { /* ignore */ }
     }
 
@@ -250,7 +248,7 @@ export function cancelCliPatrol(): boolean {
 
   // Write stop signal for teams-search queue (if running)
   try {
-    writeFileSync(join(config.casesDir, '.patrol', 'teams-queue-stop'), Date.now().toString(), 'utf-8')
+    writeFileSync(join(config.patrolDir, 'teams-queue-stop'), Date.now().toString(), 'utf-8')
   } catch { /* ignore */ }
 
   // On Windows, SIGTERM doesn't work well. Use taskkill.
@@ -281,7 +279,7 @@ export function isCliPatrolRunning(): boolean {
 
   // Check .patrol-phase file for external CLI patrol
   try {
-    const phaseFile = join(config.casesDir, '.patrol', 'phase')
+    const phaseFile = join(config.patrolDir, 'phase')
     if (existsSync(phaseFile)) {
       const phase = readFileSync(phaseFile, 'utf-8').trim()
       const activePhases = ['starting', 'discovering', 'filtering', 'warming-up', 'processing', 'aggregating']

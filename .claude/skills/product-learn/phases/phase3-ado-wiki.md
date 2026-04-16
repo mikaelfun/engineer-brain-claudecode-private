@@ -5,7 +5,7 @@
 **目标**：从 ADO Wiki 穷举提取 TSG 文档。
 
 > ⚠️ **v2 升级**：从搜索模式（top 20）升级为穷举模式（递归枚举完整 wiki page tree）。
-> 产品到 wiki 的映射从 `config.json → podProducts[product].adoWikis` 读取。
+> 产品到 wiki 的映射从 `playbooks/product-registry.json → podProducts[product].adoWikis` 读取。
 
 ---
 
@@ -37,7 +37,7 @@ wiki 名称可直接使用（无需 wiki ID）。
 
 **条件**：`.enrich/scanned-ado-wiki.json → index` 不存在或为空。
 
-1. **读取 config.json** → 取 `podProducts[product].adoWikis` 数组
+1. **读取 playbooks/product-registry.json** → 取 `podProducts[product].adoWikis` 数组
    - 为空数组 → 返回 `exhausted: true`
    - 每条含 `org`、`project`，可选 `wiki`（wiki 名，默认取该项目第一个 wiki）
    - **Scope 规则**从 `skills/products/{product}/.enrich/wiki-scope.json` 读取（不在 config.json 中）：
