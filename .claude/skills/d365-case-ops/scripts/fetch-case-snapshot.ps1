@@ -69,7 +69,9 @@ $incrementalMode = $IncrementalIfCached -and $hasLocalCache
 Write-Host "🔵 Fetching case snapshot for $TicketNumber $(if ($incrementalMode) { '(incremental)' } else { '(full)' })..."
 
 # --- 1. Get incident ID ---
-$incidentId = Get-IncidentId -TicketNumber $TicketNumber
+# AR mode: fetch main case data for the snapshot, AR-specific data is patched later
+$fetchTicket = if ($MainCaseNumber) { $MainCaseNumber } else { $TicketNumber }
+$incidentId = Get-IncidentId -TicketNumber $fetchTicket
 if (-not $incidentId) {
     Write-Error "❌ Case $TicketNumber not found"
     exit 1
