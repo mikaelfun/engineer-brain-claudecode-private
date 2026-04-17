@@ -137,9 +137,24 @@ AR Case 额外读取 `notes-ar.md`。
 
 #### 3.4 SAP 准确性检查
 
-在 summary 更新后（已读完 case-info + summary），判断 SAP 是否与 case 实际内容匹配。
+在 summary 更新后（已读完 case-info + summary），用 `match-sap` 脚本化检查 SAP 是否与 case 实际内容匹配。
 
-读 `{dataRoot}/sap-scope.json` 的 `podServices` 列表。提取 SAP 叶子节点（最后一个 `/` 后）对比 case-summary 的「问题描述」。
+```bash
+# 从 case-summary.md 提取问题描述关键词
+QUERY=$(python3 -c "
+import re
+with open(r'{caseDir}/case-summary.md', encoding='utf-8') as f:
+    c = f.read()
+desc = re.search(r'问题描述[：:]\s*(.*?)(?=\n##|\n###|\Z)', c, re.DOTALL)
+print(desc.group(1).strip()[:200] if desc else '')
+")
+
+# match-sap 搜索（mooncake-first + pod-check + JSON）
+SAP_RESULT=$(python3 -B .claude/skills/sap-match/match-sap.py $QUERY --scope mooncake-first --pod-check --top 1 --json)
+```
+
+用 match-sap 的 top-1 结果与 case-info.md 的 `| SAP |` 做产品级比对。
+若不一致：`casework-meta.json.sapCheck.suggestedSap` = match-sap 结果的 `path` + `guid`。
 
 判断结果写入 `casework-meta.json.sapCheck`：`{ currentSap, isAccurate, suggestedSap, reason, checkedAt }`
 

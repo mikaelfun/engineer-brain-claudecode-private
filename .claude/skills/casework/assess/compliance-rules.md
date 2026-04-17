@@ -47,8 +47,54 @@ assess Step 2 compliance re-infer 时按需读取本文件。cache-hit 时不读
 读 `{dataRoot}/sap-scope.json`：
 - 4.5a Mooncake 路径检测 → sapMooncake
 - 4.5b Pod 负责范围检测 → sapInPod
-- 4.5c SAP 与问题描述一致性 → sapMismatch
+- 4.5c SAP 与问题描述一致性（match-sap 脚本化）→ sapMismatch + suggestedSap
 → sapOk = sapMooncake && sapInPod && !sapMismatch
+
+### 4.5c sapMismatch 检测（脚本化）
+
+用 `match-sap.py` 将 case 的问题描述与当前 SAP 对比，判断是否偏移：
+
+```bash
+# 从 case-info.md 提取问题描述（Title + Customer Statement 前 200 字）
+QUERY=$(python3 -c "
+import re
+with open(r'{caseDir}/case-info.md', encoding='utf-8') as f:
+    c = f.read()
+title = re.search(r'\| Title \| (.+?) \|', c)
+cs = re.search(r'## Customer Statement\s*\n(.*?)(?=\n##|\Z)', c, re.DOTALL)
+parts = []
+if title: parts.append(title.group(1).strip())
+if cs: parts.append(cs.group(1).strip()[:200])
+print(' '.join(parts))
+")
+
+# 搜索最匹配的 SAP（mooncake-first + pod-check + JSON 输出）
+SAP_MATCH=$(python3 -B .claude/skills/sap-match/match-sap.py $QUERY --scope mooncake-first --pod-check --top 3 --json)
+```
+
+**sapMismatch 判定逻辑**：
+1. 取 match-sap 返回的 top-1 结果的 `path`
+2. 与 case-info.md 中的 `| SAP |` 行做**产品级比较**（比较路径的前 2-3 段）
+3. 如果 top-1 的产品级路径与当前 SAP 的产品级路径**不同** → `sapMismatch=true`
+4. 如果 top-1 score < 3.0（匹配度太低，无法判断） → `sapMismatch=false`（存疑不判偏移）
+
+**产品级比较**示例：
+- 当前 SAP: `Azure/21Vianet Mooncake/21Vianet China Azure Alert` → 产品 = `Azure Alert`
+- match-sap top-1: `Azure/21Vianet Mooncake/21Vianet China Azure Alert` → 产品 = `Azure Alert`
+- 同产品 → `sapMismatch=false`
+
+**suggestedSap**（sapMismatch=true 时填充）：
+从 match-sap 的 top-3 结果中选取 in-pod 且 isMooncake 的最佳路径，格式：
+```json
+{
+  "suggestedSap": {
+    "path": "Azure/21Vianet Mooncake/...",
+    "guid": "xxx",
+    "score": 8.5,
+    "reason": "问题描述匹配 Cosmos DB 而非当前 SAP 的 VM"
+  }
+}
+```
 
 **AR SAP 特化**（`isAR=true` 时）：
 - 4.5a/4.5b/4.5c 均使用 **`| AR Support Area Path |`** 行（而非主 case 的 `| SAP |` 行）
@@ -71,12 +117,28 @@ assess Step 2 compliance re-infer 时按需读取本文件。cache-hit 时不读
     "sapInPod": true,
     "sapMismatch": false,
     "sapPath": "Azure/21Vianet Mooncake/...",
+    "suggestedSap": null,
     "warnings": []
   },
   "ccAccount": "BMW AG",
   "ccEmails": "xxx@microsoft.com;yyy@microsoft.com"
 }
 ```
+
+**suggestedSap** 仅当 `sapMismatch=true` 或 `sapInPod=false` 时非 null：
+```json
+{
+  "suggestedSap": {
+    "path": "Azure/21Vianet Mooncake/21Vianet China Azure Cosmos DB",
+    "guid": "aec80c8e-a29a-96...",
+    "score": 11.9,
+    "inPod": true,
+    "isMooncake": true,
+    "suggestedPod": "DnAI"
+  }
+}
+```
+- `suggestedPod` 仅当 `inPod=false` 时出现，表示应 transfer 到哪个 POD
 
 ## 6. 阻断与降级
 

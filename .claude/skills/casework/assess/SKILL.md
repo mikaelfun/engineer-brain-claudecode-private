@@ -85,7 +85,7 @@ fi
 > **按需加载**：读取 `.claude/skills/casework/assess/compliance-rules.md` 获取 Entitlement 判定规则、21v Convert 检测、CC Finder、SAP 三层检查的完整规则，然后执行。cache-hit 路径不读此文件。
 
 **entitlementOk === false 时直接阻断**：写 execution-plan.json 带 `actualStatus=ready-to-close`、`noActionReason="compliance: not supported"`，跳过 Step 3/4。阻断时 warnings 必须包含具体原因（见 compliance-rules.md），供 summarize 阶段写入 todo。
-**sapOk === false 时不阻断**，但 warnings 传入 LLM prompt context，LLM 可在 actions 中建议修改 SAP。
+**sapOk === false 时不阻断**，但 warnings 传入 LLM prompt context，LLM 可在 actions 中建议修改 SAP。若 compliance 产出了 `suggestedSap`（来自 match-sap 脚本化检查），LLM 应在 actions 中用 `suggestedSap.path` 作为推荐 SAP 路径。
 **is21vConvert === true 时**，LLM 的 email-drafter action 应使用 emailType=`21v-convert-ir`（如果是首次 IR）。
 
 ### Step 2.5. AR Enrichment（仅 `isAR=true` 时执行）

@@ -153,7 +153,7 @@ if [ "$ACTUAL_STATUS" = "pending-engineer" ] && [ "$DAYS" -lt 2 ] 2>/dev/null; t
   YELLOW_ITEMS+=("客户等待工程师回复（${DAYS} 天），需安排跟进")
 fi
 
-# SAP 准确性检查（从 meta.sapCheck 读取 LLM 判断结果）
+# SAP 准确性检查（从 meta.sapCheck 读取结果，新版支持 suggestedSap 对象）
 # AR Case → 跳过 SAP 检查（AR 的 SAP 按产品路径判断，由 main case owner 管理）
 SAP_ACCURATE=$(python3 -c "
 import json, os
@@ -166,18 +166,25 @@ try:
         if not sc or sc.get('isAccurate', True):
             print('OK')
         else:
-            suggested = sc.get('suggestedSap', '未知')
+            suggested = sc.get('suggestedSap', {})
+            if isinstance(suggested, dict):
+                sap_path = suggested.get('path', '未知')
+                sap_guid = suggested.get('guid', '')
+            else:
+                sap_path = str(suggested) if suggested else '未知'
+                sap_guid = ''
             reason = sc.get('reason', '')
             current = sc.get('currentSap', '')
-            print(f'MISMATCH|{current}|{suggested}|{reason}')
+            print(f'MISMATCH|{current}|{sap_path}|{sap_guid}|{reason}')
 except:
     print('OK')
 " 2>/dev/null)
 if echo "$SAP_ACCURATE" | grep -q "^MISMATCH"; then
   SAP_CURRENT=$(echo "$SAP_ACCURATE" | cut -d'|' -f2)
   SAP_SUGGESTED=$(echo "$SAP_ACCURATE" | cut -d'|' -f3)
-  SAP_REASON=$(echo "$SAP_ACCURATE" | cut -d'|' -f4)
-  YELLOW_ITEMS+=("修改 SAP: 当前 \`${SAP_CURRENT##*/}\` 可能不准确，建议改为 \`${SAP_SUGGESTED}\`（${SAP_REASON}）")
+  SAP_GUID=$(echo "$SAP_ACCURATE" | cut -d'|' -f4)
+  SAP_REASON=$(echo "$SAP_ACCURATE" | cut -d'|' -f5)
+  YELLOW_ITEMS+=("修改 SAP: 当前 \`${SAP_CURRENT}\` → 建议 \`${SAP_SUGGESTED}\`（${SAP_REASON}）")
 fi
 
 # Compliance warnings (ISS-218: surface compliance.warnings to todo)
@@ -187,9 +194,19 @@ COMPLIANCE_WARNINGS=$(python3 -c "
 import json, sys
 try:
     meta = json.load(open('$CD/casework-meta.json', encoding='utf-8'))
-    warnings = meta.get('compliance', {}).get('warnings', [])
+    comp = meta.get('compliance', {})
+    warnings = comp.get('warnings', [])
     for w in warnings:
         if w: print(w)
+    # ISS-225: suggestedSap from match-sap
+    ss = comp.get('suggestedSap')
+    if ss and isinstance(ss, dict):
+        path = ss.get('path', '')
+        pod = ss.get('suggestedPod', '')
+        if path:
+            msg = f'SAP 建议: \`{path}\`'
+            if pod: msg += f' (transfer → {pod})'
+            print(msg)
 except: pass
 " 2>/dev/null)
 if [ -n "$COMPLIANCE_WARNINGS" ]; then
