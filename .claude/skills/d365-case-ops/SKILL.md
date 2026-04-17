@@ -190,6 +190,10 @@ pwsh scripts/edit-sap.ps1 -Family "Windows" -Name "PSS Other"
 pwsh scripts/edit-sap.ps1 -Family "Azure" -Name "21Vianet Mooncake" -Version "21Vianet China Azure Cosmos DB"
 ```
 
+### 搜索 SAP 路径
+
+已独立为 `/sap-match` skill，见 `.claude/skills/sap-match/SKILL.md`。
+
 ## 📍 页面上下文模型
 
 脚本运行依赖当前页面所处的"上下文"。Agent 在编排脚本时，必须根据此模型判断是否需要先切换上下文。
@@ -227,6 +231,7 @@ pwsh scripts/edit-sap.ps1 -Family "Azure" -Name "21Vianet Mooncake" -Version "21
 | **delete-draft** | Email Editor | Case Form | 删除后自动回到 Case tab |
 | **reply-email** | Case Form | Email Editor | ⚠️ 同 new-email |
 | **edit-sap** | Case Form | Case Form | |
+| **match-sap** | _(无需浏览器)_ | _(无需浏览器)_ | 纯本地搜索 |
 | **request-access** | Case Form | Case Form | |
 
 ### 编排规则
