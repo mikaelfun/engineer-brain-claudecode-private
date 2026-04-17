@@ -1,0 +1,35 @@
+# T2 Assess Skill — Smoke Log
+
+Date: 2026-04-17
+Executor: Main session (subagent strategy abandoned due to plan-mode inheritance)
+
+## Wave 1 Regression (utilities + schema)
+- compliance-hash: OK (3/3)
+- gate-subagents:  OK (3/3)
+- write-execution-plan: OK (3/3)
+
+## Wave 2 Doc Integrity
+- assess SKILL.md sections: 10 (>= 6 required)
+- casework SKILL references /casework:assess: ✓
+- casework-light references onenote-classifier: ✓
+- teams-search references teams-digest-writer: ✓
+
+## Wave 3 Smoke — DELTA_EMPTY fast path
+Fixture → extract deltaStatus=DELTA_EMPTY → reuse meta.actualStatus=pending-customer
+→ invoke write-execution-plan.py with actions=[] routingSource=rule-table
+→ PLAN_WRITTEN, schema assertions pass.
+Result: SMOKE_OK.
+
+## Wave 3 Smoke — DELTA_OK path
+Owner-driven, deferred to next real-case encounter (by design — requires live LLM).
+
+## Commits
+5c57602 T2.3 write-execution-plan
+2a79e9a T2.1 compliance-hash
+ba7f338 T2.2 gate-subagents
+cb5bae7 T2.4 assess SKILL.md
+cf39b1e T2.5 casework SKILL delegation
+08025ea T2.6 casework-light OneNote migration
+5008fd2 T2.7 teams-search digest notice
+
+T2 track CLOSED.
