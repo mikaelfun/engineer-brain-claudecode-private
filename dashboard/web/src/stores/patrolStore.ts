@@ -103,6 +103,8 @@ interface PatrolState {
   onPatrolCaseCompleted: (data: any) => void
   /** Update sub-step progress for a specific case during patrol */
   onCaseStepUpdate: (caseNumber: string, update: { step?: string; tool?: string }) => void
+  /** V2: Update per-case pipeline state from .casework/pipeline-state.json */
+  onPipelineUpdate: (data: { caseNumber: string; currentStep: string; steps: Record<string, { status: string }> }) => void
   /** Called when user clicks Start Patrol — immediately clears old progress and sets running */
   startNew: () => void
   reset: () => void
@@ -222,6 +224,21 @@ export const usePatrolStore = create<PatrolState>()((set) => ({
       ...existing,
       currentStep: update.step ?? existing.currentStep,
       lastTool: update.tool ?? existing.lastTool,
+      lastActivity: new Date().toISOString(),
+    }
+    return { caseProgress: updated }
+  }),
+
+  onPipelineUpdate: (data) => set((state) => {
+    if (!state.isRunning) return state
+    const idx = state.caseProgress.findIndex(c => c.caseNumber === data.caseNumber)
+    if (idx === -1) return state
+    const existing = state.caseProgress[idx]
+    if (existing.status === 'completed' || existing.status === 'failed') return state
+    const updated = [...state.caseProgress]
+    updated[idx] = {
+      ...existing,
+      currentStep: data.currentStep,
       lastActivity: new Date().toISOString(),
     }
     return { caseProgress: updated }
