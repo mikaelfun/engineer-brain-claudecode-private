@@ -197,12 +197,21 @@ if [ -n "$CONTACT_EMAIL" ]; then
   mcp_search_with_retry 11 "from:$CONTACT_EMAIL" 5 "$WD/q2.json" || true
 fi
 
-# ISS-226: Pre-fetch Graph API token in Bash (where `az` works reliably)
-# Use microsoft-fangkun profile (Global/Microsoft Corp tenant = same auth as agency.exe)
+# ISS-226: Pre-fetch ic3 Teams token for image download (Skype API)
+# Token comes from MCP Playwright Teams web localStorage (warm-teams-token.py)
 GRAPH_TOKEN=""
-GRAPH_TOKEN=$(AZURE_CONFIG_DIR="$HOME/.azure-profiles/microsoft-fangkun" \
-  az account get-access-token --resource https://graph.microsoft.com \
-  --query accessToken -o tsv 2>/dev/null) || true
+IC3_TOKEN_FILE=$(python3 -c "import os,tempfile; print(os.path.join(tempfile.gettempdir(), 'teams-ic3-token.json'))" 2>/dev/null)
+if [ -n "$IC3_TOKEN_FILE" ] && [ -f "$IC3_TOKEN_FILE" ]; then
+  GRAPH_TOKEN=$(python3 -c "
+import json, time, os, tempfile
+try:
+    fp = os.path.join(tempfile.gettempdir(), 'teams-ic3-token.json')
+    d = json.load(open(fp))
+    if time.time() < int(d.get('expiresOn', 0)) - 300:
+        print(d.get('secret', ''))
+except: pass
+" 2>/dev/null)
+fi
 
 # Python: parse chatIds → fetch messages → dump _mcp-raw.json
 # All paths via env vars (avoids Windows backslash escaping in heredoc)
@@ -400,37 +409,52 @@ else:
     pass  # no chats found
 
 # ── ISS-226: Download hostedContents images to teams/assets/ ──
+# Strategy: base64 decode contentId → extract Skype API URL → Bearer ic3_token
+import base64 as _b64
 image_map = {}
 if not os.environ.get('TEAMS_SKIP_IMAGES', ''):
-    _img_re = re.compile(r'<img[^>]*src="(https://graph\.microsoft\.com/[^"]*hostedContents[^"]*)"', re.I)
-    url_info = {}  # url → filename
+    _img_re = re.compile(r'<img[^>]*src="(https://graph\.microsoft\.com/[^"]*hostedContents/([^/]+)/\$value)"', re.I)
+    url_info = {}  # graph_url → (skype_url, filename)
     for _cid, _msgs in chat_messages.items():
         for _msg in _msgs:
             _body = (_msg.get('body') or {}).get('content', '')
             for _idx, _m in enumerate(_img_re.finditer(_body)):
-                _url = _m.group(1)
-                if _url not in url_info:
+                _graph_url = _m.group(1)
+                _content_id = _m.group(2)
+                if _graph_url not in url_info:
+                    # Decode base64 contentId to extract Skype API URL
+                    _skype_url = None
+                    try:
+                        _decoded = _b64.b64decode(_content_id + '==').decode('utf-8', errors='replace')
+                        _url_match = re.search(r'url=(https://[^,\s]+)', _decoded)
+                        if _url_match:
+                            _skype_url = _url_match.group(1)
+                    except Exception:
+                        pass
                     _mid = re.sub(r'[^a-zA-Z0-9]', '', _msg.get('id', ''))[-16:]
-                    url_info[_url] = f"{_mid}_{_idx}.png"
+                    _fn = f"{_mid}_{_idx}.png"
+                    url_info[_graph_url] = (_skype_url, _fn)
 
     if url_info:
-        # Use pre-fetched Graph token from Bash (MCP_GRAPH_TOKEN env var)
+        # Use pre-fetched ic3 token from warm-teams-token.py cache
         _token = os.environ.get('MCP_GRAPH_TOKEN', '').strip()
 
         if _token:
             _assets = os.path.join(case_dir, 'teams', 'assets')
             os.makedirs(_assets, exist_ok=True)
             _dl = _skip = 0
-            for _url, _fn in url_info.items():
+            for _graph_url, (_skype_url, _fn) in url_info.items():
+                if not _skype_url:
+                    continue  # couldn't decode Skype URL from contentId
                 _local = os.path.join(_assets, _fn)
                 _rel = f"./assets/{_fn}"
                 # Cache: skip if file already exists with content
                 if os.path.exists(_local) and os.path.getsize(_local) > 0:
-                    image_map[_url] = _rel
+                    image_map[_graph_url] = _rel
                     _skip += 1
                     continue
                 try:
-                    _req = urllib.request.Request(_url, headers={
+                    _req = urllib.request.Request(_skype_url, headers={
                         'Authorization': f'Bearer {_token}'})
                     with urllib.request.urlopen(_req, timeout=15) as _resp:
                         _data = _resp.read()
@@ -438,7 +462,7 @@ if not os.environ.get('TEAMS_SKIP_IMAGES', ''):
                             continue  # skip >1MB
                         with open(_local, 'wb') as _f:
                             _f.write(_data)
-                        image_map[_url] = _rel
+                        image_map[_graph_url] = _rel
                         _dl += 1
                 except Exception as _e:
                     print(f'  img-fail: {_fn} — {_e}', file=__import__("sys").stderr)
