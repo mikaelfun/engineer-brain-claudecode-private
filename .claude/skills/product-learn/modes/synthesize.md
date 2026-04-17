@@ -53,7 +53,7 @@ Phase 2（每 topic 双 Agent 并行）：
 
 ### 1. 读取数据 + 增量检测
 
-读取 `skills/products/{product}/known-issues.jsonl` 全部条目。
+读取 `.claude/skills/products/{product}/known-issues.jsonl` 全部条目。
 读取 `.enrich/progress.json → synthesizeState`。
 
 **增量判断**：
@@ -83,7 +83,7 @@ Phase 2（每 topic 双 Agent 并行）：
 ```
 1. known-issues.jsonl 全量条目
 2. guides/drafts/*.md 的文件名 + frontmatter（source, sourceRef, type）
-3. skills/kusto/{product}/references/queries/*.md 的文件名 + frontmatter（name, description, tables）
+3. .claude/skills/kusto/{product}/references/queries/*.md 的文件名 + frontmatter（name, description, tables）
 ```
 
 按 symptom 语义相似度分组：
@@ -141,7 +141,7 @@ Phase 2（每 topic 双 Agent 并行）：
 > import json
 > # 在 Python 代码中构建 data dict（聚类逻辑的结果变量）
 > data = { 'product': '...', 'topics': topics_list, 'discarded': discarded_list }
-> with open('skills/products/{product}/.enrich/topic-plan.json', 'w', encoding='utf-8') as f:
+> with open('.claude/skills/products/{product}/.enrich/topic-plan.json', 'w', encoding='utf-8') as f:
 >     json.dump(data, f, ensure_ascii=False, indent=2)
 > print(f'Written {len(data[\"topics\"])} topics')
 > "
@@ -152,7 +152,7 @@ Phase 2（每 topic 双 Agent 并行）：
 
 字段说明：
 - `draftPaths`: 该 topic 关联的 draft 文件路径（相对于产品目录）
-- `kustoQueryFiles`: 该 topic 关联的 Kusto query 文件名（相对于 `skills/kusto/{product}/references/queries/`）
+- `kustoQueryFiles`: 该 topic 关联的 Kusto query 文件名（相对于 `.claude/skills/kusto/{product}/references/queries/`）
 - `hasFusionGuide`: `draftPaths` 或 `kustoQueryFiles` 非空即为 `true`
 
 ### 3. 质量过滤
@@ -261,7 +261,7 @@ Phase 2（每 topic 三 Agent 并行）：
 #### 4a. Agent-A — 速查表生成
 
 **输入**：`entryIds` 对应的三元组
-**输出**：`skills/products/{product}/guides/{topic-slug}.md`
+**输出**：`.claude/skills/products/{product}/guides/{topic-slug}.md`
 
 与现有逻辑一致。**唯一改动**：
 
@@ -319,7 +319,7 @@ Phase 2（每 topic 三 Agent 并行）：
 1. 三元组（`entryIds` → 从 JSONL 提取）— 主要输入
 2. Draft 文件的 **frontmatter 和摘要**（不读全文，仅获取来源信息用于评分）
 
-**输出**：`skills/products/{product}/guides/details/{topic-slug}.md`
+**输出**：`.claude/skills/products/{product}/guides/details/{topic-slug}.md`
 
 **职责边界**：
 - ✅ 三元组逐条展开为可读格式（symptom + rootCause + solution 详细版）
@@ -370,10 +370,10 @@ Phase 2（每 topic 三 Agent 并行）：
 
 **输入**：
 1. Draft 全文（`draftPaths` → 读 `guides/drafts/`）— 主要输入，**必须完整读取**
-2. Kusto query 文件全文（`kustoQueryFiles` → 读 `skills/kusto/{product}/references/queries/`）
+2. Kusto query 文件全文（`kustoQueryFiles` → 读 `.claude/skills/kusto/{product}/references/queries/`）
 3. 三元组（`entryIds` → 从 JSONL 提取）— 仅作上下文参考
 
-**输出**：`skills/products/{product}/guides/workflows/{topic-slug}.md`
+**输出**：`.claude/skills/products/{product}/guides/workflows/{topic-slug}.md`
 
 **执行条件**：
 - `hasFusionGuide == true` → spawn Agent-C
@@ -510,7 +510,7 @@ Sub-agent 从每个文件中提取：
 
 ### 5. 生成索引
 
-Write `skills/products/{product}/guides/_index.md`：
+Write `.claude/skills/products/{product}/guides/_index.md`：
 
 ```markdown
 # {Product} 排查指南索引
@@ -530,7 +530,7 @@ Write `skills/products/{product}/guides/_index.md`：
 
 ### 6. 写审计日志
 
-Append `skills/products/{product}/.enrich/synthesize-log.md`：
+Append `.claude/skills/products/{product}/.enrich/synthesize-log.md`：
 
 ```markdown
 # Synthesize Log — {product} — {date}
@@ -591,7 +591,7 @@ Append `skills/products/{product}/.enrich/synthesize-log.md`：
 2. **标记 deprecated**：在 frontmatter 中加：
    ```yaml
    deprecated: true
-   fusedTo: "skills/products/{product}/guides/details/{topic-slug}.md"
+   fusedTo: ".claude/skills/products/{product}/guides/details/{topic-slug}.md"
    fusedAt: "2026-04-06"
    ```
 3. **README 加注**：说明 KQL 已融入 product guide，此目录供 fallback

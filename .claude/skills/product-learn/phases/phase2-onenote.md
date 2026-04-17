@@ -8,7 +8,7 @@
 > 如果分类未完成，onenote source 保持 `"pending"` 状态，不会被执行。
 
 1. **读取分类索引**：
-   过滤 `skills/products/page-classification.jsonl`，取所有 `products` 数组包含当前产品的条目。
+   过滤 `.claude/skills/products/page-classification.jsonl`，取所有 `products` 数组包含当前产品的条目。
 
 2. **读取 `.enrich/scanned-onenote.json`**，排除已处理的页面路径。
    - 不存在 → 创建：`{"scanned": []}`
@@ -48,7 +48,7 @@ Agent(
   prompt: |
     产品: {product} | 数据源: onenote | 项目根: {PROJECT_ROOT}
     读取 .claude/skills/product-learn/phases/phase2-onenote.md 执行。
-    ⚠️ 写 skills/products/{product}/.enrich/known-issues-onenote.jsonl, .enrich/scanned-onenote.json, ID: {product}-onenote-{seq:03d}
+    ⚠️ 写 .claude/skills/products/{product}/.enrich/known-issues-onenote.jsonl, .enrich/scanned-onenote.json, ID: {product}-onenote-{seq:03d}
     page-classification.jsonl 过滤 "{product}", OneNote: {ONENOTE_DIR}
     返回: discovered, deduplicated, exhausted, 摘要(<500bytes)
 )

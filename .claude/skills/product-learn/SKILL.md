@@ -39,7 +39,7 @@ allowed-tools:
 ## 通用规则
 
 ### known-issues.jsonl 路径
-`skills/products/{product}/known-issues.jsonl`
+`.claude/skills/products/{product}/known-issues.jsonl`
 
 ### ID 生成
 读取现有条目，找最大序号 +1：`{product}-{seq:03d}`
@@ -52,7 +52,7 @@ append 前必须检查：
 4. 如果相似但不同角度 → 仍然 append，标注 `relatedTo: "{existing-id}"`
 
 ### Evolution Log
-每次写入后 append 到 `skills/products/{product}/.enrich/evolution-log.md`：
+每次写入后 append 到 `.claude/skills/products/{product}/.enrich/evolution-log.md`：
 ```
 | {date} | {source} | {简述变更} | {case/link} |
 ```

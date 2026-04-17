@@ -23,7 +23,7 @@
 - 典型 KQL 模板
 
 ### Skill 目录
-`skills/kusto/{product}/SKILL.md`
+`.claude/skills/kusto/{product}/SKILL.md`
 
 ### 产品列表
 ACR / AKS / ARM / AVD / Disk / Entra-ID / Intune / Monitor / Networking / Purview / VM / EOP

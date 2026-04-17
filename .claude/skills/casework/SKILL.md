@@ -75,7 +75,7 @@ mkdir -p "$CASE_DIR/logs"
 rm -f "$CASE_DIR/logs/.t_"*
 date +%s > "$CASE_DIR/logs/.t_start"
 date +%s > "$CASE_DIR/logs/.t_changegate_start"
-pwsh -NoProfile -File "$CD/skills/d365-case-ops/scripts/check-case-changes.ps1" \
+pwsh -NoProfile -File "$CD/.claude/skills/d365-case-ops/scripts/check-case-changes.ps1" \
   -TicketNumber {caseNumber} -OutputDir "$CD/cases/active" 2>&1 | tail -1
 date +%s > "$CASE_DIR/logs/.t_changegate_end"
 ```
@@ -142,7 +142,7 @@ fi
 单次 Bash 完成 DR-skip + Teams/compliance/judge/routing 全部缓存检查（⏱ 包裹 `.t_fastpath_start/end`）：
 
 ```bash
-date +%s > "{caseDir}/logs/.t_fastpath_start" ; bash skills/casework/scripts/casework-fast-path.sh "{caseDir}" "{changegateDetail}" ; date +%s > "{caseDir}/logs/.t_fastpath_end"
+date +%s > "{caseDir}/logs/.t_fastpath_start" ; bash .claude/skills/casework/scripts/casework-fast-path.sh "{caseDir}" "{changegateDetail}" ; date +%s > "{caseDir}/logs/.t_fastpath_end"
 ```
 
 - `FAST_PATH_OK|status=...,days=...` → **跳到 Step 4**。仅预读 `casework-meta.json` + `case-summary.md`（如存在）
@@ -162,7 +162,7 @@ date +%s > "{caseDir}/logs/.t_fastpath_start" ; bash skills/casework/scripts/cas
 检测当前 case 是否已在 D365 中归档或转移（不再在 active list 中）。**必须在 spawn 任何后台 agent 之前执行**，避免对已归档 case 做无用功。
 
 ```bash
-RESULT=$(pwsh -NoProfile -File skills/d365-case-ops/scripts/detect-case-status.ps1 -CasesRoot {casesRoot} -CaseNumbers {caseNumber} -SkipClosureCheck 2>&1 | tail -1)
+RESULT=$(pwsh -NoProfile -File .claude/skills/d365-case-ops/scripts/detect-case-status.ps1 -CasesRoot {casesRoot} -CaseNumbers {caseNumber} -SkipClosureCheck 2>&1 | tail -1)
 ```
 
 解析 `$RESULT`（JSON 数组）：
@@ -195,7 +195,7 @@ prompt: |
 
 ```bash
 CACHE_HOURS=$(python3 -c "import json; print(json.load(open('config.json')).get('teamsSearchCacheHours', 8))" 2>/dev/null || echo 8)
-RESULT=$(bash skills/casework/scripts/agent-cache-check.sh "{caseDir}" "$CACHE_HOURS" "{projectRoot}")
+RESULT=$(bash .claude/skills/casework/scripts/agent-cache-check.sh "{caseDir}" "$CACHE_HOURS" "{projectRoot}")
 echo "$RESULT"
 ```
 
@@ -469,8 +469,8 @@ prompt: |
 ```bash
 # generate-todo + timing 合并为单次 Bash：
 date +%s > "{caseDir}/logs/.t_inspection_start"
-bash skills/casework/scripts/generate-todo.sh "{caseDir}"
-bash skills/casework/scripts/casework-timing.sh "{caseDir}" "{skippedStepsJson}" "{errorsJson}" '{"bash":N,"tools":N,"agents":N}'
+bash .claude/skills/casework/scripts/generate-todo.sh "{caseDir}"
+bash .claude/skills/casework/scripts/casework-timing.sh "{caseDir}" "{skippedStepsJson}" "{errorsJson}" '{"bash":N,"tools":N,"agents":N}'
 ```
 
 > `N` 由 Main Agent 在整个流程中累计替换。`bash` = Bash 工具调用次数，`tools` = 所有工具调用次数（Bash+Read+Glob+Grep+Edit+Agent+MCP），`agents` = Agent spawn 次数。

@@ -78,7 +78,7 @@ export AZURE_CONFIG_DIR="/c/Users/fangkun/.azure-profiles/cme-fangkun"
 表定义按 **database** 子目录组织，层级为 `Product → Database → Table`：
 
 ```
-skills/kusto/{product}/references/
+.claude/skills/kusto/{product}/references/
 ├── kusto_clusters.csv          ← cluster + database 映射
 ├── tables/
 │   ├── {database_1}/           ← 按数据库分组
@@ -94,8 +94,8 @@ skills/kusto/{product}/references/
 ### 产品排查 Skill
 
 每个产品还有独立的排查 skill（决策树 + 已知问题 + 工具链）：
-- 总览: `skills/products/SKILL.md`
-- 各产品: `skills/products/{product}/SKILL.md`
+- 总览: `.claude/skills/products/SKILL.md`
+- 各产品: `.claude/skills/products/{product}/SKILL.md`
 
 排查时先读产品 skill 获取**排查思路**，再读 Kusto skill 获取**数据字典**。
 
@@ -105,24 +105,24 @@ skills/kusto/{product}/references/
 
 | 关键词 | 产品域 | 子 Skill 路径 |
 |--------|--------|--------------|
-| VM, VMSS, CRP, 虚拟机, 分配失败, Service Healing | vm | `skills/kusto/vm/` |
-| AKS, Kubernetes, K8s, 集群, 升级, 节点池 | aks | `skills/kusto/aks/` |
-| ARM, 资源管理, 429, 限流, correlationId, 部署 | arm | `skills/kusto/arm/` |
-| AVD, WVD, Session Host, RDAgent, FSLogix | avd | `skills/kusto/avd/` |
-| Disk, IOPS, MBPS, 限流, 延迟, VHD | disk | `skills/kusto/disk/` |
-| 登录, Sign-in, 条件访问, MFA, AAD, Entra | entra-id | `skills/kusto/entra-id/` |
-| Intune, MDM, 设备管理, 策略, MAM | intune | `skills/kusto/intune/` |
-| Alerts, 警报, 通知, 诊断设置, Monitor | monitor | `skills/kusto/monitor/` |
-| VPN, ExpressRoute, Application Gateway, NMAgent | networking | `skills/kusto/networking/` |
-| Purview, AIP, RMS, MIP, DLP | purview | `skills/kusto/purview/` |
-| ACR, Container Registry, Docker Push/Pull | acr | `skills/kusto/acr/` |
-| EOP, 垃圾邮件, 钓鱼, 邮件头 | eop | `skills/kusto/eop/` |
+| VM, VMSS, CRP, 虚拟机, 分配失败, Service Healing | vm | `.claude/skills/kusto/vm/` |
+| AKS, Kubernetes, K8s, 集群, 升级, 节点池 | aks | `.claude/skills/kusto/aks/` |
+| ARM, 资源管理, 429, 限流, correlationId, 部署 | arm | `.claude/skills/kusto/arm/` |
+| AVD, WVD, Session Host, RDAgent, FSLogix | avd | `.claude/skills/kusto/avd/` |
+| Disk, IOPS, MBPS, 限流, 延迟, VHD | disk | `.claude/skills/kusto/disk/` |
+| 登录, Sign-in, 条件访问, MFA, AAD, Entra | entra-id | `.claude/skills/kusto/entra-id/` |
+| Intune, MDM, 设备管理, 策略, MAM | intune | `.claude/skills/kusto/intune/` |
+| Alerts, 警报, 通知, 诊断设置, Monitor | monitor | `.claude/skills/kusto/monitor/` |
+| VPN, ExpressRoute, Application Gateway, NMAgent | networking | `.claude/skills/kusto/networking/` |
+| Purview, AIP, RMS, MIP, DLP | purview | `.claude/skills/kusto/purview/` |
+| ACR, Container Registry, Docker Push/Pull | acr | `.claude/skills/kusto/acr/` |
+| EOP, 垃圾邮件, 钓鱼, 邮件头 | eop | `.claude/skills/kusto/eop/` |
 
 ### Step 2: 读取集群信息
 
 ```bash
 # 读取对应产品的集群列表
-cat skills/kusto/{product}/references/kusto_clusters.csv
+cat .claude/skills/kusto/{product}/references/kusto_clusters.csv
 ```
 
 CSV 格式: `cluster_name,cluster_uri,database,description,environment`
@@ -131,20 +131,20 @@ CSV 格式: `cluster_name,cluster_uri,database,description,environment`
 
 ```bash
 # 列出可用查询模板
-ls skills/kusto/{product}/references/queries/
+ls .claude/skills/kusto/{product}/references/queries/
 
 # 读取具体模板
-cat skills/kusto/{product}/references/queries/{scenario}.md
+cat .claude/skills/kusto/{product}/references/queries/{scenario}.md
 ```
 
 ### Step 4: 了解表结构
 
 ```bash
 # 列出数据库分组
-ls skills/kusto/{product}/references/tables/
+ls .claude/skills/kusto/{product}/references/tables/
 
 # 读取特定数据库下的表定义
-cat skills/kusto/{product}/references/tables/{database}/{TableName}.md
+cat .claude/skills/kusto/{product}/references/tables/{database}/{TableName}.md
 ```
 
 ### Step 5: 替换参数并执行
@@ -302,7 +302,7 @@ Layer 4: Fabric (如涉及节点硬件)
 
 ### 概述
 
-本 skill 的知识库（`skills/kusto/` 下的 table/query 定义）会自我进化。
+本 skill 的知识库（`.claude/skills/kusto/` 下的 table/query 定义）会自我进化。
 进化遵循 **append-only** 原则：只追加标注，不删除已有内容。
 
 ### 6.1 Schema 漂移检测（自动）
@@ -316,7 +316,7 @@ Layer 4: Fabric (如涉及节点硬件)
 2. 执行 schema probe:
    kusto-query.py --probe-schema {table} --cluster {cluster} --database {db}
 3. 读取已有 table 定义:
-   skills/kusto/{product}/references/tables/{database}/{Table}.md
+   .claude/skills/kusto/{product}/references/tables/{database}/{Table}.md
 4. 对比差异
 5. 按写回规则更新文件
 6. 追加 evolution-log.md
@@ -336,7 +336,7 @@ Layer 4: Fabric (如涉及节点硬件)
 - ❌ 绝不删除文件
 - ❌ 绝不删除已有行（只追加标注）
 - ❌ 绝不修改 kusto_clusters.csv
-- ✅ 所有变更记录到 `skills/kusto/_meta/evolution-log.md`
+- ✅ 所有变更记录到 `.claude/skills/kusto/_meta/evolution-log.md`
 
 **Changelog**: 每次写回在文件末尾追加：
 ```markdown
@@ -349,7 +349,7 @@ Layer 4: Fabric (如涉及节点硬件)
 
 **触发**: 每次通过查询模板执行查询后。
 
-**操作**: 读取 → 合并 → 写回 `skills/kusto/_meta/query-health.json`
+**操作**: 读取 → 合并 → 写回 `.claude/skills/kusto/_meta/query-health.json`
 
 ```json
 {
@@ -382,7 +382,7 @@ Layer 4: Fabric (如涉及节点硬件)
 
 1. **主动建议保存**: "这个查询有诊断价值，要保存为模板吗？"
 2. **用户确认后**:
-   - 创建 `skills/kusto/{product}/references/queries/{name}.md`
+   - 创建 `.claude/skills/kusto/{product}/references/queries/{name}.md`
    - 自动参数化: 
      - literal subscription ID → `{subscription}`
      - literal resource name → `{vmname}` / `{resourceName}`

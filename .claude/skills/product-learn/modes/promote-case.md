@@ -34,8 +34,8 @@
 - 这些**不是三元组**，而是潜在的 draft 素材
 
 ### 4. Delta 检测 — 与已有知识对比
-- 读取 `skills/products/{product}/guides/_index.md`（如存在）
-- 读取 `skills/products/{product}/known-issues.jsonl`
+- 读取 `.claude/skills/products/{product}/guides/_index.md`（如存在）
+- 读取 `.claude/skills/products/{product}/known-issues.jsonl`
 - 对比提取的三元组与已有条目：
   - `symptom` + `rootCause` 高度相似（>80% 关键词重叠）→ 已存在，标记 `[已有]`
   - 部分相似但有新角度 → 标记 `[补充]`

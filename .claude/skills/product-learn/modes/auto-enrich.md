@@ -7,7 +7,7 @@
 ```
 PROJECT_ROOT = /c/Users/fangkun/Documents/Projects/EngineerBrain/src
 ONENOTE_DIR  = /c/Users/fangkun/Documents/Projects/EngineerBrain/data/OneNote Export
-MANIFEST     = skills/products/enrich-state.json
+MANIFEST     = .claude/skills/products/enrich-state.json
 MCVKB        = ${ONENOTE_DIR}/MCVKB
 POD_NB       = ${ONENOTE_DIR}/Mooncake POD Support Notebook
 SERVICES_DIR = ${POD_NB}/POD/VMSCIM/4. Services
@@ -34,7 +34,7 @@ SERVICES_DIR = ${POD_NB}/POD/VMSCIM/4. Services
 每个 source 写独立文件，MERGE 阶段合并。消除并发写冲突。
 
 ```
-skills/products/{product}/
+.claude/skills/products/{product}/
   known-issues.jsonl                ← MERGE 产出（SYNTHESIZE 读这个）
   21v-gaps.json                     ← Phase 1 独占写（不变）
   guides/drafts/*.md                ← Track B 草稿（agent 写，文件名含 source 前缀避冲突）
@@ -83,7 +83,7 @@ skills/products/{product}/
 
 ### progress.json（per-product，新增）
 
-路径：`skills/products/{product}/.enrich/progress.json`
+路径：`.claude/skills/products/{product}/.enrich/progress.json`
 
 ```json
 {
@@ -171,10 +171,127 @@ auto-enrich skip {product}    # 跳过指定产品
 
 ## `run` — 并行 EXTRACT 流程
 
+### Step -1: Pre-flight 源头变化检测
+
+> 在 Step 0 之前执行。检测各数据源是否有增量变化，自动刷新 index 和 exhausted 状态。
+> 确保 exhausted 后新增的 OneNote 页面、ADO Wiki 新页、ContentIdea 新 KB 不会被永久丢失。
+
+#### -1a. OneNote 增量检测
+
+```python
+import os, json, glob
+
+# 1. 只扫描团队笔记本（从 config.json → onenote.teamNotebooks 读取）
+#    不扫描个人笔记本（如 Kun Fang OneNote）
+onenote_dir = config['dataRoot'] + '/OneNote Export'
+team_notebooks = config['onenote']['teamNotebooks']  # e.g. ['MCVKB', 'Mooncake POD Support Notebook']
+all_md_files = set()
+for nb in team_notebooks:
+    nb_dir = os.path.join(onenote_dir, nb)
+    if not os.path.exists(nb_dir): continue
+    for root, dirs, files in os.walk(nb_dir):
+        for f in files:
+            if f.endswith('.md'):
+                rel = os.path.relpath(os.path.join(root, f), onenote_dir)
+                all_md_files.add(rel.replace('\\', '/'))
+
+# 2. 读取 page-classification.jsonl 已分类路径
+classified = set()
+pcf = '.claude/skills/products/page-classification.jsonl'
+if os.path.exists(pcf):
+    for line in open(pcf, encoding='utf-8'):
+        try:
+            classified.add(json.loads(line)['path'])
+        except: pass
+
+# 3. 差集 = 新增未分类页面
+new_pages = all_md_files - classified
+if new_pages:
+    # Reset classifyState → scanning，Phase 0 会处理新页面
+    log(f'PRE-FLIGHT: {len(new_pages)} new OneNote pages detected, resetting classifyState')
+```
+
+- 新页面 > 0 → 设 `enrich-state.json → classifyState.status = "scanning"`
+- 新页面 = 0 → 跳过
+
+#### Pre-flight 状态重置规则
+
+> ⚠️ **Step -1 结束时，如果任何子步骤检测到增量变化**（新 OneNote 页面、index 有新条目、
+> sourceStates 被 reset 回 scanning），**必须同时执行以下重置**：
+>
+> 1. `enrich-state.json → status` 从 `"complete"` 改为 `"running"`
+> 2. 受影响的产品从 `completedProducts` 移回 `activeProducts`
+> 3. 更新 `enrich-state.json` 写盘
+>
+> 否则 Step 0 的 `status === "complete"` 门禁会直接退出，Pre-flight 检测到的增量白费。
+
+#### -1b. ADO Wiki / MS Learn index 刷新
+
+对每个 `activeProducts` + `completedProducts`，检查有 index 的源（ado-wiki, mslearn）：
+
+```python
+from datetime import datetime, timedelta
+
+REFRESH_INTERVAL_DAYS = 7
+
+for product in all_products:
+    progress = read_progress(product)
+    for source in ['ado-wiki', 'mslearn']:
+        if progress['sourceStates'].get(source) != 'exhausted':
+            continue
+        scanned_file = f'{product}/.enrich/scanned-{source}.json'
+        if not exists(scanned_file): continue
+        data = read_json(scanned_file)
+        last_refreshed = data.get('lastRefreshed')
+        if last_refreshed and days_since(last_refreshed) < REFRESH_INTERVAL_DAYS:
+            continue  # 刷新周期未到
+
+        # ado-wiki: 重新枚举 wiki page tree，对比 index
+        # mslearn: 重新 fetch toc.yml，对比 index
+        # 有新条目 → 追加 index，reset sourceState 为 scanning
+        # 更新 lastRefreshed
+        log(f'PRE-FLIGHT: {product}/{source} index refresh triggered (lastRefreshed={last_refreshed})')
+```
+
+- ADO Wiki 刷新：重新执行 Phase 3a 的 page tree 枚举，新页面追加到 `index`
+- MS Learn 刷新：重新 fetch GitHub toc.yml，新 URL 追加到 `index`
+- 刷新后 `lastRefreshed` 更新为当前时间
+
+#### -1c. ContentIdea 增量检测
+
+> 已实现（Phase 5 `lastRefreshed` + auto-enrich Step 0a 的 7 天刷新逻辑）。Pre-flight 无需额外处理。
+
+#### -1d. Registry 健康检查
+
+```python
+# 扫描 OneNote Export 顶级目录
+pod_services_dir = onenote_dir + '/Mooncake POD Support Notebook/POD/VMSCIM/4. Services'
+pod_dirs = set(os.listdir(pod_services_dir)) if os.path.exists(pod_services_dir) else set()
+
+# 读取 registry 已映射的 podServicesDir
+registry = read_json('playbooks/product-registry.json')
+mapped_dirs = set()
+for p in registry['podProducts']:
+    if p.get('podServicesDir'):
+        mapped_dirs.add(p['podServicesDir'])
+
+# 未被映射的 POD 目录 → 输出警告
+unmapped = pod_dirs - mapped_dirs - KNOWN_SKIP_DIRS
+# KNOWN_SKIP_DIRS = {'New Service Checklist', 'Security, Cost Efficiency and Sub management', ...}
+if unmapped:
+    warnings.append(f'Unmapped POD directories: {unmapped}')
+```
+
+- 警告写入 `enrich-state.json → registryWarnings` 数组
+- 不自动修改 registry（需要人工确认产品归属）
+- 输出格式：`⚠️ PRE-FLIGHT: 发现 {N} 个未映射的 OneNote 目录: {list}`
+
+---
+
 ### Step 0: 读取状态 + 前置检查
 
 ```bash
-cat skills/products/enrich-state.json
+cat .claude/skills/products/enrich-state.json
 ```
 
 - `status === "complete"` → 输出 "✅ All products enriched and synthesized"，退出
@@ -218,9 +335,22 @@ for product in activeProducts + completedProducts:
 ```
 
 **规则**：
-- 只对有 index 的源（ado-wiki, mslearn）做对账——其他源（onenote, contentidea-kb, 21v-gap）无 index 无法从磁盘判断
+- 只对有 index 的源（ado-wiki, mslearn）做对账——其他源（onenote, 21v-gap）无 index 无法从磁盘判断
 - `index` 为空（len=0）时不标记 exhausted——可能是还没建索引
 - 只做 `scanning→exhausted` 方向的修正，不做反向（防止误把正在扫的标记回退）
+- **contentidea-kb 定期刷新**：无持久化 index（WIQL 每次重查），按 `lastRefreshed` 时间判断：
+  ```python
+  # contentidea-kb 7 天刷新机制
+  if progress['sourceStates'].get('contentidea-kb') == 'exhausted':
+      ck_file = f'{product}/.enrich/scanned-contentidea-kb.json'
+      if exists(ck_file):
+          ck_data = read_json(ck_file)
+          last_refreshed = ck_data.get('lastRefreshed')  # ISO format or null
+          if not last_refreshed or days_since(last_refreshed) >= 7:
+              progress['sourceStates']['contentidea-kb'] = 'scanning'
+              changed = True
+              log(f'REFRESH: {product}/contentidea-kb exhausted→scanning (lastRefreshed={last_refreshed})')
+  ```
 
 ### Step 0.5: Phase 0 分类前置检查
 - `classifyState.status !== "exhausted"` → 仅执行 Phase 0 page-classify tick，不进入 per-product 流程
@@ -291,17 +421,17 @@ Agent(
     - contentidea-kb → phases/phase5-contentidea.md
     
     ⚠️ 并行隔离规则（v3）：
-    - 写入 JSONL: skills/products/{product}/.enrich/known-issues-{source}.jsonl（不是 known-issues.jsonl）
-    - 扫描记录: skills/products/{product}/.enrich/scanned-{source}.json
+    - 写入 JSONL: .claude/skills/products/{product}/.enrich/known-issues-{source}.jsonl（不是 known-issues.jsonl）
+    - 扫描记录: .claude/skills/products/{product}/.enrich/scanned-{source}.json
     - ID 格式: {product}-{source}-{seq:03d}（在 per-source 文件内递增）
     - 去重范围: 仅在 known-issues-{source}.jsonl 内去重
     - 草稿前缀: guides/drafts/{source}-{title}.md
     - 21v-gaps.json 不存在时: 设 21vApplicable=null（MERGE 阶段补标）
     
     关键文件：
-    - known-issues-{source}.jsonl: skills/products/{product}/.enrich/known-issues-{source}.jsonl
-    - scanned-{source}.json: skills/products/{product}/.enrich/scanned-{source}.json
-    - 21v-gaps.json: skills/products/{product}/21v-gaps.json (如果存在)
+    - known-issues-{source}.jsonl: .claude/skills/products/{product}/.enrich/known-issues-{source}.jsonl
+    - scanned-{source}.json: .claude/skills/products/{product}/.enrich/scanned-{source}.json
+    - 21v-gaps.json: .claude/skills/products/{product}/21v-gaps.json (如果存在)
     - playbooks/product-registry.json: 读取 podProducts 获取目录映射
     
     完成后返回:
@@ -439,7 +569,7 @@ Active: {activeProducts} | Queue: {remaining} remaining
      for notebook in teamNotebooks:
        find "${ONENOTE_DIR}/{notebook}" -name "*.md" -type f
      ```
-   - 将完整文件列表写入 `skills/products/page-list.txt`（一行一个路径，相对于 ONENOTE_DIR）
+   - 将完整文件列表写入 `.claude/skills/products/page-list.txt`（一行一个路径，相对于 ONENOTE_DIR）
    - 设 `classifyState.totalPages = len(page-list.txt)`
    - 设 `classifyState.status = "scanning"`
    - 如果 `page-classification.jsonl` 已存在，读取已分类的路径集合，从 `page-list.txt` 中排除
@@ -455,7 +585,7 @@ Active: {activeProducts} | Queue: {remaining} remaining
      - 排查的问题域（如 enrollment 相关 → intune，NSG 相关 → networking）
      - 一个页面可以同时属于多个产品（如 Triage 会议记录、跨产品 TSG）
      - 纯流程/人员/会议安排等非技术页面 → `products: []`（不属于任何产品）
-   - 每个分类结果 append 到 `skills/products/page-classification.jsonl`：
+   - 每个分类结果 append 到 `.claude/skills/products/page-classification.jsonl`：
      ```json
      {"path":"MCVKB/Intune/Deploy Win32 exe.md","notebook":"MCVKB","products":["intune"],"confidence":"high","classifiedAt":"2026-04-04","snippet":"Win32 app EXE deployment config..."}
      {"path":"MCVKB/Mooncake Triage/1.3 FY25 Dec.md","notebook":"MCVKB","products":["intune","vm","aks"],"confidence":"medium","classifiedAt":"2026-04-04","snippet":"Triage notes covering multiple products..."}
@@ -487,8 +617,8 @@ Agent(
     读取 .claude/skills/product-learn/modes/auto-enrich.md 的 "Phase 0: page-classify" 部分执行。
     
     关键文件：
-    - page-list.txt: skills/products/page-list.txt
-    - page-classification.jsonl: skills/products/page-classification.jsonl
+    - page-list.txt: .claude/skills/products/page-list.txt
+    - page-classification.jsonl: .claude/skills/products/page-classification.jsonl
     - playbooks/product-registry.json: 读取 podProducts 获取产品 ID 和 services 列表
     
     完成后返回:
@@ -578,7 +708,7 @@ Phase 3 (ado-wiki-scan) 的双轨细节见该 Phase 内的"内容分类 + 双轨
 
 **目标**：建立 21V 不支持功能缓存。
 
-1. **检查缓存**：读取 `skills/products/{product}/21v-gaps.json`
+1. **检查缓存**：读取 `.claude/skills/products/{product}/21v-gaps.json`
    - 存在且 `lastUpdated` 距今 < 30 天 → 跳过，返回 `{discovered:0, deduplicated:0, exhausted:true, summary:"cache valid"}`
 
 2. **读取 playbooks/product-registry.json**，找到 `podProducts[product].podServicesDir`
@@ -597,7 +727,7 @@ Phase 3 (ado-wiki-scan) 的双轨细节见该 Phase 内的"内容分类 + 双轨
    - 用 Grep 在 POD notebook 搜索 `{product}` + `"not support|不支持|gap"`
    - 仍无结果 → 写空 21v-gaps.json（标记 `"noGapDataFound": true`）
 
-6. **Write** `skills/products/{product}/21v-gaps.json`：
+6. **Write** `.claude/skills/products/{product}/21v-gaps.json`：
    ```json
    {
      "lastUpdated": "YYYY-MM-DD",
@@ -659,14 +789,14 @@ Phase 3 (ado-wiki-scan) 的双轨细节见该 Phase 内的"内容分类 + 双轨
 ## REFRESH — 增量维护
 
 **触发条件**：
-- **自动**：`onenote-export` 同步后写入 `skills/products/onenote-changes.json`
+- **自动**：`onenote-export` 同步后写入 `.claude/skills/products/onenote-changes.json`
 - **手动**：`auto-enrich reset --reset-source onenote`
 
 ### onenote-export 联动
 
 `onenote-export` sync 完成后，自动写入变更通知文件：
 ```
-skills/products/onenote-changes.json
+.claude/skills/products/onenote-changes.json
 ```
 ```json
 {
@@ -685,7 +815,7 @@ skills/products/onenote-changes.json
 
 **Step 0 新增**：在读取 enrich-state.json 后、spawn agents 前：
 
-1. 检查 `skills/products/onenote-changes.json` 是否存在
+1. 检查 `.claude/skills/products/onenote-changes.json` 是否存在
 2. 存在 → 读取 `changedFiles` + `newFiles`
 3. 对每个变更文件：
    - 通过 `page-classification.jsonl` 查找所属产品（可能属于多个产品）

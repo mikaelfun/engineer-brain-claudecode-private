@@ -41,7 +41,7 @@ D365 快照 + 邮件 + 笔记 + 附件 + ICM。
   - IR check — SLA 不是 AR owner 的责任
 - **PowerShell 命令**：
   ```bash
-  pwsh -NoProfile -File skills/d365-case-ops/scripts/fetch-all-data.ps1 -TicketNumber {caseNumber} -OutputDir {casesRoot}/active -MainCaseNumber {mainCaseId} -CacheMinutes 10 -MetaDir {casesRoot}/active
+  pwsh -NoProfile -File .claude/skills/d365-case-ops/scripts/fetch-all-data.ps1 -TicketNumber {caseNumber} -OutputDir {casesRoot}/active -MainCaseNumber {mainCaseId} -CacheMinutes 10 -MetaDir {casesRoot}/active
   ```
   `-MainCaseNumber` 触发 AR 模式，脚本内部会：
   1. 从 mainCaseNumber 拉取 snapshot/emails/notes → 存到 AR case 目录
@@ -59,7 +59,7 @@ D365 快照 + 邮件 + 笔记 + 附件 + ICM。
 ```bash
 LOG="{caseDir}/logs/data-refresh.log" && \
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] STEP 1 START | fetch-all-data.ps1" >> "$LOG" && \
-pwsh -NoProfile -File skills/d365-case-ops/scripts/fetch-all-data.ps1 ... 2>&1 && \
+pwsh -NoProfile -File .claude/skills/d365-case-ops/scripts/fetch-all-data.ps1 ... 2>&1 && \
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] STEP 1 OK | completed" >> "$LOG" || \
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] STEP 1 FAIL | see output" >> "$LOG"
 ```
@@ -79,19 +79,19 @@ pwsh -NoProfile -c 'Remove-Item -Path (Join-Path $env:TEMP "d365-case-context.js
 
 ### 1. D365 数据拉取
 ```bash
-pwsh -NoProfile -File skills/d365-case-ops/scripts/fetch-all-data.ps1 -TicketNumber {caseNumber} -OutputDir {casesRoot}/active -CacheMinutes 10 -IncludeIrCheck -MetaDir {casesRoot}/active
+pwsh -NoProfile -File .claude/skills/d365-case-ops/scripts/fetch-all-data.ps1 -TicketNumber {caseNumber} -OutputDir {casesRoot}/active -CacheMinutes 10 -IncludeIrCheck -MetaDir {casesRoot}/active
 ```
 内部并行执行 snapshot + emails + notes，完成后执行 IR check（API 优先 ~2s，失败降级 UI scraping）。
 
 **AR Mode**:
 ```bash
-pwsh -NoProfile -File skills/d365-case-ops/scripts/fetch-all-data.ps1 -TicketNumber {caseNumber} -OutputDir {casesRoot}/active -MainCaseNumber {mainCaseId} -CacheMinutes 10 -MetaDir {casesRoot}/active
+pwsh -NoProfile -File .claude/skills/d365-case-ops/scripts/fetch-all-data.ps1 -TicketNumber {caseNumber} -OutputDir {casesRoot}/active -MainCaseNumber {mainCaseId} -CacheMinutes 10 -MetaDir {casesRoot}/active
 ```
 内部会从 mainCaseId 拉取 snapshot + emails + notes 到 AR 目录，并从 AR caseNumber 拉取 notes-ar.md。IR check 自动跳过。
 
 ### 1.5. Labor 记录拉取
 ```bash
-pwsh -NoProfile -File skills/d365-case-ops/scripts/view-labor.ps1 -TicketNumber {caseNumber} -OutputDir {casesRoot}/active
+pwsh -NoProfile -File .claude/skills/d365-case-ops/scripts/view-labor.ps1 -TicketNumber {caseNumber} -OutputDir {casesRoot}/active
 ```
 生成 `{caseDir}/labor.md`，供 `/labor-estimate` 判断当天是否已记录 labor。
 
@@ -102,7 +102,7 @@ pwsh -NoProfile -File skills/d365-case-ops/scripts/view-labor.ps1 -TicketNumber 
 ### 2. 附件下载（DTM）
 读 `{caseDir}/case-info.md` 检查 `DTM Attachments: N`。N=0 跳过。
 ```bash
-pwsh -NoProfile -File skills/d365-case-ops/scripts/download-attachments.ps1 -TicketNumber {caseNumber} -OutputDir {casesRoot}/active
+pwsh -NoProfile -File .claude/skills/d365-case-ops/scripts/download-attachments.ps1 -TicketNumber {caseNumber} -OutputDir {casesRoot}/active
 ```
 Token 优先级：① dtm-token-global.json → ② per-workspace 缓存 → ③ Playwright 截获。
 **附件下载失败必须明确记录失败原因**，不要静默跳过。

@@ -1,0 +1,27 @@
+{
+  "status": "running",
+  "activeProducts": [
+    "automation",
+    "monitor",
+    "defender",
+    "entra-id",
+    "arm",
+    "disk",
+    "eop",
+    "aks",
+    "networking",
+    "intune",
+    "acr",
+    "purview",
+    "avd",
+    "vm"
+  ],
+  "productQueue": [],
+  "completedProducts": [],
+  "maxAgentsPerTick": 12,
+  "classifyState": {
+    "status": "scanning",
+    "totalPages": 5116,
+    "classifiedPages": 4414
+  }
+}

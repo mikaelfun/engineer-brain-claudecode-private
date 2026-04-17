@@ -435,7 +435,67 @@ def main():
     # Generate output
     output_path = os.path.join(case_dir, "onenote", "personal-notes.md")
     notebook_name = os.path.basename(notebook_dir)
+
+    # (delta計算已下移，使用 onenote/_search-state.json 作為權威來源)
+
     generate_output(case_number, notebook_name, results, output_path)
+
+    # Delta calculation — compare against onenote/_search-state.json (authoritative).
+    # Root cause of the old bug: we diffed "Matched pages: N" header counts, which
+    # hides content updates on existing pages (mtime bumps don't change the count).
+    # New contract: state file stores {path: mtime_iso} per matched page. Deltas:
+    #   newPages     = path not in prev state
+    #   updatedPages = path in prev state AND mtime changed
+    # Classifier trigger downstream uses (newPages + updatedPages) — modifying an
+    # already-matched page must re-run classification.
+    state_path = os.path.join(case_dir, "onenote", "_search-state.json")
+    prev_state = {}
+    try:
+        if os.path.exists(state_path):
+            with open(state_path, "r", encoding="utf-8") as sf:
+                prev_state = json.load(sf) or {}
+    except Exception:
+        prev_state = {}
+
+    current_state = {}
+    new_pages = 0
+    updated_pages = 0
+    for r in results:
+        p = os.path.normpath(r["path"])
+        try:
+            mtime_iso = datetime.fromtimestamp(os.path.getmtime(p)).isoformat(timespec="seconds")
+        except OSError:
+            mtime_iso = ""
+        current_state[p] = mtime_iso
+        prev_mtime = prev_state.get(p)
+        if prev_mtime is None:
+            new_pages += 1
+        elif prev_mtime != mtime_iso:
+            updated_pages += 1
+
+    try:
+        os.makedirs(os.path.dirname(state_path), exist_ok=True)
+        with open(state_path, "w", encoding="utf-8") as sf:
+            json.dump(current_state, sf, ensure_ascii=False, indent=2)
+    except OSError:
+        pass
+
+    # EVENT_DELTA_FILE contract (casework v2 event-wrapper.sh): if running under
+    # event-wrapper, write delta JSON to the env-provided path. Wrapper validates
+    # + merges into completed event. Silent best-effort — unset env = legacy path.
+    delta_file = os.environ.get("EVENT_DELTA_FILE")
+    if delta_file:
+        try:
+            total_pages = len(results)
+            with open(delta_file, "w", encoding="utf-8") as df:
+                json.dump({
+                    "newPages": new_pages,
+                    "updatedPages": updated_pages,
+                    "totalPages": total_pages,
+                    "keywords": unique_keywords[:5],
+                }, df)
+        except OSError:
+            pass
 
 
 if __name__ == "__main__":

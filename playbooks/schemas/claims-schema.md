@@ -79,7 +79,7 @@ triggerChallenge = claims.some(c => c.confidence === "low" || c.confidence === "
 | `ado-wiki` | ADO Wiki / TSG pages | High (may be outdated) |
 | `onenote-team` | Team OneNote knowledge base | High (check modified date) |
 | `onenote-personal` | Personal OneNote notes | Medium (may contain prior AI analysis) |
-| `product-skill` | `skills/products/{product}/SKILL.md` or `known-issues.jsonl` | High (project-maintained) |
+| `product-skill` | `.claude/skills/products/{product}/SKILL.md` or `known-issues.jsonl` | High (project-maintained) |
 | `customer-statement` | Customer emails/Teams messages | Fact (customer's own words) |
 | `icm-data` | ICM incident data | Fact (system data) |
 | `web-search` | Public web search results | Low (lowest signal-to-noise) |

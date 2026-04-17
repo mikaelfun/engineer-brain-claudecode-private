@@ -2,14 +2,10 @@
  * steps.ts — Step 级 API 路由
  *
  * 每个步骤可独立触发，在同一 case session 中 resume：
- *   POST /case/:id/step/data-refresh
- *   POST /case/:id/step/compliance-check
- *   POST /case/:id/step/status-judge
- *   POST /case/:id/step/teams-search
- *   POST /case/:id/step/troubleshoot
- *   POST /case/:id/step/draft-email
- *   POST /case/:id/step/inspection
- *   POST /case/:id/step/generate-kb
+ *   POST /case/:id/step/data-refresh   → /casework:data-refresh
+ *   POST /case/:id/step/assess         → /casework:assess
+ *   POST /case/:id/step/act            → /casework:act
+ *   POST /case/:id/step/summarize      → /casework:summarize
  *
  * AskUserQuestion interception:
  *   POST /case/:id/step-answer  — submit user answer to a pending question
@@ -42,174 +38,46 @@ import { getSSEEventType, formatMessageForSSE, getPersistedMessageType } from '.
 import { caseStepState, type CaseStepQuestion } from '../services/case-step-state.js'
 import { withInactivityTimeout, INACTIVITY_TIMEOUT_MS } from '../utils/operation-timeout.js'
 import { sdkQueue } from '../utils/sdk-queue.js'
-import { existsSync, readFileSync } from 'fs'
+import { existsSync } from 'fs'
 import { join } from 'path'
 import { config } from '../config.js'
 
 const stepRoutes = new Hono()
 
-// ---- Pipeline step detection for casework (ISS-210 v2) ----
-// Uses timing marker files (.t_*) written by the casework agent for precise tracking.
+// ---- Pipeline step detection for casework (V2) ----
+// V2 uses .casework/events/*.json files watched by file-watcher.ts for precise tracking.
 // Fallback to regex-based detection from thinking messages.
 
 /**
- * Pipeline steps definition with timing marker file mappings.
- * Each step can have a start/end marker file and optional agent markers.
+ * Pipeline steps definition (V2: 4 steps, no timing markers).
  */
 const CASEWORK_PIPELINE_STEPS = [
-  { id: 'changegate', label: 'Changegate', startMarker: '.t_changegate_start', endMarker: '.t_changegate_end' },
-  { id: 'data-refresh', label: 'Data Refresh', startMarker: '.t_dataRefresh_start', endMarker: '.t_dataRefresh_end' },
-  { id: 'compliance', label: 'Compliance', startMarker: '.t_compliance_start', endMarker: '.t_compliance_end' },
-  { id: 'status-judge', label: 'Status Judge', startMarker: '.t_statusJudge_start', endMarker: '.t_statusJudge_end' },
-  { id: 'route', label: 'Route', startMarker: '.t_routing_start', endMarker: '.t_routing_end' },
-  { id: 'troubleshoot', label: 'Troubleshoot', startMarker: '.t_troubleshoot_start', endMarker: '.t_troubleshoot_end' },
-  { id: 'email-draft', label: 'Email Draft', startMarker: '.t_emailDraft_start', endMarker: '.t_emailDraft_end' },
-  { id: 'inspection', label: 'Inspection', startMarker: '.t_inspection_start', endMarker: '.t_inspection_end' },
-] as const
+  { id: 'data-refresh', label: 'Data Refresh' },
+  { id: 'assess', label: 'Assess' },
+  { id: 'act', label: 'Act' },
+  { id: 'summarize', label: 'Summarize' },
+]
 
-/** Agent spawn tracking — detected from Agent tool calls and timing markers */
+/** Agent spawn tracking — detected from Agent tool calls */
 const AGENT_SPAWNS = [
-  { id: 'teams-search', label: 'Teams', startMarker: '.t_teamsSearch_start', endMarker: '.t_teamsSearch_end', patterns: ['teams-search', 'Teams 搜索'] },
-  { id: 'onenote-search', label: 'OneNote', startMarker: '.t_onenoteSearch_start', endMarker: '.t_onenoteSearch_end', patterns: ['onenote', 'OneNote'] },
-  { id: 'troubleshooter', label: 'Troubleshooter', startMarker: '.t_troubleshoot_start', endMarker: '.t_troubleshoot_end', patterns: ['troubleshoot'] },
-  { id: 'email-drafter', label: 'Email Drafter', startMarker: '.t_emailDraft_start', endMarker: '.t_emailDraft_end', patterns: ['email-drafter', 'draft-email'] },
-  { id: 'challenger', label: 'Challenger', startMarker: '.t_challenger_start', endMarker: '.t_challenger_end', patterns: ['challenger'] },
-] as const
-
-type PipelineStepId = typeof CASEWORK_PIPELINE_STEPS[number]['id']
-
-/** Read a timing marker file (contains Unix timestamp) */
-function readTimingMarker(logsDir: string, marker: string): number | null {
-  const p = join(logsDir, marker)
-  try {
-    if (existsSync(p)) {
-      const val = readFileSync(p, 'utf-8').trim()
-      return parseInt(val, 10) || null
-    }
-  } catch { /* ignore */ }
-  return null
-}
-
-/** Track per-case pipeline state to avoid duplicate broadcasts */
-const pipelineState: Record<string, Record<string, string>> = {} // caseNumber → { stepId → status }
-const agentSpawnState: Record<string, Record<string, string>> = {} // caseNumber → { agentId → status }
-
-/** Active polling timers per case */
-const pipelinePollers: Record<string, ReturnType<typeof setInterval>> = {}
-
-/**
- * Start polling timing markers for a case.
- * Reads .t_* files every 3s and broadcasts pipeline updates via SSE.
- */
-function startPipelinePoller(caseNumber: string, sessionId?: string) {
-  if (pipelinePollers[caseNumber]) return // already polling
-
-  const logsDir = join(config.activeCasesDir, caseNumber, 'logs')
-  pipelineState[caseNumber] = {}
-  agentSpawnState[caseNumber] = {}
-
-  console.log(`[pipeline-poller] Started for case ${caseNumber}, logsDir=${logsDir}`)
-
-  const poll = () => {
-    // Check each pipeline step
-    for (const step of CASEWORK_PIPELINE_STEPS) {
-      const prevStatus = pipelineState[caseNumber]?.[step.id]
-      const startTs = readTimingMarker(logsDir, step.startMarker)
-      const endTs = readTimingMarker(logsDir, step.endMarker)
-
-      let newStatus: string
-      if (endTs) {
-        newStatus = 'completed'
-      } else if (startTs) {
-        newStatus = 'active'
-      } else {
-        newStatus = 'pending'
-      }
-
-      if (newStatus !== prevStatus) {
-        pipelineState[caseNumber][step.id] = newStatus
-        const durationMs = (startTs && endTs) ? (endTs - startTs) * 1000 : undefined
-        sseManager.broadcast('case-pipeline-step' as any, {
-          caseNumber,
-          sessionId,
-          pipelineStep: step.id,
-          status: newStatus,
-          durationMs,
-          timestamp: new Date().toISOString(),
-        })
-      }
-    }
-
-    // Check agent spawns
-    for (const agent of AGENT_SPAWNS) {
-      const prevStatus = agentSpawnState[caseNumber]?.[agent.id]
-      const startTs = readTimingMarker(logsDir, agent.startMarker)
-      const endTs = readTimingMarker(logsDir, agent.endMarker)
-
-      // If start == end (0s), the agent was cache-skipped, not actually spawned — skip it
-      if (startTs && endTs && endTs - startTs === 0) continue
-
-      let newStatus: string
-      if (endTs) {
-        newStatus = 'completed'
-      } else if (startTs) {
-        newStatus = 'running'
-      } else {
-        continue // not spawned
-      }
-
-      if (newStatus !== prevStatus) {
-        agentSpawnState[caseNumber][agent.id] = newStatus
-        const durationMs = (startTs && endTs) ? (endTs - startTs) * 1000 : undefined
-        sseManager.broadcast('case-agent-spawn' as any, {
-          caseNumber,
-          sessionId,
-          agentId: agent.id,
-          agentLabel: agent.label,
-          status: newStatus,
-          durationMs,
-          timestamp: new Date().toISOString(),
-        })
-      }
-    }
-
-    // Check if done
-    const doneTs = readTimingMarker(logsDir, '.t_done')
-    if (doneTs) {
-      stopPipelinePoller(caseNumber)
-    }
-  }
-
-  // Initial poll immediately
-  poll()
-  // Then poll every 3s
-  pipelinePollers[caseNumber] = setInterval(poll, 3_000)
-}
-
-/** Stop polling for a case */
-function stopPipelinePoller(caseNumber: string) {
-  if (pipelinePollers[caseNumber]) {
-    clearInterval(pipelinePollers[caseNumber])
-    delete pipelinePollers[caseNumber]
-    console.log(`[pipeline-poller] Stopped for case ${caseNumber}`)
-  }
-}
+  { id: 'teams-search', label: 'Teams', patterns: ['teams-search', 'Teams 搜索'] },
+  { id: 'onenote-search', label: 'OneNote', patterns: ['onenote', 'OneNote'] },
+  { id: 'troubleshooter', label: 'Troubleshooter', patterns: ['troubleshoot'] },
+  { id: 'email-drafter', label: 'Email Drafter', patterns: ['email-drafter', 'draft-email'] },
+  { id: 'challenger', label: 'Challenger', patterns: ['challenger'] },
+]
 
 /**
  * Detect which casework pipeline step is currently active based on tool/thinking content.
- * FALLBACK for cases where timing markers haven't been written yet.
+ * FALLBACK for cases where events haven't been written yet (V2).
  */
-function detectPipelineStep(toolName: string, content: string): PipelineStepId | null {
+function detectPipelineStep(toolName: string, content: string): string | null {
   const combined = `${toolName} ${content}`.toLowerCase()
-  const patterns: Array<{ id: PipelineStepId; pats: string[] }> = [
-    { id: 'changegate', pats: ['check-case-changes', 'changegate', 'step 1'] },
-    { id: 'data-refresh', pats: ['data-refresh', 'fetch-case-info', 'fetch-emails', 'fast.path'] },
-    { id: 'compliance', pats: ['compliance-check', 'compliance', 'entitlement', 'b3'] },
-    { id: 'status-judge', pats: ['status-judge', 'statusjudge', 'b4'] },
-    { id: 'route', pats: ['routing', 'recommendedaction', 'no-agent', 'b5'] },
-    { id: 'troubleshoot', pats: ['troubleshoot', 'claims.json'] },
-    { id: 'email-draft', pats: ['email-drafter', 'draft-email', 'humanizer'] },
-    { id: 'inspection', pats: ['inspection', 'case-summary', 'generate-todo', 'step 4'] },
+  const patterns: Array<{ id: string; pats: string[] }> = [
+    { id: 'data-refresh', pats: ['data-refresh', 'fetch-case-info', 'fetch-emails', 'step 1'] },
+    { id: 'assess', pats: ['assess', 'compliance', 'status-judge', 'step 2'] },
+    { id: 'act', pats: ['act', 'troubleshoot', 'email-draft', 'route', 'step 3'] },
+    { id: 'summarize', pats: ['summarize', 'inspection', 'case-summary', 'generate-todo', 'step 4'] },
   ]
   for (const { id, pats } of patterns) {
     for (const pat of pats) {
@@ -873,12 +741,6 @@ stepRoutes.post('/case/:id/step/:step', async (c) => {
         } : {}),
       })
 
-      // Start pipeline poller for casework (ISS-210 v2)
-      // Polls timing marker files every 3s for precise step tracking
-      if (stepName === 'casework') {
-        startPipelinePoller(caseNumber)
-      }
-
       // Notify Agent Monitor to refresh session list (ISS-082)
       sseManager.broadcast('sessions-changed' as any, { reason: 'step-started', caseNumber, step: stepName })
       caseStepState.addMessage(caseNumber, {
@@ -943,40 +805,18 @@ stepRoutes.post('/case/:id/step/:step', async (c) => {
           executionId,
           executionSummary,
         })
-        // Complete any active pipeline step (ISS-210)
+        // Complete any active pipeline step (V2: no timing markers)
         if (stepName === 'casework') {
-          stopPipelinePoller(caseNumber)
-          // Do one final poll to catch any last-second timing markers
-          const logsDir = join(config.activeCasesDir, caseNumber, 'logs')
+          // Broadcast final status for all pipeline steps
           for (const step of CASEWORK_PIPELINE_STEPS) {
-            const startTs = readTimingMarker(logsDir, step.startMarker)
-            const endTs = readTimingMarker(logsDir, step.endMarker)
-            const finalStatus = endTs ? 'completed' : startTs ? 'failed' : 'skipped'
-            const durationMs = (startTs && endTs) ? (endTs - startTs) * 1000 : undefined
+            const isActive = activePipelineStep[caseNumber] === step.id
+            const finalStatus = isActive ? 'completed' : 'skipped'
             sseManager.broadcast('case-pipeline-step' as any, {
               caseNumber,
               pipelineStep: step.id,
               status: finalStatus,
-              durationMs,
               timestamp: new Date().toISOString(),
             })
-          }
-          // Broadcast final agent spawn status
-          for (const agent of AGENT_SPAWNS) {
-            const startTs = readTimingMarker(logsDir, agent.startMarker)
-            const endTs = readTimingMarker(logsDir, agent.endMarker)
-            // Skip cache-skipped agents (start == end, 0s duration)
-            if (startTs && endTs && endTs - startTs === 0) continue
-            if (startTs) {
-              sseManager.broadcast('case-agent-spawn' as any, {
-                caseNumber,
-                agentId: agent.id,
-                agentLabel: agent.label,
-                status: endTs ? 'completed' : 'timeout',
-                durationMs: endTs ? (endTs - startTs) * 1000 : (Math.floor(Date.now() / 1000) - startTs) * 1000,
-                timestamp: new Date().toISOString(),
-              })
-            }
           }
           delete activePipelineStep[caseNumber]
         }
@@ -1015,9 +855,8 @@ stepRoutes.post('/case/:id/step/:step', async (c) => {
           error: errorMsg,
           executionId,
         })
-        // Fail any active pipeline step (ISS-210)
+        // Fail any active pipeline step (V2)
         if (stepName === 'casework') {
-          stopPipelinePoller(caseNumber)
           delete activePipelineStep[caseNumber]
         }
         // Notify Agent Monitor to refresh session list (ISS-082)

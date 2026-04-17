@@ -37,7 +37,7 @@ CASE_DIR="{casesRoot}/active/{caseNumber}"
 ### Step 2: 刷新 notes.md（如需要）
 
 检查 `{CASE_DIR}/notes.md`：
-- **不存在** → 执行 `pwsh skills/d365-case-ops/scripts/fetch-notes.ps1 -TicketNumber {caseNumber} -OutputDir "{CASE_DIR}"`
+- **不存在** → 执行 `pwsh .claude/skills/d365-case-ops/scripts/fetch-notes.ps1 -TicketNumber {caseNumber} -OutputDir "{CASE_DIR}"`
 - **存在但修改时间 > 24小时** → 同上，加 `-Force` 刷新
 - **存在且 < 24小时** → 直接使用
 
@@ -197,7 +197,7 @@ WebUI: 可在 Case 详情页编辑后写入
 
 如果用户确认写入：
 ```bash
-pwsh skills/d365-case-ops/scripts/add-note.ps1 \
+pwsh .claude/skills/d365-case-ops/scripts/add-note.ps1 \
   -TicketNumber {caseNumber} \
   -Title "{title}" \
   -Body "{body}" \
@@ -206,7 +206,7 @@ pwsh skills/d365-case-ops/scripts/add-note.ps1 \
 
 写入后验证：
 ```bash
-pwsh skills/d365-case-ops/scripts/fetch-notes.ps1 \
+pwsh .claude/skills/d365-case-ops/scripts/fetch-notes.ps1 \
   -TicketNumber {caseNumber} \
   -OutputDir "{CASE_DIR}" \
   -Force

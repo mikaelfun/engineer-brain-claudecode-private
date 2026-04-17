@@ -44,7 +44,7 @@ allowed-tools:
 
 ### 2. 读取校准数据
 ```bash
-cat skills/labor-estimate/calibration.json
+cat .claude/skills/labor-estimate/calibration.json
 ```
 记住各 effort 类型的 multiplier。
 
@@ -156,7 +156,7 @@ mkdir -p "{caseDir}/labor"
 ### 7. 提交到 D365
 对每个确认提交的 case，执行：
 ```bash
-pwsh -NoProfile -File skills/d365-case-ops/scripts/record-labor.ps1 \
+pwsh -NoProfile -File .claude/skills/d365-case-ops/scripts/record-labor.ps1 \
   -Minutes {totalMinutes} \
   -Classification "{classification}" \
   -Description "{description}"
@@ -186,4 +186,4 @@ pwsh -NoProfile -File skills/d365-case-ops/scripts/record-labor.ps1 \
 
 ## 输出
 - 每个 case 的 `{caseDir}/labor/labor-estimate.json`
-- 更新后的 `skills/labor-estimate/calibration.json`（如有校准）
+- 更新后的 `.claude/skills/labor-estimate/calibration.json`（如有校准）

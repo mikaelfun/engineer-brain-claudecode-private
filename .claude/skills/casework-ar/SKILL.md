@@ -53,7 +53,7 @@ json.dump(m, open(p, 'w', encoding='utf-8'), indent=2, ensure_ascii=False)
 ### Step 1. Data Refresh（AR mode）
 
 ```bash
-bash skills/casework/scripts/data-refresh.sh \
+bash .claude/skills/casework/scripts/data-refresh.sh \
   --case-number {caseNumber} \
   --case-dir {caseDir} \
   --is-ar true \

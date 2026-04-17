@@ -100,7 +100,7 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
 
 3. **获取活跃 Case 列表**
    ```
-   pwsh -NoProfile -File skills/d365-case-ops/scripts/list-active-cases.ps1 -OutputJson
+   pwsh -NoProfile -File .claude/skills/d365-case-ops/scripts/list-active-cases.ps1 -OutputJson
    ```
 
 3. **筛选需要处理的 Case**
@@ -119,7 +119,7 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
    获取 active case 列表后，扫描本地 `{casesRoot}/active/` 目录，找出不在 D365 active list 中的 case：
 
    ```bash
-   pwsh -NoProfile -File skills/d365-case-ops/scripts/detect-case-status.ps1 -CasesRoot {casesRoot}
+   pwsh -NoProfile -File .claude/skills/d365-case-ops/scripts/detect-case-status.ps1 -CasesRoot {casesRoot}
    ```
 
    脚本输出 JSON 数组，每个元素包含 `caseNumber`, `status`（archived/transferred）, `reason`, `closureEmailEvidence`。
@@ -152,10 +152,10 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
 
    ```bash
    # IR/FDR/FWR 批量预填（~3s）
-   pwsh -NoProfile -File skills/d365-case-ops/scripts/check-ir-status-batch.ps1 -SaveMeta -MetaDir {casesRoot}/active
+   pwsh -NoProfile -File .claude/skills/d365-case-ops/scripts/check-ir-status-batch.ps1 -SaveMeta -MetaDir {casesRoot}/active
 
    # DTM token 预热（~10s）
-   pwsh -NoProfile -File skills/d365-case-ops/scripts/warm-dtm-token.ps1 -CasesRoot {casesRoot}
+   pwsh -NoProfile -File .claude/skills/d365-case-ops/scripts/warm-dtm-token.ps1 -CasesRoot {casesRoot}
    ```
 
    **关键**：
@@ -196,7 +196,7 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
        mode: patrol
 
        执行 Step 1 + Step 2：
-       1. 读取 .claude/skills/casework/data-refresh/SKILL.md，执行 data-refresh（bash skills/casework/scripts/data-refresh.sh）
+       1. 读取 .claude/skills/casework/data-refresh/SKILL.md，执行 data-refresh（bash .claude/skills/casework/scripts/data-refresh.sh）
        2. 读取 .claude/skills/casework/assess/SKILL.md，执行 assess 流程
        3. 产出 .casework/execution-plan.json 后退出
 

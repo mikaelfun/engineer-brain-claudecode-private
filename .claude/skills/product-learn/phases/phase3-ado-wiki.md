@@ -40,7 +40,7 @@ wiki 名称可直接使用（无需 wiki ID）。
 1. **读取 playbooks/product-registry.json** → 取 `podProducts[product].adoWikis` 数组
    - 为空数组 → 返回 `exhausted: true`
    - 每条含 `org`、`project`，可选 `wiki`（wiki 名，默认取该项目第一个 wiki）
-   - **Scope 规则**从 `skills/products/{product}/.enrich/wiki-scope.json` 读取（不在 config.json 中）：
+   - **Scope 规则**从 `.claude/skills/products/{product}/.enrich/wiki-scope.json` 读取（不在 config.json 中）：
      ```json
      {
        "scopes": [
@@ -77,13 +77,13 @@ wiki 名称可直接使用（无需 wiki ID）。
    > `{org}/{project}/{wikiName}:` 前缀构成完整 key（如 `Supportability/Intune/Intune:/AdminUI`）。
    > 遗漏前缀会导致 index 与 scanned 格式不一致，差集计算错误。
 
-   **pathScope 过滤**：从 `skills/products/{product}/.enrich/wiki-scope.json` 读取对应 wiki 的 scope 规则。
+   **pathScope 过滤**：从 `.claude/skills/products/{product}/.enrich/wiki-scope.json` 读取对应 wiki 的 scope 规则。
    如果有 `pathScope`，只保留路径以 scope 中任一前缀开头的叶子页面。
    如果有 `excludeScope`，排除匹配的叶子页面（先 include 再 exclude）。
    注意：scope 是 wiki 相对路径（如 `"/AKS"`），需要在拼接前缀**之后**对完整 key 的路径部分过滤：
    ```python
    # 读取 scope 配置
-   scope_file = f'skills/products/{product}/.enrich/wiki-scope.json'
+   scope_file = f'.claude/skills/products/{product}/.enrich/wiki-scope.json'
    pathScope, excludeScope = None, None
    if os.path.exists(scope_file):
        with open(scope_file) as f:
@@ -136,7 +136,7 @@ wiki 名称可直接使用（无需 wiki ID）。
    PYTHONUTF8=1 python3 -c "
    import json
    scanned = [...]  # pagesToProcess 原样写入
-   with open('skills/products/{product}/.enrich/blast-temp/scanned-ado-wiki-{batchId}.json', 'w') as f:
+   with open('.claude/skills/products/{product}/.enrich/blast-temp/scanned-ado-wiki-{batchId}.json', 'w') as f:
        f.write(json.dumps(scanned, ensure_ascii=True))
    print(f'Scanned file written: {len(scanned)} pages')
    "
@@ -152,7 +152,7 @@ wiki 名称可直接使用（无需 wiki ID）。
    PYTHONUTF8=1 python3 -c "
    import json
    entries = [...]  # 构建好的全部 Track A 条目列表（Track B 只写 draft 文件，不写 JSONL）
-   with open('skills/products/{product}/.enrich/blast-temp/known-issues-ado-wiki-{batchId}.jsonl', 'w') as f:
+   with open('.claude/skills/products/{product}/.enrich/blast-temp/known-issues-ado-wiki-{batchId}.jsonl', 'w') as f:
        for e in entries:
            f.write(json.dumps(e, ensure_ascii=True) + '\n')
    print(f'JSONL written: {len(entries)} entries')
@@ -255,14 +255,14 @@ wiki 名称可直接使用（无需 wiki ID）。
    在写入 draft 文件之前，必须检查 `guides/drafts/` 目录下是否已有**相同 sourceRef** 的 draft：
    ```bash
    # 检查是否已有同源 draft（grep frontmatter 中的 sourceRef）
-   existing=$(grep -rl 'sourceRef: "{sourceRef}"' skills/products/{product}/guides/drafts/ 2>/dev/null | head -1)
+   existing=$(grep -rl 'sourceRef: "{sourceRef}"' .claude/skills/products/{product}/guides/drafts/ 2>/dev/null | head -1)
    ```
    - **已存在** → 比较新旧内容大小，保留更大的（更完整的），删除更小的
    - **不存在** → 正常写入新 draft
    
    同样，写入 JSONL 前检查是否已有相同 `sourceRef` 的 guide-draft 条目，有则跳过。
 
-   - 写入 `skills/products/{product}/guides/drafts/{sanitized-page-title}.md`
+   - 写入 `.claude/skills/products/{product}/guides/drafts/{sanitized-page-title}.md`
    - 草稿格式：
      ```markdown
      ---
@@ -303,7 +303,7 @@ wiki 名称可直接使用（无需 wiki ID）。
    - solution 涉及 unsupported feature → 添加 tag `"21v-unsupported"`
    - 设 `21vApplicable: false`
 
-5. **去重 → append** `skills/products/{product}/.enrich/known-issues-ado-wiki.jsonl`（per-source JSONL，与 global-constraints 一致）：
+5. **去重 → append** `.claude/skills/products/{product}/.enrich/known-issues-ado-wiki.jsonl`（per-source JSONL，与 global-constraints 一致）：
    - 去重对比：读取 per-source JSONL 已有条目的 `symptom[:100]+rootCause[:100]` 指纹，>80% 重叠则跳过
    ```
    source: "ado-wiki"
@@ -318,7 +318,9 @@ wiki 名称可直接使用（无需 wiki ID）。
    > **并发安全**：标准模式为自链式单 agent 运行（无并发）；blast 模式通过 per-batch 文件隔离；
    > 两种模式通过 `adoWikiBlast` 标记互斥，不会同时写 per-source。
 
-6. **更新 `.enrich/scanned-ado-wiki.json → scanned`**：append 本次处理的路径
+6. **更新 `.enrich/scanned-ado-wiki.json`**：
+   - append 本次处理的路径到 `scanned`
+   - 更新 `lastRefreshed` 为当前时间戳（ISO 格式），用于 Pre-flight index 刷新判断
    - **关键：scanned 条目必须使用完整 key 格式**：`"{org}/{project}/{wikiName}:{pagePath}"`
    - 与 index 中的 key 格式一致（计算 unscanned 差集时用 key 对比）
    - 同时确保 JSONL 条目的 `sourceRef` 也使用相同格式
@@ -360,7 +362,7 @@ Agent(
   prompt: |
     产品: {product} | 数据源: ado-wiki | 项目根: {PROJECT_ROOT}
     读取 .claude/skills/product-learn/phases/phase3-ado-wiki.md 执行。
-    ⚠️ 写 skills/products/{product}/.enrich/known-issues-ado-wiki.jsonl, .enrich/scanned-ado-wiki.json, ID: {product}-ado-wiki-{seq:03d}
+    ⚠️ 写 .claude/skills/products/{product}/.enrich/known-issues-ado-wiki.jsonl, .enrich/scanned-ado-wiki.json, ID: {product}-ado-wiki-{seq:03d}
     config: adoWikis={adoWikis配置}
     返回: discovered, deduplicated, exhausted, 摘要(<500bytes)
 )

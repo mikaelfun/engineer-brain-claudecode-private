@@ -584,7 +584,7 @@ node .claude/skills/rag-sync/manifest.mjs build "$OUTPUT_DIR"
 
 如果本次 sync 有变更文件（`new[]` + `modified[]` 非空），写入通知文件供 `/product-learn auto-enrich` 的 REFRESH 机制消费：
 
-**文件位置**：`skills/products/onenote-changes.json`
+**文件位置**：`.claude/skills/products/onenote-changes.json`
 
 ```json
 {

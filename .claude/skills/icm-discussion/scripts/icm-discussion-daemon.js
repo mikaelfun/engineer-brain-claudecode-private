@@ -27,11 +27,13 @@ const ICM_BASE = 'https://portal.microsofticm.com/imp/v5/incidents/details';
 const args = process.argv.slice(2);
 const singleIdx = args.indexOf('--single');
 const caseDirIdx = args.indexOf('--case-dir');
+const tokenOnlyMode = args.includes('--token-only');
 const singleMode = singleIdx !== -1;
 const singleIncidentId = singleMode ? args[singleIdx + 1] : null;
 const singleCaseDir = caseDirIdx !== -1 ? args[caseDirIdx + 1] : null;
 const casesRoot = process.env.CASES_ROOT || './cases';
 const patrolDir = process.env.PATROL_DIR || path.join(casesRoot, '.patrol');
+const TOKEN_CACHE = path.join(process.env.TEMP || '/tmp', 'icm-ab-token-cache.json');
 
 function log(msg) {
   const ts = new Date().toISOString().replace('T', ' ').substring(0, 19);
@@ -110,17 +112,22 @@ async function fetchIncident(page, incidentId) {
         log(`ERROR: SSO failed for ${incidentId}`);
         return null;
       }
-      // SSO 后重新导航
-      await page.goto(`${ICM_BASE}/${incidentId}/summary`, {
-        waitUntil: 'domcontentloaded',
-        timeout: 20000
-      });
+      // SSO 后等待：如果成功跳转回 ICM，等 API 响应
+      // 如果没跳转，强制重新导航
+      const afterSso = page.url();
+      if (!afterSso.includes('/incidents/details/')) {
+        log(`SSO done but landed on ${afterSso.substring(0, 80)}, re-navigating...`);
+        await page.goto(`${ICM_BASE}/${incidentId}/summary`, {
+          waitUntil: 'domcontentloaded',
+          timeout: 20000
+        });
+      }
     }
 
-    // 等待 API 响应
+    // 等待 API 响应（最多 15s，每 500ms 检查）
     const deadline = Date.now() + 15000;
     while ((!details || !discussions) && Date.now() < deadline) {
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(500);
     }
   } catch (e) {
     log(`ERROR: Navigation failed for ${incidentId}: ${e.message}`);
@@ -151,6 +158,24 @@ function writeResult(caseDir, incidentId, result) {
 }
 
 // --- 单次模式 ---
+async function cleanStaleLock() {
+  // Kill orphaned Edge processes that lock the profile directory
+  const lockfile = path.join(PROFILE, 'lockfile');
+  if (!fs.existsSync(lockfile)) return;
+  try {
+    const { execSync } = require('child_process');
+    const out = execSync(
+      `powershell -NoProfile -c "Get-CimInstance Win32_Process -Filter \\"Name='msedge.exe'\\" | Where-Object { $_.CommandLine -like '*pw-icm-discussion*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -EA SilentlyContinue; $_.ProcessId }"`,
+      { timeout: 10000, encoding: 'utf-8' }
+    ).trim();
+    if (out) {
+      log(`Killed orphaned Edge PIDs: ${out.replace(/\n/g, ', ')}`);
+      // Wait for file handles to release
+      await new Promise(r => setTimeout(r, 2000));
+    }
+  } catch { }
+}
+
 async function runSingle() {
   if (!singleIncidentId || !singleCaseDir) {
     console.error('Usage: --single <incidentId> --case-dir <path>');
@@ -158,6 +183,7 @@ async function runSingle() {
   }
 
   log(`SINGLE mode: incident=${singleIncidentId} caseDir=${singleCaseDir}`);
+  await cleanStaleLock();
   const ctx = await pw.chromium.launchPersistentContext(PROFILE, { channel: 'msedge', headless: true });
   const page = ctx.pages()[0] || await ctx.newPage();
 
@@ -183,6 +209,7 @@ async function runQueue() {
   fs.mkdirSync(queueDir, { recursive: true });
 
   log(`QUEUE mode: casesRoot=${casesRoot}`);
+  await cleanStaleLock();
   const ctx = await pw.chromium.launchPersistentContext(PROFILE, { channel: 'msedge', headless: true });
   const page = ctx.pages()[0] || await ctx.newPage();
 
@@ -265,8 +292,59 @@ async function runQueue() {
   log(`EXIT: processed ${processed} incidents`);
 }
 
+// --- Token-only 模式：只刷新 Bearer Token，不抓 discussion ---
+async function runTokenOnly() {
+  log('TOKEN-ONLY mode: refreshing ICM Bearer Token...');
+  await cleanStaleLock();
+  const ctx = await pw.chromium.launchPersistentContext(PROFILE, { channel: 'msedge', headless: true });
+  const page = ctx.pages()[0] || await ctx.newPage();
+
+  let token = '';
+  // 拦截任意 ICM API 请求的 auth header
+  const handler = async (route) => {
+    const auth = route.request().headers()['authorization'];
+    if (auth && auth.length > 100 && !token) token = auth;
+    await route.continue();
+  };
+  await page.route('**/getdescriptionentries*', handler);
+  await page.route('**/GetIncidentDetails*', handler);
+
+  try {
+    // 导航到任意 ICM incident（用一个固定的占位 ID，页面会自动调 API）
+    const targetId = args[args.indexOf('--token-only') + 1] || '51000000969736';
+    await page.goto(`${ICM_BASE}/${targetId}/summary`, {
+      waitUntil: 'domcontentloaded', timeout: 15000
+    });
+
+    if (page.url().includes('IdentityProvider') || page.url().includes('login')) {
+      const ok = await ssoLogin(page);
+      if (!ok) { console.log('TOKEN_FAIL|SSO failed'); await ctx.close(); process.exit(1); }
+      if (!page.url().includes('/incidents/details/')) {
+        await page.goto(`${ICM_BASE}/${targetId}/summary`, {
+          waitUntil: 'domcontentloaded', timeout: 15000
+        });
+      }
+    }
+
+    for (let i = 0; i < 30 && !token; i++) await page.waitForTimeout(500);
+  } catch (e) {
+    log(`ERROR: ${e.message}`);
+  }
+
+  await ctx.close();
+
+  if (token) {
+    fs.writeFileSync(TOKEN_CACHE, JSON.stringify({ token, timestamp: Date.now() / 1000 }));
+    log(`Token refreshed (${token.length} chars) → ${TOKEN_CACHE}`);
+    console.log(`TOKEN_OK|${token.length}`);
+  } else {
+    console.log('TOKEN_FAIL|no token captured');
+    process.exit(1);
+  }
+}
+
 // --- 入口 ---
-(singleMode ? runSingle() : runQueue()).catch(e => {
+(tokenOnlyMode ? runTokenOnly() : singleMode ? runSingle() : runQueue()).catch(e => {
   console.error('FATAL:', e.message);
   process.exit(1);
 });

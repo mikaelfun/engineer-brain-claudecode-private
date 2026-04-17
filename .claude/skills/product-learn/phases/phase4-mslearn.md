@@ -55,7 +55,9 @@
    confidence: "medium"
    ```
 
-6. **更新 `.enrich/scanned-mslearn.json → scanned`**：append 本次 URL
+6. **更新 `.enrich/scanned-mslearn.json`**：
+   - append 本次 URL 到 `scanned`
+   - 更新 `lastRefreshed` 为当前时间戳（ISO 格式），用于 Pre-flight index 刷新判断
 
 7. **Append** `.enrich/evolution-log.md`
 
@@ -86,7 +88,7 @@ Agent(
   prompt: |
     产品: {product} | 数据源: mslearn | 项目根: {PROJECT_ROOT}
     读取 .claude/skills/product-learn/phases/phase4-mslearn.md 执行。Phase 4b 继续 fetch。
-    ⚠️ 写 skills/products/{product}/.enrich/known-issues-mslearn.jsonl, .enrich/scanned-mslearn.json, ID: {product}-mslearn-{seq:03d}
+    ⚠️ 写 .claude/skills/products/{product}/.enrich/known-issues-mslearn.jsonl, .enrich/scanned-mslearn.json, ID: {product}-mslearn-{seq:03d}
     返回: discovered, deduplicated, exhausted, 摘要(<500bytes)
 )
 ```

@@ -90,8 +90,8 @@ echo "[$(date '+%Y-%m-%d %H:%M:%S')] === challenger START ===" >> "$LOG"
 4. `{caseDir}/research/research.md` — 已有研究材料
 5. `{caseDir}/teams/teams-digest.md` — Teams 相关对话摘要（如存在；不存在则读 `teams/*.md`）
 6. `{caseDir}/onenote/personal-notes.md` — OneNote 个人笔记（如存在）
-7. `skills/products/{product}/SKILL.md` — 产品排查技能定义
-8. `skills/products/{product}/known-issues.jsonl` — 已知问题库
+7. `.claude/skills/products/{product}/SKILL.md` — 产品排查技能定义
+8. `.claude/skills/products/{product}/known-issues.jsonl` — 已知问题库
 
 读取完成后，记录日志：
 ```
@@ -173,8 +173,8 @@ echo "[$(date '+%Y-%m-%d %H:%M:%S')] === challenger START ===" >> "$LOG"
 
 1. **microsoft_docs_search**（msft-learn MCP）— 搜索 `"{product} {claim keywords}"`
 2. **mcp__local-rag__query_documents**（local-rag MCP）— 搜索 OneNote 团队知识库
-3. **Read** `skills/products/{product}/known-issues.jsonl` — 检查是否有匹配的已知问题
-4. **Read** `skills/products/{product}/guides/_index.md` — 检查是否有匹配的合成指南
+3. **Read** `.claude/skills/products/{product}/known-issues.jsonl` — 检查是否有匹配的已知问题
+4. **Read** `.claude/skills/products/{product}/guides/_index.md` — 检查是否有匹配的合成指南
    - 如匹配 → 读取对应 `guides/{topic}.md`，利用打分信息：
      - 🟢 8+ 分条目支持 claim → 强证据（`sourceType: "synthesized-guide"`, 注明分数）
      - 🔵 5-7 分条目 → 中等证据

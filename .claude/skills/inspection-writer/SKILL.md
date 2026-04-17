@@ -178,7 +178,7 @@ allowed-tools:
 调用 bash 脚本：
 
 ```bash
-bash skills/casework/scripts/generate-todo.sh "{caseDir}"
+bash .claude/skills/casework/scripts/generate-todo.sh "{caseDir}"
 ```
 
 输出 `TODO_OK|red=N,yellow=N,green=N`。

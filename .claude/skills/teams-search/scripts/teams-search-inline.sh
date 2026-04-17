@@ -34,7 +34,7 @@ done
 # ═══════════════════════════════════════════
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
-WRITE_EVENT="$PROJECT_ROOT/skills/casework/scripts/write-event.sh"
+WRITE_EVENT="$PROJECT_ROOT/.claude/skills/casework/scripts/write-event.sh"
 EVENT_DIR="$CASE_DIR/.casework/events"
 
 START_TS=$(date -u +%FT%TZ)

@@ -148,7 +148,7 @@ AR Case 额外读取 `notes-ar.md`。
 #### 3.5 generate-todo.sh
 
 ```bash
-bash skills/casework/scripts/generate-todo.sh "{caseDir}"
+bash .claude/skills/casework/scripts/generate-todo.sh "{caseDir}"
 # 输出: TODO_OK|red=N,yellow=N,green=N
 ```
 

@@ -294,7 +294,10 @@
           "project": "AzureStorageDevices"
         }
       ],
-      "mslearnTocPaths": []
+      "mslearnTocPaths": [
+        "azure/azure-storage/blobs",
+        "azure/azure-storage/files"
+      ]
     },
     {
       "id": "acr",
@@ -369,7 +372,9 @@
           "project": "AzureAdaptiveCloud"
         }
       ],
-      "mslearnTocPaths": []
+      "mslearnTocPaths": [
+        "azure/general"
+      ]
     },
     {
       "id": "avd",
@@ -431,7 +436,7 @@
         "classification",
         "eDiscovery"
       ],
-      "onenoteSection": null,
+      "onenoteSection": "M365 Purivew Compliance/",
       "mcvkbSection": null,
       "podServicesDir": "M365 Purivew Compliance",
       "contentIdeaKeywords": [
@@ -478,7 +483,7 @@
         "MDO",
         "defender for office"
       ],
-      "onenoteSection": null,
+      "onenoteSection": "M365 MDO EOP/",
       "mcvkbSection": null,
       "podServicesDir": "M365 MDO EOP",
       "contentIdeaKeywords": [
@@ -517,9 +522,9 @@
         "SIEM",
         "SOAR"
       ],
-      "onenoteSection": null,
-      "mcvkbSection": null,
-      "podServicesDir": null,
+      "onenoteSection": "Microsoft Defender for Cloud/",
+      "mcvkbSection": "VM+SCIM/======22.Security======",
+      "podServicesDir": "Microsoft Defender for Cloud",
       "contentIdeaKeywords": [
         "Defender for Cloud",
         "Sentinel"
@@ -536,7 +541,10 @@
           "wiki": "Sentinel"
         }
       ],
-      "mslearnTocPaths": []
+      "mslearnTocPaths": [],
+      "extraSections": [
+        "Sentinel/"
+      ]
     },
     {
       "id": "automation",
@@ -558,16 +566,24 @@
         "schedule",
         "update management"
       ],
-      "onenoteSection": null,
-      "mcvkbSection": null,
-      "podServicesDir": null,
+      "onenoteSection": "AUTOMATION/",
+      "mcvkbSection": "VM+SCIM/======16. Automation======",
+      "podServicesDir": "AUTOMATION",
       "contentIdeaKeywords": [
         "Automation",
         "Update Manager"
       ],
-      "adoWikis": [],
+      "adoWikis": [
+        {
+          "org": "Supportability",
+          "project": "AzureIaaSVM"
+        }
+      ],
       "mslearnTocPaths": [
         "azure/automation"
+      ],
+      "extraSections": [
+        "Azure Update Manager/"
       ]
     }
   ],

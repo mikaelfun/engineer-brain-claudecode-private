@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tests for skills/casework/scripts/write-event.sh
+# Tests for .claude/skills/casework/scripts/write-event.sh
 # Covers: basic write, tmp cleanup, concurrent safety (50 writers).
 #
 # NOTE: Uses a relative ./scripts/tests/tmp-* dir instead of mktemp -d to
@@ -9,7 +9,7 @@ set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
 SRC_ROOT="$(cd "$HERE/../.." && pwd)"
-SCRIPT="$SRC_ROOT/skills/casework/scripts/write-event.sh"
+SCRIPT="$SRC_ROOT/.claude/skills/casework/scripts/write-event.sh"
 
 # Use a RELATIVE path for tmp — Windows python3 misinterprets Git Bash's
 # /c/... POSIX paths (see spike-notes.md "Atomic Write Validation").
