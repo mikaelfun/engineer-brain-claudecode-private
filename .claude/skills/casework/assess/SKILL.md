@@ -89,8 +89,13 @@ fi
 
 ```bash
 eval $(bash .claude/skills/casework/assess/scripts/gate-subagents.sh "{caseDir}/.casework/data-refresh-output.json")
-# 上行注入 SPAWN_TEAMS / SPAWN_ONENOTE
+# 上行注入 SPAWN_TEAMS / SPAWN_ONENOTE / TEAMS_DEGRADED / ONENOTE_DEGRADED
 ```
+
+**Degraded 处理（T2.9.2）**：当 `TEAMS_DEGRADED=1` 或 `ONENOTE_DEGRADED=1` 时：
+- **不 spawn** 对应 subagent（采集都没成功，digest 无源）
+- 在 Step 4 LLM prompt 里必须标注 `⚠️ teams-refresh-degraded` / `⚠️ onenote-refresh-degraded`，避免主 LLM 把"信号缺失"错判成"客户/ICM 没动静"
+- 写 execution-plan 时把 degraded 源列进 `warnings[]`（PRD §4.3）：`warnings: ["teams-refresh-degraded"]`
 
 **并行 spawn 策略**（本 skill 在一次 Main Agent response 里用 Agent tool 两次，claude harness 自动并行）：
 
@@ -204,6 +209,12 @@ ASSESS_OK|delta=ok|status={actualStatus}|actions={N}|compliance={cache-hit|re-in
 - ❌ 不发邮件（email-drafter 产出只写到 drafts/）
 - ❌ 不修改 `teams/*.md` chat 原始文件（subagent 职责）
 - ✅ compliance.entitlementOk === false 直接阻断 Step 3/4，避免浪费 LLM
+
+## Pitfalls (known)
+
+- **Git Bash `/tmp/` 路径跨 shell 漂移（T2.9.3）**：MSYS Bash 写到 `/tmp/...`，Windows Python `open()` 会把 `/tmp/` 解析到 `C:\Users\...\AppData\Local\Temp\`——两边路径不一致导致 `FileNotFoundError`。**规则**：所有 LLM decision / intermediate tmp file 写到 **`{caseDir}/.casework/`** 下（已挂载在相同 Windows mount，无漂移），不要用 `/tmp/`。
+- **compliance-hash 字段对齐（T2.9.1）**：真实 case-info.md 用 `## Entitlement` heading + `| Service Level | Premier |` 子字段 + 顶层 `| SAP |` 行，**不是** `| Entitlement |` / `| SAP Code |` row。utility 已对齐；手写 fixture 时务必按真实格式。
+- **Degraded 源不是空信号（T2.9.2）**：`teams.status=FAILED` 会 newMessages=0，但这**不**等于"客户没在 Teams 发消息"。gate-subagents.sh 的 `TEAMS_DEGRADED=1` 是真相来源，Step 3 / Step 4 都必须尊重。
 
 ## 错误处理
 
