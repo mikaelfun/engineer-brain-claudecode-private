@@ -59,11 +59,10 @@ bash .claude/skills/casework/scripts/write-pipeline-state.sh "$CASE_DIR" data-re
 ```bash
 bash .claude/skills/casework/scripts/data-refresh.sh \
   --case-number {caseNumber} --case-dir "$CASE_DIR"
+# AR 模式额外传 --is-ar --main-case-number {MAIN_CASE_ID}
 ```
 
-AR 模式额外传 `--is-ar --main-case-number {MAIN_CASE_ID}`。
-
-详细参数和行为见 `.claude/skills/casework/data-refresh/SKILL.md`。产出：`.casework/data-refresh-output.json`。
+完整参数说明见 `.claude/skills/casework/data-refresh/SKILL.md`。产出：`.casework/data-refresh-output.json`。
 
 ### Step 2. Assess
 
