@@ -65,15 +65,15 @@ T0=$(date +%s)
 APID=$!
 trap 'kill $APID 2>/dev/null' EXIT
 
-# Wait for proxy ready
+# Wait for proxy ready (tight poll: 0.2s granularity, saves ~1s off the 1s-sleep loop)
 WAITED=0
-while [ $WAITED -lt 15 ]; do
+while [ $WAITED -lt 50 ]; do
   curl -s -o /dev/null -w "%{http_code}" -X POST "http://localhost:$PORT/" \
     -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" \
     -d '{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"teams-inline","version":"1.0"}}}' 2>/dev/null | grep -q "200" && break
-  sleep 1; WAITED=$((WAITED + 1))
+  sleep 0.2; WAITED=$((WAITED + 1))
 done
-[ $WAITED -ge 15 ] && { echo "TEAMS_FAIL|reason=proxy start timeout"; exit 1; }
+[ $WAITED -ge 50 ] && { echo "TEAMS_FAIL|reason=proxy start timeout"; exit 1; }
 
 # ═══════════════════════════════════════════
 # MCP searches → temp files → Python parses + fetches messages → dump
@@ -200,22 +200,32 @@ q2 = load_resp('q2.json')
 # Extract all chatIds
 all_ids = extract_chat_ids(q1) | extract_chat_ids(q2)
 
-# Fetch messages for each chat — PARALLEL via ThreadPoolExecutor
-# Single proxy handles concurrent requests fine (verified: 1 proxy = N proxy speed)
+# Fetch messages for each chat — PARALLEL via ThreadPoolExecutor.
+# Per-token throttle validated (Apr 17 experiments): ≤6 concurrent calls
+# on a single proxy = clean 200s; 8+ triggers 502/504. We cap at 3 to
+# stay well below the threshold and leave headroom for auth contention.
+# (Cross-case concurrency is safe: each case has its own proxy/token bucket.)
 import concurrent.futures
 
+# fetch_one_chat: single call with 1 retry on transient upstream 502/504/empty.
+# Graph's Teams backend occasionally returns 502 under load — a quick retry
+# on the same warm proxy typically succeeds in ~1-2s.
 def fetch_one_chat(args):
     call_id, chat_id = args
-    resp = mcp_call(call_id, 'ListChatMessages', {'chatId': chat_id, 'top': 20})
     msgs = []
-    if resp:
-        for c in resp.get('result', {}).get('content', []):
-            try:
-                raw = json.loads(c.get('text', ''))
-                msgs = raw.get('messages', [])
-                break
-            except:
-                pass
+    for attempt in range(2):
+        resp = mcp_call(call_id + attempt * 1000, 'ListChatMessages', {'chatId': chat_id, 'top': 20})
+        if resp and not resp.get('error'):
+            for c in resp.get('result', {}).get('content', []):
+                try:
+                    raw = json.loads(c.get('text', ''))
+                    maybe = raw.get('messages', None)
+                    if maybe is not None:  # empty list still means "server responded cleanly"
+                        msgs = maybe
+                        return chat_id, msgs
+                except:
+                    pass
+        # retry only if we got nothing usable
     return chat_id, msgs
 
 chat_messages = {}
@@ -249,7 +259,7 @@ if sorted_ids:
     total = len(tasks)
     done_count = 0
     _write_progress(0, total)
-    with concurrent.futures.ThreadPoolExecutor(max_workers=min(len(tasks), 8)) as ex:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=min(len(tasks), 3)) as ex:
         futures = {ex.submit(fetch_one_chat, t): t for t in tasks}
         for fut in concurrent.futures.as_completed(futures):
             try:
