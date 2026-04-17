@@ -180,7 +180,7 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
         allowedTools: ['Bash', 'Read', 'Write', 'Edit', 'Glob', 'Grep', 'Agent'],
         permissionMode: 'bypassPermissions',
         allowDangerouslySkipPermissions: true,
-        maxTurns: 200,
+        maxTurns: 300,
         stderr: (data: string) => console.error(`[SDK:stderr:patrol]`, data.trim()),
       },
     })) {
