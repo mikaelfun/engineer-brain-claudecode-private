@@ -60,3 +60,28 @@ Case restored from `_backup/2604140040001804.1776404088/`. Only casework-meta.js
 
 ### DELTA_EMPTY path (prior entry)
 Already validated via tempdir fixture smoke (see first log entry). Fast path zero-LLM confirmed.
+
+---
+
+## T2.9 Follow-up Fixes (real-case smoke debt)
+
+### T2.9.1 compliance-hash field alignment — d4d5e54
+- Real case-info.md uses `## Entitlement` heading + `| Service Level | Premier |`, not `| Entitlement | Premier |` row.
+- Utility now extracts `Service Level` + `SAP` (Support Plan never existed in prod, removed).
+- Fixtures replaced with real-format `case-info-real-{premier,prodirect}.md`.
+- Regression test verifies prod case 2604140040001804 → hash `c728508b` (non-empty).
+
+### T2.9.2 gate-subagents degraded flags — a002574
+- Old: teams.status=FAILED + newMessages=0 → SPAWN_TEAMS=0 (silent skip, indistinguishable from empty).
+- New: also emit `TEAMS_DEGRADED=1`/`ONENOTE_DEGRADED=1` when status in {FAILED,TIMEOUT}.
+- Fixture `data-refresh-output-teams-failed.json` pins the contract.
+
+### T2.9.3 SKILL.md pitfalls section — 6a00129
+- Step 3 snippet updated to show 4-flag output.
+- Pitfalls: `/tmp/` path drift (decision tmp must live under `{caseDir}/.casework/`),
+  compliance-hash field names, degraded-source handling.
+
+### T2.9.4 Teams search retry bug — ISS-216 filed
+- RCA: `head -1` in `grep -o 'data: {.*}' | sed | head -1` discards valid JSON-RPC
+  result when agency emits auth-challenge SSE frame first.
+- Scope: `.claude/skills/teams-search/scripts/teams-search-inline.sh` (out of T2 assess).
