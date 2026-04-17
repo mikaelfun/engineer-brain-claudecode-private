@@ -130,26 +130,37 @@ eval $(bash .claude/skills/casework/assess/scripts/gate-subagents.sh "{caseDir}/
 - 在 Step 4 LLM prompt 里必须标注 `⚠️ teams-refresh-degraded` / `⚠️ onenote-refresh-degraded`
 - 写 execution-plan 时把 degraded 源列进 `warnings[]`：`warnings: ["teams-refresh-degraded"]`
 
-**Enrichment 执行策略（统一 inline）**：
+**Enrichment 执行策略（脚本调 LLM API，不占 casework context）**：
 
-> V2 设计决策：**全部 inline，不 spawn**。OneNote 分析和 Teams digest 都在 assess 主 LLM context 内完成。省去 subagent spawn 开销（~30s），且产出格式统一为 V1 结构化格式。
+> V2 设计决策：enrichment 分析通过 `generate-digest.py` 脚本调 NewAPI gateway 的 LLM 完成，结果写文件。casework agent 只 Read 成品 digest，raw 数据不进 casework context，保护 assess 判断质量。
 
-| 数据源 | 读取文件 | 产出 |
-|--------|---------|------|
-| Teams | `{caseDir}/teams/*.md` | **重写 `teams/teams-digest.md`**（模板见下）+ `teams/_relevance.json` |
-| OneNote | `{caseDir}/onenote/_page-*.md` | **重写 `onenote-digest.md`**（模板见下） |
+```bash
+# Teams digest（有 chat 文件时执行）
+if ls "{caseDir}/teams/"*.md 2>/dev/null | grep -v '^_' | head -1 > /dev/null 2>&1; then
+  python3 .claude/skills/casework/assess/scripts/generate-digest.py \
+    --type teams --case-dir "{caseDir}" --case-number "{caseNumber}" \
+    --project-root "."
+fi
+
+# OneNote digest（有 _page-*.md 时执行）
+if ls "{caseDir}/onenote/_page-"*.md 2>/dev/null | head -1 > /dev/null 2>&1; then
+  python3 .claude/skills/casework/assess/scripts/generate-digest.py \
+    --type onenote --case-dir "{caseDir}" --case-number "{caseNumber}" \
+    --project-root "."
+fi
+```
+
+产出文件（Step 4 直接 Read）：
+| 数据源 | 产出 | 模板 |
+|--------|------|------|
+| Teams | `{caseDir}/teams/teams-digest.md` | `.claude/skills/casework/teams-search/teams-digest-template.md` |
+| OneNote | `{caseDir}/onenote/onenote-digest.md` | `.claude/skills/onenote/onenote-digest-template.md` |
+
+**失败隔离**：脚本失败 → digest 文件不生成 → Step 4 LLM 不引用该数据源，继续运行。
 
 **patrol mode (depth=1) — inline 路径**：
 
-不 spawn 任何 enrichment agent。主 LLM 直接读 raw 文件做分析，产出结构化文件供 Step 4 引用：
-
-**Teams inline 分析**：读 `{caseDir}/teams/*.md`（排除 `_*.md`），做 relevance scoring + key facts 提取，**写 `{caseDir}/teams/teams-digest.md` + `teams/_relevance.json`**。
-
-格式模板：读取 `.claude/skills/casework/teams-search/teams-digest-template.md`。
-
-**OneNote inline 分析**：读 `{caseDir}/onenote/_page-*.md`，分析后**重写 `{caseDir}/onenote/onenote-digest.md`**。
-
-格式模板：读取 `.claude/skills/onenote/onenote-digest-template.md`。
+**失败隔离**：脚本失败或 `_page-*.md` 不存在 → Step 4 LLM 不引用 OneNote context。
 
 > **性能影响**：raw 文件直接进 Step 4 LLM context，增加 input tokens 但省去 2 次 subagent spawn 开销（~30s 冷启动）。对于 patrol 的 3-10 case 并行场景，总体更快。
 
