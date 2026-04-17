@@ -50,7 +50,8 @@ allowed-tools:
 
 > **T2 已交付**：Step 2（compliance + actualStatus + teams digest + onenote classify）已抽为独立 sub-skill `/casework:assess`，见 `.claude/skills/casework/assess/SKILL.md`。
 >
-> - 完整 v2 路径：`data-refresh` (T1) → `assess` (T2) → `act` (T3, 未交付) → `summarize` (T4, 未交付)
+> - 完整 v2 路径：`data-refresh` (T1) → `assess` (T2) → `act` (T3) → `summarize` (T4, 未交付)
+> - act 内部：读 execution-plan.json → IR-first 拦截 → 逐 action spawn agent → challenge gate 标记 → pipeline-state 更新
 > - assess 内部：DELTA_EMPTY 快速路径（零 LLM）→ compliance hash gate（cache-hit 复用）→ 并行 spawn `teams-digest-writer` + `onenote-classifier`（按 delta 门控）→ 主 LLM 一次性决策 actualStatus + actions → 写 `.casework/execution-plan.json`
 > - 本 SKILL.md 下方的 B3 (compliance-check) + B4 (status-judge) 流程是 v1 遗留，保留作兼容回退。新 casework 调用应优先走 `/casework:assess`；冒烟验证通过后 T3 会把下述 v1 Step 2 段删除。
 >
