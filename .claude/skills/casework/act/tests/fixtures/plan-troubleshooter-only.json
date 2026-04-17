@@ -1,0 +1,10 @@
+{
+  "caseNumber": "2604140040001804",
+  "actualStatus": "researching",
+  "daysSinceLastContact": 2,
+  "actions": [
+    { "type": "troubleshooter", "priority": 1, "status": "pending" }
+  ],
+  "noActionReason": null,
+  "routingSource": "llm"
+}

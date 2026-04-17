@@ -1,0 +1,11 @@
+{
+  "caseNumber": "2604140040001804",
+  "actualStatus": "pending-engineer",
+  "daysSinceLastContact": 0,
+  "actions": [
+    { "type": "troubleshooter", "priority": 1, "status": "pending" },
+    { "type": "email-drafter", "priority": 2, "status": "pending", "emailType": "initial-response", "dependsOn": "troubleshooter" }
+  ],
+  "noActionReason": null,
+  "routingSource": "llm"
+}

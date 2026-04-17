@@ -1,0 +1,8 @@
+{
+  "caseNumber": "2604140040001804",
+  "actualStatus": "pending-pg",
+  "daysSinceLastContact": 1,
+  "actions": [],
+  "noActionReason": "DELTA_EMPTY — no new data",
+  "routingSource": "rule-table"
+}
