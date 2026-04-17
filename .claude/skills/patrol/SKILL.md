@@ -35,7 +35,7 @@ allowed-tools:
   ├── check-ir-status-batch.ps1 -SaveMeta     （~3s，批量 IR/FDR/FWR）
   └── warm-dtm-token.ps1                       （~10s，DTM token 预热）
 
-阶段 0.5: spawn teams-search-queue（后台常驻，串行处理 Teams MCP）
+阶段 0.5: ICM token 预热（可选，170 分钟缓存）
 
 阶段 1+2 合并（Streaming Pipeline，统一轮询循环）:
   全量并行启动 casework-light → 统一轮询循环：
@@ -164,59 +164,15 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
    - 预热完成后，`download-attachments.ps1` 自动优先读取全局缓存，不再需要 Playwright 导航
    - 如果全局 token 缓存仍有效（<50 分钟），`warm-dtm-token.ps1` 会跳过 Playwright，几乎零耗时
 
-5. **阶段 0.5：启动 Teams Search Queue（后台）**
+5. **阶段 0.5：ICM Token 预热（可选）**
 
-   在预热完成后、casework 启动前，spawn 一个后台 agent 串行处理 Teams 搜索请求。
-   这避免多个 casework agent 同时调用 Teams MCP 导致排队/超时。
+   V2 架构中 Teams 搜索和 ICM Discussion 由各 case 的 `data-refresh.sh` 内联执行（每 case 独立 agency proxy / REST API），不再需要全局 queue/daemon。
 
-   **⚠️ MCP 预检（主 agent 执行，不是 subagent）**：
-
-   在 spawn queue agent 之前，主 agent 先调用一次 Teams MCP 验证可用性：
-   ```
-   SearchTeamMessagesQueryParameters(queryString="test", size=1)
-   ```
-
-   - **成功返回**（有 JSON 结果）→ Teams MCP 可用，继续 spawn queue agent
-   - **返回错误**（`Connection closed` / `MCP error` / timeout）→ **跳过 Teams 搜索**：
-     ```bash
-     echo "TEAMS_MCP_UNAVAILABLE" > "{patrolDir}/teams-mcp-status"
-     echo "⚠️ Teams MCP 不可用，跳过本次 Teams 搜索。请运行 /mcp 重启 Teams MCP server。"
-     ```
-     不 spawn queue agent，直接进入阶段 0.6。后续 casework-light 的 Teams request.json 不会被处理，
-     patrol 结束时通过 orphan cleanup 清理。**在最终汇总中输出 Teams MCP 状态警告。**
-
-   **预检通过后**，清理上次残留的信号文件：
+   ICM token 预热（170 分钟缓存，跨 case 共享）：
    ```bash
-   mkdir -p "{patrolDir}"
-   rm -f "{patrolDir}/teams-queue-active" "{patrolDir}/teams-queue-stop" "{patrolDir}/teams-mcp-status"
+   node .claude/skills/icm-discussion/scripts/icm-discussion-ab.js --token-only 2>/dev/null || true
+   # 输出: TOKEN_OK|{length} 或 TOKEN_FAIL（非致命，各 case fallback 自行获取）
    ```
-
-   读取 `config.json` 中 `teamsSearchCacheHours`（默认 8）。
-
-   ```
-   Agent({
-     subagent_type: "teams-search-queue",
-     model: "haiku",
-     prompt: "Serial Teams search queue for patrol. casesRoot={casesRoot}. teamsSearchCacheHours={cacheHours}. Read .claude/skills/teams-search-queue/SKILL.md and execute the full queue loop.",
-     run_in_background: true
-   })
-   ```
-
-   > 使用 `subagent_type: "teams-search-queue"` 加载 agent 定义（含 Teams MCP），`model: "haiku"` 覆盖模型。如果新 session 报 agent type not found，需重启 Claude Code 重新索引 `.claude/agents/`。
-
-   记录 teams-queue agent 的 task ID，阶段 2 需要用来等待/清理。
-
-   **启动 ICM Discussion Daemon（后台 node 进程）**：
-
-   ICM discussion 抓取使用 playwright-core 直接控制 Edge（独立 profile，headless），不走 MCP。
-   daemon 在 patrol 期间保持浏览器 session 开启，串行处理 ICM discussion 请求，避免重复 SSO。
-
-   ```bash
-   bash .claude/skills/icm-discussion/scripts/icm-discussion-warm.sh {casesRoot}
-   ```
-
-   输出 `ICM_DAEMON_READY|pid=xxx` 表示 daemon 已就绪。
-   casework-light-runner.sh 在 ICM 需要刷新时自动写 request 到 `.patrol/icm-queue/`。
 
 6. **阶段 0.6：写 phase 文件（processing）**
 
@@ -264,14 +220,14 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
    while (有未到达 done 的 case) {
      sleep 12s
      
-     # 批量检查哪些 case 有新的 execution-plan.json
-     Bash: for each case, check [ -f execution-plan.json ] && parse actions
+     # 批量检查哪些 case 有新的 .casework/execution-plan.json
+     Bash: for each case, check [ -f .casework/execution-plan.json ] && parse actions
      
      for each case:
        switch (case.phase):
        
          case "gathering":
-           if execution-plan.json 存在:
+           if .casework/execution-plan.json 存在:
              读取 plan，解析 actions
              if no-action:
                → case.phase = "inspecting"
@@ -343,64 +299,13 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
    - 所有 case 到达 `done` 状态
    - 或总时长超过 25 分钟（超时跳出，未完成 case 标记为 timeout）
 
-8. **阶段 2.5：等待 Queue 排空 → 停止 Teams Queue**
+8. **阶段 2.5：清理**
 
-   所有阶段 2 action 完成后，**先等待队列排空，再发停止信号**。
+   V2 不需要 queue drain 或 daemon stop（各 case 的 data-refresh.sh 已自行清理 agency proxy）。
 
-   > Teams queue 可能在阶段 1 就已处理完所有请求，但阶段 2.5 确保彻底清理。
-
-   **排空检查循环**（最多等 5 分钟）：
+   清理 orphan agency 进程（防御性）：
    ```bash
-   CASES_ROOT="{casesRoot}"
-   MAX_WAIT=300  # 5 分钟（阶段 2 时大概率已排空）
-   WAITED=0
-   while [ $WAITED -lt $MAX_WAIT ]; do
-     PENDING=$(find "$CASES_ROOT/active" -path "*/teams/request.json" -type f 2>/dev/null | wc -l)
-     if [ "$PENDING" -eq 0 ]; then
-       echo "QUEUE_DRAINED|all requests processed"
-       break
-     fi
-     echo "QUEUE_DRAINING|pending=$PENDING|waited=${WAITED}s"
-     sleep 15
-     WAITED=$((WAITED + 15))
-   done
-   if [ $WAITED -ge $MAX_WAIT ]; then
-     echo "QUEUE_DRAIN_TIMEOUT|pending=$PENDING|forcing stop"
-   fi
-   ```
-
-   排空后（或超时后），发送停止信号：
-   ```bash
-   echo "$(date +%s)" > "{patrolDir}/teams-queue-stop"
-   ```
-
-   使用 `TaskOutput` 等待 teams-queue agent 退出（最多 5 分钟）。
-   如果超时，跳过（queue agent 会自行退出）。
-
-   清理信号文件：
-   ```bash
-   rm -f "{patrolDir}/teams-queue-active" "{patrolDir}/teams-queue-stop"
-   ```
-
-   **清理孤儿 request.json**（drain 超时时必须执行）：
-   ```bash
-   # Remove orphaned Teams request.json files that the queue never processed
-   find "{casesRoot}/active" -path "*/teams/request.json" -type f -delete 2>/dev/null
-   ORPHANS_CLEANED=$?
-   echo "ORPHAN_CLEANUP|removed=$(find '{casesRoot}/active' -path '*/teams/request.json' -type f 2>/dev/null | wc -l) remaining"
-   ```
-
-   **停止 ICM Discussion Daemon**：
-   ```bash
-   echo "$(date +%s)" > "{patrolDir}/icm-queue-stop"
-   ICM_PID=$(cat "{patrolDir}/icm-queue-pid" 2>/dev/null)
-   if [ -n "$ICM_PID" ]; then
-     for i in $(seq 1 30); do
-       kill -0 $ICM_PID 2>/dev/null || break
-       sleep 1
-     done
-   fi
-   rm -f "{patrolDir}/icm-queue-active" "{patrolDir}/icm-queue-stop" "{patrolDir}/icm-queue-pid"
+   tasklist 2>/dev/null | grep -c -i agency.exe && echo "⚠️ orphan agency processes detected" || true
    ```
 
 10. **汇总 Todo + 结构化输出**
@@ -448,7 +353,7 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
 - **Streaming Pipeline**：不等所有 casework-light 完成，每个 case 完成即推进下一步
 - **Inspection 并行**：每个 case 独立 spawn inspection-writer，不串行批量
 - **casework-light**（depth=1）执行信息收集 + 决策，不 spawn 任何 subagent
-- patrol 主 agent（depth=0）根据 execution-plan.json 按需 spawn troubleshooter/challenger/email-drafter/inspection-writer（depth=1）
+- patrol 主 agent（depth=0）根据 `.casework/execution-plan.json` 按需 spawn troubleshooter/challenger/email-drafter/inspection-writer（depth=1）
 - 这种设计绕过 Claude Code subagent depth=1 的嵌套限制，同时最大化并行度
 - patrol session **不读取** case-info.md、emails.md 等业务数据（由 casework-light 内联处理）
 
@@ -466,7 +371,7 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
 | onenote-search (ripgrep) | casework-light 内联 | ❌ 本地文件操作 |
 | compliance-check | casework-light 内联 | ❌ 本地脚本 |
 | status-judge | casework-light 内联 | ❌ LLM 分析 |
-| Teams 搜索 (MCP 调用) | teams-search-queue | ✅ MCP 互斥 |
+| Teams 搜索 (MCP 调用) | data-refresh.sh inline | ❌ 各 case 独立 agency proxy |
 | Teams 后处理 (write-teams) | casework-light 内联 | ❌ 本地脚本 |
 | troubleshooter (Kusto/docs) | streaming pipeline spawn | ❌ 各 case 并行 |
 | challenger | streaming pipeline spawn | ❌ 前台等待 |
