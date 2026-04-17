@@ -208,36 +208,63 @@ echo "✅ All 5 data paths finished."
 
 # ── 6. Digest generation (Teams + OneNote, parallel, LLM API call) ──
 # Runs AFTER raw data paths complete (needs their output files).
-# Two digest jobs run in parallel — each calls NewAPI independently.
+# Delta-gated: skip if no new data AND existing digest file present.
 DIGEST_SCRIPT="$PROJECT_ROOT/.claude/skills/casework/scripts/generate-digest.py"
 if [ -f "$DIGEST_SCRIPT" ]; then
-  echo "⏳ Generating digests (teams + onenote, parallel)..."
+  # Read delta from event files
+  TEAMS_DELTA=$(python3 -c "
+import json
+try:
+    e = json.load(open(r'$EVT_DIR/teams.json'))
+    d = e.get('delta', {})
+    print(int(d.get('newMessages', 0)) + int(d.get('newChats', 0)))
+except: print(0)
+" 2>/dev/null || echo "0")
 
-  # Teams digest (only if chat files exist)
+  ONENOTE_DELTA=$(python3 -c "
+import json
+try:
+    e = json.load(open(r'$EVT_DIR/onenote.json'))
+    d = e.get('delta', {})
+    print(int(d.get('newPages', 0)) + int(d.get('updatedPages', 0)))
+except: print(0)
+" 2>/dev/null || echo "0")
+
+  echo "⏳ Digest gate: teams_delta=$TEAMS_DELTA onenote_delta=$ONENOTE_DELTA"
+
+  # Teams digest: delta > 0 OR no existing digest
   PID_DIGEST_TEAMS=""
-  if ls "$CASE_DIR_ABS/teams/"*.md 2>/dev/null | grep -qv '/_'; then
-    (
-      python3 "$DIGEST_SCRIPT" --type teams \
-        --case-dir "$CASE_DIR_ABS" --case-number "$CASE_NUMBER" \
-        --project-root "$PROJECT_ROOT_WIN" \
-        > "$LOGD/digest-teams.log" 2>&1
-    ) &
-    PID_DIGEST_TEAMS=$!
+  if [ "$TEAMS_DELTA" -gt 0 ] || [ ! -f "$CASE_DIR_ABS/teams/teams-digest.md" ]; then
+    if ls "$CASE_DIR_ABS/teams/"*.md 2>/dev/null | grep -qv '/_'; then
+      (
+        python3 "$DIGEST_SCRIPT" --type teams \
+          --case-dir "$CASE_DIR_ABS" --case-number "$CASE_NUMBER" \
+          --project-root "$PROJECT_ROOT_WIN" \
+          > "$LOGD/digest-teams.log" 2>&1
+      ) &
+      PID_DIGEST_TEAMS=$!
+    fi
+  else
+    echo "DIGEST_SKIP|teams|delta=0|existing=teams-digest.md" > "$LOGD/digest-teams.log"
   fi
 
-  # OneNote digest (only if _page-*.md files exist)
+  # OneNote digest: delta > 0 OR no existing digest
   PID_DIGEST_ONENOTE=""
-  if ls "$CASE_DIR_ABS/onenote/_page-"*.md 2>/dev/null | head -1 > /dev/null 2>&1; then
-    (
-      python3 "$DIGEST_SCRIPT" --type onenote \
-        --case-dir "$CASE_DIR_ABS" --case-number "$CASE_NUMBER" \
-        --project-root "$PROJECT_ROOT_WIN" \
-        > "$LOGD/digest-onenote.log" 2>&1
-    ) &
-    PID_DIGEST_ONENOTE=$!
+  if [ "$ONENOTE_DELTA" -gt 0 ] || [ ! -f "$CASE_DIR_ABS/onenote/onenote-digest.md" ]; then
+    if ls "$CASE_DIR_ABS/onenote/_page-"*.md 2>/dev/null | head -1 > /dev/null 2>&1; then
+      (
+        python3 "$DIGEST_SCRIPT" --type onenote \
+          --case-dir "$CASE_DIR_ABS" --case-number "$CASE_NUMBER" \
+          --project-root "$PROJECT_ROOT_WIN" \
+          > "$LOGD/digest-onenote.log" 2>&1
+      ) &
+      PID_DIGEST_ONENOTE=$!
+    fi
+  else
+    echo "DIGEST_SKIP|onenote|delta=0|existing=onenote-digest.md" > "$LOGD/digest-onenote.log"
   fi
 
-  # Wait for both digest jobs
+  # Wait for both digest jobs (if launched)
   [ -n "$PID_DIGEST_TEAMS" ] && wait "$PID_DIGEST_TEAMS" 2>/dev/null || true
   [ -n "$PID_DIGEST_ONENOTE" ] && wait "$PID_DIGEST_ONENOTE" 2>/dev/null || true
 
