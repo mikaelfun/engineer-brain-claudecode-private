@@ -46,6 +46,19 @@ allowed-tools:
 - **路径格式**：本机 Bash 为 Git Bash，路径**必须**用 POSIX 格式 `/c/Users/...`。❌ `C:\Users\...` ❌ `C:/Users/...` — 这两种格式在 `>` 重定向中会失败。`config.json` 的 `casesRoot` 为相对路径时，先 `cd` 到项目根再拼接，或用 `$(cd /c/...; pwd)` 解析为绝对路径
 - **调用计数**：Main Agent 在整个 casework 流程中累计 `bashCalls`（Bash 工具调用次数）、`toolCalls`（所有工具调用次数，含 Read/Glob/Grep/Edit/Agent/Bash/MCP）、`agentSpawns`（Agent 工具 spawn 次数），最后传给 timing 脚本
 
+## Casework v2 迁移说明（Step 2 已下放）
+
+> **T2 已交付**：Step 2（compliance + actualStatus + teams digest + onenote classify）已抽为独立 sub-skill `/casework:assess`，见 `.claude/skills/casework/assess/SKILL.md`。
+>
+> - 完整 v2 路径：`data-refresh` (T1) → `assess` (T2) → `act` (T3, 未交付) → `summarize` (T4, 未交付)
+> - assess 内部：DELTA_EMPTY 快速路径（零 LLM）→ compliance hash gate（cache-hit 复用）→ 并行 spawn `teams-digest-writer` + `onenote-classifier`（按 delta 门控）→ 主 LLM 一次性决策 actualStatus + actions → 写 `.casework/execution-plan.json`
+> - 本 SKILL.md 下方的 B3 (compliance-check) + B4 (status-judge) 流程是 v1 遗留，保留作兼容回退。新 casework 调用应优先走 `/casework:assess`；冒烟验证通过后 T3 会把下述 v1 Step 2 段删除。
+>
+> **Step 2 新契约**：
+> - 输入：`{caseDir}/.casework/data-refresh-output.json`（T1 产出）
+> - 输出：`{caseDir}/.casework/execution-plan.json`（PRD §4.3 schema） + `{caseDir}/casework-meta.json` upsert
+> - 验收：`bash .claude/skills/casework/assess/scripts/write-execution-plan.py ...` schema 校验通过
+
 ## 执行步骤
 
 ### Step 1. Changegate + 分路
