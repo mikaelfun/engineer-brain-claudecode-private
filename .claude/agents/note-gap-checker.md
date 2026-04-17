@@ -10,5 +10,5 @@ maxTurns: 200
 # Note Gap Checker Agent
 
 Per-case note gap detection agent.
-Read `.claude/skills/note-gap/SKILL.md` for execution steps.
+Read `.claude/skills/casework/note-gap/SKILL.md` for execution steps.
 Execute for the given case number and case directory.

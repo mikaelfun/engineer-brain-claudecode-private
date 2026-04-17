@@ -249,9 +249,9 @@ echo "AGENT_AVAILABLE=$AGENT_OK"
     Case {caseNumber}，caseDir={caseDir}（绝对路径）。
     contactName={contactName}，contactEmail={contactEmail}。
     ⚠️ QUEUE_MODE：MCP 搜索由 patrol teams-queue agent 负责，你不做 MCP 调用。
-    请读取 .claude/skills/teams-search/SKILL.md，执行 QUEUE_MODE 路径：
+    请读取 .claude/skills/casework/teams-search/SKILL.md，执行 QUEUE_MODE 路径：
     1. 等待 {caseDir}/teams/_mcp-raw.json 出现（每 10s 检查，最多等 180s）
-    2. 运行 python3 .claude/skills/teams-search/scripts/build-input-from-raw.py "{caseDir}" 生成 _input.json
+    2. 运行 python3 .claude/skills/casework/teams-search/scripts/build-input-from-raw.py "{caseDir}" 生成 _input.json
     3. 运行 write-teams.ps1 -InputFile _input.json
     4. 执行 Step 5（relevance + digest）
     ⏱ 第一个 Bash 调用中写 date +%s > "{caseDir}/logs/.t_teamsSearch_start"
@@ -268,7 +268,7 @@ echo "AGENT_AVAILABLE=$AGENT_OK"
   prompt: |
     Case {caseNumber}，caseDir={caseDir}（绝对路径）。
     contactName={contactName}，contactEmail={contactEmail}。
-    请先读取 .claude/skills/teams-search/SKILL.md 获取完整执行步骤，然后执行。
+    请先读取 .claude/skills/casework/teams-search/SKILL.md 获取完整执行步骤，然后执行。
     ⚠️ 缓存预检已通过（{reason}），直接从 Step 0.5 开始，跳过 Step 0 缓存检查。
     ⏱ 第一个 Bash 调用中写 date +%s > "{caseDir}/logs/.t_teamsSearch_start"
     ⏱ 最后一个 Bash 调用中写 date +%s > "{caseDir}/logs/.t_teamsSearch_end"
