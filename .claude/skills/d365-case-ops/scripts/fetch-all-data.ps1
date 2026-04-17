@@ -201,17 +201,18 @@ if ($isAR) {
     }
 }
 
-# --- AR Mode: patch case-info.md with AR case's own title + case number ---
+# --- AR Mode: patch case-info.md with AR case's own title, SAP, statement ---
 if ($isAR) {
     $arCaseInfoFile = Join-Path (Join-Path $OutputDir $arCaseNumber) "case-info.md"
     if (Test-Path $arCaseInfoFile) {
-        Write-Host "🔵 Patching case-info.md with AR title..."
-        # Fetch AR case's own title via OData
+        Write-Host "🔵 Patching case-info.md with AR title, SAP, statement..."
+        # Fetch AR case's own title + SAP via OData
         $arIncidentId = Get-IncidentId -TicketNumber $arCaseNumber
         if ($arIncidentId) {
-            $arInc = Invoke-D365Api -Endpoint "/api/data/v9.0/incidents($arIncidentId)?`$select=title"
+            $arInc = Invoke-D365Api -Endpoint "/api/data/v9.0/incidents($arIncidentId)?`$select=title,msdfm_supportareapath"
             if ($arInc -and $arInc.title) {
                 $arTitle = $arInc.title
+                $arSap = $arInc.msdfm_supportareapath
                 $content = Get-Content $arCaseInfoFile -Raw -Encoding UTF8
                 # Replace header: "# Case {mainCaseNumber}" → "# Case {arCaseNumber} (AR)"
                 $content = $content -replace "^# Case $fetchCaseNumber", "# Case $arCaseNumber (AR of $fetchCaseNumber)"
@@ -219,10 +220,31 @@ if ($isAR) {
                 $content = $content -replace "(\| Title \|)[^\r\n]+", "| Title | $arTitle |"
                 # Replace Case Number row: "| Case Number | ... |" → AR case number
                 $content = $content -replace "(\| Case Number \|)[^\r\n]+", "| Case Number | $arCaseNumber (AR of $fetchCaseNumber) |"
+                # Add AR SAP row after existing SAP (keep main case SAP, add AR SAP)
+                if ($arSap) {
+                    $content = $content -replace "(\| Support Area Path \|[^\r\n]+)", "`$1`n| AR Support Area Path | $arSap |"
+                }
                 [System.IO.File]::WriteAllText($arCaseInfoFile, $content, [System.Text.UTF8Encoding]::new($false))
-                Write-Host "🔵 Patched: title='$arTitle', case=$arCaseNumber"
+                Write-Host "🔵 Patched: title='$arTitle', arSAP='$arSap', case=$arCaseNumber"
             } else {
                 Write-Host "⚠️ Could not fetch AR title, keeping main case title"
+            }
+
+            # Fetch AR customer statement (restricted attributes)
+            $arRestricted = Invoke-D365Api -Endpoint "/api/data/v9.0/incidents($arIncidentId)/msdfm_CaseRestrictedAttributesId?`$select=msdfm_customerstatement"
+            if ($arRestricted -and $arRestricted.msdfm_customerstatement) {
+                $arStmt = $arRestricted.msdfm_customerstatement
+                $content2 = Get-Content $arCaseInfoFile -Raw -Encoding UTF8
+                # Append AR Customer Statement section before the first "##" or at end
+                $arStmtBlock = "`n## AR Customer Statement`n`n$arStmt`n"
+                if ($content2 -match '(?m)^## ') {
+                    # Insert before first ## heading
+                    $content2 = $content2 -replace '(?m)(^## )', "$arStmtBlock`n`$1", 1
+                } else {
+                    $content2 += $arStmtBlock
+                }
+                [System.IO.File]::WriteAllText($arCaseInfoFile, $content2, [System.Text.UTF8Encoding]::new($false))
+                Write-Host "🔵 Patched: AR statement ($($arStmt.Length) chars)"
             }
         }
     }
