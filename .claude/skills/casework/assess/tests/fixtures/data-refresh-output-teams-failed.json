@@ -1,0 +1,11 @@
+{
+  "caseNumber": "TEST-TEAMS-FAILED",
+  "deltaStatus": "DELTA_OK",
+  "refreshResults": {
+    "d365": { "status": "OK", "newEmails": 1, "newNotes": 0 },
+    "teams": { "status": "FAILED", "newChats": 0, "newMessages": 0, "error": "python exit 1" },
+    "onenote": { "status": "OK", "newPages": 1, "updatedPages": 0 },
+    "icm": { "status": "OK", "newEntries": 0 },
+    "attachments": { "status": "OK", "downloaded": 0 }
+  }
+}
