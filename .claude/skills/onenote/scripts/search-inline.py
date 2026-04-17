@@ -436,19 +436,35 @@ def main():
     results = read_and_analyze(ranked, notebook_dir, unique_keywords)
 
     # ISS-221: Copy raw page .md files to {caseDir}/onenote/ for downstream LLM analysis.
-    # Flat directory (same as teams/): raw pages directly in onenote/, prefixed with _page- to
-    # distinguish from onenote-digest.md and _search-state.json.
+    # Copies the matched page AND any subpages (same-name directory with child .md files).
+    # OneNote Export structure: "PageName.md" + optional "PageName/" dir with child pages.
     onenote_dir = os.path.join(case_dir, "onenote")
     if results:
         os.makedirs(onenote_dir, exist_ok=True)
+        import shutil
         for r in results:
             safe_name = re.sub(r'[<>:"/\\|?*]', '_', r["title"])[:80]
+
+            # Copy main page
             page_dest = os.path.join(onenote_dir, f"_page-{safe_name}.md")
             try:
-                import shutil
                 shutil.copy2(r["path"], page_dest)
             except Exception as e:
                 print(f"WARN: Cannot copy page to {page_dest}: {e}", file=sys.stderr)
+
+            # Check for subpage directory (same name as file without .md extension)
+            page_dir = r["path"].rsplit(".", 1)[0]  # /path/to/PageName.md → /path/to/PageName
+            if os.path.isdir(page_dir):
+                subpages = [f for f in os.listdir(page_dir) if f.endswith(".md")]
+                for sp in subpages:
+                    sp_path = os.path.join(page_dir, sp)
+                    sp_safe = re.sub(r'[<>:"/\\|?*]', '_', sp.rsplit(".", 1)[0])[:60]
+                    sp_dest = os.path.join(onenote_dir, f"_page-{safe_name}--{sp_safe}.md")
+                    try:
+                        shutil.copy2(sp_path, sp_dest)
+                    except Exception as e:
+                        print(f"WARN: Cannot copy subpage to {sp_dest}: {e}", file=sys.stderr)
+                print(f"OK|subpages={len(subpages)}|parent={safe_name}", file=sys.stderr)
 
     # Generate output
     output_path = os.path.join(case_dir, "onenote", "onenote-digest.md")
