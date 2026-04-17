@@ -30,7 +30,7 @@ Patrol 专用的轻量编排器。**一次 Bash 调用**完成所有数据收集
 - `teamsSearchCacheHours`: Teams 搜索缓存 TTL
 
 ## 输出
-- `{caseDir}/execution-plan.json` — 后续行动计划
+- `{caseDir}/.casework/execution-plan.json` — 后续行动计划
 
 ## 执行步骤（目标 3-5 次 tool call）
 
@@ -50,7 +50,7 @@ bash "{projectRoot}/skills/casework/scripts/casework-light-runner.sh" \
 ```
 
 **解析 stdout 最后一行**：
-- `NO_CHANGE|plan_written|...` → execution-plan.json **已自动写入**，直接完成，不需要后续步骤
+- `NO_CHANGE|plan_written|...` → `.casework/execution-plan.json` **已自动写入**，直接完成，不需要后续步骤
 - `CHANGED|runner_output_written|...` → 继续 Step 2
 
 ### Step 2: ICM 刷新（仅当 `icm_needs_refresh=true`）
@@ -121,7 +121,7 @@ icm_data = {'state':'{state}','severity':{sev},'criStatus':'{cri}','blocked':'{b
 | `researching` | — | troubleshooter |
 | `ready-to-close` | — | email-drafter(closure) |
 
-**写 execution-plan.json + 更新 meta**（一次 Bash + python3）：
+**写 `.casework/execution-plan.json` + 更新 meta**（一次 Bash + python3）：
 
 ```bash
 python3 -c "
@@ -158,7 +158,7 @@ if os.path.exists(notes_path):
 with open(meta_path, 'w', encoding='utf-8') as f:
     json.dump(meta, f, indent=2, ensure_ascii=False)
 
-# Write execution-plan.json
+# Write execution-plan.json to .casework/ (orchestrator-internal)
 t_start = float(open(os.path.join(case_dir, 'logs', '.t_start')).read().strip())
 plan = {
     'caseNumber': '{caseNumber}',
@@ -173,23 +173,25 @@ plan = {
     'timing': {'elapsed': round(time.time() - t_start, 1), 'bashCalls': 2, 'toolCalls': 3, 'path': 'CHANGED'}
 }
 
-with open(os.path.join(case_dir, 'execution-plan.json'), 'w', encoding='utf-8') as f:
+os.makedirs(os.path.join(case_dir, '.casework'), exist_ok=True)
+with open(os.path.join(case_dir, '.casework', 'execution-plan.json'), 'w', encoding='utf-8') as f:
     json.dump(plan, f, indent=2, ensure_ascii=False)
 print(f'PLAN_WRITTEN|actions={len(actions)}')
 print('CASEWORK_LIGHT_COMPLETE')
 "
 ```
 
-## OneNote 分类（4c）
+## OneNote 分类
 
-如果 `runner-output.json` 的 `context.onenoteNotes` 非空，在 Step 3 的同一次 Bash 调用中，
-用 python3 对 `personal-notes.md` 的片段标注 `[fact]` / `[analysis]`，一并写入。
+**已迁移**：OneNote 的 [fact]/[analysis] 分类现在由 `onenote-classifier` subagent（见 `.claude/agents/onenote-classifier.md`）处理，由 `/casework:assess` 按 `refreshResults.onenote.newPages + updatedPages > 0` 门控 spawn。
+
+本 agent 不再内联做 OneNote 分类。Step 3 改为调用 `/casework:assess`（sub-skill 内部并行 spawn teams-digest-writer + onenote-classifier，再做 actualStatus 决策）。
 
 ## 错误处理
 
 - runner.sh 内部所有步骤有容错，不会因单步失败阻塞
 - ICM MCP 失败 → 跳过，用缓存数据
-- execution-plan.json 始终会写
+- `.casework/execution-plan.json` 始终会写
 
 ## 关键优化
 
