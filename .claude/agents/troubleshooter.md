@@ -211,7 +211,7 @@ acr / aks / arm / avd / disk / entra-id / eop / intune / monitor / networking / 
 #### 3a. OneNote 团队知识库（最高优先级）
 
 读取 `config.json` 获取 `onenote.teamNotebooks[]` 和 `onenote.freshnessThresholdMonths`。
-读取 `.claude/skills/onenote-export/config.json` 获取 `outputDir`。
+读取 `.claude/skills/onenote/config.json` 获取 `outputDir`。
 
 **关键词生成**（LLM 改写，复用 onenote-search skill 逻辑）：
 基于 Step 1 的问题理解，生成 3-5 组搜索词变体：

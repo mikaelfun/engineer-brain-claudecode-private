@@ -1,0 +1,11 @@
+{
+  "id": "ISS-217",
+  "title": "product-learn Pre-flight 增量检测：auto-enrich 启动时自动检测源头变化",
+  "description": "## 问题\n\nproduct-registry.json 是纯手工维护的死配置（1 commit ever），导致：\n- 6/14 产品 onenoteSection=null，OneNote 新页面永远扫不到\n- Phase 5 contentidea-kb 用 az boards query 默认 1000 条截断，intune 3669 条永久丢失（已修）\n- Phase 3/4 exhausted 后不再刷新 index，ADO Wiki/MS Learn 新页面丢失\n- 无人维护 registry，新产品/新 section 加了也不知道\n\n## 方案：Step -1 Pre-flight 源头变化检测\n\n在 auto-enrich run 的 Step 0 之前插入 Pre-flight 步骤：\n\n### 1a. OneNote 增量检测\n- 扫描 OneNote Export 所有 *.md 文件\n- 对比 page-classification.jsonl 已分类路径集合\n- 差集 = 新增页面 → classifyState reset 为 scanning\n- 新顶级目录（不在任何产品 onenoteSection 中）→ 输出警告到 enrich-state.json → registryWarnings\n\n### 1b. ADO Wiki 增量检测\n- 对每个 sourceStates[ado-wiki]=exhausted 且 lastRefreshed > 7天 的产品\n- 重新枚举 wiki page tree，对比 scanned-ado-wiki.json → index\n- 有新页面 → 追加 index，reset ado-wiki 为 scanning\n\n### 1c. ContentIdea 增量检测（已实现）\n- lastRefreshed > 7 天 → reset exhausted → re-scan\n\n### 1d. MS Learn 增量检测\n- 对 mslearnTocPaths 非空且 exhausted 的产品\n- 重新 fetch toc.yml 对比 index，有新 URL → 追加 index，reset mslearn\n\n### 1e. Registry 健康检查\n- 扫描 OneNote Export 顶级目录 vs registry 中所有产品的 onenoteSection/podServicesDir\n- 未被任何产品引用的目录 → 输出 WARNING\n- contentIdeaKeywords WIQL 返回 0 的产品 → 警告关键词可能不对\n\n## 涉及文件\n- modes/auto-enrich.md — 新增 Step -1\n- phases/phase3-ado-wiki.md — 加 lastRefreshed\n- phases/phase4-mslearn.md — 加 lastRefreshed\n- phases/phase5-contentidea.md — 已修（lastRefreshed + az rest）\n- playbooks/product-registry.json — 6 产品配置已补（purview/eop/defender/automation/disk/arm）\n\n## 已完成的前置修复（本 session）\n- [x] Phase 5: az boards query → az rest + $top=20000\n- [x] Phase 5: lastRefreshed + 7 天刷新\n- [x] auto-enrich: contentidea-kb 7 天定期刷新\n- [x] registry: 6 产品补齐 onenoteSection/mcvkbSection/mslearnTocPaths/adoWikis\n- [x] 验证: intune 201267 入库闭环",
+  "type": "feature",
+  "priority": "P1",
+  "status": "pending",
+  "testLoopScan": false,
+  "createdAt": "2026-04-17T15:30:00+08:00",
+  "updatedAt": "2026-04-17T15:30:00+08:00"
+}

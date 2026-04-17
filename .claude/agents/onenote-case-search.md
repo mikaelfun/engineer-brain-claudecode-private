@@ -28,7 +28,7 @@ Read `{caseDir}/case-info.md` to extract search identifiers:
 
 ### 2. Read Configuration
 Read `config.json` to get `onenote.personalNotebook` name.
-Read `.claude/skills/onenote-export/config.json` to get `outputDir`.
+Read `.claude/skills/onenote/config.json` to get `outputDir`.
 Construct personal notebook path: `{outputDir}/{personalNotebook}/`
 
 Verify the directory exists (Glob `{notebookPath}/**/*.md`). If no `.md` files found, write a no-match result (see Step 6) and exit.

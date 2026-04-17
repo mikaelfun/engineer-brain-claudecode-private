@@ -170,7 +170,7 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
 
    ICM token 预热（170 分钟缓存，跨 case 共享）：
    ```bash
-   node .claude/skills/icm-discussion/scripts/icm-discussion-ab.js --token-only 2>/dev/null || true
+   node .claude/skills/icm/scripts/icm-discussion-ab.js --token-only 2>/dev/null || true
    # 输出: TOKEN_OK|{length} 或 TOKEN_FAIL（非致命，各 case fallback 自行获取）
    ```
 

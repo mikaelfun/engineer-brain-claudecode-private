@@ -42,7 +42,7 @@ if [ -f "$NOTES_FILE" ]; then
   # Read onenote-export config to find source notebook dir
   # Convert POSIX path for python3 on Windows (Git Bash)
   PR_WIN=$(cygpath -w "$PROJECT_ROOT" 2>/dev/null || echo "$PROJECT_ROOT")
-  ONENOTE_CONFIG="$PROJECT_ROOT/.claude/skills/onenote-export/config.json"
+  ONENOTE_CONFIG="$PROJECT_ROOT/.claude/skills/onenote/config.json"
   OC_WIN=$(cygpath -w "$ONENOTE_CONFIG" 2>/dev/null || echo "$ONENOTE_CONFIG")
   CFG_WIN=$(cygpath -w "$PROJECT_ROOT/config.json" 2>/dev/null || echo "$PROJECT_ROOT/config.json")
   if [ -f "$ONENOTE_CONFIG" ]; then

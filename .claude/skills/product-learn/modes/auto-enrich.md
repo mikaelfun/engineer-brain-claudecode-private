@@ -428,6 +428,9 @@ Agent(
     - 草稿前缀: guides/drafts/{source}-{title}.md
     - 21v-gaps.json 不存在时: 设 21vApplicable=null（MERGE 阶段补标）
     
+    ⚠️ 写文件必须用 Bash + python3 -c，禁止用 Write 工具（会被缓存 bug 删除）
+    示例：python3 -c "import json; open('file.jsonl','a').write(json.dumps(entry)+'\\n')"
+    
     关键文件：
     - known-issues-{source}.jsonl: .claude/skills/products/{product}/.enrich/known-issues-{source}.jsonl
     - scanned-{source}.json: .claude/skills/products/{product}/.enrich/scanned-{source}.json
@@ -616,6 +619,9 @@ Agent(
     
     读取 .claude/skills/product-learn/modes/auto-enrich.md 的 "Phase 0: page-classify" 部分执行。
     
+    ⚠️ 写文件必须用 Bash + python3 -c，禁止用 Write 工具（会被缓存 bug 删除）
+    示例：python3 -c "import json; open('file.jsonl','a').write(json.dumps(entry)+'\\n')"
+    
     关键文件：
     - page-list.txt: .claude/skills/products/page-list.txt
     - page-classification.jsonl: .claude/skills/products/page-classification.jsonl
@@ -637,7 +643,7 @@ Agent(
 - **不截取页面内容**——通过动态分配（ADO Wiki）或每批 10 页（OneNote 本地文件）控制总量，确保 agent 有足够 token 完成提取+写入
 - OneNote 页面：读取完整全文，不截取
 - 每个 tick 目标完成时间 **< 5 分钟**
-- **大文件写入规则**：任何预计超过 5KB 的 JSON 文件（如 `.enrich/topic-plan.json`、`.enrich/scanned-*.json` 含大量条目时），**禁止用 Write 工具**，必须通过 `Bash` + `python3 -c "import json; ..."` 写入。原因：Write 工具把文件内容作为 output token 生成，大 JSON 会超 max_tokens 导致参数截断死循环。
+- **⚠️ 所有文件写入规则（防 Write tool 缓存 bug）**：**所有 agent 写入操作必须用 `Bash` + `python3 -c "..."` 执行**，禁止使用 Write 工具。原因：Write 工具存在文件缓存还原 bug（[#42383](https://github.com/anthropics/claude-code/issues/42383)），agent 用 Write 写的文件会被后续 Bash 命令静默删除。包括但不限于：result JSONL、scanned JSON、known-issues JSONL、草稿 MD。示例：`python3 -c "import json; open('file.jsonl','a').write(json.dumps(entry)+'\\n')"`
 - **v3 并行写入规则**：
   - 写 JSONL → `.enrich/known-issues-{source}.jsonl`（不是 `known-issues.jsonl`）
   - 写扫描记录 → `.enrich/scanned-{source}.json`

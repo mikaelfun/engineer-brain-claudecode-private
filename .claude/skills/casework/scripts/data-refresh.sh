@@ -119,7 +119,7 @@ except Exception: print('')
 done
 if [ -n "$ICM_INCIDENT" ]; then
   (
-    node "$PROJECT_ROOT/.claude/skills/icm-discussion/scripts/icm-discussion-ab.js" \
+    node "$PROJECT_ROOT/.claude/skills/icm/scripts/icm-discussion-ab.js" \
       --single "$ICM_INCIDENT" --case-dir "$CASE_DIR_ABS" --event-dir "$EVT_DIR" \
       > "$LOGD/icm.log" 2>&1
   ) &
@@ -158,7 +158,7 @@ fi
 if [ -n "$NOTEBOOK_DIR" ] && [ -d "$NOTEBOOK_DIR" ]; then
   (
     bash "$WRAPPER" onenote "$EVT_DIR" -- \
-      python3 "$PROJECT_ROOT/.claude/skills/onenote-search/scripts/search-inline.py" \
+      python3 "$PROJECT_ROOT/.claude/skills/onenote/scripts/search-inline.py" \
       --case-dir "$CASE_DIR_ABS" --notebook-dir "$NOTEBOOK_DIR" --case-number "$CASE_NUMBER" \
       > "$LOGD/onenote.log" 2>&1
   ) &

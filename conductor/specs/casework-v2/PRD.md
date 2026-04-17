@@ -94,6 +94,40 @@ Claude Code CLI 的 subagent 不能嵌套（depth=1 限制）。Patrol spawn cas
 | **ICM Discussion** | 对比本地最后一条 entry 日期 vs API 返回 | ~3-5s（无更新快速跳过） |
 | **Attachments** | 本地已有同名文件跳过 | ~1s |
 
+**数据源失败降级策略**：
+
+数据源按重要性分三级，失败时采取不同策略：
+
+| 级别 | 数据源 | 失败处理 | 理由 |
+|------|--------|---------|------|
+| **L1 必须** | D365 Snapshot, D365 Emails | **abort**——整个 Step 1 标记失败，不进 Step 2 | 没有 case-info 和邮件无法判断状态 |
+| **L2 重要** | Teams, ICM Discussion | **degrade**——标记 degraded，Step 2 正常推理但在 context 中注明数据不完整 | 有价值但非必须，缺失不影响基本判断 |
+| **L3 可选** | OneNote, Labor, Attachments, D365 Notes | **skip**——标记 skipped，Step 2 正常推理 | 辅助信息，缺失无影响 |
+
+**data-refresh-output.json 中的表达**：
+
+```json
+{
+  "refreshResults": {
+    "d365":        { "status": "OK" },
+    "teams":       { "status": "OK" },
+    "icm":         { "status": "FAILED", "error": "SSO timeout after 15s" },
+    "onenote":     { "status": "SKIP", "reason": "mtime unchanged" },
+    "labor":       { "status": "OK" },
+    "attachments": { "status": "OK" }
+  },
+  "overallStatus": "DEGRADED",
+  "degradedSources": ["icm"],
+  "failedSources": []
+}
+```
+
+- `overallStatus`：`OK`（全部成功）/ `DEGRADED`（L2 失败但可继续）/ `FAILED`（L1 失败，中止）
+- L1 失败 → `data-refresh.sh` 直接 exit 1，不生成 data-refresh-output.json
+- L2/L3 失败 → 正常生成 output，Step 2 在推理 prompt 中包含 `⚠️ ICM Discussion 获取失败（SSO timeout），本次判断不含 ICM 数据`
+
+**不做自动重试**——重试增加复杂度且延长总耗时。ICM SSO 超时通常是 token 过期，下次 patrol 自动恢复。
+
 **Delta 分布式内联报告**：每个数据源脚本在执行时直接报告自己的 delta（而不是事后用独立脚本提取）：
 
 | 数据源 | Delta 报告方式 |
@@ -110,7 +144,7 @@ Claude Code CLI 的 subagent 不能嵌套（depth=1 限制）。Patrol spawn cas
 
 **取消 `extract-delta.sh`**——其职责已分解到各数据源脚本中。
 
-**DELTA_EMPTY 判定**：所有源都报告无变化 → Step 2 直接复用上次 `actualStatus` + `recommendedActions`（读 meta），零 LLM 调用。
+**DELTA_EMPTY 判定**：所有源都报告无变化 → Step 2 跳过 LLM 推理，直接写 execution-plan.json：`actions: [], noActionReason: "DELTA_EMPTY"`。**不复用上次的 actions**——无新数据意味着无新行动，避免重复 spawn 已执行过的 troubleshooter/email-drafter。`actualStatus` 和 `daysSinceLastContact` 从 casework-meta.json 复用（状态不变无需重新判断）。
 
 **取消的组件**：
 - ❌ `check-case-changes.ps1`（changegate）
@@ -167,7 +201,7 @@ teams-search-inline.sh (每 case 1 个 agency proxy):
   Cleanup: kill agency → 合并结果 → 更新 _chat-index.json → dump _mcp-raw.json
 ```
 
-**端口分配**：`9900 + hash(case_number) % 100`。跨 case 端口可能冲突但后启动的会复用已有 proxy（Graph API 无状态），功能正确。
+**端口分配**：`9900 + hash(case_number) % 100`。每 case 独立 proxy，跨 case 共享会导致 Search 并发丢数据。端口冲突时（两个 case hash 到同一端口），后启动的检测端口占用 → 自动重试下一个可用端口。
 
 **增量判断**：Phase 2 拉取 cached chatId 消息后，对比 `lastMessageTime`——如果最新消息时间没变，该 chat 无新内容，后处理时跳过重写。
 
@@ -206,29 +240,132 @@ node .claude/skills/icm-discussion/scripts/icm-discussion-ab.js --token-only
 
 **Compliance 不是数据源，是判断层**，从 Step 1 移出：
 - 基于 case-info.md 的 Entitlement/SAP 字段做规则匹配
-- 首次计算后**永久缓存**到 `casework-meta.json`
+- 结果缓存到 `casework-meta.json`，附带源字段 hash 用于自动失效
 - 放在 Step 2 (Assess) 中作为 gate：`compliance.entitlementOk === false` → 阻断
+
+**缓存失效机制**：Entitlement/SAP 可能随客户续约/升级变化，不能真正"永久"缓存。以源字段 hash 作为缓存 key：
+```json
+// casework-meta.json 中的 compliance 字段
+{
+  "compliance": {
+    "entitlementOk": true,
+    "sapPath": "...",
+    "details": "...",
+    "sourceHash": "a3f8c2...",   // sha256(entitlement + sapCode + supportPlan) 的前 8 位
+    "checkedAt": "2026-04-17T09:00:00Z"
+  }
+}
+```
+
+Step 2 Assess 的 compliance gate 逻辑：
+1. 读 `casework-meta.json.compliance.sourceHash`
+2. 从当前 `case-info.md` 提取 Entitlement/SAP 字段，计算 hash
+3. **hash 匹配** → 复用缓存结果，零 LLM 调用
+4. **hash 不匹配**（字段变化）→ 重新推理，更新缓存
 
 Step 1 不做任何 compliance 相关工作。
 
-### 2.6 Patrol 集成
+### 2.6 Patrol 集成：事件驱动流水线
+
+**核心模型**：patrol 不分波次，每个 case 独立推进——完成一步立即进入下一步，跨 case 完全并行。
 
 ```
-patrol (depth=0):
-  预热 → 对每个 case:
-    spawn casework(mode=patrol) (depth=1):
-      Step 1: data-refresh.sh (Bash, 全并行数据收集)
-      Step 2: LLM assess (inline, 读 data-refresh-output.json)
-      写 execution-plan.json → 返回给 patrol
-    
-    patrol 读 execution-plan.json:
-      if has-actions:
-        spawn troubleshooter/email-drafter (depth=1, 由 patrol 执行)
-      spawn inspection-writer (depth=1, 由 patrol 执行)
+时间轴 →
+
+Case A: ▓▓Step1+2▓▓──→▓▓troubleshooter▓▓──→▓▓email-drafter▓▓──→▓▓summarize▓▓──→ ✅
+Case B:   ▓▓Step1+2▓▓──→(no action)──→▓▓summarize▓▓──→ ✅
+Case C:     ▓▓Step1+2▓▓──→▓▓troubleshooter▓▓──→▓▓summarize▓▓──→ ✅
+
+^全部同时启动         ^各自独立推进，互不等待
 ```
 
-casework(mode=patrol) 只执行 Step 1 + Step 2，不 spawn agent。
-casework(mode=full) 执行全部 Step 1-4，包括自己 spawn agent。
+#### Phase 0: 预热
+
+并行预热两个 token（共 ~10s）：
+```bash
+# ICM token (170 min cache)
+node .claude/skills/icm-discussion/scripts/icm-discussion-ab.js --token-only
+
+# DTM token
+pwsh -NoProfile -File skills/d365-case-ops/scripts/warm-dtm-token.ps1
+```
+
+#### Phase 1→4: 流水线推进
+
+1. **全并行启动**：所有 active case 同时 spawn casework(mode=patrol, background=true)
+2. **完成即推进**：某 case 的 Step 1+2 完成 → patrol 立即读 execution-plan.json → spawn 下一个 agent
+3. **跨 case 并行**：不同 case 的 Step 3 agent 可同时运行
+4. **逐 case 闭环**：某 case 的 Step 3 全部完成 → 立即 spawn summarize(Step 4)
+
+#### 编排伪代码
+
+```python
+# Phase 0
+preheat_icm_token()   # bg
+preheat_dtm_token()   # bg
+wait_all()
+
+# Phase 1: 全并行启动 Step 1+2
+cases = get_active_cases()
+for case in cases:
+    spawn casework(mode=patrol, case=case, background=True)
+    update_pipeline_state(case, step12="running")
+
+# Event Loop: 监听完成通知，推进 pipeline
+while not all_cases_done():
+    notification = wait_for_agent_completion()
+    case = notification.case
+
+    match notification.finished_step:
+        case "step12":
+            update_pipeline_state(case, step12="completed")
+            plan = read(f"{case.dir}/.casework/execution-plan.json")
+            if not plan.actions:
+                spawn summarize(case, background=True)
+                update_pipeline_state(case, summarize="running")
+            else:
+                first_action = plan.actions[0]  # 按 priority 排序
+                spawn first_action.type(case, background=True)
+                update_pipeline_state(case, first_action.type="running")
+
+        case "troubleshooter":
+            update_pipeline_state(case, troubleshooter="completed")
+            remaining = get_remaining_actions(case, after="troubleshooter")
+            if remaining:  # email-drafter dependsOn troubleshooter
+                spawn remaining[0].type(case, background=True)
+                update_pipeline_state(case, remaining[0].type="running")
+            else:
+                spawn summarize(case, background=True)
+                update_pipeline_state(case, summarize="running")
+
+        case "email-drafter":
+            update_pipeline_state(case, email_drafter="completed")
+            spawn summarize(case, background=True)
+            update_pipeline_state(case, summarize="running")
+
+        case "summarize":
+            update_pipeline_state(case, summarize="completed")
+            mark_case_done(case)
+
+# 汇总
+generate_patrol_summary()
+```
+
+#### 两种 mode 对比
+
+| | casework(mode=full) | casework(mode=patrol) |
+|---|---|---|
+| 调用者 | 用户直接 `/casework` | patrol spawn |
+| depth | 0（主 session） | 1（subagent） |
+| 执行范围 | Step 1→2→3→4 全流程 | Step 1→2 only |
+| Step 3 agent | 自己 spawn（depth=1） | 不 spawn，patrol 做 |
+| Step 4 | 自己 inline 执行 | patrol spawn summarize |
+| pipeline-state | 可选（直接模式无 patrol） | 必须写（patrol 依赖） |
+
+#### 状态追踪
+
+patrol 通过文件追踪每个 case 的 pipeline 阶段（见 §4.4 的 pipeline-state.json）。
+patrol 自身不维护全局状态文件——Dashboard 后端 watch 所有 case 的 pipeline-state.json 实时聚合全局视图。
 
 ### 2.7 AR 独立
 
@@ -302,10 +439,10 @@ AR casework 完全独立为 `casework-ar/SKILL.md`：
 #### casework/assess/SKILL.md
 - 读取 `.casework/data-refresh-output.json` 中的 delta + context
 - actualStatus 枚举值和判断原则（从 status-judge/SKILL.md 提取）
-- Compliance gate（仅 cache miss 时做 LLM 推理，结果永久缓存到 casework-meta.json）
+- Compliance gate（源字段 hash 比对，hash 不匹配时重新推理，结果缓存到 casework-meta.json，见 §2.5）
 - **Teams relevance scoring + digest 生成**：LLM 读取 teams/*.md 的消息内容，结合 case context 做 high/low 评分，提取 key facts，写 `_relevance.json` + `teams-digest.md`（仅当 Teams 数据有更新时）
 - recommendedActions 输出格式
-- DELTA_EMPTY 快速路径：复用上次 meta，不调 LLM（包括跳过 Teams scoring）
+- DELTA_EMPTY 快速路径：`actions: []`（无新数据 = 无新行动），`actualStatus` 从 meta 复用，不调 LLM，不复用上次 actions（避免重复 spawn）
 - 输出：更新 casework-meta.json + 写 `.casework/execution-plan.json`
 - WebUI alias: `assess`
 
@@ -366,11 +503,17 @@ AR casework 完全独立为 `casework-ar/SKILL.md`：
 ```
 {caseDir}/.casework/            ← 每次 casework 清空重建
   ├── data-refresh-output.json  ← Step 1 → Step 2（打包的 delta + context）
-  └── execution-plan.json       ← Step 2 → Step 3 / patrol（行动计划）
+  ├── execution-plan.json       ← Step 2 → Step 3 / patrol（行动计划）
+  ├── pipeline-state.json       ← 跨 Step 编排状态（patrol 模式必须，见 §4.4）
+  └── events/                   ← Step 1 子任务实时进度（见 §4.4）
+      ├── d365.json
+      ├── teams.json
+      └── ...
 ```
 
 **生命周期规则**：
-- casework 启动时 `rm -rf {caseDir}/.casework && mkdir -p {caseDir}/.casework`
+- casework 启动时 `rm -rf {caseDir}/.casework && mkdir -p {caseDir}/.casework/events`
+- `{caseDir}/logs/` 目录**不清理**，日志增量追加（`>>`），保留历史运行记录供回溯
 - patrol 读 `.casework/execution-plan.json` 决定 spawn 什么 agent——文件不存在说明 casework 未完成或失败
 - `casework-meta.json` 只做增量 upsert，永不清空
 - 旧的 `context/runner-output.json` 迁移到 `.casework/data-refresh-output.json`
@@ -443,11 +586,229 @@ Step 4 输出:
 }
 ```
 
+### 4.4 实时观测性（Pipeline + SSE）
+
+**现有基础**：Dashboard 已有 `CaseworkPipeline` 组件（水平步骤条）+ SSE 事件推送。需要适配新四步模型 + 增加 Step 1 子任务细粒度。
+
+#### Pipeline 结构：两层（Step + Subtask）
+
+```
+Step 1: Data Refresh ─────────── [active, 12.5s]
+  ├── D365 fetch     [completed, 5s]   ✅  delta: +3 emails
+  ├── Teams search   [active, 8s]      🔄  6/8 chats fetched
+  ├── ICM            [completed, 3s]   ✅  2 new entries
+  ├── OneNote        [skipped, 0s]     ⏭   mtime unchanged
+  ├── Labor          [completed, 2s]   ✅
+  └── Attachments    [completed, 1s]   ✅  1 downloaded, 3 skipped
+
+Step 2: Assess ──────────────── [pending]
+  (LLM output streaming via SSE)
+
+Step 3: Act ─────────────────── [pending]
+  ├── troubleshooter [pending]
+  └── email-drafter  [pending]
+
+Step 4: Summarize ──────────── [pending]
+```
+
+#### 事件协议：文件 → file-watcher → SSE
+
+**Step 1 子任务**（纯脚本，通过事件文件通信）：
+
+**原子写**：所有事件文件写入使用 tmp + mv，防止 file-watcher 读到半写 JSON：
+```bash
+EVENT_DIR="$CASE_DIR/.casework/events"
+mkdir -p "$EVENT_DIR"
+
+# 原子写辅助函数
+write_event() {
+  local file="$1" content="$2"
+  echo "$content" > "${file}.tmp" && mv "${file}.tmp" "$file"
+}
+```
+
+**Schema**：
+```json
+{
+  "task": "teams",
+  "status": "active | completed | failed",
+  "startedAt": "2026-04-17T09:00:12Z",
+  "completedAt": "...",
+  "durationMs": 7500,
+  "progress": { "done": 6, "total": 8 },
+  "delta": { "newMessages": 12, "newChats": 1 },
+  "error": "..."
+}
+```
+
+- `status`: `active`（运行中）→ `completed`（成功）/ `failed`（失败）
+- `progress`（可选）：中间进度，仅 `active` 状态时有意义。适用于可报告进度的子任务（Teams chat 拉取、附件下载等）
+- `delta`（可选）：完成时的增量摘要
+- `error`（可选）：失败时的错误信息
+
+**写入示例**：
+```bash
+# 启动时
+write_event "$EVENT_DIR/teams.json" \
+  '{"task":"teams","status":"active","startedAt":"'"$(date -u +%FT%TZ)"'"}'
+
+# 中间进度（Teams 拉取每完成一个 chat 更新一次）
+write_event "$EVENT_DIR/teams.json" \
+  '{"task":"teams","status":"active","startedAt":"...","progress":{"done":6,"total":8}}'
+
+# 完成时
+write_event "$EVENT_DIR/teams.json" \
+  '{"task":"teams","status":"completed","startedAt":"...","completedAt":"...","durationMs":7500,"delta":{"newMessages":12}}'
+
+# 失败时
+write_event "$EVENT_DIR/icm.json" \
+  '{"task":"icm","status":"failed","startedAt":"...","durationMs":15000,"error":"SSO timeout"}'
+```
+
+**哪些子任务支持中间进度**：
+
+| 子任务 | 支持 progress？ | 说明 |
+|--------|---------------|------|
+| D365 | ❌ | fetch-all-data.ps1 内部并行 3 个 API，不易报告 |
+| Teams | ✅ `{done: N, total: M}` | ThreadPoolExecutor 每完成一个 chat 回调更新 |
+| ICM | ❌ | 单次 API 调用，无中间状态 |
+| OneNote | ❌ | mtime 检查后要么跳过要么全量，无中间状态 |
+| Labor | ❌ | 单次 API 调用 |
+| Attachments | ✅ `{done: N, total: M}` | 逐个下载，可报告 |
+
+Dashboard `file-watcher.ts` 监听 `.casework/events/*.json` → 广播 SSE：
+```json
+{
+  "type": "case-step-progress",
+  "caseNumber": "2603260030005229",
+  "step": "data-refresh",
+  "subtask": "teams",
+  "status": "active",
+  "progress": { "done": 6, "total": 8 },
+  "durationMs": null,
+  "delta": null
+}
+}
+```
+
+**Step 2/3/4**（LLM 调用）：已有 SSE 事件直接复用：
+- `case-session-thinking` — LLM 思考过程实时输出
+- `case-session-tool-call` — 工具调用
+- `case-session-tool-result` — 工具返回结果
+
+#### 前端 Pipeline 组件改动
+
+`DEFAULT_CASEWORK_STEPS` 从 8 步改为 4 步 + Step 1 支持子任务展开：
+```typescript
+export const DEFAULT_CASEWORK_STEPS: PipelineStep[] = [
+  { id: 'data-refresh', label: 'Data Refresh', status: 'pending', subtasks: [
+    { id: 'd365', label: 'D365' },
+    { id: 'teams', label: 'Teams' },
+    { id: 'icm', label: 'ICM' },
+    { id: 'onenote', label: 'OneNote' },
+    { id: 'labor', label: 'Labor' },
+    { id: 'attachments', label: 'Attachments' },
+  ]},
+  { id: 'assess', label: 'Assess', status: 'pending' },
+  { id: 'act', label: 'Act', status: 'pending', subtasks: [
+    { id: 'troubleshooter', label: 'Troubleshooter' },
+    { id: 'email-drafter', label: 'Email Drafter' },
+  ]},
+  { id: 'summarize', label: 'Summarize', status: 'pending' },
+]
+```
+
+Step 1 展开时显示子任务并行进度条，收起时只显示聚合状态（N/6 completed）。
+
+#### Pipeline State 文件（Patrol 编排追踪）
+
+`{caseDir}/.casework/pipeline-state.json`——跟踪 case 在流水线中的跨 Step 状态，供 patrol 编排和 Dashboard 聚合使用。
+
+**与 `events/*.json` 的关系**：
+- `events/*.json` = Step 1 **内部**子任务的细粒度进度（D365 完了、Teams 在跑…），每个 bg 进程写自己的文件，无并发冲突
+- `pipeline-state.json` = **跨 Step** 的编排状态（Step 1+2 完了，正在跑 troubleshooter…），单写者模型
+
+**Schema**：
+```json
+{
+  "caseNumber": "2603260030005229",
+  "mode": "patrol",
+  "startedAt": "2026-04-17T09:00:00Z",
+  "currentStep": "troubleshooter",
+  "steps": {
+    "step12":         { "status": "completed", "startedAt": "...", "completedAt": "..." },
+    "troubleshooter": { "status": "running",   "startedAt": "..." },
+    "email-drafter":  { "status": "pending" },
+    "summarize":      { "status": "pending" }
+  },
+  "deltaStatus": "DELTA_OK",
+  "actualStatus": "pending-engineer",
+  "actions": ["troubleshooter", "email-drafter"]
+}
+```
+
+**写入者**：
+
+| 字段 | 写入者 | 时机 |
+|------|--------|------|
+| 初始化 + step12 | casework(mode=patrol) subagent | Step 1+2 执行期间和完成后 |
+| troubleshooter/email-drafter | patrol 主 session | spawn 前标 running，完成通知后标 completed |
+| summarize | patrol 主 session | spawn 前标 running，完成通知后标 completed |
+
+**并发安全**：虽然有两个写入者（casework subagent + patrol），但它们是**时间隔离**的——casework subagent 写完 step12=completed 并退出后，patrol 才收到完成通知开始写下一步。同一时刻只有一个进程写该文件，无需文件锁。
+
+**原子写保护**（防止 file-watcher 读到半写 JSON）：`update-pipeline-state.sh` 使用临时文件 + rename：
+```bash
+# update-pipeline-state.sh 内部实现
+TMP="$CASE_DIR/.casework/pipeline-state.json.tmp"
+python3 -c "
+import json, sys
+state = json.load(open('$STATE_FILE'))
+state['steps']['$STEP']['status'] = '$STATUS'
+state['currentStep'] = '$STEP' if '$STATUS' == 'running' else state.get('currentStep','')
+json.dump(state, open('$TMP', 'w'), indent=2)
+"
+mv "$TMP" "$STATE_FILE"   # 原子 rename，file-watcher 不会读到半写
+```
+
+**调用方式**（辅助脚本，避免 patrol SKILL.md 内联样板）：
+```bash
+bash .claude/skills/casework/scripts/update-pipeline-state.sh \
+  --case-dir "$CASE_DIR" \
+  --step troubleshooter \
+  --status running
+```
+
+#### Patrol 全局状态聚合
+
+patrol 不维护全局 `patrol-state.json`——由 **Dashboard 后端实时聚合**：
+
+```
+Dashboard file-watcher.ts:
+  watch: cases/active/*/.casework/pipeline-state.json
+  → 聚合为全局 patrol 视图 → SSE 广播:
+
+  {
+    "type": "patrol-progress",
+    "totalCases": 8,
+    "completed": 3,
+    "running": 4,
+    "pending": 1,
+    "cases": [
+      { "caseNumber": "260326...", "currentStep": "summarize" },
+      { "caseNumber": "260401...", "currentStep": "troubleshooter" },
+      ...
+    ]
+  }
+```
+
+**优点**：patrol 只管写每个 case 的 pipeline-state，不用维护全局状态；Dashboard 解耦获取实时视图，即使 patrol session 崩溃，已完成的 case 状态仍可见。
+
 ---
 
-## 5. New Scripts
+## 5. Scripts（新建 + 优化）
 
-### 5.1 data-refresh.sh（取代 casework-light-runner.sh + casework-gather.sh）
+### 5.1 data-refresh.sh（新建，取代 casework-light-runner.sh + casework-gather.sh）
 
 统一的数据收集调度脚本。全并行，无 changegate。
 
@@ -474,7 +835,7 @@ data-refresh-output.json   (DELTA_OK/DELTA_EMPTY/DELTA_FIRST_RUN)
 
 wait all → 汇总各源 delta 报告 → 打包 `data-refresh-output.json`
 
-### 5.2 teams-search-inline.sh 优化（保留，不新建 parallel.sh）
+### 5.2 teams-search-inline.sh（优化，不新建）
 
 在现有 `teams-search-inline.sh` 基础上优化，不新建脚本：
 
@@ -492,7 +853,7 @@ Phase 2: 并行拉取 (~7s for 8 chats)
 **不需要 `teams-search-parallel.sh`**——实测单 proxy 并行 = N proxy 并行，
 多 proxy 只增加 N×5s 启动开销。保持每 case 1 proxy 架构。
 
-### 5.3 ICM：复用已有 `icm-discussion-ab.js`
+### 5.3 icm-discussion-ab.js（复用，不新建）
 
 无需新建脚本。已有 `icm-discussion-ab.js` 完全满足需求：
 - `--single {incidentId} --case-dir {dir}` 单次抓取
@@ -519,26 +880,26 @@ Phase 2: 并行拉取 (~7s for 8 chats)
    - `teams-search-inline.sh` — 加 ThreadPoolExecutor 并行拉取 + cached chatId + ICM KQL
    - `icm-discussion-ab.js` — 已完成，直接复用
 
-2. **创建 subskills 目录 + 提取子文件**
+3. **创建 subskills 目录 + 提取子文件**
    - 从 casework/SKILL.md 提取四个 subskill markdown
    - 从 status-judge/SKILL.md、inspection-writer/SKILL.md 提取核心规则
    - Compliance 规则移入 assess.md 作为 gate
 
-3. **重写 casework/SKILL.md**
+4. **重写 casework/SKILL.md**
    - 四步编排模型，每步引用对应 subskill
    - 消除 AR 分支、changegate、fast-path、timing 样板、Agent Probe
    - 支持 `mode=full` 和 `mode=patrol` 参数
 
-4. **创建 casework-ar/SKILL.md**
+5. **创建 casework-ar/SKILL.md**
    - 从 casework 的 AR PATH 段提取
    - 复用 data-refresh.sh，AR 专用 assess 和 act 规则
 
-5. **简化 patrol/SKILL.md**
+6. **简化 patrol/SKILL.md**
    - 基于新 casework 的 mode=patrol 适配
    - 去掉 Teams queue agent 相关逻辑
    - 去掉 ICM daemon 相关逻辑
 
-6. **Challenge 独立化**
+7. **Challenge 独立化**
    - B5a/B5b 的 challenge loop 从 casework 移除
    - 保留 `/challenge` 作为独立手动技能
 
@@ -552,7 +913,6 @@ Phase 2: 并行拉取 (~7s for 8 chats)
 | `casework-light-runner.sh` | 被 data-refresh.sh 取代 |
 | `casework-gather.sh` | 被 data-refresh.sh 取代 |
 | `extract-delta.sh` | delta 分散到各数据源脚本内联报告 |
-| `teams-search-inline.sh` | **保留（已优化）** | 已改为并行拉取，不再需要新建 parallel.sh |
 | `icm-discussion-daemon.js` | 被已有 `icm-discussion-ab.js` 取代 |
 | `icm-discussion-warm.sh` | `icm-discussion-ab.js --token-only` 取代 |
 | `icm-queue-submit.sh` | 不再需要 queue |
@@ -586,7 +946,19 @@ Phase 2: 并行拉取 (~7s for 8 chats)
 | Challenge 自动化代码 | ~80 行 | 0（移为手动） |
 | Changegate + Fast-path 代码 | ~250 行 | 0（取消） |
 | Teams 搜索模式 | 串行 + 8h TTL + queue agent | 1 proxy + ThreadPoolExecutor 并行拉取，无缓存 |
-| ICM 获取模式 | daemon + queue + fingerprint | 内联 Playwright 增量 |
+| ICM 获取模式 | daemon + queue + fingerprint | 内联 REST API 增量 |
+
+**性能指标**：
+
+| Metric | Before（估算） | After（目标） | 说明 |
+|--------|---------------|--------------|------|
+| DELTA_EMPTY 快速路径 | N/A（changegate ~5-8s） | < 20s（data-refresh 全跑 + 零 LLM） | 所有源无更新时的端到端耗时 |
+| Casework 单 case（DELTA_OK，含 troubleshooter） | ~8-12 min | < 6 min | P50，含 Step 1-4 全流程 |
+| Casework 单 case（DELTA_OK，无 action） | ~4-6 min | < 2 min | Step 1+2+4，无 Step 3 |
+| Step 1 Data Refresh | ~30-45s（串行 Teams + ICM daemon） | < 20s（全并行） | 所有源并行，最慢源决定耗时 |
+| Teams 搜索（8 chats） | ~22s（串行 curl） | < 10s（ThreadPoolExecutor 并行） | 已验证基准 7.5s |
+| Patrol 8 case 总耗时 | ~60-90 min（串行处理） | < 30 min（流水线并行） | 跨 case 并行 + Step 3 并行 |
+| Patrol DELTA_EMPTY 8 case | ~15-20 min | < 5 min | 全部无更新，每 case ~20s + spawn 开销 |
 
 ---
 
@@ -596,7 +968,7 @@ Phase 2: 并行拉取 (~7s for 8 chats)
 - ❌ 不改变 case 目录结构（case-info.md、emails.md 等保持不变）
 - ❌ 不改变 execution-plan.json 格式——被 patrol 依赖
 - ❌ 不合并 troubleshooter/email-drafter agent——它们是独立领域，保持分离
-- ❌ 不做 Dashboard 适配（Dashboard 读 patrol-state.json 和 todo，这些不变）
+- ❌ 不做 Dashboard 大规模重构——Pipeline 组件适配新四步模型 + file-watcher 监听 pipeline-state.json 属于 V2 范围（见 §4.4），但不做 Dashboard 架构变更
 
 ## 8.1 Post-V2: Skill 目录整理（V2 完成后执行）
 
@@ -620,6 +992,277 @@ V2 完成后统一整理 skill 目录结构。当前状态（60 个组件散布 
 - `.claude/agents/` = agent 定义（被 skill spawn）
 - V2 删除的 skill（status-judge/compliance-check/inspection-writer/data-refresh/teams-search-queue）在 V2 中直接清理
 - 重叠和重复在 V2 完成后统一处理
+
+## 8.2 Phase 2: Dashboard 适配
+
+V2 核心 skill/脚本完成后，Dashboard 需要适配新的四步模型和事件驱动流水线。
+
+### 8.2.1 改动总览
+
+```
+前端                                    后端
+├── CaseworkPipeline.tsx  ← 8步→4步     ├── case-session-manager.ts ← 步骤+标记
+├── patrolStore.ts        ← 流水线模型   ├── file-watcher.ts        ← 新 watch 路径
+├── caseSessionStore.ts   ← pipeline    ├── steps.ts               ← step 路由
+├── useSSE.ts             ← 新事件类型   ├── patrol-orchestrator.ts ← 流水线适配
+└── PatrolDashboard UI    ← 多case并行   └── case-routes.ts         ← step 名称
+```
+
+### 8.2.2 前端改动
+
+#### CaseworkPipeline.tsx
+
+**现有**：8 步平铺水平 stepper
+```typescript
+// 删除
+const DEFAULT_CASEWORK_STEPS = [
+  'changegate', 'data-refresh', 'compliance', 'status-judge',
+  'route', 'troubleshoot', 'email-draft', 'inspection'
+]
+```
+
+**新**：4 步 + Step 1/3 子任务可展开——完整定义见 §4.4 `DEFAULT_CASEWORK_STEPS`，此处不重复。
+
+**Step 1 展开交互**：
+- 默认收起，显示聚合状态（如 `4/6 ✅`）
+- 点击展开显示子任务并行进度（每个子任务独立状态 + delta 摘要）
+- Step 3 同理，展开显示 troubleshooter/email-drafter 状态
+
+**Compact 模式**（patrol 中按 case 行显示）：4 个圆点代表 4 步，颜色表示状态。
+
+#### patrolStore.ts
+
+**现有**：波次模型——`phase: discovering | filtering | warming-up | processing | ...`
+
+**新**：流水线模型——每个 case 独立跟踪 pipeline 进度
+
+```typescript
+interface PatrolCaseState {
+  caseNumber: string
+  currentStep: 'step12' | 'troubleshooter' | 'email-drafter' | 'summarize' | 'done'
+  stepStatus: Record<string, 'pending' | 'running' | 'completed' | 'failed' | 'skipped'>
+  actualStatus?: string
+  deltaStatus?: 'DELTA_OK' | 'DELTA_EMPTY'
+  startedAt: string
+  completedAt?: string
+}
+
+interface PatrolStore {
+  isRunning: boolean
+  startedAt?: string
+  totalCases: number
+  cases: PatrolCaseState[]  // 每个 case 独立状态
+
+  // 派生值（computed）
+  completedCount: number    // cases.filter(c => c.currentStep === 'done').length
+  runningCount: number
+  pendingCount: number
+
+  // Actions
+  onPipelineStateChanged(caseNumber: string, state: PipelineState): void
+  startNew(): void
+  reset(): void
+}
+```
+
+**数据源**：Dashboard 后端 watch `pipeline-state.json` → SSE `patrol-pipeline-update` → patrolStore 更新对应 case。
+
+#### caseSessionStore.ts
+
+**现有**：
+```typescript
+// 删除
+pipelineSteps: ['changegate', 'data-refresh', 'compliance', ...]
+agentSpawns: ['teams-search', 'onenote-search', 'troubleshooter', ...]
+```
+
+**新**：
+```typescript
+pipelineSteps: ['data-refresh', 'assess', 'act', 'summarize']
+// agentSpawns 不再需要——Step 1 子任务通过 events/ 文件追踪
+// Step 3 子任务通过 pipeline-state.json 追踪
+```
+
+#### useSSE.ts
+
+新增事件处理：
+
+```typescript
+// Step 1 子任务进度（来自 .casework/events/*.json）
+case 'case-subtask-progress':
+  // { caseNumber, step: 'data-refresh', subtask: 'd365', status, delta }
+  caseSessionStore.updateSubtaskProgress(data)
+  break
+
+// 跨 Step pipeline 状态（来自 .casework/pipeline-state.json）
+case 'patrol-pipeline-update':
+  // { caseNumber, currentStep, steps: {...} }
+  patrolStore.onPipelineStateChanged(data.caseNumber, data)
+  break
+```
+
+移除/重命名的事件：
+- `case-pipeline-step` → 替换为 `case-subtask-progress`（更精确的子任务级别）
+- `case-agent-spawn` → 不再需要（agent spawn 信息通过 pipeline-state 传递）
+
+#### Patrol Dashboard UI
+
+**现有**：显示 patrol 的阶段（discovering → filtering → processing...）+ 处理过的 case 列表
+
+**新**：流水线视图——每个 case 一行，显示实时 pipeline 进度
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Patrol — 8 cases — 3 completed, 4 running, 1 pending        │
+├─────────────────────────────────────────────────────────────┤
+│ Case 260326... │ ●───●───●───◐   │ email-drafter running    │
+│ Case 260401... │ ●───◐          │ troubleshooter running    │
+│ Case 260410... │ ●───●───●───●  │ ✅ done                   │
+│ Case 260412... │ ●───●         │ assess → no action         │
+│ Case 260415... │ ◐              │ step12 running             │
+│ ...                                                          │
+├─────────────────────────────────────────────────────────────┤
+│ ● = completed   ◐ = running   ○ = pending                   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+点击某 case 行 → 展开该 case 的完整 Pipeline 视图（复用 CaseworkPipeline 组件）。
+
+### 8.2.3 后端改动
+
+#### file-watcher.ts
+
+**新增 watch 路径**：
+```typescript
+// Step 1 子任务事件（每个数据源一个文件）
+'cases/active/*/.casework/events/*.json'   → broadcast('case-subtask-progress', ...)
+
+// 跨 Step pipeline 状态（patrol 编排用）
+'cases/active/*/.casework/pipeline-state.json' → broadcast('patrol-pipeline-update', ...)
+```
+
+**classifyChange() 新增分类**：
+```typescript
+case match('.casework/events/'):
+  return { type: 'case-subtask-progress', caseNumber, subtask: filename }
+
+case match('.casework/pipeline-state.json'):
+  return { type: 'patrol-pipeline-update', caseNumber }
+```
+
+**移除的 watch**：
+- `.t_*` 时间标记文件（被 events/ 替代）
+- `case-phase.json`（被 pipeline-state.json 替代）
+
+#### case-session-manager.ts
+
+**删除**：
+```typescript
+// 删除 8 步定义
+const CASEWORK_PIPELINE_STEPS = [
+  { id: 'changegate', startMarker: '.t_changegate_start', endMarker: '.t_changegate_end' },
+  // ... 7 more
+]
+
+// 删除 .t_* 时间标记文件的写入/读取逻辑
+```
+
+**替换为**：
+```typescript
+const CASEWORK_PIPELINE_STEPS = [
+  { id: 'data-refresh', label: 'Data Refresh' },
+  { id: 'assess', label: 'Assess' },
+  { id: 'act', label: 'Act' },
+  { id: 'summarize', label: 'Summarize' },
+]
+
+// Step 进度不再通过 .t_* 文件，而是通过：
+// - Step 1: .casework/events/*.json（file-watcher 推送）
+// - Step 2-4: SDK session 的 tool_call 事件（已有 SSE）
+// - 跨 Step: .casework/pipeline-state.json（file-watcher 推送）
+```
+
+#### steps.ts（单步执行路由）
+
+**现有**：`POST /api/case/:id/step/:step`，step 值为 8 个旧名称
+
+**新**：step 值更新为 4 个新名称 + 映射到 subskill 调用
+
+```typescript
+const STEP_TO_SKILL: Record<string, string> = {
+  'data-refresh': '/casework:data-refresh',
+  'assess':       '/casework:assess',
+  'act':          '/casework:act',
+  'summarize':    '/casework:summarize',
+}
+
+// WebUI "一键全流程" → POST /api/case/:id/process
+// WebUI 单步按钮    → POST /api/case/:id/step/data-refresh
+```
+
+#### patrol-orchestrator.ts
+
+**调用方式**：WebUI 通过 SDK `query()` 调用 `/patrol` skill（depth=0），patrol 内部可 spawn subagent（depth=1）。V2 不改变 SDK 调用方式。
+
+**现有**：
+- `query()` 调用 `/patrol` skill，`tools` 包含 `'Agent'`
+- 读 `.patrol/patrol-phase` 获取进度（5s 轮询）
+- 波次模型（discovering → filtering → processing）
+- `maxTurns: 200`
+
+**V2 改动**：
+
+```typescript
+// maxTurns 调大（V2 事件循环 ~130 turns for 8 cases，留余量）
+maxTurns: 300
+
+// 移除：5s 轮询 patrol-phase
+// 移除
+function parsePhaseLine(line: string): { phase: string, progress?: string }
+// 移除：patrol-phase 相关 SSE 广播逻辑
+
+// 保留
+async function runSdkPatrol(force: boolean): Promise<PatrolResult>
+async function cancelSdkPatrol(): void
+function isSdkPatrolRunning(): boolean
+function loadPatrolLastRun(): PatrolResult | null
+
+// 进度推送职责转移到 file-watcher.ts：
+//   watch pipeline-state.json → SSE patrol-pipeline-update
+//   patrol-orchestrator 不再主动广播进度
+```
+
+**职责精简**：
+
+| | Before | After |
+|---|---|---|
+| 启动 patrol | ✅ SDK query() | ✅ SDK query()（不变） |
+| 进度轮询 | ✅ 5s 读 patrol-phase | ❌ 删除（file-watcher 驱动） |
+| 进度广播 | ✅ SSE broadcast | ❌ 删除（file-watcher 驱动） |
+| 取消 patrol | ✅ abortController | ✅ 不变 |
+| 结果读取 | ✅ patrol-state.json | ✅ 不变 |
+
+#### case-routes.ts
+
+**步骤名称更新**：所有引用旧 8 步名称的地方替换为新 4 步名称。
+
+### 8.2.4 迁移兼容
+
+| 旧机制 | 新机制 | 过渡策略 |
+|--------|--------|---------|
+| `.t_*` 时间标记文件 | `.casework/events/*.json` | 后端同时支持两种格式，前端只读新格式。旧 .t_* 文件不再生成 |
+| `case-phase.json` | `pipeline-state.json` | 直接替换，不兼容 |
+| `patrol-phase` 单行文件 | `pipeline-state.json` 聚合 | 可保留 `patrol-phase` 作为简易进度（`"processing|3/8"`），file-watcher 同时监听两种 |
+| 8 步 `case-pipeline-step` SSE | 4 步 `case-subtask-progress` SSE | 前端 useSSE 同时处理新旧事件名，旧事件映射到新步骤 |
+| `casehealth-meta.json` | `casework-meta.json` | 与 §6.1 步骤 0 同步迁移 |
+
+### 8.2.5 不改动的部分
+
+- ❌ CaseDetail.tsx 的 AI Panel（chat 交互不变）
+- ❌ TodoView（读 todo/*.md，格式不变）
+- ❌ AgentMonitor（独立的 session 监控，不依赖 casework 步骤）
+- ❌ SSE 基础设施（sse-manager.ts、ring buffer、sequence replay）
+- ❌ TestLab（独立的测试框架 UI）
 
 ---
 

@@ -33,7 +33,7 @@ stability: stable
 
 - **Manifest**: `{outputDir}/.rag-manifest.json` — 记录每个文件的 mtime + size
 - **脚本**: `.claude/skills/rag-sync/manifest.mjs` — 文件变更检测
-- **配置**: 复用 `.claude/skills/onenote-export/config.json` 的 `outputDir`
+- **配置**: 复用 `.claude/skills/onenote/config.json` 的 `outputDir`
 - **CLI**: `~/.claude/mcp-servers/local-rag/dist/index.js` — 批量 ingest 工具
 
 ## CLI 环境变量
@@ -87,7 +87,7 @@ eval $(cat .mcp.json | node -e "
 
 ### 0. 读取配置
 
-读取 `.claude/skills/onenote-export/config.json` 获取 `outputDir`。
+读取 `.claude/skills/onenote/config.json` 获取 `outputDir`。
 不存在 → 提示先运行 `/onenote-export`。
 
 ### 1. 判断操作模式
