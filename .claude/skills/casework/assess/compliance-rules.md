@@ -52,36 +52,78 @@ assess Step 2 compliance re-infer 时按需读取本文件。cache-hit 时不读
 
 ### 4.5c sapMismatch 检测（脚本化）
 
-用 `match-sap.py` 将 case 的问题描述与当前 SAP 对比，判断是否偏移：
+用 `match-sap.py` 将 case 的问题描述与当前 SAP 对比，判断是否偏移。
+
+**关键原则：问题描述和 SAP 必须来自同一侧**
+- 非 AR case → 用 `## Customer Statement` + `| SAP |`
+- AR case → 用 `## AR Customer Statement` + `| AR Support Area Path |`
+- **绝对禁止**：用 AR 问题描述搜索的结果对比 main case SAP（两者产品本来不同，一定会误报 mismatch）
 
 ```bash
-# 从 case-info.md 提取问题描述（Title + Customer Statement 前 200 字）
-QUERY=$(python3 -c "
+# 从 case-info.md 提取问题描述和 SAP（区分 AR / 非 AR）
+QUERY_AND_SAP=$(python3 -c "
 import re
 with open(r'{caseDir}/case-info.md', encoding='utf-8') as f:
     c = f.read()
-title = re.search(r'\| Title \| (.+?) \|', c)
-cs = re.search(r'## Customer Statement\s*\n(.*?)(?=\n##|\Z)', c, re.DOTALL)
-parts = []
-if title: parts.append(title.group(1).strip())
-if cs: parts.append(cs.group(1).strip()[:200])
-print(' '.join(parts))
+# 检测 AR：case number 末尾 3 位 > 000，或有 AR Support Area Path 字段
+cn = re.search(r'\| Case Number \| (\d+) \|', c)
+is_ar = False
+if cn and len(cn.group(1)) > 3 and cn.group(1)[-3:] != '000':
+    is_ar = True
+ar_sap = re.search(r'\| AR Support Area Path \| (.+?) \|', c)
+if ar_sap:
+    is_ar = True
+
+if is_ar and ar_sap:
+    # AR case：用 AR 的问题描述 + AR SAP
+    sap = ar_sap.group(1).strip()
+    ar_cs = re.search(r'## AR Customer Statement\s*\n(.*?)(?=\n##|\Z)', c, re.DOTALL)
+    query = ar_cs.group(1).strip()[:200] if ar_cs else ''
+elif is_ar and not ar_sap:
+    # AR case 但没有 AR SAP 字段 → 跳过 sapMismatch
+    print('SKIP_AR_NO_SAP')
+    import sys; sys.exit(0)
+else:
+    # 非 AR case：用主 Customer Statement + 主 SAP
+    sap_m = re.search(r'\| SAP \| (.+?) \|', c)
+    sap = sap_m.group(1).strip() if sap_m else ''
+    title = re.search(r'\| Title \| (.+?) \|', c)
+    cs = re.search(r'## Customer Statement\s*\n(.*?)(?=\n##|\Z)', c, re.DOTALL)
+    parts = []
+    if title: parts.append(title.group(1).strip())
+    if cs: parts.append(cs.group(1).strip()[:200])
+    query = ' '.join(parts)
+
+print(f'{sap}|||{query}')
 ")
 
-# 搜索最匹配的 SAP（mooncake-first + pod-check + JSON 输出）
-SAP_MATCH=$(python3 -B .claude/skills/sap-match/match-sap.py $QUERY --scope mooncake-first --pod-check --top 3 --json)
+# SKIP_AR_NO_SAP → 跳过 4.5c
+if [ "$QUERY_AND_SAP" = "SKIP_AR_NO_SAP" ]; then
+  # AR case 缺 AR SAP 字段，不判 mismatch
+  SAP_MISMATCH=false
+else
+  CURRENT_SAP=$(echo "$QUERY_AND_SAP" | cut -d'|' -f1)
+  QUERY=$(echo "$QUERY_AND_SAP" | cut -d'|' -f4-)
+  SAP_MATCH=$(python3 -B .claude/skills/sap-match/match-sap.py $QUERY --scope mooncake-first --pod-check --top 3 --json)
+fi
 ```
 
 **sapMismatch 判定逻辑**：
 1. 取 match-sap 返回的 top-1 结果的 `path`
-2. 与 case-info.md 中的 `| SAP |` 行做**产品级比较**（比较路径的前 2-3 段）
-3. 如果 top-1 的产品级路径与当前 SAP 的产品级路径**不同** → `sapMismatch=true`
-4. 如果 top-1 score < 3.0（匹配度太低，无法判断） → `sapMismatch=false`（存疑不判偏移）
+2. 与**同侧 SAP**（非 AR → `| SAP |`，AR → `| AR Support Area Path |`）做**产品级比较**
+3. 产品级比较：提取路径中产品关键词（去掉 21Vianet/Mooncake/China 前缀），比较核心产品名
+4. 如果核心产品名**不同** → `sapMismatch=true`
+5. 如果 top-1 score < 3.0 → `sapMismatch=false`（存疑不判）
 
 **产品级比较**示例：
-- 当前 SAP: `Azure/21Vianet Mooncake/21Vianet China Azure Alert` → 产品 = `Azure Alert`
-- match-sap top-1: `Azure/21Vianet Mooncake/21Vianet China Azure Alert` → 产品 = `Azure Alert`
+- 当前 SAP: `Azure/21Vianet Mooncake/21Vianet China Azure Alert` → 核心产品 = `Alert`
+- match-sap top-1: `Azure/21Vianet Mooncake/21Vianet China Azure Alert` → 核心产品 = `Alert`
 - 同产品 → `sapMismatch=false`
+
+**AR 误报防护**：
+- AR case 的 SAP 通常和 main case 不同（比如 main=Alert，AR=PostgreSQL）
+- 如果用 AR 描述搜到 PostgreSQL，和 **AR SAP** 对比 → 正确一致 → `sapMismatch=false`
+- 如果错误地和 **main SAP** (Alert) 对比 → 误报 mismatch
 
 **suggestedSap**（sapMismatch=true 时填充）：
 从 match-sap 的 top-3 结果中选取 in-pod 且 isMooncake 的最佳路径，格式：
