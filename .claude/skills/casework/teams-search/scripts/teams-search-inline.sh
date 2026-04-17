@@ -493,6 +493,22 @@ if not os.environ.get('TEAMS_SKIP_IMAGES', ''):
         else:
             print(f'WARN: no Graph token — skipping {len(url_info)} images', file=__import__("sys").stderr)
 
+    # Write image download event for webui observability
+    _evt_dir = os.environ.get('MCP_EVENT_DIR', '')
+    if _evt_dir and url_info:
+        _img_evt = {
+            'task': 'teams-images',
+            'status': 'completed' if image_map else ('skipped' if not os.environ.get('MCP_GRAPH_TOKEN','').strip() else 'partial'),
+            'totalImages': len(url_info),
+            'downloaded': len(image_map),
+            'tokenAvailable': bool(os.environ.get('MCP_GRAPH_TOKEN','').strip()),
+        }
+        try:
+            _evt_path = os.path.join(_evt_dir, 'teams-images.json')
+            with open(_evt_path, 'w') as _ef:
+                json.dump(_img_evt, _ef)
+        except: pass
+
 # Build search results
 search_results = [{'keyword': case_number, 'status': 'success' if q1 else 'error',
                     'chatIds': list(extract_chat_ids(q1))}]
