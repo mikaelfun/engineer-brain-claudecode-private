@@ -55,6 +55,25 @@ function classifyChange(filePath: string): { type: SSEEventType; data: Record<st
     if (normalized.includes('/drafts/')) {
       return { type: 'draft-updated', data: { caseNumber } }
     }
+
+    // V2: Step 1 subtask events (data-refresh progress)
+    if (normalized.includes('/.casework/events/')) {
+      const subtaskMatch = normalized.match(/events\/(\w+)\.json$/)
+      const subtask = subtaskMatch?.[1] || 'unknown'
+      try {
+        const eventData = JSON.parse(readFileSync(filePath, 'utf-8'))
+        return { type: 'case-subtask-progress' as SSEEventType, data: { caseNumber, subtask, ...eventData } }
+      } catch { return null }
+    }
+
+    // V2: Cross-step pipeline state (patrol orchestration)
+    if (normalized.includes('/.casework/pipeline-state.json')) {
+      try {
+        const state = JSON.parse(readFileSync(filePath, 'utf-8'))
+        return { type: 'patrol-pipeline-update' as SSEEventType, data: { caseNumber, ...state } }
+      } catch { return null }
+    }
+
     return { type: 'case-updated', data: { caseNumber } }
   }
 

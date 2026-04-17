@@ -291,6 +291,8 @@ export type SSEEventType =
   | 'case-step-failed'
   | 'case-step-question'
   | 'case-step-heartbeat'
+  | 'case-subtask-progress'
+  | 'patrol-pipeline-update'
   | 'sdk-queue-changed'
   | 'test-state-updated'
   | 'test-pipeline-updated'

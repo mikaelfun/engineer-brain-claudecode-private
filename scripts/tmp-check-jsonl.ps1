@@ -1,4 +1,4 @@
-$lines = Get-Content "skills/products/avd/known-issues-ado-wiki.jsonl"
+$lines = Get-Content ".claude/skills/products/avd/known-issues-ado-wiki.jsonl"
 $ids = @()
 foreach ($line in $lines) {
     if ($line -match '"id"\s*:\s*"([^"]+)"') {

@@ -1,4 +1,4 @@
-$lines = Get-Content "skills/products/avd/known-issues-ado-wiki.jsonl"
+$lines = Get-Content ".claude/skills/products/avd/known-issues-ado-wiki.jsonl"
 $seen = @{}
 $result = @()
 # Process in reverse to keep last occurrence of each ID
@@ -19,7 +19,7 @@ foreach ($line in $reversed) {
     }
 }
 [array]::Reverse($result)
-$result | Set-Content -Path "skills/products/avd/known-issues-ado-wiki.jsonl" -Encoding UTF8
+$result | Set-Content -Path ".claude/skills/products/avd/known-issues-ado-wiki.jsonl" -Encoding UTF8
 Write-Output "Deduplicated: $($result.Count) lines (was $($lines.Count))"
 # Show last 12 IDs
 $result[-12..-1] | ForEach-Object {

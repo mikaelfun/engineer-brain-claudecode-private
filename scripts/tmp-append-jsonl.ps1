@@ -10,7 +10,7 @@ $entries = @(
 '{"id":"avd-ado-wiki-125","date":"2026-04-05","symptom":"Cannot purchase or activate W365 FedRAMP licenses after removing GCC licenses; Cloud PCs deleted during transition","rootCause":"Mutual exclusivity of GCC and FedRAMP offerings at tenant level; Commerce system requires 72+ hours for GCC license deprovisioning","solution":"Wait 72+ hours after GCC license deletion. Verify GCC licenses fully removed. Purchase and activate FedRAMP licenses. Use Kusto queries to validate offboard/onboard status.","source":"ado-wiki","sourceRef":"Supportability/Windows365/Windows365 Support Wiki:/Features/Windows 365 Government/Downgrade from GCC to FedRAMP","sourceUrl":"https://dev.azure.com/Supportability/Windows365/_wiki/wikis/Windows365%20Support%20Wiki?pagePath=/Features/Windows%20365%20Government/Downgrade%20from%20GCC%20to%20FedRAMP","product":"avd","confidence":"high","quality":"raw","tags":["w365","government","gcc","fedramp","license","transition"],"21vApplicable":true,"promoted":false}'
 )
 foreach ($e in $entries) {
-    Add-Content -Path "skills/products/avd/known-issues-ado-wiki.jsonl" -Value $e
+    Add-Content -Path ".claude/skills/products/avd/known-issues-ado-wiki.jsonl" -Value $e
 }
-$count = (Get-Content "skills/products/avd/known-issues-ado-wiki.jsonl").Count
+$count = (Get-Content ".claude/skills/products/avd/known-issues-ado-wiki.jsonl").Count
 Write-Output "JSONL done: $count lines"
