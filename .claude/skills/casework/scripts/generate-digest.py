@@ -169,8 +169,71 @@ Generate the teams-digest.md following the template format exactly. Output ONLY 
     with open(out_path, "w", encoding="utf-8") as f:
         f.write(result)
 
-    # Write relevance JSON (best-effort parse from digest)
-    print(f"OK|chats={len(chat_files)}|output={out_path}")
+    # Write _relevance.json — parse from digest content
+    # Used by: 1) Dashboard backend for chat sorting/labeling
+    #          2) Next teams-search to skip low-relevance chatIds
+    import re
+    relevance_data = {
+        "_scoredAt": datetime.now().isoformat(timespec="seconds"),
+        "_source": "generate-digest.py",
+        "chats": {},
+    }
+
+    # Load _chat-index.json for fileName→chatId mapping
+    chat_index_path = os.path.join(teams_dir, "_chat-index.json")
+    filename_to_chatids = {}  # {"bi-weiwei.md": ["19:xxx"]}
+    if os.path.exists(chat_index_path):
+        try:
+            idx = json.load(open(chat_index_path, encoding="utf-8"))
+            for cid, info in idx.items():
+                if cid.startswith("_"):
+                    continue
+                fn = info.get("fileName", "")
+                if fn:
+                    filename_to_chatids.setdefault(fn, []).append(cid)
+        except Exception:
+            pass
+
+    # Parse "## Timeline (high-relevance only)" for high-relevance chat filenames
+    high_chats = set()
+    timeline_match = re.search(r"## Timeline.*?\n([\s\S]*?)(?=\n## |$)", result)
+    if timeline_match:
+        for line in timeline_match.group(1).split("\n"):
+            # Match patterns like "— bi-weiwei.md —" or "— chuck-zhang.md —"
+            fname_match = re.search(r"— (\S+\.md)", line)
+            if fname_match:
+                high_chats.add(fname_match.group(1))
+
+    # Parse "## Low-Relevance" section for low-relevance chat filenames
+    low_chats = set()
+    low_match = re.search(r"## Low-Relevance.*?\n([\s\S]*?)(?=\n## |$)", result)
+    if low_match:
+        for line in low_match.group(1).split("\n"):
+            fname_match = re.search(r"(\S+\.md)", line)
+            if fname_match and not fname_match.group(1).startswith("_"):
+                low_chats.add(fname_match.group(1))
+
+    # Build per-chat relevance entries (with chatIds for teams-search skip list)
+    for cf in chat_files:
+        chat_name = os.path.basename(cf)
+        chat_id = chat_name.replace(".md", "")
+        chat_ids = filename_to_chatids.get(chat_name, [])
+        if chat_name in high_chats:
+            relevance_data["chats"][chat_id] = {"relevance": "high", "chatIds": chat_ids}
+        elif chat_name in low_chats:
+            relevance_data["chats"][chat_id] = {"relevance": "low", "chatIds": chat_ids}
+        else:
+            # Default: if mentioned in Key Facts → high, otherwise unknown
+            if chat_name in result:
+                relevance_data["chats"][chat_id] = {"relevance": "high", "chatIds": chat_ids}
+            else:
+                relevance_data["chats"][chat_id] = {"relevance": "unknown", "chatIds": chat_ids}
+
+    relevance_path = os.path.join(teams_dir, "_relevance.json")
+    with open(relevance_path, "w", encoding="utf-8") as f:
+        json.dump(relevance_data, f, indent=2, ensure_ascii=False)
+
+    print(f"OK|chats={len(chat_files)}|output={out_path}|relevance={relevance_path}")
 
 
 def generate_onenote_digest(case_dir, case_number, project_root, base_url, api_key, model):
@@ -200,7 +263,7 @@ def generate_onenote_digest(case_dir, case_number, project_root, base_url, api_k
 
     # Build user prompt
     pages_content = []
-    for pf in page_files[:5]:  # cap at 5 pages
+    for pf in page_files[:10]:  # cap at 10 files (main pages + subpages)
         name = os.path.basename(pf)
         content = read_file(pf, max_chars=5000)
         pages_content.append(f"### Page: {name}\n{content}")
