@@ -131,7 +131,12 @@ export function useCaseAnalysis(id: string) {
 export function useCaseOnenote(id: string) {
   return useQuery({
     queryKey: ['cases', id, 'onenote'],
-    queryFn: () => apiGet<{ files: Array<{ filename: string; content: string; size: number; updatedAt: string }>; total: number }>(`/cases/${id}/onenote`),
+    queryFn: () => apiGet<{
+      files: Array<{ filename: string; content: string; size: number; updatedAt: string }>;
+      pages?: Array<{ filename: string; content: string; size: number; updatedAt: string; imageCount: number }>;
+      scoring?: { scoredAt: string; keyFacts: string[]; highCount: number; lowCount: number; pages: Record<string, { relevance: string; reason: string }> } | null;
+      total: number
+    }>(`/cases/${id}/onenote`),
     enabled: !!id,
   })
 }

@@ -247,10 +247,10 @@ cases.get('/:id/teams', (c) => {
     const digestPath = join(teamsDir, 'teams-digest.md')
     if (existsSync(digestPath)) {
       const digestContent = readFileSync(digestPath, 'utf-8')
-      // Extract key facts — support both v1 "## 关键事实（Key Facts）" and v2 "## Key Facts" headings
+      // Extract key facts — support v1 flat list, v2 "## Key Facts", and v3 grouped by "### ChatName"
       const factsMatch = digestContent.match(/## (?:关键事实（Key Facts）|Key Facts)\r?\n\r?\n([\s\S]*?)(?=\r?\n## |$)/)
       const keyFacts = factsMatch
-        ? factsMatch[1].split(/\r?\n/).filter((l: string) => l.startsWith('- ')).map((l: string) => l.slice(2))
+        ? factsMatch[1].split(/\r?\n/).filter((l: string) => l.startsWith('- ') || l.startsWith('### ')).map((l: string) => l.startsWith('### ') ? l : l.slice(2))
         : []
 
       // Extract relevance counts from digest header or _relevance.json
@@ -606,40 +606,20 @@ cases.get('/:id/timing', (c) => {
       } catch { /* skip bad files */ }
     }
 
-    // Read total from data-refresh event or data-refresh-output.json
-    const drOutputPath = join(caseDir, '.casework', 'data-refresh-output.json')
-    let totalSec = +(totalMs / 1000).toFixed(1)
-    if (existsSync(drOutputPath)) {
-      try {
-        const drOut = JSON.parse(readFileSync(drOutputPath, 'utf-8'))
-        if (drOut.elapsedSeconds) totalSec = parseFloat(drOut.elapsedSeconds)
-      } catch { /* use calculated */ }
+    // ISS-227: Compute totalSec as wall-clock time from earliest start to latest end
+    // across events + pipeline-state. Never mix timestamps from different patrol runs.
+    const drEvent = phases['data-refresh']
+    const drStart = drEvent?.startedAt ? new Date(drEvent.startedAt).getTime() : 0
+    let latestEnd = 0
+    for (const p of Object.values(phases) as any[]) {
+      if (p.completedAt) {
+        const t = new Date(p.completedAt).getTime()
+        if (t > latestEnd) latestEnd = t
+      }
     }
 
-    // Build Step 2-4 timing from meta + pipeline-state timestamps
-    const metaPath = join(caseDir, 'casework-meta.json')
+    // Include pipeline-state (summarize) in wall-clock calculation
     const pipelinePath = join(caseDir, '.casework', 'pipeline-state.json')
-    const drEvent = phases['data-refresh']
-
-    // Step 2: assess (data-refresh end → lastAssessedAt)
-    try {
-      const meta = JSON.parse(readFileSync(metaPath, 'utf-8'))
-      if (meta.lastAssessedAt && drEvent?.completedAt) {
-        const assessStart = new Date(drEvent.completedAt).getTime()
-        const assessEnd = new Date(meta.lastAssessedAt).getTime()
-        const assessMs = Math.max(0, assessEnd - assessStart)
-        phases['assess'] = {
-          durationMs: assessMs,
-          durationSec: +(assessMs / 1000).toFixed(1),
-          status: 'completed',
-          startedAt: drEvent.completedAt,
-          completedAt: meta.lastAssessedAt,
-        }
-        totalSec += +(assessMs / 1000)
-      }
-    } catch { /* no meta */ }
-
-    // Step 3: act + Step 4: summarize (from pipeline-state.json)
     try {
       const pipeline = JSON.parse(readFileSync(pipelinePath, 'utf-8'))
       const sumStep = pipeline.steps?.summarize
@@ -654,26 +634,49 @@ cases.get('/:id/timing', (c) => {
           startedAt: sumStep.startedAt,
           completedAt: sumStep.completedAt,
         }
-        totalSec += +(sumMs / 1000)
-
-        // Step 3: act = gap between assess end and summarize start
-        if (phases['assess']?.completedAt) {
-          const actStart = new Date(phases['assess'].completedAt).getTime()
-          const actEnd = sumStart
-          const actMs = Math.max(0, actEnd - actStart)
-          if (actMs > 0) {
-            phases['act'] = {
-              durationMs: actMs,
-              durationSec: +(actMs / 1000).toFixed(1),
-              status: 'completed',
-              startedAt: phases['assess'].completedAt,
-              completedAt: sumStep.startedAt,
-            }
-            totalSec += +(actMs / 1000)
-          }
-        }
+        if (sumEnd > latestEnd) latestEnd = sumEnd
       }
     } catch { /* no pipeline state */ }
+
+    // Include assess from meta ONLY if it's within the same run window (within 10 min of data-refresh)
+    const metaPath = join(caseDir, 'casework-meta.json')
+    try {
+      const meta = JSON.parse(readFileSync(metaPath, 'utf-8'))
+      if (meta.lastAssessedAt && drEvent?.completedAt) {
+        const assessEnd = new Date(meta.lastAssessedAt).getTime()
+        const drEnd = new Date(drEvent.completedAt).getTime()
+        // Only use if assess happened AFTER data-refresh and within 10 minutes (same run)
+        if (assessEnd > drEnd && (assessEnd - drEnd) < 600_000) {
+          const assessMs = assessEnd - drEnd
+          phases['assess'] = {
+            durationMs: assessMs,
+            durationSec: +(assessMs / 1000).toFixed(1),
+            status: 'completed',
+            startedAt: drEvent.completedAt,
+            completedAt: meta.lastAssessedAt,
+          }
+          if (assessEnd > latestEnd) latestEnd = assessEnd
+        }
+      }
+    } catch { /* no meta */ }
+
+    // totalSec = wall-clock from data-refresh start to latest end
+    let totalSec = 0
+    if (drStart > 0 && latestEnd > drStart) {
+      totalSec = +((latestEnd - drStart) / 1000).toFixed(1)
+    } else {
+      // Fallback: sum of sub-event durations (without data-refresh wrapper to avoid double count)
+      totalSec = +(totalMs / 1000).toFixed(1)
+    }
+    // Also try data-refresh-output.json elapsed field
+    const drOutputPath = join(caseDir, '.casework', 'data-refresh-output.json')
+    if (totalSec === 0 && existsSync(drOutputPath)) {
+      try {
+        const drOut = JSON.parse(readFileSync(drOutputPath, 'utf-8'))
+        if (drOut.elapsed) totalSec = parseFloat(drOut.elapsed)
+        else if (drOut.elapsedSeconds) totalSec = parseFloat(drOut.elapsedSeconds)
+      } catch { /* use calculated */ }
+    }
 
     totalSec = +totalSec.toFixed(1)
 
@@ -946,8 +949,41 @@ cases.get('/:id/onenote', (c) => {
           }
         })
 
+      // ISS-228: Parse _page-relevance.json for structured scoring data
+      const relevancePath = join(onenoteDir, '_page-relevance.json')
+      let scoring: { scoredAt: string; keyFacts: string[]; highCount: number; lowCount: number; pages: Record<string, { relevance: string; reason: string }> } | null = null
+      if (existsSync(relevancePath)) {
+        try {
+          const relData = JSON.parse(readFileSync(relevancePath, 'utf-8'))
+          const pages = relData.pages || {}
+          const highCount = Object.values(pages).filter((p: any) => p.relevance === 'high').length
+          const lowCount = Object.values(pages).filter((p: any) => p.relevance !== 'high').length
+
+          // Extract key facts from digest markdown (lines starting with "- [fact]" or "- [analysis]")
+          const keyFacts: string[] = []
+          let inKeyFacts = false
+          for (const line of content.split('\n')) {
+            if (line.startsWith('## Key Facts')) { inKeyFacts = true; continue }
+            if (line.startsWith('## ') && inKeyFacts) { inKeyFacts = false; continue }
+            if (inKeyFacts && line.startsWith('### ')) { keyFacts.push(line); continue }
+            if (inKeyFacts && (line.startsWith('- [fact]') || line.startsWith('- [analysis]'))) {
+              keyFacts.push(line.slice(2)) // strip "- " prefix
+            }
+          }
+
+          scoring = {
+            scoredAt: relData._scoredAt || '',
+            keyFacts,
+            highCount,
+            lowCount,
+            pages,
+          }
+        } catch { /* ignore parse errors */ }
+      }
+
       return c.json({
         digest: { content, updatedAt: stat.mtime.toISOString(), size: stat.size },
+        scoring,
         // Keep backward-compat: files array with single digest entry for old frontend
         files: [{ filename: 'onenote-digest.md', content, size: stat.size, updatedAt: stat.mtime.toISOString() }],
         pages: pageFiles,

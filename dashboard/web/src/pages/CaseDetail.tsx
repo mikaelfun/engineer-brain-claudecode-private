@@ -220,7 +220,7 @@ export default function CaseDetail() {
             {activeTab === 'drafts' && <DraftsTab drafts={draftsData?.drafts || []} caseNumber={id!} />}
             {activeTab === 'analysis' && <AnalysisTab content={analysisData?.content} exists={analysisData?.exists} files={analysisData?.files} />}
             {activeTab === 'evidence' && <EvidenceChainTab caseId={id!} />}
-            {activeTab === 'onenote' && <OnenoteTab caseId={id!} files={onenoteData?.files || []} pages={onenoteData?.pages || []} />}
+            {activeTab === 'onenote' && <OnenoteTab caseId={id!} files={onenoteData?.files || []} pages={onenoteData?.pages || []} scoring={onenoteData?.scoring} />}
             {activeTab === 'timing' && <TimingTab exists={timingData?.exists} timing={timingData?.timing} />}
             {activeTab === 'logs' && <LogsTab logs={logsData?.logs || []} />}
             {activeTab === 'attachments' && <AttachmentsTab files={attachmentsData?.files || []} meta={attachmentsData?.meta} caseNumber={id!} />}
@@ -549,7 +549,18 @@ function NotesAndLaborTab({ notes, laborRecords, caseId }: { notes: any[]; labor
 
 function TeamsTab({ chats, digest, caseId }: { chats: any[]; digest: { scoredAt: string; keyFacts: string[]; relevantCount: number; irrelevantCount: number } | null; caseId: string }) {
   const [searchTerm, setSearchTerm] = useState('')
+  const [showRelevant, setShowRelevant] = useState(true)
   const [showOther, setShowOther] = useState(false)
+  const [expandedChats, setExpandedChats] = useState<Set<string>>(new Set())
+
+  const toggleChat = (chatId: string) => {
+    setExpandedChats(prev => {
+      const next = new Set(prev)
+      if (next.has(chatId)) next.delete(chatId)
+      else next.add(chatId)
+      return next
+    })
+  }
 
   const scrollRef = useCallback((node: HTMLDivElement | null) => {
     if (node) node.scrollTop = node.scrollHeight
@@ -581,27 +592,82 @@ function TeamsTab({ chats, digest, caseId }: { chats: any[]; digest: { scoredAt:
       `![$1](/api/cases/${caseId}/teams/assets/$2)`)
   }
 
-  const renderChat = (chat: any, i: number) => (
-    <Card key={chat.chatId || i} padding="sm">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <h4 className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>
-            {chat.chatId?.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) || `Chat ${i + 1}`}
-          </h4>
-          {chat.chatType === 'customer' && (
-            <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ background: 'var(--accent-blue-dim)', color: 'var(--accent-blue)' }}>customer</span>
-          )}
-          {chat.relevance === 'high' && (
-            <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ background: 'var(--accent-green-dim)', color: 'var(--accent-green)' }}>relevant</span>
-          )}
-        </div>
-        {chat.reason && <span className="text-xs truncate max-w-48" style={{ color: 'var(--text-tertiary)' }}>{chat.reason}</span>}
-      </div>
-      <div ref={scrollRef} className="text-sm max-h-96 overflow-y-auto" style={{ color: 'var(--text-secondary)' }}>
-        {searchTerm ? highlightText(chat.content || '') : <MarkdownContent>{rewriteImagePaths(chat.content || '')}</MarkdownContent>}
-      </div>
-    </Card>
-  )
+  // ISS-227: Ensure each chat message line gets its own paragraph
+  // Chat .md format: "**Name** (HH:MM): content" — consecutive lines need blank line separation
+  const ensureMessageLineBreaks = (content: string) => {
+    return content.replace(/(\n)(\*\*[^*]+\*\*\s*\()/g, '\n\n$2')
+  }
+
+  // Extract last update time from chat content header ("> 最后更新：2026-04-18 02:03 GMT+8")
+  const extractLastUpdate = (content: string) => {
+    const match = content.match(/最后更新[：:]\s*(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})/)
+    return match ? match[1] : ''
+  }
+
+  // Strip .md header (everything before first "## " date heading) for clean content display
+  const stripMdHeader = (content: string) => {
+    const idx = content.indexOf('\n## ')
+    return idx >= 0 ? content.slice(idx + 1) : content
+  }
+
+  // Colorize person names + style date headings in chat messages
+  const colorizeChatContent = (content: string) => {
+    const colors = ['var(--accent-blue)', 'var(--accent-green)', '#c084fc', 'var(--accent-amber)', '#f472b6', 'var(--accent-red)']
+    const nameColorMap: Record<string, string> = {}
+    let colorIdx = 0
+    // 1. Replace **Name** with colored <span>
+    let result = content.replace(/\*\*([^*]+)\*\*/g, (match, name) => {
+      if (!(name in nameColorMap)) {
+        nameColorMap[name] = colors[colorIdx % colors.length]
+        colorIdx++
+      }
+      return `<span style="color:${nameColorMap[name]};font-weight:600">${name}</span>`
+    })
+    // 2. Replace ## YYYY-MM-DD date headings with styled HTML (amber color, smaller, with divider)
+    result = result.replace(/^## (\d{4}-\d{2}-\d{2})/gm,
+      '<div style="color:var(--accent-amber);font-weight:700;font-size:13px;margin-top:12px;padding-bottom:4px;border-bottom:1px solid var(--border-subtle)">📅 $1</div>')
+    return result
+  }
+
+  const renderChat = (chat: any, i: number) => {
+    const chatKey = chat.chatId || `chat-${i}`
+    const isExpanded = expandedChats.has(chatKey)
+    const lastUpdate = extractLastUpdate(chat.content || '')
+    return (
+      <Card key={chatKey} padding="sm">
+        <button
+          onClick={() => toggleChat(chatKey)}
+          className="flex items-center justify-between w-full text-left"
+          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+        >
+          <div className="flex items-center gap-2">
+            <span style={{ display: 'inline-block', transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', fontSize: '10px', color: 'var(--text-tertiary)' }}>▶</span>
+            <h4 className="font-bold text-base" style={{ color: 'var(--text-primary)' }}>
+              {chat.chatId?.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) || `Chat ${i + 1}`}
+            </h4>
+            {chat.chatType === 'customer' && (
+              <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ background: 'var(--accent-blue-dim)', color: 'var(--accent-blue)' }}>customer</span>
+            )}
+            {chat.relevance === 'high' && (
+              <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ background: 'var(--accent-green-dim)', color: 'var(--accent-green)' }}>relevant</span>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            {lastUpdate && <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>🕐 {lastUpdate}</span>}
+            {chat.reason && <span className="text-xs truncate max-w-48" style={{ color: 'var(--text-tertiary)' }}>{chat.reason}</span>}
+          </div>
+        </button>
+        {isExpanded && (
+          <div ref={scrollRef} className="text-sm max-h-96 overflow-y-auto mt-2 pt-2" style={{ color: 'var(--text-secondary)', borderTop: '1px solid var(--border-subtle)' }}>
+            {searchTerm
+              ? highlightText(chat.content || '')
+              : <MarkdownContent>{colorizeChatContent(ensureMessageLineBreaks(rewriteImagePaths(stripMdHeader(chat.content || ''))))}</MarkdownContent>
+            }
+          </div>
+        )}
+      </Card>
+    )
+  }
 
   return (
     <div className="space-y-3">
@@ -609,9 +675,13 @@ function TeamsTab({ chats, digest, caseId }: { chats: any[]; digest: { scoredAt:
       {digest && digest.keyFacts.length > 0 && (
         <Card padding="sm" style={{ borderLeft: '3px solid var(--accent-amber)' }}>
           <h4 className="font-medium text-sm mb-2" style={{ color: 'var(--accent-amber)' }}>🔑 关键事实（Key Facts）</h4>
-          <ul className="text-sm space-y-1 list-disc list-inside" style={{ color: 'var(--text-secondary)' }}>
-            {digest.keyFacts.map((fact, i) => <li key={i}>{fact}</li>)}
-          </ul>
+          <div className="text-sm space-y-1" style={{ color: 'var(--text-secondary)' }}>
+            {digest.keyFacts.map((fact, i) =>
+              fact.startsWith('### ')
+                ? <p key={i} className="font-medium mt-3 mb-1 text-xs" style={{ color: 'var(--accent-amber)', opacity: 0.8 }}>{fact.slice(4)}</p>
+                : <p key={i} className="pl-0" style={{ lineHeight: '1.5' }}>• {fact}</p>
+            )}
+          </div>
           <p className="text-xs mt-2" style={{ color: 'var(--text-tertiary)' }}>
             相关对话: {digest.relevantCount} / {digest.relevantCount + digest.irrelevantCount} · 评分时间: {new Date(digest.scoredAt).toLocaleString()}
           </p>
@@ -626,7 +696,7 @@ function TeamsTab({ chats, digest, caseId }: { chats: any[]; digest: { scoredAt:
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Search chats..."
           className="w-full px-3 py-1.5 text-sm rounded-lg focus:outline-none focus:ring-2"
-          style={{ border: '1px solid var(--border-default)', boxShadow: 'none', outlineColor: 'var(--accent-blue)', '--tw-ring-color': 'var(--accent-blue)' } as React.CSSProperties}
+          style={{ border: '1px solid var(--border-default)', background: 'var(--bg-inset)', color: 'var(--text-primary)', boxShadow: 'none', outlineColor: 'var(--accent-blue)', '--tw-ring-color': 'var(--accent-blue)' } as React.CSSProperties}
         />
       )}
 
@@ -634,13 +704,22 @@ function TeamsTab({ chats, digest, caseId }: { chats: any[]; digest: { scoredAt:
         <p className="text-sm text-center py-4" style={{ color: 'var(--text-tertiary)' }}>No matches for &ldquo;{searchTerm}&rdquo;</p>
       ) : hasScoring && !searchTerm ? (
         <>
-          {/* Relevant Chats Section */}
+          {/* Relevant Chats Section — collapsible, default open */}
           {relevantChats.length > 0 && (
-            <div className="space-y-2">
-              <h3 className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-tertiary)' }}>
+            <div>
+              <button
+                onClick={() => setShowRelevant(!showRelevant)}
+                className="flex items-center gap-1 text-xs font-medium uppercase tracking-wider w-full py-2 hover:opacity-80 transition-opacity"
+                style={{ color: 'var(--accent-green)', background: 'none', border: 'none', cursor: 'pointer' }}
+              >
+                <span style={{ display: 'inline-block', transform: showRelevant ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▶</span>
                 📌 相关对话 ({relevantChats.length})
-              </h3>
-              {relevantChats.map(renderChat)}
+              </button>
+              {showRelevant && (
+                <div className="space-y-2 mt-1">
+                  {relevantChats.map(renderChat)}
+                </div>
+              )}
             </div>
           )}
 
@@ -945,18 +1024,21 @@ function AnalysisFileList({ files }: { files: Array<{ filename: string; content:
   )
 }
 
-function OnenoteTab({ caseId, files, pages }: {
+function OnenoteTab({ caseId, files, pages, scoring }: {
   caseId: string
   files: Array<{ filename: string; content: string; size: number; updatedAt: string }>
   pages?: Array<{ filename: string; content: string; size: number; updatedAt: string; imageCount: number }>
+  scoring?: { scoredAt: string; keyFacts: string[]; highCount: number; lowCount: number; pages: Record<string, { relevance: string; reason: string }> } | null
 }) {
   const [expandedPages, setExpandedPages] = useState<Set<string>>(new Set())
+  const [showHighPages, setShowHighPages] = useState(true)
+  const [showLowPages, setShowLowPages] = useState(false)
   const [lightboxImg, setLightboxImg] = useState<string | null>(null)
 
   if (files.length === 0) return <EmptyState icon="📓" title="No OneNote notes" description="Run patrol or casework to search OneNote for case-related notes" />
 
-  const digest = files[0]
   const hasPages = pages && pages.length > 0
+  const hasScoring = scoring && scoring.keyFacts.length > 0
 
   const togglePage = (filename: string) => {
     setExpandedPages(prev => {
@@ -969,93 +1051,177 @@ function OnenoteTab({ caseId, files, pages }: {
 
   // Replace ./assets/xxx.png references with API URLs in markdown
   const renderPageContent = (content: string) => {
-    const processed = content.replace(
+    return content.replace(
       /!\[([^\]]*)\]\(\.\/(assets\/[^)]+)\)/g,
       (_, alt, assetPath) => {
         const filename = assetPath.replace('assets/', '')
         return `![${alt}](/api/cases/${caseId}/onenote/assets/${filename})`
       }
     )
-    return processed
+  }
+
+  // Get page relevance from scoring data
+  const getPageRelevance = (filename: string): string => {
+    if (!scoring?.pages) return 'unknown'
+    const key = filename.replace(/\.md$/, '')
+    return scoring.pages[key]?.relevance || 'unknown'
+  }
+
+  const getPageReason = (filename: string): string => {
+    if (!scoring?.pages) return ''
+    const key = filename.replace(/\.md$/, '')
+    return scoring.pages[key]?.reason || ''
+  }
+
+  // Split pages into high/low relevance
+  const highPages = hasPages ? pages.filter(p => getPageRelevance(p.filename) === 'high') : []
+  const lowPages = hasPages ? pages.filter(p => getPageRelevance(p.filename) !== 'high') : []
+
+  const renderPage = (page: typeof pages extends (infer T)[] | undefined ? NonNullable<T> : never) => {
+    const isExpanded = expandedPages.has(page.filename)
+    const displayName = page.filename
+      .replace(/^_page-/, '')
+      .replace(/\.md$/, '')
+      .replace(/--/g, ' › ')
+    const relevance = getPageRelevance(page.filename)
+    return (
+      <Card key={page.filename} padding="sm">
+        <button
+          onClick={() => togglePage(page.filename)}
+          className="flex items-center justify-between w-full text-left"
+          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+        >
+          <div className="flex items-center gap-2">
+            <span style={{ display: 'inline-block', transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', fontSize: '10px', color: 'var(--text-tertiary)' }}>▶</span>
+            <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+              {displayName}
+            </span>
+            {relevance === 'high' && (
+              <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ background: 'var(--accent-green-dim)', color: 'var(--accent-green)' }}>relevant</span>
+            )}
+            {page.imageCount > 0 && (
+              <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'var(--bg-tertiary)', color: 'var(--text-tertiary)' }}>
+                🖼️ {page.imageCount}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+              {new Date(page.updatedAt).toLocaleDateString()}
+            </span>
+            {relevance !== 'high' && (
+              <span className="text-xs truncate max-w-48" style={{ color: 'var(--text-tertiary)' }}>{getPageReason(page.filename)}</span>
+            )}
+          </div>
+        </button>
+        {isExpanded && (
+          <div
+            className="mt-3 pt-3"
+            style={{ borderTop: '1px solid var(--border-subtle)' }}
+            onClick={(e) => {
+              const target = e.target as HTMLElement
+              if (target.tagName === 'IMG') {
+                setLightboxImg((target as HTMLImageElement).src)
+              }
+            }}
+          >
+            <style>{`
+              .onenote-page-content img {
+                max-width: 100%;
+                max-height: 400px;
+                object-fit: contain;
+                cursor: pointer;
+                border-radius: 4px;
+                margin: 8px 0;
+                transition: opacity 0.2s;
+              }
+              .onenote-page-content img:hover { opacity: 0.8; }
+            `}</style>
+            <div className="onenote-page-content">
+              <MarkdownContent>{renderPageContent(page.content)}</MarkdownContent>
+            </div>
+          </div>
+        )}
+      </Card>
+    )
   }
 
   return (
     <div className="space-y-3">
-      {/* Digest summary */}
-      <Card>
-        <div className="flex items-center justify-between mb-3 text-xs" style={{ color: 'var(--text-tertiary)' }}>
-          <span className="font-mono">{digest.filename.replace(/\.md$/, '')}</span>
-          <span>{new Date(digest.updatedAt).toLocaleString()}</span>
-        </div>
-        <MarkdownContent>{digest.content}</MarkdownContent>
-      </Card>
+      {/* Key Facts Card — mirrors Teams digest Card */}
+      {hasScoring && (
+        <Card padding="sm" style={{ borderLeft: '3px solid var(--accent-amber)' }}>
+          <h4 className="font-medium text-sm mb-2" style={{ color: 'var(--accent-amber)' }}>🔑 关键事实（Key Facts）</h4>
+          <div className="text-sm space-y-1" style={{ color: 'var(--text-secondary)' }}>
+            {scoring!.keyFacts.map((fact, i) =>
+              fact.startsWith('### ')
+                ? <p key={i} className="font-medium mt-3 mb-1 text-xs" style={{ color: 'var(--accent-amber)', opacity: 0.8 }}>{fact.slice(4)}</p>
+                : <p key={i} className="pl-0" style={{ lineHeight: '1.5' }}>• {fact}</p>
+            )}
+          </div>
+          <p className="text-xs mt-2" style={{ color: 'var(--text-tertiary)' }}>
+            相关页面: {scoring!.highCount} / {scoring!.highCount + scoring!.lowCount} · 评分时间: {new Date(scoring!.scoredAt).toLocaleString()}
+          </p>
+        </Card>
+      )}
 
-      {/* Individual pages with inline images */}
-      {hasPages && (
+      {/* Fallback: raw markdown if no scoring data */}
+      {!hasScoring && files.length > 0 && (
+        <Card>
+          <div className="flex items-center justify-between mb-3 text-xs" style={{ color: 'var(--text-tertiary)' }}>
+            <span className="font-mono">{files[0].filename.replace(/\.md$/, '')}</span>
+            <span>{new Date(files[0].updatedAt).toLocaleString()}</span>
+          </div>
+          <MarkdownContent>{files[0].content}</MarkdownContent>
+        </Card>
+      )}
+
+      {/* Pages grouped by relevance — mirrors Teams relevant/other chats */}
+      {hasPages && hasScoring ? (
+        <>
+          {highPages.length > 0 && (
+            <div>
+              <button
+                onClick={() => setShowHighPages(!showHighPages)}
+                className="flex items-center gap-1 text-xs font-medium uppercase tracking-wider w-full py-2 hover:opacity-80 transition-opacity"
+                style={{ color: 'var(--accent-green)', background: 'none', border: 'none', cursor: 'pointer' }}
+              >
+                <span style={{ display: 'inline-block', transform: showHighPages ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▶</span>
+                📌 相关页面 ({highPages.length})
+              </button>
+              {showHighPages && (
+                <div className="space-y-2 mt-1">
+                  {highPages.map(renderPage)}
+                </div>
+              )}
+            </div>
+          )}
+
+          {lowPages.length > 0 && (
+            <div>
+              <button
+                onClick={() => setShowLowPages(!showLowPages)}
+                className="flex items-center gap-1 text-xs font-medium uppercase tracking-wider w-full py-2 hover:opacity-80 transition-opacity"
+                style={{ color: 'var(--text-tertiary)', background: 'none', border: 'none', cursor: 'pointer' }}
+              >
+                <span style={{ display: 'inline-block', transform: showLowPages ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▶</span>
+                其他页面 ({lowPages.length})
+              </button>
+              {showLowPages && (
+                <div className="space-y-2 mt-1">
+                  {lowPages.map(renderPage)}
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      ) : hasPages && (
+        /* No scoring — flat page list */
         <div className="space-y-2">
           <div className="text-xs font-medium px-1" style={{ color: 'var(--text-secondary)' }}>
-            Raw Pages ({pages.length})
+            Raw Pages ({pages!.length})
           </div>
-          {pages.map(page => {
-            const isExpanded = expandedPages.has(page.filename)
-            const displayName = page.filename
-              .replace(/^_page-/, '')
-              .replace(/\.md$/, '')
-              .replace(/--/g, ' › ')
-            return (
-              <Card key={page.filename}>
-                <button
-                  className="w-full flex items-center justify-between text-left"
-                  onClick={() => togglePage(page.filename)}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                      {isExpanded ? '▼' : '▶'}
-                    </span>
-                    <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                      {displayName}
-                    </span>
-                    {page.imageCount > 0 && (
-                      <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'var(--bg-tertiary)', color: 'var(--text-tertiary)' }}>
-                        🖼️ {page.imageCount}
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                    {new Date(page.updatedAt).toLocaleDateString()}
-                  </span>
-                </button>
-                {isExpanded && (
-                  <div
-                    className="mt-3 pt-3"
-                    style={{ borderTop: '1px solid var(--border-subtle)' }}
-                    onClick={(e) => {
-                      const target = e.target as HTMLElement
-                      if (target.tagName === 'IMG') {
-                        setLightboxImg((target as HTMLImageElement).src)
-                      }
-                    }}
-                  >
-                    <style>{`
-                      .onenote-page-content img {
-                        max-width: 100%;
-                        max-height: 400px;
-                        object-fit: contain;
-                        cursor: pointer;
-                        border-radius: 4px;
-                        margin: 8px 0;
-                        transition: opacity 0.2s;
-                      }
-                      .onenote-page-content img:hover { opacity: 0.8; }
-                    `}</style>
-                    <div className="onenote-page-content">
-                      <MarkdownContent>{renderPageContent(page.content)}</MarkdownContent>
-                    </div>
-                  </div>
-                )}
-              </Card>
-            )
-          })}
+          {pages!.map(renderPage)}
         </div>
       )}
 
