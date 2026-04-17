@@ -94,7 +94,7 @@ AR Case 额外读取 `notes-ar.md`。
 - 「排查进展」按时间线梳理关键事件（邮件往来、电话、Note 记录等），每条一行
 - 「关键发现」提取诊断结论（来自 analysis/ 或邮件中的技术内容）
 - 「风险」评估 SLA、客户响应、是否需要升级等
-- **Entitlement 不合规时**：在「风险」首行插入 `⚠️ **Entitlement Warning** — Service: {serviceName}, Schedule: {schedule}, Country: {contractCountry}。请联系 TA 确认。`
+- **Entitlement 不合规时**：在「风险」首行插入 `⚠️ **Entitlement Warning** — Service: {serviceName}, Schedule: {schedule}, Country: {contractCountry}。{compliance.warnings 中的具体原因}。联系 TA 确认，无 21V Exhibit 则引导客户从 portal.azure.cn 提工单。`
 - **RDSE 客户时**：在「问题描述」末尾注明 `[RDSE: {ccAccount}]`
 
 **AR Case 规则**（`meta.isAR === true`）：

@@ -108,7 +108,21 @@ if [ "$IS_AR" != "true" ]; then
   fi
 fi
 if [ "$ENTITLEMENT_OK" = "false" ]; then
-  RED_ITEMS+=("Entitlement 异常，需确认客户合同状态")
+  # Read compliance warnings for specific reason
+  ENT_WARNING=$(python3 -c "
+import json
+try:
+  m = json.load(open(r'$META', encoding='utf-8'))
+  warnings = m.get('compliance', {}).get('warnings', [])
+  ent_warns = [w for w in warnings if 'entitlement' in w.lower() or '21v' in w.lower() or 'exhibit' in w.lower() or 'india' in w.lower() or 'misrouted' in w.lower() or 'contract' in w.lower()]
+  print(ent_warns[0] if ent_warns else '')
+except: print('')
+" 2>/dev/null)
+  if [ -n "$ENT_WARNING" ]; then
+    RED_ITEMS+=("Entitlement 不合规: ${ENT_WARNING}")
+  else
+    RED_ITEMS+=("Entitlement 不合规（缺少 21V Exhibit），联系 TA 确认。无 exhibit 则引导客户从 portal.azure.cn 提工单")
+  fi
 fi
 
 # ICM Manage Access check: verify CSS Mooncake team has access
