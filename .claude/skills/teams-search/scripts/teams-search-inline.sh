@@ -82,6 +82,16 @@ T0=$(date +%s)
 # Start agency HTTP proxy (per-case instance)
 # ═══════════════════════════════════════════
 
+# Pre-launch: if a stale agency is squatting on our port, kill ONLY that PID.
+# Covers orphans from previous runs where EXIT trap didn't fire (e.g. session
+# disconnect, Ctrl+C race). Does NOT touch agency processes on other ports.
+STALE_PID=$(netstat -ano 2>/dev/null | grep -E "127\.0\.0\.1:$PORT\s.*LISTENING" | awk '{print $NF}' | head -1)
+if [ -n "$STALE_PID" ] && [ "$STALE_PID" != "0" ]; then
+  echo "  ⚠ port $PORT occupied by PID $STALE_PID — killing stale agency" >&2
+  taskkill //PID "$STALE_PID" //F >/dev/null 2>&1 || true
+  sleep 0.5
+fi
+
 "$AGENCY_EXE" mcp teams --transport http --port "$PORT" > /dev/null 2>&1 &
 APID=$!
 # Task 5.4i: trap chains proxy-kill + event-sentinel. If any `exit` below fires
