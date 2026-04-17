@@ -25,7 +25,7 @@ allowed-tools:
 每个 case 独立实例，天然并行安全。
 
 ```bash
-bash .claude/skills/email-search/scripts/scripts/email-search-inline.sh \
+bash .claude/skills/email-search/scripts/scripts/scripts/email-search-inline.sh \
   --case-number {caseNumber} \
   --case-dir {caseDir} \
   --project-root .
@@ -107,7 +107,7 @@ CASES_ROOT=$(python3 -c "import json; print(json.load(open('config.json'))['case
 CASE_DIR="$CASES_ROOT/active/{caseNumber}"
 mkdir -p "$CASE_DIR/logs"
 
-bash .claude/skills/email-search/scripts/scripts/email-search-inline.sh \
+bash .claude/skills/email-search/scripts/scripts/scripts/email-search-inline.sh \
   --case-number {caseNumber} \
   --case-dir "$CASE_DIR" \
   --project-root .
@@ -123,7 +123,7 @@ bash .claude/skills/email-search/scripts/scripts/email-search-inline.sh \
 在 `casework-gather.sh` 中作为后台任务并行执行：
 
 ```bash
-bash "$CD/.claude/skills/email-search/scripts/scripts/email-search-inline.sh" \
+bash "$CD/.claude/skills/email-search/scripts/scripts/scripts/email-search-inline.sh" \
   --case-number "$CASE_NUMBER" \
   --case-dir "$CASE_DIR" \
   --project-root "$CD" \

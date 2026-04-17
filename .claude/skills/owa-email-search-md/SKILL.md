@@ -52,20 +52,20 @@ allowed-tools:
 
 ```powershell
 # 默认：带图片提取
-pwsh -File ".claude/skills/email-search/scripts/owa-email-fetch.ps1" `
+pwsh -File ".claude/skills/email-search/scripts/scripts/owa-email-fetch.ps1" `
   -CaseNumber "{caseNumber}" `
   -OutputPath "{caseDir}/emails-owa.md" `
   -LogFile "{caseDir}/logs/owa-email-search.log"
 
 # 纯文本模式（更快，不提取图片）
-pwsh -File ".claude/skills/email-search/scripts/owa-email-fetch.ps1" `
+pwsh -File ".claude/skills/email-search/scripts/scripts/owa-email-fetch.ps1" `
   -CaseNumber "{caseNumber}" `
   -OutputPath "{caseDir}/emails-owa.md" `
   -LogFile "{caseDir}/logs/owa-email-search.log" `
   -NoImages
 
 # 调试模式（headed，可观察浏览器操作）
-pwsh -File ".claude/skills/email-search/scripts/owa-email-fetch.ps1" `
+pwsh -File ".claude/skills/email-search/scripts/scripts/owa-email-fetch.ps1" `
   -CaseNumber "{caseNumber}" `
   -OutputPath "{caseDir}/emails-owa.md" `
   -Headed

@@ -14,8 +14,8 @@ mcpServers:
 
 ## 关键脚本
 
-- **去重+过滤**: `.claude/skills/email-search/scripts/email-search-mcp.ps1`
-- **MCP 响应处理**: `.claude/skills/email-search/scripts/mcp-response-handler.ps1`（解析 JSON、写文件、日志）
+- **去重+过滤**: `.claude/skills/email-search/scripts/scripts/email-search-mcp.ps1`
+- **MCP 响应处理**: `.claude/skills/email-search/scripts/scripts/mcp-response-handler.ps1`（解析 JSON、写文件、日志）
 
 ## 任务池机制
 
@@ -51,7 +51,7 @@ mcpServers:
    Write → {outputDir}/{caseNumber}/mcp-raw-search.json
 
 4. 调用脚本解析并保存（脚本处理所有 JSON 转义问题）：
-   Bash: pwsh -File .claude/skills/email-search/scripts/mcp-response-handler.ps1 \
+   Bash: pwsh -File .claude/skills/email-search/scripts/scripts/mcp-response-handler.ps1 \
      -Mode search \
      -OutputPath "{outputDir}/{caseNumber}/search-results.json" \
      -LogFile "{outputDir}/{caseNumber}/logs/email-search.log" \
@@ -63,7 +63,7 @@ mcpServers:
 ### Step 2: 去重 + 过滤
 
 ```bash
-pwsh -File .claude/skills/email-search/scripts/email-search-mcp.ps1 \
+pwsh -File .claude/skills/email-search/scripts/scripts/email-search-mcp.ps1 \
   -CaseNumber "{caseNumber}" \
   -CaseDir "{outputDir}/{caseNumber}" \
   -SearchResultJson "{outputDir}/{caseNumber}/search-results.json"
@@ -82,7 +82,7 @@ pwsh -File .claude/skills/email-search/scripts/email-search-mcp.ps1 \
    Write → {outputDir}/{caseNumber}/mcp-raw-body.json
 
 3. 脚本解析并保存 body：
-   Bash: pwsh -File .claude/skills/email-search/scripts/mcp-response-handler.ps1 \
+   Bash: pwsh -File .claude/skills/email-search/scripts/scripts/mcp-response-handler.ps1 \
      -Mode body \
      -OutputPath "{outputDir}/{caseNumber}/.tmp-email-search/body-{id后10字符}.html" \
      -LogFile "{outputDir}/{caseNumber}/logs/email-search.log" \
@@ -92,7 +92,7 @@ pwsh -File .claude/skills/email-search/scripts/email-search-mcp.ps1 \
 ### Step 4: 生成 emails-office.md
 
 ```bash
-pwsh -File .claude/skills/email-search/scripts/email-search-mcp.ps1 \
+pwsh -File .claude/skills/email-search/scripts/scripts/email-search-mcp.ps1 \
   -CaseNumber "{caseNumber}" \
   -CaseDir "{outputDir}/{caseNumber}" \
   -Generate

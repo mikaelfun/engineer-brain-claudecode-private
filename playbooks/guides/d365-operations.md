@@ -91,5 +91,5 @@ ${casesRoot}/active/        ← OutputDir
 
 ## Skill 引用
 
-所有 D365 操作通过 `skills/d365-case-ops/` 下的脚本执行。
-脚本位置：`skills/d365-case-ops/scripts/`
+所有 D365 操作通过 `.claude/skills/d365-case-ops/` 下的脚本执行。
+脚本位置：`.claude/skills/d365-case-ops/scripts/`
