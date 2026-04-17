@@ -55,7 +55,7 @@ Step 1 `search-inline.py` 已经把 OneNote 匹配结果写到 `{caseDir}/onenot
 
 分类完成后，**重写** `personal-notes.md`。
 
-格式模板：读取 `.claude/skills/onenote/personal-notes-template.md`，按模板结构输出（Facts/Analysis 汇聚 + 详细页面 + Summary）。
+格式模板：读取 `.claude/skills/onenote/onenote-digest-template.md`，按模板结构输出（Facts/Analysis 汇聚 + 详细页面 + Summary）。
 
 ### 4. 读取 raw page 文件补充分析
 

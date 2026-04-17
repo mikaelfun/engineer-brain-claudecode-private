@@ -149,7 +149,7 @@ eval $(bash .claude/skills/casework/assess/scripts/gate-subagents.sh "{caseDir}/
 
 **OneNote inline 分析**：读 `{caseDir}/onenote/_page-*.md`，分析后**重写 `{caseDir}/onenote/personal-notes.md`**。
 
-格式模板：读取 `.claude/skills/onenote/personal-notes-template.md`。
+格式模板：读取 `.claude/skills/onenote/onenote-digest-template.md`。
 
 > **性能影响**：raw 文件直接进 Step 4 LLM context，增加 input tokens 但省去 2 次 subagent spawn 开销（~30s 冷启动）。对于 patrol 的 3-10 case 并行场景，总体更快。
 

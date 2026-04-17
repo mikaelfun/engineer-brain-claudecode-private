@@ -82,7 +82,7 @@ Upsert meta: ar.communicationMode, ar.caseOwnerEmail, ar.caseOwnerName
 
 **OneNote inline 分析**：读 `{caseDir}/onenote/_page-*.md`，分析后**重写 `{caseDir}/onenote/personal-notes.md`**。
 
-格式模板：读取 `.claude/skills/onenote/personal-notes-template.md`，按模板结构输出（Facts/Analysis 汇聚 + 详细页面 + Summary）。
+格式模板：读取 `.claude/skills/onenote/onenote-digest-template.md`，按模板结构输出（Facts/Analysis 汇聚 + 详细页面 + Summary）。
 
 **Teams 搜索关键词**根据沟通模式调整：
 - `internal` → 搜 case owner 名 + AR case number
