@@ -1148,22 +1148,43 @@ function OnenoteTab({ caseId, files, pages, scoring }: {
 
   return (
     <div className="space-y-3">
-      {/* Key Facts Card — mirrors Teams digest Card */}
-      {hasScoring && (
-        <Card padding="sm" style={{ borderLeft: '3px solid var(--accent-amber)' }}>
-          <h4 className="font-medium text-sm mb-2" style={{ color: 'var(--accent-amber)' }}>🔑 关键事实（Key Facts）</h4>
-          <div className="text-sm space-y-1" style={{ color: 'var(--text-secondary)' }}>
-            {scoring!.keyFacts.map((fact, i) =>
-              fact.startsWith('### ')
-                ? <p key={i} className="font-medium mt-3 mb-1 text-xs" style={{ color: 'var(--accent-amber)', opacity: 0.8 }}>{fact.slice(4)}</p>
-                : <p key={i} className="pl-0" style={{ lineHeight: '1.5' }}>• {fact}</p>
-            )}
-          </div>
-          <p className="text-xs mt-2" style={{ color: 'var(--text-tertiary)' }}>
-            相关页面: {scoring!.highCount} / {scoring!.highCount + scoring!.lowCount} · 评分时间: {new Date(scoring!.scoredAt).toLocaleString()}
-          </p>
-        </Card>
-      )}
+      {/* Key Facts Card — amber border, fact items only */}
+      {hasScoring && (() => {
+        const facts = scoring!.keyFacts.filter(f => f.startsWith('[fact]') || f.startsWith('### '))
+        const analyses = scoring!.keyFacts.filter(f => f.startsWith('[analysis]'))
+        return <>
+          {facts.length > 0 && (
+            <Card padding="sm" style={{ borderLeft: '3px solid var(--accent-amber)' }}>
+              <h4 className="font-medium text-sm mb-2" style={{ color: 'var(--accent-amber)' }}>🔑 事实记录（Facts）</h4>
+              <div className="text-sm space-y-1" style={{ color: 'var(--text-secondary)' }}>
+                {facts.map((fact, i) =>
+                  fact.startsWith('### ')
+                    ? <p key={i} className="font-medium mt-3 mb-1 text-xs" style={{ color: 'var(--accent-amber)', opacity: 0.8 }}>{fact.slice(4)}</p>
+                    : <p key={i} className="pl-0" style={{ lineHeight: '1.5' }}>• {fact.replace(/^\[fact\]\s*/, '')}</p>
+                )}
+              </div>
+              <p className="text-xs mt-2" style={{ color: 'var(--text-tertiary)' }}>
+                相关页面: {scoring!.highCount} / {scoring!.highCount + scoring!.lowCount} · 评分时间: {new Date(scoring!.scoredAt).toLocaleString()}
+              </p>
+            </Card>
+          )}
+
+          {/* Analysis Card — blue border, analysis items */}
+          {analyses.length > 0 && (
+            <Card padding="sm" style={{ borderLeft: '3px solid var(--accent-blue)' }}>
+              <h4 className="font-medium text-sm mb-2" style={{ color: 'var(--accent-blue)' }}>💡 分析记录（Analysis）</h4>
+              <div className="text-sm space-y-1" style={{ color: 'var(--text-secondary)' }}>
+                {analyses.map((a, i) =>
+                  <p key={i} className="pl-0" style={{ lineHeight: '1.5', opacity: 0.85 }}>• {a.replace(/^\[analysis\]\s*/, '')}</p>
+                )}
+              </div>
+              <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
+                ⚠️ 以上为 LLM 推断，可能不准确，需验证后引用
+              </p>
+            </Card>
+          )}
+        </>
+      })()}
 
       {/* Fallback: raw markdown if no scoring data */}
       {!hasScoring && files.length > 0 && (
