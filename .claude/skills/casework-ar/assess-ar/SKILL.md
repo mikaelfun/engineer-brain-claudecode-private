@@ -39,7 +39,11 @@ AR Case 专用状态评估。与主 casework assess 的区别：增加 AR scope 
 
 ### Step 2. Compliance gate（hash cache）
 
-同主 assess：基于 main case 的 case-info.md 做 compliance hash 检查。`entitlementOk === false` → 阻断。
+同主 assess 的完整 compliance-check 逻辑（Entitlement + 21v Convert + CC Finder + SAP 三层检查），基于 main case 的 case-info.md。
+
+AR 缓存策略更积极：Entitlement 基于 main case 数据，合同不因 AR 变化。首次检查后缓存永久有效（`compliance.entitlementOk` 有值即跳过）。
+
+`entitlementOk === false` → 阻断。
 
 ### Step 3. AR Scope 提取（首次 or scopeConfirmed !== true）
 

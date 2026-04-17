@@ -79,11 +79,43 @@ else
 fi
 ```
 
-**re-infer 路径**：本 skill 内一次 haiku 调用直接处理（不 spawn subagent——compliance 规则简单，不值得独立 agent）：
-- Prompt: "读 `{caseDir}/case-info.md` 的 Entitlement / SAP Code / Support Plan 字段，判断是否可支持（Premier/ProDirect/Unified 为 entitlementOk=true；Business Hours + 非核心产品为 false）。输出 JSON: {entitlementOk: bool, sapPath: str, details: str}"
-- 结果写 `casework-meta.json.compliance = { entitlementOk, sapPath, details, sourceHash: $CURRENT_HASH, checkedAt: ISO }`
+**re-infer 路径**：hash 不匹配时，执行**完整 compliance-check**（不只是 entitlementOk）：
+
+读取 `.claude/skills/compliance-check/SKILL.md` 的 Step 2-5 规则，依次执行：
+
+1. **Entitlement 合规检查**（Step 2）：从 case-info.md 的 Entitlement 表读 Service Name、Schedule、Contract Country → entitlementOk
+2. **21v Convert 检测**（Step 3）：从 Customer Statement 搜索 `21v ticket`/`21Vianet` → is21vConvert、21vCaseId
+3. **CC Finder**（Step 4）：读 `{dataRoot}/mooncake-cc.json`，匹配客户名 → ccEmails、ccAccount（用于首次 IR 邮件 CC 行）
+4. **SAP 三层检查**（Step 4.5）：读 `{dataRoot}/sap-scope.json`
+   - 4.5a Mooncake 路径检测 → sapMooncake
+   - 4.5b Pod 负责范围检测 → sapInPod
+   - 4.5c SAP 与问题描述一致性 → sapMismatch
+   → sapOk = sapMooncake && sapInPod && !sapMismatch
+
+结果写 `casework-meta.json.compliance`（完整 schema 见 compliance-check/SKILL.md §5）：
+```json
+{
+  "compliance": {
+    "entitlementOk": true,
+    "sourceHash": "$CURRENT_HASH",
+    "checkedAt": "ISO",
+    "is21vConvert": false,
+    "21vCaseId": null,
+    "sapOk": true,
+    "sapMooncake": true,
+    "sapInPod": true,
+    "sapMismatch": false,
+    "sapPath": "Azure/21Vianet Mooncake/...",
+    "warnings": []
+  },
+  "ccAccount": "BMW AG",
+  "ccEmails": "xxx@microsoft.com;yyy@microsoft.com"
+}
+```
 
 **entitlementOk === false 时直接阻断**：写 execution-plan.json 带 `actualStatus=ready-to-close`、`noActionReason="compliance: not supported"`，跳过 Step 3/4。
+**sapOk === false 时不阻断**，但 warnings 传入 LLM prompt context，LLM 可在 actions 中建议修改 SAP。
+**is21vConvert === true 时**，LLM 的 email-drafter action 应使用 emailType=`21v-convert-ir`（如果是首次 IR）。
 
 ### Step 3. 并行 spawn enrichment subagents（门控）
 
