@@ -157,3 +157,4 @@
 | [x] | case-back-nav_20260404 | Case 页面返回按钮导航到 Cases 列表 | 2026-04-04 | 2026-04-04 |
 | [~] | ar-ir-display_20260404 | AR Case 显示 Main Case 的 IR 状态 (abandoned: 21V KPI N/A) | 2026-04-04 | 2026-04-04 |
 | [x] | activity-stream-ux_20260405 | TestLab Activity Stream UX Improvement | 2026-04-05 | 2026-04-05 |
+| [~] | casework-v2-cleanup_20260417 | casework SKILL.md v1 残留清理 | 2026-04-17 | 2026-04-17 |

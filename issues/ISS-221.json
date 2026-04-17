@@ -1,0 +1,18 @@
+{
+  "id": "ISS-221",
+  "title": "OneNote personal-notes.md 退化为 raw keyword match — patrol mode 无 LLM 分类",
+  "severity": "medium",
+  "category": "casework",
+  "status": "resolved",
+  "createdAt": "2026-04-17T09:45:00Z",
+  "description": "v2 assess SKILL.md Step 3 设计为 spawn onenote-classifier agent 对 personal-notes.md 做 [fact]/[analysis] 标注。但 patrol mode 下 casework(mode=patrol) 在 depth=1，Claude Code 的 subagent depth 限制导致无法再 spawn onenote-classifier（depth=2 被拒绝）。结果 personal-notes.md 保持 search-inline.py 的原始输出——只有文件名匹配和 excerpt 开头几行，没有 LLM 分析，WebUI 无法有效消费。\n\n对比 v1：v1 的 onenote-case-search agent 由 casework 主 session（depth=0）直接 spawn，可以做 LLM 分析。v2 把 onenote 分析下放到 assess Step 3（在 casework agent 内部），但 patrol mode 的 depth 限制使其失效。",
+  "rootCause": "v2 架构设计缺陷：assess 内的 enrichment subagent（onenote-classifier, teams-digest-writer）在 patrol mode（depth=1）下无法 spawn。",
+  "fix": "方案 A（推荐）：在 data-refresh.sh 内 onenote 搜索完成后，直接用 python3 inline LLM 调用（不 spawn agent）做 fact/analysis 分类，写入 personal-notes.md。方案 B：把 onenote-classifier 从 assess Step 3 移到 patrol 主 agent 的 streaming pipeline（在 plan-ready 后、summarize 前），由 depth=0 的 patrol 主 agent spawn。方案 C：assess 内检测 depth 限制，降级为 inline LLM 调用而非 spawn agent。",
+  "files": [
+    ".claude/skills/casework/assess/SKILL.md",
+    ".claude/skills/casework/scripts/data-refresh.sh",
+    ".claude/agents/onenote-case-search.md"
+  ],
+  "foundDuring": "patrol-v2-cold-start-audit-20260417",
+  "resolvedAt": "2026-04-17T09:55:00Z"
+}

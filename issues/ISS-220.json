@@ -1,0 +1,18 @@
+{
+  "id": "ISS-220",
+  "title": "casework.log 和 .t_* timing markers 应统一到 .casework/logs/",
+  "severity": "low",
+  "category": "casework",
+  "status": "resolved",
+  "createdAt": "2026-04-17T09:45:00Z",
+  "description": "v2 data-refresh 组件日志（d365.log, teams.log, onenote.log, attachments.log）已在 .casework/logs/ 下。但 casework SKILL.md Step 1 仍让 LLM agent 在外层 {caseDir}/logs/ 创建 casework.log 和 .t_* timing markers。两套日志位置并存。patrol mode 下只有 AR case 创建了外层 logs/（因为 AR 走了 changegate mkdir），其他 case 外层 logs/ 缺失。",
+  "rootCause": "v1→v2 迁移不完整。casework SKILL.md 中 Step 1 的 mkdir logs + casework.log 写入位置是 v1 遗留。v2 的 data-refresh.sh 已将组件日志迁到 .casework/logs/，但 SKILL.md 没有跟上。",
+  "fix": "统一到 .casework/logs/。casework SKILL.md Step 1 改 mkdir -p .casework/logs，casework.log 写到 .casework/logs/casework.log，.t_* 也写到 .casework/logs/.t_*。同时更新 patrol SKILL.md 的日志读取路径。generate-todo.sh 和 casework-timing.sh 也需要更新读取路径。",
+  "files": [
+    ".claude/skills/casework/SKILL.md",
+    ".claude/skills/casework/scripts/generate-todo.sh",
+    ".claude/skills/casework/scripts/casework-timing.sh"
+  ],
+  "foundDuring": "patrol-v2-cold-start-audit-20260417",
+  "resolvedAt": "2026-04-17T09:55:00Z"
+}

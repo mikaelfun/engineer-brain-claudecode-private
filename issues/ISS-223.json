@@ -1,0 +1,16 @@
+{
+  "id": "ISS-223",
+  "title": "patrol 热启动 0 cases 时仍应跳过预热阶段 — 缺少 early-exit 分支",
+  "severity": "low",
+  "category": "patrol",
+  "status": "resolved",
+  "createdAt": "2026-04-17T09:45:00Z",
+  "description": "patrol SKILL.md Step 3 筛选后如果 0 cases 需要处理，当前设计仍会继续执行 Step 4（预热：IR batch + DTM token + ICM token），浪费 ~20s。应该在 Step 3 筛选后加 early-exit：0 cases → 跳过 Step 4/5/6/7 → 直接写 result.json（processedCases=0）→ release lock。",
+  "rootCause": "SKILL.md 没有定义 0 cases 的 early-exit 路径。",
+  "fix": "在 Step 3 筛选后加判断：if casesToProcess == 0 → skip warmup/processing → write empty result → exit。",
+  "files": [
+    ".claude/skills/patrol/SKILL.md"
+  ],
+  "foundDuring": "patrol-v2-hot-start-audit-20260417",
+  "resolvedAt": "2026-04-17T09:55:00Z"
+}

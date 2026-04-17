@@ -81,16 +81,16 @@ PID_D365=$!
 # paths instead of blocking them at the outer wait. Total path time =
 # max(d365, teams+post, icm, onenote, att) instead of max(...) + teams-post.
 (
-  bash "$PROJECT_ROOT/.claude/skills/teams-search/scripts/teams-search-inline.sh" \
+  bash "$PROJECT_ROOT/.claude/skills/casework/teams-search/scripts/teams-search-inline.sh" \
     --case-number "$CASE_NUMBER" --case-dir "$CASE_DIR_ABS" --contact-email "" \
     > "$LOGD/teams.log" 2>&1
 
   # PRD §4.3: Step 1 must land _chat-index.json + per-chat .md, not just raw.
   if [ -f "$CASE_DIR_ABS/teams/_mcp-raw.json" ]; then
-    python3 "$PROJECT_ROOT/.claude/skills/teams-search/scripts/build-input-from-raw.py" \
+    python3 "$PROJECT_ROOT/.claude/skills/casework/teams-search/scripts/build-input-from-raw.py" \
       "$CASE_DIR_ABS" > "$LOGD/teams-build-input.log" 2>&1 || true
     if [ -f "$CASE_DIR_ABS/teams/_input.json" ]; then
-      pwsh -NoProfile -File "$PROJECT_ROOT/.claude/skills/teams-search/scripts/write-teams.ps1" \
+      pwsh -NoProfile -File "$PROJECT_ROOT/.claude/skills/casework/teams-search/scripts/write-teams.ps1" \
         -OutputDir "$CASE_DIR_ABS/teams" -InputFile "$CASE_DIR_ABS/teams/_input.json" \
         > "$LOGD/teams-write.log" 2>&1 || true
     fi
@@ -99,9 +99,14 @@ PID_D365=$!
 PID_TEAMS=$!
 
 # 3. ICM — L2, native events (Task 5.3).
-# Resolve incidentId via 3-way fallback: meta.json → casework-meta.json → raw cache.
+# Resolve incidentId via 4-way fallback:
+#   1. casework-meta.json (pre-seeded by changegate ISS-219)
+#   2. meta.json (legacy)
+#   3. icm/_icm-portal-raw.json (legacy cache)
+#   4. WAIT for case-info.md to appear (cold start: D365 step writes it)
+#      then parse "| ICM Number | NNNNN |" line from case-info.md
 ICM_INCIDENT=""
-for src in "$CASE_DIR_ABS/meta.json" "$CASE_DIR_ABS/casework-meta.json" "$CASE_DIR_ABS/icm/_icm-portal-raw.json"; do
+for src in "$CASE_DIR_ABS/casework-meta.json" "$CASE_DIR_ABS/meta.json" "$CASE_DIR_ABS/icm/_icm-portal-raw.json"; do
   if [ -f "$src" ]; then
     ICM_INCIDENT=$(python3 -c "
 import json
@@ -117,6 +122,19 @@ except Exception: print('')
     [ -n "$ICM_INCIDENT" ] && break
   fi
 done
+
+# Cold start fallback: wait for case-info.md (D365 step produces it in ~15-30s)
+if [ -z "$ICM_INCIDENT" ]; then
+  CASE_INFO="$CASE_DIR_ABS/case-info.md"
+  for i in $(seq 1 12); do
+    [ -f "$CASE_INFO" ] && break
+    sleep 3
+  done
+  if [ -f "$CASE_INFO" ]; then
+    ICM_INCIDENT=$(grep -oP 'ICM Number\s*\|\s*\K[0-9]+' "$CASE_INFO" 2>/dev/null || echo "")
+  fi
+fi
+
 if [ -n "$ICM_INCIDENT" ]; then
   (
     node "$PROJECT_ROOT/.claude/skills/icm/scripts/icm-discussion-ab.js" \

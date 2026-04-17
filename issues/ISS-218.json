@@ -1,0 +1,16 @@
+{
+  "id": "ISS-218",
+  "title": "generate-todo.sh 不消费 compliance.warnings — SAP mismatch 不出现在 todo",
+  "severity": "medium",
+  "category": "casework",
+  "status": "resolved",
+  "createdAt": "2026-04-17T09:45:00Z",
+  "description": "generate-todo.sh 只检查 meta.sapCheck（summarize Step 3.4 产出），但 AR case 跳过 sapCheck。assess 阶段写入的 compliance.warnings[]（如 sapInPod:false, sapMismatch:true）从未被 generate-todo 消费。导致 SAP 不在 pod scope 的警告对用户不可见。",
+  "rootCause": "generate-todo.sh line 142-166 只读 meta.sapCheck，不读 meta.compliance.warnings。AR case 因 line 149 直接 print('OK') 跳过。",
+  "fix": "在 generate-todo.sh SAP 检查段之后加一段：读 meta.compliance.warnings[]，非空则每条输出到 YELLOW_ITEMS。AR case 也应走这段（compliance warnings 不受 AR 跳过限制）。",
+  "files": [
+    ".claude/skills/casework/scripts/generate-todo.sh"
+  ],
+  "foundDuring": "patrol-v2-cold-start-audit-20260417",
+  "resolvedAt": "2026-04-17T09:55:00Z"
+}

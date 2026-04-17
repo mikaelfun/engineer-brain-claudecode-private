@@ -117,7 +117,9 @@ fi
 **sapOk === false 时不阻断**，但 warnings 传入 LLM prompt context，LLM 可在 actions 中建议修改 SAP。
 **is21vConvert === true 时**，LLM 的 email-drafter action 应使用 emailType=`21v-convert-ir`（如果是首次 IR）。
 
-### Step 3. 并行 spawn enrichment subagents（门控）
+### Step 3. Enrichment：Teams digest + OneNote 分析（inline 优先，spawn 可选）
+
+> **PRD §2.1 设计原则**：Step 2 ASSESS 是 "LLM inline"。Teams relevance scoring、OneNote fact/analysis 分类、actualStatus 判断全部在 casework agent 自身 context 内一次性完成。不依赖 spawn subagent，天然兼容 patrol mode (depth=1)。
 
 ```bash
 eval $(bash .claude/skills/casework/assess/scripts/gate-subagents.sh "{caseDir}/.casework/data-refresh-output.json")
@@ -125,11 +127,25 @@ eval $(bash .claude/skills/casework/assess/scripts/gate-subagents.sh "{caseDir}/
 ```
 
 **Degraded 处理（T2.9.2）**：当 `TEAMS_DEGRADED=1` 或 `ONENOTE_DEGRADED=1` 时：
-- **不 spawn** 对应 subagent（采集都没成功，digest 无源）
-- 在 Step 4 LLM prompt 里必须标注 `⚠️ teams-refresh-degraded` / `⚠️ onenote-refresh-degraded`，避免主 LLM 把"信号缺失"错判成"客户/ICM 没动静"
-- 写 execution-plan 时把 degraded 源列进 `warnings[]`（PRD §4.3）：`warnings: ["teams-refresh-degraded"]`
+- 在 Step 4 LLM prompt 里必须标注 `⚠️ teams-refresh-degraded` / `⚠️ onenote-refresh-degraded`
+- 写 execution-plan 时把 degraded 源列进 `warnings[]`：`warnings: ["teams-refresh-degraded"]`
 
-**并行 spawn 策略**（本 skill 在一次 Main Agent response 里用 Agent tool 两次，claude harness 自动并行）：
+**Enrichment 执行策略（按 mode 分路）**：
+
+| mode | depth | Teams digest | OneNote 分类 | 实现方式 |
+|------|-------|-------------|-------------|---------|
+| **full** (depth=0) | 0 | spawn `teams-digest-writer`（可选加速） | spawn `onenote-classifier`（可选加速） | 并行 spawn，等返回 |
+| **patrol** (depth=1) | 1 | **Step 4 主 LLM inline** | **Step 4 主 LLM inline** | 不 spawn，直接读 raw 文件 |
+
+**patrol mode (depth=1) — inline 路径**：
+
+不 spawn 任何 enrichment agent。Step 4 主 LLM 直接读 raw 文件做分析：
+- Teams：读 `{caseDir}/teams/*.md`（每个 chat 一个文件，由 data-refresh write-teams.ps1 产出），在 Step 4 prompt 中要求 LLM 提取 key facts + 做 high/low relevance 判断
+- OneNote：读 `{caseDir}/onenote/_page-*.md`（raw page 副本，由 search-inline.py 产出），在 Step 4 prompt 中要求 LLM 对每条 finding 标注 `[fact]` 或 `[analysis]`
+
+> **性能影响**：raw 文件直接进 Step 4 LLM context，增加 input tokens 但省去 2 次 subagent spawn 开销（~30s 冷启动）。对于 patrol 的 3-10 case 并行场景，总体更快。
+
+**full mode (depth=0) — spawn 路径（可选加速）**：
 
 ```
 if SPAWN_TEAMS == 1:
@@ -143,17 +159,21 @@ if SPAWN_ONENOTE == 1:
         prompt="caseNumber={caseNumber}\ncaseDir={caseDir}\ncaseContextHead={head60 of case-info.md}")
 ```
 
-两 Agent 调用放在**同一 response**中一次发出以并行。等两者返回后进入 Step 4。
+两 Agent 调用放在同一 response 中并行。等返回后进入 Step 4。
 
-**失败隔离**：subagent 失败 → 对应 digest/classify 文件不存在 → Step 4 LLM 不引用，仍能决策。
+**失败隔离**：spawn 失败 / 文件不存在 → Step 4 主 LLM 回退读 raw 文件（同 patrol 路径）。
 
 ### Step 4. 主 LLM：actualStatus + actions 决策
 
 读 context：
 - `{caseDir}/.casework/data-refresh-output.json` → delta + context（含 `deltaContent` md）
 - `{caseDir}/casework-meta.json` → 历史 actualStatus / compliance
-- `{caseDir}/teams/teams-digest.md`（若 spawn 了 teams-digest-writer）
-- `{caseDir}/onenote/personal-notes.md`（若 spawn 了 onenote-classifier，已含 [fact]/[analysis] 标注）
+- Teams 数据（优先级顺序）：
+  1. `{caseDir}/teams/teams-digest.md`（若 spawn 了 teams-digest-writer 且成功）
+  2. `{caseDir}/teams/*.md` raw chat 文件（patrol mode 或 spawn 失败时直接读）
+- OneNote 数据（优先级顺序）：
+  1. `{caseDir}/onenote/personal-notes.md`（若已含 [fact]/[analysis] 标注）
+  2. `{caseDir}/onenote/_page-*.md` raw page 文件（patrol mode 或 spawn 失败时直接读，在 prompt 中要求 LLM inline 分类）
 
 **Prompt 模板**：
 

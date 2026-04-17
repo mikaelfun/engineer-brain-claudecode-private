@@ -166,6 +166,24 @@ if echo "$SAP_ACCURATE" | grep -q "^MISMATCH"; then
   YELLOW_ITEMS+=("修改 SAP: 当前 \`${SAP_CURRENT##*/}\` 可能不准确，建议改为 \`${SAP_SUGGESTED}\`（${SAP_REASON}）")
 fi
 
+# Compliance warnings (ISS-218: surface compliance.warnings to todo)
+# This covers SAP scope mismatch detected during assess compliance check,
+# which is separate from the sapCheck done during summarize.
+COMPLIANCE_WARNINGS=$(python3 -c "
+import json, sys
+try:
+    meta = json.load(open('$CD/casework-meta.json', encoding='utf-8'))
+    warnings = meta.get('compliance', {}).get('warnings', [])
+    for w in warnings:
+        if w: print(w)
+except: pass
+" 2>/dev/null)
+if [ -n "$COMPLIANCE_WARNINGS" ]; then
+  while IFS= read -r warn; do
+    YELLOW_ITEMS+=("⚠️ Compliance: $warn")
+  done <<< "$COMPLIANCE_WARNINGS"
+fi
+
 # Check for unsent drafts — only consider the LATEST draft, compare against sent emails
 if [ -d "$CD/drafts" ]; then
   LATEST_DRAFT=$(ls -t "$CD/drafts/"*.md 2>/dev/null | head -1)

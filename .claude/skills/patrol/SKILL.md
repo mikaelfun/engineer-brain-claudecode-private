@@ -141,6 +141,14 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
      ```
    - 归档/转移的 case 从后续步骤 3 的待处理列表中**排除**，不再 spawn casework
 
+   **3.5. Early-exit（ISS-223：0 cases 快速退出）**
+
+   如果筛选后待处理 case 数量为 0（全部被 patrolSkipHours 过滤 + 归档排除）：
+   - 跳过 Step 4/5/6/7（预热 + 处理）
+   - 直接写 result.json（processedCases=0）
+   - 释放 lock，退出
+   - 输出：`📊 Patrol: 0 cases to process (all within skipHours). Done.`
+
 4. **阶段 0：预热（并行执行，~15s）**
 
    写 phase 文件：
@@ -307,10 +315,16 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
 
    V2 不需要 queue drain 或 daemon stop（各 case 的 data-refresh.sh 已自行清理 agency proxy）。
 
-   清理 orphan agency 进程（防御性）：
+   清理 orphan agency 进程（ISS-222: 实际 kill 而非仅检测）：
    ```bash
-   tasklist 2>/dev/null | grep -c -i agency.exe && echo "⚠️ orphan agency processes detected" || true
+   AGENCY_COUNT=$(tasklist 2>/dev/null | grep -c -i agency.exe || echo 0)
+   if [ "$AGENCY_COUNT" -gt 0 ]; then
+     echo "⚠️ $AGENCY_COUNT orphan agency process(es) — killing..."
+     taskkill /IM agency.exe /F 2>/dev/null || true
+     echo "✅ agency cleanup done"
+   fi
    ```
+   > patrol 完成后不应有活跃的 agency 需求。teams-search-inline.sh 的 per-case agency 应在脚本退出时自行清理；残留的是异常退出的遗留。
 
 10. **汇总 Todo + 结构化输出**
 
@@ -321,7 +335,7 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
 
    从各 case 的 `todo/` 目录提取最新 Todo 文件，按 🔴🟡✅ 分级汇总展示。
 
-   从各 case 的 `logs/casework.log` 读取最后一行判断 status（`STEP B5 OK` / `STEP B6 OK` / `phase completed` → completed，否则 failed）。
+   从各 case 的 `.casework/logs/casework.log` 读取最后一行判断 status（`STEP B5 OK` / `STEP B6 OK` / `phase completed` → completed，否则 failed）。
 
    写结构化结果文件 `{patrolDir}/result.json`（兼容旧格式）和 `{patrolDir}/patrol-state.json`（WebUI 读取）：
    ```json

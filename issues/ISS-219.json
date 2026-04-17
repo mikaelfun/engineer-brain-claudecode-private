@@ -1,0 +1,16 @@
+{
+  "id": "ISS-219",
+  "title": "ICM discussion 冷启动竞态：并行 ICM 步骤读不到 D365 写入的 incidentId",
+  "severity": "high",
+  "category": "data-refresh",
+  "status": "resolved",
+  "createdAt": "2026-04-17T09:45:00Z",
+  "description": "data-refresh.sh 中 ICM discussion 拉取与 D365 数据拉取并行执行。ICM 步骤在启动时读 casework-meta.json.incidentId，但冷启动时 meta 为空，D365 步骤尚未写入 incidentId。导致 ICM 跳过：'skipped: no incidentId in meta'。实际 D365 步骤已成功缓存了 incident ID（d365.log 可见），但 ICM 先跑完了。",
+  "rootCause": "并行竞态。ICM 步骤读 meta 时 D365 步骤还没写 incidentId。冷启动必定触发。",
+  "fix": "data-refresh.sh ICM 步骤加 cold-start fallback：meta 无 incidentId 时，每 3s 轮询 case-info.md（D365 步骤产出），最多等 36s，从 case-info.md 的 ICM Number 行提取 ICM 编号。changegate 预写方案已回退（changegate 是 v1 概念，v2 PRD §2.2 明确取消）。",
+  "files": [
+    ".claude/skills/casework/scripts/data-refresh.sh"
+  ],
+  "foundDuring": "patrol-v2-cold-start-audit-20260417",
+  "resolvedAt": "2026-04-17T09:55:00Z"
+}

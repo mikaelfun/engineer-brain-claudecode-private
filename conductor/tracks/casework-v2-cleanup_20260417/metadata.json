@@ -1,0 +1,18 @@
+{
+  "id": "casework-v2-cleanup_20260417",
+  "title": "casework SKILL.md v1 \u6b8b\u7559\u6e05\u7406",
+  "type": "refactor",
+  "status": "in_progress",
+  "created": "2026-04-17T10:15:00Z",
+  "updated": "2026-04-17T10:30:00Z",
+  "phases": {
+    "total": 3,
+    "completed": 2
+  },
+  "tasks": {
+    "total": 13,
+    "completed": 13
+  },
+  "current_phase": 3,
+  "current_task": "3.1"
+}

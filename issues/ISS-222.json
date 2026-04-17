@@ -1,0 +1,16 @@
+{
+  "id": "ISS-222",
+  "title": "patrol cleanup 不 kill orphan agency.exe — 旧 session 残留进程累积",
+  "severity": "medium",
+  "category": "patrol",
+  "status": "resolved",
+  "createdAt": "2026-04-17T09:45:00Z",
+  "description": "patrol SKILL.md Step 8（清理阶段）仅执行 grep -c 检测 orphan agency.exe 进程数量并 echo 警告，不实际 kill。旧 session 的 agency proxy 进程会持续残留累积（本次观测到 18 个 orphan，占用 ~600MB 内存）。\n\nteams-search-inline.sh 设计中每个 case 独立启动 agency proxy（端口隔离），正常完成后 cleanup 函数会 kill 自己启动的 PID。但如果 casework agent 异常退出、session 断开、或脚本因 bad path 根本没执行（如 ISS-218 的路径 bug），cleanup 不会执行。",
+  "rootCause": "patrol cleanup 防御性太保守，只检测不清理。缺少全局 agency 进程回收机制。",
+  "fix": "patrol Step 8 改为：tasklist | grep agency.exe → 解析每个 PID → 检查对应端口是否在活跃 casework 使用（通过 netstat/port 关联） → 不在使用的直接 taskkill /PID /F。简化版：patrol 结束时 taskkill /IM agency.exe /F（因为 patrol 完成后不应有任何活跃的 agency 需求）。",
+  "files": [
+    ".claude/skills/patrol/SKILL.md"
+  ],
+  "foundDuring": "patrol-v2-cold-start-audit-20260417",
+  "resolvedAt": "2026-04-17T09:55:00Z"
+}
