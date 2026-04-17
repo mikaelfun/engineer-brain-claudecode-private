@@ -169,27 +169,38 @@ print(d)
 mcp_search_with_retry() {
   local rid="$1" qs="$2" size="$3" outfile="$4"
   local body="{\"jsonrpc\":\"2.0\",\"id\":$rid,\"method\":\"tools/call\",\"params\":{\"name\":\"SearchTeamMessagesQueryParameters\",\"arguments\":{\"queryString\":\"$qs\",\"size\":$size}}}"
-  # ISS-216 P1: 3 retries (15s total) wasn't enough — Graph Search API has
-  # transient empty responses unrelated to proxy init state. Verified by
-  # experiment (2026-04-18): even single proxy with clean init can return EMPTY;
-  # patrol showed 2/3 cases recovered on attempt 3, 1/3 needed more time.
-  # Bump to 5 retries with 5→10→15→20s backoff (50s total wait).
   local attempt=0 max_retries=5
   while [ $attempt -lt $max_retries ]; do
     curl -s --max-time 30 -X POST "http://localhost:$PORT/" \
       -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" \
       -d "$body" 2>/dev/null | grep -o 'data: {.*}' | sed 's/^data: //' | head -1 > "$outfile"
-    # Success criterion: file non-empty AND contains a JSON-RPC result (not an error wrapper)
     if [ -s "$outfile" ] && grep -q '"result"' "$outfile"; then
       [ $attempt -gt 0 ] && echo "  ↻ search retry $((attempt)) succeeded for qs='$qs'" >&2
       return 0
     fi
     attempt=$((attempt + 1))
-    # P3 (ISS-216): Surface actual error body — no more blind "empty/error"
     local err_body=""
     [ -s "$outfile" ] && err_body=$(head -c 200 "$outfile")
+
+    # After 3 failed attempts on same proxy, restart agency before attempt 4
+    if [ $attempt -eq 3 ]; then
+      echo "  ⚠ 3 attempts failed, restarting agency proxy on port $PORT…" >&2
+      kill $APID 2>/dev/null; wait $APID 2>/dev/null || true
+      sleep 1
+      "$AGENCY_EXE" mcp teams --transport http --port "$PORT" > /dev/null 2>&1 &
+      APID=$!
+      # Wait for new proxy ready (quick poll, max 15s)
+      local w=0
+      while [ $w -lt 30 ]; do
+        if curl -sf --max-time 2 "http://localhost:$PORT/" > /dev/null 2>&1; then
+          echo "  ✓ proxy restarted (PID=$APID)" >&2
+          break
+        fi
+        sleep 0.5; w=$((w + 1))
+      done
+    fi
+
     if [ $attempt -lt $max_retries ]; then
-      # Exponential backoff: 5s → 10s → 15s → 20s (50s total).
       local sleep_secs=$((5 * attempt))
       echo "  ⚠ search attempt $attempt/$max_retries failed for qs='$qs' (body: ${err_body:-<empty>}), sleeping ${sleep_secs}s…" >&2
       sleep $sleep_secs
