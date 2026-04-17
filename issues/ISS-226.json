@@ -6,7 +6,7 @@
   "priority": "P2",
   "status": "tracked",
   "trackId": "teams-image-local_20260417",
-  "authBlocker": "hostedContents download needs Chat.Read scope. az CLI app (04b07795) lacks it. agency proxy uses agent365 intermediary (no direct Graph token). MSAL device code blocked by Conditional Access (53003). MSAL DPAPI cache has 0 AccessTokens (WAM stores in memory). Next: try m365-copilot MCP token or Playwright Edge SSO workaround.",
+  "authBlocker": "SOLVED: MCP Playwright → teams.microsoft.com SSO login → localStorage MSAL cache → ic3.teams.office.com token (Teams.AccessAsUser.All scope) → base64 decode hostedContents contentId to extract Skype API URL (us-api.asm.skype.com) → Bearer download. Token ~1h TTL, auto-refreshed by Teams web. MCP Playwright profile persists login across sessions.",
   "relatedIssues": ["ISS-224"],
   "createdAt": "2026-04-17T23:30:00Z",
   "updatedAt": "2026-04-17T23:30:00Z"
