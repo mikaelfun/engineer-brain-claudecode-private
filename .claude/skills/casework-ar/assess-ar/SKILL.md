@@ -133,6 +133,11 @@ Upsert meta: ar.communicationMode, ar.caseOwnerEmail, ar.caseOwnerName
 
 调 `write-execution-plan.py`（复用 T2 脚本）+ upsert meta。
 
+**邮件去重规则**（推荐 email-drafter 前必须检查）：
+- 读 `{caseDir}/emails.md` 检查工程师是否已发过同类型邮件
+- `{caseDir}/drafts/` 有未发送草稿且内容仍相关 → 推荐 `no-agent`
+- AR 模式额外注意：internal 模式检查 `notes-ar.md` 最近回复，customer-facing 检查 `emails.md` 最近发出邮件
+
 **AR 安全规则**：保留已有的 `isAR`、`mainCaseId`、`ar.*` 字段不覆盖，只写入 `actualStatus`/`daysSinceLastContact`/`lastAssessedAt`。
 
 ## Safety Redlines

@@ -164,6 +164,14 @@ if SPAWN_ONENOTE == 1:
 4. ICM 有 PG 新 entry → pending-pg（等 PG 回应，actions=[]）
 5. 其余（数据不足 / 正在排查） → researching + troubleshooter
 
+**邮件去重规则**（推荐 email-drafter 前必须检查）：
+- 读 `{caseDir}/emails.md` 检查工程师是否已发过同类型邮件（IR/follow-up/closure）
+- 已发过 IR 邮件（含 21v convert IR）→ 不再推荐 email-drafter(initial-response)
+- 已发过 follow-up 且 < 3 天 → 不再推荐 email-drafter(follow-up)
+- 已发过 closure-confirm → 不再推荐 email-drafter(closure-confirm)
+- `{caseDir}/drafts/` 有未发送草稿且内容仍相关 → 推荐 `no-agent`（用户只需发送现有草稿）
+- 违反去重 = 重复骚扰客户，3.25 红线
+
 LLM 返回 JSON 后写 decision 文件，调 `write-execution-plan.py`：
 
 ```bash
