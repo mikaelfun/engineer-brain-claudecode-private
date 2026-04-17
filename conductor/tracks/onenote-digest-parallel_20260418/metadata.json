@@ -1,0 +1,17 @@
+{
+  "id": "onenote-digest-parallel_20260418",
+  "title": "OneNote Digest Per-Page Parallel LLM Classify + Code Merge",
+  "type": "refactor",
+  "status": "complete",
+  "issueId": "ISS-228",
+  "created": "2026-04-18T01:35:00+08:00",
+  "updated": "2026-04-18T07:20:00+08:00",
+  "phases": {
+    "total": 3,
+    "completed": 3
+  },
+  "tasks": {
+    "total": 5,
+    "completed": 5
+  }
+}

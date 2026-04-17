@@ -1,11 +1,15 @@
 ---
 name: onenote-classifier
-description: "OneNote onenote-digest.md 片段 [fact]/[analysis] 分类（Step 2 LLM 处理）"
+description: "DEPRECATED (ISS-228) — 已被 generate-digest.py per-page parallel 替代。OneNote onenote-digest.md 片段 [fact]/[analysis] 分类"
 tools: Read, Write, Edit
 model: haiku
 maxTurns: 30
 
 ---
+
+> **⚠️ DEPRECATED (ISS-228):** 此 agent 已被 `generate-digest.py --type onenote` 的 per-page parallel LLM 架构替代。
+> `data-refresh.sh` 直接调用 `generate-digest.py`，不再 spawn 此 agent。
+> 保留文件仅供历史参考。
 
 # OneNote Classifier Agent
 

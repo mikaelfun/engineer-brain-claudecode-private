@@ -184,38 +184,252 @@ def extract_images_from_page(page_path, max_images=3):
     return image_blocks
 
 
+def score_and_extract_single_chat(chat_path, case_info_head, case_number, base_url, api_key, model):
+    """ISS-227: Score relevance + extract key facts for a single chat file.
+
+    No truncation — reads the full chat file.
+
+    Returns:
+        dict: {"filename": str, "relevance": "high"|"low", "reason": str,
+               "key_facts": [str], "timeline_entries": [str]}
+        or None on LLM failure.
+    """
+    filename = os.path.basename(chat_path)
+
+    # Read full content — no truncation
+    try:
+        with open(chat_path, "r", encoding="utf-8", errors="replace") as f:
+            content = f.read()
+    except Exception:
+        return {"filename": filename, "relevance": "low", "reason": "cannot read file",
+                "key_facts": [], "timeline_entries": []}
+
+    # Build vision content if images exist
+    assets_dir = os.path.join(os.path.dirname(chat_path), "assets")
+    has_images = os.path.isdir(assets_dir) and any(
+        f.endswith(('.png', '.jpg', '.jpeg', '.gif')) for f in os.listdir(assets_dir)
+    ) if os.path.isdir(assets_dir) else False
+
+    image_blocks = extract_images_from_page(chat_path, max_images=3) if has_images else []
+
+    system_prompt = """You are a Teams conversation analyst for Azure support cases.
+
+Analyze ONE chat file and output a JSON object (no markdown fences, pure JSON only).
+
+Relevance criteria:
+- HIGH: Chat contains substantive discussion about the case — troubleshooting steps, customer feedback, PG guidance, technical findings, action items, progress updates, or closure/archival discussion.
+- LOW: Chat only briefly mentions the case number/ID, or is purely social/administrative, or about a different topic.
+
+Identity tags:
+- [customer] = non-@microsoft.com sender
+- [engineer] = fangkun@microsoft.com or case Assigned To
+- [pg] = other @microsoft.com (product group)
+- [internal] = other @microsoft.com (non-PG colleague)
+
+Output EXACTLY this JSON (no markdown, no code fences):
+{
+  "relevance": "high" or "low",
+  "reason": "one-line Chinese reason",
+  "key_facts": [
+    "YYYY-MM-DD: 当天所有关键事实合并成一句话总结（提及关键人物和结论）"
+  ],
+  "timeline_entries": [
+    "- YYYY-MM-DD — DisplayName — 一句话中文摘要"
+  ]
+}
+
+Rules:
+- key_facts: ONE entry per DATE — merge all messages from the same day into a single concise summary
+  Example: "2026-04-17: Kun Fang 提议临时关闭 case，客户 Sushanth 同意"（不要拆成两条）
+- key_facts format: "YYYY-MM-DD: 中文总结"
+- Do NOT use [customer]/[engineer]/[internal] tags — just person names inline
+- timeline_entries: can have multiple entries per day (more granular than key_facts)
+- key_facts and timeline_entries: only if relevance=high, else empty arrays
+- Keep names/commands/technical terms in English, rest in Chinese
+- Sort by date (oldest first)
+- Include ALL important messages — especially recent ones about case closure, status changes, deployment updates
+- CRITICAL: Customer confirmations/agreements (even short ones like "sure", "ok", "好的", "可以") are KEY FACTS that MUST be extracted. A customer agreeing to close/archive a case is as important as the engineer proposing it.
+- For images: extract visible diagnostic info and add as facts"""
+
+    user_text = f"""Case Number: {case_number}
+
+## Case Info (head)
+{case_info_head[:2000]}
+
+## Chat File: {filename}
+{content}"""
+
+    if image_blocks:
+        user_prompt = [{"type": "text", "text": user_text}] + image_blocks
+    else:
+        user_prompt = user_text
+
+    result = call_llm(base_url, api_key, model, system_prompt, user_prompt)
+    if not result:
+        return {"filename": filename, "relevance": "low", "reason": "LLM call failed",
+                "key_facts": [], "timeline_entries": []}
+
+    # Parse JSON from LLM output (strip any markdown fences if present)
+    import re
+    cleaned = re.sub(r"```json?\s*\n?", "", result).strip().rstrip("`")
+    try:
+        parsed = json.loads(cleaned)
+    except json.JSONDecodeError:
+        # Try to find JSON object in the output
+        json_match = re.search(r'\{[\s\S]*\}', result)
+        if json_match:
+            try:
+                parsed = json.loads(json_match.group())
+            except json.JSONDecodeError:
+                parsed = {"relevance": "low", "reason": "JSON parse failed", "key_facts": [], "timeline_entries": []}
+        else:
+            parsed = {"relevance": "low", "reason": "no JSON in output", "key_facts": [], "timeline_entries": []}
+
+    return {
+        "filename": filename,
+        "relevance": parsed.get("relevance", "low"),
+        "reason": parsed.get("reason", ""),
+        "key_facts": parsed.get("key_facts", []),
+        "timeline_entries": parsed.get("timeline_entries", []),
+    }
+
+
+def merge_digest_results(results, case_number, chat_files, filename_to_chatids):
+    """ISS-227: Merge per-chat LLM results into teams-digest.md + _relevance.json.
+
+    Pure code — no LLM call. Combines key_facts/timeline from all high-relevance chats.
+
+    Args:
+        results: list of dicts from score_and_extract_single_chat()
+        case_number: str
+        chat_files: list of file paths (for counting)
+        filename_to_chatids: dict mapping filename → [chatId]
+
+    Returns:
+        (digest_md: str, relevance_data: dict)
+    """
+    high_count = sum(1 for r in results if r["relevance"] == "high")
+    total_count = len(results)
+
+    # Separate high and low relevance results
+    high_results = []
+    low_relevance_lines = []
+
+    for r in results:
+        if r["relevance"] == "high":
+            high_results.append(r)
+        else:
+            display_name = r["filename"].replace(".md", "").replace("-", " ").title()
+            reason = r.get("reason", "low relevance")
+            low_relevance_lines.append(f"- {display_name}: {reason}")
+
+    # Sort high-relevance results by earliest fact date (chronological chat order)
+    import re
+
+    def _extract_date(line):
+        m = re.search(r'(\d{4}-\d{2}-\d{2})', line)
+        return m.group(1) if m else "9999-99-99"
+
+    def _earliest_date(r):
+        facts = r.get("key_facts", [])
+        if not facts:
+            return "9999-99-99"
+        return min(_extract_date(f) for f in facts)
+
+    high_results.sort(key=_earliest_date)
+
+    # Collect all timeline entries (flat, sorted by date)
+    all_timeline = []
+    for r in high_results:
+        all_timeline.extend(r.get("timeline_entries", []))
+    all_timeline.sort(key=_extract_date)
+
+    # Build digest markdown — Key Facts grouped by chat name
+    now_iso = datetime.now().isoformat(timespec="seconds")
+    lines = [
+        f"# Teams Digest — Case {case_number}",
+        "",
+        f"> Generated: {now_iso}",
+        f"> High-relevance chats: {high_count} / {total_count}",
+        "",
+        "## Key Facts",
+        "",
+        "以下事实来自 Teams 对话，按聊天分组、时间顺序排列。每条标注来源身份。",
+        "",
+    ]
+
+    if high_results:
+        for r in high_results:
+            facts = r.get("key_facts", [])
+            if not facts:
+                continue
+            # Chat display name from filename
+            display_name = r["filename"].replace(".md", "").replace("-", " ").title()
+            lines.append(f"### {display_name}")
+            lines.append("")
+            # Sort facts within this chat by date
+            facts_sorted = sorted(facts, key=_extract_date)
+            for fact in facts_sorted:
+                fact = fact.strip()
+                if not fact.startswith("- "):
+                    fact = f"- {fact}"
+                lines.append(fact)
+            lines.append("")
+    else:
+        lines.append("No high-relevance Teams conversations found.")
+        lines.append("")
+
+    lines.extend(["", "## Timeline (high-relevance only)", ""])
+    if all_timeline:
+        for entry in all_timeline:
+            entry = entry.strip()
+            if not entry.startswith("- "):
+                entry = f"- {entry}"
+            lines.append(entry)
+    else:
+        lines.append("(none)")
+
+    lines.extend(["", "## Low-Relevance (skipped)", ""])
+    if low_relevance_lines:
+        lines.extend(low_relevance_lines)
+    else:
+        lines.append("(none)")
+
+    digest_md = "\n".join(lines)
+
+    # Build _relevance.json
+    relevance_data = {
+        "_scoredAt": now_iso,
+        "_source": "generate-digest.py (per-chat parallel)",
+        "chats": {},
+    }
+    for r in results:
+        chat_id = r["filename"].replace(".md", "")
+        chat_ids = filename_to_chatids.get(r["filename"], [])
+        relevance_data["chats"][chat_id] = {
+            "relevance": r["relevance"],
+            "reason": r.get("reason", ""),
+            "chatIds": chat_ids,
+        }
+
+    return digest_md, relevance_data
+
+
 def generate_teams_digest(case_dir, case_number, project_root, base_url, api_key, model):
-    """Generate teams-digest.md from raw chat files."""
+    """Generate teams-digest.md from raw chat files — ISS-227 per-chat parallel architecture."""
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
     teams_dir = os.path.join(case_dir, "teams")
     if not os.path.isdir(teams_dir):
         print("SKIP|no teams/ dir")
         return
 
-    # Read template
-    template_path = os.path.join(project_root, ".claude/skills/casework/teams-search/teams-digest-template.md")
-    template = read_file(template_path) if os.path.exists(template_path) else "Output a Teams digest with Key Facts, Timeline, and Low-Relevance sections."
-
     # Read raw chat files (exclude _* metadata files)
     chat_files = sorted(glob.glob(os.path.join(teams_dir, "*.md")))
-    chat_files = [f for f in chat_files if not os.path.basename(f).startswith("_")]
-
-    # Sort by lastMessageTime from _chat-index.json (oldest first = chronological input for LLM)
-    chat_index_path_sort = os.path.join(teams_dir, "_chat-index.json")
-    if os.path.exists(chat_index_path_sort):
-        try:
-            idx_sort = json.load(open(chat_index_path_sort, encoding="utf-8"))
-            def _get_last_msg_time(fp):
-                fn = os.path.basename(fp)
-                for _cid, info in idx_sort.items():
-                    if not _cid.startswith("_") and info.get("fileName") == fn:
-                        return info.get("lastMessageTime", "")
-                return ""
-            chat_files.sort(key=_get_last_msg_time)
-        except Exception:
-            pass
+    chat_files = [f for f in chat_files if not os.path.basename(f).startswith("_")
+                  and os.path.basename(f) not in ("teams-digest.md",)]
 
     if not chat_files:
-        # Write empty digest
         digest = f"# Teams Digest — Case {case_number}\n\n> Generated: {datetime.now().isoformat(timespec='seconds')}\n> High-relevance chats: 0 / 0\n\nNo Teams conversations found.\n"
         out_path = os.path.join(teams_dir, "teams-digest.md")
         with open(out_path, "w", encoding="utf-8") as f:
@@ -223,87 +437,12 @@ def generate_teams_digest(case_dir, case_number, project_root, base_url, api_key
         print(f"OK|empty|output={out_path}")
         return
 
-    # Read case-info.md head for context
+    # Read case-info.md head for context (shared across all per-chat calls)
     case_info_head = read_file(os.path.join(case_dir, "case-info.md"), max_chars=3000)
-
-    # Build user prompt with raw chat content
-    chats_content = []
-    all_image_blocks = []
-    assets_dir = os.path.join(teams_dir, "assets")
-    has_images = os.path.isdir(assets_dir) and any(f.endswith(('.png', '.jpg', '.jpeg', '.gif')) for f in os.listdir(assets_dir)) if os.path.isdir(assets_dir) else False
-
-    for cf in chat_files[:10]:  # cap at 10 chats
-        name = os.path.basename(cf)
-        content = read_file(cf, max_chars=3000)
-        chats_content.append(f"### Chat: {name}\n{content}")
-        # ISS-226: extract images from chat for vision analysis
-        if has_images:
-            img_blocks = extract_images_from_page(cf, max_images=3)
-            all_image_blocks.extend(img_blocks)
-
-    user_text = f"""Case Number: {case_number}
-Total chats: {len(chat_files)}
-
-## Case Info (head)
-{case_info_head[:2000]}
-
-## Raw Chat Files
-{"".join(chats_content)}
-
-## Output Format Template
-{template}
-
-Generate the teams-digest.md following the template format exactly.
-CRITICAL: Key Facts MUST be sorted by date (oldest first). Each fact line must include a date.
-Output ONLY the markdown content, no code fences."""
-
-    # ISS-226: If images found, build vision content (list of blocks) instead of plain string
-    if all_image_blocks:
-        user_prompt = [{"type": "text", "text": user_text}] + all_image_blocks[:9]  # cap total images
-    else:
-        user_prompt = user_text
-
-    system_prompt = """You are a Teams conversation analyst for Azure support cases.
-
-Your task:
-1. FIRST: Score each chat's relevance to the case by comparing chat content against the case problem description (from Case Info). Output a JSON block with per-chat relevance.
-2. THEN: From high-relevance chats only, extract key facts and produce a structured digest.
-
-Relevance criteria (based on chat CONTENT vs case PROBLEM):
-- HIGH: Chat contains substantive discussion about the case — troubleshooting steps, customer feedback, PG guidance, technical findings, action items, or progress updates related to the case's problem.
-- LOW: Chat only briefly mentions the case number/ID without substantive discussion, or is about a completely different topic, or is purely social/administrative.
-- In other words: "详细讨论 case 进展或处理" = HIGH, "只是提到了 caseId" = LOW.
-
-Output format — you MUST output EXACTLY this structure, with the ```json-relevance``` fence:
-
-```json-relevance
-{
-  "chat_filename.md": {"score": "high", "reason": "详细讨论了 alert 问题的排查和处理"},
-  "other_chat.md": {"score": "low", "reason": "只提到了 case 号，无实质讨论"}
-}
-```
-
-Then output the digest markdown (Key Facts and Timeline MUST be in Chinese, keep names/commands/technical terms in English):
-
-If inline images/screenshots are provided, extract key diagnostic information from them (error messages, Portal configurations, RBAC settings, command outputs, etc.) and include those findings in Key Facts."""
-
-    result = call_llm(base_url, api_key, model, system_prompt, user_prompt)
-    if not result:
-        print("FAIL|LLM call failed")
-        return
-
-    # Write _relevance.json — parse structured JSON from LLM output
-    # LLM outputs ```json-relevance { ... } ``` block BEFORE the digest markdown
-    import re
-    relevance_data = {
-        "_scoredAt": datetime.now().isoformat(timespec="seconds"),
-        "_source": "generate-digest.py",
-        "chats": {},
-    }
 
     # Load _chat-index.json for fileName→chatId mapping
     chat_index_path = os.path.join(teams_dir, "_chat-index.json")
-    filename_to_chatids = {}  # {"bi-weiwei.md": ["19:xxx"]}
+    filename_to_chatids = {}
     if os.path.exists(chat_index_path):
         try:
             idx = json.load(open(chat_index_path, encoding="utf-8"))
@@ -316,75 +455,281 @@ If inline images/screenshots are provided, extract key diagnostic information fr
         except Exception:
             pass
 
-    # Parse structured json-relevance block from LLM output
-    json_rel_match = re.search(r"```json-relevance\s*\n([\s\S]*?)\n```", result)
-    if json_rel_match:
-        try:
-            rel_json = json.loads(json_rel_match.group(1))
-            for filename, info in rel_json.items():
-                chat_id = filename.replace(".md", "")
-                chat_ids = filename_to_chatids.get(filename, [])
-                score = info.get("score", "unknown")
-                reason = info.get("reason", "")
-                relevance_data["chats"][chat_id] = {
-                    "relevance": score,
-                    "reason": reason,
-                    "chatIds": chat_ids,
-                }
-        except (json.JSONDecodeError, AttributeError):
-            pass  # fallback to heuristic below
+    # Per-chat parallel LLM calls (no truncation)
+    chat_files_capped = chat_files[:10]  # cap at 10 chats
+    results = []
+    max_workers = min(5, len(chat_files_capped))
 
-    # Fallback: if no json-relevance block parsed, use Key Facts heuristic
-    if not relevance_data["chats"]:
-        # Parse Key Facts for display names → map back to chat filenames
-        keyfacts_match = re.search(r"## Key Facts.*?\n([\s\S]*?)(?=\n## |$)", result)
-        mentioned_chats = set()
-        if keyfacts_match:
-            for line in keyfacts_match.group(1).split("\n"):
-                name_match = re.match(r"- \[.+?\] (.+?) @", line)
-                if name_match:
-                    display_name = name_match.group(1).strip()
-                    for cf in chat_files:
-                        cf_base = os.path.basename(cf).replace(".md", "").replace("-", " ").lower()
-                        if display_name.lower().replace(" ", "") in cf_base.replace(" ", "") or \
-                           cf_base.replace(" ", "") in display_name.lower().replace(" ", ""):
-                            mentioned_chats.add(os.path.basename(cf))
+    print(f"PARALLEL|chats={len(chat_files_capped)}|workers={max_workers}", file=sys.stderr)
 
-        for cf in chat_files:
-            chat_name = os.path.basename(cf)
-            chat_id = chat_name.replace(".md", "")
-            chat_ids = filename_to_chatids.get(chat_name, [])
-            if chat_name in mentioned_chats:
-                relevance_data["chats"][chat_id] = {"relevance": "high", "chatIds": chat_ids}
-            else:
-                relevance_data["chats"][chat_id] = {"relevance": "low", "chatIds": chat_ids}
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {
+            executor.submit(
+                score_and_extract_single_chat,
+                cf, case_info_head, case_number, base_url, api_key, model
+            ): cf
+            for cf in chat_files_capped
+        }
 
-    # Strip json-relevance block from digest output (keep only markdown)
-    digest_content = re.sub(r"```json-relevance\s*\n[\s\S]*?\n```\s*\n?", "", result).strip()
+        for future in as_completed(futures):
+            cf = futures[future]
+            try:
+                result = future.result()
+                if result:
+                    results.append(result)
+                    rel = result["relevance"]
+                    fn = result["filename"]
+                    print(f"  {fn}: {rel}", file=sys.stderr)
+            except Exception as e:
+                fn = os.path.basename(cf)
+                print(f"  {fn}: ERROR {e}", file=sys.stderr)
+                results.append({
+                    "filename": fn, "relevance": "low",
+                    "reason": f"exception: {e}", "key_facts": [], "timeline_entries": []
+                })
+
+    # Sort results by filename for deterministic output
+    results.sort(key=lambda r: r["filename"])
+
+    # Merge all per-chat results into digest + relevance
+    digest_md, relevance_data = merge_digest_results(
+        results, case_number, chat_files, filename_to_chatids
+    )
+
+    # Write outputs
+    out_path = os.path.join(teams_dir, "teams-digest.md")
+    with open(out_path, "w", encoding="utf-8") as f:
+        f.write(digest_md)
 
     relevance_path = os.path.join(teams_dir, "_relevance.json")
     with open(relevance_path, "w", encoding="utf-8") as f:
         json.dump(relevance_data, f, indent=2, ensure_ascii=False)
 
-    # Write cleaned digest (without json-relevance block) to file
-    out_path = os.path.join(teams_dir, "teams-digest.md")
-    with open(out_path, "w", encoding="utf-8") as f:
-        f.write(digest_content if digest_content else result)
+    high_count = sum(1 for r in results if r["relevance"] == "high")
+    print(f"OK|chats={len(chat_files_capped)}|high={high_count}|output={out_path}|relevance={relevance_path}")
 
-    print(f"OK|chats={len(chat_files)}|output={out_path}|relevance={relevance_path}")
+
+def classify_single_page(page_path, case_info_head, case_number, base_url, api_key, model,
+                         max_images_per_page=3, no_vision=False):
+    """ISS-228: Classify [fact]/[analysis] for a single OneNote page.
+
+    Per-page LLM call — mirrors Teams' score_and_extract_single_chat() pattern.
+    Reads full page content (no truncation), optional vision for images.
+
+    Returns:
+        dict: {"filename": str, "relevance": "high"|"low", "reason": str,
+               "key_facts": [{"tag": "fact"|"analysis", "text": str}],
+               "summary": str}
+        or fallback on LLM failure.
+    """
+    filename = os.path.basename(page_path)
+
+    try:
+        with open(page_path, "r", encoding="utf-8", errors="replace") as f:
+            content = f.read()
+    except Exception:
+        return {"filename": filename, "relevance": "low", "reason": "cannot read file",
+                "key_facts": [], "summary": ""}
+
+    # Vision: extract images if available and not disabled
+    image_blocks = []
+    if not no_vision:
+        image_blocks = extract_images_from_page(page_path, max_images=max_images_per_page)
+
+    system_prompt = """You are a OneNote analyst for Azure support cases.
+
+Analyze ONE OneNote page and output a JSON object (no markdown fences, pure JSON only).
+
+Classification rules:
+- [fact]: Command output, error codes, customer quotes, timestamps, URLs, config values, screenshot descriptions — traceable evidence
+- [analysis]: Hypotheses, inferences, "可能"/"应该"/"怀疑", TODOs — engineer reasoning
+- When unsure, classify as [fact] (conservative — don't lose information)
+
+Relevance criteria:
+- HIGH: Page contains substantive case-related notes — troubleshooting steps, error analysis, customer findings, diagnostic commands
+- LOW: Page only briefly mentions the case number, or is unrelated
+
+For images: extract RBAC configurations, error codes, CLI outputs, portal settings, and describe what you see as [fact] items.
+
+Output EXACTLY this JSON (no markdown, no code fences):
+{
+  "relevance": "high" or "low",
+  "reason": "one-line Chinese reason",
+  "key_facts": [
+    {"tag": "fact", "text": "具体事实描述（保留英文技术术语）"},
+    {"tag": "analysis", "text": "推断或假设描述"}
+  ],
+  "summary": "1-2 句中文总结本页对 case 的诊断价值"
+}
+
+Rules:
+- key_facts: include ALL important findings from the page
+- Keep names/commands/technical terms in English, rest in Chinese
+- For images: describe visible diagnostic info as fact items
+- Empty page or irrelevant → relevance=low, key_facts=[], summary=""
+"""
+
+    user_text = f"""Case Number: {case_number}
+
+## Case Info (head)
+{case_info_head[:2000]}
+
+## OneNote Page: {filename}
+{content}"""
+
+    if image_blocks:
+        user_prompt = [{"type": "text", "text": user_text}] + image_blocks
+    else:
+        user_prompt = user_text
+
+    result = call_llm(base_url, api_key, model, system_prompt, user_prompt)
+    if not result:
+        return {"filename": filename, "relevance": "low", "reason": "LLM call failed",
+                "key_facts": [], "summary": ""}
+
+    # Parse JSON from LLM output
+    import re
+    cleaned = re.sub(r"```json?\s*\n?", "", result).strip().rstrip("`")
+    try:
+        parsed = json.loads(cleaned)
+    except json.JSONDecodeError:
+        json_match = re.search(r'\{[\s\S]*\}', result)
+        if json_match:
+            try:
+                parsed = json.loads(json_match.group())
+            except json.JSONDecodeError:
+                parsed = {"relevance": "low", "reason": "JSON parse failed", "key_facts": [], "summary": ""}
+        else:
+            parsed = {"relevance": "low", "reason": "no JSON in output", "key_facts": [], "summary": ""}
+
+    return {
+        "filename": filename,
+        "relevance": parsed.get("relevance", "low"),
+        "reason": parsed.get("reason", ""),
+        "key_facts": parsed.get("key_facts", []),
+        "summary": parsed.get("summary", ""),
+    }
+
+
+def merge_onenote_results(results, case_number, page_files):
+    """ISS-228: Merge per-page LLM results into onenote-digest.md + _page-relevance.json.
+
+    Pure code — no LLM call. Follows onenote-digest-template.md format:
+    Facts / Analysis / Details (per-page <details>) / Summary.
+
+    Args:
+        results: list of dicts from classify_single_page()
+        case_number: str
+        page_files: list of file paths
+
+    Returns:
+        (digest_md: str, relevance_data: dict)
+    """
+    import re
+
+    now_iso = datetime.now().isoformat(timespec="seconds")
+    high_count = sum(1 for r in results if r["relevance"] == "high")
+    total_count = len(results)
+
+    # Separate high and low relevance results
+    high_results = [r for r in results if r["relevance"] == "high"]
+    low_results = [r for r in results if r["relevance"] != "high"]
+
+    def _display_name(fn):
+        name = fn.replace(".md", "")
+        if name.startswith("_page-"):
+            name = name[6:]
+        return name
+
+    # ── Key Facts section: grouped by page, with page title as attribution ──
+    # Mirrors Teams' per-chat grouping style
+    lines = [
+        f"# Personal OneNote Notes — Case {case_number}",
+        "",
+        f"> Generated: {now_iso}",
+        f"> High-relevance pages: {high_count} / {total_count}",
+        "",
+        "## Key Facts",
+        "",
+        "以下事实和分析来自 OneNote 笔记，按页面分组排列。",
+        "",
+    ]
+
+    if high_results:
+        for r in high_results:
+            facts = r.get("key_facts", [])
+            if not facts:
+                continue
+            display_name = _display_name(r["filename"])
+            lines.append(f"### {display_name}")
+            lines.append("")
+            for kf in facts:
+                tag = kf.get("tag", "fact")
+                text = kf.get("text", "")
+                if text:
+                    lines.append(f"- [{tag}] {text}")
+            lines.append("")
+    else:
+        lines.append("No high-relevance OneNote notes found.")
+        lines.append("")
+
+    # ── Summary section ──
+    summaries = [r.get("summary", "") for r in high_results if r.get("summary")]
+    combined_summary = " ".join(summaries) if summaries else "No high-relevance OneNote notes found for this case."
+    lines.extend(["## Summary", "", combined_summary, ""])
+
+    # ── Low-Relevance section: flat list like Teams ──
+    lines.extend(["", "## Low-Relevance (skipped)", ""])
+    if low_results:
+        for r in low_results:
+            display_name = _display_name(r["filename"])
+            reason = r.get("reason", "low relevance")
+            lines.append(f"- {display_name}: {reason}")
+    else:
+        lines.append("(none)")
+
+    digest_md = "\n".join(lines)
+
+    # Build _page-relevance.json (with mtime + full result for incremental cache)
+    relevance_data = {
+        "_scoredAt": now_iso,
+        "_source": "generate-digest.py (per-page parallel)",
+        "pages": {},
+    }
+    for r in results:
+        page_key = r["filename"].replace(".md", "")
+        # Look up current mtime for this page
+        matching_files = [pf for pf in page_files if os.path.basename(pf).replace(".md", "") == page_key]
+        mtime = 0
+        if matching_files:
+            try:
+                mtime = os.path.getmtime(matching_files[0])
+            except OSError:
+                pass
+        relevance_data["pages"][page_key] = {
+            "relevance": r["relevance"],
+            "reason": r.get("reason", ""),
+            "key_facts": r.get("key_facts", []),
+            "summary": r.get("summary", ""),
+            "mtime": mtime,
+        }
+
+    return digest_md, relevance_data
 
 
 def generate_onenote_digest(case_dir, case_number, project_root, base_url, api_key, model,
                             max_images_per_page=3, no_vision=False):
-    """Generate onenote-digest.md from raw page files. ISS-224: supports vision analysis."""
+    """Generate onenote-digest.md from raw page files.
+
+    ISS-228: Refactored to per-page parallel LLM classify + code merge.
+    Mirrors Teams' per-chat parallel architecture (ISS-227).
+    """
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
     onenote_dir = os.path.join(case_dir, "onenote")
     if not os.path.isdir(onenote_dir):
         print("SKIP|no onenote/ dir")
         return
-
-    # Read template
-    template_path = os.path.join(project_root, ".claude/skills/onenote/onenote-digest-template.md")
-    template = read_file(template_path) if os.path.exists(template_path) else "Output an OneNote digest with Facts, Analysis, Details, and Summary sections."
 
     # Read raw page files
     page_files = sorted(glob.glob(os.path.join(onenote_dir, "_page-*.md")))
@@ -397,91 +742,102 @@ def generate_onenote_digest(case_dir, case_number, project_root, base_url, api_k
         print(f"OK|empty|output={out_path}")
         return
 
-    # Read case-info.md head for context
+    # Read case-info.md head for context (shared across all per-page calls)
     case_info_head = read_file(os.path.join(case_dir, "case-info.md"), max_chars=3000)
 
-    # ISS-224: Check for images and decide vision vs text-only mode
-    has_images = False
-    if not no_vision:
-        # Check if any page has images in assets/
-        assets_dir = os.path.join(onenote_dir, "assets")
-        if os.path.isdir(assets_dir) and os.listdir(assets_dir):
-            has_images = True
+    # ── Incremental cache: skip unchanged pages using mtime from _page-relevance.json ──
+    # If a page's mtime matches the cached value AND was previously classified,
+    # reuse the cached result (no LLM call). Changed/new pages get re-classified.
+    # This means a previously-empty "low" page that gets content WILL be re-scored
+    # because its mtime changes when content is written.
+    relevance_path = os.path.join(onenote_dir, "_page-relevance.json")
+    prev_relevance = {}
+    if os.path.exists(relevance_path):
+        try:
+            prev_relevance = json.load(open(relevance_path, encoding="utf-8"))
+        except Exception:
+            pass
+    prev_pages = prev_relevance.get("pages", {})
 
-    if has_images:
-        # Vision mode: build content array with text + images
-        content_blocks = []
+    page_files_capped = page_files[:10]  # cap at 10 pages
+    pages_to_classify = []
+    cached_results = []
 
-        # Add case info as text
-        content_blocks.append({
-            "type": "text",
-            "text": f"Case Number: {case_number}\nTotal matched pages: {len(page_files)}\n\n## Case Info (head)\n{case_info_head[:2000]}\n\n## Raw OneNote Pages\n"
-        })
+    for pf in page_files_capped:
+        fn = os.path.basename(pf)
+        page_key = fn.replace(".md", "")
+        try:
+            current_mtime = os.path.getmtime(pf)
+        except OSError:
+            current_mtime = 0
 
-        # Add each page with interleaved images
-        total_images = 0
-        for pf in page_files[:10]:
-            name = os.path.basename(pf)
-            page_text = read_file(pf, max_chars=5000)
-            content_blocks.append({
-                "type": "text",
-                "text": f"### Page: {name}\n{page_text}\n"
+        cached = prev_pages.get(page_key, {})
+        cached_mtime = cached.get("mtime", 0)
+
+        if cached_mtime and abs(current_mtime - cached_mtime) < 1.0 and "relevance" in cached:
+            # Page unchanged — reuse cached result
+            cached_results.append({
+                "filename": fn,
+                "relevance": cached["relevance"],
+                "reason": cached.get("reason", ""),
+                "key_facts": cached.get("key_facts", []),
+                "summary": cached.get("summary", ""),
             })
+            print(f"  {fn}: cached ({cached['relevance']})", file=sys.stderr)
+        else:
+            pages_to_classify.append(pf)
 
-            # Extract and add images for this page
-            image_blocks = extract_images_from_page(pf, max_images=max_images_per_page)
-            if image_blocks:
-                content_blocks.extend(image_blocks)
-                total_images += len(image_blocks)
+    # Per-page parallel LLM calls (only for changed/new pages)
+    results = list(cached_results)
+    max_workers = min(3, len(pages_to_classify)) if pages_to_classify else 0
 
-        # Add template instructions
-        content_blocks.append({
-            "type": "text",
-            "text": f"\n## Output Format Template\n{template}\n\nGenerate the onenote-digest.md following the template format exactly.\n- Classify each finding as [fact] or [analysis] per the template rules\n- Aggregate all [fact] items into the top Facts section\n- Aggregate all [analysis] items into the Analysis section\n- Include per-page details with Key findings\n- For each screenshot/image provided, extract key information (RBAC configs, error codes, CLI output, portal settings) and include as [fact] items\n- Write a 1-2 sentence Summary\nOutput ONLY the markdown content, no code fences."
-        })
+    print(f"PARALLEL|pages={len(page_files_capped)}|cached={len(cached_results)}|classify={len(pages_to_classify)}|workers={max_workers}", file=sys.stderr)
 
-        user_prompt = content_blocks
-        print(f"VISION|pages={len(page_files)}|images={total_images}", file=sys.stderr)
-    else:
-        # Text-only mode (original behavior)
-        pages_content = []
-        for pf in page_files[:10]:
-            name = os.path.basename(pf)
-            content = read_file(pf, max_chars=5000)
-            pages_content.append(f"### Page: {name}\n{content}")
+    if pages_to_classify:
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {
+                executor.submit(
+                    classify_single_page,
+                    pf, case_info_head, case_number, base_url, api_key, model,
+                    max_images_per_page=max_images_per_page, no_vision=no_vision
+                ): pf
+                for pf in pages_to_classify
+            }
 
-        user_prompt = f"""Case Number: {case_number}
-Total matched pages: {len(page_files)}
+            for future in as_completed(futures):
+                pf = futures[future]
+                try:
+                    result = future.result()
+                    if result:
+                        results.append(result)
+                        rel = result["relevance"]
+                        fn = result["filename"]
+                        print(f"  {fn}: {rel}", file=sys.stderr)
+                except Exception as e:
+                    fn = os.path.basename(pf)
+                    print(f"  {fn}: ERROR {e}", file=sys.stderr)
+                    results.append({
+                        "filename": fn, "relevance": "low",
+                        "reason": f"exception: {e}", "key_facts": [], "summary": ""
+                    })
 
-## Case Info (head)
-{case_info_head[:2000]}
+    # Sort results by filename for deterministic output
+    results.sort(key=lambda r: r["filename"])
 
-## Raw OneNote Pages
-{"".join(pages_content)}
+    # Merge all per-page results into digest + relevance
+    digest_md, relevance_data = merge_onenote_results(results, case_number, page_files)
 
-## Output Format Template
-{template}
-
-Generate the onenote-digest.md following the template format exactly.
-- Classify each finding as [fact] or [analysis] per the template rules
-- Aggregate all [fact] items into the top Facts section
-- Aggregate all [analysis] items into the Analysis section
-- Include per-page details with Key findings
-- Write a 1-2 sentence Summary
-Output ONLY the markdown content, no code fences."""
-
-    system_prompt = "You are a OneNote analyst for Azure support cases. Read raw OneNote page content (and any attached screenshots/images), classify findings as [fact] (traceable evidence) or [analysis] (inference/hypothesis), and produce a structured digest. For images: extract RBAC configurations, error codes, CLI outputs, portal settings, and other diagnostic information visible in screenshots. Be concise and accurate."
-
-    result = call_llm(base_url, api_key, model, system_prompt, user_prompt)
-    if not result:
-        print("FAIL|LLM call failed")
-        return
-
+    # Write outputs
     out_path = os.path.join(onenote_dir, "onenote-digest.md")
     with open(out_path, "w", encoding="utf-8") as f:
-        f.write(result)
+        f.write(digest_md)
 
-    print(f"OK|pages={len(page_files)}|output={out_path}")
+    relevance_path = os.path.join(onenote_dir, "_page-relevance.json")
+    with open(relevance_path, "w", encoding="utf-8") as f:
+        json.dump(relevance_data, f, indent=2, ensure_ascii=False)
+
+    high_count = sum(1 for r in results if r["relevance"] == "high")
+    print(f"OK|pages={len(page_files_capped)}|high={high_count}|output={out_path}|relevance={relevance_path}")
 
 
 def main():

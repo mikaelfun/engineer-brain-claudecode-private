@@ -1,0 +1,12 @@
+{
+  "id": "ISS-228",
+  "title": "OneNote digest 改为 per-page parallel LLM classify + code merge",
+  "description": "当前 generate-digest.py 的 generate_onenote_digest() 将所有 _page-*.md 拼成单个大 prompt 一次性调 LLM，与 Teams 的 per-chat parallel 架构不一致。\n\n问题：\n1. 5+ 页场景注意力分散，分类质量下降\n2. 无增量缓存——即使只新增 1 页也要重跑全部\n3. 单次失败全挂，无容错\n4. 与 Teams digest（ISS-227 per-chat parallel）架构不一致\n\n改造方案（对齐 Teams 架构）：\n1. 新增 score_and_extract_single_page() — 每页独立 LLM 调用，输出 {relevance, key_facts: [{tag: fact/analysis, text}], ...}\n2. ThreadPoolExecutor(max_workers=3) 并行执行\n3. 纯 code merge_onenote_results() 汇总 → 按模板输出 onenote-digest.md\n4. 写 _page-relevance.json 缓存（类似 Teams 的 _relevance.json），下次增量只处理新/变更页\n5. 废弃 onenote-classifier agent（.claude/agents/onenote-classifier.md）\n\n实际数据：当前 case OneNote 页面 1-6 页，大部分 1-2 页。per-page parallel 对 1-2 页场景无性能差异，但对 5+ 页和增量更新有明显收益。\n\n涉及文件：\n- .claude/skills/casework/scripts/generate-digest.py（主改动）\n- .claude/agents/onenote-classifier.md（标记废弃）\n- .claude/skills/onenote/onenote-digest-template.md（输出模板保持不变）",
+  "type": "refactor",
+  "priority": "P2",
+  "status": "tracking",
+  "trackId": "onenote-digest-parallel_20260418",
+  "testLoopScan": true,
+  "createdAt": "2026-04-18T01:30:00+08:00",
+  "updatedAt": "2026-04-18T01:30:00+08:00"
+}

@@ -161,3 +161,5 @@
 | [x] | merge-ar-casework_20260417 | 合并 casework-ar 到 casework：消除 AR 路由依赖 | 2026-04-17 | 2026-04-17 |
 | [x] | onenote-vision_20260417 | OneNote Inline Images + Vision Analysis | 2026-04-17 | 2026-04-17 |
 | [x] | teams-image-local_20260417 | Teams Chat 图片本地化 | 2026-04-17 | 2026-04-17 |
+| [ ] | digest-per-chat_20260418 | Teams digest per-chat 并行生成 (ISS-227) | 2026-04-18 | 2026-04-18 |
+| [x] | onenote-digest-parallel_20260418 | OneNote Digest Per-Page Parallel LLM Classify + Code Merge (ISS-228) | 2026-04-18 | 2026-04-18 |

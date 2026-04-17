@@ -59,6 +59,23 @@ mcp_call_to_file() {
     2>/dev/null | grep -o 'data: {.*}' | sed 's/^data: //' | head -1 > "$OUTFILE"
 }
 
+# ── MCP search with retry (Graph Search API has transient empty responses) ──
+mcp_search_with_retry() {
+  local ID="$1" QS="$2" SIZE="$3" OUTFILE="$4"
+  local attempt=0 max_retries=5
+  while [ $attempt -lt $max_retries ]; do
+    mcp_call_to_file "$ID" "SearchTeamMessagesQueryParameters" "{\"queryString\":\"$QS\",\"size\":$SIZE}" "$OUTFILE"
+    if [ -s "$OUTFILE" ] && grep -q '"result"' "$OUTFILE"; then
+      return 0
+    fi
+    attempt=$((attempt + 1))
+    if [ $attempt -lt $max_retries ]; then
+      sleep $((5 * attempt))
+    fi
+  done
+  return 1
+}
+
 # ═══════════════════════════════════════════
 # Process one case (all parsing in single python3 via env vars)
 # ═══════════════════════════════════════════
@@ -78,9 +95,9 @@ process_case() {
   local WD
   WD=$(python3 -c "import os; d=os.path.join(os.environ.get('TMPDIR_MCP','.'), '$CASE_NUMBER'); os.makedirs(d,exist_ok=True); print(d)")
 
-  # --- MCP searches → save to files ---
-  mcp_call_to_file 10 "SearchTeamMessagesQueryParameters" "{\"queryString\":\"$CASE_NUMBER\",\"size\":25}" "$WD/q1.json"
-  [ -n "$CONTACT_EMAIL" ] && mcp_call_to_file 11 "SearchTeamMessagesQueryParameters" "{\"queryString\":\"from:$CONTACT_EMAIL\",\"size\":5}" "$WD/q2.json"
+  # --- MCP searches → save to files (with retry for transient Graph API empty responses) ---
+  mcp_search_with_retry 10 "$CASE_NUMBER" 25 "$WD/q1.json" || true
+  [ -n "$CONTACT_EMAIL" ] && mcp_search_with_retry 11 "from:$CONTACT_EMAIL" 5 "$WD/q2.json" || true
   mcp_call_to_file 12 "ListChats" "{\"topic\":\"$CASE_NUMBER\"}" "$WD/q3.json"
 
   # --- Python does everything: parse chatIds, fetch messages, dump _mcp-raw.json ---
