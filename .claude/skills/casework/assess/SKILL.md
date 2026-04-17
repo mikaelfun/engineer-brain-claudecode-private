@@ -128,6 +128,30 @@ if SPAWN_ONENOTE == 1:
 ```
 你是 D365 Case 状态判定助手。基于以下 context 产出 JSON 决策。
 
+## 判定原则（必须遵守）
+
+### actualStatus 信号分层
+actualStatus 是对**实际沟通状态**的事实判断，仅基于已发生的沟通事实推理：
+- ✅ 输入信号：邮件方向+内容（谁发的、说了什么）、Notes 记录、ICM 当前状态、Teams 对话 Key Facts
+- ❌ 不作为 actualStatus 输入：`drafts/` 未发送草稿、`analysis/` 排查文件、todo 待办项
+- drafts/analysis 只在 actions 决策中使用，不应回流污染 actualStatus 判断
+
+### `new` 的使用极其严格
+只有当 emails.md 中**完全没有工程师（fangkun / support@mail.support.microsoft.com）发出的邮件**时，才判定为 `new`。
+已有工程师发出的任何邮件（IR、排查结果、follow-up）→ 不是 `new`，根据邮件内容判定其他状态。
+
+### 首次运行陷阱
+无 meta 历史状态不能默认 `new`。Case 可能已被手动处理过。**必须先看邮件和 notes 的实际内容再判定。**
+
+### 邮件方向 ≠ 状态
+最后一封邮件方向不等于状态，需结合内容理解意图（客户发"谢谢"≠ pending-engineer）。
+
+### ICM ≠ pending-pg
+有 ICM 不自动等于 pending-pg。PG 仍处理 → pending-pg；PG 已完成/已回复 → 可能 pending-engineer。
+
+### daysSinceLastContact 定义
+最后一封**工程师发出邮件**到现在的自然日天数（不是客户发出的）。
+
 ## Context
 ### meta (casework-meta.json)
 {meta_json}
@@ -145,7 +169,7 @@ if SPAWN_ONENOTE == 1:
 {
   "caseNumber": "{caseNumber}",
   "actualStatus": "<one of: pending-engineer|pending-customer|pending-pg|researching|ready-to-close|resolved|closed>",
-  "daysSinceLastContact": <int from context>,
+  "daysSinceLastContact": <int — 距工程师最后发出邮件的天数>,
   "actions": [
     // 允许的 type: troubleshooter / email-drafter / challenger / note-gap / labor-estimate
     // 允许的 status: pending
@@ -161,8 +185,16 @@ if SPAWN_ONENOTE == 1:
 1. compliance.entitlementOk === false → actualStatus=ready-to-close, actions=[]
 2. 客户最新回复后 < 1 day + 无工程师后续 → pending-engineer + troubleshooter 或 email-drafter
 3. 工程师发出 follow-up 后 > 3 days 无客户回复 → pending-customer + email-drafter(follow-up)
-4. ICM 有 PG 新 entry → pending-pg（等 PG 回应，actions=[]）
+4. ICM 有 PG 新 entry 且 PG 仍在处理 → pending-pg（等 PG 回应，actions=[]）
 5. 其余（数据不足 / 正在排查） → researching + troubleshooter
+
+**actions 推理指导**（非严格规则，LLM 综合判断）：
+1. 排查已完成 + 邮件已发送 + ICM pending PG → `no-agent`（等 PG）
+2. 有未发送草稿（`drafts/`）且内容仍相关 → actions=[], noActionReason="unsent draft exists"
+3. 排查完成但未告知客户 → email-drafter（不需 troubleshooter）
+4. 有新信息需排查（客户新数据、PG 新回复）→ troubleshooter
+5. 新 case（`new` 状态，无工程师邮件）+ 需初始排查 → troubleshooter + email-drafter(initial-response)
+6. 判断不确定 → actions=[]（让 act 的 fallback 路由表处理）
 
 **邮件去重规则**（推荐 email-drafter 前必须检查）：
 - 读 `{caseDir}/emails.md` 检查工程师是否已发过同类型邮件（IR/follow-up/closure）
