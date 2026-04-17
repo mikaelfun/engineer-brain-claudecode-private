@@ -49,17 +49,24 @@ def load_config(project_root):
     """Load API config from config.json or environment."""
     base = os.environ.get("NEWAPI_BASE", "https://kunnewapi.net/v1")
     key = os.environ.get("NEWAPI_KEY", "")
+    model = os.environ.get("NEWAPI_MODEL", "")
 
-    if not key:
-        cfg_path = os.path.join(project_root, "config.json")
-        try:
-            cfg = json.load(open(cfg_path, encoding="utf-8"))
-            key = cfg.get("newapi", {}).get("key", "")
-            base = cfg.get("newapi", {}).get("base", base)
-        except Exception:
-            pass
+    cfg_path = os.path.join(project_root, "config.json")
+    try:
+        cfg = json.load(open(cfg_path, encoding="utf-8"))
+        newapi = cfg.get("newapi", {})
+        if not key:
+            key = newapi.get("key", "")
+        if not model:
+            model = newapi.get("model", "claude-sonnet-4-20250514")
+        base = newapi.get("base", base)
+    except Exception:
+        pass
 
-    return base, key
+    if not model:
+        model = "claude-sonnet-4-20250514"
+
+    return base, key, model
 
 
 def call_llm(base_url, api_key, model, system_prompt, user_prompt):
@@ -234,16 +241,20 @@ Output ONLY the markdown content, no code fences."""
 
 def main():
     args = parse_args()
-    base_url, api_key = load_config(args.project_root)
+    base_url, api_key, model = load_config(args.project_root)
 
     if not api_key:
-        print("ERROR|no API key (set NEWAPI_KEY or config.json newapi.key)", file=sys.stderr)
+        print("ERROR|no API key (set config.json newapi.key)", file=sys.stderr)
         sys.exit(1)
 
+    # CLI --model overrides config
+    if args.model != "claude-sonnet-4-20250514":
+        model = args.model
+
     if args.type == "teams":
-        generate_teams_digest(args.case_dir, args.case_number, args.project_root, base_url, api_key, args.model)
+        generate_teams_digest(args.case_dir, args.case_number, args.project_root, base_url, api_key, model)
     elif args.type == "onenote":
-        generate_onenote_digest(args.case_dir, args.case_number, args.project_root, base_url, api_key, args.model)
+        generate_onenote_digest(args.case_dir, args.case_number, args.project_root, base_url, api_key, model)
 
 
 if __name__ == "__main__":
