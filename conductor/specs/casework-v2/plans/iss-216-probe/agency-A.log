@@ -1,0 +1,20 @@
+🤖 Agency 2026.4.16.2
+📁 Log directory: C:\Users\fangkun\.agency\logs\session_20260417_140029_6108
+Starting MCP Proxy (HTTP/SSE ← HTTP)
+Proxying to: https://agent365.svc.cloud.microsoft/agents/tenants/72f988bf-86f1-41af-91ab-2d7cd011db47/servers/mcp_TeamsServer
+Custom headers: [
+    HeaderValue {
+        name: "User-Agent",
+        value: "agency/2026.4.16.2",
+    },
+]
+9961
+Intercepted this request: Request { jsonrpc: V2, method: "initialize", params: Some(Object {"capabilities": Object {}, "clientInfo": Object {"name": String("probe-A"), "version": String("1.0")}, "protocolVersion": String("2024-11-05")}), id: Some(Number(0)) }
+Upstream returned 401 — resolving auth from challenge
+Detected AzureAD authorization server.
+Using interactive Entra auth
+Auth token acquired duration_ms=947
+✅ Detected initialize response with serverInfo
+Intercepted this request: Request { jsonrpc: V2, method: "tools/call", params: Some(Object {"arguments": Object {"queryString": String("2604140040001804"), "size": Number(5)}, "name": String("SearchTeamMessagesQueryParameters")}), id: Some(Number(10)) }
+Auth token acquired duration_ms=1062
+Upstream server returned status code: 200.

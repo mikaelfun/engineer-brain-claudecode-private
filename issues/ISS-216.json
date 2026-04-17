@@ -1,11 +1,11 @@
 {
   "id": "ISS-216",
-  "title": "Teams search retry — SSE first-line filter misses token-refresh responses",
-  "description": "data-refresh.sh Teams path fails on cases with long-idle agency proxy. mcp_search_with_retry uses `grep -o 'data: {.*}' | sed | head -1` to extract JSON-RPC result; when agency resolves 401 challenge mid-stream, the first SSE frame is an auth keepalive/error event, not the result. `head -1` discards the valid frame. Repro: case 2604140040001804 DELTA_OK smoke → TEAMS_FAIL|reason=all 1 search(es) errored|elapsed=103s, while manual `curl` against fresh proxy returns 6 hits in <2s. Agency log shows: `Upstream returned 401 — resolving auth from challenge` → `Auth token acquired duration_ms=968`. Fix candidates: (1) drop `head -1`, concat all data: frames then pick the one containing `\"result\"`; (2) warm auth token with a dummy search before the real query (similar to RDS agency pre-warming); (3) bump retry count from 1 to 2 and widen sleep to 10s to give token refresh time. Scope: .claude/skills/teams-search/scripts/teams-search-inline.sh.",
+  "title": "Teams search fails silently — readiness check misses upstream outage + error body lost",
+  "description": "Root cause (evidence: .agency/logs/session_20260417_133517_38552): upstream MCP server agent365.svc.cloud.microsoft returned {\"code\":\"UnexpectedError\",\"message\":\"An unexpected error occurred.\"} during ~60s outage window. agency.exe wrapped this as HTTP 200 + JSON-RPC error response. teams-search-inline.sh readiness check (L97-105) only validated HTTP 200 → treated upstream error as 'proxy ready' → proceeded to tools/call which also failed. Additionally, mcp_search_with_retry (L138) logged generic 'empty/error' without including actual response body, making RCA impossible without digging .agency/logs/. NOTE: Initial ISS-216 blamed `head -1` SSE frame filter — this was WRONG (Step A probe confirmed agency returns single SSE frame; head -1 is benign). Fix applied: (P0) readiness check now parses SSE body, detects UnexpectedError → 10s retry → fail-fast after 3x; (P1) retry count 2→3 with exponential backoff 5s→10s; (P3) error body (first 200 chars) surfaced in log messages. Live probe also found: initialize chronically returns -32700 parse error (upstream non-standard response) but tools/call succeeds — readiness check correctly treats this as 'ready'. Repro case: 2604140040001804.",
   "type": "bug",
   "priority": "P1",
-  "status": "backlog",
+  "status": "in-progress",
   "trackId": null,
   "createdAt": "2026-04-17T06:00:00.000Z",
-  "updatedAt": "2026-04-17T06:00:00.000Z"
+  "updatedAt": "2026-04-17T14:30:00.000Z"
 }
