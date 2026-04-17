@@ -30,6 +30,14 @@ while [[ $# -gt 0 ]]; do
 done
 [ -z "$CASE_NUMBER" ] || [ -z "$CASE_DIR" ] && { echo "ERROR|missing --case-number or --case-dir" >&2; exit 2; }
 
+# ── Auto-detect AR (case number >= 19 digits) ──
+# LLM callers may forget --is-ar; auto-detect is the safety net.
+if [ "${#CASE_NUMBER}" -ge 19 ] && [ "$IS_AR" = "false" ]; then
+  IS_AR="true"
+  MAIN_CASE="${CASE_NUMBER:0:16}"
+  echo "🔍 Auto-detected AR case: main=$MAIN_CASE (len=${#CASE_NUMBER})"
+fi
+
 HERE="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="${PROJECT_ROOT:-$(cd "$HERE/../../.." && pwd)}"
 # Windows-mixed path (C:/...) so python3 open() doesn't treat /c/ as literal.
@@ -131,7 +139,7 @@ if [ -z "$ICM_INCIDENT" ]; then
     sleep 3
   done
   if [ -f "$CASE_INFO" ]; then
-    ICM_INCIDENT=$(grep -oP 'ICM Number\s*\|\s*\K[0-9]+' "$CASE_INFO" 2>/dev/null || echo "")
+    ICM_INCIDENT=$(sed -n 's/.*ICM Number[[:space:]]*|[[:space:]]*\([0-9]\{1,\}\).*/\1/p' "$CASE_INFO" 2>/dev/null | head -1)
   fi
 fi
 

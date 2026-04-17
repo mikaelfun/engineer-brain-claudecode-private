@@ -33,7 +33,7 @@ done
 # Event emission setup (casework-v2 Step 1 observability)
 # ═══════════════════════════════════════════
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../../../.." && pwd)"
 WRITE_EVENT="$PROJECT_ROOT/.claude/skills/casework/scripts/write-event.sh"
 EVENT_DIR="$CASE_DIR/.casework/events"
 

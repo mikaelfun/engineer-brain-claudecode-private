@@ -1,0 +1,11 @@
+{
+  "id": "ISS-224",
+  "title": "合并 casework-ar 到 casework：消除 AR 路由依赖",
+  "description": "casework-ar 作为独立 skill 导致调用方（patrol、dashboard 单 case 按钮、CLI /casework）都需要自己判断 case number 长度来路由到不同 skill。当前所有调用方都没做这个判断，AR case 全部走了普通 casework，导致：\n- emails 从 AR case 自己拉（空的，邮件挂在 main case 上）\n- isAR=false，data-refresh-output.json 错误\n- assess 基于 0 封邮件做出错误判断\n\n## 方案\n\n合并 casework-ar 回 casework，AR 检测下沉到脚本/模板层：\n\n1. data-refresh.sh：已加 auto-detect（case number ≥19 位自动 isAR=true + 截取 mainCase）✅\n2. assess SKILL.md：加 isAR 分支，引用 assess-ar 的 AR scope + communicationMode 逻辑\n3. act SKILL.md：加 isAR 分支，引用 act-ar 的收件人选择逻辑\n4. casework SKILL.md：删除"主 casework 不含任何 AR 逻辑"的声明\n5. 删除 casework-ar/ 目录（assess-ar、act-ar 内容合并到主 assess/act）\n6. patrol SKILL.md：不需要任何修改（统一走 casework）\n7. dashboard：不需要任何修改\n\n## 已完成\n\n- [x] data-refresh.sh auto-detect AR\n- [x] teams-search-inline.sh PROJECT_ROOT 路径修复\n\n## 待做\n\n- [ ] assess SKILL.md 合并 AR 分支\n- [ ] act SKILL.md 合并 AR 分支\n- [ ] 删除 casework-ar/ 目录\n- [ ] 端到端验证：patrol 中 AR case 能正确拉到 main case emails",
+  "type": "refactor",
+  "priority": "P1",
+  "status": "pending",
+  "testLoopScan": true,
+  "createdAt": "2026-04-17T14:15:00Z",
+  "updatedAt": "2026-04-17T14:15:00Z"
+}
