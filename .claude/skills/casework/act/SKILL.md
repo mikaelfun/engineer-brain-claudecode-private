@@ -22,6 +22,7 @@ allowed-tools:
 - `{caseDir}/.casework/execution-plan.json` — 必须存在（Step 2 成功产物）
 - `{caseDir}/case-info.md` — D365 snapshot（agent 前置条件）
 - `{caseDir}/emails.md` — 邮件（agent 前置条件）
+- `{caseDir}/casework-meta.json` — AR case 时需含 `ar.scope`、`ar.communicationMode`、`ar.caseOwnerEmail`、`mainCaseId`
 
 ## 输出契约
 
@@ -65,6 +66,19 @@ if [ "$MODE" = "patrol" ]; then
     --case-number "$CASE_NUMBER" --mode "patrol"
   echo "ACT_DELEGATED|actions=$ACTION_COUNT|mode=patrol"
   exit 0
+fi
+```
+
+### Step 2.5. AR Context 读取（isAR=true 时）
+
+```bash
+IS_AR=$(python3 -c "import json; m=json.load(open(r'{caseDir}/casework-meta.json')); print('true' if m.get('isAR') else 'false')")
+
+if [ "$IS_AR" = "true" ]; then
+  AR_SCOPE=$(python3 -c "import json; m=json.load(open(r'{caseDir}/casework-meta.json')); print(m.get('ar',{}).get('scope','unknown'))")
+  AR_MODE=$(python3 -c "import json; m=json.load(open(r'{caseDir}/casework-meta.json')); print(m.get('ar',{}).get('communicationMode','internal'))")
+  AR_OWNER_EMAIL=$(python3 -c "import json; m=json.load(open(r'{caseDir}/casework-meta.json')); print(m.get('ar',{}).get('caseOwnerEmail',''))")
+  MAIN_CASE=$(python3 -c "import json; m=json.load(open(r'{caseDir}/casework-meta.json')); print(m.get('mainCaseId',''))")
 fi
 ```
 
@@ -131,6 +145,19 @@ for i in 0..(ACTION_COUNT-1):
           Case {caseNumber}，caseDir={caseDir}。
           读取 .claude/agents/troubleshooter.md 获取完整执行步骤，然后执行。
       )
+      # AR 分支：isAR=true 时使用以下 prompt 替代上方普通版
+      # Agent(
+      #   subagent_type: "troubleshooter",
+      #   description: "troubleshooter AR {caseNumber}",
+      #   run_in_background: false,
+      #   prompt: |
+      #     AR Case {caseNumber}，caseDir={caseDir}。
+      #     AR Scope: {AR_SCOPE}
+      #     沟通模式: {AR_MODE}
+      #     Main Case: {MAIN_CASE}
+      #     请只排查 AR scope 范围内的问题，不要排查 main case 的其他问题。
+      #     读取 .claude/agents/troubleshooter.md 获取完整执行步骤，然后执行。
+      # )
       # troubleshooter 完成后 → challenge gate（Step 3c）
 
     "email-drafter":
@@ -143,6 +170,38 @@ for i in 0..(ACTION_COUNT-1):
           emailType={ACTION_{i}_EMAIL_TYPE}, language=auto, recipient=customer。
           读取 .claude/agents/email-drafter.md 获取完整执行步骤，然后执行。
       )
+      # AR 分支：isAR=true 时根据 communicationMode 选择 prompt
+      #
+      # AR internal 模式 (AR_MODE = "internal"):
+      # Agent(
+      #   subagent_type: "email-drafter",
+      #   description: "email AR {caseNumber}",
+      #   run_in_background: false,
+      #   prompt: |
+      #     AR Case {caseNumber}，caseDir={caseDir}。
+      #     AR Scope: {AR_SCOPE}
+      #     沟通模式: internal
+      #     收件人: {AR_OWNER_EMAIL}（case owner）
+      #     recipient=internal
+      #     邮件发给 case owner，总结 AR scope 内的发现和建议。
+      #     读取 .claude/agents/email-drafter.md 获取完整执行步骤，然后执行。
+      # )
+      #
+      # AR customer-facing 模式 (AR_MODE = "customer-facing"):
+      # Agent(
+      #   subagent_type: "email-drafter",
+      #   description: "email AR {caseNumber}",
+      #   run_in_background: false,
+      #   prompt: |
+      #     AR Case {caseNumber}，caseDir={caseDir}。
+      #     AR Scope: {AR_SCOPE}
+      #     沟通模式: customer-facing
+      #     收件人: customer（reply-all from main case）
+      #     CC: {AR_OWNER_EMAIL}（case owner）
+      #     recipient=customer
+      #     邮件发给客户，仅回复 AR scope 内的问题。CC case owner。
+      #     读取 .claude/agents/email-drafter.md 获取完整执行步骤，然后执行。
+      # )
 
     "challenger":
       # challenger 已改为手动触发（/challenge {caseNumber}），act 自动流程不 spawn
@@ -194,6 +253,21 @@ echo "ACT_OK|actions=$ACTION_COUNT|ir_first=$IR_FIRST|elapsed=${SECONDS}s"
 | `pending-pg` | [] | 无 action |
 | `researching` | troubleshooter | troubleshooter(fg) |
 | `ready-to-close` | email-drafter(closure) | email(fg) |
+
+### AR 路由参考表（isAR=true 时使用）
+
+| actualStatus | communicationMode | 典型 actions |
+|---|---|---|
+| `new` | any | troubleshooter(AR scope) → email-drafter |
+| `pending-engineer` | `internal` | troubleshooter(AR scope) → email-drafter(to case owner) |
+| `pending-engineer` | `customer-facing` | troubleshooter(AR scope) → email-drafter(to customer, AR scope only) |
+| `pending-customer` (days<3) | any | [] |
+| `pending-customer` (days≥3) | `internal` | email-drafter(follow-up to case owner) |
+| `pending-customer` (days≥3) | `customer-facing` | email-drafter(follow-up to customer) |
+| `pending-pg` | any | [] |
+| `researching` | any | troubleshooter(AR scope) |
+| `ready-to-close` | `internal` | email-drafter(AR 完成总结 to case owner) |
+| `ready-to-close` | `customer-facing` | email-drafter(AR scope 结论 to customer, CC owner) |
 
 ## Safety Redlines
 

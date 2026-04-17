@@ -5,6 +5,7 @@
   "type": "refactor",
   "priority": "P1",
   "status": "pending",
+  "trackId": "merge-ar-casework_20260417",
   "testLoopScan": true,
   "createdAt": "2026-04-17T14:15:00Z",
   "updatedAt": "2026-04-17T14:15:00Z"
