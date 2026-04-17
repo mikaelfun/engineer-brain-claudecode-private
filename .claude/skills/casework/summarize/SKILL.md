@@ -20,7 +20,7 @@ allowed-tools:
 
 增量更新 case-summary.md + 规则化生成 todo + 更新 casework-meta.json。
 
-**本 skill 是 `/inspection-writer` 的 v2 替代品**——核心 summary 生成规则与 inspection-writer 完全相同，增加了 v2 pipeline 集成层。
+**本 skill 替代了旧的 `/inspection-writer`**——核心 summary 生成规则已完整内联在 Step 3 中，不依赖外部文件。
 
 ## 输入契约
 
@@ -58,31 +58,103 @@ python3 .claude/skills/casework/act/scripts/update-pipeline-state.py \
 
 ### Step 3. 执行 summary 更新
 
-**按 inspection-writer/SKILL.md 的完整规则执行**——读取该文件的 Step 2a/2b/2.5/3/4 章节：
+#### 3.1 changePath 决策树
 
-1. **changePath 决策树**（inspection-writer Step 1）：
-   - `NO_CHANGE + case-summary.md 已存在` → 跳过 summary，直接到 Step 3 todo
-   - `NO_CHANGE + case-summary.md 不存在` → 首次生成（Step 2a）
-   - `CHANGED + case-summary.md 不存在` → 首次生成（Step 2a）
-   - `CHANGED + case-summary.md 已存在` → 增量追加（Step 2b）
+- `NO_CHANGE + case-summary.md 已存在` → 跳过 summary，直接到 Step 3.5 todo
+- `NO_CHANGE + case-summary.md 不存在` → 首次生成（Step 3.2）
+- `CHANGED + case-summary.md 不存在` → 首次生成（Step 3.2）
+- `CHANGED + case-summary.md 已存在` → 增量追加（Step 3.3）
 
-2. **首次生成**（Step 2a）：读 case-info.md + emails.md + notes.md + teams-digest.md + claims.json + onenote/personal-notes.md，Write 生成完整 case-summary.md
+#### 3.2 首次生成 case-summary.md
 
-3. **增量追加**（Step 2b）：仅读新增内容，Edit 追加到「排查进展」「关键发现」「风险」
+读取：`case-info.md`、`emails.md`、`notes.md`、`teams/teams-digest.md`（如有；不存在则回退读 `teams/*.md`）、`claims.json`（如有）、`onenote/personal-notes.md`（如有，仅引用 `[fact]` 条目，`[analysis]` 加 `[unverified]` 前缀）。
+AR Case 额外读取 `notes-ar.md`。
 
-4. **claims.json 感知**：verified 正常写入、challenged 加 [unverified]、rejected 不写入
+用 Write 工具生成完整 summary，格式：
 
-5. **SAP 准确性检查**（Step 2.5）
+```markdown
+# Case Summary — {caseNumber}
 
-6. **generate-todo.sh**（Step 3）：
+## 问题描述
+{一句话描述客户问题}
+
+## 排查进展
+- [{YYYY-MM-DD}] {事件1}
+- [{YYYY-MM-DD}] {事件2}
+
+## 关键发现
+- {发现1}
+
+## 风险
+- {基于 actualStatus + days + SLA 的风险评估}
+```
+
+**规则**：
+- 「问题描述」从 case-info title + 首封邮件提取，一句话
+- 「排查进展」按时间线梳理关键事件（邮件往来、电话、Note 记录等），每条一行
+- 「关键发现」提取诊断结论（来自 analysis/ 或邮件中的技术内容）
+- 「风险」评估 SLA、客户响应、是否需要升级等
+- **Entitlement 不合规时**：在「风险」首行插入 `⚠️ **Entitlement Warning** — Service: {serviceName}, Schedule: {schedule}, Country: {contractCountry}。请联系 TA 确认。`
+- **RDSE 客户时**：在「问题描述」末尾注明 `[RDSE: {ccAccount}]`
+
+**AR Case 规则**（`meta.isAR === true`）：
+- 「问题描述」格式：`[AR] {ar.scope} — Main Case: {mainCaseId}`
+- 「排查进展」从 notes-ar.md + emails.md 提取 AR scope 相关事件
+- 「关键发现」仅包含 AR scope 内的诊断结论
+- 「风险」不包含 SLA 风险评估
+- 额外 section **「AR 信息」**（放在「问题描述」和「排查进展」之间）：
+  ```markdown
+  ## AR 信息
+  - Main Case: {mainCaseId}
+  - Case Owner: {ar.caseOwnerName} ({ar.caseOwnerEmail})
+  - Communication Mode: {ar.communicationMode}
+  - Scope: {ar.scope}
+  ```
+
+#### 3.3 增量追加 case-summary.md
+
+仅读取**新增内容**（自上次 inspection 后的新邮件、notes、teams-digest Key Facts）。
+
+用 **Edit 工具**追加：
+1. 在「排查进展」末尾追加 1-2 行新事件
+2. 如有新发现，追加到「关键发现」
+3. 如风险状况变化，更新「风险」section
+
+**不要**重写整个文件，只 Edit 追加/修改变化部分。
+
+**claims.json 感知**（如 `{caseDir}/claims.json` 存在）：
+
+| claim status | 写入 case-summary 的方式 |
+|--------------|------------------------|
+| `verified` | 正常写入 |
+| `challenged` | 加 `[unverified]` 前缀 |
+| `rejected` | **不写入** summary |
+| `pending` | 正常写入（向后兼容） |
+
+**清理机制**：已有 `[unverified]` 且 claim 变 `verified` → Edit 移除前缀；claim 变 `rejected` → Edit 删除。
+
+**AR Case**：增量逻辑相同，但只关注 AR scope 相关新事件。如 `ar.communicationMode` 或 `ar.scopeConfirmed` 变化，更新「AR 信息」section。
+
+#### 3.4 SAP 准确性检查
+
+在 summary 更新后（已读完 case-info + summary），判断 SAP 是否与 case 实际内容匹配。
+
+读 `{dataRoot}/sap-scope.json` 的 `podServices` 列表。提取 SAP 叶子节点（最后一个 `/` 后）对比 case-summary 的「问题描述」。
+
+判断结果写入 `casework-meta.json.sapCheck`：`{ currentSap, isAccurate, suggestedSap, reason, checkedAt }`
+
+**跳过条件**：`sapCheck.checkedAt` 距今 < 24h 且已有结果 → 跳过。AR Case → 跳过。
+
+#### 3.5 generate-todo.sh
+
 ```bash
 bash skills/casework/scripts/generate-todo.sh "{caseDir}"
 # 输出: TODO_OK|red=N,yellow=N,green=N
 ```
 
-7. **更新 meta**（Step 4）：upsert `casework-meta.json.lastInspected` = ISO now
+#### 3.6 更新 meta
 
-**完整规则参考**：`cat .claude/skills/inspection-writer/SKILL.md`（summary 格式、AR 规则、claims 感知等均在其中定义）
+upsert `casework-meta.json.lastInspected` = ISO now
 
 ### Step 4. Pipeline state — 标记 summarize completed + 日志
 
@@ -104,8 +176,7 @@ echo "SUMMARIZE_OK|changePath=$CHANGE_PATH|elapsed=${SECONDS}s"
 ## Pitfalls (known)
 
 - **changePath 推导**：data-refresh-output.json 不存在时保守视为 CHANGED（触发 LLM summary），避免漏更新
-- **inspection-writer 兼容**：本 skill 引用 inspection-writer 的规则，不重复定义。两个 skill 可独立调用——`/inspection-writer` 保留作兼容，`/casework:summarize` 是 v2 推荐入口
-- **AR Case**：changePath + AR 规则在 inspection-writer 中定义，本 skill 透传不修改
+- **AR Case**：AR summary 规则（scope 限定、AR 信息 section）已内联在 Step 3.2 中，不依赖外部文件
 
 ## 错误处理
 
