@@ -145,44 +145,11 @@ eval $(bash .claude/skills/casework/assess/scripts/gate-subagents.sh "{caseDir}/
 - Teams：读 `{caseDir}/teams/*.md`（每个 chat 一个文件，由 data-refresh write-teams.ps1 产出），在 Step 4 prompt 中要求 LLM 提取 key facts + 做 high/low relevance 判断
 - OneNote：读 `{caseDir}/onenote/_page-*.md`（raw page 副本，由 search-inline.py 产出），在 Step 4 prompt 中要求 LLM 对每条 finding 标注 `[fact]` 或 `[analysis]`
 
-**OneNote inline 分析完成后，必须重写 `{caseDir}/onenote/personal-notes.md` 为 V1 结构化格式**：
+**OneNote inline 分析完成后，必须重写 `{caseDir}/onenote/personal-notes.md`**。
 
-```markdown
-# Personal OneNote Notes — Case {caseNumber}
+格式模板：读取 `.claude/skills/onenote/personal-notes-template.md`，按模板结构输出（Facts/Analysis 汇聚 + 详细页面 + Summary）。
 
-> Searched: {原搜索时间} | Source: {notebook}
-> Matched pages: {count}
-> Classified by assess-inline at {ISO}
-
-## 事实记录（Facts）
-
-以下信息来自远程截图、客户确认、系统输出等可追溯来源，下游消费者可直接引用。
-
-- [fact] {汇聚所有页面的 fact}
-
-## 分析记录（Analysis）
-
-以下信息来自 LLM 分析、排查假设等，可能不准确，下游消费者应验证后再引用。
-
-- [analysis] {汇聚所有页面的 analysis}
-
-## 详细页面
-
-### {Page Title}
-- **Modified**: {date}
-- **Section**: {path}
-- **Key findings**:
-  - [fact] {finding}
-  - [analysis] {finding}
-
-## Summary
-{1-2 句话综合 OneNote 对本 case 的诊断价值}
-```
-
-分类规则：
-- 能追溯到具体来源（截图、客户原话、系统输出、CLI 结果）→ `[fact]`
-- 包含"怀疑"/"可能"/"建议"/"推测"等推断性语言 → `[analysis]`
-- 不确定时标 `[fact]`（保守，不丢信息）
+分类规则同模板定义：能追溯到具体来源→`[fact]`，推断性语言→`[analysis]`，不确定→`[fact]`。
 
 > **性能影响**：raw 文件直接进 Step 4 LLM context，增加 input tokens 但省去 2 次 subagent spawn 开销（~30s 冷启动）。对于 patrol 的 3-10 case 并行场景，总体更快。
 

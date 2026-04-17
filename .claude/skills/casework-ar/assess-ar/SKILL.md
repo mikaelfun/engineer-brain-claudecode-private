@@ -80,41 +80,9 @@ Upsert meta: ar.communicationMode, ar.caseOwnerEmail, ar.caseOwnerName
 
 同主 assess 的 gate-subagents.sh 逻辑，但**全部 inline，不 spawn**。
 
-**OneNote inline 分析**：读 `{caseDir}/onenote/_page-*.md`，分析后**重写 `{caseDir}/onenote/personal-notes.md` 为 V1 结构化格式**：
+**OneNote inline 分析**：读 `{caseDir}/onenote/_page-*.md`，分析后**重写 `{caseDir}/onenote/personal-notes.md`**。
 
-```markdown
-# Personal OneNote Notes — Case {caseNumber}
-
-> Searched: {原搜索时间} | Source: {notebook}
-> Matched pages: {count}
-> Classified by assess-ar-inline at {ISO}
-
-## 事实记录（Facts）
-
-以下信息来自远程截图、客户确认、系统输出等可追溯来源，下游消费者可直接引用。
-
-- [fact] {汇聚所有页面的 fact}
-
-## 分析记录（Analysis）
-
-以下信息来自 LLM 分析、排查假设等，可能不准确，下游消费者应验证后再引用。
-
-- [analysis] {汇聚所有页面的 analysis}
-
-## 详细页面
-
-### {Page Title}
-- **Modified**: {date}
-- **Section**: {path}
-- **Key findings**:
-  - [fact] {finding}
-  - [analysis] {finding}
-
-## Summary
-{1-2 句话综合 OneNote 对本 AR case 的诊断价值}
-```
-
-分类规则：能追溯到具体来源→`[fact]`，推断性语言→`[analysis]`，不确定→`[fact]`。
+格式模板：读取 `.claude/skills/onenote/personal-notes-template.md`，按模板结构输出（Facts/Analysis 汇聚 + 详细页面 + Summary）。
 
 **Teams 搜索关键词**根据沟通模式调整：
 - `internal` → 搜 case owner 名 + AR case number
