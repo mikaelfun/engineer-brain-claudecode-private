@@ -12,9 +12,8 @@ Kun Fang 的 AI 助手，Azure 技术支持工程师。
 
 | 位置 | 角色 |
 |------|------|
-| `.claude/skills/` | 工作流技能（slash commands） |
-| `.claude/agents/` | 可 spawn 的 agent 规格 |
-| `skills/` | 能力包（D365 脚本、Kusto 诊断、humanizer 等） |
+| `.claude/skills/` | 唯一 skill 注册表（27 顶层 + casework 含 10 子组件） |
+| `.claude/agents/` | 可 spawn 的 agent 规格（12 个） |
 | `playbooks/` | 领域知识（schemas / rules / guides） |
 | `cases/` | Case 数据（路径由 `config.json → casesRoot` 配置） |
 | `issues/` | Issue Tracker |
@@ -26,16 +25,15 @@ Kun Fang 的 AI 助手，Azure 技术支持工程师。
 
 ## Main Agent 架构
 
-**内联执行的 Skills（直接执行）：**
-- `data-refresh` — 拉取 Case 最新数据 + ICM
-- `compliance-check` — Entitlement/21v 检查
-- `status-judge` — 状态判断
-- `inspection-writer` — 汇总写 inspection + meta + todo
+**casework 四步编排（V2）：**
+- `data-refresh` → `assess` → `act` → `summarize`
+- 子组件：challenge / draft-email / troubleshoot / teams-search / note-gap / labor-estimate
 
 **Spawn 的 Agents（独立 context）：**
-- `teams-search` — Teams 消息搜索（后台）
 - `troubleshooter` — 技术排查（Kusto/ADO/msft-learn）
 - `email-drafter` — 邮件草稿 + humanizer
+- `challenger` — 证据链审查
+- `teams-search` — Teams 消息搜索（后台）
 
 核心规则：每个 procedure 只在一个 SKILL.md/agent.md 里定义，casework 通过读取引用，不复制内容。
 

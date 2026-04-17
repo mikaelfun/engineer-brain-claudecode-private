@@ -33,13 +33,17 @@ tools: Bash, Read, Write
 | name | model | tools | mcpServers |
 |------|-------|-------|------------|
 | `casework` | opus | Bash, Read, Write, Edit, Glob, Grep, Agent | icm |
-| `data-refresh` | sonnet | Bash, Read, Write | icm |
 | `teams-search` | sonnet | Bash, Read, Write | teams |
 | `email-drafter` | opus | Read, Write, Bash | — |
 | `troubleshooter` | opus | Bash, Read, Write, Glob, Grep, WebSearch | kusto, msft-learn, icm, local-rag |
 | `challenger` | opus | Bash, Read, Write, Glob, Grep, WebSearch | msft-learn, local-rag |
 | `stage-worker` | opus | Bash, Read, Write, Glob, Grep, Agent | — |
 | `onenote-case-search` | sonnet | Bash, Read, Write, Glob, Grep | — |
+| `knowledge-enricher` | sonnet | Bash, Read, Write, Glob, Grep | — |
+| `note-gap-checker` | sonnet | Bash, Read, Write | — |
+| `onenote-classifier` | sonnet | Read, Write, Edit | — |
+| `teams-digest-writer` | sonnet | Bash, Read, Write, Glob, Grep | — |
+| `test-supervisor-runner` | opus | Bash, Read, Write, Edit, Glob, Grep, Agent | — |
 
 ## 性能注意
 
