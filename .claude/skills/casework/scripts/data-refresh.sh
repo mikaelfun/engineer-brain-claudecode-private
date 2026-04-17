@@ -204,7 +204,47 @@ for pid in $PID_D365 $PID_TEAMS $PID_ICM $PID_ONENOTE $PID_ATT; do
   [ -n "$pid" ] && wait "$pid" 2>/dev/null || true
 done
 
-echo "✅ All paths finished, aggregating..."
+echo "✅ All 5 data paths finished."
+
+# ── 6. Digest generation (Teams + OneNote, parallel, LLM API call) ──
+# Runs AFTER raw data paths complete (needs their output files).
+# Two digest jobs run in parallel — each calls NewAPI independently.
+DIGEST_SCRIPT="$PROJECT_ROOT/.claude/skills/casework/scripts/generate-digest.py"
+if [ -f "$DIGEST_SCRIPT" ]; then
+  echo "⏳ Generating digests (teams + onenote, parallel)..."
+
+  # Teams digest (only if chat files exist)
+  PID_DIGEST_TEAMS=""
+  if ls "$CASE_DIR_ABS/teams/"*.md 2>/dev/null | grep -qv '/_'; then
+    (
+      python3 "$DIGEST_SCRIPT" --type teams \
+        --case-dir "$CASE_DIR_ABS" --case-number "$CASE_NUMBER" \
+        --project-root "$PROJECT_ROOT_WIN" \
+        > "$LOGD/digest-teams.log" 2>&1
+    ) &
+    PID_DIGEST_TEAMS=$!
+  fi
+
+  # OneNote digest (only if _page-*.md files exist)
+  PID_DIGEST_ONENOTE=""
+  if ls "$CASE_DIR_ABS/onenote/_page-"*.md 2>/dev/null | head -1 > /dev/null 2>&1; then
+    (
+      python3 "$DIGEST_SCRIPT" --type onenote \
+        --case-dir "$CASE_DIR_ABS" --case-number "$CASE_NUMBER" \
+        --project-root "$PROJECT_ROOT_WIN" \
+        > "$LOGD/digest-onenote.log" 2>&1
+    ) &
+    PID_DIGEST_ONENOTE=$!
+  fi
+
+  # Wait for both digest jobs
+  [ -n "$PID_DIGEST_TEAMS" ] && wait "$PID_DIGEST_TEAMS" 2>/dev/null || true
+  [ -n "$PID_DIGEST_ONENOTE" ] && wait "$PID_DIGEST_ONENOTE" 2>/dev/null || true
+
+  echo "✅ Digest generation done."
+fi
+
+echo "✅ Aggregating..."
 
 # ── Aggregate via inline python3 (deltaContent generator + output JSON) ──
 TOP_END_TS=$(date -u +%FT%TZ)
