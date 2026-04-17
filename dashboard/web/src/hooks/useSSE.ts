@@ -393,6 +393,32 @@ export function useSSE() {
       }
     })
 
+    // V2: Step 1 subtask progress (from .casework/events/*.json)
+    es.addEventListener('case-subtask-progress', (e) => {
+      try {
+        const data = parseAndTrack((e as MessageEvent).data)
+        if (!data) return
+        const d = data.data || data
+        // Forward to caseSessionStore for subtask-level display
+        if (d.caseNumber) {
+          sessionStoreUpdatePipeline(d.caseNumber, d.subtask, d.status, d.durationMs)
+        }
+      } catch { /* ignore parse errors */ }
+    })
+
+    // V2: Cross-step pipeline state (from .casework/pipeline-state.json)
+    es.addEventListener('patrol-pipeline-update', (e) => {
+      try {
+        const data = parseAndTrack((e as MessageEvent).data)
+        if (!data) return
+        const d = data.data || data
+        const store = usePatrolStore.getState()
+        if (store.onPipelineUpdate) {
+          store.onPipelineUpdate(d)
+        }
+      } catch { /* ignore parse errors */ }
+    })
+
     // Case step failed event — set failed status + invalidate operation
     es.addEventListener('case-step-failed', (e) => {
       const data = parseAndTrack(e.data)
