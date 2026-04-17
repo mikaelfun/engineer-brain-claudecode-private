@@ -130,12 +130,14 @@ eval $(bash .claude/skills/casework/assess/scripts/gate-subagents.sh "{caseDir}/
 - 在 Step 4 LLM prompt 里必须标注 `⚠️ teams-refresh-degraded` / `⚠️ onenote-refresh-degraded`
 - 写 execution-plan 时把 degraded 源列进 `warnings[]`：`warnings: ["teams-refresh-degraded"]`
 
-**Enrichment 执行策略（按 mode 分路）**：
+**Enrichment 执行策略（统一 inline）**：
 
-| mode | depth | Teams digest | OneNote 分类 | 实现方式 |
-|------|-------|-------------|-------------|---------|
-| **full** (depth=0) | 0 | spawn `teams-digest-writer`（可选加速） | spawn `onenote-classifier`（可选加速） | 并行 spawn，等返回 |
-| **patrol** (depth=1) | 1 | **Step 4 主 LLM inline** | **Step 4 主 LLM inline** | 不 spawn，直接读 raw 文件 |
+> V2 设计决策：**全部 inline，不 spawn**。OneNote 分析和 Teams digest 都在 assess 主 LLM context 内完成。省去 subagent spawn 开销（~30s），且产出格式统一为 V1 结构化格式。
+
+| 数据源 | 读取文件 | 产出 |
+|--------|---------|------|
+| Teams | `{caseDir}/teams/*.md` | Step 4 LLM 提取 key facts + relevance |
+| OneNote | `{caseDir}/onenote/_page-*.md` | **重写 `personal-notes.md` 为 V1 格式**（见下） |
 
 **patrol mode (depth=1) — inline 路径**：
 
@@ -143,25 +145,48 @@ eval $(bash .claude/skills/casework/assess/scripts/gate-subagents.sh "{caseDir}/
 - Teams：读 `{caseDir}/teams/*.md`（每个 chat 一个文件，由 data-refresh write-teams.ps1 产出），在 Step 4 prompt 中要求 LLM 提取 key facts + 做 high/low relevance 判断
 - OneNote：读 `{caseDir}/onenote/_page-*.md`（raw page 副本，由 search-inline.py 产出），在 Step 4 prompt 中要求 LLM 对每条 finding 标注 `[fact]` 或 `[analysis]`
 
+**OneNote inline 分析完成后，必须重写 `{caseDir}/onenote/personal-notes.md` 为 V1 结构化格式**：
+
+```markdown
+# Personal OneNote Notes — Case {caseNumber}
+
+> Searched: {原搜索时间} | Source: {notebook}
+> Matched pages: {count}
+> Classified by assess-inline at {ISO}
+
+## 事实记录（Facts）
+
+以下信息来自远程截图、客户确认、系统输出等可追溯来源，下游消费者可直接引用。
+
+- [fact] {汇聚所有页面的 fact}
+
+## 分析记录（Analysis）
+
+以下信息来自 LLM 分析、排查假设等，可能不准确，下游消费者应验证后再引用。
+
+- [analysis] {汇聚所有页面的 analysis}
+
+## 详细页面
+
+### {Page Title}
+- **Modified**: {date}
+- **Section**: {path}
+- **Key findings**:
+  - [fact] {finding}
+  - [analysis] {finding}
+
+## Summary
+{1-2 句话综合 OneNote 对本 case 的诊断价值}
+```
+
+分类规则：
+- 能追溯到具体来源（截图、客户原话、系统输出、CLI 结果）→ `[fact]`
+- 包含"怀疑"/"可能"/"建议"/"推测"等推断性语言 → `[analysis]`
+- 不确定时标 `[fact]`（保守，不丢信息）
+
 > **性能影响**：raw 文件直接进 Step 4 LLM context，增加 input tokens 但省去 2 次 subagent spawn 开销（~30s 冷启动）。对于 patrol 的 3-10 case 并行场景，总体更快。
 
-**full mode (depth=0) — spawn 路径（可选加速）**：
-
-```
-if SPAWN_TEAMS == 1:
-  Agent(subagent_type="teams-digest-writer",
-        description="Teams digest for {caseNumber}",
-        prompt="caseNumber={caseNumber}\ncaseDir={caseDir}\ncaseContextHead={head60 of case-info.md}\ndeltaHint={refreshResults.teams}")
-
-if SPAWN_ONENOTE == 1:
-  Agent(subagent_type="onenote-classifier",
-        description="OneNote classify for {caseNumber}",
-        prompt="caseNumber={caseNumber}\ncaseDir={caseDir}\ncaseContextHead={head60 of case-info.md}")
-```
-
-两 Agent 调用放在同一 response 中并行。等返回后进入 Step 4。
-
-**失败隔离**：spawn 失败 / 文件不存在 → Step 4 主 LLM 回退读 raw 文件（同 patrol 路径）。
+**失败隔离**：`_page-*.md` 不存在 → 跳过 OneNote 分析，Step 4 LLM 不引用 OneNote context。
 
 ### Step 4. 主 LLM：actualStatus + actions 决策
 
@@ -171,9 +196,7 @@ if SPAWN_ONENOTE == 1:
 - Teams 数据（优先级顺序）：
   1. `{caseDir}/teams/teams-digest.md`（若 spawn 了 teams-digest-writer 且成功）
   2. `{caseDir}/teams/*.md` raw chat 文件（patrol mode 或 spawn 失败时直接读）
-- OneNote 数据（优先级顺序）：
-  1. `{caseDir}/onenote/personal-notes.md`（若已含 [fact]/[analysis] 标注）
-  2. `{caseDir}/onenote/_page-*.md` raw page 文件（patrol mode 或 spawn 失败时直接读，在 prompt 中要求 LLM inline 分类）
+- OneNote 数据：读 `{caseDir}/onenote/_page-*.md` raw page 文件，inline 分析后**重写** `{caseDir}/onenote/personal-notes.md` 为 V1 结构化格式（Facts/Analysis 汇聚 + 详细页面 + Summary），然后在 Step 4 LLM prompt 中引用重写后的 `personal-notes.md`
 
 **Prompt 模板**：
 
