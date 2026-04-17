@@ -416,6 +416,21 @@ export function useSSE() {
         if (store.onPipelineUpdate) {
           store.onPipelineUpdate(d)
         }
+        // Bridge to caseSessionStore for CaseworkPipeline component
+        if (d.caseNumber && d.steps) {
+          const existing = useCaseSessionStore.getState().pipelineSteps[d.caseNumber]
+          if (!existing) {
+            sessionStoreInitPipeline(d.caseNumber, [
+              { id: 'data-refresh', label: 'Data Refresh', status: 'pending' },
+              { id: 'assess', label: 'Assess', status: 'pending' },
+              { id: 'act', label: 'Act', status: 'pending' },
+              { id: 'summarize', label: 'Summarize', status: 'pending' },
+            ])
+          }
+          for (const [stepId, info] of Object.entries(d.steps as Record<string, { status: string }>)) {
+            sessionStoreUpdatePipeline(d.caseNumber, stepId, info.status as any)
+          }
+        }
       } catch { /* ignore parse errors */ }
     })
 
