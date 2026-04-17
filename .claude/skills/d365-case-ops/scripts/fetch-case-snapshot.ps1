@@ -39,7 +39,8 @@ param(
     }),
     [int]$CacheMinutes = 10,
     [switch]$IncrementalIfCached,
-    [string]$OutputSubDir  # Override output subdirectory name (default: TicketNumber). Used by AR mode to write directly to AR case dir.
+    [string]$OutputSubDir,  # Override output subdirectory name (default: TicketNumber). Used by AR mode to write directly to AR case dir.
+    [string]$MainCaseNumber  # If set, this is an AR case; MainCaseNumber is the parent case
 )
 
 . "$PSScriptRoot\_init.ps1"
@@ -367,4 +368,60 @@ $md | Set-Content -Path $snapshotFile -Encoding UTF8
 
 Write-Host "✅ Snapshot saved: $snapshotFile"
 Write-Host ""
+
+# --- AR Mode: patch case-info.md with AR case's own title, SAP, statement ---
+$isAR = [bool]$MainCaseNumber
+if ($isAR) {
+    Write-Host "🔵 AR Mode: patching case-info.md with AR title, SAP, statement..."
+    $arCaseNumber = $TicketNumber
+    $arIncidentId = $null
+    # Resolve AR incident ID
+    $arIdFetch = @"
+<fetch top="1"><entity name="incident"><attribute name="incidentid"/><filter><condition attribute="ticketnumber" operator="eq" value="$arCaseNumber"/></filter></entity></fetch>
+"@
+    $arIdResult = Invoke-D365Api -Endpoint "/api/data/v9.0/incidents" -FetchXml $arIdFetch
+    if ($arIdResult -and $arIdResult.value -and $arIdResult.value.Count -gt 0) {
+        $arIncidentId = $arIdResult.value[0].incidentid
+    }
+
+    if ($arIncidentId) {
+        $arInc = Invoke-D365Api -Endpoint "/api/data/v9.0/incidents($arIncidentId)?`$select=title,msdfm_supportareapath"
+        if ($arInc -and $arInc.title) {
+            $arTitle = $arInc.title
+            $arSap = $arInc.msdfm_supportareapath
+            $content = Get-Content $snapshotFile -Raw -Encoding UTF8
+            # Add AR SAP row after SAP row
+            if ($arSap -and $content -notmatch "AR Support Area Path") {
+                $content = $content -replace "(\| SAP \|[^\r\n]+)", "`$1`n| AR Support Area Path | $arSap |"
+            }
+            # Add Is AR marker
+            if ($content -notmatch "\| Is AR \|") {
+                $content = $content -replace "(\| SAP \|[^\r\n]+(?:\n\| AR Support Area Path \|[^\r\n]+)?)", "`$1`n| Is AR | Yes (AR of $MainCaseNumber) |"
+            }
+            [System.IO.File]::WriteAllText($snapshotFile, $content, [System.Text.UTF8Encoding]::new($false))
+            Write-Host "  ✅ AR SAP: $arSap"
+        }
+
+        # Fetch AR customer statement
+        $arRestricted = Invoke-D365Api -Endpoint "/api/data/v9.0/incidents($arIncidentId)/msdfm_CaseRestrictedAttributesId?`$select=msdfm_customerstatement"
+        if ($arRestricted -and $arRestricted.msdfm_customerstatement) {
+            $arStmt = $arRestricted.msdfm_customerstatement
+            $content2 = Get-Content $snapshotFile -Raw -Encoding UTF8
+            if ($content2 -notmatch "## AR Customer Statement") {
+                $arStmtBlock = "`n## AR Customer Statement`n`n$arStmt`n"
+                # Insert before "## Entitlement" or append
+                if ($content2 -match '## Entitlement') {
+                    $content2 = $content2 -replace '(## Entitlement)', "$arStmtBlock`n`$1"
+                } else {
+                    $content2 += $arStmtBlock
+                }
+                [System.IO.File]::WriteAllText($snapshotFile, $content2, [System.Text.UTF8Encoding]::new($false))
+                Write-Host "  ✅ AR Customer Statement added ($($arStmt.Length) chars)"
+            }
+        }
+    } else {
+        Write-Host "  ⚠️ Could not resolve AR incident ID for $arCaseNumber"
+    }
+}
+
 Write-Host $md
