@@ -362,9 +362,9 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
 - patrol session **不读取** case-info.md、emails.md 等业务数据（由 casework(mode=patrol) 内联处理）
 
 ## 与 /casework 的关系
-- `/casework {caseNumber}`（单 case 手动调用）→ 使用 `.claude/skills/casework/SKILL.md`，主 agent 内联执行（depth=0），**能 spawn troubleshooter/email-drafter**
-- `/patrol`（批量巡检）→ 使用 `casework(mode=patrol)` agent（depth=1）做 data-refresh + assess，patrol 主 agent 做 spawn
-- **两者完全独立，互不影响**。casework SKILL.md 无需任何修改
+- `/casework {caseNumber}`（单 case 手动）→ 主 session depth=0，跑 Step 1→2→3→4 全流程（自己 spawn agent）
+- `/patrol`（批量巡检）→ spawn casework(mode=patrol) depth=1 跑 Step 1→2，patrol 主 agent 跑 Step 3→4 spawn
+- 两者共用相同的 sub-skill（data-refresh/assess/act/summarize），通过 mode 参数区分行为
 
 ## 串行/并行边界总结
 | 操作 | 执行位置 | 必须串行？ |

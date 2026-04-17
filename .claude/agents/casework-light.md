@@ -9,6 +9,8 @@ mcpServers:
   - icm
 ---
 
+> ⚠️ **DEPRECATED (casework-v2)**: 本 agent 已被 `casework(mode=patrol)` 替代。Patrol 现在 spawn casework subagent 执行 data-refresh.sh + assess，不再使用 casework-light。保留此文件仅供回退参考。
+
 # Casework-Light Agent (v2 — Optimized)
 
 Patrol 专用的轻量编排器。**一次 Bash 调用**完成所有数据收集，LLM 只做 status-judge 决策。
