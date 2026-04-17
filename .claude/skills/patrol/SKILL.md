@@ -28,7 +28,7 @@ allowed-tools:
 
 ## 架构：预热 → Streaming Pipeline（完成即推进）
 
-通过 **streaming pipeline** 设计：casework-light 完成一个就立即推进下一步，不等所有 case 完成。
+通过 **streaming pipeline** 设计：casework(mode=patrol) 完成一个就立即推进下一步，不等所有 case 完成。
 
 ```
 阶段 0（预热，~15s）:
@@ -38,12 +38,12 @@ allowed-tools:
 阶段 0.5: ICM token 预热（可选，170 分钟缓存）
 
 阶段 1+2 合并（Streaming Pipeline，统一轮询循环）:
-  全量并行启动 casework-light → 统一轮询循环：
+  全量并行启动 casework(mode=patrol) → 统一轮询循环：
     每轮检查每个 case 的状态，按需推进：
 
-    Case A: casework-light 完成(37s) → no-action → 立即 spawn inspection ──→ done
-    Case B: casework-light 完成(60s) → spawn email-drafter ──→ 完成后 spawn inspection → done
-    Case C: casework-light 还在跑(200s)... → 完成后 spawn troubleshooter → challenger → email → inspection → done
+    Case A: casework(mode=patrol) 完成(37s) → no-action → 立即 spawn summarize ──→ done
+    Case B: casework(mode=patrol) 完成(60s) → spawn email-drafter ──→ 完成后 spawn summarize → done
+    Case C: casework(mode=patrol) 还在跑(200s)... → 完成后 spawn troubleshooter → challenger → email → summarize → done
     
   退出条件：所有 case 到达 done 状态
 ```
@@ -56,9 +56,9 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
 
 ### 为什么这样设计
 
-- **depth=1 限制**：casework-light 作为 subagent 无法再 spawn，所以只做信息收集 + 决策
+- **depth=1 限制**：casework(mode=patrol) 作为 subagent 无法再 spawn，所以只做 data-refresh + assess
 - **Teams 串行**：Teams MCP 有并发限制，通过 queue agent 串行处理
-- **其他步骤并发**：data-refresh、onenote-search、compliance 在 casework-light 内用 Bash 后台进程并行
+- **其他步骤并发**：data-refresh、onenote-search、compliance 在 casework(mode=patrol) 内用 Bash 后台进程并行
 - **spawn 回到主 agent**：troubleshooter/challenger/email-drafter 由 patrol 主 agent（depth=0）spawn
 - **DTM/IR 预热**：与之前相同，全局缓存避免 Playwright 互斥
 
@@ -180,24 +180,27 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
    echo "processing" > "{patrolDir}/patrol-phase"
    ```
 
-7. **Streaming Pipeline：启动 casework-light + 统一轮询推进**
+7. **Streaming Pipeline：启动 casework(mode=patrol) + 统一轮询推进**
 
-   **7a. 全量并行启动 casework-light**
+   **7a. 全量并行启动 casework(mode=patrol)**
 
-   对每个待处理的 case spawn casework-light agent：
+   对每个待处理的 case spawn casework(mode=patrol) agent：
 
    ```
    Agent({
-     subagent_type: "casework-light",
-     prompt: "轻量 casework for Case {caseNumber}。
+     subagent_type: "casework",
+     prompt: "Patrol mode casework for Case {caseNumber}。
        caseDir: {casesRoot}/active/{caseNumber}/
-       projectRoot: {projectRoot}
+       projectRoot: .
        casesRoot: {casesRoot}
-       isAR: {isAR}
-       mainCaseId: {mainCaseId}
-       skipDataRefresh: false
-       teamsSearchCacheHours: {cacheHours}
-       请读取 .claude/agents/casework-light.md 获取完整执行步骤。",
+       mode: patrol
+
+       执行 Step 1 + Step 2：
+       1. 读取 .claude/skills/casework/data-refresh/SKILL.md，执行 data-refresh（bash skills/casework/scripts/data-refresh.sh）
+       2. 读取 .claude/skills/casework/assess/SKILL.md，执行 assess 流程
+       3. 产出 .casework/execution-plan.json 后退出
+
+       ⚠️ patrol mode：不执行 Step 3 (act) 和 Step 4 (summarize)，由 patrol 主 agent 处理。",
      run_in_background: true
    })
    → 记录返回的 task_id 和 output_file_path
@@ -228,10 +231,11 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
        
          case "gathering":
            if .casework/execution-plan.json 存在:
-             读取 plan，解析 actions
-             if no-action:
+             eval $(bash .claude/skills/casework/act/scripts/read-plan.sh \
+               "{casesRoot}/active/{caseNumber}/.casework/execution-plan.json")
+             if ACTION_COUNT == 0:
                → case.phase = "inspecting"
-               → 立即 spawn inspection-writer（后台）
+               → 立即 spawn summarize（后台）
              else:
                → case.phase = "executing"
                → 立即 spawn 无依赖的 action（troubleshooter/email-drafter）
@@ -250,9 +254,9 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
              if email-drafter pending && dependsOn === "troubleshooter":
                → spawn email-drafter（后台）
            
-           if 该 case 所有 action 都已完成:
+           if 該 case 所有 action 都已完成:
              → case.phase = "inspecting"
-             → 立即 spawn inspection-writer（后台）
+             → 立即 spawn summarize（后台）
          
          case "inspecting":
            检查 inspection agent 是否完成
@@ -279,18 +283,18 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
    ```
 
    **Spawn 规则**：
-   - **inspection-writer 单独 spawn**：每个 case 独立一个 agent（并行，不串行批量）
+   - **summarize 单独 spawn**：每个 case 独立一个 agent（并行，不串行批量）
    - **同一轮 spawn 合并**：如果一轮检查中多个 case 同时就绪，在一条消息中并行 spawn
-   - troubleshooter/email-drafter/inspection 都是后台 spawn（`run_in_background: true`）
+   - troubleshooter/email-drafter/summarize 都是后台 spawn（`run_in_background: true`）
    - challenger 是前台等待（需要读结果决定下一步）
 
-   **Inspection spawn 模板**：
+   **Summarize spawn 模板**（替代旧 inspection-writer）：
    ```
    Agent({
      subagent_type: "casework",
-     prompt: "仅执行 inspection-writer for Case {caseNumber}。caseDir: {caseDir}。
-       请读取 .claude/skills/inspection-writer/SKILL.md 获取完整执行步骤。
-       只做 inspection + todo 生成，不做其他步骤。",
+     prompt: "仅执行 summarize for Case {caseNumber}。caseDir: {casesRoot}/active/{caseNumber}/。
+       请读取 .claude/skills/casework/summarize/SKILL.md 获取完整执行步骤。
+       只做 summary + todo 生成 + meta 更新，不做其他步骤。",
      run_in_background: true
    })
    ```
@@ -349,17 +353,17 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
    > ⚠️ 如果 patrol 中途异常退出，lock 文件不会被删除。WebUI 和下次 CLI 启动时会检测 stale lock（PID 不存在或 lock 超过 60 分钟）并自动清理。
 
 ## 注意
-- patrol session 负责：列表获取 → 过滤 → 预热 → 启动 teams-queue → 全量并行 casework-light → **streaming pipeline 轮询**（plan ready → 立即 spawn action → action done → 立即 spawn inspection） → 停止 teams-queue → 读 todo 汇总 → 写结构化输出
-- **Streaming Pipeline**：不等所有 casework-light 完成，每个 case 完成即推进下一步
-- **Inspection 并行**：每个 case 独立 spawn inspection-writer，不串行批量
-- **casework-light**（depth=1）执行信息收集 + 决策，不 spawn 任何 subagent
-- patrol 主 agent（depth=0）根据 `.casework/execution-plan.json` 按需 spawn troubleshooter/challenger/email-drafter/inspection-writer（depth=1）
+- patrol session 负责：列表获取 → 过滤 → 预热 → 全量并行 casework(mode=patrol) → **streaming pipeline 轮询**（plan ready → 立即 spawn action → action done → 立即 spawn summarize） → 读 todo 汇总 → 写结构化输出
+- **Streaming Pipeline**：不等所有 casework(mode=patrol) 完成，每个 case 完成即推进下一步
+- **Summarize 并行**：每个 case 独立 spawn summarize，不串行批量
+- **casework(mode=patrol)**（depth=1）执行 data-refresh + assess，产出 execution-plan.json 后退出，不 spawn 任何 subagent
+- patrol 主 agent（depth=0）根据 `.casework/execution-plan.json` 按需 spawn troubleshooter/challenger/email-drafter/summarize（depth=1）
 - 这种设计绕过 Claude Code subagent depth=1 的嵌套限制，同时最大化并行度
-- patrol session **不读取** case-info.md、emails.md 等业务数据（由 casework-light 内联处理）
+- patrol session **不读取** case-info.md、emails.md 等业务数据（由 casework(mode=patrol) 内联处理）
 
 ## 与 /casework 的关系
 - `/casework {caseNumber}`（单 case 手动调用）→ 使用 `.claude/skills/casework/SKILL.md`，主 agent 内联执行（depth=0），**能 spawn troubleshooter/email-drafter**
-- `/patrol`（批量巡检）→ 使用 `casework-light` agent（depth=1）做信息收集 + 决策，patrol 主 agent 做 spawn
+- `/patrol`（批量巡检）→ 使用 `casework(mode=patrol)` agent（depth=1）做 data-refresh + assess，patrol 主 agent 做 spawn
 - **两者完全独立，互不影响**。casework SKILL.md 无需任何修改
 
 ## 串行/并行边界总结
@@ -367,16 +371,16 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
 |------|---------|-----------|
 | DTM token 获取 | 阶段 0 预热 | ❌ 全局缓存，各 case 直接读 |
 | IR/FDR/FWR check | 阶段 0 预热 | ❌ 批量 API 一次完成 |
-| data-refresh (D365 API) | casework-light 内联 | ❌ 各 case 并行 |
-| onenote-search (ripgrep) | casework-light 内联 | ❌ 本地文件操作 |
-| compliance-check | casework-light 内联 | ❌ 本地脚本 |
-| status-judge | casework-light 内联 | ❌ LLM 分析 |
+| data-refresh (D365 API) | casework(mode=patrol) 内联 | ❌ 各 case 并行 |
+| onenote-search (ripgrep) | casework(mode=patrol) 内联 | ❌ 本地文件操作 |
+| compliance-check | casework(mode=patrol) 内联 | ❌ 本地脚本 |
+| status-judge | casework(mode=patrol) 内联 | ❌ LLM 分析 |
 | Teams 搜索 (MCP 调用) | data-refresh.sh inline | ❌ 各 case 独立 agency proxy |
-| Teams 后处理 (write-teams) | casework-light 内联 | ❌ 本地脚本 |
+| Teams 后处理 (write-teams) | casework(mode=patrol) 内联 | ❌ 本地脚本 |
 | troubleshooter (Kusto/docs) | streaming pipeline spawn | ❌ 各 case 并行 |
 | challenger | streaming pipeline spawn | ❌ 前台等待 |
 | email-drafter | streaming pipeline spawn | ❌ 各 case 并行 |
-| inspection-writer | streaming pipeline spawn | ❌ **各 case 独立并行 spawn** |
+| summarize | streaming pipeline spawn | ❌ **各 case 独立并行 spawn** |
 
 ## Phase 文件协议
 
