@@ -8,5 +8,36 @@
   "trackId": "onenote-digest-parallel_20260418",
   "testLoopScan": true,
   "createdAt": "2026-04-18T01:30:00+08:00",
-  "updatedAt": "2026-04-18T01:30:00+08:00"
+  "updatedAt": "2026-04-18T07:50:00+08:00",
+  "nextIteration": {
+    "title": "OneNote Digest 语义整合 — 四段式 + Layer 2 LLM 合成",
+    "design": [
+      "Layer 1 (已有): per-page classify_single_page() → 每页结构化 JSON",
+      "Layer 2 (新增): synthesize_onenote_digest() — 读取所有 per-page JSON，跨页面语义整合",
+      "",
+      "输出四段式格式:",
+      "## 1. 关键信息 (Key Information)",
+      "  - 客户问题描述（从多页整合去重）",
+      "  - 所有事实信息（命令输出/错误码/配置值/客户确认）",
+      "  - 关键截图内容解析（vision 提取的诊断信息）",
+      "  - 截图 inline 展示（markdown image 引用保留）",
+      "",
+      "## 2. 分析推断 (Analysis & Reasoning)",
+      "  - 工程师自己写的推断（标注 [engineer]）",
+      "  - LLM 生成的推断链（标注 [llm-generated]，如有）",
+      "",
+      "## 3. 行动计划 (Action Plan)",
+      "  - 建议的排查步骤（可能 LLM 生成）",
+      "  - 标注是否已验证（[verified] / [unverified]）",
+      "",
+      "## 4. 低价值信息 (Low-Relevance)",
+      "  - 空页/无关页/bot 消息等",
+      "",
+      "Layer 1 prompt 重构: classify_single_page() 输出结构改为:",
+      "  {relevance, problem_description, facts: [], screenshots: [], analyses: [], action_items: [], summary}",
+      "Layer 2: synthesize_onenote_digest(per_page_results, case_info) → 单次 LLM 整合",
+      "前端: 四段式 Card 渲染（Key Info amber / Analysis blue / Action Plan green / Low-Relevance gray）",
+      "后端: 解析新格式 digest 到 scoring 对象"
+    ]
+  }
 }
