@@ -311,6 +311,9 @@ export function startFileWatcher() {
 
   watcher = chokidar.watch(watchPaths, {
     ignoreInitial: true,
+    // IMPORTANT: don't ignore dotfiles/dotdirs — .casework/ contains
+    // pipeline-state.json and events/*.json needed for SSE
+    ignored: undefined,
     awaitWriteFinish: {
       stabilityThreshold: 300,
       pollInterval: 100,
