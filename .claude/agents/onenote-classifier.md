@@ -51,13 +51,66 @@ Step 1 `search-inline.py` 已经把 OneNote 匹配结果写到 `{caseDir}/onenot
 | URL / 文档链接 | `[fact]` | `[fact] https://docs.microsoft.com/...` |
 | 判定不清 | `[fact]`（保守，避免把客户原话当成分析） | |
 
-### 3. 原地改写
-用 `Edit` 工具把每个 `> {line}` 改成 `> [fact] {line}` 或 `> [analysis] {line}`。
-**不修改 title / Modified / Section / Keywords 等元数据行。**
+### 3. 重写 personal-notes.md 为 V1 结构化格式
 
-如果某页 snippets 为空（只有 bodyPreview），跳过该页。
+分类完成后，**重写** `personal-notes.md` 为以下结构（不是仅 Edit 标签，而是完整重写）：
 
-### 4. 文件末尾追加
+```markdown
+# Personal OneNote Notes — Case {caseNumber}
+
+> Searched: {原有 Searched 时间} | Source: {原有 Source}
+> Matched pages: {count}
+> Classified by onenote-classifier at {ISO}
+
+## 事实记录（Facts）
+
+以下信息来自远程截图、客户确认、系统输出等可追溯来源，下游消费者可直接引用。
+
+- [fact] {汇聚所有 fact 条目}
+- [fact] {汇聚所有 fact 条目}
+
+## 分析记录（Analysis）
+
+以下信息来自 LLM 分析、排查假设等，可能不准确，下游消费者应验证后再引用。
+
+- [analysis] {汇聚所有 analysis 条目}
+- [analysis] {汇聚所有 analysis 条目}
+
+## 详细页面
+
+### {Page Title 1}
+- **Modified**: {date}
+- **Section**: {path}
+- **Key findings**:
+  - [fact] {finding 1}
+  - [analysis] {finding 2}
+
+### {Page Title 2}
+...
+
+## Summary
+{1-2 句话综合这些 OneNote 笔记对本 case 的价值}
+```
+
+**关键点**：
+- 顶部 "事实记录" section 汇聚**所有页面**的 `[fact]`，是下游 assess 的首选入口
+- "分析记录" section 汇聚**所有页面**的 `[analysis]`
+- "详细页面" 保留每页上下文，每条 finding 仍带标签
+- "Summary" 用 1-2 句话综合 OneNote 对这个 case 的诊断价值
+- 用 Write 工具完整重写文件，不是 Edit 局部修改
+
+### 4. 读取 raw page 文件补充分析
+
+在读 personal-notes.md 的 snippets 之外，**也要读取 `{caseDir}/onenote/_page-*.md` 原始页面文件**。
+这些是 search-inline.py 从 OneNote 笔记本拷贝的完整页面内容，包含 snippets 未覆盖的上下文。
+
+对每个 raw page 文件：
+1. 读取全文
+2. 提取关键 findings（命令输出、错误信息、客户确认、配置值、排查假设等）
+3. 标注 [fact] / [analysis]
+4. 整合到重写的 personal-notes.md "详细页面" 中
+
+### 5. 文件末尾追加分类统计
 ```md
 ## Classification
 Classified by `onenote-classifier` agent at {ISO} — fact={N}, analysis={M}
@@ -75,7 +128,8 @@ Classified by `onenote-classifier` agent at {ISO} — fact={N}, analysis={M}
 ## Safety Redlines
 
 - ❌ 不新建文件（只 Edit 已有的 `personal-notes.md`）
-- ❌ 不改动 search-inline.py 写入的匹配结果本身（path/score/keywords）
+- ❌ 不改动 search-inline.py 写入的 `_page-*.md` raw page 文件
+- ❌ 不改动 `_search-state.json` 状态文件
 - ❌ 不调外部 API / MCP（纯文本推理）
 - ✅ 幂等：如果 snippet 已经带了 `[fact]` / `[analysis]` 标签（上一轮分类），跳过不重复加
 
