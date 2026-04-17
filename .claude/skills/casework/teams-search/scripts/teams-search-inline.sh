@@ -81,6 +81,13 @@ mkdir -p "$CASE_DIR/teams"
 T0=$(date +%s)
 
 # ═══════════════════════════════════════════
+# Pre-warm ic3 token for image download (runs in background, ~2s if cached)
+# Token ready by the time MCP search finishes and image download begins
+# ═══════════════════════════════════════════
+python3 "$SCRIPT_DIR/warm-teams-token.py" 2>/dev/null &
+PID_WARM_TOKEN=$!
+
+# ═══════════════════════════════════════════
 # Start agency HTTP proxy (per-case instance)
 # ═══════════════════════════════════════════
 
@@ -162,7 +169,12 @@ print(d)
 mcp_search_with_retry() {
   local rid="$1" qs="$2" size="$3" outfile="$4"
   local body="{\"jsonrpc\":\"2.0\",\"id\":$rid,\"method\":\"tools/call\",\"params\":{\"name\":\"SearchTeamMessagesQueryParameters\",\"arguments\":{\"queryString\":\"$qs\",\"size\":$size}}}"
-  local attempt=0 max_retries=3
+  # ISS-216 P1: 3 retries (15s total) wasn't enough — Graph Search API has
+  # transient empty responses unrelated to proxy init state. Verified by
+  # experiment (2026-04-18): even single proxy with clean init can return EMPTY;
+  # patrol showed 2/3 cases recovered on attempt 3, 1/3 needed more time.
+  # Bump to 5 retries with 5→10→15→20s backoff (50s total wait).
+  local attempt=0 max_retries=5
   while [ $attempt -lt $max_retries ]; do
     curl -s --max-time 30 -X POST "http://localhost:$PORT/" \
       -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" \
@@ -177,8 +189,7 @@ mcp_search_with_retry() {
     local err_body=""
     [ -s "$outfile" ] && err_body=$(head -c 200 "$outfile")
     if [ $attempt -lt $max_retries ]; then
-      # P1: exponential backoff — 5s → 10s → (exit). Covers 15s total gap;
-      # original 5s single retry couldn't survive 60s+ upstream outages.
+      # Exponential backoff: 5s → 10s → 15s → 20s (50s total).
       local sleep_secs=$((5 * attempt))
       echo "  ⚠ search attempt $attempt/$max_retries failed for qs='$qs' (body: ${err_body:-<empty>}), sleeping ${sleep_secs}s…" >&2
       sleep $sleep_secs
@@ -198,7 +209,18 @@ if [ -n "$CONTACT_EMAIL" ]; then
 fi
 
 # ISS-226: Pre-fetch ic3 Teams token for image download (Skype API)
-# Token comes from MCP Playwright Teams web localStorage (warm-teams-token.py)
+# Wait for background warm-up (max 60s, should be done after ~20-40s of MCP search)
+if [ -n "${PID_WARM_TOKEN:-}" ]; then
+  ( sleep 60; kill "$PID_WARM_TOKEN" 2>/dev/null ) &
+  KILL_PID=$!
+  wait "$PID_WARM_TOKEN" 2>/dev/null
+  WARM_RC=$?
+  kill "$KILL_PID" 2>/dev/null; wait "$KILL_PID" 2>/dev/null || true
+  if [ $WARM_RC -ne 0 ]; then
+    echo "  ⚠ ic3 token warm-up failed (rc=$WARM_RC), images may be skipped" >&2
+  fi
+fi
+# Token comes from warm-teams-token.py cache file
 GRAPH_TOKEN=""
 IC3_TOKEN_FILE=$(python3 -c "import os,tempfile; print(os.path.join(tempfile.gettempdir(), 'teams-ic3-token.json'))" 2>/dev/null)
 if [ -n "$IC3_TOKEN_FILE" ] && [ -f "$IC3_TOKEN_FILE" ]; then

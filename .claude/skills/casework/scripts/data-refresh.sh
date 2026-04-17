@@ -83,7 +83,7 @@ OUT_PARENT_WIN="$(to_win "$(dirname "$CASE_DIR_ABS")")"
 ) &
 PID_D365=$!
 
-# 2. Teams — L2, native events (teams-search-inline.sh already emits).
+# ── Launch 5 parallel paths (labor merged into d365) ──
 # Post-processing (build-input + write-teams) is chained INSIDE the bg subshell
 # so per-chat .md / _chat-index.json update runs in parallel with the other 4
 # paths instead of blocking them at the outer wait. Total path time =
