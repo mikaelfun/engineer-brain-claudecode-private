@@ -103,7 +103,8 @@ def build_input(raw_data):
         "chats": chats,
         "searchMode": raw_data.get("searchMode", "full"),
         "fallbackTriggered": raw_data.get("fallbackTriggered", False),
-        "elapsed": raw_data.get("elapsed", 0)
+        "elapsed": raw_data.get("elapsed", 0),
+        "imageMap": raw_data.get("imageMap", {})
     }
 
 

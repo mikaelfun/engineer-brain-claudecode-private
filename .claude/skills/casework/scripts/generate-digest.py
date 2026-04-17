@@ -228,12 +228,20 @@ def generate_teams_digest(case_dir, case_number, project_root, base_url, api_key
 
     # Build user prompt with raw chat content
     chats_content = []
+    all_image_blocks = []
+    assets_dir = os.path.join(teams_dir, "assets")
+    has_images = os.path.isdir(assets_dir) and any(f.endswith(('.png', '.jpg', '.jpeg', '.gif')) for f in os.listdir(assets_dir)) if os.path.isdir(assets_dir) else False
+
     for cf in chat_files[:10]:  # cap at 10 chats
         name = os.path.basename(cf)
         content = read_file(cf, max_chars=3000)
         chats_content.append(f"### Chat: {name}\n{content}")
+        # ISS-226: extract images from chat for vision analysis
+        if has_images:
+            img_blocks = extract_images_from_page(cf, max_images=3)
+            all_image_blocks.extend(img_blocks)
 
-    user_prompt = f"""Case Number: {case_number}
+    user_text = f"""Case Number: {case_number}
 Total chats: {len(chat_files)}
 
 ## Case Info (head)
@@ -248,6 +256,12 @@ Total chats: {len(chat_files)}
 Generate the teams-digest.md following the template format exactly.
 CRITICAL: Key Facts MUST be sorted by date (oldest first). Each fact line must include a date.
 Output ONLY the markdown content, no code fences."""
+
+    # ISS-226: If images found, build vision content (list of blocks) instead of plain string
+    if all_image_blocks:
+        user_prompt = [{"type": "text", "text": user_text}] + all_image_blocks[:9]  # cap total images
+    else:
+        user_prompt = user_text
 
     system_prompt = """You are a Teams conversation analyst for Azure support cases.
 
@@ -269,7 +283,9 @@ Output format — you MUST output EXACTLY this structure, with the ```json-relev
 }
 ```
 
-Then output the digest markdown (Key Facts and Timeline MUST be in Chinese, keep names/commands/technical terms in English):"""
+Then output the digest markdown (Key Facts and Timeline MUST be in Chinese, keep names/commands/technical terms in English):
+
+If inline images/screenshots are provided, extract key diagnostic information from them (error messages, Portal configurations, RBAC settings, command outputs, etc.) and include those findings in Key Facts."""
 
     result = call_llm(base_url, api_key, model, system_prompt, user_prompt)
     if not result:

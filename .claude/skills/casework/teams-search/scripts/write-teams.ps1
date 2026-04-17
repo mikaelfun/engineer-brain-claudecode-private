@@ -65,13 +65,26 @@ $data = $InputJson | ConvertFrom-Json
 
 New-Item -ItemType Directory -Force -Path $OutputDir | Out-Null
 
+# ISS-226: imageMap for URL → local path replacement
+$imageMap = @{}
+if ($data.imageMap) {
+  foreach ($p in $data.imageMap.PSObject.Properties) {
+    $imageMap[$p.Name] = $p.Value
+  }
+}
+
 $logPath = Join-Path $OutputDir '_search-log.md'
 $indexPath = Join-Path $OutputDir '_chat-index.json'
 
 # --- Utility functions ---
 function Strip-Html([string]$html) {
+  # ISS-226: Replace hostedContents URLs with local paths BEFORE img→markdown conversion
+  $processed = $html
+  foreach ($entry in $imageMap.GetEnumerator()) {
+    $processed = $processed.Replace($entry.Key, $entry.Value)
+  }
   # Preserve images as markdown: <img src="url" alt="text"> → ![text](url)
-  $text = $html -replace '<img[^>]*src="([^"]*)"[^>]*alt="([^"]*)"[^>]*>', '![$2]($1)'
+  $text = $processed -replace '<img[^>]*src="([^"]*)"[^>]*alt="([^"]*)"[^>]*>', '![$2]($1)'
   $text = $text -replace '<img[^>]*alt="([^"]*)"[^>]*src="([^"]*)"[^>]*>', '![$1]($2)'
   $text = $text -replace '<img[^>]*src="([^"]*)"[^>]*>', '![image]($1)'
   $text = $text -replace '<br\s*/?>', "`n"

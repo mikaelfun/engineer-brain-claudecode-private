@@ -205,7 +205,8 @@ PY_OUTPUT=$(MCP_WD="$WD" MCP_CASE_DIR="$CASE_DIR" MCP_CASE_NUMBER="$CASE_NUMBER"
   MCP_CONTACT_EMAIL="$CONTACT_EMAIL" MCP_PORT="$PORT" MCP_T0="$T0" \
   MCP_EVENT_DIR="$EVENT_DIR" MCP_START_TS="$START_TS" \
   python3 << 'PYEOF'
-import json, os, subprocess, time
+import json, os, subprocess, time, re
+import urllib.request
 
 wd = os.environ['MCP_WD']
 case_dir = os.environ['MCP_CASE_DIR']
@@ -390,6 +391,69 @@ if sorted_ids:
 else:
     pass  # no chats found
 
+# ── ISS-226: Download hostedContents images to teams/assets/ ──
+image_map = {}
+if not os.environ.get('TEAMS_SKIP_IMAGES', ''):
+    _img_re = re.compile(r'<img[^>]*src="(https://graph\.microsoft\.com/[^"]*hostedContents[^"]*)"', re.I)
+    url_info = {}  # url → filename
+    for _cid, _msgs in chat_messages.items():
+        for _msg in _msgs:
+            _body = (_msg.get('body') or {}).get('content', '')
+            for _idx, _m in enumerate(_img_re.finditer(_body)):
+                _url = _m.group(1)
+                if _url not in url_info:
+                    _mid = re.sub(r'[^a-zA-Z0-9]', '', _msg.get('id', ''))[-16:]
+                    url_info[_url] = f"{_mid}_{_idx}.png"
+
+    if url_info:
+        # Get Graph API token via az CLI
+        _token = None
+        for _profile in [None, os.path.expanduser('~/.azure-profiles/microsoft-fangkun')]:
+            try:
+                _env = dict(os.environ)
+                if _profile and os.path.isdir(_profile):
+                    _env['AZURE_CONFIG_DIR'] = _profile
+                _r = subprocess.run(
+                    ['az', 'account', 'get-access-token',
+                     '--resource', 'https://graph.microsoft.com',
+                     '--query', 'accessToken', '-o', 'tsv'],
+                    capture_output=True, text=True, timeout=15, env=_env)
+                if _r.returncode == 0 and _r.stdout.strip():
+                    _token = _r.stdout.strip()
+                    break
+            except Exception:
+                pass
+
+        if _token:
+            _assets = os.path.join(case_dir, 'teams', 'assets')
+            os.makedirs(_assets, exist_ok=True)
+            _dl = _skip = 0
+            for _url, _fn in url_info.items():
+                _local = os.path.join(_assets, _fn)
+                _rel = f"./assets/{_fn}"
+                # Cache: skip if file already exists with content
+                if os.path.exists(_local) and os.path.getsize(_local) > 0:
+                    image_map[_url] = _rel
+                    _skip += 1
+                    continue
+                try:
+                    _req = urllib.request.Request(_url, headers={
+                        'Authorization': f'Bearer {_token}'})
+                    with urllib.request.urlopen(_req, timeout=15) as _resp:
+                        _data = _resp.read()
+                        if len(_data) > 1_000_000:
+                            continue  # skip >1MB
+                        with open(_local, 'wb') as _f:
+                            _f.write(_data)
+                        image_map[_url] = _rel
+                        _dl += 1
+                except Exception as _e:
+                    print(f'  img-fail: {_fn} — {_e}', file=__import__("sys").stderr)
+            if _dl or _skip:
+                print(f'  images: {_dl} downloaded, {_skip} cached', file=__import__("sys").stderr)
+        else:
+            print(f'WARN: no Graph token — skipping {len(url_info)} images', file=__import__("sys").stderr)
+
 # Build search results
 search_results = [{'keyword': case_number, 'status': 'success' if q1 else 'error',
                     'chatIds': list(extract_chat_ids(q1))}]
@@ -408,7 +472,8 @@ raw = {
     'chatMessages': chat_messages,
     'searchMode': 'full',
     'fallbackTriggered': False,
-    'elapsed': elapsed
+    'elapsed': elapsed,
+    'imageMap': image_map
 }
 out_path = os.path.join(case_dir, 'teams', '_mcp-raw.json')
 os.makedirs(os.path.dirname(out_path), exist_ok=True)

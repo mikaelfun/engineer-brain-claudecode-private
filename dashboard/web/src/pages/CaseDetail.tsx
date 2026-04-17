@@ -216,7 +216,7 @@ export default function CaseDetail() {
             {activeTab === 'todo' && <CaseTodoTab caseId={id!} latest={todoData?.latest || null} files={todoData?.files || []} toggleTodo={toggleCaseTodo} />}
             {activeTab === 'emails' && <EmailsTab emails={emailsData?.emails || []} caseNumber={id!} />}
             {activeTab === 'notes' && <NotesAndLaborTab notes={notesData?.notes || []} laborRecords={laborRecordsData?.records || []} caseId={id!} />}
-            {activeTab === 'teams' && <TeamsTab chats={teamsData?.chats || []} digest={teamsData?.digest || null} />}
+            {activeTab === 'teams' && <TeamsTab chats={teamsData?.chats || []} digest={teamsData?.digest || null} caseId={id!} />}
             {activeTab === 'drafts' && <DraftsTab drafts={draftsData?.drafts || []} caseNumber={id!} />}
             {activeTab === 'analysis' && <AnalysisTab content={analysisData?.content} exists={analysisData?.exists} files={analysisData?.files} />}
             {activeTab === 'evidence' && <EvidenceChainTab caseId={id!} />}
@@ -547,7 +547,7 @@ function NotesAndLaborTab({ notes, laborRecords, caseId }: { notes: any[]; labor
   )
 }
 
-function TeamsTab({ chats, digest }: { chats: any[]; digest: { scoredAt: string; keyFacts: string[]; relevantCount: number; irrelevantCount: number } | null }) {
+function TeamsTab({ chats, digest, caseId }: { chats: any[]; digest: { scoredAt: string; keyFacts: string[]; relevantCount: number; irrelevantCount: number } | null; caseId: string }) {
   const [searchTerm, setSearchTerm] = useState('')
   const [showOther, setShowOther] = useState(false)
 
@@ -575,6 +575,12 @@ function TeamsTab({ chats, digest }: { chats: any[]; digest: { scoredAt: string;
     )
   }
 
+  // ISS-226: Replace ./assets/ paths in chat content with API URLs
+  const rewriteImagePaths = (content: string) => {
+    return content.replace(/!\[([^\]]*)\]\(\.\/assets\/([^)]+)\)/g,
+      `![$1](/api/cases/${caseId}/teams/assets/$2)`)
+  }
+
   const renderChat = (chat: any, i: number) => (
     <Card key={chat.chatId || i} padding="sm">
       <div className="flex items-center justify-between mb-2">
@@ -592,7 +598,7 @@ function TeamsTab({ chats, digest }: { chats: any[]; digest: { scoredAt: string;
         {chat.reason && <span className="text-xs truncate max-w-48" style={{ color: 'var(--text-tertiary)' }}>{chat.reason}</span>}
       </div>
       <div ref={scrollRef} className="text-sm max-h-96 overflow-y-auto" style={{ color: 'var(--text-secondary)' }}>
-        {searchTerm ? highlightText(chat.content || '') : <MarkdownContent>{chat.content || ''}</MarkdownContent>}
+        {searchTerm ? highlightText(chat.content || '') : <MarkdownContent>{rewriteImagePaths(chat.content || '')}</MarkdownContent>}
       </div>
     </Card>
   )

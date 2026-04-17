@@ -1,0 +1,18 @@
+{
+  "id": "teams-image-local_20260417",
+  "title": "Teams Chat \u56fe\u7247\u672c\u5730\u5316",
+  "type": "feature",
+  "status": "complete",
+  "created": "2026-04-17T23:30:00Z",
+  "updated": "2026-04-17T23:45:00Z",
+  "current_phase": 0,
+  "current_task": "",
+  "phases": {
+    "total": 5,
+    "completed": 5
+  },
+  "tasks": {
+    "total": 17,
+    "completed": 17
+  }
+}

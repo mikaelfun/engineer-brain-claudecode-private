@@ -1,0 +1,12 @@
+{
+  "id": "ISS-226",
+  "title": "Teams chat 图片本地化：agency proxy 下载 hostedContents + WebUI 内联显示",
+  "description": "## 背景\nTeams chat 消息中的 inline 图片（截图、日志截图等）以 Graph API hostedContents URL 存储。write-teams.ps1 已支持将 <img src=\"url\"> 保留为 ![image](url) markdown 格式（ISS-224 关联 commit ca8862a），CaseDetail.tsx TeamsTab 已改用 MarkdownContent 渲染。但 Graph API URL 需要 Bearer token 认证，WebUI 的 <img> 标签无法直接加载。\n\n## 需求\n\n### 1. teams-search 阶段下载图片\n- teams-search-inline.sh 启动的 agency proxy 已持有 Graph API Bearer token\n- 在 write-teams.ps1 写入 chat md 之前，解析消息中的 hostedContents URL\n- 通过 agency proxy（或直接用 token）下载图片到 `{caseDir}/teams/assets/`\n- 文件命名：`{chatSafeName}_{messageId}_{index}.png`\n\n### 2. write-teams.ps1 URL 替换\n- Strip-Html 阶段将 Graph API hostedContents URL 替换为本地 `./assets/{filename}` 路径\n- 替换后的 chat md 文件中图片引用指向本地文件\n\n### 3. generate-digest.py teams 分支 vision 支持\n- 与 OneNote 分支（ISS-224）同理，teams digest 生成时传入图片 base64 给 LLM vision API\n- 每个 chat 最多 3 张图片（控制 token 成本）\n\n### 4. 后端 API 图片服务\n- `GET /api/cases/:id/teams/assets/:filename` — 从 `{caseDir}/teams/assets/` 读取图片\n- 路径安全校验防止 path traversal\n- Content-Type 根据扩展名返回（png/jpg/gif）\n\n### 5. 前端渲染\n- TeamsTab 的 MarkdownContent 中 `./assets/` 开头的图片路径替换为 API URL\n- 图片点击放大（复用 OneNote 的 lightbox 逻辑）\n\n## 技术约束\n- Graph API hostedContents URL 格式：`https://graph.microsoft.com/v1.0/chats/{chatId}/messages/{messageId}/hostedContents/{contentId}/$value`\n- agency proxy 已在 teams-search-inline.sh 中启动，端口隔离，有 Graph API token\n- 图片一般为 PNG/JPEG，~50-500KB/张\n- agency proxy 生命周期仅在 data-refresh 阶段，下载必须在该阶段完成",
+  "type": "feature",
+  "priority": "P2",
+  "status": "tracked",
+  "trackId": "teams-image-local_20260417",
+  "relatedIssues": ["ISS-224"],
+  "createdAt": "2026-04-17T23:30:00Z",
+  "updatedAt": "2026-04-17T23:30:00Z"
+}

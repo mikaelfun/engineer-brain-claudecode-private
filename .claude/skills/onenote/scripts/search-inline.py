@@ -27,6 +27,8 @@ def parse_args():
     parser.add_argument("--case-dir", required=True, help="Case data directory")
     parser.add_argument("--notebook-dir", required=True, help="Personal OneNote notebook directory")
     parser.add_argument("--case-number", required=True, help="Case number to search for")
+    parser.add_argument("--skip-assets", action="store_true", default=False,
+                        help="Skip copying image assets (faster, no vision support)")
     return parser.parse_args()
 
 
@@ -367,6 +369,87 @@ def generate_output(
     print(f"OK|pages={count}|output={output_path}")
 
 
+def _copy_page_assets(copied_pages, onenote_dir):
+    """ISS-224: Copy referenced image assets from OneNote Export source to case onenote/assets/.
+
+    For each copied _page-*.md:
+    1. Scan for ![...](./assets/xxx.png) references
+    2. Resolve source image path = dirname(original_source_path)/assets/filename
+    3. Copy to {onenote_dir}/assets/{safe_name}_{filename} (de-duplicated by page name)
+    4. Rewrite image paths in the copied markdown to match new filenames
+
+    Args:
+        copied_pages: list of (dest_path, source_path, safe_name)
+        onenote_dir: target onenote directory in case dir
+
+    Returns:
+        int: total number of asset files copied
+    """
+    import shutil
+    img_pattern = re.compile(r'!\[([^\]]*)\]\(\./assets/([^)]+)\)')
+    assets_dir = os.path.join(onenote_dir, "assets")
+    total_copied = 0
+
+    for dest_path, source_path, safe_name in copied_pages:
+        try:
+            with open(dest_path, "r", encoding="utf-8", errors="replace") as f:
+                content = f.read()
+        except Exception:
+            continue
+
+        matches = img_pattern.findall(content)
+        if not matches:
+            continue
+
+        # Ensure assets directory exists
+        os.makedirs(assets_dir, exist_ok=True)
+
+        # Source assets directory = sibling of the source .md file
+        source_assets_dir = os.path.join(os.path.dirname(source_path), "assets")
+
+        new_content = content
+        for alt_text, img_filename in matches:
+            src_img = os.path.join(source_assets_dir, img_filename)
+            if not os.path.isfile(src_img):
+                continue
+
+            # De-duplicate: prefix with page safe_name to avoid collisions
+            dest_filename = f"{safe_name}_{img_filename}"
+            dest_img = os.path.join(assets_dir, dest_filename)
+
+            try:
+                # ISS-226: Cache check — skip if file exists with same size
+                if os.path.isfile(dest_img):
+                    src_size = os.path.getsize(src_img)
+                    dst_size = os.path.getsize(dest_img)
+                    if src_size == dst_size:
+                        # Still need to rewrite path in markdown even if cached
+                        old_ref = f"![{alt_text}](./assets/{img_filename})"
+                        new_ref = f"![{alt_text}](./assets/{dest_filename})"
+                        new_content = new_content.replace(old_ref, new_ref)
+                        continue
+                shutil.copy2(src_img, dest_img)
+                total_copied += 1
+            except Exception as e:
+                print(f"WARN: Cannot copy asset {img_filename}: {e}", file=sys.stderr)
+                continue
+
+            # Rewrite path in markdown
+            old_ref = f"![{alt_text}](./assets/{img_filename})"
+            new_ref = f"![{alt_text}](./assets/{dest_filename})"
+            new_content = new_content.replace(old_ref, new_ref)
+
+        # Write back updated markdown if any paths changed
+        if new_content != content:
+            try:
+                with open(dest_path, "w", encoding="utf-8") as f:
+                    f.write(new_content)
+            except Exception as e:
+                print(f"WARN: Cannot update paths in {dest_path}: {e}", file=sys.stderr)
+
+    return total_copied
+
+
 def main():
     args = parse_args()
 
@@ -439,9 +522,14 @@ def main():
     # Copies the matched page AND any subpages (same-name directory with child .md files).
     # OneNote Export structure: "PageName.md" + optional "PageName/" dir with child pages.
     onenote_dir = os.path.join(case_dir, "onenote")
+    skip_assets = args.skip_assets
     if results:
         os.makedirs(onenote_dir, exist_ok=True)
         import shutil
+
+        # ISS-224: Track all copied pages for asset processing
+        copied_pages = []  # list of (dest_path, source_path, safe_name)
+
         for r in results:
             safe_name = re.sub(r'[<>:"/\\|?*]', '_', r["title"])[:80]
 
@@ -449,6 +537,7 @@ def main():
             page_dest = os.path.join(onenote_dir, f"_page-{safe_name}.md")
             try:
                 shutil.copy2(r["path"], page_dest)
+                copied_pages.append((page_dest, r["path"], safe_name))
             except Exception as e:
                 print(f"WARN: Cannot copy page to {page_dest}: {e}", file=sys.stderr)
 
@@ -462,9 +551,16 @@ def main():
                     sp_dest = os.path.join(onenote_dir, f"_page-{safe_name}--{sp_safe}.md")
                     try:
                         shutil.copy2(sp_path, sp_dest)
+                        copied_pages.append((sp_dest, sp_path, f"{safe_name}--{sp_safe}"))
                     except Exception as e:
                         print(f"WARN: Cannot copy subpage to {sp_dest}: {e}", file=sys.stderr)
                 print(f"OK|subpages={len(subpages)}|parent={safe_name}", file=sys.stderr)
+
+        # ISS-224: Copy referenced image assets and rewrite paths in copied markdown
+        if not skip_assets:
+            total_assets = _copy_page_assets(copied_pages, onenote_dir)
+            if total_assets > 0:
+                print(f"OK|assets_copied={total_assets}", file=sys.stderr)
 
     # Generate output
     output_path = os.path.join(case_dir, "onenote", "onenote-digest.md")
