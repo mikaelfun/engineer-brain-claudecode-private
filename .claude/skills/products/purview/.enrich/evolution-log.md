@@ -989,3 +989,10 @@
 - **dedup**: 0 (fresh batch file)
 | 2026-04-06 | ado-wiki blast-a | +1 guide-draft (Creating Custom classifications); 9/10 pages skipped (5 training/archived, 4 empty) | batch-a r20 |
 | 2026-04-07 | SYNTHESIZE | 42 topics (38 fusion, 4 compact), 617 entries, 13 Kusto queries fused |
+
+### 2026-04-17T10:12:17Z — contentidea-kb scan (purview)
+- **Keywords**: Purview
+- **WIQL result**: 0 work items
+- **Unscanned**: 0
+- **Discovered**: 0 | **Deduplicated**: 0
+- **Status**: exhausted (no KB articles found for Purview in ContentIdea)

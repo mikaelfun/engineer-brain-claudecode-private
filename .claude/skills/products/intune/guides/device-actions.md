@@ -1,34 +1,101 @@
-# Intune 设备操作（擦除/锁定/重置等） — 排查速查
+# INTUNE 设备操作（擦除/锁定/重置等） — 排查速查
 
-**来源数**: 4 | **21V**: 部分适用
-**条目数**: 16 | **最后更新**: 2026-04-07
-
-## 症状速查
-| # | 症状 | 根因 | 方案 | 分数 | 来源 |
-|---|------|------|------|------|------|
-| 1 | Device unexpectedly disappears from Intune device list. Customer did not manually retire or wipe ... | Intune device cleanup rule (configured in Intune > Devices > Device cleanup r... | Confirm auto-removal in Kusto: `IntuneEvent \| where ComponentName == "StatelessDeviceOverflowSer... | 🟢 9.0 | OneNote |
-| 2 | Device Wipe 操作在 Intune 门户显示 Pending 状态持续不变，但设备实际已被擦除 | 设备在重置开始前未能将状态报告回 Intune 服务，这是预期行为（时序问题） | 确认设备已成功擦除后，从 Intune 服务中手动删除该设备记录 | 🟢 8.5 | ADO Wiki |
-| 3 | Android Device Admin 注册设备的 Reset Passcode 操作灰显不可用 | Google 在 Android 7.0+ 的 Device Admin API 中移除了密码重置功能（防勒索软件措施） | 这是 Google 的平台限制，Android 7.0+ Device Admin 设备无法通过 MDM 重置密码；建议迁移到 Android Enterprise 管理模式 | 🟢 8.5 | ADO Wiki |
-| 4 | iOS/iPadOS 设备 Disable Activation Lock 代码不显示或操作灰显 | (1) 代码已过期被服务清除（有效期 15 天）；(2) 设备未通过 Device Restriction Policy 设为 Supervised 模式... | 1. 确保设备为 Supervised 模式且启用了 Activation Lock 限制策略；2. 通过 Graph API 检查代码：GET /beta/deviceManagement/m... | 🟢 8.5 | ADO Wiki |
-| 5 | 点击 Disable Activation Lock 操作后设备上没有任何变化 | 这是预期行为——点击该操作后 Intune 向 Apple 请求更新的绕过代码，管理员需手动在设备 Activation Lock 屏幕输入该代码 | 1. 点击 Disable Activation Lock 后复制绕过代码；2. 在设备 Activation Lock 界面的密码字段手动输入代码；3. 代码有效期 15 天，需在 Wipe ... | 🟢 8.5 | ADO Wiki |
-| 6 | Android Enterprise Work Profile 设备的 Wipe 操作灰显不可用 | Google 不允许 MDM Provider 对 Work Profile 设备执行 Factory Reset，这是平台限制 | 这是 Google 的预期限制，Work Profile 设备无法通过 Intune 执行 Wipe；如需完整擦除建议使用 Fully Managed 管理模式 | 🟢 8.5 | ADO Wiki |
-| 7 | 对离线设备发起 Retire/Wipe 后设备一直处于 Pending 状态 | 设备离线无法接收 MDM 命令，需等待设备重新联网并与 Intune 服务同步 | 设备在 MDM 证书过期前上线即会执行操作；MDM 证书有效期 1 年（自动续期）；若设备在证书过期前未上线则无法同步；证书过期 180 天后设备会自动从 Azure 门户移除 | 🟢 8.5 | ADO Wiki |
-| 8 | When attempting to enroll an iOS device in Microsoft Intune, the enrollment process fails with th... | This can occur if the device had been previously enrolled by another user and... | To resolve this problem, you first need to find the previous device ID assigned to the device and... | 🔵 7.0 | ContentIdea KB |
-| 9 | When iOS Device is unassigned from DEP Portal but after DEP Sync, Delete action for device is gre... | This is a code fault where if the table &quot;MDMCorpOwnedDevices&quot; has b... | There are two options for a work around on this problem for the customer while they wait for the ... | 🔵 7.0 | ContentIdea KB |
-| 10 | After configuring an iOS device in DEP to be supervised and to allow Activation Lock Bypass, when... | This is a known issue per 117062093452694, 117021415317116, 117030315402861 a... | To resolve this problem, upgrade your Configuration Manager environment to the latest release, th... | 🔵 7.0 | ContentIdea KB |
-| 11 | When viewing the status of Device Actions in the Azure Intune portal, some actions show a UPN in ... | This can occur if the Azure user account used to initiated the device action ... | Once this is done you can�t go back and fix it, because even if you add a license to that user yo... | 🔵 7.0 | ContentIdea KB |
-| 12 | When viewing the Audit Logs under Devices Actions in the Azure Intune portal, the INITIATED BY (A... | This can occur if the Azure user account used to initiated the device action ... | Once this is done you can�t go back and fix it, because even if you add a license to that user yo... | 🔵 7.0 | ContentIdea KB |
-| 13 | When attempting to launch Outlook on iOS devices, the following message is displayed:Warning You ... | This can occur if the certificate is nearing expiration. Typically, these cer... | Normally, once the CP app is opened, the certificate will renew and the user will then be able to... | 🔵 7.0 | ContentIdea KB |
-| 14 | When sending a remote lock to MAC OS X devices enrolled into Intune, the expectation is that the ... | This is a known issue with the current release of Intune. | To work around this issue, look up the affected device ID in Rave or Graph, then retrieve the PIN... | 🔵 7.0 | ContentIdea KB |
-| 15 | Reset Passcode action greyed out on Android Device Admin enrolled device | Google removed passcode reset from Device Admin API for Android 7.0+ as ranso... | Platform limitation by Google. Consider migrating to Android Enterprise management. | 🔵 6.5 | MS Learn |
-| 16 | Wipe or Retire action shows as Pending indefinitely in Intune console | Devices do not always report status back to Intune before reset/removal starts | Verify action succeeded on device then manually delete device record from Intune. | 🔵 5.5 | MS Learn |
+**来源数**: 4 | **21V**: 部分 (66/72)
+**条目数**: 72 | **最后更新**: 2026-04-17
 
 ## 快速排查路径
-1. Confirm auto-removal in Kusto: `IntuneEvent | where ComponentName == "StatelessDeviceOverflowService" | where EventUniqueName == "DeviceRemovalRuleAud `[来源: OneNote]`
-2. 确认设备已成功擦除后，从 Intune 服务中手动删除该设备记录 `[来源: ADO Wiki]`
-3. 这是 Google 的平台限制，Android 7.0+ Device Admin 设备无法通过 MDM 重置密码；建议迁移到 Android Enterprise 管理模式 `[来源: ADO Wiki]`
-4. 1. 确保设备为 Supervised 模式且启用了 Activation Lock 限制策略；2. 通过 Graph API 检查代码：GET /beta/deviceManagement/manageddevices('{id}')?$select=activationLockBypassCod `[来源: ADO Wiki]`
-5. 1. 点击 Disable Activation Lock 后复制绕过代码；2. 在设备 Activation Lock 界面的密码字段手动输入代码；3. 代码有效期 15 天，需在 Wipe 前完成操作 `[来源: ADO Wiki]`
 
-> 本 topic 有融合排查指南，含完整排查流程和 Kusto 查询模板
-> → [完整排查流程](details/device-actions.md#排查流程)
+1. **Device unexpectedly disappears from Intune device list. Customer did not manually retire or wipe the device. No admin action found in Intune audit logs.**
+   → Confirm auto-removal in Kusto: `IntuneEvent / where ComponentName == "StatelessDeviceOverflowService" / where EventUniqueName == "DeviceRemovalRuleAudit" / where AccountId == "<accountId>" / where ... `[onenote, 🟢 9.5]`
+
+2. **Device selectively wiped or retired from Intune but continues to access Exchange/O365 resources for several hours**
+   → Expected behavior due to Exchange caching. Implement additional data protection measures for retired devices. Access revoked automatically after cache period (~6 hours). `[ado-wiki, 🟢 9.0]`
+
+3. **CritSit: 客户意外从 Intune 控制台或通过 Graph API 批量删除了设备，需要恢复**
+   → 1. 确认 Entra ID 设备记录是否仍存在（不存在则无法恢复，需重新注册）；2. 立即关闭所有受影响设备防止重新 check-in；3. 收集已删除设备的 Intune Device ID CSV；4. 获取 Global Admin 或 Intune Admin 的书面邮件授权；5. 与 TL/TA 立即升级到 IET，附上授权邮件 + CSV + 影响摘要；6. 使用专用 ICM ... `[ado-wiki, 🟢 9.0]`
+
+4. **Device Wipe 操作在 Intune 门户显示 Pending 状态持续不变，但设备实际已被擦除**
+   → 确认设备已成功擦除后，从 Intune 服务中手动删除该设备记录 `[ado-wiki, 🟢 9.0]`
+
+5. **Android Device Admin 注册设备的 Reset Passcode 操作灰显不可用**
+   → 这是 Google 的平台限制，Android 7.0+ Device Admin 设备无法通过 MDM 重置密码；建议迁移到 Android Enterprise 管理模式 `[ado-wiki, 🟢 9.0]`
+
+## 症状速查
+
+| # | 症状 | 根因 | 方案 | 分数 | 来源 |
+|---|------|------|------|------|------|
+| 1 | Device unexpectedly disappears from Intune device list. Customer did not manually retire or wipe ... | Intune device cleanup rule (configured in Intune > Devices > Device cleanup rules) automatically ... | Confirm auto-removal in Kusto: `IntuneEvent / where ComponentName == "StatelessDeviceOverflowServ... | 🟢 9.5 | onenote: MCVKB/Intune/Kusto/Device Retire & Wi... |
+| 2 | Device selectively wiped or retired from Intune but continues to access Exchange/O365 resources f... | Exchange caches access rights for up to six hours. After selective wipe or retirement the cached ... | Expected behavior due to Exchange caching. Implement additional data protection measures for reti... | 🟢 9.0 | [ado-wiki](https://dev.azure.com/Supportability/Intune/_wiki/wikis/Intune?pagePath=/Conditional%20Access) |
+| 3 | CritSit: 客户意外从 Intune 控制台或通过 Graph API 批量删除了设备，需要恢复 | IT 管理员误操作在 Intune 门户手动删除设备，或自动化脚本通过 Graph API 触发了批量删除 | 1. 确认 Entra ID 设备记录是否仍存在（不存在则无法恢复，需重新注册）；2. 立即关闭所有受影响设备防止重新 check-in；3. 收集已删除设备的 Intune Device ID... | 🟢 9.0 | [ado-wiki](https://dev.azure.com/Supportability/Intune/_wiki/wikis/Intune?pagePath=%2FDevice%20Actions%2FAccidental%20Bulk%20Deletion) |
+| 4 | Device Wipe 操作在 Intune 门户显示 Pending 状态持续不变，但设备实际已被擦除 | 设备在重置开始前未能将状态报告回 Intune 服务，这是预期行为（时序问题） | 确认设备已成功擦除后，从 Intune 服务中手动删除该设备记录 | 🟢 9.0 | [ado-wiki](https://dev.azure.com/Supportability/Intune/_wiki/wikis/Intune?pagePath=%2FDevice%20Actions) |
+| 5 | Android Device Admin 注册设备的 Reset Passcode 操作灰显不可用 | Google 在 Android 7.0+ 的 Device Admin API 中移除了密码重置功能（防勒索软件措施） | 这是 Google 的平台限制，Android 7.0+ Device Admin 设备无法通过 MDM 重置密码；建议迁移到 Android Enterprise 管理模式 | 🟢 9.0 | [ado-wiki](https://dev.azure.com/Supportability/Intune/_wiki/wikis/Intune?pagePath=%2FDevice%20Actions) |
+| 6 | iOS/iPadOS 设备 Disable Activation Lock 代码不显示或操作灰显 | (1) 代码已过期被服务清除（有效期 15 天）；(2) 设备未通过 Device Restriction Policy 设为 Supervised 模式以允许 Activation Lock | 1. 确保设备为 Supervised 模式且启用了 Activation Lock 限制策略；2. 通过 Graph API 检查代码：GET /beta/deviceManagement/m... | 🟢 9.0 | [ado-wiki](https://dev.azure.com/Supportability/Intune/_wiki/wikis/Intune?pagePath=%2FDevice%20Actions) |
+| 7 | 执行 Retire 操作后应用未被卸载 | 该应用不被视为 Managed Application——只有通过 Intune 服务部署的应用（Required 部署或 Available 部署后用户从 Company Portal 安装）... | 确认应用是否为 Intune 受管应用（Required 部署或通过 Company Portal 安装的 Available 应用）；非受管应用需手动卸载 | 🟢 9.0 | [ado-wiki](https://dev.azure.com/Supportability/Intune/_wiki/wikis/Intune?pagePath=%2FDevice%20Actions) |
+| 8 | Android Enterprise Work Profile 设备的 Wipe 操作灰显不可用 | Google 不允许 MDM Provider 对 Work Profile 设备执行 Factory Reset，这是平台限制 | 这是 Google 的预期限制，Work Profile 设备无法通过 Intune 执行 Wipe；如需完整擦除建议使用 Fully Managed 管理模式 | 🟢 9.0 | [ado-wiki](https://dev.azure.com/Supportability/Intune/_wiki/wikis/Intune?pagePath=%2FDevice%20Actions) |
+| 9 | 对离线设备发起 Retire/Wipe 后设备一直处于 Pending 状态 | 设备离线无法接收 MDM 命令，需等待设备重新联网并与 Intune 服务同步 | 设备在 MDM 证书过期前上线即会执行操作；MDM 证书有效期 1 年（自动续期）；若设备在证书过期前未上线则无法同步；证书过期 180 天后设备会自动从 Azure 门户移除 | 🟢 9.0 | [ado-wiki](https://dev.azure.com/Supportability/Intune/_wiki/wikis/Intune?pagePath=%2FDevice%20Actions) |
+| 10 | Android Enterprise Work Profile passcode reset fails; OMADMLog shows 'ResetPasswordToken unknown'... | The ResetPasswordToken has not been activated on the device. Android Work Profile passcode reset ... | Deploy Android Enterprise Device Restrictions profile (Work Profile Only) with 'Require Work Prof... | 🟢 8.0 | onenote: MCVKB/Intune/Kusto/Reset Passcode.md |
+| 11 | In Intune Mobile Application Management Policies, there are several options to "Select which stor... | By Design. | Although this option is listed in the Intune service, it actually requires the apps that are targ... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4032499) |
+| 12 | When iOS Device is unassigned from DEP Portal but after DEP Sync, Delete action for device is gre... | This is a code fault where if the table &quot;MDMCorpOwnedDevices&quot; has been updated with a c... | There are two options for a work around on this problem for the customer while they wait for the ... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4037027) |
+| 13 | There are situations where customers want to know how long a Remote Wipe issued by the service la... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4046216) |
+| 14 | Issue: SCCM does not permit selecting multiple devices and performing Remote Device Actions on th... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4050388) |
+| 15 | Intune Device RemovalBrowse to https://portal.azure.com/#blade/Microsoft_Intune_Devices/DeviceEnt... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/3046141) |
+| 16 | How to capture a bug report from an Android device for diagnostic purposes. Bug report contains d... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4056854) |
+| 17 | When viewing the status of Device Actions in the Azure Intune portal, some actions show a UPN in ... | This can occur if the Azure user account used to initiated the device action doesn�t have an Intu... | Once this is done you can�t go back and fix it, because even if you add a license to that user yo... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4058388) |
+| 18 | When viewing the Audit Logs under Devices Actions in the Azure Intune portal, the INITIATED BY (A... | This can occur if the Azure user account used to initiated the device action doesn�t have an Intu... | Once this is done you can�t go back and fix it, because even if you add a license to that user yo... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4058391) |
+| 19 | In the SCCM console the option to "Wipe the mobile device and retire it from Configuration Manage... | By design. In version 1710 the option to wipe non-corporate devices is no longer available. See  ... | In order to remote wipe these devices, the device ownership category must be changed from "Person... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4077461) |
+| 20 | When you attempt to enroll a Zebra device such as the TC75x in Intune you will be unable to enrol... | The issue is caused by a conflict between Intune and Zebra's MDM solution. | Zebra has released a hotfix on their website that should be in the latest January 2018 patches. C... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4082819) |
+| 21 | When a user is assigned an app protection policy for Skype for Business and is using a device fla... | Expected Behavior | The product group states that this state occurs when clients attempt to sent an acknowledgement b... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4100230) |
+| 22 | There are times when we need to know how a device became unenrolled. This article shows you how t... | End User unenrollment | Here is an example to see if an end user has initiated a wipe from the Company Portal    First, l... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4465250) |
+| 23 | Users manually uninstall the Company Portal application from an enrolled Android device, but the ... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4480626) |
+| 24 | This article documents the current subject matter experts (SMEs) for the Intune Device Actions SM... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4481828) |
+| 25 | After configuring and assigning a device restriction configuration profile requiring a passcode t... | This can occur if the device has been enrolled as Device Owner. This is by design in this scenario. | This is expected behavior.WorkAround:&nbsp;Note that you can still create a password directly on ... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4490518) |
+| 26 | When to use it  &nbsp;  Wipe  Wipe is synonymous with Factory Reset, so only use this when it's n... | Many times customers will want to know the result of a retire/wipe action or who initiated it. Yo... | Microsoft Documentation  https://docs.microsoft.com/en-us/intune/devices-wipe  &nbsp;  Service De... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4495031) |
+| 27 | The feedback process for RAVE has changed. In addition to the traditional email survey, Intune cu... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4496085) |
+| 28 | On April 29, 2019, we sent a communication to customers letting them know they need to have their... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4502685) |
+| 29 | The customer is trying to wipe an Intune managed device from the Intune Portal. In the Azure Port... | The MDM authority of the user who enrolled in the device is Office 365 and not Intune, because th... | Assign an Intune license to the user. If the customer doesn’t want to assign an Intune license, h... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4505442) |
+| 30 | I have enabled the Factory reset protection emails policy and it is successfully applying to my A... | This is the expected behavior from Google as these emails only apply when a non-user factory rese... | We recommend blocking Factory reset in this same policy as that will only allow the two&nbsp;ways... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4505994) |
+| 31 | In the Lookout MTP Console, why is a device is not leaving the “Pending” state? | A device that is showing in the “Pending” States means the end user has not opened the LookOut fo... | Confirm that the user has opened the LookOut for Work application and selected the &quot;Activate... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4508601) |
+| 32 | What if I want to move a device previously using Lookout MTP/Intune to another user?Admins changi... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4508602) |
+| 33 | Before you begin troubleshooting a problem, be sure to check for known Emerging Issues and CRIs u... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4511554) |
+| 34 | Customer scenario that sometimes we can face and even in our own environment, having same device ... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4514951) |
+| 35 | Microsoft DocumentationIntune: Top Questions and Answers for Intune Device Actions:&nbsp;https://... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4517618) |
+| 36 | When to use itEnableLostMode is used when you recently have lost a Supervised device and like to ... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4520587) |
+| 37 | Starting in 1907 the Intune Devices-All devices blade will display whether a device is Intune Reg... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4523566) |
+| 38 | Create and assign update ringsSign in to&nbsp;Intune.Select&nbsp;Software updates&nbsp;&gt;&nbsp;... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4525416) |
+| 39 | What is the primary user?The primary user property is used to map a licensed Intune user to their... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4532732) |
+| 40 | Description:You can erase all data from a macOS device, including the operating system. The devic... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4535280) |
+| 41 | An Intune Device Cleanup rule will not remove any of the following devices:Android dedicated&nbsp... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/https:) |
+| 42 | Device Action to retire\wipe a device no longer removes the device from Azure Active Directory. | In February of 2019, this process was changed by the Product Group. | Per result of IcM &quot;https://portal.microsofticm.com/imp/v3/incidents/details/172041976/home&q... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4551551) |
+| 43 | Consider the following scenario:You issue&nbsp;a retire or wipe action to a device.The retire or ... | This is by design.&nbsp; | If the device hasn't checked in yet with the Intune service to receive the command (make sure you... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4554386) |
+| 44 | This article documents the support collaboration process established and agreed upon by Microsoft... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4559473) |
+| 45 | Google have made trainings available for their partners on Mindspace’s fathom e-learning platform... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4568937) |
+| 46 | Table&nbsp;DeviceLifecycle&nbsp;Scenario&nbsp;I will use this table when looking for device manag... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4579340) |
+| 47 | Scenario &nbsp; I use this table to find Device Actions issued with a Graph call to troubleshoot ... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4579336) |
+| 48 | Currently it is not possible to collect Company Portal logs from the UI on Poly devices. Instead,... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4614334) |
+| 49 | Device enrollment limit restriction policy does not block device enrollment even though the devic... | This can occur if some of the devices are not counted as part of the device cap.&nbsp;For Device ... | Confirm whether the devices under the user are all eligible for being counted as device cap. | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4620310) |
+| 50 | When One lock is enabled on an Android for Work (aka Android Enterprise) device, you are not able... | When one lock is enabled, if you perform “Reset work profile passcode”, it willTurn off One Lock ... | This is by-design. | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4641795) |
+| 51 | When performing a &quot;Reset passcode&quot; action on a&nbsp;personally owned work profile enrol... | This can occur if the device does not meet the requirements for work profile passcode reset. | For Android BYOD work profile device, the device reset has some prerequisites:  1. You must confi... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4642437) |
+| 52 | Like all Azure services, Intune leverages Kusto to log user and system actions.&nbsp; This articl... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/5011128) |
+| 53 | Welcome to Intune's workflow for Android device configuration. Choose an area on the left to cont... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/5012466) |
+| 54 | Use this template when posting a question to the Device Actions SME channel.  IMPORTANT Be sure t... |  | Case number: Intune DeviceId:&nbsp; What Device Action was used? See list: Manage devices with Mi... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/5013381) |
+| 55 | When a user no longer needs to use devices managed by Microsoft Intune, there are several best pr... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/5016286) |
+| 56 | In this article you will find useful Kusto queries for the available Device Actions and Tenant Sy... | Troubleshooting/Break Fix issues A few behaviors to note: Deprovisioning a device will &quot;grey... | Device Actions  ​For results in Col2, refer to the table in the &quot;More Information&quot; sect... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/5019264) |
+| 57 | This article contains Kusto queries to help you determine which user/admin initiated an action. P... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/5019278) |
+| 58 | この記事では、次の方法について説明します Android Enterprise の登録に関する問題のトラブルシューティング。 手記：テナントとアカウント ID、UserId、デバイス この内部記... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/5021336) |
+| 59 | Android allows for 2 types of deployment methods for OEMConfig, traditional and transactional. Tr... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/5023039) |
+| 60 | When executing the below query in a situation where you need to troubleshoot the incoming MTD mes... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/5025572) |
+| 61 | Even a few years after the announcement of the deprecation of Android device administrator, some ... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/5030942) |
+| 62 | If you need to&nbsp;bulk retire all devices (e.g. Windows and Android) at once (perhaps because y... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/5032746) |
+| 63 | Wipe or Retire action shows as Pending indefinitely in Intune console | Devices do not always report status back to Intune before reset/removal starts | Verify action succeeded on device then manually delete device record from Intune. | 🔵 5.5 | [mslearn](https://learn.microsoft.com/en-us/troubleshoot/mem/intune/device-management/troubleshoot-device-actions) |
+| 64 | The feedback process for RAVE has changed. In addition to the traditional email survey, Intune cu... |  |  | 🟡 4.5 | contentidea-kb |
+| 65 | On April 29, 2019, we sent a communication to customers letting them know they need to have their... |  |  | 🟡 4.5 | contentidea-kb |
+| 66 | In the Lookout MTP Console, why is a device is not leaving the “Pending” state? | A device that is showing in the “ Pending ” States means the end user has not opened the LookOut ... | Confirm that the user has opened the LookOut for Work application and selected the "Activate" but... | 🟡 4.5 | contentidea-kb |
+| 67 | What if I want to move a device previously using Lookout MTP/Intune to another user? Admins chang... |  |  | 🟡 4.5 | contentidea-kb |
+| 68 | Before you begin troubleshooting a problem, be sure to check for known Emerging Issues and CRIs u... |  |  | 🟡 4.5 | contentidea-kb |
+| 69 | After configuring and assigning a device restriction configuration profile requiring a passcode t... | This can occur if the device has been enrolled as Device Owner. This is by design in this scenario. | This is expected behavior. WorkAround : Note that you can still create a password directly on the... | 🟡 3.0 | contentidea-kb |
+| 70 | When to use it Wipe Wipe is synonymous with Factory Reset, so only use this when it's necessary d... | Many times customers will want to know the result of a retire/wipe action or who initiated it. Yo... | Microsoft Documentation https://docs.microsoft.com/en-us/intune/devices-wipe Service Desk Article... | 🟡 3.0 | contentidea-kb |
+| 71 | The customer is trying to wipe an Intune managed device from the Intune Portal. In the Azure Port... | The MDM authority of the user who enrolled in the device is Office 365 and not Intune, because th... | Assign an Intune license to the user. If the customer doesn’t want to assign an Intune license, h... | 🟡 3.0 | contentidea-kb |
+| 72 | I have enabled the Factory reset protection emails policy and it is successfully applying to my A... | This is the expected behavior from Google as these emails only apply when a non-user factory rese... | We recommend blocking Factory reset in this same policy as that will only allow the two ways that... | 🟡 3.0 | contentidea-kb |
+
+> 本 topic 有排查工作流 → [排查工作流](workflows/device-actions.md)
+> → [已知问题详情](details/device-actions.md)

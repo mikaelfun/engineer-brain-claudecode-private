@@ -1,25 +1,69 @@
-# Intune macOS 应用部署 — 排查速查
+# INTUNE macOS 应用部署 — 排查速查
 
-**来源数**: 3 | **21V**: 全部适用
-**条目数**: 7 | **最后更新**: 2026-04-07
-
-## 症状速查
-| # | 症状 | 根因 | 方案 | 分数 | 来源 |
-|---|------|------|------|------|------|
-| 1 | macOS LOB app update deployed via Intune does not apply on device. Device still shows old version... | The updated .pkg and .intunemac file do not have incremented BuildNumber and ... | 1. Increment <version> parameter in pkgbuild when creating the updated component package. 2. Rebu... | 🟢 9.0 | OneNote |
-| 2 | macOS LOB app (.pkg) re-packaged by third-party tool (e.g., sudre) installs successfully but Intu... | Re-packaged .pkg apps have empty install-location key in bundle info (pkgutil... | 1. Run pkgutil --pkg-info-plist <bundleID> to verify install-location is populated (should be App... | 🟢 9.0 | OneNote |
-| 3 | macOS LOB 应用无法设置为 Uninstall 部署类型 | macOS LOB 应用只有在部署时设置了 'Install as Managed' = Yes 的情况下才支持 Uninstall 部署类型 | 重新部署应用时确保 'Install as Managed' 选项设置为 Yes，然后才能使用 Uninstall assignment type | 🟢 8.5 | ADO Wiki |
-| 4 | macOS LOB 应用（dynamic library/ktext 类型 pkg）通过 Intune 部署后安装失败 | pkg 的 PackageInfo 文件中 install-location 不是 /Applications 或其子目录，或缺少有效的 app bund... | 1. 用 xar -x -f <pkg> -C <output> 解压 pkg；2. 检查 PackageInfo：install-location 必须是 /Applications 或子目录... | 🟢 8.5 | ADO Wiki |
-| 5 | macOS 设备 Rotate Recovery Lock Password 操作不可用或密码轮换失败 | Recovery Lock 需满足前提条件：(1) macOS 11.5+ Apple Silicon；(2) 已通过 Settings Catalog ... | 1. 确认设备为 Apple Silicon 且 macOS ≥ 11.5；2. 通过 Settings Catalog 启用 EnableRecoveryLockPassword 并配置 Ro... | 🟢 8.5 | ADO Wiki |
-| 6 | macOS configuration profile Prevent automatic app updates cannot be set to TRUE. Setting fails to... | Platform-side bug in Intune preventing the Prevent automatic app updates sett... | PG confirmed as platform bug and applied hotfix. If issue persists, file ICM for PG investigation. | 🟢 8.0 | OneNote |
-| 7 | Error 0x87D13BA2 'One or more apps contain invalid bundleIDs' when deploying macOS LOB app, even ... | Multiple applications included in the macOS app package; not all individual a... | 1) Run 'sudo /usr/libexec/mdmclient QueryInstalledApps > InstalledApps.txt' on device. 2) Compare... | 🔵 7.5 | MS Learn |
+**来源数**: 4 | **21V**: 部分 (37/40)
+**条目数**: 40 | **最后更新**: 2026-04-17
 
 ## 快速排查路径
-1. 1. Increment <version> parameter in pkgbuild when creating the updated component package. 2. Rebuild distribution archive with productbuild. 3. Re-wra `[来源: OneNote]`
-2. 1. Run pkgutil --pkg-info-plist <bundleID> to verify install-location is populated (should be Applications). 2. Re-package the .pkg with correct insta `[来源: OneNote]`
-3. 重新部署应用时确保 'Install as Managed' 选项设置为 Yes，然后才能使用 Uninstall assignment type `[来源: ADO Wiki]`
-4. 1. 用 xar -x -f <pkg> -C <output> 解压 pkg；2. 检查 PackageInfo：install-location 必须是 /Applications 或子目录；3. 确保至少有一个 app bundle 包含有效的 CFBundleIdentifier 和 CFB `[来源: ADO Wiki]`
-5. 1. 确认设备为 Apple Silicon 且 macOS ≥ 11.5；2. 通过 Settings Catalog 启用 EnableRecoveryLockPassword 并配置 RotationSchedule；3. 用 Kusto 验证策略是否已下发（查 IntuneEvent Sce `[来源: ADO Wiki]`
 
-> 本 topic 有融合排查指南，含完整排查流程和 Kusto 查询模板
-> → [完整排查流程](details/app-macos.md#排查流程)
+1. **macOS LOB app (.pkg) fails to install via Intune. App shows NotInstalled in Kusto. Running .pkg locally works fine. MDM Console log shows 'failed Error Domain=NSCocoaErrorDomain Code=4 The file Dis...**
+   → 1. Build component package: pkgbuild --root <payload> --scripts <scripts> --version <version> --identifier <id> ./<name>_component.pkg. 2. Create distribution archive: productbuild --package <name>... `[onenote, 🟢 9.5]`
+
+2. **macOS LOB app update deployed via Intune does not apply on device. Device still shows old version. App was repackaged but Intune does not detect the new version.**
+   → 1. Increment <version> parameter in pkgbuild when creating the updated component package. 2. Rebuild distribution archive with productbuild. 3. Re-wrap with IntuneAppUtil. 4. Verify detection param... `[onenote, 🟢 9.5]`
+
+3. **macOS LOB app (.pkg) with multiple sub-components installs successfully but Company Portal shows 'Install' instead of 'Re-Install'. Kusto reports NotInstalled. App is functional on device.**
+   → 1. Extract the pkg to inspect: xar -x -f <pkg> -C <output>. 2. Check install-location for each component in PackageInfo. 3. If sub-components install outside /Applications, repackage so detection w... `[onenote, 🟢 9.5]`
+
+4. **macOS LOB app (.pkg) re-packaged by third-party tool (e.g., sudre) installs successfully but Intune portal shows failed/not installed. MDM logs: Did not find bundle path URL for app. App gets re-in...**
+   → 1. Run pkgutil --pkg-info-plist <bundleID> to verify install-location is populated (should be Applications). 2. Re-package the .pkg with correct install-location in PackageInfo. 3. Compare with wor... `[onenote, 🟢 9.5]`
+
+5. **macOS LOB 应用无法设置为 Uninstall 部署类型**
+   → 重新部署应用时确保 'Install as Managed' 选项设置为 Yes，然后才能使用 Uninstall assignment type `[ado-wiki, 🟢 9.0]`
+
+## 症状速查
+
+| # | 症状 | 根因 | 方案 | 分数 | 来源 |
+|---|------|------|------|------|------|
+| 1 | macOS LOB app (.pkg) fails to install via Intune. App shows NotInstalled in Kusto. Running .pkg l... | The .pkg file was not built as a distribution archive using productbuild. Apple MDM requires pack... | 1. Build component package: pkgbuild --root <payload> --scripts <scripts> --version <version> --i... | 🟢 9.5 | onenote: Mooncake POD Support Notebook/POD/VMS... |
+| 2 | macOS LOB app update deployed via Intune does not apply on device. Device still shows old version... | The updated .pkg and .intunemac file do not have incremented BuildNumber and VersionNumber compar... | 1. Increment <version> parameter in pkgbuild when creating the updated component package. 2. Rebu... | 🟢 9.5 | onenote: Mooncake POD Support Notebook/POD/VMS... |
+| 3 | macOS LOB app (.pkg) with multiple sub-components installs successfully but Company Portal shows ... | The .pkg file contains multiple component installers (e.g., Wireshark has 3 sub-packages). Some c... | 1. Extract the pkg to inspect: xar -x -f <pkg> -C <output>. 2. Check install-location for each co... | 🟢 9.5 | onenote: Mooncake POD Support Notebook/POD/VMS... |
+| 4 | macOS LOB app (.pkg) re-packaged by third-party tool (e.g., sudre) installs successfully but Intu... | Re-packaged .pkg apps have empty install-location key in bundle info (pkgutil --pkg-info-plist sh... | 1. Run pkgutil --pkg-info-plist <bundleID> to verify install-location is populated (should be App... | 🟢 9.5 | onenote: Mooncake POD Support Notebook/POD/VMS... |
+| 5 | macOS LOB 应用无法设置为 Uninstall 部署类型 | macOS LOB 应用只有在部署时设置了 'Install as Managed' = Yes 的情况下才支持 Uninstall 部署类型 | 重新部署应用时确保 'Install as Managed' 选项设置为 Yes，然后才能使用 Uninstall assignment type | 🟢 9.0 | [ado-wiki](https://dev.azure.com/Supportability/Intune/_wiki/wikis/Intune?pagePath=%2FApp%20Management%2FApple%2FmacOS) |
+| 6 | macOS LOB 应用（dynamic library/ktext 类型 pkg）通过 Intune 部署后安装失败 | pkg 的 PackageInfo 文件中 install-location 不是 /Applications 或其子目录，或缺少有效的 app bundle（需有 <app>.app, id/... | 1. 用 xar -x -f <pkg> -C <output> 解压 pkg；2. 检查 PackageInfo：install-location 必须是 /Applications 或子目录... | 🟢 9.0 | [ado-wiki](https://dev.azure.com/Supportability/Intune/_wiki/wikis/Intune?pagePath=%2FDevelop%20and%20Customize%2FApp%20Wrapping%20Tool%20for%20macOS) |
+| 7 | macOS 自动更新应用在 Intune 中显示未安装，版本检测不匹配 | 应用支持自动更新后版本号与上传到 Intune 的版本不一致，DeviceManagementProvider 日志可确认版本差异 | 在 Intune 应用配置中启用忽略应用版本（Ignore app version）选项 | 🟢 9.0 | [ado-wiki](https://dev.azure.com/Supportability/Intune/_wiki/wikis/Intune?pagePath=%2FDevelop%20and%20Customize%2FApp%20Wrapping%20Tool%20for%20macOS) |
+| 8 | Customer expects MAM app protection policies to be applied to macOS LOB app after using IntuneApp... | The macOS App Wrapping Tool (IntuneAppUtil) does NOT inject MAM app protection policies. Unlike t... | Clarify to the customer that macOS LOB apps are managed via MDM device policies, not app protecti... | 🟢 9.0 | [ado-wiki](https://dev.azure.com/Supportability/Intune/_wiki/wikis/Intune?pagePath=%2FDevelop%20and%20Customize) |
+| 9 | macOS LOB app (.pkg) not installed on targeted devices with no error messages shown in Intune | The .pkg package is missing required information: package version/CFBundleVersion strings and cor... | Contact app developer to rebuild .pkg package with correct pkg-info containing CFBundleVersion an... | 🟢 8.0 | [mslearn](https://learn.microsoft.com/en-us/troubleshoot/mem/intune/app-management/macos-lob-apps-not-deployed) |
+| 10 | The Intune Admin portal may encounter an exception when modifying a customized application to Uni... | See https://icm.ad.msft.net/imp/v3/incidents/details/33122122/home for details. | Have the administrator edit the application in MISPA. You don�t need to change anything just edit... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4019050) |
+| 11 | OverviewAndroid Enterprise System Apps: https://docs.microsoft.com/en-us/intune/apps/apps-ae-syst... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4021942) |
+| 12 | Guide for testing LOB MSI deployments in Intune using 7Zip to verify MSI deployment functionality... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4058021) |
+| 13 | Custom packages for MacOS or PKG files must be wrapped or pre-processed with the Intune App Wrapp... | The package or .PKG file does not contain Increment package version and CFBundleVersion string in... | Review the output of Detection.xml to extract the detection parameters and version for the create... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4344141) |
+| 14 | You had set up JAMF-Intune integration appropriately and registered MacOS devices within Intune. ... | During the investigation, JAMF released a new version of 10.6.2 which contained a fix for the issue. | After   Jamf released 10.6.2, you had to do the following steps to get the client to   re-registe... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4467198) |
+| 15 | When attempting to wrap a .pkg file using the Intune App Wrapping Tool for Mac, the following err... | The packageinfo file was missing from the .pkg package. | The IntuneAppUtil currently only supports flat packages and the .pkg package must include the pac... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4480623) |
+| 16 | There are times when you need to gather a Packet Capture on macOS from a customer, for example de... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4487241) |
+| 17 | After configuring Intune/Jamf integration, Mac clients fail to to enroll and you notice one or mo... | This can occur if the user fails to authenticate via the Company Portal app 3 times. This is a re... | To resolve this issue, have the user launch the Company Portal app and sign in again until they g... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4487658) |
+| 18 | macOS line of business application doesn't install on the device. Problem occurs when app is depl... | Name of .pkg file has spaces.e.g. &quot;Test LOB.pkg&quot; | If the name of a .pkg file has spaces, wrapping of the app using Intune Wrapping Tool for macOS w... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4490742) |
+| 19 | After configuring conditional access for the Outlook mobile app, the app crashes when launched. A... | As of 3/22/2019, this is a known, emerging issue for Outlook. See More Information below for addi... | If you get a similar case, do not assume this is your issue without verifying per the More Inform... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4496044) |
+| 20 | Customer enrolls a Mac device into Jamf and attempts to register with Intune, but the device fail... | These are some typical reasons why the device fails to register:&nbsp;1. The permissions on the J... | Do the following:1. Check to make sure that the correct permissions are set, do the following:&nb... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4501464) |
+| 21 | For steps on how to collect information for troubleshooting, see&nbsp;https://internal.support.se... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4513476) |
+| 22 | Intune MacOS line-of-business (LOB) apps only support apps packed in the .pkg file format (https:... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4527921) |
+| 23 | Some MacOS line-of-business (LOB)&nbsp;app developers publish applications as stand-alone .app.&n... |  | Create a temporary folder on your Mac and copy the .app file to this locationCreate a sub-folder ... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4527937) |
+| 24 | When publishing a line-of-business (LOB) application to a MacOS device, the Intune portal may rep... | MacOS maintains a list of all installed apps through the MDS (metadata service) daemon.&nbsp; Thi... |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4531381) |
+| 25 | Before you can deploy, configure, monitor, or protect apps, you must add them to Intune. One of t... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4531495) |
+| 26 | Customer is trying to register the macOS device using Company Portal from the Jamf Self Service p... | Keychain identity issue | Make sure the customer uses the report button on the company portal error.&nbsp; Collect the inci... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4568356) |
+| 27 | Intune uses the IntuneMacSidecar database on the kusto.aria.microsoft.com Kusto cluster to log in... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4583409) |
+| 28 | Microsoft Intune App Wrapping Tool for MacOS (IntuneAppUtil) is the package wrapping tool for Mac... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4588873) |
+| 29 | If you've seen any of our Intune workflows then you know how useful a KB with side navigations li... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4591816) |
+| 30 | This article describes how to use MacOS Intune scripting to install applications.&nbsp; Intune's ... |  | Example 1:&nbsp; Install a .pkg file from a web site# download the package to /tmpcurl -L -s -o /... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4595453) |
+| 31 | Summary/SymptomYou deploy LOB apps to Mac devices as “Available” type. On the Mac, you go to comp... | If the LOB app supports auto-update function, the Intune detection cannot work properly. Please c... | The issue can be fixed by turning off version comparison. This can be done in the Intune Portal w... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4597680) |
+| 32 | When deploying an application (in this case Crowdstrike) via Intune as an LOB app for Mac, the ap... | For this customer's situation, it turned out to be a known issue with the PKG parsing, which the ... | As a workaround, the customer will need to make sure to have the correct bundle ID and then modif... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4601309) |
+| 33 | Customers could complain that LOB App for MacOS are not being deployed through Intune and the app... | Customers could complain that LOB App for MacOS are not being deployed through Intune and the app... | To fix this issue simply you have to upload the Application again and make sure to set the &quot;... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4617417) |
+| 34 | As an Intune Support Engineer, you should&nbsp;never upload a customer-signed LOB app (apk, ipa, ... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/5014894) |
+| 35 | There have been numerous requests for Microsoft to look into why a GlobalConnect deployment is fa... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/5018267) |
+| 36 | Some customers use the Google Play Console to publish LOB apps. After they upload the app, they g... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/5030981) |
+| 37 | After configuring conditional access for the Outlook mobile app, the app crashes when launched. A... | As of 3/22/2019, this is a known, emerging issue for Outlook. See More Information below for addi... | If you get a similar case, do not assume this is your issue without verifying per the More Inform... | 🟡 4.5 | contentidea-kb |
+| 38 | macOS line of business application doesn't install on the device. Problem occurs when app is depl... | Name of .pkg file has spaces. e.g. "Test LOB.pkg" | If the name of a .pkg file has spaces, wrapping of the app using Intune Wrapping Tool for macOS w... | 🟡 3.0 | contentidea-kb |
+| 39 | Customer enrolls a Mac device into Jamf and attempts to register with Intune, but the device fail... | These are some typical reasons why the device fails to register: 1. The permissions on the Jamf e... | Do the following: 1. Check to make sure that the correct permissions are set, do the following: a... | 🟡 3.0 | contentidea-kb |
+| 40 | For steps on how to collect information for troubleshooting, see https://internal.support.service... |  |  | 🟡 3.0 | contentidea-kb |
+
+> 本 topic 有排查工作流 → [排查工作流](workflows/app-macos.md)
+> → [已知问题详情](details/app-macos.md)

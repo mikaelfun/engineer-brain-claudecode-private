@@ -58,9 +58,9 @@ az account get-access-token --resource "https://kusto.windows.net" 2>&1
 
 ## 执行日志
 
-**每个步骤执行前后都必须写入日志文件 `{caseDir}/logs/troubleshooter.log`。**
+**每个步骤执行前后都必须写入日志文件 `{caseDir}/.casework/logs/troubleshooter.log`。**
 格式：`[YYYY-MM-DD HH:MM:SS] STEP {n} {OK|FAIL|SKIP} | {描述}`
-用 Bash echo append 写入。`{caseDir}/logs/` 不存在时先创建。
+用 Bash echo append 写入。`{caseDir}/.casework/logs/` 不存在时先创建。
 
 ## 执行步骤
 
@@ -242,7 +242,7 @@ acr / aks / arm / avd / disk / entra-id / eop / intune / monitor / networking / 
   - ⚠️ 可能过时 — 最后修改 2024-01-15（如适用）
 ```
 
-如有匹配，还需读取 `{caseDir}/onenote/personal-notes.md`（如存在，由 onenote-case-search agent 在 casework B2 生成），将个人笔记信息纳入排查上下文。**注意区分 `[fact]`（可直接引用）和 `[analysis]`（需验证，可能不准确）标签**——优先使用 "事实记录" section 的内容。
+如有匹配，还需读取 `{caseDir}/onenote/onenote-digest.md`（如存在，由 onenote-case-search agent 在 casework B2 生成），将个人笔记信息纳入排查上下文。**注意区分 `[fact]`（可直接引用）和 `[analysis]`（需验证，可能不准确）标签**——优先使用 "事实记录" section 的内容。
 
 #### 3b. ADO Wiki / Knowledge Base
 
@@ -369,11 +369,11 @@ az devops wiki page show --wiki "{wikiName}" --project "{project}" \
 - `{caseDir}/research/research.md` — 搜索到的文档/Wiki/KB 引用（增量）
 - `{caseDir}/kusto/{YYYYMMDD-HHMM}-{query-description}.md` — Kusto 查询结果
 - `.claude/skills/products/{product}/known-issues.jsonl` — 新发现的已知问题（增量）
-- `{caseDir}/claims.json` — 结构化证据链声明（schema 见 `playbooks/schemas/claims-schema.md`）
+- `{caseDir}/.casework/claims.json` — 结构化证据链声明（schema 见 `playbooks/schemas/claims-schema.md`）
 
 ### 5a. 证据链提取（写 claims.json）
 
-从刚写好的 analysis.md 中提取每个关键技术判断，生成 `{caseDir}/claims.json`。
+从刚写好的 analysis.md 中提取每个关键技术判断，生成 `{caseDir}/.casework/claims.json`。
 
 **提取规则**：
 - 「分析结论」section 中的每个根因判断 → `type: root-cause`

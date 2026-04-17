@@ -1,94 +1,68 @@
-# Intune BitLocker 加密管理 — 综合排查指南
+# INTUNE BitLocker 加密管理 — 已知问题详情
 
-**条目数**: 13 | **草稿融合数**: 2 | **Kusto 查询融合**: 0
-**来源草稿**: ado-wiki-Bitlocker-Recovery-Key.md, onenote-mbam-bitlocker-migration-to-mem.md
-**生成日期**: 2026-04-07
+**条目数**: 22 | **生成日期**: 2026-04-17
 
 ---
 
-## 排查流程
+## Quick Troubleshooting Path
 
-### Phase 1: Bitlocker Recovery Key
-> 来源: ADO Wiki — [ado-wiki-Bitlocker-Recovery-Key.md](../drafts/ado-wiki-Bitlocker-Recovery-Key.md)
+### Step 1: BitLocker recovery key not visible in Azure AD/Intune portal despite Intune BitLocker policy applied; key only escrowed to on-premises AD
+**Solution**: Use PowerShell script to manually escrow recovery keys to AAD (e.g. Invoke-EscrowBitlockerToAAD from GitHub). Check FVE registry and GPSearch to confirm applied backup policy. Deploy batch migration from MBAM to MEM as needed
+`[Source: onenote, Score: 9.5]`
 
-**BitLocker Key Recovery via Company Portal**
-**Prerequisites**
-- Enrolled Windows device in Intune
-- Ability to log into Company Portal website (https://portal.manage.microsoft.com/)
-- Permission to view BitLocker recovery key (if one exists in Entra ID)
+### Step 2: After BitLocker key rotation or manual key deletion, old recovery key still visible in Azure AD portal (Windows 10)
+**Solution**: For Windows 11 22H2+: Intune Key Rotation button removes old key within minutes. For Windows 10: old keys remain in AAD by design - inform customer this is expected behavior
+`[Source: onenote, Score: 9.5]`
 
-**How It Works**
-1. Open Company Portal website
-2. Navigate to Devices > select enrolled Windows device
-3. Click "Get recovery key"
-4. If multiple keys, click "Show recovery key" under the device with the needed key ID
+### Step 3: BitLocker key rotation initiated from Intune portal fails with error
+**Solution**: Configure Endpoint Protection profile: enable BitLocker encryption, set 'Client-driven recovery password rotation', ensure 'Save BitLocker recovery info to AAD' is enabled. For VMs, unmount ISO before enabling encryption
+`[Source: onenote, Score: 9.5]`
 
-**Entra ID Settings**
+### Step 4: Windows 10 设备执行 Wipe 后无法重启，设备变砖
+**Solution**: 1. 避免选择断电继续擦除选项；2. 对 BitLocker 加密设备同样适用；3. 已变砖的设备需使用可启动媒介重新安装 Windows
+`[Source: ado-wiki, Score: 9.0]`
 
-**Restrict Recovery Key Access**
-- Location: Entra ID > Devices > Device settings
-- Default: 'No' (all users can recover keys)
-- 'Yes': restricts non-admin users from seeing BitLocker keys
-- If restricted, users see: "Recovery key could not be retrieved"
+### Step 5: User sees 'Recovery key could not be retrieved' when trying to access BitLocker recovery key from Company Portal website
+**Solution**: In Entra ID > Devices > Device settings, change the BitLocker key restriction setting to 'No' to allow users to recover their own keys. Alternatively, an admin can retrieve the key on behalf of the user.
+`[Source: ado-wiki, Score: 9.0]`
 
-**Audit Recovery Key Access**
-- Entra ID > Audit Logs > Key Management category
-- Activity type: "Read BitLocker key"
-- Logs include UPN and key ID
+### Step 6: BitLocker silent encryption fails with Event ID 851: 'Group Policy settings for BitLocker startup options are in conflict and cannot be applied'
+**Solution**: Change 'Configure TPM startup PIN' to either 'Allow' or 'Do not allow'. Same applies to 'Configure TPM startup key' and 'Configure TPM startup key and PIN'. Check BitLocker Management event log (Microsoft-Windows-BitLocker/BitLocker Management) for error details.
+`[Source: ado-wiki, Score: 9.0]`
 
-### Phase 2: Mbam Bitlocker Migration To Mem
-> 来源: OneNote — [onenote-mbam-bitlocker-migration-to-mem.md](../drafts/onenote-mbam-bitlocker-migration-to-mem.md)
+### Step 7: This article explains how to setup an Endpoint Protection policy to enable Windows Encryption (Bitlocker) on a device that does not have a TPM chip...
+**Solution**: 
+`[Source: contentidea-kb, Score: 7.5]`
 
-**MBAM to Microsoft Endpoint Manager (MEM) BitLocker Migration**
-**Overview**
-**Migration Steps**
-**Step 1: Export Recovery Keys from MBAM SQL Server**
-- Open SQL Management Studio
-- Expand `MBAM_Recovery_and_Hardware` database
-- Query `RecoveryAndHardwareCore.Keys` table
-- Export RecoveryKeyID and RecoveryKey columns
-- Modify `SELECT TOP nnnnn` for large datasets
-
-**Step 2: Configure MEM BitLocker Policy**
-1. Create two device groups: "BitLocker GPO devices" and "BitLocker MEM devices"
-2. In Endpoint Manager admin center > Endpoint Security > Disk Encryption > Create Policy
-3. Configure settings:
-   - BitLocker Base Settings (full disk encryption, storage card encryption)
-   - Fixed Drive Settings
-   - OS Drive Settings (client-driven recovery password rotation)
-   - Removable Drive Settings
-4. Assign policy to "BitLocker MEM devices" group
-5. Migrate devices batch by batch between groups
-
-**Step 3: Export Recovery Keys from Azure AD via Graph API**
-- Register App in Azure AD with BitLocker read permissions
-- Delegate permission for signed-in user
-- User needs: Global Admin, Cloud Device Admin, Helpdesk Admin, Intune Service Admin, Security Admin/Reader, or Global Reader
-```
-```
-- JSON result limited to 999 items per page
-- For 1000+ items: use PowerShell script from MSEndpointMgr GitHub
-
-**Step 4: Force Current Devices to Escrow Keys to AAD**
-- Deploy PowerShell script `Invoke-EscrowBitlockerToAAD` via Intune
-... (详见原始草稿)
+### Step 8: We document the requirements for automatic device encryption here:https://docs.microsoft.com/en-us/windows-hardware/design/device-experiences/oem-b...
+**Solution**: 
+`[Source: contentidea-kb, Score: 7.5]`
 
 ---
 
-## 已知问题速查
+## All Known Issues
 
-| # | 症状 | 根因 | 方案 | 分数 | 来源 |
-|---|------|------|------|------|------|
-| 1 | USB drive access fails with 'Please Insert a Disk Into USB Drive' error after removing Intune USB... | StorageCardDisabled registry key (set to 1) persists under HKLM\SOFTWARE\Micr... | Remove the StorageCardDisabled value from HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\StorageS... | 🟢 9.0 | OneNote |
-| 2 | BitLocker recovery key not visible in Azure AD/Intune portal despite Intune BitLocker policy appl... | If BitLocker was enabled and recovery key already uploaded to on-premises AD ... | Use PowerShell script to manually escrow recovery keys to AAD (e.g. Invoke-EscrowBitlockerToAAD f... | 🟢 9.0 | OneNote |
-| 3 | After BitLocker key rotation or manual key deletion, old recovery key still visible in Azure AD p... | Windows 10 22H2 does not remove old recovery keys from AAD after local deleti... | For Windows 11 22H2+: Intune Key Rotation button removes old key within minutes. For Windows 10: ... | 🟢 9.0 | OneNote |
-| 4 | macOS FileVault policy deployed via Intune shows FileVault payload is installed but FileVault is ... | The FileVault MDM profile was successfully installed on the device, but the a... | 1. Ensure the user logs out and logs back in (or restarts) after the FileVault profile is install... | 🟢 9.0 | OneNote |
-| 5 | Windows 10 设备执行 Wipe 后无法重启，设备变砖 | 选择了 Wipe device and continue to wipe even if devices lose power 选项，可能导致部分 Win... | 1. 避免选择断电继续擦除选项；2. 对 BitLocker 加密设备同样适用；3. 已变砖的设备需使用可启动媒介重新安装 Windows | 🟢 8.5 | ADO Wiki |
-| 6 | User sees 'Recovery key could not be retrieved' when trying to access BitLocker recovery key from... | Entra ID device setting 'Restrict non-admin users from recovering BitLocker k... | In Entra ID > Devices > Device settings, change the BitLocker key restriction setting to 'No' to ... | 🟢 8.5 | ADO Wiki |
-| 7 | BitLocker silent encryption fails with Event ID 851: 'Group Policy settings for BitLocker startup... | 'Configure TPM startup PIN' (or 'Configure TPM startup key'/'Configure TPM st... | Change 'Configure TPM startup PIN' to either 'Allow' or 'Do not allow'. Same applies to 'Configur... | 🟢 8.5 | ADO Wiki |
-| 8 | BitLocker recovery key not escrowed to Azure AD; only saved to local Active Directory on Hybrid A... | During Hybrid Azure AD joined Autopilot provisioning with BitLocker policy as... | 1) Assign BitLocker policy to user group instead of device group (may still fail if hybrid Azure ... | 🟢 8.5 | ADO Wiki |
-| 9 | Intune Disk Encryption (BitLocker) policy shows Error status for devices in Endpoint Security por... | BitLocker CSP FixedDrivesRecoveryOptions setting does not have a real Not Con... | Change Recovery key file creation under FixedDrivesRecoveryOptions from Not Configured to an expl... | 🟢 8.0 | OneNote |
-| 10 | Hybrid AAD join fails 0x80090016 Keyset does not exist. | Windows is not TPM owner. TPM init failed. | Clear TPM via Windows Security. Disable BitLocker first. Restart. | 🔵 6.5 | MS Learn |
-| 11 | Windows 10 device cannot restart after Intune remote Wipe action | Wipe device and continue to wipe even if devices lose power option selected w... | Use bootable media to reinstall Windows 10. For BitLocker encrypted devices same resolution. | 🔵 6.5 | MS Learn |
-| 12 | BitLocker silent encryption fails with conflicting Group Policy settings error in BitLocker-API e... | Conflicting TPM startup settings: configuring TPM startup PIN or startup key ... | Set Compatible TPM startup PIN and Compatible TPM startup key to Blocked in BitLocker policy when... | 🔵 6.5 | MS Learn |
-| 13 | BitLocker silent encryption fails: TPM is not available / A compatible Trusted Platform Module Se... | TPM chip is missing, disabled in BIOS, or unhealthy. TPM is required for sile... | Verify TPM via TPM.msc or Get-Tpm cmdlet. If disabled, enable in BIOS. For TPM 2.0, ensure UEFI B... | 🔵 6.5 | MS Learn |
+| # | Symptom | Root Cause | Solution | Score | Source |
+|---|---------|-----------|----------|-------|--------|
+| 1 | BitLocker recovery key not visible in Azure AD/Intune portal despite Intune B... | If BitLocker was enabled and recovery key already uploaded to on-premises AD ... | Use PowerShell script to manually escrow recovery keys to AAD (e.g. Invoke-Es... | 9.5 | onenote |
+| 2 | After BitLocker key rotation or manual key deletion, old recovery key still v... | Windows 10 22H2 does not remove old recovery keys from AAD after local deleti... | For Windows 11 22H2+: Intune Key Rotation button removes old key within minut... | 9.5 | onenote |
+| 3 | BitLocker key rotation initiated from Intune portal fails with error | Missing 'Save BitLocker recovery information to Azure Active Directory' setti... | Configure Endpoint Protection profile: enable BitLocker encryption, set 'Clie... | 9.5 | onenote |
+| 4 | Windows 10 设备执行 Wipe 后无法重启，设备变砖 | 选择了 Wipe device and continue to wipe even if devices lose power 选项，可能导致部分 Win... | 1. 避免选择断电继续擦除选项；2. 对 BitLocker 加密设备同样适用；3. 已变砖的设备需使用可启动媒介重新安装 Windows | 9.0 | ado-wiki |
+| 5 | User sees 'Recovery key could not be retrieved' when trying to access BitLock... | Entra ID device setting 'Restrict non-admin users from recovering BitLocker k... | In Entra ID > Devices > Device settings, change the BitLocker key restriction... | 9.0 | ado-wiki |
+| 6 | BitLocker silent encryption fails with Event ID 851: 'Group Policy settings f... | 'Configure TPM startup PIN' (or 'Configure TPM startup key'/'Configure TPM st... | Change 'Configure TPM startup PIN' to either 'Allow' or 'Do not allow'. Same ... | 9.0 | ado-wiki |
+| 7 | This article explains how to setup an Endpoint Protection policy to enable Wi... |  |  | 7.5 | contentidea-kb |
+| 8 | We document the requirements for automatic device encryption here:https://doc... |  |  | 7.5 | contentidea-kb |
+| 9 | Use Intune Endpoint Protection settings to configure&nbsp;Client-driven recov... |  |  | 7.5 | contentidea-kb |
+| 10 | Customer receives the following error when attempting to implement silent enc... | A bug in the BIOS firmware of the device causes TPM to not be detected during... | To resolve this issue, review msinfo32 report to verify BIOS version, then up... | 7.5 | contentidea-kb |
+| 11 | When following the steps in the docs article here&nbsp;to use Windows Configu... | This can occur when User may join devices to Azure AD is set to&nbsp;None in ... | To resolve this issue, change the Users may join Devices to Azure AD setting ... | 7.5 | contentidea-kb |
+| 12 | A remote wipe sent from Intune fails and causes the OS to report &quot;no cha... | This can occur if WinRE files are missing.&nbsp; | There is a .ps1 script here&nbsp;that should be utilized to unblock customers... | 7.5 | contentidea-kb |
+| 13 | When in “Shared experiences” under “Accounts” users see ” Some of your accoun... | This can occur if the device limit has been exceeded for the user in either A... | To resolve this problem, increase the device limit in AAD and/or Intune, or r... | 7.5 | contentidea-kb |
+| 14 | Customer reports that they have created an Intune RBAC role which is properly... | Bitlocker recovery keys are an Azure AD object, not Intune object, so you wou... | The permissions needed are documented here (BitLockerKey.ReadBasic.All, BitLo... | 7.5 | contentidea-kb |
+| 15 | Automatic device encryption is failing for the reason &quot;PCR7 binding is n... | From the OS point of view, in the absence of PCR 7 binding, any other signatu... | Windows is secure regardless of using TPM profile 0, 2, 4, 11 or profile 7, 1... | 7.5 | contentidea-kb |
+| 16 | The&nbsp;One Data Collector&nbsp;is a support script to enable the collection... |  |  | 7.5 | contentidea-kb |
+| 17 | Device registration fails 0x80280036. TPM FIPS mode. | TPM has FIPS mode enabled, not supported for Azure device registration. | Disable FIPS mode on TPM. | 6.5 | mslearn |
+| 18 | Hybrid AAD join fails 0x80090016 Keyset does not exist. | Windows is not TPM owner. TPM init failed. | Clear TPM via Windows Security. Disable BitLocker first. Restart. | 6.5 | mslearn |
+| 19 | Windows 10 device cannot restart after Intune remote Wipe action | Wipe device and continue to wipe even if devices lose power option selected w... | Use bootable media to reinstall Windows 10. For BitLocker encrypted devices s... | 6.5 | mslearn |
+| 20 | BitLocker silent encryption fails with conflicting Group Policy settings erro... | Conflicting TPM startup settings: configuring TPM startup PIN or startup key ... | Set Compatible TPM startup PIN and Compatible TPM startup key to Blocked in B... | 6.5 | mslearn |
+| 21 | BitLocker silent encryption fails: TPM is not available / A compatible Truste... | TPM chip is missing, disabled in BIOS, or unhealthy. TPM is required for sile... | Verify TPM via TPM.msc or Get-Tpm cmdlet. If disabled, enable in BIOS. For TP... | 6.5 | mslearn |
+| 22 | We document the requirements for automatic device encryption here: https://do... |  |  | 3.0 | contentidea-kb |

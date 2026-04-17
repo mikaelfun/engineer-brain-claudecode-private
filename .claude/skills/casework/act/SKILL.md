@@ -26,7 +26,7 @@ allowed-tools:
 ## 输出契约
 
 - `{caseDir}/analysis/*.md` — troubleshooter 产出
-- `{caseDir}/claims.json` — troubleshooter 证据链
+- `{caseDir}/.casework/claims.json` — troubleshooter 证据链
 - `{caseDir}/drafts/*.md` — email-drafter 产出
 - `{caseDir}/.casework/pipeline-state.json` — 更新 Step 3 各 action 状态
 
@@ -117,7 +117,7 @@ for i in 0..(ACTION_COUNT-1):
 
   # 检查依赖：如果有 dependsOn，检查被依赖的 action 是否已完成
   # （通过检查对应产物文件是否存在来判断）
-  if DEPENDS == "troubleshooter" && ! -f "{caseDir}/claims.json":
+  if DEPENDS == "troubleshooter" && ! -f "{caseDir}/.casework/claims.json":
     # 依赖未完成，跳过本 action（下次 casework 处理）
     continue
 
@@ -156,10 +156,10 @@ for i in 0..(ACTION_COUNT-1):
 #### 3c. Challenge Gate（troubleshooter 完成后触发）
 
 ```bash
-if [ -f "{caseDir}/claims.json" ]; then
+if [ -f "{caseDir}/.casework/claims.json" ]; then
   TRIGGER=$(python3 -c "
 import json
-c = json.load(open(r'{caseDir}/claims.json', encoding='utf-8'))
+c = json.load(open(r'{caseDir}/.casework/claims.json', encoding='utf-8'))
 print('1' if c.get('triggerChallenge') else '0')
   ")
 

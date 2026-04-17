@@ -299,3 +299,29 @@
 - Deduplication: 0 deduplicated (new batch file)
 - Output: known-issues-ado-wiki-b.jsonl (15 entries), scanned-ado-wiki-b.json (10 paths)
 | 2026-04-07 | SYNTHESIZE | 22 topics (18 fusion, 4 compact), 386 entries, 14 Kusto queries fused |
+
+## 2026-04-17 18:14 — onenote tick (networking)
+- Pages scanned: 10 (wiki_migration/Net batch)
+- Discovered (Track A): 0
+- Deduplicated: 10 (all wiki_migration copies of already-processed Net/ pages)
+  - 1.11 WAF → dup of networking-onenote-006
+  - 1.3 NSG AppGW → dup of networking-onenote-001
+  - 1.5 APPGW template → dup of networking-onenote-002
+  - 1.6 AppGW V2 instances → dup of existing guide draft
+  - 1.7 AppGW V2 memory → dup of networking-onenote-003
+  - 1.8 AppGW redirect → dup of networking-onenote-004
+  - 1.9 AppGW redirect URL → dup of networking-onenote-004 (identical content to 1.8)
+  - 10.11 Pingmesh → dup of existing guide draft
+  - 10.13 Everflow → dup of already-scanned Net/10.13
+  - 10.13/JIT Jumpbox → sub-page dup of Everflow parent
+- Guide drafts created: 0 (already exist from Net/ originals)
+- Exhausted: false (58/159 scanned)
+
+## 2026-04-17 18:21 — ado-wiki scan (ExpressRoute Features batch)
+
+- **Pages scanned**: 10 (ExpressRoute Direct, LOA, Fastpath, GW Maintenance, PE Traffic, Global Reach, IPv6, Metro, Monitor, Guided Portal)
+- **Track A (JSONL)**: 14 new break/fix entries (networking-ado-wiki-505 to 518)
+- **Track B (Drafts)**: 9 troubleshooting guide drafts written
+- **Skip**: 1 (Guided Portal Experience - product FAQ)
+- **Dedup**: 0
+- **Scanned total**: 394/2728

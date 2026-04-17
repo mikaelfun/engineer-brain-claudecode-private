@@ -37,3 +37,9 @@
 - **Source exhausted**: all 27 ContentIdea KB items for automation scanned
 [2026-04-05] MERGE: 86 entries from 3 sources (onenote:54, mslearn:17, contentidea-kb:15), 0 deduped, 7 related pairs
 [2026-04-05] SYNTHESIZE: 12 guides generated, 82 entries kept, 4 discarded (half-entries)
+
+### 2026-04-17 10:15 UTC — contentidea-kb refresh (automation)
+- WIQL returned 27 work items (keywords: Automation, Update Manager)
+- All 27 already scanned; diff = 0
+- lastRefreshed updated (was null)
+- Result: exhausted=true, discovered=0, deduplicated=0

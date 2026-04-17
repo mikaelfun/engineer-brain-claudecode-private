@@ -1,454 +1,306 @@
-# Intune 设备合规策略 — 综合排查指南
+# INTUNE 设备合规策略 — 已知问题详情
 
-**条目数**: 72 | **草稿融合数**: 4 | **Kusto 查询融合**: 2
-**来源草稿**: ado-wiki-Compliance-Calculation.md, ado-wiki-Device-Compliance.md, ado-wiki-MDE-Compliance.md, onenote-partner-compliance-kusto.md
-**Kusto 引用**: compliance.md, policy-status.md
-**生成日期**: 2026-04-07
+**条目数**: 260 | **生成日期**: 2026-04-17
 
 ---
 
-## ⚠️ 已知矛盾 (55 条)
+## Quick Troubleshooting Path
 
-- **solution_conflict** (high): intune-ado-wiki-120 vs intune-contentidea-kb-233 — context_dependent: 不同来源给出不同方案，可能适用不同场景
-- **solution_conflict** (high): intune-ado-wiki-120 vs intune-contentidea-kb-286 — context_dependent: 不同来源给出不同方案，可能适用不同场景
-- **solution_conflict** (high): intune-ado-wiki-122 vs intune-contentidea-kb-414 — context_dependent: 不同来源给出不同方案，可能适用不同场景
-- **solution_conflict** (high): intune-ado-wiki-210 vs intune-contentidea-kb-693 — context_dependent: 不同来源给出不同方案，可能适用不同场景
-- **solution_conflict** (high): intune-ado-wiki-211 vs intune-contentidea-kb-383 — context_dependent: 不同来源给出不同方案，可能适用不同场景
+### Step 1: Android device marked Noncompliant due to USB debugging enabled; Company Portal reports Block USB debugging on device rule violation; OMA-DM log sh...
+**Solution**: USB debugging: Disable Developer Options or turn off USB debugging via Settings > Developer options > USB debugging. Encryption value 4 (ENCRYPTION_STATUS_ACTIVE_DEFAULT_KEY): Remove the startup/boot PIN from device encryption settings. Kusto: CalculationQueueLibrary | where deviceId == '{deviceId}' | project env_time, EventId, message, complianceState, complianceDetails to see per-setting compliance values. OMA-DM log shows the exact API path and returned value for each compliance check.
+`[Source: onenote, Score: 9.5]`
 
-## 排查流程
+### Step 2: Handling Intune Sev A cases in China (Mooncake/21Vianet); need to know the most common Sev A scenarios, which Kusto queries to run, and which porta...
+**Solution**: Mooncake-specific resources: Admin portal: https://intune.microsoftonline.cn/ | Company Portal: https://portal.manage.microsoftonline.cn/ | Kusto dashboard: https://dataexplorer.azure.cn/dashboards/0d518fc7-f078-48e4-b09f-297510357504 (caserush-mooncake-SCIM-Intune). Key Kusto checks by scenario - Enrollment fail: Check Intune license, DEM user, GetEnrollmentType+AccountId+EnrollmentLimit, ADE enrollment profile (iOS/Mac only), iOS Enrollment, DeviceLifecycle enrollment type, Device Enroll-renew
+`[Source: onenote, Score: 9.5]`
 
-### Phase 1: Compliance Calculation
-> 来源: ADO Wiki — [ado-wiki-Compliance-Calculation.md](../drafts/ado-wiki-Compliance-Calculation.md)
+### Step 3: Device suddenly shows as Noncompliant in Intune portal. Compliance details contain 'Expected recent contact. Last contact: <old date>' for rule Def...
+**Solution**: Verify via Kusto: `IntuneEvent | where ServiceName == "StatelessComplianceCalculationService" | where EventUniqueName has "ComplianceDetail" | where Col1 contains "<deviceId>"` — look for complianceState changing to Noncompliant and RuleId containing RequireRemainContact. Resolution: have user connect device to internet and sign into Company Portal to trigger check-in. Review device check-in frequency settings.
+`[Source: onenote, Score: 9.5]`
 
-**Compliance Calculation — Deep Technical Guide**
-**Component**
-**MDMStatus Enum (ComplianceState)**
-**Compliance Check Frequency**
-- Compliance reports filed on each check-in when new info discovered
-- Consistency Checker runs daily over all compliance reports (DMS, PartnerDeviceHealth, Jailbreak, JAMF, AndroidEnterprise, VMWare, CustomCompliance)
-- Default threshold: 30 days (admin-tunable) → device marked noncompliant
-- Compliant devices rechecked every 12 hours (RecheckDeviceComplianceTask)
-- Non-compliant devices NOT rechecked
+### Step 4: Kusto queries using DeploymentStatuses_RawData or old EffectiveGroup deployment status tables return no data or table-not-found errors when investi...
+**Solution**: Switch queries to MSU-specific snapshot tables on Intuneglobalprod cluster, e.g., `DeploymentStatus_Snapshot_<MSU>` or `EffectiveGroup_Snapshot_<MSU>`. Reference internal KB: https://internal.support.services.microsoft.com/en-US/help/4581807. Get device/user EffectiveGroup IDs first via DeviceManagementProvider session log (look for DeviceEG and UserEG in message field).
+`[Source: onenote, Score: 9.5]`
 
-**Troubleshooting Flow**
+### Step 5: AAD Connect device writeback fails; some Intune-registered devices cannot sync back to on-premises AD. Synchronization error: 'Error in evaluation ...
+**Solution**: Upgrade .NET Framework to 4.6.2 or later on the AAD Connect server. In .NET 4.6.2, SHA256.Create() was changed to use SHA256Cng which is FIPS-compliant.
+`[Source: onenote, Score: 9.5]`
 
-**1. Check SSP / Company Portal**
+### Step 6: Android device reported Noncompliant for encryption despite being encrypted; device returns ENCRYPTION_STATUS_ACTIVE_DEFAULT_KEY (value 4) meaning ...
+**Solution**: (1) Verify USB debugging via OMADM log: InstanceSource ./Device/Vendor/MSFT/DeviceLock/DevicePolicyManager/IsUsbDebuggingAllowed; (2) Check getEncryptionStatus() return value - 4=ACTIVE_DEFAULT_KEY needs startup PIN, 3=ACTIVE is expected; (3) If PIN set but status still 4, collect device model and OMADM logs for escalation.
+`[Source: onenote, Score: 9.5]`
 
-**2. Check Assist365**
+### Step 7: Admin needs to verify whether Intune sent a noncompliance notification email to the end user for a specific device. Cannot confirm if the email act...
+**Solution**: Query IntuneEvent with DeviceId, ApplicationName=Compliance, filter ColMetadata for 'scheduledActionsToAdd' or 'ruleDetails' containing 'ScheduledActionTask:1' (noncompliance email action). ScheduledActionTask enum: 1=email notification, 2=push notification, 3=retire device, 9=mark not compliant. Note: email recipient address may not be visible in recent data due to compliance/privacy policies.
+`[Source: onenote, Score: 9.5]`
 
-**3. Kusto: Compliance Status Changes**
-```kusto
-```
-
-**4. Verify device is checking in**
-```kusto
-```
-
-**5. Check CA targeting**
-```kusto
-```
-
-**6. View Policy Compliances**
-- Count should match unique compliance policy assignments
-- Less = issue in flow from check-in to writing policy compliances
-- More = stale entries (cleaned by consistency checker)
-- Check ComplianceState: 2 (noncompliant) or 3 (error) → read ComplianceDetails
-
-**Known Issues**
-
-**Email Profile causing Unknown compliance (iOS)**
-```kusto
-```
-
-**Account-level changes cause 30-min compliance flip-flop**
-
-**Compliance SLA Alert Investigation**
-```kusto
-```
-
-**Jarvis Actions**
-1. StatelessDeviceService: `Devices(GuidKey1=guid'<AccountId>', GuidKey2=guid'<DeviceId>')`
-2. If no IDs: StatelessUserService `Users?$top=10&$filter=UPN eq '<UPN>'` → get UserId → `Users(guid'<UserId>')/Devices`
-3. Check LastContact field
-
-**Windows CSP Dependencies (as of 1903)**
-
-**Service Dependencies**
-
-### Phase 2: Device Compliance
-> 来源: ADO Wiki — [ado-wiki-Device-Compliance.md](../drafts/ado-wiki-Device-Compliance.md)
-
-**Device Compliance Troubleshooting Guide**
-**How Compliance Works**
-- MDMStatusCalculator provides per-device compliance info for Conditional Access in AAD
-- Compliance calculated based on DMS check-in results and timing thresholds
-- Consistency Checker runs daily over all compliance reports (DMS, PartnerDeviceHealth, Enhanced Jailbreak Detection, Partner Device Attribute/JAMF)
-- Default compliance threshold: 30 days (admin-tunable); devices outside threshold → non-compliant
-- All compliant devices rechecked every 12 hours by RecheckDeviceComplianceBackgroundTask
-- Non-compliant devices are NOT rechecked (blocked by AAD or no user impact)
-
-**Why targeted to Users?**
-
-**Secure by Default**
-
-**Multi-User Compliance**
-- Windows: uses last logged-on user's evaluation to report status
-- Other platforms: only the enrolling user's AAD device record is updated
-- Other users accessing O365 get null device ID from workplace join
-
-**Scoping Questions**
-1. UPN of the user?
-2. Platform (iOS, Windows, Android)?
-3. Enrollment method (Auto-enroll, Autopilot, Bulk, BYOD, Co-management, DEM)?
-4. User affinity or without?
-5. Android Enterprise: Work Profile or other?
-
-**Kusto Queries**
-
-**Full device check-in logs**
-```kusto
-```
-
-**Final compliance results per CI**
-```kusto
-```
-
-**All compliance logs for device**
-```kusto
-```
-
-**Compliance evaluation results**
-```kusto
-```
-
-**Support Boundaries**
-- 3P MDM vendor compliance reporting issues → case with 3P vendor team
-- See [Partner Compliance Wiki](https://supportability.visualstudio.com/Intune/_wiki/wikis/Intune/1349493/Partner-Compliance) for details
-
-**Partner Compliance**
-1. Configure Intune to work with compliance partner
-2. Configure partner to send data to Intune
-3. Enroll iOS/Android devices to the partner
-
-### Phase 3: Mde Compliance
-> 来源: ADO Wiki — [ado-wiki-MDE-Compliance.md](../drafts/ado-wiki-MDE-Compliance.md)
-
-**Troubleshooting compliance issues between MDE and Intune**
-**Prerequisites**
-- MDE Supportability Entitlement: CoreIdentity (mtpkustosupp-mwdt)
-- MDE Scrubbed Clusters: CoreIdentity (mtpscrubbedk-x5ze)
-- Intune Events: CoreIdentity (intunekustop-iav4)
-- Cluster: https://wcdprod.kusto.windows.net/
-- Cluster: https://intune.kusto.windows.net/Intune
-
-**Step 1 - Confirm notification sent from MDE to Intune**
-```kusto
-```
-- **Secured** — device fits compliance, signal received within threshold
-- **Deactivated** — device exceeded compliance grace period (7 or 14 days). Requires deeper investigation into device health from MDE perspective.
-
-**Step 2A (Deactivated) - Investigating device heartbeat to MDE**
-```kusto
-```
-
-**Step 2B (Secured) - Investigating compliance data received by Intune**
-```kusto
-```
-
-**Step 3 - Checking device compliance status**
-```kusto
-```
-
-**Step 4 - Verifying Entra compliance patching**
-```kusto
-```
-
-### Phase 4: Partner Compliance Kusto
-> 来源: OneNote — [onenote-partner-compliance-kusto.md](../drafts/onenote-partner-compliance-kusto.md)
-
-**Partner Compliance Kusto Troubleshooting**
-**Overview**
-**Step 1: Find MessageId via GraphApiProxyLibrary**
-```kql
-```
-**Step 2: Detailed Event Trace via IntuneEvent**
-```kql
-```
-**Key Components in Trace**
-**Important Notes**
-- **HeartBeat ≠ Compliance Report**: A successful heartbeat message from the partner does NOT mean compliance status was actually reported
-- The `deviceManagementAppId` field identifies which MDM partner reported:
-  - `0000000a-0000-0000-c000-000000000000` = Microsoft Intune
-  - Other GUIDs = third-party partners (e.g., MobileIron, VMware, etc.)
-- `isCompliant: false` with `complianceExpiryTime: null` means device is marked non-compliant with no grace period
-
-### Phase 5: Kusto 诊断查询
-
-#### compliance.md
-`[工具: Kusto skill — compliance.md]`
-
-```kql
-let deviceGuid = '{deviceId}';
-let startTime = datetime({startTime});
-let endTime = datetime({endTime});
-let maxRows = 1000;
-
-IntuneEvent
-| where env_time between (startTime .. endTime)
-| where ServiceName == "StatelessComplianceCalculationService"
-| where EventUniqueName == "ComplianceDetail-GetComplianceDetailsForDeviceAction-FinalResult"
-    or EventUniqueName == "ComplianceDetail-ComplianceUpdateDevicePatcher-DeviceCompliantChangedDetails"
-| where Col1 contains deviceGuid
-| extend complianceState = iff(EventUniqueName == "ComplianceDetail-ComplianceUpdateDevicePatcher-DeviceCompliantChangedDetails", Col3, extract("ComplianceState:(.*?);", 1, Col2))
-| extend complianceDetails = extract("RuleDetails:(.*)", 1, Col2)
-| extend accountId = extract("AccountId=(.*?);DeviceId=(.*?);User=(.*?);DeviceIdSource=(.*?);", 1, Col1)
-| extend deviceId = extract("AccountId=(.*?);DeviceId=(.*?);User=(.*?);DeviceIdSource=(.*?);", 2, Col1)
-| extend userId = extract("AccountId=(.*?);DeviceId=(.*?);User=(.*?);DeviceIdSource=(.*?);", 3, Col1)
-| extend deviceSource = extract("AccountId=(.*?);DeviceId=(.*?);User=(.*?);DeviceIdSource=(.*?);", 4, Col1)
-| project ASU=env_cloud_name, env_time, complianceState, complianceDetails, deviceId, userId, accountId
-| limit maxRows
-```
-
-```kql
-let accountGuid = '{accountId}';
-let startTime = datetime({startTime});
-let endTime = datetime({endTime});
-
-IntuneEvent 
-| where env_time between (startTime .. endTime) 
-| where ServiceName == "StatelessComplianceCalculationService" 
-| where EventUniqueName == "ComplianceDetail-ComplianceUpdateDevicePatcher-DeviceCompliantChangedDetails" 
-| where Col1 contains accountGuid 
-| extend complianceState = Col3
-| where complianceState contains "now: Compliant"
-| extend accountId = extract("AccountId=(.*?);DeviceId=(.*?);User=(.*?);DeviceIdSource=(.*?);", 1, Col1) 
-| extend deviceId = extract("AccountId=(.*?);DeviceId=(.*?);User=(.*?);DeviceIdSource=(.*?);", 2, Col1) 
-| extend userId = extract("AccountId=(.*?);DeviceId=(.*?);User=(.*?);DeviceIdSource=(.*?);", 3, Col1) 
-| project ASU=env_cloud_name, env_time, complianceState, EventUniqueName, deviceId, userId, accountId, Col2
-```
-
-```kql
-IntuneEvent
-| where env_time >= ago(3d)
-| where ColMetadata == "AADDId;AADTrustType;Authority;EnrollType;ClientCertificate;Message;"
-| where ActivityId contains '{activityId}'
-| distinct DeviceId
-```
-
-```kql
-let deviceid = '{deviceId}';
-
-IntuneEvent
-| where env_time > ago(3d)
-| where ActivityId == deviceid or DeviceId == deviceid
-| project env_time, ActivityId, RelatedActivityId, EventUniqueName, ColMetadata, 
-    Col1, Col2, Col3, Col4, Col5, Col6, Message
-| extend metakeys = todynamic(split(trim_end(';',ColMetadata),';'))
-| extend metavalues = pack(tostring(metakeys[0]), Col1, tostring(metakeys[1]), Col2, 
-    tostring(metakeys[2]), Col3, tostring(metakeys[3]), Col4, 
-    tostring(metakeys[4]), Col5, tostring(metakeys[5]), Col6) 
-| project env_time, ActivityId, RelatedActivityId, EventUniqueName, metavalues
-| order by env_time asc
-```
-
-```kql
-let deviceGuid = '{deviceId}';
-let accountid = '{accountId}';
-let startTime = datetime({startTime});
-let endTime = datetime({endTime});
-
-IntuneEvent
-| where env_time between (startTime .. endTime)
-| where ServiceName == "StatelessComplianceCalculationService"
-| where EventUniqueName == "ComplianceDetail-GetComplianceDetailsForDeviceAction-FinalResult"
-    or EventUniqueName == "ComplianceDetail-ComplianceUpdateDevicePatcher-DeviceCompliantChangedDetails"
-| where Col1 contains accountid and Col1 contains deviceGuid
-| extend accountId = extract("AccountId=(.*?);DeviceId=(.*?);User=(.*?);DeviceIdSource=(.*?);", 1, Col1)
-| extend deviceId = extract("AccountId=(.*?);DeviceId=(.*?);User=(.*?);DeviceIdSource=(.*?);", 2, Col1)
-| extend userId = extract("AccountId=(.*?);DeviceId=(.*?);User=(.*?);DeviceIdSource=(.*?);", 3, Col1)
-| extend deviceSource = extract("AccountId=(.*?);DeviceId=(.*?);User=(.*?);DeviceIdSource=(.*?);", 4, Col1)
-| extend complianceState = iff(EventUniqueName == "ComplianceDetail-ComplianceUpdateDevicePatcher-DeviceCompliantChangedDetails", Col3, extract("ComplianceState:(.*?);", 1, Col5))
-| extend complianceDetails = extract("RuleDetails:(.*)", 1, Col5)
-| project env_time, complianceState, complianceDetails, deviceId, userId, deviceSource
-| limit 1000
-```
-
-#### policy-status.md
-`[工具: Kusto skill — policy-status.md]`
-
-```kql
-DeviceManagementProvider
-| where env_time between(datetime({startTime})..datetime({endTime}))
-| where deviceId =~ '{deviceId}'
-| project env_time, DeviceID=ActivityId, PolicyName=name, PolicyType=typeAndCategory, 
-    Applicability=applicablilityState, Compliance=reportComplianceState, 
-    TaskName, EventId, EventMessage, message, tenantContextId, tenantId
-| order by env_time asc
-| limit 1000
-```
-
-```kql
-DeviceManagementProvider 
-| where env_time > ago(7d) 
-| where ActivityId == '{deviceId}'
-| where EventId == 5786
-| project env_time, DeviceID=ActivityId, policyId, PolicyName=name, PolicyType=typeAndCategory, 
-    Applicability=applicablilityState, Compliance=reportComplianceState, 
-    TaskName, EventId, EventMessage, message 
-| order by env_time asc
-```
-
-```kql
-DeviceManagementProvider 
-| where env_time > ago(3d)
-| where EventId == 5786
-| where ActivityId == '{deviceId}'
-| extend PolicyId = extract("PolicyID: '(.*?)';", 1, EventMessage)
-| where PolicyId == '{policyId}'
-| project env_time, DeviceID=ActivityId, PolicyName=name, PolicyId, PolicyType=typeAndCategory, 
-    Applicability=applicablilityState, Compliance=reportComplianceState, 
-    TaskName, EventId, EventMessage, message
-| order by env_time asc
-```
-
-```kql
-DeviceManagementProvider  
-| where env_time > ago(3d)
-| where EventId == 5786
-| where deviceId == '{deviceId}'
-| where id has '{policyId}'
-| project ActivityId, PolicyName=name, PolicyType=typeAndCategory, 
-    Applicability=applicablilityState, Compliance=reportComplianceState, 
-    deviceId=ActivityId, PolicyID=['id'], env_time, policyId
-| summarize 
-    Success=(count(Compliance=='Compliant')>0), 
-    Pending=(count(Compliance=='Compliant')==0), 
-    Error=(count(Compliance=='Error')>0),
-    LastSeen=max(env_time)
-  by ActivityId, PolicyName, PolicyType, PolicyID, Applicability, policyId
-| summarize 
-    SuccessCount=sum(Success), 
-    PendingCount=sum(Pending), 
-    ErrorCount=sum(Error) 
-  by PolicyName, PolicyType, ActivityId, PolicyID, Applicability, LastSeen, policyId
-| project policyId, PolicyType, Applicability, SuccessCount, PendingCount, ErrorCount, LastSeen
-| order by Applicability asc, LastSeen asc
-```
-
-```kql
-let starttime = ago(30d);
-let endtime = now();
-let deviceid = '{deviceId}';
-let accountid = '{accountId}';
-let policyid = '{policyId}';
-let ciid = '{ciid}';
-
-DeviceManagementProvider 
-| where env_time between (starttime .. endtime)
-| where accountId == accountid
-| where ActivityId contains deviceid
-| extend rawciid = iff(ciid <> '', ciid, iff(policyid <> '', replace_regex(policyid,'-','_'), ''))
-| where EventId == 5786
-| parse EventMessage with * "PolicyID: '" parsedPolicyId "';" * "CIId: '" parsedCIID "';" *
-| where parsedCIID contains rawciid or parsedPolicyId == policyid
-| project env_time, userId, deviceId, policyId=parsedPolicyId, CIID=parsedCIID, 
-    PolicyType=typeAndCategory, Applicability=applicablilityState, 
-    Compliance=reportComplianceState, TaskName, EventMessage, PolicyName=name 
-| order by env_time asc
-```
-
-```kql
-DeviceManagementProvider
-| where env_time >= ago(1d)
-| where ActivityId == '{deviceId}'
-| where message contains "Tattoo"
-| project env_time, ActivityId, cV, message
-```
-
-```kql
-DeviceManagementProvider
-| where SourceNamespace == "IntuneCNP" 
-| where env_time >= now(-10d)
-| where EventMessage contains "Tattoo removed for - AccountID: '{accountId}'; DeviceID: '{deviceId}'" 
-| project env_time, EventMessage 
-```
-
+### Step 8: USB drive access fails with 'Please Insert a Disk Into USB Drive' error after removing Intune USB block policy; USB still inaccessible
+**Solution**: Remove the StorageCardDisabled value from HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\StorageSense\Parameters and reboot. If issue persists, collect fvevol ETL logs and Process Monitor logs for Windows team analysis.
+`[Source: onenote, Score: 9.5]`
 
 ---
 
-## 已知问题速查
+## All Known Issues
 
-| # | 症状 | 根因 | 方案 | 分数 | 来源 |
-|---|------|------|------|------|------|
-| 1 | Android device marked Noncompliant due to USB debugging enabled; Company Portal reports Block USB... | Company Portal checks USB debugging via Android global Settings adb_enabled k... | USB debugging: Disable Developer Options or turn off USB debugging via Settings > Developer optio... | 🟢 9.0 | OneNote |
-| 2 | Device suddenly shows as Noncompliant in Intune portal. Compliance details contain 'Expected rece... | The built-in default compliance policy rule RequireRemainContact marks device... | Verify via Kusto: `IntuneEvent \| where ServiceName == "StatelessComplianceCalculationService" \|... | 🟢 9.0 | OneNote |
-| 3 | Android device reported Noncompliant for encryption despite being encrypted; device returns ENCRY... | Android getEncryptionStatus() API returns value 4 (ENCRYPTION_STATUS_ACTIVE_D... | (1) Verify USB debugging via OMADM log: InstanceSource ./Device/Vendor/MSFT/DeviceLock/DevicePoli... | 🟢 9.0 | OneNote |
-| 4 | Admin with custom Intune RBAC role cannot edit or create compliance discovery scripts; operations... | Custom RBAC role missing required permissions. Edit script needs PATCH permis... | Assign required permissions in custom role: Edit existing script = PATCH, Create new script = POS... | 🟢 9.0 | OneNote |
-| 5 | Admin needs to verify whether Intune sent a noncompliance notification email to the end user for ... |  | Query IntuneEvent with DeviceId, ApplicationName=Compliance, filter ColMetadata for 'scheduledAct... | 🟢 9.0 | OneNote |
-| 6 | Intune compliance policy reports device as 'not compliant' for BitLocker encryption even though t... | Device Health Attestation (DHA) collects boot data during boot. BitLocker com... | Reboot the device after BitLocker encryption completes, then sync with Intune. DHA flow: boot -> ... | 🟢 9.0 | OneNote |
-| 7 | After user-driven Autopilot, device reports 'not compliant' for BitLocker in Intune compliance; a... | In user-driven Autopilot, BitLocker encryption occurs during or after ESP. DH... | Three options: (1) Use White-glove/pre-provisioning with BitLocker policy assigned to device grou... | 🟢 9.0 | OneNote |
-| 8 | Intune compliance policy reports device not compliant for Secure Boot even though Secure Boot is ... | DHA requires UEFI 2.3.1 BIOS + TPM 2.0 to report Secure Boot status. Devices ... | 1) Run MSINFO as admin - verify BIOS Mode=UEFI and PCR7 Configuration=Bound; 2) Run Confirm-Secur... | 🟢 9.0 | OneNote |
-| 9 | Intune device compliance state shows Unknown; ValidPolicyCompliancesCount is 0 | Two common causes: (1) Device not checked in within last 2 days; (2) Device e... | 1) Verify device checked in within 2 days; 2) Confirm not DEM-enrolled; 3) Use device-based group... | 🟢 9.0 | OneNote |
-| 10 | B2B/CC B2B user on MDM-managed iOS device: accessing resources in resource tenant always fails wi... | Edge browser bug: when accessing cross-tenant resources (resource tenant diff... | 1) Verify device is compliant in home tenant (should work). 2) Confirm cross-tenant trust setting... | 🟢 9.0 | OneNote |
-| 11 | Windows trusted certificate (Sub CA) deployment via Intune fails with error 0x86000031 (-20162811... | Same certificate is simultaneously targeted to both User group and Computer c... | 1) Identify conflicting policies: check if the same certificate thumbprint is deployed via both u... | 🟢 9.0 | OneNote |
-| 12 | iOS Teams app fails MAM login with Conditional Access non-compliant error. Outlook/OneDrive/Word ... | Teams caches a stale/old MAM OID from a previous enrollment period (e.g., use... | 1) Uninstall and reinstall Teams to clear cached OID. 2) Long-term: Request Teams PG to update In... | 🟢 9.0 | OneNote |
-| 13 | Device appears compliant in Intune but user is blocked by Conditional Access policy; AAD shows Is... | User does not have a valid Intune license assigned (IntuneLicensed=false in R... | Assign a valid license containing Intune to the affected user. Verify IntuneLicensed=true in Rave... | 🟢 8.5 | ADO Wiki |
-| 14 | iOS/iPadOS device marked noncompliant; Intune email profile fails to deploy because an existing m... | Manually configured email profile on the iOS device blocks deployment of the ... | User removes the existing manually-configured email profile from the device. Once removed, the In... | 🟢 8.5 | ADO Wiki |
-| 15 | Android device appears encrypted but Company Portal marks it noncompliant for encryption; cannot ... | Device uses a default PIN set by the manufacturer for encryption. Intune cons... | User sets a new non-default PIN: tap notification in Company Portal, confirm existing PIN, choose... | 🟢 8.5 | ADO Wiki |
-| 16 | 2025年9月后 Graph API 调用 deviceManagementScripts/deviceHealthScripts 等端点返回权限错误 | Microsoft Graph 权限变更：DeviceManagementScripts.Read.All 和 ReadWrite.All 替代了之前的 ... | 更新应用的 API 权限：1. 添加 DeviceManagementScripts.Read.All 或 DeviceManagementScripts.ReadWrite.All；2. 影响... | 🟢 8.5 | ADO Wiki |
-| 17 | iOS/iPadOS 设备执行 Remove Passcode 操作后被提示设置新密码 | 合规策略 (Compliance Policy) 要求设备设置密码，移除密码后设备变为不合规，系统提示用户重新设置 | 这是预期行为；如不希望出现此提示，需修改合规策略移除密码要求 | 🟢 8.5 | ADO Wiki |
-| 18 | Default Compliance Policy 显示错误码 65001 (Not Applicable) | Secure by Default 功能已开启，导致无分配合规策略的设备被标记为不合规；其他原因包括：无策略分配给设备、动态组未更新、设备未 check-... | 1. 检查是否启用了 Secure by Default（参考 KB4099499）；2. 确认是否有合规策略分配给设备或用户组；3. 等待动态组更新完成；4. 触发设备 check-in 重新评估 | 🟢 8.5 | ADO Wiki |
-| 19 | 合规策略中 System Account 显示为不合规 | System Account 是 Intune 通过 MDM 通道与 Windows 设备通信时使用的默认标签；iOS/Android 设备上当设备联系服... | 这是预期行为——确认设备有正确的用户关联后 System Account 的合规状态可忽略；DEP 设备需完成 Company Portal 登录建立 User Affinity | 🟢 8.5 | ADO Wiki |
-| 20 | Windows 设备有多个用户时合规状态评估不一致或 AAD 记录显示合规但门户报告不合规 | Windows 多用户设备上 Intune 使用最后登录用户的评估结果报告合规状态；其他平台仅更新注册用户的 AAD 设备记录，其他用户访问 O365 资... | 1. 确认最后登录用户的合规状态；2. 非 Windows 平台确保通过注册用户访问资源；3. Intune 合规状态主要面向 CA，门户报告可能与实际 CA 评估不同步 | 🟢 8.5 | ADO Wiki |
-| 21 | O365 MDM 注册的设备在启用 Secure by Default 后被标记为不合规 | O365 MDM 注册的设备无法使用 Intune 合规策略，因此在 Secure by Default 评估中因无分配策略而失败 | 将设备从 O365 MDM 迁移到 Intune MDM 管理，或关闭 Secure by Default 设置（Devices > Compliance > Compliance policy... | 🟢 8.5 | ADO Wiki |
-| 22 | iOS 设备合规状态持续显示 Unknown，部署了 Email Profile + Compliance Policy 到不同组 | Compliance Policy 引用了 Email Profile 的 CI（Configuration Item），但因策略分配到不同组导致 DMS... | 1. 确保 Compliance Policy 和关联的 Configuration Policy（Email Profile）分配到相同的用户/设备组；2. 参考 Intune Docs fo... | 🟢 8.5 | ADO Wiki |
-| 23 | 修改账户级合规设置后设备合规状态在 30 分钟内反复切换（flip-flop） | DQCache 用于减少 AccountService 的 GET 请求，但账户级设置变更后不同服务实例可能使用旧缓存值和新值，导致计算结果不一致 | 这是已知设计限制（缓存 TTL 约 30 分钟）；受影响设置包括 Compliance Validity Period 和 Require Assigned Compliance Policy；... | 🟢 8.5 | ADO Wiki |
-| 24 | 设备 MDMStatus 持续为 Unknown (0)，多次 check-in 后仍不变 | (1) 设备未 check-in 评估合规（最常见）；(2) 用户从不同管理控制台（如 O365 MDM + Intune）部署了冲突的策略导致设备无法退... | 1. 确认设备是否正在正常 check-in（用 Kusto DmpLogs 检查 LastContact）；2. 检查是否有来自多个控制台的冲突策略；3. MDMStatus 枚举：0=Unk... | 🟢 8.5 | ADO Wiki |
-| 25 | macOS Platform SSO password synchronization silently fails — local password not updated to match ... | MDM passcode policy specifies higher complexity requirements than the Microso... | Ensure password complexity requirements between local machine passcode policy (MDM) and Microsoft... | 🟢 8.5 | ADO Wiki |
-| 26 | EPM Client Settings policy shows error: Allow Device Health Monitoring state = noncompliant | Registry key HKLM:\SOFTWARE\Microsoft\PolicyManager\current\device\DeviceHeal... | 1) Verify OS is supported version. 2) Check registry key contains PrivilegeManagement. 3) Ensure ... | 🟢 8.5 | ADO Wiki |
-| 27 | MDE device compliance shows Deactivated state in Intune; device marked as non-compliant despite b... | Device exceeded the compliance grace period (typically 7 or 14 days configure... | 1) Query wcdprod Kusto IntuneDeviceStateUpdates for DeviceState. 2) If Deactivated, check Machine... | 🟢 8.5 | ADO Wiki |
-| 28 | AAD Connect device writeback fails; some Intune-registered devices cannot sync back to on-premise... | Prior to .NET Framework 4.6.2, SHA256.Create() defaulted to SHA256Managed whi... | Upgrade .NET Framework to 4.6.2 or later on the AAD Connect server. In .NET 4.6.2, SHA256.Create(... | 🟢 8.5 | OneNote |
-| 29 | iOS DEP-enrolled device without user affinity shows compliance state 'Not evaluated' (Unknown) in... | DEP enrollment without user affinity does not complete WorkPlaceJoin (WPJ/AAD... | This is expected behavior for DEP without user affinity. If compliance evaluation is required, us... | 🟢 8.5 | OneNote |
-| 30 | 3rd party compliance partner (JAMF Pro, VMware Workspace ONE, MobileIron) device compliance statu... | Compliance partner integration uses Graph API PATCH to /devices/{deviceId} wi... | Use Kusto query on GraphApiProxyLibrary table: filter by env_cloud_name (e.g. AMSUC0101), url con... | 🟢 8.0 | OneNote |
-| 31 | Mobile Threat Defense (MTD) partner device shows compliant in partner console but Intune reports ... | MTD compliance is evaluated in CalculationQueueLibrary via multiple rules: Ad... | Kusto query on CalculationQueueLibrary: filter by deviceId (IntuneDeviceId), env_time range, proj... | 🟢 8.0 | OneNote |
-| 32 | MDE device shows DeviceState=Deactivated in IntuneDeviceStateUpdates — device compliance status n... | Device has exceeded the compliance grace period (configurable 7 or 14 days vi... | 1) Check IntuneDeviceStateUpdates Kusto query for UploadTime and DeviceState 2) Investigate heart... | 🔵 7.5 | ADO Wiki |
-| 33 | 'Principal aaduser is not authorized to read Qrybkradxxxxxx' error when querying Snapshot Kusto c... | Due to SFI (Security Future Initiative), access to Qrybkradxxxxxx Snapshot Ku... | Use Kusto Explorer inside Assist365 (accessible via Gladiator/Titan with MID account) to query Sn... | 🔵 7.5 | ADO Wiki |
-| 34 | Linux 设备访问 M365/Azure 资源时显示 Access Denied / Error 530003 | 用户未使用 Microsoft Edge 访问受 CA 策略保护的资源；或 Edge Dev 版本低于 100.x；或设备未注册/不合规 | 1. 确认用户使用 Microsoft Edge（非 Firefox/Chrome/Safari）。2. 更新 Edge 到最新版本（>=102.x）。3. 确认设备已在 Intune 注册且合... | 🔵 7.5 | ADO Wiki |
-| 35 | Linux 设备显示合规但仍无法访问公司资源（CA 检查通过但资源拒绝） | /etc/pam.d/common-password 文件中 pam_pwquality 配置被重置，导致密码策略不满足要求，设备合规状态延迟或错误 | 1. 访问 https://aka.ms/CPWeb 确认设备合规（等待 10-20 分钟）。2. 检查 /etc/pam.d/common-password 是否包含 'password re... | 🔵 7.5 | ADO Wiki |
-| 36 | BitLocker encryption policy deployed via Intune fails to apply on Azure VM used for lab testing; ... | Azure VMs do not have TPM enabled by default. BitLocker encryption policies r... | Enable v-TPM (virtual Trusted Platform Module) on the Azure VM before deploying BitLocker policie... | 🔵 7.5 | OneNote |
-| 37 | When using the Intune PC agent on a Windows PC, the firewall policies may be listed in the Intune... | This issue occurs when the Intune Windows PC agent checks in while it's not o... | Connect the Windows PC to the domain that it's joined to, and then check in using the Intune PC a... | 🔵 7.0 | ContentIdea KB |
-| 38 | Mobile devices do not receive configuration policies such as password requirements and/or other d... | Configuration baseline deployment is not configure to Remediate (Baseline Dep... | 1) Launch the Configuration Manager console and navigate to: Assets and Compliance -> Compliance ... | 🔵 7.0 | ContentIdea KB |
-| 39 | Compliance state in InTune portal shows incorrect status of &quot;Not Applicable&quot; | This is a bug in the backend reporting services | ICM 39675629 | 🔵 7.0 | ContentIdea KB |
-| 40 | There is a known issue in System Center Configuration Manager 1702 where a missing setting in And... | [Cause is included in summary] | This issue can be resolved by installing System Center Configuration Manager 1706. There is no ho... | 🔵 7.0 | ContentIdea KB |
-| 41 | When accessing Graph Explorer, attempting to sign in fails with the following error:You can't get... | This can occur if a conditional access policy is enabled in the tenant and th... | To resolve this problem, do one of the following:- Disable the conditional access policy from the... | 🔵 7.0 | ContentIdea KB |
-| 42 | You currently have an Intune or Azure AD Conditional Access policy to enforce Intune compliance o... | Current known issue with the Microsoft To-Do app and Conditional Access:https... | To work around this issue, you can sign out of the Company Portal app, but do not actually unenro... | 🔵 7.0 | ContentIdea KB |
-| 43 | A Windows 10 PC enrolled is being marked as non-compliant when a Compliance Policy is set to requ... | The Require Encryption and Require BitLocker requirements are not met until B... | From an Intune perspective, this behavior is By Design.  A device will be marked as compliant onc... | 🔵 7.0 | ContentIdea KB |
-| 44 | Intune: DEP token sync disabled and button greyed out - status shows �Terms and Conditions not ac... | Intune: DEP token sync disabled and button greyed out - status shows �Terms a... | Intune: DEP token sync disabled and button greyed out - status shows �Terms and Conditions not ac... | 🔵 7.0 | ContentIdea KB |
-| 45 | Customer is using Sandblast Mobile Threat Protection with Intune.  Customer has configured a comp... | By design.  When a user initially enters their PIN an access token is granted... | By design. This will only work in instances where the token has not been issued or has expired. a... | 🔵 7.0 | ContentIdea KB |
-| 46 | In Azure Intune portal Device Compliance, devices with compliance policies assigned appear in rep... | Compliance policies are applied to devices instead of users or groups. | Resolved with Intune 1803 service release. | 🔵 7.0 | ContentIdea KB |
-| 47 | Within the Device Compliance section of the Intune portal, all devices are listed as compliant, h... | This can occur if the device is compliant with Device Compliance policy but n... | The labels in the portal are confusing but the reason it shows compliant one place and not the ot... | 🔵 7.0 | ContentIdea KB |
-| 48 | App-based conditional access policies configured to use MFA (or a password in case the app doesn'... | Currently this is by design as the native Mac email client is not supported w... | There are other ways to protect access to company email, such as requiring only the Outlook clien... | 🔵 7.0 | ContentIdea KB |
-| 49 | If a user is targeted with a Windows 10 compliance policy with any combination of three Windows 1... | The problem is caused by a product issue with the initial release of Windows ... | The fix was included in the Windows 10 1709 December update so installing the latest Cumulative U... | 🔵 7.0 | ContentIdea KB |
-| 50 | When logging on as another user to a Surface Hub you receive an error message similar to this&nbs... | You receiving this error because there is conditional access policy that is t... | To resolve this issue create a new security group.&nbsp; Move all the Surface Hub machines into t... | 🔵 7.0 | ContentIdea KB |
-| 51 | When assigning a Device Compliance policy to a group of Windows computers, the policy is applied ... | This can occur if the group assigned the device compliance policy is a dynami... | To work around this issue, create a manually assigned device group or a user group and assign the... | 🔵 7.0 | ContentIdea KB |
-| 52 | After enabling &quot;Unknown Sources&quot; on an Android device and sideloading apps, the device ... | This is by design. | The policy setting for &quot;Block apps from unknown sources&quot; simply checks the setting for ... | 🔵 7.0 | ContentIdea KB |
-| 53 | Customer configured a compliance policy with the "Minimum Required OS" set to beyond what is curr... | By design. The device will enroll and then check for compliance. | Close out of the company portal and re-open it and the Intune portal will show the device as "In ... | 🔵 7.0 | ContentIdea KB |
-| 54 | After creating and assigning an Approved Apps list, the Apps list shows a State of Failed in stat... | The user device is not compliant with policy, not because the policy did not ... | No resolution at this time. The Restricted Apps policy is just a reporting policy. To block certa... | 🔵 7.0 | ContentIdea KB |
-| 55 | After configuring the Actions for noncompliance for device compliance in Intune, when a device is... | This can occur if the minimum OS version of the device compliance policy is s... | To resolve this problem, make sure that Minimum OS version and Maximum OS version (if used) are s... | 🔵 7.0 | ContentIdea KB |
-| 56 | Please convert this article to an internal KB Monitoring Compliance workflow.docx . | Please convert this article to an internal KB Monitoring Compliance workflow.... | Please convert this article to an internal KB Monitoring Compliance workflow.docx | 🔵 7.0 | ContentIdea KB |
-| 57 | When a customer has setup a Compliance Policy, targeting Windows 10, that requires Secure Boot to... | This is by-design. | This is considered by-design. This feature uses something called Device Health Attestation. In a ... | 🔵 7.0 | ContentIdea KB |
-| 58 | This article describes how to use a built-in app like the native messaging application on devices... |  |  | 🔵 7.0 | ContentIdea KB |
-| 59 | Customer used to be able to see Compliance Policies they created in Silverlight, while they knew ... | [NOTICE - Information detail from Rave should not be shared with customers di... | First and foremost, this is expected behavior and design, it was confirmed with the IcM on https:... | 🔵 7.0 | ContentIdea KB |
-| 60 | Customer has a 10-character device password requirement (alphanumeric with special characters) bu... | Under investigation by Jamf. Internal Product issue: PI-006635 | This has been fixed in Jamf Pro 10.13[PI-006635] Fixed an issue that caused computers with macOS ... | 🔵 7.0 | ContentIdea KB |
-| 61 | There are 2 possible scenarios for having compliance issues in Intune due to SecureBoot:Scenario ... | Scenario 1: The compiance result will depend on the TPM recording into PCR7 (... | First, please confirm that TPM shows only as TPM is ready for use (please ask the customer to sen... | 🔵 7.0 | ContentIdea KB |
-| 62 | After configuring Intune/Jamf integration, Mac clients fail to to enroll and you notice one or mo... | This can occur if the user fails to authenticate via the Company Portal app 3... | To resolve this issue, have the user launch the Company Portal app and sign in again until they g... | 🔵 7.0 | ContentIdea KB |
-| 63 | The Device compliance reporting for a Windows 10 device displays a compliance state for a System ... | The System account is used during the device check-in if there is no user log... | The reported behavior is expected. | 🔵 7.0 | ContentIdea KB |
-| 64 | Co-managed device shows See ConfigMgr for compliance status in Intune portal and compliance polic... | Compliance Policies workload is still managed by ConfigMgr (not switched to I... | Switch the Compliance Policies workload from ConfigMgr to Intune (or Pilot Intune). After switchi... | 🔵 7.0 | OneNote |
-| 65 | iOS/iPadOS device appears compliant but user is blocked by Conditional Access; Company Portal rep... | An existing manually configured email profile on the iOS device blocks deploy... | User must remove the existing manual email profile from the device, then the Intune email profile... | 🔵 6.5 | MS Learn |
-| 66 | Android device appears encrypted but Company Portal marks it as noncompliant/not encrypted | Some Android manufacturers encrypt using a default PIN instead of a user-set ... | User must set a new non-default startup PIN: tap Company Portal notification, confirm existing PI... | 🔵 6.5 | MS Learn |
-| 67 | BitLocker-encrypted Windows 10 device shows as Not Compliant in Intune even though BitLocker Driv... | BitLocker encryption has not finished yet. Based on disk size, number of file... | Wait for BitLocker encryption to complete. After encryption is finished, the device will show as ... | 🔵 6.5 | MS Learn |
-| 68 | Windows 10 device with Secure Boot enabled shows as Not Compliant in Intune compliance policy tha... | The Require Secure Boot setting is only supported on TPM 2.0 devices with UEF... | Verify device has TPM 2.0 (run tpm.msc), UEFI BIOS mode (msinfo32), and PCR7 bound. If TPM is 1.2... | 🔵 6.5 | MS Learn |
-| 69 | Windows 10 devices with Microsoft Defender Firewall enabled show incorrect compliance status (non... | Known issue in certain Windows 10 versions (1809, 1803, 1709) causing incorre... | Install specific KB updates: KB4469342 (1809), KB4467682 (1803), KB4467681 (1709). Workaround: se... | 🔵 6.5 | MS Learn |
-| 70 | Error -2016281112 when deploying password policy (device restriction) in Intune for Android or Wi... | Password policies via device restriction cannot be immediately enforced on us... | Direct users to change their password (Android: accept notification; Windows: Ctrl+Alt+Del > Chan... | 🔵 6.5 | MS Learn |
-| 71 | NAC (Network Access Control) partner integration returns HTTP 503 errors when querying Intune for... | Broad unfiltered queries to Intune are throttled: after the first 60 minutes ... | Limit broad unfiltered NAC queries to once every 4+ hours (within the first 60-minute window). Us... | 🔵 6.5 | MS Learn |
-| 72 | Samsung Android Enterprise fully managed devices running Android 11+ show as noncompliant after a... | Known Samsung issue with compliance state after managed update on fully manag... | For DA and work profile: upgrade Company Portal to version 5.0.5358.0 (fix released Dec 2021). Fo... | 🔵 5.5 | MS Learn |
+| # | Symptom | Root Cause | Solution | Score | Source |
+|---|---------|-----------|----------|-------|--------|
+| 1 | Android device marked Noncompliant due to USB debugging enabled; Company Port... | Company Portal checks USB debugging via Android global Settings adb_enabled k... | USB debugging: Disable Developer Options or turn off USB debugging via Settin... | 9.5 | onenote |
+| 2 | Handling Intune Sev A cases in China (Mooncake/21Vianet); need to know the mo... | Top Sev A Intune scenarios in Mooncake by frequency: (1) Device enrollment fa... | Mooncake-specific resources: Admin portal: https://intune.microsoftonline.cn/... | 9.5 | onenote |
+| 3 | Device suddenly shows as Noncompliant in Intune portal. Compliance details co... | The built-in default compliance policy rule RequireRemainContact marks device... | Verify via Kusto: `IntuneEvent / where ServiceName == "StatelessComplianceCal... | 9.5 | onenote |
+| 4 | Kusto queries using DeploymentStatuses_RawData or old EffectiveGroup deployme... | Deployment status and Effective Group related tables were migrated from the p... | Switch queries to MSU-specific snapshot tables on Intuneglobalprod cluster, e... | 9.5 | onenote |
+| 5 | AAD Connect device writeback fails; some Intune-registered devices cannot syn... | Prior to .NET Framework 4.6.2, SHA256.Create() defaulted to SHA256Managed whi... | Upgrade .NET Framework to 4.6.2 or later on the AAD Connect server. In .NET 4... | 9.5 | onenote |
+| 6 | Android device reported Noncompliant for encryption despite being encrypted; ... | Android getEncryptionStatus() API returns value 4 (ENCRYPTION_STATUS_ACTIVE_D... | (1) Verify USB debugging via OMADM log: InstanceSource ./Device/Vendor/MSFT/D... | 9.5 | onenote |
+| 7 | Admin needs to verify whether Intune sent a noncompliance notification email ... |  | Query IntuneEvent with DeviceId, ApplicationName=Compliance, filter ColMetada... | 9.5 | onenote |
+| 8 | USB drive access fails with 'Please Insert a Disk Into USB Drive' error after... | StorageCardDisabled registry key (set to 1) persists under HKLM\SOFTWARE\Micr... | Remove the StorageCardDisabled value from HKLM\SOFTWARE\Microsoft\Windows\Cur... | 9.5 | onenote |
+| 9 | Intune compliance policy reports device as 'not compliant' for BitLocker encr... | Device Health Attestation (DHA) collects boot data during boot. BitLocker com... | Reboot the device after BitLocker encryption completes, then sync with Intune... | 9.5 | onenote |
+| 10 | Intune policy shows Succeeded but removed sub-settings (TattooRemoval) are no... | When admin uses only User groups (or only Device groups) for all profile assi... | Create a dummy/fake policy targeting impacted devices using the opposite assi... | 9.5 | onenote |
+| 11 | Intune compliance policy reports device not compliant for Secure Boot even th... | DHA requires UEFI 2.3.1 BIOS + TPM 2.0 to report Secure Boot status. Devices ... | 1) Run MSINFO as admin - verify BIOS Mode=UEFI and PCR7 Configuration=Bound; ... | 9.5 | onenote |
+| 12 | Intune Kiosk mode auto-logon stops working; device does not auto-login to the... | Device configuration profile or compliance policy with password policy settin... | 1) Remove or exclude password policy from configuration/compliance profiles t... | 9.5 | onenote |
+| 13 | B2B/CC B2B user on MDM-managed iOS device: accessing resources in resource te... | Edge browser bug: when accessing cross-tenant resources (resource tenant diff... | 1) Verify device is compliant in home tenant (should work). 2) Confirm cross-... | 9.5 | onenote |
+| 14 | iOS/iPadOS device marked noncompliant; Intune email profile fails to deploy b... | Manually configured email profile on the iOS device blocks deployment of the ... | User removes the existing manually-configured email profile from the device. ... | 9.0 | ado-wiki |
+| 15 | Android device appears encrypted but Company Portal marks it noncompliant for... | Device uses a default PIN set by the manufacturer for encryption. Intune cons... | User sets a new non-default PIN: tap notification in Company Portal, confirm ... | 9.0 | ado-wiki |
+| 16 | Enrolled Android device prompts No certificates found and cannot access O365 ... | Browser Access option not enabled in Company Portal app settings, preventing ... | Open Company Portal > Settings > tap Enable Browser Access. In Chrome sign ou... | 9.0 | ado-wiki |
+| 17 | iOS/iPadOS 设备执行 Remove Passcode 操作后被提示设置新密码 | 合规策略 (Compliance Policy) 要求设备设置密码，移除密码后设备变为不合规，系统提示用户重新设置 | 这是预期行为；如不希望出现此提示，需修改合规策略移除密码要求 | 9.0 | ado-wiki |
+| 18 | Default Compliance Policy 显示错误码 65001 (Not Applicable) | Secure by Default 功能已开启，导致无分配合规策略的设备被标记为不合规；其他原因包括：无策略分配给设备、动态组未更新、设备未 check-... | 1. 检查是否启用了 Secure by Default（参考 KB4099499）；2. 确认是否有合规策略分配给设备或用户组；3. 等待动态组更新完成... | 9.0 | ado-wiki |
+| 19 | 合规策略中 System Account 显示为不合规 | System Account 是 Intune 通过 MDM 通道与 Windows 设备通信时使用的默认标签；iOS/Android 设备上当设备联系服... | 这是预期行为——确认设备有正确的用户关联后 System Account 的合规状态可忽略；DEP 设备需完成 Company Portal 登录建立 U... | 9.0 | ado-wiki |
+| 20 | Windows 设备有多个用户时合规状态评估不一致或 AAD 记录显示合规但门户报告不合规 | Windows 多用户设备上 Intune 使用最后登录用户的评估结果报告合规状态；其他平台仅更新注册用户的 AAD 设备记录，其他用户访问 O365 资... | 1. 确认最后登录用户的合规状态；2. 非 Windows 平台确保通过注册用户访问资源；3. Intune 合规状态主要面向 CA，门户报告可能与实际 ... | 9.0 | ado-wiki |
+| 21 | O365 MDM 注册的设备在启用 Secure by Default 后被标记为不合规 | O365 MDM 注册的设备无法使用 Intune 合规策略，因此在 Secure by Default 评估中因无分配策略而失败 | 将设备从 O365 MDM 迁移到 Intune MDM 管理，或关闭 Secure by Default 设置（Devices > Compliance... | 9.0 | ado-wiki |
+| 22 | iOS 设备合规状态持续显示 Unknown，部署了 Email Profile + Compliance Policy 到不同组 | Compliance Policy 引用了 Email Profile 的 CI（Configuration Item），但因策略分配到不同组导致 DMS... | 1. 确保 Compliance Policy 和关联的 Configuration Policy（Email Profile）分配到相同的用户/设备组；... | 9.0 | ado-wiki |
+| 23 | 修改账户级合规设置后设备合规状态在 30 分钟内反复切换（flip-flop） | DQCache 用于减少 AccountService 的 GET 请求，但账户级设置变更后不同服务实例可能使用旧缓存值和新值，导致计算结果不一致 | 这是已知设计限制（缓存 TTL 约 30 分钟）；受影响设置包括 Compliance Validity Period 和 Require Assigne... | 9.0 | ado-wiki |
+| 24 | 设备 MDMStatus 持续为 Unknown (0)，多次 check-in 后仍不变 | (1) 设备未 check-in 评估合规（最常见）；(2) 用户从不同管理控制台（如 O365 MDM + Intune）部署了冲突的策略导致设备无法退... | 1. 确认设备是否正在正常 check-in（用 Kusto DmpLogs 检查 LastContact）；2. 检查是否有来自多个控制台的冲突策略；3... | 9.0 | ado-wiki |
+| 25 | MDE device compliance shows Deactivated state in Intune; device marked as non... | Device exceeded the compliance grace period (typically 7 or 14 days configure... | 1) Query wcdprod Kusto IntuneDeviceStateUpdates for DeviceState. 2) If Deacti... | 9.0 | ado-wiki |
+| 26 | BitLocker encryption strength remains 128-bit after deploying 256-bit policy ... | Drive was already encrypted before the BitLocker policy was deployed. BitLock... | Customer needs to decrypt the drive first, then let the BitLocker policy trig... | 9.0 | ado-wiki |
+| 27 | Driver disappeared from Driver Update policy — specific driver no longer visi... | OEM removed driver from MS Catalog; or driver aged out because all applicable... | 1) Run Kusto DriverUpdateInventory_Snapshot query with PolicyId to check driv... | 9.0 | ado-wiki |
+| 28 | Driver deployed by Intune causing issues on device — customer reports problem... | Faulty driver from OEM — Intune is just the delivery mechanism and does not c... | Intune only delivers drivers. If driver causes issues, engage TA/TL to discus... | 9.0 | ado-wiki |
+| 29 | Driver was installed without admin approval in Intune driver update policy | Device assigned to multiple driver update policies (one policy approves what ... | 1) Check Kusto DriverUpdatePolicy/DriverUpdateInventory/DriverUpdatePerPolicy... | 9.0 | ado-wiki |
+| 30 | Android Teams device sign-in timing out during enrollment - CA evaluation blo... | Device info propagated from Intune to Azure AD after enrollment takes 10-15 m... | 1) Add TWO CA exclusion filters: Filter 1 on displayName=ManufacturerModel fo... | 9.0 | ado-wiki |
+| 31 | Android Teams devices periodically signed out - device requires re-authentica... | CA policy enforcing sign-in frequency causes periodic sign-out. Expected beha... | Review CA policies for sign-in frequency settings. Known issue: https://learn... | 9.0 | ado-wiki |
+| 32 | Android Teams device compliance/configuration not working - error 50199 or 53... | Unsupported compliance or configuration settings assigned to Teams device. 50... | 1) Verify only supported settings 2) Enable Android DA enrollment 3) Check en... | 9.0 | ado-wiki |
+| 33 | iOS managed app config policy (App Configuration Profile) not applied or take... | App config delivery timing is delayed by MDM policy sync cycle; initial enrol... | 1. Use Kusto IntuneEvent to verify: IntuneEvent / where DeviceId == '{deviceI... | 8.5 | onenote |
+| 34 | Intune compliance policies and configuration profiles take effect on users wh... | By design. Intune policies can be applied to devices regardless of user licen... | This is expected behavior (by design). Intune license is required for enrollm... | 8.5 | onenote |
+| 35 | Intune Disk Encryption (BitLocker) policy shows Error status for devices in E... | BitLocker CSP FixedDrivesRecoveryOptions setting does not have a real Not Con... | Change Recovery key file creation under FixedDrivesRecoveryOptions from Not C... | 8.5 | onenote |
+| 36 | Need to verify TattooRemoval is running correctly for a device; or policy set... | TattooRemoval process may not have run yet due to hold-off period, or need to... | Kusto: IntuneEvent / where AccountId == '<tenantId>' / where * has 'Tattoo' —... | 8.5 | onenote |
+| 37 | iOS DEP-enrolled device without user affinity shows compliance state 'Not eva... | DEP enrollment without user affinity does not complete WorkPlaceJoin (WPJ/AAD... | This is expected behavior for DEP without user affinity. If compliance evalua... | 8.0 | onenote |
+| 38 | Mobile Threat Defense (MTD) partner device shows compliant in partner console... | MTD compliance is evaluated in CalculationQueueLibrary via multiple rules: Ad... | Kusto query on CalculationQueueLibrary: filter by deviceId (IntuneDeviceId), ... | 8.0 | onenote |
+| 39 | BitLocker encryption policy deployed via Intune fails to apply on Azure VM us... | Azure VMs do not have TPM enabled by default. BitLocker encryption policies r... | Enable v-TPM (virtual Trusted Platform Module) on the Azure VM before deployi... | 8.0 | onenote |
+| 40 | iOS Personal Hotspot restriction policy does not block on iOS 12.1 or earlier. | Personal Hotspot restriction only enforced starting iOS 12.2. | Upgrade to iOS 12.2 or later. | 8.0 | mslearn |
+| 41 | Co-managed device shows See ConfigMgr for compliance status in Intune portal ... | Compliance Policies workload is still managed by ConfigMgr (not switched to I... | Switch the Compliance Policies workload from ConfigMgr to Intune (or Pilot In... | 7.5 | onenote |
+| 42 | MDE device shows DeviceState=Deactivated in IntuneDeviceStateUpdates — device... | Device has exceeded the compliance grace period (configurable 7 or 14 days vi... | 1) Check IntuneDeviceStateUpdates Kusto query for UploadTime and DeviceState ... | 7.5 | ado-wiki |
+| 43 | 'Principal aaduser is not authorized to read Qrybkradxxxxxx' error when query... | Due to SFI (Security Future Initiative), access to Qrybkradxxxxxx Snapshot Ku... | Use Kusto Explorer inside Assist365 (accessible via Gladiator/Titan with MID ... | 7.5 | ado-wiki |
+| 44 | Linux 设备显示合规但仍无法访问公司资源（CA 检查通过但资源拒绝） | /etc/pam.d/common-password 文件中 pam_pwquality 配置被重置，导致密码策略不满足要求，设备合规状态延迟或错误 | 1. 访问 https://aka.ms/CPWeb 确认设备合规（等待 10-20 分钟）。2. 检查 /etc/pam.d/common-passwo... | 7.5 | ado-wiki |
+| 45 | When using the Intune PC agent on a Windows PC, the firewall policies may be ... | This issue occurs when the Intune Windows PC agent checks in while it's not o... | Connect the Windows PC to the domain that it's joined to, and then check in u... | 7.5 | contentidea-kb |
+| 46 | When trying to edit, save, or delete existing MDM security policies in O365, ... | The Office 365 portal is trying to modify a policy, and either the logged-on ... | Workaround 1: Ensure logged-on account is a local Global Administrator with C... | 7.5 | contentidea-kb |
+| 47 | Mobile devices do not receive configuration policies such as password require... | Configuration baseline deployment is not configure to Remediate (Baseline Dep... | 1) Launch the Configuration Manager console and navigate to: Assets and Compl... | 7.5 | contentidea-kb |
+| 48 | When deploying a wifi profile to an Android device, the PFX certificate never... | The Wifi profile is not authenticating against the PFX certificate because it... | Navigate to manage.microsoft.com, click on the Policy node and edit the confi... | 7.5 | contentidea-kb |
+| 49 | Q:Can you push a custom wallpaper via an Intune device configuration policy t... |  |  | 7.5 | contentidea-kb |
+| 50 | Unable to install apps from Public or Private Store - Getting error stating"E... | GPO Policy Setting that needed to be changed... "Disable all apps from Window... | This setting can be accessed by following the steps below: 1) click START, th... | 7.5 | contentidea-kb |
+| 51 | Customer is using a PFX certificate to deploy a WiFi policy to an Android dev... | Misconfigured certificate template (template created using wrong Windows vers... | Created a new      certificate template for Android devices  In the CA went t... | 7.5 | contentidea-kb |
+| 52 | Attempting to open an attached Word file in the Outlook app on an Android dev... | This can occur if a device configuration policy for device encryption exists ... | To resolve this issue, complete the following:  Open the Azure portal.Click M... | 7.5 | contentidea-kb |
+| 53 | Customer deploys a Microsoft Intune configuration policy to configure BitLock... | Unknown | Deploy a device restriction settings password policy to require encryption. | 7.5 | contentidea-kb |
+| 54 | When a device security or compliance policy change is made for Android device... |  |  | 7.5 | contentidea-kb |
+| 55 | There is a known issue in System Center Configuration Manager 1702 where a mi... | [Cause is included in summary] | This issue can be resolved by installing System Center Configuration Manager ... | 7.5 | contentidea-kb |
+| 56 | Customer has created an internal trusted root certificate to sign websites an... |  |  | 7.5 | contentidea-kb |
+| 57 | You currently have an Intune or Azure AD Conditional Access policy to enforce... | Current known issue with the Microsoft To-Do app and Conditional Access:https... | To work around this issue, you can sign out of the Company Portal app, but do... | 7.5 | contentidea-kb |
+| 58 | In a hybrid Intune/Configuration Manager environment, after you create and de... | This can occur if remediation is not enabled in the Configuration Baseline.&n... | To resolve this issue, enable remediation in the Configuration Baseline that ... | 7.5 | contentidea-kb |
+| 59 | Can you configure an Intune compliance policy that will block access to the n... |  |  | 7.5 | contentidea-kb |
+| 60 | A Windows 10 PC enrolled is being marked as non-compliant when a Compliance P... | The Require Encryption and Require BitLocker requirements are not met until B... | From an Intune perspective, this behavior is By Design.  A device will be mar... | 7.5 | contentidea-kb |
+| 61 | Devices targeted by compliance policy, showing in both the Device Compliance ... | This is due to a mis-configuration of the Compliance Policy AssignmentAs a re... | Issue resolved with Intune 1803 service release, see https://docs.microsoft.c... | 7.5 | contentidea-kb |
+| 62 | After creating and applying an Update Ring to Windows clients, the update doe... |  |  | 7.5 | contentidea-kb |
+| 63 | Overview MDM Coexistence - using both Microsoft Intune and Office 365 concurr... |  |  | 7.5 | contentidea-kb |
+| 64 | Within the Device Compliance section of the Intune portal, all devices are li... | This can occur if the device is compliant with Device Compliance policy but n... | The labels in the portal are confusing but the reason it shows compliant one ... | 7.5 | contentidea-kb |
+| 65 | If a user is targeted with a Windows 10 compliance policy with any combinatio... | The problem is caused by a product issue with the initial release of Windows ... | The fix was included in the Windows 10 1709 December update so installing the... | 7.5 | contentidea-kb |
+| 66 | When saving Outlook email attachments to a USB drive the user is prompted to ... |  |  | 7.5 | contentidea-kb |
+| 67 | When deploying a device restriction policy for MDM devices you are getting an... |  |  | 7.5 | contentidea-kb |
+| 68 | After enabling &quot;Unknown Sources&quot; on an Android device and sideloadi... | This is by design. | The policy setting for &quot;Block apps from unknown sources&quot; simply che... | 7.5 | contentidea-kb |
+| 69 | Customer configured a compliance policy with the "Minimum Required OS" set to... | By design. The device will enroll and then check for compliance. | Close out of the company portal and re-open it and the Intune portal will sho... | 7.5 | contentidea-kb |
+| 70 | Enhanced jailbreak detection compliance setting causes iOS device to check-in... |  |  | 7.5 | contentidea-kb |
+| 71 | If you have a device that is showing as Not Compliant in WebRave or Viewpoint... |  |  | 7.5 | contentidea-kb |
+| 72 | After configuring the Actions for noncompliance for device compliance in Intu... | This can occur if the minimum OS version of the device compliance policy is s... | To resolve this problem, make sure that Minimum OS version and Maximum OS ver... | 7.5 | contentidea-kb |
+| 73 | When a customer has setup a Compliance Policy, targeting Windows 10, that req... | This is by-design. | This is considered by-design. This feature uses something called Device Healt... | 7.5 | contentidea-kb |
+| 74 | On an iOS device, when the screen is locked device configuration profiles may... | This occurs because the iOS device is busy and unable to complete evaluation ... | This is a function of the iOS platform. Once the device is unlocked the polic... | 7.5 | contentidea-kb |
+| 75 | We've seen customers have issues where they deploy an iOS or Android policy t... |  |  | 7.5 | contentidea-kb |
+| 76 | Information needed to troubleshoot Jamf Registration and Compliance Issues - ... |  |  | 7.5 | contentidea-kb |
+| 77 | To troubleshoot Jamf compliance: 1. Collect the following information a. AAD ... |  |  | 7.5 | contentidea-kb |
+| 78 | After creating and assigning an iOS update policy to prevent software update ... | This is a known issue with the current release of Intune and iOS 11.3.1 and l... | UI was updated 10/2018 in the Intune portal to make the functionality more cl... | 7.5 | contentidea-kb |
+| 79 | You created a device configuration profile for Android that contains a list o... | The reporting of prohibited apps is posted to a dedicated node, separate from... | This is how to monitor restrictive apps: Login to https://portal.azure.com. O... | 7.5 | contentidea-kb |
+| 80 | Customer used to be able to see Compliance Policies they created in Silverlig... | [NOTICE - Information detail from Rave should not be shared with customers di... | First and foremost, this is expected behavior and design, it was confirmed wi... | 7.5 | contentidea-kb |
+| 81 | Use this query to find all MTD messages for a given account. You can also opt... |  |  | 7.5 | contentidea-kb |
+| 82 | You created a compliance policy for Windows 10 and checked the option to Requ... | This behavior was investigated under ICM 79613269 and Emerging Issue 66. It w... | The issue has been fixed with an update to the Windows OS. Please advise cust... | 7.5 | contentidea-kb |
+| 83 | Customers are unable to save configuration policies after they added a scope ... | This behavior is by design when using the Silverlight portal as ScopeTags are... | As this behavior is considered by design we are not able to provide a direct ... | 7.5 | contentidea-kb |
+| 84 | Guide: Kusto queries for troubleshooting Android Enterprise COBO devices - re... |  |  | 7.5 | contentidea-kb |
+| 85 | What is&nbsp;Office 365 apps for Windows 10 devicesYou can assign and install... |  |  | 7.5 | contentidea-kb |
+| 86 | Jamf managed Intune integrated macOS devices are not targeted by the macOS co... | This is by-design.The Intune Jamf feature currently only supports compliance ... | Target user based groups with the macOS compliance policy. | 7.5 | contentidea-kb |
+| 87 | Enrolled Windows 10 computers are forced to change passwords if the minimum p... |  |  | 7.5 | contentidea-kb |
+| 88 | You have noted one of the following three issues around the IntuneMAMAllowedA... | This is due to a UI \ mechanics change made by the developers that have repla... | Issue resolved with 1903 release as the console now shows the updated UI for ... | 7.5 | contentidea-kb |
+| 89 | New iPhone 8 stuck in loop while enrolling. Gets to part to enter email creds... | Customer enabled an AAD Private Preview feature which allows the use of&nbsp;... | Turn feature off and re-enroll using UPN&nbsp; | 7.5 | contentidea-kb |
+| 90 | Customer is using VPP token to push the Company Portal app to iOS devices.&nb... | The app required an App Configuration.&nbsp; | We used the custom XML from the following article:&nbsp;https://techcommunity... | 7.5 | contentidea-kb |
+| 91 | When troubleshooting BitLocker policy enforcement issues, start by reading th... |  |  | 7.5 | contentidea-kb |
+| 92 | I would like to the share the following about Compliance Policy issue with Se... | Windows 10 computer with TPM 1.2 | Based on feedback from Windows Core team about Secure Boot and TPM 1.2 we had... | 7.5 | contentidea-kb |
+| 93 | Consider the following scenario:&nbsp;  A customer has deployed a Windows 10 ... |  |  | 7.5 | contentidea-kb |
+| 94 | When deploying Intune Policy to encrypt the device and store the recovery key... | the logged on user does not have permission to read the private key on the ce... | In order to resolve this issue please install kb4497934 | 7.5 | contentidea-kb |
+| 95 | Configure https://internal.support.services.microsoft.com/help/2745725  Emerg... |  |  | 7.5 | contentidea-kb |
+| 96 | First check Kusto if Deployment works as expected:  DeploymentProvider / wher... |  |  | 7.5 | contentidea-kb |
+| 97 | You have a Windows MDM device enrolled into Intune and have deployed a compli... | A local AD account on the device has a value set for &nbsp;&quot;User cannot ... | Click Start / Windows Administrative Tools / Computer Management (or type com... | 7.5 | contentidea-kb |
+| 98 | Several Windows devices became non-compliant due to BitLocker encryption bein... | This ended up being a&nbsp;result of a recent update which temporarily suspen... | An update could indeed cause the reported behavior, as noted in the following... | 7.5 | contentidea-kb |
+| 99 | Multi-user WIndows devices may show an overall status of noncompliant even if... | This issue may occur because of a design limitation in Azure Active Directory... | There is no current resolution to this issue, but there are are two workaroun... | 7.5 | contentidea-kb |
+| 100 | This article lists and describes the different compliance settings you can co... |  |  | 7.5 | contentidea-kb |
+| 101 | This article lists and describes the different compliance settings you can co... |  |  | 7.5 | contentidea-kb |
+| 102 | First gather the following attributes and it's values (this applies to all An... |  |  | 7.5 | contentidea-kb |
+| 103 | TroubleshootingApplication GuardWindows 10 Enterprise edition, version 1709 o... |  |  | 7.5 | contentidea-kb |
+| 104 | This article lists and describes the different compliance settings you can co... |  |  | 7.5 | contentidea-kb |
+| 105 | This article lists and describes the different compliance settings you can co... |  |  | 7.5 | contentidea-kb |
+| 106 | Intune firewall device compliance policies for Windows 10 computers may repor... | Multi-user mode is not currently supported by Windows Firewall device complia... | To resolve this error, the device must be removed from Intune management and ... | 7.5 | contentidea-kb |
+| 107 | An admin can now push a FileVault2 Personal key encryption profile to devices... |  |  | 7.5 | contentidea-kb |
+| 108 | The core intent of Policy Sets is to make an admins life easier by allowing t... |  |  | 7.5 | contentidea-kb |
+| 109 | Microsoft Intune brings mobile threat defense to unenrolled BYO devicesMicros... |  |  | 7.5 | contentidea-kb |
+| 110 | What is Mobile Threat Defense app protection for unenrolled devices?Intune ca... |  |  | 7.5 | contentidea-kb |
+| 111 | When creating a Windows 10 and later Endpoint Protection Profile and specifyi... | This can happen if the administrator specifies restricted IPv6 addresses in t... | Remove the restricted address from the firewall settings within the device co... | 7.5 | contentidea-kb |
+| 112 | First check Kusto if Deployment works as expected  DeploymentProvider / where... |  |  | 7.5 | contentidea-kb |
+| 113 | Device compliance policies are a key feature when using Intune to protect you... |  |  | 7.5 | contentidea-kb |
+| 114 | In this example we will configure a Windows 10 compliance policy to ensure th... |  |  | 7.5 | contentidea-kb |
+| 115 | What is the UPN of the user?&nbsp; What is the platform the device is on? Is ... |  |  | 7.5 | contentidea-kb |
+| 116 | Before you begin troubleshooting a problem, be sure to check for known Emergi... |  |  | 7.5 | contentidea-kb |
+| 117 | Many mobile platforms include a&nbsp;native&nbsp;email client that ships as p... |  |  | 7.5 | contentidea-kb |
+| 118 | The process to deploy a&nbsp;WiFi profile with a preshared key (&quot;PSK&quo... |  |  | 7.5 | contentidea-kb |
+| 119 | The password compliance policy failing on enrolled windows 10 devices due the... | web sign-in is enable on device restrictions configuration profile | Disable it if you don’t have shared PC&nbsp; Profile type &gt; Device restric... | 7.5 | contentidea-kb |
+| 120 | Some admins might be looking for Intune policy/profile assignment report, so ... |  | In order to generate a report like which policies are targeting on which grou... | 7.5 | contentidea-kb |
+| 121 | Customer has created a dynamic device group and assigned a scope tag. Custome... | By design | Scope tags are not supported with Jamf-enrolled devices.&nbsp; Support docume... | 7.5 | contentidea-kb |
+| 122 | Customer deploys a Microsoft Intune configuration policy to configure&nbsp; B... | &nbsp;Group policy setting | Reason of “policy conflict” error is due to “FDVHideRecoveryPage” was enabled... | 7.5 | contentidea-kb |
+| 123 | Some customers enroll their 3rd party IP phones such as Yealink T56A/T58A/CP9... | There are certain compliance policy exclusions need to be set up on the custo... | What need to be done from the support team side,IET should be raised and fill... | 7.5 | contentidea-kb |
+| 124 | After successful enrollment end users are getting blocked by conditional acce... | These entries are known as Orphaned devices, typically are caused by “removin... | Delete the orphan entries created in AAD for that devices.&nbsp;Look for orph... | 7.5 | contentidea-kb |
+| 125 | What is this for? If you need to generate a custom Wi-Fi profile: For example... |  |  | 7.5 | contentidea-kb |
+| 126 | For MAC enrolled devices with&nbsp;OS X lower than 10.15,&nbsp;any changes on... |  |  | 7.5 | contentidea-kb |
+| 127 | The customer is setting a Device Restriction policy for MacOS devices which b... | Probably OS issue. | There was a new release of MacOS Catalina 10.15.5:https://developer.apple.com... | 7.5 | contentidea-kb |
+| 128 | Before engaging them, please do the following...&nbsp;Make sure that what you... |  |  | 7.5 | contentidea-kb |
+| 129 | One of our priorities as a team is to provide great resources and we are tryi... |  |  | 7.5 | contentidea-kb |
+| 130 | A BitLocker Compliance policy is deployed to a Windows device      with the R... | The Require BitLocker&nbsp;setting depends      on the Device Health Attestat... | Reboot the machine so that TCG logs gets updated.If a reboot doesn't fix the ... | 7.5 | contentidea-kb |
+| 131 | DeviceManagementProvider  &nbsp;  Scenario&nbsp;  This table is where I spend... |  |  | 7.5 | contentidea-kb |
+| 132 | Scenario    &nbsp; This table has a very broad usage similar to DeviceManagem... |  |  | 7.5 | contentidea-kb |
+| 133 | Recently, we received several customer reports about the Require device compl... | Prerequisites: 1. Require device compliance from configuration manager settin... | In Conclusion:The Require device compliance from configuration manager settin... | 7.5 | contentidea-kb |
+| 134 | The results of the compliance policy are reflected to device objects on Azure... |  |  | 7.5 | contentidea-kb |
+| 135 | On devices that meet the following criteria:                Enrolled in ... | In October 2020 there will be a Company Portal app update that will increase ... | If a device administrator managed device is running Android 10 or later or ma... | 7.5 | contentidea-kb |
+| 136 | PIN Enforcement fails on iOS devices. | Passcode modification feature blocked via Device restriction policy | PIN Enforcement fails on iOS devices.Customer had a device restriction policy... | 7.5 | contentidea-kb |
+| 137 | Customer creates a device configuration policy for iOS devices requesting pas... | Customer is pushing two settings under the same device so this is creating a ... | Customer needs to disable the option Passcode Modification for the error mess... | 7.5 | contentidea-kb |
+| 138 | Kiosk profile autologin works for a few restarts, but then stops working afte... | This occurs because the key below was created as soon as the DeviceLock polic... | If autologon behavior is desired, the EAS policies must be disabled.Engage&nb... | 7.5 | contentidea-kb |
+| 139 | End users was receiving notifications from Intune, advising that device has b... | The access to Security system settings was blocked by device restriction poli... | Finally, we used the non-documented cmdlet parameter -MeteredConnectionUpdate... | 7.5 | contentidea-kb |
+| 140 | On a Hybrid Azure AD join or Azure AD joined device, silent encryption fails ... | This occurs because recovery password creation is blocked in the policy.&nbsp; | To resolve this issue, change the &quot;Recovery password creation&quot; opti... | 7.5 | contentidea-kb |
+| 141 | On a Hybrid Azure AD join or Azure AD joined device silent encryption fails w... | This happens when &quot;Compatible TPM startup PIN&quot; option in Intune pol... | Set &quot;Compatible TPM startup PIN&quot; to any other setting but &quot;Req... | 7.5 | contentidea-kb |
+| 142 | On a Hybrid Azure AD join or Azure AD joined device silent encryption fails w... | This happens when &quot;Recovery key file creation&quot; option is set to &qu... | For silent encryption, Recovery key file creation cannot be set to &quot;Requ... | 7.5 | contentidea-kb |
+| 143 | On a Hybrid Azure AD join or Azure AD joined device silent encryption fails w... | This happens when &quot;Recovery key file creation&quot; option for Fixed dri... | For silent encryption, Recovery key file creation cannot be set to &quot;Requ... | 7.5 | contentidea-kb |
+| 144 | iOS on-demand VPN profile is created, no matter the VPN profile type. the On-... | On-demand rule's Domains field was empty. Even the endpoint portal does not f... | To Resolve the issue, edit the VPN profile, go to Configuration settings -&gt... | 7.5 | contentidea-kb |
+| 145 | Devices are becoming 'Not compliant', due to 'No compliance policy assigned'.... | This can occur if there is not a valid Intune license assigned to the affecte... | To resolve this issue, assign a valid Intune license to the affected users. O... | 7.5 | contentidea-kb |
+| 146 | On a Hybrid Azure AD join or Azure AD joined device, silent encryption fails ... | This happens because &quot;Require device to back up recovery information to ... | To resolve this problem, configure &quot;Require device to back up recovery i... | 7.5 | contentidea-kb |
+| 147 | This article explains what &quot;IsActive&quot; or &quot;is active&quot; mean... |  |  | 7.5 | contentidea-kb |
+| 148 | A device is assigned a Compliance Policy which the device is supposed to be n... | This behavior is expected and by-design. The Intune consistency checker backe... | No solution as issue is by-design behavior. | 7.5 | contentidea-kb |
+| 149 | Per-app VPN based on SCEP are not working properlyNewley created per-app VPN ... | This can occur if the VPN and SCEP profiles are assigned to different groups.... | Make sure The VPN profile and SCEP profile is assigned to the exact same group. | 7.5 | contentidea-kb |
+| 150 | When navigating to Compliance Policy -&gt; Device Status -&gt; affected machi... | This occurs because when assigning the compliance policy to a device group an... | To workaround, deploy the Compliance policy to a User group. | 7.5 | contentidea-kb |
+| 151 | Customer sees the reporting below in the Monitor blade in Intune, and when ac... | This occurs because the overview donut graph is calculated differently than t... | The exported Excel device detail is the latest sync info. We can click &quot;... | 7.5 | contentidea-kb |
+| 152 | MacOS use an agent similar to the Intune Management Extension (IME) to proces... |  |  | 7.5 | contentidea-kb |
+| 153 | Endpoint Manager Filters provides a scoping of device targeting, where Intune... |  |  | 7.5 | contentidea-kb |
+| 154 | Prerequisites  Windows 10 Version 1909 or higherAzure AD joined devicesHybrid... |  |  | 7.5 | contentidea-kb |
+| 155 | ReferencesUse these links to help improve your understanding of the component... |  |  | 7.5 | contentidea-kb |
+| 156 | Android enterprise personally-owned device is marked as not compliant due to ... | This issue has been identified to be caused by an auto-restart configured in ... | This issue was investigated by product group and determined the following:Thi... | 7.5 | contentidea-kb |
+| 157 | Customer has a Xiaomi Redmi Note 7 (or a similar Xiaomi device) with MIUI ver... | The Set Screen Lock functionality on Xiaomi devices with MIUI 11 and above do... | The user needs to enable Developer Options on the Xiaomi device which will en... | 7.5 | contentidea-kb |
+| 158 | Intune is only responsible for deploying configurations regarding Wi-Fi and V... |  |  | 7.5 | contentidea-kb |
+| 159 | From Intune portal, admin can get a centralized report regarding profiles dep... |  |  | 7.5 | contentidea-kb |
+| 160 | Verifying workflow:How would you verify the component works as expected using... |  |  | 7.5 | contentidea-kb |
+| 161 | As is explained in detail in this public document:&nbsp;Device compliance par... | In many cases the integration is not completed correctly, the&nbsp;&nbsp;thir... | Ensure that all the steps to setup the integration where completed correctly:... | 7.5 | contentidea-kb |
+| 162 | Huawei devices show inconsistent values for Minimum security patch level appl... | This issue has been investigated by the Intune product team and it is&nbsp;by... | Full mitigation of the issue should be addressed by Huawei. They have their o... | 7.5 | contentidea-kb |
+| 163 | In this case Machines would be encrypted via Automatic device encryption:For ... | When a network proxy or a firewall doesn't allow connections to&nbsp;https://... | Decrypt the machine&gt;To turn off BitLocker on drive C, type:&nbsp;manage-bd... | 7.5 | contentidea-kb |
+| 164 | When using Intune Bitlocker MDM policies, the setting &quot;Enable full disk ... | This is by design. The Product Team is considering adding the ability to encr... | As a work around, full disk encryption can be achieved through either Group P... | 7.5 | contentidea-kb |
+| 165 | Devices configured to be evaluated against a&nbsp;Windows Health Attestation ... | This can occur if the client does not has access to the Health Attestation Se... | To resolve this problem, make sure the devices have access to the Intune endp... | 7.5 | contentidea-kb |
+| 166 | Customer is trying to set up Partner Compliance with Partner Managed mobile d... | Majority of the customer issues are related to not following the configuratio... | If everything is looking correct from your call with Partner and Customer you... | 7.5 | contentidea-kb |
+| 167 | Windows devices are encrypted, however an Intune Compliance policy with Requi... | The Require      Bitlocker setting depends on the Device Health Attestation (... | To resolve this problem, first try restarting the computer. If a reboot does ... | 7.5 | contentidea-kb |
+| 168 | Hybrid Azure AD Joined devices are marked as not compliant specifically for a... | From the group policy regkey: [HKEY_LOCAL_MACHINE\Software\Policies\Microsoft... | The issue was caused by a group policy setting, the customer has to revert th... | 7.5 | contentidea-kb |
+| 169 | You have a Custom RBAC role with enough permissions to assign groups to Compl... | This happens due to the &quot;Scope (Groups)&quot; of the assignment of the r... | You have two options to resolve this problem:  1. Add all the specific groups... | 7.5 | contentidea-kb |
+| 170 | Customer has configured Partner Compliance integration with Jamf managed iOS ... |  |  | 7.5 | contentidea-kb |
+| 171 | Our&nbsp;docs state that it can take up to 7 hours for policies to be removed... | This is by design. | To resolve this problem, have at least one dummy policy targeted to both user... | 7.5 | contentidea-kb |
+| 172 | This document describes how to use the new custom settings for compliance pol... |  |  | 7.5 | contentidea-kb |
+| 173 | Manually running the Bitlocker MDM Policy Refresh task fails with error 0x800... | This happens when the OS is attempting to backup Recovery Keys to Azure AD an... | If manual encryption via the command line fails with the same error,&nbsp;unj... | 7.5 | contentidea-kb |
+| 174 | This article provides information about the configuration settings for Silent... |  |  | 7.5 | contentidea-kb |
+| 175 | PII compliance disclaimer     : UserPrincipalName, Serial Number and any othe... |  |  | 7.5 | contentidea-kb |
+| 176 | Windows (20H2 and later) devices return “(SyncML(500): The recipient encounte... |  |  | 7.5 | contentidea-kb |
+| 177 | Welcome to the Windows Directory Services workflows.&nbsp;The Windows Directo... |  |  | 7.5 | contentidea-kb |
+| 178 | Microsoft Store for Business apps cannot be updated on Windows 11 devices, ei... | This is by design as of 3/17/2022 per case 29353106. Windows 11 Apps are not ... | None. | 7.5 | contentidea-kb |
+| 179 | Customer is seeing an issue where an iOS update policy was targeted to a devi... | This was due to the update policy not being set long enough.&nbsp;  After ver... | This is due to the device not checking in during the 5-hour window checked du... | 7.5 | contentidea-kb |
+| 180 | All policies not coming down to Android Enterprise Device Owner devices (incl... | If the cause is setting an invalid range for Freeze period, this is By-Design. | To validate if the issue is Freeze Period, validate the error in Kusto with t... | 7.5 | contentidea-kb |
+| 181 | After finished the integration of Intune and MDATP, we found the connector st... | In the &quot;Microsoft defender for endpoint&quot; configuration page, we kee... | To resolve this problem, enable any&nbsp; of the device platform compliance p... | 7.5 | contentidea-kb |
+| 182 | Customer deployed the following BitLocker policy to enable silent encryption ... | After debugging the BitLocker CSP processing, it turns out to be a potential ... | Remove the setting Control use of BitLocker on removable drives from the GPO.... | 7.5 | contentidea-kb |
+| 183 | Customer ran CM Task sequence to do OS in-place upgrade and paused BitLocker ... | This issue is caused by a known issue of BitLocker Drive Encryption (BDESVC) ... | We have raised a bug with Windows engineering team, and they will fix this is... | 7.5 | contentidea-kb |
+| 184 | After creating and applying&nbsp;a Device Restriction policy that sets the lo... | This can occur if&nbsp;there are two different policies targeting the same se... | To resolve this problem, remove the duplicated setting from one of the polici... | 7.5 | contentidea-kb |
+| 185 | This article describes how to block all portable devices and USB devices exce... |  |  | 7.5 | contentidea-kb |
+| 186 | In some scenarios IT administrators will need to disable and decrypt their Wi... |  | Prerequisites:  For this solution to work we need to meet the Intune Manageme... | 7.5 | contentidea-kb |
+| 187 | Customer has correctly deployed a Windows Custom Compliance policy as per&nbs... | This is a known issue as documented at&nbsp;Support tip: Known issues in repo... | The current Workaround is to&nbsp;include another setting in the same policy,... | 7.5 | contentidea-kb |
+| 188 | After removing devices previously managed by MobileIron from Intune Portal, y... | This can occur if the user is targeted by third party (3rd party) Compliance ... | To verify if this is your issue, go to&nbsp;Tenant Administration&nbsp;-&gt;&... | 7.5 | contentidea-kb |
+| 189 | Windows Diagnostic Data Changes:&nbsp;Changes to data collection policy may a... |  |  | 7.5 | contentidea-kb |
+| 190 | All enrolling Android devices in MobileIron,&nbsp;the devices are registered ... | This occurs due to a bug in&nbsp;MobileIron with devices running Android vers... | Customers will need to work with&nbsp;MobileIron to fix the issue in their da... | 7.5 | contentidea-kb |
+| 191 | This article is for information purposes only. It discusses a current design ... |  |  | 7.5 | contentidea-kb |
+| 192 | When attempting to remove or reset the passcode on a&nbsp;mobile device manag... | The Intune product team recently became aware of an issue where the remove/re... | Before proceeding, ensure that you have verified the problem using the Kusto ... | 7.5 | contentidea-kb |
+| 193 | The device password/pin isn't enforced on Android dedicated devices even if t... | If I run this Kusto query I can see this: IntuneEvent / where env_time &gt; d... | In order for the passcode/pin prompt to be shown to the end-user we have to m... | 7.5 | contentidea-kb |
+| 194 | Customer have WHFB tenant wide enrollment enabled in his Intune tenant which ... | This is by design as the purpose of tenant wide&nbsp; profile is to configure... | WHFB tenant wide configuration is designed to use at device enrollment, not a... | 7.5 | contentidea-kb |
+| 195 | This article will explain step by step process to Create and deploy Chrome br... |  |  | 7.5 | contentidea-kb |
+| 196 | All new or updated internal KB articles, new content requests such as doc upd... |  |  | 7.5 | contentidea-kb |
+| 197 | Windows devices that have an Intune compliance policy assigned that requires ... | On Windows devices, Intune might check Firewall or Antivirus status before th... | Microsoft is investigating both client and service-side solutions to this iss... | 7.5 | contentidea-kb |
+| 198 | While the overall compliance state is still visible for all admins in the Int... | This can occur if the user viewing&nbsp;compliance reporting or a devices com... | This issue is scheduled to be fixed in the 2305 update of Intune (ETA end of ... | 7.5 | contentidea-kb |
+| 199 | When using Driver Update Management in Intune, a driver gets installed even t... | This can occur&nbsp;in the following scenarios: a. The driver was approved in... | All of these scenarios and behaviors are by design and do not represent a fun... | 7.5 | contentidea-kb |
+| 200 | The Windows Update ring policy that is configured for the setting &quot;Enabl... | Incident-372842145 Details - IcM (microsofticm.com) &nbsp;the setting&nbsp;&q... | In the Configuration profile (Setting Catalog) under System section please re... | 7.5 | contentidea-kb |
+| 201 | According to our official documentation&nbsp;Configure compliance policies wi... | As per current design,&nbsp;Microsoft Intune admin center displays the schedu... | Open Intune admin portal and copy the Compliance policy ID from the URL    Op... | 7.5 | contentidea-kb |
+| 202 | When MEM-UR report is generated, some devices are missing. | There could be multiple reasons. Let's review them step by step.&nbsp; | Make sure the device meets the prerequisites, especially around the OS versio... | 7.5 | contentidea-kb |
+| 203 | When attempting to deploy printers using an Intune&nbsp;Universal Print polic... | This can occur due to a throttling issue with the Discovery service. When pri... | To work around this issue, you can install the missing printers manually, or ... | 7.5 | contentidea-kb |
+| 204 | Case Scenario:  Windows Device (with any enrollment) enrolled in Intune with ... | The Antivirus parameter rule of the First Compliance Policy that checks for “... | When the user has decided to use only Microsoft Defender as an Antivirus solu... | 7.5 | contentidea-kb |
+| 205 | Beginning January 1, 2024, devices are suddenly&nbsp;marked as not compliant ... | After December 31, 2023, the legacy&nbsp;network access control (NAC) service... | To resolve this problem, the customer will need to migrate to one of the netw... | 7.5 | contentidea-kb |
+| 206 | iOS MDE ZeroTouch onboarding not working. The device didn't onboard to MDE au... | When&nbsp;we used JIT enrollment option + require defender in App compliance ... | Suggested best practice:  &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&n... | 7.5 | contentidea-kb |
+| 207 | This article is intended to provide guidance for Intune enrolled Windows devi... |  |  | 7.5 | contentidea-kb |
+| 208 | Enable Microsoft Defender for Endpoint in Intune Before you onboard your devi... |  | Troubleshooting the connector:  If you run into a situation where the connect... | 7.5 | contentidea-kb |
+| 209 | Device Health based compliance policy settings fail with the following error:... | The issue can happen for multiple reasons.&nbsp;  BIOS Mode is set to &quot;L... | Device Health requires BIOS mode to be UEFI.&nbsp; &nbsp; Device Health Attes... | 7.5 | contentidea-kb |
+| 210 | When a device has been targeted with a compliance policy and the assignment i... | This occurs because the untargeted policies are removed from reporting by a b... | This will be addressed in upcoming back-end updates in Intune reporting. Ther... | 7.5 | contentidea-kb |
+| 211 | Here is the link to some basic scoping questions for troubleshooting MTP (Mob... |  |  | 7.5 | contentidea-kb |
+| 212 | Defender Firewall rules return an error in MEM.&nbsp;Kusto shows these errors... | From the SyncML, we notice: Remote port range:&nbsp;When specifying a remote ... | Unchecked the &quot;FW_PROFILE_Type_Current&quot; in the policy: &nbsp;Added ... | 7.5 | contentidea-kb |
+| 213 | BitLocker policy settings are not shown as managed (under the &quot;Managed p... | It's a bug affecting Windows 11 and they're planning to address it in forthco... | As a workaround, they recommend checking PolicyManager &gt; Providers registr... | 7.5 | contentidea-kb |
+| 214 | With Configuration Manager, users have the ability to suspend the BitLocker P... |  |  | 7.5 | contentidea-kb |
+| 215 | Windows 10 22H2. Devices are not eligible for upgrade to Windows 11.Device re... | The Health Attestation certificate cannot be pulled from the TPM. The older T... | Replace devices with old TPMs. | 7.5 | contentidea-kb |
+| 216 | Users fail to get email notifications when their devices are noncompliant eve... | Starting with Intune build 2401, the notification templates for “Send email t... | Admins should review all notification templates assigned to compliance polici... | 7.5 | contentidea-kb |
+| 217 | Device configuration profile setting Max Inactivity Time Device Lock is repor... | This may be caused by:   2nd Intune Windows 10 and      later Device configur... | If conflict were caused by      2nd Device configuration profile - exclude Ma... | 7.5 | contentidea-kb |
+| 218 | Devices that don’t check in to Intune with the Compliance status validity per... | The Intune team is working on back-end improvements, and in this case the bac... | Customers can’t take action to fix this issue in their own environments. If t... | 7.5 | contentidea-kb |
+| 219 | Existing Bitlocker deployments not affected, only affecting newly deployed de... | If you left the previous Version 1 values defaults, we changed it to a new Ve... | How the settings should look in InTune policy     Resolution from ICM:  The m... | 7.5 | contentidea-kb |
+| 220 | Windows 11 devices with Pluton TPM are falling out of compliance with the Req... | Tpm.DebugTracing indicates a HTTP status code for Bad Request (400) being sen... | Switch to Discrete TPM using these steps:1.	Turn off Disk Encryption. 2.	Ente... | 7.5 | contentidea-kb |
+| 221 | One of the most common issues we encounter in Intune related to encryption is... | There isn't a single defined cause, as it could be due to various issues, suc... | Prerequisites: For this solution to work we need to meet the Intune Managemen... | 7.5 | contentidea-kb |
+| 222 | Using Device Health Attestation service as part of customer's Intune Require ... | There is a retired proxy server configured under system account. The TPM-HASC... | Deleted the following keys: HKEY_USERS\S-1-5-18\Software\Microsoft\Windows\Cu... | 7.5 | contentidea-kb |
+| 223 | Samsung Devices do not update the&nbsp;monthly security patch while they are ... |  | As suggested by Samsung support to add below apps to the kiosk allowlist as w... | 7.5 | contentidea-kb |
+| 224 | How to check which rule is targeted to an exclusion added in ASR Rule policy ... | The ASR rule policy is deployed from Intune and the exclusion is added for th... | One way is to check the MPLog which is located at C:\ProgramData\Microsoft\Wi... | 7.5 | contentidea-kb |
+| 225 | This document aims to provide a straightforward and easy-to-follow configurat... |  | Prerequisites: To manage BitLocker in Intune, an account must be assigned an ... | 7.5 | contentidea-kb |
+| 226 | A common issue that may arise after confirming that the BitLocker policy has ... |  | Prerequisites: 1. To manage BitLocker in Intune, an account must be assigned ... | 7.5 | contentidea-kb |
+| 227 | This document aims to provide a simple and easy to follow configuration guide... |  | Prerequisites: To manage BitLocker in Intune, an account must be assigned an ... | 7.5 | contentidea-kb |
+| 228 | Deploying a Firewall Rules Policy with a large number of rules can make it ch... |  |  | 7.5 | contentidea-kb |
+| 229 | In the Intune console, Windows 24H2 devices do not display network details su... | In Windows 24H2, the OS team introduced a design change that prevents devices... | The OS team is planning a future update to address this issue, but there is n... | 7.5 | contentidea-kb |
+| 230 | Device reports Not compliant for Custom Compliance Policy despite execution o... | Powershell exit code is 0     AgentExecutor     06-12-2024 10:44:40     1 (0x... | Customer can run the script manually on the problem/ failure machine to see i... | 7.5 | contentidea-kb |
+| 231 | BIOS policy as part of DFCI feature capability in Intune, when applied, repor... | Devices which are not Externally Attested&nbsp;are bound to report Error agai... | As soon as the customer gets the CSV re-uploaded by their partner, the device... | 7.5 | contentidea-kb |
+| 232 | Windows compliance policy shows an error for encryption of data storage on de... | There is a missing class from WMI: Root\CIMv2\Security\MicrosoftVolumeEncryption | Run Mofcomp on the device(s) concerned via the command line or PowerShell scr... | 7.5 | contentidea-kb |
+| 233 | Windows devices cannot sync with Intune with the following error:   The sync ... | There is one policy configured with a special character “Emoji” which caused ... | Asked the customer to check which policy is configured with special character... | 7.5 | contentidea-kb |
+| 234 | Device shows as not compliant on Bitlocker and SecureBoot | has.spserv.microsoft.com was blocked from a network prospective and so Device... | After whitelisting the network endpoint &quot;has.spserv.microsoft.com&quot; ... | 7.5 | contentidea-kb |
+| 235 | This article outlines a direct method to disable the &quot;Record&quot; featu... | Not applicable – this article provides steps to enable a feature, not resolve... | Resolution Steps:   Navigate      to:      Intune       Admin Center &gt; Dev... | 7.5 | contentidea-kb |
+| 236 | Customer has applied an Android device restriction policy to block screen cap... |  |  | 7.5 | contentidea-kb |
+| 237 | Hello for Business enabled on workstations, however when users reboot or sign... | If the DefaultCredentialProvider policy is not set, Windows may revert to the... | Open the&nbsp;Microsoft Intune admin center&nbsp;portal      and navigate to&... | 7.5 | contentidea-kb |
+| 238 | This article explains a common scenario where iOS/iPadOS devices allow users ... |  |  | 7.5 | contentidea-kb |
+| 239 | This article discusses a particular scenario wherein Windows 365 Link devices... | What are Windows 365 Link devices?  These are special cloud PC devices which ... | If users / IT admins / customers want to monitor the compliance status of Win... | 7.5 | contentidea-kb |
+| 240 | Windows devices include certain applications pre-installed as part of the ope... |  |  | 7.5 | contentidea-kb |
+| 241 | Scenario: - Driver      update configured via Microsoft Intune has successful... | Before we explore the resolution shared in this article, please ensure that t... | DisableOneSettingsDownloads setting should be set to 0 (instead of 1). CSP re... | 7.5 | contentidea-kb |
+| 242 | Android device appears encrypted but Company Portal marks it as noncompliant/... | Some Android manufacturers encrypt using a default PIN instead of a user-set ... | User must set a new non-default startup PIN: tap Company Portal notification,... | 6.5 | mslearn |
+| 243 | BitLocker device shows error state in Intune encryption report despite being ... | Device was previously encrypted with a different method (e.g., XTS-AES 256-bi... | Decrypt the device manually or with PowerShell, then let Intune BitLocker pol... | 6.5 | mslearn |
+| 244 | BitLocker-encrypted Windows 10 device shows as Not Compliant in Intune even t... | BitLocker encryption has not finished yet. Based on disk size, number of file... | Wait for BitLocker encryption to complete. After encryption is finished, the ... | 6.5 | mslearn |
+| 245 | Windows 10 device with Secure Boot enabled shows as Not Compliant in Intune c... | The Require Secure Boot setting is only supported on TPM 2.0 devices with UEF... | Verify device has TPM 2.0 (run tpm.msc), UEFI BIOS mode (msinfo32), and PCR7 ... | 6.5 | mslearn |
+| 246 | Windows 10 devices with Microsoft Defender Firewall enabled show incorrect co... | Known issue in certain Windows 10 versions (1809, 1803, 1709) causing incorre... | Install specific KB updates: KB4469342 (1809), KB4467682 (1803), KB4467681 (1... | 6.5 | mslearn |
+| 247 | Error -2016281112 when deploying password policy (device restriction) in Intu... | Password policies via device restriction cannot be immediately enforced on us... | Direct users to change their password (Android: accept notification; Windows:... | 6.5 | mslearn |
+| 248 | Samsung Android Enterprise fully managed devices running Android 11+ show as ... | Known Samsung issue with compliance state after managed update on fully manag... | For DA and work profile: upgrade Company Portal to version 5.0.5358.0 (fix re... | 5.5 | mslearn |
+| 249 | Jamf managed Intune integrated macOS devices are not targeted by the macOS co... | This is by-design. The Intune Jamf feature currently only supports compliance... | Target user based groups with the macOS compliance policy. | 4.5 | contentidea-kb |
+| 250 | Enrolled Windows 10 computers are forced to change passwords if the minimum p... |  |  | 4.5 | contentidea-kb |
+| 251 | When troubleshooting BitLocker policy enforcement issues, start by reading th... |  |  | 4.5 | contentidea-kb |
+| 252 | When deploying Intune Policy to encrypt the device and store the recovery key... | the logged on user does not have permission to read the private key on the ce... | In order to resolve this issue please install kb4497934 | 4.5 | contentidea-kb |
+| 253 | What is Office 365 apps for Windows 10 devices You can assign and install Off... |  |  | 3.0 | contentidea-kb |
+| 254 | You have noted one of the following three issues around the IntuneMAMAllowedA... | This is due to a UI \ mechanics change made by the developers that have repla... | Issue resolved with 1903 release as the console now shows the updated UI for ... | 3.0 | contentidea-kb |
+| 255 | New iPhone 8 stuck in loop while enrolling. Gets to part to enter email creds... | Customer enabled an AAD Private Preview feature which allows the use of an al... | Turn feature off and re-enroll using UPN | 3.0 | contentidea-kb |
+| 256 | Customer is using VPP token to push the Company Portal app to iOS devices. Th... | The app required an App Configuration. | We used the custom XML from the following article: https://techcommunity.micr... | 3.0 | contentidea-kb |
+| 257 | I would like to the share the following about Compliance Policy issue with Se... | Windows 10 computer with TPM 1.2 | Based on feedback from Windows Core team about Secure Boot and TPM 1.2 we had... | 3.0 | contentidea-kb |
+| 258 | Consider the following scenario: A customer has deployed a Windows 10 Complia... |  |  | 3.0 | contentidea-kb |
+| 259 | Configure https://internal.support.services.microsoft.com/help/2745725 Emergi... |  |  | 3.0 | contentidea-kb |
+| 260 | First check Kusto if Deployment works as expected: DeploymentProvider / where... |  |  | 3.0 | contentidea-kb |

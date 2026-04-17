@@ -426,3 +426,22 @@
 - JSONL: known-issues-ado-wiki-a.jsonl | scanned: scanned-ado-wiki-a.json
 
 | 2026-04-07 | SYNTHESIZE | 66 topics (50 fusion, 16 compact), 1559 entries, 5 Kusto queries fused |
+
+## 2026-04-17 10:13 UTC — contentidea-kb scan (7-day refresh)
+- Product: vm | Keywords: Virtual Machine
+- WIQL returned: 226 IDs | Already scanned: 178 | Unscanned: 48
+- Processed: 10 work items (batch)
+- Discovered: 2 new entries (vm-contentidea-kb-046, vm-contentidea-kb-047)
+- Skipped: 8 (empty structured fields)
+- Deduplicated: 0
+- Total scanned: 188/226 | Remaining: 38
+- exhausted: false
+
+## 2026-04-17 10:18 UTC — contentidea-kb scan (batch 2/2, final)
+- **Product**: vm
+- **Source**: contentidea-kb
+- **Processed**: 38 work items (IDs 146301–207176)
+- **New entries**: 36 (vm-contentidea-kb-048 to vm-contentidea-kb-083)
+- **Skipped**: 2 (empty fields), 0 (dedup)
+- **Total JSONL**: 83 entries
+- **Total scanned**: 226/226 — **EXHAUSTED**

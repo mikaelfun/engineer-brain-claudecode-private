@@ -1,280 +1,56 @@
-# Intune 报告与诊断日志收集 — 综合排查指南
+# INTUNE 报告与诊断日志收集 — 已知问题详情
 
-**条目数**: 7 | **草稿融合数**: 3 | **Kusto 查询融合**: 2
-**来源草稿**: ado-wiki-b-PowerLift.md, onenote-intune-kusto-diagnostic-queries.md, onenote-offline-mobile-log-collection.md
-**Kusto 引用**: device-info.md, intune-events-general.md
-**生成日期**: 2026-04-07
+**条目数**: 10 | **生成日期**: 2026-04-17
 
 ---
 
-## 排查流程
+## Quick Troubleshooting Path
 
-### Phase 1: B Powerlift
-> 来源: ADO Wiki — [ado-wiki-b-PowerLift.md](../drafts/ado-wiki-b-PowerLift.md)
+### Step 1: EPM automatic elevation rule Match=False for target file — elevation does not occur despite policy being assigned
+**Solution**: Check EpmServiceLogs (EpmService_YYYYMMDD_0.log) for 'Match=False;Message=' entries. The Message field explains the mismatch (e.g., certificate type/payload validation failed). Fix the rule's certificate/hash/file criteria to match the target executable.
+`[Source: ado-wiki, Score: 9.0]`
 
-**Powerlift**
-- Company Portal / Intune app / Tunnel VPN / Edge MAM / Outlook mobile / Authenticator / Defender ATP
+### Step 2: EPM elevation reporting data missing — no elevation reports appearing in Intune admin center
+**Solution**: 1) Wait 24 hours for reports to process. 2) Verify OS supported. 3) Verify EPM Reporting enabled in EPM Client Settings. 4) Check registry ConfigDeviceHealthMonitoringScope contains PrivilegeManagement. 5) Check sensor.log exists at C:\ProgramData\Microsoft\IntuneManagementExtension\Logs. 6) In sensor.log search for GUID e4cd0c46-8d75-4d93-b5ac-99cf25388591 (diagnostic events) and 2ef6314a-cc15-487d-abfc-24a02cc9180f (elevation requests).
+`[Source: ado-wiki, Score: 9.0]`
 
-**Company Portal, Intune, and Tunnel Server logs**
+### Step 3: Target OS list is empty when generating Update Device Readiness & Compatibility Risks Report
+**Solution**: Enable Device diagnostics under Tenant Admin per https://learn.microsoft.com/mem/intune/remote-actions/collect-diagnostics
+`[Source: ado-wiki, Score: 9.0]`
 
-**Authenticator**
+### Step 4: No devices found when Update Readiness (MEM-UR) report is generated
+**Solution**: 1) Enable Windows data checkboxes under Tenant Admin > Connectors > Windows data 2) Check AllowTelemetry >=1 at both registry locations 3) Ensure DisableOneSettingsDownloads not 1 4) Verify OS build 5) Allow diagnostics endpoints 6) Confirm DiagTrack running 7) If DiagTrack issue engage Windows UEX
+`[Source: ado-wiki, Score: 9.0]`
 
-**Defender for Endpoint/ATP (including Tunnel Client) logs**
+### Step 5: Update Readiness report generated but missing some devices
+**Solution**: 1) Verify device meets OS prerequisites 2) Check for GPO overriding AllowTelemetry/DisableOneSettingsDownloads 3) Ensure device in assigned policy group 4) Follow no-devices-found steps
+`[Source: ado-wiki, Score: 9.0]`
 
-### Phase 2: Intune Kusto Diagnostic Queries
-> 来源: OneNote — [onenote-intune-kusto-diagnostic-queries.md](../drafts/onenote-intune-kusto-diagnostic-queries.md)
+### Step 6: Device Readiness status shows Unknown in MEM-UR report
+**Solution**: Run compattelrunner.exe -m:appraiser.dll -f:DoScheduledTelemetryRun ent on impacted devices. Wait 24-48h (max 52h latency)
+`[Source: ado-wiki, Score: 9.0]`
 
-**Intune Kusto Diagnostic Queries - Quick Reference**
-**1. Check Intune License Status**
-- **EventUniqueNames**: LogUnlicensedUserOutOfGracePeriod, LogNotFoundGetUserResult, LogUnlicensedUserWithInGracePeriod, LogUserFoundGetAsyncResultFromDB
-- **Table**: IntuneEvent
-- **Key fields**: UserId, EventUniqueName, Col1 (license type), Col2 (unlicensed date), Col3 (grace period minutes)
-- **Grace period**: Default 43200 minutes (30 days)
+### Step 7: Intune for Education reporting is limited - Device Inventory, App Inventory, Settings Error reports available as CSV.
+**Solution**: Use Enterprise version of Intune for fuller reporting.
+`[Source: contentidea-kb, Score: 7.5]`
 
-**2. Check Device Compliance State**
-
-**Per-device compliance detail**
-- **Table**: IntuneEvent, ServiceName = StatelessComplianceCalculationService
-- **EventUniqueNames**:
-  - ComplianceDetail-GetComplianceDetailsForDeviceAction-FinalResult (current state)
-  - ComplianceDetail-ComplianceUpdateDevicePatcher-DeviceCompliantChangedDetails (state changes)
-- **Extract**: ComplianceState, RuleDetails, AccountId, DeviceId, UserId from Col1/Col2
-
-**Compliance sync to AAD**
-- **Table**: GraphApiProxyLibrary
-- Filter by AAD device ID in url/errorMessage
-- Watch for httpStatusCode 404 = AAD device not found
-
-**Function shortcut**
-- `DeviceComplianceStatusChangesByDeviceId(deviceId, startTime, endTime, maxRows)`
-
-**3. DEM (Device Enrollment Manager) User Verification**
-- **Table**: DeviceManagementProvider
-- Filter message contains "Service Account" AND contains userId
-- If results found -> user is DEM; no results -> likely not DEM
-
-**4. Device Check-in Troubleshooting**
-
-**Session tracking**
-- **Table**: DmpLogs, message startswith "New Session"
-
-**Routing service verification**
-- **Table**: HttpSubsystem, sourceServiceName = DeviceCheckinRoutingService, I_Srv = SLDMService
-
-**Apple notification result**
-- **Table**: IntuneEvent, ServiceName = AppleNotificationRelayService
-- **EventUniqueName**: DeviceNotificationResult
-... (详见原始草稿)
-
-### Phase 3: Offline Mobile Log Collection
-> 来源: OneNote — [onenote-offline-mobile-log-collection.md](../drafts/onenote-offline-mobile-log-collection.md)
-
-**Offline Mobile Log Collection (iOS & Android)**
-**iOS Outlook Log**
-1. Tap profile avatar in Outlook
-2. Go to Settings (gear icon)
-3. Select Privacy
-4. Confirm "Optional connected experiences" is OFF
-5. Return to main UI, tap "?" (Help)
-
-**Android Company Portal Log**
-1. **First**: reproduce the issue scenario
-2. Open Company Portal app
-3. Settings > Diagnostic logs > Save logs
-4. Create a new folder when prompted
-5. Logs saved to device storage
-
-**Notes**
-- iOS logs may be large; recommend internal transfer to IT before uploading to support
-- Android logs are saved locally and can be transferred via USB cable
-- These methods work when device has no email capability or upload is restricted
-
-### Phase 4: Kusto 诊断查询
-
-#### device-info.md
-`[工具: Kusto skill — device-info.md]`
-
-```kql
-let searchId = '{searchId}';
-
-DeviceManagementProvider
-| where env_time > ago(30d)
-| where * has searchId
-| parse message with * 'AADDId=' AADdeviceID_Msg ',' *
-| where isnotempty(AADdeviceID_Msg) or isnotempty(deviceId)
-| summarize 
-    FirstSeen=min(env_time), 
-    LastSeen=max(env_time)
-  by IntuneDeviceID=deviceId, AADDeviceID=AADdeviceID_Msg, accountId, accountContextId
-| project FirstSeen, LastSeen, IntuneDeviceID, AADDeviceID, AccountId=accountId, AADTenant=accountContextId
-```
-
-```kql
-DeviceManagementProvider
-| where env_time between(datetime({startTime})..datetime({endTime}))
-| where deviceId has '{deviceId}'
-| where accountId has '{accountId}'
-| project env_time, DeviceID=ActivityId, PolicyName=name, PolicyType=typeAndCategory, 
-    Applicability=applicablilityState, Compliance=reportComplianceState, 
-    TaskName, EventId, EventMessage, message, tenantContextId, tenantId, 
-    aadDeviceId, accountContextId, accountId
-| limit 1000
-| parse message with * 'AADDId=' AADdeviceID_Msg ',Type' *
-| parse message with * 'CIId:' PolicyID_EvM '\';' *
-| distinct PolicyID_EvM, AADdeviceID_Msg, DeviceID, AADTenant=accountContextId, accountId
-```
-
-```kql
-let deviceid = '{deviceId}';
-let accountid = '{accountId}';
-
-DeviceLifecycle
-| where env_time > ago(30d)
-| where accountId == accountid
-| where deviceId contains deviceid
-| extend TypeName = case(
-    type==0, 'Unknown', type==1, 'User Personal', type==2, 'User Personal with AAD',
-    type==3, 'User Corporate', type==4, 'User Corporate with AAD', type==5, 'Userless Corporate',
-    type==10, 'AutoEnrollment', type==12, 'On Premise Comanaged',
-    type==13, 'AutoPilot Azure Domain Joined with profile', tostring(type))
-| extend EventName = case(
-    EventId==46801, 'EnrollmentAddDeviceEvent', EventId==46804, 'EnrollmentAddDeviceFailedEvent',
-    EventId==46806, 'EnrollmentStartEvent', EventId==46802, 'Renewal succeeded',
-    EventId==46821, 'Registration succeeded', EventId==46822, 'Device removed',
-    EventId==46825, 'Device checked in', tostring(EventId))
-| extend PlatformName = case(
-    platform==3, 'Windows 10', platform==7, 'iPhone', platform==8, 'iPad',
-    platform==11, 'Android', platform==14, 'Android for Work', tostring(platform))
-| project env_time, EventId, EventName, TypeName, PlatformName, deviceId, userId, accountId,
-    oldManagementState, newManagementState, oldRegistrationState, newRegistrationState, details
-| order by env_time desc
-| limit 500
-```
-
-```kql
-let accountId = '{accountId}';
-let platform = '{platform}';  // 可选
-
-DeviceLifecycle
-| where env_time > ago(90d)
-| where accountId == accountId
-| where platform == platform or platform == ''
-| where deviceId != ''
-| summarize 
-    LastSeen=max(env_time),
-    FirstSeen=min(env_time)
-  by deviceId, platform
-| order by LastSeen desc
-| limit 1000
-```
-
-```kql
-let starttime = datetime({startTime});
-let endtime = datetime({endTime});
-let deviceid = '{deviceId}';
-
-IntuneEvent
-| where env_time between (starttime..endtime)
-| where deviceid <> ''
-| where DeviceId == deviceid
-| where * has 'DeviceOwnership' and Col2 has 'DeviceCategory'
-| project env_time, EventUniqueName, ColMetadata, Col1, Col2, Col3, Col4, Col5, Col6, ServiceName, DeviceId
-| summarize count(), max(env_time) by Col2, DeviceId, ServiceName
-| parse Col2 with * 'AadDeviceId = ' AADdeviceID ',' *
-| project max_env_time, ServiceName, AADdeviceID, fullmsg = Col2, DeviceId
-| limit 1000
-```
-
-#### intune-events-general.md
-`[工具: Kusto skill — intune-events-general.md]`
-
-```kql
-let starttime = datetime({startTime});
-let endtime = datetime({endTime});
-let accountid = '{accountId}';
-let deviceid = '{deviceId}';
-let userid = '{userId}';
-let filterstring = '{filterstring}';
-let relatedactivityid = '{relatedActivityId}';
-let activityid = '{activityId}';
-
-IntuneEvent
-| where env_time between (starttime .. endtime)
-| where AccountId == accountid
-| extend targetid = iff(relatedactivityid <> '', relatedactivityid, iff(activityid <> '', activityid, iff(deviceid <> '', deviceid, iff(userid <> '', userid, ''))))
-| where RelatedActivityId =~ targetid or ActivityId =~ targetid or DeviceId =~ targetid or UserId =~ targetid
-| project env_time, ContextId, AccountId, DeviceId, UserId, ActivityId, RelatedActivityId, EventUniqueName, ColMetadata, Col1, Col2, Col3, Col4, Col5, Col6, Message
-| where * contains filterstring
-| order by env_time desc
-| limit 1000
-| extend metakeys = todynamic(split(trim_end(';', ColMetadata), ';'))
-| extend metavalues = pack(tostring(metakeys[0]), Col1, tostring(metakeys[1]), Col2, tostring(metakeys[2]), Col3, tostring(metakeys[3]), Col4, tostring(metakeys[4]), Col5, tostring(metakeys[5]), Col6)
-| project env_time, EventUniqueName, metavalues, AccountId, DeviceId, UserId, ActivityId, RelatedActivityId
-| sort by env_time asc
-```
-
-```kql
-let starttime = datetime({startTime});
-let endtime = datetime({endTime});
-let accountid = '{accountId}';
-let deviceid = '{deviceId}';
-let userid = '{userId}';
-let relatedactivityid = '{relatedActivityId}';
-let activityid = '{activityId}';
-let filterstring = '{filterstring}';
-
-let relatedactivityIds = IntuneEvent
-| where env_time between (starttime .. endtime)
-| where AccountId == accountid
-| extend targetid = iff(relatedactivityid <> '', relatedactivityid, iff(activityid <> '', activityid, iff(deviceid <> '', deviceid, iff(userid <> '', userid, ''))))
-| where RelatedActivityId =~ targetid or ActivityId =~ targetid or DeviceId =~ targetid or UserId =~ targetid
-| sort by env_time asc
-| summarize makeset(RelatedActivityId, 10000);
-
-IntuneEvent
-| where env_time between (starttime .. endtime)
-| where RelatedActivityId in (relatedactivityIds)
-| project env_time, ContextId, AccountId, DeviceId, UserId, ActivityId, RelatedActivityId, EventUniqueName, ColMetadata, Col1, Col2, Col3, Col4, Col5, Col6, Message
-| limit 5000
-| extend metakeys = todynamic(split(trim_end(';', ColMetadata), ';'))
-| extend metavalues = pack(tostring(metakeys[0]), Col1, tostring(metakeys[1]), Col2, tostring(metakeys[2]), Col3, tostring(metakeys[3]), Col4, tostring(metakeys[4]), Col5, tostring(metakeys[5]), Col6)
-| project env_time, EventUniqueName, metavalues, DeviceId, ActivityId, RelatedActivityId
-| where EventUniqueName contains filterstring or metavalues contains filterstring
-| sort by env_time asc
-| limit 5000
-```
-
-```kql
-let starttime = datetime({startTime});
-let endtime = datetime({endTime});
-let accountid = '{accountId}';
-let deviceid = '{deviceId}';
-let relatedactivityid = '{relatedActivityId}';
-let activityid = '{activityId}';
-let filterstring = '{filterstring}';
-
-DeviceManagementProvider
-| where env_time between (starttime .. endtime)
-| extend myactivity = iff(relatedactivityid <> '', relatedactivityid, iff(activityid <> '', activityid, iff(deviceid <> '', deviceid, 'non-exists')))
-| where ActivityId =~ myactivity or relatedActivityId2 =~ myactivity
-| order by env_time desc
-| project env_time, message, EventMessage, EventId, ActivityId, relatedActivityId2, actionName, deviceId, accountId
-| where * contains filterstring
-| sort by env_time asc
-| limit 5000
-```
-
+### Step 8: In our attempt to improve customer experience, we have made architectural level changes to our reporting infrastructure which will lead to better p...
+**Solution**: This is by design. Customers should try accessing the reports again at a later time.
+`[Source: contentidea-kb, Score: 7.5]`
 
 ---
 
-## 已知问题速查
+## All Known Issues
 
-| # | 症状 | 根因 | 方案 | 分数 | 来源 |
-|---|------|------|------|------|------|
-| 1 | Collecting diagnostic logs from Intune portal fails or takes ~8 hours. Issue happens on almost al... | Group Policy (GPO) has cloud notifications disabled. Registry key NoCloudAppl... | 1. Check GPO: Computer Configuration > Start Menu and Taskbar > Notifications > Turn off notifica... | 🟢 9.0 | OneNote |
-| 2 | EPM elevation reporting data missing — no elevation reports appearing in Intune admin center | EPM elevation reports take 24 hours to populate; or EPM Reporting not enabled... | 1) Wait 24 hours for reports to process. 2) Verify OS supported. 3) Verify EPM Reporting enabled ... | 🟢 8.5 | ADO Wiki |
-| 3 | Target OS list is empty when generating Update Device Readiness & Compatibility Risks Report | Prerequisites not met. Device diagnostics not enabled under Tenant Administra... | Enable Device diagnostics under Tenant Admin per https://learn.microsoft.com/mem/intune/remote-ac... | 🟢 8.5 | ADO Wiki |
-| 4 | No devices found when Update Readiness (MEM-UR) report is generated | Multiple causes: telemetry AllowTelemetry <1, OneSettings disabled via GPO, O... | 1) Enable Windows data checkboxes under Tenant Admin > Connectors > Windows data 2) Check AllowTe... | 🟢 8.5 | ADO Wiki |
-| 5 | When setting up Data Alert and Intune integration on iOS and Android devices, users receive an AD... | Still under investigation. | Check the following Service Principal with the AAD Service Principal Policy Diagnostic in ViewPoi... | 🔵 7.0 | ContentIdea KB |
-| 6 | When wrapping a LOB application using Microsoft Intune App Wrapping Tool for Android, the tool cr... | The application being wrapped is at or near the Android dexfile 64k method li... | 1. Install latest Intune App Wrapping Tool for Android. 2. Enable Multidex. If unresolved: reduce... | 🔵 7.0 | ContentIdea KB |
-| 7 | Intune device diagnostics log collection from portal fails intermittently or takes approximately ... | Intermittent issue with the log collection upload to logmanagerservice endpoi... | 1. Check HttpSubsystem for logcollect requests to see timing: HttpSubsystem \| where * contains '... | 🔵 6.5 | OneNote |
+| # | Symptom | Root Cause | Solution | Score | Source |
+|---|---------|-----------|----------|-------|--------|
+| 1 | EPM automatic elevation rule Match=False for target file — elevation does not... | Certificate payload in the elevation rule does not match the actual certifica... | Check EpmServiceLogs (EpmService_YYYYMMDD_0.log) for 'Match=False;Message=' e... | 9.0 | ado-wiki |
+| 2 | EPM elevation reporting data missing — no elevation reports appearing in Intu... | EPM elevation reports take 24 hours to populate; or EPM Reporting not enabled... | 1) Wait 24 hours for reports to process. 2) Verify OS supported. 3) Verify EP... | 9.0 | ado-wiki |
+| 3 | Target OS list is empty when generating Update Device Readiness & Compatibili... | Prerequisites not met. Device diagnostics not enabled under Tenant Administra... | Enable Device diagnostics under Tenant Admin per https://learn.microsoft.com/... | 9.0 | ado-wiki |
+| 4 | No devices found when Update Readiness (MEM-UR) report is generated | Multiple causes: telemetry AllowTelemetry <1, OneSettings disabled via GPO, O... | 1) Enable Windows data checkboxes under Tenant Admin > Connectors > Windows d... | 9.0 | ado-wiki |
+| 5 | Update Readiness report generated but missing some devices | Device may not meet OS version prerequisites, GPO conflicts with AllowTelemet... | 1) Verify device meets OS prerequisites 2) Check for GPO overriding AllowTele... | 9.0 | ado-wiki |
+| 6 | Device Readiness status shows Unknown in MEM-UR report | Data processing at EDP did not generate expected results for Intune data proc... | Run compattelrunner.exe -m:appraiser.dll -f:DoScheduledTelemetryRun ent on im... | 9.0 | ado-wiki |
+| 7 | Intune for Education reporting is limited - Device Inventory, App Inventory, ... |  | Use Enterprise version of Intune for fuller reporting. | 7.5 | contentidea-kb |
+| 8 | In our attempt to improve customer experience, we have made architectural lev... | This can occur if the request is being throttled. | This is by design. Customers should try accessing the reports again at a late... | 7.5 | contentidea-kb |
+| 9 | Enterprise&nbsp;Privilege Management (EPM) Elevation reports take 24 hours to... |  |  | 7.5 | contentidea-kb |
+| 10 | Intune device diagnostics log collection from portal fails intermittently or ... | Intermittent issue with the log collection upload to logmanagerservice endpoi... | 1. Check HttpSubsystem for logcollect requests to see timing: HttpSubsystem /... | 6.0 | onenote |

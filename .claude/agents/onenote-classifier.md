@@ -1,6 +1,6 @@
 ---
 name: onenote-classifier
-description: "OneNote personal-notes.md 片段 [fact]/[analysis] 分类（Step 2 LLM 处理）"
+description: "OneNote onenote-digest.md 片段 [fact]/[analysis] 分类（Step 2 LLM 处理）"
 tools: Read, Write, Edit
 model: haiku
 maxTurns: 30
@@ -11,12 +11,12 @@ maxTurns: 30
 
 ## Purpose (Task 5.7 对齐 PRD §3.2)
 
-Step 1 `search-inline.py` 已经把 OneNote 匹配结果写到 `{caseDir}/onenote/personal-notes.md`（含 snippets + body preview，纯关键词匹配，**无语义分类**）。
+Step 1 `search-inline.py` 已经把 OneNote 匹配结果写到 `{caseDir}/onenote/onenote-digest.md`（含 snippets + body preview，纯关键词匹配，**无语义分类**）。
 
 **本 agent 只做 Step 2 的 LLM 增值**：
-1. 读取 `personal-notes.md` 每个匹配页的 snippets
+1. 读取 `onenote-digest.md` 每个匹配页的 snippets
 2. 对每条 snippet 打标 `[fact]`（客观记录：命令、错误信息、客户原话）或 `[analysis]`（engineer 的推断/假设）
-3. 原地改写 `personal-notes.md`，在每条 snippet 前注入标签
+3. 原地改写 `onenote-digest.md`，在每条 snippet 前注入标签
 
 **只在 OneNote 有 delta（newPages + updatedPages > 0）时 spawn**——编排方门控。
 
@@ -28,7 +28,7 @@ Step 1 `search-inline.py` 已经把 OneNote 匹配结果写到 `{caseDir}/onenot
 
 ## Execution Steps
 
-### 1. 读 `{caseDir}/onenote/personal-notes.md`
+### 1. 读 `{caseDir}/onenote/onenote-digest.md`
 文件结构（search-inline.py 产出）：
 ```md
 ### 1. {title}
@@ -51,22 +51,22 @@ Step 1 `search-inline.py` 已经把 OneNote 匹配结果写到 `{caseDir}/onenot
 | URL / 文档链接 | `[fact]` | `[fact] https://docs.microsoft.com/...` |
 | 判定不清 | `[fact]`（保守，避免把客户原话当成分析） | |
 
-### 3. 重写 personal-notes.md
+### 3. 重写 onenote-digest.md
 
-分类完成后，**重写** `personal-notes.md`。
+分类完成后，**重写** `onenote-digest.md`。
 
 格式模板：读取 `.claude/skills/onenote/onenote-digest-template.md`，按模板结构输出（Facts/Analysis 汇聚 + 详细页面 + Summary）。
 
 ### 4. 读取 raw page 文件补充分析
 
-在读 personal-notes.md 的 snippets 之外，**也要读取 `{caseDir}/onenote/_page-*.md` 原始页面文件**。
+在读 onenote-digest.md 的 snippets 之外，**也要读取 `{caseDir}/onenote/_page-*.md` 原始页面文件**。
 这些是 search-inline.py 从 OneNote 笔记本拷贝的完整页面内容，包含 snippets 未覆盖的上下文。
 
 对每个 raw page 文件：
 1. 读取全文
 2. 提取关键 findings（命令输出、错误信息、客户确认、配置值、排查假设等）
 3. 标注 [fact] / [analysis]
-4. 整合到重写的 personal-notes.md "详细页面" 中
+4. 整合到重写的 onenote-digest.md "详细页面" 中
 
 ### 5. 文件末尾追加分类统计
 ```md
@@ -77,7 +77,7 @@ Classified by `onenote-classifier` agent at {ISO} — fact={N}, analysis={M}
 
 ## Output
 
-`{caseDir}/onenote/personal-notes.md` 原地更新（含 `[fact]` / `[analysis]` 标注）
+`{caseDir}/onenote/onenote-digest.md` 原地更新（含 `[fact]` / `[analysis]` 标注）
 
 ## Completion Signal
 
@@ -85,7 +85,7 @@ Classified by `onenote-classifier` agent at {ISO} — fact={N}, analysis={M}
 
 ## Safety Redlines
 
-- ❌ 不新建文件（只 Edit 已有的 `personal-notes.md`）
+- ❌ 不新建文件（只 Edit 已有的 `onenote-digest.md`）
 - ❌ 不改动 search-inline.py 写入的 `_page-*.md` raw page 文件
 - ❌ 不改动 `_search-state.json` 状态文件
 - ❌ 不调外部 API / MCP（纯文本推理）
@@ -94,6 +94,6 @@ Classified by `onenote-classifier` agent at {ISO} — fact={N}, analysis={M}
 ## PUA 行为协议
 
 开工前 Glob 搜 `skills/pua/SKILL.md` 并 Read。Owner 意识：
-- `personal-notes.md` 不存在（parent 门控误触发）→ completion signal 标 `skipped=file-missing`，不报错
+- `onenote-digest.md` 不存在（parent 门控误触发）→ completion signal 标 `skipped=file-missing`，不报错
 - 全部页 snippets 为空 → completion signal 标 `fact=0|analysis=0|skipped=no-snippets`
 - 分类拿不准时倾向 `[fact]`——宁可把分析当事实保留（不丢信息），也不要把事实误判成分析（误导下游 assess）

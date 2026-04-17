@@ -24,14 +24,14 @@ mcpServers:
 
 ## 执行日志
 
-所有执行步骤记录到 `{caseDir}/logs/challenger.log`。
+所有执行步骤记录到 `{caseDir}/.casework/logs/challenger.log`。
 
 格式：`[YYYY-MM-DD HH:MM:SS] ...`
 
-使用 Bash echo append 写入。首次执行时创建 `logs/` 目录（如不存在）。
+使用 Bash echo append 写入。首次执行时创建 `.casework/logs/` 目录（如不存在）。
 
 ```bash
-LOG="{caseDir}/logs/challenger.log"
+LOG="{caseDir}/.casework/logs/challenger.log"
 mkdir -p "$(dirname "$LOG")"
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] === challenger START ===" >> "$LOG"
 ```
@@ -74,7 +74,7 @@ echo "[$(date '+%Y-%m-%d %H:%M:%S')] === challenger START ===" >> "$LOG"
 | `analysis/*.md` | troubleshooter 分析报告 |
 | `drafts/*.md` | email-drafter 邮件草稿 |
 | `case-summary.md` | 混合事实+推断的摘要 |
-| `onenote/personal-notes.md` 中的 `[analysis]` 标签条目 | AI 分析结论，需验证。`[fact]` 标签条目可信 |
+| `onenote/onenote-digest.md` 中的 `[analysis]` 标签条目 | AI 分析结论，需验证。`[fact]` 标签条目可信 |
 
 ## 执行步骤
 
@@ -89,7 +89,7 @@ echo "[$(date '+%Y-%m-%d %H:%M:%S')] === challenger START ===" >> "$LOG"
 3. `{caseDir}/kusto/*.md` — Kusto 遥测结果（Glob 找到所有文件，逐一读取）
 4. `{caseDir}/research/research.md` — 已有研究材料
 5. `{caseDir}/teams/teams-digest.md` — Teams 相关对话摘要（如存在；不存在则读 `teams/*.md`）
-6. `{caseDir}/onenote/personal-notes.md` — OneNote 个人笔记（如存在）
+6. `{caseDir}/onenote/onenote-digest.md` — OneNote 个人笔记（如存在）
 7. `.claude/skills/products/{product}/SKILL.md` — 产品排查技能定义
 8. `.claude/skills/products/{product}/known-issues.jsonl` — 已知问题库
 
@@ -102,7 +102,7 @@ echo "[$(date '+%Y-%m-%d %H:%M:%S')] === challenger START ===" >> "$LOG"
 
 读取 troubleshooter 产出的结构化声明和分析报告：
 
-1. `{caseDir}/claims.json` — 结构化声明列表（每个 claim 含 id, text, confidence, evidence[]）
+1. `{caseDir}/.casework/claims.json` — 结构化声明列表（每个 claim 含 id, text, confidence, evidence[]）
 2. `{caseDir}/analysis/{latest}.md` — 最新分析报告（用 Glob `{caseDir}/analysis/*.md` 查找，按文件名排序取最后一个）
 
 如果 `claims.json` 不存在，记录错误日志并终止：
@@ -198,11 +198,11 @@ echo "[$(date '+%Y-%m-%d %H:%M:%S')] === challenger START ===" >> "$LOG"
 
 #### 6a. 更新 claims.json
 
-更新每个 claim 的 `status` 和 `challengerNote`。追加 Step 4 中发现的新隐性推断 claims。使用 Write 工具覆盖写入 `{caseDir}/claims.json`。
+更新每个 claim 的 `status` 和 `challengerNote`。追加 Step 4 中发现的新隐性推断 claims。使用 Write 工具覆盖写入 `{caseDir}/.casework/claims.json`。
 
 #### 6b. 写 challenge-report.md
 
-输出到 `{caseDir}/challenge-report.md`，格式如下：
+输出到 `{caseDir}/.casework/challenge-report.md`，格式如下：
 
 ```markdown
 # Challenge Report — {caseNumber}

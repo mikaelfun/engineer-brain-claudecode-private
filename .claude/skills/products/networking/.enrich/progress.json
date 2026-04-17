@@ -1,14 +1,14 @@
 {
   "product": "networking",
-  "status": "complete",
+  "status": "skipped",
   "sourceStates": {
     "21v-gap": "exhausted",
     "onenote": "scanning",
     "ado-wiki": "scanning",
     "mslearn": "exhausted",
-    "contentidea-kb": "exhausted"
+    "contentidea-kb": "scanning"
   },
-  "synthesized": true,
+  "synthesized": false,
   "synthesizeState": {
     "lastSynthesizedAt": "2026-04-07",
     "lastEntryCount": 386,

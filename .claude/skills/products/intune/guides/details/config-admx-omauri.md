@@ -1,477 +1,127 @@
-# Intune ADMX / OMA-URI / Settings Catalog — 综合排查指南
+# INTUNE ADMX / OMA-URI / Settings Catalog — 已知问题详情
 
-**条目数**: 23 | **草稿融合数**: 10 | **Kusto 查询融合**: 1
-**来源草稿**: ado-wiki-b-SyncML-Viewer.md, mslearn-deploy-oma-uris-csp.md, onenote-admx-backed-policy-deployment.md, onenote-admx-backed-policy.md, onenote-chrome-homepage-admx-intune.md, onenote-chrome-homepage-admx-omauri.md, onenote-chrome-homepage-admx-policy.md, onenote-syncml-diagnostic-tools.md, onenote-syncml-status-codes.md, onenote-vpn-custom-oma-uri.md
-**Kusto 引用**: policy-error.md
-**生成日期**: 2026-04-07
+**条目数**: 81 | **生成日期**: 2026-04-17
 
 ---
 
-## ⚠️ 已知矛盾 (4 条)
-
-- **solution_conflict** (high): intune-ado-wiki-282 vs intune-contentidea-kb-463 — context_dependent: 不同来源给出不同方案，可能适用不同场景
-- **solution_conflict** (high): intune-contentidea-kb-203 vs intune-mslearn-147 — context_dependent: 不同来源给出不同方案，可能适用不同场景
-- **solution_conflict** (high): intune-contentidea-kb-246 vs intune-mslearn-147 — context_dependent: 不同来源给出不同方案，可能适用不同场景
-- **rootCause_conflict** (medium): intune-ado-wiki-375 vs intune-contentidea-kb-291 — context_dependent: 不同来源给出不同方案，可能适用不同场景
-
-## 排查流程
-
-### Phase 1: B Syncml Viewer
-> 来源: ADO Wiki — [ado-wiki-b-SyncML-Viewer.md](../drafts/ado-wiki-b-SyncML-Viewer.md)
-
-**SyncML Viewer**
-**When to use SyncML Viewer**
-- Not sure if a configuration/compliance/firewall policy is reaching the device
-- Portal settings don't match what was sent to the device
-- Errors in MDM event viewer logs — unsure if it's payload formatting or misconfiguration
-- **Note**: For EPM policy troubleshooting, refer to the EPM workflow directly
-
-**Instructions for gathering a SyncML trace**
-1. Download latest `SyncMLViewer-vXXX.zip` from [GitHub](https://github.com/okieselbach/SyncMLViewer/tree/master/SyncMLViewer/dist)
-2. Unzip and run `SyncMLViewer.exe` (requires Admin rights)
-3. Approve UAC prompt
-4. Click **MDM Sync** button (for most issues); click **MMP-C Sync** for EPM issues
-5. Once sync completes, click **Save As** and save as `.xml`
-
-**Analyzing a SyncML trace**
-- Import into VS Code, Notepad, Notepad++
-- Search for CSP keywords from the policy being applied
-- Search for terms from the expected policy settings
-- Check XML tags around setting names → indicates if policy was applied or removed
-
-### Phase 2: Deploy Oma Uris Csp
-> 来源: MS Learn — [mslearn-deploy-oma-uris-csp.md](../drafts/mslearn-deploy-oma-uris-csp.md)
-
-**Deploying Custom OMA-URIs to Target CSP via Intune**
-**Overview**
-**Key Concepts**
-**CSP Scope**
-- **User scope**: `./User/Vendor/MSFT/Policy/Config/AreaName/PolicyName`
-- **Device scope**: `./Device/Vendor/MSFT/Policy/Config/AreaName/PolicyName`
-- Scope is dictated by the platform, not MDM provider
-- Reference: [CSP documentation](https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-configuration-service-provider)
-
-**Architecture Flow**
-1. OMA-URI = payload (setting path + value)
-2. Custom policy = container in Intune
-3. Intune = delivery mechanism (OMA-DM protocol, XML-based SyncML)
-4. CSP on client = reads and applies settings (typically registry keys)
-
-**Built-in vs Custom**
-- Built-in Intune profiles use the same underlying mechanism but with friendly UI
-- Use built-in settings whenever possible; custom OMA-URI only for unavailable options
-
-**Policy Behavior Notes**
-- Policy changes pushed automatically to device
-- **Removing policy assignment may NOT revert settings to default** (no tattoo removal)
-- Exceptions: Wi-Fi, VPN, certificate, and email profiles ARE removed when unassigned
-- Behavior controlled by each CSP
-
-**Troubleshooting Custom Policies**
-
-**Common Issue Categories**
-1. Custom policy did not reach the client
-2. Policy reached client but expected behavior not observed
-
-**Diagnostic Steps**
-1. **Check MDM diagnostic logs** on the device
-2. **Check Windows Event Log**: `DeviceManagement-Enterprise-Diagnostics-Provider > Admin`
-3. Both logs should reference the custom policy/OMA-URI
-4. No reference = policy not delivered → verify configuration and group targeting
-... (详见原始草稿)
-
-### Phase 3: Admx Backed Policy Deployment
-> 来源: OneNote — [onenote-admx-backed-policy-deployment.md](../drafts/onenote-admx-backed-policy-deployment.md)
-
-**ADMX-Backed Policy Deployment via Intune OMA-URI**
-**Overview**
-**Tools**
-- **GPSearch**: https://gpsearch.azurewebsites.net/ - Check ADMX & registry key values
-- **MMAT (MDM Migration Analysis Tool)**: https://github.com/WindowsDeviceManagement/MMAT - Identify which GPO policies can be migrated to MDM
-
-**Step-by-Step Process**
-
-**1. Find the Policy CSP**
-- OMA-URI: `./Device/Vendor/MSFT/Policy/Config/System/BootStartDriverInitialization`
-- Determine scope: `./User` or `./Device`
-- Locate ADMX name and policy name from CSP docs (e.g., `earlylauncham.admx`, policy `POL_DriverLoadPolicy_Name`)
-
-**2. Get the ADMX Source File**
-- If ADMX ships with Windows: copy from `%SystemRoot%\policydefinitions`
-- If custom: obtain from vendor
-
-**3. Ingest ADMX via Intune**
-```
-```
-- `{appname}` = ADMX filename without extension (e.g., `earlylauncham`)
-- Data Type: String
-- Value: Full content of the .admx file (copy from Notepad++)
-
-**4. Configure Specific Settings**
-- Check element type from ADMX content: Text, MultiText, Boolean, Enum, Decimal, or List
-- OMA-URI: `./Device/Vendor/MSFT/Policy/Config/{Area}/{PolicyName}`
-- Value format: `<enabled/><data id="{elementId}" value="{value}"/>`
-```xml
-```
-
-**5. Verify Deployment**
-
-**Client Side**
-1. **Access Work or School** > Info > check policy listed
-2. **Registry locations**:
-   - `HKLM\Software\Microsoft\PolicyManager\Providers\{ProviderGUID}\default\Device\{Area}`
-   - `HKLM\Software\Microsoft\Provisioning\NodeCache\CSP\Device\MS DM Server\Nodes\{NodeId}`
-
-**MDM Diagnostic Log**
-- Export from Settings > Access Work or School > Export management log
-- Check `EndtraceRegistry.txt` for policy values
-
-**Kusto Query**
-```kql
-```
-
-**Known Limitations**
-- Some CSPs are **Enterprise/Education edition only** (e.g., AppVirtualization) - Professional edition shows "Not applicable"
-... (详见原始草稿)
-
-### Phase 4: Admx Backed Policy
-> 来源: OneNote — [onenote-admx-backed-policy.md](../drafts/onenote-admx-backed-policy.md)
-
-**ADMX-Backed Policy Deployment via Intune**
-**Overview**
-**Tools**
-- **GPSearch**: https://gpsearch.azurewebsites.net/ - Check ADMX & registry key values
-- **MMAT (MDM Migration Analysis Tool)**: https://github.com/WindowsDeviceManagement/MMAT - Analyze GPO policies for MDM migration feasibility
-
-**Step-by-Step: Deploy an ADMX-Backed Policy**
-
-**1. Find the GPO Configuration**
-- Identify the GPO location (e.g., Computer Configuration/Administrative Template/...)
-- Note the OMA-URI path (e.g., `./Device/Vendor/MSFT/Policy/Config/System/BootStartDriverInitialization`)
-
-**2. Confirm ADMX Source File Exists**
-- Check `%SystemRoot%\policydefinitions` for the .admx file
-- Find the ADMX name from Policy CSP documentation
-- Determine scope: `./user` vs `./device`
-
-**3. Install ADMX File via Intune (if not inbox)**
-- Copy all content from .admx file
-- Create custom OMA-URI profile:
-  - **OMA-URI**: `./Vendor/MSFT/Policy/ConfigOperations/ADMXInstall/{admxname}/Policy/admxfile01`
-  - **Data type**: String
-  - **Value**: Full XML content of the .admx file
-
-**4. Configure Specific Settings**
-- Check element types in .admx content (Text, MultiText, Boolean, Enum, Decimal, List)
-- Create another OMA-URI for the setting:
-  - **OMA-URI**: `./Device/Vendor/MSFT/Policy/Config/{Area}/{PolicyName}`
-  - **Value**: `<enabled/><data id="{elementId}" value="{value}"/>`
-
-**5. Verify Deployment**
-1. **Device side** - Access work or school > Info > check policy list
-2. **Registry** - Check:
-   - `HKLM\Software\Microsoft\PolicyManager\Providers\{providerId}\default\Device\{area}`
-   - `HKLM\Software\Microsoft\Provisioning\NodeCache\CSP\Device\MS DM Server\Nodes\{id}`
-... (详见原始草稿)
-
-### Phase 5: Chrome Homepage Admx Intune
-> 来源: OneNote — [onenote-chrome-homepage-admx-intune.md](../drafts/onenote-chrome-homepage-admx-intune.md)
-
-**Configure Chrome Homepage via Intune ADMX-backed Policy**
-**Overview**
-**Steps**
-**1. Get Chrome ADMX Template**
-**2. Ingest ADMX Template into Intune**
-1. Go to **Intune** > **Device Configuration** > **Profiles** > **Create profile**
-2. Platform: **Windows 10 and later**, Profile type: **Custom**
-3. Add row:
-   - **OMA-URI**: `./Device/Vendor/MSFT/Policy/ConfigOperations/ADMXInstall/Chrome/Policy/ChromeAdmx`
-   - **Data type**: String
-   - **Value**: Paste the full content of `chrome.admx`
-
-**3. Find Required Registry Keys**
-
-**4. Configure Settings (4 OMA-URI rows)**
-- OMA-URI: `./Device/Vendor/MSFT/Policy/Config/Chrome~Policy~googlechrome~Startup/HomepageIsNewTabPage`
-- Data type: String
-- Value: `<disabled/>`
-- OMA-URI: `./Device/Vendor/MSFT/Policy/Config/Chrome~Policy~googlechrome~Startup/HomepageLocation`
-- Data type: String
-- Value:
-  ```xml
-  ```
-- OMA-URI: `./Device/Vendor/MSFT/Policy/Config/Chrome~Policy~googlechrome~Startup/RestoreOnStartup`
-- Data type: String
-- Value:
-  ```xml
-  ```
-- OMA-URI: `./Device/Vendor/MSFT/Policy/Config/Chrome~Policy~googlechrome~Startup/RestoreOnStartupURLs`
-- Data type: String
-- Value:
-  ```xml
-  ```
-
-**5. Verify**
-
-**Notes**
-- This same ADMX ingestion pattern works for any third-party ADMX template (Firefox, Adobe, etc.)
-- Replace `https://your-homepage-url.com` with the actual desired URL
-... (详见原始草稿)
-
-### Phase 6: Chrome Homepage Admx Omauri
-> 来源: OneNote — [onenote-chrome-homepage-admx-omauri.md](../drafts/onenote-chrome-homepage-admx-omauri.md)
-
-**Configure Chrome Homepage via ADMX-Backed OMA-URI in Intune**
-**Overview**
-**Steps**
-**1. Get Chrome ADMX File**
-**2. Ingest ADMX Template into Intune**
-- **Platform**: Windows 10 and later
-- **Profile type**: Custom
-- **OMA-URI**: `./Device/Vendor/MSFT/Policy/ConfigOperations/ADMXInstall/Chrome/Policy/ChromeAdmx`
-- **Data type**: String
-- **Value**: Paste full content of chrome.admx file
-
-**3. Determine Registry Keys**
-
-**4. Configure Settings**
-```
-```
-```
-```
-```
-```
-```
-```
-
-**5. Validate**
-
-**References**
-- [Manage Chrome Browser with Microsoft Intune](https://support.google.com/chrome/a/answer/9102677)
-- CSP: `./Device/Vendor/MSFT/Policy/ConfigOperations/ADMXInstall`
-
-### Phase 7: Chrome Homepage Admx Policy
-> 来源: OneNote — [onenote-chrome-homepage-admx-policy.md](../drafts/onenote-chrome-homepage-admx-policy.md)
-
-**Set Chrome Homepage via Intune ADMX-Backed Policy**
-**Overview**
-**Prerequisites**
-- Download the latest Chrome ADMX template from [Chrome Enterprise](https://chromeenterprise.google/browser/download/#manage-policies-tab)
-- Intune license with custom profile support
-
-**Step 1: Ingest Chrome ADMX Template**
-
-**Step 2: Identify Registry Keys**
-1. Open `regedit.exe`
-2. Navigate to `HKLM\SOFTWARE\Microsoft\PolicyManager\ADMXDefault`
-3. Browse Chrome setting categories
-
-**Step 3: Configure Settings**
-
-**HomepageIsNewTabPage (Disable)**
-
-**HomepageLocation**
-
-**RestoreOnStartup**
-
-**RestoreOnStartupURLs**
-
-**Step 4: Validate**
-- Navigate to `chrome://policy` to see applied policies
-- Check homepage behavior
-
-**Notes**
-- RestoreOnStartup value `4` = Open a list of URLs
-- Multiple startup URLs use `&#xF000;` as separator
-- Quotes in XML values may cause errors — ensure proper XML escaping
-- Reference: [Manage Chrome Browser with Intune](https://support.google.com/chrome/a/answer/9102677)
-
-### Phase 8: Syncml Diagnostic Tools
-> 来源: OneNote — [onenote-syncml-diagnostic-tools.md](../drafts/onenote-syncml-diagnostic-tools.md)
-
-**SyncML & MDM Diagnostic Tools**
-**SyncML Viewer**
-**Downloads**
-- Internal: `\\shmsd\SHMSD\Readiness\Products\Azure\Intune\Tools\SyncmlViewer`
-- Public (latest): [SyncMLViewer on GitHub](https://github.com/okieselbach/SyncMLViewer)
-
-**Capabilities**
-- Verify if settings/policies from Intune have been received
-- See which CSPs are called when a policy is configured
-- View CSP command internals (Get/Add/Delete/Replace)
-- Send CSP commands manually to reproduce issues
-
-**Usage**
-1. Deploy a new policy from Intune
-2. Capture SyncML sessions in the **SyncML Messages** tab
-3. View Source/Target in each message
-4. Example: Msg 3 = Intune sends Get for Firewall status → Msg 4 = Device returns status 200, value 0
-5. Save captured sessions for sharing/future research
-
-**References**
-- [IntuneWiki SyncML Viewer](https://www.intunewiki.com/wiki/Windows_SyncML_Viewer)
-- [Oliver Kieselbach - MDM monitoring](https://oliverkieselbach.com/2019/10/11/windows-10-mdm-client-activity-monitoring-with-syncml-viewer/)
-
-**SyncML Response Status Codes**
-
-**WMI Tester (wbemtest) for MDM CSPs**
-1. Run `wbemtest` with admin permissions
-2. Connect to namespace: `root\cimv2\mdm\dmmap`
-3. Choose **Enum Classes** (Recursive)
-4. Find WMI class for the policy (e.g., `MDM_Policy_Config01_DeviceLock02`)
-
-### Phase 9: Syncml Status Codes
-> 来源: OneNote — [onenote-syncml-status-codes.md](../drafts/onenote-syncml-status-codes.md)
-
-**SyncML Response Status Codes Reference**
-**Success Codes (1xx-2xx)**
-**Redirect Codes (3xx)**
-**Client Error Codes (4xx) - Most Common in Troubleshooting**
-**Server Error Codes (5xx)**
-**Common Troubleshooting Patterns**
-- **418 + 404 in Sequence**: PauseQualityUpdates Add returns 418 (AlreadyExists), then Rollback returns 404 (NotFound) - indicates rollback prerequisites not met
-- **500 for policy delivery**: Check if CSP URI is correct and supported on device OS version
-- **405**: Command type (Add vs Replace) mismatch for the target CSP node
-
-### Phase 10: Vpn Custom Oma Uri
-> 来源: OneNote — [onenote-vpn-custom-oma-uri.md](../drafts/onenote-vpn-custom-oma-uri.md)
-
-**Windows VPN Custom Policy via Intune OMA-URI**
-**Always On VPN via Custom OMA-URI**
-- **Setting name**: Always On
-- **Data type**: String
-- **OMA-URI**: `./Device/Vendor/VPNv2/{ProfileName}/AlwaysOn`
-- **Value**: `True`
-
-**VPN Profile Storage Locations**
-
-**References**
-- [Create VPN profile via Custom OMA-URI](https://blogs.technet.microsoft.com/tune_in_to_windows_intune/2015/01/30/create-a-vpn-profile-using-microsoft-intune-standalone-via-custom-oma-uris/)
-- [VPNv2 CSP](https://learn.microsoft.com/en-us/windows/client-management/mdm/vpnv2-csp)
-
-### Phase 11: Kusto 诊断查询
-
-#### policy-error.md
-`[工具: Kusto skill — policy-error.md]`
-
-```kql
-let intuneDeviceId = '{deviceId}';
-
-DeviceManagementProvider  
-| where env_time > ago(15d)
-| where EventId == 5786
-| where deviceId == intuneDeviceId
-| where reportComplianceState == 'Error'
-| summarize 
-    LastError=max(env_time),
-    FirstError=min(env_time),
-    ErrorCount=count(),
-    Compliant=countif(reportComplianceState=='Compliant')
-  by PolicyName=name, PolicyId=id, PolicyType=typeAndCategory
-| extend SuccessRate = round(100.0 * Compliant / (Compliant + ErrorCount), 1)
-| where ErrorCount > 0
-| order by ErrorCount desc, LastError desc
-| limit 20
-```
-
-```kql
-let intuneDeviceId = '{deviceId}';
-let problemPolicyId = '{policyId}';
-
-DeviceManagementProvider  
-| where env_time > ago(15d)
-| where deviceId == intuneDeviceId
-| where reportComplianceState == 'Error'
-| where id contains problemPolicyId
-| project env_time, PolicyID=id, PolicyType=typeAndCategory, EventMessage, message
-| take 5
-```
-
-```kql
-let accountId = '{accountId}';
-let problemPolicy = '{policyId}';
-
-DeviceManagementProvider  
-| where env_time > ago(15d)
-| where accountId == accountId
-| where id contains problemPolicy
-| where reportComplianceState == 'Error'
-| summarize 
-    ErrorCount=count(),
-    FirstError=min(env_time),
-    LastError=max(env_time),
-    AffectedDevices=dcount(deviceId)
-  by accountId, PolicyType=typeAndCategory
-| project accountId, AffectedDevices, ErrorCount, FirstError, LastError, PolicyType
-```
-
-```kql
-let intuneDeviceId = '{deviceId}';
-
-DeviceManagementProvider  
-| where env_time > ago(7d)
-| where deviceId == intuneDeviceId
-| where EventId == 5786
-| summarize 
-    ErrorCount=countif(reportComplianceState == 'Error'),
-    CompliantCount=countif(reportComplianceState == 'Compliant'),
-    PendingCount=countif(reportComplianceState == 'Pending')
-  by bin(env_time, 1h)
-| order by env_time asc
-```
-
-```kql
-DeviceManagementProvider
-| where SourceNamespace == "IntuneCNP" 
-| where env_time >= now(-10d)
-| where EventMessage contains "Tattoo removed for - AccountID: '{accountId}'; DeviceID: '{deviceId}'" 
-| project env_time, EventMessage 
-```
-
-```kql
-DeviceManagementProvider
-| where env_time >= ago(1d)
-| where ActivityId == '{deviceId}'
-| where message contains "Tattoo"
-| project env_time, ActivityId, cV, message
-```
-
-```kql
-IntuneEvent
-| where env_time > ago(1d)
-| where ActivityId contains '{deviceId}'
-| where * contains "Tattoo"
-| project ActivityId, env_time, ComponentName, EventUniqueName, 
-    ColMetadata, Col1, Col2, Col3, Col4, Col5, Col6, AccountId, UserId, DeviceId
-```
-
+## Quick Troubleshooting Path
+
+### Step 1: Intune Device Restriction policy for password complexity (DeviceLock/MinDevicePasswordComplexCharacters) reports 'Error' status on Windows 10 deskt...
+**Solution**: Change password complexity setting to a supported value (1, 2, or 3) for Windows desktop devices. Value 4 is only supported on mobile. Use Windows LAPS if customer needs to manage local admin passwords. Kusto: DeviceManagementProvider with EventId 5786 to check policy compliance status. Reference IcMs: 163176114, 160587823.
+`[Source: onenote, Score: 9.5]`
+
+### Step 2: Custom OMA-URI device configuration policies may stop working or show unexpected behavior after Intune migrates Windows policies to unified setting...
+**Solution**: Check if the custom OMA-URI setting is already available in Settings Catalog. If yes, migrate to Settings Catalog policy and remove the custom policy. Reference: Microsoft Tech Community blog 'Support tip: Windows device configuration policies migrating to unified settings platform in Intune' (article ID 4189665).
+`[Source: onenote, Score: 9.5]`
+
+### Step 3: Need to restrict which users can log on locally to Windows devices managed by Intune; want to block domain users from using Ctrl+Alt+Del to sign in...
+**Solution**: Create Intune custom profile: OMA-URI: ./Device/Vendor/MSFT/Policy/Config/UserRights/AllowLocalLogOn. For specific user: Value = 'AzureAD\user@domain.com'. For SID-based: Value = '<![CDATA[*S-1-5-113]]>' (local accounts only). Must use CDATA tag for UserRights policies. Multiple entries separated by &#xF000; delimiter.
+`[Source: onenote, Score: 9.5]`
+
+### Step 4: Need to restrict domain user local logon on Intune-managed Windows 10 AADJ device. Want to allow only specific AAD users/groups to log on locally.
+**Solution**: Create custom profile: OMA-URI ./Device/Vendor/MSFT/Policy/Config/UserRights/AllowLocalLogOn, Data Type String, use CDATA tag with SIDs (e.g. *S-1-5-113 for local accounts). For AAD groups: use LocalUsersAndGroups CSP to add AAD group SID to built-in group (Remote Desktop Users S-1-5-32-555), then allow that group via AllowLocalLogOn. Use 0xF000 as delimiter for multiple entries.
+`[Source: onenote, Score: 9.5]`
+
+### Step 5: After applying AllowLocalLogOn CSP via Intune custom profile, unassigning or setting policy to Not Configured does NOT revert the setting. Users re...
+**Solution**: Must manually fix on device with local admin: Open gpedit.msc -> Allow log on locally -> remove Intune-deployed values -> restore original values. Cannot be remediated remotely via policy unassignment alone.
+`[Source: onenote, Score: 9.5]`
+
+### Step 6: Windows Device Configuration policy 显示 error (Remediation Failed) 但设备实际行为符合预期，设置已确认在 MDMDiagReport 和 Registry 中
+**Solution**: 确认 CSP 文档中是否支持 Add/Get/Replace/Delete 操作。如果 CSP 不支持 Get 操作（如 Account CSP），设置会报 failed 但实际已生效，属于预期行为。参考: https://learn.microsoft.com/en-us/windows/client-management/mdm/configuration-service-provider-reference
+`[Source: ado-wiki, Score: 9.0]`
+
+### Step 7: macOS custom profile (DLP/TCC payload) fails with error 'The profile must be a system profile. User profiles are not supported' in syslog_intune.lo...
+**Solution**: Reassign the custom configuration profile to a device group instead of a user group. TCC/Privacy Preferences, DLP, and similar payloads must be delivered as system profiles (device-scoped assignment).
+`[Source: ado-wiki, Score: 9.0]`
+
+### Step 8: Security baseline shows 'Error' status; setting fails to apply due to scope or applicability issue
+**Solution**: 1) Check error code in Intune portal for explanation. 2) Review CSP pre-requirements for each failing setting. 3) Verify device OS version supports the setting. KB: https://internal.evergreen.microsoft.com/en-us/topic/47625e81-41a4-d0d2-6fa2-93e0adbd3d59
+`[Source: ado-wiki, Score: 9.0]`
 
 ---
 
-## 已知问题速查
+## All Known Issues
 
-| # | 症状 | 根因 | 方案 | 分数 | 来源 |
-|---|------|------|------|------|------|
-| 1 | Intune Device Restriction policy for password complexity (DeviceLock/MinDevicePasswordComplexChar... | Password complexity value 4 ('Digits, lowercase letters, uppercase letters, a... | Change password complexity setting to a supported value (1, 2, or 3) for Windows desktop devices.... | 🟢 9.0 | OneNote |
-| 2 | Custom OMA-URI device configuration policies may stop working or show unexpected behavior after I... | Microsoft is migrating Windows device configuration policies to unified setti... | Check if the custom OMA-URI setting is already available in Settings Catalog. If yes, migrate to ... | 🟢 9.0 | OneNote |
-| 3 | Need to restrict which users can log on locally to Windows devices managed by Intune; want to blo... | Windows allows any valid credential holder to log on locally by default. Intu... | Create Intune custom profile: OMA-URI: ./Device/Vendor/MSFT/Policy/Config/UserRights/AllowLocalLo... | 🟢 9.0 | OneNote |
-| 4 | Need to restrict domain user local logon on Intune-managed Windows 10 AADJ device. Want to allow ... | No built-in Intune UI for AllowLocalLogOn user rights assignment. Must use cu... | Create custom profile: OMA-URI ./Device/Vendor/MSFT/Policy/Config/UserRights/AllowLocalLogOn, Dat... | 🟢 9.0 | OneNote |
-| 5 | After applying AllowLocalLogOn CSP via Intune custom profile, unassigning or setting policy to No... | Windows design limitation - AllowLocalLogOn CSP is a tattooed policy that per... | Must manually fix on device with local admin: Open gpedit.msc -> Allow log on locally -> remove I... | 🟢 9.0 | OneNote |
-| 6 | Windows Device Configuration policy 显示 error (Remediation Failed) 但设备实际行为符合预期，设置已确认在 MDMDiagRepor... | CSP 不支持 Get 操作。Intune 下发 Add/Replace 操作后，通过 Get 操作验证值，如果 Get 返回值与下发值不匹配或 CSP ... | 确认 CSP 文档中是否支持 Add/Get/Replace/Delete 操作。如果 CSP 不支持 Get 操作（如 Account CSP），设置会报 failed 但实际已生效，属于预期... | 🟢 8.5 | ADO Wiki |
-| 7 | macOS custom profile (DLP/TCC payload) fails with error 'The profile must be a system profile. Us... | Profile was deployed to a user group instead of a device group. TCC and certa... | Reassign the custom configuration profile to a device group instead of a user group. TCC/Privacy ... | 🟢 8.5 | ADO Wiki |
-| 8 | Security baseline shows 'Error' status; setting fails to apply due to scope or applicability issue | Setting either assigned to wrong scope (user vs device) or device does not su... | 1) Check error code in Intune portal for explanation. 2) Review CSP pre-requirements for each fai... | 🟢 8.5 | ADO Wiki |
-| 9 | Unhealthy Endpoint Report shows incorrect device status in MEM Admin Center; mismatch between por... | Multiple possible causes: 1) Defender AV agent reporting incorrect status (MD... | 1) Run Get-MpComputerStatus on device to get actual ComputerState/AMRunningMode/DefenderSignature... | 🟢 8.5 | ADO Wiki |
-| 10 | Security baseline profile shows 'Error' status — security setting failed to apply on device | Typically related to scope (wrong assignment to user vs device group) or appl... | 1) Review CSP pre-requirements for each security setting 2) Check if device supports the setting ... | 🟢 8.5 | ADO Wiki |
-| 11 | TargetReleaseVersion CSP and Feature Update policy behave differently for controlling Windows fea... | TargetReleaseVersion CSP is client-side control; Feature Update policy is ser... | Use TargetReleaseVersion CSP (OMA-URI ./Vendor/MSFT/Policy/Config/Update/TargetReleaseVersion) as... | 🟢 8.0 | OneNote |
-| 12 | Intune Endpoint Security firewall rule deployment fails with error 0x80070057 (E_INVALIDARG); one... | Common causes: 1) Invalid file path with typos in environment variables (e.g.... | 1) Identify the failing rule via Event Log EventID 404 under DeviceManagement-Enterprise-Diagnost... | 🟢 8.0 | OneNote |
-| 13 | Intune policy RemovableDiskDenyWriteAccess deployed successfully (registry and policy manager con... | Registry key HKLM\SYSTEM\CurrentControlSet\Control\Storage\HotplugSecureOpen ... | 1. Check if HotplugSecureOpen registry key exists: HKLM\SYSTEM\CurrentControlSet\Control\Storage\... | 🔵 7.5 | OneNote |
-| 14 | Issue:  Windows 10 Enterprise Mobile devices are assigned the CSP Policies as such:     Shows the... | The CSP is being ignored and is currently BUG: Bug 11941212 | Currently there is no work around for this issue, and the BUG is being worked on at this time, pl... | 🔵 7.0 | ContentIdea KB |
-| 15 | OMA-URI ./Vendor/MSFT/Policy/Config/Start/HideAppList policy is not applying to MDM enrolled Wind... | This is a client side bug fixed in Windows 10 RS3. | Upgrade to Windows 10 RS3. ICM 43249767. | 🔵 7.0 | ContentIdea KB |
-| 16 | When configuring the option "Use private store only" in the Intune for EDU portal the policy show... | Targeted computers have Windows PRO Education which does not support the Requ... | The RequirePrivateStoreOnly CSP policy is not supported on Windows 10 PRO Education because it is... | 🔵 7.0 | ContentIdea KB |
-| 17 | After creating a Windows 10 configuration profile and supplying the URL to an image to be used as... | This can occur if SetEduPolicies is not set to TRUE. Managing the desktop ima... | To resolve this prob lem complete the following:1. Login to portal.azure.com. 2. On the Intune bl... | 🔵 7.0 | ContentIdea KB |
-| 18 | �         The �Windows Defender Security Center� is showing unexpected results on Windows 10 1703... | The �Enable user access to Windows Defender� is not working correctly. Settin... | The workaround, until a fix is implemented to resolve the CSP being set incorrectly, can be found... | 🔵 7.0 | ContentIdea KB |
-| 19 | After creating and assigning a Device Configuration profile that defines a custom VPN connection ... | This occurs because in certain scenarios, the response sent by the Windows 10... | You can ignore this error as the connection does work as expected. Alternatively, you can&nbsp;us... | 🔵 7.0 | ContentIdea KB |
-| 20 | Cannot apply Windows 10 Custom Setting to set IE DisableHomePageChange via OMA-URI. Result: (0x80... | Quotation marks in the policy value XML string are not in UTF-8 unicode (smar... | Edit the OMA-URI and modify its string value ensuring standard UTF-8 quotation marks are used in ... | 🔵 7.0 | ContentIdea KB |
-| 21 | OneDrive KFM (Known Folder Move) allows you to redirect common Windows folders (Desktop, Document... | Protect Critical Data With OneDrive & Known Folder Move (KFM)https://blogs.te... | To setup OneDrive for Business KFM, you will need to perform the following actions:1. Make sure O... | 🔵 7.0 | ContentIdea KB |
-| 22 | ADMX-backed custom OMA-URI policy deployed via Intune shows 'Not applicable' or fails on Windows ... | Certain Policy CSPs (e.g., AppVirtualization) used in ADMX-backed policies ar... | Verify CSP edition support at docs.microsoft.com/windows/client-management/mdm/policy-csp-* befor... | 🔵 7.0 | OneNote |
-| 23 | RemoteWipe doWipe fails on Windows 10 with Event ID 400 The request is not supported (0x80070032) | Windows Recovery Environment (WinRE) is disabled. RemoteWipe CSP requires WinRE. | Run Reagentc /info as admin to check WinRE status. If Disabled troubleshoot and re-enable WinRE. | 🔵 6.5 | MS Learn |
+| # | Symptom | Root Cause | Solution | Score | Source |
+|---|---------|-----------|----------|-------|--------|
+| 1 | Intune Device Restriction policy for password complexity (DeviceLock/MinDevic... | Password complexity value 4 ('Digits, lowercase letters, uppercase letters, a... | Change password complexity setting to a supported value (1, 2, or 3) for Wind... | 9.5 | onenote |
+| 2 | Custom OMA-URI device configuration policies may stop working or show unexpec... | Microsoft is migrating Windows device configuration policies to unified setti... | Check if the custom OMA-URI setting is already available in Settings Catalog.... | 9.5 | onenote |
+| 3 | Need to restrict which users can log on locally to Windows devices managed by... | Windows allows any valid credential holder to log on locally by default. Intu... | Create Intune custom profile: OMA-URI: ./Device/Vendor/MSFT/Policy/Config/Use... | 9.5 | onenote |
+| 4 | Need to restrict domain user local logon on Intune-managed Windows 10 AADJ de... | No built-in Intune UI for AllowLocalLogOn user rights assignment. Must use cu... | Create custom profile: OMA-URI ./Device/Vendor/MSFT/Policy/Config/UserRights/... | 9.5 | onenote |
+| 5 | After applying AllowLocalLogOn CSP via Intune custom profile, unassigning or ... | Windows design limitation - AllowLocalLogOn CSP is a tattooed policy that per... | Must manually fix on device with local admin: Open gpedit.msc -> Allow log on... | 9.5 | onenote |
+| 6 | Windows Device Configuration policy 显示 error (Remediation Failed) 但设备实际行为符合预期... | CSP 不支持 Get 操作。Intune 下发 Add/Replace 操作后，通过 Get 操作验证值，如果 Get 返回值与下发值不匹配或 CSP ... | 确认 CSP 文档中是否支持 Add/Get/Replace/Delete 操作。如果 CSP 不支持 Get 操作（如 Account CSP），设置会... | 9.0 | ado-wiki |
+| 7 | macOS custom profile (DLP/TCC payload) fails with error 'The profile must be ... | Profile was deployed to a user group instead of a device group. TCC and certa... | Reassign the custom configuration profile to a device group instead of a user... | 9.0 | ado-wiki |
+| 8 | Security baseline shows 'Error' status; setting fails to apply due to scope o... | Setting either assigned to wrong scope (user vs device) or device does not su... | 1) Check error code in Intune portal for explanation. 2) Review CSP pre-requi... | 9.0 | ado-wiki |
+| 9 | Security baseline profile shows 'Error' status — security setting failed to a... | Typically related to scope (wrong assignment to user vs device group) or appl... | 1) Review CSP pre-requirements for each security setting 2) Check if device s... | 9.0 | ado-wiki |
+| 10 | TargetReleaseVersion CSP and Feature Update policy behave differently for con... | TargetReleaseVersion CSP is client-side control; Feature Update policy is ser... | Use TargetReleaseVersion CSP (OMA-URI ./Vendor/MSFT/Policy/Config/Update/Targ... | 8.5 | onenote |
+| 11 | Custom VPN profile (OMA-URI) reports 2016281112 Remediation Failed in Intune ... | Win10 response XML differs from policy XML; Intune interprets mismatch as fai... | Ignore error or use standard VPN profile instead of custom OMA-URI. | 8.0 | mslearn |
+| 12 | ADMX-backed custom OMA-URI policy deployed via Intune shows 'Not applicable' ... | Certain Policy CSPs (e.g., AppVirtualization) used in ADMX-backed policies ar... | Verify CSP edition support at docs.microsoft.com/windows/client-management/md... | 7.5 | onenote |
+| 13 | Issue:  Windows 10 Enterprise Mobile devices are assigned the CSP Policies as... | The CSP is being ignored and is currently BUG: Bug 11941212 | Currently there is no work around for this issue, and the BUG is being worked... | 7.5 | contentidea-kb |
+| 14 | (no symptom) | Customers are wanting to deploy their Commercial ID (from Microsoft Operation... | Prereqs:  �         Azure AD Premium  �         Microsoft Operations Manageme... | 7.5 | contentidea-kb |
+| 15 | Customers are wanting to deploy their Commercial ID (from Microsoft Operation... | Prereqs:  �&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Azure AD Premium�&nbsp;&nbsp;... | Solution:Section 1: Microsoft Operations Management Suite (OMS) Configuration... | 7.5 | contentidea-kb |
+| 16 | Onboarding Windows Defender ATP with Microsoft Intune - guide for OMA-URI set... |  |  | 7.5 | contentidea-kb |
+| 17 | OMA-URI ./Vendor/MSFT/Policy/Config/Start/HideAppList policy is not applying ... | This is a client side bug fixed in Windows 10 RS3. | Upgrade to Windows 10 RS3. ICM 43249767. | 7.5 | contentidea-kb |
+| 18 | After creating a Windows 10 configuration profile and supplying the URL to an... | This can occur if SetEduPolicies is not set to TRUE. Managing the desktop ima... | To resolve this prob lem complete the following:1. Login to portal.azure.com.... | 7.5 | contentidea-kb |
+| 19 | �         The �Windows Defender Security Center� is showing unexpected result... | The �Enable user access to Windows Defender� is not working correctly. Settin... | The workaround, until a fix is implemented to resolve the CSP being set incor... | 7.5 | contentidea-kb |
+| 20 | After creating and assigning a Device Configuration profile that defines a cu... | This occurs because in certain scenarios, the response sent by the Windows 10... | You can ignore this error as the connection does work as expected. Alternativ... | 7.5 | contentidea-kb |
+| 21 | Cannot apply Windows 10 Custom Setting to set IE DisableHomePageChange via OM... | Quotation marks in the policy value XML string are not in UTF-8 unicode (smar... | Edit the OMA-URI and modify its string value ensuring standard UTF-8 quotatio... | 7.5 | contentidea-kb |
+| 22 | OneDrive KFM (Known Folder Move) allows you to redirect common Windows folder... | Protect Critical Data With OneDrive & Known Folder Move (KFM)https://blogs.te... | To setup OneDrive for Business KFM, you will need to perform the following ac... | 7.5 | contentidea-kb |
+| 23 | If the customer is trying to use machine certificates for a VPN profile inste... |  |  | 7.5 | contentidea-kb |
+| 24 | For an Azure AD joined or Hybrid Azure AD joined device, every time a user si... |  |  | 7.5 | contentidea-kb |
+| 25 | When deploying VPNv2 CSP profile using a custom policy certain values report ... | The setting./User/Vendor/MSFT/VPNv2/Always-On-VPN-v2/NativeProfile/Servers - ... | Changing the NativeProfile CSP in the VPN settings to reflect serverFQDN;serv... | 7.5 | contentidea-kb |
+| 26 | User Rights (https://docs.microsoft.com/en-us/windows/security/threat-protect... |  |  | 7.5 | contentidea-kb |
+| 27 | ODJ connector is installed but not showing up in the Intune consoleIf you loo... | This indicates that the communication is not happening correctly between the ... | Configuring the proxy on the .Net Framework directly by editing&nbsp;the mach... | 7.5 | contentidea-kb |
+| 28 | Administrative templates are rolling out to Intune tenants the week of July 5... |  |  | 7.5 | contentidea-kb |
+| 29 | When trying to deploy an OMA-URI for wired lan settings the policy fails. | This particular OMA-URI only works on Windows 10 1903 and later. | Make sure the customer applying this to 1903 machines and is using the follow... | 7.5 | contentidea-kb |
+| 30 | Intune does not natively offer any method of adding a user to the local admin... |  |  | 7.5 | contentidea-kb |
+| 31 | Custom settings are configured differently for each platform. To control feat... |  |  | 7.5 | contentidea-kb |
+| 32 | When using some OMA-URIs on Windows devices they might conflict with group po... |  |  | 7.5 | contentidea-kb |
+| 33 | Using Intune custom OMA-URI policy the customer can lock out local account lo... |  |  | 7.5 | contentidea-kb |
+| 34 | Symptoms&nbsp;When Policy CSP – ControlPolicyConflict/MDMWinsOverGP is at def... |  |  | 7.5 | contentidea-kb |
+| 35 | New Intune change Announced:After an investigation performed in collaboration... |  |  | 7.5 | contentidea-kb |
+| 36 | This article is for one complex issue on co-managed devices about the Edge ap... |  |  | 7.5 | contentidea-kb |
+| 37 | There are many users trying to set up Windows 10 tablets as multi-app kiosk d... |  | Step 1: Find out the applications that need to be allowed for the target desk... | 7.5 | contentidea-kb |
+| 38 | Kiosk mode for Windows 10 will not work with Edge Chromium.&nbsp;Edge Browser... |  |  | 7.5 | contentidea-kb |
+| 39 | Devices are showing Failed status in the Feature Update End user update statu... | This occurs because the End user update status report leverages Update CSP to... | By-design behavior. It's a limitation if Update CSP. | 7.5 | contentidea-kb |
+| 40 | After Windows 10 devices receive an Application Control policy, the devices p... | This occurs because Application Control settings from the Endpoint portal use... | If all the Windows 10 devices are 1903+ you can deploy a customized Applicati... | 7.5 | contentidea-kb |
+| 41 | Engineers need to read and understand below topics before starting this lab:1... |  |  | 7.5 | contentidea-kb |
+| 42 | Self-evaluation questions:Try to find answers to following questions through ... |  |  | 7.5 | contentidea-kb |
+| 43 | Update Channel in the Intune administrative template doesn't update Office on... | Office Update policy from servicing profile takes precedence over Update chan... | To resolve this problem:  Login to&nbsp;https://config.office.com&nbsp;and na... | 7.5 | contentidea-kb |
+| 44 | This is an example from a case I handled where the Deviceenroller.exe was dis... |  |  | 7.5 | contentidea-kb |
+| 45 | Surface Hub devices (different models) randomly disconnect from wifi network. | This can occur if you are using&nbsp;MAC Address Authentication and the Surfa... | To resolve this problem, extract a Network LAN Profile from another corporate... | 7.5 | contentidea-kb |
+| 46 | Attack Surface Reduction policy setting &quot;Block abuse of exploited vulner... | The custom profile and the Endpoint Security template profile are in conflict... | In order to deploy all ASR policies, deploy the policy setting &quot;Block ab... | 7.5 | contentidea-kb |
+| 47 | Endpoint protection policy is configured to set&nbsp;LAN Manager Authenticati... | This can occur if there is a GPO applied to the device setting the &quot;LAN ... | To avoid a conflict there are two approaches: First Approach:  Delete the app... | 7.5 | contentidea-kb |
+| 48 | For Active Directory, admin can leverage allow local logon GPO to define whic... |  | If we only need to allow specific AAD user to logon to AAD joined device, we ... | 7.5 | contentidea-kb |
+| 49 | You try to apply Intune policies like Device Configuration profiles to non-En... | As of this writing, February 2022, not all Intune policies work correctly whe... | Until these language localization issues are addressed in a future roadmap, t... | 7.5 | contentidea-kb |
+| 50 | When configuring the Wallpaper from the Intune Device restrictions the device... | Windows 10 PRO does not support the CSP for DesktopImage by default, it requi... | From the article&nbsp;https://docs.microsoft.com/en-us/windows/client-managem... | 7.5 | contentidea-kb |
+| 51 | Customer configured the Lock screen and Logon image using the Intune Settings... | The below Device Restriction policy supports image URL. Intune policy relies ... | As a workaround, customer removed Lock screen settings from “Settings Catalog... | 7.5 | contentidea-kb |
+| 52 | The correct      Time Zone is not getting updated on machines after using Aut... | This can occur if automatic time zone is set to Off (default). | There is no native MEM functionality to set automatic time zone directly     ... | 7.5 | contentidea-kb |
+| 53 | Intune has a new feature that allows you to manage the members of local group... | The new&nbsp;feature is using the security identified (SID) number for the lo... | To&nbsp;create Account Protection Policy: 1. Open the&nbsp;MEM Portal2. Click... | 7.5 | contentidea-kb |
+| 54 | SyncML is a public tool developed by Oliver Kieselbach (Microsoft MVP) that&n... |  |  | 7.5 | contentidea-kb |
+| 55 | When attempting to upload an ADMX template you get the following error: The u... | This can occur if the Microsoft.Policies.Windows.ADMX dependency is missing. ... | To resolve this problem complete the following: 1.&nbsp;Navigate to&nbsp;c:\w... | 7.5 | contentidea-kb |
+| 56 | Before you start:            The purpose of this article is to help streamlin... |  |  | 7.5 | contentidea-kb |
+| 57 | After deploying a Windows Hello For Business policy from Identity protection ... | This occurs because when running Terminal or Event Viewer as Administrator, n... | Check whether the UAC setting on the device is set to &quot;Not recommended&q... | 7.5 | contentidea-kb |
+| 58 | Unable to upload Google Chrome Update. Customer follows official Google artic... | There are admx dependencies while uploading the Google Update admx.&nbsp;Belo... | If you didn't import the google.admx and google.adml first: Additionally, it'... | 7.5 | contentidea-kb |
+| 59 | This article will show you how to use Intune custom policy to map a network d... |  |  | 7.5 | contentidea-kb |
+| 60 | Restrict user to install any .exe software |  | We can choose to go with WDAC; which is a device-based policy; once an applic... | 7.5 | contentidea-kb |
+| 61 | This is an informational article only. Please remember that we don't support ... |  |  | 7.5 | contentidea-kb |
+| 62 | First you need to install&nbsp;Download and install the Windows ADK / Microso... |  |  | 7.5 | contentidea-kb |
+| 63 | Intune : Getting error while running app with elevated privilege : There was ... | This issue arises due to the implementation of the &quot;AllowLocalLogOn&quot... | The co-deployment of the AllowLocalLogon policy and the EPM Policy is not fea... | 7.5 | contentidea-kb |
+| 64 | Restricting the personal team account on the windows 11 devices or Disable Wi... | Many of the times customer do not want to allow users to use the personal tea... | Resolution:  As per the Intune configuration profile there are two ways to re... | 7.5 | contentidea-kb |
+| 65 | Windows devices were getting factory reset after multiple attempts to launch ... | The Directory Services team collected TSS logs and found in CredprovAuthui.et... | Excluding Zscaler via group policy or Intune ADMX policy addressed the issue.... | 7.5 | contentidea-kb |
+| 66 | Configuring TLS 1.3 for EAP Authentication in Intune: A Guide to Security, Pe... | Enabling or disabling TLS 1.3 for Extensible Authentication Protocol (EAP) Cl... | Before creating a policy, understanding the Configuration Service Provider (C... | 7.5 | contentidea-kb |
+| 67 | How to disable screen recording option in Snipping tool via Intune. |  | There is an existing CSP with path: ./User/Vendor/MSFT/Policy/Config/Experien... | 7.5 | contentidea-kb |
+| 68 | In order to prevent users from installing apps from the Microsoft Public stor... |  |  | 7.5 | contentidea-kb |
+| 69 | Many customers started to report: After user login to Windows Device, Device ... |  |  | 7.5 | contentidea-kb |
+| 70 | Customers are experiencing persistent failures when attempting to delete impo... | This behavior is by design. The&nbsp;Windows.admx&nbsp;file serves as a found... | Dependent ADMX templates can be removed using two approaches, with a modified... | 7.5 | contentidea-kb |
+| 71 | Phone Link disabled (grayed out) on Windows devices enrolled in Intune | Issue with Intune policy&nbsp;or GPO if applicable | Troubleshooting: Follow below steps:&nbsp;  When you enable or disable Phone-... | 7.5 | contentidea-kb |
+| 72 | Phone Link disabled (grayed out) on Windows devices enrolled in Intune | Issue with Intune policy&nbsp;or GPO if applicable | Troubleshooting:&nbsp;Follow below steps:&nbsp;  When you enable or disable P... | 7.5 | contentidea-kb |
+| 73 | Windows managed devices report a successful sync on the device but fail to up... | A legacy Administrative Template policy was configured for the Microsoft Edge... | The issue was resolved by: Removing the problematic Edge policy configuration... | 7.5 | contentidea-kb |
+| 74 | A Device Configuration policy related to the Maintenance Scheduler&nbsp;disab... | This issue is caused by a client‑side bug in registry key parsing, triggered ... | Intune Service‑Side Fix A fix has been rolled out on the Intune service side ... | 7.5 | contentidea-kb |
+| 75 | User Rights Management policy (Add/Replace/Remove users or groups) fails to a... | Windows built-in group and account display names are locale-dependent and dif... | Use Security Identifiers (SIDs) instead of display names when configuring use... | 7.0 | ado-wiki |
+| 76 | ODJ connector is installed but not showing up in the Intune console If you lo... | This indicates that the communication is not happening correctly between the ... | Configuring the proxy on the .Net Framework directly by editing the machine.c... | 4.5 | contentidea-kb |
+| 77 | When trying to deploy an OMA-URI for wired lan settings the policy fails. | This particular OMA-URI only works on Windows 10 1903 and later. | Make sure the customer applying this to 1903 machines and is using the follow... | 4.5 | contentidea-kb |
+| 78 | For an Azure AD joined or Hybrid Azure AD joined device, every time a user si... |  |  | 3.0 | contentidea-kb |
+| 79 | When deploying VPNv2 CSP profile using a custom policy certain values report ... | The setting ./User/Vendor/MSFT/VPNv2/Always-On-VPN-v2/NativeProfile/Servers -... | Changing the NativeProfile CSP in the VPN settings to reflect serverFQDN;serv... | 3.0 | contentidea-kb |
+| 80 | User Rights ( https://docs.microsoft.com/en-us/windows/security/threat-protec... |  |  | 3.0 | contentidea-kb |
+| 81 | Administrative templates are rolling out to Intune tenants the week of July 5... |  |  | 3.0 | contentidea-kb |

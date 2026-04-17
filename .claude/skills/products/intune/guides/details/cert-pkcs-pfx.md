@@ -1,304 +1,98 @@
-# Intune PKCS / PFX 证书部署 — 综合排查指南
+# INTUNE PKCS / PFX 证书部署 — 已知问题详情
 
-**条目数**: 29 | **草稿融合数**: 3 | **Kusto 查询融合**: 1
-**来源草稿**: ado-wiki-PKCS-Overview.md, onenote-PFX-PKCS-Configuration-Troubleshooting.md, onenote-pfx-pkcs-configuration.md
-**Kusto 引用**: certificate.md
-**生成日期**: 2026-04-07
+**条目数**: 52 | **生成日期**: 2026-04-17
 
 ---
 
-## ⚠️ 已知矛盾 (7 条)
+## Quick Troubleshooting Path
 
-- **solution_conflict** (high): intune-ado-wiki-274 vs intune-contentidea-kb-713 — context_dependent: 不同来源给出不同方案，可能适用不同场景
-- **solution_conflict** (high): intune-contentidea-kb-451 vs intune-mslearn-057 — context_dependent: 不同来源给出不同方案，可能适用不同场景
-- **solution_conflict** (high): intune-contentidea-kb-713 vs intune-mslearn-060 — context_dependent: 不同来源给出不同方案，可能适用不同场景
-- **rootCause_conflict** (medium): intune-contentidea-kb-255 vs intune-mslearn-056 — context_dependent: 不同来源给出不同方案，可能适用不同场景
-- **rootCause_conflict** (medium): intune-contentidea-kb-255 vs intune-mslearn-060 — context_dependent: 不同来源给出不同方案，可能适用不同场景
+### Step 1: PKCS certificate deployed via Intune does not renew; modifying validity period in certificate profile and re-pushing does not update the certificat...
+**Solution**: For PKCS renewal: must revoke/remove existing cert first then redeploy. To remove: unassign profile or use Remove-certificates action. For auto-renewal needs, consider SCEP instead (each request generates unique cert with fresh validity). Ref: learn.microsoft.com/en-us/mem/intune/protect/certificates-configure and learn.microsoft.com/en-us/mem/intune/protect/remove-certificates
+`[Source: onenote, Score: 9.5]`
 
-## 排查流程
+### Step 2: PFX Certificate connector keeps contacting decommissioned old CA server instead of newly configured CA; certificates fail to issue even though Intu...
+**Solution**: Delete contents of the PFX connector 'processing' folder to clear backlog of old CA requests. Connector will then download fresh requests pointing to new CA. Ref ICM-418855554.
+`[Source: onenote, Score: 9.5]`
 
-### Phase 1: Pkcs Overview
-> 来源: ADO Wiki — [ado-wiki-PKCS-Overview.md](../drafts/ado-wiki-PKCS-Overview.md)
+### Step 3: Import-IntuneUserPfxCertificate 上传 PFX 证书时返回 (400) Bad Request 错误
+**Solution**: 1. 确认用户已分配 Intune 许可证；2. 如用户已有证书，先用 Remove-IntuneUserPfxCertificate 删除旧证书后重新上传
+`[Source: ado-wiki, Score: 9.0]`
 
-**PKCS (PFX) Certificate Overview & Troubleshooting**
-**PKCS Communication Flow**
-1. Admin creates PKCS certificate profile in Intune
-2. Intune requests Certificate Connector to create new cert
-3. Connector sends PFX Blob and Request to CA
-4. CA issues and returns PFX User Certificate to Connector
-5. Connector uploads encrypted PFX to Intune
+### Step 4: SCEP 证书部署失败，验证阶段 Subject Name (SN) 或 Subject Alternative Name (SAN) 动态变量（如 {{UserPrincipalName}}）未能解析为实际值
+**Solution**: 1. 使用 Kusto 查询 IntuneEvent 检查 ResolveScepRequestVariables 事件确认 SN/SAN 解析结果；2. 通过 cV 值追踪 Step 2 查询确认解析错误详情；3. 确认用户在 Entra ID 中的 UPN/Email 等属性已正确填充
+`[Source: ado-wiki, Score: 9.0]`
 
-**S/MIME Scenarios**
-- PKCS supports authentication, S/MIME email signing, and S/MIME email encryption
-- Signing and encryption typically use separate certificates
-- Active Directory CS: Exchange Signature Only (signing) + Exchange User (encryption)
-- Connectors required:
-  - Microsoft Intune Certificate Connector (authentication + signing)
-  - PFX Certificate Connector (encryption)
-  - Both can be on same server
+### Step 5: SCEP/PKCS profile 部署报错，但未检查 Trusted Root profile 是否同时下发
+**Solution**: 1. 确认 Trusted Root certificate profile 已部署到目标设备；2. 用 Kusto 查询 DeviceManagementProvider 同时过滤 ClientAuthCertificate 和 TrustedRootCertificate 确认两者都 Applicable + Compliant
+`[Source: ado-wiki, Score: 9.0]`
 
-**User vs Device Certificate**
-- User certs: contain both user and device attributes in Subject/SAN
-- Device certs: only device attributes. Use for kiosks, shared devices
+### Step 6: PKCS (PFX) certificate shows only last SAN value for all fields (UPN, Email, DNS, URI) on all platforms when multiple SANs are configured
+**Solution**: By design for PKCS certificates on all platforms. Only the last SAN value of each type is used. If multiple SANs are required, consider using SCEP instead (Android/Windows/macOS show all SCEP SAN entries). For PKCS, ensure the desired SAN value is the last entry.
+`[Source: ado-wiki, Score: 9.0]`
 
-**Known Behavior**
-- PKCS: profile/assignment changes → re-push existing cert (NOT new cert)
-- SCEP: profile/assignment changes → issue new cert
-- To get new PKCS cert: re-enroll device or deploy new PKCS profile
+### Step 7: Microsoft Intune Certificate Connector certificate fails to auto-renew; SCEP/PFX certificates stop deploying. Event Viewer shows 'Failed to renew a...
+**Solution**: 1) Check connector service account permissions per https://learn.microsoft.com/en-us/mem/intune/protect/certificate-connector-prerequisites#certificate-connector-service-account. 2) To force manual renewal: edit registry HKLM\SOFTWARE\Microsoft\MicrosoftIntune\PFXCertificateConnector, set RenewalPeriod to 365 (decimal) - this triggers immediate renewal attempt. 3) If renewal still fails, reconfigure connector to use SYSTEM account instead of service account.
+`[Source: ado-wiki, Score: 9.0]`
 
-**Scoping Questions**
-1. Profile types? Sub CA? Pushing Sub CA cert to device?
-2. Affected platform? (Android/iOS/Windows/macOS)
-3. Enrollment type?
-... (详见原始草稿)
-
-### Phase 2: Pfx Pkcs Configuration Troubleshooting
-> 来源: OneNote — [onenote-PFX-PKCS-Configuration-Troubleshooting.md](../drafts/onenote-PFX-PKCS-Configuration-Troubleshooting.md)
-
-**Configuring and Troubleshooting PFX/PKCS Certificates in Intune**
-**Overview**
-**Prerequisites**
-- Active Directory domain (all servers joined)
-- Enterprise CA (AD CS) - not standalone CA
-- Client machine to connect to Enterprise CA
-- Exported root certificate (.cer)
-- Intune Certificate Connector (NDES Certificate Connector)
-
-**Configuration Tasks**
-
-**Task A: Configure Certificate Templates on CA**
-1. Open Certificate Templates snap-in on issuing CA
-2. Create new custom template or copy existing (e.g., User template)
-3. Key settings:
-   - **Subject Name**: "Supply in the request"
-   - **Extensions**: Include "Client Authentication" in Application Policies
-   - **Request Handling**: Purpose = "Signature and Encryption", enable "Allow private key to be exported"
-   - **Security**: SYSTEM needs Read + Enroll; add NDES connector computer account with Read + Enroll
-4. Publish template: Certificate Templates node > Action > New > Certificate Template to Issue
-5. Ensure connector computer has Enroll permission on CA Security tab
-
-**Task B: Install and Configure Intune Certificate Connector**
-1. Download from: Intune > Device Configuration > Certification Connectors > Add > Download
-2. Run `ndesconnectorssetup.exe` as admin on machine that can reach the CA
-3. Choose **PFX Distribution** option
-4. Sign in with **Global Admin** (must have Intune license)
-5. Restart Intune Connector Service: `services.msc` > right-click > Restart
-
-**Task C: Create and Deploy Certificate Profiles**
-1. Export Trusted Root CA as .cer (no private key)
-... (详见原始草稿)
-
-### Phase 3: Pfx Pkcs Configuration
-> 来源: OneNote — [onenote-pfx-pkcs-configuration.md](../drafts/onenote-pfx-pkcs-configuration.md)
-
-**PFX/PKCS Certificate Configuration & Troubleshooting in Intune**
-**Prerequisites**
-- Active Directory domain (all servers joined)
-- Enterprise Certification Authority (AD CS) — NOT standalone CA
-- Client to connect to Enterprise CA
-- Exported root certificate (.cer)
-- Intune Certificate Connector (NDES Certificate Connector)
-
-**Configuration Tasks**
-
-**Task A: Configure Certificate Templates on CA**
-1. Create/copy certificate template (e.g., User template)
-2. Set **Compatibility Settings** appropriately
-3. Subject Name → **Supply in the request**
-4. Extensions → Include **Client Authentication**
-5. Request Handling → Purpose: **Signature and Encryption**, enable **Allow private key to be exported**
-
-**Task B: Install Intune Certificate Connector**
-1. Download from Endpoint Management admin center → Device Configuration → Certification Connectors → Add
-2. Run `ndesconnectorssetup.exe` as admin on CA-accessible machine
-3. Choose **.PFX Distribution** option
-4. Sign in with **Global Admin** (must have Intune license)
-5. Restart **Intune Connector Service** via services.msc
-
-**Task C: Deploy Certificate Profiles**
-1. Export Trusted Root CA certificate as **.cer** (no private key)
-2. Create **Trusted Certificate** profile (Android/iOS)
-3. Create **.PFX certificate** profile:
-   - **Certification Authority**: Internal FQDN of CA (e.g., `server1.domain.local`)
-   - **Certification Authority Name**: As shown in CA MMC under **Certification Authority (Local)**
-... (详见原始草稿)
-
-### Phase 4: Kusto 诊断查询
-
-#### certificate.md
-`[工具: Kusto skill — certificate.md]`
-
-```kql
-DeviceManagementProvider
-| where env_time > ago(7d)
-| where ActivityId contains '{deviceId}'
-| where * contains "scep" or * contains "pkcs" or * contains "certificate"
-| project env_time, accountId, userId, DeviceID=ActivityId, PolicyName=name, 
-    PolicyType=typeAndCategory, Applicability=applicablilityState, 
-    Compliance=reportComplianceState, EventMessage, message, TaskName
-```
-
-```kql
-IntuneEvent
-| where env_time > ago(3h)
-| where DeviceId == '{deviceId}' or ActivityId == '{deviceId}'
-| where * contains "scep"
-| project env_time, ComponentName, DeviceId, Message, EventUniqueName, 
-    ColMetadata, Col1, Col2, Col3, Col4, Col5, Col6, ActivityId
-```
-
-```kql
-let _deviceId = '{deviceId}';
-let _startTime = datetime({startTime});
-let _endTime = datetime({endTime});
-
-DeviceManagementProvider 
-| where env_time between (_startTime .. _endTime)
-| where TaskName == "DeviceManagementProviderCIReportDataEvent" 
-| where deviceId == _deviceId
-| where typeAndCategory contains "TrustedRootCertificate" or typeAndCategory contains "ClientAuthCertificate"
-| project env_time, policyId, typeAndCategory, applicablilityState, reportComplianceState, EventMessage
-| order by env_time desc
-```
-
-```kql
-DeviceManagementProvider
-| where env_time > ago(7d)
-| where ActivityId == '{deviceId}' or userId == '{userId}'
-| where message contains '{thumbprint}'
-| project env_time, deviceId, ActivityId, message, EventId, userId, TaskName
-| order by env_time
-```
-
-```kql
-DeviceManagementProvider
-| where env_time > ago(1d)
-| where ActivityId contains '{deviceId}'
-| where message contains "dependent profile"
-| project env_time, ActivityId, cV, message
-```
-
-```kql
-let accountId = '{accountId}';
-
-// 获取 macOS 设备列表 (platform=10)
-let macDevices = DeviceLifecycle
-| where env_time > ago(90d)
-| where accountId == accountId
-| where platform == "10"  // 10=macOS, 7=iPhone, 8=iPad
-| where deviceId != ""
-| summarize by deviceId;
-
-// 从 GetDeviceIdentityAsync 事件提取证书信息
-IntuneEvent
-| where env_time > ago(7d)
-| where AccountId == accountId
-| where DeviceId in (macDevices)
-| where EventUniqueName == "GetDeviceIdentityAsync"
-| where ColMetadata == "RegistrationStatus;EnrollCertStartTime;EnrollCertExpiryTime;"
-| summarize arg_max(env_time, Col2, Col3) by DeviceId
-| extend CertExpiryDate = todatetime(Col3)
-| extend CertStartDate = todatetime(Col2)
-| extend DaysUntilExpiry = datetime_diff('day', CertExpiryDate, now())
-| project 
-    DeviceId, 
-    CertStartDate, 
-    CertExpiryDate, 
-    DaysUntilExpiry, 
-    LastCheckedTime = env_time
-| order by DaysUntilExpiry asc
-| take 100
-```
-
-```kql
-let accountId = '{accountId}';
-
-let macDevices = DeviceLifecycle
-| where env_time > ago(90d)
-| where accountId == accountId
-| where platform == "10"  // macOS
-| where deviceId != ""
-| summarize by deviceId;
-
-DeviceManagementProvider
-| where env_time > ago(14d)
-| where accountId == accountId
-| where ActivityId in (macDevices)
-| where message contains "Enroll cert expiry time:"
-| extend CertExpiryStr = extract("Enroll cert expiry time: ([0-9/]+ [0-9:]+ [AP]M)", 1, message)
-| extend CertStartStr = extract("Enroll cert start time: ([0-9/]+ [0-9:]+ [AP]M)", 1, message)
-| summarize arg_max(env_time, CertExpiryStr, CertStartStr) by DeviceId=ActivityId
-| extend CertExpiryDate = todatetime(CertExpiryStr)
-| extend CertStartDate = todatetime(CertStartStr)
-| extend DaysUntilExpiry = datetime_diff('day', CertExpiryDate, now())
-| project 
-    DeviceId, 
-    CertStartDate, 
-    CertExpiryDate, 
-    DaysUntilExpiry, 
-    LastCheckedTime = env_time
-| order by DaysUntilExpiry asc
-| take 100
-```
-
-```kql
-let accountId = '{accountId}';
-let warningDays = 60;
-
-let appleDevices = DeviceLifecycle
-| where env_time > ago(90d)
-| where accountId == accountId
-| where platform in ("7", "8", "10")  // iPhone, iPad, macOS
-| where deviceId != ""
-| summarize by deviceId;
-
-IntuneEvent
-| where env_time > ago(7d)
-| where AccountId == accountId
-| where DeviceId in (appleDevices)
-| where EventUniqueName == "GetDeviceIdentityAsync"
-| where ColMetadata == "RegistrationStatus;EnrollCertStartTime;EnrollCertExpiryTime;"
-| summarize arg_max(env_time, Col2, Col3) by DeviceId
-| extend CertExpiryDate = todatetime(Col3)
-| extend DaysUntilExpiry = datetime_diff('day', CertExpiryDate, now())
-| where DaysUntilExpiry <= warningDays and DaysUntilExpiry >= 0
-| project DeviceId, CertExpiryDate, DaysUntilExpiry, LastCheckedTime = env_time
-| order by DaysUntilExpiry asc
-```
-
+### Step 8: Intune 通过 SCEP/PKCS 颁发的证书缺少 Strong Mapping OID (1.3.6.1.4.1.311.25.2)，导致 certificate-based authentication 失败
+**Solution**: 1) 先验证 Connector 是否发送 OID：在 CA 的 Issued Certs 中导出 Binary Request → 搜索 OID 1.3.6.1.4.1.311.25.2。2) 若 OID 存在于 request（Intune scope 正常），问题在 CA 模板。3) 在 CA 运行: certutil -dstemplate [TemplateName] msPKI-Enrollment-Flag -0x00080000 启用 OID。4) 验证: certutil -v -dstemplate [TemplateName]。参考 KB5014754
+`[Source: ado-wiki, Score: 9.0]`
 
 ---
 
-## 已知问题速查
+## All Known Issues
 
-| # | 症状 | 根因 | 方案 | 分数 | 来源 |
-|---|------|------|------|------|------|
-| 1 | PKCS certificate deployed via Intune does not renew; modifying validity period in certificate pro... | PKCS certificates are the same certificate for the same device - Intune re-pu... | For PKCS renewal: must revoke/remove existing cert first then redeploy. To remove: unassign profi... | 🟢 9.0 | OneNote |
-| 2 | PFX Certificate connector keeps contacting decommissioned old CA server instead of newly configur... | PFX connector caches unprocessed certificate requests in a 'processing' folde... | Delete contents of the PFX connector 'processing' folder to clear backlog of old CA requests. Con... | 🟢 9.0 | OneNote |
-| 3 | Import-IntuneUserPfxCertificate 上传 PFX 证书时返回 (400) Bad Request 错误 | 目标用户无 Intune 许可证，或该用户已上传过相同证书 | 1. 确认用户已分配 Intune 许可证；2. 如用户已有证书，先用 Remove-IntuneUserPfxCertificate 删除旧证书后重新上传 | 🟢 8.5 | ADO Wiki |
-| 4 | SCEP 证书部署失败，验证阶段 Subject Name (SN) 或 Subject Alternative Name (SAN) 动态变量（如 {{UserPrincipalName}}）... | SCEP 配置文件中的 SN/SAN 动态变量（如 {{UserName}}、{{EmailAddress}}）在后端解析时失败，可能因用户属性缺失或 A... | 1. 使用 Kusto 查询 IntuneEvent 检查 ResolveScepRequestVariables 事件确认 SN/SAN 解析结果；2. 通过 cV 值追踪 Step 2 查询... | 🟢 8.5 | ADO Wiki |
-| 5 | PKCS (PFX) certificate shows only last SAN value for all fields (UPN, Email, DNS, URI) on all pla... | PKCS certificate behavior across all platforms (iOS, Android, Windows, macOS)... | By design for PKCS certificates on all platforms. Only the last SAN value of each type is used. I... | 🟢 8.5 | ADO Wiki |
-| 6 | Microsoft Intune Certificate Connector certificate fails to auto-renew; SCEP/PFX certificates sto... | The service account used during Certificate Connector configuration does not ... | 1) Check connector service account permissions per https://learn.microsoft.com/en-us/mem/intune/p... | 🟢 8.5 | ADO Wiki |
-| 7 | Intune 通过 SCEP/PKCS 颁发的证书缺少 Strong Mapping OID (1.3.6.1.4.1.311.25.2)，导致 certificate-based authen... | CA 模板使用 Compatibility 2012+ 或 Key Storage Provider (KSP) 时，msPKI-Enrollment-F... | 1) 先验证 Connector 是否发送 OID：在 CA 的 Issued Certs 中导出 Binary Request → 搜索 OID 1.3.6.1.4.1.311.25.2。2)... | 🟢 8.5 | ADO Wiki |
-| 8 | 修改 PKCS profile 的 assignment 或配置后，设备收到的是旧证书而非新证书 | PKCS 设计行为：与 SCEP 不同，PKCS 在修改 assignments 或 profile 配置时只会重新推送之前已颁发的证书，不会触发新证书颁发 | By design。要触发新 PKCS 证书颁发，需重新注册设备或部署全新的 PKCS profile。SCEP 则会在修改 assignment 或 profile 时自动颁发新证书 | 🟢 8.5 | ADO Wiki |
-| 9 | PKCS 证书长时间停留在 Pending 状态，Connector Event Log 显示 NullReferenceException at PkiCreateProcessor.Uplo... | Certificate Connector 的 PkiCreateProcessor.UploadResults 方法存在 bug，导致 NullRefe... | 1) 等待自动恢复（通常 2-4 小时），Connector 每 ~10 分钟重试。2) 重启 Connector 服务（立即修复）。3) 更新到最新版 Connector（永久修复）。Kust... | 🟢 8.5 | ADO Wiki |
-| 10 | iOS 设备 PKCS 证书显示 Pending 或 Not Applicable，VPN profile 安装失败，日志报 Dependent payload not found 或错误 20... | iOS 上 PKCS 证书关联 VPN profile 时存在严格部署依赖：VPN App 必须先安装 → VPN Profile → PKCS Cert... | 1) 确保 VPN App 先安装在设备上。2) 检查设备日志中的 NotNow 响应。3) VPN App 安装后触发手动同步。4) 考虑将证书和 VPN profile 分开部署 | 🟢 8.5 | ADO Wiki |
-| 11 | PKCS 证书长时间处于 Pending 状态，Connector Event Log 显示 PkiCreateProcessor.UploadResults NullReferenceExce... | Certificate Connector 的 PkiCreateProcessor.UploadResults 方法存在 bug，CA 成功签发证书后 ... | 1. 等待自动恢复（通常 2-4 小时）；2. 重启 Connector 服务可立即修复；3. 更新 Connector 到最新版本永久修复。Kusto 诊断：搜索 DownloadNewMes... | 🟢 8.5 | ADO Wiki |
-| 12 | PKCS 证书 policy 已成功分配，设备已注册，但证书 Pending 数小时后才最终交付，Intune portal 无明显错误 | 多因素导致延迟：外部 CA 性能（负载/网络延迟）、Connector 服务器资源不足、设备 MDM 同步间隔（iOS/Android/Windows 默... | 1. 检查 Connector Event Log 中的处理延迟；2. 监控 Connector 服务器资源；3. 为 Connector 文件夹添加杀毒排除项；4. 考虑部署多个 Connec... | 🟢 8.5 | ADO Wiki |
-| 13 | iOS 设备 PKCS 证书显示 Pending 或 Not Applicable，VPN profile 安装失败，设备日志报 Dependent payload not found 或 20... | iOS 上 PKCS 证书关联 VPN profile 时，Intune 强制执行部署依赖链：VPN App → VPN Profile → PKCS C... | 1. 确保 VPN App 先安装到设备；2. 检查设备日志中的 NotNow 响应；3. VPN App 安装后触发手动同步；4. 考虑将证书和 VPN profile 分开部署 | 🟢 8.5 | ADO Wiki |
-| 14 | GCC High/DoD 环境 Imported PFX 配置需要修改 service endpoint（AuthURI 和 GraphURI） | GCC High/DoD 租户使用 .us 后缀的 endpoint，默认 .com 配置不适用 | 编辑 IntunePfxImport.psd1，将 AuthURI 改为 login.microsoftonline.us，GraphURI 改为 https://graph.microsoft.us | 🔵 7.5 | ADO Wiki |
-| 15 | When deploying a wifi profile to an Android device, the PFX certificate never authenticates the p... | The Wifi profile is not authenticating against the PFX certificate because it... | Navigate to manage.microsoft.com, click on the Policy node and edit the configuration policy for ... | 🔵 7.0 | ContentIdea KB |
-| 16 | Customer is using a PFX certificate to deploy a WiFi policy to an Android device. The WiFi policy... | Misconfigured certificate template (template created using wrong Windows vers... | Created a new      certificate template for Android devices  In the CA went to the Certificate Te... | 🔵 7.0 | ContentIdea KB |
-| 17 | Customer is trying to deploy a PFX certificate to an iPhone enrolled into Intune. The trusted roo... | Customer's PKCS profile in Intune had the following fields populated incorrec... |  | 🔵 7.0 | ContentIdea KB |
-| 18 | The deployment status of PFX Profile shows the errors:&nbsp; &quot;0x87D1FDE9&quot; and &quot;0x8... | There is&nbsp;a bug where the Subject Name Generation requires each user to h... | Go into the User_DISC table and make sure each user that needs a certificate as values in the Ema... | 🔵 7.0 | ContentIdea KB |
-| 19 | When deploying PFX Profile in CONFIGMGR you see the following error in the crpctrl.log:ERROR: Ret... | Key Archival is not configured on the Certificate Authority. | - Configuration the option &quot;Archive the key&quot; on the &quot;Recovery Agents&quot; tab in ... | 🔵 7.0 | ContentIdea KB |
-| 20 | When attempting to deploy PKCS certificates, the certificates are not deployed and the following ... | This can occur if the NDES computer is unable to locate a certificate enrollm... | To resolve this issue, configure the name of the policy server manually on the NDES computer. | 🔵 7.0 | ContentIdea KB |
-| 21 | After installing Intune connector, devices never receive PKCS certificate. NDES connector log sho... | Intune PKCS profile misconfigured - wrong Certification authority name or SAN... | Correct PKCS profile configuration in Intune and target correct user group. Certificates will be ... | 🔵 7.0 | ContentIdea KB |
-| 22 | After deploying a PKCS profile to issue certificates to mobile devices, the certificates are not ... | This can occur if the option �Set the request status to pending. The administ... | To resolve this issue, in the CA Properties under policy module -> Properties, change the option ... | 🔵 7.0 | ContentIdea KB |
-| 23 | PKCS certificate deployment fails with error 0x800706BA RPC server unavailable; trusted root cert... | Cause 1: PKCS profile has wrong CA FQDN/name. Cause 2: CA cert renewed but Us... | Cause 1: Fix Certification authority and name in PKCS profile. Cause 2: Run certutil -setreg ca\U... | 🔵 6.5 | MS Learn |
-| 24 | PKCS certificate fails with 0x80094015 enrollment policy server cannot be located | Connector host cannot locate certificate enrollment policy server | Run Add-CertificateEnrollmentPolicyServer PowerShell cmdlet on connector host. | 🔵 6.5 | MS Learn |
-| 25 | PKCS submission pending: Taken Under Submission; PFX request in CA Pending Requests folder; devic... | CA Policy Module set to require admin to explicitly issue certificate | Change CA Policy Module to Follow the settings in the certificate template or automatically issue. | 🔵 6.5 | MS Learn |
-| 26 | PKCS certificate fails with 0x80070057 parameter is incorrect; connector configured but devices g... | PKCS profile misconfigured: wrong CA name or SAN for email but user has no em... | Verify PKCS profile CA name, user group assignment, and that users have valid email addresses. | 🔵 6.5 | MS Learn |
-| 27 | PKCS certificate denied by Policy Module; device gets trusted root but not PFX | Computer Account of connector server lacks Read and Enroll permissions on cer... | Add connector server Computer Account to cert template Security tab with Read + Enroll permission... | 🔵 6.5 | MS Learn |
-| 28 | PKCS fails with -2146875374 CERTSRV_E_SUBJECT_EMAIL_REQUIRED: Email name unavailable cannot be ad... | Supply in the request option not enabled on certificate template Subject Name... | Open cert template Properties > Subject Name tab > select Supply in the request > re-issue template. | 🔵 6.5 | MS Learn |
-| 29 | PKCS certificate profile stuck as Pending in Intune admin center; no obvious errors in logs | Cause 1: PfxRequest files stuck in Failed/Processing folders. Cause 2: Wrong ... | Check %programfiles%\Microsoft Intune\PfxRequest folders for errors. Verify trusted cert profile ... | 🔵 5.5 | MS Learn |
+| # | Symptom | Root Cause | Solution | Score | Source |
+|---|---------|-----------|----------|-------|--------|
+| 1 | PKCS certificate deployed via Intune does not renew; modifying validity perio... | PKCS certificates are the same certificate for the same device - Intune re-pu... | For PKCS renewal: must revoke/remove existing cert first then redeploy. To re... | 9.5 | onenote |
+| 2 | PFX Certificate connector keeps contacting decommissioned old CA server inste... | PFX connector caches unprocessed certificate requests in a 'processing' folde... | Delete contents of the PFX connector 'processing' folder to clear backlog of ... | 9.5 | onenote |
+| 3 | Import-IntuneUserPfxCertificate 上传 PFX 证书时返回 (400) Bad Request 错误 | 目标用户无 Intune 许可证，或该用户已上传过相同证书 | 1. 确认用户已分配 Intune 许可证；2. 如用户已有证书，先用 Remove-IntuneUserPfxCertificate 删除旧证书后重新上传 | 9.0 | ado-wiki |
+| 4 | SCEP 证书部署失败，验证阶段 Subject Name (SN) 或 Subject Alternative Name (SAN) 动态变量（如 {{... | SCEP 配置文件中的 SN/SAN 动态变量（如 {{UserName}}、{{EmailAddress}}）在后端解析时失败，可能因用户属性缺失或 A... | 1. 使用 Kusto 查询 IntuneEvent 检查 ResolveScepRequestVariables 事件确认 SN/SAN 解析结果；2.... | 9.0 | ado-wiki |
+| 5 | SCEP/PKCS profile 部署报错，但未检查 Trusted Root profile 是否同时下发 | SCEP/PKCS profile 依赖 Trusted Root certificate profile 作为前置条件，如果 Trusted Root ... | 1. 确认 Trusted Root certificate profile 已部署到目标设备；2. 用 Kusto 查询 DeviceManagemen... | 9.0 | ado-wiki |
+| 6 | PKCS (PFX) certificate shows only last SAN value for all fields (UPN, Email, ... | PKCS certificate behavior across all platforms (iOS, Android, Windows, macOS)... | By design for PKCS certificates on all platforms. Only the last SAN value of ... | 9.0 | ado-wiki |
+| 7 | Microsoft Intune Certificate Connector certificate fails to auto-renew; SCEP/... | The service account used during Certificate Connector configuration does not ... | 1) Check connector service account permissions per https://learn.microsoft.co... | 9.0 | ado-wiki |
+| 8 | Intune 通过 SCEP/PKCS 颁发的证书缺少 Strong Mapping OID (1.3.6.1.4.1.311.25.2)，导致 cert... | CA 模板使用 Compatibility 2012+ 或 Key Storage Provider (KSP) 时，msPKI-Enrollment-F... | 1) 先验证 Connector 是否发送 OID：在 CA 的 Issued Certs 中导出 Binary Request → 搜索 OID 1.3... | 9.0 | ado-wiki |
+| 9 | 修改 PKCS profile 的 assignment 或配置后，设备收到的是旧证书而非新证书 | PKCS 设计行为：与 SCEP 不同，PKCS 在修改 assignments 或 profile 配置时只会重新推送之前已颁发的证书，不会触发新证书颁发 | By design。要触发新 PKCS 证书颁发，需重新注册设备或部署全新的 PKCS profile。SCEP 则会在修改 assignment 或 p... | 9.0 | ado-wiki |
+| 10 | PKCS 证书长时间停留在 Pending 状态，Connector Event Log 显示 NullReferenceException at Pki... | Certificate Connector 的 PkiCreateProcessor.UploadResults 方法存在 bug，导致 NullRefe... | 1) 等待自动恢复（通常 2-4 小时），Connector 每 ~10 分钟重试。2) 重启 Connector 服务（立即修复）。3) 更新到最新版 ... | 9.0 | ado-wiki |
+| 11 | iOS 设备 PKCS 证书显示 Pending 或 Not Applicable，VPN profile 安装失败，日志报 Dependent payl... | iOS 上 PKCS 证书关联 VPN profile 时存在严格部署依赖：VPN App 必须先安装 → VPN Profile → PKCS Cert... | 1) 确保 VPN App 先安装在设备上。2) 检查设备日志中的 NotNow 响应。3) VPN App 安装后触发手动同步。4) 考虑将证书和 VP... | 9.0 | ado-wiki |
+| 12 | PKCS 证书长时间处于 Pending 状态，Connector Event Log 显示 PkiCreateProcessor.UploadResul... | Certificate Connector 的 PkiCreateProcessor.UploadResults 方法存在 bug，CA 成功签发证书后 ... | 1. 等待自动恢复（通常 2-4 小时）；2. 重启 Connector 服务可立即修复；3. 更新 Connector 到最新版本永久修复。Kusto ... | 9.0 | ado-wiki |
+| 13 | PKCS 证书 policy 已成功分配，设备已注册，但证书 Pending 数小时后才最终交付，Intune portal 无明显错误 | 多因素导致延迟：外部 CA 性能（负载/网络延迟）、Connector 服务器资源不足、设备 MDM 同步间隔（iOS/Android/Windows 默... | 1. 检查 Connector Event Log 中的处理延迟；2. 监控 Connector 服务器资源；3. 为 Connector 文件夹添加杀毒... | 9.0 | ado-wiki |
+| 14 | iOS 设备 PKCS 证书显示 Pending 或 Not Applicable，VPN profile 安装失败，设备日志报 Dependent pa... | iOS 上 PKCS 证书关联 VPN profile 时，Intune 强制执行部署依赖链：VPN App → VPN Profile → PKCS C... | 1. 确保 VPN App 先安装到设备；2. 检查设备日志中的 NotNow 响应；3. VPN App 安装后触发手动同步；4. 考虑将证书和 VPN... | 9.0 | ado-wiki |
+| 15 | Intune 中 Derived Credentials 在 21V 无法配置 | Derived Credentials 功能在 21V 未上线 | 不支持；改用其他证书认证方案（如 SCEP/PKCS） | 8.0 | 21v-gap |
+| 16 | GCC High/DoD 环境 Imported PFX 配置需要修改 service endpoint（AuthURI 和 GraphURI） | GCC High/DoD 租户使用 .us 后缀的 endpoint，默认 .com 配置不适用 | 编辑 IntunePfxImport.psd1，将 AuthURI 改为 login.microsoftonline.us，GraphURI 改为 htt... | 7.5 | ado-wiki |
+| 17 | Customer is trying to deploy a PFX certificate to an iPhone enrolled into Int... | Customer's PKCS profile in Intune had the following fields populated incorrec... |  | 7.5 | contentidea-kb |
+| 18 | The deployment status of PFX Profile shows the errors:&nbsp; &quot;0x87D1FDE9... | There is&nbsp;a bug where the Subject Name Generation requires each user to h... | Go into the User_DISC table and make sure each user that needs a certificate ... | 7.5 | contentidea-kb |
+| 19 | When deploying PFX Profile in CONFIGMGR you see the following error in the cr... | Key Archival is not configured on the Certificate Authority. | - Configuration the option &quot;Archive the key&quot; on the &quot;Recovery ... | 7.5 | contentidea-kb |
+| 20 | After deploying a PKCS profile to issue certificates to mobile devices, the c... | This can occur if the option �Set the request status to pending. The administ... | To resolve this issue, in the CA Properties under policy module -> Properties... | 7.5 | contentidea-kb |
+| 21 | Intune Sr. Support Escalation Engineer and certificate expert Anzio Breeze cr... |  |  | 7.5 | contentidea-kb |
+| 22 | After deploying an Android PFX/PKCS certificate profile, the deployment fails... | -&nbsp; &nbsp; &nbsp; &nbsp;This could happen due to an incorrect certificate... | To resolve this issue, select the correct trusted root certificate which will... | 7.5 | contentidea-kb |
+| 23 | After deploying an Android PFX/PKCS certificate profile, the deployment fails... | This problem can occur if the Supply in the request&nbsp;option is not enable... | To resolve this issue, edit the certificate template to enable Supply in the ... | 7.5 | contentidea-kb |
+| 24 | &nbsp;&quot;S/MIME (Secure/Multipurpose Internet Mail Extensions) is a widely... |  |  | 7.5 | contentidea-kb |
+| 25 | This article describes the steps |  | Use these steps to convert a PFX or P12 file to a Base64 string for ingestion... | 7.5 | contentidea-kb |
+| 26 | This article looks to give some insights on how Imported PKCS certificates wo... | Details about each component:The Intune Imported PFX Certificate Connector:&n... | Troubleshooting tips:&nbsp;Doing &quot;Get-IntuneUserPfxCertificate&quot; wil... | 7.5 | contentidea-kb |
+| 27 | Deploying PFX certificates, via Intune, to Windows 10 machines to use for dev... | Machine certificates (device certificate based authentication) for Windows 10... | Used SCEP profiles for the delivery of the machine certificates and the certi... | 7.5 | contentidea-kb |
+| 28 | Whenever you need to update, upgrade or reinstall the Microsoft Intune Certif... |  |  | 7.5 | contentidea-kb |
+| 29 | PKCS certificate profile fails to be deployed.            The error happen... | PKCS profile was configured without a Subject Alternative Name (SAN)      ... | When configure PKCS profile, make sure a Subject Alternative name is provided... | 7.5 | contentidea-kb |
+| 30 | When enrolling Android devices the wifi profile is not coming down to the dev... | When looking at company portal logs you see the following.&nbsp; &nbsp;Exclud... | Found that the Trusted certificate profile for the root CA wasn't assigned to... | 7.5 | contentidea-kb |
+| 31 | Using the new PFX Connector&nbsp;https://docs.microsoft.com/en-us/mem/intune/... | The Certificate template used in the PKCS profile was set for&nbsp;“CNG Crypt... | Version 6.2008.60.612&nbsp;of PFX Connector was released which will allow&nbs... | 7.5 | contentidea-kb |
+| 32 | PKCS certificates fail to deploy on co-managed devices.The following event is... | Antivirus application scanning&nbsp;C:\Program Files\Microsoft Intune folder. | Exclude&nbsp;C:\Program Files\Microsoft Intune folder from Antivirus scanning... | 7.5 | contentidea-kb |
+| 33 | When you have a PKCS certificate profile that issues device certificates and ... | This is the design of the feature since its inception. We are in the process ... | By-design. | 7.5 | contentidea-kb |
+| 34 | After configuring Microsoft Tunnel, the MS tunnel Gateway Health Status shows... | This can occur if there is an issue with the certificate being used. | To resolve this problem, delete and re-import the certificates, then reinstal... | 7.5 | contentidea-kb |
+| 35 | Cisco ISE 3.1+ &nbsp;and other partners will be using a new NAC service calle... |  |  | 7.5 | contentidea-kb |
+| 36 | When a PKCS certificate profile is deployed to devices, it may get failed due... | This is caused because &quot;Allow private key to be exported&quot; box is no... | Checking the&nbsp;&quot;Allow private key to be exported&quot; box re-applyin... | 7.5 | contentidea-kb |
+| 37 | Setting up PKCS imported certificates lab (S/MIME) for Outlook Tuesday, Octob... |  |  | 7.5 | contentidea-kb |
+| 38 | This guide is intended to show you how to check whether a &quot;PKCS Import&q... |  |  | 7.5 | contentidea-kb |
+| 39 | This article describes the changes made as part of the May 10, 2022, Windows ... |  |  | 7.5 | contentidea-kb |
+| 40 | Intune: How to setup PKCS Certificate Lab in My Workspace Test environment |  |  | 7.5 | contentidea-kb |
+| 41 | PKCS certificate deployment fails with error 0x800706BA RPC server unavailabl... | Cause 1: PKCS profile has wrong CA FQDN/name. Cause 2: CA cert renewed but Us... | Cause 1: Fix Certification authority and name in PKCS profile. Cause 2: Run c... | 6.5 | mslearn |
+| 42 | PKCS certificate fails with 0x80094015 enrollment policy server cannot be loc... | Connector host cannot locate certificate enrollment policy server | Run Add-CertificateEnrollmentPolicyServer PowerShell cmdlet on connector host. | 6.5 | mslearn |
+| 43 | PKCS submission pending: Taken Under Submission; PFX request in CA Pending Re... | CA Policy Module set to require admin to explicitly issue certificate | Change CA Policy Module to Follow the settings in the certificate template or... | 6.5 | mslearn |
+| 44 | PKCS certificate fails with 0x80070057 parameter is incorrect; connector conf... | PKCS profile misconfigured: wrong CA name or SAN for email but user has no em... | Verify PKCS profile CA name, user group assignment, and that users have valid... | 6.5 | mslearn |
+| 45 | PKCS certificate denied by Policy Module; device gets trusted root but not PFX | Computer Account of connector server lacks Read and Enroll permissions on cer... | Add connector server Computer Account to cert template Security tab with Read... | 6.5 | mslearn |
+| 46 | PKCS fails with -2146875374 CERTSRV_E_SUBJECT_EMAIL_REQUIRED: Email name unav... | Supply in the request option not enabled on certificate template Subject Name... | Open cert template Properties > Subject Name tab > select Supply in the reque... | 6.5 | mslearn |
+| 47 | PKCS certificate profile stuck as Pending in Intune admin center; no obvious ... | Cause 1: PfxRequest files stuck in Failed/Processing folders. Cause 2: Wrong ... | Check %programfiles%\Microsoft Intune\PfxRequest folders for errors. Verify t... | 5.5 | mslearn |
+| 48 | After deploying an Android PFX/PKCS certificate profile, the deployment fails... | - This could happen due to an incorrect certificate associated with the profi... | To resolve this issue, select the correct trusted root certificate which will... | 4.5 | contentidea-kb |
+| 49 | After deploying an Android PFX/PKCS certificate profile, the deployment fails... | This problem can occur if the Supply in the request option is not enabled on ... | To resolve this issue, edit the certificate template to enable Supply in the ... | 4.5 | contentidea-kb |
+| 50 | Intune Sr. Support Escalation Engineer and certificate expert Anzio Breeze cr... |  |  | 3.0 | contentidea-kb |
+| 51 | "S/MIME (Secure/Multipurpose Internet Mail Extensions) is a widely accepted m... |  |  | 3.0 | contentidea-kb |
+| 52 | This article describes the steps |  | Use these steps to convert a PFX or P12 file to a Base64 string for ingestion... | 3.0 | contentidea-kb |

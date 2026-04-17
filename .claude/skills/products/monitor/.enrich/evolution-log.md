@@ -495,3 +495,13 @@
 
 | 2026-04-07 | MERGE | Merged 4 per-source JSONL files → 1209 entries (0 cross-source dedup, 81 21V补标). Sources: onenote=51, ado-wiki=1080, mslearn=73, contentidea-kb=5. IDs renumbered monitor-001 to monitor-1209. | known-issues.jsonl |
 | 2026-04-07 | SYNTHESIZE | Full synthesis: 50 topics (35 fusion, 15 compact), 1206 entries retained, 3 discarded. 86 guide files generated (50 quick-ref + 35 detail + 1 index). 5 Kusto query files mapped to 4 topics. 0 cross-source conflicts detected. | guides/_index.md |
+
+### 2026-04-17T10:13:52Z — contentidea-kb refresh (monitor)
+- **WIQL**: keywords=["Monitor", "Log Analytics"], total=15
+- **Previously scanned**: 8 | **New batch**: 7
+- **Results**: 0 extracted (all 7 were false positives or test items)
+  - 16133, 22455, 22456, 56361: MBAM "BitLocker Admin and Monitor 2.5" — wrong product
+  - 27019: Dynamics CRM — wrong product
+  - 95737: Test item (empty fields, title="Test")
+  - 117786: Test item (title="contentidea_tobedeleted", symptom="to test")
+- **Status**: exhausted=true (15/15 scanned), lastRefreshed updated

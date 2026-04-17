@@ -1,0 +1,1 @@
+{"query": "SELECT [System.Id] FROM workitems WHERE [System.TeamProject]=\"ContentIdea\" AND [ECO.CI.KBArticleNumbers] <> \"\" AND ([ECO.CI.CI.AppliesToProducts] CONTAINS \"Purview\")"}

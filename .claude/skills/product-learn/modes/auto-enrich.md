@@ -433,7 +433,7 @@ Agent(
     
     关键文件：
     - known-issues-{source}.jsonl: .claude/skills/products/{product}/.enrich/known-issues-{source}.jsonl
-    - scanned-{source}.json: .claude/skills/products/{product}/.enrich/scanned-{source}.json
+    - scanned-{source}.json: .claude/skills/products/{product}/.enrich/scanned-{source}.json（🚨 必须含 lastRefreshed 字段）
     - 21v-gaps.json: .claude/skills/products/{product}/21v-gaps.json (如果存在)
     - playbooks/product-registry.json: 读取 podProducts 获取目录映射
     

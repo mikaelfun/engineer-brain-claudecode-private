@@ -303,3 +303,36 @@
 - Deduped: 0
 - IDs: defender-ado-wiki-b-r7-001 ~ 002
 | 2026-04-07 | MERGE+SYNTHESIZE | 41 topics (40 fusion, 1 compact), 1109 entries, 0 Kusto queries fused |
+
+### 2026-04-17 10:21 UTC — contentidea-kb scan (7-day refresh)
+
+- **WIQL keywords**: Security Center, Sentinel, Microsoft Defender, Defender for Cloud, Azure Sentinel
+- **Total matching KB items**: 84
+- **Previously scanned**: 5 | **This batch**: 10 | **Remaining**: 69
+- **Extracted**: 5 triplets (003-007) | **Skipped**: 5 (4 empty fields + 1 test data)
+- **Deduplicated**: 0
+- **New entries**:
+  - `defender-contentidea-kb-003`: MDE ATP error 10103 in Operations Manager event log (KB4534485)
+  - `defender-contentidea-kb-004`: MDE sharing violation with 3rd party apps on network share (KB4535525)
+  - `defender-contentidea-kb-005`: MDE machine isolation does not affect Application Guard (KB4539720)
+  - `defender-contentidea-kb-006`: Get-ProcessMitigation fails after KB4577671 due to MsSense.exe key permissions (KB4616264)
+  - `defender-contentidea-kb-007`: RDP drops on Server 2019 Core after Defender onboarding - LogonUI race condition (KB4616948)
+- **exhausted**: false (69 remaining)
+
+### 2026-04-17 10:25 UTC — contentidea-kb batch 3 (defender)
+- Scanned: 10 work items (149124, 150364, 150671, 150723, 153366, 153712, 155101, 157193, 157286, 157795)
+- Extracted: 3 entries (seq 008-010)
+- Skipped: 7 (empty structured fields — CR/platform update requests)
+- Progress: 25/84 scanned, 59 remaining
+
+## 2026-04-17 contentidea-kb scan completion
+
+- **WIQL query**: CONTAINS "Defender" OR CONTAINS "Sentinel" → 119 work items
+- **Previously scanned**: 25 (from prior sessions)
+- **This session scanned**: 98 new items (total now 123 including 4 legacy IDs not in current WIQL)
+- **New JSONL entries**: 27 (defender-contentidea-kb-011 through 037)
+- **Total JSONL entries**: 37 (001-037)
+- **Empty items skipped**: 71 (mostly KB4052623 platform updates and KB4568292 DISM package CRs)
+- **Coverage**: MDE, Windows Defender AV, WDAC, MDI, Sentinel-related Defender topics
+- **Key topics**: BSOD/bugchecks (WdFilter, MpDlp), deadlocks, CPU spikes, MAPS connectivity, DLP conflicts, ASR rules, false positives, onboarding issues
+- **Status**: exhausted=true (all 119 WIQL items scanned)

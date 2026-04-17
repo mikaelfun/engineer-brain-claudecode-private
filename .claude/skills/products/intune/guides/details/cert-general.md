@@ -1,463 +1,118 @@
-# Intune 证书通用问题与 Cloud PKI — 综合排查指南
+# INTUNE 证书通用问题与 Cloud PKI — 已知问题详情
 
-**条目数**: 43 | **草稿融合数**: 5 | **Kusto 查询融合**: 1
-**来源草稿**: ado-wiki-PKCS-Certificate-Troubleshooting.md, ado-wiki-View-Certificates.md, mslearn-troubleshoot-scep-certificate-delivery.md, mslearn-troubleshoot-scep-certificate-deployment.md, mslearn-troubleshoot-scep-certificate-profiles.md
-**Kusto 引用**: certificate.md
-**生成日期**: 2026-04-07
+**条目数**: 72 | **生成日期**: 2026-04-17
 
 ---
 
-## ⚠️ 已知矛盾 (3 条)
-
-- **solution_conflict** (high): intune-contentidea-kb-062 vs intune-mslearn-116 — context_dependent: 不同来源给出不同方案，可能适用不同场景
-- **rootCause_conflict** (medium): intune-ado-wiki-301 vs intune-onenote-185 — context_dependent: 不同来源给出不同方案，可能适用不同场景
-- **rootCause_conflict** (medium): intune-contentidea-kb-062 vs intune-mslearn-004 — context_dependent: 不同来源给出不同方案，可能适用不同场景
-
-## 排查流程
-
-### Phase 1: Pkcs Certificate Troubleshooting
-> 来源: ADO Wiki — [ado-wiki-PKCS-Certificate-Troubleshooting.md](../drafts/ado-wiki-PKCS-Certificate-Troubleshooting.md)
-
-**About PKCS Certificate Troubleshooting**
-**How PKCS Certificate Deployment Works**
-**Complete Flow**
-1. **Device Check-in**: Device → Intune: Request certificate profile. Intune creates PfxCertificate entity (Status=0, Pending)
-2. **Connector Download (DownloadNewMessages)**: Connector → Intune: Poll for new certificate requests (PfxCertificates where Status eq 0)
-3. **Connector Local Processing**: Connector → CA: Submit certificate request. CA → Connector: Return issued certificate. Potential failure point: NullReferenceException, CA errors
-4. **Connector Upload**: Connector → Intune: Upload issued certificate. Intune: Update PfxCertificate (Status=1, Issued). HTTP Response: 204 No Content (Success)
-5. **Device Notification**: Intune → APNs/WNS/FCM: Push notification to device. Device: Receive and install certificate
-
-**PfxCertificate Status Values**
-
-**Scoping Questions**
-1. What is the device platform? (Windows/iOS/Android/macOS)
-2. How long has the certificate been in "Pending" status?
-3. Are other devices/users able to receive certificates successfully?
-4. Is this a new deployment or was it previously working?
-5. Has anything changed recently? (Connector update, CA changes, network changes)
-
-**Troubleshooting Workflow**
-```
-1. Check Intune received request
-2. Check pending certificates found
-3. Check Connector uploaded result
-4. Check Upload success
-5. If no Upload, check Connector Event Log
-```
-
-**Kusto Queries**
-
-**Query 1: Check Connector Operations (Download/Upload)**
-```kusto
-```
-
-**Query 2: Verify Upload Success**
-```kusto
-```
-
-**Query 3: Check VPN Dependency (iOS)**
-```kusto
-```
-
-**Query 4: Check NotNow Responses (iOS Device Busy)**
-```kusto
-```
-
-**Query 5: Certificate Delivery Time Analysis**
-```kusto
-```
-
-**Connector Event Log Analysis**
-
-**Log Location**
-
-**Key Event IDs**
-
-**PowerShell Commands**
-```powershell
-
-**Check Connector service status**
-
-**Restart Connector services**
-
-**Export Connector Event Log**
-
-**Query recent errors**
-```
-
-**Reference Codes**
-
-**ServiceName Values**
-
-**Col2 Search Keywords**
-
-**Connector Event Log Search Keywords**
-
-**FAQ**
-- **Normal processing time**: 1-5 minutes. If pending >15 minutes, investigate.
-- **Hours in Pending**: Common causes include Connector bugs (NullReferenceException), CA processing delays, or device sync intervals (default 8 hours).
-- **Speed up iOS delivery**: Manual sync from Settings > General > VPN & Device Management > Sync.
-- **Restart Connector**: Yes, often resolves transient issues like NullReferenceException.
-
-**Additional Documentation**
-- [PKCS certificate profiles in Intune](https://learn.microsoft.com/en-us/mem/intune/protect/certificates-pfx-configure)
-... (详见原始草稿)
-
-### Phase 2: View Certificates
-> 来源: ADO Wiki — [ado-wiki-View-Certificates.md](../drafts/ado-wiki-View-Certificates.md)
-
-**View Certificates**
-**1. Android Personally Owned Work Profile (BYOD)**
-**Trusted Certificates in Settings**
-- Settings > search "Certificates" > View security certificates > User > Work
-
-**Trusted/SCEP Certificates via X-509 app**
-- Use "X509 Certificate Viewer Tool" (push via Managed Google Play Store for Enterprise enrollment)
-- SCEP cert shows as `User{Thumbprint}` (e.g., UserF1EA2F39EA7ACEBA5E6DD8BCFF4DEB1F2B5001B6)
-
-**2. Android Device Owner (DO)**
-
-**Trusted Certificates in Settings**
-- Settings > search "Certificates" > View security certificates > User
-
-**SCEP via Settings**
-- Settings > search "Certificates" > User certificates > shows as `User {policyID}`
-
-**SCEP via X-509 app**
-- Shows as `User {PolicyID}` (e.g., User 113122ab-xxxx-xxxx-xxxx-4cc5e955becd)
-
-**3. iOS Profiles**
-
-**Trusted Certificates**
-- Settings > General > VPN & Device Management > Management Profile > More Details > Certificates
-- Root: "Credential Profile - thumbprint"; Intermediate: "PKCS1 Credential Profile - thumbprint"
-
-**SCEP Certificates**
-- Settings > General > VPN & Device Management > Management Profile > More Details > SCEP DEVICE IDENTITY CERTIFICATES
-- Look for certs issued by local CA (ignore Microsoft Intune / MS-Organization-Access)
-- Note: iOS may show duplicate certificates for SCEP (one per dependent profile)
-
-**4. macOS Profiles**
-
-**Trusted Certificates in Management Profile**
-- macOS 14 and below: Settings > Privacy & Security > Profiles
-- macOS 15+: Settings > General > Device Management
-- Root: "Credential Profile - thumbprint"; Intermediate: "PKCS1 Credential Profile - thumbprint"
-
-**Trusted/SCEP Certificates in Keychain**
-- Keychain Access > System > Certificates
-
-**SCEP Certificate Chain**
-- Select cert in Keychain > Keychain Access menu > Certificate Assistant > Evaluate > Generic > Continue > Done
-
-**5. Windows Profiles**
-
-**Trusted Certificates via MMC**
-- mmc > File > Add/Remove Snap-in > Certificates > Computer Account
-- Trusted Root: Certificates (Local Computer) > Trusted Root Certification Authorities > Certificates
-- Intermediate: Certificates (Local Computer) > Intermediate Certification Authorities > Certificates
-
-**SCEP Certificates via MMC**
-- User cert: snap-in "My User Account" > Personal > Certificates
-... (详见原始草稿)
-
-### Phase 3: Troubleshoot Scep Certificate Delivery
-> 来源: MS Learn — [mslearn-troubleshoot-scep-certificate-delivery.md](../drafts/mslearn-troubleshoot-scep-certificate-delivery.md)
-
-**SCEP Certificate Delivery Troubleshooting (Step 5)**
-**Verify on Certification Authority**
-- Check CA for issued certificate entry after NDES processes the request
-
-**Device-Side Verification**
-
-**Android**
-- Device administrator: notification prompts cert install
-- Android Enterprise / Samsung Knox: automatic, silent install
-- Use third-party cert viewing app to verify
-- OMADM log key entries:
-  - Root cert state: `CERT_INSTALL_REQUESTED → CERT_INSTALLING → CERT_INSTALL_SUCCESS`
-  - SCEP cert state: `CERT_ENROLLED → CERT_INSTALL_REQUESTED → CERT_INSTALLING → CERT_ACCESS_REQUESTED → CERT_ACCESS_GRANTED`
-  - GetCACert and GetCACaps requests should return `200 OK`
-
-**iOS/iPadOS**
-- Settings → General → Device Management → view certificate
-- Debug log entries:
-  - Synchronous URL requests to NDES (GetCACert, GetCACaps, PKIOperation)
-  - `Profile 'www.windowsintune.com.SCEP...' installed.`
-
-**Windows**
-- Event Viewer → DeviceManagement-Enterprise-Diagnostic-Provider → Admin
-- **Event 39**: "SCEP: Certificate installed successfully"
-- certmgr.msc verification:
-  - Trusted Root Certification Authorities → root cert present (Issued To = Issued By)
-  - Personal → Certificates → SCEP cert present (Issued By = CA name)
-
-**Troubleshooting Failures**
-- **Android**: Review OMA DM log errors
-- **iOS**: Review device debug log errors
-- **Windows**: Check Event log; delivery errors typically related to Windows operations, not Intune
-... (详见原始草稿)
-
-### Phase 4: Troubleshoot Scep Certificate Deployment
-> 来源: MS Learn — [mslearn-troubleshoot-scep-certificate-deployment.md](../drafts/mslearn-troubleshoot-scep-certificate-deployment.md)
-
-**SCEP Certificate Profile Deployment Troubleshooting (Step 1)**
-**Assignment Compatibility Matrix**
-**Validation Steps (All Platforms)**
-1. Intune admin center → Troubleshooting + Support → Troubleshoot
-2. Set Assignments = Configuration profiles
-3. Verify: correct user, group membership, last check-in time
-
-**Platform-Specific Log Verification**
-
-**Android**
-- Check OMADM log for SyncML entries containing:
-  - `CertificateStore/Root/{GUID}/EncodedCertificate`
-  - `CertificateStore/Enroll/ModelName=AC_51...`
-  - `NDESUrls` with NDES server URL
-
-**iOS/iPadOS**
-- Debug log entries with:
-  - `Adding dependent ModelName=AC_51bad41f.../LogicalName_...`
-  - `PayloadDependencyDomainCertificate`
-
-**Windows**
-- Event Viewer → DeviceManagement-Enterprise-Diagnostic-Provider → Admin
-- **Event ID 306**: SCEP CspExecute entry
-- Error code `0x2ab0003` = `DM_S_ACCEPTED_FOR_PROCESSING` (success)
-- Non-successful codes indicate underlying problem
-
-### Phase 5: Troubleshoot Scep Certificate Profiles
-> 来源: MS Learn — [mslearn-troubleshoot-scep-certificate-profiles.md](../drafts/mslearn-troubleshoot-scep-certificate-profiles.md)
-
-**SCEP Certificate Troubleshooting Overview**
-**SCEP Communication Flow (6 Steps)**
-1. **Deploy SCEP certificate profile** → Intune generates challenge string
-2. **Device to NDES** → Device uses URI from profile to contact NDES server
-3. **NDES to Policy Module** → NDES forwards challenge to Intune Certificate Connector policy module for validation
-4. **NDES to CA** → NDES passes valid requests to Certification Authority
-5. **Certificate delivery** → Certificate delivered to device
-
-**Prerequisites**
-- Root certificate deployed through trusted certificate profile
-- Applies to Android, iOS/iPadOS, Windows (macOS info not available)
-
-**Key Log Locations**
-
-**Infrastructure (NDES Server)**
-- **Intune Connector Logs**: Event Viewer → Applications and Services Logs → Microsoft → Intune → CertificateConnectors → Admin/Operational
-- **IIS Logs**: `c:\inetpub\logs\LogFiles\W3SVC1`
-
-**Android**
-- BYOD (work profile): `OMADM.log`
-- COPE/COBO/COSU: `CloudExtension.log`
-- Enable Verbose Logging before collecting
-
-**iOS/iPadOS**
-- Console app on Mac → Include Info Messages + Debug Messages
-- Company Portal log does NOT contain SCEP info
-
-**Windows**
-- Event Viewer → Applications and Services Logs → Microsoft → Windows → DeviceManagement-Enterprise-Diagnostics-Provider
-
-**Related Troubleshooting Articles**
-- SCEP profile deployment (Step 1)
-- Device to NDES communication (Step 2)
-- NDES to policy module (Step 3)
-- NDES to CA (Step 4)
-- Certificate delivery (Step 5)
-... (详见原始草稿)
-
-### Phase 6: Kusto 诊断查询
-
-#### certificate.md
-`[工具: Kusto skill — certificate.md]`
-
-```kql
-DeviceManagementProvider
-| where env_time > ago(7d)
-| where ActivityId contains '{deviceId}'
-| where * contains "scep" or * contains "pkcs" or * contains "certificate"
-| project env_time, accountId, userId, DeviceID=ActivityId, PolicyName=name, 
-    PolicyType=typeAndCategory, Applicability=applicablilityState, 
-    Compliance=reportComplianceState, EventMessage, message, TaskName
-```
-
-```kql
-IntuneEvent
-| where env_time > ago(3h)
-| where DeviceId == '{deviceId}' or ActivityId == '{deviceId}'
-| where * contains "scep"
-| project env_time, ComponentName, DeviceId, Message, EventUniqueName, 
-    ColMetadata, Col1, Col2, Col3, Col4, Col5, Col6, ActivityId
-```
-
-```kql
-let _deviceId = '{deviceId}';
-let _startTime = datetime({startTime});
-let _endTime = datetime({endTime});
-
-DeviceManagementProvider 
-| where env_time between (_startTime .. _endTime)
-| where TaskName == "DeviceManagementProviderCIReportDataEvent" 
-| where deviceId == _deviceId
-| where typeAndCategory contains "TrustedRootCertificate" or typeAndCategory contains "ClientAuthCertificate"
-| project env_time, policyId, typeAndCategory, applicablilityState, reportComplianceState, EventMessage
-| order by env_time desc
-```
-
-```kql
-DeviceManagementProvider
-| where env_time > ago(7d)
-| where ActivityId == '{deviceId}' or userId == '{userId}'
-| where message contains '{thumbprint}'
-| project env_time, deviceId, ActivityId, message, EventId, userId, TaskName
-| order by env_time
-```
-
-```kql
-DeviceManagementProvider
-| where env_time > ago(1d)
-| where ActivityId contains '{deviceId}'
-| where message contains "dependent profile"
-| project env_time, ActivityId, cV, message
-```
-
-```kql
-let accountId = '{accountId}';
-
-// 获取 macOS 设备列表 (platform=10)
-let macDevices = DeviceLifecycle
-| where env_time > ago(90d)
-| where accountId == accountId
-| where platform == "10"  // 10=macOS, 7=iPhone, 8=iPad
-| where deviceId != ""
-| summarize by deviceId;
-
-// 从 GetDeviceIdentityAsync 事件提取证书信息
-IntuneEvent
-| where env_time > ago(7d)
-| where AccountId == accountId
-| where DeviceId in (macDevices)
-| where EventUniqueName == "GetDeviceIdentityAsync"
-| where ColMetadata == "RegistrationStatus;EnrollCertStartTime;EnrollCertExpiryTime;"
-| summarize arg_max(env_time, Col2, Col3) by DeviceId
-| extend CertExpiryDate = todatetime(Col3)
-| extend CertStartDate = todatetime(Col2)
-| extend DaysUntilExpiry = datetime_diff('day', CertExpiryDate, now())
-| project 
-    DeviceId, 
-    CertStartDate, 
-    CertExpiryDate, 
-    DaysUntilExpiry, 
-    LastCheckedTime = env_time
-| order by DaysUntilExpiry asc
-| take 100
-```
-
-```kql
-let accountId = '{accountId}';
-
-let macDevices = DeviceLifecycle
-| where env_time > ago(90d)
-| where accountId == accountId
-| where platform == "10"  // macOS
-| where deviceId != ""
-| summarize by deviceId;
-
-DeviceManagementProvider
-| where env_time > ago(14d)
-| where accountId == accountId
-| where ActivityId in (macDevices)
-| where message contains "Enroll cert expiry time:"
-| extend CertExpiryStr = extract("Enroll cert expiry time: ([0-9/]+ [0-9:]+ [AP]M)", 1, message)
-| extend CertStartStr = extract("Enroll cert start time: ([0-9/]+ [0-9:]+ [AP]M)", 1, message)
-| summarize arg_max(env_time, CertExpiryStr, CertStartStr) by DeviceId=ActivityId
-| extend CertExpiryDate = todatetime(CertExpiryStr)
-| extend CertStartDate = todatetime(CertStartStr)
-| extend DaysUntilExpiry = datetime_diff('day', CertExpiryDate, now())
-| project 
-    DeviceId, 
-    CertStartDate, 
-    CertExpiryDate, 
-    DaysUntilExpiry, 
-    LastCheckedTime = env_time
-| order by DaysUntilExpiry asc
-| take 100
-```
-
-```kql
-let accountId = '{accountId}';
-let warningDays = 60;
-
-let appleDevices = DeviceLifecycle
-| where env_time > ago(90d)
-| where accountId == accountId
-| where platform in ("7", "8", "10")  // iPhone, iPad, macOS
-| where deviceId != ""
-| summarize by deviceId;
-
-IntuneEvent
-| where env_time > ago(7d)
-| where AccountId == accountId
-| where DeviceId in (appleDevices)
-| where EventUniqueName == "GetDeviceIdentityAsync"
-| where ColMetadata == "RegistrationStatus;EnrollCertStartTime;EnrollCertExpiryTime;"
-| summarize arg_max(env_time, Col2, Col3) by DeviceId
-| extend CertExpiryDate = todatetime(Col3)
-| extend DaysUntilExpiry = datetime_diff('day', CertExpiryDate, now())
-| where DaysUntilExpiry <= warningDays and DaysUntilExpiry >= 0
-| project DeviceId, CertExpiryDate, DaysUntilExpiry, LastCheckedTime = env_time
-| order by DaysUntilExpiry asc
-```
-
+## Quick Troubleshooting Path
+
+### Step 1: Android users cannot access SharePoint Online or Exchange Online via browser after Intune device-based Conditional Access is enabled; browser repor...
+**Solution**: Android Chrome: (1) Open Company Portal > triple-dot menu > Settings > Enable Browser Access; (2) Sign out of Office 365 in Chrome; (3) Restart Chrome; (4) On first access to SharePoint/Exchange, install the certificate when prompted. Android Edge: Sign in with Work or School account (Profile icon > Add Work account). Fiddler trace will show empty device_id claim until browser access certificate is installed.
+`[Source: onenote, Score: 9.5]`
+
+### Step 2: Windows device Intune sync fails with 'The sync could not be initiated' error after device has been offline for extended period or certificate was ...
+**Solution**: Method 1 (with data loss): Disconnect work/school account via Settings > Accounts > Access work or school. Method 2 (without data loss): 1) Delete stale scheduled tasks under Task Scheduler > Microsoft > Windows > EnterpriseMgmt and note enrollment ID; 2) Delete stale registry keys under enrollment ID in HKLM paths (Enrollments, EnterpriseResourceManager, PolicyManager, Provisioning/OMADM); 3) Delete expired Intune cert from certlm.msc > Personal; 4) Run deviceenroller.exe /c /AutoEnrollMDM in S
+`[Source: onenote, Score: 9.5]`
+
+### Step 3: Windows Update scan fails with USO error 0x87c52200 (certificate error) during MoUpdateOrchestrator scan process
+**Solution**: Exclude settings-win.data.microsoft.com from SSL inspection on proxy/firewall; verify certificate chain using CAPI2 event log
+`[Source: onenote, Score: 9.5]`
+
+### Step 4: Cloud PKI SCEP 证书下发失败，设备无法访问 SCEP URI（*.manage.microsoft.com 被防火墙/代理拦截）
+**Solution**: 1. 在防火墙/代理中允许 *.manage.microsoft.com；2. 用浏览器测试 SCEP URI：追加 /?operation=GetCACaps 确认可达；3. 追加 /Certs.p7b?operation=GetCACert&message=MStest 验证证书链
+`[Source: ado-wiki, Score: 9.0]`
+
+### Step 5: 创建 Cloud PKI Issuing CA 时无法添加 Root CA 上未定义的 EKU，或选择 Any Purpose EKU 报错
+**Solution**: 1. 创建 Root CA 前规划好所有需要的 EKU（Root CA 创建后无法修改）；2. 不要使用 Any Purpose EKU；3. 如需添加新 EKU 只能重新创建 Root CA + Issuing CA
+`[Source: ado-wiki, Score: 9.0]`
+
+### Step 6: Cloud PKI CA 创建失败，提示已达 6 个 CA 服务器上限
+**Solution**: 1. 规划 CA 层级在 6 台限制内（如 1 Root + 5 Issuing，或 2 Root + 2 Issuing 各）；2. 自 2407 起可删除不用的 CA：先 Pause → Revoke 所有叶证书 → Revoke CA → Delete CA；3. Root CA 需先删除所有锚定的 Issuing CA 才能删除
+`[Source: ado-wiki, Score: 9.0]`
+
+### Step 7: Android Fully Managed/Dedicated 设备 SCEP 部署问题，DeviceManagementProvider 表无数据
+**Solution**: 使用 IntuneEvent 查询 ApplicationName='AndroidSync' 和 ComponentName in ('StatelessAndroidSyncService','StatelessGooglePolicyService')，过滤 Col1 startswith 'SCEP' 获取部署详情
+`[Source: ado-wiki, Score: 9.0]`
+
+### Step 8: SCEP certificate fails to renew on a subset of Windows devices while others renew successfully
+**Solution**: Use Procmon to diagnose: 1) Filter for Process Name=dmcertinst.exe and Path contains SCEP policy ID (replace - with _). 2) Look for error codes, use certutil /error or https://windowsinternalservices.azurewebsites.net/Static/Errors/ to decode. 3) Check Process tab for third-party DLLs loaded by dmcertinst.exe. 4) Remove/exclude the interfering software to resolve.
+`[Source: ado-wiki, Score: 9.0]`
 
 ---
 
-## 已知问题速查
+## All Known Issues
 
-| # | 症状 | 根因 | 方案 | 分数 | 来源 |
-|---|------|------|------|------|------|
-| 1 | Windows device Intune sync fails with 'The sync could not be initiated' error after device has be... | The Microsoft Intune MDM certificate (Local Machine > Personal > Certificates... | Method 1 (with data loss): Disconnect work/school account via Settings > Accounts > Access work o... | 🟢 9.0 | OneNote |
-| 2 | Windows Update scan fails with USO error 0x87c52200 (certificate error) during MoUpdateOrchestrat... | SSL/TLS inspection device replaces certificate for settings-win.data.microsof... | Exclude settings-win.data.microsoft.com from SSL inspection on proxy/firewall; verify certificate... | 🟢 9.0 | OneNote |
-| 3 | iOS enrollment fails with APNSCertificateNotValid or AccountNotOnboarded error. Device cannot com... | APNs certificate was not properly configured (steps incomplete) or has expire... | 1. Check APNs cert expiry in Intune admin center. 2. RENEW (not replace) the APNs certificate - r... | 🟢 9.0 | OneNote |
-| 4 | Newer Android devices (IQOO 15, Xiaomi 17, OPPO Reno14) cannot sign in to Outlook when Intune man... | ADFS server (behind Alibaba NLB) returns only the leaf certificate without th... | Fix the ADFS/NLB configuration to return the full certificate chain (leaf + intermediate certific... | 🟢 9.0 | OneNote |
-| 5 | macOS LOB app (.pkg) fails to install via Intune. App shows NotInstalled in Kusto. Running .pkg l... | The .pkg file was not built as a distribution archive using productbuild. App... | 1. Build component package: pkgbuild --root <payload> --scripts <scripts> --version <version> --i... | 🟢 9.0 | OneNote |
-| 6 | Cloud PKI SCEP 证书下发失败，设备无法访问 SCEP URI（*.manage.microsoft.com 被防火墙/代理拦截） | 客户防火墙或代理规则未放行 *.manage.microsoft.com，导致设备无法到达 Cloud PKI SCEP 端点 | 1. 在防火墙/代理中允许 *.manage.microsoft.com；2. 用浏览器测试 SCEP URI：追加 /?operation=GetCACaps 确认可达；3. 追加 /Cert... | 🟢 8.5 | ADO Wiki |
-| 7 | 创建 Cloud PKI Issuing CA 时无法添加 Root CA 上未定义的 EKU，或选择 Any Purpose EKU 报错 | Root CA 的 EKU 是 Issuing CA 的超集限制，Issuing CA 只能选择 Root CA 已有的 EKU；Any Purpose ... | 1. 创建 Root CA 前规划好所有需要的 EKU（Root CA 创建后无法修改）；2. 不要使用 Any Purpose EKU；3. 如需添加新 EKU 只能重新创建 Root CA ... | 🟢 8.5 | ADO Wiki |
-| 8 | Cloud PKI CA 创建失败，提示已达 6 个 CA 服务器上限 | 每个 Intune 租户最多 6 个 Cloud PKI CA 服务器（含 Root + Issuing + BYOCA 的任意组合） | 1. 规划 CA 层级在 6 台限制内（如 1 Root + 5 Issuing，或 2 Root + 2 Issuing 各）；2. 自 2407 起可删除不用的 CA：先 Pause → R... | 🟢 8.5 | ADO Wiki |
-| 9 | SCEP/PKCS profile 部署报错，但未检查 Trusted Root profile 是否同时下发 | SCEP/PKCS profile 依赖 Trusted Root certificate profile 作为前置条件，如果 Trusted Root ... | 1. 确认 Trusted Root certificate profile 已部署到目标设备；2. 用 Kusto 查询 DeviceManagementProvider 同时过滤 Clien... | 🟢 8.5 | ADO Wiki |
-| 10 | SCEP certificate deployment fails; IIS logs show only GetCACert request but no GetCACaps or PKIOp... | Certificate chain issue - device does not trust the NDES server certificate o... | Verify the trusted root certificate profile is deployed to device. Check IIS SSL binding certific... | 🟢 8.5 | ADO Wiki |
-| 11 | Android Enterprise personally-owned work profile 部署 Trusted Certificate profile 时报错 -2016281112 (... | Trusted Certificate profile 中部署了非 Root 或非 Intermediate 证书。Intune 的 Trusted Ce... | 确保 Trusted Certificate profile 仅包含 root 或 intermediate 证书。移除非 root/intermediate 证书，重新部署。参考 Intune... | 🟢 8.5 | ADO Wiki |
-| 12 | WHFB PIN sign-in fails with The request is not supported, DC System log Event ID 19/29 KDC cannot... | DC missing certificate with Kerberos Authentication EKU, or old certificate s... | 1) Verify 2016 DC has Kerberos Auth EKU cert 2) Import new cert to AD DS store and restart DC if ... | 🟢 8.5 | ADO Wiki |
-| 13 | WHFB PIN sign-in fails with KDC certificate could not be validated, System Event ID 9 Kerberos | DC certificate chain validation failure (CRL revocation check or root trust i... | 1) Export DC cert as .cer 2) certutil -verify -urlfetch 3) Fix PKI CRL/root cert issues 4) Verify... | 🟢 8.5 | ADO Wiki |
-| 14 | EPM automatic elevation rule Match=False for target file — elevation does not occur despite polic... | Certificate payload in the elevation rule does not match the actual certifica... | Check EpmServiceLogs (EpmService_YYYYMMDD_0.log) for 'Match=False;Message=' entries. The Message ... | 🟢 8.5 | ADO Wiki |
-| 15 | macOS enrollment fails with HTTP 404 error during management profile installation. Device log sho... | Intune service Node issue (PG confirmed via ICM 388482221/473790930). During ... | 1. PG confirmed Node issue - escalate via ICM. 2. Verify enrollment service works: Kusto IOSEnrol... | 🟢 8.0 | OneNote |
-| 16 | Cannot save corporate data in WIP-allowed apps (Word, Excel) on Hybrid Azure AD joined or co-mana... | The Encrypting File System (EFS) Data Recovery Agent (DRA) certificate in the... | 1) Export old DRA certificate and private key for decrypting existing files. 2) Create and verify... | 🔵 7.5 | MS Learn |
-| 17 | Windows enrollment fails with error 0x8007064c The machine is already enrolled. Device was previo... | Previous enrollment certificate (Sc_Online_Issuing) and registry key HKLM SOF... | Delete the Intune cert issued by Sc_Online_Issuing from Local Computer Personal Certificates. Del... | 🔵 7.5 | MS Learn |
-| 18 | There are advantages and disadvantages based on how a device is enrolled and seen in Intune. Whet... | There are a couple methods of enrolling a device in Intune. Computers running... | See the capability comparison chart: Windows PC management (Desktop) capabilities vs Mobile Devic... | 🔵 7.0 | ContentIdea KB |
-| 19 | When trying to enroll and configure Windows phones into IBM MaaS360 Mobile Device Management, use... | This can occur if the Company Hub Certificate has expired. | To resolve this problem, renew the Company Hub Certificate by following the steps in this article... | 🔵 7.0 | ContentIdea KB |
-| 20 | When adding or updating APN cert getting error Please specify an Apple ID in the format alias@dom... | Invalid character in the Apple ID used during cert upload | Ensure valid email format. Email is validated against regex. Use any valid format email since the... | 🔵 7.0 | ContentIdea KB |
-| 21 | Android only (iOS and Windows still working) devices are not able to login to Company Portal, Out... | The Azure AD Connect process for Device Write back is not configured or is co... | Disable and Re-enable Device WritebackReference Article: https://docs.microsoft.com/en-us/azure/a... | 🔵 7.0 | ContentIdea KB |
-| 22 |  | The error occurs when the Company Portal app checks our certificates on ADFS ... | Import the certs up the chain into the intermediate store on the ADFS Proxy Servers. So, launch t... | 🔵 7.0 | ContentIdea KB |
-| 23 | When attempting to enroll a device in Intune, the device hangs at Checking Compliance. When the h... | This can occur due to various conditions. See the steps below for information... | 1. Have the customer cancel any enrollment in progress, then terminate the Company Portal app and... | 🔵 7.0 | ContentIdea KB |
-| 24 | An end-user device is blocked by the Intune on-premises Exchange connector, however the condition... | The CAS that the Intune on-premises Exchange connector is pointing to has a c... | Navigate to the EWS URL of the CAS the Intune Exchange connector points to and verify certificate... | 🔵 7.0 | ContentIdea KB |
-| 25 | When trying to deploy a PFX certificate to an iPhone enrolled into Intune; the trusted root certi... | The following error is seen in the connector logs: IssuePfx - The submission ... | Ensure that the machine account has access to the certificate template on the CA. | 🔵 7.0 | ContentIdea KB |
-| 26 | When the customer has to update the certificate for the Cisco ISE App Registration in portal.azur... |  | &nbsp; &nbsp; a. Open the Azure Active Directory Blade and then open &quot;App Registration&quot;... | 🔵 7.0 | ContentIdea KB |
-| 27 | Customer configures a Wi-Fi profile in the Azure Intune portal for Android devices. The Wi-Fi pro... | Wi-Fi profiles using certificates are not coming down to Android devices with... | Issue has been resolved | 🔵 7.0 | ContentIdea KB |
-| 28 | When attempting to enroll a Windows computer using the Intune PC client software, the enrollment ... | This can occur if the PC client package being used is out of date. | To resolve this problem, download a new copy of the Intune PC client agent installer and try the ... | 🔵 7.0 | ContentIdea KB |
-| 29 | When attempting to enroll a Windows computer using the Intune PC client software, the enrollment ... | This can occur if the certificate trust chain is broken due to a missing or e... | <Customer Facing Steps>Download a new enrollment package from the Admin Console at admin.manage.m... | 🔵 7.0 | ContentIdea KB |
-| 30 | At the beginning of February, Microsoft publicly released the information that most of the custom... | This issue was encountered because the Keys mentioned in the documentation ar... | I managed to pre-configure the Outlook email profile settings by using the Keys from the below ta... | 🔵 7.0 | ContentIdea KB |
-| 31 | This article only apples if the Enrollment profile is set to "Select where users must authenticat... | This has multiple causes: Username or password is actually wrong (typo) The u... | If using Azure AD MFA, the preferred solution would be D.2Solution A: Enter the correct informati... | 🔵 7.0 | ContentIdea KB |
-| 32 | When attempting to enroll a MacOS device in Intune, the enrollment fails with error: Your Mac can... | This can occur if there are stale or corrupt Keychain entries related to Intu... | Make sure the user is a local administrator. Open Keychain Access, search for Microsoft, delete s... | 🔵 7.0 | ContentIdea KB |
-| 33 | After setting up the Intune NDES connector, NDESConnectorUI shows a status of Connected and the d... | This can occur when the &quot;Sign In&quot; process cannot complete. For exam... | This can occur if you have &quot;Internet Explorer Enhanced Security Configuration&quot; (commonl... | 🔵 7.0 | ContentIdea KB |
-| 34 | When trying to enroll a IOS device into Intune service you get the following error message Could ... | This caused by a problem with the Apple push notification certificate. If you... | To resolve the issue fix the issue with the Apple Push notification. In my customer case we remov... | 🔵 7.0 | ContentIdea KB |
-| 35 | Android Devices get Missing Certificate when they try to enroll | This usually happens when they use ADFS and the intermediate certificate is n... | Follow these steps to have the Certificates install.                                   1. On the ... | 🔵 7.0 | ContentIdea KB |
-| 36 | Error during sign in to Company Portal - &quot;Could not sign in. You will need to sign in again.... | The Intune Company Portal app only supports Forms Based Authentication | This error is occurring because the ADFS server is asking for a certificate-based authentication ... | 🔵 7.0 | ContentIdea KB |
-| 37 | macOS devices are unexpectedly unenrolled from Microsoft Intune service or enrollment fails | MDM agent mishandles failed MDM certificate installations. When the MDM agent... | Re-enroll the affected macOS device. | 🔵 6.5 | MS Learn |
-| 38 | iOS SCEP enrollment fails - IIS logs show good GetCACerts (200) but no GetCACaps request generate... | Trusted Root certificate profile in Intune uses a different cert than NDES se... | Reissue new Root and Intermediate certificates with supported signature algorithm (e.g. SHA256RSA... | 🔵 6.5 | MS Learn |
-| 39 | Co-management: Hybrid AAD join fails 0x801c03f2. Public key user certificate not found. | UserCertificate attribute missing or not synced to Azure AD. | dsregcmd /leave, delete MS-Organization-Access cert, restart, verify cert on AD object, delta sync. | 🔵 6.5 | MS Learn |
-| 40 | Email profile: Users repeatedly prompted for password. | Certificate profiles not assigned to same group type as email profile. | Assign all cert profiles to same group type (user or device) consistently. | 🔵 6.5 | MS Learn |
-| 41 | Android device cannot sign in to Company Portal: missing required certificate. ADFS intermediate ... | ADFS server does not include intermediate certificates in SSL Server hello re... | Sol 1: User installs missing cert. Sol 2: Import intermediate certs into ADFS Personal cert store... | 🔵 6.5 | MS Learn |
-| 42 | Intune client connectivity issues: devices cannot access Intune infrastructure, receive updates/p... | Automatic root certificate update mechanism disabled and Baltimore CyberTrust... | Install latest root certificates from Microsoft Update Catalog (search 'root update'); install on... | 🔵 5.5 | MS Learn |
-| 43 | macOS enrollment fails with keychain error -25244 (errSecInvalidOwnerEdit); Company Portal logs s... | Stale or corrupted keychain entries related to Intune enrollment (workplace j... | Open Keychain Access as local admin; delete all 'workplace' keys; delete specific Microsoft/Compa... | 🔵 5.5 | MS Learn |
+| # | Symptom | Root Cause | Solution | Score | Source |
+|---|---------|-----------|----------|-------|--------|
+| 1 | Android users cannot access SharePoint Online or Exchange Online via browser ... | On Android, browser-based Conditional Access requires the Enable Browser Acce... | Android Chrome: (1) Open Company Portal > triple-dot menu > Settings > Enable... | 9.5 | onenote |
+| 2 | Windows device Intune sync fails with 'The sync could not be initiated' error... | The Microsoft Intune MDM certificate (Local Machine > Personal > Certificates... | Method 1 (with data loss): Disconnect work/school account via Settings > Acco... | 9.5 | onenote |
+| 3 | Windows Update scan fails with USO error 0x87c52200 (certificate error) durin... | SSL/TLS inspection device replaces certificate for settings-win.data.microsof... | Exclude settings-win.data.microsoft.com from SSL inspection on proxy/firewall... | 9.5 | onenote |
+| 4 | Cloud PKI SCEP 证书下发失败，设备无法访问 SCEP URI（*.manage.microsoft.com 被防火墙/代理拦截） | 客户防火墙或代理规则未放行 *.manage.microsoft.com，导致设备无法到达 Cloud PKI SCEP 端点 | 1. 在防火墙/代理中允许 *.manage.microsoft.com；2. 用浏览器测试 SCEP URI：追加 /?operation=GetCAC... | 9.0 | ado-wiki |
+| 5 | 创建 Cloud PKI Issuing CA 时无法添加 Root CA 上未定义的 EKU，或选择 Any Purpose EKU 报错 | Root CA 的 EKU 是 Issuing CA 的超集限制，Issuing CA 只能选择 Root CA 已有的 EKU；Any Purpose ... | 1. 创建 Root CA 前规划好所有需要的 EKU（Root CA 创建后无法修改）；2. 不要使用 Any Purpose EKU；3. 如需添加新... | 9.0 | ado-wiki |
+| 6 | Cloud PKI CA 创建失败，提示已达 6 个 CA 服务器上限 | 每个 Intune 租户最多 6 个 Cloud PKI CA 服务器（含 Root + Issuing + BYOCA 的任意组合） | 1. 规划 CA 层级在 6 台限制内（如 1 Root + 5 Issuing，或 2 Root + 2 Issuing 各）；2. 自 2407 起可... | 9.0 | ado-wiki |
+| 7 | Android Fully Managed/Dedicated 设备 SCEP 部署问题，DeviceManagementProvider 表无数据 | Android Fully Managed/Dedicated 设备不使用 DMP 表记录证书部署状态，需使用 IntuneEvent 表的 Androi... | 使用 IntuneEvent 查询 ApplicationName='AndroidSync' 和 ComponentName in ('Stateles... | 9.0 | ado-wiki |
+| 8 | SCEP certificate fails to renew on a subset of Windows devices while others r... | Third-party or middleware software (e.g., security agents) interfering with d... | Use Procmon to diagnose: 1) Filter for Process Name=dmcertinst.exe and Path c... | 9.0 | ado-wiki |
+| 9 | Android Enterprise personally-owned work profile 部署 Trusted Certificate profi... | Trusted Certificate profile 中部署了非 Root 或非 Intermediate 证书。Intune 的 Trusted Ce... | 确保 Trusted Certificate profile 仅包含 root 或 intermediate 证书。移除非 root/intermedia... | 9.0 | ado-wiki |
+| 10 | Jamf Pro integration with Intune — macOS CA deprecated Sep 2024, migrate to D... | Jamf Pro Conditional Access platform no longer supported since Sep 1 2024. Mu... | Follow Jamf migration guide at Migrating from macOS Conditional Access to mac... | 9.0 | ado-wiki |
+| 11 | macOS enrollment fails with HTTP 404 error during management profile installa... | Intune service Node issue (PG confirmed via ICM 388482221/473790930). During ... | 1. PG confirmed Node issue - escalate via ICM. 2. Verify enrollment service w... | 8.5 | onenote |
+| 12 | Intune Cloud PKI 在 21V 无法使用 | 无 Intune Suite & Cloud PKI add-on 许可证；DCR 追踪中 | 不支持；改用 SCEP/PKCS（NDES + ADCS）方案部署证书 | 8.0 | 21v-gap |
+| 13 | Microsoft 365 apps for macOS close without notification and restart unexpecte... | Multiple deployments of Microsoft 365 apps assigned as Required to the device... | 1) If multiple Required deployments: assign only one deployment. 2) If M365 s... | 8.0 | mslearn |
+| 14 | Windows enrollment fails with error 0x8007064c The machine is already enrolle... | Previous enrollment certificate (Sc_Online_Issuing) and registry key HKLM SOF... | Delete the Intune cert issued by Sc_Online_Issuing from Local Computer Person... | 8.0 | mslearn |
+| 15 | When attempting to enroll a device in Intune, the device hangs at Checking Co... | This can occur due to various conditions. See the steps below for information... | 1. Have the customer cancel any enrollment in progress, then terminate the Co... | 7.5 | contentidea-kb |
+| 16 | Here is a guide on how to install/setup the �Anyconnect� Android application ... |  |  | 7.5 | contentidea-kb |
+| 17 | Customer configures a Wi-Fi profile in the Azure Intune portal for Android de... | Wi-Fi profiles using certificates are not coming down to Android devices with... | Issue has been resolved | 7.5 | contentidea-kb |
+| 18 | When you try to access secured site (https)&nbsp; in Intune Managed Browser f... | This can be caused by a problem with the web site certificate. &nbsp; &nbsp;&... | The Intune Managed Browser on Android device needs to trust the entire certif... | 7.5 | contentidea-kb |
+| 19 | Intune: Devices or service connectors are unable to connect to the Intune ser... |  |  | 7.5 | contentidea-kb |
+| 20 | Android Devices get Missing Certificate when they try to enroll | This usually happens when they use ADFS and the intermediate certificate is n... | Follow these steps to have the Certificates install.                         ... | 7.5 | contentidea-kb |
+| 21 | Scenario 1 - Base app does not install MacOS line of business (LOB) apps crea... | Scenario 1 - Base app does not installAs per Apple documentation https://deve... | Scenario 1 - Base app does not install First of all, remove any Required depl... | 7.5 | contentidea-kb |
+| 22 | WiFi Profile (PSK) is deployed but cannot connect to WiFi on Android device  ... |  |  | 7.5 | contentidea-kb |
+| 23 | Errorscannot complete the save due to a file permission error0x8007177c: reco... | Expired default EFS DRA in the organization’s GPO.Understanding the errorThe ... | Save off the old DRA cert and private key before you make any changes. (So, y... | 7.5 | contentidea-kb |
+| 24 | Supported Platforms Google Android 5.0 and later Samsung Knox Android 5.0 and... |  |  | 7.5 | contentidea-kb |
+| 25 | Scenario 1&nbsp;Cause: An existing Company Portal has an expired Symantec Cer... |  |  | 7.5 | contentidea-kb |
+| 26 | Trusted Certificates, SCEP/PKCS and WIFI profiles are applying properly to th... | This occurs because macOS is case-sensitive during TLS negotiation. The RADIU... | From  the Intune portal, edit the WIFI profile and change the FQDN from serve... | 7.5 | contentidea-kb |
+| 27 | When troubleshooting registration issues, there may be instances where you ne... |  |  | 7.5 | contentidea-kb |
+| 28 | When looking at Android company portal logs you see that the trusted root cer... | This happens on Android if the Trusted root certificate is a 3rd party certif... | Create any profiles that would use the certificate without the root certifica... | 7.5 | contentidea-kb |
+| 29 | App configuration policies in Microsoft Intune supply settings to Managed Goo... |  |  | 7.5 | contentidea-kb |
+| 30 | Consider the following scenario:You're unable to sign-in to the Intune NDES C... | This can occur if there is a network device that is&nbsp;presenting its own c... | Engage Customer's networking team so they remove &quot;manage.microsoft.com&q... | 7.5 | contentidea-kb |
+| 31 | Enrollment failed at the device preparation in autopilot self-deployment scen... | Mismatch between OS and BIOS time. | The time should be matched in Bios and OS as from&nbsp;the Log file Certreq_e... | 7.5 | contentidea-kb |
+| 32 | On Android device when you go into the&nbsp; Intune portal application.&nbsp;... | This can be caused by problem that the Android device does not trust the cert... | To determine why the Android device is not trusting the certificate chain you... | 7.5 | contentidea-kb |
+| 33 | Push the 'McAfee&nbsp;Mobile Cloud Security' (MMCS) application to the androi... |  |  | 7.5 | contentidea-kb |
+| 34 | An Android fully managed device fails to get a certificate authentication WiF... | This can occur if the device already has a Wi-fi profile configured for the s... | To resolve this problem, complete the following:1. Forget the WiFi network th... | 7.5 | contentidea-kb |
+| 35 | Scenario: Customer has a working NDES server issuing SCEP certificates to oth... | The cause of the connection failure was due to a failure in the initial TLS/S... | The customer was using a reverse proxy to expose the NDES service on the inte... | 7.5 | contentidea-kb |
+| 36 | Android uses a digital certificate (also called a&nbsp;keystore) to cryptogra... |  |  | 7.5 | contentidea-kb |
+| 37 | Cheat sheet for setting up Microsoft Tunnel on a CentOS server.Cheat Sheet&nb... |  |  | 7.5 | contentidea-kb |
+| 38 | Cheat sheet for setting up Microsoft Tunnel on an Ubuntu server.     &nbsp;  ... |  |  | 7.5 | contentidea-kb |
+| 39 | When trying to create the connection between the MTG server and the Intune se... | The MTG server was running CentOS 8. At the time of this article creation (11... | To resolve this issue, build new servers with a supported version of CentOS (... | 7.5 | contentidea-kb |
+| 40 | What is business impact and how to identify it  Business Impact describes the... |  |  | 7.5 | contentidea-kb |
+| 41 | When attempting to enroll an Android Fully Managed device, the following erro... | This occurs because Android does not support downloading additional certifica... | To resolve this issue, reimport the SSL certificate with ‘extra download’ to ... | 7.5 | contentidea-kb |
+| 42 | Intune and 3rd party MDM providers leverage the&nbsp;     EnterpriseDataProte... |  |  | 7.5 | contentidea-kb |
+| 43 | WIFI Certificate based authentication (CBA) connection fails on Android Dedic... | This occurs because for userless devices, Android does not send the device id... | To resolve this problem, use the      Identity privacy (outer identity)      ... | 7.5 | contentidea-kb |
+| 44 | In this menu, we are going to configure SCEP and PKCS certificate. As a resul... |  |  | 7.5 | contentidea-kb |
+| 45 | Windows 10 machines are unable to reach the Autopilot configuration screen wh... | The problem happens when a network device, in the middle of the connection be... | The customer’s networking team removed the following endpoints form their SSL... | 7.5 | contentidea-kb |
+| 46 | Android Enterprise BYOD (work profile) devices can no longer connect to netwo... | Starting in Android 12, the IMEI (as well as MEID and serial number) can no l... | Steps and functionality will very based on the customer’s VPN and NAC provide... | 7.5 | contentidea-kb |
+| 47 | A Trusted Root certificate profile for Android enterprise personally-owned wi... | This can be caused when the certificate uploaded to MEM console in the Truste... | Make sure the certificate uploaded&nbsp;MEM console in the Trusted root certi... | 7.5 | contentidea-kb |
+| 48 | The intention of this article is to highlight a couple of pitfalls that have ... |  |  | 7.5 | contentidea-kb |
+| 49 | The setup with Microsoft Tunnel Gateway in RHEL 8.4+ systems are now supporti... | The RHEL OS may be configured or modified to limit the Modules the kernel loa... | Root user can use command &quot;modprobe run&quot; to manually load the tun m... | 7.5 | contentidea-kb |
+| 50 | End users are using Jamf managed macOS devices that are integrated with Intun... |  |  | 7.5 | contentidea-kb |
+| 51 | The CU is unable to access Intune app on Android Enterprise Fully managed dev... | After long troubleshooting,&nbsp; I have found the problem with the default&n... | Hence, the pushed root Cert somehow forced the DigiCert Root Cert on the devi... | 7.5 | contentidea-kb |
+| 52 | Customer had a population of Zebra devices running Android 8. The SCEP profil... | This was occurring because the devices did not have a PIN/Passcode set.This r... | After setting a PIN on the device, the SCEP profile applied successfully. | 7.5 | contentidea-kb |
+| 53 | When  looking at SCEP certificate profiles in Assist 365, many values are rep... |  |  | 7.5 | contentidea-kb |
+| 54 | Per-app VPN allows applications to use an HTTP or HTTPS connection to access ... |  |  | 7.5 | contentidea-kb |
+| 55 | For&nbsp;Samsung      devices with Android OS 11 and below, you notice that t... | This problem can occur if the devices do not have the&nbsp;&quot;Knox Service... | This problem can be resolved by deploying the &quot;Knox Service Plugin&quot;... | 7.5 | contentidea-kb |
+| 56 | End users on macOS devices are unable to register their devices with Azure AD... | Below are listed 2 possible issues that can cause this exact error.&nbsp; You... | First Investigation -&nbsp; Please review the following with the customer to ... | 7.5 | contentidea-kb |
+| 57 | Clients are unable to establish a connection with MTG server.&nbsp;&nbsp;The ... | The certificate bundle the customer had was invalid. MTG requires that the bu... | The customer obtained a new certificate bundle that was complete/valid.&nbsp;... | 7.5 | contentidea-kb |
+| 58 | It's possible to see issues with Android Enterprise (AE) BYOD devices where t... | The problem occurs when CISCO tries to verify the compliance status of the de... | To resolve this problem, there are few actions that are required on CISCO ISE... | 7.5 | contentidea-kb |
+| 59 | When running sync under Access Work or School for enrollment record, it repor... | At path &quot;HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Provisioning\OMADM\Accoun... | Identify the enrollment record at registry path “HKEY_LOCAL_MACHINE\SOFTWARE\... | 7.5 | contentidea-kb |
+| 60 | Scenario:&nbsp; Android Personally enrolled Work Profile.&nbsp; The Wi-Fi net... | The customer had an incomplete server validation configuration in the Wi-Fi P... | To fix this problem, chose the correct Trusted Certificate profile (the Root ... | 7.5 | contentidea-kb |
+| 61 | Preread:&nbsp;Find lost devices with Microsoft Intune / Microsoft Learn Andro... |  |  | 7.5 | contentidea-kb |
+| 62 | When trying to re-enrol a previous working device with Autopilot for pre-prov... | Considering that TPM V 2.0 is already present, yet in the: certreq_enrollaik.... | During the Self-Deploying it is mandate to ensure the device is legitimate, a... | 7.5 | contentidea-kb |
+| 63 | In this article you will learn how to validate that a SCEP certificate is ins... |  |  | 7.5 | contentidea-kb |
+| 64 | We’ve recently received several cases where Android devices fail to connect t... | The problem occurs because Android no longer trusts the root CA “AAA Certific... | Intune admins should deploy the &quot;AAA certificate Services&quot; via a tr... | 7.5 | contentidea-kb |
+| 65 | Customer uses OpenSSL as an on‑premises CA and attempts to integrate with Int... | The Azure PKI kernel does not support arbitrary or custom OIDs in Relative Di... | What Works When the intermediate CA is signed using a standard OpenSSL config... | 7.5 | contentidea-kb |
+| 66 | iOS devices fail to connect to Intune endpoints or enrollment/check-in fails ... | Intune 21v endpoints (e.g., fef.cnpasu01.manage.microsoftonline.cn, mam.manag... | Ensure client devices support TLS 1.2 or higher with modern cipher suites. Te... | 7.0 | onenote |
+| 67 | macOS devices are unexpectedly unenrolled from Microsoft Intune service or en... | MDM agent mishandles failed MDM certificate installations. When the MDM agent... | Re-enroll the affected macOS device. | 7.0 | mslearn |
+| 68 | Android device cannot sign in to Company Portal: missing required certificate... | ADFS server does not include intermediate certificates in SSL Server hello re... | Sol 1: User installs missing cert. Sol 2: Import intermediate certs into ADFS... | 6.5 | mslearn |
+| 69 | macOS virtual machine enrollment fails with error 'It looks like you're using... | VM not fully configured (missing serial/hardware model), enrollment restricti... | For VMs: fully configure serial number and hardware model; for personal devic... | 5.5 | mslearn |
+| 70 | macOS enrollment fails with keychain error -25244 (errSecInvalidOwnerEdit); C... | Stale or corrupted keychain entries related to Intune enrollment (workplace j... | Open Keychain Access as local admin; delete all 'workplace' keys; delete spec... | 5.5 | mslearn |
+| 71 | WiFi Profile (PSK) is deployed but cannot connect to WiFi on Android device 1... |  |  | 3.0 | contentidea-kb |
+| 72 | Errors cannot complete the save due to a file permission error 0x8007177c: re... | E xpired default EFS DRA in the organization’s GPO. Understanding the error T... | Save off the old DRA cert and private key before you make any changes. (So, y... | 3.0 | contentidea-kb |

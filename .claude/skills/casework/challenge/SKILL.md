@@ -30,7 +30,7 @@ allowed-tools:
 
 ### 2. 前置检查
 
-检查 `{caseDir}/claims.json` 是否存在：
+检查 `{caseDir}/.casework/claims.json` 是否存在：
 
 - **存在** → 继续到 Step 3
 - **不存在** → 检查 `{caseDir}/analysis/` 目录：

@@ -175,3 +175,13 @@
   - CORS portal issue (large AAD groups), private ACR via proxy
 
 | 2026-04-07 | SYNTHESIZE | 20 topics (15 fusion, 5 compact), 108 entries, 10 Kusto queries fused |
+
+### 2026-04-17 10:12 UTC — contentidea-kb refresh scan
+- **Product**: acr
+- **Keywords**: Container Registry
+- **WIQL total**: 3 work items
+- **Already scanned**: 3
+- **New to scan**: 0
+- **Discovered**: 0
+- **Deduplicated**: 0
+- **Exhausted**: true (all ContentIdea KB articles scanned; lastRefreshed updated)

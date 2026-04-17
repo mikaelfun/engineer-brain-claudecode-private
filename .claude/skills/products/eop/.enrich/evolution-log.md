@@ -224,3 +224,9 @@
 - Deduped: 0 (no overlap with main JSONL - all CPE process content)
 - Note: batch-a-pages.json had corrupted paths (em-dashes/apostrophes stripped); resolved via wiki tree enumeration
 | 2026-04-07 | SYNTHESIZE | 37 topics (30 fusion, 7 compact), 261 entries, 0 Kusto queries fused |
+
+### 2026-04-17T18:12:53+08:00 — contentidea-kb refresh scan (eop)
+- WIQL 返回 56 条，已全部扫描
+- 无新增 work items
+- lastRefreshed 已更新
+- **exhausted: true**

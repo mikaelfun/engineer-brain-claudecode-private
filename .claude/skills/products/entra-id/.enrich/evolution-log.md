@@ -995,3 +995,10 @@
 - Files: known-issues-ado-wiki-c.jsonl, scanned-ado-wiki-c.json
 
 | 2026-04-07 | MERGE+SYNTHESIZE | 37 topics (36 fusion, 1 compact), 3640 entries, 8 Kusto queries fused, 713 drafts mapped |
+
+### 2026-04-17 10:12 UTC — contentidea-kb refresh (entra-id)
+- **WIQL 查询**: keyword="Active Directory", 返回 288 条
+- **已扫描**: 288 条（去重后 280 unique）
+- **未扫描**: 0 条
+- **新增条目**: 0
+- **Result**: exhausted=true, lastRefreshed updated

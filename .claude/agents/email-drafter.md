@@ -32,9 +32,9 @@ maxTurns: 200
 
 ## 执行日志
 
-**每个步骤执行前后都必须写入日志文件 `{caseDir}/logs/email-drafter.log`。**
+**每个步骤执行前后都必须写入日志文件 `{caseDir}/.casework/logs/email-drafter.log`。**
 格式：`[YYYY-MM-DD HH:MM:SS] STEP {n} {OK|FAIL|SKIP} | {描述}`
-用 Bash echo append 写入。`{caseDir}/logs/` 不存在时先创建。
+用 Bash echo append 写入。`{caseDir}/.casework/logs/` 不存在时先创建。
 
 ## 执行步骤
 
@@ -60,7 +60,7 @@ maxTurns: 200
 - `{caseDir}/casework-meta.json` — 读取 `ccEmails` 字段（RDSE CC 联系人）
 - `playbooks/guides/email-templates.md` — 邮件模板
 - `playbooks/guides/customer-communication.md` — 沟通规范
-- `{caseDir}/claims.json`（如存在）— 证据链声明状态
+- `{caseDir}/.casework/claims.json`（如存在）— 证据链声明状态
 - `{caseDir}/challenge-report.md`（如存在）— Challenger 审查报告
 - `playbooks/email-samples/` — 参考样本
 

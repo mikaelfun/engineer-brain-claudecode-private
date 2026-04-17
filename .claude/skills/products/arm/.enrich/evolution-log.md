@@ -562,3 +562,9 @@
 - **IDs**: arm-ado-wiki-a-r16-001 .. arm-ado-wiki-a-r16-008
 - **Files**: .enrich/known-issues-ado-wiki-a.jsonl (8 entries), .enrich/scanned-ado-wiki-a.json (10 pages), 5 draft files in guides/drafts/ado-wiki-a-*.md
 | 2026-04-07 | SYNTHESIZE | 60 topics (39 fusion, 21 compact), 501 entries, 19 Kusto queries fused |
+
+### 2026-04-17T10:12:31Z — contentidea-kb refresh (arm)
+- **WIQL**: 43 work items (keywords: Resource Manager, Azure Arc)
+- **Already scanned**: 43
+- **New unscanned**: 0
+- **Result**: exhausted=true, 7-day refresh completed, no new KB articles found

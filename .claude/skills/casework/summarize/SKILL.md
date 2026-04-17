@@ -67,7 +67,7 @@ python3 .claude/skills/casework/act/scripts/update-pipeline-state.py \
 
 #### 3.2 首次生成 case-summary.md
 
-读取：`case-info.md`、`emails.md`、`notes.md`、`teams/teams-digest.md`（如有；不存在则回退读 `teams/*.md`）、`claims.json`（如有）、`onenote/personal-notes.md`（如有，仅引用 `[fact]` 条目，`[analysis]` 加 `[unverified]` 前缀）。
+读取：`case-info.md`、`emails.md`、`notes.md`、`teams/teams-digest.md`（如有；不存在则回退读 `teams/*.md`）、`.casework/claims.json`（如有）、`onenote/onenote-digest.md`（如有，仅引用 `[fact]` 条目，`[analysis]` 加 `[unverified]` 前缀）。
 AR Case 额外读取 `notes-ar.md`。
 
 用 Write 工具生成完整 summary，格式：
@@ -122,7 +122,7 @@ AR Case 额外读取 `notes-ar.md`。
 
 **不要**重写整个文件，只 Edit 追加/修改变化部分。
 
-**claims.json 感知**（如 `{caseDir}/claims.json` 存在）：
+**claims.json 感知**（如 `{caseDir}/.casework/claims.json` 存在）：
 
 | claim status | 写入 case-summary 的方式 |
 |--------------|------------------------|

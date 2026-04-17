@@ -423,3 +423,10 @@
 - **Deduplicated**: 0 within batch
 - **Isolation**: JSONL→.enrich/known-issues-ado-wiki-a.jsonl, scanned→.enrich/scanned-ado-wiki-a.json
 | 2026-04-07 | SYNTHESIZE | 41 topics (27 fusion, 14 compact), 372 entries, 15 Kusto queries fused |
+
+### 2026-04-17 10:12 UTC — contentidea-kb refresh (disk)
+- **WIQL 返回**: 155 条（keywords: Managed Disk, Storage）
+- **已扫描**: 155 条（全部覆盖）
+- **新发现**: 0 条
+- **结果**: exhausted=true, lastRefreshed 已更新
+- **触发**: 7 天刷新重扫（lastRefreshed was null）

@@ -156,7 +156,7 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
    echo "warming-up" > "{patrolDir}/patrol-phase"
    ```
 
-   两个预热任务可并行执行：
+   三个预热任务全部并行执行：
 
    ```bash
    # IR/FDR/FWR 批量预填（~3s）
@@ -164,31 +164,26 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
 
    # DTM token 预热（~10s）
    pwsh -NoProfile -File .claude/skills/d365-case-ops/scripts/warm-dtm-token.ps1 -CasesRoot {casesRoot}
-   ```
 
-   **关键**：
-   - `check-ir-status-batch.ps1` 不依赖 Playwright，可与 `warm-dtm-token.ps1` 并行
-   - `warm-dtm-token.ps1` 使用 Playwright 导航 DTM 截获 token → 写入 `$env:TEMP/d365-case-ops-runtime/dtm-token-global.json`
-   - 预热完成后，`download-attachments.ps1` 自动优先读取全局缓存，不再需要 Playwright 导航
-   - 如果全局 token 缓存仍有效（<50 分钟），`warm-dtm-token.ps1` 会跳过 Playwright，几乎零耗时
-
-5. **阶段 0.5：ICM Token 预热（可选）**
-
-   V2 架构中 Teams 搜索和 ICM Discussion 由各 case 的 `data-refresh.sh` 内联执行（每 case 独立 agency proxy / REST API），不再需要全局 queue/daemon。
-
-   ICM token 预热（170 分钟缓存，跨 case 共享）：
-   ```bash
+   # ICM token 预热（~40s，170 分钟缓存，跨 case 共享）
    node .claude/skills/icm/scripts/icm-discussion-ab.js --token-only 2>/dev/null || true
    # 输出: TOKEN_OK|{length} 或 TOKEN_FAIL（非致命，各 case fallback 自行获取）
    ```
 
-6. **阶段 0.6：写 phase 文件（processing）**
+   **关键**：
+   - `check-ir-status-batch.ps1` 不依赖 Playwright，可与其他任务并行
+   - `warm-dtm-token.ps1` 使用 Playwright 导航 DTM 截获 token → 写入 `$env:TEMP/d365-case-ops-runtime/dtm-token-global.json`
+   - `icm-discussion-ab.js --token-only` 使用 agent-browser SSO 获取 ICM token，与 DTM Playwright 无冲突（不同浏览器实例）
+   - 预热完成后，`download-attachments.ps1` 自动优先读取全局缓存，不再需要 Playwright 导航
+   - 如果全局 token 缓存仍有效（<50 分钟 DTM / <170 分钟 ICM），对应预热脚本会跳过，几乎零耗时
+
+5. **阶段 0.5：写 phase 文件（processing）**
 
    ```bash
    echo "processing" > "{patrolDir}/patrol-phase"
    ```
 
-7. **Streaming Pipeline：启动 casework(mode=patrol) + 统一轮询推进**
+6. **Streaming Pipeline：启动 casework(mode=patrol) + 统一轮询推进**
 
    **7a. 全量并行启动 casework(mode=patrol)**
 

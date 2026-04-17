@@ -1,66 +1,58 @@
-# Intune Windows Hello for Business 与 KDC — 综合排查指南
+# INTUNE Windows Hello for Business 与 KDC — 已知问题详情
 
-**条目数**: 10 | **草稿融合数**: 1 | **Kusto 查询融合**: 0
-**来源草稿**: onenote-whfb-kerberos-cloud-trust-intune.md
-**生成日期**: 2026-04-07
+**条目数**: 12 | **生成日期**: 2026-04-17
 
 ---
 
-## 排查流程
+## Quick Troubleshooting Path
 
-### Phase 1: Whfb Kerberos Cloud Trust Intune
-> 来源: OneNote — [onenote-whfb-kerberos-cloud-trust-intune.md](../drafts/onenote-whfb-kerberos-cloud-trust-intune.md)
+### Step 1: Windows Hello for Business (WHFB) Identity Protection profile set to Enabled for a user group does not take effect; users not prompted to set up PI...
+**Solution**: Set tenant-wide Windows Enrollment WHfB policy to 'Not Configured' (not Disabled), then use Identity Protection profile to enable WHfB for specific user groups. Alternative: use OMA-URI custom profile with ./User/Vendor/MSFT/PassportForWork/<TenantId>/Policies/UsePassportForWork = True assigned to target user groups.
+`[Source: onenote, Score: 9.5]`
 
-**Windows Hello for Business — Kerberos Cloud Trust 部署指南（Intune 策略）**
-**前提条件**
-- AAD & Intune 许可证
-- Hybrid AADJ 环境（DRS 已完成 + Intune 注册已完成）
-- 参考：[Windows Hello for Business Deployment Prerequisites](https://learn.microsoft.com/en-us/windows/security/identity-protection/hello-for-business/hello-identity-verification#hybrid-deployments)
+### Step 2: WHFB provisioning UI fails to load, CloudExperienceHost app cannot launch, ShellCore_Oper.evtx shows ClearTemporaryWebDataAsyncFailed
+**Solution**: WAM recovery: 1) Rename %localappdata%\Packages\Microsoft.AAD.BrokerPlugin_cw5n1h2txyewy to .backup 2) Add-AppxPackage -Register to re-register 3) Rename HKCU\Software\Microsoft\IdentityCRL\TokenBroker\DefaultAccount to _backup 4) Reboot
+`[Source: ado-wiki, Score: 9.0]`
 
-**Step 1: 部署 MS Entra Kerberos**
-```powershell
+### Step 3: WHFB PIN sign-in fails with The request is not supported, DC System log Event ID 19/29 KDC cannot find suitable certificate
+**Solution**: 1) Verify 2016 DC has Kerberos Auth EKU cert 2) Import new cert to AD DS store and restart DC if multiple certs exist 3) certutil -verify -urlfetch to validate 4) Verify issuing CA in NTAuth store
+`[Source: ado-wiki, Score: 9.0]`
 
-**安装模块（依赖 AzureADPreview）**
+### Step 4: WHFB PIN sign-in fails with KDC certificate could not be validated, System Event ID 9 Kerberos
+**Solution**: 1) Export DC cert as .cer 2) certutil -verify -urlfetch 3) Fix PKI CRL/root cert issues 4) Verify CA in NTAuth store 5) Enable CAPI2 logs
+`[Source: ado-wiki, Score: 9.0]`
 
-**配置参数**
+### Step 5: WHFB configured but all Sign-in Options grayed out in Settings
+**Solution**: Set HKLM\SOFTWARE\Microsoft\PolicyManager\default\Settings\AllowSignInOptions Value to 1, check Intune/GPO policies
+`[Source: ado-wiki, Score: 9.0]`
 
-**在 AD 中创建 Azure AD Kerberos Server 对象并发布到 Azure AD**
+### Step 6: Key Admins and Enterprise Key Admins security group names not displayed after AD 2016 schema upgrade
+**Solution**: Move PDC Emulator FSMO to 2016 DC: Move-ADDirectoryServerOperationMasterRole -Identity dc2016 -OperationMasterRole PDCEmulator
+`[Source: ado-wiki, Score: 9.0]`
 
-**验证**
-```
+### Step 7: Biometric data (fingerprint/facial recognition) lost after Windows in-place upgrade
+**Solution**: Before upgrade, uncheck Allow computer to turn off this device to save power for biometric reader and camera devices
+`[Source: ado-wiki, Score: 9.0]`
 
-**Step 2: 配置 Intune 策略**
-1. **启用 WHFB**：Intune > Device configuration > Windows Hello for Business policy → Enable
-2. **配置 Kerberos Cloud Trust profile**（自定义 OMA-URI）：
-
-**Step 3: 验证 WHFB 配置**
-
-**验证命令**
-```cmd
-```
-- `OnPremTgt`（又称 rodctgt/mcticket）：Cloud Trust 开启后 AAD 作为 RODC 发给用户的 partial TGT，需联系 onprem DC 换取完整 TGT
-- `CloudTgt`：AAD 发给用户的 TGT，用于访问支持 Kerberos 的 Azure 资源（如 Azure File Share）
-```cmd
-```
-
-**注册表验证**
-
-**参考链接**
-- [Azure AD Kerberos Overview](https://supportability.visualstudio.com/AzureAD/_wiki/wikis/AzureAD/861817/Azure-AD-Kerberos)
+### Step 8: WHFB provisioning fails after cross-domain migration with error 0x801C0451 (DSREG_E_USER_TOKEN_SWITCH_ACCOUNT)
+**Solution**: 1) certutil -deletehellocontainer 2) dsregcmd /leave + /join if device also migrated 3) Clear WAM cache: delete files in %LOCALAPPDATA%\Packages\Microsoft.AAD.BrokerPlugin_cw5n1h2txyewy\AC\TokenBroker\Accounts\ 4) Reboot and re-enroll WHFB
+`[Source: ado-wiki, Score: 9.0]`
 
 ---
 
-## 已知问题速查
+## All Known Issues
 
-| # | 症状 | 根因 | 方案 | 分数 | 来源 |
-|---|------|------|------|------|------|
-| 1 | Hybrid Azure AD joined device fails to receive user-based SCEP certificate. SCEP profile is confi... | SCEP certificate profile Key Storage Provider (KSP) is set to Windows Hello f... | Change the SCEP certificate profile KSP setting from 'Windows Hello for Business' to 'Enroll to T... | 🟢 9.0 | OneNote |
-| 2 | Windows Hello for Business (WHFB) Identity Protection profile set to Enabled for a user group doe... | Tenant-wide Windows Enrollment WHfB policy is set to Disabled. The Enrollment... | Set tenant-wide Windows Enrollment WHfB policy to 'Not Configured' (not Disabled), then use Ident... | 🟢 9.0 | OneNote |
-| 3 | WHFB provisioning UI fails to load, CloudExperienceHost app cannot launch, ShellCore_Oper.evtx sh... | CXH app cache not cleared properly, known bug on OS versions below Nickel (22H2) | WAM recovery: 1) Rename %localappdata%\Packages\Microsoft.AAD.BrokerPlugin_cw5n1h2txyewy to .back... | 🟢 8.5 | ADO Wiki |
-| 4 | WHFB configured but all Sign-in Options grayed out in Settings | AllowSignInOptions registry value set to 0 by Intune policy or GPO | Set HKLM\SOFTWARE\Microsoft\PolicyManager\default\Settings\AllowSignInOptions Value to 1, check I... | 🟢 8.5 | ADO Wiki |
-| 5 | Key Admins and Enterprise Key Admins security group names not displayed after AD 2016 schema upgrade | RID 526/527 friendly name resolution requires Windows Server 2016 DC to hold ... | Move PDC Emulator FSMO to 2016 DC: Move-ADDirectoryServerOperationMasterRole -Identity dc2016 -Op... | 🟢 8.5 | ADO Wiki |
-| 6 | Biometric data (fingerprint/facial recognition) lost after Windows in-place upgrade | Biometric device had Allow computer to turn off this device to save power che... | Before upgrade, uncheck Allow computer to turn off this device to save power for biometric reader... | 🟢 8.5 | ADO Wiki |
-| 7 | WHFB provisioning fails after cross-domain migration with error 0x801C0451 (DSREG_E_USER_TOKEN_SW... | WAM cache contains stale tokens from old domain | 1) certutil -deletehellocontainer 2) dsregcmd /leave + /join if device also migrated 3) Clear WAM... | 🟢 8.5 | ADO Wiki |
-| 8 | WHFB Key Trust PIN sign-in fails with That option is temporarily unavailable | Client can only access RODC, msDS-KeyCredentialLink attribute not replicated ... | Ensure client has access to writable Domain Controller (Writable DC), RODC does not support WHFB ... | 🟢 8.5 | ADO Wiki |
-| 9 | Endpoint Security support boundary reference — which teams own which security features when setti... |  | Support boundaries: Defender Application Guard → Windows UEX \| Firewall → Windows Networking \| ... | 🟢 8.5 | ADO Wiki |
-| 10 | WHFB provisioning fails at ADFS redirect with Error Code: 0X801C044F | ADFS configuration issue causing device registration service authentication f... | Collect ADFS logs and client User Device Registration/Admin event logs, verify ADFS DRS configura... | 🔵 7.5 | ADO Wiki |
+| # | Symptom | Root Cause | Solution | Score | Source |
+|---|---------|-----------|----------|-------|--------|
+| 1 | Windows Hello for Business (WHFB) Identity Protection profile set to Enabled ... | Tenant-wide Windows Enrollment WHfB policy is set to Disabled. The Enrollment... | Set tenant-wide Windows Enrollment WHfB policy to 'Not Configured' (not Disab... | 9.5 | onenote |
+| 2 | WHFB provisioning UI fails to load, CloudExperienceHost app cannot launch, Sh... | CXH app cache not cleared properly, known bug on OS versions below Nickel (22H2) | WAM recovery: 1) Rename %localappdata%\Packages\Microsoft.AAD.BrokerPlugin_cw... | 9.0 | ado-wiki |
+| 3 | WHFB PIN sign-in fails with The request is not supported, DC System log Event... | DC missing certificate with Kerberos Authentication EKU, or old certificate s... | 1) Verify 2016 DC has Kerberos Auth EKU cert 2) Import new cert to AD DS stor... | 9.0 | ado-wiki |
+| 4 | WHFB PIN sign-in fails with KDC certificate could not be validated, System Ev... | DC certificate chain validation failure (CRL revocation check or root trust i... | 1) Export DC cert as .cer 2) certutil -verify -urlfetch 3) Fix PKI CRL/root c... | 9.0 | ado-wiki |
+| 5 | WHFB configured but all Sign-in Options grayed out in Settings | AllowSignInOptions registry value set to 0 by Intune policy or GPO | Set HKLM\SOFTWARE\Microsoft\PolicyManager\default\Settings\AllowSignInOptions... | 9.0 | ado-wiki |
+| 6 | Key Admins and Enterprise Key Admins security group names not displayed after... | RID 526/527 friendly name resolution requires Windows Server 2016 DC to hold ... | Move PDC Emulator FSMO to 2016 DC: Move-ADDirectoryServerOperationMasterRole ... | 9.0 | ado-wiki |
+| 7 | Biometric data (fingerprint/facial recognition) lost after Windows in-place u... | Biometric device had Allow computer to turn off this device to save power che... | Before upgrade, uncheck Allow computer to turn off this device to save power ... | 9.0 | ado-wiki |
+| 8 | WHFB provisioning fails after cross-domain migration with error 0x801C0451 (D... | WAM cache contains stale tokens from old domain | 1) certutil -deletehellocontainer 2) dsregcmd /leave + /join if device also m... | 9.0 | ado-wiki |
+| 9 | WHFB Key Trust PIN sign-in fails with That option is temporarily unavailable | Client can only access RODC, msDS-KeyCredentialLink attribute not replicated ... | Ensure client has access to writable Domain Controller (Writable DC), RODC do... | 9.0 | ado-wiki |
+| 10 | WHFB provisioning fails at ADFS redirect with Error Code: 0X801C044F | ADFS configuration issue causing device registration service authentication f... | Collect ADFS logs and client User Device Registration/Admin event logs, verif... | 8.0 | ado-wiki |
+| 11 | Cloud PC with Windows 365      Enterprise license fails to provision with the... | As the error message states, this will happen if the sync between AD to AAD i... | To resolve this, follow the provisioning flow of the affected Cloud PC: 1. Ch... | 7.5 | contentidea-kb |
+| 12 | First of all,&nbsp;Windows 10 devices are being deployed using same profile ,... | the issue is caused by a configuration profile caused via the CIS Level 1 sec... | cx was able to resolve the issue by disabling 'Windows Hello' tenant wide and... | 7.5 | contentidea-kb |

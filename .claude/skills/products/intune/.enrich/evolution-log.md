@@ -892,3 +892,20 @@
 - **IDs**: intune-ado-wiki-a-r5-001 ~ 002
 - **files**: known-issues-ado-wiki-a.jsonl, scanned-ado-wiki-a.json, 2 guide drafts
 | 2026-04-07 | SYNTHESIZE | 49 topics (42 fusion, 7 compact), 1232 entries, 32 Kusto queries fused |
+
+## 2026-04-17 18:56 — contentidea-kb scan (batch)
+- Processed: 10 work items (97784-97899)
+- Discovered: 4 new entries (intune-contentidea-kb-719 to 722)
+- Skipped: 6 (4 archived, 2 informational without cause/solution)
+- Deduplicated: 0
+- Scanned total: 1051 / 4679
+- Remaining: 3658
+
+### 2026-04-17 19:07 — contentidea-kb batch scan (补扫完成)
+- **scanned**: 4679/4679 (exhausted)
+- **discovered**: 2176 new entries (intune-contentidea-kb-723 ~ intune-contentidea-kb-2898)
+- **deduplicated**: 1039 (symptom 重复)
+- **empty_skipped**: 453 (无结构化字段)
+- **JSONL total**: ~2931 entries in known-issues-contentidea-kb.jsonl
+- **method**: az rest batch GET (200 IDs/request, 19 batches)
+| 2026-04-17 | SYNTHESIZE | 49 topics (41 fusion, 8 compact), 4166 entries |

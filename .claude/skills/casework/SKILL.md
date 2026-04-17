@@ -58,7 +58,7 @@ bash .claude/skills/casework/scripts/data-refresh.sh \
   --case-number {caseNumber} --case-dir "$CASE_DIR"
 ```
 
-AR 模式额外传 `--main-case {MAIN_CASE_ID}`。
+AR 模式额外传 `--is-ar --main-case-number {MAIN_CASE_ID}`。
 
 详细参数和行为见 `.claude/skills/casework/data-refresh/SKILL.md`。产出：`.casework/data-refresh-output.json`。
 

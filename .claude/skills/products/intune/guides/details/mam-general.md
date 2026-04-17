@@ -1,213 +1,220 @@
-# Intune MAM 通用策略与 App SDK — 综合排查指南
+# INTUNE MAM 通用策略与 App SDK — 已知问题详情
 
-**条目数**: 109 | **草稿融合数**: 0 | **Kusto 查询融合**: 1
-**Kusto 引用**: mam-policy.md
-**生成日期**: 2026-04-07
+**条目数**: 174 | **生成日期**: 2026-04-17
 
 ---
 
-## ⚠️ 已知矛盾 (245 条)
+## Quick Troubleshooting Path
 
-- **solution_conflict** (high): intune-ado-wiki-037 vs intune-contentidea-kb-116 — context_dependent: 不同来源给出不同方案，可能适用不同场景
-- **solution_conflict** (high): intune-ado-wiki-037 vs intune-contentidea-kb-131 — context_dependent: 不同来源给出不同方案，可能适用不同场景
-- **solution_conflict** (high): intune-ado-wiki-037 vs intune-contentidea-kb-416 — context_dependent: 不同来源给出不同方案，可能适用不同场景
-- **solution_conflict** (high): intune-ado-wiki-037 vs intune-contentidea-kb-432 — context_dependent: 不同来源给出不同方案，可能适用不同场景
-- **solution_conflict** (high): intune-ado-wiki-037 vs intune-contentidea-kb-274 — context_dependent: 不同来源给出不同方案，可能适用不同场景
+### Step 1: In dual-federation environment (same UPN in 21v and Global Azure AD), iOS PowerApps shows 'Org Data Removal – Your organization has removed its dat...
+**Solution**: Short-term: (1) Create separate Edge web apps for PowerApps 21v and Global (uninstall native PowerApps app); (2) Create Teams add-in apps for PowerApps 21v and Global. Long-term: (1) Change user UPN to be different between clouds via ADFS config/AAD Connect sync rules; (2) Wait for 'Multiple Manage Account support for MAM' feature (ETA unknown); (3) Use cross-cloud B2B user to access 21v PowerApps when PowerApps PG supports it.
+`[Source: onenote, Score: 9.5]`
 
-## 排查流程
+### Step 2: OneDrive/Outlook for Android frequently signs out or is unable to sign in; Outlook log shows 'Unable to access the network due to power optimizatio...
+**Solution**: Uninstall Microsoft Authenticator app; let Company Portal serve as the authentication broker app. After uninstalling Authenticator, verify issue disappears. Alternative: add Authenticator to battery optimization exclusion list (Settings > Battery > Not optimized). Debug log collection: enable Android debug logs to confirm which broker app (Authenticator vs Company Portal) is being used.
+`[Source: onenote, Score: 9.5]`
 
-### Phase 1: Kusto 诊断查询
+### Step 3: MAM enrollment fails with error 'application is already MDM enrolled and the provided identity does not match the MDM enrolled identity'; user cann...
+**Solution**: Option 1: Factory reset the device so the previous MAM enrollment is fully cleared. Option 2: Have the previous user properly unenroll via Company Portal (Devices -> Remove this device), confirm managed apps are removed, then re-enroll as the new user. Log keyword: 'CMAREnrollmentPreReqOperation' and 'does not match the MDM enrolled identity'.
+`[Source: onenote, Score: 9.5]`
 
-#### mam-policy.md
-`[工具: Kusto skill — mam-policy.md]`
+### Step 4: Outlook for Android sign-in fails or is blocked when Conditional Access (CA) policy requires MAM (App Protection Policy) compliance; user cannot ac...
+**Solution**: Ensure Android device meets MAM requirements: (1) Install Microsoft Intune Company Portal; (2) Register device with Azure AD (via Company Portal setup or manual AAD registration). Reference: https://learn.microsoft.com/en-us/mem/intune/apps/app-protection-policy#app-protection-policies-for-microsoft-365-office-apps
+`[Source: onenote, Score: 9.5]`
 
-```kql
-let starttime = datetime({startTime});
-let endtime = datetime({endTime});
-let userid = '{userId}';
+### Step 5: iOS Intune-enrolled devices receive App Protection Policy with type 'Apps on unmanaged devices' instead of 'Apps on Intune managed devices'; MAM ma...
+**Solution**: 1. Create App Configuration Policy (Managed devices, iOS). Add keys: IntuneMAMUPN={{UserPrincipalName}}, IntuneMAMDeviceID={{deviceID}} for third-party/LOB apps. 2. Deploy the app via Intune. 3. For already-installed apps: Company Portal -> Apps -> Install -> accept 'App Management Change' prompt to transfer to managed state.
+`[Source: onenote, Score: 9.5]`
 
-let activityIds = IntuneEvent
-    | where env_time between (starttime..endtime)
-    | where UserId == userid
-    | where ServiceName startswith "StatelessApplicationManagementService"
-    | where EventUniqueName == "IsAccountInMaintenance"
-    | project env_time, SourceNamespace, env_cloud_name, AccountId, UserId, ActivityId, cV, env_cloud_roleInstance, BuildVersion, Pid, Tid
-    | summarize makeset(ActivityId, 10000);
+### Step 6: Outlook for iOS shows 'Misconfiguration Alert' and new user cannot set up corporate email on a device previously used by another user; diagnostic l...
+**Solution**: Option 1 (Recommended): Factory reset before device handover. Option 2: (1) Previous user unenrolls from Company Portal; (2) Confirm managed apps removed; (3) New user enrolls via Company Portal; (4) Wait for managed apps to deploy; (5) Check device compliance in Company Portal. Log check: 'MDM UPN Mismatch' in Outlook diagnostic log; verify mamenrollmentoperation funnelKey shows correct new device ID.
+`[Source: onenote, Score: 9.5]`
 
-IntuneEvent
-    | where env_time between (starttime..endtime)
-    | where ActivityId in (activityIds)
-    | where ServiceName == "StatelessApplicationManagementService"
-    | where EventUniqueName == "GetAction"
-    | where ColMetadata contains "AppInstanceId;AadDeviceId;UpdateFlags;PolicyState"
-    | project 
-        env_time, SourceNamespace, env_cloud_name, AccountId, UserId, ActivityId, cV, ColMetadata,
-        AppInstanceId = Col1, AadDeviceId = Col2, UpdateFlags = Col3, PolicyState = Col4,
-        env_cloud_roleInstance, BuildVersion, Pid, Tid
-```
+### Step 7: Android device cannot enroll, app protection policies not applying, or Intune-managed apps (Outlook/OneDrive) behaving abnormally; need to collect ...
+**Solution**: Pre-request actions before collecting logs: (1) Disable battery optimization for Outlook and Company Portal; (2) Change Launch setting for both apps from Automatic to Manage Manually, enable Auto-launch + Secondary launch + Run in background; (3) If Data Saver enabled, allow unrestricted data for Outlook and CP; (4) Enable notifications for both apps. Log collection: Company Portal: Menu > Help > Email Support > generate log, share incident ID. Outlook: Help > Collect Diagnostic log > Upload log
+`[Source: onenote, Score: 9.5]`
 
-```kql
-let starttime = datetime({startTime});
-let endtime = datetime({endTime});
-let userid = '{userId}';
-let accountID = '{accountId}';
-
-let activityIds = IntuneEvent
-    | where env_time between (starttime..endtime)
-    | where UserId == userid
-    | where ServiceName startswith "StatelessApplicationManagementService"
-    | where EventUniqueName == "IsAccountInMaintenance"
-    | summarize makeset(ActivityId, 10000);
-
-let MAMappids = IntuneEvent
-    | where env_time between (starttime..endtime)
-    | where ActivityId in (activityIds)
-    | where ServiceName == "StatelessApplicationManagementService"
-    | where EventUniqueName == "GetAction"
-    | where ColMetadata contains "AppInstanceId;AadDeviceId;UpdateFlags;PolicyState"
-    | summarize makeset(Col1, 10000);
-
-HttpSubsystem
-    | where env_time between (starttime..endtime)
-    | where TaskName == "HttpSubsystemCompleteHttpOperationEvent"
-    | where ActivityId in (activityIds)
-    | where I_Srv startswith "StatelessApplicationManagementService"
-    | where httpVerb !in ("Options", "PING")
-    | extend type = case(
-        collectionName == "Actions" and httpVerb == "GetLink", "Checkin", 
-        httpVerb == "Action", "Action", 
-        collectionName == "ApplicationInstances" and httpVerb == "Create", "Enroll", 
-        collectionName == "ApplicationInstances" and httpVerb == "Delete", "Unenroll", 
-        collectionName == "ApplicationInstances" and httpVerb == "Get", "Get", 
-        collectionName == "ApplicationInstances" and httpVerb == "Patch", "Patch", 
-        "???")
-    | extend parsedUrl = parse_url(url)
-    | extend appInstId = extract("guid'([^']*)'", 1, tostring(parsedUrl["Path"]))
-    | extend queryParameters = parsedUrl["Query Parameters"]
-    | extend Os = tostring(queryParameters["Os"])
-    | extend DeviceId = tostring(queryParameters["DeviceId"])
-    | extend AppVersion = tostring(queryParameters["AppVersion"])
-    | extend SdkVersion = tostring(queryParameters["SdkVersion"])
-    | extend DeviceHealth = tostring(queryParameters["DeviceHealth"])
-    | extend ManagementLevel = tostring(queryParameters["ManagementLevel"])
-    | project env_time, SourceNamespace, env_cloud_name, type, accountId, ActivityId, statusCode,
-        appInstId, Os, DeviceId, AppVersion, SdkVersion, DeviceHealth, ManagementLevel,
-        collectionName, httpVerb, url, env_cloud_roleInstance, I_BuildVer
-```
-
+### Step 8: Need to understand expected user behavior when iOS MAM app protection policy data protection settings are applied; or user reports unexpected behav...
+**Solution**: Key MAM data protection settings and their iOS user behaviors: (1) Backup Org data to iTunes/iCloud - corporate data files are stored in a separate work storage from personal data; corporate data cannot be backed up to iTunes even when backup is enabled; (2) Send Org data to other apps - 'Policy managed apps': fewer app targets visible for corporate file transfer; sharing corporate files to non-managed apps (e.g. Apple Notes) will open the file but content cannot be read; non-corporate files sho
+`[Source: onenote, Score: 9.5]`
 
 ---
 
-## 已知问题速查
+## All Known Issues
 
-| # | 症状 | 根因 | 方案 | 分数 | 来源 |
-|---|------|------|------|------|------|
-| 1 | MAM enrollment fails with error 'application is already MDM enrolled and the provided identity do... | The managed app (e.g., Outlook) was previously enrolled by a different user. ... | Option 1: Factory reset the device so the previous MAM enrollment is fully cleared. Option 2: Hav... | 🟢 9.0 | OneNote |
-| 2 | Outlook for Android sign-in fails or is blocked when Conditional Access (CA) policy requires MAM ... | CA policy with MAM requirement has two prerequisites: (1) Company Portal app ... | Ensure Android device meets MAM requirements: (1) Install Microsoft Intune Company Portal; (2) Re... | 🟢 9.0 | OneNote |
-| 3 | iOS Intune-enrolled devices receive App Protection Policy with type 'Apps on unmanaged devices' i... | For iOS, apps must be configured with 'IntuneMAMUPN' app configuration key to... | 1. Create App Configuration Policy (Managed devices, iOS). Add keys: IntuneMAMUPN={{UserPrincipal... | 🟢 9.0 | OneNote |
-| 4 | Outlook for iOS shows 'Misconfiguration Alert' and new user cannot set up corporate email on a de... | When a device is transferred to a new user without factory reset, the previou... | Option 1 (Recommended): Factory reset before device handover. Option 2: (1) Previous user unenrol... | 🟢 9.0 | OneNote |
-| 5 | Android device cannot enroll, app protection policies not applying, or Intune-managed apps (Outlo... | Common pre-requisite issues: battery optimization killing Intune/Outlook/Comp... | Pre-request actions before collecting logs: (1) Disable battery optimization for Outlook and Comp... | 🟢 9.0 | OneNote |
-| 6 | Need to understand expected user behavior when iOS MAM app protection policy data protection sett... | iOS MAM app protection policy has multiple data protection settings, each wit... | Key MAM data protection settings and their iOS user behaviors: (1) Backup Org data to iTunes/iClo... | 🟢 9.0 | OneNote |
-| 7 | After upgrading Huawei device to HarmonyOS VNEXT (5.0+), Intune MAM policy stops working; Company... | HarmonyOS VNEXT removed AOSP compatibility and uses sandbox hiding file paths... | Intune MAM does NOT support HarmonyOS VNEXT 5.0+. MAM only works on Android AOSP, OpenHarmony, an... | 🟢 9.0 | OneNote |
-| 8 | On OPPO devices, MAM-protected apps (Outlook, Edge, OneDrive) fail to open after app protection p... | OPPO app optimization blocks Company Portal and Authenticator background exec... | Phone Manager > Privacy Permissions: enable Associated Startup, App Permissions, Auto-start for O... | 🟢 9.0 | OneNote |
-| 9 | Outlook for Android cannot open after MAM policy applied; Company Portal on China app stores is o... | China app stores stopped updating CP due to CAC privacy regulations. Outlook ... | WA1: Download CP from Baidu App Store or MS-supported stores. WA2: Download CP APK from microsoft... | 🟢 9.0 | OneNote |
-| 10 | Users blocked from launching MAM-protected iOS/Android apps after June 2024; app fails to start w... | iOS apps using Intune SDK or App Wrapping Tool version older than 17.7.0. And... | Update iOS LOB apps to Intune SDK/wrapper v17.7.0+ (recommended: SDK 19.2.0). Update Android Comp... | 🟢 9.0 | OneNote |
-| 11 | Admin initiated MAM selective wipe from Intune portal but cannot confirm whether the wipe request... |  | Step 1: Query HttpSubsystem with accountId and httpVerb=POST and url contains 'wipe' to confirm b... | 🟢 9.0 | OneNote |
-| 12 | iOS Outlook App Configuration policy keys are case-sensitive; typo or incorrect case in key name ... | App Config key names must exactly match (case-sensitive). Official docs may c... | 1) Verify exact key spelling and case in App Config policy. 2) Check Outlook diagnostic logs: com... | 🟢 9.0 | OneNote |
-| 13 | iOS MAM data transfer exception configured with app Bundle ID does not allow actual data transfer... | iOS MAM data transfer exception only supports invoking third-party apps via U... | Configure exemptions using URL protocol schemes: tel/telprompt (Phone), skype (Skype), app-settin... | 🟢 9.0 | OneNote |
-| 14 | DDM 应用部署失败，应用使用了 Intune App SDK（MAM-enabled）或配置了 App Configuration Policy | DDM 当前不支持 MAM-enabled 应用（使用 Intune App SDK 的应用）和 App Configuration Policy，也不支... | 对 MAM-enabled 应用使用 MDM 管理类型而非 DDM；移除 App Configuration Policy 或改用 MDM 部署；等待后续版本支持 | 🟢 8.5 | ADO Wiki |
-| 15 | Android 设备上 MAM/App Protection Policy 不生效，用户无法接收到策略 | Android 设备上 Company Portal 未安装。Android 上 Company Portal 作为 broker 处理约 80% 的 S... | 确保 Android 设备上安装了最新版 Company Portal 应用，即使设备未通过 Intune 注册也需要安装 | 🟢 8.5 | ADO Wiki |
-| 16 | iOS 设备上使用 Intune MAM 或第三方 MDM 时，App Protection Policy 无法正确识别用户身份 | iOS 设备使用 Intune 或任何 MDM 时，必须为每个应用创建并分配 MAMUPN 字符串以建立正确的用户身份。缺少 MAMUPN 会导致身份识别失败 | 为每个需要 MAM 策略的 iOS 应用配置 MAMUPN（IntuneMAMUPN）App Configuration Policy，确保 UPN 与 Azure AD 中的用户一致。参考：h... | 🟢 8.5 | ADO Wiki |
-| 17 | App Protection Policy 不生效：用户无法接收到 MAM 策略 | APP 要求三个条件同时满足：1) 目标 UPN 必须在 Azure AD 中可解析；2) UPN 必须有活跃的 Intune 许可证；3) 应用必须集成... | 1. 验证用户 UPN 在 Azure AD 中存在且可解析；2. 确认用户已分配活跃的 Intune 许可证；3. 确认应用在 Intune 受保护应用列表中或已集成 Intune App S... | 🟢 8.5 | ADO Wiki |
-| 18 | Rooted Android device bypasses MAM policy by directly accessing MAM database files | MAM policy database files are not encrypted; root access allows modifying DB ... | DCR submitted (ICM 56976609) requesting encryption/hash storage. Use jailbreak/root detection in ... | 🟢 8.5 | ADO Wiki |
-| 19 | MAM-WE root detection bypassed on Android ROMs that allow developer mode to toggle root | MAM-WE root detection only checks at app launch intervals; toggling root via ... | Known limitation (ICM 57208740). Combine with SafetyNet/Play Integrity attestation for layered de... | 🟢 8.5 | ADO Wiki |
-| 20 | App protection policies not applied on Teams Android devices (conference room devices, IP phones) | Teams app on Microsoft Teams Android devices does not receive policy through ... | Exclude Teams device users from APP policies. Configure device filters. Review supported CA and c... | 🟢 8.5 | ADO Wiki |
-| 21 | iOS App Protection Policy not preventing data leakage on iOS 11.x | iOS 11.x 引入的系统变更导致 App Protection 策略无法正确拦截数据泄露 | 升级到更高版本 iOS；参考内部文章 4016863 | 🟢 8.5 | ADO Wiki |
-| 22 | OneDrive with iMessage integration allows users to attach corporate protected data to iMessage ev... | OneDrive iMessage integration as managed app bypasses App Protection 数据传输策略 | 已知限制 — 文件作为链接共享不受影响；使用链接共享代替附件方式 | 🟢 8.5 | ADO Wiki |
-| 23 | iOS 11.x Hook change causes App Protection without Enrollment (MAM-WE) to fail | iOS 11.x 的 Hook 机制变更影响了 MAM without enrollment 场景下的策略注入 | 升级到更高版本 iOS；参考内部文章 4053414 | 🟢 8.5 | ADO Wiki |
-| 24 | Cannot block screenshots on managed apps for iOS via App Protection Policy | iOS 系统限制 — App Protection Policy 无法控制 iOS 截图功能 | 已知 iOS 平台限制，无法通过 APP 阻止截图；参考 4077458 | 🟢 8.5 | ADO Wiki |
-| 25 | iOS MAM policy for 'apps on unmanaged devices' is incorrectly applying to apps on managed (enroll... | MAM 策略的设备管理状态筛选条件未正确区分 managed vs unmanaged 设备 | 参考内部文章 4492345；确认策略 targeting 条件正确区分设备管理状态 | 🟢 8.5 | ADO Wiki |
-| 26 | Unable to block saving corporate files from OneDrive to iCloud when App Protection Policy is conf... | OneDrive 的 iCloud 备份/保存路径不受 App Protection Policy 数据传输限制控制 | 参考内部文章 4495329；可能需要设备级 MDM 限制来阻止 iCloud 保存 | 🟢 8.5 | ADO Wiki |
-| 27 | App missing from iOS Open-In/Sharing menu when App Protection Policy is being applied | App Protection Policy 的 Open-In 管理限制导致某些 app 不出现在共享菜单中 | 参考内部文章 4495553；确认 app 已被正确添加到 APP 的允许列表 | 🟢 8.5 | ADO Wiki |
-| 28 | MAM policies are not applied on Jailbroken iOS devices | 越狱绕过了硬件级加密；Intune MAM SDK 仅依赖硬件加密，越狱后失效 | 已知限制 — 各 app 开发团队需实现软件级文件加密；DCR ICM#61309928 已提交要求文件级加密 | 🟢 8.5 | ADO Wiki |
-| 29 | Email file attachments in Word/Excel/PowerPoint - App Protection Policies not applied to shared f... | Office 内容共享功能更新导致 email 附件的 corporate identity 未正确设置，策略未生效 | 已在 2019/8/12 修复 — 更新 Word/Excel/PowerPoint 到 iOS App Store 最新版本 | 🟢 8.5 | ADO Wiki |
-| 30 | Android 应用集成 Intune SDK 后首次启动崩溃，报 SecurityException: Signature mismatch for package | 应用包签名与 Company Portal 中注册的签名不匹配，MAMContentProviderBase 校验签名时失败 | 1. 检查 OMADMLog 中的 stacktrace 确认 Signature mismatch 错误；2. 确认应用使用正确的 keystore 签名；3. 确认上传到 Intune 的 ... | 🟢 8.5 | ADO Wiki |
-| 31 | 客户使用 Xamarin 开发的应用集成 Intune App SDK，询问兼容性或遇到问题 | Xamarin 支持已于 2024 年 5 月 1 日终止（EOL），Android API 34 和 Xcode 15 SDK 是最后支持版本，不再计划... | 1. 告知客户 Xamarin 已 EOL；2. 建议迁移到 .NET MAUI（Xamarin.Forms 的继任者）或 .NET SDK-style 项目；3. 参考迁移文档：https:/... | 🟢 8.5 | ADO Wiki |
-| 32 | iOS 应用集成 Intune App SDK 后 MSAL token 获取失败，报 authentication error | Info.plist 中 ADALClientId 或 ADALRedirectUri 与 Entra ID App Registration 不匹配；L... | 1. 确认 ADALClientId 和 ADALRedirectUri 与 Entra App Registration 完全一致；2. 添加 msauthv2 和 msauthv3 到 LS... | 🟢 8.5 | ADO Wiki |
-| 33 | iOS 应用 Intune SDK enrollment 失败，日志中出现 keychain 相关错误 | Entitlements 文件缺少必需的 keychain-access-groups：com.microsoft.intune.mam 和/或 com.... | 1. 在 Entitlements 中添加 $(AppIdentifierPrefix)com.microsoft.intune.mam 和 $(AppIdentifierPrefix)com.... | 🟢 8.5 | ADO Wiki |
-| 34 | iOS 应用集成 Intune SDK 后 enrollment 完成后不断重启（restart loop） | SDK enrollment 后需要应用重启以应用策略，若未正确实现 IntuneMAMPolicyDelegate 的 restartApplicati... | 1. 实现 IntuneMAMPolicyDelegate 的 restartApplication 方法（return NO 让 SDK 处理）；2. 检查 MDM 和 MAM app con... | 🟢 8.5 | ADO Wiki |
-| 35 | Intune 管理员发送 selective wipe 命令后 iOS 应用中企业数据未被移除 | 应用未实现 IntuneMAMEnrollmentDelegate 的 wipeDataForAccount 方法；或 deRegisterAndUnen... | 1. 实现 wipeDataForAccount: delegate 方法以删除指定账户的企业数据；2. 确认 deRegisterAndUnenrollAccountId:withWipe: ... | 🟢 8.5 | ADO Wiki |
-| 36 | Android App Wrapping Tool 启动失败，报 UnsupportedClassVersionError: class file version 55.0，当前 Java 版本过旧 | 客户使用 Java 8（class file version 52），App Wrapping Tool 要求 Java 11+（class file v... | 1. 升级 JRE 到 Java 11 或更高版本；2. 运行 java -version 确认版本；3. 确保 PATH 环境变量指向新版本 Java | 🟢 8.5 | ADO Wiki |
-| 37 | Android App Wrapping Tool 包装失败，报 Smali failed while writing smali file to DEX format，应用包含 Azure I... | 应用包含 com.azure:azure-identity 或 com.azure:azure-security-keyvault-certificate... | Wrapping Tool 不支持这类 Azure Identity 依赖的应用，客户必须改用 Intune App SDK for Android 直接集成 MAM（源代码级集成） | 🟢 8.5 | ADO Wiki |
-| 38 | Android App Wrapping Tool 拒绝包装，报 App target API level is above the MAM target API level (App targ... | 应用的 targetSdkVersion 设为 36（Android 16），但 Wrapping Tool 内置的 MAM SDK 最高支持 API 35 | 1. 检查是否有支持 API 36 的新版 Wrapping Tool；2. 临时将应用 targetSdkVersion 降到 35；3. 如必须 API 36 则改用 Intune App ... | 🟢 8.5 | ADO Wiki |
-| 39 | Flutter 应用经 Android App Wrapping Tool 包装后启动崩溃，logcat 报 NullPointerException in MAMFragment.onAttach | Flutter + Gradle 8.2+ 构建的 APK 结构与 Wrapping Tool 的 fragment injection 步骤不兼容，导致... | 1. 降级项目 Gradle 到 < 8.2 重新构建后再包装；2. 或改用 Intune App SDK for Android 在 Flutter plugin 层原生集成 MAM（目前无 ... | 🟢 8.5 | ADO Wiki |
-| 40 | Android 包装后的 APK 无法安装到设备上，安装失败或升级时报签名不匹配 | (1) 包装后的 APK 未签名（Wrapping Tool 输出的是未签名 APK）；(2) 使用了与之前版本不同的签名证书，Android 要求升级时... | 1. 包装后必须用 apksigner 或 jarsigner 签名；2. 升级已有应用时必须使用与之前版本相同的 keystore + key alias；3. 验证签名：apksigner ... | 🟢 8.5 | ADO Wiki |
-| 41 | iOS 包装后的应用登录时报 AADSTS650057: Invalid resource，提示 requested permissions not listed | 应用的 Entra ID 注册缺少 Microsoft Mobile Application Management API 权限（DeviceManage... | 1. Entra ID > App Registrations > 选择应用 > API permissions > Add a permission；2. 搜索 Microsoft Mobil... | 🟢 8.5 | ADO Wiki |
-| 42 | iOS App Wrapping Tool 包装后应用卡在启动画面/登录页，无法完成认证 | 包装时未提供 -ac（Client ID）和 -ar（Redirect URI）参数，iOS 包装工具要求这两个 MSAL 参数为必填项（与 Androi... | 1. 在 Entra ID 注册应用并获取 Client ID；2. 添加 iOS 平台 redirect URI 格式 msauth.<bundle.id>://auth；3. 授予 Intu... | 🟢 8.5 | ADO Wiki |
-| 43 | iOS 包装后应用在登录时不断循环跳转 Authenticator，启用 Background App Refresh 时出现，禁用后暂时正常 | 应用使用 NSFileProtectionComplete 导致后台无法访问文件，SDK 延迟生命周期事件导致应用在认证过程中进入后台时崩溃重启 | 1. 包装时添加 -finishLaunching 标志（设置 FinishLaunchingAtStartup=True）；2. 可选：在 Info.plist IntuneMAMSettin... | 🟢 8.5 | ADO Wiki |
-| 44 | iOS IPA 包含 watchOS extension 时 Wrapping Tool 失败，报 not signed with Apple-issued certificate / Intu... | Intune App Wrapping Tool 不支持 watchOS 应用，即使作为主应用的 extension 也不支持 | 1. 包装前从 IPA 中移除 watchOS extension；2. 如果应用必须保留 watchOS 功能同时需要 MAM 策略，改用 Intune App SDK 直接集成 | 🟢 8.5 | ADO Wiki |
-| 45 | 执行 Retire 操作后应用未被卸载 | 该应用不被视为 Managed Application——只有通过 Intune 服务部署的应用（Required 部署或 Available 部署后用户... | 确认应用是否为 Intune 受管应用（Required 部署或通过 Company Portal 安装的 Available 应用）；非受管应用需手动卸载 | 🟢 8.5 | ADO Wiki |
-| 46 | App configuration policy created in Intune but settings are not being applied to the target app o... | The target app does not support app configuration policies. Not all apps impl... | 1. Check with the app developer/vendor to confirm app configuration policy support. 2. Review the... | 🟢 8.5 | ADO Wiki |
-| 47 | Customer expects MAM app protection policies to be applied to macOS LOB app after using IntuneApp... | The macOS App Wrapping Tool (IntuneAppUtil) does NOT inject MAM app protectio... | Clarify to the customer that macOS LOB apps are managed via MDM device policies, not app protecti... | 🟢 8.5 | ADO Wiki |
-| 48 | Intune MAM selective wipe fails on Android device; Company Portal does not wake up to perform wip... | Android auto-start permission is disabled for Company Portal. Android power m... | Enable auto-start permission for Company Portal in Android device settings (Settings -> Apps -> C... | 🟢 8.0 | OneNote |
-| 49 | iOS managed app config policy (App Configuration Profile) not applied or takes 10-20 minutes to r... | App config delivery timing is delayed by MDM policy sync cycle; initial enrol... | 1. Use Kusto IntuneEvent to verify: IntuneEvent \| where DeviceId == '{deviceId}' \| where Col1 c... | 🟢 8.0 | OneNote |
-| 50 | MAM app protection policy not enforced on Android device; policy check fails intermittently or ap... | Android manufacturer auto-start / auto-launch setting is disabled for Company... | Enable auto-start / auto-launch for Company Portal (and MAM-protected apps if applicable): Settin... | 🟢 8.0 | OneNote |
-| 51 | iOS Outlook app config policy shows Succeeded in Intune portal but settings are not delivered to ... | App config delivery relies on device check-in and OMA-DM policy processing. A... | 1) Allow 10-20 minutes after enrollment or app reinstall for app config to propagate. 2) Verify t... | 🟢 8.0 | OneNote |
-| 52 | Clicking phone number in Teams meeting shows no available apps error on Android with APP | App protection policy restricts app interaction; managed browser/app required | Known issue - see KB 3153257. Review APP data transfer settings for the user. | 🔵 7.5 | ADO Wiki |
-| 53 | App Protection Policy allows Save As PDF even when Save copies of org data is set to No | Known product bug - Save As PDF bypasses APP Save-As restriction | Known issue - see KB 4022831. No workaround available; monitor for product fix. | 🔵 7.5 | ADO Wiki |
-| 54 | Adding second email account to Outlook app fails with 'Misconfiguration Alert' error | 多账户场景下 App Protection Policy 配置冲突导致 Misconfiguration Alert | 参考内部文章 4057058 排查策略配置冲突 | 🔵 7.5 | ADO Wiki |
-| 55 | OneDrive configured as managed app with APP policy allows users to attach corporate protected fil... | The Open-In feature is controlled by the OS, not by Intune APP. App protectio... | Use MDM General Intune iOS Configuration policy: set 'Allow managed documents in other unmanaged ... | 🔵 7.5 | MS Learn |
-| 56 | 'Mismatch between the value type and the configuration value' error when iOS app configuration po... | iOS configuration profiles don't support the ampersand character in XML confi... | Replace '&' with '&amp;' in the URL, or create a short URL redirect that avoids the ampersand. | 🔵 7.5 | MS Learn |
-| 57 | Intune APP policy 'Select which storage services corporate data can be saved to' does not prevent... | By design: the data relocation storage restriction setting does not apply to ... | No workaround available. This is by design limitation of current APP policy for Outlook iOS images. | 🔵 7.5 | MS Learn |
-| 58 | Intune App Wrapping Tool for Android crashes with 'The application could not be wrapped' error an... | The LOB app reaches or nearly reaches the 64K method reference limit of DEX f... | 1) Install latest App Wrapping Tool version. 2) Enable multidex for the Android app. 3) If persis... | 🔵 7.5 | MS Learn |
-| 59 | Outlook for Android shows 'Your organization has removed its data associated with this app' error... | Outlook went offline for too long (signed out by APP policy), or Outlook cann... | 1) Turn off battery optimization for Outlook and Company Portal. 2) Change app Launch from Automa... | 🔵 7.5 | MS Learn |
-| 60 | Outlook for Android shows 'This action is not allowed by your organization' when creating new ema... | User signed in with Exchange Server on-premises account directly. Only Micros... | Sign in with a Microsoft Entra account after configuring Exchange hybrid Modern Authentication. | 🔵 7.5 | MS Learn |
-| 61 | Only one Intune app configuration policy is applied to Microsoft Edge or Managed Browser when mul... | Intune does not support merging Edge or Managed Browser app configuration pol... | Configure each setting in only a single app configuration policy per user/group. Use exclusion gr... | 🔵 7.5 | MS Learn |
-| 62 | Samsung Galaxy Note 4 users not prompted for fingerprint authentication in Intune APP-managed app... | Samsung Galaxy Note 4 uses a proprietary fingerprint management API not suppo... | Use an alternate device that supports a fingerprint management API supported by Intune | 🔵 7.5 | MS Learn |
-| 63 | MAM (Mobile Application Management) for Edge on Windows fails when device is Azure AD joined (AAD... | Desktop MAM for Edge on Windows only supports Azure AD registered (Workplace ... | 1) Ensure device Join Type is 'Azure AD registered'; 2) Uncheck 'Allow my organization to manage ... | 🔵 7.5 | OneNote |
-| 64 | After configuring an app protection policy (MAM policy) for the Outlook mobile app so that PDF at... | This can occur if the user has not authenticated to Acrobat Reader for Intune... | Login to Intune within the Acrobat Reader App, then when prompted for authentication, use organiz... | 🔵 7.0 | ContentIdea KB |
-| 65 | Windows 10 MDM auto-enrollment into Intune via GPO fails. Task Scheduler generates error on Enter... | This can occur if MDM user scope is set to None in Azure AD Mobility settings. | Navigate to Azure portal > Azure Active Directory > Mobility (MDM and MAM) > Microsoft Intune. Se... | 🔵 7.0 | ContentIdea KB |
-| 66 | MAM Without Enrollment (MAMWE) policy not preventing data from being moved/saved outside of manag... | On iOS 9.x/10.x this is by design. On iOS 11+ data transfer is allowed but fi... | Use app protection policies with iOS Open-in management: set "Allow app to transfer data to only ... | 🔵 7.0 | ContentIdea KB |
-| 67 | On Android, the Intune MAM Protected version ofManaged Azure Information Protection can Save as P... | By Design. The &quot;Save as PDF&quot; is discoverable under the Print option... | The &quot;Disable Printing&quot; parameter must be set to YES in the Intune App Protection policy... | 🔵 7.0 | ContentIdea KB |
-| 68 | When opening a Image in MS Teams App on iOS or Android devices it will need to open the image in ... | Configuration or missing the AIP App \ Policy on the Device | [Policy Setup]  1. Open the Intune Azure Portal  2. Navigate to Intune Mobile Application Managem... | 🔵 7.0 | ContentIdea KB |
-| 69 | When deploying an Intune App Protection policy to a user group for Microsoft Teams for iOS, the I... | The Microsoft Teams app for iOS was created with an app id with lower-case ch... | A fix to address the case sensitivity is slated for a future release in the July 2017 timeframe. | 🔵 7.0 | ContentIdea KB |
-| 70 | Customer enabled SharePoint conditional access policy in the Intune App Protection console. They ... | By design | The following ICM bug has been filed: https://icm.ad.msft.net/imp/v3/incidents/details/41783456/home | 🔵 7.0 | ContentIdea KB |
-| 71 | Customer after tenant migration can no longer install Microsoft Store based Apps from the Company... | As the applications were present in the Intune Classic (Silverlight) portal, ... | The resolution to this issue, is to remove\clean up the Microsoft Apps from the Intune Classic (S... | 🔵 7.0 | ContentIdea KB |
-| 72 | Customer has AirWatch as his MDM and is using MAM w/o enrollment (with the IntuneMAMUPN setting d... | By Design | Only files can be shared on a 3rd Party MDM vendor when the EMM UPN[IntuneMAMUPN] is deployed. Co... | 🔵 7.0 | ContentIdea KB |
-| 73 | Attempting to open an attached Word file in the Outlook app on an Android device or an iOS device... | This can occur if a device configuration policy for device encryption exists ... | To resolve this issue, complete the following:  Open the Azure portal.Click More Services and sea... | 🔵 7.0 | ContentIdea KB |
-| 74 | Intune users targeted by Exchange Online MAMCA with the requirement to only allow apps that suppo... | You can combine device-based and app-based conditional policies (logical AND)... | Intune admins should migrate their Intune Exchange Online Conditional Access policy to Azure Acti... | 🔵 7.0 | ContentIdea KB |
-| 75 | App Protection Policy for Adobe Reader for Intune created from Intune on Azure portal and deploye... | The Adobe Reader for Intune app does not yet incorporate the new MAM SDK need... | Remove the App Protection Policy from Ibiza. Deploy the enlightened Adobe Reader for Intune app f... | 🔵 7.0 | ContentIdea KB |
-| 76 | When using an Android for Work App configuration policy created with �Specify name and value pair... |  | The way to make it work is to use �Browse to a property list file� and enter a custom json: Worka... | 🔵 7.0 | ContentIdea KB |
-| 77 | In a standalone Intune environment, App Inventory for corporate-owned iOS devices only shows mana... | This is expected behavior in a standalone Intune environment. | Per https://docs.microsoft.com/en-us/intune/app-management, Discovered Apps &quot;Shows all apps ... | 🔵 7.0 | ContentIdea KB |
-| 78 | Users enrolled in Intune may receive random wipe requests:Org Data RemovalYour association has re... | There was an issue discovered over the summer of 2017 with the 611 selective ... | To resolve this issue, update all Microsoft apps installed on the users device. Note that even if... | 🔵 7.0 | ContentIdea KB |
-| 79 | When logging in to the Azure Intune portal you find that you are unable to access Intune App Prot... | This can occur if the user is only assigned the role of Intune Service Admini... | To resolve this problem, make the user a Global Administrator via the Office365 portal, or have t... | 🔵 7.0 | ContentIdea KB |
-| 80 | It takes up to 8 hours before Mobile Application Management policy from the Azure portal is appli... | New MAM policy does not apply immediately upon creationIf MAM policy was rece... | New MAM policy can take up to 15 minutes to apply to device (this can be accelerated by logging o... | 🔵 7.0 | ContentIdea KB |
-| 81 | The "Open in another app" feature in OneDrive is allowing saves to 3rd party sites like Dropbox/G... | This policy is not controlled by MAM settings after iOS 11 updateSee https://... | You can use the following steps for Intune MDM enrolled devices to block saving from OneDrive to ... | 🔵 7.0 | ContentIdea KB |
-| 82 | Users are able to access corporate email on third-party mail apps when targeted by MAM-CA (app-ba... | A cause for this is the third-party app is using the EWS (Exchange Web Servic... | EWS is not currently supported for MAM-CA policies. A possible workaround, as EWS is legacy authe... | 🔵 7.0 | ContentIdea KB |
-| 83 | Adding second email account to Outlook app fails with Misconfiguration Alert: Your admin wants th... | By design. Enrolled and managed devices can only have one corporate email in ... | Intune supports deployment of app protection policies (MAM policy) to one user account per device... | 🔵 7.0 | ContentIdea KB |
-| 84 | When accessing Microsoft Planner, error: "You can't get there from here. It looks like you're try... | An Exchange Online conditional access policy was created using the classic Si... | Remove existing conditional access policies in the Intune App Protection (MAM) blade and configur... | 🔵 7.0 | ContentIdea KB |
-| 85 | Customer has MAM policies applied to all Office mobile apps including OneDrive. Users already hav... | This can occur is the user is signed in to the Office mobile apps (Word, Exce... | To avoid this error, once users enroll their device in Intune they need to login to the Office mo... | 🔵 7.0 | ContentIdea KB |
-| 86 | When attempting to access offline files in OneDrive when using an iOS device enrolled in Intune, ... | This is caused by a bug in OneDrive. | This is scheduled to be fixed in the January 2018 update for the iOS OneDrive mobile app. | 🔵 7.0 | ContentIdea KB |
-| 87 | Azure AD Joined Windows 10 fails to enroll into Intune MDM with error code 0x80180024 (MENROLL_E_... | Auto enrollment is required. | Disconnect the device from Azure AD.     Turn on autoenrollment:      Login to https://portal.azu... | 🔵 7.0 | ContentIdea KB |
-| 88 | When attempting to enroll a Windows 10 computer in Intune, or join a Windows 10 computer to Azure... | This can occur if the MDM terms and conditions in Azure AD is blank or does n... | To resolve this problem, ensure that the MDM terms of use URL in Azure AD has the correct URL:Log... | 🔵 7.0 | ContentIdea KB |
-| 89 | When trying to deploy email settings to Outlook for iOS & Android you need to know.Only Managed D... | incorrect documentation on: https://technet.microsoft.com/EN-US/library/mt829... | Prerequisites: Deploy Outlook as AFW application Next, go to Mobile apps - App Configuration poli... | 🔵 7.0 | ContentIdea KB |
-| 90 | When you try to access secured site (https)&nbsp; in Intune Managed Browser for Android with a MA... | This can be caused by a problem with the web site certificate. &nbsp; &nbsp;&... | The Intune Managed Browser on Android device needs to trust the entire certificate chain.&nbsp; I... | 🔵 7.0 | ContentIdea KB |
-| 91 | After enrolling an iOS device and assigning an app protection policy to Outlook, performing a �Re... | This can occur if the Outlook app has not been deployed to the user from Intu... | To resolve this problem, deploy the Outlook mobile app as a Required app to the iOS users. Once t... | 🔵 7.0 | ContentIdea KB |
-| 92 | When a user is assigned an app protection policy for Skype for Business and is using a device fla... | Expected Behavior | The product group states that this state occurs when clients attempt to sent an acknowledgement b... | 🔵 7.0 | ContentIdea KB |
-| 93 | Customer has an App configuration policy to setup a bookmark in the Managed Browser but it is not... | Cisco ACLs was blocking communication. | Customer was using a Managed Browser with a VPN profile and had applied Cisco ACLs to block the c... | 🔵 7.0 | ContentIdea KB |
-| 94 | When using Outlook iOS where devices are managed via MDM users are reporting they are unable to s... | Both the Intune and Outlook Product Teams are still investigating with Apple,... | As a possible workaround, have you considered disabling the �viewing corporate documents in unman... | 🔵 7.0 | ContentIdea KB |
-| 95 | Managed apps on iOS device prompts users to configure a device PIN when only App Protection Polic... | When the Encrypt App data policy is configured with any value other than Use ... | Configure the Encrypt App data policy to Use device settings if the IT Pro does not want iOS user... | 🔵 7.0 | ContentIdea KB |
-| 96 | Customer wants to use native Adobe Acrobat to open PDFs from Intune managed apps like Outlook/One... |  | 1) Ensure device is fully enrolled into Intune MDM. 2) Deploy Adobe Acrobat Reader for Microsoft ... | 🔵 7.0 | ContentIdea KB |
-| 97 | After configuring an App Protection Policy (MAM Policy) for Skype for Business and any other Offi... | This can occur if the App Protection Policy has the following setting:Restric... | This issue was fixed in the 8.0.7 release of the Intune app SDK. Update Skype for Business to the... | 🔵 7.0 | ContentIdea KB |
-| 98 | If you are a customer who is managing Android Enterprise devices with a work profile (aka Android... |  |  | 🔵 7.0 | ContentIdea KB |
-| 99 | If you target the Skype for Business (SfB) app with an Intune App Protection Policy (MAM policy) ... | This can occur if "Hybrid Modern Authentication" for Hybrid and On-Premises S... | To resolve this problem, enable hybrid modern authentication. To enable Hybrid Modern Auth, use t... | 🔵 7.0 | ContentIdea KB |
-| 100 | Creating iOS App Configuration Policy with SSO URL containing ampersand (&) gives error: invalid ... | Apple limitation: iOS apps/xml do not support & characters in configuration v... | Use short URL (e.g. bit.ly) or use &amp; instead of & in the URL. | 🔵 7.0 | ContentIdea KB |
-| 101 | When wrapping a LOB application using Microsoft Intune App Wrapping Tool for Android, the tool cr... | The application being wrapped is at or near the Android dexfile 64k method li... | 1. Install latest Intune App Wrapping Tool for Android. 2. Enable Multidex. If unresolved: reduce... | 🔵 7.0 | ContentIdea KB |
-| 102 | New Intune tenant: Intune blade shows Access denied, App Protection blade shows Bad Request, Requ... | Intune AAD Enterprise Application was disabled. AccountState=0 prevents compl... | Azure Portal > AAD > Enterprise Applications > Intune > Properties > Enable for users to sign-in ... | 🔵 7.0 | ContentIdea KB |
-| 103 | Selective wipes initiated with Basic Mobility and Security is not removing cached emails from Out... | Outlook and OneDrive apps only remove cached data when the app has been deplo... | By-design on both Android and iOS. For applying Intune App protection policies, an Intune license... | 🔵 7.0 | ContentIdea KB |
-| 104 | When attempting to wrap a .pkg file using the Intune App Wrapping Tool for Mac, the following err... | The packageinfo file was missing from the .pkg package. | The IntuneAppUtil currently only supports flat packages and the .pkg package must include the pac... | 🔵 7.0 | ContentIdea KB |
-| 105 | The fields on the MAM set PIN will look like you can fill them in even if you select "No" for PIN... | This is due to a UI bug. If you say "No" PIN, none of your PIN options are sa... | The bug is being fixed in the UI update in January. | 🔵 7.0 | ContentIdea KB |
-| 106 | When clicking on a Web App that has been deployed to an iOS device, you receive the following err... | This can occur if both of the following are true:- The Web App configuration ... | To resolve this issue, either install the Intune Managed Browser on the iOS device or or configur... | 🔵 7.0 | ContentIdea KB |
-| 107 | When MAM policies (aka App Protection Policies or APP) are applied to Outlook Mobile app version ... | There is a bug in Android's Java Virtual Machine implementation on specific A... | As of 2/8/2019 a fix has been created and released as an update to the Intune SDK via Android Com... | 🔵 7.0 | ContentIdea KB |
-| 108 | Android MAM policy does not restrict data transfer to Google Maps | Google Maps not covered by APP data transfer restrictions | Known issue - see KB 4490475. Consider blocking Google Maps via managed app config or compliance ... | 🔵 6.5 | ADO Wiki |
-| 109 | Users are signed out of ALL Office mobile apps on iOS once they sign out of a single Office app (... | Known issue with app protection policies (MAM) on iOS where signing out of on... | See workaround in Intune Customer Success blog post. | 🔵 6.5 | MS Learn |
+| # | Symptom | Root Cause | Solution | Score | Source |
+|---|---------|-----------|----------|-------|--------|
+| 1 | In dual-federation environment (same UPN in 21v and Global Azure AD), iOS Pow... | Intune SDK for iOS v16.0.0 (released 2022/05/25) changed device primary user ... | Short-term: (1) Create separate Edge web apps for PowerApps 21v and Global (u... | 9.5 | onenote |
+| 2 | OneDrive/Outlook for Android frequently signs out or is unable to sign in; Ou... | Microsoft Authenticator (when used as broker app) is not in the Android batte... | Uninstall Microsoft Authenticator app; let Company Portal serve as the authen... | 9.5 | onenote |
+| 3 | MAM enrollment fails with error 'application is already MDM enrolled and the ... | The managed app (e.g., Outlook) was previously enrolled by a different user. ... | Option 1: Factory reset the device so the previous MAM enrollment is fully cl... | 9.5 | onenote |
+| 4 | Outlook for Android sign-in fails or is blocked when Conditional Access (CA) ... | CA policy with MAM requirement has two prerequisites: (1) Company Portal app ... | Ensure Android device meets MAM requirements: (1) Install Microsoft Intune Co... | 9.5 | onenote |
+| 5 | iOS Intune-enrolled devices receive App Protection Policy with type 'Apps on ... | For iOS, apps must be configured with 'IntuneMAMUPN' app configuration key to... | 1. Create App Configuration Policy (Managed devices, iOS). Add keys: IntuneMA... | 9.5 | onenote |
+| 6 | Outlook for iOS shows 'Misconfiguration Alert' and new user cannot set up cor... | When a device is transferred to a new user without factory reset, the previou... | Option 1 (Recommended): Factory reset before device handover. Option 2: (1) P... | 9.5 | onenote |
+| 7 | Android device cannot enroll, app protection policies not applying, or Intune... | Common pre-requisite issues: battery optimization killing Intune/Outlook/Comp... | Pre-request actions before collecting logs: (1) Disable battery optimization ... | 9.5 | onenote |
+| 8 | Need to understand expected user behavior when iOS MAM app protection policy ... | iOS MAM app protection policy has multiple data protection settings, each wit... | Key MAM data protection settings and their iOS user behaviors: (1) Backup Org... | 9.5 | onenote |
+| 9 | On Huawei devices, MAM-protected apps show org removed data or prompt to rein... | Huawei battery optimization kills Company Portal background process, breaking... | Exempt CP and Outlook: (1) Phone Manager > Startup Manager enable auto-start/... | 9.5 | onenote |
+| 10 | On OPPO devices, MAM-protected apps (Outlook, Edge, OneDrive) fail to open af... | OPPO app optimization blocks Company Portal and Authenticator background exec... | Phone Manager > Privacy Permissions: enable Associated Startup, App Permissio... | 9.5 | onenote |
+| 11 | Outlook for Android cannot open after MAM policy applied; Company Portal on C... | China app stores stopped updating CP due to CAC privacy regulations. Outlook ... | WA1: Download CP from Baidu App Store or MS-supported stores. WA2: Download C... | 9.5 | onenote |
+| 12 | Users blocked from launching MAM-protected iOS/Android apps after June 2024; ... | iOS apps using Intune SDK or App Wrapping Tool version older than 17.7.0. And... | Update iOS LOB apps to Intune SDK/wrapper v17.7.0+ (recommended: SDK 19.2.0).... | 9.5 | onenote |
+| 13 | Need to collect Intune diagnostic logs from iOS/Android device when user cann... | Standard log upload (Company Portal > Help > Email Support) requires network ... | iOS Outlook: Settings (avatar) > Privacy > disable Optional connected experie... | 9.5 | onenote |
+| 14 | Newer Android devices (IQOO 15, Xiaomi 17, OPPO Reno14) cannot sign in to Out... | ADFS server (behind Alibaba NLB) returns only the leaf certificate without th... | Fix the ADFS/NLB configuration to return the full certificate chain (leaf + i... | 9.5 | onenote |
+| 15 | iOS Outlook App Configuration policy keys are case-sensitive; typo or incorre... | App Config key names must exactly match (case-sensitive). Official docs may c... | 1) Verify exact key spelling and case in App Config policy. 2) Check Outlook ... | 9.5 | onenote |
+| 16 | iOS MAM data transfer exception configured with app Bundle ID does not allow ... | iOS MAM data transfer exception only supports invoking third-party apps via U... | Configure exemptions using URL protocol schemes: tel/telprompt (Phone), skype... | 9.5 | onenote |
+| 17 | iOS Teams app fails MAM login with Conditional Access non-compliant error. Ou... | Teams caches a stale/old MAM OID from a previous enrollment period (e.g., use... | 1) Uninstall and reinstall Teams to clear cached OID. 2) Long-term: Request T... | 9.5 | onenote |
+| 18 | iOS Teams login blocked by Conditional Access with error ProtectionPolicyRequ... | Teams MAM refresh token expired/revoked (due to password reset, prolonged ina... | 1) Uninstall and reinstall Teams to force fresh MAM enrollment. 2) If persist... | 9.0 | onenote |
+| 19 | DDM 应用部署失败，应用使用了 Intune App SDK（MAM-enabled）或配置了 App Configuration Policy | DDM 当前不支持 MAM-enabled 应用（使用 Intune App SDK 的应用）和 App Configuration Policy，也不支... | 对 MAM-enabled 应用使用 MDM 管理类型而非 DDM；移除 App Configuration Policy 或改用 MDM 部署；等待后续... | 9.0 | ado-wiki |
+| 20 | Android 设备上 MAM/App Protection Policy 不生效，用户无法接收到策略 | Android 设备上 Company Portal 未安装。Android 上 Company Portal 作为 broker 处理约 80% 的 S... | 确保 Android 设备上安装了最新版 Company Portal 应用，即使设备未通过 Intune 注册也需要安装 | 9.0 | ado-wiki |
+| 21 | iOS 设备上使用 Intune MAM 或第三方 MDM 时，App Protection Policy 无法正确识别用户身份 | iOS 设备使用 Intune 或任何 MDM 时，必须为每个应用创建并分配 MAMUPN 字符串以建立正确的用户身份。缺少 MAMUPN 会导致身份识别失败 | 为每个需要 MAM 策略的 iOS 应用配置 MAMUPN（IntuneMAMUPN）App Configuration Policy，确保 UPN 与 ... | 9.0 | ado-wiki |
+| 22 | App Protection Policy 不生效：用户无法接收到 MAM 策略 | APP 要求三个条件同时满足：1) 目标 UPN 必须在 Azure AD 中可解析；2) UPN 必须有活跃的 Intune 许可证；3) 应用必须集成... | 1. 验证用户 UPN 在 Azure AD 中存在且可解析；2. 确认用户已分配活跃的 Intune 许可证；3. 确认应用在 Intune 受保护应用... | 9.0 | ado-wiki |
+| 23 | Rooted Android device bypasses MAM policy by directly accessing MAM database ... | MAM policy database files are not encrypted; root access allows modifying DB ... | DCR submitted (ICM 56976609) requesting encryption/hash storage. Use jailbrea... | 9.0 | ado-wiki |
+| 24 | MAM-WE root detection bypassed on Android ROMs that allow developer mode to t... | MAM-WE root detection only checks at app launch intervals; toggling root via ... | Known limitation (ICM 57208740). Combine with SafetyNet/Play Integrity attest... | 9.0 | ado-wiki |
+| 25 | App protection policies not applied on Teams Android devices (conference room... | Teams app on Microsoft Teams Android devices does not receive policy through ... | Exclude Teams device users from APP policies. Configure device filters. Revie... | 9.0 | ado-wiki |
+| 26 | iOS App Protection Policy not preventing data leakage on iOS 11.x | iOS 11.x 引入的系统变更导致 App Protection 策略无法正确拦截数据泄露 | 升级到更高版本 iOS；参考内部文章 4016863 | 9.0 | ado-wiki |
+| 27 | OneDrive with iMessage integration allows users to attach corporate protected... | OneDrive iMessage integration as managed app bypasses App Protection 数据传输策略 | 已知限制 — 文件作为链接共享不受影响；使用链接共享代替附件方式 | 9.0 | ado-wiki |
+| 28 | iOS 11.x Hook change causes App Protection without Enrollment (MAM-WE) to fail | iOS 11.x 的 Hook 机制变更影响了 MAM without enrollment 场景下的策略注入 | 升级到更高版本 iOS；参考内部文章 4053414 | 9.0 | ado-wiki |
+| 29 | Cannot block screenshots on managed apps for iOS via App Protection Policy | iOS 系统限制 — App Protection Policy 无法控制 iOS 截图功能 | 已知 iOS 平台限制，无法通过 APP 阻止截图；参考 4077458 | 9.0 | ado-wiki |
+| 30 | iOS MAM policy for 'apps on unmanaged devices' is incorrectly applying to app... | MAM 策略的设备管理状态筛选条件未正确区分 managed vs unmanaged 设备 | 参考内部文章 4492345；确认策略 targeting 条件正确区分设备管理状态 | 9.0 | ado-wiki |
+| 31 | Unable to block saving corporate files from OneDrive to iCloud when App Prote... | OneDrive 的 iCloud 备份/保存路径不受 App Protection Policy 数据传输限制控制 | 参考内部文章 4495329；可能需要设备级 MDM 限制来阻止 iCloud 保存 | 9.0 | ado-wiki |
+| 32 | App missing from iOS Open-In/Sharing menu when App Protection Policy is being... | App Protection Policy 的 Open-In 管理限制导致某些 app 不出现在共享菜单中 | 参考内部文章 4495553；确认 app 已被正确添加到 APP 的允许列表 | 9.0 | ado-wiki |
+| 33 | MAM policies are not applied on Jailbroken iOS devices | 越狱绕过了硬件级加密；Intune MAM SDK 仅依赖硬件加密，越狱后失效 | 已知限制 — 各 app 开发团队需实现软件级文件加密；DCR ICM#61309928 已提交要求文件级加密 | 9.0 | ado-wiki |
+| 34 | Email file attachments in Word/Excel/PowerPoint - App Protection Policies not... | Office 内容共享功能更新导致 email 附件的 corporate identity 未正确设置，策略未生效 | 已在 2019/8/12 修复 — 更新 Word/Excel/PowerPoint 到 iOS App Store 最新版本 | 9.0 | ado-wiki |
+| 35 | Android 应用集成 Intune SDK 后首次启动崩溃，报 SecurityException: Signature mismatch for p... | 应用包签名与 Company Portal 中注册的签名不匹配，MAMContentProviderBase 校验签名时失败 | 1. 检查 OMADMLog 中的 stacktrace 确认 Signature mismatch 错误；2. 确认应用使用正确的 keystore 签... | 9.0 | ado-wiki |
+| 36 | 客户使用 Xamarin 开发的应用集成 Intune App SDK，询问兼容性或遇到问题 | Xamarin 支持已于 2024 年 5 月 1 日终止（EOL），Android API 34 和 Xcode 15 SDK 是最后支持版本，不再计划... | 1. 告知客户 Xamarin 已 EOL；2. 建议迁移到 .NET MAUI（Xamarin.Forms 的继任者）或 .NET SDK-style ... | 9.0 | ado-wiki |
+| 37 | iOS 应用集成 Intune App SDK 后 MSAL token 获取失败，报 authentication error | Info.plist 中 ADALClientId 或 ADALRedirectUri 与 Entra ID App Registration 不匹配；L... | 1. 确认 ADALClientId 和 ADALRedirectUri 与 Entra App Registration 完全一致；2. 添加 msau... | 9.0 | ado-wiki |
+| 38 | iOS 应用 Intune SDK enrollment 失败，日志中出现 keychain 相关错误 | Entitlements 文件缺少必需的 keychain-access-groups：com.microsoft.intune.mam 和/或 com.... | 1. 在 Entitlements 中添加 $(AppIdentifierPrefix)com.microsoft.intune.mam 和 $(AppI... | 9.0 | ado-wiki |
+| 39 | iOS 应用集成 Intune SDK 后 enrollment 完成后不断重启（restart loop） | SDK enrollment 后需要应用重启以应用策略，若未正确实现 IntuneMAMPolicyDelegate 的 restartApplicati... | 1. 实现 IntuneMAMPolicyDelegate 的 restartApplication 方法（return NO 让 SDK 处理）；2. ... | 9.0 | ado-wiki |
+| 40 | Intune 管理员发送 selective wipe 命令后 iOS 应用中企业数据未被移除 | 应用未实现 IntuneMAMEnrollmentDelegate 的 wipeDataForAccount 方法；或 deRegisterAndUnen... | 1. 实现 wipeDataForAccount: delegate 方法以删除指定账户的企业数据；2. 确认 deRegisterAndUnenroll... | 9.0 | ado-wiki |
+| 41 | Android App Wrapping Tool 启动失败，报 UnsupportedClassVersionError: class file ver... | 客户使用 Java 8（class file version 52），App Wrapping Tool 要求 Java 11+（class file v... | 1. 升级 JRE 到 Java 11 或更高版本；2. 运行 java -version 确认版本；3. 确保 PATH 环境变量指向新版本 Java | 9.0 | ado-wiki |
+| 42 | Android App Wrapping Tool 包装失败，报 Smali failed while writing smali file to DEX... | 应用包含 com.azure:azure-identity 或 com.azure:azure-security-keyvault-certificate... | Wrapping Tool 不支持这类 Azure Identity 依赖的应用，客户必须改用 Intune App SDK for Android 直接... | 9.0 | ado-wiki |
+| 43 | Android App Wrapping Tool 拒绝包装，报 App target API level is above the MAM target... | 应用的 targetSdkVersion 设为 36（Android 16），但 Wrapping Tool 内置的 MAM SDK 最高支持 API 35 | 1. 检查是否有支持 API 36 的新版 Wrapping Tool；2. 临时将应用 targetSdkVersion 降到 35；3. 如必须 AP... | 9.0 | ado-wiki |
+| 44 | Flutter 应用经 Android App Wrapping Tool 包装后启动崩溃，logcat 报 NullPointerException i... | Flutter + Gradle 8.2+ 构建的 APK 结构与 Wrapping Tool 的 fragment injection 步骤不兼容，导致... | 1. 降级项目 Gradle 到 < 8.2 重新构建后再包装；2. 或改用 Intune App SDK for Android 在 Flutter p... | 9.0 | ado-wiki |
+| 45 | Android 包装后的 APK 无法安装到设备上，安装失败或升级时报签名不匹配 | (1) 包装后的 APK 未签名（Wrapping Tool 输出的是未签名 APK）；(2) 使用了与之前版本不同的签名证书，Android 要求升级时... | 1. 包装后必须用 apksigner 或 jarsigner 签名；2. 升级已有应用时必须使用与之前版本相同的 keystore + key alia... | 9.0 | ado-wiki |
+| 46 | iOS 包装后的应用登录时报 AADSTS650057: Invalid resource，提示 requested permissions not li... | 应用的 Entra ID 注册缺少 Microsoft Mobile Application Management API 权限（DeviceManage... | 1. Entra ID > App Registrations > 选择应用 > API permissions > Add a permission；2... | 9.0 | ado-wiki |
+| 47 | iOS App Wrapping Tool 包装后应用卡在启动画面/登录页，无法完成认证 | 包装时未提供 -ac（Client ID）和 -ar（Redirect URI）参数，iOS 包装工具要求这两个 MSAL 参数为必填项（与 Androi... | 1. 在 Entra ID 注册应用并获取 Client ID；2. 添加 iOS 平台 redirect URI 格式 msauth.<bundle.i... | 9.0 | ado-wiki |
+| 48 | iOS App Wrapping Tool 报 An invalid signing certificate was specified，即使证书看起来有效 | Keychain 中存在多个同名证书副本、证书已过期、证书不受信任、或缺少中间证书 | 1. Keychain Access 搜索所有签名证书，确保只有一份；2. 验证证书未过期且受信任；3. 在 System 和 login keychai... | 9.0 | ado-wiki |
+| 49 | iOS 包装后应用在登录时不断循环跳转 Authenticator，启用 Background App Refresh 时出现，禁用后暂时正常 | 应用使用 NSFileProtectionComplete 导致后台无法访问文件，SDK 延迟生命周期事件导致应用在认证过程中进入后台时崩溃重启 | 1. 包装时添加 -finishLaunching 标志（设置 FinishLaunchingAtStartup=True）；2. 可选：在 Info.p... | 9.0 | ado-wiki |
+| 50 | iOS IPA 包含 watchOS extension 时 Wrapping Tool 失败，报 not signed with Apple-issue... | Intune App Wrapping Tool 不支持 watchOS 应用，即使作为主应用的 extension 也不支持 | 1. 包装前从 IPA 中移除 watchOS extension；2. 如果应用必须保留 watchOS 功能同时需要 MAM 策略，改用 Intune... | 9.0 | ado-wiki |
+| 51 | End user cannot see the Remove or Reset button on Company Portal website (por... | Admin has hidden the Remove and/or Reset self-service actions for corporate d... | Check Intune Admin Center > Tenant Administration > Customization. Verify if ... | 9.0 | ado-wiki |
+| 52 | Passcode reset option not available or not working on personal Android device... | Passcode reset is not supported on personal Android devices with a work profi... | Inform user that passcode reset is not available for personal Android devices... | 9.0 | ado-wiki |
+| 53 | App configuration policy created in Intune but settings are not being applied... | The target app does not support app configuration policies. Not all apps impl... | 1. Check with the app developer/vendor to confirm app configuration policy su... | 9.0 | ado-wiki |
+| 54 | Customer using Intune App SDK Xamarin Bindings for MAM integration in their X... | Xamarin support ended on May 1, 2024. The Intune App SDK Xamarin Bindings are... | Advise customer to migrate from Xamarin to .NET MAUI or .NET SDK-style projec... | 9.0 | ado-wiki |
+| 55 | Intune MAM selective wipe fails on Android device; Company Portal does not wa... | Android auto-start permission is disabled for Company Portal. Android power m... | Enable auto-start permission for Company Portal in Android device settings (S... | 8.5 | onenote |
+| 56 | MAM app protection policy not enforced on Android device; policy check fails ... | Android manufacturer auto-start / auto-launch setting is disabled for Company... | Enable auto-start / auto-launch for Company Portal (and MAM-protected apps if... | 8.5 | onenote |
+| 57 | iOS Outlook app config policy shows Succeeded in Intune portal but settings a... | App config delivery relies on device check-in and OMA-DM policy processing. A... | 1) Allow 10-20 minutes after enrollment or app reinstall for app config to pr... | 8.5 | onenote |
+| 58 | Clicking phone number in Teams meeting shows no available apps error on Andro... | App protection policy restricts app interaction; managed browser/app required | Known issue - see KB 3153257. Review APP data transfer settings for the user. | 8.0 | ado-wiki |
+| 59 | App Protection Policy allows Save As PDF even when Save copies of org data is... | Known product bug - Save As PDF bypasses APP Save-As restriction | Known issue - see KB 4022831. No workaround available; monitor for product fix. | 8.0 | ado-wiki |
+| 60 | Adding second email account to Outlook app fails with 'Misconfiguration Alert... | 多账户场景下 App Protection Policy 配置冲突导致 Misconfiguration Alert | 参考内部文章 4057058 排查策略配置冲突 | 8.0 | ado-wiki |
+| 61 | OneDrive configured as managed app with APP policy allows users to attach cor... | The Open-In feature is controlled by the OS, not by Intune APP. App protectio... | Use MDM General Intune iOS Configuration policy: set 'Allow managed documents... | 8.0 | mslearn |
+| 62 | Intune APP policy 'Select which storage services corporate data can be saved ... | By design: the data relocation storage restriction setting does not apply to ... | No workaround available. This is by design limitation of current APP policy f... | 8.0 | mslearn |
+| 63 | Intune App Wrapping Tool for Android crashes with 'The application could not ... | The LOB app reaches or nearly reaches the 64K method reference limit of DEX f... | 1) Install latest App Wrapping Tool version. 2) Enable multidex for the Andro... | 8.0 | mslearn |
+| 64 | Outlook for Android shows 'Your organization has removed its data associated ... | Outlook went offline for too long (signed out by APP policy), or Outlook cann... | 1) Turn off battery optimization for Outlook and Company Portal. 2) Change ap... | 8.0 | mslearn |
+| 65 | Outlook for Android shows 'This action is not allowed by your organization' w... | User signed in with Exchange Server on-premises account directly. Only Micros... | Sign in with a Microsoft Entra account after configuring Exchange hybrid Mode... | 8.0 | mslearn |
+| 66 | Samsung Galaxy Note 4 users not prompted for fingerprint authentication in In... | Samsung Galaxy Note 4 uses a proprietary fingerprint management API not suppo... | Use an alternate device that supports a fingerprint management API supported ... | 8.0 | mslearn |
+| 67 | After configuring an app protection policy (MAM policy) for the Outlook mobil... | This can occur if the user has not authenticated to Acrobat Reader for Intune... | Login to Intune within the Acrobat Reader App, then when prompted for authent... | 7.5 | contentidea-kb |
+| 68 | MAM Without Enrollment (MAMWE) policy not preventing data from being moved/sa... | On iOS 9.x/10.x this is by design. On iOS 11+ data transfer is allowed but fi... | Use app protection policies with iOS Open-in management: set "Allow app to tr... | 7.5 | contentidea-kb |
+| 69 | You may experience the error: &quot;Error when wrapping an iOS app&quot;When ... | This issue is resolved in the next iOS SDK/Wrapper. | This issue is resolved in the next iOS SDK/Wrapper. | 7.5 | contentidea-kb |
+| 70 | When deploying an Intune App Protection policy to a user group for Microsoft ... | The Microsoft Teams app for iOS was created with an app id with lower-case ch... | A fix to address the case sensitivity is slated for a future release in the J... | 7.5 | contentidea-kb |
+| 71 | Intune App Protection has a policy which can restrict saving files to local s... |  |  | 7.5 | contentidea-kb |
+| 72 | Customer after tenant migration can no longer install Microsoft Store based A... | As the applications were present in the Intune Classic (Silverlight) portal, ... | The resolution to this issue, is to remove\clean up the Microsoft Apps from t... | 7.5 | contentidea-kb |
+| 73 | App Protection Policy for Adobe Reader for Intune created from Intune on Azur... | The Adobe Reader for Intune app does not yet incorporate the new MAM SDK need... | Remove the App Protection Policy from Ibiza. Deploy the enlightened Adobe Rea... | 7.5 | contentidea-kb |
+| 74 | Users enrolled in Intune may receive random wipe requests:Org Data RemovalYou... | There was an issue discovered over the summer of 2017 with the 611 selective ... | To resolve this issue, update all Microsoft apps installed on the users devic... | 7.5 | contentidea-kb |
+| 75 | The "Open in another app" feature in OneDrive is allowing saves to 3rd party ... | This policy is not controlled by MAM settings after iOS 11 updateSee https://... | You can use the following steps for Intune MDM enrolled devices to block savi... | 7.5 | contentidea-kb |
+| 76 | Users are able to access corporate email on third-party mail apps when target... | A cause for this is the third-party app is using the EWS (Exchange Web Servic... | EWS is not currently supported for MAM-CA policies. A possible workaround, as... | 7.5 | contentidea-kb |
+| 77 | Intune Managed Browser FAQStarting on January, 27, 2020, Intune will no longe... |  |  | 7.5 | contentidea-kb |
+| 78 | Consider the following scenario:A single user in a company is unable to login... | This can occur if the SIM card in the device is defective. In this case, when... | To resolve this problem, replace the SIM card in the device. | 7.5 | contentidea-kb |
+| 79 | When attempting to launch Outlook on iOS devices, the following message is di... | This can occur if the certificate is nearing expiration. Typically, these cer... | Normally, once the CP app is opened, the certificate will renew and the user ... | 7.5 | contentidea-kb |
+| 80 | After enrolling an iOS device and assigning an app protection policy to Outlo... | This can occur if the Outlook app has not been deployed to the user from Intu... | To resolve this problem, deploy the Outlook mobile app as a Required app to t... | 7.5 | contentidea-kb |
+| 81 | When using Outlook iOS where devices are managed via MDM users are reporting ... | Both the Intune and Outlook Product Teams are still investigating with Apple,... | As a possible workaround, have you considered disabling the �viewing corporat... | 7.5 | contentidea-kb |
+| 82 | Customer has configured an Intune app protection policy to "Allow app to rece... |  |  | 7.5 | contentidea-kb |
+| 83 | Using Intune App Protection policies, you can configure settings to block end... |  |  | 7.5 | contentidea-kb |
+| 84 | Managed apps on iOS device prompts users to configure a device PIN when only ... | When the Encrypt App data policy is configured with any value other than Use ... | Configure the Encrypt App data policy to Use device settings if the IT Pro do... | 7.5 | contentidea-kb |
+| 85 | Customer wants to use native Adobe Acrobat to open PDFs from Intune managed a... |  | 1) Ensure device is fully enrolled into Intune MDM. 2) Deploy Adobe Acrobat R... | 7.5 | contentidea-kb |
+| 86 | After configuring an App Protection Policy (MAM Policy) for Skype for Busines... | This can occur if the App Protection Policy has the following setting:Restric... | This issue was fixed in the 8.0.7 release of the Intune app SDK. Update Skype... | 7.5 | contentidea-kb |
+| 87 | With the deprecation of MAM CA policies in the Intune App Protection blade, u... |  |  | 7.5 | contentidea-kb |
+| 88 | You may notice the following on MDM-managed iOS devices running version 11.3 ... | This can occur if there is an iOS device restriction policy where either �Vie... | The following steps can be followed to configure policies in Intune to make t... | 7.5 | contentidea-kb |
+| 89 | If you target the Skype for Business (SfB) app with an Intune App Protection ... | This can occur if "Hybrid Modern Authentication" for Hybrid and On-Premises S... | To resolve this problem, enable hybrid modern authentication. To enable Hybri... | 7.5 | contentidea-kb |
+| 90 | When using Intune on premise Exchange conditional access when you try to use ... | This is because Intune on premise Exchange conditional access does not suppor... | If you have users that need to use the Outlook App you can not target them fo... | 7.5 | contentidea-kb |
+| 91 | Attempting to enroll an iOS device fails with the following error: Profile In... | This can occur if a management profile is already installed on the device. | To resolve this issue, complete the follow:1. Open Settings on the iOS device... | 7.5 | contentidea-kb |
+| 92 | Selective wipes initiated with Basic Mobility and Security is not removing ca... | Outlook and OneDrive apps only remove cached data when the app has been deplo... | By-design on both Android and iOS. For applying Intune App protection policie... | 7.5 | contentidea-kb |
+| 93 | The fields on the MAM set PIN will look like you can fill them in even if you... | This is due to a UI bug. If you say "No" PIN, none of your PIN options are sa... | The bug is being fixed in the UI update in January. | 7.5 | contentidea-kb |
+| 94 | On a few occasions, we receive cases where the Office apps such as Outlook / ... |  |  | 7.5 | contentidea-kb |
+| 95 | When MAM policies (aka App Protection Policies or APP) are applied to Outlook... | There is a bug in Android's Java Virtual Machine implementation on specific A... | As of 2/8/2019 a fix has been created and released as an update to the Intune... | 7.5 | contentidea-kb |
+| 96 | Outlook and Skype for Business are being targeted by an application protectio... | On Android, the ‘Geo’ protocol is whitelisted (allowed), which is what the qu... | This is currently expected behavior.&nbsp;Our development group currently has... | 7.5 | contentidea-kb |
+| 97 | Android Huawei device keeps getting marked as non-compliant due to being inac... | Intune service is killed in the backend by the Android system. Especially in ... | Enable auto-launch and disable batter optimization for Company Portal and oth... | 7.5 | contentidea-kb |
+| 98 | When users attempt to attach a photo to apps within the Work Profile (i.e. Wo... | This occurs because Android requires an additional application in the workspa... | To resolve this issue, approve and assign a File Explorer application from th... | 7.5 | contentidea-kb |
+| 99 | Users are unable to create a new email after an application protection policy... | This is expected behavior if the users' mailboxes are located in on-premises ... | Enable hybrid-modern authentication for on-premises Exchange | 7.5 | contentidea-kb |
+| 100 | The iOS MAM policy which is set to target “Apps on unmanaged devices” is also... |  |  | 7.5 | contentidea-kb |
+| 101 | When using the Outlook App for IOS or Android with Azure conditional access p... | This can be caused by having a Intune classic policy or old MAM policy. &nbsp... | To resolve this issue follow the steps mentioned in the following knowledge b... | 7.5 | contentidea-kb |
+| 102 | You have noticed that Outlook, OneNote or other Enlightened apps that are tar... | While we support the Android fingerprint manager APIs that were introduced in... | The only resolution for this would be in two options:  1) For the customer to... | 7.5 | contentidea-kb |
+| 103 | In an IOS application that receives a Intune App protection policy you click ... | The Intune App protection policy for the&nbsp;&quot;Send Org data to other ap... | To resolve this issue get the targeted application to be wrapped with the lat... | 7.5 | contentidea-kb |
+| 104 | Note that SDK refers to Software Development Kit, a library that can be used ... | Scenario 1 - Customer wants to start developing with Intune SDK/Setting up ne... | Scenario 1 - Customer wants to start developing with Intune SDK/Setting up ne... | 7.5 | contentidea-kb |
+| 105 | Users are not able to synchronize there Gmail&nbsp; Calendar and Gmail Contac... | This can be caused by Android for Enterprise profile setting &quot;Default Ap... | To work around this issue set the Android for Enterprise profile setting&nbsp... | 7.5 | contentidea-kb |
+| 106 | Learn how to&nbsp;collect the MAM log via Outlook for Android to troubleshoot... |  |  | 7.5 | contentidea-kb |
+| 107 | After enabling the Sync Contacts parameter in an App Protection Policy and re... | This is expected behavior and by design for the Outlook mobile app for iOS. | These messages are built-in templates in the Outlook mobile app and will alwa... | 7.5 | contentidea-kb |
+| 108 | Customer states: we can open an email attachment from Corporate native email ... | In order to accomplish the goal of the customer of having the Native Mail abl... | Once the Email Profile, Intune App Protection Policy, Device Restriction Prof... | 7.5 | contentidea-kb |
+| 109 | Attempting to apply a MAM conditional access policy fails with the following ... | This can occur if Any device is specified as the Device platform in the condi... | To resolve this problem, check all platforms and don’t use the option &quot;A... | 7.5 | contentidea-kb |
+| 110 | The following YouTube video is available that explains how to create an Intun... |  |  | 7.5 | contentidea-kb |
+| 111 | Initial Scoping Questions What is the UPN of the Azure Active Directory accou... |  |  | 7.5 | contentidea-kb |
+| 112 | When Troubleshooting App Protection Policies engineers should follow similar ... |  |  | 7.5 | contentidea-kb |
+| 113 | App configuration policies in Microsoft Intune supply settings to Managed Goo... |  |  | 7.5 | contentidea-kb |
+| 114 | General Scoping Questions 1.&nbsp;What is the UPN of the Azure Active Directo... |  |  | 7.5 | contentidea-kb |
+| 115 | New contact sync scenario available with Outlook for iOS on enrolled devicesA... |  |  | 7.5 | contentidea-kb |
+| 116 | Shared mailboxes in Outlook are not working with Intune App Protection (MAM) ... | By design - as of January 2020, there is no support for Shared Mailboxes in O... | There is&nbsp;no&nbsp;Intune support for Shared Mailboxes yet.  	 		When supp... | 7.5 | contentidea-kb |
+| 117 | The Intention of this article is to add detailed steps on how to Disable Batt... | Enable Battery Optimization on Android can stop some processes that run on th... | On HUAWEI Devices follow the below steps to disable the Battery Optimization ... | 7.5 | contentidea-kb |
+| 118 | When opening the Outlook Mobile App for Android, you see the following error ... | This can occur for one of the following reasons:Outlook was offline for long ... | To troubleshoot this issue, complete the following:Request that affected user... | 7.5 | contentidea-kb |
+| 119 | Issue: when open Outlook for Android: “Your organization has removed its data... | Root Cause:The issue may related with Outlook offline for long time, Intune w... | Troubleshooting&nbsp;Request customers disable battery optimization. If the i... | 7.5 | contentidea-kb |
+| 120 | After an app protection policy for Microsoft Hub has been assign to several u... | Microsoft has an alliance with Samsung to pre install Microsoft Hub app on th... | 1. Verify the app protection policy is targeting all versions of Microsoft Hu... | 7.5 | contentidea-kb |
+| 121 | iOS/iPadOS devices do not list the &quot;Never&quot; auto-lock setting in Set... | There is an Exchange Online configuration that can also control the auto-lock. | To check if this setting is configured in Exchange Online:Have customer go to... | 7.5 | contentidea-kb |
+| 122 | Welcome to Intune's workflow for&nbsp;App SDK for Android. Here you will find... |  |  | 7.5 | contentidea-kb |
+| 123 | One of the challenges enterprises face in a cloud-first, mobile-first world i... |  |  | 7.5 | contentidea-kb |
+| 124 | These are the type of questions that you can ask a client when facing an issu... |  |  | 7.5 | contentidea-kb |
+| 125 | Teams Channel for Intune Case Discussion: Apps-Development, here you can post... |  |  | 7.5 | contentidea-kb |
+| 126 | The Microsoft Intune App SDK for iOS lets you incorporate Intune app protecti... |  |  | 7.5 | contentidea-kb |
+| 127 | Xamarin is an open-source platform for building modern and performant applica... |  |  | 7.5 | contentidea-kb |
+| 128 | Note: Intune Device ID, Azure Device ID, Android Device Serial Number are all... |  |  | 7.5 | contentidea-kb |
+| 129 | You are using Office 365 apps e.g. Teams on your iOS device and you have appl... | With the above settings in the MAM policy, users may be able to transfer cont... | This issue can be prevented if we select the below settings (Policy managed a... | 7.5 | contentidea-kb |
+| 130 | Ideal Behavior: When a tenant admin disables or deletes a user’s AAD account,... |  |  | 7.5 | contentidea-kb |
+| 131 | When using MAM, Teams for Android or iOS will sign out 30 seconds after a suc... | Issue was caused because a user-level wipe request had been created for this ... | Guided the user to remove the user-level wipe request following these steps: ... | 7.5 | contentidea-kb |
+| 132 | Consider the following scenario:You have Intune Android      devices enrolled... | The behavior is expected and by design with the current SDK implementation. T... | Currently the only known work around is to block specific URLs to prevent acc... | 7.5 | contentidea-kb |
+| 133 | Version&nbsp;19.0.0&nbsp;of the&nbsp;Intune iOS SDK was released in December,... |  |  | 7.5 | contentidea-kb |
+| 134 | Intune  and Office test beta OS versions to ensure management and apps work a... | The  problem occurs when the Intune SDK patches a function table used by SQLi... | If this issue occurs with an LOB app, admins will need to update APP-protecte... | 7.5 | contentidea-kb |
+| 135 | When setting the&nbsp;Max OS Version conditional launch setting in an iOS or ... | This occurs because of a&nbsp;known issue in the app SDK (Bug 9816494). | This problem is scheduled to be fixed in the next version of the SDK (2105). ... | 7.5 | contentidea-kb |
+| 136 | We enrolled an Android device as dedicated device in Shared device mode accor... | This is by design today as apps other than Teams have not adopted MSAL yet wh... | By-design. | 7.5 | contentidea-kb |
+| 137 | The device security path doesn't match the one reported in the Intune Portal.... | This is by design and a known issue by Huawei. | This issue can be ignored.&nbsp;However, if you want to have a closure look, ... | 7.5 | contentidea-kb |
+| 138 | When trying to sync contacts from the Blackberry Work&nbsp;App&nbsp;to the na... | By default, the OS might prevent managed apps from saving or syncing contact ... | To resolve this issue, assign a device restriction policy to the device as fo... | 7.5 | contentidea-kb |
+| 139 | After creating an app protection policy for&nbsp;Outlook and Edge, when you s... | This can occur if the Google meet URL Protocol is not added in the MAM Policy... | The App Protection Policy &quot;send org data&quot; is preventing the end-use... | 7.5 | contentidea-kb |
+| 140 | What is the tenant name? What is the UPN and device ID? Are there any errors?... |  |  | 7.5 | contentidea-kb |
+| 141 | Citrix MVPN  payloads can be included as iOS edge App config from Intune or f... | The CitrixSDK is included in the iOS Edge browser to accept the microVPN payl... | The Browser Team (Internal)and Citrix (External) is aware of this issue, and ... | 7.5 | contentidea-kb |
+| 142 | AIP Viewer (Mobile App) enables you to view&nbsp;protected emails, PDFs, imag... |  |  | 7.5 | contentidea-kb |
+| 143 | You might get a case which customer have IOS Jailbroken device have MAM-WE po... | Jailbreak was not getting detected for MS Excel with the used SDK version above. | There is a short term solution and long term solution:  1) Short term solutio... | 7.5 | contentidea-kb |
+| 144 | The Outlook widget on iOS devices with an app protection policy is displaying... | App protection policy recently got the setting &quot;Sync policy managed app ... | To resolve this problem, set &quot;Sync policy managed app data with native a... | 7.5 | contentidea-kb |
+| 145 | Frist download a Visual Studio Enterprise edition from&nbsp;Downloads - Visua... |  |  | 7.5 | contentidea-kb |
+| 146 | This article contains troubleshooting scenarios for App protection/Configurat... |  |  | 7.5 | contentidea-kb |
+| 147 | Users are unable to attach pictures or images from the local photo library to... | This can occur if the Android device is using a&nbsp;third party photo librar... | There is no resolution as this is &quot;by design&quot; and confirmed via the... | 7.5 | contentidea-kb |
+| 148 | The IntuneMAMUPN key is required on iOS devices when the App Protection Polic... | The IntuneMAMUPN key is case sensitive. To check if the setting is properly c... | When you collect the MAM logs, you'll see a file with the BundleID of the app... | 7.5 | contentidea-kb |
+| 149 | When trying to sign into an Office app like Teams or Outlook for iOS you see ... | This can happen for different reasons: 1. The UPN from the two tenants are si... | To resolve this issue, use&nbsp;the M365 Copilot app for iOS to&nbsp;clear th... | 7.5 | contentidea-kb |
+| 150 | A customer sends two or more managed apps app configuration policies and want... | Intune for this scenario is just a delivery mechanism, so this means that Int... | So, what's the criteria that Edge uses to determine which conflict setting wi... | 7.5 | contentidea-kb |
+| 151 | When opening the application that is wrapped with the Intune App protection S... | This can be caused by issues problems with communicating with the Intune MAM ... | To resolve this issue, make sure that device has the ability to connect to al... | 7.5 | contentidea-kb |
+| 152 | This article is a guide on how to validate if a &quot;Managed Apps&quot; or &... |  |  | 7.5 | contentidea-kb |
+| 153 | On Android device when you open an app that has app protection policy assigne... | This can be caused by having in App protection policy the conditional launch ... | To resolve this issue add the device manufacturer to the &quot;Device Manufac... | 7.5 | contentidea-kb |
+| 154 | Troubleshooting Intune App protection policy requires the narrowing down the ... |  |  | 7.5 | contentidea-kb |
+| 155 | Troubleshooting Intune App protection policy requires narrowing down the prob... |  |  | 7.5 | contentidea-kb |
+| 156 | Troubleshooting Third Party MTDs will use the same available queries and basi... |  |  | 7.5 | contentidea-kb |
+| 157 | Microsoft Launched the capability to collect Microsoft365 App logs from Intun... |  |  | 7.5 | contentidea-kb |
+| 158 | iOS devices targeted with MAM policies are unable to capture screenshot as se... | &nbsp;  It's an expected behavior. For apps that have updated to v19.7.6 or l... | Configure app configuration policy setting com.microsoft.intune.mam.screencap... | 7.5 | contentidea-kb |
+| 159 | In some scenarios, when LOB app is wrapped with Intune App Wrapping tool, if ... | The auth loop in this case is actually caused by the fact that the LOB applic... | To resolve this issue,&nbsp;try specifying the -finishLaunching flag in their... | 7.5 | contentidea-kb |
+| 160 | I wanted to write this article as a guide on how to set up your environment t... |  |  | 7.5 | contentidea-kb |
+| 161 | iOS phone app freezes, does not display call notifications and device does no... | Large amount of contacts detected in the phone app (case history indicated ov... | Check if Outlook app protection is allowing contact sync.   &nbsp; Change the... | 7.5 | contentidea-kb |
+| 162 | Error “Something went wrong. [4oggx]” on Samsung Galaxy Android devices, prev... | The issue is caused by an authentication broker conflict on Samsung Galaxy An... | Troubleshooting Steps Follow the steps below to isolate and resolve the issue... | 7.5 | contentidea-kb |
+| 163 | Users are signed out of ALL Office mobile apps on iOS once they sign out of a... | Known issue with app protection policies (MAM) on iOS where signing out of on... | See workaround in Intune Customer Success blog post. | 7.0 | mslearn |
+| 164 | Android MAM policy does not restrict data transfer to Google Maps | Google Maps not covered by APP data transfer restrictions | Known issue - see KB 4490475. Consider blocking Google Maps via managed app c... | 6.5 | ado-wiki |
+| 165 | Android Huawei device keeps getting marked as non-compliant due to being inac... | Intune service is killed in the backend by the Android system. Especially in ... | Enable auto-launch and disable batter optimization for Company Portal and oth... | 4.5 | contentidea-kb |
+| 166 | The iOS MAM policy which is set to target “Apps on unmanaged devices” is also... |  |  | 4.5 | contentidea-kb |
+| 167 | In an IOS application that receives a Intune App protection policy you click ... | T he Intune App protection policy for the "Send Org data to other apps" setti... | To resolve this issue get the targeted application to be wrapped with the lat... | 4.5 | contentidea-kb |
+| 168 | When users attempt to attach a photo to apps within the Work Profile (i.e. Wo... | This occurs because Android requires an additional application in the workspa... | To resolve this issue, approve and assign a File Explorer application from th... | 3.0 | contentidea-kb |
+| 169 | Users are unable to create a new email after an application protection policy... | This is expected behavior if t he users' mailboxes are located in on-premises... | Enable hybrid-modern authentication for on-premises Exchange | 3.0 | contentidea-kb |
+| 170 | When using the Outlook App for IOS or Android with Azure conditional access p... | This can be caused by having a Intune classic policy or old MAM policy. | To resolve this issue follow the steps mentioned in the following knowledge b... | 3.0 | contentidea-kb |
+| 171 | You have noticed that Outlook, OneNote or other Enlightened apps that are tar... | While we support the Android fingerprint manager APIs that were introduced in... | The only resolution for this would be in two options: 1) For the customer to ... | 3.0 | contentidea-kb |
+| 172 | You have noticed that Outlook, OneNote or other Enlightened apps that are tar... | While we support the Android fingerprint manager APIs that were introduced in... | The only resolution for this would be in two options: 1) For the customer to ... | 3.0 | contentidea-kb |
+| 173 | Note that SDK refers to Software Development Kit, a library that can be used ... | Scenario 1 - Customer wants to start developing with Intune SDK/Setting up ne... | Scenario 1 - Customer wants to start developing with Intune SDK/Setting up ne... | 3.0 | contentidea-kb |
+| 174 | Users are not able to synchronize there Gmail Calendar and Gmail Contacts wit... | This can be caused by Android for Enterprise profile setting "Default App Per... | To work around this issue set the Android for Enterprise profile setting "Def... | 3.0 | contentidea-kb |

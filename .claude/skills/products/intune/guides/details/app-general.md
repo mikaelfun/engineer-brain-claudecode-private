@@ -1,259 +1,178 @@
-# Intune 应用部署通用问题 — 综合排查指南
+# INTUNE 应用部署通用问题 — 已知问题详情
 
-**条目数**: 57 | **草稿融合数**: 2 | **Kusto 查询融合**: 1
-**来源草稿**: ado-wiki-Company-Portal-GCC-H.md, ado-wiki-a-Web-Company-Portal.md
-**Kusto 引用**: app-install.md
-**生成日期**: 2026-04-07
+**条目数**: 132 | **生成日期**: 2026-04-17
 
 ---
 
-## ⚠️ 已知矛盾 (16 条)
+## Quick Troubleshooting Path
 
-- **solution_conflict** (high): intune-ado-wiki-a-r1-001 vs intune-contentidea-kb-004 — context_dependent: 不同来源给出不同方案，可能适用不同场景
-- **solution_conflict** (high): intune-ado-wiki-a-r1-001 vs intune-contentidea-kb-077 — version_superseded: Entry intune-contentidea-kb-077 contains deprecated/EOL language
-- **solution_conflict** (high): intune-ado-wiki-a-r1-001 vs intune-contentidea-kb-319 — context_dependent: 不同来源给出不同方案，可能适用不同场景
-- **solution_conflict** (high): intune-ado-wiki-a-r1-001 vs intune-contentidea-kb-557 — context_dependent: 不同来源给出不同方案，可能适用不同场景
-- **solution_conflict** (high): intune-ado-wiki-a-r1-001 vs intune-contentidea-kb-621 — context_dependent: 不同来源给出不同方案，可能适用不同场景
+### Step 1: LOB app update behavior varies by platform and assignment type; iOS auto-updates silently for Available assignment while Android prompts user if Ch...
+**Solution**: Upload LOB app and replace original deployment (verify version reflects update). iOS Available: silent auto-update. iOS Required: auto-update. Android Available/Required: prompt if Check apps from external sources enabled; disable setting for silent update.
+`[Source: onenote, Score: 9.5]`
 
-## 排查流程
+### Step 2: macOS LOB app (.pkg wrapped to .intunemac) shows Install status in Company Portal even after successful installation. App is usable but status neve...
+**Solution**: Extract the .pkg file using 'xar -x -f <pkg> -C <output>' and verify each sub-package install-location. Ensure all packages install to /Applications or its child folder. If the .pkg contains utilities installing to /usr/local/bin or /Library/Application Support, consider repackaging or using a custom detection script.
+`[Source: onenote, Score: 9.5]`
 
-### Phase 1: Company Portal Gcc H
-> 来源: ADO Wiki — [ado-wiki-Company-Portal-GCC-H.md](../drafts/ado-wiki-Company-Portal-GCC-H.md)
+### Step 3: After deploying app as Available type to user group, end user unable to see the app in Company Portal or app takes very long time to appear; Compan...
+**Solution**: 1. Check Kusto HttpSubsystem for Company Portal API calls: filter by deviceId, verify resultCount. 2. Check EffectiveGroupMembershipsUserService_RawData for EffectiveGroupChangeTime. 3. Check PolicyAssignmentProvider for policy assignment count changes. 4. Compare timestamps between group change and Company Portal query. 5. If resultCount=0 after group change, wait for replication (typically minutes, can be hours). 6. For apps assigned to 'All Users', verify the assignment is effective regardles
+`[Source: onenote, Score: 9.5]`
 
-**Company Portal for GCC-H — ADO Wiki 提取草稿**
-**概述**
-**Known Issue: GCC-H 无法从 Store 部署 Company Portal**
-1. **使用商业账号**下载（⚠️ 不能用 GCC-H UPN，否则下载会被阻止）:
-   ```
-   ```
-2. 将下载的二进制文件打包为 **LOB 应用**，通过 Intune 推送
-3. ⚠️ **维护注意**: 每次 Company Portal 有新版本更新时，需重复：下载 → 重打包 → 重部署
+### Step 4: Cannot deploy Windows Company Portal app as 'Required' to devices via Microsoft Store legacy in Intune; only 'Available' assignment type supported
+**Solution**: Download Company Portal offline installer from Microsoft Download Center (https://www.microsoft.com/en-us/download/details.aspx?id=105219) and deploy as Required LOB app. Long-term: PG plans to support via winget
+`[Source: onenote, Score: 9.5]`
 
-**参考链接**
-- Wiki: https://dev.azure.com/Supportability/Intune/_wiki/wikis/Intune?pagePath=%2FApp%20Management%2FWindows%2FCompany%20Portal%20for%20GCC-H
+### Step 5: MSI LOB app deployed via Intune fails to download; no MSI file in C:\Windows\System32\config\systemprofile\AppData\Local\mdm; registry Status=30 (D...
+**Solution**: 1) Check registry EnterpriseDesktopManagement for Status (30=DownloadFailed); 2) Run Bitsadmin /list /allusers; 3) Check BITS event log; 4) Reset EnforcementRetryCount and EnforcementRetryIndex to 0, clear LastError and Status to retry
+`[Source: onenote, Score: 9.5]`
 
-### Phase 2: A Web Company Portal
-> 来源: ADO Wiki — [ado-wiki-a-Web-Company-Portal.md](../drafts/ado-wiki-a-Web-Company-Portal.md)
+### Step 6: MSI LOB app downloaded but fails silent installation; no install log at expected path
+**Solution**: 1) Check logs: device-targeted at %windir%\temp\{MSIProductID}.msi.log; 2) Enable verbose MSI logging via registry (Debug=7, Logging=voicewarmupx); 3) Manual test: msiexec /I package.msi /l*vx log; 4) Check MDM event log
+`[Source: onenote, Score: 9.5]`
 
-**About the Company Portal Website**
-**Available End-User Actions**
-1. Check status - Initiate a status check to verify or regain access to organizational resources.
-2. View and manage work apps - Search, filter, and install available work apps.
-3. Store recovery key (macOS) - Store and rotate the FileVault key for an encrypted Mac.
-4. Get recovery key (macOS) - Retrieve the stored FileVault key.
-5. Get recovery key (Windows) - Retrieve the stored BitLocker key.
+### Step 7: Intune always reports Company Portal (WinCP) LOB app deployment as Failure on Windows clients. Detection finds installed version mismatch. Error 0x...
+**Solution**: PG confirmed: this is expected behavior for store-signed LOB apps. 1) Accept the failure status as cosmetic. 2) Use winget to download CP: winget download company portal --source msstore. 3) Do NOT use Download Center link. 4) PG is exploring alternative deployment methods.
+`[Source: onenote, Score: 9.5]`
 
-**Device Compliance Status**
-
-**Configuring the Company Portal Website**
-
-**Scoping Questions**
-1. What browser and browser version is the user using?
-2. Is the user able to sign in, or does the issue occur before/during/after authentication?
-3. Is the device enrolled in Intune? Is it a personal or corporate device?
-4. What specific action is the user trying to perform?
-5. What error message (if any) is displayed?
-
-**FAQ**
-
-### Phase 3: Kusto 诊断查询
-
-#### app-install.md
-`[工具: Kusto skill — app-install.md]`
-
-```kql
-DeviceManagementProvider  
-| where env_time >= ago(7d)
-| where ActivityId == '{deviceId}'
-| where (EventId == 5767 or EventId == 5766) 
-| project env_time, EventId, TaskName, enforcementType, enforcementState, errorCode, 
-    name, ['id'], typeAndCategory, applicablilityState, reportComplianceState, 
-    EventMessage, message, env_cloud_name, ActivityId, tenantId, userId, 
-    sessionId, relatedActivityId2, appPolicyId, platform, technology, devicePlatformType 
-| order by ActivityId, env_time asc 
-```
-
-```kql
-DeviceManagementProvider  
-| where env_time >= ago(2d)
-| where ActivityId == '{deviceId}'
-| where (['id'] contains '{appId}' or appPolicyId contains '{appId}' 
-    or message contains '{appId}' or name contains '{appName}')  
-| where (EventId == 5767 or EventId == 5766) 
-| project env_time, EventId, TaskName, enforcementType, enforcementState, errorCode, 
-    name, ['id'], typeAndCategory, applicablilityState, reportComplianceState, 
-    EventMessage, message, env_cloud_name, ActivityId, tenantId, userId, 
-    sessionId, relatedActivityId2, appPolicyId, platform, technology, devicePlatformType 
-| order by ActivityId, env_time asc 
-```
-
-```kql
-DeviceManagementProvider
-| where env_time >= ago(2d)
-| where ActivityId == '{deviceId}'
-| where message contains '{appName}' or EventMessage contains '{appName}'
-| project env_time, message, EventMessage, aadDeviceId, ActivityId
-```
-
-```kql
-let devId='{deviceId}';
-
-DeviceManagementProvider
-| where SourceNamespace == "IntuneCNP"
-| where env_time > ago(7d) and ActivityId == devId
-| where EventId==5786
-| project env_time, EventId, Level, name, type=typeAndCategory, compliance=reportComplianceState, EventMessage  
-| where type=="AppModel;AppModel" and compliance=="NotInstalled"
-| summarize lastNotInstalled=max(env_time) by name 
-| join kind= leftouter (
-    DeviceManagementProvider
-    | where SourceNamespace == "IntuneCNP"
-    | where env_time > ago(7d) and ActivityId == devId
-    | where EventId==5786
-    | project env_time, EventId, Level, name, type=typeAndCategory, compliance=reportComplianceState, EventMessage  
-    | where type=="AppModel;AppModel" and compliance=="Installed"
-    | summarize 1stInstalled=min(env_time) by name 
-) on name 
-| project name, lastNotInstalled, 1stInstalled, compliance = iff(isnull(1stInstalled), "NotInstalled", "Installed")
-```
-
-```kql
-DownloadService
-| where SourceNamespace == "IntuneCNP"
-| where env_time > ago(1d)
-| where EventId in (13796)
-| where deviceId == '{deviceId}' 
-| project env_time, SourceNamespace, accountId, deviceId, userId, TaskName, 
-    EventId, status, platform, statusCode, exception, errorEventId, result, EventMessage
-```
-
-```kql
-IntuneEvent
-| where env_time >= ago(3d)
-| where ApplicationName == 'SideCar'
-| where ActivityId == '{deviceId}'
-| project env_time, ColMetadata, Col1, Col2, Col3, Col4, Col5, Col6, 
-    ComponentName, RelatedActivityId, SessionId
-```
-
-```kql
-IntuneEvent
-| where env_time >= ago(24h)
-| where ApplicationName == 'SideCar'
-| where ActivityId == '{deviceId}'
-| extend Policy = split(Col3, ',')
-| extend PolicyId = split(Policy[0],':')[1]
-| extend PolicyType = split(Policy[1],':')[1]
-| extend PolicyVersion = split(Policy[2],':')[1]
-| extend PolicyBody = split(Policy[5],'":\"')[1]
-| project PolicyId, PolicyType, PolicyVersion, PolicyBody
-```
-
-```kql
-DeviceManagementProvider
-| where env_time >= ago(30d)
-| where * contains '{deviceId}'
-| where * contains 'IntuneWindowsAgent'
-| project env_time, name, applicablilityState, reportComplianceState  
-| summarize max(env_time) by name, applicablilityState, reportComplianceState 
-```
-
-```kql
-let starttime = datetime({startTime});
-let endtime = datetime({endTime});
-let deviceid = '{deviceId}';
-let inputAccountId = '{accountId}';
-let ApplicationId = '{appId}';
-
-let correlationTable = cluster('intunecn.chinanorth2.kusto.chinacloudapi.cn').database('intune').
-IntuneEvent
-| where env_time between (starttime..endtime)
-| where DeviceId contains deviceid
-| where ComponentName == 'DownloadService'
-| where EventUniqueName == 'AppRequestCorrelation'
-| where AccountId == inputAccountId
-| project env_time, env_seqNum, env_cloud_name, env_cloud_role, env_cloud_roleInstance, ApplicationName, BuildVersion, Pid, Tid, ActivityId, RelatedActivityId,
-Level = TraceLevel, EventUniqueName, AccountId, ContextId, UserId, DeviceId, ApplicationId = Col1, ContentId = Col2, FileId = Col3, HttpVerb = Col4, cV, Exception = Message;
-
-correlationTable
-| summarize by RelatedActivityId, ApplicationId, ContextId
-| join (
-    DownloadService
-    | where env_time between (starttime..endtime) and EventId == 13796
-    | where accountId =~ inputAccountId
-    | project env_time, env_seqNum, env_cloud_name, env_cloud_role, env_cloud_roleInstance, ApplicationName = I_App,
-    BuildVersion = I_BuildVer, Pid, Tid, ActivityId,
-    RelatedActivityId = relatedActivityId2, Level, EventUniqueName = TaskName, AccountId = accountId, UserId = userId, DeviceId = deviceId, exceptionType,
-    platform, requestedRange, statusCode, bytesDelivered, bytesRequested, timeElapsed, cV, Message = EventMessage
-) on RelatedActivityId
-| project-away RelatedActivityId1
-| order by env_time asc, env_seqNum asc
-| summarize MegabytesTransfered = sum(bytesDelivered)/1024/1024 by ApplicationId, AccountId, DeviceId, bin(env_time, 10m)
-| order by MegabytesTransfered desc
-| limit 1000
-```
-
+### Step 8: iOS LOB/IPA 应用从 Company Portal 安装失败，提示安装错误
+**Solution**: 1. 确认 IPA 以 Corporate/Enterprise 方式导出（非 Ad Hoc）；2. 验证 .ipa 和 plist 文件匹配；3. 检查 Apple 签名证书是否过期；4. 先在设备上手动安装测试，排除非 Intune 问题；5. 收集 iOS console log 进一步排查
+`[Source: ado-wiki, Score: 9.0]`
 
 ---
 
-## 已知问题速查
+## All Known Issues
 
-| # | 症状 | 根因 | 方案 | 分数 | 来源 |
-|---|------|------|------|------|------|
-| 1 | OneDrive/Outlook for Android frequently signs out or is unable to sign in; Outlook log shows 'Una... | Microsoft Authenticator (when used as broker app) is not in the Android batte... | Uninstall Microsoft Authenticator app; let Company Portal serve as the authentication broker app.... | 🟢 9.0 | OneNote |
-| 2 | Need to understand Intune app deployment architecture to troubleshoot why a required app is not i... | Intune uses two parallel deployment architectures: (1) Main OMA-DM/IWS path f... | Store/LOB apps: trace push notification > OMA-DM check-in > DownloadService > GetAppStatus/Report... | 🟢 9.0 | OneNote |
-| 3 | Intune Win32 app or LOB app download fails silently on Windows; BITS (Background Intelligent Tran... | BITS handles background package downloads for Intune LOB and Win32 apps on Wi... | Collect BITS ETL + netmon + procmon + TTT traces: (1) Download netmon and procmon (Sysinternals);... | 🟢 9.0 | OneNote |
-| 4 | macOS LOB app (.pkg wrapped to .intunemac) shows Install status in Company Portal even after succ... | The .pkg file contains multiple app installers (e.g., Wireshark has 3 sub-pac... | Extract the .pkg file using 'xar -x -f <pkg> -C <output>' and verify each sub-package install-loc... | 🟢 9.0 | OneNote |
-| 5 | After deploying app as Available type to user group, end user unable to see the app in Company Po... | Effective group membership change has not yet propagated to Intune backend. W... | 1. Check Kusto HttpSubsystem for Company Portal API calls: filter by deviceId, verify resultCount... | 🟢 9.0 | OneNote |
-| 6 | Cannot deploy Windows Company Portal app as 'Required' to devices via Microsoft Store legacy in I... | Microsoft Store legacy integration only supports 'Available' assignment type ... | Download Company Portal offline installer from Microsoft Download Center (https://www.microsoft.c... | 🟢 9.0 | OneNote |
-| 7 | MSI LOB app deployed via Intune fails to download; no MSI file in C:\Windows\System32\config\syst... | BITS job fails to download the MSI package. Common causes: network/proxy bloc... | 1) Check registry EnterpriseDesktopManagement for Status (30=DownloadFailed); 2) Run Bitsadmin /l... | 🟢 9.0 | OneNote |
-| 8 | MSI LOB app downloaded but fails silent installation; no install log at expected path | MSI package fails to install silently via Intune MDM enforcement. Silent inst... | 1) Check logs: device-targeted at %windir%\temp\{MSIProductID}.msi.log; 2) Enable verbose MSI log... | 🟢 9.0 | OneNote |
-| 9 | iOS enrollment fails with Company Portal Temporarily Unavailable error message. | The Company Portal app on the device is out of date or corrupted. | 1. Remove the Company Portal app from the device. 2. Validate user credentials (Azure AD/Entra ID... | 🟢 9.0 | OneNote |
-| 10 | macOS LOB app (.pkg) with multiple sub-components installs successfully but Company Portal shows ... | The .pkg file contains multiple component installers (e.g., Wireshark has 3 s... | 1. Extract the pkg to inspect: xar -x -f <pkg> -C <output>. 2. Check install-location for each co... | 🟢 9.0 | OneNote |
-| 11 | macOS FileVault is enabled by the user before Intune enrollment or before FileVault policy is dep... | FileVault was already enabled by the end user (not via MDM payload). Intune c... | 1. Deploy a FileVault policy to the device from Intune (it will not decrypt/re-encrypt, just enab... | 🟢 9.0 | OneNote |
-| 12 | iOS/macOS device hardware page in Intune portal shows unknown for some fields and inconsistent va... | Platform bug (ICM 430321468): When scheduled inventory refresh was skipped be... | 1. Wait for platform fix (ICM 430321468). 2. When device comes online, full inventory refresh tri... | 🟢 9.0 | OneNote |
-| 13 | Intune always reports Company Portal (WinCP) LOB app deployment as Failure on Windows clients. De... | Store-signed apps like Company Portal receive automatic updates from Windows ... | PG confirmed: this is expected behavior for store-signed LOB apps. 1) Accept the failure status a... | 🟢 9.0 | OneNote |
-| 14 | Android 设备应用已完成安装，但 Intune Admin Center 的 App Details 页面状态未更新为已安装 | 状态更新通过 IWS（Intune Web Service）而非直接从设备读取，存在 1-2 分钟延迟；离开 App Details 页面后不再自动刷新 | 1. 等待 1-2 分钟；2. 离开 App Details 页面后重新导航回来手动刷新；3. 如长时间不更新则通过 Kusto 查询 Intune 服务端 app install 状态 | 🟢 8.5 | ADO Wiki |
-| 15 | DISA Purebred v3 app 无法与旧版 Company Portal 配合完成 derived credential 导入流程 | Purebred v3 app 仅支持 Company Portal 5.2509.0 及以上版本，旧版 CP 不兼容 v3 Purebred app | 1. 将 Company Portal 更新至 5.2509.0+（兼容新旧 Purebred app）；2. 或将 Purebred app 回退到 v3 之前的版本 | 🟢 8.5 | ADO Wiki |
-| 16 | 用户未收到 derived credential 安装提示，设备上无 derived credential | Derived credentials 策略未正确启用/目标化，或设备未成功注册(WPJ)，或 Company Portal 通知未刷新 | 1. 确认 derived credentials 策略已正确启用并目标化到用户；2. 确认设备已成功注册/WPJ；3. 在 Company Portal 通知页面下拉刷新；4. 确认设备上只安... | 🟢 8.5 | ADO Wiki |
-| 17 | macOS Platform SSO: Platform Credential not available as passkey option in browser Sign-in Option... | Company Portal is not enabled under 'Use passwords and passkeys from' in macO... | Open System Settings > Passwords and enable 'Company Portal' under 'Use passwords and passkeys fr... | 🟢 8.5 | ADO Wiki |
-| 18 | Passcode reset option not available or not working on personal Android device with work profile i... | Passcode reset is not supported on personal Android devices with a work profi... | Inform user that passcode reset is not available for personal Android devices with work profile o... | 🟢 8.5 | ADO Wiki |
-| 19 | LOB app update behavior varies by platform and assignment type; iOS auto-updates silently for Ava... | Platform-specific LOB update handling: iOS auto-updates installed Available L... | Upload LOB app and replace original deployment (verify version reflects update). iOS Available: s... | 🟢 8.5 | OneNote |
-| 20 | Android LOB (.apk) app download fails via Intune Company Portal on cellular network; 'download fa... | HTTP 499 means the client disconnected before the server completed the respon... | Use corporate Wi-Fi network for LOB app installation to avoid network instability. On cellular: a... | 🟢 8.0 | OneNote |
-| 21 | iOS LOB app shows unexpected version after wrapping with Intune App Wrapping Tool; CFBundleVersio... | The Intune App Wrapping Tool replaces CFBundleVersion value during wrapping. ... | Use plutil on macOS: plutil -p Info.plist \| grep -i vers. CFBundleShortVersionString = display v... | 🟢 8.0 | OneNote |
-| 22 | Need to check iOS App Store app version details for troubleshooting Intune app deployment. |  | Use iTunes Store API: https://uclient-api.itunes.apple.com/WebObjects/MZStorePlatform.woa/wa/look... | 🟢 8.0 | OneNote |
-| 23 | Android LOB app update prompts user to install instead of auto-updating when assignment type is A... | When 'Check apps from external sources' (Verify apps over USB / Play Protect ... | For silent auto-update on Android: disable 'Check apps from external sources' setting on the devi... | 🟢 8.0 | OneNote |
-| 24 | GCC-H (Fairfax) 租户客户无法从 Microsoft Store 部署或更新 Company Portal，因为 Fairfax 租户不支持新版 Microsoft Store | GCC-H Fairfax 租户中新版 Microsoft Store 不可用，无法直接通过 Store 推送 Company Portal | 1. 在商业账号（非 GCC-H UPN，否则下载会被阻止）下运行：winget download --id 9WZDNCRFJ3PZ --source msstore；2. 将下载的二进制文件... | 🔵 7.5 | ADO Wiki |
-| 25 | Linux 设备注册时出现 Error 1001 / 'An unexpected error has occurred'；日志显示 ErrorCode:PasswordResetRegistr... | 租户启用了 SSPR（Self-Service Password Reset），用户首次登录时被重定向到 mysignins 页面注册必需的 MFA 方法... | 让用户先打开浏览器登录 Azure Portal（portal.azure.com）→ 自动跳转到 mysignins → 注册所需的身份验证方法 → 返回 Linux 设备重新注册 Intun... | 🔵 7.5 | ADO Wiki |
-| 26 | Error 0x87D1FDE8 displayed in Intune admin console after deploying Managed Browser policy with al... | Known issue in Microsoft Intune with Managed Browser policy deployment. The e... | The error resolves automatically after the device checks in again. No action needed - safe to ign... | 🔵 7.5 | MS Learn |
-| 27 | iOS VPP app install fails with message VPP user licensing not supported for userless enrollment. ... | VPP user licensing requires user affinity on the device. Devices enrolled via... | Change VPP app assignment to device-based licensing. If app is targeted to device groups, ensure ... | 🔵 7.5 | OneNote |
-| 28 | After deploying a WebClip application to an iOS or Android device as Required, if you delete the ... | This can occur if the web clip has been deployed as a Required app and the us... | Remove the deployment prior to migrating the user, then redeploy after migration. Or change to Av... | 🔵 7.0 | ContentIdea KB |
-| 29 | Customer has an exemption on how many devices per user that can be enrolled into Intune. Customer... | The setting for "Maximum number of devices per user" in Azure IS NOT set to "... | Log into Azure console, under Users and groups -> Device Settings; change the value for "Maximum ... | 🔵 7.0 | ContentIdea KB |
-| 30 | Company Portal in infinite loop. Device looping back to login page. Company Portal logs show The ... | Check to see if Company Portal log shows this message The signed in user is n... | Navigate to Azure portal and set user assignment required to NO. If the option is not available t... | 🔵 7.0 | ContentIdea KB |
-| 31 | Customer states that Intune Enrollment is not workingCustomer states when they attempt to enroll ... | Tenant Endpoint defectDiagnostic Description: The test determines if the acco... | Resolved the defect on the back end of the tenant via Ops procedureCustomer verified they were ab... | 🔵 7.0 | ContentIdea KB |
-| 32 | This document describes how to use Fiddler to capture a network trace, including instructions tha... |  | Fiddler is a free 3rd party tool that customers can download and use if they agree to do so. Fidd... | 🔵 7.0 | ContentIdea KB |
-| 33 | Users are unable to launch the &quot;All apps&quot; link in the Company Portal in order to self-s... | A configuration policy is configured to either disable or hide Safari on iOS ... | Need to ensure that Safari is not being disabled or blocked in the General Configuration Policy (... | 🔵 7.0 | ContentIdea KB |
-| 34 | Whether a device is a desktop, laptop or tablet is not the primary deciding factor regarding whet... |  | To manage Windows PCs, you have two choices:+ Enroll the device orInstall the Intune software cli... | 🔵 7.0 | ContentIdea KB |
-| 35 | For users who had enrolled or re-enrolled their devices into Intune recently, only the Company Po... | �Discovered Apps� reporting will only reflect apps that were captured during ... | The apps that were installed but missing were simply not captured when the initial App Inventory ... | 🔵 7.0 | ContentIdea KB |
-| 36 | When scanning for updates with the Intune Agent, you receive error 0x8024001e, and you no longer ... | To verify the Kaspersky agent is the cause of the issue, attempt to delete th... | Customer should contact Kaspersky for guidance on adding the Intune Agent/Windows Update registry... | 🔵 7.0 | ContentIdea KB |
-| 37 | Customer has a hybrid Intune environment and has configured a policy to deploy a line-of-business... | The LOB app has expired | The expiration date must be extended per Apple�s instructions. Apple App Developer guide for the ... | 🔵 7.0 | ContentIdea KB |
-| 38 | When opening the Intune Web Company Portal, the end user is not seeing any apps that were deploye... | IW Portal team made a behavior change to support mobile app install without e... | Open portal.manage.microsoft.com, sign in, click menu > My Devices, click on a listed device to s... | 🔵 7.0 | ContentIdea KB |
-| 39 | After deploying a LOB application to MacOS or iOS, clients receive error: "Unable to Download App... | Invalid URLs in the .plist file for the app. | Remove the invalid URLs or change them to valid URL addresses in the .plist file. | 🔵 7.0 | ContentIdea KB |
-| 40 | After deploying a LOB application to MacOS or iOS, error: "Unable to Download App" or "app packag... | The iOS Distribution Certificate for the app has expired. | Obtain a new iOS Distribution Certificate from Apple, distribute a new version of the app signed ... | 🔵 7.0 | ContentIdea KB |
-| 41 | A user attempts to enroll an iOS based device via the Company Portal application and after select... | The Safari browser is configured to "Block All Cookies". | After configuring the Safari browser to allow Cookies, as below, attempt to enroll again. -Go to ... | 🔵 7.0 | ContentIdea KB |
-| 42 | After assigning an app to a group of Windows 10 clients as a Required app, the app will initially... | This is by design for Windows. Currently only iOS will automatically attempt ... | As a work around, create a second group that contains the same Windows 10 users, then create a ne... | 🔵 7.0 | ContentIdea KB |
-| 43 | When a customer deploys a mobile application as "Available" to a Device Group, the application do... | Unsupported | Available Install is not supported for mobile applications to a device group.This includes: Windo... | 🔵 7.0 | ContentIdea KB |
-| 44 | Attempting to enroll an iOS device using the Company Portal app fails with the following error: C... | This can occur if the Azure Active Directory Enterprise Applications Microsof... | To resolve this problem complete the following: 1. Open a browser and navigate to the Azure Activ... | 🔵 7.0 | ContentIdea KB |
-| 45 | After configuring DEP enrollment in Intune and deploying new DEP devices to users. the devices ne... | This can occur if both of the following conditions exist:1. The user has not ... | To resolve this problem, either configure Authenticate with Company Portal instead of Apple Setup... | 🔵 7.0 | ContentIdea KB |
-| 46 | When using an AD mobile account on a Mac the Company portal app fails to launch through the Self-... | By design. The Company portal app does not support AD mobile accounts.&nbsp; | Users must enroll into Jamf using a Local account on the Mac.&nbsp; | 🔵 7.0 | ContentIdea KB |
-| 47 | During IOS enrollment using the Company Portal app, when it redirects to the Safari browser to in... | This can occur if JavaScript is turned off in Safari on the iOS device.This c... | To resolve this problem, turn on JavaScript for the Safari browser on the iOS device. This is fou... | 🔵 7.0 | ContentIdea KB |
-| 48 | When attempting to add a Windows 10 Line Of Business (LOB) app, you receive the error: File exten... | This can occur if the downloaded app package file does not have a valid exten... | Give the download app package file a file extension of APPX, or whatever file extension is approp... | 🔵 7.0 | ContentIdea KB |
-| 49 | Customer is prompted with a keychain signing message for TEAMS, Outlook (O365 apps) after enrolli... | The workplace join key is put down by AAD teams code which the Intune company... | This is expected since an App is trying to access a keychain item and the user is being prompted ... | 🔵 7.0 | ContentIdea KB |
-| 50 | Customer is prompted with a keychain signing message for TEAMS, Outlook (O365 apps) after enrolli... | The workplace join key is put down by AAD teams code which the Intune company... | This is expected since an App is trying to access a keychain item and the user is being prompted ... | 🔵 7.0 | ContentIdea KB |
-| 51 | Customer enrolls macOS devices into Jamf and registers with Intune for Partner Device Management ... | From CP app logs: Line 7783: 2018-07-25 21:41:25.116 INFO com.microsoft.ssp.a... | Company Portal (CP) should not be launched directly in JAMF cases, only JAMF should be launching ... | 🔵 7.0 | ContentIdea KB |
-| 52 | When attempting to deploy a Line of Business (LOB) app to Android devices, the deployment fails t... | This can occur if the app is being assigned as a Required app to a user group... | To resolve this issue, assign the app as a Required app to a device group instead of a user group... | 🔵 7.0 | ContentIdea KB |
-| 53 | Attempting to enroll an iOS device using the Company Portal app fails with one of the the followi... | This can occur if the Company Portal app is out of date or corrupted. | To resolve this issue complete the following:1. Remove (uninstall) the Company Portal app from th... | 🔵 7.0 | ContentIdea KB |
-| 54 | When turning on a device managed under Apple's Device Enrollment Program (DEP), Apple Business Ma... | This can occur if Authenticate with Company Portal instead of Apple Setup Ass... | To resolve this issue, set Authenticate with Company Portal instead of Apple Setup Assistant to Y... | 🔵 7.0 | ContentIdea KB |
-| 55 | After enrolling an Android Enterprise device (aka Android for Work or AfW), users see 2 versions ... | This is a known problem with the current version of the Company Portal app pr... | Resolved with December 2018 release of Intune Company Portal | 🔵 7.0 | ContentIdea KB |
-| 56 | Scenario 1 - Base app does not install MacOS line of business (LOB) apps created with the Intune ... | Scenario 1 - Base app does not installAs per Apple documentation https://deve... | Scenario 1 - Base app does not install First of all, remove any Required deployments of the affec... | 🔵 7.0 | ContentIdea KB |
-| 57 | Question whether SCCM can still deploy applications to co-managed devices after switching Client ... | Switching Client Apps workload to Intune enables Intune app deployment but do... | After switching Client Apps workload to Intune: 1) Intune-deployed available apps appear in Compa... | 🔵 7.0 | OneNote |
+| # | Symptom | Root Cause | Solution | Score | Source |
+|---|---------|-----------|----------|-------|--------|
+| 1 | LOB app update behavior varies by platform and assignment type; iOS auto-upda... | Platform-specific LOB update handling: iOS auto-updates installed Available L... | Upload LOB app and replace original deployment (verify version reflects updat... | 9.5 | onenote |
+| 2 | macOS LOB app (.pkg wrapped to .intunemac) shows Install status in Company Po... | The .pkg file contains multiple app installers (e.g., Wireshark has 3 sub-pac... | Extract the .pkg file using 'xar -x -f <pkg> -C <output>' and verify each sub... | 9.5 | onenote |
+| 3 | After deploying app as Available type to user group, end user unable to see t... | Effective group membership change has not yet propagated to Intune backend. W... | 1. Check Kusto HttpSubsystem for Company Portal API calls: filter by deviceId... | 9.5 | onenote |
+| 4 | Cannot deploy Windows Company Portal app as 'Required' to devices via Microso... | Microsoft Store legacy integration only supports 'Available' assignment type ... | Download Company Portal offline installer from Microsoft Download Center (htt... | 9.5 | onenote |
+| 5 | MSI LOB app deployed via Intune fails to download; no MSI file in C:\Windows\... | BITS job fails to download the MSI package. Common causes: network/proxy bloc... | 1) Check registry EnterpriseDesktopManagement for Status (30=DownloadFailed);... | 9.5 | onenote |
+| 6 | MSI LOB app downloaded but fails silent installation; no install log at expec... | MSI package fails to install silently via Intune MDM enforcement. Silent inst... | 1) Check logs: device-targeted at %windir%\temp\{MSIProductID}.msi.log; 2) En... | 9.5 | onenote |
+| 7 | Intune always reports Company Portal (WinCP) LOB app deployment as Failure on... | Store-signed apps like Company Portal receive automatic updates from Windows ... | PG confirmed: this is expected behavior for store-signed LOB apps. 1) Accept ... | 9.5 | onenote |
+| 8 | iOS LOB/IPA 应用从 Company Portal 安装失败，提示安装错误 | 常见原因：IPA 以 Ad Hoc（而非 Corporate/Enterprise）方式导出、.ipa 与 plist 文件不匹配、签名证书过期 | 1. 确认 IPA 以 Corporate/Enterprise 方式导出（非 Ad Hoc）；2. 验证 .ipa 和 plist 文件匹配；3. 检查... | 9.0 | ado-wiki |
+| 9 | DISA Purebred v3 app 无法与旧版 Company Portal 配合完成 derived credential 导入流程 | Purebred v3 app 仅支持 Company Portal 5.2509.0 及以上版本，旧版 CP 不兼容 v3 Purebred app | 1. 将 Company Portal 更新至 5.2509.0+（兼容新旧 Purebred app）；2. 或将 Purebred app 回退到 v... | 9.0 | ado-wiki |
+| 10 | macOS Platform SSO: 'app-sso platform -s' command shows null output after enr... | Either the com.apple.extensiblesso Profile is missing from System Settings (p... | Cause 1: Verify user/device is assigned to the Platform SSO device configurat... | 9.0 | ado-wiki |
+| 11 | macOS Platform SSO: Platform Credential not available as passkey option in br... | Company Portal is not enabled under 'Use passwords and passkeys from' in macO... | Open System Settings > Passwords and enable 'Company Portal' under 'Use passw... | 9.0 | ado-wiki |
+| 12 | Android LOB (.apk) app download fails via Intune Company Portal on cellular n... | HTTP 499 means the client disconnected before the server completed the respon... | Use corporate Wi-Fi network for LOB app installation to avoid network instabi... | 8.5 | onenote |
+| 13 | iOS LOB app shows unexpected version after wrapping with Intune App Wrapping ... | The Intune App Wrapping Tool replaces CFBundleVersion value during wrapping. ... | Use plutil on macOS: plutil -p Info.plist / grep -i vers. CFBundleShortVersio... | 8.5 | onenote |
+| 14 | Need to check iOS App Store app version details for troubleshooting Intune ap... |  | Use iTunes Store API: https://uclient-api.itunes.apple.com/WebObjects/MZStore... | 8.5 | onenote |
+| 15 | Android LOB app update prompts user to install instead of auto-updating when ... | When 'Check apps from external sources' (Verify apps over USB / Play Protect ... | For silent auto-update on Android: disable 'Check apps from external sources'... | 8.5 | onenote |
+| 16 | Android LOB app stuck in ERROR_APP_INSTALL_CANCELLED state. App download init... | In China mainland, Google Play services are blocked by firewall. Android LOB ... | 1. During app download, manually switch to Company Portal Settings and click ... | 8.5 | onenote |
+| 17 | Applications don't appear as Available in the Intune Company Portal app on Wi... | Users haven't identified their device in the Information Worker portal (IW po... | Users must go to portal.manage.microsoft.com → My Devices → Tap here → select... | 8.0 | mslearn |
+| 18 | Error 0x87D13BA2 'One or more apps contain invalid bundleIDs' when deploying ... | Multiple applications included in the macOS app package; not all individual a... | 1) Run 'sudo /usr/libexec/mdmclient QueryInstalledApps > InstalledApps.txt' o... | 8.0 | mslearn |
+| 19 | Question whether SCCM can still deploy applications to co-managed devices aft... | Switching Client Apps workload to Intune enables Intune app deployment but do... | After switching Client Apps workload to Intune: 1) Intune-deployed available ... | 7.5 | onenote |
+| 20 | GCC-H (Fairfax) 租户客户无法从 Microsoft Store 部署或更新 Company Portal，因为 Fairfax 租户不支持... | GCC-H Fairfax 租户中新版 Microsoft Store 不可用，无法直接通过 Store 推送 Company Portal | 1. 在商业账号（非 GCC-H UPN，否则下载会被阻止）下运行：winget download --id 9WZDNCRFJ3PZ --source ... | 7.5 | ado-wiki |
+| 21 | After deploying a WebClip application to an iOS or Android device as Required... | This can occur if the web clip has been deployed as a Required app and the us... | Remove the deployment prior to migrating the user, then redeploy after migrat... | 7.5 | contentidea-kb |
+| 22 | This article describes the general support boundaries for app packaging and a... |  |  | 7.5 | contentidea-kb |
+| 23 | When you attempt to save the configuration profile with the .csv files for io... | The format has changed in the new portal | The format has changed in the new portal and must be in this format:<app url>... | 7.5 | contentidea-kb |
+| 24 | Android only (iOS and Windows still working) devices are not able to login to... | The Azure AD Connect process for Device Write back is not configured or is co... | Disable and Re-enable Device WritebackReference Article: https://docs.microso... | 7.5 | contentidea-kb |
+| 25 | Customer wants advisory for the following two areas:1. Recommended practices ... | Advisory | This advisory is written to address not only the two questions below, but app... | 7.5 | contentidea-kb |
+| 26 | Users are unable to launch the &quot;All apps&quot; link in the Company Porta... | A configuration policy is configured to either disable or hide Safari on iOS ... | Need to ensure that Safari is not being disabled or blocked in the General Co... | 7.5 | contentidea-kb |
+| 27 | When opening a Image in MS Teams App on iOS or Android devices it will need t... | Configuration or missing the AIP App \ Policy on the Device | [Policy Setup]  1. Open the Intune Azure Portal  2. Navigate to Intune Mobile... | 7.5 | contentidea-kb |
+| 28 |  | The error occurs when the Company Portal app checks our certificates on ADFS ... | Import the certs up the chain into the intermediate store on the ADFS Proxy S... | 7.5 | contentidea-kb |
+| 29 | This article explains how to collect SysDump logging from a Samsung device ru... |  | Open the Phone app. Type *#9900# This will open the SysDump menu. Tap DEBUG L... | 7.5 | contentidea-kb |
+| 30 | When setting up Data Alert and Intune integration on iOS and Android devices,... | Still under investigation. | Check the following Service Principal with the AAD Service Principal Policy D... | 7.5 | contentidea-kb |
+| 31 | https://internal.support.services.microsoft.com/help/3090505 References the p... |  |  | 7.5 | contentidea-kb |
+| 32 | Customer cannot manage iOS and Android devices in Intune for Education portal... | By Design.  Intune for Education manages Windows 10 devices.  However, custom... | Follow the Intune documentation for managing iOS and Android devices: https:/... | 7.5 | contentidea-kb |
+| 33 | What inventory is collected per device. Mobile Device inventory collection pr... |  |  | 7.5 | contentidea-kb |
+| 34 | After deploying a LOB application to MacOS or iOS, clients receive error: "Un... | Invalid URLs in the .plist file for the app. | Remove the invalid URLs or change them to valid URL addresses in the .plist f... | 7.5 | contentidea-kb |
+| 35 | After deploying a LOB application to MacOS or iOS, error: "Unable to Download... | The iOS Distribution Certificate for the app has expired. | Obtain a new iOS Distribution Certificate from Apple, distribute a new versio... | 7.5 | contentidea-kb |
+| 36 | After assigning an app to a group of Windows 10 clients as a Required app, th... | This is by design for Windows. Currently only iOS will automatically attempt ... | As a work around, create a second group that contains the same Windows 10 use... | 7.5 | contentidea-kb |
+| 37 | When attempting to update an Android or iOS app, the following error message ... | This can occur if the initial APK or IPA file was uploaded without the app wr... | To resolve this problem:If the initial upload was done with the wrapper, the ... | 7.5 | contentidea-kb |
+| 38 | When a customer deploys a mobile application as "Available" to a Device Group... | Unsupported | Available Install is not supported for mobile applications to a device group.... | 7.5 | contentidea-kb |
+| 39 | Below are some steps that should allow you to enable Conditional Access (CA) ... |  |  | 7.5 | contentidea-kb |
+| 40 | You can collect iOS Xcode/Console logs from a Windows PC. The link for the iO... | Old iOSLogInfo link did not support iOS 11.3, new link needed | Use SDSiOSLogInfo from Blackberry.com. Connect iOS device via USB, open admin... | 7.5 | contentidea-kb |
+| 41 | When attempting to add a Windows 10 Line Of Business (LOB) app, you receive t... | This can occur if the downloaded app package file does not have a valid exten... | Give the download app package file a file extension of APPX, or whatever file... | 7.5 | contentidea-kb |
+| 42 | Recently, Intune released some features that will make understanding and trou... |  |  | 7.5 | contentidea-kb |
+| 43 | Beginning in April 2018, Company Portal users will be able to upload Intune-r... |  |  | 7.5 | contentidea-kb |
+| 44 | When attempting to deploy a Line of Business (LOB) app to Android devices, th... | This can occur if the app is being assigned as a Required app to a user group... | To resolve this issue, assign the app as a Required app to a device group ins... | 7.5 | contentidea-kb |
+| 45 | When wrapping a line of business (LOB) application using the Microsoft Intune... | The issue can occur when the application being wrapped is at or near the Andr... | To resolve this problem complete the following:1. Install the latest version ... | 7.5 | contentidea-kb |
+| 46 | When querying for devices based on Corporate ownership, the value Corporate n... | The Corporate value is no longer used for the deviceOwnership attribute. | To work around this issue, replace Corporate with Company to query for corpor... | 7.5 | contentidea-kb |
+| 47 | If your customer is reporting Managed Google Play applications are not auto-u... | There are many factors controlled by Google that can impact the app update be... | Managed Google Play app update overview The update experience for apps instal... | 7.5 | contentidea-kb |
+| 48 | 1.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Create the web link app.  1)&nbsp;&nbs... |  |  | 7.5 | contentidea-kb |
+| 49 | Customer had created an iOS provisioning profile and he could see that in the... | LOB app was expired. | Here are two expiry dates when we talk about the iOS provisioning profile:  1... | 7.5 | contentidea-kb |
+| 50 | You notice that several iOS devices stop checking in. When launching the Comp... | In this particular case, the issue was isolated to a possible iOS bug which c... | The following appeared to address the issue:- [Reset All Settings] from the d... | 7.5 | contentidea-kb |
+| 51 | A user uninstalls an iOS application that was previously deployed via Intune.... | This was occurring because the devices were reporting back to the service a s... | Resolved with 1903 Intune service release | 7.5 | contentidea-kb |
+| 52 | The bookmarks based app configuration policy deploys to the Edge browser on i... | Edge for iOS does not support different app configuration profiles of the sam... | This is expected behavior on iOS,&nbsp;Alternate solution if you require diff... | 7.5 | contentidea-kb |
+| 53 | When you apply Conditional Access policy to an iOS or Android store app, user... | The third party app does not support broker assisted logins | You need to work with the app vendor/publisher and request that they implemen... | 7.5 | contentidea-kb |
+| 54 | When it comes to wrapping applications, there aren't many scenarios where an ... | Scenario 1 - Customer wants to wrap their application with Intune Wrapper but... | Scenario 1 - Customer wants to wrap their application with Intune Wrapper but... | 7.5 | contentidea-kb |
+| 55 | To use Intune for broad deployment, Microsoft has provided MSI files&nbsp; th... |  |  | 7.5 | contentidea-kb |
+| 56 | SummaryThis article providess some details on “version” properties we extract... |  |  | 7.5 | contentidea-kb |
+| 57 | How Tohttps://docs.microsoft.com/en-us/intune/apps-addIntune supports a wide ... |  |  | 7.5 | contentidea-kb |
+| 58 | AndroidDownload and install Android Studio (its free!)&nbsp;https://developer... |  |  | 7.5 | contentidea-kb |
+| 59 | How Tohttps://docs.microsoft.com/en-us/intune/lob-apps-androidA line-of-busin... |  |  | 7.5 | contentidea-kb |
+| 60 | https://docs.microsoft.com/en-us/intune/supported-devices-browsersIntune supp... |  |  | 7.5 | contentidea-kb |
+| 61 | Android Enterprise dedicated devices running Android 9 stuck at Allow Permiss... | This occurs when customers apply Device restriction profile with this setting... | The workaround is to set Notification windows = &quot;Not configured&quot;.No... | 7.5 | contentidea-kb |
+| 62 | A common question we get from customers is if/how we can block the Settings a... |  |  | 7.5 | contentidea-kb |
+| 63 | Starting with Intune 1907, as administrator can send custom notifications to ... |  |  | 7.5 | contentidea-kb |
+| 64 | Documentationhttps://docs.microsoft.com/en-us/intune/device-inventoryMobile D... |  |  | 7.5 | contentidea-kb |
+| 65 | Welcome to Intune's workflow for&nbsp;App Based Conditional Access. Here you ... |  |  | 7.5 | contentidea-kb |
+| 66 | A customer notices that the following MAM (App Protection policies have been ... |  |  | 7.5 | contentidea-kb |
+| 67 | This article describes several tools that are useful for data collection to i... |  | General system informationRun the following command from a Terminal window:su... | 7.5 | contentidea-kb |
+| 68 | Some of the features are deprecated due to multiple reasons - there is a lot ... |  |  | 7.5 | contentidea-kb |
+| 69 | What are derived credentialsIn an environment where smart cards are required ... |  |  | 7.5 | contentidea-kb |
+| 70 | VMware and Microsoft are working together to enable customers’ rapid move to ... |  |  | 7.5 | contentidea-kb |
+| 71 | This article describes topics supported by Intune and some of the common issu... |  |  | 7.5 | contentidea-kb |
+| 72 | In order to better understand Application Deployment, it is necessary to unde... |  |  | 7.5 | contentidea-kb |
+| 73 | Coming soon: A step-by-step on configuring the most common app deployments fo... |  |  | 7.5 | contentidea-kb |
+| 74 | Coming soon: A general overview of what we mean when we talk about Intune App... |  |  | 7.5 | contentidea-kb |
+| 75 | Before you begin troubleshooting a problem, be sure to check for known Emergi... |  |  | 7.5 | contentidea-kb |
+| 76 | Currently if you&nbsp;allow sideloading on Android Enterprise device owner de... |  |  | 7.5 | contentidea-kb |
+| 77 | Symptoms   When testing Managed Google Play private app in our Intune Portal,... |  |  | 7.5 | contentidea-kb |
+| 78 | Article DefinitionsDeep Links:&nbsp;A direct link to a website or a direct li... |  |  | 7.5 | contentidea-kb |
+| 79 | This post is not about any new functionality or changes to the service, it’s ... |  |  | 7.5 | contentidea-kb |
+| 80 | Purpose: This article is intended to redirect Intune support professionals to... |  |  | 7.5 | contentidea-kb |
+| 81 | There are several moments when it is required to find the Intune App wrapper ... |  |  | 7.5 | contentidea-kb |
+| 82 | SCCM Client deployed as INTUNE LOB App failing with Fatal Error on Win10 Mach... | LOB App was created using incorrect Client.MSI File from an incorrect locatio... | We have to create the SCCM Client LOB App using CcmSetup.MSI from the locatio... | 7.5 | contentidea-kb |
+| 83 | When customer upload the new version of one IOS LOB app, It will finished wit... | Group A is a greater group which contains group B, Our user is granted the pe... | 1.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Based on the 403 forbidden... | 7.5 | contentidea-kb |
+| 84 | How managed Google Play handles LOB app updates&nbsp; There are two activitie... |  |  | 7.5 | contentidea-kb |
+| 85 | When working in Office application like Word&nbsp; or Excel or PowerPoint App... | This occurs because there is no App Configuration policy allowing the save. | To resolve this issue, create an App Configuration policy in the Endpoint&nbs... | 7.5 | contentidea-kb |
+| 86 | Known Issues        Symptom&nbsp;         Possible Cause&nbsp;         SDK Ar... |  |  | 7.5 | contentidea-kb |
+| 87 | The customer plans to deploy 3rd party apps and use a certificate for the aut... | This behavior is by-design. The trusted certificate profile for Android devic... |  | 7.5 | contentidea-kb |
+| 88 | For most iOS app deployment issues, an engineer may be required to collect lo... |  |  | 7.5 | contentidea-kb |
+| 89 | Users find that before wrapping an iOS LOB app, the app can be installed on i... | According to app install error code                           documentation:f... | To resolve this issue, update the Intune app wrapping tool for iOS to latest ... | 7.5 | contentidea-kb |
+| 90 | Users are unable to switch networks while in the Managed Home Screen (MHS) on... | This is by-design per the&nbsp;addNetworkSuggestions API per Google.   We cal... | To work around this issue complete the following: Escape from MHS Change to y... | 7.5 | contentidea-kb |
+| 91 | You can configure whether a required iOS/iPadOS app is installed as a removab... |  |  | 7.5 | contentidea-kb |
+| 92 | Links help engineers improve understanding of the components and find answers... |  |  | 7.5 | contentidea-kb |
+| 93 | Please try to find answers to following questions through lab experience and ... |  |  | 7.5 | contentidea-kb |
+| 94 | Level 200+ troubleshooting skills required by a support topic SME – Advanced ... |  |  | 7.5 | contentidea-kb |
+| 95 | These links help Support Engineers improve their understanding of the compone... |  |  | 7.5 | contentidea-kb |
+| 96 | Please try to find answers to following questions through lab experience and ... |  |  | 7.5 | contentidea-kb |
+| 97 | This article describes how to update a Google Play private (LOB) app for Andr... |  |  | 7.5 | contentidea-kb |
+| 98 | When assigning an Android LOB app to a Zebra scanner device (which are based ... | Intune checks the hardware requirements of the App, which is defined by App d... | App developer modified the App requirements to be matching exactly the Androi... | 7.5 | contentidea-kb |
+| 99 | This article describes how to properly configure a Device Configuration Admin... |  |  | 7.5 | contentidea-kb |
+| 100 | Mobile devices have become powerful enough to support various computationally... |  |  | 7.5 | contentidea-kb |
+| 101 | Customer have uploaded new app package for existing iOS LOB app.&nbsp;Our off... | We do allow admins to downgrade the app, i.e., allows the upload of an app wi... | It is an allowed scenario. | 7.5 | contentidea-kb |
+| 102 | Customer is trying to update their Line of Business (LoB) app on iOS running ... |  | Customer should explore using&nbsp;Autonomous single app mode (ASAM) for thei... | 7.5 | contentidea-kb |
+| 103 | These questions will help guide the troubleshooting process but should not be... |  |  | 7.5 | contentidea-kb |
+| 104 | Some common issues with IBM MaaS360 include, but are not limited to:  1. Part... |  |  | 7.5 | contentidea-kb |
+| 105 | Why does this look so bad? //To know what policies (Compliance, Device config... |  |  | 7.5 | contentidea-kb |
+| 106 | First Emulator system requirements. For the best experience, you should use t... |  |  | 7.5 | contentidea-kb |
+| 107 | The Intune PG is tracking 4 potential issues related to &quot;Microsoft Store... | For Issue 1: This symptom was resolved as of 12/13/2022 early AM PST. For Iss... | For Issue 1, this symptom was resolved 12/13/2022, early AM PST; customer may... | 7.5 | contentidea-kb |
+| 108 | The MDM trace is the next level of troubleshooting to understand and identify... |  |  | 7.5 | contentidea-kb |
+| 109 | Troubleshooting Conditional Access related issues with Intune could be relate... |  |  | 7.5 | contentidea-kb |
+| 110 | This article describes how to trace an App Selective Wipe request for an iOS ... |  |  | 7.5 | contentidea-kb |
+| 111 | Performing a repro (reproduction) of an Intune App protection issue involves ... |  |  | 7.5 | contentidea-kb |
+| 112 | The customer has configured the following permissions per the existing docume... | The customer had configured the permissions outlined in the Entrust configura... | There has been a migration from Azure AD Graph to MS Graph.  https://learn.mi... | 7.5 | contentidea-kb |
+| 113 | Customer is enrolling a device as Android Enterprise Personally Owned, Fully ... | If we look closely to the app type, we can see that the app type is &quot;Web... | If the customer uses&nbsp;&quot;Managed Google Play web link&quot; apps&nbsp;... | 7.5 | contentidea-kb |
+| 114 | MC513662 and MC547638. App registration is now required for apps using the iO... |  | This is the App registration steps:  Go to Azure Active Directory &gt;App reg... | 7.5 | contentidea-kb |
+| 115 | If you have a customer trying to configure a VPN Profile for MacOS via Intune... |  | To answer the question of,&nbsp;&quot;Can you configure Azure P2S VPN configu... | 7.5 | contentidea-kb |
+| 116 | All new or updated internal KB articles, new content requests such as doc upd... |  |  | 7.5 | contentidea-kb |
+| 117 | xinkun.yang@microsoft.comAfter sign-in Company portal app on the macOS, we st... | This is caused by device keychain access to local is locked and company porta... | Open the Keychain Access app on the Mac, check the&nbsp;Local Items&nbsp;keyc... | 7.5 | contentidea-kb |
+| 118 | Xamarin.Android, Xamarin.iOS, Xamarin.Mac are now integrated directly into .N... |  |  | 7.5 | contentidea-kb |
+| 119 | Intune: How to use Kusto to troubleshoot Remote Help issues for Android Enter... |  |  | 7.5 | contentidea-kb |
+| 120 | Users encountering the &quot;error code: 0*0 Unknown&quot; on the Windows pla... | Multiple Company portal deployment from Intune.   Mixed install contexts. Dev... | Create one single company portal deployment with MS store new as UWP and remo... | 7.5 | contentidea-kb |
+| 121 | In this article we will cover how to create Android LOB app, and how to gener... |  |  | 7.5 | contentidea-kb |
+| 122 | Issue: Admins deploy Google play store Apps, or LOB Apps using Managed Google... | apps not added to any Collection | Apps need to be added in to App Collection, and any app is not listed under a... | 7.5 | contentidea-kb |
+| 123 | Customer had created an iOS provisioning profile and he could see that in the... | LOB app was expired. | Here are two expiry dates when we talk about the iOS provisioning profile: 1.... | 4.5 | contentidea-kb |
+| 124 | You notice that several iOS devices stop checking in. When launching the Comp... | In this particular case, the issue was isolated to a possible iOS bug which c... | The following appeared to address the issue: - [Reset All Settings] from the ... | 4.5 | contentidea-kb |
+| 125 | A user uninstalls an iOS application that was previously deployed via Intune.... | This was occurring because the devices were reporting back to the service a s... | Resolved with 1903 Intune service release | 4.5 | contentidea-kb |
+| 126 | When you apply Conditional Access policy to an iOS or Android store app, user... | The third party app does not support broker assisted logins | You need to work with the app vendor/publisher and request that they implemen... | 4.5 | contentidea-kb |
+| 127 | 1. Create the web link app. 1) Sign in the Azure portal. 2) Select All servic... |  |  | 3.0 | contentidea-kb |
+| 128 | The bookmarks based app configuration policy deploys to the Edge browser on i... | Edge for iOS does not support different app configuration profiles of the sam... | This is expected behavior on iOS, Alternate solution if you require different... | 3.0 | contentidea-kb |
+| 129 | When it comes to wrapping applications, there aren't many scenarios where an ... | Scenario 1 - Customer wants to wrap their application with Intune Wrapper but... | Scenario 1 - Customer wants to wrap their application with Intune Wrapper but... | 3.0 | contentidea-kb |
+| 130 | To use Intune for broad deployment, Microsoft has provided MSI files that adm... |  |  | 3.0 | contentidea-kb |
+| 131 | Summary This article providess some details on “version” properties we extrac... |  |  | 3.0 | contentidea-kb |
+| 132 | How To https://docs.microsoft.com/en-us/intune/apps-add Intune supports a wid... |  |  | 3.0 | contentidea-kb |

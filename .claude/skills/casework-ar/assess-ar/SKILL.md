@@ -80,7 +80,7 @@ Upsert meta: ar.communicationMode, ar.caseOwnerEmail, ar.caseOwnerName
 
 同主 assess 的 gate-subagents.sh 逻辑，但**全部 inline，不 spawn**。
 
-**OneNote inline 分析**：读 `{caseDir}/onenote/_page-*.md`，分析后**重写 `{caseDir}/onenote/personal-notes.md`**。
+**OneNote inline 分析**：读 `{caseDir}/onenote/_page-*.md`，分析后**重写 `{caseDir}/onenote/onenote-digest.md`**。
 
 格式模板：读取 `.claude/skills/onenote/onenote-digest-template.md`，按模板结构输出（Facts/Analysis 汇聚 + 详细页面 + Summary）。
 

@@ -47,6 +47,16 @@
     "MCVKB/Net/=======10.Tools=======/10.16[NET] how to run Vnet get operation in for RN.md",
     "MCVKB/Net/=======10.Tools=======/10.17[NET]How to run Inbound process tuple under V.md",
     "MCVKB/Net/=======10.Tools=======/10.19 [NET] How to run the flow logs (ELK) on core.md",
-    "MCVKB/Net/======3.vNet=======/[MCVKB] Azure DHCP workflow/Control plan notes.md"
+    "MCVKB/Net/======3.vNet=======/[MCVKB] Azure DHCP workflow/Control plan notes.md",
+    "MCVKB/wiki_migration/======Net======/1.11 [MCVKB]  Troubleshoot Web Application Firewal.md",
+    "MCVKB/wiki_migration/======Net======/1.3 How to configure the NSG with the Application.md",
+    "MCVKB/wiki_migration/======Net======/1.5[NETVKB]How to deploy APPGW by template if SSL.md",
+    "MCVKB/wiki_migration/======Net======/1.6 [NETVKB]How to check the Application Gateway V.md",
+    "MCVKB/wiki_migration/======Net======/1.7 [NETVKB] AppGW V2 memory leaking issue.md",
+    "MCVKB/wiki_migration/======Net======/1.8[MCVKB] The Application Gateway response with e.md",
+    "MCVKB/wiki_migration/======Net======/1.9[MCVKB] How to configure the application gatewa.md",
+    "MCVKB/wiki_migration/======Net======/10.11[NET][pingmesh]how to quick query pingmesh la.md",
+    "MCVKB/wiki_migration/======Net======/10.13[MCVKB] [Tool sharing (Everflow)] how to exec.md",
+    "MCVKB/wiki_migration/======Net======/10.13[MCVKB] [Tool sharing (Everflow)] how to exec/JIT Jumpbox for Overlake node capture.md"
   ]
 }

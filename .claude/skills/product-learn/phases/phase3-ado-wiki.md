@@ -320,7 +320,7 @@ wiki 名称可直接使用（无需 wiki ID）。
 
 6. **更新 `.enrich/scanned-ado-wiki.json`**：
    - append 本次处理的路径到 `scanned`
-   - 更新 `lastRefreshed` 为当前时间戳（ISO 格式），用于 Pre-flight index 刷新判断
+   - 🚨 **必须更新 `lastRefreshed`** 为当前时间戳（ISO 格式，如 `datetime.now(timezone.utc).isoformat()`），用于 Pre-flight index 增量刷新。**不设置此字段 = ADO Wiki 新增页面永远无法被发现。**
    - **关键：scanned 条目必须使用完整 key 格式**：`"{org}/{project}/{wikiName}:{pagePath}"`
    - 与 index 中的 key 格式一致（计算 unscanned 差集时用 key 对比）
    - 同时确保 JSONL 条目的 `sourceRef` 也使用相同格式

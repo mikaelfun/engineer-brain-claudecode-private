@@ -9,7 +9,7 @@ Usage:
     python3 search-inline.py --case-dir /path/to/case --notebook-dir /path/to/notebook --case-number 2603260030005229
 
 Output:
-    {caseDir}/onenote/personal-notes.md
+    {caseDir}/onenote/onenote-digest.md
 """
 
 import argparse
@@ -378,7 +378,7 @@ def main():
     if not os.path.isdir(notebook_dir):
         print(f"SKIP|notebook_dir_not_found={notebook_dir}")
         # Write no-match file
-        output_path = os.path.join(case_dir, "onenote", "personal-notes.md")
+        output_path = os.path.join(case_dir, "onenote", "onenote-digest.md")
         generate_output(
             case_number,
             os.path.basename(notebook_dir),
@@ -391,7 +391,7 @@ def main():
     md_files = list(Path(notebook_dir).rglob("*.md"))
     if not md_files:
         print(f"SKIP|no_md_files_in={notebook_dir}")
-        output_path = os.path.join(case_dir, "onenote", "personal-notes.md")
+        output_path = os.path.join(case_dir, "onenote", "onenote-digest.md")
         generate_output(
             case_number,
             os.path.basename(notebook_dir),
@@ -437,7 +437,7 @@ def main():
 
     # ISS-221: Copy raw page .md files to {caseDir}/onenote/ for downstream LLM analysis.
     # Flat directory (same as teams/): raw pages directly in onenote/, prefixed with _page- to
-    # distinguish from personal-notes.md and _search-state.json.
+    # distinguish from onenote-digest.md and _search-state.json.
     onenote_dir = os.path.join(case_dir, "onenote")
     if results:
         os.makedirs(onenote_dir, exist_ok=True)
@@ -451,7 +451,7 @@ def main():
                 print(f"WARN: Cannot copy page to {page_dest}: {e}", file=sys.stderr)
 
     # Generate output
-    output_path = os.path.join(case_dir, "onenote", "personal-notes.md")
+    output_path = os.path.join(case_dir, "onenote", "onenote-digest.md")
     notebook_name = os.path.basename(notebook_dir)
 
     # (delta計算已下移，使用 onenote/_search-state.json 作為權威來源)

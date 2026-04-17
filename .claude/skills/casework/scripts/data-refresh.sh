@@ -368,7 +368,7 @@ if rd['teams']['newMessages'] > 0:
 if rd['onenote']['newPages'] > 0 or rd['onenote']['updatedPages'] > 0:
     md_lines += [f"## 📚 OneNote",
                  f"- 新增 **{rd['onenote']['newPages']}** 页 / 更新 **{rd['onenote']['updatedPages']}** 页",
-                 f"- 详见 `onenote/personal-notes.md`", '']
+                 f"- 详见 `onenote/onenote-digest.md`", '']
 
 if rd['attachments']['downloaded'] > 0:
     md_lines += [f"## 📎 Attachments", f"- 新下载: **{rd['attachments']['downloaded']}** 个",

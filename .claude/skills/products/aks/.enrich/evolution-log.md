@@ -2141,3 +2141,10 @@
 - **Scanned: 464/464 | Remaining: 0 | EXHAUSTED**
 | 2026-04-07 | MERGE | 1326 loaded, 1326 kept, 0 discarded, 69 relatedTo pairs, 101 21V tagged |
 | 2026-04-07 | SYNTHESIZE | 187 topics (135 fusion, 52 compact), 1324 entries, 18 Kusto queries fused |
+
+### 2026-04-17 10:12 UTC — contentidea-kb refresh (aks)
+- **WIQL**: keyword=Kubernetes, returned 21 work items
+- **Scanned**: 21/21 already processed
+- **New discovered**: 0
+- **Deduplicated**: 0
+- **Result**: exhausted=true, lastRefreshed updated

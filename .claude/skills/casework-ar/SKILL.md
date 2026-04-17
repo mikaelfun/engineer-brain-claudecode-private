@@ -57,11 +57,12 @@ bash .claude/skills/casework/scripts/data-refresh.sh \
   --case-number {caseNumber} \
   --case-dir {caseDir} \
   --is-ar true \
-  --main-case-id $MAIN_CASE_ID
+  --main-case-number $MAIN_CASE_ID
 ```
 
 AR mode 差异：
-- 使用 `-MainCaseNumber` 从 main case 拉 D365 数据
+- 使用 `-MainCaseNumber` 从 main case 拉 D365 数据（case-info、emails、notes 均来自 main case）
+- **⚠️ emails.md 来自 main case**：D365 中邮件活动（Email Activity）绑在 main case 上，AR case 没有独立的邮件。`fetch-all-data.ps1 -MainCaseNumber` 用 main case ID 查询邮件并写入 AR case 的 `emails.md`
 - 不执行 IR check
 - Teams 搜索：搜 AR case number + case owner 名
 

@@ -1,21 +1,55 @@
-# Intune Defender for Endpoint 集成 — 排查速查
+# INTUNE Defender for Endpoint 集成 — 排查速查
 
-**来源数**: 2 | **21V**: 部分适用
-**条目数**: 4 | **最后更新**: 2026-04-07
-
-## 症状速查
-| # | 症状 | 根因 | 方案 | 分数 | 来源 |
-|---|------|------|------|------|------|
-| 1 | Endpoint security feature (Application Guard, Firewall, SmartScreen, Encryption, Exploit Guard, A... | The security feature functionality is outside Intune scope. Intune only handl... | Verify Intune policy applied correctly via registry. If settings are correct but feature not work... | 🟢 8.5 | ADO Wiki |
-| 2 | Customer has Defender licensing but MEM Portal / Endpoint Security blade is inaccessible — cannot... | Tenant is missing the Intune_Defender service plan which is required for Defe... | Investigate the tenant's products and entitlements — verify Intune_Defender service plan is provi... | 🔵 7.5 | ADO Wiki |
-| 3 | MDE Attach tenant onboarding fails — tenant not found in MMPC, MDEAttachOnboardingState is neithe... | Failure in the onboarding flow from PartnerTenantService → MMPCSync → MMPC wh... | 1) Check MDEAttachEnabled and MDEAttachOnboardingState via GenevaAction JIT access 2) If MDEAttac... | 🔵 7.5 | ADO Wiki |
-| 4 | Intune 中 Microsoft Defender for Endpoint（含 Tamper Protection）在 21V 无法集成 | 依赖 Microsoft Defender for Endpoint（MDE），MDE 不支持 21V | 不支持；不要在 21V 配置 MDE Connector；Tamper Protection 策略在 21V 无效 | 🔵 7.0 | 21V Gap |
+**来源数**: 5 | **21V**: 部分 (23/29)
+**条目数**: 29 | **最后更新**: 2026-04-17
 
 ## 快速排查路径
-1. Verify Intune policy applied correctly via registry. If settings are correct but feature not working, transfer case to: Application Guard→Windows UEX, `[来源: ADO Wiki]`
-2. Investigate the tenant's products and entitlements — verify Intune_Defender service plan is provisioned. Once provisioned: 1) Intune polls tenant base `[来源: ADO Wiki]`
-3. 1) Check MDEAttachEnabled and MDEAttachOnboardingState via GenevaAction JIT access 2) If MDEAttachEnabled=true but OnboardingState failed, patch MDEAt `[来源: ADO Wiki]`
-4. 不支持；不要在 21V 配置 MDE Connector；Tamper Protection 策略在 21V 无效 `[来源: 21V Gap]`
 
-> 本 topic 有融合排查指南，含完整排查流程和 Kusto 查询模板
-> → [完整排查流程](details/windows-defender.md#排查流程)
+1. **21v (Mooncake) 環境で Intune Endpoint Security > Antivirus > Windows Security Experience から Tamper Protection をオン/オフしようとすると、ポータルで 'pending update' と表示され設定が適用されない**
+   → 1) MDE onboard で Tamper Protection を制御する 2) UI で手動管理する場合は ManagedDefenderProductType=0, SenseEnabled=0, ProductType=0 にレジストリを変更 3) 一時的に無効化するには Defender troubleshooting mode を使用 (4時間限定) 4) Defender ... `[onenote, 🟢 9.5]`
+
+2. **Enterprise App Management (EAM) 许可证过期后，Intune Admin Center 中 Enterprise App Catalog 选项消失，管理员无法从目录部署新应用**
+   → 1. 确认客户是否有有效的 EAM 或 Intune Suite 许可证；2. 检查许可证是否已正确分配给用户；3. 已部署的应用不会被删除，但 EAM 目录和未来体验将不可用直到重新获取许可证 `[ado-wiki, 🟢 9.0]`
+
+3. **MDE Attach device does not show up in Intune UX All Devices list view; Rave shows Last Contact Time before July 15 2022 and IsDeleted=true**
+   → Verify via Rave: Last Contact Time < July 15 2022 AND IsDeleted=true. If confirmed, transfer ticket to OCE team (Hani Chabban) to fix backend data. For OCE: check StatelessDeviceService via GenevaA... `[ado-wiki, 🟢 9.0]`
+
+4. **MDE Attach policy deployment fails with error 2146233088 'Invalid flags specified' in Sense Event Viewer (SenseCM records)**
+   → Check Sense Event Viewer (Application and Services logs → Microsoft → Windows → Sense) for error details. Review the Firewall rule configuration in Intune/Defender portal and correct the invalid va... `[ado-wiki, 🟢 9.0]`
+
+5. **Customer has Defender licensing but MEM (Microsoft Endpoint Manager) portal is inaccessible; no Intune license**
+   → Check if Intune_Defender service plan is provisioned on the tenant. All accounts with Defender Products should have this included entitlement. If missing, investigate the products and entitlements.... `[ado-wiki, 🟢 9.0]`
+
+## 症状速查
+
+| # | 症状 | 根因 | 方案 | 分数 | 来源 |
+|---|------|------|------|------|------|
+| 1 | 21v (Mooncake) 環境で Intune Endpoint Security > Antivirus > Windows Security Experience から Tamper P... | 21v では Tamper Protection が PG によりデプロイされていない。デバイスが Intune に登録されると ManagedDefenderProductType が 6 に... | 1) MDE onboard で Tamper Protection を制御する 2) UI で手動管理する場合は ManagedDefenderProductType=0, SenseEnab... | 🟢 9.5 | onenote: Mooncake POD Support Notebook/POD/VMS... |
+| 2 | Enterprise App Management (EAM) 许可证过期后，Intune Admin Center 中 Enterprise App Catalog 选项消失，管理员无法从目录... | 客户的 Intune Suite 或 Enterprise App Management 试用/正式许可证已过期 | 1. 确认客户是否有有效的 EAM 或 Intune Suite 许可证；2. 检查许可证是否已正确分配给用户；3. 已部署的应用不会被删除，但 EAM 目录和未来体验将不可用直到重新获取许可证 | 🟢 9.0 | [ado-wiki](https://dev.azure.com/Supportability/Intune/_wiki/wikis/Intune?pagePath=%2FApp%20Management%2FEnterprise%20App%20Management) |
+| 3 | MDE Attach device does not show up in Intune UX All Devices list view; Rave shows Last Contact Ti... | Bug in MDE enrollment flow caused device records to be soft-deleted in StatelessDeviceService. Fi... | Verify via Rave: Last Contact Time < July 15 2022 AND IsDeleted=true. If confirmed, transfer tick... | 🟢 9.0 | [ado-wiki](https://dev.azure.com/Supportability/Intune/_wiki/wikis/Intune?pagePath=%2FEndpoint%20Security%2FMDE%20Attach) |
+| 4 | MDE Attach policy deployment fails with error 2146233088 'Invalid flags specified' in Sense Event... | Firewall rule contains an incorrect/invalid value that cannot be applied by the MDE Attach client. | Check Sense Event Viewer (Application and Services logs → Microsoft → Windows → Sense) for error ... | 🟢 9.0 | [ado-wiki](https://dev.azure.com/Supportability/Intune/_wiki/wikis/Intune?pagePath=%2FEndpoint%20Security%2FMDE%20Attach) |
+| 5 | Customer has Defender licensing but MEM (Microsoft Endpoint Manager) portal is inaccessible; no I... | Missing Intune_Defender service plan. This service plan is embedded with all MDE Products and is ... | Check if Intune_Defender service plan is provisioned on the tenant. All accounts with Defender Pr... | 🟢 9.0 | [ado-wiki](https://dev.azure.com/Supportability/Intune/_wiki/wikis/Intune?pagePath=%2FEndpoint%20Security%2FMDE%20Attach) |
+| 6 | MDE Attach tenant not found error; device enrollment fails because tenant onboarding to MMPC did ... | MDEAttachOnboardingState is neither 0 (default) nor 1 (succeeded), indicating an onboarding failu... | 1) Query PartnerTenantService logs in Intune Kusto for onboarding events. 2) Get GenevaAction JIT... | 🟢 9.0 | [ado-wiki](https://dev.azure.com/Supportability/Intune/_wiki/wikis/Intune?pagePath=%2FEndpoint%20Security%2FMDE%20Attach) |
+| 7 | Unhealthy Endpoint Report shows incorrect device status in MEM Admin Center; mismatch between por... | Multiple possible causes: 1) Defender AV agent reporting incorrect status (MDE issue), 2) Intune ... | 1) Run Get-MpComputerStatus on device to get actual ComputerState/AMRunningMode/DefenderSignature... | 🟢 9.0 | [ado-wiki](https://dev.azure.com/Supportability/Intune/_wiki/wikis/Intune?pagePath=%2FEndpoint%20Security%2FUnhealthy%20Endpoint%20Report) |
+| 8 | Endpoint security feature (Application Guard, Firewall, SmartScreen, Encryption, Exploit Guard, A... | The security feature functionality is outside Intune scope. Intune only handles policy/registry d... | Verify Intune policy applied correctly via registry. If settings are correct but feature not work... | 🟢 9.0 | [ado-wiki](https://dev.azure.com/Supportability/Intune/_wiki/wikis/Intune?pagePath=%2FEndpoint%20Security%2FSecurity%20Tasks) |
+| 9 | Intune 中 Microsoft Defender for Endpoint（含 Tamper Protection）在 21V 无法集成 | 依赖 Microsoft Defender for Endpoint（MDE），MDE 不支持 21V | 不支持；不要在 21V 配置 MDE Connector；Tamper Protection 策略在 21V 无效 | 🟢 8.0 | 21v-gap: OneNote Export/Mooncake POD Support N... |
+| 10 | MDE Attached device enrolled before July 15th 2022 doesn't show up in Intune UX All Devices list ... | Bug in MDE enrollment flow caused devices enrolled before July 15th 2022 to be marked IsDeleted=t... | Verify symptoms: 1) Last Contact Time before July 15th 2022 in Rave 2) IsDeleted=true in Device I... | 🔵 7.5 | [ado-wiki](https://dev.azure.com/Supportability/Intune/_wiki/wikis/Intune?pagePath=%2FEndpoint%20Security%2FMDE%20Attach) |
+| 11 | Customer has Defender licensing but MEM Portal / Endpoint Security blade is inaccessible — cannot... | Tenant is missing the Intune_Defender service plan which is required for Defender entitlement to ... | Investigate the tenant's products and entitlements — verify Intune_Defender service plan is provi... | 🔵 7.5 | [ado-wiki](https://dev.azure.com/Supportability/Intune/_wiki/wikis/Intune?pagePath=%2FEndpoint%20Security%2FMDE%20Attach) |
+| 12 | MDE Attach tenant onboarding fails — tenant not found in MMPC, MDEAttachOnboardingState is neithe... | Failure in the onboarding flow from PartnerTenantService → MMPCSync → MMPC when admin flips the M... | 1) Check MDEAttachEnabled and MDEAttachOnboardingState via GenevaAction JIT access 2) If MDEAttac... | 🔵 7.5 | [ado-wiki](https://dev.azure.com/Supportability/Intune/_wiki/wikis/Intune?pagePath=%2FEndpoint%20Security%2FMDE%20Attach) |
+| 13 | Windows 10 devices are not reporting&nbsp; status for Antivirus client to Intune Admin ConsoleInt... | When upgrading from Windows 8 to Windows 10 the Intune Endpoint Protection Client does not get re... | To remove the Intune Endpoint Protection Client:1. Create a .cmd file on a machine that is having... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4022765) |
+| 14 | Realtime Protection is disabled (set to Off and grayed out)Error: Windows could not start the Win... | Defender not re-enabled properly | Run Regedit.exe and navigate to HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Defender. Ensure th... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4493748) |
+| 15 | Configuration item for &quot;DefenderScheduleScanDay&quot; is showing as failedCustomer has creat... | Code issue with Intune Infrastructure | This is a known issue that was investigated by Intune Product Group. The setting is being deliver... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4502431) |
+| 16 | Another possible message is &quot;This setting is managed by your administrator&quot;User is unab... | There are several possible causes for this issue. This restriction can be applied by Domain GPO, ... | To determine if this policy is being pushed by MDM, navigate to Settings / Accounts/ Access Work ... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4518722) |
+| 17 | Application Guard for Windows 10 and Microsoft Edge, uses a hardware isolation approach. This app... |  | Below contains all the needed info and steps need to be followed for Application Guard to work as... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4) |
+| 18 | Defender-specific functionality, including web protection, gets enabled for the Defender for Endp... | This occurs because of an issue in license checking in the MDE app which equates Defender for End... | If using the MDE app to connect to Microsoft Tunnel Gateway, use custom settings turn off Defende... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/4642985) |
+| 19 | Application Guard for Windows 10 and Microsoft Edge, uses a hardware isolation approach. This app... |  | Below contains all the needed info and steps need to be followed for Application Guard to work as... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/5010527) |
+| 20 | We would like to configure setting “Block downloads” under location Windows Settings &gt; Windows... |  | To configure “Block Downloads” settings from Intune there are two approaches: First Approach: Usi... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/5012846) |
+| 21 | Please be aware that customers using MDE attach do not need to have a separate Intune license to ... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/5024328) |
+| 22 | Windows devices and Windows&nbsp;Servers managed&nbsp;by MDE and targeted&nbsp;with&nbsp;ASR Rule... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/5031813) |
+| 23 | This article is intended to provide guidance on onboarding a non-Intune enrolled Windows device t... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/5031121) |
+| 24 | With Reporting v2, the following two&nbsp;API’s are being deprecated: #1 Device Pivot Report Repo... |  |  | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/5035184) |
+| 25 | ASR policy deployed from Intune is not taking effect on the MDE Attach device and it shows Not Ap... | When checked on both Intune and Defender Portal, the ASR policy is showing as Not Applicable for ... | Made a change in the policy by making the ASR Rule &quot;Block Webshell creation for Servers&quot... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/5048199) |
+| 26 | For Windows devices onboarded to MDE and then displayed in Intune there is a name mismatch, more ... | Intune has a limit of 15 characters for Windows devices. That said, if the name from the MDE port... | For devices that are already onboarded to MDE with a 15+ character name, they need to rename the ... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/5050495) |
+| 27 | This article explains a scenario where an MDE onboarded devices fail to proceed with MDE attach e... | There is something wrong and it is clear that the enrollment failed because it wasn't able to gen... | We identify the SenseCM service wasn't able to read the Leviathan token from the registry path. C... | 🔵 7.5 | [contentidea-kb](https://support.microsoft.com/kb/5054929) |
+| 28 | Intune Endpoint Protection engine unavailable, features disabled (real-time protection, download ... | Endpoint protection engine corrupted/deleted, features disabled by admin via configuration profil... | Engine unavailable: force update or uninstall/reinstall Endpoint Protection Agent (auto-reinstall... | 🔵 5.5 | [mslearn](https://learn.microsoft.com/en-us/troubleshoot/mem/intune/general/troubleshoot-endpoint-protection-in-microsoft-intune) |
+| 29 | Configuration item for " DefenderScheduleScanDay " is showing as failed Customer has created a Wi... | Code issue with Intune Infrastructure | This is a known issue that was investigated by Intune Product Group. The setting is being deliver... | 🟡 3.0 | contentidea-kb |

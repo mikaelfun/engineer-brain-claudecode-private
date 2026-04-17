@@ -137,7 +137,7 @@ eval $(bash .claude/skills/casework/assess/scripts/gate-subagents.sh "{caseDir}/
 | 数据源 | 读取文件 | 产出 |
 |--------|---------|------|
 | Teams | `{caseDir}/teams/*.md` | **重写 `teams/teams-digest.md`**（模板见下）+ `teams/_relevance.json` |
-| OneNote | `{caseDir}/onenote/_page-*.md` | **重写 `personal-notes.md`**（模板见下） |
+| OneNote | `{caseDir}/onenote/_page-*.md` | **重写 `onenote-digest.md`**（模板见下） |
 
 **patrol mode (depth=1) — inline 路径**：
 
@@ -147,7 +147,7 @@ eval $(bash .claude/skills/casework/assess/scripts/gate-subagents.sh "{caseDir}/
 
 格式模板：读取 `.claude/skills/casework/teams-search/teams-digest-template.md`。
 
-**OneNote inline 分析**：读 `{caseDir}/onenote/_page-*.md`，分析后**重写 `{caseDir}/onenote/personal-notes.md`**。
+**OneNote inline 分析**：读 `{caseDir}/onenote/_page-*.md`，分析后**重写 `{caseDir}/onenote/onenote-digest.md`**。
 
 格式模板：读取 `.claude/skills/onenote/onenote-digest-template.md`。
 
@@ -161,7 +161,7 @@ eval $(bash .claude/skills/casework/assess/scripts/gate-subagents.sh "{caseDir}/
 - `{caseDir}/.casework/data-refresh-output.json` → delta + context（含 `deltaContent` md）
 - `{caseDir}/casework-meta.json` → 历史 actualStatus / compliance
 - Teams 数据：引用 Step 3 产出的 `{caseDir}/teams/teams-digest.md`
-- OneNote 数据：引用 Step 3 产出的 `{caseDir}/onenote/personal-notes.md`
+- OneNote 数据：引用 Step 3 产出的 `{caseDir}/onenote/onenote-digest.md`
 
 **Prompt 模板**：
 
@@ -305,5 +305,5 @@ ASSESS_OK|delta=ok|status={actualStatus}|actions={N}|compliance={cache-hit|re-in
 | `data-refresh-output.json` 不存在 | exit 2，提示先跑 `/casework:data-refresh` |
 | compliance hash util 失败 | 视为 "re-infer"（保守，不用错误缓存） |
 | teams-digest-writer 失败 | teams-digest.md 不生成，assess 主 LLM 不引用，继续 |
-| onenote-classifier 失败 | personal-notes.md 保持 search-inline 产出（无标注），assess 主 LLM 仍可读 |
+| onenote-classifier 失败 | onenote-digest.md 保持 search-inline 产出（无标注），assess 主 LLM 仍可读 |
 | LLM 返回非法 JSON | write-execution-plan.py 校验失败 → exit 2 → 调用方（/casework）retry 一次 |

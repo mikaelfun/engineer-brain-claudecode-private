@@ -119,3 +119,67 @@
 | mam-android | 📋 融合 | 1 | 28 | 1 | Map-Reduce |
 | wifi-profiles | 📋 融合 | 1 | 2 | 0 | 0 |
 | macos-filevault | 📊 速查 | 1 | 0 | 0 | 0 |
+
+---
+
+# Synthesize Log — intune — 2026-04-17
+
+## 模式
+增量（lastEntryCount=1481 → 4166）
+
+## 统计
+- 总条目: 4166
+- Topics: 49
+
+## Topic 分布
+| Topic | 条目数 | 类型 |
+|-------|--------|------|
+| intune-general | 934 | 📊 速查 |
+| app-win32 | 266 | 📋 融合 |
+| compliance-policy | 260 | 📋 融合 |
+| cert-scep-ndes | 211 | 📋 融合 |
+| ios-general | 188 | 📋 融合 |
+| autopilot-general | 180 | 📋 融合 |
+| mam-general | 174 | 📋 融合 |
+| conditional-access | 170 | 📋 融合 |
+| app-general | 132 | 📋 融合 |
+| app-ios | 123 | 📋 融合 |
+| 21v-feature-gaps | 119 | 📋 融合 |
+| autopilot-hybrid | 103 | 📋 融合 |
+| app-android | 101 | 📋 融合 |
+| enrollment-general | 85 | 📋 融合 |
+| config-admx-omauri | 81 | 📋 融合 |
+| comanagement | 76 | 📋 融合 |
+| cert-general | 72 | 📋 融合 |
+| device-actions | 72 | 📋 融合 |
+| graph-api | 72 | 📋 融合 |
+| mam-windows | 66 | 📊 速查 |
+| email-profiles | 59 | 📋 融合 |
+| vpn-ms-tunnel | 56 | 📋 融合 |
+| cert-pkcs-pfx | 52 | 📋 融合 |
+| license-tenant | 47 | 📋 融合 |
+| enrollment-windows | 42 | 📋 融合 |
+| app-macos | 40 | 📋 融合 |
+| app-office | 36 | 📋 融合 |
+| config-security-baseline | 36 | 📋 融合 |
+| windows-update | 31 | 📋 融合 |
+| windows-defender | 29 | 📊 速查 |
+| autopilot-esp | 25 | 📋 融合 |
+| enrollment-ios | 23 | 📋 融合 |
+| windows-bitlocker | 22 | 📋 融合 |
+| wifi-profiles | 20 | 📋 融合 |
+| android-general | 19 | 📊 速查 |
+| config-general | 15 | 📋 融合 |
+| mam-android | 15 | 📋 融合 |
+| autopilot-v2 | 14 | 📋 融合 |
+| macos-update | 14 | 📋 融合 |
+| copilot-intune | 13 | 📋 融合 |
+| cert-whfb | 12 | 📋 融合 |
+| reporting-diagnostics | 10 | 📋 融合 |
+| windows-general | 9 | 📊 速查 |
+| macos-scripts | 8 | 📋 融合 |
+| vpn-general | 8 | 📊 速查 |
+| macos-general | 7 | 📊 速查 |
+| windows-kiosk | 7 | 📋 融合 |
+| macos-filevault | 6 | 📊 速查 |
+| windows-laps | 6 | 📋 融合 |

@@ -73,7 +73,7 @@ Read the top 5 matched files (typically 1-3 pages exist per case). For each file
 - 不确定时标 `[analysis]`（宁可低估确定性）
 
 ### 5. Write Structured Summary
-Write to `{caseDir}/onenote/personal-notes.md`:
+Write to `{caseDir}/onenote/onenote-digest.md`:
 
 ```
 # Personal OneNote Notes — Case {caseNumber}
@@ -128,7 +128,7 @@ No personal OneNote notes found for this case.
 This prevents downstream agents from re-searching.
 
 ## Output Files
-- `{caseDir}/onenote/personal-notes.md` — Structured summary of personal notes
+- `{caseDir}/onenote/onenote-digest.md` — Structured summary of personal notes
 
 ## Constraints
 - Read-only: does not modify OneNote files

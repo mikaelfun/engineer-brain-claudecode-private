@@ -1,6 +1,6 @@
-# personal-notes.md 输出格式模板
+# onenote-digest.md 输出格式模板
 
-assess / assess-ar / onenote-classifier 在分析 OneNote `_page-*.md` 后，必须将 `personal-notes.md` 重写为以下格式。
+assess / assess-ar / onenote-classifier 在分析 OneNote `_page-*.md` 后，必须将 `onenote-digest.md` 重写为以下格式。
 
 ## 模板
 

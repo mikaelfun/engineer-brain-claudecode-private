@@ -1,69 +1,61 @@
-# Intune macOS Shell 脚本与 Sidecar Agent — 综合排查指南
+# INTUNE macOS Shell 脚本与 Sidecar Agent — 已知问题详情
 
-**条目数**: 4 | **草稿融合数**: 1 | **Kusto 查询融合**: 0
-**来源草稿**: onenote-powershell-script-deploy-troubleshooting.md
-**生成日期**: 2026-04-07
+**条目数**: 8 | **生成日期**: 2026-04-17
 
 ---
 
-## 排查流程
+## Quick Troubleshooting Path
 
-### Phase 1: Powershell Script Deploy Troubleshooting
-> 来源: OneNote — [onenote-powershell-script-deploy-troubleshooting.md](../drafts/onenote-powershell-script-deploy-troubleshooting.md)
+### Step 1: Error uploading macOS shell script (.sh) in Intune console - script preview shows extra Unicode characters (e.g. 'i p c o n f i g' with embedded sp...
+**Solution**: Copy the script content to a new file in Notepad, then Save As with ANSI encoding (or UTF-8 without BOM). Re-upload the corrected .sh file to Intune.
+`[Source: ado-wiki, Score: 9.0]`
 
-**Intune PowerShell Script (IME/SideCar) 部署排查指南**
-**前提条件检查**
-- 客户端必须是 Windows 10 1607 或更高版本
-- PS 脚本大小限制：10KB（Unicode 为 5KB）
-- 设备必须是 AAD Join / Hybrid Join / Co-management + Auto MDM 已注册
-- **不支持** Surface Hub（by design）
-- 只能对 **用户组** 分配，不能对设备组分配
+### Step 2: Exclude groups option missing for PowerShell scripts assignments in Intune UI — cannot exclude groups from script targeting
+**Solution**: 1) Submit SAW request to add flighting tag 'EnableGAndTForPowershell' via ICM/IET 2) WARNING: procedure removes ALL existing Windows PowerShell script assignments 3) Customer must capture current assignments before procedure (screenshots or Graph API export) 4) Requires GA approval 5) Only affects Windows platform scripts, not macOS 6) Tag also enables 'All Users/All Devices' option
+`[Source: ado-wiki, Score: 9.0]`
 
-**排查步骤**
+### Step 3: macOS 11.2.x devices: apps can't be downloaded/installed (Install Pending indefinitely), shell scripts don't run, Intune management agent installat...
+**Solution**: Upgrade the device to macOS 11.3 or later version.
+`[Source: mslearn, Score: 8.0]`
 
-**Step 1：确认 IME 已安装**
-```kusto
-```
+### Step 4: Customer is using RBAC roles to manage scripts and other resources.RBAC showed the user with this RBAC should be able to access the script as user ...
+**Solution**: Please have
+the customer attempt the following as a potential workaround:
+ With
+     an admin account, go to Devices -&gt; macOS -&gt; Custom attributesOpen
+     all custom attribute policies and edit the scope tags to include at least
+     one scope tag assigned to the custom roleHave
+     the user with the custom role sign back in and go to Devices -&gt; ScriptsThe
+     user should now be able to see their script policies again.
+`[Source: contentidea-kb, Score: 7.5]`
 
-**Step 2：查 IME 事件日志**
-```kusto
-```
+### Step 5: This article describes generic troubleshooting steps to follow when investigating MacOS scripts delivered from Intune.
+**Solution**: 
+`[Source: contentidea-kb, Score: 7.5]`
 
-**Step 3：检查本地日志**
-- `IntuneManagementExtension.log`（**主日志**，搜索 `Policybody`）
-- `AgentExecutor.log`
-- `ClientHealth.log`
+### Step 6: THIS CONTENT IS NO LONGER UP TO DATE. FOR THE MOST UP-TO-DATE CONTENT, REFER TO THE INTUNE CSS WIKI FOUND HERE:&nbsp;SAW Actions - Overview (visual...
+**Solution**: 
+`[Source: contentidea-kb, Score: 7.5]`
 
-**Step 4：强制 IME 立即同步**
-1. 打开 services.msc
-2. 找到 **Microsoft Intune Management Extension**
-3. 右键 → Restart
+### Step 7: The Exclusion&nbsp;button for Powershell Scripts is not visible in the UI.
+**Solution**: To resolve this problem, the customer must be flighted&nbsp;EnableGAndTForPowershell. Note however that if this is done, the customer will&nbsp;lose their original assignments for existing PowerShell scripts and will need to redo all assignments.&nbsp;  For more information about this, see&nbsp;Intune: How to request flighting for PowerShell exclusion groups (microsoft.com).
+`[Source: contentidea-kb, Score: 7.5]`
 
-**Known Issues**
-
-**KI-1：脚本始终以 SYSTEM 运行（已修复）**
-- **现象**：即使勾选 "Run using logged-on credentials"，脚本仍以 SYSTEM 运行
-- **修复版本**：SideCar (IME) v1.7.103+
-- **ICM**：#55765826
-- **related ID**：intune-onenote-041
-
-**KI-2：Surface Hub 不支持 IME**
-- **现象**：PS 脚本无法在 Surface Hub 执行
-- **原因**：平台限制（by design）
-- **KB**：4073215
-- **related ID**：intune-onenote-042
-
-**KI-3：脚本未签名错误**
-- **错误**：`The file ...ps1 is not digitally signed. UnauthorizedAccess`
-... (详见原始草稿)
+### Step 8: Currently, the Intune platform does not support retrieving or downloading PowerShell scripts once they have been uploaded. As a result, users may b...
+**Solution**: 
+`[Source: contentidea-kb, Score: 7.5]`
 
 ---
 
-## 已知问题速查
+## All Known Issues
 
-| # | 症状 | 根因 | 方案 | 分数 | 来源 |
-|---|------|------|------|------|------|
-| 1 | Intune PowerShell scripts using legacy Microsoft Intune application (client) ID (d1ddf0e4-d672-4d... | Microsoft removed the global Intune PowerShell application (client) ID based ... | 1) Create a new app registration in Microsoft Entra admin center. 2) Update all PowerShell script... | 🟢 9.0 | OneNote |
-| 2 | Error uploading macOS shell script (.sh) in Intune console - script preview shows extra Unicode c... | Script file saved with Unicode/UTF-16 encoding, injecting non-standard Unicod... | Copy the script content to a new file in Notepad, then Save As with ANSI encoding (or UTF-8 witho... | 🟢 8.5 | ADO Wiki |
-| 3 | macOS 11.2.x devices: apps can't be downloaded/installed (Install Pending indefinitely), shell sc... | Known macOS Big Sur 11.2.x bug causing ASDErrorDomain Code=506 duplicate inst... | Upgrade the device to macOS 11.3 or later version. | 🔵 7.5 | MS Learn |
-| 4 | Error AADSTS50011 'The reply url specified in the request does not match the reply urls configure... | Default redirect URI for the application registration or PowerShell script ha... | For PowerShell: set redirectUri to 'urn:ietf:wg:oauth:2.0:oob'. For custom app: go to Azure porta... | 🔵 6.5 | MS Learn |
+| # | Symptom | Root Cause | Solution | Score | Source |
+|---|---------|-----------|----------|-------|--------|
+| 1 | Error uploading macOS shell script (.sh) in Intune console - script preview s... | Script file saved with Unicode/UTF-16 encoding, injecting non-standard Unicod... | Copy the script content to a new file in Notepad, then Save As with ANSI enco... | 9.0 | ado-wiki |
+| 2 | Exclude groups option missing for PowerShell scripts assignments in Intune UI... | Older tenant was built without exclude groups functionality for PowerShell sc... | 1) Submit SAW request to add flighting tag 'EnableGAndTForPowershell' via ICM... | 9.0 | ado-wiki |
+| 3 | macOS 11.2.x devices: apps can't be downloaded/installed (Install Pending ind... | Known macOS Big Sur 11.2.x bug causing ASDErrorDomain Code=506 duplicate inst... | Upgrade the device to macOS 11.3 or later version. | 8.0 | mslearn |
+| 4 | Customer is using RBAC roles to manage scripts and other resources.RBAC showe... | Issue is caused at service level. Fix roll-out is in preparation. | Please have the customer attempt the following as a potential workaround:  Wi... | 7.5 | contentidea-kb |
+| 5 | This article describes generic troubleshooting steps to follow when investiga... |  |  | 7.5 | contentidea-kb |
+| 6 | THIS CONTENT IS NO LONGER UP TO DATE. FOR THE MOST UP-TO-DATE CONTENT, REFER ... |  |  | 7.5 | contentidea-kb |
+| 7 | The Exclusion&nbsp;button for Powershell Scripts is not visible in the UI. | The customer must be flighted for EnableGAndTForPowershell&nbsp;to get the Ex... | To resolve this problem, the customer must be flighted&nbsp;EnableGAndTForPow... | 7.5 | contentidea-kb |
+| 8 | Currently, the Intune platform does not support retrieving or downloading Pow... |  |  | 7.5 | contentidea-kb |
