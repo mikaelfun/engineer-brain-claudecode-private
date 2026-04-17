@@ -220,7 +220,7 @@ export default function CaseDetail() {
             {activeTab === 'drafts' && <DraftsTab drafts={draftsData?.drafts || []} caseNumber={id!} />}
             {activeTab === 'analysis' && <AnalysisTab content={analysisData?.content} exists={analysisData?.exists} files={analysisData?.files} />}
             {activeTab === 'evidence' && <EvidenceChainTab caseId={id!} />}
-            {activeTab === 'onenote' && <OnenoteTab files={onenoteData?.files || []} />}
+            {activeTab === 'onenote' && <OnenoteTab caseId={id!} files={onenoteData?.files || []} pages={onenoteData?.pages || []} />}
             {activeTab === 'timing' && <TimingTab exists={timingData?.exists} timing={timingData?.timing} />}
             {activeTab === 'logs' && <LogsTab logs={logsData?.logs || []} />}
             {activeTab === 'attachments' && <AttachmentsTab files={attachmentsData?.files || []} meta={attachmentsData?.meta} caseNumber={id!} />}
@@ -591,8 +591,8 @@ function TeamsTab({ chats, digest }: { chats: any[]; digest: { scoredAt: string;
         </div>
         {chat.reason && <span className="text-xs truncate max-w-48" style={{ color: 'var(--text-tertiary)' }}>{chat.reason}</span>}
       </div>
-      <div ref={scrollRef} className="text-sm whitespace-pre-wrap max-h-96 overflow-y-auto" style={{ color: 'var(--text-secondary)' }}>
-        {searchTerm ? highlightText(chat.content || '') : chat.content}
+      <div ref={scrollRef} className="text-sm max-h-96 overflow-y-auto" style={{ color: 'var(--text-secondary)' }}>
+        {searchTerm ? highlightText(chat.content || '') : <MarkdownContent>{chat.content || ''}</MarkdownContent>}
       </div>
     </Card>
   )
@@ -939,19 +939,141 @@ function AnalysisFileList({ files }: { files: Array<{ filename: string; content:
   )
 }
 
-function OnenoteTab({ files }: { files: Array<{ filename: string; content: string; size: number; updatedAt: string }> }) {
+function OnenoteTab({ caseId, files, pages }: {
+  caseId: string
+  files: Array<{ filename: string; content: string; size: number; updatedAt: string }>
+  pages?: Array<{ filename: string; content: string; size: number; updatedAt: string; imageCount: number }>
+}) {
+  const [expandedPages, setExpandedPages] = useState<Set<string>>(new Set())
+  const [lightboxImg, setLightboxImg] = useState<string | null>(null)
+
   if (files.length === 0) return <EmptyState icon="📓" title="No OneNote notes" description="Run patrol or casework to search OneNote for case-related notes" />
 
-  // v2: single digest file, render directly without collapse
   const digest = files[0]
+  const hasPages = pages && pages.length > 0
+
+  const togglePage = (filename: string) => {
+    setExpandedPages(prev => {
+      const next = new Set(prev)
+      if (next.has(filename)) next.delete(filename)
+      else next.add(filename)
+      return next
+    })
+  }
+
+  // Replace ./assets/xxx.png references with API URLs in markdown
+  const renderPageContent = (content: string) => {
+    const processed = content.replace(
+      /!\[([^\]]*)\]\(\.\/(assets\/[^)]+)\)/g,
+      (_, alt, assetPath) => {
+        const filename = assetPath.replace('assets/', '')
+        return `![${alt}](/api/cases/${caseId}/onenote/assets/${filename})`
+      }
+    )
+    return processed
+  }
+
   return (
-    <Card>
-      <div className="flex items-center justify-between mb-3 text-xs" style={{ color: 'var(--text-tertiary)' }}>
-        <span className="font-mono">{digest.filename.replace(/\.md$/, '')}</span>
-        <span>{new Date(digest.updatedAt).toLocaleString()}</span>
-      </div>
-      <MarkdownContent>{digest.content}</MarkdownContent>
-    </Card>
+    <div className="space-y-3">
+      {/* Digest summary */}
+      <Card>
+        <div className="flex items-center justify-between mb-3 text-xs" style={{ color: 'var(--text-tertiary)' }}>
+          <span className="font-mono">{digest.filename.replace(/\.md$/, '')}</span>
+          <span>{new Date(digest.updatedAt).toLocaleString()}</span>
+        </div>
+        <MarkdownContent>{digest.content}</MarkdownContent>
+      </Card>
+
+      {/* Individual pages with inline images */}
+      {hasPages && (
+        <div className="space-y-2">
+          <div className="text-xs font-medium px-1" style={{ color: 'var(--text-secondary)' }}>
+            Raw Pages ({pages.length})
+          </div>
+          {pages.map(page => {
+            const isExpanded = expandedPages.has(page.filename)
+            const displayName = page.filename
+              .replace(/^_page-/, '')
+              .replace(/\.md$/, '')
+              .replace(/--/g, ' › ')
+            return (
+              <Card key={page.filename}>
+                <button
+                  className="w-full flex items-center justify-between text-left"
+                  onClick={() => togglePage(page.filename)}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                      {isExpanded ? '▼' : '▶'}
+                    </span>
+                    <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                      {displayName}
+                    </span>
+                    {page.imageCount > 0 && (
+                      <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'var(--bg-tertiary)', color: 'var(--text-tertiary)' }}>
+                        🖼️ {page.imageCount}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                    {new Date(page.updatedAt).toLocaleDateString()}
+                  </span>
+                </button>
+                {isExpanded && (
+                  <div
+                    className="mt-3 pt-3"
+                    style={{ borderTop: '1px solid var(--border-subtle)' }}
+                    onClick={(e) => {
+                      const target = e.target as HTMLElement
+                      if (target.tagName === 'IMG') {
+                        setLightboxImg((target as HTMLImageElement).src)
+                      }
+                    }}
+                  >
+                    <style>{`
+                      .onenote-page-content img {
+                        max-width: 100%;
+                        max-height: 400px;
+                        object-fit: contain;
+                        cursor: pointer;
+                        border-radius: 4px;
+                        margin: 8px 0;
+                        transition: opacity 0.2s;
+                      }
+                      .onenote-page-content img:hover { opacity: 0.8; }
+                    `}</style>
+                    <div className="onenote-page-content">
+                      <MarkdownContent>{renderPageContent(page.content)}</MarkdownContent>
+                    </div>
+                  </div>
+                )}
+              </Card>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Lightbox modal */}
+      {lightboxImg && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 cursor-pointer"
+          onClick={() => setLightboxImg(null)}
+        >
+          <img
+            src={lightboxImg}
+            alt="Enlarged view"
+            className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
+            onClick={e => e.stopPropagation()}
+          />
+          <button
+            className="absolute top-4 right-4 text-white text-2xl hover:text-gray-300"
+            onClick={() => setLightboxImg(null)}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+    </div>
   )
 }
 

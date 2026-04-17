@@ -70,8 +70,10 @@ $indexPath = Join-Path $OutputDir '_chat-index.json'
 
 # --- Utility functions ---
 function Strip-Html([string]$html) {
-  $text = $html -replace '<img[^>]*alt="([^"]*)"[^>]*>', '[$1]'
-  $text = $text -replace '<img[^>]*>', '[image]'
+  # Preserve images as markdown: <img src="url" alt="text"> → ![text](url)
+  $text = $html -replace '<img[^>]*src="([^"]*)"[^>]*alt="([^"]*)"[^>]*>', '![$2]($1)'
+  $text = $text -replace '<img[^>]*alt="([^"]*)"[^>]*src="([^"]*)"[^>]*>', '![$1]($2)'
+  $text = $text -replace '<img[^>]*src="([^"]*)"[^>]*>', '![image]($1)'
   $text = $text -replace '<br\s*/?>', "`n"
   $text = $text -replace '</p>\s*<p>', "`n"
   $text = $text -replace '<[^>]+>', ''
