@@ -250,7 +250,8 @@ echo "ACT_OK|actions=$ACTION_COUNT|ir_first=$IR_FIRST|elapsed=${SECONDS}s"
 | `pending-engineer`（新 case） | troubleshooter + email-drafter(IR) | IR-first: email(fg) → ts(bg) |
 | `pending-engineer`（已有 IR） | troubleshooter | 仅 troubleshooter(fg) |
 | `pending-customer` (days≥3) | email-drafter(follow-up) | email(fg) |
-| `pending-pg` | [] | 无 action |
+| `pending-pg` (days<5) | [] | 无 action，等 PG |
+| `pending-pg` (days≥5) | email-drafter(follow-up) | 向客户更新状态（PG 仍在调查） |
 | `researching` | troubleshooter | troubleshooter(fg) |
 | `ready-to-close` | email-drafter(closure) | email(fg) |
 
@@ -264,7 +265,9 @@ echo "ACT_OK|actions=$ACTION_COUNT|ir_first=$IR_FIRST|elapsed=${SECONDS}s"
 | `pending-customer` (days<3) | any | [] |
 | `pending-customer` (days≥3) | `internal` | email-drafter(follow-up to case owner) |
 | `pending-customer` (days≥3) | `customer-facing` | email-drafter(follow-up to customer) |
-| `pending-pg` | any | [] |
+| `pending-pg` (days<5) | any | [] |
+| `pending-pg` (days≥5) | `internal` | email-drafter(follow-up to case owner，告知 PG 进展) |
+| `pending-pg` (days≥5) | `customer-facing` | email-drafter(follow-up to customer，告知 PG 仍在调查) |
 | `researching` | any | troubleshooter(AR scope) |
 | `ready-to-close` | `internal` | email-drafter(AR 完成总结 to case owner) |
 | `ready-to-close` | `customer-facing` | email-drafter(AR scope 结论 to customer, CC owner) |

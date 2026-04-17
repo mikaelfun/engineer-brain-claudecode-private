@@ -72,11 +72,30 @@ maxTurns: 200
    - `new` → `initial-response`
    - `pending-engineer` → `follow-up` 或 `result-confirm`（根据是否有分析结论）
    - `pending-customer` 且 daysSinceLastContact ≥ 3 → `follow-up`
-   - `ready-to-close` → `closure-confirm`
+   - `ready-to-close` → 读 `statusReasoning` 进一步判断：
+     - 客户已明确确认解决/同意关单（如"客户同意"、"confirmed"、"temp close"）→ **`closure`**（执行关单总结，三段式 `=============` 格式）
+     - 客户暗示解决但未明确说关单（如"感谢回复"、无后续问题）→ **`closure-confirm`**（询问能否关单）
+   - `resolved` / `closed` → `closure`
    - 其他 → `follow-up`
 4. 在日志中记录选择的类型和原因
 
 根据最终确定的 `emailType` 选择对应的邮件模板，填充 Case 信息。
+
+### 2.5 必须读取对应样本（不可跳过）
+
+> 🚨 **强制步骤**：在写任何邮件内容之前，必须先 `Read` 对应的样本文件。不读样本直接写 = 不合格。
+
+| emailType | 必须读取的样本文件 |
+|-----------|------------------|
+| initial-response | `playbooks/email-samples/initial response.txt` |
+| 21v-convert-ir | `playbooks/email-samples/initial response 21v convert.txt` |
+| request-info | `playbooks/email-samples/answer customer query.txt` |
+| result-confirm | `playbooks/email-samples/answer customer query.txt` |
+| follow-up | `playbooks/email-samples/follow up.txt` |
+| closure-confirm | `playbooks/email-samples/closure confirm.txt` |
+| closure | `playbooks/email-samples/case closure.txt` |
+
+读取后**严格匹配样本的格式结构**（段落顺序、分隔符、签名格式），内容替换为当前 case 的具体信息。
 
 ### 3. 写草稿
 - 遵循 customer-communication.md 中的语气和格式规范

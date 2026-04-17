@@ -173,7 +173,7 @@ PID_EMAIL=$!
 ## 输出文件
 
 - `{caseDir}/emails-office.md` — Outlook 邮件完整内容（清洗后）
-- `{caseDir}/logs/email-search.log` — 执行日志
+- `{caseDir}/.casework/logs/email-search.log` — 执行日志
 
 ## 与 emails.md 的关系
 

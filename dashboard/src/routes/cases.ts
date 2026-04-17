@@ -926,10 +926,31 @@ cases.get('/:id/onenote', (c) => {
     if (existsSync(digestPath)) {
       const stat = statSync(digestPath)
       const content = readFileSync(digestPath, 'utf-8')
+
+      // ISS-224: Also return individual page files for per-page rendering
+      const pageFiles = readdirSync(onenoteDir)
+        .filter(f => f.startsWith('_page-') && f.endsWith('.md'))
+        .sort()
+        .map(f => {
+          const pPath = join(onenoteDir, f)
+          const pStat = statSync(pPath)
+          const pContent = readFileSync(pPath, 'utf-8')
+          // Count image references in page
+          const imgMatches = pContent.match(/!\[[^\]]*\]\(\.\/(assets\/[^)]+)\)/g)
+          return {
+            filename: f,
+            content: pContent,
+            size: pStat.size,
+            updatedAt: pStat.mtime.toISOString(),
+            imageCount: imgMatches ? imgMatches.length : 0,
+          }
+        })
+
       return c.json({
         digest: { content, updatedAt: stat.mtime.toISOString(), size: stat.size },
         // Keep backward-compat: files array with single digest entry for old frontend
         files: [{ filename: 'onenote-digest.md', content, size: stat.size, updatedAt: stat.mtime.toISOString() }],
+        pages: pageFiles,
         total: 1,
       })
     }
@@ -949,6 +970,88 @@ cases.get('/:id/onenote', (c) => {
     return c.json({ digest: null, files: [], total: 0 })
   } catch {
     return c.json({ digest: null, files: [], total: 0 })
+  }
+})
+
+// ISS-226: GET /api/cases/:id/teams/assets/:filename — Serve Teams image files
+cases.get('/:id/teams/assets/:filename', (c) => {
+  const caseNumber = validateCaseNumber(c)
+  if (!caseNumber) return c.json({ error: 'Invalid case number' }, 400)
+
+  const filename = c.req.param('filename')
+  if (!filename || filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+    return c.json({ error: 'Invalid filename' }, 400)
+  }
+
+  const caseDir = getCaseDir(caseNumber)
+  const assetPath = join(caseDir, 'teams', 'assets', filename)
+
+  if (!existsSync(assetPath)) {
+    return c.json({ error: 'Asset not found' }, 404)
+  }
+
+  try {
+    const data = readFileSync(assetPath)
+    const ext = extname(filename).toLowerCase()
+    const mimeMap: Record<string, string> = {
+      '.png': 'image/png',
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.gif': 'image/gif',
+      '.webp': 'image/webp',
+    }
+    const contentType = mimeMap[ext] || 'application/octet-stream'
+
+    return new Response(data, {
+      headers: {
+        'Content-Type': contentType,
+        'Cache-Control': 'public, max-age=3600',
+      },
+    })
+  } catch {
+    return c.json({ error: 'Cannot read asset' }, 500)
+  }
+})
+
+// ISS-224: GET /api/cases/:id/onenote/assets/:filename — Serve image files from onenote/assets/
+cases.get('/:id/onenote/assets/:filename', (c) => {
+  const caseNumber = validateCaseNumber(c)
+  if (!caseNumber) return c.json({ error: 'Invalid case number' }, 400)
+
+  const filename = c.req.param('filename')
+
+  // Security: reject path traversal attempts
+  if (!filename || filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+    return c.json({ error: 'Invalid filename' }, 400)
+  }
+
+  const caseDir = getCaseDir(caseNumber)
+  const assetPath = join(caseDir, 'onenote', 'assets', filename)
+
+  if (!existsSync(assetPath)) {
+    return c.json({ error: 'Asset not found' }, 404)
+  }
+
+  try {
+    const data = readFileSync(assetPath)
+    const ext = extname(filename).toLowerCase()
+    const mimeMap: Record<string, string> = {
+      '.png': 'image/png',
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.gif': 'image/gif',
+      '.webp': 'image/webp',
+    }
+    const contentType = mimeMap[ext] || 'application/octet-stream'
+
+    return new Response(data, {
+      headers: {
+        'Content-Type': contentType,
+        'Cache-Control': 'public, max-age=3600',
+      },
+    })
+  } catch {
+    return c.json({ error: 'Cannot read asset' }, 500)
   }
 })
 

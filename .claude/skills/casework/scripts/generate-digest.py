@@ -30,6 +30,10 @@ def parse_args():
     p.add_argument("--case-number", required=True, help="Case number")
     p.add_argument("--project-root", default=".", help="Project root (for reading templates)")
     p.add_argument("--model", default="claude-sonnet-4-20250514", help="LLM model")
+    p.add_argument("--max-images-per-page", type=int, default=3,
+                    help="Max images per page for vision analysis (default: 3)")
+    p.add_argument("--no-vision", action="store_true", default=False,
+                    help="Disable vision (skip image analysis even if images exist)")
     return p.parse_args()
 
 
@@ -70,16 +74,25 @@ def load_config(project_root):
 
 
 def call_llm(base_url, api_key, model, system_prompt, user_prompt):
-    """Call OpenAI-compatible chat completion API."""
+    """Call OpenAI-compatible chat completion API.
+
+    user_prompt can be:
+    - str: plain text content
+    - list: array of content blocks (text + image_url) for vision API
+    """
     import urllib.request
     import urllib.error
 
     url = f"{base_url}/chat/completions"
+
+    # Support both string and array content formats
+    user_content = user_prompt if isinstance(user_prompt, (str, list)) else str(user_prompt)
+
     payload = {
         "model": model,
         "messages": [
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
+            {"role": "user", "content": user_content},
         ],
         "temperature": 0.3,
         "max_tokens": 4000,
@@ -107,6 +120,68 @@ def call_llm(base_url, api_key, model, system_prompt, user_prompt):
     except Exception as e:
         print(f"ERROR|LLM API: {e}", file=sys.stderr)
         return None
+
+
+def extract_images_from_page(page_path, max_images=3):
+    """ISS-224: Extract inline images from a page markdown, return as vision content blocks.
+
+    Parses ![...](./assets/xxx.png) references, reads the image files,
+    and returns base64-encoded image_url content blocks for OpenAI vision API.
+
+    Args:
+        page_path: path to the _page-*.md file
+        max_images: max images to extract per page (controls token cost)
+
+    Returns:
+        list of {"type": "image_url", "image_url": {"url": "data:image/png;base64,..."}}
+    """
+    import re
+    import base64
+
+    img_pattern = re.compile(r'!\[[^\]]*\]\(\./assets/([^)]+)\)')
+    page_dir = os.path.dirname(page_path)
+
+    try:
+        with open(page_path, "r", encoding="utf-8", errors="replace") as f:
+            content = f.read()
+    except Exception:
+        return []
+
+    matches = img_pattern.findall(content)
+    if not matches:
+        return []
+
+    image_blocks = []
+    for img_filename in matches[:max_images]:
+        img_path = os.path.join(page_dir, "assets", img_filename)
+        if not os.path.isfile(img_path):
+            continue
+
+        # Skip very large images (>500KB) to control token cost
+        try:
+            size = os.path.getsize(img_path)
+            if size > 500_000:
+                print(f"SKIP|image_too_large|{img_filename}|{size}bytes", file=sys.stderr)
+                continue
+        except OSError:
+            continue
+
+        # Detect MIME type from extension
+        ext = img_filename.rsplit(".", 1)[-1].lower() if "." in img_filename else "png"
+        mime_map = {"png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg", "gif": "image/gif", "webp": "image/webp"}
+        mime_type = mime_map.get(ext, "image/png")
+
+        try:
+            with open(img_path, "rb") as f:
+                img_data = base64.b64encode(f.read()).decode("ascii")
+            image_blocks.append({
+                "type": "image_url",
+                "image_url": {"url": f"data:{mime_type};base64,{img_data}"}
+            })
+        except Exception as e:
+            print(f"WARN|cannot_read_image|{img_filename}|{e}", file=sys.stderr)
+
+    return image_blocks
 
 
 def generate_teams_digest(case_dir, case_number, project_root, base_url, api_key, model):
@@ -283,8 +358,9 @@ Then output the digest markdown (Key Facts and Timeline MUST be in Chinese, keep
     print(f"OK|chats={len(chat_files)}|output={out_path}|relevance={relevance_path}")
 
 
-def generate_onenote_digest(case_dir, case_number, project_root, base_url, api_key, model):
-    """Generate onenote-digest.md from raw page files."""
+def generate_onenote_digest(case_dir, case_number, project_root, base_url, api_key, model,
+                            max_images_per_page=3, no_vision=False):
+    """Generate onenote-digest.md from raw page files. ISS-224: supports vision analysis."""
     onenote_dir = os.path.join(case_dir, "onenote")
     if not os.path.isdir(onenote_dir):
         print("SKIP|no onenote/ dir")
@@ -308,14 +384,57 @@ def generate_onenote_digest(case_dir, case_number, project_root, base_url, api_k
     # Read case-info.md head for context
     case_info_head = read_file(os.path.join(case_dir, "case-info.md"), max_chars=3000)
 
-    # Build user prompt
-    pages_content = []
-    for pf in page_files[:10]:  # cap at 10 files (main pages + subpages)
-        name = os.path.basename(pf)
-        content = read_file(pf, max_chars=5000)
-        pages_content.append(f"### Page: {name}\n{content}")
+    # ISS-224: Check for images and decide vision vs text-only mode
+    has_images = False
+    if not no_vision:
+        # Check if any page has images in assets/
+        assets_dir = os.path.join(onenote_dir, "assets")
+        if os.path.isdir(assets_dir) and os.listdir(assets_dir):
+            has_images = True
 
-    user_prompt = f"""Case Number: {case_number}
+    if has_images:
+        # Vision mode: build content array with text + images
+        content_blocks = []
+
+        # Add case info as text
+        content_blocks.append({
+            "type": "text",
+            "text": f"Case Number: {case_number}\nTotal matched pages: {len(page_files)}\n\n## Case Info (head)\n{case_info_head[:2000]}\n\n## Raw OneNote Pages\n"
+        })
+
+        # Add each page with interleaved images
+        total_images = 0
+        for pf in page_files[:10]:
+            name = os.path.basename(pf)
+            page_text = read_file(pf, max_chars=5000)
+            content_blocks.append({
+                "type": "text",
+                "text": f"### Page: {name}\n{page_text}\n"
+            })
+
+            # Extract and add images for this page
+            image_blocks = extract_images_from_page(pf, max_images=max_images_per_page)
+            if image_blocks:
+                content_blocks.extend(image_blocks)
+                total_images += len(image_blocks)
+
+        # Add template instructions
+        content_blocks.append({
+            "type": "text",
+            "text": f"\n## Output Format Template\n{template}\n\nGenerate the onenote-digest.md following the template format exactly.\n- Classify each finding as [fact] or [analysis] per the template rules\n- Aggregate all [fact] items into the top Facts section\n- Aggregate all [analysis] items into the Analysis section\n- Include per-page details with Key findings\n- For each screenshot/image provided, extract key information (RBAC configs, error codes, CLI output, portal settings) and include as [fact] items\n- Write a 1-2 sentence Summary\nOutput ONLY the markdown content, no code fences."
+        })
+
+        user_prompt = content_blocks
+        print(f"VISION|pages={len(page_files)}|images={total_images}", file=sys.stderr)
+    else:
+        # Text-only mode (original behavior)
+        pages_content = []
+        for pf in page_files[:10]:
+            name = os.path.basename(pf)
+            content = read_file(pf, max_chars=5000)
+            pages_content.append(f"### Page: {name}\n{content}")
+
+        user_prompt = f"""Case Number: {case_number}
 Total matched pages: {len(page_files)}
 
 ## Case Info (head)
@@ -335,7 +454,7 @@ Generate the onenote-digest.md following the template format exactly.
 - Write a 1-2 sentence Summary
 Output ONLY the markdown content, no code fences."""
 
-    system_prompt = "You are a OneNote analyst for Azure support cases. Read raw OneNote page content, classify findings as [fact] (traceable evidence) or [analysis] (inference/hypothesis), and produce a structured digest. Be concise and accurate."
+    system_prompt = "You are a OneNote analyst for Azure support cases. Read raw OneNote page content (and any attached screenshots/images), classify findings as [fact] (traceable evidence) or [analysis] (inference/hypothesis), and produce a structured digest. For images: extract RBAC configurations, error codes, CLI outputs, portal settings, and other diagnostic information visible in screenshots. Be concise and accurate."
 
     result = call_llm(base_url, api_key, model, system_prompt, user_prompt)
     if not result:
@@ -364,7 +483,8 @@ def main():
     if args.type == "teams":
         generate_teams_digest(args.case_dir, args.case_number, args.project_root, base_url, api_key, model)
     elif args.type == "onenote":
-        generate_onenote_digest(args.case_dir, args.case_number, args.project_root, base_url, api_key, model)
+        generate_onenote_digest(args.case_dir, args.case_number, args.project_root, base_url, api_key, model,
+                               max_images_per_page=args.max_images_per_page, no_vision=args.no_vision)
 
 
 if __name__ == "__main__":

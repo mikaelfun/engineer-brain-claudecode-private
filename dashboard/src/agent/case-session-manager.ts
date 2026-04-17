@@ -537,7 +537,7 @@ export function clearStepSessionMessages(caseNumber: string, stepName: string): 
 // ---- Step-Level Log Writer ----
 
 /**
- * Write a step log to cases/active/<caseNumber>/logs/
+ * Write a step log to cases/active/<caseNumber>/.casework/logs/
  * Format: YYYY-MM-DD_HH-mm_<step-name>.log
  * Contains: step name, start/end time, status, key output summary
  */
@@ -553,7 +553,7 @@ export function writeStepLog(
 ): void {
   try {
     const casesRoot = getCasesRoot()
-    const logsDir = join(casesRoot, 'active', caseNumber, 'logs')
+    const logsDir = join(casesRoot, 'active', caseNumber, '.casework', 'logs')
 
     if (!existsSync(logsDir)) {
       mkdirSync(logsDir, { recursive: true })

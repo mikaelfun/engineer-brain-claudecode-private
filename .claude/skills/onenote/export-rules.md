@@ -24,27 +24,142 @@ allowed-tools:
 `$ARGUMENTS` 支持以下格式：
 
 ```
-/onenote-export                                      → 报错，提示需要参数
-/onenote-export sync                                 → 增量同步所有已导出的 notebook（无需指定名称）
-/onenote-export <onenote-link-or-sharepoint-url>      → 从链接自动识别 notebook+section+page
-/onenote-export -NotebookName "Kun Fang OneNote"      → 增量导出该 notebook（只导出有变更的页面）
-/onenote-export -NotebookName "Kun Fang OneNote" -Force  → 强制全量重导出
-/onenote-export -NotebookName "Kun Fang OneNote" -SectionPath "Rest Plan"   → 导出指定 section
-/onenote-export -NotebookName "Kun Fang OneNote" -PageName "^RPT$"          → 导出指定 page（支持正则）
+/onenote export                                      → 报错，提示需要参数
+/onenote export sync                                 → 增量同步所有已导出的 notebook
+/onenote export sync "MCVKB"                         → 增量同步指定 notebook（按 .export-scope.json 范围）
+/onenote export sync "MCVKB" -Force                  → 强制全量重导出指定 notebook
+/onenote export sync "MCVKB" -SectionPath "VM+SCIM"  → 只导出指定 section
+/onenote export sync "MCVKB" -PageName "^RPT$"       → 只导出指定 page（支持正则）
+/onenote export <onenote-link-or-sharepoint-url>      → 从链接自动识别 notebook+section+page
 ```
 
-### 自然语言映射
+> **已废弃**：`-NotebookName` 参数不再使用，统一用 `sync "notebook名"` 替代。
+> 如遇到旧格式 `-NotebookName "X"` → 自动转换为 `sync "X"` 执行。
+
+---
+
+## Scope 管理子命令
+
+通过 `/onenote scope` 管理 notebook 的同步范围（`.export-scope.json`）。
+
+### 无参数 — 概览所有 notebook
+
+`/onenote scope`
+
+1. 读取 `outputDir`（从 config.json → dataRoot 派生）
+2. 扫描所有子目录的 `.export-scope.json`
+3. 展示概览表格：
+
+```
+📋 OneNote Scope 概览
+━━━━━━━━━━━━━━━━━━━━━
+| Notebook                          | Mode | Sections | Pages | Last Sync           |
+|-----------------------------------|------|----------|-------|---------------------|
+| Kun Fang OneNote                  | full | —        | —     | 2026-04-17 04:01    |
+| MCVKB                             | full | —        | —     | 2026-04-16 02:02    |
+| Mooncake POD Support Notebook     | scoped | 7      | 1     | 2026-04-17 01:07    |
+```
+
+- Mode: `full`（sections 为 null 或不存在）/ `scoped`（有 sections 列表）
+- 无 `.export-scope.json` 的目录 → 显示 `(no scope, never synced)`
+
+### 指定 notebook — 详情 + 交互编辑
+
+`/onenote scope "Mooncake POD Support Notebook"`
+
+1. 读取该 notebook 的 `.export-scope.json`
+2. 展示详情：
+
+```
+📋 Scope: Mooncake POD Support Notebook
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Mode: scoped (7 sections + 1 page)
+Last sync: 2026-04-17 01:07
+
+Sections:
+  1. [Team]Process and IcM and Common Tools/ICM
+  2. [Team]Process and IcM and Common Tools/Process
+  3. [Team]Process and IcM and Common Tools/Event-based Support
+  4. [Team]Process and IcM and Common Tools/Project-based Support
+  5. POD/VMSCIM/1. Readiness
+  6. POD/VMSCIM/2. Process
+  7. POD/VMSCIM/4. Services
+
+Pages:
+  1. [Team]New Hire Manual (Must-Read) / [Team]Soft Skill trainings
+```
+
+3. 用 `AskUserQuestion` 询问操作：
+
+```
+对 Mooncake POD Support Notebook 的 scope 执行什么操作？
+  1. 添加 section — 输入 section path 添加到同步范围
+  2. 添加 page — 输入 section + page name 添加单页到同步范围
+  3. 移除条目 — 从当前 scope 中移除 section 或 page
+  4. 切换为全量 — 移除所有 scope 限制，同步整本 notebook
+  5. 不修改 — 仅查看，退出
+```
+
+#### 操作 1: 添加 section
+
+- 用 `AskUserQuestion` 询问 section path（提示示例）
+- 用户输入后，执行包含关系检测（与现有 scope 合并规则一致）
+- 写入 `.export-scope.json`
+- 确认：`✅ 已添加 section "POD/VMSCIM/3. Linux" 到 scope`
+
+> 💡 **辅助发现**：如果用户不确定 section path，先用 Bash 列出 OneNote 的 section 结构：
+> ```bash
+> pwsh -NoProfile -Command "& {
+>   $onenote = New-Object -ComObject OneNote.Application
+>   [xml]$hierarchy = ''; $onenote.GetHierarchy('', [Microsoft.Office.Interop.OneNote.HierarchyScope]::hsNotebooks, [ref]$hierarchy)
+>   # ... 解析 notebook 结构
+> }"
+> ```
+> 或从已导出的目录结构推断：`ls "{outputDir}/{notebookName}/" | head -20`
+
+#### 操作 2: 添加 page
+
+- 用 `AskUserQuestion` 询问 section path
+- 用 `AskUserQuestion` 询问 page name
+- 执行包含关系检测（如 section 已在 scope 中 → 提示已覆盖，跳过）
+- 写入 `.export-scope.json`
+
+#### 操作 3: 移除条目
+
+- 将当前 sections + pages 列为编号列表
+- 用 `AskUserQuestion` 让用户选择要移除的编号（支持多选）
+- 从 `.export-scope.json` 中移除
+- 确认：`✅ 已移除 2 个条目`
+
+#### 操作 4: 切换为全量
+
+- 用 `AskUserQuestion` 二次确认（全量同步可能很耗时）
+- 确认后：设 `sections = null, pages = []`
+- 写入 `.export-scope.json`
+
+### Scope 文件写入规则
+
+所有 scope 修改操作**必须**：
+1. 先读取现有 `.export-scope.json`（保留 lastSync、autoDiscovered 等字段）
+2. 只修改 `sections` / `pages` 字段
+3. 用 Bash + python3 写入（避免 Write 工具缓存 bug）
+4. 写入后 Read 验证
+
+---
 
 用户可能不会用精确参数格式，以下是常见自然语言到参数的映射：
 
 | 用户说的 | 实际参数 |
 |----------|----------|
 | `同步所有笔记本` / `sync onenote` / `更新所有笔记` | `sync` |
-| `增量更新 MCVKB` / `同步 MCVKB` | `-NotebookName "MCVKB"` |
-| `全量导出 MCVKB` / `重新导出 MCVKB` | `-NotebookName "MCVKB" -Force`（需二次确认） |
-| `导出 MCVKB 的 VM+SCIM section` | `-NotebookName "MCVKB" -SectionPath "VM+SCIM"` |
+| `增量更新 MCVKB` / `同步 MCVKB` | `sync "MCVKB"` |
+| `全量导出 MCVKB` / `重新导出 MCVKB` | `sync "MCVKB" -Force`（需二次确认） |
+| `导出 MCVKB 的 VM+SCIM section` | `sync "MCVKB" -SectionPath "VM+SCIM"` |
 | `再跑一次` / `再来一次` | 重复上一次的导出命令（参数不变） |
-| `导出这个页面` + 粘贴链接 | `-Link "{链接}"` |
+| `导出这个页面` + 粘贴链接 | `<url>` |
+| `查看 scope` / `同步范围` | → 路由到 `/onenote scope` |
+| `修改 scope` / `添加 section` | → 路由到 `/onenote scope "notebook名"` |
 
 ### 增量更新（默认行为，3 层检测）
 

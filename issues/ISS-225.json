@@ -1,0 +1,11 @@
+{
+  "id": "ISS-225",
+  "title": "SAP out-of-scope 处理：transfer 建议 + AR 预填写 + todo 可拷贝",
+  "description": "## 背景\ncasework assess 的 SAP 三层检查（Step 4.5）已能检测 sapInPod/sapMismatch，但检测到 out-of-scope 后缺乏完整的处理流程。\n\n## 需求\n\n### 场景 1：新 case 的问题直接偏移出 POD scope\n- assess 检测到 sapInPod=false\n- **建议 transfer** 到合适的 POD 和 SAP\n- 需要输出：目标 POD 名称、完整 SAP 路径（供工程师在 D365 修改 SAP 后 requeue）\n- SAP 完整路径和 POD 映射信息来源：用 onenote search 搜索团队 OneNote 的 SAP/routing 文档，结果保存到 {dataRoot}/sap-routing.json 供后续引用\n- todo 中显示可拷贝的文本（SAP 路径、目标 POD）\n\n### 场景 2：scope 内 case 中间发现客户有 scope 外的需求\n- 两种方向：\n  a. **建议客户开新 case**：告知客户该问题属于哪个产品，需要从对应 SAP 开新 case\n  b. **工程师开 AR**（客户无法自行开 case 时）：\n    - 预填写 AR 信息：目标 SAP 路径、AR title、AR description\n    - todo 中显示可拷贝的预填写文本，方便工程师直接拷贝到 D365 创建 AR\n    - Dashboard 的 todo 项支持点击拷贝（copy-to-clipboard）\n\n### 数据源\n- 当前 {dataRoot}/sap-scope.json 有 podServices（29 个服务）和 validPrefixes\n- 需要增加 sap-routing.json 或扩展 sap-scope.json，包含：\n  - 非 POD 内产品 → 应该 transfer 到哪个 POD/queue\n  - 常见 SAP 路径的完整路径文本（供拷贝）\n  - 来源：团队 OneNote 的 SAP routing 文档（用 /onenote search 查找）\n\n### 注意\n- 只有 transfer 场景需要改 case SAP\n- AR 场景在创建 AR 时选择 AR 的 SAP 和 title/description，不改原 case SAP\n- Dashboard todo 项需要支持 copy-to-clipboard 交互\n\n## 涉及文件\n- .claude/skills/casework/assess/SKILL.md（SAP check → action 建议）\n- .claude/skills/casework/act/SKILL.md（路由表加 sapInPod=false 处理）\n- .claude/skills/casework/summarize/SKILL.md（todo 输出加 SAP 拷贝文本）\n- dashboard/web/src/pages/CaseDetail.tsx（todo 项加 copy 按钮）\n- {dataRoot}/sap-routing.json（新增，SAP routing 映射数据）\n",
+  "type": "feature",
+  "priority": "P1",
+  "status": "pending",
+  "testLoopScan": true,
+  "createdAt": "2026-04-17T23:12:40.555372",
+  "updatedAt": "2026-04-17T23:12:40.555410"
+}

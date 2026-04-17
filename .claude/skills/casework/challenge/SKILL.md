@@ -51,8 +51,8 @@ prompt: |
   Case {caseNumber}，caseDir={caseDir}（绝对路径）。
   产品域：{product}（从 case-info.md serviceTree 推断）。
   请先读取 .claude/agents/challenger.md 获取完整执行步骤，然后执行。
-  ⏱ 第一个 Bash 调用中写 date +%s > "{caseDir}/logs/.t_challenge_start"
-  ⏱ 最后一个 Bash 调用中写 date +%s > "{caseDir}/logs/.t_challenge_end"
+  ⏱ 第一个 Bash 调用中写 date +%s > "{caseDir}/.casework/logs/.t_challenge_start"
+  ⏱ 最后一个 Bash 调用中写 date +%s > "{caseDir}/.casework/logs/.t_challenge_end"
 ```
 
 ### 5. 展示结果

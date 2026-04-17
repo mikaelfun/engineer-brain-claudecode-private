@@ -14,14 +14,14 @@ assess / assess-ar / teams-digest-writer 在分析 Teams chat 文件后，必须
 
 以下事实来自 Teams 对话，按时间顺序排列。每条标注来源身份。
 
-- [customer] {displayName} @ {date}: {一句话 fact}
-- [pg] {displayName} @ {date}: {一句话 fact}
-- [engineer] {displayName} @ {date}: {一句话 fact}
-- [internal] {displayName} @ {date}: {一句话 fact}
+- [customer] {displayName} @ {date}: {一句话中文 fact，人名/技术术语/命令保留英文}
+- [pg] {displayName} @ {date}: {一句话中文 fact}
+- [engineer] {displayName} @ {date}: {一句话中文 fact}
+- [internal] {displayName} @ {date}: {一句话中文 fact}
 
 ## Timeline (high-relevance only)
 
-- {date} — {chat displayName} — {one-line summary of the exchange}
+- {date} — {chat displayName} — {一句话中文摘要}
 
 ## Low-Relevance (skipped)
 
@@ -49,6 +49,7 @@ assess / assess-ar / teams-digest-writer 在分析 Teams chat 文件后，必须
 ## 要点
 
 - `## Key Facts` 只包含 high-relevance chat 的事实，不做推断
+- **Key Facts 和 Timeline 必须用中文撰写**（人名、技术术语、CLI 命令、错误码保留英文原文）
 - 每条 fact 需标注来源身份（`[customer]`/`[pg]`/`[engineer]`/`[internal]`）
 - `## Timeline` 按时间顺序列出 high-relevance 交互摘要
 - `## Low-Relevance` 列出被跳过的 chat 及原因（透明度）
