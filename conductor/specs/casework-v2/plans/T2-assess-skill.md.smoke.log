@@ -33,3 +33,30 @@ cf39b1e T2.5 casework SKILL delegation
 5008fd2 T2.7 teams-search digest notice
 
 T2 track CLOSED.
+
+---
+
+## Wave 3 Smoke — DELTA_OK (real case)
+
+Date: 2026-04-17
+Case: 2604140040001804 (Mooncake VM PoD / 华晨宝马)
+Procedure: backup → clean .casework/ → run data-refresh.sh → exec assess Steps 2-6.
+
+### Results
+- data-refresh: **DATA_REFRESH_OK | delta=DELTA_OK | elapsed=106.1s** (teams path DEGRADED, others OK)
+- Step 2 compliance gate: re-infer path (cache empty)
+- Step 3 gating: SPAWN_TEAMS=0 SPAWN_ONENOTE=1 (matches plan — teams.newMessages=0, onenote.newPages=1)
+- Step 4 decision (inline main-LLM, no subagent for smoke): actualStatus=pending-customer, days=3, actions=[email-drafter follow-up]
+- Step 4b write-execution-plan.py: **PLAN_WRITTEN | actions=1** — schema validates
+- Step 5 meta upsert: OK
+- **Smoke Signal**: `ASSESS_SMOKE_OK|delta=DELTA_OK|status=pending-customer|actions=1`
+
+### Issues found (to track)
+1. **compliance-hash.sh field mismatch** — T2.1 fixture uses `| Entitlement | Premier |` rows, real case-info.md uses `## Entitlement\n| Service Level | Premier |`. Hash returns empty → all real cases hit re-infer. Needs fixture + grep pattern update.
+2. **Git Bash `/tmp/` path instability** — passing `/tmp/foo.json` between MSYS Bash and Python causes Windows Python to resolve it as `C:\Users\fangkun\AppData\Local\Temp\...`. Workaround applied: put decision tmp file under `{caseDir}/.casework/`.
+
+### Rollback
+Case restored from `_backup/2604140040001804.1776404088/`. Only casework-meta.json + execution-plan.json were changed; regenerated `.casework/` left in place as T1 artifact (data-refresh re-ran cleanly).
+
+### DELTA_EMPTY path (prior entry)
+Already validated via tempdir fixture smoke (see first log entry). Fast path zero-LLM confirmed.
