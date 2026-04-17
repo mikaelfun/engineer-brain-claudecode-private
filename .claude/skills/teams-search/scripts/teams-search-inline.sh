@@ -70,9 +70,11 @@ write_failed_event() {
 AGENCY_EXE="$APPDATA/agency/CurrentVersion/agency.exe"
 [ ! -f "$AGENCY_EXE" ] && { echo "TEAMS_FAIL|reason=agency.exe not found"; exit 1; }
 
-# Auto-assign port from case number hash if not specified
+# Auto-assign port from case number hash if not specified.
+# MUST be deterministic: Python hash() is randomized per-process (PYTHONHASHSEED).
+# Use hashlib instead — same case number always gets the same port.
 if [ -z "$PORT" ]; then
-  PORT=$(python3 -c "print(9900 + hash('$CASE_NUMBER') % 100)" 2>/dev/null || echo 9950)
+  PORT=$(python3 -c "import hashlib; print(9900 + int(hashlib.md5('$CASE_NUMBER'.encode()).hexdigest(),16) % 100)" 2>/dev/null || echo 9950)
 fi
 
 mkdir -p "$CASE_DIR/teams"
