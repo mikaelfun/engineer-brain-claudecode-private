@@ -1,18 +1,15 @@
 /**
  * CaseworkPipeline — Horizontal step stepper for casework processing pipeline
  *
- * Visualizes the 8-step casework pipeline:
- *   Changegate -> Data Refresh -> Compliance -> Status Judge ->
- *   Route -> Troubleshoot -> Email Draft -> Inspection
+ * Visualizes the 4-step casework pipeline:
+ *   Data Refresh -> Assess -> Act -> Summarize
  *
  * Supports normal and compact modes, with per-step status indicators,
  * duration labels, connector lines, error tooltips, and a running timer.
  */
 import React, { useMemo, useCallback } from 'react'
 import {
-  GitCompare,
   RefreshCw,
-  Shield,
   Scale,
   GitBranch,
   Search,
@@ -53,27 +50,19 @@ export interface CaseworkPipelineProps {
 // ─── Icon registry ──────────────────────────────────────────────────────────
 
 const STEP_ICONS: Record<string, LucideIcon> = {
-  changegate: GitCompare,
   'data-refresh': RefreshCw,
-  compliance: Shield,
-  'status-judge': Scale,
-  route: GitBranch,
-  troubleshoot: Search,
-  'email-draft': Mail,
-  inspection: FileText,
+  assess: Scale,
+  act: GitBranch,
+  summarize: FileText,
 }
 
 // ─── Default steps ──────────────────────────────────────────────────────────
 
 export const DEFAULT_CASEWORK_STEPS: PipelineStep[] = [
-  { id: 'changegate', label: 'Changegate', status: 'pending' },
   { id: 'data-refresh', label: 'Data Refresh', status: 'pending' },
-  { id: 'compliance', label: 'Compliance', status: 'pending' },
-  { id: 'status-judge', label: 'Status Judge', status: 'pending' },
-  { id: 'route', label: 'Route', status: 'pending' },
-  { id: 'troubleshoot', label: 'Troubleshoot', status: 'pending' },
-  { id: 'email-draft', label: 'Email Draft', status: 'pending' },
-  { id: 'inspection', label: 'Inspection', status: 'pending' },
+  { id: 'assess', label: 'Assess', status: 'pending' },
+  { id: 'act', label: 'Act', status: 'pending' },
+  { id: 'summarize', label: 'Summarize', status: 'pending' },
 ]
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
