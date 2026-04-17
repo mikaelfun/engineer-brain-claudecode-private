@@ -39,7 +39,7 @@ if [ "${#CASE_NUMBER}" -ge 19 ] && [ "$IS_AR" = "false" ]; then
 fi
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_ROOT="${PROJECT_ROOT:-$(cd "$HERE/../../.." && pwd)}"
+PROJECT_ROOT="${PROJECT_ROOT:-$(cd "$HERE/../../../.." && pwd)}"
 # Windows-mixed path (C:/...) so python3 open() doesn't treat /c/ as literal.
 # cygpath -m handles both MSYS and Cygwin; fall back to pwd if absent.
 to_win() { cygpath -m "$1" 2>/dev/null || echo "$1"; }

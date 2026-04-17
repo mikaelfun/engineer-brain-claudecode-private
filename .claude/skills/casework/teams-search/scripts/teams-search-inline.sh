@@ -197,6 +197,13 @@ if [ -n "$CONTACT_EMAIL" ]; then
   mcp_search_with_retry 11 "from:$CONTACT_EMAIL" 5 "$WD/q2.json" || true
 fi
 
+# ISS-226: Pre-fetch Graph API token in Bash (where `az` works reliably)
+# Use microsoft-fangkun profile (Global/Microsoft Corp tenant = same auth as agency.exe)
+GRAPH_TOKEN=""
+GRAPH_TOKEN=$(AZURE_CONFIG_DIR="$HOME/.azure-profiles/microsoft-fangkun" \
+  az account get-access-token --resource https://graph.microsoft.com \
+  --query accessToken -o tsv 2>/dev/null) || true
+
 # Python: parse chatIds → fetch messages → dump _mcp-raw.json
 # All paths via env vars (avoids Windows backslash escaping in heredoc)
 # Captured in PY_OUTPUT so final event can report accurate counts.
@@ -204,6 +211,7 @@ set +e
 PY_OUTPUT=$(MCP_WD="$WD" MCP_CASE_DIR="$CASE_DIR" MCP_CASE_NUMBER="$CASE_NUMBER" \
   MCP_CONTACT_EMAIL="$CONTACT_EMAIL" MCP_PORT="$PORT" MCP_T0="$T0" \
   MCP_EVENT_DIR="$EVENT_DIR" MCP_START_TS="$START_TS" \
+  MCP_GRAPH_TOKEN="$GRAPH_TOKEN" \
   python3 << 'PYEOF'
 import json, os, subprocess, time, re
 import urllib.request
@@ -406,23 +414,8 @@ if not os.environ.get('TEAMS_SKIP_IMAGES', ''):
                     url_info[_url] = f"{_mid}_{_idx}.png"
 
     if url_info:
-        # Get Graph API token via az CLI
-        _token = None
-        for _profile in [None, os.path.expanduser('~/.azure-profiles/microsoft-fangkun')]:
-            try:
-                _env = dict(os.environ)
-                if _profile and os.path.isdir(_profile):
-                    _env['AZURE_CONFIG_DIR'] = _profile
-                _r = subprocess.run(
-                    ['az', 'account', 'get-access-token',
-                     '--resource', 'https://graph.microsoft.com',
-                     '--query', 'accessToken', '-o', 'tsv'],
-                    capture_output=True, text=True, timeout=15, env=_env)
-                if _r.returncode == 0 and _r.stdout.strip():
-                    _token = _r.stdout.strip()
-                    break
-            except Exception:
-                pass
+        # Use pre-fetched Graph token from Bash (MCP_GRAPH_TOKEN env var)
+        _token = os.environ.get('MCP_GRAPH_TOKEN', '').strip()
 
         if _token:
             _assets = os.path.join(case_dir, 'teams', 'assets')
