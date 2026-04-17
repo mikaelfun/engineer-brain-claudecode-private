@@ -1,0 +1,11 @@
+{
+  "caseNumber": "TEST-EMPTY",
+  "deltaStatus": "DELTA_EMPTY",
+  "refreshResults": {
+    "d365": { "status": "OK", "newEmails": 0, "newNotes": 0 },
+    "teams": { "status": "OK", "newChats": 0, "newMessages": 0 },
+    "onenote": { "status": "OK", "newPages": 0, "updatedPages": 0 },
+    "icm": { "status": "OK", "newEntries": 0 },
+    "attachments": { "status": "OK", "downloaded": 0 }
+  }
+}
