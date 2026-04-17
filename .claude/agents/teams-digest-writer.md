@@ -56,23 +56,9 @@ Step 1 `data-refresh` 已经把 Teams 数据拉到 `{caseDir}/teams/`（每个 c
 ```
 
 ### 3. Digest 生成
-只读 high-relevance chats，写 `{caseDir}/teams/teams-digest.md`：
+只读 high-relevance chats，写 `{caseDir}/teams/teams-digest.md`。
 
-```md
-# Teams Digest — Case {caseNumber}
-
-> Generated: {ISO}
-> High-relevance chats: {N} / {Total}
-
-## Key Facts
-- [customer] {displayName} @ {date}: {一句话 fact}
-- [pg] {displayName} @ {date}: {一句话 fact}
-
-## Timeline (high-relevance only)
-- {date} — {chat} — {one-line summary}
-```
-
-不做 troubleshooting 推断，不下结论——只抽事实 + 时间线。
+格式模板：读取 `.claude/skills/casework/teams-search/teams-digest-template.md`，按模板结构输出（Key Facts + Timeline + Low-Relevance）。
 
 ### 4. Skip 条件（parent 已过滤，本 agent 兜底）
 - 若 `teams/` 下无 `*.md`（排除下划线文件）→ 写空 digest + `_relevance.json: {chats:{}}` → 正常退出

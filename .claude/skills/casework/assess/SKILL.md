@@ -136,20 +136,20 @@ eval $(bash .claude/skills/casework/assess/scripts/gate-subagents.sh "{caseDir}/
 
 | 数据源 | 读取文件 | 产出 |
 |--------|---------|------|
-| Teams | `{caseDir}/teams/*.md` | Step 4 LLM 提取 key facts + relevance |
-| OneNote | `{caseDir}/onenote/_page-*.md` | **重写 `personal-notes.md` 为 V1 格式**（见下） |
+| Teams | `{caseDir}/teams/*.md` | **重写 `teams/teams-digest.md`**（模板见下）+ `teams/_relevance.json` |
+| OneNote | `{caseDir}/onenote/_page-*.md` | **重写 `personal-notes.md`**（模板见下） |
 
 **patrol mode (depth=1) — inline 路径**：
 
-不 spawn 任何 enrichment agent。Step 4 主 LLM 直接读 raw 文件做分析：
-- Teams：读 `{caseDir}/teams/*.md`（每个 chat 一个文件，由 data-refresh write-teams.ps1 产出），在 Step 4 prompt 中要求 LLM 提取 key facts + 做 high/low relevance 判断
-- OneNote：读 `{caseDir}/onenote/_page-*.md`（raw page 副本，由 search-inline.py 产出），在 Step 4 prompt 中要求 LLM 对每条 finding 标注 `[fact]` 或 `[analysis]`
+不 spawn 任何 enrichment agent。主 LLM 直接读 raw 文件做分析，产出结构化文件供 Step 4 引用：
 
-**OneNote inline 分析完成后，必须重写 `{caseDir}/onenote/personal-notes.md`**。
+**Teams inline 分析**：读 `{caseDir}/teams/*.md`（排除 `_*.md`），做 relevance scoring + key facts 提取，**写 `{caseDir}/teams/teams-digest.md` + `teams/_relevance.json`**。
 
-格式模板：读取 `.claude/skills/onenote/personal-notes-template.md`，按模板结构输出（Facts/Analysis 汇聚 + 详细页面 + Summary）。
+格式模板：读取 `.claude/skills/casework/teams-search/teams-digest-template.md`。
 
-分类规则同模板定义：能追溯到具体来源→`[fact]`，推断性语言→`[analysis]`，不确定→`[fact]`。
+**OneNote inline 分析**：读 `{caseDir}/onenote/_page-*.md`，分析后**重写 `{caseDir}/onenote/personal-notes.md`**。
+
+格式模板：读取 `.claude/skills/onenote/personal-notes-template.md`。
 
 > **性能影响**：raw 文件直接进 Step 4 LLM context，增加 input tokens 但省去 2 次 subagent spawn 开销（~30s 冷启动）。对于 patrol 的 3-10 case 并行场景，总体更快。
 
@@ -160,10 +160,8 @@ eval $(bash .claude/skills/casework/assess/scripts/gate-subagents.sh "{caseDir}/
 读 context：
 - `{caseDir}/.casework/data-refresh-output.json` → delta + context（含 `deltaContent` md）
 - `{caseDir}/casework-meta.json` → 历史 actualStatus / compliance
-- Teams 数据（优先级顺序）：
-  1. `{caseDir}/teams/teams-digest.md`（若 spawn 了 teams-digest-writer 且成功）
-  2. `{caseDir}/teams/*.md` raw chat 文件（patrol mode 或 spawn 失败时直接读）
-- OneNote 数据：读 `{caseDir}/onenote/_page-*.md` raw page 文件，inline 分析后**重写** `{caseDir}/onenote/personal-notes.md` 为 V1 结构化格式（Facts/Analysis 汇聚 + 详细页面 + Summary），然后在 Step 4 LLM prompt 中引用重写后的 `personal-notes.md`
+- Teams 数据：引用 Step 3 产出的 `{caseDir}/teams/teams-digest.md`
+- OneNote 数据：引用 Step 3 产出的 `{caseDir}/onenote/personal-notes.md`
 
 **Prompt 模板**：
 
