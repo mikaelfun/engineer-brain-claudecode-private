@@ -214,6 +214,26 @@ done
 
 echo "✅ All 5 data paths finished."
 
+# ── 5.5. CC Finder (RDSE customer match) ──
+# Runs after D365 data (case-info.md) is available. Writes ccAccount/ccEmails to meta.
+# Pure script, no LLM, ~0.1s. Always runs (no cache — mooncake-cc.json may update).
+CC_RESULT=$(python3 "$PROJECT_ROOT/.claude/skills/casework/scripts/cc-finder.py" \
+  --case-dir "$CASE_DIR_ABS" --data-root "$(to_win "$(cd "$PROJECT_ROOT" && python3 -c "import json; print(json.load(open('config.json')).get('dataRoot','../data'))")")" 2>/dev/null || echo "ccAccount=|ccEmails=")
+CC_ACCOUNT=$(echo "$CC_RESULT" | sed -n 's/ccAccount=\(.*\)|ccEmails=.*/\1/p')
+CC_EMAILS=$(echo "$CC_RESULT" | sed -n 's/.*|ccEmails=\(.*\)/\1/p')
+if [ -n "$CC_ACCOUNT" ]; then
+  python3 -c "
+import json, os
+p = r'$CASE_DIR_ABS/casework-meta.json'
+try: m = json.load(open(p, encoding='utf-8'))
+except: m = {}
+m['ccAccount'] = '''$CC_ACCOUNT'''
+m['ccEmails'] = '''$CC_EMAILS'''
+json.dump(m, open(p, 'w', encoding='utf-8'), indent=2, ensure_ascii=False)
+" 2>/dev/null
+  echo "  CC: $CC_ACCOUNT"
+fi
+
 # ── 6. Digest generation (Teams + OneNote, parallel, LLM API call) ──
 # Runs AFTER raw data paths complete (needs their output files).
 # Delta-gated: skip if no new data AND existing digest file present.

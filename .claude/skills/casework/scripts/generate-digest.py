@@ -124,6 +124,21 @@ def generate_teams_digest(case_dir, case_number, project_root, base_url, api_key
     chat_files = sorted(glob.glob(os.path.join(teams_dir, "*.md")))
     chat_files = [f for f in chat_files if not os.path.basename(f).startswith("_")]
 
+    # Sort by lastMessageTime from _chat-index.json (oldest first = chronological input for LLM)
+    chat_index_path_sort = os.path.join(teams_dir, "_chat-index.json")
+    if os.path.exists(chat_index_path_sort):
+        try:
+            idx_sort = json.load(open(chat_index_path_sort, encoding="utf-8"))
+            def _get_last_msg_time(fp):
+                fn = os.path.basename(fp)
+                for _cid, info in idx_sort.items():
+                    if not _cid.startswith("_") and info.get("fileName") == fn:
+                        return info.get("lastMessageTime", "")
+                return ""
+            chat_files.sort(key=_get_last_msg_time)
+        except Exception:
+            pass
+
     if not chat_files:
         # Write empty digest
         digest = f"# Teams Digest — Case {case_number}\n\n> Generated: {datetime.now().isoformat(timespec='seconds')}\n> High-relevance chats: 0 / 0\n\nNo Teams conversations found.\n"
@@ -155,23 +170,39 @@ Total chats: {len(chat_files)}
 ## Output Format Template
 {template}
 
-Generate the teams-digest.md following the template format exactly. Output ONLY the markdown content, no code fences."""
+Generate the teams-digest.md following the template format exactly.
+CRITICAL: Key Facts MUST be sorted by date (oldest first). Each fact line must include a date.
+Output ONLY the markdown content, no code fences."""
 
-    system_prompt = "You are a Teams conversation analyst. Read raw chat files, score relevance, extract key facts, and produce a structured digest. Be concise and factual."
+    system_prompt = """You are a Teams conversation analyst for Azure support cases.
+
+Your task:
+1. FIRST: Score each chat's relevance to the case by comparing chat content against the case problem description (from Case Info). Output a JSON block with per-chat relevance.
+2. THEN: From high-relevance chats only, extract key facts and produce a structured digest.
+
+Relevance criteria (based on chat CONTENT vs case PROBLEM):
+- HIGH: Chat contains substantive discussion about the case — troubleshooting steps, customer feedback, PG guidance, technical findings, action items, or progress updates related to the case's problem.
+- LOW: Chat only briefly mentions the case number/ID without substantive discussion, or is about a completely different topic, or is purely social/administrative.
+- In other words: "详细讨论 case 进展或处理" = HIGH, "只是提到了 caseId" = LOW.
+
+Output format — you MUST output EXACTLY this structure, with the ```json-relevance``` fence:
+
+```json-relevance
+{
+  "chat_filename.md": {"score": "high", "reason": "详细讨论了 alert 问题的排查和处理"},
+  "other_chat.md": {"score": "low", "reason": "只提到了 case 号，无实质讨论"}
+}
+```
+
+Then output the digest markdown (Key Facts and Timeline MUST be in Chinese, keep names/commands/technical terms in English):"""
 
     result = call_llm(base_url, api_key, model, system_prompt, user_prompt)
     if not result:
         print("FAIL|LLM call failed")
         return
 
-    # Write digest
-    out_path = os.path.join(teams_dir, "teams-digest.md")
-    with open(out_path, "w", encoding="utf-8") as f:
-        f.write(result)
-
-    # Write _relevance.json — parse from digest content
-    # Used by: 1) Dashboard backend for chat sorting/labeling
-    #          2) Next teams-search to skip low-relevance chatIds
+    # Write _relevance.json — parse structured JSON from LLM output
+    # LLM outputs ```json-relevance { ... } ``` block BEFORE the digest markdown
     import re
     relevance_data = {
         "_scoredAt": datetime.now().isoformat(timespec="seconds"),
@@ -194,44 +225,60 @@ Generate the teams-digest.md following the template format exactly. Output ONLY 
         except Exception:
             pass
 
-    # Parse "## Timeline (high-relevance only)" for high-relevance chat filenames
-    high_chats = set()
-    timeline_match = re.search(r"## Timeline.*?\n([\s\S]*?)(?=\n## |$)", result)
-    if timeline_match:
-        for line in timeline_match.group(1).split("\n"):
-            # Match patterns like "— bi-weiwei.md —" or "— chuck-zhang.md —"
-            fname_match = re.search(r"— (\S+\.md)", line)
-            if fname_match:
-                high_chats.add(fname_match.group(1))
+    # Parse structured json-relevance block from LLM output
+    json_rel_match = re.search(r"```json-relevance\s*\n([\s\S]*?)\n```", result)
+    if json_rel_match:
+        try:
+            rel_json = json.loads(json_rel_match.group(1))
+            for filename, info in rel_json.items():
+                chat_id = filename.replace(".md", "")
+                chat_ids = filename_to_chatids.get(filename, [])
+                score = info.get("score", "unknown")
+                reason = info.get("reason", "")
+                relevance_data["chats"][chat_id] = {
+                    "relevance": score,
+                    "reason": reason,
+                    "chatIds": chat_ids,
+                }
+        except (json.JSONDecodeError, AttributeError):
+            pass  # fallback to heuristic below
 
-    # Parse "## Low-Relevance" section for low-relevance chat filenames
-    low_chats = set()
-    low_match = re.search(r"## Low-Relevance.*?\n([\s\S]*?)(?=\n## |$)", result)
-    if low_match:
-        for line in low_match.group(1).split("\n"):
-            fname_match = re.search(r"(\S+\.md)", line)
-            if fname_match and not fname_match.group(1).startswith("_"):
-                low_chats.add(fname_match.group(1))
+    # Fallback: if no json-relevance block parsed, use Key Facts heuristic
+    if not relevance_data["chats"]:
+        # Parse Key Facts for display names → map back to chat filenames
+        keyfacts_match = re.search(r"## Key Facts.*?\n([\s\S]*?)(?=\n## |$)", result)
+        mentioned_chats = set()
+        if keyfacts_match:
+            for line in keyfacts_match.group(1).split("\n"):
+                name_match = re.match(r"- \[.+?\] (.+?) @", line)
+                if name_match:
+                    display_name = name_match.group(1).strip()
+                    for cf in chat_files:
+                        cf_base = os.path.basename(cf).replace(".md", "").replace("-", " ").lower()
+                        if display_name.lower().replace(" ", "") in cf_base.replace(" ", "") or \
+                           cf_base.replace(" ", "") in display_name.lower().replace(" ", ""):
+                            mentioned_chats.add(os.path.basename(cf))
 
-    # Build per-chat relevance entries (with chatIds for teams-search skip list)
-    for cf in chat_files:
-        chat_name = os.path.basename(cf)
-        chat_id = chat_name.replace(".md", "")
-        chat_ids = filename_to_chatids.get(chat_name, [])
-        if chat_name in high_chats:
-            relevance_data["chats"][chat_id] = {"relevance": "high", "chatIds": chat_ids}
-        elif chat_name in low_chats:
-            relevance_data["chats"][chat_id] = {"relevance": "low", "chatIds": chat_ids}
-        else:
-            # Default: if mentioned in Key Facts → high, otherwise unknown
-            if chat_name in result:
+        for cf in chat_files:
+            chat_name = os.path.basename(cf)
+            chat_id = chat_name.replace(".md", "")
+            chat_ids = filename_to_chatids.get(chat_name, [])
+            if chat_name in mentioned_chats:
                 relevance_data["chats"][chat_id] = {"relevance": "high", "chatIds": chat_ids}
             else:
-                relevance_data["chats"][chat_id] = {"relevance": "unknown", "chatIds": chat_ids}
+                relevance_data["chats"][chat_id] = {"relevance": "low", "chatIds": chat_ids}
+
+    # Strip json-relevance block from digest output (keep only markdown)
+    digest_content = re.sub(r"```json-relevance\s*\n[\s\S]*?\n```\s*\n?", "", result).strip()
 
     relevance_path = os.path.join(teams_dir, "_relevance.json")
     with open(relevance_path, "w", encoding="utf-8") as f:
         json.dump(relevance_data, f, indent=2, ensure_ascii=False)
+
+    # Write cleaned digest (without json-relevance block) to file
+    out_path = os.path.join(teams_dir, "teams-digest.md")
+    with open(out_path, "w", encoding="utf-8") as f:
+        f.write(digest_content if digest_content else result)
 
     print(f"OK|chats={len(chat_files)}|output={out_path}|relevance={relevance_path}")
 

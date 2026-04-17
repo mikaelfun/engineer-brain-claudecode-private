@@ -27,15 +27,34 @@ assess / assess-ar / onenote-classifier 在分析 OneNote `_page-*.md` 后，必
 
 ## 详细页面
 
-### {Page Title 1}
-- **Modified**: {date from frontmatter}
-- **Section**: {notebook/section path}
-- **Key findings**:
-  - [fact] {extracted fact}
-  - [analysis] {extracted analysis}
+按 OneNote section 层级排序：root page 在前，subpage 紧跟其后。每个页面用 `<details>` HTML 标签包裹（默认折叠）。
 
-### {Page Title 2}
-...
+格式示例：
+
+```html
+<details>
+<summary>📄 Root Page Title — Section/Path (2026-04-01)</summary>
+
+- **Key findings**:
+  - [fact] 客户确认只有 Reader 权限
+  - [analysis] 可能需要升级到 Contributor
+
+</details>
+
+<details>
+<summary>&nbsp;&nbsp;📎 Subpage Title — subpage (2026-04-02)</summary>
+
+- **Key findings**:
+  - [fact] 截图显示 RBAC 配置
+
+</details>
+```
+
+**层级规则**：
+- 从 `_page-*.md` 的文件路径中 section depth 推断层级（路径 segments 越多越深）
+- root page（section 直属）用 📄 前缀，无缩进
+- subpage 用 📎 前缀，summary 前加 `&nbsp;&nbsp;` 缩进
+- 按 section path 字母序 → 同 section 内按 modified date 排序
 
 ## Summary
 {1-2 句话综合这些 OneNote 笔记对本 case 的诊断价值}

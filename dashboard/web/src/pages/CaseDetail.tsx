@@ -940,35 +940,18 @@ function AnalysisFileList({ files }: { files: Array<{ filename: string; content:
 }
 
 function OnenoteTab({ files }: { files: Array<{ filename: string; content: string; size: number; updatedAt: string }> }) {
-  const [expanded, setExpanded] = useState<string | null>(files.length === 1 ? files[0]?.filename : null)
+  if (files.length === 0) return <EmptyState icon="📓" title="No OneNote notes" description="Run patrol or casework to search OneNote for case-related notes" />
 
-  if (files.length === 0) return <EmptyState icon="📓" title="No OneNote notes" description="Use /onenote-search to find and save relevant notes for this case" />
-
+  // v2: single digest file, render directly without collapse
+  const digest = files[0]
   return (
-    <div className="space-y-3">
-      {files.map(f => (
-        <Card key={f.filename}>
-          <button
-            onClick={() => setExpanded(expanded === f.filename ? null : f.filename)}
-            className="w-full flex items-center justify-between text-left"
-          >
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{f.filename.replace(/\.md$/, '')}</span>
-              <span className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>{(f.size / 1024).toFixed(1)}KB</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{new Date(f.updatedAt).toLocaleString()}</span>
-              {expanded === f.filename ? <ChevronDown className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} /> : <ChevronRight className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />}
-            </div>
-          </button>
-          {expanded === f.filename && (
-            <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--border-subtle)' }}>
-              <MarkdownContent>{f.content}</MarkdownContent>
-            </div>
-          )}
-        </Card>
-      ))}
-    </div>
+    <Card>
+      <div className="flex items-center justify-between mb-3 text-xs" style={{ color: 'var(--text-tertiary)' }}>
+        <span className="font-mono">{digest.filename.replace(/\.md$/, '')}</span>
+        <span>{new Date(digest.updatedAt).toLocaleString()}</span>
+      </div>
+      <MarkdownContent>{digest.content}</MarkdownContent>
+    </Card>
   )
 }
 
@@ -1216,9 +1199,25 @@ function TimingTab({ exists, timing }: { exists?: boolean; timing?: any }) {
     { key: 'inspection',    step: '4',    label: 'summary + todo + timing',                 category: 'output' },
   ]
 
+  // Detect source: v2-events from .casework/events/, v1 from timing.json
+  const isV2Events = timing.source === 'v2-events'
+
+  // v2 events step definitions (data-refresh parallel sources)
+  const v2EventSteps: StepDef[] = [
+    { key: 'd365',         step: '1',  label: 'D365 数据拉取（emails/notes/labor）',    category: 'work' },
+    { key: 'teams',        step: '1',  label: 'Teams 搜索（agency proxy）',              category: 'work' },
+    { key: 'icm',          step: '1',  label: 'ICM Discussion 拉取',                    category: 'work' },
+    { key: 'onenote',      step: '1',  label: 'OneNote 搜索（ripgrep）',                 category: 'work' },
+    { key: 'attachments',  step: '1',  label: '附件下载（DTM token）',                   category: 'work' },
+    { key: 'data-refresh', step: '1',  label: 'Step 1 Data Refresh 总耗时',             category: 'output' },
+    { key: 'assess',       step: '2',  label: 'Step 2 Assess（状态判断 + 行动规划）',     category: 'llm' },
+    { key: 'act',          step: '3',  label: 'Step 3 Act（troubleshooter/email spawn）', category: 'wait' },
+    { key: 'summarize',    step: '4',  label: 'Step 4 Summarize（summary + todo）',      category: 'output' },
+  ]
+
   // Detect path: fastpath phase exists → fast path, otherwise normal
-  const isFastPath = 'fastpath' in phaseData || 'decision' in phaseData
-  const stepDefs = isFastPath ? fastPathSteps : normalPathSteps
+  const isFastPath = !isV2Events && ('fastpath' in phaseData || 'decision' in phaseData)
+  const stepDefs = isV2Events ? v2EventSteps : (isFastPath ? fastPathSteps : normalPathSteps)
 
   // v1 fallback: if phaseData has old keys (steps), use flat rendering
   const isV1 = !timing.phases && timing.steps
@@ -1246,10 +1245,10 @@ function TimingTab({ exists, timing }: { exists?: boolean; timing?: any }) {
             <h4 className="font-semibold" style={{ color: 'var(--text-primary)' }}>Casework Timing</h4>
             {!isV1 && (
               <span className="text-xs px-1.5 py-0.5 rounded font-mono" style={{
-                background: isFastPath ? 'rgba(212,164,74,0.15)' : 'rgba(92,191,138,0.15)',
-                color: isFastPath ? 'var(--accent-amber)' : 'var(--accent-green)',
+                background: isV2Events ? 'rgba(107,163,232,0.15)' : (isFastPath ? 'rgba(212,164,74,0.15)' : 'rgba(92,191,138,0.15)'),
+                color: isV2Events ? 'var(--accent-blue)' : (isFastPath ? 'var(--accent-amber)' : 'var(--accent-green)'),
               }}>
-                {isFastPath ? '⚡ Fast Path' : '🔄 Normal'}
+                {isV2Events ? '📊 v2 Events' : (isFastPath ? '⚡ Fast Path' : '🔄 Normal')}
               </span>
             )}
           </div>
@@ -1286,66 +1285,74 @@ function TimingTab({ exists, timing }: { exists?: boolean; timing?: any }) {
         <Card>
           <h4 className="font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Pipeline</h4>
           <div className="relative">
-            {steps.map((s, idx) => {
-              const phase = phaseData[s.key] || { seconds: 0 }
-              const sec = phase.seconds || 0
-              const pct = totalSec > 0 ? (sec / totalSec) * 100 : 0
-              const style = categoryStyles[s.category] || categoryStyles.work
-              const isLast = idx === steps.length - 1
+            {(() => {
+              // Group steps by step number for v2 (Step 1 has sub-steps)
+              const isGrouped = isV2Events
+              // Step 1 sub-items vs main steps
+              const step1Subs = isGrouped ? steps.filter(s => s.step === '1' && s.key !== 'data-refresh') : []
+              const step1Total = isGrouped ? steps.find(s => s.key === 'data-refresh') : null
+              const mainSteps = isGrouped ? steps.filter(s => s.step !== '1') : steps
+
+              const renderStep = (s: StepDef, isSubStep: boolean, isLast: boolean) => {
+                const phase = phaseData[s.key] || { seconds: 0 }
+                const sec = phase.seconds || phase.durationSec || 0
+                const pct = totalSec > 0 ? (sec / totalSec) * 100 : 0
+                const style = categoryStyles[s.category] || categoryStyles.work
+                const statusIcon = phase.status === 'completed' ? '' : (phase.status === 'active' ? '⏳' : '')
+
+                return (
+                  <div key={s.key} className="relative flex" style={{ minHeight: isSubStep ? '2.2rem' : '3rem', marginLeft: isSubStep ? '1.5rem' : 0 }}>
+                    <div className="flex flex-col items-center" style={{ width: '2rem', flexShrink: 0 }}>
+                      <div style={{
+                        width: isSubStep ? 6 : 10, height: isSubStep ? 6 : 10, borderRadius: '50%',
+                        background: style.dot, flexShrink: 0, marginTop: isSubStep ? 6 : 4,
+                        boxShadow: isSubStep ? 'none' : `0 0 0 3px ${style.bg}`,
+                      }} />
+                      {!isLast && (
+                        <div style={{ width: isSubStep ? 1 : 2, flex: 1, background: 'var(--border-default)', marginTop: 2, marginBottom: 2 }} />
+                      )}
+                    </div>
+                    <div className="flex-1 pb-2 ml-1" style={{ minWidth: 0 }}>
+                      <div className="flex items-center gap-2 text-sm">
+                        {!isSubStep && (
+                          <span className="font-mono text-xs px-1 py-0.5 rounded shrink-0" style={{ background: style.bg, color: style.color, minWidth: '2rem', textAlign: 'center' }}>
+                            {s.step}
+                          </span>
+                        )}
+                        <span className={`truncate ${isSubStep ? 'text-xs' : ''}`} style={{ color: 'var(--text-secondary)' }}>
+                          {statusIcon}{phase.label || s.label}
+                        </span>
+                        <span className="ml-auto flex items-center gap-1.5 shrink-0">
+                          {!isSubStep && pct >= 1 && (
+                            <span className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>{Math.round(pct)}%</span>
+                          )}
+                          <span className={`font-mono ${isSubStep ? 'text-xs' : 'font-medium'}`} style={{ color: style.color, minWidth: '3rem', textAlign: 'right' }}>
+                            {sec > 0 ? formatDuration(sec) : (phase.status === 'active' ? 'timeout' : '0s')}
+                          </span>
+                        </span>
+                      </div>
+                      {!isSubStep && sec > 0 && (
+                        <div className="mt-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--bg-hover)' }}>
+                          <div className="h-full rounded-full transition-all" style={{ width: `${Math.max(pct, 2)}%`, background: style.color }} />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              }
 
               return (
-                <div key={s.key} className="relative flex" style={{ minHeight: '3rem' }}>
-                  {/* Timeline rail */}
-                  <div className="flex flex-col items-center" style={{ width: '2rem', flexShrink: 0 }}>
-                    {/* Dot */}
-                    <div style={{
-                      width: 10, height: 10, borderRadius: '50%',
-                      background: style.dot, flexShrink: 0, marginTop: 4,
-                      boxShadow: `0 0 0 3px ${style.bg}`,
-                    }} />
-                    {/* Line */}
-                    {!isLast && (
-                      <div style={{
-                        width: 2, flex: 1,
-                        background: 'var(--border-default)',
-                        marginTop: 2, marginBottom: 2,
-                      }} />
-                    )}
-                  </div>
-
-                  {/* Step content */}
-                  <div className="flex-1 pb-3 ml-1" style={{ minWidth: 0 }}>
-                    {/* Header row: step badge + label + duration */}
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="font-mono text-xs px-1 py-0.5 rounded shrink-0" style={{
-                        background: style.bg,
-                        color: style.color,
-                        minWidth: '2rem',
-                        textAlign: 'center',
-                      }}>
-                        {s.step}
-                      </span>
-                      <span className="truncate" style={{ color: 'var(--text-secondary)' }}>{phase.label || s.label}</span>
-                      <span className="ml-auto flex items-center gap-1.5 shrink-0">
-                        <span className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>
-                          {pct >= 1 ? `${Math.round(pct)}%` : '<1%'}
-                        </span>
-                        <span className="font-mono font-medium" style={{ color: style.color, minWidth: '3rem', textAlign: 'right' }}>
-                          {formatDuration(sec)}
-                        </span>
-                      </span>
-                    </div>
-                    {/* Bar */}
-                    <div className="mt-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--bg-hover)' }}>
-                      <div
-                        className="h-full rounded-full transition-all"
-                        style={{ width: `${Math.max(pct, 1)}%`, background: style.color, opacity: 0.8 }}
-                      />
-                    </div>
-                  </div>
-                </div>
+                <>
+                  {isGrouped && step1Total && (
+                    <>
+                      {renderStep({ ...step1Total, label: 'Step 1 Data Refresh（并行数据收集）' }, false, false)}
+                      {step1Subs.map((s, i) => renderStep(s, true, i === step1Subs.length - 1 && mainSteps.length === 0))}
+                    </>
+                  )}
+                  {mainSteps.filter(s => s.key in phaseData).map((s, idx, arr) => renderStep(s, false, idx === arr.length - 1))}
+                </>
               )
-            })}
+            })()}
           </div>
 
           {/* Category legend */}

@@ -242,27 +242,40 @@ cases.get('/:id/teams', (c) => {
       } catch { /* ignore parse errors */ }
     }
 
-    // Read digest key facts if available
+    // Read digest key facts if available (v2: digest is self-contained, _relevance.json optional)
     let digest: { scoredAt: string; keyFacts: string[]; relevantCount: number; irrelevantCount: number } | null = null
     const digestPath = join(teamsDir, 'teams-digest.md')
-    if (existsSync(digestPath) && relevanceData) {
+    if (existsSync(digestPath)) {
       const digestContent = readFileSync(digestPath, 'utf-8')
-      // Extract key facts from "## 关键事实（Key Facts）" section
-      const factsMatch = digestContent.match(/## 关键事实（Key Facts）\r?\n\r?\n([\s\S]*?)(?=\r?\n## |$)/)
+      // Extract key facts — support both v1 "## 关键事实（Key Facts）" and v2 "## Key Facts" headings
+      const factsMatch = digestContent.match(/## (?:关键事实（Key Facts）|Key Facts)\r?\n\r?\n([\s\S]*?)(?=\r?\n## |$)/)
       const keyFacts = factsMatch
         ? factsMatch[1].split(/\r?\n/).filter((l: string) => l.startsWith('- ')).map((l: string) => l.slice(2))
         : []
 
-      const chatsObj = relevanceData.chats || {}
-      const relevantCount = Object.values(chatsObj).filter((v: any) => v.relevance === 'high').length
-      const irrelevantCount = Object.values(chatsObj).filter((v: any) => v.relevance === 'low').length
+      // Extract relevance counts from digest header or _relevance.json
+      let relevantCount = 0
+      let irrelevantCount = 0
+      let scoredAt = ''
 
-      digest = {
-        scoredAt: relevanceData._scoredAt || '',
-        keyFacts,
-        relevantCount,
-        irrelevantCount,
+      if (relevanceData) {
+        // v1 path: use _relevance.json
+        const chatsObj = relevanceData.chats || {}
+        relevantCount = Object.values(chatsObj).filter((v: any) => v.relevance === 'high').length
+        irrelevantCount = Object.values(chatsObj).filter((v: any) => v.relevance === 'low').length
+        scoredAt = relevanceData._scoredAt || ''
+      } else {
+        // v2 path: parse from digest header "> High-relevance chats: 3 / 6"
+        const headerMatch = digestContent.match(/High-relevance chats:\s*(\d+)\s*\/\s*(\d+)/)
+        if (headerMatch) {
+          relevantCount = parseInt(headerMatch[1])
+          irrelevantCount = parseInt(headerMatch[2]) - parseInt(headerMatch[1])
+        }
+        const dateMatch = digestContent.match(/Generated:\s*([\d\-T:+]+)/)
+        scoredAt = dateMatch ? dateMatch[1] : ''
       }
+
+      digest = { scoredAt, keyFacts, relevantCount, irrelevantCount }
     }
 
     // Read chat files (exclude underscore-prefixed metadata files and digest)
@@ -548,57 +561,169 @@ cases.patch('/:id/todo/toggle', async (c) => {
   return c.json({ success: true })
 })
 
-// GET /api/cases/:id/timing — timing.json
+// GET /api/cases/:id/timing — timing.json or v2 events fallback
 cases.get('/:id/timing', (c) => {
   const caseNumber = validateCaseNumber(c)
   if (!caseNumber) return c.json({ error: 'Invalid case number' }, 400)
   const caseDir = getCaseDir(caseNumber)
-  const timingPath = join(caseDir, 'timing.json')
 
-  if (!existsSync(timingPath)) {
+  // v1 path: timing.json
+  const timingPath = join(caseDir, 'timing.json')
+  if (existsSync(timingPath)) {
+    try {
+      const raw = readFileSync(timingPath, 'utf-8')
+      const timing = JSON.parse(raw)
+      return c.json({ exists: true, timing })
+    } catch {
+      // fall through to v2
+    }
+  }
+
+  // v2 path: build timing from .casework/events/*.json
+  const eventsDir = join(caseDir, '.casework', 'events')
+  if (!existsSync(eventsDir)) {
     return c.json({ exists: false, timing: null })
   }
 
   try {
-    const raw = readFileSync(timingPath, 'utf-8')
-    const timing = JSON.parse(raw)
+    const eventFiles = readdirSync(eventsDir).filter(f => f.endsWith('.json'))
+    const phases: Record<string, any> = {}
+    let totalMs = 0
+
+    for (const ef of eventFiles) {
+      try {
+        const evt = JSON.parse(readFileSync(join(eventsDir, ef), 'utf-8'))
+        const name = ef.replace('.json', '')
+        const durMs = evt.durationMs || 0
+        phases[name] = {
+          durationMs: durMs,
+          durationSec: +(durMs / 1000).toFixed(1),
+          status: evt.status || 'unknown',
+          startedAt: evt.startedAt,
+          completedAt: evt.completedAt,
+        }
+        if (name !== 'data-refresh') totalMs += durMs  // data-refresh is the wrapper, don't double-count
+      } catch { /* skip bad files */ }
+    }
+
+    // Read total from data-refresh event or data-refresh-output.json
+    const drOutputPath = join(caseDir, '.casework', 'data-refresh-output.json')
+    let totalSec = +(totalMs / 1000).toFixed(1)
+    if (existsSync(drOutputPath)) {
+      try {
+        const drOut = JSON.parse(readFileSync(drOutputPath, 'utf-8'))
+        if (drOut.elapsedSeconds) totalSec = parseFloat(drOut.elapsedSeconds)
+      } catch { /* use calculated */ }
+    }
+
+    // Build Step 2-4 timing from meta + pipeline-state timestamps
+    const metaPath = join(caseDir, 'casework-meta.json')
+    const pipelinePath = join(caseDir, '.casework', 'pipeline-state.json')
+    const drEvent = phases['data-refresh']
+
+    // Step 2: assess (data-refresh end → lastAssessedAt)
+    try {
+      const meta = JSON.parse(readFileSync(metaPath, 'utf-8'))
+      if (meta.lastAssessedAt && drEvent?.completedAt) {
+        const assessStart = new Date(drEvent.completedAt).getTime()
+        const assessEnd = new Date(meta.lastAssessedAt).getTime()
+        const assessMs = Math.max(0, assessEnd - assessStart)
+        phases['assess'] = {
+          durationMs: assessMs,
+          durationSec: +(assessMs / 1000).toFixed(1),
+          status: 'completed',
+          startedAt: drEvent.completedAt,
+          completedAt: meta.lastAssessedAt,
+        }
+        totalSec += +(assessMs / 1000)
+      }
+    } catch { /* no meta */ }
+
+    // Step 3: act + Step 4: summarize (from pipeline-state.json)
+    try {
+      const pipeline = JSON.parse(readFileSync(pipelinePath, 'utf-8'))
+      const sumStep = pipeline.steps?.summarize
+      if (sumStep?.startedAt && sumStep?.completedAt) {
+        const sumStart = new Date(sumStep.startedAt).getTime()
+        const sumEnd = new Date(sumStep.completedAt).getTime()
+        const sumMs = Math.max(0, sumEnd - sumStart)
+        phases['summarize'] = {
+          durationMs: sumMs,
+          durationSec: +(sumMs / 1000).toFixed(1),
+          status: sumStep.status || 'completed',
+          startedAt: sumStep.startedAt,
+          completedAt: sumStep.completedAt,
+        }
+        totalSec += +(sumMs / 1000)
+
+        // Step 3: act = gap between assess end and summarize start
+        if (phases['assess']?.completedAt) {
+          const actStart = new Date(phases['assess'].completedAt).getTime()
+          const actEnd = sumStart
+          const actMs = Math.max(0, actEnd - actStart)
+          if (actMs > 0) {
+            phases['act'] = {
+              durationMs: actMs,
+              durationSec: +(actMs / 1000).toFixed(1),
+              status: 'completed',
+              startedAt: phases['assess'].completedAt,
+              completedAt: sumStep.startedAt,
+            }
+            totalSec += +(actMs / 1000)
+          }
+        }
+      }
+    } catch { /* no pipeline state */ }
+
+    totalSec = +totalSec.toFixed(1)
+
+    const timing = {
+      totalSeconds: totalSec,
+      phases,
+      source: 'v2-events',
+    }
     return c.json({ exists: true, timing })
   } catch {
     return c.json({ exists: false, timing: null })
   }
 })
 
-// GET /api/cases/:id/logs — logs 目录下所有日志文件
+// GET /api/cases/:id/logs — .casework/logs 目录下所有日志文件（兼容旧 logs/）
 cases.get('/:id/logs', (c) => {
   const caseNumber = validateCaseNumber(c)
   if (!caseNumber) return c.json({ error: 'Invalid case number' }, 400)
   const caseDir = getCaseDir(caseNumber)
-  const logsDir = join(caseDir, 'logs')
+  // New path: .casework/logs, fallback to legacy logs/
+  const newLogsDir = join(caseDir, '.casework', 'logs')
+  const legacyLogsDir = join(caseDir, 'logs')
 
-  if (!existsSync(logsDir)) {
-    return c.json({ logs: [], total: 0 })
-  }
+  // Collect files from both directories (new path takes priority)
+  const allFiles: Array<{ filename: string; content: string; size: number; updatedAt: string }> = []
+  const seen = new Set<string>()
 
-  try {
-    const files = readdirSync(logsDir)
-      .filter((f: string) => f.endsWith('.log') || f.endsWith('.md') || f.endsWith('.txt'))
-      .map((f: string) => {
+  for (const logsDir of [newLogsDir, legacyLogsDir]) {
+    if (!existsSync(logsDir)) continue
+    try {
+      const files = readdirSync(logsDir)
+        .filter((f: string) => f.endsWith('.log') || f.endsWith('.md') || f.endsWith('.txt'))
+      for (const f of files) {
+        if (seen.has(f)) continue // skip duplicates (new path wins)
+        seen.add(f)
         const filePath = join(logsDir, f)
         const stat = statSync(filePath)
         const content = readFileSync(filePath, 'utf-8')
-        return {
+        allFiles.push({
           filename: f,
           content,
           size: stat.size,
           updatedAt: new Date(stat.mtimeMs).toISOString(),
-        }
-      })
-      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-
-    return c.json({ logs: files, total: files.length })
-  } catch {
-    return c.json({ logs: [], total: 0 })
+        })
+      }
+    } catch { /* skip unreadable dirs */ }
   }
+
+  allFiles.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+  return c.json({ logs: allFiles, total: allFiles.length })
 })
 
 // GET /api/cases/:id/attachments — 附件元数据 + 文件列表
@@ -784,7 +909,7 @@ cases.get('/:id/challenge-report', (c) => {
   }
 })
 
-// GET /api/cases/:id/onenote — OneNote markdown files from case onenote/ directory
+// GET /api/cases/:id/onenote — OneNote digest from case onenote/ directory
 cases.get('/:id/onenote', (c) => {
   const caseNumber = validateCaseNumber(c)
   if (!caseNumber) return c.json({ error: 'Invalid case number' }, 400)
@@ -792,27 +917,38 @@ cases.get('/:id/onenote', (c) => {
   const onenoteDir = join(caseDir, 'onenote')
 
   if (!existsSync(onenoteDir)) {
-    return c.json({ files: [], total: 0 })
+    return c.json({ digest: null, total: 0 })
   }
 
   try {
-    const files = readdirSync(onenoteDir)
-      .filter(f => f.endsWith('.md'))
-      .map(f => {
-        const filePath = join(onenoteDir, f)
-        const stat = statSync(filePath)
-        const content = readFileSync(filePath, 'utf-8')
-        return {
-          filename: f,
-          content,
-          size: stat.size,
-          updatedAt: stat.mtime.toISOString(),
-        }
+    // v2: return only the digest file, not raw _page-*.md files
+    const digestPath = join(onenoteDir, 'onenote-digest.md')
+    if (existsSync(digestPath)) {
+      const stat = statSync(digestPath)
+      const content = readFileSync(digestPath, 'utf-8')
+      return c.json({
+        digest: { content, updatedAt: stat.mtime.toISOString(), size: stat.size },
+        // Keep backward-compat: files array with single digest entry for old frontend
+        files: [{ filename: 'onenote-digest.md', content, size: stat.size, updatedAt: stat.mtime.toISOString() }],
+        total: 1,
       })
-      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-    return c.json({ files, total: files.length })
+    }
+
+    // Fallback: legacy personal-notes.md
+    const legacyPath = join(onenoteDir, 'personal-notes.md')
+    if (existsSync(legacyPath)) {
+      const stat = statSync(legacyPath)
+      const content = readFileSync(legacyPath, 'utf-8')
+      return c.json({
+        digest: { content, updatedAt: stat.mtime.toISOString(), size: stat.size },
+        files: [{ filename: 'personal-notes.md', content, size: stat.size, updatedAt: stat.mtime.toISOString() }],
+        total: 1,
+      })
+    }
+
+    return c.json({ digest: null, files: [], total: 0 })
   } catch {
-    return c.json({ files: [], total: 0 })
+    return c.json({ digest: null, files: [], total: 0 })
   }
 })
 

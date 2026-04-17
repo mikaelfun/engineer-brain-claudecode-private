@@ -6,6 +6,7 @@
 import React from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import rehypeRaw from 'rehype-raw'
 
 interface MarkdownContentProps {
   children: string
@@ -194,6 +195,7 @@ export default function MarkdownContent({ children, className = '' }: MarkdownCo
     <div className={`prose prose-sm max-w-none ${className}`}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeRaw]}
         components={markdownComponents}
       >
         {children}

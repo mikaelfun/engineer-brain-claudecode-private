@@ -1,12 +1,14 @@
 {
   "id": "ISS-224",
-  "title": "合并 casework-ar 到 casework：消除 AR 路由依赖",
-  "description": "casework-ar 作为独立 skill 导致调用方（patrol、dashboard 单 case 按钮、CLI /casework）都需要自己判断 case number 长度来路由到不同 skill。当前所有调用方都没做这个判断，AR case 全部走了普通 casework，导致：\n- emails 从 AR case 自己拉（空的，邮件挂在 main case 上）\n- isAR=false，data-refresh-output.json 错误\n- assess 基于 0 封邮件做出错误判断\n\n## 方案\n\n合并 casework-ar 回 casework，AR 检测下沉到脚本/模板层：\n\n1. data-refresh.sh：已加 auto-detect（case number ≥19 位自动 isAR=true + 截取 mainCase）✅\n2. assess SKILL.md：加 isAR 分支，引用 assess-ar 的 AR scope + communicationMode 逻辑\n3. act SKILL.md：加 isAR 分支，引用 act-ar 的收件人选择逻辑\n4. casework SKILL.md：删除"主 casework 不含任何 AR 逻辑"的声明\n5. 删除 casework-ar/ 目录（assess-ar、act-ar 内容合并到主 assess/act）\n6. patrol SKILL.md：不需要任何修改（统一走 casework）\n7. dashboard：不需要任何修改\n\n## 已完成\n\n- [x] data-refresh.sh auto-detect AR\n- [x] teams-search-inline.sh PROJECT_ROOT 路径修复\n\n## 待做\n\n- [ ] assess SKILL.md 合并 AR 分支\n- [ ] act SKILL.md 合并 AR 分支\n- [ ] 删除 casework-ar/ 目录\n- [ ] 端到端验证：patrol 中 AR case 能正确拉到 main case emails",
-  "type": "refactor",
-  "priority": "P1",
-  "status": "pending",
-  "trackId": "merge-ar-casework_20260417",
-  "testLoopScan": true,
-  "createdAt": "2026-04-17T14:15:00Z",
-  "updatedAt": "2026-04-17T14:15:00Z"
+  "title": "OneNote digest 应传入 inline 图片让 LLM 做 vision 分析",
+  "severity": "medium",
+  "category": "casework",
+  "status": "open",
+  "createdAt": "2026-04-17T12:30:00Z",
+  "description": "OneNote Export 的 case page 中有 238 个页面包含 inline 图片（Portal 截图、CLI 输出、错误信息等），存储为 ./assets/*.png 相对路径引用（~100KB/张）。当前 generate-digest.py onenote 分支只读 markdown 文本，图片被忽略。这些截图包含大量诊断信息（RBAC 配置、Alert 规则、错误码等），LLM vision 分析可以提取出文本 OCR 无法覆盖的上下文。",
+  "rootCause": "generate-digest.py 只传 text content 给 LLM API，不传图片。OneNote Export 的图片存为独立 PNG 文件在 ./assets/ 目录。",
+  "fix": "generate-digest.py onenote 分支增加图片处理：1) 解析 _page-*.md 中的 ![image](./assets/xxx.png) 引用；2) 读取对应 PNG 文件 base64 编码；3) 在 LLM API messages 中用 image_url content type 传入（OpenAI vision 格式）；4) 每个 page 限制最多 3 张图片（控制 token 成本）；5) 需确认 gpt-5.4-mini 通过 NewAPI/Copilot Proxy 支持 vision。",
+  "files": [".claude/skills/casework/scripts/generate-digest.py"],
+  "notes": "图片路径在 OneNote Export 目录（../data/OneNote Export/.../assets/），不在 case 目录。search-inline.py 复制 _page-*.md 到 case 的 onenote/ 目录时没有复制 assets。需要决定：A) generate-digest.py 直接从 OneNote Export 源目录读图片；B) search-inline.py 也复制 assets 到 case 的 onenote/assets/。",
+  "foundDuring": "patrol-v2-audit-20260417-session2"
 }
