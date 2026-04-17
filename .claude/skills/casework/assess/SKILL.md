@@ -170,6 +170,7 @@ actualStatus 是对**实际沟通状态**的事实判断，仅基于已发生的
   "caseNumber": "{caseNumber}",
   "actualStatus": "<one of: pending-engineer|pending-customer|pending-pg|researching|ready-to-close|resolved|closed>",
   "daysSinceLastContact": <int — 距工程师最后发出邮件的天数>,
+  "statusReasoning": "<≤200字，关键依据 → {actualStatus}，例：'客户4/15回复部署中，2天未更新 → pending-customer'>",
   "actions": [
     // 允许的 type: troubleshooter / email-drafter / challenger / note-gap / labor-estimate
     // 允许的 status: pending
@@ -218,6 +219,7 @@ rm -f /tmp/assess-dec-$$.json
 upsert 字段：
 - `actualStatus` ← LLM 决策
 - `daysSinceLastContact` ← LLM 决策（或从 data-refresh-output 透传）
+- `statusReasoning` ← LLM 决策（≤200 字，以 `→ {actualStatus}` 结尾）
 - `lastAssessedAt` ← ISO now
 - `compliance.sourceHash` / `.entitlementOk` / `.checkedAt` ← Step 2 产物（若 re-infer）
 

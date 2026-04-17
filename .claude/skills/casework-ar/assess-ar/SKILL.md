@@ -138,6 +138,7 @@ actualStatus 是对**实际沟通状态**的事实判断：
   "caseNumber": "{caseNumber}",
   "actualStatus": "<pending-engineer|pending-customer|pending-pg|researching|ready-to-close>",
   "daysSinceLastContact": <int>,
+  "statusReasoning": "<≤200字，AR scope 内关键依据 → {actualStatus}>",
   "actions": [...],
   "noActionReason": "<string or null>",
   "routingSource": "llm"
