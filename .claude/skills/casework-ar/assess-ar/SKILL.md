@@ -39,7 +39,17 @@ AR Case 专用状态评估。与主 casework assess 的区别：增加 AR scope 
 
 ### Step 2. Compliance gate（hash cache）
 
-同主 assess 的完整 compliance-check 逻辑（Entitlement + 21v Convert + CC Finder + SAP 三层检查），基于 main case 的 case-info.md。
+同主 assess 的完整 compliance-check 逻辑（Entitlement + 21v Convert + CC Finder + SAP 三层检查），但 **AR 特化 SAP 检查**：
+
+- **Entitlement**：基于 main case 数据（合同绑在 main case 上）
+- **21v Convert**：读 `## AR Customer Statement`（AR 问题描述，优先）+ `## Customer Statement`（main case 兜底）
+- **CC Finder**：基于 main case 客户名
+- **SAP 三层检查（AR 特化）**：
+  - 4.5a Mooncake 路径检测：使用 **`| AR Support Area Path |`** 行（AR 产品必须是 Mooncake）
+  - 4.5b Pod 负责范围检测：使用 **`| AR Support Area Path |`** 行（AR scope 必须在 pod 范围内）
+  - 4.5c SAP 与问题描述一致性：使用 **`| AR Support Area Path |`** + **`## AR Customer Statement`**（AR SAP 必须匹配 AR 问题，不是 main case 问题）
+  - → sapOk = sapMooncake && sapInPod && !sapMismatch
+  - 结果写入 compliance 时额外保存 `arSapPath` 字段
 
 AR 缓存策略更积极：Entitlement 基于 main case 数据，合同不因 AR 变化。首次检查后缓存永久有效（`compliance.entitlementOk` 有值即跳过）。
 
@@ -48,7 +58,7 @@ AR 缓存策略更积极：Entitlement 基于 main case 数据，合同不因 AR
 ### Step 3. AR Scope 提取（首次 or scopeConfirmed !== true）
 
 ```
-读取 {caseDir}/notes-ar.md + case-info.md（AR case title/description）
+读取 {caseDir}/notes-ar.md + case-info.md（AR case title + AR Customer Statement + AR Support Area Path）
 LLM 提取 AR scope 一句话摘要
 Upsert meta: ar.scope = "{extracted_scope}", ar.scopeConfirmed = false
 ```
