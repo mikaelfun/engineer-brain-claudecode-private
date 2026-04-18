@@ -128,7 +128,18 @@ const path = require('path');
 const pw = require(path.join(process.env.APPDATA, 'npm', 'node_modules', '@playwright', 'cli', 'node_modules', 'playwright-core'));
 const PROFILE = path.join(process.env.TEMP || '/tmp', 'pw-dtm-token-profile');
 const DTM_URL = '$dtmUrl';
+// Clean stale profile locks (this profile is exclusively owned by this script)
+function cleanStaleLock() {
+  const fs = require('fs');
+  for (const f of ['SingletonLock', 'SingletonSocket', 'SingletonCookie']) {
+    const p = path.join(PROFILE, f);
+    try { if (fs.existsSync(p)) { fs.unlinkSync(p); console.log('  cleaned stale ' + f); } } catch {}
+  }
+  const defaultLock = path.join(PROFILE, 'Default', 'lock');
+  try { if (fs.existsSync(defaultLock)) { fs.unlinkSync(defaultLock); console.log('  cleaned Default/lock'); } } catch {}
+}
 (async () => {
+  cleanStaleLock();
   const ctx = await pw.chromium.launchPersistentContext(PROFILE, { channel: 'msedge', headless: true });
   const page = ctx.pages()[0] || await ctx.newPage();
   let token = '';

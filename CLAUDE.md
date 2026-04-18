@@ -112,6 +112,9 @@ actualStatus 有效值：`pending-engineer` | `pending-customer` | `pending-pg` 
 | 开发新功能 / Issue→Track 流程 | `playbooks/guides/developer-workflow.md` |
 | 注册或调试 Agent | `playbooks/guides/agent-registry.md` |
 | Playwright / 截图 / 进程管理 / 路径陷阱 | `playbooks/guides/platform-gotchas.md` |
+| 浏览器 Profile 架构 / Token Daemon / SSO | `playbooks/guides/browser-profile-architecture.md` |
+| 新增 Token 或 UI Profile（决策树 + 步骤） | `.claude/skills/browser-profiles/SKILL.md` |
+| Profile 注册表（tokens / ui / sso 配置） | `.claude/skills/browser-profiles/registry.json` |
 | Dashboard UI 修改（完整设计规范） | `playbooks/guides/dashboard-design-system.md` |
 | Dashboard API（完整端点列表） | `playbooks/guides/dashboard-integration.md` |
 | Case 目录结构（完整 schema） | `playbooks/schemas/case-directory.md` |

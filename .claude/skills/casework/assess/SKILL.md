@@ -41,7 +41,8 @@ allowed-tools:
   - `actions = []`
   - `noActionReason = "DELTA_EMPTY — no new data, reusing meta"`
   - `routingSource = "rule-table"`
-- **零 LLM 调用**，直接退出（输出 `ASSESS_OK|delta=empty|elapsed=Ns`）
+- **更新 `lastAssessedAt`**（即使零 LLM 调用也要更新，否则 timing 计算会跨轮次错乱）
+- 直接退出（输出 `ASSESS_OK|delta=empty|elapsed=Ns`）
 
 ```bash
 DELTA=$(python3 -c "import json; print(json.load(open(r'{caseDir}/.casework/data-refresh-output.json'))['deltaStatus'])")
@@ -56,6 +57,15 @@ EOF
   python3 .claude/skills/casework/assess/scripts/write-execution-plan.py \
     --decision /tmp/assess-dec-$$.json --case-dir "{caseDir}"
   rm -f /tmp/assess-dec-$$.json
+  # Update lastAssessedAt even on fast path (ISS-227: prevents timing cross-run drift)
+  python3 -c "
+import json, time, os
+p = r'{caseDir}/casework-meta.json'
+try: m = json.load(open(p, encoding='utf-8'))
+except: m = {}
+m['lastAssessedAt'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
+json.dump(m, open(p, 'w', encoding='utf-8'), indent=2, ensure_ascii=False)
+"
   echo "ASSESS_OK|delta=empty|elapsed=${SECONDS}s"
   exit 0
 fi
@@ -175,7 +185,16 @@ actualStatus 是对**实际沟通状态**的事实判断，仅基于已发生的
   "actions": [
     // 允许的 type: troubleshooter / email-drafter / challenger / note-gap / labor-estimate
     // 允许的 status: pending
-    // email-drafter 需额外字段 "emailType"
+    // email-drafter 需额外字段 "emailType"，可选值及使用场景：
+    //   - initial-response: 首次回复客户（工程师从未发过邮件）
+    //   - 21v-convert-ir: 21V 转 IR（is21vConvert=true 时）
+    //   - request-info: 向客户请求更多信息以继续排查
+    //   - result-confirm: 排查完成，向客户确认结果
+    //   - follow-up: 跟进邮件（等待中的状态更新、催促等）
+    //   - closure-confirm: 客户暗示问题解决但未明确说可以关单（如"谢谢"、无后续问题），需要询问客户是否可以关单
+    //   - closure: 客户已明确同意关单/已明确确认问题解决（如"可以关"、"temp close"、"confirmed"、"同意关闭"），发送关单总结邮件（三段式：问题描述/问题建议/更多信息）
+    //   ⚠️ closure vs closure-confirm 区分关键：客户是否已"明确表态"可以关。
+    //      已明确 → closure（发总结）；未明确 → closure-confirm（询问能否关）
     // 可引用 "dependsOn": "<previous action type>"
   ],
   "noActionReason": "<string or null>",
@@ -190,7 +209,10 @@ actualStatus 是对**实际沟通状态**的事实判断，仅基于已发生的
 4. ICM 有 PG 新 entry 且 PG 仍在处理 → pending-pg：
    - daysSinceLastContact < 5 → actions=[]（等 PG，客户近期已收到更新）
    - daysSinceLastContact ≥ 5 → actions=[email-drafter(follow-up)]，向客户更新当前状态（"PG 仍在调查中，我们持续跟进"）
-5. 其余（数据不足 / 正在排查） → researching + troubleshooter
+5. actualStatus=ready-to-close（问题已解决 / 客户表态可关）→ 分流 closure vs closure-confirm：
+   - 客户**明确表态**可以关单（如在邮件/Teams 中说"可以关"、"temp close"、"confirmed"、"同意关闭"、"go ahead"）→ email-drafter(closure)
+   - 客户**暗示**问题解决但**未明确说关单**（如"谢谢"、无后续提问、长时间无回复）→ email-drafter(closure-confirm)
+6. 其余（数据不足 / 正在排查） → researching + troubleshooter
 
 **actions 推理指导**（非严格规则，LLM 综合判断）：
 1. 排查已完成 + 邮件已发送 + ICM pending PG → `no-agent`（等 PG）
@@ -235,6 +257,8 @@ try: m = json.load(open(p, encoding='utf-8'))
 except: m = {}
 m['actualStatus'] = '$STATUS'
 m['daysSinceLastContact'] = int('$DAYS')
+m['statusJudgedAt'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
+m['statusReasoning'] = '''$REASONING'''.strip()[:200]
 m['lastAssessedAt'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
 # compliance merge (如 Step 2 re-infer)
 if '$COMPLIANCE_PATH' == 're-infer':

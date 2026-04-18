@@ -24,43 +24,12 @@ allowed-tools:
 ## 核心原则
 
 **每个 case 的分析/路由/写作步骤必须使用 Agent 工具（独立子进程）处理，禁止在 patrol session 中 inline 执行 casework。**
-这确保 patrol session 只保持轻量的调度状态，不会因 case 数据累积导致上下文溢出。
 
-## 架构：预热 → Streaming Pipeline（完成即推进）
-
-通过 **streaming pipeline** 设计：casework(mode=patrol) 完成一个就立即推进下一步，不等所有 case 完成。
-
-```
-阶段 0（预热，~15s）:
-  ├── check-ir-status-batch.ps1 -SaveMeta     （~3s，批量 IR/FDR/FWR）
-  └── warm-dtm-token.ps1                       （~10s，DTM token 预热）
-
-阶段 0.5: ICM token 预热（可选，170 分钟缓存）
-
-阶段 1+2 合并（Streaming Pipeline，统一轮询循环）:
-  全量并行启动 casework(mode=patrol) → 统一轮询循环：
-    每轮检查每个 case 的状态，按需推进：
-
-    Case A: casework(mode=patrol) 完成(37s) → no-action → 立即 spawn summarize ──→ done
-    Case B: casework(mode=patrol) 完成(60s) → spawn email-drafter ──→ 完成后 spawn summarize → done
-    Case C: casework(mode=patrol) 还在跑(200s)... → 完成后 spawn troubleshooter → challenger → email → summarize → done
-    
-  退出条件：所有 case 到达 done 状态
-```
-
-每个 case 的生命周期状态机：
+**Streaming Pipeline**：casework(mode=patrol) 完成一个就立即推进下一步，不等所有 case 完成。每个 case 独立状态机：
 ```
 gathering → plan-ready ─┬─ no-action → inspecting → done
                         └─ has-actions → executing → inspecting → done
 ```
-
-### 为什么这样设计
-
-- **depth=1 限制**：casework(mode=patrol) 作为 subagent 无法再 spawn，所以只做 data-refresh + assess
-- **Teams 串行**：Teams MCP 有并发限制，通过 queue agent 串行处理
-- **其他步骤并发**：data-refresh、onenote-search、compliance 在 casework(mode=patrol) 内用 Bash 后台进程并行
-- **spawn 回到主 agent**：troubleshooter/challenger/email-drafter 由 patrol 主 agent（depth=0）spawn
-- **DTM/IR 预热**：与之前相同，全局缓存避免 Playwright 互斥
 
 ## 执行步骤
 
@@ -156,7 +125,7 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
    echo "warming-up" > "{patrolDir}/patrol-phase"
    ```
 
-   三个预热任务全部并行执行：
+   四个预热任务全部并行执行：
 
    ```bash
    # IR/FDR/FWR 批量预填（~3s）
@@ -168,14 +137,22 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
    # ICM token 预热（~40s，170 分钟缓存，跨 case 共享）
    node .claude/skills/icm/scripts/icm-discussion-ab.js --token-only 2>/dev/null || true
    # 输出: TOKEN_OK|{length} 或 TOKEN_FAIL（非致命，各 case fallback 自行获取）
+
+   # Teams ic3 token 预热（~5s if cached, ~15s if refresh needed）
+   node .claude/skills/casework/teams-search/scripts/warm-teams-token.js 2>/dev/null || true
+   # 输出: TOKEN_CACHED|len=N|expires=EPOCH 或 TOKEN_OK|... 或 TOKEN_FAIL|...（非致命）
+   # 缓存: $TEMP/teams-ic3-token.json（各 case 的 teams-search-inline.sh 自动读取）
+   # 首次使用需 headed 登录: node warm-teams-token.js --login
    ```
 
    **关键**：
    - `check-ir-status-batch.ps1` 不依赖 Playwright，可与其他任务并行
-   - `warm-dtm-token.ps1` 使用 Playwright 导航 DTM 截获 token → 写入 `$env:TEMP/d365-case-ops-runtime/dtm-token-global.json`
-   - `icm-discussion-ab.js --token-only` 使用 agent-browser SSO 获取 ICM token，与 DTM Playwright 无冲突（不同浏览器实例）
-   - 预热完成后，`download-attachments.ps1` 自动优先读取全局缓存，不再需要 Playwright 导航
-   - 如果全局 token 缓存仍有效（<50 分钟 DTM / <170 分钟 ICM），对应预热脚本会跳过，几乎零耗时
+   - `warm-dtm-token.ps1` 使用独立 profile `$TEMP/pw-dtm-token-profile`
+   - `icm-discussion-ab.js --token-only` 使用 agent-browser SSO（又一个独立 profile）
+   - `warm-teams-token.py` 使用 MCP Playwright profile `$LOCALAPPDATA/ms-playwright/mcp-msedge-*`
+   - 四者 profile 互不冲突，可完全并行
+   - 预热完成后，各 case 的 `teams-search-inline.sh` 自动读取 `$TEMP/teams-ic3-token.json` 缓存，跳过重复获取
+   - 如果全局 token 缓存仍有效（<50 分钟 DTM / <170 分钟 ICM / <5 分钟 Teams ic3），对应预热脚本会跳过，几乎零耗时
 
 5. **阶段 0.5：写 phase 文件（processing）**
 
@@ -183,9 +160,9 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
    echo "processing" > "{patrolDir}/patrol-phase"
    ```
 
-6. **Streaming Pipeline：启动 casework(mode=patrol) + 统一轮询推进**
+6. **Streaming Pipeline：启动 casework(mode=patrol) + 推进**
 
-   **7a. 全量并行启动 casework(mode=patrol)**
+   **6a. 全量并行启动 casework(mode=patrol)**
 
    对每个待处理的 case spawn casework(mode=patrol) agent：
 
@@ -209,18 +186,45 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
    → 记录返回的 task_id 和 output_file_path
    ```
 
+   **6a-2. Agent Output → casework.log（追加 agent 完整输出）**
+
+   每当 casework/troubleshooter/email-drafter/summarize **任一后台 agent 完成**（收到 `<task-notification>`），**必须**将 agent output 追加到该 case 的 casework.log：
+
+   ```
+   1. 从 task-notification 获取 output_file_path（e.g. /tmp/claude/.../tasks/xxx.output）
+   2. Read(output_file_path) 读取完整内容
+   3. Bash 追加到 casework.log：
+      LOG="{caseDir}/.casework/logs/casework.log"
+      echo "" >> "$LOG"
+      echo "========== AGENT: {agent_type} | $(date -Iseconds) ==========" >> "$LOG"
+      # 用 python3 追加 Read 到的内容（避免 shell 转义问题）
+      python3 -c "
+      content = '''{read_content}'''
+      open('$LOG', 'a').write(content + '\n')
+      "
+      echo "========== END AGENT ==========" >> "$LOG"
+   ```
+
+   > ⚠️ output file 是临时文件。**收到 notification 后立即读取**，不要延迟到汇总阶段。
+   > agent_type 取值：`casework-patrol` / `troubleshooter` / `email-drafter` / `summarize` / `challenger`
+
    - **一次性启动所有 Agent（全量并行）**—— 各 agent 写不同 case 目录，无资源竞争
    - 初始化每个 case 的状态追踪：`phase: "gathering"`
 
-   **7b. 统一轮询循环（Streaming Pipeline 核心）**
+   **6b. 轮询模式分流（source 决定）**
 
-   每个 case 维护独立的状态机，轮询循环每 **12 秒** 检查并推进所有 case：
+   根据 Step 1 写入的 lock 文件中 `source` 字段分流：
 
-   ```
-   Case 状态机：
-   gathering → plan-ready ─┬─ no-action ──────────────→ inspecting → done
-                           └─ has-actions → executing → inspecting → done
-   ```
+   - **`source=cli`**：主动轮询模式（下方 6c）。每 12 秒检查状态、输出进度表、按需推进。CLI 用户需要实时反馈。
+   - **`source=webui`**：被动等待模式。WebUI 有自己的 Dashboard 实时轮询 events 文件，agent 不需要主动输出进度。
+     - 全量并行 spawn 所有 casework(mode=patrol) 后，**直接等待所有后台 agent 返回**（不 sleep 轮询）
+     - 每个 agent 返回时检查 execution-plan.json → 按需 spawn troubleshooter/email-drafter/summarize（同样后台等待）
+     - 不调用 patrol-progress.py，不输出进度表
+     - 其余逻辑（归档检测、cleanup、写 result.json）与 cli 模式相同
+
+   **6c. 统一轮询循环（CLI 模式，Streaming Pipeline 核心）**
+
+   每个 case 维护独立的状态机（见核心原则），轮询循环每 **12 秒** 检查并推进所有 case：
 
    ```
    while (有未到达 done 的 case) {
@@ -236,9 +240,32 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
            if .casework/execution-plan.json 存在:
              eval $(bash .claude/skills/casework/act/scripts/read-plan.sh \
                "{casesRoot}/active/{caseNumber}/.casework/execution-plan.json")
-             if ACTION_COUNT == 0:
+             # 读 deltaStatus
+             DELTA=$(python3 -c "import json; print(json.load(open('{casesRoot}/active/{caseNumber}/.casework/data-refresh-output.json')).get('deltaStatus','DELTA_OK'))" 2>/dev/null || echo "DELTA_OK")
+             
+             if ACTION_COUNT == 0 && DELTA == "DELTA_EMPTY":
+               # ⚡ 快速路径：无新数据 + 无 action → 主 agent 直接脚本完成，不 spawn summarize agent
+               # 省去 ~70s agent 冷启动
+               bash .claude/skills/casework/scripts/generate-todo.sh "{casesRoot}/active/{caseNumber}"
+               python3 -c "
+               import json, time
+               p = '{casesRoot}/active/{caseNumber}/casework-meta.json'
+               try: m = json.load(open(p, encoding='utf-8'))
+               except: m = {}
+               m['lastInspected'] = time.strftime('%Y-%m-%dT%H:%M:%S+08:00', time.localtime())
+               m['lastAssessedAt'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
+               json.dump(m, open(p, 'w', encoding='utf-8'), indent=2, ensure_ascii=False)
+               "
+               python3 .claude/skills/casework/act/scripts/update-pipeline-state.py \
+                 --case-dir "{casesRoot}/active/{caseNumber}" --step "summarize" --status "completed" \
+                 --case-number "{caseNumber}"
+               → case.phase = "done"  # 直接完成，不经过 inspecting
+             
+             elif ACTION_COUNT == 0:
+               # DELTA_OK 但无 action（如 unsent draft exists）→ 仍需 spawn summarize（可能要更新 summary）
                → case.phase = "inspecting"
                → 立即 spawn summarize（后台）
+             
              else:
                → case.phase = "executing"
                → 立即 spawn 无依赖的 action（troubleshooter/email-drafter）
@@ -267,21 +294,14 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
            if 完成:
              → case.phase = "done"
      
+     # 每轮输出进度表（调用 patrol-progress.py 渲染）
+     python3 .claude/skills/patrol/scripts/patrol-progress.py \
+       --cases-root {casesRoot} \
+       --cases "{comma_separated_case_numbers}" \
+       --phases '{json_phases_dict}' \
+       --patrol-start "{patrol_start_iso}"
+     # phases dict: {"caseNumber": "gathering|executing|inspecting|done", ...}
      # 每轮 spawn 调用合并：同一轮内需要 spawn 的多个 agent 在一条消息中并行发出
-     # 例如：Case A 需要 inspection + Case B 需要 email-drafter → 一次 spawn 两个
-     
-     输出进度表：
-     ━━━ Patrol Progress [12:05:30] ━━━
-       ✅ ...1969 — done (37s → no-action → inspection 15s)
-       🔍 ...1137 — executing: email-drafter(closure) running (30s)
-       📥 ...3153001 — gathering: data-refresh (120s)
-       📋 ...1034 — inspecting (20s)
-       ✅ ...1744 — done (66s → no-action → inspection 12s)
-       📥 ...0748 — gathering: ICM query (180s)
-
-       💬 Teams Queue — done=3 skip=2 pending=1
-
-     📊 Done: 2/6 | Inspecting: 1 | Executing: 1 | Gathering: 2
    }
    ```
 
@@ -306,7 +326,7 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
    - 所有 case 到达 `done` 状态
    - 或总时长超过 25 分钟（超时跳出，未完成 case 标记为 timeout）
 
-8. **阶段 2.5：清理**
+7. **阶段 2.5：清理**
 
    V2 不需要 queue drain 或 daemon stop（各 case 的 data-refresh.sh 已自行清理 agency proxy）。
 
@@ -321,7 +341,7 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
    ```
    > patrol 完成后不应有活跃的 agency 需求。teams-search-inline.sh 的 per-case agency 应在脚本退出时自行清理；残留的是异常退出的遗留。
 
-10. **汇总 Todo + 结构化输出**
+8. **汇总 Todo + 结构化输出**
 
    写阶段文件：
    ```bash
@@ -361,39 +381,7 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
 
    > ⚠️ 如果 patrol 中途异常退出，lock 文件不会被删除。WebUI 和下次 CLI 启动时会检测 stale lock（PID 不存在或 lock 超过 60 分钟）并自动清理。
 
-## 注意
-- patrol session 负责：列表获取 → 过滤 → 预热 → 全量并行 casework(mode=patrol) → **streaming pipeline 轮询**（plan ready → 立即 spawn action → action done → 立即 spawn summarize） → 读 todo 汇总 → 写结构化输出
-- **Streaming Pipeline**：不等所有 casework(mode=patrol) 完成，每个 case 完成即推进下一步
-- **Summarize 并行**：每个 case 独立 spawn summarize，不串行批量
-- **casework(mode=patrol)**（depth=1）执行 data-refresh + assess，产出 execution-plan.json 后退出，不 spawn 任何 subagent
-- patrol 主 agent（depth=0）根据 `.casework/execution-plan.json` 按需 spawn troubleshooter/challenger/email-drafter/summarize（depth=1）
-- 这种设计绕过 Claude Code subagent depth=1 的嵌套限制，同时最大化并行度
-- patrol session **不读取** case-info.md、emails.md 等业务数据（由 casework(mode=patrol) 内联处理）
-
-## 与 /casework 的关系
-- `/casework {caseNumber}`（单 case 手动）→ 主 session depth=0，跑 Step 1→2→3→4 全流程（自己 spawn agent）
-- `/patrol`（批量巡检）→ spawn casework(mode=patrol) depth=1 跑 Step 1→2，patrol 主 agent 跑 Step 3→4 spawn
-- 两者共用相同的 sub-skill（data-refresh/assess/act/summarize），通过 mode 参数区分行为
-
-## 串行/并行边界总结
-| 操作 | 执行位置 | 必须串行？ |
-|------|---------|-----------|
-| DTM token 获取 | 阶段 0 预热 | ❌ 全局缓存，各 case 直接读 |
-| IR/FDR/FWR check | 阶段 0 预热 | ❌ 批量 API 一次完成 |
-| data-refresh (D365 API) | casework(mode=patrol) 内联 | ❌ 各 case 并行 |
-| onenote-search (ripgrep) | casework(mode=patrol) 内联 | ❌ 本地文件操作 |
-| compliance-check | casework(mode=patrol) 内联 | ❌ 本地脚本 |
-| status-judge | casework(mode=patrol) 内联 | ❌ LLM 分析 |
-| Teams 搜索 (MCP 调用) | data-refresh.sh inline | ❌ 各 case 独立 agency proxy |
-| Teams 后处理 (write-teams) | casework(mode=patrol) 内联 | ❌ 本地脚本 |
-| troubleshooter (Kusto/docs) | streaming pipeline spawn | ❌ 各 case 并行 |
-| challenger | streaming pipeline spawn | ❌ 前台等待 |
-| email-drafter | streaming pipeline spawn | ❌ 各 case 并行 |
-| summarize | streaming pipeline spawn | ❌ **各 case 独立并行 spawn** |
-
 ## Phase 文件协议
 
-Patrol 在各阶段写 `{patrolDir}/phase`（单行文本），供 WebUI Dashboard 监听：
-- `discovering` → `filtering` → `warming-up` → `processing` → `aggregating` → `completed`
-
-Patrol 结束写 `{patrolDir}/result.json`（结构化 JSON），包含 startedAt, completedAt, caseResults 等。
+`{patrolDir}/patrol-phase`（单行文本），供 WebUI Dashboard 监听：
+`discovering` → `warming-up` → `processing` → `aggregating` → `completed`

@@ -1,0 +1,74 @@
+{
+  "_version": 1,
+  "_description": "Browser profile registry — 所有 Playwright/agent-browser profile 的注册表",
+
+  "daemon": {
+    "profilePath": "$TEMP/pw-token-daemon-profile",
+    "description": "Token Daemon 长驻 Edge 实例，多 tab 共享 SSO session",
+    "pidFile": "$TEMP/pw-token-daemon.pid",
+    "heartbeatFile": "$TEMP/pw-token-daemon-heartbeat.json"
+  },
+
+  "tokens": {
+    "teams": {
+      "tab": "teams.cloud.microsoft",
+      "startUrl": "https://teams.microsoft.com",
+      "tokenSource": "localStorage",
+      "tokenMatch": {
+        "credentialType": "AccessToken",
+        "targetIncludes": "ic3.teams"
+      },
+      "cacheFile": "$TEMP/teams-ic3-token.json",
+      "cacheTTLMinutes": 55,
+      "description": "Teams ic3 token for Skype API image download"
+    },
+    "dtm": {
+      "tab": "client.dtmnebula.microsoft.com",
+      "startUrl": "dynamic:from-d365-workspace",
+      "tokenSource": "request-intercept",
+      "tokenMatch": {
+        "urlIncludes": "api.dtmnebula",
+        "header": "authorization"
+      },
+      "cacheFile": "$TEMP/d365-case-ops-runtime/dtm-token-global.json",
+      "cacheTTLMinutes": 50,
+      "description": "DTM Bearer token for attachment download. startUrl 需要 ?workspaceid= 参数才触发 API 调用"
+    },
+    "icm": {
+      "tab": "portal.microsofticm.com",
+      "startUrl": "https://portal.microsofticm.com/imp/v5/incidents/details/548804026/summary",
+      "tokenSource": "request-intercept",
+      "tokenMatch": {
+        "urlIncludes": "prod.microsofticm.com",
+        "header": "authorization"
+      },
+      "cacheFile": "$TEMP/icm-token-cache.json",
+      "cacheTTLMinutes": 170,
+      "description": "ICM Bearer token for discussion/details API (注意 API domain 是 prod.microsofticm.com)"
+    }
+  },
+
+  "ui": {
+    "d365": {
+      "profilePath": "$TEMP/playwright-d365-profile",
+      "runtime": "playwright-cli",
+      "startUrl": "https://onesupport.crm.dynamics.com/main.aspx?forceUCI=1&appid=101acb62-8d00-eb11-a813-000d3a8b3117",
+      "managed": true,
+      "description": "D365 CRM UI 操作（长驻，playwright-cli --persistent）"
+    },
+    "owa": {
+      "profilePath": "$TEMP/playwright-owa-profile",
+      "runtime": "playwright-cli",
+      "startUrl": "https://outlook.office.com/mail/",
+      "managed": true,
+      "description": "OWA 邮件抓取（长驻，playwright-cli --persistent）"
+    }
+  },
+
+  "sso": {
+    "accountMatch": "@microsoft.com",
+    "tileSelector": "[data-test-id]",
+    "loginDomains": ["login.microsoftonline.com", "login.live.com"],
+    "description": "SSO 配置 — 在 login 页面自动点击包含 accountMatch 的 tile"
+  }
+}

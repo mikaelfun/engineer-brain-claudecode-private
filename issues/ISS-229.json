@@ -1,0 +1,11 @@
+{
+  "id": "ISS-229",
+  "title": "Token Daemon — 长驻 Edge 多 tab 统一管理 teams/dtm/icm token 预热",
+  "description": "当前 3 个 token（Teams ic3、DTM Bearer、ICM Bearer）各自启动独立 Edge 进程 + 独立 profile 获取，存在以下问题：\n\n1. Warmup 冷启动慢（10-40s 各自启动 Edge + SSO）\n2. 3 个独立 Edge 进程占用资源\n3. 3 个独立 profile 各自 SSO 登录\n4. Lock cleanup 逻辑重复\n5. 无统一状态视图\n\n**目标**：实现 Token Daemon（`.claude/skills/browser-profiles/`），单个长驻 Edge 实例多 tab 共享 SSO session：\n\n- scripts/token-daemon.js — Daemon 主进程（start/stop/ensure/warmup/status）\n- scripts/sso-handler.js — SSO 自动登录模块（检测 login → 点 @microsoft.com tile）\n- scripts/extract-token.js — Token 提取模块（localStorage / request-intercept）\n\n**生命周期**：\n- CLI: patrol 首次检测启动\n- WebUI: 后端启动时启动，agent-monitor 显示实时状态\n- 心跳: $TEMP/pw-token-daemon-heartbeat.json\n- 自愈: 消费者检测 cache 过期 + daemon 无心跳 → 自动重启\n\n**改造消费者**：\n- warm-dtm-token.ps1 → 读 daemon cache（或 fallback 独立获取）\n- warm-teams-token.js → 读 daemon cache\n- icm-discussion-ab.js → 读 daemon cache\n- patrol SKILL.md Step 4 → `token-daemon.js warmup` 替代 4 项独立预热\n\n**设计文档**：\n- Skill: .claude/skills/browser-profiles/SKILL.md\n- Registry: .claude/skills/browser-profiles/registry.json\n- Playbook: playbooks/guides/browser-profile-architecture.md\n- CLAUDE.md 索引已添加",
+  "type": "feature",
+  "priority": "P1",
+  "status": "pending",
+  "testLoopScan": true,
+  "createdAt": "2026-04-18T04:59:00Z",
+  "updatedAt": "2026-04-18T04:59:00Z"
+}

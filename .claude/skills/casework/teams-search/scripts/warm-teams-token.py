@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-warm-teams-token.py — 预热 Teams ic3 token（从 MCP Playwright localStorage 获取）
+warm-teams-token.py — 预热 Teams ic3 token（独立 Playwright profile）
 
 用法:
     python3 warm-teams-token.py [--force]
@@ -14,14 +14,9 @@ warm-teams-token.py — 预热 Teams ic3 token（从 MCP Playwright localStorage
     {"secret": "eyJ...", "expiresOn": "1776447500", "fetchedAt": "ISO"}
 
 设计:
-    1. 检查缓存文件是否存在且未过期（提前 5 分钟）
-    2. 如过期，从 MCP Playwright profile 的 localStorage 读取 MSAL cache
-    3. 如 localStorage 也过期/不存在，启动 Playwright → teams.microsoft.com 刷新
-    4. 提取 ic3.teams.office.com token，保存到缓存文件
-
-依赖:
-    - playwright (python3 -m pip install playwright)
-    - MCP Playwright Edge profile 已登录过 Teams（首次需手动触发 SSO）
+    使用独立 Playwright profile ($TEMP/pw-teams-token-profile)，
+    与 MCP Playwright profile / DTM profile 互不干扰。
+    profile 被锁时自动清理 SingletonLock 重试（因为此 profile 归本脚本独占）。
 """
 
 import asyncio
@@ -29,16 +24,11 @@ import json
 import os
 import sys
 import time
-import glob
-import base64
-import re
+import shutil
 
 CACHE_PATH = os.path.join(os.environ.get('TEMP', '/tmp'), 'teams-ic3-token.json')
-# MCP Playwright Edge profile — 与 MCP server 共享同一个持久化 profile
-MCP_PROFILE_PATTERN = os.path.join(
-    os.environ.get('LOCALAPPDATA', ''),
-    'ms-playwright', 'mcp-msedge-*'
-)
+# 独立 profile，不与 MCP Playwright 或 DTM 共享
+PROFILE_DIR = os.path.join(os.environ.get('TEMP', '/tmp'), 'pw-teams-token-profile')
 TOKEN_MARGIN_SECONDS = 300  # 提前 5 分钟认为过期
 
 
@@ -57,45 +47,64 @@ def check_cache():
     return None
 
 
-def read_token_from_localstorage(profile_dir):
-    """从 MCP Playwright profile 的 localStorage leveldb 读取 ic3 token。
+def cleanup_singleton_lock(profile_dir):
+    """清理 Chromium SingletonLock 文件，释放 profile 占用。
 
-    localStorage 数据在 Edge profile 的 Local Storage/leveldb/ 目录。
-    但直接读 leveldb 比较复杂，用 Playwright 更可靠。
-    先尝试简单方法：如果 Teams web 已加载过，token 在 localStorage 中。
+    此 profile 归本脚本独占，如果被锁定说明是上次异常退出的残留，
+    可以安全清理。类似 DTM warm-dtm-token.ps1 的做法。
     """
-    # 直接用 Playwright 读 localStorage 更可靠
-    return None
+    lock_files = ['SingletonLock', 'SingletonSocket', 'SingletonCookie']
+    cleaned = False
+    for lock_name in lock_files:
+        lock_path = os.path.join(profile_dir, lock_name)
+        if os.path.exists(lock_path):
+            try:
+                os.remove(lock_path)
+                cleaned = True
+            except OSError:
+                pass
+    # Also clean Default/lock if exists
+    default_lock = os.path.join(profile_dir, 'Default', 'lock')
+    if os.path.exists(default_lock):
+        try:
+            os.remove(default_lock)
+            cleaned = True
+        except OSError:
+            pass
+    if cleaned:
+        print("  ⚠ cleaned stale profile locks", file=sys.stderr)
 
 
-async def refresh_token_via_playwright():
-    """启动 Playwright 打开 Teams web，等待 SSO，提取 token。"""
+async def refresh_token_via_playwright(retry_on_lock=True):
+    """启动 Playwright 打开 Teams web，等待 SSO，提取 token。
+
+    使用独立 profile $TEMP/pw-teams-token-profile（非 MCP profile）。
+    """
     try:
         from playwright.async_api import async_playwright
     except ImportError:
         print("TOKEN_FAIL|reason=playwright not installed", file=sys.stderr)
         return None
 
-    profiles = glob.glob(MCP_PROFILE_PATTERN)
-    if not profiles:
-        print("TOKEN_FAIL|reason=no MCP Playwright profile found", file=sys.stderr)
-        return None
-
-    profile_dir = profiles[0]
+    os.makedirs(PROFILE_DIR, exist_ok=True)
 
     async with async_playwright() as p:
         try:
             ctx = await p.chromium.launch_persistent_context(
-                profile_dir,
+                PROFILE_DIR,
                 channel="msedge",
                 headless=True,
                 args=["--profile-directory=Default"]
             )
         except Exception as e:
-            if "already in use" in str(e).lower() or "Target" in str(e):
-                print("TOKEN_FAIL|reason=MCP Playwright profile locked (browser running)", file=sys.stderr)
-                return None
-            raise
+            err_msg = str(e).lower()
+            if ("already in use" in err_msg or "target" in err_msg) and retry_on_lock:
+                # Profile 被锁 — 清理 lock 文件后重试一次
+                print("  ⚠ profile locked, cleaning locks and retrying...", file=sys.stderr)
+                cleanup_singleton_lock(PROFILE_DIR)
+                return await refresh_token_via_playwright(retry_on_lock=False)
+            print(f"TOKEN_FAIL|reason=profile launch failed: {e}", file=sys.stderr)
+            return None
 
         page = ctx.pages[0] if ctx.pages else await ctx.new_page()
 
