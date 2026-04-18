@@ -73,31 +73,26 @@ export default function CaseDetail() {
 
   return (
     <div className="space-y-4">
-      {/* Compact Header Card */}
+      {/* Compact Header — 2-row layout */}
       <div
-        className="rounded-xl p-4"
+        className="rounded-xl px-4 py-3"
         style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-default)', boxShadow: 'var(--shadow-card)' }}
       >
-        {/* Row 1: Back + Title + Health Score */}
-        <div className="flex items-start gap-3">
+        {/* Row 1: Back + Case Number + Badges + SLA + Health Score */}
+        <div className="flex items-center gap-2">
           <button
             onClick={() => navigate('/cases')}
-            className="mt-1 p-1 rounded-lg flex-shrink-0"
+            className="p-1 rounded-lg flex-shrink-0"
             onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
             onMouseLeave={e => e.currentTarget.style.background = ''}
           >
-            <ArrowLeft className="w-5 h-5" style={{ color: 'var(--text-tertiary)' }} />
+            <ArrowLeft className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
           </button>
-          <h2 className="text-lg font-bold leading-snug flex-1 min-w-0" style={{ color: 'var(--text-primary)' }}>
-            {caseInfo.title}
-          </h2>
-          {meta && <HealthScoreBadge meta={meta} />}
-        </div>
 
-        {/* Row 2: Metadata chips */}
-        <div className="flex items-center gap-1.5 flex-wrap mt-2 ml-9 text-xs">
-          <span className="font-mono" style={{ color: 'var(--text-tertiary)' }}>{id}</span>
-          <span style={{ color: 'var(--border-default)' }}>·</span>
+          {/* Case number */}
+          <span className="font-mono text-xs flex-shrink-0" style={{ color: 'var(--text-tertiary)' }}>{id}</span>
+
+          {/* Core badges — only the essential ones */}
           <SeverityBadge severity={caseInfo.severity} />
           <CaseStatusBadge status={caseInfo.status} />
           {meta?.actualStatus && meta.actualStatus !== caseInfo.status?.toLowerCase() && (
@@ -106,105 +101,41 @@ export default function CaseDetail() {
           {caseInfo.is24x7 && /24\s*[x×]\s*7|yes|true/i.test(caseInfo.is24x7) && (
             <Badge variant="danger" size="xs">24×7</Badge>
           )}
-          {meta?.ccAccount && <RdseBadge ccAccount={meta.ccAccount} />}
-          <span style={{ color: 'var(--border-default)' }}>·</span>
-          <span style={{ color: 'var(--text-secondary)' }}>{caseInfo.assignedTo}</span>
-          <span style={{ color: 'var(--border-default)' }}>·</span>
-          <span style={{ color: 'var(--text-secondary)' }}>{caseInfo.caseAge || '0 days'}</span>
-          {caseInfo.origin && (
-            <>
-              <span style={{ color: 'var(--border-default)' }}>·</span>
-              <span style={{ color: 'var(--text-tertiary)' }}>{caseInfo.origin}</span>
-            </>
+
+          {/* SLA indicators — inline, compact */}
+          {meta && (
+            <div className="flex items-center gap-2 ml-2 text-xs" style={{ color: 'var(--text-tertiary)' }}>
+              <span className="flex items-center gap-0.5">IR: <SlaBadge status={meta.irSla?.status || 'unknown'} /></span>
+              <span className="flex items-center gap-0.5">FWR: <SlaBadge status={meta.fwr?.status || 'unknown'} /></span>
+              <span className="flex items-center gap-0.5">FDR: <SlaBadge status={meta.fdr?.status || 'unknown'} /></span>
+            </div>
           )}
-          {caseInfo.country && (
-            <>
-              <span style={{ color: 'var(--border-default)' }}>·</span>
-              <span style={{ color: 'var(--text-tertiary)' }}>{caseInfo.country}</span>
-            </>
-          )}
-          {caseInfo.timezone && (
-            <>
-              <span style={{ color: 'var(--border-default)' }}>·</span>
-              <span style={{ color: 'var(--text-tertiary)' }}>{caseInfo.timezone}</span>
-            </>
-          )}
-          {meta?.daysSinceLastContact != null && meta.daysSinceLastContact > 0 && (
-            <>
-              <span style={{ color: 'var(--border-default)' }}>·</span>
+
+          {/* Right side: age + health score */}
+          <div className="flex items-center gap-2 ml-auto flex-shrink-0">
+            <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{caseInfo.caseAge || '0d'}</span>
+            {meta?.daysSinceLastContact != null && meta.daysSinceLastContact > 0 && (
               <span
-                className={meta.daysSinceLastContact > 3 ? 'font-medium' : ''}
+                className={`text-xs ${meta.daysSinceLastContact > 3 ? 'font-medium' : ''}`}
                 style={{ color: meta.daysSinceLastContact > 3 ? 'var(--accent-red)' : 'var(--text-tertiary)' }}
               >
-                Last contact {meta.daysSinceLastContact}d ago
+                · {meta.daysSinceLastContact}d idle
               </span>
-            </>
-          )}
-        </div>
-
-        {/* Row 3: Timestamps */}
-        <div className="flex items-center gap-3 flex-wrap mt-1.5 ml-9 text-xs" style={{ color: 'var(--text-tertiary)' }}>
-          <span title={caseInfo.createdOn}>
-            <Clock className="w-3 h-3 inline mr-0.5 -mt-px" />
-            Created {formatCompactTime(caseInfo.createdOn)}
-          </span>
-          {caseInfo.modifiedAt && (
-            <span title={caseInfo.modifiedAt}>
-              · Updated {formatCompactTime(caseInfo.modifiedAt)}
-            </span>
-          )}
-          {caseInfo.fetchedAt && (
-            <span title={caseInfo.fetchedAt}>
-              <RefreshCw className="w-3 h-3 inline mr-0.5 -mt-px" />
-              Fetched {formatCompactTime(caseInfo.fetchedAt)}
-            </span>
-          )}
-        </div>
-
-        {/* Row 4: SAP path */}
-        {caseInfo.sap && (
-          <div className="flex items-center gap-1.5 mt-2 ml-9 text-xs" style={{ color: 'var(--text-tertiary)' }}>
-            <FolderOpen className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--text-tertiary)' }} />
-            <span className="truncate" title={caseInfo.sap}>{caseInfo.sap}</span>
-          </div>
-        )}
-
-        {/* Row 5: SLA indicators (integrated into header) */}
-        {meta && (
-          <div
-            className="flex items-center gap-3 mt-2.5 ml-9 pt-2.5 text-xs"
-            style={{ borderTop: '1px solid var(--border-subtle)' }}
-          >
-            <div className="flex items-center gap-1">
-              <span style={{ color: 'var(--text-tertiary)' }}>IR:</span>
-              <SlaBadge status={meta.irSla?.status || 'unknown'} />
-              {meta.irSla?.remaining && (
-                <span className="ml-0.5" style={{ color: 'var(--text-tertiary)' }}>{meta.irSla.remaining}</span>
-              )}
-            </div>
-            <div className="flex items-center gap-1">
-              <span style={{ color: 'var(--text-tertiary)' }}>FWR:</span>
-              <SlaBadge status={meta.fwr?.status || 'unknown'} />
-            </div>
-            <div className="flex items-center gap-1">
-              <span style={{ color: 'var(--text-tertiary)' }}>FDR:</span>
-              <SlaBadge status={meta.fdr?.status || 'unknown'} />
-            </div>
-            {meta.teams_chat_count > 0 && (
-              <div className="flex items-center gap-1">
-                <span style={{ color: 'var(--text-tertiary)' }}>Teams:</span>
-                <Badge variant="purple" size="xs">{meta.teams_chat_count} chats</Badge>
-              </div>
             )}
+            {meta && <HealthScoreBadge meta={meta} />}
           </div>
-        )}
+        </div>
 
-        {/* Entitlement Warning Banner */}
-        {meta?.compliance?.entitlementOk === false && (
-          <div className="mt-2.5 ml-9">
-            <EntitlementWarningBanner compliance={meta.compliance} />
-          </div>
-        )}
+        {/* Row 2: Title + secondary info */}
+        <div className="flex items-baseline gap-2 mt-1.5 ml-7">
+          <h2 className="text-sm font-semibold leading-snug flex-1 min-w-0 truncate" style={{ color: 'var(--text-primary)' }} title={caseInfo.title}>
+            {caseInfo.title}
+          </h2>
+          <span className="text-xs flex-shrink-0" style={{ color: 'var(--text-tertiary)' }}>
+            {caseInfo.assignedTo}
+            {caseInfo.country ? ` · ${caseInfo.country}` : ''}
+          </span>
+        </div>
       </div>
 
       {/* Main Content: Left (Tabs + Content) | Right (AI Panel) */}
