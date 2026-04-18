@@ -22,6 +22,14 @@
       "cacheTTLMinutes": 55,
       "description": "Teams ic3 token for Skype API image download"
     },
+    "d365": {
+      "tab": "dynamics.com",
+      "startUrl": "https://onesupport.crm.dynamics.com/main.aspx?forceUCI=1&appid=101acb62-8d00-eb11-a813-000d3a8b3117",
+      "tokenSource": "none",
+      "cacheFile": null,
+      "cacheTTLMinutes": 0,
+      "description": "D365 CRM session tab — cookie-based auth, 不提取 token, 保持 tab 用于 OData API 代理。DTM workspace ID 解析依赖此 tab"
+    },
     "dtm": {
       "tab": "client.dtmnebula.microsoft.com",
       "startUrl": "dynamic:from-d365-workspace",

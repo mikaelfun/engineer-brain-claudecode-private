@@ -118,41 +118,34 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
    - 释放 lock，退出
    - 输出：`📊 Patrol: 0 cases to process (all within skipHours). Done.`
 
-4. **阶段 0：预热（并行执行，~15s）**
+4. **阶段 0：预热（并行执行，~40s）**
 
    写 phase 文件：
    ```bash
    echo "warming-up" > "{patrolDir}/patrol-phase"
    ```
 
-   四个预热任务全部并行执行：
+   两个预热任务并行执行：
 
    ```bash
-   # IR/FDR/FWR 批量预填（~3s）
+   # IR/FDR/FWR 批量预填（~3s，纯 OData，不依赖 token daemon）
    pwsh -NoProfile -File .claude/skills/d365-case-ops/scripts/check-ir-status-batch.ps1 -SaveMeta -MetaDir {casesRoot}/active
 
-   # DTM token 预热（~10s）
-   pwsh -NoProfile -File .claude/skills/d365-case-ops/scripts/warm-dtm-token.ps1 -CasesRoot {casesRoot}
-
-   # ICM token 预热（~40s，170 分钟缓存，跨 case 共享）
-   node .claude/skills/icm/scripts/icm-discussion-ab.js --token-only 2>/dev/null || true
-   # 输出: TOKEN_OK|{length} 或 TOKEN_FAIL（非致命，各 case fallback 自行获取）
-
-   # Teams ic3 token 预热（~5s if cached, ~15s if refresh needed）
-   node .claude/skills/casework/teams-search/scripts/warm-teams-token.js 2>/dev/null || true
-   # 输出: TOKEN_CACHED|len=N|expires=EPOCH 或 TOKEN_OK|... 或 TOKEN_FAIL|...（非致命）
-   # 缓存: $TEMP/teams-ic3-token.json（各 case 的 teams-search-inline.sh 自动读取）
-   # 首次使用需 headed 登录: node warm-teams-token.js --login
+   # Token Daemon warmup（Teams + DTM + ICM 统一预热，~37s）
+   # 检查各 token cache，过期则启动 headless Edge + SSO 刷新
+   # 输出: WARMUP_OK|daemon=inline|teams=cached(47m)|dtm=refreshed(4200)|icm=cached(163m)
+   node .claude/skills/browser-profiles/scripts/token-daemon.js warmup
    ```
 
    **关键**：
-   - `check-ir-status-batch.ps1` 不依赖 Playwright，可与其他任务并行
-   - `warm-dtm-token.ps1` 使用独立 profile `$TEMP/pw-dtm-token-profile`
-   - `icm-discussion-ab.js --token-only` 使用 agent-browser SSO（又一个独立 profile）
-   - `warm-teams-token.py` 使用 MCP Playwright profile `$LOCALAPPDATA/ms-playwright/mcp-msedge-*`
-   - 四者 profile 互不冲突，可完全并行
-   - 预热完成后，各 case 的 `teams-search-inline.sh` 自动读取 `$TEMP/teams-ic3-token.json` 缓存，跳过重复获取
-   - 如果全局 token 缓存仍有效（<50 分钟 DTM / <170 分钟 ICM / <5 分钟 Teams ic3），对应预热脚本会跳过，几乎零耗时
+   - `check-ir-status-batch.ps1` 不是 token 预热，是 SLA 数据，独立保留
+   - `token-daemon.js warmup` 统一管理 Teams/DTM/ICM 三个 token：
+     - 共享一个 Edge 实例 + SSO session（只需登录一次）
+     - 有效 cache 直接跳过（几乎零耗时）
+     - 无效 cache 依次刷新（首次 ~37s，后续带 SSO session ~15s）
+   - 两者完全并行，无资源冲突
+   - Token cache 位置不变：`$TEMP/teams-ic3-token.json`、`$TEMP/d365-case-ops-runtime/dtm-token-global.json`、`$TEMP/icm-token-cache.json`
+   - 各 case 的消费者脚本（`teams-search-inline.sh`、`download-attachments.ps1`、`icm-discussion-ab.js`）无需改动，直接读取相同 cache 文件
 
 5. **阶段 0.5：写 phase 文件（processing）**
 

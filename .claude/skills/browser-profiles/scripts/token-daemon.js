@@ -71,6 +71,7 @@ function writeCache(cacheFile, data) {
 }
 
 function isCacheValid(cacheFile, ttlMinutes) {
+  if (!cacheFile) return false; // session tab: no cache, always "needs processing"
   const cache = readCache(cacheFile);
   if (!cache) return false;
 
@@ -96,6 +97,7 @@ function isCacheValid(cacheFile, ttlMinutes) {
 }
 
 function getCacheRemainMin(cacheFile, ttlMinutes) {
+  if (!cacheFile) return -1; // session tab
   const cache = readCache(cacheFile);
   if (!cache) return -1;
 
@@ -147,6 +149,10 @@ function writeHeartbeat(tabs) {
     tabs: {}
   };
   for (const [name, config] of Object.entries(registry.tokens)) {
+    if (config.tokenSource === 'none') {
+      data.tabs[name] = { status: 'session', remainMin: null };
+      continue;
+    }
     const remain = getCacheRemainMin(config.cacheFile, config.cacheTTLMinutes);
     data.tabs[name] = {
       status: remain > 0 ? 'ok' : 'expired',
@@ -178,7 +184,82 @@ function saveWorkspaceId(wsId, source) {
   }));
 }
 
-function resolveDtmUrl() {
+/**
+ * 用 daemon 自己的浏览器打开 D365 → OData 查 workspace ID。
+ * 利用 daemon 浏览器已有的 SSO session，无需外部 playwright-cli 实例。
+ * @param {import('playwright-core').BrowserContext} ctx - daemon 的 browser context
+ * @returns {Promise<string|null>} workspace ID 或 null
+ */
+async function fetchWorkspaceIdViaBrowser(ctx) {
+  let page;
+  try {
+    page = await ctx.newPage();
+    const D365_URL = 'https://onesupport.crm.dynamics.com/main.aspx?forceUCI=1&appid=101acb62-8d00-eb11-a813-000d3a8b3117';
+
+    log('[dtm-resolve] Opening D365 via daemon browser for workspace ID...');
+    await page.goto(D365_URL, { waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => {});
+
+    // SSO 自愈循环（最多 40s）
+    let onD365 = false;
+    for (let i = 0; i < 40 && !onD365; i++) {
+      await page.waitForTimeout(1000);
+      const url = page.url();
+      if (url.includes('login.microsoftonline') || url.includes('login.live')) {
+        await handleSSO(page, {
+          targetDomain: 'dynamics.com',
+          log: (msg) => log(`[dtm-resolve] ${msg}`)
+        });
+        continue;
+      }
+      if (url.includes('dynamics.com') && !url.includes('login') && !url.includes('#code=') && !url.includes('authorize')) {
+        await page.waitForTimeout(3000); // 等 D365 框架加载
+        onD365 = true;
+      }
+    }
+
+    if (!onD365) {
+      log('[dtm-resolve] WARN: could not reach D365 within 40s');
+      return null;
+    }
+
+    // OData 查 DTM attachment metadata → 提取 workspaceId
+    const wsId = await page.evaluate(async () => {
+      try {
+        const resp = await fetch(
+          '/api/data/v9.0/msdfm_dtmattachmentmetadatas?$select=msdfm_dtmlocationurl&$top=1&$filter=msdfm_dtmlocationurl ne null&$orderby=createdon desc',
+          { headers: { 'Accept': 'application/json', 'OData-MaxVersion': '4.0', 'OData-Version': '4.0' } }
+        );
+        if (!resp.ok) return null;
+        const data = await resp.json();
+        if (data.value && data.value[0] && data.value[0].msdfm_dtmlocationurl) {
+          const m = data.value[0].msdfm_dtmlocationurl.match(/workspaceid=([a-f0-9-]+)/i);
+          return m ? m[1] : null;
+        }
+        return null;
+      } catch { return null; }
+    });
+
+    if (wsId) {
+      log(`[dtm-resolve] Got workspace ID via D365 OData: ${wsId.substring(0, 8)}...`);
+    } else {
+      log('[dtm-resolve] WARN: D365 OData returned no workspace ID');
+    }
+    return wsId;
+  } catch (e) {
+    log(`[dtm-resolve] WARN: browser D365 query failed: ${e.message.substring(0, 80)}`);
+    return null;
+  } finally {
+    if (page) await page.close().catch(() => {});
+  }
+}
+
+/**
+ * 解析 DTM startUrl（需要动态获取 workspaceId）
+ * 获取链: 缓存 → 本地文件扫描 → daemon 浏览器 D365 OData → PowerShell fallback
+ * @param {import('playwright-core').BrowserContext} [ctx] - daemon 的 browser context（async step 3 需要）
+ * @returns {Promise<string|null>} DTM URL 或 null
+ */
+async function resolveDtmUrl(ctx) {
   // 1. 读 workspace ID 缓存（秒级）
   const cached = cachedWorkspaceId();
   if (cached) return `https://client.dtmnebula.microsoft.com/?workspaceid=${cached}`;
@@ -209,7 +290,52 @@ function resolveDtmUrl() {
     }
   } catch {}
 
-  // 3. D365 API fallback（调 PowerShell _init.ps1 的 Invoke-D365Api）
+  // 3. 查找 daemon context 中已有的 D365 tab（registry 中 d365 排在 dtm 前面）
+  if (ctx) {
+    const d365Page = ctx.pages().find(p => p.url().includes('dynamics.com') && !p.url().includes('login'));
+    if (d365Page) {
+      try {
+        log('[dtm-resolve] Using existing D365 tab for workspace ID query...');
+        const wsId = await d365Page.evaluate(async () => {
+          try {
+            const resp = await fetch(
+              '/api/data/v9.0/msdfm_dtmattachmentmetadatas?$select=msdfm_dtmlocationurl&$top=1&$filter=msdfm_dtmlocationurl ne null&$orderby=createdon desc',
+              { headers: { 'Accept': 'application/json', 'OData-MaxVersion': '4.0', 'OData-Version': '4.0' } }
+            );
+            if (!resp.ok) return null;
+            const data = await resp.json();
+            if (data.value && data.value[0] && data.value[0].msdfm_dtmlocationurl) {
+              const m = data.value[0].msdfm_dtmlocationurl.match(/workspaceid=([a-f0-9-]+)/i);
+              return m ? m[1] : null;
+            }
+            return null;
+          } catch { return null; }
+        });
+        if (wsId && wsId.match(/^[a-f0-9-]+$/i)) {
+          log(`[dtm-resolve] Got workspace ID via D365 tab: ${wsId.substring(0, 8)}...`);
+          saveWorkspaceId(wsId, 'daemon-d365-tab');
+          return `https://client.dtmnebula.microsoft.com/?workspaceid=${wsId}`;
+        }
+      } catch (e) {
+        log(`[dtm-resolve] D365 tab query failed: ${e.message.substring(0, 60)}`);
+      }
+    }
+  }
+
+  // 4. Fallback: 临时开 D365 页面获取（D365 tab 不存在时）
+  if (ctx) {
+    try {
+      const wsId = await fetchWorkspaceIdViaBrowser(ctx);
+      if (wsId && wsId.match(/^[a-f0-9-]+$/i)) {
+        saveWorkspaceId(wsId, 'daemon-d365-odata');
+        return `https://client.dtmnebula.microsoft.com/?workspaceid=${wsId}`;
+      }
+    } catch (e) {
+      log(`WARN: daemon browser D365 query failed: ${e.message.substring(0, 60)}`);
+    }
+  }
+
+  // 4. PowerShell fallback（调 Invoke-D365Api — 需要外部 playwright-cli D365 实例）
   try {
     const wsId = execSync(
       `pwsh -NoProfile -c ". .claude/skills/d365-case-ops/scripts/_init.ps1; $r = Invoke-D365Api -Endpoint '/api/data/v9.0/msdfm_dtmattachmentmetadatas?\\$select=msdfm_dtmlocationurl&\\$top=1&\\$filter=msdfm_dtmlocationurl ne null&\\$orderby=createdon desc'; if ($r.value[0].msdfm_dtmlocationurl -match 'workspaceid=([a-f0-9-]+)') { $Matches[1] }"`,
@@ -220,10 +346,10 @@ function resolveDtmUrl() {
       return `https://client.dtmnebula.microsoft.com/?workspaceid=${wsId}`;
     }
   } catch (e) {
-    log(`WARN: D365 API workspace query failed: ${e.message.substring(0, 60)}`);
+    log(`WARN: PowerShell D365 API workspace query failed: ${e.message.substring(0, 60)}`);
   }
 
-  // 4. Fallback — 跳过
+  // 5. Fallback — 跳过
   log('WARN: no DTM workspace ID found, skipping DTM token');
   return null;
 }
@@ -251,7 +377,7 @@ async function cmdStart() {
     const page = await ctx.newPage();
     let startUrl = config.startUrl;
     if (startUrl === 'dynamic:from-d365-workspace') {
-      startUrl = resolveDtmUrl();
+      startUrl = await resolveDtmUrl(ctx);
     }
 
     log(`Opening tab [${name}]: ${startUrl}`);
@@ -272,17 +398,21 @@ async function cmdStart() {
     // 等页面加载完
     await page.waitForTimeout(8000);
 
-    // 提取 token
-    const tokenData = await extractToken(page, config);
-    if (tokenData) {
-      const secret = tokenData.secret || tokenData.token || '';
-      const cacheData = tokenData.secret
-        ? { secret: tokenData.secret, expiresOn: tokenData.expiresOn, fetchedAt: new Date().toISOString() }
-        : { token: tokenData.token, timestamp: Date.now() / 1000 };
-      writeCache(config.cacheFile, cacheData);
-      log(`[${name}] Token OK (len=${secret.length})`);
+    // 提取 token（session tab 跳过）
+    if (config.tokenSource === 'none') {
+      log(`[${name}] Session tab ready`);
     } else {
-      log(`[${name}] Token extraction failed`);
+      const tokenData = await extractToken(page, config);
+      if (tokenData) {
+        const secret = tokenData.secret || tokenData.token || '';
+        const cacheData = tokenData.secret
+          ? { secret: tokenData.secret, expiresOn: tokenData.expiresOn, fetchedAt: new Date().toISOString() }
+          : { token: tokenData.token, timestamp: Date.now() / 1000 };
+        writeCache(config.cacheFile, cacheData);
+        log(`[${name}] Token OK (len=${secret.length})`);
+      } else {
+        log(`[${name}] Token extraction failed`);
+      }
     }
 
     tabs[name] = { page, config };
@@ -316,9 +446,10 @@ async function cmdStart() {
   process.on('SIGINT', shutdown);
   process.on('SIGTERM', shutdown);
 
-  // Keep alive — 定期检查 token 过期并自动刷新
+  // Keep alive — 定期检查 token 过期并自动刷新（session tab 跳过）
   setInterval(async () => {
     for (const [name, { page, config }] of Object.entries(tabs)) {
+      if (config.tokenSource === 'none') continue; // session tab: no token to refresh
       if (!isCacheValid(config.cacheFile, config.cacheTTLMinutes)) {
         log(`[${name}] Token expired, refreshing...`);
         try {
@@ -419,6 +550,10 @@ async function cmdWarmup() {
   // 2. Daemon 存活 → 检查各 token cache
   const results = [];
   for (const [name, config] of Object.entries(registry.tokens)) {
+    if (config.tokenSource === 'none') {
+      results.push(`${name}=session`);
+      continue;
+    }
     const valid = isCacheValid(config.cacheFile, config.cacheTTLMinutes);
     const remain = getCacheRemainMin(config.cacheFile, config.cacheTTLMinutes);
     results.push(`${name}=${valid ? `cached(${remain}m)` : 'expired'}`);
@@ -461,7 +596,7 @@ async function inlineWarmup() {
       // 需要刷新
       const page = await ctx.newPage();
       let startUrl = config.startUrl;
-      if (startUrl === 'dynamic:from-d365-workspace') startUrl = resolveDtmUrl();
+      if (startUrl === 'dynamic:from-d365-workspace') startUrl = await resolveDtmUrl(ctx);
 
       if (!startUrl) {
         results.push(`${name}=skipped(no-url)`);
@@ -572,6 +707,10 @@ function cmdStatus() {
   };
 
   for (const [name, config] of Object.entries(registry.tokens)) {
+    if (config.tokenSource === 'none') {
+      output.tokens[name] = { cacheFile: null, valid: true, remainMin: null, ttlMinutes: 0, tab: config.tab, type: 'session' };
+      continue;
+    }
     const valid = isCacheValid(config.cacheFile, config.cacheTTLMinutes);
     const remain = getCacheRemainMin(config.cacheFile, config.cacheTTLMinutes);
     output.tokens[name] = {

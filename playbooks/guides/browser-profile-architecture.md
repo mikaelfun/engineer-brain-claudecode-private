@@ -151,6 +151,21 @@ await page.reload({ waitUntil: 'domcontentloaded' });
 - **MCP Playwright profile 不可共用** — MCP server 独占 profile lock，其他脚本不能复用
 - **playwright-cli 不支持 headless** — D365/OWA 的 playwright-cli 实例必须 headed
 
+## Patrol 集成
+
+Patrol Step 4 预热阶段调用 `node token-daemon.js warmup` 统一预热所有 token：
+
+```bash
+# 两个并行任务
+pwsh -NoProfile -File .../check-ir-status-batch.ps1 -SaveMeta    # IR/SLA 数据（非 token）
+node .../token-daemon.js warmup                                   # Teams+DTM+ICM 统一预热
+```
+
+**优势**：
+- 4 个独立 Edge 实例 → 1 个共享 Edge 实例（省内存、省 SSO 时间）
+- 消费者脚本无需改动（cache 文件路径不变）
+- 有效 cache 跳过刷新（几乎零耗时）
+
 ## 相关文件
 
 | 文件 | 说明 |
