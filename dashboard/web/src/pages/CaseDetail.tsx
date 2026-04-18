@@ -439,18 +439,23 @@ function EmailsTab({ emails, caseNumber }: { emails: any[]; caseNumber: string }
         return (
           <div
             key={id}
-            className="relative"
+            className="relative rounded-lg"
             style={{
               borderLeft: `3px solid ${isOpen ? borderColor : 'var(--border-subtle)'}`,
-              marginBottom: '1px',
-              transition: 'border-color 0.2s',
+              marginBottom: isOpen ? '8px' : '1px',
+              background: isOpen
+                ? (isSent
+                    ? 'color-mix(in srgb, var(--accent-blue) 5%, var(--bg-surface))'
+                    : 'color-mix(in srgb, var(--accent-green) 5%, var(--bg-surface))')
+                : 'transparent',
+              transition: 'all 0.2s',
             }}
           >
             {/* Collapsed / Header row */}
             <div
-              className="flex items-center gap-2 px-3 py-2 cursor-pointer transition-colors"
+              className="flex items-center gap-2 px-3 py-2 cursor-pointer transition-colors rounded-t-lg"
               onClick={() => toggle(id)}
-              style={{ background: isOpen ? 'var(--bg-surface)' : 'transparent' }}
+              style={{ background: 'transparent' }}
               onMouseEnter={(e) => { if (!isOpen) e.currentTarget.style.background = 'var(--bg-hover)' }}
               onMouseLeave={(e) => { if (!isOpen) e.currentTarget.style.background = 'transparent' }}
             >
@@ -487,15 +492,15 @@ function EmailsTab({ emails, caseNumber }: { emails: any[]; caseNumber: string }
 
             {/* Expanded body */}
             {isOpen && (
-              <div className="px-3 pb-3">
+              <div className="px-4 pb-3 ml-1">
                 {/* To/CC line — compact */}
-                <div className="text-xs mb-2 space-y-0.5" style={{ color: 'var(--text-tertiary)' }}>
+                <div className="text-xs mb-3 space-y-0.5 pb-2" style={{ color: 'var(--text-tertiary)', borderBottom: '1px solid var(--border-subtle)' }}>
                   {email.to && <div><span style={{ opacity: 0.6 }}>To:</span> {email.to}</div>}
                   {email.cc && <div><span style={{ opacity: 0.6 }}>CC:</span> {email.cc}</div>}
                 </div>
 
                 {/* Body content */}
-                <div className="text-sm whitespace-pre-wrap leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                <div className="text-sm whitespace-pre-wrap" style={{ color: 'var(--text-primary)', lineHeight: '1.7' }}>
                   {renderBody(bodyContent)}
                 </div>
 
