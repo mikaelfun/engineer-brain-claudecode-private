@@ -18,6 +18,7 @@ import {
 } from '../api/hooks'
 import MarkdownContent from '../components/common/MarkdownContent'
 import CaseAIPanel from '../components/CaseAIPanel'
+import CaseSummaryRenderer from '../components/case/CaseSummaryRenderer'
 import { LaborEstimateCard } from '../components/LaborEstimateCard'
 import { NoteGapCard } from '../components/NoteGapCard'
 import EvidenceChainTab from '../components/EvidenceChainTab'
@@ -679,7 +680,9 @@ function TeamsTab({ chats, digest, caseId }: { chats: any[]; digest: { scoredAt:
             {digest.keyFacts.map((fact, i) =>
               fact.startsWith('### ')
                 ? <p key={i} className="font-medium mt-3 mb-1 text-xs" style={{ color: 'var(--accent-amber)', opacity: 0.8 }}>{fact.slice(4)}</p>
-                : <p key={i} className="pl-0" style={{ lineHeight: '1.5' }}>• {fact}</p>
+                : fact.includes('![')
+                  ? <div key={i} className="pl-0" style={{ lineHeight: '1.5' }}><MarkdownContent>{'• ' + rewriteImagePaths(fact)}</MarkdownContent></div>
+                  : <p key={i} className="pl-0" style={{ lineHeight: '1.5' }}>• {fact}</p>
             )}
           </div>
           <p className="text-xs mt-2" style={{ color: 'var(--text-tertiary)' }}>
@@ -1390,13 +1393,11 @@ function InspectionTab({ content, exists, filename, updatedAt }: { content?: str
   if (!exists || !content) return <EmptyState icon="📋" title="No case summary" description="Run casework to generate a summary" />
 
   return (
-    <Card>
-      <div className="flex items-center justify-between mb-3 text-xs" style={{ color: 'var(--text-tertiary)' }}>
-        <span className="font-mono">{filename}</span>
-        {updatedAt && <span>{new Date(updatedAt).toLocaleString()}</span>}
-      </div>
-      <MarkdownContent>{content}</MarkdownContent>
-    </Card>
+    <CaseSummaryRenderer
+      content={content}
+      filename={filename}
+      updatedAt={updatedAt}
+    />
   )
 }
 

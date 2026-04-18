@@ -23,6 +23,7 @@ const PROMPT_PRESETS = [
   { label: 'Patrol (batch inspect)', value: '/patrol' },
   { label: 'RAG Sync', value: '/rag-sync' },
   { label: 'Test Supervisor Run', value: '/test-supervisor run' },
+  { label: 'Product Learn Auto Enrich', value: '/product-learn auto-enrich' },
 ]
 
 export interface TriggerEditData {
