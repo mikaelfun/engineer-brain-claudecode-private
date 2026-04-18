@@ -213,7 +213,7 @@ export default function CaseDetail() {
         <div className="flex-1 min-w-0 space-y-4">
           <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
           <div>
-            {activeTab === 'summary' && <InspectionTab content={inspectionData?.content} exists={inspectionData?.exists} filename={inspectionData?.filename} updatedAt={inspectionData?.updatedAt} />}
+            {activeTab === 'summary' && <InspectionTab content={inspectionData?.content} exists={inspectionData?.exists} filename={inspectionData?.filename} updatedAt={inspectionData?.updatedAt} meta={meta} />}
             {activeTab === 'todo' && <CaseTodoTab caseId={id!} latest={todoData?.latest || null} files={todoData?.files || []} toggleTodo={toggleCaseTodo} />}
             {activeTab === 'emails' && <EmailsTab emails={emailsData?.emails || []} caseNumber={id!} />}
             {activeTab === 'notes' && <NotesAndLaborTab notes={notesData?.notes || []} laborRecords={laborRecordsData?.records || []} caseId={id!} />}
@@ -1182,8 +1182,11 @@ function OnenoteTab({ caseId, files, pages, scoring }: {
     if (processed.startsWith('### ')) {
       return <p key={idx} className="font-medium mt-3 mb-1 text-xs" style={{ color: 'var(--text-tertiary)', opacity: 0.8 }}>{processed.slice(4)}</p>
     }
-    // Regular "- item" lines
+    // Regular "- item" lines — use MarkdownContent if contains image refs
     const text = processed.startsWith('- ') ? processed.slice(2) : processed
+    if (text.includes('![')) {
+      return <div key={idx} style={{ lineHeight: '1.5' }}><MarkdownContent>{'• ' + text}</MarkdownContent></div>
+    }
     return <p key={idx} style={{ lineHeight: '1.5' }}>• {text}</p>
   }
 
@@ -1389,7 +1392,7 @@ function OnenoteTab({ caseId, files, pages, scoring }: {
   )
 }
 
-function InspectionTab({ content, exists, filename, updatedAt }: { content?: string; exists?: boolean; filename?: string; updatedAt?: string }) {
+function InspectionTab({ content, exists, filename, updatedAt, meta }: { content?: string; exists?: boolean; filename?: string; updatedAt?: string; meta?: any }) {
   if (!exists || !content) return <EmptyState icon="📋" title="No case summary" description="Run casework to generate a summary" />
 
   return (
@@ -1397,6 +1400,7 @@ function InspectionTab({ content, exists, filename, updatedAt }: { content?: str
       content={content}
       filename={filename}
       updatedAt={updatedAt}
+      meta={meta}
     />
   )
 }
