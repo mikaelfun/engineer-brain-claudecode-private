@@ -341,8 +341,9 @@ function MetaSapTagsCard({ meta }: { meta: any }) {
     tags.push({ key: '自识别 SAP', value: `${c.sapPath || 'N/A'} ✅ 一致` })
   }
 
-  // RDSE
-  tags.push({ key: 'RDSE', value: meta.ccAccount || 'N/A' })
+  // RDSE — strip parenthetical notes like "(!!!只抄送CSAM为xxx的Case)"
+  const rdseDisplay = meta.ccAccount ? meta.ccAccount.replace(/\s*\(.*?\)\s*$/, '').trim() : 'N/A'
+  tags.push({ key: 'RDSE', value: rdseDisplay })
 
   // 21V Convert
   tags.push({ key: '21V Convert', value: c.is21vConvert ? `是，原始 Case ${c['21vCaseId'] || ''}` : '否' })
