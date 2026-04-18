@@ -40,6 +40,13 @@ function debounceEmit(eventType: SSEEventType, data: Record<string, unknown>, ke
 function classifyChange(filePath: string): { type: SSEEventType; data: Record<string, unknown> } | null {
   const normalized = filePath.replace(/\\/g, '/')
 
+  // Since we watch directories (not globs) on Windows, filter irrelevant files early
+  const ext = normalized.split('.').pop()?.toLowerCase()
+  const isRelevantExt = ['md', 'json', 'log'].includes(ext || '')
+  // Special cases: patrol-phase has no extension, patrol.lock
+  const isSpecialFile = normalized.endsWith('patrol-phase') || normalized.endsWith('patrol.lock')
+  if (!isRelevantExt && !isSpecialFile) return null
+
   // Case files
   if (normalized.includes('/cases/active/')) {
     const caseMatch = normalized.match(/\/cases\/active\/(\d+)\//)
@@ -56,21 +63,11 @@ function classifyChange(filePath: string): { type: SSEEventType; data: Record<st
       return { type: 'draft-updated', data: { caseNumber } }
     }
 
-    // V2: Step 1 subtask events (data-refresh progress)
-    if (normalized.includes('/.casework/events/')) {
-      const subtaskMatch = normalized.match(/events\/(\w+)\.json$/)
-      const subtask = subtaskMatch?.[1] || 'unknown'
+    // Per-case unified progress tracking (state.json)
+    if (normalized.endsWith('/.casework/state.json')) {
       try {
-        const eventData = JSON.parse(readFileSync(filePath, 'utf-8'))
-        return { type: 'case-subtask-progress' as SSEEventType, data: { caseNumber, subtask, ...eventData } }
-      } catch { return null }
-    }
-
-    // V2: Cross-step pipeline state (patrol orchestration)
-    if (normalized.includes('/.casework/pipeline-state.json')) {
-      try {
-        const state = JSON.parse(readFileSync(filePath, 'utf-8'))
-        return { type: 'patrol-pipeline-update' as SSEEventType, data: { caseNumber, ...state } }
+        const caseState = JSON.parse(readFileSync(filePath, 'utf-8'))
+        return { type: 'patrol-case' as SSEEventType, data: caseState }
       } catch { return null }
     }
 
@@ -82,8 +79,16 @@ function classifyChange(filePath: string): { type: SSEEventType; data: Record<st
     return { type: 'todo-updated', data: {} }
   }
 
-  // Patrol state (final result)
-  if (normalized.includes('patrol-state.json')) {
+  // Patrol progress (structured JSON — written by patrol skill)
+  if (normalized.includes('patrol-progress.json')) {
+    try {
+      const progress = JSON.parse(readFileSync(filePath, 'utf-8'))
+      return { type: 'patrol-state' as SSEEventType, data: progress }
+    } catch { return null }
+  }
+
+  // Patrol final result (patrol-state.json — kept for backward compat)
+  if (normalized.includes('patrol-state.json') && !normalized.includes('patrol-progress')) {
     return { type: 'patrol-updated', data: {} }
   }
 
@@ -92,14 +97,16 @@ function classifyChange(filePath: string): { type: SSEEventType; data: Record<st
     try {
       if (existsSync(filePath)) {
         const lock = JSON.parse(readFileSync(filePath, 'utf-8'))
-        return { type: 'patrol-progress' as SSEEventType, data: { phase: 'starting', source: lock.source } }
+        return { type: 'patrol-state' as SSEEventType, data: { phase: 'starting', source: lock.source } }
       } else {
-        return { type: 'patrol-progress' as SSEEventType, data: { phase: 'idle' } }
+        return { type: 'patrol-state' as SSEEventType, data: { phase: 'idle' } }
       }
     } catch { return null }
   }
 
   // Patrol phase file — written by /patrol skill
+  // patrol-phase is backward compat — still used by CLI mode
+  // Emit as patrol-state so new frontend receives it too
   // Format: "processing" or "processing|3/6" (phase with progress)
   if (normalized.endsWith('patrol-phase')) {
     try {
@@ -112,15 +119,7 @@ function classifyChange(filePath: string): { type: SSEEventType; data: Record<st
         data.changedCases = parseInt(total, 10) || 0
         data.detail = `${done}/${total} cases done`
       }
-      return { type: 'patrol-progress' as SSEEventType, data }
-    } catch { return null }
-  }
-
-  // Patrol result file — written by /patrol skill on completion
-  if (normalized.endsWith('/result.json') && normalized.includes('.patrol')) {
-    try {
-      const result = JSON.parse(readFileSync(filePath, 'utf-8'))
-      return { type: 'patrol-progress' as SSEEventType, data: { ...result, phase: result.phase || 'completed' } }
+      return { type: 'patrol-state' as SSEEventType, data }
     } catch { return null }
   }
 
@@ -286,13 +285,16 @@ function classifyChange(filePath: string): { type: SSEEventType; data: Record<st
 }
 
 export function startFileWatcher() {
+  // IMPORTANT: On Windows, chokidar glob patterns (e.g. **/*.json) fail silently —
+  // 0 files matched. Use directory paths instead and filter in classifyChange().
+  // See: https://github.com/paulmillr/chokidar/issues/1289
   const watchPaths = [
-    join(config.activeCasesDir, '**', '*.{md,json,log}'),
-    join(config.todoDir, '*.md'),
+    config.activeCasesDir,  // Watch entire active cases directory (replaces broken glob)
+    config.todoDir,         // Watch todo directory (replaces broken glob)
     config.patrolStateFile,
+    config.patrolProgressFile,   // New: structured JSON for WebUI
     join(config.patrolDir, 'patrol.lock'),
     join(config.patrolDir, 'patrol-phase'),
-    join(config.patrolDir, 'result.json'),
     config.cronJobsFile,
     join(config.projectRoot, 'tests', 'state.json'),
     join(config.projectRoot, 'tests', 'pipeline.json'),
@@ -302,8 +304,8 @@ export function startFileWatcher() {
     join(config.projectRoot, 'tests', 'discoveries.json'),
     join(config.projectRoot, 'tests', 'evolution.json'),
     join(config.projectRoot, 'tests', 'directives.json'),
-    join(config.projectRoot, 'tests', 'results', '*.json'),
-    join(config.projectRoot, '.claude', 'skills', '**', 'SKILL.md'),
+    join(config.projectRoot, 'tests', 'results'),  // Watch directory (replaces broken glob)
+    join(config.projectRoot, '.claude', 'skills'),  // Watch directory (replaces broken glob)
   ]
 
   console.log('[watcher] Starting file watcher...')
@@ -312,7 +314,7 @@ export function startFileWatcher() {
   watcher = chokidar.watch(watchPaths, {
     ignoreInitial: true,
     // IMPORTANT: don't ignore dotfiles/dotdirs — .casework/ contains
-    // pipeline-state.json and events/*.json needed for SSE
+    // state.json needed for SSE
     ignored: undefined,
     awaitWriteFinish: {
       stabilityThreshold: 300,
