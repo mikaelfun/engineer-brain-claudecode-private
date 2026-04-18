@@ -265,6 +265,8 @@ function AuthImage({ src, alt, className, style }: { src: string; alt: string; c
 
 function EmailsTab({ emails, caseNumber }: { emails: any[]; caseNumber: string }) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
+  const [showSig, setShowSig] = useState<Set<string>>(new Set())
+  const [allExpanded, setAllExpanded] = useState(false)
 
   if (emails.length === 0) return <EmptyState icon="📧" title="No emails" />
 
@@ -273,20 +275,83 @@ function EmailsTab({ emails, caseNumber }: { emails: any[]; caseNumber: string }
     new Date(b.date).getTime() - new Date(a.date).getTime()
   )
 
+  // Default: expand latest email
+  if (expanded.size === 0 && sorted.length > 0 && !allExpanded) {
+    expanded.add(sorted[0].id || '0')
+  }
+
   const toggle = (id: string) => {
     const next = new Set(expanded)
     next.has(id) ? next.delete(id) : next.add(id)
     setExpanded(next)
   }
 
-  // Transform inline image markdown to img tags with API URLs
-  const renderBody = (body: string) => {
-    if (!body) return '(No body)'
-    // Strip legacy "**Inline Images:**" header and empty image refs
-    const cleaned = body
+  const toggleAll = () => {
+    if (allExpanded) {
+      setExpanded(new Set([sorted[0]?.id || '0']))
+      setAllExpanded(false)
+    } else {
+      setExpanded(new Set(sorted.map((e, i) => e.id || String(i))))
+      setAllExpanded(true)
+    }
+  }
+
+  const toggleSig = (id: string) => {
+    const next = new Set(showSig)
+    next.has(id) ? next.delete(id) : next.add(id)
+    setShowSig(next)
+  }
+
+  // Extract display name from "Name <email>" or "email" format
+  const extractName = (from: string): string => {
+    if (!from) return 'Unknown'
+    // "Name <email>" or "Name email@..." → take Name
+    const angleMatch = from.match(/^(.+?)\s*</)
+    if (angleMatch) return angleMatch[1].trim()
+    // "support@mail.support.microsoft.com" → "Microsoft Support"
+    if (from.includes('support@mail.support.microsoft.com')) return 'Microsoft Support'
+    // "email@domain" → take part before @
+    const atIdx = from.indexOf('@')
+    if (atIdx > 0) return from.slice(0, atIdx)
+    return from
+  }
+
+  // Signature detection: split body into content + signature
+  const splitSignature = (body: string): { content: string; signature: string } => {
+    if (!body) return { content: '', signature: '' }
+    const sigPatterns = [
+      /^(Best Regards|Kind Regards|Thanks|Thank you|Regards|此致|谢谢|Cheers)[,，]?\s*$/im,
+      /^-{3,}\s*$/m,
+      /^_{3,}\s*$/m,
+      /^\*{3,}\s*$/m,
+      /^Support Engineer\s*$/im,
+      /^Microsoft 支持\s*$/im,
+    ]
+    const lines = body.split('\n')
+    for (let i = 0; i < lines.length; i++) {
+      for (const pat of sigPatterns) {
+        if (pat.test(lines[i])) {
+          return {
+            content: lines.slice(0, i).join('\n').trimEnd(),
+            signature: lines.slice(i).join('\n'),
+          }
+        }
+      }
+    }
+    return { content: body, signature: '' }
+  }
+
+  // Strip inline image markdown artifacts
+  const cleanBody = (body: string) => {
+    return body
       .replace(/\*\*Inline Images:\*\*\n?/g, '')
       .replace(/!\[inline-image\]\(\)\n?/g, '')
-    const parts = cleaned.split(/(!\[.*?\]\(images\/[^)]+\))/)
+  }
+
+  // Render body with inline images
+  const renderBody = (body: string) => {
+    if (!body) return <span style={{ color: 'var(--text-tertiary)' }}>(No body)</span>
+    const parts = body.split(/(!\[.*?\]\(images\/[^)]+\))/)
     return parts.map((part, i) => {
       const imgMatch = part.match(/!\[.*?\]\((images\/([^)]+))\)/)
       if (imgMatch) {
@@ -306,39 +371,156 @@ function EmailsTab({ emails, caseNumber }: { emails: any[]; caseNumber: string }
     })
   }
 
+  // Preview text for collapsed state (first 80 chars, no signatures)
+  const previewBody = (body: string): string => {
+    const { content } = splitSignature(cleanBody(body))
+    const oneLine = content.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim()
+    return oneLine.length > 80 ? oneLine.slice(0, 80) + '...' : oneLine
+  }
+
+  // Format date compactly
+  const formatDate = (dateStr: string): string => {
+    try {
+      const d = new Date(dateStr)
+      const now = new Date()
+      const sameYear = d.getFullYear() === now.getFullYear()
+      const sameDay = d.toDateString() === now.toDateString()
+      if (sameDay) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      if (sameYear) return `${d.getMonth() + 1}/${d.getDate()} ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+      return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`
+    } catch { return dateStr }
+  }
+
+  // Conversation subject — clean up RE:/FW:/TrackingID
+  const convSubject = (() => {
+    const subj = sorted[sorted.length - 1]?.subject || sorted[0]?.subject || ''
+    return subj
+      .replace(/^(RE:|FW:|Fw:|Re:)\s*/gi, '')
+      .replace(/\s*-?\s*TrackingID#\d+/g, '')
+      .trim()
+  })()
+
+  // Unique participants
+  const participants = [...new Set(sorted.map(e => extractName(e.from)).filter(Boolean))]
+
   return (
-    <div className="space-y-3">
-      {sorted.map((email, i) => (
-        <Card key={email.id || i} padding="sm">
-          <div
-            className="flex items-start gap-3 cursor-pointer"
-            onClick={() => toggle(email.id || String(i))}
-          >
-            <span className="text-lg flex-shrink-0 mt-0.5">
-              {email.direction === 'sent' ? '📤' : '📥'}
-            </span>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <Badge variant={email.direction === 'sent' ? 'primary' : 'success'} size="xs">
-                  {email.direction === 'sent' ? 'Sent' : 'Received'}
-                </Badge>
-                <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{email.date}</span>
-              </div>
-              <p className="font-medium text-sm mt-1 truncate" style={{ color: 'var(--text-primary)' }}>{email.subject}</p>
-              {email.from && <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>From: {email.from}</p>}
-              {email.cc && <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>CC: {email.cc}</p>}
+    <div className="space-y-0">
+      {/* Conversation header */}
+      <div className="mb-3">
+        <div className="flex items-start justify-between">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>{convSubject}</h3>
+            <div className="flex items-center gap-1.5 flex-wrap text-xs" style={{ color: 'var(--text-tertiary)' }}>
+              {participants.map((p, i) => (
+                <span key={i} className="px-1.5 py-0.5 rounded" style={{ background: 'var(--bg-tertiary)' }}>{p}</span>
+              ))}
+              <span>· {sorted.length} emails</span>
             </div>
           </div>
-          {expanded.has(email.id || String(i)) && (
+          <button
+            onClick={toggleAll}
+            className="text-xs px-2 py-1 rounded flex-shrink-0"
+            style={{ color: 'var(--text-tertiary)', background: 'var(--bg-hover)' }}
+          >
+            {allExpanded ? '收起全部' : '展开全部'}
+          </button>
+        </div>
+      </div>
+
+      {/* Email thread */}
+      {sorted.map((email, i) => {
+        const id = email.id || String(i)
+        const isOpen = expanded.has(id)
+        const isSent = email.direction === 'sent'
+        const borderColor = isSent ? 'var(--accent-blue)' : 'var(--accent-green)'
+        const senderName = extractName(email.from)
+        const { content: bodyContent, signature } = splitSignature(cleanBody(email.body))
+
+        return (
+          <div
+            key={id}
+            className="relative"
+            style={{
+              borderLeft: `3px solid ${isOpen ? borderColor : 'var(--border-subtle)'}`,
+              marginBottom: '1px',
+              transition: 'border-color 0.2s',
+            }}
+          >
+            {/* Collapsed / Header row */}
             <div
-              className="mt-3 pt-3 text-sm whitespace-pre-wrap"
-              style={{ borderTop: '1px solid var(--border-subtle)', color: 'var(--text-secondary)' }}
+              className="flex items-center gap-2 px-3 py-2 cursor-pointer transition-colors"
+              onClick={() => toggle(id)}
+              style={{ background: isOpen ? 'var(--bg-surface)' : 'transparent' }}
+              onMouseEnter={(e) => { if (!isOpen) e.currentTarget.style.background = 'var(--bg-hover)' }}
+              onMouseLeave={(e) => { if (!isOpen) e.currentTarget.style.background = 'transparent' }}
             >
-              {renderBody(email.body)}
+              {/* Direction dot */}
+              <span className="text-xs flex-shrink-0" style={{ color: borderColor }}>
+                {isSent ? '📤' : '📥'}
+              </span>
+
+              {/* Sender name */}
+              <span className="text-sm font-medium flex-shrink-0" style={{ color: 'var(--text-primary)', minWidth: '100px' }}>
+                {senderName}
+              </span>
+
+              {/* Preview (collapsed only) */}
+              {!isOpen && (
+                <span className="text-xs truncate flex-1 min-w-0" style={{ color: 'var(--text-tertiary)' }}>
+                  {previewBody(email.body)}
+                </span>
+              )}
+
+              {/* Date */}
+              <span className="text-xs flex-shrink-0 ml-auto" style={{ color: 'var(--text-tertiary)' }}>
+                {formatDate(email.date)}
+              </span>
+
+              {/* Expand indicator */}
+              <span className="text-[10px] flex-shrink-0" style={{
+                color: 'var(--text-tertiary)',
+                transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                transition: 'transform 0.2s',
+                display: 'inline-block',
+              }}>▼</span>
             </div>
-          )}
-        </Card>
-      ))}
+
+            {/* Expanded body */}
+            {isOpen && (
+              <div className="px-3 pb-3">
+                {/* To/CC line — compact */}
+                <div className="text-xs mb-2 space-y-0.5" style={{ color: 'var(--text-tertiary)' }}>
+                  {email.to && <div><span style={{ opacity: 0.6 }}>To:</span> {email.to}</div>}
+                  {email.cc && <div><span style={{ opacity: 0.6 }}>CC:</span> {email.cc}</div>}
+                </div>
+
+                {/* Body content */}
+                <div className="text-sm whitespace-pre-wrap leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                  {renderBody(bodyContent)}
+                </div>
+
+                {/* Signature toggle */}
+                {signature && (
+                  <>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); toggleSig(id) }}
+                      className="text-xs mt-2 px-2 py-0.5 rounded"
+                      style={{ color: 'var(--text-tertiary)', background: 'var(--bg-tertiary)', border: 'none', cursor: 'pointer' }}
+                    >
+                      {showSig.has(id) ? '隐藏签名' : '··· 显示签名'}
+                    </button>
+                    {showSig.has(id) && (
+                      <div className="text-xs mt-1 whitespace-pre-wrap" style={{ color: 'var(--text-tertiary)', opacity: 0.7 }}>
+                        {signature}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }
