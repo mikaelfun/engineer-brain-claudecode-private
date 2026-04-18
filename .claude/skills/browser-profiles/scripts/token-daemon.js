@@ -597,7 +597,7 @@ async function cmdStart() {
         const secret = tokenData.secret || tokenData.token || '';
         const cacheData = tokenData.secret
           ? { secret: tokenData.secret, expiresOn: tokenData.expiresOn, fetchedAt: new Date().toISOString() }
-          : { token: tokenData.token, timestamp: Date.now() / 1000 };
+          : { token: tokenData.token, timestamp: Date.now() / 1000, fetchedAt: new Date().toISOString() };
         writeCache(config.cacheFile, cacheData);
         log(`[${name}] Token OK (len=${secret.length})`);
       } else {
@@ -653,7 +653,7 @@ async function cmdStart() {
             const secret = tokenData.secret || tokenData.token || '';
             const cacheData = tokenData.secret
               ? { secret: tokenData.secret, expiresOn: tokenData.expiresOn, fetchedAt: new Date().toISOString() }
-              : { token: tokenData.token, timestamp: Date.now() / 1000 };
+              : { token: tokenData.token, timestamp: Date.now() / 1000, fetchedAt: new Date().toISOString() };
             writeCache(config.cacheFile, cacheData);
             log(`[${name}] Token refreshed (len=${secret.length})`);
           } else {
@@ -871,7 +871,7 @@ async function inlineWarmup() {
         const secret = tokenData.secret || tokenData.token || '';
         const cacheData = tokenData.secret
           ? { secret: tokenData.secret, expiresOn: tokenData.expiresOn, fetchedAt: new Date().toISOString() }
-          : { token: tokenData.token, timestamp: Date.now() / 1000 };
+          : { token: tokenData.token, timestamp: Date.now() / 1000, fetchedAt: new Date().toISOString() };
         writeCache(config.cacheFile, cacheData);
         results.push(`${name}=refreshed(${secret.length})`);
         log(`[${name}] OK (len=${secret.length})`);

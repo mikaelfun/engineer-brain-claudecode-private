@@ -163,7 +163,12 @@ $globalCacheFile = Join-Path $tokenCacheDir "dtm-token-global.json"
 if (Test-Path $globalCacheFile) {
     try {
         $globalData = Get-Content $globalCacheFile -Raw -Encoding UTF8 | ConvertFrom-Json
-        $globalAge = (Get-Date) - [datetime]$globalData.timestamp
+        # 优先用 fetchedAt (ISO datetime)，兼容 daemon 和旧 warm-dtm-token.ps1
+        if ($globalData.fetchedAt) {
+            $globalAge = (Get-Date) - [datetime]$globalData.fetchedAt
+        } else {
+            $globalAge = (Get-Date) - (Get-Date "1970-01-01").AddSeconds($globalData.timestamp)
+        }
         if ($globalAge.TotalMinutes -lt 50 -and $globalData.token.Length -gt 100) {
             $cachedToken = $globalData.token
             Write-Host "⚡ Using global pre-warmed token (age: $([int]$globalAge.TotalMinutes)m)"

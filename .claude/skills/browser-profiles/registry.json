@@ -50,7 +50,7 @@
         "urlIncludes": "prod.microsofticm.com",
         "header": "authorization"
       },
-      "cacheFile": "$TEMP/icm-token-cache.json",
+      "cacheFile": "$TEMP/icm-ab-token-cache.json",
       "cacheTTLMinutes": 170,
       "description": "ICM Bearer token for discussion/details API (注意 API domain 是 prod.microsofticm.com)"
     }
