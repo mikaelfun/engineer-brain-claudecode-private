@@ -256,13 +256,10 @@ export interface Draft {
 export type SSEEventType =
   | 'case-updated'
   | 'todo-updated'
-  | 'patrol-updated'
   | 'draft-updated'
   | 'cron-updated'
   | 'connected'
   | 'case-session-updated'
-  | 'patrol-progress'
-  | 'patrol-case-completed'
   | 'patrol-state'          // New: replaces patrol-updated + patrol-progress
   | 'patrol-case'           // New: replaces patrol-case-completed + patrol-pipeline-update + case-subtask-progress
   | 'settings-updated'
@@ -293,8 +290,6 @@ export type SSEEventType =
   | 'case-step-failed'
   | 'case-step-question'
   | 'case-step-heartbeat'
-  | 'case-subtask-progress'
-  | 'patrol-pipeline-update'
   | 'sdk-queue-changed'
   | 'test-state-updated'
   | 'test-pipeline-updated'

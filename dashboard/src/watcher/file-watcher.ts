@@ -87,9 +87,9 @@ function classifyChange(filePath: string): { type: SSEEventType; data: Record<st
     } catch { return null }
   }
 
-  // Patrol final result (patrol-state.json — kept for backward compat)
+  // Patrol final result (patrol-state.json — emit patrol-state SSE event)
   if (normalized.includes('patrol-state.json') && !normalized.includes('patrol-progress')) {
-    return { type: 'patrol-updated', data: {} }
+    return { type: 'patrol-state' as SSEEventType, data: {} }
   }
 
   // Patrol lock (running/stopped)
