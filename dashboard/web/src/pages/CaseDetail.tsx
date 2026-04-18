@@ -149,7 +149,7 @@ export default function CaseDetail() {
 
         {/* Row 2: Title + secondary info */}
         <div className="flex items-baseline gap-2 mt-1.5 ml-7">
-          <h2 className="text-sm font-semibold leading-snug flex-1 min-w-0 truncate" style={{ color: 'var(--text-primary)' }} title={caseInfo.title}>
+          <h2 className="text-base font-bold leading-snug flex-1 min-w-0 truncate" style={{ color: 'var(--text-primary)' }} title={caseInfo.title}>
             {caseInfo.title}
           </h2>
           <span className="text-xs flex-shrink-0" style={{ color: 'var(--text-tertiary)' }}>
