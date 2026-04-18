@@ -1,78 +1,100 @@
-# onenote-digest.md 输出格式模板
+# onenote-digest.md 输出格式模板（v2 四段式）
 
-assess / assess-ar / onenote-classifier 在分析 OneNote `_page-*.md` 后，必须将 `onenote-digest.md` 重写为以下格式。
+generate-digest.py 在分析 OneNote `_page-*.md` 后，输出 `onenote-digest.md` 为以下四段式格式。
 
 ## 模板
 
 ```markdown
 # Personal OneNote Notes — Case {caseNumber}
 
-> Searched: {原搜索时间} | Source: {notebook}
-> Matched pages: {count}
-> Classified by {classifier} at {ISO}
+> Generated: {ISO timestamp}
+> High-relevance pages: {highCount} / {totalCount}
+> Synthesis: Layer 2 (cross-page LLM integration)
 
-## 事实记录（Facts）
+## 1. 关键信息（Key Information）
 
-以下信息来自远程截图、客户确认、系统输出等可追溯来源，下游消费者可直接引用。
+**问题描述**: {跨页面整合的客户问题描述}
 
-- [fact] {汇聚所有页面的 fact 1}
-- [fact] {汇聚所有页面的 fact 2}
+**事实信息**:
+- {去重后的事实1（命令输出/错误码/客户确认/配置值）}
+- {去重后的事实2}
 
-## 分析记录（Analysis）
+**截图诊断**:
+- {截图描述} ![alt](./assets/xxx.png)
 
-以下信息来自 LLM 分析、排查假设等，可能不准确，下游消费者应验证后再引用。
+## 2. 分析推断（Analysis & Reasoning）
 
-- [analysis] {汇聚所有页面的 analysis 1}
-- [analysis] {汇聚所有页面的 analysis 2}
+- [engineer] {工程师在 OneNote 中写的推断}
+- [llm-generated] {LLM 从上下文推断的分析}
 
-## 详细页面
+## 3. 行动计划（Action Plan）
 
-按 OneNote section 层级排序：root page 在前，subpage 紧跟其后。每个页面用 `<details>` HTML 标签包裹（默认折叠）。
+- [verified] {已确认完成的步骤}
+- [unverified] {建议但未验证的步骤}
 
-格式示例：
+## 4. 低价值信息（Low-Relevance）
 
-```html
-<details>
-<summary>📄 Root Page Title — Section/Path (2026-04-01)</summary>
-
-- **Key findings**:
-  - [fact] 客户确认只有 Reader 权限
-  - [analysis] 可能需要升级到 Contributor
-
-</details>
-
-<details>
-<summary>&nbsp;&nbsp;📎 Subpage Title — subpage (2026-04-02)</summary>
-
-- **Key findings**:
-  - [fact] 截图显示 RBAC 配置
-
-</details>
+- {页面名}: {原因}
 ```
 
-**层级规则**：
-- 从 `_page-*.md` 的文件路径中 section depth 推断层级（路径 segments 越多越深）
-- root page（section 直属）用 📄 前缀，无缩进
-- subpage 用 📎 前缀，summary 前加 `&nbsp;&nbsp;` 缩进
-- 按 section path 字母序 → 同 section 内按 modified date 排序
+## 两层架构
 
-## Summary
-{1-2 句话综合这些 OneNote 笔记对本 case 的诊断价值}
+| Layer | 函数 | 作用 |
+|-------|------|------|
+| Layer 1 | `classify_single_page()` | 每页独立 LLM → 结构化 JSON |
+| Layer 2 | `synthesize_onenote_digest()` | 跨页面语义整合 → 四段式 markdown |
+
+### Layer 1 输出结构（per-page JSON）
+
+```json
+{
+  "relevance": "high",
+  "reason": "one-line Chinese reason",
+  "problem_description": "客户问题描述",
+  "facts": ["事实1", "事实2"],
+  "screenshots": [{"description": "截图内容", "image_ref": "![alt](./assets/xxx.png)"}],
+  "analyses": [
+    {"source": "engineer", "text": "工程师推断"},
+    {"source": "llm-generated", "text": "LLM 推断"}
+  ],
+  "action_items": [{"step": "步骤描述", "verified": false}],
+  "summary": "1-2 句总结"
+}
 ```
+
+### Layer 2 整合规则
+
+- **去重**: 多页面出现的相同事实只保留一条
+- **合并**: 问题描述从所有页面整合为一段
+- **排序**: 事实按重要性/时间排序
+- **保留**: 截图 image_ref 原样保留（前端会替换为 API URL）
+- **标注**: 分析区分 [engineer] / [llm-generated] 来源
 
 ## 分类规则
 
-| 内容模式 | 标签 | 例子 |
-|---------|------|------|
-| 命令输出 / 错误码 / 客户原话 / 时间戳 / 截图描述 | `[fact]` | `[fact] az vm start → ProvisioningState=Failed` |
-| URL / 文档链接 / 系统配置值 | `[fact]` | `[fact] https://docs.microsoft.com/...` |
-| 假设 / 推断 / "可能"/"应该"/"怀疑" / TODO | `[analysis]` | `[analysis] 可能是 NIC 配置冲突导致` |
-| 判定不清 | `[fact]`（保守，不丢信息） | |
+| 内容模式 | 归属段落 | 例子 |
+|---------|----------|------|
+| 命令输出 / 错误码 / 客户原话 / 时间戳 | § 1 facts | `az vm start → ProvisioningState=Failed` |
+| URL / 文档链接 / 系统配置值 | § 1 facts | `https://docs.microsoft.com/...` |
+| 截图中的诊断信息 | § 1 screenshots | RBAC 配置截图显示 Reader 权限 |
+| 工程师写的假设 / "可能"/"怀疑" | § 2 [engineer] | 可能是 NIC 配置冲突导致 |
+| LLM 从上下文推断 | § 2 [llm-generated] | 根据错误码推断可能需要... |
+| 排查步骤（已做） | § 3 [verified] | 已确认 NSG 规则正确 |
+| 排查步骤（未做） | § 3 [unverified] | 建议检查 DNS 解析 |
+| 空页/无关页 | § 4 | 页面仅包含标题 |
 
-## 要点
+## 前端渲染
 
-- 顶部 `## 事实记录` 汇聚**所有页面**的 `[fact]`，是下游 assess/troubleshooter 的首选入口
-- `## 分析记录` 汇聚**所有页面**的 `[analysis]`，下游可参考但不应盲目引用
-- `## 详细页面` 保留每页完整上下文
-- `## Summary` 必须写，1-2 句话，帮助 LLM 快速判断 OneNote 对本 case 有无价值
-- 无匹配页面时写 `Matched pages: 0` + `No personal OneNote notes found for this case.`
+| 段落 | 边框颜色 | 图标 |
+|------|----------|------|
+| § 1 关键信息 | amber (--accent-amber) | 🔑 |
+| § 2 分析推断 | blue (--accent-blue) | 💡 |
+| § 3 行动计划 | green (--accent-green) | 📋 |
+| § 4 低价值信息 | gray (--border-subtle) | 📦 |
+
+## 向后兼容
+
+- `_page-relevance.json` 新增 `_format: "v2"` 字段
+- 后端同时解析 v1（`## Key Facts`）和 v2（`## 1.`）格式
+- 前端通过 `scoring.format === 'v2'` 判断渲染路径
+- v1 缓存文件（无 `facts` 字段）会触发重新分类

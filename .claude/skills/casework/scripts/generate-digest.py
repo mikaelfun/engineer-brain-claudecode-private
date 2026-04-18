@@ -509,27 +509,71 @@ def generate_teams_digest(case_dir, case_number, project_root, base_url, api_key
     print(f"OK|chats={len(chat_files_capped)}|high={high_count}|output={out_path}|relevance={relevance_path}")
 
 
+def parse_page_hierarchy(filename, case_number):
+    """Parse OneNote page filename into hierarchy info.
+
+    Naming convention:
+      _page-{caseNumber} {Section}.md          → root page of section
+      _page-{caseNumber} {Section}--{Sub}.md   → subpage under section
+      _page-{caseNumber}.md                    → case-level page (no section)
+
+    Returns:
+        str: Human-readable hierarchy string, e.g.
+             'Section "VW" → Root Page'
+             'Section "VW" → Subpage "iOS Teams MFA 历史分析"'
+             'Case-level page (no section)'
+    """
+    name = filename.replace(".md", "")
+    # Strip _page- prefix
+    if name.startswith("_page-"):
+        name = name[6:]
+    # Strip case number prefix
+    if name.startswith(case_number):
+        name = name[len(case_number):].strip()
+
+    if not name:
+        return "Case-level page (no section)"
+
+    if "--" in name:
+        parts = name.split("--", 1)
+        section = parts[0].strip()
+        subpage = parts[1].strip()
+        return f'Section "{section}" → Subpage "{subpage}"'
+    else:
+        return f'Section "{name}" → Root Page'
+
+
 def classify_single_page(page_path, case_info_head, case_number, base_url, api_key, model,
                          max_images_per_page=3, no_vision=False):
-    """ISS-228: Classify [fact]/[analysis] for a single OneNote page.
+    """ISS-228 v2: Classify a single OneNote page into structured four-section format.
 
-    Per-page LLM call — mirrors Teams' score_and_extract_single_chat() pattern.
+    Per-page LLM call — Layer 1 of two-layer architecture.
     Reads full page content (no truncation), optional vision for images.
 
     Returns:
         dict: {"filename": str, "relevance": "high"|"low", "reason": str,
-               "key_facts": [{"tag": "fact"|"analysis", "text": str}],
+               "problem_description": str,
+               "facts": [str],
+               "screenshots": [{"description": str, "image_ref": str}],
+               "analyses": [{"source": "engineer"|"llm-generated", "text": str}],
+               "action_items": [{"step": str, "verified": bool}],
                "summary": str}
         or fallback on LLM failure.
     """
     filename = os.path.basename(page_path)
 
+    # Build empty fallback result
+    empty_result = {
+        "filename": filename, "relevance": "low", "reason": "cannot read file",
+        "problem_description": "", "facts": [], "screenshots": [],
+        "analyses": [], "action_items": [], "summary": "",
+    }
+
     try:
         with open(page_path, "r", encoding="utf-8", errors="replace") as f:
             content = f.read()
     except Exception:
-        return {"filename": filename, "relevance": "low", "reason": "cannot read file",
-                "key_facts": [], "summary": ""}
+        return empty_result
 
     # Vision: extract images if available and not disabled
     image_blocks = []
@@ -540,34 +584,48 @@ def classify_single_page(page_path, case_info_head, case_number, base_url, api_k
 
 Analyze ONE OneNote page and output a JSON object (no markdown fences, pure JSON only).
 
-Classification rules:
-- [fact]: Command output, error codes, customer quotes, timestamps, URLs, config values, screenshot descriptions — traceable evidence
-- [analysis]: Hypotheses, inferences, "可能"/"应该"/"怀疑", TODOs — engineer reasoning
-- When unsure, classify as [fact] (conservative — don't lose information)
-
 Relevance criteria:
 - HIGH: Page contains substantive case-related notes — troubleshooting steps, error analysis, customer findings, diagnostic commands
-- LOW: Page only briefly mentions the case number, or is unrelated
+- LOW: Page only briefly mentions the case number, is empty, or is unrelated
 
-For images: extract RBAC configurations, error codes, CLI outputs, portal settings, and describe what you see as [fact] items.
-
-Output EXACTLY this JSON (no markdown, no code fences):
+Output EXACTLY this JSON structure (no markdown, no code fences):
 {
   "relevance": "high" or "low",
-  "reason": "one-line Chinese reason",
-  "key_facts": [
-    {"tag": "fact", "text": "具体事实描述（保留英文技术术语）"},
-    {"tag": "analysis", "text": "推断或假设描述"}
+  "reason": "one-line Chinese reason why this page is high/low relevance",
+  "problem_description": "客户问题的简要描述（从本页内容提取，没有则空字符串）",
+  "facts": [
+    "具体事实1（命令输出/错误码/客户确认/配置值/时间戳/URL — 可追溯证据）",
+    "具体事实2..."
+  ],
+  "screenshots": [
+    {"description": "截图内容描述（提取的诊断信息）", "image_ref": "原 markdown image 引用，如 ![alt](./assets/xxx.png)"}
+  ],
+  "analyses": [
+    {"source": "engineer", "text": "工程师在 OneNote 中写的推断/假设/TODO"},
+    {"source": "llm-generated", "text": "LLM 从截图或上下文推断出的分析"}
+  ],
+  "action_items": [
+    {"step": "建议的排查步骤描述", "verified": false}
   ],
   "summary": "1-2 句中文总结本页对 case 的诊断价值"
 }
 
+Classification rules for each field:
+- facts: Command output, error codes, customer quotes, timestamps, URLs, config values — traceable evidence. Include ALL important findings.
+- screenshots: For each image in the page, describe what diagnostic info is visible. Keep the original image markdown reference in image_ref.
+- analyses: Split by source:
+  - "engineer": Text that the engineer explicitly wrote as hypothesis/inference (看到"可能"/"应该"/"怀疑"/"TODO"等)
+  - "llm-generated": Your own inferences from screenshots or context that the engineer didn't write
+- action_items: Next steps mentioned or implied. verified=true only if the page shows the step was already done.
+- When unsure if something is fact or analysis, classify as fact (conservative).
+
 Rules:
-- key_facts: include ALL important findings from the page
 - Keep names/commands/technical terms in English, rest in Chinese
-- For images: describe visible diagnostic info as fact items
-- Empty page or irrelevant → relevance=low, key_facts=[], summary=""
+- Empty page or irrelevant → relevance=low, all arrays empty, summary=""
 """
+
+    # Parse page hierarchy from filename
+    hierarchy = parse_page_hierarchy(filename, case_number)
 
     user_text = f"""Case Number: {case_number}
 
@@ -575,6 +633,8 @@ Rules:
 {case_info_head[:2000]}
 
 ## OneNote Page: {filename}
+Page hierarchy: {hierarchy}
+
 {content}"""
 
     if image_blocks:
@@ -584,8 +644,8 @@ Rules:
 
     result = call_llm(base_url, api_key, model, system_prompt, user_prompt)
     if not result:
-        return {"filename": filename, "relevance": "low", "reason": "LLM call failed",
-                "key_facts": [], "summary": ""}
+        empty_result["reason"] = "LLM call failed"
+        return empty_result
 
     # Parse JSON from LLM output
     import re
@@ -598,40 +658,150 @@ Rules:
             try:
                 parsed = json.loads(json_match.group())
             except json.JSONDecodeError:
-                parsed = {"relevance": "low", "reason": "JSON parse failed", "key_facts": [], "summary": ""}
+                empty_result["reason"] = "JSON parse failed"
+                return empty_result
         else:
-            parsed = {"relevance": "low", "reason": "no JSON in output", "key_facts": [], "summary": ""}
+            empty_result["reason"] = "no JSON in output"
+            return empty_result
 
     return {
         "filename": filename,
         "relevance": parsed.get("relevance", "low"),
         "reason": parsed.get("reason", ""),
-        "key_facts": parsed.get("key_facts", []),
+        "problem_description": parsed.get("problem_description", ""),
+        "facts": parsed.get("facts", []),
+        "screenshots": parsed.get("screenshots", []),
+        "analyses": parsed.get("analyses", []),
+        "action_items": parsed.get("action_items", []),
         "summary": parsed.get("summary", ""),
     }
 
 
-def merge_onenote_results(results, case_number, page_files):
-    """ISS-228: Merge per-page LLM results into onenote-digest.md + _page-relevance.json.
+def synthesize_onenote_digest(per_page_results, case_info_head, case_number, base_url, api_key, model):
+    """ISS-228 v2 Layer 2: Cross-page semantic synthesis via LLM.
 
-    Pure code — no LLM call. Follows onenote-digest-template.md format:
-    Facts / Analysis / Details (per-page <details>) / Summary.
+    Reads all per-page structured JSON results + case-info.md, produces a
+    four-section markdown digest by deduplicating and organizing across pages.
 
     Args:
-        results: list of dicts from classify_single_page()
+        per_page_results: list of dicts from classify_single_page() (v2 format)
+        case_info_head: str, first N chars of case-info.md
+        case_number: str
+        base_url, api_key, model: LLM config
+
+    Returns:
+        str: Four-section markdown digest, or None on LLM failure.
+    """
+    # Only feed high-relevance pages to Layer 2
+    high_results = [r for r in per_page_results if r.get("relevance") == "high"]
+    low_results = [r for r in per_page_results if r.get("relevance") != "high"]
+
+    if not high_results:
+        # No high-relevance pages — return minimal digest (no LLM call needed)
+        return None
+
+    # Build per-page JSON summary for LLM input (compact, no raw content)
+    pages_json = []
+    for r in high_results:
+        hierarchy = parse_page_hierarchy(r["filename"], case_number)
+        pages_json.append({
+            "page": r["filename"],
+            "hierarchy": hierarchy,
+            "problem_description": r.get("problem_description", ""),
+            "facts": r.get("facts", []),
+            "screenshots": r.get("screenshots", []),
+            "analyses": r.get("analyses", []),
+            "action_items": r.get("action_items", []),
+            "summary": r.get("summary", ""),
+        })
+
+    system_prompt = """You are a cross-page synthesizer for Azure support case OneNote notes.
+
+You receive structured per-page analysis results (Layer 1 output) and must produce a
+UNIFIED four-section digest by DEDUPLICATING and ORGANIZING across all pages.
+
+This is NOT concatenation — you must:
+1. Merge duplicate facts that appear in multiple pages
+2. Combine problem descriptions into one coherent statement
+3. Order facts chronologically or by importance
+4. Merge action items, marking which are verified
+5. Keep all screenshot references intact (they display inline in the UI)
+6. Use the "hierarchy" field to understand page relationships (root page vs subpage under same section share context)
+
+Output markdown with EXACTLY these four sections:
+
+## 1. 关键信息（Key Information）
+
+**问题描述**: {merged problem description from all pages}
+
+**事实信息**:
+- {deduplicated fact 1}
+- {deduplicated fact 2}
+
+**截图诊断**:
+- {screenshot description} {keep the original image_ref as-is, e.g. ![alt](./assets/xxx.png)}
+
+## 2. 分析推断（Analysis & Reasoning）
+
+- [engineer] {analysis from engineer's own notes}
+- [llm-generated] {LLM-inferred analysis}
+
+## 3. 行动计划（Action Plan）
+
+- [verified] {step that has been confirmed done}
+- [unverified] {suggested step not yet confirmed}
+
+## 4. 低价值信息（Low-Relevance）
+
+(This section will be added by the caller — output empty string for this section)
+
+Rules:
+- Keep names/commands/technical terms in English, rest in Chinese
+- Do NOT repeat the same fact from different pages — merge into one entry
+- Preserve ALL image references exactly as given (![...](./assets/...))
+- If no items for a sub-section, write "(无)" instead of omitting the section
+- Do NOT add markdown code fences around your output — output raw markdown directly"""
+
+    user_text = f"""Case Number: {case_number}
+
+## Case Info (head)
+{case_info_head[:2000]}
+
+## Per-Page Analysis Results (Layer 1)
+{json.dumps(pages_json, ensure_ascii=False, indent=2)}"""
+
+    result = call_llm(base_url, api_key, model, system_prompt, user_text)
+    return result
+
+
+def merge_onenote_results(results, case_number, page_files,
+                          case_info_head="", base_url="", api_key="", model=""):
+    """ISS-228 v2: Merge per-page LLM results into four-section onenote-digest.md.
+
+    If Layer 2 LLM config is provided and there are high-relevance pages,
+    calls synthesize_onenote_digest() for cross-page semantic integration.
+    Otherwise falls back to code-based assembly.
+
+    Output format (四段式):
+    - ## 1. 关键信息（Key Information）
+    - ## 2. 分析推断（Analysis & Reasoning）
+    - ## 3. 行动计划（Action Plan）
+    - ## 4. 低价值信息（Low-Relevance）
+
+    Args:
+        results: list of dicts from classify_single_page() (v2 format)
         case_number: str
         page_files: list of file paths
+        case_info_head: str (for Layer 2 synthesis)
+        base_url, api_key, model: LLM config (for Layer 2)
 
     Returns:
         (digest_md: str, relevance_data: dict)
     """
-    import re
-
     now_iso = datetime.now().isoformat(timespec="seconds")
     high_count = sum(1 for r in results if r["relevance"] == "high")
     total_count = len(results)
 
-    # Separate high and low relevance results
     high_results = [r for r in results if r["relevance"] == "high"]
     low_results = [r for r in results if r["relevance"] != "high"]
 
@@ -641,59 +811,135 @@ def merge_onenote_results(results, case_number, page_files):
             name = name[6:]
         return name
 
-    # ── Key Facts section: grouped by page, with page title as attribution ──
-    # Mirrors Teams' per-chat grouping style
-    lines = [
-        f"# Personal OneNote Notes — Case {case_number}",
-        "",
-        f"> Generated: {now_iso}",
-        f"> High-relevance pages: {high_count} / {total_count}",
-        "",
-        "## Key Facts",
-        "",
-        "以下事实和分析来自 OneNote 笔记，按页面分组排列。",
-        "",
-    ]
+    # ── Try Layer 2 LLM synthesis first ──
+    synthesized = None
+    if high_results and api_key:
+        try:
+            synthesized = synthesize_onenote_digest(
+                results, case_info_head, case_number, base_url, api_key, model
+            )
+        except Exception as e:
+            print(f"WARN|Layer2 synthesis failed: {e}, falling back to code merge", file=sys.stderr)
 
-    if high_results:
-        for r in high_results:
-            facts = r.get("key_facts", [])
-            if not facts:
-                continue
-            display_name = _display_name(r["filename"])
-            lines.append(f"### {display_name}")
-            lines.append("")
-            for kf in facts:
-                tag = kf.get("tag", "fact")
-                text = kf.get("text", "")
-                if text:
-                    lines.append(f"- [{tag}] {text}")
-            lines.append("")
+    if synthesized:
+        # Layer 2 LLM produced the four-section body — wrap with header + add low-relevance section
+        lines = [
+            f"# Personal OneNote Notes — Case {case_number}",
+            "",
+            f"> Generated: {now_iso}",
+            f"> High-relevance pages: {high_count} / {total_count}",
+            f"> Synthesis: Layer 2 (cross-page LLM integration)",
+            "",
+            synthesized.strip(),
+        ]
+
+        # Append ## 4 if not already in LLM output
+        if "## 4." not in synthesized:
+            lines.extend(["", "## 4. 低价值信息（Low-Relevance）", ""])
+            if low_results:
+                for r in low_results:
+                    display_name = _display_name(r["filename"])
+                    reason = r.get("reason", "low relevance")
+                    lines.append(f"- {display_name}: {reason}")
+            else:
+                lines.append("(none)")
     else:
-        lines.append("No high-relevance OneNote notes found.")
+        # ── Code-based fallback: assemble four sections from per-page structured data ──
+        lines = [
+            f"# Personal OneNote Notes — Case {case_number}",
+            "",
+            f"> Generated: {now_iso}",
+            f"> High-relevance pages: {high_count} / {total_count}",
+            f"> Synthesis: Code merge (Layer 2 unavailable)",
+            "",
+        ]
+
+        # Section 1: Key Information
+        lines.append("## 1. 关键信息（Key Information）")
         lines.append("")
 
-    # ── Summary section ──
-    summaries = [r.get("summary", "") for r in high_results if r.get("summary")]
-    combined_summary = " ".join(summaries) if summaries else "No high-relevance OneNote notes found for this case."
-    lines.extend(["## Summary", "", combined_summary, ""])
+        # Problem description (merge from all pages)
+        problem_descs = [r.get("problem_description", "") for r in high_results if r.get("problem_description")]
+        if problem_descs:
+            lines.append(f"**问题描述**: {problem_descs[0]}")
+            lines.append("")
 
-    # ── Low-Relevance section: flat list like Teams ──
-    lines.extend(["", "## Low-Relevance (skipped)", ""])
-    if low_results:
-        for r in low_results:
-            display_name = _display_name(r["filename"])
-            reason = r.get("reason", "low relevance")
-            lines.append(f"- {display_name}: {reason}")
-    else:
-        lines.append("(none)")
+        # Facts
+        lines.append("**事实信息**:")
+        all_facts = []
+        for r in high_results:
+            for f in r.get("facts", []):
+                if isinstance(f, str) and f not in all_facts:
+                    all_facts.append(f)
+        if all_facts:
+            for f in all_facts:
+                lines.append(f"- {f}")
+        else:
+            lines.append("- (无)")
+        lines.append("")
+
+        # Screenshots
+        all_screenshots = []
+        for r in high_results:
+            for s in r.get("screenshots", []):
+                if isinstance(s, dict):
+                    all_screenshots.append(s)
+        if all_screenshots:
+            lines.append("**截图诊断**:")
+            for s in all_screenshots:
+                desc = s.get("description", "")
+                ref = s.get("image_ref", "")
+                lines.append(f"- {desc} {ref}")
+            lines.append("")
+
+        # Section 2: Analysis & Reasoning
+        lines.extend(["", "## 2. 分析推断（Analysis & Reasoning）", ""])
+        all_analyses = []
+        for r in high_results:
+            for a in r.get("analyses", []):
+                if isinstance(a, dict):
+                    all_analyses.append(a)
+        if all_analyses:
+            for a in all_analyses:
+                source = a.get("source", "engineer")
+                text = a.get("text", "")
+                lines.append(f"- [{source}] {text}")
+        else:
+            lines.append("- (无)")
+
+        # Section 3: Action Plan
+        lines.extend(["", "## 3. 行动计划（Action Plan）", ""])
+        all_actions = []
+        for r in high_results:
+            for ai in r.get("action_items", []):
+                if isinstance(ai, dict):
+                    all_actions.append(ai)
+        if all_actions:
+            for ai in all_actions:
+                step = ai.get("step", "")
+                verified = ai.get("verified", False)
+                tag = "[verified]" if verified else "[unverified]"
+                lines.append(f"- {tag} {step}")
+        else:
+            lines.append("- (无)")
+
+        # Section 4: Low-Relevance
+        lines.extend(["", "## 4. 低价值信息（Low-Relevance）", ""])
+        if low_results:
+            for r in low_results:
+                display_name = _display_name(r["filename"])
+                reason = r.get("reason", "low relevance")
+                lines.append(f"- {display_name}: {reason}")
+        else:
+            lines.append("(none)")
 
     digest_md = "\n".join(lines)
 
-    # Build _page-relevance.json (with mtime + full result for incremental cache)
+    # Build _page-relevance.json (v2 format with all new fields)
     relevance_data = {
         "_scoredAt": now_iso,
-        "_source": "generate-digest.py (per-page parallel)",
+        "_source": "generate-digest.py (per-page parallel, v2 four-section)",
+        "_format": "v2",
         "pages": {},
     }
     for r in results:
@@ -709,7 +955,11 @@ def merge_onenote_results(results, case_number, page_files):
         relevance_data["pages"][page_key] = {
             "relevance": r["relevance"],
             "reason": r.get("reason", ""),
-            "key_facts": r.get("key_facts", []),
+            "problem_description": r.get("problem_description", ""),
+            "facts": r.get("facts", []),
+            "screenshots": r.get("screenshots", []),
+            "analyses": r.get("analyses", []),
+            "action_items": r.get("action_items", []),
             "summary": r.get("summary", ""),
             "mtime": mtime,
         }
@@ -775,12 +1025,16 @@ def generate_onenote_digest(case_dir, case_number, project_root, base_url, api_k
         cached_mtime = cached.get("mtime", 0)
 
         if cached_mtime and abs(current_mtime - cached_mtime) < 1.0 and "relevance" in cached:
-            # Page unchanged — reuse cached result
+            # Page unchanged — reuse cached result (v2 format)
             cached_results.append({
                 "filename": fn,
                 "relevance": cached["relevance"],
                 "reason": cached.get("reason", ""),
-                "key_facts": cached.get("key_facts", []),
+                "problem_description": cached.get("problem_description", ""),
+                "facts": cached.get("facts", []),
+                "screenshots": cached.get("screenshots", []),
+                "analyses": cached.get("analyses", []),
+                "action_items": cached.get("action_items", []),
                 "summary": cached.get("summary", ""),
             })
             print(f"  {fn}: cached ({cached['relevance']})", file=sys.stderr)
@@ -824,8 +1078,11 @@ def generate_onenote_digest(case_dir, case_number, project_root, base_url, api_k
     # Sort results by filename for deterministic output
     results.sort(key=lambda r: r["filename"])
 
-    # Merge all per-page results into digest + relevance
-    digest_md, relevance_data = merge_onenote_results(results, case_number, page_files)
+    # Merge all per-page results into digest + relevance (with Layer 2 synthesis)
+    digest_md, relevance_data = merge_onenote_results(
+        results, case_number, page_files,
+        case_info_head=case_info_head, base_url=base_url, api_key=api_key, model=model,
+    )
 
     # Write outputs
     out_path = os.path.join(onenote_dir, "onenote-digest.md")

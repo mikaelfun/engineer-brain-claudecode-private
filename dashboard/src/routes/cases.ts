@@ -951,29 +951,76 @@ cases.get('/:id/onenote', (c) => {
 
       // ISS-228: Parse _page-relevance.json for structured scoring data
       const relevancePath = join(onenoteDir, '_page-relevance.json')
-      let scoring: { scoredAt: string; keyFacts: string[]; highCount: number; lowCount: number; pages: Record<string, { relevance: string; reason: string }> } | null = null
+      let scoring: {
+        scoredAt: string;
+        format: string;
+        keyInfo: string[];
+        analyses: string[];
+        actionItems: string[];
+        lowRelevance: string[];
+        highCount: number;
+        lowCount: number;
+        pages: Record<string, { relevance: string; reason: string }>
+      } | null = null
       if (existsSync(relevancePath)) {
         try {
           const relData = JSON.parse(readFileSync(relevancePath, 'utf-8'))
           const pages = relData.pages || {}
           const highCount = Object.values(pages).filter((p: any) => p.relevance === 'high').length
           const lowCount = Object.values(pages).filter((p: any) => p.relevance !== 'high').length
+          const format = relData._format || 'v1'
 
-          // Extract key facts from digest markdown (lines starting with "- [fact]" or "- [analysis]")
-          const keyFacts: string[] = []
-          let inKeyFacts = false
+          // Parse four-section digest from markdown content
+          const keyInfo: string[] = []
+          const analyses: string[] = []
+          const actionItems: string[] = []
+          const lowRelevance: string[] = []
+
+          let currentSection = ''
           for (const line of content.split('\n')) {
-            if (line.startsWith('## Key Facts')) { inKeyFacts = true; continue }
-            if (line.startsWith('## ') && inKeyFacts) { inKeyFacts = false; continue }
-            if (inKeyFacts && line.startsWith('### ')) { keyFacts.push(line); continue }
-            if (inKeyFacts && (line.startsWith('- [fact]') || line.startsWith('- [analysis]'))) {
-              keyFacts.push(line.slice(2)) // strip "- " prefix
+            // Detect section headers (v2 four-section format)
+            if (line.startsWith('## 1.') || line.startsWith('## 1、')) { currentSection = 'keyInfo'; continue }
+            if (line.startsWith('## 2.') || line.startsWith('## 2、')) { currentSection = 'analyses'; continue }
+            if (line.startsWith('## 3.') || line.startsWith('## 3、')) { currentSection = 'actionItems'; continue }
+            if (line.startsWith('## 4.') || line.startsWith('## 4、')) { currentSection = 'lowRelevance'; continue }
+            // Legacy v1 format fallback
+            if (line.startsWith('## Key Facts')) { currentSection = 'keyInfo'; continue }
+            if (line.startsWith('## Summary')) { currentSection = ''; continue }
+            if (line.startsWith('## Low-Relevance')) { currentSection = 'lowRelevance'; continue }
+            // Another ## resets section
+            if (line.startsWith('## ') && !line.startsWith('## ')) { currentSection = ''; continue }
+
+            const trimmed = line.trim()
+            if (!trimmed || trimmed.startsWith('>')) continue
+
+            // Collect items based on section
+            if (currentSection === 'keyInfo') {
+              // Accept: "- fact", "- [fact]", "**事实信息**:", "**问题描述**: ...", "### page-name", bold labels
+              if (trimmed.startsWith('- ') || trimmed.startsWith('### ') || trimmed.startsWith('**')) {
+                keyInfo.push(trimmed)
+              }
+            } else if (currentSection === 'analyses') {
+              if (trimmed.startsWith('- ')) {
+                analyses.push(trimmed.slice(2)) // strip "- " prefix
+              }
+            } else if (currentSection === 'actionItems') {
+              if (trimmed.startsWith('- ')) {
+                actionItems.push(trimmed.slice(2))
+              }
+            } else if (currentSection === 'lowRelevance') {
+              if (trimmed.startsWith('- ')) {
+                lowRelevance.push(trimmed.slice(2))
+              }
             }
           }
 
           scoring = {
             scoredAt: relData._scoredAt || '',
-            keyFacts,
+            format,
+            keyInfo,
+            analyses,
+            actionItems,
+            lowRelevance,
             highCount,
             lowCount,
             pages,

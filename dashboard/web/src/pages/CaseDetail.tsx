@@ -1028,7 +1028,20 @@ function OnenoteTab({ caseId, files, pages, scoring }: {
   caseId: string
   files: Array<{ filename: string; content: string; size: number; updatedAt: string }>
   pages?: Array<{ filename: string; content: string; size: number; updatedAt: string; imageCount: number }>
-  scoring?: { scoredAt: string; keyFacts: string[]; highCount: number; lowCount: number; pages: Record<string, { relevance: string; reason: string }> } | null
+  scoring?: {
+    scoredAt: string;
+    format?: string;
+    // v2 four-section format
+    keyInfo?: string[];
+    analyses?: string[];
+    actionItems?: string[];
+    lowRelevance?: string[];
+    // v1 legacy format
+    keyFacts?: string[];
+    highCount: number;
+    lowCount: number;
+    pages: Record<string, { relevance: string; reason: string }>
+  } | null
 }) {
   const [expandedPages, setExpandedPages] = useState<Set<string>>(new Set())
   const [showHighPages, setShowHighPages] = useState(true)
@@ -1038,7 +1051,9 @@ function OnenoteTab({ caseId, files, pages, scoring }: {
   if (files.length === 0) return <EmptyState icon="📓" title="No OneNote notes" description="Run patrol or casework to search OneNote for case-related notes" />
 
   const hasPages = pages && pages.length > 0
-  const hasScoring = scoring && scoring.keyFacts.length > 0
+  // v2 format check: has any of the four sections populated
+  const isV2 = scoring && (scoring.format === 'v2' || (scoring.keyInfo && scoring.keyInfo.length > 0))
+  const hasScoring = scoring && (isV2 || (scoring.keyFacts && scoring.keyFacts.length > 0))
 
   const togglePage = (filename: string) => {
     setExpandedPages(prev => {
@@ -1146,12 +1161,115 @@ function OnenoteTab({ caseId, files, pages, scoring }: {
     )
   }
 
+  // Helper: render markdown-ish items with bold/image support
+  const renderItem = (item: string, idx: number) => {
+    // Process inline image references for display
+    const processed = item.replace(
+      /!\[([^\]]*)\]\(\.\/(assets\/[^)]+)\)/g,
+      (_, alt, assetPath) => {
+        const fname = assetPath.replace('assets/', '')
+        return `![${alt}](/api/cases/${caseId}/onenote/assets/${fname})`
+      }
+    )
+    // Bold labels like **问题描述**: ...
+    if (processed.startsWith('**')) {
+      return <div key={idx} className="mt-2 mb-1"><MarkdownContent>{processed}</MarkdownContent></div>
+    }
+    // Section sub-headers (### page-name)
+    if (processed.startsWith('### ')) {
+      return <p key={idx} className="font-medium mt-3 mb-1 text-xs" style={{ color: 'var(--text-tertiary)', opacity: 0.8 }}>{processed.slice(4)}</p>
+    }
+    // Regular "- item" lines
+    const text = processed.startsWith('- ') ? processed.slice(2) : processed
+    return <p key={idx} style={{ lineHeight: '1.5' }}>• {text}</p>
+  }
+
   return (
     <div className="space-y-3">
-      {/* Key Facts Card — amber border, fact items only */}
-      {hasScoring && (() => {
-        const facts = scoring!.keyFacts.filter(f => f.startsWith('[fact]') || f.startsWith('### '))
-        const analyses = scoring!.keyFacts.filter(f => f.startsWith('[analysis]'))
+      {/* ── V2 Four-Section Layout ── */}
+      {isV2 && scoring && (() => {
+        const keyInfo = scoring.keyInfo || []
+        const analyses = scoring.analyses || []
+        const actionItems = scoring.actionItems || []
+        const lowRel = scoring.lowRelevance || []
+
+        return <>
+          {/* Section 1: Key Information — amber */}
+          {keyInfo.length > 0 && (
+            <Card padding="sm" style={{ borderLeft: '3px solid var(--accent-amber)' }}>
+              <h4 className="font-medium text-sm mb-2" style={{ color: 'var(--accent-amber)' }}>🔑 关键信息（Key Information）</h4>
+              <div className="text-sm space-y-0.5" style={{ color: 'var(--text-secondary)' }}>
+                {keyInfo.map((item, i) => renderItem(item, i))}
+              </div>
+              <p className="text-xs mt-2" style={{ color: 'var(--text-tertiary)' }}>
+                相关页面: {scoring.highCount} / {scoring.highCount + scoring.lowCount} · 评分时间: {new Date(scoring.scoredAt).toLocaleString()}
+              </p>
+            </Card>
+          )}
+
+          {/* Section 2: Analysis & Reasoning — blue */}
+          {analyses.length > 0 && (
+            <Card padding="sm" style={{ borderLeft: '3px solid var(--accent-blue)' }}>
+              <h4 className="font-medium text-sm mb-2" style={{ color: 'var(--accent-blue)' }}>💡 分析推断（Analysis & Reasoning）</h4>
+              <div className="text-sm space-y-1" style={{ color: 'var(--text-secondary)' }}>
+                {analyses.map((a, i) => {
+                  const isEngineer = a.startsWith('[engineer]')
+                  const isLLM = a.startsWith('[llm-generated]')
+                  const label = isEngineer ? '[engineer]' : isLLM ? '[llm-generated]' : ''
+                  const text = a.replace(/^\[(engineer|llm-generated)\]\s*/, '')
+                  return (
+                    <p key={i} style={{ lineHeight: '1.5', opacity: isLLM ? 0.75 : 0.9 }}>
+                      {label && <span className="text-xs font-mono mr-1 px-1 py-0.5 rounded" style={{
+                        background: isEngineer ? 'var(--accent-blue-dim, rgba(59,130,246,0.1))' : 'var(--bg-tertiary)',
+                        color: isEngineer ? 'var(--accent-blue)' : 'var(--text-tertiary)',
+                      }}>{label}</span>}
+                      {text}
+                    </p>
+                  )
+                })}
+              </div>
+              <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
+                ⚠️ [llm-generated] 为 LLM 推断，可能不准确，需验证后引用
+              </p>
+            </Card>
+          )}
+
+          {/* Section 3: Action Plan — green */}
+          {actionItems.length > 0 && (
+            <Card padding="sm" style={{ borderLeft: '3px solid var(--accent-green)' }}>
+              <h4 className="font-medium text-sm mb-2" style={{ color: 'var(--accent-green)' }}>📋 行动计划（Action Plan）</h4>
+              <div className="text-sm space-y-1" style={{ color: 'var(--text-secondary)' }}>
+                {actionItems.map((item, i) => {
+                  const isVerified = item.startsWith('[verified]')
+                  const isUnverified = item.startsWith('[unverified]')
+                  const text = item.replace(/^\[(verified|unverified)\]\s*/, '')
+                  return (
+                    <p key={i} className="flex items-start gap-2" style={{ lineHeight: '1.5' }}>
+                      <span className="text-xs mt-0.5 flex-shrink-0">{isVerified ? '✅' : '⬜'}</span>
+                      <span style={{ opacity: isVerified ? 0.7 : 1, textDecoration: isVerified ? 'line-through' : 'none' }}>{text}</span>
+                    </p>
+                  )
+                })}
+              </div>
+            </Card>
+          )}
+
+          {/* Section 4: Low-Relevance — gray */}
+          {lowRel.length > 0 && (
+            <Card padding="sm" style={{ borderLeft: '3px solid var(--border-subtle)', opacity: 0.7 }}>
+              <h4 className="font-medium text-sm mb-2" style={{ color: 'var(--text-tertiary)' }}>📦 低价值信息（Low-Relevance）</h4>
+              <div className="text-xs space-y-0.5" style={{ color: 'var(--text-tertiary)' }}>
+                {lowRel.map((item, i) => <p key={i}>• {item}</p>)}
+              </div>
+            </Card>
+          )}
+        </>
+      })()}
+
+      {/* ── V1 Legacy Layout (backward compat) ── */}
+      {!isV2 && hasScoring && scoring && (() => {
+        const facts = (scoring.keyFacts || []).filter(f => f.startsWith('[fact]') || f.startsWith('### '))
+        const analyses = (scoring.keyFacts || []).filter(f => f.startsWith('[analysis]'))
         return <>
           {facts.length > 0 && (
             <Card padding="sm" style={{ borderLeft: '3px solid var(--accent-amber)' }}>
@@ -1164,12 +1282,10 @@ function OnenoteTab({ caseId, files, pages, scoring }: {
                 )}
               </div>
               <p className="text-xs mt-2" style={{ color: 'var(--text-tertiary)' }}>
-                相关页面: {scoring!.highCount} / {scoring!.highCount + scoring!.lowCount} · 评分时间: {new Date(scoring!.scoredAt).toLocaleString()}
+                相关页面: {scoring.highCount} / {scoring.highCount + scoring.lowCount} · 评分时间: {new Date(scoring.scoredAt).toLocaleString()}
               </p>
             </Card>
           )}
-
-          {/* Analysis Card — blue border, analysis items */}
           {analyses.length > 0 && (
             <Card padding="sm" style={{ borderLeft: '3px solid var(--accent-blue)' }}>
               <h4 className="font-medium text-sm mb-2" style={{ color: 'var(--accent-blue)' }}>💡 分析记录（Analysis）</h4>
