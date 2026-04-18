@@ -249,12 +249,13 @@ Rules:
 - key_facts: ONE entry per DATE — merge all messages from the same day into a single concise summary
   Example: "2026-04-17: Kun Fang 提议临时关闭 case，客户 Sushanth 同意"（不要拆成两条）
 - key_facts format: "YYYY-MM-DD: 中文总结"
+- CRITICAL: key_facts and timeline_entries MUST ONLY contain messages directly related to THIS case (matching case number, case title topic, or case-specific troubleshooting). A single chat often contains discussions about MULTIPLE cases or topics — SKIP messages about other cases, other technical topics, or general chit-chat. Example: if the case is about MFA but the chat also discusses iOS Outlook offline grace period → only extract MFA-related messages, ignore Outlook grace period messages.
 - Do NOT use [customer]/[engineer]/[internal] tags — just person names inline
 - timeline_entries: can have multiple entries per day (more granular than key_facts)
 - key_facts and timeline_entries: only if relevance=high, else empty arrays
 - Keep names/commands/technical terms in English, rest in Chinese
 - Sort by date (oldest first)
-- Include ALL important messages — especially recent ones about case closure, status changes, deployment updates
+- Include all important CASE-RELEVANT messages — especially recent ones about case closure, status changes, deployment updates
 - CRITICAL: Customer confirmations/agreements are KEY FACTS — but describe the MEANING, not the literal words. "Ok sure" in response to "shall we close the case?" should become "客户同意关闭 case", NOT "客户回复 Ok sure". Always interpret what the person agreed to or confirmed, don't quote their exact short reply.
 - For images/screenshots: extract visible diagnostic info and add as facts. IMPORTANT: if a fact was derived from a screenshot, append the original markdown image reference from the chat text at the END of the fact string, e.g.: "2026-04-17: 截图显示 Portal 报错 'Resource not found' ![image](./assets/msg123_0.png)". The image reference format is ![...](./assets/xxx.png) — find it in the chat text near the message that sent the screenshot."""
 
