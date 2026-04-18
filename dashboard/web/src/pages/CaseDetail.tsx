@@ -48,6 +48,14 @@ export default function CaseDetail() {
   const { data: timingData } = useCaseTiming(activeTab === 'timing' ? (id || '') : '')
   const { data: claimsData } = useCaseClaims(id || '')
 
+  const [copiedId, setCopiedId] = useState(false)
+  const copyId = () => {
+    navigator.clipboard.writeText(id || '').then(() => {
+      setCopiedId(true)
+      setTimeout(() => setCopiedId(false), 1500)
+    })
+  }
+
   if (isLoading) return <Loading text="Loading case..." />
   if (error || !caseInfo) return <ErrorState message="Case not found" onRetry={() => navigate('/cases')} />
 
@@ -89,8 +97,21 @@ export default function CaseDetail() {
             <ArrowLeft className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
           </button>
 
-          {/* Case number */}
-          <span className="font-mono text-xs flex-shrink-0" style={{ color: 'var(--text-tertiary)' }}>{id}</span>
+          {/* Case number — prominent, click to copy */}
+          <button
+            onClick={copyId}
+            className="font-mono text-sm font-semibold flex-shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded transition-colors"
+            style={{ color: 'var(--text-primary)', background: 'transparent', border: 'none', cursor: 'pointer' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            title="Click to copy case number"
+          >
+            {id}
+            {copiedId
+              ? <Check className="w-3 h-3" style={{ color: 'var(--accent-green)' }} />
+              : <Copy className="w-3 h-3" style={{ color: 'var(--text-tertiary)' }} />
+            }
+          </button>
 
           {/* Core badges — only the essential ones */}
           <SeverityBadge severity={caseInfo.severity} />
