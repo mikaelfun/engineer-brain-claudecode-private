@@ -2,7 +2,7 @@
 # data-refresh.sh — Casework v2 Step 1 orchestrator (PRD §5.1).
 #
 # Parallel-launches 6 source paths, aggregates event JSONs into
-# data-refresh-output.json per PRD §4.2. No LLM reasoning here — this script
+# output/data-refresh.json per PRD §4.2. No LLM reasoning here — this script
 # is pure plumbing. Digest/relevance is Step 2 (assess) responsibility.
 #
 # Usage:
@@ -10,8 +10,8 @@
 #                        --case-dir ./cases/active/2601290030000748 \
 #                        [--project-root .] [--is-ar] [--main-case-number XXX]
 #
-# Output: {caseDir}/.casework/data-refresh-output.json
-# Events: {caseDir}/.casework/events/{d365,teams,icm,onenote,attachments,data-refresh}.json
+# Output: {caseDir}/.casework/output/data-refresh.json
+# State:  {caseDir}/.casework/state.json (via update-state.py)
 #
 # Exit: 0 = OK or DEGRADED; 1 = L1 source (d365) failed → no output JSON
 set -uo pipefail
@@ -47,20 +47,26 @@ mkdir -p "$CASE_DIR"
 CASE_DIR_ABS="$(to_win "$(cd "$CASE_DIR" && pwd)")"
 PROJECT_ROOT_WIN="$(to_win "$PROJECT_ROOT")"
 
-EVT_DIR="$CASE_DIR_ABS/.casework/events"
 OUT_DIR="$CASE_DIR_ABS/.casework"
+OUTPUT_DIR="$CASE_DIR_ABS/.casework/output"
+UPDATE_STATE="$HERE/update-state.py"
 WRAPPER="$HERE/event-wrapper.sh"
-WRITE_EVENT="$HERE/write-event.sh"
 
-# ── Reset .casework ──
-rm -rf "$OUT_DIR"
-mkdir -p "$EVT_DIR"
+# Legacy: external scripts (fetch-all-data.ps1, icm-discussion-ab.js,
+# download-attachments.ps1) still write to events/. Will be removed in Task 12.
+EVT_DIR="$CASE_DIR_ABS/.casework/events"
+
+# ── Reset .casework (preserve logs/) ──
+rm -f "$OUTPUT_DIR/data-refresh.json" "$OUTPUT_DIR/delta-content.md" \
+      "$OUT_DIR/state.json"
+rm -f "$OUT_DIR/.aggregate-status" "$OUT_DIR/.aggregate-stderr"
+rm -rf "$EVT_DIR"
+mkdir -p "$OUTPUT_DIR" "$EVT_DIR"
 
 TOP_START_TS=$(date -u +%FT%TZ)
 TOP_START_NS=$(date +%s%N)
 
-bash "$WRITE_EVENT" "$EVT_DIR/data-refresh.json" \
-  "{\"task\":\"data-refresh\",\"status\":\"active\",\"startedAt\":\"$TOP_START_TS\",\"caseNumber\":\"$CASE_NUMBER\"}"
+python3 "$UPDATE_STATE" --case-dir "$CASE_DIR_ABS" --step data-refresh --status active --case-number "$CASE_NUMBER"
 
 echo "🚀 data-refresh.sh: case=$CASE_NUMBER isAR=$IS_AR"
 echo "   case-dir=$CASE_DIR_ABS"
@@ -158,9 +164,10 @@ if [ -n "$ICM_INCIDENT" ]; then
   ) &
   PID_ICM=$!
 else
-  # No ICM linked → emit SKIP event directly, no subprocess.
-  bash "$WRITE_EVENT" "$EVT_DIR/icm.json" \
-    "{\"task\":\"icm\",\"status\":\"completed\",\"startedAt\":\"$TOP_START_TS\",\"completedAt\":\"$TOP_START_TS\",\"durationMs\":0,\"delta\":{\"newEntries\":0,\"skipped\":\"no incidentId in meta\"}}"
+  # No ICM linked → emit SKIP event.
+  python3 "$UPDATE_STATE" --case-dir "$CASE_DIR_ABS" --step data-refresh --subtask icm --status completed --duration-ms 0
+  # Legacy event for aggregation backward compat (reads events/*.json until Task 12)
+  echo '{"task":"icm","status":"completed","startedAt":"'"$TOP_START_TS"'","completedAt":"'"$TOP_START_TS"'","durationMs":0,"delta":{"newEntries":0,"skipped":"no incidentId in meta"}}' > "$EVT_DIR/icm.json"
   PID_ICM=""
 fi
 
@@ -190,15 +197,16 @@ except Exception: pass
 fi
 if [ -n "$NOTEBOOK_DIR" ] && [ -d "$NOTEBOOK_DIR" ]; then
   (
-    bash "$WRAPPER" onenote "$EVT_DIR" -- \
+    bash "$WRAPPER" onenote "$CASE_DIR_ABS" -- \
       python3 "$PROJECT_ROOT/.claude/skills/onenote/scripts/search-inline.py" \
       --case-dir "$CASE_DIR_ABS" --notebook-dir "$NOTEBOOK_DIR" --case-number "$CASE_NUMBER" \
       > "$LOGD/onenote.log" 2>&1
   ) &
   PID_ONENOTE=$!
 else
-  bash "$WRITE_EVENT" "$EVT_DIR/onenote.json" \
-    "{\"task\":\"onenote\",\"status\":\"completed\",\"startedAt\":\"$TOP_START_TS\",\"completedAt\":\"$TOP_START_TS\",\"durationMs\":0,\"delta\":{\"newPages\":0,\"skipped\":\"no notebook dir\"}}"
+  python3 "$UPDATE_STATE" --case-dir "$CASE_DIR_ABS" --step data-refresh --subtask onenote --status completed --duration-ms 0
+  # Legacy event for aggregation backward compat (reads events/*.json until Task 12)
+  echo '{"task":"onenote","status":"completed","startedAt":"'"$TOP_START_TS"'","completedAt":"'"$TOP_START_TS"'","durationMs":0,"delta":{"newPages":0,"skipped":"no notebook dir"}}' > "$EVT_DIR/onenote.json"
   PID_ONENOTE=""
 fi
 
@@ -316,9 +324,9 @@ TOP_DUR_MS=$(( ($(date +%s%N) - TOP_START_NS) / 1000000 ))
 ELAPSED_SEC=$(awk "BEGIN{printf \"%.1f\", $TOP_DUR_MS/1000}")
 
 EVT_DIR_PY="$EVT_DIR" CASE_DIR_PY="$CASE_DIR_ABS" CASE_NUM_PY="$CASE_NUMBER" \
-  IS_AR_PY="$IS_AR" OUT_DIR_PY="$OUT_DIR" ELAPSED_PY="$ELAPSED_SEC" \
+  IS_AR_PY="$IS_AR" OUT_DIR_PY="$OUT_DIR" OUTPUT_DIR_PY="$OUTPUT_DIR" ELAPSED_PY="$ELAPSED_SEC" \
   PYTHONIOENCODING=utf-8 \
-  python3 - > "$OUT_DIR/.aggregate-status" 2> "$OUT_DIR/.aggregate-stderr" <<'PYEOF'
+  python3 - > "$LOGD/aggregate.log" 2> "$LOGD/aggregate-err.log" <<'PYEOF'
 import json, os, pathlib, re, sys
 
 evt = pathlib.Path(os.environ['EVT_DIR_PY'])
@@ -326,6 +334,7 @@ case_dir = pathlib.Path(os.environ['CASE_DIR_PY'])
 case_num = os.environ['CASE_NUM_PY']
 is_ar = os.environ['IS_AR_PY'] == 'true'
 out_dir = pathlib.Path(os.environ['OUT_DIR_PY'])
+output_dir = pathlib.Path(os.environ['OUTPUT_DIR_PY'])
 elapsed = float(os.environ['ELAPSED_PY'])
 
 def load_evt(name):
@@ -488,7 +497,7 @@ if delta_status == 'DELTA_EMPTY':
     md_lines += ['## _DELTA_EMPTY_', '所有数据源均无新增内容。Step 2 可直接复用 meta.actualStatus。', '']
 
 delta_md = '\n'.join(md_lines) + '\n'
-(out_dir / 'delta-content.md').write_text(delta_md, encoding='utf-8')
+(output_dir / 'delta-content.md').write_text(delta_md, encoding='utf-8')
 
 # --- context packaging ---
 meta_path = case_dir / 'casework-meta.json'
@@ -527,7 +536,8 @@ output = {
 }
 
 if overall != 'FAILED':
-    (out_dir / 'data-refresh-output.json').write_text(
+    output_dir.mkdir(parents=True, exist_ok=True)
+    (output_dir / 'data-refresh.json').write_text(
         json.dumps(output, ensure_ascii=False, indent=2), encoding='utf-8')
 
 # stdout: aggregate-status payload for the shell to pick up
@@ -536,20 +546,22 @@ print(json.dumps({'overall': overall, 'delta': delta_status,
                   'totalDelta': total_delta}))
 PYEOF
 
-AGG=$(cat "$OUT_DIR/.aggregate-status")
+AGG=$(cat "$LOGD/aggregate.log")
 OVERALL=$(echo "$AGG" | python3 -c "import json,sys; print(json.load(sys.stdin)['overall'])")
 DELTA=$(echo "$AGG"   | python3 -c "import json,sys; print(json.load(sys.stdin)['delta'])")
 
 # ── Top-level data-refresh.json final event ──
 if [ "$OVERALL" = "FAILED" ]; then
-  bash "$WRITE_EVENT" "$EVT_DIR/data-refresh.json" \
-    "{\"task\":\"data-refresh\",\"status\":\"failed\",\"startedAt\":\"$TOP_START_TS\",\"durationMs\":$TOP_DUR_MS,\"error\":\"L1 source failed\"}"
+  python3 "$UPDATE_STATE" --case-dir "$CASE_DIR_ABS" --step data-refresh --status failed --duration-ms "$TOP_DUR_MS"
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] FAILED | case=$CASE_NUMBER elapsed=${ELAPSED_SEC}s" >> "$LOGD/data-refresh.log"
   echo "❌ DATA_REFRESH_FAILED|case=$CASE_NUMBER|elapsed=${ELAPSED_SEC}s"
   exit 1
 fi
 
-bash "$WRITE_EVENT" "$EVT_DIR/data-refresh.json" \
-  "{\"task\":\"data-refresh\",\"status\":\"completed\",\"startedAt\":\"$TOP_START_TS\",\"completedAt\":\"$TOP_END_TS\",\"durationMs\":$TOP_DUR_MS,\"delta\":{\"overall\":\"$OVERALL\",\"deltaStatus\":\"$DELTA\"}}"
+python3 "$UPDATE_STATE" --case-dir "$CASE_DIR_ABS" --step data-refresh --status completed --duration-ms "$TOP_DUR_MS"
+
+# Append to persistent data-refresh.log (survives across runs)
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] $OVERALL | case=$CASE_NUMBER delta=$DELTA elapsed=${ELAPSED_SEC}s" >> "$LOGD/data-refresh.log"
 
 echo "✅ DATA_REFRESH_OK|case=$CASE_NUMBER|overall=$OVERALL|delta=$DELTA|elapsed=${ELAPSED_SEC}s"
 exit 0

@@ -34,16 +34,15 @@ done
 # ═══════════════════════════════════════════
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../../../.." && pwd)"
-WRITE_EVENT="$PROJECT_ROOT/.claude/skills/casework/scripts/write-event.sh"
+UPDATE_STATE="$PROJECT_ROOT/.claude/skills/casework/scripts/update-state.py"
 EVENT_DIR="$CASE_DIR/.casework/events"
 
 START_TS=$(date -u +%FT%TZ)
 START_NS=$(date +%s%N)
 
-if [ -f "$WRITE_EVENT" ]; then
+if [ -f "$UPDATE_STATE" ]; then
   mkdir -p "$EVENT_DIR"
-  bash "$WRITE_EVENT" "$EVENT_DIR/teams.json" \
-    "{\"task\":\"teams\",\"status\":\"active\",\"startedAt\":\"$START_TS\"}"
+  python3 "$UPDATE_STATE" --case-dir "$CASE_DIR" --step data-refresh --subtask teams --status active
 fi
 
 # ═══════════════════════════════════════════
@@ -58,12 +57,12 @@ TEAMS_EVENT_WRITTEN=0
 mark_event_written() { TEAMS_EVENT_WRITTEN=1; }
 write_failed_event() {
   local reason="$1"
-  if [ -f "$WRITE_EVENT" ] && [ -d "$EVENT_DIR" ]; then
-    local end_ts dur_ms
-    end_ts=$(date -u +%FT%TZ)
+  if [ -f "$UPDATE_STATE" ]; then
+    local dur_ms
     dur_ms=$(( ($(date +%s%N) - START_NS) / 1000000 ))
-    bash "$WRITE_EVENT" "$EVENT_DIR/teams.json" \
-      "{\"task\":\"teams\",\"status\":\"failed\",\"startedAt\":\"$START_TS\",\"completedAt\":\"$end_ts\",\"durationMs\":$dur_ms,\"error\":\"$reason\"}" 2>/dev/null || true
+    python3 "$UPDATE_STATE" --case-dir "$CASE_DIR" --step data-refresh --subtask teams --status failed --duration-ms "$dur_ms" 2>/dev/null || true
+    # Legacy event for aggregation backward compat (data-refresh.sh reads events/*.json)
+    [ -d "$EVENT_DIR" ] && echo '{"task":"teams","status":"failed","startedAt":"'"$START_TS"'","durationMs":'"$dur_ms"',"error":"'"$reason"'"}' > "$EVENT_DIR/teams.json" 2>/dev/null || true
   fi
 }
 
@@ -630,8 +629,7 @@ echo "$PY_OUTPUT"
 # ═══════════════════════════════════════════
 # Write final event (completed | failed)
 # ═══════════════════════════════════════════
-if [ -f "$WRITE_EVENT" ]; then
-  END_TS=$(date -u +%FT%TZ)
+if [ -f "$UPDATE_STATE" ]; then
   DURATION_MS=$(( ($(date +%s%N) - START_NS) / 1000000 ))
   # Totals (for logging / backwards compat)
   # `|| true` suffix: when python reports TEAMS_FAIL, these fields are absent
@@ -646,11 +644,13 @@ if [ -f "$WRITE_EVENT" ]; then
   TOTAL_CHATS="${TOTAL_CHATS:-0}"; TOTAL_MSGS="${TOTAL_MSGS:-0}"
   NEW_MSGS="${NEW_MSGS:-0}"; NEW_CHATS="${NEW_CHATS:-0}"
   if [ "$TEAMS_EXIT" = "0" ]; then
-    bash "$WRITE_EVENT" "$EVENT_DIR/teams.json" \
-      "{\"task\":\"teams\",\"status\":\"completed\",\"startedAt\":\"$START_TS\",\"completedAt\":\"$END_TS\",\"durationMs\":$DURATION_MS,\"delta\":{\"newMessages\":$NEW_MSGS,\"newChats\":$NEW_CHATS,\"totalMessages\":$TOTAL_MSGS,\"totalChats\":$TOTAL_CHATS}}"
+    python3 "$UPDATE_STATE" --case-dir "$CASE_DIR" --step data-refresh --subtask teams --status completed --duration-ms "$DURATION_MS"
+    # Legacy event for aggregation backward compat (data-refresh.sh reads events/*.json)
+    echo '{"task":"teams","status":"completed","startedAt":"'"$START_TS"'","completedAt":"'"$(date -u +%FT%TZ)"'","durationMs":'"$DURATION_MS"',"delta":{"newMessages":'"$NEW_MSGS"',"newChats":'"$NEW_CHATS"',"totalMessages":'"$TOTAL_MSGS"',"totalChats":'"$TOTAL_CHATS"'}}' > "$EVENT_DIR/teams.json"
   else
-    bash "$WRITE_EVENT" "$EVENT_DIR/teams.json" \
-      "{\"task\":\"teams\",\"status\":\"failed\",\"startedAt\":\"$START_TS\",\"durationMs\":$DURATION_MS,\"error\":\"python exit $TEAMS_EXIT\"}"
+    python3 "$UPDATE_STATE" --case-dir "$CASE_DIR" --step data-refresh --subtask teams --status failed --duration-ms "$DURATION_MS"
+    # Legacy event for aggregation backward compat
+    echo '{"task":"teams","status":"failed","startedAt":"'"$START_TS"'","durationMs":'"$DURATION_MS"',"error":"python exit '"$TEAMS_EXIT"'"}' > "$EVENT_DIR/teams.json"
   fi
   # Task 5.4i: both branches wrote a terminal event — tell trap to stand down.
   mark_event_written
