@@ -17,6 +17,7 @@
 
 const path = require('path');
 const fs = require('fs');
+const http = require('http');
 const { execSync, spawn } = require('child_process');
 
 const SCRIPT_DIR = __dirname;
@@ -32,6 +33,7 @@ const TEMP = process.env.TEMP || '/tmp';
 const PROFILE = path.join(TEMP, 'pw-token-daemon-profile');
 const PID_FILE = path.join(TEMP, 'pw-token-daemon.pid');
 const HEARTBEAT_FILE = path.join(TEMP, 'pw-token-daemon-heartbeat.json');
+const PORT_FILE = path.join(TEMP, 'pw-token-daemon-port.json');
 const HEARTBEAT_INTERVAL_MS = 30000;
 const HEARTBEAT_STALE_MS = 60000;
 
@@ -355,6 +357,194 @@ async function resolveDtmUrl(ctx) {
 }
 
 // ═══════════════════════════════════════
+// D365 OData HTTP Server
+// ═══════════════════════════════════════
+
+/**
+ * 在 daemon 中启动 HTTP server，提供 D365 OData 代理。
+ * PowerShell Invoke-D365Api 可以通过 HTTP 调用替代 playwright-cli run-code。
+ *
+ * Endpoints:
+ *   POST /d365/odata       — 单个 OData 调用 { method, endpoint, body?, fetchXml? }
+ *   POST /d365/odata-batch — 批量 OData 调用 { requests: [{method, endpoint, body?, fetchXml?}] }
+ *   GET  /d365/health      — D365 session 状态检查
+ *
+ * @param {Object} tabs - { name: { page, config } }
+ * @returns {Promise<http.Server|null>}
+ */
+async function startD365HttpServer(tabs) {
+  const d365Tab = tabs.d365;
+  if (!d365Tab) {
+    log('[http] No D365 tab registered, HTTP server skipped');
+    return null;
+  }
+
+  /**
+   * 在 D365 page 上执行单个 OData fetch
+   */
+  async function execOData(page, { method = 'GET', url, body }) {
+    return page.evaluate(async (args) => {
+      try {
+        const headers = {
+          'Accept': 'application/json',
+          'OData-MaxVersion': '4.0',
+          'OData-Version': '4.0',
+          'Prefer': 'odata.include-annotations="*"'
+        };
+        const opts = { method: args.method, headers };
+        if (args.method !== 'GET' && args.body) {
+          headers['Content-Type'] = 'application/json';
+          opts.body = args.body;
+        }
+        const resp = await fetch(args.url, opts);
+        const status = resp.status;
+        if (status === 204) {
+          return { _status: status, _entityId: resp.headers.get('OData-EntityId') || '' };
+        }
+        if (status >= 400) {
+          const errText = await resp.text().catch(() => '');
+          return { _status: status, _error: errText.substring(0, 2000) };
+        }
+        const data = await resp.json();
+        data._status = status;
+        return data;
+      } catch (e) {
+        return { _status: 0, _error: e.message || String(e) };
+      }
+    }, { method, url, body: body || '' });
+  }
+
+  /**
+   * 解析请求 body（JSON）
+   */
+  function parseBody(req) {
+    return new Promise((resolve, reject) => {
+      let data = '';
+      req.on('data', chunk => { data += chunk; });
+      req.on('end', () => {
+        try { resolve(JSON.parse(data)); }
+        catch (e) { reject(e); }
+      });
+      req.on('error', reject);
+    });
+  }
+
+  /**
+   * 构建 fetch URL（处理 fetchXml 参数）
+   */
+  function buildFetchUrl(endpoint, fetchXml) {
+    if (!fetchXml) return endpoint;
+    const sep = endpoint.includes('?') ? '&' : '?';
+    return endpoint + sep + 'fetchXml=' + encodeURIComponent(fetchXml);
+  }
+
+  const server = http.createServer(async (req, res) => {
+    // CORS headers (localhost only)
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Access-Control-Allow-Origin', 'http://localhost');
+
+    try {
+      const page = d365Tab.page;
+
+      // ── GET /d365/health ──
+      if (req.method === 'GET' && req.url === '/d365/health') {
+        const url = page.url();
+        const onD365 = url.includes('dynamics.com') && !url.includes('login');
+        res.writeHead(200);
+        res.end(JSON.stringify({ status: onD365 ? 'ok' : 'session-expired', url }));
+        return;
+      }
+
+      // ── POST /d365/odata ──
+      if (req.method === 'POST' && req.url === '/d365/odata') {
+        const body = await parseBody(req);
+        const url = buildFetchUrl(body.endpoint, body.fetchXml);
+        const result = await execOData(page, {
+          method: body.method || 'GET',
+          url,
+          body: body.body
+        });
+
+        if (result && result._status >= 400) {
+          res.writeHead(200); // 返回 200，error 在 body 里（和原 Invoke-D365Api 行为一致）
+        } else {
+          res.writeHead(200);
+        }
+        res.end(JSON.stringify(result));
+        return;
+      }
+
+      // ── POST /d365/odata-batch ──
+      if (req.method === 'POST' && req.url === '/d365/odata-batch') {
+        const body = await parseBody(req);
+        const requests = body.requests || [];
+
+        // 在浏览器里用 Promise.all 并行执行（和 Invoke-D365ApiBatch 一致）
+        const results = await page.evaluate(async (reqs) => {
+          const doFetch = async (r) => {
+            try {
+              const headers = {
+                'Accept': 'application/json',
+                'OData-MaxVersion': '4.0',
+                'OData-Version': '4.0',
+                'Prefer': 'odata.include-annotations="*"'
+              };
+              const opts = { method: r.method || 'GET', headers };
+              if (r.method !== 'GET' && r.body) {
+                headers['Content-Type'] = 'application/json';
+                opts.body = r.body;
+              }
+              const resp = await fetch(r.url, opts);
+              if (resp.status === 204) return { _status: 204 };
+              if (resp.status >= 400) {
+                const t = await resp.text().catch(() => '');
+                return { _status: resp.status, _error: t.substring(0, 1000) };
+              }
+              const data = await resp.json();
+              data._status = resp.status;
+              return data;
+            } catch (e) {
+              return { _status: 0, _error: e.message || String(e) };
+            }
+          };
+          return Promise.all(reqs.map(r => doFetch(r)));
+        }, requests.map(r => ({
+          method: r.method || 'GET',
+          url: buildFetchUrl(r.endpoint, r.fetchXml),
+          body: r.body || ''
+        })));
+
+        res.writeHead(200);
+        res.end(JSON.stringify(results));
+        return;
+      }
+
+      // ── 404 ──
+      res.writeHead(404);
+      res.end(JSON.stringify({ error: 'Not found', endpoints: ['/d365/odata', '/d365/odata-batch', '/d365/health'] }));
+
+    } catch (e) {
+      log(`[http] Error: ${e.message}`);
+      res.writeHead(500);
+      res.end(JSON.stringify({ error: e.message }));
+    }
+  });
+
+  return new Promise((resolve) => {
+    server.listen(0, '127.0.0.1', () => {
+      const port = server.address().port;
+      fs.writeFileSync(PORT_FILE, JSON.stringify({ port, pid: process.pid, startedAt: new Date().toISOString() }));
+      log(`[http] D365 OData server listening on 127.0.0.1:${port}`);
+      resolve(server);
+    });
+    server.on('error', (e) => {
+      log(`[http] Server error: ${e.message}`);
+      resolve(null);
+    });
+  });
+}
+
+// ═══════════════════════════════════════
 // 命令: start
 // ═══════════════════════════════════════
 async function cmdStart() {
@@ -432,13 +622,18 @@ async function cmdStart() {
     writeHeartbeat(tabs);
   }, HEARTBEAT_INTERVAL_MS);
 
+  // ── D365 OData HTTP Server ──
+  const httpServer = await startD365HttpServer(tabs);
+
   // Graceful shutdown
   const shutdown = async () => {
     log('Shutting down...');
     clearInterval(heartbeatTimer);
+    if (httpServer) httpServer.close();
     await ctx.close().catch(() => {});
     try { fs.unlinkSync(PID_FILE); } catch {}
     try { fs.unlinkSync(HEARTBEAT_FILE); } catch {}
+    try { fs.unlinkSync(PORT_FILE); } catch {}
     log('Daemon stopped.');
     process.exit(0);
   };

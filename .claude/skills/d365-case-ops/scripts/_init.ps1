@@ -467,7 +467,36 @@ function Invoke-D365Api {
         [string]$FetchXml = ''
     )
 
-    # Inner function that does the actual API call
+    # ── Daemon HTTP 优先路径 ──
+    # 读取 daemon port 文件，如果 daemon 存活则走 HTTP 代理（快 ~50x）
+    $daemonPortFile = Join-Path $env:TEMP "pw-token-daemon-port.json"
+    if (Test-Path $daemonPortFile) {
+        try {
+            $portInfo = Get-Content $daemonPortFile -Raw | ConvertFrom-Json
+            $daemonPort = $portInfo.port
+            $daemonUrl = "http://127.0.0.1:$daemonPort/d365/odata"
+            $reqBody = @{
+                method   = $Method
+                endpoint = $Endpoint
+                body     = $Body
+                fetchXml = $FetchXml
+            } | ConvertTo-Json -Compress -Depth 3
+
+            $resp = Invoke-RestMethod -Uri $daemonUrl -Method POST -Body $reqBody -ContentType 'application/json' -TimeoutSec 30 -ErrorAction Stop
+
+            # 检查 API 级别错误（和原逻辑一致）
+            if ($resp._status -and ($resp._status -ge 400 -or $resp._status -eq 0)) {
+                Write-Host "⚠️ API error via daemon (HTTP $($resp._status)): $($resp._error)"
+                return $null
+            }
+            return $resp
+        } catch {
+            # Daemon 不可用（进程挂了、端口过期等）→ fallback 到 playwright-cli
+            Write-Host "⚠️ Daemon HTTP failed ($($_.Exception.Message.Substring(0, [Math]::Min(80, $_.Exception.Message.Length)))). Falling back to playwright-cli..."
+        }
+    }
+
+    # ── Playwright-cli 原路径（fallback）──
     function _DoApiCall {
         $escapedMethod = $Method
         $escapedBody = if ($Body) { $Body } else { '' }
@@ -671,7 +700,42 @@ function Invoke-D365ApiBatch {
         [array]$Requests
     )
 
-    # Inner function: build JS and execute batch
+    # ── Daemon HTTP 优先路径（batch） ──
+    $daemonPortFile = Join-Path $env:TEMP "pw-token-daemon-port.json"
+    if (Test-Path $daemonPortFile) {
+        try {
+            $portInfo = Get-Content $daemonPortFile -Raw | ConvertFrom-Json
+            $daemonPort = $portInfo.port
+            $daemonUrl = "http://127.0.0.1:$daemonPort/d365/odata-batch"
+
+            $reqList = @()
+            foreach ($r in $Requests) {
+                $method = if ($r.Method) { $r.Method } else { 'GET' }
+                $endpoint = $r.Endpoint
+                $body = if ($r.Body) { $r.Body } else { '' }
+                $fetchXml = if ($r.FetchXml) { $r.FetchXml } else { '' }
+                $reqList += @{ method = $method; endpoint = $endpoint; body = $body; fetchXml = $fetchXml }
+            }
+            $reqBody = @{ requests = $reqList } | ConvertTo-Json -Compress -Depth 5
+            $resp = Invoke-RestMethod -Uri $daemonUrl -Method POST -Body $reqBody -ContentType 'application/json' -TimeoutSec 30 -ErrorAction Stop
+
+            # 结果是数组，检查每个元素
+            $results = @()
+            foreach ($item in $resp) {
+                if ($item._status -ge 400 -or $item._status -eq 0) {
+                    Write-Host "⚠️ Batch API error via daemon (HTTP $($item._status)): $($item._error)"
+                    $results += $null
+                } else {
+                    $results += $item
+                }
+            }
+            return $results
+        } catch {
+            Write-Host "⚠️ Daemon HTTP batch failed ($($_.Exception.Message.Substring(0, [Math]::Min(80, $_.Exception.Message.Length)))). Falling back to playwright-cli..."
+        }
+    }
+
+    # ── Playwright-cli 原路径（fallback）──
     function _DoBatchCall {
         # --- Tab pre-check: ensure playwright-cli is on a D365 page ---
         Ensure-D365Tab
