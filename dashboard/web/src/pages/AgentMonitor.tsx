@@ -4,12 +4,11 @@
  * Unified view of all session types: case, implement, verify, track-creation.
  * Each session row is expandable to show live SSE messages and interaction controls.
  */
-import { Card, CardHeader } from '../components/common/Card'
+import { Card } from '../components/common/Card'
 import { Badge } from '../components/common/Badge'
 import { Loading, EmptyState } from '../components/common/Loading'
-import { useAgents, useCronJobs, usePatrolState, useCancelPatrol, useUnifiedSessions, useCaseMessages, useTriggers, useDeleteTrigger, useRunTrigger, useCancelTrigger, useToggleTrigger } from '../api/hooks'
+import { useAgents, useCronJobs, useUnifiedSessions, useCaseMessages, useTriggers, useDeleteTrigger, useRunTrigger, useCancelTrigger, useToggleTrigger } from '../api/hooks'
 import type { UnifiedSession } from '../api/hooks'
-import { usePatrolStore } from '../stores/patrolStore'
 import { useCaseSessionStore, type CaseSessionMessage } from '../stores/caseSessionStore'
 import { useIssueTrackStore, EMPTY_TRACK_MESSAGES, EMPTY_IMPLEMENT_MESSAGES, EMPTY_VERIFY_MESSAGES } from '../stores/issueTrackStore'
 import type { IssueTrackMessage, ImplementMessage, VerifyMessage } from '../stores/issueTrackStore'
@@ -22,7 +21,7 @@ import { useState, useEffect, useRef } from 'react'
 import { apiPost, apiDelete } from '../api/client'
 import { CreateTriggerDialog, type TriggerEditData } from '../components/agents/CreateTriggerDialog'
 import { useTriggerRunStore } from '../stores/triggerRunStore'
-import { CaseworkPipeline, DEFAULT_CASEWORK_STEPS, type PipelineStep, type StepStatus } from '../components/pipeline/CaseworkPipeline'
+import { DaemonStatusCard } from '../components/DaemonStatusCard'
 
 const EMPTY_MESSAGES: CaseSessionMessage[] = []
 
@@ -525,6 +524,145 @@ function CaseSessionDetail({ session }: { session: UnifiedSession }) {
   )
 }
 
+// ---- Cron Job Detail Panel ----
+
+function CronJobDetailPanel({ job, triggerRun, onDismissRun }: {
+  job: any | null
+  triggerRun?: any
+  onDismissRun: () => void
+}) {
+  const isJobRunning = triggerRun?.status === 'running' || job?.running
+  const justFinished = triggerRun && triggerRun.status !== 'running'
+
+  if (!job) {
+    return (
+      <Card>
+        <div className="flex items-center justify-center h-full min-h-[120px]">
+          <span className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
+            Select a job to view details
+          </span>
+        </div>
+      </Card>
+    )
+  }
+
+  return (
+    <Card>
+      <div className="space-y-3">
+        {/* Header */}
+        <div>
+          <h4 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{job.name}</h4>
+          {(job as any).description && (
+            <p className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>{(job as any).description}</p>
+          )}
+          {(job as any).prompt && (job as any).prompt !== job.name && (
+            <p className="text-xs mt-1 font-mono px-2 py-1 rounded" style={{ background: 'var(--bg-inset)', color: 'var(--text-secondary)' }}>
+              {(job as any).prompt}
+            </p>
+          )}
+        </div>
+
+        {/* Stats row */}
+        {job.state && (
+          <div className="grid grid-cols-4 gap-2 text-xs">
+            <div>
+              <span style={{ color: 'var(--text-tertiary)' }}>Status</span>
+              <p>
+                <Badge
+                  variant={job.state.lastStatus === 'error' ? 'danger' : job.state.lastStatus === 'success' ? 'success' : 'secondary'}
+                  size="xs"
+                >
+                  {job.state.lastStatus || 'pending'}
+                </Badge>
+              </p>
+            </div>
+            <div>
+              <span style={{ color: 'var(--text-tertiary)' }}>Duration</span>
+              <p style={{ color: 'var(--text-secondary)' }}>{job.state.lastDurationMs ? `${Math.round(job.state.lastDurationMs / 1000)}s` : '-'}</p>
+            </div>
+            <div>
+              <span style={{ color: 'var(--text-tertiary)' }}>Last Run</span>
+              <p style={{ color: 'var(--text-secondary)' }}>{job.state.lastRunAtMs ? new Date(job.state.lastRunAtMs).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'Never'}</p>
+            </div>
+            <div>
+              <span style={{ color: 'var(--text-tertiary)' }}>Errors</span>
+              <p style={{ color: job.state.consecutiveErrors > 0 ? 'var(--accent-red)' : 'var(--text-secondary)' }}>
+                {job.state.consecutiveErrors || 0}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Live run output */}
+        {isJobRunning && triggerRun && (
+          <div className="rounded overflow-hidden" style={{ border: '1px solid var(--border-subtle)' }}>
+            <div className="flex items-center justify-between px-3 py-1.5" style={{ background: 'var(--accent-blue-dim)' }}>
+              <span className="text-xs font-medium flex items-center gap-1.5" style={{ color: 'var(--accent-blue)' }}>
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Running... {triggerRun.elapsedMs > 0 && `(${Math.round(triggerRun.elapsedMs / 1000)}s)`}
+              </span>
+            </div>
+            {triggerRun.output && (
+              <pre className="px-3 py-2 text-xs overflow-auto whitespace-pre-wrap" style={{ background: 'var(--bg-inset)', color: 'var(--text-primary)', maxHeight: '300px' }}>
+                {triggerRun.output}
+              </pre>
+            )}
+          </div>
+        )}
+
+        {/* Just-finished result */}
+        {justFinished && (
+          <div className="rounded overflow-hidden" style={{ border: '1px solid var(--border-subtle)' }}>
+            <div className="flex items-center justify-between px-3 py-1.5" style={{
+              background: triggerRun.status === 'completed' ? 'var(--accent-green-dim)' : triggerRun.status === 'failed' ? 'var(--accent-red-dim)' : 'var(--bg-hover)',
+            }}>
+              <span className="text-xs font-medium flex items-center gap-1.5" style={{
+                color: triggerRun.status === 'completed' ? 'var(--accent-green)' : triggerRun.status === 'failed' ? 'var(--accent-red)' : 'var(--text-secondary)',
+              }}>
+                {triggerRun.status === 'completed' && <><CheckCircle2 className="w-3 h-3" /> Done ({Math.round(triggerRun.elapsedMs / 1000)}s)</>}
+                {triggerRun.status === 'failed' && <><AlertCircle className="w-3 h-3" /> Failed ({Math.round(triggerRun.elapsedMs / 1000)}s)</>}
+                {triggerRun.status === 'cancelled' && <><XCircle className="w-3 h-3" /> Cancelled</>}
+              </span>
+              <button onClick={onDismissRun} className="text-xs px-2 py-0.5 rounded hover:bg-[var(--bg-hover)]" style={{ color: 'var(--text-tertiary)' }}>
+                Dismiss
+              </button>
+            </div>
+            {triggerRun.output && (
+              <pre className="px-3 py-2 text-xs overflow-auto whitespace-pre-wrap" style={{ background: 'var(--bg-inset)', color: 'var(--text-primary)', maxHeight: '300px' }}>
+                {triggerRun.output}
+              </pre>
+            )}
+            {triggerRun.error && (
+              <div className="px-3 py-2 text-xs" style={{ color: 'var(--accent-red)' }}>{triggerRun.error}</div>
+            )}
+          </div>
+        )}
+
+        {/* Historical output (when idle) */}
+        {!isJobRunning && !justFinished && (
+          <>
+            {job.state?.lastError && (
+              <div className="p-2 rounded text-xs break-all" style={{ background: 'var(--accent-red-dim)', color: 'var(--accent-red)' }}>
+                {job.state.lastError}
+              </div>
+            )}
+            {job.state?.lastOutput ? (
+              <div>
+                <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Last Output</span>
+                <pre className="mt-1 p-2 rounded text-xs overflow-auto whitespace-pre-wrap" style={{ background: 'var(--bg-inset)', color: 'var(--text-primary)', maxHeight: '300px' }}>
+                  {job.state.lastOutput}
+                </pre>
+              </div>
+            ) : (
+              <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>No output recorded</div>
+            )}
+          </>
+        )}
+      </div>
+    </Card>
+  )
+}
+
 // ---- Main Component ----
 
 export default function AgentMonitor() {
@@ -542,38 +680,39 @@ export default function AgentMonitor() {
   // Trigger run store
   const triggerRuns = useTriggerRunStore((s) => s.runs)
   const clearTriggerRun = useTriggerRunStore((s) => s.clearRun)
-  const { data: patrol } = usePatrolState()
-  const { data: unifiedData, isLoading: sessionsLoading } = useUnifiedSessions()
 
-  // Patrol store
-  const isRunning = usePatrolStore((s) => s.isRunning)
-  const phase = usePatrolStore((s) => s.phase)
-  const totalCases = usePatrolStore((s) => s.totalCases)
-  const changedCases = usePatrolStore((s) => s.changedCases)
-  const processedCases = usePatrolStore((s) => s.processedCases)
-  const currentCase = usePatrolStore((s) => s.currentCase)
-  const caseProgress = usePatrolStore((s) => s.caseProgress)
-  const patrolError = usePatrolStore((s) => s.error)
-  const patrolDetail = usePatrolStore((s) => s.detail)
-  const lastCompletedAt = usePatrolStore((s) => s.lastCompletedAt)
-  const resetPatrolStore = usePatrolStore((s) => s.reset)
-
-  // Auto-collapse patrol card when completed (not hide — keep visible)
-  const [patrolCollapsed, setPatrolCollapsed] = useState(false)
+  // Reconcile stale trigger "running" state with API truth.
+  // When SSE misses trigger-completed events (e.g. backend restart), the
+  // triggerRunStore stays stuck at 'running'. This effect auto-clears on each
+  // triggers data refetch.
   useEffect(() => {
-    if (isRunning) {
-      setPatrolCollapsed(false) // Expand when patrol starts
-    } else if (['completed', 'failed'].includes(phase)) {
-      // Auto-collapse 10s after completion
-      const timer = setTimeout(() => setPatrolCollapsed(true), 10_000)
-      return () => clearTimeout(timer)
+    if (!triggersData) return
+    const triggers: any[] = (triggersData as any).triggers || (triggersData as any).jobs || []
+    const store = useTriggerRunStore.getState()
+    for (const [triggerId, run] of Object.entries(store.runs)) {
+      if ((run as any)?.status !== 'running') continue
+      const apiTrigger = triggers.find((t: any) => t.id === triggerId)
+      if (!apiTrigger || apiTrigger.running) continue
+      // API says NOT running, store says running → fix stale state
+      const state = apiTrigger.state || {}
+      if (state.lastStatus === 'success') {
+        store.onTriggerCompleted(triggerId, state.lastDurationMs || 0, state.lastOutput?.slice(0, 300))
+      } else if (state.lastStatus === 'error') {
+        store.onTriggerFailed(triggerId, state.lastDurationMs || 0, state.lastError)
+      } else if (state.lastStatus === 'cancelled') {
+        store.onTriggerCancelled(triggerId, state.lastDurationMs || 0)
+      } else {
+        store.onTriggerCompleted(triggerId, state.lastDurationMs || 0)
+      }
+      console.log(`[AgentMonitor] Reconciled stale trigger ${triggerId}: was 'running', API says '${state.lastStatus || 'done'}'`)
     }
-  }, [isRunning, phase])
+  }, [triggersData])
+
+  const { data: unifiedData, isLoading: sessionsLoading } = useUnifiedSessions()
 
   // Global queue status
   const queueStatus = useCaseSessionStore((s) => s.queueStatus)
 
-  const cancelPatrol = useCancelPatrol()
   const queryClient = useQueryClient()
   const [refreshing, setRefreshing] = useState(false)
 
@@ -588,6 +727,9 @@ export default function AgentMonitor() {
   // Stop All state
   const [stoppingAll, setStoppingAll] = useState(false)
 
+  // Cron job detail panel
+  const [selectedCronJobId, setSelectedCronJobId] = useState<string | null>(null)
+
   // Cleanup state
   const [cleaning, setCleaning] = useState(false)
   const [cleanupResult, setCleanupResult] = useState<{ purged: number; remaining: number } | null>(null)
@@ -598,14 +740,13 @@ export default function AgentMonitor() {
   })
 
   // Auto-refresh
-  const autoRefreshInterval = isRunning ? 5_000 : 30_000
+  const autoRefreshInterval = 30_000
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     if (intervalRef.current) clearInterval(intervalRef.current)
     intervalRef.current = setInterval(() => {
       queryClient.invalidateQueries({ queryKey: ['sessions'] })
-      queryClient.invalidateQueries({ queryKey: ['agents', 'patrol-state'] })
     }, autoRefreshInterval)
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current)
@@ -618,7 +759,6 @@ export default function AgentMonitor() {
       queryClient.invalidateQueries({ queryKey: ['agents'] }),
       queryClient.invalidateQueries({ queryKey: ['agents', 'cron-jobs'] }),
       queryClient.invalidateQueries({ queryKey: ['sessions'] }),
-      queryClient.invalidateQueries({ queryKey: ['agents', 'patrol-state'] }),
     ]).finally(() => {
       setTimeout(() => setRefreshing(false), 500)
     })
@@ -814,219 +954,28 @@ export default function AgentMonitor() {
         </div>
       )}
 
-      {/* Patrol Progress — always shown when there's data, auto-collapses after completion */}
-      {phase && (
-        <Card>
+      {/* Daemon + Patrol — side by side */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Token Daemon Status */}
+        <DaemonStatusCard />
+
+        {/* Patrol — link to dedicated page */}
+        <div className="rounded-xl p-4" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-default)' }}>
           <div className="flex items-center justify-between">
-            <button
-              onClick={() => setPatrolCollapsed(!patrolCollapsed)}
-              className="flex items-center gap-2 text-left"
-            >
-              {patrolCollapsed
-                ? <ChevronRight className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
-                : <ChevronDown className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
-              }
-              <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                {isRunning ? '🔄' : phase === 'failed' ? '❌' : '✅'} Patrol
-              </span>
-              {/* Inline summary when collapsed */}
-              <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                {phase === 'completed' && `${processedCases}/${changedCases || processedCases} done`}
-                {phase === 'failed' && 'failed'}
-                {phase === 'processing' && `${processedCases}/${changedCases} processing...`}
-                {phase === 'discovering' && 'discovering...'}
-                {phase === 'filtering' && 'filtering...'}
-                {phase === 'warming-up' && 'warming up...'}
-                {phase === 'aggregating' && 'aggregating...'}
-              </span>
-              {/* Case result chips inline when collapsed */}
-              {patrolCollapsed && caseProgress.length > 0 && (
-                <span className="flex gap-1 ml-1">
-                  {caseProgress.filter(c => c.status === 'completed').length > 0 && (
-                    <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'var(--accent-green-dim)', color: 'var(--accent-green)' }}>
-                      ✓{caseProgress.filter(c => c.status === 'completed').length}
-                    </span>
-                  )}
-                  {caseProgress.filter(c => c.status === 'failed').length > 0 && (
-                    <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'var(--accent-red-dim)', color: 'var(--accent-red)' }}>
-                      ✗{caseProgress.filter(c => c.status === 'failed').length}
-                    </span>
-                  )}
-                  {caseProgress.filter(c => c.status === 'processing').length > 0 && (
-                    <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'var(--accent-blue-dim)', color: 'var(--accent-blue)' }}>
-                      ⟳{caseProgress.filter(c => c.status === 'processing').length}
-                    </span>
-                  )}
-                </span>
-              )}
-            </button>
             <div className="flex items-center gap-2">
-              {lastCompletedAt && !isRunning && (
-                <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                  {new Date(lastCompletedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}
-                </span>
-              )}
-              {isRunning && (
-                <button
-                  onClick={() => cancelPatrol.mutate()}
-                  disabled={cancelPatrol.isPending}
-                  className="px-3 py-1 text-xs font-medium rounded-lg disabled:opacity-50 transition-colors"
-                  style={{ color: 'var(--accent-red)', background: 'var(--accent-red-dim)' }}
-                >
-                  {cancelPatrol.isPending ? 'Cancelling...' : 'Cancel'}
-                </button>
-              )}
+              <span>🔄</span>
+              <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Patrol</span>
             </div>
+            <a
+              href="/patrol"
+              className="text-sm px-3 py-1.5 rounded-lg transition-colors"
+              style={{ color: 'var(--accent-blue)', background: 'var(--accent-blue-dim)' }}
+            >
+              Open Patrol →
+            </a>
           </div>
-
-          {!patrolCollapsed && (
-            <div className="mt-3">
-              {changedCases > 0 && (
-                <div className="mb-3">
-                  <div className="flex justify-between text-xs mb-1" style={{ color: 'var(--text-tertiary)' }}>
-                    <span>{processedCases} / {changedCases} cases</span>
-                    <span>{Math.round((processedCases / changedCases) * 100)}%</span>
-                  </div>
-                  <div className="w-full rounded-full h-2" style={{ background: 'var(--bg-active)' }}>
-                    <div
-                      className="rounded-full h-2 transition-all duration-500"
-                      style={{ width: `${(processedCases / changedCases) * 100}%`, background: isRunning ? 'var(--accent-blue)' : 'var(--accent-green)' }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div className="flex items-center gap-2">
-                {isRunning && (
-                  <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: 'var(--accent-blue)' }} />
-                )}
-                <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                  {phase === 'discovering' && `Discovering active cases... ${totalCases ? `(${totalCases} found)` : ''}`}
-                  {phase === 'filtering' && `Found ${totalCases} cases, filtering...`}
-                  {phase === 'warming-up' && `Warming up (DTM token + IR batch)...`}
-                  {phase === 'processing' && `Processing ${changedCases} cases in parallel...`}
-                  {phase === 'aggregating' && 'Aggregating todos...'}
-                  {phase === 'completed' && `Patrol complete. ${processedCases}/${changedCases || processedCases} cases processed.`}
-                  {phase === 'failed' && `Patrol failed: ${patrolError}`}
-                </span>
-              </div>
-
-              {/* Detail line — real-time sub-phase info */}
-              {patrolDetail && (
-                <div className="text-xs mt-1 ml-4" style={{ color: 'var(--text-tertiary)' }}>
-                  {patrolDetail}
-                </div>
-              )}
-
-              {caseProgress.length > 0 && (
-                <div className="mt-3 pt-3 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Cases ({caseProgress.filter(c => c.status === 'completed').length}/{caseProgress.length} done):</span>
-                    {caseProgress.filter(c => c.status === 'processing').length > 0 && (
-                      <span className="text-xs font-medium" style={{ color: 'var(--accent-blue)' }}>
-                        {caseProgress.filter(c => c.status === 'processing').length} running
-                      </span>
-                    )}
-                  </div>
-                  {/* Per-case rows with mini pipeline */}
-                  <div className="space-y-1 mt-2">
-                    {caseProgress.map((cp) => {
-                      // Build mini pipeline steps from case progress
-                      const miniSteps: PipelineStep[] = DEFAULT_CASEWORK_STEPS.map(s => {
-                        let stepStatus: StepStatus = 'pending'
-                        if (cp.status === 'completed') stepStatus = 'completed'
-                        else if (cp.status === 'failed') {
-                          // All steps up to the current one are completed, current one failed
-                          stepStatus = 'completed'
-                        }
-                        else if (cp.currentStep) {
-                          const idx = DEFAULT_CASEWORK_STEPS.findIndex(ds => ds.id === s.id)
-                          const currentIdx = DEFAULT_CASEWORK_STEPS.findIndex(ds =>
-                            cp.currentStep?.toLowerCase().includes(ds.id.replace('-', ''))
-                            || cp.currentStep?.toLowerCase().includes(ds.label.toLowerCase().replace(' ', '-'))
-                          )
-                          if (currentIdx >= 0) {
-                            if (idx < currentIdx) stepStatus = 'completed'
-                            else if (idx === currentIdx) stepStatus = 'active'
-                          }
-                        }
-                        return { ...s, status: stepStatus }
-                      })
-
-                      const durationStr = cp.durationMs
-                        ? cp.durationMs < 60000 ? `${Math.round(cp.durationMs / 1000)}s` : `${Math.floor(cp.durationMs / 60000)}m ${Math.round((cp.durationMs % 60000) / 1000)}s`
-                        : ''
-
-                      return (
-                        <div
-                          key={cp.caseNumber}
-                          className="flex items-center gap-3 px-2 py-1.5 rounded-lg"
-                          style={{ background: 'var(--bg-inset)' }}
-                        >
-                          {/* Status indicator */}
-                          <span className={`w-2 h-2 rounded-full flex-shrink-0 ${cp.status === 'processing' ? 'animate-pulse' : ''}`}
-                            style={{
-                              background: cp.status === 'completed' ? 'var(--accent-green)'
-                                : cp.status === 'processing' ? 'var(--accent-blue)'
-                                : cp.status === 'failed' ? 'var(--accent-red)'
-                                : 'var(--text-tertiary)',
-                            }}
-                          />
-                          {/* Case number */}
-                          <span className="text-xs font-mono flex-shrink-0 w-16"
-                            style={{
-                              color: cp.status === 'completed' ? 'var(--accent-green)'
-                                : cp.status === 'processing' ? 'var(--accent-blue)'
-                                : cp.status === 'failed' ? 'var(--accent-red)'
-                                : 'var(--text-secondary)',
-                            }}
-                          >
-                            {cp.caseNumber.slice(-6)}
-                          </span>
-                          {/* Mini pipeline */}
-                          <div className="flex-1 min-w-0">
-                            <CaseworkPipeline
-                              steps={miniSteps}
-                              isRunning={cp.status === 'processing'}
-                              compact
-                            />
-                          </div>
-                          {/* Step label + Duration */}
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            {cp.status === 'processing' && cp.currentStep && (
-                              <span className="text-[10px] font-mono max-w-[80px] truncate"
-                                style={{ color: 'var(--accent-blue)' }}
-                              >
-                                {cp.currentStep}
-                              </span>
-                            )}
-                            {durationStr && (
-                              <span className="text-[10px] font-mono"
-                                style={{ color: 'var(--text-tertiary)' }}
-                              >
-                                {durationStr}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {patrolError && (
-                <div
-                  className="mt-2 p-2 rounded text-xs"
-                  style={{ background: 'var(--accent-red-dim)', color: 'var(--accent-red)' }}
-                >
-                  {patrolError}
-                </div>
-              )}
-            </div>
-          )}
-        </Card>
-      )}
+        </div>
+      </div>
 
       {/* All Sessions — Active/Recent grouped by type, then Completed */}
       <div>
@@ -1179,45 +1128,6 @@ export default function AgentMonitor() {
         )}
       </div>
 
-      {/* Last Patrol */}
-      {patrol && (
-        <Card>
-          <CardHeader
-            title="Last Patrol"
-            icon={<span>🔄</span>}
-            subtitle={`${patrol.patrolType} | ${new Date(patrol.lastPatrol).toLocaleString('en-US', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Singapore' })}`}
-          />
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-            <div>
-              <span style={{ color: 'var(--text-tertiary)' }}>Cases</span>
-              <p className="font-bold">{patrol.lastRunTiming?.caseCount || 0}</p>
-            </div>
-            <div>
-              <span style={{ color: 'var(--text-tertiary)' }}>Duration</span>
-              <p className="font-bold">{patrol.lastRunTiming?.wallClockMinutes || 0} min</p>
-            </div>
-            <div>
-              <span style={{ color: 'var(--text-tertiary)' }}>Compute</span>
-              <p className="font-bold">{patrol.lastRunTiming?.computeSeconds || 0}s</p>
-            </div>
-            <div>
-              <span style={{ color: 'var(--text-tertiary)' }}>Started</span>
-              <p className="font-bold text-xs">{patrol.currentPatrolStartedAt ? new Date(patrol.currentPatrolStartedAt).toLocaleString('en-US', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Singapore' }) : '-'}</p>
-            </div>
-          </div>
-          {patrol.lastRunTiming?.bottlenecks?.length > 0 && (
-            <div className="mt-3 pt-3 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
-              <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Bottlenecks:</span>
-              <ul className="text-xs mt-1 space-y-0.5" style={{ color: 'var(--text-secondary)' }}>
-                {patrol.lastRunTiming.bottlenecks.map((b: string, i: number) => (
-                  <li key={i}>• {b}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </Card>
-      )}
-
       {/* Agent Grid */}
       {agents.length > 0 && (
         <div>
@@ -1255,7 +1165,7 @@ export default function AgentMonitor() {
         </div>
       )}
 
-      {/* Cron Jobs Table */}
+      {/* Cron Jobs — List + Detail Panel */}
       <div>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>Cron Jobs</h3>
@@ -1274,306 +1184,158 @@ export default function AgentMonitor() {
         {cronJobs.length === 0 ? (
           <EmptyState icon="⏰" title="No cron jobs" />
         ) : (
-          <div className="space-y-3">
-            {cronJobs.map((job: any) => {
-              const triggerRun = triggerRuns[job.id]
-              const isJobRunning = triggerRun?.status === 'running' || job.running
-              const justFinished = triggerRun && triggerRun.status !== 'running'
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr] gap-4">
+            {/* Left: job list */}
+            <Card padding="none">
+              <div className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
+                {cronJobs.map((job: any) => {
+                  const triggerRun = triggerRuns[job.id]
+                  const isJobRunning = triggerRun?.status === 'running' || job.running
+                  const justFinished = triggerRun && triggerRun.status !== 'running'
+                  const isSelected = selectedCronJobId === job.id
 
-              return (
-              <Card key={job.id}>
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{job.name}</h4>
-                      <Badge variant={job.enabled ? 'success' : 'secondary'} size="xs">
-                        {job.enabled ? 'Enabled' : 'Disabled'}
-                      </Badge>
-                      {isJobRunning && (
-                        <Badge variant="primary" size="xs">
-                          <span className="flex items-center gap-1">
-                            <Loader2 className="w-3 h-3 animate-spin" />
-                            Running
-                          </span>
-                        </Badge>
-                      )}
-                      {justFinished && triggerRun.status === 'completed' && (
-                        <Badge variant="success" size="xs">
-                          <span className="flex items-center gap-1">
-                            <CheckCircle2 className="w-3 h-3" />
-                            Done ({Math.round(triggerRun.elapsedMs / 1000)}s)
-                          </span>
-                        </Badge>
-                      )}
-                      {justFinished && triggerRun.status === 'failed' && (
-                        <Badge variant="danger" size="xs">
-                          <span className="flex items-center gap-1">
-                            <AlertCircle className="w-3 h-3" />
-                            Failed
-                          </span>
-                        </Badge>
-                      )}
-                      {justFinished && triggerRun.status === 'cancelled' && (
-                        <Badge variant="secondary" size="xs">
-                          <span className="flex items-center gap-1">
-                            <XCircle className="w-3 h-3" />
-                            Cancelled
-                          </span>
-                        </Badge>
-                      )}
-                    </div>
-                    {(job as any).prompt && (job as any).prompt !== job.name && (
-                      <p className="text-xs mt-0.5 font-mono truncate" style={{ color: 'var(--text-tertiary)' }}>
-                        {(job as any).prompt}
-                      </p>
-                    )}
-                    {(job as any).description && (
-                      <p className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
-                        {(job as any).description}
-                      </p>
-                    )}
-                    {job.state?.lastRunAtMs && (
-                      <p className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
-                        Last: {new Date(job.state.lastRunAtMs).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                        {job.state.lastDurationMs ? ` → ${new Date(job.state.lastRunAtMs + job.state.lastDurationMs).toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit' })}` : ''}
-                        {job.state.lastDurationMs ? ` (${Math.round(job.state.lastDurationMs / 1000)}s)` : ''}
-                        {job.state.lastStatus && job.state.lastStatus !== 'success' ? ` · ${job.state.lastStatus}` : ''}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 ml-3 flex-shrink-0">
-                    <Badge variant="primary" size="xs">
-                      {job.schedule?.kind === 'cron' ? job.schedule.expr : job.schedule?.kind}
-                    </Badge>
-                    {/* Toggle enabled/disabled */}
-                    <button
-                      onClick={() => toggleTrigger.mutate({ id: job.id, enabled: !job.enabled })}
-                      disabled={toggleTrigger.isPending || isJobRunning}
-                      className="p-1.5 rounded transition-colors hover:bg-[var(--bg-hover)]"
-                      style={{ color: job.enabled ? 'var(--accent-green)' : 'var(--text-tertiary)', cursor: isJobRunning ? 'not-allowed' : 'pointer' }}
-                      title={job.enabled ? 'Disable' : 'Enable'}
-                    >
-                      <Power className="w-4 h-4" />
-                    </button>
-                    {/* Edit */}
-                    <button
-                      onClick={() => setEditingTrigger({
-                        id: job.id,
-                        name: job.name,
-                        prompt: (job as any).prompt || '',
-                        cron: job.schedule?.expr || '',
-                        description: (job as any).description || '',
-                      })}
-                      disabled={isJobRunning}
-                      className="p-1.5 rounded transition-colors hover:bg-[var(--bg-hover)]"
-                      style={{ color: isJobRunning ? 'var(--text-tertiary)' : 'var(--text-secondary)', cursor: isJobRunning ? 'not-allowed' : 'pointer' }}
-                      title="Edit"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </button>
-                    {isJobRunning ? (
-                      <button
-                        onClick={() => cancelTrigger.mutate(job.id)}
-                        disabled={cancelTrigger.isPending}
-                        className="p-1.5 rounded transition-colors hover:bg-[var(--bg-hover)]"
-                        style={{ color: 'var(--accent-red)' }}
-                        title="Cancel"
-                      >
-                        <Square className="w-4 h-4" />
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => runTrigger.mutate(job.id)}
-                        disabled={runTrigger.isPending || !job.enabled}
-                        className="p-1.5 rounded transition-colors hover:bg-[var(--bg-hover)]"
-                        style={{ color: !job.enabled ? 'var(--text-tertiary)' : 'var(--accent-green)', cursor: !job.enabled ? 'not-allowed' : 'pointer' }}
-                        title={job.enabled ? 'Run now' : 'Enable first to run'}
-                      >
-                        <Play className="w-4 h-4" />
-                      </button>
-                    )}
-                    {deletingId === job.id ? (
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => { deleteTrigger.mutate(job.id); setDeletingId(null) }}
-                          className="px-2 py-0.5 rounded text-xs font-medium"
-                          style={{ background: 'var(--accent-red)', color: 'white' }}
-                        >
-                          Confirm
-                        </button>
-                        <button
-                          onClick={() => setDeletingId(null)}
-                          className="px-2 py-0.5 rounded text-xs"
-                          style={{ color: 'var(--text-tertiary)' }}
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => setDeletingId(job.id)}
-                        disabled={isJobRunning}
-                        className="p-1.5 rounded transition-colors hover:bg-[var(--bg-hover)]"
-                        style={{ color: isJobRunning ? 'var(--text-tertiary)' : 'var(--accent-red)', cursor: isJobRunning ? 'not-allowed' : 'pointer' }}
-                        title="Delete"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Live output during execution */}
-                {isJobRunning && triggerRun && (
-                  <div className="mt-2 rounded overflow-hidden" style={{ border: '1px solid var(--border-subtle)' }}>
-                    <div className="flex items-center justify-between px-3 py-1.5" style={{ background: 'var(--accent-blue-dim)' }}>
-                      <span className="text-xs font-medium flex items-center gap-1.5" style={{ color: 'var(--accent-blue)' }}>
-                        <Loader2 className="w-3 h-3 animate-spin" />
-                        Running... {triggerRun.elapsedMs > 0 && `(${Math.round(triggerRun.elapsedMs / 1000)}s)`}
-                      </span>
-                      <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                        {triggerRun.output.length > 0 ? `${triggerRun.output.length} chars` : 'Waiting for output...'}
-                      </span>
-                    </div>
-                    {triggerRun.output && (
-                      <pre
-                        className="px-3 py-2 text-xs overflow-auto whitespace-pre-wrap"
-                        style={{
-                          background: 'var(--bg-secondary)',
-                          color: 'var(--text-primary)',
-                          maxHeight: '200px',
-                        }}
-                      >
-                        {triggerRun.output}
-                      </pre>
-                    )}
-                  </div>
-                )}
-
-                {/* Finished run result (dismissible) */}
-                {justFinished && (
-                  <div className="mt-2 rounded overflow-hidden" style={{ border: '1px solid var(--border-subtle)' }}>
+                  return (
                     <div
-                      className="flex items-center justify-between px-3 py-1.5"
+                      key={job.id}
+                      className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors"
                       style={{
-                        background: triggerRun.status === 'completed' ? 'var(--accent-green-dim)' :
-                                    triggerRun.status === 'failed' ? 'var(--accent-red-dim)' : 'var(--bg-hover)',
+                        background: isSelected ? 'var(--bg-active)' : 'transparent',
+                        borderBottom: '1px solid var(--border-subtle)',
                       }}
+                      onClick={() => setSelectedCronJobId(isSelected ? null : job.id)}
+                      onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
+                      onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
                     >
+                      {/* Status dot */}
                       <span
-                        className="text-xs font-medium flex items-center gap-1.5"
+                        className={`w-2 h-2 rounded-full shrink-0 ${isJobRunning ? 'animate-pulse' : ''}`}
                         style={{
-                          color: triggerRun.status === 'completed' ? 'var(--accent-green)' :
-                                 triggerRun.status === 'failed' ? 'var(--accent-red)' : 'var(--text-secondary)',
+                          background: isJobRunning ? 'var(--accent-blue)'
+                            : !job.enabled ? 'var(--text-tertiary)'
+                            : job.state?.lastStatus === 'error' ? 'var(--accent-red)'
+                            : job.state?.lastStatus === 'success' ? 'var(--accent-green)'
+                            : 'var(--text-tertiary)',
                         }}
-                      >
-                        {triggerRun.status === 'completed' && <><CheckCircle2 className="w-3 h-3" /> Completed in {Math.round(triggerRun.elapsedMs / 1000)}s</>}
-                        {triggerRun.status === 'failed' && <><AlertCircle className="w-3 h-3" /> Failed after {Math.round(triggerRun.elapsedMs / 1000)}s</>}
-                        {triggerRun.status === 'cancelled' && <><XCircle className="w-3 h-3" /> Cancelled after {Math.round(triggerRun.elapsedMs / 1000)}s</>}
-                      </span>
-                      <button
-                        onClick={() => clearTriggerRun(job.id)}
-                        className="text-xs px-2 py-0.5 rounded hover:bg-[var(--bg-hover)]"
-                        style={{ color: 'var(--text-tertiary)' }}
-                      >
-                        Dismiss
-                      </button>
-                    </div>
-                    {triggerRun.output && (
-                      <pre
-                        className="px-3 py-2 text-xs overflow-auto whitespace-pre-wrap"
-                        style={{
-                          background: 'var(--bg-secondary)',
-                          color: 'var(--text-primary)',
-                          maxHeight: '200px',
-                        }}
-                      >
-                        {triggerRun.output}
-                      </pre>
-                    )}
-                    {triggerRun.error && (
-                      <div className="px-3 py-2 text-xs" style={{ color: 'var(--accent-red)' }}>
-                        {triggerRun.error}
+                      />
+                      {/* Name + meta */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>
+                            {job.name}
+                          </span>
+                          {!job.enabled && (
+                            <span className="text-[10px] px-1 rounded" style={{ background: 'var(--bg-inset)', color: 'var(--text-tertiary)' }}>OFF</span>
+                          )}
+                          {isJobRunning && (
+                            <Loader2 className="w-3 h-3 animate-spin shrink-0" style={{ color: 'var(--accent-blue)' }} />
+                          )}
+                          {justFinished && triggerRun.status === 'completed' && (
+                            <CheckCircle2 className="w-3 h-3 shrink-0" style={{ color: 'var(--accent-green)' }} />
+                          )}
+                          {justFinished && triggerRun.status === 'failed' && (
+                            <AlertCircle className="w-3 h-3 shrink-0" style={{ color: 'var(--accent-red)' }} />
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-[11px] font-mono" style={{ color: 'var(--text-tertiary)' }}>
+                            {job.schedule?.kind === 'cron' ? job.schedule.expr : job.schedule?.kind}
+                          </span>
+                          {job.state?.lastRunAtMs && (
+                            <span className="text-[11px]" style={{ color: 'var(--text-tertiary)' }}>
+                              {new Date(job.state.lastRunAtMs).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                              {job.state.lastDurationMs ? ` (${Math.round(job.state.lastDurationMs / 1000)}s)` : ''}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Historical state (only show when not actively running/just finished) */}
-                {!isJobRunning && !justFinished && job.state && (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs mt-3 pt-3 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
-                    <div>
-                      <span style={{ color: 'var(--text-tertiary)' }}>Last Run</span>
-                      <p style={{ color: 'var(--text-secondary)' }}>
-                        {job.state.lastRunAtMs
-                          ? new Date(job.state.lastRunAtMs).toLocaleString()
-                          : 'Never'}
-                      </p>
-                    </div>
-                    <div>
-                      <span style={{ color: 'var(--text-tertiary)' }}>Status</span>
-                      <p>
-                        <Badge
-                          variant={job.state.lastStatus === 'error' ? 'danger' : job.state.lastStatus === 'success' ? 'success' : 'secondary'}
-                          size="xs"
+                      {/* Action buttons */}
+                      <div className="flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
+                        <button
+                          onClick={() => toggleTrigger.mutate({ id: job.id, enabled: !job.enabled })}
+                          disabled={toggleTrigger.isPending || isJobRunning}
+                          className="p-1 rounded transition-colors hover:bg-[var(--bg-hover)]"
+                          style={{ color: job.enabled ? 'var(--accent-green)' : 'var(--text-tertiary)' }}
+                          title={job.enabled ? 'Disable' : 'Enable'}
                         >
-                          {job.state.lastStatus || 'pending'}
-                        </Badge>
-                      </p>
+                          <Power className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => setEditingTrigger({
+                            id: job.id,
+                            name: job.name,
+                            prompt: (job as any).prompt || '',
+                            cron: job.schedule?.expr || '',
+                            description: (job as any).description || '',
+                          })}
+                          disabled={isJobRunning}
+                          className="p-1 rounded transition-colors hover:bg-[var(--bg-hover)]"
+                          style={{ color: isJobRunning ? 'var(--text-tertiary)' : 'var(--text-secondary)' }}
+                          title="Edit"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        {isJobRunning ? (
+                          <button
+                            onClick={() => cancelTrigger.mutate(job.id)}
+                            disabled={cancelTrigger.isPending}
+                            className="p-1 rounded transition-colors hover:bg-[var(--bg-hover)]"
+                            style={{ color: 'var(--accent-red)' }}
+                            title="Cancel"
+                          >
+                            <Square className="w-3.5 h-3.5" />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => runTrigger.mutate(job.id)}
+                            disabled={runTrigger.isPending || !job.enabled}
+                            className="p-1 rounded transition-colors hover:bg-[var(--bg-hover)]"
+                            style={{ color: !job.enabled ? 'var(--text-tertiary)' : 'var(--accent-green)' }}
+                            title={job.enabled ? 'Run now' : 'Enable first'}
+                          >
+                            <Play className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                        {deletingId === job.id ? (
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => { deleteTrigger.mutate(job.id); setDeletingId(null) }}
+                              className="px-1.5 py-0.5 rounded text-[10px] font-medium"
+                              style={{ background: 'var(--accent-red)', color: 'white' }}
+                            >
+                              Yes
+                            </button>
+                            <button
+                              onClick={() => setDeletingId(null)}
+                              className="px-1.5 py-0.5 rounded text-[10px]"
+                              style={{ color: 'var(--text-tertiary)' }}
+                            >
+                              No
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setDeletingId(job.id)}
+                            disabled={isJobRunning}
+                            className="p-1 rounded transition-colors hover:bg-[var(--bg-hover)]"
+                            style={{ color: isJobRunning ? 'var(--text-tertiary)' : 'var(--accent-red)' }}
+                            title="Delete"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <span style={{ color: 'var(--text-tertiary)' }}>Duration</span>
-                      <p style={{ color: 'var(--text-secondary)' }}>
-                        {job.state.lastDurationMs
-                          ? `${Math.round(job.state.lastDurationMs / 1000)}s`
-                          : '-'}
-                      </p>
-                    </div>
-                    <div>
-                      <span style={{ color: 'var(--text-tertiary)' }}>Errors</span>
-                      <p
-                        className={job.state.consecutiveErrors > 0 ? 'font-medium' : ''}
-                        style={{ color: job.state.consecutiveErrors > 0 ? 'var(--accent-red)' : 'var(--text-secondary)' }}
-                      >
-                        {job.state.consecutiveErrors || 0}
-                      </p>
-                    </div>
-                  </div>
-                )}
+                  )
+                })}
+              </div>
+            </Card>
 
-                {!isJobRunning && !justFinished && job.state?.lastError && (
-                  <div
-                    className="mt-2 p-2 rounded text-xs break-all"
-                    style={{ background: 'var(--accent-red-dim)', color: 'var(--accent-red)' }}
-                  >
-                    {job.state.lastError}
-                  </div>
-                )}
-
-                {!isJobRunning && !justFinished && job.state?.lastOutput && (
-                  <details className="mt-2">
-                    <summary
-                      className="text-xs cursor-pointer select-none"
-                      style={{ color: 'var(--text-secondary)' }}
-                    >
-                      Last Output ({job.state.lastOutput.length} chars)
-                    </summary>
-                    <pre
-                      className="mt-1 p-2 rounded text-xs overflow-auto whitespace-pre-wrap"
-                      style={{
-                        background: 'var(--bg-secondary)',
-                        color: 'var(--text-primary)',
-                        maxHeight: '200px',
-                        border: '1px solid var(--border-primary)',
-                      }}
-                    >
-                      {job.state.lastOutput}
-                    </pre>
-                  </details>
-                )}
-              </Card>
-              )
-            })}
+            {/* Right: selected job detail / output */}
+            <CronJobDetailPanel
+              job={cronJobs.find((j: any) => j.id === selectedCronJobId) || null}
+              triggerRun={selectedCronJobId ? triggerRuns[selectedCronJobId] : undefined}
+              onDismissRun={() => selectedCronJobId && clearTriggerRun(selectedCronJobId)}
+            />
           </div>
         )}
       </div>

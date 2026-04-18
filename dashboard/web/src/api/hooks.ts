@@ -350,46 +350,6 @@ export function useCancelTrigger() {
   })
 }
 
-export function usePatrolState() {
-  return useQuery({
-    queryKey: ['agents', 'patrol-state'],
-    queryFn: async () => {
-      try {
-        const state = await apiGet<any>('/agents/patrol-state')
-        if (state && !state.error) return state
-      } catch { /* fallback below */ }
-      // Fallback: read from patrol/status lastRun
-      try {
-        const status = await apiGet<any>('/patrol/status')
-        if (status?.lastRun) {
-          const lr = status.lastRun
-          return {
-            lastPatrol: lr.completedAt || new Date().toISOString(),
-            currentPatrolStartedAt: lr.startedAt || null,
-            patrolType: lr.phase === 'completed' ? 'full' : lr.phase,
-            summary: {
-              pendingEngineer: lr.caseResults?.filter((r: any) => r.status === 'pending-engineer').length || 0,
-              pendingCustomer: lr.caseResults?.filter((r: any) => r.status === 'pending-customer').length || 0,
-              waitingPG: lr.caseResults?.filter((r: any) => r.status === 'pending-pg').length || 0,
-              ar: lr.caseResults?.filter((r: any) => r.status === 'ar').length || 0,
-              normal: lr.caseResults?.filter((r: any) => r.status === 'completed').length || 0,
-            },
-            lastRunTiming: {
-              caseCount: lr.totalCases || 0,
-              wallClockMinutes: lr.wallClockMinutes || (lr.startedAt && lr.completedAt
-                ? Math.round((new Date(lr.completedAt).getTime() - new Date(lr.startedAt).getTime()) / 60000)
-                : 0),
-              bottlenecks: lr.caseResults?.filter((r: any) => r.error).map((r: any) => `${r.caseNumber}: ${r.error}`) || [],
-            },
-          }
-        }
-      } catch { /* ignore */ }
-      return null
-    },
-    refetchInterval: 15_000,
-  })
-}
-
 // ===== Drafts =====
 
 export function useDrafts() {
@@ -1445,6 +1405,60 @@ export function useLaborBatchSubmit() {
     }>('/labor-estimate/batch-submit', { items }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['labor-estimates'] })
+    },
+  })
+}
+
+// ===== Token Daemon =====
+
+export interface DaemonTokenStatus {
+  name: string
+  status: 'ok' | 'expired' | 'session' | 'unknown'
+  remainMin: number | null
+  ttlMinutes: number
+  tab: string
+  type: string
+}
+
+export interface DaemonStatusResponse {
+  daemon: {
+    pid: number | null
+    alive: boolean
+    heartbeatFresh: boolean
+    httpPort: number | null
+    startedAt: string | null
+    lastHeartbeat: string | null
+  }
+  tokens: DaemonTokenStatus[]
+}
+
+export function useDaemonStatus() {
+  return useQuery({
+    queryKey: ['daemon', 'status'],
+    queryFn: () => apiGet<DaemonStatusResponse>('/daemon/status'),
+    refetchInterval: 10_000,
+  })
+}
+
+export function useDaemonWarmup() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => apiPost<{ ok: boolean; warmupPid: number | null }>('/daemon/warmup'),
+    onSuccess: () => {
+      // Delay refetch to give warmup time to start
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['daemon', 'status'] })
+      }, 3000)
+    },
+  })
+}
+
+export function useDaemonStop() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => apiPost<{ stopped: boolean; pid: number | null; error?: string }>('/daemon/stop'),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['daemon', 'status'] })
     },
   })
 }

@@ -13,20 +13,36 @@ import type { ReactNode } from 'react'
 vi.mock('../stores/patrolStore', () => ({
   usePatrolStore: vi.fn((selector: (s: any) => any) => {
     const store = {
-      onPatrolProgress: vi.fn(),
-      onPatrolCaseCompleted: vi.fn(),
+      onPatrolState: vi.fn(),
+      onCaseUpdate: vi.fn(),
     }
     return selector(store)
   }),
 }))
 
 vi.mock('../stores/caseSessionStore', () => ({
-  useCaseSessionStore: vi.fn((selector: (s: any) => any) => {
-    const store = {
-      addMessage: vi.fn(),
-    }
-    return selector(store)
-  }),
+  useCaseSessionStore: Object.assign(
+    vi.fn((selector: (s: any) => any) => {
+      const store = {
+        addMessage: vi.fn(),
+        addSessionMessage: vi.fn(),
+        setSessionStatus: vi.fn(),
+        setActiveSessionId: vi.fn(),
+        setCurrentStep: vi.fn(),
+        setPendingQuestion: vi.fn(),
+        clearPendingQuestion: vi.fn(),
+        setLastHeartbeatAt: vi.fn(),
+        setQueueStatus: vi.fn(),
+        initPipelineSteps: vi.fn(),
+        updatePipelineStep: vi.fn(),
+        initAgentSpawns: vi.fn(),
+        updateAgentSpawn: vi.fn(),
+        activeSessionId: {},
+      }
+      return selector(store)
+    }),
+    { getState: () => ({ activeSessionId: {}, pipelineSteps: {} }) },
+  ),
 }))
 
 vi.mock('../stores/issueTrackStore', () => ({
@@ -34,10 +50,45 @@ vi.mock('../stores/issueTrackStore', () => ({
     const store = {
       addMessage: vi.fn(),
       setTrackingActive: vi.fn(),
+      clearMessages: vi.fn(),
       setPendingQuestion: vi.fn(),
+      startImplement: vi.fn(),
+      addImplementMessage: vi.fn(),
+      setImplementStatus: vi.fn(),
+      addVerifyMessage: vi.fn(),
+      setVerifyActive: vi.fn(),
+      setVerifyResult: vi.fn(),
+      clearVerify: vi.fn(),
     }
     return selector(store)
   }),
+}))
+
+vi.mock('../stores/todoExecuteStore', () => ({
+  useTodoExecuteStore: vi.fn((selector: (s: any) => any) => {
+    const store = {
+      setProgress: vi.fn(),
+      setResult: vi.fn(),
+    }
+    return selector(store)
+  }),
+}))
+
+vi.mock('../stores/triggerRunStore', () => ({
+  useTriggerRunStore: Object.assign(
+    vi.fn((selector: (s: any) => any) => {
+      const store = {
+        onTriggerStarted: vi.fn(),
+        onTriggerProgress: vi.fn(),
+        onTriggerCompleted: vi.fn(),
+        onTriggerFailed: vi.fn(),
+        onTriggerCancelled: vi.fn(),
+        runs: {},
+      }
+      return selector(store)
+    }),
+    { getState: () => ({ runs: {} }) },
+  ),
 }))
 
 // Mock EventSource
@@ -144,15 +195,14 @@ describe('useSSE', () => {
     const expectedEvents = [
       'case-updated',
       'todo-updated',
-      'patrol-updated',
       'draft-updated',
       'cron-updated',
       'settings-updated',
       'case-session-thinking',
       'case-session-completed',
       'case-session-failed',
-      'patrol-progress',
-      'patrol-case-completed',
+      'patrol-state',
+      'patrol-case',
     ]
 
     for (const event of expectedEvents) {

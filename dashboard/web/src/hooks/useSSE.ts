@@ -15,7 +15,7 @@ import { usePatrolStore } from '../stores/patrolStore'
 import { useCaseSessionStore } from '../stores/caseSessionStore'
 import { useIssueTrackStore } from '../stores/issueTrackStore'
 import { useTodoExecuteStore } from '../stores/todoExecuteStore'
-import { useTriggerRunStore } from '../stores/triggerRunStore'
+import { useTriggerRunStore, type TriggerRunState } from '../stores/triggerRunStore'
 
 /** Safely parse JSON, returning null on failure */
 function safeParse(raw: string): any | null {
@@ -44,9 +44,8 @@ export function useSSE() {
   const BASE_DELAY_MS = 1000
 
   // Use stable refs for Zustand store actions to avoid effect re-runs
-  const patrolOnProgress = usePatrolStore((s) => s.onPatrolProgress)
-  const patrolOnCaseCompleted = usePatrolStore((s) => s.onPatrolCaseCompleted)
-  const patrolOnCaseStepUpdate = usePatrolStore((s) => s.onCaseStepUpdate)
+  const patrolOnState = usePatrolStore((s) => s.onPatrolState)
+  const patrolOnCase = usePatrolStore((s) => s.onCaseUpdate)
   const addCaseSessionMessage = useCaseSessionStore((s) => s.addMessage)
   const addCaseSessionPerSession = useCaseSessionStore((s) => s.addSessionMessage)
   const addIssueTrackMessage = useIssueTrackStore((s) => s.addMessage)
@@ -130,11 +129,6 @@ export function useSSE() {
       if (caseNumber) {
         queryClient.invalidateQueries({ queryKey: ['cases', caseNumber, 'todo'] })
       }
-    })
-
-    es.addEventListener('patrol-updated', () => {
-      queryClient.invalidateQueries({ queryKey: ['agents', 'patrol-state'] })
-      queryClient.invalidateQueries({ queryKey: ['cases'] })
     })
 
     es.addEventListener('draft-updated', () => {
@@ -260,8 +254,6 @@ export function useSSE() {
           sessionStoreInitAgentSpawns(caseNumber, d.agentSpawns)
         }
 
-        // Update patrol store if patrol is running (per-case sub-step tracking)
-        if (d.step) patrolOnCaseStepUpdate(caseNumber, { step: d.step })
       }
     })
 
@@ -292,9 +284,6 @@ export function useSSE() {
             if (d.step) sessionStoreSetCurrentStep(caseNumber, d.step)
           }
         }
-
-        // Update patrol store per-case substep tracking (only meaningful steps, not raw tool names)
-        if (d.substep) patrolOnCaseStepUpdate(caseNumber, { step: d.substep })
       }
     })
 
@@ -406,32 +395,17 @@ export function useSSE() {
       } catch { /* ignore parse errors */ }
     })
 
-    // V2: Cross-step pipeline state (from .casework/pipeline-state.json)
-    es.addEventListener('patrol-pipeline-update', (e) => {
-      try {
-        const data = parseAndTrack((e as MessageEvent).data)
-        if (!data) return
-        const d = data.data || data
-        const store = usePatrolStore.getState()
-        if (store.onPipelineUpdate) {
-          store.onPipelineUpdate(d)
-        }
-        // Bridge to caseSessionStore for CaseworkPipeline component
-        if (d.caseNumber && d.steps) {
-          const existing = useCaseSessionStore.getState().pipelineSteps[d.caseNumber]
-          if (!existing) {
-            sessionStoreInitPipeline(d.caseNumber, [
-              { id: 'data-refresh', label: 'Data Refresh', status: 'pending' },
-              { id: 'assess', label: 'Assess', status: 'pending' },
-              { id: 'act', label: 'Act', status: 'pending' },
-              { id: 'summarize', label: 'Summarize', status: 'pending' },
-            ])
-          }
-          for (const [stepId, info] of Object.entries(d.steps as Record<string, { status: string }>)) {
-            sessionStoreUpdatePipeline(d.caseNumber, stepId, info.status as any)
-          }
-        }
-      } catch { /* ignore parse errors */ }
+    // Patrol SSE events (v3 — 2 events replace 6 legacy ones)
+    es.addEventListener('patrol-state', (e) => {
+      const data = parseAndTrack(e.data)
+      if (!data) return
+      patrolOnState(data.data || data)
+    })
+
+    es.addEventListener('patrol-case', (e) => {
+      const data = parseAndTrack(e.data)
+      if (!data) return
+      patrolOnCase(data.data || data)
     })
 
     // Case step failed event — set failed status + invalidate operation
@@ -510,25 +484,6 @@ export function useSSE() {
         queryClient.refetchQueries({ queryKey: ['case-operation', caseNumber] })
       }
       queryClient.invalidateQueries({ queryKey: ['sessions'] })
-    })
-
-    // Patrol progress events
-    es.addEventListener('patrol-progress', (e) => {
-      const data = parseAndTrack(e.data)
-      if (!data) return
-      patrolOnProgress(data.data || data)
-    })
-
-    es.addEventListener('patrol-case-completed', (e) => {
-      const data = parseAndTrack(e.data)
-      if (!data) return
-      patrolOnCaseCompleted(data.data || data)
-      const caseNumber = (data.data || data)?.caseNumber
-      if (caseNumber) {
-        queryClient.invalidateQueries({ queryKey: ['cases', caseNumber] })
-        queryClient.invalidateQueries({ queryKey: ['case-sessions', caseNumber] })
-      }
-      queryClient.invalidateQueries({ queryKey: ['todos'] })
     })
 
     es.addEventListener('settings-updated', () => {
@@ -928,32 +883,25 @@ export function useSSE() {
       retryCountRef.current = 0
       console.log('[SSE] Connection opened, lastSeq:', lastSeqRef.current)
 
-      // Reconcile patrol store with backend truth on (re)connect
-      // Fixes stuck "patrolling" state when SSE missed the completion event
-      // Also hydrates live progress for page-refresh recovery
-      fetch('/api/patrol/status').then(r => r.json()).then((status: any) => {
-        const store = usePatrolStore.getState()
-        if (store.isRunning && !status.running) {
-          // Backend says patrol is NOT running, but store thinks it is → force complete
-          console.log('[SSE] Patrol store reconciliation: backend not running, forcing completed')
-          patrolOnProgress({ phase: 'completed', ...(status.lastRun || {}) })
-        } else if (status.running && status.liveProgress && !store.isRunning) {
-          // Backend says running with progress, but store lost it (stale localStorage) → hydrate
-          console.log('[SSE] Patrol store reconciliation: hydrating live progress from backend')
-          const lp = status.liveProgress
-          patrolOnProgress({
-            phase: lp.phase || 'processing',
-            totalCases: lp.totalCases,
-            changedCases: lp.changedCases,
-            processedCases: lp.processedCases,
-            caseList: lp.caseList,
-            detail: lp.detail,
-          })
-          // Hydrate completed case results
-          if (lp.caseResults?.length) {
-            for (const cr of lp.caseResults) {
-              patrolOnProgress({ phase: lp.phase, currentCase: cr.caseNumber })
-              patrolOnCaseCompleted({ caseNumber: cr.caseNumber, durationMs: cr.durationMs, error: cr.error })
+      // Reconcile trigger run store with backend truth on (re)connect
+      // Fixes stuck "Running" state when SSE missed trigger-completed event
+      fetch('/api/agents/triggers').then(r => r.json()).then((data: any) => {
+        const triggers = data.triggers || data.jobs || []
+        const store = useTriggerRunStore.getState()
+        for (const [triggerId, run] of Object.entries(store.runs)) {
+          if (run && (run as TriggerRunState).status === 'running') {
+            const apiTrigger = triggers.find((t: any) => t.id === triggerId)
+            if (apiTrigger && !apiTrigger.running) {
+              // Backend says NOT running, but store thinks it is → force completed
+              console.log(`[SSE] Trigger reconciliation: ${triggerId} not running on backend, clearing stale state`)
+              const state = apiTrigger.state || {}
+              if (state.lastStatus === 'success') {
+                triggerOnCompleted(triggerId, state.lastDurationMs || 0, state.lastOutput?.slice(0, 300))
+              } else if (state.lastStatus === 'error') {
+                triggerOnFailed(triggerId, state.lastDurationMs || 0, state.lastError)
+              } else {
+                triggerOnCompleted(triggerId, state.lastDurationMs || 0)
+              }
             }
           }
         }
@@ -975,7 +923,7 @@ export function useSSE() {
         console.error(`[SSE] Max retries (${MAX_RETRIES}) exceeded, giving up. Last seq: ${lastSeqRef.current}`)
       }
     }
-  }, [queryClient, patrolOnProgress, patrolOnCaseCompleted, addCaseSessionMessage, addCaseSessionPerSession, addIssueTrackMessage, setIssueTrackingActive, clearIssueTrackMessages, setIssuePendingQuestion, startImplement, addImplementMessage, setImplementStatus, addVerifyMessage, setVerifyActive, setVerifyResult, clearVerify, todoExecSetProgress, todoExecSetResult, sessionStoreSetStatus, sessionStoreSetActiveSession, sessionStoreSetCurrentStep, sessionStoreSetPendingQuestion, sessionStoreClearPendingQuestion, sessionStoreSetHeartbeat, sessionStoreSetQueueStatus])
+  }, [queryClient, patrolOnState, patrolOnCase, addCaseSessionMessage, addCaseSessionPerSession, addIssueTrackMessage, setIssueTrackingActive, clearIssueTrackMessages, setIssuePendingQuestion, startImplement, addImplementMessage, setImplementStatus, addVerifyMessage, setVerifyActive, setVerifyResult, clearVerify, todoExecSetProgress, todoExecSetResult, sessionStoreSetStatus, sessionStoreSetActiveSession, sessionStoreSetCurrentStep, sessionStoreSetPendingQuestion, sessionStoreClearPendingQuestion, sessionStoreSetHeartbeat, sessionStoreSetQueueStatus])
 
   useEffect(() => {
     connect()
