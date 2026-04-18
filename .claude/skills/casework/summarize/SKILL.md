@@ -51,11 +51,11 @@ except: print('DELTA_OK')
 # DELTA_OK | DELTA_EMPTY
 ```
 
-### Step 2. Pipeline state — 标记 summarize running
+### Step 2. Pipeline state — 标记 summarize active
 
 ```bash
-python3 .claude/skills/casework/act/scripts/update-pipeline-state.py \
-  --case-dir "{caseDir}" --step "summarize" --status "running" \
+python3 .claude/skills/casework/scripts/update-state.py \
+  --case-dir "{caseDir}" --step summarize --status active \
   --case-number "{caseNumber}"
 ```
 
@@ -116,7 +116,7 @@ AR Case 额外读取 `notes-ar.md`。
 - 「Timeline」按时间线梳理关键事件（邮件往来、电话、Note 记录等）。**同一日期的多条事件合并为一条**，用分号分隔。每个日期只保留一行 `- [{YYYY-MM-DD}] {合并后的事件描述}`
 - 「关键发现」提取诊断结论，每条附 **日期** 和 **来源**。格式 `- [{YYYY-MM-DD}] {发现内容} — *来源: {source}*`。来源标注规则：`email`=邮件中的技术结论，`note`=D365 Note，`teams`=Teams 对话，`analysis`=analysis/ 文件，`ICM`=ICM 讨论/更新，`PG`=产品组回复
 - 「风险」评估 IR SLA 状态、客户响应天数、是否需要升级等。**不关注 FDR/FWR**（这些指标在 Dashboard header 已有 badge 展示）
-- **RDSE 客户时**：在「问题描述」末尾注明 `[RDSE: {ccAccount}]`
+- **RDSE 客户时**：不在「问题描述」中注明 RDSE 信息（Dashboard 已通过 badge 展示 RDSE 客户标识，避免重复）
 
 **AR Case 规则**（`meta.isAR === true`）：
 - 「问题描述」格式：`[AR] {ar.scope} — Main Case: {mainCaseId}`
@@ -196,8 +196,8 @@ upsert `casework-meta.json.lastInspected` = ISO now
 ### Step 4. Pipeline state — 标记 summarize completed + 日志
 
 ```bash
-python3 .claude/skills/casework/act/scripts/update-pipeline-state.py \
-  --case-dir "{caseDir}" --step "summarize" --status "completed" \
+python3 .claude/skills/casework/scripts/update-state.py \
+  --case-dir "{caseDir}" --step summarize --status completed \
   --case-number "{caseNumber}"
 
 echo "SUMMARIZE_OK|delta=$DELTA|elapsed=${SECONDS}s"

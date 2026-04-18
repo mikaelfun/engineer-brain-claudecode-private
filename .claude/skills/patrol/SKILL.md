@@ -65,6 +65,14 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
 2. **写 phase 文件（discovering）**
    ```bash
    echo "discovering" > "{patrolDir}/patrol-phase"
+   python3 -c "
+import json, os, time
+p = '{patrolDir}/patrol-progress.json'
+d = {'phase':'discovering','startedAt':'$(date -u +%FT%TZ)','source':'$SOURCE','updatedAt':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime())}
+tmp = p + '.tmp.' + str(os.getpid())
+json.dump(d, open(tmp,'w'), indent=2)
+os.replace(tmp, p)
+"
    ```
 
 3. **获取活跃 Case 列表**
@@ -114,7 +122,7 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
 
    如果筛选后待处理 case 数量为 0（全部被 patrolSkipHours 过滤 + 归档排除）：
    - 跳过 Step 4/5/6/7（预热 + 处理）
-   - 直接写 result.json（processedCases=0）
+   - 直接写 patrol-state.json（processedCases=0）
    - 释放 lock，退出
    - 输出：`📊 Patrol: 0 cases to process (all within skipHours). Done.`
 
@@ -123,6 +131,14 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
    写 phase 文件：
    ```bash
    echo "warming-up" > "{patrolDir}/patrol-phase"
+   python3 -c "
+import json, os, time
+p = '{patrolDir}/patrol-progress.json'
+d = {'phase':'warming-up','startedAt':'$(date -u +%FT%TZ)','source':'$SOURCE','updatedAt':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime())}
+tmp = p + '.tmp.' + str(os.getpid())
+json.dump(d, open(tmp,'w'), indent=2)
+os.replace(tmp, p)
+"
    ```
 
    两个预热任务并行执行：
@@ -151,6 +167,14 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
 
    ```bash
    echo "processing" > "{patrolDir}/patrol-phase"
+   python3 -c "
+import json, os, time
+p = '{patrolDir}/patrol-progress.json'
+d = {'phase':'processing','startedAt':'$(date -u +%FT%TZ)','source':'$SOURCE','totalCases':$TOTAL_CASES,'changedCases':$CHANGED_CASES,'caseList':$CASE_LIST_JSON,'updatedAt':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime())}
+tmp = p + '.tmp.' + str(os.getpid())
+json.dump(d, open(tmp,'w'), indent=2)
+os.replace(tmp, p)
+"
    ```
 
 6. **Streaming Pipeline：启动 casework(mode=patrol) + 推进**
@@ -213,7 +237,7 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
      - 全量并行 spawn 所有 casework(mode=patrol) 后，**直接等待所有后台 agent 返回**（不 sleep 轮询）
      - 每个 agent 返回时检查 execution-plan.json → 按需 spawn troubleshooter/email-drafter/summarize（同样后台等待）
      - 不调用 patrol-progress.py，不输出进度表
-     - 其余逻辑（归档检测、cleanup、写 result.json）与 cli 模式相同
+     - 其余逻辑（归档检测、cleanup、写 patrol-state.json）与 cli 模式相同
 
    **6c. 统一轮询循环（CLI 模式，Streaming Pipeline 核心）**
 
@@ -249,8 +273,8 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
                m['lastAssessedAt'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
                json.dump(m, open(p, 'w', encoding='utf-8'), indent=2, ensure_ascii=False)
                "
-               python3 .claude/skills/casework/act/scripts/update-pipeline-state.py \
-                 --case-dir "{casesRoot}/active/{caseNumber}" --step "summarize" --status "completed" \
+               python3 .claude/skills/casework/scripts/update-state.py \
+                 --case-dir "{casesRoot}/active/{caseNumber}" --step summarize --status completed \
                  --case-number "{caseNumber}"
                → case.phase = "done"  # 直接完成，不经过 inspecting
              
@@ -339,13 +363,21 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
    写阶段文件：
    ```bash
    echo "aggregating" > "{patrolDir}/patrol-phase"
+   python3 -c "
+import json, os, time
+p = '{patrolDir}/patrol-progress.json'
+d = {'phase':'aggregating','startedAt':'$(date -u +%FT%TZ)','source':'$SOURCE','updatedAt':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime())}
+tmp = p + '.tmp.' + str(os.getpid())
+json.dump(d, open(tmp,'w'), indent=2)
+os.replace(tmp, p)
+"
    ```
 
    从各 case 的 `todo/` 目录提取最新 Todo 文件，按 🔴🟡✅ 分级汇总展示。
 
    从各 case 的 `.casework/logs/casework.log` 读取最后一行判断 status（`STEP B5 OK` / `STEP B6 OK` / `phase completed` → completed，否则 failed）。
 
-   写结构化结果文件 `{patrolDir}/result.json`（兼容旧格式）和 `{patrolDir}/patrol-state.json`（WebUI 读取）：
+   写结构化结果文件 `{patrolDir}/patrol-state.json`：
    ```json
    {
      "startedAt": "ISO",
@@ -360,11 +392,19 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
      ]
    }
    ```
-   **两个文件内容相同**，用 `cp` 复制即可。`patrol-state.json` 是 WebUI Dashboard 的唯一数据源。
+   `patrol-state.json` 是唯一的结果文件（CLI 和 WebUI 共用）。
 
    写最终阶段：
    ```bash
    echo "completed" > "{patrolDir}/patrol-phase"
+   python3 -c "
+import json, os, time
+p = '{patrolDir}/patrol-progress.json'
+d = {'phase':'completed','startedAt':'$(date -u +%FT%TZ)','source':'$SOURCE','processedCases':$PROCESSED_CASES,'updatedAt':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime())}
+tmp = p + '.tmp.' + str(os.getpid())
+json.dump(d, open(tmp,'w'), indent=2)
+os.replace(tmp, p)
+"
    ```
 
    **🔒 释放互斥锁**：

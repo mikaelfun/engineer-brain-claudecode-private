@@ -61,9 +61,8 @@ MODE="full"
 
 ```bash
 if [ "$MODE" = "patrol" ]; then
-  python3 .claude/skills/casework/act/scripts/update-pipeline-state.py \
-    --case-dir "{caseDir}" --step "act" --status "completed" \
-    --case-number "$CASE_NUMBER" --mode "patrol"
+  python3 .claude/skills/casework/scripts/update-state.py \
+    --case-dir "{caseDir}" --step act --status completed
   echo "ACT_DELEGATED|actions=$ACTION_COUNT|mode=patrol"
   exit 0
 fi
@@ -236,8 +235,8 @@ fi
 ### Step 4. Pipeline state 更新 + Completion signal
 
 ```bash
-python3 .claude/skills/casework/act/scripts/update-pipeline-state.py \
-  --case-dir "{caseDir}" --step "act" --status "completed" \
+python3 .claude/skills/casework/scripts/update-state.py \
+  --case-dir "{caseDir}" --step act --status completed \
   --case-number "$CASE_NUMBER"
 
 echo "ACT_OK|actions=$ACTION_COUNT|ir_first=$IR_FIRST|elapsed=${SECONDS}s"

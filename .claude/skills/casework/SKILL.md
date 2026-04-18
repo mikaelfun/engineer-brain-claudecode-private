@@ -49,7 +49,7 @@ mkdir -p "$CASE_DIR/.casework/logs"
 date +%s > "$CASE_DIR/.casework/logs/.t_start"
 
 # Pipeline state → dashboard SSE (Step 1 active)
-bash .claude/skills/casework/scripts/write-pipeline-state.sh "$CASE_DIR" data-refresh
+python3 .claude/skills/casework/scripts/update-state.py --case-dir "$CASE_DIR" --step data-refresh --status active
 ```
 
 **AR 检测**：case number ≥ 19 位 → `IS_AR=true`，`MAIN_CASE_ID` = 前 16 位。upsert `casework-meta.json` 的 `isAR` + `mainCaseId`。
@@ -62,48 +62,75 @@ bash .claude/skills/casework/scripts/data-refresh.sh \
 # AR 模式额外传 --is-ar --main-case-number {MAIN_CASE_ID}
 ```
 
-完整参数说明见 `.claude/skills/casework/data-refresh/SKILL.md`。产出：`.casework/data-refresh-output.json`。
+完整参数说明见 `.claude/skills/casework/data-refresh/SKILL.md`。产出：`.casework/output/data-refresh.json`。
 
 ### Step 2. Assess
 
 ```bash
-# Pipeline state → dashboard SSE (Step 2 active, Step 1 completed)
-bash .claude/skills/casework/scripts/write-pipeline-state.sh "$CASE_DIR" assess data-refresh
+ASSESS_START=$(date -u +%FT%TZ)
+ASSESS_START_NS=$(date +%s%N)
+
+# Pipeline state → dashboard SSE (Step 2 active)
+python3 .claude/skills/casework/scripts/update-state.py --case-dir "$CASE_DIR" --step assess --status active
 ```
 
 读取 `.claude/skills/casework/assess/SKILL.md` 获取完整执行步骤，然后执行。
 
-核心流程：DELTA_EMPTY 快速路径（零 LLM）→ compliance hash gate → Teams/OneNote enrichment（inline 或 spawn）→ 主 LLM 决策 actualStatus + actions → 写 `.casework/execution-plan.json`。
+核心流程：DELTA_EMPTY 快速路径（零 LLM）→ compliance hash gate → Teams/OneNote enrichment（inline 或 spawn）→ 主 LLM 决策 actualStatus + actions → 写 `.casework/output/execution-plan.json`。
 
-**mode=patrol 时**：Step 2 完成后退出，不执行 Step 3/4。输出 `execution-plan.json` 供 patrol 主 agent 读取。
+**Step 2 完成后**更新 state：
+```bash
+ASSESS_DUR=$(( ($(date +%s%N) - ASSESS_START_NS) / 1000000 ))
+python3 .claude/skills/casework/scripts/update-state.py --case-dir "$CASE_DIR" --step assess --status completed --duration-ms $ASSESS_DUR
+```
+
+**mode=patrol 时**：Step 2 完成后退出，不执行 Step 3/4。输出 `output/execution-plan.json` 供 patrol 主 agent 读取。
 
 ### Step 3. Act
 
 ```bash
-# Pipeline state → dashboard SSE (Step 3 active, Steps 1-2 completed)
-bash .claude/skills/casework/scripts/write-pipeline-state.sh "$CASE_DIR" act data-refresh assess
+ACT_START=$(date -u +%FT%TZ)
+ACT_START_NS=$(date +%s%N)
+
+# Pipeline state → dashboard SSE (Step 3 active)
+python3 .claude/skills/casework/scripts/update-state.py --case-dir "$CASE_DIR" --step act --status active
 ```
 
 读取 `.claude/skills/casework/act/SKILL.md` 获取完整执行步骤，然后执行。
 
-核心流程：解析 `execution-plan.json` → actions=0 则跳过 → IR-first 规则 → 按需 spawn troubleshooter/email-drafter → challenge gate。
+核心流程：解析 `output/execution-plan.json` → actions=0 则跳过 → IR-first 规则 → 按需 spawn troubleshooter/email-drafter → challenge gate。
+
+**Step 3 完成后**更新 state：
+```bash
+ACT_DUR=$(( ($(date +%s%N) - ACT_START_NS) / 1000000 ))
+python3 .claude/skills/casework/scripts/update-state.py --case-dir "$CASE_DIR" --step act --status completed --duration-ms $ACT_DUR
+```
 
 ### Step 4. Summarize
 
 ```bash
-# Pipeline state → dashboard SSE (Step 4 active, Steps 1-3 completed)
-bash .claude/skills/casework/scripts/write-pipeline-state.sh "$CASE_DIR" summarize data-refresh assess act
+SUM_START=$(date -u +%FT%TZ)
+SUM_START_NS=$(date +%s%N)
+
+# Pipeline state → dashboard SSE (Step 4 active)
+python3 .claude/skills/casework/scripts/update-state.py --case-dir "$CASE_DIR" --step summarize --status active
 ```
 
 读取 `.claude/skills/casework/summarize/SKILL.md` 获取完整执行步骤，然后执行。
 
 核心流程：changePath 推导 → case-summary.md 增量更新 → SAP 准确性检查 → generate-todo.sh → meta.lastInspected 更新。
 
+**Step 4 完成后**更新 state：
+```bash
+SUM_DUR=$(( ($(date +%s%N) - SUM_START_NS) / 1000000 ))
+python3 .claude/skills/casework/scripts/update-state.py --case-dir "$CASE_DIR" --step summarize --status completed --duration-ms $SUM_DUR
+```
+
 ### Step 5. 展示结果
 
 ```bash
 # Pipeline state → dashboard SSE (all steps completed)
-bash .claude/skills/casework/scripts/write-pipeline-state.sh "$CASE_DIR" done data-refresh assess act summarize
+python3 .claude/skills/casework/scripts/update-state.py --case-dir "$CASE_DIR" --step summarize --status completed
 ```
 
 读取最新 `{caseDir}/todo/` 文件，🔴🟡✅ 格式展示 Todo 汇总。
