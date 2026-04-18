@@ -674,12 +674,16 @@ function cmdStop() {
   const pid = readPid();
   if (!pid) {
     console.log('DAEMON_NOT_RUNNING');
+    // 清理可能残留的文件
+    try { fs.unlinkSync(PORT_FILE); } catch {}
+    try { fs.unlinkSync(HEARTBEAT_FILE); } catch {}
     return;
   }
   if (!isProcessAlive(pid)) {
     console.log('DAEMON_STALE_PID|cleaning up');
     try { fs.unlinkSync(PID_FILE); } catch {}
     try { fs.unlinkSync(HEARTBEAT_FILE); } catch {}
+    try { fs.unlinkSync(PORT_FILE); } catch {}
     return;
   }
   try {
@@ -689,6 +693,8 @@ function cmdStop() {
     console.log(`DAEMON_STOP_FAILED|pid=${pid}|${e.message}`);
   }
   try { fs.unlinkSync(PID_FILE); } catch {}
+  try { fs.unlinkSync(HEARTBEAT_FILE); } catch {}
+  try { fs.unlinkSync(PORT_FILE); } catch {}
 }
 
 // ═══════════════════════════════════════

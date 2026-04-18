@@ -474,6 +474,16 @@ function Invoke-D365Api {
         try {
             $portInfo = Get-Content $daemonPortFile -Raw | ConvertFrom-Json
             $daemonPort = $portInfo.port
+            $daemonPid = $portInfo.pid
+
+            # Stale check: port 文件存在但 daemon 进程已死 → 清理文件，跳过 HTTP
+            if ($daemonPid) {
+                $alive = tasklist /FI "PID eq $daemonPid" /NH 2>$null | Select-String "$daemonPid"
+                if (-not $alive) {
+                    Remove-Item $daemonPortFile -Force -ErrorAction SilentlyContinue
+                    throw "Daemon PID $daemonPid not alive, stale port file cleaned"
+                }
+            }
             $daemonUrl = "http://127.0.0.1:$daemonPort/d365/odata"
             $reqBody = @{
                 method   = $Method
@@ -706,6 +716,17 @@ function Invoke-D365ApiBatch {
         try {
             $portInfo = Get-Content $daemonPortFile -Raw | ConvertFrom-Json
             $daemonPort = $portInfo.port
+            $daemonPid = $portInfo.pid
+
+            # Stale check
+            if ($daemonPid) {
+                $alive = tasklist /FI "PID eq $daemonPid" /NH 2>$null | Select-String "$daemonPid"
+                if (-not $alive) {
+                    Remove-Item $daemonPortFile -Force -ErrorAction SilentlyContinue
+                    throw "Daemon PID $daemonPid not alive, stale port file cleaned"
+                }
+            }
+
             $daemonUrl = "http://127.0.0.1:$daemonPort/d365/odata-batch"
 
             $reqList = @()
