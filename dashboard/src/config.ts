@@ -32,10 +32,16 @@ function resolveProjectRoot(): string {
   return fallback
 }
 
+interface DashboardConfig {
+  serverPort?: number
+  webPort?: number
+}
+
 interface ProjectConfig {
   casesRoot: string
   dataRoot?: string
   patrolDir?: string
+  dashboard?: DashboardConfig
 }
 
 /** Cached config — avoids re-reading config.json on every property access */
@@ -73,7 +79,10 @@ if (!existsSync(runtimeDir)) {
 }
 
 export const config = {
-  port: parseInt(process.env.PORT || '3010', 10),
+  port: parseInt(process.env.PORT || String(readProjectConfig().dashboard?.serverPort ?? 3010), 10),
+  get webPort(): number {
+    return readProjectConfig().dashboard?.webPort ?? 5173
+  },
   jwtSecret: process.env.JWT_SECRET || 'engineer-brain-dev-secret',
   projectRoot,
 
@@ -92,6 +101,9 @@ export const config = {
   },
   get patrolStateFile() {
     return join(this.patrolDir, 'patrol-state.json')
+  },
+  get patrolProgressFile() {
+    return join(this.patrolDir, 'patrol-progress.json')
   },
   /** @deprecated Todo files are now per-case (cases/active/{id}/todo/). Kept for backward compat. */
   get todoDir() {

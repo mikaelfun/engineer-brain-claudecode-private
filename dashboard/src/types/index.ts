@@ -263,6 +263,8 @@ export type SSEEventType =
   | 'case-session-updated'
   | 'patrol-progress'
   | 'patrol-case-completed'
+  | 'patrol-state'          // New: replaces patrol-updated + patrol-progress
+  | 'patrol-case'           // New: replaces patrol-case-completed + patrol-pipeline-update + case-subtask-progress
   | 'settings-updated'
   | 'case-session-started'
   | 'case-session-thinking'
