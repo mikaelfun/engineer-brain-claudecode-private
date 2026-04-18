@@ -158,7 +158,7 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
     writeFileSync(phaseFile, 'starting', 'utf-8')
   } catch { /* ignore */ }
 
-  sseManager.broadcast('patrol-progress' as any, {
+  sseManager.broadcast('patrol-state' as any, {
     phase: 'starting',
     detail: 'Launching patrol via SDK...',
   })
@@ -208,7 +208,7 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
             writeFileSync(lockPath(), JSON.stringify(lock, null, 2), 'utf-8')
           }
         } catch { /* ignore */ }
-        sseManager.broadcast('patrol-progress' as any, {
+        sseManager.broadcast('patrol-state' as any, {
           phase: 'starting',
           detail: `SDK session started`,
           sessionId: sdkSessionId,
@@ -223,7 +223,7 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
     const patrolResult = loadPatrolLastRun() as PatrolResult | null
 
     if (patrolResult) {
-      sseManager.broadcast('patrol-progress' as any, { ...patrolResult, phase: patrolResult.phase || 'completed' })
+      sseManager.broadcast('patrol-state' as any, { ...patrolResult, phase: patrolResult.phase || 'completed' })
       sseManager.broadcast('patrol-updated' as any, { reason: 'patrol-completed' })
       sseManager.broadcast('sessions-changed' as any, { reason: 'patrol-completed' })
       return patrolResult
@@ -248,7 +248,7 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
     const isAbort = msg.includes('abort')
     console.error(`[sdk-patrol] ${isAbort ? 'Cancelled' : 'Failed'}:`, msg)
 
-    sseManager.broadcast('patrol-progress' as any, {
+    sseManager.broadcast('patrol-state' as any, {
       phase: 'failed',
       error: isAbort ? 'Patrol cancelled by user' : msg,
     })
