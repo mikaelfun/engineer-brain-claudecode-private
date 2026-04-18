@@ -151,11 +151,14 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
   const startedAt = new Date().toISOString()
   console.log(`[sdk-patrol] Starting patrol via SDK query (force=${force})`)
 
-  // CRITICAL: Reset patrol-phase file to prevent stale "completed" from previous run
-  // being read by scanPatrolProgress() before the SDK agent writes "discovering"
+  // CRITICAL: Reset patrol-phase and patrol-progress.json to prevent stale data
   try {
     const phaseFile = join(config.patrolDir, 'patrol-phase')
     writeFileSync(phaseFile, 'starting', 'utf-8')
+  } catch { /* ignore */ }
+  try {
+    const progressFile = config.patrolProgressFile
+    if (existsSync(progressFile)) unlinkSync(progressFile)
   } catch { /* ignore */ }
 
   sseManager.broadcast('patrol-state' as any, {
