@@ -66,6 +66,13 @@ echo "🚀 data-refresh.sh: case=$CASE_NUMBER isAR=$IS_AR"
 echo "   case-dir=$CASE_DIR_ABS"
 echo "   events=$EVT_DIR"
 
+# ── Ensure Token Daemon running (background, non-blocking) ──
+# Daemon provides D365 OData HTTP proxy; Invoke-D365Api auto-detects.
+# If daemon already alive, warmup returns in <1s. If not, starts in background.
+# fetch-all-data.ps1 will fallback to playwright-cli if daemon isn't ready yet.
+node "$PROJECT_ROOT/.claude/skills/browser-profiles/scripts/token-daemon.js" warmup 2>/dev/null &
+DAEMON_WARMUP_PID=$!
+
 # ── Launch 5 parallel paths (labor merged into d365) ──
 LOGD="$OUT_DIR/logs"; mkdir -p "$LOGD"
 
@@ -276,7 +283,9 @@ except: print(0)
     echo "DIGEST_SKIP|teams|delta=0|existing=teams-digest.md" > "$LOGD/digest-teams.log"
   fi
 
-  # OneNote digest: delta > 0 OR no existing digest
+  # OneNote digest: delta > 0 OR no existing LLM-classified digest
+  # onenote-digest.md is now written exclusively by generate-digest.py (LLM classify).
+  # search-inline.py writes _search-log.md instead (matching Teams' _search-log.md pattern).
   PID_DIGEST_ONENOTE=""
   if [ "$ONENOTE_DELTA" -gt 0 ] || [ ! -f "$CASE_DIR_ABS/onenote/onenote-digest.md" ]; then
     if ls "$CASE_DIR_ABS/onenote/_page-"*.md 2>/dev/null | head -1 > /dev/null 2>&1; then

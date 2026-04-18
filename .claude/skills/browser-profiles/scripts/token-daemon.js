@@ -737,30 +737,71 @@ async function cmdEnsure() {
 // 命令: warmup
 // ═══════════════════════════════════════
 async function cmdWarmup() {
-  // 1. Ensure daemon
   const pid = readPid();
   const alive = pid && isProcessAlive(pid) && isHeartbeatFresh();
 
-  if (!alive) {
-    // Daemon 不存活 → 直接 start（前台模式会阻塞，改为 inline warmup）
-    log('Daemon not alive, doing inline warmup...');
-    await inlineWarmup();
+  if (alive) {
+    // Daemon 存活 → 检查各 token cache + 报告
+    const results = [];
+    for (const [name, config] of Object.entries(registry.tokens)) {
+      if (config.tokenSource === 'none') {
+        results.push(`${name}=session`);
+        continue;
+      }
+      const valid = isCacheValid(config.cacheFile, config.cacheTTLMinutes);
+      const remain = getCacheRemainMin(config.cacheFile, config.cacheTTLMinutes);
+      results.push(`${name}=${valid ? `cached(${remain}m)` : 'expired'}`);
+    }
+    console.log(`WARMUP_OK|daemon=alive|${results.join('|')}`);
     return;
   }
 
-  // 2. Daemon 存活 → 检查各 token cache
-  const results = [];
-  for (const [name, config] of Object.entries(registry.tokens)) {
-    if (config.tokenSource === 'none') {
-      results.push(`${name}=session`);
-      continue;
+  // Daemon 不存活 → ensure（后台启动）→ 等 port file（HTTP server 就绪）
+  log('Daemon not alive, ensuring daemon start...');
+
+  // 清理残留
+  if (pid) {
+    try { execSync(`taskkill /PID ${pid} /F /T 2>nul`, { encoding: 'utf-8', timeout: 5000 }); } catch {}
+  }
+  try { fs.unlinkSync(PID_FILE); } catch {}
+  try { fs.unlinkSync(PORT_FILE); } catch {}
+
+  // 后台启动 daemon
+  const child = spawn(process.execPath, [__filename, 'start'], {
+    detached: true,
+    stdio: 'ignore'
+  });
+  child.unref();
+
+  // 等 port file 出现（HTTP server 就绪 = daemon 完全启动，最多 120s）
+  let daemonReady = false;
+  for (let i = 0; i < 240; i++) {
+    await new Promise(r => setTimeout(r, 500));
+    if (fs.existsSync(PORT_FILE)) {
+      daemonReady = true;
+      break;
     }
-    const valid = isCacheValid(config.cacheFile, config.cacheTTLMinutes);
-    const remain = getCacheRemainMin(config.cacheFile, config.cacheTTLMinutes);
-    results.push(`${name}=${valid ? `cached(${remain}m)` : 'expired'}`);
   }
 
-  console.log(`WARMUP_OK|daemon=alive|${results.join('|')}`);
+  if (daemonReady) {
+    const newPid = readPid();
+    // 报告 token 状态
+    const results = [];
+    for (const [name, config] of Object.entries(registry.tokens)) {
+      if (config.tokenSource === 'none') {
+        results.push(`${name}=session`);
+        continue;
+      }
+      const valid = isCacheValid(config.cacheFile, config.cacheTTLMinutes);
+      const remain = getCacheRemainMin(config.cacheFile, config.cacheTTLMinutes);
+      results.push(`${name}=${valid ? `cached(${remain}m)` : 'expired'}`);
+    }
+    console.log(`WARMUP_OK|daemon=started(pid=${newPid})|${results.join('|')}`);
+  } else {
+    // Daemon 启动超时 → fallback inline warmup
+    log('Daemon start timeout (120s), falling back to inline warmup...');
+    await inlineWarmup();
+  }
 }
 
 /**
