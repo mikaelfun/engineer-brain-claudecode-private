@@ -3,10 +3,55 @@
  * 使用 react-markdown + remark-gfm + @tailwindcss/typography
  * 支持自定义表格、代码块、引用块样式，CSS 变量驱动主题化
  */
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeRaw from 'rehype-raw'
+
+/** Fetches image with JWT auth header, renders as blob URL (for /api/* endpoints) */
+function AuthImage({ src, alt, className, style }: { src: string; alt: string; className?: string; style?: React.CSSProperties }) {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null)
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    const token = localStorage.getItem('eb_token')
+    fetch(src, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+      .then(r => r.ok ? r.blob() : null)
+      .then(blob => {
+        if (cancelled) return
+        if (blob) setBlobUrl(URL.createObjectURL(blob))
+        else setFailed(true)
+      })
+      .catch(() => { if (!cancelled) setFailed(true) })
+    return () => {
+      cancelled = true
+      if (blobUrl) URL.revokeObjectURL(blobUrl)
+    }
+  }, [src])
+
+  if (failed) {
+    return (
+      <span
+        className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs"
+        style={{ background: 'var(--bg-inset)', color: 'var(--text-tertiary)', border: '1px solid var(--border-subtle)' }}
+      >
+        📷 {alt || 'image'}
+      </span>
+    )
+  }
+  if (!blobUrl) {
+    return (
+      <span
+        className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs animate-pulse"
+        style={{ background: 'var(--bg-inset)', color: 'var(--text-tertiary)' }}
+      >
+        ⏳ Loading image...
+      </span>
+    )
+  }
+  return <img src={blobUrl} alt={alt} className={className} style={style} loading="lazy" />
+}
 
 interface MarkdownContentProps {
   children: string
@@ -178,6 +223,41 @@ const markdownComponents = {
       {children}
     </a>
   ),
+
+  // Images: use auth fetch for /api/ URLs, show placeholder for graph.microsoft.com
+  img: ({ src, alt, ...props }: any) => {
+    if (src?.includes('graph.microsoft.com')) {
+      return (
+        <span
+          className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs"
+          style={{ background: 'var(--bg-inset)', color: 'var(--text-tertiary)', border: '1px solid var(--border-subtle)' }}
+        >
+          📷 {alt || 'image'}
+        </span>
+      )
+    }
+    // Local API images need auth headers — use AuthImage component
+    if (src?.startsWith('/api/')) {
+      return (
+        <AuthImage
+          src={src}
+          alt={alt || ''}
+          className="rounded-lg max-w-full my-2"
+          style={{ maxHeight: '300px', border: '1px solid var(--border-subtle)' }}
+        />
+      )
+    }
+    return (
+      <img
+        src={src}
+        alt={alt}
+        className="rounded-lg max-w-full my-2"
+        style={{ maxHeight: '300px', border: '1px solid var(--border-subtle)' }}
+        loading="lazy"
+        {...props}
+      />
+    )
+  },
 
   // Horizontal rule
   hr: (props: any) => (

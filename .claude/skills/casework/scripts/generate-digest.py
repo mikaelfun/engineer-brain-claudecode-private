@@ -220,6 +220,13 @@ Relevance criteria:
 - HIGH: Chat contains substantive discussion about the case — troubleshooting steps, customer feedback, PG guidance, technical findings, action items, progress updates, or closure/archival discussion.
 - LOW: Chat only briefly mentions the case number/ID, or is purely social/administrative, or about a different topic.
 
+CRITICAL ANTI-HALLUCINATION RULES:
+1. You MUST base your relevance judgment ONLY on the actual chat content provided. Do NOT infer relevance from the case title or case info alone.
+2. If the chat content does NOT mention the case number, AND does NOT discuss topics matching the case title/description, you MUST classify as LOW.
+3. If the chat discusses a DIFFERENT technical topic (e.g., case is about MFA but chat is about file caching), classify as LOW regardless of who the participants are.
+4. Your "reason" field MUST reference SPECIFIC messages or topics actually present in the chat. Never fabricate discussion topics that don't exist in the provided text.
+5. When in doubt, classify as LOW. False negatives are much less harmful than false positives (hallucinated relevance).
+
 Identity tags:
 - [customer] = non-@microsoft.com sender
 - [engineer] = fangkun@microsoft.com or case Assigned To
@@ -248,8 +255,8 @@ Rules:
 - Keep names/commands/technical terms in English, rest in Chinese
 - Sort by date (oldest first)
 - Include ALL important messages — especially recent ones about case closure, status changes, deployment updates
-- CRITICAL: Customer confirmations/agreements (even short ones like "sure", "ok", "好的", "可以") are KEY FACTS that MUST be extracted. A customer agreeing to close/archive a case is as important as the engineer proposing it.
-- For images: extract visible diagnostic info and add as facts"""
+- CRITICAL: Customer confirmations/agreements are KEY FACTS — but describe the MEANING, not the literal words. "Ok sure" in response to "shall we close the case?" should become "客户同意关闭 case", NOT "客户回复 Ok sure". Always interpret what the person agreed to or confirmed, don't quote their exact short reply.
+- For images/screenshots: extract visible diagnostic info and add as facts. IMPORTANT: if a fact was derived from a screenshot, append the original markdown image reference from the chat text at the END of the fact string, e.g.: "2026-04-17: 截图显示 Portal 报错 'Resource not found' ![image](./assets/msg123_0.png)". The image reference format is ![...](./assets/xxx.png) — find it in the chat text near the message that sent the screenshot."""
 
     user_text = f"""Case Number: {case_number}
 

@@ -186,20 +186,131 @@ q3 = load_resp('q3.json')
 # Extract chatIds
 all_ids = extract_chat_ids(q1) | extract_chat_ids(q2) | extract_chat_ids(q3)
 
+# Load local chat-index for incremental fetch
+chat_index_path = os.path.join(case_dir, 'teams', '_chat-index.json')
+local_index = {}
+if os.path.exists(chat_index_path):
+    try:
+        local_index = json.load(open(chat_index_path, encoding='utf-8'))
+    except:
+        pass
+
+def fetch_page(cid, call_id, extra_args=None):
+    """Fetch one page of messages. Returns list of message dicts."""
+    args = {'chatId': cid}
+    if extra_args:
+        args.update(extra_args)
+    resp = mcp_call(call_id, 'ListChatMessages', args)
+    if not resp:
+        return []
+    for c in resp.get('result', {}).get('content', []):
+        try:
+            raw = json.loads(c.get('text', ''))
+            return raw.get('messages', [])
+        except:
+            pass
+    return []
+
+def fetch_incremental(cid, call_id, last_msg_time):
+    """Incremental: fetch only messages after last_msg_time.
+
+    Uses filter=lastModifiedDateTime gt {last_msg_time} to get new messages only.
+    Paginates forward if there are more than 20 new messages.
+    Returns only the NEW messages (write-teams.ps1 will merge with existing).
+    """
+    all_new = []
+    # Use gt filter to get messages after the last known time
+    # Note: we need orderby on the same property as filter
+    page_args = {
+        'filter': f'lastModifiedDateTime gt {last_msg_time}',
+        'orderby': 'lastModifiedDateTime desc'
+    }
+
+    for page in range(5):  # max 5 pages of new messages (100 msgs)
+        msgs = fetch_page(cid, call_id + page * 100, page_args if page == 0 else {
+            'filter': f'lastModifiedDateTime gt {last_msg_time} and lastModifiedDateTime lt {cutoff}',
+            'orderby': 'lastModifiedDateTime desc'
+        } if page > 0 else None)
+
+        if not msgs:
+            break
+        all_new.extend(msgs)
+
+        if len(msgs) < 20:
+            break  # last page
+
+        cutoff = msgs[-1].get('createdDateTime', '')
+        if not cutoff:
+            break
+
+    return all_new
+
+def fetch_full_with_pagination(cid, call_id, keyword, max_pages=4):
+    """First-time fetch: paginate backwards to find keyword (case number).
+
+    Strategy:
+    1. Fetch latest 20 messages (page 1)
+    2. If keyword not found, paginate backwards
+    3. Stop when keyword found OR max_pages reached OR no more messages
+    4. Return ALL fetched messages
+    """
+    all_msgs = []
+    cutoff = None
+
+    for page in range(max_pages):
+        extra = {}
+        if cutoff:
+            extra = {
+                'filter': f'lastModifiedDateTime lt {cutoff}',
+                'orderby': 'lastModifiedDateTime desc'
+            }
+
+        msgs = fetch_page(cid, call_id + page * 100, extra if cutoff else None)
+        if not msgs:
+            break
+
+        all_msgs.extend(msgs)
+
+        # Check if keyword found in this page
+        if keyword:
+            page_text = ' '.join(m.get('body', {}).get('content', '') for m in msgs)
+            if keyword in page_text:
+                break
+
+        # Set cutoff for next page
+        oldest_dt = msgs[-1].get('createdDateTime', '')
+        if not oldest_dt or oldest_dt == cutoff:
+            break
+        cutoff = oldest_dt
+
+        if len(msgs) < 20:
+            break
+
+        # No keyword to search for → 1 page is enough
+        if page == 0 and not keyword:
+            break
+
+    return all_msgs
+
 # Fetch messages for each chat
+# - Has local cache (lastMessageTime in _chat-index.json) → incremental
+# - No local cache → full fetch with pagination to find case number
 chat_messages = {}
 for i, cid in enumerate(sorted(all_ids)):
-    resp = mcp_call(20 + i, 'ListChatMessages', {'chatId': cid, 'top': 20})
-    msgs = []
-    if resp:
-        for c in resp.get('result', {}).get('content', []):
-            try:
-                raw = json.loads(c.get('text', ''))
-                msgs = raw.get('messages', [])
-                break
-            except:
-                pass
+    cached = local_index.get(cid, {})
+    last_msg_time = cached.get('lastMessageTime', '') if isinstance(cached, dict) else ''
+
+    if last_msg_time:
+        # Incremental: only fetch new messages since last known
+        msgs = fetch_incremental(cid, 20 + i, last_msg_time)
+        mode = f'incremental(since={last_msg_time[:16]},new={len(msgs)})'
+    else:
+        # First time: full fetch with pagination
+        msgs = fetch_full_with_pagination(cid, 20 + i, case_number, max_pages=4)
+        mode = f'full(pages,msgs={len(msgs)})'
+
     chat_messages[cid] = msgs
+    print(f'  {cid[:30]}... {mode}', file=sys.stderr)
 
 # Build output
 search_results = [build_sr(case_number, q1)]
