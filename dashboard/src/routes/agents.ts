@@ -3,7 +3,6 @@
  */
 import { Hono } from 'hono'
 import { readAgents } from '../services/cron-reader.js'
-import { readPatrolState } from '../services/meta-reader.js'
 import {
   listTriggers,
   createTrigger,
@@ -147,15 +146,6 @@ agents.post('/triggers/:id/cancel', (c) => {
     return c.json({ error: 'Trigger is not running or not found' }, 404)
   }
   return c.json({ success: true, message: 'Trigger cancellation requested', id })
-})
-
-// GET /api/agents/patrol-state — 巡检状态
-agents.get('/patrol-state', (c) => {
-  const state = readPatrolState()
-  if (!state) {
-    return c.json({ error: 'Patrol state not found' }, 404)
-  }
-  return c.json(state)
 })
 
 export default agents

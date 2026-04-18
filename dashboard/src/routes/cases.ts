@@ -12,7 +12,7 @@ import { config } from '../config.js'
 const execFileAsync = promisify(execFile)
 import { parseNotes } from '../services/note-reader.js'
 import { parseLaborRecords } from '../services/labor-reader.js'
-import { readCaseMeta, readPatrolState } from '../services/meta-reader.js'
+import { readCaseMeta } from '../services/meta-reader.js'
 import { readCaseDrafts } from '../services/draft-reader.js'
 import { toggleCaseTodoItem } from '../services/todo-writer.js'
 import { readFileSync, existsSync, readdirSync, statSync } from 'fs'

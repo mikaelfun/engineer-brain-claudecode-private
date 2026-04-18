@@ -59,6 +59,7 @@ interface PatrolLock {
   pid: number
   startedAt: string
   force: boolean
+  sessionId?: string
 }
 
 // ============================================================
@@ -89,9 +90,11 @@ function isLockStale(lock: PatrolLock): boolean {
   const age = Date.now() - new Date(lock.startedAt).getTime()
   if (age > STALE_LOCK_MS) return true
 
-  // Check if PID is still alive (WebUI-originated patrols)
+  // For WebUI: if abortController is null, SDK query already finished/crashed
+  // but lock wasn't cleaned up (process crash, uncaught exception)
   if (lock.source === 'webui') {
-    try { process.kill(lock.pid, 0); return false } catch { return true }
+    if (!abortController) return true // no active query → stale
+    return false
   }
 
   // For CLI-originated, check phase file age as proxy
@@ -148,6 +151,13 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
   const startedAt = new Date().toISOString()
   console.log(`[sdk-patrol] Starting patrol via SDK query (force=${force})`)
 
+  // CRITICAL: Reset patrol-phase file to prevent stale "completed" from previous run
+  // being read by scanPatrolProgress() before the SDK agent writes "discovering"
+  try {
+    const phaseFile = join(config.patrolDir, 'patrol-phase')
+    writeFileSync(phaseFile, 'starting', 'utf-8')
+  } catch { /* ignore */ }
+
   sseManager.broadcast('patrol-progress' as any, {
     phase: 'starting',
     detail: 'Launching patrol via SDK...',
@@ -163,6 +173,8 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
     const projectRoot = getProjectRoot()
     const claudeMdPath = join(projectRoot, 'CLAUDE.md')
     const claudeMdContent = existsSync(claudeMdPath) ? readFileSync(claudeMdPath, 'utf-8') : ''
+
+    let sdkSessionId: string | null = null
 
     for await (const message of query({
       prompt: promptText,
@@ -184,20 +196,25 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
         stderr: (data: string) => console.error(`[SDK:stderr:patrol]`, data.trim()),
       },
     })) {
-      // Broadcast SDK messages for real-time SSE (thinking, tool calls, etc.)
-      if (message.type === 'assistant' && message.message) {
-        const content = message.message.content
-        if (Array.isArray(content)) {
-          for (const block of content) {
-            if (block.type === 'text' && block.text) {
-              sseManager.broadcast('patrol-progress' as any, {
-                phase: 'processing',
-                detail: block.text.slice(0, 200),
-              })
-            }
+      // Extract session ID from first message
+      if (!sdkSessionId && 'session_id' in message) {
+        sdkSessionId = (message as any).session_id
+        console.log(`[sdk-patrol] Session ID: ${sdkSessionId}`)
+        // Update lock file with session ID
+        try {
+          const lock = readLock()
+          if (lock) {
+            lock.sessionId = sdkSessionId!
+            writeFileSync(lockPath(), JSON.stringify(lock, null, 2), 'utf-8')
           }
-        }
+        } catch { /* ignore */ }
+        sseManager.broadcast('patrol-progress' as any, {
+          phase: 'starting',
+          detail: `SDK session started`,
+          sessionId: sdkSessionId,
+        })
       }
+      // Progress is handled by file-watcher → SSE (patrol-phase, .casework/events, pipeline-state)
     }
 
     console.log(`[sdk-patrol] SDK query completed`)
@@ -268,7 +285,7 @@ export function isSdkPatrolRunning(): boolean {
   return true
 }
 
-/** Get current patrol progress by reading patrol-phase file */
+/** Get current patrol progress by reading lock + patrol-progress.json */
 export function getSdkPatrolLiveProgress(): Record<string, unknown> | null {
   const lock = readLock()
   if (!lock) return null
@@ -277,21 +294,15 @@ export function getSdkPatrolLiveProgress(): Record<string, unknown> | null {
     source: lock.source,
     startedAt: lock.startedAt,
     force: lock.force,
+    sessionId: lock.sessionId || null,
   }
 
-  // Read phase file
+  // Read patrol-progress.json (written by patrol skill)
   try {
-    const phaseFile = join(config.patrolDir, 'patrol-phase')
-    if (existsSync(phaseFile)) {
-      const raw = readFileSync(phaseFile, 'utf-8').trim()
-      const [phase, progress] = raw.split('|')
-      result.phase = phase
-      if (progress) {
-        const [done, total] = progress.split('/')
-        result.processedCases = parseInt(done, 10) || 0
-        result.totalCases = parseInt(total, 10) || 0
-        result.detail = `${done}/${total} cases`
-      }
+    const progressFile = config.patrolProgressFile
+    if (existsSync(progressFile)) {
+      const progress = JSON.parse(readFileSync(progressFile, 'utf-8'))
+      Object.assign(result, progress)
     }
   } catch { /* ignore */ }
 
