@@ -103,7 +103,7 @@ AR Case 额外读取 `notes-ar.md`。
 - [{YYYY-MM-DD}] {事件描述}
 
 ## 关键发现
-- {发现1}
+- [{YYYY-MM-DD}] {发现内容} — *来源: {email/note/teams/analysis/ICM}*
 
 ## 风险
 - {基于 actualStatus + days + IR SLA 状态的风险评估}
@@ -114,7 +114,7 @@ AR Case 额外读取 `notes-ar.md`。
 - 「问题描述」从 case-info title + 首封邮件提取，一句话
 - 「SAP 与标签」从 `casework-meta.json` 读取 `compliance.sapPath`、`sapCheck`、`ccAccount`、`compliance.is21vConvert` 等字段
 - 「Timeline」按时间线梳理关键事件（邮件往来、电话、Note 记录等）。**同一日期的多条事件合并为一条**，用分号分隔。每个日期只保留一行 `- [{YYYY-MM-DD}] {合并后的事件描述}`
-- 「关键发现」提取诊断结论（来自 analysis/ 或邮件中的技术内容）
+- 「关键发现」提取诊断结论，每条附 **日期** 和 **来源**。格式 `- [{YYYY-MM-DD}] {发现内容} — *来源: {source}*`。来源标注规则：`email`=邮件中的技术结论，`note`=D365 Note，`teams`=Teams 对话，`analysis`=analysis/ 文件，`ICM`=ICM 讨论/更新，`PG`=产品组回复
 - 「风险」评估 IR SLA 状态、客户响应天数、是否需要升级等。**不关注 FDR/FWR**（这些指标在 Dashboard header 已有 badge 展示）
 - **RDSE 客户时**：在「问题描述」末尾注明 `[RDSE: {ccAccount}]`
 

@@ -201,11 +201,70 @@ function TimelineSection({ section }: { section: Section }) {
 }
 
 function FindingsSection({ section }: { section: Section }) {
+  // Parse findings: new format "- [{date}] {content} — *来源: {source}*" or old format "- {content}"
+  const findings = section.rawLines
+    .filter(l => l.trim().startsWith('- '))
+    .map(l => {
+      const text = l.trim().slice(2)
+      // Try new format with date and source
+      const match = text.match(/^\[(\d{4}-\d{1,2}-\d{1,2})\]\s*(.+?)\s*—\s*\*来源:\s*(.+?)\*\s*$/)
+      if (match) return { date: match[1], content: match[2], source: match[3] }
+      // Try date only, no source
+      const dateOnly = text.match(/^\[(\d{4}-\d{1,2}-\d{1,2})\]\s*(.+)$/)
+      if (dateOnly) return { date: dateOnly[1], content: dateOnly[2], source: '' }
+      // Old format — no date, no source
+      return { date: '', content: text, source: '' }
+    })
+
+  // Source → color mapping
+  const sourceStyle = (src: string): { color: string; bg: string } => {
+    const s = src.toLowerCase()
+    if (s.includes('icm') || s.includes('pg')) return { color: 'var(--accent-purple)', bg: 'var(--accent-purple-dim)' }
+    if (s.includes('email')) return { color: 'var(--accent-blue)', bg: 'var(--accent-blue-dim)' }
+    if (s.includes('teams')) return { color: 'var(--accent-green)', bg: 'var(--accent-green-dim)' }
+    if (s.includes('analysis')) return { color: 'var(--accent-amber)', bg: 'var(--accent-amber-dim)' }
+    if (s.includes('note')) return { color: 'var(--text-tertiary)', bg: 'var(--bg-tertiary)' }
+    return { color: 'var(--text-tertiary)', bg: 'var(--bg-tertiary)' }
+  }
+
+  if (findings.length === 0) {
+    return (
+      <Card padding="sm" style={{ borderLeft: '3px solid var(--accent-green)' }}>
+        <h4 className="font-bold text-base mb-2" style={{ color: 'var(--accent-green)' }}>💡 关键发现</h4>
+        <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+          <MarkdownContent>{section.content}</MarkdownContent>
+        </div>
+      </Card>
+    )
+  }
+
   return (
     <Card padding="sm" style={{ borderLeft: '3px solid var(--accent-green)' }}>
       <h4 className="font-bold text-base mb-2" style={{ color: 'var(--accent-green)' }}>💡 关键发现</h4>
-      <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-        <MarkdownContent>{section.content}</MarkdownContent>
+      <div className="space-y-2.5">
+        {findings.map((f, i) => (
+          <div key={i} className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            <div className="flex items-start gap-2">
+              <span className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: 'var(--accent-green)' }} />
+              <div className="flex-1 min-w-0">
+                <p className="leading-relaxed" style={{ color: 'var(--text-primary)' }}>{f.content}</p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  {f.date && (
+                    <span className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>{f.date}</span>
+                  )}
+                  {f.source && (() => {
+                    const st = sourceStyle(f.source)
+                    return (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: st.color, background: st.bg }}>
+                        {f.source}
+                      </span>
+                    )
+                  })()}
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </Card>
   )
