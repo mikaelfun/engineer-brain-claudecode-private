@@ -1,66 +1,54 @@
 /**
- * patrolStore.ts — Zustand store for real-time patrol progress
+ * patrolStore.ts — Zustand store for patrol progress (v3 rewrite)
  *
- * Updated by SSE events (patrol-progress, patrol-case-completed).
- * Retains last patrol run results until next patrol starts.
- * Persists completion state to localStorage so page refresh doesn't lose results.
+ * Consumes 2 SSE events: patrol-state, patrol-case.
+ * Replaces v2 store (12 actions → 2 handlers).
+ *
+ * Backward-compat shims (isRunning, onPatrolProgress, etc.) are provided
+ * for useSSE.ts / AgentMonitor / Dashboard until Task 11 cleans them up.
  */
 import { create } from 'zustand'
 
-const STORAGE_KEY = 'patrol-store-state'
+// ─── Types ───
 
-// Forward-declare for persistToStorage
-interface PatrolStatePersist {
-  phase: string
-  totalCases: number
-  changedCases: number
-  processedCases: number
-  caseProgress: PatrolCaseProgress[]
-  error?: string
-  detail?: string
-  lastCompletedAt?: string
-  isRunning: boolean
-  savedAt?: string
+export type PatrolPhase =
+  | 'idle' | 'starting' | 'discovering' | 'filtering'
+  | 'warming-up' | 'processing' | 'aggregating'
+  | 'completed' | 'failed'
+
+export type StepStatus = 'pending' | 'active' | 'completed' | 'failed' | 'skipped'
+
+export interface SubtaskState {
+  status: StepStatus
+  durationMs?: number
 }
 
-/** Save patrol completion state to localStorage */
-function persistToStorage(state: PatrolStatePersist) {
-  try {
-    const data = {
-      ...state,
-      savedAt: new Date().toISOString(),
-    }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
-  } catch { /* localStorage unavailable */ }
+export interface ActionState {
+  type: string
+  status: StepStatus
+  durationMs?: number
 }
 
-/** Load patrol state from localStorage (returns partial state or null) */
-function loadFromStorage(): PatrolStatePersist | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return null
-    const data = JSON.parse(raw)
-    // Only restore if saved within last 2 hours
-    const savedAt = new Date(data.savedAt).getTime()
-    if (Date.now() - savedAt > 2 * 60 * 60 * 1000) return null
-    return data
-  } catch { return null }
+export interface StepState {
+  status: StepStatus
+  startedAt?: string
+  completedAt?: string
+  durationMs?: number
+  result?: string
+  subtasks?: Record<string, SubtaskState>
+  actions?: ActionState[]
 }
 
-// Load initial state from localStorage
-// If restored state says running but is stale (>30min), treat as not running
-const _restored = loadFromStorage()
-const restored = _restored?.isRunning && _restored.savedAt
-  ? (() => {
-      const age = Date.now() - new Date(_restored.savedAt as string).getTime()
-      if (age > 30 * 60 * 1000) {
-        // Stale running state — patrol must have completed/failed while browser was closed
-        return { ..._restored, isRunning: false, phase: _restored.phase || 'completed' }
-      }
-      return _restored
-    })()
-  : _restored
+export interface CaseState {
+  caseNumber: string
+  currentStep?: string
+  steps: Record<string, StepState>
+  updatedAt?: string
+}
 
+// ─── Legacy types (kept for backward compat, remove in Task 11) ───
+
+/** @deprecated Use CaseState instead */
 export interface PatrolCaseProgress {
   caseNumber: string
   status: 'queued' | 'pending' | 'processing' | 'completed' | 'failed'
@@ -69,222 +57,234 @@ export interface PatrolCaseProgress {
   lastActivity?: string
   durationMs?: number
   error?: string
+  substeps?: Record<string, { status: string; durationMs?: number }>
+  actions?: ActionState[]
 }
 
-/** Snapshot of a completed patrol run */
-export interface PatrolRunSnapshot {
-  phase: string
+// ─── Store ───
+
+interface PatrolStore {
+  // Global
+  phase: PatrolPhase
   totalCases: number
   changedCases: number
   processedCases: number
-  caseProgress: PatrolCaseProgress[]
+  startedAt?: string
+  completedAt?: string
   error?: string
-  detail?: string
-  completedAt: string
-}
+  caseList: string[]
 
-interface PatrolState {
-  isRunning: boolean
-  phase: string
-  totalCases: number
-  changedCases: number
-  processedCases: number
-  currentCase?: string
-  caseProgress: PatrolCaseProgress[]
-  error?: string
-  detail?: string
-  lastCompletedAt?: string
+  // Per-case (v3)
+  cases: Record<string, CaseState>
 
-  /** Snapshot of previous patrol run (kept until next patrol starts) */
-  lastRun: PatrolRunSnapshot | null
+  // SSE handlers (v3)
+  onPatrolState: (data: Record<string, unknown>) => void
+  onCaseUpdate: (data: Record<string, unknown>) => void
 
-  // Actions called by SSE event handlers
-  onPatrolProgress: (data: any) => void
-  onPatrolCaseCompleted: (data: any) => void
-  /** Update sub-step progress for a specific case during patrol */
-  onCaseStepUpdate: (caseNumber: string, update: { step?: string; tool?: string }) => void
-  /** V2: Update per-case pipeline state from .casework/pipeline-state.json */
-  onPipelineUpdate: (data: { caseNumber: string; currentStep: string; steps: Record<string, { status: string }> }) => void
-  /** Called when user clicks Start Patrol — immediately clears old progress and sets running */
-  startNew: () => void
+  // User actions
+  start: () => void
   reset: () => void
+
+  // ─── Backward-compat shims (remove in Task 11) ───
+  /** @deprecated — derived from phase */
+  isRunning: boolean
+  /** @deprecated — use cases[x].currentStep */
+  currentCase?: string
+  /** @deprecated — derived from cases */
+  caseProgress: PatrolCaseProgress[]
+  /** @deprecated — not used in v3 */
+  detail?: string
+  /** @deprecated — renamed to completedAt */
+  lastCompletedAt?: string
+  /** @deprecated — alias for onPatrolState */
+  onPatrolProgress: (data: any) => void
+  /** @deprecated — alias for onCaseUpdate */
+  onPatrolCaseCompleted: (data: any) => void
+  /** @deprecated — no-op in v3 */
+  onCaseStepUpdate: (caseNumber: string, update: { step?: string; tool?: string }) => void
+  /** @deprecated — no-op in v3 */
+  onSubtaskUpdate: (caseNumber: string, subtask: string, status: string, durationMs?: number) => void
+  /** @deprecated — no-op in v3 */
+  onPipelineUpdate: (data: any) => void
+  /** @deprecated — alias for start() */
+  startNew: () => void
 }
 
-export const usePatrolStore = create<PatrolState>()((set) => ({
-  isRunning: restored?.isRunning ?? false,
-  phase: restored?.phase ?? '',
-  totalCases: restored?.totalCases ?? 0,
-  changedCases: restored?.changedCases ?? 0,
-  processedCases: restored?.processedCases ?? 0,
+const RUNNING_PHASES: PatrolPhase[] = [
+  'starting', 'discovering', 'filtering', 'warming-up', 'processing', 'aggregating',
+]
+
+function deriveProcessedCount(cases: Record<string, CaseState>): number {
+  return Object.values(cases).filter(c => {
+    const sum = c.steps?.summarize
+    const act = c.steps?.act
+    return sum?.status === 'completed' || sum?.status === 'skipped'
+      || (act?.status === 'completed' && sum?.status !== 'active')
+  }).length
+}
+
+/** Derive legacy caseProgress array from v3 cases map */
+function deriveCaseProgress(cases: Record<string, CaseState>): PatrolCaseProgress[] {
+  return Object.values(cases).map(c => {
+    const hasActive = Object.values(c.steps).some(s => s.status === 'active')
+    const hasFailed = Object.values(c.steps).some(s => s.status === 'failed')
+    const isComplete =
+      c.steps?.summarize?.status === 'completed' ||
+      c.steps?.summarize?.status === 'skipped' ||
+      (c.steps?.act?.status === 'completed' && c.steps?.summarize?.status !== 'active')
+
+    let status: PatrolCaseProgress['status'] = 'queued'
+    if (isComplete) status = hasFailed ? 'failed' : 'completed'
+    else if (hasActive) status = 'processing'
+
+    return {
+      caseNumber: c.caseNumber,
+      status,
+      currentStep: c.currentStep,
+    }
+  })
+}
+
+export const usePatrolStore = create<PatrolStore>()((set, get) => ({
+  // ─── v3 state ───
+  phase: 'idle',
+  totalCases: 0,
+  changedCases: 0,
+  processedCases: 0,
+  startedAt: undefined,
+  completedAt: undefined,
+  error: undefined,
+  caseList: [],
+  cases: {},
+
+  // ─── Compat derived state ───
+  isRunning: false,
   currentCase: undefined,
-  caseProgress: restored?.caseProgress ?? [],
-  error: restored?.error,
-  detail: restored?.detail,
-  lastCompletedAt: restored?.lastCompletedAt,
-  lastRun: null,
+  caseProgress: [],
+  detail: undefined,
+  lastCompletedAt: undefined,
 
-  onPatrolProgress: (data) => set((state) => {
-    // New patrol starting — snapshot previous run before resetting
-    // Also handle when startNew() already set phase to 'starting'
-    if (data.phase === 'discovering' && state.phase !== 'discovering') {
-      const snapshot: PatrolRunSnapshot | null = (state.phase !== 'starting' && state.lastCompletedAt) ? {
-        phase: state.phase,
-        totalCases: state.totalCases,
-        changedCases: state.changedCases,
-        processedCases: state.processedCases,
-        caseProgress: state.caseProgress,
-        error: state.error,
-        detail: state.detail,
-        completedAt: state.lastCompletedAt,
-      } : state.lastRun
+  // ─── v3 SSE handlers ───
 
-      const newState = {
-        ...state,
-        isRunning: true,
-        phase: data.phase,
-        totalCases: data.totalCases ?? 0,
-        changedCases: 0,
-        processedCases: 0,
-        currentCase: undefined,
-        caseProgress: [] as PatrolCaseProgress[],
-        error: undefined,
-        detail: data.detail,
-        lastRun: snapshot,
-      }
-      persistToStorage(newState)
-      return newState
+  onPatrolState: (data) => set(() => {
+    const phase = (data.phase as PatrolPhase) || 'idle'
+    const update: Partial<PatrolStore> = {
+      phase,
+      isRunning: RUNNING_PHASES.includes(phase),
     }
 
-    const update: Partial<PatrolState> = {
-      phase: data.phase,
-      isRunning: !['completed', 'failed'].includes(data.phase),
+    if (data.totalCases !== undefined) update.totalCases = data.totalCases as number
+    if (data.changedCases !== undefined) update.changedCases = data.changedCases as number
+    if (data.processedCases !== undefined) update.processedCases = data.processedCases as number
+    if (data.startedAt) update.startedAt = data.startedAt as string
+    if (data.error) update.error = data.error as string
+    if (data.detail !== undefined) update.detail = data.detail as string
+    if (data.caseList && Array.isArray(data.caseList)) update.caseList = data.caseList as string[]
+    if (data.currentCase) update.currentCase = data.currentCase as string
+    if (phase === 'completed') {
+      update.completedAt = new Date().toISOString()
+      update.lastCompletedAt = update.completedAt
     }
-    if (data.totalCases !== undefined) update.totalCases = data.totalCases
-    if (data.changedCases !== undefined) update.changedCases = data.changedCases
-    if (data.processedCases !== undefined) update.processedCases = data.processedCases
-    if (data.error) update.error = data.error
-    if (data.detail !== undefined) update.detail = data.detail
-    if (data.currentCase) update.currentCase = data.currentCase
-    if (data.phase === 'completed') update.lastCompletedAt = new Date().toISOString()
-    // When discovering phase sends full case list, initialize all cases as "queued"
-    if (data.caseList && Array.isArray(data.caseList) && data.caseList.length > 0) {
-      update.caseProgress = data.caseList.map((cn: string) => ({
-        caseNumber: cn,
-        status: 'queued' as const,
-      }))
+    if (phase === 'starting') {
+      update.cases = {}
+      update.caseProgress = []
+      update.processedCases = 0
+      update.error = undefined
+      update.completedAt = undefined
+      update.lastCompletedAt = undefined
     }
-    if (data.currentCase) {
-      // Update case from queued→processing, or add new if not tracked
-      const currentProgress = update.caseProgress ?? state.caseProgress
-      const existingCase = currentProgress.find(c => c.caseNumber === data.currentCase)
-      if (!existingCase) {
-        update.caseProgress = [
-          ...currentProgress,
-          { caseNumber: data.currentCase, status: 'processing' as const },
-        ]
-      } else if (existingCase.status === 'queued') {
-        update.caseProgress = currentProgress.map(c =>
-          c.caseNumber === data.currentCase ? { ...c, status: 'processing' as const } : c
-        )
-      }
-    }
-    const merged = { ...state, ...update }
-    // Persist on phase transitions (completed/failed) and progress updates
-    if (['completed', 'failed', 'processing'].includes(data.phase)) {
-      persistToStorage(merged)
-    }
-    return merged
+
+    return update
   }),
 
-  onPatrolCaseCompleted: (data) => set((state) => {
-    const newState = {
-      processedCases: data.processedCases ?? state.processedCases + 1,
-      caseProgress: [
-        ...state.caseProgress.filter(c => c.caseNumber !== data.caseNumber),
-        {
-          caseNumber: data.caseNumber,
-          status: (data.error ? 'failed' : 'completed') as PatrolCaseProgress['status'],
+  onCaseUpdate: (data) => set((state) => {
+    const caseNumber = data.caseNumber as string
+    if (!caseNumber) return state
+
+    const caseState: CaseState = {
+      caseNumber,
+      currentStep: data.currentStep as string | undefined,
+      steps: (data.steps as Record<string, StepState>) || {},
+      updatedAt: data.updatedAt as string | undefined,
+    }
+
+    const newCases = { ...state.cases, [caseNumber]: caseState }
+    const processedCases = deriveProcessedCount(newCases)
+    const caseProgress = deriveCaseProgress(newCases)
+
+    return { cases: newCases, processedCases, caseProgress }
+  }),
+
+  // ─── User actions ───
+
+  start: () => set({
+    phase: 'starting',
+    isRunning: true,
+    totalCases: 0,
+    changedCases: 0,
+    processedCases: 0,
+    cases: {},
+    caseProgress: [],
+    error: undefined,
+    completedAt: undefined,
+    lastCompletedAt: undefined,
+    startedAt: new Date().toISOString(),
+  }),
+
+  reset: () => set({
+    phase: 'idle',
+    isRunning: false,
+    totalCases: 0,
+    changedCases: 0,
+    processedCases: 0,
+    cases: {},
+    caseProgress: [],
+    caseList: [],
+    error: undefined,
+    detail: undefined,
+    startedAt: undefined,
+    completedAt: undefined,
+    lastCompletedAt: undefined,
+    currentCase: undefined,
+  }),
+
+  // ─── Backward-compat shims (remove in Task 11) ───
+
+  onPatrolProgress: (data: any) => {
+    get().onPatrolState(data)
+  },
+
+  onPatrolCaseCompleted: (data: any) => {
+    // Map legacy case-completed event to v3 onCaseUpdate
+    const caseNumber = data.caseNumber as string
+    if (!caseNumber) return
+    get().onCaseUpdate({
+      caseNumber,
+      steps: {
+        summarize: {
+          status: data.error ? 'failed' : 'completed',
           durationMs: data.durationMs,
-          error: data.error,
         },
-      ],
-    }
-    persistToStorage({ ...state, ...newState })
-    return newState
-  }),
-
-  onCaseStepUpdate: (caseNumber, update) => set((state) => {
-    if (!state.isRunning) return state
-    const idx = state.caseProgress.findIndex(c => c.caseNumber === caseNumber)
-    if (idx === -1) return state // case not tracked by patrol
-    const existing = state.caseProgress[idx]
-    if (existing.status === 'completed' || existing.status === 'failed') return state // done
-    const updated = [...state.caseProgress]
-    updated[idx] = {
-      ...existing,
-      currentStep: update.step ?? existing.currentStep,
-      lastTool: update.tool ?? existing.lastTool,
-      lastActivity: new Date().toISOString(),
-    }
-    return { caseProgress: updated }
-  }),
-
-  onPipelineUpdate: (data) => set((state) => {
-    if (!state.isRunning) return state
-    const idx = state.caseProgress.findIndex(c => c.caseNumber === data.caseNumber)
-    if (idx === -1) return state
-    const existing = state.caseProgress[idx]
-    if (existing.status === 'completed' || existing.status === 'failed') return state
-    const updated = [...state.caseProgress]
-    updated[idx] = {
-      ...existing,
-      currentStep: data.currentStep,
-      lastActivity: new Date().toISOString(),
-    }
-    return { caseProgress: updated }
-  }),
-
-  startNew: () => set((state) => {
-    // Snapshot previous run before clearing
-    const snapshot: PatrolRunSnapshot | null = state.lastCompletedAt ? {
-      phase: state.phase,
-      totalCases: state.totalCases,
-      changedCases: state.changedCases,
-      processedCases: state.processedCases,
-      caseProgress: state.caseProgress,
-      error: state.error,
-      detail: state.detail,
-      completedAt: state.lastCompletedAt,
-    } : null
-
-    const newState = {
-      isRunning: true,
-      phase: 'starting',
-      totalCases: 0,
-      changedCases: 0,
-      processedCases: 0,
-      currentCase: undefined,
-      caseProgress: [] as PatrolCaseProgress[],
-      error: undefined,
-      detail: undefined,
-      lastRun: snapshot,
-    }
-    persistToStorage(newState as any)
-    return newState
-  }),
-
-  reset: () => {
-    try { localStorage.removeItem(STORAGE_KEY) } catch { /* ignore */ }
-    return set({
-      isRunning: false,
-      phase: '',
-      totalCases: 0,
-      changedCases: 0,
-      processedCases: 0,
-      caseProgress: [],
-      error: undefined,
-      detail: undefined,
-      lastRun: null,
+      },
     })
+  },
+
+  onCaseStepUpdate: (_caseNumber: string, _update: { step?: string; tool?: string }) => {
+    // No-op in v3 — step updates come via onCaseUpdate
+  },
+
+  onSubtaskUpdate: (_caseNumber: string, _subtask: string, _status: string, _durationMs?: number) => {
+    // No-op in v3 — subtask updates come via onCaseUpdate
+  },
+
+  onPipelineUpdate: (data: any) => {
+    // Forward to onCaseUpdate for v3
+    if (data.caseNumber) {
+      get().onCaseUpdate(data)
+    }
+  },
+
+  startNew: () => {
+    get().start()
   },
 }))
