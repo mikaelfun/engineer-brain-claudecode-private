@@ -27,13 +27,13 @@ const tokenOnlyMode = args.includes('--token-only');
 const incidentId = tokenOnlyMode ? null : args[args.indexOf('--single') + 1];
 const caseDirIdx = args.indexOf('--case-dir');
 const caseDir = caseDirIdx !== -1 ? args[caseDirIdx + 1] : null;
-// Casework v2 Task 5.3: optional event dir — when provided, writes
-// {eventDir}/icm.json with active/completed/failed status + delta.newEntries.
+// Casework v2: optional output dir — when provided, writes
+// {outputDir}/icm.json with active/completed/failed status + delta.newEntries.
 // Backward compatible: absent → legacy stdout-only behavior.
-const eventDirIdx = args.indexOf('--event-dir');
-const eventDir = eventDirIdx !== -1 ? args[eventDirIdx + 1] : null;
+const outputDirIdx = args.indexOf('--output-dir');
+const outputDir = outputDirIdx !== -1 ? args[outputDirIdx + 1] : null;
 if (!tokenOnlyMode && (!incidentId || !caseDir)) {
-  console.error('Usage: node icm-discussion-ab.js --single <incidentId> --case-dir <dir> [--event-dir <dir>]');
+  console.error('Usage: node icm-discussion-ab.js --single <incidentId> --case-dir <dir> [--output-dir <dir>]');
   console.error('       node icm-discussion-ab.js --token-only');
   process.exit(1);
 }
@@ -54,10 +54,10 @@ function log(msg) {
 const eventStartTs = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
 const eventStartMs = Date.now();
 function writeIcmEvent(payload) {
-  if (!eventDir) return;
+  if (!outputDir) return;
   try {
-    fs.mkdirSync(eventDir, { recursive: true });
-    const final = path.join(eventDir, 'icm.json');
+    fs.mkdirSync(outputDir, { recursive: true });
+    const final = path.join(outputDir, 'icm.json');
     const tmp = `${final}.tmp.${process.pid}.${Math.floor(Math.random() * 1e9)}`;
     fs.writeFileSync(tmp, JSON.stringify({ task: 'icm', ...payload }), 'utf-8');
     fs.renameSync(tmp, final);

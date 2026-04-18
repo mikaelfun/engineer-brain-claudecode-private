@@ -35,13 +35,13 @@ done
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../../../.." && pwd)"
 UPDATE_STATE="$PROJECT_ROOT/.claude/skills/casework/scripts/update-state.py"
-EVENT_DIR="$CASE_DIR/.casework/events"
+SUBTASK_DIR="$CASE_DIR/.casework/output/subtasks"
 
 START_TS=$(date -u +%FT%TZ)
 START_NS=$(date +%s%N)
 
 if [ -f "$UPDATE_STATE" ]; then
-  mkdir -p "$EVENT_DIR"
+  mkdir -p "$SUBTASK_DIR"
   python3 "$UPDATE_STATE" --case-dir "$CASE_DIR" --step data-refresh --subtask teams --status active
 fi
 
@@ -61,8 +61,8 @@ write_failed_event() {
     local dur_ms
     dur_ms=$(( ($(date +%s%N) - START_NS) / 1000000 ))
     python3 "$UPDATE_STATE" --case-dir "$CASE_DIR" --step data-refresh --subtask teams --status failed --duration-ms "$dur_ms" 2>/dev/null || true
-    # Legacy event for aggregation backward compat (data-refresh.sh reads events/*.json)
-    [ -d "$EVENT_DIR" ] && echo '{"task":"teams","status":"failed","startedAt":"'"$START_TS"'","durationMs":'"$dur_ms"',"error":"'"$reason"'"}' > "$EVENT_DIR/teams.json" 2>/dev/null || true
+    # Write subtask delta file for aggregation
+    [ -d "$SUBTASK_DIR" ] && echo '{"task":"teams","status":"failed","startedAt":"'"$START_TS"'","durationMs":'"$dur_ms"',"error":"'"$reason"'"}' > "$SUBTASK_DIR/teams.json" 2>/dev/null || true
   fi
 }
 
@@ -251,7 +251,7 @@ fi
 set +e
 PY_OUTPUT=$(MCP_WD="$WD" MCP_CASE_DIR="$CASE_DIR" MCP_CASE_NUMBER="$CASE_NUMBER" \
   MCP_CONTACT_EMAIL="$CONTACT_EMAIL" MCP_PORT="$PORT" MCP_T0="$T0" \
-  MCP_EVENT_DIR="$EVENT_DIR" MCP_START_TS="$START_TS" \
+  MCP_EVENT_DIR="$SUBTASK_DIR" MCP_START_TS="$START_TS" \
   MCP_GRAPH_TOKEN="$GRAPH_TOKEN" \
   python3 << 'PYEOF'
 import json, os, subprocess, time, re
@@ -479,7 +479,7 @@ if not os.environ.get('TEAMS_SKIP_IMAGES', ''):
                 if not _skype_url:
                     continue  # couldn't decode Skype URL from contentId
                 _local = os.path.join(_assets, _fn)
-                _rel = f"./assets/{_fn}"
+                _rel = f"assets/{_fn}"
                 # Cache: skip if file already exists with content
                 if os.path.exists(_local) and os.path.getsize(_local) > 0:
                     image_map[_graph_url] = _rel
@@ -645,12 +645,12 @@ if [ -f "$UPDATE_STATE" ]; then
   NEW_MSGS="${NEW_MSGS:-0}"; NEW_CHATS="${NEW_CHATS:-0}"
   if [ "$TEAMS_EXIT" = "0" ]; then
     python3 "$UPDATE_STATE" --case-dir "$CASE_DIR" --step data-refresh --subtask teams --status completed --duration-ms "$DURATION_MS"
-    # Legacy event for aggregation backward compat (data-refresh.sh reads events/*.json)
-    echo '{"task":"teams","status":"completed","startedAt":"'"$START_TS"'","completedAt":"'"$(date -u +%FT%TZ)"'","durationMs":'"$DURATION_MS"',"delta":{"newMessages":'"$NEW_MSGS"',"newChats":'"$NEW_CHATS"',"totalMessages":'"$TOTAL_MSGS"',"totalChats":'"$TOTAL_CHATS"'}}' > "$EVENT_DIR/teams.json"
+    # Write subtask delta file for aggregation (output/subtasks/teams.json)
+    echo '{"task":"teams","status":"completed","startedAt":"'"$START_TS"'","completedAt":"'"$(date -u +%FT%TZ)"'","durationMs":'"$DURATION_MS"',"delta":{"newMessages":'"$NEW_MSGS"',"newChats":'"$NEW_CHATS"',"totalMessages":'"$TOTAL_MSGS"',"totalChats":'"$TOTAL_CHATS"'}}' > "$SUBTASK_DIR/teams.json"
   else
     python3 "$UPDATE_STATE" --case-dir "$CASE_DIR" --step data-refresh --subtask teams --status failed --duration-ms "$DURATION_MS"
-    # Legacy event for aggregation backward compat
-    echo '{"task":"teams","status":"failed","startedAt":"'"$START_TS"'","durationMs":'"$DURATION_MS"',"error":"python exit '"$TEAMS_EXIT"'"}' > "$EVENT_DIR/teams.json"
+    # Write subtask delta file for aggregation
+    echo '{"task":"teams","status":"failed","startedAt":"'"$START_TS"'","durationMs":'"$DURATION_MS"',"error":"python exit '"$TEAMS_EXIT"'"}' > "$SUBTASK_DIR/teams.json"
   fi
   # Task 5.4i: both branches wrote a terminal event — tell trap to stand down.
   mark_event_written

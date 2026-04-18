@@ -70,7 +70,7 @@ bash .claude/skills/casework/scripts/data-refresh.sh \
 ASSESS_START=$(date -u +%FT%TZ)
 ASSESS_START_NS=$(date +%s%N)
 
-# Pipeline state → dashboard SSE (Step 2 active)
+# Mark assess step active in state.json (mandatory — DO NOT SKIP)
 python3 .claude/skills/casework/scripts/update-state.py --case-dir "$CASE_DIR" --step assess --status active
 ```
 
@@ -81,7 +81,9 @@ python3 .claude/skills/casework/scripts/update-state.py --case-dir "$CASE_DIR" -
 **Step 2 完成后**更新 state：
 ```bash
 ASSESS_DUR=$(( ($(date +%s%N) - ASSESS_START_NS) / 1000000 ))
-python3 .claude/skills/casework/scripts/update-state.py --case-dir "$CASE_DIR" --step assess --status completed --duration-ms $ASSESS_DUR
+# Mark assess step completed in state.json (mandatory — DO NOT SKIP)
+ASSESS_RESULT=$(python3 -c "import json; print(json.load(open('$CASE_DIR/.casework/output/execution-plan.json')).get('actualStatus','unknown'))" 2>/dev/null || echo "unknown")
+python3 .claude/skills/casework/scripts/update-state.py --case-dir "$CASE_DIR" --step assess --status completed --duration-ms $ASSESS_DUR --result "$ASSESS_RESULT"
 ```
 
 **mode=patrol 时**：Step 2 完成后退出，不执行 Step 3/4。输出 `output/execution-plan.json` 供 patrol 主 agent 读取。

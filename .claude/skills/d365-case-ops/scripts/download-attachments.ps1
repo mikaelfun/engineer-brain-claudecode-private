@@ -27,27 +27,27 @@ param(
 
     [switch]$Force,
 
-    # Optional: when set, write atomic events/attachments.json (active/progress/completed/failed)
+    # Optional: when set, write atomic subtask output attachments.json (active/progress/completed/failed)
     # for the casework-v2 Step 1 observability pipeline. Safe to omit.
-    [string]$EventDir = ""
+    [string]$SubtaskOutputDir = ""
 )
 
 . "$PSScriptRoot\_init.ps1"
 
-# ── Event helpers (no-op if -EventDir not supplied) ──
+# ── Event helpers (no-op if -SubtaskOutputDir not supplied) ──
 $script:EventStartTs = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
 $script:EventStartMs = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
 
 function Write-AttachmentEvent {
     param([hashtable]$Payload)
-    if (-not $EventDir) { return }
+    if (-not $SubtaskOutputDir) { return }
     try {
-        if (-not (Test-Path $EventDir)) {
-            New-Item -Path $EventDir -ItemType Directory -Force | Out-Null
+        if (-not (Test-Path $SubtaskOutputDir)) {
+            New-Item -Path $SubtaskOutputDir -ItemType Directory -Force | Out-Null
         }
         $Payload["task"] = "attachments"
         $json = $Payload | ConvertTo-Json -Compress -Depth 5
-        $final = Join-Path $EventDir "attachments.json"
+        $final = Join-Path $SubtaskOutputDir "attachments.json"
         $tmp = "$final.tmp.$PID.$((Get-Random))"
         Set-Content -Path $tmp -Value $json -Encoding UTF8 -NoNewline
         Move-Item -Path $tmp -Destination $final -Force

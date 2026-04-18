@@ -29,11 +29,11 @@ param(
     [string]$MetaDir,
     [string]$MainCaseNumber,
 
-    # Casework v2 Task 5: optional event emission directory
-    # ({caseDir}/.casework/events). When set, writes d365.json active/completed/failed
-    # events with delta={newEmails,newNotes,snapshotFresh,laborRecords,laborTodayLogged}.
+    # Casework v2: optional subtask output directory
+    # ({caseDir}/.casework/output/subtasks). When set, writes d365.json with
+    # delta={newEmails,newNotes,snapshotFresh,laborRecords,laborTodayLogged}.
     # Omit for legacy callers — behavior unchanged.
-    [string]$EventDir
+    [string]$SubtaskOutputDir
 )
 
 . "$PSScriptRoot\_init.ps1"
@@ -41,20 +41,20 @@ param(
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
 $scriptRoot = $PSScriptRoot
 
-# ── Event helpers (no-op if -EventDir not supplied) ──
+# ── Event helpers (no-op if -SubtaskOutputDir not supplied) ──
 $script:D365EventStartTs = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
 $script:D365EventStartMs = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
 
 function Write-D365Event {
     param([hashtable]$Payload)
-    if (-not $EventDir) { return }
+    if (-not $SubtaskOutputDir) { return }
     try {
-        if (-not (Test-Path $EventDir)) {
-            New-Item -Path $EventDir -ItemType Directory -Force | Out-Null
+        if (-not (Test-Path $SubtaskOutputDir)) {
+            New-Item -Path $SubtaskOutputDir -ItemType Directory -Force | Out-Null
         }
         $Payload["task"] = "d365"
         $json = $Payload | ConvertTo-Json -Compress -Depth 5
-        $final = Join-Path $EventDir "d365.json"
+        $final = Join-Path $SubtaskOutputDir "d365.json"
         $tmp = "$final.tmp.$PID.$((Get-Random))"
         Set-Content -Path $tmp -Value $json -Encoding UTF8 -NoNewline
         Move-Item -Path $tmp -Destination $final -Force
@@ -293,7 +293,7 @@ if (-not $allOk) {
 }
 
 # ── Task 5.2: Parse sub-job outputs for delta + emit final d365.json event ──
-if ($EventDir) {
+if ($SubtaskOutputDir) {
     # Emails delta: fetch-emails.ps1 prints "🔵 New: N | Skipped..." line
     # Regex does NOT anchor on emoji — PS Start-Job + Out-String can mangle
     # unicode prefixes; match on the literal "New: N |" text instead.

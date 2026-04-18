@@ -273,6 +273,11 @@ os.replace(tmp, p)
                m['lastAssessedAt'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
                json.dump(m, open(p, 'w', encoding='utf-8'), indent=2, ensure_ascii=False)
                "
+               # Mark skipped steps in state.json
+               python3 .claude/skills/casework/scripts/update-state.py \
+                 --case-dir "{casesRoot}/active/{caseNumber}" --step assess --status completed --case-number "{caseNumber}"
+               python3 .claude/skills/casework/scripts/update-state.py \
+                 --case-dir "{casesRoot}/active/{caseNumber}" --step act --status skipped --case-number "{caseNumber}"
                python3 .claude/skills/casework/scripts/update-state.py \
                  --case-dir "{casesRoot}/active/{caseNumber}" --step summarize --status completed \
                  --case-number "{caseNumber}"
@@ -280,6 +285,11 @@ os.replace(tmp, p)
              
              elif ACTION_COUNT == 0:
                # DELTA_OK 但无 action（如 unsent draft exists）→ 仍需 spawn summarize（可能要更新 summary）
+               # Mark skipped steps in state.json
+               python3 .claude/skills/casework/scripts/update-state.py \
+                 --case-dir "{casesRoot}/active/{caseNumber}" --step assess --status completed --case-number "{caseNumber}"
+               python3 .claude/skills/casework/scripts/update-state.py \
+                 --case-dir "{casesRoot}/active/{caseNumber}" --step act --status skipped --case-number "{caseNumber}"
                → case.phase = "inspecting"
                → 立即 spawn summarize（后台）
              

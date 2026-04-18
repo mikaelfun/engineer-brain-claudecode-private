@@ -52,16 +52,15 @@ OUTPUT_DIR="$CASE_DIR_ABS/.casework/output"
 UPDATE_STATE="$HERE/update-state.py"
 WRAPPER="$HERE/event-wrapper.sh"
 
-# Legacy: external scripts (fetch-all-data.ps1, icm-discussion-ab.js,
-# download-attachments.ps1) still write to events/. Will be removed in Task 12.
-EVT_DIR="$CASE_DIR_ABS/.casework/events"
+# Subtask output: business delta files written by each source script.
+SUBTASK_DIR="$CASE_DIR_ABS/.casework/output/subtasks"
 
 # ── Reset .casework (preserve logs/) ──
 rm -f "$OUTPUT_DIR/data-refresh.json" "$OUTPUT_DIR/delta-content.md" \
       "$OUT_DIR/state.json"
 rm -f "$OUT_DIR/.aggregate-status" "$OUT_DIR/.aggregate-stderr"
-rm -rf "$EVT_DIR"
-mkdir -p "$OUTPUT_DIR" "$EVT_DIR"
+rm -rf "$SUBTASK_DIR"
+mkdir -p "$OUTPUT_DIR" "$SUBTASK_DIR"
 
 TOP_START_TS=$(date -u +%FT%TZ)
 TOP_START_NS=$(date +%s%N)
@@ -70,7 +69,7 @@ python3 "$UPDATE_STATE" --case-dir "$CASE_DIR_ABS" --step data-refresh --status 
 
 echo "🚀 data-refresh.sh: case=$CASE_NUMBER isAR=$IS_AR"
 echo "   case-dir=$CASE_DIR_ABS"
-echo "   events=$EVT_DIR"
+echo "   subtasks=$SUBTASK_DIR"
 
 # ── Ensure Token Daemon running (background, non-blocking) ──
 # Daemon provides D365 OData HTTP proxy; Invoke-D365Api auto-detects.
@@ -89,9 +88,10 @@ OUT_PARENT_WIN="$(to_win "$(dirname "$CASE_DIR_ABS")")"
   # -Force wipes existingIds and makes every email look "new", producing false
   # positives in d365.json.delta.newEmails. Snapshot freshness is controlled by
   # -CacheMinutes 10 independently.
-  FETCH_ARGS=(-TicketNumber "$CASE_NUMBER" -OutputDir "$OUT_PARENT_WIN" -CacheMinutes 10 -EventDir "$EVT_DIR")
+  FETCH_ARGS=(-TicketNumber "$CASE_NUMBER" -OutputDir "$OUT_PARENT_WIN" -CacheMinutes 10 -SubtaskOutputDir "$SUBTASK_DIR")
   [ "$IS_AR" = "true" ] && [ -n "$MAIN_CASE" ] && FETCH_ARGS+=(-MainCaseNumber "$MAIN_CASE")
-  pwsh -NoProfile -File "$PROJECT_ROOT/.claude/skills/d365-case-ops/scripts/fetch-all-data.ps1" "${FETCH_ARGS[@]}" \
+  bash "$WRAPPER" d365 "$CASE_DIR_ABS" -- \
+    pwsh -NoProfile -File "$PROJECT_ROOT/.claude/skills/d365-case-ops/scripts/fetch-all-data.ps1" "${FETCH_ARGS[@]}" \
     > "$LOGD/d365.log" 2>&1
 ) &
 PID_D365=$!
@@ -158,16 +158,16 @@ fi
 
 if [ -n "$ICM_INCIDENT" ]; then
   (
-    node "$PROJECT_ROOT/.claude/skills/icm/scripts/icm-discussion-ab.js" \
-      --single "$ICM_INCIDENT" --case-dir "$CASE_DIR_ABS" --event-dir "$EVT_DIR" \
+    bash "$WRAPPER" icm "$CASE_DIR_ABS" -- \
+      node "$PROJECT_ROOT/.claude/skills/icm/scripts/icm-discussion-ab.js" \
+      --single "$ICM_INCIDENT" --case-dir "$CASE_DIR_ABS" --output-dir "$SUBTASK_DIR" \
       > "$LOGD/icm.log" 2>&1
   ) &
   PID_ICM=$!
 else
   # No ICM linked → emit SKIP event.
   python3 "$UPDATE_STATE" --case-dir "$CASE_DIR_ABS" --step data-refresh --subtask icm --status completed --duration-ms 0
-  # Legacy event for aggregation backward compat (reads events/*.json until Task 12)
-  echo '{"task":"icm","status":"completed","startedAt":"'"$TOP_START_TS"'","completedAt":"'"$TOP_START_TS"'","durationMs":0,"delta":{"newEntries":0,"skipped":"no incidentId in meta"}}' > "$EVT_DIR/icm.json"
+  echo '{"task":"icm","status":"completed","startedAt":"'"$TOP_START_TS"'","completedAt":"'"$TOP_START_TS"'","durationMs":0,"delta":{"newEntries":0,"skipped":"no incidentId in meta"}}' > "$SUBTASK_DIR/icm.json"
   PID_ICM=""
 fi
 
@@ -205,15 +205,15 @@ if [ -n "$NOTEBOOK_DIR" ] && [ -d "$NOTEBOOK_DIR" ]; then
   PID_ONENOTE=$!
 else
   python3 "$UPDATE_STATE" --case-dir "$CASE_DIR_ABS" --step data-refresh --subtask onenote --status completed --duration-ms 0
-  # Legacy event for aggregation backward compat (reads events/*.json until Task 12)
-  echo '{"task":"onenote","status":"completed","startedAt":"'"$TOP_START_TS"'","completedAt":"'"$TOP_START_TS"'","durationMs":0,"delta":{"newPages":0,"skipped":"no notebook dir"}}' > "$EVT_DIR/onenote.json"
+  echo '{"task":"onenote","status":"completed","startedAt":"'"$TOP_START_TS"'","completedAt":"'"$TOP_START_TS"'","durationMs":0,"delta":{"newPages":0,"skipped":"no notebook dir"}}' > "$SUBTASK_DIR/onenote.json"
   PID_ONENOTE=""
 fi
 
-# 5. Attachments — L2, native events.
+# 5. Attachments — L2, wrapped with event-wrapper.
 (
-  pwsh -NoProfile -File "$PROJECT_ROOT/.claude/skills/d365-case-ops/scripts/download-attachments.ps1" \
-    -TicketNumber "$CASE_NUMBER" -OutputDir "$OUT_PARENT_WIN" -EventDir "$EVT_DIR" \
+  bash "$WRAPPER" attachments "$CASE_DIR_ABS" -- \
+    pwsh -NoProfile -File "$PROJECT_ROOT/.claude/skills/d365-case-ops/scripts/download-attachments.ps1" \
+    -TicketNumber "$CASE_NUMBER" -OutputDir "$OUT_PARENT_WIN" -SubtaskOutputDir "$SUBTASK_DIR" \
     > "$LOGD/attachments.log" 2>&1
 ) &
 PID_ATT=$!
@@ -254,11 +254,11 @@ fi
 # Delta-gated: skip if no new data AND existing digest file present.
 DIGEST_SCRIPT="$PROJECT_ROOT/.claude/skills/casework/scripts/generate-digest.py"
 if [ -f "$DIGEST_SCRIPT" ]; then
-  # Read delta from event files
+  # Read delta from subtask output files
   TEAMS_DELTA=$(python3 -c "
 import json
 try:
-    e = json.load(open(r'$EVT_DIR/teams.json'))
+    e = json.load(open(r'$SUBTASK_DIR/teams.json'))
     d = e.get('delta', {})
     print(int(d.get('newMessages', 0)) + int(d.get('newChats', 0)))
 except: print(0)
@@ -267,7 +267,7 @@ except: print(0)
   ONENOTE_DELTA=$(python3 -c "
 import json
 try:
-    e = json.load(open(r'$EVT_DIR/onenote.json'))
+    e = json.load(open(r'$SUBTASK_DIR/onenote.json'))
     d = e.get('delta', {})
     print(int(d.get('newPages', 0)) + int(d.get('updatedPages', 0)))
 except: print(0)
@@ -323,13 +323,13 @@ TOP_END_TS=$(date -u +%FT%TZ)
 TOP_DUR_MS=$(( ($(date +%s%N) - TOP_START_NS) / 1000000 ))
 ELAPSED_SEC=$(awk "BEGIN{printf \"%.1f\", $TOP_DUR_MS/1000}")
 
-EVT_DIR_PY="$EVT_DIR" CASE_DIR_PY="$CASE_DIR_ABS" CASE_NUM_PY="$CASE_NUMBER" \
+SUBTASK_DIR_PY="$SUBTASK_DIR" CASE_DIR_PY="$CASE_DIR_ABS" CASE_NUM_PY="$CASE_NUMBER" \
   IS_AR_PY="$IS_AR" OUT_DIR_PY="$OUT_DIR" OUTPUT_DIR_PY="$OUTPUT_DIR" ELAPSED_PY="$ELAPSED_SEC" \
   PYTHONIOENCODING=utf-8 \
   python3 - > "$LOGD/aggregate.log" 2> "$LOGD/aggregate-err.log" <<'PYEOF'
 import json, os, pathlib, re, sys
 
-evt = pathlib.Path(os.environ['EVT_DIR_PY'])
+evt = pathlib.Path(os.environ['SUBTASK_DIR_PY'])
 case_dir = pathlib.Path(os.environ['CASE_DIR_PY'])
 case_num = os.environ['CASE_NUM_PY']
 is_ar = os.environ['IS_AR_PY'] == 'true'
