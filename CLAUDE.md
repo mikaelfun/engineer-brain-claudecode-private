@@ -139,6 +139,7 @@ actualStatus 有效值：`pending-engineer` | `pending-customer` | `pending-pg` 
 | Profile 注册表（tokens / ui / sso 配置） | `.claude/skills/browser-profiles/registry.json` |
 | Dashboard UI 修改（完整设计规范） | `playbooks/guides/dashboard-design-system.md` |
 | Dashboard API（完整端点列表） | `playbooks/guides/dashboard-integration.md` |
+| Observability（状态 · 日志 · SSE） | `playbooks/guides/observability-guide.md` |
 | Case 目录结构（完整 schema） | `playbooks/schemas/case-directory.md` |
 | Todo 格式与规则 | `playbooks/schemas/todo-format.md` |
 | Case 生命周期 | `playbooks/rules/case-lifecycle.md` |

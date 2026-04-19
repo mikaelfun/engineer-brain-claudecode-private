@@ -1,6 +1,6 @@
-# UI State Tracking & SSE 开发原则
+# Observability Guide — 状态 · 日志 · SSE
 
-> 涉及 patrol/casework 状态显示、SSE 实时更新、state.json 读写的改动，先读此文档。
+> 涉及 patrol/casework 的状态文件、日志架构、SSE 实时推送/持久化的改动，先读此文档。
 
 ## 1. 两层追踪，严格隔离
 
