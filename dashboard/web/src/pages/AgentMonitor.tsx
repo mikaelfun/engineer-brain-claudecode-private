@@ -2,7 +2,7 @@
  * AgentMonitor — Agent/Session/Cron 监控页
  *
  * Unified view of all session types: case, implement, verify, track-creation.
- * Each session row is expandable to show live SSE messages and interaction controls.
+ * Two-panel "Active Sessions" layout with inline sub-agent tree.
  */
 import { Card } from '../components/common/Card'
 import { Badge } from '../components/common/Badge'
@@ -12,12 +12,13 @@ import type { UnifiedSession } from '../api/hooks'
 import { useCaseSessionStore, type CaseSessionMessage } from '../stores/caseSessionStore'
 import { useIssueTrackStore, EMPTY_TRACK_MESSAGES, EMPTY_IMPLEMENT_MESSAGES, EMPTY_VERIFY_MESSAGES } from '../stores/issueTrackStore'
 import type { IssueTrackMessage, ImplementMessage, VerifyMessage } from '../stores/issueTrackStore'
+import { useSubAgentStore, type SubAgent } from '../stores/subAgentStore'
 import { SessionMessageList } from '../components/session/SessionMessageList'
 import { QueueStatusIndicator } from '../components/session/QueueStatusIndicator'
 import { StepQuestionForm } from '../components/session/StepQuestionForm'
 import { useQueryClient } from '@tanstack/react-query'
 import { RefreshCw, ChevronDown, ChevronRight, Filter, Send, Square, Plus, Trash2, Play, Loader2, XCircle, CheckCircle2, AlertCircle, Trash, Pencil, Power } from 'lucide-react'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { apiPost, apiDelete } from '../api/client'
 import { CreateTriggerDialog, type TriggerEditData } from '../components/agents/CreateTriggerDialog'
 import { useTriggerRunStore } from '../stores/triggerRunStore'
@@ -42,7 +43,19 @@ const STATUS_CONFIG: Record<string, { label: string; dotColor: string; animate?:
   failed: { label: 'Failed', dotColor: 'var(--accent-red)' },
 }
 
-// ---- Sub-components ----
+// ---- Sub-Agent display config ----
+
+const AGENT_TYPE_COLORS: Record<string, { bg: string; color: string }> = {
+  casework: { bg: 'var(--accent-blue-dim)', color: 'var(--accent-blue)' },
+  troubleshooter: { bg: 'var(--accent-purple-dim)', color: 'var(--accent-purple)' },
+  'email-drafter': { bg: 'var(--accent-amber-dim)', color: 'var(--accent-amber)' },
+  reassess: { bg: 'var(--accent-teal-dim, var(--accent-green-dim))', color: 'var(--accent-teal, var(--accent-green))' },
+  challenger: { bg: 'var(--accent-red-dim)', color: 'var(--accent-red)' },
+  summarize: { bg: 'var(--accent-green-dim)', color: 'var(--accent-green)' },
+}
+const DEFAULT_AGENT_COLOR = { bg: 'var(--bg-inset)', color: 'var(--text-secondary)' }
+
+// ---- Shared sub-components ----
 
 function SessionTypeBadge({ type }: { type: string }) {
   const config = SESSION_TYPE_CONFIG[type] || SESSION_TYPE_CONFIG.case
@@ -67,146 +80,54 @@ function StatusDot({ status }: { status: string }) {
   )
 }
 
-function SessionRow({ session, isExpanded, onToggle, onStop }: { session: UnifiedSession; isExpanded: boolean; onToggle: () => void; onStop?: () => void }) {
-  const typeConfig = SESSION_TYPE_CONFIG[session.type] || SESSION_TYPE_CONFIG.case
-  const [isStopping, setIsStopping] = useState(false)
+function AgentTypeBadge({ type }: { type: string }) {
+  const c = AGENT_TYPE_COLORS[type] || DEFAULT_AGENT_COLOR
+  return (
+    <span
+      className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold uppercase"
+      style={{ background: c.bg, color: c.color, letterSpacing: '0.2px' }}
+    >
+      {type}
+    </span>
+  )
+}
 
-  // Format relative time
-  const lastActivity = new Date(session.lastActivityAt)
-  const now = new Date()
-  const diffMs = now.getTime() - lastActivity.getTime()
+function SubAgentStatusDot({ status }: { status: SubAgent['status'] }) {
+  const config: Record<string, { color: string; animate?: boolean }> = {
+    running: { color: 'var(--accent-blue)', animate: true },
+    completed: { color: 'var(--accent-green)' },
+    failed: { color: 'var(--accent-red)' },
+    stopped: { color: 'var(--text-tertiary)' },
+  }
+  const c = config[status] || config.completed
+  return (
+    <span
+      className={`inline-block w-2 h-2 rounded-full shrink-0 ${c.animate ? 'animate-pulse' : ''}`}
+      style={{ background: c.color }}
+      title={status}
+    />
+  )
+}
+
+function formatDuration(ms: number): string {
+  if (ms < 1000) return `${ms}ms`
+  const s = Math.floor(ms / 1000)
+  if (s < 60) return `${s}s`
+  const m = Math.floor(s / 60)
+  const remaining = s % 60
+  return remaining > 0 ? `${m}m ${remaining}s` : `${m}m`
+}
+
+function formatTimeAgo(dateStr: string): string {
+  const diffMs = Date.now() - new Date(dateStr).getTime()
   const diffMins = Math.floor(diffMs / 60000)
-  const timeAgo = diffMins < 1 ? 'just now'
-    : diffMins < 60 ? `${diffMins}m ago`
-    : diffMins < 1440 ? `${Math.floor(diffMins / 60)}h ago`
-    : `${Math.floor(diffMins / 1440)}d ago`
-
-  const isStoppable = session.type === 'case' && (session.status === 'active' || session.status === 'paused' || session.status === 'failed')
-
-  const handleInlineStop = async (e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (isStopping || !onStop) return
-    setIsStopping(true)
-    try {
-      await apiDelete(`/case/${session.context}/session`, { sessionId: session.id })
-      onStop()
-    } catch {
-      // Session may already be ended
-    } finally {
-      setIsStopping(false)
-    }
-  }
-
-  return (
-    <div>
-      <button
-        onClick={onToggle}
-        className="flex items-center justify-between py-2 px-3 rounded-lg w-full text-left transition-colors"
-        style={{
-          background: isExpanded ? 'var(--bg-active)' : 'var(--bg-inset)',
-        }}
-        onMouseEnter={e => { if (!isExpanded) (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
-        onMouseLeave={e => { if (!isExpanded) (e.currentTarget as HTMLElement).style.background = 'var(--bg-inset)' }}
-      >
-        <div className="flex items-center gap-3 min-w-0 flex-1">
-          <ChevronRight
-            className={`w-3.5 h-3.5 flex-shrink-0 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
-            style={{ color: 'var(--text-tertiary)' }}
-          />
-          <StatusDot status={session.status} />
-          <SessionTypeBadge type={session.type} />
-          <span
-            className="text-sm font-mono truncate"
-            style={{ color: typeConfig.color }}
-          >
-            {session.context}
-          </span>
-          <span
-            className="text-xs truncate max-w-[300px] hidden md:inline"
-            style={{ color: 'var(--text-tertiary)' }}
-          >
-            {session.intent}
-          </span>
-        </div>
-        <div className="flex items-center gap-3 shrink-0 ml-2">
-          {/* Type-specific metadata badges */}
-          {session.type === 'implement' && session.metadata?.trackId && (
-            <span className="text-xs font-mono px-1.5 py-0.5 rounded" style={{ background: 'var(--bg-active)', color: 'var(--text-tertiary)' }}>
-              {String(session.metadata.trackId)}
-            </span>
-          )}
-          {session.type === 'verify' && session.metadata?.result && (
-            <span className="text-xs px-1.5 py-0.5 rounded" style={{
-              background: (session.metadata.result as any)?.overall ? 'var(--accent-green-dim)' : 'var(--accent-red-dim)',
-              color: (session.metadata.result as any)?.overall ? 'var(--accent-green)' : 'var(--accent-red)',
-            }}>
-              {(session.metadata.result as any)?.overall ? '✅ Pass' : '❌ Fail'}
-            </span>
-          )}
-          {session.type === 'track-creation' && session.metadata?.hasPendingQuestion && (
-            <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'var(--accent-amber-dim)', color: 'var(--accent-amber)' }}>
-              ⏳ Awaiting input
-            </span>
-          )}
-          {/* Inline Stop/Dismiss button for active/paused/failed case sessions */}
-          {isStoppable && (
-            <span
-              role="button"
-              onClick={handleInlineStop}
-              className={`inline-flex items-center justify-center w-5 h-5 rounded cursor-pointer transition-all ${isStopping ? 'opacity-40 pointer-events-none animate-pulse' : 'hover:scale-110'}`}
-              style={{ color: 'var(--accent-red)' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--accent-red-dim)' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-              title="Stop session"
-            >
-              <Square className="w-3 h-3" style={{ fill: isStopping ? 'var(--accent-red)' : 'none' }} />
-            </span>
-          )}
-          <span className="text-xs whitespace-nowrap" style={{ color: 'var(--text-tertiary)' }}>
-            {timeAgo}
-          </span>
-        </div>
-      </button>
-      {isExpanded && (
-        <SessionDetailPanel session={session} />
-      )}
-    </div>
-  )
+  if (diffMins < 1) return 'just now'
+  if (diffMins < 60) return `${diffMins}m ago`
+  if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`
+  return `${Math.floor(diffMins / 1440)}d ago`
 }
 
-/** Detail panel shown when a session row is expanded */
-function SessionDetailPanel({ session }: { session: UnifiedSession }) {
-  if (session.type === 'case') {
-    return <CaseSessionDetail session={session} />
-  }
-  if (session.type === 'implement') {
-    return <ImplementSessionDetail session={session} />
-  }
-  if (session.type === 'verify') {
-    return <VerifySessionDetail session={session} />
-  }
-  if (session.type === 'track-creation') {
-    return <TrackCreationSessionDetail session={session} />
-  }
-
-  // Unknown type: simple status text
-  return (
-    <div className="ml-7 mt-1 mb-2 px-3 py-2 rounded-lg text-xs" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
-      <div className="flex items-center gap-2">
-        <StatusDot status={session.status} />
-        <span style={{ color: 'var(--text-secondary)' }}>
-          {session.status === 'active' ? 'Session is running...' :
-           session.status === 'paused' ? 'Session paused — waiting for input' :
-           session.status === 'completed' ? 'Session completed successfully' :
-           session.status === 'failed' ? 'Session failed' : session.status}
-        </span>
-      </div>
-      {session.intent && (
-        <p className="mt-1 ml-4" style={{ color: 'var(--text-tertiary)' }}>{session.intent}</p>
-      )}
-    </div>
-  )
-}
+// ---- SSE message converters (shared by detail panels) ----
 
 /** Convert ImplementMessage[] to CaseSessionMessage[] for SessionMessageList */
 function implementToSessionMessages(msgs: ImplementMessage[]): CaseSessionMessage[] {
@@ -258,6 +179,8 @@ function verifyToSessionMessages(msgs: VerifyMessage[]): CaseSessionMessage[] {
   })
 }
 
+// ---- Session Detail panels (rendered in the right panel) ----
+
 /** Implement session detail — reads from issueTrackStore */
 function ImplementSessionDetail({ session }: { session: UnifiedSession }) {
   const issueId = session.context
@@ -267,7 +190,6 @@ function ImplementSessionDetail({ session }: { session: UnifiedSession }) {
   const messages = implMessages.length > 0 ? implementToSessionMessages(implMessages) : EMPTY_MESSAGES
   const isActive = session.status === 'active'
 
-  // Auto-scroll to bottom on new messages
   useEffect(() => {
     if (containerRef.current) {
       containerRef.current.scrollTop = containerRef.current.scrollHeight
@@ -275,7 +197,7 @@ function ImplementSessionDetail({ session }: { session: UnifiedSession }) {
   }, [messages.length])
 
   return (
-    <div className="ml-7 mt-1 mb-2 rounded-lg overflow-hidden" style={{ border: '1px solid var(--border-subtle)' }}>
+    <div className="rounded-lg overflow-hidden h-full" style={{ border: '1px solid var(--border-subtle)' }}>
       <div className="px-3 pt-2">
         {messages.length === 0 ? (
           <p className="text-xs py-2" style={{ color: 'var(--text-tertiary)' }}>
@@ -285,7 +207,7 @@ function ImplementSessionDetail({ session }: { session: UnifiedSession }) {
           <SessionMessageList
             messages={messages}
             containerRef={containerRef}
-            maxHeightClass="max-h-64"
+            maxHeightClass="max-h-[calc(100vh-340px)]"
           />
         )}
       </div>
@@ -309,7 +231,7 @@ function VerifySessionDetail({ session }: { session: UnifiedSession }) {
   }, [messages.length])
 
   return (
-    <div className="ml-7 mt-1 mb-2 rounded-lg overflow-hidden" style={{ border: '1px solid var(--border-subtle)' }}>
+    <div className="rounded-lg overflow-hidden h-full" style={{ border: '1px solid var(--border-subtle)' }}>
       <div className="px-3 pt-2">
         {messages.length === 0 ? (
           <p className="text-xs py-2" style={{ color: 'var(--text-tertiary)' }}>
@@ -319,7 +241,7 @@ function VerifySessionDetail({ session }: { session: UnifiedSession }) {
           <SessionMessageList
             messages={messages}
             containerRef={containerRef}
-            maxHeightClass="max-h-64"
+            maxHeightClass="max-h-[calc(100vh-340px)]"
           />
         )}
       </div>
@@ -343,7 +265,7 @@ function TrackCreationSessionDetail({ session }: { session: UnifiedSession }) {
   }, [messages.length])
 
   return (
-    <div className="ml-7 mt-1 mb-2 rounded-lg overflow-hidden" style={{ border: '1px solid var(--border-subtle)' }}>
+    <div className="rounded-lg overflow-hidden h-full" style={{ border: '1px solid var(--border-subtle)' }}>
       <div className="px-3 pt-2">
         {messages.length === 0 ? (
           <p className="text-xs py-2" style={{ color: 'var(--text-tertiary)' }}>
@@ -353,7 +275,7 @@ function TrackCreationSessionDetail({ session }: { session: UnifiedSession }) {
           <SessionMessageList
             messages={messages}
             containerRef={containerRef}
-            maxHeightClass="max-h-64"
+            maxHeightClass="max-h-[calc(100vh-340px)]"
           />
         )}
       </div>
@@ -363,13 +285,11 @@ function TrackCreationSessionDetail({ session }: { session: UnifiedSession }) {
 
 /** Case session detail with live SSE messages, chat input, and stop button */
 function CaseSessionDetail({ session }: { session: UnifiedSession }) {
-  const caseNumber = session.context // case sessions use caseNumber as context
+  const caseNumber = session.context
   const sessionId = session.id
-  // Use per-session messages when sessionId is available, fallback to case-level aggregate
   const sessionKey = sessionId ? `${caseNumber}:${sessionId}` : ''
   const perSessionMessages = useCaseSessionStore(s => sessionKey ? (s.sessionMessages[sessionKey] || EMPTY_MESSAGES) : EMPTY_MESSAGES)
   const caseLevelMessages = useCaseSessionStore(s => s.messages[caseNumber] || EMPTY_MESSAGES)
-  // Prefer per-session; fallback to case-level if per-session is empty
   const storeMessages = perSessionMessages.length > 0 ? perSessionMessages : caseLevelMessages
   const pendingQuestion = useCaseSessionStore(s => s.getPendingQuestion(caseNumber))
   const addMessage = useCaseSessionStore(s => s.addMessage)
@@ -387,7 +307,6 @@ function CaseSessionDetail({ session }: { session: UnifiedSession }) {
       hasRecoveredRef.current = true
       for (const msg of recoveredData.messages) {
         addMessage(caseNumber, msg as CaseSessionMessage)
-        // Also populate per-session bucket so future reads use it
         if (sessionId) {
           addSessionMessage(caseNumber, sessionId, msg as CaseSessionMessage)
         }
@@ -411,7 +330,6 @@ function CaseSessionDetail({ session }: { session: UnifiedSession }) {
     setChatInput('')
     setIsSending(true)
 
-    // Optimistic user message
     addMessage(caseNumber, {
       type: 'user',
       content: text,
@@ -444,9 +362,9 @@ function CaseSessionDetail({ session }: { session: UnifiedSession }) {
   }
 
   return (
-    <div className="ml-7 mt-1 mb-2 rounded-lg overflow-hidden" style={{ border: '1px solid var(--border-subtle)' }}>
+    <div className="rounded-lg overflow-hidden h-full flex flex-col" style={{ border: '1px solid var(--border-subtle)' }}>
       {/* Messages */}
-      <div className="px-3 pt-2">
+      <div className="px-3 pt-2 flex-1 min-h-0">
         {storeMessages.length === 0 ? (
           <p className="text-xs py-2" style={{ color: 'var(--text-tertiary)' }}>
             {isActive ? 'Waiting for messages...' : 'No messages recorded'}
@@ -455,7 +373,7 @@ function CaseSessionDetail({ session }: { session: UnifiedSession }) {
           <SessionMessageList
             messages={storeMessages}
             containerRef={containerRef}
-            maxHeightClass="max-h-64"
+            maxHeightClass="max-h-[calc(100vh-400px)]"
             groupByStep
           />
         )}
@@ -475,7 +393,7 @@ function CaseSessionDetail({ session }: { session: UnifiedSession }) {
 
       {/* Chat input + Stop/Dismiss button */}
       {isDismissable && (
-        <div className="flex items-center gap-2 px-3 py-2 mt-1" style={{ borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}>
+        <div className="flex items-center gap-2 px-3 py-2 mt-auto" style={{ borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}>
           {isActive && (
             <>
               <input
@@ -518,6 +436,541 @@ function CaseSessionDetail({ session }: { session: UnifiedSession }) {
             <Square className="w-3 h-3" />
             {isActive ? 'Stop' : 'Dismiss'}
           </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ---- Sub-Agent Detail Panel ----
+
+function SubAgentDetailPanel({ agent }: { agent: SubAgent }) {
+  const durationMs = agent.usage?.duration_ms
+    || (agent.completedAt && agent.startedAt
+      ? new Date(agent.completedAt).getTime() - new Date(agent.startedAt).getTime()
+      : agent.startedAt
+        ? Date.now() - new Date(agent.startedAt).getTime()
+        : undefined)
+
+  return (
+    <div className="space-y-3 h-full overflow-y-auto">
+      {/* Header */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <AgentTypeBadge type={agent.agentType} />
+        {agent.caseNumber && (
+          <span className="text-sm font-mono" style={{ color: 'var(--text-primary)' }}>{agent.caseNumber}</span>
+        )}
+        <Badge
+          variant={agent.status === 'running' ? 'primary' : agent.status === 'completed' ? 'success' : agent.status === 'failed' ? 'danger' : 'secondary'}
+          size="xs"
+        >
+          {agent.status}
+        </Badge>
+      </div>
+
+      {/* Description */}
+      {agent.description && (
+        <p className="text-xs leading-relaxed line-clamp-3" style={{ color: 'var(--text-secondary)' }}>
+          {agent.description}
+        </p>
+      )}
+
+      {/* Summary */}
+      {agent.summary && (
+        <div>
+          <span className="text-[10px] font-semibold uppercase" style={{ color: 'var(--text-tertiary)' }}>Summary</span>
+          <p className="text-xs mt-0.5 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+            {agent.summary}
+          </p>
+        </div>
+      )}
+
+      {/* Usage stats */}
+      <div className="grid grid-cols-3 gap-2 text-xs">
+        <div>
+          <span style={{ color: 'var(--text-tertiary)' }}>Duration</span>
+          <p style={{ color: 'var(--text-secondary)' }}>{durationMs ? formatDuration(durationMs) : '-'}</p>
+        </div>
+        <div>
+          <span style={{ color: 'var(--text-tertiary)' }}>Tokens</span>
+          <p style={{ color: 'var(--text-secondary)' }}>
+            {agent.usage?.total_tokens ? agent.usage.total_tokens.toLocaleString() : '-'}
+          </p>
+        </div>
+        <div>
+          <span style={{ color: 'var(--text-tertiary)' }}>Tool Uses</span>
+          <p style={{ color: 'var(--text-secondary)' }}>{agent.usage?.tool_uses ?? '-'}</p>
+        </div>
+      </div>
+
+      {/* Last tool */}
+      {agent.lastToolName && (
+        <div>
+          <span className="text-[10px] font-semibold uppercase" style={{ color: 'var(--text-tertiary)' }}>Last Tool</span>
+          <p className="text-xs mt-0.5 font-mono" style={{ color: 'var(--text-secondary)' }}>
+            {agent.lastToolName}
+          </p>
+        </div>
+      )}
+
+      {/* Timestamps */}
+      <div className="text-[10px] space-y-0.5" style={{ color: 'var(--text-tertiary)' }}>
+        <div>Started: {new Date(agent.startedAt).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })}</div>
+        {agent.completedAt && (
+          <div>Completed: {new Date(agent.completedAt).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })}</div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ---- Active Sessions Section ----
+
+/** Renders the appropriate session detail based on session type */
+function SessionDetailByType({ session }: { session: UnifiedSession }) {
+  if (session.type === 'case') return <CaseSessionDetail session={session} />
+  if (session.type === 'implement') return <ImplementSessionDetail session={session} />
+  if (session.type === 'verify') return <VerifySessionDetail session={session} />
+  if (session.type === 'track-creation') return <TrackCreationSessionDetail session={session} />
+
+  // Unknown type: simple status
+  return (
+    <div className="rounded-lg p-3 text-xs h-full" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+      <div className="flex items-center gap-2">
+        <StatusDot status={session.status} />
+        <span style={{ color: 'var(--text-secondary)' }}>
+          {session.status === 'active' ? 'Session is running...' :
+           session.status === 'paused' ? 'Session paused — waiting for input' :
+           session.status === 'completed' ? 'Session completed successfully' :
+           session.status === 'failed' ? 'Session failed' : session.status}
+        </span>
+      </div>
+      {session.intent && (
+        <p className="mt-1 ml-4" style={{ color: 'var(--text-tertiary)' }}>{session.intent}</p>
+      )}
+    </div>
+  )
+}
+
+/** Right panel: full-width main SSE, or 50/50 split when sub-agent is selected */
+function MainAgentDetailPanel({
+  session,
+  selectedSub,
+}: {
+  session: UnifiedSession | null
+  selectedSub: SubAgent | null
+}) {
+  if (!session) {
+    return (
+      <div className="flex items-center justify-center h-full min-h-[200px] rounded-lg" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+        <span className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
+          Select a main agent to view details
+        </span>
+      </div>
+    )
+  }
+
+  // No sub-agent selected → full-width main session detail
+  if (!selectedSub) {
+    return <SessionDetailByType session={session} />
+  }
+
+  // Sub-agent selected → 50/50 split
+  return (
+    <div className="grid grid-cols-2 gap-3 h-full">
+      {/* Left half: Session SSE stream */}
+      <SessionDetailByType session={session} />
+      {/* Right half: Sub-Agent detail */}
+      <div className="rounded-lg p-4 overflow-hidden" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+        <SubAgentDetailPanel agent={selectedSub} />
+      </div>
+    </div>
+  )
+}
+
+/** A row in the left panel list for a main agent, with collapsible sub-agent children */
+function MainAgentRow({
+  session,
+  isSelected,
+  subAgents,
+  isSubExpanded,
+  selectedSubId,
+  onSelectMain,
+  onToggleSubList,
+  onSelectSub,
+  onStopSession,
+}: {
+  session: UnifiedSession
+  isSelected: boolean
+  subAgents: SubAgent[]
+  isSubExpanded: boolean
+  selectedSubId: string | null
+  onSelectMain: () => void
+  onToggleSubList: () => void
+  onSelectSub: (subId: string) => void
+  onStopSession?: () => void
+}) {
+  const typeConfig = SESSION_TYPE_CONFIG[session.type] || SESSION_TYPE_CONFIG.case
+  const [isStopping, setIsStopping] = useState(false)
+  const timeAgo = formatTimeAgo(session.lastActivityAt)
+
+  const isStoppable = session.type === 'case' && (session.status === 'active' || session.status === 'paused' || session.status === 'failed')
+
+  const handleInlineStop = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (isStopping || !onStopSession) return
+    setIsStopping(true)
+    try {
+      await apiDelete(`/case/${session.context}/session`, { sessionId: session.id })
+      onStopSession()
+    } catch {
+      // Session may already be ended
+    } finally {
+      setIsStopping(false)
+    }
+  }
+
+  const runningSubCount = subAgents.filter(a => a.status === 'running').length
+
+  return (
+    <div>
+      {/* Session row */}
+      <button
+        onClick={onSelectMain}
+        className="flex items-center justify-between py-2.5 px-3 w-full text-left transition-colors"
+        style={{
+          background: isSelected ? 'var(--bg-active)' : 'transparent',
+          borderBottom: '1px solid var(--border-subtle)',
+        }}
+        onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
+        onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = isSelected ? 'var(--bg-active)' : 'transparent' }}
+      >
+        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+          <StatusDot status={session.status} />
+          <SessionTypeBadge type={session.type} />
+          <span
+            className="text-sm font-mono truncate"
+            style={{ color: typeConfig.color }}
+          >
+            {session.context}
+          </span>
+          <span
+            className="text-xs truncate max-w-[200px] hidden lg:inline"
+            style={{ color: 'var(--text-tertiary)' }}
+          >
+            {session.intent}
+          </span>
+        </div>
+        <div className="flex items-center gap-2 shrink-0 ml-2">
+          {/* Type-specific metadata badges */}
+          {session.type === 'implement' && session.metadata?.trackId && (
+            <span className="text-xs font-mono px-1.5 py-0.5 rounded" style={{ background: 'var(--bg-active)', color: 'var(--text-tertiary)' }}>
+              {String(session.metadata.trackId)}
+            </span>
+          )}
+          {session.type === 'verify' && session.metadata?.result && (
+            <span className="text-xs px-1.5 py-0.5 rounded" style={{
+              background: (session.metadata.result as any)?.overall ? 'var(--accent-green-dim)' : 'var(--accent-red-dim)',
+              color: (session.metadata.result as any)?.overall ? 'var(--accent-green)' : 'var(--accent-red)',
+            }}>
+              {(session.metadata.result as any)?.overall ? '✅ Pass' : '❌ Fail'}
+            </span>
+          )}
+          {session.type === 'track-creation' && session.metadata?.hasPendingQuestion && (
+            <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'var(--accent-amber-dim)', color: 'var(--accent-amber)' }}>
+              ⏳ Awaiting input
+            </span>
+          )}
+          {/* Sub-agents toggle */}
+          {subAgents.length > 0 && (
+            <span
+              role="button"
+              onClick={(e) => { e.stopPropagation(); onToggleSubList() }}
+              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium cursor-pointer transition-colors"
+              style={{
+                background: 'var(--bg-inset)',
+                color: runningSubCount > 0 ? 'var(--accent-blue)' : 'var(--text-tertiary)',
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-inset)' }}
+              title={`${subAgents.length} sub-agent(s)`}
+            >
+              {isSubExpanded
+                ? <ChevronDown className="w-3 h-3" />
+                : <ChevronRight className="w-3 h-3" />
+              }
+              sub-agents ({subAgents.length})
+              {runningSubCount > 0 && (
+                <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--accent-blue)' }} />
+              )}
+            </span>
+          )}
+          {/* Inline Stop */}
+          {isStoppable && (
+            <span
+              role="button"
+              onClick={handleInlineStop}
+              className={`inline-flex items-center justify-center w-5 h-5 rounded cursor-pointer transition-all ${isStopping ? 'opacity-40 pointer-events-none animate-pulse' : 'hover:scale-110'}`}
+              style={{ color: 'var(--accent-red)' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--accent-red-dim)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+              title="Stop session"
+            >
+              <Square className="w-3 h-3" style={{ fill: isStopping ? 'var(--accent-red)' : 'none' }} />
+            </span>
+          )}
+          <span className="text-xs whitespace-nowrap" style={{ color: 'var(--text-tertiary)' }}>
+            {timeAgo}
+          </span>
+        </div>
+      </button>
+
+      {/* Sub-agents list (expanded) */}
+      {isSubExpanded && subAgents.length > 0 && (
+        <div style={{ background: 'var(--bg-inset)' }}>
+          {subAgents.map((sub) => {
+            const isSubSelected = selectedSubId === sub.taskId
+            const subDuration = sub.usage?.duration_ms
+              || (sub.completedAt && sub.startedAt
+                ? new Date(sub.completedAt).getTime() - new Date(sub.startedAt).getTime()
+                : sub.startedAt && sub.status === 'running'
+                  ? Date.now() - new Date(sub.startedAt).getTime()
+                  : undefined)
+
+            return (
+              <button
+                key={sub.taskId}
+                onClick={() => onSelectSub(sub.taskId)}
+                className="flex items-center gap-2.5 w-full text-left py-2 pl-8 pr-3 transition-colors"
+                style={{
+                  background: isSubSelected ? 'var(--bg-active)' : 'transparent',
+                  borderBottom: '1px solid color-mix(in srgb, var(--border-subtle) 50%, transparent)',
+                }}
+                onMouseEnter={e => { if (!isSubSelected) (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
+                onMouseLeave={e => { if (!isSubSelected) (e.currentTarget as HTMLElement).style.background = isSubSelected ? 'var(--bg-active)' : 'transparent' }}
+              >
+                <SubAgentStatusDot status={sub.status} />
+                <AgentTypeBadge type={sub.agentType} />
+                {sub.caseNumber && (
+                  <span className="text-xs font-mono" style={{ color: 'var(--text-primary)' }}>
+                    {sub.caseNumber}
+                  </span>
+                )}
+                <div className="flex-1 min-w-0">
+                  {sub.lastToolName && (
+                    <span className="text-[10px] truncate block" style={{ color: 'var(--text-tertiary)' }}>
+                      {sub.lastToolName}
+                    </span>
+                  )}
+                </div>
+                {subDuration !== undefined && (
+                  <span className="text-[10px] whitespace-nowrap shrink-0" style={{ color: 'var(--text-tertiary)' }}>
+                    {formatDuration(subDuration)}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** Main two-panel layout: left = agent list, right = detail */
+function MainAgentsSection({
+  sessions,
+  allSessions,
+  sessionsLoading,
+  onStopAllCaseSessions,
+  stoppingAll,
+  onRefreshSessions,
+}: {
+  sessions: UnifiedSession[]
+  allSessions: UnifiedSession[]
+  sessionsLoading: boolean
+  onStopAllCaseSessions: (sessions: UnifiedSession[]) => void
+  stoppingAll: boolean
+  onRefreshSessions: () => void
+}) {
+  const [selectedMainId, setSelectedMainId] = useState<string | null>(null)
+  const [selectedSubId, setSelectedSubId] = useState<string | null>(null)
+  const [expandedSubAgents, setExpandedSubAgents] = useState<Set<string>>(new Set())
+  const [showCompleted, setShowCompleted] = useState(false)
+
+  // Sub-agent store
+  const allSubAgents = useSubAgentStore((s) => s.agents)
+
+  // Group sub-agents by parent session
+  const subAgentsBySession = useMemo(() => {
+    const map: Record<string, SubAgent[]> = {}
+    for (const agent of Object.values(allSubAgents)) {
+      if (!map[agent.parentSessionId]) map[agent.parentSessionId] = []
+      map[agent.parentSessionId].push(agent)
+    }
+    // Sort each group by startedAt desc
+    for (const key of Object.keys(map)) {
+      map[key].sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime())
+    }
+    return map
+  }, [allSubAgents])
+
+  // Split & sort sessions: active first (sorted by lastActivityAt desc), completed at bottom
+  const activeSessions = useMemo(() =>
+    sessions
+      .filter(s => s.status !== 'completed')
+      .sort((a, b) => new Date(b.lastActivityAt).getTime() - new Date(a.lastActivityAt).getTime()),
+    [sessions]
+  )
+
+  const completedSessions = useMemo(() =>
+    sessions
+      .filter(s => s.status === 'completed')
+      .sort((a, b) => new Date(b.lastActivityAt).getTime() - new Date(a.lastActivityAt).getTime()),
+    [sessions]
+  )
+
+  const selectedSession = selectedMainId
+    ? sessions.find(s => s.id === selectedMainId) || null
+    : null
+
+  const selectedSub = selectedSubId
+    ? allSubAgents[selectedSubId] || null
+    : null
+
+  // Count stoppable case sessions for "Stop All" button
+  const stoppableCount = activeSessions.filter(s => s.type === 'case' && (s.status === 'active' || s.status === 'paused' || s.status === 'failed')).length
+
+  const handleSelectMain = (sessionId: string) => {
+    setSelectedMainId(sessionId)
+    setSelectedSubId(null)
+  }
+
+  const handleToggleSubList = (sessionId: string) => {
+    setExpandedSubAgents(prev => {
+      const next = new Set(prev)
+      if (next.has(sessionId)) {
+        next.delete(sessionId)
+      } else {
+        next.add(sessionId)
+      }
+      return next
+    })
+  }
+
+  const handleSelectSub = (subId: string) => {
+    // Click same sub-agent again → deselect
+    if (selectedSubId === subId) {
+      setSelectedSubId(null)
+    } else {
+      setSelectedSubId(subId)
+    }
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+          Active Sessions
+          {sessions.length !== allSessions.length && (
+            <span className="ml-2 text-sm font-normal" style={{ color: 'var(--text-tertiary)' }}>
+              ({sessions.length} of {allSessions.length})
+            </span>
+          )}
+        </h3>
+        {stoppableCount > 0 && (
+          <button
+            onClick={() => onStopAllCaseSessions(activeSessions)}
+            disabled={stoppingAll}
+            className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium rounded-md border transition-all disabled:opacity-50 hover:brightness-110"
+            style={{
+              color: 'var(--accent-red)',
+              background: 'var(--accent-red-dim)',
+              borderColor: 'color-mix(in srgb, var(--accent-red) 30%, transparent)',
+            }}
+            title="Stop all active case sessions"
+          >
+            <Square className="w-3 h-3" style={{ fill: stoppingAll ? 'var(--accent-red)' : 'none' }} />
+            {stoppingAll ? 'Stopping...' : `Stop All (${stoppableCount})`}
+          </button>
+        )}
+      </div>
+
+      {sessionsLoading ? (
+        <Loading text="Loading sessions..." />
+      ) : sessions.length === 0 ? (
+        <EmptyState icon="🧠" title="No sessions" description={allSessions.length > 0 ? 'No sessions match current filters' : 'No agent sessions recorded yet'} />
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-4" style={{ minHeight: '300px' }}>
+          {/* Left panel: scrollable agent list */}
+          <Card padding="none">
+            <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 340px)' }}>
+              {/* Active/Recent sessions */}
+              {activeSessions.map((session) => (
+                <MainAgentRow
+                  key={session.id}
+                  session={session}
+                  isSelected={selectedMainId === session.id}
+                  subAgents={subAgentsBySession[session.id] || []}
+                  isSubExpanded={expandedSubAgents.has(session.id)}
+                  selectedSubId={selectedSubId}
+                  onSelectMain={() => handleSelectMain(session.id)}
+                  onToggleSubList={() => handleToggleSubList(session.id)}
+                  onSelectSub={handleSelectSub}
+                  onStopSession={onRefreshSessions}
+                />
+              ))}
+
+              {/* Completed sessions (collapsible) */}
+              {completedSessions.length > 0 && (
+                <>
+                  <button
+                    onClick={() => setShowCompleted(!showCompleted)}
+                    className="flex items-center gap-2 w-full text-left px-3 py-2 transition-colors"
+                    style={{
+                      background: 'var(--bg-surface)',
+                      borderBottom: '1px solid var(--border-subtle)',
+                      borderTop: activeSessions.length > 0 ? '1px solid var(--border-default)' : undefined,
+                    }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-surface)' }}
+                  >
+                    {showCompleted
+                      ? <ChevronDown className="w-3.5 h-3.5" style={{ color: 'var(--text-tertiary)' }} />
+                      : <ChevronRight className="w-3.5 h-3.5" style={{ color: 'var(--text-tertiary)' }} />
+                    }
+                    <span className="text-xs font-medium" style={{ color: 'var(--text-tertiary)' }}>
+                      ✅ Completed
+                    </span>
+                    <span
+                      className="text-[10px] px-1.5 py-0.5 rounded-full"
+                      style={{ background: 'var(--accent-green-dim)', color: 'var(--accent-green)' }}
+                    >
+                      {completedSessions.length}
+                    </span>
+                  </button>
+
+                  {showCompleted && completedSessions.map((session) => (
+                    <MainAgentRow
+                      key={session.id}
+                      session={session}
+                      isSelected={selectedMainId === session.id}
+                      subAgents={subAgentsBySession[session.id] || []}
+                      isSubExpanded={expandedSubAgents.has(session.id)}
+                      selectedSubId={selectedSubId}
+                      onSelectMain={() => handleSelectMain(session.id)}
+                      onToggleSubList={() => handleToggleSubList(session.id)}
+                      onSelectSub={handleSelectSub}
+                      onStopSession={onRefreshSessions}
+                    />
+                  ))}
+                </>
+              )}
+            </div>
+          </Card>
+
+          {/* Right panel: detail */}
+          <MainAgentDetailPanel session={selectedSession} selectedSub={selectedSub} />
         </div>
       )}
     </div>
@@ -682,9 +1135,6 @@ export default function AgentMonitor() {
   const clearTriggerRun = useTriggerRunStore((s) => s.clearRun)
 
   // Reconcile stale trigger "running" state with API truth.
-  // When SSE misses trigger-completed events (e.g. backend restart), the
-  // triggerRunStore stays stuck at 'running'. This effect auto-clears on each
-  // triggers data refetch.
   useEffect(() => {
     if (!triggersData) return
     const triggers: any[] = (triggersData as any).triggers || (triggersData as any).jobs || []
@@ -693,7 +1143,6 @@ export default function AgentMonitor() {
       if ((run as any)?.status !== 'running') continue
       const apiTrigger = triggers.find((t: any) => t.id === triggerId)
       if (!apiTrigger || apiTrigger.running) continue
-      // API says NOT running, store says running → fix stale state
       const state = apiTrigger.state || {}
       if (state.lastStatus === 'success') {
         store.onTriggerCompleted(triggerId, state.lastDurationMs || 0, state.lastOutput?.slice(0, 300))
@@ -716,9 +1165,6 @@ export default function AgentMonitor() {
   const queryClient = useQueryClient()
   const [refreshing, setRefreshing] = useState(false)
 
-  // Expand/collapse per session
-  const [expandedSessionId, setExpandedSessionId] = useState<string | null>(null)
-
   // Filters
   const [typeFilter, setTypeFilter] = useState<string>('all')
   const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -733,11 +1179,6 @@ export default function AgentMonitor() {
   // Cleanup state
   const [cleaning, setCleaning] = useState(false)
   const [cleanupResult, setCleanupResult] = useState<{ purged: number; remaining: number } | null>(null)
-
-  // Collapsed groups
-  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({
-    __completed: true, // Completed sessions collapsed by default
-  })
 
   // Auto-refresh
   const autoRefreshInterval = 30_000
@@ -779,33 +1220,11 @@ export default function AgentMonitor() {
     return true
   })
 
-  // Split into active/recent vs completed
-  const activeSessions2 = filteredSessions.filter(s => s.status !== 'completed')
-  const completedSessions = filteredSessions.filter(s => s.status === 'completed')
-
-  // Group active/recent by type
-  const sessionsByType: Record<string, UnifiedSession[]> = {}
-  for (const s of activeSessions2) {
-    if (!sessionsByType[s.type]) sessionsByType[s.type] = []
-    sessionsByType[s.type].push(s)
-  }
-
-  // Group completed by type (for expanded view)
-  const completedByType: Record<string, UnifiedSession[]> = {}
-  for (const s of completedSessions) {
-    if (!completedByType[s.type]) completedByType[s.type] = []
-    completedByType[s.type].push(s)
-  }
-
   // Summary counts
   const activeSessions = allSessions.filter((s) => s.status === 'active')
   const typeCounts: Record<string, number> = {}
   for (const s of allSessions) {
     typeCounts[s.type] = (typeCounts[s.type] || 0) + 1
-  }
-
-  const toggleGroup = (type: string) => {
-    setCollapsedGroups((prev) => ({ ...prev, [type]: !prev[type] }))
   }
 
   const refreshSessions = () => {
@@ -833,14 +1252,13 @@ export default function AgentMonitor() {
       const res = await apiPost('/sessions/cleanup')
       setCleanupResult(res as { purged: number; remaining: number })
       refreshSessions()
-      // Auto-hide result after 5s
       setTimeout(() => setCleanupResult(null), 5000)
     } catch { /* ignore */ } finally {
       setCleaning(false)
     }
   }
 
-  // Count stale sessions (completed/failed older than 1h, or paused older than 15min)
+  // Count stale sessions
   const now = Date.now()
   const staleSessions = allSessions.filter(s => {
     const age = now - new Date(s.lastActivityAt).getTime()
@@ -850,7 +1268,7 @@ export default function AgentMonitor() {
     )
   })
 
-  // Group ordering
+  // Group ordering for filters
   const typeOrder = ['case', 'queue', 'implement', 'verify', 'track-creation']
 
   return (
@@ -977,156 +1395,15 @@ export default function AgentMonitor() {
         </div>
       </div>
 
-      {/* All Sessions — Active/Recent grouped by type, then Completed */}
-      <div>
-        <h3 className="text-lg font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
-          Sessions
-          {filteredSessions.length !== allSessions.length && (
-            <span className="ml-2 text-sm font-normal" style={{ color: 'var(--text-tertiary)' }}>
-              ({filteredSessions.length} of {allSessions.length})
-            </span>
-          )}
-        </h3>
-
-        {sessionsLoading ? (
-          <Loading text="Loading sessions..." />
-        ) : filteredSessions.length === 0 ? (
-          <EmptyState icon="🧠" title="No sessions" description={allSessions.length > 0 ? 'No sessions match current filters' : 'No agent sessions recorded yet'} />
-        ) : (
-          <div className="space-y-3">
-            {/* Active/Recent sessions grouped by type */}
-            {typeOrder
-              .filter((t) => sessionsByType[t]?.length)
-              .map((type) => {
-                const sessions = sessionsByType[type]
-                const config = SESSION_TYPE_CONFIG[type]
-                const isCollapsed = collapsedGroups[type]
-                const activeCount = sessions.filter((s) => s.status === 'active').length
-                const stoppableCount = sessions.filter((s) => s.type === 'case' && (s.status === 'active' || s.status === 'paused' || s.status === 'failed')).length
-
-                return (
-                  <Card key={type}>
-                    <div className="flex items-center justify-between">
-                      <button
-                        onClick={() => toggleGroup(type)}
-                        className="flex items-center gap-2 text-left"
-                      >
-                        {isCollapsed
-                          ? <ChevronRight className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
-                          : <ChevronDown className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
-                        }
-                        <span className="text-sm" style={{ color: 'var(--text-primary)' }}>
-                          {config.icon} {config.label} Sessions
-                        </span>
-                        <span
-                          className="text-xs px-1.5 py-0.5 rounded-full"
-                          style={{ background: config.bg, color: config.color }}
-                        >
-                          {sessions.length}
-                        </span>
-                        {activeCount > 0 && (
-                          <span className="flex items-center gap-1 text-xs" style={{ color: 'var(--accent-blue)' }}>
-                            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--accent-blue)' }} />
-                            {activeCount} active
-                          </span>
-                        )}
-                      </button>
-                      {/* Stop All button for case sessions with stoppable sessions */}
-                      {type === 'case' && stoppableCount > 0 && (
-                        <button
-                          onClick={() => handleStopAllCaseSessions(sessions)}
-                          disabled={stoppingAll}
-                          className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium rounded-md border transition-all disabled:opacity-50 hover:brightness-110"
-                          style={{
-                            color: 'var(--accent-red)',
-                            background: 'var(--accent-red-dim)',
-                            borderColor: 'color-mix(in srgb, var(--accent-red) 30%, transparent)',
-                          }}
-                          title="Stop all active case sessions"
-                        >
-                          <Square className="w-3 h-3" style={{ fill: stoppingAll ? 'var(--accent-red)' : 'none' }} />
-                          {stoppingAll ? 'Stopping...' : `Stop All (${stoppableCount})`}
-                        </button>
-                      )}
-                    </div>
-
-                    {!isCollapsed && (
-                      <div className="mt-3 space-y-1.5">
-                        {sessions.map((session) => (
-                          <SessionRow
-                            key={session.id}
-                            session={session}
-                            isExpanded={expandedSessionId === session.id}
-                            onToggle={() => setExpandedSessionId(expandedSessionId === session.id ? null : session.id)}
-                            onStop={refreshSessions}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </Card>
-                )
-              })}
-
-            {/* Completed Sessions — collapsed by default */}
-            {completedSessions.length > 0 && (
-              <Card>
-                <button
-                  onClick={() => toggleGroup('__completed')}
-                  className="flex items-center justify-between w-full text-left"
-                >
-                  <div className="flex items-center gap-2">
-                    {collapsedGroups.__completed
-                      ? <ChevronRight className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
-                      : <ChevronDown className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
-                    }
-                    <span className="text-sm" style={{ color: 'var(--text-primary)' }}>
-                      ✅ Completed Sessions
-                    </span>
-                    <span
-                      className="text-xs px-1.5 py-0.5 rounded-full"
-                      style={{ background: 'var(--accent-green-dim)', color: 'var(--accent-green)' }}
-                    >
-                      {completedSessions.length}
-                    </span>
-                  </div>
-                </button>
-
-                {!collapsedGroups.__completed && (
-                  <div className="mt-3 space-y-3">
-                    {typeOrder
-                      .filter(t => completedByType[t]?.length)
-                      .map(type => {
-                        const sessions = completedByType[type]
-                        const config = SESSION_TYPE_CONFIG[type]
-                        return (
-                          <div key={type}>
-                            <div className="flex items-center gap-2 mb-1.5 ml-1">
-                              <span className="text-xs font-medium" style={{ color: 'var(--text-tertiary)' }}>
-                                {config.icon} {config.label}
-                              </span>
-                              <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>({sessions.length})</span>
-                            </div>
-                            <div className="space-y-1.5">
-                              {sessions.map(session => (
-                                <SessionRow
-                                  key={session.id}
-                                  session={session}
-                                  isExpanded={expandedSessionId === session.id}
-                                  onToggle={() => setExpandedSessionId(expandedSessionId === session.id ? null : session.id)}
-                                  onStop={refreshSessions}
-                                />
-                              ))}
-                            </div>
-                          </div>
-                        )
-                      })}
-                  </div>
-                )}
-              </Card>
-            )}
-          </div>
-        )}
-      </div>
+      {/* Active Sessions — two-panel layout */}
+      <MainAgentsSection
+        sessions={filteredSessions}
+        allSessions={allSessions}
+        sessionsLoading={sessionsLoading}
+        onStopAllCaseSessions={handleStopAllCaseSessions}
+        stoppingAll={stoppingAll}
+        onRefreshSessions={refreshSessions}
+      />
 
       {/* Agent Grid */}
       {agents.length > 0 && (
