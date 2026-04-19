@@ -18,12 +18,15 @@ export type StepStatus = 'pending' | 'active' | 'completed' | 'failed' | 'skippe
 export interface SubtaskState {
   status: StepStatus
   durationMs?: number
+  delta?: Record<string, number>
 }
 
 export interface ActionState {
   type: string
   status: StepStatus
   durationMs?: number
+  detail?: string
+  result?: string
 }
 
 export interface StepState {
@@ -32,6 +35,7 @@ export interface StepState {
   completedAt?: string
   durationMs?: number
   result?: string
+  reasoning?: string
   subtasks?: Record<string, SubtaskState>
   actions?: ActionState[]
 }

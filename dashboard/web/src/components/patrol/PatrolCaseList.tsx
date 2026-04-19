@@ -132,7 +132,7 @@ export default function PatrolCaseList() {
           <PatrolCaseRow
             key={c.caseNumber}
             caseState={c}
-            isExpanded={isCaseActive(c) || !isCaseComplete(c)}
+            defaultExpanded={isCaseActive(c) || !isCaseComplete(c)}
           />
         ))}
 

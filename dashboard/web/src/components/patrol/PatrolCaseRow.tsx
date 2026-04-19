@@ -1,61 +1,53 @@
 /**
- * PatrolCaseRow — Per-case row in the patrol list
+ * PatrolCaseRow — Per-case row with 5-step horizontal pipeline
  *
- * Compact mode: one-line with case number + 4 step dots + status badge + duration
- * Expanded mode: inline chips showing substep progress
+ * Header bar: case number + status pill + summary tags + step count + duration
+ * Pipeline body: start → data-refresh → assess → act → summarize (collapsible for done cases)
  */
-import type { CaseState, StepState, StepStatus } from '../../stores/patrolStore'
+import { useState } from 'react'
+import { ChevronRight, Loader2 } from 'lucide-react'
+import type { CaseState, StepState, StepStatus, SubtaskState, ActionState } from '../../stores/patrolStore'
+
+// ─── Props ───
 
 interface PatrolCaseRowProps {
   caseState: CaseState
-  isExpanded: boolean
+  defaultExpanded: boolean
 }
 
-const MAIN_STEPS = ['data-refresh', 'assess', 'act', 'summarize'] as const
+// ─── Constants ───
+
+const PIPELINE_STEPS = ['start', 'data-refresh', 'assess', 'act', 'summarize'] as const
 const STEP_LABELS: Record<string, string> = {
+  start: 'Start',
   'data-refresh': 'Refresh',
   assess: 'Assess',
   act: 'Act',
   summarize: 'Summary',
 }
 
-const DR_SUBTASKS = ['d365', 'teams', 'onenote', 'icm', 'attachments'] as const
-const ACT_ACTIONS = ['troubleshooter', 'email-drafter', 'challenger'] as const
-
-const STATUS_COLORS: Record<StepStatus, string> = {
-  completed: 'var(--accent-green)',
-  active: 'var(--accent-blue)',
-  failed: 'var(--accent-red)',
-  pending: 'var(--text-tertiary)',
-  skipped: 'var(--text-tertiary)',
+const DR_SUBTASK_NAMES = ['d365', 'teams', 'icm', 'onenote', 'attachments'] as const
+const DR_SUBTASK_LABELS: Record<string, string> = {
+  d365: 'D365',
+  teams: 'Teams',
+  icm: 'ICM',
+  onenote: 'OneNote',
+  attachments: 'Attach',
 }
 
-function getStepStatus(steps: Record<string, StepState>, stepId: string): StepStatus {
-  return steps[stepId]?.status || 'pending'
-}
-
-function getCaseDuration(caseState: CaseState): number | undefined {
-  let total = 0
-  let hasAny = false
-  for (const step of Object.values(caseState.steps)) {
-    if (step.durationMs) {
-      total += step.durationMs
-      hasAny = true
-    }
-  }
-  return hasAny ? total : undefined
-}
+// ─── Helpers ───
 
 function formatDuration(ms: number): string {
-  const s = Math.round(ms / 1000)
-  if (s < 60) return `${s}s`
+  if (ms < 1000) return '<1s'
+  const s = Math.floor(ms / 1000)
   const m = Math.floor(s / 60)
-  return `${m}m ${s % 60}s`
+  if (m > 0) return `${m}m ${s % 60}s`
+  return `${s}s`
 }
 
-function isCaseComplete(caseState: CaseState): boolean {
-  const sum = caseState.steps.summarize
-  const act = caseState.steps.act
+function isCaseComplete(c: CaseState): boolean {
+  const sum = c.steps?.summarize
+  const act = c.steps?.act
   return (
     sum?.status === 'completed' ||
     sum?.status === 'skipped' ||
@@ -63,99 +55,657 @@ function isCaseComplete(caseState: CaseState): boolean {
   )
 }
 
-function isCaseActive(caseState: CaseState): boolean {
-  return Object.values(caseState.steps).some(s => s.status === 'active')
+function isCaseActive(c: CaseState): boolean {
+  return Object.values(c.steps).some(s => s.status === 'active')
 }
 
-export default function PatrolCaseRow({ caseState, isExpanded }: PatrolCaseRowProps) {
-  const duration = getCaseDuration(caseState)
-  const complete = isCaseComplete(caseState)
-  const active = isCaseActive(caseState)
+function getCaseDuration(c: CaseState): number | undefined {
+  let total = 0
+  let hasAny = false
+  for (const step of Object.values(c.steps)) {
+    if (step.durationMs) { total += step.durationMs; hasAny = true }
+  }
+  return hasAny ? total : undefined
+}
+
+function getCompletedStepCount(c: CaseState): number {
+  return Object.values(c.steps).filter(
+    s => s.status === 'completed' || s.status === 'skipped'
+  ).length
+}
+
+function formatDelta(name: string, delta?: Record<string, number>): string | null {
+  if (!delta) return null
+  switch (name) {
+    case 'd365': {
+      const parts: string[] = []
+      if (delta.emails) parts.push(`+${delta.emails} emails`)
+      if (delta.notes) parts.push(`+${delta.notes} note`)
+      return parts.join(' \u00b7 ') || null
+    }
+    case 'teams': {
+      const parts: string[] = []
+      if (delta.chats) parts.push(`${delta.chats} chats`)
+      if (delta.messages) parts.push(`${delta.messages} msgs`)
+      return parts.join(' \u00b7 ') || null
+    }
+    case 'icm':
+      return delta.discussions ? `+${delta.discussions} discussions` : null
+    case 'onenote':
+      return delta.pagesUpdated ? `${delta.pagesUpdated} pages updated` : null
+    case 'attachments': {
+      if (!delta.files) return null
+      let s = `+${delta.files} file`
+      if (delta.sizeKB) s += ` (${delta.sizeKB} KB)`
+      return s
+    }
+    default:
+      return null
+  }
+}
+
+function getActSummary(c: CaseState): string {
+  const act = c.steps?.act
+  if (act?.status === 'skipped') return 'act skipped'
+  if (!act?.actions?.length) return ''
+  return (
+    act.actions
+      .filter(a => a.status === 'completed')
+      .map(a => a.type.replace('-', ' '))
+      .join(' + ') || ''
+  )
+}
+
+function hasFailed(c: CaseState): boolean {
+  return Object.values(c.steps).some(s => s.status === 'failed')
+}
+
+// ─── Status icon (22px circle) ───
+
+function StepStatusIcon({ status }: { status: StepStatus }) {
+  const size = 22
+  if (status === 'completed') {
+    return (
+      <div
+        style={{
+          width: size,
+          height: size,
+          borderRadius: '50%',
+          background: 'var(--accent-green)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
+    )
+  }
+  if (status === 'active') {
+    return (
+      <div
+        style={{
+          width: size,
+          height: size,
+          borderRadius: '50%',
+          background: 'var(--accent-blue-dim)',
+          border: '2px solid var(--accent-blue)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+          animation: 'patrol-step-pulse 2s ease-in-out infinite',
+        }}
+      >
+        <div
+          style={{
+            width: 8,
+            height: 8,
+            borderRadius: '50%',
+            background: 'var(--accent-blue)',
+          }}
+        />
+      </div>
+    )
+  }
+  if (status === 'failed') {
+    return (
+      <div
+        style={{
+          width: size,
+          height: size,
+          borderRadius: '50%',
+          background: 'var(--accent-red)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+          <path d="M2.5 2.5L7.5 7.5M7.5 2.5L2.5 7.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+      </div>
+    )
+  }
+  if (status === 'skipped') {
+    return (
+      <div
+        style={{
+          width: size,
+          height: size,
+          borderRadius: '50%',
+          background: 'var(--bg-inset)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+          opacity: 0.5,
+        }}
+      >
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+          <path d="M2 5H8" stroke="var(--text-tertiary)" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+      </div>
+    )
+  }
+  // pending
+  return (
+    <div
+      style={{
+        width: size,
+        height: size,
+        borderRadius: '50%',
+        border: '2px solid var(--border-subtle)',
+        flexShrink: 0,
+      }}
+    />
+  )
+}
+
+// ─── Connector line between steps ───
+
+function StepConnector({ leftStatus, rightStatus }: { leftStatus: StepStatus; rightStatus: StepStatus }) {
+  let background: string
+  let opacity: number
+
+  const leftDone = leftStatus === 'completed' || leftStatus === 'skipped'
+  const rightDone = rightStatus === 'completed' || rightStatus === 'skipped'
+  const rightActive = rightStatus === 'active'
+
+  if (leftDone && rightDone) {
+    background = 'var(--accent-green)'
+    opacity = 0.3
+  } else if (leftDone && rightActive) {
+    background = 'linear-gradient(90deg, var(--accent-green), var(--accent-blue))'
+    opacity = 0.4
+  } else {
+    background = 'var(--border-subtle)'
+    opacity = 1
+  }
 
   return (
     <div
-      className="rounded-lg transition-all duration-150"
       style={{
-        background: isExpanded ? 'var(--bg-hover)' : 'transparent',
-        border: isExpanded ? '1px solid var(--border-subtle)' : '1px solid transparent',
+        width: 20,
+        flexShrink: 0,
+        display: 'flex',
+        alignItems: 'center',
+        paddingTop: 2,
       }}
     >
-      {/* Compact row */}
-      <div className="flex items-center gap-3 px-3 py-2">
+      <div
+        style={{
+          width: '100%',
+          height: 2,
+          borderRadius: 1,
+          background,
+          opacity,
+        }}
+      />
+    </div>
+  )
+}
+
+// ─── Step-specific body content ───
+
+function StartBody({ step }: { step?: StepState }) {
+  const status = step?.status || 'pending'
+  if (status === 'completed') {
+    return <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>SDK session ready</div>
+  }
+  if (status === 'active') {
+    return (
+      <div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--accent-blue)' }}>
+        <Loader2 size={12} className="animate-spin" />
+        Launching SDK session\u2026
+      </div>
+    )
+  }
+  return null
+}
+
+function DataRefreshBody({ step }: { step?: StepState }) {
+  if (!step) return null
+  return (
+    <div className="space-y-1">
+      {DR_SUBTASK_NAMES.map(name => {
+        const sub: SubtaskState | undefined = step.subtasks?.[name]
+        const status = sub?.status || 'pending'
+        const deltaText = formatDelta(name, sub?.delta)
+        return (
+          <div key={name} className="flex items-center gap-2">
+            {/* 6px status dot */}
+            <div
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                flexShrink: 0,
+                background:
+                  status === 'completed' ? 'var(--accent-green)' :
+                  status === 'active' ? 'var(--accent-blue)' :
+                  status === 'failed' ? 'var(--accent-red)' :
+                  'var(--border-subtle)',
+                animation: status === 'active' ? 'patrol-dot-pulse 2s ease-in-out infinite' : undefined,
+              }}
+            />
+            {/* Name */}
+            <span
+              className="text-[13px] font-medium"
+              style={{ minWidth: 70, color: 'var(--text-primary)' }}
+            >
+              {DR_SUBTASK_LABELS[name]}
+            </span>
+            {/* Delta */}
+            {deltaText && (
+              <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                {deltaText}
+              </span>
+            )}
+            {!deltaText && status === 'completed' && (
+              <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>no new</span>
+            )}
+            {/* Duration */}
+            {sub?.durationMs !== undefined && (
+              <span
+                className="text-[11px] ml-auto"
+                style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  color: 'var(--text-tertiary)',
+                  flexShrink: 0,
+                }}
+              >
+                {formatDuration(sub.durationMs)}
+              </span>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function AssessBody({ step }: { step?: StepState }) {
+  if (!step) return null
+  const result = step.result
+  const reasoning = step.reasoning
+
+  const isNeedsAction = result === 'needs-action'
+  const isNoChange = result === 'no-change'
+
+  return (
+    <div className="space-y-2">
+      {/* Result pill */}
+      {result && (
+        <div
+          className="inline-flex items-center gap-1.5 text-[13px] font-semibold rounded-lg px-3 py-1"
+          style={{
+            background: isNeedsAction
+              ? 'var(--accent-amber-dim)'
+              : 'var(--bg-inset)',
+            color: isNeedsAction
+              ? 'var(--accent-amber)'
+              : 'var(--text-tertiary)',
+          }}
+        >
+          {isNeedsAction && (
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.5" />
+              <path d="M7 4V7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <circle cx="7" cy="10" r="0.75" fill="currentColor" />
+            </svg>
+          )}
+          {isNoChange && (
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.5" />
+              <path d="M4.5 7H9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          )}
+          {result}
+        </div>
+      )}
+      {/* Reasoning */}
+      {reasoning && (
+        <div
+          className="text-xs"
+          style={{
+            color: 'var(--text-tertiary)',
+            borderLeft: '2px solid var(--border-subtle)',
+            paddingLeft: 10,
+          }}
+        >
+          {reasoning}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ActBody({ step }: { step?: StepState }) {
+  if (!step) return null
+  const actions = step.actions
+  if (!actions?.length) {
+    if (step.status === 'active') {
+      return (
+        <div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--accent-blue)' }}>
+          <Loader2 size={12} className="animate-spin" />
+          Waiting\u2026
+        </div>
+      )
+    }
+    return null
+  }
+
+  return (
+    <div className="space-y-1.5">
+      {actions.map((action, idx) => (
+        <ActionCard key={`${action.type}-${idx}`} action={action} />
+      ))}
+    </div>
+  )
+}
+
+function ActionCard({ action }: { action: ActionState }) {
+  const { type, status, durationMs, detail, result } = action
+  const name = type.replace(/-/g, ' ')
+
+  if (status === 'completed') {
+    return (
+      <div
+        className="rounded-lg px-2.5 py-1.5"
+        style={{
+          border: '1px solid var(--accent-green)',
+          opacity: 0.8,
+        }}
+      >
+        <div className="flex items-center gap-1.5">
+          <div
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: '50%',
+              background: 'var(--accent-green)',
+              flexShrink: 0,
+            }}
+          />
+          <span className="text-xs font-medium" style={{ color: 'var(--accent-green)' }}>
+            {name}
+          </span>
+          {durationMs !== undefined && (
+            <span
+              className="text-[11px] ml-auto"
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                color: 'var(--text-tertiary)',
+              }}
+            >
+              {formatDuration(durationMs)}
+            </span>
+          )}
+        </div>
+        {result && (
+          <div className="text-[11px] mt-0.5" style={{ color: 'var(--text-tertiary)', paddingLeft: 14 }}>
+            {result}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  if (status === 'active') {
+    const isLaunching = detail?.toLowerCase().includes('launching')
+    return (
+      <div
+        className="rounded-lg px-2.5 py-1.5"
+        style={{
+          background: 'var(--accent-blue-dim)',
+          border: '1px solid rgba(106,95,193,0.25)',
+        }}
+      >
+        <div className="flex items-center gap-1.5">
+          {isLaunching ? (
+            <Loader2 size={12} className="animate-spin" style={{ color: 'var(--accent-blue)', flexShrink: 0 }} />
+          ) : (
+            <div
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                background: 'var(--accent-blue)',
+                flexShrink: 0,
+                animation: 'patrol-dot-pulse 2s ease-in-out infinite',
+              }}
+            />
+          )}
+          <span className="text-xs font-medium" style={{ color: 'var(--accent-blue)' }}>
+            {name}
+          </span>
+          {durationMs !== undefined && (
+            <span
+              className="text-[11px] ml-auto"
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                color: 'var(--text-tertiary)',
+              }}
+            >
+              {formatDuration(durationMs)}
+            </span>
+          )}
+        </div>
+        {detail && (
+          <div className="text-[11px] mt-0.5" style={{ color: 'var(--accent-blue)', paddingLeft: 18 }}>
+            {detail}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // pending
+  return (
+    <div className="rounded-lg px-2.5 py-1.5" style={{ opacity: 0.3 }}>
+      <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+        {name}
+      </span>
+    </div>
+  )
+}
+
+function SummarizeBody({ step }: { step?: StepState }) {
+  if (!step) return null
+  const status = step.status
+  if (status === 'completed') {
+    return (
+      <div className="space-y-0.5">
+        <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Todo updated</div>
+        {step.result && (
+          <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{step.result}</div>
+        )}
+      </div>
+    )
+  }
+  if (status === 'active') {
+    return (
+      <div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--accent-blue)' }}>
+        <Loader2 size={12} className="animate-spin" />
+        Summarizing\u2026
+      </div>
+    )
+  }
+  if (status === 'pending') {
+    return <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Waiting\u2026</div>
+  }
+  return null
+}
+
+// ─── Main Component ───
+
+export default function PatrolCaseRow({ caseState, defaultExpanded }: PatrolCaseRowProps) {
+  const [expanded, setExpanded] = useState(defaultExpanded)
+  const isComplete = isCaseComplete(caseState)
+  const isActive = isCaseActive(caseState)
+  const failed = hasFailed(caseState)
+  const duration = getCaseDuration(caseState)
+  const completedCount = getCompletedStepCount(caseState)
+
+  const showBody = isActive || expanded
+
+  return (
+    <div
+      className="rounded-xl transition-all duration-200"
+      style={{
+        background: 'var(--bg-surface)',
+        border: isActive
+          ? '1px solid rgba(106,95,193,0.25)'
+          : '1px solid var(--border-subtle)',
+        boxShadow: isActive
+          ? '0 4px 20px rgba(106,95,193,0.15)'
+          : undefined,
+      }}
+    >
+      {/* ─── Header bar ─── */}
+      <div
+        className="flex items-center gap-3 px-4 py-2.5"
+        style={{
+          cursor: isComplete ? 'pointer' : undefined,
+          userSelect: 'none',
+        }}
+        onClick={() => {
+          if (isComplete) setExpanded(e => !e)
+        }}
+      >
+        {/* Chevron (done cases only) */}
+        {isComplete && (
+          <ChevronRight
+            size={16}
+            style={{
+              color: 'var(--text-tertiary)',
+              transition: 'transform 150ms ease',
+              transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)',
+              flexShrink: 0,
+            }}
+          />
+        )}
+
         {/* Case number */}
         <span
-          className="text-xs font-medium shrink-0"
+          className="text-[15px] font-bold shrink-0"
           style={{
             fontFamily: "'JetBrains Mono', monospace",
-            color: active ? 'var(--accent-blue)' : complete ? 'var(--text-secondary)' : 'var(--text-primary)',
-            minWidth: 100,
+            color: isActive ? 'var(--accent-blue)' : 'var(--text-secondary)',
           }}
         >
           {caseState.caseNumber}
         </span>
 
-        {/* 4 step dots */}
-        <div className="flex items-center gap-1.5">
-          {MAIN_STEPS.map(stepId => {
-            const status = getStepStatus(caseState.steps, stepId)
-            return (
-              <div
-                key={stepId}
-                className="rounded-full transition-all duration-200"
-                style={{
-                  width: status === 'active' ? 9 : 7,
-                  height: status === 'active' ? 9 : 7,
-                  background: STATUS_COLORS[status],
-                  opacity: status === 'skipped' ? 0.4 : 1,
-                  animation: status === 'active' ? 'patrol-dot-pulse 2s ease-in-out infinite' : undefined,
-                }}
-                title={`${STEP_LABELS[stepId]}: ${status}`}
-              />
-            )
-          })}
-        </div>
-
-        {/* Current step label */}
-        {caseState.currentStep && active && (
+        {/* Status pill */}
+        {isActive && (
           <span
-            className="text-[10px] font-medium uppercase tracking-wide"
-            style={{ color: 'var(--accent-blue)' }}
+            className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase rounded-xl px-3 py-1"
+            style={{
+              background: 'var(--accent-blue-dim)',
+              color: 'var(--accent-blue)',
+              flexShrink: 0,
+            }}
           >
-            {STEP_LABELS[caseState.currentStep] || caseState.currentStep}
+            <Loader2 size={11} className="animate-spin" />
+            {STEP_LABELS[caseState.currentStep || ''] || caseState.currentStep || 'Processing'}
           </span>
         )}
-
-        {/* Spacer */}
-        <div className="flex-1" />
-
-        {/* Status badge */}
-        {complete && (
+        {isComplete && !failed && (
           <span
-            className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide"
+            className="inline-flex items-center gap-1 text-[11px] font-bold uppercase rounded-xl px-3 py-1"
             style={{
               background: 'var(--accent-green-dim)',
               color: 'var(--accent-green)',
+              flexShrink: 0,
             }}
           >
+            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+              <path d="M2 5.5L4.5 8L9 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
             Done
           </span>
         )}
-        {Object.values(caseState.steps).some(s => s.status === 'failed') && (
+        {failed && (
           <span
-            className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide"
+            className="inline-flex items-center gap-1 text-[11px] font-bold uppercase rounded-xl px-3 py-1"
             style={{
               background: 'var(--accent-red-dim)',
               color: 'var(--accent-red)',
+              flexShrink: 0,
             }}
           >
             Failed
           </span>
         )}
 
+        {/* Summary tags (only when collapsed done) */}
+        {isComplete && !expanded && (
+          <div className="flex items-center gap-2 min-w-0 overflow-hidden">
+            {/* Assess result tag */}
+            {caseState.steps?.assess?.result && (
+              <span
+                className="text-[11px] font-medium rounded px-2 py-0.5 shrink-0"
+                style={{
+                  background: 'var(--bg-inset)',
+                  color: 'var(--text-tertiary)',
+                }}
+              >
+                [{caseState.steps.assess.result}]
+              </span>
+            )}
+            {/* Act summary */}
+            {getActSummary(caseState) && (
+              <span
+                className="text-[11px] truncate"
+                style={{ color: 'var(--text-tertiary)' }}
+              >
+                &middot; {getActSummary(caseState)}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Step count */}
+        <span
+          className="text-xs shrink-0"
+          style={{ color: 'var(--text-tertiary)' }}
+        >
+          {completedCount} / 5
+        </span>
+
         {/* Duration */}
         {duration !== undefined && (
           <span
-            className="text-[11px]"
+            className="text-xs shrink-0"
             style={{
               fontFamily: "'JetBrains Mono', monospace",
               color: 'var(--text-tertiary)',
@@ -166,192 +716,84 @@ export default function PatrolCaseRow({ caseState, isExpanded }: PatrolCaseRowPr
         )}
       </div>
 
-      {/* Expanded detail */}
-      {isExpanded && (
-        <div className="px-3 pb-3 pt-1 space-y-2">
-          {/* Data-refresh: parallel subtask chips */}
-          <ExpandedStep
-            label="Data Refresh"
-            step={caseState.steps['data-refresh']}
-            renderDetail={() => (
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {DR_SUBTASKS.map(st => {
-                  const sub = caseState.steps['data-refresh']?.subtasks?.[st]
-                  const status = sub?.status || 'pending'
-                  return (
-                    <SubtaskChip
-                      key={st}
-                      label={st}
-                      status={status}
-                      durationMs={sub?.durationMs}
-                    />
-                  )
-                })}
-              </div>
-            )}
-          />
+      {/* ─── Pipeline body ─── */}
+      {showBody && (
+        <div
+          className="px-4 pb-4 pt-1"
+          style={{
+            display: 'flex',
+            gap: 0,
+            alignItems: 'flex-start',
+          }}
+        >
+          {PIPELINE_STEPS.map((stepId, idx) => {
+            const step = caseState.steps[stepId]
+            const status: StepStatus = step?.status || 'pending'
+            const isStart = stepId === 'start'
 
-          {/* Assess */}
-          <ExpandedStep
-            label="Assess"
-            step={caseState.steps.assess}
-            renderDetail={() => {
-              const result = caseState.steps.assess?.result
-              return result ? (
-                <span
-                  className="text-[10px] font-medium px-2 py-0.5 rounded"
-                  style={{ background: 'var(--bg-inset)', color: 'var(--text-secondary)' }}
-                >
-                  {result}
-                </span>
-              ) : null
-            }}
-          />
-
-          {/* Act: serial actions with arrows */}
-          <ExpandedStep
-            label="Act"
-            step={caseState.steps.act}
-            renderDetail={() => {
-              const actions = caseState.steps.act?.actions
-              if (!actions?.length) return null
-              return (
-                <div className="flex items-center gap-1 flex-wrap">
-                  {actions.map((action, idx) => (
-                    <div key={action.type} className="flex items-center gap-1">
-                      <SubtaskChip
-                        label={action.type}
-                        status={action.status}
-                        durationMs={action.durationMs}
-                      />
-                      {idx < actions.length - 1 && (
-                        <span
-                          className="text-[10px]"
-                          style={{ color: 'var(--text-tertiary)' }}
-                        >
-                          →
-                        </span>
-                      )}
-                    </div>
-                  ))}
+            return (
+              <div key={stepId} style={{ display: 'contents' }}>
+                {/* Connector before this step (not before first) */}
+                {idx > 0 && (
+                  <StepConnector
+                    leftStatus={caseState.steps[PIPELINE_STEPS[idx - 1]]?.status || 'pending'}
+                    rightStatus={status}
+                  />
+                )}
+                {/* Step column */}
+                <div style={{ flex: isStart ? 0.6 : 1, minWidth: 0 }}>
+                  {/* Step header */}
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <StepStatusIcon status={status} />
+                    <span
+                      className="text-sm font-bold uppercase tracking-wide"
+                      style={{
+                        color:
+                          status === 'active' ? 'var(--accent-blue)' :
+                          status === 'completed' ? 'var(--text-primary)' :
+                          'var(--text-tertiary)',
+                      }}
+                    >
+                      {STEP_LABELS[stepId]}
+                    </span>
+                    {step?.durationMs !== undefined && (
+                      <span
+                        className="text-xs"
+                        style={{
+                          fontFamily: "'JetBrains Mono', monospace",
+                          color: 'var(--text-tertiary)',
+                        }}
+                      >
+                        {formatDuration(step.durationMs)}
+                      </span>
+                    )}
+                  </div>
+                  {/* Step body (left-padded to align under name) */}
+                  <div style={{ paddingLeft: 29 }}>
+                    {stepId === 'start' && <StartBody step={step} />}
+                    {stepId === 'data-refresh' && <DataRefreshBody step={step} />}
+                    {stepId === 'assess' && <AssessBody step={step} />}
+                    {stepId === 'act' && <ActBody step={step} />}
+                    {stepId === 'summarize' && <SummarizeBody step={step} />}
+                  </div>
                 </div>
-              )
-            }}
-          />
-
-          {/* Summarize */}
-          <ExpandedStep
-            label="Summary"
-            step={caseState.steps.summarize}
-          />
+              </div>
+            )
+          })}
         </div>
       )}
 
-      {/* Animations */}
+      {/* ─── Animations ─── */}
       <style>{`
         @keyframes patrol-dot-pulse {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.4; }
         }
+        @keyframes patrol-step-pulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(106,95,193,0.3); }
+          50% { box-shadow: 0 0 0 4px rgba(106,95,193,0); }
+        }
       `}</style>
     </div>
-  )
-}
-
-/* ─── Sub-components ─── */
-
-function ExpandedStep({
-  label,
-  step,
-  renderDetail,
-}: {
-  label: string
-  step?: StepState
-  renderDetail?: () => React.ReactNode
-}) {
-  const status = step?.status || 'pending'
-
-  return (
-    <div className="flex items-start gap-2">
-      {/* Status dot */}
-      <div
-        className="mt-1 rounded-full shrink-0"
-        style={{
-          width: 6,
-          height: 6,
-          background: STATUS_COLORS[status],
-          opacity: status === 'skipped' ? 0.4 : 1,
-        }}
-      />
-      {/* Label */}
-      <span
-        className="text-[11px] font-semibold uppercase tracking-wide shrink-0"
-        style={{
-          color: status === 'active' ? 'var(--accent-blue)' : 'var(--text-tertiary)',
-          minWidth: 72,
-        }}
-      >
-        {label}
-      </span>
-      {/* Detail content */}
-      <div className="flex-1">
-        {renderDetail?.()}
-      </div>
-      {/* Duration */}
-      {step?.durationMs !== undefined && (
-        <span
-          className="text-[10px] shrink-0"
-          style={{
-            fontFamily: "'JetBrains Mono', monospace",
-            color: 'var(--text-tertiary)',
-          }}
-        >
-          {formatDuration(step.durationMs)}
-        </span>
-      )}
-    </div>
-  )
-}
-
-function SubtaskChip({
-  label,
-  status,
-  durationMs,
-}: {
-  label: string
-  status: StepStatus
-  durationMs?: number
-}) {
-  return (
-    <span
-      className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition-all"
-      style={{
-        background: status === 'active'
-          ? 'var(--accent-blue-dim)'
-          : status === 'completed'
-            ? 'var(--accent-green-dim)'
-            : status === 'failed'
-              ? 'var(--accent-red-dim)'
-              : 'var(--bg-inset)',
-        color: STATUS_COLORS[status],
-        opacity: status === 'skipped' ? 0.4 : 1,
-      }}
-    >
-      {status === 'active' && (
-        <span
-          className="w-1.5 h-1.5 rounded-full"
-          style={{
-            background: 'var(--accent-blue)',
-            animation: 'patrol-dot-pulse 2s ease-in-out infinite',
-          }}
-        />
-      )}
-      {label}
-      {durationMs !== undefined && (
-        <span style={{ fontFamily: "'JetBrains Mono', monospace", opacity: 0.7 }}>
-          {formatDuration(durationMs)}
-        </span>
-      )}
-    </span>
   )
 }
