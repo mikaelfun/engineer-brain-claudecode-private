@@ -52,6 +52,8 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
    检测 prompt 中是否包含 `source=webui`，如果包含则 source 为 `webui`，否则为 `cli`。
    ```bash
    mkdir -p "{patrolDir}"
+   rm -f "{patrolDir}/patrol-progress.json"  # 清理上次残留
+   echo "starting" > "{patrolDir}/patrol-phase"
    echo '{"source":"cli","pid":'"$$"',"startedAt":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'","force":FORCE_VALUE}' > "{patrolDir}/patrol.lock"
    ```
 
