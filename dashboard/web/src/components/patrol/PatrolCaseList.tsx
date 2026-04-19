@@ -62,6 +62,7 @@ export default function PatrolCaseList() {
         </h3>
         {totalCases > 0 && (
           <span className="text-xs font-medium" style={{ color: 'var(--text-tertiary)' }}>
+            {processedCases} / {totalCases} processed
           </span>
         )}
         {totalCases > 0 && (

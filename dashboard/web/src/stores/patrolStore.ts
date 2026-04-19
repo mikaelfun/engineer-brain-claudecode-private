@@ -144,7 +144,8 @@ export const usePatrolStore = create<PatrolStore>()((set, _get) => ({
     if (data.totalFound !== undefined) update.totalFound = data.totalFound as number
     if (data.skippedCount !== undefined) update.skippedCount = data.skippedCount as number
     if (data.warmupStatus !== undefined) update.warmupStatus = data.warmupStatus as string
-    if (phase === 'completed') {
+    if (data.completedAt) update.completedAt = data.completedAt as string
+    if (phase === 'completed' && !data.completedAt) {
       update.completedAt = new Date().toISOString()
     }
     if (phase === 'starting') {

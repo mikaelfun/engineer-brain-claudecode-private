@@ -184,7 +184,7 @@ function StatChip({ label, value, color }: { label: string; value: number; color
       </span>
       <span
         className="font-bold uppercase"
-        style={{ color: 'var(--text-tertiary)', letterSpacing: '1.2px' }}
+        style={{ color: 'var(--text-tertiary)', letterSpacing: '1.2px', fontSize: 8 }}
       >
         {label}
       </span>

@@ -11,7 +11,8 @@ import {
   Sparkles, Search, Mail, Play, X, Send,
   CheckCircle2, Loader2, Brain, AlertCircle, ChevronDown,
   RefreshCw, MessageSquare, GitBranch, FileText, BookOpen,
-  ChevronRight, Maximize2, ExternalLink, Square, Shield, Zap, Clock
+  ChevronRight, Maximize2, ExternalLink, Square, Shield, Zap, Clock,
+  ClipboardCheck, Cog, ListChecks
 } from 'lucide-react'
 import { apiPost, apiDelete } from '../api/client'
 import { useCaseSessions, useCaseOperation, useCaseMessages, useEndAllCaseSessions, useEndCaseSession, useCaseStepProgress, useSkills } from '../api/hooks'
@@ -507,8 +508,12 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull, ski
 
   const SKILL_ICONS: Record<string, typeof RefreshCw> = {
     'data-refresh': RefreshCw,
+    'assess': ClipboardCheck,
+    'act': Cog,
+    'summarize': ListChecks,
     'teams-search': MessageSquare,
     'troubleshoot': Search,
+    'challenge': Shield,
     'inspection': FileText,
     'inspection-writer': FileText,
     'generate-kb': BookOpen,
@@ -520,7 +525,11 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull, ski
 
   const SKILL_COLORS: Record<string, string> = {
     'data-refresh': 'var(--accent-blue)',
+    'assess': 'var(--accent-amber)',
+    'act': 'var(--accent-red)',
+    'summarize': 'var(--accent-green)',
     'teams-search': 'var(--accent-purple)',
+    'challenge': 'var(--accent-red)',
     'troubleshoot': 'var(--accent-red)',
     'inspection-writer': 'var(--accent-blue)',
     'generate-kb': 'var(--accent-purple)',
@@ -531,7 +540,8 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull, ski
 
   // Only show case-relevant skills as quick actions
   const CASE_SKILL_ALLOWLIST = new Set([
-    'data-refresh', 'troubleshoot', 'inspection-writer',
+    'data-refresh', 'assess', 'act', 'summarize',
+    'troubleshoot', 'challenge', 'inspection-writer',
     'generate-kb', 'teams-search', 'labor-estimate', 'note-gap',
     'onenote-case-search',
   ])
