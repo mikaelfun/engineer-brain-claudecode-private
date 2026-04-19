@@ -254,7 +254,7 @@ function StepConnector({ leftStatus, rightStatus }: { leftStatus: StepStatus; ri
         flexShrink: 0,
         display: 'flex',
         alignItems: 'center',
-        paddingTop: 2,
+        height: 22, // match StepStatusIcon height so line aligns with icon centers
       }}
     >
       <div
