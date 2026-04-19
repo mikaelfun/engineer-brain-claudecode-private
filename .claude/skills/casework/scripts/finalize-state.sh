@@ -60,6 +60,20 @@ if drafts:
           '--case-dir', r'$CASE_DIR', '--step', 'act',
           '--action', 'email-drafter', '--result', 'Draft: ' + subj[:80]], check=False)
     except: pass
+# Backfill reassess result from execution-plan.json plans[]
+ep = os.path.join(r'$CASE_DIR', '.casework', 'execution-plan.json')
+if os.path.exists(ep):
+    try:
+        plan = json.load(open(ep, encoding='utf-8'))
+        plans = plan.get('plans', [])
+        reassess_plan = next((p for p in plans if p.get('phase') == 'reassess'), None)
+        if reassess_plan:
+            conclusion = reassess_plan.get('conclusion', {})
+            result = f\"{conclusion.get('type', '?')} → {conclusion.get('suggestedNextAction', '?')}\"
+            subprocess.run([sys.executable, r'$UPDATE_STATE',
+              '--case-dir', r'$CASE_DIR', '--step', 'act',
+              '--action', 'reassess', '--result', result], check=False)
+    except: pass
 " 2>/dev/null || true
     ;;
 esac
