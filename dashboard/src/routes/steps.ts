@@ -38,7 +38,7 @@ import { getSSEEventType, formatMessageForSSE, getPersistedMessageType } from '.
 import { caseStepState, type CaseStepQuestion } from '../services/case-step-state.js'
 import { withInactivityTimeout, INACTIVITY_TIMEOUT_MS } from '../utils/operation-timeout.js'
 import { sdkQueue } from '../utils/sdk-queue.js'
-import { existsSync } from 'fs'
+import { existsSync, appendFileSync, mkdirSync } from 'fs'
 import { join } from 'path'
 import { config } from '../config.js'
 
@@ -297,6 +297,12 @@ async function processStepMessages(
   let completionDetected = false
   let graceExpired = false
   let completionTimer: ReturnType<typeof setTimeout> | null = null
+
+  // SDK session JSONL log — full message capture for post-hoc analysis
+  const logTs = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
+  const caseLogsDir = join(config.activeCasesDir, caseNumber, '.casework', 'logs')
+  try { if (!existsSync(caseLogsDir)) mkdirSync(caseLogsDir, { recursive: true }) } catch { /* ignore */ }
+  const sdkLogPath = join(caseLogsDir, `${logTs}_${stepName}_sdk.jsonl`)
   const COMPLETION_GRACE_MS = 30_000 // 30s grace period after completion signal
 
   const COMPLETION_KEYWORDS = [
@@ -514,6 +520,9 @@ async function processStepMessages(
         timestamp: formatted.timestamp as string || new Date().toISOString(),
       })
     }
+
+    // Append raw SDK message to JSONL log
+    try { appendFileSync(sdkLogPath, JSON.stringify(message) + '\n', 'utf-8') } catch { /* non-fatal */ }
   }
   } finally {
     // Clean up completion grace timer
