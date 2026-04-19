@@ -250,8 +250,7 @@ function StepConnector({ leftStatus, rightStatus }: { leftStatus: StepStatus; ri
   return (
     <div
       style={{
-        width: 20,
-        flexShrink: 0,
+        flex: 0.25, // proportional width — centers line in whitespace between steps
         display: 'flex',
         alignItems: 'center',
         height: 22, // match StepStatusIcon height so line aligns with icon centers
@@ -592,10 +591,10 @@ export default function PatrolCaseRow({ caseState, defaultExpanded }: PatrolCase
         background: 'var(--bg-surface)',
         border: isActive
           ? '1px solid rgba(106,95,193,0.25)'
-          : '1px solid var(--border-subtle)',
+          : '1px solid rgba(106,95,193,0.12)',
         boxShadow: isActive
           ? '0 4px 20px rgba(106,95,193,0.15)'
-          : '0 1px 4px rgba(0,0,0,0.03)',
+          : '0 1px 4px rgba(106,95,193,0.04)',
         overflow: 'hidden', // clip header bg to card radius
       }}
       onMouseEnter={e => {
@@ -605,7 +604,7 @@ export default function PatrolCaseRow({ caseState, defaultExpanded }: PatrolCase
       }}
       onMouseLeave={e => {
         if (!isActive) {
-          (e.currentTarget as HTMLElement).style.boxShadow = '0 1px 4px rgba(0,0,0,0.03)'
+          (e.currentTarget as HTMLElement).style.boxShadow = '0 1px 4px rgba(106,95,193,0.04)'
         }
       }}
     >
@@ -640,7 +639,7 @@ export default function PatrolCaseRow({ caseState, defaultExpanded }: PatrolCase
           className="text-[15px] font-bold shrink-0"
           style={{
             fontFamily: "'JetBrains Mono', monospace",
-            color: isActive ? 'var(--accent-blue)' : 'var(--text-secondary)',
+            color: isActive ? 'var(--accent-blue)' : 'rgba(106,95,193,0.7)',
           }}
         >
           {caseState.caseNumber}

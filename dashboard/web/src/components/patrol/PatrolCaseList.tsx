@@ -60,7 +60,7 @@ export default function PatrolCaseList() {
       {/* Section header — matches sidebar's "PIPELINE" label style exactly:
           same padding (16px 18px 10px), same 11px uppercase bold, same color */}
       <div style={{ padding: '16px 18px 10px' }}>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3" style={{ lineHeight: '16px' }}>
           <span
             className="text-[11px] font-bold uppercase"
             style={{ letterSpacing: '0.8px', color: 'var(--text-tertiary)' }}

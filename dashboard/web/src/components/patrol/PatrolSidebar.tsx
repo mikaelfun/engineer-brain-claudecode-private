@@ -193,7 +193,7 @@ export default function PatrolSidebar() {
 
   return (
     <Card padding="none">
-      <div className="" style={{ padding: '16px 18px 10px' }}>
+      <div className="" style={{ padding: '16px 18px 10px', lineHeight: '16px' }}>
         {/* Title */}
         <span
           className="text-[11px] font-bold uppercase"
