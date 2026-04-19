@@ -11,17 +11,22 @@ import PatrolGlobalPipeline from '../components/patrol/PatrolGlobalPipeline'
 import PatrolCaseList from '../components/patrol/PatrolCaseList'
 
 /** Hydrate per-case state from backend caseStates map.
- *  If patrolStartedAt is provided, only include cases updated AFTER that time
- *  (prevents stale data from previous patrol polluting the current run). */
-function hydrateCaseStates(caseStates: Record<string, any>, patrolStartedAt?: string) {
+ *  Filters stale data and fixes stuck 'active' steps when patrol is done. */
+function hydrateCaseStates(caseStates: Record<string, any>, patrolStartedAt?: string, patrolDone?: boolean) {
   const store = usePatrolStore.getState()
   const cutoff = patrolStartedAt ? new Date(patrolStartedAt).getTime() - 60_000 : 0 // 1min grace
   for (const [cn, cs] of Object.entries(caseStates)) {
-    if (!cs || typeof cs !== 'object') continue
+    if (!cs || typeof cs === 'string') continue
     // Skip stale case state from previous patrol
     if (cutoff > 0 && cs.updatedAt) {
       const updated = new Date(cs.updatedAt).getTime()
       if (updated < cutoff) continue
+    }
+    // Fix stuck 'active' steps when patrol has completed
+    if (patrolDone && cs.steps) {
+      for (const step of Object.values(cs.steps) as any[]) {
+        if (step?.status === 'active') step.status = 'completed'
+      }
     }
     store.onCaseUpdate({ caseNumber: cn, ...cs })
   }
@@ -82,7 +87,8 @@ export default function PatrolPage() {
             const patrolStart = status.running
               ? (status.liveProgress?.startedAt || store.startedAt)
               : status.lastRun?.startedAt
-            hydrateCaseStates(status.caseStates, patrolStart)
+            const patrolDone = !status.running && ['completed', 'failed'].includes(status.lastRun?.phase)
+            hydrateCaseStates(status.caseStates, patrolStart, patrolDone)
           }
         })
         .catch(() => {})
