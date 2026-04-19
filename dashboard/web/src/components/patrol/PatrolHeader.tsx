@@ -90,8 +90,11 @@ export default function PatrolHeader() {
       {/* Phase badge */}
       {phase !== 'idle' && (
         <span
-          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wide"
+          className="inline-flex items-center gap-1.5 rounded-full font-bold uppercase"
           style={{
+            letterSpacing: '0.4px',
+            fontSize: 11,
+            padding: '5px 14px',
             background: isRunning
               ? 'var(--accent-blue-dim)'
               : isCompleted
@@ -104,25 +107,26 @@ export default function PatrolHeader() {
                 : 'var(--accent-red)',
           }}
         >
-          {isRunning && <Loader2 className="w-3 h-3 animate-spin" />}
+          {isRunning && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
           {phase}
         </span>
       )}
 
       {/* Timer — contextual display */}
       {startedAt && elapsed > 0 && (
-        <div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-tertiary)' }}>
+        <div className="flex items-center gap-1.5" style={{ color: 'var(--text-tertiary)' }}>
           {isRunning ? (
-            <span className="font-mono">{formatElapsed(elapsed)}</span>
+            <span className="font-mono font-medium" style={{ fontSize: 16 }}>{formatElapsed(elapsed)}</span>
           ) : isDone ? (
             <>
               <span className="font-mono font-medium" style={{
+                fontSize: 16,
                 color: isCompleted ? 'var(--accent-green)' : 'var(--accent-red)',
               }}>
                 {formatElapsed(elapsed)}
               </span>
               <span style={{ opacity: 0.6 }}>·</span>
-              <span style={{ opacity: 0.7 }}>
+              <span style={{ opacity: 0.7, fontSize: 13 }}>
                 {formatTime(startedAt)}
                 {completedAt && <> → {formatTime(completedAt)}</>}
               </span>

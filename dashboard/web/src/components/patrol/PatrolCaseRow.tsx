@@ -138,8 +138,8 @@ function StepStatusIcon({ status }: { status: StepStatus }) {
           flexShrink: 0,
         }}
       >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-          <path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+          <path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </div>
     )
@@ -151,8 +151,8 @@ function StepStatusIcon({ status }: { status: StepStatus }) {
           width: size,
           height: size,
           borderRadius: '50%',
-          background: 'var(--accent-blue-dim)',
-          border: '2px solid var(--accent-blue)',
+          background: 'transparent',
+          border: '2.5px solid var(--accent-blue)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -436,8 +436,9 @@ function ActionCard({ action }: { action: ActionState }) {
   if (status === 'completed') {
     return (
       <div
-        className="rounded-lg px-2.5 py-1.5"
+        className="rounded-lg"
         style={{
+          padding: '8px 12px',
           border: '1px solid var(--accent-green)',
           opacity: 0.8,
         }}
@@ -452,7 +453,7 @@ function ActionCard({ action }: { action: ActionState }) {
               flexShrink: 0,
             }}
           />
-          <span className="text-xs font-medium" style={{ color: 'var(--accent-green)' }}>
+          <span className="text-[13px] font-semibold" style={{ color: 'var(--accent-green)' }}>
             {name}
           </span>
           {durationMs !== undefined && (
@@ -468,7 +469,7 @@ function ActionCard({ action }: { action: ActionState }) {
           )}
         </div>
         {result && (
-          <div className="text-[11px] mt-0.5" style={{ color: 'var(--text-tertiary)', paddingLeft: 14 }}>
+          <div className="text-[11px]" style={{ marginTop: 3, color: 'var(--text-tertiary)', paddingLeft: 14 }}>
             {result}
           </div>
         )}
@@ -480,8 +481,9 @@ function ActionCard({ action }: { action: ActionState }) {
     const isLaunching = detail?.toLowerCase().includes('launching')
     return (
       <div
-        className="rounded-lg px-2.5 py-1.5"
+        className="rounded-lg"
         style={{
+          padding: '8px 12px',
           background: 'var(--accent-blue-dim)',
           border: '1px solid rgba(106,95,193,0.25)',
         }}
@@ -501,7 +503,7 @@ function ActionCard({ action }: { action: ActionState }) {
               }}
             />
           )}
-          <span className="text-xs font-medium" style={{ color: 'var(--accent-blue)' }}>
+          <span className="text-[13px] font-semibold" style={{ color: 'var(--accent-blue)' }}>
             {name}
           </span>
           {durationMs !== undefined && (
@@ -517,7 +519,7 @@ function ActionCard({ action }: { action: ActionState }) {
           )}
         </div>
         {detail && (
-          <div className="text-[11px] mt-0.5" style={{ color: 'var(--accent-blue)', paddingLeft: 18 }}>
+          <div className="text-[11px]" style={{ marginTop: 3, color: 'var(--accent-blue)', paddingLeft: 18 }}>
             {detail}
           </div>
         )}
@@ -527,7 +529,7 @@ function ActionCard({ action }: { action: ActionState }) {
 
   // pending
   return (
-    <div className="rounded-lg px-2.5 py-1.5" style={{ opacity: 0.3 }}>
+    <div className="rounded-lg" style={{ padding: '8px 12px', opacity: 0.3 }}>
       <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
         {name}
       </span>
@@ -584,13 +586,15 @@ export default function PatrolCaseRow({ caseState, defaultExpanded }: PatrolCase
           : '1px solid var(--border-subtle)',
         boxShadow: isActive
           ? '0 4px 20px rgba(106,95,193,0.15)'
-          : undefined,
+          : '0 1px 4px rgba(0,0,0,0.03)',
       }}
     >
       {/* ─── Header bar ─── */}
       <div
-        className="flex items-center gap-3 px-4 py-2.5"
+        className="flex items-center gap-3"
         style={{
+          padding: '14px 20px',
+          background: 'var(--bg-base)',
           cursor: isComplete ? 'pointer' : undefined,
           userSelect: 'none',
         }}
@@ -630,6 +634,7 @@ export default function PatrolCaseRow({ caseState, defaultExpanded }: PatrolCase
               background: 'var(--accent-blue-dim)',
               color: 'var(--accent-blue)',
               flexShrink: 0,
+              letterSpacing: '0.3px',
             }}
           >
             <Loader2 size={11} className="animate-spin" />
@@ -643,6 +648,7 @@ export default function PatrolCaseRow({ caseState, defaultExpanded }: PatrolCase
               background: 'var(--accent-green-dim)',
               color: 'var(--accent-green)',
               flexShrink: 0,
+              letterSpacing: '0.3px',
             }}
           >
             <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
@@ -658,6 +664,7 @@ export default function PatrolCaseRow({ caseState, defaultExpanded }: PatrolCase
               background: 'var(--accent-red-dim)',
               color: 'var(--accent-red)',
               flexShrink: 0,
+              letterSpacing: '0.3px',
             }}
           >
             Failed
@@ -670,8 +677,10 @@ export default function PatrolCaseRow({ caseState, defaultExpanded }: PatrolCase
             {/* Assess result tag */}
             {caseState.steps?.assess?.result && (
               <span
-                className="text-[11px] font-medium rounded px-2 py-0.5 shrink-0"
+                className="text-[11px] font-semibold shrink-0"
                 style={{
+                  padding: '3px 10px',
+                  borderRadius: 6,
                   background: 'var(--bg-inset)',
                   color: 'var(--text-tertiary)',
                 }}
@@ -705,8 +714,10 @@ export default function PatrolCaseRow({ caseState, defaultExpanded }: PatrolCase
         {/* Duration */}
         {duration !== undefined && (
           <span
-            className="text-xs shrink-0"
+            className="shrink-0 font-mono"
             style={{
+              fontSize: 13,
+              fontWeight: 500,
               fontFamily: "'JetBrains Mono', monospace",
               color: 'var(--text-tertiary)',
             }}
@@ -719,8 +730,10 @@ export default function PatrolCaseRow({ caseState, defaultExpanded }: PatrolCase
       {/* ─── Pipeline body ─── */}
       {showBody && (
         <div
-          className="px-4 pb-4 pt-1"
+          className=""
           style={{
+            padding: '18px 20px',
+            borderTop: '1px solid var(--bg-hover)',
             display: 'flex',
             gap: 0,
             alignItems: 'flex-start',
@@ -743,14 +756,14 @@ export default function PatrolCaseRow({ caseState, defaultExpanded }: PatrolCase
                 {/* Step column */}
                 <div style={{ flex: isStart ? 0.6 : 1, minWidth: 0 }}>
                   {/* Step header */}
-                  <div className="flex items-center gap-2 mb-1.5">
+                  <div className="flex items-center gap-2 mb-2">
                     <StepStatusIcon status={status} />
                     <span
                       className="text-sm font-bold uppercase tracking-wide"
                       style={{
                         color:
                           status === 'active' ? 'var(--accent-blue)' :
-                          status === 'completed' ? 'var(--text-primary)' :
+                          status === 'completed' ? 'var(--accent-green)' :
                           'var(--text-tertiary)',
                       }}
                     >

@@ -193,17 +193,17 @@ export default function PatrolSidebar() {
 
   return (
     <Card padding="none">
-      <div className="px-5 pt-5 pb-2">
+      <div className="" style={{ padding: '16px 18px 10px' }}>
         {/* Title */}
         <span
-          className="text-[11px] font-bold uppercase tracking-widest"
-          style={{ color: 'var(--text-tertiary)' }}
+          className="text-[11px] font-bold uppercase"
+          style={{ letterSpacing: '0.8px', color: 'var(--text-tertiary)' }}
         >
           Pipeline
         </span>
       </div>
 
-      <div className="px-5 pb-5">
+      <div className="" style={{ padding: '0 18px 18px' }}>
         {stages.map((stage, idx) => {
           const isLast = idx === stages.length - 1
           const nextStatus: StageStatus | undefined = isLast ? undefined : stages[idx + 1].status
@@ -289,8 +289,8 @@ export default function PatrolSidebar() {
                   />
                 ) : stage.detail ? (
                   <p
-                    className="text-xs mt-0.5"
-                    style={{ color: 'var(--text-secondary)', lineHeight: 1.5 }}
+                    className="text-xs"
+                    style={{ marginTop: 3, color: 'var(--text-secondary)', lineHeight: 1.5 }}
                   >
                     {stage.detail}
                   </p>
@@ -350,7 +350,7 @@ function ProcessingDetail({
                 width: `${progressPct}%`,
                 background: status === 'completed'
                   ? 'var(--accent-green)'
-                  : 'linear-gradient(90deg, var(--accent-blue), var(--accent-green))',
+                  : 'linear-gradient(90deg, var(--accent-green), var(--accent-blue))',
               }}
             />
           </div>

@@ -57,12 +57,11 @@ export default function PatrolCaseList() {
     <div>
       {/* Section header: Cases + count + progress bar — all inline */}
       <div className="flex items-center gap-3 px-1 pb-3">
-        <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+        <h3 className="font-bold" style={{ fontSize: 15, color: 'var(--text-primary)' }}>
           Cases
         </h3>
         {totalCases > 0 && (
-          <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-            {processedCases} / {totalCases} processed
+          <span className="text-xs font-medium" style={{ color: 'var(--text-tertiary)' }}>
           </span>
         )}
         {totalCases > 0 && (

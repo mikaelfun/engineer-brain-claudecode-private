@@ -103,8 +103,12 @@ export default function PatrolPage() {
             <button
               onClick={handleCancel}
               disabled={cancelPatrol.isPending}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold uppercase tracking-wide transition-all"
+              className="inline-flex items-center gap-2 font-bold uppercase transition-all"
               style={{
+                fontSize: 12,
+                padding: '9px 22px',
+                borderRadius: 13,
+                letterSpacing: '0.3px',
                 background: 'var(--accent-red)',
                 color: 'var(--text-inverse)',
                 border: '1px solid rgba(0,0,0,0.1)',
@@ -120,8 +124,12 @@ export default function PatrolPage() {
               <button
                 onClick={handleStart}
                 disabled={startPatrol.isPending}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold uppercase tracking-wide transition-all"
+                className="inline-flex items-center gap-2 font-bold uppercase transition-all"
                 style={{
+                  fontSize: 12,
+                  padding: '9px 22px',
+                  borderRadius: 13,
+                  letterSpacing: '0.3px',
                   background: 'var(--accent-blue)',
                   color: 'var(--text-inverse)',
                   border: '1px solid rgba(0,0,0,0.1)',
@@ -171,12 +179,12 @@ export default function PatrolPage() {
 function StatChip({ label, value, color }: { label: string; value: number; color: string }) {
   return (
     <div className="flex flex-col items-center" style={{ minWidth: 40 }}>
-      <span className="font-mono text-xl font-bold" style={{ color, lineHeight: 1.1 }}>
+      <span className="font-mono font-bold" style={{ color, lineHeight: 1.1, fontSize: 22 }}>
         {value}
       </span>
       <span
-        className="font-semibold uppercase tracking-widest"
-        style={{ color: 'var(--text-tertiary)', fontSize: 8 }}
+        className="font-bold uppercase"
+        style={{ color: 'var(--text-tertiary)', letterSpacing: '1.2px' }}
       >
         {label}
       </span>
