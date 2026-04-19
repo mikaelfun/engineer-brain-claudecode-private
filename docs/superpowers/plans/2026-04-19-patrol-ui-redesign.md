@@ -569,17 +569,19 @@ git commit -m "feat(state): finalize-state.sh backfills delta + act results from
 
 ---
 
-## Phase 3: Polish
+## Phase 3: Polish ✅ COMPLETED
 
 ### Task 16: Visual polish + responsive
 
-- [ ] **Step 1: Smooth transitions** — CSS transitions on case row expand/collapse (height + opacity)
-- [ ] **Step 2: Mobile breakpoint** — sidebar collapses to horizontal bar on narrow screens
-- [ ] **Step 3: Loading skeletons** — shimmer placeholders while waiting for first SSE
+- [x] **Step 1: Smooth transitions** — CSS transitions on case row expand/collapse (max-height + opacity)
+- [x] **Step 2: Mobile breakpoint** — sidebar collapses to full-width stacked layout on narrow screens (<768px)
+- [x] **Step 3: Loading skeletons** — shimmer placeholders while waiting for first SSE
+
+Commit: `c6da0a5` — transitions, responsive, skeletons
 
 ---
 
-## Phase 4: Reassess Integration (from reassess-feedback-loop spec)
+## Phase 4: Reassess Integration ✅ COMPLETED
 
 > Depends on: Phase 2 complete + reassess-feedback-loop P0-P2 (done)
 > Spec: `docs/superpowers/specs/2026-04-19-reassess-feedback-loop.md`
@@ -591,7 +593,7 @@ git commit -m "feat(state): finalize-state.sh backfills delta + act results from
 
 The `act` case in finalize-state.sh currently handles troubleshooter (from claims.json) and email-drafter (from drafts/). Add reassess action result backfill:
 
-- [ ] **Step 1: Add reassess result backfill to act case**
+- [x] **Step 1: Add reassess result backfill to act case**
 
 After the troubleshooter backfill block, add:
 
@@ -612,12 +614,9 @@ if os.path.exists(ep):
     except: pass
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
-```bash
-git add .claude/skills/casework/scripts/finalize-state.sh
-git commit -m "feat(state): finalize-state.sh backfills reassess action result"
-```
+Commit: `2eec75f`
 
 ### Task 18: Patrol pipeline — Add reassess phases to streaming loop
 
@@ -626,7 +625,7 @@ git commit -m "feat(state): finalize-state.sh backfills reassess action result"
 
 Add `investigating`, `reassessing`, `communicating` phases to patrol's streaming pipeline state machine. See `docs/superpowers/specs/2026-04-19-reassess-feedback-loop.md` § "Patrol pipeline changes" for full design.
 
-- [ ] **Step 1: Update state machine in patrol SKILL.md**
+- [x] **Step 1: Update state machine in patrol SKILL.md**
 
 New phases in Step 6c polling loop:
 ```
@@ -635,7 +634,7 @@ case "reassessing":    # reassess completed, check for email action
 case "communicating":  # post-reassess email-drafter running
 ```
 
-- [ ] **Step 2: Update currentAction examples for reassess**
+- [x] **Step 2: Update currentAction examples for reassess**
 
 ```bash
 CURRENT_ACTION="0748 troubleshooter done → launching reassess"
@@ -643,32 +642,26 @@ CURRENT_ACTION="0748 reassess: found-cause → launching email(result-confirm)"
 CURRENT_ACTION="0748 reassess: exhausted → no email, recommend ICM → summarizing"
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
-```bash
-git add .claude/skills/patrol/SKILL.md
-git commit -m "feat(patrol): add reassess phases to streaming pipeline state machine"
-```
+Commit: `efe0bad`
 
 ### Task 19: Frontend — Support reassess action card type
 
 **Files:**
 - Modify: `dashboard/src/components/patrol/PatrolCaseRow.tsx`
 
-- [ ] **Step 1: Add reassess to action type rendering**
+- [x] **Step 1: Add reassess to action type rendering**
 
 In the Act step agent cards rendering, handle `type: "reassess"` with appropriate icon and result display format (`"found-cause → result-confirm"`).
 
-- [ ] **Step 2: Add subtype display for email-drafter**
+- [x] **Step 2: Add subtype display for email-drafter**
 
 When email-drafter has `subtype` field (set by reassess), show it in the card: `"Email: result-confirm"` instead of just `"Email"`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
-```bash
-git add dashboard/src/components/patrol/PatrolCaseRow.tsx
-git commit -m "feat(patrol-ui): support reassess action card and email subtype display"
-```
+Commit: `d993511`
 
 ---
 
