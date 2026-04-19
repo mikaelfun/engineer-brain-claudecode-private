@@ -1,8 +1,12 @@
 /**
  * PatrolCaseList — Sorted case list with progress bar
+ *
+ * Shows phase-appropriate content:
+ * - Pre-processing phases: status message with spinner
+ * - Processing/completed: per-case pipeline rows
  */
 import { useMemo } from 'react'
-import { usePatrolStore, type CaseState } from '../../stores/patrolStore'
+import { usePatrolStore, type CaseState, type PatrolPhase } from '../../stores/patrolStore'
 import { Card, CardHeader } from '../common/Card'
 import PatrolCaseRow from './PatrolCaseRow'
 
@@ -27,17 +31,21 @@ function sortCases(cases: CaseState[]): CaseState[] {
     const aComplete = isCaseComplete(a)
     const bComplete = isCaseComplete(b)
 
-    // Active first
     if (aActive && !bActive) return -1
     if (!aActive && bActive) return 1
-
-    // Then queued (not complete, not active)
     if (!aComplete && bComplete) return -1
     if (aComplete && !bComplete) return 1
-
-    // Same group: alphabetical
     return a.caseNumber.localeCompare(b.caseNumber)
   })
+}
+
+/** Phase-specific status messages shown before cases are available */
+const PHASE_STATUS: Partial<Record<PatrolPhase, { icon: string; text: string }>> = {
+  starting:      { icon: '🚀', text: 'Launching patrol agent...' },
+  discovering:   { icon: '🔍', text: 'Querying D365 for active cases...' },
+  filtering:     { icon: '📋', text: 'Checking which cases have changes...' },
+  'warming-up':  { icon: '🔑', text: 'Warming up tokens (Teams / ICM / DTM)...' },
+  aggregating:   { icon: '📊', text: 'Aggregating todos...' },
 }
 
 export default function PatrolCaseList() {
@@ -49,23 +57,50 @@ export default function PatrolCaseList() {
 
   const sortedCases = useMemo(() => sortCases(Object.values(cases)), [cases])
 
-  // Build queued-only cases (in caseList but not yet in cases store)
   const queuedOnly = useMemo(() => {
     const inStore = new Set(Object.keys(cases))
     return caseList.filter(cn => !inStore.has(cn))
   }, [cases, caseList])
 
-  const showProgress = totalCases > 0 && phase !== 'idle'
+  if (phase === 'idle') return null
+
+  const hasCases = sortedCases.length > 0 || queuedOnly.length > 0
+  const showProgress = totalCases > 0
   const pct = totalCases > 0 ? Math.round((processedCases / totalCases) * 100) : 0
 
-  if (phase === 'idle') return null
+  // Pre-processing phases: show status message, not case list
+  const phaseStatus = PHASE_STATUS[phase]
+  if (phaseStatus && !hasCases) {
+    return (
+      <Card padding="none">
+        <div className="flex items-center justify-center gap-3 py-12">
+          <span className="text-xl">{phaseStatus.icon}</span>
+          <div>
+            <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+              {phaseStatus.text}
+            </p>
+            {phase === 'filtering' && totalCases > 0 && (
+              <p className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
+                {totalCases} active cases found
+              </p>
+            )}
+          </div>
+          {/* Spinner */}
+          <div
+            className="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin"
+            style={{ borderColor: 'var(--accent-blue)', borderTopColor: 'transparent' }}
+          />
+        </div>
+      </Card>
+    )
+  }
 
   return (
     <Card padding="none">
       <div className="px-4 pt-4 pb-2">
         <CardHeader
           title="Cases"
-          subtitle={totalCases > 0 ? `${processedCases} / ${totalCases} processed` : undefined}
+          subtitle={showProgress ? `${processedCases} / ${totalCases} processed` : undefined}
         />
 
         {/* Progress bar */}
@@ -101,7 +136,7 @@ export default function PatrolCaseList() {
           />
         ))}
 
-        {/* Queued cases (not yet in store — show as grey placeholders) */}
+        {/* Queued cases (in caseList but not yet started) */}
         {queuedOnly.map(cn => (
           <div
             key={cn}
@@ -141,15 +176,17 @@ export default function PatrolCaseList() {
           </div>
         ))}
 
-        {/* Empty state */}
-        {sortedCases.length === 0 && queuedOnly.length === 0 && (
-          <div className="text-center py-8">
-            <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
-              {phase === 'starting' || phase === 'discovering'
-                ? 'Discovering cases...'
-                : 'No cases to process'
-              }
-            </p>
+        {/* Aggregating phase (after processing, before final) */}
+        {phase === 'aggregating' && sortedCases.length > 0 && (
+          <div className="flex items-center justify-center gap-2 py-4">
+            <span>📊</span>
+            <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+              Aggregating todos...
+            </span>
+            <div
+              className="w-3 h-3 rounded-full border-2 border-t-transparent animate-spin"
+              style={{ borderColor: 'var(--accent-blue)', borderTopColor: 'transparent' }}
+            />
           </div>
         )}
       </div>
