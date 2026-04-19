@@ -4,7 +4,7 @@
  * Header bar: case number + status pill + summary tags + step count + duration
  * Pipeline body: start → data-refresh → assess → act → summarize (collapsible for done cases)
  */
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ChevronRight, Loader2 } from 'lucide-react'
 import type { CaseState, StepState, StepStatus, SubtaskState, ActionState } from '../../stores/patrolStore'
 
@@ -574,6 +574,15 @@ export default function PatrolCaseRow({ caseState, defaultExpanded }: PatrolCase
   const duration = getCaseDuration(caseState)
   const completedCount = getCompletedStepCount(caseState)
 
+  // Auto-collapse when case transitions from active → done
+  // (useState only reads defaultExpanded on first render, so we
+  //  need to explicitly sync when the case finishes)
+  useEffect(() => {
+    if (isComplete && !isActive) {
+      setExpanded(false)
+    }
+  }, [isComplete, isActive])
+
   const showBody = isActive || expanded
 
   return (
@@ -685,7 +694,7 @@ export default function PatrolCaseRow({ caseState, defaultExpanded }: PatrolCase
                   color: 'var(--text-tertiary)',
                 }}
               >
-                [{caseState.steps.assess.result}]
+                {caseState.steps.assess.result}
               </span>
             )}
             {/* Act summary */}

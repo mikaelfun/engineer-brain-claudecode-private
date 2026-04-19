@@ -55,8 +55,10 @@ export default function PatrolCaseList() {
 
   return (
     <div>
-      {/* Section header: Cases + count + progress bar — all inline */}
-      <div className="flex items-center gap-3 px-1 pb-3">
+      {/* Section header: Cases + count + progress bar — all inline
+           pt-4 matches the Pipeline sidebar card's internal padding (16px)
+           so "Cases" aligns vertically with "PIPELINE" label */}
+      <div className="flex items-center gap-3 px-1 pt-4 pb-3">
         <h3 className="font-bold" style={{ fontSize: 15, color: 'var(--text-primary)' }}>
           Cases
         </h3>
@@ -79,7 +81,7 @@ export default function PatrolCaseList() {
       </div>
 
       {/* Case rows */}
-      <div className="space-y-0.5">
+      <div className="space-y-2.5">
         {sortedCases.map(c => (
           <PatrolCaseRow
             key={c.caseNumber}
@@ -88,43 +90,38 @@ export default function PatrolCaseList() {
           />
         ))}
 
-        {/* Queued cases (in caseList but not yet started) */}
+        {/* Queued cases — faded card style matching mockup (.cc.q) */}
         {queuedOnly.map(cn => (
           <div
             key={cn}
-            className="flex items-center gap-3 px-3 py-2"
+            className="rounded-xl"
+            style={{
+              opacity: 0.3,
+              border: '1px solid var(--border-subtle)',
+              background: 'transparent',
+            }}
           >
-            <span
-              className="text-xs font-medium"
-              style={{
-                fontFamily: "'JetBrains Mono', monospace",
-                color: 'var(--text-tertiary)',
-                minWidth: 100,
-              }}
+            <div
+              className="flex items-center gap-3"
+              style={{ padding: '14px 20px' }}
             >
-              {cn}
-            </span>
-            <div className="flex items-center gap-1.5">
-              {[0, 1, 2, 3].map(i => (
-                <div
-                  key={i}
-                  className="rounded-full"
-                  style={{
-                    width: 7,
-                    height: 7,
-                    background: 'var(--text-tertiary)',
-                    opacity: 0.3,
-                  }}
-                />
-              ))}
+              <span
+                className="text-[15px] font-bold"
+                style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  color: 'var(--text-tertiary)',
+                }}
+              >
+                {cn}
+              </span>
+              <div className="flex-1" />
+              <span
+                className="text-[11px] font-medium uppercase tracking-wide"
+                style={{ color: 'var(--text-tertiary)' }}
+              >
+                Queued
+              </span>
             </div>
-            <div className="flex-1" />
-            <span
-              className="text-[10px] font-medium uppercase tracking-wide"
-              style={{ color: 'var(--text-tertiary)', opacity: 0.5 }}
-            >
-              Queued
-            </span>
           </div>
         ))}
 
