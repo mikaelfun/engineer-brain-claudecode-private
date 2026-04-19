@@ -70,6 +70,8 @@
 
 ## Troubleshooter Usage (Step 1.5)
 
+> Troubleshooter integration details: see `.claude/skills/product-learn/SKILL.md` → "与 Troubleshooter 集成"
+
 When troubleshooting a case, the agent should follow this lookup chain:
 
 1. **Read SKILL.md** -- get diagnostic layers + decision tree for the product
