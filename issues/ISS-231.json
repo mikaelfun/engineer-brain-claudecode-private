@@ -1,0 +1,11 @@
+{
+  "id": "ISS-231",
+  "title": "casework 日志架构重构：统一 runs/ 目录结构",
+  "description": "当前 .casework/logs/ 存在多种格式混合（casework.log agent输出、脚本stdout .log、SDK JSONL、markdown摘要）、无版本隔离（脚本日志覆盖写）、无消费者（dashboard 不读取）等问题。\n\n重构为 runs/{YYMMDD-HHmm}_{type}/ 按执行分组，每次 casework/patrol/step 执行创建独立 run 目录。\n\nrun 类型：patrol | casework | step-data-refresh | step-assess | step-act | step-summarize\n\n目标目录结构：\n```\n.casework/\n├── state.json                    # 实时状态（不属于 run）\n└── runs/\n    └── {YYMMDD-HHmm}_{type}/\n        ├── session.jsonl          # JSONL — SDK 全量\n        ├── execution-plan.json    # assess 产物\n        ├── delta-content.md       # data-refresh 变更摘要\n        ├── output/                # data-refresh 结构化输出\n        │   ├── data-refresh.json\n        │   └── subtasks/*.json\n        ├── scripts/               # 纯文本 — 脚本 stdout/stderr\n        │   ├── d365.log\n        │   ├── teams.log 等\n        └── agents/                # 纯文本 — sub-agent output\n            ├── troubleshooter.log\n            └── email-drafter.log\n```\n\n要删除的：\n- casework.log（被 agents/*.log + session.jsonl 替代）\n- writeStepLog() 的 markdown 摘要（被 session.jsonl 替代）\n\n关键改动点：\n1. update-state.py --init 加 --run-type，创建 run 目录，写 runId 到 state.json\n2. data-refresh.sh 读 state.json.runId 确定 LOGD 和 output 路径\n3. write-execution-plan.py 写到 run 目录\n4. steps.ts SDK JSONL 写到 run 目录的 session.jsonl\n5. patrol-orchestrator.ts sub-agent output 写到 run 目录的 agents/\n6. patrol SKILL.md 删除 casework.log 写入指令（步骤6a-2）和读取逻辑（步骤7），改读 state.json\n7. case-session-manager.ts 删除 writeStepLog()\n8. 30天自动清理老 run 目录",
+  "type": "refactor",
+  "priority": "P1",
+  "status": "pending",
+  "testLoopScan": true,
+  "createdAt": "2026-04-19T13:30:00Z",
+  "updatedAt": "2026-04-19T13:30:00Z"
+}
