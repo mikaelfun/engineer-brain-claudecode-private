@@ -26,7 +26,7 @@ import json
 import os
 import time
 
-ALL_STEPS = ['data-refresh', 'assess', 'act', 'summarize']
+ALL_STEPS = ['start', 'data-refresh', 'assess', 'act', 'summarize']
 
 
 def now_iso():
@@ -67,6 +67,9 @@ def main():
     ap.add_argument('--action', default='', help='Action type within act step (e.g. troubleshooter)')
     ap.add_argument('--duration-ms', type=int, default=0, help='Duration in milliseconds')
     ap.add_argument('--result', default='', help='Result annotation (e.g. pending-engineer)')
+    ap.add_argument('--delta', default='', help='JSON delta data for subtask (e.g. \'{"emails":3,"notes":1}\')')
+    ap.add_argument('--reasoning', default='', help='Reasoning text for step result')
+    ap.add_argument('--detail', default='', help='Live detail text for action')
     ap.add_argument('--case-number', default='', help='Case number')
     args = ap.parse_args()
 
@@ -101,6 +104,8 @@ def main():
             sub['status'] = args.status
         if args.duration_ms:
             sub['durationMs'] = args.duration_ms
+        if args.delta:
+            sub['delta'] = json.loads(args.delta)
         subtasks[args.subtask] = sub
         step_state['subtasks'] = subtasks
         state['steps'][step_key] = step_state
@@ -118,6 +123,10 @@ def main():
                     a['status'] = args.status
                 if args.duration_ms:
                     a['durationMs'] = args.duration_ms
+                if args.detail:
+                    a['detail'] = args.detail
+                if args.result:
+                    a['result'] = args.result
                 found = True
                 break
         if not found:
@@ -126,6 +135,10 @@ def main():
                 new_action['status'] = args.status
             if args.duration_ms:
                 new_action['durationMs'] = args.duration_ms
+            if args.detail:
+                new_action['detail'] = args.detail
+            if args.result:
+                new_action['result'] = args.result
             actions.append(new_action)
         step_state['actions'] = actions
         state['steps'][step_key] = step_state
@@ -146,6 +159,9 @@ def main():
 
     if args.result:
         step_state['result'] = args.result
+
+    if args.reasoning:
+        step_state['reasoning'] = args.reasoning
 
     state['steps'][step_key] = step_state
     atomic_write(state_path, state)
