@@ -48,6 +48,9 @@ CASE_DIR="$CD/cases/active/{caseNumber}"
 mkdir -p "$CASE_DIR/.casework/logs"
 date +%s > "$CASE_DIR/.casework/logs/.t_start"
 
+# Mark start step completed (SDK cold-start done — duration = completedAt - startedAt)
+python3 .claude/skills/casework/scripts/update-state.py --case-dir "$CASE_DIR" --step start --status completed --case-number "{caseNumber}"
+
 # Pipeline state → dashboard SSE (Step 1 active)
 python3 .claude/skills/casework/scripts/update-state.py --case-dir "$CASE_DIR" --step data-refresh --status active
 ```

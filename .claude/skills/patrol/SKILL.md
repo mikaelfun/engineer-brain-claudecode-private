@@ -82,6 +82,11 @@ os.replace(tmp, p)
    pwsh -NoProfile -File .claude/skills/d365-case-ops/scripts/list-active-cases.ps1 -OutputJson
    ```
 
+   获取后，将 `totalFound`（D365 返回的全部 active case 数量）记入变量供后续 progress 使用：
+   ```bash
+   TOTAL_FOUND=$ACTIVE_CASE_COUNT
+   ```
+
 3. **筛选需要处理的 Case**
 
    **`--force` 模式**：如果用户传入 `--force`（或明确表示要强制巡检），跳过 `lastInspected` 检查，所有活跃 case 全部纳入处理。
@@ -155,6 +160,12 @@ os.replace(tmp, p)
    node .claude/skills/browser-profiles/scripts/token-daemon.js warmup
    ```
 
+   捕获 warmup 输出供 sidebar 展示：
+   ```bash
+   WARMUP_OUT=$(node .claude/skills/browser-profiles/scripts/token-daemon.js warmup 2>/dev/null || echo "daemon offline")
+   WARMUP_STATUS=$(echo "$WARMUP_OUT" | head -1 | cut -c1-60)
+   ```
+
    **关键**：
    - `check-ir-status-batch.ps1` 不是 token 预热，是 SLA 数据，独立保留
    - `token-daemon.js warmup` 统一管理 Teams/DTM/ICM 三个 token：
@@ -169,10 +180,11 @@ os.replace(tmp, p)
 
    ```bash
    echo "processing" > "{patrolDir}/patrol-phase"
+   SKIPPED_COUNT=$((TOTAL_FOUND - CHANGED_CASES))
    python3 -c "
 import json, os, time
 p = '{patrolDir}/patrol-progress.json'
-d = {'phase':'processing','startedAt':'$(date -u +%FT%TZ)','source':'$SOURCE','totalCases':$TOTAL_CASES,'changedCases':$CHANGED_CASES,'caseList':$CASE_LIST_JSON,'updatedAt':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime())}
+d = {'phase':'processing','startedAt':'$(date -u +%FT%TZ)','source':'$SOURCE','totalCases':$TOTAL_CASES,'changedCases':$CHANGED_CASES,'caseList':$CASE_LIST_JSON,'totalFound':$TOTAL_FOUND,'skippedCount':$SKIPPED_COUNT,'warmupStatus':'$WARMUP_STATUS','updatedAt':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime())}
 tmp = p + '.tmp.' + str(os.getpid())
 json.dump(d, open(tmp,'w'), indent=2)
 os.replace(tmp, p)
@@ -184,6 +196,13 @@ os.replace(tmp, p)
    **6a. 全量并行启动 casework(mode=patrol)**
 
    对每个待处理的 case spawn casework(mode=patrol) agent：
+
+   **先写 start=active（SDK 冷启动计时起点）**：
+   ```bash
+   python3 .claude/skills/casework/scripts/update-state.py \
+     --case-dir "{casesRoot}/active/{caseNumber}" --step start --status active \
+     --case-number "{caseNumber}"
+   ```
 
    ```
    Agent({

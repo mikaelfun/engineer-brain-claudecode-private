@@ -106,6 +106,22 @@ def main():
     with open(out_path, 'w', encoding='utf-8') as f:
         json.dump(result, f, indent=2, ensure_ascii=False)
 
+    # Write reasoning + result to state.json for UI display (deterministic — no agent needed)
+    reasoning = d.get('statusReasoning', '')
+    if reasoning or d.get('actualStatus'):
+        import subprocess
+        cmd = [
+            sys.executable,
+            os.path.join(os.path.dirname(os.path.dirname(__file__)), 'scripts', 'update-state.py'),
+            '--case-dir', args.case_dir,
+            '--step', 'assess',
+            '--status', 'completed',
+            '--result', d.get('actualStatus', ''),
+        ]
+        if reasoning:
+            cmd.extend(['--reasoning', reasoning[:200]])
+        subprocess.run(cmd, check=False)
+
     plan_count = len(result['plans'])
     action_count = len(d.get('actions', []))
     print(f"PLAN_WRITTEN|path={out_path}|phase={args.phase}|plan#{plan_count}|actions={action_count}")

@@ -187,9 +187,15 @@ class PatrolStateManager {
       if (!this.state.phaseTimings) this.state.phaseTimings = {}
 
       // Record completed phase duration
+      // Use updatedAt from patrol-progress.json if available (skill-side timestamp, no chokidar delay)
+      // Otherwise fall back to Date.now()
+      const transitionTime = (partial as any).updatedAt
+        ? new Date((partial as any).updatedAt as string).getTime()
+        : Date.now()
+
       if (prevPhase !== 'idle' && this.state.phaseStartedAt) {
-        const durationMs = Date.now() - new Date(this.state.phaseStartedAt).getTime()
-        this.state.phaseTimings[prevPhase] = durationMs
+        const startTime = new Date(this.state.phaseStartedAt).getTime()
+        this.state.phaseTimings[prevPhase] = transitionTime - startTime
       }
 
       // Fill skipped phases with 0ms.
@@ -207,8 +213,8 @@ class PatrolStateManager {
         }
       }
 
-      // Mark new phase start
-      this.state.phaseStartedAt = now
+      // Mark new phase start (use skill-provided timestamp if available)
+      this.state.phaseStartedAt = (partial as any).updatedAt as string || now
 
       // Persist timings to disk (survives backend restart)
       this.persistTimings()

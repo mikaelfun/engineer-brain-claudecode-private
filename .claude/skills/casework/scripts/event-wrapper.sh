@@ -36,8 +36,25 @@ set -e
 DUR_MS=$(( ($(date +%s%N) - START_NS) / 1000000 ))
 
 if [ $EXIT -eq 0 ]; then
-  python3 "$UPDATE_STATE" --case-dir "$CASE_DIR" --step data-refresh --subtask "$TASK" --status completed --duration-ms "$DUR_MS"
+  # Read delta from subtask output file (deterministic — file written by source script)
+  SUBTASK_FILE="$CASE_DIR/.casework/output/subtasks/${TASK}.json"
+  DELTA_ARGS=()
+  if [ -f "$SUBTASK_FILE" ]; then
+    DELTA_JSON=$(python3 -c "
+import json
+try:
+    d = json.load(open(r'$SUBTASK_FILE', encoding='utf-8'))
+    delta = d.get('delta', {})
+    if delta: print(json.dumps(delta))
+except: pass
+" 2>/dev/null || true)
+    [ -n "$DELTA_JSON" ] && DELTA_ARGS=(--delta "$DELTA_JSON")
+  fi
+
+  python3 "$UPDATE_STATE" --case-dir "$CASE_DIR" --step data-refresh \
+    --subtask "$TASK" --status completed --duration-ms "$DUR_MS" "${DELTA_ARGS[@]}"
 else
-  python3 "$UPDATE_STATE" --case-dir "$CASE_DIR" --step data-refresh --subtask "$TASK" --status failed
+  python3 "$UPDATE_STATE" --case-dir "$CASE_DIR" --step data-refresh \
+    --subtask "$TASK" --status failed
 fi
 exit $EXIT

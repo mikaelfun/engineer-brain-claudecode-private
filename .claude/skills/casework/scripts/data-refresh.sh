@@ -101,6 +101,8 @@ PID_D365=$!
 # so per-chat .md / _chat-index.json update runs in parallel with the other 4
 # paths instead of blocking them at the outer wait. Total path time =
 # max(d365, teams+post, icm, onenote, att) instead of max(...) + teams-post.
+python3 "$UPDATE_STATE" --case-dir "$CASE_DIR_ABS" --step data-refresh --subtask teams --status active
+TEAMS_START_NS=$(date +%s%N)
 (
   bash "$PROJECT_ROOT/.claude/skills/casework/teams-search/scripts/teams-search-inline.sh" \
     --case-number "$CASE_NUMBER" --case-dir "$CASE_DIR_ABS" --contact-email "" \
@@ -226,6 +228,23 @@ echo "⏳ Waiting 5 paths (each path self-times-out; no external watchdog)..."
 for pid in $PID_D365 $PID_TEAMS $PID_ICM $PID_ONENOTE $PID_ATT; do
   [ -n "$pid" ] && wait "$pid" 2>/dev/null || true
 done
+
+# Teams subtask completion tracking (not wrapped by event-wrapper.sh)
+if [ -n "$PID_TEAMS" ]; then
+  TEAMS_DUR_MS=$(( ($(date +%s%N) - TEAMS_START_NS) / 1000000 ))
+  TEAMS_DELTA_JSON=$(python3 -c "
+import json
+try:
+    d = json.load(open(r'$SUBTASK_DIR/teams.json', encoding='utf-8'))
+    delta = d.get('delta', {})
+    if delta: print(json.dumps(delta))
+except: pass
+" 2>/dev/null || true)
+  TEAMS_DELTA_ARGS=()
+  [ -n "$TEAMS_DELTA_JSON" ] && TEAMS_DELTA_ARGS=(--delta "$TEAMS_DELTA_JSON")
+  python3 "$UPDATE_STATE" --case-dir "$CASE_DIR_ABS" --step data-refresh \
+    --subtask teams --status completed --duration-ms "$TEAMS_DUR_MS" "${TEAMS_DELTA_ARGS[@]}"
+fi
 
 echo "✅ All 5 data paths finished."
 
@@ -559,6 +578,9 @@ if [ "$OVERALL" = "FAILED" ]; then
 fi
 
 python3 "$UPDATE_STATE" --case-dir "$CASE_DIR_ABS" --step data-refresh --status completed --duration-ms "$TOP_DUR_MS"
+
+# Backfill state.json with delta data from output files (deterministic, no agent needed)
+bash "$HERE/finalize-state.sh" "$CASE_DIR_ABS" data-refresh 2>/dev/null || true
 
 # Append to persistent data-refresh.log (survives across runs)
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] $OVERALL | case=$CASE_NUMBER delta=$DELTA elapsed=${ELAPSED_SEC}s" >> "$LOGD/data-refresh.log"
