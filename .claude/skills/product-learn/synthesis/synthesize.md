@@ -1,6 +1,6 @@
 # SYNTHESIZE — 融合指南生成（双 Agent + Map-Reduce）
 
-> v4 架构：从 `modes/synthesize.md` 迁移。触发方式和并行架构不变。
+> v4 架构：已从旧 `modes/synthesize.md` 迁移至此。触发方式和并行架构不变。
 > 触发方式：`/product-learn synthesize {product}` 或 auto-enrich 流程自动触发。
 
 ## 触发条件
