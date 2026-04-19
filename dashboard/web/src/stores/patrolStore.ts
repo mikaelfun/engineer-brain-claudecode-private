@@ -27,6 +27,7 @@ export interface ActionState {
   durationMs?: number
   detail?: string
   result?: string
+  subtype?: string
 }
 
 export interface StepState {

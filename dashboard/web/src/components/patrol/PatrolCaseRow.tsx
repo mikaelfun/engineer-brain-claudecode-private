@@ -5,7 +5,7 @@
  * Pipeline body: start → data-refresh → assess → act → summarize (collapsible for done cases)
  */
 import { useState, useEffect } from 'react'
-import { ChevronRight, Loader2 } from 'lucide-react'
+import { ChevronRight, Loader2, RotateCw } from 'lucide-react'
 import type { CaseState, StepState, StepStatus, SubtaskState, ActionState } from '../../stores/patrolStore'
 
 // ─── Props ───
@@ -387,8 +387,14 @@ function ActBody({ step }: { step?: StepState }) {
 }
 
 function ActionCard({ action }: { action: ActionState }) {
-  const { type, status, durationMs, detail, result } = action
-  const name = type.replace(/-/g, ' ')
+  const { type, status, durationMs, detail, result, subtype } = action
+
+  // Smart name: reassess gets special label, email-drafter shows subtype
+  const name = type === 'reassess'
+    ? 'reassess'
+    : type === 'email-drafter' && subtype
+      ? `email: ${subtype}`
+      : type.replace(/-/g, ' ')
 
   if (status === 'completed') {
     return (
@@ -401,15 +407,19 @@ function ActionCard({ action }: { action: ActionState }) {
         }}
       >
         <div className="flex items-center gap-1.5">
-          <div
-            style={{
-              width: 6,
-              height: 6,
-              borderRadius: '50%',
-              background: 'var(--accent-green)',
-              flexShrink: 0,
-            }}
-          />
+          {type === 'reassess' ? (
+            <RotateCw size={12} style={{ color: 'var(--accent-green)', flexShrink: 0 }} />
+          ) : (
+            <div
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                background: 'var(--accent-green)',
+                flexShrink: 0,
+              }}
+            />
+          )}
           <span className="text-[13px] font-semibold" style={{ color: 'var(--accent-green)' }}>
             {name}
           </span>
@@ -448,6 +458,8 @@ function ActionCard({ action }: { action: ActionState }) {
         <div className="flex items-center gap-1.5">
           {isLaunching ? (
             <Loader2 size={12} className="animate-spin" style={{ color: 'var(--accent-blue)', flexShrink: 0 }} />
+          ) : type === 'reassess' ? (
+            <RotateCw size={12} className="animate-spin" style={{ color: 'var(--accent-blue)', flexShrink: 0 }} />
           ) : (
             <div
               style={{
