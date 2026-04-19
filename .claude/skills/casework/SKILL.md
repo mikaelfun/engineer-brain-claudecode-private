@@ -100,7 +100,9 @@ python3 .claude/skills/casework/scripts/update-state.py --case-dir "$CASE_DIR" -
 
 读取 `.claude/skills/casework/act/SKILL.md` 获取完整执行步骤，然后执行。
 
-核心流程：解析 `output/execution-plan.json` → actions=0 则跳过 → IR-first 规则 → 按需 spawn troubleshooter/email-drafter → challenge gate。
+核心流程：解析 `output/execution-plan.json` → actions=0 则跳过 → IR-first 规则 → 按需 spawn troubleshooter → **如有 deferred actions 则 spawn reassess（读 claims.json.conclusion → fact/analysis 落盘 → LLM 决策 phase 2 actions）→ 按 reassess 结果 spawn email-drafter** → challenge gate。
+
+**无 troubleshooter 的场景**（follow-up / closure）：assess 直接决定 email 类型，不经 reassess。
 
 **Step 3 完成后**更新 state：
 ```bash
@@ -155,7 +157,8 @@ AR 检测逻辑：`[ ${#CASE_NUM} -ge 19 ] && IS_AR=true`。Main case ID = case 
 | 调用者 | 用户 `/casework` | patrol spawn |
 | 执行范围 | Step 1→2→3→4→5 | Step 1→2 only |
 | Step 2 enrichment | 可选 spawn subagent 加速 | inline（不 spawn，PRD §2.1 LLM inline 设计） |
-| Step 3 act | 自己 spawn agent | 不执行，patrol 主 agent 做 |
+| Step 3 act | 自己 spawn agent（含 reassess） | 不执行，patrol 主 agent 做 |
+| Step 3 reassess | troubleshooter 后 spawn reassess → phase 2 email | patrol 主 agent 做 |
 | Step 4 summarize | 自己 inline 执行 | 不执行，patrol spawn summarize |
 
 ## 安全红线

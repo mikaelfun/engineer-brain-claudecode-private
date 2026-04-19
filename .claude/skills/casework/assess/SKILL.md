@@ -181,11 +181,15 @@ actualStatus 是对**实际沟通状态**的事实判断，仅基于已发生的
   "caseNumber": "{caseNumber}",
   "actualStatus": "<one of: pending-engineer|pending-customer|pending-pg|researching|ready-to-close|resolved|closed>",
   "daysSinceLastContact": <int — 距工程师最后发出邮件的天数>,
-  "statusReasoning": "<≤200字，关键依据 → {actualStatus}，例：'客户4/15回复部署中，2天未更新 → pending-customer'>",
+  "statusReasoning": "<≤200字，关键依据 → {actualStatus}>",
   "actions": [
     // 允许的 type: troubleshooter / email-drafter / challenger / note-gap / labor-estimate
     // 允许的 status: pending
-    // email-drafter 需额外字段 "emailType"，可选值及使用场景：
+    // ⚠️ 新规则：当 actions 包含 troubleshooter 时，email-drafter 不在此处输出。
+    //    改为设置 deferredActions: ["email-drafter"]，email 类型由 reassess 步骤根据排查结论决定。
+    //    例外：IR-first 路径（new case + initial-response）仍在此处输出 email-drafter(initial-response)，
+    //    因为 IR 先发不需要等排查结论。
+    // email-drafter 需额外字段 "emailType"（仅不含 troubleshooter 的场景 + IR-first 场景使用）：
     //   - initial-response: 首次回复客户（工程师从未发过邮件）
     //   - 21v-convert-ir: 21V 转 IR（is21vConvert=true 时）
     //   - request-info: 向客户请求更多信息以继续排查
@@ -197,6 +201,10 @@ actualStatus 是对**实际沟通状态**的事实判断，仅基于已发生的
     //      已明确 → closure（发总结）；未明确 → closure-confirm（询问能否关）
     // 可引用 "dependsOn": "<previous action type>"
   ],
+  "deferredActions": ["email-drafter"] | [],
+  // ⚠️ 当 actions 包含 troubleshooter 时，必须设 deferredActions: ["email-drafter"]
+  //    当不含 troubleshooter 时，设 deferredActions: []
+  "deferReason": "<string — 为什么 defer，如 'email type TBD after troubleshoot reassess'> | null",
   "noActionReason": "<string or null>",
   "routingSource": "llm"
 }
@@ -204,15 +212,17 @@ actualStatus 是对**实际沟通状态**的事实判断，仅基于已发生的
 
 决策规则（判定优先级）：
 1. compliance.entitlementOk === false → actualStatus=ready-to-close, actions=[]
-2. 客户最新回复后 < 1 day + 无工程师后续 → pending-engineer + troubleshooter 或 email-drafter
+2. 客户最新回复后 < 1 day + 无工程师后续 → pending-engineer + troubleshooter, deferredActions=["email-drafter"]
+   （email 类型由 reassess 根据排查结论决定）
 3. 工程师发出 follow-up 后 > 3 days 无客户回复 → pending-customer + email-drafter(follow-up)
+   （无 troubleshooter → 不 defer）
 4. ICM 有 PG 新 entry 且 PG 仍在处理 → pending-pg：
    - daysSinceLastContact < 5 → actions=[]（等 PG，客户近期已收到更新）
    - daysSinceLastContact ≥ 5 → actions=[email-drafter(follow-up)]，向客户更新当前状态（"PG 仍在调查中，我们持续跟进"）
 5. actualStatus=ready-to-close（问题已解决 / 客户表态可关）→ 分流 closure vs closure-confirm：
    - 客户**明确表态**可以关单（如在邮件/Teams 中说"可以关"、"temp close"、"confirmed"、"同意关闭"、"go ahead"）→ email-drafter(closure)
    - 客户**暗示**问题解决但**未明确说关单**（如"谢谢"、无后续提问、长时间无回复）→ email-drafter(closure-confirm)
-6. 其余（数据不足 / 正在排查） → researching + troubleshooter
+6. 其余（数据不足 / 正在排查） → researching + troubleshooter, deferredActions=["email-drafter"]
 
 **actions 推理指导**（非严格规则，LLM 综合判断）：
 1. 排查已完成 + 邮件已发送 + ICM pending PG → `no-agent`（等 PG）
@@ -221,6 +231,9 @@ actualStatus 是对**实际沟通状态**的事实判断，仅基于已发生的
 4. 有新信息需排查（客户新数据、PG 新回复）→ troubleshooter
 5. 新 case（`new` 状态，无工程师邮件）+ 需初始排查 → troubleshooter + email-drafter(initial-response)
 6. 判断不确定 → actions=[]（让 act 的 fallback 路由表处理）
+7. 有 troubleshooter action → 必须设 deferredActions=["email-drafter"]
+   → 唯一例外：IR-first（new + initial-response）同时输出 troubleshooter + email-drafter(initial-response)
+   → IR-first 时 deferredActions=["email-drafter"]（reassess 仍决定第二封邮件）
 
 **邮件去重规则**（推荐 email-drafter 前必须检查）：
 - 读 `{caseDir}/emails.md` 检查工程师是否已发过同类型邮件（IR/follow-up/closure）

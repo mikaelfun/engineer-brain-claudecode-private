@@ -38,7 +38,8 @@ allowed-tools:
 ```bash
 eval $(bash .claude/skills/casework/act/scripts/read-plan.sh "{caseDir}/.casework/execution-plan.json")
 # 注入: CASE_NUMBER, ACTUAL_STATUS, DAYS_SINCE, ACTION_COUNT, IR_FIRST,
-#       ACTION_{i}_TYPE, ACTION_{i}_EMAIL_TYPE, ACTION_{i}_DEPENDS_ON, NO_ACTION_REASON
+#       ACTION_{i}_TYPE, ACTION_{i}_EMAIL_TYPE, ACTION_{i}_DEPENDS_ON,
+#       NO_ACTION_REASON, HAS_DEFERRED, PLAN_PHASE, PLAN_COUNT
 ```
 
 如 `ACTION_COUNT == 0`：
@@ -90,11 +91,13 @@ fi
 适用条件：`actualStatus ∈ {new, pending-engineer}` 且 actions 同时含 troubleshooter + email-drafter(initial-response)。
 
 **执行顺序**：
-1. **先 spawn email-drafter（前台）** — emailType = `initial-response`
+1. **先 spawn email-drafter(initial-response)（前台）** — 尽快产出 IR 草稿
 2. email-drafter 完成 → 展示 IR 草稿给用户
-3. **再 spawn troubleshooter（后台 `run_in_background: true`）** — 独立排查
-4. **不等待 troubleshooter** → 直接进 Step 4（completion signal）
-5. troubleshooter 后台完成后的 challenge gate 延迟到下次 casework/patrol 处理
+3. **spawn troubleshooter（前台）** — 完整排查
+4. troubleshooter 完成 → **spawn reassess（前台）** — 基于排查结论决策第二封邮件
+5. reassess 完成 → 读取 updated execution-plan.json
+6. 如 reassess 产出 email-drafter action → **spawn email-drafter（前台）** — 第二封邮件
+7. 如 reassess 无 action（exhausted/out-of-scope）→ 跳过，todo 中标记建议
 
 ```
 # IR-first: email-drafter 前台
@@ -108,20 +111,54 @@ Agent(
     读取 .claude/agents/email-drafter.md 获取完整执行步骤，然后执行。
 )
 
-# IR-first: troubleshooter 后台
+# IR-first Step 2: troubleshooter 前台（不再后台，因为要等结果做 reassess）
 Agent(
   subagent_type: "troubleshooter",
   description: "troubleshooter {caseNumber}",
-  run_in_background: true,
+  run_in_background: false,
   prompt: |
     Case {caseNumber}，caseDir={caseDir}。
     读取 .claude/agents/troubleshooter.md 获取完整执行步骤，然后执行。
 )
+
+# IR-first Step 3: reassess 前台
+Agent(
+  subagent_type: "casework",
+  description: "reassess {caseNumber}",
+  run_in_background: false,
+  prompt: |
+    仅执行 reassess for Case {caseNumber}。caseDir={caseDir}。
+    请读取 .claude/skills/casework/reassess/SKILL.md 获取完整执行步骤。
+    只做 reassess（读 claims.json → 分类落盘 → LLM 决策 → 写 plan phase 2），不做其他步骤。
+)
+
+# IR-first Step 4: 检查 reassess 结果，按需 spawn 第二封邮件
+eval $(bash .claude/skills/casework/act/scripts/read-plan.sh "{caseDir}/.casework/execution-plan.json")
+# 现在 read-plan 读到的是 reassess 产出的 phase 2 actions
+if [ "$ACTION_COUNT" -gt 0 ]; then
+  for i in $(seq 0 $((ACTION_COUNT-1))); do
+    TYPE_VAR="ACTION_${i}_TYPE"
+    EMAIL_TYPE_VAR="ACTION_${i}_EMAIL_TYPE"
+    TYPE="${!TYPE_VAR}"
+    EMAIL_TYPE="${!EMAIL_TYPE_VAR}"
+    if [ "$TYPE" = "email-drafter" ]; then
+      Agent(
+        subagent_type: "email-drafter",
+        description: "post-reassess email {caseNumber}",
+        run_in_background: false,
+        prompt: |
+          Case {caseNumber}，caseDir={caseDir}。
+          emailType=${EMAIL_TYPE}, language=auto, recipient=customer。
+          读取 .claude/agents/email-drafter.md 获取完整执行步骤，然后执行。
+      )
+    fi
+  done
+fi
 ```
 
 #### 3b. 标准路径（`IR_FIRST == 0`）
 
-按 priority 排序，逐个执行 action：
+按 priority 排序，逐个执行 action。当 `HAS_DEFERRED == 1` 时，troubleshooter 完成后 spawn reassess。
 
 ```
 for i in 0..(ACTION_COUNT-1):
@@ -157,6 +194,34 @@ for i in 0..(ACTION_COUNT-1):
       #     请只排查 AR scope 范围内的问题，不要排查 main case 的其他问题。
       #     读取 .claude/agents/troubleshooter.md 获取完整执行步骤，然后执行。
       # )
+      # troubleshooter 完成后：如有 deferred actions，spawn reassess
+      if HAS_DEFERRED == 1:
+        Agent(
+          subagent_type: "casework",
+          description: "reassess {caseNumber}",
+          run_in_background: false,
+          prompt: |
+            仅执行 reassess for Case {caseNumber}。caseDir={caseDir}。
+            请读取 .claude/skills/casework/reassess/SKILL.md 获取完整执行步骤。
+            只做 reassess，不做其他步骤。
+        )
+
+        # 读取 reassess 结果，执行 phase 2 actions
+        eval $(bash .claude/skills/casework/act/scripts/read-plan.sh "{caseDir}/.casework/execution-plan.json")
+        for j in 0..(ACTION_COUNT-1):
+          RTYPE = ACTION_{j}_TYPE
+          REMAIL_TYPE = ACTION_{j}_EMAIL_TYPE
+          if RTYPE == "email-drafter":
+            Agent(
+              subagent_type: "email-drafter",
+              description: "post-reassess email {caseNumber}",
+              run_in_background: false,
+              prompt: |
+                Case {caseNumber}，caseDir={caseDir}。
+                emailType=${REMAIL_TYPE}, language=auto, recipient=customer。
+                读取 .claude/agents/email-drafter.md 获取完整执行步骤，然后执行。
+            )
+
       # troubleshooter 完成后 → challenge gate（Step 3c）
 
     "email-drafter":
@@ -244,14 +309,14 @@ echo "ACT_OK|actions=$ACTION_COUNT|ir_first=$IR_FIRST|elapsed=${SECONDS}s"
 
 ## 路由参考表（assess LLM 输出 → act spawn）
 
-| actualStatus | 典型 actions | act 行为 |
+| actualStatus | assess actions | act 行为 |
 |---|---|---|
-| `pending-engineer`（新 case） | troubleshooter + email-drafter(IR) | IR-first: email(fg) → ts(bg) |
-| `pending-engineer`（已有 IR） | troubleshooter | 仅 troubleshooter(fg) |
+| `pending-engineer`（新 case） | troubleshooter + email-drafter(IR) | IR-first: email(IR,fg) → ts(fg) → reassess(fg) → email(phase2,fg) |
+| `pending-engineer`（已有 IR） | troubleshooter, deferred=[email-drafter] | ts(fg) → reassess(fg) → email(phase2,fg) |
 | `pending-customer` (days≥3) | email-drafter(follow-up) | email(fg) |
 | `pending-pg` (days<5) | [] | 无 action，等 PG |
 | `pending-pg` (days≥5) | email-drafter(follow-up) | 向客户更新状态（PG 仍在调查） |
-| `researching` | troubleshooter | troubleshooter(fg) |
+| `researching` | troubleshooter, deferred=[email-drafter] | ts(fg) → reassess(fg) → email(phase2,fg) |
 | `ready-to-close` | email-drafter(closure) | email(fg) |
 
 ### AR 路由参考表（isAR=true 时使用）
@@ -276,13 +341,14 @@ echo "ACT_OK|actions=$ACTION_COUNT|ir_first=$IR_FIRST|elapsed=${SECONDS}s"
 - ❌ 不直接发邮件（email-drafter 产出只写到 drafts/）
 - ❌ 不自动 spawn challenger（改为手动 `/challenge`）
 - ❌ patrol mode 不 spawn 任何 agent（depth=1 限制）
-- ✅ IR-first troubleshooter 后台 spawn（不阻塞用户审阅 IR 草稿）
+- ✅ IR-first troubleshooter 前台 spawn（等待结果做 reassess）
+- ✅ reassess 完成后按结论类型 spawn email-drafter 或跳过
 
 ## Pitfalls (known)
 
 - **Agent prompt 路径格式**：prompt 中的 `caseDir` 必须用相对路径（`./cases/active/{caseNumber}`），禁止 Windows 绝对路径（反斜杠被 Bash 转义）
 - **depth=1 限制**：patrol spawn 的 casework subagent 不能再 spawn subagent → patrol mode 必须委托回 patrol 主 session
-- **IR-first 后台 troubleshooter 生命周期**：后台 agent 完成后不在本次 act 处理，下次 casework/patrol 才做 challenge gate
+- **IR-first troubleshooter + reassess 流程**：troubleshooter 前台完成后立即 spawn reassess，reassess 决定第二封邮件类型，同一 cycle 内完成
 
 ## 错误处理
 
