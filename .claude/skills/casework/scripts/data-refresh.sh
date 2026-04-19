@@ -60,6 +60,7 @@ rm -f "$OUTPUT_DIR/data-refresh.json" "$OUTPUT_DIR/delta-content.md" \
       "$OUT_DIR/state.json"
 rm -f "$OUT_DIR/.aggregate-status" "$OUT_DIR/.aggregate-stderr"
 rm -rf "$SUBTASK_DIR"
+rm -rf "$CASE_DIR_ABS/.casework/events"  # clean legacy events/ dir
 mkdir -p "$OUTPUT_DIR" "$SUBTASK_DIR"
 
 TOP_START_TS=$(date -u +%FT%TZ)
