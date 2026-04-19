@@ -41,23 +41,31 @@ Vertical timeline in a sticky card. 6 stages connected by vertical lines.
 
 ### Stages and their detail data
 
-| Stage | Detail (2 lines max) | Data source |
-|-------|---------------------|-------------|
-| **Start** | "SDK session launched" + session ID | orchestrator |
-| **Discover** | "D365 query → **18** active cases" | patrol skill (new: write to patrol-progress.json) |
-| **Filter** | "**12** changed · 6 skipped" | patrol skill (new: write to patrol-progress.json) |
-| **Warmup** | "Token daemon **running**" | patrol skill warmup check |
-| **Process** | "**5** / 12 cases" + progress bar + live decision text | StateManager + patrol skill |
-| **Aggregate** | "Todos merged. **3** new actions" | patrol skill (new: write to patrol-progress.json) |
+| Stage | Detail (2 lines max) | Duration | Data source |
+|-------|---------------------|----------|-------------|
+| **Start** | "SDK session launched" + session ID | `8s` | orchestrator |
+| **Discover** | "D365 query → **18** active cases" | `12s` | patrol skill (new: write to patrol-progress.json) |
+| **Filter** | "**12** changed · 6 skipped" | `3s` | patrol skill (new: write to patrol-progress.json) |
+| **Warmup** | "Token daemon **running**" | `5s` | patrol skill warmup check |
+| **Process** | "**5** / 12 cases" + progress bar + live decision text | `4m04s` | StateManager + patrol skill |
+| **Aggregate** | "Todos merged. **3** new actions" | `2s` | patrol skill (new: write to patrol-progress.json) |
+
+### Per-stage timing requirements
+
+Each completed stage shows its duration right-aligned (e.g. `12s`, `4m 3s`). The active stage shows a live counter. All durations should approximately sum to the total patrol time shown in the header.
+
+**Timing accuracy**: Patrol skill writes explicit `phaseTiming` in patrol-progress.json (bash `date +%s%N` at each phase boundary). StateManager prefers these over its own phase-change detection (which can miss fast phases due to chokidar's 300ms stabilization delay).
 
 ### Process stage live text
 
 Shows patrol session's **serial decisions** (not per-case parallel work):
-- `0748 assess done → launching act agent`
-- `0748 troubleshooter done → launching email drafter`
-- `0748 needs challenge → launching challenger`
+- `0748 assess done → launching troubleshooter`
+- `0748 troubleshooter done → launching reassess`
+- `0748 reassess: found-cause → launching email(result-confirm)`
+- `0748 reassess: exhausted → no email, recommend ICM → summarizing`
 - `0748 email done → skipping challenge → summarizing`
 - `1034 assess done → no action, self-summarizing`
+- `2048 assess done → launching email(follow-up)` (no troubleshooter, no reassess)
 
 ## Case Pipeline (Right Content)
 
@@ -88,14 +96,20 @@ Requires: casework data-refresh scripts to write delta counts to state.json subt
 
 Agent cards appear **only when patrol session decides to trigger them**:
 1. Patrol session returns from assess → decides to spawn troubleshooter → card appears
-2. Troubleshooter returns → patrol decides to spawn email drafter → card appears
-3. Email drafter returns → patrol decides challenge needed → challenger card appears
-4. If no challenge needed → no challenger card, proceed to summary
+2. Troubleshooter returns → patrol spawns **reassess** → reassess card appears
+3. Reassess returns → patrol decides to spawn email drafter (type decided by reassess) → email-drafter card appears
+4. If reassess says exhausted/out-of-scope → no email card, proceed to summary
+5. Email drafter returns → patrol decides challenge needed → challenger card appears
+6. If no challenge needed → no challenger card, proceed to summary
+
+**No-troubleshooter path** (follow-up / closure): assess directly decides email type, no reassess card appears.
 
 Each agent card has 3 visual states:
 - **Launching**: purple bg + spinner + "Launching SDK session…"
 - **Running**: purple bg + pulse dot + live description ("Querying NSG rules…")
 - **Completed**: green border + result summary ("Found: NSG rule blocking RDP")
+
+Reassess card completed state shows conclusion type: `"reassess: found-cause → result-confirm"`
 
 ### Case row states
 
@@ -134,7 +148,7 @@ All components use the dashboard's existing design system:
   "totalFound": 18,
   "skippedCount": 6,
   "warmupStatus": "daemon running",
-  "currentAction": "0748 troubleshooter done → launching email drafter",
+  "currentAction": "0748 troubleshooter done → launching reassess",
   "caseList": ["2601290030000748", ...]
 }
 ```
@@ -164,7 +178,8 @@ All components use the dashboard's existing design system:
     "act": {
       "actions": [
         { "type": "troubleshooter", "status": "completed", "durationMs": 105000, "result": "Found NSG rule blocking RDP" },
-        { "type": "email-drafter", "status": "active", "detail": "Launching SDK session…" }
+        { "type": "reassess", "status": "completed", "durationMs": 8000, "result": "found-cause → result-confirm" },
+        { "type": "email-drafter", "subtype": "result-confirm", "status": "active", "detail": "Launching SDK session…" }
       ]
     }
   }
