@@ -277,13 +277,43 @@ caseRoutes.post('/patrol/cancel', (c) => {
   return c.json({ success: cancelled, message: cancelled ? 'Patrol cancellation requested' : 'Failed to cancel' })
 })
 
-// GET /patrol/status — 查询 patrol 运行状态 + 当前进度 + 上次运行结果
+// GET /patrol/status — 查询 patrol 运行状态 + 当前进度 + 上次运行结果 + per-case state
 caseRoutes.get('/patrol/status', (c) => {
   const running = isSdkPatrolRunning()
+  const lastRun = loadPatrolLastRun() as Record<string, unknown> | null
+
+  // Read per-case state.json for all cases in lastRun or liveProgress
+  const caseStates: Record<string, unknown> = {}
+  const caseNumbers: string[] = []
+
+  if (running) {
+    const lp = getSdkPatrolLiveProgress()
+    if (lp?.caseList && Array.isArray(lp.caseList)) {
+      caseNumbers.push(...(lp.caseList as string[]))
+    }
+  }
+  if (lastRun?.caseResults && Array.isArray(lastRun.caseResults)) {
+    for (const cr of lastRun.caseResults as Array<{ caseNumber?: string }>) {
+      if (cr.caseNumber && !caseNumbers.includes(cr.caseNumber)) {
+        caseNumbers.push(cr.caseNumber)
+      }
+    }
+  }
+
+  for (const cn of caseNumbers) {
+    try {
+      const statePath = join(appConfig.activeCasesDir, cn, '.casework', 'state.json')
+      if (existsSync(statePath)) {
+        caseStates[cn] = JSON.parse(readFileSync(statePath, 'utf-8'))
+      }
+    } catch { /* skip unreadable */ }
+  }
+
   return c.json({
     running,
     liveProgress: running ? getSdkPatrolLiveProgress() : null,
-    lastRun: loadPatrolLastRun(),
+    lastRun,
+    caseStates,
   })
 })
 

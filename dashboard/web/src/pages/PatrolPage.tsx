@@ -2,13 +2,23 @@
  * PatrolPage — Independent patrol page
  *
  * Composes: PatrolHeader + PatrolGlobalPipeline + PatrolCaseList
- * Hydrates store on mount from /api/patrol/status
+ * Hydrates store on mount from /api/patrol/status (includes per-case state.json)
  */
 import { useEffect } from 'react'
 import { usePatrolStore } from '../stores/patrolStore'
 import PatrolHeader from '../components/patrol/PatrolHeader'
 import PatrolGlobalPipeline from '../components/patrol/PatrolGlobalPipeline'
 import PatrolCaseList from '../components/patrol/PatrolCaseList'
+
+/** Hydrate per-case state from backend caseStates map */
+function hydrateCaseStates(caseStates: Record<string, any>) {
+  const store = usePatrolStore.getState()
+  for (const [cn, cs] of Object.entries(caseStates)) {
+    if (cs && typeof cs === 'object') {
+      store.onCaseUpdate({ caseNumber: cn, ...cs })
+    }
+  }
+}
 
 export default function PatrolPage() {
   // Hydrate store from backend on mount + periodic reconciliation
@@ -30,16 +40,11 @@ export default function PatrolPage() {
               caseList: lp.caseList,
               startedAt: lp.startedAt,
             })
-            if (lp.caseStates && typeof lp.caseStates === 'object') {
-              for (const [cn, cs] of Object.entries(lp.caseStates)) {
-                store.onCaseUpdate({ caseNumber: cn, ...(cs as object) })
-              }
-            }
           } else if (!status.running) {
             // Backend says NOT running
             const isStoreRunning = !['idle', 'completed', 'failed'].includes(store.phase)
             if (isStoreRunning) {
-              // Store thinks patrol is running but backend says no → force complete/fail
+              // Store thinks running but backend says no → force complete/fail
               const lr = status.lastRun
               store.onPatrolState({
                 phase: lr?.phase || 'completed',
@@ -62,6 +67,11 @@ export default function PatrolPage() {
                 })
               }
             }
+          }
+
+          // Always hydrate per-case state from disk (works for both running and completed)
+          if (status.caseStates && Object.keys(status.caseStates).length > 0) {
+            hydrateCaseStates(status.caseStates)
           }
         })
         .catch(() => {})
