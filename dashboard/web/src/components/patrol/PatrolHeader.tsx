@@ -1,10 +1,12 @@
 /**
- * PatrolHeader — Page title, Start/Cancel button, stat chips, elapsed timer
+ * PatrolHeader — Slim header: title, phase badge, timer, error, action buttons
  *
  * Timer display:
  *   - Running:   live counter "4m 32s"
  *   - Completed: "Completed in 5m 32s · 14:23 → 14:28"
  *   - Failed:    "Failed after 3m 12s · 14:23 → 14:26"
+ *
+ * Stat chips moved to PatrolPage (separate row).
  */
 import { useState, useEffect, useRef } from 'react'
 import { Play, Square, Loader2, RotateCcw } from 'lucide-react'
@@ -31,11 +33,8 @@ const RUNNING_PHASES: PatrolPhase[] = [
 
 export default function PatrolHeader() {
   const phase = usePatrolStore(s => s.phase)
-  const totalCases = usePatrolStore(s => s.totalCases)
-  const processedCases = usePatrolStore(s => s.processedCases)
   const startedAt = usePatrolStore(s => s.startedAt)
   const completedAt = usePatrolStore(s => s.completedAt)
-  const cases = usePatrolStore(s => s.cases)
   const error = usePatrolStore(s => s.error)
 
   const startPatrol = useStartPatrol()
@@ -45,14 +44,6 @@ export default function PatrolHeader() {
   const isCompleted = phase === 'completed'
   const isFailed = phase === 'failed'
   const isDone = isCompleted || isFailed
-
-  // Derive stats
-  const activeCases = Object.values(cases).filter(c => {
-    const hasActive = Object.values(c.steps).some(s => s.status === 'active')
-    return hasActive
-  }).length
-
-  const queuedCases = totalCases - processedCases - activeCases
 
   // ── Total elapsed timer ──
   // Uses a ref to lock in the start time once, immune to SSE overwrites.
@@ -162,18 +153,8 @@ export default function PatrolHeader() {
         )}
       </div>
 
-      {/* Right: stat chips + action button */}
+      {/* Right: error + action buttons */}
       <div className="flex items-center gap-3 flex-wrap">
-        {/* Stat chips */}
-        {(isRunning || isCompleted || isFailed) && (
-          <div className="flex items-center gap-2">
-            <StatChip label="Total" value={totalCases} color="var(--text-secondary)" />
-            <StatChip label="Done" value={processedCases} color="var(--accent-green)" />
-            <StatChip label="Active" value={activeCases} color="var(--accent-blue)" />
-            <StatChip label="Queue" value={Math.max(0, queuedCases)} color="var(--text-tertiary)" />
-          </div>
-        )}
-
         {/* Error message */}
         {error && (
           <span className="text-xs" style={{ color: 'var(--accent-red)' }}>
@@ -239,22 +220,6 @@ export default function PatrolHeader() {
           )}
         </div>
       </div>
-    </div>
-  )
-}
-
-function StatChip({ label, value, color }: { label: string; value: number; color: string }) {
-  return (
-    <div
-      className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs"
-      style={{ background: 'var(--bg-hover)' }}
-    >
-      <span className="font-medium uppercase tracking-wide" style={{ color: 'var(--text-tertiary)', fontSize: 10 }}>
-        {label}
-      </span>
-      <span className="font-bold font-mono" style={{ color }}>
-        {value}
-      </span>
     </div>
   )
 }
