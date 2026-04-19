@@ -79,23 +79,25 @@ function formatDelta(name: string, delta?: Record<string, number>): string | nul
   switch (name) {
     case 'd365': {
       const parts: string[] = []
-      if (delta.emails) parts.push(`+${delta.emails} emails`)
-      if (delta.notes) parts.push(`+${delta.notes} note`)
+      if (delta.newEmails) parts.push(`+${delta.newEmails} emails`)
+      if (delta.newNotes) parts.push(`+${delta.newNotes} note`)
       return parts.join(' \u00b7 ') || null
     }
     case 'teams': {
       const parts: string[] = []
-      if (delta.chats) parts.push(`${delta.chats} chats`)
-      if (delta.messages) parts.push(`${delta.messages} msgs`)
+      if (delta.newChats) parts.push(`${delta.newChats} chats`)
+      if (delta.newMessages) parts.push(`${delta.newMessages} msgs`)
       return parts.join(' \u00b7 ') || null
     }
     case 'icm':
-      return delta.discussions ? `+${delta.discussions} discussions` : null
-    case 'onenote':
-      return delta.pagesUpdated ? `${delta.pagesUpdated} pages updated` : null
+      return delta.newEntries ? `+${delta.newEntries} discussions` : null
+    case 'onenote': {
+      const pages = (delta.newPages || 0) + (delta.updatedPages || 0)
+      return pages ? `${pages} pages updated` : null
+    }
     case 'attachments': {
-      if (!delta.files) return null
-      let s = `+${delta.files} file`
+      if (!delta.downloaded) return null
+      let s = `+${delta.downloaded} file`
       if (delta.sizeKB) s += ` (${delta.sizeKB} KB)`
       return s
     }
@@ -198,16 +200,15 @@ function StepStatusIcon({ status }: { status: StepStatus }) {
           width: size,
           height: size,
           borderRadius: '50%',
-          background: 'var(--bg-inset)',
+          background: 'var(--accent-green)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           flexShrink: 0,
-          opacity: 0.5,
         }}
       >
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-          <path d="M2 5H8" stroke="var(--text-tertiary)" strokeWidth="1.5" strokeLinecap="round" />
+          <path d="M2.5 5H7.5" stroke="white" strokeWidth="2" strokeLinecap="round" />
         </svg>
       </div>
     )
@@ -370,7 +371,14 @@ function ActBody({ step }: { step?: StepState }) {
       return (
         <div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--accent-blue)' }}>
           <Loader2 size={12} className="animate-spin" />
-          Waiting\u2026
+          Waiting…
+        </div>
+      )
+    }
+    if (step.status === 'skipped') {
+      return (
+        <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+          No action needed
         </div>
       )
     }
@@ -716,12 +724,19 @@ export default function PatrolCaseRow({ caseState, defaultExpanded }: PatrolCase
         )}
       </div>
 
-      {/* ─── Pipeline body ─── */}
-      {showBody && (
+      {/* ─── Pipeline body (animated) ─── */}
+      <div
+        style={{
+          maxHeight: showBody ? 500 : 0,
+          opacity: showBody ? 1 : 0,
+          overflow: 'hidden',
+          transition: 'max-height 300ms ease, opacity 200ms ease',
+        }}
+      >
         <div
           style={{
             padding: '18px 20px',
-            borderTop: '1px solid var(--bg-hover)',
+            borderTop: showBody ? '1px solid var(--bg-hover)' : '1px solid transparent',
           }}
         >
           {/* ── Step columns ── */}
@@ -741,7 +756,8 @@ export default function PatrolCaseRow({ caseState, defaultExpanded }: PatrolCase
                       style={{
                         color:
                           status === 'active' ? 'var(--accent-blue)' :
-                          status === 'completed' ? 'var(--accent-green)' :
+                          status === 'completed' || status === 'skipped' ? 'var(--accent-green)' :
+                          status === 'failed' ? 'var(--accent-red)' :
                           'var(--text-tertiary)',
                       }}
                     >
@@ -772,7 +788,7 @@ export default function PatrolCaseRow({ caseState, defaultExpanded }: PatrolCase
             })}
           </div>
         </div>
-      )}
+      </div>
 
       {/* ─── Animations ─── */}
       <style>{`

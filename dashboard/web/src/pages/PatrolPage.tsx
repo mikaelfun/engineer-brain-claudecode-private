@@ -159,10 +159,10 @@ export default function PatrolPage() {
       </div>
 
       {/* Sidebar + Content */}
-      <div className="flex gap-6 items-start">
+      <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-stretch md:items-start">
         {/* Left sidebar */}
         {!isIdle && (
-          <div className="w-[260px] flex-shrink-0 sticky top-7">
+          <div className="w-full md:w-[260px] flex-shrink-0 md:sticky md:top-7">
             <PatrolSidebar />
           </div>
         )}
