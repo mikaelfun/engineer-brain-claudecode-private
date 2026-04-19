@@ -10,13 +10,20 @@ import PatrolHeader from '../components/patrol/PatrolHeader'
 import PatrolGlobalPipeline from '../components/patrol/PatrolGlobalPipeline'
 import PatrolCaseList from '../components/patrol/PatrolCaseList'
 
-/** Hydrate per-case state from backend caseStates map */
-function hydrateCaseStates(caseStates: Record<string, any>) {
+/** Hydrate per-case state from backend caseStates map.
+ *  If patrolStartedAt is provided, only include cases updated AFTER that time
+ *  (prevents stale data from previous patrol polluting the current run). */
+function hydrateCaseStates(caseStates: Record<string, any>, patrolStartedAt?: string) {
   const store = usePatrolStore.getState()
+  const cutoff = patrolStartedAt ? new Date(patrolStartedAt).getTime() - 60_000 : 0 // 1min grace
   for (const [cn, cs] of Object.entries(caseStates)) {
-    if (cs && typeof cs === 'object') {
-      store.onCaseUpdate({ caseNumber: cn, ...cs })
+    if (!cs || typeof cs !== 'object') continue
+    // Skip stale case state from previous patrol
+    if (cutoff > 0 && cs.updatedAt) {
+      const updated = new Date(cs.updatedAt).getTime()
+      if (updated < cutoff) continue
     }
+    store.onCaseUpdate({ caseNumber: cn, ...cs })
   }
 }
 
@@ -69,9 +76,13 @@ export default function PatrolPage() {
             }
           }
 
-          // Always hydrate per-case state from disk (works for both running and completed)
+          // Hydrate per-case state from disk — filter by patrol start time
           if (status.caseStates && Object.keys(status.caseStates).length > 0) {
-            hydrateCaseStates(status.caseStates)
+            // Use current patrol's startedAt (running) or lastRun's startedAt (completed)
+            const patrolStart = status.running
+              ? (status.liveProgress?.startedAt || store.startedAt)
+              : status.lastRun?.startedAt
+            hydrateCaseStates(status.caseStates, patrolStart)
           }
         })
         .catch(() => {})
