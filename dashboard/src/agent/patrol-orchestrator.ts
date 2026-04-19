@@ -23,6 +23,7 @@ import { fileURLToPath } from 'url'
 import { dirname } from 'path'
 import { config } from '../config.js'
 import { sseManager } from '../watcher/sse-manager.js'
+import { patrolStateManager } from '../services/patrol-state-manager.js'
 import { loadAgentDefinitions } from './case-session-manager.js'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -161,8 +162,10 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
     if (existsSync(progressFile)) unlinkSync(progressFile)
   } catch { /* ignore */ }
 
-  sseManager.broadcast('patrol-state' as any, {
+  patrolStateManager.update({
     phase: 'starting',
+    startedAt,
+    source: 'webui',
     detail: 'Launching patrol via SDK...',
   })
 
@@ -211,13 +214,12 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
             writeFileSync(lockPath(), JSON.stringify(lock, null, 2), 'utf-8')
           }
         } catch { /* ignore */ }
-        sseManager.broadcast('patrol-state' as any, {
-          phase: 'starting',
-          detail: `SDK session started`,
-          sessionId: sdkSessionId,
+        patrolStateManager.update({
+          sessionId: sdkSessionId!,
+          detail: 'SDK session started',
         })
       }
-      // Progress is handled by file-watcher → SSE (patrol-phase, .casework/events, pipeline-state)
+      // Progress is handled by file-watcher → patrolStateManager → SSE
     }
 
     console.log(`[sdk-patrol] SDK query completed`)
@@ -226,7 +228,15 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
     const patrolResult = loadPatrolLastRun() as PatrolResult | null
 
     if (patrolResult) {
-      sseManager.broadcast('patrol-state' as any, { ...patrolResult, phase: patrolResult.phase || 'completed' })
+      patrolStateManager.update({
+        phase: (patrolResult.phase || 'completed') as any,
+        totalCases: patrolResult.totalCases,
+        changedCases: patrolResult.changedCases,
+        processedCases: patrolResult.processedCases,
+        startedAt: patrolResult.startedAt,
+        completedAt: patrolResult.completedAt,
+        error: patrolResult.error,
+      })
       sseManager.broadcast('patrol-updated' as any, { reason: 'patrol-completed' })
       sseManager.broadcast('sessions-changed' as any, { reason: 'patrol-completed' })
       return patrolResult
@@ -251,7 +261,7 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
     const isAbort = msg.includes('abort')
     console.error(`[sdk-patrol] ${isAbort ? 'Cancelled' : 'Failed'}:`, msg)
 
-    sseManager.broadcast('patrol-state' as any, {
+    patrolStateManager.update({
       phase: 'failed',
       error: isAbort ? 'Patrol cancelled by user' : msg,
     })
@@ -288,28 +298,11 @@ export function isSdkPatrolRunning(): boolean {
   return true
 }
 
-/** Get current patrol progress by reading lock + patrol-progress.json */
+/** Get current patrol progress from in-memory state manager */
 export function getSdkPatrolLiveProgress(): Record<string, unknown> | null {
   const lock = readLock()
   if (!lock) return null
-
-  const result: Record<string, unknown> = {
-    source: lock.source,
-    startedAt: lock.startedAt,
-    force: lock.force,
-    sessionId: lock.sessionId || null,
-  }
-
-  // Read patrol-progress.json (written by patrol skill)
-  try {
-    const progressFile = config.patrolProgressFile
-    if (existsSync(progressFile)) {
-      const progress = JSON.parse(readFileSync(progressFile, 'utf-8'))
-      Object.assign(result, progress)
-    }
-  } catch { /* ignore */ }
-
-  return result
+  return patrolStateManager.getState() as Record<string, unknown>
 }
 
 /** Cancel the current patrol */

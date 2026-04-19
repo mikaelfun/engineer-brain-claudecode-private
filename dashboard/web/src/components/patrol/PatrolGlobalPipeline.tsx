@@ -1,8 +1,10 @@
 /**
  * PatrolGlobalPipeline — 5 horizontal nodes: Discover → Filter → Warmup → Process → Aggregate
  *
- * Maps patrol phase to node statuses with color-coded circles and connecting lines.
+ * Maps patrol phase to node statuses with color-coded circles, connecting lines,
+ * and per-phase elapsed time (live counter for active, final for completed).
  */
+import { useState, useEffect } from 'react'
 import { usePatrolStore, type PatrolPhase } from '../../stores/patrolStore'
 import { Card } from '../common/Card'
 
@@ -12,6 +14,9 @@ interface PipelineNode {
   label: string
   phase: PatrolPhase
   status: NodeStatus
+  durationMs?: number       // final duration for completed phases
+  isLive?: boolean          // true = active node, needs live counter
+  liveStartedAt?: string    // ISO timestamp for live counter
 }
 
 const PHASE_ORDER: PatrolPhase[] = ['discovering', 'filtering', 'warming-up', 'processing', 'aggregating']
@@ -24,7 +29,11 @@ const NODE_LABELS: Record<string, string> = {
   aggregating: 'Aggregate',
 }
 
-function deriveNodes(phase: PatrolPhase): PipelineNode[] {
+function deriveNodes(
+  phase: PatrolPhase,
+  phaseTimings?: Record<string, number>,
+  phaseStartedAt?: string,
+): PipelineNode[] {
   const currentIdx = PHASE_ORDER.indexOf(phase)
 
   return PHASE_ORDER.map((p, idx) => {
@@ -33,7 +42,6 @@ function deriveNodes(phase: PatrolPhase): PipelineNode[] {
     if (phase === 'completed') {
       status = 'completed'
     } else if (phase === 'failed') {
-      // Everything up to current is completed, current is completed (failed after)
       status = idx <= currentIdx ? 'completed' : 'pending'
     } else if (currentIdx >= 0) {
       if (idx < currentIdx) status = 'completed'
@@ -41,8 +49,45 @@ function deriveNodes(phase: PatrolPhase): PipelineNode[] {
       else status = 'pending'
     }
 
-    return { label: NODE_LABELS[p], phase: p, status }
+    const node: PipelineNode = { label: NODE_LABELS[p], phase: p, status }
+
+    // Attach timing data
+    if (status === 'completed' && phaseTimings?.[p] !== undefined) {
+      node.durationMs = phaseTimings[p]
+    }
+    if (status === 'active' && phaseStartedAt) {
+      node.isLive = true
+      node.liveStartedAt = phaseStartedAt
+    }
+
+    return node
   })
+}
+
+function formatDuration(ms: number): string {
+  if (ms < 1000) return '<1s'
+  const s = Math.floor(ms / 1000)
+  const m = Math.floor(s / 60)
+  if (m > 0) return `${m}m ${s % 60}s`
+  return `${s}s`
+}
+
+/** Live counter for the active phase node */
+function LiveTimer({ startedAt }: { startedAt: string }) {
+  const [elapsed, setElapsed] = useState(() => Date.now() - new Date(startedAt).getTime())
+
+  useEffect(() => {
+    const start = new Date(startedAt).getTime()
+    setElapsed(Date.now() - start)
+    const timer = setInterval(() => setElapsed(Date.now() - start), 1000)
+    return () => clearInterval(timer)
+  }, [startedAt])
+
+  return (
+    <span style={{ color: 'var(--accent-blue)' }}>
+      {formatDuration(elapsed)}
+    </span>
+  )
 }
 
 const statusColors: Record<NodeStatus, string> = {
@@ -53,11 +98,13 @@ const statusColors: Record<NodeStatus, string> = {
 
 export default function PatrolGlobalPipeline() {
   const phase = usePatrolStore(s => s.phase)
+  const phaseTimings = usePatrolStore(s => s.phaseTimings)
+  const phaseStartedAt = usePatrolStore(s => s.phaseStartedAt)
 
   // Don't render when idle
   if (phase === 'idle') return null
 
-  const nodes = deriveNodes(phase)
+  const nodes = deriveNodes(phase, phaseTimings, phaseStartedAt)
 
   return (
     <Card padding="sm">
@@ -65,7 +112,7 @@ export default function PatrolGlobalPipeline() {
         {nodes.map((node, idx) => (
           <div key={node.phase} className="flex items-center">
             {/* Node */}
-            <div className="flex flex-col items-center gap-1.5 min-w-[72px]">
+            <div className="flex flex-col items-center gap-1 min-w-[72px]">
               {/* Circle */}
               <div
                 className="relative flex items-center justify-center"
@@ -116,6 +163,17 @@ export default function PatrolGlobalPipeline() {
               >
                 {node.label}
               </span>
+              {/* Phase duration */}
+              <span
+                className="text-[10px] font-mono whitespace-nowrap"
+                style={{ minHeight: 14, color: 'var(--text-tertiary)' }}
+              >
+                {node.isLive && node.liveStartedAt ? (
+                  <LiveTimer startedAt={node.liveStartedAt} />
+                ) : node.durationMs !== undefined ? (
+                  formatDuration(node.durationMs)
+                ) : null}
+              </span>
             </div>
 
             {/* Connecting line */}
@@ -130,7 +188,7 @@ export default function PatrolGlobalPipeline() {
                     : node.status === 'active'
                       ? `linear-gradient(to right, ${statusColors.active}, var(--text-tertiary))`
                       : 'var(--border-subtle)',
-                  marginBottom: 20, // align with circles, not labels
+                  marginBottom: 34, // align with circles (label + duration below)
                   borderRadius: 1,
                 }}
               />

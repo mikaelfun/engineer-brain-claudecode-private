@@ -6,6 +6,7 @@ import { join } from 'path'
 import { readFileSync, statSync, writeFileSync, existsSync } from 'fs'
 import { config } from '../config.js'
 import { sseManager } from './sse-manager.js'
+import { patrolStateManager } from '../services/patrol-state-manager.js'
 import { getSkillRegistry } from '../services/skill-registry.js'
 import type { SSEEventType } from '../types/index.js'
 
@@ -80,47 +81,66 @@ function classifyChange(filePath: string): { type: SSEEventType; data: Record<st
   }
 
   // Patrol progress (structured JSON — written by patrol skill)
+  // → Route through PatrolStateManager (single source of truth)
   if (normalized.includes('patrol-progress.json')) {
     try {
       const progress = JSON.parse(readFileSync(filePath, 'utf-8'))
-      return { type: 'patrol-state' as SSEEventType, data: progress }
-    } catch { return null }
+      patrolStateManager.update(progress)
+    } catch { /* ignore */ }
+    return null // StateManager handles SSE broadcast
   }
 
-  // Patrol final result (patrol-state.json — emit patrol-state SSE event)
+  // Patrol final result (patrol-state.json)
+  // For CLI-originated patrols, this is the primary completion signal
+  // (orchestrator only handles WebUI patrols)
   if (normalized.includes('patrol-state.json') && !normalized.includes('patrol-progress')) {
-    return { type: 'patrol-state' as SSEEventType, data: {} }
+    try {
+      const result = JSON.parse(readFileSync(filePath, 'utf-8'))
+      if (result.phase === 'completed' || result.phase === 'failed') {
+        patrolStateManager.update({
+          phase: result.phase,
+          totalCases: result.totalCases,
+          changedCases: result.changedCases,
+          processedCases: result.processedCases,
+          startedAt: result.startedAt,
+          completedAt: result.completedAt,
+          error: result.error,
+        })
+      }
+    } catch { /* ignore */ }
+    return null // StateManager handles SSE broadcast
   }
 
   // Patrol lock (running/stopped)
+  // → Route through PatrolStateManager
   if (normalized.endsWith('patrol.lock')) {
     try {
       if (existsSync(filePath)) {
         const lock = JSON.parse(readFileSync(filePath, 'utf-8'))
-        return { type: 'patrol-state' as SSEEventType, data: { phase: 'starting', source: lock.source } }
+        patrolStateManager.update({ phase: 'starting', source: lock.source })
       } else {
-        return { type: 'patrol-state' as SSEEventType, data: { phase: 'idle' } }
+        // Lock removed — if state manager still thinks running, it was a stale cleanup
+        // Don't reset to idle here; orchestrator handles terminal states
       }
-    } catch { return null }
+    } catch { /* ignore */ }
+    return null // StateManager handles SSE broadcast
   }
 
   // Patrol phase file — written by /patrol skill
-  // patrol-phase is backward compat — still used by CLI mode
-  // Emit as patrol-state so new frontend receives it too
-  // Format: "processing" or "processing|3/6" (phase with progress)
+  // → Route through PatrolStateManager
   if (normalized.endsWith('patrol-phase')) {
     try {
       const raw = readFileSync(filePath, 'utf-8').trim()
       const [phase, progress] = raw.split('|')
-      const data: Record<string, unknown> = { phase }
+      const update: Record<string, unknown> = { phase }
       if (progress) {
         const [done, total] = progress.split('/')
-        data.processedCases = parseInt(done, 10) || 0
-        data.changedCases = parseInt(total, 10) || 0
-        data.detail = `${done}/${total} cases done`
+        update.processedCases = parseInt(done, 10) || 0
+        update.changedCases = parseInt(total, 10) || 0
       }
-      return { type: 'patrol-state' as SSEEventType, data }
-    } catch { return null }
+      patrolStateManager.update(update as any)
+    } catch { /* ignore */ }
+    return null // StateManager handles SSE broadcast
   }
 
   // Per-case phase — written by casework-light agent
@@ -335,6 +355,31 @@ export function startFileWatcher() {
     if (event) {
       console.log(`[watcher] File added: ${addedPath} → ${event.type}`)
       debounceEmit(event.type, event.data, `${event.type}:${JSON.stringify(event.data)}`)
+    }
+  })
+
+  // Handle file deletions — specifically patrol.lock removal (CLI patrol completion)
+  watcher.on('unlink', (removedPath: string) => {
+    const normalized = removedPath.replace(/\\/g, '/')
+    if (normalized.endsWith('patrol.lock') && patrolStateManager.isRunning()) {
+      console.log(`[watcher] patrol.lock removed — checking for final result`)
+      // Lock removed while StateManager still thinks running → CLI patrol ended
+      // Try to read patrol-state.json for the final result
+      try {
+        if (existsSync(config.patrolStateFile)) {
+          const result = JSON.parse(readFileSync(config.patrolStateFile, 'utf-8'))
+          patrolStateManager.update({
+            phase: result.phase || 'completed',
+            totalCases: result.totalCases,
+            changedCases: result.changedCases,
+            processedCases: result.processedCases,
+            completedAt: result.completedAt || new Date().toISOString(),
+          })
+          return
+        }
+      } catch { /* ignore */ }
+      // No state file found — default to completed
+      patrolStateManager.update({ phase: 'completed' })
     }
   })
 

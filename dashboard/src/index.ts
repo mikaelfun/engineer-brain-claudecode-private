@@ -37,6 +37,7 @@ import { startFileWatcher, stopFileWatcher } from './watcher/file-watcher.js'
 import { abortAllQueries } from './agent/case-session-manager.js'
 import { recoverOrphanTrackingIssues } from './services/issue-reader.js'
 import { initCronManager } from './services/cron-manager.js'
+import { patrolStateManager } from './services/patrol-state-manager.js'
 
 import authRoutes from './routes/auth.js'
 import casesRoutes from './routes/cases.js'
@@ -55,12 +56,14 @@ import { skillRoutes } from './routes/skill-routes.js'
 import { initSkillRegistry } from './services/skill-registry.js'
 import { noteGapRoutes, noteGapBatchRoutes } from './routes/note-gap-routes.js'
 import { laborEstimateRoutes } from './routes/labor-estimate.js'
+import daemonRoutes from './routes/daemon.js'
+import { spawnDaemonWarmup } from './services/daemon-reader.js'
 
 const app = new Hono()
 
 // ===== Middleware =====
 app.use('*', cors({
-  origin: ['http://localhost:5173', `http://localhost:${config.port}`],
+  origin: [`http://localhost:${config.webPort}`, `http://localhost:${config.port}`],
   credentials: true,
 }))
 app.use('*', logger())
@@ -97,6 +100,7 @@ app.use('/api/skills', authMiddleware)
 app.use('/api/skills/*', authMiddleware)
 app.use('/api/case/*/note-gap', authMiddleware)
 app.use('/api/case/*/note-gap/*', authMiddleware)
+app.use('/api/daemon/*', authMiddleware)
 app.use('/api/note-gaps', authMiddleware)
 
 app.route('/api/cases', casesRoutes)
@@ -114,6 +118,7 @@ app.route('/api/skills', skillRoutes)
 app.route('/api/case', noteGapRoutes)
 app.route('/api/note-gaps', noteGapBatchRoutes)
 app.route('/api/labor-estimate', laborEstimateRoutes)
+app.route('/api/daemon', daemonRoutes)
 
 // ===== Start =====
 console.log(`
@@ -125,8 +130,9 @@ console.log(`
 ━━━━━━━━━━━━━━━━━━━━━━━━━
 `)
 
-// Start file watcher
+// Start file watcher + patrol state hydration
 if (isWorkspaceReady()) {
+  patrolStateManager.hydrate()
   startFileWatcher()
 }
 
@@ -138,6 +144,16 @@ initCronManager()
 
 // Initialize skill registry
 initSkillRegistry(config.projectRoot)
+
+// Background: warm up Token Daemon (non-blocking)
+try {
+  const warmup = spawnDaemonWarmup()
+  if (warmup.pid) {
+    console.log(`🔥 Token Daemon warmup spawned (PID: ${warmup.pid})`)
+  }
+} catch (e) {
+  console.warn('[startup] Token Daemon warmup failed (non-fatal):', e)
+}
 
 serve({
   fetch: app.fetch,

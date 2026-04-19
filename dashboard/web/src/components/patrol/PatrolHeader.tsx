@@ -1,7 +1,12 @@
 /**
  * PatrolHeader — Page title, Start/Cancel button, stat chips, elapsed timer
+ *
+ * Timer display:
+ *   - Running:   live counter "4m 32s"
+ *   - Completed: "Completed in 5m 32s · 14:23 → 14:28"
+ *   - Failed:    "Failed after 3m 12s · 14:23 → 14:26"
  */
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Play, Square, Loader2, RotateCcw } from 'lucide-react'
 import { usePatrolStore, type PatrolPhase } from '../../stores/patrolStore'
 import { useStartPatrol, useCancelPatrol } from '../../api/hooks'
@@ -15,6 +20,11 @@ function formatElapsed(ms: number): string {
   return `${s}s`
 }
 
+function formatTime(iso: string): string {
+  const d = new Date(iso)
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+}
+
 const RUNNING_PHASES: PatrolPhase[] = [
   'starting', 'discovering', 'filtering', 'warming-up', 'processing', 'aggregating',
 ]
@@ -24,6 +34,7 @@ export default function PatrolHeader() {
   const totalCases = usePatrolStore(s => s.totalCases)
   const processedCases = usePatrolStore(s => s.processedCases)
   const startedAt = usePatrolStore(s => s.startedAt)
+  const completedAt = usePatrolStore(s => s.completedAt)
   const cases = usePatrolStore(s => s.cases)
   const error = usePatrolStore(s => s.error)
 
@@ -33,6 +44,7 @@ export default function PatrolHeader() {
   const isRunning = RUNNING_PHASES.includes(phase)
   const isCompleted = phase === 'completed'
   const isFailed = phase === 'failed'
+  const isDone = isCompleted || isFailed
 
   // Derive stats
   const activeCases = Object.values(cases).filter(c => {
@@ -42,20 +54,42 @@ export default function PatrolHeader() {
 
   const queuedCases = totalCases - processedCases - activeCases
 
-  // Elapsed timer
+  // ── Total elapsed timer ──
+  // Uses a ref to lock in the start time once, immune to SSE overwrites.
+  // store.start() sets an optimistic startedAt; SSE later sends the
+  // orchestrator's startedAt (a few hundred ms different). Without the ref,
+  // useEffect would re-trigger and reset the counter on every such change.
+  const startTimeRef = useRef<number | null>(null)
   const [elapsed, setElapsed] = useState(0)
+
+  // Lock start time on first running frame; clear on idle
   useEffect(() => {
-    if (!isRunning || !startedAt) {
-      if (startedAt && (isCompleted || isFailed)) {
-        setElapsed(Date.now() - new Date(startedAt).getTime())
-      }
+    if ((isRunning || isDone) && startedAt && startTimeRef.current === null) {
+      startTimeRef.current = new Date(startedAt).getTime()
+    }
+    if (phase === 'idle') {
+      startTimeRef.current = null
+      setElapsed(0)
+    }
+  }, [isRunning, isDone, startedAt, phase])
+
+  // Live counter (running) or frozen snapshot (done)
+  useEffect(() => {
+    const origin = startTimeRef.current
+    if (!origin) return
+
+    if (isDone) {
+      const end = completedAt ? new Date(completedAt).getTime() : Date.now()
+      setElapsed(end - origin)
       return
     }
-    const start = new Date(startedAt).getTime()
-    setElapsed(Date.now() - start)
-    const timer = setInterval(() => setElapsed(Date.now() - start), 1000)
+
+    if (!isRunning) return
+
+    setElapsed(Date.now() - origin)
+    const timer = setInterval(() => setElapsed(Date.now() - origin), 1000)
     return () => clearInterval(timer)
-  }, [isRunning, startedAt, isCompleted, isFailed])
+  }, [isRunning, isDone, completedAt, startTimeRef.current])
 
   const handleStart = () => {
     usePatrolStore.getState().start()
@@ -72,8 +106,8 @@ export default function PatrolHeader() {
 
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      {/* Left: title + status */}
-      <div className="flex items-center gap-3">
+      {/* Left: title + status + timer */}
+      <div className="flex items-center gap-3 flex-wrap">
         <h1
           className="text-xl font-semibold"
           style={{ color: 'var(--text-primary)', letterSpacing: '-0.3px' }}
@@ -103,14 +137,28 @@ export default function PatrolHeader() {
           </span>
         )}
 
-        {/* Elapsed */}
+        {/* Timer — contextual display */}
         {startedAt && elapsed > 0 && (
-          <span
-            className="text-xs font-mono"
-            style={{ color: 'var(--text-tertiary)' }}
-          >
-            {formatElapsed(elapsed)}
-          </span>
+          <div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-tertiary)' }}>
+            {isRunning ? (
+              // Running: just the live counter
+              <span className="font-mono">{formatElapsed(elapsed)}</span>
+            ) : isDone ? (
+              // Done: "Completed in Xm Ys · HH:MM → HH:MM"
+              <>
+                <span className="font-mono font-medium" style={{
+                  color: isCompleted ? 'var(--accent-green)' : 'var(--accent-red)',
+                }}>
+                  {formatElapsed(elapsed)}
+                </span>
+                <span style={{ opacity: 0.6 }}>·</span>
+                <span style={{ opacity: 0.7 }}>
+                  {formatTime(startedAt)}
+                  {completedAt && <> → {formatTime(completedAt)}</>}
+                </span>
+              </>
+            ) : null}
+          </div>
         )}
       </div>
 

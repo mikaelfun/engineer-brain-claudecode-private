@@ -71,6 +71,10 @@ interface PatrolStore {
   error?: string
   caseList: string[]
 
+  // Phase timing
+  phaseStartedAt?: string
+  phaseTimings?: Record<string, number>
+
   // Per-case (v3)
   cases: Record<string, CaseState>
 
@@ -102,6 +106,8 @@ export const usePatrolStore = create<PatrolStore>()((set, _get) => ({
   completedAt: undefined,
   error: undefined,
   caseList: [],
+  phaseStartedAt: undefined,
+  phaseTimings: undefined,
   cases: {},
 
   // ─── v3 SSE handlers ───
@@ -118,6 +124,8 @@ export const usePatrolStore = create<PatrolStore>()((set, _get) => ({
     if (data.startedAt) update.startedAt = data.startedAt as string
     if (data.error) update.error = data.error as string
     if (data.caseList && Array.isArray(data.caseList)) update.caseList = data.caseList as string[]
+    if (data.phaseStartedAt) update.phaseStartedAt = data.phaseStartedAt as string
+    if (data.phaseTimings) update.phaseTimings = data.phaseTimings as Record<string, number>
     if (phase === 'completed') {
       update.completedAt = new Date().toISOString()
     }
@@ -126,6 +134,7 @@ export const usePatrolStore = create<PatrolStore>()((set, _get) => ({
       update.processedCases = 0
       update.error = undefined
       update.completedAt = undefined
+      update.phaseTimings = {}
     }
 
     return update
@@ -171,5 +180,7 @@ export const usePatrolStore = create<PatrolStore>()((set, _get) => ({
     error: undefined,
     startedAt: undefined,
     completedAt: undefined,
+    phaseStartedAt: undefined,
+    phaseTimings: undefined,
   }),
 }))

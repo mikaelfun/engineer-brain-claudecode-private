@@ -36,7 +36,8 @@ import {
   writeStepLog,
   getCaseMcpServerNames,
 } from '../agent/case-session-manager.js'
-import { runSdkPatrol, isSdkPatrolRunning, cancelSdkPatrol, loadPatrolLastRun, getSdkPatrolLiveProgress } from '../agent/patrol-orchestrator.js'
+import { runSdkPatrol, isSdkPatrolRunning, cancelSdkPatrol, loadPatrolLastRun } from '../agent/patrol-orchestrator.js'
+import { patrolStateManager } from '../services/patrol-state-manager.js'
 import { sseManager } from '../watcher/sse-manager.js'
 import { sdkQueue } from '../utils/sdk-queue.js'
 import { reloadConfig, config as appConfig } from '../config.js'
@@ -277,42 +278,61 @@ caseRoutes.post('/patrol/cancel', (c) => {
   return c.json({ success: cancelled, message: cancelled ? 'Patrol cancellation requested' : 'Failed to cancel' })
 })
 
-// GET /patrol/status — 查询 patrol 运行状态 + 当前进度 + 上次运行结果 + per-case state
+// GET /patrol/status — 查询 patrol 运行状态 + per-case state
+// State comes from PatrolStateManager (single source of truth)
+// caseStates are pre-filtered: stale data removed, stuck steps fixed
 caseRoutes.get('/patrol/status', (c) => {
-  const running = isSdkPatrolRunning()
-  const lastRun = loadPatrolLastRun() as Record<string, unknown> | null
+  const patrolState = patrolStateManager.getState()
+  const running = patrolStateManager.isRunning()
 
-  // Read per-case state.json for all cases in lastRun or liveProgress
+  // Read per-case state.json for hydration
   const caseStates: Record<string, unknown> = {}
-  const caseNumbers: string[] = []
+  const caseNumbers: string[] = [...(patrolState.caseList || [])]
 
-  if (running) {
-    const lp = getSdkPatrolLiveProgress()
-    if (lp?.caseList && Array.isArray(lp.caseList)) {
-      caseNumbers.push(...(lp.caseList as string[]))
-    }
-  }
-  if (lastRun?.caseResults && Array.isArray(lastRun.caseResults)) {
-    for (const cr of lastRun.caseResults as Array<{ caseNumber?: string }>) {
-      if (cr.caseNumber && !caseNumbers.includes(cr.caseNumber)) {
-        caseNumbers.push(cr.caseNumber)
+  // Also include cases from last run result (for completed patrol display)
+  if (!running) {
+    const lastRun = loadPatrolLastRun()
+    if (lastRun?.caseResults && Array.isArray(lastRun.caseResults)) {
+      for (const cr of lastRun.caseResults as Array<{ caseNumber?: string }>) {
+        if (cr.caseNumber && !caseNumbers.includes(cr.caseNumber)) {
+          caseNumbers.push(cr.caseNumber)
+        }
       }
     }
   }
+
+  // Stale cutoff: skip case states updated before this patrol started (1min grace)
+  const patrolDone = !running && ['completed', 'failed'].includes(patrolState.phase)
+  const cutoff = patrolState.startedAt
+    ? new Date(patrolState.startedAt).getTime() - 60_000
+    : 0
 
   for (const cn of caseNumbers) {
     try {
       const statePath = join(appConfig.activeCasesDir, cn, '.casework', 'state.json')
-      if (existsSync(statePath)) {
-        caseStates[cn] = JSON.parse(readFileSync(statePath, 'utf-8'))
+      if (!existsSync(statePath)) continue
+      const cs = JSON.parse(readFileSync(statePath, 'utf-8'))
+
+      // Filter stale case state from a previous patrol
+      if (cutoff > 0 && cs.updatedAt) {
+        const updated = new Date(cs.updatedAt).getTime()
+        if (updated < cutoff) continue
       }
+
+      // Fix stuck 'active' steps when patrol has completed
+      if (patrolDone && cs.steps) {
+        for (const step of Object.values(cs.steps) as any[]) {
+          if (step?.status === 'active') step.status = 'completed'
+        }
+      }
+
+      caseStates[cn] = cs
     } catch { /* skip unreadable */ }
   }
 
   return c.json({
+    patrolState,
     running,
-    liveProgress: running ? getSdkPatrolLiveProgress() : null,
-    lastRun,
     caseStates,
   })
 })
