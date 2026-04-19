@@ -19,42 +19,41 @@ allowed-tools:
 
 从多种来源学习新知识，追加到产品 skill 的 `known-issues.jsonl`；并通过综合管线生成 Markdown 排查指南。
 
+> 数据格式规范（JSONL、去重、ID、写入规则）见 shared-rules.md
+
 ## 路由表
 
 | 子命令 | 路由到 | 简述 |
 |--------|--------|------|
-| `onenote` | `phases/phase2-onenote.md` | OneNote 团队知识库扫描 |
-| `ado-wiki` | `phases/phase3-ado-wiki.md` | ADO Wiki TSG 扫描 |
+| `auto-enrich` | `orchestrator.md` | Cron 驱动的增量知识富化 |
 | `case-review` | `modes/case-review.md` | 归档案例复盘 |
 | `promote-case` | `modes/promote-case.md` | Case 增量知识写回 |
-| `synthesize` | `modes/synthesize.md` | 综合指南生成 |
-| `ado-wiki-blast` | `modes/ado-wiki-blast.md` | ADO Wiki 独立并行扫描 |
+| `synthesize` | `synthesis/synthesize.md` | 手动触发综合指南生成 |
 | `promote` | `modes/promote.md` | 知识提升到 SKILL.md |
-| `auto-enrich` | `modes/auto-enrich.md` | 自动知识富化循环 |
+| `ado-wiki rebuild-index` | `sources/ado-wiki.md` | 重建 wiki 页面索引 |
 | `add` | 内联（见下方） | 手动添加 known-issue |
 | `stats` | 内联（见下方） | 各产品统计概览 |
 
-**调度方式**：读取对应 mode/phase 文件，按其内容执行。
+## 架构概览
 
-## 通用规则
-
-### known-issues.jsonl 路径
-`.claude/skills/products/{product}/known-issues.jsonl`
-
-### ID 生成
-读取现有条目，找最大序号 +1：`{product}-{seq:03d}`
-
-### 去重
-append 前必须检查：
-1. 读取已有 `known-issues.jsonl`
-2. 对比 `symptom` 和 `rootCause`
-3. 如果高度相似（80%+ 关键词重叠）→ 跳过，报告已存在
-4. 如果相似但不同角度 → 仍然 append，标注 `relatedTo: "{existing-id}"`
-
-### Evolution Log
-每次写入后 append 到 `.claude/skills/products/{product}/.enrich/evolution-log.md`：
 ```
-| {date} | {source} | {简述变更} | {case/link} |
+Orchestrator (orchestrator.md)
+  │
+  ├── Shared Pool Layer
+  │   └── OneNote Router (router/onenote-router.md)
+  │
+  ├── Per-Product Source Adapters (sources/)
+  │   ├── onenote.md    — dual-channel: section mapping + Router
+  │   ├── ado-wiki.md   — wiki tree enum, standard + parallel mode
+  │   ├── mslearn.md    — toc.yml + GitHub Commits API
+  │   └── contentidea.md — WIQL query
+  │
+  ├── Reference Data (reference/)
+  │   └── 21v-gap.md    — Feature Gap cache (not a source)
+  │
+  └── Synthesis (synthesis/)
+      ├── merge.md       — cross-source dedup + ID unification
+      └── synthesize.md  — cluster + conflict scan + guide generation
 ```
 
 ---
