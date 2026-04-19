@@ -41,6 +41,11 @@ export interface PatrolState {
   // Phase timing
   phaseStartedAt?: string                  // when the current phase began
   phaseTimings?: Record<string, number>    // completed phase → durationMs
+  // Process stage enrichment
+  currentAction?: string                   // patrol session's serial decision text
+  totalFound?: number                      // total cases found in discover (before filter)
+  skippedCount?: number                    // cases skipped by filter
+  warmupStatus?: string                    // token daemon status text
 }
 
 // ─── Constants ───

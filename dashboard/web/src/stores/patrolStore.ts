@@ -75,6 +75,12 @@ interface PatrolStore {
   phaseStartedAt?: string
   phaseTimings?: Record<string, number>
 
+  // Pipeline detail fields (from patrol-progress.json via SSE)
+  currentAction?: string
+  totalFound?: number
+  skippedCount?: number
+  warmupStatus?: string
+
   // Per-case (v3)
   cases: Record<string, CaseState>
 
@@ -108,6 +114,10 @@ export const usePatrolStore = create<PatrolStore>()((set, _get) => ({
   caseList: [],
   phaseStartedAt: undefined,
   phaseTimings: undefined,
+  currentAction: undefined,
+  totalFound: undefined,
+  skippedCount: undefined,
+  warmupStatus: undefined,
   cases: {},
 
   // ─── v3 SSE handlers ───
@@ -126,6 +136,10 @@ export const usePatrolStore = create<PatrolStore>()((set, _get) => ({
     if (data.caseList && Array.isArray(data.caseList)) update.caseList = data.caseList as string[]
     if (data.phaseStartedAt) update.phaseStartedAt = data.phaseStartedAt as string
     if (data.phaseTimings) update.phaseTimings = data.phaseTimings as Record<string, number>
+    if (data.currentAction !== undefined) update.currentAction = data.currentAction as string
+    if (data.totalFound !== undefined) update.totalFound = data.totalFound as number
+    if (data.skippedCount !== undefined) update.skippedCount = data.skippedCount as number
+    if (data.warmupStatus !== undefined) update.warmupStatus = data.warmupStatus as string
     if (phase === 'completed') {
       update.completedAt = new Date().toISOString()
     }
@@ -168,6 +182,10 @@ export const usePatrolStore = create<PatrolStore>()((set, _get) => ({
     error: undefined,
     completedAt: undefined,
     startedAt: new Date().toISOString(),
+    currentAction: undefined,
+    totalFound: undefined,
+    skippedCount: undefined,
+    warmupStatus: undefined,
   }),
 
   reset: () => set({
@@ -182,5 +200,9 @@ export const usePatrolStore = create<PatrolStore>()((set, _get) => ({
     completedAt: undefined,
     phaseStartedAt: undefined,
     phaseTimings: undefined,
+    currentAction: undefined,
+    totalFound: undefined,
+    skippedCount: undefined,
+    warmupStatus: undefined,
   }),
 }))
