@@ -50,10 +50,15 @@ Kun Fang 的 AI 助手，Azure 技术支持工程师。
 ```bash
 cd dashboard && npm run dev
 ```
-| 服务 | 端口 | 地址 |
-|------|------|------|
+| 服务 | 默认端口 | 地址 |
+|------|----------|------|
 | 前端（Vite） | 5173 | http://localhost:5173 |
 | 后端（Hono） | 3010 | http://localhost:3010/api/* |
+
+端口可在 `config.json` 的 `dashboard` 字段统一配置：
+```json
+"dashboard": { "serverPort": 3010, "webPort": 5173 }
+```
 
 - 技术栈：React + TypeScript + Vite + Tailwind CSS + Zustand
 - 主题：深色模式默认，CSS 变量切换
@@ -61,6 +66,23 @@ cd dashboard && npm run dev
 - 启动前先确认 5173 和 3010 端口未被占用
 - 设计规范 → `playbooks/guides/dashboard-design-system.md`
 - API 详情 → `playbooks/guides/dashboard-integration.md`
+
+### 后端启动规则（禁止 watch 模式）
+- **禁止 `--watch`**：`node --watch` 会导致 SSE 断连 + 僵尸进程堆积（已踩坑）
+- 后端启动命令：`node --import tsx/esm src/index.ts`（`npm run dev` 已配置为无 watch）
+- **修改后端代码后**：不要自动重启，提醒用户在 Dashboard UI Settings 页点击"Restart Backend"
+- 前端（Vite）保持 HMR 热更新，不受影响
+
+## 开发流程偏好
+
+| 场景 | 使用工具 | 说明 |
+|------|---------|------|
+| 写计划 / spec / 实现 | superpowers (writing-plans → subagent-driven-development) | 不用 EnterPlanMode |
+| Issue / Track 管理 | conductor (new-track, verify, manage, status) | 不用 superpowers |
+| 运维 / Case 相关任务 | 直接执行 | 跳过 brainstorming |
+| 简单修改（<3 文件） | 直接做 | 跳过 brainstorming 和 plan |
+
+**Subagent 模型**：所有 spawn 的 subagent 默认使用 **opus** model（`model: "opus"`）。不用担心成本和效率。
 
 ## 安全红线
 - ❌ 不直接发邮件给客户
