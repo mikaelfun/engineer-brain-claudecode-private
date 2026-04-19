@@ -1,21 +1,29 @@
 {
   "product": "networking",
-  "status": "skipped",
   "sourceStates": {
-    "21v-gap": "exhausted",
-    "onenote": "scanning",
-    "ado-wiki": "scanning",
-    "mslearn": "exhausted",
-    "contentidea-kb": "scanning"
+    "onenote": {
+      "status": "idle",
+      "lastExtracted": null,
+      "pendingPages": 0
+    },
+    "ado-wiki": {
+      "status": "idle",
+      "lastRefreshed": null,
+      "pendingPages": 0
+    },
+    "mslearn": {
+      "status": "idle",
+      "lastRefreshed": null,
+      "pendingPages": 0
+    },
+    "contentidea": {
+      "status": "idle",
+      "lastRefreshed": null,
+      "pendingPages": 0
+    }
   },
-  "synthesized": false,
-  "synthesizeState": {
-    "lastSynthesizedAt": "2026-04-07",
-    "lastEntryCount": 386,
-    "synthesizedEntryIds": 386,
-    "topicPlanHash": "a539ec71b162",
-    "draftHashes": {},
-    "mode": "full"
-  },
-  "adoWikiBlast": "paused"
+  "21vGapLastUpdated": null,
+  "lastMerged": null,
+  "lastSynthesized": null,
+  "synthesizeState": {}
 }

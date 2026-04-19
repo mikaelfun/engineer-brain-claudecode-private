@@ -1,20 +1,29 @@
 {
   "product": "arm",
-  "status": "complete",
   "sourceStates": {
-    "21v-gap": "exhausted",
-    "onenote": "exhausted",
-    "ado-wiki": "exhausted",
-    "mslearn": "exhausted",
-    "contentidea-kb": "exhausted"
+    "onenote": {
+      "status": "idle",
+      "lastExtracted": null,
+      "pendingPages": 0
+    },
+    "ado-wiki": {
+      "status": "idle",
+      "lastRefreshed": null,
+      "pendingPages": 0
+    },
+    "mslearn": {
+      "status": "idle",
+      "lastRefreshed": null,
+      "pendingPages": 0
+    },
+    "contentidea": {
+      "status": "idle",
+      "lastRefreshed": null,
+      "pendingPages": 0
+    }
   },
-  "synthesized": true,
-  "synthesizeState": {
-    "lastSynthesizedAt": "2026-04-07",
-    "lastEntryCount": 508,
-    "synthesizedEntryIds": 501,
-    "topicPlanHash": "6162d56dda2e",
-    "mode": "full"
-  },
-  "adoWikiBlast": "stopped"
+  "21vGapLastUpdated": null,
+  "lastMerged": null,
+  "lastSynthesized": null,
+  "synthesizeState": {}
 }

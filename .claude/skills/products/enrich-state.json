@@ -1,27 +1,28 @@
 {
-  "status": "complete",
-  "activeProducts": [],
-  "productQueue": [],
-  "completedProducts": [
-    "networking",
-    "automation",
+  "mode": "idle",
+  "lastTickAt": null,
+  "lastChangesDetected": null,
+  "router": {
+    "status": "idle",
+    "totalPages": 0,
+    "routedPages": 0,
+    "pendingPages": 0
+  },
+  "products": [
+    "intune",
+    "vm",
+    "aks",
     "monitor",
     "entra-id",
-    "arm",
+    "networking",
     "disk",
-    "eop",
-    "aks",
     "acr",
-    "purview",
+    "arm",
     "avd",
-    "vm",
+    "purview",
+    "eop",
     "defender",
-    "intune"
+    "automation"
   ],
-  "maxAgentsPerTick": 12,
-  "classifyState": {
-    "status": "exhausted",
-    "totalPages": 5116,
-    "classifiedPages": 5140
-  }
+  "maxAgentsPerTick": 20
 }
