@@ -5,9 +5,7 @@ tools: Bash, Read, Write, Glob, Grep, WebSearch
 model: opus
 maxTurns: 200
 mcpServers:
-  - kusto
   - msft-learn
-  - icm
   - local-rag
 ---
 
@@ -332,6 +330,35 @@ az devops wiki page show --wiki "{wikiName}" --project "{project}" \
   kusto anomalies explained: A by skill, B unexplained (knowledge gap)
 ```
 
+#### 4d. 结论合成（写 conclusion 块）
+
+基于 4a-4c 的综合判断，产出结构化结论（将写入 claims.json 的 `conclusion` 字段）。
+
+**判断规则**：
+
+| 情况 | conclusion.type | suggestedNextAction |
+|------|----------------|---------------------|
+| 找到根因，有 ≥2 个独立来源交叉验证 | `found-cause` (high) | `email-result` |
+| 找到根因，仅单一来源支持 | `found-cause` (medium) | `email-result` |
+| 有线索但需要客户提供信息验证 | `need-info` | `email-request-info` |
+| 所有 Kusto/知识库/文档路径穷尽，无法定位 | `exhausted` | `escalate-pg` |
+| 问题明确不属于本 POD 服务范围 | `out-of-scope` | `transfer-pod` |
+| 部分发现但排查未完成（超时/数据不足） | `partial` | `email-request-info` |
+
+**missingInfo 字段**：当 type 为 `need-info` 或 `partial` 时，列出具体需要客户提供的信息（不是泛泛的"更多信息"，而是如"问题发生时段的 NSG flow logs"、"客户是否手动修改过路由表"等具体问题）。
+
+**scopeAssessment 判断**：
+- `in-pod`：问题属于本 POD 服务范围（默认值）
+- `out-of-scope`：排查发现问题根源在其他服务（如 VM 问题实际是 Networking NSG，AKS 问题实际是 ACR image pull）
+- `unclear`：无法确定是否在本 POD 范围
+
+**outOfScopeTarget**：仅 `out-of-scope` 时填写，指明应该转到的 POD/团队（如 "Networking POD"、"Storage team"）。
+
+**日志**：
+```
+[timestamp] STEP 4d OK | conclusion: type={type}, confidence={confidence}, suggestedNextAction={action}
+```
+
 ### 5. 写分析报告
 输出到 `{caseDir}/analysis/YYYYMMDD-HHMM-{topic}.md`：
 ```markdown
@@ -407,6 +434,34 @@ az devops wiki page show --wiki "{wikiName}" --project "{project}" \
 **triggerChallenge 计算**：
 - 存在任何 `confidence: "low"` 或 `confidence: "none"` 的 claim → `true`
 - 否则 → `false`
+
+**conclusion 块写入**：
+
+基于 Step 4d 的结论合成，在 claims.json 根对象中写入 `conclusion` 字段：
+
+```json
+{
+  "version": 2,
+  "generatedAt": "...",
+  "generatedBy": "troubleshooter",
+  "analysisRef": "...",
+  "overallConfidence": "...",
+  "triggerChallenge": false,
+  "retryCount": 0,
+  "conclusion": {
+    "type": "found-cause",
+    "summary": "...",
+    "confidence": "high",
+    "suggestedNextAction": "email-result",
+    "missingInfo": [],
+    "scopeAssessment": "in-pod",
+    "outOfScopeTarget": null
+  },
+  "claims": [...]
+}
+```
+
+Schema 详见 `playbooks/schemas/claims-schema.md` 的 Conclusion Object 部分。
 
 Schema 详见 `playbooks/schemas/claims-schema.md`。
 

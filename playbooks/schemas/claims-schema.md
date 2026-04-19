@@ -1,9 +1,9 @@
 # claims.json Schema
 
-> Version: 1
-> Location: `{caseDir}/claims.json`
+> Version: 2
+> Location: `{caseDir}/.casework/claims.json`
 > Writers: troubleshooter (creates) → challenger (updates status)
-> Consumers: challenger, email-drafter, inspection-writer, Dashboard
+> Consumers: challenger, email-drafter, reassess, summarize, Dashboard
 
 ## Overview
 
@@ -14,7 +14,7 @@ Each claim represents a key technical judgment with confidence level and support
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `version` | number | yes | Schema version, currently `1` |
+| `version` | number | yes | Schema version, currently `2` |
 | `generatedAt` | string (ISO8601) | yes | When claims were extracted |
 | `generatedBy` | string | yes | Always `"troubleshooter"` |
 | `analysisRef` | string | yes | Relative path to the analysis.md file (e.g. `analysis/20260402-1030-topic.md`) |
@@ -22,6 +22,31 @@ Each claim represents a key technical judgment with confidence level and support
 | `triggerChallenge` | boolean | yes | Whether to auto-trigger Challenger agent |
 | `retryCount` | number | yes | Troubleshooter retry count, starts at `0` |
 | `claims` | array | yes | Array of Claim objects |
+| `conclusion` | object | yes | Structured troubleshooter conclusion for reassess consumption |
+
+## Conclusion Object
+
+Structured output from troubleshooter's Step 4c synthesis. Consumed by reassess sub-skill to decide communication action.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `type` | enum | yes | `"found-cause"` / `"need-info"` / `"exhausted"` / `"out-of-scope"` / `"partial"` |
+| `summary` | string | yes | 1-3 sentence natural language summary of the conclusion |
+| `confidence` | enum | yes | `"high"` / `"medium"` / `"low"` — overall conclusion confidence |
+| `suggestedNextAction` | enum | yes | `"email-result"` / `"email-request-info"` / `"escalate-pg"` / `"transfer-pod"` / `"no-action"` |
+| `missingInfo` | array[string] | no | Specific information needed from customer (for `need-info` / `partial` types) |
+| `scopeAssessment` | enum | yes | `"in-pod"` / `"out-of-scope"` / `"unclear"` |
+| `outOfScopeTarget` | string? | no | Target team/POD for transfer (only when `scopeAssessment === "out-of-scope"`) |
+
+### conclusion.type Mapping
+
+| type | Meaning | Typical suggestedNextAction |
+|------|---------|----------------------------|
+| `found-cause` | Root cause identified | `email-result` |
+| `need-info` | Need customer data to verify hypothesis | `email-request-info` |
+| `exhausted` | All investigation avenues exhausted, no root cause | `escalate-pg` |
+| `out-of-scope` | Problem outside this POD's service scope | `transfer-pod` |
+| `partial` | Some findings but investigation incomplete | `email-request-info` |
 
 ### overallConfidence Calculation
 
@@ -98,13 +123,22 @@ Only Challenger updates status. Troubleshooter always writes `"pending"`.
 
 ```json
 {
-  "version": 1,
+  "version": 2,
   "generatedAt": "2026-04-02T10:30:00+08:00",
   "generatedBy": "troubleshooter",
   "analysisRef": "analysis/20260402-1030-aks-pss-policy.md",
   "overallConfidence": "low",
   "triggerChallenge": true,
   "retryCount": 0,
+  "conclusion": {
+    "type": "found-cause",
+    "summary": "AKS 集群的 Pod Security Standards enforcement 导致 Pod 被 reject，升级到 1.28 后 PSS 默认行为变化",
+    "confidence": "medium",
+    "suggestedNextAction": "email-result",
+    "missingInfo": [],
+    "scopeAssessment": "in-pod",
+    "outOfScopeTarget": null
+  },
   "claims": [
     {
       "id": "C1",
