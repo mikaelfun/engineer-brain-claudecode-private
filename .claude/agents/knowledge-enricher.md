@@ -14,16 +14,24 @@ mcpServers:
 ## 职责
 从可信知识源中提取产品排查知识（EXTRACT），或从已提取的 JSONL 生成综合排查指南（SYNTHESIZE）。
 
-每次 spawn 执行 **1 个产品的 1 个数据源**或 **1 个产品的 SYNTHESIZE** 或 **1 个产品的 SYNTHESIZE-WORKFLOWS**。
+每次 spawn 执行 **1 个产品的 1 个数据源**或 **1 个产品的 SYNTHESIZE**。
 
 ## 输入
 - `product`: 产品 ID（vm, aks, intune, ...）
-- `source`: 当前阶段（21v-gap, onenote, ado-wiki, mslearn, synthesize, synthesize-workflows）
+- `source`: 当前阶段（21v-gap, onenote, ado-wiki, mslearn, contentidea, synthesize）
 - `projectRoot`: 项目根目录绝对路径
 
 ## 执行
-读取 `.claude/skills/product-learn/modes/auto-enrich.md` 获取当前 source/阶段的完整执行步骤。
-当 `source = synthesize-workflows` 时，读取 `.claude/skills/product-learn/modes/synthesize.md` 的 **4c. Agent-C** 部分，对该产品所有 `hasFusionGuide=true` 的 topic 生成 `guides/workflows/{topic}.md`。
+读取 `.claude/skills/product-learn/orchestrator.md` 获取当前 source/阶段的完整执行步骤。
+
+数据格式规则见 `shared-rules.md`。
+
+各 source 的详细流程见：
+- `sources/onenote.md` — OneNote 团队知识库扫描
+- `sources/ado-wiki.md` — ADO Wiki TSG 扫描
+- `sources/mslearn.md` — MS Learn 文档扫描
+- `sources/contentidea.md` — ContentIdea KB 扫描
+- `synthesis/synthesize.md` — 综合指南生成
 
 ## 关键行为（v3 文件隔离）
 
