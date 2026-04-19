@@ -2,10 +2,12 @@
  * PatrolCaseList — Sorted case list with progress bar
  *
  * Shows per-case pipeline rows with a section header and progress bar.
+ * Wrapped in a Card to match the Pipeline sidebar's visual level.
  * Phase status messages are handled by the sidebar.
  */
 import { useMemo } from 'react'
 import { usePatrolStore, type CaseState } from '../../stores/patrolStore'
+import { Card } from '../common/Card'
 import PatrolCaseRow from './PatrolCaseRow'
 
 function isCaseActive(c: CaseState): boolean {
@@ -54,34 +56,41 @@ export default function PatrolCaseList() {
   if (phase === 'idle') return null
 
   return (
-    <div>
-      {/* Section header: Cases + count + progress bar — all inline
-           pt-4 matches the Pipeline sidebar card's internal padding (16px)
-           so "Cases" aligns vertically with "PIPELINE" label */}
-      <div className="flex items-center gap-3 px-1 pt-4 pb-3">
-        <h3 className="font-bold" style={{ fontSize: 15, color: 'var(--text-primary)' }}>
-          Cases
-        </h3>
-        {totalCases > 0 && (
-          <span className="text-xs font-medium" style={{ color: 'var(--text-tertiary)' }}>
-            {processedCases} / {totalCases} processed
+    <Card padding="none" style={{ background: 'var(--bg-base)' }}>
+      {/* Section header — matches sidebar's "PIPELINE" label style exactly:
+          same padding (16px 18px 10px), same 11px uppercase bold, same color */}
+      <div style={{ padding: '16px 18px 10px' }}>
+        <div className="flex items-center gap-3">
+          <span
+            className="text-[11px] font-bold uppercase"
+            style={{ letterSpacing: '0.8px', color: 'var(--text-tertiary)' }}
+          >
+            Cases
           </span>
-        )}
-        {totalCases > 0 && (
-          <div className="flex-1 max-w-[220px] rounded-full overflow-hidden" style={{ height: 5, background: 'var(--bg-hover)' }}>
-            <div
-              className="h-full rounded-full transition-all duration-500 ease-out"
-              style={{
-                width: `${Math.round((processedCases / totalCases) * 100)}%`,
-                background: phase === 'completed' ? 'var(--accent-green)' : 'linear-gradient(90deg, var(--accent-green), var(--accent-blue))',
-              }}
-            />
-          </div>
-        )}
+          {totalCases > 0 && (
+            <span
+              className="text-[11px] font-medium"
+              style={{ color: 'var(--text-tertiary)', letterSpacing: '0.3px' }}
+            >
+              {processedCases} / {totalCases}
+            </span>
+          )}
+          {totalCases > 0 && (
+            <div className="flex-1 max-w-[180px] rounded-full overflow-hidden" style={{ height: 4, background: 'var(--bg-hover)' }}>
+              <div
+                className="h-full rounded-full transition-all duration-500 ease-out"
+                style={{
+                  width: `${Math.round((processedCases / totalCases) * 100)}%`,
+                  background: phase === 'completed' ? 'var(--accent-green)' : 'linear-gradient(90deg, var(--accent-green), var(--accent-blue))',
+                }}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Case rows */}
-      <div className="space-y-2.5">
+      {/* Case rows — inner padding matches sidebar (0 18px 18px) */}
+      <div className="space-y-2.5" style={{ padding: '0 18px 18px' }}>
         {sortedCases.map(c => (
           <PatrolCaseRow
             key={c.caseNumber}
@@ -139,6 +148,6 @@ export default function PatrolCaseList() {
           </div>
         )}
       </div>
-    </div>
+    </Card>
   )
 }
