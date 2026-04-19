@@ -28,7 +28,8 @@ allowed-tools:
 **Streaming Pipeline**：casework(mode=patrol) 完成一个就立即推进下一步，不等所有 case 完成。每个 case 独立状态机：
 ```
 gathering → plan-ready ─┬─ no-action → inspecting → done
-                        └─ has-actions → executing → inspecting → done
+                        └─ has-actions → executing ─┬─ (no deferred) → inspecting → done
+                                                    └─ (has deferred) → investigating → reassessing → inspecting → done
 ```
 
 ## 执行步骤
@@ -328,13 +329,81 @@ os.replace(tmp, p)
                → spawn challenger (前台等待)
                → 读结果 → if retry → re-spawn troubleshooter
              
-             # 触发依赖的 email-drafter
-             if email-drafter pending && dependsOn === "troubleshooter":
-               → spawn email-drafter（后台）
+             # Check if execution-plan has deferredActions (reassess path)
+             eval $(bash .claude/skills/casework/act/scripts/read-plan.sh \
+               "{casesRoot}/active/{caseNumber}/.casework/execution-plan.json")
+             if HAS_DEFERRED == "true":
+               → case.phase = "investigating"
+               CURRENT_ACTION="{caseNumber} troubleshooter done → launching reassess"
+               → spawn reassess agent（后台）:
+                 Agent({
+                   subagent_type: "casework",
+                   prompt: "执行 reassess for Case {caseNumber}。caseDir: {casesRoot}/active/{caseNumber}/。
+                     请读取 .claude/skills/casework/reassess/SKILL.md 获取完整执行步骤。",
+                   run_in_background: true,
+                   model: "opus"
+                 })
+             else:
+               # 原有逻辑：直接触发 email-drafter
+               if email-drafter pending && dependsOn === "troubleshooter":
+                 → spawn email-drafter（后台）
            
-           if 該 case 所有 action 都已完成:
+           if 該 case 所有 action 都已完成 && case.phase still "executing":
              → case.phase = "inspecting"
              → 立即 spawn summarize（后台）
+         
+         case "investigating":
+           # Troubleshooter done, reassess running
+           # 检查 execution-plan.json 是否有 phase=="reassess" 的 plan entry
+           ep = "{casesRoot}/active/{caseNumber}/.casework/execution-plan.json"
+           HAS_REASSESS = python3 -c "
+             import json
+             try:
+               p = json.load(open('$ep', encoding='utf-8'))
+               plans = p.get('plans', [])
+               has = any(x.get('phase') == 'reassess' for x in plans)
+               print('true' if has else 'false')
+             except: print('false')
+           "
+           if HAS_REASSESS == "true":
+             # Reassess complete — read its actions
+             eval $(bash .claude/skills/casework/act/scripts/read-plan.sh "$ep")
+             # read-plan.sh with phase=reassess context gives reassess plan's actions
+             reassess_plan = python3 -c "
+               import json
+               p = json.load(open('$ep', encoding='utf-8'))
+               plans = p.get('plans', [])
+               rp = next((x for x in plans if x.get('phase') == 'reassess'), {})
+               conclusion = rp.get('conclusion', {})
+               actions = rp.get('actions', [])
+               has_email = any(a.get('type') == 'email-drafter' for a in actions)
+               print(f\"{conclusion.get('type','?')}|{conclusion.get('suggestedNextAction','?')}|{has_email}\")
+             "
+             
+             # Backfill reassess action result in state.json
+             bash .claude/skills/casework/scripts/finalize-state.sh \
+               "{casesRoot}/active/{caseNumber}" act
+             
+             if reassess has email-drafter action:
+               → case.phase = "reassessing"
+               CURRENT_ACTION="{caseNumber} reassess: {type} → launching email({emailType})"
+               → spawn email-drafter with reassess-derived emailType（后台）
+             else:
+               CURRENT_ACTION="{caseNumber} reassess: {type} → no email → summarizing"
+               → case.phase = "inspecting"
+               → spawn summarize（后台）
+         
+         case "reassessing":
+           # Post-reassess email-drafter running
+           # 检查 email-drafter 是否完成（drafts/ 目录有新文件）
+           if email-drafter 完成:
+             → case.phase = "communicating"  # brief transition state
+             CURRENT_ACTION="{caseNumber} email draft ready → summarizing"
+             # Backfill email-drafter result
+             bash .claude/skills/casework/scripts/finalize-state.sh \
+               "{casesRoot}/active/{caseNumber}" act
+             → case.phase = "inspecting"
+             → spawn summarize（后台）
          
          case "inspecting":
            检查 inspection agent 是否完成
@@ -348,7 +417,7 @@ os.replace(tmp, p)
        --cases "{comma_separated_case_numbers}" \
        --phases '{json_phases_dict}' \
        --patrol-start "{patrol_start_iso}"
-     # phases dict: {"caseNumber": "gathering|executing|inspecting|done", ...}
+     # phases dict: {"caseNumber": "gathering|executing|investigating|reassessing|inspecting|done", ...}
      # 每轮 spawn 调用合并：同一轮内需要 spawn 的多个 agent 在一条消息中并行发出
    }
    ```
