@@ -81,7 +81,7 @@ export default function PatrolCaseList() {
                 className="h-full rounded-full transition-all duration-500 ease-out"
                 style={{
                   width: `${Math.round((processedCases / totalCases) * 100)}%`,
-                  background: phase === 'completed' ? 'var(--accent-green)' : 'linear-gradient(90deg, var(--accent-green), var(--accent-blue))',
+                  background: 'linear-gradient(90deg, var(--accent-green), var(--accent-blue))',
                 }}
               />
             </div>

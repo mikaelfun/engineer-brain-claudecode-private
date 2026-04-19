@@ -348,9 +348,7 @@ function ProcessingDetail({
               className="h-full rounded-full transition-all duration-500"
               style={{
                 width: `${progressPct}%`,
-                background: status === 'completed'
-                  ? 'var(--accent-green)'
-                  : 'linear-gradient(90deg, var(--accent-green), var(--accent-blue))',
+                background: 'linear-gradient(90deg, var(--accent-green), var(--accent-blue))',
               }}
             />
           </div>

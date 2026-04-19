@@ -596,6 +596,17 @@ export default function PatrolCaseRow({ caseState, defaultExpanded }: PatrolCase
         boxShadow: isActive
           ? '0 4px 20px rgba(106,95,193,0.15)'
           : '0 1px 4px rgba(0,0,0,0.03)',
+        overflow: 'hidden', // clip header bg to card radius
+      }}
+      onMouseEnter={e => {
+        if (!isActive) {
+          (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(106,95,193,0.08)'
+        }
+      }}
+      onMouseLeave={e => {
+        if (!isActive) {
+          (e.currentTarget as HTMLElement).style.boxShadow = '0 1px 4px rgba(0,0,0,0.03)'
+        }
       }}
     >
       {/* ─── Header bar ─── */}
