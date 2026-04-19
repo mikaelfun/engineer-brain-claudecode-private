@@ -1,13 +1,11 @@
 /**
  * PatrolCaseList — Sorted case list with progress bar
  *
- * Shows phase-appropriate content:
- * - Pre-processing phases: status message with spinner
- * - Processing/completed: per-case pipeline rows
+ * Shows per-case pipeline rows with a section header and progress bar.
+ * Phase status messages are handled by the sidebar.
  */
 import { useMemo } from 'react'
-import { usePatrolStore, type CaseState, type PatrolPhase } from '../../stores/patrolStore'
-import { Card, CardHeader } from '../common/Card'
+import { usePatrolStore, type CaseState } from '../../stores/patrolStore'
 import PatrolCaseRow from './PatrolCaseRow'
 
 function isCaseActive(c: CaseState): boolean {
@@ -39,15 +37,6 @@ function sortCases(cases: CaseState[]): CaseState[] {
   })
 }
 
-/** Phase-specific status messages shown before cases are available */
-const PHASE_STATUS: Partial<Record<PatrolPhase, { icon: string; text: string }>> = {
-  starting:      { icon: '🚀', text: 'Launching patrol agent...' },
-  discovering:   { icon: '🔍', text: 'Querying D365 for active cases...' },
-  filtering:     { icon: '📋', text: 'Checking which cases have changes...' },
-  'warming-up':  { icon: '🔑', text: 'Warming up tokens (Teams / ICM / DTM)...' },
-  aggregating:   { icon: '📊', text: 'Aggregating todos...' },
-}
-
 export default function PatrolCaseList() {
   const cases = usePatrolStore(s => s.cases)
   const totalCases = usePatrolStore(s => s.totalCases)
@@ -64,70 +53,37 @@ export default function PatrolCaseList() {
 
   if (phase === 'idle') return null
 
-  const hasCases = sortedCases.length > 0 || queuedOnly.length > 0
-  const showProgress = totalCases > 0
-  const pct = totalCases > 0 ? Math.round((processedCases / totalCases) * 100) : 0
-
-  // Pre-processing phases: show status message, not case list
-  const phaseStatus = PHASE_STATUS[phase]
-  if (phaseStatus && !hasCases) {
-    return (
-      <Card padding="none">
-        <div className="flex items-center justify-center gap-3 py-12">
-          <span className="text-xl">{phaseStatus.icon}</span>
-          <div>
-            <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-              {phaseStatus.text}
-            </p>
-            {phase === 'filtering' && totalCases > 0 && (
-              <p className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
-                {totalCases} active cases found
-              </p>
-            )}
-          </div>
-          {/* Spinner */}
-          <div
-            className="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin"
-            style={{ borderColor: 'var(--accent-blue)', borderTopColor: 'transparent' }}
-          />
-        </div>
-      </Card>
-    )
-  }
-
   return (
-    <Card padding="none">
-      <div className="px-4 pt-4 pb-2">
-        <CardHeader
-          title="Cases"
-          subtitle={showProgress ? `${processedCases} / ${totalCases} processed` : undefined}
-        />
+    <div>
+      {/* Section header */}
+      <div className="flex items-center gap-3 px-1 pb-3">
+        <div className="flex-1 min-w-0">
+          <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+            Cases
+          </h3>
+          {totalCases > 0 && (
+            <p className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
+              {processedCases} / {totalCases} processed
+            </p>
+          )}
+        </div>
 
         {/* Progress bar */}
-        {showProgress && (
-          <div className="mt-1 mb-2">
+        {totalCases > 0 && (
+          <div className="w-full max-w-[220px] rounded-full overflow-hidden" style={{ height: 5, background: 'var(--bg-hover)' }}>
             <div
-              className="w-full rounded-full overflow-hidden"
-              style={{ height: 4, background: 'var(--bg-inset)' }}
-            >
-              <div
-                className="h-full rounded-full transition-all duration-500 ease-out"
-                style={{
-                  width: `${pct}%`,
-                  background: phase === 'completed'
-                    ? 'var(--accent-green)'
-                    : phase === 'failed'
-                      ? 'var(--accent-red)'
-                      : 'var(--accent-blue)',
-                }}
-              />
-            </div>
+              className="h-full rounded-full transition-all duration-500 ease-out"
+              style={{
+                width: `${Math.round((processedCases / totalCases) * 100)}%`,
+                background: phase === 'completed' ? 'var(--accent-green)' : 'linear-gradient(90deg, var(--accent-green), var(--accent-blue))',
+              }}
+            />
           </div>
         )}
       </div>
 
       {/* Case rows */}
-      <div className="px-2 pb-2 space-y-0.5">
+      <div className="space-y-0.5">
         {sortedCases.map(c => (
           <PatrolCaseRow
             key={c.caseNumber}
@@ -190,6 +146,6 @@ export default function PatrolCaseList() {
           </div>
         )}
       </div>
-    </Card>
+    </div>
   )
 }
