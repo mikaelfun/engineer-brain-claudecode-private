@@ -46,6 +46,9 @@ export interface PatrolState {
   totalFound?: number                      // total cases found in discover (before filter)
   skippedCount?: number                    // cases skipped by filter
   warmupStatus?: string                    // token daemon status text
+  archivedCount?: number                   // cases archived during filter
+  transferredCount?: number                // cases transferred during filter
+  sdkLogFile?: string                      // current patrol SDK log filename (in .patrol/logs/)
 }
 
 // ─── Constants ───
@@ -216,6 +219,22 @@ class PatrolStateManager {
       // Mark new phase start (use skill-provided timestamp if available)
       this.state.phaseStartedAt = (partial as any).updatedAt as string || now
 
+      // Reset on new patrol start (only when phase ACTUALLY changes to 'starting',
+      // not on repeated updates with same phase — otherwise phaseStartedAt gets
+      // overwritten by file-watcher's late detection, losing SDK cold-start time)
+      if (newPhase === 'starting') {
+        this.state.totalCases = partial.totalCases ?? 0
+        this.state.changedCases = partial.changedCases ?? 0
+        this.state.processedCases = partial.processedCases ?? 0
+        this.state.caseList = partial.caseList ?? []
+        this.state.error = undefined
+        this.state.completedAt = undefined
+        this.state.phaseTimings = {}
+        // phaseStartedAt already set above — don't overwrite with 'now'
+        this.state.archivedCount = undefined
+        this.state.transferredCount = undefined
+      }
+
       // Persist timings to disk (survives backend restart)
       this.persistTimings()
     }
@@ -240,19 +259,6 @@ class PatrolStateManager {
         }
       }
       this.persistTimings()
-    }
-
-    // Reset on new patrol start
-    if (partial.phase === 'starting') {
-      this.state.totalCases = partial.totalCases ?? 0
-      this.state.changedCases = partial.changedCases ?? 0
-      this.state.processedCases = partial.processedCases ?? 0
-      this.state.caseList = partial.caseList ?? []
-      this.state.error = undefined
-      this.state.completedAt = undefined
-      this.state.phaseTimings = {}
-      this.state.phaseStartedAt = now
-      this.persistTimings() // overwrite stale file from previous run
     }
 
     this.scheduleBroadcast()

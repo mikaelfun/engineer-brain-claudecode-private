@@ -105,6 +105,9 @@ export const config = {
   get patrolProgressFile() {
     return join(this.patrolDir, 'patrol-progress.json')
   },
+  get archiveSummaryFile() {
+    return join(this.patrolDir, 'archive-summary.json')
+  },
   /** @deprecated Todo files are now per-case (cases/active/{id}/todo/). Kept for backward compat. */
   get todoDir() {
     return join(this.casesDir, 'todo')

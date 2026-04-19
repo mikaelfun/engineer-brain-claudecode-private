@@ -278,6 +278,53 @@ caseRoutes.post('/patrol/cancel', (c) => {
   return c.json({ success: cancelled, message: cancelled ? 'Patrol cancellation requested' : 'Failed to cancel' })
 })
 
+// GET /patrol/logs — 列出所有 patrol SDK 日志文件
+caseRoutes.get('/patrol/logs', (c) => {
+  const logsDir = join(appConfig.patrolDir, 'logs')
+  if (!existsSync(logsDir)) return c.json({ logs: [] })
+  try {
+    const files = readdirSync(logsDir)
+      .filter(f => f.endsWith('.jsonl'))
+      .sort()
+      .reverse() // newest first
+      .map(f => {
+        const stats = statSync(join(logsDir, f))
+        return { name: f, sizeKB: Math.round(stats.size / 1024), modifiedAt: stats.mtime.toISOString() }
+      })
+    return c.json({ logs: files })
+  } catch {
+    return c.json({ logs: [] })
+  }
+})
+
+// GET /patrol/logs/:name — 读取单个日志文件内容
+// 支持 ?lines=N 参数（默认 200，从尾部读取）
+caseRoutes.get('/patrol/logs/:name', (c) => {
+  const name = c.req.param('name')
+  // Security: only allow .jsonl files, no path traversal
+  if (!name.endsWith('.jsonl') || name.includes('/') || name.includes('\\') || name.includes('..')) {
+    return c.json({ error: 'Invalid log file name' }, 400)
+  }
+  const filePath = join(appConfig.patrolDir, 'logs', name)
+  if (!existsSync(filePath)) return c.json({ error: 'Log not found' }, 404)
+
+  try {
+    const raw = readFileSync(filePath, 'utf-8')
+    const allLines = raw.split('\n').filter(l => l.trim())
+    const maxLines = parseInt(c.req.query('lines') || '200', 10)
+    const lines = allLines.slice(-maxLines)
+    return c.json({
+      name,
+      totalLines: allLines.length,
+      returnedLines: lines.length,
+      truncated: allLines.length > maxLines,
+      messages: lines.map(l => { try { return JSON.parse(l) } catch { return { raw: l } } }),
+    })
+  } catch (err) {
+    return c.json({ error: (err as Error).message }, 500)
+  }
+})
+
 // GET /patrol/status — 查询 patrol 运行状态 + per-case state
 // State comes from PatrolStateManager (single source of truth)
 // caseStates are pre-filtered: stale data removed, stuck steps fixed

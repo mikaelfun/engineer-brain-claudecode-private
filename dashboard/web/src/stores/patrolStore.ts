@@ -85,6 +85,8 @@ interface PatrolStore {
   totalFound?: number
   skippedCount?: number
   warmupStatus?: string
+  archivedCount?: number
+  transferredCount?: number
 
   // Per-case (v3)
   cases: Record<string, CaseState>
@@ -123,6 +125,8 @@ export const usePatrolStore = create<PatrolStore>()((set, _get) => ({
   totalFound: undefined,
   skippedCount: undefined,
   warmupStatus: undefined,
+  archivedCount: undefined,
+  transferredCount: undefined,
   cases: {},
 
   // ─── v3 SSE handlers ───
@@ -145,6 +149,8 @@ export const usePatrolStore = create<PatrolStore>()((set, _get) => ({
     if (data.totalFound !== undefined) update.totalFound = data.totalFound as number
     if (data.skippedCount !== undefined) update.skippedCount = data.skippedCount as number
     if (data.warmupStatus !== undefined) update.warmupStatus = data.warmupStatus as string
+    if (data.archivedCount !== undefined) update.archivedCount = data.archivedCount as number
+    if (data.transferredCount !== undefined) update.transferredCount = data.transferredCount as number
     if (data.completedAt) update.completedAt = data.completedAt as string
     if (phase === 'completed' && !data.completedAt) {
       update.completedAt = new Date().toISOString()
@@ -192,6 +198,8 @@ export const usePatrolStore = create<PatrolStore>()((set, _get) => ({
     totalFound: undefined,
     skippedCount: undefined,
     warmupStatus: undefined,
+    archivedCount: undefined,
+    transferredCount: undefined,
   }),
 
   reset: () => set({
@@ -210,5 +218,7 @@ export const usePatrolStore = create<PatrolStore>()((set, _get) => ({
     totalFound: undefined,
     skippedCount: undefined,
     warmupStatus: undefined,
+    archivedCount: undefined,
+    transferredCount: undefined,
   }),
 }))

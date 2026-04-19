@@ -67,6 +67,25 @@ function LiveTimer({ startedAt }: { startedAt: string }) {
   )
 }
 
+// ─── Warmup status friendly text ───
+
+function friendlyWarmupStatus(raw?: string): string {
+  if (!raw) return 'Checking tokens\u2026'
+  const s = raw.toLowerCase()
+  if (s.includes('alive') || s.includes('running') || s.includes('ready'))
+    return 'Token daemon ready'
+  if (s.includes('valid') || s.includes('fresh'))
+    return 'All tokens valid'
+  if (s.includes('expired') || s.includes('refresh'))
+    return 'Refreshing tokens\u2026'
+  if (s.includes('offline') || s.includes('not running') || s.includes('failed'))
+    return 'Daemon offline \u2014 using fallback'
+  if (s.includes('warmup') || s.includes('starting'))
+    return 'Starting daemon\u2026'
+  // Fallback: truncate raw to something readable
+  return raw.length > 30 ? raw.slice(0, 30) + '\u2026' : raw
+}
+
 // ─── Stage derivation ───
 
 function deriveStages(
@@ -81,6 +100,8 @@ function deriveStages(
     processedCases: number
     totalCases: number
     currentAction?: string
+    archivedCount?: number
+    transferredCount?: number
   },
 ): StageState[] {
   const currentIdx = PHASE_ORDER.indexOf(phase)
@@ -105,7 +126,7 @@ function deriveStages(
     let detail = ''
     switch (cfg.phase) {
       case 'starting':
-        detail = 'SDK session launched'
+        detail = status === 'completed' ? 'SDK session launched' : 'Launching SDK session…'
         break
       case 'discovering':
         if (status === 'pending') {
@@ -119,10 +140,22 @@ function deriveStages(
       case 'filtering':
         if (status === 'pending') {
           detail = ''
-        } else if (store.changedCases > 0 || store.skippedCount !== undefined) {
+        } else if (store.changedCases > 0 || store.skippedCount !== undefined ||
+                   store.archivedCount !== undefined || store.transferredCount !== undefined) {
           const parts: string[] = []
-          parts.push(`${store.changedCases} changed`)
-          if (store.skippedCount !== undefined) parts.push(`${store.skippedCount} skipped`)
+          // Main count: cases to process
+          parts.push(`${store.changedCases} to process`)
+          // Skipped by patrolSkipHours (only meaningful in non-force mode)
+          if (store.skippedCount && store.skippedCount > 0) {
+            parts.push(`${store.skippedCount} skipped (recent)`)
+          }
+          // Archive/transfer results from detect-case-status.ps1
+          if (store.archivedCount && store.archivedCount > 0) {
+            parts.push(`${store.archivedCount} archived`)
+          }
+          if (store.transferredCount && store.transferredCount > 0) {
+            parts.push(`${store.transferredCount} transferred`)
+          }
           detail = parts.join(' \u00b7 ')
         } else {
           detail = 'Checking changes\u2026'
@@ -132,7 +165,7 @@ function deriveStages(
         if (status === 'pending') {
           detail = ''
         } else {
-          detail = store.warmupStatus || 'Checking tokens\u2026'
+          detail = friendlyWarmupStatus(store.warmupStatus)
         }
         break
       case 'processing':
@@ -181,12 +214,15 @@ export default function PatrolSidebar() {
   const processedCases = usePatrolStore(s => s.processedCases)
   const totalCases = usePatrolStore(s => s.totalCases)
   const currentAction = usePatrolStore(s => s.currentAction)
+  const archivedCount = usePatrolStore(s => s.archivedCount)
+  const transferredCount = usePatrolStore(s => s.transferredCount)
 
   if (phase === 'idle') return null
 
   const stages = deriveStages(phase, phaseTimings, phaseStartedAt, {
     totalFound, changedCases, skippedCount, warmupStatus,
     processedCases, totalCases, currentAction,
+    archivedCount, transferredCount,
   })
 
   const progressPct = totalCases > 0 ? Math.round((processedCases / totalCases) * 100) : 0

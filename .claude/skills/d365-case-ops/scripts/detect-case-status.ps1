@@ -128,6 +128,11 @@ if ($arCascaded.Count -gt 0) {
 
 if ($notActive.Count -eq 0) {
     Write-Host "✅ No cases need archiving."
+    # Write zero-count summary for patrol sidebar
+    $patrolDir = Join-Path $CasesRoot ".patrol"
+    if (-not (Test-Path $patrolDir)) { New-Item -ItemType Directory -Path $patrolDir -Force | Out-Null }
+    $summaryPath = Join-Path $patrolDir "archive-summary.json"
+    @{ archivedCount = 0; transferredCount = 0; updatedAt = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ") } | ConvertTo-Json -Compress | Set-Content $summaryPath -Encoding UTF8
     Write-Output "[]"
     exit 0
 }
@@ -224,6 +229,18 @@ foreach ($cn in $notActive) {
         Write-Host "      📧 $($entry.closureEmailEvidence)"
     }
 }
+
+# ── Write archive-summary.json for patrol sidebar ──
+$patrolDir = Join-Path $CasesRoot ".patrol"
+if (-not (Test-Path $patrolDir)) { New-Item -ItemType Directory -Path $patrolDir -Force | Out-Null }
+$summaryPath = Join-Path $patrolDir "archive-summary.json"
+$summary = @{
+    archivedCount = @($results | Where-Object { $_.status -eq 'archived' }).Count
+    transferredCount = @($results | Where-Object { $_.status -eq 'transferred' }).Count
+    updatedAt = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+}
+$summary | ConvertTo-Json -Compress | Set-Content $summaryPath -Encoding UTF8
+Write-Host "   Summary written to $summaryPath (archived=$($summary.archivedCount), transferred=$($summary.transferredCount))"
 
 # ── Output JSON ──
 Write-Output ($results | ConvertTo-Json -Compress -Depth 5)
