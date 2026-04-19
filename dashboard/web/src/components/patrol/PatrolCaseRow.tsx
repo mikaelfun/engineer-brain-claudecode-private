@@ -220,52 +220,10 @@ function StepStatusIcon({ status }: { status: StepStatus }) {
         height: size,
         borderRadius: '50%',
         border: '2px solid var(--border-subtle)',
+        background: 'var(--bg-surface)',
         flexShrink: 0,
       }}
     />
-  )
-}
-
-// ─── Connector line between steps ───
-
-function StepConnector({ leftStatus, rightStatus }: { leftStatus: StepStatus; rightStatus: StepStatus }) {
-  let background: string
-  let opacity: number
-
-  const leftDone = leftStatus === 'completed' || leftStatus === 'skipped'
-  const rightDone = rightStatus === 'completed' || rightStatus === 'skipped'
-  const rightActive = rightStatus === 'active'
-
-  if (leftDone && rightDone) {
-    background = 'var(--accent-green)'
-    opacity = 0.3
-  } else if (leftDone && rightActive) {
-    background = 'linear-gradient(90deg, var(--accent-green), var(--accent-blue))'
-    opacity = 0.4
-  } else {
-    background = 'var(--border-subtle)'
-    opacity = 1
-  }
-
-  return (
-    <div
-      style={{
-        flex: 0.25, // proportional width — centers line in whitespace between steps
-        display: 'flex',
-        alignItems: 'center',
-        height: 22, // match StepStatusIcon height so line aligns with icon centers
-      }}
-    >
-      <div
-        style={{
-          width: '100%',
-          height: 2,
-          borderRadius: 1,
-          background,
-          opacity,
-        }}
-      />
-    </div>
   )
 }
 
@@ -749,31 +707,20 @@ export default function PatrolCaseRow({ caseState, defaultExpanded }: PatrolCase
       {/* ─── Pipeline body ─── */}
       {showBody && (
         <div
-          className=""
           style={{
             padding: '18px 20px',
             borderTop: '1px solid var(--bg-hover)',
-            display: 'flex',
-            gap: 0,
-            alignItems: 'flex-start',
           }}
         >
-          {PIPELINE_STEPS.map((stepId, idx) => {
-            const step = caseState.steps[stepId]
-            const status: StepStatus = step?.status || 'pending'
-            const isStart = stepId === 'start'
+          {/* ── Step columns ── */}
+          <div style={{ display: 'flex', gap: 0, alignItems: 'flex-start' }}>
+            {PIPELINE_STEPS.map((stepId, idx) => {
+              const step = caseState.steps[stepId]
+              const status: StepStatus = step?.status || 'pending'
+              const isStart = stepId === 'start'
 
-            return (
-              <div key={stepId} style={{ display: 'contents' }}>
-                {/* Connector before this step (not before first) */}
-                {idx > 0 && (
-                  <StepConnector
-                    leftStatus={caseState.steps[PIPELINE_STEPS[idx - 1]]?.status || 'pending'}
-                    rightStatus={status}
-                  />
-                )}
-                {/* Step column */}
-                <div style={{ flex: isStart ? 0.6 : 1, minWidth: 0 }}>
+              return (
+                <div key={stepId} style={{ flex: isStart ? 0.6 : 1, minWidth: 0 }}>
                   {/* Step header */}
                   <div className="flex items-center gap-2 mb-2">
                     <StepStatusIcon status={status} />
@@ -809,9 +756,9 @@ export default function PatrolCaseRow({ caseState, defaultExpanded }: PatrolCase
                     {stepId === 'summarize' && <SummarizeBody step={step} />}
                   </div>
                 </div>
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
         </div>
       )}
 
