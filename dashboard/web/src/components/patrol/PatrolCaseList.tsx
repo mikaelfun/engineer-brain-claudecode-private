@@ -55,22 +55,18 @@ export default function PatrolCaseList() {
 
   return (
     <div>
-      {/* Section header */}
+      {/* Section header: Cases + count + progress bar — all inline */}
       <div className="flex items-center gap-3 px-1 pb-3">
-        <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-            Cases
-          </h3>
-          {totalCases > 0 && (
-            <p className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
-              {processedCases} / {totalCases} processed
-            </p>
-          )}
-        </div>
-
-        {/* Progress bar */}
+        <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+          Cases
+        </h3>
         {totalCases > 0 && (
-          <div className="w-full max-w-[220px] rounded-full overflow-hidden" style={{ height: 5, background: 'var(--bg-hover)' }}>
+          <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+            {processedCases} / {totalCases} processed
+          </span>
+        )}
+        {totalCases > 0 && (
+          <div className="flex-1 max-w-[220px] rounded-full overflow-hidden" style={{ height: 5, background: 'var(--bg-hover)' }}>
             <div
               className="h-full rounded-full transition-all duration-500 ease-out"
               style={{

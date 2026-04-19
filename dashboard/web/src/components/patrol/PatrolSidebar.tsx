@@ -209,15 +209,15 @@ export default function PatrolSidebar() {
           const nextStatus: StageStatus | undefined = isLast ? undefined : stages[idx + 1].status
 
           return (
-            <div key={stage.id} className="relative flex gap-3" style={{ paddingBottom: isLast ? 0 : 28 }}>
+            <div key={stage.id} className="relative flex gap-3" style={{ padding: '28px 0' }}>
               {/* Connecting line (between icon centers) */}
               {!isLast && (
                 <div
                   className="absolute"
                   style={{
                     left: 11, // center of 24px icon
-                    top: 24,  // below the icon
-                    bottom: 0,
+                    top: 60,  // below icon + padding
+                    bottom: -20,
                     width: 2,
                     borderRadius: 1,
                     ...getLineStyle(stage.status, nextStatus),
