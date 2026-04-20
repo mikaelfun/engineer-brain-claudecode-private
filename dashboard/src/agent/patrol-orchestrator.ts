@@ -191,8 +191,8 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
       'CRITICAL INSTRUCTIONS (do NOT deviate):',
       '1. Read .claude/skills/patrol/SKILL.md FIRST (do NOT Glob or explore the codebase)',
       '2. Config is at config.json (casesRoot="../data/cases", patrolDir="../data/.patrol")',
-      '3. SKIP Step 1 lock management entirely — lock is already managed by the backend orchestrator',
-      '4. Start execution from Step 2 (write patrol-phase "discovering")',
+      '3. Execute Step 1 (patrol-init.sh) — it handles lock, listing, filtering, warmup. Pass --source webui to the script.',
+      '4. Then execute Step 2 (Streaming Pipeline) with the cases from init output.',
       '5. Use relative paths only (./cases, ../data) — never absolute Windows paths',
     ].join('\n')
 

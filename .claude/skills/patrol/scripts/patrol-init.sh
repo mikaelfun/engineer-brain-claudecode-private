@@ -93,8 +93,13 @@ import json
 try: print(json.load(open('$PATROL_DIR/patrol.lock', encoding='utf-8')).get('source','unknown'))
 except: print('unknown')
 " 2>/dev/null || echo "unknown")
-  echo "{\"status\":\"error\",\"error\":\"Patrol already running (source=$LOCK_SOURCE)\"}"
-  exit 1
+  # WebUI mode: lock was written by patrol-orchestrator.ts, not a conflict
+  if [ "$SOURCE" = "webui" ] && [ "$LOCK_SOURCE" = "webui" ]; then
+    log "📌 WebUI mode: lock exists (managed by orchestrator), proceeding"
+  else
+    echo "{\"status\":\"error\",\"error\":\"Patrol already running (source=$LOCK_SOURCE)\"}"
+    exit 1
+  fi
 fi
 
 # ── Step 3: Write lock file + clear previous progress ──
