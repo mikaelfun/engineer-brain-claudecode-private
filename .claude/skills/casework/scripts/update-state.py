@@ -57,12 +57,12 @@ def generate_run_id(run_type):
 def create_run_dir(casework_dir, run_id):
     """Create the run directory structure under .casework/runs/{runId}/"""
     run_dir = os.path.join(casework_dir, 'runs', run_id)
-    for subdir in ['scripts', 'output', 'output/subtasks', 'agents']:
+    for subdir in ['data-refresh', 'data-refresh/subtasks', 'data-refresh/logs', 'agents']:
         os.makedirs(os.path.join(run_dir, subdir), exist_ok=True)
     return run_dir
 
 
-def init_state(case_number='', run_id='', run_type=''):
+def init_state(case_number='', run_id='', run_type='', parent_run_id=''):
     state = {
         'caseNumber': case_number,
         'updatedAt': now_iso(),
@@ -73,6 +73,8 @@ def init_state(case_number='', run_id='', run_type=''):
         state['runId'] = run_id
     if run_type:
         state['runType'] = run_type
+    if parent_run_id:
+        state['parentRunId'] = parent_run_id
     return state
 
 
@@ -140,6 +142,7 @@ def main():
     ap.add_argument('--delta', default='', help='JSON delta data for subtask (e.g. \'{"emails":3,"notes":1}\')')
     ap.add_argument('--reasoning', default='', help='Reasoning text for step result')
     ap.add_argument('--detail', default='', help='Live detail text for action')
+    ap.add_argument('--parent-run-id', default='', help='Parent patrol runId (for linking case runs to patrol runs)')
     ap.add_argument('--case-number', default='', help='Case number')
     args = ap.parse_args()
 
@@ -165,7 +168,7 @@ def main():
             case_num = state.get('caseNumber', args.case_number)
             run_type = args.run_type or 'casework'
             run_id = generate_run_id(run_type)
-            state = init_state(case_num, run_id, run_type)
+            state = init_state(case_num, run_id, run_type, args.parent_run_id)
             # Create run directory structure
             create_run_dir(casework_dir, run_id)
             if not args.step:
