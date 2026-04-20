@@ -40,6 +40,19 @@
   --accent-red-dim: rgba(248,113,113,0.15);
   --accent-purple: #a78bfa;
   --accent-purple-dim: rgba(167,139,250,0.15);
+
+  /* Sticky tab colors (patrol card stack) */
+  --tab-green: rgba(74,222,128,0.18);
+  --tab-green-border: rgba(74,222,128,0.35);
+  --tab-green-text: #6ee7a0;
+  --tab-amber: rgba(251,191,36,0.15);
+  --tab-amber-border: rgba(251,191,36,0.30);
+  --tab-amber-text: #fbbf24;
+  --tab-purple: rgba(167,139,250,0.18);
+  --tab-purple-border: rgba(167,139,250,0.35);
+  --tab-purple-text: #b8a4fb;
+  --bg-front: #2e2e54;
+
   --accent-cyan: #67e8f9;
   --accent-cyan-dim: rgba(103,232,249,0.15);
 
@@ -80,6 +93,19 @@
   --accent-red-dim: rgba(220,38,38,0.10);
   --accent-purple: #7c3aed;
   --accent-purple-dim: rgba(124,58,237,0.10);
+
+  /* Sticky tab colors (patrol card stack) */
+  --tab-green: rgba(22,163,74,0.10);
+  --tab-green-border: rgba(22,163,74,0.30);
+  --tab-green-text: #15803d;
+  --tab-amber: rgba(217,119,6,0.10);
+  --tab-amber-border: rgba(217,119,6,0.25);
+  --tab-amber-text: #b45309;
+  --tab-purple: rgba(124,58,237,0.10);
+  --tab-purple-border: rgba(124,58,237,0.28);
+  --tab-purple-text: #6d28d9;
+  --bg-front: #ffffff;
+
   --accent-cyan: #0e9bae;
   --accent-cyan-dim: rgba(14,155,174,0.10);
 
