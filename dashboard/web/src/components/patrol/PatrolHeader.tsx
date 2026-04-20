@@ -27,7 +27,7 @@ function formatTime(iso: string): string {
 }
 
 const RUNNING_PHASES: PatrolPhase[] = [
-  'starting', 'discovering', 'filtering', 'warming-up', 'processing', 'aggregating',
+  'initializing', 'processing', 'finalizing',
 ]
 
 export default function PatrolHeader() {
@@ -51,7 +51,7 @@ export default function PatrolHeader() {
 
   // Lock start time on first running frame; clear on idle or new run
   useEffect(() => {
-    if (phase === 'starting') {
+    if (phase === 'initializing') {
       // Bug 2 fix: Reset timer for new patrol run (hot restart bypasses idle)
       startTimeRef.current = startedAt ? new Date(startedAt).getTime() : Date.now()
       setElapsed(0)

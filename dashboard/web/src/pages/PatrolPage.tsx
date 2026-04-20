@@ -26,7 +26,7 @@ import PatrolSidebar from '../components/patrol/PatrolSidebar'
 import PatrolCaseList from '../components/patrol/PatrolCaseList'
 
 const RUNNING_PHASES: PatrolPhase[] = [
-  'starting', 'discovering', 'filtering', 'warming-up', 'processing', 'aggregating',
+  'initializing', 'processing', 'finalizing',
 ]
 
 export default function PatrolPage() {

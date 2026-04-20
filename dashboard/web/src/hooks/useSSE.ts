@@ -462,9 +462,9 @@ export function useSSE() {
       const d = data.data || data
       // Clear patrol agent store when patrol restarts OR sessionId changes
       // This ensures stale data from previous patrol runs is discarded
-      // even if the user opens the page mid-patrol (missing 'starting' event)
+      // even if the user opens the page mid-patrol (missing 'initializing' event)
       const incomingSessionId = d.sessionId as string | undefined
-      if (d.phase === 'starting' || (incomingSessionId && incomingSessionId !== patrolSessionIdRef.current)) {
+      if (d.phase === 'initializing' || (incomingSessionId && incomingSessionId !== patrolSessionIdRef.current)) {
         patrolAgentClear()
         // Invalidate patrol messages cache so recovery fetches fresh data
         queryClient.invalidateQueries({ queryKey: ['patrol', 'messages'] })

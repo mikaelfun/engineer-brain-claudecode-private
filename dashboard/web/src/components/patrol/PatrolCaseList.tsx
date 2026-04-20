@@ -11,7 +11,7 @@ import { Card } from '../common/Card'
 import PatrolCaseRow from './PatrolCaseRow'
 
 const RUNNING_PHASES: PatrolPhase[] = [
-  'starting', 'discovering', 'filtering', 'warming-up', 'processing', 'aggregating',
+  'initializing', 'processing', 'finalizing',
 ]
 
 function isCaseActive(c: CaseState): boolean {
