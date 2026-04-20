@@ -9,9 +9,32 @@ import { create } from 'zustand'
 // ─── Types ───
 
 export type PatrolPhase =
-  | 'idle' | 'starting' | 'discovering' | 'filtering'
-  | 'warming-up' | 'processing' | 'aggregating'
+  | 'idle' | 'initializing' | 'processing' | 'finalizing'
   | 'completed' | 'failed'
+
+/** Map old backend phase names to new 3-phase model (backward compat) */
+function mapPhase(raw: string): PatrolPhase {
+  switch (raw) {
+    case 'starting':
+    case 'discovering':
+    case 'filtering':
+    case 'warming-up':
+      return 'initializing'
+    case 'processing':
+      return 'processing'
+    case 'aggregating':
+      return 'finalizing'
+    case 'initializing':
+    case 'finalizing':
+      return raw as PatrolPhase
+    case 'completed':
+    case 'failed':
+    case 'idle':
+      return raw as PatrolPhase
+    default:
+      return 'idle'
+  }
+}
 
 export type StepStatus = 'pending' | 'active' | 'completed' | 'failed' | 'skipped'
 
@@ -132,7 +155,7 @@ export const usePatrolStore = create<PatrolStore>()((set, _get) => ({
   // ─── v3 SSE handlers ───
 
   onPatrolState: (data) => set((state) => {
-    const phase = (data.phase as PatrolPhase) || 'idle'
+    const phase = mapPhase((data.phase as string) || 'idle')
     const update: Partial<PatrolStore> = {
       phase,
     }
@@ -160,7 +183,7 @@ export const usePatrolStore = create<PatrolStore>()((set, _get) => ({
     if (phase === 'completed' && !data.completedAt) {
       update.completedAt = new Date().toISOString()
     }
-    if (phase === 'starting') {
+    if (phase === 'initializing') {
       // Bug 1 fix: Preserve case list skeleton, reset step progress to pending
       const resetCases: Record<string, CaseState> = {}
       for (const [cn, c] of Object.entries(state.cases)) {
@@ -212,7 +235,7 @@ export const usePatrolStore = create<PatrolStore>()((set, _get) => ({
       }
     }
     return {
-      phase: 'starting' as PatrolPhase,
+      phase: 'initializing' as PatrolPhase,
       totalCases: 0,
       changedCases: 0,
       processedCases: 0,
