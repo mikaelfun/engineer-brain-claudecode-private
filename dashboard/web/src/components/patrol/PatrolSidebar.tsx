@@ -126,7 +126,13 @@ function deriveStages(
     let detail = ''
     switch (cfg.phase) {
       case 'starting':
-        detail = status === 'completed' ? 'SDK session launched' : 'Launching SDK session…'
+        if (status === 'completed') {
+          detail = 'SDK session launched'
+        } else if (status === 'active' && store.currentAction) {
+          detail = store.currentAction
+        } else {
+          detail = 'Launching SDK session…'
+        }
         break
       case 'discovering':
         if (status === 'pending') {

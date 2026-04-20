@@ -171,7 +171,7 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
     phase: 'starting',
     startedAt,
     source: 'webui',
-    detail: 'Launching SDK session...',
+    currentAction: 'Launching SDK session...',
   })
 
   // Clear message store for fresh patrol run
@@ -249,7 +249,7 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
         } catch { /* ignore */ }
         patrolStateManager.update({
           sessionId: sdkSessionId!,
-          detail: 'SDK session started',
+          currentAction: 'SDK session started',
           sdkLogFile: `patrol-sdk-${logTimestamp}.jsonl`,
         })
       }
@@ -402,16 +402,16 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
                 content: toolContent,
                 timestamp: ts,
               })
-              // Update detail with tool call summary (e.g. "Reading SKILL.md", "Running patrol-init.sh")
+              // Update currentAction with tool call summary (e.g. "Reading SKILL.md", "Running patrol-init.sh")
               const toolDetail = parsed.toolName === 'Read' ? `Reading ${(parsed.toolInput?.file_path || '').split(/[/\\]/).pop() || 'file'}` :
                 parsed.toolName === 'Bash' ? `Running ${(parsed.toolInput?.command || '').slice(0, 50)}` :
                 `${parsed.toolName}: ${toolContent.slice(0, 40)}`
-              patrolStateManager.update({ detail: toolDetail })
+              patrolStateManager.update({ currentAction: toolDetail })
             } else if (parsed.kind === 'thinking') {
               // Extract first line of thinking as sub-detail
               const firstLine = (parsed.content || '').split('\n')[0].trim().slice(0, 80)
               if (firstLine) {
-                patrolStateManager.update({ detail: firstLine })
+                patrolStateManager.update({ currentAction: firstLine })
               }
               sseManager.broadcast('patrol-main-progress' as any, {
                 kind: parsed.kind,
