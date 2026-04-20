@@ -1,0 +1,153 @@
+/**
+ * DashboardTopBar — Command Center top bar
+ *
+ * Time-of-day greeting, date display, alert badges, and patrol trigger.
+ */
+import { Play, Loader2, AlertTriangle, Clock, Zap, Shield } from 'lucide-react'
+import { useStartPatrol, useCancelPatrol } from '../../api/hooks'
+import { usePatrolStore } from '../../stores/patrolStore'
+
+interface DashboardTopBarProps {
+  slaRiskCount: number
+  needActionCount: number
+  lastPatrolTime?: string | null
+  totalCases: number
+}
+
+function getGreeting(): string {
+  const hour = new Date().getHours()
+  if (hour < 12) return 'Good morning'
+  if (hour < 18) return 'Good afternoon'
+  return 'Good evening'
+}
+
+function formatDate(): string {
+  return new Date().toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
+function formatPatrolTime(iso: string | null | undefined): string {
+  if (!iso) return 'Never'
+  const d = new Date(iso)
+  const now = new Date()
+  const diffMs = now.getTime() - d.getTime()
+  const diffMin = Math.floor(diffMs / 60_000)
+  if (diffMin < 1) return 'Just now'
+  if (diffMin < 60) return `${diffMin}m ago`
+  const diffH = Math.floor(diffMin / 60)
+  if (diffH < 24) return `${diffH}h ago`
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+export function DashboardTopBar({
+  slaRiskCount,
+  needActionCount,
+  lastPatrolTime,
+  totalCases,
+}: DashboardTopBarProps) {
+  const startPatrol = useStartPatrol()
+  const cancelPatrol = useCancelPatrol()
+  const patrolPhase = usePatrolStore((s) => s.phase)
+  const patrolRunning =
+    patrolPhase !== 'idle' && patrolPhase !== 'completed' && patrolPhase !== 'failed'
+  const isPatrolActive = patrolRunning || startPatrol.isPending
+
+  const handlePatrol = () => {
+    if (isPatrolActive) {
+      cancelPatrol.mutate()
+    } else {
+      startPatrol.mutate(true)
+    }
+  }
+
+  return (
+    <div
+      className="flex items-center justify-between gap-4 px-6 py-4 rounded-xl"
+      style={{ background: 'var(--bg-surface)' }}
+    >
+      {/* Left — Greeting */}
+      <div className="min-w-0">
+        <h1
+          className="text-xl font-extrabold tracking-tight truncate"
+          style={{ color: 'var(--text-primary)' }}
+        >
+          {getGreeting()}, Engineer
+        </h1>
+        <p className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
+          {totalCases} active case{totalCases !== 1 ? 's' : ''} ·{' '}
+          <span style={{ color: 'var(--text-secondary)' }}>{formatDate()}</span>
+        </p>
+      </div>
+
+      {/* Right — Badges + Patrol */}
+      <div className="flex items-center gap-2 flex-shrink-0">
+        {/* SLA Risk badge */}
+        {slaRiskCount > 0 && (
+          <span
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono font-bold"
+            style={{
+              background: 'var(--accent-red)',
+              color: '#fff',
+            }}
+          >
+            <AlertTriangle className="w-3 h-3" />
+            {slaRiskCount} SLA
+          </span>
+        )}
+
+        {/* Need Action badge */}
+        {needActionCount > 0 && (
+          <span
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono font-bold"
+            style={{
+              background: 'var(--accent-amber)',
+              color: '#000',
+            }}
+          >
+            <Zap className="w-3 h-3" />
+            {needActionCount} Action
+          </span>
+        )}
+
+        {/* Last Patrol badge */}
+        <span
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono"
+          style={{
+            background: 'var(--bg-inset)',
+            color: 'var(--accent-blue)',
+          }}
+        >
+          <Clock className="w-3 h-3" />
+          {formatPatrolTime(lastPatrolTime)}
+        </span>
+
+        {/* Patrol button */}
+        <button
+          onClick={handlePatrol}
+          disabled={cancelPatrol.isPending}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 disabled:opacity-50"
+          style={{
+            background: isPatrolActive ? 'var(--accent-red)' : 'var(--accent-blue)',
+            color: '#fff',
+          }}
+          title={isPatrolActive ? 'Cancel patrol' : 'Start patrol'}
+        >
+          {isPatrolActive ? (
+            <>
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              Patrol
+            </>
+          ) : (
+            <>
+              <Shield className="w-3.5 h-3.5" />
+              Patrol
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  )
+}

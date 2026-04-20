@@ -57,6 +57,7 @@ import { initSkillRegistry } from './services/skill-registry.js'
 import { noteGapRoutes, noteGapBatchRoutes } from './routes/note-gap-routes.js'
 import { laborEstimateRoutes } from './routes/labor-estimate.js'
 import daemonRoutes from './routes/daemon.js'
+import actionsRoutes from './routes/actions.js'
 import { spawnDaemonWarmup } from './services/daemon-reader.js'
 
 const app = new Hono()
@@ -102,6 +103,7 @@ app.use('/api/case/*/note-gap', authMiddleware)
 app.use('/api/case/*/note-gap/*', authMiddleware)
 app.use('/api/daemon/*', authMiddleware)
 app.use('/api/note-gaps', authMiddleware)
+app.use('/api/actions', authMiddleware)
 
 app.route('/api/cases', casesRoutes)
 app.route('/api/todos', todosRoutes)
@@ -119,6 +121,7 @@ app.route('/api/case', noteGapRoutes)
 app.route('/api/note-gaps', noteGapBatchRoutes)
 app.route('/api/labor-estimate', laborEstimateRoutes)
 app.route('/api/daemon', daemonRoutes)
+app.route('/api/actions', actionsRoutes)
 
 // ===== Start =====
 console.log(`

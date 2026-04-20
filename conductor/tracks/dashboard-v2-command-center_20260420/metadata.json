@@ -1,0 +1,24 @@
+{
+  "id": "dashboard-v2-command-center_20260420",
+  "title": "Dashboard v2 Redesign — Command Center",
+  "type": "feature",
+  "issueId": "ISS-233",
+  "status": "complete",
+  "created": "2026-04-20T00:45:00+08:00",
+  "updated": "2026-04-20T10:05:00+08:00",
+  "current_phase": 4,
+  "current_task": "4.6",
+  "phases": {
+    "total": 4,
+    "completed": 4
+  },
+  "tasks": {
+    "total": 22,
+    "completed": 22
+  },
+  "verification": {
+    "status": "skipped",
+    "reason": "User chose mark-done (skip tests)",
+    "timestamp": "2026-04-20T10:05:00+08:00"
+  }
+}

@@ -163,3 +163,5 @@
 | [x] | teams-image-local_20260417 | Teams Chat 图片本地化 | 2026-04-17 | 2026-04-17 |
 | [ ] | digest-per-chat_20260418 | Teams digest per-chat 并行生成 (ISS-227) | 2026-04-18 | 2026-04-18 |
 | [x] | onenote-digest-parallel_20260418 | OneNote Digest Per-Page Parallel LLM Classify + Code Merge (ISS-228) | 2026-04-18 | 2026-04-18 |
+| [x] | synthesize-topic-regen_20260419 | SYNTHESIZE Topic-Level Incremental Regeneration (ISS-230) | 2026-04-19 | 2026-04-19 |
+| [x] | dashboard-v2-command-center_20260420 | Dashboard v2 Redesign — Command Center (ISS-233) | 2026-04-20 | 2026-04-20 |

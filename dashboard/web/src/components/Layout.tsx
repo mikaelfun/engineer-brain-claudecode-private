@@ -22,12 +22,12 @@ type NavEntry = NavItem | NavSection
 
 const navItems: NavEntry[] = [
   { path: '/', label: 'Dashboard', icon: '📊', exact: true },
+  { path: '/patrol', label: 'Patrol', icon: '🔄' },
   { path: '/cases', label: 'Cases', icon: '📁' },
-  { path: '/todo', label: 'Todo', icon: '📌' },
   { path: '/labor', label: 'Daily Ops', icon: '📋' },
   { path: '/agents', label: 'Agents', icon: '🤖' },
-  { path: '/patrol', label: 'Patrol', icon: '🔄' },
   { path: '/drafts', label: 'Drafts', icon: '✉️' },
+  { section: 'Experiments' },
   { path: '/tests', label: 'Test Lab', icon: '🧪' },
   { path: '/test-results', label: 'Test Results', icon: '📈' },
   { section: 'Manage' },

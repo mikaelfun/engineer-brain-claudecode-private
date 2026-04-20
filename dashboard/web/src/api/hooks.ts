@@ -350,6 +350,16 @@ export function useCancelTrigger() {
   })
 }
 
+/** Fetch in-memory cron messages for SSE recovery on page refresh */
+export function useCronMessages(triggerId: string | null) {
+  return useQuery({
+    queryKey: ['agents', 'triggers', triggerId, 'messages'],
+    queryFn: () => apiGet<{ triggerId: string; messages: any[]; total: number }>(`/agents/triggers/${triggerId}/messages`),
+    enabled: !!triggerId,
+    staleTime: 5000,
+  })
+}
+
 // ===== Drafts =====
 
 export function useDrafts() {
@@ -463,7 +473,7 @@ export function useAllSessions(status?: string) {
 
 export interface UnifiedSession {
   id: string
-  type: 'case' | 'queue' | 'implement' | 'verify' | 'track-creation'
+  type: 'case' | 'queue' | 'implement' | 'verify' | 'track-creation' | 'cron'
   status: 'active' | 'paused' | 'completed' | 'failed'
   context: string
   intent: string
@@ -504,6 +514,17 @@ export function useActiveTrackSessions(): Set<string> {
 }
 
 const EMPTY_ACTIVE_SET = new Set<string>()
+
+// ===== Actions (Command Center) =====
+
+export function useActions(enabled = false) {
+  return useQuery({
+    queryKey: ['actions'],
+    queryFn: () => apiGet<{ actions: any[]; total: number }>('/actions'),
+    enabled,
+    refetchInterval: enabled ? 60_000 : false,
+  })
+}
 
 // ===== Patrol =====
 
