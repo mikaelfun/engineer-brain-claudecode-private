@@ -1,8 +1,8 @@
 /**
  * CaseworkPipeline — Horizontal step stepper for casework processing pipeline
  *
- * Visualizes the 4-step casework pipeline:
- *   Data Refresh -> Assess -> Act -> Summarize
+ * Visualizes the 3-step casework pipeline:
+ *   Data Refresh -> Act -> Summarize
  *
  * Supports normal and compact modes, with per-step status indicators,
  * duration labels, connector lines, error tooltips, and a running timer.
@@ -10,7 +10,6 @@
 import React, { useMemo, useCallback } from 'react'
 import {
   RefreshCw,
-  Scale,
   GitBranch,
   Search,
   Mail,
@@ -51,7 +50,6 @@ export interface CaseworkPipelineProps {
 
 const STEP_ICONS: Record<string, LucideIcon> = {
   'data-refresh': RefreshCw,
-  assess: Scale,
   act: GitBranch,
   summarize: FileText,
 }
@@ -59,10 +57,9 @@ const STEP_ICONS: Record<string, LucideIcon> = {
 // ─── Default steps ──────────────────────────────────────────────────────────
 
 export const DEFAULT_CASEWORK_STEPS: PipelineStep[] = [
-  { id: 'data-refresh', label: 'Data Refresh', status: 'pending' },
-  { id: 'assess', label: 'Assess', status: 'pending' },
+  { id: 'data-refresh', label: 'Refresh', status: 'pending' },
   { id: 'act', label: 'Act', status: 'pending' },
-  { id: 'summarize', label: 'Summarize', status: 'pending' },
+  { id: 'summarize', label: 'Summary', status: 'pending' },
 ]
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
