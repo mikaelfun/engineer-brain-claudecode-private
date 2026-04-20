@@ -409,6 +409,12 @@ az devops wiki page show --wiki "{wikiName}" --project "{project}" \
 
 从刚写好的 analysis.md 中提取每个关键技术判断，生成 `{caseDir}/.casework/claims.json`。
 
+**Per-run snapshot**: 写完 `.casework/claims.json` 后，复制一份到当前 run 目录：
+```bash
+RUN_DIR=$(bash .claude/skills/casework/scripts/resolve-run-path.sh "{caseDir}" ".")
+cp "{caseDir}/.casework/claims.json" "$RUN_DIR/claims.json" 2>/dev/null || true
+```
+
 **提取规则**：
 - 「分析结论」section 中的每个根因判断 → `type: root-cause`
 - 支撑根因的因果链条 → `type: cause-chain`

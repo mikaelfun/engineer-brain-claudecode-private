@@ -271,10 +271,15 @@ actualStatus 是对**实际沟通状态**的事实判断，仅基于已发生的
 LLM 返回 JSON 后写 decision 文件，调 `write-execution-plan.py`：
 
 ```bash
-echo "$LLM_JSON" > /tmp/assess-dec-$$.json
+echo "$LLM_JSON" > "{caseDir}/.casework/assess-decision.json"
 python3 .claude/skills/casework/assess/scripts/write-execution-plan.py \
-  --decision /tmp/assess-dec-$$.json --case-dir "{caseDir}"
-rm -f /tmp/assess-dec-$$.json
+  --decision "{caseDir}/.casework/assess-decision.json" --case-dir "{caseDir}"
+```
+
+**Per-run snapshot**: 同时保存到 run 目录供审计：
+```bash
+EP_DIR=$(bash .claude/skills/casework/scripts/resolve-run-path.sh "{caseDir}" ".")
+cp "{caseDir}/.casework/assess-decision.json" "$EP_DIR/assess-decision.json" 2>/dev/null || true
 ```
 
 ### Step 5. 更新 casework-meta.json

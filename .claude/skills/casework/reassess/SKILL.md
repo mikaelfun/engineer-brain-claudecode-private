@@ -200,6 +200,12 @@ python3 .claude/skills/casework/assess/scripts/write-execution-plan.py \
   --phase reassess
 ```
 
+**Per-run snapshot**: 同时保存到 run 目录供审计：
+```bash
+EP_DIR=$(bash .claude/skills/casework/scripts/resolve-run-path.sh "{caseDir}" ".")
+cp "{caseDir}/.casework/reassess-decision.json" "$EP_DIR/reassess-decision.json" 2>/dev/null || true
+```
+
 ### Step 6. 更新 state + Completion signal
 
 ```bash
