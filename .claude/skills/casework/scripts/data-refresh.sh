@@ -75,16 +75,16 @@ fi
 
 if [ -n "$RUN_ID" ]; then
   RUN_DIR="$OUT_DIR/runs/$RUN_ID"
-  OUTPUT_DIR="$RUN_DIR/output"
-  SUBTASK_DIR="$RUN_DIR/output/subtasks"
-  LOGD="$RUN_DIR/scripts"
+  OUTPUT_DIR="$RUN_DIR/data-refresh"
+  SUBTASK_DIR="$RUN_DIR/data-refresh/subtasks"
+  LOGD="$RUN_DIR/data-refresh/logs"
 else
   # Fallback: runId generation failed — use timestamped fallback dir (never logs/)
   FALLBACK_RUN="$(date +%y%m%d-%H%M)_fallback"
   RUN_DIR="$OUT_DIR/runs/$FALLBACK_RUN"
-  OUTPUT_DIR="$RUN_DIR/output"
-  SUBTASK_DIR="$RUN_DIR/output/subtasks"
-  LOGD="$RUN_DIR/scripts"
+  OUTPUT_DIR="$RUN_DIR/data-refresh"
+  SUBTASK_DIR="$RUN_DIR/data-refresh/subtasks"
+  LOGD="$RUN_DIR/data-refresh/logs"
 fi
 
 # ── Reset .casework (preserve state.json lifecycle) ──
