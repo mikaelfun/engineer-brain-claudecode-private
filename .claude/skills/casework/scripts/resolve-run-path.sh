@@ -24,8 +24,28 @@ try:
 except: print('')
 " 2>/dev/null || echo "")
 
+# ── Path mapping: old → new (backward compat) ──
+map_path() {
+  local p="$1"
+  case "$p" in
+    output/*)          echo "data-refresh/${p#output/}" ;;
+    output)            echo "data-refresh" ;;
+    scripts/*)         echo "data-refresh/logs/${p#scripts/}" ;;
+    scripts)           echo "data-refresh/logs" ;;
+    *)                 echo "$p" ;;
+  esac
+}
+
+MAPPED_PATH=$(map_path "$REL_PATH")
+
 if [ -n "$RUN_ID" ]; then
-  echo "$CASE_DIR/.casework/runs/$RUN_ID/$REL_PATH"
+  RESOLVED="$CASE_DIR/.casework/runs/$RUN_ID/$MAPPED_PATH"
+  # Fallback: if mapped path doesn't exist but old path does, use old path
+  if [ ! -e "$RESOLVED" ]; then
+    OLD_RESOLVED="$CASE_DIR/.casework/runs/$RUN_ID/$REL_PATH"
+    [ -e "$OLD_RESOLVED" ] && RESOLVED="$OLD_RESOLVED"
+  fi
+  echo "$RESOLVED"
 else
   echo "$CASE_DIR/.casework/$REL_PATH"
 fi
