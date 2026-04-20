@@ -37,6 +37,22 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# ── Read runId from patrol.lock ──
+RUN_ID=""
+if [[ -f "$PATROL_DIR/patrol.lock" ]]; then
+  RUN_ID=$(python3 -c "
+import json
+try: print(json.load(open('$PATROL_DIR/patrol.lock', encoding='utf-8')).get('runId', ''))
+except: print('')
+" 2>/dev/null)
+fi
+
+SCRIPTS_DIR=""
+if [[ -n "$RUN_ID" ]]; then
+  SCRIPTS_DIR="$PATROL_DIR/runs/$RUN_ID/scripts"
+  mkdir -p "$SCRIPTS_DIR"
+fi
+
 if [[ -z "$CASES_ROOT" || -z "$PATROL_DIR" ]]; then
   log "ERROR: --cases-root and --patrol-dir are required"
   echo '{"status":"error","error":"missing required args"}'
@@ -172,9 +188,30 @@ python3 "$SCRIPT_DIR/update-phase.py" \
   --patrol-dir "$PATROL_DIR" --phase completed \
   --processed-cases "$PROCESSED" >/dev/null 2>&1 || true
 
-# ── Step 6: Release lock ─────────────────────────────────────────────
+# ── Step 6: Update run-info.json & Release lock ─────────────────────
+# Update run-info.json with completion data
+if [[ -n "$RUN_ID" ]]; then
+  python3 -c "
+import json, os
+p = os.path.join('$PATROL_DIR', 'runs', '$RUN_ID', 'run-info.json')
+try:
+    d = json.load(open(p, encoding='utf-8'))
+except: d = {}
+d['completedAt'] = '$COMPLETED_AT'
+d['processedCases'] = $PROCESSED
+d['cases'] = [c.strip() for c in '$CASES_CSV'.split(',') if c.strip()]
+with open(p, 'w', encoding='utf-8') as f:
+    json.dump(d, f, indent=2, ensure_ascii=False)
+" 2>/dev/null || true
+fi
+
 log "Releasing patrol lock"
 rm -f "$PATROL_DIR/patrol.lock"
 
 # ── Output (single JSON to stdout) ───────────────────────────────────
-echo "{\"status\":\"ok\",\"processedCases\":${PROCESSED},\"caseResults\":${CASE_RESULTS_JSON}}"
+FINAL_JSON="{\"status\":\"ok\",\"processedCases\":${PROCESSED},\"caseResults\":${CASE_RESULTS_JSON}}"
+if [[ -n "$SCRIPTS_DIR" ]]; then
+  echo "$FINAL_JSON" | tee "$SCRIPTS_DIR/patrol-finalize.json"
+else
+  echo "$FINAL_JSON"
+fi
