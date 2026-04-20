@@ -390,7 +390,7 @@ export interface AgentToolCallRecord {
 // ============ Patrol 进度 ============
 
 export interface PatrolProgress {
-  phase: 'discovering' | 'filtering' | 'warming-up' | 'processing' | 'aggregating' | 'completed' | 'failed'
+  phase: 'initializing' | 'processing' | 'finalizing' | 'completed' | 'failed'
   totalCases?: number
   changedCases?: number
   processedCases?: number

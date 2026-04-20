@@ -117,7 +117,7 @@ function classifyChange(filePath: string): { type: SSEEventType; data: Record<st
     try {
       if (existsSync(filePath)) {
         const lock = JSON.parse(readFileSync(filePath, 'utf-8'))
-        patrolStateManager.update({ phase: 'starting', source: lock.source })
+        patrolStateManager.update({ phase: 'initializing', source: lock.source })
       } else {
         // Lock removed — if state manager still thinks running, it was a stale cleanup
         // Don't reset to idle here; orchestrator handles terminal states

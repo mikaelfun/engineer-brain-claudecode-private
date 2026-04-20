@@ -160,7 +160,7 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
   // CRITICAL: Reset patrol-phase and patrol-progress.json to prevent stale data
   try {
     const phaseFile = join(config.patrolDir, 'patrol-phase')
-    writeFileSync(phaseFile, 'starting', 'utf-8')
+    writeFileSync(phaseFile, 'initializing', 'utf-8')
   } catch { /* ignore */ }
   try {
     const progressFile = config.patrolProgressFile
@@ -168,7 +168,7 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
   } catch { /* ignore */ }
 
   patrolStateManager.update({
-    phase: 'starting',
+    phase: 'initializing',
     startedAt,
     source: 'webui',
     currentAction: 'Launching SDK session...',

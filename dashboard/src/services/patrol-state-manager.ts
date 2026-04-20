@@ -22,9 +22,32 @@ import type { SSEEventType } from '../types/index.js'
 // ─── Types ───
 
 export type PatrolPhase =
-  | 'idle' | 'starting' | 'discovering' | 'filtering'
-  | 'warming-up' | 'processing' | 'aggregating'
+  | 'idle' | 'initializing' | 'processing' | 'finalizing'
   | 'completed' | 'failed'
+
+/** Map old backend phase names to new 3-phase model (backward compat) */
+function mapLegacyPhase(raw: PatrolPhase | string): PatrolPhase {
+  switch (raw) {
+    case 'starting':
+    case 'discovering':
+    case 'filtering':
+    case 'warming-up':
+      return 'initializing'
+    case 'processing':
+      return 'processing'
+    case 'aggregating':
+      return 'finalizing'
+    case 'initializing':
+    case 'finalizing':
+      return raw as PatrolPhase
+    case 'completed':
+    case 'failed':
+    case 'idle':
+      return raw as PatrolPhase
+    default:
+      return 'idle'
+  }
+}
 
 export interface PatrolState {
   phase: PatrolPhase
@@ -58,7 +81,7 @@ const BROADCAST_DEBOUNCE_MS = 50         // Coalesce rapid file-watcher events
 
 // Ordered pipeline phases (excluding terminal/meta phases)
 const PIPELINE_PHASES: PatrolPhase[] = [
-  'starting', 'discovering', 'filtering', 'warming-up', 'processing', 'aggregating',
+  'initializing', 'processing', 'finalizing',
 ]
 
 // ─── Default state ───
@@ -118,7 +141,7 @@ class PatrolStateManager {
       this.state.source = lock.source
       this.state.startedAt = lock.startedAt
       this.state.sessionId = lock.sessionId
-      this.state.phase = 'starting' // default if no phase file
+      this.state.phase = 'initializing' // default if no phase file
 
       // Read patrol-progress.json first (most detailed)
       try {
@@ -134,7 +157,7 @@ class PatrolStateManager {
       } catch { /* ignore */ }
 
       // Fallback: read patrol-phase text file
-      if (this.state.phase === 'starting') {
+      if (this.state.phase === 'initializing') {
         try {
           if (existsSync(phasePath)) {
             const raw = readFileSync(phasePath, 'utf-8').trim()
@@ -182,6 +205,10 @@ class PatrolStateManager {
    */
   update(partial: Partial<PatrolState>): void {
     const now = new Date().toISOString()
+
+    if (partial.phase) {
+      partial = { ...partial, phase: mapLegacyPhase(partial.phase) }
+    }
 
     // ── Phase regression guard ──
     // Phases must only move forward in the pipeline. If an update tries to
@@ -238,10 +265,10 @@ class PatrolStateManager {
       // Mark new phase start (use skill-provided timestamp if available)
       this.state.phaseStartedAt = (partial as any).updatedAt as string || now
 
-      // Reset on new patrol start (only when phase ACTUALLY changes to 'starting',
+      // Reset on new patrol start (only when phase ACTUALLY changes to 'initializing',
       // not on repeated updates with same phase — otherwise phaseStartedAt gets
       // overwritten by file-watcher's late detection, losing SDK cold-start time)
-      if (newPhase === 'starting') {
+      if (newPhase === 'initializing') {
         this.state.totalCases = partial.totalCases ?? 0
         this.state.changedCases = partial.changedCases ?? 0
         this.state.processedCases = partial.processedCases ?? 0
