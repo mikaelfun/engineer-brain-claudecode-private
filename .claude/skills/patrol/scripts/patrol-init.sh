@@ -102,8 +102,16 @@ NOW_ISO=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 FORCE_JSON="false"
 [ "$FORCE" = "true" ] && FORCE_JSON="true"
 
-echo "{\"source\":\"$SOURCE\",\"pid\":$$,\"startedAt\":\"$NOW_ISO\",\"force\":$FORCE_JSON}" > "$PATROL_DIR/patrol.lock"
+# ── Generate patrol runId + create run directory ──
+RUN_ID=$(date +%y%m%d-%H%M)
+RUN_DIR="$PATROL_DIR/runs/$RUN_ID"
+SCRIPTS_DIR="$RUN_DIR/scripts"
+mkdir -p "$SCRIPTS_DIR"
+log "📁 Run directory: $RUN_DIR"
+
+echo "{\"source\":\"$SOURCE\",\"pid\":$$,\"startedAt\":\"$NOW_ISO\",\"force\":$FORCE_JSON,\"runId\":\"$RUN_ID\"}" > "$PATROL_DIR/patrol.lock"
 rm -f "$PATROL_DIR/patrol-progress.json"
+echo "{\"runId\":\"$RUN_ID\",\"startedAt\":\"$NOW_ISO\",\"source\":\"$SOURCE\",\"force\":$FORCE_JSON}" > "$RUN_DIR/run-info.json"
 
 # ── Step 4: update-phase → starting, then discovering ──
 update_phase --patrol-dir "$PATROL_DIR" --phase starting --source "$SOURCE"
@@ -114,6 +122,7 @@ log "⏳ Querying D365 active cases..."
 ACTIVE_JSON_TMP="$PATROL_DIR/.active-cases-tmp.json"
 pwsh -NoProfile -File "$PROJECT_ROOT/.claude/skills/d365-case-ops/scripts/list-active-cases.ps1" -OutputJson > "$ACTIVE_JSON_TMP" 2>&2
 LIST_EXIT=$?
+cp "$ACTIVE_JSON_TMP" "$SCRIPTS_DIR/list-active-cases.log" 2>/dev/null || true
 
 ACTIVE_CASES_JSON=""
 [ -f "$ACTIVE_JSON_TMP" ] && ACTIVE_CASES_JSON=$(cat "$ACTIVE_JSON_TMP")
@@ -231,6 +240,7 @@ log "⏳ Running archive/transfer detection..."
 DETECT_JSON_TMP="$PATROL_DIR/.detect-status-tmp.json"
 pwsh -NoProfile -File "$PROJECT_ROOT/.claude/skills/d365-case-ops/scripts/detect-case-status.ps1" \
   -CasesRoot "$CASES_ROOT" -ActiveCasesJson "$ACTIVE_CASES_JSON" > "$DETECT_JSON_TMP" 2>&2
+[ -f "$DETECT_JSON_TMP" ] && cp "$DETECT_JSON_TMP" "$SCRIPTS_DIR/detect-case-status.log" 2>/dev/null || true
 
 ARCHIVED_COUNT=0
 TRANSFERRED_COUNT=0
@@ -378,7 +388,8 @@ with open('$PATROL_DIR/patrol-state.json', 'w', encoding='utf-8') as f:
   rm -f "$PATROL_DIR/patrol.lock" "$ACTIVE_JSON_TMP" "$DETECT_JSON_TMP"
 
   # Output early-exit JSON to stdout
-  echo "{\"status\":\"early-exit\",\"cases\":[],\"totalFound\":$TOTAL_FOUND,\"changedCases\":0,\"skippedCount\":$SKIPPED_COUNT,\"archivedCount\":$ARCHIVED_COUNT,\"transferredCount\":$TRANSFERRED_COUNT,\"warmupStatus\":\"\",\"source\":\"$SOURCE\",\"force\":$FORCE_JSON,\"message\":\"All cases within skipHours\"}"
+  FINAL_JSON="{\"status\":\"early-exit\",\"runId\":\"$RUN_ID\",\"cases\":[],\"totalFound\":$TOTAL_FOUND,\"changedCases\":0,\"skippedCount\":$SKIPPED_COUNT,\"archivedCount\":$ARCHIVED_COUNT,\"transferredCount\":$TRANSFERRED_COUNT,\"warmupStatus\":\"\",\"source\":\"$SOURCE\",\"force\":$FORCE_JSON,\"message\":\"All cases within skipHours\"}"
+  echo "$FINAL_JSON" | tee "$SCRIPTS_DIR/patrol-init.json"
   exit 0
 fi
 
@@ -388,11 +399,12 @@ update_phase --patrol-dir "$PATROL_DIR" --phase warming-up --warmup-status "warm
 
 # IR/FDR/FWR batch (background, ~3s)
 pwsh -NoProfile -File "$PROJECT_ROOT/.claude/skills/d365-case-ops/scripts/check-ir-status-batch.ps1" \
-  -SaveMeta -MetaDir "$CASES_ROOT/active" >&2 &
+  -SaveMeta -MetaDir "$CASES_ROOT/active" > "$SCRIPTS_DIR/ir-check.log" 2>&1 &
 PID_IR=$!
 
 # Token daemon warmup (foreground, capture output)
-WARMUP_OUT=$(node "$PROJECT_ROOT/.claude/skills/browser-profiles/scripts/token-daemon.js" warmup 2>/dev/null || echo "daemon offline")
+WARMUP_OUT=$(node "$PROJECT_ROOT/.claude/skills/browser-profiles/scripts/token-daemon.js" warmup 2>"$SCRIPTS_DIR/warmup.log" || echo "daemon offline")
+echo "$WARMUP_OUT" >> "$SCRIPTS_DIR/warmup.log"
 WARMUP_STATUS=$(echo "$WARMUP_OUT" | head -1 | cut -c1-60)
 
 # Update warmup status immediately
@@ -420,7 +432,8 @@ update_phase --patrol-dir "$PATROL_DIR" --phase processing \
 
 # ── Output final JSON to stdout ──
 WARMUP_ESCAPED=$(echo "$WARMUP_STATUS" | python3 -c "import json,sys; print(json.dumps(sys.stdin.read().strip()))" 2>/dev/null || echo "\"\"")
-echo "{\"status\":\"ok\",\"cases\":$CASES_JSON_ARRAY,\"totalFound\":$TOTAL_FOUND,\"changedCases\":$CHANGED_COUNT,\"skippedCount\":$SKIPPED_COUNT,\"archivedCount\":$ARCHIVED_COUNT,\"transferredCount\":$TRANSFERRED_COUNT,\"warmupStatus\":$WARMUP_ESCAPED,\"source\":\"$SOURCE\",\"force\":$FORCE_JSON}"
+FINAL_JSON="{\"status\":\"ok\",\"runId\":\"$RUN_ID\",\"cases\":$CASES_JSON_ARRAY,\"totalFound\":$TOTAL_FOUND,\"changedCases\":$CHANGED_COUNT,\"skippedCount\":$SKIPPED_COUNT,\"archivedCount\":$ARCHIVED_COUNT,\"transferredCount\":$TRANSFERRED_COUNT,\"warmupStatus\":$WARMUP_ESCAPED,\"source\":\"$SOURCE\",\"force\":$FORCE_JSON}"
+echo "$FINAL_JSON" | tee "$SCRIPTS_DIR/patrol-init.json"
 
 # Cleanup temp files
 rm -f "$ACTIVE_JSON_TMP" "$DETECT_JSON_TMP"
