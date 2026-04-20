@@ -171,7 +171,7 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
     phase: 'starting',
     startedAt,
     source: 'webui',
-    detail: 'Launching patrol via SDK...',
+    detail: 'Launching SDK session (~15s cold start)...',
   })
 
   // Clear message store for fresh patrol run
