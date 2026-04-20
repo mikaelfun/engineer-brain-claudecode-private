@@ -75,6 +75,7 @@ app.get('/api/health', (c) => {
     status: 'ok',
     casesReady: isWorkspaceReady(),
     casesRoot: config.casesDir,
+    engineerName: config.engineerName,
     timestamp: new Date().toISOString(),
   })
 })

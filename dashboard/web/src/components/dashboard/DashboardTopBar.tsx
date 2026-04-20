@@ -12,6 +12,7 @@ interface DashboardTopBarProps {
   needActionCount: number
   lastPatrolTime?: string | null
   totalCases: number
+  engineerName?: string
 }
 
 function getGreeting(): string {
@@ -47,6 +48,7 @@ export function DashboardTopBar({
   needActionCount,
   lastPatrolTime,
   totalCases,
+  engineerName,
 }: DashboardTopBarProps) {
   const startPatrol = useStartPatrol()
   const cancelPatrol = useCancelPatrol()
@@ -74,7 +76,7 @@ export function DashboardTopBar({
           className="text-xl font-extrabold tracking-tight truncate"
           style={{ color: 'var(--text-primary)' }}
         >
-          {getGreeting()}, Engineer
+          {getGreeting()}, {engineerName || 'Engineer'}
         </h1>
         <p className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
           {totalCases} active case{totalCases !== 1 ? 's' : ''} ·{' '}

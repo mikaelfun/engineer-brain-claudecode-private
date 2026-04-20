@@ -115,6 +115,9 @@ export const config = {
   get cronJobsFile() {
     return join(runtimeDir, 'cron-jobs.json')
   },
+  get cronLogsDir() {
+    return join(runtimeDir, 'cron-logs')
+  },
   get authFile() {
     return join(runtimeDir, '.eb-auth.json')
   },
@@ -144,5 +147,9 @@ export const config = {
 
   get noteGapThresholdDays(): number {
     return (readProjectConfig() as any).noteGapThresholdDays ?? 3
+  },
+
+  get engineerName(): string {
+    return (readProjectConfig() as any).engineerName ?? 'Engineer'
   },
 }

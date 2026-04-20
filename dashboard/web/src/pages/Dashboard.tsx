@@ -10,7 +10,7 @@
  */
 import { useState, useRef, useMemo } from 'react'
 import { Loading, ErrorState } from '../components/common/Loading'
-import { useCases } from '../api/hooks'
+import { useCases, useHealth } from '../api/hooks'
 import {
   DashboardTopBar,
   ActionsList,
@@ -24,6 +24,7 @@ import { computeUrgencyScore } from '../utils/urgencyScore'
 
 export default function Dashboard() {
   const { data: casesData, isLoading, error } = useCases()
+  const { data: health } = useHealth()
   const [selectedIndex, setSelectedIndex] = useState(0)
   const pipelineRef = useRef<HTMLDivElement>(null)
 
@@ -64,6 +65,7 @@ export default function Dashboard() {
         needActionCount={needActionCount}
         lastPatrolTime={lastPatrolTime}
         totalCases={cases.length}
+        engineerName={health?.engineerName}
       />
 
       {/* Zone 1 + Zone 2: Actions + Pipeline (side by side on wide screens) */}
