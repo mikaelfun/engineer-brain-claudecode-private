@@ -58,27 +58,79 @@ function appendLog(msg) {
 
 async function ssoLogin(page) {
   const url = page.url();
+  log(`SSO check: ${url.substring(0, 100)}`);
   if (!url.includes('IdentityProvider') && !url.includes('login.microsoftonline')) return true;
 
   // Identity Provider Selection page
   if (url.includes('IdentityProvider')) {
     log('SSO: Identity Provider page, clicking Sign in...');
     const signIn = page.locator('a:has-text("Sign in")').first();
-    await signIn.click().catch(() => {});
-    await page.waitForTimeout(3000);
+    const visible = await signIn.isVisible().catch(() => false);
+    if (!visible) {
+      log('SSO: Sign in link NOT visible');
+      return false;
+    }
+
+    // Get href and navigate directly (headless click may not trigger redirect)
+    const href = await signIn.getAttribute('href').catch(() => null);
+    if (href) {
+      const signInUrl = href.startsWith('http') ? href : `https://portal.microsofticm.com${href}`;
+      log(`SSO: navigating to Sign in URL directly: ${signInUrl.substring(0, 100)}`);
+      await page.goto(signInUrl, { waitUntil: 'domcontentloaded', timeout: 20000 }).catch(() => {});
+    } else {
+      // Fallback: click
+      await signIn.click().catch(e => log(`SSO: click error: ${e.message.substring(0, 60)}`));
+    }
+
+    // Wait for redirect to login.microsoftonline or ICM (up to 15s)
+    let redirected = false;
+    for (let i = 0; i < 15; i++) {
+      await page.waitForTimeout(1000);
+      const curUrl = page.url();
+      if (curUrl.includes('login.microsoftonline') || curUrl.includes('/incidents/')) {
+        redirected = true;
+        break;
+      }
+    }
+    log(`SSO: after Sign in → ${page.url().substring(0, 100)} (redirected=${redirected})`);
+    if (!redirected) {
+      log('SSO: FAILED — still on IdentityProvider after 15s');
+      return false;
+    }
   }
 
   // Pick an account page
   if (page.url().includes('login.microsoftonline')) {
     log('SSO: Pick account page...');
+    await page.waitForTimeout(2000); // wait for tiles to render
     const tiles = await page.locator('[data-test-id]').all();
+    log(`SSO: found ${tiles.length} account tiles`);
+    let clicked = false;
     for (const t of tiles) {
       const txt = await t.textContent().catch(() => '');
       if (txt && txt.includes('@microsoft.com')) {
         await t.click();
         log('SSO: Selected @microsoft.com account');
+        clicked = true;
         break;
       }
+    }
+    if (!clicked) {
+      log('SSO: no @microsoft.com tile found, trying button scan...');
+      const btns = await page.locator('button').all();
+      for (const b of btns) {
+        const txt = await b.textContent().catch(() => '');
+        if (txt && txt.includes('@microsoft.com')) {
+          await b.click();
+          log('SSO: clicked @microsoft.com button (fallback)');
+          clicked = true;
+          break;
+        }
+      }
+    }
+    if (!clicked) {
+      log('SSO: FAILED — no @microsoft.com account found on page');
+      return false;
     }
     try {
       await page.waitForURL('**/incidents/**', { timeout: 20000 });
@@ -87,7 +139,11 @@ async function ssoLogin(page) {
     }
   }
 
-  return !page.url().includes('login');
+  const finalUrl = page.url();
+  // Must be on ICM, not on login or IdentityProvider
+  const ok = finalUrl.includes('microsofticm.com') && !finalUrl.includes('login') && !finalUrl.includes('IdentityProvider');
+  log(`SSO result: ${ok ? 'OK' : 'FAILED'} → ${finalUrl.substring(0, 100)}`);
+  return ok;
 }
 
 async function fetchIncident(page, incidentId) {
@@ -170,8 +226,6 @@ function writeResult(caseDir, incidentId, result) {
 // --- 单次模式 ---
 async function cleanStaleLock() {
   // Kill orphaned Edge processes that lock the profile directory
-  const lockfile = path.join(PROFILE, 'lockfile');
-  if (!fs.existsSync(lockfile)) return;
   try {
     const { execSync } = require('child_process');
     const out = execSync(
@@ -180,10 +234,15 @@ async function cleanStaleLock() {
     ).trim();
     if (out) {
       log(`Killed orphaned Edge PIDs: ${out.replace(/\n/g, ', ')}`);
-      // Wait for file handles to release
       await new Promise(r => setTimeout(r, 2000));
     }
   } catch { }
+
+  // Clean ALL known lock files (lockfile, SingletonLock, Default/lock)
+  for (const rel of ['lockfile', 'SingletonLock', 'SingletonSocket', 'SingletonCookie', 'Default/lock']) {
+    const p = path.join(PROFILE, rel);
+    try { if (fs.existsSync(p)) { fs.unlinkSync(p); log(`Cleaned lock: ${rel}`); } } catch {}
+  }
 }
 
 async function runSingle() {
@@ -306,15 +365,33 @@ async function runQueue() {
 async function runTokenOnly() {
   log('TOKEN-ONLY mode: refreshing ICM Bearer Token...');
   await cleanStaleLock();
-  const ctx = await pw.chromium.launchPersistentContext(PROFILE, { channel: 'msedge', headless: true });
+
+  let ctx;
+  try {
+    ctx = await pw.chromium.launchPersistentContext(PROFILE, { channel: 'msedge', headless: true });
+  } catch (e) {
+    log(`Launch failed: ${e.message.substring(0, 120)}`);
+    // Retry after cleaning locks again
+    await cleanStaleLock();
+    try {
+      ctx = await pw.chromium.launchPersistentContext(PROFILE, { channel: 'msedge', headless: true });
+    } catch (e2) {
+      log(`Launch retry failed: ${e2.message.substring(0, 120)}`);
+      console.log(`TOKEN_FAIL|launch failed: ${e2.message.substring(0, 80)}`);
+      process.exit(1);
+    }
+  }
+
   const page = ctx.pages()[0] || await ctx.newPage();
 
   let token = '';
   // 拦截任意 ICM API 请求的 auth header
   const handler = async (route) => {
-    const auth = route.request().headers()['authorization'];
-    if (auth && auth.length > 100 && !token) token = auth;
-    await route.continue();
+    try {
+      const auth = route.request().headers()['authorization'];
+      if (auth && auth.length > 100 && !token) token = auth;
+      await route.continue();
+    } catch { /* page may have closed */ }
   };
   await page.route('**/getdescriptionentries*', handler);
   await page.route('**/GetIncidentDetails*', handler);
@@ -322,23 +399,39 @@ async function runTokenOnly() {
   try {
     // 导航到任意 ICM incident（用一个固定的占位 ID，页面会自动调 API）
     const targetId = args[args.indexOf('--token-only') + 1] || '51000000969736';
+    log(`Navigating to ICM incident ${targetId}...`);
     await page.goto(`${ICM_BASE}/${targetId}/summary`, {
-      waitUntil: 'domcontentloaded', timeout: 15000
+      waitUntil: 'domcontentloaded', timeout: 20000
     });
+
+    log(`Landed on: ${page.url().substring(0, 100)}`);
 
     if (page.url().includes('IdentityProvider') || page.url().includes('login')) {
       const ok = await ssoLogin(page);
-      if (!ok) { console.log('TOKEN_FAIL|SSO failed'); await ctx.close(); process.exit(1); }
+      if (!ok) {
+        log('SSO failed in token-only mode');
+        console.log('TOKEN_FAIL|SSO failed');
+        await ctx.close();
+        process.exit(1);
+      }
       if (!page.url().includes('/incidents/details/')) {
+        log(`SSO done but on ${page.url().substring(0, 80)}, re-navigating...`);
         await page.goto(`${ICM_BASE}/${targetId}/summary`, {
-          waitUntil: 'domcontentloaded', timeout: 15000
+          waitUntil: 'domcontentloaded', timeout: 20000
         });
+        log(`Re-nav landed on: ${page.url().substring(0, 100)}`);
       }
     }
 
+    log('Waiting for token intercept...');
     for (let i = 0; i < 30 && !token; i++) await page.waitForTimeout(500);
+    if (!token) {
+      log('No token after 15s, reloading page...');
+      await page.reload({ waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => {});
+      for (let i = 0; i < 20 && !token; i++) await page.waitForTimeout(500);
+    }
   } catch (e) {
-    log(`ERROR: ${e.message}`);
+    log(`ERROR: ${e.message.substring(0, 150)}`);
   }
 
   await ctx.close();
@@ -348,6 +441,7 @@ async function runTokenOnly() {
     log(`Token refreshed (${token.length} chars) → ${TOKEN_CACHE}`);
     console.log(`TOKEN_OK|${token.length}`);
   } else {
+    log('TOKEN_FAIL: no token captured after all attempts');
     console.log('TOKEN_FAIL|no token captured');
     process.exit(1);
   }

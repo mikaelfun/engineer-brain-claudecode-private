@@ -149,18 +149,43 @@ function writeCache(cacheFile, data) {
   fs.writeFileSync(p, JSON.stringify(data, null, 2));
 }
 
+/**
+ * Decode JWT exp claim from a Bearer token (no verification, just base64 decode).
+ * Returns epoch seconds or null if not a valid JWT.
+ */
+function getJwtExp(tokenStr) {
+  try {
+    const raw = (tokenStr || '').replace(/^Bearer\s+/i, '');
+    const parts = raw.split('.');
+    if (parts.length !== 3) return null;
+    let payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    while (payload.length % 4) payload += '=';
+    const decoded = JSON.parse(Buffer.from(payload, 'base64').toString('utf-8'));
+    return decoded.exp || null;
+  } catch { return null; }
+}
+
 function isCacheValid(cacheFile, ttlMinutes) {
   if (!cacheFile) return false; // session tab: no cache, always "needs processing"
   const cache = readCache(cacheFile);
   if (!cache) return false;
 
-  // localStorage 方式: expiresOn 字段
+  // Priority 1: JWT exp claim (most accurate for request-intercept tokens).
+  // The token may have been intercepted long after issuance; cache.timestamp
+  // only records when WE cached it, not when the IdP issued it. JWT exp is
+  // the ground truth.
+  const jwtExp = getJwtExp(cache.token);
+  if (jwtExp) {
+    return (Date.now() / 1000) < (jwtExp - 300); // 5min buffer
+  }
+
+  // Priority 2: localStorage 方式: expiresOn 字段
   if (cache.expiresOn) {
     const expires = parseInt(cache.expiresOn, 10);
     return (Date.now() / 1000) < (expires - 300); // 5min 余量
   }
 
-  // request-intercept 方式: timestamp 字段（预留 5 分钟余量）
+  // Priority 3: request-intercept 方式: timestamp 字段（预留 5 分钟余量）
   if (cache.timestamp) {
     const ageMin = (Date.now() / 1000 - cache.timestamp) / 60;
     return ageMin < (ttlMinutes - 5);
@@ -179,6 +204,12 @@ function getCacheRemainMin(cacheFile, ttlMinutes) {
   if (!cacheFile) return -1; // session tab
   const cache = readCache(cacheFile);
   if (!cache) return -1;
+
+  // Priority 1: JWT exp (ground truth)
+  const jwtExp = getJwtExp(cache.token);
+  if (jwtExp) {
+    return Math.round((jwtExp - Date.now() / 1000) / 60);
+  }
 
   if (cache.expiresOn) {
     const expires = parseInt(cache.expiresOn, 10);

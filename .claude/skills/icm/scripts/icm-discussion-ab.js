@@ -77,13 +77,26 @@ function computeNewEntries(newCount, outPath) {
   }
 }
 
-// --- agent-browser 命令执行 ---
-function ab(cmd, timeout = 30000) {
-  try {
-    return execSync(`agent-browser ${cmd}`, { encoding: 'utf-8', timeout, stdio: ['pipe','pipe','pipe'] }).trim();
-  } catch(e) {
-    return e.stdout?.trim() || '';
+// --- agent-browser 命令执行（带 retry + 错误日志）---
+function ab(cmd, timeout = 30000, retries = 1) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return execSync(`agent-browser ${cmd}`, { encoding: 'utf-8', timeout, stdio: ['pipe','pipe','pipe'] }).trim();
+    } catch(e) {
+      const stdout = e.stdout?.trim() || '';
+      const stderr = e.stderr?.trim() || '';
+      const err = stderr || e.message?.split('\n')[0] || 'unknown';
+      if (attempt < retries) {
+        log(`ab retry ${attempt+1}: "${cmd.substring(0,40)}" failed: ${err.substring(0,80)}`);
+        // Wait briefly before retry
+        try { execSync('ping -n 2 127.0.0.1 >nul', { timeout: 3000 }); } catch {}
+        continue;
+      }
+      log(`ab FAIL: "${cmd.substring(0,40)}" → ${err.substring(0,120)}`);
+      return stdout;
+    }
   }
+  return '';
 }
 
 // --- HTTPS JSON 请求 ---
@@ -108,13 +121,34 @@ function fetchJson(url, token) {
   });
 }
 
+// --- JWT exp 解码 ---
+function getJwtExp(tokenStr) {
+  try {
+    const raw = (tokenStr || '').replace(/^Bearer\s+/i, '');
+    const parts = raw.split('.');
+    if (parts.length !== 3) return null;
+    let payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    while (payload.length % 4) payload += '=';
+    const decoded = JSON.parse(Buffer.from(payload, 'base64').toString('utf-8'));
+    return decoded.exp || null;
+  } catch { return null; }
+}
+
 // --- Token 缓存 ---
 function getCachedToken() {
   if (!fs.existsSync(TOKEN_CACHE)) return null;
   try {
     const cache = JSON.parse(fs.readFileSync(TOKEN_CACHE, 'utf-8'));
+    if (!cache.token || cache.token.length <= 100) return null;
+    // Priority: use JWT exp claim (ground truth) over fixed TTL
+    const jwtExp = getJwtExp(cache.token);
+    if (jwtExp) {
+      if ((Date.now() / 1000) < (jwtExp - 300)) return cache.token; // 5min buffer
+      return null; // JWT actually expired
+    }
+    // Fallback: cache timestamp + fixed 170min TTL
     const ageMin = (Date.now()/1000 - cache.timestamp) / 60;
-    if (ageMin < 170 && cache.token?.length > 100) return cache.token;
+    if (ageMin < 170) return cache.token;
   } catch {}
   return null;
 }
@@ -137,45 +171,64 @@ async function validateToken(token) {
 // --- SSO 流程（agent-browser）---
 function doSSO(targetUrl) {
   log('agent-browser SSO starting...');
-  ab('close --all', 5000);
+  ab('close --all', 5000, 0);
 
-  const openResult = ab(`--executable-path "${EDGE_EXE}" --session-name icm-discussion open "${targetUrl}"`, 35000);
+  const openResult = ab(`--executable-path "${EDGE_EXE}" --session-name icm-discussion open "${targetUrl}"`, 35000, 0);
   log(`Open: ${openResult.split('\n')[0] || '(no output)'}`);
+  if (!openResult || openResult.includes('Could not configure') || openResult.includes('error')) {
+    log('agent-browser open failed, aborting SSO');
+    return false;
+  }
 
   // 等页面初始加载
-  ab('wait 4000', 8000);
+  ab('wait 4000', 8000, 0);
 
-  let url = ab('get url', 5000);
+  // get url with retry — CDP 间歇性超时是 L2 的主要失败点
+  let url = ab('get url', 8000, 2);
+  if (!url) { log('get url returned empty after retries'); return false; }
 
   // Step 1: Identity Provider Selection
   if (url.includes('IdentityProvider')) {
     log('SSO: Identity Provider page...');
-    const snap = ab('snapshot -i', 10000);
+    const snap = ab('snapshot -i', 10000, 1);
+    if (!snap) { log('snapshot returned empty'); return false; }
     const m = snap.match(/link "Sign in" \[ref=(e\d+)\]/);
-    if (m) ab(`click @${m[1]}`, 8000);
-    ab('wait 4000', 8000);
-    url = ab('get url', 5000);
+    if (m) {
+      ab(`click @${m[1]}`, 8000, 1);
+    } else {
+      log('Sign in link not found in snapshot');
+      return false;
+    }
+    ab('wait 5000', 10000, 0);
+    url = ab('get url', 8000, 2);
+    if (!url) { log('get url empty after Sign in click'); return false; }
   }
 
   // Step 2: Pick account
   if (url.includes('login.microsoftonline')) {
     log('SSO: Pick account page...');
-    const snap = ab('snapshot -i', 10000);
+    // Wait a bit for account tiles to render
+    ab('wait 2000', 5000, 0);
+    const snap = ab('snapshot -i', 10000, 1);
+    if (!snap) { log('snapshot empty on Pick Account page'); return false; }
     const m = snap.match(/button "Sign in with [^"]*@microsoft\.com[^"]*" \[ref=(e\d+)\]/);
     if (m) {
-      ab(`click @${m[1]}`, 8000);
+      ab(`click @${m[1]}`, 8000, 1);
     } else {
-      ab('find text "@microsoft.com" click', 8000);
+      log('No @microsoft.com tile found, trying find+click...');
+      ab('find text "@microsoft.com" click', 8000, 0);
     }
     // 等 SSO redirect 完成
     for (let i = 0; i < 25; i++) {
-      ab('wait 1000', 3000);
-      url = ab('get url', 5000);
-      if (url.includes('/incidents/') || url.includes('microsofticm.com/imp')) break;
+      ab('wait 1000', 3000, 0);
+      url = ab('get url', 5000, 1);
+      if (url && (url.includes('/incidents/') || url.includes('microsofticm.com/imp'))) break;
     }
   }
 
-  return url.includes('microsofticm.com') && !url.includes('login') && !url.includes('IdentityProvider');
+  const ok = !!url && url.includes('microsofticm.com') && !url.includes('login') && !url.includes('IdentityProvider');
+  log(`SSO result: ${ok ? 'OK' : 'FAILED'} (url=${(url || '').substring(0, 80)})`);
+  return ok;
 }
 
 // --- 通过 CDP 拦截 requestWillBeSent 拿 Bearer Token ---
@@ -289,17 +342,29 @@ async function acquireToken() {
     log('agent-browser SSO failed');
   }
 
-  // Level 3: Playwright daemon --token-only（最终回落）
-  log('Falling back to Playwright daemon --token-only...');
+  // Level 3: Playwright --token-only（最终回落，独立 profile + 完整锁清理）
+  log('Falling back to Playwright --token-only...');
   try {
     const daemonPath = path.join(__dirname, 'icm-discussion-daemon.js');
-    const out = execSync(`node "${daemonPath}" --token-only`, { encoding: 'utf-8', timeout: 45000 });
-    if (out.includes('TOKEN_OK')) {
+    const out = execSync(`node "${daemonPath}" --token-only`, {
+      encoding: 'utf-8',
+      timeout: 60000,
+      stdio: ['pipe', 'pipe', 'pipe']
+    });
+    // Log stderr for diagnostics (SSO steps, lock cleanup, etc.)
+    const stdout = out || '';
+    log(`Playwright stdout: ${stdout.split('\n').filter(l => l.trim()).slice(-3).join(' | ')}`);
+    if (stdout.includes('TOKEN_OK')) {
       const token = getCachedToken();
-      if (token) { log('Token via Playwright daemon fallback'); return token; }
+      if (token) { log('Token via Playwright fallback'); return token; }
     }
+    log(`Playwright returned but no TOKEN_OK: ${stdout.substring(0, 200)}`);
   } catch(e) {
+    const stderr = e.stderr?.trim() || '';
+    const stdout = e.stdout?.trim() || '';
     log(`Playwright fallback failed: ${e.message.split('\n')[0]}`);
+    if (stderr) log(`  stderr: ${stderr.split('\n').slice(-5).join(' | ').substring(0, 300)}`);
+    if (stdout) log(`  stdout: ${stdout.split('\n').slice(-3).join(' | ').substring(0, 200)}`);
   }
 
   return null;
