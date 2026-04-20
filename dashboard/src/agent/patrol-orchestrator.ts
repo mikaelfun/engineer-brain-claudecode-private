@@ -17,7 +17,7 @@
  *   - loadPatrolLastRun(): Read patrol-state.json
  */
 import { query, type Options } from '@anthropic-ai/claude-agent-sdk'
-import { existsSync, readFileSync, writeFileSync, mkdirSync, unlinkSync, statSync, appendFileSync, readdirSync } from 'fs'
+import { existsSync, readFileSync, writeFileSync, mkdirSync, unlinkSync, statSync, appendFileSync, readdirSync, copyFileSync } from 'fs'
 import { join, resolve } from 'path'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
@@ -451,6 +451,20 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
 
     registryHandle.complete()
     console.log(`[sdk-patrol] SDK query completed`)
+
+    // Copy SDK session log to run directory if available
+    try {
+      const lockPath = join(config.patrolDir, 'patrol.lock')
+      if (existsSync(lockPath)) {
+        const lock = JSON.parse(readFileSync(lockPath, 'utf-8'))
+        if (lock.runId) {
+          const runDir = join(config.patrolDir, 'runs', lock.runId)
+          if (existsSync(runDir) && existsSync(sdkLogPath)) {
+            copyFileSync(sdkLogPath, join(runDir, 'sdk-session.jsonl'))
+          }
+        }
+      }
+    } catch { /* non-fatal */ }
 
     // Read the result written by /patrol skill
     const patrolResult = loadPatrolLastRun() as PatrolResult | null
