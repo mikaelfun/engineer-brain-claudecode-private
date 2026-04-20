@@ -70,6 +70,7 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
      CASE_LIST_CSV="$CASES"
      TOTAL_CASES="$CHANGED_CASES"
      PATROL_START_ISO=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+     RUN_ID=$(echo "$INIT_JSON" | python3 -c "import json,sys; print(json.load(sys.stdin).get('runId',''))")
      ```
 
    **🚨 路径硬规则（反复出问题，必须严格遵守）**：
@@ -78,9 +79,9 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
    - **绝对禁止**：`C:\Users\...`、`C:/Users/...`、`/c/Users/...` 任何形式的绝对路径
    - 违反此规则会导致：文件写到错误位置、`__teams-queue__` 幽灵目录、path 中反斜杠被当转义符
 
-6. **Streaming Pipeline：启动 casework(mode=patrol) + 推进**
+2. **Streaming Pipeline：启动 casework(mode=patrol) + 推进**
 
-   **6a. 全量并行启动 casework(mode=patrol)**
+   **2a. 全量并行启动 casework(mode=patrol)**
 
    对每个待处理的 case spawn casework(mode=patrol) agent：
 
@@ -88,7 +89,7 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
    ```bash
    python3 .claude/skills/casework/scripts/update-state.py \
      --case-dir "{casesRoot}/active/{caseNumber}" --init --run-type patrol --step start --status active \
-     --case-number "{caseNumber}"
+     --case-number "{caseNumber}" --parent-run-id "$RUN_ID"
    ```
 
    ```
@@ -111,7 +112,7 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
    → 记录返回的 task_id 和 output_file_path
    ```
 
-   **6a-2. Agent Output（ISS-231：自动保存到 runs/{runId}/agents/）**
+   **2a-2. Agent Output（ISS-231：自动保存到 runs/{runId}/agents/）**
 
    每当 casework/troubleshooter/email-drafter/summarize **任一后台 agent 完成**（收到 `<task-notification>`），Dashboard 的 patrol-orchestrator.ts 会自动将 output 保存到 `{caseDir}/.casework/runs/{runId}/agents/{agentType}.log`。
    **不需要** patrol agent 手动读取和追加 output。
@@ -119,7 +120,7 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
    - **一次性启动所有 Agent（全量并行）**—— 各 agent 写不同 case 目录，无资源竞争
    - 初始化每个 case 的状态追踪：`phase: "gathering"`
 
-   **6b. 轮询模式分流（source 决定）**
+   **2b. 轮询模式分流（source 决定）**
 
    根据 Step 1 写入的 lock 文件中 `source` 字段分流：
 
@@ -130,7 +131,7 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
      - 不调用 patrol-progress.py，不输出进度表
      - 其余逻辑（归档检测、cleanup、写 patrol-state.json）与 cli 模式相同
 
-   **6c. 统一轮询循环（CLI 模式，Streaming Pipeline 核心）**
+   **2c. 统一轮询循环（CLI 模式，Streaming Pipeline 核心）**
 
    每个 case 维护独立的状态机（见核心原则），轮询循环每 **12 秒** 检查并推进所有 case：
 
@@ -341,7 +342,7 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
    - 所有 case 到达 `done` 状态
    - 或总时长超过 25 分钟（超时跳出，未完成 case 标记为 timeout）
 
-7. **收尾（patrol-finalize.sh）**
+3. **收尾（patrol-finalize.sh）**
 
    一个脚本完成所有收尾：orphan 进程清理、结果聚合、patrol-state.json 写入、lock 释放。
 
