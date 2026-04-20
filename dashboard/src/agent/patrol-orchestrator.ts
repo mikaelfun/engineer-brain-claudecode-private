@@ -171,7 +171,7 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
     phase: 'starting',
     startedAt,
     source: 'webui',
-    detail: 'Launching SDK session (~15s cold start)...',
+    detail: 'Launching SDK session...',
   })
 
   // Clear message store for fresh patrol run
@@ -402,8 +402,29 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
                 content: toolContent,
                 timestamp: ts,
               })
+              // Update detail with tool call summary (e.g. "Reading SKILL.md", "Running patrol-init.sh")
+              const toolDetail = parsed.toolName === 'Read' ? `Reading ${(parsed.toolInput?.file_path || '').split(/[/\\]/).pop() || 'file'}` :
+                parsed.toolName === 'Bash' ? `Running ${(parsed.toolInput?.command || '').slice(0, 50)}` :
+                `${parsed.toolName}: ${toolContent.slice(0, 40)}`
+              patrolStateManager.update({ detail: toolDetail })
+            } else if (parsed.kind === 'thinking') {
+              // Extract first line of thinking as sub-detail
+              const firstLine = (parsed.content || '').split('\n')[0].trim().slice(0, 80)
+              if (firstLine) {
+                patrolStateManager.update({ detail: firstLine })
+              }
+              sseManager.broadcast('patrol-main-progress' as any, {
+                kind: parsed.kind,
+                content: parsed.content,
+                timestamp: ts,
+              })
+              patrolMessageStore.add({
+                kind: parsed.kind,
+                content: parsed.content,
+                timestamp: ts,
+              })
             } else {
-              // 'response' or 'thinking'
+              // 'response'
               sseManager.broadcast('patrol-main-progress' as any, {
                 kind: parsed.kind,
                 content: parsed.content,
