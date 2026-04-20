@@ -787,7 +787,7 @@ for ($i = 0; $i -lt $allPages.Count; $i++) {
 
         # Convert to markdown (with image extraction)
         $imgDir = Join-Path $outDir "assets"
-        $imgRelPath = "./assets"
+        $imgRelPath = "assets"
         # Use page-specific prefix to avoid filename collisions in shared assets dirs
         # Include dedup suffix if page name was duplicated
         $imgPrefixBase = Sanitize-ImgPrefix $page.Name

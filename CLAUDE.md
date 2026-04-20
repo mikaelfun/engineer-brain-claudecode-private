@@ -84,6 +84,16 @@ cd dashboard && npm run dev
 
 **Subagent 模型**：所有 spawn 的 subagent 默认使用 **opus** model（`model: "opus"`）。不用担心成本和效率。
 
+## 改动前必读
+
+| 改什么 | 先读什么 |
+|--------|---------|
+| SSE / 状态文件 / 日志 | `playbooks/guides/observability-guide.md` |
+| Dashboard UI | `playbooks/guides/dashboard-design-system.md` |
+| Dashboard API | `playbooks/guides/dashboard-integration.md` |
+| Agent 注册 / SDK query | `playbooks/guides/sdk-session-registry.md` |
+| Playwright / 截图 / 进程 | `playbooks/guides/platform-gotchas.md` |
+
 ## 安全红线
 - ❌ 不直接发邮件给客户
 - ❌ **禁止在自动流程（patrol/casework agent）中调用 D365 邮件脚本**（`new-email.ps1`、`reply-email.ps1`、`edit-draft.ps1`）——邮件草稿只保存到本地 `{caseDir}/drafts/` 目录
@@ -140,6 +150,7 @@ actualStatus 有效值：`pending-engineer` | `pending-customer` | `pending-pg` 
 | Dashboard UI 修改（完整设计规范） | `playbooks/guides/dashboard-design-system.md` |
 | Dashboard API（完整端点列表） | `playbooks/guides/dashboard-integration.md` |
 | Observability（状态 · 日志 · SSE） | `playbooks/guides/observability-guide.md` |
+| 新增 SDK query 调用 / Agent Monitor 观测 | `playbooks/guides/sdk-session-registry.md` |
 | Case 目录结构（完整 schema） | `playbooks/schemas/case-directory.md` |
 | Todo 格式与规则 | `playbooks/schemas/todo-format.md` |
 | Case 生命周期 | `playbooks/rules/case-lifecycle.md` |

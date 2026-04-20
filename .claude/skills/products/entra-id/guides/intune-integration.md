@@ -1,7 +1,7 @@
 # ENTRA-ID Intune Integration — Quick Reference
 
-**Entries**: 49 | **21V**: All applicable
-**Last updated**: 2026-04-07
+**Entries**: 52 | **21V**: All applicable
+**Last updated**: 2026-04-18
 **Keywords**: intune, mdm, linux, enrollment, linux-sso, device-registration
 
 > This topic has a fusion guide with detailed troubleshooting flow
@@ -51,6 +51,9 @@
 | 38 📋 | Windows LAPS Event ID 10013: LAPS failed to find the configured local administrator account on th... | Managed local admin account in GPO/Intune does not exist on machine, or trail... | Open Local Users and Groups to verify account. Check for trailing spaces in G... | 🟢 8.5 | ADO Wiki |
 | 39 📋 | Windows LAPS Event ID 10027: Unable to create acceptable new password. Password length/complexity... | LAPS password settings (Intune/GPO) conflict with machine local or domain pas... | Run secpol.msc > Account Policies > Password Policy. Align LAPS password sett... | 🟢 8.5 | ADO Wiki |
 | 40 📋 | Windows LAPS Event ID 10034: Configured encryption principal is an isolated/ambiguous name. Canno... | Authorized Password Decryptors in GPO/Intune uses ambiguous name instead of d... | Update GPO/Intune Authorized Password Decryptors setting to use DomainName\Us... | 🟢 8.5 | ADO Wiki |
+| NEW 📋 | The MDM Terms of Use are set in the Mobility (MDM and MAM) blade of Azure Active Directory for the M... | N/A | N/A | 🟡 6.5 | ContentIdea |
+| NEW 📋 | You are using AAD Joined Windows Scenario the appliance of Manage account protection settings with e... | AAD Group membership evaluation currently does not work for the built-in group o... | Two proposed workarounds.  1st Solution    create a new local group add the SID ... | 🟢 8.0 | ContentIdea |
+| NEW 📋 | MDM Terms of Use troubleshooting for Azure Active Directory Mobility blade. Users not receiving MDM ... | N/A | N/A | 🟡 6.5 | ContentIdea |
 | ... | *9 more entries* | | | | |
 
 ## Quick Troubleshooting Path

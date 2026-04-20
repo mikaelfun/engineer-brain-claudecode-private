@@ -137,3 +137,18 @@
 - 3. **Network trace**: Clear DNS cache first (`ipconfig /flushdns`) before capturing
 
 ---
+
+
+---
+
+## Incremental Scenarios (2026-04-18)
+
+## Scenario 12: Azure AD joined machines take approximately 3 hours  (=2.77 hours) to boot up the logon screen. The machine is not hung ...
+> Source: contentidea-kb (entra-id-3668) | Applicability: unverified
+
+### Troubleshooting Steps
+1. **Confirm symptom**: Azure AD joined machines take approximately 3 hours  (=2.77 hours) to boot up the logon screen. The machine is not hung and you will see a black screen with spinning dots. 2.77 hours later, after the ...
+2. **Root cause**: When you logon with AzureAD account synced with on-premises AD, the domain information of the on-premises AD is set to the client OS. If the on-premises Domain NetBIOS name and the Work Group name of ...
+3. **Solution**: Change the Work Group name of the client to a different name than the Domain NetBIOS name of the on-premises AD. This bug will be fixed in the future release.
+
+---

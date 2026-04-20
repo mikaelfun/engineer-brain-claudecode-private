@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-04-04",
+  "lastUpdated": "2026-04-18",
   "product": "vm",
   "noGapDataFound": false,
   "unsupportedFeatures": [
@@ -27,6 +27,17 @@
       "feature": "NVIDIA GRID driver v550 on Mooncake",
       "description": "The latest NVIDIA GRID driver version 550 is not working in Mooncake. Customers should use GRID driver version 535 instead (download: https://download.microsoft.com/download/8/d/a/8da4fb8e-3a9b-4e6a-bc9a-72ff64d7a13c/NVIDIA-Linux-x86_64-535.161.08-grid-azure.run).",
       "sourceRef": "POD/VMSCIM/4. Services/VM/SME Topics/4. Linux on Azure/4.11-Enable CUDA on NVadsA10v5 Series VM running U.md"
+    },
+    {
+      "feature": "Azure Serial Console",
+      "description": "Azure Serial Console is not yet available in the Azure China cloud (Mooncake). Engineers and customers cannot use Serial Console for VM troubleshooting in 21V environment. Must use alternative methods like attaching OS disk to recovery VM, or using Azure Linux Agent for password resets.",
+      "sourceRef": "https://learn.microsoft.com/en-us/troubleshoot/azure/virtual-machines/linux/serial-console-linux"
+    },
+    {
+      "feature": "VM Inspector (Preview)",
+      "description": "VM Inspector is a self-help diagnostic tool for Azure VMs that collects OS logs and configuration files from the OS disk. It is only supported in specific global Azure regions (Australia East, East US, East US2, North Europe, SouthCentral US, SouthEast Asia, UK South, WestCentral US, West Europe, West US2). Azure China (Mooncake) regions are not listed as supported.",
+      "sourceRef": "mslearn",
+      "sourceUrl": "https://learn.microsoft.com/en-us/troubleshoot/azure/virtual-machines/windows/vm-inspector-azure-virtual-machines"
     }
   ],
   "partialFeatures": [
@@ -34,6 +45,12 @@
       "feature": "Azure Disk Encryption (ADE) on Mooncake RHEL images from 云角 (CloudAngle)",
       "description": "Mooncake RHEL images are provided by 云角 (CloudAngle, a 3rd-party provider) where the OS disk is configured as an LVM volume mounted at /root (/dev/mapper/rhel-root). The ADE extension falsely detects the OS disk as already encrypted because it matches two conditions: (1) mount source contains '/dev/mapper', (2) mount target is '/root'. This is a Mooncake-specific issue; CentOS and Global Azure RHEL images use first-party images without LVM OS disks and are unaffected. Workaround: the issue is in the ADE extension logic misidentifying LVM-based OS disks.",
       "sourceRef": "POD/VMSCIM/4. Services/VM/SME Topics/4. Linux on Azure/4.1-118121719461691 - 云角redhat磁盘加密问题 -Jessie.md"
+    },
+    {
+      "feature": "Windows 11 VM SKU availability",
+      "description": "Windows 11 support depends on specific VM series (Gen2 + Trusted Launch + compatible CPU). 21V may have different VM SKU availability, so the support matrix may not directly apply.",
+      "source": "mslearn",
+      "sourceUrl": "https://learn.microsoft.com/en-us/troubleshoot/azure/virtual-machines/windows/windows-11-support-azure-virtual-machines"
     }
   ]
 }

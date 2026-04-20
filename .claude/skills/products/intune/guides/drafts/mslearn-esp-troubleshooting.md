@@ -1,73 +1,66 @@
-# Enrollment Status Page (ESP) Troubleshooting Guide
+---
+title: Troubleshooting the Enrollment Status Page (ESP)
+source: mslearn
+sourceUrl: https://learn.microsoft.com/en-us/troubleshoot/mem/intune/device-enrollment/understand-troubleshoot-esp
+product: intune
+date: 2026-04-18
+type: troubleshooting-guide
+---
 
-Source: https://learn.microsoft.com/en-us/troubleshoot/mem/intune/device-enrollment/understand-troubleshoot-esp
+# Troubleshooting the Enrollment Status Page (ESP)
 
 ## Overview
-
-The ESP can be used as part of any Windows Autopilot provisioning scenario or separately during default OOBE for Microsoft Entra join. ESP settings and tracking info are logged in the device registry.
+The Enrollment Status Page (ESP) tracks device setup progress during Windows Autopilot and standard OOBE Entra join scenarios.
 
 ## Log Collection
 
 ### User-initiated
-- ESP timeout → user selects **Collect logs** → copy to USB
+When ESP times out, user can select Collect logs and copy to USB drive.
 
-### Command Prompt (Shift+F10 during OOBE on non-S mode)
-- **User-driven Autopilot**: `mdmdiagnosticstool.exe -area Autopilot -cab <path>`
-- **Self-deploying / White glove**: `mdmdiagnosticstool.exe -area Autopilot;TPM -cab <path>`
-- **Runtime provisioning (1809+)**: `mdmdiagnosticstool.exe -area DeviceProvisioning -cab <path>`
+### Command Prompt (Shift+F10 in OOBE on non-S mode)
+- User-driven Autopilot: `mdmdiagnosticstool.exe -area Autopilot -cab <path>`
+- Self-deploying/White glove: `mdmdiagnosticstool.exe -area Autopilot;TPM -cab <path>`
+- Runtime provisioning: `mdmdiagnosticstool.exe -area DeviceProvisioning -cab <path>`
 
-### Key file in cab
-- `MDMDiagReport_RegistryDump.Reg` — contains all MDM enrollment registry keys
-
-## Registry Keys
+## Key Registry Locations
 
 ### ESP Settings
 `HKLM\SOFTWARE\Microsoft\Enrollments\{EnrollmentGUID}\FirstSync`
 
-### Skip ESP phases via CSP
-- `SkipUserStatusPage` = 0xffffffff → skip account setup
-- `SkipDeviceStatusPage` = 0xffffffff → skip device setup
-
-### EnrollmentStatusTracking (Win10 1903+)
+### ESP Tracking (Win10 1903+)
 `HKLM\SOFTWARE\Microsoft\Windows\Autopilot\EnrollmentStatusTracking`
 
 Subkeys:
-- **Device\DevicePreparation** — SideCar (IME) install state: 1=NotInstalled, 2=NotRequired, 3=Completed, 4=Error
-- **Device\Setup** — Win32 app tracking, TrackingPoliciesCreated, per-app InstallationState
-- **ESPTrackingInfo\Diagnostics** — LOB/MSI apps, Wi-Fi profiles, SCEP certs, Store apps status with timestamps
-- **{User_SID}** — account setup phase Win32 apps (user context)
+- `Device/DevicePreparation` - IME (SideCar) install state
+- `Device/Setup` - Win32 app tracking and install status
+- `ESPTrackingInfo/Diagnostics` - App and policy tracking with timestamps
+- `{User_SID}` - User context Win32 apps (account setup phase)
 
-### App InstallationState values
-1. NotInstalled
-2. InProgress
-3. Completed
-4. Error (ESP stops installing further apps)
+### InstallationState Values
+1 = NotInstalled, 2 = InProgress (or NotRequired for DevicePrep), 3 = Completed, 4 = Error
 
-## Diagnosing with PowerShell
+## Skip ESP Phases via CSP
+- Skip user setup: `./Vendor/MSFT/DMClient/Provider/ProviderID/FirstSyncStatus/SkipUserStatusPage`
+- Skip device setup: `./Vendor/MSFT/DMClient/Provider/ProviderID/FirstSyncStatus/SkipDeviceStatusPage`
+- Registry value 0xffffffff indicates skipped
+
+## Disable User ESP via Custom OMA-URI
+- OMA-URI: `./Vendor/MSFT/DMClient/Provider/MS DM Server/FirstSyncStatus/SkipUserStatusPage`
+- Data type: Boolean, Value: True
+
+## Diagnostic Script
 ```powershell
 Install-Script -Name Get-AutopilotDiagnostics -Force
-Get-AutopilotDiagnostics -CABFile <pathToOutputCabFile>
+Get-AutopilotDiagnostics -CABFile <path>
 ```
-
-## Unexpected Reboots
-- Check Event Viewer for `RebootRequiredURI` (event value 2800)
-- Log shows which URI triggered reboot (e.g., Update/ManagePreviewBuilds)
 
 ## Common Issues
 
 ### Apps not tracked by ESP
-- Apps must be assigned as **required** to device (device setup) or user (account setup) groups
-- Must enable "Block device use until all apps installed" or include in blocking list
-- Device-context apps must have no user-context applicability rules
+Requirements: apps must be assigned as Required to device/user Entra group, and either Block device use until all apps installed or included in the blocking list.
 
-### ESP showing for non-Autopilot enrollments
-- ESP shows for all enrollment methods including co-management and first user login
-- Use **Only show page to devices provisioned by OOBE** to limit
+### Unexpected Reboots
+Check Event Viewer for RebootRequiredURI event (ID 2800) to identify which URI triggered the reboot. Reboots only supported during device setup phase.
 
-### Disable user ESP portion
-OMA-URI: `./Vendor/MSFT/DMClient/Provider/MS DM Server/FirstSyncStatus/SkipUserStatusPage`
-Data type: Boolean, Value: True
-
-## App Deployment Timeout
-- Common cause: timeout value too short for number of required apps (e.g., 5 min for 15+ apps)
-- Check `InstallationState` = 4 (Error) in registry → review IME log for cause
+### App Deployment Failures
+If any app InstallationState = 4 (Error), ESP stops installing apps. Check IME log for root cause. Common cause: timeout value too short for number of required apps.

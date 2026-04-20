@@ -1,9 +1,66 @@
 /**
  * sse-helpers.ts — Shared SSE message formatting utilities
  *
- * Used by case-routes.ts, steps.ts, and case-session-manager.ts
+ * Used by case-routes.ts, steps.ts, case-session-manager.ts,
+ * cron-manager.ts, and patrol-orchestrator.ts
  * to convert Claude SDK messages into SSE event payloads.
  */
+
+// ---- Shared assistant content block parser ----
+
+/**
+ * Parsed content block from an SDK assistant message.
+ *
+ * Single entry point for classifying SDK content blocks:
+ * - text blocks → 'response' (actual model output)
+ * - thinking blocks → 'thinking' (extended reasoning)
+ * - tool_use blocks → 'tool-call' (tool invocation)
+ *
+ * All consumers (case sessions, cron, patrol) MUST use this parser
+ * instead of duplicating classification logic.
+ */
+export interface ParsedContentBlock {
+  kind: 'response' | 'thinking' | 'tool-call'
+  content: string
+  toolName?: string
+  toolInput?: any
+}
+
+/**
+ * Parse an SDK assistant message's content blocks into typed events.
+ *
+ * @param contentBlocks - Array of content blocks from message.message.content
+ * @param maxContentLen - Max length to slice content (default 800)
+ * @returns Array of parsed blocks
+ */
+export function parseAssistantBlocks(
+  contentBlocks: any[],
+): ParsedContentBlock[] {
+  const results: ParsedContentBlock[] = []
+
+  for (const block of contentBlocks) {
+    if (block.type === 'tool_use') {
+      results.push({
+        kind: 'tool-call',
+        content: '', // callers use toolInput to summarize
+        toolName: block.name,
+        toolInput: block.input,
+      })
+    } else if (block.type === 'text' && block.text) {
+      results.push({
+        kind: 'response',
+        content: block.text,
+      })
+    } else if (block.type === 'thinking' && block.thinking) {
+      results.push({
+        kind: 'thinking',
+        content: block.thinking,
+      })
+    }
+  }
+
+  return results
+}
 
 /** Map a Claude SDK message type to an SSE event name */
 export function getSSEEventType(message: any): string {

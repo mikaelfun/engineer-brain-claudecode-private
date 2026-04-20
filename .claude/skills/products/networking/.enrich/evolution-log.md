@@ -325,3 +325,127 @@
 - **Skip**: 1 (Guided Portal Experience - product FAQ)
 - **Dedup**: 0
 - **Scanned total**: 394/2728
+
+### 2026-04-18 17:08 — mslearn batch (VNet troubleshoot pages)
+- Scanned 8 URLs: sdp-landing(skip), create-ptr(dedup), diagnose-traffic-filter, troubleshoot-nva, nsg-manage-log, test-latency, bandwidth-testing, troubleshoot-vm-connectivity
+- Track A: +2 entries (networking-mslearn-066: NVA Standard SKU NSG, networking-mslearn-067: NIC failed state)
+- Track B: +2 guide drafts (mslearn-troubleshoot-nva-checklist.md, mslearn-troubleshoot-vm-connectivity.md)
+- Dedup: 1 (create-ptr ≥80% overlap with mslearn-001)
+- Progress: 28/39 scanned, 11 remaining
+
+## 2026-04-18 — Phase 4b mslearn batch 5 (8 pages)
+
+**Pages processed:**
+1. troubleshoot-outbound-smtp-connectivity (VNet) → Track A: 1 entry
+2. virtual-network-troubleshoot-peering-issues (VNet) → Track A: 3 entries
+3. virtual-network-troubleshoot-peering-sync-route-issues (VNet) → Track A: 3 entries
+4. virtual-network-troubleshoot-connectivity-problem-between-vms (VNet) → Track B: guide draft
+5. virtual-network-troubleshoot-cannot-delete-vnet (VNet) → Track A: 1 entry
+6. virtual-network-troubleshoot-cannot-delete-modify-subnet (VNet) → Track A: 1 entry
+7. vpn-gateway-troubleshoot-bgp (VPN Gateway) → Track A: 3 entries
+8. front-door/refstring (Front Door) → Track B: guide draft
+
+**Stats:** +12 JSONL entries (068-079), +2 guide drafts, 0 deduplicated
+**Coverage:** VNet peering (Disconnected/overlapping/sync/DNS/P2S), VNet/subnet deletion blockers, VPN BGP (peer/flapping/advertisement), SMTP port 25 blocking, Front Door RefString
+**Remaining:** 3 URLs (Front Door troubleshoot-compression, troubleshoot-issues, troubleshoot-performance-issues)
+
+### 2026-04-18 Phase 4b mslearn (Final Batch — Front Door)
+- **Fetched**: 3 URLs (troubleshoot-compression, troubleshoot-issues, troubleshoot-performance-issues)
+- **Track A**: 7 entries (networking-mslearn-080 ~ 086) — Front Door compression, 503/504 timeout, 503 HTTPS/SSL, 400 custom domain, 411 RFC compliance, 429 rate limit, IP origin SNI
+- **Track B**: 1 guide draft (mslearn-front-door-performance-troubleshoot.md) — 3-scenario performance diagnosis
+- **Deduplicated**: 0
+- **Status**: mslearn source EXHAUSTED (39/39 indexed URLs scanned)
+
+### 2026-04-18T12:32:37Z — contentidea-kb scan (networking)
+- WIQL returned 19 work items (keywords: Virtual Network, Load Balancer, VPN Gateway)
+- All 19 already scanned → 0 new, 0 dedup
+- exhausted: true (no new KB articles since last scan)
+- lastRefreshed updated
+
+## 2026-04-18 OneNote Scan (Batch 4)
+- Pages scanned: 10 (TOR capture, AKS tcpdump, NRP/NSM logs, AVD RDP shortpath/Private Link/Service tag/VNet peering/Network issue, AKS security)
+- Track A entries: 2 (networking-onenote-038: RDP Shortpath config, networking-onenote-039: Service tag CLI workaround)
+- Track B guides: 4 (TOR capture topology, AKS pod tcpdump, NRP Kusto logs, NSM/NM Agent logs)
+- Skipped (too short): 4 pages (AKS security, AVD Private Link, AVD VNet peering lab, AVD Network issue)
+- Remaining: 91/159 pages
+
+## 2026-04-18 20:43 — OneNote Scan (batch)
+
+- **Pages scanned**: 10
+- **Track A entries**: 4 (networking-onenote-040 ~ 043)
+  - 040: AVD proxy config for system accounts (bitsadmin)
+  - 041: ExpressRoute bandwidth monitoring via Kusto KQL
+  - 042: ExpressRoute traffic check via Jarvis dashboard (relatedTo 041)
+  - 043: AppGW backend pool load distribution verification
+- **Track B drafts**: 1
+  - `guides/drafts/onenote-pcap-to-kusto-analysis.md` — pcap to Kusto analysis workflow
+- **Skipped**: 5 pages (3 empty section headers, 1 link-only, 1 deprecated link-only)
+- **Deduplicated**: 0
+- **Remaining**: 81 pages
+- 2026-04-18 12:49 UTC | ado-wiki scan | 1 page processed (ExpressRoute Resiliency Validation) | 5 Track A entries (networking-ado-wiki-527~531) + 1 Track B draft | scanned: 397/2728
+
+## 2026-04-18 OneNote Scan Round (batch 044-050)
+
+- **Pages processed**: 10
+- **New entries**: 7 (networking-onenote-044 to 050)
+- **Deduplicated**: 1 (3.4 AccelNet OUT stats = networking-onenote-036)
+- **Skipped**: 2 (section header page, raw NRP logs)
+- **Topics**: ExpressRoute public peering deprecation, Global VNet peering (ILB constraint, gateway transit), SMTP port 25 blocking, VFP/NMAgent health check, host packet capture parsing, DHCP failure (SwitchPortNotPresent)
+- **Remaining**: 71 pages
+- **Exhausted**: false
+
+## 2026-04-18 OneNote Scan (batch 5)
+- Pages scanned: 10 (3 section headers with no content, 7 with extractable knowledge)
+- New entries: 7 (networking-onenote-051 to 057)
+- Deduplicated: 0
+- Topics: Standard ILB PA address, ILB health probe Jarvis, VPN GatewayV3 ETL parsing, PingMesh latency verification, AP XTS host logs, Everflow JIT Jumpbox procedure, TOR capture Kusto queries
+- Remaining: 61 pages
+- Exhausted: False
+
+## 2026-04-18 21:03 — ADO Wiki Scan (standard batch)
+- Product: networking
+- Pages scanned: 10 (ExpressRoute Features & Functions)
+- Track A entries: 11 (IDs 532-542)
+- Track B drafts: 3 (MACsec, MSEE architecture, Route Filter)
+- Skipped: 2 (Standby Support template, Skytap overview)
+- Topics: ErGwScale, subscription ops, Traffic Collector errors, Traffic Block Y-pattern, Route Filter auth
+
+## 2026-04-18 21:04 — OneNote Scan (Batch: Tools 10.x)
+
+**Pages processed**: 10
+**Track A (JSONL)**: 4 entries (networking-onenote-058 to 061)
+  - 058: MC JIT Jumpbox manual approval policy change
+  - 059: VIP lifecycle check via Kusto ResourceLifeCycleEvent
+  - 060: VFP stateful flow table inspection via FcShell
+  - 061: TOR/NodeId lookup by ContainerId via Kusto (relatedTo: 057)
+
+**Track B (Drafts)**: 2 guides
+  - onenote-host-packet-capture-escort.md (from 10.21 + Psaw+CME)
+  - onenote-azure-db-containerid-nodeid-lookup.md (from 10.22)
+
+**0 output**: 4 pages (10.20 too short, 10.5 too short, 10.2 deprecated/overlapping, Psaw+CME merged into 10.21)
+**Deduplicated**: 0 (061 has ~60% overlap with 057, added with relatedTo)
+**Remaining**: 51 pages
+**Exhausted**: false
+
+### 2026-04-18 OneNote Scan (Round 12)
+**Scanned**: 10 pages
+**New entries**: 7 (networking-onenote-062 to networking-onenote-068)
+- 062: VNet packet loss check via netvma tool, redeploy VM to healthy node
+- 063: List all VMs under specific TOR switch via Kusto aznwcosmos query
+- 064: Blob access failure troubleshooting flow (ASC transactions, PE, SAS, permissions)
+- 065: Cross-region Global-Mooncake connectivity via WAN edge traceroute and GFW analysis
+- 066: Decode Vxlan payload and VFP trace in Netmon/Wireshark (port 65330, custom NPL files)
+- 067: ASR PE DNS failure in Mooncake - use privatelink address format in /etc/hosts
+- 068: SDOStdPolicyNetwork blocks public IP on corpnet ER subscriptions (MSIT ISRM policy)
+**0 output**: 3 pages (10.9 pingmesh duplicate with 054, 7.DNS section header empty, 6.29 AppGW+Storage stub incomplete)
+**Deduplicated**: 0
+**Remaining**: 41 pages
+**Exhausted**: false
+
+## 2026-04-18 13:18 UTC — ado-wiki scan (standard batch)
+- Pages scanned: 10 (ExpressRoute How To)
+- Track A (break/fix): 5 entries (IDs 543-547) — circuit deletion stale connections, BGP down RCA (BFD/holdtimer/maxprefix/interface flap)
+- Track B (guides): 8 drafts — BGP route propagation, gateway migration, auto-ICMs, S2S VPN config, debug ACL, classic deprovisioning, topology discovery, BFD troubleshooting
+- Skip: 0
+- Remaining unscanned: ~2311

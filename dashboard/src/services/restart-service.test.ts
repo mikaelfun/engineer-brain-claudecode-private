@@ -2,7 +2,7 @@
  * restart-service.test.ts — Unit tests for restart-service
  *
  * ISS-089: Verify process tree kill, PID tracking, and killPort on backend restart.
- * ISS-100: Verify process tree root traversal, --watch mode spawn, port retry.
+ * ISS-100: Verify process tree root traversal, backend spawn (no --watch), port retry.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
@@ -160,7 +160,7 @@ describe('restart-service', () => {
   })
 
   describe('ISS-100: spawn commands use PowerShell Start-Process', () => {
-    it('should spawn backend via PowerShell Start-Process with node --watch', async () => {
+    it('should spawn backend via PowerShell Start-Process WITHOUT --watch', async () => {
       // All exec calls succeed (no port listener, PowerShell Start-Process succeeds)
       mockExecImpl
         .mockRejectedValueOnce(new Error('no match')) // findPidByPort — no port listener
@@ -170,12 +170,12 @@ describe('restart-service', () => {
 
       // Find the PowerShell Start-Process call for backend
       const psCall = mockExecImpl.mock.calls.find(
-        (call: unknown[]) => typeof call[0] === 'string' && (call[0] as string).includes('Start-Process') && (call[0] as string).includes('--watch')
+        (call: unknown[]) => typeof call[0] === 'string' && (call[0] as string).includes('Start-Process') && (call[0] as string).includes('src/index.ts')
       )
       expect(psCall).toBeDefined()
       expect(psCall![0]).toMatch(/node/)
       expect(psCall![0]).toMatch(/--import.*tsx\/esm/)
-      expect(psCall![0]).toMatch(/--watch/)
+      expect(psCall![0]).not.toMatch(/--watch/)
       expect(psCall![0]).toMatch(/src\/index\.ts/)
     })
 
@@ -300,7 +300,7 @@ describe('restart-service', () => {
 
       const cmds = psCalls.map((c: unknown[]) => c[0] as string)
       const hasFrontend = cmds.some(c => c.includes('vite'))
-      const hasBackend = cmds.some(c => c.includes('--watch'))
+      const hasBackend = cmds.some(c => c.includes('src/index.ts'))
       expect(hasFrontend).toBe(true)
       expect(hasBackend).toBe(true)
     })

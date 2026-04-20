@@ -473,7 +473,7 @@ export function useAllSessions(status?: string) {
 
 export interface UnifiedSession {
   id: string
-  type: 'case' | 'queue' | 'implement' | 'verify' | 'track-creation' | 'cron'
+  type: 'case' | 'queue' | 'implement' | 'verify' | 'track-creation' | 'cron' | 'patrol'
   status: 'active' | 'paused' | 'completed' | 'failed'
   context: string
   intent: string
@@ -492,6 +492,38 @@ export function useUnifiedSessions(type?: string, status?: string) {
       return apiGet<{ sessions: UnifiedSession[]; total: number }>('/sessions/all', Object.keys(params).length ? params : undefined)
     },
     refetchInterval: 10_000,
+  })
+}
+
+// ===== Patrol Messages Recovery =====
+
+/** Recover patrol messages from backend.
+ *  @param logFile - specific log file name (for recovered sessions), or null for latest */
+export function usePatrolMessages(logFile: string | null | undefined, enabled: boolean) {
+  return useQuery({
+    queryKey: ['patrol', 'messages', logFile || 'latest'],
+    queryFn: () => {
+      const params = logFile ? `?logFile=${encodeURIComponent(logFile)}` : ''
+      return apiGet<{ messages: any[]; subAgents?: Record<string, any> }>(`/patrol/messages${params}`)
+    },
+    enabled,
+    staleTime: 30_000, // 30s — allow refetch when invalidated by sessionId change
+  })
+}
+
+// ===== Run Messages Recovery (generic — session.jsonl + agents/*.log) =====
+
+/** Recover ALL SSE data from a case's latest run directory */
+export function useRunMessages(caseNumber: string | null) {
+  return useQuery({
+    queryKey: ['run-messages', caseNumber],
+    queryFn: () => apiGet<{
+      mainMessages: any[]
+      subAgents: Record<string, any>
+      runDir: string | null
+    }>(`/case/${caseNumber}/run-messages`),
+    enabled: !!caseNumber,
+    staleTime: Infinity,
   })
 }
 
@@ -1480,6 +1512,35 @@ export function useDaemonStop() {
     mutationFn: () => apiPost<{ stopped: boolean; pid: number | null; error?: string }>('/daemon/stop'),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['daemon', 'status'] })
+    },
+  })
+}
+
+// ===== Az Profile Tokens =====
+
+export interface AzProfileStatus {
+  name: string
+  profileDir: string
+  cloud: 'china' | 'public'
+  status: 'ok' | 'expired' | 'unknown'
+  lastChecked: string | null
+  error: string | null
+}
+
+export function useAzProfileStatus() {
+  return useQuery({
+    queryKey: ['az-profiles', 'status'],
+    queryFn: () => apiGet<{ profiles: AzProfileStatus[] }>('/az-profiles/status'),
+    refetchInterval: 5 * 60_000, // 5 min — backend cache always fresh from bg monitor
+  })
+}
+
+export function useAzProfileRefresh() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => apiPost<{ ok: boolean; profiles: AzProfileStatus[] }>('/az-profiles/refresh'),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['az-profiles', 'status'] })
     },
   })
 }

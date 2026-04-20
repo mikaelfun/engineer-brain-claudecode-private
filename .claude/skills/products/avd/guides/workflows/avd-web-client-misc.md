@@ -1,145 +1,190 @@
-# AVD Web 客户端 - 杂项 — 排查工作流
+# AVD Web 客户端 - 杂项 — Troubleshooting Workflow
 
-**来源草稿**: ado-wiki-b-unified-web-client.md, ado-wiki-b-unified-web-portal.md, ado-wiki-web-portal-connection-flow.md
-**Kusto 引用**: (无)
-**场景数**: 10
-**生成日期**: 2026-04-07
+**Scenario Count**: 17
+**Generated**: 2026-04-18
 
 ---
 
-## Scenario 1: Overview
-> 来源: ado-wiki-b-unified-web-client.md | 适用: \u901a\u7528 \u2705
+## Scenario 1: AVD Remote Desktop client Subscribe button connects to Globa...
+> Source: OneNote | Applicable: ✅
 
-### 排查步骤
-Nighthawk (W365 web client) extended to support all AVD resources (VMs and remote applications) via unified web experience.
+### Troubleshooting Steps
+- Set registry DefaultFeedUrl to Mooncake: reg.exe ADD HKLM\SOFTWARE\Microsoft\MSRDC\Policies /v DefaultFeedUrl /t REG_SZ /d https://rdweb.wvd.azure.cn/api/arm/feeddiscovery. Deploy via Group Policy for domain-joined clients
 
-## Scenario 2: Key Technical Notes
-> 来源: ado-wiki-b-unified-web-client.md | 适用: \u901a\u7528 \u2705
+**Root Cause**: RD client Subscribe flow first checks registry DefaultFeedUrl, then performs home cloud discovery via token request. For domain-joined PCs with hybrid identity, home cloud discovery returns Global Azure authority, causing client to subscribe to wrong endpoint
 
-### 排查步骤
-   - **Feed discovery and connection** happen at different URLs and on different web apps
-   - Users can bookmark connection URL to skip feed discovery in future
-   - **Nighthawk** = application running in user's browser that loads RD Core Web
-   - **RD Core Web** = component managing session and connection
-   - **Mobius client** = allows users to connect directly to a resource without going through feed discovery
-   - User Agent: `CPC.Web`
-   - **Broadcast Channel**: communication between Mobius portal and client for launching remote apps in correct browser tab
-   - Telemetry: ARIA (from Nighthawk itself, scrubbed of EUPI); RD Core emits telemetry uniformly to Event Hub
-   - **ECS** = flighting system for feature exposure control
-   - **ADFS SSO**: not supported during public preview (falls back to password); **Azure AD SSO**: supported for public preview
+## Scenario 2: AVD Web Client: User cannot connect; 'TimeSkew' error — 'We ...
+> Source: ADO Wiki | Applicable: ✅
 
-## Scenario 3: Connection Flow
-> 来源: ado-wiki-b-unified-web-client.md | 适用: \u901a\u7528 \u2705
+### Troubleshooting Steps
+- Ensure the clock on the client device is set to the correct time (sync with time server). Then retry the connection
 
-### 排查步骤
-1. Request token from Azure AD by calling RD Web API
-2. Receive token from Azure AD
-3. Get RDP file URL from RDWeb using direct launch URL
-4. Construct direct launch URL using tenant ID and resource ID from URL → send to RDWeb
-5. Get back the URL for the RDP file
-6. Get RDP file contents
-7. Hand off to RD Core Web → start orchestration
-**For RemoteApps**: portal maintains a Broadcast Channel with web client. Opening additional apps communicated over broadcast channel. Client verifies same host → opens new app; different host → opens new client tab.
+**Root Cause**: Date/time difference (time skew) between user's device and the remote PC
 
-## Scenario 4: Error Codes Reference
-> 来源: ado-wiki-b-unified-web-client.md | 适用: \u901a\u7528 \u2705
+## Scenario 3: AVD Web Client: User cannot connect; 'PasswordExpired' or 'P...
+> Source: ADO Wiki | Applicable: ✅
 
-### 排查步骤
-| Error Code | Symptom / User Message | Root Cause / Notes |
-|-----------|----------------------|-------------------|
-| AccountDisabled | Can't connect — account disabled | User account disabled in directory |
-| AccountExpired | Can't connect — account expired | User account expired |
-| AccountLockedOut | Can't connect — account locked | Too many sign-in or password change attempts |
-| AccountRestricted | Can't connect — account restricted | User account restriction preventing sign-in |
-| AutoReconnectFailed | Couldn't auto-reconnect | Auto-reconnect mechanism failed |
-| CertExpired | Session ended — certificate expired or invalid | Server auth certificate expired or invalid |
-| CertMismatch | Session ended — unexpected certificate | Unexpected server authentication certificate received |
-| ConnectionBroken | Connection to remote PC lost | Network connection problem |
-| ConnectionTimeout | Couldn't establish session in time | Session setup timed out |
-| CredSSPRequired | Session ended — CredSSP required by server | CredSSP must be enabled; contact administrator |
-| FreshCredsRequired | Working on refreshing token, try again shortly | Token refresh in progress |
-| GatewayAuthFailure | Couldn't connect to gateway | Gateway authentication error |
-| GenericLicenseError | Can't connect — licensing error | Licensing issue; contact admin |
-| IdleTimeout | Session timed out due to inactivity | Inactivity timeout; try reconnecting |
-| InvalidLogonHours | Session ended — outside allowed sign-in hours | Admin restricted allowed sign-in hours |
-| InvalidWorkStation | Can't connect — device not allowed | Admin restricted which devices can sign in |
-| LogonFailed | Sign in failed | Incorrect username or password |
-| LogonTimeout | Session ended — session time limit exceeded | Admin or network policy time limit |
-| LoopbackUnsupported | Can't connect — device and remote PC are same | Loopback connection not supported |
-| NoLicenseAvailable | Can't connect — no licenses available | No licenses available for this PC; contact admin |
-| NoLicenseServer | Can't connect — no license server available | No license server available |
-| NoRemoteConnectionLicense | Session ended — PC not licensed for remote connections | PC not licensed for remote connections |
-| NoSuchUser | Can't connect — username doesn't exist | Username not found; verify username |
-| OrchestrationResourceNotAvailableError | Can't connect — no available resources | No session hosts currently available; try later |
-| OutOfMemory | Web client out of memory | Reduce browser window size or disconnect existing sessions |
-| PasswordExpired | Can't connect — password expired | User password expired; change password |
-| PasswordMustChange | Can't connect — must change password | Password change required before sign-in |
-| RemotingDisabled | Can't connect | Remote access not enabled on PC |
-| ReplacedByOtherConnection | Disconnected — another connection made | Another session replaced this connection |
-| SSLHandshakeFailed | Can't connect | Possible expired password; SSL handshake failed |
-| ServerNameLookupFailed | Can't connect — PC can't be found | DNS resolution failure for server name |
-| SessionHostResourceNotAvailable | Can't connect — VM failed to start | Session host VM failed to start; try again or contact support |
-| TimeSkew | Can't connect — TimeSkew | Date/time difference between client and remote PC; sync clock |
-| VersionMismatch | Session ended — protocol version mismatch | Local and server RDP versions don't match; update client |
-| WebWorkerError | Can't start connection due to webworker error | Click Reconnect to start new session without webworkers |
-| ScreenCaptureProtectNotSupported | Can't connect — screen capture protection | Enable screen capture protection; contact admin if persists |
+### Troubleshooting Steps
+- User must change their password first, then retry connection
 
-## Scenario 5: Client Authentication
-> 来源: ado-wiki-b-unified-web-portal.md | 适用: \u901a\u7528 \u2705
+**Root Cause**: User's account password has expired or must be changed before sign-in is allowed
 
-### 排查步骤
-Handled using **msal-browser** library. Tokens obtained for:
-   - **O365 Header** — onboard O365 Suite Header
-   - **AVD** — feed discovery
-   - **OCPS** — survey and feedback features
+## Scenario 4: AVD Web Client: 'SessionHostResourceNotAvailable' error — 'W...
+> Source: ADO Wiki | Applicable: ✅
 
-## Scenario 6: First Party Application (FPA)
-> 来源: ado-wiki-b-unified-web-portal.md | 适用: \u901a\u7528 \u2705
+### Troubleshooting Steps
+- Retry connection after waiting; if issue persists check session host VM health in the portal and contact support
 
-### 排查步骤
-   - Portal web client: **Windows 365 Client - Web FPA** (same as Consumer Portal; allows MSA and AAD)
-   - Portal UX Service: **Windows 365 End User API FPA** (same as Window 365 End User API)
+**Root Cause**: The session host VM failed to start during the connection attempt
 
-## Scenario 7: Unified Web Portal Structure
-> 来源: ado-wiki-b-unified-web-portal.md | 适用: \u901a\u7528 \u2705
+## Scenario 5: AVD Web Client: Session disconnected with 'IdleTimeout' erro...
+> Source: ADO Wiki | Applicable: ✅
 
-### 排查步骤
-   - Frontend web app served via unified URL
-   - Backend UX service using Windows 365 End User API FPA
-   - Client authentication via msal-browser (client-side)
-   - Service authentication via MISE+SAL (server-side)
+### Troubleshooting Steps
+- Reconnect; ask admin to review idle timeout policy settings if too aggressive
 
-## Scenario 8: Device List Flow
-> 来源: ado-wiki-b-unified-web-portal.md | 适用: \u901a\u7528 \u2705
+**Root Cause**: Session timed out due to inactivity — idle timeout policy enforced by admin or network policy
 
-### 排查步骤
-Two flows for getting devices list (including AVD & Cloud PCs):
-1. **Without Unified Feed Discovery** — direct device enumeration
-2. **With Unified Feed Discovery** — feed discovery then device list
+## Scenario 6: AVD Web Client: 'NoLicenseAvailable' or 'NoLicenseServer' er...
+> Source: ADO Wiki | Applicable: ✅
 
-## Scenario 9: Key URLs (Deprecated/Historical)
-> 来源: ado-wiki-b-unified-web-portal.md | 适用: \u901a\u7528 \u2705
+### Troubleshooting Steps
+- Contact admin to check license availability and assignment; may need to procure additional licenses
 
-### 排查步骤
-   - These URLs are no longer in use; current production URL is managed by the unified portal team
+**Root Cause**: No licenses available for the remote PC (or no license server available to provide a license)
 
-## Scenario 10: **Connection Flow when End User uses Web Portal/Web Client**
-> 来源: ado-wiki-web-portal-connection-flow.md | 适用: \u901a\u7528 \u2705
+## Scenario 7: AVD Web Client: 'AccountLockedOut' error — 'account has been...
+> Source: ADO Wiki | Applicable: ✅
 
-### 排查步骤
-**Connection Flow**
-1. End User launches browser and authenticates against AAD using OneAuth.
-2. Once Auth is successful, we get the Graph token. Then we reach to Graph APi for getting information related to RDP file, CPC List, WorkspaceID, DirectLaunchUrl.
-3. Customers click on "Connect", when customer click on connect, the rdp file(downloaded in step2) is used and reads the contents of the AVD resources and connects to CPC by orchestrating the connection within AVD Infra.
-AVD Infra : RD Gateway, RD Connection Broker, RD Web
-**How the Web Portal client talks with workspace (Nighthawk) and get the end consumer the required resource when they select CloudPC or AVD?**
-We redirect users to Nighthawk by specified URL, which contains the ID of workspace will be launched. Nighthawk will use this ID to query required information.
-**What kind of failures/error message a user will get when they select the workspace but are not shows the required W365 CPCs?**
-Nighthawk shows "We couldn't connect to the remote PC. This might be because of a network problem. If this keeps happening, ask your admin or tech support for help." to users if there are any issues on required information fetching.
-**What kind of error message an end consumer will get when perform a remote action like "Restart" or "Restore" and it fails to perform those actions? What kind of logs can we collect in these scenarios?**
-Any Cloud PC failed actions would notify users with a generic error dialog.
-**How does pinned device works? Failure for pinning a Cloud PC results in what error? What logs can be collected?**
-In current version, pinning device will not trigger any requests to server but store the pinned information on browser local storage.
-**Log collection for above scenarios: "Capture Logs"** inside "**Collect User Logs**" and get **activity Id** from "**Connection Details**." section.
-https://learn.microsoft.com/en-us/windows-365/end-user-access-cloud-pc#collect-user-logs
-Once we get the **activity Id** from the above logs, we can use the AVD Kusto Queries for further troubleshooting.
+### Troubleshooting Steps
+- Wait for lockout period to expire or have admin unlock the account; review sign-in attempts for suspicious activity
+
+**Root Cause**: User account locked out in Azure AD due to brute-force protection or too many failed attempts
+
+## Scenario 8: Remote Desktop client cannot subscribe to 21v AVD. Sign-in f...
+> Source: OneNote | Applicable: ✅
+
+### Troubleshooting Steps
+- Disable SSL inspection in the third-party security tool (Digital Guardian or similar) for AVD-related endpoints. Key diagnostic steps: 1. Collect ETL trace (cd $env:TEMP\DiagOutputDir\RdClientAutoTrace, tracerpt to csv). 2. Check CAPI2 event logs for certificate chain - if cert issuer is not Microsoft, SSL injection is occurring. 3. Compare certificate fingerprint with expected Microsoft certificate. 4. Whitelist AVD endpoints (rdweb.wvd.azure.cn, login.partner.microsoftonline.cn) from SSL inspection.
+
+**Root Cause**: Third-party security tool (Digital Guardian) performs SSL inspection/injection, re-signing the WVD service certificates with its own CA. Remote Desktop client does not support SSL injection and rejects the modified certificate as invalid.
+
+## Scenario 9: After subscribing in MSRDC or RDWEB client, users see: Unava...
+> Source: ContentIdea | Applicable: ✅
+
+### Troubleshooting Steps
+- Create a workspace and register the application group to it. After registration, the resource will appear in WVD client.
+
+**Root Cause**: No workspace created/assigned for application group, and/or it was not registered.
+
+## Scenario 10: Users cannot connect using AVD client (freshly installed). W...
+> Source: ContentIdea | Applicable: ✅
+
+### Troubleshooting Steps
+- Add all required cipher suites supported by Azure Front Door on the client machine.
+
+**Root Cause**: Client machine missing required TLS cipher suites (TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384, etc). AVD gateway and RDWeb are behind AFD.
+
+## Scenario 11: Upload feature in AVD Web Client is not working when browser...
+> Source: ContentIdea | Applicable: ✅
+
+### Troubleshooting Steps
+- Change browser primary language to English or use Legacy version of Web Client as workaround. The issue has been fixed in a subsequent product update via setTranslations gallery function.
+
+**Root Cause**: Race condition in Web Client JavaScript: folder name strings were not translated before virtual drive creation, causing mismatch between local and protocol-side folder names. Bug 48638042 fixed this.
+
+## Scenario 12: Users unable to connect intermittently with AVD Web Client. ...
+> Source: ContentIdea | Applicable: ✅
+
+### Troubleshooting Steps
+- Follow up with Forcepoint (WebSense vendor) to exclude AVD gateway URLs from proxy inspection. Ensure WebSocket upgrade headers are not modified by network proxies.
+
+**Root Cause**: Forcepoint WebSense proxy alters HTTP headers: Connection header shows Keep-Alive instead of Upgrade and no Upgrade header for WebSocket. This prevents WebSocket connection to AVD gateway.
+
+## Scenario 13: Remote application's icon not displaying as expected on AVD ...
+> Source: ContentIdea | Applicable: ✅
+
+### Troubleshooting Steps
+- PG was able to patch the issue on the AVD Web client prod
+ring R0 before implementing in the normal prod ring. Cx confirmed
+the issue is resolved. &nbsp;Related IcM: Incident-546858141
+Details - IcM
+
+**Root Cause**: &nbsp;Incident-546858141
+Details - IcM PG able to get a repro of the issue. It happens on a very
+specific situation. &nbsp;From the RCA in the
+IcM: Very specifically happening on feeds with small workspaces
+and little resources within them. A few events were set to happen simultaneously during feed
+discovery and depending on what was finished first, the UI was lacking a final
+update, so a few icons and statuses were lacking an update. Issue detected on the web client and code changes made to
+fix.
+
+## Scenario 14: Users reported that while connected to an Azure Virtual Desk...
+> Source: ContentIdea | Applicable: ✅
+
+### Troubleshooting Steps
+- As an
+alternate solution, you can transfer the files between local device to remote
+session using RD webclient: Files can be successfully transferred between the local device and
+remote AVD session using the Remote Desktop Web Client by following
+these steps: 
+ Sign in to the Remote
+     Desktop Web Client and launch a remote session. 
+ When prompted to access local resources,
+     ensure that File transfer is enabled by checking the corresponding
+     box and selecting Allow. 
+ Once the session has started, open File
+     Explorer and navigate to This PC. 
+ Locate the Remote Desktop Virtual
+     Drive on RDWebClient, which includes: 
+ 
+  Uploads � for files
+      uploaded from the local system. 
+  Downloads � where
+      files can be moved from the AVD session for download. 
+ 
+ To download files from AVD to
+     your local device, paste them into the Downloads folder. A
+     prompt will appear asking for confirmation to download the files. Select Confirm
+     to proceed. 
+ To upload files, click the Upload
+     new file (upward arrow icon) on the RD WebClient taskbar, and select
+     the required files from the local system.  Notes: Ensure that &quot;Drive Redirection&quot; is not disabled, as it is
+required for the Remote Desktop Virtual Drive to appear and function properly
+within the session.
+
+**Root Cause**: This behavior was determined to be by design and is associated with
+clipboard redirection restrictions within AVD environments. Key findings include: 
+ Clipboard redirection applies to
+     content within files (e.g., text or images) but not to the files
+     themselves. 
+ Attempts to copy an entire file
+     (e.g., a .txt or image file) fail because the clipboard channel does not
+     support file-level redirection. 
+ This limitation is implemented
+     intentionally to prevent security bypass attempts, such as renaming
+     executable files to .txt to exploit redirection.
+
+## Scenario 15: WVD Classic: Users cannot subscribe to WVD feed in desktop c...
+> Source: ContentIdea | Applicable: ✅
+
+### Troubleshooting Steps
+- In Azure AD Enterprise applications, set User assignment required to No for both Windows Virtual Desktop AME and Windows Virtual Desktop Client (default setting). Adding all users with TenantCreator or Default Access role is not recommended.
+
+**Root Cause**: In WVD Classic, User assignment required was enabled on Windows Virtual Desktop AME or Windows Virtual Desktop Client enterprise app in Azure AD, blocking users without explicit role assignment.
+
+## Scenario 16: When accessing \\tsclient\Windows365 virtual drive\ in Cloud...
+> Source: ADO Wiki | Applicable: ❓
+
+### Troubleshooting Steps
+- Click Turn on network discovery and file sharing in the yellow banner. Then access \\tsclient\Windows365 virtual drive\ to find Uploads and Downloads folders.
+
+**Root Cause**: Network discovery is not enabled on the Cloud PC by default when using web client file transfer
+
+## Scenario 17: Cannot access WVD via Remote Desktop client or RDWeb. Error ...
+> Source: OneNote | Applicable: ✅
+
+### Troubleshooting Steps
+- Try connecting from different client to isolate. Collect WVD logs. Check for corrupted system files. Reset PIN/credential store.
+
+**Root Cause**: Error 0x80090016 related to corrupted system files, certificate/key issues on client. Can occur with PIN login.

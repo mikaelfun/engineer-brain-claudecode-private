@@ -3,6 +3,10 @@
  */
 import { Hono } from 'hono'
 import { readAgents } from '../services/cron-reader.js'
+import { existsSync, readdirSync } from 'fs'
+import { join } from 'path'
+import { config } from '../config.js'
+import { parseSessionLog } from '../utils/session-log-parser.js'
 import {
   listTriggers,
   createTrigger,
@@ -13,6 +17,7 @@ import {
   cancelTrigger,
   isTriggerRunning,
   getRunningTriggerIds,
+  getCronMessages,
 } from '../services/cron-manager.js'
 
 const agents = new Hono()
@@ -146,6 +151,58 @@ agents.post('/triggers/:id/cancel', (c) => {
     return c.json({ error: 'Trigger is not running or not found' }, 404)
   }
   return c.json({ success: true, message: 'Trigger cancellation requested', id })
+})
+
+// GET /api/agents/triggers/:id/messages — SSE recovery: in-memory first, disk fallback
+agents.get('/triggers/:id/messages', (c) => {
+  const id = c.req.param('id')
+  const logFile = c.req.query('logFile') // optional: specific JSONL log file
+  const inMemory = getCronMessages(id)
+
+  // If in-memory messages exist and no specific logFile requested, return them
+  if (inMemory.length > 0 && !logFile) {
+    return c.json({ triggerId: id, messages: inMemory, total: inMemory.length, source: 'memory' })
+  }
+
+  // Disk recovery: parse JSONL log + agents/ directory
+  try {
+    const logsDir = config.cronLogsDir
+    if (!existsSync(logsDir)) {
+      return c.json({ triggerId: id, messages: inMemory, total: inMemory.length, source: 'memory' })
+    }
+
+    let targetLog: string | null = null
+    if (logFile) {
+      // Specific log file requested
+      const fullPath = join(logsDir, logFile)
+      if (existsSync(fullPath)) targetLog = fullPath
+    } else {
+      // Find the latest log file matching this trigger ID
+      const files = readdirSync(logsDir)
+        .filter(f => f.endsWith('.jsonl') && f.includes(id))
+        .sort()
+        .reverse()
+      if (files.length > 0) {
+        targetLog = join(logsDir, files[0])
+      }
+    }
+
+    if (!targetLog) {
+      return c.json({ triggerId: id, messages: inMemory, total: inMemory.length, source: 'memory' })
+    }
+
+    const agentsDir = join(logsDir, 'agents')
+    const parsed = parseSessionLog(targetLog, existsSync(agentsDir) ? agentsDir : undefined)
+    return c.json({
+      triggerId: id,
+      mainMessages: parsed.mainMessages,
+      subAgents: parsed.subAgents,
+      total: parsed.mainMessages.length,
+      source: 'disk',
+    })
+  } catch {
+    return c.json({ triggerId: id, messages: inMemory, total: inMemory.length, source: 'memory' })
+  }
 })
 
 export default agents

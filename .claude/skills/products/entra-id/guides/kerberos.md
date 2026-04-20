@@ -1,7 +1,7 @@
 # ENTRA-ID Kerberos Auth & Delegation — Quick Reference
 
-**Entries**: 118 | **21V**: Partial (115/118)
-**Last updated**: 2026-04-07
+**Entries**: 119 | **21V**: Partial (115/118)
+**Last updated**: 2026-04-18
 **Keywords**: kerberos, azure-files, seamless-sso, azure-fileshare, aes, kcd
 
 > This topic has a fusion guide with detailed troubleshooting flow
@@ -51,6 +51,7 @@
 | 38 📋 | Establishing multiple Kerberos incoming trusts between different Microsoft Entra tenants and the ... | Multiple Kerberos incoming trusts across different Entra tenants to the same ... | Not supported. Feature request tracked in ADO 2372314. Customer must use a si... | 🟢 8.5 | ADO Wiki |
 | 39 📋 | Seamless SSO AES ticket processing long latency - user on domain-joined machine gets password pro... | Windows SSPI API used for AES Kerberos ticket decryption introduces latency; ... | Workaround: switch AZUREADSSOACC to RC4 encryption type and roll over Kerbero... | 🟢 8.5 | ADO Wiki |
 | 40 📋 | Users cannot benefit from Seamless SSO after Kerberos key rolled over more than once | Entra stores only current and previous Kerberos key; rolling over more than o... | Wait up to 10 hours for TGS to renew, or flush Kerberos cache with klist purg... | 🟢 8.5 | ADO Wiki |
+| NEW 📋 | Seamless SSO doesn't work as expected. Users get prompted for Password during sign in. | After we hit login.microsoftonline.com, Azure AD detects that the tenant is enab... | Searched for the correlationID in the response in Kusto to get further details./... | 🟢 8.0 | ContentIdea |
 | ... | *78 more entries* | | | | |
 
 ## Quick Troubleshooting Path

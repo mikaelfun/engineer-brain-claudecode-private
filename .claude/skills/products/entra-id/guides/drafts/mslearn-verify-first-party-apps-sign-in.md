@@ -1,40 +1,51 @@
-# Verify First-Party Microsoft Applications in Sign-in Reports
+---
+title: Verify First-Party Microsoft Applications in Sign-In Reports
+source: mslearn
+sourceUrl: https://learn.microsoft.com/en-us/troubleshoot/entra/entra-id/governance/verify-first-party-apps-sign-in
+product: entra-id
+date: 2026-04-18
+type: how-to
+21vApplicable: true
+---
 
-Source: https://learn.microsoft.com/en-us/troubleshoot/entra/entra-id/governance/verify-first-party-apps-sign-in
+# Verify First-Party Microsoft Applications in Sign-In Reports
 
-## Summary
+How to identify and verify Microsoft-owned applications that appear in Entra ID sign-in reports.
 
-How to identify and verify Microsoft first-party applications appearing in Entra sign-in reports.
+## Scenario
+Users see unfamiliar application names in sign-in reports (e.g., "dev-rel-auth-prod" when accessing learn.microsoft.com).
 
 ## Verification Methods
 
-### Via Azure Portal
-1. Open Enterprise Applications in Entra ID
-2. Select **All applications**
-3. Filter **Application Type** → **Microsoft Applications**
-4. Search by Display Name or Application ID
-5. Select app → **Properties** → should show "You can't delete this application because it's a Microsoft first party application"
+### Method 1: Entra Portal
+1. Open Enterprise Applications in Entra ID portal
+2. Filter Application Type = "Microsoft Applications"
+3. Search by Display Name or Application ID
+4. Verify Properties shows: "You can't delete this application because it's a Microsoft first party application"
 
-### Via Microsoft Graph PowerShell
+### Method 2: Microsoft Graph PowerShell SDK
 ```powershell
 Import-Module Microsoft.Graph.Applications
 Connect-MgGraph
-$appDisplayName = '<display name>'
+$appDisplayName = "<display name>"
 Get-MgServicePrincipal -Filter "DisplayName eq '$appDisplayName'" | Select-Object Id, DisplayName, SignInAudience, AppOwnerOrganizationId
 ```
-- If `AppOwnerOrganizationId` = `f8cdef31-a31e-4b4a-93e4-5f571e91255a` → Microsoft first-party
 
-### Via Microsoft Entra PowerShell
+### Method 3: Microsoft Entra PowerShell
 ```powershell
 Import-Module Microsoft.Entra
 Connect-Entra
+$appDisplayName = "<display name>"
 Get-EntraServicePrincipal -SearchString $appDisplayName | Select-Object Id, DisplayName, SignInAudience, AppOwnerOrganizationId
 ```
 
-## Known Microsoft Tenant-Owned Apps (Tenant: 72f988bf-86f1-41af-91ab-2d7cd011db47)
+## Key Reference
+- Microsoft Services tenant ID: f8cdef31-a31e-4b4a-93e4-5f571e91255a
+- Microsoft Corp tenant ID: 72f988bf-86f1-41af-91ab-2d7cd011db47
 
+### Known Microsoft App IDs
 | App Name | App ID |
-|---|---|
+|----------|--------|
 | Graph Explorer | de8bc8b5-d9f9-48b1-a8ad-b748da725064 |
 | Microsoft Graph Command Line Tools | 14d82eec-204b-4c2f-b7e8-296a70dab67e |
 | OutlookUserSettingsConsumer | 7ae974c5-1af7-4923-af3a-fb1fd14dcb7e |

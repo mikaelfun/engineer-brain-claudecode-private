@@ -48,24 +48,62 @@ CASE_DIR_ABS="$(to_win "$(cd "$CASE_DIR" && pwd)")"
 PROJECT_ROOT_WIN="$(to_win "$PROJECT_ROOT")"
 
 OUT_DIR="$CASE_DIR_ABS/.casework"
-OUTPUT_DIR="$CASE_DIR_ABS/.casework/output"
 UPDATE_STATE="$HERE/update-state.py"
 WRAPPER="$HERE/event-wrapper.sh"
 
-# Subtask output: business delta files written by each source script.
-SUBTASK_DIR="$CASE_DIR_ABS/.casework/output/subtasks"
+# ── ISS-231: Read runId from state.json → run directory paths ──
+RUN_ID=$(python3 -c "
+import json
+try:
+    s = json.load(open(r'$OUT_DIR/state.json', encoding='utf-8'))
+    print(s.get('runId', ''))
+except: print('')
+" 2>/dev/null || echo "")
 
-# ── Reset .casework (preserve logs/) ──
-rm -f "$OUTPUT_DIR/data-refresh.json" "$OUTPUT_DIR/delta-content.md" \
-      "$OUT_DIR/state.json"
+# If no runId exists (patrol doesn't call --init), generate one now
+if [ -z "$RUN_ID" ]; then
+  RUN_TYPE="${RUN_TYPE:-patrol}"
+  python3 "$UPDATE_STATE" --case-dir "$CASE_DIR_ABS" --init --run-type "$RUN_TYPE" --case-number "$CASE_NUMBER" 2>/dev/null || true
+  RUN_ID=$(python3 -c "
+import json
+try:
+    s = json.load(open(r'$OUT_DIR/state.json', encoding='utf-8'))
+    print(s.get('runId', ''))
+except: print('')
+" 2>/dev/null || echo "")
+fi
+
+if [ -n "$RUN_ID" ]; then
+  RUN_DIR="$OUT_DIR/runs/$RUN_ID"
+  OUTPUT_DIR="$RUN_DIR/output"
+  SUBTASK_DIR="$RUN_DIR/output/subtasks"
+  LOGD="$RUN_DIR/scripts"
+else
+  # Fallback: runId generation failed — use timestamped fallback dir (never logs/)
+  FALLBACK_RUN="$(date +%y%m%d-%H%M)_fallback"
+  RUN_DIR="$OUT_DIR/runs/$FALLBACK_RUN"
+  OUTPUT_DIR="$RUN_DIR/output"
+  SUBTASK_DIR="$RUN_DIR/output/subtasks"
+  LOGD="$RUN_DIR/scripts"
+fi
+
+# ── Reset .casework (preserve state.json lifecycle) ──
+# state.json is managed by update-state.py --init (atomic reset, not rm).
+# Only delete data-refresh output files here.
+rm -f "$OUTPUT_DIR/data-refresh.json" "$OUTPUT_DIR/delta-content.md"
 rm -f "$OUT_DIR/.aggregate-status" "$OUT_DIR/.aggregate-stderr"
 rm -rf "$SUBTASK_DIR"
-mkdir -p "$OUTPUT_DIR" "$SUBTASK_DIR"
+mkdir -p "$OUTPUT_DIR" "$SUBTASK_DIR" "$LOGD"
 
 TOP_START_TS=$(date -u +%FT%TZ)
 TOP_START_NS=$(date +%s%N)
 
-python3 "$UPDATE_STATE" --case-dir "$CASE_DIR_ABS" --step data-refresh --status active --case-number "$CASE_NUMBER"
+# ── Initialize pipeline state ──
+# state.json lifecycle: init is done by the session launcher (processCaseSession / patrol / CLI).
+# data-refresh.sh only writes its own steps. If no prior init, --status active on a missing
+# file will auto-create state.json via update-state.py's init_state() fallback.
+python3 "$UPDATE_STATE" --case-dir "$CASE_DIR_ABS" --step start --status completed --case-number "$CASE_NUMBER"
+python3 "$UPDATE_STATE" --case-dir "$CASE_DIR_ABS" --step data-refresh --status active
 
 echo "🚀 data-refresh.sh: case=$CASE_NUMBER isAR=$IS_AR"
 echo "   case-dir=$CASE_DIR_ABS"
@@ -79,7 +117,7 @@ node "$PROJECT_ROOT/.claude/skills/browser-profiles/scripts/token-daemon.js" war
 DAEMON_WARMUP_PID=$!
 
 # ── Launch 5 parallel paths (labor merged into d365) ──
-LOGD="$OUT_DIR/logs"; mkdir -p "$LOGD"
+# LOGD already set above (ISS-231: runs/{runId}/scripts/ or fallback logs/)
 
 OUT_PARENT_WIN="$(to_win "$(dirname "$CASE_DIR_ABS")")"
 (
@@ -168,8 +206,8 @@ if [ -n "$ICM_INCIDENT" ]; then
   PID_ICM=$!
 else
   # No ICM linked → emit SKIP event.
-  python3 "$UPDATE_STATE" --case-dir "$CASE_DIR_ABS" --step data-refresh --subtask icm --status completed --duration-ms 0
-  echo '{"task":"icm","status":"completed","startedAt":"'"$TOP_START_TS"'","completedAt":"'"$TOP_START_TS"'","durationMs":0,"delta":{"newEntries":0,"skipped":"no incidentId in meta"}}' > "$SUBTASK_DIR/icm.json"
+  python3 "$UPDATE_STATE" --case-dir "$CASE_DIR_ABS" --step data-refresh --subtask icm --status skipped --duration-ms 0
+  echo '{"task":"icm","status":"skipped","startedAt":"'"$TOP_START_TS"'","completedAt":"'"$TOP_START_TS"'","durationMs":0,"delta":{"newEntries":0,"skipped":"no incidentId in meta"}}' > "$SUBTASK_DIR/icm.json"
   PID_ICM=""
 fi
 
@@ -572,18 +610,18 @@ DELTA=$(echo "$AGG"   | python3 -c "import json,sys; print(json.load(sys.stdin)[
 # ── Top-level data-refresh.json final event ──
 if [ "$OVERALL" = "FAILED" ]; then
   python3 "$UPDATE_STATE" --case-dir "$CASE_DIR_ABS" --step data-refresh --status failed --duration-ms "$TOP_DUR_MS"
-  echo "[$(date '+%Y-%m-%d %H:%M:%S')] FAILED | case=$CASE_NUMBER elapsed=${ELAPSED_SEC}s" >> "$LOGD/data-refresh.log"
   echo "❌ DATA_REFRESH_FAILED|case=$CASE_NUMBER|elapsed=${ELAPSED_SEC}s"
   exit 1
 fi
 
 python3 "$UPDATE_STATE" --case-dir "$CASE_DIR_ABS" --step data-refresh --status completed --duration-ms "$TOP_DUR_MS"
 
+# Mark assess step active (deterministic: data-refresh done = assess begins next)
+# This ensures UI shows assess as blue/active immediately, not grey/pending.
+python3 "$UPDATE_STATE" --case-dir "$CASE_DIR_ABS" --step assess --status active
+
 # Backfill state.json with delta data from output files (deterministic, no agent needed)
 bash "$HERE/finalize-state.sh" "$CASE_DIR_ABS" data-refresh 2>/dev/null || true
-
-# Append to persistent data-refresh.log (survives across runs)
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] $OVERALL | case=$CASE_NUMBER delta=$DELTA elapsed=${ELAPSED_SEC}s" >> "$LOGD/data-refresh.log"
 
 echo "✅ DATA_REFRESH_OK|case=$CASE_NUMBER|overall=$OVERALL|delta=$DELTA|elapsed=${ELAPSED_SEC}s"
 exit 0

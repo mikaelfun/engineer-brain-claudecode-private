@@ -263,6 +263,7 @@ export type SSEEventType =
   | 'patrol-state'          // New: replaces patrol-updated + patrol-progress
   | 'patrol-case'           // New: replaces patrol-case-completed + patrol-pipeline-update + case-subtask-progress
   | 'patrol-agent'          // Sub-agent lifecycle (started/progress/completed) during patrol
+  | 'patrol-main-progress'  // Main agent messages (tool-call/thinking/tool-result) during patrol
   | 'settings-updated'
   | 'case-session-started'
   | 'case-session-thinking'
@@ -308,6 +309,9 @@ export type SSEEventType =
   | 'trigger-completed'
   | 'trigger-failed'
   | 'trigger-cancelled'
+  | 'agent-registered'
+  | 'agent-session-bound'
+  | 'agent-completed'
 
 export interface SSEEvent {
   type: SSEEventType
@@ -499,7 +503,7 @@ export interface ExecutionSummary {
 
 // ============ Unified Session View ============
 
-export type UnifiedSessionType = 'case' | 'implement' | 'verify' | 'track-creation'
+export type UnifiedSessionType = 'case' | 'implement' | 'verify' | 'track-creation' | 'patrol' | 'cron' | 'queue'
 export type UnifiedSessionStatus = 'active' | 'paused' | 'completed' | 'failed'
 
 export interface UnifiedSession {

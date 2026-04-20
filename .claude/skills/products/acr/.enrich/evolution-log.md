@@ -185,3 +185,29 @@
 - **Discovered**: 0
 - **Deduplicated**: 0
 - **Exhausted**: true (all ContentIdea KB articles scanned; lastRefreshed updated)
+
+### 2026-04-18 09:06 UTC — mslearn Phase 4b (batch 3)
+- **Fetched**: 8 URLs (1 ACR-specific, 7 non-ACR)
+- **Track A (JSONL)**: 0 new entries (ACR article was a general guide, non-ACR skipped)
+- **Track B (Draft)**: 1 new draft (mslearn-acr-pull-troubleshooting-checklist.md)
+- **Deduplicated**: 0
+- **Scanned total**: 20/59
+- **Remaining**: 39
+- **Exhausted**: false
+
+### 2026-04-18 17:15 — mslearn Phase 4b (batch 3)
+- **Fetched**: 8 URLs (non-ACR: AKS auth, App Service SNAT, ASP.NET Core, Confluent, Istio egress, Front Door, partner log limits, RHUI connectivity)
+- **Discovered**: 0 (all 8 articles are non-ACR products, no relevant break/fix or guide content)
+- **Deduplicated**: 0
+- **Scanned total**: 28/59
+- **Remaining**: 31
+
+## 2026-04-18 09:19 UTC — mslearn Phase 4b (batch)
+
+- **Fetched**: 8 URLs (non-ACR articles: Confluent x3, Data API Builder, App Service, Linux VM, AKS Istio, Front Door)
+- **Extracted**: 0 (all articles unrelated to ACR product)
+- **Deduplicated**: 0
+- **Scanned total**: 36/59
+- **Remaining**: 23
+- **Exhausted**: false
+| 2026-04-20 | ado-wiki | Indexed 138 ACR/ACI pages from Supportability/AzureContainers wiki (74 ACR + 64 ACI) | first-run index build |

@@ -169,7 +169,6 @@ cat >> "$LOG" << LOGEOF
 [$(date '+%Y-%m-%d %H:%M:%S')] STEP 4 OK | $RESULT
 LOGEOF
 echo "| $(date '+%Y-%m-%d %H:%M') GMT+8 | {caseNumber} | ok | full | - | no | {elapsed}s | {n} | ok | summary |" >> "$CASE_DIR/teams/_search-log.md"
-date +%s > "$CASE_DIR/logs/.t_teamsSearch_end"
 echo "DONE|chats={n},elapsed={elapsed}s"
 ```
 
@@ -191,7 +190,6 @@ cat >> "$LOG" << LOGEOF
 [$(date '+%Y-%m-%d %H:%M:%S')] STEP 4 OK | $RESULT
 LOGEOF
 echo "| $(date '+%Y-%m-%d %H:%M') GMT+8 | {caseNumber} | ok | full | - | no | {elapsed}s | {n} | ok | summary |" >> "$CASE_DIR/teams/_search-log.md"
-date +%s > "$CASE_DIR/logs/.t_teamsSearch_end"
 echo "DONE|chats={n},elapsed={elapsed}s"
 ```
 

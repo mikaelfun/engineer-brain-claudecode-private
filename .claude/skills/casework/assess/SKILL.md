@@ -35,30 +35,47 @@ allowed-tools:
 ### Step 1. DELTA_EMPTY 快速路径
 
 读 `.casework/data-refresh-output.json`，如 `deltaStatus == "DELTA_EMPTY"`：
-- 从 `casework-meta.json` 复用 `actualStatus` + `daysSinceLastContact`
-- 调 `write-execution-plan.py`，传：
-  - `actualStatus = meta.actualStatus`
-  - `actions = []`
-  - `noActionReason = "DELTA_EMPTY — no new data, reusing meta"`
-  - `routingSource = "rule-table"`
-- **更新 `lastAssessedAt`**（即使零 LLM 调用也要更新，否则 timing 计算会跨轮次错乱）
-- 直接退出（输出 `ASSESS_OK|delta=empty|elapsed=Ns`）
+
+**ISS-235 过期检查**：先检查 `casework-meta.json → nextFollowUpDate`，若 today >= nextFollowUpDate 则跳出快速路径强制走 LLM re-assess。
 
 ```bash
 DELTA=$(python3 -c "import json; print(json.load(open(r'{caseDir}/.casework/data-refresh-output.json'))['deltaStatus'])")
 if [ "$DELTA" = "DELTA_EMPTY" ]; then
   META=$(cat "{caseDir}/casework-meta.json" 2>/dev/null || echo '{}')
-  STATUS=$(echo "$META" | python3 -c "import json,sys; print(json.load(sys.stdin).get('actualStatus','researching'))")
-  DAYS=$(echo "$META"  | python3 -c "import json,sys; print(json.load(sys.stdin).get('daysSinceLastContact',0))")
-  cat > /tmp/assess-dec-$$.json <<EOF
+
+  # ISS-235: Check nextFollowUpDate expiry — if today >= date, force LLM re-assess
+  FOLLOW_UP_EXPIRED=$(python3 -c "
+import json, sys, datetime
+try:
+    m = json.load(open(r'{caseDir}/casework-meta.json', encoding='utf-8'))
+    nfd = m.get('nextFollowUpDate', '')
+    if nfd:
+        target = datetime.date.fromisoformat(nfd)
+        if datetime.date.today() >= target:
+            print('EXPIRED')
+            sys.exit(0)
+except Exception:
+    pass
+print('OK')
+" 2>/dev/null || echo "OK")
+
+  if [ "$FOLLOW_UP_EXPIRED" = "EXPIRED" ]; then
+    echo "DELTA_EMPTY_EXPIRED|nextFollowUpDate reached, forcing LLM re-assess"
+    # Fall through to Step 2 (do NOT exit)
+  else
+    STATUS=$(echo "$META" | python3 -c "import json,sys; print(json.load(sys.stdin).get('actualStatus','researching'))")
+    DAYS=$(echo "$META"  | python3 -c "import json,sys; print(json.load(sys.stdin).get('daysSinceLastContact',0))")
+    REASONING=$(echo "$META" | python3 -c "import json,sys; r=json.load(sys.stdin).get('statusReasoning',''); print(r.replace('\"','\\\\\"')[:200])")
+    cat > /tmp/assess-dec-$$.json <<EOF
 {"caseNumber":"{caseNumber}","actualStatus":"$STATUS","daysSinceLastContact":$DAYS,
+ "statusReasoning":"$REASONING",
  "actions":[],"noActionReason":"DELTA_EMPTY — no new data, reusing meta","routingSource":"rule-table"}
 EOF
-  python3 .claude/skills/casework/assess/scripts/write-execution-plan.py \
-    --decision /tmp/assess-dec-$$.json --case-dir "{caseDir}"
-  rm -f /tmp/assess-dec-$$.json
-  # Update lastAssessedAt even on fast path (ISS-227: prevents timing cross-run drift)
-  python3 -c "
+    python3 .claude/skills/casework/assess/scripts/write-execution-plan.py \
+      --decision /tmp/assess-dec-$$.json --case-dir "{caseDir}"
+    rm -f /tmp/assess-dec-$$.json
+    # Update lastAssessedAt even on fast path (ISS-227: prevents timing cross-run drift)
+    python3 -c "
 import json, time, os
 p = r'{caseDir}/casework-meta.json'
 try: m = json.load(open(p, encoding='utf-8'))
@@ -66,8 +83,9 @@ except: m = {}
 m['lastAssessedAt'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
 json.dump(m, open(p, 'w', encoding='utf-8'), indent=2, ensure_ascii=False)
 "
-  echo "ASSESS_OK|delta=empty|elapsed=${SECONDS}s"
-  exit 0
+    echo "ASSESS_OK|delta=empty|elapsed=${SECONDS}s"
+    exit 0
+  fi
 fi
 ```
 
@@ -206,7 +224,13 @@ actualStatus 是对**实际沟通状态**的事实判断，仅基于已发生的
   //    当不含 troubleshooter 时，设 deferredActions: []
   "deferReason": "<string — 为什么 defer，如 'email type TBD after troubleshoot reassess'> | null",
   "noActionReason": "<string or null>",
-  "routingSource": "llm"
+  "routingSource": "llm",
+  "nextFollowUpDate": "<ISO date (YYYY-MM-DD) or null>"
+  // nextFollowUpDate 规则（ISS-235：DELTA_EMPTY 过期机制）：
+  // - pending-customer + 提到未来日期事件（版本发布、会议、PG deadline）→ 设为该日期
+  // - pending-customer 无明确日期 → 设为 today + 3 天（默认 follow-up 间隔）
+  // - pending-engineer / ready-to-close / researching → null（不需要等待到期触发）
+  // 当 DELTA_EMPTY 且 today >= nextFollowUpDate 时强制走 LLM re-assess
 }
 ```
 
@@ -259,6 +283,7 @@ upsert 字段：
 - `actualStatus` ← LLM 决策
 - `daysSinceLastContact` ← LLM 决策（或从 data-refresh-output 透传）
 - `statusReasoning` ← LLM 决策（≤200 字，以 `→ {actualStatus}` 结尾）
+- `nextFollowUpDate` ← LLM 决策（ISO date 或 null，ISS-235）
 - `lastAssessedAt` ← ISO now
 - `compliance.sourceHash` / `.entitlementOk` / `.checkedAt` ← Step 2 产物（若 re-infer）
 
@@ -273,6 +298,12 @@ m['daysSinceLastContact'] = int('$DAYS')
 m['statusJudgedAt'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
 m['statusReasoning'] = '''$REASONING'''.strip()[:200]
 m['lastAssessedAt'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
+# ISS-235: nextFollowUpDate — DELTA_EMPTY 过期机制
+nfd = '''$NEXT_FOLLOW_UP_DATE'''.strip()
+if nfd and nfd != 'null' and nfd != 'None':
+    m['nextFollowUpDate'] = nfd
+elif 'nextFollowUpDate' in m:
+    del m['nextFollowUpDate']  # 清除旧值（非 pending-customer 时）
 # compliance merge (如 Step 2 re-infer)
 if '$COMPLIANCE_PATH' == 're-infer':
     m['compliance'] = json.loads('''$COMPLIANCE_JSON''')

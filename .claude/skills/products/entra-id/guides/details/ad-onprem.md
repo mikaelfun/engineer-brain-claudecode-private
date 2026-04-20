@@ -1,6 +1,6 @@
 # ENTRA-ID On-Premises AD/LDAP — Detailed Troubleshooting Guide
 
-**Entries**: 183 | **Drafts fused**: 71 | **Kusto queries**: 0
+**Entries**: 187 | **Drafts fused**: 71 | **Kusto queries**: 0
 **Draft sources**: ado-wiki-a-ad-forest-restore.md, ado-wiki-a-ad-replication-general-approach-troubleshooting.md, ado-wiki-a-ad-replication-unknown-solution-investigation.md, ado-wiki-a-dc-lsass-high-memory-data-analysis.md, ado-wiki-a-dc-lsass-high-memory-data-collection-adperf.md, ado-wiki-a-dc-lsass-high-memory-data-collection-tss.md, ado-wiki-a-dfsr-cloning.md, ado-wiki-a-dfsr-event-log-verbosity.md, ado-wiki-a-dfsr-unknown-solution-investigation.md, ado-wiki-a-dfsrdiag-syntax.md
 **Generated**: 2026-04-07
 
@@ -1027,3 +1027,40 @@ SamAccountName,
 | 28 | ADLDS replication fails with access denied or permission errors between repli... | Computer accounts or service accounts for LDS instances a... | Add the computer account SID or service account of the pr... | 🟢 8.5 | ADO Wiki |
 | 29 | After installing June 2024 (6B.2024) cumulative update on Active Directory do... | Memory leak bug in kdcsvc service introduced in the June ... | Install a later cumulative update that contains the fix f... | 🟢 8.5 | ADO Wiki |
 | 30 | Small memory leak in LSASS on Windows Server 2016 and older domain controller... | PAC hardening protections in April 2024 (4B.24) Windows U... | Install the fix from May 2024 (5B.24) cumulative update w... | 🟢 8.5 | ADO Wiki |
+
+
+---
+
+## Incremental Update (2026-04-18) - +4 entries from contentidea-kb
+
+### Customer is unable to install Azure AD Password Protection DC Agent, after uninstalling all previous versions, because of the following error:CheckFor...
+**Score**: 🟢 8.0 | **Source**: ContentIdea KB | **ID**: entra-id-3650
+
+**Root Cause**: Uninstalling Azure AD Password Protection DC Agent' - '1.1.10.3' did not clear the registry key, found in SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall
+
+**Solution**: The issue was resolved after cleaning the registry key of Azure AD Password Protection DC Agent' - '1.1.10.3', found in SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall
+
+
+### While joining a Linux VM in a step we need to run kinit <User's UPN> this step may throw the below errors,kinit: Cannot find KDC for realm '<Domain FQ...
+**Score**: 🟢 8.0 | **Source**: ContentIdea KB | **ID**: entra-id-3655
+
+**Root Cause**: kinit: Cannot find KDC for realm '<Domain FQDN>' while getting initial credentialsNo definition for the domain FQDN in krb5.conf file.kinit: Resource temporarily unavailable while getting initial credentialsThe nameserver records are missing in resolv.conf file.
+
+**Solution**: 1) kinit: Cannot find KDC for realm '<Domain FQDN>' while getting initial credentials  This      error occurs if there is no definition in the /etc/krb5.conf file for the      kdc of domain you are trying to join the machine to.(Usually the domain is      picked from the UPN suffix).  If      this e...
+
+
+### Attempts to update Active Directory (AD) attribute (such as personalPager, otherPager, or extensionAttribute5) user account fail in both ADSI Edit and...
+**Score**: 🟢 8.0 | **Source**: ContentIdea KB | **ID**: entra-id-3683
+
+**Root Cause**: Inspection reveals that the affected user object has a very large number of entries in the userCertificate attribute, while a typical user has none or very few. This is causing directory limits or constraints to be hit for that object. This is a data/volume issue on a single object, not a schema def...
+
+**Solution**: Perform a safe cleanup of the userCertificate attribute values for the impacted user. After cleanup, re-attempt the attribute updates. Recommended Steps:   Assess Current Values      Use PowerShell to review and count the current userCertificate values:     Get-ADUser <ImpactedUserID> -Properties us...
+
+
+### Attempts to update Active Directory (AD) attribute (such as personalPager, otherPager, or extensionAttribute5) user account fail in both ADSI Edit and...
+**Score**: 🟢 8.0 | **Source**: ContentIdea KB | **ID**: entra-id-3688
+
+**Root Cause**: The affected user object has a very large number of entries in the userCertificate attribute. This is causing directory limits or constraints to be hit for that object. This is a data/volume issue on a single object, not a schema defect.
+
+**Solution**: Perform a safe cleanup of the userCertificate attribute values for the impacted user. Steps: 1) Assess Current Values with Get-ADUser. 2) Back Up/Export Existing Values. 3) Clean Up Redundant/Stale Certificates - remove duplicates, expired, or no-longer-required certificates. 4) Re-run the Intended ...
+

@@ -1,6 +1,6 @@
 # ENTRA-ID Device Registration & Join — Detailed Troubleshooting Guide
 
-**Entries**: 112 | **Drafts fused**: 13 | **Kusto queries**: 0
+**Entries**: 118 | **Drafts fused**: 13 | **Kusto queries**: 0
 **Draft sources**: ado-wiki-b-device-registration-troubleshooting-windows-10-automatic-device-registration.md, ado-wiki-b-entra-hybrid-join-using-entra-kerberos.md, ado-wiki-d-device-registration-authentication-android.md, ado-wiki-device-registration-authentication-android.md, ado-wiki-device-registration-basic-knowledge.md, ado-wiki-device-registration-flowchart.md, ado-wiki-device-registration-troubleshooting-device-management.md, ado-wiki-entra-hybrid-join-using-entra-kerberos.md, ado-wiki-troubleshooting-win10-automatic-device-registration.md, ado-wiki-troubleshooting-windows7-automatic-device-registration.md
 **Generated**: 2026-04-07
 
@@ -787,3 +787,56 @@
 | 28 | Windows 10 Hybrid Azure AD Join fails in SYSTEM context - device cannot disco... | Hybrid Azure AD Join runs as SYSTEM, which cannot discove... | 1) Configure WPAD (Web Proxy Auto-Discovery) so SYSTEM co... | 🟢 8.5 | ADO Wiki |
 | 29 | Hybrid Azure AD Join fails - domain-joined devices not appearing in Azure AD ... | Service Connection Point (SCP) configured incorrectly for... | For managed domains: SCP should point to contoso.onmicros... | 🟢 8.5 | ADO Wiki |
 | 30 | Hybrid Azure AD Join fails with connectivity errors - device registration run... | Outbound proxy configured only for user context, not syst... | Use WPAD for automatic proxy discovery in system context,... | 🟢 8.5 | ADO Wiki |
+
+
+---
+
+## Incremental Update (2026-04-18) - +6 entries from contentidea-kb
+
+### HybridDevicesHealthChecker PowerShell script checks  the health status of hybrid Azure AD joined devices. This PowerShell  script performs various tes...
+**Score**: 🟡 6.5 | **Source**: ContentIdea KB | **ID**: entra-id-3642
+
+**Description**: HybridDevicesHealthChecker PowerShell script checks  the health status of hybrid Azure AD joined devices. This PowerShell  script performs various tests on selected devices and shows the result  on the Shell screen, grid view and generates  HTML report. Why is this script useful?  To check the hybri
+
+> This entry contains description only, no explicit root cause/solution.
+
+
+### This PowerShell script automates resolving Device  Registration Service Connection Point (SCP) creation and configuration  issues while configuring Hy...
+**Score**: 🟡 6.5 | **Source**: ContentIdea KB | **ID**: entra-id-3643
+
+**Description**: This PowerShell script automates resolving Device  Registration Service Connection Point (SCP) creation and configuration  issues while configuring Hybrid Azure Active Directory Joined devices.  The script verifies all needed prerequisites  to install SCP, installs the missing ones, then, it creates
+
+> This entry contains description only, no explicit root cause/solution.
+
+
+### This article describes how to unjoin a Windows 10 computer that has been Microsoft Entra joined to a Microsoft Entra tenant.  OOBE Setup in Windows 10...
+**Score**: 🟡 6.5 | **Source**: ContentIdea KB | **ID**: entra-id-3657
+
+**Description**: This article describes how to unjoin a Windows 10 computer that has been Microsoft Entra joined to a Microsoft Entra tenant.  OOBE Setup in Windows 10 Enterprise presents the user with two &quot;domain join&quot; options to choose from.      Join Azure AD   Choose this option if your organization us
+
+> This entry contains description only, no explicit root cause/solution.
+
+
+### Are Hybrid Azure AD joined machines escrowing bitlocker recovery information to Azure AD or not
+**Score**: 🟡 6.5 | **Source**: ContentIdea KB | **ID**: entra-id-3666
+
+**Description**: Are Hybrid Azure AD joined machines escrowing bitlocker recovery information to Azure AD or not
+
+> This entry contains description only, no explicit root cause/solution.
+
+
+### Hybrid Azure AD joined machines escrow bitlocker recovery information in Azure AD or not.
+**Score**: 🟡 6.5 | **Source**: ContentIdea KB | **ID**: entra-id-3667
+
+**Description**: Hybrid Azure AD joined machines escrow bitlocker recovery information in Azure AD or not.
+
+> This entry contains description only, no explicit root cause/solution.
+
+
+### Azure AD joined machines take approximately 3 hours  (=2.77 hours) to boot up the logon screen. The machine is not hung and you will see a black scree...
+**Score**: 🟢 8.0 | **Source**: ContentIdea KB | **ID**: entra-id-3668
+
+**Root Cause**: When you logon with AzureAD account synced with on-premises AD, the domain information of the on-premises AD is set to the client OS. If the on-premises Domain NetBIOS name and the Work Group name of the client are the same, the deadlock occurs after the rebooting client.
+
+**Solution**: Change the Work Group name of the client to a different name than the Domain NetBIOS name of the on-premises AD. This bug will be fixed in the future release.
+

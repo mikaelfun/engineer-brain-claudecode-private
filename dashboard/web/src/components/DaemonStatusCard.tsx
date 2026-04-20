@@ -17,6 +17,14 @@ const TOKEN_STATUS_COLORS: Record<string, { dot: string; bg: string; label: stri
   unknown: { dot: 'var(--text-tertiary)', bg: 'var(--text-tertiary)', label: 'N/A' },
 }
 
+// Display name overrides for token names
+const TOKEN_DISPLAY_NAMES: Record<string, string> = {
+  d365: 'D365',
+  dtm: 'DTM',
+  icm: 'ICM',
+  teams: 'Teams',
+}
+
 function TokenBar({ token }: { token: DaemonTokenStatus }) {
   const colors = TOKEN_STATUS_COLORS[token.status] || TOKEN_STATUS_COLORS.unknown
   const pct = token.ttlMinutes > 0 && token.remainMin != null
@@ -38,7 +46,7 @@ function TokenBar({ token }: { token: DaemonTokenStatus }) {
         className="text-xs font-mono w-12 text-right shrink-0"
         style={{ color: 'var(--text-secondary)' }}
       >
-        {token.name}
+        {TOKEN_DISPLAY_NAMES[token.name] || token.name}
       </span>
       {/* Status dot */}
       <span
@@ -197,13 +205,10 @@ export function DaemonStatusCard() {
           <div className="space-y-1.5">
             {[...tokens]
               .sort((a, b) => {
-                // session tabs first
                 if (a.status === 'session' && b.status !== 'session') return -1
                 if (a.status !== 'session' && b.status === 'session') return 1
-                // then expired before ok
                 if (a.status === 'expired' && b.status !== 'expired') return -1
                 if (a.status !== 'expired' && b.status === 'expired') return 1
-                // then by remaining time ascending (most urgent first)
                 return (a.remainMin ?? 0) - (b.remainMin ?? 0)
               })
               .map((t) => (

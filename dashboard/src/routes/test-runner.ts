@@ -11,6 +11,7 @@ import { query, type Options } from '@anthropic-ai/claude-agent-sdk'
 import { readDirectives, writeDirectives, readTestState, readPipeline, readSupervisor } from '../services/test-reader.js'
 import { config } from '../config.js'
 import { sseManager } from '../watcher/sse-manager.js'
+import { sdkRegistry } from '../agent/sdk-session-registry.js'
 import type { SSEEventType } from '../types/index.js'
 
 const testRunnerRoutes = new Hono()
@@ -61,23 +62,31 @@ function broadcastRunnerStatus() {
 async function runOnce(ac: AbortController): Promise<void> {
   const projectRoot = config.projectRoot
   let firstMessage = true
-  for await (const message of query({
-    prompt: '执行一轮监督式测试循环。读取 .claude/agents/test-supervisor-runner.md 获取步骤。',
-    options: {
-      abortController: ac,
-      cwd: projectRoot,
-      settingSources: ['user'] as Options['settingSources'],
-      permissionMode: 'bypassPermissions',
-      allowDangerouslySkipPermissions: true,
-    },
-  })) {
-    if (firstMessage) {
-      const msg = message as Record<string, unknown>
-      if (msg.session_id) {
-        runnerState.sessionId = msg.session_id as string
+  const registryHandle = sdkRegistry.register({ source: 'test', context: 'test-supervisor', intent: 'Test supervisor run' })
+  try {
+    for await (const message of query({
+      prompt: '执行一轮监督式测试循环。读取 .claude/agents/test-supervisor-runner.md 获取步骤。',
+      options: {
+        abortController: ac,
+        cwd: projectRoot,
+        settingSources: ['user'] as Options['settingSources'],
+        permissionMode: 'bypassPermissions',
+        allowDangerouslySkipPermissions: true,
+      },
+    })) {
+      registryHandle.onMessage(message)
+      if (firstMessage) {
+        const msg = message as Record<string, unknown>
+        if (msg.session_id) {
+          runnerState.sessionId = msg.session_id as string
+        }
+        firstMessage = false
       }
-      firstMessage = false
     }
+    registryHandle.complete()
+  } catch (err) {
+    registryHandle.fail((err as Error)?.message || 'unknown error')
+    throw err
   }
 }
 

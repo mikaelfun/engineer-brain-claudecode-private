@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "defaultMode": "bypassPermissions",
+    "allow": [
+      "Bash(pwsh *)",
+      "Bash(pwsh -NoProfile *)",
+      "Bash(playwright-cli *)",
+      "Bash(agent-browser --version)",
+      "Bash(python3 -c \":*)",
+      "Bash(python3 -m pip show playwright)"
+    ]
+  }
+}

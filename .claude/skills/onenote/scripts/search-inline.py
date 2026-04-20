@@ -9,7 +9,7 @@ Usage:
     python3 search-inline.py --case-dir /path/to/case --notebook-dir /path/to/notebook --case-number 2603260030005229
 
 Output:
-    {caseDir}/onenote/onenote-digest.md
+    {caseDir}/onenote/_search-log.md
 """
 
 import argparse
@@ -373,7 +373,7 @@ def _copy_page_assets(copied_pages, onenote_dir):
     """ISS-224: Copy referenced image assets from OneNote Export source to case onenote/assets/.
 
     For each copied _page-*.md:
-    1. Scan for ![...](./assets/xxx.png) references
+    1. Scan for ![...](assets/xxx.png) references
     2. Resolve source image path = dirname(original_source_path)/assets/filename
     3. Copy to {onenote_dir}/assets/{safe_name}_{filename} (de-duplicated by page name)
     4. Rewrite image paths in the copied markdown to match new filenames
@@ -386,7 +386,7 @@ def _copy_page_assets(copied_pages, onenote_dir):
         int: total number of asset files copied
     """
     import shutil
-    img_pattern = re.compile(r'!\[([^\]]*)\]\(\./assets/([^)]+)\)')
+    img_pattern = re.compile(r'!\[([^\]]*)\]\((?:\./)?assets/([^)]+)\)')
     assets_dir = os.path.join(onenote_dir, "assets")
     total_copied = 0
 
@@ -423,10 +423,11 @@ def _copy_page_assets(copied_pages, onenote_dir):
                     src_size = os.path.getsize(src_img)
                     dst_size = os.path.getsize(dest_img)
                     if src_size == dst_size:
-                        # Still need to rewrite path in markdown even if cached
-                        old_ref = f"![{alt_text}](./assets/{img_filename})"
-                        new_ref = f"![{alt_text}](./assets/{dest_filename})"
-                        new_content = new_content.replace(old_ref, new_ref)
+                        # Replace both ./assets/ and assets/ variants
+                        for prefix in ["./assets/", "assets/"]:
+                            old_ref = f"![{alt_text}]({prefix}{img_filename})"
+                            new_ref = f"![{alt_text}](assets/{dest_filename})"
+                            new_content = new_content.replace(old_ref, new_ref)
                         continue
                 shutil.copy2(src_img, dest_img)
                 total_copied += 1
@@ -435,9 +436,10 @@ def _copy_page_assets(copied_pages, onenote_dir):
                 continue
 
             # Rewrite path in markdown
-            old_ref = f"![{alt_text}](./assets/{img_filename})"
-            new_ref = f"![{alt_text}](./assets/{dest_filename})"
-            new_content = new_content.replace(old_ref, new_ref)
+            for prefix in ["./assets/", "assets/"]:
+                old_ref = f"![{alt_text}]({prefix}{img_filename})"
+                new_ref = f"![{alt_text}](assets/{dest_filename})"
+                new_content = new_content.replace(old_ref, new_ref)
 
         # Write back updated markdown if any paths changed
         if new_content != content:
@@ -461,7 +463,7 @@ def main():
     if not os.path.isdir(notebook_dir):
         print(f"SKIP|notebook_dir_not_found={notebook_dir}")
         # Write no-match file
-        output_path = os.path.join(case_dir, "onenote", "onenote-digest.md")
+        output_path = os.path.join(case_dir, "onenote", "_search-log.md")
         generate_output(
             case_number,
             os.path.basename(notebook_dir),
@@ -474,7 +476,7 @@ def main():
     md_files = list(Path(notebook_dir).rglob("*.md"))
     if not md_files:
         print(f"SKIP|no_md_files_in={notebook_dir}")
-        output_path = os.path.join(case_dir, "onenote", "onenote-digest.md")
+        output_path = os.path.join(case_dir, "onenote", "_search-log.md")
         generate_output(
             case_number,
             os.path.basename(notebook_dir),
@@ -563,7 +565,7 @@ def main():
                 print(f"OK|assets_copied={total_assets}", file=sys.stderr)
 
     # Generate output
-    output_path = os.path.join(case_dir, "onenote", "onenote-digest.md")
+    output_path = os.path.join(case_dir, "onenote", "_search-log.md")
     notebook_name = os.path.basename(notebook_dir)
 
     # (delta計算已下移，使用 onenote/_search-state.json 作為權威來源)

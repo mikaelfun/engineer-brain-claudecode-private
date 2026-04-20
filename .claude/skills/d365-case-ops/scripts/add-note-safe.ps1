@@ -65,7 +65,7 @@ function Write-NoteLog {
         [string]$Error
     )
     # Resolve case logs dir from config
-    $projRoot = (Resolve-Path "$PSScriptRoot\..\..\..").Path
+    $projRoot = (Resolve-Path "$PSScriptRoot\..\..\..\..").Path
     $cfg = Get-Content "$projRoot\config.json" -Raw | ConvertFrom-Json
     $cr = if ([IO.Path]::IsPathRooted($cfg.casesRoot)) { $cfg.casesRoot } else { Join-Path $projRoot $cfg.casesRoot }
     $logsDir = Join-Path $cr "active" $CaseNumber "logs"

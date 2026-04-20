@@ -1,0 +1,12 @@
+{
+  "id": "ISS-235",
+  "title": "Assess DELTA_EMPTY 快速路径不感知时间到期事件",
+  "description": "DELTA_EMPTY 快速路径只检查数据变化（新邮件/新notes），不检查时间维度，导致时间到期的 follow-up 被遗漏。\n\n## 复现\nCase 2601290030000748 连续5次被错误判定 no-action/pending-customer：\n- statusReasoning（4/18 生成）说\"版本预计明天(4/20)发布，等发布后再跟进\"\n- 4/19~4/20 每次 patrol 都走 DELTA_EMPTY（无新邮件/notes），直接复用旧判断\n- 实际4/20已到，应 follow up 客户确认版本+关闭\n\n## 方案：nextFollowUpDate 过期机制\n\n### 写入端（assess LLM 判断时）\nassess 输出 execution-plan 时，LLM 增加一个字段 `nextFollowUpDate`（ISO date，如 2026-04-20）。\n规则：\n- pending-customer + 提到未来日期事件（版本发布、会议、deadline）→ 设为该日期\n- pending-customer 无明确日期 → 设为 today + N 天（N 由 daysSinceLastContact 的阈值决定，默认3天）\n- pending-engineer → 不设（工程师应主动行动）\n- ready-to-close → 不设\n\n写入位置：casework-meta.json → `nextFollowUpDate`\n\n### 读取端（DELTA_EMPTY 检查时）\nassess DELTA_EMPTY 路径增加一个 gate：\n```\nif meta.nextFollowUpDate && today >= meta.nextFollowUpDate:\n    skip DELTA_EMPTY, force LLM re-assess\n```\n零 LLM 开销，纯日期比较。\n\n### 涉及文件\n- `.claude/skills/casework/assess/SKILL.md` — LLM prompt 增加 nextFollowUpDate 输出\n- `.claude/skills/casework/assess/` 中的 DELTA_EMPTY gate 逻辑\n- `playbooks/schemas/case-directory.md` — casework-meta schema 增加字段说明",
+  "type": "bug",
+  "priority": "P1",
+  "status": "implemented",
+  "testLoopScan": true,
+  "trackId": "delta-empty-expiry_20260420",
+  "createdAt": "2026-04-20T13:30:00Z",
+  "updatedAt": "2026-04-20T13:30:00Z"
+}

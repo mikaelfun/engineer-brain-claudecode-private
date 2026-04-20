@@ -1,6 +1,6 @@
 # VM Vm Linux Os — 综合排查指南
 
-**条目数**: 24 | **草稿融合数**: 20 | **Kusto 查询融合**: 0
+**条目数**: 25 | **草稿融合数**: 20 | **Kusto 查询融合**: 0
 **来源草稿**: [ado-wiki-a-Best-Practices-Managing-extensions-enabled-Linux.md](../../guides/drafts/ado-wiki-a-Best-Practices-Managing-extensions-enabled-Linux.md), [ado-wiki-b-Linux-GA-Guide.md](../../guides/drafts/ado-wiki-b-Linux-GA-Guide.md), [ado-wiki-b-Linux-Security-Cases-Process.md](../../guides/drafts/ado-wiki-b-Linux-Security-Cases-Process.md), [ado-wiki-b-Unlock-Encrypted-Linux-Disk.md](../../guides/drafts/ado-wiki-b-Unlock-Encrypted-Linux-Disk.md), [ado-wiki-c-monitoring-extension-linux-manual-upgrade.md](../../guides/drafts/ado-wiki-c-monitoring-extension-linux-manual-upgrade.md), [ado-wiki-capture-linux-ga-callstack.md](../../guides/drafts/ado-wiki-capture-linux-ga-callstack.md), [mslearn-collect-perf-metrics-linux.md](../../guides/drafts/mslearn-collect-perf-metrics-linux.md), [mslearn-cpu-perf-troubleshoot-linux.md](../../guides/drafts/mslearn-cpu-perf-troubleshoot-linux.md), [mslearn-create-swap-file-linux-vm.md](../../guides/drafts/mslearn-create-swap-file-linux-vm.md), [mslearn-linux-grub-rescue-troubleshooting.md](../../guides/drafts/mslearn-linux-grub-rescue-troubleshooting.md), [mslearn-linux-kernel-panic-troubleshooting.md](../../guides/drafts/mslearn-linux-kernel-panic-troubleshooting.md), [mslearn-linux-support-scope.md](../../guides/drafts/mslearn-linux-support-scope.md), [mslearn-memory-perf-troubleshoot-linux.md](../../guides/drafts/mslearn-memory-perf-troubleshoot-linux.md), [mslearn-performance-bottlenecks-linux.md](../../guides/drafts/mslearn-performance-bottlenecks-linux.md), [mslearn-redeploy-linux-vm-new-node.md](../../guides/drafts/mslearn-redeploy-linux-vm-new-node.md), [mslearn-reset-linux-password.md](../../guides/drafts/mslearn-reset-linux-password.md), [onenote-clamav-linux-vm.md](../../guides/drafts/onenote-clamav-linux-vm.md), [onenote-enable-cuda-on-nv-series-linux.md](../../guides/drafts/onenote-enable-cuda-on-nv-series-linux.md), [onenote-linux-perf-commands-reference.md](../../guides/drafts/onenote-linux-perf-commands-reference.md), [onenote-linux-slow-network-troubleshooting.md](../../guides/drafts/onenote-linux-slow-network-troubleshooting.md)
 **生成日期**: 2026-04-07
 
@@ -80,3 +80,19 @@
 | 23 | yum RHEL 7 HTTPS 403 Forbidden to RHUI. Third-party curl from city-fan.org. | Third-party curl certificates not recognized by Red Hat. | Downgrade to official RHEL curl: yum downgrade curl libcurl --disablerepo=*. | 🔵 7.0 | MS Learn |
 | 24 | Ubuntu 24.04 VM needs account lockout configuration: lock login for N minutes after N failed attempt... | Ubuntu 24.04 defaults to pam_faillock (replacing older pam_tally2). Three PAM co... | 1) Edit /etc/security/faillock.conf: deny=3, unlock_time=600, fail_interval=900,... | 🟢 8.5 | OneNote |
 
+
+
+---
+
+## 增量补充条目 (2026-04-18)
+
+### vm-contentidea-kb-041
+**来源**: KB | **分数**: 🟡 5.0
+
+**症状**: cloud-init is an open source project provisioning agent, that can be baked into Linux images, this is responsible for completing the setup of the VM when you create it, such as setting the hostname, username, password/ssh keys, mounting the ephemeral disk etc. The process of completing the setup is known as æprovisioningÆ. In addition to just setting up the minimum required configuration options d
+
+**根因**: Reference doc (no explicit root cause)
+
+**方案**: See original document for detailed steps
+
+---

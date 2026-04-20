@@ -1,0 +1,12 @@
+[
+  "Supportability/AzureNetworking/Wiki:/Azure Firewall/Features & Functions/AZFW and SLB - Port Re-use Behavior",
+  "Supportability/AzureNetworking/Wiki:/Azure Firewall/Features & Functions/Application Rules - Active Listeners on the AZFW",
+  "Supportability/AzureNetworking/Wiki:/Azure Firewall/Features & Functions/Azure Firewall & SNI",
+  "Supportability/AzureNetworking/Wiki:/Azure Firewall/Features & Functions/Azure Firewall - \"Data Processed\" value for billing purpose",
+  "Supportability/AzureNetworking/Wiki:/Azure Firewall/Features & Functions/Azure Firewall Explicit Proxy",
+  "Supportability/AzureNetworking/Wiki:/Azure Firewall/Features & Functions/Azure Firewall Web Categories",
+  "Supportability/AzureNetworking/Wiki:/Azure Firewall/Features & Functions/Firewall Manager - Using Secure Hub (VWAN) Routing",
+  "Supportability/AzureNetworking/Wiki:/Azure Firewall/Features & Functions/Firewall, Firewall Policy, Ipgroups - Architecture and Control Plane Operations",
+  "Supportability/AzureNetworking/Wiki:/Azure Firewall/Features & Functions/IDPS (IDS + IPS) Feature - Azure Firewall",
+  "Supportability/AzureNetworking/Wiki:/Azure Firewall/Features & Functions/Persistent connectivity issues when AKS nodes resuse ports and application rules are utilized"
+]

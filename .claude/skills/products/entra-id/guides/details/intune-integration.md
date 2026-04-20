@@ -1,6 +1,6 @@
 # ENTRA-ID Intune Integration — Detailed Troubleshooting Guide
 
-**Entries**: 49 | **Drafts fused**: 4 | **Kusto queries**: 0
+**Entries**: 52 | **Drafts fused**: 4 | **Kusto queries**: 0
 **Draft sources**: ado-wiki-b-azure-ad-mobility-mdm-mam.md, ado-wiki-c-Intune-Configure-CA-Policy.md, ado-wiki-e-windows-laps-intune-mdm-log-analysis.md, ado-wiki-intune-identity-support-boundaries.md
 **Generated**: 2026-04-07
 
@@ -430,3 +430,32 @@
 | 28 | After activating Entra role via PIM, user cannot use elevated permissions in ... | Role assignments activated in PIM are stored in AAD/MSODS... | 1) Wait 10-15 minutes after PIM activation before signing... | 🟢 8.5 | ADO Wiki |
 | 29 | After PIM Entra role activation, user cannot utilize permissions in M365 apps... | PIM activation reflected in AAD/MSODS within 1-2 min, but... | Wait 10-15 min after activation. Sign out completely. Sig... | 🟢 8.5 | ADO Wiki |
 | 30 | Federated sign-in is bypassed when using QR code to bootstrap Outlook Mobile ... | Token transfer performed by scanning QR code bypasses the... | Disable QR code sign-in feature via Exchange PowerShell t... | 🟢 8.5 | ADO Wiki |
+
+
+---
+
+## Incremental Update (2026-04-18) - +3 entries from contentidea-kb
+
+### The MDM Terms of Use are set in the Mobility (MDM and MAM) blade of Azure Active Directory for the MDM applications defined here. These include Intune...
+**Score**: 🟡 6.5 | **Source**: ContentIdea KB | **ID**: entra-id-3677
+
+**Description**: The MDM Terms of Use are set in the Mobility (MDM and MAM) blade of Azure Active Directory for the MDM applications defined here. These include Intune, 3rd party On-Premises MDM Applications, and 3rd party cloud MDM�s.   The MDM User Scope set inside of the MDM application will determine who is targ
+
+> This entry contains description only, no explicit root cause/solution.
+
+
+### You are using AAD Joined Windows Scenario the appliance of Manage account protection settings with endpoint security policies in Microsoft Intune | Mi...
+**Score**: 🟢 8.0 | **Source**: ContentIdea KB | **ID**: entra-id-3678
+
+**Root Cause**: AAD Group membership evaluation currently does not work for the built-in group of "Users"
+
+**Solution**: Two proposed workarounds.  1st Solution    create a new local group add the SID of the AAD      Group to this newly created local group on the device grant "Allow log on locally" to the local group in order for the members of the group to      have the necessary permissions to log on to the device r...
+
+
+### MDM Terms of Use troubleshooting for Azure Active Directory Mobility blade. Users not receiving MDM enrollment prompt during device registration. Cove...
+**Score**: 🟡 6.5 | **Source**: ContentIdea KB | **ID**: entra-id-3685
+
+**Description**: MDM Terms of Use troubleshooting for Azure Active Directory Mobility blade. Users not receiving MDM enrollment prompt during device registration. Covers DefaultMDMPolicy verification, ghost MDM applications, and token claims debugging.
+
+> This entry contains description only, no explicit root cause/solution.
+

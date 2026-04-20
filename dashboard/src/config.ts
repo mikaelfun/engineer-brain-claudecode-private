@@ -35,6 +35,8 @@ function resolveProjectRoot(): string {
 interface DashboardConfig {
   serverPort?: number
   webPort?: number
+  /** How many days completed sessions stay visible in Monitor (default 7) */
+  sessionRetentionDays?: number
 }
 
 interface ProjectConfig {
@@ -83,6 +85,11 @@ export const config = {
   get webPort(): number {
     return readProjectConfig().dashboard?.webPort ?? 5173
   },
+  /** Completed session retention in ms (default 7 days, configurable via dashboard.sessionRetentionDays) */
+  get sessionRetentionMs(): number {
+    const days = readProjectConfig().dashboard?.sessionRetentionDays ?? 7
+    return days * 24 * 60 * 60 * 1000
+  },
   jwtSecret: process.env.JWT_SECRET || 'engineer-brain-dev-secret',
   projectRoot,
 
@@ -97,7 +104,8 @@ export const config = {
   },
   get patrolDir() {
     const pd = readProjectConfig().patrolDir
-    return pd ? resolveConfigPath(pd) : join(this.casesDir, '.patrol')
+    if (!pd) throw new Error('patrolDir not configured in config.json')
+    return resolveConfigPath(pd)
   },
   get patrolStateFile() {
     return join(this.patrolDir, 'patrol-state.json')
@@ -125,7 +133,7 @@ export const config = {
     return join(runtimeDir, 'perf-reports')
   },
   get scriptsDir() {
-    return join(projectRoot, 'skills', 'd365-case-ops', 'scripts')
+    return join(projectRoot, '.claude', 'skills', 'd365-case-ops', 'scripts')
   },
   get agentSessionsDir() {
     return join(runtimeDir, 'agent-sessions')

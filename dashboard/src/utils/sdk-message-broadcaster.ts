@@ -7,7 +7,7 @@
  */
 import { sseManager } from '../watcher/sse-manager.js'
 import { appendSessionMessage } from '../agent/case-session-manager.js'
-import { getSSEEventType, formatMessageForSSE, getPersistedMessageType } from './sse-helpers.js'
+import { getSSEEventType, formatMessageForSSE, getPersistedMessageType, parseAssistantBlocks } from './sse-helpers.js'
 import type { ToolCallRecord } from '../types/index.js'
 
 /**
@@ -120,19 +120,20 @@ export async function broadcastSDKMessages(
       capturedSessionId = (message as any).session_id
     }
 
-    // Deep-parse assistant messages (SDK nested structure: message.message.content)
+    // Deep-parse assistant messages (shared parser)
     if (message.type === 'assistant' && message.message?.content) {
       turns++
       const content = message.message.content
       if (Array.isArray(content)) {
-        for (const block of content) {
-          if (block.type === 'tool_use') {
-            const toolContent = summarizeToolInput((block as any).name, (block as any).input)
-            lastToolName = (block as any).name
+        for (const parsed of parseAssistantBlocks(content)) {
+          messageCount++
+          const ts = new Date().toISOString()
+
+          if (parsed.kind === 'tool-call') {
+            const toolContent = summarizeToolInput(parsed.toolName!, parsed.toolInput)
+            lastToolName = parsed.toolName
             const substep = inferCaseworkSubstep(lastToolName!, toolContent)
-            // Track tool call (mark as pending; will be resolved by tool_result)
             toolCalls.push({ name: lastToolName!, success: true })
-            messageCount++
             sseManager.broadcast('case-step-progress' as any, {
               caseNumber,
               sessionId: capturedSessionId,
@@ -141,48 +142,30 @@ export async function broadcastSDKMessages(
               toolName: lastToolName,
               content: toolContent,
               ...(substep ? { substep } : {}),
-              timestamp: new Date().toISOString(),
+              timestamp: ts,
             })
             appendSessionMessage(caseNumber, {
               type: 'tool-call',
               content: toolContent,
               toolName: lastToolName,
               step: stepName,
-              timestamp: new Date().toISOString(),
+              timestamp: ts,
             })
-          } else if (block.type === 'text' && (block as any).text) {
-            messageCount++
-            const text = (block as any).text.slice(0, 500)
+          } else {
+            // 'response' or 'thinking'
             sseManager.broadcast('case-step-progress' as any, {
               caseNumber,
               sessionId: capturedSessionId,
               step: stepName,
-              kind: 'thinking',
-              content: text,
-              timestamp: new Date().toISOString(),
+              kind: parsed.kind,
+              content: parsed.content,
+              timestamp: ts,
             })
             appendSessionMessage(caseNumber, {
-              type: 'thinking',
-              content: text,
+              type: parsed.kind,
+              content: parsed.content,
               step: stepName,
-              timestamp: new Date().toISOString(),
-            })
-          } else if (block.type === 'thinking' && (block as any).thinking) {
-            messageCount++
-            const thinkText = (block as any).thinking.slice(0, 500)
-            sseManager.broadcast('case-step-progress' as any, {
-              caseNumber,
-              sessionId: capturedSessionId,
-              step: stepName,
-              kind: 'thinking',
-              content: thinkText,
-              timestamp: new Date().toISOString(),
-            })
-            appendSessionMessage(caseNumber, {
-              type: 'thinking',
-              content: thinkText,
-              step: stepName,
-              timestamp: new Date().toISOString(),
+              timestamp: ts,
             })
           }
         }

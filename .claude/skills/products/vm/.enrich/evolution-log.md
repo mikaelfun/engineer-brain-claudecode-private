@@ -445,3 +445,267 @@
 - **Skipped**: 2 (empty fields), 0 (dedup)
 - **Total JSONL**: 83 entries
 - **Total scanned**: 226/226 — **EXHAUSTED**
+
+## 2026-04-18 17:13 — mslearn batch (Phase 4b)
+- Fetched 8 URLs (Linux: apt-issues, UEFI-boot, boot-errors, debian-connect, network, capture-image, chroot, chroot-lvm)
+- Track A: 11 JSONL entries (vm-mslearn-327 to vm-mslearn-337)
+- Track B: 3 guide drafts (capture-image, chroot, chroot-lvm)
+- boot-error-troubleshoot-linux: index/summary page, skipped (no actionable content)
+- Remaining: 444 URLs
+
+### 2026-04-18 17:16 — mslearn Phase 4b (batch)
+- **Fetched**: 8 URLs
+- **Track A (JSONL)**: 1 new entry (vm-mslearn-338: broken secure channel / trust relationship failure)
+- **Track B (guide draft)**: 1 new (BSOD dump collection guide)
+- **Deduplicated**: 3 (restart-resize vm-mslearn-127, cannot-extend-volume-sql-server vm-mslearn-138, applying-group-policy-shortcuts vm-mslearn-122)
+- **Already drafted**: 1 (app-connection guide already exists)
+- **Non-VM skipped**: 2 (istio-add-on-egress-gateway, partner-solutions/log-limitations)
+- **Remaining**: 436/741
+
+## 2026-04-18 09:21 UTC — mslearn Phase 4b batch
+
+- **Fetched**: 8 URLs (4 VM, 2 AKS, 1 App Service, 1 Automation)
+- **Track A**: 1 new entry (vm-mslearn-339: boot diagnostics screenshot stale/VIDEOIDLE)
+- **Track B**: 2 guide drafts (serial-console-overview, boot-diagnostics-guide)
+- **Deduplicated**: 2 (0x7E→vm-mslearn-097, CustomScript rerun→vm-mslearn-254)
+- **Skipped (non-VM)**: 4 pages (AKS policy, AKS subnet, App Service TLS, Automation HRW)
+- **Remaining**: 428 URLs
+
+### 2026-04-18 09:25 UTC — mslearn-scan batch (Phase 4b)
+- Fetched 8 pages, 0 new JSONL entries (3 Break/Fix candidates all deduplicated)
+- 1 new guide draft: mslearn-windows-client-eos-timeline.md
+- 4 guide topics already covered by existing drafts (serial-console-cmd, offline-repair, memory-dump, recovery-disk)
+- 1 skipped (HUB retirement notice, no troubleshooting value)
+- Scanned: 485/741, Remaining: 256
+
+## 2026-04-18 17:29 — mslearn Phase 4b batch
+
+- **Fetched**: 8 URLs
+- **Track A (JSONL)**: 2 new entries (vm-mslearn-340, vm-mslearn-341)
+  - vm-mslearn-340: RDP failure due to disabled NIC in guest OS
+  - vm-mslearn-341: Windows Server EOS (2003/2008/R2) on Azure VM
+- **Track B (guide drafts)**: 3 new drafts
+  - mslearn-azure-disks-faq.md: Managed Disks FAQ key facts
+  - mslearn-serial-console-windows.md: Serial Console quick reference
+  - mslearn-install-vm-agent-offline.md: VM Agent offline install procedure
+- **Deduplicated**: 3 (security-policy→090, 0xc0000011→100, 0xC0000428→092)
+- **Remaining**: 248 URLs
+
+### 2026-04-18 — mslearn batch (cloud-init/perf/dns/ssh/extensions)
+
+- **Scanned**: 8 URLs (Linux cloud-init, perf metrics, MBR→GPT, swap, DNS config, SSH troubleshoot, extensions)
+- **Track A**: 4 break/fix items — all deduplicated (≥80% overlap with vm-mslearn-248/252/253/255)
+- **Track B**: 4 guide drafts — all already exist (collect-perf-metrics, create-swap, custom-dns, detailed-ssh)
+- **New JSONL entries**: 0
+- **Remaining**: 232 URLs
+
+## 2026-04-18 12:45 UTC — mslearn scan batch
+
+- **Pages scanned**: 8
+- **Track A (JSONL)**: 5 entries (vm-mslearn-345 to vm-mslearn-349)
+  - GPU disabled after Ubuntu 16.04 kernel upgrade to 4.4.0-75
+  - Kernel panic: VFS unable to mount root fs (missing initramfs)
+  - Kernel panic: Attempted to kill init (missing files/permissions/SELinux)
+  - Linux Agent 2.1.5/2.1.6 cannot process extensions + high CPU
+  - Linux Agent Not Ready - cannot connect to WireServer 168.63.129.16
+- **Track B (drafts)**: 6 guide files
+  - Display ADE encryption settings via Resource Explorer
+  - Kernel-related boot issues comprehensive guide
+  - RHEL Leapp upgrade (7->8, 8->9, 9->10) on PAYG VMs
+  - RHEL SAP HANA/APPS Leapp upgrade 8.x->9.x
+  - RHEL SAP HANA/APPS Leapp upgrade 7.9->8.x
+  - Linux Azure Guest Agent troubleshooting guide
+- **Deduplicated**: 0
+- **Remaining unscanned**: 224
+
+## 2026-04-18 12:49 UTC — mslearn batch (8 URLs)
+
+- **Scanned**: 8 pages (applying-group-policy-registry-policy, extension-supported-os, os-not-found, multiple-certificates-iaas-vm-extensions, start-vm-last-known-good, troubleshoot-recovery-disks-portal-windows, windows-stop-error-bad-system-config-info, troubleshoot-specific-rdp-errors)
+- **Deduplicated**: 6 (already had matching JSONL entries from same sourceUrl)
+- **New Track B guides**: 2
+  - mslearn-start-vm-last-known-good.md (Last Known Good Configuration procedure)
+  - mslearn-troubleshoot-recovery-disks-portal.md (Attach OS disk to repair VM procedure)
+- **New JSONL entries**: 0 (all Break/Fix items already captured)
+- **Progress**: 525/741 scanned (216 remaining)
+
+### 2026-04-18 20:53 — mslearn batch (vm)
+- **Scanned**: 8 URLs
+- **Track A (Break/Fix)**: 1 new entry (vm-mslearn-350: VM agent minimum version support)
+- **Track B (Guides)**: 2 drafts (serial-console-power-options, imds-verification-tool)
+- **Deduplicated**: 5 (exact sourceUrl match with existing entries: 0xc0000221→108, 32-bit→006, capacity-reservation→169/177, boot-manager→085, corrupted-hive→018)
+- **Progress**: 533/741 scanned (72%)
+
+### 2026-04-18 20:56 — mslearn batch (8 pages)
+- Scanned: 8 URLs (troubleshoot-rdp-safe-mode, windows-activation-stopped-working, detailed-troubleshoot-rdp, troubleshoot-vm-boot-configure-update, guest-os-firewall-blocking-inbound-traffic, applying-group-policy-environment-policy, applying-group-policy-power-options, troubleshoot-guide-not-bootable-disk)
+- Track A new: 1 (vm-mslearn-351: not bootable disk / missing active partition / BCD)
+- Track B draft: 1 (mslearn-detailed-rdp-troubleshooting.md — comprehensive multi-source RDP troubleshooting guide)
+- Deduplicated: 6 (same sourceUrl as existing vm-mslearn-056/057/072/110/114/159)
+- Remaining: 200 / 741
+
+## 2026-04-18 mslearn batch (vm)
+
+- **Pages scanned**: 8
+- **Track A new entries**: 2 (vm-mslearn-352, vm-mslearn-353)
+  - vm-mslearn-352: Windows Guest Agent WireServer 168.63.129.16 connectivity failure
+  - vm-mslearn-353: Windows Guest Agent Npcap loopback adapter interference
+- **Track B guide drafts**: 2
+  - mslearn-os-upgrade-assessment-tool.md (reference tool)
+  - mslearn-enable-disable-firewall-rule-guest-os.md (procedures guide)
+- **Deduplicated (>=80% overlap)**: 11 entries across 6 pages
+- **Progress**: 549/741 scanned (74%), 192 remaining
+
+## 2026-04-18 13:07 UTC — mslearn scan (batch)
+
+- **Scanned**: 8 URLs (557/741, 75%)
+- **Track A (JSONL)**: 4 entries (vm-mslearn-042 ~ 045)
+  - 042: Extension certificate issues (FailedToDecryptProtectedSettings / CryptographicException)
+  - 043: OS boot failure (inactive partition / BCD corruption / boot sector not found)
+  - 044: INACCESSIBLE_BOOT_DEVICE blue screen
+  - 045: Windows activation / KMS troubleshooting (multiple error codes)
+- **Track B (guide drafts)**: 2 files
+  - mslearn-downsize-data-disk.md
+  - mslearn-repair-boot-configuration-data.md
+- **Deduplicated**: 2 (in-place-system-upgrade = vm-mslearn-005, inaccurate-vm-availability = vm-mslearn-023)
+- **Remaining**: 184 URLs
+
+## 2026-04-18 21:14 — mslearn batch (8 pages)
+
+- **Pages fetched**: 8
+- **Track A entries**: 2 new (vm-mslearn-354, vm-mslearn-355)
+  - vm-mslearn-354: Wrong swap device path in GRUB → dracut emergency shell
+  - vm-mslearn-355: Initramfs/initrd corruption → dracut emergency shell
+- **Track B guide drafts**: 3 new
+  - mslearn-vm-assist-linux-guest-agent-tool.md
+  - mslearn-linux-kernel-panic-troubleshooting.md
+  - mslearn-linux-dracut-boot-failure.md
+- **Deduplicated**: 5 URLs (content already extracted from prior scans but URLs not in scanned list)
+  - linux-custom-gallery-marketplace-image-allocation-failure (≥80% overlap with vm-mslearn-295)
+  - linux-custom-image-provisioning-errors (≥80% overlap with vm-mslearn-296)
+  - linux-fulldisk-boot-error (≥80% overlap with vm-mslearn-287/288)
+  - linux-hyperv-issue (≥80% overlap with vm-mslearn-260)
+  - linux-kernel-panics-upgrade (≥80% overlap with vm-mslearn-283)
+- **Remaining**: 176 unscanned URLs
+
+## 2026-04-18 13:42 UTC — mslearn scan batch
+
+- **Pages fetched**: 8
+- **Track A (JSONL)**: 5 entries (vm-mslearn-356 ~ vm-mslearn-360)
+  - check-disk-boot-error (chkdsk stuck at boot)
+  - azure-vm-nsi-not-starting (NSI service failure)
+  - bad-pool-header (BSOD 0x00000019)
+  - guest-os-firewall-misconfigured (firewall blocking RDP)
+  - failed-get-contents-log-error (Boot Diagnostics log error)
+- **Track B (guide drafts)**: 3 files
+  - mslearn-rdp-authentication-errors.md (NLA/domain/TLS/FIPS)
+  - mslearn-windows-activation-troubleshoot-tools.md (activation tools)
+  - mslearn-troubleshoot-rdp-connection.md (comprehensive RDP troubleshooting)
+- **Remaining**: 168 / 741
+
+## 2026-04-18 13:46 UTC — mslearn scan batch (vm)
+
+- **Scanned**: 8 pages (581/741, 78.4%)
+- **Track A (JSONL)**: 3 entries (vm-mslearn-361 ~ vm-mslearn-363)
+  - vm-mslearn-361: VM unresponsive when applying Group Policy (CleanupProfiles lock)
+  - vm-mslearn-362: RDP error "must change password before first login"
+  - vm-mslearn-363: RDP error "too many admin sessions open" (MaxConnections)
+- **Track B (Guide Drafts)**: 5 drafts
+  - mslearn-enable-serial-console-memory-dump.md
+  - mslearn-remote-tools-troubleshoot-azure-vm.md
+  - mslearn-unmanaged-disk-offline-repair.md
+  - mslearn-vm-common-error-messages.md
+  - mslearn-capacity-reservation-billing.md
+- **Deduplicated**: 0
+- **Remaining**: 160 pages
+
+## 2026-04-18 13:50 UTC — mslearn scan batch (8 pages)
+- **Scanned**: 8 URLs (589/741 total, 152 remaining)
+- **Track A (JSONL)**: 5 entries (vm-mslearn-364 to vm-mslearn-368)
+  - poor-performance-emulated-storage-stack (storflt driver / emulated mode)
+  - troubleshoot-guide-critical-process-died (BSOD 0x000000EF)
+  - vm-unresponsive-domain-controllers-policy (GP hang at boot)
+  - boot-error-0xc00000ba (corrupt system driver)
+  - os-bootmgr-missing (BOOTMGR missing / BCD repair)
+- **Track B (Drafts)**: 3 guide drafts
+  - mslearn-windows-vm-deployment-faqs.md
+  - mslearn-vm-inspector-error-messages.md
+  - mslearn-azure-iaas-vm-logs.md
+- **Deduplicated**: 0
+
+## 2026-04-18 13:54 UTC — mslearn batch (vm)
+- Fetched 8 pages, 7 deduplicated (sourceUrl already in JSONL), 1 new page
+- New page: boot-error-status-not-found (0xC0000225) → 3 Track A entries (vm-mslearn-369~371)
+  - Cause 1: Missing/corrupted system driver (.sys)
+  - Cause 2: Corrupted BCD / incorrectly prepared VHD
+  - Cause 3: Registry hive corruption
+- Scanned: 597/741 (144 remaining)
+
+## 2026-04-18 21:58 — mslearn scan (batch, rear-half)
+
+**Scanned 8 URLs** (from unscanned tail):
+1. reset-password → Track B (guide draft)
+2. troubleshoot-recovery-disks-portal-linux → Track B (guide draft)
+3. removing-extensions-netapp-cvo → Track A (vm-mslearn-372)
+4. upgrade-rhel-8-dot-x-to-8-dot-10-on-sap-hana-apps → Track A (vm-mslearn-373)
+5. linux-vm-not-start-kernel-lis → **deduplicated** (already in JSONL)
+6. troubleshoot-performance-memory-linux → Track B (guide draft)
+7. troubleshoot-rhel-pacemaker-cluster-services-resources-startup-issues → **deduplicated** (already in JSONL)
+8. serial-console-linux → Track B (guide draft) + 21V gap added
+
+**Stats**: discovered=6 (2 JSONL + 4 drafts), deduplicated=2, remaining=136
+**21V gap added**: Azure Serial Console not available in Mooncake
+
+## 2026-04-18 14:04 UTC — mslearn scan batch (8 pages)
+
+**Pages processed:** 8 / 136 remaining → 128 remaining
+**Track A (JSONL):** 4 new entries (vm-mslearn-374 to vm-mslearn-377)
+- 374: Mellanox mlx5 driver BSOD (DRIVER_IRQL_NOT_LESS_OR_EQUAL 0xD1)
+- 375: AllocationFailed / ZonalAllocationFailed (standalone VM)
+- 376: OverconstrainedAllocationRequest (multi-constraint failure)
+- 377: Allocation failure for legacy VM sizes (Av1/Dv1/DSv1/D15v2)
+
+**Track B (Drafts):** 4 guide drafts
+- mslearn-disable-guest-os-firewall.md (4 online + 1 offline method)
+- mslearn-windows-11-support-matrix.md (VM series compatibility table)
+- mslearn-allocation-troubleshooting-guide.md (8 scenarios decision tree)
+- mslearn-vm-agent-extensions-support.md (support policy + diagnostics)
+
+**Deduplicated:** 2
+- troubleshoot-rdp-no-license-server (>=80% overlap with vm-mslearn-045)
+- windows-stop-error-hardware-malfunction (>=80% overlap with vm-mslearn-094)
+
+**Skipped:** 0 (how-to-videos page had minimal content, processed as scanned-only)
+
+**21V gaps:** +1 partial feature (Windows 11 VM SKU availability)
+
+### 2026-04-18 14:09 UTC — mslearn batch scan (8 pages)
+
+- **Pages fetched**: 8
+- **Track A (break/fix)**: 5 candidates, all deduplicated (>=80% overlap with existing entries)
+  - slow-vm-start-extensions → dup of vm-mslearn-131
+  - unresponsive-vm-apply-windows-update (C01A001D) → dup of vm-mslearn-081/086
+  - cannot-rdp-brute-force → dup of vm-mslearn-041
+  - storage-resource-deletion-errors → dup of vm-mslearn-140
+  - mellanox-driver-validation-tool → dup of vm-mslearn-374 (tool reference, reclassified Track B)
+- **Track B (guide drafts)**: 4 created
+  - mslearn-serial-console-enable-disable.md
+  - mslearn-windows-vm-ipu-tool.md
+  - mslearn-mellanox-driver-validation-tool.md
+  - VM Inspector already had existing draft (skipped)
+- **21v gaps**: Added VM Inspector (Preview) — not supported in China regions
+- **Remaining**: 120 unscanned URLs
+
+## 2026-04-18 14:13 UTC — mslearn-scan batch (final)
+
+- **Pages examined**: 10 (8 fetched from top-8 unscanned + 2 truly new URLs)
+- **All 120 unscanned URLs resolved**:
+  - 118 were .md suffix variants of already-scanned URLs (same page, different URL format from toc.yml refresh)
+  - 2 truly new URLs (troubleshoot-rdp-internal-error, ms-azure-windows-eos-2003-faq) had ≥80% overlap with existing entries (vm-mslearn-047, vm-mslearn-341)
+- **New entries**: 0
+- **Deduplicated**: 120 (all)
+- **Status**: exhausted (741/741 index URLs scanned)
+| 2026-04-20 | mslearn | Indexed 292 URLs from toc.yml (windows: 212, linux: 98), 22 already scanned, 270 remaining | full-scan index build |
+| 2026-04-20 | contentidea-kb | Scanned 10 VM work items (all empty/old, 0 extracted) | ContentIdea#18275..#56628 |
+| 2026-04-20 | ado-wiki | Indexed 3049 leaf pages under /SME Topics (first run); 820 already scanned from prior JSONL, 2229 remaining | Supportability/AzureIaaSVM/AzureIaaSVM |
+| 2026-04-20 | mslearn | +4 Track A entries (Win11 SKU compat, Win11 Trusted Launch req, unsupported WinServer roles, Win10 EOS/ESU), +2 Track B drafts (Win11 matrix, server software support), 5 skipped (log refs, policy, retirement) | batch 8 URLs |
+| 2026-04-20 | contentidea-kb | +0 VM known issues (batch 57664-59633), 10 empty skipped | ContentIdea WI |
+| 2026-04-20 | contentidea-kb | +2 VM known issues (batch 60799-68414) | ContentIdea WI |

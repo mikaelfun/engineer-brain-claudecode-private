@@ -38,9 +38,19 @@ assess Step 2 compliance re-infer 时按需读取本文件。cache-hit 时不读
 
 从 Customer Statement 搜索 `21v ticket`/`21Vianet` → is21vConvert、21vCaseId
 
-## 3. CC Finder
+## 3. CC List（两层合并）
 
-读 `{dataRoot}/mooncake-cc.json`，匹配客户名 → ccEmails、ccAccount（用于首次 IR 邮件 CC 行）
+### 3.1 Base CC（所有非 AR case）
+
+从 `config.json` 读取 `defaultCcEmails` 字段作为 base CC。所有 case 都设 `ccEmails = defaultCcEmails`。
+
+### 3.2 RDSE CC（追加层）
+
+读 `{dataRoot}/mooncake-cc.json`，匹配客户名：
+- 匹配成功 → 设 `ccAccount`，将 CC Finder 结果**追加**到 base CC 中
+- 合并时**去重**（以邮箱地址为 key，忽略大小写）
+- 清理：移除 `<Replace with POD alias>` 占位符（已被 base CC 中的 podAlias 覆盖）、清理多余分号和空格
+- 匹配失败 → `ccAccount` 不设（非 RDSE），`ccEmails` 保持 base CC
 
 ## 4. SAP 三层检查
 
@@ -163,7 +173,7 @@ fi
     "warnings": []
   },
   "ccAccount": "BMW AG",
-  "ccEmails": "xxx@microsoft.com;yyy@microsoft.com"
+  "ccEmails": "mcpodvm@microsoft.com;fangkun@microsoft.com;vivianx@microsoft.com;xxx@microsoft.com;yyy@microsoft.com"
 }
 ```
 

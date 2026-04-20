@@ -1,47 +1,34 @@
----
-source: onenote
-sourceRef: "MCVKB/VM+SCIM/=======18. AKS=======/18.26 SMB CSI Driver for Kubernetes (AKS).md"
-sourceUrl: null
-importDate: "2026-04-04"
-type: how-to-guide
-scope: community-support
----
+# [AKS] Mount Non-Azure SMB Share via SMB CSI Driver
 
-# AKS 挂载非 Azure SMB Share（SMB CSI Driver）
+**Source:** MCVKB/VM+SCIM/18.26  
+**Type:** How-To Guide  
+**Product:** AKS  
+**Date:** 2021-09-06
 
-> ⚠️ **支持范围声明**: 这是开源社区方案（kubernetes-csi/csi-driver-smb），**不在 Microsoft 官方支持范围内**。  
-> Azure File 问题应通过正常 AKS 产品支持渠道处理。
+## Overview
 
-## 场景
+AKS natively supports Azure File shares (SMB). For **non-Azure SMB shares** (e.g., Windows File Server, Samba), use the open-source **CSI Driver for SMB**.
 
-客户需要将同一 VNET 内的 Windows File Server（非 Azure Storage）挂载为 AKS Pod 的 PersistentVolume。
+> ⚠️ **Scope:** This is a GitHub community-supported driver, not official AKS support scope.  
+> GitHub: https://github.com/kubernetes-csi/csi-driver-smb
 
-AKS 原生 Azure File CSI 只支持 Azure Storage Account，不支持任意 SMB Server。
+## Prerequisites
 
-## 前提条件
+- SMB server accessible from AKS node subnet (same VNet or VNet-peered)
+- Credentials (username/password) for the SMB share
 
-- SMB Server 与 AKS node 在同一 VNET 或 Peered VNET
-- SMB Server 已共享目录并有认证凭据
+## Steps
 
----
-
-## 步骤
-
-### 1. 安装 SMB CSI Driver
+### 1. Install SMB CSI Driver via Helm
 
 ```bash
-helm repo add csi-driver-smb \
-  https://raw.githubusercontent.com/kubernetes-csi/csi-driver-smb/master/charts
-helm install csi-driver-smb csi-driver-smb/csi-driver-smb \
-  --namespace kube-system
+helm repo add csi-driver-smb https://raw.githubusercontent.com/kubernetes-csi/csi-driver-smb/master/charts
+helm install csi-driver-smb csi-driver-smb/csi-driver-smb --namespace kube-system
 ```
 
-验证:
-```bash
-kubectl get pods -n kube-system -l app=csi-smb-node
-```
+Verify pods: `kubectl get pods -n kube-system | grep csi-smb`
 
-### 2. 创建认证 Secret
+### 2. Create Secret for SMB Credentials
 
 ```bash
 kubectl create secret generic smbcreds \
@@ -49,7 +36,7 @@ kubectl create secret generic smbcreds \
   --from-literal password="PASSWORD"
 ```
 
-### 3. 创建 PersistentVolume
+### 3. Create PersistentVolume
 
 ```yaml
 apiVersion: v1
@@ -58,9 +45,9 @@ metadata:
   name: pv-smb
 spec:
   capacity:
-    storage: 10Gi   # ⚠️ 此值仅为标记，Kubernetes 不对 SMB/NFS 强制执行容量限制
+    storage: 10Gi          # Note: capacity is NOT enforced for SMB/NFS PVs
   accessModes:
-    - ReadWriteMany  # SMB 要求使用 ReadWriteMany
+    - ReadWriteMany
   persistentVolumeReclaimPolicy: Retain
   mountOptions:
     - dir_mode=0777
@@ -69,15 +56,15 @@ spec:
   csi:
     driver: smb.csi.k8s.io
     readOnly: false
-    volumeHandle: unique-volume-id-001    # 集群内唯一 ID
+    volumeHandle: unique-volumeid   # must be unique in cluster
     volumeAttributes:
-      source: "//10.240.0.8/myshare"     # SMB Server IP + 共享名
+      source: "//10.240.0.8/myshare"   # SMB server path
     nodeStageSecretRef:
       name: smbcreds
       namespace: default
 ```
 
-### 4. 创建 PVC
+### 4. Create PersistentVolumeClaim
 
 ```yaml
 kind: PersistentVolumeClaim
@@ -91,29 +78,20 @@ spec:
     requests:
       storage: 5Gi
   volumeName: pv-smb
-  storageClassName: ""  # ⚠️ 必须显式设为空字符串，否则使用 default StorageClass
+  storageClassName: ""
 ```
 
-### 5. 在 Pod 中使用
+### 5. Mount in Pod/Deployment
 
 ```yaml
-volumeMounts:
-  - name: smb
-    mountPath: "/mnt/smb"
-    readOnly: false
 volumes:
   - name: smb
     persistentVolumeClaim:
       claimName: pvc-smb
 ```
 
----
+## Notes
 
-## 重要说明
-
-| 项目 | 说明 |
-|------|------|
-| 容量限制 | Kubernetes **不强制** SMB/NFS PV 容量 — 实际可用大小由存储后端决定 |
-| accessModes | 必须使用 `ReadWriteMany` |
-| 网络要求 | SMB Server 需在同 VNET 或 Peered VNET |
-| 支持范围 | 社区/GitHub 范围，非 Microsoft 官方支持 |
+- **Capacity is not enforced** — Kubernetes does not enforce PV capacity for NFS/SMB; the backend storage controls limits
+- **AccessMode ReadWriteMany** is required for SMB CSI driver
+- For Windows File Server lab: deploy in same VNet as AKS nodes

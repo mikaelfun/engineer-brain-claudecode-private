@@ -22,10 +22,24 @@ const { execSync, spawn } = require('child_process');
 
 const SCRIPT_DIR = __dirname;
 const REGISTRY_PATH = path.join(SCRIPT_DIR, '..', 'registry.json');
-const pw = require(path.join(process.env.APPDATA, 'npm', 'node_modules', '@playwright', 'cli', 'node_modules', 'playwright-core'));
 
-const { handleSSO } = require('./sso-handler');
-const { extractToken } = require('./extract-token');
+// ── Lazy-load heavy deps (ISS-perf) ──
+// playwright-core takes ~5-8s to require on Windows.
+// warmup/status commands don't need it when daemon is alive,
+// so defer loading until actually needed (inlineWarmup, start).
+let _pw = null;
+function getPW() {
+  if (!_pw) {
+    _pw = require(path.join(process.env.APPDATA, 'npm', 'node_modules', '@playwright', 'cli', 'node_modules', 'playwright-core'));
+  }
+  return _pw;
+}
+
+// Also lazy-load SSO/extract helpers (they may import playwright internally)
+let _handleSSO = null;
+let _extractToken = null;
+function getHandleSSO() { if (!_handleSSO) _handleSSO = require('./sso-handler').handleSSO; return _handleSSO; }
+function getExtractToken() { if (!_extractToken) _extractToken = require('./extract-token').extractToken; return _extractToken; }
 
 // ── 配置 ──
 const registry = JSON.parse(fs.readFileSync(REGISTRY_PATH, 'utf-8'));
@@ -36,10 +50,73 @@ const HEARTBEAT_FILE = path.join(TEMP, 'pw-token-daemon-heartbeat.json');
 const PORT_FILE = path.join(TEMP, 'pw-token-daemon-port.json');
 const HEARTBEAT_INTERVAL_MS = 30000;
 const HEARTBEAT_STALE_MS = 60000;
+const LOG_FILE = path.join(TEMP, 'pw-token-daemon.log');
+const LOG_MAX_BYTES = 2 * 1024 * 1024; // 2MB — rotate when exceeded
+const WARMUP_LOCK_FILE = path.join(TEMP, 'pw-token-daemon-warmup.lock');
+const WARMUP_LOCK_STALE_MS = 180000; // 3min — auto-release stale lock
 
 function log(msg) {
   const ts = new Date().toISOString().replace('T', ' ').substring(0, 19);
-  console.error(`[${ts}] ${msg}`);
+  const line = `[${ts}] ${msg}\n`;
+  console.error(line.trimEnd());
+  // Append to log file (fire-and-forget)
+  try {
+    // Simple rotation: truncate if too large
+    try {
+      const stat = fs.statSync(LOG_FILE);
+      if (stat.size > LOG_MAX_BYTES) {
+        const old = LOG_FILE + '.old';
+        try { fs.unlinkSync(old); } catch {}
+        fs.renameSync(LOG_FILE, old);
+      }
+    } catch {}
+    fs.appendFileSync(LOG_FILE, line);
+  } catch {}
+}
+
+// ── Warmup Mutex (cross-process) ──
+function acquireWarmupLock() {
+  try {
+    if (fs.existsSync(WARMUP_LOCK_FILE)) {
+      const stat = fs.statSync(WARMUP_LOCK_FILE);
+      const age = Date.now() - stat.mtimeMs;
+      if (age < WARMUP_LOCK_STALE_MS) {
+        const holder = fs.readFileSync(WARMUP_LOCK_FILE, 'utf-8').trim();
+        log(`Warmup lock held by PID ${holder} (${Math.round(age/1000)}s ago), skipping`);
+        return false;
+      }
+      log(`Warmup lock stale (${Math.round(age/1000)}s), stealing`);
+    }
+    fs.writeFileSync(WARMUP_LOCK_FILE, String(process.pid));
+    return true;
+  } catch { return false; }
+}
+
+function releaseWarmupLock() {
+  try { fs.unlinkSync(WARMUP_LOCK_FILE); } catch {}
+}
+
+// ── Kill orphan Edge processes using daemon profile ──
+function killOrphanEdge() {
+  try {
+    const out = execSync(
+      'powershell.exe -NoProfile -Command "Get-CimInstance Win32_Process -Filter \\"CommandLine LIKE \'%pw-token-daemon-profile%\' AND Name=\'msedge.exe\'\\" -ErrorAction SilentlyContinue | ForEach-Object { $_.ProcessId }"',
+      { encoding: 'utf-8', timeout: 10000 }
+    );
+    const pids = out.split('\n').map(l => l.trim()).filter(p => /^\d+$/.test(p));
+    for (const p of pids) {
+      try {
+        execSync(`taskkill /PID ${p} /F 2>nul`, { encoding: 'utf-8', timeout: 5000 });
+        log(`killed orphan Edge PID ${p}`);
+      } catch {}
+    }
+    if (pids.length > 0) {
+      // Wait for profile locks to be released
+      try { execSync('ping -n 2 127.0.0.1 >nul', { timeout: 5000 }); } catch {}
+    }
+  } catch (e) {
+    log(`killOrphanEdge error (non-fatal): ${e.message}`);
+  }
 }
 
 // ── Lock Cleanup ──
@@ -83,16 +160,16 @@ function isCacheValid(cacheFile, ttlMinutes) {
     return (Date.now() / 1000) < (expires - 300); // 5min 余量
   }
 
-  // request-intercept 方式: timestamp 字段
+  // request-intercept 方式: timestamp 字段（预留 5 分钟余量）
   if (cache.timestamp) {
     const ageMin = (Date.now() / 1000 - cache.timestamp) / 60;
-    return ageMin < ttlMinutes;
+    return ageMin < (ttlMinutes - 5);
   }
 
-  // fetchedAt fallback
+  // fetchedAt fallback（预留 5 分钟余量）
   if (cache.fetchedAt) {
     const fetched = new Date(cache.fetchedAt).getTime();
-    return (Date.now() - fetched) < ttlMinutes * 60 * 1000;
+    return (Date.now() - fetched) < (ttlMinutes - 5) * 60 * 1000;
   }
 
   return false;
@@ -152,7 +229,16 @@ function writeHeartbeat(tabs) {
   };
   for (const [name, config] of Object.entries(registry.tokens)) {
     if (config.tokenSource === 'none') {
-      data.tabs[name] = { status: 'session', remainMin: null };
+      // Session tab: check if page is still on the target domain
+      const tabEntry = tabs[name];
+      let sessionOk = true;
+      if (tabEntry && tabEntry.page) {
+        try {
+          const url = tabEntry.page.url();
+          sessionOk = url.includes(config.tab) && !url.includes('login');
+        } catch { sessionOk = false; }
+      }
+      data.tabs[name] = { status: sessionOk ? 'session' : 'expired', remainMin: null };
       continue;
     }
     const remain = getCacheRemainMin(config.cacheFile, config.cacheTTLMinutes);
@@ -207,7 +293,7 @@ async function fetchWorkspaceIdViaBrowser(ctx) {
       await page.waitForTimeout(1000);
       const url = page.url();
       if (url.includes('login.microsoftonline') || url.includes('login.live')) {
-        await handleSSO(page, {
+        await getHandleSSO()(page, {
           targetDomain: 'dynamics.com',
           log: (msg) => log(`[dtm-resolve] ${msg}`)
         });
@@ -552,7 +638,7 @@ async function cmdStart() {
   cleanStaleLocks();
   writePid();
 
-  const ctx = await pw.chromium.launchPersistentContext(PROFILE, {
+  const ctx = await getPW().chromium.launchPersistentContext(PROFILE, {
     channel: 'msedge',
     headless: true
   });
@@ -562,6 +648,12 @@ async function cmdStart() {
   // 为每个 token 打开一个 tab
   const tabs = {};
   const tokenEntries = Object.entries(registry.tokens);
+
+  // 立即开始心跳（不等 token 提取完成），避免 tab 卡住导致 heartbeat 不写
+  const heartbeatTimer = setInterval(() => {
+    writeHeartbeat(tabs);
+  }, HEARTBEAT_INTERVAL_MS);
+  writeHeartbeat(tabs); // 首次立即写
 
   for (const [name, config] of tokenEntries) {
     const page = await ctx.newPage();
@@ -574,7 +666,7 @@ async function cmdStart() {
     await page.goto(startUrl, { waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => {});
 
     // SSO: 首个 tab 做完 SSO 后，后续 tab 共享 session
-    const ssoResult = await handleSSO(page, {
+    const ssoResult = await getHandleSSO()(page, {
       targetDomain: config.tab,
       log: (msg) => log(`[${name}] ${msg}`)
     });
@@ -592,7 +684,7 @@ async function cmdStart() {
     if (config.tokenSource === 'none') {
       log(`[${name}] Session tab ready`);
     } else {
-      const tokenData = await extractToken(page, config);
+      const tokenData = await getExtractToken()(page, config);
       if (tokenData) {
         const secret = tokenData.secret || tokenData.token || '';
         const cacheData = tokenData.secret
@@ -614,13 +706,8 @@ async function cmdStart() {
     await allPages[0].close().catch(() => {});
   }
 
-  // 心跳循环
-  log('Daemon running. Heartbeat every 30s. Ctrl+C to stop.');
-  writeHeartbeat(tabs);
-
-  const heartbeatTimer = setInterval(() => {
-    writeHeartbeat(tabs);
-  }, HEARTBEAT_INTERVAL_MS);
+  // 心跳已在 tab 循环前启动，这里只记录日志
+  log('All tabs initialized. Daemon running. Ctrl+C to stop.');
 
   // ── D365 OData HTTP Server ──
   const httpServer = await startD365HttpServer(tabs);
@@ -641,14 +728,35 @@ async function cmdStart() {
   process.on('SIGINT', shutdown);
   process.on('SIGTERM', shutdown);
 
-  // Keep alive — 定期检查 token 过期并自动刷新（session tab 跳过）
+  // Keep alive — 定期检查 token 过期并自动刷新 + session tab SSO 自愈
   setInterval(async () => {
     for (const [name, { page, config }] of Object.entries(tabs)) {
-      if (config.tokenSource === 'none') continue; // session tab: no token to refresh
+      // Session tab: 检查是否被踢到 login 页面，自动重新 SSO
+      if (config.tokenSource === 'none') {
+        try {
+          const url = page.url();
+          if (url.includes('login.microsoftonline') || url.includes('login.live') || url.includes('IdentityProvider')) {
+            log(`[${name}] Session expired (on login page), re-doing SSO...`);
+            const ssoResult = await getHandleSSO()(page, {
+              targetDomain: config.tab,
+              log: (msg) => log(`[${name}] ${msg}`)
+            });
+            if (ssoResult.success) {
+              log(`[${name}] SSO re-auth OK: ${ssoResult.action}`);
+              await page.waitForTimeout(5000).catch(() => {});
+            } else {
+              log(`[${name}] SSO re-auth failed: ${ssoResult.action}`);
+            }
+          }
+        } catch (e) {
+          log(`[${name}] Session check error: ${e.message}`);
+        }
+        continue;
+      }
       if (!isCacheValid(config.cacheFile, config.cacheTTLMinutes)) {
         log(`[${name}] Token expired, refreshing...`);
         try {
-          const tokenData = await extractToken(page, config);
+          const tokenData = await getExtractToken()(page, config);
           if (tokenData) {
             const secret = tokenData.secret || tokenData.token || '';
             const cacheData = tokenData.secret
@@ -657,7 +765,34 @@ async function cmdStart() {
             writeCache(config.cacheFile, cacheData);
             log(`[${name}] Token refreshed (len=${secret.length})`);
           } else {
-            log(`[${name}] Refresh failed`);
+            // extractToken failed — check if page landed on login (session expired)
+            const curUrl = page.url();
+            if (curUrl.includes('login.microsoftonline') || curUrl.includes('login.live')) {
+              log(`[${name}] Session expired during refresh, re-doing SSO...`);
+              const ssoResult = await getHandleSSO()(page, {
+                targetDomain: config.tab,
+                log: (msg) => log(`[${name}] ${msg}`)
+              });
+              if (ssoResult.success) {
+                log(`[${name}] SSO re-auth OK, retrying token extraction...`);
+                await page.waitForTimeout(5000).catch(() => {});
+                const retryData = await getExtractToken()(page, config);
+                if (retryData) {
+                  const s = retryData.secret || retryData.token || '';
+                  const cd = retryData.secret
+                    ? { secret: retryData.secret, expiresOn: retryData.expiresOn, fetchedAt: new Date().toISOString() }
+                    : { token: retryData.token, timestamp: Date.now() / 1000, fetchedAt: new Date().toISOString() };
+                  writeCache(config.cacheFile, cd);
+                  log(`[${name}] Token refreshed after SSO re-auth (len=${s.length})`);
+                } else {
+                  log(`[${name}] Refresh still failed after SSO re-auth`);
+                }
+              } else {
+                log(`[${name}] SSO re-auth failed: ${ssoResult.action}`);
+              }
+            } else {
+              log(`[${name}] Refresh failed (page: ${curUrl.substring(0, 60)})`);
+            }
           }
         } catch (e) {
           log(`[${name}] Refresh error: ${e.message}`);
@@ -713,6 +848,8 @@ async function cmdEnsure() {
     try { execSync(`taskkill /PID ${pid} /F /T 2>nul`, { encoding: 'utf-8', timeout: 5000 }); } catch {}
   }
   try { fs.unlinkSync(PID_FILE); } catch {}
+  killOrphanEdge();
+  cleanStaleLocks();
 
   // 后台启动自身的 start 命令
   const child = spawn(process.execPath, [__filename, 'start'], {
@@ -741,7 +878,7 @@ async function cmdWarmup() {
   const alive = pid && isProcessAlive(pid) && isHeartbeatFresh();
 
   if (alive) {
-    // Daemon 存活 → 检查各 token cache + 报告
+    // Daemon 存活 → 检查各 token cache，过期的清掉 cache 触发 daemon 60s 轮询自动刷新
     const results = [];
     for (const [name, config] of Object.entries(registry.tokens)) {
       if (config.tokenSource === 'none') {
@@ -750,13 +887,26 @@ async function cmdWarmup() {
       }
       const valid = isCacheValid(config.cacheFile, config.cacheTTLMinutes);
       const remain = getCacheRemainMin(config.cacheFile, config.cacheTTLMinutes);
-      results.push(`${name}=${valid ? `cached(${remain}m)` : 'expired'}`);
+      if (!valid && config.cacheFile) {
+        // 清掉过期 cache 强制 daemon 下一轮刷新
+        try { fs.unlinkSync(resolveEnvPath(config.cacheFile)); } catch {}
+        results.push(`${name}=queued-refresh`);
+      } else {
+        results.push(`${name}=${valid ? `cached(${remain}m)` : 'expired'}`);
+      }
     }
     console.log(`WARMUP_OK|daemon=alive|${results.join('|')}`);
+    process.exit(0);
     return;
   }
 
-  // Daemon 不存活 → ensure（后台启动）→ 等 port file（HTTP server 就绪）
+  // Daemon 不存活 → 需要重启，先抢互斥锁
+  if (!acquireWarmupLock()) {
+    console.log('WARMUP_SKIP|another warmup in progress');
+    process.exit(0);
+    return;
+  }
+
   log('Daemon not alive, ensuring daemon start...');
 
   // 清理残留
@@ -765,6 +915,8 @@ async function cmdWarmup() {
   }
   try { fs.unlinkSync(PID_FILE); } catch {}
   try { fs.unlinkSync(PORT_FILE); } catch {}
+  killOrphanEdge();
+  cleanStaleLocks();
 
   // 后台启动 daemon
   const child = spawn(process.execPath, [__filename, 'start'], {
@@ -802,6 +954,9 @@ async function cmdWarmup() {
     log('Daemon start timeout (120s), falling back to inline warmup...');
     await inlineWarmup();
   }
+
+  releaseWarmupLock();
+  process.exit(0);
 }
 
 /**
@@ -813,11 +968,11 @@ async function inlineWarmup() {
 
   let ctx;
   try {
-    ctx = await pw.chromium.launchPersistentContext(PROFILE, { channel: 'msedge', headless: true });
+    ctx = await getPW().chromium.launchPersistentContext(PROFILE, { channel: 'msedge', headless: true });
   } catch {
     cleanStaleLocks();
     try {
-      ctx = await pw.chromium.launchPersistentContext(PROFILE, { channel: 'msedge', headless: true });
+      ctx = await getPW().chromium.launchPersistentContext(PROFILE, { channel: 'msedge', headless: true });
     } catch (e) {
       console.log(`WARMUP_FAIL|launch failed: ${e.message.substring(0, 80)}`);
       return;
@@ -875,7 +1030,7 @@ async function inlineWarmup() {
         // 在 login 或 IdentityProvider 页面 → 触发 SSO
         if (curUrl.includes('login.microsoftonline') || curUrl.includes('login.live') || curUrl.includes('IdentityProvider')) {
           log(`[${name}] SSO needed`);
-          await handleSSO(page, {
+          await getHandleSSO()(page, {
             targetDomain: config.tab,
             log: (msg) => log(`[${name}] ${msg}`)
           });
@@ -903,7 +1058,7 @@ async function inlineWarmup() {
       } else if (config.tokenSource === 'localStorage') {
         // localStorage 需要等页面加载完再读
         await page.waitForTimeout(3000).catch(() => {});
-        tokenData = await extractToken(page, config);
+        tokenData = await getExtractToken()(page, config);
       } else if (!earlyToken) {
         // request-intercept 但没拿到
         tokenData = null;
@@ -970,6 +1125,17 @@ function cmdStatus() {
 // ═══════════════════════════════════════
 // Main
 // ═══════════════════════════════════════
+
+// Global error handlers — catch crashes and write to log file
+process.on('uncaughtException', (err) => {
+  log(`FATAL uncaughtException: ${err.stack || err.message}`);
+  process.exit(1);
+});
+process.on('unhandledRejection', (reason) => {
+  log(`FATAL unhandledRejection: ${reason instanceof Error ? reason.stack : String(reason)}`);
+  process.exit(1);
+});
+
 const cmd = process.argv[2] || 'status';
 
 switch (cmd) {

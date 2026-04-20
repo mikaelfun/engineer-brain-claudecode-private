@@ -377,3 +377,47 @@ cluster('msodsmooncake.chinanorth2.kusto.chinacloudapi.cn').database('MSODS').If
 ```
 
 ---
+
+---
+
+## Incremental Scenarios (2026-04-18)
+
+## Scenario 24: AAD Connect is installed and configured in Hybrid identity scenario with a �Multiple forest, single sync server, user re...
+> Source: contentidea-kb (entra-id-3648) | Applicability: unverified
+
+### Troubleshooting Steps
+1. **Confirm symptom**: AAD Connect is installed and configured in Hybrid identity scenario with a �Multiple forest, single sync server, user represented in only one directory� topology using the ms-DS-ConsistencyGuild as a ...
+2. **Root cause**: The on-premises ActiveDirectory attribute �Manager� is a reference attribute and contains the distinguished name of the user who is the user's manager. The manager's user object contains a directRepor...
+3. **Solution**: As a workaround to bypass this scenario, you can try to leverage the Azure AD Connect synchronization engine to manipulate the metaverse objects and achieve your goal. Depending on the requirements of...
+
+---
+
+## Scenario 25: Azure AADConnect service fails to start with an error 'Error 1069: The service did not start due to a logon failure'
+> Source: contentidea-kb (entra-id-3675) | Applicability: unverified
+
+### Troubleshooting Steps
+1. **Confirm symptom**: Azure AADConnect service fails to start with an error 'Error 1069: The service did not start due to a logon failure'
+2. **Root cause**: This happens when the Adsync service cannot use the credentials associated with the VSA (Virtual Service Account) of 'NT SERVICE\ADSYNC'
+3. **Solution**: 1. Please confirm through ASC that the service account used for Azure AADConnect is 'NT Service\ADSYNC'.  2. Using Service.MSC please Navigate to ADSync service with the Display Name as 'Microsoft Azu...
+
+---
+
+## Scenario 26: You get a case or collab task for an Azure type application, such as CloudSync.  The customer gets an error in the wizar...
+> Source: contentidea-kb (entra-id-3681) | Applicability: unverified
+
+### Troubleshooting Steps
+1. **Confirm symptom**: You get a case or collab task for an Azure type application, such as CloudSync.  The customer gets an error in the wizard/application stating, "The specified directory service attribute or value does ...
+2. **Root cause**: Directory Services is not responsible for troubleshooting this error.  It is the application team's responsibility to not only troubleshoot this error, but to improve their logging to improve servicea...
+3. **Solution**: If collab owner, do not proceed without an ICM created by Azure application's team for troubleshooting this error.  ICMs are used for escalation, and should be used here to gain awareness of this scen...
+
+---
+
+## Scenario 27: CloudSync or Azure application error: "The specified directory service attribute or value does not exist." Log shows Con...
+> Source: contentidea-kb (entra-id-3687) | Applicability: unverified
+
+### Troubleshooting Steps
+1. **Confirm symptom**: CloudSync or Azure application error: "The specified directory service attribute or value does not exist." Log shows ConfigSyncDirectoriesPage caught exception while creating connector for directory.
+2. **Root cause**: Directory Services is not responsible for troubleshooting this error. It is the application team's responsibility to troubleshoot and improve their logging.
+3. **Solution**: If collab owner, do not proceed without an ICM created by Azure application's team. If case owner, do not allow Azure application's team to resolve collaboration until they provide the object and natu...
+
+---

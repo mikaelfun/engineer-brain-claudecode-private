@@ -80,8 +80,8 @@ function friendlyWarmupStatus(raw?: string): string {
     return 'Refreshing tokens\u2026'
   if (s.includes('offline') || s.includes('not running') || s.includes('failed'))
     return 'Daemon offline \u2014 using fallback'
-  if (s.includes('warmup') || s.includes('starting'))
-    return 'Starting daemon\u2026'
+  if (s.includes('warmup') || s.includes('warming up') || s.includes('starting'))
+    return 'Warming up tokens\u2026'
   // Fallback: truncate raw to something readable
   return raw.length > 30 ? raw.slice(0, 30) + '\u2026' : raw
 }
@@ -131,6 +131,11 @@ function deriveStages(
       case 'discovering':
         if (status === 'pending') {
           detail = ''
+        } else if (status === 'active') {
+          // Still querying — show progress indicator, not final count
+          detail = store.totalFound !== undefined
+            ? `Querying D365\u2026 (${store.totalFound} found)`
+            : 'Querying D365\u2026'
         } else if (store.totalFound !== undefined) {
           detail = `D365 query \u2192 ${store.totalFound} active cases`
         } else {
@@ -143,13 +148,12 @@ function deriveStages(
         } else if (store.changedCases > 0 || store.skippedCount !== undefined ||
                    store.archivedCount !== undefined || store.transferredCount !== undefined) {
           const parts: string[] = []
-          // Main count: cases to process
+          // All filter results (changedCases, archivedCount, etc.) now arrive
+          // atomically via patrol-progress.json — no more race condition.
           parts.push(`${store.changedCases} to process`)
-          // Skipped by patrolSkipHours (only meaningful in non-force mode)
           if (store.skippedCount && store.skippedCount > 0) {
             parts.push(`${store.skippedCount} skipped (recent)`)
           }
-          // Archive/transfer results from detect-case-status.ps1
           if (store.archivedCount && store.archivedCount > 0) {
             parts.push(`${store.archivedCount} archived`)
           }
@@ -164,7 +168,13 @@ function deriveStages(
       case 'warming-up':
         if (status === 'pending') {
           detail = ''
+        } else if (status === 'completed') {
+          // Show final warmup result when stage is done
+          detail = store.warmupStatus
+            ? friendlyWarmupStatus(store.warmupStatus)
+            : 'Tokens ready'
         } else {
+          // Active: show live warmup status
           detail = friendlyWarmupStatus(store.warmupStatus)
         }
         break

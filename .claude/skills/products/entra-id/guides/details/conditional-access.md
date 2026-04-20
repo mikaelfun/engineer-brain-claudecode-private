@@ -1,6 +1,6 @@
 # ENTRA-ID Conditional Access — Detailed Troubleshooting Guide
 
-**Entries**: 73 | **Drafts fused**: 2 | **Kusto queries**: 1
+**Entries**: 74 | **Drafts fused**: 2 | **Kusto queries**: 1
 **Draft sources**: ado-wiki-b-mcp-server-conditional-access.md, ado-wiki-c-conditional-access-tsg.md
 **Kusto references**: conditional-access-decode.md
 **Generated**: 2026-04-07
@@ -365,3 +365,16 @@
 | 28 | Require approved client app retiring June 30, 2026. Must migrate to avoid dis... | Microsoft deprecating in favor of Require app protection ... | Migrate to Require app protection policy by June 30, 2026... | 🟢 8.5 | ADO Wiki |
 | 29 | Disabling Resilience Defaults on CA policy targeting group/role blocks ALL us... | During outage, Backup Auth Service cannot evaluate group/... | Apply policy to individual users instead of groups/roles.... | 🟢 8.5 | ADO Wiki |
 | 30 | Conditional Access policies targeting Windows Azure Service Management API (A... | Azure DevOps no longer relies on Azure Resource Manager (... | Update CA policies to explicitly include Azure DevOps (Ap... | 🟢 8.5 | ADO Wiki |
+
+
+---
+
+## Incremental Update (2026-04-18) - +1 entries from contentidea-kb
+
+### When Conditional Access Policy is created to force MFA on Exchange Online (EXO) and/or SharePoint Online (SPO) cloud application, and the users open t...
+**Score**: 🟢 8.0 | **Source**: ContentIdea KB | **ID**: entra-id-3645
+
+**Root Cause**: When user tries to create Word/Excel/PowerPoint document from https://portal.office.com portal, the selected application tries to access Exchange Online (EXO) and/or SharePoint Online (SPO) using non-interactive login. And since MFA does not complete with non-interactive login, the authentication wi...
+
+**Solution**: Since this is non-interactive login, MFA will not trigger, and the MFA popup will not show to the end user. Hence, creating Word/Excel/PowerPoint documents from office portal will fail.  Therefore, we need to modify the configured Conditional Access Policy to target �All Cloud Applications� instead ...
+

@@ -12,6 +12,8 @@ import { useEffect, useRef, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { BASE_URL } from '../api/client'
 import { usePatrolStore } from '../stores/patrolStore'
+import { usePatrolAgentStore } from '../stores/patrolAgentStore'
+import { useSubAgentStore } from '../stores/subAgentStore'
 import { useCaseSessionStore } from '../stores/caseSessionStore'
 import { useIssueTrackStore } from '../stores/issueTrackStore'
 import { useTodoExecuteStore } from '../stores/todoExecuteStore'
@@ -46,6 +48,13 @@ export function useSSE() {
   // Use stable refs for Zustand store actions to avoid effect re-runs
   const patrolOnState = usePatrolStore((s) => s.onPatrolState)
   const patrolOnCase = usePatrolStore((s) => s.onCaseUpdate)
+  const patrolAgentOnEvent = usePatrolAgentStore((s) => s.onPatrolAgent)
+  const patrolAgentOnMain = usePatrolAgentStore((s) => s.onMainProgress)
+  const patrolAgentClear = usePatrolAgentStore((s) => s.clear)
+  const patrolAgentSetSessionId = usePatrolAgentStore((s) => s.setSessionId)
+  const patrolSessionIdRef = useRef<string | null>(null)
+  const subAgentOnEvent = useSubAgentStore((s) => s.onAgentEvent)
+  const subAgentHydrate = useSubAgentStore((s) => s.hydrate)
   const addCaseSessionMessage = useCaseSessionStore((s) => s.addMessage)
   const addCaseSessionPerSession = useCaseSessionStore((s) => s.addSessionMessage)
   const addIssueTrackMessage = useIssueTrackStore((s) => s.addMessage)
@@ -257,14 +266,65 @@ export function useSSE() {
       }
     })
 
-    // Case step progress events — write to caseSessionStore
+    // Case step progress events — write to caseSessionStore + subAgentStore
     es.addEventListener('case-step-progress', (e) => {
       const data = parseAndTrack(e.data)
       if (!data) return
       const d = data.data || data
       const caseNumber = d.caseNumber
       if (caseNumber) {
-        const msgType = d.kind === 'tool-call' ? 'tool-call' : d.kind === 'tool-result' ? 'tool-result' : 'thinking'
+        // Sub-agent lifecycle events → route to unified subAgentStore
+        if (d.kind === 'agent-started' || d.kind === 'agent-progress' || d.kind === 'agent-completed') {
+          const eventType = d.kind === 'agent-started' ? 'started'
+            : d.kind === 'agent-progress' ? 'progress' : 'completed'
+          subAgentOnEvent({
+            type: eventType,
+            taskId: d.taskId,
+            agentType: d.agentType,
+            source: (d.step === 'casework' ? 'casework' : 'step') as any,
+            parentSessionId: d.sessionId || caseNumber,
+            caseNumber,
+            description: d.description,
+            status: d.status,
+            lastToolName: d.lastToolName,
+            summary: d.summary,
+            usage: d.usage,
+            timestamp: d.timestamp,
+          })
+          // Hydrate sub-agent with full parsed messages from output file (ISS-231)
+          if (d.kind === 'agent-completed' && d.messages && Array.isArray(d.messages) && d.messages.length > 0) {
+            const existing = useSubAgentStore.getState().agents[d.taskId]
+            if (existing) {
+              subAgentHydrate({
+                ...existing,
+                status: (d.status === 'failed' || d.status === 'stopped') ? d.status : 'completed',
+                completedAt: d.timestamp || new Date().toISOString(),
+                summary: d.summary || existing.summary,
+                usage: d.usage || existing.usage,
+                messages: d.messages,
+              })
+            }
+          }
+          // Also write a message to caseSessionStore for inline display
+          if (d.kind !== 'agent-progress') {
+            const content = d.kind === 'agent-started'
+              ? `🤖 Sub-agent ${d.agentType} started`
+              : `${d.status === 'failed' ? '❌' : '✅'} Sub-agent ${d.agentType} ${d.status || 'completed'}${d.summary ? ': ' + d.summary.slice(0, 150) : ''}`
+            const sessionMsg: import('../stores/caseSessionStore').CaseSessionMessage = {
+              type: 'thinking',
+              content,
+              step: d.step,
+              timestamp: d.timestamp || new Date().toISOString(),
+            }
+            addCaseSessionMessage(caseNumber, sessionMsg)
+            if (d.sessionId) {
+              addCaseSessionPerSession(caseNumber, d.sessionId, sessionMsg)
+            }
+          }
+          return
+        }
+
+        const msgType = d.kind === 'tool-call' ? 'tool-call' : d.kind === 'tool-result' ? 'tool-result' : d.kind === 'response' ? 'response' : 'thinking'
         const sessionMsg: import('../stores/caseSessionStore').CaseSessionMessage = {
           type: msgType,
           content: typeof d.content === 'string' ? d.content : '',
@@ -399,13 +459,101 @@ export function useSSE() {
     es.addEventListener('patrol-state', (e) => {
       const data = parseAndTrack(e.data)
       if (!data) return
-      patrolOnState(data.data || data)
+      const d = data.data || data
+      // Clear patrol agent store when patrol restarts OR sessionId changes
+      // This ensures stale data from previous patrol runs is discarded
+      // even if the user opens the page mid-patrol (missing 'starting' event)
+      const incomingSessionId = d.sessionId as string | undefined
+      if (d.phase === 'starting' || (incomingSessionId && incomingSessionId !== patrolSessionIdRef.current)) {
+        patrolAgentClear()
+        // Invalidate patrol messages cache so recovery fetches fresh data
+        queryClient.invalidateQueries({ queryKey: ['patrol', 'messages'] })
+      }
+      if (incomingSessionId) {
+        patrolSessionIdRef.current = incomingSessionId
+        patrolAgentSetSessionId(incomingSessionId)
+      }
+      patrolOnState(d)
     })
 
     es.addEventListener('patrol-case', (e) => {
       const data = parseAndTrack(e.data)
       if (!data) return
       patrolOnCase(data.data || data)
+    })
+
+    // Patrol sub-agent lifecycle events (started/progress/completed)
+    es.addEventListener('patrol-agent', (e) => {
+      const data = parseAndTrack(e.data)
+      if (!data) return
+      const d = data.data || data
+      // Feed legacy patrolAgentStore (backward compat)
+      patrolAgentOnEvent(d)
+      // Feed unified subAgentStore
+      const eventMap: Record<string, 'started' | 'progress' | 'completed'> = {
+        started: 'started', progress: 'progress', completed: 'completed',
+      }
+      const eventType = eventMap[d.event as string]
+      if (eventType && d.taskId) {
+        subAgentOnEvent({
+          type: eventType,
+          taskId: d.taskId as string,
+          agentType: d.agentType as string,
+          source: 'patrol',
+          parentSessionId: 'patrol', // sentinel — patrol sub-agents grouped under virtual patrol agent
+          caseNumber: d.caseNumber as string | undefined,
+          description: d.description as string | undefined,
+          status: d.status as string | undefined,
+          lastToolName: d.lastToolName as string | undefined,
+          summary: d.summary as string | undefined,
+          usage: d.usage as any,
+          timestamp: d.timestamp as string | undefined,
+        })
+        // Hydrate sub-agent with full parsed messages from output file (ISS-231)
+        if (eventType === 'completed' && d.messages && Array.isArray(d.messages) && d.messages.length > 0) {
+          const existing = useSubAgentStore.getState().agents[d.taskId as string]
+          if (existing) {
+            subAgentHydrate({
+              ...existing,
+              status: (d.status === 'failed' || d.status === 'stopped') ? d.status as 'failed' | 'stopped' : 'completed',
+              completedAt: (d.timestamp as string) || new Date().toISOString(),
+              summary: (d.summary as string) || existing.summary,
+              usage: d.usage || existing.usage,
+              messages: d.messages,
+            })
+          }
+        }
+      }
+    })
+
+    // Patrol main-agent progress (tool-call/thinking/tool-result) → patrolAgentStore.mainMessages
+    es.addEventListener('patrol-main-progress', (e) => {
+      const data = parseAndTrack(e.data)
+      if (!data) return
+      const d = data.data || data
+      patrolAgentOnMain(d)
+    })
+
+    // Agent registry lifecycle events — refresh session list
+    es.addEventListener('agent-registered', (e) => {
+      parseAndTrack((e as MessageEvent).data)
+      queryClient.invalidateQueries({ queryKey: ['sessions'] })
+    })
+    es.addEventListener('agent-session-bound', (e) => {
+      parseAndTrack((e as MessageEvent).data)
+      queryClient.invalidateQueries({ queryKey: ['sessions'] })
+    })
+    es.addEventListener('agent-completed', (e) => {
+      const data = parseAndTrack((e as MessageEvent).data)
+      if (data) {
+        queryClient.invalidateQueries({ queryKey: ['sessions'] })
+        const d = data.data || data
+        // Also update caseSessionStore if this was a case agent
+        if (d.source === 'case' && d.context) {
+          const status = d.status === 'failed' ? 'failed' : 'completed'
+          sessionStoreSetStatus(d.context as string, status as any)
+        }
+      }
     })
 
     // Case step failed event — set failed status + invalidate operation
@@ -841,7 +989,47 @@ export function useSSE() {
       if (!data) return
       const d = data.data || data
       if (d.triggerId) {
-        triggerOnProgress(d.triggerId, d.chunk || '', d.elapsedMs || 0)
+        triggerOnProgress(d.triggerId, {
+          kind: d.kind,
+          chunk: d.chunk,
+          toolName: d.toolName,
+          content: d.content,
+          elapsedMs: d.elapsedMs,
+          timestamp: d.timestamp,
+        })
+        // Route sub-agent lifecycle events to unified subAgentStore (ISS-231)
+        if (d.kind === 'agent-started' || d.kind === 'agent-progress' || d.kind === 'agent-completed') {
+          const eventType = d.kind === 'agent-started' ? 'started'
+            : d.kind === 'agent-progress' ? 'progress' : 'completed'
+          subAgentOnEvent({
+            type: eventType,
+            taskId: d.taskId as string,
+            agentType: d.agentType as string,
+            source: 'cron',
+            parentSessionId: d.triggerId as string,
+            caseNumber: d.caseNumber as string | undefined,
+            description: d.description as string | undefined,
+            status: d.status as string | undefined,
+            lastToolName: d.lastToolName as string | undefined,
+            summary: d.summary as string | undefined,
+            usage: d.usage as any,
+            timestamp: d.timestamp as string | undefined,
+          })
+          // Hydrate sub-agent with full parsed messages from output file
+          if (eventType === 'completed' && d.messages && Array.isArray(d.messages) && d.messages.length > 0) {
+            const existing = useSubAgentStore.getState().agents[d.taskId as string]
+            if (existing) {
+              subAgentHydrate({
+                ...existing,
+                status: (d.status === 'failed' || d.status === 'stopped') ? d.status as 'failed' | 'stopped' : 'completed',
+                completedAt: (d.timestamp as string) || new Date().toISOString(),
+                summary: (d.summary as string) || existing.summary,
+                usage: d.usage || existing.usage,
+                messages: d.messages,
+              })
+            }
+          }
+        }
       }
     })
 
@@ -923,7 +1111,7 @@ export function useSSE() {
         console.error(`[SSE] Max retries (${MAX_RETRIES}) exceeded, giving up. Last seq: ${lastSeqRef.current}`)
       }
     }
-  }, [queryClient, patrolOnState, patrolOnCase, addCaseSessionMessage, addCaseSessionPerSession, addIssueTrackMessage, setIssueTrackingActive, clearIssueTrackMessages, setIssuePendingQuestion, startImplement, addImplementMessage, setImplementStatus, addVerifyMessage, setVerifyActive, setVerifyResult, clearVerify, todoExecSetProgress, todoExecSetResult, sessionStoreSetStatus, sessionStoreSetActiveSession, sessionStoreSetCurrentStep, sessionStoreSetPendingQuestion, sessionStoreClearPendingQuestion, sessionStoreSetHeartbeat, sessionStoreSetQueueStatus])
+  }, [queryClient, patrolOnState, patrolOnCase, patrolAgentOnEvent, patrolAgentOnMain, patrolAgentClear, addCaseSessionMessage, addCaseSessionPerSession, addIssueTrackMessage, setIssueTrackingActive, clearIssueTrackMessages, setIssuePendingQuestion, startImplement, addImplementMessage, setImplementStatus, addVerifyMessage, setVerifyActive, setVerifyResult, clearVerify, todoExecSetProgress, todoExecSetResult, sessionStoreSetStatus, sessionStoreSetActiveSession, sessionStoreSetCurrentStep, sessionStoreSetPendingQuestion, sessionStoreClearPendingQuestion, sessionStoreSetHeartbeat, sessionStoreSetQueueStatus])
 
   useEffect(() => {
     connect()

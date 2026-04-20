@@ -31,6 +31,7 @@ import { getTrackMetadata, updateTrackMetadata, updateTracksMdStatus, enrichIssu
 import { config } from '../config.js'
 import { sseManager } from '../watcher/sse-manager.js'
 import { issueTrackState, type IssueTrackQuestion } from '../services/issue-track-state.js'
+import { sdkRegistry } from '../agent/sdk-session-registry.js'
 import {
   acquireImplementLock,
   releaseImplementLock,
@@ -689,6 +690,7 @@ issues.post('/:id/start-implement', async (c) => {
 
   // Spawn conductor:implement asynchronously
   const implementAsync = async () => {
+    const registryHandle = sdkRegistry.register({ source: 'implement', context: id, intent: `Implement track ${trackId}` })
     try {
       const startedMsg: ImplementMessage = {
         type: 'started',
@@ -717,6 +719,7 @@ issues.post('/:id/start-implement', async (c) => {
           maxTurns: 80,
         },
       })) {
+        registryHandle.onMessage(message)
         // Fine-grained SSE: thinking / tool-call / tool-result
         if (message.type === 'assistant' && message.message?.content) {
           const content = message.message.content
@@ -754,6 +757,7 @@ issues.post('/:id/start-implement', async (c) => {
       }
 
       // Completed successfully
+      registryHandle.complete()
       releaseImplementLock(id, 'completed')
       const completedMsg: ImplementMessage = {
         type: 'completed',
@@ -769,6 +773,7 @@ issues.post('/:id/start-implement', async (c) => {
       updateTrackMetadata(trackId, { status: 'complete' })
     } catch (err: any) {
       console.error(`[implement] Failed for ${trackId}:`, err.message)
+      registryHandle.fail(err.message)
       releaseImplementLock(id, 'failed')
       const failedMsg: ImplementMessage = {
         type: 'failed',
@@ -900,6 +905,7 @@ OVERALL: PASS/FAIL
 
   let agentOutput = ''
   let agentSuccess = false
+  const registryHandle = sdkRegistry.register({ source: 'verify', context: issueId, intent: `Verify ${issueId} (UI tests)` })
 
   try {
     for await (const message of query({
@@ -920,8 +926,10 @@ OVERALL: PASS/FAIL
       // Check for cancellation
       if (isVerifyCancelled(issueId)) {
         clearVerifyCancellation(issueId)
+        registryHandle.fail('Verification cancelled by user')
         return { success: false, output: 'Verification cancelled by user' }
       }
+      registryHandle.onMessage(message)
       // Stream agent messages as SSE events
       if (message.type === 'assistant' && message.message?.content) {
         const content = message.message.content
@@ -964,6 +972,7 @@ OVERALL: PASS/FAIL
 
     // Parse agent results: look for OVERALL: PASS or OVERALL: FAIL
     agentSuccess = parseAgentVerificationResult(agentOutput)
+    registryHandle.complete()
 
     const resultMsg: VerifyMessage = {
       type: 'tool-result',
@@ -983,6 +992,7 @@ OVERALL: PASS/FAIL
     })
   } catch (err: any) {
     agentOutput = `Agent verification failed: ${err.message}`
+    registryHandle.fail(err.message)
     const errorMsg: VerifyMessage = {
       type: 'tool-result',
       content: agentOutput,
@@ -1120,7 +1130,7 @@ issues.post('/:id/verify', async (c) => {
       let uiResult = { success: false, output: 'Skipped (unit tests failed)' }
       if (unitResult.success) {
         // Pre-flight: check if frontend service is reachable
-        const frontendUrl = 'http://localhost:5173'
+        const frontendUrl = `http://localhost:${config.webPort}`
         let frontendReachable = false
         for (let attempt = 1; attempt <= 3; attempt++) {
           try {

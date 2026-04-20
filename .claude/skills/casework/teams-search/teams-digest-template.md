@@ -14,10 +14,9 @@ assess / assess-ar / teams-digest-writer 在分析 Teams chat 文件后，必须
 
 以下事实来自 Teams 对话，按时间顺序排列。每条标注来源身份。
 
-- [customer] {displayName} @ {date}: {一句话中文 fact，人名/技术术语/命令保留英文}
-- [pg] {displayName} @ {date}: {一句话中文 fact}
-- [engineer] {displayName} @ {date}: {一句话中文 fact}
-- [internal] {displayName} @ {date}: {一句话中文 fact}
+- {YYYY-MM-DD}: {displayName} {一句话中文 fact，人名/技术术语/命令保留英文}
+- {YYYY-MM-DD}: {displayName} {一句话中文 fact}
+- {YYYY-MM-DD}: {displayName} {一句话中文 fact}
 
 ## Timeline (high-relevance only)
 

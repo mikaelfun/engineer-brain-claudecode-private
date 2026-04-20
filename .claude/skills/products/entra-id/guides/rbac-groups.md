@@ -1,7 +1,7 @@
 # ENTRA-ID RBAC/Roles/Groups Management — Quick Reference
 
-**Entries**: 140 | **21V**: Partial (135/140)
-**Last updated**: 2026-04-07
+**Entries**: 142 | **21V**: Partial (135/140)
+**Last updated**: 2026-04-18
 **Keywords**: rbac, groups, dynamic-groups, pim, permissions, custom-role
 
 > This topic has a fusion guide with detailed troubleshooting flow
@@ -51,6 +51,8 @@
 | 38 📋 | MS Graph returns 'Insufficient privileges' when updating group membership | Multiple possible causes: (1) Target is a Dynamic Group - manual member updat... | For dynamic groups: modify the dynamic membership rule instead. For role-assi... | 🟢 8.5 | ADO Wiki |
 | 39 📋 | System.UnauthorizedAccessException: IDW10201: Neither scope or roles claim was found in the beare... | Microsoft Identity Web validates that scope or role claims exist in the token... | Set AllowWebApiToBeAuthorizedByACL to true in AzureAD configuration section: ... | 🟢 8.5 | ADO Wiki |
 | 40 📋 | Azure Policy remediation task for assigning user-assigned managed identity to VMs fails with Auth... | The user-assigned managed identity has Managed Identity Operator and User Acc... | Add the user-assigned managed identity to the Contributor role at the subscri... | 🟢 8.5 | ADO Wiki |
+| NEW 📋 | Global admin/Owner of Subscription Unable to access Azure Resources under PIM Unable to access Azure... | For PIM service to be able to access Azure resources, MS-PIM SPN should always h... | Assign a User Access Administrator RBAC role to PIM SPN (MS � PIM) at a subscrip... | 🟢 8.0 | ContentIdea |
+| NEW 📋 | It is possible to create and attach Extension attributes for Azure AD created Groups but it has to b... | N/A | N/A | 🟡 6.5 | ContentIdea |
 | ... | *100 more entries* | | | | |
 
 ## Quick Troubleshooting Path

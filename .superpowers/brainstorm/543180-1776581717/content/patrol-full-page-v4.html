@@ -1,0 +1,300 @@
+<!-- Patrol Page Full Redesign v4 — Global Pipeline + Case Grid -->
+<h2>Patrol Page 完整重设计</h2>
+<p class="subtitle">全局 pipeline 每个阶段透明化 + Case 行 4 列网格</p>
+
+<!-- ==================== GLOBAL PIPELINE ==================== -->
+<div class="mockup" style="margin-top:16px">
+  <div class="mockup-header">全局 Pipeline — 每个阶段有过程和结果</div>
+  <div class="mockup-body" style="padding:0;background:#f8fafc">
+
+    <!-- Header bar -->
+    <div style="display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid #e2e8f0">
+      <span style="font-size:18px;font-weight:700;color:#1e293b">Patrol</span>
+      <span style="font-size:11px;background:#eff6ff;color:#2563eb;padding:3px 10px;border-radius:12px;border:1px solid #bfdbfe;font-weight:600;display:inline-flex;align-items:center;gap:4px">
+        <span style="width:6px;height:6px;border-radius:50%;background:#2563eb"></span>
+        processing
+      </span>
+      <span style="font-family:monospace;font-size:13px;color:#64748b">4m 32s</span>
+      <div style="flex:1"></div>
+      <span style="font-size:12px;color:#94a3b8">Total: 12</span>
+      <span style="font-size:12px;color:#16a34a">Done: 5</span>
+      <span style="font-size:12px;color:#2563eb">Active: 1</span>
+      <span style="font-size:12px;color:#94a3b8">Queue: 6</span>
+      <button style="background:#ef4444;color:white;border:none;padding:6px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">Cancel</button>
+    </div>
+
+    <!-- Pipeline stages: horizontal cards -->
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:0;border-bottom:1px solid #e2e8f0">
+
+      <!-- Stage 1: Starting — completed -->
+      <div style="padding:10px 12px;border-right:1px solid #f1f5f9;background:#fafffe">
+        <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px">
+          <div style="width:12px;height:12px;border-radius:50%;background:#16a34a;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="color:white;font-size:7px">✓</span></div>
+          <span style="font-size:9px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:0.5px">Start</span>
+          <div style="flex:1"></div>
+          <span style="font-size:9px;font-family:monospace;color:#94a3b8">8s</span>
+        </div>
+        <div style="font-size:9px;color:#64748b;line-height:1.5">
+          SDK session launched<br>
+          <span style="color:#94a3b8">Session: a03d…6bba6</span>
+        </div>
+      </div>
+
+      <!-- Stage 2: Discover — completed -->
+      <div style="padding:10px 12px;border-right:1px solid #f1f5f9;background:#fafffe">
+        <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px">
+          <div style="width:12px;height:12px;border-radius:50%;background:#16a34a;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="color:white;font-size:7px">✓</span></div>
+          <span style="font-size:9px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:0.5px">Discover</span>
+          <div style="flex:1"></div>
+          <span style="font-size:9px;font-family:monospace;color:#94a3b8">12s</span>
+        </div>
+        <div style="font-size:9px;color:#64748b;line-height:1.5">
+          D365 query returned<br>
+          <span style="font-weight:600;color:#1e293b">18</span> active cases found
+        </div>
+      </div>
+
+      <!-- Stage 3: Filter — completed -->
+      <div style="padding:10px 12px;border-right:1px solid #f1f5f9;background:#fafffe">
+        <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px">
+          <div style="width:12px;height:12px;border-radius:50%;background:#16a34a;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="color:white;font-size:7px">✓</span></div>
+          <span style="font-size:9px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:0.5px">Filter</span>
+          <div style="flex:1"></div>
+          <span style="font-size:9px;font-family:monospace;color:#94a3b8">3s</span>
+        </div>
+        <div style="font-size:9px;color:#64748b;line-height:1.5">
+          <span style="font-weight:600;color:#1e293b">12</span> / 18 have changes<br>
+          6 skipped (no activity)
+        </div>
+      </div>
+
+      <!-- Stage 4: Warmup — completed -->
+      <div style="padding:10px 12px;border-right:1px solid #f1f5f9;background:#fafffe">
+        <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px">
+          <div style="width:12px;height:12px;border-radius:50%;background:#16a34a;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="color:white;font-size:7px">✓</span></div>
+          <span style="font-size:9px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:0.5px">Warmup</span>
+          <div style="flex:1"></div>
+          <span style="font-size:9px;font-family:monospace;color:#94a3b8">5s</span>
+        </div>
+        <div style="font-size:9px;color:#64748b;line-height:1.5">
+          <div style="display:flex;gap:3px;flex-wrap:wrap;margin-top:2px">
+            <span style="background:#f0fdf4;color:#16a34a;padding:0 4px;border-radius:2px">Teams ✓</span>
+            <span style="background:#f0fdf4;color:#16a34a;padding:0 4px;border-radius:2px">ICM ✓</span>
+            <span style="background:#f0fdf4;color:#16a34a;padding:0 4px;border-radius:2px">DTM ✓</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stage 5: Process — active -->
+      <div style="padding:10px 12px;border-right:1px solid #f1f5f9;background:#f0f7ff">
+        <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px">
+          <div style="width:14px;height:14px;border-radius:50%;border:2px solid #2563eb;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <div style="width:5px;height:5px;border-radius:50%;background:#2563eb"></div>
+          </div>
+          <span style="font-size:9px;font-weight:700;color:#2563eb;text-transform:uppercase;letter-spacing:0.5px">Process</span>
+          <div style="flex:1"></div>
+          <span style="font-size:9px;font-family:monospace;color:#2563eb">4m 04s</span>
+        </div>
+        <div style="font-size:9px;color:#64748b;line-height:1.5">
+          <span style="font-weight:600;color:#2563eb">5</span> / 12 done<br>
+          <!-- Mini progress bar -->
+          <div style="width:100%;height:3px;background:#e2e8f0;border-radius:2px;margin-top:3px;overflow:hidden">
+            <div style="width:42%;height:100%;background:#2563eb;border-radius:2px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stage 6: Aggregate — pending -->
+      <div style="padding:10px 12px;opacity:0.4">
+        <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px">
+          <div style="width:12px;height:12px;border-radius:50%;border:2px solid #cbd5e1;flex-shrink:0"></div>
+          <span style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px">Aggregate</span>
+        </div>
+        <div style="font-size:9px;color:#94a3b8;line-height:1.5">
+          Waiting...
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ==================== CASE LIST ==================== -->
+    <div style="padding:12px">
+
+      <!-- Progress bar + label -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:0 4px">
+        <span style="font-size:12px;font-weight:600;color:#1e293b">Cases</span>
+        <span style="font-size:11px;color:#94a3b8">5 / 12 processed</span>
+        <div style="flex:1;height:4px;background:#e2e8f0;border-radius:2px;overflow:hidden">
+          <div style="width:42%;height:100%;background:#2563eb;border-radius:2px"></div>
+        </div>
+      </div>
+
+      <!-- Case 1: Active -->
+      <div style="background:#fff;border:1px solid #dbeafe;border-radius:8px;overflow:hidden;margin-bottom:8px;box-shadow:0 1px 3px rgba(37,99,235,0.08)">
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid #f1f5f9;background:#fafbff">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#2563eb;font-weight:700">2601290030000748</span>
+          <span style="font-size:9px;background:#eff6ff;color:#2563eb;padding:1px 6px;border-radius:8px;border:1px solid #bfdbfe;font-weight:600">● act</span>
+          <div style="flex:1"></div>
+          <div style="width:60px;height:3px;background:#e2e8f0;border-radius:2px;overflow:hidden"><div style="width:60%;height:100%;background:linear-gradient(90deg,#16a34a 66%,#2563eb 100%);border-radius:2px"></div></div>
+          <span style="font-family:monospace;font-size:10px;color:#94a3b8">2/4 · 2m 51s</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr">
+          <!-- Refresh -->
+          <div style="padding:8px 10px;border-right:1px solid #f1f5f9">
+            <div style="display:flex;align-items:center;gap:4px;margin-bottom:5px">
+              <div style="width:10px;height:10px;border-radius:50%;background:#16a34a;display:flex;align-items:center;justify-content:center"><span style="color:white;font-size:6px">✓</span></div>
+              <span style="font-size:9px;font-weight:700;color:#16a34a">REFRESH</span>
+              <span style="flex:1"></span>
+              <span style="font-size:8px;font-family:monospace;color:#94a3b8">27s</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:1px;font-size:9px;color:#64748b">
+              <div style="display:flex"><span style="flex:1">D365</span><span style="color:#94a3b8;font-family:monospace">12s</span></div>
+              <div style="display:flex"><span style="flex:1">Teams</span><span style="color:#94a3b8;font-family:monospace">22s</span></div>
+              <div style="display:flex"><span style="flex:1">ICM</span><span style="color:#94a3b8;font-family:monospace">11s</span></div>
+              <div style="display:flex"><span style="flex:1">OneNote</span><span style="color:#94a3b8;font-family:monospace">13s</span></div>
+              <div style="display:flex"><span style="flex:1">Attach</span><span style="color:#94a3b8;font-family:monospace">6s</span></div>
+            </div>
+          </div>
+          <!-- Assess -->
+          <div style="padding:8px 10px;border-right:1px solid #f1f5f9">
+            <div style="display:flex;align-items:center;gap:4px;margin-bottom:5px">
+              <div style="width:10px;height:10px;border-radius:50%;background:#16a34a;display:flex;align-items:center;justify-content:center"><span style="color:white;font-size:6px">✓</span></div>
+              <span style="font-size:9px;font-weight:700;color:#16a34a">ASSESS</span>
+              <span style="flex:1"></span>
+              <span style="font-size:8px;font-family:monospace;color:#94a3b8">1m 52s</span>
+            </div>
+            <div style="margin-bottom:4px"><span style="font-size:9px;background:#fef3c7;color:#b45309;padding:1px 6px;border-radius:3px;font-weight:600;border:1px solid #fde68a">needs-action</span></div>
+            <div style="font-size:9px;color:#64748b;line-height:1.4;border-left:2px solid #e2e8f0;padding-left:6px">Customer replied w/ new error. RDP 0x204.</div>
+          </div>
+          <!-- Act: active -->
+          <div style="padding:8px 10px;border-right:1px solid #f1f5f9;background:#fafbff">
+            <div style="display:flex;align-items:center;gap:4px;margin-bottom:5px">
+              <div style="width:12px;height:12px;border-radius:50%;border:2px solid #2563eb;display:flex;align-items:center;justify-content:center"><div style="width:4px;height:4px;border-radius:50%;background:#2563eb"></div></div>
+              <span style="font-size:9px;font-weight:700;color:#2563eb">ACT</span>
+              <span style="flex:1"></span>
+              <span style="font-size:8px;font-family:monospace;color:#2563eb">32s</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:3px">
+              <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:4px;padding:3px 6px">
+                <div style="display:flex;align-items:center;gap:3px;font-size:9px;color:#2563eb;font-weight:600"><span style="width:4px;height:4px;border-radius:50%;background:#2563eb"></span>Troubleshooter <span style="font-family:monospace;font-weight:400">32s</span></div>
+                <div style="font-size:8px;color:#64748b;margin-top:1px">Checking NSG + NVA...</div>
+              </div>
+              <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:4px;padding:3px 6px;opacity:0.5;font-size:9px;color:#94a3b8">Email Drafter</div>
+              <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:4px;padding:3px 6px;opacity:0.5;font-size:9px;color:#94a3b8">Challenger</div>
+            </div>
+          </div>
+          <!-- Summary: pending -->
+          <div style="padding:8px 10px;opacity:0.35">
+            <div style="display:flex;align-items:center;gap:4px">
+              <div style="width:10px;height:10px;border-radius:50%;border:2px solid #cbd5e1"></div>
+              <span style="font-size:9px;font-weight:700;color:#94a3b8">SUMMARY</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Case 2: Completed -->
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid #f1f5f9;background:#f8fafc">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#475569;font-weight:600">2602130040001034</span>
+          <span style="font-size:9px;background:#f0fdf4;color:#16a34a;padding:1px 6px;border-radius:8px;border:1px solid #bbf7d0;font-weight:600">✓ done</span>
+          <div style="flex:1"></div>
+          <div style="width:60px;height:3px;background:#16a34a;border-radius:2px"></div>
+          <span style="font-family:monospace;font-size:10px;color:#94a3b8">4/4 · 1m 59s</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr">
+          <div style="padding:6px 10px;border-right:1px solid #f1f5f9">
+            <div style="display:flex;align-items:center;gap:4px">
+              <div style="width:8px;height:8px;border-radius:50%;background:#16a34a"></div>
+              <span style="font-size:9px;font-weight:600;color:#16a34a">REFRESH</span><span style="flex:1"></span><span style="font-size:8px;font-family:monospace;color:#94a3b8">29s</span>
+            </div>
+            <div style="font-size:8px;color:#94a3b8;margin-top:2px">5/5 subtasks ✓</div>
+          </div>
+          <div style="padding:6px 10px;border-right:1px solid #f1f5f9">
+            <div style="display:flex;align-items:center;gap:4px">
+              <div style="width:8px;height:8px;border-radius:50%;background:#16a34a"></div>
+              <span style="font-size:9px;font-weight:600;color:#16a34a">ASSESS</span><span style="flex:1"></span><span style="font-size:8px;font-family:monospace;color:#94a3b8">1m 29s</span>
+            </div>
+            <div style="margin-top:2px"><span style="font-size:8px;background:#f1f5f9;color:#64748b;padding:0 4px;border-radius:2px">no-change</span></div>
+            <div style="font-size:8px;color:#94a3b8;margin-top:1px">Pending customer reply</div>
+          </div>
+          <div style="padding:6px 10px;border-right:1px solid #f1f5f9;opacity:0.4">
+            <div style="display:flex;align-items:center;gap:4px">
+              <div style="width:8px;height:8px;border-radius:50%;background:#cbd5e1"></div>
+              <span style="font-size:9px;font-weight:600;color:#94a3b8">ACT</span>
+            </div>
+            <div style="font-size:8px;color:#94a3b8;margin-top:2px">Skipped</div>
+          </div>
+          <div style="padding:6px 10px">
+            <div style="display:flex;align-items:center;gap:4px">
+              <div style="width:8px;height:8px;border-radius:50%;background:#16a34a"></div>
+              <span style="font-size:9px;font-weight:600;color:#16a34a">SUMMARY</span><span style="flex:1"></span><span style="font-size:8px;font-family:monospace;color:#94a3b8">&lt;1s</span>
+            </div>
+            <div style="font-size:8px;color:#64748b;margin-top:2px">Todo updated</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Case 3: Queued (collapsed) -->
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;margin-bottom:4px;opacity:0.4">
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 14px">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#94a3b8">2603300030003153001</span>
+          <span style="font-size:9px;color:#cbd5e1">Queued</span>
+          <div style="flex:1"></div>
+          <div style="width:60px;height:3px;background:#e2e8f0;border-radius:2px"></div>
+        </div>
+      </div>
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;margin-bottom:4px;opacity:0.4">
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 14px">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#94a3b8">2604010030004100</span>
+          <span style="font-size:9px;color:#cbd5e1">Queued</span>
+          <div style="flex:1"></div>
+          <div style="width:60px;height:3px;background:#e2e8f0;border-radius:2px"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Design notes -->
+<div class="section" style="margin-top:24px">
+  <h3>信息层次设计</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:10px">
+      <div style="font-size:11px;font-weight:700;color:#2563eb;margin-bottom:4px">🔭 全局 Pipeline（6 列卡片）</div>
+      <ul style="font-size:10px;color:#6b7280;line-height:1.7;padding-left:14px;margin:0">
+        <li><b>Start</b>: SDK 启动耗时 + session ID</li>
+        <li><b>Discover</b>: 查询了什么 + 找到多少 case</li>
+        <li><b>Filter</b>: 多少有变化 / 多少跳过</li>
+        <li><b>Warmup</b>: 哪些 token 预热了</li>
+        <li><b>Process</b>: 进度条 + done/total</li>
+        <li><b>Aggregate</b>: todo 汇总结果</li>
+      </ul>
+    </div>
+    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:10px">
+      <div style="font-size:11px;font-weight:700;color:#2563eb;margin-bottom:4px">📋 Case 行（4 列网格）</div>
+      <ul style="font-size:10px;color:#6b7280;line-height:1.7;padding-left:14px;margin:0">
+        <li><b>Refresh</b>: 5 个子任务各自状态 + 耗时</li>
+        <li><b>Assess</b>: 结果标签 + 推理摘要</li>
+        <li><b>Act</b>: agent 卡片 + 当前操作描述</li>
+        <li><b>Summary</b>: todo 更新 / 状态变更</li>
+        <li>Completed 行自动收紧，Active 行展开</li>
+        <li>Queued 只显示一行 header</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:16px">
+  <h3>需要后端配合的数据扩展</h3>
+  <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px;font-size:11px;color:#92400e;line-height:1.7">
+    当前 <code>patrol-progress.json</code> 和 <code>state.json</code> 缺少部分字段。实现时需要：
+    <ul style="margin:6px 0 0;padding-left:16px">
+      <li><b>全局</b>: patrol skill 在 discover/filter/warmup 阶段写入结果数据（totalFound、changedCount、warmupTokens）</li>
+      <li><b>Assess</b>: casework skill 写入 <code>result</code>（已有）+ <code>reasoning</code> 摘要（新增）</li>
+      <li><b>Act</b>: 每个 agent action 写入 <code>detail</code> 描述当前操作（新增）</li>
+      <li><b>Summary</b>: 写入 <code>result</code> 描述生成的 todo/状态变更（新增）</li>
+    </ul>
+  </div>
+</div>

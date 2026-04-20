@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard v2 — Engineer Brain</title>
+<style>
+  :root {
+    --bg: #f8f9fb;
+    --bg-surface: #ffffff;
+    --bg-inset: #f0f2f5;
+    --border: #e1e4e8;
+    --border-subtle: #eaecef;
+    --text-primary: #1a1a2e;
+    --text-secondary: #57606a;
+    --text-tertiary: #8b949e;
+    --accent-blue: #0969da;
+    --accent-green: #1a7f37;
+    --accent-red: #cf222e;
+    --accent-amber: #bf8700;
+    --accent-purple: #8250df;
+    --accent-cyan: #0891b2;
+    --accent-pink: #d63384;
+    --shadow-card: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-lg: 0 4px 16px rgba(0,0,0,0.08);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    line-height: 1.6;
+  }
+  .page { max-width: 1400px; margin: 0 auto; padding: 40px 32px; }
+  .page-title { font-size: 28px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 6px; }
+  .page-subtitle { color: var(--text-secondary); font-size: 14px; margin-bottom: 48px; }
+  .section { margin-bottom: 56px; }
+  .section-title {
+    font-size: 18px; font-weight: 700; color: var(--accent-blue);
+    margin-bottom: 6px; display: flex; align-items: center; gap: 8px;
+  }
+  .section-desc { color: var(--text-secondary); font-size: 13px; margin-bottom: 24px; max-width: 720px; line-height: 1.7; }
+  .divider { height: 1px; background: var(--border); margin: 48px 0; }
+
+  /* === Decision Cards === */
+  .decision-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .decision-card {
+    background: var(--bg-surface); border: 1px solid var(--border-subtle);
+    border-radius: 12px; padding: 20px; box-shadow: var(--shadow-card);
+    border-left: 3px solid var(--accent-green);
+  }
+  .decision-label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; color: var(--accent-green); margin-bottom: 6px;
+  }
+  .decision-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .decision-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+
+  /* ===== MOCKUP ===== */
+  .mockup-frame {
+    background: var(--bg-surface); border: 1px solid var(--border);
+    border-radius: 16px; overflow: hidden; box-shadow: var(--shadow-lg);
+  }
+  .mockup-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 24px; border-bottom: 1px solid var(--border-subtle);
+  }
+  .mockup-topbar-left { display: flex; align-items: center; gap: 16px; }
+  .mockup-greeting { font-size: 18px; font-weight: 700; }
+  .mockup-greeting span { color: var(--accent-blue); }
+  .mockup-time { font-size: 12px; color: var(--text-tertiary); font-family: 'SF Mono', monospace; }
+  .mockup-topbar-right { display: flex; align-items: center; gap: 10px; }
+  .mockup-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
+  }
+  .mockup-body { padding: 20px 24px; background: var(--bg-inset); }
+
+  /* === ACTION + TODO Combined === */
+  .action-section { margin-bottom: 24px; }
+  .action-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+  }
+  .action-header-left { display: flex; align-items: center; gap: 8px; }
+  .action-header h3 {
+    font-size: 13px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--text-secondary);
+  }
+  .action-count {
+    font-size: 11px; font-weight: 700; background: var(--accent-red);
+    color: #fff; padding: 1px 8px; border-radius: 10px;
+  }
+  .action-tabs {
+    display: flex; gap: 4px;
+  }
+  .action-tab {
+    font-size: 11px; font-weight: 600; padding: 3px 10px;
+    border-radius: 6px; cursor: pointer; border: none;
+  }
+  .action-tab.active {
+    background: var(--accent-blue); color: #fff;
+  }
+  .action-tab:not(.active) {
+    background: var(--bg-inset); color: var(--text-secondary); border: 1px solid var(--border-subtle);
+  }
+
+  .action-list { display: flex; flex-direction: column; gap: 6px; }
+  .action-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px; background: var(--bg-surface);
+    border: 1px solid var(--border-subtle); border-radius: 10px;
+    cursor: pointer; box-shadow: var(--shadow-card);
+    transition: all 0.15s;
+  }
+  .action-item:hover { border-color: var(--accent-blue); box-shadow: 0 2px 8px rgba(9,105,218,0.1); }
+
+  /* Score pill */
+  .score-pill {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 800; font-family: 'SF Mono', monospace;
+    flex-shrink: 0;
+  }
+  .score-critical { background: rgba(207,34,46,0.1); color: var(--accent-red); }
+  .score-high { background: rgba(191,135,0,0.1); color: var(--accent-amber); }
+  .score-medium { background: rgba(9,105,218,0.1); color: var(--accent-blue); }
+  .score-low { background: rgba(26,127,55,0.1); color: var(--accent-green); }
+
+  .action-content { flex: 1; min-width: 0; }
+  .action-title-row {
+    font-size: 13px; font-weight: 600; display: flex;
+    align-items: center; gap: 8px; color: var(--text-primary);
+  }
+  .case-id {
+    font-family: 'SF Mono', monospace; font-size: 11px; color: var(--accent-blue);
+    background: rgba(9,105,218,0.08); padding: 1px 6px; border-radius: 4px;
+  }
+  .action-meta { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+
+  /* Score factors row */
+  .score-factors {
+    display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap;
+  }
+  .factor {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 9px; font-weight: 600; padding: 1px 6px;
+    border-radius: 3px; text-transform: uppercase; letter-spacing: 0.03em;
+  }
+  .factor-prod { background: rgba(207,34,46,0.06); color: var(--accent-red); }
+  .factor-sentiment { background: rgba(191,135,0,0.06); color: var(--accent-amber); }
+  .factor-sla { background: rgba(130,80,223,0.06); color: var(--accent-purple); }
+  .factor-contact { background: rgba(9,105,218,0.06); color: var(--accent-blue); }
+  .factor-teams { background: rgba(214,51,132,0.06); color: var(--accent-pink); }
+
+  .action-tag {
+    font-size: 10px; font-weight: 600; padding: 2px 8px;
+    border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .tag-sla { background: rgba(207,34,46,0.1); color: var(--accent-red); }
+  .tag-reply { background: rgba(191,135,0,0.1); color: var(--accent-amber); }
+  .tag-followup { background: rgba(130,80,223,0.1); color: var(--accent-purple); }
+  .tag-close { background: rgba(26,127,55,0.1); color: var(--accent-green); }
+  .tag-new { background: rgba(9,105,218,0.1); color: var(--accent-blue); }
+  .tag-todo { background: rgba(8,145,178,0.1); color: var(--accent-cyan); }
+
+  .action-right {
+    display: flex; flex-direction: column; align-items: flex-end; gap: 2px;
+  }
+  .action-timer {
+    font-family: 'SF Mono', monospace; font-size: 12px; font-weight: 600; white-space: nowrap;
+  }
+  .action-source {
+    font-size: 9px; color: var(--text-tertiary); text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* === PIPELINE === */
+  .pipeline-section { margin-bottom: 24px; }
+  .pipeline-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;
+  }
+  .pipeline-header h3 {
+    font-size: 13px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--text-secondary);
+  }
+  .pipeline-flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .pipeline-stage {
+    background: var(--bg-surface); border: 1px solid var(--border-subtle);
+    border-radius: 10px; min-height: 180px; box-shadow: var(--shadow-card);
+  }
+  .stage-header {
+    padding: 10px 12px; border-bottom: 2px solid transparent;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .stage-header.eng { border-bottom-color: var(--accent-red); }
+  .stage-header.cust { border-bottom-color: var(--accent-green); }
+  .stage-header.pg { border-bottom-color: var(--accent-purple); }
+  .stage-header.close { border-bottom-color: var(--accent-cyan); }
+  .stage-name { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+  .stage-count {
+    font-size: 12px; font-weight: 800; font-family: 'SF Mono', monospace;
+    width: 22px; height: 22px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .stage-body { padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+  .stage-card {
+    background: var(--bg-inset); border: 1px solid var(--border-subtle);
+    border-radius: 8px; padding: 10px; cursor: pointer; transition: all 0.15s;
+    position: relative;
+  }
+  .stage-card:hover { border-color: var(--accent-blue); box-shadow: 0 2px 6px rgba(9,105,218,0.1); }
+  .stage-card-id {
+    font-family: 'SF Mono', monospace; font-size: 10px;
+    color: var(--accent-blue); margin-bottom: 3px; font-weight: 600;
+  }
+  .stage-card-title {
+    font-size: 12px; font-weight: 500; color: var(--text-primary); line-height: 1.3;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .stage-card-footer {
+    display: flex; align-items: center; justify-content: space-between; margin-top: 6px;
+  }
+  .stage-card-sev { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; }
+  .sev-a { background: rgba(207,34,46,0.1); color: var(--accent-red); }
+  .sev-b { background: rgba(191,135,0,0.1); color: var(--accent-amber); }
+  .sev-c { background: rgba(9,105,218,0.1); color: var(--accent-blue); }
+  .stage-card-age { font-size: 10px; font-family: 'SF Mono', monospace; color: var(--text-tertiary); }
+  .stage-card-tags { display: flex; gap: 3px; margin-top: 5px; flex-wrap: wrap; }
+  .micro-tag {
+    font-size: 9px; font-weight: 600; padding: 1px 5px; border-radius: 3px;
+    text-transform: uppercase; letter-spacing: 0.03em;
+  }
+  .tag-s500 { background: rgba(207,34,46,0.08); color: var(--accent-red); }
+  .tag-21v { background: rgba(130,80,223,0.08); color: var(--accent-purple); }
+  .tag-rdse { background: rgba(214,51,132,0.08); color: var(--accent-pink); }
+  .card-navigate {
+    position: absolute; top: 8px; right: 8px; font-size: 10px;
+    color: var(--text-tertiary); opacity: 0; transition: opacity 0.15s;
+  }
+  .stage-card:hover .card-navigate { opacity: 1; color: var(--accent-blue); }
+
+  /* === Bottom: Metrics + Activity === */
+  .bottom-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+
+  /* Health Metrics Grid */
+  .health-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+  }
+  .health-card {
+    background: var(--bg-surface); border: 1px solid var(--border-subtle);
+    border-radius: 12px; padding: 16px; box-shadow: var(--shadow-card);
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+    position: relative; overflow: hidden;
+  }
+  .health-card-wide {
+    grid-column: span 2;
+    flex-direction: row;
+    text-align: left;
+    align-items: stretch;
+    gap: 20px;
+  }
+  .health-card-label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--text-tertiary); margin-bottom: 8px;
+  }
+  .health-card-value {
+    font-size: 28px; font-weight: 800; font-family: 'SF Mono', 'Cascadia Code', monospace;
+    line-height: 1;
+  }
+  .health-card-sub {
+    font-size: 11px; color: var(--text-tertiary); margin-top: 4px;
+  }
+  .health-card-trend {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 11px; font-weight: 600; padding: 2px 8px;
+    border-radius: 10px; margin-top: 6px;
+  }
+  .trend-good { background: rgba(26,127,55,0.08); color: var(--accent-green); }
+  .trend-bad { background: rgba(207,34,46,0.08); color: var(--accent-red); }
+  .trend-neutral { background: rgba(139,148,158,0.08); color: var(--text-tertiary); }
+
+  /* Ring chart (SVG-based) */
+  .ring-wrap { position: relative; width: 80px; height: 80px; margin-bottom: 8px; }
+  .ring-svg { width: 80px; height: 80px; transform: rotate(-90deg); }
+  .ring-bg { fill: none; stroke: var(--bg-inset); stroke-width: 6; }
+  .ring-fill { fill: none; stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset 0.8s ease; }
+  .ring-center {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    font-size: 18px; font-weight: 800; font-family: 'SF Mono', monospace;
+  }
+
+  /* Horizontal stacked bar (severity) */
+  .hbar-wrap { width: 100%; margin-top: 8px; }
+  .hbar {
+    display: flex; height: 10px; border-radius: 5px; overflow: hidden;
+    background: var(--bg-inset);
+  }
+  .hbar-seg { height: 100%; transition: width 0.5s; min-width: 3px; }
+  .hbar-legend {
+    display: flex; justify-content: center; gap: 12px; margin-top: 8px;
+  }
+  .hbar-legend-item {
+    display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--text-secondary);
+  }
+  .hbar-legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+
+  /* Sparkline (mini trend) */
+  .spark-wrap { margin-top: 8px; }
+  .spark-svg { width: 100%; height: 32px; }
+  .spark-line { fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+  .spark-area { opacity: 0.1; }
+  .spark-dot { r: 2.5; }
+
+  /* Status pipeline mini */
+  .pipeline-mini {
+    display: flex; gap: 2px; width: 100%; margin-top: 6px;
+  }
+  .pipeline-mini-seg {
+    height: 6px; border-radius: 3px; transition: flex 0.5s;
+  }
+
+  /* === Activity Feed (two sections) === */
+  .activity-panel {
+    background: var(--bg-surface); border: 1px solid var(--border-subtle);
+    border-radius: 10px; padding: 16px; box-shadow: var(--shadow-card);
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .activity-sub { }
+  .activity-sub h4 {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--text-secondary); margin-bottom: 10px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .activity-sub h4 .source-tag {
+    font-size: 9px; font-weight: 600; padding: 1px 6px;
+    border-radius: 3px; text-transform: uppercase;
+  }
+  .feed-item {
+    display: flex; gap: 10px; padding: 7px 0;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .feed-item:last-child { border-bottom: none; }
+  .feed-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    margin-top: 5px; flex-shrink: 0;
+  }
+  .feed-content { flex: 1; min-width: 0; }
+  .feed-text { font-size: 12px; color: var(--text-primary); line-height: 1.5; }
+  .feed-text .hl { color: var(--accent-blue); font-weight: 600; }
+  .feed-time {
+    font-size: 10px; color: var(--text-tertiary);
+    font-family: 'SF Mono', monospace; margin-top: 1px;
+  }
+  .feed-divider {
+    height: 1px; background: var(--border); margin: 4px 0;
+  }
+
+  /* Intel card style */
+  .intel-item {
+    display: flex; gap: 8px; padding: 8px 10px;
+    background: var(--bg-inset); border: 1px solid var(--border-subtle);
+    border-radius: 8px; margin-bottom: 6px;
+  }
+  .intel-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+  .intel-content { flex: 1; }
+  .intel-title { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+  .intel-desc { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+  .intel-meta {
+    font-size: 10px; color: var(--text-tertiary); margin-top: 3px;
+    font-family: 'SF Mono', monospace;
+  }
+
+  /* === Scoring Formula === */
+  .formula-box {
+    background: var(--bg-surface); border: 1px solid var(--border-subtle);
+    border-radius: 12px; padding: 24px; box-shadow: var(--shadow-card);
+    margin-top: 20px;
+  }
+  .formula-title { font-size: 14px; font-weight: 700; margin-bottom: 12px; }
+  .formula-code {
+    background: var(--bg-inset); border: 1px solid var(--border-subtle);
+    border-radius: 8px; padding: 16px; font-family: 'SF Mono', monospace;
+    font-size: 13px; line-height: 1.8; color: var(--text-primary);
+    overflow-x: auto;
+  }
+  .formula-code .comment { color: var(--text-tertiary); }
+  .formula-code .keyword { color: var(--accent-purple); font-weight: 600; }
+  .formula-code .value { color: var(--accent-blue); }
+
+  .factor-table {
+    width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 16px;
+  }
+  .factor-table th {
+    text-align: left; font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--text-tertiary); padding: 8px 12px;
+    background: var(--bg-inset); border-bottom: 1px solid var(--border);
+  }
+  .factor-table td {
+    padding: 8px 12px; border-bottom: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+  }
+  .factor-table td:first-child { font-weight: 600; color: var(--text-primary); }
+
+  @media (max-width: 1000px) {
+    .pipeline-flow { grid-template-columns: repeat(2, 1fr); }
+    .bottom-grid { grid-template-columns: 1fr; }
+    .decision-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1 class="page-title">🧠 Dashboard v2 — Command Center</h1>
+  <p class="page-subtitle">根据反馈迭代：4 列 Pipeline · Action + Todo 合并 · 可视化 Metrics · 双区 Activity Feed</p>
+
+  <!-- ===== Decisions ===== -->
+  <div class="section">
+    <div class="section-title">✅ 已确认的设计决策</div>
+    <div class="decision-grid">
+      <div class="decision-card">
+        <div class="decision-label">✓ Decided</div>
+        <div class="decision-title">Pipeline 4 列</div>
+        <div class="decision-desc">Pending Engineer → Pending Customer → Pending PG → Close。不需要 Researching 独立列（归入 Pending Engineer）。</div>
+      </div>
+      <div class="decision-card">
+        <div class="decision-label">✓ Decided</div>
+        <div class="decision-title">Action List + Todo 合并</div>
+        <div class="decision-desc">不再需要独立 Todo 页面。综合评分排序，来源标记区分（Case Action / Patrol Todo / Manual Todo）。</div>
+      </div>
+      <div class="decision-card">
+        <div class="decision-label">✓ Decided</div>
+        <div class="decision-title">Health Metrics 可视化</div>
+        <div class="decision-desc">用进度条、mini donut、severity bar chart 替代纯文本行。数据一眼看懂。</div>
+      </div>
+      <div class="decision-card">
+        <div class="decision-label">✓ Decided</div>
+        <div class="decision-title">Recent Activity 双区</div>
+        <div class="decision-desc">个人 Activity（WorkIQ 生成）+ 团队 Intel（Known Issue / LSI / Swarming），后续可被 troubleshooter 消费。</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ===== MOCKUP ===== -->
+  <div class="section">
+    <div class="section-title">🖥️ Dashboard v2 Mockup</div>
+    <p class="section-desc">三区布局：Action+Todo → Pipeline (4列) → Visual Metrics + Activity Feed (双区)</p>
+
+    <div class="mockup-frame">
+      <div class="mockup-topbar">
+        <div class="mockup-topbar-left">
+          <div class="mockup-greeting">Good morning, <span>Kun</span> 👋</div>
+          <div class="mockup-time">SUN 20 APR · 00:30 SGT</div>
+        </div>
+        <div class="mockup-topbar-right">
+          <div class="mockup-badge" style="background: rgba(207,34,46,0.08); color: var(--accent-red);">🔴 2 SLA Risk</div>
+          <div class="mockup-badge" style="background: rgba(191,135,0,0.08); color: var(--accent-amber);">⚡ 7 Actions</div>
+          <div class="mockup-badge" style="background: rgba(26,127,55,0.08); color: var(--accent-green);">✅ Patrol 2h ago</div>
+        </div>
+      </div>
+
+      <div class="mockup-body">
+
+        <!-- ====== ACTION + TODO ====== -->
+        <div class="action-section">
+          <div class="action-header">
+            <div class="action-header-left">
+              <h3>⚡ Actions & Todo</h3>
+              <span class="action-count">7</span>
+            </div>
+            <div class="action-tabs">
+              <button class="action-tab active">All</button>
+              <button class="action-tab">Case</button>
+              <button class="action-tab">Todo</button>
+              <button class="action-tab">Manual</button>
+            </div>
+          </div>
+          <div class="action-list">
+            <!-- Item 1: Critical -->
+            <div class="action-item">
+              <div class="score-pill score-critical">95</div>
+              <div class="action-content">
+                <div class="action-title-row">
+                  <span class="case-id">402506</span>
+                  <span>一台生产机器突然宕机重启</span>
+                  <span class="action-tag tag-sla">SLA 2h</span>
+                </div>
+                <div class="action-meta">Sev A · VM Host Down · Customer replied 30min ago · S500 Mercedes</div>
+                <div class="score-factors">
+                  <span class="factor factor-prod">🏭 Prod Down</span>
+                  <span class="factor factor-sentiment">😤 Urgent Tone</span>
+                  <span class="factor factor-sla">⏱ SLA 2h</span>
+                  <span class="factor factor-teams">💬 Teams 催促</span>
+                </div>
+              </div>
+              <div class="action-right">
+                <div class="action-timer" style="color: var(--accent-red);">⏱ 1:47:23</div>
+                <div class="action-source">CASE ACTION</div>
+              </div>
+            </div>
+
+            <!-- Item 2 -->
+            <div class="action-item">
+              <div class="score-pill score-high">72</div>
+              <div class="action-content">
+                <div class="action-title-row">
+                  <span class="case-id">402253</span>
+                  <span>无法收集日志到 Workspace 自定义 table</span>
+                  <span class="action-tag tag-reply">Replied</span>
+                </div>
+                <div class="action-meta">Sev B · Azure Monitor · Customer replied 6h ago · 21V</div>
+                <div class="score-factors">
+                  <span class="factor factor-prod">🏭 Prod Impact</span>
+                  <span class="factor factor-contact">📩 6h 未回</span>
+                </div>
+              </div>
+              <div class="action-right">
+                <div class="action-timer" style="color: var(--accent-amber);">📩 6h</div>
+                <div class="action-source">CASE ACTION</div>
+              </div>
+            </div>
+
+            <!-- Item 3: Todo from patrol -->
+            <div class="action-item">
+              <div class="score-pill score-high">68</div>
+              <div class="action-content">
+                <div class="action-title-row">
+                  <span class="case-id">402302</span>
+                  <span>Follow up: 生产 AKS 集群访问邮箱很慢</span>
+                  <span class="action-tag tag-todo">Patrol Todo</span>
+                </div>
+                <div class="action-meta">Sev B · AKS · No contact 3 days · 21V · Patrol 建议: 发 follow-up 邮件</div>
+                <div class="score-factors">
+                  <span class="factor factor-prod">🏭 Prod Slow</span>
+                  <span class="factor factor-contact">📭 3d 无联系</span>
+                </div>
+              </div>
+              <div class="action-right">
+                <div class="action-timer" style="color: var(--accent-amber);">📭 3d</div>
+                <div class="action-source">PATROL TODO</div>
+              </div>
+            </div>
+
+            <!-- Item 4 -->
+            <div class="action-item">
+              <div class="score-pill score-medium">45</div>
+              <div class="action-content">
+                <div class="action-title-row">
+                  <span class="case-id">402516</span>
+                  <span>磁盘警报规则改过阈值后还是按以前的触发</span>
+                  <span class="action-tag tag-new">New</span>
+                </div>
+                <div class="action-meta">Sev C · Azure Monitor · Assigned today · 21V</div>
+                <div class="score-factors">
+                  <span class="factor factor-sentiment">😐 Neutral</span>
+                </div>
+              </div>
+              <div class="action-right">
+                <div class="action-timer" style="color: var(--accent-blue);">🆕 New</div>
+                <div class="action-source">CASE ACTION</div>
+              </div>
+            </div>
+
+            <!-- Item 5: Ready to close -->
+            <div class="action-item">
+              <div class="score-pill score-low">25</div>
+              <div class="action-content">
+                <div class="action-title-row">
+                  <span class="case-id">401738</span>
+                  <span>Close case: Entra ID P2 功能对比</span>
+                  <span class="action-tag tag-close">Close</span>
+                </div>
+                <div class="action-meta">Sev C · Entra ID · Customer confirmed · Record labor + close</div>
+              </div>
+              <div class="action-right">
+                <div class="action-timer" style="color: var(--accent-green);">✓</div>
+                <div class="action-source">PATROL TODO</div>
+              </div>
+            </div>
+
+            <!-- Item 6: Manual todo -->
+            <div class="action-item">
+              <div class="score-pill score-low">20</div>
+              <div class="action-content">
+                <div class="action-title-row">
+                  <span>Review ADO PR: pbi-gateway-refresh-rca query</span>
+                  <span class="action-tag tag-todo">Manual</span>
+                </div>
+                <div class="action-meta">Sam Zhao's PR · CopilotSkills #659 · Due today</div>
+              </div>
+              <div class="action-right">
+                <div class="action-timer" style="color: var(--text-tertiary);">📝</div>
+                <div class="action-source">MANUAL TODO</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====== PIPELINE (4 columns) ====== -->
+        <div class="pipeline-section">
+          <div class="pipeline-header">
+            <h3>📊 Case Pipeline</h3>
+            <span style="font-size: 11px; color: var(--text-tertiary);">Click card → Case Detail</span>
+          </div>
+          <div class="pipeline-flow">
+            <!-- Pending Engineer -->
+            <div class="pipeline-stage">
+              <div class="stage-header eng">
+                <span class="stage-name" style="color: var(--accent-red);">🔴 Pending Engineer</span>
+                <span class="stage-count" style="background: rgba(207,34,46,0.08); color: var(--accent-red);">5</span>
+              </div>
+              <div class="stage-body">
+                <div class="stage-card">
+                  <span class="card-navigate">→ Detail</span>
+                  <div class="stage-card-id">#402506</div>
+                  <div class="stage-card-title">生产机器宕机重启</div>
+                  <div class="stage-card-footer">
+                    <span class="stage-card-sev sev-a">A</span>
+                    <span class="stage-card-age" style="color: var(--accent-red);">⏱ SLA</span>
+                  </div>
+                  <div class="stage-card-tags">
+                    <span class="micro-tag tag-s500">S500</span>
+                    <span class="micro-tag tag-21v">21V</span>
+                  </div>
+                </div>
+                <div class="stage-card">
+                  <span class="card-navigate">→ Detail</span>
+                  <div class="stage-card-id">#402516</div>
+                  <div class="stage-card-title">磁盘警报规则阈值问题</div>
+                  <div class="stage-card-footer">
+                    <span class="stage-card-sev sev-c">C</span>
+                    <span class="stage-card-age">0d</span>
+                  </div>
+                  <div class="stage-card-tags"><span class="micro-tag tag-21v">21V</span></div>
+                </div>
+                <div class="stage-card">
+                  <span class="card-navigate">→ Detail</span>
+                  <div class="stage-card-id">#402253</div>
+                  <div class="stage-card-title">日志收集到自定义 table</div>
+                  <div class="stage-card-footer">
+                    <span class="stage-card-sev sev-b">B</span>
+                    <span class="stage-card-age">4d</span>
+                  </div>
+                  <div class="stage-card-tags"><span class="micro-tag tag-21v">21V</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pending Customer -->
+            <div class="pipeline-stage">
+              <div class="stage-header cust">
+                <span class="stage-name" style="color: var(--accent-green);">🟢 Pending Customer</span>
+                <span class="stage-count" style="background: rgba(26,127,55,0.08); color: var(--accent-green);">4</span>
+              </div>
+              <div class="stage-body">
+                <div class="stage-card">
+                  <span class="card-navigate">→ Detail</span>
+                  <div class="stage-card-id">#400804</div>
+                  <div class="stage-card-title">AKS 升级失败</div>
+                  <div class="stage-card-footer">
+                    <span class="stage-card-sev sev-b">B</span>
+                    <span class="stage-card-age">7d</span>
+                  </div>
+                  <div class="stage-card-tags"><span class="micro-tag tag-s500">S500</span></div>
+                </div>
+                <div class="stage-card">
+                  <span class="card-navigate">→ Detail</span>
+                  <div class="stage-card-id">#402302</div>
+                  <div class="stage-card-title">AKS 访问邮箱慢</div>
+                  <div class="stage-card-footer">
+                    <span class="stage-card-sev sev-b">B</span>
+                    <span class="stage-card-age" style="color: var(--accent-red);">3d ⚠</span>
+                  </div>
+                  <div class="stage-card-tags"><span class="micro-tag tag-21v">21V</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pending PG -->
+            <div class="pipeline-stage">
+              <div class="stage-header pg">
+                <span class="stage-name" style="color: var(--accent-purple);">🟣 Pending PG</span>
+                <span class="stage-count" style="background: rgba(130,80,223,0.08); color: var(--accent-purple);">1</span>
+              </div>
+              <div class="stage-body">
+                <div class="stage-card">
+                  <span class="card-navigate">→ Detail</span>
+                  <div class="stage-card-id">#401556</div>
+                  <div class="stage-card-title">VM Gen 转换问题</div>
+                  <div class="stage-card-footer">
+                    <span class="stage-card-sev sev-b">B</span>
+                    <span class="stage-card-age">10d</span>
+                  </div>
+                  <div class="stage-card-tags">
+                    <span class="micro-tag tag-s500">S500</span>
+                    <span class="micro-tag tag-rdse">RDSE</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Close -->
+            <div class="pipeline-stage">
+              <div class="stage-header close">
+                <span class="stage-name" style="color: var(--accent-cyan);">✅ Ready to Close</span>
+                <span class="stage-count" style="background: rgba(8,145,178,0.08); color: var(--accent-cyan);">1</span>
+              </div>
+              <div class="stage-body">
+                <div class="stage-card">
+                  <span class="card-navigate">→ Detail</span>
+                  <div class="stage-card-id">#401738</div>
+                  <div class="stage-card-title">Entra ID P2 功能对比</div>
+                  <div class="stage-card-footer">
+                    <span class="stage-card-sev sev-c">C</span>
+                    <span class="stage-card-age">6d</span>
+                  </div>
+                  <div class="stage-card-tags"><span class="micro-tag tag-21v">21V</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====== Bottom: Metrics + Activity ====== -->
+        <div class="bottom-grid">
+          <!-- ====== HEALTH METRICS — Card Grid ====== -->
+          <div>
+            <div style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); margin-bottom: 12px;">📈 Health Metrics</div>
+            <div class="health-grid">
+
+              <!-- Card 1: IR SLA Ring -->
+              <div class="health-card">
+                <div class="health-card-label">IR SLA Met</div>
+                <div class="ring-wrap">
+                  <svg class="ring-svg" viewBox="0 0 42 42">
+                    <circle class="ring-bg" cx="21" cy="21" r="18" />
+                    <circle class="ring-fill" cx="21" cy="21" r="18"
+                      stroke="#1a7f37"
+                      stroke-dasharray="113.1"
+                      stroke-dashoffset="14.7" />
+                  </svg>
+                  <div class="ring-center" style="color: #1a7f37;">87<span style="font-size: 12px;">%</span></div>
+                </div>
+                <div class="health-card-sub">8 met · 1 missed</div>
+                <div class="health-card-trend trend-good">↑ 5% vs last wk</div>
+              </div>
+
+              <!-- Card 2: Active Cases -->
+              <div class="health-card">
+                <div class="health-card-label">Active Cases</div>
+                <div class="health-card-value" style="color: var(--accent-blue);">11</div>
+                <div class="health-card-sub">Capacity: 20</div>
+                <!-- Pipeline mini bar -->
+                <div class="pipeline-mini" style="margin-top: 10px;">
+                  <div class="pipeline-mini-seg" style="flex: 5; background: var(--accent-red); border-radius: 3px 0 0 3px;" title="Pending Eng: 5"></div>
+                  <div class="pipeline-mini-seg" style="flex: 4; background: var(--accent-green);" title="Pending Cust: 4"></div>
+                  <div class="pipeline-mini-seg" style="flex: 1; background: var(--accent-purple);" title="Pending PG: 1"></div>
+                  <div class="pipeline-mini-seg" style="flex: 1; background: var(--accent-cyan); border-radius: 0 3px 3px 0;" title="Close: 1"></div>
+                </div>
+                <div class="hbar-legend" style="margin-top: 6px;">
+                  <div class="hbar-legend-item"><div class="hbar-legend-dot" style="background: var(--accent-red);"></div>Eng 5</div>
+                  <div class="hbar-legend-item"><div class="hbar-legend-dot" style="background: var(--accent-green);"></div>Cust 4</div>
+                  <div class="hbar-legend-item"><div class="hbar-legend-dot" style="background: var(--accent-purple);"></div>PG 1</div>
+                  <div class="hbar-legend-item"><div class="hbar-legend-dot" style="background: var(--accent-cyan);"></div>Close 1</div>
+                </div>
+                <div class="health-card-trend trend-good">↓ 2 vs last wk</div>
+              </div>
+
+              <!-- Card 3: Avg Contact Days -->
+              <div class="health-card">
+                <div class="health-card-label">Avg Days Since Contact</div>
+                <div class="ring-wrap">
+                  <svg class="ring-svg" viewBox="0 0 42 42">
+                    <circle class="ring-bg" cx="21" cy="21" r="18" />
+                    <circle class="ring-fill" cx="21" cy="21" r="18"
+                      stroke="#bf8700"
+                      stroke-dasharray="113.1"
+                      stroke-dashoffset="59" />
+                  </svg>
+                  <div class="ring-center" style="color: #bf8700;">2.4<span style="font-size: 10px;">d</span></div>
+                </div>
+                <div class="health-card-sub">Target: &lt;3d</div>
+                <div class="health-card-trend trend-bad">↑ 0.3 vs last wk</div>
+              </div>
+
+              <!-- Card 4: Severity (horizontal stacked) — wide -->
+              <div class="health-card health-card-wide">
+                <div style="flex: 1;">
+                  <div class="health-card-label">Severity Distribution</div>
+                  <div class="hbar-wrap" style="margin-top: 12px;">
+                    <div class="hbar">
+                      <div class="hbar-seg" style="width: 9%; background: var(--accent-red);" title="Sev A: 1"></div>
+                      <div class="hbar-seg" style="width: 45.5%; background: var(--accent-amber);" title="Sev B: 5"></div>
+                      <div class="hbar-seg" style="width: 45.5%; background: var(--accent-blue);" title="Sev C: 5"></div>
+                    </div>
+                    <div class="hbar-legend">
+                      <div class="hbar-legend-item"><div class="hbar-legend-dot" style="background: var(--accent-red);"></div><strong>Sev A</strong>&nbsp;1</div>
+                      <div class="hbar-legend-item"><div class="hbar-legend-dot" style="background: var(--accent-amber);"></div><strong>Sev B</strong>&nbsp;5</div>
+                      <div class="hbar-legend-item"><div class="hbar-legend-dot" style="background: var(--accent-blue);"></div><strong>Sev C</strong>&nbsp;5</div>
+                    </div>
+                  </div>
+                </div>
+                <div style="width: 1px; background: var(--border-subtle); margin: -16px 0;"></div>
+                <div style="flex: 1;">
+                  <div class="health-card-label">Case Volume (7d)</div>
+                  <div class="spark-wrap">
+                    <svg class="spark-svg" viewBox="0 0 120 32" preserveAspectRatio="none">
+                      <path class="spark-area" d="M0,28 L17,22 L34,25 L51,18 L68,20 L85,14 L102,10 L120,8 L120,32 L0,32 Z" fill="#0969da" />
+                      <polyline class="spark-line" stroke="#0969da" points="0,28 17,22 34,25 51,18 68,20 85,14 102,10 120,8" />
+                      <circle class="spark-dot" cx="120" cy="8" fill="#0969da" />
+                    </svg>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; font-size: 9px; color: var(--text-tertiary); margin-top: 2px;">
+                    <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span><span style="font-weight: 700; color: var(--accent-blue);">Today</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Card 5: Closed This Week -->
+              <div class="health-card">
+                <div class="health-card-label">Closed This Week</div>
+                <div class="health-card-value" style="color: var(--accent-green);">3<span style="font-size: 14px; color: var(--text-tertiary);"> / 4</span></div>
+                <div class="health-card-sub">75% of target</div>
+                <div class="ring-wrap" style="width: 52px; height: 52px; margin-top: 8px;">
+                  <svg style="width: 52px; height: 52px; transform: rotate(-90deg);" viewBox="0 0 42 42">
+                    <circle class="ring-bg" cx="21" cy="21" r="18" />
+                    <circle class="ring-fill" cx="21" cy="21" r="18"
+                      stroke="#1a7f37"
+                      stroke-dasharray="113.1"
+                      stroke-dashoffset="28.3" />
+                  </svg>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- ====== ACTIVITY FEED (two sections) ====== -->
+          <div class="activity-panel">
+            <div class="activity-sub">
+              <h4>👤 My Activity <span class="source-tag" style="background: rgba(9,105,218,0.08); color: var(--accent-blue);">WorkIQ</span></h4>
+              <div class="feed-item">
+                <div class="feed-dot" style="background: var(--accent-green);"></div>
+                <div class="feed-content">
+                  <div class="feed-text"><span class="hl">Mercedes (SAP)</span> replied to <span class="hl">#401651</span> — AKS 多 zone 节点池创建</div>
+                  <div class="feed-time">30 min ago · Email</div>
+                </div>
+              </div>
+              <div class="feed-item">
+                <div class="feed-dot" style="background: var(--accent-amber);"></div>
+                <div class="feed-content">
+                  <div class="feed-text"><span class="hl">Liu Wanting</span> forwarded new case <span class="hl">#402517</span> — 磁盘警报阈值</div>
+                  <div class="feed-time">2h ago · Email</div>
+                </div>
+              </div>
+              <div class="feed-item">
+                <div class="feed-dot" style="background: var(--accent-purple);"></div>
+                <div class="feed-content">
+                  <div class="feed-text">Patrol completed: <span class="hl">11 cases</span> scanned → 3 todos generated</div>
+                  <div class="feed-time">6h ago · System</div>
+                </div>
+              </div>
+              <div class="feed-item">
+                <div class="feed-dot" style="background: var(--accent-red);"></div>
+                <div class="feed-content">
+                  <div class="feed-text">SLA alert: <span class="hl">#402506</span> IR deadline approaching</div>
+                  <div class="feed-time">8h ago · System</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="feed-divider"></div>
+
+            <div class="activity-sub">
+              <h4>🏢 Team Intel <span class="source-tag" style="background: rgba(130,80,223,0.08); color: var(--accent-purple);">Swarming / Teams</span></h4>
+              <div class="intel-item">
+                <div class="intel-icon">🐛</div>
+                <div class="intel-content">
+                  <div class="intel-title">Known Issue: Azure Monitor DCR 日志延迟</div>
+                  <div class="intel-desc">AzMon 团队确认 DCR pipeline 在 Mooncake region 有 15-30min 延迟，ETA fix 下周二</div>
+                  <div class="intel-meta">AzMon Swarming · 2h ago · 影响 Case #402253, #402516</div>
+                </div>
+              </div>
+              <div class="intel-item">
+                <div class="intel-icon">⚡</div>
+                <div class="intel-content">
+                  <div class="intel-title">LSI: East China 2 VM Host Degradation</div>
+                  <div class="intel-desc">多个 S500 客户报告 EC2 region VM 性能下降，ICM 626495494 已创建</div>
+                  <div class="intel-meta">OneVM Channel · 5h ago · 可能影响 Case #402506</div>
+                </div>
+              </div>
+              <div class="intel-item">
+                <div class="intel-icon">📢</div>
+                <div class="intel-content">
+                  <div class="intel-title">MDO Swarming: EXO vs MDO 权责边界更新</div>
+                  <div class="intel-desc">新规则：Restrictions 类问题先走 EXO team 确认，MDO 只接 authentication 和 policy 类</div>
+                  <div class="intel-meta">MDO Swarming · Yesterday · 参考</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ===== Scoring Formula ===== -->
+  <div class="section">
+    <div class="section-title">🧮 Action 综合评分算法</div>
+    <p class="section-desc">每个 Action Item 都有一个 0-100 的 urgency score，由以下因子加权计算。</p>
+
+    <div class="formula-box">
+      <div class="formula-title">Urgency Score Formula</div>
+      <div class="formula-code">
+<span class="keyword">score</span> = <span class="value">w1</span> × <span class="keyword">prod_impact</span>     <span class="comment">// 生产环境紧急度 (0-30)</span>
+      + <span class="value">w2</span> × <span class="keyword">customer_sentiment</span> <span class="comment">// 客户情绪感知 (0-20)</span>
+      + <span class="value">w3</span> × <span class="keyword">severity</span>           <span class="comment">// Case 等级 A=25 B=15 C=5</span>
+      + <span class="value">w4</span> × <span class="keyword">contact_gap</span>        <span class="comment">// 上次联系间隔 (0-15)</span>
+      + <span class="value">w5</span> × <span class="keyword">teams_pressure</span>     <span class="comment">// Teams 催促信号 (0-10)</span>
+      + <span class="keyword">sla_bonus</span>                   <span class="comment">// SLA < 4h → +20, < 8h → +10</span>
+      </div>
+
+      <table class="factor-table">
+        <thead>
+          <tr><th>Factor</th><th>Range</th><th>数据来源</th><th>示例</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>🏭 prod_impact</td><td>0-30</td>
+            <td>Case title + SAP 关键词匹配</td>
+            <td>宕机=30, 性能慢=20, 配置问题=10, 咨询=5</td>
+          </tr>
+          <tr>
+            <td>😤 customer_sentiment</td><td>0-20</td>
+            <td>最近邮件/note 情绪分析</td>
+            <td>催促/不满=20, 焦急=15, 中性=5, 满意=0</td>
+          </tr>
+          <tr>
+            <td>🔴 severity</td><td>5-25</td>
+            <td>Case severity 字段</td>
+            <td>Sev A=25, Sev B=15, Sev C=5</td>
+          </tr>
+          <tr>
+            <td>📭 contact_gap</td><td>0-15</td>
+            <td>meta.daysSinceLastContact</td>
+            <td>>5d=15, 3-5d=10, 1-3d=5, <1d=0</td>
+          </tr>
+          <tr>
+            <td>💬 teams_pressure</td><td>0-10</td>
+            <td>Teams swarming 频道搜索</td>
+            <td>有催促消息=10, 有讨论=5, 无=0</td>
+          </tr>
+          <tr>
+            <td>⏱ sla_bonus</td><td>0-20</td>
+            <td>SLA 剩余时间计算</td>
+            <td><4h=+20, <8h=+10, 其他=0</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ===== Architecture ===== -->
+  <div class="section">
+    <div class="section-title">🏗️ 数据架构</div>
+    <p class="section-desc">Dashboard v2 需要的数据源和后端扩展。</p>
+
+    <div class="decision-grid">
+      <div class="decision-card" style="border-left-color: var(--accent-blue);">
+        <div class="decision-label" style="color: var(--accent-blue);">现有可用</div>
+        <div class="decision-title">Pipeline + Metrics</div>
+        <div class="decision-desc">来自 /api/cases：meta.actualStatus (分列)、severity、daysSinceLastContact、irSla、ccAccount (RDSE)、compliance (Entitlement)。无需后端改动。</div>
+      </div>
+      <div class="decision-card" style="border-left-color: var(--accent-blue);">
+        <div class="decision-label" style="color: var(--accent-blue);">现有可用</div>
+        <div class="decision-title">Todo 数据</div>
+        <div class="decision-desc">来自 /api/todos：patrol 生成的 todo + 手动 todo。合并到 Action List，标记来源。</div>
+      </div>
+      <div class="decision-card" style="border-left-color: var(--accent-amber);">
+        <div class="decision-label" style="color: var(--accent-amber);">需要新增</div>
+        <div class="decision-title">Urgency Score 计算</div>
+        <div class="decision-desc">后端新增 scoring service：读取 case meta + 邮件情绪 + Teams 搜索结果 → 输出 score + factors。可在 patrol 或 data-refresh 时计算并缓存到 meta.json。</div>
+      </div>
+      <div class="decision-card" style="border-left-color: var(--accent-amber);">
+        <div class="decision-label" style="color: var(--accent-amber);">需要新增</div>
+        <div class="decision-title">Team Intel Feed</div>
+        <div class="decision-desc">定期（或按需）从 Teams swarming 频道 + WorkIQ 搜集 Known Issue / LSI / 权责变更。存入 dataRoot/intel/ 目录，前端消费。后续 troubleshooter 可直接引用。</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

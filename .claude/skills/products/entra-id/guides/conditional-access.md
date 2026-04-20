@@ -1,7 +1,7 @@
 # ENTRA-ID Conditional Access — Quick Reference
 
-**Entries**: 73 | **21V**: Partial (63/73)
-**Last updated**: 2026-04-07
+**Entries**: 74 | **21V**: Partial (63/73)
+**Last updated**: 2026-04-18
 **Keywords**: conditional-access, cae, terms-of-use, identity-protection, ipv6, named-locations
 
 > This topic has a fusion guide with detailed troubleshooting flow
@@ -51,6 +51,7 @@
 | 38 📋 | Admin configures a Conditional Access policy to block Global Secure Access M365 traffic profile, ... | M365 forwarding traffic policies have hardening set to bypass by default. Whe... | Confirm the M365 forwarding profile hardening setting is set to bypass (defau... | 🟢 8.5 | ADO Wiki |
 | 39 📋 | Admin cannot configure a Conditional Access policy with Global Secure Access as target resource a... | By design: a user cannot come from a compliant network before connecting to o... | Inform customer this is by design. Use the Compliant Network location conditi... | 🟢 8.5 | ADO Wiki |
 | 40 📋 | Conditional Access location-based policy does not effectively restrict IP-based access to Applica... | Conditional Access Policy only blocks authentication, not application access.... | Do not rely solely on CA location-based policy for IP restriction with App Pr... | 🟢 8.5 | ADO Wiki |
+| NEW 📋 | When Conditional Access Policy is created to force MFA on Exchange Online (EXO) and/or SharePoint On... | When user tries to create Word/Excel/PowerPoint document from https://portal.off... | Since this is non-interactive login, MFA will not trigger, and the MFA popup wil... | 🟢 8.0 | ContentIdea |
 | ... | *33 more entries* | | | | |
 
 ## Quick Troubleshooting Path

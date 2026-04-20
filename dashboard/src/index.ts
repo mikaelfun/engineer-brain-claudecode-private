@@ -57,6 +57,8 @@ import { initSkillRegistry } from './services/skill-registry.js'
 import { noteGapRoutes, noteGapBatchRoutes } from './routes/note-gap-routes.js'
 import { laborEstimateRoutes } from './routes/labor-estimate.js'
 import daemonRoutes from './routes/daemon.js'
+import azProfileRoutes from './routes/az-profiles.js'
+import { startAzProfileMonitor } from './services/az-profile-reader.js'
 import actionsRoutes from './routes/actions.js'
 import { spawnDaemonWarmup } from './services/daemon-reader.js'
 
@@ -122,6 +124,7 @@ app.route('/api/case', noteGapRoutes)
 app.route('/api/note-gaps', noteGapBatchRoutes)
 app.route('/api/labor-estimate', laborEstimateRoutes)
 app.route('/api/daemon', daemonRoutes)
+app.route('/api/az-profiles', azProfileRoutes)
 app.route('/api/actions', actionsRoutes)
 
 // ===== Start =====
@@ -158,6 +161,14 @@ try {
 } catch (e) {
   console.warn('[startup] Token Daemon warmup failed (non-fatal):', e)
 }
+
+// Background: monitor az profile tokens every 15 min
+startAzProfileMonitor((profiles) => {
+  const expired = profiles.filter(p => p.status === 'expired')
+  if (expired.length > 0) {
+    console.warn(`⚠️ [az-profile] ${expired.length} profile(s) expired: ${expired.map(p => p.name).join(', ')}`)
+  }
+})
 
 serve({
   fetch: app.fetch,

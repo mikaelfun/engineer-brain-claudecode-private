@@ -1,6 +1,76 @@
 {
-  "product": "entra-id",
-  "generatedAt": "2026-04-07",
-  "totalConflicts": 0,
-  "conflicts": []
+  "generatedAt": "2026-04-18",
+  "mode": "incremental",
+  "conflictsFound": 4,
+  "duplicatesFound": 2,
+  "conflicts": [
+    {
+      "topic": "adfs",
+      "type": "rootCause-divergence",
+      "ids": [
+        "entra-id-3676",
+        "entra-id-3684"
+      ],
+      "description": "ADFS service start failure",
+      "detail": "RC1: This can occur if the ADFS Token Signing and Token Decrypting certificates have expired, and the system was not able to roll over to new certificates. This situation may be most common when using a VM\nRC2: This can occur if the ADFS Token Signing and Token Decrypting certificates have expired, and the system was not able to roll over to new certificates.",
+      "severity": "low",
+      "resolution": "Near-duplicate entries with minor wording differences. Merge into single entry."
+    },
+    {
+      "topic": "directory-sync",
+      "type": "rootCause-divergence",
+      "ids": [
+        "entra-id-3681",
+        "entra-id-3687"
+      ],
+      "description": "CloudSync error",
+      "detail": "RC1: Directory\nServices is not responsible for troubleshooting this error.  It is the application team's responsibility\nto not only troubleshoot this error, but to improve their logging to improve servicea\nRC2: Directory Services is not responsible for troubleshooting this error. It is the application team's responsibility to troubleshoot and improve their logging.",
+      "severity": "low",
+      "resolution": "Near-duplicate entries with minor wording differences. Merge into single entry."
+    },
+    {
+      "topic": "ad-onprem",
+      "type": "rootCause-divergence",
+      "ids": [
+        "entra-id-3683",
+        "entra-id-3688"
+      ],
+      "description": "AD attribute update large userCertificate",
+      "detail": "RC1: Inspection\nreveals that the affected user object has a very large number of entries in the\nuserCertificate attribute, while a typical user has none or very few. This is\ncausing directory limits or con\nRC2: The affected user object has a very large number of entries in the userCertificate attribute. This is causing directory limits or constraints to be hit for that object. This is a data/volume issue on ",
+      "severity": "low",
+      "resolution": "Near-duplicate entries with minor wording differences. Merge into single entry."
+    },
+    {
+      "topic": "device-registration",
+      "type": "ambiguous-question",
+      "ids": [
+        "entra-id-3666",
+        "entra-id-3667"
+      ],
+      "description": "Both entries ask about BitLocker recovery info escrow for Hybrid AADJ - one framed as question, other as statement",
+      "severity": "low",
+      "resolution": "Merge into single FAQ-style entry with clear answer"
+    }
+  ],
+  "duplicates": [
+    {
+      "topic": "intune-integration",
+      "ids": [
+        "entra-id-3677",
+        "entra-id-3685"
+      ],
+      "description": "Near-duplicate: MDM Terms of Use",
+      "action": "dedup-merge"
+    },
+    {
+      "topic": "wam-oneauth",
+      "ids": [
+        "entra-id-3680",
+        "entra-id-3686"
+      ],
+      "description": "Near-duplicate: AAD Broker plugin",
+      "action": "dedup-merge"
+    }
+  ],
+  "summary": "Scanned 48 new entries across 16 topics. Found 4 minor conflicts and 2 near-duplicates. No severe contradictions detected."
 }

@@ -4,6 +4,8 @@
 import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
 import { useCreateTrigger, useUpdateTrigger } from '../../api/hooks'
+import { useQuery } from '@tanstack/react-query'
+import { apiGet } from '../../api/client'
 
 const CRON_PRESETS = [
   { label: 'Every 1 hour', value: '0 */1 * * *' },
@@ -17,14 +19,39 @@ const CRON_PRESETS = [
   { label: 'Custom', value: '' },
 ]
 
-const PROMPT_PRESETS = [
+// Hardcoded fallback if API fails — kept as safety net
+const FALLBACK_PROMPT_PRESETS = [
   { label: 'Select a template...', value: '' },
-  { label: 'OneNote Sync (incremental)', value: '/onenote-export sync' },
+  { label: 'OneNote Sync', value: '/onenote export sync' },
   { label: 'Patrol (batch inspect)', value: '/patrol' },
   { label: 'RAG Sync', value: '/rag-sync' },
   { label: 'Test Supervisor Run', value: '/test-supervisor run' },
   { label: 'Product Learn Auto Enrich', value: '/product-learn auto-enrich' },
 ]
+
+/** Build prompt presets dynamically from skill registry API */
+function usePromptPresets() {
+  const { data } = useQuery<Array<{ name: string; displayName: string; category: string; promptTemplate?: string }>>({
+    queryKey: ['skills'],
+    queryFn: () => apiGet<Array<{ name: string; displayName: string; category: string; promptTemplate?: string }>>('/skills?includeDev=true'),
+    staleTime: 5 * 60 * 1000,
+  })
+
+  if (!data || data.length === 0) return FALLBACK_PROMPT_PRESETS
+
+  const presets: Array<{ label: string; value: string }> = [
+    { label: 'Select a skill...', value: '' },
+  ]
+
+  for (const skill of data) {
+    // Skip sub-skills (category casework-sub-skill) and dev skills without promptTemplate
+    if (skill.category === 'casework-sub-skill') continue
+    const cmd = `/${skill.name}`
+    presets.push({ label: `${skill.displayName} (${cmd})`, value: cmd })
+  }
+
+  return presets
+}
 
 export interface TriggerEditData {
   id: string
@@ -48,6 +75,7 @@ export function CreateTriggerDialog({ isOpen, onClose, editData }: Props) {
   const [description, setDescription] = useState('')
   const [error, setError] = useState('')
 
+  const promptPresets = usePromptPresets()
   const createTrigger = useCreateTrigger()
   const updateTrigger = useUpdateTrigger()
 
@@ -201,7 +229,7 @@ export function CreateTriggerDialog({ isOpen, onClose, editData }: Props) {
                   color: 'var(--text-secondary)',
                 }}
               >
-                {PROMPT_PRESETS.map((p) => (
+                {promptPresets.map((p) => (
                   <option key={p.value} value={p.value}>{p.label}</option>
                 ))}
               </select>

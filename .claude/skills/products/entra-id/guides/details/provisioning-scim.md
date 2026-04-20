@@ -1,6 +1,6 @@
 # ENTRA-ID User Provisioning (SCIM) — Detailed Troubleshooting Guide
 
-**Entries**: 29 | **Drafts fused**: 10 | **Kusto queries**: 0
+**Entries**: 30 | **Drafts fused**: 10 | **Kusto queries**: 0
 **Draft sources**: ado-wiki-b-build-self-hosted-scim-lab.md, ado-wiki-b-configuring-provisioning.md, ado-wiki-b-entra-enterprise-app-provisioning-ui-changes.md, ado-wiki-b-identity-provisioning-with-entra-id.md, ado-wiki-b-user-provisioning-errors-graph.md, ado-wiki-c-entra-inbound-user-provisioning.md, ado-wiki-d-scim-identity-s500-sev-c-volume-transition.md, ado-wiki-f-understanding-aad-provisioning-engine.md, onenote-fiddler-sso-provisioning-troubleshoot.md, onenote-sso-provisioning-fiddler.md
 **Generated**: 2026-04-07
 
@@ -325,3 +325,16 @@
 | 27 | Need to validate if M365 Identity tenant is concierge (seat count < 300). IsC... | The IsConcierge attribute in Case Buddy and the Support A... | Validate concierge status using IsConcierge attribute in ... | 🔵 6.5 | ADO Wiki |
 | 28 | ECMA Connector Host provisioning placed into quarantine with error SystemForC... | ECMA Connector Host is not accessible from Microsoft Entr... | Verify ECMA Host server is online. Check ECMA2Host servic... | 🔵 6.5 | ADO Wiki |
 | 29 | ECMA Connector Host Test Connection fails with error "You appear to have ente... | No active provisioning agent assigned to the enterprise a... | In the Entra provisioning configuration, go to On-Premise... | 🔵 6.5 | ADO Wiki |
+
+
+---
+
+## Incremental Update (2026-04-18) - +1 entries from contentidea-kb
+
+### Customer tries to configure the service now provisioning in the Azure Portal. On the Provisioning Page (Dashboard => Enterprise Applications - All App...
+**Score**: 🟡 6.5 | **Source**: ContentIdea KB | **ID**: entra-id-3644
+
+**Description**: Customer tries to configure the service now provisioning in the Azure Portal. On the Provisioning Page (Dashboard => Enterprise Applications - All Applications => Service Now Provisioning) the administrator fills the required fields for provisioning and after click on Test Connection the following e
+
+> This entry contains description only, no explicit root cause/solution.
+

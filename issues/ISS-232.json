@@ -4,7 +4,7 @@
   "description": "当前 cron-manager.ts 用 spawn('claude', ['-p']) CLI 子进程执行 cron job，存在：\n1. 每次冷启动 5-10s（加载 CLI + MCP）\n2. SSE 持久化缺失（只有 ① broadcast，无 ② 内存恢复 ③ 磁盘 JSONL）\n3. Sub-agent 消息无追踪（NDJSON 里的 task_started/progress/notification 被跳过）\n4. 历史只保留最后一次 lastOutput（覆盖写）\n5. 手动解析 NDJSON stdout，无类型安全\n\n迁移到 SDK query() 模式（复用 patrol-orchestrator 的 pattern），统一 observability 三层模型。",
   "type": "refactor",
   "priority": "P1",
-  "status": "pending",
+  "status": "done",
   "testLoopScan": true,
   "createdAt": "2026-04-19T14:10:00Z",
   "updatedAt": "2026-04-19T14:10:00Z"

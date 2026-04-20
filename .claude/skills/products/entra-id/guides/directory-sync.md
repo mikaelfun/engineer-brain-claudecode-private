@@ -1,7 +1,7 @@
 # ENTRA-ID Directory Sync (Connect/Cloud Sync/PTA) — Quick Reference
 
-**Entries**: 223 | **21V**: Partial (205/223)
-**Last updated**: 2026-04-07
+**Entries**: 227 | **21V**: Partial (205/223)
+**Last updated**: 2026-04-18
 **Keywords**: aad-connect, entra-connect, pta, cloud-sync, contentidea-kb, installation
 
 > This topic has a fusion guide with detailed troubleshooting flow
@@ -51,6 +51,10 @@
 | 38 📋 | Entra Connect cannot switch Staging mode via wizard after MSOnline PowerShell retirement | Older Entra Connect versions (<2.4.18.0) depend on MSOnline for wizard operat... | Install ADSyncTools module: Install-Module ADSyncTools; Import-Module ADSyncT... | 🟢 8.5 | ADO Wiki |
 | 39 📋 | Azure AD Connect, Azure PowerShell, or Azure CLI fails to authenticate for US Government users af... | Client tool uses outdated authority endpoint (login.microsoftonline.com) inst... | Update the client tool to the latest version supporting login.microsoftonline... | 🟢 8.5 | ADO Wiki |
 | 40 📋 | On-premises AD accounts being locked out due to cloud password spray/brute-force attacks when usi... | Azure AD Smart Lockout and on-premises AD account lockout policies are not co... | Configure: 1) On-prem AD account lockout threshold to be 2-3x greater than AA... | 🟢 8.5 | ADO Wiki |
+| NEW 📋 | AAD Connect is installed and configured in Hybrid identity scenario with a �Multiple forest, single ... | The on-premises ActiveDirectory attribute �Manager� is a reference attribute and... | As a workaround to bypass this scenario, you can try to leverage the Azure AD Co... | 🟢 8.0 | ContentIdea |
+| NEW 📋 | Azure AADConnect service fails to start with an error 'Error 1069: The service did not start due to ... | This happens when the Adsync service cannot use the credentials associated with ... | 1. Please confirm through ASC that the service account used for Azure AADConnect... | 🟢 8.0 | ContentIdea |
+| NEW 📋 | You get a case or collab task for an Azure type application, such as CloudSync.  The customer gets a... | Directory Services is not responsible for troubleshooting this error.  It is the... | If collab owner, do not proceed without an ICM created by Azure application's te... | 🟢 8.0 | ContentIdea |
+| NEW 📋 | CloudSync or Azure application error: "The specified directory service attribute or value does not e... | Directory Services is not responsible for troubleshooting this error. It is the ... | If collab owner, do not proceed without an ICM created by Azure application's te... | 🟢 8.0 | ContentIdea |
 | ... | *183 more entries* | | | | |
 
 ## Quick Troubleshooting Path

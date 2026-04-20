@@ -2148,3 +2148,38 @@
 - **New discovered**: 0
 - **Deduplicated**: 0
 - **Result**: exhausted=true, lastRefreshed updated
+
+## 2026-04-18 17:09 - mslearn Phase 4b batch (Istio+DNS+GatewayAPI)
+- URLs scanned: 8 (dns-resolution, istio-cni, istio-egress, istio-gateway-api, istio-general, istio-ingress, istio-meshconfig, managed-gateway-api)
+- Track A: 8 new entries (aks-mslearn-251 to 258)
+  - Istio CNI DaemonSet node taints, egress webhook blocking, outboundTrafficPolicy REGISTRY_ONLY
+  - Ingress on system node pools, Managed Gateway API CRD conflicts/upgrades
+  - Gateway API cross-namespace routing, canary upgrade proxy image
+- Track B: 1 guide draft (mslearn-aks-dns-resolution-troubleshooting.md)
+- Dedup: 14 items overlapped >=80% with existing entries 160-176 (Istio) and DNS entries
+- Remaining: 39 URLs unscanned
+
+### 2026-04-18 17:17 — mslearn Phase 4b batch
+- **Fetched**: 8 URLs (logs/capture-*, security/troubleshoot-*, storage/pods-namespaces-terminating, app-service/socket-forbidden)
+- **Track A**: 4 new JSONL entries (aks-mslearn-259 to aks-mslearn-262)
+  - 259: Network connectivity blocks IdP access for JWT auth
+  - 260: Missing aks:jwt: prefix in claim mappings
+  - 261: Pods stuck in Terminating state
+  - 262: Namespace stuck in Terminating due to finalizers
+- **Track B**: 4 guide drafts (Inspektor Gadget, TCP dump Linux/Windows, pod packet capture)
+- **Deduplicated**: 3 (JWT auth 401/CEL/seccomp already in aks-mslearn-222/223/224)
+- **Skipped**: 1 (App Service socket-forbidden — not AKS content, marked scanned only)
+- **Remaining**: ~38 URLs
+
+## 2026-04-18 Phase 4b mslearn batch (tick)
+
+- **Fetched**: 8 URLs (4 AKS, 1 ACR, 2 App Service, 1 VM)
+- **Track A extracted**: 2 entries (aks-mslearn-263: pod restart/probe misconfig, aks-mslearn-264: SNAT/storage timeout)
+- **Track B drafted**: 1 guide (mslearn-troubleshoot-localdns.md — LocalDNS diagnostic workflow)
+- **Skipped**: 4 non-AKS (App Service/VM), 1 ACR (already well-covered with 7 entries + drafts)
+- **Deduplicated**: 0 (both new entries are unique)
+- **Scanned total**: 198/221 | **Remaining**: 30 (23 non-AKS, 7 misc)
+| 2026-04-20 | mslearn | Indexed 185 AKS troubleshoot URLs from toc.yml (first run) | azure/azure-kubernetes/toc.yml |
+| 2026-04-20 | contentidea-kb | +1 AKS KB from ContentIdea (2 WIs processed, 1 empty-skip, 0 deduped) | ContentIdea#99927,#188552 |
+| 2026-04-20 | mslearn | Batch 1: 8 URLs scanned (all 8 already extracted - 7 JSONL dedup, 1 draft dedup), 0 new entries | create-upgrade-delete/* |
+| 2026-04-20 | ado-wiki | Built index: 705 pages (380 already scanned, 325 unscanned) for AKS wiki | Supportability/AzureContainers/Containers Wiki |

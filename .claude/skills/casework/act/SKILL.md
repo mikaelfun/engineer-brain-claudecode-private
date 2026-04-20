@@ -36,7 +36,7 @@ allowed-tools:
 ### Step 1. 解析 execution-plan.json
 
 ```bash
-eval $(bash .claude/skills/casework/act/scripts/read-plan.sh "{caseDir}/.casework/execution-plan.json")
+eval $(bash .claude/skills/casework/act/scripts/read-plan.sh "{caseDir}")
 # 注入: CASE_NUMBER, ACTUAL_STATUS, DAYS_SINCE, ACTION_COUNT, IR_FIRST,
 #       ACTION_{i}_TYPE, ACTION_{i}_EMAIL_TYPE, ACTION_{i}_DEPENDS_ON,
 #       NO_ACTION_REASON, HAS_DEFERRED, PLAN_PHASE, PLAN_COUNT
@@ -133,7 +133,7 @@ Agent(
 )
 
 # IR-first Step 4: 检查 reassess 结果，按需 spawn 第二封邮件
-eval $(bash .claude/skills/casework/act/scripts/read-plan.sh "{caseDir}/.casework/execution-plan.json")
+eval $(bash .claude/skills/casework/act/scripts/read-plan.sh "{caseDir}")
 # 现在 read-plan 读到的是 reassess 产出的 phase 2 actions
 if [ "$ACTION_COUNT" -gt 0 ]; then
   for i in $(seq 0 $((ACTION_COUNT-1))); do
@@ -207,7 +207,7 @@ for i in 0..(ACTION_COUNT-1):
         )
 
         # 读取 reassess 结果，执行 phase 2 actions
-        eval $(bash .claude/skills/casework/act/scripts/read-plan.sh "{caseDir}/.casework/execution-plan.json")
+        eval $(bash .claude/skills/casework/act/scripts/read-plan.sh "{caseDir}")
         for j in 0..(ACTION_COUNT-1):
           RTYPE = ACTION_{j}_TYPE
           REMAIL_TYPE = ACTION_{j}_EMAIL_TYPE

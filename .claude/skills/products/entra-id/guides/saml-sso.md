@@ -1,7 +1,7 @@
 # ENTRA-ID SAML SSO — Quick Reference
 
-**Entries**: 136 | **21V**: Partial (132/136)
-**Last updated**: 2026-04-07
+**Entries**: 137 | **21V**: Partial (132/136)
+**Last updated**: 2026-04-18
 **Keywords**: saml, sso, federation, b2c, certificate, aws
 
 > This topic has a fusion guide with detailed troubleshooting flow
@@ -51,6 +51,7 @@
 | 38 📋 | SAML NameID IfEmpty() claim transformation produces persistent identifier instead of fallback val... | Known PG bug: Parameter 3 is calculated first, then Transform is evaluated. I... | Use IfNotEmpty() transformation instead of IfEmpty(). IfNotEmpty() works corr... | 🟢 8.5 | ADO Wiki |
 | 39 📋 | AADSTS7500525 XML error in SAML message when identifierUris is non-URI format (e.g. "test123") co... | Non-URI identifiers not supported as issuer URL for SAML IdP-initiated SSO | Use actual URIs (https:// or api://) for identifierUris, or update Identifier... | 🟢 8.5 | ADO Wiki |
 | 40 📋 | Failed to delete SAML application: "Property appId is invalid" or "identifierUris is invalid" or ... | App ID URI has trailing slash, uses unverified domain, or SAML app misconfigu... | Fix App ID URI format (remove trailing slash, use verified domain). For publi... | 🟢 8.5 | ADO Wiki |
+| NEW 📋 | As per article https://docs.microsoft.com/en-us/azure/active-directory/develop/active-directory-saml... | &quot;Source Attribute&quot; field would not let you type anything static. The a... | Type &quot;Contoso1234&quot; in Notepad instead of typing it directly under &quo... | 🟢 8.0 | ContentIdea |
 | ... | *96 more entries* | | | | |
 
 ## Quick Troubleshooting Path

@@ -269,3 +269,17 @@ cluster('idsharedmcsha.chinaeast2.kusto.chinacloudapi.cn').database('idmfacne').
 ```
 
 ---
+
+---
+
+## Incremental Scenarios (2026-04-18)
+
+## Scenario 12: Unable to access MFA Server User portal due to error - Service unavailable HTTP 500
+> Source: contentidea-kb (entra-id-3673) | Applicability: unverified
+
+### Troubleshooting Steps
+1. **Confirm symptom**: Unable to access MFA Server User portal due to error - Service unavailable HTTP 500
+2. **Root cause**: Custom app pool under which the MFA Application was running within IIS was in stopped state.
+3. **Solution**: Updated the username, password for the custom App pool in IIS and started the Application pool.
+
+---

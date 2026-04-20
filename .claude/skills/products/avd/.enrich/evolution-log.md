@@ -1537,3 +1537,26 @@
 - **New entries appended**: 2 (avd-contentidea-kb-147, avd-contentidea-kb-148)
 - **Deduplicated**: 0
 - **Exhausted**: true (all 170 IDs now scanned)
+
+## 2026-04-18 — onenote scan (REFRESH batch)
+
+- **Scanned**: 10 pages (top 10 unscanned after REFRESH reset)
+- **New entries**: 5 (avd-onenote-107 to avd-onenote-111)
+  - 107: Windows App replacing Remote Desktop client (EOL timeline)
+  - 108: Windows App dual-federation in Mooncake (registry key fix)
+  - 109: AVD self-service reboot via Azure Automation webhook
+  - 110: Restrict AVD sign-in location via AAD CA policy
+  - 111: Cross dual-federation workaround for 21v AVD (AAD Connect custom sync)
+- **Deduplicated**: 4 (wiki_migration copies of already-extracted MCVKB pages: 20.4/20.6/20.7/20.8)
+- **Zero-triplet stubs**: 2 (CritSit Handbook stubs: deploy/connect)
+- **Remaining unscanned**: 2 pages (## Contacts.md, AVD.md header)
+
+### 2026-04-18 — onenote batch (final)
+- **Pages processed**: 2 (section header + contacts list)
+- **New entries**: 0
+- **Deduplicated**: 0
+- **Status**: exhausted (all 188/188 avd onenote pages scanned)
+- **Pages**:
+  - MCVKB/Critsit Handbook/VM+SCIM/AVD.md → section header only, no knowledge
+  - ## Contacts.md → contact list (Roop Kiran Chevuri, David Belanger), no troubleshooting knowledge
+| 2026-04-20 | ado-wiki | Indexed 1205 pages (645 WindowsVirtualDesktop + 560 Windows365) — first run, no content extraction | full-scan |

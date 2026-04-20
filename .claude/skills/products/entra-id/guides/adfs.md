@@ -1,7 +1,7 @@
 # ENTRA-ID ADFS Config & Troubleshooting — Quick Reference
 
-**Entries**: 155 | **21V**: Partial (140/155)
-**Last updated**: 2026-04-07
+**Entries**: 161 | **21V**: Partial (140/155)
+**Last updated**: 2026-04-18
 **Keywords**: adfs, federation, wap, contentidea-kb, claim-rules, certificate
 
 > This topic has a fusion guide with detailed troubleshooting flow
@@ -51,6 +51,12 @@
 | 38 📋 | User is prompted with login form instead of SSO in intranet when accessing O365 through federated... | The application sends prompt=login parameter to AAD. AAD translates this to w... | Set ADFS PromptLoginBehavior to Disabled so ADFS ignores the wauth/wfresh par... | 🟢 9.0 | OneNote |
 | 39 📋 | ADFS configuration to authenticate users stored in AD LDS (LDAP directories) fails when using Get... | The official Microsoft documentation PowerShell example for creating LDAP ser... | Use PSCredential directly: $ldapuser='CN=admin,OU=...'; $ldappassword=Convert... | 🟢 9.0 | OneNote |
 | 40 📋 | Update-MsolFederatedDomain fails with 'Invalid length for a Base-64 char array or string' when tr... | When ADFS metadata is not publicly accessible from the internet, the O365 RPT... | Use Set-MsolDomainFederationSettings as workaround: 1) Export token-signing c... | 🟢 9.0 | OneNote |
+| NEW 📋 | Unable to create Group Managed Service Account during ADFS configuration on Server 2019.            ... | The AD FS configuration powershell/installer looks for the CN=Managed Service Ac... | Please review article:  4549462 ADDS How to force re-running parts of ADPREP /do... | 🟢 8.0 | ContentIdea |
+| NEW 📋 | When customers try to customize error messages on ADFS page they see duplicate entries of the attrib... | The reason being that each locale has its own web content and customization of t... | In order to customize the error messages for a particular locale you need to exp... | 🟢 8.0 | ContentIdea |
+| NEW 📋 | We have created ADFS claim rule to block all external request except the particular Active directory... | In ADFS Audit / debug logs, when claim processing was happening, the group was n... | Changed the group type to Security group and ADFS started processing the group c... | 🟢 8.0 | ContentIdea |
+| NEW 📋 | ADFS gives a responder token back to relying party and the event viewer logs the below eventLog Name... | This mostly happens when the relying party sends a signed request to ADFS server... | First thing we need to do is to identify the certificate from the thumbprint fou... | 🟢 8.0 | ContentIdea |
+| NEW 📋 | When trying to start the ADFS / AD FS service within the services console, it fails with the followi... | This can occur if the ADFS Token Signing and Token Decrypting certificates have ... | The ADFS service won't start because the certificates are expired, and you can't... | 🟢 8.0 | ContentIdea |
+| NEW 📋 | When trying to start the ADFS / AD FS service within the services console, it fails with the followi... | This can occur if the ADFS Token Signing and Token Decrypting certificates have ... | The ADFS service won't start because the certificates are expired, and you can't... | 🟢 8.0 | ContentIdea |
 | ... | *115 more entries* | | | | |
 
 ## Quick Troubleshooting Path

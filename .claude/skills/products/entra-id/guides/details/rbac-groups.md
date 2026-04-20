@@ -1,6 +1,6 @@
 # ENTRA-ID RBAC/Roles/Groups Management — Detailed Troubleshooting Guide
 
-**Entries**: 140 | **Drafts fused**: 40 | **Kusto queries**: 1
+**Entries**: 142 | **Drafts fused**: 40 | **Kusto queries**: 1
 **Draft sources**: ado-wiki-a-aad-roles-groups-css-test-environment.md, ado-wiki-a-azure-rbac-roles-entitlement-management.md, ado-wiki-a-bulk-actions-users-groups.md, ado-wiki-b-export-rbac-roles-csv-script.md, ado-wiki-b-group-name-claims-synced-groups.md, ado-wiki-b-pim-azure-lighthouse.md, ado-wiki-b-pim-azure-resources-rbac.md, ado-wiki-b-troubleshooting-msi-rbac-roles.md, ado-wiki-b-tsg-troubleshooting-rbac-permissions.md, ado-wiki-b-unified-rbac-api-tsg.md
 **Kusto references**: authorization-manager.md
 **Generated**: 2026-04-07
@@ -689,3 +689,24 @@
 | 28 | Non-admin application owners cannot manage their registered applications in t... | The 'Restrict access to Azure AD administration portal' s... | Set 'Restrict access to Azure AD administration portal' t... | 🟢 8.5 | ADO Wiki |
 | 29 | Non-admin App Owner cannot manage their owned apps in Azure AD portal even af... | The 'Restrict access to Azure AD administration portal' s... | Set 'Restrict access to Azure AD administration portal' t... | 🟢 8.5 | ADO Wiki |
 | 30 | Group transform claim (TraceCode 25729) omitted from token: 'Overage limit ha... | User has 1000+ group memberships. When group transform is... | Group filtering may not help when user has 1000+ groups. ... | 🟢 8.5 | ADO Wiki |
+
+
+---
+
+## Incremental Update (2026-04-18) - +2 entries from contentidea-kb
+
+### Global admin/Owner of Subscription Unable to access Azure Resources under PIM Unable to access Azure Resources under PIM even though the user is a Glo...
+**Score**: 🟢 8.0 | **Source**: ContentIdea KB | **ID**: entra-id-3651
+
+**Root Cause**: For PIM service to be able to access Azure resources, MS-PIM SPN should always have a User Access Administrator role assigned on a subscription.In this case the User Access Administrator role for PIM SPN (MS�PIM) was accidently removed from the subscription by the User. The below listed RBAC roles w...
+
+**Solution**: Assign a User Access Administrator RBAC role to PIM SPN (MS � PIM) at a subscription level and that should allow PIM service to access the Azure resources.Note: The role can be assigned on a management group or subscription level based on the requirements and set-up of the customer�s tenant.
+
+
+### It is possible to create and attach Extension attributes for Azure AD created Groups but it has to be done through Graph API as there no PowerShell co...
+**Score**: 🟡 6.5 | **Source**: ContentIdea KB | **ID**: entra-id-3661
+
+**Description**: It is possible to create and attach Extension attributes for Azure AD created Groups but it has to be done through Graph API as there no PowerShell command available to perform the operation below are the Graph calls which we need to make for setting extension attributes in Azure AD created Groups,V
+
+> This entry contains description only, no explicit root cause/solution.
+

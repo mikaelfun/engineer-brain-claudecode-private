@@ -1,0 +1,260 @@
+<!-- Patrol Page UI Redesign — Light Mode Mockup -->
+<h2>Patrol Page UI 重设计方案</h2>
+<p class="subtitle">基于真实 state.json 数据结构，解决"每个阶段看不到做了什么"的问题</p>
+
+<div class="section">
+  <h3>核心问题 → 设计目标</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px">
+    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px">
+      <div class="label" style="color:#ef4444;margin-bottom:8px">❌ 现在</div>
+      <ul style="font-size:13px;color:#6b7280;line-height:1.8;padding-left:18px;margin:0">
+        <li>assess 只显示一个点，不知道在做什么</li>
+        <li>summarize 只显示状态，无结果内容</li>
+        <li>全局 pipeline 和 case pipeline 信息割裂</li>
+        <li>阶段间没有时间感</li>
+      </ul>
+    </div>
+    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px">
+      <div class="label" style="color:#16a34a;margin-bottom:8px">✅ 目标</div>
+      <ul style="font-size:13px;color:#6b7280;line-height:1.8;padding-left:18px;margin:0">
+        <li>每个步骤都有明确的子状态和结果</li>
+        <li>assess 显示判定结果（needs-action/no-change）</li>
+        <li>act 显示执行了哪些 action 及结果</li>
+        <li>summarize 显示生成的 todo 条数</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<h3 style="margin-top:32px">选择 Case 行展示方案</h3>
+<p class="subtitle">点击选择你偏好的方案</p>
+
+<div class="options">
+  <!-- Option A: Horizontal pipeline -->
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content" style="width:100%">
+      <h3>水平流水线（推荐）</h3>
+      <p>每个 case 一行水平 pipeline，步骤之间有连接线，子状态在步骤下方展开</p>
+
+      <div class="mockup" style="margin-top:12px">
+        <div class="mockup-header">Case Pipeline — 水平展开</div>
+        <div class="mockup-body" style="padding:16px;background:#f9fafb">
+
+          <!-- Case row 1: Active -->
+          <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 2px rgba(0,0,0,0.04)">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+              <span style="font-family:monospace;font-size:12px;color:#2563eb;font-weight:600">2601290030000748</span>
+              <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:0">
+                <!-- Step: data-refresh completed -->
+                <div style="display:flex;flex-direction:column;align-items:center;min-width:90px">
+                  <div style="width:22px;height:22px;border-radius:50%;background:#16a34a;display:flex;align-items:center;justify-content:center">
+                    <span style="color:white;font-size:11px">✓</span>
+                  </div>
+                  <span style="font-size:9px;color:#16a34a;margin-top:3px;font-weight:600">REFRESH</span>
+                  <span style="font-size:9px;color:#9ca3af;font-family:monospace">27s</span>
+                </div>
+                <div style="width:30px;height:2px;background:#16a34a;margin-bottom:18px"></div>
+                <!-- Step: assess completed -->
+                <div style="display:flex;flex-direction:column;align-items:center;min-width:90px">
+                  <div style="width:22px;height:22px;border-radius:50%;background:#16a34a;display:flex;align-items:center;justify-content:center">
+                    <span style="color:white;font-size:11px">✓</span>
+                  </div>
+                  <span style="font-size:9px;color:#16a34a;margin-top:3px;font-weight:600">ASSESS</span>
+                  <span style="font-size:9px;color:#9ca3af;font-family:monospace">1m 52s</span>
+                </div>
+                <div style="width:30px;height:2px;background:#d1d5db;margin-bottom:18px"></div>
+                <!-- Step: act active -->
+                <div style="display:flex;flex-direction:column;align-items:center;min-width:90px">
+                  <div style="width:24px;height:24px;border-radius:50%;border:2px solid #2563eb;display:flex;align-items:center;justify-content:center">
+                    <div style="width:8px;height:8px;border-radius:50%;background:#2563eb"></div>
+                  </div>
+                  <span style="font-size:9px;color:#2563eb;margin-top:3px;font-weight:600">ACT</span>
+                  <span style="font-size:9px;color:#2563eb;font-family:monospace">32s</span>
+                </div>
+                <div style="width:30px;height:2px;background:#e5e7eb;margin-bottom:18px"></div>
+                <!-- Step: summarize pending -->
+                <div style="display:flex;flex-direction:column;align-items:center;min-width:90px">
+                  <div style="width:22px;height:22px;border-radius:50%;border:2px solid #d1d5db"></div>
+                  <span style="font-size:9px;color:#9ca3af;margin-top:3px;font-weight:600">SUMMARY</span>
+                </div>
+              </div>
+              <span style="font-family:monospace;font-size:11px;color:#9ca3af">2m 51s</span>
+            </div>
+            <!-- Expanded detail for active step -->
+            <div style="margin-left:118px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+              <span style="font-size:10px;color:#9ca3af">assess:</span>
+              <span style="font-size:10px;background:#f0fdf4;color:#16a34a;padding:2px 8px;border-radius:4px;border:1px solid #bbf7d0">needs-action</span>
+              <span style="font-size:10px;color:#d1d5db;margin:0 4px">|</span>
+              <span style="font-size:10px;background:#eff6ff;color:#2563eb;padding:2px 8px;border-radius:4px;display:inline-flex;align-items:center;gap:4px;border:1px solid #bfdbfe">
+                <span style="width:5px;height:5px;border-radius:50%;background:#2563eb"></span>
+                troubleshooter 32s
+              </span>
+              <span style="font-size:10px;color:#d1d5db">→</span>
+              <span style="font-size:10px;background:#f3f4f6;color:#9ca3af;padding:2px 8px;border-radius:4px;border:1px solid #e5e7eb">email-drafter</span>
+              <span style="font-size:10px;color:#d1d5db">→</span>
+              <span style="font-size:10px;background:#f3f4f6;color:#9ca3af;padding:2px 8px;border-radius:4px;border:1px solid #e5e7eb">challenger</span>
+            </div>
+          </div>
+
+          <!-- Case row 2: Completed, act skipped -->
+          <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 2px rgba(0,0,0,0.04)">
+            <div style="display:flex;align-items:center;gap:12px">
+              <span style="font-family:monospace;font-size:12px;color:#6b7280">2602130040001034</span>
+              <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:0">
+                <div style="display:flex;flex-direction:column;align-items:center;min-width:90px">
+                  <div style="width:22px;height:22px;border-radius:50%;background:#16a34a;display:flex;align-items:center;justify-content:center"><span style="color:white;font-size:11px">✓</span></div>
+                  <span style="font-size:9px;color:#16a34a;margin-top:3px;font-weight:600">REFRESH</span>
+                  <span style="font-size:9px;color:#9ca3af;font-family:monospace">29s</span>
+                </div>
+                <div style="width:30px;height:2px;background:#16a34a;margin-bottom:18px"></div>
+                <div style="display:flex;flex-direction:column;align-items:center;min-width:90px">
+                  <div style="width:22px;height:22px;border-radius:50%;background:#16a34a;display:flex;align-items:center;justify-content:center"><span style="color:white;font-size:11px">✓</span></div>
+                  <span style="font-size:9px;color:#16a34a;margin-top:3px;font-weight:600">ASSESS</span>
+                  <span style="font-size:9px;color:#9ca3af;font-family:monospace">1m 29s</span>
+                </div>
+                <div style="width:30px;height:2px;background:#16a34a;margin-bottom:18px"></div>
+                <div style="display:flex;flex-direction:column;align-items:center;min-width:90px">
+                  <div style="width:22px;height:22px;border-radius:50%;background:#d1d5db;display:flex;align-items:center;justify-content:center;opacity:0.5"><span style="color:white;font-size:10px">—</span></div>
+                  <span style="font-size:9px;color:#9ca3af;margin-top:3px;font-weight:600;opacity:0.5">ACT</span>
+                  <span style="font-size:9px;color:#9ca3af;font-family:monospace;opacity:0.5">skip</span>
+                </div>
+                <div style="width:30px;height:2px;background:#16a34a;margin-bottom:18px"></div>
+                <div style="display:flex;flex-direction:column;align-items:center;min-width:90px">
+                  <div style="width:22px;height:22px;border-radius:50%;background:#16a34a;display:flex;align-items:center;justify-content:center"><span style="color:white;font-size:11px">✓</span></div>
+                  <span style="font-size:9px;color:#16a34a;margin-top:3px;font-weight:600">SUMMARY</span>
+                  <span style="font-size:9px;color:#9ca3af;font-family:monospace">&lt;1s</span>
+                </div>
+              </div>
+              <span style="background:#f0fdf4;color:#16a34a;font-size:10px;padding:2px 10px;border-radius:10px;font-weight:600;border:1px solid #bbf7d0">Done</span>
+              <span style="font-family:monospace;font-size:11px;color:#9ca3af">1m 59s</span>
+            </div>
+            <!-- Assess result shown inline -->
+            <div style="margin-left:118px;margin-top:8px;display:flex;gap:8px;align-items:center">
+              <span style="font-size:10px;color:#9ca3af">assess:</span>
+              <span style="font-size:10px;background:#f3f4f6;color:#6b7280;padding:2px 8px;border-radius:4px;border:1px solid #e5e7eb">no-change · pending-customer</span>
+            </div>
+          </div>
+
+          <!-- Case row 3: Queued -->
+          <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;opacity:0.5">
+            <div style="display:flex;align-items:center;gap:12px">
+              <span style="font-family:monospace;font-size:12px;color:#9ca3af">2603310040003200</span>
+              <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:0">
+                <div style="display:flex;flex-direction:column;align-items:center;min-width:90px">
+                  <div style="width:22px;height:22px;border-radius:50%;border:2px solid #e5e7eb"></div>
+                  <span style="font-size:9px;color:#d1d5db;margin-top:3px;font-weight:600">REFRESH</span>
+                </div>
+                <div style="width:30px;height:2px;background:#e5e7eb;margin-bottom:10px"></div>
+                <div style="display:flex;flex-direction:column;align-items:center;min-width:90px">
+                  <div style="width:22px;height:22px;border-radius:50%;border:2px solid #e5e7eb"></div>
+                  <span style="font-size:9px;color:#d1d5db;margin-top:3px;font-weight:600">ASSESS</span>
+                </div>
+                <div style="width:30px;height:2px;background:#e5e7eb;margin-bottom:10px"></div>
+                <div style="display:flex;flex-direction:column;align-items:center;min-width:90px">
+                  <div style="width:22px;height:22px;border-radius:50%;border:2px solid #e5e7eb"></div>
+                  <span style="font-size:9px;color:#d1d5db;margin-top:3px;font-weight:600">ACT</span>
+                </div>
+                <div style="width:30px;height:2px;background:#e5e7eb;margin-bottom:10px"></div>
+                <div style="display:flex;flex-direction:column;align-items:center;min-width:90px">
+                  <div style="width:22px;height:22px;border-radius:50%;border:2px solid #e5e7eb"></div>
+                  <span style="font-size:9px;color:#d1d5db;margin-top:3px;font-weight:600">SUMMARY</span>
+                </div>
+              </div>
+              <span style="font-size:10px;color:#d1d5db;font-weight:500">Queued</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option B: Vertical accordion -->
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content" style="width:100%">
+      <h3>垂直手风琴</h3>
+      <p>每个 case 可展开为垂直步骤列表，每一步占一行，有更多空间显示子信息</p>
+
+      <div class="mockup" style="margin-top:12px">
+        <div class="mockup-header">Case Pipeline — 垂直展开</div>
+        <div class="mockup-body" style="padding:16px;background:#f9fafb">
+
+          <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;box-shadow:0 1px 2px rgba(0,0,0,0.04)">
+            <!-- Case header -->
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+              <span style="font-family:monospace;font-size:12px;color:#2563eb;font-weight:600">2601290030000748</span>
+              <span style="font-size:10px;color:#2563eb;background:#eff6ff;padding:2px 8px;border-radius:10px;border:1px solid #bfdbfe">processing</span>
+              <div style="flex:1"></div>
+              <span style="font-family:monospace;font-size:11px;color:#9ca3af">2m 51s</span>
+            </div>
+
+            <!-- Vertical steps -->
+            <div style="margin-left:8px;border-left:2px solid #e5e7eb;padding-left:16px">
+              <!-- Step 1: completed -->
+              <div style="position:relative;margin-bottom:16px">
+                <div style="position:absolute;left:-22px;top:2px;width:12px;height:12px;border-radius:50%;background:#16a34a;border:2px solid #fff"></div>
+                <div style="display:flex;align-items:baseline;gap:8px">
+                  <span style="font-size:11px;color:#16a34a;font-weight:600;min-width:70px">Refresh</span>
+                  <span style="font-size:10px;color:#9ca3af;font-family:monospace">27s</span>
+                </div>
+                <div style="display:flex;gap:4px;margin-top:4px;flex-wrap:wrap">
+                  <span style="font-size:9px;background:#f0fdf4;color:#16a34a;padding:1px 6px;border-radius:3px;border:1px solid #dcfce7">d365 12s</span>
+                  <span style="font-size:9px;background:#f0fdf4;color:#16a34a;padding:1px 6px;border-radius:3px;border:1px solid #dcfce7">teams 22s</span>
+                  <span style="font-size:9px;background:#f0fdf4;color:#16a34a;padding:1px 6px;border-radius:3px;border:1px solid #dcfce7">icm 11s</span>
+                  <span style="font-size:9px;background:#f0fdf4;color:#16a34a;padding:1px 6px;border-radius:3px;border:1px solid #dcfce7">onenote 13s</span>
+                  <span style="font-size:9px;background:#f0fdf4;color:#16a34a;padding:1px 6px;border-radius:3px;border:1px solid #dcfce7">attach 6s</span>
+                </div>
+              </div>
+              <!-- Step 2: completed with result -->
+              <div style="position:relative;margin-bottom:16px">
+                <div style="position:absolute;left:-22px;top:2px;width:12px;height:12px;border-radius:50%;background:#16a34a;border:2px solid #fff"></div>
+                <div style="display:flex;align-items:baseline;gap:8px">
+                  <span style="font-size:11px;color:#16a34a;font-weight:600;min-width:70px">Assess</span>
+                  <span style="font-size:10px;color:#9ca3af;font-family:monospace">1m 52s</span>
+                  <span style="font-size:10px;background:#fef3c7;color:#d97706;padding:1px 8px;border-radius:3px;border:1px solid #fde68a">needs-action</span>
+                </div>
+              </div>
+              <!-- Step 3: active -->
+              <div style="position:relative;margin-bottom:16px">
+                <div style="position:absolute;left:-22px;top:1px;width:12px;height:12px;border-radius:50%;border:3px solid #2563eb;background:#fff"></div>
+                <div style="display:flex;align-items:baseline;gap:8px">
+                  <span style="font-size:11px;color:#2563eb;font-weight:600;min-width:70px">Act</span>
+                  <span style="font-size:10px;color:#2563eb;font-family:monospace">32s</span>
+                </div>
+                <div style="display:flex;gap:4px;margin-top:5px;align-items:center">
+                  <span style="font-size:9px;background:#eff6ff;color:#2563eb;padding:1px 6px;border-radius:3px;display:inline-flex;align-items:center;gap:3px;border:1px solid #bfdbfe"><span style="width:4px;height:4px;border-radius:50%;background:#2563eb"></span> troubleshooter 32s</span>
+                  <span style="font-size:9px;color:#d1d5db">→</span>
+                  <span style="font-size:9px;background:#f3f4f6;color:#9ca3af;padding:1px 6px;border-radius:3px;border:1px solid #e5e7eb">email</span>
+                  <span style="font-size:9px;color:#d1d5db">→</span>
+                  <span style="font-size:9px;background:#f3f4f6;color:#9ca3af;padding:1px 6px;border-radius:3px;border:1px solid #e5e7eb">challenger</span>
+                </div>
+              </div>
+              <!-- Step 4: pending -->
+              <div style="position:relative">
+                <div style="position:absolute;left:-22px;top:2px;width:12px;height:12px;border-radius:50%;border:2px solid #d1d5db;background:#fff"></div>
+                <div style="display:flex;align-items:baseline;gap:8px">
+                  <span style="font-size:11px;color:#9ca3af;font-weight:600;min-width:70px">Summary</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:24px">
+  <h3>两个方案的共同改进</h3>
+  <ul style="font-size:13px;color:var(--text-secondary);line-height:2;padding-left:18px;margin:0">
+    <li><strong>assess 结果可见</strong> — 显示 <code style="background:#f3f4f6;padding:1px 4px;border-radius:3px">needs-action</code> / <code style="background:#f3f4f6;padding:1px 4px;border-radius:3px">no-change</code> / <code style="background:#f3f4f6;padding:1px 4px;border-radius:3px">pending-customer</code></li>
+    <li><strong>act 子动作链</strong> — troubleshooter → email-drafter → challenger 每个独立显示状态和耗时</li>
+    <li><strong>data-refresh 并行子任务</strong> — d365/teams/onenote/icm/attachments 各自独立显示</li>
+    <li><strong>skipped 步骤明确标注</strong> — 灰色 "skip" + 破折号图标，不再是空白</li>
+    <li><strong>每步独立计时</strong> — 不再只有总时间，每个步骤/子任务都有耗时</li>
+    <li><strong>queued case</strong> — 灰色空心管线，视觉明确区分已处理/进行中/排队</li>
+  </ul>
+</div>

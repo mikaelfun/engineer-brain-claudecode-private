@@ -1,7 +1,7 @@
 # ENTRA-ID User Provisioning (SCIM) — Quick Reference
 
-**Entries**: 29 | **21V**: Partial (25/29)
-**Last updated**: 2026-04-07
+**Entries**: 30 | **21V**: Partial (25/29)
+**Last updated**: 2026-04-18
 **Keywords**: provisioning, scim, outbound, aws, scim-validator, attribute-mapping
 
 > This topic has a fusion guide with detailed troubleshooting flow
@@ -40,6 +40,7 @@
 | 27 📋 | Need to validate if M365 Identity tenant is concierge (seat count < 300). IsConcierge in Case Bud... | The IsConcierge attribute in Case Buddy and the Support Area Name attribute a... | Validate concierge status using IsConcierge attribute in Dynamics for Microso... | 🔵 6.5 | ADO Wiki |
 | 28 📋 | ECMA Connector Host provisioning placed into quarantine with error SystemForCrossDomainIdentityMa... | ECMA Connector Host is not accessible from Microsoft Entra ID. Common causes:... | Verify ECMA Host server is online. Check ECMA2Host service status (Get-Servic... | 🔵 6.5 | ADO Wiki |
 | 29 📋 | ECMA Connector Host Test Connection fails with error "You appear to have entered invalid credenti... | No active provisioning agent assigned to the enterprise application. Customer... | In the Entra provisioning configuration, go to On-Premises Connectivity secti... | 🔵 6.5 | ADO Wiki |
+| NEW 📋 | Customer tries to configure the service now provisioning in the Azure Portal. On the Provisioning Pa... | N/A | N/A | 🟡 6.5 | ContentIdea |
 
 ## Quick Troubleshooting Path
 

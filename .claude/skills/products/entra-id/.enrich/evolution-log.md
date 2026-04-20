@@ -1002,3 +1002,186 @@
 - **未扫描**: 0 条
 - **新增条目**: 0
 - **Result**: exhausted=true, lastRefreshed updated
+
+### 2026-04-18 17:07 — mslearn Phase 4b (final batch)
+- **Product**: entra-id
+- **Source**: mslearn
+- **URLs processed**: 4 (final batch, all remaining)
+- **Track A (JSONL)**: 1 entry (entra-id-mslearn-207: hybrid-join pending device after OU move)
+- **Track B (drafts)**: 3 files
+  - mslearn-unknown-actors-audit-reports.md
+  - mslearn-verify-first-party-apps-sign-in.md
+  - mslearn-global-secure-access-client-windows.md
+- **Deduplicated**: 0
+- **Status**: EXHAUSTED (0 remaining in index)
+
+## 2026-04-18 20:40 — onenote scan (batch: pages 637-646)
+
+- **Scanned**: 10 pages (IDO support scope, AVD+CA/AADDS/MFA/dual-fed, AIP scanner UPN, iOS PRT cross-cloud bug, diagnostic logs)
+- **Extracted**: 11 new entries (entra-id-onenote-409 to 419)
+- **Dedup skipped**: 1 (iOS B2B Browser SSO = duplicate of Deviceless PRT page)
+- **Key topics**: AVD+Entra ID integration (CA, AAD DS, AADJ MFA, dual-federation), AIP scanner UPN mismatch, iOS cross-cloud PRT upgrade bug (Broker fix 2026-03-31), Mooncake NorthStar diagnostic logs
+- **Remaining**: 136 pages
+
+## 2026-04-18 OneNote Scan (batch)
+
+- **Pages scanned**: 10 (656/782 total, 126 remaining)
+- **Track A entries**: 5 (entra-id-onenote-420 to 424)
+  - 420: Access Review notification culture zh-CHS-CN fallback
+  - 421: B2B direct federation DNS TXT record for domain mismatch
+  - 422: B2B cross-cloud domain verification conflict (proxyaddress workaround)
+  - 423: Entra portal MFA re-register button blocked by HTTP proxy
+  - 424: Dynamic group IsTenantDisabledForProcessing=True
+- **Track B drafts**: 5
+  - onenote-ests-signin-log-kusto.md
+  - onenote-bulk-remove-access-reviews.md
+  - onenote-b2b-vs-ccb2b-comparison.md
+  - onenote-custom-redemption-flow.md
+  - onenote-entra-portal-kusto.md
+- **Deduplicated**: 0
+- **Exhausted**: false
+
+## 2026-04-18 OneNote Scan (Group Mgmt + Role Admin + SSPR)
+
+- **Scanned**: 10 pages (Group Management, Role and Admin, Self-service Password Reset)
+- **Discovered**: 9 new entries (entra-id-onenote-425 to 433)
+- **Deduplicated**: 1 page skipped (Role assignment with SP - duplicate of entra-id-onenote-112)
+- **Topics**: ADX group membership latency, group expiration check/renew, group expiration 400 bug, GBL Kusto troubleshooting, dynamic group contains operator removal, SP API permission migration (AAD Graph to MS Graph), SSPR troubleshooter (4 workflows), password writeback relay architecture (Mooncake), SSPR on Windows 10 login screen
+- **Total scanned**: 752/782 | **Remaining**: 116 (was 126) | not exhausted
+
+### 2026-04-18 — OneNote Phase 2 scan (batch)
+- Pages scanned: 10 (SSPR SCCM, ADFS MSIS7065, App Proxy connector/GA-status/Graph-API/Kusto)
+- New entries: 5 (entra-id-onenote-434 to 438)
+- Deduplicated: 1 (SSPR SCCM deploy → covered by 433)
+- Skipped: 4 (test logs merged into 437)
+- Topics: ADFS MSIS7065 protocol handler error, App Proxy connector Mooncake installation, App Proxy NOT GA in Mooncake (preview), App Proxy Graph API failures in Mooncake, App Proxy Jarvis diagnostics (no Kusto in sovereign)
+- Remaining: 106 pages
+
+## 2026-04-18 21:09 | onenote-extract | entra-id
+- Scanned 10 pages (772/782 total, 96 remaining)
+- Extracted 8 entries: entra-id-onenote-439 to entra-id-onenote-446
+- Topics: App Proxy KCD/IIS WIA SSO, MSA throttling account-type-selection, JWT signature verification, KMSI session lifecycle, token revocation matrix, user realm discovery ProxyAddresses mismatch, AADJ SSO on-prem file share CNAME/SPN/NTLM, ESTS RamLogData reference
+- 2 pages skipped (links-only: Log Collection, SAML App SSO portal URL)
+- Exhausted: false
+
+## 2026-04-18 OneNote Scan (Batch)
+
+- **Pages processed**: 10
+- **Track A (JSONL)**: 4 entries (entra-id-onenote-447 to 450)
+  - 447: ESTS session cookies non-HTTPOnly security scan flag
+  - 448: Grant Graph API app role to managed identity via PowerShell
+  - 449: Connect-MgGraph fails in Azure China without pre-registered app
+  - 450: Authentication methods API not available in Mooncake (legacy, related to 050)
+- **Track B (Guide drafts)**: 1
+  - onenote-ms-graph-whatif-workload-routing.md: Using $whatif to identify Graph API workload routing
+- **Skipped (too thin)**: 4
+  - Azure AD backup auth service (link only)
+  - MS Graph API Document (links only)
+  - SignInActivity not available (IcM link only)
+  - Tenant Restriction POC V1 (Fiddler snippet only)
+- **Deduplicated**: 1
+  - Graph Explorer China URL (>=80% overlap with entra-id-onenote-405)
+- **Remaining**: 86 pages
+- **Exhausted**: false
+
+## 2026-04-18 21:51 — OneNote Phase 2 Scan (batch)
+
+- **Pages scanned**: 10 (792/782 total, 86 remaining before this batch -> 76 after)
+- **Track A (Break/Fix)**: 6 new entries (entra-id-onenote-451 ~ 456)
+  - 451: Az PowerShell MSAL multi-account SharedTokenCache error
+  - 452: TLS 1.0/1.1/3DES deprecation AADSTS1002016 (Mooncake)
+  - 453: PRT failure due to VMware IDM 3rd-party federation
+  - 454: SAML AuthenticatingAuthority non-absolute URI (SAP IAS+IDS)
+  - 455: SAML NameID format mismatch AADSTS500132 (SAP IAS+IDS)
+  - 456: PowerBI mobile AADSTS50126 managed vs federated domain UPN
+- **Track B (Guide drafts)**: 2 new drafts
+  - onenote-conditional-access-kusto-troubleshooting.md
+  - onenote-tls-deprecation-mooncake-guide.md
+- **Deduplicated**: 0 (no >=80% overlap found)
+- **Skipped pages (no extractable knowledge)**: 4
+  - third-party cookie (code snippet only)
+  - Readiness (training plan)
+  - Tenant Restriction (links only)
+  - POC - V1 (brief Fiddler setup)
+- **Exhausted**: false (76 pages remaining)
+
+## 2026-04-18 22:00 — onenote scan (batch)
+
+- Pages processed: 10
+- New issues extracted: 8 (entra-id-onenote-457 to entra-id-onenote-464)
+- Deduplicated: 1 (PowerBI mobile AADSTS50126 = existing entra-id-onenote-456)
+- Skipped (no content): 2 (App Model link-only, OIDC Postman deprecation notice)
+- Skipped (pure reference): 1 (AutoPilot branding how-to)
+- Topics: SAML IdP federation (WS-Fed mismatch, required attributes, 400/500081 errors), AAD Connect sync (Linked Mailbox), VM domain join extension, Intune PS app deprecation, Android device-based CA
+- Remaining: 66 pages
+- Exhausted: false
+
+## 2026-04-18 OneNote Batch (back-half, parallel agent)
+
+- **Pages scanned**: 10 (back-half of unscanned list to avoid conflict with b8 agent)
+- **New entries**: 6 (entra-id-onenote-457 to entra-id-onenote-462)
+- **Skipped**: 4 pages (1 how-to from BigFix with no entra-id knowledge, 1 Kusto query snippet, 2 sub-pages that were variants of same Teams MAM issue already captured, 1 TOC page for Windows LAPS)
+- **Topics covered**: GPO MDM enrollment failure, Teams iOS MAM stale OID, ESTS error 53005/700082, OOBE enrollment with CA compliance, WHfB tenant-wide vs Identity Protection policy conflict, WHfB default provisioning behavior
+- **Remaining**: 58 unscanned pages
+- **Exhausted**: false
+
+### 2026-04-18 OneNote Scan (batch b9-parallel)
+- **Pages processed**: 10
+- **New entries**: 8 (entra-id-onenote-463 to entra-id-onenote-470)
+- **Deduplicated**: 2 (PowerBI mobile SAML already as onenote-456, msExchRecipientTypeDetails already as onenote-461)
+- **Guide drafts created**: 2 (onenote-partner-compliance-diagnostics.md, onenote-mam-app-protection-edge-windows.md)
+- **Topics covered**: SharePoint unmanaged device download restriction, MAM app protection for Edge on Windows (architecture + case routing), Intune auto-enrollment after AADJ (GP workaround), HAADJ Autopilot ESP provisioning delay (Automatic-Device-Join task), Intune Enrollment service principal recovery, Mooncake Autopilot v2 policy delay (Strong Consistency), AllowLocalLogOn CSP with AAD groups (two-step approach)
+- **Remaining**: 48 unscanned pages
+- **Exhausted**: false
+
+## 2026-04-18 OneNote Scan (batch)
+
+- **Pages processed**: 10 (SAML IdP case, AAD Connect msExch sync, Windows LAPS x4, Co-management, Wireshark enrollment, PRT Log, TPM)
+- **New entries**: 10 (entra-id-onenote-471 to 480)
+- **Deduplicated**: 2 (page 1 = onenote-456, page 2 = onenote-461)
+- **Skipped**: 1 (Co-management page - primarily Intune, no entra-id specific issue extracted but scanned)
+- **Key topics added**: Windows LAPS with Azure AD (Kusto queries, support boundaries, SAP routing, event log troubleshooting 10025/10058/10059), MDM enrollment log collection, PRT diagnostics, TPM attestation
+- **Remaining**: ~40 pages
+- **Exhausted**: false
+
+## 2026-04-18 14:30 UTC - onenote scan (batch)
+- Pages processed: 10
+- New entries: 4 (entra-id-onenote-481~484)
+- Deduplicated: 2 (Page1->onenote-456, Page2->onenote-461)
+- Skipped: 4 (1 Intune-focused, 1 too-short, 2 wiki-dup tool-sharing)
+- Remaining: 32 pages
+- Exhausted: False
+- Topics: O365 HRD cache migration, Jarvis namespace discovery, M365 licensing lookup
+
+## 2026-04-18 OneNote Scan Round (10 pages)
+
+- **Scanned**: 10 pages (AAD Reporting/Known issue, Access Package, App Proxy Agent test, App Proxy On-premises App Publish, App Proxy Wiki, EvoSTS Case study, Deep Dive calendar, MS Graph API Jarvis, MS Graph API Video, POD member status)
+- **Discovered**: 1 new entry (entra-id-onenote-485: MS Graph API debugging via Jarvis correlationId)
+- **Deduplicated**: 1 (App Proxy applicationTemplate test → dup of entra-id-onenote-437)
+- **Empty/Low-value**: 8 pages (stubs, links, admin tables)
+- **Remaining**: 22 pages
+- **Exhausted**: false
+
+## 2026-04-18 OneNote Scan (batch: pages 853-862)
+- **Scanned**: 10 pages (1 medium-confidence, 9 low-confidence)
+- **New entries**: 0
+- **Reason**: 9/10 pages were completely empty (title-only stubs: B2B Features, Entra Portal Case study, Group Mgmt Case study/Known issue, Role & Admin Case study, SSPR Case study, WHfB Case study, AAD CritSit Handbook). 1 page (App Proxy redirection) was Intune MAM config guide, not Entra ID troubleshooting knowledge; 6 App Proxy entries already exist.
+- **Remaining**: 12 unscanned pages (all low/unknown confidence)
+- **Exhausted**: false
+
+## 2026-04-18 22:42 — onenote batch (final 12 pages)
+
+- **Scanned**: 12 pages (last batch)
+- **Discovered**: 0 (all low-value: 7 empty pages, 4 customer profiles with PII, 1 LAPS config guide already covered by entries 471-477)
+- **Deduplicated**: 0
+- **Total scanned**: 782/782
+- **Status**: ✅ **EXHAUSTED** — all entra-id OneNote pages fully scanned
+- Pages breakdown:
+  - Empty section headers: =====PG Sessions=====, =====Tech Blogs=====, Known issue (Graph API), Tool (Graph API), Case study (SAML), Training Materials
+  - Internal onboarding: CME Permission and MSODS access (SAW/smartcard setup)
+  - Customer profiles (Intune): 奥迪, 德勤, 摩根斯坦利, 资生堂
+  - Already covered: Windows LAPS with Azure AD (→ entries 471-477)
+| 2026-04-20 | onenote | +2 AADDS known issues (re-extracted from changed page: cloud-user login, LDAPS cert) | Mooncake POD/VMSCIM/.../AAD Domain Service.md |
+| 2026-04-20 | mslearn | Indexed 212 URLs from entra toc.yml; 151 already scanned, 60 pending | support/entra/toc.yml |
+| 2026-04-20 | mslearn | +2 Track A (IPv6 sign-in block, ASP.NET session expiry), +1 Track B draft (Connect Health data freshness guide), 5 skipped (informational/landing pages) | ad-dmn-services, app-integration |
+| 2026-04-20 | ado-wiki | Indexed 2811 pages (AzureAD: 1879, WDS: 932) for entra-id, first run | full-scan index build |

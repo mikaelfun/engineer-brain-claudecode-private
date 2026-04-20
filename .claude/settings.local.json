@@ -1,17 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Read(//mnt/c/Users/fangkun/AppData/Roaming/**)",
-      "Read(//mnt/c/Users/fangkun/AppData/Local/**)",
-      "Bash(pwsh *)",
-      "Bash(pwsh -NoProfile *)",
-      "Bash(playwright-cli *)",
-      "Bash(agent-browser --version)",
-      "Bash(git rm:*)",
-      "Bash(git status:*)",
-      "Bash(sed -i 's/- \\\\[ \\\\] Task 1\\\\./- [x] Task 1./g; s/- \\\\[ \\\\] Task 2\\\\./- [x] Task 2./g' conductor/tracks/casework-v2-cleanup_20260417/plan.md)",
-      "Bash(sed -i 's/- \\\\[ \\\\] 行数 < 120/- [x] 行数 = 115 ✅/; s/- \\\\[ \\\\] grep 确认无/- [x] grep 确认无/; s/- \\\\[ \\\\] 被删脚本无/- [x] 被删脚本无/; s/- \\\\[ \\\\] patrol 和 casework 不报/- [x] 待 Phase 3 冒烟验证/' conductor/tracks/casework-v2-cleanup_20260417/plan.md)",
-      "Bash(python3 -c ':*)"
+      "Bash(npx tsc:*)",
+      "Read(//c/Users/fangkun/Documents/Projects/EngineerBrain/src/dashboard/**)"
     ]
   }
 }

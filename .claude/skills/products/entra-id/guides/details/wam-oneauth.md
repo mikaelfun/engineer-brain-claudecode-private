@@ -1,6 +1,6 @@
 # ENTRA-ID WAM/OneAuth Authentication — Detailed Troubleshooting Guide
 
-**Entries**: 63 | **Drafts fused**: 12 | **Kusto queries**: 0
+**Entries**: 65 | **Drafts fused**: 12 | **Kusto queries**: 0
 **Draft sources**: ado-wiki-c-WebView2-Integration-Entra-ID-WAM.md, ado-wiki-e-wam-log-collection-analysis.md, ado-wiki-e-wam-profile-pictures.md, ado-wiki-e-wam-scoping-troubleshooting.md, ado-wiki-g-oneauth-msal-overview.md, ado-wiki-troubleshooting-wam-sso-issues.md, onenote-clear-oneauth-cache.md, onenote-clear-wam-cache.md, onenote-wam-auth-troubleshooting.md, onenote-wam-sso-outlook-trace.md
 **Generated**: 2026-04-07
 
@@ -452,3 +452,24 @@
 | 28 | Error 5z9gd signing into Word/Excel from AVD - URL access restrictions | Server-side URL access restrictions blocking Microsoft cl... | Whitelist M365 URLs per learn.microsoft.com M365 URLs and... | 🟢 8.5 | ADO Wiki |
 | 29 | VS Code MCP login logs into wrong account after CBA flow - WAM bug | WAM bug confirmed: wrong account hint shown on WAM UI aft... | Route to WAM team. Confirmed WAM bug. | 🟢 8.5 | ADO Wiki |
 | 30 | Connect-MgGraph fails with AADSTS50011 redirect URI mismatch for sovereign cl... | Microsoft.Graph PowerShell SDK 2.34.0 enables WAM (Web Ac... | Use -UseDeviceCode or -UseDeviceAuthentication switch wit... | 🟢 8.5 | ADO Wiki |
+
+
+---
+
+## Incremental Update (2026-04-18) - +2 entries from contentidea-kb
+
+### MDE events shows that AAD Broker plugin(Microsoft.AAD.BrokerPlugin.exe) is initiating connections to Github(in this scenario).
+**Score**: 🟡 6.5 | **Source**: ContentIdea KB | **ID**: entra-id-3680
+
+**Description**: MDE events shows that AAD Broker plugin(Microsoft.AAD.BrokerPlugin.exe) is initiating connections to Github(in this scenario).
+
+> This entry contains description only, no explicit root cause/solution.
+
+
+### MDE events shows that AAD Broker plugin(Microsoft.AAD.BrokerPlugin.exe) is initiating connections to Github(in this scenario).
+**Score**: 🟡 6.5 | **Source**: ContentIdea KB | **ID**: entra-id-3686
+
+**Description**: MDE events shows that AAD Broker plugin(Microsoft.AAD.BrokerPlugin.exe) is initiating connections to Github(in this scenario).
+
+> This entry contains description only, no explicit root cause/solution.
+

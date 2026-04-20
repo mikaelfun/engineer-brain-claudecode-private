@@ -6,13 +6,26 @@
  * trigger-failed, trigger-cancelled.
  */
 import { create } from 'zustand'
+import type { CaseSessionMessage } from './caseSessionStore'
 
 export interface TriggerRunState {
   status: 'running' | 'completed' | 'failed' | 'cancelled'
   startedAt: number
   elapsedMs: number
   output: string
+  /** Structured messages for SessionMessageList rendering */
+  messages: CaseSessionMessage[]
   error?: string
+}
+
+/** Structured progress data from SSE trigger-progress event */
+export interface TriggerProgressData {
+  kind?: string     // 'tool-call' | 'tool-result' | 'response' | 'thinking' | 'agent-started' | ...
+  chunk?: string
+  toolName?: string
+  content?: string
+  elapsedMs?: number
+  timestamp?: string
 }
 
 interface TriggerRunStore {
@@ -21,7 +34,7 @@ interface TriggerRunStore {
 
   /** SSE event handlers */
   onTriggerStarted: (triggerId: string) => void
-  onTriggerProgress: (triggerId: string, chunk: string, elapsedMs: number) => void
+  onTriggerProgress: (triggerId: string, data: TriggerProgressData) => void
   onTriggerCompleted: (triggerId: string, durationMs: number, outputPreview?: string) => void
   onTriggerFailed: (triggerId: string, durationMs: number, error?: string) => void
   onTriggerCancelled: (triggerId: string, durationMs: number) => void
@@ -34,6 +47,17 @@ interface TriggerRunStore {
 }
 
 const MAX_OUTPUT_LENGTH = 3000
+const MAX_MESSAGES = 300
+
+/** Map SSE kind to CaseSessionMessage type */
+function kindToType(kind?: string): CaseSessionMessage['type'] {
+  if (kind === 'tool-call') return 'tool-call'
+  if (kind === 'tool-result') return 'tool-result'
+  if (kind === 'response') return 'response'
+  if (kind === 'thinking') return 'thinking'
+  if (kind?.startsWith('agent-')) return 'system'
+  return 'thinking'
+}
 
 export const useTriggerRunStore = create<TriggerRunStore>((set, get) => ({
   runs: {},
@@ -47,23 +71,34 @@ export const useTriggerRunStore = create<TriggerRunStore>((set, get) => ({
           startedAt: Date.now(),
           elapsedMs: 0,
           output: '',
+          messages: [],
         },
       },
     }))
   },
 
-  onTriggerProgress: (triggerId, chunk, elapsedMs) => {
+  onTriggerProgress: (triggerId, data) => {
     set((state) => {
       const existing = state.runs[triggerId]
       if (!existing || existing.status !== 'running') return state
+      const chunk = data.chunk || data.content || ''
       const newOutput = (existing.output + chunk).slice(-MAX_OUTPUT_LENGTH)
+      const newMsg: CaseSessionMessage = {
+        type: kindToType(data.kind),
+        content: data.content || data.chunk || '',
+        toolName: data.toolName,
+        timestamp: data.timestamp || new Date().toISOString(),
+      }
+      const newMessages = [...existing.messages, newMsg]
+      if (newMessages.length > MAX_MESSAGES) newMessages.splice(0, newMessages.length - MAX_MESSAGES)
       return {
         runs: {
           ...state.runs,
           [triggerId]: {
             ...existing,
-            elapsedMs,
+            elapsedMs: data.elapsedMs ?? existing.elapsedMs,
             output: newOutput,
+            messages: newMessages,
           },
         },
       }
@@ -81,6 +116,7 @@ export const useTriggerRunStore = create<TriggerRunStore>((set, get) => ({
             startedAt: existing?.startedAt || Date.now() - durationMs,
             elapsedMs: durationMs,
             output: existing?.output || outputPreview || '',
+            messages: existing?.messages || [],
           },
         },
       }
@@ -98,6 +134,7 @@ export const useTriggerRunStore = create<TriggerRunStore>((set, get) => ({
             startedAt: existing?.startedAt || Date.now() - durationMs,
             elapsedMs: durationMs,
             output: existing?.output || '',
+            messages: existing?.messages || [],
             error,
           },
         },
@@ -116,6 +153,7 @@ export const useTriggerRunStore = create<TriggerRunStore>((set, get) => ({
             startedAt: existing?.startedAt || Date.now() - durationMs,
             elapsedMs: durationMs,
             output: existing?.output || '',
+            messages: existing?.messages || [],
           },
         },
       }

@@ -1,8 +1,6 @@
 # AVD AVD 监控与诊断 - Comprehensive Troubleshooting Guide
 
-**Entries**: 6 | **Drafts fused**: 10 | **Kusto queries fused**: 0
-**Source drafts**: ado-wiki-a-insights-confirm-dcr-la-workspace.md, ado-wiki-ama-deployment-issues.md, ado-wiki-dcrs-feature-requests.md, ado-wiki-deprecated-data-collection.md, ado-wiki-portal-related-issue-data-collection.md, ado-wiki-remoting-connection-report.md, mslearn-insights-troubleshooting.md, onenote-avd-diagnostic-logs-tools.md, onenote-avd-diagnostics-log-analytics.md, onenote-avd-log-analytics-queries.md
-**Generated**: 2026-04-07
+**Entries**: 8 | **Generated**: 2026-04-18
 
 ---
 
@@ -10,149 +8,111 @@
 
 ### Phase 1: Initial Assessment
 
-> Sources: OneNote, KB, ADO Wiki
+> Sources: ADO Wiki, ContentIdea, OneNote
 
 **Symptom matching:**
 
 | Condition | Meaning | Next Action |
 |-----------|---------|-------------|
-| Error retrieving data when loading Diagnostics tab in DfM EU... | DfM EU region data retrieval limitation in Azure Support Cen... | Use a Global (WW) DFM case to load the VM in ASC instead of ... |
-| AVD Insights workbook (new, not Insights Legacy) not selecti... | The default Insights workbook selects DCR based on naming co... | Ensure the desired DCR name follows the 'microsoft-avdi-*' n... |
-| AVD Insights workbook not selecting the expected Log Analyti... | Default Insights workbook selects LA workspace based on alph... | Rename/recreate the desired Diagnostic Setting to appear fir... |
-| Need to verify if Relative Mouse is being triggered successf... | - | Use ASC Tracing tab with connection Activity ID (filter Task... |
-| Logging in to VM joined to Azure AD DS with an Azure AD user... | By design: strict enforcement on UPN to enable reliable re-c... | Organizations using Azure AD DS for their AVD environment ne... |
-| AVD users see ADFS login prompt for session host RDP sign-in... | AAD cookie is still valid allowing silent sign-in to AVD gat... | This is expected behavior when ADFS cookie expires before AA... |
+| Error retrieving data when loading Diagnostics tab in DfM EU ASC for C... | DfM EU region data retrieval limitation in Azure Support Center | Use a Global (WW) DFM case to load the VM in ASC instead of the EU DFM... |
+| AVD Insights workbook (new, not Insights Legacy) not selecting the exp... | The default Insights workbook selects DCR based on naming convention '... | Ensure the desired DCR name follows the 'microsoft-avdi-*' naming conv... |
+| AVD Insights workbook not selecting the expected Log Analytics workspa... | Default Insights workbook selects LA workspace based on alphanumerical... | Rename/recreate the desired Diagnostic Setting to appear first in alph... |
+| Need to verify if Relative Mouse is being triggered successfully in an... |  | Use ASC Tracing tab with connection Activity ID (filter Task Name = Re... |
+| AVD Insights workbook (new, not Insights Legacy) displays unexpected o... | Default Insights workbook selects DCR based on 'microsoft-avdi-*' nami... | 1. Ensure DCR name follows 'microsoft-avdi-*' naming convention (the c... |
+| User session UPNs not displayed in AVD portal user sessions list; UPN ... | User subscribes to the AVD workspace with one set of credentials (e.g.... | 1) Get ActivityID for an affected connected user session. 2) Run Kusto... |
+| Logging in to VM joined to Azure AD DS with an Azure AD user sourced f... | By design: strict enforcement on UPN to enable reliable re-connections... | Organizations using Azure AD DS for their AVD environment need users c... |
+| AVD auto scaling script fails with 'The remote name could not be resol... | Log Analytics workspace ODS ingestion endpoint DNS not resolvable. Wor... | Re-run the script after Log Analytics workspace is fully provisioned. ... |
 
 ### Phase 2: Detailed Investigation
 
-#### How to Confirm Which DCR and Log Analytics Workspace Is Being Selected (AVD Insights)
-> Source: [ado-wiki-a-insights-confirm-dcr-la-workspace.md](guides/drafts/ado-wiki-a-insights-confirm-dcr-la-workspace.md)
+#### Entry 1: Error retrieving data when loading Diagnostics tab in DfM EU...
+> Source: ADO Wiki | ID: avd-ado-wiki-429 | Score: 8.0
 
-> ⚠️ This content is under development / may be outdated.
+**Symptom**: Error retrieving data when loading Diagnostics tab in DfM EU ASC for Cloud PC
 
-#### AMA Deployment Issues (AVD)
-> Source: [ado-wiki-ama-deployment-issues.md](guides/drafts/ado-wiki-ama-deployment-issues.md)
+**Root Cause**: DfM EU region data retrieval limitation in Azure Support Center
 
-> ⚠️ This content was marked as "in development / not yet ready for consumption" in the wiki.
+**Solution**: Use a Global (WW) DFM case to load the VM in ASC instead of the EU DFM case
 
-#### DCRs and Feature Requests Process - WCX
-> Source: [ado-wiki-dcrs-feature-requests.md](guides/drafts/ado-wiki-dcrs-feature-requests.md)
+> 21V Mooncake: Applicable
 
-WCX CxE CAT team manages DCR and feature requests for Windows 365 and Azure Virtual Desktop. Any DCR or feature request from support (not a bug) goes through SaaF process and is filed in CRM.
+#### Entry 2: AVD Insights workbook (new, not Insights Legacy) not selecti...
+> Source: ADO Wiki | ID: avd-ado-wiki-0819 | Score: 8.0
 
-#### WVD/AVD Data Collection (Deprecated)
-> Source: [ado-wiki-deprecated-data-collection.md](guides/drafts/ado-wiki-deprecated-data-collection.md)
+**Symptom**: AVD Insights workbook (new, not Insights Legacy) not selecting the expected Data Collection Rule (DCR) – wrong DCR selected, incorrect data displayed
 
-See [WebRTC trace collection guide](https://dev.azure.com/Supportability/WindowsVirtualDesktop/_wiki/wikis/WindowsVirtualDesktop/474447/Troubleshooting?anchor=collect-webrtc-traces-on-the-avd-client-m
+**Root Cause**: The default Insights workbook selects DCR based on naming convention 'microsoft-avdi-*'; a DCR that does not follow this naming convention will not be selected. The workbook looks for DCRs starting with 'microsoft-avdi-' prefix.
 
-#### Portal Related Issue - Data Collection
-> Source: [ado-wiki-portal-related-issue-data-collection.md](guides/drafts/ado-wiki-portal-related-issue-data-collection.md)
+**Solution**: Ensure the desired DCR name follows the 'microsoft-avdi-*' naming convention. The configuration workbook creates DCR as 'microsoft-avdi-<location>' by default. Rename or recreate the DCR with a name starting with 'microsoft-avdi-'.
 
-For any **MEM/Azure** Portal related issue, collect the following from the customer:
+> 21V Mooncake: Applicable
 
-#### Remoting connection report on Endpoint Analytics
-> Source: [ado-wiki-remoting-connection-report.md](guides/drafts/ado-wiki-remoting-connection-report.md)
+#### Entry 3: AVD Insights workbook not selecting the expected Log Analyti...
+> Source: ADO Wiki | ID: avd-ado-wiki-0820 | Score: 8.0
 
-This report is available on the MEM portal for customers with Cloud PC licenses in their tenant.
+**Symptom**: AVD Insights workbook not selecting the expected Log Analytics workspace – showing data from wrong workspace
 
-#### AVD Insights Troubleshooting Guide
-> Source: [mslearn-insights-troubleshooting.md](guides/drafts/mslearn-insights-troubleshooting.md)
+**Root Cause**: Default Insights workbook selects LA workspace based on alphanumerical sort of Diagnostic Settings; the first Diagnostic Setting that starts with numbers or letters AND has a LA workspace as destination wins. Diagnostic Settings starting with special characters (e.g., '_') are deprioritized. Priority order: allowed symbols → numbers → letters.
 
-> Source: [Troubleshoot Azure Virtual Desktop Insights](https://learn.microsoft.com/en-us/troubleshoot/azure/virtual-desktop/troubleshoot-insights)
+**Solution**: Rename/recreate the desired Diagnostic Setting to appear first in alphanumerical sort (must start with numbers or letters). Note: Diagnostic Setting names cannot be edited – must delete and recreate with the correct name.
 
-#### AVD Diagnostic Logs & Data Collection Tools (OneNote)
-> Source: [onenote-avd-diagnostic-logs-tools.md](guides/drafts/onenote-avd-diagnostic-logs-tools.md)
+> 21V Mooncake: Applicable
 
-## Data Collection Tool: MSRD-Collect
+#### Entry 4: Need to verify if Relative Mouse is being triggered successf...
+> Source: ADO Wiki | ID: avd-ado-wiki-0852 | Score: 8.0
 
-#### AVD Diagnostics with Log Analytics — KQL Query Patterns
-> Source: [onenote-avd-diagnostics-log-analytics.md](guides/drafts/onenote-avd-diagnostics-log-analytics.md)
+**Symptom**: Need to verify if Relative Mouse is being triggered successfully in an AVD session
 
-**Source**: OneNote Lab Verification (Ning, 2021-11)
+**Root Cause**: 
 
-*Contains 3 KQL query template(s)*
+**Solution**: Use ASC Tracing tab with connection Activity ID (filter Task Name = RelativeMouse), or Kusto query on RDClientTrace `| where TaskName == 'RelativeMouse'` across all regional clusters. Alternatively run RelativeMouseSupportTool.exe on AVD VM (Ctrl+O to toggle); if Relative Mouse Movement field shows N/A, it is not enabled.
 
-#### AVD Log Analytics Query Reference (OneNote)
-> Source: [onenote-avd-log-analytics-queries.md](guides/drafts/onenote-avd-log-analytics-queries.md)
+> 21V Mooncake: Applicable
 
-Log Analytics workspace queries using WVDConnections, WVDErrors, WVDCheckpoints tables.
+#### Entry 5: AVD Insights workbook (new, not Insights Legacy) displays un...
+> Source: ADO Wiki | ID: avd-ado-wiki-0818 | Score: 8.0
 
-*Contains 8 KQL query template(s)*
+**Symptom**: AVD Insights workbook (new, not Insights Legacy) displays unexpected or incorrect data at the Host Pool level in Azure Portal
 
-### Key KQL Queries
+**Root Cause**: Default Insights workbook selects DCR based on 'microsoft-avdi-*' naming convention and Log Analytics workspace based on alphanumerical sort of Diagnostic Settings; when naming conventions are not followed or incorrect Diagnostic Setting is first alphabetically, the wrong data source is selected
 
-**Query 1:**
-```kql
-WVDConnections
-| where UserName contains "username"
-| take 100
-| sort by TimeGenerated asc, CorrelationId
-```
+**Solution**: 1. Ensure DCR name follows 'microsoft-avdi-*' naming convention (the configuration workbook creates DCR as 'microsoft-avdi-<location>' by default). 2. Ensure the desired Diagnostic Setting (with LA workspace destination) appears first in alphanumerical sort – delete and recreate with appropriate name if needed (names cannot be edited).
 
-**Query 2:**
-```kql
-WVDConnections
-| where UserName contains "username"
-| take 100
-| sort by TimeGenerated asc, CorrelationId
-| summarize dcount(CorrelationId) by bin(TimeGenerated, 1d)
-```
+> 21V Mooncake: Applicable
 
-**Query 3:**
-```kql
-let Events = WVDConnections | where UserName contains "username";
-Events
-| where State == "Connected"
-| project CorrelationId, UserName, ResourceAlias, StartTime=TimeGenerated
-| join (Events
-    | where State == "Completed"
-    | project EndTime=TimeGenerated, CorrelationId)
-on CorrelationId
-| project Duration = EndTime - StartTime, ResourceAlias
-| sort by Duration asc
-```
+#### Entry 6: User session UPNs not displayed in AVD portal user sessions ...
+> Source: ADO Wiki | ID: avd-ado-wiki-0824 | Score: 8.0
 
-**Query 4:**
-```kql
-WVDConnections
-| project-away TenantId, SourceSystem
-| join kind=leftouter (
-    WVDErrors
-    | summarize Errors=makelist(pack('Code', Code, 'CodeSymbolic', CodeSymbolic, 'Time', TimeGenerated, 'Message', Message, 'ServiceError', ServiceError, 'Source', Source)) by CorrelationId
-) on CorrelationId
-| join kind=leftouter (
-    WVDCheckpoints
-    | summarize Checkpoints=makelist(pack('Time', TimeGenerated, 'Name', Name, 'Parameters', Parameters, 'Source', Source)) by CorrelationId
-    | mv-apply C
-```
+**Symptom**: User session UPNs not displayed in AVD portal user sessions list; UPN column is empty or missing for active sessions despite users being connected.
 
-**Query 5:**
-```kql
-WVDConnections
-| where State == "Connected" and TimeGenerated > ago(7d)
-| project CorrelationId, UserName, ResourceAlias, StartTime = TimeGenerated
-| join (WVDConnections | where State == "Completed" | project EndTime = TimeGenerated, CorrelationId) on CorrelationId
-| project UserName, StartTime, EndTime, ResourceAlias
-| sort by StartTime desc
-```
+**Root Cause**: User subscribes to the AVD workspace with one set of credentials (e.g. User1@domain.com) but connects to a resource using a different set of credentials (e.g. direct1@domain.com or account from a different domain). This 'switched user credentials scenario' causes the orchestration layer to lose the UPN mapping.
 
-**Query 6:**
-```kql
-WVDConnections
-| where UserName == "userupn"
-| take 100
-| sort by TimeGenerated asc, CorrelationId
-```
+**Solution**: 1) Get ActivityID for an affected connected user session. 2) Run Kusto query on RDInfraTrace (all regions union) with ActivityId filter and Msg contains 'switched user credentials scenario' to confirm. 3) On session host, run 'quser <sessionID>' to get username. 4) Run 'Get-WmiObject win32_useraccount | Where-Object{$_.Name -like "<Username>"} | Select name,sid' to get SID. 5) Run '([ADSI]"LDAP://<SID=<User SID>>").UserPrincipalName' to get the actual UPN. 6) Compare with orchestration trace using connection ActivityID (filter on OrchestrationService and RDmiAuthorizationService categories) to confirm credential mismatch. 7) Inform customer to use consistent credentials for workspace subscription and resource connection.
 
----
+> 21V Mooncake: Applicable
 
-## Known Issues Reference
+#### Entry 7: Logging in to VM joined to Azure AD DS with an Azure AD user...
+> Source: ContentIdea | ID: avd-contentidea-kb-002 | Score: 6.5
 
-| # | Symptom | Root Cause | Solution | Score | Source |
-|---|---------|------------|----------|-------|--------|
-| 1 | Error retrieving data when loading Diagnostics tab in DfM EU ASC for Cloud PC | DfM EU region data retrieval limitation in Azure Support Center | Use a Global (WW) DFM case to load the VM in ASC instead of the EU DFM case | 🔵 7.5 | ADO Wiki |
-| 2 | AVD Insights workbook (new, not Insights Legacy) not selecting the expected Data... | The default Insights workbook selects DCR based on naming convention 'microsoft-... | Ensure the desired DCR name follows the 'microsoft-avdi-*' naming convention. Th... | 🔵 7.5 | ADO Wiki |
-| 3 | AVD Insights workbook not selecting the expected Log Analytics workspace – showi... | Default Insights workbook selects LA workspace based on alphanumerical sort of D... | Rename/recreate the desired Diagnostic Setting to appear first in alphanumerical... | 🔵 7.5 | ADO Wiki |
-| 4 | Need to verify if Relative Mouse is being triggered successfully in an AVD sessi... | - | Use ASC Tracing tab with connection Activity ID (filter Task Name = RelativeMous... | 🔵 7.5 | ADO Wiki |
-| 5 | Logging in to VM joined to Azure AD DS with an Azure AD user sourced from Window... | By design: strict enforcement on UPN to enable reliable re-connections and no du... | Organizations using Azure AD DS for their AVD environment need users created dir... | 🔵 6.5 | KB |
-| 6 | AVD users see ADFS login prompt for session host RDP sign-in even though AAD gat... | AAD cookie is still valid allowing silent sign-in to AVD gateway, but ADFS cooki... | This is expected behavior when ADFS cookie expires before AAD cookie. After user... | 🔵 6.0 | OneNote |
+**Symptom**: Logging in to VM joined to Azure AD DS with an Azure AD user sourced from Windows Server (on prem) Active Directory fails. Users synchronized to Azure AD through Azure AD Connect. Error in Diagnostics: ErrorSource: RDBroker, ErrorOperation: Orchestration.
+
+**Root Cause**: By design: strict enforcement on UPN to enable reliable re-connections and no duplication of sessions. When synchronized from AD to Azure AD, the user comes with a SID. However, the identity on Azure AD DS has a different SID, so login is blocked.
+
+**Solution**: Organizations using Azure AD DS for their AVD environment need users created directly in Azure AD.
+
+> 21V Mooncake: Applicable
+
+#### Entry 8: AVD auto scaling script fails with 'The remote name could no...
+> Source: OneNote | ID: avd-onenote-067 | Score: 5.5
+
+**Symptom**: AVD auto scaling script fails with 'The remote name could not be resolved' for *.ods.opinsights.azure.com endpoint when creating Log Analytics custom log table.
+
+**Root Cause**: Log Analytics workspace ODS ingestion endpoint DNS not resolvable. Workspace may not be fully provisioned yet, or network/DNS configuration blocking the endpoint.
+
+**Solution**: Re-run the script after Log Analytics workspace is fully provisioned. Verify DNS resolution for the ODS endpoint. For Mooncake, ensure endpoint uses .azure.cn domain.
+
+> 21V Mooncake: Applicable
+
+### Phase 3: Kusto Diagnostics
+
+> Refer to Kusto skill references for relevant queries.

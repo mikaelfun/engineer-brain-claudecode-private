@@ -194,3 +194,28 @@ GlobalIfxRestBusinessCommon
 ### 相关错误码: AADSTS65001, AADSTS650056, AADSTS90094, AADSTS90008, AADSTS900941
 
 ---
+
+
+---
+
+## Incremental Scenarios (2026-04-18)
+
+## Scenario 12: Users/Customers claim that they cannot see their Line-Of-Business applications on Azure AD's Conditional Access Applicat...
+> Source: contentidea-kb (entra-id-3654) | Applicability: unverified
+
+### Troubleshooting Steps
+1. **Confirm symptom**: Users/Customers claim that they cannot see their Line-Of-Business applications on Azure AD's Conditional Access Application picker, when creating new Conditional Access policies.
+2. **Root cause**: This can happen when the user has created the application as a native app, or does not have a Web App platform configured under its Platform Configurations in Authentication sections of the applicatio...
+3. **Solution**: The resolution on this is to apply Conditional Access to the available APIs that the application is invoking/accessing, or to the service that the API falls under.
+
+---
+
+## Scenario 13: Taking Examples : App name : <Application Name> with App ID : 2fddb45a-3701-403d-8063-69c4f8531838Attribute value ( Role...
+> Source: contentidea-kb (entra-id-3662) | Applicability: unverified
+
+### Troubleshooting Steps
+1. **Confirm symptom**: Taking Examples : App name : <Application Name> with App ID : 2fddb45a-3701-403d-8063-69c4f8531838Attribute value ( Role ) : Service-based_Development_OperationsAttribute name in analysis : displayNam...
+2. **Root cause**: Usually when this happens, the cause is that the role that currently exists in the application with that name is not the same role that previously had it. Each role has a unique identifier -  &quot;id...
+3. **Solution**: 1) First, take a look in ASC using the AppId in the right tenant, to see if this role ( you can search with the id  ) is present as part of the serviceprincipal's roles, or the application's roles def...
+
+---

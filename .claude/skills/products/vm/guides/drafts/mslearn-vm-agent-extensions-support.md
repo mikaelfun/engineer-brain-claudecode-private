@@ -1,47 +1,41 @@
-# VM Agent Extensions Support Policy and Troubleshooting
+---
+title: Azure VM Agent Extensions Support Matrix
+source: mslearn
+sourceUrl: https://learn.microsoft.com/en-us/troubleshoot/azure/virtual-machines/windows/support-agent-extensions
+product: vm
+tags: [VM-agent, extensions, support-policy, troubleshooting]
+21vApplicable: true
+---
 
-Source: https://learn.microsoft.com/en-us/troubleshoot/azure/virtual-machines/windows/support-agent-extensions
+# Azure VM Agent Extensions Support Matrix
 
-## Support Policy
+## 支持策略
 
-- **First-party extensions** (developed by Microsoft): Supported by Microsoft Azure Support
-- **Third-party extensions**: Supported by the respective vendor (Chef, Puppet, Symantec, Trend Micro, etc.)
+- Microsoft 仅支持**第一方扩展**（Microsoft 直接开发和发布）
+- 第三方扩展（Chef, Puppet, Symantec, Trend Micro 等）由厂商直接支持
 
-## Agent vs Extension: How to Diagnose
+## VM Agent 服务组件
 
-### VM Agent Services (must all be running)
+VM Agent 包含三个必须运行的服务：
+1. **RDAgent**
+2. **Windows Azure Guest Agent**
+3. **Microsoft Azure Telemetry Service**（Guest Agent 2.7.41491.971+ 已合并到 Guest Agent 服务）
 
-| Service | Purpose |
-|---------|---------|
-| RdAgent | Remote Desktop agent |
-| Windows Azure Guest Agent | Core guest agent |
-| Microsoft Azure Telemetry Service | Telemetry (merged into Guest Agent in v2.7.41491.971+) |
+## 扩展故障排查
 
-### Diagnosing Extension Failures
+1. 确认三个 Agent 服务都在运行
+2. 检查扩展安装/启动日志：
+3. 搜索 "error" 关键词定位失败的扩展
+4. 日志中可看到 Enable/Install/Start/Disable 操作的结果
 
-1. Check `C:\WindowsAzure\logs\WaAppAgent.log` for extension operation summary
-2. Look for keywords: Enable, Install, Start, Disable, **error**
-3. Extension-specific logs: `C:\WindowsAzure\Logs\Plugins\<ExtensionName>\`
-   - `CommandExecution.log`
-   - `CustomScriptHandler.log`
-   - `IaaSBcdrExtension*.log`
+## 常见扩展列表
 
-### Key Extensions Support Matrix
-
-| Extension | Supported By |
-|-----------|-------------|
+| 扩展 | 支持方 |
+|------|--------|
 | DSC (Desired State Configuration) | Microsoft |
 | BGInfo | Microsoft |
 | VMAccessAgent | Microsoft |
 | Chef Client | Chef Software |
 | Puppet Enterprise Agent | PuppetLabs |
-| Symantec EP | Symantec |
+| Symantec Endpoint Protection | Symantec |
 | Trend Micro Deep Security | Trend Micro |
-
-## Guest Log Collection Tool
-
-Run `CollectGuestLogs.exe` from:
-- `C:\WindowsAzure\Packages`
-- `C:\WindowsAzure\GuestAgent_<Version>_<Timestamp>`
-
-## 21V Applicable: Yes

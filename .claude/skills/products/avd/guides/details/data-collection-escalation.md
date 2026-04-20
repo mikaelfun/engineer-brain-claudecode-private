@@ -1,8 +1,6 @@
 # AVD 数据收集与升级流程 - Comprehensive Troubleshooting Guide
 
-**Entries**: 7 | **Drafts fused**: 15 | **Kusto queries fused**: 0
-**Source drafts**: ado-wiki-assist-365-request-access.md, ado-wiki-assist365-usage.md, ado-wiki-css-saaf-cat-collaboration-escalation-flows.md, ado-wiki-escalation-workflow-w365.md, ado-wiki-extra-goodies-scripts-powershell-python.md, ado-wiki-msrd-collect.md, ado-wiki-sfi-compliance.md, ado-wiki-share-customer-data-with-pg.md, ado-wiki-vm-os-dump-from-azure-host.md, ado-wiki-w365-css-mcaps-subscription-lab.md
-**Generated**: 2026-04-07
+**Entries**: 8 | **Generated**: 2026-04-18
 
 ---
 
@@ -10,152 +8,111 @@
 
 ### Phase 1: Initial Assessment
 
-> Sources: KB, ADO Wiki
+> Sources: ADO Wiki, ContentIdea
 
 **Symptom matching:**
 
 | Condition | Meaning | Next Action |
 |-----------|---------|-------------|
-| Cloud PC VM fails to boot or stuck on restarting | Azure Host level changes - VMs running in certain Cluster or... | Engage RDOS DRI (OCE) via IcM to capture memory dump. Get No... |
-| AccessDenied error when performing Inspect IaaS Disk log col... | VM not pinned to the DfM case in Azure Support Center | Pin the VM to the case using Resource Explorer (Step 6 in AS... |
-| Windows 10/11 Enterprise multi-session OS on AVD VM gets dow... | The VM gets activated/reactivated by a customer custom KMS s... | 1) Confirm the customer is using their own KMS server. 2) Th... |
-| AVD agent process crashing with Event ID 1000 in Application... | Agent crashes can be misleading - often caused by underlying... | 1) Collect MSRD-Collect and check Event ID 1000s. 2) First v... |
-| Azure AD joined Windows 11 AVD VMs: users get 'The sign-in m... | AVD VMs deployed via Intune never got into managed state. In... | Ensure machines are successfully provisioned and managed in ... |
-| Users trying to login to Azure AD VMs get error: "The sign-i... | AVD VMs deployed using Intune had broken settings. Provision... | Engage internal Intune team. Ensure machines are successfull... |
-| Error SubscriptionNotRegisteredForFeature when creating Publ... | Subscription not registered for Microsoft.Network/AllowBring... | 1. Register subscription for AllowBringYourOwnPublicIpAddres... |
+| Cloud PC VM fails to boot or stuck on restarting | Azure Host level changes - VMs running in certain Cluster or Host vers... | Engage RDOS DRI (OCE) via IcM to capture memory dump. Get NodeId/Conta... |
+| AccessDenied error when performing Inspect IaaS Disk log collection in... | VM not pinned to the DfM case in Azure Support Center | Pin the VM to the case using Resource Explorer (Step 6 in ASC workflow... |
+| Windows 10/11 Enterprise multi-session OS on AVD VM gets downgraded to... | The VM gets activated/reactivated by a customer custom KMS server usin... | 1) Confirm the customer is using their own KMS server. 2) The only sup... |
+| AVD agent process crashing with Event ID 1000 in Application logs. Pro... | Agent crashes can be misleading - often caused by underlying INVALID_R... | 1) Collect MSRD-Collect and check Event ID 1000s. 2) First verify NOT ... |
+| Application crash or hang inside Cloud PC or AVD session host | Various application-level issues in guest OS | Ask user to collect User-Mode Dump via Windows Error Reporting (WER) o... |
+| Error SubscriptionNotRegisteredForFeature when creating Public IP Addr... | Subscription not registered for Microsoft.Network/AllowBringYourOwnPub... | 1. Register subscription for AllowBringYourOwnPublicIpAddress feature ... |
+| Azure AD joined Windows 11 AVD VMs: users get 'The sign-in method you'... | AVD VMs deployed via Intune never got into managed state. Intune compl... | Ensure machines are successfully provisioned and managed in Intune. On... |
+| Users trying to login to Azure AD VMs get error: "The sign-in method y... | AVD VMs deployed using Intune had broken settings. Provisioned machine... | Engage internal Intune team. Ensure machines are successfully provisio... |
 
 ### Phase 2: Detailed Investigation
 
-#### Assist 365 - How to Request Access
-> Source: [ado-wiki-assist-365-request-access.md](guides/drafts/ado-wiki-assist-365-request-access.md)
+#### Entry 1: Cloud PC VM fails to boot or stuck on restarting
+> Source: ADO Wiki | ID: avd-ado-wiki-321 | Score: 8.0
 
-1. Login to physical or virtual SAW
+**Symptom**: Cloud PC VM fails to boot or stuck on restarting
 
-#### Assist 365 - How to Use
-> Source: [ado-wiki-assist365-usage.md](guides/drafts/ado-wiki-assist365-usage.md)
+**Root Cause**: Azure Host level changes - VMs running in certain Cluster or Host version may hit boot issue
 
-Request access first (see Assist 365 access request guide).
+**Solution**: Engage RDOS DRI (OCE) via IcM to capture memory dump. Get NodeId/ContainerId/VMId from CPCD Tool or AzureCM.LogContainerSnapshot. AVD can use Serial Console first. Previous FC dump method unavailable since May 2023.
 
-#### CSS - SaaF - CAT Collaboration and Escalation Flows
-> Source: [ado-wiki-css-saaf-cat-collaboration-escalation-flows.md](guides/drafts/ado-wiki-css-saaf-cat-collaboration-escalation-flows.md)
+> 21V Mooncake: Applicable
 
-The CSS (Customer Service & Support) team focuses on providing exceptional support and service to customers.
+#### Entry 2: AccessDenied error when performing Inspect IaaS Disk log col...
+> Source: ADO Wiki | ID: avd-ado-wiki-428 | Score: 8.0
 
-#### Escalation Workflow for Service Engineers, W365 Rangers, and SaaF
-> Source: [ado-wiki-escalation-workflow-w365.md](guides/drafts/ado-wiki-escalation-workflow-w365.md)
+**Symptom**: AccessDenied error when performing Inspect IaaS Disk log collection in ASC for Windows 365 Cloud PC
 
-2. Engineer assigned, contacts customer to scope issue
+**Root Cause**: VM not pinned to the DfM case in Azure Support Center
 
-#### Microsoft has a clear rule when it comes to customers requesting assistance with scripts
-> Source: [ado-wiki-extra-goodies-scripts-powershell-python.md](guides/drafts/ado-wiki-extra-goodies-scripts-powershell-python.md)
+**Solution**: Pin the VM to the case using Resource Explorer (Step 6 in ASC workflow) and refresh the entire page
 
-Support for building and fixing scripts is not in scope!
+> 21V Mooncake: Applicable
 
-#### MSRD-Collect (Microsoft Remote Desktop Collect)
-> Source: [ado-wiki-msrd-collect.md](guides/drafts/ado-wiki-msrd-collect.md)
+#### Entry 3: Windows 10/11 Enterprise multi-session OS on AVD VM gets dow...
+> Source: ADO Wiki | ID: avd-ado-wiki-b-r4-003 | Score: 8.0
 
-PowerShell script for collecting diagnostic data for AVD, RDS, and Windows 365 Cloud PC troubleshooting.
+**Symptom**: Windows 10/11 Enterprise multi-session OS on AVD VM gets downgraded to Enterprise single session (or other editions). Customer is using a custom KMS server.
 
-#### Public IP Addresses
-> Source: [ado-wiki-sfi-compliance.md](guides/drafts/ado-wiki-sfi-compliance.md)
+**Root Cause**: The VM gets activated/reactivated by a customer custom KMS server using an activation key for single session OS, which overrides the multi-session edition. Windows Enterprise multi-session must be activated by Azure KMS only.
 
-In May 2024, Microsoft CEO Satya Nadella made security the company's top priority, with the Secure Future Initiative (SFI) highlighted as the way we will drive progress toward greater security and res
+**Solution**: 1) Confirm the customer is using their own KMS server. 2) The only supported fix is to redeploy the VM and let it activate via Azure KMS (using activation keys to re-upgrade is NOT supported). 3) Collect MSRD-Collect data with Activation scenario. 4) Review MSRD-Diag to check Azure KMS reachability and custom KMS configuration. 5) Investigate and remove the root cause (custom KMS) to prevent recurrence after redeploy.
 
-#### How to Share Customer Data with CPC PG
-> Source: [ado-wiki-share-customer-data-with-pg.md](guides/drafts/ado-wiki-share-customer-data-with-pg.md)
+> 21V Mooncake: Applicable
 
-- Add PII into ICM (email, UPN, etc.)
+#### Entry 4: AVD agent process crashing with Event ID 1000 in Application...
+> Source: ADO Wiki | ID: avd-ado-wiki-b-r6-004 | Score: 8.0
 
-#### General Steps to get VM OS Dump from Azure Host (Deprecated)
-> Source: [ado-wiki-vm-os-dump-from-azure-host.md](guides/drafts/ado-wiki-vm-os-dump-from-azure-host.md)
+**Symptom**: AVD agent process crashing with Event ID 1000 in Application logs. Processes affected: Winlogon, TermServ, RdAgentBootLoader, RdpInit, RdpShell, Explorer, Appx
 
-CPC VM encounters bootup issue and customer requests RCA.
+**Root Cause**: Agent crashes can be misleading - often caused by underlying INVALID_REGISTRATION_TOKEN or NAME_ALREADY_REGISTERED issues which generate Event ID 1000 crash events. If neither applies, the crash requires PG investigation via process dump
 
-#### CSS MCAPS Subscription Lab (W365)
-> Source: [ado-wiki-w365-css-mcaps-subscription-lab.md](guides/drafts/ado-wiki-w365-css-mcaps-subscription-lab.md)
+**Solution**: 1) Collect MSRD-Collect and check Event ID 1000s. 2) First verify NOT hitting INVALID_REGISTRATION_TOKEN or NAME_ALREADY_REGISTERED (these generate misleading crash events). 3) Use Kusto: RDPCoreTSEventLog where ProviderName=='LSM' and Message startswith 'szOutput="ERR::RCM process exit' to find crash events. 4) If actual crash, configure procdump to capture process dump when agent crashes, then create ICM for PG review
 
-## CSS Azure Subscription Management
+> 21V Mooncake: Applicable
 
-#### W365 Lab using Visual Studio (FTE) Benefit Subscription
-> Source: [ado-wiki-w365-lab-visual-studio-subscription.md](guides/drafts/ado-wiki-w365-lab-visual-studio-subscription.md)
+#### Entry 5: Application crash or hang inside Cloud PC or AVD session hos...
+> Source: ADO Wiki | ID: avd-ado-wiki-322 | Score: 8.0
 
-Guide for setting up a Windows 365 test lab using Microsoft FTE Visual Studio Enterprise subscription ($150/month Azure credit).
+**Symptom**: Application crash or hang inside Cloud PC or AVD session host
 
-#### SaaF CRI Review Process
-> Source: [ado-wiki-w365-saaf-cri-review-process.md](guides/drafts/ado-wiki-w365-saaf-cri-review-process.md)
+**Root Cause**: Various application-level issues in guest OS
 
-The WCX SaaF team performs a monthly review of ICM escalations (CRIs) to determine insights:
+**Solution**: Ask user to collect User-Mode Dump via Windows Error Reporting (WER) or Task Manager. Share via DTM. AVD can also use Diagnostic Settings > Crash Dumps. Fleet Diagnostic only for 1P VMs.
 
-*Contains 4 KQL query template(s)*
+> 21V Mooncake: Applicable
 
-#### Windows Error Dump Collection
-> Source: [ado-wiki-windows-error-dump.md](guides/drafts/ado-wiki-windows-error-dump.md)
+#### Entry 6: Error SubscriptionNotRegisteredForFeature when creating Publ...
+> Source: ADO Wiki | ID: avd-ado-wiki-366 | Score: 6.5
 
-1. Create registry key: `HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps`
+**Symptom**: Error SubscriptionNotRegisteredForFeature when creating Public IP Address without registering AllowBringYourOwnPublicIpAddress feature for SFI compliance
 
-#### Windows Performance Recorder (WPR) Logs Collection
-> Source: [ado-wiki-wpr-logs-collection.md](guides/drafts/ado-wiki-wpr-logs-collection.md)
+**Root Cause**: Subscription not registered for Microsoft.Network/AllowBringYourOwnPublicIpAddress feature required by SFI baseline for IP tagging
 
-1. Download the Windows ADK from https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk
+**Solution**: 1. Register subscription for AllowBringYourOwnPublicIpAddress feature via SAW/AME account. 2. Verify with Get-AzProviderFeature. 3. Create IpTag with New-AzPublicIpTag -IpTagType FirstPartyUsage -Tag /Unprivileged. 4. Create IP with New-AzPublicIpAddress including -IpTag parameter
 
-#### AVD Troubleshooting Overview & Escalation Tracks
-> Source: [mslearn-setup-overview-escalation.md](guides/drafts/mslearn-setup-overview-escalation.md)
+> 21V Mooncake: Not verified
 
-> Source: [Troubleshooting overview, feedback, and support for Azure Virtual Desktop](https://learn.microsoft.com/en-us/troubleshoot/azure/virtual-desktop/troubleshoot-set-up-overview)
+#### Entry 7: Azure AD joined Windows 11 AVD VMs: users get 'The sign-in m...
+> Source: ContentIdea | ID: avd-contentidea-kb-068 | Score: 6.5
 
-### Key KQL Queries
+**Symptom**: Azure AD joined Windows 11 AVD VMs: users get 'The sign-in method you're trying to use isn't allowed'. Most users cannot login, only few can.
 
-**Query 1:**
-```kql
-cluster('cpcsre.eastus.kusto.windows.net').database('SaaF').fn_GetW365SupportCase()
-| where CreatedDateTime >= datetime(2023-07-01 00:00) and CreatedDateTime < datetime(2023-08-01 00:00)
-| where InitialResponseQueueKey != 3447
-| distinct CaseNumber
-| count
-```
+**Root Cause**: AVD VMs deployed via Intune never got into managed state. Intune compliance shows 'See ConfigMgr' instead of 'Compliant' for non-working machines.
 
-**Query 2:**
-```kql
-cluster('icmcluster.kusto.windows.net').database('IcMDataWarehouse').Incidents
-| where OwningTenantId == 27011 and OwningTeamId == 78675
-| where CreateDate >= datetime(2023-08-01 00:00) and CreateDate < datetime(2023-09-01 00:00)
-```
+**Solution**: Ensure machines are successfully provisioned and managed in Intune. Once machines reach managed state with proper compliance status, login issue resolves.
 
-**Query 3:**
-```kql
-let icmlist = cluster('icmcluster.kusto.windows.net').database('IcMDataWarehouse').Incidents
-    | where OwningTenantId == 27011 and OwningTeamId == 78675
-    | where CreateDate >= datetime(2023-08-01 00:00) and CreateDate < datetime(2023-09-01 00:00)
-    | distinct IncidentId;
-cluster('icmcluster.kusto.windows.net').database('IcmDataWarehouse').IncidentsSnapshotV2()
-| where IncidentId in (icmlist)
-| extend Status = iff(OwningTeamName !contains "jarnold", "Transferred", Status)
-| summarize count
-```
+> 21V Mooncake: Applicable
 
-**Query 4:**
-```kql
-let icmlist = cluster('icmcluster.kusto.windows.net').database('IcMDataWarehouse').Incidents
-    | where OwningTenantId == 27011 and OwningTeamId == 78675
-    | where CreateDate >= datetime(2023-08-01 00:00) and CreateDate < datetime(2023-09-01 00:00)
-    | distinct IncidentId;
-cluster('icmcluster.kusto.windows.net').database('IcmDataWarehouse').IncidentsSnapshotV2()
-| where IncidentId in (icmlist)
-| where OwningTeamName !contains "jarnold"
-| extend OwningTeamName = case(
-    OwningTeamName star
-```
+#### Entry 8: Users trying to login to Azure AD VMs get error: "The sign-i...
+> Source: ContentIdea | ID: avd-contentidea-kb-073 | Score: 6.5
 
----
+**Symptom**: Users trying to login to Azure AD VMs get error: "The sign-in method you're trying to use isn't allowed." Most users unable to login, few users can.
 
-## Known Issues Reference
+**Root Cause**: AVD VMs deployed using Intune had broken settings. Provisioned machines never got into a managed state with Intune. Compliance showed 'See ConfigMgr' for non-working machines vs 'Compliant' for working ones.
 
-| # | Symptom | Root Cause | Solution | Score | Source |
-|---|---------|------------|----------|-------|--------|
-| 1 | Cloud PC VM fails to boot or stuck on restarting | Azure Host level changes - VMs running in certain Cluster or Host version may hi... | Engage RDOS DRI (OCE) via IcM to capture memory dump. Get NodeId/ContainerId/VMI... | 🔵 7.5 | ADO Wiki |
-| 2 | AccessDenied error when performing Inspect IaaS Disk log collection in ASC for W... | VM not pinned to the DfM case in Azure Support Center | Pin the VM to the case using Resource Explorer (Step 6 in ASC workflow) and refr... | 🔵 7.5 | ADO Wiki |
-| 3 | Windows 10/11 Enterprise multi-session OS on AVD VM gets downgraded to Enterpris... | The VM gets activated/reactivated by a customer custom KMS server using an activ... | 1) Confirm the customer is using their own KMS server. 2) The only supported fix... | 🔵 7.5 | ADO Wiki |
-| 4 | AVD agent process crashing with Event ID 1000 in Application logs. Processes aff... | Agent crashes can be misleading - often caused by underlying INVALID_REGISTRATIO... | 1) Collect MSRD-Collect and check Event ID 1000s. 2) First verify NOT hitting IN... | 🔵 7.5 | ADO Wiki |
-| 5 | Azure AD joined Windows 11 AVD VMs: users get 'The sign-in method you're trying ... | AVD VMs deployed via Intune never got into managed state. Intune compliance show... | Ensure machines are successfully provisioned and managed in Intune. Once machine... | 🔵 6.5 | KB |
-| 6 | Users trying to login to Azure AD VMs get error: "The sign-in method you're tryi... | AVD VMs deployed using Intune had broken settings. Provisioned machines never go... | Engage internal Intune team. Ensure machines are successfully provisioned in Int... | 🔵 6.5 | KB |
-| 7 | Error SubscriptionNotRegisteredForFeature when creating Public IP Address withou... | Subscription not registered for Microsoft.Network/AllowBringYourOwnPublicIpAddre... | 1. Register subscription for AllowBringYourOwnPublicIpAddress feature via SAW/AM... | 🔵 6.0 | ADO Wiki |
+**Solution**: Engage internal Intune team. Ensure machines are successfully provisioned in Intune managed state. Once Intune provisioning completed, the issue was resolved.
+
+> 21V Mooncake: Applicable
+
+### Phase 3: Kusto Diagnostics
+
+> Refer to Kusto skill references for relevant queries.

@@ -45,4 +45,4 @@
 | [Sovereign Cloud 工具与访问](sovereign-cloud-tooling.md) | 📋 fusion | 0 | corp-access, dfm-access, dsts, dsts-enforcement | 8 | medium |
 | [工程师内部工具 (DTM/rCRI/ICM)](support-internal-tooling.md) | 📋 fusion | 0 | access-denied, accesscheck, asc, azure-subscription | 10 | high |
 
-Last updated: 2026-04-07
+Last updated: 2026-04-18

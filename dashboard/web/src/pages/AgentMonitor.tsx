@@ -1,15 +1,17 @@
 /**
- * AgentMonitor — Agent/Session/Cron 监控页
+ * AgentMonitor — Agent/Session 监控页
  *
  * Unified view of all session types: case, implement, verify, track-creation.
  * Two-panel "Active Sessions" layout with inline sub-agent tree.
+ * Cron Jobs management has been moved to AutomationsPage.
  */
 import { Card } from '../components/common/Card'
 import { Badge } from '../components/common/Badge'
 import { Loading, EmptyState } from '../components/common/Loading'
-import { useAgents, useCronJobs, useUnifiedSessions, useCaseMessages, useTriggers, useDeleteTrigger, useRunTrigger, useCancelTrigger, useToggleTrigger } from '../api/hooks'
+import { useAgents, useUnifiedSessions, useCaseMessages, useCancelTrigger, useCronMessages, usePatrolMessages, useRunMessages } from '../api/hooks'
 import type { UnifiedSession } from '../api/hooks'
 import { useCaseSessionStore, type CaseSessionMessage } from '../stores/caseSessionStore'
+import { usePatrolAgentStore, type PatrolMainMessage } from '../stores/patrolAgentStore'
 import { useIssueTrackStore, EMPTY_TRACK_MESSAGES, EMPTY_IMPLEMENT_MESSAGES, EMPTY_VERIFY_MESSAGES } from '../stores/issueTrackStore'
 import type { IssueTrackMessage, ImplementMessage, VerifyMessage } from '../stores/issueTrackStore'
 import { useSubAgentStore, type SubAgent } from '../stores/subAgentStore'
@@ -17,12 +19,12 @@ import { SessionMessageList } from '../components/session/SessionMessageList'
 import { QueueStatusIndicator } from '../components/session/QueueStatusIndicator'
 import { StepQuestionForm } from '../components/session/StepQuestionForm'
 import { useQueryClient } from '@tanstack/react-query'
-import { RefreshCw, ChevronDown, ChevronRight, Filter, Send, Square, Plus, Trash2, Play, Loader2, XCircle, CheckCircle2, AlertCircle, Trash, Pencil, Power } from 'lucide-react'
+import { RefreshCw, ChevronDown, ChevronRight, Filter, Send, Square, Loader2, Trash } from 'lucide-react'
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { apiPost, apiDelete } from '../api/client'
-import { CreateTriggerDialog, type TriggerEditData } from '../components/agents/CreateTriggerDialog'
 import { useTriggerRunStore } from '../stores/triggerRunStore'
 import { DaemonStatusCard } from '../components/DaemonStatusCard'
+import { AzProfileCard } from '../components/AzProfileCard'
 
 const EMPTY_MESSAGES: CaseSessionMessage[] = []
 
@@ -34,6 +36,8 @@ const SESSION_TYPE_CONFIG: Record<string, { label: string; icon: string; bg: str
   implement: { label: 'Implement', icon: '🔧', bg: 'var(--accent-purple-dim, var(--accent-blue-dim))', color: 'var(--accent-purple, var(--accent-blue))' },
   verify: { label: 'Verify', icon: '🧪', bg: 'var(--accent-amber-dim)', color: 'var(--accent-amber)' },
   'track-creation': { label: 'Track', icon: '📝', bg: 'var(--accent-teal-dim, var(--accent-green-dim))', color: 'var(--accent-teal, var(--accent-green))' },
+  patrol: { label: 'Patrol', icon: '🔍', bg: 'var(--accent-green-dim)', color: 'var(--accent-green)' },
+  cron: { label: 'Cron', icon: '⏰', bg: 'var(--accent-amber-dim)', color: 'var(--accent-amber)' },
 }
 
 const STATUS_CONFIG: Record<string, { label: string; dotColor: string; animate?: boolean }> = {
@@ -207,7 +211,7 @@ function ImplementSessionDetail({ session }: { session: UnifiedSession }) {
           <SessionMessageList
             messages={messages}
             containerRef={containerRef}
-            maxHeightClass="max-h-[calc(100vh-340px)]"
+            maxHeightClass="max-h-[calc(100vh-220px)]"
           />
         )}
       </div>
@@ -241,7 +245,7 @@ function VerifySessionDetail({ session }: { session: UnifiedSession }) {
           <SessionMessageList
             messages={messages}
             containerRef={containerRef}
-            maxHeightClass="max-h-[calc(100vh-340px)]"
+            maxHeightClass="max-h-[calc(100vh-220px)]"
           />
         )}
       </div>
@@ -275,7 +279,7 @@ function TrackCreationSessionDetail({ session }: { session: UnifiedSession }) {
           <SessionMessageList
             messages={messages}
             containerRef={containerRef}
-            maxHeightClass="max-h-[calc(100vh-340px)]"
+            maxHeightClass="max-h-[calc(100vh-220px)]"
           />
         )}
       </div>
@@ -294,11 +298,13 @@ function CaseSessionDetail({ session }: { session: UnifiedSession }) {
   const pendingQuestion = useCaseSessionStore(s => s.getPendingQuestion(caseNumber))
   const addMessage = useCaseSessionStore(s => s.addMessage)
   const addSessionMessage = useCaseSessionStore(s => s.addSessionMessage)
+  const subAgentHydrate = useSubAgentStore(s => s.hydrate)
   const containerRef = useRef<HTMLDivElement>(null)
   const [chatInput, setChatInput] = useState('')
   const [isSending, setIsSending] = useState(false)
   const [isStopping, setIsStopping] = useState(false)
   const hasRecoveredRef = useRef(false)
+  const hasRecoveredSubAgentsRef = useRef(false)
 
   // Recover persisted messages on first expand
   const { data: recoveredData } = useCaseMessages(caseNumber)
@@ -313,6 +319,38 @@ function CaseSessionDetail({ session }: { session: UnifiedSession }) {
       }
     }
   }, [recoveredData, storeMessages.length, caseNumber, sessionId, addMessage, addSessionMessage])
+
+  // Recover sub-agents from run-messages (session.jsonl + agents/*.log) on refresh
+  // Also recover for 'active' sessions after backend restart (SSE ring buffer is empty)
+  const existingSubAgents = useSubAgentStore(s => s.getByParent(sessionId))
+  const needsSubAgentRecovery = existingSubAgents.length === 0
+  const { data: runData } = useRunMessages(needsSubAgentRecovery ? caseNumber : null)
+  useEffect(() => {
+    if (runData?.subAgents && !hasRecoveredSubAgentsRef.current) {
+      hasRecoveredSubAgentsRef.current = true
+      for (const [taskId, sub] of Object.entries(runData.subAgents as Record<string, any>)) {
+        subAgentHydrate({
+          taskId,
+          agentType: sub.agentType || taskId,
+          source: 'casework',
+          parentSessionId: sessionId,
+          caseNumber,
+          status: sub.status || 'completed',
+          description: sub.description,
+          startedAt: sub.startedAt || '',
+          completedAt: sub.completedAt,
+          summary: sub.summary,
+          usage: sub.usage,
+          messages: (sub.messages || []).map((m: any) => ({
+            type: m.type || 'system',
+            content: m.content || '',
+            toolName: m.toolName,
+            timestamp: m.timestamp || '',
+          })),
+        })
+      }
+    }
+  }, [runData, subAgentHydrate, sessionId, caseNumber])
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -373,7 +411,7 @@ function CaseSessionDetail({ session }: { session: UnifiedSession }) {
           <SessionMessageList
             messages={storeMessages}
             containerRef={containerRef}
-            maxHeightClass="max-h-[calc(100vh-400px)]"
+            maxHeightClass="max-h-[calc(100vh-260px)]"
             groupByStep
           />
         )}
@@ -445,6 +483,7 @@ function CaseSessionDetail({ session }: { session: UnifiedSession }) {
 // ---- Sub-Agent Detail Panel ----
 
 function SubAgentDetailPanel({ agent }: { agent: SubAgent }) {
+  const containerRef = useRef<HTMLDivElement>(null)
   const durationMs = agent.usage?.duration_ms
     || (agent.completedAt && agent.startedAt
       ? new Date(agent.completedAt).getTime() - new Date(agent.startedAt).getTime()
@@ -452,13 +491,72 @@ function SubAgentDetailPanel({ agent }: { agent: SubAgent }) {
         ? Date.now() - new Date(agent.startedAt).getTime()
         : undefined)
 
+  // Check if messages are incomplete (only system/tool-call/completed from main agent's task_progress)
+  const hasDetailedMessages = (agent.messages || []).some(m =>
+    m.type === 'thinking' || m.type === 'response' || m.type === 'tool-result'
+  )
+
+  // If agent has a caseNumber and messages are incomplete, fetch full log from case run
+  const { data: runData } = useRunMessages(
+    (!hasDetailedMessages && agent.caseNumber && agent.status !== 'running') ? agent.caseNumber : null
+  )
+
+  // Convert messages: prefer full log from run, fallback to agent.messages
+  const messages = useMemo((): CaseSessionMessage[] => {
+    // Try to find this agent's full log in runData.subAgents
+    if (runData?.subAgents) {
+      for (const sub of Object.values(runData.subAgents as Record<string, any>)) {
+        if (sub.messages?.length > 0 && sub.messages.some((m: any) => m.type === 'thinking' || m.type === 'response' || m.type === 'tool-result')) {
+          // Match by taskId prefix or agentType
+          const isMatch = sub.taskId === agent.taskId
+            || agent.taskId.startsWith(sub.taskId?.slice(0, 8) || '__none__')
+            || sub.taskId?.startsWith(agent.taskId.slice(0, 8))
+          if (isMatch) {
+            return sub.messages.map((m: any) => ({
+              type: m.type as CaseSessionMessage['type'],
+              content: m.content || '',
+              toolName: m.toolName,
+              timestamp: m.timestamp,
+            }))
+          }
+        }
+      }
+      // No exact match — if there's only one sub-agent with full messages, use it
+      const fullSubs = Object.values(runData.subAgents as Record<string, any>)
+        .filter((s: any) => s.messages?.some((m: any) => m.type === 'thinking' || m.type === 'response'))
+      if (fullSubs.length === 1) {
+        return (fullSubs[0] as any).messages.map((m: any) => ({
+          type: m.type as CaseSessionMessage['type'],
+          content: m.content || '',
+          toolName: m.toolName,
+          timestamp: m.timestamp,
+        }))
+      }
+    }
+
+    // Fallback: use agent.messages from store
+    return (agent.messages || []).map(m => ({
+      type: m.type as CaseSessionMessage['type'],
+      content: m.content,
+      toolName: m.toolName,
+      timestamp: m.timestamp,
+    }))
+  }, [agent.messages, agent.taskId, runData])
+
+  // Auto-scroll on new messages
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollTop = containerRef.current.scrollHeight
+    }
+  }, [messages.length])
+
   return (
-    <div className="space-y-3 h-full overflow-y-auto">
-      {/* Header */}
-      <div className="flex items-center gap-2 flex-wrap">
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* Compact header: type + case + status + duration */}
+      <div className="flex items-center gap-2 flex-wrap px-1 pb-2 flex-shrink-0" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
         <AgentTypeBadge type={agent.agentType} />
         {agent.caseNumber && (
-          <span className="text-sm font-mono" style={{ color: 'var(--text-primary)' }}>{agent.caseNumber}</span>
+          <span className="text-xs font-mono" style={{ color: 'var(--text-primary)' }}>{agent.caseNumber}</span>
         )}
         <Badge
           variant={agent.status === 'running' ? 'primary' : agent.status === 'completed' ? 'success' : agent.status === 'failed' ? 'danger' : 'secondary'}
@@ -466,58 +564,26 @@ function SubAgentDetailPanel({ agent }: { agent: SubAgent }) {
         >
           {agent.status}
         </Badge>
+        {durationMs !== undefined && (
+          <span className="text-[10px] font-mono ml-auto" style={{ color: 'var(--text-tertiary)' }}>
+            {formatDuration(durationMs)}
+          </span>
+        )}
+        {agent.usage?.total_tokens && (
+          <span className="text-[10px] font-mono" style={{ color: 'var(--text-tertiary)' }}>
+            {agent.usage.total_tokens.toLocaleString()} tok
+          </span>
+        )}
       </div>
 
-      {/* Description */}
-      {agent.description && (
-        <p className="text-xs leading-relaxed line-clamp-3" style={{ color: 'var(--text-secondary)' }}>
-          {agent.description}
-        </p>
-      )}
-
-      {/* Summary */}
-      {agent.summary && (
-        <div>
-          <span className="text-[10px] font-semibold uppercase" style={{ color: 'var(--text-tertiary)' }}>Summary</span>
-          <p className="text-xs mt-0.5 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-            {agent.summary}
+      {/* Message stream */}
+      <div ref={containerRef} className="flex-1 overflow-y-auto pt-2" style={{ maxHeight: 'calc(100vh - 300px)' }}>
+        {messages.length === 0 ? (
+          <p className="text-xs py-2" style={{ color: 'var(--text-tertiary)' }}>
+            {agent.status === 'running' ? 'Waiting for events...' : 'No events recorded'}
           </p>
-        </div>
-      )}
-
-      {/* Usage stats */}
-      <div className="grid grid-cols-3 gap-2 text-xs">
-        <div>
-          <span style={{ color: 'var(--text-tertiary)' }}>Duration</span>
-          <p style={{ color: 'var(--text-secondary)' }}>{durationMs ? formatDuration(durationMs) : '-'}</p>
-        </div>
-        <div>
-          <span style={{ color: 'var(--text-tertiary)' }}>Tokens</span>
-          <p style={{ color: 'var(--text-secondary)' }}>
-            {agent.usage?.total_tokens ? agent.usage.total_tokens.toLocaleString() : '-'}
-          </p>
-        </div>
-        <div>
-          <span style={{ color: 'var(--text-tertiary)' }}>Tool Uses</span>
-          <p style={{ color: 'var(--text-secondary)' }}>{agent.usage?.tool_uses ?? '-'}</p>
-        </div>
-      </div>
-
-      {/* Last tool */}
-      {agent.lastToolName && (
-        <div>
-          <span className="text-[10px] font-semibold uppercase" style={{ color: 'var(--text-tertiary)' }}>Last Tool</span>
-          <p className="text-xs mt-0.5 font-mono" style={{ color: 'var(--text-secondary)' }}>
-            {agent.lastToolName}
-          </p>
-        </div>
-      )}
-
-      {/* Timestamps */}
-      <div className="text-[10px] space-y-0.5" style={{ color: 'var(--text-tertiary)' }}>
-        <div>Started: {new Date(agent.startedAt).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })}</div>
-        {agent.completedAt && (
-          <div>Completed: {new Date(agent.completedAt).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })}</div>
+        ) : (
+          <SessionMessageList messages={messages} maxHeightClass="" />
         )}
       </div>
     </div>
@@ -526,12 +592,261 @@ function SubAgentDetailPanel({ agent }: { agent: SubAgent }) {
 
 // ---- Active Sessions Section ----
 
+/** Convert PatrolMainMessage kind to CaseSessionMessage type */
+function patrolKindToType(kind: string): CaseSessionMessage['type'] {
+  switch (kind) {
+    case 'tool-call': return 'tool-call'
+    case 'tool-result': return 'tool-result'
+    case 'response': return 'response'
+    default: return 'thinking'
+  }
+}
+
+/** Patrol session detail — reads live SSE from patrolAgentStore + recovers from API on refresh */
+function PatrolSessionDetail({ session }: { session: UnifiedSession }) {
+  const mainMessages = usePatrolAgentStore(s => s.mainMessages)
+  const storeSessionId = usePatrolAgentStore(s => s.sessionId)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const hasRecoveredRef = useRef(false)
+  const subAgentHydrate = useSubAgentStore(s => s.hydrate)
+
+  const isActive = session.status === 'active'
+  const logFile = (session.metadata?.logFile as string) || null
+  const isRecovered = !!session.metadata?.recovered
+
+  // Recovery: for recovered sessions, fetch by logFile; for live, use store or latest
+  // Also trigger recovery when store messages belong to a different session
+  const sessionIdMismatch = !!(storeSessionId && session.id && storeSessionId !== session.id)
+  const needsRecovery = isRecovered || mainMessages.length === 0 || sessionIdMismatch
+  const { data: recoveredData } = usePatrolMessages(logFile, needsRecovery)
+
+  // Hydrate subAgentStore from recovered sub-agent data (with full messages)
+  useEffect(() => {
+    if (recoveredData?.subAgents && !hasRecoveredRef.current) {
+      hasRecoveredRef.current = true
+      for (const [taskId, sub] of Object.entries(recoveredData.subAgents as Record<string, any>)) {
+        subAgentHydrate({
+          taskId,
+          agentType: sub.agentType || taskId,
+          source: 'patrol',
+          parentSessionId: session.id,
+          caseNumber: sub.caseNumber,
+          status: sub.status || 'completed',
+          description: sub.description,
+          startedAt: sub.startedAt || '',
+          completedAt: sub.completedAt,
+          summary: sub.summary,
+          usage: sub.usage,
+          messages: (sub.messages || []).map((m: any) => ({
+            type: m.type || 'system',
+            content: m.content || '',
+            toolName: m.toolName,
+            timestamp: m.timestamp || '',
+          })),
+        })
+      }
+    }
+  }, [recoveredData, subAgentHydrate, session.id])
+
+  // Convert store messages or recovered messages into CaseSessionMessage[]
+  const messages = useMemo((): CaseSessionMessage[] => {
+    // For live (non-recovered) sessions, prefer in-memory store —
+    // but ONLY if store messages belong to this session (sessionId match)
+    const sessionIdMatch = !session.id || !storeSessionId || storeSessionId === session.id
+    if (!isRecovered && mainMessages.length > 0 && sessionIdMatch) {
+      return mainMessages.map(m => ({
+        type: patrolKindToType(m.kind),
+        content: m.content || '',
+        toolName: m.toolName,
+        timestamp: m.timestamp,
+      }))
+    }
+
+    // Recovered or empty store → use API data
+    if (recoveredData?.messages) {
+      return recoveredData.messages.map((m: any) => ({
+        type: patrolKindToType(m.kind || m.type),
+        content: m.content || '',
+        toolName: m.toolName,
+        timestamp: m.timestamp,
+      }))
+    }
+
+    return []
+  }, [isRecovered, mainMessages, recoveredData, storeSessionId, session.id])
+
+  // Client-side elapsed timer
+  const startedAt = session.startedAt
+  const [localElapsed, setLocalElapsed] = useState(0)
+
+  useEffect(() => {
+    if (!isActive || !startedAt) {
+      setLocalElapsed(0)
+      return
+    }
+    setLocalElapsed(Date.now() - new Date(startedAt).getTime())
+    const timer = setInterval(() => {
+      setLocalElapsed(Date.now() - new Date(startedAt).getTime())
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [isActive, startedAt])
+
+  // Auto-scroll
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollTop = containerRef.current.scrollHeight
+    }
+  }, [messages.length])
+
+  return (
+    <div className="rounded-lg overflow-hidden h-full flex flex-col" style={{ border: '1px solid var(--border-subtle)' }}>
+      {/* Header */}
+      <div className="flex items-center justify-between px-3 py-1.5" style={{
+        background: isActive ? 'var(--accent-green-dim)' : 'var(--bg-surface)',
+        borderBottom: '1px solid var(--border-subtle)',
+      }}>
+        <span className="text-xs font-medium flex items-center gap-1.5" style={{ color: 'var(--accent-green)' }}>
+          {isActive && <Loader2 className="w-3 h-3 animate-spin" />}
+          🔍 {session.intent || 'Patrol'}
+          {localElapsed > 0 ? ` (${Math.round(localElapsed / 1000)}s)` : ''}
+        </span>
+      </div>
+
+      {/* Message stream */}
+      <div ref={containerRef} className="flex-1 overflow-y-auto px-3 py-2" style={{ maxHeight: 'calc(100vh - 240px)' }}>
+        {messages.length === 0 ? (
+          <p className="text-xs py-2" style={{ color: 'var(--text-tertiary)' }}>
+            {isActive ? 'Waiting for messages...' : 'No messages recorded'}
+          </p>
+        ) : (
+          <SessionMessageList
+            messages={messages}
+            maxHeightClass=""
+          />
+        )}
+      </div>
+    </div>
+  )
+}
+
+/** Cron session detail — reads live output from triggerRunStore, recovers from API on refresh */
+function CronSessionDetail({ session }: { session: UnifiedSession }) {
+  const triggerId = session.context
+  const triggerRun = useTriggerRunStore(s => s.runs[triggerId])
+  const containerRef = useRef<HTMLDivElement>(null)
+  const hasRecoveredRef = useRef(false)
+  const cancelTriggerMut = useCancelTrigger()
+
+  // Client-side elapsed timer — ticks every second while running,
+  // independent of SSE events (fixes frozen timer during long Bash commands)
+  const isRunning = triggerRun?.status === 'running'
+  const startedAt = triggerRun?.startedAt
+  const [localElapsed, setLocalElapsed] = useState(0)
+
+  useEffect(() => {
+    if (!isRunning || !startedAt) {
+      // Show final elapsedMs from server when not running
+      setLocalElapsed(triggerRun?.elapsedMs || 0)
+      return
+    }
+    // Immediately compute current elapsed
+    setLocalElapsed(Date.now() - startedAt)
+    const timer = setInterval(() => {
+      setLocalElapsed(Date.now() - startedAt)
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [isRunning, startedAt, triggerRun?.elapsedMs])
+
+  // Recovery: fetch messages from backend if triggerRunStore is empty (page refresh scenario)
+  const { data: recoveredData } = useCronMessages(
+    triggerRun ? null : triggerId  // only fetch if store is empty
+  )
+
+  // Convert triggerRun.messages or recovered messages into CaseSessionMessage[] for rendering
+  const messages = useMemo((): CaseSessionMessage[] => {
+    // Prefer live structured messages from triggerRunStore
+    if (triggerRun?.messages && triggerRun.messages.length > 0) {
+      return triggerRun.messages
+    }
+
+    // Fallback: recovered messages from getCronMessages() API
+    if (recoveredData?.messages && !hasRecoveredRef.current) {
+      hasRecoveredRef.current = true
+      return recoveredData.messages.map((m: any) => ({
+        type: m.kind === 'tool-call' ? 'tool-call' as const
+          : m.kind === 'tool-result' ? 'tool-result' as const
+          : m.kind === 'response' ? 'response' as const
+          : m.kind?.startsWith('agent-') ? 'system' as const
+          : 'thinking' as const,
+        content: m.content || '',
+        toolName: m.toolName,
+        timestamp: m.timestamp,
+      }))
+    }
+
+    return []
+  }, [triggerRun?.messages, recoveredData])
+
+  const isActive = session.status === 'active'
+
+  // Auto-scroll
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollTop = containerRef.current.scrollHeight
+    }
+  }, [messages.length])
+
+  return (
+    <div className="rounded-lg overflow-hidden h-full flex flex-col" style={{ border: '1px solid var(--border-subtle)' }}>
+      {/* Header */}
+      <div className="flex items-center justify-between px-3 py-1.5" style={{
+        background: isActive ? 'var(--accent-amber-dim)' : 'var(--bg-surface)',
+        borderBottom: '1px solid var(--border-subtle)',
+      }}>
+        <span className="text-xs font-medium flex items-center gap-1.5" style={{ color: 'var(--accent-amber)' }}>
+          {isActive && <Loader2 className="w-3 h-3 animate-spin" />}
+          ⏰ Cron: {session.intent || triggerId}
+          {localElapsed ? ` (${Math.round(localElapsed / 1000)}s)` : ''}
+        </span>
+        {isActive && (
+          <button
+            onClick={() => cancelTriggerMut.mutate(triggerId)}
+            disabled={cancelTriggerMut.isPending}
+            className="flex items-center gap-1 px-2 py-0.5 text-xs rounded transition-colors"
+            style={{ color: 'var(--accent-red)', background: 'var(--accent-red-dim)' }}
+          >
+            <Square className="w-3 h-3" />
+            Cancel
+          </button>
+        )}
+      </div>
+
+      {/* Message stream */}
+      <div className="px-3 pt-2 flex-1 min-h-0">
+        {messages.length === 0 ? (
+          <p className="text-xs py-2" style={{ color: 'var(--text-tertiary)' }}>
+            {isActive ? 'Waiting for output...' : 'No messages recorded'}
+          </p>
+        ) : (
+          <SessionMessageList
+            messages={messages}
+            containerRef={containerRef}
+            maxHeightClass="max-h-[calc(100vh-260px)]"
+          />
+        )}
+      </div>
+    </div>
+  )
+}
+
 /** Renders the appropriate session detail based on session type */
 function SessionDetailByType({ session }: { session: UnifiedSession }) {
   if (session.type === 'case') return <CaseSessionDetail session={session} />
+  if (session.type === 'patrol') return <PatrolSessionDetail session={session} />
   if (session.type === 'implement') return <ImplementSessionDetail session={session} />
   if (session.type === 'verify') return <VerifySessionDetail session={session} />
   if (session.type === 'track-creation') return <TrackCreationSessionDetail session={session} />
+  if (session.type === 'cron') return <CronSessionDetail session={session} />
 
   // Unknown type: simple status
   return (
@@ -562,7 +877,7 @@ function MainAgentDetailPanel({
 }) {
   if (!session) {
     return (
-      <div className="flex items-center justify-center h-full min-h-[200px] rounded-lg" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+      <div className="flex items-center justify-center h-full min-h-[300px] rounded-lg" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
         <span className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
           Select a main agent to view details
         </span>
@@ -636,7 +951,7 @@ function MainAgentRow({
     <div>
       {/* Session row */}
       <button
-        onClick={onSelectMain}
+        onClick={() => { onSelectMain(); if (subAgents.length > 0) onToggleSubList() }}
         className="flex items-center justify-between py-2.5 px-3 w-full text-left transition-colors"
         style={{
           background: isSelected ? 'var(--bg-active)' : 'transparent',
@@ -646,20 +961,37 @@ function MainAgentRow({
         onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = isSelected ? 'var(--bg-active)' : 'transparent' }}
       >
         <div className="flex items-center gap-2.5 min-w-0 flex-1">
+          {/* Expand chevron (replaces sub-agents button) — doubles as click-to-select when no subs */}
+          {subAgents.length > 0 ? (
+            <span className="flex-shrink-0" style={{ color: runningSubCount > 0 ? 'var(--accent-blue)' : 'var(--text-tertiary)' }}>
+              {isSubExpanded
+                ? <ChevronDown className="w-3.5 h-3.5" />
+                : <ChevronRight className="w-3.5 h-3.5" />
+              }
+            </span>
+          ) : (
+            <span className="w-3.5 flex-shrink-0" /> /* spacer for alignment */
+          )}
           <StatusDot status={session.status} />
           <SessionTypeBadge type={session.type} />
-          <span
-            className="text-sm font-mono truncate"
-            style={{ color: typeConfig.color }}
-          >
-            {session.context}
-          </span>
-          <span
-            className="text-xs truncate max-w-[200px] hidden lg:inline"
-            style={{ color: 'var(--text-tertiary)' }}
-          >
-            {session.intent}
-          </span>
+          {/* Context: skip if same as type label (e.g. patrol/patrol) */}
+          {session.context !== session.type && (
+            <span
+              className="text-sm font-mono truncate"
+              style={{ color: typeConfig.color }}
+            >
+              {session.context}
+            </span>
+          )}
+          {/* Intent: skip if redundant with type (e.g. "Patrol run" when badge says Patrol) */}
+          {session.intent && !session.intent.toLowerCase().startsWith(session.type) && (
+            <span
+              className="text-xs truncate max-w-[200px] hidden lg:inline"
+              style={{ color: 'var(--text-tertiary)' }}
+            >
+              {session.intent}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2 shrink-0 ml-2">
           {/* Type-specific metadata badges */}
@@ -681,27 +1013,17 @@ function MainAgentRow({
               ⏳ Awaiting input
             </span>
           )}
-          {/* Sub-agents toggle */}
+          {/* Sub-agent count badge (compact, no toggle — chevron is on the left) */}
           {subAgents.length > 0 && (
             <span
-              role="button"
-              onClick={(e) => { e.stopPropagation(); onToggleSubList() }}
-              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium cursor-pointer transition-colors"
+              className="text-[10px] font-mono px-1.5 py-0.5 rounded"
               style={{
                 background: 'var(--bg-inset)',
                 color: runningSubCount > 0 ? 'var(--accent-blue)' : 'var(--text-tertiary)',
               }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-inset)' }}
-              title={`${subAgents.length} sub-agent(s)`}
             >
-              {isSubExpanded
-                ? <ChevronDown className="w-3 h-3" />
-                : <ChevronRight className="w-3 h-3" />
-              }
-              sub-agents ({subAgents.length})
-              {runningSubCount > 0 && (
-                <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--accent-blue)' }} />
+              {subAgents.length} sub{runningSubCount > 0 && (
+                <span className="inline-block w-1.5 h-1.5 rounded-full animate-pulse ml-1" style={{ background: 'var(--accent-blue)' }} />
               )}
             </span>
           )}
@@ -810,10 +1132,23 @@ function MainAgentsSection({
     }
     // Sort each group by startedAt desc
     for (const key of Object.keys(map)) {
-      map[key].sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime())
+      map[key].sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime())
     }
     return map
   }, [allSubAgents])
+
+  /** Lookup sub-agents for a session.
+   *  For patrol sessions, sub-agents use parentSessionId='patrol' (sentinel),
+   *  so also check session.context as fallback. */
+  const getSubAgentsForSession = (session: UnifiedSession): SubAgent[] => {
+    const byId = subAgentsBySession[session.id]
+    if (byId && byId.length > 0) return byId
+    // Fallback: match by context (covers patrol sentinel and similar cases)
+    if (session.context && session.context !== session.id) {
+      return subAgentsBySession[session.context] || []
+    }
+    return []
+  }
 
   // Split & sort sessions: active first (sorted by lastActivityAt desc), completed at bottom
   const activeSessions = useMemo(() =>
@@ -901,17 +1236,17 @@ function MainAgentsSection({
       ) : sessions.length === 0 ? (
         <EmptyState icon="🧠" title="No sessions" description={allSessions.length > 0 ? 'No sessions match current filters' : 'No agent sessions recorded yet'} />
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-4" style={{ minHeight: '300px' }}>
+        <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-4" style={{ minHeight: 'calc(100vh - 280px)' }}>
           {/* Left panel: scrollable agent list */}
           <Card padding="none">
-            <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 340px)' }}>
+            <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 220px)' }}>
               {/* Active/Recent sessions */}
               {activeSessions.map((session) => (
                 <MainAgentRow
                   key={session.id}
                   session={session}
                   isSelected={selectedMainId === session.id}
-                  subAgents={subAgentsBySession[session.id] || []}
+                  subAgents={getSubAgentsForSession(session)}
                   isSubExpanded={expandedSubAgents.has(session.id)}
                   selectedSubId={selectedSubId}
                   onSelectMain={() => handleSelectMain(session.id)}
@@ -955,7 +1290,7 @@ function MainAgentsSection({
                       key={session.id}
                       session={session}
                       isSelected={selectedMainId === session.id}
-                      subAgents={subAgentsBySession[session.id] || []}
+                      subAgents={getSubAgentsForSession(session)}
                       isSubExpanded={expandedSubAgents.has(session.id)}
                       selectedSubId={selectedSubId}
                       onSelectMain={() => handleSelectMain(session.id)}
@@ -977,185 +1312,10 @@ function MainAgentsSection({
   )
 }
 
-// ---- Cron Job Detail Panel ----
-
-function CronJobDetailPanel({ job, triggerRun, onDismissRun }: {
-  job: any | null
-  triggerRun?: any
-  onDismissRun: () => void
-}) {
-  const isJobRunning = triggerRun?.status === 'running' || job?.running
-  const justFinished = triggerRun && triggerRun.status !== 'running'
-
-  if (!job) {
-    return (
-      <Card>
-        <div className="flex items-center justify-center h-full min-h-[120px]">
-          <span className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
-            Select a job to view details
-          </span>
-        </div>
-      </Card>
-    )
-  }
-
-  return (
-    <Card>
-      <div className="space-y-3">
-        {/* Header */}
-        <div>
-          <h4 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{job.name}</h4>
-          {(job as any).description && (
-            <p className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>{(job as any).description}</p>
-          )}
-          {(job as any).prompt && (job as any).prompt !== job.name && (
-            <p className="text-xs mt-1 font-mono px-2 py-1 rounded" style={{ background: 'var(--bg-inset)', color: 'var(--text-secondary)' }}>
-              {(job as any).prompt}
-            </p>
-          )}
-        </div>
-
-        {/* Stats row */}
-        {job.state && (
-          <div className="grid grid-cols-4 gap-2 text-xs">
-            <div>
-              <span style={{ color: 'var(--text-tertiary)' }}>Status</span>
-              <p>
-                <Badge
-                  variant={job.state.lastStatus === 'error' ? 'danger' : job.state.lastStatus === 'success' ? 'success' : 'secondary'}
-                  size="xs"
-                >
-                  {job.state.lastStatus || 'pending'}
-                </Badge>
-              </p>
-            </div>
-            <div>
-              <span style={{ color: 'var(--text-tertiary)' }}>Duration</span>
-              <p style={{ color: 'var(--text-secondary)' }}>{job.state.lastDurationMs ? `${Math.round(job.state.lastDurationMs / 1000)}s` : '-'}</p>
-            </div>
-            <div>
-              <span style={{ color: 'var(--text-tertiary)' }}>Last Run</span>
-              <p style={{ color: 'var(--text-secondary)' }}>{job.state.lastRunAtMs ? new Date(job.state.lastRunAtMs).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'Never'}</p>
-            </div>
-            <div>
-              <span style={{ color: 'var(--text-tertiary)' }}>Errors</span>
-              <p style={{ color: job.state.consecutiveErrors > 0 ? 'var(--accent-red)' : 'var(--text-secondary)' }}>
-                {job.state.consecutiveErrors || 0}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Live run output */}
-        {isJobRunning && triggerRun && (
-          <div className="rounded overflow-hidden" style={{ border: '1px solid var(--border-subtle)' }}>
-            <div className="flex items-center justify-between px-3 py-1.5" style={{ background: 'var(--accent-blue-dim)' }}>
-              <span className="text-xs font-medium flex items-center gap-1.5" style={{ color: 'var(--accent-blue)' }}>
-                <Loader2 className="w-3 h-3 animate-spin" />
-                Running... {triggerRun.elapsedMs > 0 && `(${Math.round(triggerRun.elapsedMs / 1000)}s)`}
-              </span>
-            </div>
-            {triggerRun.output && (
-              <pre className="px-3 py-2 text-xs overflow-auto whitespace-pre-wrap" style={{ background: 'var(--bg-inset)', color: 'var(--text-primary)', maxHeight: '300px' }}>
-                {triggerRun.output}
-              </pre>
-            )}
-          </div>
-        )}
-
-        {/* Just-finished result */}
-        {justFinished && (
-          <div className="rounded overflow-hidden" style={{ border: '1px solid var(--border-subtle)' }}>
-            <div className="flex items-center justify-between px-3 py-1.5" style={{
-              background: triggerRun.status === 'completed' ? 'var(--accent-green-dim)' : triggerRun.status === 'failed' ? 'var(--accent-red-dim)' : 'var(--bg-hover)',
-            }}>
-              <span className="text-xs font-medium flex items-center gap-1.5" style={{
-                color: triggerRun.status === 'completed' ? 'var(--accent-green)' : triggerRun.status === 'failed' ? 'var(--accent-red)' : 'var(--text-secondary)',
-              }}>
-                {triggerRun.status === 'completed' && <><CheckCircle2 className="w-3 h-3" /> Done ({Math.round(triggerRun.elapsedMs / 1000)}s)</>}
-                {triggerRun.status === 'failed' && <><AlertCircle className="w-3 h-3" /> Failed ({Math.round(triggerRun.elapsedMs / 1000)}s)</>}
-                {triggerRun.status === 'cancelled' && <><XCircle className="w-3 h-3" /> Cancelled</>}
-              </span>
-              <button onClick={onDismissRun} className="text-xs px-2 py-0.5 rounded hover:bg-[var(--bg-hover)]" style={{ color: 'var(--text-tertiary)' }}>
-                Dismiss
-              </button>
-            </div>
-            {triggerRun.output && (
-              <pre className="px-3 py-2 text-xs overflow-auto whitespace-pre-wrap" style={{ background: 'var(--bg-inset)', color: 'var(--text-primary)', maxHeight: '300px' }}>
-                {triggerRun.output}
-              </pre>
-            )}
-            {triggerRun.error && (
-              <div className="px-3 py-2 text-xs" style={{ color: 'var(--accent-red)' }}>{triggerRun.error}</div>
-            )}
-          </div>
-        )}
-
-        {/* Historical output (when idle) */}
-        {!isJobRunning && !justFinished && (
-          <>
-            {job.state?.lastError && (
-              <div className="p-2 rounded text-xs break-all" style={{ background: 'var(--accent-red-dim)', color: 'var(--accent-red)' }}>
-                {job.state.lastError}
-              </div>
-            )}
-            {job.state?.lastOutput ? (
-              <div>
-                <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Last Output</span>
-                <pre className="mt-1 p-2 rounded text-xs overflow-auto whitespace-pre-wrap" style={{ background: 'var(--bg-inset)', color: 'var(--text-primary)', maxHeight: '300px' }}>
-                  {job.state.lastOutput}
-                </pre>
-              </div>
-            ) : (
-              <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>No output recorded</div>
-            )}
-          </>
-        )}
-      </div>
-    </Card>
-  )
-}
-
 // ---- Main Component ----
 
 export default function AgentMonitor() {
   const { data: agentsData, isLoading: agentsLoading } = useAgents()
-  const { data: cronData, isLoading: cronLoading } = useCronJobs()
-  const { data: triggersData } = useTriggers()
-  const deleteTrigger = useDeleteTrigger()
-  const runTrigger = useRunTrigger()
-  const cancelTrigger = useCancelTrigger()
-  const toggleTrigger = useToggleTrigger()
-  const [showCreateDialog, setShowCreateDialog] = useState(false)
-  const [editingTrigger, setEditingTrigger] = useState<TriggerEditData | null>(null)
-  const [deletingId, setDeletingId] = useState<string | null>(null)
-
-  // Trigger run store
-  const triggerRuns = useTriggerRunStore((s) => s.runs)
-  const clearTriggerRun = useTriggerRunStore((s) => s.clearRun)
-
-  // Reconcile stale trigger "running" state with API truth.
-  useEffect(() => {
-    if (!triggersData) return
-    const triggers: any[] = (triggersData as any).triggers || (triggersData as any).jobs || []
-    const store = useTriggerRunStore.getState()
-    for (const [triggerId, run] of Object.entries(store.runs)) {
-      if ((run as any)?.status !== 'running') continue
-      const apiTrigger = triggers.find((t: any) => t.id === triggerId)
-      if (!apiTrigger || apiTrigger.running) continue
-      const state = apiTrigger.state || {}
-      if (state.lastStatus === 'success') {
-        store.onTriggerCompleted(triggerId, state.lastDurationMs || 0, state.lastOutput?.slice(0, 300))
-      } else if (state.lastStatus === 'error') {
-        store.onTriggerFailed(triggerId, state.lastDurationMs || 0, state.lastError)
-      } else if (state.lastStatus === 'cancelled') {
-        store.onTriggerCancelled(triggerId, state.lastDurationMs || 0)
-      } else {
-        store.onTriggerCompleted(triggerId, state.lastDurationMs || 0)
-      }
-      console.log(`[AgentMonitor] Reconciled stale trigger ${triggerId}: was 'running', API says '${state.lastStatus || 'done'}'`)
-    }
-  }, [triggersData])
 
   const { data: unifiedData, isLoading: sessionsLoading } = useUnifiedSessions()
 
@@ -1172,9 +1332,6 @@ export default function AgentMonitor() {
 
   // Stop All state
   const [stoppingAll, setStoppingAll] = useState(false)
-
-  // Cron job detail panel
-  const [selectedCronJobId, setSelectedCronJobId] = useState<string | null>(null)
 
   // Cleanup state
   const [cleaning, setCleaning] = useState(false)
@@ -1198,17 +1355,15 @@ export default function AgentMonitor() {
     setRefreshing(true)
     Promise.all([
       queryClient.invalidateQueries({ queryKey: ['agents'] }),
-      queryClient.invalidateQueries({ queryKey: ['agents', 'cron-jobs'] }),
       queryClient.invalidateQueries({ queryKey: ['sessions'] }),
     ]).finally(() => {
       setTimeout(() => setRefreshing(false), 500)
     })
   }
 
-  if (agentsLoading || cronLoading) return <Loading text="Loading agents..." />
+  if (agentsLoading) return <Loading text="Loading agents..." />
 
   const agents = agentsData?.agents || []
-  const cronJobs = cronData?.jobs || []
   const allSessions: UnifiedSession[] = unifiedData?.sessions || []
 
   // Apply filters — reclassify internal sessions as 'queue' type
@@ -1269,16 +1424,16 @@ export default function AgentMonitor() {
   })
 
   // Group ordering for filters
-  const typeOrder = ['case', 'queue', 'implement', 'verify', 'track-creation']
+  const typeOrder = ['case', 'patrol', 'queue', 'implement', 'verify', 'track-creation']
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Agent Monitor</h2>
+          <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Monitor</h2>
           <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>
-            {activeSessions.length} active | {allSessions.length} total sessions | {cronJobs.length} cron jobs
+            {activeSessions.length} active | {allSessions.length} total sessions
           </p>
           {queueStatus && (
             <div className="mt-1.5">
@@ -1372,26 +1527,13 @@ export default function AgentMonitor() {
         </div>
       )}
 
-      {/* Daemon + Patrol — side by side */}
+      {/* Token Daemon + Az Profiles — side by side, equal width */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Token Daemon Status */}
-        <DaemonStatusCard />
-
-        {/* Patrol — link to dedicated page */}
-        <div className="rounded-xl p-4" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-default)' }}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span>🔄</span>
-              <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Patrol</span>
-            </div>
-            <a
-              href="/patrol"
-              className="text-sm px-3 py-1.5 rounded-lg transition-colors"
-              style={{ color: 'var(--accent-blue)', background: 'var(--accent-blue-dim)' }}
-            >
-              Open Patrol →
-            </a>
-          </div>
+        <div className="min-w-0">
+          <DaemonStatusCard />
+        </div>
+        <div className="min-w-0">
+          <AzProfileCard />
         </div>
       </div>
 
@@ -1441,188 +1583,6 @@ export default function AgentMonitor() {
           </div>
         </div>
       )}
-
-      {/* Cron Jobs — List + Detail Panel */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>Cron Jobs</h3>
-          <button
-            onClick={() => setShowCreateDialog(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium transition-colors"
-            style={{
-              background: 'var(--accent-blue)',
-              color: 'white',
-            }}
-          >
-            <Plus className="w-4 h-4" />
-            New Cron Job
-          </button>
-        </div>
-        {cronJobs.length === 0 ? (
-          <EmptyState icon="⏰" title="No cron jobs" />
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr] gap-4">
-            {/* Left: job list */}
-            <Card padding="none">
-              <div className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
-                {cronJobs.map((job: any) => {
-                  const triggerRun = triggerRuns[job.id]
-                  const isJobRunning = triggerRun?.status === 'running' || job.running
-                  const justFinished = triggerRun && triggerRun.status !== 'running'
-                  const isSelected = selectedCronJobId === job.id
-
-                  return (
-                    <div
-                      key={job.id}
-                      className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors"
-                      style={{
-                        background: isSelected ? 'var(--bg-active)' : 'transparent',
-                        borderBottom: '1px solid var(--border-subtle)',
-                      }}
-                      onClick={() => setSelectedCronJobId(isSelected ? null : job.id)}
-                      onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
-                      onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-                    >
-                      {/* Status dot */}
-                      <span
-                        className={`w-2 h-2 rounded-full shrink-0 ${isJobRunning ? 'animate-pulse' : ''}`}
-                        style={{
-                          background: isJobRunning ? 'var(--accent-blue)'
-                            : !job.enabled ? 'var(--text-tertiary)'
-                            : job.state?.lastStatus === 'error' ? 'var(--accent-red)'
-                            : job.state?.lastStatus === 'success' ? 'var(--accent-green)'
-                            : 'var(--text-tertiary)',
-                        }}
-                      />
-                      {/* Name + meta */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>
-                            {job.name}
-                          </span>
-                          {!job.enabled && (
-                            <span className="text-[10px] px-1 rounded" style={{ background: 'var(--bg-inset)', color: 'var(--text-tertiary)' }}>OFF</span>
-                          )}
-                          {isJobRunning && (
-                            <Loader2 className="w-3 h-3 animate-spin shrink-0" style={{ color: 'var(--accent-blue)' }} />
-                          )}
-                          {justFinished && triggerRun.status === 'completed' && (
-                            <CheckCircle2 className="w-3 h-3 shrink-0" style={{ color: 'var(--accent-green)' }} />
-                          )}
-                          {justFinished && triggerRun.status === 'failed' && (
-                            <AlertCircle className="w-3 h-3 shrink-0" style={{ color: 'var(--accent-red)' }} />
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[11px] font-mono" style={{ color: 'var(--text-tertiary)' }}>
-                            {job.schedule?.kind === 'cron' ? job.schedule.expr : job.schedule?.kind}
-                          </span>
-                          {job.state?.lastRunAtMs && (
-                            <span className="text-[11px]" style={{ color: 'var(--text-tertiary)' }}>
-                              {new Date(job.state.lastRunAtMs).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                              {job.state.lastDurationMs ? ` (${Math.round(job.state.lastDurationMs / 1000)}s)` : ''}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      {/* Action buttons */}
-                      <div className="flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
-                        <button
-                          onClick={() => toggleTrigger.mutate({ id: job.id, enabled: !job.enabled })}
-                          disabled={toggleTrigger.isPending || isJobRunning}
-                          className="p-1 rounded transition-colors hover:bg-[var(--bg-hover)]"
-                          style={{ color: job.enabled ? 'var(--accent-green)' : 'var(--text-tertiary)' }}
-                          title={job.enabled ? 'Disable' : 'Enable'}
-                        >
-                          <Power className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => setEditingTrigger({
-                            id: job.id,
-                            name: job.name,
-                            prompt: (job as any).prompt || '',
-                            cron: job.schedule?.expr || '',
-                            description: (job as any).description || '',
-                          })}
-                          disabled={isJobRunning}
-                          className="p-1 rounded transition-colors hover:bg-[var(--bg-hover)]"
-                          style={{ color: isJobRunning ? 'var(--text-tertiary)' : 'var(--text-secondary)' }}
-                          title="Edit"
-                        >
-                          <Pencil className="w-3.5 h-3.5" />
-                        </button>
-                        {isJobRunning ? (
-                          <button
-                            onClick={() => cancelTrigger.mutate(job.id)}
-                            disabled={cancelTrigger.isPending}
-                            className="p-1 rounded transition-colors hover:bg-[var(--bg-hover)]"
-                            style={{ color: 'var(--accent-red)' }}
-                            title="Cancel"
-                          >
-                            <Square className="w-3.5 h-3.5" />
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => runTrigger.mutate(job.id)}
-                            disabled={runTrigger.isPending || !job.enabled}
-                            className="p-1 rounded transition-colors hover:bg-[var(--bg-hover)]"
-                            style={{ color: !job.enabled ? 'var(--text-tertiary)' : 'var(--accent-green)' }}
-                            title={job.enabled ? 'Run now' : 'Enable first'}
-                          >
-                            <Play className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                        {deletingId === job.id ? (
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={() => { deleteTrigger.mutate(job.id); setDeletingId(null) }}
-                              className="px-1.5 py-0.5 rounded text-[10px] font-medium"
-                              style={{ background: 'var(--accent-red)', color: 'white' }}
-                            >
-                              Yes
-                            </button>
-                            <button
-                              onClick={() => setDeletingId(null)}
-                              className="px-1.5 py-0.5 rounded text-[10px]"
-                              style={{ color: 'var(--text-tertiary)' }}
-                            >
-                              No
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => setDeletingId(job.id)}
-                            disabled={isJobRunning}
-                            className="p-1 rounded transition-colors hover:bg-[var(--bg-hover)]"
-                            style={{ color: isJobRunning ? 'var(--text-tertiary)' : 'var(--accent-red)' }}
-                            title="Delete"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </Card>
-
-            {/* Right: selected job detail / output */}
-            <CronJobDetailPanel
-              job={cronJobs.find((j: any) => j.id === selectedCronJobId) || null}
-              triggerRun={selectedCronJobId ? triggerRuns[selectedCronJobId] : undefined}
-              onDismissRun={() => selectedCronJobId && clearTriggerRun(selectedCronJobId)}
-            />
-          </div>
-        )}
-      </div>
-
-      {/* Create Trigger Dialog */}
-      <CreateTriggerDialog
-        isOpen={showCreateDialog || !!editingTrigger}
-        onClose={() => { setShowCreateDialog(false); setEditingTrigger(null) }}
-        editData={editingTrigger}
-      />
     </div>
   )
 }

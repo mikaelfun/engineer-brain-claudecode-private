@@ -1,0 +1,53 @@
+{
+  "detectedAt": "2026-04-19T09:48:16.130539+00:00",
+  "onenote": null,
+  "adoWiki": {
+    "intune": "full-scan",
+    "vm": "full-scan",
+    "aks": "full-scan",
+    "monitor": "full-scan",
+    "entra-id": "full-scan",
+    "networking": "full-scan",
+    "disk": "full-scan",
+    "acr": "full-scan",
+    "arm": "full-scan",
+    "avd": "full-scan",
+    "purview": "full-scan",
+    "eop": "full-scan",
+    "defender": "full-scan",
+    "automation": "full-scan"
+  },
+  "mslearn": {
+    "intune": "full-scan",
+    "vm": "full-scan",
+    "aks": "full-scan",
+    "monitor": "full-scan",
+    "entra-id": "full-scan",
+    "networking": "full-scan",
+    "disk": "full-scan",
+    "acr": "full-scan",
+    "arm": "full-scan",
+    "avd": "full-scan",
+    "purview": "full-scan",
+    "eop": "full-scan",
+    "defender": "full-scan",
+    "automation": "full-scan"
+  },
+  "contentidea": {
+    "intune": "full-scan",
+    "vm": "full-scan",
+    "aks": "full-scan",
+    "monitor": "full-scan",
+    "entra-id": "full-scan",
+    "networking": "full-scan",
+    "disk": "full-scan",
+    "acr": "full-scan",
+    "arm": "full-scan",
+    "avd": "full-scan",
+    "purview": "full-scan",
+    "eop": "full-scan",
+    "defender": "full-scan",
+    "automation": "full-scan"
+  },
+  "21vGap": {}
+}

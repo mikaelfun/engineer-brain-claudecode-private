@@ -996,3 +996,11 @@
 - **Unscanned**: 0
 - **Discovered**: 0 | **Deduplicated**: 0
 - **Status**: exhausted (no KB articles found for Purview in ContentIdea)
+
+## 2026-04-18 OneNote REFRESH re-scan (purview)
+
+- **Pages processed**: 10 (4 REFRESH-reset + 6 newly classified)
+- **New entries**: 1 (purview-onenote-078: AIP encryption template troubleshooting in Mooncake)
+- **Deduplicated**: 5 (wiki_migration copies of already-extracted MCVKB originals + refreshed pages with unchanged knowledge)
+- **No extractable content**: 4 (Lab guidance, support scope links, member schedule, customer monitoring note)
+- **Status**: exhausted (137/137 purview pages scanned)

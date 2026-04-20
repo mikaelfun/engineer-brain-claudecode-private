@@ -42,6 +42,8 @@ Parse the user's intent from `$ARGUMENTS` into one of these subcommands:
 | `logs`, `logs 200`, `查看日志`, `查看日志 200` | logs |
 | `reconfigure`, `修改配置`, `帮我改一下 token`, `换个 bot` | reconfigure |
 | `doctor`, `diagnose`, `诊断`, `挂了`, `没反应了`, `bot 没反应`, `出问题了` | doctor |
+| `install-autostart`, `开机自启`, `自启动`, `auto start`, `deploy`, `部署` | install-autostart |
+| `uninstall-autostart`, `取消自启`, `remove autostart` | uninstall-autostart |
 
 **Disambiguation: `status` vs `doctor`** — Use `status` when the user just wants to check if the bridge is running (informational). Use `doctor` when the user reports a problem or suspects something is broken (diagnostic). When in doubt and the user describes a symptom (e.g., "没反应了", "挂了"), prefer `doctor`.
 
@@ -183,6 +185,59 @@ Show results and suggest fixes for any failures. Common fixes:
 For more complex issues (messages not received, permission timeouts, high memory, stale PID files), read `SKILL_DIR/references/troubleshooting.md` for detailed diagnosis steps.
 
 **Feishu upgrade note:** If the user upgraded from an older version of this skill and Feishu is returning permission errors (e.g. streaming cards not working, typing indicators failing, permission buttons unresponsive), the root cause is almost certainly missing permissions or callbacks in the Feishu backend. Refer the user to the "Upgrading from a previous version" section in `SKILL_DIR/references/setup-guides.md` — they need to add new scopes (`cardkit:card:write`, `cardkit:card:read`, `im:message:update`, `im:message.reactions:read`, `im:message.reactions:write_only`), add the `card.action.trigger` callback, and re-publish the app. The upgrade requires two publish cycles because adding the callback needs an active WebSocket connection (bridge must be running).
+
+### `install-autostart`
+
+**Windows only.** Creates a Scheduled Task that launches the bridge at login with automatic restart on failure.
+
+Read `SKILL_DIR/references/windows-autostart.md` for the full specification. Execute these steps:
+
+1. **Pre-check:** Verify `~/.claude-to-im/config.env` exists. Verify OS is Windows (`process.platform === 'win32'` or PowerShell available). On non-Windows, tell the user to use `launchd` (macOS) or `systemd` (Linux) instead — see `scripts/supervisor-macos.sh` and `scripts/supervisor-linux.sh`.
+
+2. **Generate autostart.ps1**: Write `~/.claude-to-im/runtime/autostart.ps1` using the template from `SKILL_DIR/references/windows-autostart.md`.
+
+   **CRITICAL**: The script must NOT pipe `node` output to `bridge.log`. The daemon has its own logger (`logger.ts`) that writes to `bridge.log`. Piping to the same file causes EBUSY file-lock conflicts on Windows and results in an infinite crash-loop. Use `Write-Host` or a separate `autostart-wrapper.log` file for wrapper messages only.
+
+3. **Resolve SKILL_DIR in the script**: The `$daemonPath` variable must point to the actual installed skill directory's `dist/daemon.mjs`. Use the resolved SKILL_DIR from the current session.
+
+4. **Register Scheduled Task**: Run PowerShell to create the task:
+   ```powershell
+   $scriptPath = "$env:USERPROFILE\.claude-to-im\runtime\autostart.ps1"
+   $action = New-ScheduledTaskAction -Execute 'pwsh.exe' `
+       -Argument "-WindowStyle Hidden -ExecutionPolicy Bypass -File `"$scriptPath`""
+   $trigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
+   $settings = New-ScheduledTaskSettingsSet `
+       -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
+       -ExecutionTimeLimit (New-TimeSpan -Days 365) `
+       -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1) `
+       -MultipleInstances IgnoreNew
+   Register-ScheduledTask -TaskName 'ClaudeToIMBridge' `
+       -Action $action -Trigger $trigger -Settings $settings `
+       -Description 'Claude-to-IM Bridge auto-start with restart loop' `
+       -RunLevel Limited -Force
+   ```
+   Note: `-Force` overwrites if the task already exists.
+
+5. **Start the task** and verify it's running:
+   ```powershell
+   Start-ScheduledTask -TaskName 'ClaudeToIMBridge'
+   Start-Sleep -Seconds 10
+   Get-ScheduledTask -TaskName 'ClaudeToIMBridge' | Select-Object State
+   Get-Content "$env:USERPROFILE\.claude-to-im\runtime\status.json"
+   ```
+
+6. **Report** the result to the user. If the task failed to start, show the last 20 lines of `bridge.log` and suggest running `doctor`.
+
+### `uninstall-autostart`
+
+**Windows only.** Removes the Scheduled Task created by `install-autostart`.
+
+```powershell
+Stop-ScheduledTask -TaskName 'ClaudeToIMBridge' -ErrorAction SilentlyContinue
+Unregister-ScheduledTask -TaskName 'ClaudeToIMBridge' -Confirm:$false
+```
+
+Report success. Remind the user that the bridge will no longer auto-start on login.
 
 ## Notes
 

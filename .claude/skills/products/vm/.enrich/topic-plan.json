@@ -1878,7 +1878,8 @@
         "vm-onenote-225",
         "vm-onenote-243",
         "vm-onenote-244",
-        "vm-onenote-249"
+        "vm-onenote-249",
+        "vm-contentidea-kb-030"
       ],
       "draftPaths": [
         "guides/drafts/ado-wiki-a-Pre-Provisioning-Service.md"
@@ -1920,7 +1921,8 @@
         "vm-mslearn-321",
         "vm-mslearn-322",
         "vm-mslearn-326",
-        "vm-onenote-202"
+        "vm-onenote-202",
+        "vm-contentidea-kb-041"
       ],
       "draftPaths": [
         "guides/drafts/ado-wiki-a-Best-Practices-Managing-extensions-enabled-Linux.md",
@@ -2059,7 +2061,8 @@
         "vm-ado-wiki-a-r1-005",
         "vm-contentidea-kb-001",
         "vm-onenote-214",
-        "vm-onenote-245"
+        "vm-onenote-245",
+        "vm-contentidea-kb-029"
       ],
       "draftPaths": [],
       "kustoQueryFiles": [],
@@ -2345,7 +2348,9 @@
       "title": "Vm Extension D",
       "entryIds": [
         "vm-onenote-156",
-        "vm-onenote-163"
+        "vm-onenote-163",
+        "vm-contentidea-kb-024",
+        "vm-contentidea-kb-033"
       ],
       "draftPaths": [],
       "kustoQueryFiles": [],
@@ -2705,7 +2710,10 @@
       "entryIds": [
         "vm-ado-wiki-c-r12-010",
         "vm-ado-wiki-d-r1-004",
-        "vm-mslearn-262"
+        "vm-mslearn-262",
+        "vm-contentidea-kb-007",
+        "vm-contentidea-kb-023",
+        "vm-contentidea-kb-036"
       ],
       "draftPaths": [
         "guides/drafts/ado-wiki-b-Guest-Agent-Event-Logs-Reference-Guide-WindowsOS.md",
@@ -2774,7 +2782,8 @@
         "vm-contentidea-kb-010",
         "vm-onenote-051",
         "vm-onenote-053",
-        "vm-onenote-175"
+        "vm-onenote-175",
+        "vm-contentidea-kb-043"
       ],
       "draftPaths": [
         "guides/drafts/ado-wiki-b-VMApps-Kusto-and-General-Troubleshooting-Info.md"
@@ -2785,6 +2794,33 @@
         "general"
       ],
       "confidence": "medium"
+    },
+    {
+      "slug": "vm-scvmm",
+      "title": "SCVMM (System Center Virtual Machine Manager)",
+      "entryIds": [
+        "vm-contentidea-kb-004",
+        "vm-contentidea-kb-009",
+        "vm-contentidea-kb-011",
+        "vm-contentidea-kb-012",
+        "vm-contentidea-kb-013",
+        "vm-contentidea-kb-014",
+        "vm-contentidea-kb-015",
+        "vm-contentidea-kb-016",
+        "vm-contentidea-kb-018",
+        "vm-contentidea-kb-021",
+        "vm-contentidea-kb-028"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "scvmm",
+        "system-center",
+        "hyper-v",
+        "on-premises"
+      ],
+      "confidence": "low"
     }
   ],
   "discarded": [
@@ -2892,5 +2928,15 @@
       "id": "vm-contentidea-kb-043",
       "reason": "no rootCause and no solution"
     }
-  ]
+  ],
+  "lastUpdated": "2026-04-18",
+  "skippedEntries": [
+    "vm-contentidea-kb-002",
+    "vm-contentidea-kb-006",
+    "vm-contentidea-kb-019",
+    "vm-contentidea-kb-020",
+    "vm-contentidea-kb-032",
+    "vm-contentidea-kb-039"
+  ],
+  "skippedReason": "Internal process docs, broken SharePoint links, no technical value"
 }

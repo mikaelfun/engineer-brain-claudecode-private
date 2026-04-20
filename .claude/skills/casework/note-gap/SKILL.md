@@ -32,6 +32,9 @@ allowed-tools:
 读取 `config.json` 的 `casesRoot`，定位 case 目录：
 ```bash
 CASE_DIR="{casesRoot}/active/{caseNumber}"
+
+# Mark note-gap action active (auto-compute durationMs on completion)
+python3 .claude/skills/casework/scripts/update-state.py --case-dir "$CASE_DIR" --step act --action note-gap --status active
 ```
 
 ### Step 2: 刷新 notes.md（如需要）
@@ -174,6 +177,11 @@ generatedAt: "{now ISO8601}"
 4. 如果某天无进展但需要补充，写 `- -continued investigation, no update.`
 
 ### Step 8: 展示草稿
+
+```bash
+# Mark note-gap action completed (auto-compute durationMs from startedAt)
+python3 .claude/skills/casework/scripts/update-state.py --case-dir "$CASE_DIR" --step act --action note-gap --status completed
+```
 
 在终端展示：
 

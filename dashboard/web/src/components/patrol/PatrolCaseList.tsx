@@ -85,7 +85,15 @@ export default function PatrolCaseList() {
   const phase = usePatrolStore(s => s.phase)
   const caseList = usePatrolStore(s => s.caseList)
 
-  const sortedCases = useMemo(() => sortCases(Object.values(cases)), [cases])
+  const sortedCases = useMemo(() => {
+    const allCases = Object.values(cases)
+    // Filter to only show cases in the current run's caseList (if available)
+    // This prevents stale cases from previous runs or archived cases from showing
+    const filtered = caseList.length > 0
+      ? allCases.filter(c => caseList.includes(c.caseNumber))
+      : allCases
+    return sortCases(filtered)
+  }, [cases, caseList])
 
   const queuedOnly = useMemo(() => {
     const inStore = new Set(Object.keys(cases))
@@ -208,19 +216,6 @@ export default function PatrolCaseList() {
           </div>
         ))}
 
-        {/* Aggregating phase (after processing, before final) */}
-        {phase === 'aggregating' && sortedCases.length > 0 && (
-          <div className="flex items-center justify-center gap-2 py-4">
-            <span>📊</span>
-            <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-              Aggregating todos...
-            </span>
-            <div
-              className="w-3 h-3 rounded-full border-2 border-t-transparent animate-spin"
-              style={{ borderColor: 'var(--accent-blue)', borderTopColor: 'transparent' }}
-            />
-          </div>
-        )}
       </div>
     </Card>
   )

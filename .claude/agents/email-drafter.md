@@ -32,9 +32,16 @@ maxTurns: 200
 
 ## 执行日志
 
-**每个步骤执行前后都必须写入日志文件 `{caseDir}/.casework/logs/email-drafter.log`。**
+**每个步骤执行前后都必须写入日志文件。**
+
+日志路径通过 `state.json` 中的 `runId` 决定：
+```bash
+RUN_ID=$(python3 -c "import json; print(json.load(open('{caseDir}/.casework/state.json',encoding='utf-8')).get('runId',''))" 2>/dev/null)
+LOG="{caseDir}/.casework/runs/$RUN_ID/agents/email-drafter.log"
+mkdir -p "$(dirname "$LOG")"
+```
 格式：`[YYYY-MM-DD HH:MM:SS] STEP {n} {OK|FAIL|SKIP} | {描述}`
-用 Bash echo append 写入。`{caseDir}/.casework/logs/` 不存在时先创建。
+用 Bash echo append 写入。
 
 ## 执行步骤
 

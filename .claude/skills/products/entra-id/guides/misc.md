@@ -1,7 +1,7 @@
 # ENTRA-ID misc — Quick Reference
 
-**Entries**: 376 | **21V**: Partial (336/376)
-**Last updated**: 2026-04-07
+**Entries**: 386 | **21V**: Partial (336/376)
+**Last updated**: 2026-04-18
 **Keywords**: identity-protection, verified-id, domain-verification, sbsl, by-design, dns
 
 ## Issue Quick Reference
@@ -48,6 +48,16 @@
 | 38 | Domain force deletion fails - DomainForceDeleteTask status shows 'Incomplete'. Error in logs: 'Pr... | Exchange mastered groups (_SingleAuthorityMetadata has ExchangeMastered=True)... | 1) Check DS Explorer PropagationTask for DomainForceDeleteTask. 2) Identify E... | 🟢 8.5 | ADO Wiki |
 | 39 | Cannot verify custom domain - domain is verified on a viral/unmanaged tenant created by self-serv... | Domain was auto-verified when a user signed up for a self-service cloud servi... | 1) Check User Realm endpoint: https://login.microsoftonline.com/common/userre... | 🟢 8.5 | ADO Wiki |
 | 40 | Governed tenant is unable to terminate a governance relationship; Terminate button is unavailable... | The governance relationship was created using a policy template from before N... | The governing tenant must initiate termination: Go to Governed tenants blade ... | 🟢 8.5 | ADO Wiki |
+| NEW 📋 | This document describes how to use PII Removal Tool to PII from data that was collected from custome... | N/A | N/A | 🟡 6.5 | ContentIdea |
+| NEW 📋 | This article is still in development and is not to be shared with customers yet.                    ... | N/A | N/A | 🟡 6.5 | ContentIdea |
+| NEW 📋 | What is this attribute and how is it used? The process that drives populating and using this attribu... | N/A | N/A | 🟡 6.5 | ContentIdea |
+| NEW 📋 | The below steps can help collect the appropriate logs from the Kubernentes cluster when troubleshoot... | N/A | N/A | 🟡 6.5 | ContentIdea |
+| NEW 📋 | It is possible to create and attach Extension attributes for Azure AD created Groups but it has to b... | N/A | N/A | 🟡 6.5 | ContentIdea |
+| NEW 📋 | This FAQ answers common questions about utilizing Azure AD and cloud services to enable your IT Pro ... | N/A | N/A | 🟡 6.5 | ContentIdea |
+| NEW 📋 | No this cannot be achieved | Its by design . | Scenario :WVD | Is it possible to do AD sync done between two different AAD tena... | 🟢 8.0 | ContentIdea |
+| NEW 📋 | Azure                               Plugins for Jenkins                     will be retired on      ... | N/A | N/A | 🟡 6.5 | ContentIdea |
+| NEW 📋 | Short URL for this article: https://aka.ms/howto-fiddler       How to configure Fiddler as proxy    ... | N/A | N/A | 🟡 6.5 | ContentIdea |
+| NEW 📋 | If you're wondering how to use ChatGPT, you're not alone. ChatGPT took the world by storm when it la... | N/A | N/A | 🟡 6.5 | ContentIdea |
 | ... | *336 more entries* | | | | |
 
 ## Quick Troubleshooting Path

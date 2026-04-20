@@ -35,7 +35,9 @@ done
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../../../.." && pwd)"
 UPDATE_STATE="$PROJECT_ROOT/.claude/skills/casework/scripts/update-state.py"
-SUBTASK_DIR="$CASE_DIR/.casework/output/subtasks"
+# ISS-231: subtask files under runs/{runId}/output/subtasks/
+RUN_ID=$(python3 -c "import json; print(json.load(open('$CASE_DIR/.casework/state.json',encoding='utf-8')).get('runId',''))" 2>/dev/null || echo "")
+SUBTASK_DIR="$CASE_DIR/.casework/runs/$RUN_ID/output/subtasks"
 
 START_TS=$(date -u +%FT%TZ)
 START_NS=$(date +%s%N)
@@ -200,7 +202,7 @@ mcp_search_with_retry() {
     fi
 
     if [ $attempt -lt $max_retries ]; then
-      local sleep_secs=$((5 * attempt))
+      local sleep_secs=$((2 * attempt + 1))
       echo "  ⚠ search attempt $attempt/$max_retries failed for qs='$qs' (body: ${err_body:-<empty>}), sleeping ${sleep_secs}s…" >&2
       sleep $sleep_secs
     else
@@ -211,12 +213,15 @@ mcp_search_with_retry() {
 }
 
 # Search by case number (with 1 retry on transient auth failure)
+SEARCH_T0=$(date +%s)
 mcp_search_with_retry 10 "$CASE_NUMBER" 25 "$WD/q1.json" || true
 
 # Search by contact email (optional)
 if [ -n "$CONTACT_EMAIL" ]; then
   mcp_search_with_retry 11 "from:$CONTACT_EMAIL" 5 "$WD/q2.json" || true
 fi
+SEARCH_DUR=$(($(date +%s) - SEARCH_T0))
+echo "  PHASE_SEARCH|dur=${SEARCH_DUR}s" >&2
 
 # ISS-226: Pre-fetch ic3 Teams token for image download (Skype API)
 # Wait for background warm-up (max 60s, should be done after ~20-40s of MCP search)
@@ -306,6 +311,7 @@ def mcp_call(tid, tool, args):
         "method": "tools/call",
         "params": {"name": tool, "arguments": args}
     })
+    _call_t0 = time.time()
     try:
         r = subprocess.run(
             ['curl', '-s', '--max-time', '60', '-X', 'POST',
@@ -315,16 +321,24 @@ def mcp_call(tid, tool, args):
              '-d', body],
             capture_output=True, text=True, timeout=65
         )
+        _call_dur = round(time.time() - _call_t0, 1)
         for line in r.stdout.split('\n'):
             if line.startswith('data: {'):
-                return json.loads(line[6:])
-    except:
-        pass
+                parsed = json.loads(line[6:])
+                has_error = bool(parsed.get('error'))
+                print(f'  MCP_CALL|tool={tool}|id={tid}|dur={_call_dur}s|error={has_error}', file=__import__("sys").stderr)
+                return parsed
+        print(f'  MCP_CALL|tool={tool}|id={tid}|dur={_call_dur}s|NO_DATA_LINE', file=__import__("sys").stderr)
+    except Exception as e:
+        _call_dur = round(time.time() - _call_t0, 1)
+        print(f'  MCP_CALL|tool={tool}|id={tid}|dur={_call_dur}s|EXCEPTION={e}', file=__import__("sys").stderr)
     return None
 
 # Load search results from files
 q1 = load_resp('q1.json')
 q2 = load_resp('q2.json')
+
+_phase_t0 = time.time()
 
 # Extract all chatIds
 all_ids = extract_chat_ids(q1) | extract_chat_ids(q2)
@@ -377,6 +391,7 @@ def fetch_one_chat(args):
     call_id, chat_id = args
     msgs = []
     import time as _t
+    _fetch_t0 = _t.time()
     for attempt in range(2):
         resp = mcp_call(call_id + attempt * 1000, 'ListChatMessages', {'chatId': chat_id, 'top': 20})
         if resp and not resp.get('error'):
@@ -386,14 +401,16 @@ def fetch_one_chat(args):
                     maybe = raw.get('messages', None)
                     if maybe is not None:  # empty list still means "server responded cleanly"
                         msgs = maybe
+                        _fetch_dur = round(_t.time() - _fetch_t0, 1)
+                        print(f'  FETCH_CHAT|id={call_id}|chat={chat_id[:30]}|attempt={attempt}|msgs={len(msgs)}|dur={_fetch_dur}s', file=__import__("sys").stderr)
                         return chat_id, msgs
                 except:
                     pass
-        # retry only if we got nothing usable — 5s gap lets transient 502/504
-        # upstream throttling clear before second attempt (same rationale as
-        # shell-side mcp_search_with_retry).
         if attempt == 0:
-            _t.sleep(5)
+            print(f'  FETCH_CHAT_RETRY|id={call_id}|chat={chat_id[:30]}|sleeping=2s', file=__import__("sys").stderr)
+            _t.sleep(2)
+    _fetch_dur = round(_t.time() - _fetch_t0, 1)
+    print(f'  FETCH_CHAT_FAIL|id={call_id}|chat={chat_id[:30]}|dur={_fetch_dur}s', file=__import__("sys").stderr)
     return chat_id, msgs
 
 chat_messages = {}
@@ -423,6 +440,8 @@ def _write_progress(done, total):
         pass
 
 if sorted_ids:
+    _fetch_phase_t0 = time.time()
+    print(f'  PHASE_FETCH|chats={len(sorted_ids)}|start', file=__import__("sys").stderr)
     tasks = [(20 + i, cid) for i, cid in enumerate(sorted_ids)]
     total = len(tasks)
     done_count = 0
@@ -439,6 +458,10 @@ if sorted_ids:
             _write_progress(done_count, total)
 else:
     pass  # no chats found
+
+_fetch_phase_dur = round(time.time() - (_fetch_phase_t0 if sorted_ids else _phase_t0), 1)
+_total_msgs = sum(len(v) for v in chat_messages.values())
+print(f'  PHASE_FETCH|chats={len(chat_messages)}|msgs={_total_msgs}|dur={_fetch_phase_dur}s', file=__import__("sys").stderr)
 
 # ── ISS-226: Download hostedContents images to teams/assets/ ──
 # Strategy: base64 decode contentId → extract Skype API URL → Bearer ic3_token

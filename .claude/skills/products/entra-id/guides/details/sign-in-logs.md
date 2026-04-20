@@ -1,6 +1,6 @@
 # ENTRA-ID Sign-in Logs & AADSTS Errors — Detailed Troubleshooting Guide
 
-**Entries**: 121 | **Drafts fused**: 2 | **Kusto queries**: 2
+**Entries**: 124 | **Drafts fused**: 2 | **Kusto queries**: 2
 **Draft sources**: ado-wiki-c-websignin-log-analysis.md, ado-wiki-d-ca-sign-in-logs.md
 **Kusto references**: diagnostic-traces.md, signin-logs.md
 **Generated**: 2026-04-07
@@ -644,3 +644,32 @@
 | 28 | AADSTS900440 PublicTenantNotSupportedOnUSGovEndpoint: Public cloud users rece... | Azure AD blocks public cloud users from signing into apps... | Application must be updated to support public cloud users... | 🟢 8.5 | ADO Wiki |
 | 29 | USGov application users get AADSTS900439 (USGClientNotSupportedOnPublicEndpoi... | Azure AD enforces that US Government users must sign in u... | 1) Customer-owned app: update to use login.microsoftonlin... | 🟢 8.5 | ADO Wiki |
 | 30 | Public cloud users get AADSTS900440 (PublicTenantNotSupportedOnUSGovEndpoint)... | Azure AD blocks public cloud users from signing into apps... | Application must send users to the correct login endpoint... | 🟢 8.5 | ADO Wiki |
+
+
+---
+
+## Incremental Update (2026-04-18) - +3 entries from contentidea-kb
+
+### When customers review their sign in Logs, they notice that the User IDs show up as User: 00000000-0000-0000-0000-000000000000Username: domainName.comU...
+**Score**: 🟢 8.0 | **Source**: ContentIdea KB | **ID**: entra-id-3653
+
+**Root Cause**: This happens due to setup of Tenant restrictions.Tenant restrictions on a network, is basically setup using a proxy device that inserts headers into traffic to Azure AD endpoints. The two headers that are inserted are  :Restrict-Access-To-Tenants:  (use a value of <permitted tenant list>, which is a...
+
+**Solution**: The customer will have to take this Tenant Restrictions' sign in logs into considerations when they run scripts to analyze the logs.
+
+
+### Enable the debug logs by following this article https://supportability.visualstudio.com/AzureAD/_wiki/wikis/AzureAD/183983/Azure-AD-Sign-in-for-Azure-...
+**Score**: 🟢 8.0 | **Source**: ContentIdea KB | **ID**: entra-id-3660
+
+**Root Cause**: This issue is caused because the metadata sends the location name as IndiaCentral and Plugin is searching for CentralIndia.
+
+**Solution**: This issue is fixed in the Plugin release 1.0.011360001 to install this plugin please follow the below steps,Install the extension with the below command,az vm extension set \--publisher Microsoft.Azure.ActiveDirectory.LinuxSSH \--name AADLoginForLinux \--resource-group <rg name> \--vm-name <vm name...
+
+
+### Abstract  Customers are reporting the following symptoms:  Excessive AAD auth requests  The throttling of AAD Auth request  Sign-in failure logs conta...
+**Score**: 🟢 7.0 | **Source**: ContentIdea KB | **ID**: entra-id-3682
+
+**Root Cause**: N/A
+
+**Solution**: Case ownership:       Play it where it lies given that (1.) this issue will be continually documented in internal KB5033148 allowing a case owner in any POD to search DFM Knowledge, consume internal and external IP to explain   Customer sharable coms Microsoft fully aware of an issue where ORGID log...
+

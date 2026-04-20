@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>Patrol Case Row v5 Light — Sticky Tabs</title>
+<style>
+  :root {
+    --bg-page: #f4f5f8;
+    --bg-base: #ffffff;
+    --bg-surface: #ffffff;
+    --bg-hover: #f0f1f5;
+    --bg-inset: #f6f7fa;
+    --bg-front: #ffffff;
+    --border-subtle: rgba(60,60,90,0.10);
+    --border-card: rgba(60,60,90,0.08);
+    --text-primary: #1e1e2e;
+    --text-secondary: #555570;
+    --text-tertiary: #8e8ea8;
+    --accent-blue: #5b4fbf;
+    --accent-blue-dim: rgba(91,79,191,0.08);
+    --accent-green: #16a34a;
+    --accent-green-dim: rgba(22,163,74,0.07);
+    --accent-amber: #d97706;
+    --accent-amber-dim: rgba(217,119,6,0.07);
+    --accent-purple: #7c3aed;
+    --accent-purple-dim: rgba(124,58,237,0.07);
+    /* Sticky note palette — pastel on light bg */
+    --tab-green: rgba(22,163,74,0.10);
+    --tab-green-border: rgba(22,163,74,0.30);
+    --tab-green-text: #15803d;
+    --tab-amber: rgba(217,119,6,0.10);
+    --tab-amber-border: rgba(217,119,6,0.25);
+    --tab-amber-text: #b45309;
+    --tab-purple: rgba(124,58,237,0.10);
+    --tab-purple-border: rgba(124,58,237,0.28);
+    --tab-purple-text: #6d28d9;
+    --tab-blue: rgba(91,79,191,0.08);
+    --tab-blue-border: rgba(91,79,191,0.22);
+    --tab-blue-text: #5b4fbf;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg-page);color:var(--text-primary);padding:36px 44px;line-height:1.5}
+  h1{font-size:22px;font-weight:800;color:var(--accent-blue);margin-bottom:4px}
+  h2{font-size:16px;font-weight:700;margin:40px 0 12px;color:var(--text-secondary)}
+  h3{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin:24px 0 8px;color:var(--text-tertiary)}
+  .sub{color:var(--text-tertiary);font-size:12px;margin-bottom:28px}
+  .mono{font-family:'JetBrains Mono','Cascadia Code',monospace}
+
+  /* ═══ Case Card ═══ */
+  .cc{background:var(--bg-surface);border:1px solid var(--border-card);border-radius:13px;overflow:hidden;margin-bottom:10px;max-width:860px;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+  .cc.on{border-color:rgba(91,79,191,0.18);box-shadow:0 2px 12px rgba(91,79,191,0.08)}
+  .ch{display:flex;align-items:center;gap:10px;padding:10px 18px;background:var(--bg-inset);border-bottom:1px solid var(--border-subtle)}
+  .cn{font-size:13px;font-weight:700;color:rgba(91,79,191,0.45)}
+  .cn.lit{color:var(--accent-blue)}
+  .pill{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:700;text-transform:uppercase;padding:3px 9px;border-radius:9px;letter-spacing:0.3px;flex-shrink:0}
+  .pill-b{background:var(--accent-blue-dim);color:var(--accent-blue)}
+  .pill-p{background:var(--accent-purple-dim);color:var(--accent-purple)}
+  .pill-g{background:var(--accent-green-dim);color:var(--accent-green)}
+  .dur{font-size:11px;color:var(--text-tertiary)}
+
+  /* ═══ Body: 3 zones ═══ */
+  .bz{display:flex;align-items:stretch;padding:14px 18px;gap:14px}
+  .zl{width:140px;flex-shrink:0;display:flex;flex-direction:column;gap:10px}
+  .zl-s{display:flex;flex-direction:column;gap:3px}
+  .zl-r{display:flex;align-items:center;gap:6px}
+  .zl-n{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px}
+  .zl-n.d{color:var(--accent-green)}.zl-n.a{color:var(--accent-blue)}.zl-n.p{color:var(--text-tertiary)}
+  .zl-d{font-size:10px;color:var(--text-tertiary)}
+  .zl-sub{display:flex;align-items:center;gap:5px;padding-left:24px}
+  .zl-sn{font-size:10px;color:var(--text-secondary);min-width:42px}
+  .zl-sd{font-size:9px;color:var(--text-tertiary)}
+  .zr{width:110px;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+
+  /* ═══ Zone C: Sticky Tab + Front Card ═══ */
+  .zc{flex:1;min-width:0;max-width:460px;display:flex;flex-direction:column;gap:0}
+
+  /* ── Sticky tab row ── */
+  .tab-row{display:flex;gap:4px;padding-bottom:6px;flex-wrap:wrap}
+
+  /* ── Individual sticky tab ── */
+  .tab{
+    display:inline-flex;align-items:center;gap:4px;
+    padding:3px 9px;
+    border-radius:5px 5px 1px 1px;
+    font-size:10px;font-weight:700;
+    position:relative;cursor:default;
+    transition:all 120ms ease;
+    border-bottom:2px solid;
+  }
+  .tab-g{background:var(--tab-green);border-bottom-color:var(--tab-green-border);color:var(--tab-green-text)}
+  .tab-g:hover{background:rgba(22,163,74,0.16)}
+  .tab-a{background:var(--tab-amber);border-bottom-color:var(--tab-amber-border);color:var(--tab-amber-text)}
+  .tab-a:hover{background:rgba(217,119,6,0.16)}
+  .tab-p{background:var(--tab-purple);border-bottom-color:var(--tab-purple-border);color:var(--tab-purple-text)}
+  .tab-p:hover{background:rgba(124,58,237,0.16)}
+  .tab-b{background:var(--tab-blue);border-bottom-color:var(--tab-blue-border);color:var(--tab-blue-text)}
+  .tab-b:hover{background:rgba(91,79,191,0.14)}
+
+  .tab-detail{font-size:8px;font-weight:500;opacity:0.7;margin-left:2px}
+
+  .tab:nth-child(1){transform:rotate(-0.8deg)}
+  .tab:nth-child(2){transform:rotate(0.5deg)}
+  .tab:nth-child(3){transform:rotate(-0.4deg)}
+  .tab:nth-child(4){transform:rotate(0.6deg)}
+  .tab:hover{transform:rotate(0deg) translateY(-1px) !important}
+
+  /* ── Front Card ── */
+  .fc{
+    padding:14px 16px;border-radius:10px;
+    background:var(--bg-front);
+    border:1px solid rgba(91,79,191,0.15);
+    box-shadow:0 2px 10px rgba(91,79,191,0.08),0 0 0 1px rgba(91,79,191,0.04);
+  }
+  .fc.pu{border-color:rgba(124,58,237,0.2);box-shadow:0 2px 10px rgba(124,58,237,0.08),0 0 0 1px rgba(124,58,237,0.06)}
+  .fc-h{display:flex;align-items:center;gap:8px}
+  .fc-n{font-size:13px;font-weight:700}
+  .fc-n.b{color:var(--accent-blue)}
+  .fc-n.pu{color:var(--accent-purple)}
+  .fc-detail{font-size:11px;margin-top:5px;padding-left:26px}
+  .fc-detail.b{color:rgba(91,79,191,0.6)}
+  .fc-detail.pu{color:rgba(124,58,237,0.6)}
+
+  /* ── Queued ── */
+  .qc{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:7px;border:1.5px dashed rgba(60,60,90,0.10);margin-top:4px;opacity:0.45}
+  .qc-n{font-size:11px;color:var(--text-tertiary)}
+  .qc-h{font-size:9px;color:var(--text-tertiary);font-style:italic;margin-left:2px}
+
+  /* ═══ Icons ═══ */
+  .ico{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .ico-d{background:var(--accent-green)}
+  .ico-a{border:2.5px solid var(--accent-blue);animation:pulse 2s infinite}
+  .ico-ap{border:2.5px solid var(--accent-purple);animation:pulse-p 2s infinite}
+  .ico-p{border:1.5px solid rgba(60,60,90,0.15)}
+  .ico-in{width:6px;height:6px;border-radius:50%}
+  .ico-in-b{background:var(--accent-blue)}.ico-in-p{background:var(--accent-purple)}
+  .dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}.dot-g{background:var(--accent-green)}
+  svg.ck{width:9px;height:9px}svg.ck path{stroke:white;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;fill:none}
+
+  /* ═══ Collapsed ═══ */
+  .fp{display:flex;gap:2px;align-items:center}
+  .fpp{padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600}
+  .fpp-d{background:var(--bg-hover);color:var(--text-tertiary)}
+  .fpp-p{background:var(--accent-purple-dim);color:var(--accent-purple)}
+  .fpp-g{background:var(--accent-green-dim);color:var(--accent-green)}
+  .fpa{color:var(--text-tertiary);font-size:9px;padding:0 1px}
+
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(91,79,191,0.25)}50%{box-shadow:0 0 0 5px rgba(91,79,191,0)}}
+  @keyframes pulse-p{0%,100%{box-shadow:0 0 0 0 rgba(124,58,237,0.25)}50%{box-shadow:0 0 0 5px rgba(124,58,237,0)}}
+  .spin{animation:sp 1.5s linear infinite;display:inline-block}@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<h1>Patrol Case Row v5 Light</h1>
+<p class="sub">浅色版：同样的便签 tab 结构，白色底 + 柔和阴影 + 低饱和色彩</p>
+
+<h2>各阶段效果</h2>
+
+<h3>A — Troubleshooter 完成 → Reassess 进行中</h3>
+<div class="cc on">
+  <div class="ch">
+    <span class="cn lit mono">2501160034</span>
+    <span class="pill pill-p"><span class="spin" style="font-size:8px">↻</span> Reassess</span>
+    <span style="flex:1"></span>
+    <span class="dur mono">4m 23s</span>
+  </div>
+  <div class="bz">
+    <div class="zl">
+      <div class="zl-s">
+        <div class="zl-r"><div class="ico ico-d"><svg class="ck" viewBox="0 0 12 12"><path d="M2.5 6L5 8.5L9.5 3.5"/></svg></div><span class="zl-n d">Start</span><span class="zl-d mono">3s</span></div>
+      </div>
+      <div class="zl-s">
+        <div class="zl-r"><div class="ico ico-d"><svg class="ck" viewBox="0 0 12 12"><path d="M2.5 6L5 8.5L9.5 3.5"/></svg></div><span class="zl-n d">Refresh</span><span class="zl-d mono">28s</span></div>
+        <div class="zl-sub"><div class="dot dot-g"></div><span class="zl-sn">D365</span><span class="zl-sd">+2 emails</span></div>
+        <div class="zl-sub"><div class="dot dot-g"></div><span class="zl-sn">Teams</span><span class="zl-sd">3 msgs</span></div>
+        <div class="zl-sub"><div class="dot dot-g"></div><span class="zl-sn">ICM</span><span class="zl-sd">no new</span></div>
+      </div>
+    </div>
+    <div class="zc">
+      <div class="tab-row">
+        <div class="tab tab-a">Assess<span class="tab-detail">· needs-action</span></div>
+        <div class="tab tab-g">Troubleshoot<span class="tab-detail">· 2m31s</span></div>
+      </div>
+      <div class="fc pu">
+        <div class="fc-h">
+          <div class="ico ico-ap"><div class="ico-in ico-in-p"></div></div>
+          <span class="fc-n pu">Reassess</span>
+          <span class="dur mono" style="margin-left:auto">12s</span>
+        </div>
+        <div class="fc-detail pu">分析 troubleshooter 结论，决策沟通行动…</div>
+      </div>
+      <div class="qc">
+        <div class="ico ico-p" style="width:14px;height:14px"></div>
+        <span class="qc-n">Email</span>
+        <span class="qc-h">待 reassess 决定类型</span>
+      </div>
+    </div>
+    <div class="zr">
+      <div class="zl-r" style="justify-content:flex-end"><span class="zl-n p">Summary</span><div class="ico ico-p"></div></div>
+    </div>
+  </div>
+</div>
+
+<h3>B — 3 便签 + Email 生成中</h3>
+<div class="cc on">
+  <div class="ch">
+    <span class="cn lit mono">2501160034</span>
+    <span class="pill pill-b">⟳ Email</span>
+    <span style="flex:1"></span>
+    <span class="dur mono">5m 08s</span>
+  </div>
+  <div class="bz">
+    <div class="zl">
+      <div class="zl-s">
+        <div class="zl-r"><div class="ico ico-d"><svg class="ck" viewBox="0 0 12 12"><path d="M2.5 6L5 8.5L9.5 3.5"/></svg></div><span class="zl-n d">Start</span></div>
+      </div>
+      <div class="zl-s">
+        <div class="zl-r"><div class="ico ico-d"><svg class="ck" viewBox="0 0 12 12"><path d="M2.5 6L5 8.5L9.5 3.5"/></svg></div><span class="zl-n d">Refresh</span><span class="zl-d mono">28s</span></div>
+      </div>
+    </div>
+    <div class="zc">
+      <div class="tab-row">
+        <div class="tab tab-a">Assess</div>
+        <div class="tab tab-g">Troubleshoot</div>
+        <div class="tab tab-p">Reassess<span class="tab-detail">· result-confirm</span></div>
+      </div>
+      <div class="fc">
+        <div class="fc-h">
+          <div class="ico ico-a"><div class="ico-in ico-in-b"></div></div>
+          <span class="fc-n b">Email: result-confirm</span>
+          <span class="dur mono" style="margin-left:auto">22s</span>
+        </div>
+        <div class="fc-detail b">基于排查结论生成 result-confirm 邮件草稿…</div>
+      </div>
+    </div>
+    <div class="zr">
+      <div class="zl-r" style="justify-content:flex-end"><span class="zl-n p">Summary</span><div class="ico ico-p"></div></div>
+    </div>
+  </div>
+</div>
+
+<h3>C — 无 troubleshooter（1 便签 + email front）</h3>
+<div class="cc on">
+  <div class="ch">
+    <span class="cn lit mono">2502030089</span>
+    <span class="pill pill-b">⟳ Email</span>
+    <span style="flex:1"></span>
+    <span class="dur mono">1m 45s</span>
+  </div>
+  <div class="bz">
+    <div class="zl">
+      <div class="zl-s">
+        <div class="zl-r"><div class="ico ico-d"><svg class="ck" viewBox="0 0 12 12"><path d="M2.5 6L5 8.5L9.5 3.5"/></svg></div><span class="zl-n d">Start</span></div>
+      </div>
+      <div class="zl-s">
+        <div class="zl-r"><div class="ico ico-d"><svg class="ck" viewBox="0 0 12 12"><path d="M2.5 6L5 8.5L9.5 3.5"/></svg></div><span class="zl-n d">Refresh</span><span class="zl-d mono">18s</span></div>
+      </div>
+    </div>
+    <div class="zc">
+      <div class="tab-row">
+        <div class="tab tab-a">Assess<span class="tab-detail">· needs-action</span></div>
+      </div>
+      <div class="fc">
+        <div class="fc-h">
+          <div class="ico ico-a"><div class="ico-in ico-in-b"></div></div>
+          <span class="fc-n b">Email: follow-up</span>
+          <span class="dur mono" style="margin-left:auto">35s</span>
+        </div>
+        <div class="fc-detail b">生成 follow-up 邮件草稿…</div>
+      </div>
+    </div>
+    <div class="zr">
+      <div class="zl-r" style="justify-content:flex-end"><span class="zl-n p">Summary</span><div class="ico ico-p"></div></div>
+    </div>
+  </div>
+</div>
+
+<h3>D — Assess 阶段（无便签，只有 front card）</h3>
+<div class="cc on">
+  <div class="ch">
+    <span class="cn lit mono">2504100077</span>
+    <span class="pill pill-b">⟳ Assess</span>
+    <span style="flex:1"></span>
+    <span class="dur mono">32s</span>
+  </div>
+  <div class="bz">
+    <div class="zl">
+      <div class="zl-s">
+        <div class="zl-r"><div class="ico ico-d"><svg class="ck" viewBox="0 0 12 12"><path d="M2.5 6L5 8.5L9.5 3.5"/></svg></div><span class="zl-n d">Start</span><span class="zl-d mono">3s</span></div>
+      </div>
+      <div class="zl-s">
+        <div class="zl-r"><div class="ico ico-d"><svg class="ck" viewBox="0 0 12 12"><path d="M2.5 6L5 8.5L9.5 3.5"/></svg></div><span class="zl-n d">Refresh</span><span class="zl-d mono">25s</span></div>
+        <div class="zl-sub"><div class="dot dot-g"></div><span class="zl-sn">D365</span><span class="zl-sd">+1 email</span></div>
+      </div>
+    </div>
+    <div class="zc">
+      <div class="fc">
+        <div class="fc-h">
+          <div class="ico ico-a"><div class="ico-in ico-in-b"></div></div>
+          <span class="fc-n b">Assess</span>
+          <span class="dur mono" style="margin-left:auto">4s</span>
+        </div>
+        <div class="fc-detail b">分析 case 状态 + 决策行动方案…</div>
+      </div>
+    </div>
+    <div class="zr">
+      <div class="zl-r" style="justify-content:flex-end"><span class="zl-n p">Summary</span><div class="ico ico-p"></div></div>
+    </div>
+  </div>
+</div>
+
+<h3>E — Troubleshooter 进行中（1 便签 + front + 1 queued）</h3>
+<div class="cc on">
+  <div class="ch">
+    <span class="cn lit mono">2503220041</span>
+    <span class="pill pill-b">⟳ Troubleshoot</span>
+    <span style="flex:1"></span>
+    <span class="dur mono">2m 15s</span>
+  </div>
+  <div class="bz">
+    <div class="zl">
+      <div class="zl-s">
+        <div class="zl-r"><div class="ico ico-d"><svg class="ck" viewBox="0 0 12 12"><path d="M2.5 6L5 8.5L9.5 3.5"/></svg></div><span class="zl-n d">Start</span></div>
+      </div>
+      <div class="zl-s">
+        <div class="zl-r"><div class="ico ico-d"><svg class="ck" viewBox="0 0 12 12"><path d="M2.5 6L5 8.5L9.5 3.5"/></svg></div><span class="zl-n d">Refresh</span><span class="zl-d mono">22s</span></div>
+      </div>
+    </div>
+    <div class="zc">
+      <div class="tab-row">
+        <div class="tab tab-a">Assess<span class="tab-detail">· needs-action</span></div>
+      </div>
+      <div class="fc">
+        <div class="fc-h">
+          <div class="ico ico-a"><div class="ico-in ico-in-b"></div></div>
+          <span class="fc-n b">Troubleshooter</span>
+          <span class="dur mono" style="margin-left:auto">1m 39s</span>
+        </div>
+        <div class="fc-detail b">Kusto 查询 + 日志分析中…</div>
+      </div>
+      <div class="qc">
+        <div class="ico ico-p" style="width:14px;height:14px"></div>
+        <span class="qc-n">Email / Reassess</span>
+        <span class="qc-h">待排查结果决定</span>
+      </div>
+    </div>
+    <div class="zr">
+      <div class="zl-r" style="justify-content:flex-end"><span class="zl-n p">Summary</span><div class="ico ico-p"></div></div>
+    </div>
+  </div>
+</div>
+
+<h3>F — Summarize 阶段（4 便签，右侧亮起）</h3>
+<div class="cc on">
+  <div class="ch">
+    <span class="cn lit mono">2501280012</span>
+    <span class="pill pill-b">⟳ Summary</span>
+    <span style="flex:1"></span>
+    <span class="dur mono">5m 52s</span>
+  </div>
+  <div class="bz">
+    <div class="zl">
+      <div class="zl-s">
+        <div class="zl-r"><div class="ico ico-d"><svg class="ck" viewBox="0 0 12 12"><path d="M2.5 6L5 8.5L9.5 3.5"/></svg></div><span class="zl-n d">Start</span></div>
+      </div>
+      <div class="zl-s">
+        <div class="zl-r"><div class="ico ico-d"><svg class="ck" viewBox="0 0 12 12"><path d="M2.5 6L5 8.5L9.5 3.5"/></svg></div><span class="zl-n d">Refresh</span><span class="zl-d mono">28s</span></div>
+      </div>
+    </div>
+    <div class="zc">
+      <div class="tab-row">
+        <div class="tab tab-a">Assess</div>
+        <div class="tab tab-g">Troubleshoot</div>
+        <div class="tab tab-p">Reassess</div>
+        <div class="tab tab-g">Email</div>
+      </div>
+      <div style="padding:8px 12px;border-radius:8px;background:var(--bg-inset);border:1px solid var(--border-subtle);display:flex;align-items:center;gap:6px">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="var(--accent-green)" stroke-width="1.5"/><path d="M4 7l2 2 4-4" stroke="var(--accent-green)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span style="font-size:11px;color:var(--accent-green);font-weight:600">All steps done</span>
+        <span class="dur mono" style="margin-left:auto">4m 33s total</span>
+      </div>
+    </div>
+    <div class="zr">
+      <div class="zl-r" style="justify-content:flex-end">
+        <span class="zl-n a">Summary</span>
+        <div class="ico ico-a"><div class="ico-in ico-in-b"></div></div>
+      </div>
+      <div style="font-size:10px;color:var(--accent-blue);text-align:right">Summarizing…</div>
+    </div>
+  </div>
+</div>
+
+<h2>折叠态</h2>
+
+<div class="cc" style="max-width:860px">
+  <div class="ch" style="cursor:pointer">
+    <span style="color:var(--text-tertiary);font-size:11px">▸</span>
+    <span class="cn mono">2501280012</span>
+    <span class="pill pill-g">✓ Done</span>
+    <div class="fp">
+      <span class="fpp fpp-d">assess</span><span class="fpa">→</span>
+      <span class="fpp fpp-d">troubleshoot</span><span class="fpa">→</span>
+      <span class="fpp fpp-p">reassess</span><span class="fpa">→</span>
+      <span class="fpp fpp-d">email</span>
+    </div>
+    <span style="flex:1"></span>
+    <span class="dur mono">6m 48s</span>
+  </div>
+</div>
+<div class="cc" style="max-width:860px">
+  <div class="ch" style="cursor:pointer">
+    <span style="color:var(--text-tertiary);font-size:11px">▸</span>
+    <span class="cn mono">2502030089</span>
+    <span class="pill pill-g">✓ Done</span>
+    <div class="fp">
+      <span class="fpp fpp-d">assess</span><span class="fpa">→</span>
+      <span class="fpp fpp-d">email</span>
+    </div>
+    <span style="flex:1"></span>
+    <span class="dur mono">1m 22s</span>
+  </div>
+</div>
+<div class="cc" style="max-width:860px">
+  <div class="ch" style="cursor:pointer">
+    <span style="color:var(--text-tertiary);font-size:11px">▸</span>
+    <span class="cn mono">2504010003</span>
+    <span class="pill pill-g">✓ Done</span>
+    <div class="fp">
+      <span class="fpp fpp-d">assess</span><span class="fpa">→</span>
+      <span class="fpp fpp-g">no-change</span>
+    </div>
+    <span style="flex:1"></span>
+    <span class="dur mono">38s</span>
+  </div>
+</div>
+
+</body>
+</html>

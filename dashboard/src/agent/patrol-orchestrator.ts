@@ -25,6 +25,11 @@ import { config } from '../config.js'
 import { sseManager } from '../watcher/sse-manager.js'
 import { patrolStateManager } from '../services/patrol-state-manager.js'
 import { loadAgentDefinitions } from './case-session-manager.js'
+import { summarizeToolInput } from '../utils/sdk-message-broadcaster.js'
+import { parseAssistantBlocks } from '../utils/sse-helpers.js'
+import { patrolMessageStore } from '../services/patrol-message-store.js'
+import { sdkRegistry } from './sdk-session-registry.js'
+import { parseSessionLog } from '../utils/session-log-parser.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -169,10 +174,27 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
     detail: 'Launching patrol via SDK...',
   })
 
+  // Clear message store for fresh patrol run
+  patrolMessageStore.clear()
+
+  const registryHandle = sdkRegistry.register({ source: 'patrol', context: 'patrol', intent: force ? 'Patrol run (force)' : 'Patrol run' })
+
   try {
-    const promptText = force
-      ? 'Execute /patrol with force mode enabled (skip lastInspected check, process all cases). source=webui'
-      : 'Execute /patrol. source=webui'
+    // ── Performance-optimized prompt (ISS-perf) ──
+    // SDK log analysis showed the model wasted ~15s on 5x Glob exploring for SKILL.md,
+    // then another ~20s on 3 Bash turns for lock check/write that orchestrator already handles.
+    // Fix: explicit paths + skip-lock instruction eliminates ~35s of starting overhead.
+    const forceFlag = force ? ' --force' : ''
+    const promptText = [
+      `Execute patrol${forceFlag}. source=webui`,
+      '',
+      'CRITICAL INSTRUCTIONS (do NOT deviate):',
+      '1. Read .claude/skills/patrol/SKILL.md FIRST (do NOT Glob or explore the codebase)',
+      '2. Config is at config.json (casesRoot="../data/cases", patrolDir="../data/.patrol")',
+      '3. SKIP Step 1 lock management entirely — lock is already managed by the backend orchestrator',
+      '4. Start execution from Step 2 (write patrol-phase "discovering")',
+      '5. Use relative paths only (./cases, ../data) — never absolute Windows paths',
+    ].join('\n')
 
     // Single SDK query that runs the entire patrol
     // Uses same config pattern as case-session-manager.ts processCaseSession()
@@ -190,6 +212,7 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
 
     // Sub-agent tracking: task_id → caseNumber, uuid dedup
     const taskCaseMap: Record<string, string> = {}
+    const taskTypeMap: Record<string, string> = {}  // ISS-231: preserve agentType from task_started for log naming
     const seenUuids = new Set<string>()
 
     for await (const message of query({
@@ -244,6 +267,7 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
           taskCaseMap[taskId] = caseMatch[1]
         }
         const agentType = msg.task_type || 'unknown'
+        taskTypeMap[taskId] = agentType
         console.log(`[sdk-patrol] Sub-agent started: ${agentType} task=${taskId} case=${caseMatch?.[1] || '?'}`)
         sseManager.broadcast('patrol-agent' as any, {
           event: 'started',
@@ -252,14 +276,23 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
           caseNumber: caseMatch?.[1],
           description: msg.description,
         })
+        patrolMessageStore.add({
+          kind: 'agent-started',
+          content: msg.description || `${agentType} started`,
+          taskId,
+          agentType,
+          caseNumber: caseMatch?.[1],
+          timestamp: new Date().toISOString(),
+        })
       }
 
       if (subtype === 'task_progress') {
         const taskId = msg.task_id as string
         const caseNumber = taskCaseMap[taskId]
-        // Broadcast progress SSE (dedup by uuid)
-        if (!seenUuids.has(msg.uuid)) {
-          seenUuids.add(msg.uuid)
+        // Broadcast progress SSE (dedup by uuid; fallback to unique key if uuid missing)
+        const dedupKey = msg.uuid || `${taskId}-${Date.now()}-${Math.random()}`
+        if (!seenUuids.has(dedupKey)) {
+          seenUuids.add(dedupKey)
           sseManager.broadcast('patrol-agent' as any, {
             event: 'progress',
             taskId,
@@ -268,6 +301,13 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
             summary: msg.summary,
             description: msg.description,
             usage: msg.usage,
+          })
+          patrolMessageStore.add({
+            kind: 'agent-progress',
+            content: msg.summary || msg.description || '',
+            taskId,
+            caseNumber,
+            timestamp: new Date().toISOString(),
           })
         }
       }
@@ -280,18 +320,32 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
 
         console.log(`[sdk-patrol] Sub-agent ${status}: task=${taskId} case=${caseNumber || '?'} output=${outputFile || 'none'}`)
 
-        // Save output_file to {caseDir}/.casework/logs/
+        // Save output_file to {caseDir}/.casework/runs/{runId}/agents/ (ISS-231)
         if (outputFile && caseNumber) {
           try {
-            const caseLogsDir = join(config.activeCasesDir, caseNumber, '.casework', 'logs')
-            if (!existsSync(caseLogsDir)) mkdirSync(caseLogsDir, { recursive: true })
-            const agentType = msg.task_type || taskId.slice(0, 8)
-            const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
-            const logName = `${ts}_${agentType}.log`
+            // Read runId from state.json for run-scoped path
+            let agentLogDir: string
+            const stateJsonPath = join(config.activeCasesDir, caseNumber, '.casework', 'state.json')
+            try {
+              const stateData = JSON.parse(readFileSync(stateJsonPath, 'utf-8'))
+              if (stateData.runId) {
+                agentLogDir = join(config.activeCasesDir, caseNumber, '.casework', 'runs', stateData.runId, 'agents')
+              } else {
+                // No runId — generate fallback run dir (never write to logs/)
+                const fallbackRun = new Date().toISOString().replace(/[:.]/g, '').slice(2, 13) + '_fallback'
+                agentLogDir = join(config.activeCasesDir, caseNumber, '.casework', 'runs', fallbackRun, 'agents')
+              }
+            } catch {
+              const fallbackRun = new Date().toISOString().replace(/[:.]/g, '').slice(2, 13) + '_fallback'
+              agentLogDir = join(config.activeCasesDir, caseNumber, '.casework', 'runs', fallbackRun, 'agents')
+            }
+            if (!existsSync(agentLogDir)) mkdirSync(agentLogDir, { recursive: true })
+            const agentType = msg.task_type || taskTypeMap[taskId] || taskId.slice(0, 8)
+            const logName = `${agentType}.log`
             if (existsSync(outputFile)) {
               const content = readFileSync(outputFile, 'utf-8')
-              writeFileSync(join(caseLogsDir, logName), content, 'utf-8')
-              console.log(`[sdk-patrol] Saved sub-agent log: ${caseNumber}/.casework/logs/${logName} (${Math.round(content.length / 1024)}KB)`)
+              writeFileSync(join(agentLogDir, logName), content, 'utf-8')
+              console.log(`[sdk-patrol] Saved sub-agent log: ${caseNumber}/.casework/…/${logName} (${Math.round(content.length / 1024)}KB)`)
             }
           } catch (err) {
             console.warn(`[sdk-patrol] Failed to save sub-agent output:`, (err as Error).message)
@@ -305,17 +359,97 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
           status,
           summary: msg.summary,
           usage: msg.usage,
+          // Parse output file → full sub-agent messages (thinking/tool-call/tool-result/response)
+          ...(outputFile && existsSync(outputFile) ? (() => {
+            try {
+              const parsed = parseSessionLog(outputFile)
+              if (parsed.mainMessages.length > 0) {
+                return { messages: parsed.mainMessages }
+              }
+            } catch { /* non-fatal */ }
+            return {}
+          })() : {}),
+        })
+        patrolMessageStore.add({
+          kind: 'agent-completed',
+          content: msg.summary || `Agent ${status}`,
+          taskId,
+          caseNumber,
+          timestamp: new Date().toISOString(),
         })
         // Cleanup task mapping
         delete taskCaseMap[taskId]
+        delete taskTypeMap[taskId]
       }
+
+      // ── Main agent message parsing (shared parser) ──
+      if (msg.type === 'assistant' && msg.message?.content) {
+        const content = msg.message.content
+        if (Array.isArray(content)) {
+          for (const parsed of parseAssistantBlocks(content)) {
+            const ts = new Date().toISOString()
+            if (parsed.kind === 'tool-call') {
+              const toolContent = summarizeToolInput(parsed.toolName!, parsed.toolInput)
+              sseManager.broadcast('patrol-main-progress' as any, {
+                kind: 'tool-call',
+                toolName: parsed.toolName,
+                content: toolContent,
+                timestamp: ts,
+              })
+              patrolMessageStore.add({
+                kind: 'tool-call',
+                toolName: parsed.toolName,
+                content: toolContent,
+                timestamp: ts,
+              })
+            } else {
+              // 'response' or 'thinking'
+              sseManager.broadcast('patrol-main-progress' as any, {
+                kind: parsed.kind,
+                content: parsed.content,
+                timestamp: ts,
+              })
+              patrolMessageStore.add({
+                kind: parsed.kind,
+                content: parsed.content,
+                timestamp: ts,
+              })
+            }
+          }
+        }
+      }
+
+      if (msg.type === 'tool_result') {
+        const resultContent = typeof msg.content === 'string'
+          ? msg.content.slice(0, 500)
+          : typeof msg.text === 'string'
+            ? msg.text.slice(0, 500)
+            : ''
+        if (resultContent) {
+          const ts = new Date().toISOString()
+          sseManager.broadcast('patrol-main-progress' as any, {
+            kind: 'tool-result',
+            content: resultContent,
+            timestamp: ts,
+          })
+          patrolMessageStore.add({
+            kind: 'tool-result',
+            content: resultContent,
+            timestamp: ts,
+          })
+        }
+      }
+
+      // Registry: track message
+      registryHandle.onMessage(message)
 
       // Append SDK message to JSONL log
       try {
-        appendFileSync(sdkLogPath, JSON.stringify(message) + '\n', 'utf-8')
+        appendFileSync(sdkLogPath, JSON.stringify({ ...message, _ts: new Date().toISOString() }) + '\n', 'utf-8')
       } catch { /* non-fatal — don't break patrol for logging */ }
     }
 
+    registryHandle.complete()
     console.log(`[sdk-patrol] SDK query completed`)
 
     // Read the result written by /patrol skill
@@ -352,6 +486,7 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
 
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
+    registryHandle.fail(msg)
     const isAbort = msg.includes('abort')
     console.error(`[sdk-patrol] ${isAbort ? 'Cancelled' : 'Failed'}:`, msg)
 

@@ -97,3 +97,27 @@ cluster('estscnn2.chinanorth2.kusto.chinacloudapi.cn').database('ESTS').PerReque
 ```
 
 ---
+
+---
+
+## Incremental Scenarios (2026-04-18)
+
+## Scenario 3: When customers review their sign in Logs, they notice that the User IDs show up as User: 00000000-0000-0000-0000-0000000...
+> Source: contentidea-kb (entra-id-3653) | Applicability: unverified
+
+### Troubleshooting Steps
+1. **Confirm symptom**: When customers review their sign in Logs, they notice that the User IDs show up as User: 00000000-0000-0000-0000-000000000000Username: domainName.comUser ID: 00000000-0000-0000-0000-000000000000Altern...
+2. **Root cause**: This happens due to setup of Tenant restrictions.Tenant restrictions on a network, is basically setup using a proxy device that inserts headers into traffic to Azure AD endpoints. The two headers that...
+3. **Solution**: The customer will have to take this Tenant Restrictions' sign in logs into considerations when they run scripts to analyze the logs.
+
+---
+
+## Scenario 4: Enable the debug logs by following this article https://supportability.visualstudio.com/AzureAD/_wiki/wikis/AzureAD/1839...
+> Source: contentidea-kb (entra-id-3660) | Applicability: unverified
+
+### Troubleshooting Steps
+1. **Confirm symptom**: Enable the debug logs by following this article https://supportability.visualstudio.com/AzureAD/_wiki/wikis/AzureAD/183983/Azure-AD-Sign-in-for-Azure-Linux-VMs?anchor=auth.log-(debug-level)in the log ...
+2. **Root cause**: This issue is caused because the metadata sends the location name as IndiaCentral and Plugin is searching for CentralIndia.
+3. **Solution**: This issue is fixed in the Plugin release 1.0.011360001 to install this plugin please follow the below steps,Install the extension with the below command,az vm extension set \--publisher Microsoft.Azu...
+
+---

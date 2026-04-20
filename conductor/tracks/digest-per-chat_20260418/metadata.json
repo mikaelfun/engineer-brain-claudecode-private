@@ -1,0 +1,17 @@
+{
+  "id": "digest-per-chat_20260418",
+  "title": "Teams digest \u622a\u65ad\u5bfc\u81f4 assess \u8bef\u5224 \u2014 \u6539\u4e3a per-chat \u5e76\u884c\u751f\u6210",
+  "type": "bug",
+  "status": "implemented",
+  "issueId": "ISS-227",
+  "created": "2026-04-18T02:15:00+08:00",
+  "updated": "2026-04-18T06:15:00+08:00",
+  "phases": {
+    "total": 3,
+    "completed": 3
+  },
+  "tasks": {
+    "total": 10,
+    "completed": 10
+  }
+}

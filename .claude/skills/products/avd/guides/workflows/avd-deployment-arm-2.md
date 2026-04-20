@@ -1,109 +1,114 @@
-# AVD ARM 部署 (Part 2) — 排查工作流
+# AVD ARM 部署 (Part 2) — Troubleshooting Workflow
 
-**来源草稿**: ado-wiki-b-template-deployment-failed-multiple-errors.md, ado-wiki-b-template-validation-error.md, ado-wiki-b-troubleshoot-arm-deployment-asc-kusto.md
-**Kusto 引用**: deployment-info.md
-**场景数**: 4
-**生成日期**: 2026-04-07
+**Scenario Count**: 13
+**Generated**: 2026-04-18
 
 ---
 
-## Scenario 1: Option 1 - ASC
-> 来源: ado-wiki-b-template-deployment-failed-multiple-errors.md | 适用: \u901a\u7528 \u2705
+## Scenario 1: AVD deployment fails with InvalidContentLink error: 'Unable ...
+> Source: ADO Wiki | Applicable: ✅
 
-### 排查步骤
-1. Open ASC -> enter case number -> go to Resource Explorer
-2. Select the customer's Subscription -> Operations -> RDFE Operations
-3. Identify failure using correlation ID (from Summary Error/Raw Error), deployment ID, or resource group name
-4. Expand error and review to determine why the validation failed
+### Troubleshooting Steps
+- Create an ICM incident. PG team will need to upload the missing ARM templates using the artifact deployment pipeline.
 
-## Scenario 2: Option 2 - Customer Error Details
-> 来源: ado-wiki-b-template-deployment-failed-multiple-errors.md | 适用: \u901a\u7528 \u2705
+**Root Cause**: ARM templates artifacts are missing from the storage blob used for AVD deployment.
 
-### 排查步骤
-1. Ask the customer to click the error message in Azure Portal
-2. Review the Summary and Raw Error - typically this will tell you why failed
-   - Note: Some resources may have already been created (host pool, workspace, availability set, application group). If starting over, delete these first for a clean installation.
+## Scenario 2: Customer cannot download or install Windows App because comp...
+> Source: ADO Wiki | Applicable: ✅
 
-## Scenario 3: Option 3 - Activity Log
-> 来源: ado-wiki-b-template-deployment-failed-multiple-errors.md | 适用: \u901a\u7528 \u2705
+### Troubleshooting Steps
+- Download Windows App directly from Microsoft Learn: https://learn.microsoft.com/en-us/windows-app/whats-new - the page has direct download links for all platforms without requiring Microsoft Store
 
-### 排查步骤
-1. Ask customer to login to Azure Portal and go to Activity Log
-2. Look for "Validate Deployment" failures (select the operation with the red icon)
-3. On the right side select "JSON" and scroll to "statusMessage" for more information about the actual issue
+**Root Cause**: Organization policy blocks Microsoft Store access, preventing standard Windows App installation
 
-## Scenario 4: Steps
-> 来源: ado-wiki-b-troubleshoot-arm-deployment-asc-kusto.md | 适用: \u901a\u7528 \u2705
+## Scenario 3: AVD deployment fails with InvalidContentLink: Unable to down...
+> Source: ADO Wiki | Applicable: ✅
 
-### 排查步骤
-1. Open ASC -> Resource Explorer -> click Sub -> Operations -> select date range when deployment failed -> Run
-2. Under ARM Operations -> Filter on Status Failed
-3. Find failure -> click Kusto Link for Job Traces
-   - Note: To access job traces go to MyAccess and request access to:
-   - Azure Diagnostic Partner - 19401
-   - ARM Logs
-4. Find failure - Copy Activity ID
-5. Search RDInfra using Activity ID (see Basic Queries wiki page for RDInfraTrace query)
+### Troubleshooting Steps
+- Create an IcM to AVD PG. PG will need to upload the missing ARM templates using the artifact deployment pipeline.
 
----
+**Root Cause**: ARM template artifacts are missing from the storage blob used during AVD host pool deployment.
 
-## 关联 Kusto 查询参考
+## Scenario 4: AVD VM deployed with Windows Enterprise multi-session image ...
+> Source: ADO Wiki | Applicable: ✅
 
-```kql
-cluster('https://rdskmc.chinaeast2.kusto.chinacloudapi.cn').database('WVD').RDTenant
-| where TenantGroupId == "{TenantGroupId}"
-| where env_time >= ago(1d)
-| project env_time, Name, Id, CreationDate, TenantGroupId, AzureADId
-| summarize arg_max(env_time, *) by Id
-```
-`[来源: deployment-info.md]`
+### Troubleshooting Steps
+- 1) Collect MSRD-Collect data
+- 2) Check Application event logs for Microsoft-Windows-Security-SPP events (1016, 1040, 1061, 8198, 8230, 12288, 16394) showing edition change from multi-session to Pro
+- 3) Open IcM to AVD PG documenting symptoms and findings
+- 4) Redeploy the VM is the only supported fix
+- Reference IcM 256401151.
 
-```kql
-cluster('https://rdskmc.chinaeast2.kusto.chinacloudapi.cn').database('WVD').HostPool
-| where TenantId == "{TenantId}"
-| where env_time >= ago(2d)
-| summarize arg_max(env_time, *) by Id
-| project Name, Id, PoolType, SHCount, LoadBalancerType, MaxSessions, Location
-```
-`[来源: deployment-info.md]`
+**Root Cause**: Backend issue potentially caused by old WinPA agent on certain VM clusters. During automated deployment, the OS edition gets switched from Enterprise for Virtual Desktop to Professional before the AVD agent installation completes.
 
-```kql
-cluster('https://rdskmc.chinaeast2.kusto.chinacloudapi.cn').database('WVD').AppGroup
-| where HostPoolId == "{HostPoolId}"
-| where env_time >= ago(1d)
-| summarize arg_max(env_time, *) by Id
-| project Name, Id, UsersCount, PubAppsCount, Type, Location
-```
-`[来源: deployment-info.md]`
+## Scenario 5: AVD host pool deployment fails with InvalidContentLink error...
+> Source: ADO Wiki | Applicable: ✅
 
-```kql
-let aadTenantId = "{AADTenantId}";
-let hostPools = cluster('https://rdskmc.chinaeast2.kusto.chinacloudapi.cn').database('WVD').HostPool
-| where AADTenantId == aadTenantId
-| where env_time >= ago(1d)
-| summarize arg_max(env_time, *) by Id
-| project HostPoolName = Name, HostPoolId = Id, SHCount, PoolType;
-let appGroups = cluster('https://rdskmc.chinaeast2.kusto.chinacloudapi.cn').database('WVD').AppGroup
-| where AADTenantId == aadTenantId
-| where env_time >= ago(1d)
-| summarize arg_max(env_time, *) by Id
-| project AppGroupName = Name, AppGroupId = Id, HostPoolId, Type, UsersCount;
-hostPools
-| join kind=leftouter appGroups on HostPoolId
-| project HostPoolName, HostPoolId, SHCount, PoolType, AppGroupName, Type, UsersCount
-```
-`[来源: deployment-info.md]`
+### Troubleshooting Steps
+- Create an ICM incident to the AVD PG team. PG will upload the missing ARM templates using the artifact deployment pipeline.
 
-```kql
-let subscriptionId = "{SubscriptionId}";
-cluster('https://rdskmc.chinaeast2.kusto.chinacloudapi.cn').database('WVD').HostPool
-| where SubscriptionId == subscriptionId
-| where env_time >= ago(1d)
-| summarize arg_max(env_time, *) by Id
-| summarize 
-    HostPoolCount = count(),
-    TotalSessionHosts = sum(SHCount),
-    PooledCount = countif(PoolType == "Pooled"),
-    PersonalCount = countif(PoolType == "Personal")
-```
-`[来源: deployment-info.md]`
+**Root Cause**: ARM template artifacts are missing from the storage blob used by the AVD deployment pipeline.
+
+## Scenario 6: Windows 10/11 Enterprise multi-session AVD VM gets downgrade...
+> Source: ADO Wiki | Applicable: ✅
+
+### Troubleshooting Steps
+- Redeploy the VM. The underlying cause is a backend issue that should be resolved with updated WinPA agent. If persists, escalate to PG.
+
+**Root Cause**: Scenario 2: Issue in Azure backend system (e.g., due to old WinPA agent) causes OS downgrade during initial deployment phase.
+
+## Scenario 7: DSC extension fails to download Configuration.zip - cataloga...
+> Source: MS Learn | Applicable: ✅
+
+### Troubleshooting Steps
+- Remove blocking network rules or download zip manually
+
+**Root Cause**: Firewall/NSG/static route blocking download
+
+## Scenario 8: AVD deployment fails with DeploymentFailed InvalidResourceRe...
+> Source: ADO Wiki | Applicable: ✅
+
+### Troubleshooting Steps
+- See Microsoft documentation: https://docs.microsoft.com/en-us/azure/virtual-desktop/troubleshoot-set-up-issues#error-deploymentfailed--invalidresourcereference (two scenarios documented)
+
+**Root Cause**: None
+
+## Scenario 9: WVD Deployment failed with DSC extension error. User is not ...
+> Source: ContentIdea | Applicable: ✅
+
+### Troubleshooting Steps
+- Create service principal role assignment per docs.
+
+**Root Cause**: SPN was missing role assignment.
+
+## Scenario 10: WVD ARM deployment fails: The template deployment vmCreation...
+> Source: ContentIdea | Applicable: ✅
+
+### Troubleshooting Steps
+- Check detailed error by clicking error banner in Portal. Request quota increase for affected region/VM family.
+
+**Root Cause**: Azure subscription quota limit exceeded for a region or VM family.
+
+## Scenario 11: Ephemeral OS disk deployment fails in certain regions due to...
+> Source: MS Learn | Applicable: ✅
+
+### Troubleshooting Steps
+- Monitor Azure announcements for SKU availability updates; deploy to another region or select a different SKU as workaround
+
+**Root Cause**: Incomplete rollout of supported SKUs or backend bugs cause regional deployment issues
+
+## Scenario 12: Azure Monitor workbook deployment for AVD fails with 'Deploy...
+> Source: OneNote | Applicable: ✅
+
+### Troubleshooting Steps
+- If workbook deployment fails, go to Log Analytics workspace > Agents configuration to manually configure performance counters and Windows event logs for AVD session hosts.
+
+**Root Cause**: Azure Monitor configuration workbook passes object-type parameter instead of string when setting up session host data (performance counters/event logs).
+
+## Scenario 13: Deployment fails Unauthorized - scale operation not allowed ...
+> Source: MS Learn | Applicable: ❓
+
+### Troubleshooting Steps
+- Change subscription type or deploy to different region
+
+**Root Cause**: Subscription type (MSDN/Free/Education) lacks VM features in region

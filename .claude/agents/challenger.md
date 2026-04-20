@@ -24,14 +24,11 @@ mcpServers:
 
 ## 执行日志
 
-所有执行步骤记录到 `{caseDir}/.casework/logs/challenger.log`。
-
-格式：`[YYYY-MM-DD HH:MM:SS] ...`
-
-使用 Bash echo append 写入。首次执行时创建 `.casework/logs/` 目录（如不存在）。
+日志路径通过 `state.json` 中的 `runId` 决定：
 
 ```bash
-LOG="{caseDir}/.casework/logs/challenger.log"
+RUN_ID=$(python3 -c "import json; print(json.load(open('{caseDir}/.casework/state.json',encoding='utf-8')).get('runId',''))" 2>/dev/null)
+LOG="{caseDir}/.casework/runs/$RUN_ID/agents/challenger.log"
 mkdir -p "$(dirname "$LOG")"
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] === challenger START ===" >> "$LOG"
 ```

@@ -207,4 +207,28 @@ describe('processMessages', () => {
     expect(result[0].messages[0].content).toBe('First question')
     expect(result[1].messages[0].content).toBe('Second question')
   })
+
+  it('passes through response message as single item (never collapsed)', () => {
+    const result = processMessages([msg('response', 'Here is the answer')])
+    expect(result).toHaveLength(1)
+    expect(result[0].kind).toBe('single')
+    expect(result[0].messages[0].type).toBe('response')
+  })
+
+  it('does not collapse response with adjacent thinking', () => {
+    const messages = [
+      msg('thinking', 'Let me reason...'),
+      msg('thinking', 'Analyzing...'),
+      msg('response', 'The answer is 42'),
+      msg('thinking', 'More reasoning...'),
+    ]
+    const result = processMessages(messages)
+    expect(result).toHaveLength(3)
+    expect(result[0].kind).toBe('collapsed-thinking')
+    expect(result[0].messages).toHaveLength(2)
+    expect(result[1].kind).toBe('single')
+    expect(result[1].messages[0].type).toBe('response')
+    expect(result[2].kind).toBe('collapsed-thinking')
+    expect(result[2].messages).toHaveLength(1)
+  })
 })

@@ -1,49 +1,50 @@
-# Microsoft Entra Device Registration & Windows Autopilot Troubleshooting
+---
+title: Troubleshooting Entra Device Registration and Windows Autopilot
+source: mslearn
+sourceUrl: https://learn.microsoft.com/en-us/troubleshoot/mem/intune/device-enrollment/azure-ad-device-registration-autopilot
+product: intune
+date: 2026-04-18
+type: troubleshooting-guide
+---
 
-Source: https://learn.microsoft.com/en-us/troubleshoot/mem/intune/device-enrollment/azure-ad-device-registration-autopilot
+# Troubleshooting Entra Device Registration and Windows Autopilot
 
-## Microsoft Entra Device Registration
+## Entra Device Registration
 
-### Connection Types
-- Microsoft Entra registered
-- Microsoft Entra joined
-- Microsoft Entra hybrid joined
+### Connection Options
+- Entra registered (BYOD)
+- Entra joined (cloud-only)
+- Entra hybrid joined (on-prem AD + cloud)
 
-### Troubleshooter Tool
-Use the [Device Registration Troubleshooter Tool](https://aka.ms/DevRegTS):
-- Device health status **Pending** → option 5
-- Missing Primary Refresh Token (PRT) → option 6
+### Diagnostic Tool
+Device Registration Troubleshooter Tool: https://aka.ms/DevRegTS
 
-Reference: [Microsoft Entra device identity documentation](https://learn.microsoft.com/en-us/azure/active-directory/devices)
+Menu options:
+- Option 5: Device health status Pending
+- Option 6: Device does not have Primary Refresh Token (PRT) issued
+
+### Reference
+Full documentation: Entra device identity documentation
 
 ## Windows Autopilot
 
-### CSV Import
-1. Intune admin center → Devices > Windows > Windows enrollment > Devices (under Autopilot) > Import
-2. Generate CSV with PowerShell:
+### Device Import
+Import CSV via: Intune admin center > Devices > Windows > Windows enrollment > Devices (under Windows Autopilot Deployment Program) > Import
+
+### Generate CSV
 ```powershell
 Install-Script -Name Get-WindowsAutoPilotInfo
-Get-WindowsAutoPilotInfo.ps1 -OutputFile autopilot.csv
+Get-WindowsAutoPilotInfo
 ```
 
-### Log Collection
-Collect logs first using:
-```console
-mdmdiagnosticstool.exe -area Autopilot -cab <path>
-```
-
-### Key Log Files
+### Key Log Files for Troubleshooting
 - `microsoft-windows-devicemanagement-enterprise-diagnostics-provider-admin.evtx`
 - `microsoft-windows-moderndeployment-diagnostics-provider-autopilot.evtx`
 - `MdmDiagReport_RegistryDump.reg`
 - `TpmHliInfo_Output.txt`
-- `microsoft-windows-provisioning-diagnostics-provider-admin.evtx` — ESP events (app failures, timeouts)
+- `microsoft-windows-provisioning-diagnostics-provider-admin.evtx` (ESP events)
 
-### ESP-related Event Examples
-- `AutoPilotGetOobeSettingsOverride succeeded: OOBE setting = AUTOPILOT_OOBE_SETTINGS_AAD_JOIN_ONLY`
-- `UnifiedEnrollment_ProvisioningProgressPage_ApplicationsFailed`
-- `UnifiedEnrollment_ProvisioningProgressPage_DeviceConfigurationTimeOut`
-
-### Further Resources
-- [Troubleshooting overview](https://learn.microsoft.com/en-us/windows/deployment/windows-autopilot/troubleshooting)
-- [Troubleshooting Windows Autopilot (level 300/400)](https://techcommunity.microsoft.com/t5/windows-blog-archive/troubleshooting-windows-autopilot-level-300-400/ba-p/706512)
+### ESP-related Events in Provisioning Log
+- `AutoPilotGetOobeSettingsOverride succeeded` - OOBE setting status
+- `UnifiedEnrollment_ProvisioningProgressPage_ApplicationsFailed` - App install failure
+- `UnifiedEnrollment_ProvisioningProgressPage_DeviceConfigurationTimeOut` - Config timeout

@@ -59,3 +59,9 @@ python3 .claude/skills/sap-match/match-sap.py --list-products Azure
 - `{dataRoot}/sap-scope.json` — POD scope 定义
 
 纯本地搜索，无网络/浏览器依赖，毫秒级响应。
+
+## 输出规则
+
+- **SAP 路径禁止在 `/` 两边加空格**。D365 严格匹配，`Azure/VPN Gateway` 才能识别，`Azure / VPN Gateway` 不行。
+- 展示给用户时直接用原始格式（如 `Azure/21Vianet Mooncake/...`），不要美化加空格。
+- `config.json` 中 `cloud` 字段（`mooncake`/`global`）决定默认 scope，有该字段时自动加 `--scope`。

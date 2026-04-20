@@ -1,85 +1,15 @@
 {
-  "product": "vm",
-  "generatedAt": "2026-04-07",
-  "totalConflicts": 3,
-  "conflicts": [
-    {
-      "id": "conflict-001",
-      "topic": "vm-provisioning-h",
-      "type": "solution_conflict",
-      "severity": "medium",
-      "entryA": {
-        "id": "vm-mslearn-260",
-        "source": "mslearn",
-        "date": "2026-04-05",
-        "symptom": "Linux VM fails to boot after migration to Azure or after disabling Hyper-V drivers. VM stuck at dracut/initramfs, kernel panic, cannot find root device, no network, GRUB failure. Missing hv_vmbus/hv_s",
-        "solution": "Fix1(disabled): chroot repair VM, grep -nr hv_ /etc/modprobe.d/, remove blacklist. Fix2(missing): add hv_vmbus hv_netvsc hv_storvsc to /etc/dracut.conf or /etc/initramfs-tools/modules, rebuild initramfs."
-      },
-      "entryB": {
-        "id": "vm-onenote-043",
-        "source": "onenote",
-        "date": "2026-04-04",
-        "symptom": "Windows Server VM fails to boot: winload.exe not found or BCD boot failure; VM stuck at boot error screen after disk corruption or migration",
-        "solution": "1) Attach failed OS disk to troubleshooting VM; identify drive letters (System Reserved active partition = BCD location, e.g. H:; OS partition = I:); 2) bcdedit /store H:\\boot\\bcd /enum to view entries; 3) Fix {default}: set device partition=I:, osdevice partition=I:, integrityservices enable, recov"
-      },
-      "symptomSimilarity": 0.48,
-      "contradictionSignal": "disable vs enable",
-      "judgment": "false_alarm",
-      "reasoning": "False alarm: entryA is Linux Hyper-V driver boot fix, entryB is Windows BCD boot fix - completely different OS and scenarios. Keyword \"disable/enable\" is coincidental.",
-      "recommendation": "No action needed - false alarm",
-      "resolved": true
-    },
-    {
-      "id": "conflict-002",
-      "topic": "vm-linux-os",
-      "type": "solution_conflict",
-      "severity": "medium",
-      "entryA": {
-        "id": "vm-ado-wiki-e-r7-008",
-        "source": "ado-wiki",
-        "date": "2026-04-06",
-        "symptom": "Mount of Azure File Share on RHEL 8.2 fails with: mount: bad option; for several filesystems (e.g. nfs, cifs) you might need a /sbin/mount.<type> helper program",
-        "solution": "Install cifs-utils package: yum install cifs-utils. Verify installation: ls -l /sbin/mount.cifs. Then retry mounting the Azure File Share. The package provides mount.cifs binary required for CIFS/SMB mounts."
-      },
-      "entryB": {
-        "id": "vm-mslearn-243",
-        "source": "mslearn",
-        "date": "2026-04-05",
-        "symptom": "apt update fails with does not have a Release file for armhf packages on x86_64 Azure VM",
-        "solution": "Remove or comment out armhf repository lines from sources.list or sources.list.d/*.list."
-      },
-      "symptomSimilarity": 0.41,
-      "contradictionSignal": "install vs remove",
-      "judgment": "false_alarm",
-      "reasoning": "False alarm: entryA is CIFS mount on RHEL (install cifs-utils), entryB is apt armhf repo on Debian (remove wrong repo). Different packages, different distros, different issues.",
-      "recommendation": "No action needed - false alarm",
-      "resolved": true
-    },
-    {
-      "id": "conflict-003",
-      "topic": "vm-extension-c",
-      "type": "rootcause_conflict",
-      "severity": "low",
-      "entryA": {
-        "id": "vm-mslearn-156",
-        "source": "mslearn",
-        "date": "2026-04-05",
-        "symptom": "VM extension fails with Error Code 51 'Unsupported OS'. Extension cannot run on the current operating system.",
-        "rootCause": "The VM's operating system is not supported by the specific extension. Windows VM Agent requires Windows Server 2008 SP2 (64-bit) + .NET 4.0 minimum. Linux agent has extension framework limits beyond base agent support."
-      },
-      "entryB": {
-        "id": "vm-onenote-147",
-        "source": "onenote",
-        "date": "2022-01-04",
-        "symptom": "Set-AzVMCustomScriptExtension fails on Linux VM with error: binCustomScriptHandler.exe command not found; exit code 127; extension handler reports terminal failure for Microsoft.Compute.CustomScriptEx",
-        "rootCause": "Set-AzVMCustomScriptExtension installs from publisher Microsoft.Compute.CustomScriptExtension which is only supported for Windows; Linux requires publisher Microsoft.Azure.Extensions"
-      },
-      "symptomSimilarity": 0.44,
-      "contradictionSignal": "not supported vs supported",
-      "judgment": "false_alarm",
-      "reasoning": "False alarm: entryA is generic extension OS support matrix, entryB is CSE publisher mismatch (Windows vs Linux). Different root issues, keyword \"supported/not supported\" is coincidental.",
-      "recommendation": "No action needed - false alarm",
-      "resolved": true
-    }
-  ]
+  "generatedAt": "2026-04-18",
+  "mode": "incremental",
+  "affectedTopics": [
+    "vm-encryption",
+    "vm-extension-d",
+    "vm-general",
+    "vm-linux-os",
+    "vm-provisioning-i",
+    "vm-scvmm",
+    "vm-windows-os"
+  ],
+  "conflictsFound": 0,
+  "conflicts": []
 }

@@ -21,11 +21,11 @@ allowed-tools:
 
 **由 `casework-gather.sh` 自动调用或手动 `/email-search` 触发，不需要 LLM agent 做 MCP 调用。**
 
-`email-search-inline.sh` 直接通过 agency.exe HTTP proxy 调 Graph API，完全绕过 MCP 直连。
+`fetch-outlook-emails.sh` 直接通过 agency.exe HTTP proxy 调 Graph API，完全绕过 MCP 直连。
 每个 case 独立实例，天然并行安全。
 
 ```bash
-bash .claude/skills/email-search/scripts/scripts/scripts/email-search-inline.sh \
+bash .claude/skills/email-search/scripts/scripts/scripts/fetch-outlook-emails.sh \
   --case-number {caseNumber} \
   --case-dir {caseDir} \
   --project-root .
@@ -55,12 +55,23 @@ bash .claude/skills/email-search/scripts/scripts/scripts/email-search-inline.sh 
 
 **⚠️ DEPRECATED** — 推荐改用 INLINE_HTTP 模式。
 
-## 并发性能
+## 使用场景
+
+> ⚠️ **casework / patrol 正常流程不调用此脚本**。邮件数据由 `data-refresh.sh → fetch-all-data.ps1` (D365 OData API) 拉取，产出 `emails.md`。
+
+本脚本的适用场景：
+
+| 场景 | 说明 |
+|------|------|
+| **Case Review Master** | 批量拉取所有 case 的 Outlook 邮件全文，用于 case review 分析 |
+| **product-learn auto enrich** | 作为邮件知识源，为 product-learn 提供完整邮件对话（含 HTML body），补充 D365 `emails.md` 可能截断的内容 |
+| **手动 `/email-search`** | 单 case 临时需要完整 Outlook 邮件正文时手动调用 |
+
+## 并发性能（批量模式）
 
 ### 架构：每 case 独立 agency proxy
 
-当前 `email-search-inline.sh` 每次调用启动独立的 `agency.exe mcp mail` HTTP proxy。
-天然并行安全，但高并发时 agency.exe 进程数 = 并发数。
+每次调用启动独立的 `agency.exe mcp mail` HTTP proxy，天然并行安全。
 
 ### 实测吞吐（226 case 批量压测）
 
@@ -74,26 +85,28 @@ bash .claude/skills/email-search/scripts/scripts/scripts/email-search-inline.sh 
 
 ### 并发建议
 
-- **casework 单 case**：直接调用，不需要考虑并发
-- **patrol 批量**（5-20 case）：`--port` 指定不同端口，并行安全
-- **大批量**（20+ case）：推荐并发 **10-20**，Graph API 是瓶颈（非 agency）
-  - 20→40 吞吐仅 40→42/min（+5%），但最慢 case 从 28s→55s（+96%）
-  - 20 并发是**吞吐/延迟最优平衡点**
-- **⚠️ 端口范围**：默认 9860-9889（30 个），超过 30 并发会端口冲突
-  - 冲突时后启动的进程复用已有 proxy（Graph API 无状态，不影响正确性）
-  - 但先完成的 case 杀 proxy 会中断后续 case → 真正安全上限 ~20 并发
+- **单 case**（手动 `/email-search`）：直接调用
+- **批量**（20+ case）：推荐并发 **10-20**，20 并发是吞吐/延迟最优平衡点
+- **⚠️ 端口范围**：默认 9860-9889（30 个），真正安全上限 ~20 并发
 
 ### 批量最佳实践
 
-226 case 全量，推荐分批 + 共享 proxy（未来优化）：
+批量拉取输出到独立目录，**不污染 EB active cases 数据**：
 
 ```bash
-# 当前：直接并行（20 并发，~6 分钟跑完 226 case）
-cat case-ids.txt | xargs -P20 -I{} bash email-search-inline.sh \
-  --case-number {} --case-dir ./cases/active/{} --project-root .
+# Case Review Master / product-learn auto enrich 批量模式
+# 输出到独立目录，每 case 一个子目录
+OUTPUT_ROOT="../data/email-export"
+cat case-ids.txt | xargs -P20 -I{} bash fetch-outlook-emails.sh \
+  --case-number {} --case-dir ./cases/active/{} --project-root . \
+  --output-dir "$OUTPUT_ROOT/{}"
 
-# 未来：共享 proxy 模式（参考 teams-search-http.sh）
-# 一个 agency proxy + 多 worker 共享同端口，消除 N 个启动开销
+# 产出结构：
+# ../data/email-export/2601290030000748/emails-office.md
+# ../data/email-export/2601290030000748/emails-office.json
+# ../data/email-export/2601290030000748/assets/image001.png  (inline images)
+# ../data/email-export/2601290030000748/assets/image002.png
+# ../data/email-export/2601290030000748/.casework/runs/{runId}/agents/email-search.log
 ```
 
 ## 参数
@@ -105,9 +118,9 @@ cat case-ids.txt | xargs -P20 -I{} bash email-search-inline.sh \
 # 读取 config.json 获取 casesRoot
 CASES_ROOT=$(python3 -c "import json; print(json.load(open('config.json'))['casesRoot'])")
 CASE_DIR="$CASES_ROOT/active/{caseNumber}"
-mkdir -p "$CASE_DIR/logs"
+mkdir -p "$CASE_DIR/.casework/logs"
 
-bash .claude/skills/email-search/scripts/scripts/scripts/email-search-inline.sh \
+bash .claude/skills/email-search/scripts/scripts/scripts/fetch-outlook-emails.sh \
   --case-number {caseNumber} \
   --case-dir "$CASE_DIR" \
   --project-root .
@@ -123,7 +136,7 @@ bash .claude/skills/email-search/scripts/scripts/scripts/email-search-inline.sh 
 在 `casework-gather.sh` 中作为后台任务并行执行：
 
 ```bash
-bash "$CD/.claude/skills/email-search/scripts/scripts/scripts/email-search-inline.sh" \
+bash "$CD/.claude/skills/email-search/scripts/scripts/scripts/fetch-outlook-emails.sh" \
   --case-number "$CASE_NUMBER" \
   --case-dir "$CASE_DIR" \
   --project-root "$CD" \
@@ -173,7 +186,7 @@ PID_EMAIL=$!
 ## 输出文件
 
 - `{caseDir}/emails-office.md` — Outlook 邮件完整内容（清洗后）
-- `{caseDir}/.casework/logs/email-search.log` — 执行日志
+- `{caseDir}/.casework/runs/{runId}/agents/email-search.log` — 执行日志
 
 ## 与 emails.md 的关系
 

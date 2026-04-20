@@ -4,9 +4,6 @@ description: "Case 全流程编排：data-refresh → assess → act → summari
 tools: Bash, Read, Write, Edit, Glob, Grep, Agent
 model: opus
 maxTurns: 200
-
-mcpServers:
-  - icm
 ---
 
 # Casework Agent

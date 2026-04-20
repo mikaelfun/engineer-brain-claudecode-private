@@ -90,21 +90,6 @@ function classifyChange(filePath: string): { type: SSEEventType; data: Record<st
     return null // StateManager handles SSE broadcast
   }
 
-  // Archive/transfer summary (written by detect-case-status.ps1 during filter phase)
-  // Only merge if patrol is currently running to avoid stale data pollution
-  if (normalized.includes('archive-summary.json')) {
-    if (patrolStateManager.isRunning()) {
-      try {
-        const summary = JSON.parse(readFileSync(filePath, 'utf-8'))
-        patrolStateManager.update({
-          archivedCount: summary.archivedCount ?? 0,
-          transferredCount: summary.transferredCount ?? 0,
-        })
-      } catch { /* ignore */ }
-    }
-    return null
-  }
-
   // Patrol final result (patrol-state.json)
   // For CLI-originated patrols, this is the primary completion signal
   // (orchestrator only handles WebUI patrols)

@@ -6,7 +6,7 @@ export interface SkillMeta {
   name: string
   displayName: string
   description: string
-  category: 'inline' | 'agent' | 'orchestrator'
+  category: 'inline' | 'agent' | 'orchestrator' | 'casework-sub-skill'
   stability: 'stable' | 'beta' | 'dev'
   requiredInput?: string
   mcpServers?: string[]
@@ -15,10 +15,12 @@ export interface SkillMeta {
   promptTemplate?: string
   steps?: string[]
   webUiAlias?: string
+  /** Relative path from skills root to skill directory (e.g., 'casework/assess') */
+  skillDir?: string
 }
 
 const REQUIRED_FIELDS: (keyof SkillMeta)[] = ['name', 'displayName', 'description', 'category', 'stability']
-const VALID_CATEGORIES = ['inline', 'agent', 'orchestrator'] as const
+const VALID_CATEGORIES = ['inline', 'agent', 'orchestrator', 'casework-sub-skill'] as const
 const VALID_STABILITIES = ['stable', 'beta', 'dev'] as const
 
 class SkillRegistryService {
@@ -88,6 +90,7 @@ class SkillRegistryService {
         promptTemplate: data.promptTemplate,
         steps: data.steps,
         webUiAlias: data.webUiAlias,
+        skillDir: dirName,
       }
 
       this.registry.set(meta.name, meta)
@@ -95,8 +98,70 @@ class SkillRegistryService {
       if (meta.webUiAlias) {
         this.aliasMap.set(meta.webUiAlias, meta.name)
       }
+
+      // For orchestrator skills, also load sub-skills from subdirectories
+      if (meta.category === 'orchestrator') {
+        this.loadSubSkills(dirName)
+      }
     } catch (err) {
       console.error(`[skill-registry] Error loading ${skillPath}:`, err)
+    }
+  }
+
+  /**
+   * Load sub-skills from subdirectories of an orchestrator skill.
+   * Each sub-skill gets a webUiAlias derived from its name (e.g., 'casework:assess' → 'assess').
+   */
+  private loadSubSkills(parentDir: string): void {
+    const parentPath = join(this.skillsDir, parentDir)
+    let subDirs: string[]
+    try {
+      subDirs = readdirSync(parentPath, { withFileTypes: true })
+        .filter(d => d.isDirectory())
+        .map(d => d.name)
+    } catch {
+      return
+    }
+
+    for (const subDir of subDirs) {
+      // Skip non-skill directories (scripts, etc.)
+      const skillPath = join(parentPath, subDir, 'SKILL.md')
+      if (!existsSync(skillPath)) continue
+
+      try {
+        const content = readFileSync(skillPath, 'utf-8')
+        const { data } = matter(content)
+        if (!data || !data.name) continue
+
+        // Sub-skills may have non-standard categories — accept them
+        const meta: SkillMeta = {
+          name: data.name,
+          displayName: data.displayName || subDir,
+          description: data.description || '',
+          category: data.category || 'casework-sub-skill',
+          stability: data.stability || 'beta',
+          requiredInput: data.requiredInput,
+          mcpServers: data.mcpServers,
+          estimatedDuration: data.estimatedDuration,
+          version: data.version,
+          promptTemplate: data.promptTemplate,
+          steps: data.steps,
+          webUiAlias: data.webUiAlias,
+          skillDir: `${parentDir}/${subDir}`,
+        }
+
+        // Auto-derive webUiAlias from name: "casework:assess" → "assess"
+        if (!meta.webUiAlias && meta.name.includes(':')) {
+          meta.webUiAlias = meta.name.split(':').pop()!
+        }
+
+        this.registry.set(meta.name, meta)
+        if (meta.webUiAlias) {
+          this.aliasMap.set(meta.webUiAlias, meta.name)
+        }
+      } catch (err) {
+        console.error(`[skill-registry] Error loading sub-skill ${parentDir}/${subDir}:`, err)
+      }
     }
   }
 

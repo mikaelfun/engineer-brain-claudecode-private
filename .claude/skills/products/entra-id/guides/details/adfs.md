@@ -1,6 +1,6 @@
 # ENTRA-ID ADFS Config & Troubleshooting — Detailed Troubleshooting Guide
 
-**Entries**: 155 | **Drafts fused**: 45 | **Kusto queries**: 0
+**Entries**: 161 | **Drafts fused**: 45 | **Kusto queries**: 0
 **Draft sources**: ado-wiki-a-adfs-365-default-rules.md, ado-wiki-a-adfs-claims-xray-setup.md, ado-wiki-a-adfs-idpinitiated-signon-test.md, ado-wiki-a-adfs-issuerid-claim-issuance-deepdive.md, ado-wiki-a-adfs-wia-settings-check.md, ado-wiki-a-wap-trust-troubleshooter.md, ado-wiki-b-adfs-endpoints-reference.md, ado-wiki-b-adfs-enterprise-prt-event-1021.md, ado-wiki-b-adfs-gmsa-reference.md, ado-wiki-b-adfs-oauth-troubleshooting-guide.md
 **Generated**: 2026-04-07
 
@@ -512,40 +512,79 @@ Set-AdfsDeviceRegistration -MaximumInactiveDays 0 Note: Setting MaximumInactiveD
 ## Phase 9: Kb
 > 4 related entries
 
-### Unable to create Group Managed Service Account during ADFS configuration on Server 2019.                         Receive error message:    ...
+### Unable to create Group Managed Service Account during ADFS configuration on Server 2019.  
+   
+   
+      
+   
+   
+     Receive error message:
+   
+ ...
 **Score**: 🔵 7.0 | **Source**: KB
 
-**Root Cause**: The AD FS configuration powershell/installer looks for the CN=Managed Service Accounts, container by WKGUID.   
-  
-  
-     
-  
-  
-    Expected value:
-  
-  
-    
-      
-    
-    
-      
-    
-      
-    Customer didn
-    
-    t have a CN=Managed Service Accounts container in AD. Instead he had created an OU with the same name.
-    
-      
-    
-      
-    As the container couldn
-    
-    t be found to create GMSA ,it reports above error and fails.
-  
-  
-     
-  
-  
+**Root Cause**: The AD FS configuration powershell/installer looks for the CN=Managed Service Accounts, container by WKGUID.   
+
+  
+
+  
+
+     
+
+  
+
+  
+
+    Expected value:
+
+  
+
+  
+
+    
+
+      
+
+    
+
+    
+
+      
+
+    
+
+      
+
+    Customer didn
+
+    
+
+    t have a CN=Managed Service Accounts container in AD. Instead he had created an OU with the same name.
+
+    
+
+      
+
+    
+
+      
+
+    As the container couldn
+
+    
+
+    t be found to create GMSA ,it reports above error and fails.
+
+  
+
+  
+
+     
+
+  
+
+  
+
   
 
 **Solution**: Please review article:  4549462 ADDS How to force re-running parts of ADPREP /domainprep Implement the steps needed to re-play the task for the &quot;Managed Service Accounts&quot; Container. It's about re-running operations GUIDs (Windows Server 2008 R2): Operation 75: {5e1574f6-55df-493e-a6-71-aa-ef-fc-a6-a1-00} Operation 76: {d262aae8-41f7-48ed-9f-35-56-bb-b6-77-57-3d}
@@ -793,3 +832,56 @@ Set-AdfsDeviceRegistration -MaximumInactiveDays 0 Note: Setting MaximumInactiveD
 | 28 | Third-party desktop app prompts for credentials when authenticating via ADFS ... | ADFS ExtendedProtectionTokenCheck set to Required blocks ... | Set-ADFSProperties -ExtendedProtectionTokenCheck None. Al... | 🟢 9.0 | OneNote |
 | 29 | Cannot convert federated domain to managed after ADFS server uninstalled. Set... | ADFS server removed before domain conversion. Standard cm... | Use Set-MsolDomainAuthentication or Get-MsolUser / Conver... | 🟢 9.0 | OneNote |
 | 30 | Cannot add child federated domain with New-MsolFederatedDomain when parent us... | New-MsolFederatedDomain only works with AD FS as IDP. Fai... | Use New-MsolDomain -Name child.domain -Authentication Fed... | 🟢 9.0 | OneNote |
+
+
+---
+
+## Incremental Update (2026-04-18) - +6 entries from contentidea-kb
+
+### Unable to create Group Managed Service Account during ADFS configuration on Server 2019.                               Receive error message:         ...
+**Score**: 🟢 8.0 | **Source**: ContentIdea KB | **ID**: entra-id-3652
+
+**Root Cause**: The AD FS configuration powershell/installer looks for the CN=Managed Service Accounts, container by WKGUID.                                Expected value:                                                              Customer didn            t have a CN=Managed Service Accounts container in AD. Inst...
+
+**Solution**: Please review article:  4549462 ADDS How to force re-running parts of ADPREP /domainprep Implement the steps needed to re-play the task for the &quot;Managed Service Accounts&quot; Container. It's about re-running operations GUIDs (Windows Server 2008 R2): Operation 75: {5e1574f6-55df-493e-a6-71-aa-...
+
+
+### When customers try to customize error messages on ADFS page they see duplicate entries of the attributes as:The above ADFSGlobalWebContent has duplica...
+**Score**: 🟢 8.0 | **Source**: ContentIdea KB | **ID**: entra-id-3656
+
+**Root Cause**: The reason being that each locale has its own web content and customization of the error pages. When the customization is done without specifying the locale it by default updates the Global web content where the value of locale is &quot;NULL&quot;.In order to customize the error messages for a parti...
+
+**Solution**: In order to customize the error messages for a particular locale you need to explicitly call out the name of the locale while running the PowerShell cmdlet as: Set-AdfsGlobalWebContent -Locale  en -ErrorPageGenericErrorMessage &quot;<Message>&quot;
+
+
+### We have created ADFS claim rule to block all external request except the particular Active directory group of users. After creating the rule, we still...
+**Score**: 🟢 8.0 | **Source**: ContentIdea KB | **ID**: entra-id-3665
+
+**Root Cause**: In ADFS Audit / debug logs, when claim processing was happening, the group was not being evaluated. The group SID S-1-5-21-1010517290-1075059173-903097961-179968 assigned in the ADFS claim rule was for a distribution group and not a Security group.
+
+**Solution**: Changed the group type to Security group and ADFS started processing the group claims and issued deny claim as it should.
+
+
+### ADFS gives a responder token back to relying party and the event viewer logs the below eventLog Name:      AD FS/AdminSource:        AD FSDate:       ...
+**Score**: 🟢 8.0 | **Source**: ContentIdea KB | **ID**: entra-id-3669
+
+**Root Cause**: This mostly happens when the relying party sends a signed request to ADFS server and ADFS server could not verify the revocation of the certificate which is used to sign the authentication request.
+
+**Solution**: First thing we need to do is to identify the certificate from the thumbprint found in the event 316 in ADFS admin log. Once done export the certificate to file path.Then run the below command to verify if the revocation is getting successful or not.certutil -f �urlfetch -verify &quot;<Path of the ex...
+
+
+### When trying to start the ADFS / AD FS service within the services console, it fails with the following error: The Active Directory Federation Services...
+**Score**: 🟢 8.0 | **Source**: ContentIdea KB | **ID**: entra-id-3676
+
+**Root Cause**: This can occur if the ADFS Token Signing and Token Decrypting certificates have expired, and the system was not able to roll over to new certificates. This situation may be most common when using a VM template, or if a VM was shut down during the certificate expiration timeframe.
+
+**Solution**: The ADFS service won't start because the certificates are expired, and you can't update the certificates unless the ADFS service is started.  You have to trick the system into thinking the certificates are valid long enough to get the service started, then you can update the certs.  We can do that w...
+
+
+### When trying to start the ADFS / AD FS service within the services console, it fails with the following error: The Active Directory Federation Services...
+**Score**: 🟢 8.0 | **Source**: ContentIdea KB | **ID**: entra-id-3684
+
+**Root Cause**: This can occur if the ADFS Token Signing and Token Decrypting certificates have expired, and the system was not able to roll over to new certificates.
+
+**Solution**: The ADFS service won't start because the certificates are expired, and you can't update the certificates unless the ADFS service is started. You have to trick the system into thinking the certificates are valid long enough to get the service started, then you can update the certs. We can do that wit...
+

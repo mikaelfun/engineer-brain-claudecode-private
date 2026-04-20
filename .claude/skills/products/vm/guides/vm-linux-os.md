@@ -1,8 +1,8 @@
 # VM Vm Linux Os — 排查速查
 
 **来源数**: 3 | **21V**: 未标注
-**条目数**: 24 | **关键词**: linux, os
-**最后更新**: 2026-04-07
+**条目数**: 25 | **关键词**: linux, os
+**最后更新**: 2026-04-18
 
 ## 症状速查
 
@@ -32,6 +32,7 @@
 | 22 | yum SyntaxError/No module named yum/bad interpreter. Wrong Python version. | Default Python changed or symlink modified. | Fix symlink: ln -s python2.7 python. Or rpm -ivh python --replacepkgs. | 🔵 7.0 | MS Learn |
 | 23 | yum RHEL 7 HTTPS 403 Forbidden to RHUI. Third-party curl from city-fan.org. | Third-party curl certificates not recognized by Red Hat. | Downgrade to official RHEL curl: yum downgrade curl libcurl --disablerepo=*. | 🔵 7.0 | MS Learn |
 | 24 | Ubuntu 24.04 VM needs account lockout configuration: lock login for N minutes after N failed attempt... | Ubuntu 24.04 defaults to pam_faillock (replacing older pam_tally2). Three PAM co... | 1) Edit /etc/security/faillock.conf: deny=3, unlock_time=600, fail_interval=900,... | 🟢 8.5 | OneNote |
+| 25 | cloud-init is an open source project provisioning agent, that can be baked into Linux images, this i... | Reference doc (no explicit root cause)... | See original document for detailed steps... | 🟡 5.0 | KB |
 
 > 本 topic 有融合排查指南，含完整排查流程和 Kusto 查询模板
 > → [完整排查流程](details/vm-linux-os.md)

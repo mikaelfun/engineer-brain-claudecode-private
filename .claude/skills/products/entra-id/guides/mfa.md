@@ -1,7 +1,7 @@
 # ENTRA-ID Multi-Factor Authentication — Quick Reference
 
-**Entries**: 66 | **21V**: Partial (63/66)
-**Last updated**: 2026-04-07
+**Entries**: 67 | **21V**: Partial (63/66)
+**Last updated**: 2026-04-18
 **Keywords**: mfa, entra-id, conditional-access, 21v, nps, aadsts50076
 
 > This topic has a fusion guide with detailed troubleshooting flow
@@ -51,6 +51,7 @@
 | 38 📋 | In Azure Free tenants, toggling Security defaults to On in the MFA Wizard takes immediate effect ... | Security defaults toggle is applied immediately when switched On in the wizar... | Navigate to Properties blade > Manage security defaults link to disable Secur... | 🟢 8.5 | ADO Wiki |
 | 39 📋 | VPN authorization fails after number matching rollout (May 8, 2023) for organizations using RADIU... | NPS extension does not support Number Matching, Rich Context, or Geographic L... | Update NPS extension to version 1.2.2216.1 or later. Users will receive One-T... | 🟢 8.5 | ADO Wiki |
 | 40 📋 | Silent PTA agent installation with credentials fails when the Global Admin account is protected b... | Silent credential-based installation using PSCredential cannot handle MFA cha... | Use offline token method instead: Generate token interactively on another mac... | 🟢 8.5 | ADO Wiki |
+| NEW 📋 | Unable to access MFA Server User portal due to error - Service unavailable HTTP 500 | Custom app pool under which the MFA Application was running within IIS was in st... | Updated the username, password for the custom App pool in IIS and started the Ap... | 🟢 8.0 | ContentIdea |
 | ... | *26 more entries* | | | | |
 
 ## Quick Troubleshooting Path

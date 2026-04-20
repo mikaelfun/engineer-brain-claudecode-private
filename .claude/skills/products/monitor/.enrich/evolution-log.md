@@ -505,3 +505,25 @@
   - 95737: Test item (empty fields, title="Test")
   - 117786: Test item (title="contentidea_tobedeleted", symptom="to test")
 - **Status**: exhausted=true (15/15 scanned), lastRefreshed updated
+
+## 2026-04-18T09:11:12Z — Phase 4b mslearn scan (final batch)
+
+- **Fetched**: 17 Monitor-relevant URLs (3+8+6 across batches)
+- **New Track A entries**: 7 (monitor-mslearn-093 to 099)
+  - 093: Log Analytics role definition fetch failures (missing subscription)
+  - 094: Legacy log profile deprecation/migration to Diagnostic Settings
+  - 095: Management group activity log export via API
+  - 096: Event Hub data export pricing/billing confusion
+  - 097: Activity log export per resource group (not supported natively)
+  - 098: Ghost diagnostic setting blocking 5th setting (legacy log profile)
+  - 099: Activity logs not forwarding after legacy-to-diagnostic-settings migration
+- **Track B guide drafts**: 3
+  - mslearn-mma-troubleshoot-basics.md
+  - mslearn-ssl-connectivity-check-mma.md
+  - mslearn-windows-agent-installation-troubleshoot.md
+- **Deduplicated**: 10 (same articles under azure-monitor-agent/ vs log-analytics/ paths, plus earlier extractions)
+- **Non-Monitor cross-references skipped**: 149 (marked as scanned)
+- **Status**: ALL 241 index URLs scanned → **exhausted: true**
+| 2026-04-20 | mslearn | Indexed 80 URLs from toc.yml (azure/azure-monitor), 51 already scanned, 32 pending | full-scan index build |
+| 2026-04-20 | contentidea-kb | Scanned 10 new work items (all empty/test data, 0 entries added); total 15/15 scanned | WIQL: Monitor, Log Analytics |
+| 2026-04-20 | mslearn | +8 entries (activity-log retention/export, App Insights Entra auth 401/403, Java 2.x no-data, JS correlation header) + 3 guide drafts (self-diagnostics, missing telemetry flow, high data ingestion) | batch 7: 8 URLs scanned |

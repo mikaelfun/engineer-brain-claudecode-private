@@ -20,7 +20,6 @@ import { join, resolve, dirname, isAbsolute } from 'path'
 import { fileURLToPath } from 'url'
 import {
   processCaseSession,
-  chatCaseSession,
   executeTodoAction,
   endSession,
   getActiveSessionForCase,
@@ -33,11 +32,12 @@ import {
   appendSessionMessage,
   getSessionMessages,
   clearSessionMessages,
-  writeStepLog,
   getCaseMcpServerNames,
 } from '../agent/case-session-manager.js'
 import { runSdkPatrol, isSdkPatrolRunning, cancelSdkPatrol, loadPatrolLastRun } from '../agent/patrol-orchestrator.js'
 import { patrolStateManager } from '../services/patrol-state-manager.js'
+import { patrolMessageStore } from '../services/patrol-message-store.js'
+import { parseSessionLog, findLatestRunDir } from '../utils/session-log-parser.js'
 import { sseManager } from '../watcher/sse-manager.js'
 import { sdkQueue } from '../utils/sdk-queue.js'
 import { reloadConfig, config as appConfig } from '../config.js'
@@ -99,87 +99,30 @@ caseRoutes.post('/case/:id/process', async (c) => {
   return c.json(data, res.status as any)
 })
 
-// POST /case/:id/chat — 交互式反馈
+// POST /case/:id/chat — 交互式反馈 (always creates fresh ephemeral session)
 caseRoutes.post('/case/:id/chat', async (c) => {
   const caseNumber = c.req.param('id')
-  const body = await c.req.json<{ sessionId?: string; message: string }>()
+  const body = await c.req.json<{ message: string }>()
 
   if (!body.message) {
     return c.json({ error: 'message is required' }, 400)
   }
 
-  // Use provided sessionId, or find the active session for this case
-  const sessionId = body.sessionId || getActiveSessionForCase(caseNumber)
-
-  // If no session exists, auto-create one via processCaseSession (free chat)
-  if (!sessionId) {
-    try {
-      const createAsync = async () => {
-        let newSessionId: string | undefined
-        try {
-          for await (const message of processCaseSession(caseNumber, body.message)) {
-            // Capture the SDK session ID from the first message
-            if (!newSessionId && (message as any).sdkSessionId) {
-              newSessionId = (message as any).sdkSessionId
-            }
-            const eventType = getSSEEventType(message)
-            const formatted = formatMessageForSSE(message)
-            sseManager.broadcast(eventType as any, {
-              caseNumber,
-              sessionId: newSessionId || 'pending',
-              ...formatted,
-            })
-            appendSessionMessage(caseNumber, {
-              type: getPersistedMessageType(message),
-              content: formatted.content as string || '',
-              toolName: formatted.toolName as string,
-              timestamp: formatted.timestamp as string || new Date().toISOString(),
-            })
-          }
-          sseManager.broadcast('case-session-completed', {
-            caseNumber,
-            sessionId: newSessionId || 'unknown',
-          })
-          appendSessionMessage(caseNumber, {
-            type: 'completed',
-            content: 'Chat response completed',
-            timestamp: new Date().toISOString(),
-          })
-        } catch (err) {
-          const errorMsg = err instanceof Error ? err.message : String(err)
-          sseManager.broadcast('case-session-failed', {
-            caseNumber,
-            sessionId: newSessionId || 'unknown',
-            error: errorMsg,
-          })
-          appendSessionMessage(caseNumber, {
-            type: 'failed',
-            content: errorMsg,
-            timestamp: new Date().toISOString(),
-          })
-        }
-      }
-      createAsync()
-      return c.json({ status: 'started', sessionId: 'creating' }, 202)
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
-      return c.json({ error: msg }, 500)
-    }
-  }
-
   try {
     const chatAsync = async () => {
+      let newSessionId: string | undefined
       try {
-        for await (const message of chatCaseSession(sessionId, body.message)) {
+        for await (const message of processCaseSession(caseNumber, body.message, undefined, undefined, true)) {
+          if (!newSessionId && (message as any).sdkSessionId) {
+            newSessionId = (message as any).sdkSessionId
+          }
           const eventType = getSSEEventType(message)
           const formatted = formatMessageForSSE(message)
           sseManager.broadcast(eventType as any, {
             caseNumber,
-            sessionId,
+            sessionId: newSessionId || 'pending',
             ...formatted,
           })
-
-          // Persist message for recovery after page refresh
           appendSessionMessage(caseNumber, {
             type: getPersistedMessageType(message),
             content: formatted.content as string || '',
@@ -189,7 +132,7 @@ caseRoutes.post('/case/:id/chat', async (c) => {
         }
         sseManager.broadcast('case-session-completed', {
           caseNumber,
-          sessionId,
+          sessionId: newSessionId || 'unknown',
         })
         appendSessionMessage(caseNumber, {
           type: 'completed',
@@ -200,7 +143,7 @@ caseRoutes.post('/case/:id/chat', async (c) => {
         const errorMsg = err instanceof Error ? err.message : String(err)
         sseManager.broadcast('case-session-failed', {
           caseNumber,
-          sessionId,
+          sessionId: newSessionId || 'unknown',
           error: errorMsg,
         })
         appendSessionMessage(caseNumber, {
@@ -210,9 +153,8 @@ caseRoutes.post('/case/:id/chat', async (c) => {
         })
       }
     }
-
     chatAsync()
-    return c.json({ status: 'started', sessionId }, 202)
+    return c.json({ status: 'started', caseNumber }, 202)
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     return c.json({ error: msg }, 500)
@@ -278,6 +220,46 @@ caseRoutes.post('/patrol/cancel', (c) => {
   return c.json({ success: cancelled, message: cancelled ? 'Patrol cancellation requested' : 'Failed to cancel' })
 })
 
+// GET /patrol/messages — 恢复 patrol agent 消息
+// ?logFile=patrol-sdk-xxx.jsonl → parse specific log (for recovered sessions)
+// No param → in-memory store, fallback to latest log on disk
+caseRoutes.get('/patrol/messages', (c) => {
+  const logFile = c.req.query('logFile')
+
+  // Specific log file requested (recovered session)
+  if (logFile) {
+    if (!logFile.endsWith('.jsonl') || logFile.includes('/') || logFile.includes('\\') || logFile.includes('..')) {
+      return c.json({ error: 'Invalid log file name' }, 400)
+    }
+    const filePath = join(appConfig.patrolDir, 'logs', logFile)
+    if (!existsSync(filePath)) return c.json({ messages: [], subAgents: {} })
+    const result = parseSessionLog(filePath)
+    return c.json({ messages: result.mainMessages, subAgents: result.subAgents, source: 'disk' })
+  }
+
+  // No param → in-memory first, then latest disk log
+  const inMemory = patrolMessageStore.getAll()
+  if (inMemory.length > 0) {
+    return c.json({ messages: inMemory })
+  }
+
+  const logsDir = join(appConfig.patrolDir, 'logs')
+  if (existsSync(logsDir)) {
+    try {
+      const files = readdirSync(logsDir)
+        .filter(f => f.endsWith('.jsonl'))
+        .sort()
+        .reverse()
+      if (files.length > 0) {
+        const result = parseSessionLog(join(logsDir, files[0]))
+        return c.json({ messages: result.mainMessages, subAgents: result.subAgents, source: 'disk' })
+      }
+    } catch { /* fall through */ }
+  }
+
+  return c.json({ messages: [] })
+})
+
 // GET /patrol/logs — 列出所有 patrol SDK 日志文件
 caseRoutes.get('/patrol/logs', (c) => {
   const logsDir = join(appConfig.patrolDir, 'logs')
@@ -337,6 +319,8 @@ caseRoutes.get('/patrol/status', (c) => {
   const caseNumbers: string[] = [...(patrolState.caseList || [])]
 
   // Also include cases from last run result (for completed patrol display)
+  // Track which cases came from caseResults (exempt from stale filter)
+  const fromCaseResults = new Set<string>()
   if (!running) {
     const lastRun = loadPatrolLastRun()
     if (lastRun?.caseResults && Array.isArray(lastRun.caseResults)) {
@@ -344,11 +328,13 @@ caseRoutes.get('/patrol/status', (c) => {
         if (cr.caseNumber && !caseNumbers.includes(cr.caseNumber)) {
           caseNumbers.push(cr.caseNumber)
         }
+        if (cr.caseNumber) fromCaseResults.add(cr.caseNumber)
       }
     }
   }
 
   // Stale cutoff: skip case states updated before this patrol started (1min grace)
+  // Cases explicitly listed in caseResults are exempt — they're confirmed part of this run
   const patrolDone = !running && ['completed', 'failed'].includes(patrolState.phase)
   const cutoff = patrolState.startedAt
     ? new Date(patrolState.startedAt).getTime() - 60_000
@@ -361,7 +347,9 @@ caseRoutes.get('/patrol/status', (c) => {
       const cs = JSON.parse(readFileSync(statePath, 'utf-8'))
 
       // Filter stale case state from a previous patrol
-      if (cutoff > 0 && cs.updatedAt) {
+      // Skip filter for cases in caseResults (startedAt can be unreliable — set at
+      // patrol completion, not actual start, so early-finishing cases get filtered)
+      if (cutoff > 0 && cs.updatedAt && !fromCaseResults.has(cn)) {
         const updated = new Date(cs.updatedAt).getTime()
         if (updated < cutoff) continue
       }
@@ -645,6 +633,24 @@ caseRoutes.post('/case/:id/session/end-all', async (c) => {
     }
   }
   return c.json({ success: true, endedCount: ended })
+})
+
+// GET /case/:id/run-messages — Recover ALL SSE data from latest run's session.jsonl + agents/*.log
+// Generic recovery: returns main agent messages + sub-agent messages/output
+caseRoutes.get('/case/:id/run-messages', (c) => {
+  const caseNumber = c.req.param('id')
+  const caseworkDir = join(appConfig.activeCasesDir, caseNumber, '.casework')
+  const runDir = findLatestRunDir(caseworkDir)
+
+  if (!runDir) {
+    return c.json({ mainMessages: [], subAgents: {}, runDir: null })
+  }
+
+  const sessionJsonl = join(runDir, 'session.jsonl')
+  const agentsDir = join(runDir, 'agents')
+  const result = parseSessionLog(sessionJsonl, agentsDir)
+
+  return c.json({ ...result, runDir: runDir.split(/[/\\]/).slice(-1)[0] })
 })
 
 export default caseRoutes

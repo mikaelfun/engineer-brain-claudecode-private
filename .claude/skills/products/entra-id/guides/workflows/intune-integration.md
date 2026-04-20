@@ -44,3 +44,18 @@
 - 3. If still failing:
 
 ---
+
+
+---
+
+## Incremental Scenarios (2026-04-18)
+
+## Scenario 4: You are using AAD Joined Windows Scenario the appliance of Manage account protection settings with endpoint security pol...
+> Source: contentidea-kb (entra-id-3678) | Applicability: unverified
+
+### Troubleshooting Steps
+1. **Confirm symptom**: You are using AAD Joined Windows Scenario the appliance of Manage account protection settings with endpoint security policies in Microsoft Intune | Microsoft Learn. In this policy you have configured ...
+2. **Root cause**: AAD Group membership evaluation currently does not work for the built-in group of "Users"
+3. **Solution**: Two proposed workarounds.  1st Solution    create a new local group add the SID of the AAD      Group to this newly created local group on the device grant "Allow log on locally" to the local group in...
+
+---

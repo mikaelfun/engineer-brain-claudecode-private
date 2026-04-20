@@ -3,22 +3,22 @@
   "sourceStates": {
     "onenote": {
       "status": "idle",
-      "lastExtracted": null,
+      "lastExtracted": "2026-04-20T10:00:00Z",
       "pendingPages": 0
     },
     "ado-wiki": {
-      "status": "idle",
-      "lastRefreshed": null,
-      "pendingPages": 0
+      "status": "scanning",
+      "lastRefreshed": "2026-04-19T09:54:34+00:00",
+      "pendingPages": 164
     },
     "mslearn": {
-      "status": "idle",
-      "lastRefreshed": null,
-      "pendingPages": 0
+      "status": "scanning",
+      "lastRefreshed": "2026-04-19T00:00:00Z",
+      "pendingPages": 28
     },
     "contentidea": {
       "status": "idle",
-      "lastRefreshed": null,
+      "lastRefreshed": "2026-04-19T09:54:05+00:00",
       "pendingPages": 0
     }
   },

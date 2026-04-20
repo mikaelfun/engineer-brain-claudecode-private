@@ -1,7 +1,7 @@
 # ENTRA-ID SSPR & Password Writeback — Quick Reference
 
-**Entries**: 65 | **21V**: Partial (59/65)
-**Last updated**: 2026-04-07
+**Entries**: 66 | **21V**: Partial (59/65)
+**Last updated**: 2026-04-18
 **Keywords**: password-writeback, sspr, password-reset, aad-connect, entra-connect, cloud-sync
 
 > This topic has a fusion guide with detailed troubleshooting flow
@@ -51,6 +51,7 @@
 | 38 📋 | 自助密码重置时收到错误 "Your request could not be processed"，重试仍然失败 | 登记的电话号码不正确，系统无法联系到用户进行验证 | 联系管理员更新电话号码；如可用，尝试其他验证方式（手机/办公电话/移动应用） | 🔵 7.5 | MS Learn |
 | 39 📋 | 自助密码重置时收到错误 "Oops! We encountered an unexpected error while contacting you" | 登记的电话号码不正确，系统无法联系到用户 | 联系管理员更新电话号码；尝试其他验证方式（手机/办公电话/移动应用） | 🔵 7.5 | MS Learn |
 | 40 📋 | Entra Connect wizard error: Unable to configure password writeback. Ensure you have the required ... | Admin account lacks Entra ID P1/P2 license, server time out of sync, or TLS 1... | Enable TLS 1.2; use cloud-only admin with proper license (not federated); syn... | 🔵 7.5 | MS Learn |
+| NEW 📋 | When SSPR enabled user tries to register at https://aka.ms/ssprsetup , it fails with an error &quot;... | Proof-up failure due to Proxy address conflict in Azure AD. | Correct the Proxy address for the account to resolve the conflict. | 🟢 8.0 | ContentIdea |
 | ... | *25 more entries* | | | | |
 
 ## Quick Troubleshooting Path

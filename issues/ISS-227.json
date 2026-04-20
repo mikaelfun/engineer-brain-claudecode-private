@@ -1,0 +1,12 @@
+{
+  "id": "ISS-227",
+  "title": "Teams digest 截断导致 assess 误判 — 改为 per-chat 并行生成",
+  "description": "## 问题\n\n`generate-digest.py` 第 237 行 `read_file(cf, max_chars=3000)` 截断 chat 文件，导致 Case 2602130040001034 的 4/17 客户同意关单对话（在 3001-3404 字符区间）被截掉。digest → assess 全链路误判 actualStatus 为 pending-customer，实际应为 ready-to-close。\n\n## 临时修复\n\n已将 max_chars 从 3000 改为 8000，但截断方案本质不保险。\n\n## 方案\n\n改为 per-chat 并行架构：\n1. 每个 chat 文件独立调 LLM（不截断，完整输入）\n2. 并行执行 N 个 LLM call（asyncio / ThreadPoolExecutor）\n3. 每个 call 输出：relevance(high/low) + key_facts(仅 high)\n4. 纯代码合并各 chat 结果为 teams-digest.md + _relevance.json\n\n好处：\n- 零截断，无信息丢失\n- 并行，总耗时 ≈ 单个 chat 的 LLM 时间\n- low relevance chat 不提取 facts，省 token\n\n## 影响文件\n\n- `.claude/skills/casework/scripts/generate-digest.py` — teams digest 生成逻辑重构",
+  "type": "bug",
+  "priority": "P1",
+  "status": "implemented",
+  "testLoopScan": true,
+  "createdAt": "2026-04-18T02:15:00+08:00",
+  "updatedAt": "2026-04-18T06:15:00+08:00",
+  "trackId": "digest-per-chat_20260418"
+}

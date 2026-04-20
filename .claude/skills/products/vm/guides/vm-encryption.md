@@ -1,8 +1,8 @@
 # VM Vm Encryption — 排查速查
 
 **来源数**: 3 | **21V**: 未标注
-**条目数**: 20 | **关键词**: encryption
-**最后更新**: 2026-04-07
+**条目数**: 21 | **关键词**: encryption
+**最后更新**: 2026-04-18
 
 ## 症状速查
 
@@ -28,3 +28,4 @@
 | 18 | When attempting to upgrade to SCVMM 2016 from SCVMM 2012 R2, you are presented with a dialog that in... | During upgrade we check the Database version in the tbl_GlobalSetting table. The... | To upgrade from 2012R2 to 2016, you can modify the setting in the database with ... | 🔵 7.5 | KB |
 | 19 | Windows VM login fails with error 'The user profile service service failed the logon. User profile c... | User profile corruption or permission issues on profile-related files/folders, e... | 1) Follow KB947215 troubleshooting steps; 2) Check Event Log for related errors;... | 🟢 8.5 | OneNote |
 | 20 | NVv3 VM (Nvidia Tesla M60) GPU issues with GRID driver version 17.x — driver incompatibility | GRID Driver version 17.x is incompatible with NVv3 series VMs using Tesla M60 GP... | Follow TSG: AzureIaaSVM wiki 'NVv3 (Nvidia Tesla M60) GRID Driver version 17.x I... | 🟢 8.5 | OneNote |
+| 21 | Key Vault AAD 1. SSMS CMK Azure Key Vault 2... | Reference doc (no explicit root cause)... | See original document for detailed steps... | 🟡 5.0 | KB |

@@ -1,0 +1,396 @@
+<!-- Patrol Page — DevOps Pipeline Style (Azure DevOps / GitHub Actions) -->
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patrol — Pipeline View</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f6f8fa; color: #1f2937; padding: 24px; }
+
+  .page-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .page-title { font-size: 22px; font-weight: 700; color: #111827; }
+  .phase-badge { font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 16px; text-transform: uppercase; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 5px; }
+  .phase-badge.running { background: #dbeafe; color: #1d4ed8; }
+  .phase-badge.done { background: #dcfce7; color: #15803d; }
+  .timer { font-family: 'JetBrains Mono', 'SF Mono', monospace; font-size: 14px; color: #6b7280; }
+  .header-stats { margin-left: auto; display: flex; gap: 16px; align-items: center; }
+  .stat { display: flex; flex-direction: column; align-items: center; }
+  .stat-value { font-size: 18px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+  .stat-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.8px; color: #9ca3af; font-weight: 600; }
+  .cancel-btn { background: #ef4444; color: white; border: none; padding: 8px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+
+  /* Pipeline */
+  .pipeline { display: flex; align-items: flex-start; gap: 0; margin-bottom: 28px; overflow-x: auto; padding: 4px 0; }
+  .pipeline-arrow { display: flex; align-items: center; padding-top: 18px; }
+  .pipeline-arrow svg { color: #d1d5db; }
+
+  /* Stage card */
+  .stage { min-width: 160px; max-width: 200px; flex: 1; }
+  .stage-card { background: white; border: 1.5px solid #e5e7eb; border-radius: 10px; overflow: hidden; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .stage-card.completed { border-color: #86efac; }
+  .stage-card.active { border-color: #93c5fd; box-shadow: 0 0 0 3px #dbeafe, 0 2px 8px rgba(59,130,246,0.15); }
+  .stage-card.pending { opacity: 0.45; }
+
+  .stage-header { padding: 12px 14px; display: flex; align-items: center; gap: 8px; }
+  .stage-icon { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 11px; }
+  .stage-icon.completed { background: #16a34a; color: white; }
+  .stage-icon.active { border: 2.5px solid #2563eb; background: white; position: relative; }
+  .stage-icon.active::after { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #2563eb; position: absolute; animation: pulse 2s ease-in-out infinite; }
+  .stage-icon.pending { border: 2px solid #d1d5db; background: white; }
+  .stage-name { font-size: 13px; font-weight: 700; flex: 1; }
+  .stage-name.completed { color: #15803d; }
+  .stage-name.active { color: #1d4ed8; }
+  .stage-name.pending { color: #9ca3af; }
+  .stage-time { font-size: 11px; font-family: 'JetBrains Mono', monospace; color: #9ca3af; }
+  .stage-time.active { color: #2563eb; }
+
+  .stage-summary { padding: 0 14px 10px; font-size: 11px; color: #6b7280; line-height: 1.5; }
+  .stage-summary strong { color: #374151; }
+
+  /* Jobs list (expanded) */
+  .stage-jobs { border-top: 1px solid #f3f4f6; }
+  .job { display: flex; align-items: center; gap: 8px; padding: 6px 14px; font-size: 12px; border-bottom: 1px solid #f9fafb; }
+  .job:last-child { border-bottom: none; }
+  .job-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .job-dot.completed { background: #16a34a; }
+  .job-dot.active { background: #2563eb; animation: pulse 2s ease-in-out infinite; }
+  .job-dot.pending { border: 1.5px solid #d1d5db; }
+  .job-dot.skipped { background: #d1d5db; }
+  .job-name { flex: 1; color: #374151; }
+  .job-name.pending { color: #9ca3af; }
+  .job-time { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #9ca3af; }
+  .job-detail { font-size: 10px; color: #6b7280; padding: 2px 14px 6px 29px; line-height: 1.4; border-bottom: 1px solid #f9fafb; }
+
+  /* Section header */
+  .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .section-title { font-size: 14px; font-weight: 700; color: #374151; }
+  .section-subtitle { font-size: 12px; color: #9ca3af; }
+  .progress-bar { flex: 1; height: 5px; background: #e5e7eb; border-radius: 3px; overflow: hidden; max-width: 200px; }
+  .progress-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+  .progress-fill.running { background: linear-gradient(90deg, #16a34a, #2563eb); }
+  .progress-fill.done { background: #16a34a; }
+
+  /* Case card */
+  .case-card { background: white; border: 1.5px solid #e5e7eb; border-radius: 10px; margin-bottom: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .case-card.active { border-color: #93c5fd; box-shadow: 0 0 0 2px #dbeafe; }
+  .case-header { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: #fafbfc; border-bottom: 1px solid #f3f4f6; }
+  .case-id { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; }
+  .case-id.active { color: #1d4ed8; }
+  .case-id.done { color: #6b7280; }
+  .case-badge { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
+  .case-badge.active { background: #dbeafe; color: #1d4ed8; }
+  .case-badge.done { background: #dcfce7; color: #15803d; }
+
+  /* Case pipeline (mini) */
+  .case-pipeline { display: flex; align-items: flex-start; padding: 12px 16px; gap: 0; }
+  .case-stage { flex: 1; min-width: 0; }
+  .case-stage-header { display: flex; align-items: center; gap: 5px; margin-bottom: 6px; }
+  .case-stage-dot { width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 9px; }
+  .case-stage-dot.completed { background: #16a34a; color: white; }
+  .case-stage-dot.active { border: 2px solid #2563eb; position: relative; }
+  .case-stage-dot.active::after { content: ''; width: 5px; height: 5px; border-radius: 50%; background: #2563eb; position: absolute; }
+  .case-stage-dot.pending { border: 2px solid #d1d5db; }
+  .case-stage-dot.skipped { background: #e5e7eb; color: #9ca3af; font-size: 8px; }
+  .case-stage-name { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
+  .case-stage-time { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: #9ca3af; margin-left: auto; }
+
+  .case-stage-body { padding-left: 21px; font-size: 11px; color: #6b7280; line-height: 1.6; }
+  .case-stage-body .result-tag { display: inline-block; font-size: 10px; font-weight: 600; padding: 1px 8px; border-radius: 4px; margin-bottom: 3px; }
+  .result-tag.action { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+  .result-tag.nochange { background: #f1f5f9; color: #64748b; }
+  .case-stage-body .reasoning { border-left: 2px solid #e5e7eb; padding-left: 8px; color: #64748b; font-size: 10px; margin-top: 3px; }
+  .case-stage-body .agent-card { background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 6px; padding: 5px 8px; margin-bottom: 3px; }
+  .case-stage-body .agent-card.active { background: #eff6ff; border-color: #bfdbfe; }
+  .case-stage-body .agent-name { font-weight: 600; font-size: 10px; }
+
+  .case-connector { width: 20px; display: flex; align-items: center; justify-content: center; padding-top: 3px; }
+  .case-connector-line { width: 100%; height: 2px; border-radius: 1px; }
+  .case-connector-line.completed { background: #86efac; }
+  .case-connector-line.active { background: linear-gradient(90deg, #86efac, #93c5fd); }
+  .case-connector-line.pending { background: #e5e7eb; }
+
+  .case-card.queued { opacity: 0.4; }
+  .case-card.queued .case-header { border-bottom: none; }
+
+  /* Subtask row */
+  .subtask { display: flex; align-items: center; gap: 5px; padding: 1px 0; }
+  .subtask-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+  .subtask-name { flex: 1; font-size: 10px; }
+  .subtask-time { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: #9ca3af; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  @keyframes glow {
+    0%, 100% { box-shadow: 0 0 0 3px #dbeafe, 0 2px 8px rgba(59,130,246,0.15); }
+    50% { box-shadow: 0 0 0 5px #dbeafe, 0 2px 12px rgba(59,130,246,0.25); }
+  }
+  .stage-card.active { animation: glow 3s ease-in-out infinite; }
+</style>
+</head>
+<body>
+
+<!-- Page Header -->
+<div class="page-header">
+  <span class="page-title">Patrol</span>
+  <span class="phase-badge running">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite"/></path></svg>
+    processing
+  </span>
+  <span class="timer">4m 32s</span>
+  <div class="header-stats">
+    <div class="stat"><span class="stat-value" style="color:#374151">12</span><span class="stat-label">Total</span></div>
+    <div class="stat"><span class="stat-value" style="color:#16a34a">5</span><span class="stat-label">Done</span></div>
+    <div class="stat"><span class="stat-value" style="color:#2563eb">1</span><span class="stat-label">Active</span></div>
+    <div class="stat"><span class="stat-value" style="color:#9ca3af">6</span><span class="stat-label">Queue</span></div>
+    <button class="cancel-btn">Cancel</button>
+  </div>
+</div>
+
+<!-- ========== GLOBAL PIPELINE ========== -->
+<div class="pipeline">
+
+  <!-- Stage: Start -->
+  <div class="stage">
+    <div class="stage-card completed">
+      <div class="stage-header">
+        <div class="stage-icon completed">✓</div>
+        <span class="stage-name completed">Start</span>
+        <span class="stage-time">8s</span>
+      </div>
+      <div class="stage-summary">SDK session launched<br><span style="font-size:10px;color:#9ca3af">a03d…6bba6</span></div>
+    </div>
+  </div>
+
+  <div class="pipeline-arrow"><svg width="24" height="16" viewBox="0 0 24 16"><path d="M0 8h18M14 3l5 5-5 5" fill="none" stroke="#86efac" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+
+  <!-- Stage: Discover -->
+  <div class="stage">
+    <div class="stage-card completed">
+      <div class="stage-header">
+        <div class="stage-icon completed">✓</div>
+        <span class="stage-name completed">Discover</span>
+        <span class="stage-time">12s</span>
+      </div>
+      <div class="stage-summary">D365 query → <strong>18</strong> active cases</div>
+    </div>
+  </div>
+
+  <div class="pipeline-arrow"><svg width="24" height="16" viewBox="0 0 24 16"><path d="M0 8h18M14 3l5 5-5 5" fill="none" stroke="#86efac" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+
+  <!-- Stage: Filter -->
+  <div class="stage">
+    <div class="stage-card completed">
+      <div class="stage-header">
+        <div class="stage-icon completed">✓</div>
+        <span class="stage-name completed">Filter</span>
+        <span class="stage-time">3s</span>
+      </div>
+      <div class="stage-summary"><strong>12</strong> changed · 6 skipped</div>
+    </div>
+  </div>
+
+  <div class="pipeline-arrow"><svg width="24" height="16" viewBox="0 0 24 16"><path d="M0 8h18M14 3l5 5-5 5" fill="none" stroke="#86efac" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+
+  <!-- Stage: Warmup -->
+  <div class="stage">
+    <div class="stage-card completed">
+      <div class="stage-header">
+        <div class="stage-icon completed">✓</div>
+        <span class="stage-name completed">Warmup</span>
+        <span class="stage-time">5s</span>
+      </div>
+      <div class="stage-jobs">
+        <div class="job"><div class="job-dot completed"></div><span class="job-name">Teams token</span><span class="job-time">2s</span></div>
+        <div class="job"><div class="job-dot completed"></div><span class="job-name">ICM token</span><span class="job-time">3s</span></div>
+        <div class="job"><div class="job-dot completed"></div><span class="job-name">DTM token</span><span class="job-time">5s</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pipeline-arrow"><svg width="24" height="16" viewBox="0 0 24 16"><path d="M0 8h18M14 3l5 5-5 5" fill="none" stroke="url(#grad1)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><defs><linearGradient id="grad1"><stop offset="0%" stop-color="#86efac"/><stop offset="100%" stop-color="#93c5fd"/></linearGradient></defs></svg></div>
+
+  <!-- Stage: Process (active) -->
+  <div class="stage">
+    <div class="stage-card active">
+      <div class="stage-header">
+        <div class="stage-icon active"></div>
+        <span class="stage-name active">Process</span>
+        <span class="stage-time active">4m 04s</span>
+      </div>
+      <div class="stage-summary">
+        <strong style="color:#1d4ed8">5</strong> / 12 cases done
+        <div class="progress-bar" style="margin-top:4px;max-width:100%"><div class="progress-fill running" style="width:42%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pipeline-arrow"><svg width="24" height="16" viewBox="0 0 24 16"><path d="M0 8h18M14 3l5 5-5 5" fill="none" stroke="#e5e7eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+
+  <!-- Stage: Aggregate (pending) -->
+  <div class="stage">
+    <div class="stage-card pending">
+      <div class="stage-header">
+        <div class="stage-icon pending"></div>
+        <span class="stage-name pending">Aggregate</span>
+      </div>
+      <div class="stage-summary" style="color:#9ca3af">Waiting…</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ========== CASE LIST ========== -->
+<div class="section-header">
+  <span class="section-title">Cases</span>
+  <span class="section-subtitle">5 / 12 processed</span>
+  <div class="progress-bar"><div class="progress-fill running" style="width:42%"></div></div>
+</div>
+
+<!-- Case 1: Active -->
+<div class="case-card active">
+  <div class="case-header">
+    <span class="case-id active">2601290030000748</span>
+    <span class="case-badge active">● act</span>
+    <div style="flex:1"></div>
+    <span class="section-subtitle">2 / 4 steps</span>
+    <span class="timer" style="font-size:12px">2m 51s</span>
+  </div>
+  <div class="case-pipeline">
+
+    <!-- Refresh: completed -->
+    <div class="case-stage">
+      <div class="case-stage-header">
+        <div class="case-stage-dot completed">✓</div>
+        <span class="case-stage-name" style="color:#15803d">Refresh</span>
+        <span class="case-stage-time">27s</span>
+      </div>
+      <div class="case-stage-body">
+        <div class="subtask"><div class="subtask-dot" style="background:#16a34a"></div><span class="subtask-name">D365</span><span class="subtask-time">12s</span></div>
+        <div class="subtask"><div class="subtask-dot" style="background:#16a34a"></div><span class="subtask-name">Teams</span><span class="subtask-time">22s</span></div>
+        <div class="subtask"><div class="subtask-dot" style="background:#16a34a"></div><span class="subtask-name">ICM</span><span class="subtask-time">11s</span></div>
+        <div class="subtask"><div class="subtask-dot" style="background:#16a34a"></div><span class="subtask-name">OneNote</span><span class="subtask-time">13s</span></div>
+        <div class="subtask"><div class="subtask-dot" style="background:#16a34a"></div><span class="subtask-name">Attach</span><span class="subtask-time">6s</span></div>
+      </div>
+    </div>
+
+    <div class="case-connector"><div class="case-connector-line completed"></div></div>
+
+    <!-- Assess: completed -->
+    <div class="case-stage">
+      <div class="case-stage-header">
+        <div class="case-stage-dot completed">✓</div>
+        <span class="case-stage-name" style="color:#15803d">Assess</span>
+        <span class="case-stage-time">1m 52s</span>
+      </div>
+      <div class="case-stage-body">
+        <div class="result-tag action">needs-action</div>
+        <div class="reasoning">Customer replied w/ new error logs. RDP fails with 0x204. Need to check NSG rules.</div>
+      </div>
+    </div>
+
+    <div class="case-connector"><div class="case-connector-line active"></div></div>
+
+    <!-- Act: active -->
+    <div class="case-stage">
+      <div class="case-stage-header">
+        <div class="case-stage-dot active"></div>
+        <span class="case-stage-name" style="color:#1d4ed8">Act</span>
+        <span class="case-stage-time" style="color:#2563eb">32s</span>
+      </div>
+      <div class="case-stage-body">
+        <div class="agent-card active">
+          <div style="display:flex;align-items:center;gap:4px">
+            <div class="subtask-dot" style="background:#2563eb;width:6px;height:6px;animation:pulse 2s infinite"></div>
+            <span class="agent-name" style="color:#1d4ed8">Troubleshooter</span>
+            <span class="subtask-time" style="color:#2563eb">32s</span>
+          </div>
+          <div style="font-size:9px;color:#64748b;margin-top:2px">Querying NSG rules, checking NVA routing…</div>
+        </div>
+        <div class="agent-card" style="opacity:0.4"><span class="agent-name" style="color:#9ca3af">Email Drafter</span></div>
+        <div class="agent-card" style="opacity:0.4"><span class="agent-name" style="color:#9ca3af">Challenger</span></div>
+      </div>
+    </div>
+
+    <div class="case-connector"><div class="case-connector-line pending"></div></div>
+
+    <!-- Summary: pending -->
+    <div class="case-stage">
+      <div class="case-stage-header">
+        <div class="case-stage-dot pending"></div>
+        <span class="case-stage-name" style="color:#9ca3af">Summary</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Case 2: Completed (act skipped) -->
+<div class="case-card">
+  <div class="case-header">
+    <span class="case-id done">2602130040001034</span>
+    <span class="case-badge done">✓ done</span>
+    <div style="flex:1"></div>
+    <span class="section-subtitle">4 / 4 steps</span>
+    <span class="timer" style="font-size:12px">1m 59s</span>
+  </div>
+  <div class="case-pipeline">
+    <div class="case-stage">
+      <div class="case-stage-header">
+        <div class="case-stage-dot completed">✓</div>
+        <span class="case-stage-name" style="color:#15803d">Refresh</span>
+        <span class="case-stage-time">29s</span>
+      </div>
+      <div class="case-stage-body" style="font-size:10px;color:#9ca3af">5/5 subtasks ✓</div>
+    </div>
+    <div class="case-connector"><div class="case-connector-line completed"></div></div>
+    <div class="case-stage">
+      <div class="case-stage-header">
+        <div class="case-stage-dot completed">✓</div>
+        <span class="case-stage-name" style="color:#15803d">Assess</span>
+        <span class="case-stage-time">1m 29s</span>
+      </div>
+      <div class="case-stage-body">
+        <div class="result-tag nochange">no-change</div>
+        <div style="font-size:10px;color:#9ca3af;margin-top:2px">Pending customer reply. No new activity.</div>
+      </div>
+    </div>
+    <div class="case-connector"><div class="case-connector-line completed"></div></div>
+    <div class="case-stage">
+      <div class="case-stage-header">
+        <div class="case-stage-dot skipped">—</div>
+        <span class="case-stage-name" style="color:#9ca3af;opacity:0.5">Act</span>
+      </div>
+      <div class="case-stage-body" style="font-size:10px;color:#9ca3af;opacity:0.5">Skipped</div>
+    </div>
+    <div class="case-connector"><div class="case-connector-line completed"></div></div>
+    <div class="case-stage">
+      <div class="case-stage-header">
+        <div class="case-stage-dot completed">✓</div>
+        <span class="case-stage-name" style="color:#15803d">Summary</span>
+        <span class="case-stage-time">&lt;1s</span>
+      </div>
+      <div class="case-stage-body" style="font-size:10px;color:#6b7280">Todo updated · pending-customer</div>
+    </div>
+  </div>
+</div>
+
+<!-- Case 3: Queued -->
+<div class="case-card queued">
+  <div class="case-header">
+    <span class="case-id" style="color:#9ca3af">2603300030003153001</span>
+    <span style="font-size:10px;color:#d1d5db">Queued</span>
+  </div>
+</div>
+<div class="case-card queued">
+  <div class="case-header">
+    <span class="case-id" style="color:#9ca3af">2604010030004100</span>
+    <span style="font-size:10px;color:#d1d5db">Queued</span>
+  </div>
+</div>
+
+</body>
+</html>

@@ -12,22 +12,37 @@ STEP="${2:?step required}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 UPDATE_STATE="$SCRIPT_DIR/update-state.py"
 
+# ISS-231: Read runId from state.json → resolve run-scoped paths
+RUN_ID=$(python3 -c "
+import json
+try:
+    s = json.load(open(r'$CASE_DIR/.casework/state.json', encoding='utf-8'))
+    print(s.get('runId', ''))
+except: print('')
+" 2>/dev/null || echo "")
+
+if [ -n "$RUN_ID" ]; then
+  OUTPUT_BASE="$CASE_DIR/.casework/runs/$RUN_ID/output"
+else
+  OUTPUT_BASE="$CASE_DIR/.casework/output"
+fi
+
 case "$STEP" in
   data-refresh)
     # Backfill subtask deltas from data-refresh-output.json
     python3 -c "
 import json, subprocess, sys, os
-dr_path = os.path.join(r'$CASE_DIR', '.casework', 'output', 'data-refresh.json')
+dr_path = os.path.join(r'$OUTPUT_BASE', 'data-refresh.json')
 try:
     dr = json.load(open(dr_path, encoding='utf-8'))
 except: exit(0)
 rr = dr.get('refreshResults', {})
 mapping = {
-    'd365':        {'emails': rr.get('d365',{}).get('newEmails',0), 'notes': rr.get('d365',{}).get('newNotes',0)},
-    'teams':       {'chats': rr.get('teams',{}).get('newChats',0), 'messages': rr.get('teams',{}).get('newMessages',0)},
-    'icm':         {'discussions': rr.get('icm',{}).get('newEntries',0)},
-    'onenote':     {'pages': rr.get('onenote',{}).get('newPages',0) + rr.get('onenote',{}).get('updatedPages',0)},
-    'attachments': {'files': rr.get('attachments',{}).get('downloaded',0)},
+    'd365':        {'newEmails': rr.get('d365',{}).get('newEmails',0), 'newNotes': rr.get('d365',{}).get('newNotes',0)},
+    'teams':       {'newChats': rr.get('teams',{}).get('newChats',0), 'newMessages': rr.get('teams',{}).get('newMessages',0)},
+    'icm':         {'newEntries': rr.get('icm',{}).get('newEntries',0)},
+    'onenote':     {'newPages': rr.get('onenote',{}).get('newPages',0), 'updatedPages': rr.get('onenote',{}).get('updatedPages',0)},
+    'attachments': {'downloaded': rr.get('attachments',{}).get('downloaded',0)},
 }
 for task, delta in mapping.items():
     if any(v > 0 for v in delta.values()):
@@ -61,8 +76,20 @@ if drafts:
           '--action', 'email-drafter', '--result', 'Draft: ' + subj[:80]], check=False)
     except: pass
 # Backfill reassess result from execution-plan.json plans[]
-ep = os.path.join(r'$CASE_DIR', '.casework', 'execution-plan.json')
-if os.path.exists(ep):
+# Resolve path via state.json runId
+ep = None
+cw = os.path.join(r'$CASE_DIR', '.casework')
+try:
+    s = json.load(open(os.path.join(cw, 'state.json'), encoding='utf-8'))
+    rid = s.get('runId', '')
+    if rid:
+        p = os.path.join(cw, 'runs', rid, 'execution-plan.json')
+        if os.path.exists(p): ep = p
+except: pass
+if not ep:
+    p = os.path.join(cw, 'execution-plan.json')
+    if os.path.exists(p): ep = p
+if ep:
     try:
         plan = json.load(open(ep, encoding='utf-8'))
         plans = plan.get('plans', [])

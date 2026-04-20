@@ -26,7 +26,6 @@ import {
   getActiveCaseOperation,
   appendSessionMessage,
   clearStepSessionMessages,
-  writeStepLog,
   endSession,
   abortQuery,
   buildExecutionSummary,
@@ -38,9 +37,10 @@ import { getSSEEventType, formatMessageForSSE, getPersistedMessageType } from '.
 import { caseStepState, type CaseStepQuestion } from '../services/case-step-state.js'
 import { withInactivityTimeout, INACTIVITY_TIMEOUT_MS } from '../utils/operation-timeout.js'
 import { sdkQueue } from '../utils/sdk-queue.js'
-import { existsSync, appendFileSync, mkdirSync } from 'fs'
+import { existsSync, appendFileSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { config } from '../config.js'
+import { parseSessionLog } from '../utils/session-log-parser.js'
 
 const stepRoutes = new Hono()
 
@@ -298,11 +298,43 @@ async function processStepMessages(
   let graceExpired = false
   let completionTimer: ReturnType<typeof setTimeout> | null = null
 
+  // Sub-agent tracking (same pattern as patrol-orchestrator.ts)
+  const taskAgentMap: Record<string, string> = {} // taskId → agentType
+  const seenTaskUuids = new Set<string>()
+
   // SDK session JSONL log — full message capture for post-hoc analysis
+  // ISS-231: Write to runs/{runId}/session.jsonl if runId exists, else fallback
   const logTs = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
-  const caseLogsDir = join(config.activeCasesDir, caseNumber, '.casework', 'logs')
-  try { if (!existsSync(caseLogsDir)) mkdirSync(caseLogsDir, { recursive: true }) } catch { /* ignore */ }
-  const sdkLogPath = join(caseLogsDir, `${logTs}_${stepName}_sdk.jsonl`)
+  let sdkLogPath: string
+  const caseStateDir = join(config.activeCasesDir, caseNumber, '.casework')
+  const caseStatePath = join(caseStateDir, 'state.json')
+  try {
+    if (existsSync(caseStatePath)) {
+      const caseState = JSON.parse(readFileSync(caseStatePath, 'utf-8'))
+      const runId = caseState.runId as string | undefined
+      if (runId) {
+        const runDir = join(caseStateDir, 'runs', runId)
+        if (!existsSync(runDir)) mkdirSync(runDir, { recursive: true })
+        sdkLogPath = join(runDir, 'session.jsonl')
+      } else {
+        // No runId — generate fallback run dir (never write to logs/)
+        const fallbackRun = logTs.slice(0, 13).replace(/-/g, '') + '_fallback'
+        const runDir = join(caseStateDir, 'runs', fallbackRun)
+        if (!existsSync(runDir)) mkdirSync(runDir, { recursive: true })
+        sdkLogPath = join(runDir, 'session.jsonl')
+      }
+    } else {
+      const fallbackRun = logTs.slice(0, 13).replace(/-/g, '') + '_fallback'
+      const runDir = join(caseStateDir, 'runs', fallbackRun)
+      if (!existsSync(runDir)) mkdirSync(runDir, { recursive: true })
+      sdkLogPath = join(runDir, 'session.jsonl')
+    }
+  } catch {
+    const fallbackRun = logTs.slice(0, 13).replace(/-/g, '') + '_fallback'
+    const runDir = join(caseStateDir, 'runs', fallbackRun)
+    try { if (!existsSync(runDir)) mkdirSync(runDir, { recursive: true }) } catch { /* ignore */ }
+    sdkLogPath = join(runDir, 'session.jsonl')
+  }
   const COMPLETION_GRACE_MS = 30_000 // 30s grace period after completion signal
 
   const COMPLETION_KEYWORDS = [
@@ -377,6 +409,119 @@ async function processStepMessages(
     if ((message as any).session_id && !capturedSessionId) {
       capturedSessionId = (message as any).session_id
       if (sessionRef) sessionRef.current = capturedSessionId
+    }
+
+    // ── Sub-agent lifecycle tracking (same pattern as patrol-orchestrator.ts) ──
+    const msg = message as any
+    const subtype = msg.subtype as string | undefined
+
+    if (subtype === 'task_started') {
+      const taskId = msg.task_id as string
+      const agentType = msg.task_type || 'unknown'
+      taskAgentMap[taskId] = agentType
+      console.log(`[step:${stepName}] Sub-agent started: ${agentType} task=${taskId} case=${caseNumber}`)
+      sseManager.broadcast('case-step-progress', {
+        caseNumber,
+        sessionId: capturedSessionId,
+        executionId,
+        kind: 'agent-started',
+        agentType,
+        taskId,
+        description: msg.description,
+        timestamp: new Date().toISOString(),
+      })
+      caseStepState.addMessage(caseNumber, {
+        kind: 'agent-started',
+        content: `Sub-agent ${agentType} started`,
+        step: stepName,
+        timestamp: new Date().toISOString(),
+      })
+    }
+
+    if (subtype === 'task_progress') {
+      const taskId = msg.task_id as string
+      if (!seenTaskUuids.has(msg.uuid)) {
+        seenTaskUuids.add(msg.uuid)
+        sseManager.broadcast('case-step-progress', {
+          caseNumber,
+          sessionId: capturedSessionId,
+          executionId,
+          kind: 'agent-progress',
+          agentType: taskAgentMap[taskId] || 'unknown',
+          taskId,
+          lastToolName: msg.last_tool_name,
+          summary: msg.summary,
+          usage: msg.usage,
+          timestamp: new Date().toISOString(),
+        })
+      }
+    }
+
+    if (subtype === 'task_notification') {
+      const taskId = msg.task_id as string
+      const agentType = taskAgentMap[taskId] || msg.task_type || 'unknown'
+      const outputFile = msg.output_file as string | undefined
+      const status = msg.status as string
+
+      console.log(`[step:${stepName}] Sub-agent ${status}: ${agentType} task=${taskId} case=${caseNumber}`)
+
+      // Save output_file to {caseDir}/.casework/runs/{runId}/agents/ (ISS-231)
+      if (outputFile && existsSync(outputFile)) {
+        try {
+          // Read runId from state.json for run-scoped path
+          let subAgentDir: string
+          const stateJsonPath = join(config.activeCasesDir, caseNumber, '.casework', 'state.json')
+          try {
+            const stateData = JSON.parse(readFileSync(stateJsonPath, 'utf-8'))
+            if (stateData.runId) {
+                subAgentDir = join(config.activeCasesDir, caseNumber, '.casework', 'runs', stateData.runId, 'agents')
+              } else {
+                const fallbackRun = new Date().toISOString().replace(/[:.]/g, '').slice(2, 13) + '_fallback'
+                subAgentDir = join(config.activeCasesDir, caseNumber, '.casework', 'runs', fallbackRun, 'agents')
+              }
+            } catch {
+              const fallbackRun = new Date().toISOString().replace(/[:.]/g, '').slice(2, 13) + '_fallback'
+              subAgentDir = join(config.activeCasesDir, caseNumber, '.casework', 'runs', fallbackRun, 'agents')
+            }
+          if (!existsSync(subAgentDir)) mkdirSync(subAgentDir, { recursive: true })
+          const logName = `${agentType}.log`
+          const content = readFileSync(outputFile, 'utf-8')
+          writeFileSync(join(subAgentDir, logName), content, 'utf-8')
+          console.log(`[step:${stepName}] Saved sub-agent log: ${caseNumber}/.casework/…/${logName} (${Math.round(content.length / 1024)}KB)`)
+        } catch (err) {
+          console.warn(`[step:${stepName}] Failed to save sub-agent output:`, (err as Error).message)
+        }
+      }
+
+      sseManager.broadcast('case-step-progress', {
+        caseNumber,
+        sessionId: capturedSessionId,
+        executionId,
+        kind: 'agent-completed',
+        agentType,
+        taskId,
+        status,
+        summary: msg.summary,
+        usage: msg.usage,
+        timestamp: new Date().toISOString(),
+        // Parse output file → full sub-agent messages (thinking/tool-call/tool-result/response)
+        ...(outputFile && existsSync(outputFile) ? (() => {
+          try {
+            const parsed = parseSessionLog(outputFile)
+            if (parsed.mainMessages.length > 0) {
+              return { messages: parsed.mainMessages }
+            }
+          } catch { /* non-fatal */ }
+          return {}
+        })() : {}),
+      })
+      caseStepState.addMessage(caseNumber, {
+        kind: 'agent-completed',
+        content: `Sub-agent ${agentType} ${status}${msg.summary ? ': ' + msg.summary.slice(0, 200) : ''}`,
+        step: stepName,
+        timestamp: new Date().toISOString(),
+      })
+      delete taskAgentMap[taskId]
     }
 
     // Parse assistant messages into semantic types
@@ -522,7 +667,7 @@ async function processStepMessages(
     }
 
     // Append raw SDK message to JSONL log
-    try { appendFileSync(sdkLogPath, JSON.stringify(message) + '\n', 'utf-8') } catch { /* non-fatal */ }
+    try { appendFileSync(sdkLogPath, JSON.stringify({ ...message, _ts: new Date().toISOString() }) + '\n', 'utf-8') } catch { /* non-fatal */ }
   }
   } finally {
     // Clean up completion grace timer
@@ -540,6 +685,7 @@ async function processStepMessages(
 /**
  * Resume a step session after user answers a question.
  * Supports multiple rounds of Q&A.
+ * If SDK session expired, rebuilds with the user's answer as context (ISS-231 safety net).
  */
 async function resumeStepSession(
   caseNumber: string,
@@ -552,10 +698,33 @@ async function resumeStepSession(
     const sessionRef: { current: string | undefined } = { current: sessionId }
     const canUseTool = createStepCanUseTool(caseNumber, stepName, () => sessionRef.current)
 
+    let queryIter: AsyncIterable<any>
+    let usedSessionId = sessionId
+
+    try {
+      queryIter = chatCaseSession(sessionId, answer, canUseTool)
+    } catch (resumeErr: any) {
+      // SDK session expired — rebuild with answer as context
+      console.warn(`[step-answer] SDK session expired for ${caseNumber}, rebuilding: ${resumeErr.message}`)
+      sseManager.broadcast('case-step-progress', {
+        caseNumber,
+        kind: 'thinking',
+        content: 'Session expired, rebuilding with your input...',
+        step: stepName,
+        timestamp: new Date().toISOString(),
+      })
+
+      // Import stepCaseSession to create a fresh session with the user's answer injected
+      const { stepCaseSession } = await import('../agent/case-session-manager.js')
+      const rebuildPrompt = `Continue ${stepName} for Case ${caseNumber}. The user provided this input: "${answer}". Process it and continue.`
+      queryIter = stepCaseSession(caseNumber, stepName, { canUseTool })
+      // We'll send the answer as part of the new session's first prompt
+      usedSessionId = '' // will be captured from messages
+    }
+
     const abortCtrl = new AbortController()
-    const queryIter = chatCaseSession(sessionId, answer, canUseTool)
     const timedIter = withInactivityTimeout(queryIter, abortCtrl, INACTIVITY_TIMEOUT_MS, `resume:${stepName}:${caseNumber}`)
-    const result = await processStepMessages(caseNumber, stepName, timedIter, sessionId, sessionRef)
+    const result = await processStepMessages(caseNumber, stepName, timedIter, usedSessionId || undefined, sessionRef)
 
     if (result.interrupted) {
       // Another question — wait for next answer
@@ -592,16 +761,11 @@ async function resumeStepSession(
       timestamp: new Date().toISOString(),
     })
 
-    writeStepLog(caseNumber, stepName, {
-      status: 'completed',
-      startedAt: stepStartedAt,
-      messageCount: result.messageCount,
-    })
-
     // Release the operation lock
     releaseCaseOperationLock(caseNumber)
   } catch (err: any) {
-    console.error(`[step-answer] Resume failed for ${caseNumber}:`, err.message)
+    const isSessionExpired = err.message?.includes('not found') || err.message?.includes('timeout') || err.message?.includes('abort')
+    console.error(`[step-answer] Resume failed for ${caseNumber}:`, err.message, isSessionExpired ? '(session likely expired)' : '')
     const errorMsg = {
       kind: 'error' as const,
       error: err.message,
@@ -614,12 +778,6 @@ async function resumeStepSession(
     sseManager.broadcast('case-step-failed', {
       caseNumber,
       step: stepName,
-      error: err.message,
-    })
-
-    writeStepLog(caseNumber, stepName, {
-      status: 'failed',
-      startedAt: stepStartedAt,
       error: err.message,
     })
 
@@ -839,12 +997,6 @@ stepRoutes.post('/case/:id/step/:step', async (c) => {
           timestamp: new Date().toISOString(),
         })
 
-        writeStepLog(caseNumber, stepName, {
-          status: 'completed',
-          startedAt: stepStartedAt,
-          messageCount: result.messageCount,
-        })
-
         // Release lock on completion (background steps don't hold a lock)
         if (!isBackground) releaseCaseOperationLock(caseNumber)
       } catch (err) {
@@ -870,12 +1022,6 @@ stepRoutes.post('/case/:id/step/:step', async (c) => {
         }
         // Notify Agent Monitor to refresh session list (ISS-082)
         sseManager.broadcast('sessions-changed' as any, { reason: 'step-failed', caseNumber, step: stepName })
-
-        writeStepLog(caseNumber, stepName, {
-          status: 'failed',
-          startedAt: stepStartedAt,
-          error: errorMsg,
-        })
 
         if (!isBackground) releaseCaseOperationLock(caseNumber)
       }

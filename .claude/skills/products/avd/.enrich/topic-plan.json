@@ -422,7 +422,9 @@
         "avd-onenote-016",
         "avd-onenote-087",
         "avd-onenote-088",
-        "avd-onenote-089"
+        "avd-onenote-089",
+        "avd-ado-wiki-156",
+        "avd-contentidea-kb-031"
       ],
       "draftPaths": [
         "guides/drafts/ado-wiki-b-msix-appattach-setup-guide.md",
@@ -760,7 +762,8 @@
         "avd-mslearn-052",
         "avd-onenote-007",
         "avd-onenote-066",
-        "avd-onenote-106"
+        "avd-onenote-106",
+        "avd-ado-wiki-148"
       ],
       "draftPaths": [
         "guides/drafts/ado-wiki-a-azure-academy.md",
@@ -1004,7 +1007,12 @@
         "avd-contentidea-kb-052",
         "avd-contentidea-kb-089",
         "avd-contentidea-kb-131",
-        "avd-onenote-098"
+        "avd-onenote-098",
+        "avd-ado-wiki-275",
+        "avd-ado-wiki-277",
+        "avd-ado-wiki-0851",
+        "avd-contentidea-kb-022",
+        "avd-contentidea-kb-025"
       ],
       "draftPaths": [
         "guides/drafts/ado-wiki-a-drag-drop-setup.md",
@@ -1044,7 +1052,11 @@
         "avd-contentidea-kb-130",
         "avd-contentidea-kb-136",
         "avd-mslearn-061",
-        "avd-onenote-051"
+        "avd-onenote-051",
+        "avd-ado-wiki-0814",
+        "avd-ado-wiki-a-r3-008",
+        "avd-ado-wiki-a-r3-010",
+        "avd-contentidea-kb-005"
       ],
       "draftPaths": [
         "guides/drafts/ado-wiki-a-determine-disconnection-source.md",
@@ -1091,7 +1103,9 @@
         "avd-contentidea-kb-143",
         "avd-contentidea-kb-146",
         "avd-mslearn-068",
-        "avd-onenote-019"
+        "avd-onenote-019",
+        "avd-ado-wiki-016",
+        "avd-ado-wiki-a-r8-003"
       ],
       "draftPaths": [
         "guides/drafts/ado-wiki-a-entra-auth-urls-windows-app.md",
@@ -1268,7 +1282,9 @@
         "avd-ado-wiki-278",
         "avd-ado-wiki-279",
         "avd-ado-wiki-0841",
-        "avd-ado-wiki-a-r14-006"
+        "avd-ado-wiki-a-r14-006",
+        "avd-ado-wiki-320",
+        "avd-ado-wiki-0842"
       ],
       "draftPaths": [],
       "kustoQueryFiles": [],
@@ -1300,7 +1316,14 @@
         "avd-contentidea-kb-024",
         "avd-onenote-027",
         "avd-onenote-035",
-        "avd-onenote-086"
+        "avd-onenote-086",
+        "avd-ado-wiki-0780",
+        "avd-ado-wiki-0781",
+        "avd-ado-wiki-0782",
+        "avd-ado-wiki-0783",
+        "avd-ado-wiki-0784",
+        "avd-ado-wiki-0785",
+        "avd-ado-wiki-a-r16-001"
       ],
       "draftPaths": [
         "guides/drafts/ado-wiki-b-unified-web-client.md",
@@ -1336,7 +1359,19 @@
         "avd-onenote-049",
         "avd-onenote-097",
         "avd-onenote-101",
-        "avd-onenote-103"
+        "avd-onenote-103",
+        "avd-ado-wiki-a-r3-005",
+        "avd-ado-wiki-b-r4-002",
+        "avd-ado-wiki-a-r4-004",
+        "avd-ado-wiki-a-r5-006",
+        "avd-ado-wiki-b-r5-005",
+        "avd-ado-wiki-a-r6-002",
+        "avd-ado-wiki-a-r6-004",
+        "avd-ado-wiki-b-r6-002",
+        "avd-ado-wiki-a-r12-004",
+        "avd-contentidea-kb-066",
+        "avd-contentidea-kb-071",
+        "avd-onenote-040"
       ],
       "draftPaths": [
         "guides/drafts/ado-wiki-a-agent-cant-talk-to-broker.md",
@@ -1410,7 +1445,11 @@
         "avd-mslearn-043",
         "avd-mslearn-044",
         "avd-mslearn-067",
-        "avd-onenote-065"
+        "avd-onenote-065",
+        "avd-ado-wiki-b-r4-001",
+        "avd-ado-wiki-b-r4-004",
+        "avd-ado-wiki-b-r5-001",
+        "avd-ado-wiki-b-r6-006"
       ],
       "draftPaths": [
         "guides/drafts/ado-wiki-b-template-deployment-failed-multiple-errors.md",
@@ -1484,7 +1523,8 @@
         "avd-onenote-062",
         "avd-onenote-074",
         "avd-onenote-068",
-        "avd-onenote-067"
+        "avd-onenote-067",
+        "avd-contentidea-kb-028"
       ],
       "draftPaths": [
         "guides/drafts/ado-wiki-a-enable-schannel-logging.md",
@@ -1550,7 +1590,9 @@
         "avd-ado-wiki-a-r3-006",
         "avd-contentidea-kb-023",
         "avd-mslearn-038",
-        "avd-onenote-002"
+        "avd-onenote-002",
+        "avd-ado-wiki-0863",
+        "avd-contentidea-kb-003"
       ],
       "draftPaths": [
         "guides/drafts/ado-wiki-a-billing-solution.md",
@@ -1620,7 +1662,9 @@
         "avd-onenote-085",
         "avd-onenote-058",
         "avd-onenote-058",
-        "avd-onenote-084"
+        "avd-onenote-084",
+        "avd-ado-wiki-b-r4-005",
+        "avd-ado-wiki-a-r4-002"
       ],
       "draftPaths": [
         "guides/drafts/ado-wiki-b-domain-join-failure.md",
@@ -1653,7 +1697,9 @@
         "avd-ado-wiki-232",
         "avd-ado-wiki-a-r3-007",
         "avd-contentidea-kb-032",
-        "avd-contentidea-kb-097"
+        "avd-contentidea-kb-097",
+        "avd-ado-wiki-a-r14-002",
+        "avd-contentidea-kb-001"
       ],
       "draftPaths": [
         "guides/drafts/ado-wiki-resource-performance.md"
@@ -1747,7 +1793,8 @@
         "avd-ado-wiki-b-r4-003",
         "avd-ado-wiki-b-r6-004",
         "avd-contentidea-kb-068",
-        "avd-contentidea-kb-073"
+        "avd-contentidea-kb-073",
+        "avd-ado-wiki-322"
       ],
       "draftPaths": [
         "guides/drafts/ado-wiki-assist-365-request-access.md",
@@ -1791,7 +1838,11 @@
         "avd-onenote-054",
         "avd-onenote-065",
         "avd-onenote-072",
-        "avd-onenote-076"
+        "avd-onenote-076",
+        "avd-ado-wiki-a-r4-003",
+        "avd-ado-wiki-b-r5-002",
+        "avd-ado-wiki-a-r6-005",
+        "avd-ado-wiki-b-r6-005"
       ],
       "draftPaths": [
         "guides/drafts/ado-wiki-b-determine-session-host-image-type.md"
@@ -1855,7 +1906,9 @@
         "avd-ado-wiki-0820",
         "avd-ado-wiki-0852",
         "avd-contentidea-kb-002",
-        "avd-onenote-067"
+        "avd-onenote-067",
+        "avd-ado-wiki-0818",
+        "avd-ado-wiki-0824"
       ],
       "draftPaths": [
         "guides/drafts/ado-wiki-a-insights-confirm-dcr-la-workspace.md",
@@ -2151,7 +2204,11 @@
         "avd-ado-wiki-0870",
         "avd-ado-wiki-0873",
         "avd-ado-wiki-0874",
-        "avd-ado-wiki-0875"
+        "avd-ado-wiki-0875",
+        "avd-ado-wiki-0871",
+        "avd-ado-wiki-0872",
+        "avd-ado-wiki-0876",
+        "avd-ado-wiki-0877"
       ],
       "draftPaths": [],
       "kustoQueryFiles": [],
@@ -2173,7 +2230,8 @@
         "avd-ado-wiki-c-r1-003",
         "avd-ado-wiki-c-r1-005",
         "avd-contentidea-kb-030",
-        "avd-contentidea-kb-069"
+        "avd-contentidea-kb-069",
+        "avd-ado-wiki-0892"
       ],
       "draftPaths": [],
       "kustoQueryFiles": [],
@@ -2220,7 +2278,9 @@
       "entryIds": [
         "avd-ado-wiki-155",
         "avd-ado-wiki-157",
-        "avd-ado-wiki-160"
+        "avd-ado-wiki-160",
+        "avd-ado-wiki-158",
+        "avd-ado-wiki-161"
       ],
       "draftPaths": [],
       "kustoQueryFiles": [],
@@ -2486,7 +2546,9 @@
       "title": "ContentIdea KB Legacy (Part 2)",
       "entryIds": [
         "avd-contentidea-kb-034",
-        "avd-contentidea-kb-060"
+        "avd-contentidea-kb-060",
+        "avd-contentidea-kb-021",
+        "avd-contentidea-kb-129"
       ],
       "draftPaths": [],
       "kustoQueryFiles": [],
@@ -2524,6 +2586,88 @@
         "timeout"
       ],
       "confidence": "low"
+    },
+    {
+      "slug": "avd-azure-stack-hci",
+      "title": "AVD on Azure Stack HCI",
+      "entryIds": [
+        "avd-ado-wiki-164",
+        "avd-ado-wiki-0878",
+        "avd-ado-wiki-0879",
+        "avd-ado-wiki-0881"
+      ],
+      "tags": [
+        "agent",
+        "azure-arc",
+        "azure-stack-hci",
+        "conflict",
+        "deployment",
+        "himds",
+        "known-issue",
+        "session-host",
+        "unavailable",
+        "upgrade",
+        "vm-deployment",
+        "windows-activation"
+      ],
+      "created": "2026-04-18",
+      "status": "new"
+    },
+    {
+      "slug": "avd-session-host-update",
+      "title": "AVD Session Host Update (SHU)",
+      "entryIds": [
+        "avd-ado-wiki-0832",
+        "avd-ado-wiki-0833",
+        "avd-ado-wiki-0834",
+        "avd-ado-wiki-0835",
+        "avd-ado-wiki-0836",
+        "avd-mslearn-055"
+      ],
+      "tags": [
+        "403",
+        "AuthorizationFailed",
+        "DeniedAccessToCustomerResource",
+        "ForbiddenByPolicy",
+        "HyperVGeneration",
+        "ImageHyperVGenerationDoesNotMatchExistingVms_1024",
+        "MigrationMayExceedCapacityLimit_1024",
+        "RBAC",
+        "SHU",
+        "UnableToAccessKeyvaultSecret_1024",
+        "capacity",
+        "drain",
+        "gen1-gen2",
+        "image-mismatch",
+        "keyvault",
+        "pause-resume",
+        "permissions",
+        "quota",
+        "rollback",
+        "session-host-update",
+        "stuck",
+        "vCPU"
+      ],
+      "created": "2026-04-18",
+      "status": "new"
+    },
+    {
+      "slug": "avd-windows-activation",
+      "title": "AVD Windows Activation (KMS)",
+      "entryIds": [
+        "avd-onenote-083"
+      ],
+      "tags": [
+        "activation",
+        "jarvis",
+        "kms",
+        "kms-proxy",
+        "network",
+        "pseudo-vip",
+        "windows-activation"
+      ],
+      "created": "2026-04-18",
+      "status": "new"
     }
   ],
   "discarded": [
@@ -2539,5 +2683,7 @@
       "id": "avd-contentidea-kb-129",
       "reason": "No rootCause and no solution"
     }
-  ]
+  ],
+  "updatedAt": "2026-04-18",
+  "totalEntries": 684
 }

@@ -68,6 +68,45 @@ The daemon management script (`daemon.sh`) handles stale PID files automatically
    ```
 3. Run `/claude-to-im start` to launch a fresh instance
 
+## EBUSY crash-loop on Windows
+
+**Symptoms**: Bridge starts, then immediately crashes with `Error: EBUSY: resource busy or locked, open 'bridge.log'`. Restarts every 10 seconds in an infinite loop. If running via Scheduled Task with `-WindowStyle Hidden`, this manifests as terminal windows flashing on screen.
+
+**Root cause**: Two components both try to write to `~/.claude-to-im/logs/bridge.log` simultaneously:
+1. The autostart wrapper (`autostart.ps1`) pipes node output via `Out-File -Append`
+2. The daemon's internal logger (`logger.ts`) opens the same file with `fs.createWriteStream()`
+
+Windows enforces exclusive file locks, causing EBUSY. Linux/macOS are not affected (POSIX allows multiple writers).
+
+**Fix**: Edit `~/.claude-to-im/runtime/autostart.ps1` — remove the `Out-File -Append $logFile` pipe:
+
+```powershell
+# BAD — causes EBUSY:
+& node $daemonPath 2>&1 | Out-File -Append $logFile
+
+# GOOD — let daemon handle its own logging:
+& node $daemonPath
+```
+
+The daemon already writes logs with rotation and secret masking via `logger.ts`. The wrapper pipe is redundant.
+
+See `references/windows-autostart.md` for the complete correct autostart script.
+
+## Windows auto-start issues
+
+**Symptoms**: Bridge doesn't start on login, or dies when the terminal is closed.
+
+**Steps**:
+
+1. Check the Scheduled Task: `Get-ScheduledTask -TaskName 'ClaudeToIMBridge'`
+2. If not registered, run `/claude-to-im install-autostart` to create it
+3. If registered but not running, check `LastTaskResult`:
+   - `0xC000013A` = process was terminated (SIGHUP / Ctrl+C)
+   - Non-zero = check `~/.claude-to-im/logs/autostart-wrapper.log` and `bridge.log`
+4. If daemon dies when terminal closes, ensure you're using the Scheduled Task or `supervisor-windows.ps1 start` (not running autostart.ps1 directly in a terminal)
+
+See `references/windows-autostart.md` for full deployment guide.
+
 ## Streaming cards not working (Feishu)
 
 **Symptoms**: Card shows "Thinking..." but text never updates; or no card at all, just plain text.

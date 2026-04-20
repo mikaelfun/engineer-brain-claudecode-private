@@ -1,10 +1,11 @@
 ---
 source: ado-wiki
 sourceRef: "Supportability/Intune/Intune:/Endpoint Security/Endpoint Privilege Management/Troubleshooting Client Install"
-sourceUrl: "https://dev.azure.com/Supportability/Intune/_wiki/wikis/Intune?pagePath=%2FEndpoint%20Security%2FEndpoint%20Privilege%20Management%2FTroubleshooting%20Client%20Install"
-importDate: "2026-04-05"
-type: troubleshooting-guide
+sourceUrl: "https://dev.azure.com/Supportability/Intune/_wiki/wikis/Intune?pagePath=/Endpoint%20Security/Endpoint%20Privilege%20Management/Troubleshooting%20Client%20Install"
+importDate: "2026-04-20"
+type: guide-draft
 ---
+
 [[_TOC_]]
 
 The purpose of this article is to provide a comprehensive guide for understanding the EPM (Endpoint Privilege Management) Agent installation process on Windows devices managed through Microsoft Intune. This document explains the technical flow from policy assignment to agent deployment, details each phase of the installation process, and provides troubleshooting steps to diagnose common deployment issues. 
@@ -151,7 +152,7 @@ cluster('mmpc.northcentralus.kusto.windows.net').database('mmpc').IntuneEvent
 
 
 ## Verify Document for EPMAgent.msi Distribution
-You can generally verify whether the document for EPMAgent distribution is being attempted to be delivered to the device using the following query. The MMPC Device ID can be verified from the above ôMicrosoft Device Managementö registry key.
+You can generally verify whether the document for EPMAgent distribution is being attempted to be delivered to the device using the following query. The MMPC Device ID can be verified from the above “Microsoft Device Management” registry key.
 
 ```kusto
 let MMPCDeviceId = "<MMPC Device ID>";
@@ -455,4 +456,3 @@ Windows Installer installed the product. Product Name: Microsoft EPM Agent. Prod
 - [DeclaredConfiguration CSP](https://learn.microsoft.com/en-us/windows/client-management/mdm/declaredconfiguration-csp)
 - [EnterpriseDesktopAppManagement CSP](https://learn.microsoft.com/en-us/windows/client-management/mdm/enterprisedesktopappmanagement-csp)
 - [BITS (Background Intelligent Transfer Service)](https://learn.microsoft.com/en-us/windows/win32/bits/background-intelligent-transfer-service-portal) 
-

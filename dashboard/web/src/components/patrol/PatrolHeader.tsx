@@ -49,9 +49,13 @@ export default function PatrolHeader() {
   const startTimeRef = useRef<number | null>(null)
   const [elapsed, setElapsed] = useState(0)
 
-  // Lock start time on first running frame; clear on idle
+  // Lock start time on first running frame; clear on idle or new run
   useEffect(() => {
-    if ((isRunning || isDone) && startedAt && startTimeRef.current === null) {
+    if (phase === 'starting') {
+      // Bug 2 fix: Reset timer for new patrol run (hot restart bypasses idle)
+      startTimeRef.current = startedAt ? new Date(startedAt).getTime() : Date.now()
+      setElapsed(0)
+    } else if ((isRunning || isDone) && startedAt && startTimeRef.current === null) {
       startTimeRef.current = new Date(startedAt).getTime()
     }
     if (phase === 'idle') {

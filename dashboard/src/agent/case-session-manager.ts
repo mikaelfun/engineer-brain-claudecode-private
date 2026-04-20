@@ -13,6 +13,7 @@
  * 注意: @anthropic-ai/claude-agent-sdk 提供 query() 函数
  */
 import { query, type Options, type SDKMessage, type CanUseTool, type McpServerConfig, type AgentDefinition } from '@anthropic-ai/claude-agent-sdk'
+import { sdkRegistry } from './sdk-session-registry.js'
 import { readFileSync, existsSync, writeFileSync, mkdirSync, appendFileSync, readdirSync, unlinkSync } from 'fs'
 import { join, resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
@@ -215,12 +216,12 @@ function getCasesRoot(): string {
 // ---- MCP Server Config ----
 
 // MCP servers relevant to case processing (subset of .mcp.json)
-// Excludes: playwright (browser), ado-* (ADO boards), workiq, OfficeMCP
-const CASE_MCP_SERVER_NAMES = ['icm', 'teams', 'mail', 'kusto', 'msft-learn', 'local-rag']
+// ISS-231: Reduced to msft-learn and local-rag only (icm/teams/mail/kusto handled by scripts/agents)
+const CASE_MCP_SERVER_NAMES = ['msft-learn', 'local-rag']
 
 // Per-step MCP requirements — steps not listed here get ALL MCP servers (full-process, etc.)
 const STEP_MCP_SERVERS: Record<string, string[]> = {
-  'data-refresh':        ['icm'],
+  'data-refresh':        [],
   'compliance-check':    [],
   'status-judge':        [],
   'inspection':          [],
@@ -228,10 +229,10 @@ const STEP_MCP_SERVERS: Record<string, string[]> = {
   'note-gap':            [],
   'onenote-case-search': [],
   'generate-kb':         ['local-rag'],
-  'teams-search':        ['teams'],
-  'email-search':        ['mail'],
+  'teams-search':        [],
+  'email-search':        [],
   'draft-email':         [],
-  'troubleshoot':        ['kusto', 'msft-learn', 'local-rag', 'icm'],
+  'troubleshoot':        ['msft-learn', 'local-rag'],
 }
 
 // Cached MCP config (loaded once per process)
@@ -534,85 +535,8 @@ export function clearStepSessionMessages(caseNumber: string, stepName: string): 
   saveSessionMessages()
 }
 
-// ---- Step-Level Log Writer ----
-
-/**
- * Write a step log to cases/active/<caseNumber>/.casework/logs/
- * Format: YYYY-MM-DD_HH-mm_<step-name>.log
- * Contains: step name, start/end time, status, key output summary
- */
-export function writeStepLog(
-  caseNumber: string,
-  stepName: string,
-  opts: {
-    status: 'completed' | 'failed'
-    startedAt: string
-    error?: string
-    messageCount?: number
-  }
-): void {
-  try {
-    const casesRoot = getCasesRoot()
-    const logsDir = join(casesRoot, 'active', caseNumber, '.casework', 'logs')
-
-    if (!existsSync(logsDir)) {
-      mkdirSync(logsDir, { recursive: true })
-    }
-
-    const now = new Date()
-    const dateStr = now.toISOString().replace(/T/, '_').replace(/:/g, '-').slice(0, 16)
-    const filename = `${dateStr}_${stepName}.log`
-    const filePath = join(logsDir, filename)
-
-    const endedAt = now.toISOString()
-    const startTime = new Date(opts.startedAt).getTime()
-    const durationMs = now.getTime() - startTime
-    const durationSec = (durationMs / 1000).toFixed(1)
-
-    const lines = [
-      `# Step Log: ${stepName}`,
-      ``,
-      `- **Case:** ${caseNumber}`,
-      `- **Step:** ${stepName}`,
-      `- **Status:** ${opts.status}`,
-      `- **Started:** ${opts.startedAt}`,
-      `- **Ended:** ${endedAt}`,
-      `- **Duration:** ${durationSec}s`,
-    ]
-
-    if (opts.messageCount !== undefined) {
-      lines.push(`- **Messages:** ${opts.messageCount}`)
-    }
-
-    if (opts.error) {
-      lines.push(``, `## Error`, `\`\`\``, opts.error, `\`\`\``)
-    }
-
-    // Include summary from persisted messages
-    const messages = getSessionMessages(caseNumber)
-    if (messages.length > 0) {
-      lines.push(``, `## Output Summary`)
-      const completedMsg = messages.find(m => m.type === 'completed')
-      if (completedMsg) {
-        lines.push(`- ${completedMsg.content}`)
-      }
-      const toolCalls = messages.filter(m => m.type === 'tool-call')
-      if (toolCalls.length > 0) {
-        lines.push(`- Tool calls: ${toolCalls.length}`)
-        const toolNames = [...new Set(toolCalls.map(t => t.toolName).filter(Boolean))]
-        if (toolNames.length > 0) {
-          lines.push(`- Tools used: ${toolNames.join(', ')}`)
-        }
-      }
-    }
-
-    lines.push(``)
-
-    writeFileSync(filePath, lines.join('\n'), 'utf-8')
-  } catch (err) {
-    console.error(`[step-log] Failed to write log for ${stepName} on case ${caseNumber}:`, err)
-  }
-}
+// ---- Step-Level Log Writer (REMOVED by ISS-231) ----
+// writeStepLog() was removed — session.jsonl in runs/{runId}/ replaces markdown step logs.
 
 // ---- Execution Summary Extraction (ISS-136) ----
 
@@ -659,7 +583,6 @@ loadSessionMessages()
 // This catches cases where the SDK subprocess died but the async iterator never threw/completed.
 const STALE_SESSION_CHECK_INTERVAL_MS = 60_000 // check every 60s
 const STALE_SESSION_THRESHOLD_MS = 5 * 60_000  // 5 min without activity + no in-memory query → stale
-const RESUME_STALE_THRESHOLD_MS = 5 * 60_000   // 5 min — skip resume if session idle longer than this
 
 const staleSessionWatchdog = setInterval(() => {
   const now = Date.now()
@@ -694,7 +617,7 @@ staleSessionWatchdog.unref()
 // ---- Expired Session Purge ----
 // Remove completed/failed sessions after TTL, paused sessions after SDK expiry,
 // and sessions for cases no longer in active/ directory (archived).
-const COMPLETED_TTL_MS = 5 * 60 * 1000       // 5 min — completed sessions purged quickly
+const COMPLETED_TTL_MS = 2 * 60 * 60 * 1000   // 2 hours — keep completed sessions visible in Agent Monitor
 const PAUSED_TTL_MS = 15 * 60 * 1000         // 15 min for paused (SDK session expired)
 const PURGE_INTERVAL_MS = 30 * 60 * 1000     // run every 30 min
 const MESSAGE_TTL_MS = 2 * 60 * 60 * 1000    // 2 hours — purge messages earlier than sessions
@@ -885,41 +808,23 @@ function appendUserInput(caseNumber: string, type: string, content: string): voi
 /**
  * Start a new case processing session.
  * Captures the SDK's real session_id from the message stream.
+ * Always creates a fresh session — no cross-execution resume (ISS-231 simplification).
+ * Resume is only used for intra-execution AskUserQuestion via chatCaseSession().
  */
 export async function* processCaseSession(
   caseNumber: string,
   intent: string,
   canUseTool?: CanUseTool,
   mcpOverride?: Record<string, McpServerConfig>,
-  /** If true, don't register in caseIndex — session won't be resumed by Full Process */
+  /** If true, don't register in caseIndex */
   ephemeral?: boolean,
 ): AsyncGenerator<SDKMessage & { sdkSessionId?: string }> {
-  // Check if case already has a resumable session → reuse it (avoid orphan sessions)
-  // But only if it was active recently (within 10 minutes). Stale sessions are likely dead
-  // and resuming them causes the SDK to hang with no SSE output.
+  // Clean up any previous session for this case (no resume — always fresh)
   const existingSessionId = caseIndex[caseNumber]
-  if (existingSessionId && sessions[existingSessionId] && sessions[existingSessionId].status !== 'completed') {
-    const lastActivity = sessions[existingSessionId].lastActivityAt
-    const isStale = lastActivity && (Date.now() - new Date(lastActivity).getTime() > RESUME_STALE_THRESHOLD_MS)
-    if (isStale) {
-      // Mark stale session as completed so a fresh session is created
-      sessions[existingSessionId].status = 'completed'
-      delete caseIndex[caseNumber]
-      saveSessionStore()
-      console.log(`[processCaseSession] Stale session ${existingSessionId} for case ${caseNumber} marked completed (last activity: ${lastActivity})`)
-    } else {
-      // Resume existing session with new intent — but fallback if resume fails
-      try {
-        yield* chatCaseSession(existingSessionId, `Case ${caseNumber}: ${intent}`, canUseTool) as any
-        return
-      } catch (resumeErr: any) {
-        console.warn(`[processCaseSession] Resume failed for session ${existingSessionId} (case ${caseNumber}): ${resumeErr.message}. Creating new session.`)
-        sessions[existingSessionId].status = 'completed'
-        delete caseIndex[caseNumber]
-        saveSessionStore()
-        // Fall through to create new session below
-      }
-    }
+  if (existingSessionId && sessions[existingSessionId]) {
+    sessions[existingSessionId].status = 'completed'
+    delete caseIndex[caseNumber]
+    saveSessionStore()
   }
 
   const now = new Date().toISOString()
@@ -927,6 +832,31 @@ export async function* processCaseSession(
 
   // Ensure context directory exists
   ensureContextDir(caseNumber)
+
+  // Initialize state.json and mark start=active (SDK cold-start timing begins here)
+  // This is deterministic — happens before SDK query(), so startedAt = button click time.
+  // data-refresh.sh will later write start=completed (cold-start duration = completed - started).
+  try {
+    const casesRoot = getCasesRoot()
+    const caseDir = join(casesRoot, 'active', caseNumber)
+    const updateStatePy = join(getProjectRoot(), '.claude', 'skills', 'casework', 'scripts', 'update-state.py')
+    if (existsSync(updateStatePy)) {
+      execSync(
+        `python3 "${updateStatePy}" --case-dir "${caseDir}" --init --run-type casework --step start --status active --case-number "${caseNumber}"`,
+        { timeout: 5000, stdio: 'pipe' }
+      )
+    }
+  } catch (err) {
+    console.warn(`[processCaseSession] Failed to init state.json for ${caseNumber}:`, (err as Error).message)
+  }
+
+  // Register in unified SDK session registry for Agent Monitor observability
+  const registryHandle = sdkRegistry.register({
+    source: 'case',
+    context: caseNumber,
+    intent,
+    metadata: { ephemeral },
+  })
 
   // Create AbortController for this query (ISS-086)
   const abortController = registerQuery(caseNumber)
@@ -993,10 +923,12 @@ export async function* processCaseSession(
       // Detect maxTurns exhaustion — break out to avoid hang
       if ((message as any).subtype === 'error_max_turns') {
         console.warn(`[SDK] maxTurns exhausted for case ${caseNumber} — ending session`)
+        registryHandle.onMessage(message)
         yield { ...message, sdkSessionId } as any
         break
       }
 
+      registryHandle.onMessage(message)
       yield { ...message, sdkSessionId } as any
     }
 
@@ -1005,6 +937,7 @@ export async function* processCaseSession(
       sessions[sdkSessionId].status = 'paused'
       saveSessionStore()
     }
+    registryHandle.complete()
     // Clean up AbortController + connection timer on normal completion (ISS-086)
     clearTimeout(connTimer)
     unregisterQuery(caseNumber)
@@ -1014,6 +947,7 @@ export async function* processCaseSession(
     unregisterQuery(caseNumber)
     // Enhance error message for connection timeout
     const isTimeout = !firstMessageReceived && (err as Error)?.message?.includes('abort')
+    registryHandle.fail((err as Error)?.message || 'unknown error')
     if (sdkSessionId && sessions[sdkSessionId]) {
       sessions[sdkSessionId].status = 'failed'
       // Clean up caseIndex so failed session doesn't block new sessions
@@ -1050,6 +984,14 @@ export async function* chatCaseSession(
   // Record user input to persistent context
   appendUserInput(session.caseNumber, 'user-note', userMessage)
 
+  // Register in unified SDK session registry
+  const registryHandle = sdkRegistry.register({
+    source: 'case',
+    context: session.caseNumber,
+    intent: `Chat: ${userMessage.slice(0, 100)}`,
+    metadata: { resumeSessionId: sessionId },
+  })
+
   // Create AbortController for this query (ISS-086)
   const abortController = registerQuery(session.caseNumber)
   // Resume timeout: shorter than new session (no MCP init needed)
@@ -1078,11 +1020,13 @@ export async function* chatCaseSession(
       }
       session.lastActivityAt = new Date().toISOString()
       saveSessionStore()
+      registryHandle.onMessage(message)
       yield message
     }
 
     session.status = 'paused' // Paused, can be resumed
     saveSessionStore()
+    registryHandle.complete()
     // Clean up AbortController + connection timer on normal completion (ISS-086)
     clearTimeout(connTimer)
     unregisterQuery(session.caseNumber)
@@ -1091,6 +1035,7 @@ export async function* chatCaseSession(
     clearTimeout(connTimer)
     unregisterQuery(session.caseNumber)
     const isTimeout = !firstMessageReceived && (err as Error)?.message?.includes('abort')
+    registryHandle.fail((err as Error)?.message || 'unknown error')
     session.status = 'failed'
     // Clean up caseIndex so failed session doesn't block new sessions
     if (caseIndex[session.caseNumber] === sessionId) {
@@ -1105,8 +1050,8 @@ export async function* chatCaseSession(
 }
 
 /**
- * Execute a specific step within a case session (resume or create new).
- * Each step runs in the same case session for context continuity.
+ * Execute a specific step within a case session.
+ * Always creates a fresh session — no cross-execution resume (ISS-231 simplification).
  */
 export async function* stepCaseSession(
   caseNumber: string,
@@ -1130,6 +1075,59 @@ export async function* stepCaseSession(
   if (stepName === 'teams-search') {
     promptParams.forceRefresh = options?.forceRefresh ? ' --force-refresh' : ''
     promptParams.fullSearch = options?.fullSearch ? ' --full-search' : ''
+  }
+
+  // ISS-231: Build troubleshoot context (case-summary + analysis + dir listing)
+  if (stepName === 'troubleshoot') {
+    const casesRoot = getCasesRoot()
+    const caseDir = join(casesRoot, 'active', caseNumber)
+    const contextParts: string[] = []
+
+    // Case summary
+    const summaryPath = join(caseDir, 'case-summary.md')
+    if (existsSync(summaryPath)) {
+      try {
+        const summary = readFileSync(summaryPath, 'utf-8')
+        contextParts.push(`## Case Summary\n${summary}`)
+      } catch { /* ignore */ }
+    }
+
+    // Analysis results (if any)
+    const analysisDir = join(caseDir, 'analysis')
+    if (existsSync(analysisDir)) {
+      try {
+        const analysisFiles = readdirSync(analysisDir).filter(f => f.endsWith('.md') || f.endsWith('.json')).sort().reverse()
+        for (const file of analysisFiles.slice(0, 3)) { // latest 3 files max
+          try {
+            const content = readFileSync(join(analysisDir, file), 'utf-8')
+            contextParts.push(`## Previous Analysis: ${file}\n${content.slice(0, 4000)}`)
+          } catch { /* ignore */ }
+        }
+      } catch { /* ignore */ }
+    }
+
+    // Claims.json (troubleshooter previous output)
+    const claimsPath = join(caseDir, '.casework', 'claims.json')
+    if (existsSync(claimsPath)) {
+      try {
+        const claims = readFileSync(claimsPath, 'utf-8')
+        contextParts.push(`## Previous Troubleshoot Claims\n\`\`\`json\n${claims.slice(0, 3000)}\n\`\`\``)
+      } catch { /* ignore */ }
+    }
+
+    // Case directory structure
+    try {
+      const { execSync: execSyncLocal } = require('child_process')
+      const listing = execSyncLocal(`ls -la "${caseDir}" 2>/dev/null || dir "${caseDir}" 2>nul`, {
+        encoding: 'utf-8', timeout: 3000, cwd: getProjectRoot(),
+      }).slice(0, 2000)
+      contextParts.push(`## Case Directory\n\`\`\`\n${listing}\n\`\`\``)
+    } catch { /* ignore */ }
+
+    promptParams.troubleshootContext = contextParts.length > 0
+      ? `\n\n# Pre-loaded Context\n\n${contextParts.join('\n\n')}`
+      : ''
+    promptParams.caseDir = caseDir
   }
 
   // Look up prompt from skill registry, with fallback for agent-based steps
@@ -1159,7 +1157,8 @@ export async function* stepCaseSession(
   const skill = getSkillRegistry().getSkill(stepName)
   const SKIP_INJECTION = new Set(['casework', 'patrol'])
   if (!SKIP_INJECTION.has(stepName)) {
-    const skillPath = join(getProjectRoot(), '.claude', 'skills', stepName, 'SKILL.md')
+    const skillDir = skill?.skillDir || stepName
+    const skillPath = join(getProjectRoot(), '.claude', 'skills', skillDir, 'SKILL.md')
     if (existsSync(skillPath)) {
       try {
         const skillContent = readFileSync(skillPath, 'utf-8')
@@ -1174,47 +1173,9 @@ export async function* stepCaseSession(
     }
   }
 
-  // Check if case already has a session → resume in that session
-  // But only if it was active recently (within 10 minutes). Stale sessions cause SDK to hang.
-  const existingSessionId = caseIndex[caseNumber]
-  if (existingSessionId && sessions[existingSessionId] && sessions[existingSessionId].status !== 'completed') {
-    const lastActivity = sessions[existingSessionId].lastActivityAt
-    const isStale = lastActivity && (Date.now() - new Date(lastActivity).getTime() > RESUME_STALE_THRESHOLD_MS)
-    if (isStale) {
-      // Mark stale session as completed so a fresh session is created
-      sessions[existingSessionId].status = 'completed'
-      delete caseIndex[caseNumber]
-      saveSessionStore()
-      console.log(`[stepCaseSession] Stale session ${existingSessionId} for case ${caseNumber} marked completed (last activity: ${lastActivity})`)
-    } else {
-      // Resume existing session with step prompt — but fallback to new session if resume fails
-      try {
-        yield* chatCaseSession(existingSessionId, prompt, options?.canUseTool) as any
-        return
-      } catch (resumeErr: any) {
-        // Resume failed (stale SDK process, connection timeout, etc.) — cleanup and fallback
-        console.warn(`[stepCaseSession] Resume failed for session ${existingSessionId} (case ${caseNumber}): ${resumeErr.message}. Creating new session.`)
-        sessions[existingSessionId].status = 'completed'
-        delete caseIndex[caseNumber]
-        saveSessionStore()
-        // Fall through to processCaseSession below
-      }
-    }
-  }
-
-  // No existing session → create new one with step-specific MCP servers
-  // If step uses fewer MCPs than full set, mark as ephemeral (won't be reused by Full Process)
+  // Always create fresh session with step-specific MCP servers (ISS-231: no resume)
   const stepMcp = getCaseMcpServers(stepName)
-  const allMcp = getCaseMcpServers()
-  const isSubset = Object.keys(stepMcp).length < Object.keys(allMcp).length
-  yield* processCaseSession(caseNumber, prompt, options?.canUseTool, stepMcp, isSubset)
-
-  // Step sessions are one-shot — mark completed so they don't show as "running"
-  const stepSessionId = caseIndex[caseNumber]
-  if (stepSessionId && sessions[stepSessionId] && sessions[stepSessionId].status === 'paused') {
-    sessions[stepSessionId].status = 'completed'
-    saveSessionStore()
-  }
+  yield* processCaseSession(caseNumber, prompt, options?.canUseTool, stepMcp, true)
 }
 
 /**
@@ -1269,32 +1230,7 @@ After verification, output a single JSON block on a line by itself:
 - If verification PASSED (success=true): update the corresponding Todo file to mark this item as completed [x]
 - If verification FAILED (success=false): do NOT mark the checkbox, leave it as [ ]`
 
-  // Try to resume in existing case session
-  // But only if it was active recently (within 10 minutes). Stale sessions cause SDK to hang.
-  const existingSessionId = caseIndex[caseNumber]
-  if (existingSessionId && sessions[existingSessionId] && sessions[existingSessionId].status !== 'completed') {
-    const lastActivity = sessions[existingSessionId].lastActivityAt
-    const isStale = lastActivity && (Date.now() - new Date(lastActivity).getTime() > RESUME_STALE_THRESHOLD_MS)
-    if (isStale) {
-      sessions[existingSessionId].status = 'completed'
-      delete caseIndex[caseNumber]
-      saveSessionStore()
-      console.log(`[executeTodoAction] Stale session ${existingSessionId} for case ${caseNumber} marked completed (last activity: ${lastActivity})`)
-    } else {
-      try {
-        yield* chatCaseSession(existingSessionId, prompt)
-        return
-      } catch (resumeErr: any) {
-        console.warn(`[executeTodoAction] Resume failed for session ${existingSessionId} (case ${caseNumber}): ${resumeErr.message}. Falling back to standalone query.`)
-        sessions[existingSessionId].status = 'completed'
-        delete caseIndex[caseNumber]
-        saveSessionStore()
-        // Fall through to standalone query below
-      }
-    }
-  }
-
-  // Fallback: standalone query
+  // Always standalone query — no resume (ISS-231 simplification)
   const todoAbort = registerQuery(`todo-${caseNumber}`)
   const todoConnTimer = setConnectionTimeout(todoAbort, `todo:${caseNumber}`)
   let todoFirstMsg = false

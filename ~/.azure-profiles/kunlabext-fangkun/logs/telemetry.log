@@ -1,0 +1,8 @@
+51312 : 2026-04-20 11:16:39,229 : INFO : telemetry.main : Attempt start. Configuration directory [~/.azure-profiles/kunlabext-fangkun]. Cache directory [~/.azure-profiles/kunlabext-fangkun\telemetry\20260420111638496].
+51312 : 2026-04-20 11:16:39,229 : INFO : telemetry.records : 1 cache files to upload.
+51312 : 2026-04-20 11:16:39,245 : INFO : telemetry.records : Processed file ~/.azure-profiles/kunlabext-fangkun\telemetry\20260420111638496\cache into 1 records.
+51312 : 2026-04-20 11:16:39,246 : INFO : telemetry.records : Remove directory ~/.azure-profiles/kunlabext-fangkun\telemetry\20260420111638496
+51312 : 2026-04-20 11:16:39,345 : INFO : telemetry.client : Accumulated 1 events. Flush the clients.
+51312 : 2026-04-20 11:16:39,345 : INFO : telemetry.client : Flush client c4395b75-49cc-422c-bc95-c7d51aef5d46.
+51312 : 2026-04-20 11:16:40,181 : INFO : telemetry.sender : Sending 4141 bytes
+51312 : 2026-04-20 11:16:40,181 : INFO : telemetry.sender : Finish uploading in 0.835262 seconds.

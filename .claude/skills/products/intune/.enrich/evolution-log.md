@@ -909,3 +909,104 @@
 - **JSONL total**: ~2931 entries in known-issues-contentidea-kb.jsonl
 - **method**: az rest batch GET (200 IDs/request, 19 batches)
 | 2026-04-17 | SYNTHESIZE | 49 topics (41 fusion, 8 compact), 4166 entries |
+
+## %Y-%m-%dT%H:%M:%SZ — mslearn Phase 4b
+- Fetched 8 URLs (known-issues, troubleshoot-google-apps, 5x SCEP certificates, certificateregistrationsvc)
+- Track A: 11 new entries (intune-mslearn-180~190), 5 deduplicated (overlap with existing 006,007,040,041,047)
+- Track B: 3 guide drafts (SCEP overview, profile deployment, certificate delivery)
+- Remaining: 96 URLs
+
+## 2026-04-18 Phase 4b mslearn batch (intune-mslearn-191..198)
+- Fetched 8 certificate/connector troubleshoot articles
+- All Track A (Break/Fix): NDES setup errors, SCEP template mismatch, connector sign-in license issues, root cert connectivity, proxy config
+- 0 deduplicated, 0 Track B guides
+- Remaining: 88 unscanned URLs
+
+### 2026-04-18 17:27 — Phase 4b mslearn-scan (batch 7)
+
+- **URLs fetched**: 8 (certificates/SCEP deep-dive + co-management auto-enrolling)
+- **Track A**: 10 new entries (intune-mslearn-199 to 208) — SCEP/NDES IIS errors (503/414/500/GatewayTimeout), NDESPolicy cert expired, SSL CN/SAN mismatch, App Proxy issues, MSCEP-RA cert expired
+- **Track B**: 2 guide drafts — SCEP-Device-to-NDES-Troubleshooting, Certificate-Connector-Events-Reference
+- **Deduplicated**: 5 articles fully covered by existing entries (scep-deployment-to-win10-devices-fails=049, troubleshoot-pkcs-certificate-profiles=056-062, troubleshoot-scep-certificate-reporting=055, troubleshoot-co-management-auto-enrolling=069-074, verify-ndes-configuration=guide-only)
+- **Remaining**: 80 URLs
+
+## 2026-04-18 Phase 4b mslearn batch (comanage+device-config)
+
+- **URLs scanned**: 8 (co-management-bootstrap, co-management-workloads, troubleshoot-policies, email-profiles, vpn-profiles, wi-fi-profiles, password-expiration, csp-custom-settings)
+- **Track A (JSONL)**: 15 entries (intune-mslearn-209 to intune-mslearn-223)
+  - Co-management: HTTPS mgmt point, 0x87d00231, CMG disconnected, 403 CRL, unhealthy agent, EP workload, client apps, tattoo removal
+  - Policies: Exchange access rules, security policy removal
+  - Email: password prompt, 0x87D1FDE8 KNOX, images, iOS duplicate
+  - Android: password expiration timer reset
+- **Track B (drafts)**: 1 new (mslearn-troubleshoot-csp-custom-settings.md); 3 existing (vpn, wifi, policies)
+- **Remaining**: 72 URLs
+- **Deduplicated**: 0
+
+## 2026-04-18T12:15Z | mslearn Phase 4b batch
+
+- **Fetched**: 8 URLs (device-configuration category)
+- **Track A**: 7 entries (intune-mslearn-224 to 230)
+  - VPN error 2016281112 false positive
+  - Enterprise Mode site list co-management conflict
+  - Multi-app kiosk logon failure (CA/MFA)
+  - Feature updates not offered (wlidsvc disabled)
+  - iOS busy 2016341112 (locked device)
+  - iOS Personal Hotspot restriction (iOS version)
+  - iOS email no password prompt (EAS/OAuth)
+- **Track B**: 1 guide draft (OMA-URI deployment guide)
+- **Deduplicated**: 0
+- **Progress**: 73/137 scanned, 64 remaining
+| 2026-04-18 | mslearn | Phase 4b: fetched 8 URLs (device-config/device-enrollment), extracted 9 break/fix entries (intune-mslearn-231..239), skipped 4 dedup (099/100/101/105). Topics: FRP enforcement, Android password timing, enrollment errors (DeviceCapReached, MDM authority, profile install failed, AD FS multi-domain), Android work profile creation, Edge sign-in enrollment, Google Play sync. | mslearn scan batch |
+| 2026-04-18 | mslearn | +10 entries (intune-mslearn-240~249): iOS inactive sync, APNs cert errors, DeviceTypeNotSupported, UserLicenseTypeInvalid, MdmAuthorityNotDefined, ADE token sync, ADE token upload, WS-Trust 1.3, ADE MFA stuck, gov cloud redirect. +1 guide draft (Android enterprise config). 5 deduped (ownership/PAC/stuck/profile-failed/ADE-fails). Scanned 8 URLs, 48 remaining. | Phase 4b mslearn-scan |
+
+## 2026-04-18 17:58 — mslearn Phase 4b (intune)
+- **Fetched**: 8 URLs (device-enrollment batch: dep-enrollment-xpc, macos-vm, keychain, ESP, entra-device-reg, autopilot-csv, autopilot-profile-delete, windows-enrollment-errors)
+- **Track A**: 7 new entries (intune-mslearn-250 to 256) — license error, 0x80cf4017, bulk enrollment, OOBEIDPS, 0x801C03EA TPM, ESP timeout, Autopilot naming
+- **Track B**: 2 guide drafts (ESP Troubleshooting, Entra Device Registration & Autopilot)
+- **Deduplicated**: 9 items already covered (XPC_TYPE, keychain, CSV 806/808, Autopilot profile delete, 0x8007064c, 8018000a, 80180026, 0x8018002b, 0x80180022, 0x800705b4, 80070774, Terms of Use, 0x80180014)
+- **Remaining**: 40 URLs unscanned
+
+### 2026-04-18 Phase 4b mslearn batch (enrollment: windows-user-cannot-enroll → windows-failed-to-apply-mdm-policy)
+- Fetched 8 URLs (device-enrollment category: windows enrollment errors)
+- Track A: 7 break/fix entries (intune-mslearn-257 ~ 263)
+  - 257: 0x801c0003/80180003 user not authorized (device limit/restrictions/Home/Entra)
+  - 258: 80180014 OOBE personal device blocked
+  - 259: 0x80180002b stale tenant info after tenant migration
+  - 260: No privileges - non-admin enrollment via Company Portal
+  - 261: 0xcaa9001f co-management federation flow error
+  - 262: Sysprep does not remove MDM artifacts from cloned images
+  - 263: gpupdate 0x8018000a false alarm (device already enrolled)
+- Track B: 1 page (troubleshoot-windows-auto-enrollment) - guide draft already existed, skipped
+- Remaining: 32 unscanned URLs
+
+### 2026-04-18T10:12:06Z - mslearn Phase 4b batch (device-management + device-protection)
+- **Fetched**: 8 URLs (device-management/*, device-protection/troubleshoot-conditional-access)
+- **Track A**: 10 entries (intune-mslearn-264 to intune-mslearn-273)
+  - orphaned UPN, help desk RBAC, iOS backup encryption, RemoteWipe RE, dmwappushservice sync, Activation Lock, Wipe Android WP, Wipe boot failure, passcode reset token, Retire app uninstall
+- **Track B**: 1 guide draft (mslearn-troubleshoot-conditional-access.md), 1 skipped (remove-duplicate-mdm already exists)
+- **Deduplicated**: 0
+- **Remaining**: 24 URLs
+
+## 2026-04-18T10:19:18Z - mslearn Phase 4b batch
+
+- URLs fetched: 8
+- Track A entries: 15 (intune-mslearn-274 to intune-mslearn-288)
+- Track B drafts: 4 (exchange-connector, bitlocker-client, update-rings, jamf)
+- Topics: Exchange Connector (5), Jamf integration (6), BitLocker (4)
+- Remaining: 16 URLs
+
+### 2026-04-18 10:22 UTC — mslearn Phase 4b batch
+- Fetched 8 URLs (device-protection + general)
+- Track A: 6 entries (intune-mslearn-289..294) — BitLocker/SecureBoot/Firewall compliance, ADE access, password policy error, BMS enrollment prompt
+- Track B: 2 guide drafts — synced attributes list, company resource access error codes
+- Remaining: 8 URLs
+
+### 2026-04-18 10:24 UTC — mslearn Phase 4b final batch
+- Fetched 8 URLs (general + get-support)
+- Track A: 6 entries (intune-mslearn-295..300) — script error setup, AADSTS50011 data warehouse, 403 Graph Explorer, NAC 503, help blade cookies, troubleshoot blade license
+- Track B: 2 guide drafts — endpoint protection troubleshooting, before you call support checklist
+- **EXHAUSTED**: All 137 index URLs scanned. mslearn source complete.
+| 2026-04-19 | mslearn | Rebuilt index from toc.yml: 137 URLs indexed, 109 already scanned, 28 pending | mem/intune/toc.yml |
+| 2026-04-19 | contentidea-kb | Batch 10 items (IDs 661-34516): all empty structured fields, skipped; scanned file initialized with 3859 IDs | WIQL incremental |
+| 2026-04-19 | ado-wiki | Indexed 258 leaf pages for intune wiki (94 already scanned from prior JSONL, 164 unscanned) | Supportability/Intune/Intune |
+| 2026-04-20 | onenote | Skipped 1 page (Customer Profile — admin/internal data, no technical knowledge) | Mooncake POD Support Notebook/.../Intune/## Customer Profile.md |

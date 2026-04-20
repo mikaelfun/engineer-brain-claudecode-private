@@ -1,13 +1,39 @@
 #!/usr/bin/env bash
 # read-plan.sh — Parse execution-plan.json → shell variables for act SKILL.md
 # Supports both legacy flat format and new plans[] list format.
-# Usage: eval $(bash read-plan.sh <execution-plan.json>)
+# Usage: eval $(bash read-plan.sh <case-dir>)
+#    or: eval $(bash read-plan.sh <execution-plan.json>)   # legacy
 # Outputs: CASE_NUMBER, ACTUAL_STATUS, DAYS_SINCE, ACTION_COUNT,
 #          ACTION_{i}_TYPE, ACTION_{i}_PRIORITY, ACTION_{i}_STATUS,
 #          ACTION_{i}_EMAIL_TYPE, ACTION_{i}_DEPENDS_ON, IR_FIRST,
 #          NO_ACTION_REASON, HAS_DEFERRED, PLAN_PHASE, PLAN_COUNT
 set -euo pipefail
-PLAN="${1:?usage: read-plan.sh <execution-plan.json>}"
+ARG="${1:?usage: read-plan.sh <case-dir or execution-plan.json>}"
+
+# Resolve: if arg is a directory (case-dir), find execution-plan.json via state.json runId
+if [ -d "$ARG" ]; then
+  CASE_DIR="$ARG"
+  PLAN=$(python3 -c "
+import json, os
+cd = r'$CASE_DIR'
+cw = os.path.join(cd, '.casework')
+try:
+    s = json.load(open(os.path.join(cw, 'state.json'), encoding='utf-8'))
+    rid = s.get('runId', '')
+    if rid:
+        p = os.path.join(cw, 'runs', rid, 'execution-plan.json')
+        if os.path.exists(p):
+            print(p); raise SystemExit
+except SystemExit: raise
+except: pass
+# fallback: .casework/execution-plan.json
+p = os.path.join(cw, 'execution-plan.json')
+print(p)
+" 2>/dev/null)
+else
+  PLAN="$ARG"
+fi
+
 [ -f "$PLAN" ] || { echo "echo 'ERROR: plan not found: $PLAN'" >&2; exit 2; }
 
 python3 - "$PLAN" <<'PYEOF'

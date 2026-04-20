@@ -1,6 +1,6 @@
 # ENTRA-ID App Registration & Consent — Detailed Troubleshooting Guide
 
-**Entries**: 161 | **Drafts fused**: 18 | **Kusto queries**: 0
+**Entries**: 164 | **Drafts fused**: 18 | **Kusto queries**: 0
 **Draft sources**: ado-wiki-a-app-consent-policies-lab.md, ado-wiki-a-azure-ad-admin-consent-workflow.md, ado-wiki-a-grant-user-consent-on-behalf-powershell.md, ado-wiki-a-microsoft-managed-consent-policy-change.md, ado-wiki-a-revoke-admin-user-consent-entra-powershell.md, ado-wiki-a-understanding-prompt-consent-oauth-request.md, ado-wiki-a-user-consent-settings-admin-consent-workflow.md, ado-wiki-a-user-consent-settings-low-risk-permissions.md, ado-wiki-a-user-low-risk-permission-consent.md, ado-wiki-azure-ad-admin-consent-workflow.md
 **Generated**: 2026-04-07
 
@@ -697,3 +697,32 @@
 | 28 | AADSTS65001: The user or administrator has not consented to use the applicati... | Application is missing the minimum required Microsoft Gra... | 1. Add Microsoft Graph 'User.Read' delegated permission t... | 🟢 8.5 | ADO Wiki |
 | 29 | AADSTS650059: The application (appId:{appId}) is not configured for use in te... | Application was previously configured as multi-tenant (Az... | If the app needs to work cross-tenant: change signInAudie... | 🟢 8.5 | ADO Wiki |
 | 30 | SignInAudience value 'AzureADMultipleOrgs' not allowed as per assigned policy... | Tenant admin has configured app management policy (defaul... | Contact tenant admin to either: (1) Update the policy to ... | 🟢 8.5 | ADO Wiki |
+
+
+---
+
+## Incremental Update (2026-04-18) - +3 entries from contentidea-kb
+
+### This KB article describes a problem with the Azure portal under Azure Active Directory -> App Registrations blade may not show the correct certificate...
+**Score**: 🟡 6.5 | **Source**: ContentIdea KB | **ID**: entra-id-3641
+
+**Description**: This KB article describes a problem with the Azure portal under Azure Active Directory -> App Registrations blade may not show the correct certificate thumbprint for certain application using the Powershell command New-AzureRmADAppCredential to create a certificate key:
+
+> This entry contains description only, no explicit root cause/solution.
+
+
+### Users/Customers claim that they cannot see their Line-Of-Business applications on Azure AD's Conditional Access Application picker, when creating new ...
+**Score**: 🟢 8.0 | **Source**: ContentIdea KB | **ID**: entra-id-3654
+
+**Root Cause**: This can happen when the user has created the application as a native app, or does not have a Web App platform configured under its Platform Configurations in Authentication sections of the application's app registration portal.Conditional Access does not apply to native apps , because it wouldn't p...
+
+**Solution**: The resolution on this is to apply Conditional Access to the available APIs that the application is invoking/accessing, or to the service that the API falls under.
+
+
+### Taking Examples : App name : <Application Name> with App ID : 2fddb45a-3701-403d-8063-69c4f8531838Attribute value ( Role ) : Service-based_Development...
+**Score**: 🟢 8.0 | **Source**: ContentIdea KB | **ID**: entra-id-3662
+
+**Root Cause**: Usually when this happens, the cause is that the role that currently exists in the application with that name is not the same role that previously had it. Each role has a unique identifier -  &quot;id&quot; in this case. During the initial times of the application�s creation and usage, AAD would hav...
+
+**Solution**: 1) First, take a look in ASC using the AppId in the right tenant, to see if this role ( you can search with the id  ) is present as part of the serviceprincipal's roles, or the application's roles definition. ASC > Azure AD Explorer > Applications > AppId > Service Principal / ApplicationObject2) Ma...
+

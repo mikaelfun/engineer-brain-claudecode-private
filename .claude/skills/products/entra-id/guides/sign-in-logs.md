@@ -1,7 +1,7 @@
 # ENTRA-ID Sign-in Logs & AADSTS Errors — Quick Reference
 
-**Entries**: 121 | **21V**: Partial (111/121)
-**Last updated**: 2026-04-07
+**Entries**: 124 | **21V**: Partial (111/121)
+**Last updated**: 2026-04-18
 **Keywords**: sign-in-logs, aadsts, fic, conditional-access, national-cloud, ests
 
 > This topic has a fusion guide with detailed troubleshooting flow
@@ -51,6 +51,9 @@
 | 38 📋 | Sign-ins from a user who does not belong to the tenant appear in the tenant sign-in logs | The user is a pass-through user (UserIsPassthru=1) who signed into a resource... | Check sign-in log in ASC > click Troubleshoot this sign-in > Expert View PerR... | 🟢 8.5 | ADO Wiki |
 | 39 📋 | Location information is missing for some entries in Entra ID sign-in logs (both failed and succes... | For failed events: location is populated late in the sign-in workflow; early ... | For failed sign-ins: by design when failure occurs before location processing... | 🟢 8.5 | ADO Wiki |
 | 40 📋 | Sign-in logs in Azure Monitor (Log Analytics) show timestamps >2 hours delayed from original even... | UDI (central log processor) adds processing latency between ingestion partner... | Query idsharedwus/Idxingestion table with correlationId to check env_time, Lo... | 🟢 8.5 | ADO Wiki |
+| NEW 📋 | When customers review their sign in Logs, they notice that the User IDs show up as User: 00000000-00... | This happens due to setup of Tenant restrictions.Tenant restrictions on a networ... | The customer will have to take this Tenant Restrictions' sign in logs into consi... | 🟢 8.0 | ContentIdea |
+| NEW 📋 | Enable the debug logs by following this article https://supportability.visualstudio.com/AzureAD/_wik... | This issue is caused because the metadata sends the location name as IndiaCentra... | This issue is fixed in the Plugin release 1.0.011360001 to install this plugin p... | 🟢 8.0 | ContentIdea |
+| NEW 📋 | Abstract  Customers are reporting the following symptoms:  Excessive AAD auth requests  The throttli... | N/A | Case ownership:       Play it where it lies given that (1.) this issue will be c... | 🟢 7.0 | ContentIdea |
 | ... | *81 more entries* | | | | |
 
 ## Quick Troubleshooting Path

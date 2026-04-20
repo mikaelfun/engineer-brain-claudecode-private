@@ -125,7 +125,7 @@ def call_llm(base_url, api_key, model, system_prompt, user_prompt):
 def extract_images_from_page(page_path, max_images=3):
     """ISS-224: Extract inline images from a page markdown, return as vision content blocks.
 
-    Parses ![...](./assets/xxx.png) references, reads the image files,
+    Parses ![...](assets/xxx.png) references, reads the image files,
     and returns base64-encoded image_url content blocks for OpenAI vision API.
 
     Args:
@@ -138,7 +138,7 @@ def extract_images_from_page(page_path, max_images=3):
     import re
     import base64
 
-    img_pattern = re.compile(r'!\[[^\]]*\]\(\./assets/([^)]+)\)')
+    img_pattern = re.compile(r'!\[[^\]]*\]\((?:\./)?assets/([^)]+)\)')
     page_dir = os.path.dirname(page_path)
 
     try:
@@ -257,7 +257,7 @@ Rules:
 - Sort by date (oldest first)
 - Include all important CASE-RELEVANT messages — especially recent ones about case closure, status changes, deployment updates
 - CRITICAL: Customer confirmations/agreements are KEY FACTS — but describe the MEANING, not the literal words. "Ok sure" in response to "shall we close the case?" should become "客户同意关闭 case", NOT "客户回复 Ok sure". Always interpret what the person agreed to or confirmed, don't quote their exact short reply.
-- For images/screenshots: extract visible diagnostic info and add as facts. IMPORTANT: if a fact was derived from a screenshot, append the original markdown image reference from the chat text at the END of the fact string, e.g.: "2026-04-17: 截图显示 Portal 报错 'Resource not found' ![image](./assets/msg123_0.png)". The image reference format is ![...](./assets/xxx.png) — find it in the chat text near the message that sent the screenshot."""
+- For images/screenshots: extract visible diagnostic info and add as facts. IMPORTANT: if a fact was derived from a screenshot, append the original markdown image reference from the chat text at the END of the fact string, e.g.: "2026-04-17: 截图显示 Portal 报错 'Resource not found' ![image](assets/msg123_0.png)". The image reference format is ![...](assets/xxx.png) — find it in the chat text near the message that sent the screenshot."""
 
     user_text = f"""Case Number: {case_number}
 
@@ -606,7 +606,7 @@ Output EXACTLY this JSON structure (no markdown, no code fences):
     "具体事实2..."
   ],
   "screenshots": [
-    {"description": "截图内容描述（提取的诊断信息）", "image_ref": "原 markdown image 引用，如 ![alt](./assets/xxx.png)"}
+    {"description": "截图内容描述（提取的诊断信息）", "image_ref": "原 markdown image 引用，如 ![alt](assets/xxx.png)"}
   ],
   "analyses": [
     {"source": "engineer", "text": "工程师在 OneNote 中写的推断/假设/TODO"},
@@ -747,7 +747,7 @@ Output markdown with EXACTLY these four sections:
 - {deduplicated fact 2}
 
 **截图诊断**:
-- {screenshot description} {keep the original image_ref as-is, e.g. ![alt](./assets/xxx.png)}
+- {screenshot description} {keep the original image_ref as-is, e.g. ![alt](assets/xxx.png)}
 
 ## 2. 分析推断（Analysis & Reasoning）
 
@@ -766,7 +766,7 @@ Output markdown with EXACTLY these four sections:
 Rules:
 - Keep names/commands/technical terms in English, rest in Chinese
 - Do NOT repeat the same fact from different pages — merge into one entry
-- Preserve ALL image references exactly as given (![...](./assets/...))
+- Preserve ALL image references exactly as given (![...](assets/...))
 - If no items for a sub-section, write "(无)" instead of omitting the section
 - Do NOT add markdown code fences around your output — output raw markdown directly"""
 

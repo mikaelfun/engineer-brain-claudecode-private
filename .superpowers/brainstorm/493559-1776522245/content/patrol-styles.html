@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patrol Progress UI — Style Comparison</title>
+<style>
+  :root {
+    --bg-base: #0a0a0b;
+    --bg-surface: #141416;
+    --bg-elevated: #1c1c20;
+    --bg-inset: #111113;
+    --bg-active: #1e1e22;
+    --text-primary: #e8e8ed;
+    --text-secondary: #a0a0ab;
+    --text-tertiary: #6b6b76;
+    --border-default: #2a2a30;
+    --border-subtle: #222228;
+    --accent-blue: #3b82f6;
+    --accent-blue-dim: rgba(59,130,246,0.12);
+    --accent-green: #22c55e;
+    --accent-green-dim: rgba(34,197,94,0.12);
+    --accent-amber: #f59e0b;
+    --accent-amber-dim: rgba(245,158,11,0.12);
+    --accent-red: #ef4444;
+    --accent-red-dim: rgba(239,68,68,0.12);
+    --accent-purple: #a855f7;
+    --accent-purple-dim: rgba(168,85,247,0.12);
+    --accent-cyan: #06b6d4;
+    --accent-cyan-dim: rgba(6,182,212,0.12);
+    --shadow-elevated: 0 4px 24px rgba(0,0,0,0.4);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+    background: var(--bg-base);
+    color: var(--text-primary);
+    padding: 24px;
+    line-height: 1.5;
+  }
+
+  .page-title {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+  }
+  .page-subtitle {
+    font-size: 14px;
+    color: var(--text-tertiary);
+    margin-bottom: 40px;
+  }
+
+  .style-section {
+    margin-bottom: 48px;
+    border: 1px solid var(--border-default);
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .style-section:hover {
+    border-color: var(--accent-blue);
+  }
+  .style-section.selected {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 1px var(--accent-blue), 0 0 24px var(--accent-blue-dim);
+  }
+
+  .style-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-default);
+  }
+  .style-letter {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    background: var(--accent-blue-dim);
+    color: var(--accent-blue);
+    flex-shrink: 0;
+  }
+  .style-name {
+    font-weight: 600;
+    font-size: 16px;
+  }
+  .style-desc {
+    font-size: 13px;
+    color: var(--text-tertiary);
+  }
+  .style-tags {
+    margin-left: auto;
+    display: flex;
+    gap: 6px;
+  }
+  .style-tag {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-weight: 500;
+  }
+  .tag-ref {
+    background: var(--accent-purple-dim);
+    color: var(--accent-purple);
+  }
+
+  .style-body {
+    padding: 24px;
+    background: var(--bg-base);
+  }
+
+  /* ===== Style A: Vercel Pipeline ===== */
+  .pipeline-container {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    padding: 20px 0;
+    overflow-x: auto;
+  }
+  .pipeline-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    min-width: 120px;
+    flex: 1;
+  }
+  .pipeline-dot {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    position: relative;
+    z-index: 2;
+    border: 2px solid;
+    transition: all 0.3s;
+  }
+  .pipeline-dot.completed { background: var(--accent-green-dim); border-color: var(--accent-green); color: var(--accent-green); }
+  .pipeline-dot.active { background: var(--accent-blue-dim); border-color: var(--accent-blue); color: var(--accent-blue); animation: pulse-glow 2s ease-in-out infinite; }
+  .pipeline-dot.pending { background: var(--bg-elevated); border-color: var(--border-default); color: var(--text-tertiary); }
+
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(59,130,246,0.3); }
+    50% { box-shadow: 0 0 0 8px rgba(59,130,246,0); }
+  }
+
+  .pipeline-line {
+    position: absolute;
+    top: 20px;
+    left: calc(50% + 20px);
+    right: calc(-50% + 20px);
+    height: 2px;
+    z-index: 1;
+  }
+  .pipeline-line.filled { background: var(--accent-green); }
+  .pipeline-line.empty { background: var(--border-default); }
+
+  .pipeline-label {
+    margin-top: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .pipeline-label.completed { color: var(--accent-green); }
+  .pipeline-label.active { color: var(--accent-blue); }
+  .pipeline-label.pending { color: var(--text-tertiary); }
+
+  .pipeline-sub {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    margin-top: 2px;
+  }
+
+  /* Per-case mini pipeline */
+  .case-pipeline-list {
+    margin-top: 20px;
+    border-top: 1px solid var(--border-subtle);
+    padding-top: 16px;
+  }
+  .case-pipeline-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+  }
+  .case-pipeline-row.active-case {
+    border-color: var(--accent-blue-dim);
+    background: rgba(59,130,246,0.04);
+  }
+  .case-id {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 11px;
+    width: 60px;
+    flex-shrink: 0;
+  }
+  .mini-pipeline {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex: 1;
+  }
+  .mini-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .mini-dot.c { background: var(--accent-green); }
+  .mini-dot.a { background: var(--accent-blue); animation: mini-pulse 1.5s infinite; }
+  .mini-dot.p { background: var(--border-default); }
+  .mini-dot.f { background: var(--accent-red); }
+  @keyframes mini-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .mini-line {
+    width: 16px;
+    height: 1.5px;
+    flex-shrink: 0;
+  }
+  .mini-line.c { background: var(--accent-green); }
+  .mini-line.e { background: var(--border-default); }
+
+  .case-step-badge {
+    font-size: 9px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+    flex-shrink: 0;
+  }
+  .case-dur {
+    font-size: 9px;
+    font-family: monospace;
+    color: var(--text-tertiary);
+    width: 40px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* ===== Style B: Kanban / Swim Lanes ===== */
+  .kanban-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .kanban-lane {
+    border-radius: 10px;
+    border: 1px solid var(--border-default);
+    background: var(--bg-surface);
+    overflow: hidden;
+  }
+  .kanban-lane-header {
+    padding: 10px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .kanban-count {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 9999px;
+    font-weight: 500;
+  }
+  .kanban-cards {
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 60px;
+  }
+  .kanban-card {
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-family: monospace;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    transition: transform 0.2s;
+  }
+  .kanban-card:hover { transform: translateX(2px); }
+  .kanban-card-active {
+    background: var(--accent-blue-dim);
+    border: 1px solid rgba(59,130,246,0.2);
+    color: var(--accent-blue);
+  }
+  .kanban-card-done {
+    background: var(--accent-green-dim);
+    border: 1px solid rgba(34,197,94,0.15);
+    color: var(--accent-green);
+  }
+  .kanban-card-queued {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-tertiary);
+  }
+  .kanban-card-fail {
+    background: var(--accent-red-dim);
+    border: 1px solid rgba(239,68,68,0.15);
+    color: var(--accent-red);
+  }
+
+  /* ===== Style C: GitHub Actions / CI Pipeline ===== */
+  .ci-container {
+    margin-top: 12px;
+  }
+  .ci-header-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    border-radius: 10px 10px 0 0;
+  }
+  .ci-status-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .ci-status-running {
+    background: var(--accent-blue-dim);
+    color: var(--accent-blue);
+    animation: spin 2s linear infinite;
+  }
+  @keyframes spin {
+    100% { transform: rotate(360deg); }
+  }
+  .ci-title {
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .ci-meta {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-left: auto;
+    display: flex;
+    gap: 16px;
+  }
+
+  .ci-jobs {
+    border: 1px solid var(--border-default);
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    overflow: hidden;
+  }
+  .ci-job {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border-subtle);
+    transition: background 0.15s;
+  }
+  .ci-job:last-child { border-bottom: none; }
+  .ci-job:hover { background: var(--bg-surface); }
+  .ci-job-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    flex-shrink: 0;
+  }
+  .ci-job-icon.done { background: var(--accent-green); color: #000; }
+  .ci-job-icon.running { background: var(--accent-blue); color: #fff; animation: spin 1.5s linear infinite; }
+  .ci-job-icon.queued { background: var(--bg-elevated); border: 1.5px solid var(--border-default); color: var(--text-tertiary); }
+  .ci-job-icon.failed { background: var(--accent-red); color: #fff; }
+  .ci-job-name {
+    font-size: 13px;
+    flex: 1;
+  }
+  .ci-job-step {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: monospace;
+  }
+  .ci-job-dur {
+    font-size: 11px;
+    font-family: monospace;
+    color: var(--text-tertiary);
+    width: 50px;
+    text-align: right;
+  }
+
+  /* Substep expansion */
+  .ci-substeps {
+    display: flex;
+    gap: 4px;
+    padding: 4px 0 4px 44px;
+    flex-wrap: wrap;
+  }
+  .ci-chip {
+    font-size: 9px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-family: monospace;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  /* ===== Style D: Linear Timeline / Log ===== */
+  .timeline-container {
+    margin-top: 12px;
+    position: relative;
+    padding-left: 32px;
+  }
+  .timeline-line {
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--accent-green), var(--accent-blue) 60%, var(--border-default) 60%);
+  }
+  .timeline-event {
+    position: relative;
+    padding: 10px 0 10px 20px;
+  }
+  .timeline-dot-wrapper {
+    position: absolute;
+    left: -24px;
+    top: 12px;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .timeline-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+  .timeline-dot.t-done { background: var(--accent-green); }
+  .timeline-dot.t-active { background: var(--accent-blue); box-shadow: 0 0 0 4px var(--accent-blue-dim); animation: t-pulse 2s infinite; }
+  .timeline-dot.t-pending { background: var(--border-default); }
+  @keyframes t-pulse {
+    0%, 100% { box-shadow: 0 0 0 4px rgba(59,130,246,0.15); }
+    50% { box-shadow: 0 0 0 8px rgba(59,130,246,0.05); }
+  }
+
+  .timeline-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 10px 14px;
+  }
+  .timeline-card.t-active-card {
+    border-color: rgba(59,130,246,0.25);
+    background: rgba(59,130,246,0.03);
+  }
+  .timeline-title {
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .timeline-time {
+    font-size: 10px;
+    font-family: monospace;
+    color: var(--text-tertiary);
+    margin-left: auto;
+  }
+  .timeline-detail {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+  }
+  .timeline-cases {
+    display: flex;
+    gap: 4px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+  }
+  .timeline-case-chip {
+    font-size: 9px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-family: monospace;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  /* ===== Global shared ===== */
+  .progress-bar-track {
+    width: 100%;
+    height: 6px;
+    background: var(--bg-active);
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 8px 0;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+  }
+
+  .overall-stats {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 16px;
+    font-size: 12px;
+  }
+  .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .stat-value {
+    font-weight: 700;
+    font-size: 20px;
+    font-family: monospace;
+  }
+  .stat-label {
+    color: var(--text-tertiary);
+    font-size: 11px;
+  }
+</style>
+</head>
+<body>
+
+<div class="page-title">Patrol Progress UI — Design Comparison</div>
+<p class="page-subtitle">Click a design to select it. Each mockup shows the same patrol state: 3/5 cases processed, currently processing case #7.</p>
+
+<!-- ===== STYLE A: Vercel Pipeline ===== -->
+<div class="style-section" onclick="this.classList.toggle('selected')">
+  <div class="style-header">
+    <div class="style-letter">A</div>
+    <div>
+      <div class="style-name">Pipeline Flow</div>
+      <div class="style-desc">Vercel-inspired horizontal stage pipeline + per-case mini-pipelines</div>
+    </div>
+    <div class="style-tags">
+      <span class="style-tag tag-ref">Vercel</span>
+    </div>
+  </div>
+  <div class="style-body">
+    <!-- Overall stats -->
+    <div class="overall-stats">
+      <div class="stat-item"><span class="stat-value" style="color:var(--text-primary)">5</span><span class="stat-label">Total Cases</span></div>
+      <div class="stat-item"><span class="stat-value" style="color:var(--accent-green)">3</span><span class="stat-label">Completed</span></div>
+      <div class="stat-item"><span class="stat-value" style="color:var(--accent-blue)">1</span><span class="stat-label">Processing</span></div>
+      <div class="stat-item"><span class="stat-value" style="color:var(--text-tertiary)">1</span><span class="stat-label">Queued</span></div>
+    </div>
+
+    <!-- Main pipeline stages -->
+    <div class="pipeline-container">
+      <div class="pipeline-stage">
+        <div class="pipeline-dot completed">✓</div>
+        <div class="pipeline-label completed">Discover</div>
+        <div class="pipeline-sub">5 found</div>
+        <div class="pipeline-line filled"></div>
+      </div>
+      <div class="pipeline-stage">
+        <div class="pipeline-dot completed">✓</div>
+        <div class="pipeline-label completed">Filter</div>
+        <div class="pipeline-sub">5 changed</div>
+        <div class="pipeline-line filled"></div>
+      </div>
+      <div class="pipeline-stage">
+        <div class="pipeline-dot active">⟳</div>
+        <div class="pipeline-label active">Process</div>
+        <div class="pipeline-sub">3/5 done</div>
+        <div class="pipeline-line empty"></div>
+      </div>
+      <div class="pipeline-stage">
+        <div class="pipeline-dot pending">◦</div>
+        <div class="pipeline-label pending">Aggregate</div>
+        <div class="pipeline-sub">—</div>
+      </div>
+    </div>
+
+    <div class="progress-bar-track">
+      <div class="progress-bar-fill" style="width:60%;background:var(--accent-blue)"></div>
+    </div>
+
+    <!-- Per-case pipeline rows -->
+    <div class="case-pipeline-list">
+      <div class="case-pipeline-row">
+        <span class="case-id" style="color:var(--accent-green)">...3042</span>
+        <div class="mini-pipeline">
+          <span class="mini-dot c"></span><span class="mini-line c"></span>
+          <span class="mini-dot c"></span><span class="mini-line c"></span>
+          <span class="mini-dot c"></span><span class="mini-line c"></span>
+          <span class="mini-dot c"></span>
+        </div>
+        <span class="case-step-badge" style="background:var(--accent-green-dim);color:var(--accent-green)">done</span>
+        <span class="case-dur">2m 14s</span>
+      </div>
+      <div class="case-pipeline-row">
+        <span class="case-id" style="color:var(--accent-green)">...8891</span>
+        <div class="mini-pipeline">
+          <span class="mini-dot c"></span><span class="mini-line c"></span>
+          <span class="mini-dot c"></span><span class="mini-line c"></span>
+          <span class="mini-dot c"></span><span class="mini-line c"></span>
+          <span class="mini-dot c"></span>
+        </div>
+        <span class="case-step-badge" style="background:var(--accent-green-dim);color:var(--accent-green)">done</span>
+        <span class="case-dur">1m 48s</span>
+      </div>
+      <div class="case-pipeline-row">
+        <span class="case-id" style="color:var(--accent-green)">...5520</span>
+        <div class="mini-pipeline">
+          <span class="mini-dot c"></span><span class="mini-line c"></span>
+          <span class="mini-dot c"></span><span class="mini-line c"></span>
+          <span class="mini-dot c"></span><span class="mini-line c"></span>
+          <span class="mini-dot c"></span>
+        </div>
+        <span class="case-step-badge" style="background:var(--accent-green-dim);color:var(--accent-green)">done</span>
+        <span class="case-dur">3m 01s</span>
+      </div>
+      <div class="case-pipeline-row active-case">
+        <span class="case-id" style="color:var(--accent-blue)">...7741</span>
+        <div class="mini-pipeline">
+          <span class="mini-dot c"></span><span class="mini-line c"></span>
+          <span class="mini-dot c"></span><span class="mini-line c"></span>
+          <span class="mini-dot a"></span><span class="mini-line e"></span>
+          <span class="mini-dot p"></span>
+        </div>
+        <span class="case-step-badge" style="background:var(--accent-blue-dim);color:var(--accent-blue)">act</span>
+        <span class="case-dur">1m 22s</span>
+      </div>
+      <div class="case-pipeline-row">
+        <span class="case-id" style="color:var(--text-tertiary)">...9102</span>
+        <div class="mini-pipeline">
+          <span class="mini-dot p"></span><span class="mini-line e"></span>
+          <span class="mini-dot p"></span><span class="mini-line e"></span>
+          <span class="mini-dot p"></span><span class="mini-line e"></span>
+          <span class="mini-dot p"></span>
+        </div>
+        <span class="case-step-badge" style="background:var(--bg-elevated);color:var(--text-tertiary)">queued</span>
+        <span class="case-dur">—</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== STYLE B: Kanban Swim Lanes ===== -->
+<div class="style-section" onclick="this.classList.toggle('selected')">
+  <div class="style-header">
+    <div class="style-letter">B</div>
+    <div>
+      <div class="style-name">Kanban Board</div>
+      <div class="style-desc">Swim-lane columns where cases flow left→right as they progress through stages</div>
+    </div>
+    <div class="style-tags">
+      <span class="style-tag tag-ref">Linear / Notion</span>
+    </div>
+  </div>
+  <div class="style-body">
+    <div class="overall-stats">
+      <div class="stat-item"><span class="stat-value" style="color:var(--text-primary)">5</span><span class="stat-label">Total</span></div>
+      <div class="stat-item"><span class="stat-value" style="color:var(--accent-green)">3</span><span class="stat-label">Done</span></div>
+      <div class="stat-item"><span class="stat-value" style="color:var(--accent-blue)">1</span><span class="stat-label">Active</span></div>
+      <div>
+        <span style="font-size:11px;color:var(--text-tertiary)">Elapsed: </span>
+        <span style="font-size:13px;font-family:monospace;color:var(--text-secondary)">8m 42s</span>
+      </div>
+    </div>
+    <div class="progress-bar-track">
+      <div class="progress-bar-fill" style="width:60%;background:var(--accent-blue)"></div>
+    </div>
+
+    <div class="kanban-container">
+      <!-- Data Refresh column -->
+      <div class="kanban-lane">
+        <div class="kanban-lane-header" style="color:var(--accent-green)">
+          <span>📥 Data Refresh</span>
+          <span class="kanban-count" style="background:var(--accent-green-dim);color:var(--accent-green)">4</span>
+        </div>
+        <div class="kanban-cards">
+          <div class="kanban-card kanban-card-done">...3042 <span>✓</span></div>
+          <div class="kanban-card kanban-card-done">...8891 <span>✓</span></div>
+          <div class="kanban-card kanban-card-done">...5520 <span>✓</span></div>
+          <div class="kanban-card kanban-card-done">...7741 <span>✓</span></div>
+        </div>
+      </div>
+      <!-- Assess column -->
+      <div class="kanban-lane">
+        <div class="kanban-lane-header" style="color:var(--accent-green)">
+          <span>⚖️ Assess</span>
+          <span class="kanban-count" style="background:var(--accent-green-dim);color:var(--accent-green)">4</span>
+        </div>
+        <div class="kanban-cards">
+          <div class="kanban-card kanban-card-done">...3042 <span>✓</span></div>
+          <div class="kanban-card kanban-card-done">...8891 <span>✓</span></div>
+          <div class="kanban-card kanban-card-done">...5520 <span>✓</span></div>
+          <div class="kanban-card kanban-card-done">...7741 <span>✓</span></div>
+        </div>
+      </div>
+      <!-- Act column -->
+      <div class="kanban-lane">
+        <div class="kanban-lane-header" style="color:var(--accent-blue)">
+          <span>🔧 Act</span>
+          <span class="kanban-count" style="background:var(--accent-blue-dim);color:var(--accent-blue)">1</span>
+        </div>
+        <div class="kanban-cards">
+          <div class="kanban-card kanban-card-done">...3042 <span>✓</span></div>
+          <div class="kanban-card kanban-card-done">...8891 <span>✓</span></div>
+          <div class="kanban-card kanban-card-done">...5520 <span>✓</span></div>
+          <div class="kanban-card kanban-card-active">...7741 <span>⟳</span></div>
+        </div>
+      </div>
+      <!-- Summarize column -->
+      <div class="kanban-lane">
+        <div class="kanban-lane-header" style="color:var(--text-tertiary)">
+          <span>📋 Summarize</span>
+          <span class="kanban-count" style="background:var(--bg-elevated);color:var(--text-tertiary)">0</span>
+        </div>
+        <div class="kanban-cards">
+          <div class="kanban-card kanban-card-done">...3042 <span>✓</span></div>
+          <div class="kanban-card kanban-card-done">...8891 <span>✓</span></div>
+          <div class="kanban-card kanban-card-done">...5520 <span>✓</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== STYLE C: GitHub Actions / CI ===== -->
+<div class="style-section" onclick="this.classList.toggle('selected')">
+  <div class="style-header">
+    <div class="style-letter">C</div>
+    <div>
+      <div class="style-name">CI Pipeline (GitHub Actions style)</div>
+      <div class="style-desc">Job-list with expandable substeps — familiar to developers, dense & scannable</div>
+    </div>
+    <div class="style-tags">
+      <span class="style-tag tag-ref">GitHub Actions</span>
+    </div>
+  </div>
+  <div class="style-body">
+    <div class="ci-container">
+      <div class="ci-header-bar">
+        <div class="ci-status-icon ci-status-running">⟳</div>
+        <div>
+          <div class="ci-title">Patrol Run #47</div>
+          <div style="font-size:11px;color:var(--text-tertiary)">Started 8m ago · 3/5 cases complete</div>
+        </div>
+        <div class="ci-meta">
+          <span>🕐 8m 42s</span>
+          <span style="color:var(--accent-green)">●</span>
+          <span>3 pass</span>
+          <span style="color:var(--accent-blue)">●</span>
+          <span>1 running</span>
+        </div>
+      </div>
+      <div class="ci-jobs">
+        <!-- Completed case -->
+        <div class="ci-job">
+          <div class="ci-job-icon done">✓</div>
+          <span class="ci-job-name">Case ...3042</span>
+          <span class="ci-job-step" style="background:var(--accent-green-dim);color:var(--accent-green)">completed</span>
+          <span class="ci-job-dur">2m 14s</span>
+        </div>
+        <div class="ci-job">
+          <div class="ci-job-icon done">✓</div>
+          <span class="ci-job-name">Case ...8891</span>
+          <span class="ci-job-step" style="background:var(--accent-green-dim);color:var(--accent-green)">completed</span>
+          <span class="ci-job-dur">1m 48s</span>
+        </div>
+        <div class="ci-job">
+          <div class="ci-job-icon done">✓</div>
+          <span class="ci-job-name">Case ...5520</span>
+          <span class="ci-job-step" style="background:var(--accent-green-dim);color:var(--accent-green)">completed</span>
+          <span class="ci-job-dur">3m 01s</span>
+        </div>
+        <!-- Active case with substeps -->
+        <div class="ci-job" style="background:rgba(59,130,246,0.03)">
+          <div class="ci-job-icon running">⟳</div>
+          <span class="ci-job-name" style="color:var(--accent-blue);font-weight:600">Case ...7741</span>
+          <span class="ci-job-step" style="background:var(--accent-blue-dim);color:var(--accent-blue)">act</span>
+          <span class="ci-job-dur">1m 22s</span>
+        </div>
+        <div class="ci-substeps">
+          <span class="ci-chip" style="background:var(--accent-green-dim);color:var(--accent-green)">📋 D365 ✓ 12s</span>
+          <span class="ci-chip" style="background:var(--accent-green-dim);color:var(--accent-green)">💬 Teams ✓ 8s</span>
+          <span class="ci-chip" style="background:var(--accent-green-dim);color:var(--accent-green)">📓 Notes ✓ 5s</span>
+          <span class="ci-chip" style="background:var(--accent-green-dim);color:var(--accent-green)">🔔 ICM ✓ 3s</span>
+          <span class="ci-chip" style="background:var(--accent-green-dim);color:var(--accent-green)">📎 Attach ✓ 2s</span>
+          <span style="color:var(--border-default);font-size:9px;padding:0 4px">│</span>
+          <span class="ci-chip" style="background:var(--accent-blue-dim);color:var(--accent-blue)">🔍 Tshoot ⟳</span>
+          <span class="ci-chip" style="background:var(--bg-active);color:var(--text-tertiary)">✉️ Email</span>
+        </div>
+        <!-- Queued -->
+        <div class="ci-job">
+          <div class="ci-job-icon queued">◦</div>
+          <span class="ci-job-name" style="color:var(--text-tertiary)">Case ...9102</span>
+          <span class="ci-job-step" style="background:var(--bg-elevated);color:var(--text-tertiary)">queued</span>
+          <span class="ci-job-dur">—</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== STYLE D: Timeline / Activity Log ===== -->
+<div class="style-section" onclick="this.classList.toggle('selected')">
+  <div class="style-header">
+    <div class="style-letter">D</div>
+    <div>
+      <div class="style-name">Activity Timeline</div>
+      <div class="style-desc">Chronological event feed — shows patrol as a stream of events unfolding in real-time</div>
+    </div>
+    <div class="style-tags">
+      <span class="style-tag tag-ref">Linear Changelog</span>
+    </div>
+  </div>
+  <div class="style-body">
+    <div class="overall-stats">
+      <div class="stat-item"><span class="stat-value" style="color:var(--text-primary)">5</span><span class="stat-label">Total</span></div>
+      <div class="stat-item"><span class="stat-value" style="color:var(--accent-green)">3</span><span class="stat-label">Done</span></div>
+      <div>
+        <span style="font-size:11px;color:var(--text-tertiary)">Elapsed: </span>
+        <span style="font-size:13px;font-family:monospace;color:var(--text-secondary)">8m 42s</span>
+      </div>
+    </div>
+    <div class="progress-bar-track">
+      <div class="progress-bar-fill" style="width:60%;background:var(--accent-blue)"></div>
+    </div>
+
+    <div class="timeline-container">
+      <div class="timeline-line"></div>
+
+      <div class="timeline-event">
+        <div class="timeline-dot-wrapper"><div class="timeline-dot t-done"></div></div>
+        <div class="timeline-card">
+          <div class="timeline-title">
+            <span style="color:var(--accent-green)">✓ Discover</span>
+            <span style="font-size:10px;padding:1px 6px;border-radius:4px;background:var(--accent-green-dim);color:var(--accent-green)">5 cases</span>
+            <span class="timeline-time">14:30:02</span>
+          </div>
+          <div class="timeline-detail">Found 5 active cases in D365</div>
+        </div>
+      </div>
+
+      <div class="timeline-event">
+        <div class="timeline-dot-wrapper"><div class="timeline-dot t-done"></div></div>
+        <div class="timeline-card">
+          <div class="timeline-title">
+            <span style="color:var(--accent-green)">✓ Filter</span>
+            <span style="font-size:10px;padding:1px 6px;border-radius:4px;background:var(--accent-green-dim);color:var(--accent-green)">5 changed</span>
+            <span class="timeline-time">14:30:15</span>
+          </div>
+          <div class="timeline-detail">All 5 cases have updates since last patrol</div>
+        </div>
+      </div>
+
+      <div class="timeline-event">
+        <div class="timeline-dot-wrapper"><div class="timeline-dot t-done"></div></div>
+        <div class="timeline-card">
+          <div class="timeline-title">
+            <span style="color:var(--accent-green)">✓ Case ...3042</span>
+            <span class="timeline-time">14:32:16 (2m 14s)</span>
+          </div>
+          <div class="timeline-detail">Data refresh → Assess: pending-customer → Act: drafted reply → Summarized</div>
+          <div class="timeline-cases">
+            <span class="timeline-case-chip" style="background:var(--accent-green-dim);color:var(--accent-green)">📋 D365 12s</span>
+            <span class="timeline-case-chip" style="background:var(--accent-green-dim);color:var(--accent-green)">💬 Teams 8s</span>
+            <span class="timeline-case-chip" style="background:var(--accent-green-dim);color:var(--accent-green)">✉️ Email ✓</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="timeline-event">
+        <div class="timeline-dot-wrapper"><div class="timeline-dot t-done"></div></div>
+        <div class="timeline-card">
+          <div class="timeline-title">
+            <span style="color:var(--accent-green)">✓ Case ...8891</span>
+            <span class="timeline-time">14:34:04 (1m 48s)</span>
+          </div>
+          <div class="timeline-detail">Data refresh → Assess: researching → Act: troubleshoot → Summarized</div>
+        </div>
+      </div>
+
+      <div class="timeline-event">
+        <div class="timeline-dot-wrapper"><div class="timeline-dot t-done"></div></div>
+        <div class="timeline-card">
+          <div class="timeline-title">
+            <span style="color:var(--accent-green)">✓ Case ...5520</span>
+            <span class="timeline-time">14:37:05 (3m 01s)</span>
+          </div>
+          <div class="timeline-detail">Data refresh → Assess: pending-pg → Act: skip (no action) → Summarized</div>
+        </div>
+      </div>
+
+      <div class="timeline-event">
+        <div class="timeline-dot-wrapper"><div class="timeline-dot t-active"></div></div>
+        <div class="timeline-card t-active-card">
+          <div class="timeline-title">
+            <span style="color:var(--accent-blue)">⟳ Case ...7741</span>
+            <span style="font-size:10px;padding:1px 6px;border-radius:4px;background:var(--accent-blue-dim);color:var(--accent-blue)">act · troubleshooter</span>
+            <span class="timeline-time">1m 22s...</span>
+          </div>
+          <div class="timeline-detail">Data refresh ✓ → Assess: pending-engineer → Act: running troubleshooter...</div>
+          <div class="timeline-cases">
+            <span class="timeline-case-chip" style="background:var(--accent-green-dim);color:var(--accent-green)">📋 D365 ✓</span>
+            <span class="timeline-case-chip" style="background:var(--accent-green-dim);color:var(--accent-green)">💬 Teams ✓</span>
+            <span class="timeline-case-chip" style="background:var(--accent-green-dim);color:var(--accent-green)">📓 Notes ✓</span>
+            <span class="timeline-case-chip" style="background:var(--accent-blue-dim);color:var(--accent-blue)">🔍 Tshoot ⟳</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="timeline-event">
+        <div class="timeline-dot-wrapper"><div class="timeline-dot t-pending"></div></div>
+        <div class="timeline-card">
+          <div class="timeline-title">
+            <span style="color:var(--text-tertiary)">Case ...9102</span>
+            <span style="font-size:10px;padding:1px 6px;border-radius:4px;background:var(--bg-elevated);color:var(--text-tertiary)">queued</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="text-align:center;padding:24px;color:var(--text-tertiary);font-size:13px">
+  Click to select your preferred style. You can combine elements from different styles.
+</div>
+
+</body>
+</html>

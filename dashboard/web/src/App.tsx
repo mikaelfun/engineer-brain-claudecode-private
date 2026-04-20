@@ -18,6 +18,7 @@ import CasesPage from './pages/CasesPage'
 import TestLab from './pages/TestLab'
 import TestResults from './pages/TestResults'
 import PatrolPage from './pages/PatrolPage'
+import AutomationsPage from './pages/AutomationsPage'
 import { PageLoading } from './components/common/Loading'
 import { ErrorBoundary } from './components/common/ErrorBoundary'
 
@@ -34,6 +35,7 @@ function AuthenticatedApp() {
         <Route path="/todo" element={<TodoView />} />
         <Route path="/labor" element={<LaborEstimatePage />} />
         <Route path="/agents" element={<AgentMonitor />} />
+        <Route path="/automations" element={<AutomationsPage />} />
         <Route path="/drafts" element={<DraftsPage />} />
         <Route path="/tests" element={<TestLab />} />
         <Route path="/test-results" element={<TestResults />} />

@@ -131,7 +131,7 @@ export const usePatrolStore = create<PatrolStore>()((set, _get) => ({
 
   // ─── v3 SSE handlers ───
 
-  onPatrolState: (data) => set(() => {
+  onPatrolState: (data) => set((state) => {
     const phase = (data.phase as PatrolPhase) || 'idle'
     const update: Partial<PatrolStore> = {
       phase,
@@ -139,7 +139,12 @@ export const usePatrolStore = create<PatrolStore>()((set, _get) => ({
 
     if (data.totalCases !== undefined) update.totalCases = data.totalCases as number
     if (data.changedCases !== undefined) update.changedCases = data.changedCases as number
-    if (data.processedCases !== undefined) update.processedCases = data.processedCases as number
+    // Bug 3/4 fix: Don't let backend processedCases override frontend-derived count.
+    // The frontend's deriveProcessedCount (from onCaseUpdate) is the source of truth.
+    // Only accept backend value when no case data exists (recovery after backend restart).
+    if (data.processedCases !== undefined && Object.keys(state.cases).length === 0) {
+      update.processedCases = data.processedCases as number
+    }
     if (data.startedAt) update.startedAt = data.startedAt as string
     if (data.error) update.error = data.error as string
     if (data.caseList && Array.isArray(data.caseList)) update.caseList = data.caseList as string[]
@@ -156,7 +161,17 @@ export const usePatrolStore = create<PatrolStore>()((set, _get) => ({
       update.completedAt = new Date().toISOString()
     }
     if (phase === 'starting') {
-      update.cases = {}
+      // Bug 1 fix: Preserve case list skeleton, reset step progress to pending
+      const resetCases: Record<string, CaseState> = {}
+      for (const [cn, c] of Object.entries(state.cases)) {
+        resetCases[cn] = {
+          caseNumber: c.caseNumber,
+          steps: Object.fromEntries(
+            Object.keys(c.steps).map(k => [k, { status: 'pending' as StepStatus }])
+          ),
+        }
+      }
+      update.cases = resetCases
       update.processedCases = 0
       update.error = undefined
       update.completedAt = undefined
@@ -185,21 +200,33 @@ export const usePatrolStore = create<PatrolStore>()((set, _get) => ({
 
   // ─── User actions ───
 
-  start: () => set({
-    phase: 'starting',
-    totalCases: 0,
-    changedCases: 0,
-    processedCases: 0,
-    cases: {},
-    error: undefined,
-    completedAt: undefined,
-    startedAt: new Date().toISOString(),
-    currentAction: undefined,
-    totalFound: undefined,
-    skippedCount: undefined,
-    warmupStatus: undefined,
-    archivedCount: undefined,
-    transferredCount: undefined,
+  start: () => set((state) => {
+    // Hot restart: preserve case list skeleton, reset step progress to pending
+    const resetCases: Record<string, CaseState> = {}
+    for (const [cn, c] of Object.entries(state.cases)) {
+      resetCases[cn] = {
+        caseNumber: c.caseNumber,
+        steps: Object.fromEntries(
+          Object.keys(c.steps).map(k => [k, { status: 'pending' as StepStatus }])
+        ),
+      }
+    }
+    return {
+      phase: 'starting' as PatrolPhase,
+      totalCases: 0,
+      changedCases: 0,
+      processedCases: 0,
+      cases: resetCases,
+      error: undefined,
+      completedAt: undefined,
+      startedAt: new Date().toISOString(),
+      currentAction: undefined,
+      totalFound: undefined,
+      skippedCount: undefined,
+      warmupStatus: undefined,
+      archivedCount: undefined,
+      transferredCount: undefined,
+    }
   }),
 
   reset: () => set({

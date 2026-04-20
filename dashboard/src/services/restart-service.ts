@@ -19,8 +19,8 @@ import { abortAllQueries } from '../agent/case-session-manager.js'
 
 const execAsync = promisify(exec)
 
-const FRONTEND_PORT = 5173
-const BACKEND_PORT = config.port // default 3010
+const FRONTEND_PORT = config.webPort
+const BACKEND_PORT = config.port
 
 // ISS-089: Track spawned child PIDs for clean kill on next restart
 let lastFrontendPid: number | null = null
@@ -40,7 +40,7 @@ const DASHBOARD_CMD_PATTERNS = [
   'concurrently.*dev:server.*dev:web',
   'npm run dev:server',
   'npm run dev:web',
-  'node.*tsx.*watch.*src/index\\.ts',
+  'node.*tsx.*src/index\\.ts',
   'npx.*vite.*--port',
   'vite.*--port',
   // Also catch bare 'cd web && npm run dev' wrappers from concurrently
@@ -105,7 +105,7 @@ async function getAllProcessParentInfo(): Promise<Map<number, { parentPid: numbe
  * Returns the topmost PID in the tree that is still part of the chain.
  *
  * Uses a single PowerShell call to get all process info, then traverses in memory.
- * This ensures we kill the --watch watcher parent, not just the child.
+ * This ensures we kill the process tree root, not just the child.
  * Max depth of 10 to prevent infinite loops.
  */
 async function findProcessTreeRoot(pid: number): Promise<number> {
@@ -301,16 +301,17 @@ async function spawnFrontend(): Promise<void> {
 
 /**
  * Spawn backend dev server as detached process.
- * ISS-100: Aligned with package.json dev:server script — uses node --watch.
+ * Aligned with package.json dev:server script — NO --watch.
+ * --watch causes SSE disconnections, zombie process pile-up, and terminal flash popups.
  * Uses PowerShell Start-Process to ensure the process survives parent exit on Windows.
  */
 async function spawnBackend(): Promise<void> {
   const cwd = join(config.projectRoot, 'dashboard')
-  const cmd = `node --import tsx/esm --watch src/index.ts`
+  const cmd = `node --import tsx/esm src/index.ts`
   console.log(`[restart] Spawning backend: ${cmd} (cwd: ${cwd})`)
   try {
     await execAsync(
-      `powershell -NoProfile -Command "Start-Process -FilePath 'node' -ArgumentList '--import','tsx/esm','--watch','src/index.ts' -WorkingDirectory '${cwd}' -WindowStyle Hidden"`,
+      `powershell -NoProfile -Command "Start-Process -FilePath 'node' -ArgumentList '--import','tsx/esm','src/index.ts' -WorkingDirectory '${cwd}' -WindowStyle Hidden"`,
     )
     console.log(`[restart] Backend spawn initiated`)
   } catch (e) {

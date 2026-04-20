@@ -45,7 +45,25 @@ def main():
 
     out_dir = os.path.join(args.case_dir, '.casework')
     os.makedirs(out_dir, exist_ok=True)
-    out_path = os.path.join(out_dir, 'execution-plan.json')
+
+    # ISS-231: Write to runs/{runId}/ directory (single source of truth)
+    run_id = ''
+    try:
+        state_path = os.path.join(out_dir, 'state.json')
+        if os.path.exists(state_path):
+            with open(state_path, encoding='utf-8') as f:
+                state = json.load(f)
+            run_id = state.get('runId', '')
+    except Exception:
+        pass
+
+    if run_id:
+        run_dir = os.path.join(out_dir, 'runs', run_id)
+        os.makedirs(run_dir, exist_ok=True)
+        out_path = os.path.join(run_dir, 'execution-plan.json')
+    else:
+        # Fallback: no runId — write to .casework/ root
+        out_path = os.path.join(out_dir, 'execution-plan.json')
 
     # Build plan entry
     plan_entry = {
@@ -112,7 +130,8 @@ def main():
         import subprocess
         cmd = [
             sys.executable,
-            os.path.join(os.path.dirname(os.path.dirname(__file__)), 'scripts', 'update-state.py'),
+            # assess/scripts/ → assess/ → casework/ → casework/scripts/update-state.py
+            os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'scripts', 'update-state.py'),
             '--case-dir', args.case_dir,
             '--step', 'assess',
             '--status', 'completed',

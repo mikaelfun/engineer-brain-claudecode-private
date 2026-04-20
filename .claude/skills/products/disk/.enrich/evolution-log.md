@@ -430,3 +430,22 @@
 - **新发现**: 0 条
 - **结果**: exhausted=true, lastRefreshed 已更新
 - **触发**: 7 天刷新重扫（lastRefreshed was null）
+
+### 2026-04-18 09:06 UTC — Phase 4b mslearn batch
+- Fetched 8 URLs from index (fallback-search mode)
+- 7/8 off-topic (AKS/AppGW/Dynamics365/IIS) — no disk-relevant content
+- 1/8 disk-relevant: AKS disk I/O latency troubleshooting (Track B → draft guide)
+- New JSONL entries: 0 (guide-only content)
+- New draft: `guides/drafts/mslearn-troubleshoot-high-disk-io-latency-aks.md`
+- Remaining unscanned: 108 of 116 index URLs
+
+## 2026-04-18 17:15 — mslearn Phase 4b (batch)
+- URLs fetched: 8
+- All 8 irrelevant to Azure Disk (App Service, Application Gateway, AGIC topics)
+- Discovered: 0 | Deduplicated: 0
+- Remaining unscanned: 100
+- Exhausted: false
+- Note: fallback-search index contains significant noise from non-disk topics
+| 2026-04-20 | mslearn | Built toc.yml index: 28 URLs (14 blobs + 14 files), 28 pending | azure/azure-storage/blobs, azure/azure-storage/files |
+| 2026-04-20 | ado-wiki | disk: indexed 157 wiki pages (102 pre-scanned from existing JSONL, 55 unscanned) | Supportability/AzureStorageDevices |
+| 2026-04-20 | contentidea-kb | +4 disk entries (37 scanned, 33 empty/no symptom), source exhausted | WIQL: Managed Disk, Storage |

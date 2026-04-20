@@ -1,33 +1,37 @@
+---
+title: Windows VM Deployment FAQs
+source: mslearn
+sourceUrl: https://learn.microsoft.com/en-us/troubleshoot/azure/virtual-machines/windows/windows-vm-deployment-faqs
+product: vm
+21vApplicable: true
+---
+
 # Windows VM Deployment FAQs
 
-Source: [Microsoft Learn](https://learn.microsoft.com/en-us/troubleshoot/azure/virtual-machines/windows/windows-vm-deployment-faqs)
-
 ## Windows Client Images in Azure
-- Windows 7/8/10 available for dev/test with Visual Studio (MSDN) subscription
-- Eligibility and Gallery images: see [client images doc](/en-us/azure/virtual-machines/windows/client-images)
+- Use Windows 7/8/10 in Azure for dev/test with Visual Studio (MSDN) subscription
+- Windows 10 images available from Azure Gallery within eligible dev/test offers
+- Custom Windows client images can be uploaded to Azure
 
-## Hybrid Use Benefit (HUB)
-- EA subscription: Deploy from pre-configured Marketplace images
-- Custom VM: Upload + deploy via ARM template or PowerShell
-- Overview: https://azure.microsoft.com/pricing/hybrid-use-benefit/
+## Azure Hybrid Use Benefit (HUB)
+- Enterprise Agreement: Deploy from pre-configured Marketplace images
+- Upload custom VM and deploy using ARM template or Azure PowerShell
 
 ## Visual Studio Enterprise (BizSpark) Monthly Credit
-- Activation: https://azure.microsoft.com/offers/ms-azr-0064p/
+- Activate via Azure offers page
 
 ## Enterprise Dev/Test Subscription
-- Account Owner creates subscriptions (needs EA admin permission)
-- Add Visual Studio subscribers as co-administrators
+- Requires Account Owner permission from Enterprise Administrator
+- Add active Visual Studio subscribers as co-administrators
 
-## N-Series GPU VMs
-- **Missing drivers**: Install GPU drivers post-deployment (see [sizes-gpu doc](/en-us/azure/virtual-machines/sizes-gpu))
-- **Can't find GPU instance**: Install drivers first, check [supported OS and drivers](/en-us/azure/virtual-machines/sizes-gpu#supported-operating-systems-and-drivers)
-- **Region availability**: Check [Products by region](https://azure.microsoft.com/regions/services)
+## N-Series VM GPU Drivers
+- Must install graphics drivers on each VM after deployment
+- Driver setup: https://learn.microsoft.com/en-us/azure/virtual-machines/sizes-gpu#supported-operating-systems-and-drivers
 
-## VM Size Family Not Visible During Resize
-- Running VMs are pinned to physical clusters
-- Classic deployment: Remove cloud service deployment, redeploy
-- ARM deployment: Stop all VMs in availability set, then resize
+## VM Resize - Size Family Not Visible
+- Classic VMs: Must remove and redeploy cloud service deployment
+- Resource Manager VMs: Must stop all VMs in availability set before resizing any VM
 
-## Availability Set Sizing
-- Choose largest expected VM size for first deployment
-- Size must be supported on the availability set's cluster
+## Availability Set Size Support
+- Choose largest VM size needed as first deployment
+- Subsequent VMs must use sizes supported by the availability set cluster

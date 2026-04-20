@@ -79,9 +79,18 @@ SERVICE_LEVEL=${SERVICE_LEVEL:-Unknown}
 CASE_NUMBER=$(sed -n 's/.*"caseNumber":[[:space:]]*"\([^"]*\)".*/\1/p' "$META" | head -1)
 CASE_NUMBER=${CASE_NUMBER:-unknown}
 
-# CC Finder fields (RDSE customers)
+# CC fields: two-layer (base CC from config + RDSE CC from meta)
 CC_EMAILS=$(sed -n 's/.*"ccEmails":[[:space:]]*"\([^"]*\)".*/\1/p' "$META" | head -1)
 CC_KNOW_ME=$(sed -n 's/.*"ccKnowMePage":[[:space:]]*"\([^"]*\)".*/\1/p' "$META" | head -1)
+CC_ACCOUNT=$(sed -n 's/.*"ccAccount":[[:space:]]*"\([^"]*\)".*/\1/p' "$META" | head -1)
+# Fallback: if meta has no ccEmails, read defaultCcEmails from config.json
+if [ -z "$CC_EMAILS" ]; then
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  CONFIG_FILE="$SCRIPT_DIR/../../../../config.json"
+  if [ -f "$CONFIG_FILE" ]; then
+    CC_EMAILS=$(sed -n 's/.*"defaultCcEmails":[[:space:]]*"\([^"]*\)".*/\1/p' "$CONFIG_FILE" | head -1)
+  fi
+fi
 
 # AR fields
 IS_AR=$(sed -n 's/.*"isAR":[[:space:]]*\(true\|false\).*/\1/p' "$META" | head -1)
@@ -257,9 +266,14 @@ fi
 if [ "$ACTUAL_STATUS" = "ready-to-close" ]; then
   YELLOW_ITEMS+=("准备关单，发 closure email")
 fi
-# CC Finder reminder for RDSE customers — auto-check if IR already sent with CC
-if [ -n "$CC_EMAILS" ]; then
-  CC_REMINDER="发送 Initial Response 时请 CC: \`${CC_EMAILS}\`"
+# CC reminder — two-layer: base CC (all cases) + RDSE CC (additional)
+# AR cases: CC is managed by case owner, skip reminder for AR engineer
+if [ -n "$CC_EMAILS" ] && [ "$IS_AR" != "true" ]; then
+  if [ -n "$CC_ACCOUNT" ]; then
+    CC_REMINDER="[RDSE] 发送邮件时请 CC: \`${CC_EMAILS}\`"
+  else
+    CC_REMINDER="发送邮件时请 CC: \`${CC_EMAILS}\`"
+  fi
   if [ -n "$CC_KNOW_ME" ]; then
     CC_REMINDER="${CC_REMINDER} | [Know-Me Wiki](${CC_KNOW_ME})"
   fi

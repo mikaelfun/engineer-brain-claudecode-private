@@ -2,21 +2,77 @@
  * cron-manager.ts — Self-managed cron job CRUD + scheduler
  *
  * Manages cron jobs stored in cron-jobs.json. Provides CRUD operations
- * and a simple setInterval-based scheduler that executes prompts via Claude CLI.
- * Broadcasts SSE events for real-time UI feedback.
+ * and a simple setInterval-based scheduler that executes prompts via SDK query().
+ * Broadcasts SSE events for real-time UI feedback with full observability
+ * (SSE broadcast + in-memory state + JSONL disk logs).
+ *
+ * Migrated from CLI subprocess (spawn) to SDK query() — ISS-232.
  */
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
-import { dirname } from 'path'
-import { spawn, type ChildProcess } from 'child_process'
+import { query, type Options } from '@anthropic-ai/claude-agent-sdk'
+import { readFileSync, writeFileSync, existsSync, mkdirSync, appendFileSync, readdirSync, unlinkSync, statSync } from 'fs'
+import { dirname, join, resolve } from 'path'
+import { fileURLToPath } from 'url'
 import { config } from '../config.js'
 import { sseManager } from '../watcher/sse-manager.js'
+import { loadAgentDefinitions } from '../agent/case-session-manager.js'
+import { summarizeToolInput } from '../utils/sdk-message-broadcaster.js'
+import { parseAssistantBlocks } from '../utils/sse-helpers.js'
+import { sdkRegistry } from '../agent/sdk-session-registry.js'
+import { parseSessionLog } from '../utils/session-log-parser.js'
 import type { CronJob } from '../types/index.js'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+
+function getProjectRoot(): string {
+  return resolve(__dirname, '..', '..', '..')
+}
 
 // ---- In-memory state ----
 
 let jobs: CronJob[] = []
-/** Track running trigger subprocesses for cancellation */
-let runningProcesses: Map<string, ChildProcess> = new Map()
+/** Track running trigger AbortControllers for cancellation */
+const runningControllers: Map<string, AbortController> = new Map()
+
+// ---- In-memory message store (observability layer ②) ----
+// Ring buffer per trigger for SSE recovery on page refresh.
+// Cleared at each new execution, capped at MAX_MESSAGES_PER_TRIGGER.
+
+const MAX_MESSAGES_PER_TRIGGER = 200
+
+export interface CronMessage {
+  kind: string      // thinking | response | tool-call | tool-result | agent-started | agent-progress | agent-completed
+  content: string
+  toolName?: string
+  taskId?: string
+  caseNumber?: string
+  timestamp: string
+}
+
+/** triggerId → messages (ring buffer) */
+const cronMessageStore: Map<string, CronMessage[]> = new Map()
+
+function addCronMessage(triggerId: string, msg: CronMessage): void {
+  let msgs = cronMessageStore.get(triggerId)
+  if (!msgs) {
+    msgs = []
+    cronMessageStore.set(triggerId, msgs)
+  }
+  msgs.push(msg)
+  if (msgs.length > MAX_MESSAGES_PER_TRIGGER) {
+    msgs.splice(0, msgs.length - MAX_MESSAGES_PER_TRIGGER)
+  }
+}
+
+/** Get stored messages for a trigger (for SSE recovery API) */
+export function getCronMessages(triggerId: string): CronMessage[] {
+  return cronMessageStore.get(triggerId) || []
+}
+
+/** Clear stored messages for a trigger */
+export function clearCronMessages(triggerId: string): void {
+  cronMessageStore.delete(triggerId)
+}
 
 // ---- File I/O ----
 
@@ -105,31 +161,105 @@ function nextCronMatch(expr: string): number | null {
 
 // ---- Execution Engine ----
 //
-// NOTE: Prompt is passed to `claude -p` as-is. Slash commands like
-// `/onenote-export sync` work correctly in -p mode (tested 2026-04-02).
-// Previous `formatPromptForPrintMode()` rewrites BROKE the prompt by
-// stripping the slash command format that the CLI relies on for skill
-// invocation. DO NOT add prompt rewriting — pass through verbatim.
+// Executes cron prompts via Claude Agent SDK query().
+// Observability: ① SSE broadcast ② in-memory state (job.state.lastOutput)
+//               ③ JSONL disk logs (30-day retention)
+//
+// NOTE: Prompt is passed to SDK query() as-is. Slash commands like
+// `/onenote-export sync` work correctly (tested 2026-04-02).
 
 const CRON_TIMEOUT_MS = 30 * 60 * 1000 // 30 minutes default
-const MAX_OUTPUT_LENGTH = 2000
+const MAX_OUTPUT_LENGTH = 5000
+const LOG_RETENTION_DAYS = 30
 
 interface ExecutionResult {
   success: boolean
   output: string
   durationMs: number
-  exitCode: number | null
   error?: string
   cancelled?: boolean
 }
 
+/** Load CLAUDE.md content for SDK systemPrompt.append (cached) */
+let _claudeMdCache: string | null = null
+function getClaudeMdContent(): string {
+  if (_claudeMdCache !== null) return _claudeMdCache
+  const claudeMdPath = join(getProjectRoot(), 'CLAUDE.md')
+  _claudeMdCache = existsSync(claudeMdPath) ? readFileSync(claudeMdPath, 'utf-8') : ''
+  return _claudeMdCache
+}
+
 /**
- * Execute a cron prompt via Claude CLI subprocess.
- * Broadcasts SSE events for real-time UI feedback.
- * Supports cancellation via runningProcesses map.
+ * Execute a cron prompt via Claude Agent SDK query().
+ *
+ * Full observability:
+ * - SSE broadcast (trigger-started / trigger-progress / trigger-completed/failed/cancelled)
+ * - In-memory state (job.state.lastOutput — cumulative)
+ * - JSONL disk log (one per execution, 30-day retention)
+ *
+/**
+ * Convert slash command prompts to natural language prompts.
+ *
+ * SDK query() treats /foo as a built-in slash command lookup, which fails for
+ * project-level skills (.claude/skills/). Convert to explicit instructions:
+ *   "/onenote export sync X" → "Read .claude/skills/onenote/SKILL.md and execute: export sync X"
+ *
+ * Non-slash prompts are passed through unchanged.
  */
-async function executeCronPrompt(triggerId: string, prompt: string): Promise<ExecutionResult> {
+function resolveSlashPrompt(rawPrompt: string): string {
+  const trimmed = rawPrompt.trim()
+  if (!trimmed.startsWith('/')) return trimmed
+
+  // Parse: /skillname [args...]
+  // Handle compound names like /product-learn, /rag-sync
+  const match = trimmed.match(/^\/([a-z0-9_-]+)\s*(.*)$/i)
+  if (!match) return trimmed
+
+  const skillName = match[1]
+  const args = match[2].trim()
+
+  // Check if skill exists on disk
+  const skillPath = join(getProjectRoot(), '.claude', 'skills', skillName, 'SKILL.md')
+  if (!existsSync(skillPath)) {
+    // Not a project skill — pass through as-is (might be a built-in command)
+    return trimmed
+  }
+
+  const parts = [
+    `Read .claude/skills/${skillName}/SKILL.md FIRST, then follow all steps.`,
+    `Config is at config.json.`,
+  ]
+  if (args) {
+    parts.push(`Execute with arguments: ${args}`)
+  }
+  parts.push('Do NOT Glob or explore the codebase — go straight to the skill file.')
+
+  console.log(`[cron-manager] Resolved slash prompt: "${trimmed}" → natural language (skill: ${skillName})`)
+  return parts.join(' ')
+}
+
+/**
+ * Execute a cron prompt via Claude Agent SDK query().
+ *
+ * Supports cancellation via AbortController + timeout.
+ */
+async function executeCronPrompt(triggerId: string, rawPrompt: string): Promise<ExecutionResult> {
+  const prompt = resolveSlashPrompt(rawPrompt)
   const startMs = Date.now()
+  const abortController = new AbortController()
+  runningControllers.set(triggerId, abortController)
+
+  // Timeout via AbortController
+  const timeoutHandle = setTimeout(() => {
+    console.warn(`[cron-manager] Trigger ${triggerId} timed out after ${CRON_TIMEOUT_MS / 1000}s`)
+    abortController.abort()
+  }, CRON_TIMEOUT_MS)
+
+  // ③ JSONL disk log (config.cronLogsDir — independent of patrol)
+  const logsDir = config.cronLogsDir
+  if (!existsSync(logsDir)) mkdirSync(logsDir, { recursive: true })
+  const logTs = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
+  const sdkLogPath = join(logsDir, `${logTs}_${triggerId}.jsonl`)
 
   // Broadcast start
   sseManager.broadcast('trigger-started', {
@@ -138,146 +268,307 @@ async function executeCronPrompt(triggerId: string, prompt: string): Promise<Exe
     startedAt: new Date().toISOString(),
   })
 
-  return new Promise((resolve) => {
-    const chunks: Buffer[] = []
-    const errChunks: Buffer[] = []
-    let outputSoFar = ''
+  let outputSoFar = ''
 
-    const child = spawn('claude', ['-p', '--output-format', 'stream-json', '--verbose'], {
-      cwd: config.projectRoot,
-      shell: true,
-      timeout: CRON_TIMEOUT_MS,
-      env: { ...process.env },
-    })
+  // ② Clear in-memory store for fresh execution
+  clearCronMessages(triggerId)
 
-    // Pipe prompt via stdin to avoid shell quoting issues with long prompts
-    child.stdin.write(prompt)
-    child.stdin.end()
+  const registryHandle = sdkRegistry.register({ source: 'cron', context: triggerId, intent: prompt.slice(0, 100) })
 
-    // Track for cancellation
-    runningProcesses.set(triggerId, child)
+  try {
+    const projectRoot = getProjectRoot()
+    const claudeMdContent = getClaudeMdContent()
 
-    // Stream stdout as NDJSON — parse each line and extract readable text
-    let lineBuf = ''
+    // Sub-agent tracking (same pattern as patrol-orchestrator)
+    const taskCaseMap: Record<string, string> = {}
+    const seenUuids = new Set<string>()
 
-    child.stdout.on('data', (data: Buffer) => {
-      chunks.push(data)
-      lineBuf += data.toString('utf-8')
-      const lines = lineBuf.split('\n')
-      lineBuf = lines.pop() || '' // keep incomplete trailing line
+    for await (const message of query({
+      prompt,
+      options: {
+        abortController,
+        cwd: projectRoot,
+        settingSources: ['user'] as Options['settingSources'],
+        agents: loadAgentDefinitions(),
+        systemPrompt: {
+          type: 'preset' as const,
+          preset: 'claude_code' as const,
+          append: claudeMdContent,
+        },
+        tools: ['Bash', 'Read', 'Write', 'Edit', 'Glob', 'Grep', 'Agent'],
+        allowedTools: ['Bash', 'Read', 'Write', 'Edit', 'Glob', 'Grep', 'Agent'],
+        permissionMode: 'bypassPermissions',
+        allowDangerouslySkipPermissions: true,
+        maxTurns: 100,
+        stderr: (data: string) => console.error(`[SDK:stderr:cron:${triggerId}]`, data.trim()),
+      },
+    })) {
+      // ① JSONL disk log — every message (with _ts for timestamp recovery)
+      try { appendFileSync(sdkLogPath, JSON.stringify({ ...message, _ts: new Date().toISOString() }) + '\n', 'utf-8') } catch { /* non-fatal */ }
 
-      for (const line of lines) {
-        if (!line.trim()) continue
-        try {
-          const msg = JSON.parse(line)
-          let text = ''
+      registryHandle.onMessage(message)
 
-          if (msg.type === 'assistant' && msg.message?.content) {
-            const parts: string[] = []
-            for (const block of msg.message.content) {
-              if (block.type === 'text' && block.text) {
-                parts.push(block.text)
-              } else if (block.type === 'tool_use') {
-                // Show tool invocation as progress indicator
-                const input = block.input || {}
-                const summary = input.command || input.description || input.pattern || input.file_path || ''
-                parts.push(`\n▶ ${block.name}${summary ? ': ' + String(summary).slice(0, 120) : ''}\n`)
-              }
-            }
-            text = parts.join('')
-          } else if (msg.type === 'user' && msg.message?.content) {
-            // Tool results come back as synthetic user messages
-            const contents = Array.isArray(msg.message.content) ? msg.message.content : []
-            for (const block of contents) {
-              if (block.type === 'tool_result' && block.content) {
-                // Extract first 200 chars of tool output as progress
-                const resultText = typeof block.content === 'string'
-                  ? block.content
-                  : Array.isArray(block.content)
-                    ? block.content.filter((c: any) => c.type === 'text').map((c: any) => c.text).join('')
-                    : ''
-                if (resultText) {
-                  text += resultText.slice(0, 200) + (resultText.length > 200 ? '...' : '') + '\n'
-                }
-              }
-            }
-          } else if (msg.type === 'result' && msg.subtype === 'success' && msg.result) {
-            // Final result — use as definitive output
-            text = msg.result
-          }
+      const msg = message as any
+      const subtype = msg.subtype as string | undefined
 
-          if (text) {
-            outputSoFar += text
-            sseManager.broadcast('trigger-progress', {
-              triggerId,
-              chunk: text,
-              elapsedMs: Date.now() - startMs,
-              outputLength: outputSoFar.length,
-            })
-          }
-        } catch {
-          // Non-JSON line — skip
+      // ── Sub-agent lifecycle tracking ──
+      if (subtype === 'task_started') {
+        const taskId = msg.task_id as string
+        const taskPrompt = (msg.prompt || msg.description || '') as string
+        const caseMatch = taskPrompt.match(/(?:Case\s+|case\s+|\/active\/|caseNumber[:\s]+)(\d{10,})/i)
+        if (caseMatch) taskCaseMap[taskId] = caseMatch[1]
+        const agentType = msg.task_type || 'unknown'
+        console.log(`[cron-manager] Sub-agent started: ${agentType} task=${taskId}`)
+        const ts = new Date().toISOString()
+        sseManager.broadcast('trigger-progress', {
+          triggerId,
+          chunk: `[Agent] ${msg.description || agentType}\n`,
+          kind: 'agent-started',
+          taskId,
+          agentType,
+          caseNumber: caseMatch?.[1],
+          description: msg.description,
+          elapsedMs: Date.now() - startMs,
+        })
+        addCronMessage(triggerId, {
+          kind: 'agent-started',
+          content: msg.description || `${agentType} started`,
+          taskId,
+          caseNumber: caseMatch?.[1],
+          timestamp: ts,
+        })
+      }
+
+      if (subtype === 'task_progress') {
+        const taskId = msg.task_id as string
+        if (!seenUuids.has(msg.uuid)) {
+          seenUuids.add(msg.uuid)
+          sseManager.broadcast('trigger-progress', {
+            triggerId,
+            chunk: msg.summary || '',
+            kind: 'agent-progress',
+            taskId,
+            caseNumber: taskCaseMap[taskId],
+            summary: msg.summary,
+            elapsedMs: Date.now() - startMs,
+          })
+          addCronMessage(triggerId, {
+            kind: 'agent-progress',
+            content: msg.summary || '',
+            taskId,
+            caseNumber: taskCaseMap[taskId],
+            timestamp: new Date().toISOString(),
+          })
         }
       }
-    })
 
-    child.stderr.on('data', (data: Buffer) => errChunks.push(data))
+      if (subtype === 'task_notification') {
+        const taskId = msg.task_id as string
+        const caseNumber = taskCaseMap[taskId]
+        const outputFile = msg.output_file as string | undefined
+        const agentType = msg.task_type || 'unknown'
 
-    child.on('close', (code, signal) => {
-      runningProcesses.delete(triggerId)
-      const durationMs = Date.now() - startMs
-      const stderr = Buffer.concat(errChunks).toString('utf-8')
-      // Use parsed human-readable text (outputSoFar) instead of raw NDJSON
-      const output = (outputSoFar || stderr).slice(-MAX_OUTPUT_LENGTH)
-      const cancelled = signal === 'SIGTERM' || signal === 'SIGKILL'
+        console.log(`[cron-manager] Sub-agent ${msg.status}: task=${taskId} case=${caseNumber || '?'} output=${outputFile || 'none'}`)
 
-      if (cancelled) {
-        sseManager.broadcast('trigger-cancelled', {
+        // Save output_file to cronLogsDir/agents/ for persistence + recovery
+        if (outputFile && existsSync(outputFile)) {
+          try {
+            const agentsDir = join(logsDir, 'agents')
+            if (!existsSync(agentsDir)) mkdirSync(agentsDir, { recursive: true })
+            const logName = `${agentType}_${taskId.slice(0, 8)}.log`
+            const content = readFileSync(outputFile, 'utf-8')
+            writeFileSync(join(agentsDir, logName), content, 'utf-8')
+            console.log(`[cron-manager] Saved sub-agent log: agents/${logName} (${Math.round(content.length / 1024)}KB)`)
+          } catch (err) {
+            console.warn(`[cron-manager] Failed to save sub-agent output:`, (err as Error).message)
+          }
+        }
+
+        // Parse output file → full sub-agent messages (thinking/tool-call/tool-result/response)
+        let agentMessages: any[] | undefined
+        if (outputFile && existsSync(outputFile)) {
+          try {
+            const parsed = parseSessionLog(outputFile)
+            if (parsed.mainMessages.length > 0) {
+              agentMessages = parsed.mainMessages
+            }
+          } catch { /* non-fatal */ }
+        }
+
+        sseManager.broadcast('trigger-progress', {
           triggerId,
-          durationMs,
+          chunk: msg.summary || `Agent ${msg.status}\n`,
+          kind: 'agent-completed',
+          taskId,
+          agentType,
+          caseNumber,
+          status: msg.status,
+          summary: msg.summary,
+          elapsedMs: Date.now() - startMs,
+          ...(agentMessages ? { messages: agentMessages } : {}),
         })
-      } else if (code === 0) {
-        sseManager.broadcast('trigger-completed', {
-          triggerId,
-          durationMs,
-          outputPreview: output.slice(0, 300),
+        addCronMessage(triggerId, {
+          kind: 'agent-completed',
+          content: msg.summary || `Agent ${msg.status}`,
+          taskId,
+          caseNumber,
+          timestamp: new Date().toISOString(),
         })
-      } else {
-        sseManager.broadcast('trigger-failed', {
-          triggerId,
-          durationMs,
-          exitCode: code,
-          error: stderr.slice(0, 500),
-        })
+        delete taskCaseMap[taskId]
       }
 
-      resolve({
-        success: code === 0,
-        output,
-        durationMs,
-        exitCode: code,
-        error: code !== 0 && !cancelled ? `Exit code ${code}: ${stderr.slice(0, 500)}` : undefined,
-        cancelled,
-      })
+      // ── Main agent message parsing (shared parser) ──
+      if (msg.type === 'assistant' && msg.message?.content) {
+        const content = msg.message.content
+        if (Array.isArray(content)) {
+          for (const parsed of parseAssistantBlocks(content)) {
+            const ts = new Date().toISOString()
+            if (parsed.kind === 'tool-call') {
+              const toolContent = summarizeToolInput(parsed.toolName!, parsed.toolInput)
+              const text = `\n▶ ${parsed.toolName}${toolContent ? ': ' + toolContent.slice(0, 200) : ''}\n`
+              outputSoFar += text
+              sseManager.broadcast('trigger-progress', {
+                triggerId,
+                chunk: text,
+                kind: 'tool-call',
+                toolName: parsed.toolName,
+                content: toolContent,
+                elapsedMs: Date.now() - startMs,
+                outputLength: outputSoFar.length,
+              })
+              addCronMessage(triggerId, {
+                kind: 'tool-call',
+                content: toolContent,
+                toolName: parsed.toolName,
+                timestamp: ts,
+              })
+            } else if (parsed.kind === 'response') {
+              outputSoFar += parsed.content
+              sseManager.broadcast('trigger-progress', {
+                triggerId,
+                kind: 'response',
+                chunk: parsed.content,
+                elapsedMs: Date.now() - startMs,
+                outputLength: outputSoFar.length,
+              })
+              addCronMessage(triggerId, {
+                kind: 'response',
+                content: parsed.content,
+                timestamp: ts,
+              })
+            } else if (parsed.kind === 'thinking') {
+              // Extended thinking — don't add to output, just broadcast + store
+              sseManager.broadcast('trigger-progress', {
+                triggerId,
+                kind: 'thinking',
+                chunk: parsed.content,
+                elapsedMs: Date.now() - startMs,
+              })
+              addCronMessage(triggerId, {
+                kind: 'thinking',
+                content: parsed.content,
+                timestamp: ts,
+              })
+            }
+          }
+        }
+      }
+
+      if (msg.type === 'tool_result') {
+        const resultContent = typeof msg.content === 'string'
+          ? msg.content.slice(0, 500)
+          : typeof msg.text === 'string'
+            ? msg.text.slice(0, 500)
+            : ''
+        if (resultContent) {
+          outputSoFar += resultContent.slice(0, 200) + '\n'
+          const ts = new Date().toISOString()
+          sseManager.broadcast('trigger-progress', {
+            triggerId,
+            chunk: resultContent.slice(0, 200) + '\n',
+            kind: 'tool-result',
+            content: resultContent,
+            elapsedMs: Date.now() - startMs,
+            outputLength: outputSoFar.length,
+          })
+          addCronMessage(triggerId, {
+            kind: 'tool-result',
+            content: resultContent,
+            timestamp: ts,
+          })
+        }
+      }
+    }
+
+    // SDK query completed successfully
+    registryHandle.complete()
+    const durationMs = Date.now() - startMs
+    const output = outputSoFar.slice(-MAX_OUTPUT_LENGTH)
+
+    sseManager.broadcast('trigger-completed', {
+      triggerId,
+      durationMs,
+      outputPreview: output.slice(0, 300),
     })
 
-    child.on('error', (err) => {
-      runningProcesses.delete(triggerId)
-      const durationMs = Date.now() - startMs
-      sseManager.broadcast('trigger-failed', {
-        triggerId,
-        durationMs,
-        error: err.message,
-      })
-      resolve({
+    return { success: true, output, durationMs }
+
+  } catch (err) {
+    const durationMs = Date.now() - startMs
+    const errMsg = err instanceof Error ? err.message : String(err)
+    const cancelled = errMsg.includes('abort')
+    registryHandle.fail(cancelled ? 'cancelled' : errMsg)
+
+    if (cancelled) {
+      sseManager.broadcast('trigger-cancelled', { triggerId, durationMs })
+      return {
         success: false,
-        output: '',
+        output: outputSoFar.slice(-MAX_OUTPUT_LENGTH),
         durationMs,
-        exitCode: null,
-        error: `Spawn error: ${err.message}`,
-      })
+        cancelled: true,
+      }
+    }
+
+    sseManager.broadcast('trigger-failed', {
+      triggerId,
+      durationMs,
+      error: errMsg.slice(0, 500),
     })
-  })
+    return {
+      success: false,
+      output: outputSoFar.slice(-MAX_OUTPUT_LENGTH),
+      durationMs,
+      error: errMsg,
+    }
+
+  } finally {
+    clearTimeout(timeoutHandle)
+    runningControllers.delete(triggerId)
+    // Clean up old cron JSONL logs (30-day retention)
+    cleanupOldCronLogs()
+  }
+}
+
+/** Delete cron JSONL logs older than LOG_RETENTION_DAYS */
+function cleanupOldCronLogs(): void {
+  try {
+    const logsDir = config.cronLogsDir
+    if (!existsSync(logsDir)) return
+    const cutoff = Date.now() - LOG_RETENTION_DAYS * 24 * 60 * 60 * 1000
+    const files = readdirSync(logsDir).filter(f => f.endsWith('.jsonl'))
+    let removed = 0
+    for (const file of files) {
+      const filePath = join(logsDir, file)
+      const mtime = statSync(filePath).mtimeMs
+      if (mtime < cutoff) {
+        unlinkSync(filePath)
+        removed++
+      }
+    }
+    if (removed > 0) {
+      console.log(`[cron-manager] Cleaned up ${removed} cron log(s) older than ${LOG_RETENTION_DAYS} days`)
+    }
+  } catch { /* non-fatal */ }
 }
 
 // ---- Scheduler (true cron: 1-minute tick) ----
@@ -324,7 +615,7 @@ function startCronTick(): void {
         job.state.nextRunAtMs = nextCronMatch(expr) || undefined
 
         if (!result.success && !result.cancelled) {
-          console.error(`[cron-manager] Job ${job.id} failed (exit ${result.exitCode}): ${result.error}`)
+          console.error(`[cron-manager] Job ${job.id} failed: ${result.error}`)
         } else {
           console.log(`[cron-manager] Job ${job.id} ${result.cancelled ? 'cancelled' : 'succeeded'} in ${(result.durationMs / 1000).toFixed(1)}s`)
         }
@@ -369,12 +660,12 @@ export function getTrigger(id: string): CronJob | undefined {
 
 /** Check if a trigger is currently running */
 export function isTriggerRunning(id: string): boolean {
-  return runningProcesses.has(id)
+  return runningControllers.has(id)
 }
 
 /** Get all running trigger IDs */
 export function getRunningTriggerIds(): string[] {
-  return Array.from(runningProcesses.keys())
+  return Array.from(runningControllers.keys())
 }
 
 export interface CreateTriggerInput {
@@ -438,7 +729,7 @@ export async function runTriggerNow(id: string): Promise<{ success: boolean; err
   if (!job) return { success: false, error: 'Trigger not found' }
 
   // Prevent double-run
-  if (runningProcesses.has(id)) {
+  if (runningControllers.has(id)) {
     return { success: false, error: 'Trigger is already running' }
   }
 
@@ -457,7 +748,7 @@ export async function runTriggerNow(id: string): Promise<{ success: boolean; err
   saveJobs()
 
   if (!result.success && !result.cancelled) {
-    console.error(`[cron-manager] Manual trigger ${job.id} failed (exit ${result.exitCode}): ${result.error}`)
+    console.error(`[cron-manager] Manual trigger ${job.id} failed: ${result.error}`)
   } else {
     console.log(`[cron-manager] Manual trigger ${job.id} ${result.cancelled ? 'cancelled' : 'succeeded'} in ${(result.durationMs / 1000).toFixed(1)}s`)
   }
@@ -465,19 +756,14 @@ export async function runTriggerNow(id: string): Promise<{ success: boolean; err
   return { success: result.success, error: result.error }
 }
 
-/** Cancel a running trigger by killing its subprocess */
+/** Cancel a running trigger by aborting its SDK query */
 export function cancelTrigger(id: string): boolean {
-  const child = runningProcesses.get(id)
-  if (!child) return false
+  const controller = runningControllers.get(id)
+  if (!controller) return false
 
   try {
-    // On Windows, use taskkill for the process tree
-    if (process.platform === 'win32') {
-      spawn('taskkill', ['/F', '/T', '/PID', String(child.pid)], { shell: true })
-    } else {
-      child.kill('SIGTERM')
-    }
-    console.log(`[cron-manager] Cancelled trigger: ${id} (PID ${child.pid})`)
+    controller.abort()
+    console.log(`[cron-manager] Cancelled trigger: ${id}`)
     return true
   } catch (err: any) {
     console.error(`[cron-manager] Failed to cancel trigger ${id}:`, err.message)

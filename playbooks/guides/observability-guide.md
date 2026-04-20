@@ -2,6 +2,13 @@
 
 > 涉及 patrol/casework 的状态文件、日志架构、SSE 推送/持久化的改动，先读此文档。
 
+## 写入准则
+
+- **只写原则和约束**，不写具体实现步骤（实现细节在各 SKILL.md）
+- **每条原则一句话**，附 ✅/❌ 示例即可，不展开解释
+- **新增原则前先检查是否已被现有条目覆盖**，避免重复
+- **脚本用法不记在这里**，记在脚本自身的 docstring 或 SKILL.md
+
 ## 1. 两层追踪，严格隔离
 
 ```
@@ -82,3 +89,15 @@ Run 类型：`patrol` | `casework` | `step-{name}`
 **日志**：写到 run 目录？命名规范？JSONL/纯文本格式正确？有清理策略？不依赖 agent 写日志？
 
 **SSE**：event type 注册到 SSEEventType？三层都写了（broadcast + 内存 + 磁盘）？有恢复 API？uuid 去重？isRunning() 数据污染守卫？
+
+## 8. 计时
+
+- 统一用脚本写计时（casework: `update-state.py`，patrol: `update-phase.py`），禁止内联 python
+- 谁跑谁计时 — `--status active` 记 `startedAt`，`--status completed` 自动算 `durationMs`
+- ❌ 禁止：`.t_*_start/end` 文件打点、`${SECONDS}` inline 算术、调用者手动传 `--duration-ms`（已有 auto-compute）
+
+## 9. SDK Session Registry
+
+新增 SDK `query()` 调用时，必须注册到统一 registry 以确保 Agent Monitor 可观测。
+
+详见 → `playbooks/guides/sdk-session-registry.md`

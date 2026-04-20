@@ -2,75 +2,56 @@
 source: mslearn
 sourceRef: null
 sourceUrl: "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-monitor/app-insights/telemetry/investigate-missing-telemetry"
-importDate: "2026-04-05"
-type: troubleshooting-guide
+importDate: "2026-04-20"
+type: guide-draft
 ---
 
-# Troubleshoot missing application telemetry in Azure Monitor Application Insights
+# Troubleshoot Missing Application Telemetry - Diagnostic Flow
 
-## Common causes in the ingestion pipeline
+## Processing Pipeline Steps (where telemetry can be lost)
 
-1. **SDK/agent misconfigured** - not sending telemetry to ingestion endpoint
-2. **Network blocks** calls to ingestion endpoint
-3. **Ingestion endpoint drops or throttles** inbound telemetry
-4. **Ingestion pipeline** drops/slows telemetry due to service health issues
-5. **Log Analytics** service health problems saving records (uncommon)
-6. **Query API** at `api.applicationinsights.io` fails (uncommon)
+1. SDK/agent misconfigured - not sending to ingestion endpoint
+2. Network blocks calls to ingestion endpoint
+3. Ingestion endpoint drops/throttles inbound telemetry
+4. Ingestion pipeline service health issues
+5. Log Analytics service health problems (uncommon)
+6. Query API failure at api.applicationinsights.io (uncommon)
 
-## Microsoft Entra ID authentication
+## Step 1: Send Sample Telemetry Record
 
-If your Application Insights data collection endpoint uses Microsoft Entra ID authentication, the application must also authenticate with Entra ID. Otherwise telemetry is silently rejected.
+Use PowerShell or curl to send a test availability result directly to the ingestion endpoint.
 
-## Diagnostic approach: Send a sample telemetry record
+**If sample arrives**: Problem is in SDK/agent configuration
+**If sample fails**: Problem is in network/endpoint/TLS
 
-Use PowerShell or curl to send a test availability result directly to the ingestion endpoint. This eliminates SDK issues from the equation.
+### PowerShell Test (Availability Result)
+- Supply connection string or iKey
+- Use `Invoke-WebRequest -Uri $url -Method POST -Body $data -UseBasicParsing`
+- Look for HTTP 200 with itemsReceived == itemsAccepted
 
-### PowerShell (Availability test result)
-
-```powershell
-$ConnectionString = "<your-connection-string>"
-# Parse connection string to get IngestionEndpoint and InstrumentationKey
-# Send POST to {IngestionEndpoint}/v2/track with availability data payload
-$ProgressPreference = "SilentlyContinue"
-Invoke-WebRequest -Uri $url -Method POST -Body $availabilityData -UseBasicParsing
+### curl Test (Linux)
+```
+curl -H "Content-Type: application/json" -X POST -d '<json>' https://dc.applicationinsights.azure.com/v2.1/track
 ```
 
-**Expected result**: HTTP 200 with `itemsReceived` matching `itemsAccepted`.
+## Step 2: Check TLS/SSL Configuration
+- Most endpoints require TLS 1.2
+- Test different protocols: `[System.Net.ServicePointManager]::SecurityProtocol = TLS12`
+- Check for proxy/firewall SSL certificate offloading issues
 
-### Curl (Linux/MacOS)
+## Step 3: Entra ID Authentication Troubleshooting
+- HTTP 400: Resource set as Entra-only, SDK sending to wrong API (v2/track vs v2.1/track)
+- HTTP 401: SDK cannot acquire valid token
+- HTTP 403: Credentials lack Monitoring Metrics Publisher role
 
-```bash
-curl -H "Content-Type: application/json" -X POST -d '{"data":{"baseData":{"ver":2,...},"baseType":"AvailabilityData"},...}' https://dc.applicationinsights.azure.com/v2.1/track
-```
+### Language-Specific Checks
+- .NET: Collect event source logs with PerfView
+- Java: Inspect traffic with Fiddler, check for CredentialUnavailableException
+- Node.js: Enable internal logging with setInternalLogging(true, true)
+- Python: Check for credential error / authentication error in logs
 
-## Interpreting results
-
-- **Sample arrives** in Application Insights Logs tab → SDK/agent configuration issue. Collect SDK self-diagnostic logs.
-- **Sample fails** → Network/TLS/DNS issue:
-  - DNS fails to resolve ingestion endpoint
-  - TCP blocked by firewall/gateway
-  - TLS version mismatch (endpoints require TLS 1.2)
-  - Multiple Azure Monitor Private Links overwriting DNS entries
-
-## Entra ID authentication errors
-
-| Error | Cause | Fix |
-|-------|-------|-----|
-| HTTP 400 "Authentication not supported" | Resource is Entra-only but SDK sends to v2/track | Configure SDK correctly; Entra ID requires v2.1/track |
-| HTTP 401 "Authorization required" | SDK cannot acquire valid token | Check Azure Identity exceptions in SDK logs |
-| HTTP 403 "Unauthorized" | Credentials lack permission | Assign Monitoring Metrics Publisher role to the identity |
-
-### Language-specific Entra ID troubleshooting
-
-- **.NET**: Enable EventSource logs, look for "Failed to get AAD Token" message
-- **Java**: Use Fiddler proxy (`"proxy": {"host":"localhost","port":8888}`), check for `CredentialUnavailableException` or `MsalServiceException`
-- **Node.js**: `appInsights.setup(...).setInternalLogging(true, true)`
-- **Python**: Credential errors (no token), authentication errors (wrong role), status 400/403
-
-## TLS/SSL troubleshooting
-
-Most ingestion endpoints require TLS 1.2. Test with:
-
-```powershell
-[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::TLS12
-```
+## Step 4: Network/DNS Issues
+- DNS fails to resolve ingestion endpoint
+- TCP blocked by firewalls
+- Azure Monitor Private Link overwriting DNS entries
+- Note: Network issues should be escalated to Azure Networking support

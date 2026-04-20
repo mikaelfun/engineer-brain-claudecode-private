@@ -1,70 +1,43 @@
-# Unmanaged Disk Offline Repair
+---
+title: Attach Unmanaged Disk to VM for Offline Repair
+source: mslearn
+sourceUrl: https://learn.microsoft.com/en-us/troubleshoot/azure/virtual-machines/windows/unmanaged-disk-offline-repair
+product: vm
+21vApplicable: true
+date: 2026-04-18
+---
 
-> Source: Microsoft Learn
-> URL: https://learn.microsoft.com/en-us/troubleshoot/azure/virtual-machines/windows/unmanaged-disk-offline-repair
-> Quality: guide-draft | Needs review before promotion
+# 非托管磁盘离线修复指南
 
-## Determine if Disk is Managed or Unmanaged
+## 概述
+当 VM 使用非托管磁盘且无法启动时，需要通过离线修复方式处理。
 
-### Azure Portal
-- Unmanaged: banner "VM is not using managed disks" on Overview blade
-- Unmanaged: disk name appended with "(unmanaged)"
-- Managed: Overview blade shows "Managed by" field
+## 判断磁盘类型
+
+### Portal
+- Overview 页面有 banner 提示 "VM is not using managed disks"
+- 磁盘名称后缀 "(unmanaged)"
 
 ### PowerShell
 ```powershell
-(Get-AzVM -ResourceGroupName MyResourceGroup -Name MyVM).StorageProfile.OsDisk
-# If ManagedDisk field is empty → unmanaged
+(Get-AzVM -ResourceGroupName MyRG -Name MyVM).StorageProfile.OsDisk
+# ManagedDisk 字段为空 → 非托管盘
 ```
 
 ### Azure CLI
 ```bash
-az vm show -n MyVM -g MyResourceGroup --query "storageProfile.osDisk.managedDisk"
-# No output → unmanaged
+az vm show -n MyVM -g MyRG --query "storageProfile.osDisk.managedDisk"
+# 无输出 → 非托管盘
 ```
 
-## Repair Steps for Unmanaged Disk
+## 修复流程
 
-### 1. Copy the VHD
-1. Stop the source VM
-2. Open Azure Storage Explorer
-3. Navigate to storage account > vhds container
-4. Copy the VHD to a new blob container (e.g., "disk-copies")
+1. **停止源 VM**
+2. **复制 VHD**：Azure Storage Explorer → vhds container → Copy → 粘贴到新 blob container
+3. **创建修复 VM**（非托管盘模式）：取消勾选 "Use managed disks"
+4. **挂载磁盘副本**：Disks → Add data disk → Existing blob → 选择副本
+5. **修复**：在修复 VM 中操作挂载的磁盘
+6. **替换源 VM 磁盘**：通过 PowerShell 更新 OsDisk VHD URI
 
-### 2. Create Repair VM (Unmanaged)
-1. Create new Windows Server 2019 VM
-2. Select "No infrastructure redundancy required"
-3. On Disks page: expand Advanced > clear "Use managed disks"
-4. If checkbox unavailable, use CLI:
-```bash
-az vm create --resource-group <RG> --name <VM> --image <Image> \
-  --location <location> --admin-username <Admin> --subnet $SubnetID \
-  --size <size> --use-unmanaged-disk
-```
-
-### 3. Attach VHD Copy to Repair VM
-1. Disks blade > Add data disk
-2. Source type: Existing blob
-3. Browse to the copied VHD
-
-### 4. If Encrypted
-Use Resolution #3 (Manual BEK unlock) from encrypted disk guide.
-
-### 5. Replace OS Disk on Source VM
-
-**Azure CLI:**
-```bash
-az vm unmanaged-disk detach -g MyResourceGroup --vm-name MyVm -n disk_name
-```
-
-**PowerShell:**
-```powershell
-$VirtualMachine = Get-AzVM -ResourceGroupName "MyResourceGroup" -Name "MyVm"
-Remove-AzVMDataDisk -VM $VirtualMachine -Name "disk_name"
-Update-AzVM -ResourceGroupName "MyResourceGroup" -VM $VirtualMachine
-
-# Swap OS disk
-$vm = Get-AzVM -ResourceGroupName $rgname -Name $vmname
-$vm.StorageProfile.OsDisk.Vhd.Uri = $vhduri
-Update-AzVM -ResourceGroupName $rgname -VM $vm
-```
+## 加密磁盘处理
+如果磁盘使用 ADE 加密，需先 unlock 再修复。

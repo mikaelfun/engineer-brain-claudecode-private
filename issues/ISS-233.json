@@ -1,0 +1,12 @@
+{
+  "id": "ISS-233",
+  "title": "Migrate act-step artifacts (claims.json, reassess-decision.json, logs/) to runs/{runId}/",
+  "type": "enhancement",
+  "priority": "medium",
+  "status": "open",
+  "createdAt": "2026-04-20T09:28:08Z",
+  "description": "ISS-231 introduced runs/{runId}/ for data-refresh subtasks, but act-step artifacts still write to legacy paths:\n\n1.  — troubleshooter.log, email-drafter.log, challenger.log (FIXED in agent .md files — now reads runId from state.json)\n2.  — event-wrapper.sh reads from here for delta (FIXED — now checks runs/{runId}/ first)\n3.  — written by troubleshooter, read by challenger/reassess/act/summarize\n4.  — written by reassess, read by act\n\nItems 3-4 are cross-step shared artifacts. Options:\nA) Move to runs/{runId}/output/ and update all readers (10+ files)\nB) Keep in .casework/ root (shared), archive to runs/{runId}/ on patrol cleanup\nC) Symlink from runs/{runId}/ → .casework/ root\n\nRecommend option B: least invasive, preserves run-level auditability.",
+  "relatedIssues": [
+    "ISS-231"
+  ]
+}

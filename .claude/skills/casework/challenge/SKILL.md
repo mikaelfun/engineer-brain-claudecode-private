@@ -3,7 +3,7 @@ name: challenge
 displayName: 证据链审查
 description: "手动触发 Challenger 审查 troubleshooter 分析的证据链。"
 category: agent
-stability: experimental
+stability: beta
 requiredInput: caseNumber
 estimatedDuration: 60s
 promptTemplate: |
@@ -51,8 +51,8 @@ prompt: |
   Case {caseNumber}，caseDir={caseDir}（绝对路径）。
   产品域：{product}（从 case-info.md serviceTree 推断）。
   请先读取 .claude/agents/challenger.md 获取完整执行步骤，然后执行。
-  ⏱ 第一个 Bash 调用中写 date +%s > "{caseDir}/.casework/logs/.t_challenge_start"
-  ⏱ 最后一个 Bash 调用中写 date +%s > "{caseDir}/.casework/logs/.t_challenge_end"
+  ⏱ 执行前：update-state.py --case-dir "$CASE_DIR" --step act --action challenger --status active
+  ⏱ 执行后：update-state.py --case-dir "$CASE_DIR" --step act --action challenger --status completed
 ```
 
 ### 5. 展示结果

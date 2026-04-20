@@ -1,6 +1,6 @@
 # VM Vm General — 综合排查指南
 
-**条目数**: 20 | **草稿融合数**: 1 | **Kusto 查询融合**: 0
+**条目数**: 21 | **草稿融合数**: 1 | **Kusto 查询融合**: 0
 **来源草稿**: [ado-wiki-b-VMApps-Kusto-and-General-Troubleshooting-Info.md](../../guides/drafts/ado-wiki-b-VMApps-Kusto-and-General-Troubleshooting-Info.md)
 **生成日期**: 2026-04-07
 
@@ -57,3 +57,19 @@
 | 19 | [container] VM+SCIM Windows section index page |  | Section container page. No actionable content. | 🟢 8.5 | OneNote |
 | 20 | Azure VPN gateway S2S connections to strongSwan VPNs (AWS) both disconnected for extended period | Misconfiguration of pre-shared key on customer side VPN gateway | Customer re-checked VPN configuration and re-configured the pre-shared key; conn... | 🟢 8.5 | OneNote |
 
+
+
+---
+
+## 增量补充条目 (2026-04-18)
+
+### vm-contentidea-kb-043
+**来源**: KB | **分数**: 🟡 5.0
+
+**症状**: This article will contain a walk through of how to use Dump Insights to scan a dump or review the results of processed data.
+
+**根因**: Reference doc (no explicit root cause)
+
+**方案**: See original document for detailed steps
+
+---

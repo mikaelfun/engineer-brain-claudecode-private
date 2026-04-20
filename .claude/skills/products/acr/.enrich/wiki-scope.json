@@ -4,7 +4,8 @@
     {
       "wikiKey": "Supportability/AzureContainers",
       "pathScope": [
-        "/Azure Kubernetes Service Wiki/ACR"
+        "/Azure Kubernetes Service Wiki/ACR",
+        "/Azure Kubernetes Service Wiki/ACI"
       ]
     }
   ]

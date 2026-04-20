@@ -92,3 +92,17 @@ cluster('estscnn2.chinanorth2.kusto.chinacloudapi.cn').database('ESTS').PerReque
 ```
 
 ---
+
+---
+
+## Incremental Scenarios (2026-04-18)
+
+## Scenario 3: When Conditional Access Policy is created to force MFA on Exchange Online (EXO) and/or SharePoint Online (SPO) cloud app...
+> Source: contentidea-kb (entra-id-3645) | Applicability: unverified
+
+### Troubleshooting Steps
+1. **Confirm symptom**: When Conditional Access Policy is created to force MFA on Exchange Online (EXO) and/or SharePoint Online (SPO) cloud application, and the users open the browser and try to create Word/Excel/PowerPoint...
+2. **Root cause**: When user tries to create Word/Excel/PowerPoint document from https://portal.office.com portal, the selected application tries to access Exchange Online (EXO) and/or SharePoint Online (SPO) using non-...
+3. **Solution**: Since this is non-interactive login, MFA will not trigger, and the MFA popup will not show to the end user. Hence, creating Word/Excel/PowerPoint documents from office portal will fail.  Therefore, we...
+
+---

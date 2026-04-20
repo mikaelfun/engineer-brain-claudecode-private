@@ -9,7 +9,7 @@
  * their `step` field, then each step group is rendered as a collapsible
  * section with a step header showing name + status.
  */
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   Sparkles, Send, CheckCircle2, Loader2, Wrench, Brain,
   AlertCircle, ChevronRight, ChevronDown, Clock, Play
@@ -21,7 +21,7 @@ import type { CaseSessionMessage } from '../../stores/caseSessionStore'
 // ============================================================
 
 /** Types that are always shown individually (never collapsed) */
-const ALWAYS_SHOW: Set<string> = new Set(['system', 'completed', 'failed', 'user', 'queued'])
+const ALWAYS_SHOW: Set<string> = new Set(['system', 'completed', 'failed', 'user', 'queued', 'response'])
 
 /** Collapsible verbose types */
 const TOOL_TYPES: Set<string> = new Set(['tool-call', 'tool-result'])
@@ -360,10 +360,22 @@ function StepGroupSection({ group, defaultExpanded }: { group: StepGroup; defaul
   )
 }
 
+/** Animated "Thinking..." dots */
+function ThinkingDots() {
+  const [dots, setDots] = useState('')
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setDots(prev => prev.length >= 3 ? '' : prev + '.')
+    }, 500)
+    return () => clearInterval(timer)
+  }, [])
+  return <>Thinking{dots}</>
+}
+
 /** Collapsed group — compact summary with expand toggle */
 export function CollapsedGroup({ group, isLast }: { group: DisplayMessage; isLast?: boolean }) {
-  // Tools: default collapsed; Thinking: default expanded (show full content)
-  const [expanded, setExpanded] = useState(group.kind !== 'collapsed-tools')
+  // Both tools and thinking default collapsed
+  const [expanded, setExpanded] = useState(false)
 
   if (group.kind === 'collapsed-tools') {
     const toolCount = group.messages.filter(m => m.type === 'tool-call').length
@@ -415,12 +427,44 @@ export function CollapsedGroup({ group, isLast }: { group: DisplayMessage; isLas
     )
   }
 
-  // collapsed-thinking — show all messages expanded by default (full content)
+  // collapsed-thinking — collapsible with summary header (same pattern as tools)
+  const thinkingCount = group.messages.length
+  const ThinkIcon = isLast ? Loader2 : Brain
+  const thinkIconClass = isLast ? 'w-3.5 h-3.5 animate-spin flex-shrink-0' : 'w-3.5 h-3.5 flex-shrink-0'
+
   return (
-    <div className="space-y-0.5">
-      {group.messages.map((msg, j) => (
-        <MessageBubble key={j} message={msg} />
-      ))}
+    <div>
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center gap-1.5 pl-2 py-1 text-left rounded-sm transition-colors"
+        style={{ borderLeft: '2px solid var(--accent-blue)' }}
+        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
+        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+      >
+        <ThinkIcon className={thinkIconClass} style={{ color: 'var(--accent-blue)' }} />
+        <span className="text-xs font-medium truncate" style={{ color: 'var(--text-secondary)' }}>
+          {isLast ? <ThinkingDots /> : 'Thinking'}
+        </span>
+        {thinkingCount > 1 && (
+          <span className="text-xs font-mono flex-shrink-0" style={{ color: 'var(--text-tertiary)' }}>
+            ({thinkingCount})
+          </span>
+        )}
+        {group.timestamp && (
+          <span className="text-xs font-mono flex-shrink-0" style={{ color: 'var(--text-tertiary)' }}>{formatTime(group.timestamp)}</span>
+        )}
+        <ChevronRight
+          className={`w-3 h-3 flex-shrink-0 transition-transform ${expanded ? 'rotate-90' : ''}`}
+          style={{ color: 'var(--text-tertiary)' }}
+        />
+      </button>
+      {expanded && (
+        <div className="ml-3 mt-0.5 space-y-0.5">
+          {group.messages.map((msg, j) => (
+            <MessageBubble key={j} message={msg} compact />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -445,6 +489,11 @@ export function MessageBubble({ message, compact }: { message: { type: string; c
       borderColor: 'var(--accent-blue)',
       icon: <Brain className="w-3.5 h-3.5" style={{ color: 'var(--accent-blue)' }} />,
       label: 'Thinking',
+    },
+    response: {
+      borderColor: 'var(--accent-purple, #a78bfa)',
+      icon: <Sparkles className="w-3.5 h-3.5" style={{ color: 'var(--accent-purple, #a78bfa)' }} />,
+      label: 'Response',
     },
     'tool-call': {
       borderColor: 'var(--accent-amber)',

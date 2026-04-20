@@ -1,0 +1,459 @@
+<!-- Patrol Page — Engineer Brain Design System (Sentry Light / Dark) -->
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patrol — Pipeline View</title>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-base: #faf9fb; --bg-surface: #fff; --bg-hover: #f3f1f5; --bg-inset: #f5f3f7;
+    --text-primary: #1f1633; --text-secondary: #3e3554; --text-tertiary: #9e95b0;
+    --border-subtle: #e8e3f0; --border-default: #d4ccdf;
+    --accent: #6a5fc1; --accent-dim: rgba(106,95,193,0.10);
+    --green: #16a34a; --green-dim: rgba(22,163,74,0.10);
+    --amber: #d97706; --amber-dim: rgba(217,119,6,0.10);
+    --red: #dc2626; --red-dim: rgba(220,38,38,0.10);
+    --radius: 12px; --font: 'Rubik', sans-serif; --mono: 'JetBrains Mono', monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: var(--font); background: var(--bg-base); color: var(--text-primary); padding: 28px 36px; }
+
+  /* ── Header ── */
+  .header { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; }
+  .title { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+  .badge { font-size: 11px; font-weight: 600; padding: 4px 14px; border-radius: 18px; text-transform: uppercase; letter-spacing: 0.3px; display: inline-flex; align-items: center; gap: 6px; }
+  .badge-running { background: var(--accent-dim); color: var(--accent); }
+  .badge-done { background: var(--green-dim); color: var(--green); }
+  .timer-main { font-family: var(--mono); font-size: 15px; font-weight: 500; color: var(--text-tertiary); }
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 20px; }
+  .stat-group { display: flex; gap: 16px; }
+  .stat { text-align: center; }
+  .stat-val { font-family: var(--mono); font-size: 20px; font-weight: 700; line-height: 1.2; }
+  .stat-lbl { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-tertiary); }
+  .btn-cancel { background: var(--red); color: white; border: 1px solid rgba(0,0,0,0.1); padding: 8px 22px; border-radius: 13px; font-family: var(--font); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; cursor: pointer; box-shadow: rgba(0,0,0,0.06) 0 1px 3px 0 inset; }
+
+  /* ── Pipeline (global) ── */
+  .pipeline { display: flex; align-items: stretch; justify-content: center; gap: 0; margin-bottom: 28px; }
+  .pipe-arrow { display: flex; align-items: center; padding: 0 2px; align-self: flex-start; margin-top: 32px; }
+
+  .stage { flex: 1; max-width: 200px; }
+  .stage-card {
+    background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius);
+    box-shadow: rgba(0,0,0,0.04) 0 1px 3px; transition: all 0.25s; overflow: hidden; height: 100%;
+    display: flex; flex-direction: column;
+  }
+  .stage-card:hover { border-color: var(--border-default); box-shadow: rgba(106,95,193,0.1) 0 4px 16px; }
+  .stage-card.completed { border-top: 2.5px solid var(--green); }
+  .stage-card.active { border-top: 2.5px solid var(--accent); box-shadow: rgba(106,95,193,0.15) 0 4px 20px; animation: stage-glow 3s ease-in-out infinite; }
+  .stage-card.pending { opacity: 0.4; border-top: 2.5px solid var(--border-subtle); }
+
+  .stage-top { padding: 14px 16px 8px; display: flex; align-items: center; gap: 8px; }
+  .stage-icon { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .stage-icon.completed { background: var(--green); color: white; }
+  .stage-icon.active { border: 2.5px solid var(--accent); background: white; position: relative; }
+  .stage-icon.active::after { content: ''; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); position: absolute; animation: dot-pulse 2s ease-in-out infinite; }
+  .stage-icon.pending { border: 2px solid var(--border-default); }
+  .stage-label { font-size: 13px; font-weight: 700; flex: 1; }
+  .stage-label.completed { color: var(--green); }
+  .stage-label.active { color: var(--accent); }
+  .stage-label.pending { color: var(--text-tertiary); }
+  .stage-dur { font-family: var(--mono); font-size: 11px; font-weight: 500; color: var(--text-tertiary); }
+  .stage-dur.active { color: var(--accent); }
+
+  .stage-body { padding: 0 16px 14px; font-size: 12px; color: var(--text-secondary); line-height: 1.6; flex: 1; }
+  .stage-body strong { color: var(--text-primary); font-weight: 600; }
+  .stage-body .mini-progress { width: 100%; height: 4px; background: var(--bg-hover); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+  .stage-body .mini-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--green), var(--accent)); }
+
+  .stage-jobs { border-top: 1px solid var(--border-subtle); }
+  .stage-job { display: flex; align-items: center; gap: 8px; padding: 7px 16px; font-size: 12px; border-bottom: 1px solid var(--bg-hover); }
+  .stage-job:last-child { border-bottom: none; }
+  .job-icon { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .job-icon.done { background: var(--green); }
+  .job-icon.run { background: var(--accent); animation: dot-pulse 2s infinite; }
+  .job-icon.wait { border: 1.5px solid var(--border-default); }
+  .job-label { flex: 1; color: var(--text-secondary); font-weight: 500; }
+  .job-time { font-family: var(--mono); font-size: 10px; color: var(--text-tertiary); }
+
+  /* ── Cases section ── */
+  .section-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .section-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+  .section-sub { font-size: 12px; color: var(--text-tertiary); font-weight: 500; }
+  .progress-track { flex: 1; max-width: 240px; height: 5px; background: var(--bg-hover); border-radius: 3px; overflow: hidden; }
+  .progress-bar { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--green), var(--accent)); transition: width 0.5s ease; }
+
+  /* ── Case card ── */
+  .case {
+    background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius);
+    margin-bottom: 10px; overflow: hidden; box-shadow: rgba(0,0,0,0.04) 0 1px 3px; transition: all 0.2s;
+  }
+  .case:hover { box-shadow: rgba(106,95,193,0.08) 0 4px 12px; }
+  .case.active { border-color: rgba(106,95,193,0.3); box-shadow: rgba(106,95,193,0.12) 0 4px 16px; }
+  .case-head { display: flex; align-items: center; gap: 10px; padding: 10px 18px; border-bottom: 1px solid var(--bg-hover); }
+  .case-id { font-family: var(--mono); font-size: 14px; font-weight: 700; }
+  .case-id.active { color: var(--accent); }
+  .case-id.done { color: var(--text-secondary); }
+  .case-badge { font-size: 10px; font-weight: 700; padding: 2px 10px; border-radius: 12px; text-transform: uppercase; letter-spacing: 0.3px; }
+  .case-badge.active { background: var(--accent-dim); color: var(--accent); }
+  .case-badge.done { background: var(--green-dim); color: var(--green); }
+  .case-meta { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .case-steps { font-size: 11px; color: var(--text-tertiary); font-weight: 500; }
+  .case-time { font-family: var(--mono); font-size: 12px; color: var(--text-tertiary); }
+
+  /* ── Case pipeline ── */
+  .case-pipe { display: flex; align-items: stretch; padding: 14px 18px; gap: 0; }
+  .cs { flex: 1; min-width: 0; }
+  .cs-head { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+  .cs-icon { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 10px; }
+  .cs-icon.done { background: var(--green); color: white; }
+  .cs-icon.run { border: 2.5px solid var(--accent); position: relative; }
+  .cs-icon.run::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); position: absolute; animation: dot-pulse 2s infinite; }
+  .cs-icon.wait { border: 2px solid var(--border-default); }
+  .cs-icon.skip { background: var(--bg-hover); color: var(--text-tertiary); font-size: 9px; }
+  .cs-name { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
+  .cs-name.done { color: var(--green); }
+  .cs-name.run { color: var(--accent); }
+  .cs-name.wait { color: var(--text-tertiary); }
+  .cs-name.skip { color: var(--text-tertiary); opacity: 0.5; }
+  .cs-dur { font-family: var(--mono); font-size: 10px; margin-left: auto; }
+
+  .cs-body { padding-left: 26px; }
+  .cs-row { display: flex; align-items: center; gap: 6px; padding: 2px 0; font-size: 12px; }
+  .cs-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .cs-label { flex: 1; color: var(--text-secondary); }
+  .cs-val { font-family: var(--mono); font-size: 10px; color: var(--text-tertiary); }
+
+  .result-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 8px; margin-bottom: 4px; }
+  .result-pill.action { background: var(--amber-dim); color: var(--amber); }
+  .result-pill.nochange { background: var(--bg-inset); color: var(--text-tertiary); }
+  .result-pill svg { width: 12px; height: 12px; }
+  .reasoning { font-size: 11px; color: var(--text-tertiary); line-height: 1.5; border-left: 2px solid var(--border-subtle); padding-left: 10px; margin-top: 4px; }
+
+  .agent-chip { background: var(--bg-inset); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 6px 10px; margin-bottom: 4px; transition: all 0.2s; }
+  .agent-chip.active { background: var(--accent-dim); border-color: rgba(106,95,193,0.25); }
+  .agent-chip .a-head { display: flex; align-items: center; gap: 5px; }
+  .agent-chip .a-name { font-size: 12px; font-weight: 600; }
+  .agent-chip .a-desc { font-size: 10px; color: var(--text-tertiary); margin-top: 2px; }
+  .agent-chip.pending { opacity: 0.35; }
+
+  .cs-connector { width: 24px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding-top: 4px; }
+  .conn-line { width: 100%; height: 2px; border-radius: 1px; }
+  .conn-line.done { background: var(--green); opacity: 0.4; }
+  .conn-line.active { background: linear-gradient(90deg, var(--green), var(--accent)); opacity: 0.5; }
+  .conn-line.wait { background: var(--border-subtle); }
+
+  .case.queued { opacity: 0.35; }
+  .case.queued .case-head { border-bottom: none; }
+
+  /* Summary result */
+  .summary-result { font-size: 11px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; }
+  .summary-result svg { width: 12px; height: 12px; color: var(--green); }
+
+  /* ── Animations ── */
+  @keyframes dot-pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.3; transform:scale(0.7); } }
+  @keyframes stage-glow {
+    0%,100% { box-shadow: rgba(106,95,193,0.12) 0 4px 16px; }
+    50% { box-shadow: rgba(106,95,193,0.25) 0 6px 28px; }
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spin { animation: spin 1s linear infinite; }
+
+  /* ── SVG icon helpers ── */
+  .icon { width: 14px; height: 14px; display: inline-block; vertical-align: middle; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════ HEADER ═══════════ -->
+<div class="header">
+  <span class="title">Patrol</span>
+  <span class="badge badge-running">
+    <svg class="spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 12a9 9 0 11-6.2-8.56"/></svg>
+    processing
+  </span>
+  <span class="timer-main">4m 32s</span>
+  <div class="header-right">
+    <div class="stat-group">
+      <div class="stat"><span class="stat-val" style="color:var(--text-primary)">12</span><span class="stat-lbl">Total</span></div>
+      <div class="stat"><span class="stat-val" style="color:var(--green)">5</span><span class="stat-lbl">Done</span></div>
+      <div class="stat"><span class="stat-val" style="color:var(--accent)">1</span><span class="stat-lbl">Active</span></div>
+      <div class="stat"><span class="stat-val" style="color:var(--text-tertiary)">6</span><span class="stat-lbl">Queue</span></div>
+    </div>
+    <button class="btn-cancel">■ Cancel</button>
+  </div>
+</div>
+
+<!-- ═══════════ GLOBAL PIPELINE ═══════════ -->
+<div class="pipeline">
+
+  <!-- Start -->
+  <div class="stage">
+    <div class="stage-card completed">
+      <div class="stage-top">
+        <div class="stage-icon completed"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="stage-label completed">Start</span>
+        <span class="stage-dur">8s</span>
+      </div>
+      <div class="stage-body">SDK agent launched<br><span style="font-family:var(--mono);font-size:10px;color:var(--text-tertiary)">session a03d…6bba6</span></div>
+    </div>
+  </div>
+
+  <div class="pipe-arrow"><svg width="20" height="14" viewBox="0 0 20 14"><path d="M0 7h14M11 2.5L16 7l-5 4.5" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"/></svg></div>
+
+  <!-- Discover -->
+  <div class="stage">
+    <div class="stage-card completed">
+      <div class="stage-top">
+        <div class="stage-icon completed"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="stage-label completed">Discover</span>
+        <span class="stage-dur">12s</span>
+      </div>
+      <div class="stage-body">D365 query returned<br><strong>18</strong> active cases</div>
+    </div>
+  </div>
+
+  <div class="pipe-arrow"><svg width="20" height="14" viewBox="0 0 20 14"><path d="M0 7h14M11 2.5L16 7l-5 4.5" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"/></svg></div>
+
+  <!-- Filter -->
+  <div class="stage">
+    <div class="stage-card completed">
+      <div class="stage-top">
+        <div class="stage-icon completed"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="stage-label completed">Filter</span>
+        <span class="stage-dur">3s</span>
+      </div>
+      <div class="stage-body"><strong>12</strong> with changes<br>6 skipped (no activity)</div>
+    </div>
+  </div>
+
+  <div class="pipe-arrow"><svg width="20" height="14" viewBox="0 0 20 14"><path d="M0 7h14M11 2.5L16 7l-5 4.5" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"/></svg></div>
+
+  <!-- Warmup -->
+  <div class="stage">
+    <div class="stage-card completed">
+      <div class="stage-top">
+        <div class="stage-icon completed"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="stage-label completed">Warmup</span>
+        <span class="stage-dur">5s</span>
+      </div>
+      <div class="stage-body">Token daemon <strong>running</strong><br>All tokens fresh (TTL &gt; 30m)</div>
+    </div>
+  </div>
+
+  <div class="pipe-arrow"><svg width="20" height="14" viewBox="0 0 20 14"><path d="M0 7h14M11 2.5L16 7l-5 4.5" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.35"/></svg></div>
+
+  <!-- Process (active) -->
+  <div class="stage">
+    <div class="stage-card active">
+      <div class="stage-top">
+        <div class="stage-icon active"></div>
+        <span class="stage-label active">Process</span>
+        <span class="stage-dur active">4m 04s</span>
+      </div>
+      <div class="stage-body">
+        <strong style="color:var(--accent)">5</strong> / 12 cases done
+        <div class="mini-progress"><div class="mini-fill" style="width:42%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pipe-arrow"><svg width="20" height="14" viewBox="0 0 20 14"><path d="M0 7h14M11 2.5L16 7l-5 4.5" fill="none" stroke="var(--border-subtle)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+
+  <!-- Aggregate (pending) -->
+  <div class="stage">
+    <div class="stage-card pending">
+      <div class="stage-top">
+        <div class="stage-icon pending"></div>
+        <span class="stage-label pending">Aggregate</span>
+      </div>
+      <div class="stage-body" style="color:var(--text-tertiary)">Waiting…</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ CASES ═══════════ -->
+<div class="section-bar">
+  <span class="section-title">Cases</span>
+  <span class="section-sub">5 / 12 processed</span>
+  <div class="progress-track"><div class="progress-bar" style="width:42%"></div></div>
+</div>
+
+<!-- Case 1: Active -->
+<div class="case active">
+  <div class="case-head">
+    <span class="case-id active">2601290030000748</span>
+    <span class="case-badge active">
+      <svg class="spin" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M21 12a9 9 0 11-6.2-8.56"/></svg>
+      act
+    </span>
+    <div class="case-meta">
+      <span class="case-steps">2 / 4 steps</span>
+      <span class="case-time">2m 51s</span>
+    </div>
+  </div>
+  <div class="case-pipe">
+
+    <!-- Refresh ✅ -->
+    <div class="cs">
+      <div class="cs-head">
+        <div class="cs-icon done"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="cs-name done">Refresh</span>
+        <span class="cs-dur" style="color:var(--text-tertiary)">27s</span>
+      </div>
+      <div class="cs-body">
+        <div class="cs-row"><div class="cs-dot" style="background:var(--green)"></div><span class="cs-label">D365</span><span class="cs-val" style="color:var(--text-secondary)">+3 emails · +1 note</span><span class="cs-val" style="margin-left:4px">12s</span></div>
+        <div class="cs-row"><div class="cs-dot" style="background:var(--green)"></div><span class="cs-label">Teams</span><span class="cs-val" style="color:var(--text-secondary)">2 chats · 14 msgs</span><span class="cs-val" style="margin-left:4px">22s</span></div>
+        <div class="cs-row"><div class="cs-dot" style="background:var(--green)"></div><span class="cs-label">ICM</span><span class="cs-val" style="color:var(--text-secondary)">+5 discussions</span><span class="cs-val" style="margin-left:4px">11s</span></div>
+        <div class="cs-row"><div class="cs-dot" style="background:var(--green)"></div><span class="cs-label">OneNote</span><span class="cs-val" style="color:var(--text-secondary)">2 pages updated</span><span class="cs-val" style="margin-left:4px">13s</span></div>
+        <div class="cs-row"><div class="cs-dot" style="background:var(--green)"></div><span class="cs-label">Attach</span><span class="cs-val" style="color:var(--text-secondary)">+1 file</span><span class="cs-val" style="margin-left:4px">6s</span></div>
+      </div>
+    </div>
+
+    <div class="cs-connector"><div class="conn-line done"></div></div>
+
+    <!-- Assess ✅ -->
+    <div class="cs">
+      <div class="cs-head">
+        <div class="cs-icon done"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="cs-name done">Assess</span>
+        <span class="cs-dur" style="color:var(--text-tertiary)">1m 52s</span>
+      </div>
+      <div class="cs-body">
+        <div class="result-pill action">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+          needs-action
+        </div>
+        <div class="reasoning">Customer replied with new error logs. RDP connection fails with 0x204. Need to investigate NSG rules and NVA routing configuration.</div>
+      </div>
+    </div>
+
+    <div class="cs-connector"><div class="conn-line active"></div></div>
+
+    <!-- Act 🔵 -->
+    <div class="cs">
+      <div class="cs-head">
+        <div class="cs-icon run"></div>
+        <span class="cs-name run">Act</span>
+        <span class="cs-dur" style="color:var(--accent)">32s</span>
+      </div>
+      <div class="cs-body">
+        <div class="agent-chip active">
+          <div class="a-head">
+            <div class="cs-dot" style="background:var(--accent);width:7px;height:7px;animation:dot-pulse 2s infinite"></div>
+            <span class="a-name" style="color:var(--accent)">Troubleshooter</span>
+            <span class="cs-val" style="color:var(--accent)">32s</span>
+          </div>
+          <div class="a-desc">Querying NSG rules, checking NVA routing tables…</div>
+        </div>
+        <div class="agent-chip pending">
+          <div class="a-head"><span class="a-name" style="color:var(--text-tertiary)">Email Drafter</span></div>
+        </div>
+        <div class="agent-chip pending">
+          <div class="a-head"><span class="a-name" style="color:var(--text-tertiary)">Challenger</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cs-connector"><div class="conn-line wait"></div></div>
+
+    <!-- Summary ⚪ -->
+    <div class="cs">
+      <div class="cs-head">
+        <div class="cs-icon wait"></div>
+        <span class="cs-name wait">Summary</span>
+      </div>
+      <div class="cs-body" style="font-size:11px;color:var(--text-tertiary)">Waiting…</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Case 2: Completed (collapsed by default, click to expand) -->
+<div class="case" id="case-1034">
+  <div class="case-head" style="cursor:pointer" onclick="document.getElementById('case-1034-pipe').style.display = document.getElementById('case-1034-pipe').style.display === 'none' ? 'flex' : 'none'; this.querySelector('.chevron').style.transform = document.getElementById('case-1034-pipe').style.display === 'none' ? '' : 'rotate(90deg)'">
+    <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.2s;flex-shrink:0"><path d="M9 18l6-6-6-6"/></svg>
+    <span class="case-id done">2602130040001034</span>
+    <span class="case-badge done">
+      <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      done
+    </span>
+    <!-- Inline summary when collapsed -->
+    <span style="font-size:11px;color:var(--text-tertiary);margin-left:4px">
+      <span style="background:var(--bg-inset);padding:1px 6px;border-radius:4px;font-size:10px">no-change</span>
+      · act skipped · todo updated
+    </span>
+    <div class="case-meta">
+      <span class="case-steps">4 / 4 steps</span>
+      <span class="case-time">1m 59s</span>
+    </div>
+  </div>
+  <div class="case-pipe" id="case-1034-pipe" style="display:none">
+    <div class="cs">
+      <div class="cs-head">
+        <div class="cs-icon done"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="cs-name done">Refresh</span>
+        <span class="cs-dur" style="color:var(--text-tertiary)">29s</span>
+      </div>
+      <div class="cs-body">
+        <div class="cs-row"><div class="cs-dot" style="background:var(--green)"></div><span class="cs-label">D365</span><span class="cs-val" style="color:var(--text-secondary)">+1 email</span><span class="cs-val" style="margin-left:4px">14s</span></div>
+        <div class="cs-row"><div class="cs-dot" style="background:var(--green)"></div><span class="cs-label">Teams</span><span class="cs-val" style="color:var(--text-secondary)">1 chat · 3 msgs</span><span class="cs-val" style="margin-left:4px">24s</span></div>
+        <div class="cs-row"><div class="cs-dot" style="background:var(--green)"></div><span class="cs-label">ICM</span><span class="cs-val" style="color:var(--text-secondary)">no new</span></div>
+        <div class="cs-row"><div class="cs-dot" style="background:var(--green)"></div><span class="cs-label">OneNote</span><span class="cs-val" style="color:var(--text-secondary)">1 page updated</span><span class="cs-val" style="margin-left:4px">21s</span></div>
+        <div class="cs-row"><div class="cs-dot" style="background:var(--green)"></div><span class="cs-label">Attach</span><span class="cs-val" style="color:var(--text-secondary)">no new</span><span class="cs-val" style="margin-left:4px">19s</span></div>
+      </div>
+    </div>
+    <div class="cs-connector"><div class="conn-line done"></div></div>
+    <div class="cs">
+      <div class="cs-head">
+        <div class="cs-icon done"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="cs-name done">Assess</span>
+        <span class="cs-dur" style="color:var(--text-tertiary)">1m 29s</span>
+      </div>
+      <div class="cs-body">
+        <div class="result-pill nochange">no-change</div>
+        <div style="font-size:11px;color:var(--text-tertiary);margin-top:2px">Pending customer reply. No new activity since last contact.</div>
+      </div>
+    </div>
+    <div class="cs-connector"><div class="conn-line done"></div></div>
+    <div class="cs">
+      <div class="cs-head">
+        <div class="cs-icon skip">—</div>
+        <span class="cs-name skip">Act</span>
+      </div>
+      <div class="cs-body" style="font-size:11px;color:var(--text-tertiary);opacity:0.5">Skipped (no action needed)</div>
+    </div>
+    <div class="cs-connector"><div class="conn-line done"></div></div>
+    <div class="cs">
+      <div class="cs-head">
+        <div class="cs-icon done"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span class="cs-name done">Summary</span>
+        <span class="cs-dur" style="color:var(--text-tertiary)">&lt;1s</span>
+      </div>
+      <div class="cs-body">
+        <div class="summary-result">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+          Todo updated · status: pending-customer
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Queued -->
+<div class="case queued">
+  <div class="case-head">
+    <span class="case-id" style="color:var(--text-tertiary)">2603300030003153001</span>
+    <span style="font-size:11px;color:var(--text-tertiary);opacity:0.6">Queued</span>
+  </div>
+</div>
+<div class="case queued">
+  <div class="case-head">
+    <span class="case-id" style="color:var(--text-tertiary)">2604010030004100</span>
+    <span style="font-size:11px;color:var(--text-tertiary);opacity:0.6">Queued</span>
+  </div>
+</div>
+
+</body>
+</html>

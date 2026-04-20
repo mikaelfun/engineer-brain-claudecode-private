@@ -1,7 +1,7 @@
 # ENTRA-ID App Registration & Consent — Quick Reference
 
-**Entries**: 161 | **21V**: Partial (157/161)
-**Last updated**: 2026-04-07
+**Entries**: 164 | **21V**: Partial (157/161)
+**Last updated**: 2026-04-18
 **Keywords**: consent, app-registration, admin-consent, aadsts90094, aadsts90095, multi-tenant
 
 > This topic has a fusion guide with detailed troubleshooting flow
@@ -51,6 +51,9 @@
 | 38 📋 | User prompted for consent twice during sign-in. First consent, then login, then second consent wi... | Dynamic scopes: first call evaluates existing Graph delegations, second call ... | By-design. App can minimize by registering all permissions in App Registratio... | 🟢 8.5 | ADO Wiki |
 | 39 📋 | AADSTS65001: user/admin has not consented. Or AADSTS90008: app misconfigured, must require Sign i... | Application missing Microsoft Graph User.Read or openid delegated permission,... | 1. Add User.Read delegated permission. 2. Admin consent with Consent on behal... | 🟢 8.5 | ADO Wiki |
 | 40 📋 | AADSTS650059: Application not configured for use in tenant. SignInAudience AzureADMyOrg limiting ... | App changed from multi-tenant to single-tenant. External SPs cannot authentic... | Change signInAudience to AzureADMultipleOrgs in home tenant app registration.... | 🟢 8.5 | ADO Wiki |
+| NEW 📋 | This KB article describes a problem with the Azure portal under Azure Active Directory -> App Regist... | N/A | N/A | 🟡 6.5 | ContentIdea |
+| NEW 📋 | Users/Customers claim that they cannot see their Line-Of-Business applications on Azure AD's Conditi... | This can happen when the user has created the application as a native app, or do... | The resolution on this is to apply Conditional Access to the available APIs that... | 🟢 8.0 | ContentIdea |
+| NEW 📋 | Taking Examples : App name : <Application Name> with App ID : 2fddb45a-3701-403d-8063-69c4f8531838At... | Usually when this happens, the cause is that the role that currently exists in t... | 1) First, take a look in ASC using the AppId in the right tenant, to see if this... | 🟢 8.0 | ContentIdea |
 | ... | *121 more entries* | | | | |
 
 ## Quick Troubleshooting Path

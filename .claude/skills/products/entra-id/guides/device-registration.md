@@ -1,7 +1,7 @@
 # ENTRA-ID Device Registration & Join — Quick Reference
 
-**Entries**: 112 | **21V**: Partial (107/112)
-**Last updated**: 2026-04-07
+**Entries**: 118 | **21V**: Partial (107/112)
+**Last updated**: 2026-04-18
 **Keywords**: device-registration, hybrid-join, prt, kerberos, azure-ad-join, conditional-access
 
 > This topic has a fusion guide with detailed troubleshooting flow
@@ -51,6 +51,12 @@
 | 38 📋 | PRT acquisition fails with AADSTS50155: Device authentication failed on Azure AD Joined or Hybrid... | AAD is unable to authenticate the device to issue a PRT. The device object ma... | 1) Confirm device has not been deleted or disabled in Azure portal (Devices b... | 🟢 8.5 | ADO Wiki |
 | 39 📋 | PRT acquisition fails with AADSTS50126: Error validating credentials due to invalid username or p... | If tenant has Password Hash Sync enabled and device is Hybrid Joined, the new... | Wait for the AAD Connect sync cycle to complete (default 30 min) to acquire a... | 🟢 8.5 | ADO Wiki |
 | 40 📋 | LAPS password not updated to Azure AD. Event ID 10059 with error Local admin password solution is... | LAPS feature not enabled in Azure AD tenant Device settings (disabled by defa... | Navigate to Azure AD > Devices > Device settings, toggle Enable Azure AD Loca... | 🟢 8.5 | ADO Wiki |
+| NEW 📋 | HybridDevicesHealthChecker PowerShell script checks  the health status of hybrid Azure AD joined dev... | N/A | N/A | 🟡 6.5 | ContentIdea |
+| NEW 📋 | This PowerShell script automates resolving Device  Registration Service Connection Point (SCP) creat... | N/A | N/A | 🟡 6.5 | ContentIdea |
+| NEW 📋 | This article describes how to unjoin a Windows 10 computer that has been Microsoft Entra joined to a... | N/A | N/A | 🟡 6.5 | ContentIdea |
+| NEW 📋 | Are Hybrid Azure AD joined machines escrowing bitlocker recovery information to Azure AD or not | N/A | N/A | 🟡 6.5 | ContentIdea |
+| NEW 📋 | Hybrid Azure AD joined machines escrow bitlocker recovery information in Azure AD or not. | N/A | N/A | 🟡 6.5 | ContentIdea |
+| NEW 📋 | Azure AD joined machines take approximately 3 hours  (=2.77 hours) to boot up the logon screen. The ... | When you logon with AzureAD account synced with on-premises AD, the domain infor... | Change the Work Group name of the client to a different name than the Domain Net... | 🟢 8.0 | ContentIdea |
 | ... | *72 more entries* | | | | |
 
 ## Quick Troubleshooting Path

@@ -242,3 +242,18 @@
 - 1. KPS receives the Kerberos response from KDC.
 
 ---
+
+
+---
+
+## Incremental Scenarios (2026-04-18)
+
+## Scenario 26: Seamless SSO doesn't work as expected. Users get prompted for Password during sign in.
+> Source: contentidea-kb (entra-id-3664) | Applicability: unverified
+
+### Troubleshooting Steps
+1. **Confirm symptom**: Seamless SSO doesn't work as expected. Users get prompted for Password during sign in.
+2. **Root cause**: After we hit login.microsoftonline.com, Azure AD detects that the tenant is enabled for seamless SSO and redirects the user as below. User gets Unauthorized challenged from Autologon Endpoint.  User f...
+3. **Solution**: Searched for the correlationID in the response in Kusto to get further details.//Get all PerRequestTableIfx events associated with the CorrelationId cited in the client-side error to get a Summary vie...
+
+---

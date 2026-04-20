@@ -1,0 +1,30 @@
+{
+  "id": "onenote-vision_20260417",
+  "title": "OneNote Inline Images + Vision Analysis",
+  "type": "feature",
+  "status": "complete",
+  "issueId": "ISS-224",
+  "created": "2026-04-17T13:00:00+08:00",
+  "updated": "2026-04-17T14:15:00+08:00",
+  "phases": {
+    "total": 3,
+    "completed": 3
+  },
+  "tasks": {
+    "total": 14,
+    "completed": 14
+  },
+  "verification": {
+    "status": "passed",
+    "timestamp": "2026-04-17T15:15:00+08:00",
+    "regression": "pass",
+    "note": "3 pre-existing failures in restart-service.test.ts (unrelated)",
+    "criteria": [
+      { "id": "AC1", "description": "search-inline.py copies assets to onenote/assets/", "result": "pass", "evidence": "E2E test: 2 files copied with pageName prefix de-duplication" },
+      { "id": "AC2", "description": "Image paths correctly resolve after copy", "result": "pass", "evidence": "E2E test: markdown paths rewritten from ./assets/xxx.png to ./assets/{pageName}_xxx.png" },
+      { "id": "AC3", "description": "generate-digest.py vision API support", "result": "pass", "evidence": "E2E test: extract_images_from_page returns 3 blocks (max_images=3), image_url + base64 format, JSON serializable for OpenAI vision API" },
+      { "id": "AC4", "description": "WebUI OnenoteTab inline image rendering", "result": "skip", "evidence": "TypeScript compilation passed. No live case data with images available for E2E. Will validate on next onenote-case-search run." },
+      { "id": "AC5", "description": "Backend GET /api/cases/:id/onenote/assets/:filename", "result": "pass", "evidence": "Path traversal returns 400. TypeScript compile pass. Code review verified route logic + MIME type mapping + Cache-Control header." }
+    ]
+  }
+}

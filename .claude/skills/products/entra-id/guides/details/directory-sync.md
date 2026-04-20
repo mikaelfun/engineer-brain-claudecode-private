@@ -1,6 +1,6 @@
 # ENTRA-ID Directory Sync (Connect/Cloud Sync/PTA) — Detailed Troubleshooting Guide
 
-**Entries**: 223 | **Drafts fused**: 30 | **Kusto queries**: 1
+**Entries**: 227 | **Drafts fused**: 30 | **Kusto queries**: 1
 **Draft sources**: ado-wiki-a-entra-connect-admin-actions-auditing.md, ado-wiki-a-entra-connect-sync-on-premise-lab-setup.md, ado-wiki-a-failover-aad-connect-servers.md, ado-wiki-a-migration-connect-sync-to-cloud-sync.md, ado-wiki-b-aad-connect-architecture-troubleshooting.md, ado-wiki-b-migrating-phs-entra-connect-to-cloud-sync.md, ado-wiki-b-phs-troubleshooting-cloud-sync.md, ado-wiki-b-remove-unwanted-ad-domains-cloud-sync.md, ado-wiki-c-entra-connect-performance-issues.md, ado-wiki-c-rpc-errors-affecting-aadconnect.md
 **Kusto references**: aad-connect-sync.md
 **Generated**: 2026-04-07
@@ -923,3 +923,40 @@ bad Windows hotfix KB3139923 that can cause
 | 28 | Entra Connect upgrade fails at 'Connect to Microsoft Entra' step with MSAL er... | PKCS registry key exists under HKLM\SYSTEM\CurrentControl... | 1) Back up the registry; 2) Delete the 'PKCS' key at HKLM... | 🟢 8.5 | ADO Wiki |
 | 29 | Mobile phone attribute for an AAD user does not get updated via AD Connect sy... | When an admin uses MsOnline/AzureAD PowerShell or the use... | Use the BypassDirSyncOverrides feature (released Nov 2022... | 🟢 8.5 | ADO Wiki |
 | 30 | AD Connect Sync Service not running after swing migration or new installation... | Group Writeback was previously enabled on the source serv... | Enable the Group Writeback feature on the new/migrated En... | 🟢 8.5 | ADO Wiki |
+
+
+---
+
+## Incremental Update (2026-04-18) - +4 entries from contentidea-kb
+
+### AAD Connect is installed and configured in Hybrid identity scenario with a �Multiple forest, single sync server, user represented in only one director...
+**Score**: 🟢 8.0 | **Source**: ContentIdea KB | **ID**: entra-id-3648
+
+**Root Cause**: The on-premises ActiveDirectory attribute �Manager� is a reference attribute and contains the distinguished name of the user who is the user's manager. The manager's user object contains a directReports property that contains references to all user objects that have their manager properties set to t...
+
+**Solution**: As a workaround to bypass this scenario, you can try to leverage the Azure AD Connect synchronization engine to manipulate the metaverse objects and achieve your goal. Depending on the requirements of the customer, there are two possible scenarios:Option 1: Assign using a contact objectYou can creat...
+
+
+### Azure AADConnect service fails to start with an error 'Error 1069: The service did not start due to a logon failure'
+**Score**: 🟢 8.0 | **Source**: ContentIdea KB | **ID**: entra-id-3675
+
+**Root Cause**: This happens when the Adsync service cannot use the credentials associated with the VSA (Virtual Service Account) of 'NT SERVICE\ADSYNC'
+
+**Solution**: 1. Please confirm through ASC that the service account used for Azure AADConnect is 'NT Service\ADSYNC'.  2. Using Service.MSC please Navigate to ADSync service with the Display Name as 'Microsoft Azure AD Sync'3. Please click on the Logon tab and then please specify the logon account as 'NT Service...
+
+
+### You get a case or collab task for an Azure type application, such as CloudSync.  The customer gets an error in the wizard/application stating, "The sp...
+**Score**: 🟢 8.0 | **Source**: ContentIdea KB | **ID**: entra-id-3681
+
+**Root Cause**: Directory Services is not responsible for troubleshooting this error.  It is the application team's responsibility to not only troubleshoot this error, but to improve their logging to improve serviceability as well as allowing the customer to self-resolve the issue.  Requesting DS to gather an iDNA ...
+
+**Solution**: If collab owner, do not proceed without an ICM created by Azure application's team for troubleshooting this error.  ICMs are used for escalation, and should be used here to gain awareness of this scenario.   If case owner, do not allow Azure application's team to resolve the collaboration until they...
+
+
+### CloudSync or Azure application error: "The specified directory service attribute or value does not exist." Log shows ConfigSyncDirectoriesPage caught ...
+**Score**: 🟢 8.0 | **Source**: ContentIdea KB | **ID**: entra-id-3687
+
+**Root Cause**: Directory Services is not responsible for troubleshooting this error. It is the application team's responsibility to troubleshoot and improve their logging.
+
+**Solution**: If collab owner, do not proceed without an ICM created by Azure application's team. If case owner, do not allow Azure application's team to resolve collaboration until they provide the object and nature of failures. For CritSit, use LDAP client tracing to investigate.
+

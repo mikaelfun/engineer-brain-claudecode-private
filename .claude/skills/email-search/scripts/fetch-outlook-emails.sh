@@ -1,0 +1,676 @@
+#!/usr/bin/env bash
+# fetch-outlook-emails.sh — 通过 agency HTTP proxy 拉取 Outlook 邮件全文
+#
+# 用途：Case Review Master / product-learn auto enrich
+# 正常 casework/patrol 不使用此脚本（邮件走 D365 OData）。
+#
+# 用法: bash fetch-outlook-emails.sh \
+#   --case-number 2601290030000748 \
+#   --case-dir ./cases/active/2601290030000748 \
+#   --project-root . \
+#   [--port 9860] \
+#   [--top 20] \
+#   [--incremental]
+#
+# 输出 (stdout 最后一行):
+#   EMAIL_OK|emails=N|fetched=M|elapsed=Xs
+#   EMAIL_SKIP|reason=...
+#   EMAIL_FAIL|reason=...
+set -uo pipefail
+
+CASE_NUMBER="" CASE_DIR="" PROJECT_ROOT="." PORT="" TOP=20 INCREMENTAL="" OUTPUT_DIR="" DOWNLOAD_IMAGES="true"
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --case-number)    CASE_NUMBER="$2"; shift 2 ;;
+    --case-dir)       CASE_DIR="$2"; shift 2 ;;
+    --project-root)   PROJECT_ROOT="$2"; shift 2 ;;
+    --port)           PORT="$2"; shift 2 ;;
+    --top)            TOP="$2"; shift 2 ;;
+    --incremental)    INCREMENTAL="true"; shift ;;
+    --output-dir)     OUTPUT_DIR="$2"; shift 2 ;;
+    --download-images) DOWNLOAD_IMAGES="true"; shift ;;
+    --no-images)       DOWNLOAD_IMAGES=""; shift ;;
+    *) shift ;;
+  esac
+done
+
+[ -z "$CASE_NUMBER" ] || [ -z "$CASE_DIR" ] && { echo "EMAIL_FAIL|reason=missing args" >&2; exit 1; }
+
+# Default output-dir = case-dir (backward compat for /email-search single case)
+[ -z "$OUTPUT_DIR" ] && OUTPUT_DIR="$CASE_DIR"
+
+AGENCY_EXE="$APPDATA/agency/CurrentVersion/agency.exe"
+[ ! -f "$AGENCY_EXE" ] && { echo "EMAIL_FAIL|reason=agency.exe not found"; exit 1; }
+
+# Auto-assign port from case number hash
+if [ -z "$PORT" ]; then
+  PORT=$(python3 -c "print(9860 + hash('email$CASE_NUMBER') % 30)" 2>/dev/null || echo 9860)
+fi
+
+RUN_ID=$(python3 -c "import json; print(json.load(open('$CASE_DIR/.casework/state.json',encoding='utf-8')).get('runId',''))" 2>/dev/null || echo "")
+if [ -n "$RUN_ID" ]; then
+  LOG="$CASE_DIR/.casework/runs/$RUN_ID/agents/email-search.log"
+else
+  LOG="$CASE_DIR/.casework/runs/email-search.log"
+fi
+mkdir -p "$(dirname "$LOG")"
+T0=$(date +%s)
+
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] INLINE START | case=$CASE_NUMBER port=$PORT" >> "$LOG"
+
+# ═══════════════════════════════════════════
+# Start agency HTTP proxy
+# ═══════════════════════════════════════════
+
+"$AGENCY_EXE" mcp mail --transport http --port "$PORT" > /dev/null 2>&1 &
+APID=$!
+trap 'kill $APID 2>/dev/null' EXIT
+
+WAITED=0
+while [ $WAITED -lt 15 ]; do
+  curl -s -o /dev/null -w "%{http_code}" -X POST "http://localhost:$PORT/" \
+    -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" \
+    -d '{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"email-inline","version":"1.0"}}}' 2>/dev/null | grep -q "200" && break
+  sleep 1; WAITED=$((WAITED + 1))
+done
+[ $WAITED -ge 15 ] && { echo "[$(date '+%Y-%m-%d %H:%M:%S')] INLINE FAIL | proxy start timeout" >> "$LOG"; echo "EMAIL_FAIL|reason=proxy start timeout"; exit 1; }
+
+# ═══════════════════════════════════════════
+# Python: search → dedup → fetch bodies → generate md
+# ═══════════════════════════════════════════
+
+MCP_PORT="$PORT" MCP_CASE_NUMBER="$CASE_NUMBER" MCP_CASE_DIR="$CASE_DIR" \
+  MCP_PROJECT_ROOT="$PROJECT_ROOT" MCP_TOP="$TOP" MCP_INCREMENTAL="$INCREMENTAL" MCP_T0="$T0" \
+  MCP_OUTPUT_DIR="$OUTPUT_DIR" MCP_DOWNLOAD_IMAGES="$DOWNLOAD_IMAGES" \
+  python3 << 'PYEOF'
+import json, subprocess, time, os, re, html, sys
+
+port = os.environ['MCP_PORT']
+case_number = os.environ['MCP_CASE_NUMBER']
+case_dir = os.environ['MCP_CASE_DIR']
+output_dir = os.environ.get('MCP_OUTPUT_DIR', case_dir)
+project_root = os.environ['MCP_PROJECT_ROOT']
+top = int(os.environ.get('MCP_TOP', '20'))
+incremental = os.environ.get('MCP_INCREMENTAL', '') == 'true'
+t0 = int(os.environ['MCP_T0'])
+download_images = os.environ.get('MCP_DOWNLOAD_IMAGES', '') == 'true'
+
+os.makedirs(output_dir, exist_ok=True)
+log_path = os.path.join(output_dir, '.casework', 'logs', 'email-search.log')
+os.makedirs(os.path.dirname(log_path), exist_ok=True)
+tmp_dir = os.path.join(output_dir, '.tmp-email-search')
+os.makedirs(tmp_dir, exist_ok=True)
+
+def log(msg):
+    ts = time.strftime('%Y-%m-%d %H:%M:%S')
+    line = f'[{ts}] {msg}'
+    with open(log_path, 'a', encoding='utf-8') as f:
+        f.write(line + '\n')
+
+def mcp_call(call_id, tool, args):
+    body = json.dumps({
+        "jsonrpc": "2.0", "id": call_id,
+        "method": "tools/call",
+        "params": {"name": tool, "arguments": args}
+    })
+    try:
+        r = subprocess.run(
+            ['curl', '-s', '--max-time', '90', '-X', 'POST', f'http://localhost:{port}/',
+             '-H', 'Content-Type: application/json',
+             '-H', 'Accept: application/json, text/event-stream',
+             '-d', body],
+            capture_output=True, text=True, timeout=95
+        )
+        for line in r.stdout.split('\n'):
+            if line.startswith('data: {'):
+                return json.loads(line[6:])
+        if r.stdout.strip():
+            try:
+                return json.loads(r.stdout)
+            except:
+                pass
+    except Exception as e:
+        log(f'MCP call error: {e}')
+    return None
+
+def extract_messages(resp):
+    """Deep parse the nested rawResponse structure from mail MCP"""
+    if not resp:
+        return []
+    content = resp.get('result', {}).get('content', [])
+    all_msgs = []
+    for c in content:
+        text = c.get('text', '')
+        try:
+            parsed = json.loads(text)
+            raw_resp = parsed.get('rawResponse', '')
+            if raw_resp:
+                inner = json.loads(raw_resp)
+                all_msgs.extend(inner.get('value', []))
+            all_msgs.extend(parsed.get('messages', []))
+        except:
+            pass
+    return all_msgs
+
+def extract_single_message(resp):
+    """Parse GetMessage response — handles {message, data} wrapper"""
+    if not resp:
+        return None
+    content = resp.get('result', {}).get('content', [])
+    for c in content:
+        text = c.get('text', '')
+        try:
+            parsed = json.loads(text)
+            # Mail MCP returns {message: "...", data: {actual message}}
+            if 'data' in parsed and isinstance(parsed['data'], dict):
+                return parsed['data']
+            # Check rawResponse wrapping
+            raw_resp = parsed.get('rawResponse', '')
+            if raw_resp:
+                inner = json.loads(raw_resp)
+                if 'data' in inner and isinstance(inner['data'], dict):
+                    return inner['data']
+                return inner
+            # Direct message object (has 'body' key)
+            if 'body' in parsed or 'subject' in parsed:
+                return parsed
+        except:
+            pass
+    return None
+
+def clean_html(html_text):
+    """Strip HTML to plain text, preserving downloaded images as markdown."""
+    if not html_text:
+        return ''
+    # Replace cid: references with local image paths (if downloaded)
+    processed = html_text
+    for cid_ref, local_path in image_map.items():
+        processed = processed.replace(cid_ref, local_path)
+    # Convert downloaded images to markdown before stripping HTML
+    # <img src="assets/file.png" ...> → ![image](assets/file.png)
+    processed = re.sub(r'<img[^>]*src="(assets/[^"]*)"[^>]*alt="([^"]*)"[^>]*>', r'![\2](\1)', processed, flags=re.IGNORECASE)
+    processed = re.sub(r'<img[^>]*alt="([^"]*)"[^>]*src="(assets/[^"]*)"[^>]*>', r'![\1](\2)', processed, flags=re.IGNORECASE)
+    processed = re.sub(r'<img[^>]*src="(assets/[^"]*)"[^>]*>', r'![image](\1)', processed, flags=re.IGNORECASE)
+    # Strip remaining HTML
+    text = re.sub(r'<style[^>]*>.*?</style>', '', processed, flags=re.DOTALL|re.IGNORECASE)
+    text = re.sub(r'<script[^>]*>.*?</script>', '', text, flags=re.DOTALL|re.IGNORECASE)
+    text = re.sub(r'<br\s*/?>|</p>|</div>|</tr>|</li>', '\n', text, flags=re.IGNORECASE)
+    text = re.sub(r'</td>', '\t', text, flags=re.IGNORECASE)
+    text = re.sub(r'<[^>]+>', '', text)
+    text = html.unescape(text)
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    lines = [line.rstrip() for line in text.splitlines()]
+    return '\n'.join(lines).strip()
+
+# ═══════════════════════════════════════════
+# Step 1: Search emails
+# ═══════════════════════════════════════════
+
+# Determine incremental timestamp
+last_fetch_time = None
+office_md = os.path.join(output_dir, 'emails-office.md')
+if incremental and os.path.exists(office_md):
+    with open(office_md, encoding='utf-8') as f:
+        for line in f:
+            m = re.search(r'Generated:\s*(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})', line)
+            if m:
+                last_fetch_time = m.group(1).replace(' ', 'T') + 'Z'
+                break
+
+# Strategy: $search first (full-text, finds TrackingID# in subject/body),
+# then $filter fallback (structured, supports $orderby but unreliable for long numbers).
+# $search does NOT support $orderby or $filter combo, so we sort client-side.
+if last_fetch_time:
+    # Incremental: use $filter with date (can't combine $search + $filter)
+    qp = f"?$filter=receivedDateTime ge {last_fetch_time} and contains(subject,'{case_number}')&$orderby=receivedDateTime desc&$top={top}&$select=id,subject,from,toRecipients,ccRecipients,receivedDateTime,sentDateTime,bodyPreview"
+    log(f'STEP 1 START | Incremental search since {last_fetch_time}')
+    resp = mcp_call(10, "SearchMessagesQueryParameters", {"queryParameters": qp})
+    msgs = extract_messages(resp)
+else:
+    # Full: use $search (more reliable for case numbers in TrackingID# format)
+    qp_search = f'?$search="{case_number}"&$top={top}'
+    log(f'STEP 1 START | Full $search for case {case_number}')
+    resp = mcp_call(10, "SearchMessagesQueryParameters", {"queryParameters": qp_search})
+    msgs = extract_messages(resp)
+    if not msgs:
+        # Fallback to $filter
+        log('STEP 1 FALLBACK | $search returned 0, trying $filter')
+        qp_filter = f"?$filter=contains(subject,'{case_number}')&$orderby=receivedDateTime desc&$top={top}&$select=id,subject,from,toRecipients,ccRecipients,receivedDateTime,sentDateTime,bodyPreview"
+        resp = mcp_call(11, "SearchMessagesQueryParameters", {"queryParameters": qp_filter})
+        msgs = extract_messages(resp)
+
+if not msgs:
+    # Final retry
+    log('STEP 1 RETRY | Still no results, retrying $search...')
+    time.sleep(1)
+    resp = mcp_call(12, "SearchMessagesQueryParameters", {"queryParameters": f'?$search="{case_number}"&$top={top}'})
+    msgs = extract_messages(resp)
+
+total_before = len(msgs)
+
+# Dedup by subject + sentDateTime
+seen = set()
+unique = []
+for msg in msgs:
+    key = f"{msg.get('subject','')}|{msg.get('sentDateTime','')}"
+    if key not in seen:
+        seen.add(key)
+        unique.append(msg)
+
+# Filter auto-replies
+auto_patterns = ['自动回复', '自动答复', 'Automatic reply', 'Out of Office', 'AutoReply']
+filtered = []
+auto_count = 0
+for msg in unique:
+    subj = msg.get('subject', '') or ''
+    is_auto = any(p in subj for p in auto_patterns)
+    if not is_auto:
+        preview = msg.get('bodyPreview', '') or ''
+        if len(preview) < 200 and not re.match(r'^(Re:|RE:|回复|答复|FW:|Fw:|\[外部\])', subj):
+            is_auto = True
+    if is_auto:
+        auto_count += 1
+    else:
+        filtered.append(msg)
+
+log(f'STEP 1 OK    | Found {total_before} emails, dedup to {len(unique)}, filtered to {len(filtered)} (skipped {auto_count} auto-replies)')
+
+if not filtered:
+    # Generate empty emails-office.md
+    ts = time.strftime('%Y-%m-%d %H:%M:%S')
+    content = f'# Emails (Outlook) — Case {case_number}\n\n> Generated: {ts} | Total: 0 emails | Source: Agency Mail HTTP\n\n---\n\n_No emails found._\n'
+    with open(office_md, 'w', encoding='utf-8') as f:
+        f.write(content)
+    elapsed = int(time.time()) - t0
+    log(f'STEP 3 OK    | Empty emails-office.md (0 emails)')
+    print(f'EMAIL_OK|emails=0|fetched=0|elapsed={elapsed}s')
+    sys.exit(0)
+
+# ═══════════════════════════════════════════
+# Step 2: Extract body from latest email(s) only
+# ═══════════════════════════════════════════
+
+log(f'STEP 2 START | Extracting body from latest email')
+
+# Sort by receivedDateTime asc
+sorted_msgs = sorted(filtered, key=lambda m: m.get('receivedDateTime', ''))
+
+# Email replies nest the full conversation history.
+# The latest email's body contains ALL previous exchanges.
+# Only expand the single latest email — it has the complete thread.
+latest = sorted_msgs[-1] if sorted_msgs else None
+latest_id = latest.get('id', '') if latest else ''
+
+expand_ids = {latest_id} if latest_id else set()
+
+# Extract bodies for expanded emails
+fetched_bodies = {}
+for msg in sorted_msgs:
+    msg_id = msg.get('id', '')
+    if msg_id not in expand_ids:
+        continue
+    body_obj = msg.get('body', {})
+    body_content = body_obj.get('content', '') if isinstance(body_obj, dict) else ''
+    if body_content and len(body_content) > 300:
+        suffix = msg_id[-10:] if len(msg_id) >= 10 else msg_id
+        body_file = os.path.join(tmp_dir, f'body-{suffix}.html')
+        with open(body_file, 'w', encoding='utf-8') as f:
+            f.write(body_content)
+        fetched_bodies[msg_id] = body_file
+
+# Fallback: if body not in search results, try GetMessage
+for msg_id in expand_ids:
+    if msg_id and msg_id not in fetched_bodies:
+        resp = mcp_call(20, "GetMessage", {"id": msg_id, "preferHtml": True})
+        parsed = extract_single_message(resp)
+        if parsed and parsed.get('body', {}).get('content'):
+            suffix = msg_id[-10:] if len(msg_id) >= 10 else msg_id
+            body_file = os.path.join(tmp_dir, f'body-{suffix}.html')
+            with open(body_file, 'w', encoding='utf-8') as f:
+                f.write(parsed['body']['content'])
+            fetched_bodies[msg_id] = body_file
+
+log(f'STEP 2 OK    | {len(fetched_bodies)} bodies extracted (expanding {len(expand_ids)} of {len(sorted_msgs)} emails)')
+
+# ═══════════════════════════════════════════
+# Step 2.5: Download inline images (--download-images)
+# ═══════════════════════════════════════════
+
+import base64 as _b64
+
+# cid → local relative path mapping (for HTML replacement in Step 3)
+image_map = {}  # cid_ref → 'assets/filename.png'
+img_dl_count = 0
+img_skip_count = 0
+
+if download_images and expand_ids:
+    log('STEP 2.5 START | Downloading inline images')
+    assets_dir = os.path.join(output_dir, 'assets')
+    os.makedirs(assets_dir, exist_ok=True)
+
+    # Signature image filter: parse HTML img tags for dimensions
+    # Skip images where BOTH width < 200 AND height < 200 (logos, icons, spacers)
+    # Also skip by alt text patterns (logo, banner, icon, spacer, etc.)
+    _SIG_ALT_PATTERNS = re.compile(
+        r'logo|banner|icon|spacer|separator|divider|linkedin|twitter|facebook|'
+        r'instagram|youtube|social|badge|award|certification|微软|microsoft\s+logo',
+        re.IGNORECASE)
+
+    def is_signature_image(img_tag):
+        """Return True if this img tag looks like a signature/decoration image."""
+        w_m = re.search(r'width="(\d+)"', img_tag)
+        h_m = re.search(r'height="(\d+)"', img_tag)
+        w = int(w_m.group(1)) if w_m else 9999
+        h = int(h_m.group(1)) if h_m else 9999
+        # Small images are almost certainly decorative
+        if w < 200 and h < 200:
+            return True
+        # Check alt text for signature keywords
+        alt_m = re.search(r'alt="([^"]*)"', img_tag, re.IGNORECASE)
+        if alt_m and _SIG_ALT_PATTERNS.search(alt_m.group(1)):
+            return True
+        return False
+
+    # Collect cid references from expanded emails' HTML bodies
+    # Map: cid_ref (e.g. "image002.png@01DCCE4B.987C6330") → img_tag
+    cid_to_download = {}  # cid_ref → {'skip_reason': None or str}
+    for msg_id in expand_ids:
+        body_file = fetched_bodies.get(msg_id)
+        if not body_file or not os.path.exists(body_file):
+            continue
+        with open(body_file, encoding='utf-8') as f:
+            body_html = f.read()
+        for m in re.finditer(r'<img[^>]*src="cid:([^"]+)"[^>]*>', body_html, re.IGNORECASE):
+            cid_ref = m.group(1)
+            img_tag = m.group(0)
+            if cid_ref in cid_to_download:
+                continue  # same cid referenced multiple times
+            if is_signature_image(img_tag):
+                cid_to_download[cid_ref] = {'skip': True, 'reason': 'signature/small'}
+            else:
+                cid_to_download[cid_ref] = {'skip': False}
+
+    content_cids = {c: v for c, v in cid_to_download.items() if not v.get('skip')}
+    skip_cids = {c: v for c, v in cid_to_download.items() if v.get('skip')}
+    log(f'STEP 2.5 FILTER | {len(content_cids)} content images, {len(skip_cids)} signature/small skipped')
+
+    # Helper: parse GetAttachments response into a list of attachment dicts
+    def parse_att_response(att_resp):
+        att_list = []
+        for c in att_resp.get('result', {}).get('content', []):
+            text = c.get('text', '')
+            try:
+                parsed = json.loads(text)
+                if isinstance(parsed, list):
+                    att_list.extend(parsed)
+                elif isinstance(parsed, dict):
+                    if 'value' in parsed:
+                        att_list.extend(parsed['value'])
+                    elif 'data' in parsed and isinstance(parsed['data'], list):
+                        att_list.extend(parsed['data'])
+                    elif 'id' in parsed:
+                        att_list.append(parsed)
+            except:
+                pass
+        return att_list
+
+    # Helper: try to match & download attachments from a message against unresolved CIDs
+    # Uses _dl_counter[0] instead of nonlocal (module-level scope)
+    _dl_counter = [0]
+    def try_download_from_msg(msg_id, unresolved_cids):
+        if not msg_id or not unresolved_cids:
+            return
+        att_resp = mcp_call(30, "GetAttachments", {"messageId": msg_id})
+        if not att_resp:
+            log(f'STEP 2.5 WARN | GetAttachments failed for msg {msg_id[-10:]}')
+            return
+        att_list = parse_att_response(att_resp)
+        if not att_list:
+            return
+        # Match attachments to unresolved cid refs
+        for att in att_list:
+            if not att.get('isInline'):
+                continue
+            att_cid = att.get('contentId', '')
+            att_name = att.get('name', 'image.png')
+            att_id = att.get('id', '')
+            if not att_id:
+                continue
+            # Match strategy:
+            # 1. contentId direct match (if API provides it)
+            # 2. Filename match: CID "image002.png@01DCCE4B.987C6330" → name "image002.png"
+            matched_cid = None
+            for cid_ref in list(unresolved_cids):
+                # Direct contentId match
+                if att_cid and (att_cid in cid_ref or cid_ref in att_cid):
+                    matched_cid = cid_ref
+                    break
+                # Filename match: extract part before '@' from cid_ref
+                cid_filename = cid_ref.split('@')[0] if '@' in cid_ref else cid_ref
+                if cid_filename and att_name and cid_filename.lower() == att_name.lower():
+                    matched_cid = cid_ref
+                    break
+            if not matched_cid:
+                continue
+            # DownloadAttachment via MCP
+            dl_resp = mcp_call(31, "DownloadAttachment", {"messageId": msg_id, "attachmentId": att_id})
+            if not dl_resp:
+                continue
+            # Extract base64 content
+            b64_content = None
+            for c in dl_resp.get('result', {}).get('content', []):
+                text = c.get('text', '')
+                try:
+                    parsed = json.loads(text)
+                    b64_content = parsed.get('contentBytes') or parsed.get('data', {}).get('contentBytes', '')
+                    if not b64_content and isinstance(parsed.get('data'), str):
+                        b64_content = parsed['data']
+                except:
+                    # Maybe raw base64
+                    if len(text) > 100 and not text.startswith('{'):
+                        b64_content = text
+            if not b64_content:
+                continue
+            # Save to assets/
+            safe_name = re.sub(r'[^a-zA-Z0-9._-]', '_', att_name)
+            local_path = os.path.join(assets_dir, safe_name)
+            try:
+                img_bytes = _b64.b64decode(b64_content)
+                with open(local_path, 'wb') as f:
+                    f.write(img_bytes)
+                image_map[f'cid:{matched_cid}'] = f'assets/{safe_name}'
+                _dl_counter[0] += 1
+                unresolved_cids.discard(matched_cid)
+                log(f'STEP 2.5 DL   | {safe_name} (cid:{matched_cid[:30]}...) from msg {msg_id[-10:]}')
+            except Exception as e:
+                log(f'STEP 2.5 FAIL | {safe_name}: {e}')
+
+    # Phase 1: Fetch attachments from expanded emails (latest email)
+    unresolved = set(content_cids.keys())
+    checked_ids = set()
+    for msg_id in expand_ids:
+        try_download_from_msg(msg_id, unresolved)
+        checked_ids.add(msg_id)
+
+    # Phase 2: If unresolved CIDs remain, search other emails in the thread
+    # Start from earliest (images are typically attached to the original email)
+    if unresolved:
+        log(f'STEP 2.5 EXPAND | {len(unresolved)} unresolved CIDs, searching {len(sorted_msgs)} thread emails (earliest first)')
+        for msg in sorted_msgs:
+            if not unresolved:
+                break
+            msg_id = msg.get('id', '')
+            if msg_id in checked_ids:
+                continue
+            try_download_from_msg(msg_id, unresolved)
+            checked_ids.add(msg_id)
+
+    if unresolved:
+        log(f'STEP 2.5 WARN | {len(unresolved)} CIDs still unresolved: {list(unresolved)[:5]}')
+    img_dl_count = _dl_counter[0]
+    log(f'STEP 2.5 OK    | downloaded={img_dl_count} skipped_sig={len(skip_cids)} checked_msgs={len(checked_ids)}')
+elif download_images:
+    log('STEP 2.5 SKIP | no expanded emails')
+
+# ═══════════════════════════════════════════
+# Step 3: Generate emails-office.md
+# ═══════════════════════════════════════════
+
+log(f'STEP 3 START | Generating emails-office.md')
+
+def format_msg_meta(msg):
+    """Extract metadata fields from a message"""
+    from_addr = ''
+    from_name = ''
+    if isinstance(msg.get('from'), dict):
+        ea = msg['from'].get('emailAddress', {})
+        from_addr = ea.get('address', '')
+        from_name = ea.get('name', '')
+    to_list = []
+    for r in (msg.get('toRecipients') or []):
+        ea = r.get('emailAddress', {})
+        to_list.append(f"{ea.get('name','')} <{ea.get('address','')}>")
+    cc_list = []
+    for r in (msg.get('ccRecipients') or []):
+        ea = r.get('emailAddress', {})
+        cc_list.append(f"{ea.get('name','')} <{ea.get('address','')}>")
+    dt_str = msg.get('receivedDateTime', '')[:19].replace('T', ' ')
+    direction = 'Sent' if '@microsoft.com' in from_addr else 'Received'
+    icon = '\U0001f4e4' if direction == 'Sent' else '\U0001f4e5'
+    return from_addr, from_name, to_list, cc_list, dt_str, direction, icon
+
+ts = time.strftime('%Y-%m-%d %H:%M:%S')
+lines = [
+    f'# Emails (Outlook) \u2014 Case {case_number}',
+    '',
+    f'> Generated: {ts} | Total: {len(sorted_msgs)} emails | Source: Agency Mail HTTP',
+    '',
+    '## Timeline',
+    '',
+    '| # | Time | Direction | From | Subject |',
+    '|---|------|-----------|------|---------|',
+]
+
+# Timeline index (all emails, one line each)
+for i, msg in enumerate(sorted_msgs):
+    from_addr, from_name, _, _, dt_str, direction, icon = format_msg_meta(msg)
+    subj = (msg.get('subject', '') or '')[:60]
+    expanded = ' **\u2190 full body below**' if msg.get('id', '') in expand_ids else ''
+    display_name = from_name.split()[0] if from_name else from_addr.split('@')[0]
+    lines.append(f'| {i+1} | {dt_str} | {icon} {direction} | {display_name} | {subj}{expanded} |')
+
+lines.append('')
+lines.append('---')
+
+# Full body for expanded emails only
+for msg in sorted_msgs:
+    msg_id = msg.get('id', '')
+    if msg_id not in expand_ids:
+        continue
+
+    from_addr, from_name, to_list, cc_list, dt_str, direction, icon = format_msg_meta(msg)
+    subj = msg.get('subject', '') or '(no subject)'
+
+    lines.append('')
+    lines.append(f'## {icon} {direction} | {dt_str}')
+    lines.append(f'**Subject:** {subj}')
+    lines.append(f'**From:** {from_name} <{from_addr}>')
+    lines.append(f'**To:** {"; ".join(to_list)}')
+    if cc_list:
+        lines.append(f'**Cc:** {"; ".join(cc_list)}')
+    lines.append('')
+
+    body_file = fetched_bodies.get(msg_id)
+    if body_file and os.path.exists(body_file):
+        with open(body_file, encoding='utf-8') as f:
+            html_body = f.read()
+        cleaned = clean_html(html_body)
+        lines.append(cleaned if cleaned else (msg.get('bodyPreview', '') or ''))
+    else:
+        lines.append(msg.get('bodyPreview', '') or '')
+
+    lines.append('')
+    lines.append('---')
+
+# Write .md output
+with open(office_md, 'w', encoding='utf-8') as f:
+    f.write('\n'.join(lines))
+
+# Write .json output (structured, machine-readable)
+office_json = os.path.join(output_dir, 'emails-office.json')
+
+def build_email_record(msg, is_expanded=False):
+    """Build structured record for one email"""
+    from_addr = ''
+    from_name = ''
+    if isinstance(msg.get('from'), dict):
+        ea = msg['from'].get('emailAddress', {})
+        from_addr = ea.get('address', '')
+        from_name = ea.get('name', '')
+    to_addrs = []
+    for r in (msg.get('toRecipients') or []):
+        ea = r.get('emailAddress', {})
+        to_addrs.append({'name': ea.get('name',''), 'address': ea.get('address','')})
+    cc_addrs = []
+    for r in (msg.get('ccRecipients') or []):
+        ea = r.get('emailAddress', {})
+        cc_addrs.append({'name': ea.get('name',''), 'address': ea.get('address','')})
+    direction = 'sent' if '@microsoft.com' in from_addr else 'received'
+
+    record = {
+        'id': msg.get('id', ''),
+        'conversationId': msg.get('conversationId', ''),
+        'subject': msg.get('subject', ''),
+        'from': {'name': from_name, 'address': from_addr},
+        'to': to_addrs,
+        'cc': cc_addrs,
+        'direction': direction,
+        'receivedDateTime': msg.get('receivedDateTime', ''),
+        'sentDateTime': msg.get('sentDateTime', ''),
+        'importance': msg.get('importance', 'normal'),
+        'hasAttachments': msg.get('hasAttachments', False),
+        'isRead': msg.get('isRead', True),
+        'bodyPreview': msg.get('bodyPreview', '')[:255],
+    }
+
+    if is_expanded:
+        msg_id = msg.get('id', '')
+        body_file = fetched_bodies.get(msg_id)
+        if body_file and os.path.exists(body_file):
+            with open(body_file, encoding='utf-8') as bf:
+                record['bodyHtml'] = bf.read()
+            record['bodyText'] = clean_html(record['bodyHtml'])
+        else:
+            record['bodyHtml'] = ''
+            record['bodyText'] = msg.get('bodyPreview', '')
+
+    return record
+
+json_output = {
+    '_version': 1,
+    '_generatedAt': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
+    '_source': 'agency-mail-http',
+    'caseNumber': case_number,
+    'totalEmails': len(sorted_msgs),
+    'expandedCount': len(expand_ids),
+    'emails': [
+        build_email_record(msg, is_expanded=(msg.get('id','') in expand_ids))
+        for msg in sorted_msgs
+    ]
+}
+
+with open(office_json, 'w', encoding='utf-8') as f:
+    json.dump(json_output, f, indent=2, ensure_ascii=False)
+
+# Cleanup temp dir
+import shutil
+shutil.rmtree(tmp_dir, ignore_errors=True)
+
+md_size = os.path.getsize(office_md) / 1024
+json_size = os.path.getsize(office_json) / 1024
+elapsed = int(time.time()) - t0
+log(f'STEP 3 OK    | emails-office.md ({md_size:.1f}KB) + .json ({json_size:.1f}KB) | {len(sorted_msgs)} emails, {len(expand_ids)} expanded')
+
+print(f'EMAIL_OK|emails={len(sorted_msgs)}|expanded={len(expand_ids)}|elapsed={elapsed}s')
+PYEOF

@@ -1,7 +1,7 @@
 # ENTRA-ID On-Premises AD/LDAP — Quick Reference
 
-**Entries**: 183 | **21V**: Partial (176/183)
-**Last updated**: 2026-04-07
+**Entries**: 187 | **21V**: Partial (176/183)
+**Last updated**: 2026-04-18
 **Keywords**: ldap, dfsr, ad-replication, domain-controller, dc-promotion, domain-join
 
 > This topic has a fusion guide with detailed troubleshooting flow
@@ -51,6 +51,10 @@
 | 38 📋 | LSASS.exe high CPU on domain controller caused by excessive SAM EnumUsersInDomain calls originati... | Third-party product CheckPoint firewall with Identity Awareness feature enabl... | Identify source IP from Xperf call stacks (OSF_SCALL frame shows Client Endpo... | 🟢 8.5 | ADO Wiki |
 | 39 📋 | Domain Controller fails to start due to hardware failure, BugCheck (BSOD), ransomware attack, or ... | Physical hardware damage, OS-level crash (BugCheck/BSOD), ransomware encrypti... | Option A (preferred, when multiple DCs exist and no unique data/roles on fail... | 🟢 8.5 | ADO Wiki |
 | 40 📋 | Active Directory Administrative Center (ADAC) cannot display all deleted objects in large enterpr... | ADAC uses client-side filtering which cannot handle displaying more than appr... | Right-click the Deleted Objects container > select 'Search under this node' >... | 🟢 8.5 | ADO Wiki |
+| NEW 📋 | Customer is unable to install Azure AD Password Protection DC Agent, after uninstalling all previous... | Uninstalling Azure AD Password Protection DC Agent' - '1.1.10.3' did not clear t... | The issue was resolved after cleaning the registry key of Azure AD Password Prot... | 🟢 8.0 | ContentIdea |
+| NEW 📋 | While joining a Linux VM in a step we need to run kinit <User's UPN> this step may throw the below e... | kinit: Cannot find KDC for realm '<Domain FQDN>' while getting initial credentia... | 1) kinit: Cannot find KDC for realm '<Domain FQDN>' while getting initial creden... | 🟢 8.0 | ContentIdea |
+| NEW 📋 | Attempts to update Active Directory (AD) attribute (such as personalPager, otherPager, or extensionA... | Inspection reveals that the affected user object has a very large number of entr... | Perform a safe cleanup of the userCertificate attribute values for the impacted ... | 🟢 8.0 | ContentIdea |
+| NEW 📋 | Attempts to update Active Directory (AD) attribute (such as personalPager, otherPager, or extensionA... | The affected user object has a very large number of entries in the userCertifica... | Perform a safe cleanup of the userCertificate attribute values for the impacted ... | 🟢 8.0 | ContentIdea |
 | ... | *143 more entries* | | | | |
 
 ## Quick Troubleshooting Path

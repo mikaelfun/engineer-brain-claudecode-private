@@ -1,6 +1,6 @@
 # ENTRA-ID SAML SSO — Detailed Troubleshooting Guide
 
-**Entries**: 136 | **Drafts fused**: 14 | **Kusto queries**: 0
+**Entries**: 137 | **Drafts fused**: 14 | **Kusto queries**: 0
 **Draft sources**: ado-wiki-a-get-all-saml-apps-powershell.md, ado-wiki-a-saml-request-troubleshooting-flow.md, ado-wiki-a-saml-request-validation.md, ado-wiki-a-saml-screwdriver-sp-initiated-lab.md, ado-wiki-c-debug-saml-protocol.md, ado-wiki-c-lab-saml-tool-idp-sp-initiated-flows.md, ado-wiki-c-saml-tool-idp-sp-flow-testing.md, ado-wiki-c-using-claims-x-ray-saas-saml-testing.md, ado-wiki-d-generate-saml-request.md, ado-wiki-e-develop-saml2-app.md
 **Generated**: 2026-04-07
 
@@ -652,3 +652,16 @@
 | 28 | SAML Token Encryption certificate upload fails when configuring token encrypt... | Wrong certificate format used for upload. The certificate... | Export/obtain the certificate as an X.509 .cer file (publ... | 🟢 8.5 | ADO Wiki |
 | 29 | SAML token encryption configured but tokens are not being encrypted, or appli... | TokenEncryptionKeyID attribute in the application manifes... | Verify tokenEncryptionKeyId in the app manifest matches t... | 🟢 8.5 | ADO Wiki |
 | 30 | SAML SSO fails — token is sent encrypted by Azure AD but the application cann... | Key mismatch: the public key certificate uploaded to Azur... | 1) Use Fiddler to capture the SAML response and verify th... | 🟢 8.5 | ADO Wiki |
+
+
+---
+
+## Incremental Update (2026-04-18) - +1 entries from contentidea-kb
+
+### As per article https://docs.microsoft.com/en-us/azure/active-directory/develop/active-directory-saml-claims-customization#adding-application-specific-...
+**Score**: 🟢 8.0 | **Source**: ContentIdea KB | **ID**: entra-id-3659
+
+**Root Cause**: &quot;Source Attribute&quot; field would not let you type anything static. The alphabets will keep on deleting as you type them.
+
+**Solution**: Type &quot;Contoso1234&quot; in Notepad instead of typing it directly under &quot;Source Attribute&quot; tab and copy / paste it there. Click on &quot;Contoso 1234&quot; as highlighted and you will not see it after selecting but you can click on SAVE and you are good to go.
+

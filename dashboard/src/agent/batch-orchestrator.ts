@@ -8,6 +8,7 @@ import { query, type Options } from '@anthropic-ai/claude-agent-sdk'
 import { loadAgentDefinitions } from './case-session-manager.js'
 import { config } from '../config.js'
 import { sseManager } from '../watcher/sse-manager.js'
+import { sdkRegistry } from './sdk-session-registry.js'
 
 export interface BatchTask {
   caseNumber: string
@@ -57,24 +58,31 @@ After all agents complete, report a brief summary of results (which cases succee
   })
 
   // Single SDK query — Claude orchestrates parallel agents
-  for await (const _msg of query({
-    prompt: batchPrompt,
-    options: {
-      cwd: config.projectRoot,
-      settingSources: ['user'] as Options['settingSources'],
-      agents: loadAgentDefinitions(),
-      systemPrompt: {
-        type: 'preset' as const,
-        preset: 'claude_code' as const,
+  const registryHandle = sdkRegistry.register({ source: 'batch', context: taskName, intent: `Batch ${taskName} for ${tasks.length} cases` })
+  try {
+    for await (const _msg of query({
+      prompt: batchPrompt,
+      options: {
+        cwd: config.projectRoot,
+        settingSources: ['user'] as Options['settingSources'],
+        agents: loadAgentDefinitions(),
+        systemPrompt: {
+          type: 'preset' as const,
+          preset: 'claude_code' as const,
+        },
+        tools: ['Bash', 'Read', 'Write', 'Agent', 'Glob', 'Grep'],
+        allowedTools: ['Bash', 'Read', 'Write', 'Agent', 'Glob', 'Grep'],
+        permissionMode: 'bypassPermissions',
+        allowDangerouslySkipPermissions: true,
+        maxTurns: Math.max(tasks.length * 2 + 10, 30),
       },
-      tools: ['Bash', 'Read', 'Write', 'Agent', 'Glob', 'Grep'],
-      allowedTools: ['Bash', 'Read', 'Write', 'Agent', 'Glob', 'Grep'],
-      permissionMode: 'bypassPermissions',
-      allowDangerouslySkipPermissions: true,
-      maxTurns: Math.max(tasks.length * 2 + 10, 30),
-    },
-  })) {
-    // Consume messages — side effects are file writes by subagents
+    })) {
+      registryHandle.onMessage(_msg)
+    }
+    registryHandle.complete()
+  } catch (err) {
+    registryHandle.fail((err as Error)?.message || 'unknown error')
+    throw err
   }
 
   // SSE broadcast completion

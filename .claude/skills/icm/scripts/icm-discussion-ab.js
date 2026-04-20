@@ -123,11 +123,15 @@ function saveToken(token) {
   fs.writeFileSync(TOKEN_CACHE, JSON.stringify({ token, timestamp: Date.now()/1000 }));
 }
 
-// --- 验证 token 有效性（轻量 HEAD-like 请求）---
+// --- 验证 token 有效性（轻量 HEAD-like 请求，带重试）---
 async function validateToken(token) {
   const url = `${API_BASE}/incidents/${TOKEN_PROBE_ID}/getdescriptionentries?$top=1&$skip=0`;
   const r = await fetchJson(url, token);
-  return r.status === 200;
+  if (r.status === 200) return true;
+  // Retry once after 2s — ICM API may have transient 5xx/429
+  await new Promise(r => setTimeout(r, 2000));
+  const r2 = await fetchJson(url, token);
+  return r2.status === 200;
 }
 
 // --- SSO 流程（agent-browser）---
@@ -248,7 +252,22 @@ async function acquireToken() {
       return cached;
     }
     log('Cached token expired, refreshing...');
-    try { fs.unlinkSync(TOKEN_CACHE); } catch {}
+    // NOTE: Do NOT delete the cache file here. In parallel patrol runs,
+    // multiple ICM scripts share this cache. Deleting it causes a race
+    // condition where other scripts lose their valid token. The cache
+    // will be overwritten by saveToken() when a fresh token is acquired.
+  }
+
+  // Level 1.5: Token daemon cache — daemon may have refreshed it since our getCachedToken()
+  // This is a second chance: if daemon refreshed the token while we were validating,
+  // we can pick it up without going through SSO.
+  const retryToken = getCachedToken();
+  if (retryToken && retryToken !== cached) {
+    log('Token daemon refreshed cache, retrying...');
+    if (await validateToken(retryToken)) {
+      log('Daemon-refreshed token valid');
+      return retryToken;
+    }
   }
 
   // Level 2: agent-browser SSO → CDP 拦截

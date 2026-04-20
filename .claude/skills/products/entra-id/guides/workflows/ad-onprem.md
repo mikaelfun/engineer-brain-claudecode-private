@@ -509,3 +509,48 @@
 - 5. If needed, capture Process Monitor log on the client to identify the process.
 
 ---
+
+
+---
+
+## Incremental Scenarios (2026-04-18)
+
+## Scenario 50: Customer is unable to install Azure AD Password Protection DC Agent, after uninstalling all previous versions, because o...
+> Source: contentidea-kb (entra-id-3650) | Applicability: unverified
+
+### Troubleshooting Steps
+1. **Confirm symptom**: Customer is unable to install Azure AD Password Protection DC Agent, after uninstalling all previous versions, because of the following error:CheckForNonUpgradeableApps - a nonupgradeable app was foun...
+2. **Root cause**: Uninstalling Azure AD Password Protection DC Agent' - '1.1.10.3' did not clear the registry key, found in SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall
+3. **Solution**: The issue was resolved after cleaning the registry key of Azure AD Password Protection DC Agent' - '1.1.10.3', found in SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall
+
+---
+
+## Scenario 51: While joining a Linux VM in a step we need to run kinit <User's UPN> this step may throw the below errors,kinit: Cannot ...
+> Source: contentidea-kb (entra-id-3655) | Applicability: unverified
+
+### Troubleshooting Steps
+1. **Confirm symptom**: While joining a Linux VM in a step we need to run kinit <User's UPN> this step may throw the below errors,kinit: Cannot find KDC for realm '<Domain FQDN>' while getting initial credentialskinit: Resou...
+2. **Root cause**: kinit: Cannot find KDC for realm '<Domain FQDN>' while getting initial credentialsNo definition for the domain FQDN in krb5.conf file.kinit: Resource temporarily unavailable while getting initial cred...
+3. **Solution**: 1) kinit: Cannot find KDC for realm '<Domain FQDN>' while getting initial credentials  This      error occurs if there is no definition in the /etc/krb5.conf file for the      kdc of domain you are tr...
+
+---
+
+## Scenario 52: Attempts to update Active Directory (AD) attribute (such as personalPager, otherPager, or extensionAttribute5) user acco...
+> Source: contentidea-kb (entra-id-3683) | Applicability: unverified
+
+### Troubleshooting Steps
+1. **Confirm symptom**: Attempts to update Active Directory (AD) attribute (such as personalPager, otherPager, or extensionAttribute5) user account fail in both ADSI Edit and PowerShell.  On ADSI Edit or PowerShell the error...
+2. **Root cause**: Inspection reveals that the affected user object has a very large number of entries in the userCertificate attribute, while a typical user has none or very few. This is causing directory limits or con...
+3. **Solution**: Perform a safe cleanup of the userCertificate attribute values for the impacted user. After cleanup, re-attempt the attribute updates. Recommended Steps:   Assess Current Values      Use PowerShell to...
+
+---
+
+## Scenario 53: Attempts to update Active Directory (AD) attribute (such as personalPager, otherPager, or extensionAttribute5) user acco...
+> Source: contentidea-kb (entra-id-3688) | Applicability: unverified
+
+### Troubleshooting Steps
+1. **Confirm symptom**: Attempts to update Active Directory (AD) attribute (such as personalPager, otherPager, or extensionAttribute5) user account fail in both ADSI Edit and PowerShell. Error code: 0x2024 The administrative...
+2. **Root cause**: The affected user object has a very large number of entries in the userCertificate attribute. This is causing directory limits or constraints to be hit for that object. This is a data/volume issue on ...
+3. **Solution**: Perform a safe cleanup of the userCertificate attribute values for the impacted user. Steps: 1) Assess Current Values with Get-ADUser. 2) Back Up/Export Existing Values. 3) Clean Up Redundant/Stale Ce...
+
+---

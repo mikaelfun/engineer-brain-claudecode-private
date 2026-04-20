@@ -1,0 +1,248 @@
+<!-- Patrol Page UI Redesign v3 — High-Density Information-Rich -->
+<h2>Patrol Case Row — 高密度信息版</h2>
+<p class="subtitle">充分利用空间，每个步骤的子任务、结果、推理逻辑全部可见</p>
+
+<div class="mockup" style="margin-top:16px">
+  <div class="mockup-header">Case 行 — Active（正在处理中）</div>
+  <div class="mockup-body" style="padding:12px;background:#f8fafc">
+
+    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,0.04)">
+      <!-- Case header bar -->
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #f1f5f9;background:#f8fafc">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#2563eb;font-weight:700">2601290030000748</span>
+        <span style="font-size:10px;background:#eff6ff;color:#2563eb;padding:2px 8px;border-radius:10px;border:1px solid #bfdbfe;font-weight:600">● act</span>
+        <div style="flex:1"></div>
+        <!-- Mini progress bar -->
+        <div style="width:80px;height:4px;background:#e2e8f0;border-radius:2px;overflow:hidden">
+          <div style="width:60%;height:100%;background:linear-gradient(90deg,#16a34a 66%,#2563eb 100%);border-radius:2px"></div>
+        </div>
+        <span style="font-family:monospace;font-size:11px;color:#94a3b8">2/4</span>
+        <span style="font-family:monospace;font-size:11px;color:#94a3b8">2m 51s</span>
+      </div>
+
+      <!-- 4-column step grid -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;min-height:0">
+
+        <!-- Column 1: data-refresh ✅ -->
+        <div style="padding:10px 12px;border-right:1px solid #f1f5f9;background:#fafffe">
+          <div style="display:flex;align-items:center;gap:5px;margin-bottom:8px">
+            <div style="width:14px;height:14px;border-radius:50%;background:#16a34a;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="color:white;font-size:8px">✓</span></div>
+            <span style="font-size:10px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:0.5px">Refresh</span>
+            <div style="flex:1"></div>
+            <span style="font-size:9px;font-family:monospace;color:#94a3b8">27s</span>
+          </div>
+          <!-- Sub-tasks with individual status -->
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <div style="display:flex;align-items:center;gap:5px">
+              <div style="width:6px;height:6px;border-radius:50%;background:#16a34a;flex-shrink:0"></div>
+              <span style="font-size:10px;color:#475569;flex:1">D365</span>
+              <span style="font-size:9px;font-family:monospace;color:#94a3b8">12s</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:5px">
+              <div style="width:6px;height:6px;border-radius:50%;background:#16a34a;flex-shrink:0"></div>
+              <span style="font-size:10px;color:#475569;flex:1">Teams</span>
+              <span style="font-size:9px;font-family:monospace;color:#94a3b8">22s</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:5px">
+              <div style="width:6px;height:6px;border-radius:50%;background:#16a34a;flex-shrink:0"></div>
+              <span style="font-size:10px;color:#475569;flex:1">ICM</span>
+              <span style="font-size:9px;font-family:monospace;color:#94a3b8">11s</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:5px">
+              <div style="width:6px;height:6px;border-radius:50%;background:#16a34a;flex-shrink:0"></div>
+              <span style="font-size:10px;color:#475569;flex:1">OneNote</span>
+              <span style="font-size:9px;font-family:monospace;color:#94a3b8">13s</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:5px">
+              <div style="width:6px;height:6px;border-radius:50%;background:#16a34a;flex-shrink:0"></div>
+              <span style="font-size:10px;color:#475569;flex:1">Attachments</span>
+              <span style="font-size:9px;font-family:monospace;color:#94a3b8">6s</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Column 2: assess ✅ with result -->
+        <div style="padding:10px 12px;border-right:1px solid #f1f5f9;background:#fafffe">
+          <div style="display:flex;align-items:center;gap:5px;margin-bottom:8px">
+            <div style="width:14px;height:14px;border-radius:50%;background:#16a34a;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="color:white;font-size:8px">✓</span></div>
+            <span style="font-size:10px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:0.5px">Assess</span>
+            <div style="flex:1"></div>
+            <span style="font-size:9px;font-family:monospace;color:#94a3b8">1m 52s</span>
+          </div>
+          <!-- Result badge -->
+          <div style="margin-bottom:6px">
+            <span style="font-size:10px;background:#fef3c7;color:#b45309;padding:2px 8px;border-radius:4px;font-weight:600;border:1px solid #fde68a">needs-action</span>
+          </div>
+          <!-- Reasoning summary -->
+          <div style="font-size:10px;color:#64748b;line-height:1.5;border-left:2px solid #e2e8f0;padding-left:8px;margin-top:6px">
+            Customer replied with new error logs. RDP connection fails with 0x204. Need to check NSG rules and NVA config.
+          </div>
+        </div>
+
+        <!-- Column 3: act 🔵 active -->
+        <div style="padding:10px 12px;border-right:1px solid #f1f5f9;background:#f8faff">
+          <div style="display:flex;align-items:center;gap:5px;margin-bottom:8px">
+            <div style="width:16px;height:16px;border-radius:50%;border:2px solid #2563eb;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <div style="width:6px;height:6px;border-radius:50%;background:#2563eb"></div>
+            </div>
+            <span style="font-size:10px;font-weight:700;color:#2563eb;text-transform:uppercase;letter-spacing:0.5px">Act</span>
+            <div style="flex:1"></div>
+            <span style="font-size:9px;font-family:monospace;color:#2563eb">32s</span>
+          </div>
+          <!-- Action chain -->
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <!-- Troubleshooter: active -->
+            <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:5px;padding:5px 8px">
+              <div style="display:flex;align-items:center;gap:4px">
+                <span style="width:5px;height:5px;border-radius:50%;background:#2563eb;flex-shrink:0"></span>
+                <span style="font-size:10px;color:#2563eb;font-weight:600;flex:1">Troubleshooter</span>
+                <span style="font-size:9px;font-family:monospace;color:#2563eb">32s</span>
+              </div>
+              <div style="font-size:9px;color:#64748b;margin-top:3px;line-height:1.4">Checking NSG rules, NVA routing tables...</div>
+            </div>
+            <!-- Email: pending -->
+            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:5px;padding:5px 8px;opacity:0.5">
+              <div style="display:flex;align-items:center;gap:4px">
+                <div style="width:5px;height:5px;border-radius:50%;border:1px solid #94a3b8;flex-shrink:0"></div>
+                <span style="font-size:10px;color:#94a3b8">Email Drafter</span>
+              </div>
+            </div>
+            <!-- Challenger: pending -->
+            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:5px;padding:5px 8px;opacity:0.5">
+              <div style="display:flex;align-items:center;gap:4px">
+                <div style="width:5px;height:5px;border-radius:50%;border:1px solid #94a3b8;flex-shrink:0"></div>
+                <span style="font-size:10px;color:#94a3b8">Challenger</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Column 4: summarize ⚪ pending -->
+        <div style="padding:10px 12px;opacity:0.4">
+          <div style="display:flex;align-items:center;gap:5px;margin-bottom:8px">
+            <div style="width:14px;height:14px;border-radius:50%;border:2px solid #cbd5e1;flex-shrink:0"></div>
+            <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px">Summary</span>
+          </div>
+          <div style="font-size:10px;color:#94a3b8">Waiting...</div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Completed case -->
+<div class="mockup" style="margin-top:16px">
+  <div class="mockup-header">Case 行 — Completed（已完成，act skipped）</div>
+  <div class="mockup-body" style="padding:12px;background:#f8fafc">
+
+    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,0.04)">
+      <!-- Case header bar -->
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #f1f5f9;background:#f8fafc">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#475569;font-weight:600">2602130040001034</span>
+        <span style="font-size:10px;background:#f0fdf4;color:#16a34a;padding:2px 8px;border-radius:10px;border:1px solid #bbf7d0;font-weight:600">✓ done</span>
+        <div style="flex:1"></div>
+        <div style="width:80px;height:4px;background:#e2e8f0;border-radius:2px;overflow:hidden">
+          <div style="width:100%;height:100%;background:#16a34a;border-radius:2px"></div>
+        </div>
+        <span style="font-family:monospace;font-size:11px;color:#94a3b8">4/4</span>
+        <span style="font-family:monospace;font-size:11px;color:#94a3b8">1m 59s</span>
+      </div>
+
+      <!-- 4-column step grid — compact for completed -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;min-height:0">
+
+        <!-- Refresh: done -->
+        <div style="padding:8px 12px;border-right:1px solid #f1f5f9">
+          <div style="display:flex;align-items:center;gap:5px;margin-bottom:5px">
+            <div style="width:12px;height:12px;border-radius:50%;background:#16a34a;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="color:white;font-size:7px">✓</span></div>
+            <span style="font-size:10px;font-weight:600;color:#16a34a;text-transform:uppercase">Refresh</span>
+            <div style="flex:1"></div>
+            <span style="font-size:9px;font-family:monospace;color:#94a3b8">29s</span>
+          </div>
+          <div style="display:flex;gap:3px;flex-wrap:wrap">
+            <span style="font-size:9px;color:#64748b;background:#f0fdf4;padding:0px 5px;border-radius:2px">d365</span>
+            <span style="font-size:9px;color:#64748b;background:#f0fdf4;padding:0px 5px;border-radius:2px">teams</span>
+            <span style="font-size:9px;color:#64748b;background:#f0fdf4;padding:0px 5px;border-radius:2px">icm</span>
+            <span style="font-size:9px;color:#64748b;background:#f0fdf4;padding:0px 5px;border-radius:2px">onenote</span>
+            <span style="font-size:9px;color:#64748b;background:#f0fdf4;padding:0px 5px;border-radius:2px">attach</span>
+          </div>
+        </div>
+
+        <!-- Assess: done with result -->
+        <div style="padding:8px 12px;border-right:1px solid #f1f5f9">
+          <div style="display:flex;align-items:center;gap:5px;margin-bottom:5px">
+            <div style="width:12px;height:12px;border-radius:50%;background:#16a34a;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="color:white;font-size:7px">✓</span></div>
+            <span style="font-size:10px;font-weight:600;color:#16a34a;text-transform:uppercase">Assess</span>
+            <div style="flex:1"></div>
+            <span style="font-size:9px;font-family:monospace;color:#94a3b8">1m 29s</span>
+          </div>
+          <span style="font-size:9px;background:#f1f5f9;color:#64748b;padding:1px 6px;border-radius:3px">no-change</span>
+          <div style="font-size:9px;color:#94a3b8;margin-top:3px;line-height:1.4">Pending customer reply. No new activity since last contact.</div>
+        </div>
+
+        <!-- Act: skipped -->
+        <div style="padding:8px 12px;border-right:1px solid #f1f5f9;opacity:0.4">
+          <div style="display:flex;align-items:center;gap:5px">
+            <div style="width:12px;height:12px;border-radius:50%;background:#cbd5e1;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="color:white;font-size:8px">—</span></div>
+            <span style="font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase">Act</span>
+          </div>
+          <div style="font-size:9px;color:#94a3b8;margin-top:4px">Skipped (no action needed)</div>
+        </div>
+
+        <!-- Summary: done -->
+        <div style="padding:8px 12px">
+          <div style="display:flex;align-items:center;gap:5px;margin-bottom:5px">
+            <div style="width:12px;height:12px;border-radius:50%;background:#16a34a;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="color:white;font-size:7px">✓</span></div>
+            <span style="font-size:10px;font-weight:600;color:#16a34a;text-transform:uppercase">Summary</span>
+            <div style="flex:1"></div>
+            <span style="font-size:9px;font-family:monospace;color:#94a3b8">&lt;1s</span>
+          </div>
+          <div style="font-size:9px;color:#64748b;line-height:1.4">Todo updated. Status: pending-customer.</div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Queued case -->
+<div class="mockup" style="margin-top:16px">
+  <div class="mockup-header">Case 行 — Queued（排队中）</div>
+  <div class="mockup-body" style="padding:12px;background:#f8fafc">
+
+    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;opacity:0.45">
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 14px">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#94a3b8;font-weight:600">2603310040003200</span>
+        <span style="font-size:10px;color:#cbd5e1;font-weight:500">Queued</span>
+        <div style="flex:1"></div>
+        <div style="width:80px;height:4px;background:#e2e8f0;border-radius:2px"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="section" style="margin-top:24px">
+  <h3>设计亮点</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px">
+    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:12px">
+      <div style="font-size:11px;font-weight:700;color:#2563eb;margin-bottom:6px">📐 4 列等宽网格</div>
+      <div style="font-size:11px;color:#6b7280;line-height:1.6">每步占一列，空间利用率最高。完成的行自动收紧高度，active 行展开详情。</div>
+    </div>
+    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:12px">
+      <div style="font-size:11px;font-weight:700;color:#2563eb;margin-bottom:6px">🧠 Assess 结果 + 推理</div>
+      <div style="font-size:11px;color:#6b7280;line-height:1.6">状态标签（needs-action/no-change）+ 1-2 行推理摘要，一眼看出为什么要/不要 act。</div>
+    </div>
+    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:12px">
+      <div style="font-size:11px;font-weight:700;color:#2563eb;margin-bottom:6px">🤖 Act 动作卡片</div>
+      <div style="font-size:11px;color:#6b7280;line-height:1.6">每个 agent 独立卡片，active 的显示当前操作摘要，完成的显示结果。</div>
+    </div>
+    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:12px">
+      <div style="font-size:11px;font-weight:700;color:#2563eb;margin-bottom:6px">📊 Header 进度条</div>
+      <div style="font-size:11px;color:#6b7280;line-height:1.6">case 号 + 状态标签 + mini 进度条 + 步骤计数 + 总耗时，信息密度最大化。</div>
+    </div>
+  </div>
+</div>

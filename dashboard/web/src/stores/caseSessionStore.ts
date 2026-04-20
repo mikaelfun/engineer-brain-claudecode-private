@@ -19,7 +19,7 @@ import { create } from 'zustand'
 import type { StepQuestion } from '../components/session/StepQuestionForm'
 
 export interface CaseSessionMessage {
-  type: 'thinking' | 'tool-call' | 'tool-result' | 'completed' | 'failed' | 'user' | 'system' | 'queued'
+  type: 'thinking' | 'response' | 'tool-call' | 'tool-result' | 'completed' | 'failed' | 'user' | 'system' | 'queued'
   content: string
   toolName?: string
   step?: string

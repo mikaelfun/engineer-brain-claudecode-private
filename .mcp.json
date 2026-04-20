@@ -13,6 +13,7 @@
       "args": ["/c", "%APPDATA%\\agency\\CurrentVersion\\agency.exe", "mcp", "teams"]
     },
     "kusto": {
+      "disabled": true,
       "command": "cmd",
       "args": ["/c", "set AZURE_CONFIG_DIR=%USERPROFILE%\\.azure-profiles\\cme-fangkun&&%APPDATA%\\agency\\CurrentVersion\\agency.exe", "mcp", "kusto", "--service-uri", "https://mcakshuba.chinaeast2.kusto.chinacloudapi.cn", "--database", "AKSprod"]
     },

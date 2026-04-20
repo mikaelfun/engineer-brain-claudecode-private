@@ -436,3 +436,17 @@ cluster('msodsmooncake.chinanorth2.kusto.chinacloudapi.cn').database('MSODS').If
 ```
 
 ---
+
+---
+
+## Incremental Scenarios (2026-04-18)
+
+## Scenario 27: Global admin/Owner of Subscription Unable to access Azure Resources under PIM Unable to access Azure Resources under PIM...
+> Source: contentidea-kb (entra-id-3651) | Applicability: unverified
+
+### Troubleshooting Steps
+1. **Confirm symptom**: Global admin/Owner of Subscription Unable to access Azure Resources under PIM Unable to access Azure Resources under PIM even though the user is a Global admin and the owner of the subscription, Getti...
+2. **Root cause**: For PIM service to be able to access Azure resources, MS-PIM SPN should always have a User Access Administrator role assigned on a subscription.In this case the User Access Administrator role for PIM ...
+3. **Solution**: Assign a User Access Administrator RBAC role to PIM SPN (MS � PIM) at a subscription level and that should allow PIM service to access the Azure resources.Note: The role can be assigned on a managemen...
+
+---

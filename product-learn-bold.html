@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product Learn — Skill Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── Reset ── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* ── Viewport CSS (mandatory) ── */
+html, body { height: 100%; overflow-x: hidden; }
+html { scroll-snap-type: y mandatory; scroll-behavior: smooth; }
+.slide { width: 100vw; height: 100vh; height: 100dvh; overflow: hidden; scroll-snap-align: start; display: flex; flex-direction: column; position: relative; }
+.slide-content { flex: 1; display: flex; flex-direction: column; justify-content: center; max-height: 100%; overflow: hidden; padding: var(--slide-padding); }
+:root {
+  --title-size: clamp(1.5rem, 5vw, 4rem);
+  --h2-size: clamp(1.25rem, 3.5vw, 2.5rem);
+  --h3-size: clamp(1rem, 2.5vw, 1.75rem);
+  --body-size: clamp(0.75rem, 1.5vw, 1.125rem);
+  --small-size: clamp(0.65rem, 1vw, 0.875rem);
+  --slide-padding: clamp(1rem, 4vw, 4rem);
+  --content-gap: clamp(0.5rem, 2vw, 2rem);
+  --element-gap: clamp(0.25rem, 1vw, 1rem);
+  --orange: #FF5722;
+  --cyan: #00BCD4;
+  --amber: #FFC107;
+  --teal: #009688;
+  --bg: #1a1a1a;
+  --text: #ffffff;
+  --text-dark: #1a1a1a;
+}
+.card, .container, .content-box { max-width: min(90vw, 1000px); max-height: min(80vh, 700px); }
+.feature-list, .bullet-list { gap: clamp(0.4rem, 1vh, 1rem); }
+.feature-list li, .bullet-list li { font-size: var(--body-size); line-height: 1.4; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: clamp(0.5rem, 1.5vw, 1rem); }
+img, .image-container { max-width: 100%; max-height: min(50vh, 400px); object-fit: contain; }
+@media (max-height: 700px) { :root { --slide-padding: clamp(0.75rem, 3vw, 2rem); --content-gap: clamp(0.4rem, 1.5vw, 1rem); --title-size: clamp(1.25rem, 4.5vw, 2.5rem); --h2-size: clamp(1rem, 3vw, 1.75rem); } }
+@media (max-height: 600px) { :root { --slide-padding: clamp(0.5rem, 2.5vw, 1.5rem); --content-gap: clamp(0.3rem, 1vw, 0.75rem); --title-size: clamp(1.1rem, 4vw, 2rem); --body-size: clamp(0.7rem, 1.2vw, 0.95rem); } .nav-dots, .keyboard-hint, .decorative { display: none; } }
+@media (max-height: 500px) { :root { --slide-padding: clamp(0.4rem, 2vw, 1rem); --title-size: clamp(1rem, 3.5vw, 1.5rem); --h2-size: clamp(0.9rem, 2.5vw, 1.25rem); --body-size: clamp(0.65rem, 1vw, 0.85rem); } }
+@media (max-width: 600px) { :root { --title-size: clamp(1.25rem, 7vw, 2.5rem); } .grid { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.2s !important; } html { scroll-behavior: auto; } }
+
+/* ── Base ── */
+body {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-weight: 400;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}
+h1, h2, h3, .bold-title, .section-num {
+  font-family: 'Archivo Black', 'Impact', sans-serif;
+  font-weight: 900;
+}
+
+/* ── Slide bg ── */
+.slide {
+  background: linear-gradient(160deg, #1a1a1a 0%, #222 50%, #1a1a1a 100%);
+}
+
+/* ── Section number ── */
+.section-num {
+  position: absolute;
+  top: clamp(0.75rem, 2.5vw, 2rem);
+  left: clamp(1rem, 3vw, 3rem);
+  font-size: clamp(2rem, 6vw, 5rem);
+  opacity: 0.08;
+  letter-spacing: -0.05em;
+  z-index: 1;
+  user-select: none;
+}
+
+/* ── Accent cards ── */
+.accent-card {
+  border-radius: clamp(8px, 1.5vw, 16px);
+  padding: clamp(0.75rem, 2vw, 1.5rem) clamp(1rem, 2.5vw, 2rem);
+  color: var(--text-dark);
+  font-weight: 600;
+}
+.accent-card.orange { background: var(--orange); }
+.accent-card.cyan   { background: var(--cyan); }
+.accent-card.amber  { background: var(--amber); }
+.accent-card.teal   { background: var(--teal); }
+
+.accent-card-outline {
+  border-radius: clamp(8px, 1.5vw, 16px);
+  padding: clamp(0.6rem, 1.5vw, 1.2rem) clamp(0.8rem, 2vw, 1.5rem);
+  border: 2px solid;
+  background: rgba(255,255,255,0.03);
+}
+
+/* ── Breadcrumb nav ── */
+.breadcrumb {
+  position: fixed;
+  top: clamp(0.5rem, 1.5vw, 1.25rem);
+  right: clamp(1rem, 3vw, 3rem);
+  display: flex;
+  gap: clamp(4px, 0.5vw, 8px);
+  z-index: 100;
+}
+.breadcrumb .dot {
+  width: clamp(6px, 0.8vw, 10px);
+  height: clamp(6px, 0.8vw, 10px);
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.breadcrumb .dot.active {
+  background: var(--orange);
+  transform: scale(1.3);
+}
+.breadcrumb .dot:hover {
+  background: rgba(255,255,255,0.6);
+}
+
+/* ── Counter ── */
+.slide-counter {
+  position: fixed;
+  bottom: clamp(0.5rem, 1.5vw, 1.25rem);
+  right: clamp(1rem, 3vw, 3rem);
+  font-family: 'Archivo Black', sans-serif;
+  font-size: var(--small-size);
+  opacity: 0.4;
+  z-index: 100;
+  letter-spacing: 0.1em;
+}
+
+/* ── Keyboard hint ── */
+.keyboard-hint {
+  position: fixed;
+  bottom: clamp(0.5rem, 1.5vw, 1.25rem);
+  left: clamp(1rem, 3vw, 3rem);
+  font-size: var(--small-size);
+  opacity: 0.25;
+  z-index: 100;
+}
+
+/* ── Animations ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.anim { opacity: 0; }
+.anim.visible {
+  animation: fadeUp 0.6s ease forwards;
+}
+.anim.d1 { animation-delay: 0.1s; }
+.anim.d2 { animation-delay: 0.2s; }
+.anim.d3 { animation-delay: 0.3s; }
+.anim.d4 { animation-delay: 0.4s; }
+.anim.d5 { animation-delay: 0.5s; }
+.anim.d6 { animation-delay: 0.6s; }
+.anim.d7 { animation-delay: 0.7s; }
+
+/* ── Utility ── */
+.gap-sm { gap: var(--element-gap); }
+.gap-md { gap: var(--content-gap); }
+.flex-col { display: flex; flex-direction: column; }
+.flex-row { display: flex; flex-direction: row; flex-wrap: wrap; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+.text-center { text-align: center; }
+.w-full { width: 100%; }
+
+/* ── Slide-specific ── */
+
+/* Slide 1 Title */
+.title-huge {
+  font-size: clamp(2.5rem, 8vw, 7rem);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+}
+.title-sub {
+  font-size: var(--h2-size);
+  opacity: 0.7;
+  letter-spacing: 0.05em;
+}
+.title-stat {
+  font-size: var(--body-size);
+  opacity: 0.5;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+/* Slide 2 Product grid */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
+  gap: clamp(6px, 1vw, 12px);
+}
+.product-cell {
+  background: rgba(255,255,255,0.06);
+  border-radius: clamp(4px, 0.8vw, 10px);
+  padding: clamp(6px, 1vw, 14px) clamp(8px, 1.2vw, 16px);
+  text-align: center;
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: transform 0.2s;
+}
+.product-cell:hover { transform: scale(1.04); }
+.product-cell .name {
+  font-family: 'Archivo Black', sans-serif;
+  font-size: var(--small-size);
+  opacity: 0.7;
+}
+.product-cell .count {
+  font-family: 'Archivo Black', sans-serif;
+  font-size: clamp(1rem, 2.5vw, 1.75rem);
+}
+.big-number {
+  font-family: 'Archivo Black', sans-serif;
+  font-size: clamp(2rem, 6vw, 4.5rem);
+  letter-spacing: -0.03em;
+}
+
+/* Slide 3 Flow steps */
+.flow-step {
+  display: flex;
+  align-items: flex-start;
+  gap: clamp(8px, 1.5vw, 16px);
+  padding: clamp(4px, 0.6vw, 8px) 0;
+}
+.flow-num {
+  font-family: 'Archivo Black', sans-serif;
+  font-size: clamp(1rem, 2vw, 1.5rem);
+  min-width: clamp(1.5rem, 3vw, 2.5rem);
+  opacity: 0.4;
+}
+.flow-label {
+  font-weight: 500;
+  font-size: var(--body-size);
+}
+.flow-label code {
+  background: rgba(255,255,255,0.1);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  font-family: 'Space Grotesk', monospace;
+}
+.flow-label .desc {
+  opacity: 0.5;
+  font-size: var(--small-size);
+}
+
+/* Slide 4 Source bars */
+.source-bar {
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 1.5vw, 16px);
+  padding: clamp(4px, 0.8vw, 10px) 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.source-bar:last-child { border-bottom: none; }
+.source-weight {
+  font-family: 'Archivo Black', sans-serif;
+  font-size: clamp(1.2rem, 2.5vw, 2rem);
+  min-width: clamp(2rem, 4vw, 3.5rem);
+  text-align: center;
+}
+.source-name { font-weight: 600; font-size: var(--body-size); flex: 1; }
+.source-pct {
+  font-family: 'Archivo Black', sans-serif;
+  font-size: var(--body-size);
+  opacity: 0.6;
+}
+
+/* Slide 5 Pipeline */
+.pipeline-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: clamp(2px, 0.5vw, 6px);
+  justify-content: center;
+}
+.pipe-node {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: clamp(6px, 1vw, 12px);
+  padding: clamp(6px, 1vw, 12px) clamp(8px, 1.2vw, 16px);
+  text-align: center;
+  min-width: clamp(60px, 8vw, 100px);
+  transition: transform 0.2s, background 0.2s;
+}
+.pipe-node:hover { transform: translateY(-2px); background: rgba(255,255,255,0.12); }
+.pipe-node .phase-id {
+  font-family: 'Archivo Black', sans-serif;
+  font-size: clamp(0.7rem, 1.2vw, 1rem);
+  opacity: 0.5;
+}
+.pipe-node .phase-label {
+  font-size: var(--small-size);
+  font-weight: 600;
+}
+.pipe-arrow {
+  font-size: clamp(0.8rem, 1.5vw, 1.2rem);
+  opacity: 0.3;
+}
+.pipe-node.highlight {
+  border-color: var(--amber);
+  background: rgba(255,193,7,0.12);
+}
+
+/* Slide 6 Key points */
+.kp-item {
+  display: flex;
+  align-items: flex-start;
+  gap: clamp(6px, 1vw, 12px);
+  font-size: var(--body-size);
+  font-weight: 500;
+}
+.kp-bullet {
+  width: clamp(6px, 0.8vw, 10px);
+  height: clamp(6px, 0.8vw, 10px);
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 0.5em;
+}
+
+/* Slide 7 Tiers */
+.tier-card {
+  border-radius: clamp(8px, 1.5vw, 14px);
+  padding: clamp(8px, 1.5vw, 16px) clamp(12px, 2vw, 20px);
+  flex: 1;
+  min-width: min(100%, 200px);
+}
+.tier-card .tier-icon { font-size: clamp(1.2rem, 2.5vw, 2rem); }
+.tier-card .tier-title {
+  font-family: 'Archivo Black', sans-serif;
+  font-size: clamp(0.85rem, 1.5vw, 1.15rem);
+}
+.tier-card .tier-path {
+  font-size: var(--small-size);
+  opacity: 0.7;
+  font-family: 'Space Grotesk', monospace;
+}
+.tier-card .tier-desc {
+  font-size: var(--small-size);
+  opacity: 0.85;
+}
+
+/* Slide 8 Scoring table */
+.score-table {
+  width: 100%;
+  max-width: 500px;
+  border-collapse: collapse;
+  font-size: var(--body-size);
+}
+.score-table th, .score-table td {
+  padding: clamp(4px, 0.6vw, 10px) clamp(8px, 1.2vw, 16px);
+  text-align: left;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.score-table th {
+  font-family: 'Archivo Black', sans-serif;
+  opacity: 0.5;
+  font-size: var(--small-size);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.score-table td:last-child {
+  font-family: 'Archivo Black', sans-serif;
+  text-align: center;
+}
+.score-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(8px, 1.5vw, 16px);
+  font-size: var(--small-size);
+  font-weight: 500;
+}
+.score-legend span { opacity: 0.7; }
+
+/* Slide 9 Conflict grid */
+.conflict-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: clamp(6px, 1vw, 12px);
+}
+.conflict-cell {
+  background: rgba(255,255,255,0.05);
+  border-radius: clamp(6px, 1vw, 10px);
+  padding: clamp(8px, 1.2vw, 14px);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.conflict-cell .c-label {
+  font-family: 'Archivo Black', sans-serif;
+  font-size: var(--small-size);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.6;
+  margin-bottom: 2px;
+}
+.conflict-cell .c-action {
+  font-size: var(--body-size);
+  font-weight: 600;
+}
+
+/* Slide 10 Maintenance items */
+.maint-item {
+  display: flex;
+  align-items: flex-start;
+  gap: clamp(8px, 1.5vw, 14px);
+  padding: clamp(6px, 1vw, 12px) 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.maint-item:last-child { border-bottom: none; }
+.maint-icon {
+  font-size: clamp(1rem, 2vw, 1.5rem);
+  flex-shrink: 0;
+}
+.maint-text { font-size: var(--body-size); font-weight: 500; }
+.maint-sub { font-size: var(--small-size); opacity: 0.5; }
+
+/* ── Responsive grid overrides ── */
+@media (max-width: 600px) {
+  .product-grid { grid-template-columns: repeat(2, 1fr); }
+  .conflict-grid { grid-template-columns: 1fr; }
+  .pipeline-row { gap: clamp(2px, 1vw, 4px); }
+  .pipe-node { min-width: clamp(50px, 20vw, 80px); padding: clamp(4px, 1vw, 8px); }
+  .tiers-row { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Navigation ── -->
+<div class="breadcrumb" id="breadcrumb"></div>
+<div class="slide-counter" id="slideCounter">01 / 10</div>
+<div class="keyboard-hint">↑↓ Navigate</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SLIDE 01: Title -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="slide" id="slide-1">
+  <span class="section-num">01</span>
+  <div class="slide-content flex-col items-center justify-center gap-md text-center">
+    <div class="anim d1 title-huge" style="color: var(--text);">Product Learn</div>
+    <div class="anim d2 title-sub">Skill Architecture</div>
+    <div class="anim d3 title-stat" style="margin-top: var(--element-gap);">5 Sources &times; 14 Products &times; 13,591 Entries</div>
+    <div class="anim d4 accent-card orange" style="margin-top: var(--content-gap); max-width: min(85vw, 600px); text-align: center;">
+      <div style="font-size: var(--body-size); font-weight: 700;">多源知识自动富化 — 综合排查指南生成</div>
+      <div style="font-size: var(--small-size); opacity: 0.7; margin-top: 4px;">Multi-source Knowledge Enrichment Pipeline for Azure Support</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SLIDE 02: 产品覆盖 -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="slide" id="slide-2">
+  <span class="section-num">02</span>
+  <div class="slide-content flex-col gap-md">
+    <h2 class="anim d1" style="font-size: var(--h2-size);">产品覆盖</h2>
+    <div class="anim d2 accent-card cyan" style="max-width: min(90vw, 900px);">
+      <div class="product-grid">
+        <div class="product-cell"><div class="name">VM</div><div class="count">1,585</div></div>
+        <div class="product-cell"><div class="name">AKS</div><div class="count">1,326</div></div>
+        <div class="product-cell"><div class="name">Entra ID</div><div class="count">3,688</div></div>
+        <div class="product-cell"><div class="name">Intune</div><div class="count">1,522</div></div>
+        <div class="product-cell"><div class="name">Monitor</div><div class="count">1,209</div></div>
+        <div class="product-cell"><div class="name">Defender</div><div class="count">1,109</div></div>
+        <div class="product-cell"><div class="name">AVD</div><div class="count">694</div></div>
+        <div class="product-cell"><div class="name">Purview</div><div class="count">643</div></div>
+        <div class="product-cell"><div class="name">ARM</div><div class="count">508</div></div>
+        <div class="product-cell"><div class="name">Disk</div><div class="count">463</div></div>
+        <div class="product-cell"><div class="name">Net</div><div class="count">386</div></div>
+        <div class="product-cell"><div class="name">EOP</div><div class="count">288</div></div>
+        <div class="product-cell"><div class="name">ACR</div><div class="count">109</div></div>
+        <div class="product-cell"><div class="name">Auto</div><div class="count">61</div></div>
+      </div>
+    </div>
+    <div class="anim d3 flex-row items-center gap-sm" style="margin-top: var(--element-gap);">
+      <span class="big-number" style="color: var(--cyan);">13,591</span>
+      <span style="font-size: var(--body-size); opacity: 0.5; font-weight: 500;">entries across all products</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SLIDE 03: Troubleshooter 查找链 -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="slide" id="slide-3">
+  <span class="section-num">03</span>
+  <div class="slide-content flex-col gap-md">
+    <h2 class="anim d1" style="font-size: var(--h2-size);">Troubleshooter 查找链</h2>
+    <div class="anim d2 flex-col gap-sm" style="max-width: min(90vw, 700px);">
+      <div class="flow-step"><span class="flow-num">1</span><div class="flow-label"><code>SKILL.md</code> <span class="desc">— 诊断层级 + 决策树</span></div></div>
+      <div class="flow-step"><span class="flow-num">2</span><div class="flow-label"><code>_index.md</code> <span class="desc">— 症状关键词匹配</span></div></div>
+      <div class="flow-step"><span class="flow-num">3</span><div class="flow-label"><code>{topic}.md</code> <span class="desc">— 速查表 + 评分</span></div></div>
+      <div class="flow-step"><span class="flow-num">4</span><div class="flow-label"><code>details/{topic}.md</code> <span class="desc">— 融合指南 + KQL</span></div></div>
+      <div class="flow-step"><span class="flow-num">5</span><div class="flow-label"><code>known-issues.jsonl</code> <span class="desc">— 结构化三元组搜索</span></div></div>
+      <div class="flow-step"><span class="flow-num">6</span><div class="flow-label">External <span class="desc">— OneNote RAG / MS Learn / ADO Wiki</span></div></div>
+    </div>
+    <div class="anim d3 accent-card-outline" style="border-color: var(--orange); max-width: min(90vw, 700px);">
+      <div style="font-size: var(--small-size); font-weight: 600; opacity: 0.7;">逐层下钻 — 命中即停，避免过度检索开销</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SLIDE 04: 5 大数据源 -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="slide" id="slide-4">
+  <span class="section-num">04</span>
+  <div class="slide-content flex-col gap-md">
+    <h2 class="anim d1" style="font-size: var(--h2-size);">5 大数据源</h2>
+    <div class="anim d2 accent-card cyan" style="max-width: min(90vw, 700px);">
+      <div style="font-size: var(--small-size); font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.6; margin-bottom: clamp(4px, 0.8vw, 10px);">Source Hierarchy &mdash; weighted</div>
+      <div class="flex-col">
+        <div class="source-bar"><span class="source-weight">5</span><span class="source-name">OneNote 团队 KB</span><span class="source-pct">10.8%</span></div>
+        <div class="source-bar"><span class="source-weight">4</span><span class="source-name">ADO Wiki TSG</span><span class="source-pct">67.7%</span></div>
+        <div class="source-bar"><span class="source-weight">3</span><span class="source-name">ContentIdea KB</span><span class="source-pct">9.3%</span></div>
+        <div class="source-bar"><span class="source-weight">2</span><span class="source-name">MS Learn 文档</span><span class="source-pct">11.9%</span></div>
+        <div class="source-bar"><span class="source-weight">1</span><span class="source-name">Case 复盘</span><span class="source-pct">0.2%</span></div>
+      </div>
+    </div>
+    <div class="anim d3" style="font-size: var(--small-size); opacity: 0.4; font-weight: 500;">权重越高 → 评分加分越大 → 指南中优先展示</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SLIDE 05: Auto-Enrich Pipeline -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="slide" id="slide-5">
+  <span class="section-num">05</span>
+  <div class="slide-content flex-col items-center gap-md">
+    <h2 class="anim d1" style="font-size: var(--h2-size);">Auto-Enrich Pipeline</h2>
+    <div class="anim d2 pipeline-row">
+      <div class="pipe-node"><div class="phase-id">P0</div><div class="phase-label">page-classify</div><div style="font-size:var(--small-size);opacity:0.4;">4,002 pages</div></div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-node"><div class="phase-id">P1</div><div class="phase-label">21v-gap</div></div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-node"><div class="phase-id">P2</div><div class="phase-label">onenote</div></div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-node"><div class="phase-id">P3</div><div class="phase-label">ado-wiki</div></div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-node"><div class="phase-id">P4</div><div class="phase-label">mslearn</div></div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-node"><div class="phase-id">P5</div><div class="phase-label">contentidea</div></div>
+    </div>
+    <div class="anim d3 pipeline-row">
+      <span class="pipe-arrow" style="opacity:0;">→</span>
+      <span class="pipe-arrow">↓</span>
+    </div>
+    <div class="anim d4 pipeline-row">
+      <div class="pipe-node highlight"><div class="phase-id">M</div><div class="phase-label">dedup + merge</div></div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-node highlight"><div class="phase-id">S</div><div class="phase-label">guide gen</div></div>
+    </div>
+    <div class="anim d5 accent-card-outline" style="border-color: var(--amber); max-width: min(85vw, 600px); text-align: center;">
+      <div style="font-size: var(--small-size); font-weight: 600; opacity: 0.7;">P0–P5 各 source 独立提取 → MERGE 去重合并 → SYNTHESIZE 生成指南</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SLIDE 06: 并行架构 v3 -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="slide" id="slide-6">
+  <span class="section-num">06</span>
+  <div class="slide-content flex-col gap-md">
+    <h2 class="anim d1" style="font-size: var(--h2-size);">并行架构 v3</h2>
+    <div class="anim d2 accent-card amber" style="max-width: min(90vw, 650px);">
+      <div style="font-size: var(--small-size); font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.6; margin-bottom: clamp(6px, 1vw, 14px);">Parallel Architecture</div>
+      <div class="flex-col gap-sm">
+        <div class="kp-item"><div class="kp-bullet" style="background: var(--text-dark);"></div><div>多产品 &times; 多 source 并行</div></div>
+        <div class="kp-item"><div class="kp-bullet" style="background: var(--text-dark);"></div><div>文件隔离: per-source JSONL</div></div>
+        <div class="kp-item"><div class="kp-bullet" style="background: var(--text-dark);"></div><div>Agent 独占写, MERGE 合并</div></div>
+        <div class="kp-item"><div class="kp-bullet" style="background: var(--text-dark);"></div><div>maxAgentsPerTick 并发控制</div></div>
+        <div class="kp-item"><div class="kp-bullet" style="background: var(--text-dark);"></div><div>Slot refill on completion</div></div>
+      </div>
+    </div>
+    <div class="anim d3 accent-card-outline" style="border-color: var(--amber); max-width: min(90vw, 650px);">
+      <div style="font-size: var(--small-size); font-weight: 500; opacity: 0.6;">无锁设计 — 每个 agent 写独立 JSONL，避免写冲突；MERGE 阶段统一聚合</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SLIDE 07: 三层指南输出 -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="slide" id="slide-7">
+  <span class="section-num">07</span>
+  <div class="slide-content flex-col gap-md">
+    <h2 class="anim d1" style="font-size: var(--h2-size);">三层指南输出</h2>
+    <div class="anim d2 flex-row gap-sm tiers-row" style="max-width: min(95vw, 950px);">
+      <div class="tier-card" style="background: rgba(76,175,80,0.15); border: 1px solid rgba(76,175,80,0.3);">
+        <div class="tier-icon">🟢</div>
+        <div class="tier-title" style="color: #81C784;">速查表</div>
+        <div class="tier-path">guides/{topic}.md</div>
+        <div class="tier-desc">symptom / cause / solution + 评分排序</div>
+      </div>
+      <div class="tier-card" style="background: rgba(33,150,243,0.15); border: 1px solid rgba(33,150,243,0.3);">
+        <div class="tier-icon">🔵</div>
+        <div class="tier-title" style="color: #64B5F6;">详情指南</div>
+        <div class="tier-path">guides/details/{topic}.md</div>
+        <div class="tier-desc">完整 known issues + 多源证据</div>
+      </div>
+      <div class="tier-card" style="background: rgba(156,39,176,0.15); border: 1px solid rgba(156,39,176,0.3);">
+        <div class="tier-icon">🟣</div>
+        <div class="tier-title" style="color: #CE93D8;">工作流</div>
+        <div class="tier-path">guides/workflows/{topic}.md</div>
+        <div class="tier-desc">KQL 查询 + 决策树 + 排查步骤</div>
+      </div>
+    </div>
+    <div class="anim d3" style="font-size: var(--small-size); opacity: 0.4; max-width: min(90vw, 700px);">速查表用于 Agent 快速命中；详情指南供深入分析；工作流提供端到端操作手册</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SLIDE 08: 多维评分 -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="slide" id="slide-8">
+  <span class="section-num">08</span>
+  <div class="slide-content flex-col gap-md">
+    <h2 class="anim d1" style="font-size: var(--h2-size);">多维评分</h2>
+    <div class="anim d2 accent-card teal" style="max-width: min(90vw, 550px);">
+      <table class="score-table">
+        <thead><tr><th>维度</th><th>满分</th></tr></thead>
+        <tbody>
+          <tr><td>来源质量</td><td>3</td></tr>
+          <tr><td>时效性</td><td>2</td></tr>
+          <tr><td>验证强度</td><td>3</td></tr>
+          <tr><td>21V 适用性</td><td>2</td></tr>
+          <tr style="border-top: 2px solid rgba(0,0,0,0.2);"><td style="font-family:'Archivo Black',sans-serif;">TOTAL</td><td style="font-size: clamp(1.2rem, 2.5vw, 1.8rem);">10</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="anim d3 score-legend" style="max-width: min(90vw, 600px);">
+      <span>🟢 8+ 采信</span>
+      <span>🔵 5–8 参考</span>
+      <span>🟡 3–5 方向</span>
+      <span>⚪ &lt;3 过时</span>
+    </div>
+    <div class="anim d4" style="font-size: var(--small-size); opacity: 0.4;">每条 known issue 独立评分 → 指南内按分值降序排列 → 低分标注 ⚠️ 提醒</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SLIDE 09: 矛盾检测 -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="slide" id="slide-9">
+  <span class="section-num">09</span>
+  <div class="slide-content flex-col gap-md">
+    <h2 class="anim d1" style="font-size: var(--h2-size);">矛盾检测</h2>
+    <div class="anim d2" style="max-width: min(90vw, 600px);">
+      <div style="font-size: var(--small-size); font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.4; margin-bottom: clamp(4px, 0.8vw, 10px);">4 矛盾类型</div>
+      <div class="accent-card-outline" style="border-color: var(--orange); margin-bottom: var(--element-gap);">
+        <div style="font-size: var(--body-size); font-weight: 600;">rootCause &nbsp;·&nbsp; solution &nbsp;·&nbsp; 时效 &nbsp;·&nbsp; 21V</div>
+      </div>
+    </div>
+    <div class="anim d3" style="max-width: min(90vw, 600px);">
+      <div style="font-size: var(--small-size); font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.4; margin-bottom: clamp(4px, 0.8vw, 10px);">4 判断结果</div>
+      <div class="conflict-grid">
+        <div class="conflict-cell" style="border-color: var(--orange);">
+          <div class="c-label" style="color: var(--orange);">real_conflict</div>
+          <div class="c-action">⛔ 阻断 — 人工复核</div>
+        </div>
+        <div class="conflict-cell" style="border-color: var(--cyan);">
+          <div class="c-label" style="color: var(--cyan);">superseded</div>
+          <div class="c-action">🔄 取新 — 废旧条目</div>
+        </div>
+        <div class="conflict-cell" style="border-color: var(--amber);">
+          <div class="c-label" style="color: var(--amber);">context</div>
+          <div class="c-action">📎 保留两个 — 标注适用场景</div>
+        </div>
+        <div class="conflict-cell" style="border-color: var(--teal);">
+          <div class="c-label" style="color: var(--teal);">false_alarm</div>
+          <div class="c-action">✅ 忽略 — 非真实矛盾</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SLIDE 10: 增量维护 -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="slide" id="slide-10">
+  <span class="section-num">10</span>
+  <div class="slide-content flex-col gap-md">
+    <h2 class="anim d1" style="font-size: var(--h2-size);">增量维护</h2>
+    <div class="anim d2 flex-col" style="max-width: min(90vw, 700px);">
+      <div class="maint-item">
+        <span class="maint-icon">🔄</span>
+        <div>
+          <div class="maint-text">OneNote sync → stale 标记 → 重提取</div>
+          <div class="maint-sub">检测笔记本更新时间戳，过期条目自动标记并重新提取</div>
+        </div>
+      </div>
+      <div class="maint-item">
+        <span class="maint-icon">📅</span>
+        <div>
+          <div class="maint-text">Pre-flight 7 天刷新</div>
+          <div class="maint-sub">ADO Wiki / MS Learn / ContentIdea — 7 天内未更新则触发刷新</div>
+        </div>
+      </div>
+      <div class="maint-item">
+        <span class="maint-icon">📡</span>
+        <div>
+          <div class="maint-text">GitHub Commits API 增量检测</div>
+          <div class="maint-sub">对比上次同步 SHA，仅处理变更文件</div>
+        </div>
+      </div>
+      <div class="maint-item">
+        <span class="maint-icon">🩺</span>
+        <div>
+          <div class="maint-text">Registry 健康检查</div>
+          <div class="maint-sub">产品注册表完整性校验 — 缺失字段 / 无效路径 / 孤立条目</div>
+        </div>
+      </div>
+    </div>
+    <div class="anim d3 accent-card-outline" style="border-color: var(--teal); max-width: min(90vw, 700px);">
+      <div style="font-size: var(--small-size); font-weight: 600; opacity: 0.7;">持续演进 — 知识库不是静态产物，而是随团队实践同步生长的活系统</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const TOTAL = 10;
+  const breadcrumb = document.getElementById('breadcrumb');
+  const counter = document.getElementById('slideCounter');
+
+  // Build breadcrumb dots
+  for (let i = 1; i <= TOTAL; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (i === 1 ? ' active' : '');
+    dot.dataset.slide = i;
+    dot.addEventListener('click', () => {
+      document.getElementById('slide-' + i).scrollIntoView({ behavior: 'smooth' });
+    });
+    breadcrumb.appendChild(dot);
+  }
+
+  // Intersection Observer for animations & nav updates
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const slideEl = entry.target;
+        const idx = parseInt(slideEl.id.split('-')[1]);
+
+        // Update counter
+        counter.textContent = String(idx).padStart(2, '0') + ' / ' + String(TOTAL).padStart(2, '0');
+
+        // Update dots
+        breadcrumb.querySelectorAll('.dot').forEach((d, di) => {
+          d.classList.toggle('active', di + 1 === idx);
+        });
+
+        // Trigger animations
+        slideEl.querySelectorAll('.anim').forEach(el => el.classList.add('visible'));
+      }
+    });
+  }, { threshold: 0.4 });
+
+  document.querySelectorAll('.slide').forEach(s => observer.observe(s));
+
+  // Keyboard navigation
+  let currentSlide = 1;
+  function goTo(n) {
+    n = Math.max(1, Math.min(TOTAL, n));
+    currentSlide = n;
+    document.getElementById('slide-' + n).scrollIntoView({ behavior: 'smooth' });
+  }
+
+  // Track current slide via scroll
+  const scrollObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
+        currentSlide = parseInt(entry.target.id.split('-')[1]);
+      }
+    });
+  }, { threshold: 0.5 });
+  document.querySelectorAll('.slide').forEach(s => scrollObserver.observe(s));
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
+      e.preventDefault();
+      goTo(currentSlide + 1);
+    } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+      e.preventDefault();
+      goTo(currentSlide - 1);
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      goTo(1);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      goTo(TOTAL);
+    }
+  });
+
+  // Trigger first slide animations on load
+  setTimeout(() => {
+    document.getElementById('slide-1').querySelectorAll('.anim').forEach(el => el.classList.add('visible'));
+  }, 100);
+})();
+</script>
+</body>
+</html>

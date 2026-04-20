@@ -1,8 +1,8 @@
 # VM Vm General — 排查速查
 
 **来源数**: 3 | **21V**: 未标注
-**条目数**: 20 | **关键词**: general
-**最后更新**: 2026-04-07
+**条目数**: 21 | **关键词**: general
+**最后更新**: 2026-04-18
 
 ## 症状速查
 
@@ -28,6 +28,7 @@
 | 18 | [container] VM+SCIM Process section index page |  | Section container page. No actionable content. | 🟢 8.5 | OneNote |
 | 19 | [container] VM+SCIM Windows section index page |  | Section container page. No actionable content. | 🟢 8.5 | OneNote |
 | 20 | Azure VPN gateway S2S connections to strongSwan VPNs (AWS) both disconnected for extended period | Misconfiguration of pre-shared key on customer side VPN gateway | Customer re-checked VPN configuration and re-configured the pre-shared key; conn... | 🟢 8.5 | OneNote |
+| 21 | This article will contain a walk through of how to use Dump Insights to scan a dump or review the re... | Reference doc (no explicit root cause)... | See original document for detailed steps... | 🟡 5.0 | KB |
 
 > 本 topic 有融合排查指南，含完整排查流程和 Kusto 查询模板
 > → [完整排查流程](details/vm-general.md)

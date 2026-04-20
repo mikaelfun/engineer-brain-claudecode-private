@@ -38,6 +38,12 @@ allowed-tools:
 
 ## 执行步骤
 
+### 0. 计时开始
+```bash
+# Mark labor-estimate action active (auto-compute durationMs on completion)
+python3 .claude/skills/casework/scripts/update-state.py --case-dir "$CASE_DIR" --step act --action labor-estimate --status active
+```
+
 ### 1. 确定目标日期
 - 如有 `--date` 参数，使用指定日期
 - 否则使用当天日期（`date '+%Y-%m-%d'`）
@@ -168,6 +174,11 @@ pwsh -NoProfile -File .claude/skills/d365-case-ops/scripts/record-labor.ps1 \
 
 ### 8. 更新校准数据
 如果用户修改了估算值（`final` ≠ `estimated`），更新 `calibration.json`：
+
+```bash
+# Mark labor-estimate action completed (auto-compute durationMs from startedAt)
+python3 .claude/skills/casework/scripts/update-state.py --case-dir "$CASE_DIR" --step act --action labor-estimate --status completed
+```
 
 对每种 effort 类型，如果用户调整了总时长：
 - 计算比例：`ratio = userTotal / aiTotal`

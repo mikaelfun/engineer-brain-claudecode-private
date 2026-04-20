@@ -1,6 +1,6 @@
 # ENTRA-ID Multi-Factor Authentication — Detailed Troubleshooting Guide
 
-**Entries**: 66 | **Drafts fused**: 20 | **Kusto queries**: 1
+**Entries**: 67 | **Drafts fused**: 20 | **Kusto queries**: 1
 **Draft sources**: ado-wiki-a-asc-mfa-logs-result-codes.md, ado-wiki-b-azure-portal-mfa-enforcement.md, ado-wiki-b-mfa-authentication-management.md, ado-wiki-c-azure-mfa-source-of-mfa.md, ado-wiki-c-bulk-update-mfa-phone-auth-method.md, ado-wiki-c-change-per-user-mfa-settings-msgraph.md, ado-wiki-c-external-mfa-policy.md, ado-wiki-c-get-mfa-auth-method-all-group-users.md, ado-wiki-c-mfa-server-migration-utility.md, ado-wiki-d-m365-admin-center-mandatory-mfa.md
 **Kusto references**: mfa-detail.md
 **Generated**: 2026-04-07
@@ -462,3 +462,16 @@
 | 28 | Azure AD B2C MFA: Custom Greetings for MFA phone call setting at tenant level... | Product team explored this feature but encountered challe... | No workaround available. Custom greetings for MFA phone c... | 🟢 8.5 | ADO Wiki |
 | 29 | User incorrectly marked as Multifactor Authentication Capable in User Registr... | User must be included as target in tenant MFA policy to a... | Verify user is targeted in tenant MFA policy under Authen... | 🟢 8.5 | ADO Wiki |
 | 30 | defaultMfaMethod in User Registration Details does not match portal Authentic... | Hardware token (hardwareOneTimePasscode) not shown as def... | Use userPreferredMethodForSecondaryAuthentication propert... | 🟢 8.5 | ADO Wiki |
+
+
+---
+
+## Incremental Update (2026-04-18) - +1 entries from contentidea-kb
+
+### Unable to access MFA Server User portal due to error - Service unavailable HTTP 500
+**Score**: 🟢 8.0 | **Source**: ContentIdea KB | **ID**: entra-id-3673
+
+**Root Cause**: Custom app pool under which the MFA Application was running within IIS was in stopped state.
+
+**Solution**: Updated the username, password for the custom App pool in IIS and started the Application pool.
+

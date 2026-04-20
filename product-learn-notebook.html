@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product Learn Skill 架构</title>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* === RESET & VIEWPORT === */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; overflow-x: hidden; }
+html { scroll-snap-type: y mandatory; scroll-behavior: smooth; }
+
+:root {
+  --title-size: clamp(1.5rem, 5vw, 4rem);
+  --h2-size: clamp(1.25rem, 3.5vw, 2.5rem);
+  --h3-size: clamp(1rem, 2.5vw, 1.75rem);
+  --body-size: clamp(0.75rem, 1.5vw, 1.125rem);
+  --small-size: clamp(0.65rem, 1vw, 0.875rem);
+  --slide-padding: clamp(1rem, 4vw, 4rem);
+  --content-gap: clamp(0.5rem, 2vw, 2rem);
+  --element-gap: clamp(0.25rem, 1vw, 1rem);
+  --mint: #98d4bb;
+  --lavender: #c7b8ea;
+  --pink: #f4b8c5;
+  --sky: #a8d8ea;
+  --cream-tab: #ffe6a7;
+  --bg-outer: #2d2d2d;
+  --bg-paper: #f8f6f1;
+  --text-primary: #1a1a1a;
+  --text-muted: #555;
+  --binder-color: #ccc;
+}
+
+body {
+  background: var(--bg-outer);
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* === SLIDE CONTAINER === */
+.slide {
+  width: 100vw; height: 100vh; height: 100dvh;
+  overflow: hidden; scroll-snap-align: start;
+  display: flex; flex-direction: column;
+  position: relative;
+  align-items: center; justify-content: center;
+}
+
+/* === PAPER CARD === */
+.paper {
+  position: relative;
+  width: min(92vw, 1100px);
+  height: min(88vh, 780px);
+  background: var(--bg-paper);
+  border-radius: 4px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.2);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+
+/* === BINDER HOLES === */
+.binder {
+  position: absolute; left: clamp(12px, 2vw, 28px); top: 0; bottom: 0;
+  width: 2px; display: flex; flex-direction: column;
+  justify-content: space-evenly; align-items: center;
+  pointer-events: none; z-index: 2;
+}
+.binder-hole {
+  width: clamp(10px, 1.2vw, 16px); height: clamp(10px, 1.2vw, 16px);
+  border-radius: 50%;
+  border: 2px solid var(--binder-color);
+  background: var(--bg-outer);
+  flex-shrink: 0;
+}
+.binder-line {
+  width: 1px; flex: 1;
+  background: linear-gradient(to bottom, transparent, var(--binder-color) 20%, var(--binder-color) 80%, transparent);
+}
+
+/* === TABS === */
+.tab {
+  position: absolute;
+  right: -38px; right: clamp(-32px, -3vw, -38px);
+  width: clamp(32px, 3.5vw, 42px);
+  height: clamp(52px, 7vh, 72px);
+  border-radius: 0 6px 6px 0;
+  display: flex; align-items: center; justify-content: center;
+  writing-mode: vertical-rl; text-orientation: mixed;
+  font-family: 'DM Sans', sans-serif;
+  font-size: clamp(0.5rem, 1vh, 0.7rem);
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  z-index: 10;
+  letter-spacing: 0.03em;
+}
+.tab:hover { transform: translateX(4px); box-shadow: -2px 2px 8px rgba(0,0,0,0.15); }
+.tab.active { transform: translateX(6px); font-weight: 700; }
+
+/* tab positions — evenly distribute */
+.tab:nth-child(1)  { top: 3%; }
+.tab:nth-child(2)  { top: 12%; }
+.tab:nth-child(3)  { top: 21%; }
+.tab:nth-child(4)  { top: 30%; }
+.tab:nth-child(5)  { top: 39%; }
+.tab:nth-child(6)  { top: 48%; }
+.tab:nth-child(7)  { top: 57%; }
+.tab:nth-child(8)  { top: 66%; }
+.tab:nth-child(9)  { top: 75%; }
+.tab:nth-child(10) { top: 84%; }
+
+/* tab colors cycling */
+.tab[data-color="mint"]     { background: var(--mint); }
+.tab[data-color="lavender"] { background: var(--lavender); }
+.tab[data-color="pink"]     { background: var(--pink); }
+.tab[data-color="sky"]      { background: var(--sky); }
+.tab[data-color="cream"]    { background: var(--cream-tab); }
+
+/* === SLIDE CONTENT === */
+.slide-content {
+  flex: 1; display: flex; flex-direction: column;
+  justify-content: center;
+  max-height: 100%; overflow: hidden;
+  padding: var(--slide-padding);
+  padding-left: clamp(2.5rem, 5vw, 5rem);
+  opacity: 0; transform: translateY(18px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.slide-content.visible {
+  opacity: 1; transform: translateY(0);
+}
+
+/* === TYPOGRAPHY === */
+h1 {
+  font-family: 'Bodoni Moda', serif;
+  font-size: var(--title-size);
+  font-weight: 700;
+  line-height: 1.15;
+  margin-bottom: var(--element-gap);
+  color: var(--text-primary);
+}
+h2 {
+  font-family: 'Bodoni Moda', serif;
+  font-size: var(--h2-size);
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: var(--content-gap);
+}
+h3 {
+  font-family: 'Bodoni Moda', serif;
+  font-size: var(--h3-size);
+  font-weight: 400;
+  font-style: italic;
+  line-height: 1.3;
+  margin-bottom: var(--element-gap);
+}
+p, li, td, th {
+  font-size: var(--body-size);
+  line-height: 1.5;
+}
+.subtitle {
+  font-family: 'DM Sans', sans-serif;
+  font-size: clamp(0.85rem, 1.8vw, 1.3rem);
+  color: var(--text-muted);
+  margin-bottom: var(--element-gap);
+  font-weight: 400;
+}
+.accent {
+  font-family: 'Bodoni Moda', serif;
+  font-style: italic;
+  color: var(--text-muted);
+  font-size: var(--body-size);
+}
+
+/* === SLIDE NUMBER === */
+.slide-number {
+  position: absolute;
+  bottom: clamp(8px, 1.5vh, 18px);
+  right: clamp(12px, 2vw, 24px);
+  font-family: 'Bodoni Moda', serif;
+  font-size: var(--small-size);
+  color: #999;
+  font-style: italic;
+}
+
+/* === DECORATIVE RULE === */
+.rule {
+  width: clamp(40px, 8vw, 80px);
+  height: 2px;
+  background: var(--text-primary);
+  margin-bottom: var(--content-gap);
+}
+.rule-thin {
+  width: 100%;
+  height: 1px;
+  background: #ddd;
+  margin: var(--element-gap) 0;
+}
+
+/* === GRIDS === */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+  gap: clamp(0.5rem, 1.5vw, 1rem);
+}
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  gap: clamp(0.35rem, 0.8vw, 0.6rem);
+}
+.product-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: clamp(0.3rem, 0.6vw, 0.5rem) clamp(0.5rem, 1vw, 0.8rem);
+  background: #fff;
+  border-radius: 4px;
+  border-left: 3px solid var(--mint);
+  font-size: var(--small-size);
+}
+.product-item .count {
+  font-family: 'Bodoni Moda', serif;
+  font-weight: 700;
+  color: var(--text-muted);
+  font-size: var(--small-size);
+}
+.product-item:nth-child(4n+2) { border-left-color: var(--lavender); }
+.product-item:nth-child(4n+3) { border-left-color: var(--pink); }
+.product-item:nth-child(4n)   { border-left-color: var(--sky); }
+
+.stats-row {
+  display: flex; gap: clamp(0.8rem, 2vw, 2rem);
+  margin-top: var(--content-gap);
+  flex-wrap: wrap;
+}
+.stat-box {
+  text-align: center;
+  padding: clamp(0.4rem, 1vw, 0.8rem) clamp(0.8rem, 1.5vw, 1.2rem);
+  background: #fff;
+  border-radius: 4px;
+  border-bottom: 2px solid var(--mint);
+}
+.stat-box .num {
+  font-family: 'Bodoni Moda', serif;
+  font-size: clamp(1.1rem, 2.5vw, 1.8rem);
+  font-weight: 700;
+  display: block;
+}
+.stat-box .label {
+  font-size: var(--small-size);
+  color: var(--text-muted);
+}
+
+/* === FLOW DIAGRAM === */
+.flow {
+  display: flex; flex-direction: column;
+  gap: clamp(0.15rem, 0.5vh, 0.35rem);
+}
+.flow-step {
+  display: flex; align-items: stretch;
+  gap: clamp(0.4rem, 1vw, 0.8rem);
+}
+.flow-num {
+  width: clamp(22px, 2.5vw, 32px);
+  height: clamp(22px, 2.5vw, 32px);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Bodoni Moda', serif;
+  font-weight: 700;
+  font-size: var(--small-size);
+  color: #fff;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.flow-body {
+  flex: 1;
+  padding: clamp(0.25rem, 0.5vw, 0.4rem) 0;
+}
+.flow-body strong {
+  font-size: var(--body-size);
+}
+.flow-body span {
+  font-size: var(--small-size);
+  color: var(--text-muted);
+  display: block;
+  margin-top: 1px;
+}
+.flow-connector {
+  width: 2px; height: clamp(6px, 1vh, 12px);
+  background: #ddd;
+  margin-left: clamp(10px, 1.2vw, 15px);
+}
+
+/* flow colors */
+.flow-step:nth-child(odd) .flow-num  { background: #6b8f71; }
+.flow-step:nth-child(even) .flow-num { background: #8b7db8; }
+
+/* === TABLES === */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--small-size);
+}
+.data-table th {
+  text-align: left;
+  padding: clamp(0.25rem, 0.5vw, 0.5rem) clamp(0.4rem, 0.8vw, 0.8rem);
+  background: #eee;
+  font-weight: 500;
+  border-bottom: 2px solid #ccc;
+  white-space: nowrap;
+}
+.data-table td {
+  padding: clamp(0.2rem, 0.4vw, 0.4rem) clamp(0.4rem, 0.8vw, 0.8rem);
+  border-bottom: 1px solid #eee;
+  font-size: var(--small-size);
+}
+.data-table tr:last-child td { border-bottom: none; }
+
+.priority-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: clamp(18px, 2vw, 24px); height: clamp(18px, 2vw, 24px);
+  border-radius: 50%;
+  font-size: clamp(0.55rem, 0.8vw, 0.7rem);
+  font-weight: 700; color: #fff;
+}
+.p1 { background: #e74c3c; }
+.p2 { background: #e67e22; }
+.p3 { background: #f1c40f; color: #333; }
+.p4 { background: #3498db; }
+.p5 { background: #95a5a6; }
+
+/* === PIPELINE === */
+.pipeline {
+  display: flex; flex-direction: column;
+  gap: clamp(0.1rem, 0.3vh, 0.25rem);
+}
+.pipe-phase {
+  display: flex; align-items: center;
+  gap: clamp(0.3rem, 0.8vw, 0.6rem);
+}
+.pipe-label {
+  font-family: 'Bodoni Moda', serif;
+  font-weight: 700;
+  font-size: var(--small-size);
+  width: clamp(48px, 6vw, 72px);
+  text-align: right;
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+.pipe-bar {
+  flex: 1; height: clamp(22px, 3vh, 32px);
+  border-radius: 3px;
+  display: flex; align-items: center;
+  padding: 0 clamp(0.4rem, 0.8vw, 0.8rem);
+  font-size: var(--small-size);
+  color: #fff;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.pipe-phase:nth-child(1) .pipe-bar  { background: #6b8f71; }
+.pipe-phase:nth-child(2) .pipe-bar  { background: #7ba088; }
+.pipe-phase:nth-child(3) .pipe-bar  { background: #5c7a63; }
+.pipe-phase:nth-child(4) .pipe-bar  { background: #8b7db8; }
+.pipe-phase:nth-child(5) .pipe-bar  { background: #7c6eaa; }
+.pipe-phase:nth-child(6) .pipe-bar  { background: #a394c9; }
+.pipe-phase:nth-child(7) .pipe-bar  { background: #c0392b; width: 90%; }
+.pipe-phase:nth-child(8) .pipe-bar  { background: #2c3e50; }
+.pipe-arrow {
+  font-size: clamp(0.7rem, 1vw, 0.9rem);
+  color: #aaa;
+  text-align: center;
+  padding-left: clamp(52px, 7vw, 78px);
+}
+
+/* === THREE TIERS === */
+.tier {
+  display: flex; align-items: flex-start;
+  gap: clamp(0.5rem, 1vw, 0.8rem);
+  padding: clamp(0.4rem, 0.8vw, 0.7rem);
+  background: #fff;
+  border-radius: 4px;
+  margin-bottom: clamp(0.3rem, 0.6vh, 0.5rem);
+}
+.tier-icon {
+  width: clamp(32px, 4vw, 44px);
+  height: clamp(32px, 4vw, 44px);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: clamp(0.9rem, 1.5vw, 1.3rem);
+  flex-shrink: 0;
+}
+.tier-body h4 {
+  font-family: 'Bodoni Moda', serif;
+  font-size: var(--body-size);
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.tier-body p {
+  font-size: var(--small-size);
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* === SCORING === */
+.score-legend {
+  display: flex; gap: clamp(0.4rem, 1vw, 0.8rem); flex-wrap: wrap;
+  margin-top: var(--element-gap);
+}
+.score-pill {
+  display: flex; align-items: center; gap: 4px;
+  font-size: var(--small-size);
+  padding: clamp(0.15rem, 0.3vw, 0.25rem) clamp(0.4rem, 0.8vw, 0.6rem);
+  background: #fff;
+  border-radius: 20px;
+}
+.score-dot {
+  width: clamp(8px, 1vw, 12px); height: clamp(8px, 1vw, 12px);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* === CONFLICT TYPES === */
+.conflict-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: clamp(0.3rem, 0.8vw, 0.6rem);
+}
+.conflict-card {
+  padding: clamp(0.4rem, 0.8vw, 0.7rem);
+  background: #fff;
+  border-radius: 4px;
+  border-top: 2px solid var(--pink);
+}
+.conflict-card h4 {
+  font-family: 'Bodoni Moda', serif;
+  font-size: var(--small-size);
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.conflict-card p {
+  font-size: clamp(0.6rem, 0.9vw, 0.78rem);
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+.conflict-card:nth-child(2) { border-top-color: var(--lavender); }
+.conflict-card:nth-child(3) { border-top-color: var(--sky); }
+.conflict-card:nth-child(4) { border-top-color: var(--cream-tab); }
+
+.verdict-row {
+  display: flex; gap: clamp(0.3rem, 0.6vw, 0.5rem); flex-wrap: wrap;
+  margin-top: var(--element-gap);
+}
+.verdict {
+  display: flex; align-items: center; gap: 4px;
+  padding: clamp(0.2rem, 0.4vw, 0.3rem) clamp(0.5rem, 0.8vw, 0.7rem);
+  border-radius: 3px;
+  font-size: var(--small-size);
+  font-weight: 500;
+}
+.verdict.block  { background: #fde8e8; color: #a33; }
+.verdict.auto   { background: #e8f5e9; color: #2e7d32; }
+.verdict.depend { background: #fff3e0; color: #e65100; }
+.verdict.ignore { background: #f5f5f5; color: #888; }
+
+/* === MAINTENANCE === */
+.maint-item {
+  display: flex; align-items: flex-start; gap: clamp(0.4rem, 1vw, 0.8rem);
+  padding: clamp(0.35rem, 0.7vw, 0.6rem) 0;
+  border-bottom: 1px solid #eee;
+}
+.maint-item:last-child { border-bottom: none; }
+.maint-icon {
+  width: clamp(28px, 3vw, 36px); height: clamp(28px, 3vw, 36px);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: clamp(0.75rem, 1.2vw, 1rem);
+  flex-shrink: 0;
+  background: #eee;
+}
+.maint-body strong {
+  font-size: var(--body-size);
+  display: block;
+}
+.maint-body span {
+  font-size: var(--small-size);
+  color: var(--text-muted);
+}
+
+/* === PARALLEL ARCH === */
+.arch-feature {
+  display: flex; align-items: flex-start; gap: clamp(0.3rem, 0.6vw, 0.5rem);
+  padding: clamp(0.25rem, 0.5vw, 0.4rem) 0;
+}
+.arch-bullet {
+  width: clamp(6px, 0.8vw, 8px); height: clamp(6px, 0.8vw, 8px);
+  border-radius: 50%;
+  background: var(--lavender);
+  flex-shrink: 0;
+  margin-top: clamp(5px, 0.6vw, 7px);
+}
+.arch-feature:nth-child(even) .arch-bullet { background: var(--mint); }
+
+/* === NAV DOTS === */
+.nav-dots {
+  position: fixed;
+  left: clamp(10px, 1.5vw, 20px);
+  top: 50%; transform: translateY(-50%);
+  display: flex; flex-direction: column;
+  gap: clamp(6px, 1vh, 10px);
+  z-index: 100;
+}
+.nav-dot {
+  width: clamp(7px, 0.8vw, 10px);
+  height: clamp(7px, 0.8vw, 10px);
+  border-radius: 50%;
+  background: rgba(255,255,255,0.25);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none; outline: none;
+}
+.nav-dot.active {
+  background: #fff;
+  transform: scale(1.3);
+}
+.nav-dot:hover { background: rgba(255,255,255,0.6); }
+
+/* === KEYBOARD HINT === */
+.keyboard-hint {
+  position: fixed;
+  bottom: clamp(8px, 1.5vh, 16px);
+  left: 50%; transform: translateX(-50%);
+  font-size: var(--small-size);
+  color: rgba(255,255,255,0.35);
+  font-family: 'DM Sans', sans-serif;
+  z-index: 100;
+  pointer-events: none;
+}
+
+/* === RESPONSIVE === */
+@media (max-height: 700px) {
+  :root {
+    --slide-padding: clamp(0.75rem, 3vw, 2rem);
+    --content-gap: clamp(0.4rem, 1.5vw, 1rem);
+    --title-size: clamp(1.25rem, 4.5vw, 2.5rem);
+    --h2-size: clamp(1rem, 3vw, 1.75rem);
+  }
+}
+@media (max-height: 600px) {
+  :root {
+    --slide-padding: clamp(0.5rem, 2.5vw, 1.5rem);
+    --content-gap: clamp(0.3rem, 1vw, 0.75rem);
+    --title-size: clamp(1.1rem, 4vw, 2rem);
+    --body-size: clamp(0.7rem, 1.2vw, 0.95rem);
+  }
+  .nav-dots, .keyboard-hint, .decorative { display: none; }
+}
+@media (max-height: 500px) {
+  :root {
+    --slide-padding: clamp(0.4rem, 2vw, 1rem);
+    --title-size: clamp(1rem, 3.5vw, 1.5rem);
+    --h2-size: clamp(0.9rem, 2.5vw, 1.25rem);
+    --body-size: clamp(0.65rem, 1vw, 0.85rem);
+  }
+}
+@media (max-width: 600px) {
+  :root { --title-size: clamp(1.25rem, 7vw, 2.5rem); }
+  .grid, .product-grid, .conflict-grid { grid-template-columns: 1fr; }
+  .stats-row { flex-direction: column; gap: 0.5rem; }
+  .tab { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.2s !important; }
+  html { scroll-behavior: auto; }
+}
+</style>
+</head>
+<body>
+
+<!-- Navigation Dots -->
+<nav class="nav-dots" id="navDots"></nav>
+<div class="keyboard-hint">↑ ↓ ← → Space</div>
+
+<!-- ============== SLIDE 1: TITLE ============== -->
+<section class="slide" data-slide="0">
+  <div class="paper">
+    <div class="binder">
+      <div class="binder-hole"></div><div class="binder-line"></div>
+      <div class="binder-hole"></div><div class="binder-line"></div>
+      <div class="binder-hole"></div><div class="binder-line"></div>
+      <div class="binder-hole"></div>
+    </div>
+    <div class="tab active" data-color="mint" onclick="goSlide(0)">Title</div>
+    <div class="tab" data-color="lavender" onclick="goSlide(1)">产品覆盖</div>
+    <div class="tab" data-color="pink" onclick="goSlide(2)">查找链</div>
+    <div class="tab" data-color="sky" onclick="goSlide(3)">数据源</div>
+    <div class="tab" data-color="cream" onclick="goSlide(4)">管线</div>
+    <div class="tab" data-color="mint" onclick="goSlide(5)">并行</div>
+    <div class="tab" data-color="lavender" onclick="goSlide(6)">输出</div>
+    <div class="tab" data-color="pink" onclick="goSlide(7)">评分</div>
+    <div class="tab" data-color="sky" onclick="goSlide(8)">矛盾</div>
+    <div class="tab" data-color="cream" onclick="goSlide(9)">维护</div>
+
+    <div class="slide-content" id="sc0">
+      <div class="rule"></div>
+      <h1>Product Learn<br>Skill 架构</h1>
+      <p class="subtitle" style="margin-top: var(--element-gap);">5 数据源 &times; 14 产品 &times; 13,591 知识条目</p>
+      <h3>多源知识自动富化 &amp; 综合排查指南生成</h3>
+      <p class="accent" style="margin-top: var(--content-gap);">Engineer Brain &mdash; Azure Technical Support</p>
+    </div>
+    <div class="slide-number">1 / 10</div>
+  </div>
+</section>
+
+<!-- ============== SLIDE 2: 产品覆盖 ============== -->
+<section class="slide" data-slide="1">
+  <div class="paper">
+    <div class="binder"><div class="binder-hole"></div><div class="binder-line"></div><div class="binder-hole"></div><div class="binder-line"></div><div class="binder-hole"></div><div class="binder-line"></div><div class="binder-hole"></div></div>
+    <div class="tab" data-color="mint" onclick="goSlide(0)">Title</div>
+    <div class="tab active" data-color="lavender" onclick="goSlide(1)">产品覆盖</div>
+    <div class="tab" data-color="pink" onclick="goSlide(2)">查找链</div>
+    <div class="tab" data-color="sky" onclick="goSlide(3)">数据源</div>
+    <div class="tab" data-color="cream" onclick="goSlide(4)">管线</div>
+    <div class="tab" data-color="mint" onclick="goSlide(5)">并行</div>
+    <div class="tab" data-color="lavender" onclick="goSlide(6)">输出</div>
+    <div class="tab" data-color="pink" onclick="goSlide(7)">评分</div>
+    <div class="tab" data-color="sky" onclick="goSlide(8)">矛盾</div>
+    <div class="tab" data-color="cream" onclick="goSlide(9)">维护</div>
+    <div class="slide-content" id="sc1">
+      <h2>产品覆盖</h2>
+      <div class="product-grid">
+        <div class="product-item"><span>VM</span><span class="count">1,585</span></div>
+        <div class="product-item"><span>AKS</span><span class="count">1,326</span></div>
+        <div class="product-item"><span>Entra ID</span><span class="count">3,688</span></div>
+        <div class="product-item"><span>Intune</span><span class="count">1,522</span></div>
+        <div class="product-item"><span>Monitor</span><span class="count">1,209</span></div>
+        <div class="product-item"><span>Defender</span><span class="count">1,109</span></div>
+        <div class="product-item"><span>AVD</span><span class="count">694</span></div>
+        <div class="product-item"><span>Purview</span><span class="count">643</span></div>
+        <div class="product-item"><span>ARM</span><span class="count">508</span></div>
+        <div class="product-item"><span>Disk</span><span class="count">463</span></div>
+        <div class="product-item"><span>Networking</span><span class="count">386</span></div>
+        <div class="product-item"><span>EOP</span><span class="count">288</span></div>
+        <div class="product-item"><span>ACR</span><span class="count">109</span></div>
+        <div class="product-item"><span>Automation</span><span class="count">61</span></div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-box"><span class="num">13,591</span><span class="label">知识条目</span></div>
+        <div class="stat-box" style="border-bottom-color: var(--lavender);"><span class="num">734</span><span class="label">速查表</span></div>
+        <div class="stat-box" style="border-bottom-color: var(--pink);"><span class="num">629</span><span class="label">融合指南</span></div>
+      </div>
+    </div>
+    <div class="slide-number">2 / 10</div>
+  </div>
+</section>
+
+<!-- ============== SLIDE 3: Troubleshooter 查找链 ============== -->
+<section class="slide" data-slide="2">
+  <div class="paper">
+    <div class="binder"><div class="binder-hole"></div><div class="binder-line"></div><div class="binder-hole"></div><div class="binder-line"></div><div class="binder-hole"></div><div class="binder-line"></div><div class="binder-hole"></div></div>
+    <div class="tab" data-color="mint" onclick="goSlide(0)">Title</div>
+    <div class="tab" data-color="lavender" onclick="goSlide(1)">产品覆盖</div>
+    <div class="tab active" data-color="pink" onclick="goSlide(2)">查找链</div>
+    <div class="tab" data-color="sky" onclick="goSlide(3)">数据源</div>
+    <div class="tab" data-color="cream" onclick="goSlide(4)">管线</div>
+    <div class="tab" data-color="mint" onclick="goSlide(5)">并行</div>
+    <div class="tab" data-color="lavender" onclick="goSlide(6)">输出</div>
+    <div class="tab" data-color="pink" onclick="goSlide(7)">评分</div>
+    <div class="tab" data-color="sky" onclick="goSlide(8)">矛盾</div>
+    <div class="tab" data-color="cream" onclick="goSlide(9)">维护</div>
+    <div class="slide-content" id="sc2">
+      <h2>Troubleshooter 查找链</h2>
+      <div class="flow">
+        <div class="flow-step">
+          <div class="flow-num">1</div>
+          <div class="flow-body"><strong>Read SKILL.md</strong><span>诊断层级 + 决策树</span></div>
+        </div>
+        <div class="flow-connector"></div>
+        <div class="flow-step">
+          <div class="flow-num">2</div>
+          <div class="flow-body"><strong>Read guides/_index.md</strong><span>匹配症状关键词</span></div>
+        </div>
+        <div class="flow-connector"></div>
+        <div class="flow-step">
+          <div class="flow-num">3</div>
+          <div class="flow-body"><strong>Read guides/{topic}.md</strong><span>速查表 + 多维评分</span></div>
+        </div>
+        <div class="flow-connector"></div>
+        <div class="flow-step">
+          <div class="flow-num">4</div>
+          <div class="flow-body"><strong>Read guides/details/{topic}.md</strong><span>融合指南 + KQL 查询</span></div>
+        </div>
+        <div class="flow-connector"></div>
+        <div class="flow-step">
+          <div class="flow-num">5</div>
+          <div class="flow-body"><strong>Keyword search known-issues.jsonl</strong><span>结构化三元组 (symptom → rootCause → solution)</span></div>
+        </div>
+        <div class="flow-connector"></div>
+        <div class="flow-step">
+          <div class="flow-num">6</div>
+          <div class="flow-body"><strong>External sources</strong><span>OneNote RAG / MS Learn / ADO Wiki</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-number">3 / 10</div>
+  </div>
+</section>
+
+<!-- ============== SLIDE 4: 5 大数据源 ============== -->
+<section class="slide" data-slide="3">
+  <div class="paper">
+    <div class="binder"><div class="binder-hole"></div><div class="binder-line"></div><div class="binder-hole"></div><div class="binder-line"></div><div class="binder-hole"></div><div class="binder-line"></div><div class="binder-hole"></div></div>
+    <div class="tab" data-color="mint" onclick="goSlide(0)">Title</div>
+    <div class="tab" data-color="lavender" onclick="goSlide(1)">产品覆盖</div>
+    <div class="tab" data-color="pink" onclick="goSlide(2)">查找链</div>
+    <div class="tab active" data-color="sky" onclick="goSlide(3)">数据源</div>
+    <div class="tab" data-color="cream" onclick="goSlide(4)">管线</div>
+    <div class="tab" data-color="mint" onclick="goSlide(5)">并行</div>
+    <div class="tab" data-color="lavender" onclick="goSlide(6)">输出</div>
+    <div class="tab" data-color="pink" onclick="goSlide(7)">评分</div>
+    <div class="tab" data-color="sky" onclick="goSlide(8)">矛盾</div>
+    <div class="tab" data-color="cream" onclick="goSlide(9)">维护</div>
+    <div class="slide-content" id="sc3">
+      <h2>5 大数据源</h2>
+      <table class="data-table">
+        <thead>
+          <tr><th>优先级</th><th>来源</th><th>权重</th><th>条目占比</th><th style="width:35%;">说明</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="priority-badge p1">1</span></td>
+            <td><strong>OneNote 团队 KB</strong></td>
+            <td style="font-family:'Bodoni Moda',serif;font-weight:700;">5</td>
+            <td>10.8%</td>
+            <td>一线团队实战经验，优先级最高</td>
+          </tr>
+          <tr>
+            <td><span class="priority-badge p2">2</span></td>
+            <td><strong>ADO Wiki TSG</strong></td>
+            <td style="font-family:'Bodoni Moda',serif;font-weight:700;">4</td>
+            <td>67.7%</td>
+            <td>官方排查指南，覆盖最广</td>
+          </tr>
+          <tr>
+            <td><span class="priority-badge p3">3</span></td>
+            <td><strong>ContentIdea KB</strong></td>
+            <td style="font-family:'Bodoni Moda',serif;font-weight:700;">3</td>
+            <td>9.3%</td>
+            <td>内部知识库文章</td>
+          </tr>
+          <tr>
+            <td><span class="priority-badge p4">4</span></td>
+            <td><strong>MS Learn 文档</strong></td>
+            <td style="font-family:'Bodoni Moda',serif;font-weight:700;">2</td>
+            <td>11.9%</td>
+            <td>公开文档，基础参考</td>
+          </tr>
+          <tr>
+            <td><span class="priority-badge p5">5</span></td>
+            <td><strong>Case 复盘</strong></td>
+            <td style="font-family:'Bodoni Moda',serif;font-weight:700;">1</td>
+            <td>0.2%</td>
+            <td>个人 Case 沉淀</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="accent" style="margin-top: var(--content-gap);">权重越高，冲突时优先采信</p>
+    </div>
+    <div class="slide-number">4 / 10</div>
+  </div>
+</section>
+
+<!-- ============== SLIDE 5: Auto-Enrich 管线 ============== -->
+<section class="slide" data-slide="4">
+  <div class="paper">
+    <div class="binder"><div class="binder-hole"></div><div class="binder-line"></div><div class="binder-hole"></div><div class="binder-line"></div><div class="binder-hole"></div><div class="binder-line"></div><div class="binder-hole"></div></div>
+    <div class="tab" data-color="mint" onclick="goSlide(0)">Title</div>
+    <div class="tab" data-color="lavender" onclick="goSlide(1)">产品覆盖</div>
+    <div class="tab" data-color="pink" onclick="goSlide(2)">查找链</div>
+    <div class="tab" data-color="sky" onclick="goSlide(3)">数据源</div>
+    <div class="tab active" data-color="cream" onclick="goSlide(4)">管线</div>
+    <div class="tab" data-color="mint" onclick="goSlide(5)">并行</div>
+    <div class="tab" data-color="lavender" onclick="goSlide(6)">输出</div>
+    <div class="tab" data-color="pink" onclick="goSlide(7)">评分</div>
+    <div class="tab" data-color="sky" onclick="goSlide(8)">矛盾</div>
+    <div class="tab" data-color="cream" onclick="goSlide(9)">维护</div>
+    <div class="slide-content" id="sc4">
+      <h2>Auto-Enrich 管线</h2>
+      <div class="pipeline">
+        <div class="pipe-phase"><div class="pipe-label">Phase 0</div><div class="pipe-bar">page-classify — 4,002 OneNote pages → product mapping</div></div>
+        <div class="pipe-arrow">▼</div>
+        <div class="pipe-phase"><div class="pipe-label">Phase 1</div><div class="pipe-bar">21v-gap-scan — Mooncake 不支持功能缓存</div></div>
+        <div class="pipe-arrow">▼</div>
+        <div class="pipe-phase"><div class="pipe-label">Phase 2</div><div class="pipe-bar">onenote-extract — 团队 KB → triples</div></div>
+        <div class="pipe-arrow">▼</div>
+        <div class="pipe-phase"><div class="pipe-label">Phase 3</div><div class="pipe-bar">ado-wiki-scan — TSG → triples</div></div>
+        <div class="pipe-arrow">▼</div>
+        <div class="pipe-phase"><div class="pipe-label">Phase 4</div><div class="pipe-bar">mslearn-scan — docs → triples</div></div>
+        <div class="pipe-arrow">▼</div>
+        <div class="pipe-phase"><div class="pipe-label">Phase 5</div><div class="pipe-bar">contentidea-kb-scan — KB articles → triples</div></div>
+        <div class="pipe-arrow">▼</div>
+        <div class="pipe-phase"><div class="pipe-label">MERGE</div><div class="pipe-bar" style="background:#c0392b;">cross-source dedup + 21V marking</div></div>
+        <div class="pipe-arrow">▼</div>
+        <div class="pipe-phase"><div class="pipe-label">SYNTH</div><div class="pipe-bar" style="background:#2c3e50;">topic clustering → guide generation</div></div>
+      </div>
+    </div>
+    <div class="slide-number">5 / 10</div>
+  </div>
+</section>
+
+<!-- ============== SLIDE 6: 并行架构 (v3) ============== -->
+<section class="slide" data-slide="5">
+  <div class="paper">
+    <div class="binder"><div class="binder-hole"></div><div class="binder-line"></div><div class="binder-hole"></div><div class="binder-line"></div><div class="binder-hole"></div><div class="binder-line"></div><div class="binder-hole"></div></div>
+    <div class="tab" data-color="mint" onclick="goSlide(0)">Title</div>
+    <div class="tab" data-color="lavender" onclick="goSlide(1)">产品覆盖</div>
+    <div class="tab" data-color="pink" onclick="goSlide(2)">查找链</div>
+    <div class="tab" data-color="sky" onclick="goSlide(3)">数据源</div>
+    <div class="tab" data-color="cream" onclick="goSlide(4)">管线</div>
+    <div class="tab active" data-color="mint" onclick="goSlide(5)">并行</div>
+    <div class="tab" data-color="lavender" onclick="goSlide(6)">输出</div>
+    <div class="tab" data-color="pink" onclick="goSlide(7)">评分</div>
+    <div class="tab" data-color="sky" onclick="goSlide(8)">矛盾</div>
+    <div class="tab" data-color="cream" onclick="goSlide(9)">维护</div>
+    <div class="slide-content" id="sc5">
+      <h2>并行架构 <span style="font-weight:400;font-style:italic;font-size:var(--h3-size);">v3</span></h2>
+      <div style="display:flex;flex-direction:column;gap:var(--element-gap);">
+        <div class="arch-feature">
+          <div class="arch-bullet"></div>
+          <div><strong>多产品 &times; 多 source 同时扫描</strong><br><span style="font-size:var(--small-size);color:var(--text-muted);">14 个产品并发，每产品内 5 个 source 并行</span></div>
+        </div>
+        <div class="arch-feature">
+          <div class="arch-bullet"></div>
+          <div><strong>每个 product &times; source = 1 个独立 agent</strong><br><span style="font-size:var(--small-size);color:var(--text-muted);">无共享状态，无锁竞争</span></div>
+        </div>
+        <div class="arch-feature">
+          <div class="arch-bullet"></div>
+          <div><strong>文件隔离：per-source JSONL</strong><br><span style="font-size:var(--small-size);color:var(--text-muted);">known-issues-{source}.jsonl — 各写各的</span></div>
+        </div>
+        <div class="arch-feature">
+          <div class="arch-bullet"></div>
+          <div><strong>Agent 写入规则：独占文件</strong><br><span style="font-size:var(--small-size);color:var(--text-muted);">MERGE 阶段统一合并去重</span></div>
+        </div>
+        <div class="arch-feature">
+          <div class="arch-bullet"></div>
+          <div><strong>maxAgentsPerTick 控制并发</strong><br><span style="font-size:var(--small-size);color:var(--text-muted);">防止资源耗尽，可动态调整</span></div>
+        </div>
+      </div>
+      <div style="margin-top:var(--content-gap);padding:clamp(0.4rem,0.8vw,0.6rem);background:#fff;border-radius:4px;border-left:3px solid var(--lavender);font-size:var(--small-size);color:var(--text-muted);font-style:italic;">
+        架构核心理念：embarrassingly parallel — 扫描阶段零协调
+      </div>
+    </div>
+    <div class="slide-number">6 / 10</div>
+  </div>
+</section>
+
+<!-- ============== SLIDE 7: SYNTHESIZE 三层输出 ============== -->
+<section class="slide" data-slide="6">
+  <div class="paper">
+    <div class="binder"><div class="binder-hole"></div><div class="binder-line"></div><div class="binder-hole"></div><div class="binder-line"></div><div class="binder-hole"></div><div class="binder-line"></div><div class="binder-hole"></div></div>
+    <div class="tab" data-color="mint" onclick="goSlide(0)">Title</div>
+    <div class="tab" data-color="lavender" onclick="goSlide(1)">产品覆盖</div>
+    <div class="tab" data-color="pink" onclick="goSlide(2)">查找链</div>
+    <div class="tab" data-color="sky" onclick="goSlide(3)">数据源</div>
+    <div class="tab" data-color="cream" onclick="goSlide(4)">管线</div>
+    <div class="tab" data-color="mint" onclick="goSlide(5)">并行</div>
+    <div class="tab active" data-color="lavender" onclick="goSlide(6)">输出</div>
+    <div class="tab" data-color="pink" onclick="goSlide(7)">评分</div>
+    <div class="tab" data-color="sky" onclick="goSlide(8)">矛盾</div>
+    <div class="tab" data-color="cream" onclick="goSlide(9)">维护</div>
+    <div class="slide-content" id="sc6">
+      <h2>SYNTHESIZE 三层输出</h2>
+      <div class="tier">
+        <div class="tier-icon" style="background:var(--mint);">&#x1F4CB;</div>
+        <div class="tier-body">
+          <h4>速查表 &mdash; guides/{topic}.md</h4>
+          <p>症状 / 根因 / 方案 + 多维评分矩阵，Troubleshooter 第一匹配层</p>
+        </div>
+      </div>
+      <div class="tier">
+        <div class="tier-icon" style="background:var(--lavender);">&#x1F50D;</div>
+        <div class="tier-body">
+          <h4>已知问题详情 &mdash; guides/details/{topic}.md</h4>
+          <p>三元组展开 (symptom &rarr; rootCause &rarr; solution)，含来源引用与置信度</p>
+        </div>
+      </div>
+      <div class="tier">
+        <div class="tier-icon" style="background:var(--sky);">&#x1F6E0;</div>
+        <div class="tier-body">
+          <h4>排查工作流 &mdash; guides/workflows/{topic}.md</h4>
+          <p>KQL 查询模板 + 决策树 + Portal 导航路径，可直接执行</p>
+        </div>
+      </div>
+      <div class="rule-thin"></div>
+      <p class="accent">大 topic 自动拆分 &mdash; Map-Reduce 并行生成</p>
+    </div>
+    <div class="slide-number">7 / 10</div>
+  </div>
+</section>
+
+<!-- ============== SLIDE 8: 多维度评分体系 ============== -->
+<section class="slide" data-slide="7">
+  <div class="paper">
+    <div class="binder"><div class="binder-hole"></div><div class="binder-line"></div><div class="binder-hole"></div><div class="binder-line"></div><div class="binder-hole"></div><div class="binder-line"></div><div class="binder-hole"></div></div>
+    <div class="tab" data-color="mint" onclick="goSlide(0)">Title</div>
+    <div class="tab" data-color="lavender" onclick="goSlide(1)">产品覆盖</div>
+    <div class="tab" data-color="pink" onclick="goSlide(2)">查找链</div>
+    <div class="tab" data-color="sky" onclick="goSlide(3)">数据源</div>
+    <div class="tab" data-color="cream" onclick="goSlide(4)">管线</div>
+    <div class="tab" data-color="mint" onclick="goSlide(5)">并行</div>
+    <div class="tab" data-color="lavender" onclick="goSlide(6)">输出</div>
+    <div class="tab active" data-color="pink" onclick="goSlide(7)">评分</div>
+    <div class="tab" data-color="sky" onclick="goSlide(8)">矛盾</div>
+    <div class="tab" data-color="cream" onclick="goSlide(9)">维护</div>
+    <div class="slide-content" id="sc7">
+      <h2>多维度评分体系</h2>
+      <table class="data-table">
+        <thead>
+          <tr><th>维度</th><th>满分</th><th>评分标准</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>来源质量</strong></td><td style="font-family:'Bodoni Moda',serif;font-weight:700;">3</td><td>OneNote(3) &gt; Wiki(2.5) &gt; KB(2) &gt; Learn(1.5)</td></tr>
+          <tr><td><strong>时效性</strong></td><td style="font-family:'Bodoni Moda',serif;font-weight:700;">2</td><td>&lt;6月(2) &rarr; &gt;4年(0)，线性衰减</td></tr>
+          <tr><td><strong>验证强度</strong></td><td style="font-family:'Bodoni Moda',serif;font-weight:700;">3</td><td>多源交叉验证(3) &rarr; 单源(1)</td></tr>
+          <tr><td><strong>21V 适用性</strong></td><td style="font-family:'Bodoni Moda',serif;font-weight:700;">2</td><td>Mooncake 已验证(2) &rarr; 不支持(0)</td></tr>
+        </tbody>
+      </table>
+      <div class="score-legend">
+        <div class="score-pill"><div class="score-dot" style="background:#4caf50;"></div><span>8&ndash;10 可直接采信</span></div>
+        <div class="score-pill"><div class="score-dot" style="background:#2196f3;"></div><span>5&ndash;7.9 可参考</span></div>
+        <div class="score-pill"><div class="score-dot" style="background:#ffc107;"></div><span>3&ndash;4.9 方向参考</span></div>
+        <div class="score-pill"><div class="score-dot" style="background:#bbb;"></div><span>0&ndash;2.9 可能过时</span></div>
+      </div>
+      <p class="accent" style="margin-top:var(--content-gap);">总分 = 来源质量 + 时效性 + 验证强度 + 21V 适用性 (满分 10)</p>
+    </div>
+    <div class="slide-number">8 / 10</div>
+  </div>
+</section>
+
+<!-- ============== SLIDE 9: 矛盾检测 ============== -->
+<section class="slide" data-slide="8">
+  <div class="paper">
+    <div class="binder"><div class="binder-hole"></div><div class="binder-line"></div><div class="binder-hole"></div><div class="binder-line"></div><div class="binder-hole"></div><div class="binder-line"></div><div class="binder-hole"></div></div>
+    <div class="tab" data-color="mint" onclick="goSlide(0)">Title</div>
+    <div class="tab" data-color="lavender" onclick="goSlide(1)">产品覆盖</div>
+    <div class="tab" data-color="pink" onclick="goSlide(2)">查找链</div>
+    <div class="tab" data-color="sky" onclick="goSlide(3)">数据源</div>
+    <div class="tab" data-color="cream" onclick="goSlide(4)">管线</div>
+    <div class="tab" data-color="mint" onclick="goSlide(5)">并行</div>
+    <div class="tab" data-color="lavender" onclick="goSlide(6)">输出</div>
+    <div class="tab" data-color="pink" onclick="goSlide(7)">评分</div>
+    <div class="tab active" data-color="sky" onclick="goSlide(8)">矛盾</div>
+    <div class="tab" data-color="cream" onclick="goSlide(9)">维护</div>
+    <div class="slide-content" id="sc8">
+      <h2>矛盾检测 <span style="font-weight:400;font-style:italic;font-size:var(--h3-size);">Phase 1.5</span></h2>
+      <p style="font-size:var(--small-size);color:var(--text-muted);margin-bottom:var(--element-gap);">跨源矛盾类型</p>
+      <div class="conflict-grid">
+        <div class="conflict-card"><h4>rootCause 矛盾</h4><p>不同来源对同一症状给出不同根因解释</p></div>
+        <div class="conflict-card"><h4>solution 矛盾</h4><p>推荐的解决方案相互冲突或步骤矛盾</p></div>
+        <div class="conflict-card"><h4>时效矛盾</h4><p>旧文档的方案在新版本已失效或变更</p></div>
+        <div class="conflict-card"><h4>21V 矛盾</h4><p>Global 方案在 Mooncake 不可用或行为不同</p></div>
+      </div>
+      <p style="font-size:var(--small-size);color:var(--text-muted);margin-top:var(--content-gap);margin-bottom:var(--element-gap);">LLM 裁定结果</p>
+      <div class="verdict-row">
+        <div class="verdict block">real_conflict &rarr; 阻断生成，等人工裁定</div>
+        <div class="verdict auto">version_superseded &rarr; 自动取新弃旧</div>
+        <div class="verdict depend">context_dependent &rarr; 标注适用条件</div>
+        <div class="verdict ignore">false_alarm &rarr; 忽略</div>
+      </div>
+    </div>
+    <div class="slide-number">9 / 10</div>
+  </div>
+</section>
+
+<!-- ============== SLIDE 10: 增量维护 ============== -->
+<section class="slide" data-slide="9">
+  <div class="paper">
+    <div class="binder"><div class="binder-hole"></div><div class="binder-line"></div><div class="binder-hole"></div><div class="binder-line"></div><div class="binder-hole"></div><div class="binder-line"></div><div class="binder-hole"></div></div>
+    <div class="tab" data-color="mint" onclick="goSlide(0)">Title</div>
+    <div class="tab" data-color="lavender" onclick="goSlide(1)">产品覆盖</div>
+    <div class="tab" data-color="pink" onclick="goSlide(2)">查找链</div>
+    <div class="tab" data-color="sky" onclick="goSlide(3)">数据源</div>
+    <div class="tab" data-color="cream" onclick="goSlide(4)">管线</div>
+    <div class="tab" data-color="mint" onclick="goSlide(5)">并行</div>
+    <div class="tab" data-color="lavender" onclick="goSlide(6)">输出</div>
+    <div class="tab" data-color="pink" onclick="goSlide(7)">评分</div>
+    <div class="tab" data-color="sky" onclick="goSlide(8)">矛盾</div>
+    <div class="tab active" data-color="cream" onclick="goSlide(9)">维护</div>
+    <div class="slide-content" id="sc9">
+      <h2>增量维护</h2>
+      <div style="display:flex;flex-direction:column;">
+        <div class="maint-item">
+          <div class="maint-icon" style="background:var(--mint);">&#x1F4D3;</div>
+          <div class="maint-body">
+            <strong>OneNote sync 联动</strong>
+            <span>onenote-changes.json &rarr; 自动标记 stale &rarr; 重新提取三元组</span>
+          </div>
+        </div>
+        <div class="maint-item">
+          <div class="maint-icon" style="background:var(--lavender);">&#x1F504;</div>
+          <div class="maint-body">
+            <strong>Pre-flight: ADO Wiki / MS Learn</strong>
+            <span>7 天 index 刷新，检测新增/修改的 TSG 页面</span>
+          </div>
+        </div>
+        <div class="maint-item">
+          <div class="maint-icon" style="background:var(--pink);">&#x1F50E;</div>
+          <div class="maint-body">
+            <strong>ContentIdea KB</strong>
+            <span>7 天 WIQL 重查，拉取新发布/更新的 KB 文章</span>
+          </div>
+        </div>
+        <div class="maint-item">
+          <div class="maint-icon" style="background:var(--sky);">&#x1F4E1;</div>
+          <div class="maint-body">
+            <strong>GitHub Commits API</strong>
+            <span>检测 MS Learn 内容仓库更新，精准触发相关 topic 重生成</span>
+          </div>
+        </div>
+      </div>
+      <div class="rule-thin"></div>
+      <p class="accent">知识保鲜 &mdash; 全自动增量，无需人工巡检</p>
+    </div>
+    <div class="slide-number">10 / 10</div>
+  </div>
+</section>
+
+<script>
+(function(){
+  const TOTAL = 10;
+  let current = 0;
+
+  // Build nav dots
+  const dotsContainer = document.getElementById('navDots');
+  for(let i = 0; i < TOTAL; i++){
+    const dot = document.createElement('button');
+    dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+    dot.setAttribute('aria-label', 'Slide ' + (i+1));
+    dot.onclick = function(){ goSlide(i); };
+    dotsContainer.appendChild(dot);
+  }
+
+  // Intersection Observer for visibility animations and active state
+  const slides = document.querySelectorAll('.slide');
+  const observer = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      const idx = parseInt(entry.target.getAttribute('data-slide'));
+      const content = document.getElementById('sc' + idx);
+      if(entry.isIntersecting && entry.intersectionRatio > 0.5){
+        current = idx;
+        content.classList.add('visible');
+        updateDots();
+        updateTabs();
+      }
+    });
+  }, { threshold: 0.5 });
+
+  slides.forEach(function(s){ observer.observe(s); });
+
+  // Initial visibility
+  document.getElementById('sc0').classList.add('visible');
+
+  function updateDots(){
+    const dots = dotsContainer.querySelectorAll('.nav-dot');
+    dots.forEach(function(d, i){
+      d.classList.toggle('active', i === current);
+    });
+  }
+
+  function updateTabs(){
+    // Handled by per-slide tab active class in HTML — but we keep in sync
+  }
+
+  // Navigate to slide
+  window.goSlide = function(idx){
+    if(idx < 0 || idx >= TOTAL) return;
+    slides[idx].scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Keyboard navigation
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === ' '){
+      e.preventDefault();
+      goSlide(Math.min(current + 1, TOTAL - 1));
+    } else if(e.key === 'ArrowUp' || e.key === 'ArrowLeft'){
+      e.preventDefault();
+      goSlide(Math.max(current - 1, 0));
+    } else if(e.key === 'Home'){
+      e.preventDefault();
+      goSlide(0);
+    } else if(e.key === 'End'){
+      e.preventDefault();
+      goSlide(TOTAL - 1);
+    }
+  });
+})();
+</script>
+</body>
+</html>

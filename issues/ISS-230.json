@@ -1,0 +1,12 @@
+{
+  "id": "ISS-230",
+  "title": "SYNTHESIZE 增量合成改造：从 20 条全量阈值到 topic 级按需合成",
+  "description": "## 问题\n\n当前 synthesize.md 的增量合成逻辑使用产品级固定阈值：新增 JSONL 条目 < 20 → 跳过合成。\n\n三个缺陷：\n1. **高价值单条更新被忽略** — 1 条 score 9.5 的 OneNote 条目（关键 bug fix）也要等凑够 20 条才能进指南\n2. **Draft 变化不是独立触发条件** — draft 被重新提取（内容大改）但 JSONL 条目数不变时，workflow 不会更新\n3. **全量重合成开销大** — 一旦触发就是全产品所有 topic 重建（~100 agents/product），实际可能只有 1-2 个 topic 有变化\n\n## 改造方案：Topic 级按需合成\n\n### 核心变化\n\n把"产品级 20 条阈值全量重合成"拆为"topic 级精准按需重合成"：\n\n```\n旧: 全产品 JSONL 新增 ≥20 → 全量 Phase 1 + Phase 1.5 + Phase 2（所有 topic）\n新: 逐 topic 检查输入是否变化 → 只重生成有变化的 topic（~3-6 agents）\n```\n\n### 三个触发条件（任一命中即触发该 topic 重生成）\n\n1. **该 topic 有新 JSONL 条目**（哪怕只有 1 条）\n2. **该 topic 关联的 draft 文件内容 hash 变了**（draftHashes 对比）\n3. **该 topic 关联的 Kusto query 文件内容 hash 变了**（新增 kqlHashes 追踪）\n\n### 聚类的增量处理\n\n- 新条目到达 → 用 topic-plan.json 各 topic 的 keywords 快速匹配\n- 匹配到 → 追加到该 topic 的 entryIds，标记 needs_regen\n- 匹配不到 → 累积到 unassigned 池\n- unassigned 池 ≥ 10 条 → 触发小范围聚类（仅对 unassigned）\n\n### synthesizeState 新增字段\n\n```json\n{\n  \"kqlHashes\": {\"service-healing.md\": \"abc123\"},\n  \"topicRegenLog\": [\n    {\"topic\": \"vm-start-stop\", \"reason\": \"+2 entries, draft changed\", \"at\": \"2026-04-19\"}\n  ]\n}\n```\n\n## 预期收益\n\n| 维度 | 旧 | 新 |\n|------|----|----|  \n| 触发粒度 | 产品级全量 | topic 级精准 |\n| 1 条关键更新 | ❌ 被忽略 | ✅ 对应 topic 立刻重生成 |\n| Draft 变化 | ❌ 不触发 | ✅ 直接触发关联 topic |\n| Agent 开销 | ~100 agents/产品 | ~3-6 agents（仅变化 topic）|\n\n## 涉及文件\n\n- `.claude/skills/product-learn/modes/synthesize.md`（主改动 — 增量判断逻辑重写）\n- `.claude/skills/product-learn/modes/auto-enrich.md`（Step 4 结果收集 → topic 级触发）\n- `.claude/skills/products/{product}/.enrich/progress.json`（synthesizeState 新增 kqlHashes + topicRegenLog）",
+  "type": "feature",
+  "priority": "P1",
+  "status": "tracking",
+  "trackId": "synthesize-topic-regen_20260419",
+  "testLoopScan": true,
+  "createdAt": "2026-04-19T22:30:00+08:00",
+  "updatedAt": "2026-04-19T22:35:00+08:00"
+}

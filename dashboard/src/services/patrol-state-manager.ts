@@ -183,6 +183,25 @@ class PatrolStateManager {
   update(partial: Partial<PatrolState>): void {
     const now = new Date().toISOString()
 
+    // ── Phase regression guard ──
+    // Phases must only move forward in the pipeline. If an update tries to
+    // revert to an earlier phase (e.g., warming-up→processing→warming-up due
+    // to async warmup completion), suppress the phase change but still merge
+    // other fields (like warmupStatus).
+    if (partial.phase && partial.phase !== this.state.phase) {
+      const prevIdx = PIPELINE_PHASES.indexOf(this.state.phase)
+      const newIdx = PIPELINE_PHASES.indexOf(partial.phase)
+      // Both phases are in the pipeline and the new one is earlier → regression
+      if (prevIdx >= 0 && newIdx >= 0 && newIdx < prevIdx) {
+        console.warn(
+          `[patrol-state] Phase regression blocked: ${this.state.phase} → ${partial.phase} (keeping ${this.state.phase})`
+        )
+        // Strip the phase from partial but keep other fields (warmupStatus, etc.)
+        const { phase: _dropped, ...rest } = partial
+        partial = rest
+      }
+    }
+
     // ── Phase transition tracking ──
     if (partial.phase && partial.phase !== this.state.phase) {
       const prevPhase = this.state.phase

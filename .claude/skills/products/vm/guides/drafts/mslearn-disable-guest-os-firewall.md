@@ -1,58 +1,46 @@
-# Disable Guest OS Firewall in Azure VM
+---
+title: Disable Guest OS Firewall on Azure Windows VM
+source: mslearn
+sourceUrl: https://learn.microsoft.com/en-us/troubleshoot/azure/virtual-machines/windows/disable-guest-os-firewall-windows
+product: vm
+tags: [firewall, RDP, connectivity, workaround]
+21vApplicable: true
+---
 
-> Source: https://learn.microsoft.com/en-us/troubleshoot/azure/virtual-machines/windows/disable-guest-os-firewall-windows
+# Disable Guest OS Firewall on Azure Windows VM
 
-## When to Use
+当怀疑 Guest OS 防火墙过滤了 VM 的部分或全部流量（尤其是导致 RDP 连接失败），可使用以下方法作为 workaround。
 
-Guest OS firewall is filtering partial or complete traffic to VM, causing RDP or other connectivity failures.
+> **注意**：Microsoft 最佳实践是保持 Windows Firewall 启用。此为临时 workaround，最终应正确配置防火墙规则。
 
-## Online Solutions (VM accessible via another VM in same VNET)
+## Online Solutions（VM 在线时）
 
 ### Mitigation 1: Custom Script Extension / Run Command
 
-**Local firewall:**
-```powershell
+通过 Azure 代理远程执行脚本：
+
+**本地防火墙策略：**
+'''powershell
 Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\services\SharedAccess\Parameters\FirewallPolicy\DomainProfile' -name "EnableFirewall" -Value 0
 Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\services\SharedAccess\Parameters\FirewallPolicy\PublicProfile' -name "EnableFirewall" -Value 0
 Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\services\SharedAccess\Parameters\FirewallPolicy\Standardprofile' -name "EnableFirewall" -Value 0
 Restart-Service -Name mpssvc
-```
+'''
 
-**AD policy firewall (temporary):**
-```powershell
-Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\WindowsFirewall\DomainProfile' -name "EnableFirewall" -Value 0
-Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\WindowsFirewall\PublicProfile' -name "EnableFirewall" -Value 0
-Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\WindowsFirewall\StandardProfile' -name "EnableFirewall" -Value 0
-Restart-Service -Name mpssvc
-```
+**AD 策略设置的防火墙（临时）：** 修改 HKLM:\SOFTWARE\Policies\Microsoft\WindowsFirewall 下相同键值。
 
 ### Mitigation 2: Remote PowerShell
-```powershell
-Enter-PSSession (New-PSSession -ComputerName "<HOSTNAME>" -Credential (Get-Credential) -SessionOption (New-PSSessionOption -SkipCACheck -SkipCNCheck))
-netsh advfirewall set allprofiles state off
-Restart-Service -Name mpssvc
-exit
-```
+从同 VNET 另一台 VM 通过 Enter-PSSession + netsh advfirewall set allprofiles state off。
 
 ### Mitigation 3: PSTools
-```cmd
-psexec \\<DIP> -u <username> cmd
-netsh advfirewall set allprofiles state off
-psservice restart mpssvc
-```
+使用 psexec 远程执行 netsh advfirewall set allprofiles state off。
 
 ### Mitigation 4: Remote Registry
-Navigate to `<TARGET>\SYSTEM\CurrentControlSet\services\SharedAccess\Parameters\FirewallPolicy\{Profile}\EnableFirewall` → set to 0 for each profile (Domain, Public, Standard).
+通过 Remote Registry 修改 EnableFirewall 注册表项为 0，再通过 Remote Service Console 重启 mpssvc 服务。
 
-## Offline Solution
-
-1. Attach OS disk to recovery VM
-2. Load SYSTEM and SOFTWARE hives
-3. Set EnableFirewall=0 for all profiles in both local policy and AD policy paths
-4. Also clear AD policy: `HKLM:\BROKENSOFTWARE\Policies\Microsoft\WindowsFirewall\{Profile}\EnableFirewall` → 0
-5. Unload hives, detach disk, recreate VM
-
-## Important Notes
-- Microsoft best practice: keep Windows Firewall enabled, fix rules instead of disabling entirely
-- AD policy firewall: disabling locally is temporary; policy reapplication will re-enable
-- This is a workaround; focus on fixing firewall rules correctly
+## Offline Solutions（VM 完全不可达时）
+1. 将 OS 磁盘附加到恢复 VM
+2. 加载注册表 hive (BROKENSYSTEM / BROKENSOFTWARE)
+3. 修改 EnableFirewall 为 0（ControlSet001 + ControlSet002）
+4. 同时检查 AD 策略路径
+5. Unload hive → 分离磁盘 → 重建 VM

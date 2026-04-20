@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Per-Case Substep Layout Comparison</title>
+<style>
+  :root {
+    --bg-base: #f8f9fb;
+    --bg-surface: #ffffff;
+    --bg-elevated: #f0f2f5;
+    --bg-inset: #f5f6f8;
+    --bg-active: #e8eaef;
+    --text-primary: #1a1a2e;
+    --text-secondary: #555770;
+    --text-tertiary: #8e90a6;
+    --border-default: #d9dbe4;
+    --border-subtle: #e4e6ed;
+    --accent-blue: #2563eb;
+    --accent-blue-dim: rgba(37,99,235,0.10);
+    --accent-green: #16a34a;
+    --accent-green-dim: rgba(22,163,74,0.10);
+    --accent-amber: #d97706;
+    --accent-amber-dim: rgba(217,119,6,0.10);
+    --accent-red: #dc2626;
+    --accent-red-dim: rgba(220,38,38,0.10);
+    --accent-purple: #7c3aed;
+    --accent-purple-dim: rgba(124,58,237,0.10);
+    --accent-cyan: #0891b2;
+    --accent-cyan-dim: rgba(8,145,178,0.10);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+    background: var(--bg-base);
+    color: var(--text-primary);
+    padding: 24px;
+    line-height: 1.5;
+  }
+
+  .page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; letter-spacing: -0.5px; }
+  .page-subtitle { font-size: 13px; color: var(--text-tertiary); margin-bottom: 32px; }
+
+  .section {
+    margin-bottom: 40px;
+    border: 1px solid var(--border-default);
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .section:hover { border-color: var(--accent-blue); }
+  .section.selected { border-color: var(--accent-blue); box-shadow: 0 0 0 1px var(--accent-blue), 0 0 24px var(--accent-blue-dim); }
+
+  .section-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 20px;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-default);
+  }
+  .letter {
+    width: 28px; height: 28px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px;
+    background: var(--accent-blue-dim); color: var(--accent-blue);
+  }
+  .section-title { font-weight: 600; font-size: 15px; }
+  .section-desc { font-size: 12px; color: var(--text-tertiary); }
+  .section-body { padding: 20px; }
+
+  /* ===== Data model legend ===== */
+  .legend {
+    margin-bottom: 24px; padding: 14px 16px;
+    background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px;
+    font-size: 11px; color: var(--text-secondary); line-height: 1.8;
+  }
+  .legend strong { color: var(--text-primary); }
+
+  /* ===== Shared: Main 4-step pipeline ===== */
+  .main-pipeline {
+    display: flex; align-items: center; gap: 0; margin-bottom: 16px;
+  }
+  .step-node {
+    display: flex; flex-direction: column; align-items: center;
+    position: relative; min-width: 80px; flex: 1;
+  }
+  .step-circle {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; border: 2px solid; z-index: 2;
+  }
+  .step-circle.done { background: var(--accent-green-dim); border-color: var(--accent-green); color: var(--accent-green); }
+  .step-circle.active { background: var(--accent-blue-dim); border-color: var(--accent-blue); color: var(--accent-blue); animation: pulse 2s infinite; }
+  .step-circle.pending { background: var(--bg-elevated); border-color: var(--border-default); color: var(--text-tertiary); }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(59,130,246,0.25); } 50% { box-shadow: 0 0 0 6px rgba(59,130,246,0); } }
+
+  .step-line {
+    position: absolute; top: 16px;
+    left: calc(50% + 16px); right: calc(-50% + 16px);
+    height: 2px; z-index: 1;
+  }
+  .step-line.filled { background: var(--accent-green); }
+  .step-line.empty { background: var(--border-default); }
+
+  .step-label {
+    margin-top: 6px; font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.4px;
+  }
+  .step-label.done { color: var(--accent-green); }
+  .step-label.active { color: var(--accent-blue); }
+  .step-label.pending { color: var(--text-tertiary); }
+
+  /* ===== Option 1: Inline Chips (single row per step) ===== */
+  .inline-substep-row {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 12px; margin: 2px 0;
+    background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px;
+  }
+  .inline-substep-row.is-active {
+    border-color: rgba(37,99,235,0.25); background: rgba(37,99,235,0.05);
+  }
+  .step-icon-mini {
+    width: 20px; height: 20px; border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; flex-shrink: 0;
+  }
+  .step-name { font-size: 11px; font-weight: 600; min-width: 80px; flex-shrink: 0; }
+  .chip-group {
+    display: flex; gap: 3px; flex-wrap: wrap; flex: 1;
+  }
+  .chip {
+    font-size: 9px; padding: 2px 6px; border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    display: inline-flex; align-items: center; gap: 2px;
+    white-space: nowrap; transition: all 0.2s;
+  }
+  .chip-done { background: var(--accent-green-dim); color: var(--accent-green); }
+  .chip-active { background: var(--accent-blue-dim); color: var(--accent-blue); animation: chip-pulse 1.5s infinite; }
+  .chip-pending { background: var(--bg-active); color: var(--text-tertiary); }
+  .chip-failed { background: var(--accent-red-dim); color: var(--accent-red); }
+  @keyframes chip-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+  .step-dur { font-size: 9px; font-family: monospace; color: var(--text-tertiary); flex-shrink: 0; }
+  .parallel-tag, .serial-tag {
+    font-size: 8px; padding: 1px 4px; border-radius: 3px; flex-shrink: 0;
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .parallel-tag { background: var(--accent-cyan-dim); color: var(--accent-cyan); }
+  .serial-tag { background: var(--accent-amber-dim); color: var(--accent-amber); }
+
+  /* ===== Option 2: Two-tier expanded ===== */
+  .tier-container {
+    background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 10px;
+    overflow: hidden; margin-bottom: 8px;
+  }
+  .tier-container.is-active {
+    border-color: rgba(37,99,235,0.3);
+  }
+  .tier-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .tier-body {
+    padding: 8px 14px 10px;
+  }
+  .substep-grid {
+    display: flex; gap: 6px; flex-wrap: wrap;
+  }
+  .substep-card {
+    display: flex; align-items: center; gap: 5px;
+    padding: 5px 8px; border-radius: 6px;
+    font-size: 10px; font-family: monospace;
+    border: 1px solid; min-width: 70px;
+  }
+  .substep-card.done { border-color: rgba(22,163,74,0.25); background: var(--accent-green-dim); color: var(--accent-green); }
+  .substep-card.active { border-color: rgba(37,99,235,0.35); background: var(--accent-blue-dim); color: var(--accent-blue); }
+  .substep-card.pending { border-color: var(--border-subtle); background: var(--bg-elevated); color: var(--text-tertiary); }
+  .substep-icon { font-size: 11px; }
+  .substep-name { font-weight: 600; }
+  .substep-dur { font-size: 8px; opacity: 0.7; }
+  .substep-status { font-weight: 700; }
+
+  /* Serial connector for act */
+  .serial-flow {
+    display: flex; align-items: center; gap: 0;
+  }
+  .serial-arrow {
+    color: var(--text-tertiary); font-size: 10px; padding: 0 4px; flex-shrink: 0;
+  }
+  .serial-arrow.done { color: var(--accent-green); }
+
+  /* ===== Option 3: Compact nested dots ===== */
+  .compact-case-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; margin: 3px 0;
+    background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px;
+  }
+  .compact-case-row.is-active {
+    border-color: rgba(37,99,235,0.25); background: rgba(37,99,235,0.05);
+  }
+  .case-num {
+    font-family: monospace; font-size: 11px; width: 56px; flex-shrink: 0; font-weight: 600;
+  }
+  .nested-pipeline {
+    display: flex; align-items: center; gap: 0; flex: 1;
+  }
+  .np-group {
+    display: flex; align-items: center; gap: 2px;
+    padding: 2px 6px; border-radius: 6px; position: relative;
+  }
+  .np-group-refresh { background: rgba(22,163,74,0.07); }
+  .np-group-act { background: rgba(37,99,235,0.07); }
+  .np-dot {
+    width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+  }
+  .np-dot.done { background: var(--accent-green); }
+  .np-dot.active { background: var(--accent-blue); animation: np-pulse 1.2s infinite; }
+  .np-dot.pending { background: var(--border-default); }
+  @keyframes np-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  .np-connector {
+    width: 8px; height: 1.5px; flex-shrink: 0;
+  }
+  .np-connector.done { background: var(--accent-green); }
+  .np-connector.empty { background: var(--border-default); }
+
+  .np-main-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+    border: 1.5px solid;
+  }
+  .np-main-dot.done { border-color: var(--accent-green); background: var(--accent-green-dim); }
+  .np-main-dot.active { border-color: var(--accent-blue); background: var(--accent-blue-dim); }
+  .np-main-dot.pending { border-color: var(--border-default); background: var(--bg-elevated); }
+
+  .np-main-connector {
+    width: 16px; height: 2px; flex-shrink: 0;
+  }
+  .np-main-connector.done { background: var(--accent-green); }
+  .np-main-connector.empty { background: var(--border-default); }
+
+  .np-group-label {
+    font-size: 7px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%);
+    white-space: nowrap;
+  }
+
+  .case-badge {
+    font-size: 9px; padding: 2px 6px; border-radius: 4px; flex-shrink: 0; font-family: monospace;
+  }
+  .case-time { font-size: 9px; font-family: monospace; color: var(--text-tertiary); width: 44px; text-align: right; flex-shrink: 0; }
+
+  /* Tooltip */
+  .hover-tooltip {
+    display: none; position: absolute; z-index: 10; top: calc(100% + 4px); left: 50%; transform: translateX(-50%);
+    background: var(--bg-elevated); border: 1px solid var(--border-default); border-radius: 6px;
+    padding: 6px 10px; white-space: nowrap; font-size: 9px; color: var(--text-secondary);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  }
+  .np-group:hover .hover-tooltip { display: block; }
+</style>
+</head>
+<body>
+
+<div class="page-title">子步骤布局对比</div>
+<p class="page-subtitle">
+  Data Refresh 有 5 个<strong style="color:var(--accent-cyan)">并行</strong>子步骤 (D365, Teams, OneNote, ICM, Attachments)。
+  Act 有 1-3 个<strong style="color:var(--accent-amber)">串行</strong>子步骤 (Troubleshooter → Email → Challenger)。
+  点击选择你觉得最合适的布局。
+</p>
+
+<div class="legend">
+  <strong>模拟状态：</strong>Case ...7741 正在处理中<br>
+  <strong>Data Refresh：</strong>D365 ✓(51s) · Teams ✓(22s) · OneNote ✓(15s) · ICM ✓(8s) · Attachments ✓(3s) — 全部完成，总耗时 2m8s<br>
+  <strong>Assess：</strong>已完成 (5s) → 判定 pending-engineer<br>
+  <strong>Act：</strong>Troubleshooter 进行中(45s...) → Email 待执行 → Challenger 不需要<br>
+  <strong>Summarize：</strong>待执行
+</div>
+
+<!-- ===== OPTION 1: Inline chips — 一行一步 ===== -->
+<div class="section" onclick="this.classList.toggle('selected')">
+  <div class="section-header">
+    <div class="letter">1</div>
+    <div>
+      <div class="section-title">Inline Chips — 水平芯片组</div>
+      <div class="section-desc">每个主步骤占一行，子步骤以 chip 形式内联展示，并行/串行用标签区分</div>
+    </div>
+  </div>
+  <div class="section-body">
+    <!-- Data Refresh row -->
+    <div class="inline-substep-row">
+      <div class="step-icon-mini" style="background:var(--accent-green-dim);color:var(--accent-green)">✓</div>
+      <span class="step-name" style="color:var(--accent-green)">Data Refresh</span>
+      <span class="parallel-tag">parallel</span>
+      <div class="chip-group">
+        <span class="chip chip-done">📋 D365 ✓ <span style="opacity:0.6">51s</span></span>
+        <span class="chip chip-done">💬 Teams ✓ <span style="opacity:0.6">22s</span></span>
+        <span class="chip chip-done">📓 Notes ✓ <span style="opacity:0.6">15s</span></span>
+        <span class="chip chip-done">🔔 ICM ✓ <span style="opacity:0.6">8s</span></span>
+        <span class="chip chip-done">📎 Attach ✓ <span style="opacity:0.6">3s</span></span>
+      </div>
+      <span class="step-dur">2m 08s</span>
+    </div>
+
+    <!-- Assess row -->
+    <div class="inline-substep-row">
+      <div class="step-icon-mini" style="background:var(--accent-green-dim);color:var(--accent-green)">✓</div>
+      <span class="step-name" style="color:var(--accent-green)">Assess</span>
+      <span style="font-size:9px;color:var(--accent-green);font-family:monospace">pending-engineer</span>
+      <span class="step-dur" style="margin-left:auto">5s</span>
+    </div>
+
+    <!-- Act row — active -->
+    <div class="inline-substep-row is-active">
+      <div class="step-icon-mini" style="background:var(--accent-blue-dim);color:var(--accent-blue)">⟳</div>
+      <span class="step-name" style="color:var(--accent-blue)">Act</span>
+      <span class="serial-tag">serial</span>
+      <div class="chip-group">
+        <span class="chip chip-active">🔍 Tshoot ⟳ <span style="opacity:0.6">45s</span></span>
+        <span style="color:var(--text-tertiary);font-size:9px">→</span>
+        <span class="chip chip-pending">✉️ Email</span>
+        <span style="color:var(--text-tertiary);font-size:9px">→</span>
+        <span class="chip chip-pending" style="opacity:0.4">⚔️ Challenge <span style="font-size:7px">skip</span></span>
+      </div>
+      <span class="step-dur">45s...</span>
+    </div>
+
+    <!-- Summarize row -->
+    <div class="inline-substep-row">
+      <div class="step-icon-mini" style="background:var(--bg-elevated);color:var(--text-tertiary)">◦</div>
+      <span class="step-name" style="color:var(--text-tertiary)">Summarize</span>
+      <span class="step-dur" style="margin-left:auto">—</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== OPTION 2: Two-tier cards ===== -->
+<div class="section" onclick="this.classList.toggle('selected')">
+  <div class="section-header">
+    <div class="letter">2</div>
+    <div>
+      <div class="section-title">Two-Tier Cards — 分层卡片</div>
+      <div class="section-desc">主步骤用 header bar，子步骤用 card grid（并行）或 flow chain（串行）</div>
+    </div>
+  </div>
+  <div class="section-body">
+
+    <!-- Top: 4-step main pipeline -->
+    <div class="main-pipeline">
+      <div class="step-node">
+        <div class="step-circle done">✓</div>
+        <span class="step-label done">Refresh</span>
+        <div class="step-line filled"></div>
+      </div>
+      <div class="step-node">
+        <div class="step-circle done">✓</div>
+        <span class="step-label done">Assess</span>
+        <div class="step-line filled"></div>
+      </div>
+      <div class="step-node">
+        <div class="step-circle active">⟳</div>
+        <span class="step-label active">Act</span>
+        <div class="step-line empty"></div>
+      </div>
+      <div class="step-node">
+        <div class="step-circle pending">◦</div>
+        <span class="step-label pending">Summarize</span>
+      </div>
+    </div>
+
+    <!-- Data Refresh tier -->
+    <div class="tier-container">
+      <div class="tier-header">
+        <div class="step-icon-mini" style="background:var(--accent-green-dim);color:var(--accent-green)">✓</div>
+        <span style="font-size:12px;font-weight:600;color:var(--accent-green)">Data Refresh</span>
+        <span class="parallel-tag">5 parallel</span>
+        <span class="step-dur" style="margin-left:auto">2m 08s</span>
+      </div>
+      <div class="tier-body">
+        <div class="substep-grid">
+          <div class="substep-card done">
+            <span class="substep-icon">📋</span>
+            <span class="substep-name">D365</span>
+            <span class="substep-status">✓</span>
+            <span class="substep-dur">51s</span>
+          </div>
+          <div class="substep-card done">
+            <span class="substep-icon">💬</span>
+            <span class="substep-name">Teams</span>
+            <span class="substep-status">✓</span>
+            <span class="substep-dur">22s</span>
+          </div>
+          <div class="substep-card done">
+            <span class="substep-icon">📓</span>
+            <span class="substep-name">Notes</span>
+            <span class="substep-status">✓</span>
+            <span class="substep-dur">15s</span>
+          </div>
+          <div class="substep-card done">
+            <span class="substep-icon">🔔</span>
+            <span class="substep-name">ICM</span>
+            <span class="substep-status">✓</span>
+            <span class="substep-dur">8s</span>
+          </div>
+          <div class="substep-card done">
+            <span class="substep-icon">📎</span>
+            <span class="substep-name">Attach</span>
+            <span class="substep-status">✓</span>
+            <span class="substep-dur">3s</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Act tier — active -->
+    <div class="tier-container is-active">
+      <div class="tier-header">
+        <div class="step-icon-mini" style="background:var(--accent-blue-dim);color:var(--accent-blue)">⟳</div>
+        <span style="font-size:12px;font-weight:600;color:var(--accent-blue)">Act</span>
+        <span class="serial-tag">serial</span>
+        <span style="font-size:10px;color:var(--text-tertiary);margin-left:4px">pending-engineer</span>
+        <span class="step-dur" style="margin-left:auto">45s...</span>
+      </div>
+      <div class="tier-body">
+        <div class="serial-flow">
+          <div class="substep-card active">
+            <span class="substep-icon">🔍</span>
+            <span class="substep-name">Troubleshoot</span>
+            <span class="substep-status">⟳</span>
+            <span class="substep-dur">45s</span>
+          </div>
+          <span class="serial-arrow">→</span>
+          <div class="substep-card pending">
+            <span class="substep-icon">✉️</span>
+            <span class="substep-name">Email</span>
+          </div>
+          <span class="serial-arrow">→</span>
+          <div class="substep-card pending" style="opacity:0.4">
+            <span class="substep-icon">⚔️</span>
+            <span class="substep-name">Challenge</span>
+            <span style="font-size:7px;color:var(--text-tertiary)">skip</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== OPTION 3: Compact nested dots + hover ===== -->
+<div class="section" onclick="this.classList.toggle('selected')">
+  <div class="section-header">
+    <div class="letter">3</div>
+    <div>
+      <div class="section-title">Compact Nested — 嵌套圆点</div>
+      <div class="section-desc">主步骤大圆点 + 子步骤小圆点集群，单行展示全部信息，hover 看详情。适合 patrol 多 case 列表</div>
+    </div>
+  </div>
+  <div class="section-body">
+    <div style="font-size:10px;color:var(--text-tertiary);margin-bottom:12px">
+      大圆点 = 主步骤 (Refresh / Assess / Act / Summarize)，小圆点簇 = 子步骤。鼠标悬停看详情。
+    </div>
+
+    <!-- Completed case — ultra-compact -->
+    <div class="compact-case-row">
+      <span class="case-num" style="color:var(--accent-green)">...3042</span>
+      <div class="nested-pipeline">
+        <!-- Data Refresh: main dot + 5 mini dots inside group -->
+        <div class="np-group np-group-refresh" style="position:relative">
+          <span class="np-dot done"></span>
+          <span class="np-dot done"></span>
+          <span class="np-dot done"></span>
+          <span class="np-dot done"></span>
+          <span class="np-dot done"></span>
+          <div class="hover-tooltip">📋D365 51s · 💬Teams 22s · 📓Notes 15s · 🔔ICM 8s · 📎Attach 3s</div>
+        </div>
+        <span class="np-main-connector done"></span>
+        <!-- Assess: single main dot -->
+        <span class="np-main-dot done"></span>
+        <span class="np-main-connector done"></span>
+        <!-- Act: main dot + substep dots -->
+        <div class="np-group" style="position:relative">
+          <span class="np-dot done"></span>
+          <span class="np-dot done"></span>
+          <div class="hover-tooltip">🔍Tshoot 1m2s · ✉️Email 38s</div>
+        </div>
+        <span class="np-main-connector done"></span>
+        <!-- Summarize -->
+        <span class="np-main-dot done"></span>
+      </div>
+      <span class="case-badge" style="background:var(--accent-green-dim);color:var(--accent-green)">done</span>
+      <span class="case-time">2m 14s</span>
+    </div>
+
+    <!-- Active case — show detail inline -->
+    <div class="compact-case-row is-active">
+      <span class="case-num" style="color:var(--accent-blue)">...7741</span>
+      <div class="nested-pipeline">
+        <!-- Data Refresh: all done -->
+        <div class="np-group np-group-refresh" style="position:relative">
+          <span class="np-dot done"></span>
+          <span class="np-dot done"></span>
+          <span class="np-dot done"></span>
+          <span class="np-dot done"></span>
+          <span class="np-dot done"></span>
+          <div class="hover-tooltip">📋D365 51s · 💬Teams 22s · 📓Notes 15s · 🔔ICM 8s · 📎Attach 3s</div>
+        </div>
+        <span class="np-main-connector done"></span>
+        <!-- Assess: done -->
+        <span class="np-main-dot done"></span>
+        <span class="np-main-connector done"></span>
+        <!-- Act: one active, one pending -->
+        <div class="np-group np-group-act" style="position:relative">
+          <span class="np-dot active"></span>
+          <span style="color:var(--text-tertiary);font-size:6px;padding:0 1px">→</span>
+          <span class="np-dot pending"></span>
+          <div class="hover-tooltip">🔍Tshoot 45s... → ✉️Email pending</div>
+        </div>
+        <span class="np-main-connector empty"></span>
+        <!-- Summarize: pending -->
+        <span class="np-main-dot pending"></span>
+      </div>
+      <span class="case-badge" style="background:var(--accent-blue-dim);color:var(--accent-blue)">act</span>
+      <span class="case-time">1m 22s</span>
+    </div>
+
+    <!-- Queued case -->
+    <div class="compact-case-row">
+      <span class="case-num" style="color:var(--text-tertiary)">...9102</span>
+      <div class="nested-pipeline">
+        <div class="np-group">
+          <span class="np-dot pending"></span>
+          <span class="np-dot pending"></span>
+          <span class="np-dot pending"></span>
+          <span class="np-dot pending"></span>
+          <span class="np-dot pending"></span>
+        </div>
+        <span class="np-main-connector empty"></span>
+        <span class="np-main-dot pending"></span>
+        <span class="np-main-connector empty"></span>
+        <div class="np-group">
+          <span class="np-dot pending"></span>
+        </div>
+        <span class="np-main-connector empty"></span>
+        <span class="np-main-dot pending"></span>
+      </div>
+      <span class="case-badge" style="background:var(--bg-elevated);color:var(--text-tertiary)">queued</span>
+      <span class="case-time">—</span>
+    </div>
+
+    <div style="margin-top:16px;padding:10px;background:var(--bg-surface);border-radius:6px;border:1px dashed var(--border-subtle)">
+      <div style="font-size:10px;color:var(--text-tertiary);margin-bottom:6px">
+        💡 这种模式适合 patrol 列表——10+ cases 也不会撑爆屏幕。<br>
+        可以和方案 1 或 2 组合：默认紧凑，点击/hover 展开详情。
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== BONUS: Hybrid suggestion ===== -->
+<div class="section" onclick="this.classList.toggle('selected')">
+  <div class="section-header">
+    <div class="letter">★</div>
+    <div>
+      <div class="section-title">推荐组合 — Compact List + Expandable Detail</div>
+      <div class="section-desc">列表默认用方案 3 的紧凑行。正在处理的 case 自动展开为方案 1 的 inline chips 详情。</div>
+    </div>
+  </div>
+  <div class="section-body">
+
+    <!-- Completed: compact -->
+    <div class="compact-case-row">
+      <span class="case-num" style="color:var(--accent-green)">...3042</span>
+      <div class="nested-pipeline">
+        <div class="np-group np-group-refresh" style="position:relative">
+          <span class="np-dot done"></span><span class="np-dot done"></span><span class="np-dot done"></span><span class="np-dot done"></span><span class="np-dot done"></span>
+        </div>
+        <span class="np-main-connector done"></span>
+        <span class="np-main-dot done"></span>
+        <span class="np-main-connector done"></span>
+        <div class="np-group"><span class="np-dot done"></span><span class="np-dot done"></span></div>
+        <span class="np-main-connector done"></span>
+        <span class="np-main-dot done"></span>
+      </div>
+      <span class="case-badge" style="background:var(--accent-green-dim);color:var(--accent-green)">done</span>
+      <span class="case-time">2m 14s</span>
+    </div>
+    <div class="compact-case-row">
+      <span class="case-num" style="color:var(--accent-green)">...8891</span>
+      <div class="nested-pipeline">
+        <div class="np-group np-group-refresh" style="position:relative">
+          <span class="np-dot done"></span><span class="np-dot done"></span><span class="np-dot done"></span><span class="np-dot done"></span><span class="np-dot done"></span>
+        </div>
+        <span class="np-main-connector done"></span>
+        <span class="np-main-dot done"></span>
+        <span class="np-main-connector done"></span>
+        <div class="np-group"><span class="np-dot done"></span></div>
+        <span class="np-main-connector done"></span>
+        <span class="np-main-dot done"></span>
+      </div>
+      <span class="case-badge" style="background:var(--accent-green-dim);color:var(--accent-green)">done</span>
+      <span class="case-time">1m 48s</span>
+    </div>
+
+    <!-- Active: expanded inline chips -->
+    <div style="border:1px solid rgba(37,99,235,0.25);border-radius:10px;background:rgba(37,99,235,0.04);overflow:hidden;margin:4px 0">
+      <!-- Header row: compact style -->
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid rgba(37,99,235,0.12)">
+        <span class="case-num" style="color:var(--accent-blue);font-size:12px">...7741</span>
+        <span class="case-badge" style="background:var(--accent-blue-dim);color:var(--accent-blue)">act · troubleshooter</span>
+        <span style="margin-left:auto;font-size:9px;font-family:monospace;color:var(--text-tertiary)">1m 22s...</span>
+      </div>
+      <!-- Expanded detail rows -->
+      <div style="padding:6px 10px">
+        <div class="inline-substep-row" style="margin:2px 0;border-color:transparent;background:transparent;padding:4px 8px">
+          <div class="step-icon-mini" style="background:var(--accent-green-dim);color:var(--accent-green);width:16px;height:16px;font-size:8px">✓</div>
+          <span class="step-name" style="color:var(--accent-green);font-size:10px;min-width:65px">Refresh</span>
+          <div class="chip-group">
+            <span class="chip chip-done" style="font-size:8px">📋D365 ✓ 51s</span>
+            <span class="chip chip-done" style="font-size:8px">💬Teams ✓ 22s</span>
+            <span class="chip chip-done" style="font-size:8px">📓Notes ✓ 15s</span>
+            <span class="chip chip-done" style="font-size:8px">🔔ICM ✓ 8s</span>
+            <span class="chip chip-done" style="font-size:8px">📎Att ✓ 3s</span>
+          </div>
+          <span class="step-dur">2m 08s</span>
+        </div>
+        <div class="inline-substep-row" style="margin:2px 0;border-color:transparent;background:transparent;padding:4px 8px">
+          <div class="step-icon-mini" style="background:var(--accent-green-dim);color:var(--accent-green);width:16px;height:16px;font-size:8px">✓</div>
+          <span class="step-name" style="color:var(--accent-green);font-size:10px;min-width:65px">Assess</span>
+          <span style="font-size:8px;color:var(--accent-green);font-family:monospace">pending-engineer</span>
+          <span class="step-dur" style="margin-left:auto">5s</span>
+        </div>
+        <div class="inline-substep-row is-active" style="margin:2px 0;padding:4px 8px;border-radius:6px">
+          <div class="step-icon-mini" style="background:var(--accent-blue-dim);color:var(--accent-blue);width:16px;height:16px;font-size:8px">⟳</div>
+          <span class="step-name" style="color:var(--accent-blue);font-size:10px;min-width:65px">Act</span>
+          <div class="chip-group">
+            <span class="chip chip-active" style="font-size:8px">🔍 Tshoot ⟳ 45s</span>
+            <span style="color:var(--text-tertiary);font-size:8px">→</span>
+            <span class="chip chip-pending" style="font-size:8px">✉️ Email</span>
+          </div>
+          <span class="step-dur">45s...</span>
+        </div>
+        <div class="inline-substep-row" style="margin:2px 0;border-color:transparent;background:transparent;padding:4px 8px">
+          <div class="step-icon-mini" style="background:var(--bg-elevated);color:var(--text-tertiary);width:16px;height:16px;font-size:8px">◦</div>
+          <span class="step-name" style="color:var(--text-tertiary);font-size:10px;min-width:65px">Summarize</span>
+          <span class="step-dur" style="margin-left:auto">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Queued: compact -->
+    <div class="compact-case-row">
+      <span class="case-num" style="color:var(--text-tertiary)">...9102</span>
+      <div class="nested-pipeline">
+        <div class="np-group">
+          <span class="np-dot pending"></span><span class="np-dot pending"></span><span class="np-dot pending"></span><span class="np-dot pending"></span><span class="np-dot pending"></span>
+        </div>
+        <span class="np-main-connector empty"></span>
+        <span class="np-main-dot pending"></span>
+        <span class="np-main-connector empty"></span>
+        <div class="np-group"><span class="np-dot pending"></span></div>
+        <span class="np-main-connector empty"></span>
+        <span class="np-main-dot pending"></span>
+      </div>
+      <span class="case-badge" style="background:var(--bg-elevated);color:var(--text-tertiary)">queued</span>
+      <span class="case-time">—</span>
+    </div>
+
+  </div>
+</div>
+
+<div style="text-align:center;padding:20px;color:var(--text-tertiary);font-size:12px">
+  点击选择。方案可以混合搭配。
+</div>
+
+</body>
+</html>

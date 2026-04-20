@@ -165,3 +165,4 @@
 | [x] | onenote-digest-parallel_20260418 | OneNote Digest Per-Page Parallel LLM Classify + Code Merge (ISS-228) | 2026-04-18 | 2026-04-18 |
 | [x] | synthesize-topic-regen_20260419 | SYNTHESIZE Topic-Level Incremental Regeneration (ISS-230) | 2026-04-19 | 2026-04-19 |
 | [x] | dashboard-v2-command-center_20260420 | Dashboard v2 Redesign — Command Center (ISS-233) | 2026-04-20 | 2026-04-20 |
+| [x] | delta-empty-expiry_20260420 | DELTA_EMPTY nextFollowUpDate 过期机制 (ISS-235) | 2026-04-20 | 2026-04-20 |

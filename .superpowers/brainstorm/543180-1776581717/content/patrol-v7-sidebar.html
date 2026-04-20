@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patrol — Side Pipeline Layout</title>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #faf9fb; --surface: #fff; --hover: #f3f1f5; --inset: #f0edf4;
+    --text1: #1f1633; --text2: #4a4260; --text3: #9e95b0;
+    --border: #e8e3f0; --border2: #d4ccdf;
+    --purple: #6a5fc1; --purple-d: rgba(106,95,193,.08); --purple-g: rgba(106,95,193,.15);
+    --green: #16a34a; --green-d: rgba(22,163,74,.08);
+    --amber: #d97706; --amber-d: rgba(217,119,6,.08);
+    --red: #dc2626;
+    --r: 12px; --f: 'Rubik',sans-serif; --m: 'JetBrains Mono',monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:var(--f);background:var(--bg);color:var(--text1);padding:28px 36px;-webkit-font-smoothing:antialiased}
+
+  /* ═══ HEADER ═══ */
+  .hdr{display:flex;align-items:center;gap:14px;margin-bottom:24px}
+  .hdr h1{font-size:24px;font-weight:800;letter-spacing:-.5px}
+  .pill{font-size:11px;font-weight:700;padding:5px 14px;border-radius:20px;text-transform:uppercase;letter-spacing:.4px;display:inline-flex;align-items:center;gap:6px}
+  .pill-run{background:var(--purple-d);color:var(--purple)}
+  .timer{font-family:var(--m);font-size:16px;font-weight:500;color:var(--text3)}
+  .hdr-r{margin-left:auto;display:flex;align-items:center;gap:24px}
+  .stats{display:flex;gap:20px}
+  .st{text-align:center;min-width:40px}
+  .st b{display:block;font-family:var(--m);font-size:22px;font-weight:700;line-height:1.1}
+  .st small{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--text3)}
+  .btn{border:none;padding:9px 22px;border-radius:13px;font-family:var(--f);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;cursor:pointer;box-shadow:inset 0 1px 3px rgba(0,0,0,.06)}
+  .btn-red{background:var(--red);color:#fff}
+
+  /* ═══ MAIN LAYOUT: sidebar + content ═══ */
+  .main{display:flex;gap:24px;align-items:flex-start}
+
+  /* ═══ LEFT: VERTICAL PIPELINE ═══ */
+  .sidebar{width:260px;flex-shrink:0;position:sticky;top:28px}
+  .side-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:0 1px 4px rgba(0,0,0,.04);overflow:hidden}
+  .side-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);padding:16px 18px 10px}
+
+  /* vertical stage */
+  .vs{position:relative;padding:0 18px 0 18px}
+  .vs-item{display:flex;gap:12px;padding:28px 0;position:relative}
+  .vs-item:not(:last-child)::after{
+    content:'';position:absolute;left:29px;top:60px;bottom:-20px;width:2px;
+    background:var(--border);z-index:0;
+  }
+  .vs-item.ok:not(:last-child)::after{background:var(--green);opacity:.3}
+  .vs-item.run:not(:last-child)::after{background:linear-gradient(180deg,var(--green),var(--purple));opacity:.4}
+
+  .vs-icon{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;z-index:1;position:relative}
+  .vs-icon.ok{background:var(--green);color:#fff}
+  .vs-icon.run{border:2.5px solid var(--purple);background:var(--surface)}
+  .vs-icon.run::after{content:'';width:8px;height:8px;border-radius:50%;background:var(--purple);position:absolute;animation:pulse 2s ease-in-out infinite}
+  .vs-icon.wait{border:2px solid var(--border2);background:var(--surface)}
+
+  .vs-content{flex:1;min-width:0}
+  .vs-head{display:flex;align-items:center;gap:6px}
+  .vs-name{font-size:14px;font-weight:700}
+  .vs-name.ok{color:var(--green)} .vs-name.run{color:var(--purple)} .vs-name.wait{color:var(--text3)}
+  .vs-time{font-family:var(--m);font-size:11px;color:var(--text3);margin-left:auto}
+  .vs-time.run{color:var(--purple)}
+  .vs-detail{font-size:12px;color:var(--text2);line-height:1.5;margin-top:3px}
+  .vs-detail strong{color:var(--text1);font-weight:700}
+  .vs-bar{width:100%;height:4px;background:var(--hover);border-radius:2px;margin-top:4px;overflow:hidden}
+  .vs-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--green),var(--purple))}
+
+  .vs-item.wait{opacity:.35}
+
+  /* ═══ RIGHT: CASES ═══ */
+  .content{flex:1;min-width:0}
+  .sec{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+  .sec h2{font-size:15px;font-weight:700}
+  .sec span{font-size:12px;color:var(--text3);font-weight:500}
+  .sec-bar{flex:1;max-width:220px;height:5px;background:var(--hover);border-radius:3px;overflow:hidden}
+  .sec-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--green),var(--purple))}
+
+  /* case card */
+  .cc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.03);transition:all .2s}
+  .cc:hover{box-shadow:0 4px 16px var(--purple-d)}
+  .cc.act{border-color:rgba(106,95,193,.25);box-shadow:0 4px 20px var(--purple-g)}
+  .cc-h{display:flex;align-items:center;gap:12px;padding:14px 20px;background:var(--bg)}
+  .cc-h .chevron{flex-shrink:0;transition:transform .2s;color:var(--text3);cursor:pointer}
+  .cc-id{font-family:var(--m);font-size:15px;font-weight:700}
+  .cc-id.act{color:var(--purple)} .cc-id.dn{color:var(--text2)}
+  .cc-pill{font-size:11px;font-weight:700;padding:4px 12px;border-radius:12px;text-transform:uppercase;letter-spacing:.3px}
+  .cc-pill.act{background:var(--purple-d);color:var(--purple)}
+  .cc-pill.ok{background:var(--green-d);color:var(--green)}
+  .cc-sum{font-size:12px;color:var(--text3);display:flex;align-items:center;gap:6px}
+  .cc-sum .tag{background:var(--inset);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;color:var(--text2)}
+  .cc-meta{margin-left:auto;display:flex;align-items:center;gap:14px;font-size:12px;color:var(--text3)}
+  .cc-meta .tt{font-family:var(--m);font-weight:500;font-size:13px}
+
+  /* case pipeline 4-col */
+  .cp{display:flex;align-items:stretch;padding:18px 20px;gap:0;border-top:1px solid var(--hover)}
+  .cs{flex:1;min-width:0}
+  .cs-h{display:flex;align-items:center;gap:7px;margin-bottom:8px}
+  .cs-i{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px}
+  .cs-i.ok{background:var(--green);color:#fff}
+  .cs-i.run{border:2.5px solid var(--purple);position:relative}
+  .cs-i.run::after{content:'';width:7px;height:7px;border-radius:50%;background:var(--purple);position:absolute;animation:pulse 2s infinite}
+  .cs-i.wait{border:2px solid var(--border2)}
+  .cs-i.skip{background:var(--inset);color:var(--text3)}
+  .cs-n{font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+  .cs-n.ok{color:var(--green)} .cs-n.run{color:var(--purple)} .cs-n.wait{color:var(--text3)} .cs-n.skip{color:var(--text3);opacity:.5}
+  .cs-d{font-family:var(--m);font-size:12px;margin-left:auto;color:var(--text3)}
+  .cs-d.run{color:var(--purple)}
+  .cs-body{padding-left:29px;font-size:13px}
+
+  .sr{display:flex;align-items:baseline;gap:7px;padding:3px 0;color:var(--text2)}
+  .sr-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px}
+  .sr-n{min-width:70px;font-weight:500;font-size:13px}
+  .sr-v{flex:1;font-size:12px;color:var(--text3)}
+  .sr-t{font-family:var(--m);font-size:11px;color:var(--text3)}
+
+  .rp{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;padding:4px 12px;border-radius:8px;margin-bottom:6px}
+  .rp.action{background:var(--amber-d);color:var(--amber)}
+  .rp.nochange{background:var(--inset);color:var(--text3)}
+  .rp svg{width:14px;height:14px}
+  .reason{font-size:12px;color:var(--text3);line-height:1.55;border-left:2px solid var(--border);padding-left:10px;margin-top:3px}
+
+  .ag{border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:5px}
+  .ag.run{background:var(--purple-d);border-color:rgba(106,95,193,.2)}
+  .ag.pend{opacity:.3}
+  .ag-h{display:flex;align-items:center;gap:6px}
+  .ag-n{font-size:13px;font-weight:600}
+  .ag-n.run{color:var(--purple)}
+  .ag-desc{font-size:11px;color:var(--text3);margin-top:3px;line-height:1.45}
+
+  .cn{width:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding-top:4px}
+  .cl{width:100%;height:2px;border-radius:1px}
+  .cl.ok{background:var(--green);opacity:.3} .cl.run{background:linear-gradient(90deg,var(--green),var(--purple));opacity:.4} .cl.wait{background:var(--border)}
+
+  .cc.q{opacity:.3}
+  .cc.q .cc-h{background:transparent}
+
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.7)}}
+  @keyframes glow{0%,100%{box-shadow:0 4px 20px var(--purple-g)}50%{box-shadow:0 8px 32px rgba(106,95,193,.22)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .spin{animation:spin .8s linear infinite}
+  .ck{display:inline-block;vertical-align:middle}
+</style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<div class="hdr">
+  <h1>Patrol</h1>
+  <span class="pill pill-run"><svg class="spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 12a9 9 0 11-6.2-8.56"/></svg> processing</span>
+  <span class="timer">4m 32s</span>
+  <div class="hdr-r">
+    <div class="stats">
+      <div class="st"><b style="color:var(--text1)">12</b><small>Total</small></div>
+      <div class="st"><b style="color:var(--green)">5</b><small>Done</small></div>
+      <div class="st"><b style="color:var(--purple)">1</b><small>Active</small></div>
+      <div class="st"><b style="color:var(--text3)">6</b><small>Queue</small></div>
+    </div>
+    <button class="btn btn-red">■ Cancel</button>
+  </div>
+</div>
+
+<!-- ═══ MAIN: sidebar + cases ═══ -->
+<div class="main">
+
+  <!-- ═══ LEFT SIDEBAR: Vertical Pipeline ═══ -->
+  <div class="sidebar">
+    <div class="side-card">
+      <div class="side-title">Pipeline</div>
+      <div class="vs">
+
+        <div class="vs-item ok">
+          <div class="vs-icon ok"><svg class="ck" width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="vs-content">
+            <div class="vs-head"><span class="vs-name ok">Start</span><span class="vs-time">8s</span></div>
+            <div class="vs-detail">SDK session launched<br><span style="font-family:var(--m);font-size:10px;color:var(--text3)">a03d…6bba6</span></div>
+          </div>
+        </div>
+
+        <div class="vs-item ok">
+          <div class="vs-icon ok"><svg class="ck" width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="vs-content">
+            <div class="vs-head"><span class="vs-name ok">Discover</span><span class="vs-time">12s</span></div>
+            <div class="vs-detail">D365 query → <strong>18</strong> active cases</div>
+          </div>
+        </div>
+
+        <div class="vs-item ok">
+          <div class="vs-icon ok"><svg class="ck" width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="vs-content">
+            <div class="vs-head"><span class="vs-name ok">Filter</span><span class="vs-time">3s</span></div>
+            <div class="vs-detail"><strong>12</strong> changed · 6 skipped</div>
+          </div>
+        </div>
+
+        <div class="vs-item ok">
+          <div class="vs-icon ok"><svg class="ck" width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="vs-content">
+            <div class="vs-head"><span class="vs-name ok">Warmup</span><span class="vs-time">5s</span></div>
+            <div class="vs-detail">Token daemon <strong>running</strong></div>
+          </div>
+        </div>
+
+        <div class="vs-item run">
+          <div class="vs-icon run"></div>
+          <div class="vs-content">
+            <div class="vs-head"><span class="vs-name run">Process</span><span class="vs-time run">4m 04s</span></div>
+            <div class="vs-detail"><strong style="color:var(--purple)">5</strong> / 12 cases</div>
+            <div class="vs-bar"><div class="vs-fill" style="width:42%"></div></div>
+            <div style="font-size:11px;color:var(--purple);margin-top:6px;font-weight:500;display:flex;align-items:center;gap:4px">
+              <svg class="spin" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M21 12a9 9 0 11-6.2-8.56"/></svg>
+              0748 troubleshooter done → launching email drafter
+            </div>
+          </div>
+        </div>
+
+        <div class="vs-item wait">
+          <div class="vs-icon wait"></div>
+          <div class="vs-content">
+            <div class="vs-head"><span class="vs-name wait">Aggregate</span></div>
+            <div class="vs-detail" style="color:var(--text3)">Waiting…</div>
+          </div>
+        </div>
+
+      </div>
+      <div style="height:12px"></div>
+    </div>
+  </div>
+
+  <!-- ═══ RIGHT: CASE LIST ═══ -->
+  <div class="content">
+    <div class="sec">
+      <h2>Cases</h2>
+      <span>5 / 12 processed</span>
+      <div class="sec-bar"><div class="sec-fill" style="width:42%"></div></div>
+    </div>
+
+    <!-- Active case -->
+    <div class="cc act">
+      <div class="cc-h">
+        <span class="cc-id act">2601290030000748</span>
+        <span class="cc-pill act"><svg class="spin" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M21 12a9 9 0 11-6.2-8.56"/></svg> act</span>
+        <div class="cc-meta"><span>2 / 5</span><span class="tt">2m 51s</span></div>
+      </div>
+      <div class="cp">
+        <div class="cs" style="flex:.6">
+          <div class="cs-h"><div class="cs-i ok"><svg class="ck" width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="cs-n ok">Start</span><span class="cs-d">3s</span></div>
+          <div class="cs-body" style="font-size:12px;color:var(--text3)">SDK session ready</div>
+        </div>
+        <div class="cn"><div class="cl ok"></div></div>
+        <div class="cs">
+          <div class="cs-h"><div class="cs-i ok"><svg class="ck" width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="cs-n ok">Refresh</span><span class="cs-d">27s</span></div>
+          <div class="cs-body">
+            <div class="sr"><div class="sr-dot" style="background:var(--green)"></div><span class="sr-n">D365</span><span class="sr-v">+3 emails · +1 note</span><span class="sr-t">12s</span></div>
+            <div class="sr"><div class="sr-dot" style="background:var(--green)"></div><span class="sr-n">Teams</span><span class="sr-v">2 chats · 14 msgs</span><span class="sr-t">22s</span></div>
+            <div class="sr"><div class="sr-dot" style="background:var(--green)"></div><span class="sr-n">ICM</span><span class="sr-v">+5 discussions</span><span class="sr-t">11s</span></div>
+            <div class="sr"><div class="sr-dot" style="background:var(--green)"></div><span class="sr-n">OneNote</span><span class="sr-v">2 pages updated</span><span class="sr-t">13s</span></div>
+            <div class="sr"><div class="sr-dot" style="background:var(--green)"></div><span class="sr-n">Attach</span><span class="sr-v">+1 file (234 KB)</span><span class="sr-t">6s</span></div>
+          </div>
+        </div>
+        <div class="cn"><div class="cl ok"></div></div>
+        <div class="cs">
+          <div class="cs-h"><div class="cs-i ok"><svg class="ck" width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="cs-n ok">Assess</span><span class="cs-d">1m 52s</span></div>
+          <div class="cs-body">
+            <div class="rp action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> needs-action</div>
+            <div class="reason">Customer replied with new error logs. RDP 0x204. Check NSG + NVA routing.</div>
+          </div>
+        </div>
+        <div class="cn"><div class="cl run"></div></div>
+        <div class="cs">
+          <div class="cs-h"><div class="cs-i run"></div><span class="cs-n run">Act</span><span class="cs-d run">32s</span></div>
+          <div class="cs-body">
+            <div class="ag" style="border-color:var(--green);opacity:.8"><div class="ag-h"><div class="sr-dot" style="background:var(--green);width:6px;height:6px"></div><span class="ag-n" style="color:var(--green)">Troubleshooter</span><span class="sr-t">1m 45s</span></div><div class="ag-desc">Found: NSG rule blocking RDP on subnet-2. Recommended fix in draft.</div></div>
+            <div class="ag run"><div class="ag-h"><svg class="spin" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="3" stroke-linecap="round"><path d="M21 12a9 9 0 11-6.2-8.56"/></svg><span class="ag-n run">Email Drafter</span><span class="sr-t" style="color:var(--purple)">3s</span></div><div class="ag-desc" style="color:var(--purple)">Launching SDK session…</div></div>
+          </div>
+        </div>
+        <div class="cn"><div class="cl wait"></div></div>
+        <div class="cs">
+          <div class="cs-h"><div class="cs-i wait"></div><span class="cs-n wait">Summary</span></div>
+          <div class="cs-body" style="color:var(--text3);font-size:12px">Waiting…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Case: Starting (agent initializing) -->
+    <div class="cc act" style="border-color:rgba(106,95,193,.15);box-shadow:0 2px 12px var(--purple-d)">
+      <div class="cc-h">
+        <span class="cc-id act">2604010030004100</span>
+        <span class="cc-pill act"><svg class="spin" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M21 12a9 9 0 11-6.2-8.56"/></svg> start</span>
+        <div class="cc-meta"><span>0 / 5</span><span class="tt">2s</span></div>
+      </div>
+      <div class="cp">
+        <div class="cs" style="flex:.6">
+          <div class="cs-h"><div class="cs-i run"></div><span class="cs-n run">Start</span><span class="cs-d run">2s</span></div>
+          <div class="cs-body" style="font-size:12px;color:var(--purple)">Launching SDK session…</div>
+        </div>
+        <div class="cn"><div class="cl wait"></div></div>
+        <div class="cs"><div class="cs-h"><div class="cs-i wait"></div><span class="cs-n wait">Refresh</span></div></div>
+        <div class="cn"><div class="cl wait"></div></div>
+        <div class="cs"><div class="cs-h"><div class="cs-i wait"></div><span class="cs-n wait">Assess</span></div></div>
+        <div class="cn"><div class="cl wait"></div></div>
+        <div class="cs"><div class="cs-h"><div class="cs-i wait"></div><span class="cs-n wait">Act</span></div></div>
+        <div class="cn"><div class="cl wait"></div></div>
+        <div class="cs"><div class="cs-h"><div class="cs-i wait"></div><span class="cs-n wait">Summary</span></div></div>
+      </div>
+    </div>
+
+    <!-- Done case (collapsed) -->
+    <div class="cc" id="c2">
+      <div class="cc-h" style="cursor:pointer" onclick="var p=document.getElementById('c2p');p.style.display=p.style.display==='none'?'flex':'none';this.querySelector('.chevron').style.transform=p.style.display==='none'?'':'rotate(90deg)'">
+        <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        <span class="cc-id dn">2602130040001034</span>
+        <span class="cc-pill ok"><svg class="ck" width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> done</span>
+        <div class="cc-sum"><span class="tag">no-change</span><span>· act skipped</span></div>
+        <div class="cc-meta"><span>5 / 5</span><span class="tt">1m 59s</span></div>
+      </div>
+      <div class="cp" id="c2p" style="display:none">
+        <div class="cs"><div class="cs-h"><div class="cs-i ok"><svg class="ck" width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="cs-n ok">Refresh</span><span class="cs-d">29s</span></div><div class="cs-body"><div class="sr"><div class="sr-dot" style="background:var(--green)"></div><span class="sr-n">D365</span><span class="sr-v">+1 email</span><span class="sr-t">14s</span></div><div class="sr"><div class="sr-dot" style="background:var(--green)"></div><span class="sr-n">Teams</span><span class="sr-v">1 chat · 3 msgs</span><span class="sr-t">24s</span></div><div class="sr"><div class="sr-dot" style="background:var(--green)"></div><span class="sr-n">ICM</span><span class="sr-v">no new</span></div><div class="sr"><div class="sr-dot" style="background:var(--green)"></div><span class="sr-n">OneNote</span><span class="sr-v">1 page</span><span class="sr-t">21s</span></div><div class="sr"><div class="sr-dot" style="background:var(--green)"></div><span class="sr-n">Attach</span><span class="sr-v">no new</span></div></div></div>
+        <div class="cn"><div class="cl ok"></div></div>
+        <div class="cs"><div class="cs-h"><div class="cs-i ok"><svg class="ck" width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="cs-n ok">Assess</span><span class="cs-d">1m 29s</span></div><div class="cs-body"><div class="rp nochange">no-change</div><div style="font-size:12px;color:var(--text3);margin-top:2px">Pending customer reply.</div></div></div>
+        <div class="cn"><div class="cl ok"></div></div>
+        <div class="cs"><div class="cs-h"><div class="cs-i skip">—</div><span class="cs-n skip">Act</span></div><div class="cs-body" style="font-size:12px;color:var(--text3);opacity:.5">Skipped</div></div>
+        <div class="cn"><div class="cl ok"></div></div>
+        <div class="cs"><div class="cs-h"><div class="cs-i ok"><svg class="ck" width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="cs-n ok">Summary</span><span class="cs-d">&lt;1s</span></div><div class="cs-body" style="font-size:12px;color:var(--text2)">Todo updated · pending-customer</div></div>
+      </div>
+    </div>
+
+    <!-- Done case 2 -->
+    <div class="cc" id="c3">
+      <div class="cc-h" style="cursor:pointer" onclick="var p=document.getElementById('c3p');p.style.display=p.style.display==='none'?'flex':'none';this.querySelector('.chevron').style.transform=p.style.display==='none'?'':'rotate(90deg)'">
+        <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        <span class="cc-id dn">2603300030003153001</span>
+        <span class="cc-pill ok"><svg class="ck" width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> done</span>
+        <div class="cc-sum"><span class="tag">needs-action</span><span>· troubleshooter + email</span></div>
+        <div class="cc-meta"><span>4 / 4</span><span class="tt">3m 42s</span></div>
+      </div>
+      <div class="cp" id="c3p" style="display:none"></div>
+    </div>
+
+    <!-- Queued -->
+    <div class="cc q"><div class="cc-h"><span class="cc-id" style="color:var(--text3)">2604010030004100</span><span style="font-size:11px;color:var(--text3);opacity:.6">Queued</span></div></div>
+    <div class="cc q"><div class="cc-h"><span class="cc-id" style="color:var(--text3)">2604050040004500</span><span style="font-size:11px;color:var(--text3);opacity:.6">Queued</span></div></div>
+    <div class="cc q"><div class="cc-h"><span class="cc-id" style="color:var(--text3)">2604080030004800</span><span style="font-size:11px;color:var(--text3);opacity:.6">Queued</span></div></div>
+    <div class="cc q"><div class="cc-h"><span class="cc-id" style="color:var(--text3)">2604100040005100</span><span style="font-size:11px;color:var(--text3);opacity:.6">Queued</span></div></div>
+  </div>
+
+</div>
+</body>
+</html>

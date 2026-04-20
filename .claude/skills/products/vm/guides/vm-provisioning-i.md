@@ -1,8 +1,8 @@
 # VM Vm Provisioning I — 排查速查
 
 **来源数**: 1 | **21V**: 未标注
-**条目数**: 7 | **关键词**: provisioning, i
-**最后更新**: 2026-04-07
+**条目数**: 8 | **关键词**: provisioning, i
+**最后更新**: 2026-04-18
 
 ## 症状速查
 
@@ -15,6 +15,7 @@
 | 5 | VMSS nodes enter failed state after Scale-in operation due to Fabric Failover | Fabric Failover triggered during or after VMSS scale-in operation causes remaini... | Investigate Fabric Failover root cause via Kusto/ICM. Ref ICM: 120205931. | 🔵 7.5 | OneNote |
 | 6 | Customer deleted managed disk and needs recovery; disk was hard deleted (not in soft-delete state) | Managed disk was hard deleted — either soft-delete conditions not met (disk crea... | Open Sev.2 or Sev.3 ICM to XStore/Table Server team. ICM template: O01O2z. If no... | 🔵 7.5 | OneNote |
 | 7 | AWS image imported to Azure: Gen1 VM created from the image works fine, but Gen2 VM created from the... | The image captured from AWS was a Gen1 image. Using it directly for Gen2 VM depl... | Capture a proper Gen2 image from AWS (ensure UEFI boot support) before importing... | 🔵 6.0 | OneNote |
+| 8 | Issue description: ================================================= Sysprep error with long running... | due to the DSC module is out-of-date... | Resolution: ================================================== To resolve this i... | 🟡 5.0 | KB |
 
 > 本 topic 有融合排查指南，含完整排查流程和 Kusto 查询模板
 > → [完整排查流程](details/vm-provisioning-i.md)

@@ -1,6 +1,6 @@
 # ENTRA-ID SSPR & Password Writeback — Detailed Troubleshooting Guide
 
-**Entries**: 65 | **Drafts fused**: 13 | **Kusto queries**: 0
+**Entries**: 66 | **Drafts fused**: 13 | **Kusto queries**: 0
 **Draft sources**: ado-wiki-b-password-writeback-support-overview.md, ado-wiki-b-sspr-cloud-users.md, ado-wiki-b-sspr-hybrid-users.md, ado-wiki-b-sspr-security-questions-retirement.md, ado-wiki-c-password-writeback-support-overview.md, ado-wiki-c-troubleshooting-password-writeback.md, ado-wiki-d-password-writeback-sspr-cloud-sync.md, ado-wiki-f-password-writeback-not-working.md, ado-wiki-f-sspr-mfa-combined-registration.md, ado-wiki-f-sspr-reporting.md
 **Generated**: 2026-04-07
 
@@ -494,3 +494,16 @@ Get-ADSyncAADPasswordResetConfiguration -Connector $conn.Name
 | 28 | User with Azure AD Administrator role gets SSPR_009 error: 'Your organization... | SSPR for Administrators (SSPR-A) is not enabled on the te... | Enable password writeback in SSPR: 1) Sign in to Entra ad... | 🟢 8.5 | ADO Wiki |
 | 29 | Password change/reset via SSPR fails with message: Unfortunately you cannot r... | The new password provided does not comply with on-premise... | Provide a compliant password. Check AD password policy vi... | 🟢 8.5 | ADO Wiki |
 | 30 | Password writeback fails with Event 33009/6329: hr=8023062C 'The password cou... | Sign and Encrypt LDAP Traffic is disabled in one or more ... | Enable Sign and Encrypt LDAP Traffic in all 3 locations: ... | 🟢 8.5 | ADO Wiki |
+
+
+---
+
+## Incremental Update (2026-04-18) - +1 entries from contentidea-kb
+
+### When SSPR enabled user tries to register at https://aka.ms/ssprsetup , it fails with an error &quot;Oops! We encountered an unexpected error while sav...
+**Score**: 🟢 8.0 | **Source**: ContentIdea KB | **ID**: entra-id-3672
+
+**Root Cause**: Proof-up failure due to Proxy address conflict in Azure AD.
+
+**Solution**: Correct the Proxy address for the account to resolve the conflict.
+

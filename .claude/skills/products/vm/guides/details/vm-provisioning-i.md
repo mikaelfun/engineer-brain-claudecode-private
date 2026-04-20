@@ -1,6 +1,6 @@
 # VM Vm Provisioning I — 综合排查指南
 
-**条目数**: 7 | **草稿融合数**: 1 | **Kusto 查询融合**: 1
+**条目数**: 8 | **草稿融合数**: 1 | **Kusto 查询融合**: 1
 **来源草稿**: [ado-wiki-a-Pre-Provisioning-Service.md](../../guides/drafts/ado-wiki-a-Pre-Provisioning-Service.md)
 **Kusto 引用**: [provisioning-timeout.md](../../../kusto/vm/references/queries/provisioning-timeout.md)
 **生成日期**: 2026-04-07
@@ -47,3 +47,19 @@
 | 6 | Customer deleted managed disk and needs recovery; disk was hard deleted (not in soft-delete state) | Managed disk was hard deleted — either soft-delete conditions not met (disk crea... | Open Sev.2 or Sev.3 ICM to XStore/Table Server team. ICM template: O01O2z. If no... | 🔵 7.5 | OneNote |
 | 7 | AWS image imported to Azure: Gen1 VM created from the image works fine, but Gen2 VM created from the... | The image captured from AWS was a Gen1 image. Using it directly for Gen2 VM depl... | Capture a proper Gen2 image from AWS (ensure UEFI boot support) before importing... | 🔵 6.0 | OneNote |
 
+
+
+---
+
+## 增量补充条目 (2026-04-18)
+
+### vm-contentidea-kb-030
+**来源**: KB | **分数**: 🟡 5.0
+
+**症状**: Issue description: ================================================= Sysprep error with long running without result. Error message: 2018-01-05 14:23:21, Info [0x0f008b] SYSPRP RunRegistryDlls:Found entrypoint in registry at {AlphanumericPII}; will try to launch 'DscCore.dll,SysPrep_Cleanup' Cause: ================================================== The errors is related DscCore.dll, so this sysprep
+
+**根因**: due to the DSC module is out-of-date
+
+**方案**: Resolution: ================================================== To resolve this issue, you can download the latest WMF module 5
+
+---

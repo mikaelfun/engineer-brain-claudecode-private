@@ -144,7 +144,7 @@ LLM 在一次 prompt 中完成分类和提取（详见 `shared-rules.md § Dual-
 
 ### 4. Track B → Guide Draft
 
-保存为 `guides/drafts/onenote-{sanitized-title}.md`，格式：
+保存为 `.claude/skills/products/{product}/guides/drafts/onenote-{sanitized-title}.md`，格式：
 
 ```yaml
 ---

@@ -15,16 +15,22 @@
     Case 数据根路径（如 ./cases）。
 .PARAMETER CaseNumbers
     可选：只检测指定的 case numbers（逗号分隔或数组）。不指定则扫描所有 active/ 目录。
+.PARAMETER ActiveCasesJson
+    可选：直接传入 list-active-cases.ps1 -OutputJson 的 JSON 输出。
+    传入后跳过内部调用 list-active-cases.ps1，避免重复 OData 查询（节省 ~8s）。
 .PARAMETER SkipClosureCheck
     跳过 closure 邮件辅证检查（加速执行）。
 .EXAMPLE
     pwsh scripts/detect-case-status.ps1 -CasesRoot ./cases
     pwsh scripts/detect-case-status.ps1 -CasesRoot ./cases -CaseNumbers "2602250040000327,2603120040001498"
+    # 传入已有的 active cases JSON 避免重复查询:
+    pwsh scripts/detect-case-status.ps1 -CasesRoot ./cases -ActiveCasesJson '[{"ticketnumber":"123",...}]'
 #>
 param(
     [Parameter(Mandatory=$true)]
     [string]$CasesRoot,
     [string]$CaseNumbers = '',
+    [string]$ActiveCasesJson = '',
     [switch]$SkipClosureCheck
 )
 
@@ -33,20 +39,49 @@ $ErrorActionPreference = "Stop"
 
 $scriptDir = $PSScriptRoot
 
+# ── Resolve patrolDir from config.json (must be configured) ──
+$_projRoot = (Resolve-Path "$PSScriptRoot\..\..\..\..").Path
+$_configPath = Join-Path $_projRoot "config.json"
+if (-not (Test-Path $_configPath)) {
+    Write-Error "config.json not found at $_configPath"
+    exit 1
+}
+$_cfg = Get-Content $_configPath -Raw | ConvertFrom-Json
+if (-not $_cfg.patrolDir) {
+    Write-Error "patrolDir not configured in config.json"
+    exit 1
+}
+$_patrolDir = if ([IO.Path]::IsPathRooted($_cfg.patrolDir)) { $_cfg.patrolDir } else { Join-Path $_projRoot $_cfg.patrolDir }
+
 # ── Step 1: Get D365 active case list ──
-Write-Host "🔵 Step 1: Fetching D365 active case list..."
-$activeJson = & pwsh -NoProfile -File "$scriptDir/list-active-cases.ps1" -OutputJson 2>&1
 $activeTickets = @{}
-try {
-    $activeCases = $activeJson | Where-Object { $_ -is [string] -and $_.Trim().StartsWith('[') } | Select-Object -Last 1
-    if ($activeCases) {
-        $parsed = $activeCases | ConvertFrom-Json
+if ($ActiveCasesJson) {
+    # Caller already has the data — skip redundant OData call (~8s saved)
+    Write-Host "🔵 Step 1: Using pre-fetched active case list..."
+    try {
+        $parsed = $ActiveCasesJson | ConvertFrom-Json
         foreach ($c in $parsed) {
             if ($c.ticketnumber) { $activeTickets[$c.ticketnumber] = $true }
         }
+    } catch {
+        Write-Host "⚠️ Failed to parse ActiveCasesJson: $($_.Exception.Message). Falling back to OData query..."
+        $ActiveCasesJson = ''  # clear to trigger fallback below
     }
-} catch {
-    Write-Host "⚠️ Failed to parse active case list: $($_.Exception.Message)"
+}
+if (-not $ActiveCasesJson) {
+    Write-Host "🔵 Step 1: Fetching D365 active case list..."
+    $activeJson = & pwsh -NoProfile -File "$scriptDir/list-active-cases.ps1" -OutputJson 2>&1
+    try {
+        $activeCases = $activeJson | Where-Object { $_ -is [string] -and $_.Trim().StartsWith('[') } | Select-Object -Last 1
+        if ($activeCases) {
+            $parsed = $activeCases | ConvertFrom-Json
+            foreach ($c in $parsed) {
+                if ($c.ticketnumber) { $activeTickets[$c.ticketnumber] = $true }
+            }
+        }
+    } catch {
+        Write-Host "⚠️ Failed to parse active case list: $($_.Exception.Message)"
+    }
 }
 Write-Host "   Active cases in D365: $($activeTickets.Count)"
 
@@ -128,11 +163,6 @@ if ($arCascaded.Count -gt 0) {
 
 if ($notActive.Count -eq 0) {
     Write-Host "✅ No cases need archiving."
-    # Write zero-count summary for patrol sidebar
-    $patrolDir = Join-Path $CasesRoot ".patrol"
-    if (-not (Test-Path $patrolDir)) { New-Item -ItemType Directory -Path $patrolDir -Force | Out-Null }
-    $summaryPath = Join-Path $patrolDir "archive-summary.json"
-    @{ archivedCount = 0; transferredCount = 0; updatedAt = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ") } | ConvertTo-Json -Compress | Set-Content $summaryPath -Encoding UTF8
     Write-Output "[]"
     exit 0
 }
@@ -229,18 +259,6 @@ foreach ($cn in $notActive) {
         Write-Host "      📧 $($entry.closureEmailEvidence)"
     }
 }
-
-# ── Write archive-summary.json for patrol sidebar ──
-$patrolDir = Join-Path $CasesRoot ".patrol"
-if (-not (Test-Path $patrolDir)) { New-Item -ItemType Directory -Path $patrolDir -Force | Out-Null }
-$summaryPath = Join-Path $patrolDir "archive-summary.json"
-$summary = @{
-    archivedCount = @($results | Where-Object { $_.status -eq 'archived' }).Count
-    transferredCount = @($results | Where-Object { $_.status -eq 'transferred' }).Count
-    updatedAt = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
-}
-$summary | ConvertTo-Json -Compress | Set-Content $summaryPath -Encoding UTF8
-Write-Host "   Summary written to $summaryPath (archived=$($summary.archivedCount), transferred=$($summary.transferredCount))"
 
 # ── Output JSON ──
 Write-Output ($results | ConvertTo-Json -Compress -Depth 5)

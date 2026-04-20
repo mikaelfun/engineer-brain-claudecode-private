@@ -7,18 +7,18 @@
       "pendingPages": 0
     },
     "ado-wiki": {
-      "status": "idle",
-      "lastRefreshed": null,
-      "pendingPages": 0
+      "status": "scanning",
+      "lastRefreshed": "2026-04-20T10:35:00Z",
+      "pendingPages": 325
     },
     "mslearn": {
-      "status": "idle",
-      "lastRefreshed": null,
-      "pendingPages": 0
+      "status": "scanning",
+      "lastRefreshed": "2026-04-20T10:05:00Z",
+      "pendingPages": 177
     },
     "contentidea": {
       "status": "idle",
-      "lastRefreshed": null,
+      "lastRefreshed": "2026-04-20T10:25:00Z",
       "pendingPages": 0
     }
   },

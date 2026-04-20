@@ -144,3 +144,18 @@
 1. **Steps**
 
 ---
+
+
+---
+
+## Incremental Scenarios (2026-04-18)
+
+## Scenario 11: As per article https://docs.microsoft.com/en-us/azure/active-directory/develop/active-directory-saml-claims-customizatio...
+> Source: contentidea-kb (entra-id-3659) | Applicability: unverified
+
+### Troubleshooting Steps
+1. **Confirm symptom**: As per article https://docs.microsoft.com/en-us/azure/active-directory/develop/active-directory-saml-claims-customization#adding-application-specific-claimsI want to add new attribute name for example...
+2. **Root cause**: &quot;Source Attribute&quot; field would not let you type anything static. The alphabets will keep on deleting as you type them.
+3. **Solution**: Type &quot;Contoso1234&quot; in Notepad instead of typing it directly under &quot;Source Attribute&quot; tab and copy / paste it there. Click on &quot;Contoso 1234&quot; as highlighted and you will no...
+
+---

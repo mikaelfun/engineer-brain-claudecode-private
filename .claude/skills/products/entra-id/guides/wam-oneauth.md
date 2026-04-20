@@ -1,7 +1,7 @@
 # ENTRA-ID WAM/OneAuth Authentication — Quick Reference
 
-**Entries**: 63 | **21V**: Partial (62/63)
-**Last updated**: 2026-04-07
+**Entries**: 65 | **21V**: Partial (62/63)
+**Last updated**: 2026-04-18
 **Keywords**: wam, oneauth, windows, sso, teams, broker
 
 > This topic has a fusion guide with detailed troubleshooting flow
@@ -51,6 +51,8 @@
 | 38 📋 | Silent token calls on WAM failing with wamcompat_id_token not present in WAM response on Windows ... | Obtaining wamcompat_id_token is only supported starting with Windows 10 RS2 a... | Upgrade to Windows 10 RS2 or later. This is expected behavior on RS1. | 🟢 8.5 | ADO Wiki |
 | 39 📋 | Authentication error 1200 in Teams App with error tag 657rx, error code 2148073494. TPM-related e... | TPM error (TPM_E_PCP_WRONG_PARENT). Windows authentication broker cannot comp... | Restart the computer. If issue persists, perform manual recovery per https://... | 🟢 8.5 | ADO Wiki |
 | 40 📋 | Something went wrong [1001] with tags 7q6ch and 5fcl8 after upgrading Office 365 from version 230... | REGDB_E_CLASSNOTREG and ERROR_NOT_FOUND on Windows Server 2019 + Citrix envir... | Apply Citrix TSG: https://support.citrix.com/s/article/CTX267071. For 5fcl8 e... | 🟢 8.5 | ADO Wiki |
+| NEW 📋 | MDE events shows that AAD Broker plugin(Microsoft.AAD.BrokerPlugin.exe) is initiating connections to... | N/A | N/A | 🟡 6.5 | ContentIdea |
+| NEW 📋 | MDE events shows that AAD Broker plugin(Microsoft.AAD.BrokerPlugin.exe) is initiating connections to... | N/A | N/A | 🟡 6.5 | ContentIdea |
 | ... | *23 more entries* | | | | |
 
 ## Quick Troubleshooting Path

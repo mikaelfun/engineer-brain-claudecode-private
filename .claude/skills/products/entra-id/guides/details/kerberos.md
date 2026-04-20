@@ -1,6 +1,6 @@
 # ENTRA-ID Kerberos Auth & Delegation — Detailed Troubleshooting Guide
 
-**Entries**: 118 | **Drafts fused**: 49 | **Kusto queries**: 0
+**Entries**: 119 | **Drafts fused**: 49 | **Kusto queries**: 0
 **Draft sources**: ado-wiki-a-kerberos-action-plan-templates.md, ado-wiki-a-kerberos-constrained-delegation-kcd-s4u2proxy.md, ado-wiki-a-kerberos-delegation-in-general.md, ado-wiki-a-kerberos-protocol-transition-s4u2self.md, ado-wiki-a-kerberos-resource-based-constrained-delegation.md, ado-wiki-a-kerberos-unconstrained-delegation.md, ado-wiki-a-kerberos-user-to-user-authentication-u2u.md, ado-wiki-b-configure-gmsa-kerberos-delegation.md, ado-wiki-b-kerberos-forest-trust.md, ado-wiki-b-kerberos-klist-features.md
 **Generated**: 2026-04-07
 
@@ -715,3 +715,16 @@
 | 28 | Customer can access Azure MI or Azure Fileshare on-prem but authentication fa... | VPN client stores credentials in Credential Manager. Cach... | Remove cached RAS credentials. See internal KB 3682d54a f... | 🟢 8.5 | ADO Wiki |
 | 29 | Set-AzureAdKerberosServer fails: Azure AD Kerberos Server object in Active Di... | The domain credential used is not a member of both Domain... | Use a credential that is member of Domain Admins in Root ... | 🟢 8.5 | ADO Wiki |
 | 30 | Set-AzureADKerberosServer fails: Failed to create Azure AD Kerberos Server: E... | Account lacks SeEnableDelegationPrivilege on DCs, require... | Run gpresult /h on DC. Check Enable computer and user acc... | 🟢 8.5 | ADO Wiki |
+
+
+---
+
+## Incremental Update (2026-04-18) - +1 entries from contentidea-kb
+
+### Seamless SSO doesn't work as expected. Users get prompted for Password during sign in.
+**Score**: 🟢 8.0 | **Source**: ContentIdea KB | **ID**: entra-id-3664
+
+**Root Cause**: After we hit login.microsoftonline.com, Azure AD detects that the tenant is enabled for seamless SSO and redirects the user as below. User gets Unauthorized challenged from Autologon Endpoint.  User fetches Kerberos ticket 1:48:14 PM x/xx/xxxx             3528        36.4694666                      ...
+
+**Solution**: Searched for the correlationID in the response in Kusto to get further details.//Get all PerRequestTableIfx events associated with the CorrelationId cited in the client-side error to get a Summary viewlet start = datetime(xxxx-xx-xx 08:26:00Z);let end = datetime(xxxx-xx-xx08:28:00Z);find in (cluster...
+

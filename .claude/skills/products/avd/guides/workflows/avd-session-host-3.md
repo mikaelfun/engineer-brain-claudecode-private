@@ -1,125 +1,90 @@
-# AVD Session Host (Part 3) — 排查工作流
+# AVD Session Host (Part 3) — Troubleshooting Workflow
 
-**来源草稿**: ado-wiki-b-determine-session-host-image-type.md
-**Kusto 引用**: health-check.md, heartbeat.md, session-host.md
-**场景数**: 1
-**生成日期**: 2026-04-07
+**Scenario Count**: 10
+**Generated**: 2026-04-18
 
 ---
 
-## Scenario 1: [[_TOC_]]
-> 来源: ado-wiki-b-determine-session-host-image-type.md | 适用: \u901a\u7528 \u2705
+## Scenario 1: Users get repeated/duplicate sessions on the same AVD sessio...
+> Source: ADO Wiki | Applicable: ✅
 
-### 排查步骤
+### Troubleshooting Steps
+- Set registry key HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server\fSingleSessionPerUser to 1. Alternatively, enable GPO: Computer Configuration → Administrative Templates → Windows Components → Remote Desktop Services → Remote Desktop Session Host → Connections → 'Restrict Remote Desktop Services users to a single Remote Desktop Services session'.
 
-#### Purpose
-The main idea of this article is to help you identify if a Session Host was created from a custom or from a gallery image using **Azure Support Center (ASC)**
+**Root Cause**: Registry key fSingleSessionPerUser at HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server is set to 0, allowing unlimited simultaneous remote connections per user on the same session host.
 
-#### Steps to identify it
-1. Open the case on ASC
-2. Go to the Resource Explorer module and select Resource Provider
-![image.png](/.attachments/image-95eb229f-9be5-44e2-9344-14bc872d3ac3.png)
-3. If you have the name of the Virtual Machine that you want to check, type its name on the search bar and then click on **Virtual machine name + (Microsoft.Compute/VirtualMachines)**
-![image.png](/.attachments/image-7fd715cc-5f94-4f3e-9904-0deedd387666.png)
-4. In case you do not have the name of the Session Host, _click_ on **Microsoft.DesktopVirtualization**, Hostpools, _click_ on the Host Pool and find the name of the **Session Host** on the right chart. After that, proceed with the **Step 3**
-![image.png](/.attachments/image-489d138e-2162-46f9-832e-edb81258a0cb.png)
-5. Once you _click_ on the **Virtual Machine** name, it will open the Virtual Machine section. By default, the tab **V2 Properties** is selected, but in case it is not opened, please open that tab.
-![image.png](/.attachments/image-fc32394f-8a45-4b59-bdbe-085b3fef9f37.png)
-6. Scroll down until the **Storage Profile** module and look for the **Create Option** setting
-![image.png](/.attachments/image-9ceee791-3883-411c-92b2-5178614b80f3.png)
-7. Also, scroll down until the **OS Profile** module and look for the **OS Created From** setting
-![image.png](/.attachments/image-99b6c016-b036-492b-b3a8-f2fa65786e4c.png)
+## Scenario 2: AVD users get assigned to same session host but a new sessio...
+> Source: ADO Wiki | Applicable: ✅
 
-#### Summary
-   - If **OS Created From** is set as **Platform Image** that means this Virtual Machine was created using a _Gallery_ Image
-   - If **OS Created From** is set as **Generalized Disk** that means the Virtual Machine was created using a _Custom_ Image
+### Troubleshooting Steps
+- Set registry key HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server [fSingleSessionPerUser] to 1. Alternatively, enable GPO: Computer Configuration > Administrative Templates > Windows Components > Remote Desktop Services > Remote Desktop Session Host > Connections > 'Restrict Remote Desktop Services users to a single Remote Desktop Services session'
 
----
+**Root Cause**: Registry key fSingleSessionPerUser under HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server has been changed to 0, allowing unlimited simultaneous remote connections and preventing session reconnection to existing sessions
 
-## 关联 Kusto 查询参考
+## Scenario 3: Cannot add AVD session host using Windows Server 2019 Datace...
+> Source: OneNote | Applicable: ❓
 
-```kql
-cluster('https://rdskmc.chinaeast2.kusto.chinacloudapi.cn').database('WVD').RDOperation
-| where HostInstance has "{SessionHostName}"
-| where TIMESTAMP >= ago(1d)
-| where Name == "SxSStackListenerCheck" 
-    or Name == "DomainReachableHealthCheck" 
-    or Name == "DomainTrustCheckHealthCheck" 
-    or Name == "DomainJoinedCheck" 
-    or Name == "FSLogixHealthCheck" 
-    or Name == "MonitoringAgentCheck" 
-    or Name == "SessionHostCanAccessUrlsCheck" 
-    or Name == "RDAgentCanReachRDGatewayURL" 
-    or Name == "RdInfraAgentConnectToRdBroker" 
-    or Name == "WebRTCRedirectorHealthCheck"
-| project TIMESTAMP, Name, ResType, ResSignature, ResDesc
-| order by TIMESTAMP desc
-```
-`[来源: health-check.md]`
+### Troubleshooting Steps
+- Workaround: Create VM separately then register to host pool manually with PowerShell registration token. PG fixed the marketplace availability eventually
 
-```kql
-cluster('https://rdskmc.chinaeast2.kusto.chinacloudapi.cn').database('WVD').RDOperation
-| where AADTenantId == "{AADTenantId}"
-| where TIMESTAMP >= ago(1d)
-| where Name endswith "Check"
-| where ResType != "Success"
-| project TIMESTAMP, HostPool, HostInstance, Name, ResType, ResSignature, ResDesc
-| order by TIMESTAMP desc
-```
-`[来源: health-check.md]`
+**Root Cause**: Windows Server 2019 Datacenter marketplace offer not available in customer subscription region. Marketplace/region availability issue, not AVD-specific
 
-```kql
-cluster('https://rdskmc.chinaeast2.kusto.chinacloudapi.cn').database('WVD').RDOperation
-| where PreciseTimeStamp > ago(1d)
-| where Role == 'RDAgent'
-| where Name endswith "Check"
-| where AADTenantId != ""
-| summarize arg_max(PreciseTimeStamp, ResType) by Env, Ring, HostPool, HostInstance, Name, AADTenantId
-| order by Env, Ring, HostPool, HostInstance
-```
-`[来源: health-check.md]`
+## Scenario 4: When publishing Edge browser as RemoteApp in AVD, users can ...
+> Source: OneNote | Applicable: ✅
 
-```kql
-cluster('https://rdskmc.chinaeast2.kusto.chinacloudapi.cn').database('WVD').RDOperation
-| where TIMESTAMP >= ago(7d)
-| where Name endswith "Check"
-| where ResType != "Success"
-| summarize FailureCount = count() by bin(TIMESTAMP, 1h), Name
-| order by TIMESTAMP desc
-```
-`[来源: health-check.md]`
+### Troubleshooting Steps
+- Configure Group Policy URLBlocklist to block file:// URLs. For Edge: Microsoft.Policies.Edge::URLBlocklist (admx.help). For Chrome: Google.Policies.Chrome::URLBlocklist. For Firefox: Mozilla.Policies.Firefox::B_WebsiteFilter_Block. Apply via GPO to session hosts.
 
-```kql
-cluster('https://rdskmc.chinaeast2.kusto.chinacloudapi.cn').database('WVD').RDInfraTrace
-| where HostInstance has "{SessionHostName}"
-| where PreciseTimeStamp > ago(8h)
-| where Category contains "Heartbeat" or Msg contains "Heartbeat"
-| where Category != "Microsoft.RDInfra.Diagnostics.DataSink.RestPipelineSink"
-| project PreciseTimeStamp, Level, Category, Role, HostInstance, Msg
-| order by PreciseTimeStamp desc
-| take 100
-```
-`[来源: heartbeat.md]`
+**Root Cause**: Browser RemoteApp runs on session host with full file system access. No default restriction prevents browser from navigating to local file paths via file:// protocol.
 
-```kql
-cluster('https://rdskmc.chinaeast2.kusto.chinacloudapi.cn').database('WVD').RDAgentMetadata
-| where HostInstance has "{SessionHostName}"
-| where TIMESTAMP >= ago(1d)
-| summarize arg_max(TIMESTAMP, *) by HostInstance
-| project TIMESTAMP, SubscriptionId, HostPool, HostInstance, 
-          Location, OsType, Sku, VmSize, AzureResourceId
-```
-`[来源: session-host.md]`
+## Scenario 5: Error in RemoteDesktopServices event log from Microsoft.RDIn...
+> Source: ADO Wiki | Applicable: ✅
 
-```kql
-cluster('https://rdskmc.chinaeast2.kusto.chinacloudapi.cn').database('WVD').DiagActivity
-| where SessionHostName has "{SessionHostName}"
-| where env_time >= ago(1d)
-| where Type == "Connection"
-| summarize 
-    TotalConnections = count(),
-    SuccessCount = countif(Outcome == "Success"),
-    FailureCount = countif(Outcome == "Failure")
-| extend SuccessRate = round(100.0 * SuccessCount / TotalConnections, 2)
-```
-`[来源: session-host.md]`
+### Troubleshooting Steps
+- Follow the Geneva Monitoring Agent Check troubleshooting steps at: https://eng.ms/docs/cloud-ai-platform/azure/aep-platform/sigma/sigma-remote-desktop-windows-virtual-desktop/internal-documentation/devops/documentation/sessionhost/healthchecks/monitoringagentcheck
+
+**Root Cause**: None
+
+## Scenario 6: Session host health check failure: 'Unable to locate cert RD...
+> Source: ADO Wiki | Applicable: ✅
+
+### Troubleshooting Steps
+- Follow the Geneva Monitoring Agent Check troubleshooting guide to remediate the certificate issue. Reference: https://eng.ms/docs/cloud-ai-platform/azure/aep-platform/sigma/sigma-remote-desktop-windows-virtual-desktop/internal-documentation/devops/documentation/sessionhost/healthchecks/monitoringagentcheck
+
+**Root Cause**: Geneva monitoring agent certificate is missing or invalid on the AVD session host.
+
+## Scenario 7: AVD session randomly reconnects 1-2 times per hour. Backend ...
+> Source: OneNote | Applicable: ✅
+
+### Troubleshooting Steps
+- 1) Whitelist all WVD URLs on client firewall
+- 2) Whitelist Azure IP ranges: AzureCloud, WindowsVirtualDesktop, AzureFrontDoor tags
+- 3) Diagnose with WVDAgentURLTool.exe, netmon, tracert to RDGateway cluster.
+
+**Root Cause**: Client intermittently loses connectivity to WVD service URLs. AVD heartbeat: 1 pkt/sec via gateway. 8 missed=warning, 16 missed=disconnect. Azure IP ranges may be blocked by firewall.
+
+## Scenario 8: All AVD session hosts across multiple host pools become unav...
+> Source: OneNote | Applicable: ✅
+
+### Troubleshooting Steps
+- 1) Reboot affected session hosts
+- 2) Whitelist all AVD required URLs on firewall
+- 3) Monitor agent upgrade windows.
+
+**Root Cause**: Session hosts lost WebSocket connectivity to RDBroker URL due to network/firewall (Palo Alto) blocking. Agent upgrade also contributed to transient unavailability.
+
+## Scenario 9: AVD connection failure with error ConnectionFailedAdTrustedR...
+> Source: OneNote | Applicable: ✅
+
+### Troubleshooting Steps
+- Add service tag VirtualNetwork to NSG inbound/outbound rules to allow traffic between peered VNETs (session host to domain controller). Verify session host can reach DC on required AD ports (LDAP 389, Kerberos 88, etc.).
+
+**Root Cause**: NSG rules blocked network communication between session host VNET and domain controller VNET (peered VNETs). The WindowsVirtualDesktop service tag only covers AVD service IPs, not intra-VNET traffic needed for AD authentication.
+
+## Scenario 10: Azure Monitor workbook deployment for AVD fails with 'Deploy...
+> Source: OneNote | Applicable: ✅
+
+### Troubleshooting Steps
+- If workbook deployment fails, go to Log Analytics workspace > Agents configuration to manually configure performance counters and Windows event logs for AVD session hosts.
+
+**Root Cause**: Azure Monitor configuration workbook passes object-type parameter instead of string when setting up session host data (performance counters/event logs).

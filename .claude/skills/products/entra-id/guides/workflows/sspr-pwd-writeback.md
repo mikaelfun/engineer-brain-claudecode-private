@@ -145,3 +145,18 @@ IfxTraceEvent
 > 来源: mslearn-password-writeback-general-troubleshooting.md | 适用: Mooncake ✅ / Global ✅
 
 ---
+
+
+---
+
+## Incremental Scenarios (2026-04-18)
+
+## Scenario 12: When SSPR enabled user tries to register at https://aka.ms/ssprsetup , it fails with an error &quot;Oops! We encountered...
+> Source: contentidea-kb (entra-id-3672) | Applicability: unverified
+
+### Troubleshooting Steps
+1. **Confirm symptom**: When SSPR enabled user tries to register at https://aka.ms/ssprsetup , it fails with an error &quot;Oops! We encountered an unexpected error while saving your data. Please try again.&quot;
+2. **Root cause**: Proof-up failure due to Proxy address conflict in Azure AD.
+3. **Solution**: Correct the Proxy address for the account to resolve the conflict.
+
+---

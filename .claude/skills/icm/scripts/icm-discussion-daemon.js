@@ -32,7 +32,17 @@ const singleMode = singleIdx !== -1;
 const singleIncidentId = singleMode ? args[singleIdx + 1] : null;
 const singleCaseDir = caseDirIdx !== -1 ? args[caseDirIdx + 1] : null;
 const casesRoot = process.env.CASES_ROOT || './cases';
-const patrolDir = process.env.PATROL_DIR || path.join(casesRoot, '.patrol');
+
+// Resolve patrolDir from config.json (must be configured)
+let patrolDir = process.env.PATROL_DIR || null;
+if (!patrolDir) {
+  const cfgPath = path.join(__dirname, '..', '..', '..', '..', 'config.json');
+  const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf-8'));
+  if (!cfg.patrolDir) throw new Error('patrolDir not configured in config.json');
+  patrolDir = path.isAbsolute(cfg.patrolDir)
+    ? cfg.patrolDir
+    : path.resolve(path.dirname(cfgPath), cfg.patrolDir);
+}
 const TOKEN_CACHE = path.join(process.env.TEMP || '/tmp', 'icm-ab-token-cache.json');
 
 function log(msg) {
