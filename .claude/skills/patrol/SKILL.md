@@ -34,163 +34,49 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
 
 ## 执行步骤
 
-1. **读取配置 + 互斥检查**
-   读取 `config.json` 获取 `casesRoot` 和 `patrolDir`。**直接使用原始值，不做任何路径解析。**
-   - `casesRoot` 默认 `./cases`
-   - `patrolDir` 默认 `{casesRoot}/.patrol`（如果 config.json 未配置 patrolDir）
+1. **初始化（patrol-init.sh）**
 
-   **🔒 互斥检查**：检查 `{patrolDir}/patrol.lock` 是否存在：
-   ```bash
-   if [ -f "{patrolDir}/patrol.lock" ]; then
-     LOCK_SOURCE=$(python3 -c "import json; print(json.load(open('{patrolDir}/patrol.lock'))['source'])")
-     echo "ERROR: Patrol already running (source=$LOCK_SOURCE). Abort."
-     exit 1
-   fi
-   ```
-   如果 lock 存在，输出错误并终止。
+   一个脚本完成所有预处理：配置读取、互斥检查、Case 列表获取、筛选、归档检测、预热。
 
-   **写 lock 文件**：
-   检测 prompt 中是否包含 `source=webui`，如果包含则 source 为 `webui`，否则为 `cli`。
+   检测 prompt 中是否包含 `source=webui`，如果包含则 SOURCE 为 `webui`，否则为 `cli`。
+   检测 prompt 中是否包含 `--force`，如果包含则加 `--force` 参数。
+
+   读取 `config.json` 获取 `casesRoot` 和 `patrolDir`：
    ```bash
-   mkdir -p "{patrolDir}"
-   rm -f "{patrolDir}/patrol-progress.json"  # 清理上次残留
-   echo "starting" > "{patrolDir}/patrol-phase"
-   echo '{"source":"cli","pid":'"$$"',"startedAt":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'","force":FORCE_VALUE}' > "{patrolDir}/patrol.lock"
+   eval $(python3 -c "
+   import json
+   c = json.load(open('config.json', encoding='utf-8'))
+   print(f\"CASES_ROOT={c.get('casesRoot', '../data/cases')}\")
+   print(f\"PATROL_DIR={c.get('patrolDir', '../data/.patrol')}\")
+   ")
    ```
+
+   执行初始化脚本：
+   ```bash
+   INIT_JSON=$(bash .claude/skills/patrol/scripts/patrol-init.sh \
+     --cases-root "$CASES_ROOT" --patrol-dir "$PATROL_DIR" \
+     --source "$SOURCE" [--force])
+   ```
+
+   解析输出 JSON：
+   - `status=error` → 输出 `.error` 字段，终止
+   - `status=early-exit` → 输出 `📊 Patrol: 0 cases to process (all within skipHours). Done.`，终止
+   - `status=ok` → 提取字段继续：
+     ```bash
+     CASES=$(echo "$INIT_JSON" | python3 -c "import json,sys; print(','.join(json.load(sys.stdin)['cases']))")
+     TOTAL_FOUND=$(echo "$INIT_JSON" | python3 -c "import json,sys; print(json.load(sys.stdin)['totalFound'])")
+     CHANGED_CASES=$(echo "$INIT_JSON" | python3 -c "import json,sys; print(json.load(sys.stdin)['changedCases'])")
+     WARMUP_STATUS=$(echo "$INIT_JSON" | python3 -c "import json,sys; print(json.load(sys.stdin)['warmupStatus'])")
+     CASE_LIST_CSV="$CASES"
+     TOTAL_CASES="$CHANGED_CASES"
+     PATROL_START_ISO=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+     ```
 
    **🚨 路径硬规则（反复出问题，必须严格遵守）**：
-   - `casesRoot` = `./cases`（直接用 config.json 原始值）
-   - `projectRoot` = `.`（当前目录）
+   - `casesRoot` 和 `patrolDir` 直接使用 config.json 原始值（相对路径）
    - **所有 Bash 命令、Agent spawn prompt、python3 -c 内部**都用这些相对路径
    - **绝对禁止**：`C:\Users\...`、`C:/Users/...`、`/c/Users/...` 任何形式的绝对路径
    - 违反此规则会导致：文件写到错误位置、`__teams-queue__` 幽灵目录、path 中反斜杠被当转义符
-
-2. **写 phase 文件（discovering）**
-   ```bash
-   echo "discovering" > "{patrolDir}/patrol-phase"
-   python3 -c "
-import json, os, time
-p = '{patrolDir}/patrol-progress.json'
-d = {'phase':'discovering','startedAt':'$(date -u +%FT%TZ)','source':'$SOURCE','updatedAt':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime())}
-tmp = p + '.tmp.' + str(os.getpid())
-json.dump(d, open(tmp,'w'), indent=2)
-os.replace(tmp, p)
-"
-   ```
-
-3. **获取活跃 Case 列表**
-   ```
-   pwsh -NoProfile -File .claude/skills/d365-case-ops/scripts/list-active-cases.ps1 -OutputJson
-   ```
-
-   获取后，将 `totalFound`（D365 返回的全部 active case 数量）记入变量供后续 progress 使用：
-   ```bash
-   TOTAL_FOUND=$ACTIVE_CASE_COUNT
-   ```
-
-3. **筛选需要处理的 Case**
-
-   **`--force` 模式**：如果用户传入 `--force`（或明确表示要强制巡检），跳过 `lastInspected` 检查，所有活跃 case 全部纳入处理。
-
-   **常规模式**：读取 `config.json` 中 `patrolSkipHours`（默认 3 小时）。对每个 case，读取 `{casesRoot}/active/{case-id}/casework-meta.json` 的 `lastInspected`。
-   满足以下**任一条件**即纳入处理：
-   - `lastInspected` 距当前时间超过 `patrolSkipHours` 小时
-   - 无 `casework-meta.json` 或无 `lastInspected` 字段（新 case，首次巡检）
-
-   > **设计说明**：不使用 D365 `modifiedon` 作为筛选条件，因为新邮件是独立 Email Activity，不一定更新 Case 实体的 `modifiedon`，会导致漏检。
-
-   **2.5. 归档/转移检测（含 AR 级联）**
-
-   获取 active case 列表后，扫描本地 `{casesRoot}/active/` 目录，找出不在 D365 active list 中的 case：
-
-   ```bash
-   pwsh -NoProfile -File .claude/skills/d365-case-ops/scripts/detect-case-status.ps1 -CasesRoot {casesRoot}
-   ```
-
-   脚本输出 JSON 数组，每个元素包含 `caseNumber`, `status`（archived/transferred）, `reason`, `closureEmailEvidence`。
-
-   > **AR 级联归档**：`detect-case-status.ps1` 内置 Step 3a 会自动检测 AR case（case number ≥ 19 位）的 main case（前 16 位）是否正在归档或已归档。当 main case resolved/archived 时，其 AR case 即使仍在 D365 active list 中也会被标记为 archived（reason: "AR cascade: main case {mainCaseId} resolved/archived"）。无需额外处理。
-
-   对每个检测到的 case：
-   - 确保 `{casesRoot}/archived/` 和 `{casesRoot}/transfer/` 目录存在（`mkdir -p`）
-   - 根据 status 移动目录：
-     ```bash
-     # archived case
-     mv "{casesRoot}/active/{caseNumber}" "{casesRoot}/archived/{caseNumber}"
-     # transferred case
-     mv "{casesRoot}/active/{caseNumber}" "{casesRoot}/transfer/{caseNumber}"
-     ```
-   - 记录日志到 `{patrolDir}/archive-log.jsonl`（append）：
-     ```json
-     {"timestamp":"ISO","caseNumber":"...","status":"archived|transferred","reason":"...","closureEmailEvidence":"...","from":"active/","to":"archived/|transfer/"}
-     ```
-   - 归档/转移的 case 从后续步骤 3 的待处理列表中**排除**，不再 spawn casework
-
-   **3.5. Early-exit（ISS-223：0 cases 快速退出）**
-
-   如果筛选后待处理 case 数量为 0（全部被 patrolSkipHours 过滤 + 归档排除）：
-   - 跳过 Step 4/5/6/7（预热 + 处理）
-   - 直接写 patrol-state.json（processedCases=0）
-   - 释放 lock，退出
-   - 输出：`📊 Patrol: 0 cases to process (all within skipHours). Done.`
-
-4. **阶段 0：预热（并行执行，~40s）**
-
-   写 phase 文件：
-   ```bash
-   echo "warming-up" > "{patrolDir}/patrol-phase"
-   python3 -c "
-import json, os, time
-p = '{patrolDir}/patrol-progress.json'
-d = {'phase':'warming-up','startedAt':'$(date -u +%FT%TZ)','source':'$SOURCE','updatedAt':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime())}
-tmp = p + '.tmp.' + str(os.getpid())
-json.dump(d, open(tmp,'w'), indent=2)
-os.replace(tmp, p)
-"
-   ```
-
-   两个预热任务并行执行：
-
-   ```bash
-   # IR/FDR/FWR 批量预填（~3s，纯 OData，不依赖 token daemon）
-   pwsh -NoProfile -File .claude/skills/d365-case-ops/scripts/check-ir-status-batch.ps1 -SaveMeta -MetaDir {casesRoot}/active
-
-   # Token Daemon warmup（Teams + DTM + ICM 统一预热，~37s）
-   # 检查各 token cache，过期则启动 headless Edge + SSO 刷新
-   # 输出: WARMUP_OK|daemon=inline|teams=cached(47m)|dtm=refreshed(4200)|icm=cached(163m)
-   node .claude/skills/browser-profiles/scripts/token-daemon.js warmup
-   ```
-
-   捕获 warmup 输出供 sidebar 展示：
-   ```bash
-   WARMUP_OUT=$(node .claude/skills/browser-profiles/scripts/token-daemon.js warmup 2>/dev/null || echo "daemon offline")
-   WARMUP_STATUS=$(echo "$WARMUP_OUT" | head -1 | cut -c1-60)
-   ```
-
-   **关键**：
-   - `check-ir-status-batch.ps1` 不是 token 预热，是 SLA 数据，独立保留
-   - `token-daemon.js warmup` 统一管理 Teams/DTM/ICM 三个 token：
-     - 共享一个 Edge 实例 + SSO session（只需登录一次）
-     - 有效 cache 直接跳过（几乎零耗时）
-     - 无效 cache 依次刷新（首次 ~37s，后续带 SSO session ~15s）
-   - 两者完全并行，无资源冲突
-   - Token cache 位置不变：`$TEMP/teams-ic3-token.json`、`$TEMP/d365-case-ops-runtime/dtm-token-global.json`、`$TEMP/icm-token-cache.json`
-   - 各 case 的消费者脚本（`teams-search-inline.sh`、`download-attachments.ps1`、`icm-discussion-ab.js`）无需改动，直接读取相同 cache 文件
-
-5. **阶段 0.5：写 phase 文件（processing）**
-
-   ```bash
-   echo "processing" > "{patrolDir}/patrol-phase"
-   SKIPPED_COUNT=$((TOTAL_FOUND - CHANGED_CASES))
-   python3 -c "
-import json, os, time
-p = '{patrolDir}/patrol-progress.json'
-d = {'phase':'processing','startedAt':'$(date -u +%FT%TZ)','source':'$SOURCE','totalCases':$TOTAL_CASES,'changedCases':$CHANGED_CASES,'caseList':$CASE_LIST_JSON,'totalFound':$TOTAL_FOUND,'skippedCount':$SKIPPED_COUNT,'warmupStatus':'$WARMUP_STATUS','updatedAt':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime())}
-tmp = p + '.tmp.' + str(os.getpid())
-json.dump(d, open(tmp,'w'), indent=2)
-os.replace(tmp, p)
-"
-   ```
 
 6. **Streaming Pipeline：启动 casework(mode=patrol) + 推进**
 
@@ -198,10 +84,10 @@ os.replace(tmp, p)
 
    对每个待处理的 case spawn casework(mode=patrol) agent：
 
-   **先写 start=active（SDK 冷启动计时起点）**：
+   **先写 start=active（SDK 冷启动计时起点，同时 --init 清除上次状态）**：
    ```bash
    python3 .claude/skills/casework/scripts/update-state.py \
-     --case-dir "{casesRoot}/active/{caseNumber}" --step start --status active \
+     --case-dir "{casesRoot}/active/{caseNumber}" --init --run-type patrol --step start --status active \
      --case-number "{caseNumber}"
    ```
 
@@ -225,27 +111,10 @@ os.replace(tmp, p)
    → 记录返回的 task_id 和 output_file_path
    ```
 
-   **6a-2. Agent Output → casework.log（追加 agent 完整输出）**
+   **6a-2. Agent Output（ISS-231：自动保存到 runs/{runId}/agents/）**
 
-   每当 casework/troubleshooter/email-drafter/summarize **任一后台 agent 完成**（收到 `<task-notification>`），**必须**将 agent output 追加到该 case 的 casework.log：
-
-   ```
-   1. 从 task-notification 获取 output_file_path（e.g. /tmp/claude/.../tasks/xxx.output）
-   2. Read(output_file_path) 读取完整内容
-   3. Bash 追加到 casework.log：
-      LOG="{caseDir}/.casework/logs/casework.log"
-      echo "" >> "$LOG"
-      echo "========== AGENT: {agent_type} | $(date -Iseconds) ==========" >> "$LOG"
-      # 用 python3 追加 Read 到的内容（避免 shell 转义问题）
-      python3 -c "
-      content = '''{read_content}'''
-      open('$LOG', 'a').write(content + '\n')
-      "
-      echo "========== END AGENT ==========" >> "$LOG"
-   ```
-
-   > ⚠️ output file 是临时文件。**收到 notification 后立即读取**，不要延迟到汇总阶段。
-   > agent_type 取值：`casework-patrol` / `troubleshooter` / `email-drafter` / `summarize` / `challenger`
+   每当 casework/troubleshooter/email-drafter/summarize **任一后台 agent 完成**（收到 `<task-notification>`），Dashboard 的 patrol-orchestrator.ts 会自动将 output 保存到 `{caseDir}/.casework/runs/{runId}/agents/{agentType}.log`。
+   **不需要** patrol agent 手动读取和追加 output。
 
    - **一次性启动所有 Agent（全量并行）**—— 各 agent 写不同 case 目录，无资源竞争
    - 初始化每个 case 的状态追踪：`phase: "gathering"`
@@ -285,6 +154,12 @@ os.replace(tmp, p)
              if ACTION_COUNT == 0 && DELTA == "DELTA_EMPTY":
                # ⚡ 快速路径：无新数据 + 无 action → 主 agent 直接脚本完成，不 spawn summarize agent
                # 省去 ~70s agent 冷启动
+               # Step 1: Mark intermediate UI states BEFORE doing work (act skipped, summarize active)
+               python3 .claude/skills/casework/scripts/update-state.py \
+                 --case-dir "{casesRoot}/active/{caseNumber}" --step act --status skipped --case-number "{caseNumber}"
+               python3 .claude/skills/casework/scripts/update-state.py \
+                 --case-dir "{casesRoot}/active/{caseNumber}" --step summarize --status active --case-number "{caseNumber}"
+               # Step 2: Do the actual inline summarize work
                bash .claude/skills/casework/scripts/generate-todo.sh "{casesRoot}/active/{caseNumber}"
                python3 -c "
                import json, time
@@ -295,11 +170,7 @@ os.replace(tmp, p)
                m['lastAssessedAt'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
                json.dump(m, open(p, 'w', encoding='utf-8'), indent=2, ensure_ascii=False)
                "
-               # Mark skipped steps in state.json
-               python3 .claude/skills/casework/scripts/update-state.py \
-                 --case-dir "{casesRoot}/active/{caseNumber}" --step assess --status completed --case-number "{caseNumber}"
-               python3 .claude/skills/casework/scripts/update-state.py \
-                 --case-dir "{casesRoot}/active/{caseNumber}" --step act --status skipped --case-number "{caseNumber}"
+               # Step 3: Mark summarize completed AFTER work is done
                python3 .claude/skills/casework/scripts/update-state.py \
                  --case-dir "{casesRoot}/active/{caseNumber}" --step summarize --status completed \
                  --case-number "{caseNumber}"
@@ -313,10 +184,18 @@ os.replace(tmp, p)
                python3 .claude/skills/casework/scripts/update-state.py \
                  --case-dir "{casesRoot}/active/{caseNumber}" --step act --status skipped --case-number "{caseNumber}"
                → case.phase = "inspecting"
+               # Mark summarize active for UI
+               python3 .claude/skills/casework/scripts/update-state.py \
+                 --case-dir "{casesRoot}/active/{caseNumber}" --step summarize --status active --case-number "{caseNumber}"
                → 立即 spawn summarize（后台）
              
              else:
                → case.phase = "executing"
+               # Update state.json for UI: assess done, act starts
+               python3 .claude/skills/casework/scripts/update-state.py \
+                 --case-dir "{casesRoot}/active/{caseNumber}" --step assess --status completed --case-number "{caseNumber}"
+               python3 .claude/skills/casework/scripts/update-state.py \
+                 --case-dir "{casesRoot}/active/{caseNumber}" --step act --status active --case-number "{caseNumber}"
                → 立即 spawn 无依赖的 action（troubleshooter/email-drafter）
          
          case "executing":
@@ -350,6 +229,11 @@ os.replace(tmp, p)
            
            if 該 case 所有 action 都已完成 && case.phase still "executing":
              → case.phase = "inspecting"
+             # Update state.json for UI: act done, summarize starts
+             python3 .claude/skills/casework/scripts/update-state.py \
+               --case-dir "{casesRoot}/active/{caseNumber}" --step act --status completed --case-number "{caseNumber}"
+             python3 .claude/skills/casework/scripts/update-state.py \
+               --case-dir "{casesRoot}/active/{caseNumber}" --step summarize --status active --case-number "{caseNumber}"
              → 立即 spawn summarize（后台）
          
          case "investigating":
@@ -403,12 +287,18 @@ os.replace(tmp, p)
              bash .claude/skills/casework/scripts/finalize-state.sh \
                "{casesRoot}/active/{caseNumber}" act
              → case.phase = "inspecting"
+             # Mark summarize active for UI
+             python3 .claude/skills/casework/scripts/update-state.py \
+               --case-dir "{casesRoot}/active/{caseNumber}" --step summarize --status active --case-number "{caseNumber}"
              → spawn summarize（后台）
          
          case "inspecting":
            检查 inspection agent 是否完成
            （判断方式：todo/ 目录下有本次 patrol 时间戳之后的文件）
            if 完成:
+             # Mark summarize completed for UI
+             python3 .claude/skills/casework/scripts/update-state.py \
+               --case-dir "{casesRoot}/active/{caseNumber}" --step summarize --status completed --case-number "{caseNumber}"
              → case.phase = "done"
      
      # 每轮输出进度表（调用 patrol-progress.py 渲染）
@@ -418,6 +308,14 @@ os.replace(tmp, p)
        --phases '{json_phases_dict}' \
        --patrol-start "{patrol_start_iso}"
      # phases dict: {"caseNumber": "gathering|executing|investigating|reassessing|inspecting|done", ...}
+     
+     # WebUI 模式：每轮更新 patrol-progress.json（供 file-watcher → SSE 推送）
+     # CLI 模式也写，确保 sidebar 实时更新 currentAction + processedCases
+     DONE_COUNT=$(echo '{json_phases_dict}' | python3 -c "import json,sys; d=json.load(sys.stdin); print(sum(1 for v in d.values() if v=='done'))")
+     python3 .claude/skills/patrol/scripts/update-phase.py \
+       --patrol-dir "{patrolDir}" --phase processing \
+       --total-cases $TOTAL_CASES --changed-cases $CHANGED_CASES \
+       --processed-cases $DONE_COUNT --current-action "$CURRENT_ACTION"
      # 每轮 spawn 调用合并：同一轮内需要 spawn 的多个 agent 在一条消息中并行发出
    }
    ```
@@ -443,74 +341,18 @@ os.replace(tmp, p)
    - 所有 case 到达 `done` 状态
    - 或总时长超过 25 分钟（超时跳出，未完成 case 标记为 timeout）
 
-7. **阶段 2.5：清理**
+7. **收尾（patrol-finalize.sh）**
 
-   V2 不需要 queue drain 或 daemon stop（各 case 的 data-refresh.sh 已自行清理 agency proxy）。
+   一个脚本完成所有收尾：orphan 进程清理、结果聚合、patrol-state.json 写入、lock 释放。
 
-   清理 orphan agency 进程（ISS-222: 实际 kill 而非仅检测）：
    ```bash
-   AGENCY_COUNT=$(tasklist 2>/dev/null | grep -c -i agency.exe || echo 0)
-   if [ "$AGENCY_COUNT" -gt 0 ]; then
-     echo "⚠️ $AGENCY_COUNT orphan agency process(es) — killing..."
-     taskkill /IM agency.exe /F 2>/dev/null || true
-     echo "✅ agency cleanup done"
-   fi
-   ```
-   > patrol 完成后不应有活跃的 agency 需求。teams-search-inline.sh 的 per-case agency 应在脚本退出时自行清理；残留的是异常退出的遗留。
-
-8. **汇总 Todo + 结构化输出**
-
-   写阶段文件：
-   ```bash
-   echo "aggregating" > "{patrolDir}/patrol-phase"
-   python3 -c "
-import json, os, time
-p = '{patrolDir}/patrol-progress.json'
-d = {'phase':'aggregating','startedAt':'$(date -u +%FT%TZ)','source':'$SOURCE','updatedAt':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime())}
-tmp = p + '.tmp.' + str(os.getpid())
-json.dump(d, open(tmp,'w'), indent=2)
-os.replace(tmp, p)
-"
+   FINAL_JSON=$(bash .claude/skills/patrol/scripts/patrol-finalize.sh \
+     --cases-root "$CASES_ROOT" --patrol-dir "$PATROL_DIR" \
+     --cases "$CASE_LIST_CSV" --source "$SOURCE" \
+     --started-at "$PATROL_START_ISO")
    ```
 
-   从各 case 的 `todo/` 目录提取最新 Todo 文件，按 🔴🟡✅ 分级汇总展示。
-
-   从各 case 的 `.casework/logs/casework.log` 读取最后一行判断 status（`STEP B5 OK` / `STEP B6 OK` / `phase completed` → completed，否则 failed）。
-
-   写结构化结果文件 `{patrolDir}/patrol-state.json`：
-   ```json
-   {
-     "startedAt": "ISO",
-     "completedAt": "ISO",
-     "source": "cli",
-     "totalCases": 10,
-     "changedCases": 5,
-     "processedCases": 5,
-     "phase": "completed",
-     "caseResults": [
-       { "caseNumber": "xxx", "status": "completed" }
-     ]
-   }
-   ```
-   `patrol-state.json` 是唯一的结果文件（CLI 和 WebUI 共用）。
-
-   写最终阶段：
-   ```bash
-   echo "completed" > "{patrolDir}/patrol-phase"
-   python3 -c "
-import json, os, time
-p = '{patrolDir}/patrol-progress.json'
-d = {'phase':'completed','startedAt':'$(date -u +%FT%TZ)','source':'$SOURCE','processedCases':$PROCESSED_CASES,'updatedAt':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime())}
-tmp = p + '.tmp.' + str(os.getpid())
-json.dump(d, open(tmp,'w'), indent=2)
-os.replace(tmp, p)
-"
-   ```
-
-   **🔒 释放互斥锁**：
-   ```bash
-   rm -f "{patrolDir}/patrol.lock"
-   ```
+   收尾完成后，从各 case 的 `todo/` 目录提取最新 Todo 文件，按 🔴🟡✅ 分级汇总展示给用户。
 
    > ⚠️ 如果 patrol 中途异常退出，lock 文件不会被删除。WebUI 和下次 CLI 启动时会检测 stale lock（PID 不存在或 lock 超过 60 分钟）并自动清理。
 
