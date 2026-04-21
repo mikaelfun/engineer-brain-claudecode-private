@@ -562,7 +562,12 @@ export function useActions(enabled = false) {
 
 export function useStartPatrol() {
   return useMutation({
-    mutationFn: (force?: boolean) => apiPost<{ status: string }>('/patrol', { force: force ?? true }),
+    mutationFn: (params?: { force?: boolean; mode?: string } | boolean) => {
+      // Backward compat: accept bare boolean (force) or object
+      const force = typeof params === 'boolean' ? params : (params?.force ?? true)
+      const mode = typeof params === 'object' && params !== null ? (params.mode ?? 'normal') : 'normal'
+      return apiPost<{ status: string }>('/patrol', { force, mode })
+    },
   })
 }
 
@@ -1525,13 +1530,18 @@ export interface AzProfileStatus {
   status: 'ok' | 'expired' | 'unknown'
   lastChecked: string | null
   error: string | null
+  loginInProgress?: boolean
 }
 
 export function useAzProfileStatus() {
   return useQuery({
     queryKey: ['az-profiles', 'status'],
-    queryFn: () => apiGet<{ profiles: AzProfileStatus[] }>('/az-profiles/status'),
-    refetchInterval: 5 * 60_000, // 5 min — backend cache always fresh from bg monitor
+    queryFn: () => apiGet<{ profiles: AzProfileStatus[]; anyLoginInProgress?: boolean }>('/az-profiles/status'),
+    refetchInterval: (query) => {
+      // Poll every 3s while any login is in progress, otherwise 5 min
+      const data = query.state.data
+      return data?.anyLoginInProgress ? 3_000 : 5 * 60_000
+    },
   })
 }
 
@@ -1541,6 +1551,79 @@ export function useAzProfileRefresh() {
     mutationFn: () => apiPost<{ ok: boolean; profiles: AzProfileStatus[] }>('/az-profiles/refresh'),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['az-profiles', 'status'] })
+    },
+  })
+}
+
+export function useAzProfileLogin() {
+  return useMutation({
+    mutationFn: (profileDir: string) => apiPost<{ ok: boolean; command: string }>('/az-profiles/login', { profileDir }),
+  })
+}
+
+// ---- Teams Watch hooks ----
+
+export function useTeamsWatches() {
+  return useQuery({
+    queryKey: ['teams-watch'],
+    queryFn: () => apiGet<{ watches: any[]; total: number }>('/teams-watch'),
+    refetchInterval: 15_000,
+  })
+}
+
+export function useTeamsWatchHistory(watchId: string | null) {
+  return useQuery({
+    queryKey: ['teams-watch', watchId, 'history'],
+    queryFn: () => apiGet<{ history: any[]; total: number }>(`/teams-watch/${watchId}/history`),
+    enabled: !!watchId,
+  })
+}
+
+export function useSbaStatus() {
+  return useQuery({
+    queryKey: ['teams-watch', 'sba', 'status'],
+    queryFn: () => apiGet<any>('/teams-watch/sba/status'),
+    refetchInterval: 30_000,
+  })
+}
+
+export function useCreateTeamsWatch() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: { topic?: string; chatId?: string; interval?: number; action?: string }) =>
+      apiPost<any>('/teams-watch', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['teams-watch'] })
+    },
+  })
+}
+
+export function useStartTeamsWatch() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => apiPost<any>(`/teams-watch/${id}/start`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['teams-watch'] })
+    },
+  })
+}
+
+export function useStopTeamsWatch() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => apiPost<any>(`/teams-watch/${id}/stop`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['teams-watch'] })
+    },
+  })
+}
+
+export function useDeleteTeamsWatch() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => apiDelete<any>(`/teams-watch/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['teams-watch'] })
     },
   })
 }
