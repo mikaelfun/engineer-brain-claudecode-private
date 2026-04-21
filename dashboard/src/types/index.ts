@@ -312,6 +312,7 @@ export type SSEEventType =
   | 'agent-registered'
   | 'agent-session-bound'
   | 'agent-completed'
+  | 'teams-watch-update'
 
 export interface SSEEvent {
   type: SSEEventType
