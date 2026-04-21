@@ -1,0 +1,15 @@
+{
+  "_doc": "Pre-configured watch targets. Use --target <name> as shortcut for --chat-id.",
+  "targets": {
+    "sba": {
+      "chatId": "19:deeeb1e6-0c83-4151-9662-fe56143e83d4_9c20e562-eb23-4bbd-a65c-23684d386825@unq.gbl.spaces",
+      "displayName": "SBAManager Bot",
+      "description": "Case assignment notifications from SBAManager Bot"
+    },
+    "self": {
+      "chatId": "48:notes",
+      "displayName": "Kun Fang (You)",
+      "description": "Self-chat / Notes to Self"
+    }
+  }
+}

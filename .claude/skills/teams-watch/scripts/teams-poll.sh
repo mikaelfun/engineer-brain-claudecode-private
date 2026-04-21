@@ -14,7 +14,7 @@
 #   WATCH_FAIL|reason=...
 set -uo pipefail
 
-CHAT_ID="" TOPIC="" CHANNEL="" SINCE="" ACTION="notify" ACTION_SCRIPT=""
+CHAT_ID="" TOPIC="" CHANNEL="" TARGET="" SINCE="" ACTION="notify" ACTION_SCRIPT=""
 STATE_FILE="" PORT=9840
 
 while [[ $# -gt 0 ]]; do
@@ -22,6 +22,7 @@ while [[ $# -gt 0 ]]; do
     --chat-id)       CHAT_ID="$2"; shift 2 ;;
     --topic)         TOPIC="$2"; shift 2 ;;
     --channel)       CHANNEL="$2"; shift 2 ;;
+    --target)        TARGET="$2"; shift 2 ;;
     --since)         SINCE="$2"; shift 2 ;;
     --action)        ACTION="$2"; shift 2 ;;
     --action-script) ACTION_SCRIPT="$2"; shift 2 ;;
@@ -31,16 +32,44 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# Resolve --target from watch-targets.json config
+if [ -n "$TARGET" ] && [ -z "$CHAT_ID" ]; then
+  TARGETS_FILE="$(cd "$(dirname "$0")" && pwd)/../watch-targets.json"
+  if [ -f "$TARGETS_FILE" ]; then
+    TF="$TARGETS_FILE"
+    command -v cygpath &>/dev/null && TF="$(cygpath -m "$TARGETS_FILE")"
+    RESOLVED=$(python3 -c "
+import json,sys
+d=json.load(open('$TF'))
+t=d.get('targets',{}).get('$TARGET',{})
+if t.get('chatId'): print(t['chatId'])
+" 2>/dev/null)
+    if [ -n "$RESOLVED" ]; then
+      CHAT_ID="$RESOLVED"
+      [ -z "$TOPIC" ] && TOPIC="$TARGET"
+    else
+      echo "WATCH_FAIL|reason=target '$TARGET' not found in watch-targets.json"; exit 1
+    fi
+  else
+    echo "WATCH_FAIL|reason=watch-targets.json not found"; exit 1
+  fi
+fi
+
 [ -z "$CHAT_ID" ] && [ -z "$TOPIC" ] && [ -z "$CHANNEL" ] && {
-  echo "WATCH_FAIL|reason=must specify --chat-id, --topic, or --channel"; exit 1
+  echo "WATCH_FAIL|reason=must specify --chat-id, --topic, --target, or --channel"; exit 1
 }
 
 AGENCY_EXE="$APPDATA/agency/CurrentVersion/agency.exe"
 [ ! -f "$AGENCY_EXE" ] && { echo "WATCH_FAIL|reason=agency.exe not found"; exit 1; }
 
-# State directory
+# State directory — use Windows path for Python compatibility
 STATE_DIR="$TEMP/teams-watch"
 mkdir -p "$STATE_DIR"
+# Convert to Windows path with forward slashes for python3
+# (Git Bash /tmp != Python C:\tmp, and backslashes break python string literals)
+if command -v cygpath &>/dev/null; then
+  STATE_DIR="$(cygpath -m "$STATE_DIR")"
+fi
 
 # Derive state file from topic/chatId hash
 if [ -z "$STATE_FILE" ]; then

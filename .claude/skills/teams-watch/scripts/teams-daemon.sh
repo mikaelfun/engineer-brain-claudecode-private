@@ -31,6 +31,15 @@ PID_DIR="$STATE_DIR/pids"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 mkdir -p "$STATE_DIR" "$PID_DIR"
 
+# Helper: convert POSIX path to Windows path for python3 (Git Bash /tmp != Python C:\tmp)
+_pypath() {
+  if command -v cygpath &>/dev/null; then
+    cygpath -m "$1"
+  else
+    echo "$1"
+  fi
+}
+
 case "$CMD" in
   start)
     [ -z "$TOPIC" ] && [ -z "$CHAT_ID" ] && { echo "ERROR: --topic or --chat-id required"; exit 1; }
@@ -68,6 +77,8 @@ case "$CMD" in
     echo "$DAEMON_PID" > "$PID_FILE"
 
     # Write daemon config for WebUI
+    PY_CFG="$(_pypath "$STATE_DIR/daemon-$HASH-config.json")"
+    PY_LOG="$(_pypath "$LOG_FILE")"
     python3 -c "
 import json, os
 config = {
@@ -78,10 +89,10 @@ config = {
     'action': '$ACTION',
     'pid': $DAEMON_PID,
     'startedAt': '$(date -u +%FT%TZ)',
-    'logFile': '$LOG_FILE',
+    'logFile': '$PY_LOG',
     'status': 'running'
 }
-with open('$STATE_DIR/daemon-$HASH-config.json', 'w') as f:
+with open(r'$PY_CFG', 'w') as f:
     json.dump(config, f, indent=2)
 "
 
@@ -99,11 +110,12 @@ with open('$STATE_DIR/daemon-$HASH-config.json', 'w') as f:
         rm -f "$PID_FILE"
         # Update config
         CFG="$STATE_DIR/daemon-$HASH-config.json"
+        PY_CFG="$(_pypath "$CFG")"
         [ -f "$CFG" ] && python3 -c "
 import json
-d=json.load(open('$CFG'))
+d=json.load(open(r'$PY_CFG'))
 d['status']='stopped'
-json.dump(d,open('$CFG','w'),indent=2)
+json.dump(d,open(r'$PY_CFG','w'),indent=2)
 "
       else
         echo "DAEMON_NOT_RUNNING|topic=$LABEL"
@@ -120,11 +132,12 @@ json.dump(d,open('$CFG','w'),indent=2)
       # Update all configs
       for cf in "$STATE_DIR"/daemon-*-config.json; do
         [ -f "$cf" ] || continue
+        PY_CF="$(_pypath "$cf")"
         python3 -c "
 import json
-d=json.load(open('$cf'))
+d=json.load(open(r'$PY_CF'))
 d['status']='stopped'
-json.dump(d,open('$cf','w'),indent=2)
+json.dump(d,open(r'$PY_CF','w'),indent=2)
 " 2>/dev/null
       done
       echo "DAEMON_STOP_ALL|stopped=$STOPPED"
@@ -137,9 +150,10 @@ json.dump(d,open('$cf','w'),indent=2)
     for cf in "$STATE_DIR"/daemon-*-config.json; do
       [ -f "$cf" ] || continue
       FOUND=$((FOUND + 1))
+      PY_CF="$(_pypath "$cf")"
       python3 -c "
 import json, os
-d=json.load(open('$cf'))
+d=json.load(open(r'$PY_CF'))
 pid=d.get('pid',0)
 running = False
 try:
@@ -162,9 +176,10 @@ print(f'  {icon} {topic:40} | {interval}s | {action:12} | pid={pid} | {started}'
     echo "=== Watch State Files ==="
     for sf in "$STATE_DIR"/watch-*.json; do
       [ -f "$sf" ] || continue
+      PY_SF="$(_pypath "$sf")"
       python3 -c "
 import json
-d=json.load(open('$sf'))
+d=json.load(open(r'$PY_SF'))
 topic=d.get('target',{}).get('topic','?')
 s=d.get('state',{})
 polls=s.get('pollCount',0)

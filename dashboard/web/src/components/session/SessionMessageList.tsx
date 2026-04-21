@@ -480,9 +480,8 @@ function formatTime(ts: string | undefined): string {
   }
 }
 
-/** Compact message bubble for sidebar width — with expand/collapse for long content */
+/** Compact message bubble for sidebar width — full content, no truncation */
 export function MessageBubble({ message, compact }: { message: { type: string; content: string; toolName?: string; step?: string; timestamp?: string }; compact?: boolean }) {
-  const [expanded, setExpanded] = useState(false)
 
   const styles: Record<string, { borderColor: string; icon: React.ReactNode; label: string }> = {
     thinking: {
@@ -534,12 +533,8 @@ export function MessageBubble({ message, compact }: { message: { type: string; c
 
   const style = styles[message.type] || styles.system
 
-  // Increased preview limits: normal 500, compact 200
-  const maxLen = compact ? 200 : 500
-  const isTruncated = message.content.length > maxLen
-  const displayContent = (isTruncated && !expanded)
-    ? message.content.slice(0, maxLen) + '…'
-    : message.content
+  // No truncation — show full content
+  const displayContent = message.content
 
   return (
     <div
@@ -557,18 +552,9 @@ export function MessageBubble({ message, compact }: { message: { type: string; c
         )}
       </div>
       {displayContent && (
-        <p className={`text-sm mt-0.5 ml-5 leading-relaxed break-words whitespace-pre-wrap ${compact && !expanded ? 'line-clamp-3' : ''}`} style={{ color: 'var(--text-secondary)' }}>
+        <p className={`text-sm mt-0.5 ml-5 leading-relaxed break-words whitespace-pre-wrap ${compact ? 'line-clamp-3' : ''}`} style={{ color: 'var(--text-secondary)' }}>
           {displayContent}
         </p>
-      )}
-      {isTruncated && (
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="text-xs ml-5 mt-0.5 font-medium cursor-pointer hover:underline"
-          style={{ color: 'var(--accent-blue)' }}
-        >
-          {expanded ? '▲ Show less' : '▼ Show more'}
-        </button>
       )}
     </div>
   )

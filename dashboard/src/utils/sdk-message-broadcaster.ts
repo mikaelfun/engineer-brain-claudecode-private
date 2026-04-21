@@ -17,16 +17,16 @@ import type { ToolCallRecord } from '../types/index.js'
 export function summarizeToolInput(toolName: string, input: any): string {
   if (!input || typeof input !== 'object') return ''
   try {
-    if (toolName === 'Bash' && input.command) return input.command.slice(0, 300)
+    if (toolName === 'Bash' && input.command) return input.command
     if (['Read', 'Write', 'Edit'].includes(toolName) && input.file_path) return input.file_path
     if (toolName === 'Glob' && input.pattern) return input.pattern
     if (toolName === 'Grep' && input.pattern) return `/${input.pattern}/` + (input.path ? ` in ${input.path}` : '')
-    if (toolName === 'Agent' && input.prompt) return input.prompt.slice(0, 200)
+    if (toolName === 'Agent' && input.prompt) return input.prompt
     if (input.url) return input.url
     if (input.query) return input.query
     for (const key of Object.keys(input)) {
       if (typeof input[key] === 'string' && input[key].length > 0) {
-        return `${key}: ${input[key].slice(0, 200)}`
+        return `${key}: ${input[key]}`
       }
     }
   } catch { /* ignore */ }
@@ -180,13 +180,13 @@ export async function broadcastSDKMessages(
       if (isError && toolCalls.length > 0) {
         const lastCall = toolCalls[toolCalls.length - 1]
         lastCall.success = false
-        const errText = typeof message.content === 'string' ? message.content.slice(0, 200) : ''
+        const errText = typeof message.content === 'string' ? message.content : ''
         if (errText) lastCall.error = errText
       }
       const resultContent = typeof message.content === 'string'
-        ? message.content.slice(0, 300)
+        ? message.content
         : typeof message.text === 'string'
-          ? message.text.slice(0, 300)
+          ? message.text
           : ''
       if (resultContent) {
         messageCount++
