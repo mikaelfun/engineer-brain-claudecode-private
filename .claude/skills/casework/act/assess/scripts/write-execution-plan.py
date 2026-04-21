@@ -136,8 +136,8 @@ def main():
         import subprocess
         cmd = [
             sys.executable,
-            # assess/scripts/ → assess/ → casework/ → casework/scripts/update-state.py
-            os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'scripts', 'update-state.py'),
+            # act/assess/scripts/ → act/assess/ → act/ → casework/ → casework/scripts/update-state.py
+            os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'scripts', 'update-state.py'),
             '--case-dir', args.case_dir,
             '--step', 'assess',
             '--status', 'completed',
