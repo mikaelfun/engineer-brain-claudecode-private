@@ -5,7 +5,7 @@ category: orchestrator
 stability: stable
 promptTemplate: |
   Execute patrol. Read .claude/skills/patrol/SKILL.md and follow all steps.
-description: "批量巡检：获取所有活跃 Case 列表，筛选有变化的 Case，逐个执行 casework 流程，汇总 Todo。"
+description: "批量巡检 v4：casework 自闭环简单路径 + troubleshooter 外部 spawn + phase2 闭环排查后流程。"
 allowed-tools:
   - Bash
   - Read
@@ -23,13 +23,14 @@ allowed-tools:
 
 ## 核心原则
 
-**每个 case 的分析/路由/写作步骤必须使用 Agent 工具（独立子进程）处理，禁止在 patrol session 中 inline 执行 casework。**
+**casework agent 自闭环简单路径（A/B/C），patrol 不再管理 email/summarize/challenger/reassess。**
+**patrol 主 agent 仅负责：spawn casework → 等待 → spawn troubleshooter → 等待 → spawn phase2 → 等待 → 进度展示。**
 
-**Streaming Pipeline**：casework(mode=patrol) 完成一个就立即推进下一步，不等所有 case 完成。每个 case 独立状态机：
+**Streaming Pipeline**：casework(mode=patrol) 完成一个就立即推进下一步。每个 case 独立状态机：
 ```
-gathering → plan-ready ─┬─ no-action → inspecting → done
-                        └─ has-actions → executing ─┬─ (no deferred) → inspecting → done
-                                                    └─ (has deferred) → investigating → reassessing → inspecting → done
+gathering ─┬─ casework 自闭环（summarize.status=completed）→ done
+           └─ act.status=waiting-troubleshooter → troubleshooting ─┬─ phase2 完成 → done
+                                                                    └─ needs-retroubleshoot → troubleshooting（重试）
 ```
 
 ## 执行步骤
@@ -40,6 +41,7 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
 
    检测 prompt 中是否包含 `source=webui`，如果包含则 SOURCE 为 `webui`，否则为 `cli`。
    检测 prompt 中是否包含 `--force`，如果包含则加 `--force` 参数。
+   检测 prompt 中是否包含 `--new` 或 `new-cases`，如果包含则加 `--mode new-cases` 参数（筛选本地不存在的新 case，跳过归档检测）。
 
    读取 `config.json` 获取 `casesRoot` 和 `patrolDir`：
    ```bash
@@ -55,7 +57,7 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
    ```bash
    INIT_JSON=$(bash .claude/skills/patrol/scripts/patrol-init.sh \
      --cases-root "$CASES_ROOT" --patrol-dir "$PATROL_DIR" \
-     --source "$SOURCE" [--force])
+     --source "$SOURCE" [--force] [--mode new-cases])
    ```
 
    解析输出 JSON：
@@ -79,7 +81,7 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
    - **绝对禁止**：`C:\Users\...`、`C:/Users/...`、`/c/Users/...` 任何形式的绝对路径
    - 违反此规则会导致：文件写到错误位置、`__teams-queue__` 幽灵目录、path 中反斜杠被当转义符
 
-2. **Streaming Pipeline：启动 casework(mode=patrol) + 推进**
+2. **Streaming Pipeline：spawn casework → troubleshooter → phase2（v4 三阶段）**
 
    **2a. 全量并行启动 casework(mode=patrol)**
 
@@ -87,34 +89,34 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
 
    **先写 start=active（SDK 冷启动计时起点，同时 --init 清除上次状态）**：
    ```bash
+   # new-cases mode: 新 case 没有本地目录，先创建
+   # if MODE == "new-cases": mkdir -p "{casesRoot}/active/{caseNumber}/.casework"
    python3 .claude/skills/casework/scripts/update-state.py \
      --case-dir "{casesRoot}/active/{caseNumber}" --init --run-type patrol --step start --status active \
      --case-number "{caseNumber}" --parent-run-id "$RUN_ID"
    ```
 
+   **casework(patrol) spawn 模板**：
    ```
    Agent({
-     subagent_type: "casework",
      prompt: "Patrol mode casework for Case {caseNumber}。
        caseDir: {casesRoot}/active/{caseNumber}/
        projectRoot: .
        casesRoot: {casesRoot}
        mode: patrol
 
-       执行 Step 1 + Step 2：
-       1. 读取 .claude/skills/casework/data-refresh/SKILL.md，执行 data-refresh（bash .claude/skills/casework/scripts/data-refresh.sh）
-       2. 读取 .claude/skills/casework/assess/SKILL.md，执行 assess 流程
-       3. 产出 .casework/execution-plan.json 后退出
-
-       ⚠️ patrol mode：不执行 Step 3 (act) 和 Step 4 (summarize)，由 patrol 主 agent 处理。",
-     run_in_background: true
+       读取 .claude/skills/casework/SKILL.md，按 mode=patrol 流程执行。
+       简单路径（无 troubleshooter）在 agent 内完成全部步骤后退出。
+       排查路径（有 troubleshooter）在 IR email（如有）后标记 waiting-troubleshooter 退出。",
+     run_in_background: true,
+     model: "opus"
    })
    → 记录返回的 task_id 和 output_file_path
    ```
 
    **2a-2. Agent Output（ISS-231：自动保存到 runs/{runId}/agents/）**
 
-   每当 casework/troubleshooter/email-drafter/summarize **任一后台 agent 完成**（收到 `<task-notification>`），Dashboard 的 patrol-orchestrator.ts 会自动将 output 保存到 `{caseDir}/.casework/runs/{runId}/agents/{agentType}.log`。
+   每当 casework/troubleshooter/casework-phase2 **任一后台 agent 完成**（收到 `<task-notification>`），Dashboard 的 patrol-orchestrator.ts 会自动将 output 保存到 `{caseDir}/.casework/runs/{runId}/agents/{agentType}.log`。
    **不需要** patrol agent 手动读取和追加 output。
 
    - **一次性启动所有 Agent（全量并行）**—— 各 agent 写不同 case 目录，无资源竞争
@@ -124,217 +126,109 @@ gathering → plan-ready ─┬─ no-action → inspecting → done
 
    根据 Step 1 写入的 lock 文件中 `source` 字段分流：
 
-   - **`source=cli`**：主动轮询模式（下方 6c）。每 12 秒检查状态、输出进度表、按需推进。CLI 用户需要实时反馈。
+   - **`source=cli`**：主动轮询模式（下方 2c）。每 12 秒检查状态、输出进度表、按需推进。CLI 用户需要实时反馈。
    - **`source=webui`**：被动等待模式。WebUI 有自己的 Dashboard 实时轮询 events 文件，agent 不需要主动输出进度。
      - 全量并行 spawn 所有 casework(mode=patrol) 后，**直接等待所有后台 agent 返回**（不 sleep 轮询）
-     - 每个 agent 返回时检查 execution-plan.json → 按需 spawn troubleshooter/email-drafter/summarize（同样后台等待）
+     - 每个 agent 返回时检查 state.json → 按需 spawn troubleshooter → phase2（同样后台等待）
      - 不调用 patrol-progress.py，不输出进度表
      - 其余逻辑（归档检测、cleanup、写 patrol-state.json）与 cli 模式相同
 
-   **2c. 统一轮询循环（CLI 模式，Streaming Pipeline 核心）**
+   **2c. 统一轮询循环（CLI 模式，v4 三阶段核心）**
 
-   每个 case 维护独立的状态机（见核心原则），轮询循环每 **12 秒** 检查并推进所有 case：
+   每个 case 只有 3 个阶段：`gathering` → `troubleshooting` → `done`。轮询循环每 **12 秒** 检查并推进：
 
    ```
    while (有未到达 done 的 case) {
      sleep 12s
      
-     # 批量检查哪些 case 有新的 .casework/execution-plan.json
-     Bash: for each case, check [ -f .casework/execution-plan.json ] && parse actions
-     
      for each case:
+       # 读 state.json 判断当前状态
+       STATE_INFO=$(python3 -c "
+       import json
+       try:
+         s = json.load(open('{casesRoot}/active/{caseNumber}/.casework/state.json', encoding='utf-8'))
+         act = s.get('steps',{}).get('act',{})
+         summ = s.get('steps',{}).get('summarize',{})
+         print(f'{act.get(\"status\",\"\")},{summ.get(\"status\",\"\")}')
+       except: print(',')
+       ")
+       ACT_STATUS=$(echo "$STATE_INFO" | cut -d, -f1)
+       SUMM_STATUS=$(echo "$STATE_INFO" | cut -d, -f2)
+       
        switch (case.phase):
        
          case "gathering":
-           if .casework/execution-plan.json 存在:
-             eval $(bash .claude/skills/casework/act/scripts/read-plan.sh \
-               "{casesRoot}/active/{caseNumber}/.casework/execution-plan.json")
-             # 读 deltaStatus
-             DELTA=$(python3 -c "import json; print(json.load(open('{casesRoot}/active/{caseNumber}/.casework/data-refresh-output.json')).get('deltaStatus','DELTA_OK'))" 2>/dev/null || echo "DELTA_OK")
-             
-             if ACTION_COUNT == 0 && DELTA == "DELTA_EMPTY":
-               # ⚡ 快速路径：无新数据 + 无 action → 主 agent 直接脚本完成，不 spawn summarize agent
-               # 省去 ~70s agent 冷启动
-               # Step 1: Mark intermediate UI states BEFORE doing work (act skipped, summarize active)
-               python3 .claude/skills/casework/scripts/update-state.py \
-                 --case-dir "{casesRoot}/active/{caseNumber}" --step act --status skipped --case-number "{caseNumber}"
-               python3 .claude/skills/casework/scripts/update-state.py \
-                 --case-dir "{casesRoot}/active/{caseNumber}" --step summarize --status active --case-number "{caseNumber}"
-               # Step 2: Do the actual inline summarize work
-               bash .claude/skills/casework/scripts/generate-todo.sh "{casesRoot}/active/{caseNumber}"
-               python3 -c "
-               import json, time
-               p = '{casesRoot}/active/{caseNumber}/casework-meta.json'
-               try: m = json.load(open(p, encoding='utf-8'))
-               except: m = {}
-               m['lastInspected'] = time.strftime('%Y-%m-%dT%H:%M:%S+08:00', time.localtime())
-               m['lastAssessedAt'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
-               json.dump(m, open(p, 'w', encoding='utf-8'), indent=2, ensure_ascii=False)
-               "
-               # Step 3: Mark summarize completed AFTER work is done
-               python3 .claude/skills/casework/scripts/update-state.py \
-                 --case-dir "{casesRoot}/active/{caseNumber}" --step summarize --status completed \
-                 --case-number "{caseNumber}"
-               → case.phase = "done"  # 直接完成，不经过 inspecting
-             
-             elif ACTION_COUNT == 0:
-               # DELTA_OK 但无 action（如 unsent draft exists）→ 仍需 spawn summarize（可能要更新 summary）
-               # Mark skipped steps in state.json
-               python3 .claude/skills/casework/scripts/update-state.py \
-                 --case-dir "{casesRoot}/active/{caseNumber}" --step assess --status completed --case-number "{caseNumber}"
-               python3 .claude/skills/casework/scripts/update-state.py \
-                 --case-dir "{casesRoot}/active/{caseNumber}" --step act --status skipped --case-number "{caseNumber}"
-               → case.phase = "inspecting"
-               # Mark summarize active for UI
-               python3 .claude/skills/casework/scripts/update-state.py \
-                 --case-dir "{casesRoot}/active/{caseNumber}" --step summarize --status active --case-number "{caseNumber}"
-               → 立即 spawn summarize（后台）
-             
-             else:
-               → case.phase = "executing"
-               # Update state.json for UI: assess done, act starts
-               python3 .claude/skills/casework/scripts/update-state.py \
-                 --case-dir "{casesRoot}/active/{caseNumber}" --step assess --status completed --case-number "{caseNumber}"
-               python3 .claude/skills/casework/scripts/update-state.py \
-                 --case-dir "{casesRoot}/active/{caseNumber}" --step act --status active --case-number "{caseNumber}"
-               → 立即 spawn 无依赖的 action（troubleshooter/email-drafter）
-         
-         case "executing":
-           检查已 spawn 的 action 是否完成：
-           
-           if troubleshooter spawned && claims.json 存在:
-             # challenger gate
-             读 claims.json：
-             if triggerChallenge === true:
-               → spawn challenger (前台等待)
-               → 读结果 → if retry → re-spawn troubleshooter
-             
-             # Check if execution-plan has deferredActions (reassess path)
-             eval $(bash .claude/skills/casework/act/scripts/read-plan.sh \
-               "{casesRoot}/active/{caseNumber}/.casework/execution-plan.json")
-             if HAS_DEFERRED == "true":
-               → case.phase = "investigating"
-               CURRENT_ACTION="{caseNumber} troubleshooter done → launching reassess"
-               → spawn reassess agent（后台）:
-                 Agent({
-                   subagent_type: "casework",
-                   prompt: "执行 reassess for Case {caseNumber}。caseDir: {casesRoot}/active/{caseNumber}/。
-                     请读取 .claude/skills/casework/reassess/SKILL.md 获取完整执行步骤。",
-                   run_in_background: true,
-                   model: "opus"
-                 })
-             else:
-               # 原有逻辑：直接触发 email-drafter
-               if email-drafter pending && dependsOn === "troubleshooter":
-                 → spawn email-drafter（后台）
-           
-           if 該 case 所有 action 都已完成 && case.phase still "executing":
-             → case.phase = "inspecting"
-             # Update state.json for UI: act done, summarize starts
-             python3 .claude/skills/casework/scripts/update-state.py \
-               --case-dir "{casesRoot}/active/{caseNumber}" --step act --status completed --case-number "{caseNumber}"
-             python3 .claude/skills/casework/scripts/update-state.py \
-               --case-dir "{casesRoot}/active/{caseNumber}" --step summarize --status active --case-number "{caseNumber}"
-             → 立即 spawn summarize（后台）
-         
-         case "investigating":
-           # Troubleshooter done, reassess running
-           # 检查 execution-plan.json 是否有 phase=="reassess" 的 plan entry
-           ep = "{casesRoot}/active/{caseNumber}/.casework/execution-plan.json"
-           HAS_REASSESS = python3 -c "
-             import json
-             try:
-               p = json.load(open('$ep', encoding='utf-8'))
-               plans = p.get('plans', [])
-               has = any(x.get('phase') == 'reassess' for x in plans)
-               print('true' if has else 'false')
-             except: print('false')
-           "
-           if HAS_REASSESS == "true":
-             # Reassess complete — read its actions
-             eval $(bash .claude/skills/casework/act/scripts/read-plan.sh "$ep")
-             # read-plan.sh with phase=reassess context gives reassess plan's actions
-             reassess_plan = python3 -c "
-               import json
-               p = json.load(open('$ep', encoding='utf-8'))
-               plans = p.get('plans', [])
-               rp = next((x for x in plans if x.get('phase') == 'reassess'), {})
-               conclusion = rp.get('conclusion', {})
-               actions = rp.get('actions', [])
-               has_email = any(a.get('type') == 'email-drafter' for a in actions)
-               print(f\"{conclusion.get('type','?')}|{conclusion.get('suggestedNextAction','?')}|{has_email}\")
-             "
-             
-             # Backfill reassess action result in state.json
-             bash .claude/skills/casework/scripts/finalize-state.sh \
-               "{casesRoot}/active/{caseNumber}" act
-             
-             if reassess has email-drafter action:
-               → case.phase = "reassessing"
-               CURRENT_ACTION="{caseNumber} reassess: {type} → launching email({emailType})"
-               → spawn email-drafter with reassess-derived emailType（后台）
-             else:
-               CURRENT_ACTION="{caseNumber} reassess: {type} → no email → summarizing"
-               → case.phase = "inspecting"
-               → spawn summarize（后台）
-         
-         case "reassessing":
-           # Post-reassess email-drafter running
-           # 检查 email-drafter 是否完成（drafts/ 目录有新文件）
-           if email-drafter 完成:
-             → case.phase = "communicating"  # brief transition state
-             CURRENT_ACTION="{caseNumber} email draft ready → summarizing"
-             # Backfill email-drafter result
-             bash .claude/skills/casework/scripts/finalize-state.sh \
-               "{casesRoot}/active/{caseNumber}" act
-             → case.phase = "inspecting"
-             # Mark summarize active for UI
-             python3 .claude/skills/casework/scripts/update-state.py \
-               --case-dir "{casesRoot}/active/{caseNumber}" --step summarize --status active --case-number "{caseNumber}"
-             → spawn summarize（后台）
-         
-         case "inspecting":
-           检查 inspection agent 是否完成
-           （判断方式：todo/ 目录下有本次 patrol 时间戳之后的文件）
-           if 完成:
-             # Mark summarize completed for UI
-             python3 .claude/skills/casework/scripts/update-state.py \
-               --case-dir "{casesRoot}/active/{caseNumber}" --step summarize --status completed --case-number "{caseNumber}"
+           if SUMM_STATUS == "completed":
+             # casework 自闭环完成（路径 A/B/C）
              → case.phase = "done"
+           
+           elif ACT_STATUS == "waiting-troubleshooter":
+             # casework 退出，需要 troubleshooter
+             → case.phase = "troubleshooting"
+             → spawn troubleshooter [后台]
+         
+         case "troubleshooting":
+           # 检查 troubleshooter agent 是否返回
+           if troubleshooter task 已返回 && claims.json 存在:
+             if phase2 未 spawn:
+               → spawn casework-phase2 [后台]
+               → case.sub_phase = "phase2-running"
+           
+           # 检查 phase2 是否完成
+           if phase2 task 已返回:
+             SUMM_STATUS_2 = 重新读 state.json → summarize.status
+             if SUMM_STATUS_2 == "completed":
+               → case.phase = "done"
+             elif phase2 output 含 "needs-retroubleshoot":
+               → 重新 spawn troubleshooter [后台]
+               → case.sub_phase = "ts-retry"
      
-     # 每轮输出进度表（调用 patrol-progress.py 渲染）
+     # 更新 patrol 级进度
+     DONE_COUNT = count(case.phase == "done")
      python3 .claude/skills/patrol/scripts/patrol-progress.py \
        --cases-root {casesRoot} \
        --cases "{comma_separated_case_numbers}" \
        --phases '{json_phases_dict}' \
        --patrol-start "{patrol_start_iso}"
-     # phases dict: {"caseNumber": "gathering|executing|investigating|reassessing|inspecting|done", ...}
+     # phases dict: {"caseNumber": "gathering|troubleshooting|done", ...}
      
      # WebUI 模式：每轮更新 patrol-progress.json（供 file-watcher → SSE 推送）
      # CLI 模式也写，确保 sidebar 实时更新 currentAction + processedCases
-     DONE_COUNT=$(echo '{json_phases_dict}' | python3 -c "import json,sys; d=json.load(sys.stdin); print(sum(1 for v in d.values() if v=='done'))")
      python3 .claude/skills/patrol/scripts/update-phase.py \
        --patrol-dir "{patrolDir}" --phase processing \
        --total-cases $TOTAL_CASES --changed-cases $CHANGED_CASES \
        --processed-cases $DONE_COUNT --current-action "$CURRENT_ACTION"
-     # 每轮 spawn 调用合并：同一轮内需要 spawn 的多个 agent 在一条消息中并行发出
    }
    ```
 
-   **Spawn 规则**：
-   - **summarize 单独 spawn**：每个 case 独立一个 agent（并行，不串行批量）
-   - **同一轮 spawn 合并**：如果一轮检查中多个 case 同时就绪，在一条消息中并行 spawn
-   - troubleshooter/email-drafter/summarize 都是后台 spawn（`run_in_background: true`）
-   - challenger 是前台等待（需要读结果决定下一步）
+   **Spawn 规则（v4 简化）**：
+   - **casework(patrol)**：第一轮全量并行，后台
+   - **troubleshooter**：按需，后台（casework 标记 waiting-troubleshooter 后）
+   - **casework-phase2**：troubleshooter 完成后，后台
+   - 同一轮多个 case 就绪 → 一条消息并行 spawn
+   - **不再 spawn**：email-drafter、summarize、challenger、reassess（全部由 casework/phase2 inline 处理）
 
-   **Summarize spawn 模板**（替代旧 inspection-writer）：
+   **troubleshooter spawn 模板**：
    ```
    Agent({
-     subagent_type: "casework",
-     prompt: "仅执行 summarize for Case {caseNumber}。caseDir: {casesRoot}/active/{caseNumber}/。
-       请读取 .claude/skills/casework/summarize/SKILL.md 获取完整执行步骤。
-       只做 summary + todo 生成 + meta 更新，不做其他步骤。",
-     run_in_background: true
+     prompt: "Case {caseNumber}，caseDir={casesRoot}/active/{caseNumber}/。
+       读取 .claude/agents/troubleshooter.md 获取完整执行步骤，然后执行。",
+     run_in_background: true,
+     model: "opus"
+   })
+   ```
+
+   **casework-phase2 spawn 模板**：
+   ```
+   Agent({
+     prompt: "执行 phase2 for Case {caseNumber}。
+       caseDir: {casesRoot}/active/{caseNumber}/
+       projectRoot: .
+
+       读取 .claude/skills/casework/phase2/SKILL.md 获取完整执行步骤。
+       Inline 执行 challenger→reassess→[email]→summarize 全部步骤。",
+     run_in_background: true,
+     model: "opus"
    })
    ```
 
