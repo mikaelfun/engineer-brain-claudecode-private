@@ -60,6 +60,8 @@ import daemonRoutes from './routes/daemon.js'
 import azProfileRoutes from './routes/az-profiles.js'
 import { startAzProfileMonitor } from './services/az-profile-reader.js'
 import actionsRoutes from './routes/actions.js'
+import teamsWatchRoutes from './routes/teams-watch-routes.js'
+import { initSbaPatrolTrigger } from './services/sba-patrol-trigger.js'
 import { spawnDaemonWarmup } from './services/daemon-reader.js'
 
 const app = new Hono()
@@ -107,6 +109,8 @@ app.use('/api/case/*/note-gap/*', authMiddleware)
 app.use('/api/daemon/*', authMiddleware)
 app.use('/api/note-gaps', authMiddleware)
 app.use('/api/actions', authMiddleware)
+app.use('/api/teams-watch', authMiddleware)
+app.use('/api/teams-watch/*', authMiddleware)
 
 app.route('/api/cases', casesRoutes)
 app.route('/api/todos', todosRoutes)
@@ -126,6 +130,7 @@ app.route('/api/labor-estimate', laborEstimateRoutes)
 app.route('/api/daemon', daemonRoutes)
 app.route('/api/az-profiles', azProfileRoutes)
 app.route('/api/actions', actionsRoutes)
+app.route('/api/teams-watch', teamsWatchRoutes)
 
 // ===== Start =====
 console.log(`
@@ -169,6 +174,9 @@ startAzProfileMonitor((profiles) => {
     console.warn(`⚠️ [az-profile] ${expired.length} profile(s) expired: ${expired.map(p => p.name).join(', ')}`)
   }
 })
+
+// Initialize SBA patrol trigger (monitors Teams Watch for new case assignments)
+initSbaPatrolTrigger()
 
 serve({
   fetch: app.fetch,
