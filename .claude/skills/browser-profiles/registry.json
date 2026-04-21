@@ -53,6 +53,18 @@
       "cacheFile": "$TEMP/icm-ab-token-cache.json",
       "cacheTTLMinutes": 170,
       "description": "ICM Bearer token for discussion/details API (注意 API domain 是 prod.microsofticm.com)"
+    },
+    "graph": {
+      "tab": "outlook.office.com",
+      "startUrl": "https://outlook.office.com/mail/",
+      "tokenSource": "localStorage",
+      "tokenMatch": {
+        "credentialType": "AccessToken",
+        "targetIncludes": "graph.microsoft.com/Chat.Read"
+      },
+      "cacheFile": "$TEMP/graph-api-token.json",
+      "cacheTTLMinutes": 55,
+      "description": "Graph API token for Teams chat message attachments (Adaptive Card parsing)"
     }
   },
 
