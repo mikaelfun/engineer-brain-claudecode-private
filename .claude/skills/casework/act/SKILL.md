@@ -1,21 +1,21 @@
 ---
-description: "Step 3 Act — 读取 execution-plan.json，路由 spawn troubleshooter/email-drafter/challenger"
+description: "Step 2 Act v4 — 内含执行链：assess → troubleshooter → challenger(inline) → reassess(inline) → email-drafter(inline)"
 name: casework:act
 displayName: Case 行动执行
 category: casework-sub-skill
 stability: beta
 requiredInput: caseNumber
 promptTemplate: |
-  Run Step 3 (act) for Case {caseNumber}. Read .claude/skills/casework/act/SKILL.md and follow all steps.
+  Run Step 2 (act) for Case {caseNumber}. Read .claude/skills/casework/act/SKILL.md and follow all steps.
 allowed-tools:
   - Bash
   - Read
   - Agent
 ---
 
-# /casework:act — Step 3 Act
+# /casework:act — Step 2 Act
 
-基于 `.casework/execution-plan.json`（Step 2 `/casework:assess` 产出）执行行动：spawn troubleshooter / email-drafter / challenger。
+v4 执行链编排器。先执行 assess（作为第一个 action），产出 `execution-plan.json`，然后按 plan 执行后续 actions。所有 troubleshooter case 完成后必经 challenger gate(inline) → reassess(inline) → email-drafter(inline)。
 
 ## 输入契约
 
@@ -33,6 +33,29 @@ allowed-tools:
 
 ## 执行步骤
 
+### Phase 0. Assess（执行链第一环）
+
+assess 现在是 act 的内部 action，用 action 级别状态汇报。
+
+```bash
+# Mark assess action active in state.json
+python3 .claude/skills/casework/scripts/update-state.py --case-dir "{caseDir}" --step act --action assess --status active
+```
+
+读取 `.claude/skills/casework/assess/SKILL.md` 获取完整执行步骤，然后执行。
+
+核心流程：DELTA_EMPTY 快速路径（零 LLM）→ compliance hash gate → Teams/OneNote enrichment → 主 LLM 决策 actualStatus + actions → 写 `.casework/execution-plan.json`。
+
+**Phase 0 完成后**更新 state：
+```bash
+# Resolve execution-plan.json path via state.json runId
+EP_PATH=$(bash .claude/skills/casework/act/scripts/resolve-run-path.sh "{caseDir}" execution-plan.json 2>/dev/null || echo "{caseDir}/.casework/execution-plan.json")
+# Mark assess action completed (auto-computes durationMs)
+ASSESS_RESULT=$(python3 -c "import json; print(json.load(open('$EP_PATH')).get('actualStatus','unknown'))" 2>/dev/null || echo "unknown")
+ASSESS_REASONING=$(python3 -c "import json; ep=json.load(open('$EP_PATH')); print((ep.get('reasoning') or ep.get('statusReasoning') or '')[:200])" 2>/dev/null || echo "")
+python3 .claude/skills/casework/scripts/update-state.py --case-dir "{caseDir}" --step act --action assess --status completed --result "$ASSESS_RESULT" --detail "$ASSESS_REASONING"
+```
+
 ### Step 1. 解析 execution-plan.json
 
 ```bash
@@ -45,29 +68,6 @@ eval $(bash .claude/skills/casework/act/scripts/read-plan.sh "{caseDir}")
 如 `ACTION_COUNT == 0`：
 - 记日志 `ACT_OK|actions=0|reason=$NO_ACTION_REASON|elapsed=0s`
 - 直接退出，不进 Step 2
-
-### Step 2. 模式检测
-
-```bash
-# patrol mode = subagent (depth=1)，不能再 spawn agent
-# full mode = 主 session (depth=0)，可以 spawn
-MODE="full"
-# 如果 casework 主 SKILL.md 传入了 mode=patrol，设 MODE="patrol"
-```
-
-**patrol mode 行为**：
-- 不 spawn 任何 agent（depth=1 限制）
-- 把 actions 写入 pipeline-state.json（`actions` 字段），patrol 主 session 读取后自行 spawn
-- 输出 `ACT_DELEGATED|actions={N}|mode=patrol`，退出
-
-```bash
-if [ "$MODE" = "patrol" ]; then
-  python3 .claude/skills/casework/scripts/update-state.py \
-    --case-dir "{caseDir}" --step act --status completed
-  echo "ACT_DELEGATED|actions=$ACTION_COUNT|mode=patrol"
-  exit 0
-fi
-```
 
 ### Step 2.5. AR Context 读取（isAR=true 时）
 
@@ -82,7 +82,7 @@ if [ "$IS_AR" = "true" ]; then
 fi
 ```
 
-### Step 3. 执行 actions（full mode）
+### Step 3. 执行 actions
 
 按 priority 排序的 actions 逐个执行。**IR-first 拦截优先于 priority 排序。**
 
@@ -94,15 +94,16 @@ fi
 1. **先 spawn email-drafter(initial-response)（前台）** — 尽快产出 IR 草稿
 2. email-drafter 完成 → 展示 IR 草稿给用户
 3. **spawn troubleshooter（前台）** — 完整排查
-4. troubleshooter 完成 → **spawn reassess（前台）** — 基于排查结论决策第二封邮件
-5. reassess 完成 → 读取 updated execution-plan.json
-6. 如 reassess 产出 email-drafter action → **spawn email-drafter（前台）** — 第二封邮件
-7. 如 reassess 无 action（exhausted/out-of-scope）→ 跳过，todo 中标记建议
+4. troubleshooter 完成 → **inline challenger gate**（Step 3c）— 检查 claims.json triggerChallenge
+5. **inline reassess** — 读取 reassess/SKILL.md 执行，基于排查结论决策第二封邮件
+6. reassess 完成 → 读取 updated execution-plan.json
+7. 如 reassess 产出 email-drafter action → **inline email-drafter** — 第二封邮件
+8. 如 reassess 无 action（exhausted/out-of-scope）→ 跳过，todo 中标记建议
 
 ```
 # IR-first: email-drafter 前台
 Agent(
-  subagent_type: "email-drafter",
+  # Note: SDK doesn't support custom subagent_type, use general-purpose (default)
   description: "IR email for {caseNumber}",
   run_in_background: false,
   prompt: |
@@ -113,7 +114,7 @@ Agent(
 
 # IR-first Step 2: troubleshooter 前台（不再后台，因为要等结果做 reassess）
 Agent(
-  subagent_type: "troubleshooter",
+  # Note: SDK doesn't support custom subagent_type, use general-purpose (default)
   description: "troubleshooter {caseNumber}",
   run_in_background: false,
   prompt: |
@@ -121,9 +122,12 @@ Agent(
     读取 .claude/agents/troubleshooter.md 获取完整执行步骤，然后执行。
 )
 
-# IR-first Step 3: reassess 前台
+# IR-first Step 2.5: challenger gate (inline) — 见 Step 3c
+# 读取 claims.json → 检查 triggerChallenge → 如 true 则标记 challenge-pending
+
+# IR-first Step 3: reassess (inline)
 Agent(
-  subagent_type: "casework",
+  # Note: SDK doesn't support custom subagent_type, use general-purpose (default)
   description: "reassess {caseNumber}",
   run_in_background: false,
   prompt: |
@@ -143,7 +147,7 @@ if [ "$ACTION_COUNT" -gt 0 ]; then
     EMAIL_TYPE="${!EMAIL_TYPE_VAR}"
     if [ "$TYPE" = "email-drafter" ]; then
       Agent(
-        subagent_type: "email-drafter",
+        # Note: SDK doesn't support custom subagent_type, use general-purpose (default)
         description: "post-reassess email {caseNumber}",
         run_in_background: false,
         prompt: |
@@ -158,7 +162,7 @@ fi
 
 #### 3b. 标准路径（`IR_FIRST == 0`）
 
-按 priority 排序，逐个执行 action。当 `HAS_DEFERRED == 1` 时，troubleshooter 完成后 spawn reassess。
+按 priority 排序，逐个执行 action。**所有 troubleshooter case 完成后必经 challenger gate(inline) → reassess(inline) → email-drafter(inline)**。
 
 ```
 for i in 0..(ACTION_COUNT-1):
@@ -174,7 +178,7 @@ for i in 0..(ACTION_COUNT-1):
   match TYPE:
     "troubleshooter":
       Agent(
-        subagent_type: "troubleshooter",
+        # Note: SDK doesn't support custom subagent_type, use general-purpose (default)
         description: "troubleshooter {caseNumber}",
         run_in_background: false,
         prompt: |
@@ -183,7 +187,7 @@ for i in 0..(ACTION_COUNT-1):
       )
       # AR 分支：isAR=true 时使用以下 prompt 替代上方普通版
       # Agent(
-      #   subagent_type: "troubleshooter",
+      #   # Note: SDK doesn't support custom subagent_type, use general-purpose (default)
       #   description: "troubleshooter AR {caseNumber}",
       #   run_in_background: false,
       #   prompt: |
@@ -194,39 +198,42 @@ for i in 0..(ACTION_COUNT-1):
       #     请只排查 AR scope 范围内的问题，不要排查 main case 的其他问题。
       #     读取 .claude/agents/troubleshooter.md 获取完整执行步骤，然后执行。
       # )
-      # troubleshooter 完成后：如有 deferred actions，spawn reassess
-      if HAS_DEFERRED == 1:
-        Agent(
-          subagent_type: "casework",
-          description: "reassess {caseNumber}",
-          run_in_background: false,
-          prompt: |
-            仅执行 reassess for Case {caseNumber}。caseDir={caseDir}。
-            请读取 .claude/skills/casework/reassess/SKILL.md 获取完整执行步骤。
-            只做 reassess，不做其他步骤。
-        )
 
-        # 读取 reassess 结果，执行 phase 2 actions
-        eval $(bash .claude/skills/casework/act/scripts/read-plan.sh "{caseDir}")
-        for j in 0..(ACTION_COUNT-1):
-          RTYPE = ACTION_{j}_TYPE
-          REMAIL_TYPE = ACTION_{j}_EMAIL_TYPE
-          if RTYPE == "email-drafter":
-            Agent(
-              subagent_type: "email-drafter",
-              description: "post-reassess email {caseNumber}",
-              run_in_background: false,
-              prompt: |
-                Case {caseNumber}，caseDir={caseDir}。
-                emailType=${REMAIL_TYPE}, language=auto, recipient=customer。
-                读取 .claude/agents/email-drafter.md 获取完整执行步骤，然后执行。
-            )
+      # troubleshooter 完成后：ALWAYS challenger gate → reassess → email
+      # Step 1: challenger gate (inline) — 见 Step 3c
+      # 读取 claims.json → 检查 triggerChallenge → 如 true 则标记 challenge-pending
 
-      # troubleshooter 完成后 → challenge gate（Step 3c）
+      # Step 2: reassess (inline)
+      # 读取 .claude/skills/casework/reassess/SKILL.md 获取完整执行步骤，然后执行
+      Agent(
+        # Note: SDK doesn't support custom subagent_type, use general-purpose (default)
+        description: "reassess {caseNumber}",
+        run_in_background: false,
+        prompt: |
+          仅执行 reassess for Case {caseNumber}。caseDir={caseDir}。
+          请读取 .claude/skills/casework/reassess/SKILL.md 获取完整执行步骤。
+          只做 reassess，不做其他步骤。
+      )
+
+      # Step 3: 读取 reassess 结果，执行 phase 2 actions
+      eval $(bash .claude/skills/casework/act/scripts/read-plan.sh "{caseDir}")
+      for j in 0..(ACTION_COUNT-1):
+        RTYPE = ACTION_{j}_TYPE
+        REMAIL_TYPE = ACTION_{j}_EMAIL_TYPE
+        if RTYPE == "email-drafter":
+          Agent(
+            # Note: SDK doesn't support custom subagent_type, use general-purpose (default)
+            description: "post-reassess email {caseNumber}",
+            run_in_background: false,
+            prompt: |
+              Case {caseNumber}，caseDir={caseDir}。
+              emailType=${REMAIL_TYPE}, language=auto, recipient=customer。
+              读取 .claude/agents/email-drafter.md 获取完整执行步骤，然后执行。
+          )
 
     "email-drafter":
       Agent(
-        subagent_type: "email-drafter",
+        # Note: SDK doesn't support custom subagent_type, use general-purpose (default)
         description: "email {caseNumber}",
         run_in_background: false,
         prompt: |
@@ -238,7 +245,7 @@ for i in 0..(ACTION_COUNT-1):
       #
       # AR internal 模式 (AR_MODE = "internal"):
       # Agent(
-      #   subagent_type: "email-drafter",
+      #   # Note: SDK doesn't support custom subagent_type, use general-purpose (default)
       #   description: "email AR {caseNumber}",
       #   run_in_background: false,
       #   prompt: |
@@ -253,7 +260,7 @@ for i in 0..(ACTION_COUNT-1):
       #
       # AR customer-facing 模式 (AR_MODE = "customer-facing"):
       # Agent(
-      #   subagent_type: "email-drafter",
+      #   # Note: SDK doesn't support custom subagent_type, use general-purpose (default)
       #   description: "email AR {caseNumber}",
       #   run_in_background: false,
       #   prompt: |
@@ -307,17 +314,17 @@ python3 .claude/skills/casework/scripts/update-state.py \
 echo "ACT_OK|actions=$ACTION_COUNT|ir_first=$IR_FIRST|elapsed=${SECONDS}s"
 ```
 
-## 路由参考表（assess LLM 输出 → act spawn）
+## 路由参考表 v4（assess LLM 输出 → act 执行）
 
 | actualStatus | assess actions | act 行为 |
 |---|---|---|
-| `pending-engineer`（新 case） | troubleshooter + email-drafter(IR) | IR-first: email(IR,fg) → ts(fg) → reassess(fg) → email(phase2,fg) |
-| `pending-engineer`（已有 IR） | troubleshooter, deferred=[email-drafter] | ts(fg) → reassess(fg) → email(phase2,fg) |
-| `pending-customer` (days≥3) | email-drafter(follow-up) | email(fg) |
-| `pending-pg` (days<5) | [] | 无 action，等 PG |
-| `pending-pg` (days≥5) | email-drafter(follow-up) | 向客户更新状态（PG 仍在调查） |
-| `researching` | troubleshooter, deferred=[email-drafter] | ts(fg) → reassess(fg) → email(phase2,fg) |
-| `ready-to-close` | email-drafter(closure) | email(fg) |
+| `pending-engineer`（新 case） | troubleshooter + email-drafter(IR) | IR-first: email(IR,inline) → ts(fg) → challenger(inline) → reassess(inline) → email(phase2,inline) |
+| `pending-engineer`（已有 IR） | troubleshooter, deferred=[email-drafter] | ts(fg) → challenger(inline) → reassess(inline) → email(inline) |
+| `pending-customer` (days≥3) | email-drafter(follow-up) | email(inline) |
+| `pending-pg` (days<5) | [] | 无 action |
+| `pending-pg` (days≥5) | email-drafter(follow-up) | email(inline) |
+| `researching` | troubleshooter, deferred=[email-drafter] | ts(fg) → challenger(inline) → reassess(inline) → email(inline) |
+| `ready-to-close` | email-drafter(closure/closure-confirm) | email(inline) |
 
 ### AR 路由参考表（isAR=true 时使用）
 
@@ -340,15 +347,14 @@ echo "ACT_OK|actions=$ACTION_COUNT|ir_first=$IR_FIRST|elapsed=${SECONDS}s"
 
 - ❌ 不直接发邮件（email-drafter 产出只写到 drafts/）
 - ❌ 不自动 spawn challenger（改为手动 `/challenge`）
-- ❌ patrol mode 不 spawn 任何 agent（depth=1 限制）
+- ✅ All troubleshooter cases go through reassess — no HAS_DEFERRED branching
 - ✅ IR-first troubleshooter 前台 spawn（等待结果做 reassess）
 - ✅ reassess 完成后按结论类型 spawn email-drafter 或跳过
 
 ## Pitfalls (known)
 
 - **Agent prompt 路径格式**：prompt 中的 `caseDir` 必须用相对路径（`./cases/active/{caseNumber}`），禁止 Windows 绝对路径（反斜杠被 Bash 转义）
-- **depth=1 限制**：patrol spawn 的 casework subagent 不能再 spawn subagent → patrol mode 必须委托回 patrol 主 session
-- **IR-first troubleshooter + reassess 流程**：troubleshooter 前台完成后立即 spawn reassess，reassess 决定第二封邮件类型，同一 cycle 内完成
+- **IR-first troubleshooter + reassess 流程**：troubleshooter 前台完成后立即执行 challenger gate(inline) → reassess(inline)，reassess 决定第二封邮件类型，同一 cycle 内完成
 
 ## 错误处理
 
@@ -357,4 +363,3 @@ echo "ACT_OK|actions=$ACTION_COUNT|ir_first=$IR_FIRST|elapsed=${SECONDS}s"
 | `execution-plan.json` 不存在 | exit 2，提示先跑 `/casework:assess` |
 | troubleshooter spawn 失败 | pipeline-state 标 failed，不阻塞后续 email-drafter |
 | email-drafter spawn 失败 | pipeline-state 标 failed，记日志 |
-| IR-first 后台 troubleshooter 超时 | 不影响本次 act（后台），下次 patrol 检测到 |
