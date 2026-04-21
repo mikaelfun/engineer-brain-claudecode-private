@@ -29,7 +29,7 @@ v4 执行链编排器。先执行 assess（作为第一个 action），产出 `e
 - `{caseDir}/analysis/*.md` — troubleshooter 产出
 - `{caseDir}/.casework/claims.json` — troubleshooter 证据链
 - `{caseDir}/drafts/*.md` — email-drafter 产出
-- `{caseDir}/.casework/pipeline-state.json` — 更新 Step 3 各 action 状态
+
 
 ## 执行步骤
 
@@ -42,7 +42,7 @@ assess 现在是 act 的内部 action，用 action 级别状态汇报。
 python3 .claude/skills/casework/scripts/update-state.py --case-dir "{caseDir}" --step act --action assess --status active
 ```
 
-读取 `.claude/skills/casework/assess/SKILL.md` 获取完整执行步骤，然后执行。
+读取 `.claude/skills/casework/act/assess/SKILL.md` 获取完整执行步骤，然后执行。
 
 核心流程：DELTA_EMPTY 快速路径（零 LLM）→ compliance hash gate → Teams/OneNote enrichment → 主 LLM 决策 actualStatus + actions → 写 `.casework/execution-plan.json`。
 
@@ -52,7 +52,23 @@ python3 .claude/skills/casework/scripts/update-state.py --case-dir "{caseDir}" -
 EP_PATH=$(bash .claude/skills/casework/act/scripts/resolve-run-path.sh "{caseDir}" execution-plan.json 2>/dev/null || echo "{caseDir}/.casework/execution-plan.json")
 # Mark assess action completed (auto-computes durationMs)
 ASSESS_RESULT=$(python3 -c "import json; print(json.load(open('$EP_PATH')).get('actualStatus','unknown'))" 2>/dev/null || echo "unknown")
-ASSESS_REASONING=$(python3 -c "import json; ep=json.load(open('$EP_PATH')); print((ep.get('reasoning') or ep.get('statusReasoning') or '')[:200])" 2>/dev/null || echo "")
+ASSESS_REASONING=$(python3 -c "
+import json, os
+# Try execution-plan.json first, then casework-meta.json
+ep_path = '$EP_PATH'
+case_dir = '{caseDir}'
+reasoning = ''
+try:
+    ep = json.load(open(ep_path, encoding='utf-8'))
+    reasoning = ep.get('reasoning') or ep.get('statusReasoning') or ''
+except: pass
+if not reasoning:
+    try:
+        meta = json.load(open(os.path.join(case_dir, 'casework-meta.json'), encoding='utf-8'))
+        reasoning = meta.get('statusReasoning', '')
+    except: pass
+print(reasoning[:200])
+" 2>/dev/null || echo "")
 python3 .claude/skills/casework/scripts/update-state.py --case-dir "{caseDir}" --step act --action assess --status completed --result "$ASSESS_RESULT" --detail "$ASSESS_REASONING"
 ```
 
@@ -109,7 +125,7 @@ Agent(
   prompt: |
     Case {caseNumber}，caseDir={caseDir}。
     emailType=initial-response, language=auto, recipient=customer。
-    读取 .claude/agents/email-drafter.md 获取完整执行步骤，然后执行。
+    读取 .claude/skills/casework/act/draft-email/SKILL.md 获取完整执行步骤，然后执行。
 )
 
 # IR-first Step 2: troubleshooter 前台（不再后台，因为要等结果做 reassess）
@@ -119,7 +135,7 @@ Agent(
   run_in_background: false,
   prompt: |
     Case {caseNumber}，caseDir={caseDir}。
-    读取 .claude/agents/troubleshooter.md 获取完整执行步骤，然后执行。
+    读取 .claude/skills/casework/act/troubleshoot/SKILL.md 获取完整执行步骤，然后执行。
 )
 
 # IR-first Step 2.5: challenger gate (inline) — 见 Step 3c
@@ -132,7 +148,7 @@ Agent(
   run_in_background: false,
   prompt: |
     仅执行 reassess for Case {caseNumber}。caseDir={caseDir}。
-    请读取 .claude/skills/casework/reassess/SKILL.md 获取完整执行步骤。
+    请读取 .claude/skills/casework/act/reassess/SKILL.md 获取完整执行步骤。
     只做 reassess（读 claims.json → 分类落盘 → LLM 决策 → 写 plan phase 2），不做其他步骤。
 )
 
@@ -153,7 +169,7 @@ if [ "$ACTION_COUNT" -gt 0 ]; then
         prompt: |
           Case {caseNumber}，caseDir={caseDir}。
           emailType=${EMAIL_TYPE}, language=auto, recipient=customer。
-          读取 .claude/agents/email-drafter.md 获取完整执行步骤，然后执行。
+          读取 .claude/skills/casework/act/draft-email/SKILL.md 获取完整执行步骤，然后执行。
       )
     fi
   done
@@ -183,7 +199,7 @@ for i in 0..(ACTION_COUNT-1):
         run_in_background: false,
         prompt: |
           Case {caseNumber}，caseDir={caseDir}。
-          读取 .claude/agents/troubleshooter.md 获取完整执行步骤，然后执行。
+          读取 .claude/skills/casework/act/troubleshoot/SKILL.md 获取完整执行步骤，然后执行。
       )
       # AR 分支：isAR=true 时使用以下 prompt 替代上方普通版
       # Agent(
@@ -196,7 +212,7 @@ for i in 0..(ACTION_COUNT-1):
       #     沟通模式: {AR_MODE}
       #     Main Case: {MAIN_CASE}
       #     请只排查 AR scope 范围内的问题，不要排查 main case 的其他问题。
-      #     读取 .claude/agents/troubleshooter.md 获取完整执行步骤，然后执行。
+      #     读取 .claude/skills/casework/act/troubleshoot/SKILL.md 获取完整执行步骤，然后执行。
       # )
 
       # troubleshooter 完成后：ALWAYS challenger gate → reassess → email
@@ -204,14 +220,14 @@ for i in 0..(ACTION_COUNT-1):
       # 读取 claims.json → 检查 triggerChallenge → 如 true 则标记 challenge-pending
 
       # Step 2: reassess (inline)
-      # 读取 .claude/skills/casework/reassess/SKILL.md 获取完整执行步骤，然后执行
+      # 读取 .claude/skills/casework/act/reassess/SKILL.md 获取完整执行步骤，然后执行
       Agent(
         # Note: SDK doesn't support custom subagent_type, use general-purpose (default)
         description: "reassess {caseNumber}",
         run_in_background: false,
         prompt: |
           仅执行 reassess for Case {caseNumber}。caseDir={caseDir}。
-          请读取 .claude/skills/casework/reassess/SKILL.md 获取完整执行步骤。
+          请读取 .claude/skills/casework/act/reassess/SKILL.md 获取完整执行步骤。
           只做 reassess，不做其他步骤。
       )
 
@@ -228,7 +244,7 @@ for i in 0..(ACTION_COUNT-1):
             prompt: |
               Case {caseNumber}，caseDir={caseDir}。
               emailType=${REMAIL_TYPE}, language=auto, recipient=customer。
-              读取 .claude/agents/email-drafter.md 获取完整执行步骤，然后执行。
+              读取 .claude/skills/casework/act/draft-email/SKILL.md 获取完整执行步骤，然后执行。
           )
 
     "email-drafter":
@@ -239,7 +255,7 @@ for i in 0..(ACTION_COUNT-1):
         prompt: |
           Case {caseNumber}，caseDir={caseDir}。
           emailType={ACTION_{i}_EMAIL_TYPE}, language=auto, recipient=customer。
-          读取 .claude/agents/email-drafter.md 获取完整执行步骤，然后执行。
+          读取 .claude/skills/casework/act/draft-email/SKILL.md 获取完整执行步骤，然后执行。
       )
       # AR 分支：isAR=true 时根据 communicationMode 选择 prompt
       #
@@ -255,7 +271,7 @@ for i in 0..(ACTION_COUNT-1):
       #     收件人: {AR_OWNER_EMAIL}（case owner）
       #     recipient=internal
       #     邮件发给 case owner，总结 AR scope 内的发现和建议。
-      #     读取 .claude/agents/email-drafter.md 获取完整执行步骤，然后执行。
+      #     读取 .claude/skills/casework/act/draft-email/SKILL.md 获取完整执行步骤，然后执行。
       # )
       #
       # AR customer-facing 模式 (AR_MODE = "customer-facing"):
@@ -271,7 +287,7 @@ for i in 0..(ACTION_COUNT-1):
       #     CC: {AR_OWNER_EMAIL}（case owner）
       #     recipient=customer
       #     邮件发给客户，仅回复 AR scope 内的问题。CC case owner。
-      #     读取 .claude/agents/email-drafter.md 获取完整执行步骤，然后执行。
+      #     读取 .claude/skills/casework/act/draft-email/SKILL.md 获取完整执行步骤，然后执行。
       # )
 
     "challenger":
@@ -295,7 +311,7 @@ print('1' if c.get('triggerChallenge') else '0')
 
   if [ "$TRIGGER" = "1" ]; then
     # PRD: challenger 改为手动触发。自动流程不 spawn challenger。
-    # 在 pipeline-state 标记 "challenge-pending"，todo 会提示用户手动 /challenge
+    # 在 state.json 标记 "challenge-pending"，todo 会提示用户手动 /challenge
     echo "  ⚠ claims.json triggerChallenge=true — 标记待 challenge，需用户手动 /challenge {caseNumber}" >&2
   fi
 
@@ -361,5 +377,5 @@ echo "ACT_OK|actions=$ACTION_COUNT|ir_first=$IR_FIRST|elapsed=${SECONDS}s"
 | 场景 | 行为 |
 |------|------|
 | `execution-plan.json` 不存在 | exit 2，提示先跑 `/casework:assess` |
-| troubleshooter spawn 失败 | pipeline-state 标 failed，不阻塞后续 email-drafter |
-| email-drafter spawn 失败 | pipeline-state 标 failed，记日志 |
+| troubleshooter spawn 失败 | state.json 标 failed，不阻塞后续 email-drafter |
+| email-drafter spawn 失败 | state.json 标 failed，记日志 |

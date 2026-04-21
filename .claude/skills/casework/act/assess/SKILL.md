@@ -131,7 +131,7 @@ fi
 **产出文件（Step 4 直接 Read）**：
 | 数据源 | 产出 | 模板 |
 |--------|------|------|
-| Teams | `{caseDir}/teams/teams-digest.md` | `.claude/skills/casework/teams-search/teams-digest-template.md` |
+| Teams | `{caseDir}/teams/teams-digest.md` | `.claude/skills/casework/data-refresh/teams-search/teams-digest-template.md` |
 | OneNote | `{caseDir}/onenote/onenote-digest.md` | `.claude/skills/onenote/onenote-digest-template.md` |
 
 **失败隔离**：digest 文件不存在 → Step 4 LLM 不引用该数据源，继续运行。

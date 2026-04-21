@@ -1,5 +1,5 @@
 ---
-description: "Step 4 Summarize — case-summary.md 增量更新 + todo 生成 + meta 更新"
+description: "Pipeline Step 3 Summarize — case-summary.md 增量更新 + todo 生成 + meta 更新"
 name: casework:summarize
 displayName: Case 总结
 category: casework-sub-skill
@@ -16,7 +16,7 @@ allowed-tools:
   - Grep
 ---
 
-# /casework:summarize — Step 4 Summarize
+# /casework:summarize — Pipeline Step 3 Summarize
 
 增量更新 case-summary.md + 规则化生成 todo + 更新 casework-meta.json。
 
@@ -34,7 +34,6 @@ allowed-tools:
 - `{caseDir}/case-summary.md` — 增量更新（首次生成或追加）
 - `{caseDir}/todo/YYMMDD-HHMM.md` — 规则化 todo
 - `{caseDir}/casework-meta.json` — upsert `lastInspected`
-- `{caseDir}/.casework/pipeline-state.json` — 标记 summarize completed
 
 ## 执行步骤
 
@@ -178,7 +177,29 @@ SAP_RESULT=$(python3 -B .claude/skills/sap-match/match-sap.py $QUERY --scope moo
 用 match-sap 的 top-1 结果与 case-info.md 的 `| SAP |` 做产品级比对。
 若不一致：`casework-meta.json.sapCheck.suggestedSap` = match-sap 结果的 `path` + `guid`。
 
-判断结果写入 `casework-meta.json.sapCheck`：`{ currentSap, isAccurate, suggestedSap, reason, checkedAt }`
+判断结果写入 `casework-meta.json.sapCheck`：`{ currentSap, isAccurate, suggestedSap, reason, checkedAt, cloudScope }`
+
+**`cloudScope` 判断（21v Boundary 检测）**：
+
+在 SAP 比对的同时，基于 `case-summary.md` 全文，用 LLM 判断客户问题实际发生在哪个 cloud 环境。
+
+Prompt（追加到 SAP 准确性判断的同一次 LLM 调用中）：
+```
+基于 case summary 的完整上下文，判断客户的问题实际发生在哪个 Azure 环境。
+综合以下信号语义判断（不要仅凭单个关键词）：
+- 客户明确陈述的环境（如"我用的是 Azure Global"）
+- 实际使用的 endpoint（login.microsoftonline.com vs login.partner.microsoftonline.cn）
+- az cloud show 输出（AzureCloud vs AzureChinaCloud）
+- Portal URL（portal.azure.com vs portal.azure.cn）
+- 资源的 ARM endpoint、subscription 归属等
+
+输出 cloudScope 字段：
+- "mooncake" — 问题发生在 Mooncake 环境（默认值）
+- "global" — 客户的问题实际发生在 Azure Global
+- "unclear" — 信息不足，无法判断
+```
+
+写入 `casework-meta.json.sapCheck.cloudScope`。当 `cloudScope=global` 且当前 SAP 含 `21Vianet`/`Mooncake` 时，generate-todo.sh 会生成 🔴 红色 todo 提醒工程师 transfer case 到 Global team。
 
 **跳过条件**：`sapCheck.checkedAt` 距今 < 24h 且已有结果 → 跳过。AR Case → 跳过。
 
@@ -223,4 +244,4 @@ echo "SUMMARIZE_OK|delta=$DELTA|elapsed=${SECONDS}s"
 | `data-refresh-output.json` 不存在 | deltaStatus 默认 `DELTA_OK`（保守） |
 | `case-info.md` 不存在 | exit 2，提示先跑 `/casework:data-refresh` |
 | `generate-todo.sh` 失败 | 记日志，不阻塞 meta 更新 |
-| LLM summary 生成失败 | pipeline-state 标 failed |
+| LLM summary 生成失败 | state.json 标 failed |

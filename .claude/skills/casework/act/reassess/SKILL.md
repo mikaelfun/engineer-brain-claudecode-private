@@ -6,7 +6,7 @@ category: casework-sub-skill
 stability: beta
 requiredInput: caseNumber
 promptTemplate: |
-  Run reassess for Case {caseNumber}. Read .claude/skills/casework/reassess/SKILL.md and follow all steps.
+  Run reassess for Case {caseNumber}. Read .claude/skills/casework/act/reassess/SKILL.md and follow all steps.
 allowed-tools:
   - Bash
   - Read
@@ -194,7 +194,7 @@ upsert `investigationFindings` 字段：
 
 ```bash
 echo "$LLM_JSON" > "{caseDir}/.casework/reassess-decision.json"
-python3 .claude/skills/casework/assess/scripts/write-execution-plan.py \
+python3 .claude/skills/casework/act/assess/scripts/write-execution-plan.py \
   --decision "{caseDir}/.casework/reassess-decision.json" \
   --case-dir "{caseDir}" \
   --phase reassess

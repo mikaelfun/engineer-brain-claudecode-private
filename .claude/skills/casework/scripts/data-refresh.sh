@@ -103,6 +103,19 @@ TOP_START_NS=$(date +%s%N)
 # data-refresh.sh only writes its own steps. If no prior init, --status active on a missing
 # file will auto-create state.json via update-state.py's init_state() fallback.
 python3 "$UPDATE_STATE" --case-dir "$CASE_DIR_ABS" --step start --status completed --case-number "$CASE_NUMBER"
+# Clear stale subtasks/actions from previous run before setting active
+python3 -c "
+import json, os
+p = os.path.join(r'$CASE_DIR_ABS', '.casework', 'state.json')
+try:
+    s = json.load(open(p, encoding='utf-8'))
+    for step in ('data-refresh', 'act', 'assess', 'summarize'):
+        if step in s.get('steps', {}):
+            s['steps'][step] = {'status': 'pending'}
+    with open(p, 'w', encoding='utf-8') as f:
+        json.dump(s, f, indent=2, ensure_ascii=False)
+except: pass
+" 2>/dev/null || true
 python3 "$UPDATE_STATE" --case-dir "$CASE_DIR_ABS" --step data-refresh --status active
 
 echo "🚀 data-refresh.sh: case=$CASE_NUMBER isAR=$IS_AR"
@@ -135,26 +148,20 @@ OUT_PARENT_WIN="$(to_win "$(dirname "$CASE_DIR_ABS")")"
 PID_D365=$!
 
 # ── Launch 5 parallel paths (labor merged into d365) ──
-# Post-processing (build-input + write-teams) is chained INSIDE the bg subshell
-# so per-chat .md / _chat-index.json update runs in parallel with the other 4
-# paths instead of blocking them at the outer wait. Total path time =
-# max(d365, teams+post, icm, onenote, att) instead of max(...) + teams-post.
-python3 "$UPDATE_STATE" --case-dir "$CASE_DIR_ABS" --step data-refresh --subtask teams --status active
-TEAMS_START_NS=$(date +%s%N)
+# Teams uses two wrapper calls: teams-search (MCP stability timing) + teams-write (post-processing).
+# Both run inside one bg subshell so the combined path parallelizes with d365/icm/onenote/att.
 (
-  bash "$PROJECT_ROOT/.claude/skills/casework/teams-search/scripts/teams-search-inline.sh" \
-    --case-number "$CASE_NUMBER" --case-dir "$CASE_DIR_ABS" --contact-email "" \
+  bash "$WRAPPER" teams-search "$CASE_DIR_ABS" -- \
+    bash "$PROJECT_ROOT/.claude/skills/casework/data-refresh/teams-search/scripts/teams-search-inline.sh" \
+      --case-number "$CASE_NUMBER" --case-dir "$CASE_DIR_ABS" --contact-email "" \
     > "$LOGD/teams.log" 2>&1
 
-  # PRD §4.3: Step 1 must land _chat-index.json + per-chat .md, not just raw.
+  # Post-processing: transform _mcp-raw.json + write per-chat .md (merged into write-teams.ps1 -RawFile)
   if [ -f "$CASE_DIR_ABS/teams/_mcp-raw.json" ]; then
-    python3 "$PROJECT_ROOT/.claude/skills/casework/teams-search/scripts/build-input-from-raw.py" \
-      "$CASE_DIR_ABS" > "$LOGD/teams-build-input.log" 2>&1 || true
-    if [ -f "$CASE_DIR_ABS/teams/_input.json" ]; then
-      pwsh -NoProfile -File "$PROJECT_ROOT/.claude/skills/casework/teams-search/scripts/write-teams.ps1" \
-        -OutputDir "$CASE_DIR_ABS/teams" -InputFile "$CASE_DIR_ABS/teams/_input.json" \
-        > "$LOGD/teams-write.log" 2>&1 || true
-    fi
+    bash "$WRAPPER" teams-write "$CASE_DIR_ABS" -- \
+      pwsh -NoProfile -File "$PROJECT_ROOT/.claude/skills/casework/data-refresh/teams-search/scripts/write-teams.ps1" \
+        -OutputDir "$CASE_DIR_ABS/teams" -RawFile "$CASE_DIR_ABS/teams/_mcp-raw.json" \
+      > "$LOGD/teams-write.log" 2>&1
   fi
 ) &
 PID_TEAMS=$!
@@ -267,21 +274,25 @@ for pid in $PID_D365 $PID_TEAMS $PID_ICM $PID_ONENOTE $PID_ATT; do
   [ -n "$pid" ] && wait "$pid" 2>/dev/null || true
 done
 
-# Teams subtask completion tracking (not wrapped by event-wrapper.sh)
-if [ -n "$PID_TEAMS" ]; then
-  TEAMS_DUR_MS=$(( ($(date +%s%N) - TEAMS_START_NS) / 1000000 ))
-  TEAMS_DELTA_JSON=$(python3 -c "
-import json
-try:
-    d = json.load(open(r'$SUBTASK_DIR/teams.json', encoding='utf-8'))
-    delta = d.get('delta', {})
-    if delta: print(json.dumps(delta))
-except: pass
-" 2>/dev/null || true)
-  TEAMS_DELTA_ARGS=()
-  [ -n "$TEAMS_DELTA_JSON" ] && TEAMS_DELTA_ARGS=(--delta "$TEAMS_DELTA_JSON")
+# Teams subtask completion is now handled by event-wrapper.sh (teams-search + teams-write).
+# Delta is read by wrapper from subtask JSON files.
+
+# OneNote subtask completion tracking (writes onenote.json for digest gate)
+if [ -n "$PID_ONENOTE" ]; then
+  ONENOTE_END_TS=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  ONENOTE_PAGES=$(grep "pages=" "$LOGD/onenote.log" 2>/dev/null | sed 's/.*pages=\([0-9]*\).*/\1/' | tail -1)
+  [ -z "$ONENOTE_PAGES" ] && ONENOTE_PAGES=0
+  ONENOTE_ASSETS=$(grep "assets_copied=" "$LOGD/onenote.log" 2>/dev/null | sed 's/.*assets_copied=\([0-9]*\).*/\1/' | tail -1)
+  [ -z "$ONENOTE_ASSETS" ] && ONENOTE_ASSETS=0
+  if grep -q "^OK|" "$LOGD/onenote.log" 2>/dev/null; then
+    ONENOTE_STATUS="completed"
+  else
+    ONENOTE_STATUS="failed"
+  fi
+  echo "{\"task\":\"onenote\",\"status\":\"$ONENOTE_STATUS\",\"startedAt\":\"$TOP_START_TS\",\"completedAt\":\"$ONENOTE_END_TS\",\"delta\":{\"newPages\":$ONENOTE_PAGES,\"assetsCopied\":$ONENOTE_ASSETS}}" > "$SUBTASK_DIR/onenote.json"
+  # Note: durationMs already written by event-wrapper.sh — only update status here
   python3 "$UPDATE_STATE" --case-dir "$CASE_DIR_ABS" --step data-refresh \
-    --subtask teams --status completed --duration-ms "$TEAMS_DUR_MS" "${TEAMS_DELTA_ARGS[@]}"
+    --subtask onenote --status "$ONENOTE_STATUS"
 fi
 
 echo "✅ All 5 data paths finished."
@@ -615,10 +626,6 @@ if [ "$OVERALL" = "FAILED" ]; then
 fi
 
 python3 "$UPDATE_STATE" --case-dir "$CASE_DIR_ABS" --step data-refresh --status completed --duration-ms "$TOP_DUR_MS"
-
-# Mark assess step active (deterministic: data-refresh done = assess begins next)
-# This ensures UI shows assess as blue/active immediately, not grey/pending.
-python3 "$UPDATE_STATE" --case-dir "$CASE_DIR_ABS" --step assess --status active
 
 # Backfill state.json with delta data from output files (deterministic, no agent needed)
 bash "$HERE/finalize-state.sh" "$CASE_DIR_ABS" data-refresh 2>/dev/null || true

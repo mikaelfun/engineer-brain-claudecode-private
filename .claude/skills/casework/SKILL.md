@@ -53,7 +53,10 @@ mkdir -p "$CASE_DIR/.casework"
 # Initialize state.json + mark start step (SDK cold-start timing)
 # --init resets all steps to pending (clears previous run's state)
 # --run-type creates runs/{YYMMDD-HHmm_casework}/ directory (ISS-231)
-python3 .claude/skills/casework/scripts/update-state.py --case-dir "$CASE_DIR" --init --run-type casework --step start --status active --case-number "{caseNumber}"
+# In patrol mode: skip --init (patrol already wrote it with correct spawnedAt timestamp)
+if [ "$MODE" != "patrol" ]; then
+  python3 .claude/skills/casework/scripts/update-state.py --case-dir "$CASE_DIR" --init --run-type casework --step start --status active --case-number "{caseNumber}"
+fi
 
 # Pipeline state → dashboard SSE (Step 1 active)
 # data-refresh.sh will write start=completed + data-refresh=active at its top
@@ -106,7 +109,7 @@ echo "CASEWORK_PATROL_OK|path=self-closed|actions=0|elapsed=${SECONDS}s"
 python3 .claude/skills/casework/scripts/update-state.py \
   --case-dir "$CASE_DIR" --step act --action email-drafter --status active --case-number "$CASE_NUMBER"
 ```
-读取 `.claude/agents/email-drafter.md`，inline 执行 email-drafter。emailType 从 execution-plan 获取。
+读取 `.claude/skills/casework/act/draft-email/SKILL.md`，inline 执行 email-drafter。emailType 从 execution-plan 获取。
 完成后标记 act completed，然后 inline 执行 Step 3 Summarize。
 ```
 echo "CASEWORK_PATROL_OK|path=self-closed|actions=email|elapsed=${SECONDS}s"
@@ -118,7 +121,7 @@ echo "CASEWORK_PATROL_OK|path=self-closed|actions=email|elapsed=${SECONDS}s"
 if [ "$IR_FIRST" = "1" ]; then
   python3 .claude/skills/casework/scripts/update-state.py \
     --case-dir "$CASE_DIR" --step act --action email-drafter --status active --case-number "$CASE_NUMBER"
-  # 读取 .claude/agents/email-drafter.md，inline 执行 IR email
+  # 读取 .claude/skills/casework/act/draft-email/SKILL.md，inline 执行 IR email
   python3 .claude/skills/casework/scripts/update-state.py \
     --case-dir "$CASE_DIR" --step act --action email-drafter --status completed --case-number "$CASE_NUMBER"
 fi

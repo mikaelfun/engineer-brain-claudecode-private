@@ -61,7 +61,7 @@ print('1' if c.get('triggerChallenge') else '0')
 
 **triggerChallenge=true 时**：
 
-1. 读取 `.claude/agents/challenger.md` 获取完整执行步骤
+1. 读取 `.claude/skills/casework/act/challenge/SKILL.md` 获取完整执行步骤
 2. **在当前 agent 内 inline 执行** challenger 的全部逻辑（读 claims → 逐条审查 → 写 challenge-report.md → 更新 claims.json 状态）
 3. 读取 challenger 结果：
    - `ACTION:retry-troubleshoot` → 更新 state，标记 `needs-retroubleshoot`，**退出返回 patrol**
@@ -90,7 +90,7 @@ python3 .claude/skills/casework/scripts/update-state.py \
   --case-number "{caseNumber}"
 ```
 
-读取 `.claude/skills/casework/reassess/SKILL.md` 获取完整执行步骤，在当前 agent 内 inline 执行：
+读取 `.claude/skills/casework/act/reassess/SKILL.md` 获取完整执行步骤，在当前 agent 内 inline 执行：
 - 读 claims.json → fact/analysis 分类落盘 → LLM 决策 → 写 execution-plan phase 2
 
 ```bash
@@ -116,7 +116,7 @@ python3 .claude/skills/casework/scripts/update-state.py \
   --case-number "{caseNumber}"
 ```
 
-读取 `.claude/agents/email-drafter.md` 获取完整执行步骤，在当前 agent 内 inline 执行。
+读取 `.claude/skills/casework/act/draft-email/SKILL.md` 获取完整执行步骤，在当前 agent 内 inline 执行。
 emailType 从 reassess decision 中获取。
 
 ```bash
