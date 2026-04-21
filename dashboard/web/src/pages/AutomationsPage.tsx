@@ -7,7 +7,7 @@
 import { Card } from '../components/common/Card'
 import { Badge } from '../components/common/Badge'
 import { Loading, EmptyState } from '../components/common/Loading'
-import { useCronJobs, useTriggers, useDeleteTrigger, useRunTrigger, useCancelTrigger, useToggleTrigger } from '../api/hooks'
+import { useCronJobs, useTriggers, useDeleteTrigger, useRunTrigger, useCancelTrigger, useToggleTrigger, useTeamsWatches, useTeamsWatchHistory, useStartTeamsWatch, useStopTeamsWatch, useDeleteTeamsWatch, useCreateTeamsWatch } from '../api/hooks'
 import { SessionMessageList } from '../components/session/SessionMessageList'
 import { useTriggerRunStore } from '../stores/triggerRunStore'
 import { CreateTriggerDialog, type TriggerEditData } from '../components/agents/CreateTriggerDialog'
@@ -188,6 +188,10 @@ type AutomationTab = 'cron' | 'teams-watch' | 'activity-feed'
 export default function AutomationsPage() {
   const [activeTab, setActiveTab] = useState<AutomationTab>('cron')
 
+  // ---- Teams Watch state (page-level for tab count) ----
+  const { data: teamsWatchData } = useTeamsWatches()
+  const teamsWatches = teamsWatchData?.watches || []
+
   // ---- Cron Jobs state ----
   const { data: cronData, isLoading: cronLoading } = useCronJobs()
   const { data: triggersData } = useTriggers()
@@ -256,7 +260,7 @@ export default function AutomationsPage() {
   // ---- Tab definitions ----
   const tabs: { key: AutomationTab; label: string; icon: string; count?: number }[] = [
     { key: 'cron', label: 'Cron Jobs', icon: '⏰', count: cronJobs.length },
-    { key: 'teams-watch', label: 'Teams Watch', icon: '👁️' },
+    { key: 'teams-watch', label: 'Teams Watch', icon: '👁️', count: teamsWatches.length },
     { key: 'activity-feed', label: 'Activity Feed', icon: '📡' },
   ]
 
@@ -344,7 +348,7 @@ export default function AutomationsPage() {
       )}
 
       {activeTab === 'teams-watch' && (
-        <TeamsWatchTab />
+        <TeamsWatchTab watches={teamsWatches} />
       )}
 
       {activeTab === 'activity-feed' && (
@@ -555,27 +559,433 @@ function CronJobsTab({
   )
 }
 
-// ---- Teams Watch Tab (placeholder) ----
+// ---- Teams Watch Tab ----
 
-function TeamsWatchTab() {
+function TeamsWatchTab({ watches }: { watches: any[] }) {
+  const [selectedWatchId, setSelectedWatchId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [newTopic, setNewTopic] = useState('')
+  const [newInterval, setNewInterval] = useState('60')
+  const [newAction, setNewAction] = useState('notify')
+
+  const startWatch = useStartTeamsWatch()
+  const stopWatch = useStopTeamsWatch()
+  const deleteWatch = useDeleteTeamsWatch()
+  const createWatch = useCreateTeamsWatch()
+
+  const { data: historyData } = useTeamsWatchHistory(selectedWatchId)
+  const history = historyData?.history || []
+
+  const selectedWatch = watches.find((w: any) => w.id === selectedWatchId) || null
+
+  const handleCreate = () => {
+    if (!newTopic.trim()) return
+    createWatch.mutate(
+      { topic: newTopic.trim(), interval: Number(newInterval), action: newAction },
+      {
+        onSuccess: () => {
+          setNewTopic('')
+          setNewInterval('60')
+          setNewAction('notify')
+          setShowAddForm(false)
+        },
+      },
+    )
+  }
+
+  if (watches.length === 0 && !showAddForm) {
+    return (
+      <div className="space-y-4">
+        <EmptyState icon="👁️" title="No watches" description="Create a watch to monitor Teams chats" />
+        <div className="flex justify-center">
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium transition-colors"
+            style={{ background: 'var(--accent-blue)', color: 'white' }}
+          >
+            <Plus className="w-4 h-4" />
+            Add Watch
+          </button>
+        </div>
+        {showAddForm && (
+          <Card>
+            <TeamsWatchAddForm
+              newTopic={newTopic} setNewTopic={setNewTopic}
+              newInterval={newInterval} setNewInterval={setNewInterval}
+              newAction={newAction} setNewAction={setNewAction}
+              onCreate={handleCreate}
+              onCancel={() => setShowAddForm(false)}
+              isPending={createWatch.isPending}
+            />
+          </Card>
+        )}
+      </div>
+    )
+  }
+
   return (
-    <Card>
-      <div className="flex flex-col items-center justify-center py-16 gap-4">
-        <span className="text-4xl">👁️</span>
-        <div className="text-center">
-          <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
-            Teams Watch
-          </h3>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>
-            Coming Soon — ISS-234
-          </p>
-          <p className="text-xs mt-3 max-w-md" style={{ color: 'var(--text-tertiary)' }}>
-            Monitor Teams chats for new messages and trigger automated actions.
-            CLI version is available via <code className="px-1 py-0.5 rounded text-[11px]" style={{ background: 'var(--bg-inset)' }}>teams-poll.sh</code> and <code className="px-1 py-0.5 rounded text-[11px]" style={{ background: 'var(--bg-inset)' }}>teams-daemon.sh</code>.
-          </p>
+    <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr] gap-4" style={{ minHeight: 'calc(100vh - 280px)' }}>
+      {/* Left: watch list */}
+      <Card padding="none">
+        <div className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
+          {watches.map((watch: any) => {
+            const isRunning = watch.status === 'running'
+            const isSelected = selectedWatchId === watch.id
+
+            return (
+              <div
+                key={watch.id}
+                className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors"
+                style={{
+                  background: isSelected ? 'var(--bg-active)' : 'transparent',
+                  borderBottom: '1px solid var(--border-subtle)',
+                }}
+                onClick={() => setSelectedWatchId(isSelected ? null : watch.id)}
+                onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
+                onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+              >
+                {/* Status dot */}
+                <span
+                  className={`w-2 h-2 rounded-full shrink-0 ${isRunning ? 'animate-pulse' : ''}`}
+                  style={{
+                    background: isRunning ? 'var(--accent-green)' : 'var(--accent-red)',
+                  }}
+                />
+                {/* Name + meta */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>
+                      {watch.topic || 'Untitled Watch'}
+                    </span>
+                    {isRunning && (
+                      <Loader2 className="w-3 h-3 animate-spin shrink-0" style={{ color: 'var(--accent-green)' }} />
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[11px] font-mono" style={{ color: 'var(--text-tertiary)' }}>
+                      {watch.interval || 60}s | {watch.action || 'notify'} | {watch.pollCount || 0} polls
+                    </span>
+                  </div>
+                </div>
+                {/* Action buttons */}
+                <div className="flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
+                  {isRunning ? (
+                    <button
+                      onClick={() => stopWatch.mutate(watch.id)}
+                      disabled={stopWatch.isPending}
+                      className="p-1 rounded transition-colors hover:bg-[var(--bg-hover)]"
+                      style={{ color: 'var(--accent-red)' }}
+                      title="Stop"
+                    >
+                      <Square className="w-3.5 h-3.5" />
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => startWatch.mutate(watch.id)}
+                      disabled={startWatch.isPending}
+                      className="p-1 rounded transition-colors hover:bg-[var(--bg-hover)]"
+                      style={{ color: 'var(--accent-green)' }}
+                      title="Start"
+                    >
+                      <Play className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                  {deletingId === watch.id ? (
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => {
+                          deleteWatch.mutate(watch.id)
+                          setDeletingId(null)
+                          if (selectedWatchId === watch.id) setSelectedWatchId(null)
+                        }}
+                        className="px-1.5 py-0.5 rounded text-[10px] font-medium"
+                        style={{ background: 'var(--accent-red)', color: 'white' }}
+                      >
+                        Yes
+                      </button>
+                      <button
+                        onClick={() => setDeletingId(null)}
+                        className="px-1.5 py-0.5 rounded text-[10px]"
+                        style={{ color: 'var(--text-tertiary)' }}
+                      >
+                        No
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setDeletingId(watch.id)}
+                      className="p-1 rounded transition-colors hover:bg-[var(--bg-hover)]"
+                      style={{ color: 'var(--accent-red)' }}
+                      title="Delete"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Add Watch section */}
+        <div className="px-4 py-3" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+          {showAddForm ? (
+            <TeamsWatchAddForm
+              newTopic={newTopic} setNewTopic={setNewTopic}
+              newInterval={newInterval} setNewInterval={setNewInterval}
+              newAction={newAction} setNewAction={setNewAction}
+              onCreate={handleCreate}
+              onCancel={() => setShowAddForm(false)}
+              isPending={createWatch.isPending}
+            />
+          ) : (
+            <button
+              onClick={() => setShowAddForm(true)}
+              className="flex items-center gap-1.5 w-full justify-center py-1.5 rounded text-sm transition-colors"
+              style={{ color: 'var(--accent-blue)' }}
+              onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'}
+              onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
+            >
+              <Plus className="w-4 h-4" />
+              Add Watch
+            </button>
+          )}
+        </div>
+      </Card>
+
+      {/* Right: selected watch detail */}
+      <TeamsWatchDetailPanel watch={selectedWatch} history={history} />
+    </div>
+  )
+}
+
+// ---- Teams Watch Add Form ----
+
+function TeamsWatchAddForm({
+  newTopic, setNewTopic,
+  newInterval, setNewInterval,
+  newAction, setNewAction,
+  onCreate, onCancel,
+  isPending,
+}: {
+  newTopic: string; setNewTopic: (v: string) => void
+  newInterval: string; setNewInterval: (v: string) => void
+  newAction: string; setNewAction: (v: string) => void
+  onCreate: () => void; onCancel: () => void
+  isPending: boolean
+}) {
+  return (
+    <div className="space-y-2">
+      <input
+        type="text"
+        placeholder="Topic name"
+        value={newTopic}
+        onChange={e => setNewTopic(e.target.value)}
+        className="w-full px-2 py-1.5 rounded text-sm"
+        style={{
+          background: 'var(--bg-inset)',
+          color: 'var(--text-primary)',
+          border: '1px solid var(--border-subtle)',
+          outline: 'none',
+        }}
+        onKeyDown={e => { if (e.key === 'Enter') onCreate() }}
+      />
+      <div className="flex gap-2">
+        <select
+          value={newInterval}
+          onChange={e => setNewInterval(e.target.value)}
+          className="flex-1 px-2 py-1.5 rounded text-sm"
+          style={{
+            background: 'var(--bg-inset)',
+            color: 'var(--text-primary)',
+            border: '1px solid var(--border-subtle)',
+            outline: 'none',
+          }}
+        >
+          <option value="30">30s</option>
+          <option value="60">60s</option>
+          <option value="120">120s</option>
+          <option value="300">300s</option>
+        </select>
+        <select
+          value={newAction}
+          onChange={e => setNewAction(e.target.value)}
+          className="flex-1 px-2 py-1.5 rounded text-sm"
+          style={{
+            background: 'var(--bg-inset)',
+            color: 'var(--text-primary)',
+            border: '1px solid var(--border-subtle)',
+            outline: 'none',
+          }}
+        >
+          <option value="notify">notify</option>
+          <option value="log">log</option>
+          <option value="self-message">self-message</option>
+        </select>
+      </div>
+      <div className="flex justify-end gap-2 pt-1">
+        <button
+          onClick={onCancel}
+          className="px-3 py-1 rounded text-xs"
+          style={{ color: 'var(--text-tertiary)' }}
+        >
+          Cancel
+        </button>
+        <button
+          onClick={onCreate}
+          disabled={!newTopic.trim() || isPending}
+          className="flex items-center gap-1 px-3 py-1 rounded text-xs font-medium disabled:opacity-50"
+          style={{ background: 'var(--accent-blue)', color: 'white' }}
+        >
+          {isPending && <Loader2 className="w-3 h-3 animate-spin" />}
+          Add
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ---- Teams Watch Detail Panel ----
+
+function TeamsWatchDetailPanel({ watch, history }: { watch: any | null; history: any[] }) {
+  if (!watch) {
+    return (
+      <Card className="h-full">
+        <div className="flex items-center justify-center h-full min-h-[120px]">
+          <span className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
+            Select a watch to view details
+          </span>
+        </div>
+      </Card>
+    )
+  }
+
+  const isRunning = watch.status === 'running'
+
+  return (
+    <Card className="h-full flex flex-col">
+      <div className="flex flex-col flex-1 min-h-0 gap-3">
+        {/* Header */}
+        <div>
+          <h4 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+            {watch.topic || 'Untitled Watch'}
+          </h4>
+          {watch.chatId && (
+            <p className="text-xs mt-0.5 font-mono" style={{ color: 'var(--text-tertiary)' }}>
+              Chat: {watch.chatId.length > 30 ? watch.chatId.slice(0, 30) + '…' : watch.chatId}
+            </p>
+          )}
+          <div className="flex items-center gap-3 mt-1">
+            <span className="text-[11px]" style={{ color: 'var(--text-tertiary)' }}>
+              Interval: {watch.interval || 60}s
+            </span>
+            <span className="text-[11px]" style={{ color: 'var(--text-tertiary)' }}>
+              Action: {watch.action || 'notify'}
+            </span>
+          </div>
+        </div>
+
+        {/* Stats row */}
+        <div className="grid grid-cols-4 gap-2 text-xs">
+          <div>
+            <span style={{ color: 'var(--text-tertiary)' }}>Status</span>
+            <p>
+              <Badge
+                variant={isRunning ? 'success' : 'danger'}
+                size="xs"
+              >
+                {isRunning ? 'running' : 'stopped'}
+              </Badge>
+            </p>
+          </div>
+          <div>
+            <span style={{ color: 'var(--text-tertiary)' }}>Polls</span>
+            <p style={{ color: 'var(--text-secondary)' }}>{watch.pollCount || 0}</p>
+          </div>
+          <div>
+            <span style={{ color: 'var(--text-tertiary)' }}>New Msgs</span>
+            <p style={{ color: 'var(--text-secondary)' }}>{watch.newMessageCount || 0}</p>
+          </div>
+          <div>
+            <span style={{ color: 'var(--text-tertiary)' }}>Errors</span>
+            <p style={{ color: (watch.errorCount || 0) > 0 ? 'var(--accent-red)' : 'var(--text-secondary)' }}>
+              {watch.errorCount || 0}
+            </p>
+          </div>
+        </div>
+
+        {/* History section */}
+        <div className="flex-1 min-h-0 flex flex-col">
+          <span className="text-xs shrink-0 mb-1" style={{ color: 'var(--text-tertiary)' }}>
+            History ({history.length})
+          </span>
+          {history.length === 0 ? (
+            <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>No history yet</div>
+          ) : (
+            <div className="flex-1 min-h-0 overflow-auto space-y-1.5">
+              {[...history].reverse().map((entry: any, idx: number) => (
+                <TeamsWatchHistoryEntry key={entry.id || idx} entry={entry} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </Card>
+  )
+}
+
+// ---- Teams Watch History Entry ----
+
+function TeamsWatchHistoryEntry({ entry }: { entry: any }) {
+  const ts = entry.timestamp
+    ? new Date(entry.timestamp).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    : ''
+
+  // SBA card entry
+  if (entry.parsedCard) {
+    const card = entry.parsedCard
+    return (
+      <div
+        className="rounded px-2.5 py-2 text-xs"
+        style={{ background: 'var(--accent-blue-dim)', border: '1px solid var(--border-subtle)' }}
+      >
+        <div className="flex items-center justify-between">
+          <span className="font-medium" style={{ color: 'var(--accent-blue)' }}>
+            🔔 SR {card.caseNumber || '?'} (Sev {card.severity || '?'})
+          </span>
+          <span className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>{ts}</span>
+        </div>
+        {card.assignedTo && (
+          <div className="mt-0.5 text-[11px]" style={{ color: 'var(--text-secondary)' }}>
+            Assigned: {card.assignedTo}
+          </div>
+        )}
+        <div className="flex items-center gap-3 mt-0.5">
+          {card.sla && (
+            <span className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>SLA: {card.sla}</span>
+          )}
+          {card.patrolStatus && (
+            <span className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>Patrol: {card.patrolStatus}</span>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // Normal message entry
+  return (
+    <div
+      className="rounded px-2.5 py-1.5 text-xs"
+      style={{ background: 'var(--bg-inset)' }}
+    >
+      <div className="flex items-center justify-between">
+        <span className="truncate" style={{ color: 'var(--text-primary)' }}>
+          📩 {entry.from ? `${entry.from}: ` : ''}{entry.preview || entry.message || 'No content'}
+        </span>
+        <span className="text-[10px] shrink-0 ml-2" style={{ color: 'var(--text-tertiary)' }}>{ts}</span>
+      </div>
+    </div>
   )
 }
 
