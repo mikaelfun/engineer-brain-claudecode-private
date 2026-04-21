@@ -131,6 +131,8 @@ def main():
         shutil.copy2(out_path, root_path)
 
     # Write reasoning + result to state.json for UI display (deterministic — no agent needed)
+    # NOTE: assess is an action within act step, NOT a top-level step.
+    # Use --step act --action assess to avoid creating orphan steps.assess entry.
     reasoning = d.get('statusReasoning', '')
     if reasoning or d.get('actualStatus'):
         import subprocess
@@ -139,12 +141,13 @@ def main():
             # act/assess/scripts/ → act/assess/ → act/ → casework/ → casework/scripts/update-state.py
             os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'scripts', 'update-state.py'),
             '--case-dir', args.case_dir,
-            '--step', 'assess',
+            '--step', 'act',
+            '--action', 'assess',
             '--status', 'completed',
             '--result', d.get('actualStatus', ''),
         ]
         if reasoning:
-            cmd.extend(['--reasoning', reasoning[:200]])
+            cmd.extend(['--detail', reasoning[:200]])
         subprocess.run(cmd, check=False)
 
     plan_count = len(result['plans'])
