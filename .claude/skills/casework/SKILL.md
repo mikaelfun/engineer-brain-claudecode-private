@@ -106,11 +106,6 @@ python3 .claude/skills/casework/scripts/update-state.py --case-dir "$CASE_DIR" -
 
 ### Pipeline Step 4. 展示结果
 
-```bash
-# Pipeline state → dashboard SSE (all steps completed)
-python3 .claude/skills/casework/scripts/update-state.py --case-dir "$CASE_DIR" --step summarize --status completed
-```
-
 读取最新 `{caseDir}/todo/` 文件，🔴🟡✅ 格式展示 Todo 汇总。
 
 ## AR 分路

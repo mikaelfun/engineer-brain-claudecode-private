@@ -6,7 +6,7 @@ category: casework-sub-skill
 stability: beta
 requiredInput: caseNumber
 promptTemplate: |
-  Run assess for Case {caseNumber}. Read .claude/skills/casework/assess/SKILL.md and follow all steps.
+  Run assess for Case {caseNumber}. Read .claude/skills/casework/act/assess/SKILL.md and follow all steps.
 allowed-tools:
   - Bash
   - Read
@@ -66,14 +66,14 @@ print('OK')
     STATUS=$(echo "$META" | python3 -c "import json,sys; print(json.load(sys.stdin).get('actualStatus','researching'))")
     DAYS=$(echo "$META"  | python3 -c "import json,sys; print(json.load(sys.stdin).get('daysSinceLastContact',0))")
     REASONING=$(echo "$META" | python3 -c "import json,sys; r=json.load(sys.stdin).get('statusReasoning',''); print(r.replace('\"','\\\\\"')[:200])")
-    cat > /tmp/assess-dec-$$.json <<EOF
+    cat > {caseDir}/.casework/assess-dec-$$.json <<EOF
 {"caseNumber":"{caseNumber}","actualStatus":"$STATUS","daysSinceLastContact":$DAYS,
  "statusReasoning":"$REASONING",
  "actions":[],"noActionReason":"DELTA_EMPTY — no new data, reusing meta","routingSource":"rule-table"}
 EOF
-    python3 .claude/skills/casework/assess/scripts/write-execution-plan.py \
-      --decision /tmp/assess-dec-$$.json --case-dir "{caseDir}"
-    rm -f /tmp/assess-dec-$$.json
+    python3 .claude/skills/casework/act/assess/scripts/write-execution-plan.py \
+      --decision {caseDir}/.casework/assess-dec-$$.json --case-dir "{caseDir}"
+    rm -f {caseDir}/.casework/assess-dec-$$.json
     # Update lastAssessedAt even on fast path (ISS-227: prevents timing cross-run drift)
     python3 -c "
 import json, time, os
@@ -94,7 +94,7 @@ fi
 PRD §2.5：字段 hash 匹配则复用缓存，否则 re-infer via LLM。
 
 ```bash
-CURRENT_HASH=$(bash .claude/skills/casework/assess/scripts/compliance-hash.sh "{caseDir}/case-info.md")
+CURRENT_HASH=$(bash .claude/skills/casework/act/assess/scripts/compliance-hash.sh "{caseDir}/case-info.md")
 CACHED_HASH=$(python3 -c "
 import json
 try: print(json.load(open(r'{caseDir}/casework-meta.json'))['compliance']['sourceHash'])
@@ -110,7 +110,7 @@ fi
 
 **re-infer 路径**：hash 不匹配时，读取 `compliance-rules.md` 执行完整 compliance-check：
 
-> **按需加载**：读取 `.claude/skills/casework/assess/compliance-rules.md` 获取 Entitlement 判定规则、21v Convert 检测、CC Finder、SAP 三层检查的完整规则，然后执行。cache-hit 路径不读此文件。
+> **按需加载**：读取 `.claude/skills/casework/act/assess/compliance-rules.md` 获取 Entitlement 判定规则、21v Convert 检测、CC Finder、SAP 三层检查的完整规则，然后执行。cache-hit 路径不读此文件。
 
 **entitlementOk === false 时直接阻断**：写 execution-plan.json 带 `actualStatus=ready-to-close`、`noActionReason="compliance: not supported"`，跳过 Step 3/4。阻断时 warnings 必须包含具体原因（见 compliance-rules.md），供 summarize 阶段写入 todo。
 **sapOk === false 时不阻断**，但 warnings 传入 LLM prompt context，LLM 可在 actions 中建议修改 SAP。若 compliance 产出了 `suggestedSap`（来自 match-sap 脚本化检查），LLM 应在 actions 中用 `suggestedSap.path` 作为推荐 SAP 路径。
@@ -118,7 +118,7 @@ fi
 
 ### Step 2.5. AR Enrichment（仅 `isAR=true` 时执行）
 
-> **按需加载**：当 `casework-meta.json` 中 `isAR === true` 时，读取 `.claude/skills/casework/assess/ar-rules.md` 的 Step 2.5 章节执行 AR scope 提取 + communicationMode 检测 + AR-specific OneNote/Teams 调整。非 AR case 跳过，不读此文件。
+> **按需加载**：当 `casework-meta.json` 中 `isAR === true` 时，读取 `.claude/skills/casework/act/assess/ar-rules.md` 的 Step 2.5 章节执行 AR scope 提取 + communicationMode 检测 + AR-specific OneNote/Teams 调整。非 AR case 跳过，不读此文件。
 
 ### Step 3. Enrichment digest（已由 data-refresh 完成）
 
@@ -179,7 +179,7 @@ actualStatus 是对**实际沟通状态**的事实判断，仅基于已发生的
 
 ### AR Mode 判断（仅 isAR=true 时适用）
 
-> **按需加载**：当 `isAR=true` 时，读取 `.claude/skills/casework/assess/ar-rules.md` 的 "Step 4 AR Mode 判断规则" + "AR Context 注入模板" 章节，替代上述普通模式判断规则。非 AR case 不读此文件。
+> **按需加载**：当 `isAR=true` 时，读取 `.claude/skills/casework/act/assess/ar-rules.md` 的 "Step 4 AR Mode 判断规则" + "AR Context 注入模板" 章节，替代上述普通模式判断规则。非 AR case 不读此文件。
 
 ## Context
 ### meta (casework-meta.json)
@@ -271,7 +271,7 @@ LLM 返回 JSON 后写 decision 文件，调 `write-execution-plan.py`：
 
 ```bash
 echo "$LLM_JSON" > "{caseDir}/.casework/assess-decision.json"
-python3 .claude/skills/casework/assess/scripts/write-execution-plan.py \
+python3 .claude/skills/casework/act/assess/scripts/write-execution-plan.py \
   --decision "{caseDir}/.casework/assess-decision.json" --case-dir "{caseDir}"
 ```
 
