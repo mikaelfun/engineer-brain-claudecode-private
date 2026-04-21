@@ -1,12 +1,12 @@
 ---
-description: "Step 2 Assess — compliance gate + subagent enrichment + actualStatus/actions 决策，读 .casework/data-refresh-output.json 写 .casework/execution-plan.json"
+description: "Assess — compliance gate + subagent enrichment + actualStatus/actions 决策。作为 act 的第一个 action 执行（不再是独立顶层步骤），读 .casework/data-refresh-output.json 写 .casework/execution-plan.json"
 name: casework:assess
-displayName: Case 状态评估
+displayName: Case 状态评估（act 内部组件）
 category: casework-sub-skill
 stability: beta
 requiredInput: caseNumber
 promptTemplate: |
-  Run Step 2 (assess) for Case {caseNumber}. Read .claude/skills/casework/assess/SKILL.md and follow all steps.
+  Run assess for Case {caseNumber}. Read .claude/skills/casework/assess/SKILL.md and follow all steps.
 allowed-tools:
   - Bash
   - Read
@@ -203,10 +203,9 @@ actualStatus 是对**实际沟通状态**的事实判断，仅基于已发生的
   "actions": [
     // 允许的 type: troubleshooter / email-drafter / challenger / note-gap / labor-estimate
     // 允许的 status: pending
-    // ⚠️ 新规则：当 actions 包含 troubleshooter 时，email-drafter 不在此处输出。
-    //    改为设置 deferredActions: ["email-drafter"]，email 类型由 reassess 步骤根据排查结论决定。
-    //    例外：IR-first 路径（new case + initial-response）仍在此处输出 email-drafter(initial-response)，
-    //    因为 IR 先发不需要等排查结论。
+    // ⚠️ v4 规则：当 actions 包含 troubleshooter 时，email 类型统一由 reassess 步骤决定。
+    //    deferredActions 字段保留向后兼容但不再影响路由——所有含 troubleshooter 的场景都会走 reassess。
+    //    IR-first 例外不变：new case 同时输出 troubleshooter + email-drafter(initial-response)。
     // email-drafter 需额外字段 "emailType"（仅不含 troubleshooter 的场景 + IR-first 场景使用）：
     //   - initial-response: 首次回复客户（工程师从未发过邮件）
     //   - 21v-convert-ir: 21V 转 IR（is21vConvert=true 时）
@@ -255,9 +254,9 @@ actualStatus 是对**实际沟通状态**的事实判断，仅基于已发生的
 4. 有新信息需排查（客户新数据、PG 新回复）→ troubleshooter
 5. 新 case（`new` 状态，无工程师邮件）+ 需初始排查 → troubleshooter + email-drafter(initial-response)
 6. 判断不确定 → actions=[]（让 act 的 fallback 路由表处理）
-7. 有 troubleshooter action → 必须设 deferredActions=["email-drafter"]
-   → 唯一例外：IR-first（new + initial-response）同时输出 troubleshooter + email-drafter(initial-response)
-   → IR-first 时 deferredActions=["email-drafter"]（reassess 仍决定第二封邮件）
+7. 有 troubleshooter action → deferredActions=["email-drafter"]（向后兼容，不影响路由）
+   → v4: 所有含 troubleshooter 的场景都走 reassess，reassess 决定 email 类型
+   → IR-first 例外不变：new case 同时输出 email-drafter(initial-response) + troubleshooter
 
 **邮件去重规则**（推荐 email-drafter 前必须检查）：
 - 读 `{caseDir}/emails.md` 检查工程师是否已发过同类型邮件（IR/follow-up/closure）
