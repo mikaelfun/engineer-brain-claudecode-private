@@ -124,6 +124,12 @@ def main():
     with open(out_path, 'w', encoding='utf-8') as f:
         json.dump(result, f, indent=2, ensure_ascii=False)
 
+    # Always maintain a copy at .casework/execution-plan.json (patrol polls this path)
+    root_path = os.path.join(out_dir, 'execution-plan.json')
+    if out_path != root_path:
+        import shutil
+        shutil.copy2(out_path, root_path)
+
     # Write reasoning + result to state.json for UI display (deterministic — no agent needed)
     reasoning = d.get('statusReasoning', '')
     if reasoning or d.get('actualStatus'):
