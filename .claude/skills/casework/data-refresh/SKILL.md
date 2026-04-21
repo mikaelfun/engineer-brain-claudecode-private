@@ -1,5 +1,5 @@
 ---
-description: "Step 1 Data Refresh — 并行拉取 D365/Teams/ICM/OneNote/Attachments 数据，产出 data-refresh-output.json"
+description: "Step 1 Data Refresh — 并行拉取 D365/Teams/ICM/OneNote/Attachments 数据，产出 data-refresh.json（写入 run 目录）"
 name: casework:data-refresh
 displayName: Case 数据刷新
 category: casework-sub-skill
@@ -14,7 +14,7 @@ allowed-tools:
 
 # /casework:data-refresh — Step 1 Data Refresh
 
-纯脚本步骤，无 LLM 推理。并行拉取 6 路数据源，聚合为 `data-refresh-output.json`。
+纯脚本步骤，无 LLM 推理。并行拉取 6 路数据源，聚合为 `data-refresh.json`（写入 run 目录）。
 
 ## 输入
 
@@ -23,7 +23,7 @@ allowed-tools:
 
 ## 输出
 
-- `{caseDir}/.casework/data-refresh-output.json` — 聚合结果（PRD §4.2 schema）
+- `{caseDir}/.casework/runs/{runId}/data-refresh/data-refresh.json` — 聚合结果（PRD §4.2 schema）。下游通过 `resolve-run-path.sh output/data-refresh.json` 解析。
 - `{caseDir}/case-info.md` — D365 snapshot
 - `{caseDir}/emails.md` — 邮件
 - `{caseDir}/notes.md` — Notes

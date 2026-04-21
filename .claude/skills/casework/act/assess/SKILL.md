@@ -1,5 +1,5 @@
 ---
-description: "Assess — compliance gate + subagent enrichment + actualStatus/actions 决策。作为 act 的第一个 action 执行（不再是独立顶层步骤），读 .casework/data-refresh-output.json 写 .casework/execution-plan.json"
+description: "Assess — compliance gate + subagent enrichment + actualStatus/actions 决策。作为 act 的第一个 action 执行（不再是独立顶层步骤），通过 resolve-run-path.sh 读 data-refresh 产出，写 .casework/execution-plan.json"
 name: casework:assess
 displayName: Case 状态评估（act 内部组件）
 category: casework-sub-skill
@@ -20,7 +20,7 @@ allowed-tools:
 
 ## 输入契约
 
-- `{caseDir}/.casework/data-refresh-output.json` — 必须存在（Step 1 成功产物）
+- data-refresh 产出（通过 `resolve-run-path.sh output/data-refresh.json` 解析）— 必须存在（Step 1 成功产物）
 - `{caseDir}/casework-meta.json` — 累计元数据（首次运行可不存在）
 - `{caseDir}/case-info.md` — D365 snapshot（用于 compliance hash）
 - `{caseDir}/notes-ar.md` — AR 专属 notes（仅 AR case 存在，可选）
@@ -34,12 +34,13 @@ allowed-tools:
 
 ### Step 1. DELTA_EMPTY 快速路径
 
-读 `.casework/data-refresh-output.json`，如 `deltaStatus == "DELTA_EMPTY"`：
+读 data-refresh 产出（通过 `resolve-run-path.sh` 解析 run 目录路径），如 `deltaStatus == "DELTA_EMPTY"`：
 
 **ISS-235 过期检查**：先检查 `casework-meta.json → nextFollowUpDate`，若 today >= nextFollowUpDate 则跳出快速路径强制走 LLM re-assess。
 
 ```bash
-DELTA=$(python3 -c "import json; print(json.load(open(r'{caseDir}/.casework/data-refresh-output.json'))['deltaStatus'])")
+DR_PATH=$(bash .claude/skills/casework/scripts/resolve-run-path.sh "{caseDir}" output/data-refresh.json 2>/dev/null || echo "{caseDir}/.casework/data-refresh-output.json")
+DELTA=$(python3 -c "import json; print(json.load(open(r'$DR_PATH'))['deltaStatus'])")
 if [ "$DELTA" = "DELTA_EMPTY" ]; then
   META=$(cat "{caseDir}/casework-meta.json" 2>/dev/null || echo '{}')
 
@@ -142,8 +143,8 @@ fi
 
 ### Step 4. 主 LLM：actualStatus + actions 决策
 
-读 context：
-- `{caseDir}/.casework/data-refresh-output.json` → delta + context（含 `deltaContent` md）
+读 context（`$DR_PATH` 已在 Step 1 通过 `resolve-run-path.sh` 解析）：
+- `$DR_PATH`（data-refresh 产出）→ delta + context（含 `deltaContent` md）
 - `{caseDir}/casework-meta.json` → 历史 actualStatus / compliance
 - Teams 数据：引用 Step 3 产出的 `{caseDir}/teams/teams-digest.md`
 - OneNote 数据：引用 Step 3 产出的 `{caseDir}/onenote/onenote-digest.md`
@@ -338,7 +339,7 @@ ASSESS_OK|delta=ok|status={actualStatus}|actions={N}|compliance={cache-hit|re-in
 
 | 场景 | 行为 |
 |------|------|
-| `data-refresh-output.json` 不存在 | exit 2，提示先跑 `/casework:data-refresh` |
+| data-refresh 产出不存在 | exit 2，提示先跑 `/casework:data-refresh` |
 | compliance hash util 失败 | 视为 "re-infer"（保守，不用错误缓存） |
 | teams-digest-writer 失败 | teams-digest.md 不生成，assess 主 LLM 不引用，继续 |
 | onenote-classifier 失败 | onenote-digest.md 保持 search-inline 产出（无标注），assess 主 LLM 仍可读 |

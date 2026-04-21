@@ -24,7 +24,7 @@ allowed-tools:
 
 ## 输入契约
 
-- `{caseDir}/.casework/data-refresh-output.json` — 可选（用于读取 `deltaStatus`；不存在时视为 `DELTA_OK`）
+- data-refresh 产出（通过 `resolve-run-path.sh output/data-refresh.json` 解析）— 可选（用于读取 `deltaStatus`；不存在时视为 `DELTA_OK`）
 - `{caseDir}/case-info.md` — D365 snapshot
 - `{caseDir}/emails.md` — 邮件
 - `{caseDir}/casework-meta.json` — 累计元数据
@@ -39,12 +39,13 @@ allowed-tools:
 
 ### Step 1. 读取 deltaStatus
 
-直接从 data-refresh-output.json 读取 `deltaStatus`（砍掉了旧的 `changePath` / `derive-change-path.sh` 间接层）：
+直接从 data-refresh 产出读取 `deltaStatus`（通过 `resolve-run-path.sh` 解析 run 目录路径）：
 
 ```bash
+DR_PATH=$(bash .claude/skills/casework/scripts/resolve-run-path.sh "{caseDir}" output/data-refresh.json 2>/dev/null || echo "{caseDir}/.casework/data-refresh-output.json")
 DELTA=$(python3 -c "
 import json
-try: print(json.load(open(r'{caseDir}/.casework/data-refresh-output.json'))['deltaStatus'])
+try: print(json.load(open(r'$DR_PATH'))['deltaStatus'])
 except: print('DELTA_OK')
 ")
 # DELTA_OK | DELTA_EMPTY
@@ -233,7 +234,7 @@ echo "SUMMARIZE_OK|delta=$DELTA|elapsed=${SECONDS}s"
 
 ## Pitfalls (known)
 
-- **deltaStatus 推导**：data-refresh-output.json 不存在时保守视为 `DELTA_OK`（触发 LLM summary），避免漏更新
+- **deltaStatus 推导**：data-refresh 产出不存在时保守视为 `DELTA_OK`（触发 LLM summary），避免漏更新
 - **旧 `changePath` 已移除**：v2 不再使用 `derive-change-path.sh`，直接读 `deltaStatus`
 - **AR Case**：AR summary 规则（scope 限定、AR 信息 section）已内联在 Step 3.2 中，不依赖外部文件
 
@@ -241,7 +242,7 @@ echo "SUMMARIZE_OK|delta=$DELTA|elapsed=${SECONDS}s"
 
 | 场景 | 行为 |
 |------|------|
-| `data-refresh-output.json` 不存在 | deltaStatus 默认 `DELTA_OK`（保守） |
+| data-refresh 产出不存在 | deltaStatus 默认 `DELTA_OK`（保守） |
 | `case-info.md` 不存在 | exit 2，提示先跑 `/casework:data-refresh` |
 | `generate-todo.sh` 失败 | 记日志，不阻塞 meta 更新 |
 | LLM summary 生成失败 | state.json 标 failed |
