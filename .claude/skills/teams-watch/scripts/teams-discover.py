@@ -63,7 +63,134 @@ def ensure_playwright():
                        capture_output=True)
         return True
 
-def discover_chats(name_filter=None, timeout_s=30, login_only=False):
+LOGIN_DOMAINS = ['login.microsoftonline.com', 'login.live.com']
+ACCOUNT_MATCH = '@microsoft.com'
+TARGET_DOMAIN = 'teams.cloud.microsoft'
+
+
+def _is_login_url(url):
+    return any(d in url for d in LOGIN_DOMAINS)
+
+
+def _is_teams_url(url):
+    return TARGET_DOMAIN in url
+
+
+def _find_active_page(context):
+    """Pick the most relevant page from context: prefer login > teams > last."""
+    for p in context.pages:
+        try:
+            if _is_login_url(p.url):
+                return p
+        except Exception:
+            pass
+    for p in context.pages:
+        try:
+            if _is_teams_url(p.url):
+                return p
+        except Exception:
+            pass
+    pages = context.pages
+    return pages[-1] if pages else None
+
+
+def _handle_sso(page, context, timeout_s=40):
+    """Handle SSO login. Ported from sso-handler.js.
+
+    Phases:
+      1. Wait for redirect from teams.cloud.microsoft → login.microsoftonline.com
+      2. Wait for DSSO ("Trying to sign you in") to finish → "Pick an account"
+      3. Iterate [data-test-id] tiles, find @microsoft.com, click
+      4. Wait for redirect back to teams.cloud.microsoft
+
+    Returns: page object (may differ from input if redirect opened new tab)
+    """
+    # Phase 1: Wait for URL to settle (teams or login) — poll every 500ms, up to 15s
+    print('  [sso] waiting for redirect...', file=sys.stderr)
+    deadline = time.time() + min(timeout_s, 15)
+    while time.time() < deadline:
+        page = _find_active_page(context)
+        url = page.url
+        if _is_login_url(url):
+            print(f'  [sso] reached login page', file=sys.stderr)
+            break
+        if _is_teams_url(url):
+            # teams.cloud.microsoft URL — but might be pre-redirect. Check body.
+            try:
+                body = page.evaluate('() => document.body.innerText.substring(0, 200)')
+                if 'Chat' in body or 'Activity' in body:
+                    print(f'  [sso] Teams already loaded, no SSO needed', file=sys.stderr)
+                    return page
+            except Exception:
+                pass
+        time.sleep(0.5)
+
+    # Phase 2: On login page — wait for DSSO to complete and "Pick an account" to appear
+    if _is_login_url(page.url):
+        print('  [sso] waiting for account picker...', file=sys.stderr)
+        deadline = time.time() + min(timeout_s, 20)
+        while time.time() < deadline:
+            try:
+                body = page.evaluate('() => document.body.innerText.substring(0, 300)')
+                if 'Pick an account' in body or 'Sign in to your account' in body:
+                    break
+                if 'Trying to sign' in body:
+                    pass  # DSSO still running, wait
+            except Exception:
+                pass
+            time.sleep(1)
+
+        # Phase 3: Click account tile — iterate [data-test-id] tiles (à la sso-handler.js)
+        page.wait_for_timeout(2000)  # Wait for KO bindings to render data-test-id
+        print('  [sso] looking for account tiles...', file=sys.stderr)
+        clicked = False
+        try:
+            tiles = page.locator('[data-test-id]').all()
+            for tile in tiles:
+                try:
+                    txt = tile.text_content() or ''
+                    if ACCOUNT_MATCH in txt:
+                        label = ' '.join(txt.split())[:50]
+                        tile.click(timeout=5000)
+                        clicked = True
+                        print(f'  [sso] clicked: {label}', file=sys.stderr)
+                        break
+                except Exception:
+                    continue
+        except Exception as e:
+            print(f'  [sso] tile search error: {e}', file=sys.stderr)
+
+        if not clicked:
+            # Fallback: try row.tile with text match
+            try:
+                fallback = page.locator('div.row.tile:has-text("' + ACCOUNT_MATCH + '")').first
+                if fallback.is_visible(timeout=2000):
+                    fallback.click(timeout=5000)
+                    clicked = True
+                    print(f'  [sso] clicked via fallback (div.row.tile)', file=sys.stderr)
+            except Exception:
+                pass
+
+        if not clicked:
+            print('  [sso] WARNING: could not find/click account tile', file=sys.stderr)
+            return page
+
+        # Phase 4: Wait for redirect back to Teams
+        print('  [sso] waiting for Teams redirect...', file=sys.stderr)
+        try:
+            page.wait_for_url(f'**/{TARGET_DOMAIN}/**', timeout=30000)
+        except Exception:
+            # URL pattern might not match exactly — poll manually
+            for _ in range(30):
+                page = _find_active_page(context)
+                if _is_teams_url(page.url) and not _is_login_url(page.url):
+                    break
+                time.sleep(1)
+
+    return page
+
+
+def discover_chats(name_filter=None, timeout_s=60, login_only=False):
     """Open Teams web, list chats, extract chatIds."""
     from playwright.sync_api import sync_playwright
 
@@ -118,83 +245,63 @@ def discover_chats(name_filter=None, timeout_s=30, login_only=False):
             page.goto('https://teams.cloud.microsoft/', timeout=30000,
                       wait_until='domcontentloaded')
 
-            # Persistent profile may open multiple tabs — close extras, keep the one with Teams/login
-            page.wait_for_timeout(3000)
-            pages = context.pages
-            if len(pages) > 1:
-                print(f'  [info] {len(pages)} tabs, cleaning up...', file=sys.stderr)
-                for p in pages:
-                    try:
-                        url = p.url
-                        if 'about:blank' in url:
-                            p.close()
-                    except Exception:
-                        pass
-                # Re-get pages after cleanup
-                pages = context.pages
-                # Pick the page that's on login or teams
-                for p in pages:
-                    try:
-                        url = p.url
-                        if 'login.microsoftonline' in url or 'teams.cloud' in url or 'teams.microsoft' in url:
-                            page = p
-                            break
-                    except Exception:
-                        pass
-                print(f'  [info] using page: {page.url[:60]}', file=sys.stderr)
-
-            # Wait for either SSO picker or Teams chat to load
-            print('Waiting for Teams / SSO...', file=sys.stderr)
-            sso_clicked = False
-            deadline = time.time() + timeout_s
-            while time.time() < deadline:
-                # Re-check pages — SSO might open in a new tab
-                pages = context.pages
-                if len(pages) > 1:
-                    page = pages[-1]
-
-                # Try SSO click first — don't rely on title (it throws during redirects)
-                if not sso_clicked:
-                    try:
-                        # MS login page uses data-test-id="email@domain" on account buttons
-                        for sel in [
-                            '[data-test-id="fangkun@microsoft.com"]',
-                            'div:text-is("fangkun@microsoft.com")',
-                            ':text("fangkun@microsoft.com")',
-                        ]:
-                            try:
-                                btn = page.locator(sel).first
-                                if btn.is_visible(timeout=1500):
-                                    btn.click(timeout=5000)
-                                    sso_clicked = True
-                                    print(f'  SSO: clicked via {sel}', file=sys.stderr)
-                                    page.wait_for_timeout(8000)
-                                    break
-                            except Exception:
-                                continue
-                    except Exception as e:
-                        print(f'  [sso-debug] {e.__class__.__name__}: {str(e)[:80]}', file=sys.stderr)
-
-                # Check if Teams loaded
+            # Close stray about:blank tabs
+            for tab in context.pages:
                 try:
-                    title = page.title()
-                    if ('Chat' in title or 'Teams' in title) and 'Sign in' not in title and 'Almost' not in title:
-                        break
+                    if tab != page and 'about:blank' in tab.url:
+                        tab.close()
                 except Exception:
                     pass
 
-                page.wait_for_timeout(2000)
+            # === SSO handling (ported from sso-handler.js) ===
+            print('Handling SSO...', file=sys.stderr)
+            page = _handle_sso(page, context, timeout_s=timeout_s)
 
-            page.wait_for_timeout(5000)  # Extra settle time
+            if login_only:
+                print('Login-only mode, exiting after SSO.', file=sys.stderr)
+                return []
 
-            # Ensure we're on Chat tab (not Activity/Calendar/etc)
-            try:
-                chat_btn = page.locator('[data-tid="app-bar-Chat"], [aria-label*="Chat"], button:has-text("Chat")').first
-                if chat_btn.is_visible(timeout=3000):
-                    chat_btn.click(timeout=3000)
-                    page.wait_for_timeout(3000)
-            except Exception:
-                pass
+            # === Wait for Teams app to fully load ===
+            print('Waiting for Teams app to fully load...', file=sys.stderr)
+            deadline = time.time() + timeout_s
+            chat_tab_clicked = False
+
+            while time.time() < deadline:
+                # Re-find active Teams page
+                page = _find_active_page(context)
+                try:
+                    info = page.evaluate('''() => ({
+                        url: location.href,
+                        title: document.title,
+                        treeitem: document.querySelectorAll('[role="treeitem"]').length,
+                        listitem: document.querySelectorAll('[role="listitem"]').length,
+                        chatBtn: !!document.querySelector('[data-tid="app-bar-Chat"], [data-tid="app-bar-2"]'),
+                        loading: !!document.querySelector('[role="progressbar"]') ||
+                            document.body.innerText.includes('Loading'),
+                    })''')
+                except Exception:
+                    time.sleep(2)
+                    continue
+
+                # Chat list found
+                if info['treeitem'] > 2 or (info['listitem'] > 2 and _is_teams_url(info['url'])):
+                    print(f'  Teams loaded! treeitem={info["treeitem"]} listitem={info["listitem"]}', file=sys.stderr)
+                    break
+
+                # App bar loaded — try clicking Chat tab
+                if info['chatBtn'] and not chat_tab_clicked:
+                    try:
+                        btn = page.locator('[data-tid="app-bar-Chat"], [data-tid="app-bar-2"]').first
+                        if btn.is_visible(timeout=2000):
+                            btn.click(timeout=3000)
+                            chat_tab_clicked = True
+                            print(f'  Clicked Chat tab', file=sys.stderr)
+                    except Exception:
+                        pass
+
+                time.sleep(3)
+
+            page.wait_for_timeout(3000)  # Extra settle time
 
             # Debug: save screenshot
             debug_dir = PW_PROFILE / 'debug'
@@ -205,48 +312,40 @@ def discover_chats(name_filter=None, timeout_s=30, login_only=False):
             except Exception:
                 pass
 
-            # Extract chat list items — try multiple selector strategies
+            # Extract chat list items from treeitems
+            # New Teams UI: aria-label is empty, chat names are in innerText.
+            # Group headers (Favorites, Chats, etc.) contain '|' with child items.
+            # Leaf treeitems have clean single-line innerText = chat display name.
             print('Extracting chat names...', file=sys.stderr)
             items = page.evaluate('''() => {
                 const results = [];
                 const seen = new Set();
+                const treeitems = document.querySelectorAll('[role="treeitem"]');
 
-                // Strategy 1: role="treeitem" (classic Teams)
-                for (const el of document.querySelectorAll('[role="treeitem"]')) {
-                    const name = (el.getAttribute('aria-label') || '').trim();
-                    if (name && !seen.has(name)) { seen.add(name); results.push({name: name.substring(0, 80), strategy: 'treeitem'}); }
-                }
-
-                // Strategy 2: data-tid chat list items
-                for (const el of document.querySelectorAll('[data-tid*="chat-list-item"], [data-tid*="listitem"]')) {
-                    const name = (el.getAttribute('aria-label') || el.textContent || '').trim();
-                    if (name && !seen.has(name)) { seen.add(name); results.push({name: name.substring(0, 80), strategy: 'data-tid'}); }
-                }
-
-                // Strategy 3: listbox > option/listitem pattern
-                for (const el of document.querySelectorAll('[role="listbox"] [role="option"], [role="list"] [role="listitem"]')) {
-                    const name = (el.getAttribute('aria-label') || el.textContent || '').trim();
-                    if (name && name.length > 2 && name.length < 80 && !seen.has(name)) {
-                        seen.add(name); results.push({name: name.substring(0, 80), strategy: 'listbox'});
+                for (const el of treeitems) {
+                    // Use aria-label if present, otherwise innerText
+                    let name = (el.getAttribute('aria-label') || '').trim();
+                    if (!name) {
+                        // innerText — but skip group headers that contain multiple items
+                        const raw = (el.innerText || '').trim();
+                        // Group headers have newlines or '|' (multiple child names)
+                        if (raw.includes('\\n') || raw.length > 80) continue;
+                        name = raw;
+                    }
+                    if (name && name.length > 1 && name.length <= 80 && !seen.has(name)) {
+                        seen.add(name);
+                        results.push({ name, strategy: 'treeitem' });
                     }
                 }
 
-                // Strategy 4: Generic — look for chat conversation containers
-                for (const el of document.querySelectorAll('[class*="chatListItem"], [class*="ChatListItem"], [class*="conversationListItem"]')) {
-                    const name = (el.getAttribute('aria-label') || el.textContent || '').trim().substring(0, 80);
-                    if (name && name.length > 2 && !seen.has(name)) { seen.add(name); results.push({name, strategy: 'class'}); }
-                }
-
-                // Debug info: report what selectors matched
-                const debug = {
-                    treeitemCount: document.querySelectorAll('[role="treeitem"]').length,
-                    listboxCount: document.querySelectorAll('[role="listbox"]').length,
-                    listCount: document.querySelectorAll('[role="list"]').length,
-                    chatListCount: document.querySelectorAll('[class*="chatList"], [class*="ChatList"]').length,
+                // Debug info
+                results.push({
+                    name: '__debug__',
+                    strategy: 'debug',
+                    treeitemCount: treeitems.length,
                     pageTitle: document.title,
                     url: location.href,
-                };
-                results.push({name: '__debug__', ...debug, strategy: 'debug'});
+                });
 
                 return results;
             }''')
@@ -257,13 +356,13 @@ def discover_chats(name_filter=None, timeout_s=30, login_only=False):
 
             if debug_info:
                 d = debug_info[0]
-                print(f'  [debug] treeitem={d.get("treeitemCount")}, listbox={d.get("listboxCount")}, '
-                      f'list={d.get("listCount")}, chatList={d.get("chatListCount")}, '
+                print(f'  [debug] treeitem={d.get("treeitemCount")}, '
                       f'title={d.get("pageTitle","")[:40]}, url={d.get("url","")[:60]}', file=sys.stderr)
 
-            # Filter out nav/system items
+            # Filter out nav/system items (not actual chats)
             skip_names = {'Copilot', 'Mentions', 'Discover', 'Drafts', 'Chat', 'Teams and channels',
-                          'Unread', 'Channels', 'Chats', 'Quick views', 'Turn on'}
+                          'Unread', 'Channels', 'Chats', 'Quick views', 'Turn on', 'Workflows',
+                          'SBAManager Bot'}
             items = [i for i in items
                      if i['name'] not in skip_names
                      and not i['name'].startswith('Favorites')
@@ -374,7 +473,7 @@ def main():
                         help='Discover specific chat and add as target with KEY')
     parser.add_argument('--login', action='store_true',
                         help='Login mode: open Teams for SSO, then exit (run once to set up profile)')
-    parser.add_argument('--timeout', type=int, default=30, help='Page load timeout (s)')
+    parser.add_argument('--timeout', type=int, default=60, help='Page load timeout (s)')
     args = parser.parse_args()
 
     ensure_playwright()
