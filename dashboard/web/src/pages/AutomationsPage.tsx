@@ -696,6 +696,8 @@ function TeamsWatchTab({ watches }: { watches: any[] }) {
   const restartWatch = useRestartTeamsWatch()
   const deleteWatch = useDeleteTeamsWatch()
   const createWatch = useCreateTeamsWatch()
+  // Track which watchId is currently being mutated (avoids all buttons spinning together)
+  const [mutatingWatchId, setMutatingWatchId] = useState<string | null>(null)
 
   const { data: historyData } = useTeamsWatchHistory(selectedWatchId)
   const history = historyData?.history || []
@@ -817,33 +819,33 @@ function TeamsWatchTab({ watches }: { watches: any[] }) {
                 <div className="flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
                   {healthStatus === 'running' ? (
                     <button
-                      onClick={() => stopWatch.mutate(watch.watchId)}
-                      disabled={stopWatch.isPending}
+                      onClick={() => { setMutatingWatchId(watch.watchId); stopWatch.mutate(watch.watchId, { onSettled: () => setMutatingWatchId(null) }) }}
+                      disabled={mutatingWatchId === watch.watchId}
                       className="p-1 rounded transition-colors hover:bg-[var(--bg-hover)]"
-                      style={{ color: stopWatch.isPending ? 'var(--text-tertiary)' : 'var(--accent-red)' }}
+                      style={{ color: mutatingWatchId === watch.watchId ? 'var(--text-tertiary)' : 'var(--accent-red)' }}
                       title="Stop"
                     >
-                      {stopWatch.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Square className="w-3.5 h-3.5" />}
+                      {mutatingWatchId === watch.watchId ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Square className="w-3.5 h-3.5" />}
                     </button>
                   ) : healthStatus === 'stale' ? (
                     <button
-                      onClick={() => restartWatch.mutate(watch.watchId)}
-                      disabled={restartWatch.isPending}
+                      onClick={() => { setMutatingWatchId(watch.watchId); restartWatch.mutate(watch.watchId, { onSettled: () => setMutatingWatchId(null) }) }}
+                      disabled={mutatingWatchId === watch.watchId}
                       className="p-1 rounded transition-colors hover:bg-[var(--bg-hover)]"
-                      style={{ color: restartWatch.isPending ? 'var(--text-tertiary)' : 'var(--accent-amber)' }}
+                      style={{ color: mutatingWatchId === watch.watchId ? 'var(--text-tertiary)' : 'var(--accent-amber)' }}
                       title="Restart (stop + start)"
                     >
-                      {restartWatch.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+                      {mutatingWatchId === watch.watchId ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
                     </button>
                   ) : (
                     <button
-                      onClick={() => startWatch.mutate(watch.watchId)}
-                      disabled={startWatch.isPending}
+                      onClick={() => { setMutatingWatchId(watch.watchId); startWatch.mutate(watch.watchId, { onSettled: () => setMutatingWatchId(null) }) }}
+                      disabled={mutatingWatchId === watch.watchId}
                       className="p-1 rounded transition-colors hover:bg-[var(--bg-hover)]"
-                      style={{ color: startWatch.isPending ? 'var(--text-tertiary)' : 'var(--accent-green)' }}
+                      style={{ color: mutatingWatchId === watch.watchId ? 'var(--text-tertiary)' : 'var(--accent-green)' }}
                       title="Start"
                     >
-                      {startWatch.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
+                      {mutatingWatchId === watch.watchId ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
                     </button>
                   )}
                   {deletingId === watch.watchId ? (
