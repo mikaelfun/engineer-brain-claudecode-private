@@ -135,6 +135,15 @@ interface WatchTargetsFile {
   }>
 }
 
+/**
+ * Extract the hash from a watchId, handling the "watch-watch-xxx" bug
+ * from teams-poll.sh which double-prefixes the watchId.
+ * Input: "watch-07aa2e857f13" or "watch-watch-07aa2e857f13" → "07aa2e857f13"
+ */
+function extractHash(watchId: string): string {
+  return watchId.replace(/^(watch-)+/, '')
+}
+
 // ── Public API ──
 
 /**
@@ -168,8 +177,10 @@ export function listWatches(): TeamsWatch[] {
       const state = readJsonFile<WatchStateFile>(join(STATE_DIR, f))
       if (!state) continue
 
-      const watchId = state.watchId || f.replace('.json', '')
-      const daemon = daemonConfigs.get(watchId)
+      // Use filename as authoritative watchId (state.watchId has "watch-watch-" bug)
+      const watchId = f.replace('.json', '')
+      const hash = extractHash(watchId)
+      const daemon = daemonConfigs.get(watchId) || daemonConfigs.get(`watch-${hash}`) || daemonConfigs.get(state.watchId || '')
 
       // Determine PID and liveness
       let pid: number | null = daemon?.pid ?? null
@@ -177,7 +188,6 @@ export function listWatches(): TeamsWatch[] {
 
       // Also check PID file
       if (!pid) {
-        const hash = watchId.replace('watch-', '')
         const pidFile = join(PID_DIR, `watch-${hash}.pid`)
         if (existsSync(pidFile)) {
           try {
@@ -288,7 +298,7 @@ export function startWatch(opts: {
  * Reads the topic from the state/config file, then calls teams-daemon.sh stop.
  */
 export function stopWatch(watchId: string): string {
-  const hash = watchId.replace('watch-', '')
+  const hash = extractHash(watchId)
 
   // Try to find the topic from daemon config or state file
   let topic = ''
@@ -349,7 +359,7 @@ export function deleteWatch(watchId: string): boolean {
   // Stop first (ignore errors)
   stopWatch(watchId)
 
-  const hash = watchId.replace('watch-', '')
+  const hash = extractHash(watchId)
   const filesToRemove = [
     join(STATE_DIR, `${watchId}.json`),
     join(STATE_DIR, `daemon-${hash}-config.json`),
@@ -373,7 +383,7 @@ export function deleteWatch(watchId: string): boolean {
  * Read the history array from a watch state file.
  */
 export function getWatchHistory(watchId: string): WatchHistoryEntry[] {
-  const hash = watchId.replace('watch-', '')
+  const hash = extractHash(watchId)
   const statePath = join(STATE_DIR, `watch-${hash}.json`)
   const state = readJsonFile<WatchStateFile>(statePath)
   return state?.history || []
