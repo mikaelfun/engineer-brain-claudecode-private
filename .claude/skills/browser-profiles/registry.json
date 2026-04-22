@@ -20,7 +20,7 @@
       },
       "cacheFile": "$TEMP/teams-ic3-token.json",
       "cacheTTLMinutes": 55,
-      "description": "Teams ic3 token for Skype API image download"
+      "description": "Teams IC3 token (aud: ic3.teams.office.com, scp: Teams.AccessAsUser.All). 消费方: teams-search-inline.sh 下载 Teams 消息内联图片"
     },
     "d365": {
       "tab": "dynamics.com",
@@ -28,7 +28,7 @@
       "tokenSource": "none",
       "cacheFile": null,
       "cacheTTLMinutes": 0,
-      "description": "D365 CRM session tab — cookie-based auth, 不提取 token, 保持 tab 用于 OData API 代理。DTM workspace ID 解析依赖此 tab"
+      "description": "D365 CRM session tab — cookie-based auth, 不提取 token。保持 tab 用于 OData API 代理 (HTTP Server /d365/odata)。DTM workspace ID 解析依赖此 tab"
     },
     "dtm": {
       "tab": "client.dtmnebula.microsoft.com",
@@ -40,7 +40,7 @@
       },
       "cacheFile": "$TEMP/d365-case-ops-runtime/dtm-token-global.json",
       "cacheTTLMinutes": 50,
-      "description": "DTM Bearer token for attachment download. startUrl 需要 ?workspaceid= 参数才触发 API 调用"
+      "description": "DTM Bearer token (aud: DTM app ID, no scp claim). 消费方: download-attachments.ps1 下载 D365 Case DTM 附件。startUrl 需要 ?workspaceid= 参数才触发 API 调用"
     },
     "icm": {
       "tab": "portal.microsofticm.com",
@@ -52,7 +52,7 @@
       },
       "cacheFile": "$TEMP/icm-ab-token-cache.json",
       "cacheTTLMinutes": 170,
-      "description": "ICM Bearer token for discussion/details API (注意 API domain 是 prod.microsofticm.com)"
+      "description": "ICM Bearer token (aud: prod.microsofticm.com, no scp claim). 消费方: icm-discussion-ab.js 读取 ICM incident discussion/details API (注意 API domain 是 prod.microsofticm.com)"
     },
     "graph": {
       "tab": "outlook.office.com",
@@ -64,7 +64,7 @@
       },
       "cacheFile": "$TEMP/graph-api-token.json",
       "cacheTTLMinutes": 55,
-      "description": "Graph API token for Teams chat message attachments (Adaptive Card parsing)"
+      "description": "Graph API token (aud: graph.microsoft.com, scp: Chat.Read/ReadWrite + 20余项). 来源: OWA localStorage. 消费方: (1) teams-search-inline.sh 并行拉 chat 消息 (ISS-236 primary), (2) teams-poll.sh 监听新消息, (3) Adaptive Card 附件解析"
     }
   },
 

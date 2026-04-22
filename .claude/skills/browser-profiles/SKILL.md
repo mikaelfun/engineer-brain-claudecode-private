@@ -54,8 +54,60 @@ allowed-tools:
 | Name | 目标站点 | 提取方式 | 缓存 TTL | Cache 文件 |
 |------|---------|---------|---------|-----------|
 | teams | teams.cloud.microsoft | localStorage | 55 min | `$TEMP/teams-ic3-token.json` |
+| d365 | dynamics.com | session (cookie) | — | — (无 cache，保持 tab 用于 OData 代理) |
 | dtm | client.dtmnebula.xxx | request intercept | 50 min | `$TEMP/d365-case-ops-runtime/dtm-token-global.json` |
-| icm | portal.microsofticm.com | request intercept | 170 min | `$TEMP/icm-token-cache.json` |
+| icm | portal.microsofticm.com | request intercept | 170 min | `$TEMP/icm-ab-token-cache.json` |
+| graph | outlook.office.com | localStorage | 55 min | `$TEMP/graph-api-token.json` |
+
+### Token 详情：权限与消费方
+
+#### teams — IC3 Token
+
+| 项目 | 值 |
+|------|-----|
+| **audience** | `https://ic3.teams.office.com` |
+| **scope** | `Teams.AccessAsUser.All` |
+| **发行方 app** | Teams Web Client (`5e3ce6c0-...`) |
+| **来源页面** | `https://teams.microsoft.com` |
+| **当前消费方** | `teams-search-inline.sh` — 下载 Teams 消息中的内联图片（Skype API `imgt1-{region}.teams.microsoft.com`） |
+
+#### d365 — D365 Session Tab
+
+| 项目 | 值 |
+|------|-----|
+| **认证方式** | Cookie-based（不提取 token，保持浏览器 session） |
+| **来源页面** | `https://onesupport.crm.dynamics.com` |
+| **当前消费方** | Token Daemon 内置 HTTP Server（`/d365/odata`、`/d365/odata-batch`）— PowerShell `Invoke-D365Api` 通过 HTTP 调用代理 OData 请求，无需独立 playwright-cli D365 实例 |
+| **附加用途** | DTM workspace ID 解析的 fallback 数据源 |
+
+#### dtm — DTM Bearer Token
+
+| 项目 | 值 |
+|------|-----|
+| **audience** | `4e76891d-8450-4e5e-be38-ea3bd6ef21e5`（DTM 内部 app ID） |
+| **scope** | 无 `scp` claim（first-party app token） |
+| **来源页面** | `https://client.dtmnebula.microsoft.com/?workspaceid=...`（动态 URL，依赖 D365 tab 获取 workspace ID） |
+| **当前消费方** | `download-attachments.ps1` — 下载 D365 Case 的 DTM 附件（`api.dtmnebula.microsoft.com`） |
+
+#### icm — ICM Bearer Token
+
+| 项目 | 值 |
+|------|-----|
+| **audience** | `https://prod.microsofticm.com` |
+| **scope** | 无 `scp` claim（first-party app token） |
+| **来源页面** | `https://portal.microsofticm.com` |
+| **当前消费方** | `icm-discussion-ab.js` — 读取 ICM incident discussion timeline 和详情（`prod.microsofticm.com` API） |
+
+#### graph — Graph API Token
+
+| 项目 | 值 |
+|------|-----|
+| **audience** | `https://graph.microsoft.com` |
+| **scope** | `AuditLog.Create`, `Channel.ReadBasic.All`, `Chat.Read`, `Chat.ReadWrite`, `DataLossPreventionPolicy.Evaluate`, `Directory.Read.All`, `EduRoster.ReadBasic`, `email`, `Files.ReadWrite.All`, `FileStorageContainer.Selected`, `Group.ReadWrite.All`, `InformationProtectionPolicy.Read`, `OnlineMeetingArtifact.Read.All`, `OnlineMeetings.Read`, `OnlineMeetings.ReadWrite`, `openid`, `Organization.Read.All`, `People.Read`, `profile`, `SensitiveInfoType.Detect`, `SensitiveInfoType.Read.All`, `SensitivityLabel.Evaluate`, `User.Invite.All`, `User.Read`, `User.ReadBasic.All`, `User.ReadWrite` |
+| **发行方 app** | One Outlook Web |
+| **来源页面** | `https://outlook.office.com/mail/` |
+| **当前消费方** | `teams-search-inline.sh` — 通过 Graph API 读取 Teams chat 消息附件（Adaptive Card 解析） |
+| **潜在可用** | 邮件搜索（`Mail.Read`*）、日历查询、用户目录查询、文件操作等。注意：实际可用 scope 取决于 OWA 页面 MSAL token 的 consent，可能随 M365 更新变化 |
 
 ### UI Profile（独立管理）
 

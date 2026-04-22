@@ -1,0 +1,12 @@
+{
+  "id": "ISS-236",
+  "title": "Teams Search: Graph API 并行拉缓存 chatId 消息，Agency 仅负责搜索",
+  "description": "## 背景\n\nteams-search-inline.sh 当前架构是串行的：\n1. Agency Search（SearchTeamMessagesQueryParameters）搜索 case number → 得到 chatId 列表（~3s）\n2. Agency ListChatMessages 并行拉取每个 chatId 的消息内容（~7s）\n3. 总耗时 ~10s\n\n经探索验证（2026-04-22 session）：\n- Graph API `GET /me/chats/{chatId}/messages` (Chat.Read scope) ✅ 可用（OWA token daemon 已管理）\n- Graph API Search (`POST /search/query` chatMessage) ❌ 不可用（缺 ChannelMessage.Read.All）\n- Substrate Search (Teams Web 内部 API) ❌ 不可用（内部 API，token 不自动刷新）\n\n## 优化方案\n\n### 核心思路：搜索和拉消息并行\n\n大多数场景下，搜索到的 chatId 已在本地缓存（CACHED_HIGH），真正新增 chatId 的概率很低。\n利用这一点，可以将 Agency Search 和 Graph API List Messages **并行启动**：\n\n```\n┌─ Agency Search (搜索新 chatId)  ─────────── ~3s ─┐\n│                                                    │→ 合并结果\n├─ Graph API 并行拉缓存 chatId 消息 ────── ~7s ────┘\n│\n└─ 如有新 chatId → Graph API 补拉 ─────── ~1-2s\n```\n\n### 预期收益\n- 最佳情况（无新 chatId）：max(3s, 7s) ≈ **7s**（省 3s）\n- 有新 chatId：7s + 1-2s ≈ **8-9s**（省 1-2s）\n- Agency proxy 启动时间可能也能省掉（Graph API 不需要 proxy）\n\n### 实现要点\n\n1. **读取缓存 chatId**：从 `{caseDir}/teams/_mcp-raw.json` 的 `highRelevanceChatIds` 读取\n2. **并行启动两个任务**：\n   - Task A: Agency Search（搜索 case number，返回 chatId 列表）\n   - Task B: Graph API 并行拉缓存 chatId 消息（用 OWA Graph token from daemon）\n3. **合并**：Task A 完成后，对比搜索结果与缓存 chatId，差集为新 chatId\n4. **补拉**：新 chatId 用 Graph API 拉消息（不走 Agency，省掉 proxy 开销）\n5. **Fallback**：Graph API 失败时回退 Agency ListChatMessages（保持健壮性）\n\n### 额外收益：Agency proxy 可延迟启动\n- 如果缓存 chatId 非空，先用 Graph API 拉消息\n- Agency proxy 只在搜索时才需要启动（~5s 启动时间可能与 Graph 拉取重叠）\n- 极端情况（缓存全覆盖 + 无新 chatId）：完全不需要等 proxy 拉消息\n\n## 技术依赖\n- OWA Graph token (`$TEMP/graph-api-token.json`) — token daemon 已管理\n- Graph API `GET /me/chats/{chatId}/messages?$top=50` — 需要 `Chat.Read` scope ✅\n- Agency `SearchTeamMessagesQueryParameters` — 搜索不可替代\n\n## 改动范围\n- `teams-search-inline.sh` — 主要改动，加 Graph API 并行逻辑\n- `build-input-from-raw.py` — 可能需要适配 Graph API 响应格式（与 Agency 格式略有不同）\n- `registry.json` / `SKILL.md` — 文档更新（graph token 增加 teams-search 消费方）",
+  "type": "feature",
+  "priority": "P1",
+  "status": "tracked",
+  "trackId": "teams-search-graph_20260422",
+  "testLoopScan": true,
+  "createdAt": "2026-04-22T03:40:00Z",
+  "updatedAt": "2026-04-22T03:40:00Z"
+}

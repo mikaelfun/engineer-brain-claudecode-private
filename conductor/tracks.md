@@ -166,3 +166,4 @@
 | [x] | synthesize-topic-regen_20260419 | SYNTHESIZE Topic-Level Incremental Regeneration (ISS-230) | 2026-04-19 | 2026-04-19 |
 | [x] | dashboard-v2-command-center_20260420 | Dashboard v2 Redesign — Command Center (ISS-233) | 2026-04-20 | 2026-04-20 |
 | [x] | delta-empty-expiry_20260420 | DELTA_EMPTY nextFollowUpDate 过期机制 (ISS-235) | 2026-04-20 | 2026-04-20 |
+| [x] | teams-search-graph_20260422 | Teams Search: Graph API Parallel Fetch (ISS-236) | 2026-04-22 | 2026-04-22 |
