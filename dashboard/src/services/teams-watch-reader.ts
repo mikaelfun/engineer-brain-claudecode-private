@@ -316,15 +316,17 @@ export function startWatch(opts: {
   const pollArgs: string[] = []
   if (topic) pollArgs.push('--topic', topic)
   if (chatId) pollArgs.push('--chat-id', chatId)
-  pollArgs.push('--action', action, '--state-dir', STATE_DIR)
+  // Pass explicit state-file so poll script writes to the correct hash path
+  // (avoids mismatch when hash was based on topic but poll would compute from chatId)
+  const posix = (p: string) => p.replace(/\\/g, '/')
+  const stateFile = posix(join(STATE_DIR, `watch-${hash}.json`))
+  pollArgs.push('--action', action, '--state-file', stateFile)
 
   // Write a loop script and spawn it detached
   // Convert Windows paths to POSIX for bash compatibility
-  const posix = (p: string) => p.replace(/\\/g, '/')
   const logFile = posix(join(STATE_DIR, `daemon-${hash}.log`))
   const loopScript = join(STATE_DIR, `daemon-${hash}-loop.sh`)
   const posixPollScript = posix(POLL_SCRIPT)
-  const posixStateDir = posix(STATE_DIR)
 
   const pollCmd = `bash "${posixPollScript}" ${pollArgs.map(a => `"${a}"`).join(' ').replace(/\\/g, '/')}`
   const scriptContent = `#!/usr/bin/env bash
