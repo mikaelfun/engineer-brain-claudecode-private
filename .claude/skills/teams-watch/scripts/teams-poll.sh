@@ -21,12 +21,16 @@
 #   WATCH_FAIL|reason=...
 set -uo pipefail
 
-# Ensure python3 is available — fall back to python if needed
-if ! command -v python3 &>/dev/null; then
-  if command -v python &>/dev/null; then
-    python3() { python "$@"; }
-    export -f python3
-  fi
+# Ensure python is available — detect the working interpreter.
+# On Windows, 'python3' may be a Microsoft Store stub (exits 49 with
+# "Python was not found"). Test with actual execution, not just command -v.
+if python3 --version &>/dev/null 2>&1; then
+  PYTHON_CMD="python3"
+elif python --version &>/dev/null 2>&1; then
+  PYTHON_CMD="python"
+else
+  echo "WATCH_FAIL|reason=no python interpreter found"
+  exit 1
 fi
 
 CHAT_ID="" TOPIC="" CHANNEL="" TARGET="" SINCE="" ACTION="notify" ACTION_SCRIPT=""
@@ -56,7 +60,7 @@ if [ -n "$TARGET" ] && [ -z "$CHAT_ID" ]; then
   if [ -f "$TARGETS_FILE" ]; then
     TF="$TARGETS_FILE"
     command -v cygpath &>/dev/null && TF="$(cygpath -m "$TARGETS_FILE")"
-    RESOLVED=$(python3 -c "
+    RESOLVED=$($PYTHON_CMD -c "
 import json,sys
 d=json.load(open('$TF'))
 t=d.get('targets',{}).get('$TARGET',{})
@@ -86,7 +90,7 @@ if [ -z "$STATE_DIR" ]; then
   if [ -f "$CONFIG_FILE" ]; then
     CFG_PATH="$CONFIG_FILE"
     command -v cygpath &>/dev/null && CFG_PATH="$(cygpath -m "$CONFIG_FILE")"
-    DATA_ROOT=$(python3 -c "import json,os; c=json.load(open('$CFG_PATH')); dr=c.get('dataRoot',''); print(os.path.join(os.path.dirname('$CFG_PATH'), dr) if not os.path.isabs(dr) else dr)" 2>/dev/null)
+    DATA_ROOT=$($PYTHON_CMD -c "import json,os; c=json.load(open('$CFG_PATH')); dr=c.get('dataRoot',''); print(os.path.join(os.path.dirname('$CFG_PATH'), dr) if not os.path.isabs(dr) else dr)" 2>/dev/null)
     if [ -n "$DATA_ROOT" ] && [ -d "$DATA_ROOT" ]; then
       STATE_DIR="$DATA_ROOT/teams-watch"
     fi
@@ -94,7 +98,7 @@ if [ -z "$STATE_DIR" ]; then
   [ -z "$STATE_DIR" ] && STATE_DIR="$TEMP/teams-watch"
 fi
 mkdir -p "$STATE_DIR"
-# Convert to Windows path with forward slashes for python3
+# Convert to Windows path with forward slashes for $PYTHON_CMD
 if command -v cygpath &>/dev/null; then
   STATE_DIR="$(cygpath -m "$STATE_DIR")"
 fi
@@ -102,7 +106,7 @@ fi
 # Derive state file from topic/chatId hash
 if [ -z "$STATE_FILE" ]; then
   HASH_KEY="${CHAT_ID:-$TOPIC}"
-  HASH=$(python3 -c "import hashlib; print(hashlib.md5('$HASH_KEY'.encode()).hexdigest()[:12])")
+  HASH=$($PYTHON_CMD -c "import hashlib; print(hashlib.md5('$HASH_KEY'.encode()).hexdigest()[:12])")
   STATE_FILE="$STATE_DIR/watch-$HASH.json"
 fi
 
@@ -114,7 +118,7 @@ GRAPH_TOKEN_FILE="${TEMP:-/tmp}/graph-api-token.json"
 GT_PYPATH="$GRAPH_TOKEN_FILE"
 command -v cygpath &>/dev/null && GT_PYPATH="$(cygpath -m "$GRAPH_TOKEN_FILE")"
 
-GRAPH_TOKEN=$(python3 -c "
+GRAPH_TOKEN=$($PYTHON_CMD -c "
 import json, time
 try:
     d = json.load(open('$GT_PYPATH'))
@@ -168,7 +172,7 @@ trap '[ -n "$MCP_PROXY_PID" ] && kill $MCP_PROXY_PID 2>/dev/null' EXIT
 if [ -z "$CHAT_ID" ] && [ -n "$TOPIC" ]; then
   # Check state file for cached chatId
   if [ -f "$STATE_FILE" ]; then
-    CACHED_ID=$(python3 -c "
+    CACHED_ID=$($PYTHON_CMD -c "
 import json
 try:
     d=json.load(open('$STATE_FILE'))
@@ -188,7 +192,7 @@ except: pass
       -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" \
       -d "{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"tools/call\",\"params\":{\"name\":\"ListChats\",\"arguments\":{\"topic\":\"$TOPIC\"}}}" 2>/dev/null \
       | grep -o 'data: {.*}' | sed 's/^data: //' | head -1 \
-      | python3 -c "
+      | $PYTHON_CMD -c "
 import json,sys
 raw=sys.stdin.read().strip()
 if not raw: sys.exit()
@@ -213,7 +217,7 @@ PREV_LAST_MSG_ID=""
 POLL_COUNT=0
 TOTAL_NEW=0
 if [ -f "$STATE_FILE" ]; then
-  eval $(python3 -c "
+  eval $($PYTHON_CMD -c "
 import json
 try:
     d=json.load(open('$STATE_FILE'))
@@ -242,7 +246,7 @@ if [ -n "$GRAPH_TOKEN" ]; then
     -H "Accept: application/json" 2>/dev/null)
 
   # Validate: JSON with "value" array
-  if echo "$GRAPH_RESULT" | python3 -c "import json,sys; d=json.loads(sys.stdin.read()); assert 'value' in d" 2>/dev/null; then
+  if echo "$GRAPH_RESULT" | $PYTHON_CMD -c "import json,sys; d=json.loads(sys.stdin.read()); assert 'value' in d" 2>/dev/null; then
     RESULT="$GRAPH_RESULT"
     DATA_SOURCE="graph"
     echo "  [Graph API] OK" >&2
@@ -289,7 +293,7 @@ echo "$RESULT" | CAL_STATE_FILE="$STATE_FILE" CAL_CHAT_ID="$CHAT_ID" CAL_TOPIC="
   CAL_ACTION="$ACTION" CAL_ACTION_SCRIPT="$ACTION_SCRIPT" \
   CAL_PORT="$PORT" CAL_NOTIF_DIR="$STATE_DIR" \
   CAL_DATA_SOURCE="$DATA_SOURCE" \
-  python3 -c "
+  $PYTHON_CMD -c "
 import json, os, sys, subprocess, re
 from datetime import datetime, timezone
 
