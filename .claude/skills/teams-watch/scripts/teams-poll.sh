@@ -119,14 +119,30 @@ GT_PYPATH="$GRAPH_TOKEN_FILE"
 command -v cygpath &>/dev/null && GT_PYPATH="$(cygpath -m "$GRAPH_TOKEN_FILE")"
 
 GRAPH_TOKEN=$($PYTHON_CMD -c "
-import json, time
+import json, time, base64
 try:
     d = json.load(open('$GT_PYPATH'))
     secret = d.get('secret', '')
-    expires = int(d.get('expiresOn', '0'))
-    now = int(time.time())
-    if secret and len(secret) > 100 and (expires - now) > 120:
-        print(secret)
+    if not secret or len(secret) < 100:
+        pass
+    else:
+        # Try expiresOn as unix timestamp first, then ISO string, then decode JWT exp
+        expires_raw = d.get('expiresOn', '')
+        now = int(time.time())
+        expires = 0
+        if isinstance(expires_raw, (int, float)):
+            expires = int(expires_raw)
+        elif isinstance(expires_raw, str) and expires_raw.isdigit():
+            expires = int(expires_raw)
+        else:
+            # Decode JWT to get exp claim
+            parts = secret.split('.')
+            if len(parts) >= 2:
+                payload = parts[1] + '=' * (4 - len(parts[1]) % 4)
+                claims = json.loads(base64.b64decode(payload))
+                expires = claims.get('exp', 0)
+        if (expires - now) > 120:
+            print(secret)
 except: pass
 " 2>/dev/null)
 
