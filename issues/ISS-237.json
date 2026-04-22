@@ -1,0 +1,12 @@
+{
+  "id": "ISS-237",
+  "title": "Teams Watch 缺少心跳机制 — UI 显示 on 但 daemon 实际未轮询",
+  "description": "WebUI Automations 页面的 Teams Watch 功能，当用户 turn on 一个 watch 后，前端显示运行中（on），但没有心跳检测机制来验证后端 daemon 是否真正在轮询。\n\n## 问题\n- 后端 setInterval 可能因异常静默停止，但前端状态仍显示 on\n- 无 heartbeat 文件/API 供前端定期校验 daemon 存活\n- 用户无法区分「正在轮询」和「已挂但 UI 没更新」\n\n## 期望\n- 后端 TeamsWatchManager 每个 watch 维护 lastPollAt / lastHeartbeat 时间戳\n- 前端定期检查 heartbeat，超时（如 2× 轮询间隔未更新）则标记为 stale/dead\n- UI 显示明确状态：running / stale / stopped\n- 可选：自动重启 stale watch 或提示用户手动重启\n\n## 关联\n- ISS-234: Automations 页面整体设计（Teams Watch 是其 Tab 2）\n- ISS-229: Token Daemon 心跳机制（概念类似，可复用设计模式）",
+  "type": "bug",
+  "priority": "P1",
+  "status": "pending",
+  "trackId": "watch-heartbeat_20260422",
+  "testLoopScan": true,
+  "createdAt": "2026-04-22T10:00:00+08:00",
+  "updatedAt": "2026-04-22T10:00:00+08:00"
+}

@@ -1,0 +1,17 @@
+{
+  "id": "watch-heartbeat_20260422",
+  "title": "Teams Watch 心跳机制 — UI 显示 on 但 daemon 实际未轮询",
+  "type": "bug",
+  "status": "complete",
+  "issueId": "ISS-237",
+  "created": "2026-04-22T10:00:00+08:00",
+  "updated": "2026-04-22T13:35:00+08:00",
+  "phases": {
+    "total": 2,
+    "completed": 2
+  },
+  "tasks": {
+    "total": 6,
+    "completed": 6
+  }
+}

@@ -11,6 +11,7 @@ import {
   useCronJobs, useTriggers, useDeleteTrigger, useRunTrigger, useCancelTrigger, useToggleTrigger,
   useTeamsWatches, useTeamsWatchHistory, useStartTeamsWatch, useStopTeamsWatch,
   useDeleteTeamsWatch, useCreateTeamsWatch, useSbaStatus, useToggleAutoPatrol,
+  useCronMessages,
 } from '../api/hooks'
 import { SessionMessageList } from '../components/session/SessionMessageList'
 import { useTriggerRunStore } from '../stores/triggerRunStore'
@@ -20,8 +21,54 @@ import {
   RefreshCw, Plus, Trash2, Play, Loader2,
   CheckCircle2, AlertCircle, XCircle, Pencil, Power, Square,
 } from 'lucide-react'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNotificationStore } from '../stores/notificationStore'
+
+// ---- Watch Health Status ----
+
+export type WatchHealthStatus = 'running' | 'stale' | 'stopped'
+
+/**
+ * Compute the health status of a Teams Watch based on heartbeat data.
+ *
+ * - stopped: backend reports status=stopped (PID dead)
+ * - stale: PID alive but lastPollAt is missing or older than 3×interval
+ * - running: PID alive and lastPollAt within 3×interval
+ */
+export function getWatchHealthStatus(
+  lastPollAt: string | null,
+  interval: number,
+  status: 'running' | 'stopped',
+  consecutiveErrors: number,
+): WatchHealthStatus {
+  if (status === 'stopped') return 'stopped'
+
+  // PID alive but no poll data yet — stale
+  if (!lastPollAt) return 'stale'
+
+  const elapsed = Date.now() - new Date(lastPollAt).getTime()
+  const threshold = 3 * interval * 1000
+
+  if (elapsed > threshold) return 'stale'
+
+  return 'running'
+}
+
+/**
+ * Format a timestamp as relative time (e.g. "2 分钟前", "刚刚").
+ */
+export function formatRelativeTime(ts: string | null): string {
+  if (!ts) return 'Never'
+  const diff = Date.now() - new Date(ts).getTime()
+  if (diff < 0) return '刚刚'
+  const seconds = Math.floor(diff / 1000)
+  if (seconds < 60) return `${seconds}s ago`
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${minutes}m ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h ago`
+  return `${Math.floor(hours / 24)}d ago`
+}
 
 // ---- Cron Job Detail Panel ----
 
@@ -32,6 +79,50 @@ function CronJobDetailPanel({ job, triggerRun, onDismissRun }: {
 }) {
   const isJobRunning = triggerRun?.status === 'running' || job?.running
   const justFinished = triggerRun && triggerRun.status !== 'running'
+
+  // Recovery: fetch persisted messages from backend when no SSE messages in store
+  const { data: recoveredData } = useCronMessages(
+    job?.id && !triggerRun?.messages?.length ? job.id : null
+  )
+  // Merge: SSE messages (live) > recovered messages (disk/memory)
+  // disk (parseSessionLog) returns mainMessages with `type` field — already CaseSessionMessage compatible
+  // in-memory (cronMessageStore) returns messages with `kind` field — needs mapping
+  const displayMessages = useMemo(() => {
+    if (triggerRun?.messages?.length > 0) return triggerRun.messages
+    // Disk recovery: mainMessages already has correct `type` field
+    if (recoveredData?.mainMessages && recoveredData.mainMessages.length > 0) {
+      return recoveredData.mainMessages.map((m: any) => ({
+        type: m.type || 'thinking',
+        content: m.content || '',
+        toolName: m.toolName,
+        timestamp: m.timestamp,
+      }))
+    }
+    // In-memory recovery: messages use `kind` field, needs mapping
+    if (recoveredData?.messages && recoveredData.messages.length > 0) {
+      return recoveredData.messages.map((m: any) => ({
+        type: m.type || (m.kind === 'tool-call' ? 'tool-call'
+          : m.kind === 'tool-result' ? 'tool-result'
+          : m.kind === 'response' ? 'response'
+          : m.kind?.startsWith('agent-') ? 'system'
+          : 'thinking'),
+        content: m.content || '',
+        toolName: m.toolName,
+        timestamp: m.timestamp,
+      }))
+    }
+    return []
+  }, [triggerRun?.messages, recoveredData])
+  const hasMessages = displayMessages.length > 0
+
+  // Auto-scroll SSE output to bottom
+  const sseScrollRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = sseScrollRef.current
+    if (el) {
+      el.scrollTop = el.scrollHeight
+    }
+  }, [displayMessages])
 
   // Client-side elapsed timer — ticks every second while running
   const [localElapsed, setLocalElapsed] = useState(0)
@@ -46,6 +137,10 @@ function CronJobDetailPanel({ job, triggerRun, onDismissRun }: {
     }, 1000)
     return () => clearInterval(timer)
   }, [isJobRunning, triggerRun?.startedAt, triggerRun?.elapsedMs])
+
+  // Banner dismiss — only hides status header, keeps SSE messages visible
+  const [bannerDismissed, setBannerDismissed] = useState(false)
+  useEffect(() => { if (isJobRunning) setBannerDismissed(false) }, [isJobRunning])
 
   if (!job) {
     return (
@@ -106,79 +201,77 @@ function CronJobDetailPanel({ job, triggerRun, onDismissRun }: {
           </div>
         )}
 
-        {/* Live run output */}
+        {/* Status banner — running */}
         {isJobRunning && triggerRun && (
-          <div className="rounded overflow-hidden flex-1 min-h-0 flex flex-col" style={{ border: '1px solid var(--border-subtle)' }}>
-            <div className="flex items-center justify-between px-3 py-1.5 shrink-0" style={{ background: 'var(--accent-blue-dim)' }}>
-              <span className="text-xs font-medium flex items-center gap-1.5" style={{ color: 'var(--accent-blue)' }}>
-                <Loader2 className="w-3 h-3 animate-spin" />
-                Running... {localElapsed > 0 && `(${Math.round(localElapsed / 1000)}s)`}
-              </span>
-            </div>
-            {triggerRun.messages && triggerRun.messages.length > 0 ? (
-              <div className="px-2 py-1 flex-1 min-h-0 overflow-auto">
-                <SessionMessageList messages={triggerRun.messages} maxHeightClass="" />
-              </div>
-            ) : triggerRun.output ? (
-              <pre className="px-3 py-2 text-xs overflow-auto whitespace-pre-wrap flex-1 min-h-0" style={{ background: 'var(--bg-inset)', color: 'var(--text-primary)' }}>
-                {triggerRun.output}
-              </pre>
-            ) : null}
+          <div className="flex items-center px-3 py-1.5 rounded shrink-0" style={{ background: 'var(--accent-blue-dim)' }}>
+            <span className="text-xs font-medium flex items-center gap-1.5" style={{ color: 'var(--accent-blue)' }}>
+              <Loader2 className="w-3 h-3 animate-spin" />
+              Running... {localElapsed > 0 && `(${Math.round(localElapsed / 1000)}s)`}
+            </span>
           </div>
         )}
 
-        {/* Just-finished result */}
-        {justFinished && (
-          <div className="rounded overflow-hidden flex-1 min-h-0 flex flex-col" style={{ border: '1px solid var(--border-subtle)' }}>
-            <div className="flex items-center justify-between px-3 py-1.5 shrink-0" style={{
-              background: triggerRun.status === 'completed' ? 'var(--accent-green-dim)' : triggerRun.status === 'failed' ? 'var(--accent-red-dim)' : 'var(--bg-hover)',
+        {/* Status banner — just finished (dismissible, only hides banner not output) */}
+        {justFinished && !bannerDismissed && (
+          <div className="flex items-center justify-between px-3 py-1.5 rounded shrink-0" style={{
+            background: triggerRun.status === 'completed' ? 'var(--accent-green-dim)' : triggerRun.status === 'failed' ? 'var(--accent-red-dim)' : 'var(--bg-hover)',
+          }}>
+            <span className="text-xs font-medium flex items-center gap-1.5" style={{
+              color: triggerRun.status === 'completed' ? 'var(--accent-green)' : triggerRun.status === 'failed' ? 'var(--accent-red)' : 'var(--text-secondary)',
             }}>
-              <span className="text-xs font-medium flex items-center gap-1.5" style={{
-                color: triggerRun.status === 'completed' ? 'var(--accent-green)' : triggerRun.status === 'failed' ? 'var(--accent-red)' : 'var(--text-secondary)',
-              }}>
-                {triggerRun.status === 'completed' && <><CheckCircle2 className="w-3 h-3" /> Done ({Math.round(localElapsed / 1000)}s)</>}
-                {triggerRun.status === 'failed' && <><AlertCircle className="w-3 h-3" /> Failed ({Math.round(localElapsed / 1000)}s)</>}
-                {triggerRun.status === 'cancelled' && <><XCircle className="w-3 h-3" /> Cancelled</>}
-              </span>
-              <button onClick={onDismissRun} className="text-xs px-2 py-0.5 rounded hover:bg-[var(--bg-hover)]" style={{ color: 'var(--text-tertiary)' }}>
-                Dismiss
-              </button>
-            </div>
-            {triggerRun.messages && triggerRun.messages.length > 0 ? (
-              <div className="px-2 py-1 flex-1 min-h-0 overflow-auto">
-                <SessionMessageList messages={triggerRun.messages} maxHeightClass="" />
-              </div>
-            ) : triggerRun.output ? (
-              <pre className="px-3 py-2 text-xs overflow-auto whitespace-pre-wrap flex-1 min-h-0" style={{ background: 'var(--bg-inset)', color: 'var(--text-primary)' }}>
-                {triggerRun.output}
-              </pre>
-            ) : null}
-            {triggerRun.error && (
-              <div className="px-3 py-2 text-xs" style={{ color: 'var(--accent-red)' }}>{triggerRun.error}</div>
-            )}
+              {triggerRun.status === 'completed' && <><CheckCircle2 className="w-3 h-3" /> Done ({Math.round(localElapsed / 1000)}s)</>}
+              {triggerRun.status === 'failed' && <><AlertCircle className="w-3 h-3" /> Failed ({Math.round(localElapsed / 1000)}s)</>}
+              {triggerRun.status === 'cancelled' && <><XCircle className="w-3 h-3" /> Cancelled</>}
+            </span>
+            <button onClick={() => setBannerDismissed(true)} className="text-xs px-2 py-0.5 rounded hover:bg-[var(--bg-hover)]" style={{ color: 'var(--text-tertiary)' }}>
+              Dismiss
+            </button>
           </div>
         )}
 
-        {/* Historical output (when idle) */}
-        {!isJobRunning && !justFinished && (
-          <div className="flex-1 min-h-0 flex flex-col">
-            {job.state?.lastError && (
-              <div className="p-2 rounded text-xs break-all shrink-0" style={{ background: 'var(--accent-red-dim)', color: 'var(--accent-red)' }}>
-                {job.state.lastError}
-              </div>
-            )}
-            {job.state?.lastOutput ? (
-              <div className="flex-1 min-h-0 flex flex-col">
-                <span className="text-xs shrink-0" style={{ color: 'var(--text-tertiary)' }}>Last Output</span>
-                <pre className="mt-1 p-2 rounded text-xs overflow-auto whitespace-pre-wrap flex-1 min-h-0" style={{ background: 'var(--bg-inset)', color: 'var(--text-primary)' }}>
-                  {job.state.lastOutput}
-                </pre>
-              </div>
-            ) : (
-              <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>No output recorded</div>
-            )}
+        {/* Error detail from run */}
+        {justFinished && triggerRun.error && (
+          <div className="px-3 py-2 text-xs rounded break-all" style={{ background: 'var(--accent-red-dim)', color: 'var(--accent-red)' }}>
+            {triggerRun.error}
           </div>
         )}
+
+        {/* Output area — SSE messages persist after completion, plain lastOutput as fallback */}
+        <div className="flex-1 min-h-0 flex flex-col">
+          {hasMessages ? (
+            <div className="rounded overflow-hidden flex-1 min-h-0 flex flex-col" style={{ border: '1px solid var(--border-subtle)' }}>
+              <div ref={sseScrollRef} className="px-2 py-1 flex-1 min-h-0 overflow-y-auto">
+                <SessionMessageList messages={displayMessages} maxHeightClass="" />
+              </div>
+            </div>
+          ) : triggerRun?.output ? (
+            <pre className="p-2 rounded text-xs overflow-auto whitespace-pre-wrap flex-1 min-h-0" style={{ background: 'var(--bg-inset)', color: 'var(--text-primary)' }}>
+              {triggerRun.output}
+            </pre>
+          ) : isJobRunning ? (
+            <div className="flex items-center justify-center flex-1 min-h-[80px]">
+              <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Waiting for output...</span>
+            </div>
+          ) : (
+            <>
+              {!isJobRunning && job.state?.lastError && (
+                <div className="p-2 rounded text-xs break-all shrink-0" style={{ background: 'var(--accent-red-dim)', color: 'var(--accent-red)' }}>
+                  {job.state.lastError}
+                </div>
+              )}
+              {job.state?.lastOutput ? (
+                <div className="flex-1 min-h-0 flex flex-col">
+                  <span className="text-xs shrink-0" style={{ color: 'var(--text-tertiary)' }}>Last Output</span>
+                  <pre className="mt-1 p-2 rounded text-xs overflow-auto whitespace-pre-wrap flex-1 min-h-0" style={{ background: 'var(--bg-inset)', color: 'var(--text-primary)' }}>
+                    {job.state.lastOutput}
+                  </pre>
+                </div>
+              ) : (
+                <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>No output recorded</div>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </Card>
   )
@@ -408,7 +501,7 @@ function CronJobsTab({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr] gap-4" style={{ minHeight: 'calc(100vh - 280px)' }}>
+    <div className="grid grid-cols-1 md:grid-cols-[minmax(260px,340px)_1fr] gap-4" style={{ minHeight: 'calc(100vh - 280px)' }}>
       {/* Left: job list */}
       <Card padding="none">
         <div className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
@@ -665,7 +758,7 @@ function TeamsWatchTab({ watches }: { watches: any[] }) {
       <Card padding="none">
         <div className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
           {watches.map((watch: any) => {
-            const isRunning = watch.status === 'running'
+            const healthStatus = getWatchHealthStatus(watch.lastPollAt, watch.interval || 60, watch.status, watch.consecutiveErrors || 0)
             const isSelected = selectedWatchId === watch.watchId
 
             return (
@@ -680,11 +773,13 @@ function TeamsWatchTab({ watches }: { watches: any[] }) {
                 onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
                 onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
               >
-                {/* Status dot — static green/red, no animation */}
+                {/* Status dot — green/yellow/red */}
                 <span
                   className="w-2 h-2 rounded-full shrink-0"
                   style={{
-                    background: isRunning ? 'var(--accent-green)' : 'var(--text-tertiary)',
+                    background: healthStatus === 'running' ? 'var(--accent-green)'
+                      : healthStatus === 'stale' ? 'var(--accent-amber)'
+                      : 'var(--text-tertiary)',
                   }}
                 />
                 {/* Name + meta */}
@@ -693,22 +788,30 @@ function TeamsWatchTab({ watches }: { watches: any[] }) {
                     <span className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>
                       {watch.topic || 'Untitled Watch'}
                     </span>
-                    {isRunning && (
+                    {healthStatus === 'running' && (
                       <span className="text-[10px] px-1 rounded" style={{ background: 'var(--accent-green-dim)', color: 'var(--accent-green)' }}>ON</span>
                     )}
-                    {!isRunning && (
+                    {healthStatus === 'stale' && (
+                      <span className="text-[10px] px-1 rounded" style={{ background: 'var(--accent-amber-dim)', color: 'var(--accent-amber)' }}>STALE</span>
+                    )}
+                    {healthStatus === 'stopped' && (
                       <span className="text-[10px] px-1 rounded" style={{ background: 'var(--bg-inset)', color: 'var(--text-tertiary)' }}>OFF</span>
+                    )}
+                    {(watch.consecutiveErrors || 0) > 0 && (
+                      <span className="text-[10px] px-1 rounded font-medium" style={{ background: 'var(--accent-red-dim)', color: 'var(--accent-red)' }}>
+                        ⚠ {watch.consecutiveErrors}
+                      </span>
                     )}
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="text-[11px] font-mono" style={{ color: 'var(--text-tertiary)' }}>
-                      {watch.interval || 60}s | {watch.action || 'notify'}{watch.lastPollAt ? ` | ${new Date(watch.lastPollAt).toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}` : ''}
+                      {watch.interval || 60}s | {watch.action || 'notify'} | {formatRelativeTime(watch.lastPollAt)}
                     </span>
                   </div>
                 </div>
                 {/* Action buttons */}
                 <div className="flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
-                  {isRunning ? (
+                  {healthStatus === 'running' ? (
                     <button
                       onClick={() => stopWatch.mutate(watch.watchId)}
                       disabled={stopWatch.isPending}
@@ -717,6 +820,20 @@ function TeamsWatchTab({ watches }: { watches: any[] }) {
                       title="Stop"
                     >
                       {stopWatch.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Square className="w-3.5 h-3.5" />}
+                    </button>
+                  ) : healthStatus === 'stale' ? (
+                    <button
+                      onClick={() => {
+                        stopWatch.mutate(watch.watchId, {
+                          onSuccess: () => startWatch.mutate(watch.watchId)
+                        })
+                      }}
+                      disabled={stopWatch.isPending || startWatch.isPending}
+                      className="p-1 rounded transition-colors hover:bg-[var(--bg-hover)]"
+                      style={{ color: (stopWatch.isPending || startWatch.isPending) ? 'var(--text-tertiary)' : 'var(--accent-amber)' }}
+                      title="Restart (stop + start)"
+                    >
+                      {(stopWatch.isPending || startWatch.isPending) ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
                     </button>
                   ) : (
                     <button
@@ -910,14 +1027,12 @@ function TeamsWatchDetailPanel({ watch, history }: { watch: any | null; history:
     )
   }
 
-  const isRunning = watch.status === 'running'
-  const lastPollFormatted = watch.lastPollAt
+  const healthStatus = getWatchHealthStatus(watch.lastPollAt, watch.interval || 60, watch.status, watch.consecutiveErrors || 0)
+  const lastPollRelative = formatRelativeTime(watch.lastPollAt)
 
   // SBA-specific: auto patrol toggle
   const isSbaWatch = watch.chatId?.includes('deeeb1e6') || watch.topic?.includes('SBA')
   const autoPatrolEnabled = localAutoPatrol ?? sbaStatus?.autoPatrolEnabled ?? true
-    ? new Date(watch.lastPollAt).toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-    : 'Never'
 
   return (
     <Card className="h-full flex flex-col">
@@ -1001,22 +1116,28 @@ function TeamsWatchDetailPanel({ watch, history }: { watch: any | null; history:
           </div>
         </div>
 
-        {/* Stats row — Status + Last Poll + Errors */}
-        <div className="grid grid-cols-3 gap-2 text-xs">
+        {/* Stats row — Status + Last Poll + Poll Count + Errors */}
+        <div className="grid grid-cols-4 gap-2 text-xs">
           <div>
             <span style={{ color: 'var(--text-tertiary)' }}>Status</span>
             <p>
               <Badge
-                variant={isRunning ? 'success' : 'danger'}
+                variant={healthStatus === 'running' ? 'success' : healthStatus === 'stale' ? 'warning' : 'danger'}
                 size="xs"
               >
-                {isRunning ? 'running' : 'stopped'}
+                {healthStatus}
               </Badge>
             </p>
           </div>
           <div>
             <span style={{ color: 'var(--text-tertiary)' }}>Last Poll</span>
-            <p style={{ color: 'var(--text-secondary)' }}>{lastPollFormatted}</p>
+            <p style={{ color: healthStatus === 'stale' ? 'var(--accent-amber)' : 'var(--text-secondary)' }}>
+              {lastPollRelative}
+            </p>
+          </div>
+          <div>
+            <span style={{ color: 'var(--text-tertiary)' }}>Polls</span>
+            <p style={{ color: 'var(--text-secondary)' }}>{watch.pollCount ?? 0}</p>
           </div>
           <div>
             <span style={{ color: 'var(--text-tertiary)' }}>Errors</span>
@@ -1025,6 +1146,28 @@ function TeamsWatchDetailPanel({ watch, history }: { watch: any | null; history:
             </p>
           </div>
         </div>
+
+        {/* Stale warning + Restart button */}
+        {healthStatus === 'stale' && (
+          <div className="flex items-center justify-between px-2.5 py-1.5 rounded text-xs" style={{ background: 'var(--accent-amber-dim)', border: '1px solid var(--accent-amber)' }}>
+            <span style={{ color: 'var(--accent-amber)' }}>
+              ⚠ Daemon may have stopped polling. Last seen: {lastPollRelative}
+            </span>
+            <button
+              onClick={() => {
+                stopWatch.mutate(watch.watchId, {
+                  onSuccess: () => createWatch.mutate({ chatId: watch.chatId, interval: watch.interval || 60, action: watch.action || 'notify' })
+                })
+              }}
+              disabled={stopWatch.isPending || createWatch.isPending}
+              className="px-2 py-0.5 rounded text-[10px] font-medium transition-colors flex items-center gap-1"
+              style={{ background: 'var(--accent-amber)', color: 'white' }}
+            >
+              {(stopWatch.isPending || createWatch.isPending) ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+              Restart
+            </button>
+          </div>
+        )}
 
         {/* Auto Patrol toggle (SBA watch only) */}
         {isSbaWatch && (
