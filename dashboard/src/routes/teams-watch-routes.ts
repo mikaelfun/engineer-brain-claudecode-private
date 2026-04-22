@@ -58,16 +58,16 @@ teamsWatchRoutes.delete('/:id', (c) => {
   return c.json({ ok })
 })
 
-// Start a stopped watch
+// Start a stopped watch — use chatId to avoid topic/displayName hash mismatch
 teamsWatchRoutes.post('/:id/start', async (c) => {
   const id = c.req.param('id')
   const watches = listWatches()
   const watch = watches.find(w => w.watchId === id)
   if (!watch) return c.json({ error: 'Watch not found' }, 404)
 
+  // Always use chatId (stable), never enriched topic (would produce different hash)
   const result = startWatch({
-    topic: watch.topic || undefined,
-    chatId: watch.chatId || undefined,
+    chatId: watch.chatId,
     interval: watch.interval || 60,
     action: watch.action || 'notify',
   })
