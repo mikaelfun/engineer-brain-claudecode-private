@@ -395,6 +395,10 @@ def get_preview(msg, maxlen=500):
     body = (msg.get('body') or {}).get('content', '')
     return re.sub(r'<[^>]+>', '', body).strip()[:maxlen]
 
+def get_html_body(msg, maxlen=2000):
+    \"\"\"Get the raw HTML body content for rich rendering.\"\"\"
+    return ((msg.get('body') or {}).get('content', '') or '')[:maxlen]
+
 def get_parsed_card(msg):
     \"\"\"Extract parsed SBA card from message attachments, if any.\"\"\"
     for att in (msg.get('attachments') or []):
@@ -418,6 +422,7 @@ latest_time = latest.get('createdDateTime', '')
 latest_id = latest.get('id', '')
 latest_from = get_from(latest)
 latest_preview = get_preview(latest)
+latest_html = get_html_body(latest)
 
 # Detect new messages since last poll
 # Normalize timestamps for comparison: strip sub-second precision (.xxxZ -> Z)
@@ -458,10 +463,11 @@ if new_count > 0:
     for msg in new_msgs[:5]:
         msg_from = get_from(msg)
         msg_body = get_preview(msg, 500)
+        msg_html = get_html_body(msg)
         msg_time = msg.get('createdDateTime', '')
 
         entry = {'detectedAt': utcnow().strftime('%Y-%m-%dT%H:%M:%S')+'Z', 'messageTime': msg_time,
-                 'from': msg_from, 'preview': msg_body, 'action': action, 'actionResult': 'ok'}
+                 'from': msg_from, 'preview': msg_body, 'htmlBody': msg_html, 'action': action, 'actionResult': 'ok'}
 
         # Parse Adaptive Card if present (Graph API provides attachment content)
         parsed = get_parsed_card(msg)
@@ -506,6 +512,7 @@ if normalize_ts(latest_time) >= normalize_ts(prev_time or ''):
     effective_time = latest_time
     effective_from = latest_from
     effective_preview = latest_preview
+    effective_html = latest_html
     effective_id = latest_id
 else:
     effective_time = prev_time
@@ -515,10 +522,12 @@ else:
         prev_state = json.load(open(state_file)).get('state', {})
         effective_from = prev_state.get('lastMessageFrom', latest_from)
         effective_preview = prev_state.get('lastMessagePreview', latest_preview)
+        effective_html = prev_state.get('lastMessageHtml', latest_html)
         effective_id = prev_state.get('lastMessageId', latest_id)
     except:
         effective_from = latest_from
         effective_preview = latest_preview
+        effective_html = latest_html
         effective_id = latest_id
 
 state = {'_version': 2,
@@ -529,6 +538,7 @@ state = {'_version': 2,
     'state': {'lastPollAt':utcnow().strftime('%Y-%m-%dT%H:%M:%S')+'Z','lastMessageId':effective_id,
         'lastMessageTime':effective_time,'lastMessageFrom':effective_from,
         'lastMessagePreview':effective_preview,
+        'lastMessageHtml':effective_html,
         'pollCount':poll_count,'newMessageCount':total_new,'consecutiveErrors':0,
         'dataSource':data_source},
     'history': history}

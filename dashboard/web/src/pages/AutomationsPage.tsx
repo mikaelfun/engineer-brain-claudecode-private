@@ -145,7 +145,7 @@ function CronJobDetailPanel({ job, triggerRun, onDismissRun }: {
 
   if (!job) {
     return (
-      <Card className="h-full">
+      <Card style={{ height: '100%' }}>
         <div className="flex items-center justify-center h-full min-h-[120px]">
           <span className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
             Select a job to view details
@@ -156,7 +156,7 @@ function CronJobDetailPanel({ job, triggerRun, onDismissRun }: {
   }
 
   return (
-    <Card className="h-full flex flex-col overflow-hidden">
+    <Card className="flex flex-col overflow-hidden" style={{ height: '100%' }}>
       <div className="flex flex-col flex-1 min-h-0 gap-3 overflow-hidden">
         {/* Header */}
         <div>
@@ -364,9 +364,9 @@ export default function AutomationsPage() {
   ]
 
   return (
-    <div className="flex flex-col gap-6 h-full">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between shrink-0">
+      <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Automations</h2>
           <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>
@@ -398,7 +398,7 @@ export default function AutomationsPage() {
       </div>
 
       {/* Tab Bar */}
-      <div className="flex items-center gap-1 p-1 rounded-lg shrink-0" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-default)' }}>
+      <div className="flex items-center gap-1 p-1 rounded-lg" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-default)' }}>
         {tabs.map((tab) => (
           <button
             key={tab.key}
@@ -428,7 +428,6 @@ export default function AutomationsPage() {
       </div>
 
       {/* Tab Content */}
-      <div className="flex-1 min-h-0 flex flex-col">
       {activeTab === 'cron' && (
         <CronJobsTab
           cronJobs={cronJobs}
@@ -454,7 +453,6 @@ export default function AutomationsPage() {
       {activeTab === 'activity-feed' && (
         <ActivityFeedTab />
       )}
-      </div>
 
       {/* Create/Edit Trigger Dialog */}
       <CreateTriggerDialog
@@ -504,9 +502,9 @@ function CronJobsTab({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[minmax(260px,340px)_1fr] gap-4 flex-1 min-h-0 overflow-hidden">
+    <div className="grid grid-cols-1 md:grid-cols-[minmax(260px,340px)_1fr] gap-4" style={{ height: 'calc(100vh - 240px)' }}>
       {/* Left: job list */}
-      <Card padding="none" className="h-full overflow-auto">
+      <Card padding="none" className="overflow-y-auto">
         <div className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
           {cronJobs.map((job: any) => {
             const triggerRun = triggerRuns[job.id]
@@ -759,7 +757,7 @@ function TeamsWatchTab({ watches }: { watches: any[] }) {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr] gap-4 flex-1 min-h-0 overflow-hidden">
+    <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr] gap-4" style={{ height: 'calc(100vh - 240px)' }}>
       {/* Left: watch list */}
       <Card padding="none">
         <div className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
@@ -1020,7 +1018,7 @@ function TeamsWatchDetailPanel({ watch, history }: { watch: any | null; history:
 
   if (!watch) {
     return (
-      <Card className="h-full">
+      <Card style={{ height: '100%' }}>
         <div className="flex items-center justify-center h-full min-h-[120px]">
           <span className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
             Select a watch to view details
@@ -1038,7 +1036,7 @@ function TeamsWatchDetailPanel({ watch, history }: { watch: any | null; history:
   const autoPatrolEnabled = localAutoPatrol ?? sbaStatus?.autoPatrolEnabled ?? true
 
   return (
-    <Card className="h-full flex flex-col overflow-hidden">
+    <Card className="flex flex-col overflow-hidden" style={{ height: '100%' }}>
       <div className="flex flex-col flex-1 min-h-0 gap-3 overflow-hidden">
         {/* Header */}
         <div>
@@ -1191,20 +1189,30 @@ function TeamsWatchDetailPanel({ watch, history }: { watch: any | null; history:
           </div>
         )}
 
-        {/* Latest message */}
+        {/* Latest message — rendered as HTML like history entries */}
         {watch.lastMessageFrom && (
           <div className="rounded px-2.5 py-1.5 text-xs" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-medium" style={{ color: 'var(--text-tertiary)' }}>Latest Message</span>
+            <div className="flex items-center justify-between mb-0.5">
+              <span className="font-medium" style={{ color: 'var(--text-secondary)' }}>
+                📩 {watch.lastMessageFrom}
+              </span>
               {watch.lastMessageTime && (
-                <span className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
+                <span className="text-[10px] shrink-0 ml-2" style={{ color: 'var(--text-tertiary)' }}>
                   {new Date(watch.lastMessageTime).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
                 </span>
               )}
             </div>
-            <p className="mt-0.5" style={{ color: 'var(--text-primary)', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
-              {watch.lastMessageFrom}: {decodeHtml(watch.lastMessagePreview || '(no content)')}
-            </p>
+            {watch.lastMessageHtml ? (
+              <div
+                className="teams-html-content break-words"
+                style={{ color: 'var(--text-primary)' }}
+                dangerouslySetInnerHTML={{ __html: watch.lastMessageHtml }}
+              />
+            ) : (
+              <p className="break-words" style={{ color: 'var(--text-primary)' }}>
+                {decodeHtml(watch.lastMessagePreview || '(no content)')}
+              </p>
+            )}
           </div>
         )}
 
@@ -1302,9 +1310,17 @@ function TeamsWatchHistoryEntry({ entry }: { entry: any }) {
         </span>
         <span className="text-[10px] shrink-0 ml-2" style={{ color: 'var(--text-tertiary)' }}>{ts}</span>
       </div>
-      <p className="break-words" style={{ color: 'var(--text-primary)' }}>
-        {decodeHtml(entry.preview || entry.message || 'No content')}
-      </p>
+      {entry.htmlBody ? (
+        <div
+          className="teams-html-content break-words"
+          style={{ color: 'var(--text-primary)' }}
+          dangerouslySetInnerHTML={{ __html: entry.htmlBody }}
+        />
+      ) : (
+        <p className="break-words" style={{ color: 'var(--text-primary)' }}>
+          {decodeHtml(entry.preview || entry.message || 'No content')}
+        </p>
+      )}
     </div>
   )
 }
@@ -1320,8 +1336,8 @@ function ActivityFeedTab() {
   ]
 
   return (
-    <Card className="flex-1 min-h-0">
-      <div className="flex flex-col items-center justify-center h-full gap-6">
+    <Card>
+      <div className="flex flex-col items-center justify-center py-12 gap-6">
         <span className="text-4xl">📡</span>
         <div className="text-center">
           <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>

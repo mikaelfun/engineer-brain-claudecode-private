@@ -309,3 +309,22 @@ th {
 .dark ::-webkit-scrollbar-thumb:hover {
   background: var(--text-tertiary);
 }
+
+/* ============================
+   TEAMS HTML CONTENT STYLING
+   ============================ */
+.teams-html-content {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  word-break: break-word;
+}
+.teams-html-content p { margin: 0.15em 0; }
+.teams-html-content br { display: block; content: ''; margin-top: 0.15em; }
+.teams-html-content a { color: var(--accent-blue); text-decoration: underline; }
+.teams-html-content img { max-width: 100%; height: auto; border-radius: 4px; margin: 4px 0; }
+.teams-html-content table { border-collapse: collapse; margin: 4px 0; font-size: 0.7rem; }
+.teams-html-content th, .teams-html-content td { border: 1px solid var(--border-subtle); padding: 2px 6px; }
+.teams-html-content th { background: var(--bg-inset); }
+.teams-html-content blockquote { border-left: 2px solid var(--border-strong); margin: 4px 0; padding-left: 8px; color: var(--text-secondary); }
+.teams-html-content ul, .teams-html-content ol { padding-left: 1.2em; margin: 2px 0; }
+.teams-html-content pre, .teams-html-content code { background: var(--bg-inset); padding: 1px 4px; border-radius: 3px; font-size: 0.7rem; }
