@@ -31,6 +31,7 @@ let lastProcessedMessageId: string | null = null
 let lastCheckAt: string | null = null
 let triggerCount = 0
 let lastError: string | null = null
+let autoPatrolEnabled = true // Can be toggled via API
 
 const POLL_INTERVAL_MS = 60_000
 
@@ -217,6 +218,12 @@ async function checkForNewSbaMessages(): Promise<void> {
     }
 
     // 8. Trigger patrol for the specific new case
+    if (!autoPatrolEnabled) {
+      console.log('[SBA-Trigger] Auto patrol disabled, skipping')
+      lastError = null
+      return
+    }
+
     const { runSdkPatrol, isSdkPatrolRunning } = await getPatrolFns()
 
     if (isSdkPatrolRunning()) {
@@ -289,20 +296,20 @@ export function stopSbaPatrolTrigger(): void {
 /**
  * Get current status for API endpoints.
  */
-export function getSbaPatrolStatus(): {
-  running: boolean
-  lastCheckAt: string | null
-  lastKnownMessageCount: number
-  lastProcessedMessageId: string | null
-  triggerCount: number
-  lastError: string | null
-} {
+export function getSbaPatrolStatus() {
   return {
     running: pollTimer !== null,
+    autoPatrolEnabled,
     lastCheckAt,
     lastKnownMessageCount,
     lastProcessedMessageId,
     triggerCount,
     lastError,
   }
+}
+
+export function setAutoPatrol(enabled: boolean): void {
+  autoPatrolEnabled = enabled
+  console.log(`[SBA-Trigger] Auto patrol ${enabled ? 'enabled' : 'disabled'}`)
+}
 }

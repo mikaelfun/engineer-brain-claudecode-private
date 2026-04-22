@@ -18,7 +18,7 @@ import {
   getWatchHistory,
   enrichWatchHistory,
 } from '../services/teams-watch-reader.js'
-import { getSbaPatrolStatus } from '../services/sba-patrol-trigger.js'
+import { getSbaPatrolStatus, setAutoPatrol } from '../services/sba-patrol-trigger.js'
 
 const teamsWatchRoutes = new Hono()
 
@@ -31,6 +31,13 @@ teamsWatchRoutes.get('/', (c) => {
 // SBA trigger status (must be before /:id to avoid matching "sba" as id)
 teamsWatchRoutes.get('/sba/status', (c) => {
   return c.json(getSbaPatrolStatus())
+})
+
+// Toggle auto patrol
+teamsWatchRoutes.post('/sba/auto-patrol', async (c) => {
+  const body = await c.req.json<{ enabled: boolean }>()
+  setAutoPatrol(body.enabled)
+  return c.json({ ok: true, autoPatrolEnabled: body.enabled })
 })
 
 // Create/start a new watch

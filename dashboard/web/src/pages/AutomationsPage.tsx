@@ -7,7 +7,11 @@
 import { Card } from '../components/common/Card'
 import { Badge } from '../components/common/Badge'
 import { Loading, EmptyState } from '../components/common/Loading'
-import { useCronJobs, useTriggers, useDeleteTrigger, useRunTrigger, useCancelTrigger, useToggleTrigger, useTeamsWatches, useTeamsWatchHistory, useStartTeamsWatch, useStopTeamsWatch, useDeleteTeamsWatch, useCreateTeamsWatch } from '../api/hooks'
+import {
+  useCronJobs, useTriggers, useDeleteTrigger, useRunTrigger, useCancelTrigger, useToggleTrigger,
+  useTeamsWatches, useTeamsWatchHistory, useStartTeamsWatch, useStopTeamsWatch,
+  useDeleteTeamsWatch, useCreateTeamsWatch, useSbaStatus, useToggleAutoPatrol,
+} from '../api/hooks'
 import { SessionMessageList } from '../components/session/SessionMessageList'
 import { useTriggerRunStore } from '../stores/triggerRunStore'
 import { CreateTriggerDialog, type TriggerEditData } from '../components/agents/CreateTriggerDialog'
@@ -904,6 +908,12 @@ function TeamsWatchDetailPanel({ watch, history }: { watch: any | null; history:
 
   const isRunning = watch.status === 'running'
   const lastPollFormatted = watch.lastPollAt
+
+  // SBA-specific: auto patrol toggle
+  const isSbaWatch = watch.chatId?.includes('deeeb1e6') || watch.topic?.includes('SBA')
+  const { data: sbaStatus } = useSbaStatus()
+  const autoPatrolMut = useToggleAutoPatrol()
+  const autoPatrolEnabled = sbaStatus?.autoPatrolEnabled ?? true
     ? new Date(watch.lastPollAt).toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
     : 'Never'
 
@@ -1013,6 +1023,29 @@ function TeamsWatchDetailPanel({ watch, history }: { watch: any | null; history:
             </p>
           </div>
         </div>
+
+        {/* Auto Patrol toggle (SBA watch only) */}
+        {isSbaWatch && (
+          <div className="flex items-center justify-between px-2.5 py-1.5 rounded text-xs" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+            <div>
+              <span className="font-medium" style={{ color: 'var(--text-primary)' }}>Auto Patrol</span>
+              <span className="ml-2" style={{ color: 'var(--text-tertiary)' }}>
+                {autoPatrolEnabled ? 'Case assignment → auto patrol' : 'Notifications only'}
+              </span>
+            </div>
+            <button
+              onClick={() => autoPatrolMut.mutate(!autoPatrolEnabled)}
+              disabled={autoPatrolMut.isPending}
+              className="px-2 py-0.5 rounded text-[10px] font-medium transition-colors"
+              style={{
+                background: autoPatrolEnabled ? 'var(--accent-green)' : 'var(--bg-inset)',
+                color: autoPatrolEnabled ? 'white' : 'var(--text-tertiary)',
+              }}
+            >
+              {autoPatrolEnabled ? 'ON' : 'OFF'}
+            </button>
+          </div>
+        )}
 
         {/* Latest message */}
         {watch.lastMessageFrom && (

@@ -1587,6 +1587,16 @@ export function useSbaStatus() {
   })
 }
 
+export function useToggleAutoPatrol() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (enabled: boolean) => apiPost<any>('/teams-watch/sba/auto-patrol', { enabled }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['teams-watch', 'sba', 'status'] })
+    },
+  })
+}
+
 export function useCreateTeamsWatch() {
   const queryClient = useQueryClient()
   return useMutation({
