@@ -1,7 +1,7 @@
 /**
  * teams-watch-reader.ts — Teams Watch 状态读取 + 进程管理
  *
- * 读取 $TEMP/teams-watch/ 下的 watch state 和 daemon config 文件，
+ * 读取 {dataDir}/teams-watch/ 下的 watch state 和 daemon config 文件，
  * 提供 CRUD 操作，通过 shell 调用 teams-daemon.sh 控制后台进程。
  */
 import { readFileSync, existsSync, readdirSync, unlinkSync } from 'fs'
@@ -9,8 +9,7 @@ import { join, resolve } from 'path'
 import { execSync } from 'child_process'
 import { config } from '../config.js'
 
-const TEMP = process.env.TEMP || process.env.TMP || '/tmp'
-const STATE_DIR = join(TEMP, 'teams-watch')
+const STATE_DIR = join(config.dataDir, 'teams-watch')
 const PID_DIR = join(STATE_DIR, 'pids')
 
 const DAEMON_SCRIPT = resolve(

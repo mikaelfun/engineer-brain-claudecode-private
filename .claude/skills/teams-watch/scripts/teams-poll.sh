@@ -15,7 +15,7 @@
 set -uo pipefail
 
 CHAT_ID="" TOPIC="" CHANNEL="" TARGET="" SINCE="" ACTION="notify" ACTION_SCRIPT=""
-STATE_FILE="" PORT=9840
+STATE_FILE="" STATE_DIR="" PORT=9840
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -27,6 +27,7 @@ while [[ $# -gt 0 ]]; do
     --action)        ACTION="$2"; shift 2 ;;
     --action-script) ACTION_SCRIPT="$2"; shift 2 ;;
     --state-file)    STATE_FILE="$2"; shift 2 ;;
+    --state-dir)     STATE_DIR="$2"; shift 2 ;;
     --port)          PORT="$2"; shift 2 ;;
     *) shift ;;
   esac
@@ -62,8 +63,23 @@ fi
 AGENCY_EXE="$APPDATA/agency/CurrentVersion/agency.exe"
 [ ! -f "$AGENCY_EXE" ] && { echo "WATCH_FAIL|reason=agency.exe not found"; exit 1; }
 
-# State directory — use Windows path for Python compatibility
-STATE_DIR="$TEMP/teams-watch"
+# State directory — default to dataRoot/teams-watch, fallback to $TEMP
+# Use --state-dir to override, or set via config.json dataRoot
+if [ -z "$STATE_DIR" ]; then
+  # Try to resolve from config.json
+  SCRIPT_ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"
+  CONFIG_FILE="$SCRIPT_ROOT/config.json"
+  if [ -f "$CONFIG_FILE" ]; then
+    CFG_PATH="$CONFIG_FILE"
+    command -v cygpath &>/dev/null && CFG_PATH="$(cygpath -m "$CONFIG_FILE")"
+    DATA_ROOT=$(python3 -c "import json,os; c=json.load(open('$CFG_PATH')); dr=c.get('dataRoot',''); print(os.path.join(os.path.dirname('$CFG_PATH'), dr) if not os.path.isabs(dr) else dr)" 2>/dev/null)
+    if [ -n "$DATA_ROOT" ] && [ -d "$DATA_ROOT" ]; then
+      STATE_DIR="$DATA_ROOT/teams-watch"
+    fi
+  fi
+  # Fallback to $TEMP
+  [ -z "$STATE_DIR" ] && STATE_DIR="$TEMP/teams-watch"
+fi
 mkdir -p "$STATE_DIR"
 # Convert to Windows path with forward slashes for python3
 # (Git Bash /tmp != Python C:\tmp, and backslashes break python string literals)

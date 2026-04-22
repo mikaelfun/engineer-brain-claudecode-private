@@ -12,7 +12,7 @@ set -uo pipefail
 
 CMD="${1:-status}"; shift 2>/dev/null || true
 
-TOPIC="" CHAT_ID="" INTERVAL=60 ACTION="notify" ACTION_SCRIPT="" PORT=9840
+TOPIC="" CHAT_ID="" INTERVAL=60 ACTION="notify" ACTION_SCRIPT="" PORT=9840 STATE_DIR=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -22,11 +22,25 @@ while [[ $# -gt 0 ]]; do
     --action)        ACTION="$2"; shift 2 ;;
     --action-script) ACTION_SCRIPT="$2"; shift 2 ;;
     --port)          PORT="$2"; shift 2 ;;
+    --state-dir)     STATE_DIR="$2"; shift 2 ;;
     *) shift ;;
   esac
 done
 
-STATE_DIR="$TEMP/teams-watch"
+# State directory — resolve from config.json dataRoot, fallback to $TEMP
+if [ -z "$STATE_DIR" ]; then
+  SCRIPT_ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"
+  CONFIG_FILE="$SCRIPT_ROOT/config.json"
+  if [ -f "$CONFIG_FILE" ]; then
+    CFG_PATH="$CONFIG_FILE"
+    command -v cygpath &>/dev/null && CFG_PATH="$(cygpath -m "$CONFIG_FILE")"
+    DATA_ROOT=$(python3 -c "import json,os; c=json.load(open('$CFG_PATH')); dr=c.get('dataRoot',''); print(os.path.join(os.path.dirname('$CFG_PATH'), dr) if not os.path.isabs(dr) else dr)" 2>/dev/null)
+    if [ -n "$DATA_ROOT" ] && [ -d "$DATA_ROOT" ]; then
+      STATE_DIR="$DATA_ROOT/teams-watch"
+    fi
+  fi
+  [ -z "$STATE_DIR" ] && STATE_DIR="$TEMP/teams-watch"
+fi
 PID_DIR="$STATE_DIR/pids"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 mkdir -p "$STATE_DIR" "$PID_DIR"
