@@ -21,6 +21,14 @@
 #   WATCH_FAIL|reason=...
 set -uo pipefail
 
+# Ensure python3 is available — fall back to python if needed
+if ! command -v python3 &>/dev/null; then
+  if command -v python &>/dev/null; then
+    python3() { python "$@"; }
+    export -f python3
+  fi
+fi
+
 CHAT_ID="" TOPIC="" CHANNEL="" TARGET="" SINCE="" ACTION="notify" ACTION_SCRIPT=""
 STATE_FILE="" STATE_DIR="" PORT=9840
 
@@ -408,9 +416,11 @@ latest_from = get_from(latest)
 latest_preview = get_preview(latest)
 
 # Detect new messages since last poll
-new_msgs = [m for m in messages if m.get('createdDateTime', '') > prev_time] if prev_time else []
-new_count = len(new_msgs)
-total_new += new_count
+# Normalize timestamps for comparison: strip sub-second precision (.xxxZ -> Z)
+def normalize_ts(t):
+    return re.sub(r'\.\d+Z$', 'Z', t) if t else ''
+
+new_msgs = [m for m in messages if normalize_ts(m.get('createdDateTime', '')) > normalize_ts(prev_time)] if prev_time else []
 
 # Load existing history
 history = []
@@ -418,6 +428,26 @@ if os.path.exists(state_file):
     try:
         history = json.load(open(state_file)).get('history', [])
     except: pass
+
+# Dedup: build set of existing (normalizedTime, preview) to skip duplicates
+existing_keys = set()
+for h in history:
+    ht = normalize_ts(h.get('messageTime', ''))
+    hp = h.get('preview', '')[:60]
+    existing_keys.add((ht, hp))
+
+# Filter out messages already in history
+deduped_msgs = []
+for m in new_msgs:
+    mt = normalize_ts(m.get('createdDateTime', ''))
+    mp = get_preview(m, 120)[:60]
+    if (mt, mp) not in existing_keys:
+        deduped_msgs.append(m)
+        existing_keys.add((mt, mp))
+
+new_msgs = deduped_msgs
+new_count = len(new_msgs)
+total_new += new_count
 
 # Execute action for new messages
 if new_count > 0:
@@ -465,15 +495,36 @@ if new_count > 0:
         history.append(entry)
     history = history[-50:]
 
-# Write state file
+# Write state file — keep lastMessageTime monotonically increasing to prevent oscillation
+effective_time = max(normalize_ts(latest_time), normalize_ts(prev_time)) if prev_time else latest_time
+# Use the original (non-normalized) time if it's the winner
+if normalize_ts(latest_time) >= normalize_ts(prev_time or ''):
+    effective_time = latest_time
+    effective_from = latest_from
+    effective_preview = latest_preview
+    effective_id = latest_id
+else:
+    effective_time = prev_time
+    effective_from = prev_id  # keep previous, avoid regressing
+    # Read previous values from state file
+    try:
+        prev_state = json.load(open(state_file)).get('state', {})
+        effective_from = prev_state.get('lastMessageFrom', latest_from)
+        effective_preview = prev_state.get('lastMessagePreview', latest_preview)
+        effective_id = prev_state.get('lastMessageId', latest_id)
+    except:
+        effective_from = latest_from
+        effective_preview = latest_preview
+        effective_id = latest_id
+
 state = {'_version': 2,
     'watchId': f'watch-{os.path.basename(state_file).replace(\".json\",\"\")}',
     'target': {'type':'chat','chatId':chat_id,'topic':topic,
                'resolvedAt':utcnow().strftime('%Y-%m-%dT%H:%M:%S')+'Z'},
     'config': {'interval':0,'action':action,'actionScript':action_script or None},
-    'state': {'lastPollAt':utcnow().strftime('%Y-%m-%dT%H:%M:%S')+'Z','lastMessageId':latest_id,
-        'lastMessageTime':latest_time,'lastMessageFrom':latest_from,
-        'lastMessagePreview':latest_preview,
+    'state': {'lastPollAt':utcnow().strftime('%Y-%m-%dT%H:%M:%S')+'Z','lastMessageId':effective_id,
+        'lastMessageTime':effective_time,'lastMessageFrom':effective_from,
+        'lastMessagePreview':effective_preview,
         'pollCount':poll_count,'newMessageCount':total_new,'consecutiveErrors':0,
         'dataSource':data_source},
     'history': history}

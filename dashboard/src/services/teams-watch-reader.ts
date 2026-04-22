@@ -439,15 +439,13 @@ export function restartWatch(watchId: string): string {
     } catch { /* ignore */ }
   }
 
-  // 5. Start fresh — use the SAME label that produced the original hash
-  // so new daemon files (PID, config, state) match the existing state file
-  if (useTopic) {
-    return startWatch({ topic, interval, action })
-  } else if (useChatId) {
+  // 5. Start fresh — always prefer chatId if available (it's the stable identifier).
+  // Topic-based hash happens when daemon config stored chatId as "topic" field,
+  // but for polling we must use --chat-id so the poll script skips topic resolution.
+  if (chatId) {
     return startWatch({ chatId, interval, action })
   } else {
-    // Fallback: prefer chatId
-    return startWatch({ chatId: chatId || topic, interval, action })
+    return startWatch({ topic, interval, action })
   }
 }
 
