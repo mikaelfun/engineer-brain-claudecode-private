@@ -852,6 +852,8 @@ function TeamsWatchAddForm({
 // ---- Teams Watch Detail Panel ----
 
 function TeamsWatchDetailPanel({ watch, history }: { watch: any | null; history: any[] }) {
+  const [historyOpen, setHistoryOpen] = useState(true)
+
   if (!watch) {
     return (
       <Card className="h-full">
@@ -865,6 +867,9 @@ function TeamsWatchDetailPanel({ watch, history }: { watch: any | null; history:
   }
 
   const isRunning = watch.status === 'running'
+  const lastPollFormatted = watch.lastPollAt
+    ? new Date(watch.lastPollAt).toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    : 'Never'
 
   return (
     <Card className="h-full flex flex-col">
@@ -875,8 +880,8 @@ function TeamsWatchDetailPanel({ watch, history }: { watch: any | null; history:
             {watch.topic || 'Untitled Watch'}
           </h4>
           {watch.chatId && (
-            <p className="text-xs mt-0.5 font-mono" style={{ color: 'var(--text-tertiary)' }}>
-              Chat: {watch.chatId.length > 30 ? watch.chatId.slice(0, 30) + '…' : watch.chatId}
+            <p className="text-[10px] mt-0.5 font-mono break-all" style={{ color: 'var(--text-tertiary)' }}>
+              {watch.chatId}
             </p>
           )}
           <div className="flex items-center gap-3 mt-1">
@@ -889,8 +894,8 @@ function TeamsWatchDetailPanel({ watch, history }: { watch: any | null; history:
           </div>
         </div>
 
-        {/* Stats row */}
-        <div className="grid grid-cols-4 gap-2 text-xs">
+        {/* Stats row — Status + Last Poll + Errors */}
+        <div className="grid grid-cols-3 gap-2 text-xs">
           <div>
             <span style={{ color: 'var(--text-tertiary)' }}>Status</span>
             <p>
@@ -903,34 +908,37 @@ function TeamsWatchDetailPanel({ watch, history }: { watch: any | null; history:
             </p>
           </div>
           <div>
-            <span style={{ color: 'var(--text-tertiary)' }}>Polls</span>
-            <p style={{ color: 'var(--text-secondary)' }}>{watch.pollCount || 0}</p>
-          </div>
-          <div>
-            <span style={{ color: 'var(--text-tertiary)' }}>New Msgs</span>
-            <p style={{ color: 'var(--text-secondary)' }}>{watch.newMessageCount || 0}</p>
+            <span style={{ color: 'var(--text-tertiary)' }}>Last Poll</span>
+            <p style={{ color: 'var(--text-secondary)' }}>{lastPollFormatted}</p>
           </div>
           <div>
             <span style={{ color: 'var(--text-tertiary)' }}>Errors</span>
-            <p style={{ color: (watch.errorCount || 0) > 0 ? 'var(--accent-red)' : 'var(--text-secondary)' }}>
-              {watch.errorCount || 0}
+            <p style={{ color: (watch.consecutiveErrors || 0) > 0 ? 'var(--accent-red)' : 'var(--text-secondary)' }}>
+              {watch.consecutiveErrors || 0}
             </p>
           </div>
         </div>
 
-        {/* History section */}
+        {/* History section — collapsible */}
         <div className="flex-1 min-h-0 flex flex-col">
-          <span className="text-xs shrink-0 mb-1" style={{ color: 'var(--text-tertiary)' }}>
+          <button
+            onClick={() => setHistoryOpen(!historyOpen)}
+            className="flex items-center gap-1 text-xs shrink-0 mb-1 hover:opacity-80"
+            style={{ color: 'var(--text-tertiary)' }}
+          >
+            <span style={{ display: 'inline-block', transform: historyOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.15s' }}>▶</span>
             History ({history.length})
-          </span>
-          {history.length === 0 ? (
-            <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>No history yet</div>
-          ) : (
-            <div className="flex-1 min-h-0 overflow-auto space-y-1.5">
-              {[...history].reverse().map((entry: any, idx: number) => (
-                <TeamsWatchHistoryEntry key={entry.id || idx} entry={entry} />
-              ))}
-            </div>
+          </button>
+          {historyOpen && (
+            history.length === 0 ? (
+              <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>No history yet</div>
+            ) : (
+              <div className="flex-1 min-h-0 overflow-auto space-y-1.5">
+                {[...history].reverse().map((entry: any, idx: number) => (
+                  <TeamsWatchHistoryEntry key={entry.id || idx} entry={entry} />
+                ))}
+              </div>
+            )
           )}
         </div>
       </div>
@@ -941,8 +949,9 @@ function TeamsWatchDetailPanel({ watch, history }: { watch: any | null; history:
 // ---- Teams Watch History Entry ----
 
 function TeamsWatchHistoryEntry({ entry }: { entry: any }) {
-  const ts = entry.timestamp
-    ? new Date(entry.timestamp).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })
+  const rawTs = entry.detectedAt || entry.messageTime || entry.timestamp || ''
+  const ts = rawTs
+    ? new Date(rawTs).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
     : ''
 
   // SBA card entry
