@@ -330,6 +330,7 @@ export function startWatch(opts: {
 
   const pollCmd = `bash "${posixPollScript}" ${pollArgs.map(a => `"${a}"`).join(' ').replace(/\\/g, '/')}`
   const scriptContent = `#!/usr/bin/env bash
+export MSYS_NO_PATHCONV=1
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] DAEMON START | topic=${label} interval=${interval}s action=${action}" >> "${logFile}"
 while true; do
   ${pollCmd} >> "${logFile}" 2>&1
@@ -342,6 +343,7 @@ done
     detached: true,
     stdio: 'ignore',
     cwd: config.projectRoot,
+    env: { ...process.env, MSYS_NO_PATHCONV: '1' },
   })
   child.unref()
 
