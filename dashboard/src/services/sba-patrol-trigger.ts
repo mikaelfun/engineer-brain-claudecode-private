@@ -117,13 +117,12 @@ async function checkForNewSbaMessages(): Promise<void> {
     // 2. Find active watch for that chatId
     const watch = findWatchByChatId(sbaTarget.chatId)
     if (!watch) {
-      lastError = `No active watch for SBA chatId ${sbaTarget.chatId}`
+      lastError = null // Not an error — watch just not started
       return
     }
 
     // 3. Compare newMessageCount
     if (lastKnownMessageCount === -1) {
-      // First run — just record baseline, don't trigger
       lastKnownMessageCount = watch.newMessageCount
       lastProcessedMessageId = watch.lastMessageId
       lastError = null
@@ -131,7 +130,6 @@ async function checkForNewSbaMessages(): Promise<void> {
     }
 
     if (watch.newMessageCount <= lastKnownMessageCount) {
-      // No new messages
       lastError = null
       return
     }
@@ -148,76 +146,67 @@ async function checkForNewSbaMessages(): Promise<void> {
     lastProcessedMessageId = watch.lastMessageId
     console.log(`[SBA-Trigger] New message detected (count: ${watch.newMessageCount}, id: ${watch.lastMessageId})`)
 
-    // 5. Read Graph token
-    const token = readGraphToken()
-    if (!token?.isValid) {
-      lastError = 'Graph token invalid or expired — cannot fetch message content'
-      sseManager.broadcast('teams-watch-update', {
-        source: 'sba-patrol-trigger',
-        event: 'new-message-detected',
-        error: lastError,
-      })
-      return
-    }
-
-    // 6. Fetch recent messages
-    const res = await fetch(
-      `https://graph.microsoft.com/v1.0/me/chats/${sbaTarget.chatId}/messages?$top=5`,
-      {
-        headers: { Authorization: `Bearer ${token.secret}` },
-      }
-    )
-
-    if (!res.ok) {
-      lastError = `Graph API error: ${res.status} ${res.statusText}`
-      return
-    }
-
-    const data = await res.json()
-    const messages: any[] = data.value || []
-
-    // 7. Find Adaptive Card attachment in the latest messages
+    // 5. Get parsedCard from state file history (written by teams-poll.sh with Graph API)
     let parsedCard: ParsedCard | null = null
-    for (const msg of messages) {
-      if (!Array.isArray(msg.attachments)) continue
-      for (const att of msg.attachments) {
-        if (att.contentType === 'application/vnd.microsoft.card.adaptive') {
-          let cardContent: any
-          try {
-            cardContent = typeof att.content === 'string'
-              ? JSON.parse(att.content)
-              : att.content
-          } catch {
-            continue
-          }
-          parsedCard = parseSbaCard(cardContent)
-          if (parsedCard) break
-        }
+    for (const entry of [...watch.history].reverse()) {
+      if (entry.parsedCard?.type === 'case-assignment') {
+        parsedCard = entry.parsedCard
+        break
       }
-      if (parsedCard) break
+    }
+
+    // 6. Fallback: fetch from Graph API if no card in history
+    if (!parsedCard) {
+      const token = readGraphToken()
+      if (token?.isValid) {
+        try {
+          const res = await fetch(
+            `https://graph.microsoft.com/v1.0/me/chats/${encodeURIComponent(sbaTarget.chatId)}/messages?$top=5`,
+            { headers: { Authorization: `Bearer ${token.secret}` } }
+          )
+          if (res.ok) {
+            const data = await res.json()
+            for (const msg of (data.value || [])) {
+              for (const att of (msg.attachments || [])) {
+                if (att.contentType === 'application/vnd.microsoft.card.adaptive' && att.content) {
+                  try {
+                    const cardJson = typeof att.content === 'string' ? JSON.parse(att.content) : att.content
+                    parsedCard = parseSbaCard(cardJson)
+                    if (parsedCard) break
+                  } catch {}
+                }
+              }
+              if (parsedCard) break
+            }
+          }
+        } catch {}
+      }
     }
 
     if (!parsedCard) {
+      // New message but not a case assignment card — just notify
       lastError = null
       sseManager.broadcast('teams-watch-update', {
         source: 'sba-patrol-trigger',
-        event: 'new-message-no-card',
-        messageCount: watch.newMessageCount,
+        event: 'new-message',
+        topic: watch.topic,
+        lastMessageFrom: watch.lastMessageFrom,
+        lastMessagePreview: watch.lastMessagePreview,
       })
       return
     }
 
-    // 8. Check if assigned to current engineer
+    // 7. Check if assigned to current engineer
     const engineerName = config.engineerName
     const isAssignedToMe = parsedCard.assignedTo
       ? parsedCard.assignedTo.toLowerCase().includes(engineerName.toLowerCase())
       : false
 
-    console.log(`[SBA-Trigger] Parsed card: SR=${parsedCard.caseNumber}, assignedTo=${parsedCard.assignedTo}, isMe=${isAssignedToMe}`)
+    console.log(`[SBA-Trigger] Case assignment: SR=${parsedCard.caseNumber}, assignedTo=${parsedCard.assignedTo}, isMe=${isAssignedToMe}`)
 
     sseManager.broadcast('teams-watch-update', {
       source: 'sba-patrol-trigger',
-      event: 'case-assignment-detected',
+      event: 'case-assignment',
       card: parsedCard,
       isAssignedToMe,
     })
@@ -227,11 +216,11 @@ async function checkForNewSbaMessages(): Promise<void> {
       return
     }
 
-    // 9. Trigger patrol
+    // 8. Trigger patrol for the specific new case
     const { runSdkPatrol, isSdkPatrolRunning } = await getPatrolFns()
 
     if (isSdkPatrolRunning()) {
-      console.log('[SBA-Trigger] Patrol already running, skipping trigger')
+      console.log('[SBA-Trigger] Patrol already running, skipping')
       lastError = 'Patrol already running'
       return
     }
@@ -246,7 +235,7 @@ async function checkForNewSbaMessages(): Promise<void> {
       triggerCount,
     })
 
-    // Fire-and-forget — don't await, let it run in background
+    // Fire-and-forget — patrol runs in background
     runSdkPatrol(true, 'normal').catch((err: Error) => {
       console.error('[SBA-Trigger] Patrol failed:', err.message)
     })
