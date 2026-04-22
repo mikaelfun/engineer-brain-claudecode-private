@@ -75,10 +75,13 @@ teamsWatchRoutes.post('/:id/start', async (c) => {
   if (!watch) return c.json({ error: 'Watch not found' }, 404)
 
   // Always use chatId (stable), never enriched topic (would produce different hash)
+  // Pass existingHash to reuse the original watchId (avoids creating duplicate watch)
+  const existingHash = id.replace(/^(watch-)+/, '')
   const result = startWatch({
     chatId: watch.chatId,
     interval: watch.interval || 60,
     action: watch.action || 'notify',
+    existingHash,
   })
   return c.json({ ok: true, result })
 })

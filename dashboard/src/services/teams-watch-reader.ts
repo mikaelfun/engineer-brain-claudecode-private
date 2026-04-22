@@ -287,15 +287,16 @@ export function startWatch(opts: {
   chatId?: string
   interval?: number
   action?: string
+  existingHash?: string  // Reuse an existing hash to avoid creating a new watchId
 }): string {
-  const { topic, chatId, interval = 60, action = 'notify' } = opts
+  const { topic, chatId, interval = 60, action = 'notify', existingHash } = opts
 
   if (!topic && !chatId) {
     return 'ERROR: topic or chatId required'
   }
 
   const label = chatId || topic || ''
-  const hash = createHash('md5').update(label).digest('hex').slice(0, 12)
+  const hash = existingHash || createHash('md5').update(label).digest('hex').slice(0, 12)
 
   const pidDir = join(STATE_DIR, 'pids')
   mkdirSync(pidDir, { recursive: true })
@@ -440,12 +441,11 @@ export function restartWatch(watchId: string): string {
   }
 
   // 5. Start fresh — always prefer chatId if available (it's the stable identifier).
-  // Topic-based hash happens when daemon config stored chatId as "topic" field,
-  // but for polling we must use --chat-id so the poll script skips topic resolution.
+  // Pass existingHash to reuse the original watchId (avoids creating duplicate watch).
   if (chatId) {
-    return startWatch({ chatId, interval, action })
+    return startWatch({ chatId, interval, action, existingHash: hash })
   } else {
-    return startWatch({ topic, interval, action })
+    return startWatch({ topic, interval, action, existingHash: hash })
   }
 }
 
