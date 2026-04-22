@@ -18,8 +18,9 @@
  * in the /api/patrol/status endpoint — frontend just passes data through.
  */
 import { useEffect } from 'react'
-import { Play, Square, Loader2, RotateCcw } from 'lucide-react'
+import { Play, Square, Loader2, RotateCcw, Plus } from 'lucide-react'
 import { usePatrolStore, type PatrolPhase } from '../stores/patrolStore'
+import { usePatrolAgentStore, hydratePatrolAgents } from '../stores/patrolAgentStore'
 import { useStartPatrol, useCancelPatrol } from '../api/hooks'
 import PatrolHeader from '../components/patrol/PatrolHeader'
 import PatrolSidebar from '../components/patrol/PatrolSidebar'
@@ -58,6 +59,9 @@ export default function PatrolPage() {
         }
       })
       .catch(() => {})
+
+    // Hydrate agent store from patrol messages (SSE doesn't replay history)
+    hydratePatrolAgents()
   }, [])
 
   const isIdle = phase === 'idle'
@@ -70,7 +74,13 @@ export default function PatrolPage() {
 
   const handleStart = () => {
     usePatrolStore.getState().start()
-    startPatrol.mutate(true)
+    usePatrolAgentStore.getState().clear()
+    startPatrol.mutate({ force: true, mode: 'normal' })
+  }
+  const handleStartNewCases = () => {
+    usePatrolStore.getState().start()
+    usePatrolAgentStore.getState().clear()
+    startPatrol.mutate({ force: true, mode: 'new-cases' })
   }
   const handleCancel = () => cancelPatrol.mutate()
   const handleReset = () => usePatrolStore.getState().reset()
@@ -141,6 +151,26 @@ export default function PatrolPage() {
                 {startPatrol.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
                 Start Patrol
               </button>
+              <button
+                onClick={handleStartNewCases}
+                disabled={startPatrol.isPending}
+                className="inline-flex items-center gap-2 font-bold uppercase transition-all"
+                style={{
+                  fontSize: 12,
+                  padding: '9px 18px',
+                  borderRadius: 13,
+                  letterSpacing: '0.3px',
+                  background: 'var(--accent-green)',
+                  color: 'var(--text-inverse)',
+                  border: '1px solid rgba(0,0,0,0.1)',
+                  boxShadow: 'rgba(0,0,0,0.06) 0 1px 3px 0 inset',
+                  opacity: startPatrol.isPending ? 0.6 : 1,
+                  cursor: startPatrol.isPending ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {startPatrol.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                New Cases
+              </button>
               {(isCompleted || isFailed) && (
                 <button
                   onClick={handleReset}
@@ -162,7 +192,7 @@ export default function PatrolPage() {
       <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-stretch md:items-start">
         {/* Left sidebar */}
         {!isIdle && (
-          <div className="w-full md:w-[260px] flex-shrink-0 md:sticky md:top-7">
+          <div className="w-full md:w-[320px] flex-shrink-0 md:sticky md:top-7">
             <PatrolSidebar />
           </div>
         )}
