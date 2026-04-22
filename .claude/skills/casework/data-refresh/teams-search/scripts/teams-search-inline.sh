@@ -33,7 +33,7 @@ done
 # Event emission setup (casework-v2 Step 1 observability)
 # ═══════════════════════════════════════════
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../../../.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../../../../.." && pwd)"
 UPDATE_STATE="$PROJECT_ROOT/.claude/skills/casework/scripts/update-state.py"
 # ISS-231: subtask files under runs/{runId}/output/subtasks/
 RUN_ID=$(python3 -c "import json,os; p=os.path.join(r'''$CASE_DIR''','.casework','state.json'); print(json.load(open(p,encoding='utf-8')).get('runId',''))" 2>/dev/null || echo "")
