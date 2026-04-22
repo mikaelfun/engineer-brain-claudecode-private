@@ -312,4 +312,3 @@ export function setAutoPatrol(enabled: boolean): void {
   autoPatrolEnabled = enabled
   console.log(`[SBA-Trigger] Auto patrol ${enabled ? 'enabled' : 'disabled'}`)
 }
-}
