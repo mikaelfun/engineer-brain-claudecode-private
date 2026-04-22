@@ -1060,7 +1060,7 @@ function TeamsWatchDetailPanel({ watch, history }: { watch: any | null; history:
                 </span>
               )}
             </div>
-            <p className="mt-0.5 truncate" style={{ color: 'var(--text-primary)' }}>
+            <p className="mt-0.5 break-words" style={{ color: 'var(--text-primary)' }}>
               {watch.lastMessageFrom}: {watch.lastMessagePreview || '(no content)'}
             </p>
           </div>
@@ -1144,15 +1144,18 @@ function TeamsWatchHistoryEntry({ entry }: { entry: any }) {
   // Normal message entry
   return (
     <div
-      className="rounded px-2.5 py-1.5 text-xs overflow-hidden"
+      className="rounded px-2.5 py-1.5 text-xs"
       style={{ background: 'var(--bg-inset)' }}
     >
-      <div className="flex items-center justify-between min-w-0">
-        <span className="truncate min-w-0" style={{ color: 'var(--text-primary)' }}>
-          📩 {entry.from ? `${entry.from}: ` : ''}{entry.preview || entry.message || 'No content'}
+      <div className="flex items-center justify-between mb-0.5">
+        <span className="font-medium" style={{ color: 'var(--text-secondary)' }}>
+          📩 {entry.from || 'Unknown'}
         </span>
         <span className="text-[10px] shrink-0 ml-2" style={{ color: 'var(--text-tertiary)' }}>{ts}</span>
       </div>
+      <p className="break-words" style={{ color: 'var(--text-primary)' }}>
+        {entry.preview || entry.message || 'No content'}
+      </p>
     </div>
   )
 }
