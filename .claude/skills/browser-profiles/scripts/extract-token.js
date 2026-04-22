@@ -23,18 +23,28 @@ async function extractFromLocalStorage(page, match = {}) {
   const { targetIncludes = '' } = match;
 
   return page.evaluate((pattern) => {
+    // Collect ALL matching tokens, then pick the best one
+    const candidates = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       try {
         const val = JSON.parse(localStorage.getItem(key));
         if (val && val.credentialType === 'AccessToken' && val.target && val.secret) {
           if (!pattern || val.target.includes(pattern)) {
-            return { secret: val.secret, expiresOn: val.expiresOn || '' };
+            candidates.push({ secret: val.secret, expiresOn: val.expiresOn || '' });
           }
         }
       } catch {}
     }
-    return null;
+    if (candidates.length === 0) return null;
+    if (candidates.length === 1) return candidates[0];
+    // Multiple matches: pick the one with the latest expiresOn (freshest token)
+    candidates.sort((a, b) => {
+      const expA = parseInt(a.expiresOn, 10) || 0;
+      const expB = parseInt(b.expiresOn, 10) || 0;
+      return expB - expA;
+    });
+    return candidates[0];
   }, targetIncludes).catch(() => null);
 }
 

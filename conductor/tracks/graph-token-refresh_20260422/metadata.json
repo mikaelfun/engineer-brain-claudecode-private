@@ -1,0 +1,16 @@
+{
+  "id": "graph-token-refresh_20260422",
+  "title": "Graph API Token 过期后无法自动刷新",
+  "type": "bug",
+  "status": "complete",
+  "created": "2026-04-22T16:00:00+08:00",
+  "updated": "2026-04-22T21:38:00+08:00",
+  "phases": {
+    "total": 3,
+    "completed": 3
+  },
+  "tasks": {
+    "total": 6,
+    "completed": 6
+  }
+}

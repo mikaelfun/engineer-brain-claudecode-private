@@ -1,0 +1,12 @@
+{
+  "id": "ISS-238",
+  "title": "Monitor 中 Graph API token 过期后无法自动刷新，手动点击刷新也无法获取新 token",
+  "description": "Dashboard Monitor 中使用的 Graph API token 过期后，系统无法自动刷新 token。用户手动点击刷新按钮后仍然无法获取新的有效 token，导致依赖 Graph API 的功能（如 Teams 消息搜索、邮件操作等）全部失败。需要排查 token 刷新机制的实现，确认是 refresh token 本身也过期、还是刷新逻辑有 bug。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "tracking",
+  "testLoopScan": true,
+  "trackId": "graph-token-refresh_20260422",
+  "createdAt": "2026-04-22T16:00:00+08:00",
+  "updatedAt": "2026-04-22T16:00:00+08:00"
+}

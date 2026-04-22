@@ -760,6 +760,10 @@ async function cmdStart() {
   process.on('SIGTERM', shutdown);
 
   // Keep alive — 定期检查 token 过期并自动刷新 + session tab SSO 自愈
+  // Per-token stale retry counter: avoid hammering reload every 60s when token can't be refreshed
+  const staleRetryCount = {};  // { tokenName: { count, lastAttempt } }
+  const STALE_MAX_RETRIES = 3;
+  const STALE_COOLDOWN_MS = 5 * 60 * 1000; // 5 min cooldown after max retries
   setInterval(async () => {
     for (const [name, { page, config }] of Object.entries(tabs)) {
       // Session tab: 检查是否被踢到 login 页面，自动重新 SSO
@@ -786,15 +790,136 @@ async function cmdStart() {
       }
       if (!isCacheValid(config.cacheFile, config.cacheTTLMinutes)) {
         log(`[${name}] Token expired, refreshing...`);
+        // Check stale retry cooldown — avoid hammering reload when token can't be refreshed
+        const sr = staleRetryCount[name] || { count: 0, lastAttempt: 0 };
+        if (sr.count >= STALE_MAX_RETRIES && (Date.now() - sr.lastAttempt) < STALE_COOLDOWN_MS) {
+          const cooldownRemain = Math.round((STALE_COOLDOWN_MS - (Date.now() - sr.lastAttempt)) / 60000);
+          log(`[${name}] Stale retry limit reached (${sr.count}x), cooldown ${cooldownRemain}m remaining`);
+          continue;
+        }
         try {
           const tokenData = await getExtractToken()(page, config);
           if (tokenData) {
             const secret = tokenData.secret || tokenData.token || '';
-            const cacheData = tokenData.secret
-              ? { secret: tokenData.secret, expiresOn: tokenData.expiresOn, fetchedAt: new Date().toISOString() }
-              : { token: tokenData.token, timestamp: Date.now() / 1000, fetchedAt: new Date().toISOString() };
-            writeCache(config.cacheFile, cacheData);
-            log(`[${name}] Token refreshed (len=${secret.length})`);
+
+            // Check if extracted token is actually fresh (防止读到 localStorage 里的过期 token 死循环)
+            let isStale = false;
+            if (tokenData.expiresOn && String(tokenData.expiresOn).length > 0) {
+              isStale = (Date.now() / 1000) >= (parseInt(tokenData.expiresOn, 10) - 60);
+            }
+            // Fallback: decode JWT exp from either .token (request-intercept) or .secret (localStorage)
+            if (!isStale && !tokenData.expiresOn) {
+              const rawToken = tokenData.token || tokenData.secret || '';
+              const jwtExp = getJwtExp(rawToken);
+              if (jwtExp) isStale = (Date.now() / 1000) >= (jwtExp - 60);
+            }
+
+            if (isStale) {
+              // Token extracted but already expired → reload page to force MSAL/SSO renewal
+              log(`[${name}] Extracted token is stale (expiresOn already passed), reloading page...`);
+              staleRetryCount[name] = { count: (sr.count || 0) + 1, lastAttempt: Date.now() };
+              await page.reload({ waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => {});
+              await page.waitForTimeout(3000).catch(() => {});
+
+              // If we landed on login page → SSO re-auth
+              const reloadUrl = page.url();
+              if (reloadUrl.includes('login.microsoftonline') || reloadUrl.includes('login.live') || reloadUrl.includes('IdentityProvider')) {
+                log(`[${name}] SSO needed after reload`);
+                await getHandleSSO()(page, {
+                  targetDomain: config.tab,
+                  log: (msg) => log(`[${name}] ${msg}`)
+                });
+              }
+              await page.waitForTimeout(5000).catch(() => {});
+
+              // Re-extract after reload
+              const retryData = await getExtractToken()(page, config);
+              let retryOk = false;
+              if (retryData) {
+                // Verify the re-extracted token is actually fresh
+                let retryStale = false;
+                if (retryData.expiresOn && String(retryData.expiresOn).length > 0) {
+                  retryStale = (Date.now() / 1000) >= (parseInt(retryData.expiresOn, 10) - 60);
+                }
+                if (!retryStale && !retryData.expiresOn) {
+                  const rawRetry = retryData.token || retryData.secret || '';
+                  const retryExp = getJwtExp(rawRetry);
+                  if (retryExp) retryStale = (Date.now() / 1000) >= (retryExp - 60);
+                }
+                if (!retryStale) {
+                  const s = retryData.secret || retryData.token || '';
+                  const cd = retryData.secret
+                    ? { secret: retryData.secret, expiresOn: retryData.expiresOn, fetchedAt: new Date().toISOString() }
+                    : { token: retryData.token, timestamp: Date.now() / 1000, fetchedAt: new Date().toISOString() };
+                  writeCache(config.cacheFile, cd);
+                  log(`[${name}] Token refreshed after page reload (len=${s.length})`);
+                  retryOk = true;
+                } else {
+                  log(`[${name}] Re-extracted token still stale after reload`);
+                }
+              }
+
+              // Fallback: clear MSAL AccessToken entries from localStorage to force silent renewal
+              if (!retryOk && config.tokenSource === 'localStorage') {
+                log(`[${name}] Clearing MSAL AccessToken cache from localStorage to force renewal...`);
+                const targetPattern = config.tokenMatch?.targetIncludes || '';
+                await page.evaluate((pattern) => {
+                  const keysToRemove = [];
+                  for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    try {
+                      const val = JSON.parse(localStorage.getItem(key));
+                      if (val && val.credentialType === 'AccessToken' && val.target) {
+                        if (!pattern || val.target.includes(pattern)) {
+                          keysToRemove.push(key);
+                        }
+                      }
+                    } catch {}
+                  }
+                  keysToRemove.forEach(k => localStorage.removeItem(k));
+                  return keysToRemove.length;
+                }, targetPattern).catch(() => 0);
+
+                // Reload to trigger MSAL acquireTokenSilent with refresh_token
+                await page.reload({ waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => {});
+                await page.waitForTimeout(8000).catch(() => {}); // MSAL silent renewal needs time
+
+                // If on login page → SSO
+                const postClearUrl = page.url();
+                if (postClearUrl.includes('login.microsoftonline') || postClearUrl.includes('login.live') || postClearUrl.includes('IdentityProvider')) {
+                  log(`[${name}] SSO needed after MSAL cache clear`);
+                  await getHandleSSO()(page, {
+                    targetDomain: config.tab,
+                    log: (msg) => log(`[${name}] ${msg}`)
+                  });
+                  await page.waitForTimeout(5000).catch(() => {});
+                }
+
+                // Final re-extract
+                const finalData = await getExtractToken()(page, config);
+                if (finalData) {
+                  const s = finalData.secret || finalData.token || '';
+                  const cd = finalData.secret
+                    ? { secret: finalData.secret, expiresOn: finalData.expiresOn, fetchedAt: new Date().toISOString() }
+                    : { token: finalData.token, timestamp: Date.now() / 1000, fetchedAt: new Date().toISOString() };
+                  writeCache(config.cacheFile, cd);
+                  log(`[${name}] Token refreshed after MSAL cache clear (len=${s.length})`);
+                } else {
+                  log(`[${name}] Refresh failed even after MSAL cache clear`);
+                }
+              } else if (!retryOk) {
+                log(`[${name}] Refresh still failed after page reload`);
+              }
+            } else {
+              // Token is fresh → write to cache
+              const cacheData = tokenData.secret
+                ? { secret: tokenData.secret, expiresOn: tokenData.expiresOn, fetchedAt: new Date().toISOString() }
+                : { token: tokenData.token, timestamp: Date.now() / 1000, fetchedAt: new Date().toISOString() };
+              writeCache(config.cacheFile, cacheData);
+              log(`[${name}] Token refreshed (len=${secret.length})`);
+              // Reset stale retry counter on successful fresh token
+              staleRetryCount[name] = { count: 0, lastAttempt: 0 };
+            }
           } else {
             // extractToken failed — check if page landed on login (session expired)
             const curUrl = page.url();
