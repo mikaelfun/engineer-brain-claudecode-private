@@ -895,6 +895,8 @@ function TeamsWatchDetailPanel({ watch, history }: { watch: any | null; history:
   const createWatch = useCreateTeamsWatch()
   const { data: sbaStatus } = useSbaStatus()
   const autoPatrolMut = useToggleAutoPatrol()
+  // Local optimistic state for instant UI feedback
+  const [localAutoPatrol, setLocalAutoPatrol] = useState<boolean | null>(null)
 
   if (!watch) {
     return (
@@ -913,7 +915,7 @@ function TeamsWatchDetailPanel({ watch, history }: { watch: any | null; history:
 
   // SBA-specific: auto patrol toggle
   const isSbaWatch = watch.chatId?.includes('deeeb1e6') || watch.topic?.includes('SBA')
-  const autoPatrolEnabled = sbaStatus?.autoPatrolEnabled ?? true
+  const autoPatrolEnabled = localAutoPatrol ?? sbaStatus?.autoPatrolEnabled ?? true
     ? new Date(watch.lastPollAt).toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
     : 'Never'
 
@@ -1034,7 +1036,7 @@ function TeamsWatchDetailPanel({ watch, history }: { watch: any | null; history:
               </span>
             </div>
             <button
-              onClick={() => autoPatrolMut.mutate(!autoPatrolEnabled)}
+              onClick={() => { const next = !autoPatrolEnabled; setLocalAutoPatrol(next); autoPatrolMut.mutate(next, { onSettled: () => setLocalAutoPatrol(null) }) }}
               disabled={autoPatrolMut.isPending}
               className="px-2 py-0.5 rounded text-[10px] font-medium transition-colors"
               style={{
