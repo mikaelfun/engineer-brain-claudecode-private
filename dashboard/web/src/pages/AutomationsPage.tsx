@@ -893,6 +893,8 @@ function TeamsWatchDetailPanel({ watch, history }: { watch: any | null; history:
   const [editAction, setEditAction] = useState('notify')
   const stopWatch = useStopTeamsWatch()
   const createWatch = useCreateTeamsWatch()
+  const { data: sbaStatus } = useSbaStatus()
+  const autoPatrolMut = useToggleAutoPatrol()
 
   if (!watch) {
     return (
@@ -911,8 +913,6 @@ function TeamsWatchDetailPanel({ watch, history }: { watch: any | null; history:
 
   // SBA-specific: auto patrol toggle
   const isSbaWatch = watch.chatId?.includes('deeeb1e6') || watch.topic?.includes('SBA')
-  const { data: sbaStatus } = useSbaStatus()
-  const autoPatrolMut = useToggleAutoPatrol()
   const autoPatrolEnabled = sbaStatus?.autoPatrolEnabled ?? true
     ? new Date(watch.lastPollAt).toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
     : 'Never'
