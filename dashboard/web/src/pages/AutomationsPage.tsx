@@ -86,22 +86,21 @@ function CronJobDetailPanel({ job, triggerRun, onDismissRun }: {
     job?.id && !triggerRun?.messages?.length ? job.id : null
   )
   // Merge: SSE messages (live) > recovered messages (disk/memory)
-  // disk (parseSessionLog) returns mainMessages with `type` field — already CaseSessionMessage compatible
-  // in-memory (cronMessageStore) returns messages with `kind` field — needs mapping
+  // For cron jobs, only show response/completed/failed — filter out thinking/tool-call noise
+  const CRON_SHOW_TYPES = new Set(['response', 'completed', 'failed', 'system', 'user'])
   const displayMessages = useMemo(() => {
-    if (triggerRun?.messages?.length > 0) return triggerRun.messages
-    // Disk recovery: mainMessages already has correct `type` field
-    if (recoveredData?.mainMessages && recoveredData.mainMessages.length > 0) {
-      return recoveredData.mainMessages.map((m: any) => ({
+    let raw: any[] = []
+    if (triggerRun?.messages?.length > 0) {
+      raw = triggerRun.messages
+    } else if (recoveredData?.mainMessages && recoveredData.mainMessages.length > 0) {
+      raw = recoveredData.mainMessages.map((m: any) => ({
         type: m.type || 'thinking',
         content: m.content || '',
         toolName: m.toolName,
         timestamp: m.timestamp,
       }))
-    }
-    // In-memory recovery: messages use `kind` field, needs mapping
-    if (recoveredData?.messages && recoveredData.messages.length > 0) {
-      return recoveredData.messages.map((m: any) => ({
+    } else if (recoveredData?.messages && recoveredData.messages.length > 0) {
+      raw = recoveredData.messages.map((m: any) => ({
         type: m.type || (m.kind === 'tool-call' ? 'tool-call'
           : m.kind === 'tool-result' ? 'tool-result'
           : m.kind === 'response' ? 'response'
@@ -112,7 +111,7 @@ function CronJobDetailPanel({ job, triggerRun, onDismissRun }: {
         timestamp: m.timestamp,
       }))
     }
-    return []
+    return raw.filter((m: any) => CRON_SHOW_TYPES.has(m.type))
   }, [triggerRun?.messages, recoveredData])
   const hasMessages = displayMessages.length > 0
 
@@ -1267,7 +1266,7 @@ function TeamsWatchHistoryEntry({ entry }: { entry: any }) {
     ? new Date(rawTs).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
     : ''
 
-  // SBA card entry
+  // SBA card entry — render all facts from Adaptive Card
   if (entry.parsedCard) {
     const card = entry.parsedCard
     return (
@@ -1277,7 +1276,7 @@ function TeamsWatchHistoryEntry({ entry }: { entry: any }) {
       >
         <div className="flex items-center justify-between">
           <span className="font-medium" style={{ color: 'var(--accent-blue)' }}>
-            🔔 SR {card.caseNumber || '?'} (Sev {card.severity || '?'})
+            🔔 {card.caseNumber ? `SR ${card.caseNumber}` : 'Case Assignment'}{card.severity ? ` (Sev ${card.severity})` : ''}
           </span>
           <span className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>{ts}</span>
         </div>
@@ -1286,14 +1285,26 @@ function TeamsWatchHistoryEntry({ entry }: { entry: any }) {
             Assigned: {card.assignedTo}
           </div>
         )}
-        <div className="flex items-center gap-3 mt-0.5">
-          {card.sla && (
-            <span className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>SLA: {card.sla}</span>
-          )}
-          {card.patrolStatus && (
-            <span className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>Patrol: {card.patrolStatus}</span>
-          )}
-        </div>
+        {/* Render all FactSet fields */}
+        {card.facts && card.facts.length > 0 && (
+          <div className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-[10px]">
+            {card.facts.filter((f: any) => f.title && f.value).map((f: any, i: number) => [
+              <span key={`t${i}`} style={{ color: 'var(--text-tertiary)' }}>{f.title}</span>,
+              <span key={`v${i}`} style={{ color: 'var(--text-secondary)' }}>{f.value}</span>,
+            ])}
+          </div>
+        )}
+        {card.d365Url && (
+          <a
+            href={card.d365Url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block mt-1 text-[10px] underline"
+            style={{ color: 'var(--accent-blue)' }}
+          >
+            Open in D365
+          </a>
+        )}
       </div>
     )
   }

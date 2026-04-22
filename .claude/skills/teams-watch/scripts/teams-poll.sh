@@ -353,19 +353,27 @@ def parse_sba_card(card):
     if not assigned_to:
         return None
     case_number = severity = sla_expire = d365_url = None
+    all_facts = []
+    title_text = None
     for block in card['body']:
+        if block.get('type') == 'TextBlock' and isinstance(block.get('text'), str):
+            if not title_text:
+                title_text = block['text']
         if block.get('type') == 'FactSet' and isinstance(block.get('facts'), list):
             for fact in block['facts']:
-                if fact.get('title') == 'SR': case_number = fact.get('value')
-                if fact.get('title') == 'Severity': severity = fact.get('value')
-                if fact.get('title') == 'Sla Expire Date': sla_expire = fact.get('value')
+                t, v = fact.get('title', ''), fact.get('value', '')
+                all_facts.append({'title': t, 'value': v})
+                if t == 'SR': case_number = v
+                if t == 'Severity': severity = v
+                if t == 'Sla Expire Date': sla_expire = v
         if block.get('type') == 'ActionSet' and isinstance(block.get('actions'), list):
             for act_item in block['actions']:
                 if act_item.get('type') == 'Action.OpenUrl' and act_item.get('url'):
                     d365_url = act_item['url']
                     break
     return {'type': 'case-assignment', 'caseNumber': case_number, 'assignedTo': assigned_to,
-            'severity': severity, 'slaExpire': sla_expire, 'd365Url': d365_url}
+            'severity': severity, 'slaExpire': sla_expire, 'd365Url': d365_url,
+            'titleText': title_text, 'facts': all_facts}
 
 # ---- Extract messages from either format ----
 
