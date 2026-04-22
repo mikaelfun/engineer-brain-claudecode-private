@@ -1576,7 +1576,6 @@ export function useTeamsWatchHistory(watchId: string | null) {
     queryKey: ['teams-watch', watchId, 'history'],
     queryFn: () => apiGet<{ history: any[]; total: number }>(`/teams-watch/${watchId}/history`),
     enabled: !!watchId,
-    refetchInterval: 15_000,
   })
 }
 

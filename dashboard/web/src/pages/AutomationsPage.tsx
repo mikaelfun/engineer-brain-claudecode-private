@@ -579,6 +579,15 @@ function TeamsWatchTab({ watches }: { watches: any[] }) {
 
   const selectedWatch = watches.find((w: any) => w.watchId === selectedWatchId) || null
 
+  // Auto-refresh history when lastMessageId changes (new message detected)
+  const queryClient = useQueryClient()
+  const lastMsgId = selectedWatch?.lastMessageId || ''
+  useEffect(() => {
+    if (selectedWatchId && lastMsgId) {
+      queryClient.invalidateQueries({ queryKey: ['teams-watch', selectedWatchId, 'history'] })
+    }
+  }, [lastMsgId, selectedWatchId, queryClient])
+
   const handleCreate = () => {
     if (!newTopic.trim()) return
     createWatch.mutate(
