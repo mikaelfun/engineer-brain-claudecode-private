@@ -667,7 +667,7 @@ function TeamsWatchTab({ watches }: { watches: any[] }) {
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="text-[11px] font-mono" style={{ color: 'var(--text-tertiary)' }}>
-                      {watch.interval || 60}s | {watch.action || 'notify'} | {watch.pollCount || 0} polls
+                      {watch.interval || 60}s | {watch.action || 'notify'}{watch.lastPollAt ? ` | ${new Date(watch.lastPollAt).toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}` : ''}
                     </span>
                   </div>
                 </div>
@@ -853,6 +853,11 @@ function TeamsWatchAddForm({
 
 function TeamsWatchDetailPanel({ watch, history }: { watch: any | null; history: any[] }) {
   const [historyOpen, setHistoryOpen] = useState(true)
+  const [editing, setEditing] = useState(false)
+  const [editInterval, setEditInterval] = useState(60)
+  const [editAction, setEditAction] = useState('notify')
+  const stopWatch = useStopTeamsWatch()
+  const createWatch = useCreateTeamsWatch()
 
   if (!watch) {
     return (
@@ -885,12 +890,71 @@ function TeamsWatchDetailPanel({ watch, history }: { watch: any | null; history:
             </p>
           )}
           <div className="flex items-center gap-3 mt-1">
-            <span className="text-[11px]" style={{ color: 'var(--text-tertiary)' }}>
-              Interval: {watch.interval || 60}s
-            </span>
-            <span className="text-[11px]" style={{ color: 'var(--text-tertiary)' }}>
-              Action: {watch.action || 'notify'}
-            </span>
+            {editing ? (
+              <>
+                <select
+                  value={editInterval}
+                  onChange={e => setEditInterval(Number(e.target.value))}
+                  className="text-[11px] px-1 py-0.5 rounded"
+                  style={{ background: 'var(--bg-inset)', color: 'var(--text-primary)', border: '1px solid var(--border-subtle)' }}
+                >
+                  <option value={30}>30s</option>
+                  <option value={60}>60s</option>
+                  <option value={120}>120s</option>
+                  <option value={300}>300s</option>
+                </select>
+                <select
+                  value={editAction}
+                  onChange={e => setEditAction(e.target.value)}
+                  className="text-[11px] px-1 py-0.5 rounded"
+                  style={{ background: 'var(--bg-inset)', color: 'var(--text-primary)', border: '1px solid var(--border-subtle)' }}
+                >
+                  <option value="notify">notify</option>
+                  <option value="log">log</option>
+                  <option value="self-message">self-message</option>
+                </select>
+                <button
+                  onClick={() => {
+                    // Stop then restart with new params
+                    stopWatch.mutate(watch.watchId, {
+                      onSuccess: () => {
+                        createWatch.mutate({ chatId: watch.chatId, interval: editInterval, action: editAction })
+                        setEditing(false)
+                      }
+                    })
+                  }}
+                  disabled={stopWatch.isPending || createWatch.isPending}
+                  className="text-[10px] px-1.5 py-0.5 rounded font-medium"
+                  style={{ background: 'var(--accent-blue)', color: 'white' }}
+                >
+                  {(stopWatch.isPending || createWatch.isPending) ? '...' : 'Save'}
+                </button>
+                <button
+                  onClick={() => setEditing(false)}
+                  className="text-[10px] px-1.5 py-0.5 rounded"
+                  style={{ color: 'var(--text-tertiary)' }}
+                >
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <>
+                <span className="text-[11px]" style={{ color: 'var(--text-tertiary)' }}>
+                  Interval: {watch.interval || 60}s
+                </span>
+                <span className="text-[11px]" style={{ color: 'var(--text-tertiary)' }}>
+                  Action: {watch.action || 'notify'}
+                </span>
+                <button
+                  onClick={() => { setEditInterval(watch.interval || 60); setEditAction(watch.action || 'notify'); setEditing(true) }}
+                  className="p-0.5 rounded hover:bg-[var(--bg-hover)]"
+                  style={{ color: 'var(--text-tertiary)' }}
+                  title="Edit"
+                >
+                  <Pencil className="w-3 h-3" />
+                </button>
+              </>
+            )}
           </div>
         </div>
 
