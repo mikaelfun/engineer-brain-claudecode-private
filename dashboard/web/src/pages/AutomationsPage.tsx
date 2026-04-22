@@ -934,9 +934,18 @@ function TeamsWatchDetailPanel({ watch, history }: { watch: any | null; history:
               <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>No history yet</div>
             ) : (
               <div className="flex-1 min-h-0 overflow-auto space-y-1.5">
-                {[...history].reverse().map((entry: any, idx: number) => (
-                  <TeamsWatchHistoryEntry key={entry.id || idx} entry={entry} />
-                ))}
+                {(() => {
+                  // Deduplicate by messageTime+from+preview
+                  const seen = new Set<string>()
+                  return [...history].reverse().filter((entry: any) => {
+                    const key = `${entry.messageTime || entry.detectedAt}|${entry.from}|${entry.preview}`
+                    if (seen.has(key)) return false
+                    seen.add(key)
+                    return true
+                  }).map((entry: any, idx: number) => (
+                    <TeamsWatchHistoryEntry key={idx} entry={entry} />
+                  ))
+                })()}
               </div>
             )
           )}
