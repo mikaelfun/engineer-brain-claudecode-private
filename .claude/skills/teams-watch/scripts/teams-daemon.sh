@@ -79,14 +79,22 @@ case "$CMD" in
     [ -n "$ACTION_SCRIPT" ] && POLL_ARGS="$POLL_ARGS --action-script \"$ACTION_SCRIPT\""
 
     # Start background loop
+    # Use a separate script file to ensure the process survives parent exit
+    # (Node execSync kills child process group when pipe closes)
     LOG_FILE="$STATE_DIR/daemon-$HASH.log"
-    (
-      echo "[$(date '+%Y-%m-%d %H:%M:%S')] DAEMON START | topic=$LABEL interval=${INTERVAL}s action=$ACTION" >> "$LOG_FILE"
-      while true; do
-        eval "bash \"$SCRIPT_DIR/teams-poll.sh\" $POLL_ARGS" >> "$LOG_FILE" 2>&1
-        sleep "$INTERVAL"
-      done
-    ) &
+    LOOP_SCRIPT="$STATE_DIR/daemon-$HASH-loop.sh"
+    cat > "$LOOP_SCRIPT" << LOOPEOF
+#!/usr/bin/env bash
+echo "[\$(date '+%Y-%m-%d %H:%M:%S')] DAEMON START | topic=$LABEL interval=${INTERVAL}s action=$ACTION" >> "$LOG_FILE"
+while true; do
+  bash "$SCRIPT_DIR/teams-poll.sh" $POLL_ARGS --state-dir "$STATE_DIR" >> "$LOG_FILE" 2>&1
+  sleep $INTERVAL
+done
+LOOPEOF
+    chmod +x "$LOOP_SCRIPT"
+    # Launch detached: setsid on Linux, start /B on Windows (Git Bash)
+    bash "$LOOP_SCRIPT" </dev/null >>"$LOG_FILE" 2>&1 &
+    disown
     DAEMON_PID=$!
     echo "$DAEMON_PID" > "$PID_FILE"
 

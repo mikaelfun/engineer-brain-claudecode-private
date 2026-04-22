@@ -4,9 +4,9 @@
  * 读取 {dataDir}/teams-watch/ 下的 watch state 和 daemon config 文件，
  * 提供 CRUD 操作，通过 shell 调用 teams-daemon.sh 控制后台进程。
  */
-import { readFileSync, existsSync, readdirSync, unlinkSync } from 'fs'
+import { readFileSync, existsSync, readdirSync, unlinkSync, writeFileSync, mkdirSync, appendFileSync } from 'fs'
 import { join, resolve } from 'path'
-import { execSync } from 'child_process'
+import { execSync, spawn } from 'child_process'
 import { config } from '../config.js'
 
 const STATE_DIR = join(config.dataDir, 'teams-watch')
@@ -15,6 +15,11 @@ const PID_DIR = join(STATE_DIR, 'pids')
 const DAEMON_SCRIPT = resolve(
   config.projectRoot,
   '.claude', 'skills', 'teams-watch', 'scripts', 'teams-daemon.sh'
+)
+
+const POLL_SCRIPT = resolve(
+  config.projectRoot,
+  '.claude', 'skills', 'teams-watch', 'scripts', 'teams-poll.sh'
 )
 
 const WATCH_TARGETS_FILE = resolve(
@@ -269,8 +274,9 @@ export function listWatches(): TeamsWatch[] {
 }
 
 /**
- * Start a new watch daemon via teams-daemon.sh.
- * Returns the daemon output line (e.g. "DAEMON_STARTED|topic=...|pid=...")
+ * Start a watch daemon by spawning teams-poll.sh in a detached loop.
+ * Uses Node spawn({detached:true}) instead of bash background process
+ * to survive parent pipe close (Git Bash limitation on Windows).
  */
 export function startWatch(opts: {
   topic?: string
@@ -284,27 +290,71 @@ export function startWatch(opts: {
     return 'ERROR: topic or chatId required'
   }
 
-  const args: string[] = ['start']
-  if (topic) args.push('--topic', `"${topic}"`)
-  if (chatId) args.push('--chat-id', `"${chatId}"`)
-  args.push('--interval', String(interval))
-  args.push('--action', action)
+  const label = chatId || topic || ''
+  const hash = execSync(`python3 -c "import hashlib; print(hashlib.md5('${label}'.encode()).hexdigest()[:12])"`, {
+    encoding: 'utf-8', timeout: 5000,
+  }).trim()
 
-  try {
-    const result = execSync(
-      `bash "${DAEMON_SCRIPT}" ${args.join(' ')}`,
-      {
-        encoding: 'utf-8',
-        timeout: 15_000,
-        cwd: config.projectRoot,
-        stdio: ['pipe', 'pipe', 'pipe'],
+  const pidDir = join(STATE_DIR, 'pids')
+  mkdirSync(pidDir, { recursive: true })
+  const pidFile = join(pidDir, `watch-${hash}.pid`)
+
+  // Check if already running
+  if (existsSync(pidFile)) {
+    try {
+      const oldPid = parseInt(readFileSync(pidFile, 'utf-8').trim(), 10)
+      if (!isNaN(oldPid) && isProcessAlive(oldPid)) {
+        return `DAEMON_ALREADY_RUNNING|topic=${label}|pid=${oldPid}`
       }
-    )
-    return result.trim()
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message.substring(0, 200) : String(e)
-    return `ERROR: ${msg}`
+    } catch {}
   }
+
+  // Build poll args
+  const pollArgs: string[] = []
+  if (topic) pollArgs.push('--topic', topic)
+  if (chatId) pollArgs.push('--chat-id', chatId)
+  pollArgs.push('--action', action, '--state-dir', STATE_DIR)
+
+  // Write a loop script and spawn it detached
+  const logFile = join(STATE_DIR, `daemon-${hash}.log`)
+  const loopScript = join(STATE_DIR, `daemon-${hash}-loop.sh`)
+
+  const pollCmd = `bash "${POLL_SCRIPT}" ${pollArgs.map(a => `"${a}"`).join(' ')}`
+  const scriptContent = `#!/usr/bin/env bash
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] DAEMON START | topic=${label} interval=${interval}s action=${action}" >> "${logFile}"
+while true; do
+  ${pollCmd} >> "${logFile}" 2>&1
+  sleep ${interval}
+done
+`
+  writeFileSync(loopScript, scriptContent)
+
+  const child = spawn('bash', [loopScript], {
+    detached: true,
+    stdio: 'ignore',
+    cwd: config.projectRoot,
+  })
+  child.unref()
+
+  const pid = child.pid
+  if (pid) {
+    writeFileSync(pidFile, String(pid))
+
+    // Write daemon config for UI
+    const cfgFile = join(STATE_DIR, `daemon-${hash}-config.json`)
+    writeFileSync(cfgFile, JSON.stringify({
+      watchId: `watch-${hash}`,
+      topic: label,
+      chatId: chatId || '',
+      interval,
+      action,
+      pid,
+      startedAt: new Date().toISOString(),
+      status: 'running',
+    }, null, 2))
+  }
+
+  return `DAEMON_STARTED|topic=${label}|pid=${pid}|interval=${interval}s|action=${action}`
 }
 
 /**
