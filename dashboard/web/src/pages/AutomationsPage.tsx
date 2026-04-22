@@ -1060,8 +1060,8 @@ function TeamsWatchDetailPanel({ watch, history }: { watch: any | null; history:
                 </span>
               )}
             </div>
-            <p className="mt-0.5 break-words" style={{ color: 'var(--text-primary)' }}>
-              {watch.lastMessageFrom}: {watch.lastMessagePreview || '(no content)'}
+            <p className="mt-0.5" style={{ color: 'var(--text-primary)', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
+              {watch.lastMessageFrom}: {decodeHtml(watch.lastMessagePreview || '(no content)')}
             </p>
           </div>
         )}
@@ -1103,6 +1103,13 @@ function TeamsWatchDetailPanel({ watch, history }: { watch: any | null; history:
 }
 
 // ---- Teams Watch History Entry ----
+
+// Decode HTML entities in preview text (e.g. &gt; → >)
+function decodeHtml(text: string): string {
+  const el = document.createElement('textarea')
+  el.innerHTML = text
+  return el.value
+}
 
 function TeamsWatchHistoryEntry({ entry }: { entry: any }) {
   const rawTs = entry.messageTime || entry.detectedAt || entry.timestamp || ''
@@ -1154,7 +1161,7 @@ function TeamsWatchHistoryEntry({ entry }: { entry: any }) {
         <span className="text-[10px] shrink-0 ml-2" style={{ color: 'var(--text-tertiary)' }}>{ts}</span>
       </div>
       <p className="break-words" style={{ color: 'var(--text-primary)' }}>
-        {entry.preview || entry.message || 'No content'}
+        {decodeHtml(entry.preview || entry.message || 'No content')}
       </p>
     </div>
   )
