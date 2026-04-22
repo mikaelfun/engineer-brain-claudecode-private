@@ -391,7 +391,7 @@ def get_from(msg):
         return app['displayName']
     return 'system'
 
-def get_preview(msg, maxlen=80):
+def get_preview(msg, maxlen=500):
     body = (msg.get('body') or {}).get('content', '')
     return re.sub(r'<[^>]+>', '', body).strip()[:maxlen]
 
@@ -437,14 +437,14 @@ if os.path.exists(state_file):
 existing_keys = set()
 for h in history:
     ht = normalize_ts(h.get('messageTime', ''))
-    hp = h.get('preview', '')[:60]
+    hp = h.get('preview', '')[:200]
     existing_keys.add((ht, hp))
 
 # Filter out messages already in history
 deduped_msgs = []
 for m in new_msgs:
     mt = normalize_ts(m.get('createdDateTime', ''))
-    mp = get_preview(m, 120)[:60]
+    mp = get_preview(m, 500)[:200]
     if (mt, mp) not in existing_keys:
         deduped_msgs.append(m)
         existing_keys.add((mt, mp))
@@ -457,7 +457,7 @@ total_new += new_count
 if new_count > 0:
     for msg in new_msgs[:5]:
         msg_from = get_from(msg)
-        msg_body = get_preview(msg, 120)
+        msg_body = get_preview(msg, 500)
         msg_time = msg.get('createdDateTime', '')
 
         entry = {'detectedAt': utcnow().strftime('%Y-%m-%dT%H:%M:%S')+'Z', 'messageTime': msg_time,
