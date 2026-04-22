@@ -86,9 +86,13 @@ teamsWatchRoutes.post('/:id/start', async (c) => {
 // Restart a stale/running watch (atomic stop + cleanup + start)
 teamsWatchRoutes.post('/:id/restart', (c) => {
   const id = c.req.param('id')
-  const result = restartWatch(id)
-  const ok = !result.startsWith('ERROR')
-  return c.json({ ok, result })
+  try {
+    const result = restartWatch(id)
+    const ok = !result.startsWith('ERROR')
+    return c.json({ ok, result })
+  } catch (e: any) {
+    return c.json({ ok: false, error: e.message || String(e) }, 500)
+  }
 })
 
 // Stop a running watch

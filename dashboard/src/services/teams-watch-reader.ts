@@ -7,6 +7,7 @@
 import { readFileSync, existsSync, readdirSync, unlinkSync, writeFileSync, mkdirSync, statSync } from 'fs'
 import { join, resolve } from 'path'
 import { execSync, spawn } from 'child_process'
+import { createHash } from 'crypto'
 import { config } from '../config.js'
 
 const STATE_DIR = join(config.dataDir, 'teams-watch')
@@ -294,9 +295,7 @@ export function startWatch(opts: {
   }
 
   const label = chatId || topic || ''
-  const hash = execSync(`python3 -c "import hashlib; print(hashlib.md5('${label}'.encode()).hexdigest()[:12])"`, {
-    encoding: 'utf-8', timeout: 5000,
-  }).trim()
+  const hash = createHash('md5').update(label).digest('hex').slice(0, 12)
 
   const pidDir = join(STATE_DIR, 'pids')
   mkdirSync(pidDir, { recursive: true })
@@ -378,12 +377,20 @@ export function restartWatch(watchId: string): string {
   const state = readJsonFile<WatchStateFile>(statePath)
 
   const chatId = cfg?.chatId || state?.target?.chatId || ''
+  const topic = cfg?.topic || state?.target?.topic || ''
   const interval = cfg?.interval ?? state?.config?.interval ?? 60
   const action = cfg?.action ?? state?.config?.action ?? 'notify'
 
-  if (!chatId) {
-    return `ERROR: cannot determine chatId for ${watchId}`
+  if (!chatId && !topic) {
+    return `ERROR: cannot determine chatId or topic for ${watchId}`
   }
+
+  // Determine which label was used to create the original hash
+  // so the new daemon uses the same hash and matches old state files
+  const chatIdHash = chatId ? createHash('md5').update(chatId).digest('hex').slice(0, 12) : ''
+  const topicHash = topic ? createHash('md5').update(topic).digest('hex').slice(0, 12) : ''
+  const useTopic = topicHash === hash
+  const useChatId = chatIdHash === hash
 
   // 2. Kill the process (try multiple methods)
   let oldPid: number | null = null
@@ -424,11 +431,24 @@ export function restartWatch(watchId: string): string {
 
   // 4. Brief wait to ensure process is fully dead (Windows taskkill can be async)
   try {
-    execSync('ping -n 2 127.0.0.1 >nul 2>&1', { timeout: 3000, stdio: 'ignore' })
-  } catch { /* ignore */ }
+    execSync('sleep 1', { timeout: 3000, stdio: 'ignore' })
+  } catch {
+    // sleep not available — try Windows ping fallback
+    try {
+      execSync('cmd /c "ping -n 2 127.0.0.1 >nul 2>&1"', { timeout: 3000, stdio: 'ignore' })
+    } catch { /* ignore */ }
+  }
 
-  // 5. Start fresh
-  return startWatch({ chatId, interval, action })
+  // 5. Start fresh — use the SAME label that produced the original hash
+  // so new daemon files (PID, config, state) match the existing state file
+  if (useTopic) {
+    return startWatch({ topic, interval, action })
+  } else if (useChatId) {
+    return startWatch({ chatId, interval, action })
+  } else {
+    // Fallback: prefer chatId
+    return startWatch({ chatId: chatId || topic, interval, action })
+  }
 }
 
 /**
