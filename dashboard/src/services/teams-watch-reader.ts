@@ -4,7 +4,7 @@
  * 读取 {dataDir}/teams-watch/ 下的 watch state 和 daemon config 文件，
  * 提供 CRUD 操作，通过 shell 调用 teams-daemon.sh 控制后台进程。
  */
-import { readFileSync, existsSync, readdirSync, unlinkSync, writeFileSync, mkdirSync, appendFileSync } from 'fs'
+import { readFileSync, existsSync, readdirSync, unlinkSync, writeFileSync, mkdirSync, statSync } from 'fs'
 import { join, resolve } from 'path'
 import { execSync, spawn } from 'child_process'
 import { config } from '../config.js'
@@ -469,4 +469,102 @@ export function getSbaTarget(): { chatId: string; displayName: string } | null {
 export function findWatchByChatId(chatId: string): TeamsWatch | null {
   const watches = listWatches()
   return watches.find(w => w.chatId === chatId) || null
+}
+
+/**
+ * Enrich watch history with Graph API data:
+ * - Replace "system" from with actual sender displayName
+ * - Parse Adaptive Card attachments into parsedCard
+ *
+ * Results are cached in a separate enriched-{hash}.json file
+ * to avoid re-fetching on every request.
+ */
+export async function enrichWatchHistory(watchId: string): Promise<WatchHistoryEntry[]> {
+  const { readGraphToken } = await import('./graph-token-reader.js')
+  const { parseSbaCard } = await import('./sba-patrol-trigger.js')
+
+  const hash = extractHash(watchId)
+  const statePath = join(STATE_DIR, `watch-${hash}.json`)
+  const enrichCachePath = join(STATE_DIR, `enriched-${hash}.json`)
+  const state = readJsonFile<WatchStateFile>(statePath)
+  if (!state?.history?.length) return []
+
+  const chatId = state.target?.chatId
+  if (!chatId) return state.history
+
+  // Check enrichment cache — reuse if fresh (< 2 min old)
+  if (existsSync(enrichCachePath)) {
+    try {
+      const fstat = statSync(enrichCachePath)
+      const ageMs = Date.now() - fstat.mtimeMs
+      if (ageMs < 120_000) {
+        const cached = readJsonFile<WatchHistoryEntry[]>(enrichCachePath)
+        if (cached) return cached
+      }
+    } catch {}
+  }
+
+  // Get Graph token
+  const token = readGraphToken()
+  if (!token?.isValid) return state.history // Can't enrich without token
+
+  // Fetch recent messages with full data (from + attachments)
+  try {
+    const res = await fetch(
+      `https://graph.microsoft.com/v1.0/me/chats/${encodeURIComponent(chatId)}/messages?$top=20`,
+      { headers: { Authorization: `Bearer ${token.secret}` } }
+    )
+    if (!res.ok) return state.history
+
+    const data = await res.json()
+    const graphMessages: any[] = data.value || []
+
+    // Build lookup: messageId → { from, parsedCard }
+    const msgLookup = new Map<string, { from: string; parsedCard?: ParsedCard }>()
+    // Also build time-based lookup for matching (state history uses messageTime)
+    const timeLookup = new Map<string, { from: string; parsedCard?: ParsedCard }>()
+
+    for (const msg of graphMessages) {
+      const from = msg.from?.user?.displayName
+        || msg.from?.application?.displayName
+        || 'system'
+
+      let parsedCard: ParsedCard | undefined
+      if (Array.isArray(msg.attachments)) {
+        for (const att of msg.attachments) {
+          if (att.contentType === 'application/vnd.microsoft.card.adaptive' && att.content) {
+            try {
+              const cardJson = typeof att.content === 'string' ? JSON.parse(att.content) : att.content
+              const card = parseSbaCard(cardJson)
+              if (card) parsedCard = card
+            } catch {}
+          }
+        }
+      }
+
+      if (msg.id) msgLookup.set(msg.id, { from, parsedCard })
+      if (msg.createdDateTime) timeLookup.set(msg.createdDateTime, { from, parsedCard })
+    }
+
+    // Enrich history entries
+    const enriched = state.history.map(entry => {
+      // Match by messageTime (most reliable — same as createdDateTime from Graph)
+      const match = timeLookup.get(entry.messageTime) || null
+      if (!match) return entry
+
+      return {
+        ...entry,
+        from: match.from !== 'system' ? match.from : entry.from,
+        parsedCard: match.parsedCard || entry.parsedCard,
+      }
+    })
+
+    // Cache enriched result
+    writeFileSync(enrichCachePath, JSON.stringify(enriched, null, 2))
+    return enriched
+
+  } catch (err) {
+    console.warn(`[teams-watch] Enrichment failed for ${watchId}:`, err)
+    return state.history
+  }
 }

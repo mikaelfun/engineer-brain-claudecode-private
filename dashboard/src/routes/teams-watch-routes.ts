@@ -16,6 +16,7 @@ import {
   stopWatch,
   deleteWatch,
   getWatchHistory,
+  enrichWatchHistory,
 } from '../services/teams-watch-reader.js'
 import { getSbaPatrolStatus } from '../services/sba-patrol-trigger.js'
 
@@ -81,10 +82,10 @@ teamsWatchRoutes.post('/:id/stop', (c) => {
   return c.json({ ok: true, result })
 })
 
-// Get message history
-teamsWatchRoutes.get('/:id/history', (c) => {
+// Get message history (enriched with Graph API data)
+teamsWatchRoutes.get('/:id/history', async (c) => {
   const id = c.req.param('id')
-  const history = getWatchHistory(id)
+  const history = await enrichWatchHistory(id)
   return c.json({ history, total: history.length })
 })
 
