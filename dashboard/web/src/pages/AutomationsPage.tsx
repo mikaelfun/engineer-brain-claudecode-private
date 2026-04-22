@@ -577,7 +577,7 @@ function TeamsWatchTab({ watches }: { watches: any[] }) {
   const { data: historyData } = useTeamsWatchHistory(selectedWatchId)
   const history = historyData?.history || []
 
-  const selectedWatch = watches.find((w: any) => w.id === selectedWatchId) || null
+  const selectedWatch = watches.find((w: any) => w.watchId === selectedWatchId) || null
 
   const handleCreate = () => {
     if (!newTopic.trim()) return
@@ -631,17 +631,17 @@ function TeamsWatchTab({ watches }: { watches: any[] }) {
         <div className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
           {watches.map((watch: any) => {
             const isRunning = watch.status === 'running'
-            const isSelected = selectedWatchId === watch.id
+            const isSelected = selectedWatchId === watch.watchId
 
             return (
               <div
-                key={watch.id}
+                key={watch.watchId}
                 className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors"
                 style={{
                   background: isSelected ? 'var(--bg-active)' : 'transparent',
                   borderBottom: '1px solid var(--border-subtle)',
                 }}
-                onClick={() => setSelectedWatchId(isSelected ? null : watch.id)}
+                onClick={() => setSelectedWatchId(isSelected ? null : watch.watchId)}
                 onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
                 onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
               >
@@ -672,7 +672,7 @@ function TeamsWatchTab({ watches }: { watches: any[] }) {
                 <div className="flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
                   {isRunning ? (
                     <button
-                      onClick={() => stopWatch.mutate(watch.id)}
+                      onClick={() => stopWatch.mutate(watch.watchId)}
                       disabled={stopWatch.isPending}
                       className="p-1 rounded transition-colors hover:bg-[var(--bg-hover)]"
                       style={{ color: 'var(--accent-red)' }}
@@ -682,7 +682,7 @@ function TeamsWatchTab({ watches }: { watches: any[] }) {
                     </button>
                   ) : (
                     <button
-                      onClick={() => startWatch.mutate(watch.id)}
+                      onClick={() => startWatch.mutate(watch.watchId)}
                       disabled={startWatch.isPending}
                       className="p-1 rounded transition-colors hover:bg-[var(--bg-hover)]"
                       style={{ color: 'var(--accent-green)' }}
@@ -691,13 +691,13 @@ function TeamsWatchTab({ watches }: { watches: any[] }) {
                       <Play className="w-3.5 h-3.5" />
                     </button>
                   )}
-                  {deletingId === watch.id ? (
+                  {deletingId === watch.watchId ? (
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => {
-                          deleteWatch.mutate(watch.id)
+                          deleteWatch.mutate(watch.watchId)
                           setDeletingId(null)
-                          if (selectedWatchId === watch.id) setSelectedWatchId(null)
+                          if (selectedWatchId === watch.watchId) setSelectedWatchId(null)
                         }}
                         className="px-1.5 py-0.5 rounded text-[10px] font-medium"
                         style={{ background: 'var(--accent-red)', color: 'white' }}
@@ -714,7 +714,7 @@ function TeamsWatchTab({ watches }: { watches: any[] }) {
                     </div>
                   ) : (
                     <button
-                      onClick={() => setDeletingId(watch.id)}
+                      onClick={() => setDeletingId(watch.watchId)}
                       className="p-1 rounded transition-colors hover:bg-[var(--bg-hover)]"
                       style={{ color: 'var(--accent-red)' }}
                       title="Delete"
