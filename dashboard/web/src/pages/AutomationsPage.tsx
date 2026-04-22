@@ -958,7 +958,7 @@ function TeamsWatchDetailPanel({ watch, history }: { watch: any | null; history:
 // ---- Teams Watch History Entry ----
 
 function TeamsWatchHistoryEntry({ entry }: { entry: any }) {
-  const rawTs = entry.detectedAt || entry.messageTime || entry.timestamp || ''
+  const rawTs = entry.messageTime || entry.detectedAt || entry.timestamp || ''
   const ts = rawTs
     ? new Date(rawTs).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
     : ''
