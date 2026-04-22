@@ -21,12 +21,51 @@ import PatrolPage from './pages/PatrolPage'
 import AutomationsPage from './pages/AutomationsPage'
 import { PageLoading } from './components/common/Loading'
 import { ErrorBoundary } from './components/common/ErrorBoundary'
+import { useNotificationStore } from './stores/notificationStore'
+
+function GlobalNotificationBanner() {
+  const notifications = useNotificationStore((s) => s.notifications)
+  const dismiss = useNotificationStore((s) => s.dismiss)
+
+  if (notifications.length === 0) return null
+
+  const colorMap = {
+    info: { bg: 'var(--accent-blue-dim)', color: 'var(--accent-blue)', border: 'var(--border-subtle)' },
+    success: { bg: 'var(--accent-green-dim)', color: 'var(--accent-green)', border: 'var(--border-subtle)' },
+    warning: { bg: '#fef3c7', color: '#92400e', border: '#fbbf24' },
+    error: { bg: 'var(--accent-red-dim)', color: 'var(--accent-red)', border: 'var(--accent-red)' },
+  }
+
+  return (
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999, padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      {notifications.map((n) => {
+        const c = colorMap[n.type]
+        return (
+          <div
+            key={n.id}
+            style={{
+              background: c.bg, color: c.color, border: `1px solid ${c.border}`,
+              borderRadius: '8px', padding: '8px 16px', fontSize: '13px',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+            }}
+          >
+            <span>{n.msg}</span>
+            <button onClick={() => dismiss(n.id)} style={{ marginLeft: 8, opacity: 0.6, cursor: 'pointer', background: 'none', border: 'none', color: 'inherit', fontSize: '12px' }}>✕</button>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
 
 function AuthenticatedApp() {
   useSSE()
 
   return (
-    <Layout>
+    <>
+      <GlobalNotificationBanner />
+      <Layout>
       <ErrorBoundary>
       <Routes>
         <Route path="/" element={<Dashboard />} />
@@ -46,6 +85,7 @@ function AuthenticatedApp() {
       </Routes>
       </ErrorBoundary>
     </Layout>
+    </>
   )
 }
 

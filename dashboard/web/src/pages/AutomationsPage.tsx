@@ -17,6 +17,7 @@ import {
   CheckCircle2, AlertCircle, XCircle, Pencil, Power, Square,
 } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
+import { useNotificationStore } from '../stores/notificationStore'
 
 // ---- Cron Job Detail Panel ----
 
@@ -568,9 +569,10 @@ function TeamsWatchTab({ watches }: { watches: any[] }) {
   const [newTopic, setNewTopic] = useState('')
   const [newInterval, setNewInterval] = useState('60')
   const [newAction, setNewAction] = useState('notify')
-  const [notification, setNotification] = useState<{ msg: string; type: 'info' | 'success' | 'warning' } | null>(null)
+  const [notification, setNotification] = useState<null>(null) // kept for TS compat, not used
+  const pushNotification = useNotificationStore((s) => s.push)
 
-  // Track last message changes for notification
+  // Track last message changes for global notification
   const prevMsgRef = useRef<Record<string, string>>({})
   useEffect(() => {
     for (const w of watches) {
@@ -578,18 +580,16 @@ function TeamsWatchTab({ watches }: { watches: any[] }) {
       const prev = prevMsgRef.current[key]
       const curr = w.lastMessageId
       if (prev && curr && prev !== curr) {
-        // New message detected!
         const card = w.history?.find((e: any) => e.parsedCard?.type === 'case-assignment')?.parsedCard
         if (card?.caseNumber) {
-          setNotification({ msg: `🔔 New case assigned: SR ${card.caseNumber} (Sev ${card.severity || '?'}) → ${card.assignedTo || '?'}`, type: 'warning' })
+          pushNotification(`🔔 New case assigned: SR ${card.caseNumber} (Sev ${card.severity || '?'}) → ${card.assignedTo || '?'}`, 'warning', 15000)
         } else {
-          setNotification({ msg: `📩 ${w.topic}: ${w.lastMessageFrom || 'New'} — ${w.lastMessagePreview || ''}`, type: 'info' })
+          pushNotification(`📩 ${w.topic}: ${w.lastMessageFrom || 'New'} — ${w.lastMessagePreview || ''}`, 'info')
         }
-        setTimeout(() => setNotification(null), 10000)
       }
       prevMsgRef.current[key] = curr || ''
     }
-  }, [watches])
+  }, [watches, pushNotification])
 
   const startWatch = useStartTeamsWatch()
   const stopWatch = useStopTeamsWatch()
@@ -656,23 +656,7 @@ function TeamsWatchTab({ watches }: { watches: any[] }) {
   }
 
   return (
-    <div className="space-y-3">
-      {/* Notification banner */}
-      {notification && (
-        <div
-          className="flex items-center justify-between px-4 py-2.5 rounded-lg text-sm"
-          style={{
-            background: notification.type === 'warning' ? 'var(--accent-yellow-dim, #fef3c7)' : notification.type === 'success' ? 'var(--accent-green-dim)' : 'var(--accent-blue-dim)',
-            color: notification.type === 'warning' ? 'var(--accent-yellow, #92400e)' : notification.type === 'success' ? 'var(--accent-green)' : 'var(--accent-blue)',
-            border: `1px solid ${notification.type === 'warning' ? 'var(--accent-yellow, #fbbf24)' : 'var(--border-subtle)'}`,
-          }}
-        >
-          <span>{notification.msg}</span>
-          <button onClick={() => setNotification(null)} className="ml-2 text-xs opacity-60 hover:opacity-100">✕</button>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr] gap-4" style={{ minHeight: 'calc(100vh - 280px)' }}>
+    <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr] gap-4" style={{ minHeight: 'calc(100vh - 280px)' }}>
       {/* Left: watch list */}
       <Card padding="none">
         <div className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
@@ -806,7 +790,6 @@ function TeamsWatchTab({ watches }: { watches: any[] }) {
 
       {/* Right: selected watch detail */}
       <TeamsWatchDetailPanel watch={selectedWatch} history={history} />
-    </div>
     </div>
   )
 }
