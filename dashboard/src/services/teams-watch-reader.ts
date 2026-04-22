@@ -316,10 +316,14 @@ export function startWatch(opts: {
   pollArgs.push('--action', action, '--state-dir', STATE_DIR)
 
   // Write a loop script and spawn it detached
-  const logFile = join(STATE_DIR, `daemon-${hash}.log`)
+  // Convert Windows paths to POSIX for bash compatibility
+  const posix = (p: string) => p.replace(/\\/g, '/')
+  const logFile = posix(join(STATE_DIR, `daemon-${hash}.log`))
   const loopScript = join(STATE_DIR, `daemon-${hash}-loop.sh`)
+  const posixPollScript = posix(POLL_SCRIPT)
+  const posixStateDir = posix(STATE_DIR)
 
-  const pollCmd = `bash "${POLL_SCRIPT}" ${pollArgs.map(a => `"${a}"`).join(' ')}`
+  const pollCmd = `bash "${posixPollScript}" ${pollArgs.map(a => `"${a}"`).join(' ').replace(/\\/g, '/')}`
   const scriptContent = `#!/usr/bin/env bash
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] DAEMON START | topic=${label} interval=${interval}s action=${action}" >> "${logFile}"
 while true; do
