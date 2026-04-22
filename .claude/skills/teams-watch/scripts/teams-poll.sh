@@ -1,12 +1,19 @@
 #!/usr/bin/env bash
-# teams-poll.sh — 单次 Teams 消息轮询
+# teams-poll.sh — 单次 Teams 消息轮询 (Graph API primary, Agency MCP fallback)
 #
 # 检查指定聊天是否有新消息，有则执行动作。
 # 设计为幂等单次调用，供 /loop、cron、daemon 反复调用。
 #
+# Data flow:
+#   1. Read Graph API token from Token Daemon cache ($TEMP/graph-api-token.json)
+#   2. If valid → fetch via Graph API (curl GET)
+#   3. If invalid/failed → fall back to Agency MCP proxy (ListChatMessages)
+#   4. Python3 processes result (handles both formats), writes state file
+#
 # 用法:
 #   bash teams-poll.sh --topic "MC VM+SCIM POD" [--action notify]
 #   bash teams-poll.sh --chat-id "19:xxx@thread.v2" [--action self-message]
+#   bash teams-poll.sh --target sba [--action log]
 #
 # 输出 (stdout 最后一行):
 #   WATCH_OK|topic=...|new=0|last=...|poll=N
@@ -33,7 +40,9 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# Resolve --target from watch-targets.json config
+# ═══════════════════════════════════════════
+# Resolve --target from watch-targets.json
+# ═══════════════════════════════════════════
 if [ -n "$TARGET" ] && [ -z "$CHAT_ID" ]; then
   TARGETS_FILE="$(cd "$(dirname "$0")" && pwd)/../watch-targets.json"
   if [ -f "$TARGETS_FILE" ]; then
@@ -60,13 +69,10 @@ fi
   echo "WATCH_FAIL|reason=must specify --chat-id, --topic, --target, or --channel"; exit 1
 }
 
-AGENCY_EXE="$APPDATA/agency/CurrentVersion/agency.exe"
-[ ! -f "$AGENCY_EXE" ] && { echo "WATCH_FAIL|reason=agency.exe not found"; exit 1; }
-
+# ═══════════════════════════════════════════
 # State directory — default to dataRoot/teams-watch, fallback to $TEMP
-# Use --state-dir to override, or set via config.json dataRoot
+# ═══════════════════════════════════════════
 if [ -z "$STATE_DIR" ]; then
-  # Try to resolve from config.json
   SCRIPT_ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"
   CONFIG_FILE="$SCRIPT_ROOT/config.json"
   if [ -f "$CONFIG_FILE" ]; then
@@ -77,12 +83,10 @@ if [ -z "$STATE_DIR" ]; then
       STATE_DIR="$DATA_ROOT/teams-watch"
     fi
   fi
-  # Fallback to $TEMP
   [ -z "$STATE_DIR" ] && STATE_DIR="$TEMP/teams-watch"
 fi
 mkdir -p "$STATE_DIR"
 # Convert to Windows path with forward slashes for python3
-# (Git Bash /tmp != Python C:\tmp, and backslashes break python string literals)
 if command -v cygpath &>/dev/null; then
   STATE_DIR="$(cygpath -m "$STATE_DIR")"
 fi
@@ -95,33 +99,60 @@ if [ -z "$STATE_FILE" ]; then
 fi
 
 # ═══════════════════════════════════════════
-# Start agency proxy (reuse if already running on port)
+# Read Graph API token from Token Daemon cache
 # ═══════════════════════════════════════════
-PROXY_STARTED=""
-if ! curl -s --max-time 2 -o /dev/null "http://localhost:$PORT/" 2>/dev/null; then
-  # Kill stale proxy
-  STALE_PID=$(netstat -ano 2>/dev/null | grep -E "127\.0\.0\.1:$PORT\s.*LISTENING" | awk '{print $NF}' | head -1)
-  [ -n "$STALE_PID" ] && [ "$STALE_PID" != "0" ] && taskkill //PID "$STALE_PID" //F >/dev/null 2>&1
+GRAPH_TOKEN=""
+GRAPH_TOKEN_FILE="${TEMP:-/tmp}/graph-api-token.json"
+GT_PYPATH="$GRAPH_TOKEN_FILE"
+command -v cygpath &>/dev/null && GT_PYPATH="$(cygpath -m "$GRAPH_TOKEN_FILE")"
 
-  "$AGENCY_EXE" mcp teams --transport http --port "$PORT" > /dev/null 2>&1 &
-  APID=$!
-  PROXY_STARTED="$APID"
+GRAPH_TOKEN=$(python3 -c "
+import json, time
+try:
+    d = json.load(open('$GT_PYPATH'))
+    secret = d.get('secret', '')
+    expires = int(d.get('expiresOn', '0'))
+    now = int(time.time())
+    if secret and len(secret) > 100 and (expires - now) > 120:
+        print(secret)
+except: pass
+" 2>/dev/null)
 
-  # Wait for ready
-  WAITED=0
-  while [ $WAITED -lt 20 ]; do
-    curl -s -o /dev/null -w "%{http_code}" --max-time 3 -X POST "http://localhost:$PORT/" \
-      -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" \
-      -d '{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"teams-watch","version":"1.0"}}}' 2>/dev/null | grep -q "200" && break
-    sleep 0.5; WAITED=$((WAITED + 1))
-  done
-  [ $WAITED -ge 20 ] && { echo "WATCH_FAIL|reason=proxy start timeout"; exit 1; }
-fi
+# ═══════════════════════════════════════════
+# MCP proxy helper — start on demand, reuse if already running
+# ═══════════════════════════════════════════
+MCP_PROXY_READY=""
+MCP_PROXY_PID=""
+
+ensure_mcp_proxy() {
+  [ "$MCP_PROXY_READY" = "1" ] && return 0
+
+  AGENCY_EXE="$APPDATA/agency/CurrentVersion/agency.exe"
+  [ ! -f "$AGENCY_EXE" ] && return 1
+
+  if ! curl -s --max-time 2 -o /dev/null "http://localhost:$PORT/" 2>/dev/null; then
+    STALE_PID=$(netstat -ano 2>/dev/null | grep -E "127\.0\.0\.1:$PORT\s.*LISTENING" | awk '{print $NF}' | head -1)
+    [ -n "$STALE_PID" ] && [ "$STALE_PID" != "0" ] && taskkill //PID "$STALE_PID" //F >/dev/null 2>&1
+
+    "$AGENCY_EXE" mcp teams --transport http --port "$PORT" > /dev/null 2>&1 &
+    MCP_PROXY_PID=$!
+
+    WAITED=0
+    while [ $WAITED -lt 20 ]; do
+      curl -s -o /dev/null -w "%{http_code}" --max-time 3 -X POST "http://localhost:$PORT/" \
+        -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" \
+        -d '{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"teams-watch","version":"1.0"}}}' 2>/dev/null | grep -q "200" && break
+      sleep 0.5; WAITED=$((WAITED + 1))
+    done
+    [ $WAITED -ge 20 ] && return 1
+  fi
+
+  MCP_PROXY_READY="1"
+  return 0
+}
 
 # Cleanup proxy on exit (only if we started it)
-if [ -n "$PROXY_STARTED" ]; then
-  trap 'kill $PROXY_STARTED 2>/dev/null' EXIT
-fi
+trap '[ -n "$MCP_PROXY_PID" ] && kill $MCP_PROXY_PID 2>/dev/null' EXIT
 
 # ═══════════════════════════════════════════
 # Resolve chatId from topic (if needed)
@@ -139,9 +170,12 @@ except: pass
     [ -n "$CACHED_ID" ] && CHAT_ID="$CACHED_ID"
   fi
 
-  # If not cached, resolve via ListChats
+  # If not cached, resolve via MCP ListChats
   if [ -z "$CHAT_ID" ]; then
-    echo "  Resolving topic '$TOPIC' → chatId..." >&2
+    echo "  Resolving topic '$TOPIC' -> chatId..." >&2
+    if ! ensure_mcp_proxy; then
+      echo "WATCH_FAIL|reason=cannot start MCP proxy for topic resolution"; exit 1
+    fi
     CHAT_ID=$(curl -s --max-time 15 -X POST "http://localhost:$PORT/" \
       -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" \
       -d "{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"tools/call\",\"params\":{\"name\":\"ListChats\",\"arguments\":{\"topic\":\"$TOPIC\"}}}" 2>/dev/null \
@@ -155,20 +189,17 @@ for c in d.get('result',{}).get('content',[]):
     try:
         obj=json.loads(c.get('text',''))
         chats=obj.get('chats',[])
-        if chats:
-            print(chats[0].get('id',''))
+        if chats: print(chats[0].get('id',''))
     except: pass
 " 2>/dev/null)
     [ -z "$CHAT_ID" ] && { echo "WATCH_FAIL|reason=topic '$TOPIC' not found"; exit 1; }
-    echo "  → $CHAT_ID" >&2
+    echo "  -> $CHAT_ID" >&2
   fi
 fi
 
 # ═══════════════════════════════════════════
-# Poll: ListChats for unread status + ListChatMessages for new msgs
-# ═══════════════════════════════════════════
-
 # Read previous state
+# ═══════════════════════════════════════════
 PREV_LAST_MSG_TIME=""
 PREV_LAST_MSG_ID=""
 POLL_COUNT=0
@@ -186,234 +217,76 @@ try:
 except: pass
 " 2>/dev/null)
 fi
-
 POLL_COUNT=$((POLL_COUNT + 1))
 
-# Fetch recent messages
-RESULT=$(curl -s --max-time 15 -X POST "http://localhost:$PORT/" \
-  -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" \
-  -d "{\"jsonrpc\":\"2.0\",\"id\":10,\"method\":\"tools/call\",\"params\":{\"name\":\"ListChatMessages\",\"arguments\":{\"chatId\":\"$CHAT_ID\",\"top\":10}}}" 2>/dev/null \
-  | grep -o 'data: {.*}' | sed 's/^data: //' | head -1)
+# ═══════════════════════════════════════════
+# Fetch messages: Graph API primary, Agency MCP fallback
+# ═══════════════════════════════════════════
+RESULT=""
+DATA_SOURCE=""
+
+# --- Try Graph API first ---
+if [ -n "$GRAPH_TOKEN" ]; then
+  echo "  [Graph API] Fetching messages..." >&2
+  GRAPH_RESULT=$(curl -s --max-time 15 \
+    "https://graph.microsoft.com/v1.0/me/chats/${CHAT_ID}/messages?\$top=10" \
+    -H "Authorization: Bearer $GRAPH_TOKEN" \
+    -H "Accept: application/json" 2>/dev/null)
+
+  # Validate: JSON with "value" array
+  if echo "$GRAPH_RESULT" | python3 -c "import json,sys; d=json.loads(sys.stdin.read()); assert 'value' in d" 2>/dev/null; then
+    RESULT="$GRAPH_RESULT"
+    DATA_SOURCE="graph"
+    echo "  [Graph API] OK" >&2
+  else
+    echo "  [Graph API] Failed or invalid response, falling back to MCP" >&2
+  fi
+fi
+
+# --- Fallback: Agency MCP ---
+if [ -z "$RESULT" ]; then
+  if [ -z "$GRAPH_TOKEN" ]; then
+    echo "  [Graph API] No valid token, using MCP fallback" >&2
+  fi
+
+  if ensure_mcp_proxy; then
+    echo "  [Agency MCP] Fetching messages..." >&2
+    MCP_RAW=$(curl -s --max-time 15 -X POST "http://localhost:$PORT/" \
+      -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" \
+      -d "{\"jsonrpc\":\"2.0\",\"id\":10,\"method\":\"tools/call\",\"params\":{\"name\":\"ListChatMessages\",\"arguments\":{\"chatId\":\"$CHAT_ID\",\"top\":10}}}" 2>/dev/null \
+      | grep -o 'data: {.*}' | sed 's/^data: //' | head -1)
+
+    if [ -n "$MCP_RAW" ]; then
+      RESULT="$MCP_RAW"
+      DATA_SOURCE="mcp"
+      echo "  [Agency MCP] OK" >&2
+    fi
+  fi
+fi
 
 if [ -z "$RESULT" ]; then
-  echo "WATCH_FAIL|reason=empty response from ListChatMessages"
+  echo "WATCH_FAIL|reason=both Graph API and Agency MCP returned empty"
   exit 1
 fi
 
-# Python: compare with previous state, detect new messages, execute action
+# ═══════════════════════════════════════════
+# Python: process result, detect new messages, execute actions
+# Handles both Graph API and MCP response formats.
+# ═══════════════════════════════════════════
 WATCH_TOPIC="${TOPIC:-$CHAT_ID}"
 
-POLL_OUTPUT=$(CAL_STATE_FILE="$STATE_FILE" CAL_CHAT_ID="$CHAT_ID" CAL_TOPIC="$WATCH_TOPIC" \
-  CAL_PREV_TIME="$PREV_LAST_MSG_TIME" CAL_PREV_ID="$PREV_LAST_MSG_ID" \
-  CAL_POLL_COUNT="$POLL_COUNT" CAL_TOTAL_NEW="$TOTAL_NEW" \
-  CAL_ACTION="$ACTION" CAL_ACTION_SCRIPT="$ACTION_SCRIPT" \
-  CAL_PORT="$PORT" CAL_NOTIF_DIR="$STATE_DIR" \
-  python3 << 'PYEOF'
-import json, os, sys, subprocess
-from datetime import datetime
-
-result_raw = '''RESULT_PLACEHOLDER'''
-# Read from env instead
-state_file = os.environ['CAL_STATE_FILE']
-chat_id = os.environ['CAL_CHAT_ID']
-topic = os.environ['CAL_TOPIC']
-prev_time = os.environ.get('CAL_PREV_TIME', '')
-prev_id = os.environ.get('CAL_PREV_ID', '')
-poll_count = int(os.environ.get('CAL_POLL_COUNT', '1'))
-total_new = int(os.environ.get('CAL_TOTAL_NEW', '0'))
-action = os.environ.get('CAL_ACTION', 'notify')
-action_script = os.environ.get('CAL_ACTION_SCRIPT', '')
-port = os.environ.get('CAL_PORT', '9840')
-notif_dir = os.environ.get('CAL_NOTIF_DIR', '')
-
-# Read result from stdin
-import io
-result_text = sys.stdin.read().strip()
-if not result_text:
-    print('WATCH_FAIL|reason=no result data')
-    sys.exit(1)
-
-try:
-    d = json.loads(result_text)
-except:
-    print('WATCH_FAIL|reason=json parse error')
-    sys.exit(1)
-
-# Extract messages
-messages = []
-for c in d.get('result', {}).get('content', []):
-    try:
-        obj = json.loads(c.get('text', ''))
-        messages = obj.get('messages', [])
-    except:
-        pass
-
-if not messages:
-    # No messages, update state
-    state = {
-        '_version': 1,
-        'watchId': f'watch-{os.path.basename(state_file).replace(".json","")}',
-        'target': {'type': 'chat', 'chatId': chat_id, 'topic': topic, 'resolvedAt': datetime.utcnow().isoformat() + 'Z'},
-        'config': {'interval': 0, 'action': action},
-        'state': {
-            'lastPollAt': datetime.utcnow().isoformat() + 'Z',
-            'lastMessageId': prev_id, 'lastMessageTime': prev_time,
-            'pollCount': poll_count, 'newMessageCount': total_new, 'consecutiveErrors': 0
-        },
-        'history': []
-    }
-    with open(state_file, 'w') as f:
-        json.dump(state, f, indent=2)
-    print(f'WATCH_OK|topic={topic}|new=0|last=(none)|poll={poll_count}')
-    sys.exit(0)
-
-# Sort by createdDateTime desc (most recent first)
-messages.sort(key=lambda m: m.get('createdDateTime', ''), reverse=True)
-
-latest = messages[0]
-latest_time = latest.get('createdDateTime', '')
-latest_id = latest.get('id', '')
-latest_from = (latest.get('from') or {}).get('user', {}).get('displayName', '') or \
-              (latest.get('from') or {}).get('application', {}).get('displayName', 'system')
-latest_body = (latest.get('body') or {}).get('content', '')
-# Strip HTML for preview
-import re
-latest_preview = re.sub(r'<[^>]+>', '', latest_body).strip()[:80]
-
-# Detect new messages since last poll
-new_msgs = []
-if prev_time:
-    new_msgs = [m for m in messages if m.get('createdDateTime', '') > prev_time]
-else:
-    # First poll — don't count everything as "new"
-    new_msgs = []
-
-new_count = len(new_msgs)
-total_new += new_count
-
-# Load existing history
-history = []
-if os.path.exists(state_file):
-    try:
-        old = json.load(open(state_file))
-        history = old.get('history', [])
-    except:
-        pass
-
-# Execute action for new messages
-if new_count > 0:
-    for msg in new_msgs[:5]:  # cap at 5 per poll
-        msg_from = (msg.get('from') or {}).get('user', {}).get('displayName', '') or 'system'
-        msg_body = re.sub(r'<[^>]+>', '', (msg.get('body') or {}).get('content', '')).strip()[:120]
-        msg_time = msg.get('createdDateTime', '')
-
-        entry = {
-            'detectedAt': datetime.utcnow().isoformat() + 'Z',
-            'messageTime': msg_time,
-            'from': msg_from,
-            'preview': msg_body,
-            'action': action,
-            'actionResult': 'ok'
-        }
-
-        # Action: notify (write to notifications.jsonl)
-        if action == 'notify' and notif_dir:
-            notif_path = os.path.join(notif_dir, 'notifications.jsonl')
-            notif_entry = {
-                'watchId': f'watch-{os.path.basename(state_file).replace(".json","")}',
-                'topic': topic, 'from': msg_from, 'preview': msg_body,
-                'messageTime': msg_time,
-                'detectedAt': datetime.utcnow().isoformat() + 'Z'
-            }
-            with open(notif_path, 'a') as nf:
-                nf.write(json.dumps(notif_entry, ensure_ascii=False) + '\n')
-
-        # Action: self-message (send to self via Teams)
-        elif action == 'self-message':
-            try:
-                body = json.dumps({
-                    "jsonrpc": "2.0", "id": 99,
-                    "method": "tools/call",
-                    "params": {"name": "SendMessageToSelf", "arguments": {
-                        "content": f"🔔 [{topic}] {msg_from}: {msg_body}"
-                    }}
-                })
-                subprocess.run(
-                    ['curl', '-s', '--max-time', '10', '-X', 'POST',
-                     f'http://localhost:{port}/',
-                     '-H', 'Content-Type: application/json',
-                     '-H', 'Accept: application/json, text/event-stream',
-                     '-d', body],
-                    capture_output=True, timeout=12
-                )
-            except:
-                entry['actionResult'] = 'failed'
-
-        # Action: log
-        elif action == 'log' and notif_dir:
-            log_path = os.path.join(notif_dir, 'watch.log')
-            with open(log_path, 'a') as lf:
-                lf.write(f'[{datetime.utcnow().isoformat()}] [{topic}] {msg_from}: {msg_body}\n')
-
-        # Action: custom script
-        elif action == 'custom' and action_script:
-            try:
-                env = os.environ.copy()
-                env.update({
-                    'WATCH_TOPIC': topic, 'WATCH_FROM': msg_from,
-                    'WATCH_PREVIEW': msg_body, 'WATCH_TIME': msg_time,
-                    'WATCH_CHAT_ID': chat_id
-                })
-                subprocess.run(['bash', action_script], env=env, timeout=30, capture_output=True)
-            except:
-                entry['actionResult'] = 'failed'
-
-        history.append(entry)
-
-    # Keep history bounded
-    history = history[-50:]
-
-# Update state
-state = {
-    '_version': 1,
-    'watchId': f'watch-{os.path.basename(state_file).replace(".json","")}',
-    'target': {'type': 'chat', 'chatId': chat_id, 'topic': topic,
-               'resolvedAt': datetime.utcnow().isoformat() + 'Z'},
-    'config': {'interval': 0, 'action': action, 'actionScript': action_script or None},
-    'state': {
-        'lastPollAt': datetime.utcnow().isoformat() + 'Z',
-        'lastMessageId': latest_id,
-        'lastMessageTime': latest_time,
-        'lastMessageFrom': latest_from,
-        'lastMessagePreview': latest_preview,
-        'pollCount': poll_count,
-        'newMessageCount': total_new,
-        'consecutiveErrors': 0
-    },
-    'history': history
-}
-
-with open(state_file, 'w') as f:
-    json.dump(state, f, indent=2, ensure_ascii=False)
-
-if new_count > 0:
-    first_new_from = (new_msgs[0].get('from') or {}).get('user', {}).get('displayName', '') or 'system'
-    first_preview = re.sub(r'<[^>]+>', '', (new_msgs[0].get('body') or {}).get('content', '')).strip()[:60]
-    print(f'WATCH_NEW|topic={topic}|new={new_count}|from={first_new_from}|preview={first_preview}')
-else:
-    print(f'WATCH_OK|topic={topic}|new=0|last={latest_from}: {latest_preview[:40]}|poll={poll_count}')
-PYEOF
-)
-
-# Feed result JSON to python via stdin — heredoc approach
 echo "$RESULT" | CAL_STATE_FILE="$STATE_FILE" CAL_CHAT_ID="$CHAT_ID" CAL_TOPIC="$WATCH_TOPIC" \
   CAL_PREV_TIME="$PREV_LAST_MSG_TIME" CAL_PREV_ID="$PREV_LAST_MSG_ID" \
   CAL_POLL_COUNT="$POLL_COUNT" CAL_TOTAL_NEW="$TOTAL_NEW" \
   CAL_ACTION="$ACTION" CAL_ACTION_SCRIPT="$ACTION_SCRIPT" \
   CAL_PORT="$PORT" CAL_NOTIF_DIR="$STATE_DIR" \
+  CAL_DATA_SOURCE="$DATA_SOURCE" \
   python3 -c "
 import json, os, sys, subprocess, re
-from datetime import datetime
+from datetime import datetime, timezone
+
+def utcnow():
+    return datetime.now(timezone.utc)
 
 state_file = os.environ['CAL_STATE_FILE']
 chat_id = os.environ['CAL_CHAT_ID']
@@ -426,6 +299,7 @@ action = os.environ.get('CAL_ACTION', 'notify')
 action_script = os.environ.get('CAL_ACTION_SCRIPT', '')
 port = os.environ.get('CAL_PORT', '9840')
 notif_dir = os.environ.get('CAL_NOTIF_DIR', '')
+data_source = os.environ.get('CAL_DATA_SOURCE', 'unknown')
 
 result_text = sys.stdin.read().strip()
 if not result_text:
@@ -436,54 +310,143 @@ try:
 except:
     print('WATCH_FAIL|reason=json parse error'); sys.exit(1)
 
+# ---- SBA Adaptive Card parser (mirrors parseSbaCard in sba-patrol-trigger.ts) ----
+
+def parse_sba_card(card):
+    if not card or card.get('type') != 'AdaptiveCard' or not isinstance(card.get('body'), list):
+        return None
+    assigned_to = None
+    for block in card['body']:
+        if block.get('type') == 'TextBlock' and isinstance(block.get('text'), str):
+            m = re.search(r'\*\*(.+?)\*\*\s+has been assigned', block['text'])
+            if m:
+                assigned_to = m.group(1)
+                break
+    if not assigned_to:
+        return None
+    case_number = severity = sla_expire = d365_url = None
+    for block in card['body']:
+        if block.get('type') == 'FactSet' and isinstance(block.get('facts'), list):
+            for fact in block['facts']:
+                if fact.get('title') == 'SR': case_number = fact.get('value')
+                if fact.get('title') == 'Severity': severity = fact.get('value')
+                if fact.get('title') == 'Sla Expire Date': sla_expire = fact.get('value')
+        if block.get('type') == 'ActionSet' and isinstance(block.get('actions'), list):
+            for act_item in block['actions']:
+                if act_item.get('type') == 'Action.OpenUrl' and act_item.get('url'):
+                    d365_url = act_item['url']
+                    break
+    return {'type': 'case-assignment', 'caseNumber': case_number, 'assignedTo': assigned_to,
+            'severity': severity, 'slaExpire': sla_expire, 'd365Url': d365_url}
+
+# ---- Extract messages from either format ----
+
 messages = []
-for c in d.get('result', {}).get('content', []):
-    try:
-        obj = json.loads(c.get('text', ''))
-        messages = obj.get('messages', [])
-    except: pass
+if data_source == 'graph':
+    # Graph API: { value: [...] }
+    messages = d.get('value', [])
+elif data_source == 'mcp':
+    # Agency MCP: { result: { content: [{ text: JSON-string }] } }
+    for c in d.get('result', {}).get('content', []):
+        try:
+            obj = json.loads(c.get('text', ''))
+            messages = obj.get('messages', [])
+        except: pass
+else:
+    # Auto-detect
+    if 'value' in d:
+        messages = d['value']
+    else:
+        for c in d.get('result', {}).get('content', []):
+            try:
+                obj = json.loads(c.get('text', ''))
+                messages = obj.get('messages', [])
+            except: pass
 
 if not messages:
     print(f'WATCH_OK|topic={topic}|new=0|last=(empty)|poll={poll_count}')
     sys.exit(0)
 
+# ---- Helpers ----
+
+def get_from(msg):
+    fr = msg.get('from') or {}
+    user = fr.get('user')
+    app = fr.get('application')
+    if user and user.get('displayName'):
+        return user['displayName']
+    if app and app.get('displayName'):
+        return app['displayName']
+    return 'system'
+
+def get_preview(msg, maxlen=80):
+    body = (msg.get('body') or {}).get('content', '')
+    return re.sub(r'<[^>]+>', '', body).strip()[:maxlen]
+
+def get_parsed_card(msg):
+    \"\"\"Extract parsed SBA card from message attachments, if any.\"\"\"
+    for att in (msg.get('attachments') or []):
+        if att.get('contentType') == 'application/vnd.microsoft.card.adaptive':
+            content = att.get('content')
+            if isinstance(content, str):
+                try: content = json.loads(content)
+                except: continue
+            if isinstance(content, dict):
+                card = parse_sba_card(content)
+                if card:
+                    return card
+    return None
+
+# ---- Process ----
+
 messages.sort(key=lambda m: m.get('createdDateTime', ''), reverse=True)
+
 latest = messages[0]
 latest_time = latest.get('createdDateTime', '')
 latest_id = latest.get('id', '')
-fr = (latest.get('from') or {})
-latest_from = fr.get('user', {}).get('displayName', '') if fr.get('user') else \
-              fr.get('application', {}).get('displayName', 'system') if fr.get('application') else 'system'
-latest_preview = re.sub(r'<[^>]+>', '', (latest.get('body') or {}).get('content', '')).strip()[:80]
+latest_from = get_from(latest)
+latest_preview = get_preview(latest)
 
+# Detect new messages since last poll
 new_msgs = [m for m in messages if m.get('createdDateTime', '') > prev_time] if prev_time else []
 new_count = len(new_msgs)
 total_new += new_count
 
+# Load existing history
 history = []
 if os.path.exists(state_file):
     try:
         history = json.load(open(state_file)).get('history', [])
     except: pass
 
+# Execute action for new messages
 if new_count > 0:
     for msg in new_msgs[:5]:
-        fr2 = (msg.get('from') or {})
-        msg_from = fr2.get('user', {}).get('displayName', '') if fr2.get('user') else 'system'
-        msg_body = re.sub(r'<[^>]+>', '', (msg.get('body') or {}).get('content', '')).strip()[:120]
+        msg_from = get_from(msg)
+        msg_body = get_preview(msg, 120)
         msg_time = msg.get('createdDateTime', '')
 
-        entry = {'detectedAt': datetime.utcnow().isoformat()+'Z', 'messageTime': msg_time,
+        entry = {'detectedAt': utcnow().strftime('%Y-%m-%dT%H:%M:%S')+'Z', 'messageTime': msg_time,
                  'from': msg_from, 'preview': msg_body, 'action': action, 'actionResult': 'ok'}
 
+        # Parse Adaptive Card if present (Graph API provides attachment content)
+        parsed = get_parsed_card(msg)
+        if parsed:
+            entry['parsedCard'] = parsed
+
+        # ---- Action dispatch ----
         if action == 'notify' and notif_dir:
+            notif_entry = {'topic': topic, 'from': msg_from, 'preview': msg_body,
+                'messageTime': msg_time, 'detectedAt': entry['detectedAt']}
+            if parsed:
+                notif_entry['parsedCard'] = parsed
             with open(os.path.join(notif_dir, 'notifications.jsonl'), 'a') as nf:
-                nf.write(json.dumps({'topic': topic, 'from': msg_from, 'preview': msg_body,
-                    'messageTime': msg_time, 'detectedAt': entry['detectedAt']}, ensure_ascii=False) + '\n')
+                nf.write(json.dumps(notif_entry, ensure_ascii=False) + '\n')
         elif action == 'self-message':
             try:
                 body = json.dumps({'jsonrpc':'2.0','id':99,'method':'tools/call',
-                    'params':{'name':'SendMessageToSelf','arguments':{'content':f'[{topic}] {msg_from}: {msg_body}'}}})
+                    'params':{'name':'SendMessageToSelf','arguments':{
+                        'content':f'[{topic}] {msg_from}: {msg_body}'}}})
                 subprocess.run(['curl','-s','--max-time','10','-X','POST',f'http://localhost:{port}/',
                     '-H','Content-Type: application/json','-H','Accept: application/json, text/event-stream',
                     '-d',body], capture_output=True, timeout=12)
@@ -502,22 +465,25 @@ if new_count > 0:
         history.append(entry)
     history = history[-50:]
 
-state = {'_version':1,
+# Write state file
+state = {'_version': 2,
     'watchId': f'watch-{os.path.basename(state_file).replace(\".json\",\"\")}',
-    'target': {'type':'chat','chatId':chat_id,'topic':topic,'resolvedAt':datetime.utcnow().isoformat()+'Z'},
+    'target': {'type':'chat','chatId':chat_id,'topic':topic,
+               'resolvedAt':utcnow().strftime('%Y-%m-%dT%H:%M:%S')+'Z'},
     'config': {'interval':0,'action':action,'actionScript':action_script or None},
-    'state': {'lastPollAt':datetime.utcnow().isoformat()+'Z','lastMessageId':latest_id,
-        'lastMessageTime':latest_time,'lastMessageFrom':latest_from,'lastMessagePreview':latest_preview,
-        'pollCount':poll_count,'newMessageCount':total_new,'consecutiveErrors':0},
+    'state': {'lastPollAt':utcnow().strftime('%Y-%m-%dT%H:%M:%S')+'Z','lastMessageId':latest_id,
+        'lastMessageTime':latest_time,'lastMessageFrom':latest_from,
+        'lastMessagePreview':latest_preview,
+        'pollCount':poll_count,'newMessageCount':total_new,'consecutiveErrors':0,
+        'dataSource':data_source},
     'history': history}
 
 with open(state_file, 'w') as f:
     json.dump(state, f, indent=2, ensure_ascii=False)
 
 if new_count > 0:
-    nf = (new_msgs[0].get('from') or {})
-    fn = nf.get('user',{}).get('displayName','') if nf.get('user') else 'system'
-    fp = re.sub(r'<[^>]+>','', (new_msgs[0].get('body') or {}).get('content','')).strip()[:60]
+    fn = get_from(new_msgs[0])
+    fp = get_preview(new_msgs[0], 60)
     print(f'WATCH_NEW|topic={topic}|new={new_count}|from={fn}|preview={fp}')
 else:
     print(f'WATCH_OK|topic={topic}|new=0|last={latest_from}: {latest_preview[:40]}|poll={poll_count}')
