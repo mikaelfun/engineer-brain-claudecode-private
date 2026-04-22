@@ -37,7 +37,7 @@ function GlobalNotificationBanner() {
   }
 
   return (
-    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999, padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+    <div style={{ position: 'fixed', top: 0, left: 'var(--sidebar-width, 220px)', right: 0, zIndex: 9999, padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
       {notifications.map((n) => {
         const c = colorMap[n.type]
         return (

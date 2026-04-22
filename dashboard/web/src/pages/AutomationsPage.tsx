@@ -1115,7 +1115,7 @@ function TeamsWatchHistoryEntry({ entry }: { entry: any }) {
     const card = entry.parsedCard
     return (
       <div
-        className="rounded px-2.5 py-2 text-xs"
+        className="rounded px-2.5 py-2 text-xs overflow-hidden"
         style={{ background: 'var(--accent-blue-dim)', border: '1px solid var(--border-subtle)' }}
       >
         <div className="flex items-center justify-between">
@@ -1144,11 +1144,11 @@ function TeamsWatchHistoryEntry({ entry }: { entry: any }) {
   // Normal message entry
   return (
     <div
-      className="rounded px-2.5 py-1.5 text-xs"
+      className="rounded px-2.5 py-1.5 text-xs overflow-hidden"
       style={{ background: 'var(--bg-inset)' }}
     >
-      <div className="flex items-center justify-between">
-        <span className="truncate" style={{ color: 'var(--text-primary)' }}>
+      <div className="flex items-center justify-between min-w-0">
+        <span className="truncate min-w-0" style={{ color: 'var(--text-primary)' }}>
           📩 {entry.from ? `${entry.from}: ` : ''}{entry.preview || entry.message || 'No content'}
         </span>
         <span className="text-[10px] shrink-0 ml-2" style={{ color: 'var(--text-tertiary)' }}>{ts}</span>
