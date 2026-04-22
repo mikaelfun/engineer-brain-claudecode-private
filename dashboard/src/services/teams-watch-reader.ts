@@ -152,6 +152,17 @@ function extractHash(watchId: string): string {
 export function listWatches(): TeamsWatch[] {
   if (!existsSync(STATE_DIR)) return []
 
+  // Load watch-targets.json for display name enrichment
+  const targets = readJsonFile<WatchTargetsFile>(WATCH_TARGETS_FILE)
+  const chatIdToDisplayName = new Map<string, string>()
+  if (targets?.targets) {
+    for (const t of Object.values(targets.targets)) {
+      if (t.chatId && t.displayName) {
+        chatIdToDisplayName.set(t.chatId, t.displayName)
+      }
+    }
+  }
+
   // 1. Read all daemon configs (keyed by watchId)
   const daemonConfigs = new Map<string, DaemonConfigFile>()
   try {
@@ -203,10 +214,14 @@ export function listWatches(): TeamsWatch[] {
       // Daemon config says 'running' but process is dead → stopped
       const status: 'running' | 'stopped' = alive ? 'running' : 'stopped'
 
+      const chatId = state.target?.chatId || daemon?.chatId || ''
+      const rawTopic = state.target?.topic || daemon?.topic || ''
+      const topic = chatIdToDisplayName.get(chatId) || rawTopic
+
       watches.push({
         watchId,
-        topic: state.target?.topic || daemon?.topic || '',
-        chatId: state.target?.chatId || daemon?.chatId || '',
+        topic,
+        chatId,
         interval: daemon?.interval ?? state.config?.interval ?? 60,
         action: daemon?.action ?? state.config?.action ?? 'notify',
         status,
