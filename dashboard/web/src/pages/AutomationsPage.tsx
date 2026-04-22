@@ -645,11 +645,11 @@ function TeamsWatchTab({ watches }: { watches: any[] }) {
                 onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
                 onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
               >
-                {/* Status dot */}
+                {/* Status dot — static green/red, no animation */}
                 <span
-                  className={`w-2 h-2 rounded-full shrink-0 ${isRunning ? 'animate-pulse' : ''}`}
+                  className="w-2 h-2 rounded-full shrink-0"
                   style={{
-                    background: isRunning ? 'var(--accent-green)' : 'var(--accent-red)',
+                    background: isRunning ? 'var(--accent-green)' : 'var(--text-tertiary)',
                   }}
                 />
                 {/* Name + meta */}
@@ -659,7 +659,10 @@ function TeamsWatchTab({ watches }: { watches: any[] }) {
                       {watch.topic || 'Untitled Watch'}
                     </span>
                     {isRunning && (
-                      <Loader2 className="w-3 h-3 animate-spin shrink-0" style={{ color: 'var(--accent-green)' }} />
+                      <span className="text-[10px] px-1 rounded" style={{ background: 'var(--accent-green-dim)', color: 'var(--accent-green)' }}>ON</span>
+                    )}
+                    {!isRunning && (
+                      <span className="text-[10px] px-1 rounded" style={{ background: 'var(--bg-inset)', color: 'var(--text-tertiary)' }}>OFF</span>
                     )}
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
@@ -675,20 +678,20 @@ function TeamsWatchTab({ watches }: { watches: any[] }) {
                       onClick={() => stopWatch.mutate(watch.watchId)}
                       disabled={stopWatch.isPending}
                       className="p-1 rounded transition-colors hover:bg-[var(--bg-hover)]"
-                      style={{ color: 'var(--accent-red)' }}
+                      style={{ color: stopWatch.isPending ? 'var(--text-tertiary)' : 'var(--accent-red)' }}
                       title="Stop"
                     >
-                      <Square className="w-3.5 h-3.5" />
+                      {stopWatch.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Square className="w-3.5 h-3.5" />}
                     </button>
                   ) : (
                     <button
                       onClick={() => startWatch.mutate(watch.watchId)}
                       disabled={startWatch.isPending}
                       className="p-1 rounded transition-colors hover:bg-[var(--bg-hover)]"
-                      style={{ color: 'var(--accent-green)' }}
+                      style={{ color: startWatch.isPending ? 'var(--text-tertiary)' : 'var(--accent-green)' }}
                       title="Start"
                     >
-                      <Play className="w-3.5 h-3.5" />
+                      {startWatch.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
                     </button>
                   )}
                   {deletingId === watch.watchId ? (
