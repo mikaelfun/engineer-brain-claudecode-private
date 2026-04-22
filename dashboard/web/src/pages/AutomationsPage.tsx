@@ -983,6 +983,23 @@ function TeamsWatchDetailPanel({ watch, history }: { watch: any | null; history:
           </div>
         </div>
 
+        {/* Latest message */}
+        {watch.lastMessageFrom && (
+          <div className="rounded px-2.5 py-1.5 text-xs" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-medium" style={{ color: 'var(--text-tertiary)' }}>Latest Message</span>
+              {watch.lastPollAt && (
+                <span className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
+                  {new Date(watch.lastPollAt).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                </span>
+              )}
+            </div>
+            <p className="mt-0.5 truncate" style={{ color: 'var(--text-primary)' }}>
+              {watch.lastMessageFrom}: {watch.lastMessagePreview || '(no content)'}
+            </p>
+          </div>
+        )}
+
         {/* History section — collapsible */}
         <div className="flex-1 min-h-0 flex flex-col">
           <button
