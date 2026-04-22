@@ -59,6 +59,7 @@ export interface TeamsWatch {
   lastPollAt: string | null
   lastMessageFrom: string | null
   lastMessagePreview: string | null
+  lastMessageTime: string | null
   lastMessageId: string | null
   pollCount: number
   newMessageCount: number
@@ -234,6 +235,7 @@ export function listWatches(): TeamsWatch[] {
         lastPollAt: state.state?.lastPollAt || null,
         lastMessageFrom: state.state?.lastMessageFrom || null,
         lastMessagePreview: state.state?.lastMessagePreview || null,
+        lastMessageTime: state.state?.lastMessageTime || null,
         lastMessageId: state.state?.lastMessageId || null,
         pollCount: state.state?.pollCount ?? 0,
         newMessageCount: state.state?.newMessageCount ?? 0,
@@ -262,6 +264,7 @@ export function listWatches(): TeamsWatch[] {
       lastPollAt: null,
       lastMessageFrom: null,
       lastMessagePreview: null,
+      lastMessageTime: null,
       lastMessageId: null,
       pollCount: 0,
       newMessageCount: 0,
@@ -525,7 +528,9 @@ export async function enrichWatchHistory(watchId: string): Promise<WatchHistoryE
 
     // Build lookup: messageId → { from, parsedCard }
     const msgLookup = new Map<string, { from: string; parsedCard?: ParsedCard }>()
-    // Also build time-based lookup for matching (state history uses messageTime)
+    // Build time-based lookup — truncate to seconds for matching
+    // (Graph returns "2026-04-22T01:42:39.128Z" but state has "2026-04-22T01:42:39Z")
+    const truncateMs = (t: string) => t.replace(/\.\d+Z$/, 'Z')
     const timeLookup = new Map<string, { from: string; parsedCard?: ParsedCard }>()
 
     for (const msg of graphMessages) {
@@ -547,13 +552,13 @@ export async function enrichWatchHistory(watchId: string): Promise<WatchHistoryE
       }
 
       if (msg.id) msgLookup.set(msg.id, { from, parsedCard })
-      if (msg.createdDateTime) timeLookup.set(msg.createdDateTime, { from, parsedCard })
+      if (msg.createdDateTime) timeLookup.set(truncateMs(msg.createdDateTime), { from, parsedCard })
     }
 
     // Enrich history entries
     const enriched = state.history.map(entry => {
       // Match by messageTime (most reliable — same as createdDateTime from Graph)
-      const match = timeLookup.get(entry.messageTime) || null
+      const match = timeLookup.get(truncateMs(entry.messageTime)) || null
       if (!match) return entry
 
       return {

@@ -988,9 +988,9 @@ function TeamsWatchDetailPanel({ watch, history }: { watch: any | null; history:
           <div className="rounded px-2.5 py-1.5 text-xs" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-medium" style={{ color: 'var(--text-tertiary)' }}>Latest Message</span>
-              {watch.lastPollAt && (
+              {watch.lastMessageTime && (
                 <span className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
-                  {new Date(watch.lastPollAt).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                  {new Date(watch.lastMessageTime).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
                 </span>
               )}
             </div>
