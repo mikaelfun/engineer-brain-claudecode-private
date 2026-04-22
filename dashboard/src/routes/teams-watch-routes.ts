@@ -17,6 +17,7 @@ import {
   deleteWatch,
   getWatchHistory,
   enrichWatchHistory,
+  restartWatch,
 } from '../services/teams-watch-reader.js'
 import { getSbaPatrolStatus, setAutoPatrol } from '../services/sba-patrol-trigger.js'
 
@@ -80,6 +81,14 @@ teamsWatchRoutes.post('/:id/start', async (c) => {
     action: watch.action || 'notify',
   })
   return c.json({ ok: true, result })
+})
+
+// Restart a stale/running watch (atomic stop + cleanup + start)
+teamsWatchRoutes.post('/:id/restart', (c) => {
+  const id = c.req.param('id')
+  const result = restartWatch(id)
+  const ok = !result.startsWith('ERROR')
+  return c.json({ ok, result })
 })
 
 // Stop a running watch

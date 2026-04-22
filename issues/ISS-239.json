@@ -1,0 +1,11 @@
+{
+  "id": "ISS-239",
+  "title": "Teams Watch Restart 按钮点击后 daemon 未成功重启",
+  "description": "Automations 页面 Teams Watch tab，stale 状态的 Watch 点击 Restart 按钮后，daemon 没有成功启动。\n\n## 复现\n1. 有一个 stale 状态的 Teams Watch（lastPollAt 超时）\n2. 点击 Watch 卡片上的 Restart（RefreshCw 图标）或详情面板的 Restart 按钮\n3. 按钮转圈后恢复，但 daemon 没有启动，状态仍为 stale\n\n## 可能原因\n1. **hash 不一致**：stop 用 topic 做 hash 找 PID 文件，start 用 chatId 做 hash 生成新 PID 文件，两个 hash 不同导致 stop 没清理干净旧文件、start 检测到旧 PID 文件认为已在运行\n2. **卡片 vs 详情面板实现不一致**：卡片用 `startWatch.mutate(watchId)` → `POST /:id/start`，详情面板用 `createWatch.mutate({chatId, ...})` → `POST /`，两条路径行为可能不同\n3. **stop 静默失败**：daemon 进程已死但 stop 调用 `teams-daemon.sh stop` 时找不到 topic → 走 PID fallback → PID 文件不存在 → 返回 ERROR 但 onSuccess 仍触发\n4. **onSuccess 时序**：stop mutation 的 onSuccess 在 API 返回后立即触发 start，但 stop 内部可能还没完全清理完文件\n\n## 关联\n- ISS-237: 心跳机制（三态检测 + Restart 按钮 UI）— Restart 按钮在此 issue 中添加\n- ISS-100: Dashboard 重启按钮进程树杀不干净（类似进程管理问题）",
+  "type": "bug",
+  "priority": "P1",
+  "status": "pending",
+  "testLoopScan": true,
+  "createdAt": "2026-04-22T13:45:00+08:00",
+  "updatedAt": "2026-04-22T13:45:00+08:00"
+}

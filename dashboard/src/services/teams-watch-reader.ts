@@ -365,6 +365,73 @@ done
 }
 
 /**
+ * Restart a watch daemon atomically: stop → cleanup → wait for death → start.
+ * Avoids race conditions between separate stop + start calls.
+ */
+export function restartWatch(watchId: string): string {
+  const hash = extractHash(watchId)
+
+  // 1. Read config before stopping (we need chatId, interval, action to restart)
+  const cfgPath = join(STATE_DIR, `daemon-${hash}-config.json`)
+  const statePath = join(STATE_DIR, `watch-${hash}.json`)
+  const cfg = readJsonFile<DaemonConfigFile>(cfgPath)
+  const state = readJsonFile<WatchStateFile>(statePath)
+
+  const chatId = cfg?.chatId || state?.target?.chatId || ''
+  const interval = cfg?.interval ?? state?.config?.interval ?? 60
+  const action = cfg?.action ?? state?.config?.action ?? 'notify'
+
+  if (!chatId) {
+    return `ERROR: cannot determine chatId for ${watchId}`
+  }
+
+  // 2. Kill the process (try multiple methods)
+  let oldPid: number | null = null
+
+  // From daemon config
+  if (cfg?.pid) oldPid = cfg.pid
+
+  // From PID file
+  if (!oldPid) {
+    const pidFile = join(PID_DIR, `watch-${hash}.pid`)
+    if (existsSync(pidFile)) {
+      try {
+        const val = parseInt(readFileSync(pidFile, 'utf-8').trim(), 10)
+        if (!isNaN(val)) oldPid = val
+      } catch { /* ignore */ }
+    }
+  }
+
+  if (oldPid && isProcessAlive(oldPid)) {
+    try {
+      execSync(`taskkill /PID ${oldPid} /F /T`, {
+        encoding: 'utf-8',
+        timeout: 10_000,
+        stdio: ['pipe', 'pipe', 'pipe'],
+      })
+    } catch { /* may already be dead */ }
+  }
+
+  // 3. Clean up ALL leftover files (PID, config, loop script)
+  const filesToClean = [
+    join(PID_DIR, `watch-${hash}.pid`),
+    join(STATE_DIR, `daemon-${hash}-config.json`),
+    join(STATE_DIR, `daemon-${hash}-loop.sh`),
+  ]
+  for (const f of filesToClean) {
+    try { if (existsSync(f)) unlinkSync(f) } catch { /* ignore */ }
+  }
+
+  // 4. Brief wait to ensure process is fully dead (Windows taskkill can be async)
+  try {
+    execSync('ping -n 2 127.0.0.1 >nul 2>&1', { timeout: 3000, stdio: 'ignore' })
+  } catch { /* ignore */ }
+
+  // 5. Start fresh
+  return startWatch({ chatId, interval, action })
+}
+
+/**
  * Stop a watch daemon by watchId.
  * Reads the topic from the state/config file, then calls teams-daemon.sh stop.
  */

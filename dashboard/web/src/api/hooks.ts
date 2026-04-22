@@ -354,7 +354,7 @@ export function useCancelTrigger() {
 export function useCronMessages(triggerId: string | null) {
   return useQuery({
     queryKey: ['agents', 'triggers', triggerId, 'messages'],
-    queryFn: () => apiGet<{ triggerId: string; messages: any[]; total: number }>(`/agents/triggers/${triggerId}/messages`),
+    queryFn: () => apiGet<{ triggerId: string; messages?: any[]; mainMessages?: any[]; total: number; source: string }>(`/agents/triggers/${triggerId}/messages`),
     enabled: !!triggerId,
     staleTime: 5000,
   })
@@ -574,6 +574,12 @@ export function useStartPatrol() {
 export function useCancelPatrol() {
   return useMutation({
     mutationFn: () => apiPost<{ success: boolean; message: string }>('/patrol/cancel'),
+  })
+}
+
+export function useResetPatrol() {
+  return useMutation({
+    mutationFn: () => apiPost<{ success: boolean; removed: string[] }>('/patrol/reset'),
   })
 }
 
@@ -1622,6 +1628,16 @@ export function useStopTeamsWatch() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => apiPost<any>(`/teams-watch/${id}/stop`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['teams-watch'] })
+    },
+  })
+}
+
+export function useRestartTeamsWatch() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => apiPost<any>(`/teams-watch/${id}/restart`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teams-watch'] })
     },

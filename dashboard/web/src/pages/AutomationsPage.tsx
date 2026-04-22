@@ -11,6 +11,7 @@ import {
   useCronJobs, useTriggers, useDeleteTrigger, useRunTrigger, useCancelTrigger, useToggleTrigger,
   useTeamsWatches, useTeamsWatchHistory, useStartTeamsWatch, useStopTeamsWatch,
   useDeleteTeamsWatch, useCreateTeamsWatch, useSbaStatus, useToggleAutoPatrol,
+  useRestartTeamsWatch,
   useCronMessages,
 } from '../api/hooks'
 import { SessionMessageList } from '../components/session/SessionMessageList'
@@ -155,8 +156,8 @@ function CronJobDetailPanel({ job, triggerRun, onDismissRun }: {
   }
 
   return (
-    <Card className="h-full flex flex-col">
-      <div className="flex flex-col flex-1 min-h-0 gap-3">
+    <Card className="h-full flex flex-col overflow-hidden">
+      <div className="flex flex-col flex-1 min-h-0 gap-3 overflow-hidden">
         {/* Header */}
         <div>
           <h4 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{job.name}</h4>
@@ -363,9 +364,9 @@ export default function AutomationsPage() {
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6 h-full">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between shrink-0">
         <div>
           <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Automations</h2>
           <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>
@@ -397,7 +398,7 @@ export default function AutomationsPage() {
       </div>
 
       {/* Tab Bar */}
-      <div className="flex items-center gap-1 p-1 rounded-lg" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-default)' }}>
+      <div className="flex items-center gap-1 p-1 rounded-lg shrink-0" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-default)' }}>
         {tabs.map((tab) => (
           <button
             key={tab.key}
@@ -427,6 +428,7 @@ export default function AutomationsPage() {
       </div>
 
       {/* Tab Content */}
+      <div className="flex-1 min-h-0 flex flex-col">
       {activeTab === 'cron' && (
         <CronJobsTab
           cronJobs={cronJobs}
@@ -452,6 +454,7 @@ export default function AutomationsPage() {
       {activeTab === 'activity-feed' && (
         <ActivityFeedTab />
       )}
+      </div>
 
       {/* Create/Edit Trigger Dialog */}
       <CreateTriggerDialog
@@ -501,9 +504,9 @@ function CronJobsTab({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[minmax(260px,340px)_1fr] gap-4" style={{ minHeight: 'calc(100vh - 280px)' }}>
+    <div className="grid grid-cols-1 md:grid-cols-[minmax(260px,340px)_1fr] gap-4 flex-1 min-h-0 overflow-hidden">
       {/* Left: job list */}
-      <Card padding="none">
+      <Card padding="none" className="h-full overflow-auto">
         <div className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
           {cronJobs.map((job: any) => {
             const triggerRun = triggerRuns[job.id]
@@ -690,6 +693,7 @@ function TeamsWatchTab({ watches }: { watches: any[] }) {
 
   const startWatch = useStartTeamsWatch()
   const stopWatch = useStopTeamsWatch()
+  const restartWatch = useRestartTeamsWatch()
   const deleteWatch = useDeleteTeamsWatch()
   const createWatch = useCreateTeamsWatch()
 
@@ -753,7 +757,7 @@ function TeamsWatchTab({ watches }: { watches: any[] }) {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr] gap-4" style={{ minHeight: 'calc(100vh - 280px)' }}>
+    <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr] gap-4 flex-1 min-h-0 overflow-hidden">
       {/* Left: watch list */}
       <Card padding="none">
         <div className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
@@ -823,17 +827,13 @@ function TeamsWatchTab({ watches }: { watches: any[] }) {
                     </button>
                   ) : healthStatus === 'stale' ? (
                     <button
-                      onClick={() => {
-                        stopWatch.mutate(watch.watchId, {
-                          onSuccess: () => startWatch.mutate(watch.watchId)
-                        })
-                      }}
-                      disabled={stopWatch.isPending || startWatch.isPending}
+                      onClick={() => restartWatch.mutate(watch.watchId)}
+                      disabled={restartWatch.isPending}
                       className="p-1 rounded transition-colors hover:bg-[var(--bg-hover)]"
-                      style={{ color: (stopWatch.isPending || startWatch.isPending) ? 'var(--text-tertiary)' : 'var(--accent-amber)' }}
+                      style={{ color: restartWatch.isPending ? 'var(--text-tertiary)' : 'var(--accent-amber)' }}
                       title="Restart (stop + start)"
                     >
-                      {(stopWatch.isPending || startWatch.isPending) ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+                      {restartWatch.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
                     </button>
                   ) : (
                     <button
@@ -1010,6 +1010,7 @@ function TeamsWatchDetailPanel({ watch, history }: { watch: any | null; history:
   const [editAction, setEditAction] = useState('notify')
   const stopWatch = useStopTeamsWatch()
   const createWatch = useCreateTeamsWatch()
+  const restartWatch = useRestartTeamsWatch()
   const { data: sbaStatus } = useSbaStatus()
   const autoPatrolMut = useToggleAutoPatrol()
   // Local optimistic state for instant UI feedback
@@ -1035,8 +1036,8 @@ function TeamsWatchDetailPanel({ watch, history }: { watch: any | null; history:
   const autoPatrolEnabled = localAutoPatrol ?? sbaStatus?.autoPatrolEnabled ?? true
 
   return (
-    <Card className="h-full flex flex-col">
-      <div className="flex flex-col flex-1 min-h-0 gap-3">
+    <Card className="h-full flex flex-col overflow-hidden">
+      <div className="flex flex-col flex-1 min-h-0 gap-3 overflow-hidden">
         {/* Header */}
         <div>
           <h4 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
@@ -1154,16 +1155,12 @@ function TeamsWatchDetailPanel({ watch, history }: { watch: any | null; history:
               ⚠ Daemon may have stopped polling. Last seen: {lastPollRelative}
             </span>
             <button
-              onClick={() => {
-                stopWatch.mutate(watch.watchId, {
-                  onSuccess: () => createWatch.mutate({ chatId: watch.chatId, interval: watch.interval || 60, action: watch.action || 'notify' })
-                })
-              }}
-              disabled={stopWatch.isPending || createWatch.isPending}
+              onClick={() => restartWatch.mutate(watch.watchId)}
+              disabled={restartWatch.isPending}
               className="px-2 py-0.5 rounded text-[10px] font-medium transition-colors flex items-center gap-1"
               style={{ background: 'var(--accent-amber)', color: 'white' }}
             >
-              {(stopWatch.isPending || createWatch.isPending) ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+              {restartWatch.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
               Restart
             </button>
           </div>
@@ -1321,8 +1318,8 @@ function ActivityFeedTab() {
   ]
 
   return (
-    <Card>
-      <div className="flex flex-col items-center justify-center py-12 gap-6">
+    <Card className="flex-1 min-h-0">
+      <div className="flex flex-col items-center justify-center h-full gap-6">
         <span className="text-4xl">📡</span>
         <div className="text-center">
           <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
