@@ -1,2 +1,0 @@
-CMD-LOG-LINE-BEGIN 49712 | 2026-04-23 11:08:46,636 | INFO | az_command_data_logger | command args: account list --output {}
-CMD-LOG-LINE-BEGIN 49712 | 2026-04-23 11:08:46,659 | INFO | az_command_data_logger | exit code: 0

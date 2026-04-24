@@ -1,2 +1,0 @@
-CMD-LOG-LINE-BEGIN 41772 | 2026-04-20 11:10:11,866 | INFO | az_command_data_logger | command args: config set {}
-CMD-LOG-LINE-BEGIN 41772 | 2026-04-20 11:10:12,004 | INFO | az_command_data_logger | exit code: 0

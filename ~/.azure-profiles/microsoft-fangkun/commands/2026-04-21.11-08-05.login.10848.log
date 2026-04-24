@@ -1,3 +1,0 @@
-CMD-LOG-LINE-BEGIN 10848 | 2026-04-21 11:08:05,189 | INFO | az_command_data_logger | command args: login --scope {}
-CMD-LOG-LINE-BEGIN 10848 | 2026-04-21 11:08:40,911 | ERROR | az_command_data_logger | User canceled the flow. Status: Response_Status.Status_UserCanceled, Error code: 0, Tag: 593773845
-CMD-LOG-LINE-BEGIN 10848 | 2026-04-21 11:08:40,912 | INFO | az_command_data_logger | exit code: 1
