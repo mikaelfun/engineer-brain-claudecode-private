@@ -167,7 +167,7 @@ node .claude/skills/rag-sync/manifest.mjs diff "{outputDir}"
 
 #### 3.5. 解析真实路径（处理 symlink）
 
-`outputDir` 路径中可能包含 symlink（如 `data-dev/OneNote Export` → `data-prod/OneNote Export`）。`local-rag` 内部用 `realpathSync` 解析文件路径会跟随 symlink，如果 `--base-dir` 仍用原始路径，`startsWith` 检查会失败。
+`outputDir` 路径中可能包含 symlink。`local-rag` 内部用 `realpathSync` 解析文件路径会跟随 symlink，如果 `--base-dir` 仍用原始路径，`startsWith` 检查会失败。
 
 ```bash
 # 解析 outputDir 的真实路径（跟随 symlink），取 parent 作为 base-dir

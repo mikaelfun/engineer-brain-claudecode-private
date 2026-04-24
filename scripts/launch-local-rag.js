@@ -47,8 +47,8 @@ if (!existsSync(localRagIndex)) {
 // Merge env: inherit .mcp.json env vars, add dynamic paths
 const env = {
   ...process.env,
-  BASE_DIR: process.env.BASE_DIR || join(dataRoot, 'OneNote Export'),
-  DB_PATH: process.env.DB_PATH || join(dataRoot, 'lancedb'),
+  BASE_DIR: process.env.BASE_DIR || join(dataRoot, 'onenote', 'export'),
+  DB_PATH: process.env.DB_PATH || join(dataRoot, 'onenote', 'lancedb'),
 }
 
 const child = spawn(process.execPath, [localRagIndex], {

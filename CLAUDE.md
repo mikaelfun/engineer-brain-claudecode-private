@@ -15,7 +15,7 @@ Kun Fang 的 AI 助手，Azure 技术支持工程师。
 | `.claude/skills/` | 唯一 skill 注册表（27 顶层 + casework 含 10 子组件） |
 | `.claude/agents/` | 可 spawn 的 agent 规格（12 个） |
 | `playbooks/` | 领域知识（schemas / rules / guides） |
-| `../data/cases/` | Case 数据（`config.json → casesRoot`） |
+| `../data/{dev,main}/cases/` | Case 数据（`config.json → casesRoot`，按分支隔离） |
 | `issues/` | Issue Tracker |
 | `conductor/` | 项目管理（tracks / specs / plans） |
 | `dashboard/` | Web Dashboard（前端 + 后端） |

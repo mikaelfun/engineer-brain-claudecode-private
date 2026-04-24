@@ -2,16 +2,16 @@
   "id": "ir-first-routing_20260424",
   "title": "Patrol new-case mode IR-first 路径修复",
   "type": "bug",
-  "status": "pending",
+  "status": "implemented",
   "created": "2026-04-24T11:30:00+08:00",
-  "updated": "2026-04-24T11:30:00+08:00",
+  "updated": "2026-04-24T14:30:00+08:00",
   "issueId": "ISS-247",
   "phases": {
     "total": 2,
-    "completed": 0
+    "completed": 2
   },
   "tasks": {
     "total": 6,
-    "completed": 0
+    "completed": 6
   }
 }

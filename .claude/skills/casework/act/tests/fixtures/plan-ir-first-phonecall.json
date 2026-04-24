@@ -1,0 +1,12 @@
+{
+  "caseNumber": "2604240099999999",
+  "actualStatus": "pending-engineer",
+  "daysSinceLastContact": 0,
+  "statusReasoning": "Case has phone call IR but no engineer outbound email. IR-first path required.",
+  "actions": [
+    { "type": "troubleshooter", "priority": 1, "status": "pending" },
+    { "type": "email-drafter", "priority": 2, "status": "pending", "emailType": "initial-response", "dependsOn": "troubleshooter" }
+  ],
+  "noActionReason": null,
+  "routingSource": "llm"
+}

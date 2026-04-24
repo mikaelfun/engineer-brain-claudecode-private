@@ -4,7 +4,7 @@
   "description": "当前 patrol new-case mode 在检测到 Case 已通过 phone call 完成 IR，但没有任何工程师邮件发出时，没有走 IR-first 路径，而是直接将 Case 设为 pending-engineer 并启动 troubleshooting。\n\n期望行为：\n1. 检测到 Case 已有 phone call IR 但无工程师邮件时，应走 IR-first 路径\n2. 优先生成 IR 邮件草稿，让工程师尽快发送 initial response 邮件\n3. 工程师发送 IR 邮件后，再根据 troubleshooter 的 request-info 结果回复客户需要哪些具体信息\n4. 即：IR 邮件优先于 troubleshoot 分析，确保客户第一时间收到工程师响应\n\n当前流程：phone call IR → pending-engineer → troubleshoot（❌ 跳过了 IR 邮件）\n期望流程：phone call IR → IR-first → 生成 IR 邮件草稿 → 工程师发送 → 再根据 troubleshoot 结果补充 request-info",
   "type": "bug",
   "priority": "P1",
-  "status": "tracked",
+  "status": "implemented",
   "trackId": "ir-first-routing_20260424",
   "testLoopScan": true,
   "createdAt": "2026-04-24T11:26:00+08:00",

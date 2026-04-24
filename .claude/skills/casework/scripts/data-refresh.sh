@@ -219,7 +219,7 @@ else
 fi
 
 # 4. OneNote — L2, wrapped (emits delta via EVENT_DELTA_FILE contract).
-# 拉通 casework-gather.sh 已有方式：{dataRoot}/OneNote Export/{personalNotebook}/
+# 拉通 casework-gather.sh 已有方式：{dataRoot}/onenote/export/{personalNotebook}/
 # 之前错读 config.onenoteNotebookDir（不存在的 key）导致永远 skip，md 从未落盘。
 NOTEBOOK_DIR=""
 # PROJECT_ROOT_WIN is cygpath -m'd (C:/…); python3 open() on Windows chokes on
@@ -237,7 +237,7 @@ try:
         if not os.path.isabs(dr):
             dr = os.path.join(r'$PROJECT_ROOT_WIN', dr)
             dr = os.path.normpath(dr).replace('\\\\', '/')
-        d = os.path.join(dr, 'OneNote Export', nb)
+        d = os.path.join(dr, 'onenote', 'export', nb)
         print(d if os.path.isdir(d) else '')
 except Exception: pass
 " 2>/dev/null || echo "")

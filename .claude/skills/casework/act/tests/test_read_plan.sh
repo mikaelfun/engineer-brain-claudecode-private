@@ -39,5 +39,12 @@ output=$(bash "$SCRIPT" "$HERE/fixtures/plan-with-dependency.json")
 eval "$output"
 [ "$ACTION_1_DEPENDS_ON" = "troubleshooter" ] && { echo "  ✓ dependency"; PASS=$((PASS+1)); } || { echo "  ✗ dependency"; FAIL=$((FAIL+1)); }
 
+# T5: phone call IR — should also trigger IR_FIRST=1
+run_test "phonecall-ir status" "plan-ir-first-phonecall.json" "ACTUAL_STATUS" "pending-engineer"
+output=$(bash "$SCRIPT" "$HERE/fixtures/plan-ir-first-phonecall.json")
+eval "$output"
+[ "$IR_FIRST" = "1" ] && { echo "  ✓ phonecall-ir ir-first flag"; PASS=$((PASS+1)); } || { echo "  ✗ phonecall-ir ir-first flag: got '$IR_FIRST'"; FAIL=$((FAIL+1)); }
+[ "$ACTION_COUNT" = "2" ] && { echo "  ✓ phonecall-ir action count"; PASS=$((PASS+1)); } || { echo "  ✗ phonecall-ir action count: got '$ACTION_COUNT'"; FAIL=$((FAIL+1)); }
+
 echo "=== $PASS passed, $FAIL failed ==="
 [ $FAIL -eq 0 ]

@@ -253,15 +253,18 @@ actualStatus 是对**实际沟通状态**的事实判断，仅基于已发生的
 2. 有未发送草稿（`drafts/`）且内容仍相关 → actions=[], noActionReason="unsent draft exists"
 3. 排查完成但未告知客户 → email-drafter（不需 troubleshooter）
 4. 有新信息需排查（客户新数据、PG 新回复）→ troubleshooter
-5. 新 case（`new` 状态，无工程师邮件）+ 需初始排查 → troubleshooter + email-drafter(initial-response)
+5. 新 case 或 phone call IR（无工程师邮件）+ 需初始排查 → troubleshooter + email-drafter(initial-response)
+   ⚠️ "无工程师邮件" = emails.md 中没有工程师 outbound 邮件。Phone call IR 不等于已发邮件！
+   即使 D365 有 phone call activity 记录了 IR，只要工程师没发过正式邮件，仍走 IR-first。
 6. 判断不确定 → actions=[]（让 act 的 fallback 路由表处理）
 7. 有 troubleshooter action → deferredActions=["email-drafter"]（向后兼容，不影响路由）
    → v4: 所有含 troubleshooter 的场景都走 reassess，reassess 决定 email 类型
-   → IR-first 例外不变：new case 同时输出 email-drafter(initial-response) + troubleshooter
+   → IR-first 例外不变：无工程师邮件时同时输出 email-drafter(initial-response) + troubleshooter（含 phone call IR 场景）
 
 **邮件去重规则**（推荐 email-drafter 前必须检查）：
 - 读 `{caseDir}/emails.md` 检查工程师是否已发过同类型邮件（IR/follow-up/closure）
 - 已发过 IR 邮件（含 21v convert IR）→ 不再推荐 email-drafter(initial-response)
+  ⚠️ phone call IR 不算 "已发 IR 邮件"。只有 emails.md 中有工程师 outbound 的 IR 邮件才算。
 - 已发过 follow-up 且 < 3 天 → 不再推荐 email-drafter(follow-up)
 - 已发过 closure-confirm → 不再推荐 email-drafter(closure-confirm)
 - `{caseDir}/drafts/` 有未发送草稿且内容仍相关 → 推荐 `no-agent`（用户只需发送现有草稿）

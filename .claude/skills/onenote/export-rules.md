@@ -195,7 +195,7 @@ hierarchy lastModifiedTime  vs  本地 frontmatter modified:
 
 ## Skill 配置
 
-配置来源：项目根目录 `config.json` 的 `dataRoot` 字段，`outputDir` = `{dataRoot}/OneNote Export`
+配置来源：项目根目录 `config.json` 的 `dataRoot` 字段，`outputDir` = `{dataRoot}/onenote/export`
 
 > ⚠️ `.claude/skills/onenote/config.json` 不再维护 `outputDir`，所有路径统一从项目 `config.json` 派生。
 
@@ -226,14 +226,14 @@ Sync 模式的 exclude 列表存放在**项目级** `config.json`（不是 skill
 **始终从项目 `config.json` 的 `dataRoot` 派生**，不维护独立的 outputDir：
 
 ```bash
-# 从项目 config.json 读取 dataRoot，拼接 "OneNote Export"
-node -e "const c=JSON.parse(require('fs').readFileSync('config.json','utf-8'));const p=require('path');const dr=c.dataRoot||'./data';const abs=p.isAbsolute(dr)?dr:p.resolve(dr);console.log(p.join(abs,'OneNote Export'))"
+# 从项目 config.json 读取 dataRoot，拼接 "onenote/export"
+node -e "const c=JSON.parse(require('fs').readFileSync('config.json','utf-8'));const p=require('path');const dr=c.dataRoot||'./data';const abs=p.isAbsolute(dr)?dr:p.resolve(dr);console.log(p.join(abs,'onenote','export'))"
 ```
 
 解析规则（单一来源）：
-- **项目 `config.json` 有 `dataRoot`** → 用 `{dataRoot}/OneNote Export` 作为 `$OutputBase`
+- **项目 `config.json` 有 `dataRoot`** → 用 `{dataRoot}/onenote/export` 作为 `$OutputBase`
 - **`config.json` 不存在或无 `dataRoot`（首次使用）** → 执行 onboarding：
-  1. 用 `AskUserQuestion` 询问导出目录路径（提示示例：`C:\Users\你的用户名\Documents\OneNote Export`）
+  1. 用 `AskUserQuestion` 询问导出目录路径（提示示例：`~/projects/data/shared/onenote/export`）
   2. 用户提供路径后，将 `dataRoot` 写入项目 `config.json`（而非 skill config）
   3. 用该路径作为 `$OutputBase` 继续执行
 
@@ -617,7 +617,7 @@ eval $(cat .mcp.json | node -e "
 
 **第二步：解析真实路径（处理 symlink）**
 
-`outputDir` 可能包含 symlink（如 `data-dev/OneNote Export` → `data-prod/OneNote Export`），而 `local-rag` 内部用 `realpathSync` 解析文件路径会跟随 symlink。如果 `--base-dir` 仍用原始路径，`startsWith` 检查会失败。因此 `--base-dir` 和文件路径都必须用 resolved 后的真实路径：
+`outputDir` 可能包含 symlink，而 `local-rag` 内部用 `realpathSync` 解析文件路径会跟随 symlink。如果 `--base-dir` 仍用原始路径，`startsWith` 检查会失败。因此 `--base-dir` 和文件路径都必须用 resolved 后的真实路径：
 
 ```bash
 # 解析 outputDir 的真实路径（跟随 symlink），取 parent 作为 base-dir

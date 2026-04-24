@@ -295,8 +295,8 @@ if (Test-Path $mcpFile) {
       "command": "node",
       "args": ["$homeDir\\.claude\\mcp-servers\\local-rag\\dist\\index.js"],
       "env": {
-        "BASE_DIR": "$dataRootEsc\\OneNote Export",
-        "DB_PATH": "$dataRootEsc\\lancedb",
+        "BASE_DIR": "$dataRootEsc\\onenote\\export",
+        "DB_PATH": "$dataRootEsc\\onenote\\lancedb",
         "EMBEDDING_PROVIDER": "openai",
         "OPENAI_API_KEY": "$openaiKey",
         "OPENAI_BASE_URL": "$openaiBase",

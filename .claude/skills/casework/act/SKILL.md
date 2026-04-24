@@ -165,7 +165,7 @@ echo "ACT_OK|actions=$ACTION_COUNT|ir_first=$IR_FIRST|loops=$LOOP_COUNT|elapsed=
 
 | actualStatus | assess actions | act 行为 |
 |---|---|---|
-| `pending-engineer`（新 case） | troubleshooter + email-drafter(IR) | IR-first: email(IR) → ts → reassess → challenger gate → email(phase2) |
+| `pending-engineer`（新 case / phone call IR 无邮件） | troubleshooter + email-drafter(IR) | IR-first: email(IR) → ts → reassess → challenger gate → email(phase2) |
 | `pending-engineer`（已有 IR） | troubleshooter, deferred=[email-drafter] | ts → reassess → challenger gate → email |
 | `pending-customer` (days≥3) | email-drafter(follow-up) | email |
 | `pending-pg` (days<5) | [] | 无 action |
