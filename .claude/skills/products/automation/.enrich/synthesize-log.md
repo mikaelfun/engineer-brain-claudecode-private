@@ -110,3 +110,92 @@
 | account-recovery | automation-078, automation-079, automation-080 |
 | code-samples | automation-011, automation-012, automation-022, automation-028 |
 
+
+# Synthesize Log -- automation -- 2026-04-24
+
+## 模式
+增量（补建 topic-plan.json + 索引文件）
+
+## 保留条目
+| ID | 原因 |
+|----|------|
+| automation-contentidea-kb-001 | contentidea-kb / medium |
+| automation-contentidea-kb-006 | contentidea-kb / medium |
+| automation-contentidea-kb-007 | contentidea-kb / medium |
+| automation-contentidea-kb-008 | contentidea-kb / medium |
+| automation-contentidea-kb-009 | contentidea-kb / medium |
+| automation-contentidea-kb-010 | contentidea-kb / medium |
+| automation-contentidea-kb-011 | contentidea-kb / medium |
+| automation-contentidea-kb-012 | contentidea-kb / medium |
+| automation-contentidea-kb-013 | contentidea-kb / medium |
+| automation-contentidea-kb-014 | contentidea-kb / medium |
+| automation-contentidea-kb-015 | contentidea-kb / medium |
+| automation-mslearn-001 | mslearn / medium |
+| automation-mslearn-002 | mslearn / medium |
+| automation-mslearn-003 | mslearn / medium |
+| automation-mslearn-004 | mslearn / medium |
+| automation-mslearn-005 | mslearn / medium |
+| automation-mslearn-006 | mslearn / high |
+| automation-mslearn-007 | mslearn / high |
+| automation-mslearn-008 | mslearn / medium |
+| automation-mslearn-009 | mslearn / high |
+| automation-mslearn-010 | mslearn / high |
+| automation-mslearn-011 | mslearn / high |
+| automation-mslearn-012 | mslearn / high |
+| automation-mslearn-013 | mslearn / medium |
+| automation-mslearn-014 | mslearn / high |
+| automation-mslearn-015 | mslearn / medium |
+| automation-mslearn-016 | mslearn / medium |
+| automation-mslearn-017 | mslearn / medium |
+| automation-onenote-001 | onenote / high |
+| automation-onenote-002 | onenote / high |
+| automation-onenote-003 | onenote / high |
+| automation-onenote-004 | onenote / high |
+| automation-onenote-005 | onenote / high |
+| automation-onenote-006 | onenote / high |
+| automation-onenote-007 | onenote / high |
+| automation-onenote-008 | onenote / high |
+| automation-onenote-009 | onenote / high |
+| automation-onenote-013 | onenote / high |
+| automation-onenote-014 | onenote / high |
+| automation-onenote-015 | onenote / high |
+| automation-onenote-016 | onenote / high |
+| automation-onenote-018 | onenote / high |
+| automation-onenote-019 | onenote / high |
+| automation-onenote-020 | onenote / high |
+| automation-onenote-021 | onenote / high |
+| automation-onenote-025 | onenote / high |
+| automation-onenote-026 | onenote / high |
+| automation-onenote-034 | onenote / high |
+| automation-onenote-035 | onenote / high |
+| automation-onenote-036 | onenote / high |
+| automation-onenote-043 | onenote / high |
+| automation-onenote-044 | onenote / high |
+| automation-onenote-045 | onenote / high |
+| automation-onenote-046 | onenote / high |
+| automation-onenote-048 | onenote / medium |
+| automation-onenote-049 | onenote / high |
+| automation-onenote-050 | onenote / high |
+
+## 丢弃条目
+| ID | 原因 |
+|----|------|
+| automation-contentidea-kb-002 | 半成品（无根因无方案） |
+| automation-contentidea-kb-003 | 半成品（无根因无方案） |
+| automation-contentidea-kb-004 | 半成品（无根因无方案） |
+| automation-contentidea-kb-005 | 半成品（无根因无方案） |
+
+## 融合统计
+| topic | 类型 | 三元组 | draft | Kusto | sub-agents |
+|-------|------|--------|-------|-------|------------|
+| runbook-sandbox-limits | 📋 融合 | 9 | 1 | 0 | 0 |
+| runbook-module-dependency | 📊 速查 | 6 | 0 | 0 | 0 |
+| hybrid-worker | 📋 融合 | 4 | 2 | 0 | 0 |
+| runbook-auth-credentials | 📋 融合 | 8 | 1 | 0 | 0 |
+| update-management-v1 | 📋 融合 | 8 | 1 | 0 | 0 |
+| azure-update-manager | 📋 融合 | 7 | 3 | 0 | 0 |
+| runbook-common-errors | 📋 融合 | 11 | 1 | 0 | 0 |
+| mooncake-feature-gaps | 📋 融合 | 3 | 1 | 0 | 0 |
+| diagnostic-tools-reference | 📋 融合 | 1 | 5 | 0 | 0 |
+| python-sdk-runbook | 📋 融合 | 0 | 3 | 0 | 0 |
+| dsc-configuration | 📋 融合 | 0 | 1 | 0 | 0 |

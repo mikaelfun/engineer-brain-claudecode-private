@@ -37,9 +37,9 @@ DUR_MS=$(( ($(date +%s%N) - START_NS) / 1000000 ))
 
 if [ $EXIT -eq 0 ]; then
   # Read delta from subtask output file (deterministic — file written by source script)
-  # ISS-231: subtask files live under runs/{runId}/output/subtasks/
-  RUN_ID=$(python3 -c "import json; print(json.load(open('$CASE_DIR/.casework/state.json',encoding='utf-8')).get('runId',''))" 2>/dev/null || echo "")
-  SUBTASK_FILE="$CASE_DIR/.casework/runs/${RUN_ID}/output/subtasks/${TASK}.json"
+  # ISS-231: subtask files live under runs/{runId}/data-refresh/subtasks/
+  RUN_ID=$(python3 -c "import json,os; p=os.path.join(r'''$CASE_DIR''','.casework','state.json'); print(json.load(open(p,encoding='utf-8')).get('runId',''))" 2>/dev/null || echo "")
+  SUBTASK_FILE="$CASE_DIR/.casework/runs/${RUN_ID}/data-refresh/subtasks/${TASK}.json"
   DELTA_ARGS=()
   if [ -f "$SUBTASK_FILE" ]; then
     DELTA_JSON=$(python3 -c "

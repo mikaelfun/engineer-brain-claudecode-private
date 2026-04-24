@@ -13,16 +13,16 @@ allowed-tools:
 
 # /tunnel — 隧道管理
 
-管理 cloudflared 快速隧道，将本地 Dashboard (localhost:5173) 暴露到公网，供手机端飞书等访问。
+管理 cloudflared 快速隧道，将本地 Dashboard 暴露到公网，供手机端飞书等访问。
 
-## 常量
+## 常量（动态读取）
 
-```
-PROJECT_ROOT = /c/Users/fangkun/Documents/Projects/EngineerBrain/src
-RUNTIME_DIR  = ${PROJECT_ROOT}/dashboard/.runtime
-PID_FILE     = ${RUNTIME_DIR}/tunnel.pid
-URL_FILE     = ${RUNTIME_DIR}/tunnel.url
-TARGET_PORT  = 5173
+```bash
+# 从 config.json 读取端口（适配 dev/prod 不同端口）
+TARGET_PORT=$(python3 -c "import json; print(json.load(open('config.json')).get('dashboard',{}).get('webPort',5173))")
+RUNTIME_DIR="dashboard/.runtime"
+PID_FILE="$RUNTIME_DIR/tunnel.pid"
+URL_FILE="$RUNTIME_DIR/tunnel.url"
 ```
 
 ## 命令解析
@@ -35,15 +35,19 @@ TARGET_PORT  = 5173
 
 ## start
 
-1. **检查是否已运行**：
+1. **读取端口 + 检查是否已运行**：
 
 ```bash
-PID_FILE="/c/Users/fangkun/Documents/Projects/EngineerBrain/src/dashboard/.runtime/tunnel.pid"
+TARGET_PORT=$(python3 -c "import json; print(json.load(open('config.json')).get('dashboard',{}).get('webPort',5173))")
+RUNTIME_DIR="dashboard/.runtime"
+PID_FILE="$RUNTIME_DIR/tunnel.pid"
+URL_FILE="$RUNTIME_DIR/tunnel.url"
+
 if [ -f "$PID_FILE" ]; then
   OLD_PID=$(cat "$PID_FILE")
   if tasklist //FI "PID eq $OLD_PID" 2>/dev/null | grep -q "$OLD_PID"; then
     echo "ALREADY_RUNNING"
-    cat "/c/Users/fangkun/Documents/Projects/EngineerBrain/src/dashboard/.runtime/tunnel.url"
+    cat "$URL_FILE"
     exit 0
   else
     rm -f "$PID_FILE"
@@ -56,19 +60,19 @@ fi
 2. **检查 Dashboard 是否在运行**：
 
 ```bash
-netstat -ano | grep "5173" | grep "LISTENING"
+netstat -ano | grep "$TARGET_PORT" | grep "LISTENING"
 ```
 
-如果 5173 无监听，提醒用户先启动 Dashboard：`cd dashboard && npm run dev`，不要继续。
+如果端口无监听，提醒用户先启动 Dashboard：`cd dashboard && npm run dev`，不要继续。
 
 3. **启动隧道**：
 
 ```bash
-RUNTIME_DIR="/c/Users/fangkun/Documents/Projects/EngineerBrain/src/dashboard/.runtime"
+mkdir -p "$RUNTIME_DIR"
 LOG_FILE="$RUNTIME_DIR/tunnel.log"
-npx --yes cloudflared tunnel --url http://localhost:5173 > "$LOG_FILE" 2>&1 &
+npx --yes cloudflared tunnel --url http://localhost:$TARGET_PORT > "$LOG_FILE" 2>&1 &
 TUNNEL_PID=$!
-echo $TUNNEL_PID > "$RUNTIME_DIR/tunnel.pid"
+echo $TUNNEL_PID > "$PID_FILE"
 ```
 
 4. **等待并提取 URL**：
@@ -76,7 +80,7 @@ echo $TUNNEL_PID > "$RUNTIME_DIR/tunnel.pid"
 ```bash
 sleep 8
 TUNNEL_URL=$(grep -oP 'https://[^\s]+\.trycloudflare\.com' "$LOG_FILE" | head -1)
-echo "$TUNNEL_URL" > "$RUNTIME_DIR/tunnel.url"
+echo "$TUNNEL_URL" > "$URL_FILE"
 echo "$TUNNEL_URL"
 ```
 
@@ -89,8 +93,9 @@ echo "$TUNNEL_URL"
 ## stop
 
 ```bash
-PID_FILE="/c/Users/fangkun/Documents/Projects/EngineerBrain/src/dashboard/.runtime/tunnel.pid"
-URL_FILE="/c/Users/fangkun/Documents/Projects/EngineerBrain/src/dashboard/.runtime/tunnel.url"
+RUNTIME_DIR="dashboard/.runtime"
+PID_FILE="$RUNTIME_DIR/tunnel.pid"
+URL_FILE="$RUNTIME_DIR/tunnel.url"
 
 if [ -f "$PID_FILE" ]; then
   PID=$(cat "$PID_FILE")
@@ -114,8 +119,9 @@ fi
 ## status
 
 ```bash
-PID_FILE="/c/Users/fangkun/Documents/Projects/EngineerBrain/src/dashboard/.runtime/tunnel.pid"
-URL_FILE="/c/Users/fangkun/Documents/Projects/EngineerBrain/src/dashboard/.runtime/tunnel.url"
+RUNTIME_DIR="dashboard/.runtime"
+PID_FILE="$RUNTIME_DIR/tunnel.pid"
+URL_FILE="$RUNTIME_DIR/tunnel.url"
 
 if [ -f "$PID_FILE" ]; then
   PID=$(cat "$PID_FILE")

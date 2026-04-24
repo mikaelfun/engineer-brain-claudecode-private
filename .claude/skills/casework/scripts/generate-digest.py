@@ -605,6 +605,9 @@ Output EXACTLY this JSON structure (no markdown, no code fences):
     "具体事实1（命令输出/错误码/客户确认/配置值/时间戳/URL — 可追溯证据）",
     "具体事实2..."
   ],
+  "code_blocks": [
+    {"language": "powershell", "description": "一句话中文描述：脚本用途、关键参数、预期行为", "code": "完整代码内容（保留原始格式）"}
+  ],
   "screenshots": [
     {"description": "截图内容描述（提取的诊断信息）", "image_ref": "原 markdown image 引用，如 ![alt](assets/xxx.png)"}
   ],
@@ -620,6 +623,12 @@ Output EXACTLY this JSON structure (no markdown, no code fences):
 
 Classification rules for each field:
 - facts: Command output, error codes, customer quotes, timestamps, URLs, config values — traceable evidence. Include ALL important findings.
+  IMPORTANT: Do NOT put full code/scripts in facts — those go in code_blocks. Facts should only contain a brief one-line reference like "客户提供了 SMTP AUTH 测试脚本（见相关代码）" if a script exists.
+- code_blocks: Scripts, code snippets, or multi-line commands (PowerShell, Python, Bash, curl, etc.) found in the page.
+  - Each entry: {"language": "powershell|python|bash|...", "description": "中文描述：用途、关键参数、预期行为", "code": "完整代码"}
+  - Preserve the ENTIRE script as-is — do NOT truncate or summarize the code itself
+  - The description should explain: what the code does, key parameters (server, port, auth method), and the expected outcome
+  - If no scripts/code in the page, return empty array []
 - screenshots: For each image in the page, describe what diagnostic info is visible. Keep the original image markdown reference in image_ref.
 - analyses: Split by source:
   - "engineer": Text that the engineer explicitly wrote as hypothesis/inference (看到"可能"/"应该"/"怀疑"/"TODO"等)
@@ -678,6 +687,7 @@ Page hierarchy: {hierarchy}
         "reason": parsed.get("reason", ""),
         "problem_description": parsed.get("problem_description", ""),
         "facts": parsed.get("facts", []),
+        "code_blocks": parsed.get("code_blocks", []),
         "screenshots": parsed.get("screenshots", []),
         "analyses": parsed.get("analyses", []),
         "action_items": parsed.get("action_items", []),
@@ -717,6 +727,7 @@ def synthesize_onenote_digest(per_page_results, case_info_head, case_number, bas
             "hierarchy": hierarchy,
             "problem_description": r.get("problem_description", ""),
             "facts": r.get("facts", []),
+            "code_blocks": r.get("code_blocks", []),
             "screenshots": r.get("screenshots", []),
             "analyses": r.get("analyses", []),
             "action_items": r.get("action_items", []),
@@ -736,7 +747,7 @@ This is NOT concatenation — you must:
 5. Keep all screenshot references intact (they display inline in the UI)
 6. Use the "hierarchy" field to understand page relationships (root page vs subpage under same section share context)
 
-Output markdown with EXACTLY these four sections:
+Output markdown with EXACTLY these sections (conditional sections only appear when content exists):
 
 ## 1. 关键信息（Key Information）
 
@@ -746,20 +757,27 @@ Output markdown with EXACTLY these four sections:
 - {deduplicated fact 1}
 - {deduplicated fact 2}
 
-**截图诊断**:
+## 2. 相关代码（Code）                    ← CONDITIONAL: only include if code_blocks exist in ANY page
+> {description of what the code does}
+```{language}
+{full code}
+```
+(repeat for each code block)
+
+## 3. 相关截图（Screenshots）              ← CONDITIONAL: only include if screenshots exist in ANY page
 - {screenshot description} {keep the original image_ref as-is, e.g. ![alt](assets/xxx.png)}
 
-## 2. 分析推断（Analysis & Reasoning）
+## 4. 分析推断（Analysis & Reasoning）
 
 - [engineer] {analysis from engineer's own notes}
 - [llm-generated] {LLM-inferred analysis}
 
-## 3. 行动计划（Action Plan）
+## 5. 行动计划（Action Plan）
 
 - [verified] {step that has been confirmed done}
 - [unverified] {suggested step not yet confirmed}
 
-## 4. 低价值信息（Low-Relevance）
+## 6. 低价值信息（Low-Relevance）
 
 (This section will be added by the caller — output empty string for this section)
 
@@ -767,7 +785,9 @@ Rules:
 - Keep names/commands/technical terms in English, rest in Chinese
 - Do NOT repeat the same fact from different pages — merge into one entry
 - Preserve ALL image references exactly as given (![...](assets/...))
-- If no items for a sub-section, write "(无)" instead of omitting the section
+- CRITICAL — Code blocks: Render each code_block entry as: description line + ```{language} code fence. Preserve complete code, never truncate.
+- CRITICAL — Conditional sections: Do NOT output "## 2. 相关代码" if there are zero code_blocks across all pages. Do NOT output "## 3. 相关截图" if there are zero screenshots. Adjust numbering accordingly (e.g., if no code but has screenshots, screenshots becomes ## 2).
+- If no items for a sub-section within an included section, write "(无)" instead of omitting
 - Do NOT add markdown code fences around your output — output raw markdown directly"""
 
     user_text = f"""Case Number: {case_number}
@@ -841,8 +861,8 @@ def merge_onenote_results(results, case_number, page_files,
             synthesized.strip(),
         ]
 
-        # Append ## 4 if not already in LLM output
-        if "## 4." not in synthesized:
+        # Append ## 6 if not already in LLM output
+        if "## 6." not in synthesized and "低价值信息" not in synthesized:
             lines.extend(["", "## 4. 低价值信息（Low-Relevance）", ""])
             if low_results:
                 for r in low_results:
@@ -965,6 +985,7 @@ def merge_onenote_results(results, case_number, page_files,
             "reason": r.get("reason", ""),
             "problem_description": r.get("problem_description", ""),
             "facts": r.get("facts", []),
+            "code_blocks": r.get("code_blocks", []),
             "screenshots": r.get("screenshots", []),
             "analyses": r.get("analyses", []),
             "action_items": r.get("action_items", []),

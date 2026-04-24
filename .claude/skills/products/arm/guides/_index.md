@@ -1,66 +1,66 @@
 # ARM 排查指南索引
 
-| 指南 | 类型 | Kusto | 关键词 | 来源数 | 置信度 |
-|------|------|-------|--------|--------|--------|
-| [ARM API 限流与 429 错误](arm-throttling.md) | 📋 融合 | 3 | throttling, 429, rate-limit, arm, httpincomingrequests | 9 | high |
-| [ARM 缓存同步问题](arm-cache-sync.md) | 📋 融合 | 1 | arm-cache, sync, jarvis, tags, cache-sync | 7 | medium |
-| [ARM 模板部署基础问题](arm-template-basics.md) | 📋 融合 | 1 | arm-template, deployment, linked-template, template-spec, storage-firewall | 9 | high |
-| [ARM 部署错误排查](arm-deployment-errors.md) | 📋 融合 | 3 | bicep, azurechinacloud, mooncake, bicepconfig.json, currentprofile | 1 | medium |
-| [Azure Policy 模式与合规扫描](policy-mode-scan.md) | 📋 融合 | 0 | compliance, azure-policy, policy, brownfield, compliance-scan | 15 | high |
-| [Azure Policy 执行与阻断](policy-enforcement.md) | 📋 融合 | 0 | azure-policy, greenfield, policy, deny, dine | 15 | high |
-| [Azure Policy 条件与别名](policy-conditions-aliases.md) | 📋 融合 | 0 | azure-policy, policy-definition, alias, condition, array-alias | 6 | high |
-| [Azure Policy 特定资源提供程序](policy-special-rp.md) | 📋 融合 | 0 | azure-policy, policy, support-scope, sql, master-db | 6 | medium |
-| [Azure Policy 与 MDfC/安全中心集成](policy-mdc-integration.md) | 📋 融合 | 0 | security-center, compliance, mdc, microsoft-defender-for-cloud, discrepancy | 3 | medium |
-| [Azure Policy 通用问题](policy-general.md) | 📋 融合 | 0 | azure-policy, policy, deny-effect, requestdisallowedbypolicy, arc-k8s | 8 | high |
-| [RBAC 拒绝分配](rbac-deny-assignments.md) | 📋 融合 | 0 | deny-assignment, rbac, access-denied, managed-application, first-party-rp | 7 | high |
-| [RBAC 角色与权限管理 custom role keyvault](rbac-roles-permissions-custom-role-keyvault.md) | 📋 融合 | 1 | rbac, custom-role, role-assignment, limit, 403 | 15 | high |
-| [RBAC 角色与权限管理 guest user owner](rbac-roles-permissions-guest-user-owner.md) | 📋 融合 | 1 | rbac, azure-arc, guest-user, external-user, authorizationfailed | 6 | medium |
-| [Azure 资源标签管理](tags-management.md) | 📋 融合 | 0 | tags, resource-provider, portal, patch, put | 12 | medium |
-| [资源移动与跨区域迁移](resource-move.md) | 📊 速查 | 0 | resource-move, cn1-ce1-migration, resource-mover, movecannotproceedwithresourcesnotinsucceededstate, vnet | 13 | high |
-| [资源恢复](resource-recovery.md) | 📊 速查 | 0 | resource-recovery, self-recoverable, non-recoverable, storage-account, csar | 4 | medium |
-| [Azure Resource Graph](resource-graph.md) | 📊 速查 | 0 | azure-resource-graph, stale-data, resources-table, full-scan, proxy-resources | 3 | medium |
-| [资源锁与命名约束](resource-locks-naming.md) | 📊 速查 | 0 | naming, resource-lock, cannotdelete, readonly, delete-blocked | 3 | medium |
-| [订阅管理与计费](subscription-billing.md) | 📊 速查 | 0 | subscription-transfer, managed-identity, billing, billing-api, 403 | 8 | high |
-| [Azure Arc 服务器](arc-servers.md) | 📊 速查 | 0 | arc, customscriptextension, ama, azuremonitoragent, cse | 4 | medium |
-| [Azure Arc Kubernetes](arc-k8s.md) | 📊 速查 | 0 | kubernetes, arc, arc-k8s, mooncake, azure-arc | 9 | high |
-| [Azure Arc Resource Bridge 与 VMware](arc-resource-bridge.md) | 📊 速查 | 0 | arc-resource-bridge, telemetry-manager, crashloopbackoff, kubectl, aldo | 1 | medium |
-| [Azure Arc 通用](arc-general.md) | 📊 速查 | 0 | azure-arc, arc, azcmagent, firewall, proxy | 6 | high |
-| [Azure Migrate 迁移与发现](azure-migrate.md) | 📋 融合 | 0 | azure-migrate, migration, kusto, discovery, sql-discovery | 9 | high |
-| [CN1/CE1 区域迁移](region-migration.md) | 📊 速查 | 0 | cn1-ce1-migration, storage, cross-region-migration, live-migration, adf | 2 | medium |
-| [Azure Lighthouse 委托管理](lighthouse.md) | 📋 融合 | 0 | lighthouse, delegation, tenant-migration, subscription-move, logs | 2 | medium |
-| [ARM Private Link](private-link-arm.md) | 📊 速查 | 0 | private-link, pla, rmpl, management-group, public-network-access | 2 | medium |
-| [Azure Stack Hub AzS Support 诊断命令 service fabric](ash-azs-cmdlets-service-fabric.md) | 📋 融合 | 0 | azure-stack-hub, service-fabric, azs-support-module, diagnostics, remediation | 11 | medium |
-| [Azure Stack Hub AzS Support 诊断命令 compute storage](ash-azs-cmdlets-compute-storage.md) | 📋 融合 | 0 | azure-stack-hub, azs-support, compute, storage, csstools | 14 | medium |
-| [Azure Stack Hub AzS Support 诊断命令 misc blob service](ash-azs-cmdlets-misc-blob-service.md) | 📋 融合 | 0 | azure-stack-hub, azs-support-module, storage, azs-support, misc | 15 | medium |
-| [Azure Stack Hub AzS Support 诊断命令 ece unhealthy ece logs](ash-azs-cmdlets-ece-unhealthy-ece-logs.md) | 📋 融合 | 0 | azure-stack-hub, azs-support, azs-support-module, diagnostics, repair | 15 | medium |
-| [Azure Stack Hub AzS Support 诊断命令 vm refresh safe restart](ash-azs-cmdlets-vm-refresh-safe-restart.md) | 📋 融合 | 0 | azure-stack-hub, azs-support-module, diagnostics, infrastructure-vm, hyper-v | 11 | medium |
-| [Azure Stack Hub 网络与 SDN sdn nrp](ash-networking-sdn-sdn-nrp.md) | 📋 融合 | 0 | azure-stack-hub, networking, sdn, duplicate, nrp | 15 | medium |
-| [Azure Stack Hub 网络与 SDN dns hyper v](ash-networking-sdn-dns-hyper-v.md) | 📋 融合 | 0 | azure-stack-hub, networking, network-controller, dns, orphaned-records | 4 | medium |
-| [Azure Stack Hub 存储](ash-storage.md) | 📋 融合 | 0 | azure-stack-hub, storage, csv, acs, disk-space | 7 | medium |
-| [Azure Stack Hub 计算与 Hyper-V](ash-compute-hyperv.md) | 📊 速查 | 0 | azure-stack-hub, crp, vm-reboot, temp-disk, resize | 3 | medium |
-| [Azure Stack Hub Service Fabric](ash-service-fabric.md) | 📊 速查 | 0 | azure-stack-hub, certificate, hrp, sbrp, fabric | 2 | medium |
-| [Azure Stack Hub 密钥轮换与证书](ash-secret-rotation.md) | 📊 速查 | 0 | azure-stack-hub, secret-rotation, certificate, 1907, hotfix | 7 | medium |
-| [Azure Stack Hub 诊断与日志](ash-diagnostics.md) | 📊 速查 | 0 | azure-stack-hub, performance, network, perf-counters, 2108 | 1 | medium |
-| [Azure Stack Hub 部署与补丁](ash-deployment-hotfix.md) | 📋 融合 | 0 | azure-stack-hub, hotfix, 1907, oem-update, 1908 | 8 | medium |
-| [Azure Stack Hub 通用问题](ash-general.md) | 📊 速查 | 0 | azure-stack-hub, physical-host, wmi, winrm, dsc | 6 | medium |
-| [Azure Local 部署](azure-local-deployment.md) | 📋 融合 | 0 | azure-local, deployment, disconnected-operations, dns, hci | 10 | medium |
-| [Azure Local 网络](azure-local-networking.md) | 📋 融合 | 0 | azure-local, disconnected-operations, winfield, sdn, dns | 14 | medium |
-| [Azure Local 通用 disconnected operations azure local rack scale](azure-local-general-disconnected-operations-azure-local-rack-scale.md) | 📋 融合 | 0 | azure-local, disconnected-operations, winfield, azure-local-rack-scale, connectivity | 14 | medium |
-| [Azure Local 通用 azure local sff container](azure-local-general-azure-local-sff-container.md) | 📋 融合 | 0 | azure-local, azure-local-sff, disconnected-operations, winfield, private-preview | 15 | medium |
-| [Azure Local 通用 bootstrap alm](azure-local-general-bootstrap-alm.md) | 📋 融合 | 0 | azure-local, aldo, disconnected, bootstrap, arc-initialization | 7 | medium |
-| [Nexus 计算与 BMM](nexus-compute.md) | 📋 融合 | 0 | nexus, bmm, cmbu, replace, storage-policy | 9 | medium |
-| [Nexus 网络](nexus-networking.md) | 📋 融合 | 0 | nexus, network-fabric, wipe-repave, portal, password-rotation | 5 | medium |
-| [Nexus 平台与 NAKS](nexus-platform.md) | 📋 融合 | 0 | nexus, naks, log-collector, ssh, diagnostics | 3 | medium |
-| [Nexus 通用](nexus-general.md) | 📋 融合 | 0 | nexus, dataplane, cpu-isolation, performance, packet-drop | 8 | medium |
-| [ALDO 平台 log collection add node](aldo-log-collection-add-node.md) | 📋 融合 | 0 | aldo, log-collection, winfield, diagnostics, disconnected-operations | 15 | medium |
-| [ALDO 平台 deployment blocker irvm](aldo-deployment-blocker-irvm.md) | 📋 融合 | 0 | aldo, deployment-blocker, ga-release, long-haul, known-bug | 4 | medium |
-| [Kube-OVN 网络 vpc nat gateway security group](kube-ovn-vpc-nat-gateway-security-group.md) | 📊 速查 | 0 | kube-ovn, vpc-nat-gateway, security-group, acl, iptables-eip | 13 | medium |
-| [Kube-OVN 网络 geneve kubectl ko](kube-ovn-geneve-kubectl-ko.md) | 📊 速查 | 0 | kube-ovn, geneve, tunnel, alrs, encap-type | 5 | medium |
-| [Azure Arc KB 文章合集 misc 1](arc-kb-articles-misc-1.md) | 📊 速查 | 0 |  | 11 | medium |
-| [Azure Arc KB 文章合集 misc 2](arc-kb-articles-misc-2.md) | 📊 速查 | 0 |  | 12 | medium |
-| [Azure Arc KB 文章合集 misc 3](arc-kb-articles-misc-3.md) | 📊 速查 | 0 |  | 13 | medium |
-| [ARM 杂项操作 aks arc autonomous](arm-misc-operations-aks-arc-autonomous.md) | 📋 融合 | 3 | aks, crp, arc-autonomous, saw, yubikey | 15 | high |
-| [ARM 杂项操作 latency avnm](arm-misc-operations-latency-avnm.md) | 📋 融合 | 3 | compliance, naks, latency, kusto, arm-layer | 15 | high |
-| [ARM 杂项操作 notfound invalidtemplate](arm-misc-operations-notfound-invalidtemplate.md) | 📋 融合 | 3 | dependson, notfound, resourcenotfound, dependency, reference | 9 | medium |
+| # | Topic | Title | Entries | Fusion | Score | Keywords | Sources | Files |
+|---|-------|-------|---------|--------|-------|----------|---------|-------|
+| 1 | arm-throttling | ARM API 限流与 429 错误 | 9 | ✅ | 🔵 6.7 | 429, arm, arm-layer, arm-throttling, compute-rp | AW ML ON | [speed](arm-throttling.md) / [detail](details/arm-throttling.md) / [workflow](workflows/arm-throttling.md) |
+| 2 | arm-cache-sync | ARM 缓存同步问题 | 7 | ✅ | 🔵 6.6 | arm-cache, azure-policy, cache-sync, deleted-resource, desync | AW | [speed](arm-cache-sync.md) / [detail](details/arm-cache-sync.md) / [workflow](workflows/arm-cache-sync.md) |
+| 3 | arm-template-basics | ARM 模板部署基础问题 | 9 | ✅ | 🔵 6.5 | 403, 4mb-limit, application-gateway, arm-template, azure-policy | AW ML ON | [speed](arm-template-basics.md) / [detail](details/arm-template-basics.md) / [workflow](workflows/arm-template-basics.md) |
+| 4 | arm-deployment-errors | ARM 部署错误排查 | 1 | ✅ | 🟢 8.0 | azurechinacloud, bicep, bicepconfig.json, currentprofile, deployment | ON | [speed](arm-deployment-errors.md) / [detail](details/arm-deployment-errors.md) / [workflow](workflows/arm-deployment-errors.md) |
+| 5 | policy-mode-scan | Azure Policy 模式与合规扫描 | 15 | ✅ | 🔵 6.6 | 24h-cycle, aks, arc, arg, array-alias | AW ML | [speed](policy-mode-scan.md) / [detail](details/policy-mode-scan.md) / [workflow](workflows/policy-mode-scan.md) |
+| 6 | policy-enforcement | Azure Policy 执行与阻断 | 15 | ✅ | 🔵 6.9 | aine, allow-list, assessments, assignment, attestation | AW ML | [speed](policy-enforcement.md) / [detail](details/policy-enforcement.md) / [workflow](workflows/policy-enforcement.md) |
+| 7 | policy-conditions-aliases | Azure Policy 条件与别名 | 6 | ✅ | 🔵 6.3 | alias, allof, array-alias, azure-policy, boolean | AW ML | [speed](policy-conditions-aliases.md) / [detail](details/policy-conditions-aliases.md) / [workflow](workflows/policy-conditions-aliases.md) |
+| 8 | policy-special-rp | Azure Policy 特定资源提供程序 | 6 | ✅ | 🔵 6.5 | aks, arc, azure-policy, by-design, compute | AW | [speed](policy-special-rp.md) / [detail](details/policy-special-rp.md) / [workflow](workflows/policy-special-rp.md) |
+| 9 | policy-mdc-integration | Azure Policy 与 MDfC/安全中心集成 | 3 | ✅ | 🔵 5.5 | auditifnotexists, by-design, compliance, discrepancy, expected-behavior | AW | [speed](policy-mdc-integration.md) / [detail](details/policy-mdc-integration.md) / [workflow](workflows/policy-mdc-integration.md) |
+| 10 | policy-general | Azure Policy 通用问题 | 8 | ✅ | 🔵 6.7 | alerts, arc-k8s, azure-arc, azure-policy, compliance-state | AW ML ON | [speed](policy-general.md) / [detail](details/policy-general.md) / [workflow](workflows/policy-general.md) |
+| 11 | rbac-deny-assignments | RBAC 拒绝分配 | 7 | ✅ | 🔵 5.6 | 1st-party-rp, access-denied, ame, azure-blueprints, blueprint | AW ML | [speed](rbac-deny-assignments.md) / [detail](details/rbac-deny-assignments.md) / [workflow](workflows/rbac-deny-assignments.md) |
+| 12 | rbac-roles-permissions-custom-role-keyvault | RBAC 角色与权限管理 custom role keyvault | 15 | ✅ | 🔵 6.4 | 10min-delay, 2000, 21vianet, 4000, 401 | AW ML ON | [speed](rbac-roles-permissions-custom-role-keyvault.md) / [detail](details/rbac-roles-permissions-custom-role-keyvault.md) / [workflow](workflows/rbac-roles-permissions-custom-role-keyvault.md) |
+| 13 | rbac-roles-permissions-guest-user-owner | RBAC 角色与权限管理 guest user owner | 6 | ✅ | 🔵 5.2 | 21vianet, 403, access-denied, authorization, authorizationfailed | ML | [speed](rbac-roles-permissions-guest-user-owner.md) / [detail](details/rbac-roles-permissions-guest-user-owner.md) / [workflow](workflows/rbac-roles-permissions-guest-user-owner.md) |
+| 14 | tags-management | Azure 资源标签管理 | 12 | ✅ | 🔵 6.6 | alertrules, app-service-certificates, billing, bug, casing | AW | [speed](tags-management.md) / [detail](details/tags-management.md) / [workflow](workflows/tags-management.md) |
+| 15 | resource-move | 资源移动与跨区域迁移 | 13 | — | 🔵 7.2 | 4-hour-lock, 409, adx, aks, app-insights | AW ML ON | [speed](resource-move.md) |
+| 16 | resource-recovery | 资源恢复 | 4 | — | 🔵 7.2 | 14-day-window, csar, dns-zones, eventgrid, eventhub | AW | [speed](resource-recovery.md) |
+| 17 | resource-graph | Azure Resource Graph | 3 | — | 🔵 6.5 | azure-resource-graph, compliance, export, faq, full-scan | AW | [speed](resource-graph.md) |
+| 18 | resource-locks-naming | 资源锁与命名约束 | 3 | — | 🔵 5.5 | accountnameinvalid, cannotdelete, delete-blocked, management-lock, naming | ML | [speed](resource-locks-naming.md) |
+| 19 | subscription-billing | 订阅管理与计费 | 8 | — | 🔵 5.7 | 21vca, 403, access-denied, access-policy, att | AW ML ON | [speed](subscription-billing.md) |
+| 20 | arc-servers | Azure Arc 服务器 | 4 | — | 🔵 7.4 | ama, arc, arc-server, azuremonitoragent, chinanorth3 | ON | [speed](arc-servers.md) |
+| 21 | arc-k8s | Azure Arc Kubernetes | 9 | — | 🔵 6.8 | aks, akvsecretproviderextension, arc, arc-k8s, azure-arc | AW ML ON | [speed](arc-k8s.md) |
+| 22 | arc-resource-bridge | Azure Arc Resource Bridge 与 VMware | 1 | — | 🔵 7.5 | aldo, arc-resource-bridge, crashloopbackoff, kubectl, telemetry-manager | AW | [speed](arc-resource-bridge.md) |
+| 23 | arc-general | Azure Arc 通用 | 6 | — | 🔵 6.2 | already-connected, arc, arc-sql-server, azcm0026, azcm0044 | ML ON | [speed](arc-general.md) |
+| 24 | azure-migrate | Azure Migrate 迁移与发现 | 9 | ✅ | 🔵 7.3 | 21v, agent-exception, asr, assessment, azure-blueprints | AW ON | [speed](azure-migrate.md) / [detail](details/azure-migrate.md) / [workflow](workflows/azure-migrate.md) |
+| 25 | region-migration | CN1/CE1 区域迁移 | 2 | — | 🔵 7.5 | adf, azcopy, cn1-ce1-migration, cross-region-migration, failover | ON | [speed](region-migration.md) |
+| 26 | lighthouse | Azure Lighthouse 委托管理 | 2 | ✅ | 🔵 7.0 | delegation, http-trace, kusto, lighthouse, logs | AW | [speed](lighthouse.md) / [detail](details/lighthouse.md) / [workflow](workflows/lighthouse.md) |
+| 27 | private-link-arm | ARM Private Link | 2 | — | 🟡 4.5 | feature-limitation, management-group, pla, private-link, public-network-access | AW | [speed](private-link-arm.md) |
+| 28 | ash-azs-cmdlets-service-fabric | Azure Stack Hub AzS Support 诊断命令 service fabric | 11 | ✅ | 🔵 5.8 | actors-app, azs-support-module, azure-stack-hub, cluster-config, cluster-health | AW | [speed](ash-azs-cmdlets-service-fabric.md) / [detail](details/ash-azs-cmdlets-service-fabric.md) / [workflow](workflows/ash-azs-cmdlets-service-fabric.md) |
+| 29 | ash-azs-cmdlets-compute-storage | Azure Stack Hub AzS Support 诊断命令 compute storage | 14 | ✅ | 🔵 6.2 | azs-support, azs-support-module, azure-stack-hub, azurestack.hub.storage.acs, cluster-health | AW | [speed](ash-azs-cmdlets-compute-storage.md) / [detail](details/ash-azs-cmdlets-compute-storage.md) / [workflow](workflows/ash-azs-cmdlets-compute-storage.md) |
+| 30 | ash-azs-cmdlets-misc-blob-service | Azure Stack Hub AzS Support 诊断命令 misc blob service | 15 | ✅ | 🔵 6.2 | adfs, azs-support, azs-support-module, azure-stack-hub, blob-service | AW | [speed](ash-azs-cmdlets-misc-blob-service.md) / [detail](details/ash-azs-cmdlets-misc-blob-service.md) / [workflow](workflows/ash-azs-cmdlets-misc-blob-service.md) |
+| 31 | ash-azs-cmdlets-ece-unhealthy-ece-logs | Azure Stack Hub AzS Support 诊断命令 ece unhealthy ece logs | 15 | ✅ | 🔵 5.5 | azs-support, azs-support-module, azure-stack-hub, backup-recovery, cloud-definition | AW | [speed](ash-azs-cmdlets-ece-unhealthy-ece-logs.md) / [detail](details/ash-azs-cmdlets-ece-unhealthy-ece-logs.md) / [workflow](workflows/ash-azs-cmdlets-ece-unhealthy-ece-logs.md) |
+| 32 | ash-azs-cmdlets-vm-refresh-safe-restart | Azure Stack Hub AzS Support 诊断命令 vm refresh safe restart | 11 | ✅ | 🔵 5.2 | action-plan, active-directory, address-mapping, azs-support-module, azure-stack-hub | AW | [speed](ash-azs-cmdlets-vm-refresh-safe-restart.md) / [detail](details/ash-azs-cmdlets-vm-refresh-safe-restart.md) / [workflow](workflows/ash-azs-cmdlets-vm-refresh-safe-restart.md) |
+| 33 | ash-networking-sdn-sdn-nrp | Azure Stack Hub 网络与 SDN sdn nrp | 15 | ✅ | 🔵 6.5 | aad, aks-engine, arm-endpoint, azure-stack-hub, cdn | AW | [speed](ash-networking-sdn-sdn-nrp.md) / [detail](details/ash-networking-sdn-sdn-nrp.md) / [workflow](workflows/ash-networking-sdn-sdn-nrp.md) |
+| 34 | ash-networking-sdn-dns-hyper-v | Azure Stack Hub 网络与 SDN dns hyper v | 4 | ✅ | 🔵 6.5 | 1907, azure-stack-hub, dns, hotfix, hyper-v | AW | [speed](ash-networking-sdn-dns-hyper-v.md) / [detail](details/ash-networking-sdn-dns-hyper-v.md) / [workflow](workflows/ash-networking-sdn-dns-hyper-v.md) |
+| 35 | ash-storage | Azure Stack Hub 存储 | 7 | ✅ | 🔵 6.6 | acs, azure-stack-hub, blob, cleanup, cluster | AW | [speed](ash-storage.md) / [detail](details/ash-storage.md) / [workflow](workflows/ash-storage.md) |
+| 36 | ash-compute-hyperv | Azure Stack Hub 计算与 Hyper-V | 3 | — | 🔵 6.5 | 159042, 1908, azure-stack-hub, certificate, crp | AW | [speed](ash-compute-hyperv.md) |
+| 37 | ash-service-fabric | Azure Stack Hub Service Fabric | 2 | — | 🔵 7.0 | 1907, azure-stack-hub, certificate, diskrp, fabric | AW | [speed](ash-service-fabric.md) |
+| 38 | ash-secret-rotation | Azure Stack Hub 密钥轮换与证书 | 7 | — | 🔵 6.6 | 1901, 1907, 403-forbidden, admin-portal, alert | AW | [speed](ash-secret-rotation.md) |
+| 39 | ash-diagnostics | Azure Stack Hub 诊断与日志 | 1 | — | 🔵 6.5 | 2108, azure-stack-hub, bottleneck, diagnostics, network | AW | [speed](ash-diagnostics.md) |
+| 40 | ash-deployment-hotfix | Azure Stack Hub 部署与补丁 | 8 | ✅ | 🔵 6.5 | 1907, 1908, admin-portal, azure-bridge, azure-stack-hub | AW | [speed](ash-deployment-hotfix.md) / [detail](details/ash-deployment-hotfix.md) / [workflow](workflows/ash-deployment-hotfix.md) |
+| 41 | ash-general | Azure Stack Hub 通用问题 | 6 | — | 🔵 6.5 | azure-stack-hub, cim-exception, connectivity, corruption, dsc | AW | [speed](ash-general.md) |
+| 42 | azure-local-deployment | Azure Local 部署 | 10 | ✅ | 🔵 6.7 | active-directory, ad-pre-creation, azure-local, baremetal, connectivity | AW | [speed](azure-local-deployment.md) / [detail](details/azure-local-deployment.md) / [workflow](workflows/azure-local-deployment.md) |
+| 43 | azure-local-networking | Azure Local 网络 | 14 | ✅ | 🔵 7.0 | aldo, arc, authentication, azure-local, certificate | AW | [speed](azure-local-networking.md) / [detail](details/azure-local-networking.md) / [workflow](workflows/azure-local-networking.md) |
+| 44 | azure-local-general-disconnected-operations-azure-local-rack-scale | Azure Local 通用 disconnected operations azure local rack scale | 14 | ✅ | 🔵 6.9 | 0xc000a002, authentication, azure-local, azure-local-rack-scale, bug | AW | [speed](azure-local-general-disconnected-operations-azure-local-rack-scale.md) / [detail](details/azure-local-general-disconnected-operations-azure-local-rack-scale.md) / [workflow](workflows/azure-local-general-disconnected-operations-azure-local-rack-scale.md) |
+| 45 | azure-local-general-azure-local-sff-container | Azure Local 通用 azure local sff container | 15 | ✅ | 🔵 6.4 | 0xc000a002, aldo, arc-connected-cluster, azshostagent, azure-local | AW | [speed](azure-local-general-azure-local-sff-container.md) / [detail](details/azure-local-general-azure-local-sff-container.md) / [workflow](workflows/azure-local-general-azure-local-sff-container.md) |
+| 46 | azure-local-general-bootstrap-alm | Azure Local 通用 bootstrap alm | 7 | ✅ | 🔵 6.8 | acr, add-node, agent-lifecycle-manager, aksarc, aldo | AW | [speed](azure-local-general-bootstrap-alm.md) / [detail](details/azure-local-general-bootstrap-alm.md) / [workflow](workflows/azure-local-general-bootstrap-alm.md) |
+| 47 | nexus-compute | Nexus 计算与 BMM | 9 | ✅ | 🔵 6.6 | 4.9.7, bmc-password, bmm, cmbu, cordon | AW | [speed](nexus-compute.md) / [detail](details/nexus-compute.md) / [workflow](workflows/nexus-compute.md) |
+| 48 | nexus-networking | Nexus 网络 | 5 | ✅ | 🔵 7.3 | arm, connectivity, hybrid-agent, l2-network, maintenance-mode | AW | [speed](nexus-networking.md) / [detail](details/nexus-networking.md) / [workflow](workflows/nexus-networking.md) |
+| 49 | nexus-platform | Nexus 平台与 NAKS | 3 | ✅ | 🔵 6.8 | arc, connectivity, diagnostics, dri, kusto-diagnostic | AW | [speed](nexus-platform.md) / [detail](details/nexus-platform.md) / [workflow](workflows/nexus-platform.md) |
+| 50 | nexus-general | Nexus 通用 | 8 | ✅ | 🔵 6.6 | 5xx, azure-local-nexus, azure-monitor, by-design, case-handling | AW | [speed](nexus-general.md) / [detail](details/nexus-general.md) / [workflow](workflows/nexus-general.md) |
+| 51 | aldo-log-collection-add-node | ALDO 平台 log collection add node | 15 | ✅ | 🔵 6.6 | add-node, aldo, appliance-vm, arc-connection, arc-enabled-servers | AW | [speed](aldo-log-collection-add-node.md) / [detail](details/aldo-log-collection-add-node.md) / [workflow](workflows/aldo-log-collection-add-node.md) |
+| 52 | aldo-deployment-blocker-irvm | ALDO 平台 deployment blocker irvm | 4 | ✅ | 🔵 7.0 | air-gapped, aldo, authentication, cluster-service, deployment-blocker | AW | [speed](aldo-deployment-blocker-irvm.md) / [detail](details/aldo-deployment-blocker-irvm.md) / [workflow](workflows/aldo-deployment-blocker-irvm.md) |
+| 53 | kube-ovn-vpc-nat-gateway-security-group | Kube-OVN 网络 vpc nat gateway security group | 13 | — | 🔵 6.5 | acl, alrs, binding-failure, cidr-mismatch, conntrack | AW | [speed](kube-ovn-vpc-nat-gateway-security-group.md) |
+| 54 | kube-ovn-geneve-kubectl-ko | Kube-OVN 网络 geneve kubectl ko | 5 | — | 🔵 6.7 | alrs, encap-type, firewall, geneve, kube-ovn | AW | [speed](kube-ovn-geneve-kubectl-ko.md) |
+| 55 | arc-kb-articles-misc-1 | Azure Arc KB 文章合集 misc 1 | 11 | — | 🔵 5.9 | break/fix, contentidea-kb, informational | KB | [speed](arc-kb-articles-misc-1.md) |
+| 56 | arc-kb-articles-misc-2 | Azure Arc KB 文章合集 misc 2 | 12 | — | 🔵 6.1 | break/fix, contentidea-kb | KB | [speed](arc-kb-articles-misc-2.md) |
+| 57 | arc-kb-articles-misc-3 | Azure Arc KB 文章合集 misc 3 | 13 | — | 🔵 6.3 | break/fix, contentidea-kb | KB | [speed](arc-kb-articles-misc-3.md) |
+| 58 | arm-misc-operations-aks-arc-autonomous | ARM 杂项操作 aks arc autonomous | 15 | ✅ | 🔵 6.4 | 15mb-limit, 2019-05-10, advisory, aks, api | AW ML ON | [speed](arm-misc-operations-aks-arc-autonomous.md) / [detail](details/arm-misc-operations-aks-arc-autonomous.md) / [workflow](workflows/arm-misc-operations-aks-arc-autonomous.md) |
+| 59 | arm-misc-operations-latency-avnm | ARM 杂项操作 latency avnm | 15 | ✅ | 🔵 6.0 | add-node, alerts, api-version, apiversion-null, arm-layer | AW ML | [speed](arm-misc-operations-latency-avnm.md) / [detail](details/arm-misc-operations-latency-avnm.md) / [workflow](workflows/arm-misc-operations-latency-avnm.md) |
+| 60 | arm-misc-operations-notfound-invalidtemplate | ARM 杂项操作 notfound invalidtemplate | 9 | ✅ | 🔵 5.4 | 1mb-limit, 4mb-limit, 800-limit, bastion, bicep | ML | [speed](arm-misc-operations-notfound-invalidtemplate.md) / [detail](details/arm-misc-operations-notfound-invalidtemplate.md) / [workflow](workflows/arm-misc-operations-notfound-invalidtemplate.md) |
 
-最后更新: 2026-04-07
+最后更新: 2026-04-24

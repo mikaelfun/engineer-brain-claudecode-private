@@ -1,56 +1,56 @@
-# Monitor Troubleshooting Guide Index
+# Monitor 排查指南索引
 
-| Guide | Type | Kusto | Keywords | Sources | Confidence |
-|-------|------|-------|----------|---------|------------|
-| [Log Analytics 综合问题](la-general.md) | fusion | 1 | log-analytics, oms, workspace | 96 | high |
-| [Application Insights 综合问题](ai-general.md) | fusion | 0 | application-insights, app-insights, monitoring | 66 | high |
-| [Application Insights 自动检测与无代码注入](ai-auto-instrumentation.md) | fusion | 0 | auto-instrumentation, codeless, status-monitor, agent-based | 61 | high |
-| [其他监控问题](other.md) | compact | 0 | monitor, misc | 59 | high |
-| [监控代理综合问题](agent-general.md) | fusion | 0 | agent, extension, heartbeat | 50 | high |
-| [Log Analytics 数据摄取与丢失排查](la-ingestion.md) | fusion | 0 | ingestion, missing-data, latency, pipeline | 50 | high |
-| [告警综合问题](alert-general.md) | fusion | 0 | alert, rule, suppress, mute | 48 | high |
-| [容器监控与 Container Insights](container-monitoring.md) | fusion | 0 | container-insights, aks, prometheus, kubernetes | 42 | high |
-| [诊断设置与资源日志](diagnostic-settings.md) | fusion | 1 | diagnostic-settings, resource-logs, activity-log, event-hub | 42 | high |
-| [AMA 数据收集规则 (DCR)](agent-ama-dcr.md) | fusion | 0 | dcr, data-collection-rule, transform, stream | 41 | high |
-| [Application Insights 工作区迁移](ai-workspace-migration.md) | fusion | 0 | workspace-based, classic, migration, resource | 38 | high |
-| [MMA/OMS Linux 代理排查](agent-mma-linux.md) | compact | 0 | mma, oms, omsagent, linux | 36 | high |
-| [设计限制与支持边界](by-design-limitation.md) | compact | 0 | by-design, limitation, support-boundary, unsupported | 36 | high |
-| [AMPLS 与 Private Link](network-ampls.md) | fusion | 0 | ampls, private-link, private-endpoint, scope | 32 | high |
-| [Application Insights 遥测数据缺失排查](ai-missing-telemetry.md) | compact | 0 | missing, no-data, telemetry-loss, gap | 30 | high |
-| [Log Analytics KQL 查询问题](la-query.md) | compact | 0 | kusto, kql, query, performance | 29 | high |
-| [Application Insights JavaScript/Browser SDK](ai-javascript-sdk.md) | fusion | 0 | javascript, browser, click-analytics, spa | 26 | high |
-| [agent-mma-windows](agent-mma-windows.md) | compact | 0 |  | 25 | high |
-| [Application Insights 可用性测试](ai-availability-tests.md) | fusion | 0 | availability, web-test, ping, url-test | 25 | high |
-| [MMA 代理通用问题与迁移](agent-mma-general.md) | fusion | 0 | mma, legacy, deprecation, migration | 22 | high |
-| [Application Insights SDK 通用问题](ai-sdk-general.md) | compact | 0 | sdk, telemetry, channel | 20 | high |
-| [监控权限与 RBAC](permissions-rbac.md) | fusion | 0 | rbac, permissions, role, access | 20 | high |
-| [AMA Linux 代理排查](agent-ama-linux.md) | fusion | 0 | ama, linux, extension, mdsd | 19 | high |
-| [Application Insights Java SDK 与代理](ai-java-sdk.md) | fusion | 0 | java, javaagent, applicationinsights-agent | 18 | high |
-| [Application Insights Profiler 与 Snapshot Debugger](ai-profiler-debugger.md) | fusion | 0 | profiler, snapshot-debugger, performance, trace | 18 | high |
-| [告警操作组与通知](alert-action-group.md) | fusion | 1 | action-group, notification, webhook, email | 18 | high |
-| [指标告警规则](alert-metric.md) | fusion | 1 | metric-alert, threshold, dynamic, signal | 18 | high |
-| [Application Insights Azure Functions 集成](ai-azure-functions.md) | fusion | 0 | functions, serverless, trigger, binding | 17 | high |
-| [Application Insights 数据摄取](ai-ingestion.md) | compact | 0 | ingestion, endpoint, throttle | 16 | high |
-| [AMA Windows 代理排查](agent-ama-windows.md) | fusion | 0 | ama, windows, extension, monitoringagent | 15 | high |
-| [Application Insights 连接字符串与配置](ai-connection-config.md) | compact | 0 | connection-string, instrumentation-key, config | 15 | high |
-| [Application Insights 采样与数据量控制](ai-sampling-data-volume.md) | fusion | 0 | sampling, adaptive, fixed-rate, data-volume | 15 | high |
-| [Application Insights IIS/ASP.NET 监控](ai-iis-aspnet.md) | fusion | 0 | iis, asp.net, freb, w3wp | 14 | high |
-| [日志查询告警规则](alert-log-query.md) | fusion | 1 | log-alert, scheduled-query, evaluation | 13 | high |
-| [Log Analytics 计费与承诺层级](la-billing.md) | fusion | 0 | billing, daily-cap, commitment-tier, cost | 13 | high |
-| [Azure Managed Grafana](managed-grafana.md) | fusion | 0 | grafana, dashboard, visualization | 12 | high |
-| [Application Insights Live Metrics](ai-live-metrics.md) | fusion | 0 | live-metrics, quickpulse, real-time | 11 | high |
-| [Application Insights .NET SDK](ai-dotnet-sdk.md) | fusion | 0 | dotnet, dotnet-core, nuget, telemetryclient | 10 | high |
-| [VM Insights 与 Dependency Agent](agent-vm-insights.md) | compact | 0 | vm-insights, dependency-agent, service-map | 9 | medium |
-| [Application Insights Python SDK](ai-python-sdk.md) | fusion | 0 | python, opencensus, django, flask | 9 | medium |
-| [ai-by-design](ai-by-design.md) | compact | 0 |  | 8 | medium |
-| [ai-export](ai-export.md) | compact | 0 |  | 8 | medium |
-| [Application Insights OpenTelemetry 集成](ai-opentelemetry.md) | fusion | 0 | opentelemetry, otel, distro, exporter | 6 | medium |
-| [alert-autoscale](alert-autoscale.md) | compact | 0 |  | 6 | medium |
-| [la-retention](la-retention.md) | compact | 0 |  | 6 | medium |
-| [代理与防火墙配置](network-proxy-firewall.md) | fusion | 0 | proxy, firewall, ssl, tls | 6 | medium |
-| [Application Insights 计费与每日上限](ai-billing-cap.md) | compact | 0 | daily-cap, billing, cost, pricing | 5 | medium |
-| [Log Analytics 自定义日志](la-custom-logs.md) | fusion | 0 | custom-log, custom-table, dcr, api | 3 | low |
-| [Log Analytics 工作区管理](la-workspace.md) | fusion | 0 | workspace, retention, purge, delete | 2 | low |
-| [监控 DNS 配置](network-dns.md) | fusion | 0 | dns, resolution, private-dns, zone | 2 | low |
+| # | Topic | Title | Entries | Fusion | Score | Keywords | Sources | Files |
+|---|-------|-------|---------|--------|-------|----------|---------|-------|
+| 1 | la-general | Log Analytics 综合问题 | 96 | ✅ | 🔵 6.1 | 21v-gap, 30000-rows, 403, 404, 429 | AW KB ML ON | [speed](la-general.md) / [detail](details/la-general.md) / [workflow](workflows/la-general.md) |
+| 2 | ai-general | Application Insights 综合问题 | 66 | ✅ | 🔵 6.5 | 499, 500-error, AADSTS7000112, AKS, AMPLS | AW ML ON | [speed](ai-general.md) / [detail](details/ai-general.md) / [workflow](workflows/ai-general.md) |
+| 3 | ai-auto-instrumentation | Application Insights 自动检测与无代码注入 | 61 | ✅ | 🔵 6.5 | .net, 2x-sdk, AppAlreadyInstrumented, AppLens, CATALINA_OPTS | AW ML | [speed](ai-auto-instrumentation.md) / [detail](details/ai-auto-instrumentation.md) / [workflow](workflows/ai-auto-instrumentation.md) |
+| 4 | other | 其他监控问题 | 59 | — | 🔵 6.5 | 301, 400, 400-error, 403, 404 | AW ML ON | [speed](other.md) |
+| 5 | agent-general | 监控代理综合问题 | 50 | ✅ | 🔵 6.3 | 1.10.7, 169.254.169.254, 18080, AMA-Linux, ASC | AW ML ON | [speed](agent-general.md) / [detail](details/agent-general.md) / [workflow](workflows/agent-general.md) |
+| 6 | la-ingestion | Log Analytics 数据摄取与丢失排查 | 50 | ✅ | 🔵 6.6 | 32k-limit, 500-column-limit, 500-columns, AMPLS, ASC | AW ON | [speed](la-ingestion.md) / [detail](details/la-ingestion.md) / [workflow](workflows/la-ingestion.md) |
+| 7 | alert-general | 告警综合问题 | 48 | ✅ | 🔵 6.3 | 1.25.0, 21v-gap, 3-sigma, 403, 429 | AW ON | [speed](alert-general.md) / [detail](details/alert-general.md) / [workflow](workflows/alert-general.md) |
+| 8 | container-monitoring | 容器监控与 Container Insights | 42 | ✅ | 🔵 6.9 | AKS, AKSLinuxExtension, ARM, AgentLogCollection, ConfigMap | AW ON | [speed](container-monitoring.md) / [detail](details/container-monitoring.md) / [workflow](workflows/container-monitoring.md) |
+| 9 | diagnostic-settings | 诊断设置与资源日志 | 42 | ✅ | 🔵 6.6 | 0-bytes, 21v-unsupported, AAD, AADSTS7000112, ADF | AW ML ON | [speed](diagnostic-settings.md) / [detail](details/diagnostic-settings.md) / [workflow](workflows/diagnostic-settings.md) |
+| 10 | agent-ama-dcr | AMA 数据收集规则 (DCR) | 41 | ✅ | 🔵 6.5 | 403, 404-error, AKS, AMA, AMA-Linux | AW ML ON | [speed](agent-ama-dcr.md) / [detail](details/agent-ama-dcr.md) / [workflow](workflows/agent-ama-dcr.md) |
+| 11 | ai-workspace-migration | Application Insights 工作区迁移 | 38 | ✅ | 🔵 6.7 | 400-error, DCR, HTTP-402, HTTP-439, ImmediatePurgeDataOn30Days | AW | [speed](ai-workspace-migration.md) / [detail](details/ai-workspace-migration.md) |
+| 12 | agent-mma-linux | MMA/OMS Linux 代理排查 | 36 | — | 🔵 6.6 | AMA-migration-rollback, Baltimore, CVE-2021-38647, Current.mof, Cylance | AW ML ON | [speed](agent-mma-linux.md) |
+| 13 | by-design-limitation | 设计限制与支持边界 | 36 | — | 🔵 6.6 | ADF, API-limitation, Action Group, Alert Processing Rule, Auxiliary-Logs | AW | [speed](by-design-limitation.md) |
+| 14 | network-ampls | AMPLS 与 Private Link | 32 | ✅ | 🔵 6.6 | 169.254.169.254, 403, ADX-Proxy, AMPLS, App Service | AW | [speed](network-ampls.md) / [detail](details/network-ampls.md) / [workflow](workflows/network-ampls.md) |
+| 15 | ai-missing-telemetry | Application Insights 遥测数据缺失排查 | 30 | — | 🔵 6.6 | 21v-unsupported, 404, 50k-limit, API-Analytics, APIM | AW ML | [speed](ai-missing-telemetry.md) |
+| 16 | la-query | Log Analytics KQL 查询问题 | 29 | — | 🔵 6.4 | 100MB, 21v, 400, 429, 500k-records | AW ON | [speed](la-query.md) |
+| 17 | ai-javascript-sdk | Application Insights JavaScript/Browser SDK | 26 | ✅ | 🔵 6.3 | 500-error, AMPLS, CORS, HttpOnly, SPA | AW ML | [speed](ai-javascript-sdk.md) / [detail](details/ai-javascript-sdk.md) |
+| 18 | agent-mma-windows | agent-mma-windows | 25 | — | 🔵 6.1 | 0x80070057, 0x80070643, 0x80090016, 12044L, 1603 | AW ON | [speed](agent-mma-windows.md) |
+| 19 | ai-availability-tests | Application Insights 可用性测试 | 25 | ✅ | 🔵 6.7 | ASC, Application-Insights, Availability-Tests, CDN, DNS | AW ML ON | [speed](ai-availability-tests.md) / [detail](details/ai-availability-tests.md) / [workflow](workflows/ai-availability-tests.md) |
+| 20 | agent-mma-general | MMA 代理通用问题与迁移 | 22 | ✅ | 🔵 5.7 | 0x80090016, AD-Assessment, AMPLS, Azure-Policy, Baltimore-CyberTrust | AW ML | [speed](agent-mma-general.md) / [detail](details/agent-mma-general.md) / [workflow](workflows/agent-mma-general.md) |
+| 21 | ai-sdk-general | Application Insights SDK 通用问题 | 20 | — | 🔵 6.7 | 503, AAD, Azure-Identity, Managed-Identity, _MS.links | AW ML | [speed](ai-sdk-general.md) |
+| 22 | permissions-rbac | 监控权限与 RBAC | 20 | ✅ | 🔵 6.6 | 400, 401, 403, AAD-token, ADX | AW | [speed](permissions-rbac.md) / [detail](details/permissions-rbac.md) / [workflow](workflows/permissions-rbac.md) |
+| 23 | agent-ama-linux | AMA Linux 代理排查 | 19 | ✅ | 🔵 6.8 | AMA, AMA-1.34, AMA-1.35, AMA-Linux, ARC | AW ON | [speed](agent-ama-linux.md) / [detail](details/agent-ama-linux.md) / [workflow](workflows/agent-ama-linux.md) |
+| 24 | ai-java-sdk | Application Insights Java SDK 与代理 | 18 | ✅ | 🔵 6.2 | GraalVM, OpenTelemetry, Quarkus, SNI, TLS | AW ML | [speed](ai-java-sdk.md) / [detail](details/ai-java-sdk.md) / [workflow](workflows/ai-java-sdk.md) |
+| 25 | ai-profiler-debugger | Application Insights Profiler 与 Snapshot Debugger | 18 | ✅ | 🔵 6.9 | 401-unauthorized, 403, Application-Insights, Microsoft.Data.SqlClient, Profiler | AW | [speed](ai-profiler-debugger.md) / [detail](details/ai-profiler-debugger.md) / [workflow](workflows/ai-profiler-debugger.md) |
+| 26 | alert-action-group | 告警操作组与通知 | 18 | ✅ | 🔵 6.7 | 404, RBAC, action-group, alert-notification, alerts | AW ON | [speed](alert-action-group.md) / [detail](details/alert-action-group.md) / [workflow](workflows/alert-action-group.md) |
+| 27 | alert-metric | 指标告警规则 | 18 | ✅ | 🔵 6.9 | 3-consecutive-evaluations, ASC, Application Insights, FillGapsWithZero, Fired Alerts | AW ON | [speed](alert-metric.md) / [detail](details/alert-metric.md) / [workflow](workflows/alert-metric.md) |
+| 28 | ai-azure-functions | Application Insights Azure Functions 集成 | 17 | ✅ | 🔵 6.8 | 307-redirect, AMPLS, ASP.NET-Core, Application-Insights, Azure-Function | AW ON | [speed](ai-azure-functions.md) / [detail](details/ai-azure-functions.md) |
+| 29 | ai-ingestion | Application Insights 数据摄取 | 16 | — | 🔵 7.0 | 404, AMPLS, CNAME, DCR, DNS | AW | [speed](ai-ingestion.md) |
+| 30 | agent-ama-windows | AMA Windows 代理排查 | 15 | ✅ | 🔵 6.8 | AMA, AMA-Windows, CERT_E_UNTRUSTEDROOT, CLOUDENV, CRL | AW ON | [speed](agent-ama-windows.md) / [detail](details/agent-ama-windows.md) / [workflow](workflows/agent-ama-windows.md) |
+| 31 | ai-connection-config | Application Insights 连接字符串与配置 | 15 | — | 🔵 6.9 | 48-hour-window, AMPLS, DNS, HTTP-307, HTTP-308 | AW ML | [speed](ai-connection-config.md) |
+| 32 | ai-sampling-data-volume | Application Insights 采样与数据量控制 | 15 | ✅ | 🔵 6.8 | 4xx, HTTP-429, adaptive, adaptive-sampling, always-on | AW | [speed](ai-sampling-data-volume.md) / [detail](details/ai-sampling-data-volume.md) / [workflow](workflows/ai-sampling-data-volume.md) |
+| 33 | ai-iis-aspnet | Application Insights IIS/ASP.NET 监控 | 14 | ✅ | 🔵 6.6 | IIS, Redfield, activity-id, ai-agent, antares | AW | [speed](ai-iis-aspnet.md) / [detail](details/ai-iis-aspnet.md) / [workflow](workflows/ai-iis-aspnet.md) |
+| 34 | alert-log-query | 日志查询告警规则 | 13 | ✅ | 🔵 6.7 | 0-rows, 400-badrequest, 403-forbidden, 404-notfound, MetricValue | AW | [speed](alert-log-query.md) / [detail](details/alert-log-query.md) / [workflow](workflows/alert-log-query.md) |
+| 35 | la-billing | Log Analytics 计费与承诺层级 | 13 | ✅ | 🔵 5.8 | Free-tier, Kusto, azurediagnostics, billing, by-design | AW | [speed](la-billing.md) / [detail](details/la-billing.md) / [workflow](workflows/la-billing.md) |
+| 36 | managed-grafana | Azure Managed Grafana | 12 | ✅ | 🔵 6.8 | 1p-customer, 529, alerting, dashboard, deletion | AW | [speed](managed-grafana.md) / [detail](details/managed-grafana.md) / [workflow](workflows/managed-grafana.md) |
+| 37 | ai-live-metrics | Application Insights Live Metrics | 11 | ✅ | 🔵 6.0 | Application-Insights, Azure-Function, FunctionsStartup, Mooncake, QuickPulse | AW ML ON | [speed](ai-live-metrics.md) / [detail](details/ai-live-metrics.md) |
+| 38 | ai-dotnet-sdk | Application Insights .NET SDK | 10 | ✅ | 🔵 6.4 | .net, EventSourceTelemetryModule, app-insights, app-service, application-insights | AW ML | [speed](ai-dotnet-sdk.md) / [detail](details/ai-dotnet-sdk.md) / [workflow](workflows/ai-dotnet-sdk.md) |
+| 39 | agent-vm-insights | VM Insights 与 Dependency Agent | 9 | — | 🔵 6.5 | Dependency Agent, Guest Health Extension, Linux, MMA-to-AMA-migration, Map | AW | [speed](agent-vm-insights.md) |
+| 40 | ai-python-sdk | Application Insights Python SDK | 9 | ✅ | 🔵 6.1 | app-insights, app-service, application-insights, auto-collected-telemetry, azure-cli | AW ML | [speed](ai-python-sdk.md) / [detail](details/ai-python-sdk.md) / [workflow](workflows/ai-python-sdk.md) |
+| 41 | ai-by-design | ai-by-design | 8 | — | 🔵 6.9 | Azure-AD-B2C, SQLException, VS-Code-extension, aad, activity-log | AW | [speed](ai-by-design.md) |
+| 42 | ai-export | ai-export | 8 | — | 🔵 7.0 | allLogs, api-limits, app-service, application-insights, blob-storage | AW | [speed](ai-export.md) |
+| 43 | ai-opentelemetry | Application Insights OpenTelemetry 集成 | 6 | ✅ | 🔵 6.1 | ACA, OTEL_RESOURCE_ATTRIBUTES, OpenTelemetry, adaptive-sampling, app-insights | AW ML | [speed](ai-opentelemetry.md) / [detail](details/ai-opentelemetry.md) / [workflow](workflows/ai-opentelemetry.md) |
+| 44 | alert-autoscale | alert-autoscale | 6 | — | 🔵 5.7 | MetricFailures, anti-flapping, autoscale, capacity-projection, configuration | AW | [speed](alert-autoscale.md) |
+| 45 | la-retention | la-retention | 6 | — | 🔵 6.8 | 30-days, RegistrationTelemetry, alert-processing-rules, audit, auto-resolve | AW | [speed](la-retention.md) |
+| 46 | network-proxy-firewall | 代理与防火墙配置 | 6 | ✅ | 🔵 6.8 | 21-seconds, 42-seconds, AMW, Client-Hello, Managed Prometheus | AW ML | [speed](network-proxy-firewall.md) / [detail](details/network-proxy-firewall.md) / [workflow](workflows/network-proxy-firewall.md) |
+| 47 | ai-billing-cap | Application Insights 计费与每日上限 | 5 | — | 🔵 6.3 | app-insights, applens, application-insights, billing, configuration | AW ML | [speed](ai-billing-cap.md) |
+| 48 | la-custom-logs | Log Analytics 自定义日志 | 3 | ✅ | 🔵 6.5 | 400, ama-linux, api, breaking-change, custom-log | AW | [speed](la-custom-logs.md) / [detail](details/la-custom-logs.md) / [workflow](workflows/la-custom-logs.md) |
+| 49 | la-workspace | Log Analytics 工作区管理 | 2 | ✅ | 🔵 6.0 | delete, deletion, force-delete, intelligence-pack, log-analytics | AW | [speed](la-workspace.md) / [detail](details/la-workspace.md) / [workflow](workflows/la-workspace.md) |
+| 50 | network-dns | 监控 DNS 配置 | 2 | ✅ | 🔵 6.0 | ARM template, DNS, Log Analytics, availability-tests, data connector | AW ML | [speed](network-dns.md) / [detail](details/network-dns.md) / [workflow](workflows/network-dns.md) |
 
-Last updated: 2026-04-07
+最后更新: 2026-04-24

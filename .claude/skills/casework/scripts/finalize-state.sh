@@ -22,9 +22,9 @@ except: print('')
 " 2>/dev/null || echo "")
 
 if [ -n "$RUN_ID" ]; then
-  OUTPUT_BASE="$CASE_DIR/.casework/runs/$RUN_ID/output"
+  OUTPUT_BASE="$CASE_DIR/.casework/runs/$RUN_ID"
 else
-  OUTPUT_BASE="$CASE_DIR/.casework/output"
+  OUTPUT_BASE="$CASE_DIR/.casework"
 fi
 
 case "$STEP" in
@@ -32,17 +32,17 @@ case "$STEP" in
     # Backfill subtask deltas from data-refresh-output.json
     python3 -c "
 import json, subprocess, sys, os
-dr_path = os.path.join(r'$OUTPUT_BASE', 'data-refresh.json')
+dr_path = os.path.join(r'$OUTPUT_BASE', 'data-refresh', 'data-refresh.json')
 try:
     dr = json.load(open(dr_path, encoding='utf-8'))
 except: exit(0)
 rr = dr.get('refreshResults', {})
 mapping = {
-    'd365':        {'newEmails': rr.get('d365',{}).get('newEmails',0), 'newNotes': rr.get('d365',{}).get('newNotes',0)},
-    'teams':       {'newChats': rr.get('teams',{}).get('newChats',0), 'newMessages': rr.get('teams',{}).get('newMessages',0)},
-    'icm':         {'newEntries': rr.get('icm',{}).get('newEntries',0)},
-    'onenote':     {'newPages': rr.get('onenote',{}).get('newPages',0), 'updatedPages': rr.get('onenote',{}).get('updatedPages',0)},
-    'attachments': {'downloaded': rr.get('attachments',{}).get('downloaded',0)},
+    'd365':          {'newEmails': rr.get('d365',{}).get('newEmails',0), 'newNotes': rr.get('d365',{}).get('newNotes',0)},
+    'teams-search':  {'newChats': rr.get('teams',{}).get('newChats',0), 'newMessages': rr.get('teams',{}).get('newMessages',0)},
+    'icm':           {'newEntries': rr.get('icm',{}).get('newEntries',0)},
+    'onenote':       {'newPages': rr.get('onenote',{}).get('newPages',0), 'updatedPages': rr.get('onenote',{}).get('updatedPages',0)},
+    'attachments':   {'downloaded': rr.get('attachments',{}).get('downloaded',0)},
 }
 for task, delta in mapping.items():
     if any(v > 0 for v in delta.values()):

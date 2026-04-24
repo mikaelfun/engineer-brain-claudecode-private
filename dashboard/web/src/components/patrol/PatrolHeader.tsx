@@ -35,11 +35,17 @@ export default function PatrolHeader() {
   const startedAt = usePatrolStore(s => s.startedAt)
   const completedAt = usePatrolStore(s => s.completedAt)
   const error = usePatrolStore(s => s.error)
+  const phaseTimings = usePatrolStore(s => s.phaseTimings)
 
   const isRunning = RUNNING_PHASES.includes(phase)
   const isCompleted = phase === 'completed'
   const isFailed = phase === 'failed'
   const isDone = isCompleted || isFailed
+
+  // Total duration from phaseTimings (authoritative source when available)
+  const timingsTotal = phaseTimings
+    ? Object.values(phaseTimings).reduce((sum, ms) => sum + (typeof ms === 'number' ? ms : 0), 0)
+    : 0
 
   // ── Total elapsed timer ──
   // Uses a ref to lock in the start time once, immune to SSE overwrites.
@@ -70,8 +76,14 @@ export default function PatrolHeader() {
     if (!origin) return
 
     if (isDone) {
-      const end = completedAt ? new Date(completedAt).getTime() : Date.now()
-      setElapsed(end - origin)
+      // Prefer phaseTimings total (authoritative) over completedAt - startedAt
+      // because startedAt/completedAt can be inaccurate due to SSE race conditions
+      if (timingsTotal > 0) {
+        setElapsed(timingsTotal)
+      } else {
+        const end = completedAt ? new Date(completedAt).getTime() : Date.now()
+        setElapsed(end - origin)
+      }
       return
     }
 
@@ -80,7 +92,7 @@ export default function PatrolHeader() {
     setElapsed(Date.now() - origin)
     const timer = setInterval(() => setElapsed(Date.now() - origin), 1000)
     return () => clearInterval(timer)
-  }, [isRunning, isDone, completedAt, startTimeRef.current])
+  }, [isRunning, isDone, completedAt, timingsTotal, startTimeRef.current])
 
   return (
     <div className="flex items-center gap-3 flex-wrap">
@@ -131,8 +143,16 @@ export default function PatrolHeader() {
               </span>
               <span style={{ opacity: 0.6 }}>·</span>
               <span style={{ opacity: 0.7, fontSize: 13 }}>
-                {formatTime(startedAt)}
-                {completedAt && <> → {formatTime(completedAt)}</>}
+                {(() => {
+                  // When phaseTimings is available, derive accurate start/end times
+                  const endIso = completedAt
+                  if (timingsTotal > 0 && endIso) {
+                    const endMs = new Date(endIso).getTime()
+                    const startIso = new Date(endMs - timingsTotal).toISOString()
+                    return <>{formatTime(startIso)} → {formatTime(endIso)}</>
+                  }
+                  return <>{formatTime(startedAt)}{completedAt && <> → {formatTime(completedAt)}</>}</>
+                })()}
               </span>
             </>
           ) : null}

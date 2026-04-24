@@ -96,13 +96,14 @@ export const usePatrolAgentStore = create<PatrolAgentStore>()((set) => ({
     if (event === 'progress') {
       const existing = state.agents[taskId]
       if (!existing) return state
+      const newSummary = (data.summary as string) || (data.description as string) || existing.summary
       return {
         agents: {
           ...state.agents,
           [taskId]: {
             ...existing,
             lastToolName: (data.lastToolName as string) || existing.lastToolName,
-            summary: (data.summary as string) || existing.summary,
+            summary: newSummary,
             usage: (data.usage as PatrolAgent['usage']) || existing.usage,
           },
         },
@@ -134,3 +135,39 @@ export const usePatrolAgentStore = create<PatrolAgentStore>()((set) => ({
 
   setSessionId: (id: string) => set({ sessionId: id }),
 }))
+
+/** Hydrate agent store from /api/patrol/messages on page load (SSE doesn't replay history) */
+export function hydratePatrolAgents() {
+  fetch('/api/patrol/messages')
+    .then(r => r.json())
+    .then(data => {
+      const msgs: Array<Record<string, any>> = data.messages || data || []
+      const agents: Record<string, PatrolAgent> = {}
+      for (const m of msgs) {
+        const taskId = m.taskId as string
+        if (!taskId) continue
+        if (m.kind === 'agent-started') {
+          agents[taskId] = {
+            taskId,
+            agentType: m.agentType || 'unknown',
+            caseNumber: m.caseNumber,
+            status: 'running',
+            description: m.content,
+            startedAt: m.timestamp || new Date().toISOString(),
+          }
+        } else if (m.kind === 'agent-progress' && agents[taskId]) {
+          agents[taskId].summary = m.content || agents[taskId].summary
+        } else if (m.kind === 'agent-completed' && agents[taskId]) {
+          agents[taskId].status = 'completed'
+          agents[taskId].summary = m.content || agents[taskId].summary
+          agents[taskId].completedAt = m.timestamp
+        }
+      }
+      // Only hydrate if store is currently empty (don't overwrite live SSE data)
+      const current = usePatrolAgentStore.getState().agents
+      if (Object.keys(current).length === 0 && Object.keys(agents).length > 0) {
+        usePatrolAgentStore.setState({ agents })
+      }
+    })
+    .catch(() => {})
+}

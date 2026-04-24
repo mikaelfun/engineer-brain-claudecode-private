@@ -2,8 +2,10 @@
  * DashboardTopBar — Command Center top bar
  *
  * Time-of-day greeting, date display, alert badges, and patrol trigger.
+ * Patrol button has a dropdown for mode selection (Force Patrol / New Cases Only).
  */
-import { Play, Loader2, AlertTriangle, Clock, Zap, Shield } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { Play, Loader2, AlertTriangle, Clock, Zap, Shield, ChevronDown, Plus } from 'lucide-react'
 import { useStartPatrol, useCancelPatrol } from '../../api/hooks'
 import { usePatrolStore } from '../../stores/patrolStore'
 
@@ -57,11 +59,34 @@ export function DashboardTopBar({
     patrolPhase !== 'idle' && patrolPhase !== 'completed' && patrolPhase !== 'failed'
   const isPatrolActive = patrolRunning || startPatrol.isPending
 
-  const handlePatrol = () => {
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!dropdownOpen) return
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [dropdownOpen])
+
+  const handlePatrolClick = () => {
     if (isPatrolActive) {
       cancelPatrol.mutate()
     } else {
-      startPatrol.mutate(true)
+      // Default: force patrol
+      startPatrol.mutate({ force: true, mode: 'normal' })
+    }
+  }
+
+  const handleNewCases = () => {
+    setDropdownOpen(false)
+    if (!isPatrolActive) {
+      startPatrol.mutate({ force: false, mode: 'new-cases' })
     }
   }
 
@@ -126,29 +151,73 @@ export function DashboardTopBar({
           {formatPatrolTime(lastPatrolTime)}
         </span>
 
-        {/* Patrol button */}
-        <button
-          onClick={handlePatrol}
-          disabled={cancelPatrol.isPending}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 disabled:opacity-50"
-          style={{
-            background: isPatrolActive ? 'var(--accent-red)' : 'var(--accent-blue)',
-            color: '#fff',
-          }}
-          title={isPatrolActive ? 'Cancel patrol' : 'Start patrol'}
-        >
-          {isPatrolActive ? (
-            <>
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              Patrol
-            </>
-          ) : (
-            <>
-              <Shield className="w-3.5 h-3.5" />
-              Patrol
-            </>
+        {/* Patrol split button */}
+        <div className="relative" ref={dropdownRef}>
+          <div className="flex">
+            {/* Main button */}
+            <button
+              onClick={handlePatrolClick}
+              disabled={cancelPatrol.isPending}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold transition-all duration-150 disabled:opacity-50"
+              style={{
+                background: isPatrolActive ? 'var(--accent-red)' : 'var(--accent-blue)',
+                color: '#fff',
+                borderRadius: '8px 0 0 8px',
+              }}
+              title={isPatrolActive ? 'Cancel patrol' : 'Start patrol (force)'}
+            >
+              {isPatrolActive ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  Patrol
+                </>
+              ) : (
+                <>
+                  <Shield className="w-3.5 h-3.5" />
+                  Patrol
+                </>
+              )}
+            </button>
+
+            {/* Dropdown toggle */}
+            {!isPatrolActive && (
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="inline-flex items-center px-1.5 py-1.5 text-xs font-bold transition-all duration-150"
+                style={{
+                  background: 'var(--accent-blue)',
+                  color: '#fff',
+                  borderRadius: '0 8px 8px 0',
+                  borderLeft: '1px solid rgba(255,255,255,0.2)',
+                }}
+                title="Patrol options"
+              >
+                <ChevronDown className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+
+          {/* Dropdown menu */}
+          {dropdownOpen && !isPatrolActive && (
+            <div
+              className="absolute right-0 mt-1 py-1 rounded-lg shadow-lg z-50"
+              style={{
+                background: 'var(--bg-elevated)',
+                border: '1px solid var(--border-default)',
+                minWidth: 160,
+              }}
+            >
+              <button
+                onClick={handleNewCases}
+                className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium transition-colors hover:bg-[var(--bg-inset)]"
+                style={{ color: 'var(--text-primary)' }}
+              >
+                <Plus className="w-3.5 h-3.5" style={{ color: 'var(--accent-green)' }} />
+                New Cases Only
+              </button>
+            </div>
           )}
-        </button>
+        </div>
       </div>
     </div>
   )

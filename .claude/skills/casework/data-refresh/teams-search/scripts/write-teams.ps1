@@ -38,17 +38,25 @@
 .PARAMETER InputFile
   Path to a JSON file with the input data. Alternative to InputJson/stdin.
 
+.PARAMETER RawFile
+  Path to _mcp-raw.json. When provided, automatically transforms MCP raw format
+  to write-teams input format (replaces build-input-from-raw.py).
+
 .EXAMPLE
   # From subagent: pipe JSON
   $json | pwsh write-teams.ps1 -OutputDir "cases/active/2603090040000814/teams"
 
   # From file
   pwsh write-teams.ps1 -OutputDir "..." -InputFile "teams-data.json"
+
+  # From raw MCP output (replaces build-input-from-raw.py + write-teams.ps1)
+  pwsh write-teams.ps1 -OutputDir "..." -RawFile "teams/_mcp-raw.json"
 #>
 param(
   [Parameter(Mandatory)][string]$OutputDir,
   [string]$InputJson,
-  [string]$InputFile
+  [string]$InputFile,
+  [string]$RawFile
 )
 
 $ErrorActionPreference = 'Stop'
@@ -56,7 +64,58 @@ $ErrorActionPreference = 'Stop'
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
 # --- Read input ---
-if ($InputFile) {
+if ($RawFile) {
+  # Transform _mcp-raw.json → write-teams input format (replaces build-input-from-raw.py)
+  $raw = Get-Content $RawFile -Raw -Encoding UTF8 | ConvertFrom-Json
+  $chats = @()
+  if ($raw.chatMessages) {
+    foreach ($prop in $raw.chatMessages.PSObject.Properties) {
+      $chatId = $prop.Name
+      $msgs = @()
+      foreach ($m in $prop.Value) {
+        # Flatten from.user.displayName → from.displayName
+        $fromObj = $m.from
+        $displayName = "Unknown"
+        if ($fromObj) {
+          if ($fromObj.PSObject.Properties['user'] -and $fromObj.user) {
+            $displayName = $fromObj.user.displayName ?? "Unknown"
+          } elseif ($fromObj.PSObject.Properties['application'] -and $fromObj.application) {
+            $displayName = $fromObj.application.displayName ?? "Unknown"
+          } elseif ($fromObj.PSObject.Properties['displayName']) {
+            $displayName = $fromObj.displayName ?? "Unknown"
+          }
+          # Fallback: use from.id prefix when displayName is empty/Unknown (Mooncake Graph API)
+          if ((-not $displayName -or $displayName -eq "Unknown" -or $displayName -eq "") -and $fromObj.PSObject.Properties['id'] -and $fromObj.id) {
+            $displayName = $fromObj.id.Substring(0, [Math]::Min(8, $fromObj.id.Length))
+          }
+        }
+        # Filter system/empty messages (allow unknown-name participants with id fallback)
+        $content = ($m.body.content ?? "").Trim()
+        if ($displayName -ne "Unknown" -and $content -ne "" -and $content -ne "<systemEventMessage/>") {
+          $msgs += @{
+            id = $m.id ?? ""
+            createdDateTime = $m.createdDateTime ?? ""
+            from = @{ displayName = $displayName }
+            body = $m.body ?? @{ contentType = "Text"; content = "" }
+          }
+        }
+      }
+      if ($msgs.Count -gt 0) {
+        $chats += @{ chatId = $chatId; messages = $msgs }
+      }
+    }
+  }
+  $transformed = @{
+    caseNumber = $raw.caseNumber ?? ""
+    searchResults = $raw.searchResults ?? @()
+    chats = $chats
+    searchMode = $raw.searchMode ?? "full"
+    fallbackTriggered = $raw.fallbackTriggered ?? $false
+    elapsed = $raw.elapsed ?? 0
+    imageMap = $raw.imageMap ?? @{}
+  }
+  $InputJson = $transformed | ConvertTo-Json -Depth 10
+} elseif ($InputFile) {
   $InputJson = Get-Content $InputFile -Raw -Encoding UTF8
 } elseif (-not $InputJson) {
   $InputJson = $input | Out-String
@@ -173,7 +232,9 @@ function Parse-ChatMessages($chatData) {
   $others = @()
 
   foreach ($msg in $chatData.messages) {
-    $from = if ($msg.from -and $msg.from.displayName) { $msg.from.displayName } else { $null }
+    $from = if ($msg.from -and $msg.from.displayName) { $msg.from.displayName }
+            elseif ($msg.from -and $msg.from.id) { $msg.from.id.Substring(0, [Math]::Min(8, $msg.from.id.Length)) }
+            else { $null }
     $bodyContent = if ($msg.body) { $msg.body.content } else { '' }
     $body = Strip-Html $bodyContent
     if (-not $body -or $body -match '^\s*$' -or $body -eq '<systemEventMessage/>' -or $body -eq '[systemEventMessage/]') { continue }

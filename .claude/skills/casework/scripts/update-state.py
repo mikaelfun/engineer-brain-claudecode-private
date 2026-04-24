@@ -15,8 +15,8 @@ Usage:
   update-state.py --case-dir <dir> --step act --action troubleshooter --status active
   update-state.py --case-dir <dir> --step act --action troubleshooter --status completed --duration-ms 45000
 
-  # Result annotation
-  update-state.py --case-dir <dir> --step assess --status completed --result pending-engineer
+  # Result annotation (assess is now an action within act step)
+  update-state.py --case-dir <dir> --step act --action assess --status completed --result pending-engineer
 
   # With case number
   update-state.py --case-dir <dir> --step data-refresh --status active --case-number 2601290030000748
@@ -33,7 +33,7 @@ import time
 from contextlib import contextmanager
 from datetime import datetime
 
-ALL_STEPS = ['start', 'data-refresh', 'assess', 'act', 'summarize']
+ALL_STEPS = ['start', 'data-refresh', 'act', 'summarize']
 VALID_RUN_TYPES = ['patrol', 'casework', 'step-data-refresh', 'step-assess', 'step-act', 'step-summarize']
 
 
@@ -123,7 +123,24 @@ def atomic_write(path, data):
     tmp = f'{path}.tmp.{os.getpid()}'
     with open(tmp, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
-    os.replace(tmp, path)
+    # Windows: os.replace can fail if target is locked by file-watcher (chokidar read lock).
+    # Retry with short backoff — read locks are momentary.
+    for attempt in range(5):
+        try:
+            os.replace(tmp, path)
+            return
+        except PermissionError:
+            if attempt < 4:
+                time.sleep(0.05 * (attempt + 1))
+            else:
+                # Last resort: try remove + rename
+                try:
+                    os.remove(path)
+                    os.rename(tmp, path)
+                    return
+                except OSError:
+                    pass
+                raise
 
 
 def main():
@@ -211,29 +228,46 @@ def main():
         if args.action:
             actions = step_state.get('actions', [])
             found = False
-            for a in actions:
-                if a.get('type') == args.action:
-                    if args.status:
-                        a['status'] = args.status
-                        if args.status == 'active':
-                            a['startedAt'] = now_iso()
-                        elif args.status in ('completed', 'failed'):
-                            a['completedAt'] = now_iso()
-                            if args.duration_ms is not None:
-                                a['durationMs'] = args.duration_ms
-                            elif 'startedAt' in a:
-                                try:
-                                    s = datetime.strptime(a['startedAt'], '%Y-%m-%dT%H:%M:%SZ')
-                                    e = datetime.strptime(a['completedAt'], '%Y-%m-%dT%H:%M:%SZ')
-                                    a['durationMs'] = int((e - s).total_seconds() * 1000)
-                                except (ValueError, KeyError):
-                                    pass
-                    if args.detail:
-                        a['detail'] = args.detail
-                    if args.result:
-                        a['result'] = args.result
-                    found = True
-                    break
+
+            # Find target action: for 'active' status, if all same-type actions are already
+            # completed/failed → append new instance (e.g. phase2 email after phase1 email).
+            # For 'completed'/'failed', update the LAST same-type action (most recent instance).
+            target = None
+            if args.status == 'active':
+                # Check if there's an existing non-terminal action to update
+                for a in actions:
+                    if a.get('type') == args.action and a.get('status') not in ('completed', 'failed'):
+                        target = a
+                        break
+                # If all instances are terminal → target stays None → will append new
+            else:
+                # For completed/failed: find last matching action (reverse search)
+                for a in reversed(actions):
+                    if a.get('type') == args.action:
+                        target = a
+                        break
+
+            if target is not None:
+                if args.status:
+                    target['status'] = args.status
+                    if args.status == 'active':
+                        target['startedAt'] = now_iso()
+                    elif args.status in ('completed', 'failed'):
+                        target['completedAt'] = now_iso()
+                        if args.duration_ms is not None:
+                            target['durationMs'] = args.duration_ms
+                        elif 'startedAt' in target:
+                            try:
+                                s = datetime.strptime(target['startedAt'], '%Y-%m-%dT%H:%M:%SZ')
+                                e = datetime.strptime(target['completedAt'], '%Y-%m-%dT%H:%M:%SZ')
+                                target['durationMs'] = int((e - s).total_seconds() * 1000)
+                            except (ValueError, KeyError):
+                                pass
+                if args.detail:
+                    target['detail'] = args.detail
+                if args.result:
+                    target['result'] = args.result
+                found = True
             if not found:
                 new_action = {'type': args.action}
                 if args.status:

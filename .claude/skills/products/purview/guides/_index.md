@@ -1,48 +1,48 @@
-# Purview Troubleshooting Guide Index
+# Purview 排查指南索引
 
-| Guide | Type | Kusto | Keywords | Entries | Confidence |
-|-------|------|-------|----------|---------|------------|
-| [扫描连接与凭据问题](scan-connectivity-credentials.md) | 📋 fusion | 0 | 3rd-party, account-name, adls-gen2, ads | 24 | high |
-| [SHIR 安装注册与运行时](scan-shir-setup.md) | 📋 fusion | 0 | 3804, adf, assembly, authentication-key | 38 | high |
-| [扫描私有终结点与网络](scan-private-endpoint-network.md) | 📋 fusion | 0 | 409-error, account-pe, adf, authorization | 32 | high |
-| [第三方数据源扫描](scan-third-party.md) | 📋 fusion | 0 | 3p-datasource, authentication, aws, aws-s3 | 23 | high |
-| [Fabric 与 Power BI 扫描](scan-fabric-powerbi.md) | 📋 fusion | 0 | adls, adls-gen2, admin-settings, collection | 23 | high |
-| [扫描性能与异常终止](scan-performance-stuck.md) | 📋 fusion | 0 | adls-gen2, azure-files, cancelled, csv | 8 | high |
-| [扫描后资产丢失](scan-missing-assets.md) | 📋 fusion | 0 | asset-deletion, audit log, data-map, deleted-asset | 10 | high |
-| [Data Map 分类标注](classification-datamap.md) | 📋 fusion | 0 | 403-forbidden, acl, asset-deletion, classification | 17 | high |
-| [Schema 与资源集](schema-resource-set.md) | 📋 fusion | 0 | 1mb, ars, by-design, classification | 13 | high |
-| [Data Map API 与资产操作](data-map-api-operations.md) | 📋 fusion | 0 | api, api-version, asset-count, asset-deletion | 22 | high |
-| [集合管理与元数据策略](data-map-collections.md) | 📋 fusion | 0 | 409-error, collection, collections, data-map | 4 | low |
-| [数据质量扫描](data-quality.md) | 📋 fusion | 0 | 500-error, data-profile, data-quality, databricks | 9 | medium |
-| [Azure Data Share (ADS)](azure-data-share.md) | 📋 fusion | 0 | ads, authentication, blob-missing, data-share | 22 | medium |
-| [Purview 数据共享](purview-data-sharing.md) | 📊 compact | 0 | access, asset, asset-mapping, attach | 14 | medium |
-| [ADF / Synapse 血缘](lineage-adf-synapse.md) | 📋 fusion | 0 | adf, connection, data-factory, databricks | 6 | medium |
-| [敏感度标签可见性与策略](sensitivity-labels-visibility.md) | 📋 fusion | 0 | 12mb-limit, activity-explorer, aip, aip-add-in | 37 | high |
-| [敏感度标签加密与权限](sensitivity-labels-encryption.md) | 📋 fusion | 1 | aipservice, b2b, cmk, cross-cloud | 7 | high |
-| [自动标签 (客户端 / 服务端)](auto-labeling.md) | 📋 fusion | 0 | 100-file-limit, auto-labeling, client-side, custom-sit | 10 | medium |
-| [MPIP 客户端 (AIP Client)](mpip-client.md) | 📋 fusion | 0 | ad-rms, aip-add-in, co-authoring, conflict | 16 | medium |
-| [MPIP / AIP Scanner](mpip-scanner.md) | 📋 fusion | 0 | aip, authentication, cpu, dlp | 8 | high |
-| [IRM / RMS / 邮件加密](irm-rms-pme.md) | 📋 fusion | 2 | 550, 554, aad-groups, activity-explorer | 34 | high |
-| [AIP Service / BYOK / TPD 管理](aip-service-byok.md) | 📋 fusion | 2 | ad-rms, aip, aip-service, aipservice | 20 | high |
-| [RMS Connector 与 AD RMS](rms-connector-adrms.md) | 📋 fusion | 1 | ad-rms, aip, aip-template, caching | 10 | medium |
-| [Double Key Encryption (DKE)](dke-double-key.md) | 📊 compact | 0 | authentication, case-sensitive, connectivity, dke | 5 | medium |
-| [跨云 / 跨租户 MIP 标签](cross-cloud-mip.md) | 📋 fusion | 1 | cross-cloud, cross-tenant, external-user, guest-account | 5 | high |
-| [MIP SDK 集成](mip-sdk.md) | 📋 fusion | 0 | encryption, mip-sdk, office | 1 | low |
-| [eDiscovery 搜索与保留](ediscovery.md) | 📋 fusion | 1 | ambiguous-location, bulk-update, compliance-boundaries, content search | 16 | high |
-| [Activity Explorer 与 Content Explorer](activity-content-explorer.md) | 📋 fusion | 0 | activity-explorer, admin-unit, aggregation, audit-log | 17 | medium |
-| [保留策略与记录管理](retention-records.md) | 📋 fusion | 2 | activedirectorysyncerror, archive, archive-quota, audit | 11 | high |
-| [DLP 策略与告警](dlp-policies.md) | 📋 fusion | 2 | china-id-card, defender, dlp, endpoint-dlp | 3 | high |
-| [审计日志](audit-log.md) | 📊 compact | 0 | api, audit, audit-log, deleted-email | 5 | high |
-| [账户创建 / 升级 / 合并 / 配额](account-provisioning.md) | 📋 fusion | 0 | account, account-creation, account-deletion, account-limit | 29 | medium |
-| [账户区域变更与迁移](account-region-migration.md) | 📊 compact | 0 | account-move, region-move, subscription-transfer | 1 | low |
-| [计费与定价](billing-pricing.md) | 📋 fusion | 0 | adf, billing, capacity-unit, classic-billing | 17 | medium |
-| [权限与 RBAC](permissions-rbac.md) | 📋 fusion | 1 | 401, access, admin-role, admin-units | 22 | high |
-| [门户访问与 UX](portal-access-ux.md) | 📋 fusion | 0 | azure-subscription, browser-compatibility, business-assets, chrome | 8 | medium |
-| [数据治理与统一目录](data-governance-catalog.md) | 📋 fusion | 0 | 412, access-loss, bulk-delete, classic-to-new | 11 | medium |
-| [策略存储与执行](policy-store-enforcement.md) | 📋 fusion | 0 | access-policy, adls-gen2, artifact-store, azure-sql | 11 | medium |
-| [工作流审批](workflow-approval.md) | 📋 fusion | 0 | approval, email, outlook, workflow | 2 | low |
-| [21Vianet 功能差异与缺失](21v-feature-gaps.md) | 📋 fusion | 0 | 21v, aip, alert, archive-quota | 28 | high |
-| [Sovereign Cloud 工具与访问](sovereign-cloud-tooling.md) | 📋 fusion | 0 | corp-access, dfm-access, dsts, dsts-enforcement | 8 | medium |
-| [工程师内部工具 (DTM/rCRI/ICM)](support-internal-tooling.md) | 📋 fusion | 0 | access-denied, accesscheck, asc, azure-subscription | 10 | high |
+| # | Topic | Title | Entries | Fusion | Score | Keywords | Sources | Files |
+|---|-------|-------|---------|--------|-------|----------|---------|-------|
+| 1 | scan-connectivity-credentials | 扫描连接与凭据问题 | 24 | ✅ | 🔵 6.6 | 20500, 3rd-party, AKV, CREATE-USER, Entra-ID | AW ML | [speed](scan-connectivity-credentials.md) / [detail](details/scan-connectivity-credentials.md) / [workflow](workflows/scan-connectivity-credentials.md) |
+| 2 | scan-shir-setup | SHIR 安装注册与运行时 | 38 | ✅ | 🔵 6.3 | 3804, 3rd-party, 400, Azure-Policy, CLASSPATH | AW ML | [speed](scan-shir-setup.md) / [detail](details/scan-shir-setup.md) / [workflow](workflows/scan-shir-setup.md) |
+| 3 | scan-private-endpoint-network | 扫描私有终结点与网络 | 32 | ✅ | 🔵 6.7 | 403, 403-forbidden, 409-error, 5521, 5522 | AW ML | [speed](scan-private-endpoint-network.md) / [detail](details/scan-private-endpoint-network.md) / [workflow](workflows/scan-private-endpoint-network.md) |
+| 4 | scan-third-party | 第三方数据源扫描 | 23 | ✅ | 🔵 6.4 | 3P-datasource, 3p-datasource, 3rd-party, AKV, AWS | AW ML | [speed](scan-third-party.md) / [detail](details/scan-third-party.md) / [workflow](workflows/scan-third-party.md) |
+| 5 | scan-fabric-powerbi | Fabric 与 Power BI 扫描 | 23 | ✅ | 🔵 6.1 | ABAC, ADLS, ADLS-Gen2, AIP, Fabric | AW ML | [speed](scan-fabric-powerbi.md) / [detail](details/scan-fabric-powerbi.md) / [workflow](workflows/scan-fabric-powerbi.md) |
+| 6 | scan-performance-stuck | 扫描性能与异常终止 | 8 | ✅ | 🔵 7.0 | Azure-Batch, SharePoint, adls-gen2, azure-files, browser-settings | AW ML | [speed](scan-performance-stuck.md) / [detail](details/scan-performance-stuck.md) / [workflow](workflows/scan-performance-stuck.md) |
+| 7 | scan-missing-assets | 扫描后资产丢失 | 10 | ✅ | 🔵 7.0 | BOM, CSV, Chinese, ConvertedEntities, OpInfo | AW ON | [speed](scan-missing-assets.md) / [detail](details/scan-missing-assets.md) / [workflow](workflows/scan-missing-assets.md) |
+| 8 | classification-datamap | Data Map 分类标注 | 17 | ✅ | 🔵 6.7 | 403-forbidden, ACL, ADF-lineage, EDM, MIP-Scanner | AW ML | [speed](classification-datamap.md) / [detail](details/classification-datamap.md) / [workflow](workflows/classification-datamap.md) |
+| 9 | schema-resource-set | Schema 与资源集 | 13 | ✅ | 🔵 6.6 | 1MB, 1mb, 400-error, 800-columns, ARS | AW ML | [speed](schema-resource-set.md) / [detail](details/schema-resource-set.md) / [workflow](workflows/schema-resource-set.md) |
+| 10 | data-map-api-operations | Data Map API 与资产操作 | 22 | ✅ | 🔵 6.6 | 100k-limit, 409, 409-error, API-version, REST-API | AW ML | [speed](data-map-api-operations.md) / [detail](details/data-map-api-operations.md) / [workflow](workflows/data-map-api-operations.md) |
+| 11 | data-map-collections | 集合管理与元数据策略 | 4 | ✅ | 🔵 6.5 | 404, 409-error, REST-API, administration, collection | AW | [speed](data-map-collections.md) / [detail](details/data-map-collections.md) / [workflow](workflows/data-map-collections.md) |
+| 12 | data-quality | 数据质量扫描 | 9 | ✅ | 🔵 6.3 | 500-error, DQ-scan, DataQualityInternalError, MaxRetryCount, NullType | AW | [speed](data-quality.md) / [detail](details/data-quality.md) / [workflow](workflows/data-quality.md) |
+| 13 | azure-data-share | Azure Data Share (ADS) | 22 | ✅ | 🔵 6.5 | ADS, ads, alert, authentication, azure-ad | AW | [speed](azure-data-share.md) / [detail](details/azure-data-share.md) / [workflow](workflows/azure-data-share.md) |
+| 14 | purview-data-sharing | Purview 数据共享 | 14 | — | 🔵 6.6 | access, api-version, asset, asset-mapping, attach | AW | [speed](purview-data-sharing.md) / [detail](details/purview-data-sharing.md) |
+| 15 | lineage-adf-synapse | ADF / Synapse 血缘 | 6 | ✅ | 🔵 6.8 | MITI, NOTEBOOK, SQL, adf, azure-sql-db | AW | [speed](lineage-adf-synapse.md) / [detail](details/lineage-adf-synapse.md) / [workflow](workflows/lineage-adf-synapse.md) |
+| 16 | sensitivity-labels-visibility | 敏感度标签可见性与策略 | 37 | ✅ | 🔵 6.0 | 12MB-limit, 12mb-limit, 21v, AIP, AIP-add-in | AW ML ON | [speed](sensitivity-labels-visibility.md) / [detail](details/sensitivity-labels-visibility.md) / [workflow](workflows/sensitivity-labels-visibility.md) |
+| 17 | sensitivity-labels-encryption | 敏感度标签加密与权限 | 7 | ✅ | 🔵 6.9 | AIPService, B2B, Entra, IRM, MIP | AW ML ON | [speed](sensitivity-labels-encryption.md) / [detail](details/sensitivity-labels-encryption.md) / [workflow](workflows/sensitivity-labels-encryption.md) |
+| 18 | auto-labeling | 自动标签 (客户端 / 服务端) | 10 | ✅ | 🔵 5.9 | 100-file-limit, 21v-unsupported, AugLoop, MIP_S_CLP2, OWA | AW | [speed](auto-labeling.md) / [detail](details/auto-labeling.md) / [workflow](workflows/auto-labeling.md) |
+| 19 | mpip-client | MPIP 客户端 (AIP Client) | 16 | ✅ | 🔵 6.6 | EnableContainerSupport, KB5027318, MPIP-client, PST, Remove-FileLabel | AW | [speed](mpip-client.md) / [detail](details/mpip-client.md) / [workflow](workflows/mpip-client.md) |
+| 20 | mpip-scanner | MPIP / AIP Scanner | 8 | ✅ | 🔵 6.4 | AAD Connect, AIP, CPU, DLP, DelegatedUser | AW ML ON | [speed](mpip-scanner.md) / [detail](details/mpip-scanner.md) / [workflow](workflows/mpip-scanner.md) |
+| 21 | irm-rms-pme | IRM / RMS / 邮件加密 | 34 | ✅ | 🔵 6.5 | 21v, 550, 554, AAD-groups, AIP | AW ML ON | [speed](irm-rms-pme.md) / [detail](details/irm-rms-pme.md) / [workflow](workflows/irm-rms-pme.md) |
+| 22 | aip-service-byok | AIP Service / BYOK / TPD 管理 | 20 | ✅ | 🔵 6.7 | AD-RMS, AIP, AIPService, Active, Archived | AW ON | [speed](aip-service-byok.md) / [detail](details/aip-service-byok.md) / [workflow](workflows/aip-service-byok.md) |
+| 23 | rms-connector-adrms | RMS Connector 与 AD RMS | 10 | ✅ | 🔵 6.0 | AD-RMS, ADSI-Edit, AIP, Enterprise-Admin, MIP-SDK | AW | [speed](rms-connector-adrms.md) / [detail](details/rms-connector-adrms.md) / [workflow](workflows/rms-connector-adrms.md) |
+| 24 | dke-double-key | Double Key Encryption (DKE) | 5 | — | 🔵 6.7 | AAD-app-registration, DKE, JwtAudience, MSIPC, Office | AW | [speed](dke-double-key.md) / [detail](details/dke-double-key.md) |
+| 25 | cross-cloud-mip | 跨云 / 跨租户 MIP 标签 | 5 | ✅ | 🔵 6.5 | Adobe-Acrobat, Azure RMS, B2B, Entra, MIP | ML ON | [speed](cross-cloud-mip.md) / [detail](details/cross-cloud-mip.md) / [workflow](workflows/cross-cloud-mip.md) |
+| 26 | mip-sdk | MIP SDK 集成 | 1 | ✅ | 🔵 6.5 | cache, encryption, mip-sdk, mipsdk, office | AW | [speed](mip-sdk.md) / [detail](details/mip-sdk.md) / [workflow](workflows/mip-sdk.md) |
+| 27 | ediscovery | eDiscovery 搜索与保留 | 16 | ✅ | 🔵 5.5 | 21v, 401, 503, ComplianceWorkbenchApp, Deletions | ML ON | [speed](ediscovery.md) / [detail](details/ediscovery.md) / [workflow](workflows/ediscovery.md) |
+| 28 | activity-content-explorer | Activity Explorer 与 Content Explorer | 17 | ✅ | 🔵 6.5 | Activity-Explorer, Connect-IPPSSession, Content-Explorer, DLP, Exchange | AW | [speed](activity-content-explorer.md) / [detail](details/activity-content-explorer.md) / [workflow](workflows/activity-content-explorer.md) |
+| 29 | retention-records | 保留策略与记录管理 | 11 | ✅ | 🔵 6.1 | 240GB, ActiveDirectorySyncError, E5-license, EXO, ForceDeletion | ML ON | [speed](retention-records.md) / [detail](details/retention-records.md) / [workflow](workflows/retention-records.md) |
+| 30 | dlp-policies | DLP 策略与告警 | 3 | ✅ | 🔵 6.0 | DLP, Defender, Fiddler, MailTips, Outlook | ML ON | [speed](dlp-policies.md) / [detail](details/dlp-policies.md) / [workflow](workflows/dlp-policies.md) |
+| 31 | audit-log | 审计日志 | 5 | — | 🔵 5.7 | 21v, AuditEnabled, Exchange, Move, PowerShell | ML ON | [speed](audit-log.md) / [detail](details/audit-log.md) |
+| 32 | account-provisioning | 账户创建 / 升级 / 合并 / 配额 | 29 | ✅ | 🔵 7.0 | BCDR, CRUD-failure, Central-US, ICM, Jarvis | AW | [speed](account-provisioning.md) / [detail](details/account-provisioning.md) / [workflow](workflows/account-provisioning.md) |
+| 33 | account-region-migration | 账户区域变更与迁移 | 1 | — | 🔵 7.5 | account-move, managed-storage, not-supported, region-move, subscription-transfer | AW | [speed](account-region-migration.md) / [detail](details/account-region-migration.md) |
+| 34 | billing-pricing | 计费与定价 | 17 | ✅ | 🔵 6.8 | ADF, AtlasAnalytics, BillingLogEvent, CU, DEH | AW | [speed](billing-pricing.md) / [detail](details/billing-pricing.md) / [workflow](workflows/billing-pricing.md) |
+| 35 | permissions-rbac | 权限与 RBAC | 22 | ✅ | 🔵 6.8 | 401, 401-error, MSI, RBAC, ReadData | AW ML | [speed](permissions-rbac.md) / [detail](details/permissions-rbac.md) / [workflow](workflows/permissions-rbac.md) |
+| 36 | portal-access-ux | 门户访问与 UX | 8 | ✅ | 🔵 6.6 | 404, API, Chrome, Edge, HTML | AW | [speed](portal-access-ux.md) / [detail](details/portal-access-ux.md) / [workflow](workflows/portal-access-ux.md) |
+| 37 | data-governance-catalog | 数据治理与统一目录 | 11 | ✅ | 🔵 6.5 | 412, SDK-workaround, access-loss, breaking-change, bulk-delete | AW | [speed](data-governance-catalog.md) / [detail](details/data-governance-catalog.md) / [workflow](workflows/data-governance-catalog.md) |
+| 38 | policy-store-enforcement | 策略存储与执行 | 11 | ✅ | 🔵 6.7 | 401, 500, AAD-authentication, ACL-precedence, ADLS-Gen2 | AW | [speed](policy-store-enforcement.md) / [detail](details/policy-store-enforcement.md) / [workflow](workflows/policy-store-enforcement.md) |
+| 39 | workflow-approval | 工作流审批 | 2 | ✅ | 🔵 6.5 | 403, 404, Outlook, approval, by-design | AW | [speed](workflow-approval.md) / [detail](details/workflow-approval.md) / [workflow](workflows/workflow-approval.md) |
+| 40 | 21v-feature-gaps | 21Vianet 功能差异与缺失 | 28 | ✅ | 🔵 7.0 | 21v, AIP, AIPService, Chinese, ComplianceWorkbenchApp | AW ON | [speed](21v-feature-gaps.md) / [detail](details/21v-feature-gaps.md) / [workflow](workflows/21v-feature-gaps.md) |
+| 41 | sovereign-cloud-tooling | Sovereign Cloud 工具与访问 | 8 | ✅ | 🔵 7.4 | 21v, ASC, JIT, SAVM, SHIR | AW | [speed](sovereign-cloud-tooling.md) / [detail](details/sovereign-cloud-tooling.md) / [workflow](workflows/sovereign-cloud-tooling.md) |
+| 42 | support-internal-tooling | 工程师内部工具 (DTM/rCRI/ICM) | 10 | ✅ | 🔵 6.3 | ACL, AME, ASC, AccessCheck, DTM | AW ML | [speed](support-internal-tooling.md) / [detail](details/support-internal-tooling.md) / [workflow](workflows/support-internal-tooling.md) |
 
-Last updated: 2026-04-18
+最后更新: 2026-04-24

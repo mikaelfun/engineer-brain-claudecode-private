@@ -171,8 +171,10 @@ node .claude/skills/rag-sync/manifest.mjs diff "{outputDir}"
 
 ```bash
 # 解析 outputDir 的真实路径（跟随 symlink），取 parent 作为 base-dir
-REAL_ONENOTE=$(node -e "console.log(require('fs').realpathSync('{outputDir}'))")
-REAL_BASE=$(node -e "console.log(require('path').dirname('$REAL_ONENOTE'))")
+# 注意：realpathSync 在 Windows 返回反斜杠路径，必须转为正斜杠，
+# 否则 Bash 双引号展开会把 \U \f 等当转义符吃掉
+REAL_ONENOTE=$(node -e "console.log(require('fs').realpathSync('{outputDir}'))" | sed 's|\\\\|/|g')
+REAL_BASE=$(dirname "$REAL_ONENOTE")
 # 后续所有 --base-dir 用 $REAL_BASE，文件路径用 $REAL_ONENOTE/... 前缀
 ```
 

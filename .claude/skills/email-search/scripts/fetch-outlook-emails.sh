@@ -48,7 +48,7 @@ if [ -z "$PORT" ]; then
   PORT=$(python3 -c "print(9860 + hash('email$CASE_NUMBER') % 30)" 2>/dev/null || echo 9860)
 fi
 
-RUN_ID=$(python3 -c "import json; print(json.load(open('$CASE_DIR/.casework/state.json',encoding='utf-8')).get('runId',''))" 2>/dev/null || echo "")
+RUN_ID=$(python3 -c "import json,os; p=os.path.join(r'''$CASE_DIR''','.casework','state.json'); print(json.load(open(p,encoding='utf-8')).get('runId',''))" 2>/dev/null || echo "")
 if [ -n "$RUN_ID" ]; then
   LOG="$CASE_DIR/.casework/runs/$RUN_ID/agents/email-search.log"
 else

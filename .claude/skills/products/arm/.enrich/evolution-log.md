@@ -568,3 +568,4 @@
 - **Already scanned**: 43
 - **New unscanned**: 0
 - **Result**: exhausted=true, 7-day refresh completed, no new KB articles found
+| 2026-04-24 | SYNTHESIZE | Phase 2.5 + §5: 60 topics indexed, _index.search.jsonl generated, _index.md reformatted | incremental |

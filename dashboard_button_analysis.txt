@@ -1,0 +1,144 @@
+# Dashboard Button Patterns & Patrol "New Case" Button Analysis
+
+## 1. PATROL PAGE LOCATION & "NEW CASES" BUTTON
+
+### File Paths
+- Main Page: C:\Users\fangkun\Documents\Projects\EngineerBrain\dev\dashboard\web\src\pages\PatrolPage.tsx
+- Header: C:\Users\fangkun\Documents\Projects\EngineerBrain\dev\dashboard\web\src\components\patrol\PatrolHeader.tsx
+- Case List: C:\Users\fangkun\Documents\Projects\EngineerBrain\dev\dashboard\web\src\components\patrol\PatrolCaseList.tsx
+- Sidebar: C:\Users\fangkun\Documents\Projects\EngineerBrain\dev\dashboard\web\src\components\patrol\PatrolSidebar.tsx
+
+### Current "New Cases" Button (PatrolPage.tsx, lines 162-181)
+Color: var(--accent-green) background, var(--text-inverse) text
+Size: 12px font, padding 9px 18px, border-radius 13px
+Icon: Plus (lucide-react, w-4 h-4)
+Text: "New Cases" - bold, uppercase, 0.3px letter-spacing
+States: Opacity 0.6 when pending, cursor not-allowed when disabled
+Loading: Icon becomes spinning Loader2 (animate-spin)
+Shadow: Subtle inset rgba(0,0,0,0.06) 0 1px 3px 0 inset
+Handler: handleStartNewCases() -> startPatrol.mutate({ force: true, mode: 'new-cases' })
+
+## 2. STANDARD DASHBOARD BUTTON PATTERNS
+
+PATTERN 1: PRIMARY ACTION BUTTONS
+- Size: 12px font, padding 9px 18-22px, radius 13px
+- Colors: var(--accent-blue/green/red) solid background
+- Text: Bold, uppercase, 0.3px letter-spacing
+- Icon: w-4 h-4, always paired with text
+- Shadow: Inset rgba(0,0,0,0.06) 0 1px 3px 0
+- Used for: Start, Cancel, New Cases
+
+PATTERN 2: SECONDARY MINI BUTTONS
+- Size: 10px font, px-2.5 py-1, radius 13px
+- Colors: var(--accent-color-dim) background with color text
+- Text: Semibold, uppercase, 0.2px letter-spacing
+- Icon: w-3 h-3, spin conditionally
+- Hover: brightness-110
+- Disabled: opacity-40
+- Used for: Case refresh, process actions
+
+PATTERN 3: ICON-ONLY BUTTONS
+- Size: p-1 padding, no set font (icon only)
+- Colors: Transparent, color-driven icon
+- Icon: w-3.5 h-3.5
+- Hover: bg-[var(--bg-hover)]
+- States: Color change (green/gray based on state)
+- Used for: Edit, delete, enable/disable, run
+
+PATTERN 4: TEXT BUTTONS WITH SMALL ICON
+- Size: px-2 py-1, text-xs, r-4
+- Colors: Transparent background, text-driven color
+- Icon: w-3 h-3 with text
+- Hover: smooth color transition
+- Used for: Edit draft, copy, auxiliary actions
+
+PATTERN 5: CONFIRMATION BUTTONS
+- Size: px-1.5 py-0.5, text-[10px], rounded
+- Colors: Confirm=var(--accent-red), Cancel=text-tertiary
+- Layout: Horizontal group, gap-1
+- Used for: Delete confirmations
+
+## 3. UNIVERSAL DESIGN LANGUAGE
+
+CSS CLASSES:
+- Layout: inline-flex items-center gap-1/2, flex-col
+- Typography: font-bold/semibold, uppercase
+- Interactions: transition-all, disabled:opacity-40
+- Hover: hover:brightness-110 or hover:bg-hover
+
+COLOR SCHEME:
+- Blue (var(--accent-blue)) = Primary/start
+- Green (var(--accent-green)) = Positive/enable/new
+- Red (var(--accent-red)) = Danger/cancel/delete
+- Dim variants = Secondary/muted actions
+
+STATES:
+- Loading: Loader2 spinner replaces icon
+- Disabled: opacity 0.6, cursor not-allowed
+- Hover: brightness-110 or background change
+
+## 4. PATROL PAGE BUTTONS
+
+Start Patrol: Blue, Play icon, 9px 22px padding
+New Cases: Green, Plus icon, 9px 18px padding
+Cancel: Red, Square icon, 9px 22px padding
+Reset: Gray text-only, RotateCcw icon, text-xs
+
+All in header button group (lines 108-197)
+Visible: Start+New+Reset when !isRunning, Cancel when isRunning
+
+## 5. BUTTON USAGE EXAMPLES
+
+CasesPage.tsx:
+- Vertical stack: Refresh (blue-dim) + Process (green-dim)
+- 10px font, compact 2-button layout per case
+
+AutomationsPage.tsx:
+- Horizontal toolbar: Power, Pencil, Play/Square, Trash2
+- Icon-only with title tooltips
+- Delete confirm: Yes/No buttons
+
+DraftsPage.tsx:
+- Horizontal group: Edit, Copy, Outlook
+- State-based coloring (green when copied)
+- All text+icon small buttons
+
+Issues.tsx:
+- Status-driven: Different button per issue lifecycle
+- Create Track -> Start Implement -> Verify
+- Dynamic button replacement based on status
+
+## 6. KEY FINDINGS
+
+NO CENTRALIZED BUTTON COMPONENT - inline style + className pattern
+SEMANTIC COLOR CODING - blue/green/red consistently used
+ICON ALWAYS WITH TEXT - except pure-icon toolbars
+LOADING = LOADER2 SPINNER - replaces action icon
+THREE VISUAL TIERS - large primary, medium secondary, small icon
+CONSISTENT SIZING - 12px primary, 10px secondary, xs tertiary
+LUCIDE ICONS ONLY - Plus, Play, Square, Refresh, Pencil, Trash2, etc
+
+## 7. NEW CASES BUTTON SPECIFICS
+
+Current: Green pill-button (radius 13px)
+Position: Top-right header, next to Start Patrol
+Function: mode: 'new-cases' patrol run
+Icon: Plus (Lucide)
+Loading: Spinner icon, opacity 0.6
+Visible: When !isRunning
+Handler: handleStartNewCases()
+Missing: Could add title="Start patrol for new cases only"
+
+## 8. IMPLEMENTATION GUIDELINES
+
+✓ Icon + text pairs (except toolbars)
+✓ Semantic colors (blue/green/red + dims)
+✓ Lucide React icons
+✓ transition-all class
+✓ title attribute for accessibility
+✓ Loader2 spinner for loading
+✓ Disable with opacity (not color)
+✓ gap-1/2 spacing for groups
+✓ CSS variables for colors
+✓ Test disabled/loading states
+

@@ -46,8 +46,8 @@ interface TriggerRunStore {
   isRunning: (triggerId: string) => boolean
 }
 
-const MAX_OUTPUT_LENGTH = 3000
-const MAX_MESSAGES = 300
+const MAX_OUTPUT_LENGTH = 20000
+const MAX_MESSAGES = 500
 
 /** Map SSE kind to CaseSessionMessage type */
 function kindToType(kind?: string): CaseSessionMessage['type'] {

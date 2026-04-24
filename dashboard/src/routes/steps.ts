@@ -33,7 +33,7 @@ import {
   cleanupStaleSessions,
 } from '../agent/case-session-manager.js'
 import { sseManager } from '../watcher/sse-manager.js'
-import { getSSEEventType, formatMessageForSSE, getPersistedMessageType } from '../utils/sse-helpers.js'
+import { getSSEEventType, formatMessageForSSE, getPersistedMessageType, parseAssistantBlocks } from '../utils/sse-helpers.js'
 import { caseStepState, type CaseStepQuestion } from '../services/case-step-state.js'
 import { withInactivityTimeout, INACTIVITY_TIMEOUT_MS } from '../utils/operation-timeout.js'
 import { sdkQueue } from '../utils/sdk-queue.js'
@@ -223,10 +223,11 @@ function createStepCanUseTool(
  */
 function summarizeToolInput(toolName: string, input: any): string {
   if (!input || typeof input !== 'object') return ''
+  const maxLen = config.sseLimits.toolCallContentMaxLen
   try {
     // Bash: show the command being run
     if (toolName === 'Bash' && input.command) {
-      return input.command.slice(0, 500)
+      return input.command.slice(0, maxLen)
     }
     // Read/Write/Edit: show file path
     if ((toolName === 'Read' || toolName === 'Write' || toolName === 'Edit') && input.file_path) {
@@ -240,9 +241,9 @@ function summarizeToolInput(toolName: string, input: any): string {
     if (toolName === 'Grep' && input.pattern) {
       return `/${input.pattern}/` + (input.path ? ` in ${input.path}` : '')
     }
-    // Agent: show prompt summary (expanded to 500 chars to avoid truncation)
+    // Agent: show prompt summary
     if (toolName === 'Agent' && input.prompt) {
-      return input.prompt.slice(0, 500)
+      return input.prompt.slice(0, maxLen)
     }
     // Teams MCP tools: show message/query
     if (toolName === 'mcp__teams__SearchTeamsMessages' && input.message) {
@@ -257,7 +258,7 @@ function summarizeToolInput(toolName: string, input: any): string {
     // Generic: show first string-valued key
     for (const key of Object.keys(input)) {
       if (typeof input[key] === 'string' && input[key].length > 0) {
-        return `${key}: ${input[key].slice(0, 200)}`
+        return `${key}: ${input[key].slice(0, maxLen)}`
       }
     }
   } catch {
@@ -524,25 +525,25 @@ async function processStepMessages(
       delete taskAgentMap[taskId]
     }
 
-    // Parse assistant messages into semantic types
+    // Parse assistant messages into semantic types (using shared parser)
     if (message.type === 'assistant' && message.message?.content) {
       turns++
       const content = message.message.content
       if (Array.isArray(content)) {
-        for (const block of content) {
-          if (block.type === 'tool_use') {
-            // Extract human-readable summary of tool input
-            const toolInput = (block as any).input
-            const toolContent = summarizeToolInput((block as any).name, toolInput)
-            lastToolName = (block as any).name
+        for (const parsed of parseAssistantBlocks(content)) {
+          const ts = new Date().toISOString()
+
+          if (parsed.kind === 'tool-call') {
+            const toolContent = summarizeToolInput(parsed.toolName!, parsed.toolInput)
+            lastToolName = parsed.toolName
             // Track tool call for executionSummary (ISS-136)
             toolCalls.push({ name: lastToolName!, success: true })
             const toolMsg = {
               kind: 'tool-call' as const,
-              toolName: (block as any).name,
+              toolName: parsed.toolName,
               content: toolContent,
               step: stepName,
-              timestamp: new Date().toISOString(),
+              timestamp: ts,
             }
             sseManager.broadcast('case-step-progress', {
               caseNumber,
@@ -555,7 +556,7 @@ async function processStepMessages(
 
             // Pipeline step detection for casework (ISS-210)
             if (stepName === 'casework') {
-              const detectedStep = detectPipelineStep((block as any).name, toolContent)
+              const detectedStep = detectPipelineStep(parsed.toolName!, toolContent)
               if (detectedStep && activePipelineStep[caseNumber] !== detectedStep) {
                 // Mark previous step as completed
                 if (activePipelineStep[caseNumber]) {
@@ -564,7 +565,7 @@ async function processStepMessages(
                     sessionId: capturedSessionId,
                     pipelineStep: activePipelineStep[caseNumber],
                     status: 'completed',
-                    timestamp: new Date().toISOString(),
+                    timestamp: ts,
                   })
                 }
                 // Mark new step as active
@@ -574,29 +575,32 @@ async function processStepMessages(
                   sessionId: capturedSessionId,
                   pipelineStep: detectedStep,
                   status: 'active',
-                  timestamp: new Date().toISOString(),
+                  timestamp: ts,
                 })
               }
             }
-          } else if (block.type === 'text') {
-            const thinkText = (block as any).text || ''
-            const thinkMsg = {
-              kind: 'thinking' as const,
-              content: thinkText.slice(0, 800),
+          } else {
+            // 'response' (text blocks) or 'thinking' (extended reasoning)
+            const maxContentLen = parsed.kind === 'thinking'
+              ? config.sseLimits.thinkingMaxLen
+              : config.sseLimits.responseMaxLen
+            const progressMsg = {
+              kind: parsed.kind,
+              content: parsed.content.slice(0, maxContentLen),
               step: stepName,
-              timestamp: new Date().toISOString(),
+              timestamp: ts,
             }
             sseManager.broadcast('case-step-progress', {
               caseNumber,
               sessionId: capturedSessionId,
               executionId,
-              ...thinkMsg,
+              ...progressMsg,
             })
-            caseStepState.addMessage(caseNumber, thinkMsg)
+            caseStepState.addMessage(caseNumber, progressMsg)
             messageCount++
 
-            // Casework completion detection (ISS-210)
-            if (!completionDetected && detectCompletion(thinkText)) {
+            // Casework completion detection (ISS-210) — check response text
+            if (!completionDetected && detectCompletion(parsed.content)) {
               startCompletionGrace()
             }
           }
@@ -615,9 +619,9 @@ async function processStepMessages(
         if (errText) lastCall.error = errText
       }
       const resultContent = typeof message.content === 'string'
-        ? message.content.slice(0, 500)
+        ? message.content.slice(0, config.sseLimits.toolResultMaxLen)
         : typeof message.text === 'string'
-          ? message.text.slice(0, 500)
+          ? message.text.slice(0, config.sseLimits.toolResultMaxLen)
           : ''
       if (resultContent) {
         const resultMsg = {

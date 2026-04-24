@@ -265,7 +265,19 @@
     "https://learn.microsoft.com/en-us/troubleshoot/mem/intune/certificates/troubleshoot-scep-certificate-delivery",
     "https://learn.microsoft.com/en-us/troubleshoot/mem/intune/certificates/verify-ndes-configuration",
     "https://learn.microsoft.com/en-us/troubleshoot/mem/intune/certificates/troubleshoot-certificate-connector-events",
-    "https://learn.microsoft.com/en-us/troubleshoot/mem/intune/device-configuration/troubleshoot-vpn-profiles"
+    "https://learn.microsoft.com/en-us/troubleshoot/mem/intune/device-configuration/troubleshoot-vpn-profiles",
+    "https://learn.microsoft.com/en-us/troubleshoot/mem/intune/device-configuration/troubleshoot-wi-fi-profiles",
+    "https://learn.microsoft.com/en-us/troubleshoot/mem/intune/device-configuration/troubleshoot-csp-custom-settings",
+    "https://learn.microsoft.com/en-us/troubleshoot/mem/intune/device-configuration/deploy-oma-uris-to-target-csp-via-intune",
+    "https://learn.microsoft.com/en-us/troubleshoot/mem/intune/device-enrollment/configure-android-enterprise-devices-intune",
+    "https://learn.microsoft.com/en-us/troubleshoot/mem/intune/device-enrollment/understand-troubleshoot-esp",
+    "https://learn.microsoft.com/en-us/troubleshoot/mem/intune/device-enrollment/azure-ad-device-registration-autopilot",
+    "https://learn.microsoft.com/en-us/troubleshoot/mem/intune/device-enrollment/troubleshoot-windows-auto-enrollment",
+    "https://learn.microsoft.com/en-us/troubleshoot/mem/intune/device-management/remove-duplicate-mobile-device-management",
+    "https://learn.microsoft.com/en-us/troubleshoot/mem/intune/device-protection/troubleshoot-update-rings",
+    "https://learn.microsoft.com/en-us/troubleshoot/mem/intune/general/intune-synced-attributes-list",
+    "https://learn.microsoft.com/en-us/troubleshoot/mem/intune/general/troubleshoot-company-resource-access-problems",
+    "https://learn.microsoft.com/en-us/troubleshoot/mem/intune/get-support/before-you-call-intune-support"
   ],
-  "lastRefreshed": "2026-04-19T00:00:00Z"
+  "lastRefreshed": "2026-04-23T03:08:26Z"
 }

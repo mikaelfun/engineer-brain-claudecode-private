@@ -55,3 +55,40 @@
 - .enrich/topic-plan.json
 - .enrich/conflict-report.json
 - .enrich/progress.json
+# Synthesize Log — entra-id — 2026-04-24
+
+## Mode
+Incremental (Phase 2.5 + Section 5 only — index generation)
+
+## Summary
+- topicsToRegen: 0 (no topic content regeneration needed)
+- Phase 2.5: Generated guides/_index.search.jsonl (37 topics)
+- Section 5: Updated guides/_index.md to new 9-column format
+- Score computation: 4-dim formula (Source Quality + Recency + Validation Strength + 21V Applicability)
+
+## Score Distribution
+| Badge | Count | Percentage |
+|-------|-------|------------|
+| 🟢 (8-10) | 219 | 5.9% |
+| 🔵 (5-7.9) | 3246 | 88.0% |
+| 🟡 (3-4.9) | 223 | 6.0% |
+| ⚪ (<3) | 0 | 0% |
+
+## Topic Statistics
+| Metric | Value |
+|--------|-------|
+| Total topics | 37 |
+| Fusion topics (✅) | 36 |
+| Workflow topics | 35 |
+| Quick-only topics | 1 |
+| Total JSONL entries | 3688 |
+| Draft files | 1361 |
+
+## Files Generated
+| File | Action |
+|------|--------|
+| guides/_index.search.jsonl | Created (37 records) |
+| guides/_index.md | Updated to new format |
+| .enrich/progress.json | synthesizeState updated |
+
+---

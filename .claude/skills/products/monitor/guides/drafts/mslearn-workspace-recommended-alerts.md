@@ -1,19 +1,30 @@
-# Set Recommended Alerts for Log Analytics Workspace
+---
+source: mslearn
+sourceRef: null
+sourceUrl: "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-monitor/log-analytics/billing/workspace-recommended-alerts"
+importDate: "2026-04-23"
+type: guide-draft
+---
 
-> Source: [Microsoft Learn](https://learn.microsoft.com/en-us/troubleshoot/azure/azure-monitor/log-analytics/billing/workspace-recommended-alerts)
+# Set Up Recommended Alerts for Log Analytics Daily Cap and Ingestion
 
 ## Overview
-How to configure recommended alerts for proactive daily cap and ingestion notifications.
 
-## Steps
-1. Navigate to Log Analytics workspace → Monitoring → Alerts
-2. Select **Set up recommendations**
-3. Enable all recommended alert rules
-4. Configure email address in Notify me section
-5. Save
+Configure proactive alerts for daily cap reached events and ingestion anomalies in Log Analytics workspace.
 
-## Key Insight
-Recommended alerts provide out-of-box monitoring for daily cap reached events and ingestion anomalies without needing custom KQL alert rules.
+## Configuration Steps
 
-## 21V Applicability
-Applicable - Alert rules available in 21Vianet.
+1. Sign in to Azure portal
+2. Navigate to Log Analytics workspace
+3. Monitoring → Alerts
+4. Select "Set up recommendations"
+5. Turn on desired alert rules (recommend enabling all)
+6. In Notify me section, specify email address
+7. Select Save
+
+## Key Notes
+
+- When daily cap is reached, a banner appears in Azure portal
+- An event is logged in the Operations table
+- Recommended alerts provide proactive notification before issues impact monitoring
+- All alert rules should be enabled for comprehensive coverage

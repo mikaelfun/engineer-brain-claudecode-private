@@ -1,97 +1,28 @@
 ---
 source: ado-wiki
 sourceRef: "Supportability/AzureContainers/Containers Wiki:/Azure Kubernetes Service Wiki/AKS/How Tos/Compute/Linux/Linux Kernel Dump and Crash Analysis Setup"
-sourceUrl: "https://dev.azure.com/Supportability/AzureContainers/_wiki/wikis/Containers Wiki?pagePath=/Azure Kubernetes Service Wiki/AKS/How Tos/Compute/Linux/Linux Kernel Dump and Crash Analysis Setup"
-importDate: "2026-04-05"
-type: troubleshooting-guide
+sourceUrl: "https://dev.azure.com/Supportability/AzureContainers/_wiki/wikis/Containers%20Wiki?pagePath=%2FAzure%20Kubernetes%20Service%20Wiki%2FAKS%2FHow%20Tos%2FCompute%2FLinux%2FLinux%20Kernel%20Dump%20and%20Crash%20Analysis%20Setup"
+importDate: "2026-04-24"
+type: guide-draft
 ---
 
-# How to setup kdump on AKS Linux (Ubuntu) node and analyze crash dumps
+# Linux Kernel Dump and Crash Analysis on AKS Nodes
 
 ## Scenario
+AKS node OS crashes recurrently and customer needs root cause analysis.
 
-AKS node OS crashes recurrently. Enable kdump to capture kernel dump for analysis. Contact Linux Escalation Team for deeper analysis.
-
-## Prerequisites
-
-- SSH access to AKS node (https://docs.microsoft.com/en-us/azure/aks/node-access or kubectl-exec/kubego tools)
-
-## Setup Steps
-
-### 1. Install kdump package
-
-```bash
+## Step 1: SSH into AKS node
+## Step 2: Install kdump
 apt-get update && apt install linux-crashdump -y
-# Select "YES" both times
-```
 
-### 2. Verify configuration
+## Step 3: Configure kdump
+- Set KDUMP_COREDIR to /mnt/crash
+- Increase reserved memory to 256M
+- Reboot node
 
-```bash
-grep LOAD_KEXEC /etc/default/kexec        # Should be: LOAD_KEXEC=true
-grep USE_KDUMP /etc/default/kdump-tools    # Should be: USE_KDUMP=1
-```
-
-### 3. Set crash dump target to temporary disk
-
-```bash
-mkdir -p /mnt/crash && chmod 777 /mnt/crash && chmod o+t /mnt/crash
-sed -i 's/^KDUMP_COREDIR=.*/KDUMP_COREDIR=\"\/mnt\/crash\"/' /etc/default/kdump-tools
-```
-
-### 4. Increase reserved memory and update grub
-
-```bash
-sed -i 's/512M-:192M/512M-:256M/' /etc/default/grub.d/kdump-tools.cfg
-update-grub
-```
-
-### 5. Reboot
-
-```bash
-init 6
-```
-
-### 6. Verify after reboot
-
-```bash
+## Step 4: Verify kdump is ready
 kdump-config show
-# Should show: current state: ready to kdump
-```
 
-### 7. Test (optional)
-
-```bash
-sudo sysctl -w kernel.sysrq=1
-echo c > /proc/sysrq-trigger
-# After reboot, check /mnt/crash/ for dump files
-```
-
-## Crash Analysis
-
-### Install debug tools
-
-```bash
-echo "deb http://ddebs.ubuntu.com $(lsb_release -cs) main restricted universe multiverse
-deb http://ddebs.ubuntu.com $(lsb_release -cs)-updates main restricted universe multiverse
-deb http://ddebs.ubuntu.com $(lsb_release -cs)-proposed main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list.d/ddebs.list
-
-sudo apt install ubuntu-dbgsym-keyring
-
-var=$(cat /proc/version)
-var=${var#*version }
-var=${var%-azure*}
-
-apt-get update && apt-get install crash linux-image-$var-azure linux-image-$var-azure-dbgsym -y
-```
-
-### Analyze dump
-
-```bash
-crash /usr/lib/debug/boot/vmlinux-$var-azure /mnt/crash/[DATETIME]/dump.[DUMP_NUMBER]
-```
-
-## References
-
-- https://ubuntu.com/server/docs/kernel-crash-dump
-- https://www.kernel.org/doc/Documentation/kdump/kdump.txt
+## Step 5: Analyze crash dump
+Use crash utility with debug symbols.
+Contact Linux Escalation Team for deeper analysis.

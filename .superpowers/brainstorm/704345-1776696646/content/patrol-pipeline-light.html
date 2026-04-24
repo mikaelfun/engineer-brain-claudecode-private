@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patrol Pipeline Refactor — Light Mode</title>
+<style>
+  :root {
+    /* Sentry Light theme — from dashboard index.css .light */
+    --bg-base: #faf9fb;
+    --bg-surface: #ffffff;
+    --bg-elevated: #ffffff;
+    --bg-hover: #f3f1f5;
+    --bg-active: #ebe8ef;
+    --bg-inset: #f5f3f7;
+    --border-subtle: #e8e3f0;
+    --border-default: #d4ccdf;
+    --border-strong: #b0a8c0;
+    --text-primary: #1f1633;
+    --text-secondary: #3e3554;
+    --text-tertiary: #9e95b0;
+    --text-inverse: #ffffff;
+    --accent-blue: #6a5fc1;
+    --accent-blue-dim: rgba(106,95,193,0.10);
+    --accent-green: #16a34a;
+    --accent-green-dim: rgba(22,163,74,0.10);
+    --accent-amber: #d97706;
+    --accent-amber-dim: rgba(217,119,6,0.10);
+    --accent-red: #dc2626;
+    --accent-red-dim: rgba(220,38,38,0.10);
+    --accent-purple: #7c3aed;
+    --accent-purple-dim: rgba(124,58,237,0.10);
+    --tab-green: rgba(22,163,74,0.10);
+    --tab-green-border: rgba(22,163,74,0.30);
+    --tab-green-text: #15803d;
+    --tab-amber: rgba(217,119,6,0.10);
+    --tab-amber-border: rgba(217,119,6,0.25);
+    --tab-amber-text: #b45309;
+    --tab-purple: rgba(124,58,237,0.10);
+    --tab-purple-border: rgba(124,58,237,0.28);
+    --tab-purple-text: #6d28d9;
+    --bg-front: #ffffff;
+    --shadow-card: rgba(0,0,0,0.04) 0 1px 3px;
+    --shadow-elevated: rgba(31,22,51,0.08) 0 8px 24px;
+    --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg-base);
+    color: var(--text-primary);
+    font-family: 'Rubik', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    padding: 28px 36px;
+    min-height: 100vh;
+  }
+
+  /* ─── Header ─── */
+  .page-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  h1 {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--text-primary);
+  }
+  .phase-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 5px 14px;
+    border-radius: 999px;
+    background: var(--accent-blue-dim);
+    color: var(--accent-blue);
+  }
+  .timer {
+    font-family: var(--font-mono);
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+  }
+  .stat-chips {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-left: auto;
+  }
+  .stat-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 40px;
+  }
+  .stat-value {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 22px;
+    line-height: 1.1;
+  }
+  .stat-label {
+    font-size: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--text-tertiary);
+  }
+  .btn-cancel {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding: 9px 22px;
+    border-radius: 13px;
+    background: var(--accent-red);
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+
+  /* ─── Layout ─── */
+  .main-layout {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+  }
+
+  /* ─── Pipeline Card (Sidebar) ─── */
+  .sidebar {
+    width: 280px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 28px;
+  }
+  .card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+  }
+  .card-head {
+    padding: 16px 20px 10px;
+  }
+  .card-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-tertiary);
+  }
+  .card-body {
+    padding: 0 20px 20px;
+  }
+
+  /* ─── Parent stage ─── */
+  .parent-stage {
+    margin-bottom: 2px;
+  }
+  .parent-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+  }
+  .parent-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 12px;
+    font-weight: 800;
+  }
+  .parent-icon.done { background: var(--accent-green); color: white; }
+  .parent-icon.active { border: 2.5px solid var(--accent-blue); background: var(--accent-blue-dim); }
+  .parent-icon.wait { border: 2px solid var(--border-default); opacity: 0.4; }
+  .parent-name {
+    font-size: 14px;
+    font-weight: 800;
+    flex: 1;
+  }
+  .parent-name.done { color: var(--accent-green); }
+  .parent-name.active { color: var(--accent-blue); }
+  .parent-name.wait { color: var(--text-tertiary); opacity: 0.4; }
+  .parent-dur {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-tertiary);
+  }
+  .parent-dur.active { color: var(--accent-blue); }
+
+  /* ─── Substeps ─── */
+  .substeps {
+    margin-left: 14px;
+    padding-left: 16px;
+    border-left: 2px solid var(--border-subtle);
+    padding-bottom: 4px;
+  }
+  .substeps.done-line { border-left-color: rgba(22,163,74,0.20); }
+  .substeps.active-line { border-left-color: rgba(106,95,193,0.20); }
+  .sub {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+  }
+  .sub-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .sub-dot.done { background: var(--accent-green); }
+  .sub-dot.active { background: var(--accent-blue); animation: pulse 2s ease-in-out infinite; }
+  .sub-dot.wait { background: var(--border-default); opacity: 0.35; }
+  .sub-name {
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .sub-name.done { color: var(--accent-green); }
+  .sub-name.active { color: var(--accent-blue); }
+  .sub-name.wait { color: var(--text-tertiary); opacity: 0.45; }
+  .sub-info {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    margin-left: auto;
+    white-space: nowrap;
+  }
+
+  /* ─── Agent rows (Process substeps) ─── */
+  .agent-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 10px;
+    margin: 3px 0;
+    border-radius: 8px;
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-surface);
+  }
+  .agent-row.running {
+    border-color: rgba(106,95,193,0.22);
+    background: rgba(106,95,193,0.04);
+  }
+  .agent-row.finished {
+    opacity: 0.65;
+  }
+  .agent-cn {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .agent-cn.running { color: var(--accent-blue); }
+  .agent-cn.finished { color: var(--accent-green); }
+  .pill {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding: 2px 8px;
+    border-radius: 6px;
+  }
+  .pill-run { background: var(--accent-blue-dim); color: var(--accent-blue); }
+  .pill-ok { background: var(--accent-green-dim); color: var(--accent-green); }
+  .agent-desc {
+    font-size: 10px;
+    color: var(--text-secondary);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .agent-dur {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+  }
+  .agent-queued {
+    padding: 4px 10px;
+    opacity: 0.35;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ─── SSE stream ─── */
+  .sse-box {
+    margin: 4px 0;
+    padding: 5px 10px;
+    border-radius: 6px;
+    background: var(--bg-inset);
+    border: 1px solid var(--border-subtle);
+  }
+  .sse-line {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-tertiary);
+    line-height: 1.8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .sse-line .k { color: var(--accent-blue); opacity: 0.65; }
+
+  /* ─── Right content: Cases card ─── */
+  .content { flex: 1; min-width: 0; }
+
+  /* ─── Case Row ─── */
+  .case-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 10px;
+    box-shadow: var(--shadow-card);
+  }
+  .case-card.active-case {
+    border-color: rgba(106,95,193,0.22);
+    box-shadow: 0 2px 12px rgba(106,95,193,0.06);
+  }
+  .case-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px;
+    background: var(--bg-inset);
+  }
+  .case-cn {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .case-cn.active { color: var(--accent-blue); }
+  .case-cn.done { color: rgba(106,95,193,0.55); }
+  .case-body {
+    padding: 14px 18px;
+    border-top: 1px solid var(--bg-hover);
+    display: flex;
+    gap: 14px;
+    align-items: stretch;
+  }
+  .z-l { width: 130px; flex-shrink: 0; }
+  .z-c { flex: 1; min-width: 0; }
+  .z-r { width: 100px; flex-shrink: 0; text-align: right; }
+
+  /* Zone L: status dots */
+  .zl-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+  .dot18 {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 9px;
+    color: white;
+  }
+  .dot18.done { background: var(--accent-green); }
+  .dot18.active { border: 2.5px solid var(--accent-blue); }
+  .dot18.wait { border: 1.5px solid var(--border-subtle); }
+  .zl-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .zl-delta {
+    padding-left: 24px;
+    font-size: 10px;
+    color: var(--text-secondary);
+  }
+  .zl-delta-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .delta-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent-green);
+  }
+
+  /* Zone C: card stack */
+  .sticky-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    border-radius: 5px 5px 1px 1px;
+    font-size: 10px;
+    font-weight: 700;
+    transition: all 120ms ease;
+    cursor: default;
+  }
+  .sticky-tab .detail { font-size: 8px; font-weight: 500; opacity: 0.7; margin-left: 2px; }
+  .front-card {
+    padding: 14px 16px;
+    border-radius: 10px;
+    background: var(--bg-front);
+    border: 1px solid rgba(106,95,193,0.15);
+    box-shadow: 0 2px 10px rgba(106,95,193,0.06), 0 0 0 1px rgba(106,95,193,0.04);
+  }
+
+  /* Zone R */
+  .zr-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--text-tertiary);
+  }
+
+  /* ─── Progress bar in cases header ─── */
+  .progress-bar {
+    flex: 1;
+    max-width: 180px;
+    height: 4px;
+    border-radius: 4px;
+    background: var(--bg-hover);
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--accent-green), var(--accent-blue));
+    transition: width 500ms ease-out;
+  }
+
+  /* Collapsed row */
+  .flow-pill {
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    background: var(--bg-inset);
+    color: var(--text-tertiary);
+  }
+  .flow-arrow {
+    font-size: 9px;
+    color: var(--text-tertiary);
+    padding: 0 1px;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.7); }
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spin { animation: spin 1s linear infinite; display: inline-block; }
+
+  /* Queued case row (faded) */
+  .case-queued {
+    border-radius: 12px;
+    border: 1px solid var(--border-subtle);
+    background: transparent;
+    opacity: 0.3;
+    margin-bottom: 10px;
+  }
+  .case-queued .case-head {
+    background: transparent;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     FULL PAGE MOCKUP: Patrol Page with new pipeline design
+     ═══════════════════════════════════════════════════════════ -->
+
+<!-- Header Row -->
+<div class="page-header">
+  <h1>Patrol</h1>
+  <span class="phase-badge">
+    <span class="spin" style="font-size:12px;">⟳</span>
+    processing
+  </span>
+  <span class="timer">4m 32s</span>
+
+  <div class="stat-chips">
+    <div class="stat-chip">
+      <span class="stat-value" style="color:var(--text-secondary);">8</span>
+      <span class="stat-label">Total</span>
+    </div>
+    <div class="stat-chip">
+      <span class="stat-value" style="color:var(--accent-green);">5</span>
+      <span class="stat-label">Done</span>
+    </div>
+    <div class="stat-chip">
+      <span class="stat-value" style="color:var(--accent-blue);">2</span>
+      <span class="stat-label">Active</span>
+    </div>
+    <div class="stat-chip">
+      <span class="stat-value" style="color:var(--text-tertiary);">1</span>
+      <span class="stat-label">Queue</span>
+    </div>
+  </div>
+
+  <button class="btn-cancel">■ Cancel</button>
+</div>
+
+<div class="main-layout">
+
+  <!-- ═══ LEFT: Pipeline Sidebar ═══ -->
+  <div class="sidebar">
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">Pipeline</span>
+      </div>
+      <div class="card-body">
+
+        <!-- ── 1. Initialize (completed) ── -->
+        <div class="parent-stage">
+          <div class="parent-header">
+            <div class="parent-icon done">✓</div>
+            <div class="parent-name done">Initialize</div>
+            <div class="parent-dur">18s</div>
+          </div>
+          <div class="substeps done-line">
+            <div class="sub">
+              <div class="sub-dot done"></div>
+              <div class="sub-name done">SDK Session</div>
+              <div class="sub-info">3s</div>
+            </div>
+            <div class="sub">
+              <div class="sub-dot done"></div>
+              <div class="sub-name done">Load Config</div>
+              <div class="sub-info">skill + script</div>
+            </div>
+            <div class="sub">
+              <div class="sub-dot done"></div>
+              <div class="sub-name done">Mutex Check</div>
+              <div class="sub-info">ok</div>
+            </div>
+            <div class="sub">
+              <div class="sub-dot done"></div>
+              <div class="sub-name done">D365 Query</div>
+              <div class="sub-info">12 found</div>
+            </div>
+            <div class="sub">
+              <div class="sub-dot done"></div>
+              <div class="sub-name done">Filter & Archive</div>
+              <div class="sub-info">8 proc · 3 skip · 1 arch</div>
+            </div>
+            <div class="sub">
+              <div class="sub-dot done"></div>
+              <div class="sub-name done">Token Warmup</div>
+              <div class="sub-info">all valid</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── 2. Process (active) ── -->
+        <div class="parent-stage">
+          <div class="parent-header">
+            <div class="parent-icon active">
+              <div style="width:10px;height:10px;border-radius:50%;background:var(--accent-blue);animation:pulse 2s ease-in-out infinite;"></div>
+            </div>
+            <div class="parent-name active">Process</div>
+            <div class="parent-dur active">5 / 8</div>
+          </div>
+          <div class="substeps active-line">
+            <!-- Completed agents -->
+            <div class="agent-row finished">
+              <div class="sub-dot done" style="width:6px;height:6px;"></div>
+              <div class="agent-cn finished">2501080001</div>
+              <div class="agent-desc" style="opacity:0.6;">assess → no-change</div>
+              <div class="agent-dur">45s</div>
+            </div>
+            <div class="agent-row finished">
+              <div class="sub-dot done" style="width:6px;height:6px;"></div>
+              <div class="agent-cn finished">2501120034</div>
+              <div class="agent-desc" style="opacity:0.6;">assess → email → summarize</div>
+              <div class="agent-dur">2m 14s</div>
+            </div>
+            <div class="agent-row finished">
+              <div class="sub-dot done" style="width:6px;height:6px;"></div>
+              <div class="agent-cn finished">2502040012</div>
+              <div class="agent-desc" style="opacity:0.6;">assess → troubleshoot → email</div>
+              <div class="agent-dur">3m 02s</div>
+            </div>
+            <div class="agent-row finished">
+              <div class="sub-dot done" style="width:6px;height:6px;"></div>
+              <div class="agent-cn finished">2503010007</div>
+              <div class="agent-desc" style="opacity:0.6;">assess → no-change</div>
+              <div class="agent-dur">38s</div>
+            </div>
+            <div class="agent-row finished">
+              <div class="sub-dot done" style="width:6px;height:6px;"></div>
+              <div class="agent-cn finished">2503150023</div>
+              <div class="agent-desc" style="opacity:0.6;">assess → email</div>
+              <div class="agent-dur">1m 52s</div>
+            </div>
+            <!-- SSE between spawns -->
+            <div class="sse-box">
+              <div class="sse-line"><span class="k">spawn:</span> queuing 2504010005…</div>
+              <div class="sse-line"><span class="k">slot:</span> concurrency 2/3, waiting…</div>
+            </div>
+            <!-- Running agents -->
+            <div class="agent-row running">
+              <div class="sub-dot active" style="width:6px;height:6px;"></div>
+              <div class="agent-cn running">2504010005</div>
+              <div class="pill pill-run"><span class="spin" style="font-size:8px;">⟳</span> Assess</div>
+              <div class="agent-desc">Reading case-info…</div>
+              <div class="agent-dur">32s</div>
+            </div>
+            <div class="agent-row running">
+              <div class="sub-dot active" style="width:6px;height:6px;"></div>
+              <div class="agent-cn running">2504080019</div>
+              <div class="pill pill-run"><span class="spin" style="font-size:8px;">⟳</span> Refresh</div>
+              <div class="agent-desc">Querying D365…</div>
+              <div class="agent-dur">12s</div>
+            </div>
+            <!-- Queued -->
+            <div class="agent-queued">
+              <div style="width:6px;height:6px;border-radius:50%;border:1.5px solid var(--border-default);"></div>
+              <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);">2504120042</span>
+              <span style="font-size:9px;color:var(--text-tertiary);text-transform:uppercase;">queued</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── 3. Finalize (pending) ── -->
+        <div class="parent-stage">
+          <div class="parent-header">
+            <div class="parent-icon wait"></div>
+            <div class="parent-name wait">Finalize</div>
+          </div>
+          <div class="substeps" style="opacity:0.35;">
+            <div class="sub">
+              <div class="sub-dot wait"></div>
+              <div class="sub-name wait">Cleanup orphans</div>
+            </div>
+            <div class="sub">
+              <div class="sub-dot wait"></div>
+              <div class="sub-name wait">Aggregate results</div>
+            </div>
+            <div class="sub">
+              <div class="sub-dot wait"></div>
+              <div class="sub-name wait">Write state & unlock</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ RIGHT: Cases List ═══ -->
+  <div class="content">
+    <div class="card">
+      <div class="card-head">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span class="card-title">Cases</span>
+          <span style="font-size:11px;font-weight:500;color:var(--text-tertiary);letter-spacing:0.3px;">5 / 8</span>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:62%;"></div>
+          </div>
+        </div>
+      </div>
+      <div style="padding:0 18px 18px;">
+
+        <!-- Active case (expanded) -->
+        <div class="case-card active-case">
+          <div class="case-head">
+            <span class="case-cn active">2504010005</span>
+            <span class="pill pill-run"><span class="spin" style="font-size:8px;">⟳</span> Assess</span>
+            <div style="flex:1;"></div>
+            <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);">32s</span>
+          </div>
+          <div class="case-body">
+            <div class="z-l">
+              <div class="zl-row">
+                <div class="dot18 done">✓</div>
+                <span class="zl-label" style="color:var(--accent-green);">Start</span>
+                <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);margin-left:auto;">2s</span>
+              </div>
+              <div class="zl-row">
+                <div class="dot18 done">✓</div>
+                <span class="zl-label" style="color:var(--accent-green);">Refresh</span>
+                <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);margin-left:auto;">8s</span>
+              </div>
+              <div class="zl-delta">
+                <div class="zl-delta-row"><div class="delta-dot"></div> D365 +3 emails</div>
+                <div class="zl-delta-row"><div class="delta-dot"></div> Teams 2 msgs</div>
+                <div class="zl-delta-row"><div class="delta-dot"></div> OneNote 1 page</div>
+              </div>
+            </div>
+            <div class="z-c">
+              <div class="front-card">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div class="dot18 active">
+                    <div style="width:6px;height:6px;border-radius:50%;background:var(--accent-blue);"></div>
+                  </div>
+                  <span style="font-size:13px;font-weight:700;color:var(--accent-blue);">Assess</span>
+                </div>
+                <div style="font-size:11px;margin-top:5px;padding-left:26px;color:var(--accent-blue);opacity:0.7;">Reading case-info…</div>
+              </div>
+            </div>
+            <div class="z-r">
+              <div style="display:flex;align-items:center;gap:6px;justify-content:flex-end;">
+                <span class="zr-label">Summary</span>
+                <div class="dot18 wait"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Active case 2 (expanded) -->
+        <div class="case-card active-case">
+          <div class="case-head">
+            <span class="case-cn active">2504080019</span>
+            <span class="pill pill-run"><span class="spin" style="font-size:8px;">⟳</span> Refresh</span>
+            <div style="flex:1;"></div>
+            <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);">12s</span>
+          </div>
+          <div class="case-body">
+            <div class="z-l">
+              <div class="zl-row">
+                <div class="dot18 done">✓</div>
+                <span class="zl-label" style="color:var(--accent-green);">Start</span>
+              </div>
+              <div class="zl-row">
+                <div class="dot18 active">
+                  <div style="width:6px;height:6px;border-radius:50%;background:var(--accent-blue);"></div>
+                </div>
+                <span class="zl-label" style="color:var(--accent-blue);">Refresh</span>
+              </div>
+              <div class="zl-delta" style="color:var(--accent-blue);font-size:10px;">
+                <span class="spin" style="font-size:9px;">⟳</span> Querying D365…
+              </div>
+            </div>
+            <div class="z-c" style="opacity:0.35;">
+              <div style="border:1.5px dashed var(--border-subtle);border-radius:7px;padding:5px 12px;display:flex;align-items:center;gap:6px;">
+                <div class="dot18 wait"></div>
+                <span style="font-size:11px;color:var(--text-tertiary);">Assess</span>
+              </div>
+            </div>
+            <div class="z-r">
+              <div style="display:flex;align-items:center;gap:6px;justify-content:flex-end;">
+                <span class="zr-label">Summary</span>
+                <div class="dot18 wait"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Completed case (collapsed) -->
+        <div class="case-card">
+          <div class="case-head" style="cursor:pointer;">
+            <span style="color:var(--text-tertiary);font-size:14px;">›</span>
+            <span class="case-cn done">2503150023</span>
+            <span class="pill pill-ok">✓ Done</span>
+            <div style="display:flex;align-items:center;gap:2px;">
+              <span class="flow-pill">assess</span>
+              <span class="flow-arrow">→</span>
+              <span class="flow-pill" style="background:var(--accent-green-dim);color:var(--accent-green);">needs-action</span>
+              <span class="flow-arrow">→</span>
+              <span class="flow-pill">email</span>
+              <span class="flow-arrow">→</span>
+              <span class="flow-pill">summarize</span>
+            </div>
+            <div style="flex:1;"></div>
+            <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);">1m 52s</span>
+          </div>
+        </div>
+
+        <!-- Completed case 2 (collapsed) -->
+        <div class="case-card">
+          <div class="case-head" style="cursor:pointer;">
+            <span style="color:var(--text-tertiary);font-size:14px;">›</span>
+            <span class="case-cn done">2503010007</span>
+            <span class="pill pill-ok">✓ Done</span>
+            <div style="display:flex;align-items:center;gap:2px;">
+              <span class="flow-pill">assess</span>
+              <span class="flow-arrow">→</span>
+              <span class="flow-pill" style="background:var(--accent-green-dim);color:var(--accent-green);">no-change</span>
+            </div>
+            <div style="flex:1;"></div>
+            <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);">38s</span>
+          </div>
+        </div>
+
+        <!-- More collapsed done cases -->
+        <div class="case-card">
+          <div class="case-head" style="cursor:pointer;">
+            <span style="color:var(--text-tertiary);font-size:14px;">›</span>
+            <span class="case-cn done">2502040012</span>
+            <span class="pill pill-ok">✓ Done</span>
+            <div style="display:flex;align-items:center;gap:2px;">
+              <span class="flow-pill">assess</span>
+              <span class="flow-arrow">→</span>
+              <span class="flow-pill">troubleshoot</span>
+              <span class="flow-arrow">→</span>
+              <span class="flow-pill">email</span>
+            </div>
+            <div style="flex:1;"></div>
+            <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);">3m 02s</span>
+          </div>
+        </div>
+
+        <!-- Queued case -->
+        <div class="case-queued">
+          <div class="case-head">
+            <span style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--text-tertiary);">2504120042</span>
+            <div style="flex:1;"></div>
+            <span style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-tertiary);">Queued</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

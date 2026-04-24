@@ -183,3 +183,32 @@
 | windows-kiosk | 7 | 📋 融合 |
 | macos-filevault | 6 | 📊 速查 |
 | windows-laps | 6 | 📋 融合 |
+
+# Synthesize Log - intune - 2026-04-24
+
+## 模式
+增量（Phase 2.5 + S5 索引生成，无 topic 重生成）
+
+## 执行范围
+- topicsToRegen: 0
+- Phase 2.5: 生成 `_index.search.jsonl`（49 条记录）
+- S5: 更新 `_index.md` 为新格式（| # | Topic | Title | Entries | Fusion | Score | Keywords | Sources | Files |）
+
+## 评分统计
+| Badge | 范围 | Topic 数 |
+|-------|------|---------|
+| 🟢 | 8.0-10.0 | 0 |
+| 🔵 | 5.0-7.9 | 49 |
+| 🟡 | 3.0-4.9 | 0 |
+| ⚪ | 0-2.9 | 0 |
+
+## 索引统计
+| 指标 | 值 |
+|------|-----|
+| 总 topic 数 | 49 |
+| 总条目数 | 4166 |
+| 融合 topic | 41 |
+| 速查 topic | 8 |
+| 有工作流 topic | 41 |
+| Draft 文件数 | 378 |
+| Kusto query 文件数 | 18 |

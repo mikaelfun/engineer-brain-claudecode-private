@@ -149,3 +149,18 @@ Full (all 5 sources exhausted)
 | w365-cloud-apps | Fusion | 2 | 5 | 0 | 0 (inline) |
 | contentidea-kb-legacy-2 | Quick | 2 | 0 | 0 | 0 (inline) |
 | w365-boot | Fusion | 1 | 4 | 0 | 0 (inline) |
+# Synthesize Log — avd — 2026-04-24
+
+## 模式
+增量（Phase 2.5 + §5 索引生成，无 topic 重生成）
+
+## 统计
+- Topics: 74
+- Entries: 694 (JSONL), 648 assigned to topics
+- Score distribution: 🟢0 🔵72 🟡2 ⚪0
+- Files generated: _index.search.jsonl (74 records), _index.md (updated to new format)
+
+## 融合统计
+| topic | 类型 | 三元组 | draft | Kusto | sub-agents |
+|-------|------|--------|-------|-------|------------|
+| (全部 74 topics) | 📋 融合 52 / 📊 速查 22 | 648 | 313 | 0 | 0 (索引仅模式) |

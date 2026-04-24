@@ -55,3 +55,51 @@ Total: 617
 | 21v-feature-gaps | 📋 fusion | 28 | 8 | 0 | 0 (inline) |
 | sovereign-cloud-tooling | 📋 fusion | 8 | 4 | 0 | 0 (inline) |
 | support-internal-tooling | 📋 fusion | 10 | 26 | 0 | 0 (inline) |
+# Synthesize Log — purview — 2026-04-24
+
+## 模式
+增量（Phase 2.5 + S5 无条件执行）
+
+## 说明
+topicsToRegen 为空（guide 已全部存在），但 _index.search.jsonl 不存在 + _index.md 格式需更新。
+根据 spec "无条件执行" 规则，执行 Phase 2.5 和 S5。
+
+## 评分方法
+四维公式逐条计算（Source Quality 0-3 + Recency 0-2 + Validation Strength 0-3 + 21V Applicability 0-2 = 0-10）
+
+## 评分统计
+| 等级 | Badge | Topic 数 |
+|------|-------|----------|
+| 可直接采信 | 🟢 8.0+ | 0 |
+| 可参考 | 🔵 5.0-7.9 | 42 |
+| 方向参考 | 🟡 3.0-4.9 | 0 |
+| 谨慎使用 | ⚪ <3.0 | 0 |
+
+## 融合统计
+| 指标 | 数量 |
+|------|------|
+| 总 topic 数 | 42 |
+| 融合 topic (✅) | 38 |
+| 速查 topic (—) | 4 |
+| 有工作流 | 38 |
+| JSONL 条目总数 | 643 |
+
+## Top/Bottom 5 Topics by avgScore
+
+### Top 5
+| Topic | Title | Entries | avgScore |
+|-------|-------|---------|----------|
+| account-region-migration | 账户区域变更与迁移 | 1 | 🔵 7.5 |
+| sovereign-cloud-tooling | Sovereign Cloud 工具与访问 | 8 | 🔵 7.4 |
+| scan-performance-stuck | 扫描性能与异常终止 | 8 | 🔵 7.0 |
+| scan-missing-assets | 扫描后资产丢失 | 10 | 🔵 7.0 |
+| account-provisioning | 账户创建 / 升级 / 合并 / 配额 | 29 | 🔵 7.0 |
+
+### Bottom 5
+| Topic | Title | Entries | avgScore |
+|-------|-------|---------|----------|
+| rms-connector-adrms | RMS Connector 与 AD RMS | 10 | 🔵 6.0 |
+| dlp-policies | DLP 策略与告警 | 3 | 🔵 6.0 |
+| auto-labeling | 自动标签 (客户端 / 服务端) | 10 | 🔵 5.9 |
+| audit-log | 审计日志 | 5 | 🔵 5.7 |
+| ediscovery | eDiscovery 搜索与保留 | 16 | 🔵 5.5 |

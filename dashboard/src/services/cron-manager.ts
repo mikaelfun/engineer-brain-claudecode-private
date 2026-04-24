@@ -169,7 +169,7 @@ function nextCronMatch(expr: string): number | null {
 // `/onenote-export sync` work correctly (tested 2026-04-02).
 
 const CRON_TIMEOUT_MS = 30 * 60 * 1000 // 30 minutes default
-const MAX_OUTPUT_LENGTH = 5000
+const MAX_OUTPUT_LENGTH = 20000
 const LOG_RETENTION_DAYS = 30
 
 interface ExecutionResult {
@@ -219,15 +219,20 @@ function resolveSlashPrompt(rawPrompt: string): string {
   const args = match[2].trim()
 
   // Check if skill exists on disk
-  const skillPath = join(getProjectRoot(), '.claude', 'skills', skillName, 'SKILL.md')
+  const projectRoot = getProjectRoot()
+  const skillPath = join(projectRoot, '.claude', 'skills', skillName, 'SKILL.md')
   if (!existsSync(skillPath)) {
     // Not a project skill — pass through as-is (might be a built-in command)
     return trimmed
   }
 
+  // Use absolute path to prevent CWD ambiguity in SDK sessions
+  const absoluteSkillPath = skillPath.replace(/\\/g, '/')
+
   const parts = [
-    `Read .claude/skills/${skillName}/SKILL.md FIRST, then follow all steps.`,
-    `Config is at config.json.`,
+    `Read ${absoluteSkillPath} FIRST, then follow all steps.`,
+    `Config is at ${join(projectRoot, 'config.json').replace(/\\/g, '/')}.`,
+    `Project root is ${projectRoot.replace(/\\/g, '/')}.`,
   ]
   if (args) {
     parts.push(`Execute with arguments: ${args}`)
@@ -425,7 +430,7 @@ async function executeCronPrompt(triggerId: string, rawPrompt: string): Promise<
             const ts = new Date().toISOString()
             if (parsed.kind === 'tool-call') {
               const toolContent = summarizeToolInput(parsed.toolName!, parsed.toolInput)
-              const text = `\n▶ ${parsed.toolName}${toolContent ? ': ' + toolContent.slice(0, 200) : ''}\n`
+              const text = `\n▶ ${parsed.toolName}${toolContent ? ': ' + toolContent.slice(0, config.sseLimits.toolCallContentMaxLen) : ''}\n`
               outputSoFar += text
               sseManager.broadcast('trigger-progress', {
                 triggerId,
@@ -475,17 +480,19 @@ async function executeCronPrompt(triggerId: string, rawPrompt: string): Promise<
       }
 
       if (msg.type === 'tool_result') {
+        const maxToolResult = config.sseLimits.toolResultMaxLen
         const resultContent = typeof msg.content === 'string'
-          ? msg.content.slice(0, 500)
+          ? msg.content.slice(0, maxToolResult)
           : typeof msg.text === 'string'
-            ? msg.text.slice(0, 500)
+            ? msg.text.slice(0, maxToolResult)
             : ''
         if (resultContent) {
-          outputSoFar += resultContent.slice(0, 200) + '\n'
+          const chunkLen = config.sseLimits.toolCallContentMaxLen
+          outputSoFar += resultContent.slice(0, chunkLen) + '\n'
           const ts = new Date().toISOString()
           sseManager.broadcast('trigger-progress', {
             triggerId,
-            chunk: resultContent.slice(0, 200) + '\n',
+            chunk: resultContent.slice(0, chunkLen) + '\n',
             kind: 'tool-result',
             content: resultContent,
             elapsedMs: Date.now() - startMs,

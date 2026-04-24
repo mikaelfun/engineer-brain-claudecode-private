@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Case Row Redesign — 3 Approaches</title>
+<style>
+  :root {
+    --bg-base: #faf9fb;
+    --bg-surface: #ffffff;
+    --bg-elevated: #ffffff;
+    --bg-hover: #f3f1f5;
+    --bg-active: #ebe8ef;
+    --bg-inset: #f5f3f7;
+    --border-subtle: #e8e3f0;
+    --border-default: #d4ccdf;
+    --border-strong: #b0a8c0;
+    --text-primary: #1f1633;
+    --text-secondary: #3e3554;
+    --text-tertiary: #9e95b0;
+    --text-inverse: #ffffff;
+    --accent-blue: #6a5fc1;
+    --accent-blue-dim: rgba(106,95,193,0.10);
+    --accent-green: #16a34a;
+    --accent-green-dim: rgba(22,163,74,0.10);
+    --accent-amber: #d97706;
+    --accent-amber-dim: rgba(217,119,6,0.10);
+    --accent-red: #dc2626;
+    --accent-red-dim: rgba(220,38,38,0.10);
+    --accent-purple: #7c3aed;
+    --accent-purple-dim: rgba(124,58,237,0.10);
+    --tab-green: rgba(22,163,74,0.10);
+    --tab-green-border: rgba(22,163,74,0.30);
+    --tab-green-text: #15803d;
+    --tab-amber: rgba(217,119,6,0.10);
+    --tab-amber-border: rgba(217,119,6,0.25);
+    --tab-amber-text: #b45309;
+    --tab-purple: rgba(124,58,237,0.10);
+    --tab-purple-border: rgba(124,58,237,0.28);
+    --tab-purple-text: #6d28d9;
+    --bg-front: #ffffff;
+    --shadow-card: rgba(0,0,0,0.04) 0 1px 3px;
+    --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg-base);
+    color: var(--text-primary);
+    font-family: 'Rubik', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    padding: 28px 36px;
+    min-height: 100vh;
+  }
+  h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 6px; }
+  .subtitle { font-size: 13px; color: var(--text-secondary); margin-bottom: 28px; line-height: 1.6; }
+
+  .approach {
+    margin-bottom: 40px;
+    padding-bottom: 40px;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .approach:last-child { border-bottom: none; }
+  .approach-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  .approach-tag {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 3px 10px;
+    border-radius: 6px;
+  }
+  .tag-a { background: var(--accent-blue-dim); color: var(--accent-blue); }
+  .tag-b { background: var(--accent-purple-dim); color: var(--accent-purple); }
+  .tag-c { background: var(--accent-green-dim); color: var(--accent-green); }
+  .approach-title { font-size: 16px; font-weight: 700; }
+  .approach-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    line-height: 1.6;
+  }
+  .pros-cons {
+    display: flex;
+    gap: 16px;
+    margin-top: 12px;
+  }
+  .pros, .cons {
+    flex: 1;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 11px;
+    line-height: 1.7;
+  }
+  .pros { background: var(--accent-green-dim); color: var(--tab-green-text); }
+  .cons { background: var(--accent-red-dim); color: var(--accent-red); }
+  .pros h4, .cons h4 { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px; }
+  .pros ul, .cons ul { padding-left: 14px; }
+
+  /* Shared case card */
+  .case-card {
+    background: var(--bg-surface);
+    border: 1px solid rgba(106,95,193,0.22);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(106,95,193,0.06);
+  }
+  .case-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px;
+    background: var(--bg-inset);
+  }
+  .cn {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent-blue);
+  }
+  .pill {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .pill-run { background: var(--accent-blue-dim); color: var(--accent-blue); }
+  .pill-ok { background: var(--accent-green-dim); color: var(--accent-green); }
+  .pill-purple { background: var(--accent-purple-dim); color: var(--accent-purple); }
+  .dur {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-tertiary);
+  }
+
+  /* Mini pipeline stepper (horizontal) */
+  .mini-pipe {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+  .mp-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .mp-dot {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .mp-dot.done { background: var(--accent-green); color: white; }
+  .mp-dot.active { border: 2px solid var(--accent-blue); background: var(--accent-blue-dim); color: var(--accent-blue); }
+  .mp-dot.wait { border: 1.5px solid var(--border-default); color: var(--text-tertiary); opacity: 0.4; }
+  .mp-dot.active-purple { border: 2px solid var(--accent-purple); background: var(--accent-purple-dim); color: var(--accent-purple); }
+  .mp-label {
+    font-size: 9px;
+    font-weight: 600;
+    margin-top: 3px;
+    text-align: center;
+  }
+  .mp-label.done { color: var(--accent-green); }
+  .mp-label.active { color: var(--accent-blue); }
+  .mp-label.wait { color: var(--text-tertiary); opacity: 0.4; }
+  .mp-conn {
+    width: 16px;
+    height: 2px;
+    border-radius: 1px;
+    flex-shrink: 0;
+    margin-top: -14px;
+  }
+  .mp-conn.filled { background: var(--accent-green); }
+  .mp-conn.empty { background: var(--border-subtle); }
+  .mp-conn.half { background: linear-gradient(90deg, var(--accent-green), var(--accent-blue)); }
+  .mp-dur {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    color: var(--text-tertiary);
+    margin-top: 1px;
+  }
+
+  /* Action chain (horizontal flow) */
+  .action-chain {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+  .ac-node {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-surface);
+  }
+  .ac-node.done { border-color: rgba(22,163,74,0.2); color: var(--accent-green); }
+  .ac-node.active { border-color: rgba(106,95,193,0.25); color: var(--accent-blue); background: rgba(106,95,193,0.04); }
+  .ac-node.active-purple { border-color: rgba(124,58,237,0.25); color: var(--accent-purple); background: rgba(124,58,237,0.04); }
+  .ac-node.wait { opacity: 0.4; color: var(--text-tertiary); border-style: dashed; }
+  .ac-node .mini-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .ac-node.done .mini-dot { background: var(--accent-green); }
+  .ac-node.active .mini-dot { background: var(--accent-blue); animation: pulse 2s ease-in-out infinite; }
+  .ac-node.active-purple .mini-dot { background: var(--accent-purple); animation: pulse 2s ease-in-out infinite; }
+  .ac-node.wait .mini-dot { background: var(--border-default); }
+  .ac-arrow {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+  }
+  .ac-detail {
+    font-size: 9px;
+    opacity: 0.65;
+    font-weight: 400;
+    margin-left: 2px;
+  }
+
+  /* Vertical timeline for approach B */
+  .vtl {
+    position: relative;
+    padding-left: 20px;
+  }
+  .vtl::before {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    border-radius: 1px;
+    background: var(--border-subtle);
+  }
+  .vtl-item {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 6px 0;
+  }
+  .vtl-dot {
+    position: absolute;
+    left: -17px;
+    top: 10px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+  .vtl-dot.done { background: var(--accent-green); }
+  .vtl-dot.active { background: var(--accent-blue); animation: pulse 2s ease-in-out infinite; }
+  .vtl-dot.active-purple { background: var(--accent-purple); animation: pulse 2s ease-in-out infinite; }
+  .vtl-dot.wait { background: var(--border-default); opacity: 0.35; }
+  .vtl-content {
+    flex: 1;
+    min-width: 0;
+  }
+  .vtl-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .vtl-name {
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .vtl-name.done { color: var(--accent-green); }
+  .vtl-name.active { color: var(--accent-blue); }
+  .vtl-name.active-purple { color: var(--accent-purple); }
+  .vtl-name.wait { color: var(--text-tertiary); opacity: 0.45; }
+  .vtl-sub {
+    font-size: 10px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+  .vtl-dur {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-tertiary);
+    margin-left: auto;
+  }
+
+  /* Swimlane for approach C */
+  .swimlane {
+    display: flex;
+    gap: 0;
+    align-items: stretch;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border-subtle);
+  }
+  .swim-phase {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+    border-right: 1px solid var(--border-subtle);
+    position: relative;
+  }
+  .swim-phase:last-child { border-right: none; }
+  .swim-phase.active-bg { background: rgba(106,95,193,0.03); }
+  .swim-phase.done-bg { background: rgba(22,163,74,0.02); }
+  .swim-phase-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .swim-phase-name {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .swim-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 0;
+    font-size: 10px;
+  }
+  .swim-item .mini-dot { flex-shrink: 0; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.7); }
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spin { animation: spin 1s linear infinite; display: inline-block; }
+
+  .rec-badge {
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--accent-amber-dim);
+    color: var(--accent-amber);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Case Row 重新设计 — 3 种方案</h1>
+<p class="subtitle">
+  核心挑战：Act 阶段包含 <strong>不确定数量的 agent</strong>（assess → troubleshoot → reassess → challenger → email-drafter），<br>
+  需要清晰展示动态流程，同时保持视觉整洁。以下每种方案都展示同一个复杂 case 的中间状态。
+</p>
+
+<!-- ═══════════════════════════════════════════════════════════
+     APPROACH A: Pipeline Header + Action Chain
+     ═══════════════════════════════════════════════════════════ -->
+<div class="approach">
+  <div class="approach-header">
+    <span class="approach-tag tag-a">A</span>
+    <span class="approach-title">Pipeline Header + Action Chain</span>
+    <span class="rec-badge">★ Recommended</span>
+  </div>
+  <p class="approach-desc">
+    顶部水平 4 步 pipeline（Refresh → Assess → Act → Summarize）保持整体进度一目了然。<br>
+    下方展开 Act 的<strong>动作链</strong>——水平 flow 排列，每个 agent 是一个小节点卡片，自动换行。兼顾整体进度感和细节可见性。
+  </p>
+
+  <div class="case-card">
+    <div class="case-head">
+      <span class="cn">2504010005</span>
+      <span class="pill pill-purple"><span class="spin" style="font-size:8px;">⟳</span> Reassess</span>
+      <div style="flex:1;"></div>
+      <span class="dur">3m 42s</span>
+    </div>
+
+    <div style="padding:14px 18px;">
+      <!-- Top: Mini pipeline -->
+      <div class="mini-pipe" style="margin-bottom:14px;">
+        <div class="mp-step">
+          <div class="mp-dot done">✓</div>
+          <div class="mp-label done">Refresh</div>
+          <div class="mp-dur">8s</div>
+        </div>
+        <div class="mp-conn filled"></div>
+        <div class="mp-step">
+          <div class="mp-dot done">✓</div>
+          <div class="mp-label done">Assess</div>
+          <div class="mp-dur">12s</div>
+        </div>
+        <div class="mp-conn half"></div>
+        <div class="mp-step">
+          <div class="mp-dot active-purple" style="position:relative;">
+            <div style="width:8px;height:8px;border-radius:50%;background:var(--accent-purple);animation:pulse 2s ease-in-out infinite;"></div>
+          </div>
+          <div class="mp-label active" style="color:var(--accent-purple);">Act</div>
+        </div>
+        <div class="mp-conn empty"></div>
+        <div class="mp-step">
+          <div class="mp-dot wait">📄</div>
+          <div class="mp-label wait">Summary</div>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div style="height:1px;background:var(--border-subtle);margin-bottom:12px;"></div>
+
+      <!-- Action chain: horizontal flow with wrap -->
+      <div style="margin-bottom:4px;">
+        <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-tertiary);">Action Flow</span>
+      </div>
+      <div class="action-chain">
+        <div class="ac-node done">
+          <div class="mini-dot"></div>
+          Assess<span class="ac-detail">· needs-action</span>
+        </div>
+        <span class="ac-arrow">→</span>
+        <div class="ac-node done">
+          <div class="mini-dot"></div>
+          Troubleshoot<span class="ac-detail">· 1m 20s</span>
+        </div>
+        <span class="ac-arrow">→</span>
+        <div class="ac-node active-purple">
+          <div class="mini-dot"></div>
+          Reassess<span class="ac-detail"><span class="spin" style="font-size:8px;">⟳</span> evaluating…</span>
+        </div>
+        <span class="ac-arrow">→</span>
+        <div class="ac-node wait">
+          <div class="mini-dot"></div>
+          Challenger
+        </div>
+        <span class="ac-arrow">→</span>
+        <div class="ac-node wait">
+          <div class="mini-dot"></div>
+          Email
+        </div>
+      </div>
+
+      <!-- Refresh delta (compact) -->
+      <div style="margin-top:10px;display:flex;gap:12px;font-size:10px;color:var(--text-tertiary);">
+        <span style="color:var(--accent-green);">↻ +3 emails · 2 teams msgs · 1 note</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="pros-cons">
+    <div class="pros">
+      <h4>✓ Pros</h4>
+      <ul>
+        <li>整体进度 (4 步) 和详细动作链同时可见</li>
+        <li>动作链水平排列，自动换行，适应任意长度</li>
+        <li>视觉层级清晰：pipeline → action chain → details</li>
+        <li>与当前 CaseworkPipeline 组件风格一致</li>
+      </ul>
+    </div>
+    <div class="cons">
+      <h4>✗ Cons</h4>
+      <ul>
+        <li>动作多时换行可能占较多垂直空间</li>
+        <li>节点间的连线在换行处断开</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     APPROACH B: Vertical Timeline
+     ═══════════════════════════════════════════════════════════ -->
+<div class="approach">
+  <div class="approach-header">
+    <span class="approach-tag tag-b">B</span>
+    <span class="approach-title">Vertical Timeline</span>
+  </div>
+  <p class="approach-desc">
+    整个 case 流程用一条<strong>垂直时间线</strong>展示，每个步骤（包括 Act 内的每个 agent）是时间线上的一个节点。<br>
+    类似 GitHub PR 的 timeline 或 CI/CD pipeline 的纵向展示。自然支持任意长度的动作链。
+  </p>
+
+  <div class="case-card">
+    <div class="case-head">
+      <span class="cn">2504010005</span>
+      <span class="pill pill-purple"><span class="spin" style="font-size:8px;">⟳</span> Reassess</span>
+      <div style="flex:1;"></div>
+      <span class="dur">3m 42s</span>
+    </div>
+
+    <div style="padding:14px 18px 14px 22px;">
+      <div class="vtl">
+        <!-- Data Refresh -->
+        <div class="vtl-item">
+          <div class="vtl-dot done"></div>
+          <div class="vtl-content">
+            <div class="vtl-row">
+              <span class="vtl-name done">Data Refresh</span>
+              <span class="vtl-dur">8s</span>
+            </div>
+            <div class="vtl-sub">+3 emails · 2 teams msgs · 1 note</div>
+          </div>
+        </div>
+        <!-- Assess -->
+        <div class="vtl-item">
+          <div class="vtl-dot done"></div>
+          <div class="vtl-content">
+            <div class="vtl-row">
+              <span class="vtl-name done">Assess</span>
+              <span class="pill pill-ok" style="font-size:8px;">needs-action</span>
+              <span class="vtl-dur">12s</span>
+            </div>
+            <div class="vtl-sub">新增客户邮件请求进度更新，需要排查并回复</div>
+          </div>
+        </div>
+        <!-- Troubleshoot -->
+        <div class="vtl-item">
+          <div class="vtl-dot done"></div>
+          <div class="vtl-content">
+            <div class="vtl-row">
+              <span class="vtl-name done">Troubleshoot</span>
+              <span class="vtl-dur">1m 20s</span>
+            </div>
+            <div class="vtl-sub">Kusto 查询 → 发现 WAF rule 配置冲突</div>
+          </div>
+        </div>
+        <!-- Reassess (active) -->
+        <div class="vtl-item">
+          <div class="vtl-dot active-purple"></div>
+          <div class="vtl-content">
+            <div class="vtl-row">
+              <span class="vtl-name active-purple">Reassess</span>
+              <span class="pill pill-purple" style="font-size:8px;"><span class="spin" style="font-size:7px;">⟳</span> evaluating</span>
+            </div>
+            <div class="vtl-sub" style="color:var(--accent-purple);opacity:0.7;">Reviewing troubleshoot findings…</div>
+          </div>
+        </div>
+        <!-- Challenger (pending) -->
+        <div class="vtl-item">
+          <div class="vtl-dot wait"></div>
+          <div class="vtl-content">
+            <div class="vtl-row">
+              <span class="vtl-name wait">Challenger</span>
+            </div>
+          </div>
+        </div>
+        <!-- Email (pending) -->
+        <div class="vtl-item">
+          <div class="vtl-dot wait"></div>
+          <div class="vtl-content">
+            <div class="vtl-row">
+              <span class="vtl-name wait">Email Drafter</span>
+            </div>
+          </div>
+        </div>
+        <!-- Summarize (pending) -->
+        <div class="vtl-item">
+          <div class="vtl-dot wait"></div>
+          <div class="vtl-content">
+            <div class="vtl-row">
+              <span class="vtl-name wait">Summarize</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pros-cons">
+    <div class="pros">
+      <h4>✓ Pros</h4>
+      <ul>
+        <li>所有步骤一条线，不区分"主步骤"和"子步骤"，简单直观</li>
+        <li>天然支持任意长度，不用考虑换行</li>
+        <li>每个步骤有足够空间放详细信息</li>
+        <li>与左侧 patrol pipeline sidebar 的 vertical 风格一致</li>
+      </ul>
+    </div>
+    <div class="cons">
+      <h4>✗ Cons</h4>
+      <ul>
+        <li>失去 4 步 pipeline 的整体进度概览</li>
+        <li>复杂 case（6+ 步骤）时占较多垂直空间</li>
+        <li>所有步骤同级，缺少"阶段归属感"</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     APPROACH C: Swimlane Columns
+     ═══════════════════════════════════════════════════════════ -->
+<div class="approach">
+  <div class="approach-header">
+    <span class="approach-tag tag-c">C</span>
+    <span class="approach-title">Swimlane Columns</span>
+  </div>
+  <p class="approach-desc">
+    4 个主阶段变成 4 列<strong>泳道</strong>，每列内部垂直排列该阶段的具体步骤。<br>
+    Act 列内展示所有 agent 的迷你时间线。类似看板 (Kanban) 的视觉效果。
+  </p>
+
+  <div class="case-card">
+    <div class="case-head">
+      <span class="cn">2504010005</span>
+      <span class="pill pill-purple"><span class="spin" style="font-size:8px;">⟳</span> Reassess</span>
+      <div style="flex:1;"></div>
+      <span class="dur">3m 42s</span>
+    </div>
+
+    <div style="padding:12px 14px;">
+      <div class="swimlane">
+        <!-- Refresh column -->
+        <div class="swim-phase done-bg" style="max-width:110px;">
+          <div class="swim-phase-head">
+            <div style="width:8px;height:8px;border-radius:50%;background:var(--accent-green);"></div>
+            <span class="swim-phase-name" style="color:var(--accent-green);">Refresh</span>
+            <span style="font-family:var(--font-mono);font-size:8px;color:var(--text-tertiary);margin-left:auto;">8s</span>
+          </div>
+          <div class="swim-item" style="font-size:9px;color:var(--accent-green);">
+            +3 emails
+          </div>
+          <div class="swim-item" style="font-size:9px;color:var(--accent-green);">
+            2 teams msgs
+          </div>
+          <div class="swim-item" style="font-size:9px;color:var(--accent-green);">
+            1 note
+          </div>
+        </div>
+
+        <!-- Assess column -->
+        <div class="swim-phase done-bg" style="max-width:110px;">
+          <div class="swim-phase-head">
+            <div style="width:8px;height:8px;border-radius:50%;background:var(--accent-green);"></div>
+            <span class="swim-phase-name" style="color:var(--accent-green);">Assess</span>
+            <span style="font-family:var(--font-mono);font-size:8px;color:var(--text-tertiary);margin-left:auto;">12s</span>
+          </div>
+          <div class="swim-item">
+            <span class="pill pill-ok" style="font-size:8px;">needs-action</span>
+          </div>
+          <div style="font-size:9px;color:var(--text-secondary);margin-top:4px;line-height:1.5;">客户追问进度</div>
+        </div>
+
+        <!-- Act column (wide, active) -->
+        <div class="swim-phase active-bg" style="flex:2;">
+          <div class="swim-phase-head">
+            <div style="width:8px;height:8px;border-radius:50%;background:var(--accent-purple);animation:pulse 2s ease-in-out infinite;"></div>
+            <span class="swim-phase-name" style="color:var(--accent-purple);">Act</span>
+          </div>
+          <div class="swim-item">
+            <div style="width:6px;height:6px;border-radius:50%;background:var(--accent-green);flex-shrink:0;"></div>
+            <span style="font-size:10px;font-weight:600;color:var(--accent-green);">Troubleshoot</span>
+            <span style="font-size:9px;color:var(--text-tertiary);margin-left:auto;">1m 20s</span>
+          </div>
+          <div class="swim-item">
+            <div style="width:6px;height:6px;border-radius:50%;background:var(--accent-purple);animation:pulse 2s ease-in-out infinite;flex-shrink:0;"></div>
+            <span style="font-size:10px;font-weight:600;color:var(--accent-purple);">Reassess</span>
+            <span class="pill pill-purple" style="font-size:7px;margin-left:4px;"><span class="spin" style="font-size:6px;">⟳</span></span>
+          </div>
+          <div class="swim-item" style="opacity:0.4;">
+            <div style="width:6px;height:6px;border-radius:50%;border:1px solid var(--border-default);flex-shrink:0;"></div>
+            <span style="font-size:10px;color:var(--text-tertiary);">Challenger</span>
+          </div>
+          <div class="swim-item" style="opacity:0.4;">
+            <div style="width:6px;height:6px;border-radius:50%;border:1px solid var(--border-default);flex-shrink:0;"></div>
+            <span style="font-size:10px;color:var(--text-tertiary);">Email</span>
+          </div>
+        </div>
+
+        <!-- Summarize column -->
+        <div class="swim-phase" style="max-width:90px;opacity:0.4;">
+          <div class="swim-phase-head">
+            <div style="width:8px;height:8px;border-radius:50%;border:1.5px solid var(--border-default);"></div>
+            <span class="swim-phase-name" style="color:var(--text-tertiary);">Summary</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pros-cons">
+    <div class="pros">
+      <h4>✓ Pros</h4>
+      <ul>
+        <li>4 个阶段并排可见，整体进度一目了然</li>
+        <li>Act 列可以容纳任意多个 agent</li>
+        <li>Kanban 风格，信息密度高</li>
+      </ul>
+    </div>
+    <div class="cons">
+      <h4>✗ Cons</h4>
+      <ul>
+        <li>列宽分配不均——Act 需要最多空间</li>
+        <li>简单 case (assess → no-change) 时列内容空洞</li>
+        <li>水平空间有限时会挤压</li>
+        <li>与左侧 sidebar 的垂直 pipeline 风格冲突</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

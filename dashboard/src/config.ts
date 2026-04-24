@@ -39,11 +39,31 @@ interface DashboardConfig {
   sessionRetentionDays?: number
 }
 
+/** SSE message truncation limits — centralized config to avoid hardcoded magic numbers */
+export interface SseLimits {
+  /** Max chars for tool-call content summary (Bash commands, Agent prompts, etc.) */
+  toolCallContentMaxLen: number
+  /** Max chars for tool-result content */
+  toolResultMaxLen: number
+  /** Max chars for response (text) content */
+  responseMaxLen: number
+  /** Max chars for thinking (extended reasoning) content */
+  thinkingMaxLen: number
+}
+
+const SSE_DEFAULTS: SseLimits = {
+  toolCallContentMaxLen: 2000,
+  toolResultMaxLen: 5000,
+  responseMaxLen: 5000,
+  thinkingMaxLen: 5000,
+}
+
 interface ProjectConfig {
   casesRoot: string
   dataRoot?: string
   patrolDir?: string
   dashboard?: DashboardConfig
+  sse?: Partial<SseLimits>
 }
 
 /** Cached config — avoids re-reading config.json on every property access */
@@ -159,5 +179,11 @@ export const config = {
 
   get engineerName(): string {
     return (readProjectConfig() as any).engineerName ?? 'Engineer'
+  },
+
+  /** SSE truncation limits — merged from config.json with defaults */
+  get sseLimits(): SseLimits {
+    const cfg = readProjectConfig()
+    return { ...SSE_DEFAULTS, ...cfg.sse }
   },
 }

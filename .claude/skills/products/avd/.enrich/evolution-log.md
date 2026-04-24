@@ -1560,3 +1560,6 @@
   - MCVKB/Critsit Handbook/VM+SCIM/AVD.md → section header only, no knowledge
   - ## Contacts.md → contact list (Roop Kiran Chevuri, David Belanger), no troubleshooting knowledge
 | 2026-04-20 | ado-wiki | Indexed 1205 pages (645 WindowsVirtualDesktop + 560 Windows365) — first run, no content extraction | full-scan |
+| 2026-04-21 | ado-wiki | +9 W365 known issues (ANC device filter, domain trust, split screen, DR, resize/WinRE, provisioning errors) + 12 guide drafts from 25 pages | Supportability/Windows365 Features |
+| 2026-04-23 | ado-wiki | +1 AVD Classic known issue (RDS Owner lost), +2 guide drafts (removing classic, kusto discovery), skipped 3 redirect/process pages | 🔄Workflows/AVD Classic/* |
+| 2026-04-24 | SYNTHESIZE | 74 topics (52 fusion, 22 compact), 694 entries, 0 Kusto queries fused |

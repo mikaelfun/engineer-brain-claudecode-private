@@ -45,13 +45,14 @@ update_phase() {
 }
 
 # ── Args ──
-CASES_ROOT="" PATROL_DIR="" SOURCE="cli" FORCE="false"
+CASES_ROOT="" PATROL_DIR="" SOURCE="cli" FORCE="false" MODE="normal"
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --cases-root)  CASES_ROOT="$2"; shift 2 ;;
     --patrol-dir)  PATROL_DIR="$2"; shift 2 ;;
     --source)      SOURCE="$2"; shift 2 ;;
     --force)       FORCE="true"; shift ;;
+    --mode)        MODE="$2"; shift 2 ;;
     *) shift ;;
   esac
 done
@@ -125,9 +126,21 @@ update_phase --patrol-dir "$PATROL_DIR" --phase discovering --source "$SOURCE"
 # ── Step 5: Get active case list from D365 ──
 log "⏳ Querying D365 active cases..."
 ACTIVE_JSON_TMP="$PATROL_DIR/.active-cases-tmp.json"
-pwsh -NoProfile -File "$PROJECT_ROOT/.claude/skills/d365-case-ops/scripts/list-active-cases.ps1" -OutputJson > "$ACTIVE_JSON_TMP" 2>&2
+ACTIVE_RAW_TMP="$PATROL_DIR/.active-cases-raw.tmp"
+pwsh -NoProfile -File "$PROJECT_ROOT/.claude/skills/d365-case-ops/scripts/list-active-cases.ps1" -OutputJson > "$ACTIVE_RAW_TMP" 2>&1
 LIST_EXIT=$?
-cp "$ACTIVE_JSON_TMP" "$SCRIPTS_DIR/list-active-cases.log" 2>/dev/null || true
+cp "$ACTIVE_RAW_TMP" "$SCRIPTS_DIR/list-active-cases.log" 2>/dev/null || true
+
+# Extract only the JSON line (Write-Host log lines pollute stdout in non-console pwsh)
+python3 -c "
+import json
+for line in open('$ACTIVE_RAW_TMP', encoding='utf-8'):
+    line = line.strip()
+    if line.startswith('[') or line.startswith('{'):
+        json.loads(line)  # validate
+        print(line)
+        break
+" > "$ACTIVE_JSON_TMP" 2>/dev/null
 
 ACTIVE_CASES_JSON=""
 [ -f "$ACTIVE_JSON_TMP" ] && ACTIVE_CASES_JSON=$(cat "$ACTIVE_JSON_TMP")
@@ -163,12 +176,43 @@ log "📋 D365 returned $TOTAL_FOUND active cases"
 # ── Step 6: update-phase → filtering ──
 update_phase --patrol-dir "$PATROL_DIR" --phase filtering --total-found "$TOTAL_FOUND"
 
-# ── Step 7: Filter cases by patrolSkipHours ──
+# ── Step 7: Filter cases ──
 CHANGED_CASES_LIST=""
 SKIPPED_COUNT=0
 CHANGED_COUNT=0
 
-if [ "$FORCE" = "true" ]; then
+if [ "$MODE" = "new-cases" ]; then
+  # New-case mode: only cases without local directory
+  FILTER_RESULT=$(python3 -c "
+import os, sys
+
+cases_root = '$CASES_ROOT'
+
+case_numbers = []
+for line in sys.stdin:
+    cn = line.strip()
+    if cn: case_numbers.append(cn)
+
+changed = []
+skipped = 0
+
+for cn in case_numbers:
+    case_dir = os.path.join(cases_root, 'active', cn)
+    if not os.path.isdir(case_dir):
+        changed.append(cn)
+    else:
+        skipped += 1
+
+print(skipped)
+for cn in changed:
+    print(cn)
+" <<< "$ALL_CASE_NUMBERS" 2>/dev/null)
+
+  SKIPPED_COUNT=$(echo "$FILTER_RESULT" | head -1)
+  CHANGED_CASES_LIST=$(echo "$FILTER_RESULT" | tail -n +2)
+  CHANGED_COUNT=$(echo "$CHANGED_CASES_LIST" | grep -c . || true)
+  log "🆕 New-case mode: $CHANGED_COUNT new cases, $SKIPPED_COUNT already cached"
+elif [ "$FORCE" = "true" ]; then
   # Force mode: include all cases
   CHANGED_CASES_LIST="$ALL_CASE_NUMBERS"
   CHANGED_COUNT=$TOTAL_FOUND
@@ -235,16 +279,22 @@ for cn in changed:
 
   SKIPPED_COUNT=$(echo "$FILTER_RESULT" | head -1)
   CHANGED_CASES_LIST=$(echo "$FILTER_RESULT" | tail -n +2)
-  CHANGED_COUNT=$(echo "$CHANGED_CASES_LIST" | grep -c . || echo 0)
+  CHANGED_COUNT=$(echo "$CHANGED_CASES_LIST" | grep -c . || true)
   log "🔍 Filter: $CHANGED_COUNT changed, $SKIPPED_COUNT skipped (skipHours=$SKIP_HOURS)"
 fi
 
-# ── Step 8: Archive detection ──
+# ── Step 8: Archive detection (skip in new-cases mode — no local dirs to archive) ──
+ARCHIVED_COUNT=0
+TRANSFERRED_COUNT=0
+
+if [ "$MODE" = "new-cases" ]; then
+  log "⏭️ New-case mode: skipping archive detection"
+else
 log "⏳ Running archive/transfer detection..."
 
 DETECT_JSON_TMP="$PATROL_DIR/.detect-status-tmp.json"
 pwsh -NoProfile -File "$PROJECT_ROOT/.claude/skills/d365-case-ops/scripts/detect-case-status.ps1" \
-  -CasesRoot "$CASES_ROOT" -ActiveCasesJson "$ACTIVE_CASES_JSON" > "$DETECT_JSON_TMP" 2>&2
+  -CasesRoot "$CASES_ROOT" -ActiveCasesJson "$ACTIVE_CASES_JSON" > "$DETECT_JSON_TMP" 2>&1
 [ -f "$DETECT_JSON_TMP" ] && cp "$DETECT_JSON_TMP" "$SCRIPTS_DIR/detect-case-status.log" 2>/dev/null || true
 
 ARCHIVED_COUNT=0
@@ -263,9 +313,20 @@ patrol_dir = os.environ['PATROL_DIR_PY']
 try:
     items = json.load(open(detect_file, encoding='utf-8'))
 except:
+    # detect-case-status.ps1 mixes log lines with JSON — extract JSON lines only
     try:
-        # Might be raw text, not a file of JSON
-        items = json.loads(open(detect_file, encoding='utf-8').read())
+        raw = open(detect_file, encoding='utf-8').read()
+        items = []
+        for line in raw.strip().splitlines():
+            line = line.strip()
+            if line.startswith('{'):
+                try:
+                    items.append(json.loads(line))
+                except:
+                    pass
+        if not items:
+            # Try parsing entire content as JSON array
+            items = json.loads(raw)
     except:
         items = []
 
@@ -330,7 +391,7 @@ for item in items:
 # Output: archived_count|transferred_count|comma_separated_moved_cases
 moved = archived_cases + transferred_cases
 print(f'{archived}|{transferred}|{chr(44).join(moved)}')
-" 2>&2)
+" 2>&1)
 
   ARCHIVED_COUNT=$(echo "$ARCHIVE_RESULT" | cut -d'|' -f1)
   TRANSFERRED_COUNT=$(echo "$ARCHIVE_RESULT" | cut -d'|' -f2)
@@ -347,10 +408,11 @@ for line in sys.stdin:
         print(cn)
 " <<< "$CHANGED_CASES_LIST" 2>/dev/null)
 
-    CHANGED_COUNT=$(echo "$CHANGED_CASES_LIST" | grep -c . || echo 0)
+    CHANGED_COUNT=$(echo "$CHANGED_CASES_LIST" | grep -c . || true)
     log "📦 Archived: $ARCHIVED_COUNT, Transferred: $TRANSFERRED_COUNT → $CHANGED_COUNT cases remaining"
   fi
 fi
+fi  # end of new-cases archive skip
 
 [ -z "$ARCHIVED_COUNT" ] && ARCHIVED_COUNT=0
 [ -z "$TRANSFERRED_COUNT" ] && TRANSFERRED_COUNT=0
@@ -390,7 +452,7 @@ with open('$PATROL_DIR/patrol-state.json', 'w', encoding='utf-8') as f:
     --archived-count "$ARCHIVED_COUNT" --transferred-count "$TRANSFERRED_COUNT"
 
   # Release lock + cleanup temp files
-  rm -f "$PATROL_DIR/patrol.lock" "$ACTIVE_JSON_TMP" "$DETECT_JSON_TMP"
+  rm -f "$PATROL_DIR/patrol.lock" "$ACTIVE_JSON_TMP" "${DETECT_JSON_TMP:-}"
 
   # Output early-exit JSON to stdout
   FINAL_JSON="{\"status\":\"early-exit\",\"runId\":\"$RUN_ID\",\"cases\":[],\"totalFound\":$TOTAL_FOUND,\"changedCases\":0,\"skippedCount\":$SKIPPED_COUNT,\"archivedCount\":$ARCHIVED_COUNT,\"transferredCount\":$TRANSFERRED_COUNT,\"warmupStatus\":\"\",\"source\":\"$SOURCE\",\"force\":$FORCE_JSON,\"message\":\"All cases within skipHours\"}"
@@ -422,12 +484,13 @@ log "✅ Warmup done: $WARMUP_STATUS"
 # ── Step 12: Build case list CSV + update-phase → processing ──
 CASE_LIST_CSV=$(echo "$CHANGED_CASES_LIST" | tr '\n' ',' | sed 's/,$//')
 
-# Build JSON array of case numbers
-CASES_JSON_ARRAY=$(python3 -c "
-import json
-cases = [c.strip() for c in '$CASE_LIST_CSV'.split(',') if c.strip()]
+# Build JSON array of case numbers (use stdin to avoid shell quoting issues)
+CASES_JSON_ARRAY=$(echo "$CASE_LIST_CSV" | python3 -c "
+import json, sys
+csv_val = sys.stdin.read().strip()
+cases = [c.strip() for c in csv_val.split(',') if c.strip()]
 print(json.dumps(cases))
-" 2>/dev/null)
+" 2>/dev/null || echo "[]")
 
 update_phase --patrol-dir "$PATROL_DIR" --phase processing \
   --total-found "$TOTAL_FOUND" --changed-cases "$CHANGED_COUNT" \
@@ -441,5 +504,5 @@ FINAL_JSON="{\"status\":\"ok\",\"runId\":\"$RUN_ID\",\"cases\":$CASES_JSON_ARRAY
 echo "$FINAL_JSON" | tee "$SCRIPTS_DIR/patrol-init.json"
 
 # Cleanup temp files
-rm -f "$ACTIVE_JSON_TMP" "$DETECT_JSON_TMP"
+rm -f "$ACTIVE_JSON_TMP" "${DETECT_JSON_TMP:-}"
 exit 0

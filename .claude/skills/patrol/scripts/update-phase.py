@@ -88,13 +88,20 @@ def main():
     except Exception:
         pass  # Can't read existing progress — proceed normally
 
-    # Build progress data
-    data: dict = {
-        'phase': effective_phase,
-        'updatedAt': now,
-    }
+    # Load existing progress to merge (preserve fields like caseList from init)
+    existing_data: dict = {}
+    try:
+        if os.path.exists(progress_path):
+            existing_data = json.load(open(progress_path, encoding='utf-8'))
+    except Exception:
+        pass
 
-    # Optional fields — only include if provided
+    # Start from existing data (merge mode), then overlay new fields
+    data: dict = {**existing_data}
+    data['phase'] = effective_phase
+    data['updatedAt'] = now
+
+    # Optional fields — only include if provided (explicit None = don't touch)
     if args.source is not None:
         data['source'] = args.source
     if args.total_found is not None:

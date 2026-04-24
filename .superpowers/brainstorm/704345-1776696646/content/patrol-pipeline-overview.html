@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patrol Pipeline Refactor — Overview</title>
+<style>
+  :root {
+    --bg-base: #0f1117;
+    --bg-surface: #161822;
+    --bg-elevated: #1c1f2e;
+    --bg-hover: #252838;
+    --bg-inset: #0c0e14;
+    --text-primary: #e8eaf0;
+    --text-secondary: #a0a4b8;
+    --text-tertiary: #5c6078;
+    --accent-blue: #6a5fc1;
+    --accent-blue-dim: rgba(106,95,193,0.12);
+    --accent-green: #34d399;
+    --accent-green-dim: rgba(52,211,153,0.12);
+    --accent-red: #ef4444;
+    --accent-red-dim: rgba(239,68,68,0.12);
+    --accent-amber: #f59e0b;
+    --accent-purple: #7c3aed;
+    --border-default: #2a2d3e;
+    --border-subtle: #1e2130;
+    --shadow-elevated: 0 4px 24px rgba(0,0,0,0.3);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg-base);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    padding: 32px;
+    min-height: 100vh;
+  }
+  h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 8px; }
+  .subtitle { color: var(--text-secondary); font-size: 14px; margin-bottom: 32px; }
+  .layout {
+    display: flex;
+    gap: 40px;
+    align-items: flex-start;
+  }
+  .panel {
+    flex: 1;
+    min-width: 0;
+  }
+  .panel-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--text-tertiary);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .panel-label .badge {
+    font-size: 9px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .badge-current { background: var(--accent-red-dim); color: var(--accent-red); }
+  .badge-new { background: var(--accent-green-dim); color: var(--accent-green); }
+  .badge-ref { background: var(--accent-blue-dim); color: var(--accent-blue); }
+
+  /* Pipeline Card */
+  .pipeline-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    border-radius: 16px;
+    padding: 20px 22px;
+  }
+  .pipeline-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-tertiary);
+    margin-bottom: 16px;
+  }
+
+  /* Stage row */
+  .stage {
+    position: relative;
+    display: flex;
+    gap: 12px;
+    padding: 12px 0;
+  }
+  .stage-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .stage-icon.completed { background: var(--accent-green); color: white; }
+  .stage-icon.active { border: 2.5px solid var(--accent-blue); }
+  .stage-icon.pending { border: 2px solid var(--border-default); opacity: 0.35; }
+  .stage-content { flex: 1; min-width: 0; }
+  .stage-label {
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .stage-label.completed { color: var(--accent-green); }
+  .stage-label.active { color: var(--accent-blue); }
+  .stage-label.pending { color: var(--text-tertiary); opacity: 0.35; }
+  .stage-detail {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 3px;
+    line-height: 1.5;
+  }
+  .stage-duration {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-tertiary);
+  }
+  .connector {
+    position: absolute;
+    left: 11px;
+    top: 44px;
+    bottom: -8px;
+    width: 2px;
+    border-radius: 1px;
+    background: var(--border-subtle);
+  }
+  .connector.done { background: var(--accent-green); opacity: 0.3; }
+
+  /* New design: collapsible parent stages */
+  .parent-stage {
+    margin-bottom: 4px;
+  }
+  .parent-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    cursor: default;
+  }
+  .parent-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 800;
+  }
+  .parent-icon.completed { background: var(--accent-green); color: white; }
+  .parent-icon.active { border: 2.5px solid var(--accent-blue); background: var(--accent-blue-dim); }
+  .parent-icon.pending { border: 2px solid var(--border-default); opacity: 0.35; }
+  .parent-label {
+    font-size: 14px;
+    font-weight: 800;
+    flex: 1;
+  }
+  .parent-label.completed { color: var(--accent-green); }
+  .parent-label.active { color: var(--accent-blue); }
+  .parent-label.pending { color: var(--text-tertiary); opacity: 0.35; }
+  .parent-duration {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-tertiary);
+  }
+
+  /* Sub-steps */
+  .substeps {
+    margin-left: 14px;
+    padding-left: 18px;
+    border-left: 2px solid var(--border-subtle);
+  }
+  .substeps.active-border { border-left-color: rgba(106,95,193,0.25); }
+  .substeps.done-border { border-left-color: rgba(52,211,153,0.2); }
+  .substep {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 0;
+  }
+  .substep-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .substep-dot.completed { background: var(--accent-green); }
+  .substep-dot.active { background: var(--accent-blue); animation: pulse 2s ease-in-out infinite; }
+  .substep-dot.pending { background: var(--border-default); opacity: 0.35; }
+  .substep-label {
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .substep-label.completed { color: var(--accent-green); }
+  .substep-label.active { color: var(--accent-blue); }
+  .substep-label.pending { color: var(--text-tertiary); opacity: 0.5; }
+  .substep-detail {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    margin-left: auto;
+  }
+
+  /* Agent sub-steps in Process */
+  .agent-substep {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 10px;
+    margin: 3px 0;
+    border-radius: 8px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+  }
+  .agent-substep.running {
+    border-color: rgba(106,95,193,0.25);
+    background: rgba(106,95,193,0.06);
+  }
+  .agent-substep.done {
+    border-color: rgba(52,211,153,0.15);
+    opacity: 0.75;
+  }
+  .agent-case {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .agent-case.running { color: var(--accent-blue); }
+  .agent-case.done { color: var(--accent-green); }
+  .agent-status-pill {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding: 2px 8px;
+    border-radius: 6px;
+  }
+  .pill-running { background: var(--accent-blue-dim); color: var(--accent-blue); }
+  .pill-done { background: var(--accent-green-dim); color: var(--accent-green); }
+  .agent-action {
+    font-size: 10px;
+    color: var(--text-secondary);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .agent-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+  }
+
+  /* Casework pipeline (horizontal) */
+  .cw-pipeline {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+  }
+  .cw-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .cw-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+  .cw-icon.completed { background: var(--accent-green-dim); border: 1.5px solid var(--accent-green); color: var(--accent-green); }
+  .cw-icon.active { background: var(--accent-blue-dim); border: 1.5px solid var(--accent-blue); color: var(--accent-blue); box-shadow: 0 0 12px var(--accent-blue-dim); }
+  .cw-icon.pending { background: var(--bg-elevated); border: 1.5px solid var(--text-tertiary); color: var(--text-tertiary); }
+  .cw-label {
+    margin-top: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    text-align: center;
+    max-width: 64px;
+  }
+  .cw-label.completed { color: var(--accent-green); }
+  .cw-label.active { color: var(--accent-blue); }
+  .cw-label.pending { color: var(--text-tertiary); }
+  .cw-connector {
+    width: 20px;
+    height: 2px;
+    border-radius: 1px;
+    align-self: center;
+    margin-top: -14px;
+    flex-shrink: 0;
+  }
+  .cw-connector.filled { background: var(--accent-green); }
+  .cw-connector.empty { background: var(--border-subtle); }
+
+  /* Comparison arrow */
+  .arrow-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 0;
+    flex-shrink: 0;
+  }
+  .arrow {
+    font-size: 32px;
+    color: var(--accent-blue);
+    opacity: 0.5;
+  }
+  .arrow-label {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    writing-mode: vertical-rl;
+    margin-top: 8px;
+  }
+
+  /* SSE message stream mockup */
+  .sse-stream {
+    margin-top: 6px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: var(--bg-inset);
+    border: 1px solid var(--border-subtle);
+    max-height: 60px;
+    overflow-y: auto;
+  }
+  .sse-line {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--text-tertiary);
+    line-height: 1.7;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .sse-line .key { color: var(--accent-blue); opacity: 0.7; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.7); }
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  .spin { animation: spin 1s linear infinite; display: inline-block; }
+
+  .divider {
+    width: 1px;
+    background: var(--border-default);
+    align-self: stretch;
+    flex-shrink: 0;
+  }
+
+  /* Case row reference */
+  .case-row-ref {
+    background: var(--bg-surface);
+    border: 1px solid rgba(106,95,193,0.22);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 12px;
+  }
+  .case-row-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px;
+    background: var(--bg-base);
+  }
+  .case-row-body {
+    padding: 14px 18px;
+    border-top: 1px solid var(--bg-hover);
+    display: flex;
+    gap: 14px;
+    align-items: stretch;
+  }
+  .zone { display: flex; flex-direction: column; gap: 6px; }
+  .zone-l { width: 120px; flex-shrink: 0; }
+  .zone-c { flex: 1; min-width: 0; }
+  .zone-r { width: 90px; flex-shrink: 0; text-align: right; }
+
+  .note {
+    margin-top: 24px;
+    padding: 12px 16px;
+    background: rgba(106,95,193,0.06);
+    border: 1px solid rgba(106,95,193,0.15);
+    border-radius: 10px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+  .note strong { color: var(--accent-blue); }
+</style>
+</head>
+<body>
+
+<h1>Patrol Pipeline Refactor</h1>
+<p class="subtitle">左：当前 6 阶段 flat pipeline → 新 3 阶段 + 子步骤设计。右：已重构的 Casework Pipeline（参考）</p>
+
+<div class="layout">
+
+  <!-- ═══ CURRENT DESIGN ═══ -->
+  <div class="panel" style="max-width: 240px;">
+    <div class="panel-label">
+      Current Design
+      <span class="badge badge-current">BEFORE</span>
+    </div>
+    <div class="pipeline-card">
+      <div class="pipeline-title">Pipeline</div>
+
+      <!-- Start -->
+      <div class="stage">
+        <div class="connector done"></div>
+        <div class="stage-icon completed">✓</div>
+        <div class="stage-content">
+          <div class="stage-label completed">Start <span class="stage-duration">3s</span></div>
+          <div class="stage-detail">SDK session launched</div>
+        </div>
+      </div>
+      <!-- Discover -->
+      <div class="stage">
+        <div class="connector done"></div>
+        <div class="stage-icon completed">✓</div>
+        <div class="stage-content">
+          <div class="stage-label completed">Discover <span class="stage-duration">8s</span></div>
+          <div class="stage-detail">D365 query → 12 active cases</div>
+        </div>
+      </div>
+      <!-- Filter -->
+      <div class="stage">
+        <div class="connector done"></div>
+        <div class="stage-icon completed">✓</div>
+        <div class="stage-content">
+          <div class="stage-label completed">Filter <span class="stage-duration">2s</span></div>
+          <div class="stage-detail">8 to process · 3 skipped · 1 archived</div>
+        </div>
+      </div>
+      <!-- Warmup -->
+      <div class="stage">
+        <div class="connector done"></div>
+        <div class="stage-icon completed">✓</div>
+        <div class="stage-content">
+          <div class="stage-label completed">Warmup <span class="stage-duration">5s</span></div>
+          <div class="stage-detail">All tokens valid</div>
+        </div>
+      </div>
+      <!-- Process -->
+      <div class="stage">
+        <div class="connector" style="background: linear-gradient(180deg, var(--accent-blue), var(--border-subtle)); opacity: 0.4;"></div>
+        <div class="stage-icon active"><div style="width:8px;height:8px;border-radius:50%;background:var(--accent-blue);animation:pulse 2s ease-in-out infinite;"></div></div>
+        <div class="stage-content">
+          <div class="stage-label active">Process</div>
+          <div class="stage-detail">5 / 8 cases</div>
+          <div style="margin-top:6px;height:4px;border-radius:4px;background:var(--bg-hover);overflow:hidden;">
+            <div style="width:62%;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent-green),var(--accent-blue));"></div>
+          </div>
+        </div>
+      </div>
+      <!-- Aggregate -->
+      <div class="stage">
+        <div class="stage-icon pending"></div>
+        <div class="stage-content">
+          <div class="stage-label pending">Aggregate</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:12px;font-size:10px;color:var(--accent-red);text-align:center;opacity:0.7;">
+      ⚠ 6 flat stages · 没有层级感<br>
+      子步骤信息丢失 · 无 agent 追踪
+    </div>
+  </div>
+
+  <!-- ═══ ARROW ═══ -->
+  <div class="arrow-col">
+    <div class="arrow">→</div>
+    <div class="arrow-label">refactor</div>
+  </div>
+
+  <!-- ═══ NEW DESIGN ═══ -->
+  <div class="panel" style="max-width: 320px;">
+    <div class="panel-label">
+      Proposed Design
+      <span class="badge badge-new">AFTER</span>
+    </div>
+    <div class="pipeline-card">
+      <div class="pipeline-title">Pipeline</div>
+
+      <!-- ── 1. Initialize (completed) ── -->
+      <div class="parent-stage">
+        <div class="parent-header">
+          <div class="parent-icon completed">✓</div>
+          <div class="parent-label completed">Initialize</div>
+          <div class="parent-duration">18s</div>
+        </div>
+        <div class="substeps done-border">
+          <div class="substep">
+            <div class="substep-dot completed"></div>
+            <div class="substep-label completed">SDK Session</div>
+            <div class="substep-detail">3s</div>
+          </div>
+          <div class="substep">
+            <div class="substep-dot completed"></div>
+            <div class="substep-label completed">Load Config</div>
+            <div class="substep-detail">skill + script</div>
+          </div>
+          <div class="substep">
+            <div class="substep-dot completed"></div>
+            <div class="substep-label completed">D365 Query</div>
+            <div class="substep-detail">12 found</div>
+          </div>
+          <div class="substep">
+            <div class="substep-dot completed"></div>
+            <div class="substep-label completed">Filter & Archive</div>
+            <div class="substep-detail">8 to process · 3 skip · 1 arch</div>
+          </div>
+          <div class="substep">
+            <div class="substep-dot completed"></div>
+            <div class="substep-label completed">Token Warmup</div>
+            <div class="substep-detail">all valid</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── 2. Process (active) ── -->
+      <div class="parent-stage">
+        <div class="parent-header">
+          <div class="parent-icon active"><div style="width:10px;height:10px;border-radius:50%;background:var(--accent-blue);animation:pulse 2s ease-in-out infinite;"></div></div>
+          <div class="parent-label active">Process</div>
+          <div class="parent-duration" style="color:var(--accent-blue);">5 / 8</div>
+        </div>
+        <div class="substeps active-border">
+          <!-- Completed agents -->
+          <div class="agent-substep done">
+            <div class="substep-dot completed" style="width:6px;height:6px;"></div>
+            <div class="agent-case done">2501080001</div>
+            <div class="agent-action" style="opacity:0.6;">assess → no-change</div>
+            <div class="agent-time">45s</div>
+          </div>
+          <div class="agent-substep done">
+            <div class="substep-dot completed" style="width:6px;height:6px;"></div>
+            <div class="agent-case done">2501120034</div>
+            <div class="agent-action" style="opacity:0.6;">assess → email → summarize</div>
+            <div class="agent-time">2m 14s</div>
+          </div>
+          <div class="agent-substep done">
+            <div class="substep-dot completed" style="width:6px;height:6px;"></div>
+            <div class="agent-case done">2502040012</div>
+            <div class="agent-action" style="opacity:0.6;">assess → troubleshoot → email</div>
+            <div class="agent-time">3m 02s</div>
+          </div>
+          <!-- SSE message between spawns -->
+          <div class="sse-stream">
+            <div class="sse-line"><span class="key">spawn:</span> queuing 2503010007…</div>
+            <div class="sse-line"><span class="key">spawn:</span> concurrency 2/3, waiting slot…</div>
+          </div>
+          <!-- Running agents -->
+          <div class="agent-substep running">
+            <div class="substep-dot active" style="width:6px;height:6px;"></div>
+            <div class="agent-case running">2503010007</div>
+            <div class="agent-status-pill pill-running"><span class="spin">⟳</span> Assess</div>
+            <div class="agent-action">Reading case-info…</div>
+            <div class="agent-time">32s</div>
+          </div>
+          <div class="agent-substep running">
+            <div class="substep-dot active" style="width:6px;height:6px;"></div>
+            <div class="agent-case running">2503150023</div>
+            <div class="agent-status-pill pill-running"><span class="spin">⟳</span> Email</div>
+            <div class="agent-action">Drafting follow-up…</div>
+            <div class="agent-time">1m 08s</div>
+          </div>
+          <!-- Queued -->
+          <div style="padding:4px 10px;opacity:0.35;display:flex;align-items:center;gap:8px;">
+            <div style="width:6px;height:6px;border-radius:50%;border:1.5px solid var(--border-default);"></div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-tertiary);">2504010005</span>
+            <span style="font-size:9px;color:var(--text-tertiary);text-transform:uppercase;">queued</span>
+          </div>
+          <div style="padding:4px 10px;opacity:0.35;display:flex;align-items:center;gap:8px;">
+            <div style="width:6px;height:6px;border-radius:50%;border:1.5px solid var(--border-default);"></div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-tertiary);">2504080019</span>
+            <span style="font-size:9px;color:var(--text-tertiary);text-transform:uppercase;">queued</span>
+          </div>
+          <div style="padding:4px 10px;opacity:0.35;display:flex;align-items:center;gap:8px;">
+            <div style="width:6px;height:6px;border-radius:50%;border:1.5px solid var(--border-default);"></div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-tertiary);">2504120042</span>
+            <span style="font-size:9px;color:var(--text-tertiary);text-transform:uppercase;">queued</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── 3. Finalize (pending) ── -->
+      <div class="parent-stage">
+        <div class="parent-header">
+          <div class="parent-icon pending"></div>
+          <div class="parent-label pending">Finalize</div>
+        </div>
+        <div class="substeps" style="opacity:0.35;">
+          <div class="substep">
+            <div class="substep-dot pending"></div>
+            <div class="substep-label pending">Cleanup orphans</div>
+          </div>
+          <div class="substep">
+            <div class="substep-dot pending"></div>
+            <div class="substep-label pending">Aggregate results</div>
+          </div>
+          <div class="substep">
+            <div class="substep-dot pending"></div>
+            <div class="substep-label pending">Write state & release lock</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ DIVIDER ═══ -->
+  <div class="divider"></div>
+
+  <!-- ═══ CASEWORK PIPELINE (reference) ═══ -->
+  <div class="panel" style="max-width: 340px;">
+    <div class="panel-label">
+      Casework Pipeline
+      <span class="badge badge-ref">REFERENCE</span>
+    </div>
+
+    <!-- CaseworkPipeline horizontal stepper -->
+    <div class="pipeline-card" style="padding: 18px 20px;">
+      <div class="pipeline-title">Per-Case Pipeline (horizontal)</div>
+      <div class="cw-pipeline">
+        <div class="cw-step">
+          <div class="cw-icon completed">↻</div>
+          <div class="cw-label completed">Data Refresh</div>
+        </div>
+        <div class="cw-connector filled"></div>
+        <div class="cw-step">
+          <div class="cw-icon completed">⚖</div>
+          <div class="cw-label completed">Assess</div>
+        </div>
+        <div class="cw-connector filled"></div>
+        <div class="cw-step">
+          <div class="cw-icon active"><span class="spin">⟳</span></div>
+          <div class="cw-label active">Act</div>
+        </div>
+        <div class="cw-connector empty"></div>
+        <div class="cw-step">
+          <div class="cw-icon pending">📄</div>
+          <div class="cw-label pending">Summarize</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Case row reference (3-zone) -->
+    <div style="margin-top:16px;">
+      <div class="pipeline-title" style="margin-bottom:8px;">Case Row (3-zone layout)</div>
+      <div class="case-row-ref">
+        <div class="case-row-header">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--accent-blue);">2503010007</span>
+          <span class="agent-status-pill pill-running" style="font-size:9.5px;"><span class="spin">⟳</span> Troubleshoot</span>
+          <div style="flex:1;"></div>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-tertiary);">1m 32s</span>
+        </div>
+        <div class="case-row-body">
+          <div class="zone zone-l">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <div style="width:18px;height:18px;border-radius:50%;background:var(--accent-green);display:flex;align-items:center;justify-content:center;font-size:9px;color:white;">✓</div>
+              <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;color:var(--accent-green);">Start</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <div style="width:18px;height:18px;border-radius:50%;background:var(--accent-green);display:flex;align-items:center;justify-content:center;font-size:9px;color:white;">✓</div>
+              <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;color:var(--accent-green);">Refresh</span>
+            </div>
+            <div style="padding-left:24px;font-size:10px;color:var(--text-secondary);">
+              <div style="display:flex;align-items:center;gap:4px;"><div style="width:5px;height:5px;border-radius:50%;background:var(--accent-green);"></div> D365 +2 emails</div>
+              <div style="display:flex;align-items:center;gap:4px;"><div style="width:5px;height:5px;border-radius:50%;background:var(--accent-green);"></div> Teams 3 msgs</div>
+            </div>
+          </div>
+          <div class="zone zone-c">
+            <div style="display:flex;gap:4px;flex-wrap:wrap;padding-bottom:6px;">
+              <span style="display:inline-flex;padding:3px 9px;border-radius:5px 5px 1px 1px;font-size:10px;font-weight:700;background:rgba(245,158,11,0.12);color:#f59e0b;border-bottom:2px solid rgba(245,158,11,0.3);transform:rotate(-0.8deg);">Assess · needs-action</span>
+            </div>
+            <div style="padding:14px 16px;border-radius:10px;background:var(--bg-elevated);border:1px solid rgba(106,95,193,0.15);box-shadow:0 2px 10px rgba(106,95,193,0.08);">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:18px;height:18px;border-radius:50%;border:2.5px solid var(--accent-blue);display:flex;align-items:center;justify-content:center;">
+                  <div style="width:6px;height:6px;border-radius:50%;background:var(--accent-blue);"></div>
+                </div>
+                <span style="font-size:13px;font-weight:700;color:var(--accent-blue);">Troubleshoot</span>
+              </div>
+              <div style="font-size:11px;margin-top:5px;padding-left:26px;color:var(--accent-blue);opacity:0.7;">Querying Kusto…</div>
+            </div>
+          </div>
+          <div class="zone zone-r">
+            <div style="display:flex;align-items:center;gap:6px;justify-content:flex-end;">
+              <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;color:var(--text-tertiary);">Summary</span>
+              <div style="width:18px;height:18px;border-radius:50%;border:1.5px solid var(--border-subtle);"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="note">
+  <strong>设计要点：</strong> 左侧 Patrol Pipeline 从 6 个 flat 阶段重构为 <strong>3 个父阶段 + 子步骤</strong>。<br>
+  • <strong>Initialize</strong> = SDK Session + Config/Skill 加载 + D365 查询 + 筛选/归档 + Token 预热<br>
+  • <strong>Process</strong> = 每个 spawn 的 subagent 是独立子步骤，按 spawn 顺序排列，含 SSE 流式消息<br>
+  • <strong>Finalize</strong>（替代 Aggregate）= Orphan 清理 + 结果聚合 + State 写入 + Lock 释放<br>
+  右侧 Casework Pipeline 保持现有设计不变（水平 4 步 + 3-zone case row），作为参考对照。
+</div>
+
+</body>
+</html>

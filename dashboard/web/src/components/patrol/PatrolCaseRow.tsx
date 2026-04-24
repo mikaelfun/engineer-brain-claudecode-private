@@ -16,14 +16,30 @@ import SummaryDetail from './SummaryDetail'
 
 // ─── Types ───
 
-type SelectedStep = 'refresh' | 'act' | 'summary' | null
+type SelectedStep = 'init' | 'refresh' | 'act' | 'summary' | null
 
 interface PatrolCaseRowProps {
   caseState: CaseState
+  title?: string
   defaultExpanded: boolean
 }
 
 // ─── Helpers ───
+
+function LiveDuration({ startedAt }: { startedAt: string }) {
+  const [elapsed, setElapsed] = useState(() => Date.now() - new Date(startedAt).getTime())
+  useEffect(() => {
+    const start = new Date(startedAt).getTime()
+    setElapsed(Date.now() - start)
+    const timer = setInterval(() => setElapsed(Date.now() - start), 1000)
+    return () => clearInterval(timer)
+  }, [startedAt])
+  return (
+    <span className="shrink-0" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: 'var(--accent-blue)' }}>
+      {formatDuration(elapsed)}
+    </span>
+  )
+}
 
 function formatDuration(ms: number): string {
   if (ms < 1000) return '<1s'
@@ -35,12 +51,13 @@ function formatDuration(ms: number): string {
 
 function isCaseComplete(c: CaseState): boolean {
   const sum = c.steps?.summarize
-  const act = c.steps?.act
-  return sum?.status === 'completed' || sum?.status === 'skipped' || (act?.status === 'completed' && sum?.status !== 'active')
+  return sum?.status === 'completed' || sum?.status === 'skipped'
 }
 
 function isCaseActive(c: CaseState): boolean {
-  return Object.values(c.steps).some(s => s.status === 'active')
+  return Object.values(c.steps).some(s =>
+    s.status === 'active' || (s.status as string) === 'waiting-troubleshooter'
+  )
 }
 
 function hasFailed(c: CaseState): boolean {
@@ -93,32 +110,49 @@ interface PipelineStepInfo {
 function derivePipelineSteps(steps: Record<string, any>): PipelineStepInfo[] {
   const refresh = steps?.['data-refresh']
   const start = steps?.start
-  const assess = steps?.assess
   const act = steps?.act
   const summarize = steps?.summarize
 
-  // Refresh: done when data-refresh completed
+  // Init: agent cold start (reading SKILL.md, --init, warmup)
+  const initStatus: StepStatus = start?.status === 'completed' ? 'completed'
+    : start?.status === 'active' ? 'active'
+    : 'pending'
+  const initDur = start?.durationMs
+
+  // Refresh: only active when data-refresh itself is active (not during start/init)
   const refreshStatus: StepStatus = refresh?.status === 'completed' ? 'completed'
     : refresh?.status === 'active' ? 'active'
-    : start?.status === 'active' ? 'active' // start is part of refresh phase
     : 'pending'
-  const refreshDur = (start?.durationMs || 0) + (refresh?.durationMs || 0) || undefined
+  const refreshDur = refresh?.durationMs
 
-  // Act: active if assess or act is active, done if both done
+  // Act: assess lives inside act.actions[type=assess], not as a separate step
   const actActions = act?.actions || []
+  const assessAction = actActions.find((a: ActionState) => a.type === 'assess')
   const hasReassessActive = actActions.some((a: ActionState) => a.type === 'reassess' && a.status === 'active')
-  const actStatus: StepStatus = (assess?.status === 'completed' && act?.status === 'completed') ? 'completed'
-    : (assess?.status === 'active' || act?.status === 'active') ? 'active'
-    : assess?.status === 'completed' && act?.status !== 'active' && act?.status !== 'completed' ? 'active' // between assess done and act actions
+
+  // Treat 'waiting-troubleshooter' and similar intermediate statuses as 'active'
+  const actRawStatus = act?.status as string | undefined
+  const isActEffectivelyActive = actRawStatus === 'active' || actRawStatus === 'waiting-troubleshooter'
+  const isActEffectivelyCompleted = actRawStatus === 'completed'
+
+  const actStatus: StepStatus =
+    isActEffectivelyCompleted ? 'completed'
+    : isActEffectivelyActive ? 'active'
+    : assessAction?.status === 'completed' && !isActEffectivelyCompleted ? 'active' // between assess done and next action
     : 'pending'
-  const actDur = (assess?.durationMs || 0) + (act?.durationMs || 0) || undefined
+  const actDur = act?.durationMs || undefined
 
   // Summary
   const sumStatus: StepStatus = summarize?.status || 'pending'
   const sumDur = summarize?.durationMs
 
   // Connector types
-  const refreshConn: PipelineStepInfo['connectorType'] = 'none' // first step, no left connector
+  const initConn: PipelineStepInfo['connectorType'] = 'none'
+
+  let refreshConn: PipelineStepInfo['connectorType'] = 'empty'
+  if (initStatus === 'completed' && refreshStatus === 'completed') refreshConn = 'green'
+  else if (initStatus === 'completed' && refreshStatus === 'active') refreshConn = 'gradient-blue'
+  else if (initStatus === 'completed') refreshConn = 'green' // init done, refresh pending
 
   let actConn: PipelineStepInfo['connectorType'] = 'empty'
   if (refreshStatus === 'completed' && actStatus === 'completed') actConn = 'green'
@@ -129,6 +163,7 @@ function derivePipelineSteps(steps: Record<string, any>): PipelineStepInfo[] {
   else if (actStatus === 'completed' && sumStatus === 'active') sumConn = 'gradient-blue'
 
   return [
+    { id: 'init', label: 'Init', status: initStatus, durationMs: initDur, connectorType: initConn },
     { id: 'refresh', label: 'Refresh', status: refreshStatus, durationMs: refreshDur, connectorType: refreshConn },
     { id: 'act', label: 'Act', status: actStatus, durationMs: actDur, connectorType: actConn },
     { id: 'summary', label: 'Summary', status: sumStatus, durationMs: sumDur, connectorType: sumConn },
@@ -137,29 +172,49 @@ function derivePipelineSteps(steps: Record<string, any>): PipelineStepInfo[] {
 
 // ─── Collapsed flow pills ───
 
-function deriveFlowPills(steps: Record<string, any>): Array<{ label: string; color: 'default' | 'green' | 'purple' }> {
-  const assess = steps?.assess
+type PillColor = 'default' | 'green' | 'blue' | 'purple'
+
+function deriveFlowPills(steps: Record<string, any>): Array<{ label: string; color: PillColor }> {
+  const refresh = steps?.['data-refresh']
+  const start = steps?.start
   const act = steps?.act
-  const actions = act?.actions || []
+  const summarize = steps?.summarize
+  const actions: ActionState[] = act?.actions || []
 
-  if (!assess || assess.status === 'pending') return []
+  // Nothing started yet
+  if (!refresh && !start) return []
 
-  if (actions.length === 0) {
-    return [
-      { label: 'assess', color: 'default' },
-      { label: assess.result || 'no-change', color: 'green' },
-    ]
+  const pills: Array<{ label: string; color: PillColor }> = []
+
+  // 1. Refresh
+  const refreshDone = refresh?.status === 'completed'
+  const refreshActive = refresh?.status === 'active' || start?.status === 'active'
+  pills.push({ label: 'refresh', color: refreshDone ? 'green' : refreshActive ? 'blue' : 'default' })
+
+  // 2. Assess — from act.actions[type=assess]
+  const assessAction = actions.find(a => a.type === 'assess')
+  const assessDone = assessAction?.status === 'completed'
+  const assessActive = assessAction?.status === 'active'
+  if (assessDone || assessActive || act) {
+    pills.push({ label: 'assess', color: assessDone ? 'green' : assessActive ? 'blue' : 'default' })
   }
 
-  const pills: Array<{ label: string; color: 'default' | 'green' | 'purple' }> = [
-    { label: 'assess', color: 'default' },
-  ]
+  // 3. Act actions (skip assess — already shown above)
   for (const a of actions) {
-    pills.push({
-      label: a.type === 'email-drafter' ? 'email' : a.type === 'troubleshooter' ? 'troubleshoot' : a.type,
-      color: a.type === 'reassess' ? 'purple' : 'default',
-    })
+    if (a.type === 'assess') continue
+    const done = a.status === 'completed'
+    const active = a.status === 'active'
+    const lbl = a.type === 'email-drafter' ? 'email' : a.type === 'troubleshooter' ? 'troubleshoot' : a.type
+    pills.push({ label: lbl, color: done ? 'green' : active ? (a.type === 'reassess' ? 'purple' : 'blue') : 'default' })
   }
+
+  // 4. Summary
+  if (summarize) {
+    const sumDone = summarize.status === 'completed'
+    const sumActive = summarize.status === 'active'
+    pills.push({ label: 'summary', color: sumDone ? 'green' : sumActive ? 'blue' : 'default' })
+  }
+
   return pills
 }
 
@@ -262,7 +317,7 @@ function PipelineStep({
 
 // ─── Main Component ───
 
-export default function PatrolCaseRow({ caseState, defaultExpanded }: PatrolCaseRowProps) {
+export default function PatrolCaseRow({ caseState, title, defaultExpanded }: PatrolCaseRowProps) {
   const [expanded, setExpanded] = useState(defaultExpanded)
   const [selectedStep, setSelectedStep] = useState<SelectedStep>(null)
   const isComplete = isCaseComplete(caseState)
@@ -281,33 +336,54 @@ export default function PatrolCaseRow({ caseState, defaultExpanded }: PatrolCase
   const pipelineSteps = useMemo(() => derivePipelineSteps(caseState.steps), [caseState.steps])
   const flowPills = useMemo(() => deriveFlowPills(caseState.steps), [caseState.steps])
 
-  // Auto-collapse on complete
+  // Auto-collapse on complete, auto-expand when active
   useEffect(() => {
     if (isComplete && !isActive) { setExpanded(false); setSelectedStep(null) }
+    if (isActive && !expanded) { setExpanded(true) }
   }, [isComplete, isActive])
 
-  // Active case: auto-select Act
+  // Active case: auto-select the currently active pipeline step
   useEffect(() => {
-    if (isActive) {
+    if (!isActive) return
+    const dr = caseState.steps?.['data-refresh']
+    const act = caseState.steps?.act
+    const summarize = caseState.steps?.summarize
+    const start = caseState.steps?.start
+    const actRawStatus = act?.status as string | undefined
+    const assessAction = (act?.actions || []).find((a: ActionState) => a.type === 'assess')
+
+    const sumStatus = summarize?.status as string | undefined
+
+    if (sumStatus === 'active') {
+      setSelectedStep('summary')
+    } else if (assessAction?.status === 'active' || act?.status === 'active' || actRawStatus === 'waiting-troubleshooter' ||
+               (assessAction?.status === 'completed' && sumStatus !== 'active' && sumStatus !== 'completed')) {
+      // Stay on act during entire act phase (assess done → act actions → waiting-troubleshooter)
       setSelectedStep('act')
+    } else if (dr?.status === 'active') {
+      setSelectedStep('refresh')
+    } else if (start?.status === 'active') {
+      setSelectedStep('init')
     }
-  }, [isActive])
+  }, [isActive, caseState.steps])
 
   // Determine current active pill label
   const actActions = caseState.steps?.act?.actions || []
   const activeAction = actActions.find((a: ActionState) => a.status === 'active')
+  const assessActionActive = actActions.some((a: ActionState) => a.type === 'assess' && a.status === 'active')
   const pillLabel = activeAction?.type === 'reassess' ? 'Reassess'
     : activeAction?.type === 'email-drafter' ? 'Email'
     : activeAction?.type === 'troubleshooter' ? 'Troubleshoot'
     : activeAction?.type === 'challenger' ? 'Challenger'
-    : caseState.steps?.assess?.status === 'active' ? 'Assess'
+    : (assessActionActive) ? 'Assess'
     : caseState.steps?.summarize?.status === 'active' ? 'Summary'
     : caseState.steps?.['data-refresh']?.status === 'active' ? 'Refresh'
+    : (caseState.steps?.act?.status as string) === 'waiting-troubleshooter' ? 'Troubleshoot'
     : caseState.currentStep || 'Processing'
   const isPurplePill = activeAction?.type === 'reassess'
 
-  const showBody = isActive || expanded
-  const canCollapse = !isActive
+  const showBody = expanded
+  const canCollapse = true
 
   function handleStepClick(stepId: string) {
     const step = stepId as SelectedStep
@@ -326,76 +402,100 @@ export default function PatrolCaseRow({ caseState, defaultExpanded }: PatrolCase
     >
       {/* ─── Header ─── */}
       <div
-        className="flex items-center gap-2.5"
         style={{
           padding: '10px 18px', background: 'var(--bg-inset)',
           cursor: canCollapse ? 'pointer' : undefined, userSelect: 'none',
         }}
         onClick={() => canCollapse && setExpanded(e => !e)}
       >
-        {canCollapse && (
-          <ChevronRight size={14} style={{
-            color: 'var(--text-tertiary)', flexShrink: 0,
-            transition: 'transform 150ms ease',
-            transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)',
-          }} />
-        )}
-        <span className="text-[13px] font-bold shrink-0" style={{
-          fontFamily: "'JetBrains Mono', monospace",
-          color: isActive ? 'var(--accent-blue)' : 'rgba(106,95,193,0.55)',
-        }}>
-          {caseState.caseNumber}
-        </span>
+        {/* Row 1: chevron + case number + status pill + duration */}
+        <div className="flex items-center gap-2.5">
+          {canCollapse && (
+            <ChevronRight size={14} style={{
+              color: 'var(--text-tertiary)', flexShrink: 0,
+              transition: 'transform 150ms ease',
+              transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)',
+            }} />
+          )}
+          <span className="text-[13px] font-bold" style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            color: isActive ? 'var(--accent-blue)' : 'rgba(106,95,193,0.55)',
+            minWidth: 175, flexShrink: 0,
+          }}>
+            {caseState.caseNumber}
+          </span>
 
-        {/* Status pill */}
-        {isActive && (
-          <span className="inline-flex items-center gap-1 text-[9.5px] font-bold uppercase rounded-lg px-2.5 py-0.5 shrink-0" style={{
-            background: isPurplePill ? 'var(--accent-purple-dim)' : 'var(--accent-blue-dim)',
-            color: isPurplePill ? 'var(--accent-purple)' : 'var(--accent-blue)',
-            letterSpacing: '0.3px',
-          }}>
-            <Loader2 size={10} className="animate-spin" />
-            {pillLabel}
-          </span>
-        )}
-        {isComplete && !failed && (
-          <span className="inline-flex items-center gap-1 text-[9.5px] font-bold uppercase rounded-lg px-2.5 py-0.5 shrink-0" style={{
-            background: 'var(--accent-green-dim)', color: 'var(--accent-green)', letterSpacing: '0.3px',
-          }}>
-            <CheckIcon size={8} /> Done
-          </span>
-        )}
-        {failed && (
-          <span className="inline-flex items-center gap-1 text-[9.5px] font-bold uppercase rounded-lg px-2.5 py-0.5 shrink-0" style={{
-            background: 'rgba(239,68,68,0.10)', color: 'var(--accent-red)', letterSpacing: '0.3px',
-          }}>
-            Failed
-          </span>
-        )}
+          {/* Status pill */}
+          {isActive && (
+            <span className="inline-flex items-center gap-1 text-[9.5px] font-bold uppercase rounded-lg px-2.5 py-0.5 shrink-0" style={{
+              background: isPurplePill ? 'var(--accent-purple-dim)' : 'var(--accent-blue-dim)',
+              color: isPurplePill ? 'var(--accent-purple)' : 'var(--accent-blue)',
+              letterSpacing: '0.3px',
+            }}>
+              <Loader2 size={10} className="animate-spin" />
+              {pillLabel}
+            </span>
+          )}
+          {isComplete && !failed && (
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase rounded-lg px-3 py-1 shrink-0" style={{
+              background: 'var(--accent-green)', color: 'white', letterSpacing: '0.4px',
+            }}>
+              <CheckIcon size={10} /> Done
+            </span>
+          )}
+          {failed && (
+            <span className="inline-flex items-center gap-1 text-[9.5px] font-bold uppercase rounded-lg px-2.5 py-0.5 shrink-0" style={{
+              background: 'rgba(239,68,68,0.10)', color: 'var(--accent-red)', letterSpacing: '0.3px',
+            }}>
+              Failed
+            </span>
+          )}
 
-        {/* Collapsed flow pills */}
-        {canCollapse && !expanded && flowPills.length > 0 && (
-          <div className="flex items-center gap-0.5 min-w-0 overflow-hidden">
-            {flowPills.map((fp, i) => (
-              <span key={i} className="flex items-center gap-0.5">
-                {i > 0 && <span style={{ color: 'var(--text-tertiary)', fontSize: 9, padding: '0 1px' }}>→</span>}
-                <span style={{
-                  padding: '2px 7px', borderRadius: 4, fontSize: 10, fontWeight: 600,
-                  background: fp.color === 'purple' ? 'var(--accent-purple-dim)' : fp.color === 'green' ? 'var(--accent-green-dim)' : 'var(--bg-inset)',
-                  color: fp.color === 'purple' ? 'var(--accent-purple)' : fp.color === 'green' ? 'var(--accent-green)' : 'var(--text-tertiary)',
-                }}>
-                  {fp.label}
-                </span>
+          <div className="flex-1" />
+          {isActive && caseState.steps?.start?.startedAt ? (
+            <LiveDuration startedAt={caseState.steps.start.startedAt} />
+          ) : duration !== undefined ? (
+            <span className="shrink-0" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: 'var(--text-tertiary)' }}>
+              {formatDuration(duration)}
+            </span>
+          ) : null}
+        </div>
+
+        {/* Row 2: title + flow pills */}
+        {(title || (canCollapse && !expanded && flowPills.length > 0)) && (
+          <div className="flex items-center gap-2 mt-1" style={{ marginLeft: canCollapse ? 22 : 0 }}>
+            {title && (
+              <span style={{
+                fontSize: 11, fontWeight: 500, color: 'var(--text-secondary)',
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                minWidth: 0, flex: 1, opacity: 0.7,
+              }}>
+                {title}
               </span>
-            ))}
+            )}
+            {canCollapse && !expanded && flowPills.length > 0 && (
+              <div className="flex items-center gap-0.5 shrink-0">
+                {flowPills.map((fp, i) => (
+                  <span key={i} className="flex items-center gap-0.5">
+                    {i > 0 && <span style={{ color: 'var(--text-tertiary)', fontSize: 9, padding: '0 1px' }}>→</span>}
+                    <span style={{
+                      padding: '2px 7px', borderRadius: 4, fontSize: 10, fontWeight: 600,
+                      background: fp.color === 'purple' ? 'var(--accent-purple-dim)'
+                        : fp.color === 'green' ? 'var(--accent-green-dim)'
+                        : fp.color === 'blue' ? 'var(--accent-blue-dim)'
+                        : 'var(--bg-inset)',
+                      color: fp.color === 'purple' ? 'var(--accent-purple)'
+                        : fp.color === 'green' ? 'var(--accent-green)'
+                        : fp.color === 'blue' ? 'var(--accent-blue)'
+                        : 'var(--text-tertiary)',
+                    }}>
+                      {fp.label}
+                    </span>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
-        )}
-
-        <div className="flex-1" />
-        {duration !== undefined && (
-          <span className="shrink-0" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: 'var(--text-tertiary)' }}>
-            {formatDuration(duration)}
-          </span>
         )}
       </div>
 
@@ -417,7 +517,7 @@ export default function PatrolCaseRow({ caseState, defaultExpanded }: PatrolCase
         </div>
 
         {/* Detail panel */}
-        {selectedStep && (
+        {selectedStep && selectedStep !== 'init' && (
           <div style={{ padding: '0 20px 16px' }}>
             {selectedStep === 'refresh' && (
               <RefreshDetail
@@ -426,7 +526,7 @@ export default function PatrolCaseRow({ caseState, defaultExpanded }: PatrolCase
               />
             )}
             {selectedStep === 'act' && (
-              <ActionFlowTimeline steps={caseState.steps} />
+              <ActionFlowTimeline steps={caseState.steps} caseNumber={caseState.caseNumber} />
             )}
             {selectedStep === 'summary' && (
               <SummaryDetail

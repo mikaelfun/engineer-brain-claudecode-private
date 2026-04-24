@@ -46,7 +46,8 @@ allowed-tools:
 
 ```bash
 CD="{projectRoot}"
-CASE_DIR="$CD/cases/active/{caseNumber}"
+CASES_ROOT=$(python3 -c "import json; print(json.load(open('config.json',encoding='utf-8')).get('casesRoot','./cases'))")
+CASE_DIR="$CD/$CASES_ROOT/active/{caseNumber}"
 mkdir -p "$CASE_DIR/.casework"
 
 # Initialize state.json + mark start step (SDK cold-start timing)

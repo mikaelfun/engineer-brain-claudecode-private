@@ -86,21 +86,18 @@ function CronJobDetailPanel({ job, triggerRun, onDismissRun }: {
     job?.id && !triggerRun?.messages?.length ? job.id : null
   )
   // Merge: SSE messages (live) > recovered messages (disk/memory)
-  // For cron jobs, only show response/completed/failed — filter out thinking/tool-call noise
-  const CRON_SHOW_TYPES = new Set(['response', 'completed', 'failed', 'system', 'user'])
   const displayMessages = useMemo(() => {
-    let raw: any[] = []
-    if (triggerRun?.messages?.length > 0) {
-      raw = triggerRun.messages
-    } else if (recoveredData?.mainMessages && recoveredData.mainMessages.length > 0) {
-      raw = recoveredData.mainMessages.map((m: any) => ({
+    if (triggerRun?.messages?.length > 0) return triggerRun.messages
+    if (recoveredData?.mainMessages && recoveredData.mainMessages.length > 0) {
+      return recoveredData.mainMessages.map((m: any) => ({
         type: m.type || 'thinking',
         content: m.content || '',
         toolName: m.toolName,
         timestamp: m.timestamp,
       }))
-    } else if (recoveredData?.messages && recoveredData.messages.length > 0) {
-      raw = recoveredData.messages.map((m: any) => ({
+    }
+    if (recoveredData?.messages && recoveredData.messages.length > 0) {
+      return recoveredData.messages.map((m: any) => ({
         type: m.type || (m.kind === 'tool-call' ? 'tool-call'
           : m.kind === 'tool-result' ? 'tool-result'
           : m.kind === 'response' ? 'response'
@@ -111,7 +108,7 @@ function CronJobDetailPanel({ job, triggerRun, onDismissRun }: {
         timestamp: m.timestamp,
       }))
     }
-    return raw.filter((m: any) => CRON_SHOW_TYPES.has(m.type))
+    return []
   }, [triggerRun?.messages, recoveredData])
   const hasMessages = displayMessages.length > 0
 

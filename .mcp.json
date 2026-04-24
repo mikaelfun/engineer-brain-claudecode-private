@@ -25,6 +25,14 @@
       "command": "cmd",
       "args": ["/c", "%APPDATA%\\agency\\CurrentVersion\\agency.exe", "mcp", "mail"]
     },
+    "workiq": {
+      "command": "cmd",
+      "args": ["/c", "%APPDATA%\\agency\\CurrentVersion\\agency.exe", "mcp", "workiq"]
+    },
+    "enghub": {
+      "command": "cmd",
+      "args": ["/c", "%APPDATA%\\agency\\CurrentVersion\\agency.exe", "mcp", "enghub"]
+    },
     "local-rag": {
       "command": "node",
       "args": ["scripts/launch-local-rag.js"],

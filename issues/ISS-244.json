@@ -1,0 +1,11 @@
+{
+  "id": "ISS-244",
+  "title": "Case Step notegap 检测按钮生成到错误路径",
+  "description": "Dashboard case step 的 notegap 检测功能生成文件到错误路径：C:\\Users\\fangkun\\Documents\\Projects\\data-dev\\cases\\active\\2604230030000803，缺少 EngineerBrain 层级。正确路径应为 C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\data-dev\\cases\\active\\2604230030000803。根因可能是 casesRoot 相对路径解析时基准目录不对。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "done",
+  "testLoopScan": true,
+  "createdAt": "2026-04-23T22:30:00+08:00",
+  "updatedAt": "2026-04-23T22:45:00+08:00"
+}

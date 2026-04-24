@@ -2,7 +2,13 @@
   "permissions": {
     "allow": [
       "Bash(npx tsc:*)",
-      "Read(//c/Users/fangkun/Documents/Projects/EngineerBrain/src/dashboard/**)"
+      "Bash(bash:*)",
+      "Bash(rmdir \"/c/Users/fangkun/Documents/Projects/EngineerBrain/data-dev/OneNote Export\")",
+      "Bash(cmd //c \"mklink /J \\\\\"C:\\\\Users\\\\fangkun\\\\Documents\\\\Projects\\\\EngineerBrain\\\\data-dev\\\\OneNote Export\\\\\" \\\\\"C:\\\\Users\\\\fangkun\\\\Documents\\\\Projects\\\\EngineerBrain\\\\data-prod\\\\OneNote Export\\\\\"\")",
+      "Bash(mkdir -p ../data-dev/humanizer-mimic)",
+      "Bash(mv .claude/skills/humanizer/cache/d365-case-ids.txt ../data-dev/humanizer-mimic/)",
+      "Bash(rm -rf .claude/skills/humanizer/cache)",
+      "Read(//c/Users/fangkun/Documents/Projects/EngineerBrain/data-dev/**)"
     ]
   }
 }

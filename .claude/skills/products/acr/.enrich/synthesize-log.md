@@ -47,3 +47,47 @@
 | caching-cache-rules | 📋 融合 | 4 | 1 | 0 | 0 |
 | dns-registry-creation | 📋 融合 | 2 | 1 | 0 | 0 |
 | platform-integration | 📋 融合 | 5 | 6 | 1 | 0 |
+
+# Synthesize Log — acr — 2026-04-24
+
+## Mode
+Incremental (index-only: Phase 2.5 + Section 5)
+
+## Changes
+- Generated missing guides/_index.search.jsonl (20 records)
+- Updated guides/_index.md with Keywords, Sources, Score, Files columns
+- All 109 entries scored using 4-dimension formula (Source Quality + Recency + Validation Strength + 21V Applicability)
+
+## Topic Regeneration
+No topic content regeneration needed (topicsToRegen = 0).
+Phase 2.5 and Section 5 executed unconditionally per spec.
+
+## Score Distribution
+- All 20 topics scored in Blue range (5.0-7.9)
+- Highest avg: image-deletion-forensics (7.6), throttling-intermittent (7.5), dns-registry-creation (7.5)
+- Lowest avg: platform-integration (6.4)
+- Top individual scores: 8.0 (firewall-network-rules, content-trust-notation, acr-tasks-build, image-deletion-forensics, rbac-authorization, recovery-restore, platform-integration)
+
+## Fusion Statistics
+| topic | type | entries | draft | kusto | sub-agents |
+|-------|------|---------|-------|-------|------------|
+| connected-registry | speed-only | 3 | 0 | 0 | 0 |
+| api-deprecation | fusion | 2 | 0 | 1 | 0 |
+| authentication-login | fusion | 9 | 1 | 1 | 0 |
+| firewall-network-rules | fusion | 8 | 0 | 1 | 0 |
+| private-endpoint-dns | fusion | 10 | 3 | 1 | 0 |
+| pull-timeout-connectivity | fusion | 8 | 0 | 1 | 0 |
+| content-trust-notation | fusion | 7 | 1 | 0 | 0 |
+| acr-tasks-build | fusion | 8 | 1 | 1 | 0 |
+| image-deletion-forensics | fusion | 4 | 5 | 2 | 0 |
+| image-lock-repository | speed-only | 5 | 0 | 0 | 0 |
+| throttling-intermittent | fusion | 4 | 1 | 2 | 0 |
+| rbac-authorization | fusion | 6 | 2 | 0 | 0 |
+| aks-image-pull | speed-only | 4 | 0 | 0 | 0 |
+| push-storage-limit | fusion | 6 | 0 | 2 | 0 |
+| soft-delete | speed-only | 4 | 0 | 0 | 0 |
+| recovery-restore | fusion | 5 | 2 | 1 | 0 |
+| retention-cleanup-defender | fusion | 4 | 1 | 1 | 0 |
+| caching-cache-rules | fusion | 4 | 1 | 0 | 0 |
+| dns-registry-creation | fusion | 2 | 1 | 0 | 0 |
+| platform-integration | fusion | 5 | 6 | 1 | 0 |

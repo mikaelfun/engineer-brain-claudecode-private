@@ -1,48 +1,48 @@
-# DEFENDER Troubleshooting Guide Index
+# Defender 排查指南索引
 
-| Guide | Type | Kusto | Keywords | Entries | Confidence |
-|-------|------|-------|----------|---------|------------|
-| [MDC 安全建议与合规](mdc-recommendations.md) | 📋 Fusion | 0 | 20mb-limit, 3rd-party-AV, 403, AAC, AKS | 148 | high |
-| [Sentinel 通用排查](sentinel-general.md) | 📋 Fusion | 0 | AADSTS50131, ASIM, AUTO-DISABLED, AWS-S3, B2B | 133 | high |
-| [Sentinel 数据连接器](sentinel-data-connectors.md) | 📋 Fusion | 0 | AADSTS70008, AMA, ARM-deployment, ASA, AWS | 80 | high |
-| [MDE 集成 (Defender for Endpoint)](defender-mde-integration.md) | 📋 Fusion | 0 | 429, API, ARC, ASR, AuditD | 77 | high |
-| [Defender for Containers](defender-for-containers.md) | 📋 Fusion | 0 | AKS, Containers, DCSPM, DINE-policy, Defender Profile | 58 | high |
-| [MDC 权限与 RBAC](mdc-permissions-rbac.md) | 📋 Fusion | 0 | AKS, AWS, BYOK, CMK, Cloud-Apps | 49 | high |
-| [MDC 安全警报](mdc-alerts-security.md) | 📋 Fusion | 0 | AWS, App-Service, Defender-for-Cloud, DenyAssignment, EICAR | 39 | high |
-| [MDC 通用运维](mdc-general-operations.md) | 📋 Fusion | 0 | ARG, ASR, BYOL, BitLocker, CVE-2017-8563 | 38 | high |
-| [Sentinel 事件调查与 Hunting](sentinel-incidents-investigation.md) | 📋 Fusion | 0 | ARG, Azure-Resource-Graph, CPU-throttling, CSV-export, CloudAuditEvents | 37 | high |
-| [Sentinel Data Lake 与存储](sentinel-data-lake.md) | 📋 Fusion | 0 | ADLS-Gen2, ADX, AgentManifest, Antivirus, CAPACITY_UNAVAILABLE | 36 | high |
-| [漏洞评估 (VA/MDVM)](defender-vulnerability-assessment.md) | 📋 Fusion | 0 | ARG, Arc-less, Azure-extensions, BYOL, CVE | 35 | high |
-| [多云连接 (AWS/GCP)](mdc-multi-cloud.md) | 📋 Fusion | 0 | 401, 404, ARM-sync, AWS, CIEM | 35 | high |
-| [Sentinel 自动化与 Playbook](sentinel-automation-playbooks.md) | 📋 Fusion | 0 | Defender-portal, Event-Hub, Logic-App, MDE, MSSP | 32 | high |
-| [MDC 计费与定价](mdc-billing-pricing.md) | 📋 Fusion | 0 | AMA, AOBO, Databricks, Defender-for-Storage, IcM-template | 32 | high |
-| [Sentinel 威胁情报](sentinel-threat-intelligence.md) | 📋 Fusion | 0 | STIX, TAXII, TI-blade, connector, flat-file-import | 29 | medium |
-| [ACR 容器镜像扫描](defender-acr-scanning.md) | 📋 Fusion | 0 | ACR, Cloud-Discovery, Containers, Defender-for-Cloud, Docker | 26 | high |
-| [MDC 接入与自动预配](mdc-onboarding-provisioning.md) | 📋 Fusion | 0 | AMA, ASA, BYOL, CSPM, Cloud-Security-Explorer | 23 | high |
-| [Defender for Storage](defender-for-storage.md) | 📋 Fusion | 0 | StorageAntimalwareSubscription, access-concepts, activity-log, alerts, automated-response | 23 | medium |
-| [Defender for Identity (MDI)](defender-for-identity.md) | 📊 Quick | 0 | Entra-Connect, Entra-ID, MDI, NTLM, Npcap | 21 | medium |
-| [CSPM / DCSPM 云安全态势管理](defender-cspm.md) | 📋 Fusion | 0 | CIEM, CSPM, DCSPM, K8s, MEPM | 19 | high |
-| [DevOps 安全](defender-devops-security.md) | 📋 Fusion | 0 | ado-connector, agentless-code-scanning, agentless-scanning, authentication, azure-devops | 18 | medium |
-| [Sentinel 分析规则与检测](sentinel-analytics-rules.md) | 📋 Fusion | 0 | ASIM, AlertPerRow, Defender-XDR, KQL, REST-API | 16 | high |
-| [无代理扫描](agentless-scanning.md) | 📋 Fusion | 0 | DiskScan, FIM, GCP, agentless, agentless-scanning | 14 | high |
-| [监控代理 (MMA/AMA/OMS)](agent-mma-ama.md) | 📋 Fusion | 0 | Arc-less, Defender-for-Cloud, FIM, Log Analytics, MDE-Linux | 12 | high |
-| [21V/Mooncake 特有问题](mdc-21v-mooncake.md) | 📋 Fusion | 0 | 409-conflict, HierarchyId, MDE-integration, aks, api-onboarding | 12 | high |
-| [Guest Config 基线](guest-config-baselines.md) | 📋 Fusion | 0 | CIS, DFSS, GPO, MCSB, MDVM | 9 | high |
-| [Sentinel SOC 优化与运维](sentinel-soc-optimization.md) | 📋 Fusion | 0 | Sentinel, capacity-limit, icm-escalation, orphaned-job, publish-failure | 7 | high |
-| [Defender for Servers](defender-for-servers.md) | 📋 Fusion | 0 | Defender-for-Cloud, IaaS-Antimalware, SCEP, UILockDown, antimalware | 7 | high |
-| [Sentinel UEBA 用户行为分析](sentinel-ueba.md) | 📋 Fusion | 0 | BehavioralAnalytics, IdentityInfo, OnpremisesExtensionAttribute, Sentinel, UEBA | 6 | high |
-| [MDC CRI 与升级流程](mdc-cri-escalation.md) | 📋 Fusion | 0 | ARG, AWS, CIEM, attack-paths, bug-fix | 6 | medium |
-| [FIM 文件完整性监控](fim-change-tracking.md) | 📋 Fusion | 0 | AMA, FIM, LAW, MDE, MMA | 6 | medium |
-| [Defender for Office / 邮件安全](defender-office-email.md) | 📋 Fusion | 0 | Defender-Antivirus, DefenderTamperingRestore, EOP, MDE, MDO | 6 | high |
-| [JIT 网络访问](jit-network-access.md) | 📋 Fusion | 0 | arm-manifest, async, jit, just-in-time, new-region | 5 | high |
-| [MDC 数据隐私与驻留](mdc-data-privacy.md) | 📋 Fusion | 0 | continuous-export, event-hub, kusto, kusto-diagnostics, log-analytics | 5 | medium |
-| [Defender for DNS](defender-for-dns.md) | 📋 Fusion | 0 | alerts, azure-ad-ds, defender-for-dns, private-dns, unsupported | 3 | medium |
-| [Defender for Cloud Apps](defender-cloud-apps.md) | 📋 Fusion | 0 | CAAC, Cloud-Apps, MCAS, SIEM, device-identification | 3 | medium |
-| [Defender for SQL](defender-for-sql.md) | 📋 Fusion | 0 | baseline-storage, email-notification, express-config, sql-va | 2 | medium |
-| [Defender for API](defender-for-api.md) | 📋 Fusion | 0 | API-security, APIM, defender-for-api | 1 | medium |
-| [AI 安全 (Defender for AI)](defender-ai-security.md) | 📋 Fusion | 0 | defender-for-ai, prompt-evidence, threat-protection | 1 | medium |
-| [Defender for ARM](defender-for-arm.md) | 📋 Fusion | 0 |  | 0 | medium |
-| [SAP 连接器](sap-connector.md) | 📋 Fusion | 0 |  | 0 | medium |
+| # | Topic | Title | Entries | Fusion | Score | Keywords | Sources | Files |
+|---|-------|-------|---------|--------|-------|----------|---------|-------|
+| 1 | mdc-recommendations | MDC 安全建议与合规 | 148 | ✅ | 🔵 6.5 | 12-hours, 20mb-limit, 21v-unsupported, 24h-delay, 3rd-party-AV | AW ML ON | [speed](mdc-recommendations.md) / [detail](details/mdc-recommendations.md) / [workflow](workflows/mdc-recommendations.md) |
+| 2 | sentinel-general | Sentinel 通用排查 | 133 | ✅ | 🔵 5.9 | 30-day-threshold, 365-defender, 403-unauthorized, AAD-identity-protection, AADSTS50131 | AW ML ON | [speed](sentinel-general.md) / [detail](details/sentinel-general.md) / [workflow](workflows/sentinel-general.md) |
+| 3 | sentinel-data-connectors | Sentinel 数据连接器 | 80 | ✅ | 🔵 6.1 | 20-seconds, 21v-unsupported, 403, 404, AADSTS70008 | AW ML ON | [speed](sentinel-data-connectors.md) / [detail](details/sentinel-data-connectors.md) / [workflow](workflows/sentinel-data-connectors.md) |
+| 4 | defender-mde-integration | MDE 集成 (Defender for Endpoint) | 77 | ✅ | 🔵 5.1 | 101.75.43, 101.78.13, 15min-SLA, 200MB, 2012R2 | AW ML | [speed](defender-mde-integration.md) / [detail](details/defender-mde-integration.md) / [workflow](workflows/defender-mde-integration.md) |
+| 5 | defender-for-containers | Defender for Containers | 58 | ✅ | 🔵 6.1 | 21Vianet, 2GB, 403, AKS, AksPermissionBinder | AW ML ON | [speed](defender-for-containers.md) / [detail](details/defender-for-containers.md) / [workflow](workflows/defender-for-containers.md) |
+| 6 | mdc-permissions-rbac | MDC 权限与 RBAC | 49 | ✅ | 🔵 5.9 | 21v-unsupported, 403-forbidden, ADX, AKS, AWS | AW ML | [speed](mdc-permissions-rbac.md) / [detail](details/mdc-permissions-rbac.md) / [workflow](workflows/mdc-permissions-rbac.md) |
+| 7 | mdc-alerts-security | MDC 安全警报 | 39 | ✅ | 🔵 6.4 | ARM-lock, AWS, App-Service, Defender-for-Cloud, Defender-plan | AW ML | [speed](mdc-alerts-security.md) / [detail](details/mdc-alerts-security.md) / [workflow](workflows/mdc-alerts-security.md) |
+| 8 | mdc-general-operations | MDC 通用运维 | 38 | ✅ | 🔵 5.8 | 100-resource-limit, AADJ, API, ARG, ASR | AW KB ML | [speed](mdc-general-operations.md) / [detail](details/mdc-general-operations.md) / [workflow](workflows/mdc-general-operations.md) |
+| 9 | sentinel-incidents-investigation | Sentinel 事件调查与 Hunting | 37 | ✅ | 🔵 6.5 | ARG, AlertEvidence, AlertInfo, Azure-Resource-Graph, CPU-throttling | AW ML | [speed](sentinel-incidents-investigation.md) / [detail](details/sentinel-incidents-investigation.md) / [workflow](workflows/sentinel-incidents-investigation.md) |
+| 10 | sentinel-data-lake | Sentinel Data Lake 与存储 | 36 | ✅ | 🔵 6.5 | 401, 500K, 90-120-minutes, ADLS-Gen2, ADX | AW ML | [speed](sentinel-data-lake.md) / [detail](details/sentinel-data-lake.md) / [workflow](workflows/sentinel-data-lake.md) |
+| 11 | defender-vulnerability-assessment | 漏洞评估 (VA/MDVM) | 35 | ✅ | 🔵 6.6 | ACR, ADE, AMA, ARG, ARG-limitation | AW ML ON | [speed](defender-vulnerability-assessment.md) / [detail](details/defender-vulnerability-assessment.md) / [workflow](workflows/defender-vulnerability-assessment.md) |
+| 12 | mdc-multi-cloud | 多云连接 (AWS/GCP) | 35 | ✅ | 🔵 6.0 | 21v-unsupported, 400-error, 401, 404, ARG | AW ML | [speed](mdc-multi-cloud.md) / [detail](details/mdc-multi-cloud.md) / [workflow](workflows/mdc-multi-cloud.md) |
+| 13 | sentinel-automation-playbooks | Sentinel 自动化与 Playbook | 32 | ✅ | 🔵 5.7 | 10-minute-delay, ARM-template, Automation-Contributor, Defender-portal, Description-field | AW ML | [speed](sentinel-automation-playbooks.md) / [detail](details/sentinel-automation-playbooks.md) / [workflow](workflows/sentinel-automation-playbooks.md) |
+| 14 | mdc-billing-pricing | MDC 计费与定价 | 32 | ✅ | 🔵 6.7 | 21v-unsupported, 500mb-allowance, AMA, AOBO, API | AW KB ON | [speed](mdc-billing-pricing.md) / [detail](details/mdc-billing-pricing.md) / [workflow](workflows/mdc-billing-pricing.md) |
+| 15 | sentinel-threat-intelligence | Sentinel 威胁情报 | 29 | ✅ | 🔵 6.6 | ANOMALI, AppID, CEF, CommonSecurityLog, FTE-only | AW | [speed](sentinel-threat-intelligence.md) / [detail](details/sentinel-threat-intelligence.md) / [workflow](workflows/sentinel-threat-intelligence.md) |
+| 16 | defender-acr-scanning | ACR 容器镜像扫描 | 26 | ✅ | 🔵 5.4 | ACR, ARM, CSPM, Cloud-Discovery, Containers | AW ML ON | [speed](defender-acr-scanning.md) / [detail](details/defender-acr-scanning.md) / [workflow](workflows/defender-acr-scanning.md) |
+| 17 | mdc-onboarding-provisioning | MDC 接入与自动预配 | 23 | ✅ | 🔵 5.7 | AMA, ASA, AWS, Arc, BYOL | AW ML ON | [speed](mdc-onboarding-provisioning.md) / [detail](details/mdc-onboarding-provisioning.md) |
+| 18 | defender-for-storage | Defender for Storage | 23 | ✅ | 🔵 6.0 | SecurityOperator, StorageAntimalwareSubscription, access-concepts, activity-log, adls-gen2 | AW | [speed](defender-for-storage.md) / [detail](details/defender-for-storage.md) / [workflow](workflows/defender-for-storage.md) |
+| 19 | defender-for-identity | Defender for Identity (MDI) | 21 | — | 🟡 4.5 | 0x80070643, 401, 403, COMException, Cloud-Apps | ML | [speed](defender-for-identity.md) / [detail](details/defender-for-identity.md) |
+| 20 | defender-cspm | CSPM / DCSPM 云安全态势管理 | 19 | ✅ | 🔵 6.2 | 21v-unsupported, ARG, ASE, AgentlessManager, Azure | AW ML | [speed](defender-cspm.md) / [detail](details/defender-cspm.md) / [workflow](workflows/defender-cspm.md) |
+| 21 | defender-devops-security | DevOps 安全 | 18 | ✅ | 🔵 6.6 | ARM, AWS, CloudMap, DSRP, ado-connector | AW | [speed](defender-devops-security.md) / [detail](details/defender-devops-security.md) / [workflow](workflows/defender-devops-security.md) |
+| 22 | sentinel-analytics-rules | Sentinel 分析规则与检测 | 16 | ✅ | 🔵 6.8 | 512-limit, ASIM, AlertPerRow, Defender-XDR, ExtendedProperties | AW ML | [speed](sentinel-analytics-rules.md) / [detail](details/sentinel-analytics-rules.md) / [workflow](workflows/sentinel-analytics-rules.md) |
+| 23 | agentless-scanning | 无代理扫描 | 14 | ✅ | 🔵 5.2 | 21v-unsupported, 24h-cadence, ASC-diagnostic, CMK, DiskScan | AW ML | [speed](agentless-scanning.md) / [detail](details/agentless-scanning.md) / [workflow](workflows/agentless-scanning.md) |
+| 24 | agent-mma-ama | 监控代理 (MMA/AMA/OMS) | 12 | ✅ | 🔵 6.2 | Arc-less, Azure-Arc, Change-Tracking, Defender-for-Cloud, FIM | AW ML ON | [speed](agent-mma-ama.md) / [detail](details/agent-mma-ama.md) / [workflow](workflows/agent-mma-ama.md) |
+| 25 | mdc-21v-mooncake | 21V/Mooncake 特有问题 | 12 | ✅ | 🔵 7.2 | 21v, 21v-unsupported, 409-conflict, HierarchyId, MDE-integration | AW ON | [speed](mdc-21v-mooncake.md) / [detail](details/mdc-21v-mooncake.md) |
+| 26 | guest-config-baselines | Guest Config 基线 | 9 | ✅ | 🔵 5.3 | Azure-VM, CIS, CLM, Constrained-Language-Mode, DFSS | AW ML | [speed](guest-config-baselines.md) / [detail](details/guest-config-baselines.md) / [workflow](workflows/guest-config-baselines.md) |
+| 27 | sentinel-soc-optimization | Sentinel SOC 优化与运维 | 7 | ✅ | 🔵 5.1 | Sentinel, analytics-rules, capacity-limit, deadlock, icm-escalation | AW ML | [speed](sentinel-soc-optimization.md) / [detail](details/sentinel-soc-optimization.md) / [workflow](workflows/sentinel-soc-optimization.md) |
+| 28 | defender-for-servers | Defender for Servers | 7 | ✅ | 🔵 6.6 | Defender-for-Cloud, IaaS-Antimalware, ProtectionStatus, SCEP, UILockDown | AW ML ON | [speed](defender-for-servers.md) / [detail](details/defender-for-servers.md) / [workflow](workflows/defender-for-servers.md) |
+| 29 | sentinel-ueba | Sentinel UEBA 用户行为分析 | 6 | ✅ | 🔵 5.7 | BehavioralAnalytics, IdentityInfo, MITRE, OnpremisesExtensionAttribute, Sentinel | AW ML | [speed](sentinel-ueba.md) / [detail](details/sentinel-ueba.md) / [workflow](workflows/sentinel-ueba.md) |
+| 30 | mdc-cri-escalation | MDC CRI 与升级流程 | 6 | ✅ | 🔵 6.7 | ARG, AWS, CIEM, CRI, MDC | AW | [speed](mdc-cri-escalation.md) / [detail](details/mdc-cri-escalation.md) / [workflow](workflows/mdc-cri-escalation.md) |
+| 31 | fim-change-tracking | FIM 文件完整性监控 | 6 | ✅ | 🔵 6.7 | AMA, Defender-for-Servers, Defender-for-Servers-P2, FIM, LAW | AW | [speed](fim-change-tracking.md) / [detail](details/fim-change-tracking.md) / [workflow](workflows/fim-change-tracking.md) |
+| 32 | defender-office-email | Defender for Office / 邮件安全 | 6 | ✅ | 🔵 5.4 | 451, 550, Defender-Antivirus, DefenderTamperingRestore, EOP | AW ML ON | [speed](defender-office-email.md) / [detail](details/defender-office-email.md) / [workflow](workflows/defender-office-email.md) |
+| 33 | jit-network-access | JIT 网络访问 | 5 | ✅ | 🔵 5.7 | NoRegisteredProviderFound, arm-manifest, async, bug, delete-lock | AW ON | [speed](jit-network-access.md) / [detail](details/jit-network-access.md) / [workflow](workflows/jit-network-access.md) |
+| 34 | mdc-data-privacy | MDC 数据隐私与驻留 | 5 | ✅ | 🔵 6.1 | alert-verification, backend, continuous-export, event-hub, firewall | AW | [speed](mdc-data-privacy.md) / [detail](details/mdc-data-privacy.md) / [workflow](workflows/mdc-data-privacy.md) |
+| 35 | defender-for-dns | Defender for DNS | 3 | ✅ | 🔵 6.5 | alerts, azure-ad-ds, defender-for-dns, deprecation, dns-private-resolver | AW | [speed](defender-for-dns.md) / [detail](details/defender-for-dns.md) / [workflow](workflows/defender-for-dns.md) |
+| 36 | defender-cloud-apps | Defender for Cloud Apps | 3 | ✅ | 🟡 4.5 | CAAC, Cloud-Apps, Entra-ID, Intune, JRE | ML | [speed](defender-cloud-apps.md) / [detail](details/defender-cloud-apps.md) / [workflow](workflows/defender-cloud-apps.md) |
+| 37 | defender-for-sql | Defender for SQL | 2 | ✅ | 🔵 6.5 | baseline-storage, email-notification, express-config, logic-app, on-demand-scan | AW | [speed](defender-for-sql.md) / [detail](details/defender-for-sql.md) |
+| 38 | defender-for-api | Defender for API | 1 | ✅ | 🔵 6.5 | API-security, APIM, D4API, PII, defender-for-api | AW | [speed](defender-for-api.md) / [detail](details/defender-for-api.md) / [workflow](workflows/defender-for-api.md) |
+| 39 | defender-ai-security | AI 安全 (Defender for AI) | 1 | ✅ | 🔵 6.5 | alert, defender-for-ai, prompt-evidence, threat-protection | AW | [speed](defender-ai-security.md) / [detail](details/defender-ai-security.md) / [workflow](workflows/defender-ai-security.md) |
+| 40 | defender-for-arm | Defender for ARM | 0 | ✅ | ⚪ 0.0 |  |  | [speed](defender-for-arm.md) / [detail](details/defender-for-arm.md) / [workflow](workflows/defender-for-arm.md) |
+| 41 | sap-connector | SAP 连接器 | 0 | ✅ | ⚪ 0.0 |  |  | [speed](sap-connector.md) / [detail](details/sap-connector.md) / [workflow](workflows/sap-connector.md) |
 
-Last updated: 2026-04-07
+最后更新: 2026-04-24
 Total: 41 guides, 1109 entries

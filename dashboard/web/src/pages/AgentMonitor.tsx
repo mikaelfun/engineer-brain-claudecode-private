@@ -56,6 +56,13 @@ const AGENT_TYPE_COLORS: Record<string, { bg: string; color: string }> = {
   reassess: { bg: 'var(--accent-teal-dim, var(--accent-green-dim))', color: 'var(--accent-teal, var(--accent-green))' },
   challenger: { bg: 'var(--accent-red-dim)', color: 'var(--accent-red)' },
   summarize: { bg: 'var(--accent-green-dim)', color: 'var(--accent-green)' },
+  phase2: { bg: 'var(--accent-purple-dim)', color: 'var(--accent-purple)' },
+  'data-refresh': { bg: 'var(--accent-blue-dim)', color: 'var(--accent-blue)' },
+  patrol: { bg: 'var(--accent-amber-dim)', color: 'var(--accent-amber)' },
+  'note-gap': { bg: 'var(--accent-green-dim)', color: 'var(--accent-green)' },
+  labor: { bg: 'var(--accent-green-dim)', color: 'var(--accent-green)' },
+  onenote: { bg: 'var(--accent-blue-dim)', color: 'var(--accent-blue)' },
+  'teams-search': { bg: 'var(--accent-blue-dim)', color: 'var(--accent-blue)' },
 }
 const DEFAULT_AGENT_COLOR = { bg: 'var(--bg-inset)', color: 'var(--text-secondary)' }
 
@@ -768,16 +775,24 @@ function CronSessionDetail({ session }: { session: UnifiedSession }) {
     if (triggerRun?.messages && triggerRun.messages.length > 0) {
       return triggerRun.messages
     }
-
-    // Fallback: recovered messages from getCronMessages() API
+    // Disk recovery: mainMessages already has correct `type` field (RecoveredMessage)
+    if (recoveredData?.mainMessages && recoveredData.mainMessages.length > 0) {
+      return recoveredData.mainMessages.map((m: any) => ({
+        type: (m.type || 'thinking') as CaseSessionMessage['type'],
+        content: m.content || '',
+        toolName: m.toolName,
+        timestamp: m.timestamp,
+      }))
+    }
+    // In-memory recovery: messages use `kind` field, needs mapping
     if (recoveredData?.messages && !hasRecoveredRef.current) {
       hasRecoveredRef.current = true
       return recoveredData.messages.map((m: any) => ({
-        type: m.kind === 'tool-call' ? 'tool-call' as const
-          : m.kind === 'tool-result' ? 'tool-result' as const
-          : m.kind === 'response' ? 'response' as const
-          : m.kind?.startsWith('agent-') ? 'system' as const
-          : 'thinking' as const,
+        type: (m.type || (m.kind === 'tool-call' ? 'tool-call'
+          : m.kind === 'tool-result' ? 'tool-result'
+          : m.kind === 'response' ? 'response'
+          : m.kind?.startsWith('agent-') ? 'system'
+          : 'thinking')) as CaseSessionMessage['type'],
         content: m.content || '',
         toolName: m.toolName,
         timestamp: m.timestamp,
@@ -969,28 +984,37 @@ function MainAgentRow({
                 : <ChevronRight className="w-3.5 h-3.5" />
               }
             </span>
-          ) : (
-            <span className="w-3.5 flex-shrink-0" /> /* spacer for alignment */
-          )}
+          ) : null}
           <StatusDot status={session.status} />
           <SessionTypeBadge type={session.type} />
-          {/* Context: skip if same as type label (e.g. patrol/patrol) */}
-          {session.context !== session.type && (
+          {/* Context display — cron shows intent (prompt command) instead of triggerId */}
+          {session.type === 'cron' ? (
             <span
-              className="text-sm font-mono truncate"
+              className="text-xs font-mono truncate"
               style={{ color: typeConfig.color }}
+              title={session.intent || session.context}
             >
-              {session.context}
+              {session.intent || session.context}
             </span>
-          )}
-          {/* Intent: skip if redundant with type (e.g. "Patrol run" when badge says Patrol) */}
-          {session.intent && !session.intent.toLowerCase().startsWith(session.type) && (
-            <span
-              className="text-xs truncate max-w-[200px] hidden lg:inline"
-              style={{ color: 'var(--text-tertiary)' }}
-            >
-              {session.intent}
-            </span>
+          ) : (
+            <>
+              {session.context !== session.type && (
+                <span
+                  className="text-sm font-mono truncate"
+                  style={{ color: typeConfig.color }}
+                >
+                  {session.context}
+                </span>
+              )}
+              {session.intent && !session.intent.toLowerCase().startsWith(session.type) && (
+                <span
+                  className="text-xs truncate max-w-[200px] hidden lg:inline"
+                  style={{ color: 'var(--text-tertiary)' }}
+                >
+                  {session.intent}
+                </span>
+              )}
+            </>
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0 ml-2">
@@ -1236,7 +1260,7 @@ function MainAgentsSection({
       ) : sessions.length === 0 ? (
         <EmptyState icon="🧠" title="No sessions" description={allSessions.length > 0 ? 'No sessions match current filters' : 'No agent sessions recorded yet'} />
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-4" style={{ minHeight: 'calc(100vh - 280px)' }}>
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4" style={{ minHeight: 'calc(100vh - 280px)' }}>
           {/* Left panel: scrollable agent list */}
           <Card padding="none">
             <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 220px)' }}>
@@ -1527,18 +1551,12 @@ export default function AgentMonitor() {
         </div>
       )}
 
-      {/* Token Daemon + Az Profiles — side by side, equal width */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="min-w-0">
-          <DaemonStatusCard />
-        </div>
-        <div className="min-w-0">
-          <AzProfileCard />
-        </div>
-      </div>
-
-      {/* Active Sessions — two-panel layout */}
-      <MainAgentsSection
+      {/* Main + Sidebar layout */}
+      <div className="flex gap-4 items-stretch">
+        {/* Main content */}
+        <div className="flex-1 min-w-0 space-y-6">
+          {/* Active Sessions */}
+          <MainAgentsSection
         sessions={filteredSessions}
         allSessions={allSessions}
         sessionsLoading={sessionsLoading}
@@ -1583,6 +1601,14 @@ export default function AgentMonitor() {
           </div>
         </div>
       )}
+        </div>
+
+        {/* Right sidebar — auth health cards, align with detail view cards */}
+        <div className="w-56 shrink-0 hidden lg:flex lg:flex-col gap-3 sticky top-4 self-start pt-10">
+          <DaemonStatusCard />
+          <AzProfileCard />
+        </div>
+      </div>
     </div>
   )
 }

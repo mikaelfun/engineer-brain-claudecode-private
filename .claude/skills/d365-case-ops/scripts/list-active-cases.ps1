@@ -20,7 +20,7 @@ $ErrorActionPreference = "Stop"
 
 $userId = $script:D365CurrentUserId
 
-Write-Host "🔵 Querying active cases via OData (assignedto=$userId)..."
+[Console]::Error.WriteLine("🔵 Querying active cases via OData (assignedto=$userId)...")
 
 $fetchXml = @"
 <fetch top="200">
@@ -48,7 +48,7 @@ $fetchXml = @"
 $result = Invoke-D365Api -Endpoint "/api/data/v9.0/incidents" -FetchXml $fetchXml
 
 if (-not $result -or -not $result.value) {
-    Write-Host "⚠️ No results or API error. Falling back to ownerid query..."
+    [Console]::Error.WriteLine("⚠️ No results or API error. Falling back to ownerid query...")
     
     # Fallback: also try ownerid-based query (some cases may be directly owned)
     $fetchXmlFallback = @"
@@ -74,15 +74,15 @@ if (-not $result -or -not $result.value) {
 "@
     $result = Invoke-D365Api -Endpoint "/api/data/v9.0/incidents" -FetchXml $fetchXmlFallback
     if (-not $result -or -not $result.value) {
-        Write-Host "❌ Both queries failed. Cannot get active case list."
+        [Console]::Error.WriteLine("❌ Both queries failed. Cannot get active case list.")
         exit 1
     }
-    Write-Host "⚠️ Using ownerid fallback — may miss cases where owner is a queue."
+    [Console]::Error.WriteLine("⚠️ Using ownerid fallback — may miss cases where owner is a queue.")
 }
 
 $cases = $result.value
 
-Write-Host "✅ Found $($cases.Count) active case(s)"
+[Console]::Error.WriteLine("✅ Found $($cases.Count) active case(s)")
 
 if ($OutputJson) {
     $output = $cases | ForEach-Object {
@@ -98,13 +98,13 @@ if ($OutputJson) {
     }
     Write-Output ($output | ConvertTo-Json -Compress)
 } else {
-    Write-Host ""
-    Write-Host "=== Active Cases ==="
+    [Console]::Error.WriteLine("")
+    [Console]::Error.WriteLine("=== Active Cases ===")
     foreach ($c in $cases) {
         $age = [Math]::Floor(([DateTime]::UtcNow - [DateTime]::Parse($c.createdon)).TotalDays)
         $customer = if ($_."cust.name") { $_."cust.name" } else { "N/A" }
         $status = $c."statuscode@OData.Community.Display.V1.FormattedValue"
-        Write-Host "  $($c.ticketnumber)  [$status]  Age:${age}d  $($c.title)"
+        [Console]::Error.WriteLine("  $($c.ticketnumber)  [$status]  Age:${age}d  $($c.title)")
     }
-    Write-Host "===================="
+    [Console]::Error.WriteLine("====================")
 }

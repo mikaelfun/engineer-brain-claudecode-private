@@ -1,0 +1,116 @@
+[
+ {
+  "file": "README.md",
+  "name": "",
+  "description": "",
+  "tables": ""
+ },
+ {
+  "file": "arm-throttling.md",
+  "name": "arm-throttling",
+  "description": "ARM Throttling 查询 - 排查 429 限流错误",
+  "tables": ""
+ },
+ {
+  "file": "arm-tracking.md",
+  "name": "arm-tracking",
+  "description": "ARM 追踪查询 - 追踪 ARM 层资源操作和活动日志",
+  "tables": ""
+ },
+ {
+  "file": "capacity-allocation.md",
+  "name": "capacity-allocation",
+  "description": "容量分配查询 - 排查分配失败和容量问题",
+  "tables": ""
+ },
+ {
+  "file": "container-snapshot.md",
+  "name": "container-snapshot",
+  "description": "容器快照查询 - 获取 VM 的 Fabric 层信息 (containerId/nodeId/tenantName)",
+  "tables": ""
+ },
+ {
+  "file": "disk-operations.md",
+  "name": "disk-operations",
+  "description": "磁盘操作查询 - 查询托管磁盘创建、附加、分离等操作",
+  "tables": ""
+ },
+ {
+  "file": "extension-events.md",
+  "name": "extension-events",
+  "description": "扩展事件查询 - 查询 VM 扩展安装和执行状态",
+  "tables": ""
+ },
+ {
+  "file": "hardware-failure.md",
+  "name": "hardware-failure",
+  "description": "硬件故障查询 - 排查节点硬件问题和修复历史",
+  "tables": ""
+ },
+ {
+  "file": "live-migration.md",
+  "name": "live-migration",
+  "description": "Live Migration 查询 - 排查 VM 实时迁移事件",
+  "tables": ""
+ },
+ {
+  "file": "node-events.md",
+  "name": "node-events",
+  "description": "节点事件查询 - 排查节点状态变更和故障",
+  "tables": ""
+ },
+ {
+  "file": "provisioning-timeout.md",
+  "name": "provisioning-timeout",
+  "description": "OS Provisioning 超时查询 - 排查 OSProvisioningTimedOut 和网络编程问题",
+  "tables": ""
+ },
+ {
+  "file": "service-healing.md",
+  "name": "service-healing",
+  "description": "Service Healing 查询 - 排查 VM 意外重启和服务自愈事件",
+  "tables": ""
+ },
+ {
+  "file": "vm-disk-performance-analysis.md",
+  "name": "vm-disk-performance-config",
+  "description": "VM 磁盘性能配置分析 - 查询 VM SKU、附加磁盘类型、IOPS/带宽限制，识别性能瓶颈",
+  "tables": ""
+ },
+ {
+  "file": "vm-health.md",
+  "name": "vm-health",
+  "description": "VM 健康状态查询 - 监控 VM 健康状态和性能指标",
+  "tables": ""
+ },
+ {
+  "file": "vm-maintenance.md",
+  "name": "vm-maintenance",
+  "description": "计划内维护查询 - 查询 VM 计划内维护 (Scheduled Maintenance) 状态和事件",
+  "tables": ""
+ },
+ {
+  "file": "vm-network.md",
+  "name": "vm-network",
+  "description": "VM 网络配置查询 - 获取 VNet/Subnet/CA/PA/MAC/TOR 等网络信息",
+  "tables": ""
+ },
+ {
+  "file": "vm-operations.md",
+  "name": "vm-operations",
+  "description": "VM 操作查询 - 查询 VM 创建、启动、停止等操作",
+  "tables": ""
+ },
+ {
+  "file": "vma-analysis.md",
+  "name": "vma-analysis",
+  "description": "VMA 可用性分析 - 查询 VM 可用性事件和 RCA 结果",
+  "tables": ""
+ },
+ {
+  "file": "vmss-operations.md",
+  "name": "vmss-operations",
+  "description": "VMSS 操作查询 - 查询 VMSS 扩缩容、部署等操作",
+  "tables": ""
+ }
+]

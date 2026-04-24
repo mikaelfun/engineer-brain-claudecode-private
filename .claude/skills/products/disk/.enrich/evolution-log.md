@@ -449,3 +449,8 @@
 | 2026-04-20 | mslearn | Built toc.yml index: 28 URLs (14 blobs + 14 files), 28 pending | azure/azure-storage/blobs, azure/azure-storage/files |
 | 2026-04-20 | ado-wiki | disk: indexed 157 wiki pages (102 pre-scanned from existing JSONL, 55 unscanned) | Supportability/AzureStorageDevices |
 | 2026-04-20 | contentidea-kb | +4 disk entries (37 scanned, 33 empty/no symptom), source exhausted | WIQL: Managed Disk, Storage |
+| 2026-04-21 | mslearn | +11 storage blob issues (AzCopy 403/proxy/throttle, block errors, ADLS sticky bit) + 3 guide drafts | blobs/connectivity, blobs/authentication, blobs/performance |
+| 2026-04-23 | onenote | dedup skip: soft delete managed disk recovery (already disk-onenote-002) | 6.0.3 soft delete managed disk |
+| 2026-04-23 | mslearn | +14 storage/files known issues (throttling, SAS, restore errors), +3 guide drafts | blobs/alerts + files/backup-restore |
+| 2026-04-24 | SYNTHESIZE | Phase 2.5: _index.search.jsonl (41 topics), §5: _index.md format update (+Keywords +Sources) | incremental index-only |
+| 2026-04-24 | mslearn | +42 Azure Files issues (SMB connectivity/performance/auth/NFS/File Sync) + 2 guide drafts from 8 mslearn pages | files-troubleshoot-smb-connectivity, files-troubleshoot-performance, files-troubleshoot-smb-authentication, files-troubleshoot-linux-smb, files-troubleshoot-linux-nfs, files-client-other-errors, file-sync-troubleshoot, file-sync-troubleshoot-installation |

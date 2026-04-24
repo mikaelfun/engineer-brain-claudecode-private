@@ -19,7 +19,7 @@ export interface CaseStepQuestion {
 }
 
 export interface CaseStepMessage {
-  kind: 'started' | 'thinking' | 'tool-call' | 'tool-result' | 'completed' | 'error' | 'question' | 'agent-started' | 'agent-progress' | 'agent-completed'
+  kind: 'started' | 'thinking' | 'response' | 'tool-call' | 'tool-result' | 'completed' | 'error' | 'question' | 'agent-started' | 'agent-progress' | 'agent-completed'
   content?: string
   toolName?: string
   step?: string

@@ -1,0 +1,11 @@
+{
+  "id": "ISS-246",
+  "title": "Case email draft 编辑后点击保存无法生效",
+  "description": "Dashboard Case Detail 页面的 email draft 编辑功能：用户修改草稿内容后点击保存按钮，修改未能持久化。需排查前端保存逻辑（API 调用）和后端写入逻辑是否正确。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "done",
+  "testLoopScan": true,
+  "createdAt": "2026-04-23T23:20:00+08:00",
+  "updatedAt": "2026-04-23T23:30:00+08:00"
+}

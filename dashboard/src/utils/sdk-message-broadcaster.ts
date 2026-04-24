@@ -8,6 +8,7 @@
 import { sseManager } from '../watcher/sse-manager.js'
 import { appendSessionMessage } from '../agent/case-session-manager.js'
 import { getSSEEventType, formatMessageForSSE, getPersistedMessageType, parseAssistantBlocks } from './sse-helpers.js'
+import { config } from '../config.js'
 import type { ToolCallRecord } from '../types/index.js'
 
 /**
@@ -16,17 +17,18 @@ import type { ToolCallRecord } from '../types/index.js'
  */
 export function summarizeToolInput(toolName: string, input: any): string {
   if (!input || typeof input !== 'object') return ''
+  const maxLen = config.sseLimits.toolCallContentMaxLen
   try {
-    if (toolName === 'Bash' && input.command) return input.command
+    if (toolName === 'Bash' && input.command) return input.command.slice(0, maxLen)
     if (['Read', 'Write', 'Edit'].includes(toolName) && input.file_path) return input.file_path
     if (toolName === 'Glob' && input.pattern) return input.pattern
     if (toolName === 'Grep' && input.pattern) return `/${input.pattern}/` + (input.path ? ` in ${input.path}` : '')
-    if (toolName === 'Agent' && input.prompt) return input.prompt
+    if (toolName === 'Agent' && input.prompt) return input.prompt.slice(0, maxLen)
     if (input.url) return input.url
     if (input.query) return input.query
     for (const key of Object.keys(input)) {
       if (typeof input[key] === 'string' && input[key].length > 0) {
-        return `${key}: ${input[key]}`
+        return `${key}: ${input[key].slice(0, maxLen)}`
       }
     }
   } catch { /* ignore */ }
@@ -153,12 +155,15 @@ export async function broadcastSDKMessages(
             })
           } else {
             // 'response' or 'thinking'
+            const maxContentLen = parsed.kind === 'thinking'
+              ? config.sseLimits.thinkingMaxLen
+              : config.sseLimits.responseMaxLen
             sseManager.broadcast('case-step-progress' as any, {
               caseNumber,
               sessionId: capturedSessionId,
               step: stepName,
               kind: parsed.kind,
-              content: parsed.content,
+              content: parsed.content.slice(0, maxContentLen),
               timestamp: ts,
             })
             appendSessionMessage(caseNumber, {
@@ -183,10 +188,11 @@ export async function broadcastSDKMessages(
         const errText = typeof message.content === 'string' ? message.content : ''
         if (errText) lastCall.error = errText
       }
+      const maxToolResult = config.sseLimits.toolResultMaxLen
       const resultContent = typeof message.content === 'string'
-        ? message.content
+        ? message.content.slice(0, maxToolResult)
         : typeof message.text === 'string'
-          ? message.text
+          ? message.text.slice(0, maxToolResult)
           : ''
       if (resultContent) {
         messageCount++

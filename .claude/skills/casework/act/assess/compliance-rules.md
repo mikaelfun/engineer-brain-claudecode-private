@@ -55,6 +55,7 @@ assess Step 2 compliance re-infer 时按需读取本文件。cache-hit 时不读
 ## 4. SAP 三层检查
 
 读 `{dataRoot}/sap-scope.json`：
+- **归一化**：比较前先将 SAP 路径中的 `\` 替换为 `/`（D365 有时用反斜杠）
 - 4.5a Mooncake 路径检测 → sapMooncake
 - 4.5b Pod 负责范围检测 → sapInPod
 - 4.5c SAP 与问题描述一致性（match-sap 脚本化）→ sapMismatch + suggestedSap

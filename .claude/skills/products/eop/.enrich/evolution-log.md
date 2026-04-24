@@ -230,3 +230,4 @@
 - 无新增 work items
 - lastRefreshed 已更新
 - **exhausted: true**
+| 2026-04-24 | SYNTHESIZE | Phase 2.5 + §5: generated _index.search.jsonl (37 topics), updated _index.md format |

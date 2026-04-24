@@ -8,10 +8,39 @@
  *
  * Used by recovery APIs to rebuild frontend stores after page refresh / backend restart.
  */
+
+/**
+ * Infer real agent purpose from SDK's generic 'local_agent' task_type.
+ * SDK Agent tool always reports task_type as 'local_agent';
+ * the actual purpose is encoded in the description field (3-5 word task summary).
+ */
+export function inferAgentType(taskType: string, description?: string): string {
+  if (taskType && taskType !== 'local_agent' && taskType !== 'unknown') return taskType
+  if (!description) return taskType || 'unknown'
+
+  const desc = String(description).toLowerCase()
+  if (desc.includes('casework') || desc.includes('case processing') || desc.includes('full process')) return 'casework'
+  if (desc.includes('troubleshoot')) return 'troubleshooter'
+  if (desc.includes('phase2') || desc.includes('phase 2')) return 'phase2'
+  if (desc.includes('email') || desc.includes('draft')) return 'email-drafter'
+  if (desc.includes('challenge') || desc.includes('review')) return 'challenger'
+  if (desc.includes('reassess')) return 'reassess'
+  if (desc.includes('summarize') || desc.includes('summary')) return 'summarize'
+  if (desc.includes('data-refresh') || desc.includes('refresh')) return 'data-refresh'
+  if (desc.includes('patrol')) return 'patrol'
+  if (desc.includes('note-gap') || desc.includes('notegap')) return 'note-gap'
+  if (desc.includes('labor')) return 'labor'
+  if (desc.includes('onenote')) return 'onenote'
+  if (desc.includes('teams')) return 'teams-search'
+  // Fallback: use first 2-3 meaningful words from description
+  const words = desc.replace(/[^a-z0-9\s-]/g, '').trim().split(/\s+/).slice(0, 3).join('-')
+  return words || taskType || 'agent'
+}
 import { existsSync, readFileSync, readdirSync } from 'fs'
 import { join } from 'path'
 import { parseAssistantBlocks } from './sse-helpers.js'
 import { summarizeToolInput } from './sdk-message-broadcaster.js'
+import { config } from '../config.js'
 
 // ---- Output types ----
 
@@ -79,7 +108,7 @@ export function parseSessionLog(sessionJsonlPath: string, agentsDir?: string): R
     // ---- Sub-agent lifecycle events ----
     if (subtype === 'task_started') {
       const taskId = msg.task_id as string
-      const agentType = msg.task_type || 'unknown'
+      const agentType = inferAgentType(msg.task_type as string, msg.description as string)
       const prompt = (msg.prompt || msg.description || '') as string
       const caseMatch = prompt.match(/(?:Case\s+|case\s+|\/active\/|caseNumber[:\s]+)(\d{10,})/i)
 
@@ -156,7 +185,7 @@ export function parseSessionLog(sessionJsonlPath: string, agentsDir?: string): R
           } else {
             result.mainMessages.push({
               type: parsed.kind === 'response' ? 'response' : 'thinking',
-              content: parsed.content?.slice(0, 800) || '',
+              content: parsed.content?.slice(0, config.sseLimits.thinkingMaxLen) || '',
               timestamp: ts,
             })
           }
@@ -168,10 +197,11 @@ export function parseSessionLog(sessionJsonlPath: string, agentsDir?: string): R
     if (msg.type === 'user' && Array.isArray(msg.message?.content)) {
       for (const block of msg.message.content) {
         if (block.type === 'tool_result') {
+          const maxToolResult = config.sseLimits.toolResultMaxLen
           const resultContent = typeof block.content === 'string'
-            ? block.content.slice(0, 500)
+            ? block.content.slice(0, maxToolResult)
             : Array.isArray(block.content)
-              ? block.content.map((b: any) => b.text || '').join('').slice(0, 500)
+              ? block.content.map((b: any) => b.text || '').join('').slice(0, maxToolResult)
               : ''
           if (resultContent) {
             result.mainMessages.push({
@@ -186,10 +216,11 @@ export function parseSessionLog(sessionJsonlPath: string, agentsDir?: string): R
 
     // Legacy: standalone tool_result messages (older SDK format)
     if (msg.type === 'tool_result') {
+      const maxToolResult = config.sseLimits.toolResultMaxLen
       const resultContent = typeof msg.content === 'string'
-        ? msg.content.slice(0, 500)
+        ? msg.content.slice(0, maxToolResult)
         : typeof msg.text === 'string'
-          ? msg.text.slice(0, 500)
+          ? msg.text.slice(0, maxToolResult)
           : ''
       if (resultContent) {
         result.mainMessages.push({

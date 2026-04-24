@@ -10,6 +10,7 @@
  * section with a step header showing name + status.
  */
 import { useState, useMemo, useEffect } from 'react'
+import MarkdownContent from '../common/MarkdownContent'
 import {
   Sparkles, Send, CheckCircle2, Loader2, Wrench, Brain,
   AlertCircle, ChevronRight, ChevronDown, Clock, Play
@@ -552,9 +553,17 @@ export function MessageBubble({ message, compact }: { message: { type: string; c
         )}
       </div>
       {displayContent && (
-        <p className={`text-sm mt-0.5 ml-5 leading-relaxed break-words whitespace-pre-wrap ${compact ? 'line-clamp-3' : ''}`} style={{ color: 'var(--text-secondary)' }}>
-          {displayContent}
-        </p>
+        // Use Markdown rendering for response/completed messages (may contain tables, lists, etc.)
+        // Use plain text for thinking/tool messages (raw data, no formatting needed)
+        message.type === 'response' || message.type === 'completed' ? (
+          <div className={`mt-0.5 ml-5 text-xs ${compact ? 'line-clamp-3' : ''}`} style={{ color: 'var(--text-secondary)' }}>
+            <MarkdownContent className="text-xs">{displayContent}</MarkdownContent>
+          </div>
+        ) : (
+          <p className={`text-xs mt-0.5 ml-5 leading-relaxed break-words whitespace-pre-wrap ${compact ? 'line-clamp-3' : ''}`} style={{ color: 'var(--text-secondary)' }}>
+            {displayContent}
+          </p>
+        )
       )}
     </div>
   )

@@ -206,13 +206,9 @@ EP_DIR=$(bash .claude/skills/casework/scripts/resolve-run-path.sh "{caseDir}" ".
 cp "{caseDir}/.casework/reassess-decision.json" "$EP_DIR/reassess-decision.json" 2>/dev/null || true
 ```
 
-### Step 6. 更新 state + Completion signal
+### Step 6. Completion signal
 
 ```bash
-python3 .claude/skills/casework/scripts/update-state.py \
-  --case-dir "{caseDir}" --step reassess --status completed \
-  --case-number "{caseNumber}"
-
 echo "REASSESS_OK|conclusion={conclusion_type}|actions={N}|elapsed=${SECONDS}s"
 ```
 

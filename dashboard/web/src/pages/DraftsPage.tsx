@@ -2,10 +2,11 @@
  * DraftsPage — 邮件草稿审批页
  */
 import { useState } from 'react'
-import { ChevronDown, ChevronRight, Copy, Check, Pencil, X, Save } from 'lucide-react'
+import { ChevronDown, ChevronRight, Copy, Check, Pencil, X, Save, Mail } from 'lucide-react'
 import { Card } from '../components/common/Card'
 import { Loading, EmptyState } from '../components/common/Loading'
 import { useDrafts } from '../api/hooks'
+import { apiPut, apiPost } from '../api/client'
 import MarkdownContent from '../components/common/MarkdownContent'
 import { useNavigate } from 'react-router-dom'
 
@@ -29,6 +30,8 @@ function DraftCard({ draft, showCaseNumber = false }: { draft: any; showCaseNumb
   const [copied, setCopied] = useState(false)
   const [editing, setEditing] = useState(false)
   const [editContent, setEditContent] = useState('')
+  const [outlookStatus, setOutlookStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
+  const [outlookLink, setOutlookLink] = useState<string | null>(null)
 
   const cleanContent = stripFrontmatter(draft.content?.replace(/\n{3,}/g, '\n\n') || '')
 
@@ -54,15 +57,9 @@ function DraftCard({ draft, showCaseNumber = false }: { draft: any; showCaseNumb
   const handleSave = async (e: React.MouseEvent) => {
     e.stopPropagation()
     try {
-      const res = await fetch(`/api/drafts/${draft.caseNumber}/${draft.filename}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: editContent }),
-      })
-      if (res.ok) {
-        draft.content = editContent
-        setEditing(false)
-      }
+      await apiPut(`/drafts/${draft.caseNumber}/${draft.filename}`, { content: editContent })
+      draft.content = editContent
+      setEditing(false)
     } catch { /* ignore */ }
   }
 
@@ -70,6 +67,25 @@ function DraftCard({ draft, showCaseNumber = false }: { draft: any; showCaseNumb
     e.stopPropagation()
     setEditing(false)
     setEditContent('')
+  }
+
+  const handleCreateOutlookDraft = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setOutlookStatus('loading')
+    try {
+      const data = await apiPost<{ ok?: boolean; webLink?: string }>(`/drafts/${draft.caseNumber}/${draft.filename}/create-outlook-draft`, {})
+      if (data.ok && data.webLink) {
+        setOutlookStatus('done')
+        setOutlookLink(data.webLink)
+        setTimeout(() => setOutlookStatus('idle'), 5000)
+      } else {
+        setOutlookStatus('error')
+        setTimeout(() => setOutlookStatus('idle'), 3000)
+      }
+    } catch {
+      setOutlookStatus('error')
+      setTimeout(() => setOutlookStatus('idle'), 3000)
+    }
   }
 
   return (
@@ -116,6 +132,38 @@ function DraftCard({ draft, showCaseNumber = false }: { draft: any; showCaseNumb
             {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
             {copied ? 'Copied!' : 'Copy'}
           </button>
+          <button
+            onClick={handleCreateOutlookDraft}
+            disabled={outlookStatus === 'loading'}
+            className="flex items-center gap-1 px-2 py-1 text-xs rounded transition-colors"
+            style={{
+              color: outlookStatus === 'done' ? 'var(--accent-green)'
+                   : outlookStatus === 'error' ? 'var(--accent-red)'
+                   : outlookStatus === 'loading' ? 'var(--accent-blue)'
+                   : 'var(--text-tertiary)',
+              background: outlookStatus === 'done' ? 'var(--accent-green-dim)' : undefined,
+              opacity: outlookStatus === 'loading' ? 0.6 : 1,
+            }}
+            title="Create reply draft in Outlook"
+          >
+            <Mail className="w-3 h-3" />
+            {outlookStatus === 'loading' ? 'Creating...'
+             : outlookStatus === 'done' ? 'Created!'
+             : outlookStatus === 'error' ? 'Failed'
+             : 'Outlook'}
+          </button>
+          {outlookLink && outlookStatus === 'done' && (
+            <a
+              href={outlookLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="text-xs underline"
+              style={{ color: 'var(--accent-blue)' }}
+            >
+              Open
+            </a>
+          )}
           <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
             {new Date(draft.createdAt).toLocaleString()}
           </span>

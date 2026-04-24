@@ -87,12 +87,13 @@ function deriveInitSubSteps(store: {
   warmupStatus?: string
   archivedCount?: number
   transferredCount?: number
+  phaseTimings?: Record<string, number>
 }): SubStep[] {
   const parentDone = store.phase !== 'initializing' && store.phase !== 'idle'
   const isInit = store.phase === 'initializing'
+  const t = store.phaseTimings || {}
 
-  // Heuristic: determine which sub-step we're at based on available data
-  // Data flows sequentially: SDK→Config→Mutex→D365→Filter→Warmup
+  // Data availability heuristics
   const hasD365 = store.totalFound !== undefined
   const hasFilter = store.changedCases > 0 || store.skippedCount !== undefined || store.archivedCount !== undefined
   const hasWarmup = store.warmupStatus !== undefined
@@ -104,66 +105,45 @@ function deriveInitSubSteps(store: {
     return 'pending'
   }
 
-  // SDK Session — done once we have any other data or if currentAction indicates past it
-  const sdkDone = hasD365 || hasFilter || hasWarmup || (isInit && store.currentAction && !store.currentAction.includes('SDK') && !store.currentAction.includes('Launch'))
-  const sdkActive = isInit && !sdkDone
-
-  // Config — we don't have explicit tracking for this, treat as done once SDK is done
-  const configDone = sdkDone
-  const configActive = false // too brief to show as active
-
-  // Mutex — same as config, too brief
-  const mutexDone = sdkDone
-  const mutexActive = false
-
-  // D365 Query
-  const d365Done = hasFilter || hasWarmup || (hasD365 && !isInit) || (hasD365 && hasFilter)
+  // D365 Query — covers starting + discovering phases
+  const d365Done = hasFilter || hasWarmup || (hasD365 && !isInit)
   const d365Active = isInit && hasD365 && !hasFilter && !hasWarmup
+  const d365Ms = (t['starting'] || 0) + (t['discovering'] || 0)
 
-  // Filter
-  const filterDone = hasWarmup || (hasFilter && store.phase !== 'initializing') || (hasFilter && hasWarmup)
+  // Filter & Archive
+  const filterDone = hasWarmup || (hasFilter && !isInit)
   const filterActive = isInit && hasFilter && !hasWarmup
+  const filterMs = t['filtering'] || 0
 
-  // Warmup
+  // Token Warmup
   const warmupDone = parentDone
   const warmupActive = isInit && hasWarmup && !parentDone
+  const warmupMs = t['warming-up'] || 0
 
   const steps: SubStep[] = [
-    {
-      id: 'sdk-session',
-      label: 'SDK Session',
-      status: subStatus(!!sdkDone, sdkActive),
-      detail: sdkActive ? 'Launching\u2026' : undefined,
-    },
-    {
-      id: 'load-config',
-      label: 'Load Config',
-      status: subStatus(!!configDone, configActive),
-      detail: configDone ? 'skill + script' : undefined,
-    },
-    {
-      id: 'mutex-check',
-      label: 'Mutex Check',
-      status: subStatus(!!mutexDone, mutexActive),
-      detail: mutexDone ? 'ok' : undefined,
-    },
     {
       id: 'd365-query',
       label: 'D365 Query',
       status: subStatus(!!d365Done, d365Active),
-      detail: store.totalFound !== undefined ? `${store.totalFound} found` : (d365Active ? 'Querying\u2026' : undefined),
+      detail: store.totalFound !== undefined
+        ? `${store.totalFound} found${d365Ms ? ' · ' + formatDuration(d365Ms) : ''}`
+        : (d365Active ? 'Querying\u2026' : undefined),
     },
     {
       id: 'filter-archive',
       label: 'Filter & Archive',
       status: subStatus(!!filterDone, filterActive),
-      detail: hasFilter ? buildFilterDetail(store) : (filterActive ? 'Checking\u2026' : undefined),
+      detail: hasFilter
+        ? buildFilterDetail(store) + (filterMs ? ' · ' + formatDuration(filterMs) : '')
+        : (filterActive ? 'Checking\u2026' : undefined),
     },
     {
       id: 'token-warmup',
       label: 'Token Warmup',
       status: subStatus(!!warmupDone, warmupActive),
-      detail: hasWarmup ? friendlyWarmupStatus(store.warmupStatus) : undefined,
+      detail: hasWarmup
+        ? friendlyWarmupStatus(store.warmupStatus) + (warmupMs ? ' · ' + formatDuration(warmupMs) : '')
+        : undefined,
     },
   ]
   return steps
@@ -176,9 +156,9 @@ function buildFilterDetail(store: {
   transferredCount?: number
 }): string {
   const parts: string[] = [`${store.changedCases} proc`]
-  if (store.skippedCount && store.skippedCount > 0) parts.push(`${store.skippedCount} skip`)
-  if (store.archivedCount && store.archivedCount > 0) parts.push(`${store.archivedCount} arch`)
-  if (store.transferredCount && store.transferredCount > 0) parts.push(`${store.transferredCount} xfer`)
+  if (store.skippedCount !== undefined) parts.push(`${store.skippedCount} skip`)
+  if (store.archivedCount !== undefined) parts.push(`${store.archivedCount} arch`)
+  if (store.transferredCount !== undefined) parts.push(`${store.transferredCount} xfer`)
   return parts.join(' \u00b7 ')
 }
 
@@ -210,12 +190,12 @@ function ParentStage({
   children: React.ReactNode
 }) {
   return (
-    <div style={{ marginBottom: 2 }}>
+    <div style={{ marginBottom: 6 }}>
       {/* Parent header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0' }}>
         <div
           style={{
-            width: 28, height: 28, borderRadius: '50%',
+            width: 30, height: 30, borderRadius: '50%',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0,
             ...(status === 'completed' ? { background: 'var(--accent-green)', color: 'white' } :
@@ -230,7 +210,7 @@ function ParentStage({
         </div>
 
         <div style={{
-          fontSize: 14, fontWeight: 800, flex: 1,
+          fontSize: 15, fontWeight: 800, flex: 1, letterSpacing: '0.3px',
           color: status === 'completed' ? 'var(--accent-green)' : status === 'active' ? 'var(--accent-blue)' : 'var(--text-tertiary)',
           opacity: status === 'pending' ? 0.4 : 1,
         }}>
@@ -239,13 +219,13 @@ function ParentStage({
 
         {/* Right: duration or counter */}
         {rightLabel ? (
-          <span className="font-mono text-[11px]" style={{ color: status === 'active' ? 'var(--accent-blue)' : 'var(--text-tertiary)' }}>
+          <span className="font-mono text-[12px] font-bold" style={{ color: status === 'active' ? 'var(--accent-blue)' : 'var(--text-tertiary)' }}>
             {rightLabel}
           </span>
         ) : liveStartedAt ? (
           <LiveTimer startedAt={liveStartedAt} />
         ) : durationMs !== undefined ? (
-          <span className="font-mono text-[11px]" style={{ color: 'var(--text-tertiary)' }}>
+          <span className="font-mono text-[12px]" style={{ color: 'var(--text-tertiary)' }}>
             {formatDuration(durationMs)}
           </span>
         ) : null}
@@ -253,12 +233,12 @@ function ParentStage({
 
       {/* Sub-steps */}
       <div style={{
-        marginLeft: 14,
-        paddingLeft: 16,
-        paddingBottom: 4,
+        marginLeft: 15,
+        paddingLeft: 18,
+        paddingBottom: 6,
         borderLeft: `2px solid ${
-          status === 'completed' ? 'rgba(22,163,74,0.2)' :
-          status === 'active' ? 'rgba(106,95,193,0.2)' :
+          status === 'completed' ? 'rgba(22,163,74,0.15)' :
+          status === 'active' ? 'rgba(106,95,193,0.15)' :
           'var(--border-subtle)'
         }`,
         opacity: status === 'pending' ? 0.35 : 1,
@@ -273,7 +253,7 @@ function ParentStage({
 
 function SubStepRow({ step }: { step: SubStep }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0' }}>
       <div style={{
         width: 7, height: 7, borderRadius: '50%', flexShrink: 0,
         ...(step.status === 'completed' ? { background: 'var(--accent-green)' } :
@@ -281,11 +261,9 @@ function SubStepRow({ step }: { step: SubStep }) {
           { background: 'var(--border-default)', opacity: 0.35 }),
       }} />
       <span style={{
-        fontSize: 11, fontWeight: 600,
-        color: step.status === 'completed' ? 'var(--accent-green)' :
-          step.status === 'active' ? 'var(--accent-blue)' :
-          'var(--text-tertiary)',
-        opacity: step.status === 'pending' ? 0.45 : 1,
+        fontSize: 12, fontWeight: 600,
+        color: step.status === 'active' ? 'var(--accent-blue)' : 'var(--text-primary)',
+        opacity: step.status === 'pending' ? 0.45 : step.status === 'completed' ? 0.7 : 1,
       }}>
         {step.label}
       </span>
@@ -304,44 +282,74 @@ function AgentRow({ agent }: { agent: PatrolAgent }) {
   const isRunning = agent.status === 'running'
   const isDone = agent.status === 'completed'
 
+  // Derive agent type label from description
+  const agentType = agent.description
+    ? agent.description.replace(/^Casework patrol\b/i, 'casework').replace(/^Casework phase2\b/i, 'phase2').split(' ')[0]
+    : undefined
+
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: 10,
-      padding: '7px 10px', margin: '3px 0', borderRadius: 8,
+      padding: '10px 12px', margin: '4px 0', borderRadius: 10,
+      overflow: 'hidden',
       background: isRunning ? 'rgba(106,95,193,0.04)' : 'var(--bg-surface)',
       border: `1px solid ${isRunning ? 'rgba(106,95,193,0.22)' : 'var(--border-subtle)'}`,
       opacity: isDone ? 0.65 : 1,
     }}>
-      <div style={{
-        width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
-        background: isDone ? 'var(--accent-green)' : isRunning ? 'var(--accent-blue)' : 'var(--border-default)',
-        ...(isRunning ? { animation: 'sidebar-pulse 2s ease-in-out infinite' } : {}),
-      }} />
-      <span style={{
-        fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
-        fontSize: 11, fontWeight: 700,
-        color: isDone ? 'var(--accent-green)' : isRunning ? 'var(--accent-blue)' : 'var(--text-tertiary)',
-      }}>
-        {agent.caseNumber || agent.taskId.slice(0, 8)}
-      </span>
-      {isRunning && agent.lastToolName && (
+      {/* Row 1: status dot + agent type + duration */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+        <div style={{
+          width: 7, height: 7, borderRadius: '50%', flexShrink: 0,
+          background: isDone ? 'var(--accent-green)' : isRunning ? 'var(--accent-blue)' : 'var(--border-default)',
+          ...(isRunning ? { animation: 'sidebar-pulse 2s ease-in-out infinite' } : {}),
+        }} />
+        {agentType && (
+          <span style={{
+            fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3px',
+            color: isDone ? 'var(--accent-green)' : isRunning ? 'var(--accent-blue)' : 'var(--text-tertiary)',
+          }}>
+            {agentType}
+          </span>
+        )}
+        {agent.usage?.duration_ms !== undefined && (
+          <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: 'var(--text-tertiary)', flexShrink: 0, marginLeft: 'auto', whiteSpace: 'nowrap' }}>
+            {formatDuration(agent.usage.duration_ms)}
+          </span>
+        )}
+      </div>
+      {/* Row 2: case number */}
+      <div style={{ marginTop: 3, marginLeft: 15 }}>
         <span style={{
-          fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3px',
-          padding: '2px 8px', borderRadius: 6,
-          background: 'var(--accent-blue-dim)', color: 'var(--accent-blue)',
+          fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
+          fontSize: 11, fontWeight: 600,
+          color: isDone ? 'rgba(22,163,74,0.7)' : isRunning ? 'rgba(106,95,193,0.7)' : 'var(--text-tertiary)',
         }}>
-          \u27F3 {agent.lastToolName}
+          {agent.caseNumber || agent.taskId.slice(0, 8)}
         </span>
-      )}
-      {isDone && agent.summary && (
-        <span style={{ fontSize: 10, color: 'var(--text-secondary)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', opacity: 0.6 }}>
+      </div>
+      {/* Row 2: last response summary (running or done) */}
+      {agent.summary && (
+        <div style={{
+          marginTop: 4, marginLeft: 15, fontSize: 10, lineHeight: 1.4,
+          color: isRunning ? 'var(--text-secondary)' : 'var(--text-secondary)',
+          opacity: isDone ? 0.6 : 0.8,
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
           {agent.summary}
-        </span>
+        </div>
       )}
-      {agent.usage?.duration_ms !== undefined && (
-        <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: 'var(--text-tertiary)', flexShrink: 0 }}>
-          {formatDuration(agent.usage.duration_ms)}
-        </span>
+      {/* Row 3: current tool (only when running) */}
+      {isRunning && agent.lastToolName && (
+        <div style={{ marginTop: 3, marginLeft: 15, display: 'flex', alignItems: 'center', gap: 4 }}>
+          <svg width="10" height="10" viewBox="0 0 16 16" style={{ animation: 'agent-spin 1.5s linear infinite', flexShrink: 0 }}>
+            <path d="M8 1a7 7 0 1 0 7 7" stroke="var(--accent-blue)" strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.6" />
+          </svg>
+          <span style={{
+            fontSize: 9, fontWeight: 600, letterSpacing: '0.3px',
+            color: 'var(--accent-blue)', opacity: 0.7,
+          }}>
+            {agent.lastToolName}
+          </span>
+        </div>
       )}
     </div>
   )
@@ -373,10 +381,11 @@ export default function PatrolSidebar() {
   const processStatus = deriveStageStatus(phase, 'processing')
   const finalizeStatus = deriveStageStatus(phase, 'finalizing')
 
-  // Initialize sub-steps
+  // Initialize sub-steps (consuming phaseTimings for real durations)
   const initSubSteps = deriveInitSubSteps({
     phase, currentAction, totalFound, changedCases,
     skippedCount, warmupStatus, archivedCount, transferredCount,
+    phaseTimings,
   })
 
   // Initialize total duration: sum of old phase timings that map to "initializing"
@@ -392,11 +401,35 @@ export default function PatrolSidebar() {
   )
   const casesInAgents = new Set(sortedAgents.map(a => a.caseNumber).filter(Boolean))
 
-  // Finalize sub-steps
+  // Finalize: parse currentAction for structured display
+  // Only use currentAction if it contains finalize-specific keywords (orphan/aggregat/cleanup)
+  // Otherwise it's a stale value from processing phase
+  let finalizeDetail: string | undefined
+  if (finalizeStatus === 'completed' || finalizeStatus === 'active') {
+    const isFinalizeAction = currentAction && (
+      /orphan/i.test(currentAction) || /aggregat/i.test(currentAction) || /cleanup/i.test(currentAction)
+    )
+    if (isFinalizeAction) {
+      const orphanMatch = currentAction!.match(/Killed (\d+) orphan/i)
+      const noOrphan = /No orphans/i.test(currentAction!)
+      const aggMatch = currentAction!.match(/(\d+\/\d+).*aggregat/i)
+      const parts: string[] = []
+      if (orphanMatch) parts.push(`${orphanMatch[1]} orphans killed`)
+      else if (noOrphan) parts.push('0 orphans')
+      if (aggMatch) parts.push(`${aggMatch[1]} cases`)
+      finalizeDetail = parts.length > 0 ? parts.join(' · ') : undefined
+    }
+    if (!finalizeDetail) {
+      finalizeDetail = finalizeStatus === 'active' ? 'Cleaning up…' : `${processedCases} cases`
+    }
+  }
   const finalizeSubSteps: SubStep[] = [
-    { id: 'cleanup', label: 'Cleanup orphans', status: finalizeStatus === 'active' ? 'active' : finalizeStatus === 'completed' ? 'completed' : 'pending' },
-    { id: 'aggregate', label: 'Aggregate results', status: finalizeStatus === 'completed' ? 'completed' : 'pending' },
-    { id: 'write-state', label: 'Write state & unlock', status: finalizeStatus === 'completed' ? 'completed' : 'pending' },
+    {
+      id: 'cleanup-aggregate',
+      label: 'Cleanup & Write',
+      status: finalizeStatus,
+      detail: finalizeDetail,
+    },
   ]
 
   return (
@@ -453,6 +486,10 @@ export default function PatrolSidebar() {
         @keyframes sidebar-pulse {
           0%, 100% { opacity: 1; transform: scale(1); }
           50% { opacity: 0.5; transform: scale(0.7); }
+        }
+        @keyframes agent-spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
       `}</style>
     </Card>

@@ -17,13 +17,30 @@
       "pendingPages": 0
     },
     "contentidea": {
-      "status": "scanning",
+      "status": "idle",
       "lastRefreshed": null,
       "pendingPages": 0
     }
   },
   "21vGapLastUpdated": null,
   "lastMerged": null,
-  "lastSynthesized": null,
-  "synthesizeState": {}
+  "lastSynthesized": "2026-04-24",
+  "synthesizeState": {
+    "lastSynthesizedAt": "2026-04-24",
+    "lastEntryCount": 386,
+    "synthesizedEntryIds": 386,
+    "topicPlanHash": "b786114ed4c5",
+    "draftHashes": {},
+    "kqlHashes": {},
+    "topicRegenLog": [
+      {
+        "topic": "_all",
+        "reasons": [
+          "Phase 2.5 + index generation (guides already existed, state bootstrap)"
+        ],
+        "at": "2026-04-24"
+      }
+    ],
+    "mode": "incremental"
+  }
 }

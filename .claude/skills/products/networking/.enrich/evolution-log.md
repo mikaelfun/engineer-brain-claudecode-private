@@ -449,3 +449,4 @@
 - Track B (guides): 8 drafts — BGP route propagation, gateway migration, auto-ICMs, S2S VPN config, debug ACL, classic deprovisioning, topology discovery, BFD troubleshooting
 - Skip: 0
 - Remaining unscanned: ~2311
+| 2026-04-24 | SYNTHESIZE | 22 topics, 386 entries, Phase 2.5 index + _index.md §5 format |

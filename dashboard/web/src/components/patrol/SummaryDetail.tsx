@@ -29,7 +29,7 @@ export default function SummaryDetail({ summarizeStep, durationMs }: SummaryDeta
       animation: 'detail-slide 0.2s ease-out',
     }}>
       <div style={{
-        fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
+        fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
         letterSpacing: '0.6px', color: 'var(--text-tertiary)', marginBottom: 10,
         display: 'flex', alignItems: 'center', gap: 6,
       }}>
@@ -38,11 +38,11 @@ export default function SummaryDetail({ summarizeStep, durationMs }: SummaryDeta
       </div>
 
       {isActive ? (
-        <div style={{ fontSize: 11, color: 'var(--accent-blue)', opacity: 0.7 }}>
+        <div style={{ fontSize: 12, color: 'var(--accent-blue)', opacity: 0.7 }}>
           Generating todo…
         </div>
       ) : (
-        <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+        <div style={{ fontSize: 12, lineHeight: 1.6, color: 'var(--text-secondary)' }}>
           {summarizeStep.result || 'Todo updated'}
         </div>
       )}

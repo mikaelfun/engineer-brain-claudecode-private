@@ -834,6 +834,31 @@ cases.get('/:id/attachments/:filename', (c) => {
   })
 })
 
+// GET /api/cases/:id/images — list available inline images (ISS-243)
+cases.get('/:id/images', (c) => {
+  const caseNumber = validateCaseNumber(c)
+  if (!caseNumber) return c.json({ error: 'Invalid case number' }, 400)
+  const caseDir = getCaseDir(caseNumber)
+  const imagesDir = join(caseDir, 'images')
+
+  if (!existsSync(imagesDir)) {
+    return c.json({ images: [], total: 0 })
+  }
+
+  try {
+    const files = readdirSync(imagesDir)
+      .filter((f: string) => /\.(png|jpe?g|gif|bmp|svg|webp)$/i.test(f))
+      .map((f: string) => {
+        const filePath = join(imagesDir, f)
+        const stat = statSync(filePath)
+        return { filename: f, size: stat.size, url: `/api/cases/${caseNumber}/images/${f}` }
+      })
+    return c.json({ images: files, total: files.length })
+  } catch {
+    return c.json({ images: [], total: 0 })
+  }
+})
+
 // GET /api/cases/:id/images/:filename — serve email inline images
 cases.get('/:id/images/:filename', (c) => {
   const caseNumber = validateCaseNumber(c)
@@ -878,7 +903,7 @@ cases.get('/:id/claims', (c) => {
   const caseNumber = validateCaseNumber(c)
   if (!caseNumber) return c.json({ error: 'Invalid case number' }, 400)
   const caseDir = getCaseDir(caseNumber)
-  const claimsPath = join(caseDir, 'claims.json')
+  const claimsPath = join(caseDir, '.casework', 'claims.json')
 
   if (!existsSync(claimsPath)) {
     return c.json({ claims: null })
@@ -955,6 +980,8 @@ cases.get('/:id/onenote', (c) => {
         scoredAt: string;
         format: string;
         keyInfo: string[];
+        codeBlocks?: string[];
+        screenshots?: string[];
         analyses: string[];
         actionItems: string[];
         lowRelevance: string[];
@@ -970,25 +997,52 @@ cases.get('/:id/onenote', (c) => {
           const lowCount = Object.values(pages).filter((p: any) => p.relevance !== 'high').length
           const format = relData._format || 'v1'
 
-          // Parse four-section digest from markdown content
+          // Parse digest sections from markdown content — match by keyword, not number
           const keyInfo: string[] = []
+          const codeBlocks: string[] = []
+          const screenshots: string[] = []
           const analyses: string[] = []
           const actionItems: string[] = []
           const lowRelevance: string[] = []
 
           let currentSection = ''
+          let inCodeFence = false
+          let codeAccumulator: string[] = []
           for (const line of content.split('\n')) {
-            // Detect section headers (v2 four-section format)
-            if (line.startsWith('## 1.') || line.startsWith('## 1、')) { currentSection = 'keyInfo'; continue }
-            if (line.startsWith('## 2.') || line.startsWith('## 2、')) { currentSection = 'analyses'; continue }
-            if (line.startsWith('## 3.') || line.startsWith('## 3、')) { currentSection = 'actionItems'; continue }
-            if (line.startsWith('## 4.') || line.startsWith('## 4、')) { currentSection = 'lowRelevance'; continue }
-            // Legacy v1 format fallback
-            if (line.startsWith('## Key Facts')) { currentSection = 'keyInfo'; continue }
-            if (line.startsWith('## Summary')) { currentSection = ''; continue }
-            if (line.startsWith('## Low-Relevance')) { currentSection = 'lowRelevance'; continue }
-            // Another ## resets section
-            if (line.startsWith('## ') && !line.startsWith('## ')) { currentSection = ''; continue }
+            // Track code fences (``` blocks) — collect content, don't parse headers inside
+            if (line.trim().startsWith('```')) {
+              if (inCodeFence) {
+                codeAccumulator.push(line)
+                if (currentSection === 'codeBlocks') {
+                  codeBlocks.push(codeAccumulator.join('\n'))
+                }
+                codeAccumulator = []
+                inCodeFence = false
+                continue
+              } else {
+                inCodeFence = true
+                codeAccumulator = [line]
+                continue
+              }
+            }
+            if (inCodeFence) {
+              codeAccumulator.push(line)
+              continue
+            }
+
+            // Detect section headers by keyword (handles dynamic numbering)
+            if (line.startsWith('## ')) {
+              if (line.includes('关键信息') || line.includes('Key Information')) { currentSection = 'keyInfo'; continue }
+              if (line.includes('相关代码') || line.includes('Code')) { currentSection = 'codeBlocks'; continue }
+              if (line.includes('相关截图') || line.includes('Screenshots')) { currentSection = 'screenshots'; continue }
+              if (line.includes('分析推断') || line.includes('Analysis')) { currentSection = 'analyses'; continue }
+              if (line.includes('行动计划') || line.includes('Action Plan')) { currentSection = 'actionItems'; continue }
+              if (line.includes('低价值') || line.includes('Low-Relevance')) { currentSection = 'lowRelevance'; continue }
+              // Legacy v1 fallback
+              if (line.startsWith('## Key Facts')) { currentSection = 'keyInfo'; continue }
+              if (line.startsWith('## Summary')) { currentSection = ''; continue }
+              currentSection = ''; continue
+            }
 
             const trimmed = line.trim()
             if (!trimmed || trimmed.startsWith('>')) continue
@@ -998,6 +1052,13 @@ cases.get('/:id/onenote', (c) => {
               // Accept: "- fact", "- [fact]", "**事实信息**:", "**问题描述**: ...", "### page-name", bold labels
               if (trimmed.startsWith('- ') || trimmed.startsWith('### ') || trimmed.startsWith('**')) {
                 keyInfo.push(trimmed)
+              }
+            } else if (currentSection === 'codeBlocks') {
+              // Non-fence lines in code section = description text
+              if (trimmed) codeBlocks.push(trimmed)
+            } else if (currentSection === 'screenshots') {
+              if (trimmed.startsWith('- ')) {
+                screenshots.push(trimmed.slice(2))
               }
             } else if (currentSection === 'analyses') {
               if (trimmed.startsWith('- ')) {
@@ -1018,6 +1079,8 @@ cases.get('/:id/onenote', (c) => {
             scoredAt: relData._scoredAt || '',
             format,
             keyInfo,
+            codeBlocks: codeBlocks.length > 0 ? codeBlocks : undefined,
+            screenshots: screenshots.length > 0 ? screenshots : undefined,
             analyses,
             actionItems,
             lowRelevance,

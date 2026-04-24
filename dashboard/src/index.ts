@@ -62,7 +62,7 @@ import { startAzProfileMonitor } from './services/az-profile-reader.js'
 import actionsRoutes from './routes/actions.js'
 import teamsWatchRoutes from './routes/teams-watch-routes.js'
 import { initSbaPatrolTrigger } from './services/sba-patrol-trigger.js'
-import { spawnDaemonWarmup } from './services/daemon-reader.js'
+import { spawnDaemonWarmup, readDaemonStatus } from './services/daemon-reader.js'
 
 const app = new Hono()
 
@@ -166,6 +166,24 @@ try {
 } catch (e) {
   console.warn('[startup] Token Daemon warmup failed (non-fatal):', e)
 }
+
+// Daemon Watchdog — auto-restart if heartbeat goes stale
+const DAEMON_WATCHDOG_INTERVAL_MS = 90_000 // 90s
+let lastWatchdogWarmup = 0
+setInterval(() => {
+  try {
+    const status = readDaemonStatus()
+    const now = Date.now()
+    // Auto-restart if: daemon dead or heartbeat stale, with 5min cooldown
+    if (!status.daemon.alive || !status.daemon.heartbeatFresh) {
+      if (now - lastWatchdogWarmup > 300_000) {
+        console.log('[daemon-watchdog] Heartbeat stale or daemon dead, spawning warmup...')
+        spawnDaemonWarmup()
+        lastWatchdogWarmup = now
+      }
+    }
+  } catch { /* ignore — daemon files may not exist */ }
+}, DAEMON_WATCHDOG_INTERVAL_MS)
 
 // Background: monitor az profile tokens every 15 min
 startAzProfileMonitor((profiles) => {

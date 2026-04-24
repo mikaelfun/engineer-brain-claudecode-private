@@ -210,6 +210,15 @@ export function useCaseAttachments(id: string) {
   })
 }
 
+// ISS-243: List inline images in case images/ directory
+export function useCaseImages(id: string) {
+  return useQuery({
+    queryKey: ['cases', id, 'images'],
+    queryFn: () => apiGet<{ images: Array<{ filename: string; size: number; url: string }>; total: number }>(`/cases/${id}/images`),
+    enabled: !!id,
+  })
+}
+
 export function useCaseClaims(id: string) {
   return useQuery({
     queryKey: ['cases', id, 'claims'],

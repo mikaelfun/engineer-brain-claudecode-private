@@ -1,33 +1,102 @@
 {
   "index": [
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - FXT and vFXT/Avere vFXT Quick Reference Sheet",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - FXT and vFXT/Main Links",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - FXT and vFXT/Rebooting a Cluster",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - FXT and vFXT/Rebooting a Node",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - FXT and vFXT/Restarting Services",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - FXT and vFXT/Scoping questions |  Client Access Issues",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - FXT and vFXT/Scoping questions | General",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - FXT and vFXT/Scoping questions | Performance",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - FXT and vFXT/Scoping questions | System Failure",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - FXT and vFXT/Troubleshooting/Avere CLI cmdlets",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - FXT and vFXT/Troubleshooting/Basic Connectivity Testing",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - FXT and vFXT/Troubleshooting/Basic Troobleshooting steps",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - FXT and vFXT/Troubleshooting/Hardware 6K Diagram",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - FXT and vFXT/Troubleshooting/How to get Logs and packet captures",
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - FXT and vFXT/Main Links",
+      "length": 2622
+    },
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - FXT and vFXT/Rebooting a Cluster",
+      "length": 0
+    },
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - FXT and vFXT/Rebooting a Node",
+      "length": 0
+    },
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - FXT and vFXT/Restarting Services",
+      "length": 0
+    },
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - FXT and vFXT/Scoping questions |  Client Access Issues",
+      "length": 720
+    },
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - FXT and vFXT/Scoping questions | General",
+      "length": 536
+    },
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - FXT and vFXT/Scoping questions | Performance",
+      "length": 896
+    },
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - FXT and vFXT/Scoping questions | System Failure",
+      "length": 925
+    },
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - FXT and vFXT/Troubleshooting/Avere CLI cmdlets",
+      "length": 1859
+    },
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - FXT and vFXT/Troubleshooting/Basic Connectivity Testing",
+      "length": 8480
+    },
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - FXT and vFXT/Troubleshooting/Basic Troobleshooting steps",
+      "length": 4680
+    },
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - FXT and vFXT/Troubleshooting/Hardware 6K Diagram",
+      "length": 474
+    },
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - FXT and vFXT/Troubleshooting/How to get Logs and packet captures",
+      "length": 2716
+    },
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - FXT and vFXT/Troubleshooting/RPC Slot Exhaustion - NFS",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - HPC Cache/HPC Quick Reference Sheet",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - HPC Cache/Kusto queries",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - HPC Cache/Support Operations - Collect Traces",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - HPC Cache/Support Operations - Get Cache PLus",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - HPC Cache/Support Operations - Reboot Cache",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - HPC Cache/Support Operations - Restart Services",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - HPC Cache/Top Customer Scenarios That Prompt Support Cases in DfM",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Container Storage Enabled by Azure Arc/ACSA LAB",
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - HPC Cache/Kusto queries",
+      "length": 4291
+    },
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - HPC Cache/Support Operations - Collect Traces",
+      "length": 1909
+    },
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - HPC Cache/Support Operations - Get Cache PLus",
+      "length": 4942
+    },
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - HPC Cache/Support Operations - Reboot Cache",
+      "length": 1748
+    },
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - HPC Cache/Support Operations - Restart Services",
+      "length": 1748
+    },
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - HPC Cache/Top Customer Scenarios That Prompt Support Cases in DfM",
+      "length": 1933
+    },
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Container Storage Enabled by Azure Arc/ACSA LAB",
+      "length": 0
+    },
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Container Storage Enabled by Azure Arc/Common errors Kubernetes",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Container Storage Enabled by Azure Arc/FAQ Frequenly asked questions",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Container Storage Enabled by Azure Arc/ICM template",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Container Storage Enabled by Azure Arc/Troubleshooting Guide",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Container Storage Enabled by Azure Arc/kuberneetes cmdltes",
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Container Storage Enabled by Azure Arc/ICM template",
+      "length": 0
+    },
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Container Storage Enabled by Azure Arc/Troubleshooting Guide",
+      "length": 1685
+    },
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Container Storage Enabled by Azure Arc/kuberneetes cmdltes",
+      "length": 703
+    },
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box Disk/Connect & Copy/Azure Databox Disk is not mounted or accessible after process is killed or system is restarted",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box Disk/Connect & Copy/How is data from the Azure Data Box Disk uploaded to a container in the storage account?",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box Disk/Connect & Copy/Unable to mount Azure Data Box Disk using Oracle Linux version 7.9",
@@ -37,16 +106,25 @@
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box Disk/Data Copy at Azure/Data Box disk showing as Internal Error in Azure Portal",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box Disk/Data Copy at Azure/Data Copy to Azure Files Completed with 'CompletedWithErrors' and-or 'BadRequest' Status",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box Disk/Device Return - Logistics/The customer has returned the device with another label and has not received any updates on Data Box Disk order",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box Disk/Disk Validation/Generic \"Access Denied\" Error When Using Data Box Disk Validation Tool",
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box Disk/Disk Validation/Generic \"Access Denied\" Error When Using Data Box Disk Validation Tool",
+      "length": 3770
+    },
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box Disk/Disk Validation/Subfolders created inside the AzureFile folder disappear on Azure Data Box Disk during Validation",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box Disk/Hardware & Unlock/\"Drive Formatted\" Error on Azure Data Box Disk",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box Disk/Hardware & Unlock/Error 'Power Surge On Hub Port: A USB device has exceeded the power limits of its hub port' During Data Copy for Azure Data Box Disk",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box Disk/Hardware & Unlock/The Media is Write Protected error on Azure Data Box Disk",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box Disk/Hardware & Unlock/Unlocking a Data Box Disk on Red Hat Linux (RHEL) 7.x host fails with an error saying that the passkey is wrong",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box Disk/Hardware & Unlock/Using USBTreeView tool to troubleshoot undetected disks or disks that cannot be unlocked",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box Disk/Management & How-To",
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box Disk/Management & How-To",
+      "length": 0
+    },
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box Disk/Ordering & Logistics/Data Box Disk FAQs",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box Gateway/Configure & Setup/Process to Expand Data Disk on Data Box Gateway",
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box Gateway/Configure & Setup/Process to Expand Data Disk on Data Box Gateway",
+      "length": 2739
+    },
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box Gateway/Connectivity & Performance/Data is not being uploaded to the Azure cloud on Data Box Gateway",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box Gateway/Connectivity & Performance/Getting Error 0x8007003A while copying files from Gateway share to local machine",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box Gateway/Connectivity & Performance/Identifying which files are on the Local Cache (VM Data Disk) of Data Box Gateway",
@@ -63,8 +141,14 @@
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Connect & Copy/Permission error when writing to Data Box via NFS",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Connect & Copy/Problem detecting NFS share on Data Box being used with Microsoft Recovery Services Vault",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Connect & Copy/SMB Password Reset on Azure Data Box Share",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Connect & Copy/Slow NFS Transfer Rate between Linux Servers and Data Box",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Connect & Copy/Unable to Access Data Box Local Web UI",
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Connect & Copy/Slow NFS Transfer Rate between Linux Servers and Data Box",
+      "length": 3664
+    },
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Connect & Copy/Unable to Access Data Box Local Web UI",
+      "length": 2724
+    },
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Connect & Copy/Unable to access data box share Permissions - NTLM configuration issues",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Connect & Copy/Unable to access folders and files on Data Box after preserving ACLs",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Connect & Copy/Unable to connect to the Databox SMB or NFS shares over the network",
@@ -73,7 +157,10 @@
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Connect & Copy/Unable to mount NFS share of Azure Data Box",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Data Copy Service/Data Copy Service Failure with Dell Isilon OS as Storage Source",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Data Copy Service/Files copied in an unknown format (ADB_PACK_*) when using the built-in Data Copy Service",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Data Copy Service/How to Erase Data on Data Box Pod from CLI (PowerShell Support Session)",
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Data Copy Service/How to Erase Data on Data Box Pod from CLI (PowerShell Support Session)",
+      "length": 3536
+    },
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Data Copy to Azure/Data Box copy not yet started",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Data Copy to Azure/Data Box device lost",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Data Copy to Azure/Data copied without errors from Databox but size seems different in Storage Account",
@@ -90,47 +177,101 @@
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Hardware/Hardware FAQ",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Hardware/No power cord shipped with Data Box",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Hardware/Unable to insert or remove SFP cable on Data Box",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Management and How-To/Connecting to a Support Session on a Data Box Device",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Management and How-To/How request a refund or waiver",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Management and How-To/How to create an IcM for Data Box",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Management and How-To/How to decrypt the password via ACIS to connect to Data Box Support Session",
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Management and How-To/Connecting to a Support Session on a Data Box Device",
+      "length": 7117
+    },
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Management and How-To/How request a refund or waiver",
+      "length": 3403
+    },
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Management and How-To/How to create an IcM for Data Box",
+      "length": 2100
+    },
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Management and How-To/How to decrypt the password via ACIS to connect to Data Box Support Session",
+      "length": 3188
+    },
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Management and How-To/Local UI Error Codes",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Management and How-To/Unable to download BOM Files",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Ordering - Logistics/Change Shipping Address",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Ordering - Logistics/Data Box order showing incorrect region",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Ordering - Logistics/Ordering FAQs",
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Ordering - Logistics/Ordering FAQs",
+      "length": 3607
+    },
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Ordering - Logistics/Shipping Data Box to different address",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Ordering - Logistics/The Data Box was not delivered on the expected date by courier service",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Prepare to Ship/'Prepare to Ship' Phases",
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Prepare to Ship/'Prepare to Ship' Phases",
+      "length": 1915
+    },
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Prepare to Ship/'Prepare to Ship' scan completed with errors",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Prepare to Ship/'Prepare to ship' process is stuck on Data Box",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Prepare to Ship/Customer needs new shipping label",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Prepare to Ship/Prepare to Ship Stuck with SE_METADATA_NOT_FOUND error",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Prepare to Ship/Unable to run prepare to ship due to 502 error on Local Web UI of Data Box",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Data Box/Prepare to Ship/Uploading shares that are larger than 5 TB to Data Box Share",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Import-Export Service/Copying A Managed Disk to an Azure Storage Account",
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Import-Export Service/Copying A Managed Disk to an Azure Storage Account",
+      "length": 2274
+    },
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Import-Export Service/Incorrect Files Sent to Customer for Export Job",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Import-Export Service/Unable to Create Import Job due to Journal File",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Root Cause Tree/Classifications Active Root Cause Classification - Dynamics 365",
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Root Cause Tree/Classifications Active Root Cause Classification - Dynamics 365",
+      "length": 1121
+    },
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Root Cause Tree/Request Access to Config Hub",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Activation Key/403 Error when Generating Activation Key",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Certificates/Subject Name Error with Self-Signed Certificates",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Device Return - Logistics/Return Process for Azure Stack Edge Devices",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/GPU - Compute/Disable Multi-Process Service MPS on Azure Stack Edge",
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Device Return - Logistics/Return Process for Azure Stack Edge Devices",
+      "length": 4029
+    },
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/GPU - Compute/Disable Multi-Process Service MPS on Azure Stack Edge",
+      "length": 1067
+    },
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Hardware/Data Disk and PSU Replacement",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Hardware/Monitor Hardware Temperature on Azure Stack Edge",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Hardware/Replacing an Azure Stack Edge Device",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Hardware/Reseating or Replacing a Data Drive on Azure Stack Edge Pro",
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Hardware/Replacing an Azure Stack Edge Device",
+      "length": 7918
+    },
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Hardware/Reseating or Replacing a Data Drive on Azure Stack Edge Pro",
+      "length": 848
+    },
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Identifying AP5GC Cases and Customers for Rerouting and Collaboration",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Kubernetes/Changing Memory Processor Limits for Kubernetes on Azure Stack Edge",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Kubernetes/Granting Kubernetes Admin Access on Azure Stack Edge",
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Kubernetes/Changing Memory Processor Limits for Kubernetes on Azure Stack Edge",
+      "length": 5549
+    },
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Kubernetes/Granting Kubernetes Admin Access on Azure Stack Edge",
+      "length": 4725
+    },
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Kubernetes/Increase K8 VM memory",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Kubernetes/Unable to access kubernetes dashboard",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Manage Device/Connecting to an Azure Stack Edge Device via BMC",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Manage Device/Elevated Support Session",
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Manage Device/Connecting to an Azure Stack Edge Device via BMC",
+      "length": 5009
+    },
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Manage Device/Elevated Support Session",
+      "length": 1822
+    },
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Manage Device/Finding the BIOS version of an Azure Stack Edge device",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Manage Device/Generating and Reading Performance Logs on Azure Stack Edge",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Manage Device/Move Azure Stack Edge Resource Between Azure Subscriptions",
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Manage Device/Generating and Reading Performance Logs on Azure Stack Edge",
+      "length": 2372
+    },
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Manage Device/Move Azure Stack Edge Resource Between Azure Subscriptions",
+      "length": 4715
+    },
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Manage Device/Recovering an Azure Stack Edge from the Bitlocker Recovery Screen (Local WebUI is Inaccessible)",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Manage Device/Unable to Access Local Web UI",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Manage Device/Using Az.StackEdge CMDlets",
@@ -143,20 +284,44 @@
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Storage Gateway/Unable to write Data to Azure Stack Edge due to Legal Hold on Storage Account",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Update Issues/Azure Stack Edge upgrade failing due to Cluster Virtual Disk (ClusterPerformanceHistory) resource down",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Virtual Machines/BlobDownloadFailed Error - Adding VHD Image times out after 40-50 minutes",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Virtual Machines/Collect VM Guest Logs",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Virtual Machines/Manually Installing GPU Drivers on RHEL VM",
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Virtual Machines/Collect VM Guest Logs",
+      "length": 1128
+    },
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Virtual Machines/Manually Installing GPU Drivers on RHEL VM",
+      "length": 2839
+    },
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Virtual Machines/ProvisioningTimeOut Error when deploying VM on Azure Stack Edge",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Virtual Machines/VM Fails to Boot Up after Resize",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Virtual Machines/Windows Server VM Stopping on its Own",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Web Proxy/Cannot Configure Proxy with NTLM Authetnication from Local WebUI",
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Stack Edge/Web Proxy/Unable to Apply Web Proxy",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Storage Devices Wiki/ASD Training Manual",
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Storage Devices Wiki/ASD Training Manual",
+      "length": 637
+    },
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Storage Devices Wiki/Common Misroutes",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Storage Devices Wiki/Getting Started",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Storage Devices Wiki/Wiki Tips",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/WebApps_training/Data capturing steps",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/WebApps_training/Dump Collection|Debug diag tool",
-    "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/WebApps_training/Initial Questions"
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Storage Devices Wiki/Getting Started",
+      "length": 1717
+    },
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Azure Storage Devices Wiki/Wiki Tips",
+      "length": 1084
+    },
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/WebApps_training/Data capturing steps",
+      "length": 10711
+    },
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/WebApps_training/Dump Collection|Debug diag tool",
+      "length": 644
+    },
+    {
+      "path": "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/WebApps_training/Initial Questions",
+      "length": 1515
+    }
   ],
   "scanned": [
     "Supportability/AzureStorageDevices/AzureStorageDevices.wiki:/Avere - FXT and vFXT/Avere vFXT Quick Reference Sheet",

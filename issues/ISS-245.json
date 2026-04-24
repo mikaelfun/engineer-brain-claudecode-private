@@ -1,0 +1,11 @@
+{
+  "id": "ISS-245",
+  "title": "Cron Job Sync Team OneNote 读取错误的 SKILL.md 路径",
+  "description": "Dashboard automation cron job 中 Sync Team OneNote 任务读取了错误的 SKILL.md 路径（C:\\Users\\fangkun\\.claude\\skills\\onenote\\SKILL.md），正确路径应为项目内的 C:\\Users\\fangkun\\Documents\\Projects\\EngineerBrain\\dev\\.claude\\skills\\onenote\\SKILL.md。同类型的另外两个 job 能读到正确路径，说明该 job 的 CWD 或路径解析有问题。可能是 cron job 创建时 CWD 未设置为项目根目录，导致相对路径 .claude/skills/ 解析到了用户 home 下的 .claude/ 目录。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "done",
+  "testLoopScan": true,
+  "createdAt": "2026-04-23T23:00:00+08:00",
+  "updatedAt": "2026-04-23T23:15:00+08:00"
+}

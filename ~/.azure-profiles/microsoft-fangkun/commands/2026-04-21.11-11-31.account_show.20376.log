@@ -1,0 +1,3 @@
+CMD-LOG-LINE-BEGIN 20376 | 2026-04-21 11:11:31,669 | INFO | az_command_data_logger | command args: account show -o {}
+CMD-LOG-LINE-BEGIN 20376 | 2026-04-21 11:11:32,065 | ERROR | az_command_data_logger | Please run 'az login' to setup account.
+CMD-LOG-LINE-BEGIN 20376 | 2026-04-21 11:11:32,065 | INFO | az_command_data_logger | exit code: 1

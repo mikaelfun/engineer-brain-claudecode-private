@@ -1004,3 +1004,6 @@
 - **Deduplicated**: 5 (wiki_migration copies of already-extracted MCVKB originals + refreshed pages with unchanged knowledge)
 - **No extractable content**: 4 (Lab guidance, support scope links, member schedule, customer monitoring note)
 - **Status**: exhausted (137/137 purview pages scanned)
+| 2026-04-21 | ado-wiki | +6 purview known issues (DG permissions, DGPU billing, data products, DQ errors) | Supportability/Azure Purview batch a-r19 |
+| 2026-04-23 | onenote | Scanned 1 page (Iridias alert registration), skipped as internal admin content | Mooncake POD/M365 Purview Compliance/Readiness |
+| 2026-04-24 | SYNTHESIZE | 42 topics (38 fusion, 4 compact), 643 entries, 0 Kusto queries fused |

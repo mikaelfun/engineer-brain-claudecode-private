@@ -336,3 +336,4 @@
 - **Coverage**: MDE, Windows Defender AV, WDAC, MDI, Sentinel-related Defender topics
 - **Key topics**: BSOD/bugchecks (WdFilter, MpDlp), deadlocks, CPU spikes, MAPS connectivity, DLP conflicts, ASR rules, false positives, onboarding issues
 - **Status**: exhausted=true (all 119 WIQL items scanned)
+| 2026-04-24 | SYNTHESIZE | 41 topics (40 fusion, 1 compact), 1109 entries, Phase 2.5 + S5 index generated |

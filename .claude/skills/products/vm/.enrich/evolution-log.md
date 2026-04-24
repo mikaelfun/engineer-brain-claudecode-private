@@ -709,3 +709,12 @@
 | 2026-04-20 | mslearn | +4 Track A entries (Win11 SKU compat, Win11 Trusted Launch req, unsupported WinServer roles, Win10 EOS/ESU), +2 Track B drafts (Win11 matrix, server software support), 5 skipped (log refs, policy, retirement) | batch 8 URLs |
 | 2026-04-20 | contentidea-kb | +0 VM known issues (batch 57664-59633), 10 empty skipped | ContentIdea WI |
 | 2026-04-20 | contentidea-kb | +2 VM known issues (batch 60799-68414) | ContentIdea WI |
+| 2026-04-21 | mslearn | Batch scan: 8 URLs processed (4 already had JSONL, 4 already had Track B drafts, 1 dedup skipped); reconciled scanned list | windows-vm-osupgradeassessment-tool, ms-azure-windows-eos, windows-vm-ipu-tool, windows-vm-wureset-tool, troubleshoot-recovery-disks-portal-windows, troubleshoot-recovery-disks-windows, repair-windows-vm-repair-commands, unmanaged-disk-offline-repair |
+| 2026-04-23 | onenote | +3 VM maintenance notification investigation known issues | Mooncake POD Support Notebook/.../How to get the impact node list of the Maintenance.md |
+| 2026-04-23 | mslearn | +1 VM known issue (offline password reset without agent); 4 thin articles skipped; 2 Track B drafts already existed; 1 ghosted-NIC dedup skipped | batch 6: 8 URLs processed |
+| 2026-04-23 | mslearn | +3 Track B guide drafts (chroot-env, chroot-lvm, perf-metrics), 7 dedup skips, 3 skips (hub/howto/policy) | batch 13 URLs |
+| 2026-04-23 | mslearn | batch: 8 URLs scanned, 0 new (all 8 deduped vs existing RDP/connectivity entries) | windows/rdp-auth-nsg-license-termservice |
+| 2026-04-24 | SYNTHESIZE v2 | 69 topics, 1513 entries, semantic clustering, 4-dim scoring |
+| 2026-04-24 | mslearn | +1 Track A (Event 1058/1057 RDP TLS cert), +2 Track B drafts (firewall guides), 5 dedup skipped | batch: RDP connectivity & firewall pages |
+| 2026-04-24 | mslearn | +0 Track A (6 dedup, 1 tool-skip), +1 Track B draft (app-connectivity guide) | batch: firewall/netvsc/mellanox/rdp-sessions/app-connection |
+| 2026-04-24 | mslearn | +0 Track A (4 dedup, 2 tool/howto skip), +2 Track B drafts (high-cpu, memory guides) | batch: redeploy/cpu/memory/emulated-storage/IMDS/boot-diag |

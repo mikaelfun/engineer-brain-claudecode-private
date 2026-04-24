@@ -13,6 +13,7 @@ interface BadgeProps {
   variant?: BadgeVariant
   size?: 'xs' | 'sm' | 'md'
   className?: string
+  title?: string
 }
 
 const variantStyles: Record<BadgeVariant, { bg: string; color: string }> = {
@@ -33,12 +34,13 @@ const sizeStyles: Record<string, string> = {
   md: 'px-2.5 py-1 text-xs',
 }
 
-export function Badge({ children, variant = 'default', size = 'sm', className = '' }: BadgeProps) {
+export function Badge({ children, variant = 'default', size = 'sm', className = '', title }: BadgeProps) {
   const v = variantStyles[variant]
   return (
     <span
       className={`inline-flex items-center gap-1 font-semibold font-mono rounded-[18px] uppercase whitespace-nowrap ${sizeStyles[size]} ${className}`}
       style={{ background: v.bg, color: v.color, letterSpacing: '0.2px' }}
+      title={title}
     >
       {children}
     </span>

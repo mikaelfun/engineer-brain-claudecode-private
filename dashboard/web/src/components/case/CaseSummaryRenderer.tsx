@@ -303,6 +303,140 @@ function ArInfoSection({ section }: { section: Section }) {
   )
 }
 
+function TroubleshooterFindingsSection({ section }: { section: Section }) {
+  // Parse sub-sections: ### [fact], ### [analysis], ### 排查结论, etc.
+  const lines = section.rawLines
+  const subs: Array<{ title: string; tag: string; content: string }> = []
+  let currentSub: { title: string; tag: string; content: string } | null = null
+  // Collect meta lines before first ### (e.g. > 最后更新, > 来源)
+  let metaLines: string[] = []
+
+  for (const line of lines) {
+    if (line.startsWith('### ')) {
+      if (currentSub) subs.push(currentSub)
+      const rawTitle = line.slice(4).trim()
+      // Extract [tag] if present
+      const tagMatch = rawTitle.match(/^\[(\w+)\]\s*(.*)$/)
+      const tag = tagMatch ? tagMatch[1] : ''
+      const title = tagMatch ? tagMatch[2] || tagMatch[1] : rawTitle
+      currentSub = { title, tag, content: '' }
+      continue
+    }
+    if (currentSub) {
+      currentSub.content += line + '\n'
+    } else {
+      metaLines.push(line)
+    }
+  }
+  if (currentSub) subs.push(currentSub)
+
+  // Style for sub-section tags
+  const getSubStyle = (tag: string, title: string): { color: string; emoji: string } => {
+    const t = (tag + title).toLowerCase()
+    if (t.includes('fact') || t.includes('确认')) return { color: 'var(--accent-blue)', emoji: '✅' }
+    if (t.includes('analysis') || t.includes('分析')) return { color: 'var(--accent-amber)', emoji: '🔬' }
+    if (t.includes('结论') || t.includes('conclusion') || t.includes('root cause')) return { color: 'var(--accent-red)', emoji: '🎯' }
+    return { color: 'var(--text-tertiary)', emoji: '📄' }
+  }
+
+  // Parse 排查结论 key-value pairs for structured rendering
+  const renderConclusionContent = (content: string) => {
+    const kvLines = content.trim().split('\n').filter(l => l.trim().startsWith('- **'))
+    if (kvLines.length === 0) return <MarkdownContent>{content.trim()}</MarkdownContent>
+
+    const kvs = kvLines.map(l => {
+      const m = l.match(/^-\s*\*\*(.+?)\*\*\s*[:：]\s*(.+)$/)
+      if (!m) return null
+      return { key: m[1], value: m[2] }
+    }).filter(Boolean) as Array<{ key: string; value: string }>
+
+    // Remaining non-KV lines
+    const otherLines = content.trim().split('\n').filter(l => !l.trim().startsWith('- **')).filter(l => l.trim())
+
+    // Confidence → color
+    const confColor = (v: string) => {
+      if (v.includes('high')) return 'var(--accent-green)'
+      if (v.includes('medium')) return 'var(--accent-amber)'
+      if (v.includes('low')) return 'var(--accent-red)'
+      return 'var(--text-secondary)'
+    }
+
+    // Type → badge color
+    const typeColor = (v: string) => {
+      if (v.includes('confirmed') || v.includes('root-cause')) return 'var(--accent-green)'
+      if (v.includes('partial')) return 'var(--accent-amber)'
+      if (v.includes('need-info')) return 'var(--accent-red)'
+      return 'var(--text-secondary)'
+    }
+
+    return (
+      <div className="space-y-1.5">
+        {kvs.map((kv, i) => {
+          const isConf = kv.key === '置信度'
+          const isType = kv.key === '类型'
+          const valueColor = isConf ? confColor(kv.value) : isType ? typeColor(kv.value) : 'var(--text-primary)'
+          return (
+            <div key={i} className="flex items-baseline gap-2">
+              <span className="text-xs font-semibold whitespace-nowrap" style={{ color: 'var(--text-tertiary)', minWidth: '64px' }}>{kv.key}</span>
+              {(isConf || isType) ? (
+                <span className="text-xs px-1.5 py-0.5 rounded-full font-medium" style={{ color: valueColor, background: `color-mix(in srgb, ${valueColor} 12%, var(--bg-surface))`, border: `1px solid color-mix(in srgb, ${valueColor} 25%, transparent)` }}>
+                  {kv.value}
+                </span>
+              ) : (
+                <span style={{ color: valueColor }}>{kv.value}</span>
+              )}
+            </div>
+          )
+        })}
+        {otherLines.length > 0 && <MarkdownContent>{otherLines.join('\n')}</MarkdownContent>}
+      </div>
+    )
+  }
+
+  // Meta info (来源, 最后更新)
+  const metaContent = metaLines.filter(l => l.trim()).join('\n').trim()
+
+  return (
+    <Card padding="sm" style={{ borderLeft: '3px solid var(--accent-cyan, var(--accent-blue))' }}>
+      <h4 className="font-bold text-base mb-1" style={{ color: 'var(--accent-cyan, var(--accent-blue))' }}>🔍 排查发现</h4>
+      {metaContent && (
+        <div className="text-[11px] mb-3 leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>
+          <MarkdownContent>{metaContent}</MarkdownContent>
+        </div>
+      )}
+
+      {subs.length > 0 ? (
+        <div className="space-y-3">
+          {subs.map((sub, i) => {
+            const { color, emoji } = getSubStyle(sub.tag, sub.title)
+            const isConcl = sub.title.includes('结论') || sub.title.toLowerCase().includes('conclusion')
+            return (
+              <div key={i} className="rounded-lg px-3 py-2" style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-subtle)' }}>
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <span>{emoji}</span>
+                  <span className="text-sm font-semibold" style={{ color }}>{sub.title}</span>
+                  {sub.tag && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full font-mono" style={{ color, background: `color-mix(in srgb, ${color} 10%, var(--bg-surface))` }}>
+                      {sub.tag}
+                    </span>
+                  )}
+                </div>
+                <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                  {isConcl ? renderConclusionContent(sub.content) : <MarkdownContent>{sub.content.trim()}</MarkdownContent>}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      ) : (
+        <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+          <MarkdownContent>{section.content}</MarkdownContent>
+        </div>
+      )}
+    </Card>
+  )
+}
+
 function PendingStatusBar({ meta }: { meta: any }) {
   const status = meta?.actualStatus
   if (!status) return null
@@ -370,6 +504,7 @@ const SECTION_MAP: Record<string, React.FC<{ section: Section }>> = {
   'Timeline': TimelineSection,
   '排查进展': TimelineSection,
   '关键发现': FindingsSection,
+  '排查发现（Troubleshooter Findings）': TroubleshooterFindingsSection,
   '风险': RiskSection,
   'AR 信息': ArInfoSection,
 }

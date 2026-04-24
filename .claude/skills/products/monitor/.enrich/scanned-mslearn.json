@@ -140,7 +140,31 @@
     "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-monitor/app-insights/telemetry/java-2x-troubleshoot",
     "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-monitor/app-insights/telemetry/sdk-support-guidance",
     "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-monitor/app-insights/telemetry/troubleshoot-high-data-ingestion",
-    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-monitor/app-insights/telemetry/webpages-not-get-request-context-header"
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-monitor/app-insights/telemetry/webpages-not-get-request-context-header",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-monitor/azure-monitor-agent/ama-windows-installation-issues-advanced-troubleshooting-steps",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-monitor/azure-monitor-agent/ama-windows-installation-issues-detailed-troubleshooting-steps",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-monitor/azure-monitor-agent/ama-windows-installation-issues-prepare-troubleshooting",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-monitor/azure-monitor-agent/linux-agents/linux-agent-missing-heartbeats",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-monitor/azure-monitor-agent/linux-agents/linux-agent-performance-counter-missing",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-monitor/azure-monitor-agent/migration/best-practices-migrating-from-log-analytics-agent",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-monitor/azure-monitor-agent/migration/step-1-plan-your-migration",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-monitor/azure-monitor-agent/migration/step-2-understand-your-data-collection",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-monitor/azure-monitor-agent/migration/step-3-configure-data-collections",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-monitor/azure-monitor-agent/migration/step-4-test-data-collections-azure-monitor-agent",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-monitor/azure-monitor-agent/migration/step-5-deploy-at-scale",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-monitor/azure-monitor-agent/migration/step-6-configure-other-services",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-monitor/azure-monitor-agent/windows-agents/mma-troubleshoot-basics",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-monitor/azure-monitor-agent/windows-agents/ssl-connectivity-mma-windows-powershell",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-monitor/azure-monitor-agent/windows-agents/windows-could-not-start-mma",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-monitor/azure-monitor-agent/windows-agents/resolve-windows-agent-installation-issues",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-monitor/azure-monitor-agent/windows-agents/erased-proxy-settings-microsoft-monitoring-agent",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-monitor/log-analytics/billing/configure-data-retention",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-monitor/log-analytics/billing/identify-service-cause-unexpected-costs",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-monitor/log-analytics/billing/set-up-a-daily-cap",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-monitor/log-analytics/billing/understand-log-analytics-workspace-bill",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-monitor/log-analytics/billing/why-daily-cap-exceeded",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-monitor/log-analytics/billing/workspace-recommended-alerts",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-monitor/log-analytics/configure-and-manage-log-analytics-tables/understand-and-mitigate-high-data-consumption-log-analytics"
   ],
-  "lastRefreshed": "2026-04-20T12:00:00Z"
+  "lastRefreshed": "2026-04-23T03:15:54Z"
 }

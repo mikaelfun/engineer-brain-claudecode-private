@@ -1,0 +1,11 @@
+{
+  "id": "ISS-240",
+  "title": "Agent Monitor patrol subagent 名称显示 local_agent，应显示真实 purpose",
+  "description": "Agent Monitor 页面查看 patrol session 时，主 session 正确显示 patrol，但 spawn 出的 subagent session 名称全部显示为 local_agent。期望显示真实的 purpose/角色名，如 Casework、troubleshooter、phase2 等，方便用户快速识别每个 subagent 在做什么。需要排查 subagent spawn 时是否传递了 purpose/name 元数据，以及前端 Agent Monitor 页面是否正确读取并展示。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "implemented",
+  "testLoopScan": true,
+  "createdAt": "2026-04-22T21:50:00+08:00",
+  "updatedAt": "2026-04-22T21:50:00+08:00"
+}

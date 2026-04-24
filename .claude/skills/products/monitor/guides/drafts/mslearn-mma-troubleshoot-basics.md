@@ -1,38 +1,34 @@
 ---
-title: MMA (Microsoft Monitoring Agent) Troubleshooting Basics
 source: mslearn
-sourceUrl: https://learn.microsoft.com/en-us/troubleshoot/azure/azure-monitor/azure-monitor-agent/windows-agents/mma-troubleshoot-basics
-product: monitor
-date: 2026-04-18
+sourceRef: null
+sourceUrl: "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-monitor/azure-monitor-agent/windows-agents/mma-troubleshoot-basics"
+importDate: "2026-04-23"
+type: guide-draft
 ---
 
-# MMA Troubleshooting Basics
-
-> Note: MMA (Log Analytics agent) was retired November 2024. Migrate to Azure Monitor Agent (AMA).
+# Azure Log Analytics Monitoring Agent Troubleshooting Basics
 
 ## Basic Requirements
-- Supported Windows OS
-- TLS 1.2 protocol
-- Workspace ID configured
-- Valid MMA certificate (certlm.msc > Microsoft Monitoring Agent > Certificates)
-- Proxy settings via Log Analytics gateway or proxy server
+- Supported OS: See Log Analytics Agent supported operating systems
+- Networking: TLS 1.2 required
+- Workspace ID must be configured when connecting to Log Analytics workspace
+- Monitoring Agent certificate must have correct server hostname (certlm.msc)
+- Proxy: Configure through Log Analytics gateway or proxy server
 
-## Find Agent Version
-- Control Panel > Microsoft Monitoring Agent > Properties tab
-- PowerShell: `Get-WmiObject -Class Win32_Product -Filter "Name='Microsoft Monitoring Agent'"`
-- KQL: `Heartbeat | summarize arg_max(TimeGenerated, *) by Computer`
+## Finding Agent Version
+- On VM/server: Control Panel > System and Security > Microsoft Monitoring Agent > Properties
+- PowerShell: Get-WmiObject -Class Win32_Product -Filter Name=Microsoft Monitoring Agent
+- Azure portal: Heartbeat | summarize arg_max(TimeGenerated, *) by Computer
 
-## Collect ETL Trace
-1. Navigate to `%programfiles%\Microsoft Monitoring Agent\Agent\Tools`
-2. `StopTracing.cmd`
-3. `StartTracing.cmd INF` (INF must be uppercase)
+## ETL Trace Collection
+1. Navigate to %programfiles%\Microsoft Monitoring Agent\Agent\Tools
+2. Run StopTracing.cmd
+3. Run StartTracing.cmd INF (INF must be uppercase)
 4. Reproduce the issue
-5. `StopTracing.cmd`
-6. `FormatTracing.cmd`
-7. Collect `*.log` from `%windowsroot%\Logs\OpsMgrTrace`
+5. Run StopTracing.cmd then FormatTracing.cmd
+6. Collect *.log files from %windowsroot%\Logs\OpsMgrTrace
 
-## Data Buffer Behavior
-- Max cache: 8.5 hours, retry every 20s -> 30s -> 60s -> 120s -> up to 9 min
-- Default buffer: 100 MB (min 5 MB, max 1.5 GB)
-- Registry: `HKLM\SYSTEM\CurrentControlSet\Services\HealthService\Parameters\Management Groups\<ID>\MaximumQueueSizeKb`
-- When disconnected: exponential backoff, discard oldest data at buffer limit
+## FAQ
+- Data cache duration: Max 8.5 hours, retries every 20s initially, exponential backoff up to 9 min
+- Cache size: Default 100 MB (min 5 MB, max 1.5 GB), configurable via registry MaximumQueueSizeKb
+- Connection unavailable: Agent backs off exponentially, discards oldest data when buffer full

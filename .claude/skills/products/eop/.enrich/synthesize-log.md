@@ -119,3 +119,59 @@ Total: 27 entries
 | escalation-case-routing | 📋 Fusion | 7 | 23 | 0 | 0 (inline) |
 | mdo-cross-product | 📋 Fusion | 2 | 3 | 0 | 0 (inline) |
 | user-reporting-misc | 📋 Fusion | 2 | 1 | 0 | 0 (inline) |
+
+# Synthesize Log — eop — 2026-04-24
+
+## 模式
+增量 (Phase 2.5 + §5 only — index generation)
+
+## 执行范围
+- topicsToRegen: 0 (无新条目/draft/kql 变化)
+- Phase 2.5: 生成 _index.search.jsonl (无条件执行)
+- §5: 更新 _index.md 格式 (添加 Keywords + Sources 列)
+
+## 评分统计
+| Topic | Entries | Avg Score | Top Score | 🟢 | 🔵 | 🟡 | ⚪ |
+|-------|---------|-----------|-----------|----|----|----|----|
+| ndr-outbound-sender-blocks | 16 | 6.2 | 7.0 | 0 | 16 | 0 | 0 |
+| ndr-ip-throttling-reputation | 15 | 6.0 | 7.0 | 0 | 12 | 3 | 0 |
+| ip-blocklist-spamhaus | 6 | 6.9 | 7.5 | 0 | 6 | 0 | 0 |
+| email-auth-spf | 12 | 6.3 | 7.0 | 0 | 12 | 0 | 0 |
+| email-auth-dkim | 8 | 5.6 | 6.5 | 0 | 7 | 1 | 0 |
+| email-auth-dmarc-compauth | 8 | 6.1 | 7.0 | 0 | 8 | 0 | 0 |
+| spoofing-impersonation | 5 | 6.0 | 7.0 | 0 | 5 | 0 | 0 |
+| false-positive-spam | 10 | 6.4 | 7.5 | 0 | 10 | 0 | 0 |
+| false-negative-bypass | 7 | 5.5 | 5.5 | 0 | 7 | 0 | 0 |
+| fp-fn-escalation | 4 | 5.6 | 7.0 | 0 | 2 | 2 | 0 |
+| quarantine-operations | 9 | 6.0 | 7.0 | 0 | 9 | 0 | 0 |
+| zap-post-delivery | 5 | 5.9 | 6.5 | 0 | 5 | 0 | 0 |
+| tabl-allow-block | 10 | 5.5 | 5.5 | 0 | 10 | 0 | 0 |
+| connection-filter-ipv6 | 6 | 5.0 | 6.5 | 0 | 2 | 4 | 0 |
+| enhanced-filtering | 5 | 6.1 | 6.5 | 0 | 4 | 1 | 0 |
+| junk-email-config | 8 | 6.5 | 6.5 | 0 | 8 | 0 | 0 |
+| transport-rules | 7 | 5.6 | 6.5 | 0 | 7 | 0 | 0 |
+| anti-spam-policy | 5 | 6.1 | 6.5 | 0 | 5 | 0 | 0 |
+| advanced-delivery-phishsim | 5 | 5.9 | 6.5 | 0 | 5 | 0 | 0 |
+| safe-links | 5 | 4.9 | 5.5 | 0 | 2 | 3 | 0 |
+| safe-attachments | 6 | 5.0 | 6.5 | 0 | 2 | 4 | 0 |
+| spo-odb-malware | 4 | 6.5 | 6.5 | 0 | 4 | 0 | 0 |
+| relay-forwarding-outbound | 10 | 5.5 | 6.5 | 0 | 6 | 4 | 0 |
+| connector-delivery-errors | 9 | 5.5 | 5.5 | 0 | 9 | 0 | 0 |
+| smtp-auth-device-sending | 9 | 5.6 | 6.5 | 0 | 9 | 0 | 0 |
+| hve-high-volume-email | 6 | 4.5 | 4.5 | 0 | 0 | 6 | 0 |
+| dane-dnssec-mtasts | 8 | 4.5 | 4.5 | 0 | 0 | 8 | 0 |
+| hybrid-mail-flow | 15 | 5.3 | 6.0 | 0 | 9 | 6 | 0 |
+| dbeb-recipient-validation | 10 | 5.5 | 7.0 | 0 | 8 | 2 | 0 |
+| 21v-feature-gaps | 5 | 6.7 | 7.0 | 0 | 5 | 0 | 0 |
+| mdo-portal-permissions | 6 | 6.2 | 6.5 | 0 | 6 | 0 | 0 |
+| backscatter-ndr | 2 | 6.2 | 7.0 | 0 | 2 | 0 | 0 |
+| image-download-outlook | 2 | 6.5 | 6.5 | 0 | 2 | 0 | 0 |
+| admin-submissions-overrides | 2 | 5.0 | 5.5 | 0 | 1 | 1 | 0 |
+| escalation-case-routing | 7 | 6.2 | 6.5 | 0 | 7 | 0 | 0 |
+| mdo-cross-product | 2 | 6.0 | 6.5 | 0 | 2 | 0 | 0 |
+| user-reporting-misc | 2 | 6.0 | 6.0 | 0 | 2 | 0 | 0 |
+
+## 总计
+- 总 topic: 37
+- 总条目: 288
+- 全局均分: 5.8

@@ -17,13 +17,42 @@
       "pendingPages": 0
     },
     "contentidea": {
-      "status": "scanning",
+      "status": "idle",
       "lastRefreshed": null,
       "pendingPages": 0
     }
   },
   "21vGapLastUpdated": null,
   "lastMerged": null,
-  "lastSynthesized": null,
-  "synthesizeState": {}
+  "lastSynthesized": "2026-04-24",
+  "synthesizeState": {
+    "lastSynthesizedAt": "2026-04-24",
+    "lastEntryCount": 61,
+    "synthesizedEntryIds": 57,
+    "topicPlanHash": "5b3bdf6a7f9a",
+    "draftHashes": {
+      "onenote-aum-tools.md": "e7547c7be00c",
+      "onenote-automation-feature-gap.md": "56fccc8a6d2e",
+      "onenote-css-wiki-links.md": "4fa53c92c1b5",
+      "onenote-definition-updates-check.md": "be7c5c4de160",
+      "onenote-dsc-for-vm.md": "2f70449fabb2",
+      "onenote-extension-hybrid-worker.md": "f3479d748776",
+      "onenote-generic-error-tsg.md": "7aa35a2104fd",
+      "onenote-hybrid-worker-tsg.md": "9c1aa123d357",
+      "onenote-jarvis-job-trigger.md": "fca895716241",
+      "onenote-jarvis-namespaces.md": "80967ab39601",
+      "onenote-jarvis-sandbox-diagnosis.md": "e9b696f28969",
+      "onenote-kusto-cluster-access.md": "53d7b6b1366d",
+      "onenote-kusto-runbook-queries.md": "6be620ae197d",
+      "onenote-kusto-um-queries.md": "65d4c105952b",
+      "onenote-mooncake-runbook-auth.md": "a35e1d3290e6",
+      "onenote-python-sdk-azure-resources.md": "767a63120cee",
+      "onenote-python-sdk-getting-started.md": "1e0690b7dc02",
+      "onenote-sql-azure-runbook.md": "ca5669ba2614",
+      "onenote-um-to-aum-migration.md": "359dacbfb07c"
+    },
+    "kqlHashes": {},
+    "topicRegenLog": [],
+    "mode": "incremental"
+  }
 }

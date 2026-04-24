@@ -1,48 +1,48 @@
 # Disk 排查指南索引
 
-| 指南 | 类型 | Kusto | 关键词 | 来源数 | 置信度 |
-|------|------|-------|--------|--------|--------|
-| [Azure Container Storage (Arc)](acsa.md) | 📋 融合 | 0 | acsa, azure-container-storage-arc, cloud-ingest, configmap, crashloopbackoff | 4 | medium |
-| [Azure Disk Encryption (ADE) & BitLocker](ade-bitlocker.md) | 📋 融合 | 0 | 14.04, ade, azure-stack-edge, backup, bdehdcfg | 20 | high |
-| [AKS Persistent Volume & Disk](aks-disk.md) | 📊 速查 | 0 | afs, aks, attach, authorizationfailed, availability-zone | 10 | high |
-| [Azure Stack Edge: VM & Kubernetes](ase-compute.md) | 📋 融合 | 0 | aks, ap5gc, azure-for-operators, azure-stack-edge, bmc | 6 | high |
-| [Azure Stack Edge: Device Management](ase-hardware.md) | 📋 融合 | 0 | 403-error, activation-key, automation, az.stackedge, azure-policy | 4 | medium |
-| [Azure Stack Edge: Networking](ase-networking.md) | 📋 融合 | 0 | 403, azure-stack-edge, blobdownloadfailed, bmc, bug | 14 | high |
-| [Azure Stack Edge: Storage & Upload](ase-storage.md) | 📊 速查 | 0 | alternate-data-streams, azure-stack-edge, copy-error-665, datadata, error-2998 | 3 | medium |
-| [Avere vFXT & HPC Cache](avere-hpc-cache.md) | 📋 融合 | 0 | avere-vfxt, backend, cache-full, cache-policy, core-filer | 9 | high |
-| [Azure Files, File Sync & NFS](azure-files-sync.md) | 📋 融合 | 0 | 0x80070032, 21v, agent-v15, azcopy, aznfs | 7 | high |
-| [Blob Storage & Transfer Tools](blob-tools.md) | 📋 融合 | 0 | 403, adls, aks, authenticationfailed, azcopy | 5 | high |
-| [VM Boot Failures](boot-failure.md) | 📋 融合 | 0 | 0xc00000ba, 0xc0000225, 2tb-limit, active-partition, auditd | 16 | high |
-| [CMK & SSE Encryption](cmk-sse-encryption.md) | 📊 速查 | 0 | auto-shutdown, cmk, copy-disk, cross-tenant, customer-managed-key | 5 | high |
-| [Data Box Disk: Data Copy & Import](data-box-disk-copy.md) | 📋 融合 | 0 | 409, 5tib, asc, bitlocker, blob | 9 | high |
-| [Data Box Disk: Shipping & Mooncake](data-box-disk-logistics.md) | 📊 速查 | 0 | contact, data-box-disk, label, mooncake, phone-unreachable | 2 | medium |
-| [Data Box Disk: MARS Offline Backup](data-box-disk-mars.md) | 📊 速查 | 0 | data-box-disk, mars, mmc-crash, offline-backup | 1 | low |
-| [Data Box Disk: Unlock & Hardware](data-box-disk-setup.md) | 📋 融合 | 0 | azcopy, bitlocker, blob-upload, compatibility, corrupt | 19 | high |
-| [Data Box Disk: DC Upload & Errors](data-box-disk-upload.md) | 📊 速查 | 0 | data-box-disk, delay, icm, logistics, mailbox | 4 | medium |
-| [Data Box Disk: Validation & Naming](data-box-disk-validation.md) | 📊 速查 | 0 | 256-chars, azcopy, azure-files, bad-request, blockblob | 18 | high |
-| [Data Box Gateway](data-box-gateway.md) | 📋 融合 | 0 | archived-blob, authentication, azure-stack-edge, by-design, copy-failure | 7 | high |
-| [Data Box POD: Connectivity & Access](data-box-pod-connectivity.md) | 📋 融合 | 0 | 3rd-party, access, access-denied, account-disabled, account-lockout | 28 | high |
-| [Data Box POD: Data Copy & Performance](data-box-pod-copy.md) | 📋 融合 | 0 | 512-byte-aligned, 512-byte-alignment, acl, azcopy, azure-files | 12 | high |
-| [Data Box POD: Hardware & Error Codes](data-box-pod-hardware.md) | 📋 融合 | 0 | cable, cables, cluster-resource, connectivity, data-box | 11 | high |
-| [Data Box POD: Metadata & ACL](data-box-pod-metadata.md) | 📋 融合 | 0 | acl, azure-files, backup-operator, blob-storage, by-design | 7 | high |
-| [Data Box POD: Ordering & Shipping](data-box-pod-ordering.md) | 📋 融合 | 0 | 5-active-orders, 502-error, 5tb-limit, account-lockout, acl | 34 | high |
-| [Data Box POD: Prepare to Ship](data-box-pod-prepare.md) | 📋 融合 | 0 | base64, bom, data-box, data-box-pod, download-file-list | 8 | high |
-| [Disk Backup, Restore & Snapshots](disk-backup-restore.md) | 📋 融合 | 0 | 403, 500, 60-day-limit, application-consistency, asr | 13 | high |
-| [Disk Export, Upload & Access](disk-export-upload.md) | 📊 速查 | 0 | 100-limit, azure-advisor, billing, cleanup, cost | 3 | medium |
-| [IaaS Disk Failure (Event 17)](disk-failure-event17.md) | 📋 融合 | 2 | disk-failure, e17, event17, iaasxstorageoutage, rca | 2 | medium |
-| [Disk Management (Attach/Detach/Resize)](disk-management.md) | 📋 融合 | 5 | 4tib, attach, attachdiskwhilebeingdetached, blob, blobcache | 13 | high |
-| [Disk Performance & Throttling](disk-performance.md) | 📋 融合 | 5 | 30-minutes, 4k, 512e, 512gib, 513gib | 18 | high |
-| [Managed Disk Recovery](disk-recovery.md) | 📋 融合 | 1 | asr, backup, blob-recovery, disk-recovery, diskrp | 4 | medium |
-| [Azure Import/Export Service](import-export.md) | 📊 速查 | 0 | azure-storage-devices, export-job, import-export, import-job, incorrect-files | 3 | medium |
-| [Miscellaneous Disk Issues](misc-disk-issues.md) | 📋 融合 | 0 | access, acquirediskleasefailed, blob, config-hub, coreidentity | 5 | high |
-| [Mooncake Operations](mooncake-ops.md) | 📊 速查 | 0 | escort-access, fairfax, geneva-action, mooncake, national-cloud | 1 | low |
-| [Azure Shared Disk](shared-disk.md) | 📋 融合 | 0 | aks, azure-files, csv, deallocate, expand | 4 | medium |
-| [Storage Account Issues](storage-account.md) | 📋 融合 | 2 | 20000, 404, 409-conflict, 503, access-tier | 14 | high |
-| [Storage Spaces & S2D](storage-spaces.md) | 📊 速查 | 0 | nullsessionshares, registry-type-mismatch, smb, sofs | 5 | high |
-| [Temporary & Ephemeral OS Disk](temp-ephemeral-disk.md) | 📊 速查 | 0 | cache, d-drive, data-loss, deallocate, deployment-failure | 3 | medium |
-| [TLS, Certificates & Security](tls-security.md) | 📊 速查 | 0 | 3des, asc, audit, cipher-suite, client-ip | 5 | high |
-| [Ultra Disk, Premium SSD v2 & NVMe](ultra-premium-disk.md) | 📋 融合 | 0 | availability-zone, azure-compute-gallery, completionpercent, cross-region, data-disk-only | 4 | medium |
-| [Windows Server Misc KB](windows-misc.md) | 📊 速查 | 0 | print-to-pdf, printer-driver, registry | 12 | high |
+| # | Topic | Title | Entries | Fusion | Score | Keywords | Sources | Files |
+|---|-------|-------|---------|--------|-------|----------|---------|-------|
+| 1 | acsa | Azure Container Storage (Arc) | 4 | ✅ | 🔵 6.5 | pod-restart, kubernetes, scheduling, createcontainerconfigerror, crashloopbackoff | AW | [speed](acsa.md) / [detail](details/acsa.md) / [workflow](workflows/acsa.md) |
+| 2 | ade-bitlocker | Azure Disk Encryption (ADE) & BitLocker | 20 | ✅ | 🔵 5.5 | encryption-status, extension-version, Windows-Server-2016, host-caching, isolated-network | AW ML ON | [speed](ade-bitlocker.md) / [detail](details/ade-bitlocker.md) / [workflow](workflows/ade-bitlocker.md) |
+| 3 | aks-disk | AKS Persistent Volume & Disk | 10 | — | 🔵 5.9 | detach, Ultra-Disk, AFS, storage-migration, external-RG | ML ON | [speed](aks-disk.md) / [detail](details/aks-disk.md) |
+| 4 | ase-compute | Azure Stack Edge: VM & Kubernetes | 6 | ✅ | 🔵 6.5 | low-memory, idrac, kubernetes, wlms, azure-for-operators | AW | [speed](ase-compute.md) / [detail](details/ase-compute.md) / [workflow](workflows/ase-compute.md) |
+| 5 | ase-hardware | Azure Stack Edge: Device Management | 4 | ✅ | 🔵 6.2 | azure-policy, bios, powershell, ClusterPerformanceHistory, azure-stack-edge | AW | [speed](ase-hardware.md) / [detail](details/ase-hardware.md) / [workflow](workflows/ase-hardware.md) |
+| 6 | ase-networking | Azure Stack Edge: Networking | 14 | ✅ | 🔵 6.5 | bug, webui, timeout, vhd, lan-transformer | AW | [speed](ase-networking.md) / [detail](details/ase-networking.md) / [workflow](workflows/ase-networking.md) |
+| 7 | ase-storage | Azure Stack Edge: Storage & Upload | 3 | — | 🔵 6.5 | robocopy, copy-error-665, readonly, upload, alternate-data-streams | AW | [speed](ase-storage.md) / [detail](details/ase-storage.md) |
+| 8 | avere-hpc-cache | Avere vFXT & HPC Cache | 9 | ✅ | 🔵 6.5 | core-filer, rpc-slot-exhaustion, recycling, diagnostics, reboot | AW | [speed](avere-hpc-cache.md) / [detail](details/avere-hpc-cache.md) / [workflow](workflows/avere-hpc-cache.md) |
+| 9 | azure-files-sync | Azure Files, File Sync & NFS | 7 | ✅ | 🔵 7.0 | initial-delay, TieringStatusBootstrapMaxThreadCount, agent-v15, recall, DigiCert | ON | [speed](azure-files-sync.md) / [detail](details/azure-files-sync.md) / [workflow](workflows/azure-files-sync.md) |
+| 10 | blob-tools | Blob Storage & Transfer Tools | 5 | ✅ | 🔵 7.0 | clock-drift, timeout, adls, xstore, ICM | ON | [speed](blob-tools.md) / [detail](details/blob-tools.md) / [workflow](workflows/blob-tools.md) |
+| 11 | boot-failure | VM Boot Failures | 16 | ✅ | 🔵 5.8 | 2TB-limit, serial-console, SxS, bcdboot, latency | KB ML ON | [speed](boot-failure.md) / [detail](details/boot-failure.md) / [workflow](workflows/boot-failure.md) |
+| 12 | cmk-sse-encryption | CMK & SSE Encryption | 5 | — | 🔵 5.8 | KeyVault, customer-managed-key, incremental-snapshot, MSI, auto-shutdown | ML ON | [speed](cmk-sse-encryption.md) / [detail](details/cmk-sse-encryption.md) |
+| 13 | data-box-disk-copy | Data Box Disk: Data Copy & Import | 9 | ✅ | 🔵 6.2 | shipping-label, copy-stuck, dynamic-vhd, managed-disk, sla | AW ML ON | [speed](data-box-disk-copy.md) / [detail](details/data-box-disk-copy.md) / [workflow](workflows/data-box-disk-copy.md) |
+| 14 | data-box-disk-logistics | Data Box Disk: Shipping & Mooncake | 2 | — | 🔵 7.5 | shipping, contact, return, label, phone-unreachable | ON | [speed](data-box-disk-logistics.md) / [detail](details/data-box-disk-logistics.md) |
+| 15 | data-box-disk-mars | Data Box Disk: MARS Offline Backup | 1 | — | 🔵 7.0 | mmc-crash, offline-backup, mars, data-box-disk | ON | [speed](data-box-disk-mars.md) / [detail](details/data-box-disk-mars.md) |
+| 16 | data-box-disk-setup | Data Box Disk: Unlock & Hardware | 19 | ✅ | 🔵 6.6 | reboot, reconnection, rhel, RHEL, ejected | AW ML ON | [speed](data-box-disk-setup.md) / [detail](details/data-box-disk-setup.md) / [workflow](workflows/data-box-disk-setup.md) |
+| 17 | data-box-disk-upload | Data Box Disk: DC Upload & Errors | 4 | — | 🔵 7.6 | shipping-label, pickup-delay, mailbox, preparation-sla, order-status | AW ON | [speed](data-box-disk-upload.md) / [detail](details/data-box-disk-upload.md) |
+| 18 | data-box-disk-validation | Data Box Disk: Validation & Naming | 18 | — | 🔵 6.9 | container, invalid-containers, managed-disk, routing, VHDX | AW ON | [speed](data-box-disk-validation.md) / [detail](details/data-box-disk-validation.md) |
+| 19 | data-box-gateway | Data Box Gateway | 7 | ✅ | 🔵 6.5 | authentication, local-cache, slow-file-access, by-design, error-0x8007003a | AW | [speed](data-box-gateway.md) / [detail](details/data-box-gateway.md) / [workflow](workflows/data-box-gateway.md) |
+| 20 | data-box-pod-connectivity | Data Box POD: Connectivity & Access | 28 | ✅ | 🔵 6.6 | LED, time-zone, permission-denied, Data-Box-POD, connection | AW ML ON | [speed](data-box-pod-connectivity.md) / [detail](details/data-box-pod-connectivity.md) / [workflow](workflows/data-box-pod-connectivity.md) |
+| 21 | data-box-pod-copy | Data Box POD: Data Copy & Performance | 12 | ✅ | 🔵 6.5 | AzCopy, IcM, Data-Box-POD, managed-disk, data-copy-service | AW ML ON | [speed](data-box-pod-copy.md) / [detail](details/data-box-pod-copy.md) / [workflow](workflows/data-box-pod-copy.md) |
+| 22 | data-box-pod-hardware | Data Box POD: Hardware & Error Codes | 11 | ✅ | 🔵 6.6 | Data-Box-POD, version-mismatch, data-box-pod, Failed-state, unexpected-error | AW ON | [speed](data-box-pod-hardware.md) / [detail](details/data-box-pod-hardware.md) / [workflow](workflows/data-box-pod-hardware.md) |
+| 23 | data-box-pod-metadata | Data Box POD: Metadata & ACL | 7 | ✅ | 🔵 6.5 | delete-files, robocopy, azure-files, by-design, invalid-characters | AW | [speed](data-box-pod-metadata.md) / [detail](details/data-box-pod-metadata.md) / [workflow](workflows/data-box-pod-metadata.md) |
+| 24 | data-box-pod-ordering | Data Box POD: Ordering & Shipping | 34 | ✅ | 🔵 6.7 | verbose-log, shipping-label, backup-semantics, Data-Box-POD, not-available | AW ON | [speed](data-box-pod-ordering.md) / [detail](details/data-box-pod-ordering.md) / [workflow](workflows/data-box-pod-ordering.md) |
+| 25 | data-box-pod-prepare | Data Box POD: Prepare to Ship | 8 | ✅ | 🔵 6.4 | base64, dynamic-vhd, Data-Box-POD, managed-disk, data-box-pod | AW ML ON | [speed](data-box-pod-prepare.md) / [detail](details/data-box-pod-prepare.md) / [workflow](workflows/data-box-pod-prepare.md) |
+| 26 | disk-backup-restore | Disk Backup, Restore & Snapshots | 13 | ✅ | 🔵 5.6 | KeyVault, expiration, commvault, managed-disk, 500 | ML ON | [speed](disk-backup-restore.md) / [detail](details/disk-backup-restore.md) / [workflow](workflows/disk-backup-restore.md) |
+| 27 | disk-export-upload | Disk Export, Upload & Access | 3 | — | 🔵 5.5 | encryption-set, delete, cost, azure-advisor, NetworkAccessPolicy | ML | [speed](disk-export-upload.md) / [detail](details/disk-export-upload.md) |
+| 28 | disk-failure-event17 | IaaS Disk Failure (Event 17) | 2 | ✅ | 🔵 7.0 | VMA, XStore, iaasxstorageoutage, e17, RCA | ON | [speed](disk-failure-event17.md) / [detail](details/disk-failure-event17.md) / [workflow](workflows/disk-failure-event17.md) |
+| 29 | disk-management | Disk Management (Attach/Detach/Resize) | 13 | ✅ | 🔵 5.6 | detach, Ultra-Disk, OS-swap, host-caching, host-cache | ML ON | [speed](disk-management.md) / [detail](details/disk-management.md) / [workflow](workflows/disk-management.md) |
+| 30 | disk-performance | Disk Performance & Throttling | 18 | ✅ | 🔵 6.1 | Ultra-Disk, shadow-copy, 4K, disk-tier, credits | KB ML ON | [speed](disk-performance.md) / [detail](details/disk-performance.md) / [workflow](workflows/disk-performance.md) |
+| 31 | disk-recovery | Managed Disk Recovery | 4 | ✅ | 🔵 6.6 | blob-recovery, EEE, diskrp, managed-disk, hard-delete | ML ON | [speed](disk-recovery.md) / [detail](details/disk-recovery.md) / [workflow](workflows/disk-recovery.md) |
+| 32 | import-export | Azure Import/Export Service | 3 | — | 🔵 6.5 | incorrect-files, routing, export-job, snapshots, journal-file | AW | [speed](import-export.md) / [detail](details/import-export.md) |
+| 33 | misc-disk-issues | Miscellaneous Disk Issues | 5 | ✅ | 🔵 6.2 | coreidentity, AcquireDiskLeaseFailed, blob, Java-SDK, lease | AW ML ON | [speed](misc-disk-issues.md) / [detail](details/misc-disk-issues.md) / [workflow](workflows/misc-disk-issues.md) |
+| 34 | mooncake-ops | Mooncake Operations | 1 | — | 🔵 7.0 | security, psa, escort-access, national-cloud, geneva-action | ON | [speed](mooncake-ops.md) / [detail](details/mooncake-ops.md) |
+| 35 | shared-disk | Azure Shared Disk | 4 | ✅ | 🔵 6.5 | multi-writer, failover-cluster, RWO, multi-attach, PV | ML ON | [speed](shared-disk.md) / [detail](details/shared-disk.md) / [workflow](workflows/shared-disk.md) |
+| 36 | storage-account | Storage Account Issues | 14 | ✅ | 🔵 6.9 | account-migration, egress, latency, outbound-IP, portal-bug | ML ON | [speed](storage-account.md) / [detail](details/storage-account.md) / [workflow](workflows/storage-account.md) |
+| 37 | storage-spaces | Storage Spaces & S2D | 5 | — | 🔵 6.0 | SMB, sofs, registry-type-mismatch, smb, contentidea-kb | KB | [speed](storage-spaces.md) / [detail](details/storage-spaces.md) |
+| 38 | temp-ephemeral-disk | Temporary & Ephemeral OS Disk | 3 | — | 🔵 5.5 | ephemeral-OS-disk, d-drive, temporary-disk, maintenance, stateless | ML | [speed](temp-ephemeral-disk.md) / [detail](details/temp-ephemeral-disk.md) |
+| 39 | tls-security | TLS, Certificates & Security | 5 | — | 🔵 6.4 | ipv6, unknown, ASC, ipv4, 3des | KB ON | [speed](tls-security.md) / [detail](details/tls-security.md) |
+| 40 | ultra-premium-disk | Ultra Disk, Premium SSD v2 & NVMe | 4 | ✅ | 🔵 5.5 | Ultra-Disk, data-disk-only, Azure-Compute-Gallery, CompletionPercent, latency | ML | [speed](ultra-premium-disk.md) / [detail](details/ultra-premium-disk.md) / [workflow](workflows/ultra-premium-disk.md) |
+| 41 | windows-misc | Windows Server Misc KB | 12 | — | 🔵 6.0 | registry, unknown, kb, printer-driver, contentidea-kb | KB | [speed](windows-misc.md) / [detail](details/windows-misc.md) |
 
-最后更新: 2026-04-07
-条目总数: 372 | 指南总数: 82 | 融合 topic: 27 | 速查 topic: 14
+最后更新: 2026-04-24
+条目总数: 372 | 指南总数: 41 | 融合 topic: 27 | 速查 topic: 14

@@ -90,7 +90,31 @@
     "https://learn.microsoft.com/azure/databox/data-box-disk-troubleshoot-data-upload",
     "https://learn.microsoft.com/azure/virtual-machines/disks-redundancy#zone-redundant-storage-for-managed-disks",
     "https://learn.microsoft.com/troubleshoot/azure/virtual-machines/windows/boot-error-disk-read-error-occurred",
-    "https://learn.microsoft.com/azure/virtual-machines/disks-convert-types"
+    "https://learn.microsoft.com/azure/virtual-machines/disks-convert-types",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-storage/blobs/recovery/data-protection-backup-recovery",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-storage/blobs/connectivity/storage-use-azcopy-troubleshoot",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-storage/blobs/connectivity/copy-blobs-between-storage-accounts-network-restriction",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-storage/blobs/connectivity/request-body-large",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-storage/blobs/connectivity/invalid-blob-or-block-content-or-invalid-block-list",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-storage/blobs/authentication/adls-gen2-sticky-bit-403-access-denied",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-storage/blobs/authentication/storage-troubleshoot-403-errors",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-storage/blobs/performance/diagnose-high-cpu-disk-perfinsights",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-storage/blobs/alerts/troubleshoot-storage-availability",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-storage/blobs/alerts/troubleshoot-storage-client-application-errors",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-storage/blobs/alerts/troubleshoot-storage-performance",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-storage/blobs/alerts/storage-monitoring-diagnosing-troubleshooting",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-storage/blobs/alerts/troubleshoot-latency-storage-analytics-logs",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-storage/blobs/alerts/storage-explorer-troubleshooting",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-storage/files/backup-restore/troubleshoot-azure-files",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-storage/files/connectivity/files-troubleshoot",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-storage/files/connectivity/files-troubleshoot-smb-connectivity",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-storage/files/performance/files-troubleshoot-performance",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-storage/files/security/files-troubleshoot-smb-authentication",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-storage/files/security/files-troubleshoot-linux-smb",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-storage/files/security/files-troubleshoot-linux-nfs",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-storage/files/security/files-client-other-errors",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-storage/files/file-sync/file-sync-troubleshoot",
+    "https://learn.microsoft.com/en-us/troubleshoot/azure/azure-storage/files/file-sync/file-sync-troubleshoot-installation"
   ],
-  "lastRefreshed": "2026-04-20T03:12:39Z"
+  "lastRefreshed": "2026-04-24T09:30:00Z"
 }

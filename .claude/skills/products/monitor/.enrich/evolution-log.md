@@ -527,3 +527,20 @@
 | 2026-04-20 | mslearn | Indexed 80 URLs from toc.yml (azure/azure-monitor), 51 already scanned, 32 pending | full-scan index build |
 | 2026-04-20 | contentidea-kb | Scanned 10 new work items (all empty/test data, 0 entries added); total 15/15 scanned | WIQL: Monitor, Log Analytics |
 | 2026-04-20 | mslearn | +8 entries (activity-log retention/export, App Insights Entra auth 401/403, Java 2.x no-data, JS correlation header) + 3 guide drafts (self-diagnostics, missing telemetry flow, high data ingestion) | batch 7: 8 URLs scanned |
+
+### 2026-04-21 mslearn scan (batch: AMA Windows + Migration)
+- **URLs processed**: 8 (3 AMA Windows install TSG + 2 Linux agent duplicates + 3 MMA migration)
+- **Track A (break/fix)**: 4 entries (monitor-mslearn-101~104)
+  - 101: AMA install fails — VM missing managed identity
+  - 102: AMA install fails — IMDS (169.254.169.254) not reachable
+  - 103: AMA install fails — VM Guest Agent not running
+  - 104: MMA deprecated Aug 2024 — migrate to AMA via Migration Helper workbook
+- **Track B (guide-drafts)**: 2 guides
+  - mslearn-ama-windows-installation-troubleshooting.md (3-page comprehensive TSG)
+  - mslearn-mma-to-ama-migration-guide.md (3-page migration planning guide)
+- **Deduplicated**: 2 (linux-agent-missing-heartbeats + linux-agent-performance-counter-missing: same content under azure-monitor-agent/ vs log-analytics/ paths, already extracted as mslearn-083~088)
+- **Remaining**: 16 URLs
+| 2026-04-21 | mslearn | +6 monitor known issues (Linux agent heartbeat/perf counter), +3 guide drafts (AMA Windows install troubleshooting) | azure-monitor-agent/* |
+| 2026-04-23 | mslearn | +1 MMA startup issue (Track A), +6 guide drafts (AMA migration steps 3-5, MMA troubleshoot basics, SSL connectivity, agent installation) | azure-monitor-agent/windows-agents, migration |
+| 2026-04-23 | mslearn | +3 Log Analytics billing/cost known issues (seq 112-114), 4 guide drafts, 1 dedup skip (erased proxy) | Log Analytics billing batch |
+| 2026-04-24 | SYNTHESIZE | 50 topics (35 fusion, 15 compact), 1209 entries, 5 Kusto queries fused | Phase 2.5 + S5 index rebuild |

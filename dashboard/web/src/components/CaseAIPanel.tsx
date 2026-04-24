@@ -12,11 +12,12 @@ import {
   CheckCircle2, Loader2, Brain, AlertCircle, ChevronDown,
   RefreshCw, MessageSquare, GitBranch, FileText, BookOpen,
   ChevronRight, Maximize2, ExternalLink, Square, Shield, Zap, Clock,
-  ClipboardCheck, Cog, ListChecks
+  ClipboardCheck, Cog, ListChecks, Bot
 } from 'lucide-react'
 import { apiPost, apiDelete } from '../api/client'
-import { useCaseSessions, useCaseOperation, useCaseMessages, useEndAllCaseSessions, useEndCaseSession, useCaseStepProgress, useSkills } from '../api/hooks'
+import { useCaseSessions, useCaseOperation, useCaseMessages, useEndAllCaseSessions, useEndCaseSession, useCaseStepProgress, useSkills, useRunMessages } from '../api/hooks'
 import { useCaseSessionStore, type CaseSessionMessage } from '../stores/caseSessionStore'
+import { useSubAgentStore, type SubAgent } from '../stores/subAgentStore'
 import { SessionMessageList, groupMessagesByStep } from './session/SessionMessageList'
 import { StepQuestionForm } from './session/StepQuestionForm'
 import { StepFilterTabs } from './session/StepFilterTabs'
@@ -69,6 +70,128 @@ function getSessionLabel(session: { intent?: string; sessionId: string }): strin
   return session.sessionId.slice(0, 8)
 }
 
+/** Inline sub-agent detail view — shown when a sub-agent tab is selected in CaseAIPanel */
+function SubAgentInlineDetail({ agent, caseNumber }: { agent: SubAgent; caseNumber: string }) {
+  const durationMs = agent.usage?.duration_ms
+    || (agent.completedAt && agent.startedAt
+      ? new Date(agent.completedAt).getTime() - new Date(agent.startedAt).getTime()
+      : agent.startedAt && agent.status === 'running'
+        ? Date.now() - new Date(agent.startedAt).getTime()
+        : undefined)
+
+  // Check if messages are incomplete (only system/tool-call from progress events)
+  const hasDetailedMessages = (agent.messages || []).some(m =>
+    m.type === 'thinking' || m.type === 'response' || m.type === 'tool-result'
+  )
+
+  // If agent completed but messages lack detail, try to fetch from run log
+  const { data: runData } = useRunMessages(
+    (!hasDetailedMessages && caseNumber && agent.status !== 'running') ? caseNumber : null
+  )
+
+  const messages = useMemo((): CaseSessionMessage[] => {
+    // Try to find this agent's full log in runData.subAgents
+    if (runData?.subAgents) {
+      for (const sub of Object.values(runData.subAgents as Record<string, any>)) {
+        if (sub.messages?.length > 0 && sub.messages.some((m: any) => m.type === 'thinking' || m.type === 'response' || m.type === 'tool-result')) {
+          const isMatch = sub.taskId === agent.taskId
+            || agent.taskId.startsWith(sub.taskId?.slice(0, 8) || '__none__')
+            || sub.taskId?.startsWith(agent.taskId.slice(0, 8))
+          if (isMatch) {
+            return sub.messages.map((m: any) => ({
+              type: m.type as CaseSessionMessage['type'],
+              content: m.content || '',
+              toolName: m.toolName,
+              timestamp: m.timestamp,
+            }))
+          }
+        }
+      }
+      // Fallback: if only one sub-agent with full messages, use it
+      const fullSubs = Object.values(runData.subAgents as Record<string, any>)
+        .filter((s: any) => s.messages?.some((m: any) => m.type === 'thinking' || m.type === 'response'))
+      if (fullSubs.length === 1) {
+        return (fullSubs[0] as any).messages.map((m: any) => ({
+          type: m.type as CaseSessionMessage['type'],
+          content: m.content || '',
+          toolName: m.toolName,
+          timestamp: m.timestamp,
+        }))
+      }
+    }
+
+    // Fallback: use agent.messages from store (populated by SSE progress events)
+    return (agent.messages || []).map(m => ({
+      type: m.type as CaseSessionMessage['type'],
+      content: m.content,
+      toolName: m.toolName,
+      timestamp: m.timestamp,
+    }))
+  }, [agent.messages, agent.taskId, runData])
+
+  const formatDuration = (ms: number) => {
+    if (ms < 1000) return `${ms}ms`
+    const s = Math.floor(ms / 1000)
+    if (s < 60) return `${s}s`
+    const m = Math.floor(s / 60)
+    return m > 0 ? `${m}m ${s % 60}s` : `${s}s`
+  }
+
+  const statusColor = agent.status === 'running' ? 'var(--accent-blue)'
+    : agent.status === 'completed' ? 'var(--accent-green)'
+    : agent.status === 'failed' ? 'var(--accent-red)' : 'var(--text-tertiary)'
+  const statusBg = agent.status === 'running' ? 'var(--accent-blue-dim)'
+    : agent.status === 'completed' ? 'var(--accent-green-dim)'
+    : agent.status === 'failed' ? 'var(--accent-red-dim)' : 'var(--bg-elevated)'
+
+  return (
+    <div className="space-y-2">
+      {/* Compact header */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span
+          className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold uppercase"
+          style={{ background: statusBg, color: statusColor, letterSpacing: '0.2px' }}
+        >
+          {agent.agentType}
+        </span>
+        <span
+          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs"
+          style={{ background: statusBg, color: statusColor }}
+        >
+          {agent.status === 'running' && <Loader2 className="w-3 h-3 animate-spin" />}
+          {agent.status === 'completed' && <CheckCircle2 className="w-3 h-3" />}
+          {agent.status === 'failed' && <AlertCircle className="w-3 h-3" />}
+          {agent.status}
+        </span>
+        {durationMs !== undefined && (
+          <span className="text-[10px] font-mono" style={{ color: 'var(--text-tertiary)' }}>
+            {formatDuration(durationMs)}
+          </span>
+        )}
+        {agent.usage?.total_tokens && (
+          <span className="text-[10px] font-mono" style={{ color: 'var(--text-tertiary)' }}>
+            {agent.usage.total_tokens.toLocaleString()} tok
+          </span>
+        )}
+        {agent.description && (
+          <span className="text-xs truncate max-w-[300px]" style={{ color: 'var(--text-secondary)' }}>
+            {agent.description}
+          </span>
+        )}
+      </div>
+
+      {/* Message stream */}
+      {messages.length === 0 ? (
+        <p className="text-xs py-2" style={{ color: 'var(--text-tertiary)' }}>
+          {agent.status === 'running' ? 'Waiting for events...' : 'No events recorded'}
+        </p>
+      ) : (
+        <SessionMessageList messages={messages} maxHeightClass="" />
+      )}
+    </div>
+  )
+}
+
 export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull, skipRecovery = false }: CaseAIPanelProps) {
   const navigate = useNavigate()
   const [chatInput, setChatInput] = useState('')
@@ -79,6 +202,7 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull, ski
   const [activeStepFilter, setActiveStepFilter] = useState<string | null>(null)
   const [queuedMessages, setQueuedMessages] = useState<QueuedMessage[]>([])
   const [isDraining, setIsDraining] = useState(false)
+  const [selectedSubAgentId, setSelectedSubAgentId] = useState<string | null>(null)
   const emailMenuRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
 
@@ -116,6 +240,49 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull, ski
   const pipelineSteps = useCaseSessionStore((s) => s.pipelineSteps[caseNumber])
   const agentSpawns = useCaseSessionStore((s) => s.agentSpawns[caseNumber])
   const isCaseworkRunning = currentStep === 'casework' && isStepActive
+
+  // Sub-agents from unified subAgentStore — grouped by parent session
+  const storeActiveSessionId = useCaseSessionStore((s) => s.activeSessionId[caseNumber])
+  const allSubAgents = useSubAgentStore((s) => s.agents)
+  const caseSubAgents = useMemo(() => {
+    return Object.values(allSubAgents)
+      .filter(a => a.caseNumber === caseNumber || a.parentSessionId === storeActiveSessionId)
+      .sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime())
+  }, [allSubAgents, caseNumber, storeActiveSessionId])
+  const selectedSubAgent = selectedSubAgentId ? allSubAgents[selectedSubAgentId] || null : null
+
+  // Recover sub-agents from run-messages on page refresh
+  const subAgentHydrate = useSubAgentStore((s) => s.hydrate)
+  const hasRecoveredSubAgentsRef = useRef(false)
+  const needsSubAgentRecovery = caseSubAgents.length === 0
+  const { data: subAgentRunData } = useRunMessages(needsSubAgentRecovery && !skipRecovery ? caseNumber : null)
+  useEffect(() => {
+    if (skipRecovery) return
+    if (subAgentRunData?.subAgents && !hasRecoveredSubAgentsRef.current) {
+      hasRecoveredSubAgentsRef.current = true
+      for (const [taskId, sub] of Object.entries(subAgentRunData.subAgents as Record<string, any>)) {
+        subAgentHydrate({
+          taskId,
+          agentType: sub.agentType || taskId,
+          source: 'casework',
+          parentSessionId: storeActiveSessionId || caseNumber,
+          caseNumber,
+          status: sub.status || 'completed',
+          description: sub.description,
+          startedAt: sub.startedAt || '',
+          completedAt: sub.completedAt,
+          summary: sub.summary,
+          usage: sub.usage,
+          messages: (sub.messages || []).map((m: any) => ({
+            type: m.type || 'system',
+            content: m.content || '',
+            toolName: m.toolName,
+            timestamp: m.timestamp || '',
+          })),
+        })
+      }
+    }
+  }, [subAgentRunData, subAgentHydrate, storeActiveSessionId, caseNumber, skipRecovery])
 
   // Auto-initialize pipeline steps when casework starts but no SSE pipeline event was received
   // (e.g. page refresh, late SSE connection)
@@ -185,9 +352,6 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull, ski
     const timer = setInterval(checkStall, 5_000)
     return () => clearInterval(timer)
   }, [isStepActive, lastHeartbeat])
-
-  // Store-tracked active session ID (from SSE events → caseSessionStore)
-  const storeActiveSessionId = useCaseSessionStore((s) => s.activeSessionId[caseNumber])
 
   /** Background actions can run concurrently — only disabled when the same action is already running */
   const BACKGROUND_ACTIONS: ReadonlySet<AIAction> = new Set(['teams-search'])
@@ -271,7 +435,7 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull, ski
           : 'completed' as const
         // Populate caseSessionStore unified timeline
         const KIND_TO_TYPE: Record<string, CaseSessionMessage['type']> = {
-          started: 'system', thinking: 'thinking', 'tool-call': 'tool-call',
+          started: 'system', thinking: 'thinking', response: 'response', 'tool-call': 'tool-call',
           'tool-result': 'tool-result', completed: 'completed', error: 'failed', question: 'system',
         }
         for (const msg of stepProgressData.messages) {
@@ -1059,13 +1223,74 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull, ski
       <StepFilterTabs
         steps={stepGroups}
         activeFilter={activeStepFilter}
-        onFilterChange={setActiveStepFilter}
+        onFilterChange={(step) => { setActiveStepFilter(step); setSelectedSubAgentId(null) }}
         onClear={() => {
           useCaseSessionStore.getState().clearAll(caseNumber)
           setSelectedSessionId(null)
           setActiveStepFilter(null)
+          setSelectedSubAgentId(null)
         }}
       />
+
+      {/* Sub-agent Tabs — shown when sub-agents exist for this case */}
+      {caseSubAgents.length > 0 && (
+        <div
+          className="flex items-center gap-1 px-5 py-1.5 flex-shrink-0 overflow-x-auto"
+          style={{ borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-inset)' }}
+        >
+          <span className="text-[10px] font-medium mr-1 flex-shrink-0" style={{ color: 'var(--text-tertiary)' }}>
+            <Bot className="w-3 h-3 inline mr-0.5" />Sub-agents:
+          </span>
+          {caseSubAgents.map((agent) => {
+            const isSelected = selectedSubAgentId === agent.taskId
+            const statusColor = agent.status === 'running' ? 'var(--accent-blue)'
+              : agent.status === 'completed' ? 'var(--accent-green)'
+              : agent.status === 'failed' ? 'var(--accent-red)'
+              : 'var(--text-tertiary)'
+            const statusBg = agent.status === 'running' ? 'var(--accent-blue-dim)'
+              : agent.status === 'completed' ? 'var(--accent-green-dim)'
+              : agent.status === 'failed' ? 'var(--accent-red-dim)'
+              : 'var(--bg-elevated)'
+            return (
+              <button
+                key={agent.taskId}
+                onClick={() => {
+                  if (isSelected) {
+                    setSelectedSubAgentId(null)
+                  } else {
+                    setSelectedSubAgentId(agent.taskId)
+                    setActiveStepFilter(null) // deselect step filter
+                  }
+                }}
+                className={`px-2.5 py-1 rounded text-xs font-medium transition-colors flex-shrink-0 flex items-center gap-1.5 ${agent.status === 'running' ? 'animate-pulse' : ''}`}
+                style={{
+                  background: isSelected ? statusBg : 'transparent',
+                  color: isSelected ? statusColor : 'var(--text-tertiary)',
+                }}
+                onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
+                onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+              >
+                <span
+                  className={`inline-block w-2 h-2 rounded-full flex-shrink-0 ${agent.status === 'running' ? 'animate-pulse' : ''}`}
+                  style={{ background: statusColor }}
+                />
+                {agent.agentType}
+                {agent.messages.length > 0 && (
+                  <span
+                    className="text-[10px] px-1 py-px rounded-full"
+                    style={{
+                      background: isSelected ? statusColor : 'var(--bg-elevated)',
+                      color: isSelected ? 'var(--text-inverse)' : 'var(--text-tertiary)',
+                    }}
+                  >
+                    {agent.messages.length}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      )}
 
       {/* Messages area — flex-grow, scrollable */}
       <div
@@ -1073,7 +1298,10 @@ export default function CaseAIPanel({ caseNumber, mode = 'full', onOpenFull, ski
         className="flex-1 overflow-y-auto px-5 py-3"
         style={{ minHeight: '300px' }}
       >
-        {effectiveMessages.length === 0 ? (
+        {selectedSubAgent ? (
+          /* Sub-agent detail view */
+          <SubAgentInlineDetail agent={selectedSubAgent} caseNumber={caseNumber} />
+        ) : effectiveMessages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center py-12" style={{ color: 'var(--text-tertiary)' }}>
             <Brain className="w-12 h-12 mb-3 opacity-30" />
             <p className="text-base">No messages yet</p>

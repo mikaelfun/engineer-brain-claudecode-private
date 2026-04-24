@@ -28,11 +28,24 @@ allowed-tools:
 
 ## 1. 快速参考
 
+### 认证 Profile 选择
+
+根据集群 cloud 选择 `config.json → azProfile` 中的 profile：
+- `chinacloudapi.cn` (Mooncake) → `azProfile.mooncake`
+- `kusto.windows.net` (Global) → `azProfile.global`
+
+```bash
+# 从 config.json 动态读取（Mooncake 示例）
+AZ_PROFILE=$(python3 -c "import json; print(json.load(open('config.json'))['azProfile']['mooncake'])")
+export AZURE_CONFIG_DIR="$HOME/.azure-profiles/$AZ_PROFILE"
+```
+
 ### 单查询
 
 ```bash
-AZURE_CONFIG_DIR="/c/Users/fangkun/.azure-profiles/cme-fangkun" \
-/c/Python314/python.exe scripts/kusto-query.py \
+AZ_PROFILE=$(python3 -c "import json; print(json.load(open('config.json'))['azProfile']['mooncake'])")
+AZURE_CONFIG_DIR="$HOME/.azure-profiles/$AZ_PROFILE" \
+python3 scripts/kusto-query.py \
   --cluster "https://azcrpmc.kusto.chinacloudapi.cn" \
   --database "crp_allmc" \
   --query "ApiQosEvent | where TIMESTAMP > ago(1h) | take 5" \
@@ -42,8 +55,9 @@ AZURE_CONFIG_DIR="/c/Users/fangkun/.azure-profiles/cme-fangkun" \
 ### Schema Probe
 
 ```bash
-AZURE_CONFIG_DIR="/c/Users/fangkun/.azure-profiles/cme-fangkun" \
-/c/Python314/python.exe scripts/kusto-query.py \
+AZ_PROFILE=$(python3 -c "import json; print(json.load(open('config.json'))['azProfile']['mooncake'])")
+AZURE_CONFIG_DIR="$HOME/.azure-profiles/$AZ_PROFILE" \
+python3 scripts/kusto-query.py \
   --cluster "https://azcrpmc.kusto.chinacloudapi.cn" \
   --database "crp_allmc" \
   --probe-schema "ApiQosEvent"
@@ -62,10 +76,12 @@ AZURE_CONFIG_DIR="/c/Users/fangkun/.azure-profiles/cme-fangkun" \
 ### 环境变量
 
 ```bash
-export AZURE_CONFIG_DIR="/c/Users/fangkun/.azure-profiles/cme-fangkun"
+# 从 config.json 读取 profile（不要硬编码 profile 名）
+AZ_PROFILE=$(python3 -c "import json; c=json.load(open('config.json'))['azProfile']; print(c['mooncake'] if 'chinacloudapi' in '$CLUSTER' else c['global'])")
+export AZURE_CONFIG_DIR="$HOME/.azure-profiles/$AZ_PROFILE"
 ```
 
-⚠️ **必须设置**，否则 DefaultAzureCredential 无法获取 Mooncake token。
+⚠️ **必须设置**，否则 DefaultAzureCredential 无法获取正确 cloud 的 token。
 
 ---
 

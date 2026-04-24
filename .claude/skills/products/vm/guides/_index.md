@@ -1,98 +1,111 @@
-# VM Known Issues Guide Index
+# VM 排查指南索引
 
-**Total Topics**: 67 | **Last Updated**: 2026-04-18
-**Total Entries**: 1579
-**Skipped Entries**: 6
+**Total Topics**: 69 | **Total Entries**: 1513 | **Last Updated**: 2026-04-24
+**Discarded**: 26 | **Method**: tag-heuristic-v1 + sub-clustering
 
 ## Topic Index
 
-| # | Topic | Title | Entries | Fusion | Score | Files |
-|---|-------|-------|---------|--------|-------|-------|
-| 1 | vm-allocation-a | Vm Allocation A | 30 | ❌ | medium | [speed](vm-allocation-a.md) |
-| 2 | vm-allocation-b | Vm Allocation B | 30 | ❌ | medium | [speed](vm-allocation-b.md) |
-| 3 | vm-allocation-c | Vm Allocation C | 30 | ❌ | medium | [speed](vm-allocation-c.md) |
-| 4 | vm-allocation-d | Vm Allocation D | 30 | ❌ | medium | [speed](vm-allocation-d.md) |
-| 5 | vm-allocation-e | Vm Allocation E | 30 | ❌ | medium | [speed](vm-allocation-e.md) |
-| 6 | vm-allocation-f | Vm Allocation F | 8 | ❌ | medium | [speed](vm-allocation-f.md) |
-| 7 | vm-disk-storage-a | Vm Disk Storage A | 30 | ✅ | medium | [speed](vm-disk-storage-a.md) / [detail](details/vm-disk-storage-a.md) |
-| 8 | vm-disk-storage-b | Vm Disk Storage B | 30 | ✅ | medium | [speed](vm-disk-storage-b.md) / [detail](details/vm-disk-storage-b.md) |
-| 9 | vm-disk-storage-c | Vm Disk Storage C | 30 | ✅ | medium | [speed](vm-disk-storage-c.md) / [detail](details/vm-disk-storage-c.md) |
-| 10 | vm-disk-storage-d | Vm Disk Storage D | 30 | ✅ | medium | [speed](vm-disk-storage-d.md) / [detail](details/vm-disk-storage-d.md) |
-| 11 | vm-disk-storage-e | Vm Disk Storage E | 30 | ✅ | medium | [speed](vm-disk-storage-e.md) / [detail](details/vm-disk-storage-e.md) |
-| 12 | vm-disk-storage-f | Vm Disk Storage F | 4 | ✅ | medium | [speed](vm-disk-storage-f.md) / [detail](details/vm-disk-storage-f.md) |
-| 13 | vm-start-stop-a | Vm Start Stop A | 30 | ✅ | medium | [speed](vm-start-stop-a.md) / [detail](details/vm-start-stop-a.md) |
-| 14 | vm-start-stop-b | Vm Start Stop B | 30 | ✅ | medium | [speed](vm-start-stop-b.md) / [detail](details/vm-start-stop-b.md) |
-| 15 | vm-start-stop-c | Vm Start Stop C | 30 | ✅ | medium | [speed](vm-start-stop-c.md) / [detail](details/vm-start-stop-c.md) |
-| 16 | vm-start-stop-d | Vm Start Stop D | 30 | ✅ | medium | [speed](vm-start-stop-d.md) / [detail](details/vm-start-stop-d.md) |
-| 17 | vm-start-stop-e | Vm Start Stop E | 30 | ✅ | medium | [speed](vm-start-stop-e.md) / [detail](details/vm-start-stop-e.md) |
-| 18 | vm-start-stop-f | Vm Start Stop F | 30 | ✅ | medium | [speed](vm-start-stop-f.md) / [detail](details/vm-start-stop-f.md) |
-| 19 | vm-start-stop-g | Vm Start Stop G | 30 | ✅ | medium | [speed](vm-start-stop-g.md) / [detail](details/vm-start-stop-g.md) |
-| 20 | vm-start-stop-h | Vm Start Stop H | 30 | ✅ | medium | [speed](vm-start-stop-h.md) / [detail](details/vm-start-stop-h.md) |
-| 21 | vm-start-stop-i | Vm Start Stop I | 30 | ✅ | medium | [speed](vm-start-stop-i.md) / [detail](details/vm-start-stop-i.md) |
-| 22 | vm-start-stop-j | Vm Start Stop J | 30 | ✅ | medium | [speed](vm-start-stop-j.md) / [detail](details/vm-start-stop-j.md) |
-| 23 | vm-start-stop-k | Vm Start Stop K | 30 | ✅ | medium | [speed](vm-start-stop-k.md) / [detail](details/vm-start-stop-k.md) |
-| 24 | vm-start-stop-l | Vm Start Stop L | 30 | ✅ | medium | [speed](vm-start-stop-l.md) / [detail](details/vm-start-stop-l.md) |
-| 25 | vm-start-stop-m | Vm Start Stop M | 30 | ✅ | medium | [speed](vm-start-stop-m.md) / [detail](details/vm-start-stop-m.md) |
-| 26 | vm-start-stop-n | Vm Start Stop N | 30 | ✅ | medium | [speed](vm-start-stop-n.md) / [detail](details/vm-start-stop-n.md) |
-| 27 | vm-start-stop-o | Vm Start Stop O | 30 | ✅ | medium | [speed](vm-start-stop-o.md) / [detail](details/vm-start-stop-o.md) |
-| 28 | vm-start-stop-p | Vm Start Stop P | 30 | ✅ | medium | [speed](vm-start-stop-p.md) / [detail](details/vm-start-stop-p.md) |
-| 29 | vm-start-stop-q | Vm Start Stop Q | 30 | ✅ | medium | [speed](vm-start-stop-q.md) / [detail](details/vm-start-stop-q.md) |
-| 30 | vm-start-stop-r | Vm Start Stop R | 30 | ✅ | medium | [speed](vm-start-stop-r.md) / [detail](details/vm-start-stop-r.md) |
-| 31 | vm-start-stop-s | Vm Start Stop S | 30 | ✅ | medium | [speed](vm-start-stop-s.md) / [detail](details/vm-start-stop-s.md) |
-| 32 | vm-start-stop-t | Vm Start Stop T | 22 | ✅ | medium | [speed](vm-start-stop-t.md) / [detail](details/vm-start-stop-t.md) |
-| 33 | vm-provisioning-a | Vm Provisioning A | 30 | ✅ | medium | [speed](vm-provisioning-a.md) / [detail](details/vm-provisioning-a.md) |
-| 34 | vm-provisioning-b | Vm Provisioning B | 30 | ✅ | medium | [speed](vm-provisioning-b.md) / [detail](details/vm-provisioning-b.md) |
-| 35 | vm-provisioning-c | Vm Provisioning C | 30 | ✅ | medium | [speed](vm-provisioning-c.md) / [detail](details/vm-provisioning-c.md) |
-| 36 | vm-provisioning-d | Vm Provisioning D | 30 | ✅ | medium | [speed](vm-provisioning-d.md) / [detail](details/vm-provisioning-d.md) |
-| 37 | vm-provisioning-e | Vm Provisioning E | 30 | ✅ | medium | [speed](vm-provisioning-e.md) / [detail](details/vm-provisioning-e.md) |
-| 38 | vm-provisioning-f | Vm Provisioning F | 30 | ✅ | medium | [speed](vm-provisioning-f.md) / [detail](details/vm-provisioning-f.md) |
-| 39 | vm-provisioning-g | Vm Provisioning G | 30 | ✅ | medium | [speed](vm-provisioning-g.md) / [detail](details/vm-provisioning-g.md) |
-| 40 | vm-provisioning-h | Vm Provisioning H | 30 | ✅ | medium | [speed](vm-provisioning-h.md) / [detail](details/vm-provisioning-h.md) |
-| 41 | vm-provisioning-i | Vm Provisioning I | 8 | ✅ | medium | [speed](vm-provisioning-i.md) / [detail](details/vm-provisioning-i.md) |
-| 42 | vm-linux-os | Vm Linux Os | 25 | ✅ | medium | [speed](vm-linux-os.md) / [detail](details/vm-linux-os.md) / [workflow](workflows/vm-linux-os.md) |
-| 43 | vm-maintenance | Vm Maintenance | 6 | ✅ | medium | [speed](vm-maintenance.md) / [detail](details/vm-maintenance.md) / [workflow](workflows/vm-maintenance.md) |
-| 44 | vm-image-gallery | Vm Image Gallery | 34 | ✅ | medium | [speed](vm-image-gallery.md) / [detail](details/vm-image-gallery.md) / [workflow](workflows/vm-image-gallery.md) |
-| 45 | vm-encryption | Vm Encryption | 21 | ❌ | medium | [speed](vm-encryption.md) / [detail](details/vm-encryption.md) |
-| 46 | vm-performance | Vm Performance | 32 | ✅ | medium | [speed](vm-performance.md) / [detail](details/vm-performance.md) / [workflow](workflows/vm-performance.md) |
-| 47 | vm-networking-a | Vm Networking A | 30 | ❌ | medium | [speed](vm-networking-a.md) |
-| 48 | vm-networking-b | Vm Networking B | 26 | ❌ | medium | [speed](vm-networking-b.md) |
-| 49 | vm-extension-a | Vm Extension A | 30 | ❌ | medium | [speed](vm-extension-a.md) |
-| 50 | vm-extension-b | Vm Extension B | 30 | ❌ | medium | [speed](vm-extension-b.md) |
-| 51 | vm-extension-c | Vm Extension C | 30 | ❌ | medium | [speed](vm-extension-c.md) |
-| 52 | vm-extension-d | Vm Extension D | 4 | ❌ | medium | [speed](vm-extension-d.md) / [detail](details/vm-extension-d.md) |
-| 53 | vm-scale-set | Vm Scale Set | 6 | ✅ | medium | [speed](vm-scale-set.md) / [detail](details/vm-scale-set.md) / [workflow](workflows/vm-scale-set.md) |
-| 54 | vm-boot-diagnostics | Vm Boot Diagnostics | 15 | ❌ | medium | [speed](vm-boot-diagnostics.md) |
-| 55 | vm-arc | Vm Arc | 3 | ❌ | medium | [speed](vm-arc.md) |
-| 56 | vm-connectivity-rdp-a | Vm Connectivity Rdp A | 30 | ✅ | medium | [speed](vm-connectivity-rdp-a.md) / [detail](details/vm-connectivity-rdp-a.md) |
-| 57 | vm-connectivity-rdp-b | Vm Connectivity Rdp B | 30 | ✅ | medium | [speed](vm-connectivity-rdp-b.md) / [detail](details/vm-connectivity-rdp-b.md) |
-| 58 | vm-connectivity-rdp-c | Vm Connectivity Rdp C | 15 | ✅ | medium | [speed](vm-connectivity-rdp-c.md) / [detail](details/vm-connectivity-rdp-c.md) |
-| 59 | vm-connectivity-ssh | Vm Connectivity Ssh | 6 | ✅ | medium | [speed](vm-connectivity-ssh.md) / [detail](details/vm-connectivity-ssh.md) / [workflow](workflows/vm-connectivity-ssh.md) |
-| 60 | vm-identity | Vm Identity | 2 | ✅ | medium | [speed](vm-identity.md) / [detail](details/vm-identity.md) / [workflow](workflows/vm-identity.md) |
-| 61 | vm-gpu | Vm Gpu | 1 | ✅ | medium | [speed](vm-gpu.md) / [detail](details/vm-gpu.md) / [workflow](workflows/vm-gpu.md) |
-| 62 | vm-migration | Vm Migration | 3 | ✅ | medium | [speed](vm-migration.md) / [detail](details/vm-migration.md) / [workflow](workflows/vm-migration.md) |
-| 63 | vm-monitoring | Vm Monitoring | 1 | ✅ | medium | [speed](vm-monitoring.md) / [detail](details/vm-monitoring.md) / [workflow](workflows/vm-monitoring.md) |
-| 64 | vm-windows-os | Vm Windows Os | 6 | ✅ | medium | [speed](vm-windows-os.md) / [detail](details/vm-windows-os.md) / [workflow](workflows/vm-windows-os.md) |
-| 65 | vm-backup-recovery | Vm Backup Recovery | 9 | ❌ | medium | [speed](vm-backup-recovery.md) |
-| 66 | vm-general | Vm General | 21 | ✅ | medium | [speed](vm-general.md) / [detail](details/vm-general.md) |
-| 67 | vm-scvmm | SCVMM (System Center Virtual Machine Manager) | 11 | ❌ | low | [speed](vm-scvmm.md) / [detail](details/vm-scvmm.md) |
+| # | Topic | Title | Entries | Score | Sources | Keywords | Files |
+|---|-------|-------|---------|-------|---------|----------|-------|
+| 1 | vm-guest-agent-general | Guest Agent 通用问题 | 114 | 🔵 6.9 | AW ML ON | baltimore-cybertrust, mscoree.dll, bcd, installation, dotnet-framework | — |
+| 2 | vm-rdp-general | RDP 通用连接问题 | 72 | 🔵 6.8 | AW ML ON | kb5018427, ad-database, dotnet-framework, bcd, rd-licensing | — |
+| 3 | vm-azure-files-mount-connectivity | Azure Files 挂载与连接 | 65 | 🔵 6.9 | AW | not-triggered, enterprise-app, cifs, status_logon_failure, no-route-to-host | — |
+| 4 | vm-ade-windows-encrypt | ADE Windows 加密 | 64 | 🔵 6.7 | AW KB ML ON | bcd, mirantis, process-monitor, extension-bug, win2022 | — |
+| 5 | vm-file-sync-general | File Sync 通用问题 | 62 | 🔵 7.0 | AW | clone, tiered-files, 0x80092004, cloud-endpoint, ecs_e_not_enough_remote_storage | — |
+| 6 | vm-extension-general | 扩展通用问题 | 56 | 🔵 7.1 | AW KB ML ON | baltimore-cybertrust, failedtodecryptprotectedsettings, extension-not-found, unsupported-os, spectre | — |
+| 7 | vm-guest-agent-linux-install-config | Linux Guest Agent 安装与配置 | 53 | 🔵 6.9 | AW ML ON | chinese-tags, distro-detection, osprovisioningtimedout, specialized, resource-disk | — |
+| 8 | vm-ade-general | ADE 通用问题 | 48 | 🔵 6.8 | AW KB ML ON | rd-licensing, azure-image-builder, serial-console, version-2.2, secret-deleted | — |
+| 9 | vm-azure-files-general | Azure Files 通用问题 | 44 | 🔵 6.9 | AW ON | pending-xml, password-rotation, https-decryption, availability-zone, offline-repair | — |
+| 10 | vm-windows-general | Windows OS 通用问题 | 37 | 🔵 6.8 | AW KB ML ON | eos, invisible-character, azure-vm, mak, max_server_memory | — |
+| 11 | vm-image-gallery-acg | Azure Compute Gallery (ACG) | 36 | 🔵 6.7 | AW ML | owner-role, definition, naming-validation, image-version, large-disk | — |
+| 12 | vm-extension-vmaccess | VMAccess 扩展（密码重置） | 34 | 🔵 6.7 | AW ML ON | mpssvc, password policy, administrators-group, xml.sax.saxutils, shadow | — |
+| 13 | vm-linux-general | Linux OS 通用问题 | 33 | 🔵 6.3 | AW KB ML ON | baltimore-cybertrust, apt, 18.04, regionservice, sles-11-sp4 | — |
+| 14 | vm-ade-linux-encrypt | ADE Linux 加密 | 32 | 🔵 6.6 | AW ML ON | extension-conflict, data-disk-secrets-missing, python-entrypoint, encryption-policy, specialized | — |
+| 15 | vm-image-general | 镜像通用问题 | 32 | 🔵 6.8 | AW ML ON | azure-image-builder, region-limitation, replication, smb-vs-nfs, offline-repair | — |
+| 16 | vm-misc | 其他未分类 | 31 | 🔵 6.5 | AW KB ML ON | pg-escalation, resource-missing, azure-image-builder, index, logcontainersnapshot | — |
+| 17 | vm-disk-operations | 托管磁盘操作 | 30 | 🔵 6.8 | AW ML ON | disk-cache, availability-zone, sas, 21vianet, incremental-snapshot | — |
+| 18 | vm-disk-encryption-host | 主机加密与 SSE+CMK | 29 | 🔵 6.2 | AW | restore-point, rdp, vmstart, vm-size, asc | — |
+| 19 | vm-cse-general | CSE/Run Command 通用 | 27 | 🔵 6.9 | AW ML ON | rc4, logcontainersnapshot, sid-mismatch, confidential-vm, outbound-connectivity | — |
+| 20 | vm-rdp-firewall-nsg | RDP 防火墙与 NSG 阻断 | 25 | 🔵 7.0 | AW ML ON | failed-status, powershell-remoting, unsupported-os, static-ip, specialized | — |
+| 21 | vm-advisor | Azure Advisor 建议 | 24 | 🔵 7.0 | AW | pending-xml, cost, score, pg-escalation, expand-parameter | — |
+| 22 | vm-connectivity-serial-console | 串行控制台 | 22 | 🔵 6.1 | AW ML ON | inspectiaas, image-version, bcd, acis, chkdsk | — |
+| 23 | vm-azure-files-nfs | Azure Files NFS | 22 | 🔵 7.0 | AW ON | nosharecache, bug-check, hyper-v-stuck, hardware-migration, bcd-corruption | — |
+| 24 | vm-monitoring-ama-mma | AMA/MMA 监控代理 | 21 | 🔵 6.5 | AW KB ML ON | cost, azure-image-builder, sbamanager, china-standard-time, compute-gallery | — |
+| 25 | vm-network-firewall-nsg | 网络防火墙与 NSG | 21 | 🔵 6.7 | AW ML ON | apt, storage-mount, azure-image-builder, kms, health-history | — |
+| 26 | vm-guest-agent-wireserver-communication | WireServer 通信与 GoalState | 20 | 🔵 7.3 | AW ON | mcafee, mac-preservation, nullreference, not-ready, static-ip | — |
+| 27 | vm-windows-group-policy-config | Windows 组策略与系统配置 | 19 | 🔵 6.2 | AW ML ON | dump-analysis, errorcontrol, boot, rescue-vm, scheduled-tasks-policy | — |
+| 28 | vm-allocation-quota | 分配与配额 | 19 | 🔵 6.7 | AW ML ON | service-fabric, china-east-2, vm-size, hardware-cluster, genomics | — |
+| 29 | vm-rdp-group-policy-registry | RDP 组策略与注册表配置 | 18 | 🔵 7.3 | AW ON | pending-xml, 0x00000074, rdp, boot, boot-hang | — |
+| 30 | vm-azure-files-auth | Azure Files AD 身份认证 | 18 | 🔵 6.9 | AW ML | error-1332, ou-placement, aad-auth, dns, group-policy | — |
+| 31 | vm-network-general | 网络通用问题 | 17 | 🔵 6.4 | AW KB ML ON | apt, load-balancer, rescue-vm, hostname-resolution, crp | — |
+| 32 | vm-connectivity-ssh | SSH 连接问题 | 16 | 🔵 6.5 | AW KB ML ON | pam_limits, host-keys, interrupted-update, azure-image-builder, vmaccess | [speed](vm-connectivity-ssh.md) / [detail](details/vm-connectivity-ssh.md) / [workflow](workflows/vm-connectivity-ssh.md) |
+| 33 | vm-boot-bsod | Windows BSOD 蓝屏 | 16 | 🔵 6.5 | AW ML ON | 0x0000000a, 0x00000074, windows-server-2008, chkdsk, boot | — |
+| 34 | vm-provisioning-deployment | VM 部署与预配 | 16 | 🔵 6.3 | AW ML ON | dsv4, vhd, reapply, vm-size, crp | — |
+| 35 | vm-disk-performance | 磁盘性能与限流 | 15 | 🔵 7.0 | AW ML ON | http-409, sync-io, columns-missing, elastic-san, mooncake | — |
+| 36 | vm-elastic-san | Elastic SAN | 15 | 🔵 6.8 | AW | master-storage-account, volume-group, vnet-acl, region-availability, active-sessions | — |
+| 37 | vm-monitoring-general | 监控通用问题 | 15 | 🔵 7.0 | AW ON | rdp, large-disk, warning, key-based-access, asc | — |
+| 38 | vm-cse-linux-shell | CSE Linux Shell 脚本 | 14 | 🔵 6.6 | AW ON | boot, wrong-os, set-azvmcustomscriptextension, os-compatibility, dns | — |
+| 39 | vm-boot-linux | Linux 启动问题 | 14 | 🔵 6.1 | AW ML ON | apt, rescue-vm, nic-naming, 3.10-kernel, alar | — |
+| 40 | vm-start-stop-healing | Service Healing 与意外重启 | 13 | 🔵 7.4 | AW ON | v7-series, drive-replacement, maintenance, vhd, event-18590 | — |
+| 41 | vm-migration | VM 迁移 | 13 | 🔵 7.6 | AW ON | vmm, av2, duplicate-entries, unregister-asrcomponent, job-log | [speed](vm-migration.md) / [detail](details/vm-migration.md) / [workflow](workflows/vm-migration.md) |
+| 42 | vm-ade-keyvault-secrets | ADE KeyVault 密钥管理 | 12 | 🔵 6.2 | AW | encrypted-disk-attach, sse+cmk, keyvault, subscription-move, kek | — |
+| 43 | vm-azure-files-permissions-rbac | Azure Files 权限与 RBAC | 12 | 🔵 6.8 | AW | file-handle, portal-access-denied, error-1326, serial-console, preview | — |
+| 44 | vm-cse-run-command | Run Command 功能 | 12 | 🔵 6.9 | AW ON | serial-console, active-directory, rejoin-domain, escape, vmaccess | — |
+| 45 | vm-boot-general | Windows 启动通用问题 | 12 | 🔵 6.5 | AW ML ON | mbr, portal-shutdown, windows11, host-agent-timeout, trusted-launch | — |
+| 46 | vm-acss | ACSS / SAP on Azure | 12 | 🔵 7.0 | AW ON | icm-escalation, strongswan, bcd-corruption, ascs, scs-install | — |
+| 47 | vm-image-builder-aib | Azure Image Builder (AIB) | 11 | 🔵 6.7 | AW ON | errorhandling, subnet, azure-image-builder, tags, udf | — |
+| 48 | vm-linux-rhel-upgrade | RHEL Leapp 升级 | 11 | 🔵 5.9 | AW ML ON | 21v, dual-fencing, custom-image, third-party, quorum | — |
+| 49 | vm-linux-kernel-driver | Linux 内核与驱动 | 10 | 🔵 6.0 | ML ON | repositories, vm-tags, false-alert, unicode, udf | — |
+| 50 | vm-boot-bcd-winload | BCD/WinLoad 启动配置 | 10 | 🔵 6.8 | AW ML ON | bcd, boot, mbr, bcd-corruption, boot-manager | — |
+| 51 | vm-windows-sysprep-generalize | Sysprep 与镜像泛化 | 9 | 🔵 6.9 | AW ML ON | image-version, panther, wvd, image-capture, osprovisioningtimedout | — |
+| 52 | vm-ade-dual-to-single-migration | ADE 双通道迁移至单通道 | 9 | 🔵 6.6 | AW | rescue-vm, unsupported, dsv6, training-lab, dual-pass | — |
+| 53 | vm-file-sync-cloud-tiering | Cloud Tiering 与数据召回 | 9 | 🔵 7.3 | AW | sf_dataless, recall, v16, ese-database, multimedia | — |
+| 54 | vm-windows-update-patch | Windows Update 与补丁管理 | 8 | 🔵 6.6 | AW ML ON | component-store-corruption, extended-security-update, rescue-vm, c0000265, restart-schedule | — |
+| 55 | vm-performance | VM 性能问题 | 8 | 🔵 7.0 | AW ON | cpu-performance, rdp, vm-agent, new-resource, basv2 | [speed](vm-performance.md) / [detail](details/vm-performance.md) / [workflow](workflows/vm-performance.md) |
+| 56 | vm-azure-files-performance-throttling | Azure Files 性能与限流 | 7 | 🔵 7.1 | AW | vhd, resource-exhaustion, premium-files, file-handles, vhd-workaround | — |
+| 57 | vm-windows-activation | Windows 激活与许可 | 7 | 🔵 6.1 | AW ML | ws2022, ws2008, skiprearm, kms, devices-and-deployment | — |
+| 58 | vm-genomics | Genomics 基因组学 | 7 | 🔵 6.8 | AW | blob-block-limit, read-length, genomics, sas-key, unmatched-read | — |
+| 59 | vm-confidential-vm | 机密 VM (CVM) | 6 | 🔵 6.7 | AW KB ML | sev-snp, secureboot, dcasv6, preview, trusted-launch | — |
+| 60 | vm-start-stop-operations | VM 启停操作 | 6 | 🔵 7.2 | AW ML ON | logic-app, azurecm, project-flash, mount, version-not-supported | — |
+| 61 | vm-extension-security | 安全扩展 (Defender) | 6 | 🔵 7.3 | AW | mpssvc, encryption-policy, not-available, scoping, firewall | — |
+| 62 | vm-azure-files-mac-linux-client | Azure Files Mac/Linux 客户端 | 5 | 🔵 7.3 | AW | trust-relationship, authentication-failure, sam-database, error-1396, rc4-disabled | — |
+| 63 | vm-linux-config-tools | Linux 配置与工具 | 5 | 🔵 5.9 | ML ON | ephemeral-disk, registration, certificate-pinning, dhcp, udev | — |
+| 64 | vm-sla-process | SLA 与流程 | 5 | 🔵 6.1 | AW | disclosure, datacenter, case-management, azure-safety-guard, asc | — |
+| 65 | vm-backup-recovery | 备份与恢复 | 5 | 🔵 6.6 | AW KB ON | service-fabric, container, index, offline-repair, recovery-points | [speed](vm-backup-recovery.md) |
+| 66 | vm-scale-set | VMSS 虚拟机规模集 | 5 | 🔵 7.0 | ON | service-fabric, load-balancer, nat-pool, false-alert, computer-name | [speed](vm-scale-set.md) / [detail](details/vm-scale-set.md) / [workflow](workflows/vm-scale-set.md) |
+| 67 | vm-sovereign-cloud | 主权云支持边界 | 5 | 🔵 7.2 | AW ON | customer-communication, 21v, host-agent, template, rca | — |
+| 68 | vm-identity | 托管标识 | 4 | 🔵 6.2 | AW | ame, 3+0-geo, lrs, ha, west-india | [speed](vm-identity.md) / [detail](details/vm-identity.md) / [workflow](workflows/vm-identity.md) |
+| 69 | vm-arc | Azure Arc VM | 3 | 🔵 6.7 | AW ON | global-search, case-management, mooncake-limitation, icm, search | [speed](vm-arc.md) |
 
-## Skipped Entries
+## Discarded Entries
 
-**Count**: 6
-**Reason**: Internal process docs, broken SharePoint links, no technical value
+**Count**: 26
 
-| Entry ID |
-|----------|
-| vm-contentidea-kb-002 |
-| vm-contentidea-kb-006 |
-| vm-contentidea-kb-019 |
-| vm-contentidea-kb-020 |
-| vm-contentidea-kb-032 |
-| vm-contentidea-kb-039 |
+| Entry ID | Reason |
+|----------|--------|
+| vm-contentidea-kb-007 | No rootCause and no solution |
+| vm-contentidea-kb-024 | No rootCause and no solution |
+| vm-contentidea-kb-033 | No rootCause and no solution |
+| vm-contentidea-kb-039 | No rootCause and no solution |
+| vm-contentidea-kb-002 | No rootCause and no solution |
+| vm-contentidea-kb-006 | No rootCause and no solution |
+| vm-contentidea-kb-013 | No rootCause and no solution |
+| vm-contentidea-kb-023 | No rootCause and no solution |
+| vm-contentidea-kb-028 | No rootCause and no solution |
+| vm-contentidea-kb-032 | No rootCause and no solution |
+| vm-contentidea-kb-036 | No rootCause and no solution |
+| vm-contentidea-kb-029 | No rootCause and no solution |
+| vm-contentidea-kb-019 | No rootCause and no solution |
+| vm-contentidea-kb-020 | No rootCause and no solution |
+| vm-contentidea-kb-043 | No rootCause and no solution |
+| vm-contentidea-kb-041 | No rootCause and no solution |
+| vm-contentidea-kb-030 | No rootCause and no solution |
+| vm-contentidea-kb-011 | No rootCause and no solution |
+| vm-contentidea-kb-014 | No rootCause and no solution |
+| vm-contentidea-kb-015 | No rootCause and no solution |
 
 ## Change Log
 
 | Date | Action | Details |
 |------|--------|---------|
-| 2026-04-07 | Full synthesis | 66 topics, 1559 entries |
-| 2026-04-18 | Incremental | +26 entries (20 assigned, 6 skipped), +1 new topic (vm-scvmm), 7 topics updated |
+| 2026-04-24 | Full synthesis v2 | 69 topics, 1513 entries, semantic clustering |

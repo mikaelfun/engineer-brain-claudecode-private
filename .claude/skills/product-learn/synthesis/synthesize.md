@@ -156,8 +156,34 @@ elif len(unassignedPool) > 0:
 按 symptom 语义相似度分组：
 - 同类症状（如不同错误信息但同一根因）归为一组
 - 每组取一个代表性主题名（英文 slug 用于文件名，中文用于标题）
-- **聚类粒度控制**：单个 topic 超过 15 条三元组时，强制拆分为子 topic
-  - 按 rootCause 或 tags 二次聚类
+- **聚类粒度控制**：单个 topic 超过 **30 条**三元组时，必须按语义二次聚类拆分为子 topic
+  - **二次聚类方法**：按 rootCause 语义相似度分组（不是 round-robin 切片）
+    - 先提取该 topic 下所有条目的 rootCause 字段
+    - 按 rootCause 语义相似度聚类为若干子组（子组大小允许不均，自然聚类结果）
+    - 如果 rootCause 为空或过于笼统，退而使用 tags + symptom 关键词聚类
+  - **子 topic slug 格式**：`{product}-{category}-{semantic-descriptor}`
+    - 每个 slug 必须对 troubleshooter 自解释——仅看 slug 就能判断该 topic 是否与当前症状相关
+    - `semantic-descriptor` 必须描述该子组的核心语义（如 `quota-exceeded`、`zone-capacity`、`cvm-constraint`）
+    - **禁止使用 a/b/c 字母后缀或数字序号（如 `-a`, `-b`, `-1`, `-2`）作为区分**
+    - 如果同一大类需要拆分，必须用语义描述词区分
+  - **子 topic 条目数允许不均**（自然聚类结果），不要做人工均分
+  - **keywords 字段**：必须是该子组的真实语义关键词，禁止包含无意义字母（`"a"`, `"b"` 等）
+
+  ```
+  ❌ 错误示例（round-robin 切片 + 字母后缀）：
+    vm-allocation-a (30条), vm-allocation-b (30条), vm-allocation-c (30条)
+    keywords: ["allocation", "a"] / ["allocation", "b"] / ["allocation", "c"]
+    title: "Vm Allocation A" / "Vm Allocation B" / ...
+    问题：无语义区分，slug 不自解释，keywords 含无意义字母
+
+  ✅ 正确示例（语义二次聚类）：
+    vm-allocation-quota-exceeded (25条) — 配额超限导致的分配失败
+    vm-allocation-zone-capacity (18条) — 可用区容量不足
+    vm-allocation-cvm-constraint (12条) — 机密 VM 特殊约束
+    vm-allocation-pinning-affinity (8条) — 硬件亲和性导致的分配限制
+    keywords: ["quota", "exceeded", "limit"] / ["zone", "capacity", "region"] / ...
+    每个 slug 看一眼就知道涵盖哪类问题
+  ```
 
 **Draft → topic 映射**：
 - **直接扫描 `guides/drafts/` 目录**发现所有 draft 文件（不依赖 JSONL 指引条目）
@@ -365,7 +391,7 @@ Phase 2（每 topic 三 Agent 并行）：
 | 8-10 | 🟢 | 可直接采信 |
 | 5-7.9 | 🔵 | 可参考，建议验证关键步骤 |
 | 3-4.9 | 🟡 | 仅供方向参考 |
-| 0-2.9 | ⚪ | 可能过时，谨慎参考 |
+| 0-2.9 | ⚪ | 可能已过时，谨慎使用 |
 
 速查表格式：
 ```markdown
@@ -584,6 +610,137 @@ Sub-agent 从每个文件中提取：
 | Case | `[case:NNNN]` |
 | Kusto skill | `[工具: Kusto skill — {file}]` — 不参与评分 |
 
+### 4.5 机器索引生成（Phase 2.5）
+
+Phase 2 全部 agent 完成后，主 agent 串行生成 `guides/_index.search.jsonl`。
+
+**⚠️ 无条件执行**：Phase 2.5 和 §5（_index.md 生成）**始终执行**，即使 Phase 2 中 `topicsToRegen` 为空（无 topic 需要重生成）。原因：索引文件读取 topic-plan.json + JSONL 全量数据，不依赖 Phase 2 的 agent 输出。当索引文件缺失（如 `_index.search.jsonl` 不存在）时，synthesize 即使检测到 0 个变化 topic，也必须执行 Phase 2.5 + §5 生成索引。
+
+**输出文件**：`.claude/skills/products/{product}/guides/_index.search.jsonl`
+
+每行一个 JSON 对象：
+
+```json
+{"slug":"vm-allocation-quota-exceeded","title":"VM 配额分配失败","keywords":["quota","exceeded","limit","AllocationFailed","OverconstrainedAllocationRequest"],"errorCodes":["AllocationFailed","OverconstrainedAllocationRequest"],"symptoms":["VM 无法创建，提示 AllocationFailed","配额不足无法部署","quota exceeded for subscription"],"entryCount":25,"topScore":9.5,"avgScore":7.2,"sources":["onenote","ado-wiki","mslearn"],"hasFusion":true,"hasWorkflow":true,"21vRate":0.92}
+```
+
+**字段说明**：
+
+| 字段 | 类型 | 来源 |
+|------|------|------|
+| `slug` | string | topic-plan.json |
+| `title` | string | topic-plan.json（中文语义标题） |
+| `keywords` | string[] | 合并：topic keywords + 条目 tags + symptom 中提取的关键术语 |
+| `errorCodes` | string[] | 正则匹配 symptom 中的错误代码模式（如 AllocationFailed, 0x80070005 等） |
+| `symptoms` | string[] | 取该 topic 前 3 条最具代表性的 symptom 摘要（≤60 字，优先选不同 rootCause 的） |
+| `entryCount` | number | 该 topic 的 JSONL 条目数 |
+| `topScore` | number | 该 topic 内最高评分 |
+| `avgScore` | number | 该 topic 内平均评分 |
+| `sources` | string[] | 去重后的来源列表 |
+| `hasFusion` | boolean | 是否有 details/ 融合指南 |
+| `hasWorkflow` | boolean | 是否有 workflows/ 排查工作流 |
+| `21vRate` | number | 21vApplicable=true 的条目占比 |
+
+**生成逻辑**：
+
+```python
+for topic in topic_plan['topics']:
+    entries = [e for e in all_entries if e['id'] in topic['entryIds']]
+    
+    # 关键词提取
+    all_tags = set()
+    for e in entries:
+        all_tags.update(e.get('tags', []))
+    
+    # 错误代码提取（正则）
+    import re
+    error_pattern = r'\b([A-Z][a-zA-Z]+(?:Failed|Error|Exception|Denied|Timeout|Exceeded))\b|(?:0x[0-9a-fA-F]{8})|(?:error\s+code\s*[:=]?\s*\d+)'
+    error_codes = set()
+    for e in entries:
+        matches = re.findall(error_pattern, e.get('symptom', ''))
+        error_codes.update(m for m in matches if m)
+    
+    # 症状摘要（取不同 rootCause 的前 3 条）
+    seen_causes = set()
+    symptoms = []
+    for e in sorted(entries, key=lambda x: x.get('confidence', ''), reverse=True):
+        cause_key = e.get('rootCause', '')[:50]
+        if cause_key not in seen_causes and len(symptoms) < 3:
+            symptoms.append(e['symptom'][:60])
+            seen_causes.add(cause_key)
+    
+    # 评分统计（按 shared-rules.md 四维公式逐条计算，不从 JSONL 读 score 字段）
+    from datetime import datetime, timedelta
+    now = datetime.now()
+    
+    def calc_score(e, all_entries_in_topic):
+        # 维度 1: Source Quality (0-3)
+        sq = {'onenote': 3, 'ado-wiki': 2.5, 'contentidea-kb': 2, 'mslearn': 1.5, 'case': 1.5, '21v-gap': 2}.get(e.get('source', ''), 1)
+        
+        # 维度 2: Recency (0-2)
+        try:
+            d = datetime.strptime(e.get('date', ''), '%Y-%m-%d')
+            months = (now - d).days / 30
+            rec = 2 if months < 6 else 1.5 if months < 12 else 1 if months < 24 else 0.5 if months < 48 else 0
+        except:
+            rec = 0
+        
+        # 维度 3: Validation Strength (0-3)
+        my_cause = (e.get('rootCause') or '')[:80].lower()
+        cross = any(
+            o['id'] != e['id'] and o.get('source') != e.get('source')
+            and my_cause and (o.get('rootCause') or '')[:80].lower()
+            and my_cause in (o.get('rootCause') or '').lower()
+            for o in all_entries_in_topic
+        )
+        val = 3 if cross else (2 if e.get('solution', '').count('. ') >= 3 else 1)
+        if not e.get('rootCause'):
+            val = 0
+        
+        # 维度 4: 21V Applicability (0-2)
+        tags = e.get('tags', [])
+        v21 = e.get('21vApplicable')
+        if v21 is False:
+            v21s = 0
+        elif any(t in tags for t in ['21v-verified', 'mooncake']) or e.get('source') == '21v-gap':
+            v21s = 2
+        elif v21 is None:
+            v21s = 0.5
+        else:
+            v21s = 1
+        
+        return round(sq + rec + val + v21s, 1)
+    
+    scores = [calc_score(e, entries) for e in entries]
+    
+    record = {
+        "slug": topic['slug'],
+        "title": topic['title'],
+        "keywords": list(all_tags | set(topic.get('keywords', []))),
+        "errorCodes": list(error_codes),
+        "symptoms": symptoms,
+        "entryCount": len(entries),
+        "topScore": max(scores) if scores else 0,
+        "avgScore": round(sum(scores) / len(scores), 1) if scores else 0,
+        "sources": list(set(e['source'] for e in entries)),
+        "hasFusion": topic.get('hasFusionGuide', False),
+        "hasWorkflow": os.path.exists(f'guides/workflows/{topic["slug"]}.md'),
+        "21vRate": round(sum(1 for e in entries if e.get('21vApplicable', True)) / len(entries), 2) if entries else 0
+    }
+```
+
+**大文件写入规则**：使用 Bash + Python 写入（与 topic-plan.json 相同规则），不用 Write 工具。
+
+**Troubleshooter 使用方式**：
+
+```bash
+# 按关键词搜索
+grep -i "AllocationFailed" guides/_index.search.jsonl | python3 -c "import sys,json; [print(json.loads(l)['slug']) for l in sys.stdin]"
+
+# 按错误代码搜索  
+grep '"AllocationFailed"' guides/_index.search.jsonl
+```
+
 ### 5. 生成索引
 
 Write `.claude/skills/products/{product}/guides/_index.md`：
@@ -591,18 +748,22 @@ Write `.claude/skills/products/{product}/guides/_index.md`：
 ```markdown
 # {Product} 排查指南索引
 
-| 指南 | 类型 | Kusto | 关键词 | 来源数 | 置信度 |
-|------|------|-------|--------|--------|--------|
-| [启停与可用性](vm-start-stop.md) | 📋 融合 | 3 | service-healing, restart | 28 | high |
-| [备份与恢复](vm-backup-restore.md) | 📋 融合 | 1 | backup, asr, recovery | 34 | high |
-| [GPU](vm-gpu.md) | 📊 速查 | 0 | gpu, nvidia | 8 | medium |
+| # | Topic | Title | Entries | Fusion | Score | Keywords | Sources | Files |
+|---|-------|-------|---------|--------|-------|----------|---------|-------|
+| 1 | vm-allocation-quota | VM 配额分配失败 | 25 | ✅ | 🟢 8.2 | quota, exceeded, limit, AllocationFailed | AW ON ML | [speed](vm-allocation-quota.md) / [detail](details/vm-allocation-quota.md) |
+| 2 | vm-start-stop | VM 启停与可用性 | 28 | ✅ | 🔵 7.1 | restart, service-healing, reboot | ON AW | [speed](vm-start-stop.md) / [detail](details/vm-start-stop.md) / [workflow](workflows/vm-start-stop.md) |
+| 3 | vm-gpu | GPU 驱动与性能 | 8 | — | 🟡 4.5 | gpu, nvidia, driver | ML | [speed](vm-gpu.md) |
 
 最后更新: {date}
 ```
 
 列说明：
-- **类型**: `📋 融合`（hasFusionGuide=true，有排查流程+KQL）/ `📊 速查`（仅三元组表格）
-- **Kusto**: 融合的 Kusto query 文件数量
+- **Title**: 中文语义标题（来自 topic-plan.json 的 `title` 字段），不用 slug 驼峰化
+- **Fusion**: `✅`（hasFusionGuide=true）/ `—`（无融合素材）
+- **Score**: `avgScore` 数值 + badge（🟢 8.0+ / 🔵 5.0-7.9 / 🟡 3.0-4.9 / ⚪ <3.0）
+- **Keywords**: 前 5 个关键词，逗号分隔（来自 `_index.search.jsonl`）
+- **Sources**: 来源分布缩写（ON=OneNote, AW=ADO Wiki, ML=MS Learn, KB=ContentIdea KB）
+- **Files**: 速查表 + 详情 + 工作流链接（按实际存在的文件列出）
 
 ### 6. 写审计日志
 

@@ -1,0 +1,3 @@
+CMD-LOG-LINE-BEGIN 9952 | 2026-04-24 11:14:10,365 | INFO | az_command_data_logger | command args: rest --method {} --url {} --resource {} --output {}
+CMD-LOG-LINE-BEGIN 9952 | 2026-04-24 11:14:12,208 | ERROR | az_command_data_logger | Please run 'az login' to setup account.
+CMD-LOG-LINE-BEGIN 9952 | 2026-04-24 11:14:12,209 | INFO | az_command_data_logger | exit code: 1

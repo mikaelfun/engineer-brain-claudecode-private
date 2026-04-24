@@ -21,7 +21,7 @@ import { useEffect } from 'react'
 import { Play, Square, Loader2, RotateCcw, Plus } from 'lucide-react'
 import { usePatrolStore, type PatrolPhase } from '../stores/patrolStore'
 import { usePatrolAgentStore, hydratePatrolAgents } from '../stores/patrolAgentStore'
-import { useStartPatrol, useCancelPatrol } from '../api/hooks'
+import { useStartPatrol, useCancelPatrol, useResetPatrol } from '../api/hooks'
 import PatrolHeader from '../components/patrol/PatrolHeader'
 import PatrolSidebar from '../components/patrol/PatrolSidebar'
 import PatrolCaseList from '../components/patrol/PatrolCaseList'
@@ -71,6 +71,7 @@ export default function PatrolPage() {
 
   const startPatrol = useStartPatrol()
   const cancelPatrol = useCancelPatrol()
+  const resetPatrol = useResetPatrol()
 
   const handleStart = () => {
     usePatrolStore.getState().start()
@@ -83,7 +84,14 @@ export default function PatrolPage() {
     startPatrol.mutate({ force: true, mode: 'new-cases' })
   }
   const handleCancel = () => cancelPatrol.mutate()
-  const handleReset = () => usePatrolStore.getState().reset()
+  const handleReset = () => {
+    resetPatrol.mutate(undefined, {
+      onSuccess: () => {
+        usePatrolStore.getState().reset()
+        usePatrolAgentStore.getState().clear()
+      },
+    })
+  }
 
   // Derive stat values for the stat row
   const activeCases = Object.values(cases).filter(c =>
@@ -154,33 +162,29 @@ export default function PatrolPage() {
               <button
                 onClick={handleStartNewCases}
                 disabled={startPatrol.isPending}
-                className="inline-flex items-center gap-2 font-bold uppercase transition-all"
+                className="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-semibold uppercase rounded-[13px] border transition-all disabled:opacity-40 hover:brightness-110"
                 style={{
-                  fontSize: 12,
-                  padding: '9px 18px',
-                  borderRadius: 13,
-                  letterSpacing: '0.3px',
-                  background: 'var(--accent-green)',
-                  color: 'var(--text-inverse)',
-                  border: '1px solid rgba(0,0,0,0.1)',
-                  boxShadow: 'rgba(0,0,0,0.06) 0 1px 3px 0 inset',
-                  opacity: startPatrol.isPending ? 0.6 : 1,
-                  cursor: startPatrol.isPending ? 'not-allowed' : 'pointer',
+                  color: 'var(--accent-green)',
+                  background: 'var(--accent-green-dim)',
+                  borderColor: 'color-mix(in srgb, var(--accent-green) 25%, transparent)',
+                  letterSpacing: '0.2px',
                 }}
+                title="Scan for new cases only"
               >
-                {startPatrol.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                {startPatrol.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
                 New Cases
               </button>
-              {(isCompleted || isFailed) && (
+              {!isIdle && (
                 <button
                   onClick={handleReset}
+                  disabled={resetPatrol.isPending}
                   className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-colors"
-                  style={{ color: 'var(--text-tertiary)' }}
+                  style={{ color: 'var(--text-tertiary)', opacity: resetPatrol.isPending ? 0.5 : 1 }}
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-                  title="Clear results"
+                  title="Force reset — clear all patrol state and lock"
                 >
-                  <RotateCcw className="w-3.5 h-3.5" />
+                  {resetPatrol.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RotateCcw className="w-3.5 h-3.5" />}
                 </button>
               )}
             </div>

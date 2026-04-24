@@ -5,26 +5,27 @@
  * Wrapped in a Card to match the Pipeline sidebar's visual level.
  * Phase status messages are handled by the sidebar.
  */
-import { useMemo } from 'react'
+import { useMemo, useEffect, useState } from 'react'
 import { usePatrolStore, type CaseState, type PatrolPhase } from '../../stores/patrolStore'
 import { Card } from '../common/Card'
 import PatrolCaseRow from './PatrolCaseRow'
+import { apiGet } from '../../api/client'
 
 const RUNNING_PHASES: PatrolPhase[] = [
   'initializing', 'processing', 'finalizing',
 ]
 
 function isCaseActive(c: CaseState): boolean {
-  return Object.values(c.steps).some(s => s.status === 'active')
+  return Object.values(c.steps).some(s =>
+    s.status === 'active' || (s.status as string) === 'waiting-troubleshooter'
+  )
 }
 
 function isCaseComplete(c: CaseState): boolean {
   const sum = c.steps?.summarize
-  const act = c.steps?.act
   return (
     sum?.status === 'completed' ||
-    sum?.status === 'skipped' ||
-    (act?.status === 'completed' && sum?.status !== 'active')
+    sum?.status === 'skipped'
   )
 }
 
@@ -85,14 +86,35 @@ export default function PatrolCaseList() {
   const phase = usePatrolStore(s => s.phase)
   const caseList = usePatrolStore(s => s.caseList)
 
+  // Fetch case titles (with auth)
+  const [titleMap, setTitleMap] = useState<Record<string, string>>({})
+  useEffect(() => {
+    apiGet<{ cases: Array<{ caseNumber: string; title: string }> }>('/cases')
+      .then(data => {
+        const map: Record<string, string> = {}
+        for (const c of (data.cases || [])) {
+          if (c.caseNumber && c.title) map[c.caseNumber] = c.title
+        }
+        setTitleMap(map)
+      })
+      .catch(() => {})
+  }, [])
+
   const sortedCases = useMemo(() => {
     const allCases = Object.values(cases)
     // Filter to only show cases in the current run's caseList (if available)
-    // This prevents stale cases from previous runs or archived cases from showing
     const filtered = caseList.length > 0
       ? allCases.filter(c => caseList.includes(c.caseNumber))
       : allCases
-    return sortCases(filtered)
+    // Fixed order: follow caseList sequence (patrol init order), don't re-sort on status change
+    if (caseList.length > 0) {
+      const orderMap = new Map(caseList.map((cn, i) => [cn, i]))
+      return [...filtered].sort((a, b) =>
+        (orderMap.get(a.caseNumber) ?? 999) - (orderMap.get(b.caseNumber) ?? 999)
+      )
+    }
+    // Fallback: alphabetical by case number
+    return [...filtered].sort((a, b) => a.caseNumber.localeCompare(b.caseNumber))
   }, [cases, caseList])
 
   const queuedOnly = useMemo(() => {
@@ -177,6 +199,7 @@ export default function PatrolCaseList() {
           <PatrolCaseRow
             key={c.caseNumber}
             caseState={c}
+            title={titleMap[c.caseNumber]}
             defaultExpanded={isCaseActive(c) || !isCaseComplete(c)}
           />
         ))}

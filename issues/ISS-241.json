@@ -1,0 +1,11 @@
+{
+  "id": "ISS-241",
+  "title": "Case 页面 Troubleshooter Findings 排版未对齐其他区块格式",
+  "description": "WebUI 的 Case Detail 页面中，排查发现（Troubleshooter Findings）区块的排版格式与页面中其他区块（如 Summary、Analysis 等）不一致，需要统一视觉风格和排版规范。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "done",
+  "testLoopScan": true,
+  "createdAt": "2026-04-23T22:00:00+08:00",
+  "updatedAt": "2026-04-23T22:15:00+08:00"
+}

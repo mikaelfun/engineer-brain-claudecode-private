@@ -4,6 +4,7 @@
  * with status, reasoning, findings, and context tags.
  */
 import type { StepState, ActionState, StepStatus } from '../../stores/patrolStore'
+import { usePatrolAgentStore } from '../../stores/patrolAgentStore'
 
 // ─── Types ───
 
@@ -20,41 +21,74 @@ interface ActionCard {
 
 interface ActionFlowTimelineProps {
   steps: Record<string, StepState>
+  caseNumber?: string
 }
 
 // ─── Derive action cards from steps ───
 
-function deriveCards(steps: Record<string, StepState>): ActionCard[] {
-  const cards: ActionCard[] = []
-  const assess = steps?.assess
-  if (!assess || assess.status === 'pending') return cards
-
-  // Card 1: Assess
-  cards.push({
-    type: 'assess',
-    label: 'Assess',
-    status: assess.status,
-    durationMs: assess.durationMs,
-    detail: assess.reasoning,
-    result: assess.result,
-  })
-
-  // Cards from act.actions[]
+function deriveCards(steps: Record<string, StepState>, troubleshooterAgentDone?: boolean): ActionCard[] {
   const act = steps?.act
+  if (!act || act.status === 'pending') return []
+
   const actions: ActionState[] = act?.actions || []
+  if (actions.length === 0 && act.status === 'active') return []
+
+  const actStatus = act.status as string
+  const hasTroubleshooter = actions.some(a => a.type === 'troubleshooter')
+  const hasChallenger = actions.some(a => a.type === 'challenger')
+  const hasReassess = actions.some(a => a.type === 'reassess')
+  const isPhase2 = hasChallenger || hasReassess
+
+  // Troubleshooter status: agent store (SSE lifecycle) is more up-to-date than state.json
+  const tsStillWaiting = actStatus === 'waiting-troubleshooter' && !troubleshooterAgentDone
+
+  // Build cards preserving original state.json order (= execution order)
+  const cards: ActionCard[] = []
+  let troubleshooterInserted = false
+
   for (const action of actions) {
+    // Insert virtual troubleshooter BEFORE challenger/reassess (phase2 boundary)
+    if (!hasTroubleshooter && !troubleshooterInserted && isPhase2 &&
+        (action.type === 'challenger' || action.type === 'reassess')) {
+      const tsStatus: StepStatus = tsStillWaiting ? 'active' : 'completed'
+      cards.push({
+        type: 'troubleshooter',
+        label: 'Troubleshoot',
+        status: tsStatus,
+        detail: tsStatus === 'active' ? 'Running external troubleshooter agent…' : undefined,
+      })
+      troubleshooterInserted = true
+    }
+
+    const isAssess = action.type === 'assess'
     const isReassess = action.type === 'reassess'
     const isEmail = action.type === 'email-drafter'
+    // Assess: detail from action itself
+    const assessDetail = isAssess
+      ? (action.detail || (action as any).reasoning)
+      : action.detail
     cards.push({
       type: action.type,
-      label: isReassess ? 'Reassess'
-           : isEmail ? `Email${action.subtype ? ': ' + action.subtype : ''}`
+      label: isAssess ? 'Assess'
+           : isReassess ? 'Reassess'
+           : isEmail ? `Email${action.subtype ? ' (' + action.subtype + ')' : ''}`
            : action.type.charAt(0).toUpperCase() + action.type.slice(1).replace(/-/g, ' '),
       status: action.status || 'pending',
       durationMs: action.durationMs,
-      detail: action.detail,
+      detail: assessDetail,
       result: action.result,
       subtype: action.subtype,
+    })
+  }
+
+  // If waiting-troubleshooter and no phase2 actions yet, append at end
+  if (!hasTroubleshooter && !troubleshooterInserted && (actStatus === 'waiting-troubleshooter' || troubleshooterAgentDone)) {
+    const tsStatus: StepStatus = tsStillWaiting ? 'active' : 'completed'
+    cards.push({
+      type: 'troubleshooter',
+      label: 'Troubleshoot',
+      status: tsStatus,
+      detail: tsStatus === 'active' ? 'Running external troubleshooter agent…' : undefined,
     })
   }
 
@@ -97,8 +131,18 @@ function resultPillColor(result?: string): { bg: string; color: string } {
 
 // ─── Main Component ───
 
-export default function ActionFlowTimeline({ steps }: ActionFlowTimelineProps) {
-  const cards = deriveCards(steps)
+export default function ActionFlowTimeline({ steps, caseNumber }: ActionFlowTimelineProps) {
+  // Check agent store for troubleshooter completion (SSE is more up-to-date than state.json)
+  const agents = usePatrolAgentStore(s => s.agents)
+  const troubleshooterAgentDone = caseNumber
+    ? Object.values(agents).some(a =>
+        a.caseNumber === caseNumber &&
+        a.description?.toLowerCase().includes('troubleshoot') &&
+        (a.status === 'completed' || a.status === 'failed' || a.status === 'stopped')
+      )
+    : false
+
+  const cards = deriveCards(steps, troubleshooterAgentDone)
 
   if (cards.length === 0) return null
 
@@ -111,7 +155,7 @@ export default function ActionFlowTimeline({ steps }: ActionFlowTimelineProps) {
       animation: 'detail-slide 0.2s ease-out',
     }}>
       <div style={{
-        fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
+        fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
         letterSpacing: '0.6px', color: 'var(--text-tertiary)', marginBottom: 12,
         display: 'flex', alignItems: 'center', gap: 6,
       }}>
@@ -128,7 +172,8 @@ export default function ActionFlowTimeline({ steps }: ActionFlowTimelineProps) {
         {cards.map((card, idx) => {
           const isLast = idx === cards.length - 1
           const accent = cardAccentColor(card)
-          const isPending = card.status === 'pending'
+          const isSkipped = card.status === 'skipped'
+          const isPending = card.status === 'pending' || isSkipped
           const isActive = card.status === 'active'
           const isDone = card.status === 'completed'
 
@@ -154,7 +199,7 @@ export default function ActionFlowTimeline({ steps }: ActionFlowTimelineProps) {
               {/* Card body */}
               <div style={{ flex: 1, padding: '8px 0 8px 10px' }}>
                 <div style={{
-                  padding: '10px 14px', borderRadius: 8,
+                  padding: '12px 16px', borderRadius: 8,
                   background: isActive ? 'rgba(106,95,193,0.03)' : isPending ? 'transparent' : 'var(--bg-surface)',
                   border: `1px solid ${isPending ? 'var(--border-subtle)' : isActive ? 'rgba(106,95,193,0.25)' : 'var(--border-subtle)'}`,
                   borderStyle: isPending ? 'dashed' : 'solid',
@@ -162,12 +207,20 @@ export default function ActionFlowTimeline({ steps }: ActionFlowTimelineProps) {
                 }}>
                   {/* Header row */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: isPending ? 'var(--text-tertiary)' : accent }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: isPending ? 'var(--text-tertiary)' : accent }}>
                       {card.label}
                     </span>
-                    {card.result && (
+                    {isSkipped && (
                       <span style={{
-                        fontSize: 8, fontWeight: 700, padding: '2px 8px', borderRadius: 6,
+                        fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 4,
+                        background: 'var(--bg-inset)', color: 'var(--text-tertiary)',
+                      }}>
+                        skipped
+                      </span>
+                    )}
+                    {card.result && !isSkipped && (
+                      <span style={{
+                        fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 6,
                         ...resultPillColor(card.result),
                       }}>
                         {card.result}
@@ -175,7 +228,7 @@ export default function ActionFlowTimeline({ steps }: ActionFlowTimelineProps) {
                     )}
                     {isActive && (
                       <span style={{
-                        fontSize: 8, fontWeight: 700, padding: '2px 8px', borderRadius: 6,
+                        fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 6,
                         background: isReassessType(card.type) ? 'var(--accent-purple-dim)' : 'var(--accent-blue-dim)',
                         color: isReassessType(card.type) ? 'var(--accent-purple)' : 'var(--accent-blue)',
                       }}>
@@ -183,7 +236,7 @@ export default function ActionFlowTimeline({ steps }: ActionFlowTimelineProps) {
                       </span>
                     )}
                     {card.durationMs !== undefined && (
-                      <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: 'var(--text-tertiary)', marginLeft: 'auto' }}>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: 'var(--text-tertiary)', marginLeft: 'auto' }}>
                         {formatDuration(card.durationMs)}
                       </span>
                     )}
@@ -192,7 +245,7 @@ export default function ActionFlowTimeline({ steps }: ActionFlowTimelineProps) {
                   {/* Detail text (only for non-pending) */}
                   {!isPending && card.detail && (
                     <div style={{
-                      marginTop: 5, fontSize: 11, lineHeight: 1.55,
+                      marginTop: 6, fontSize: 12, lineHeight: 1.6,
                       color: isActive ? accent : 'var(--text-secondary)',
                       opacity: isActive ? 0.7 : 1,
                     }}>
@@ -205,7 +258,7 @@ export default function ActionFlowTimeline({ steps }: ActionFlowTimelineProps) {
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
                       {card.tags.map((tag, i) => (
                         <span key={i} style={{
-                          fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 4,
+                          fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 4,
                           background: 'var(--bg-inset)', color: 'var(--text-tertiary)',
                         }}>
                           {tag}

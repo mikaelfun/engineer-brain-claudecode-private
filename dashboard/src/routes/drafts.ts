@@ -1,8 +1,9 @@
 /**
- * drafts.ts — 邮件草稿路由 (只读)
+ * drafts.ts — 邮件草稿路由 (只读 + Outlook 草稿创建)
  */
 import { Hono } from 'hono'
 import { readAllDrafts, readCaseDrafts, writeDraft } from '../services/draft-reader.js'
+import { createOutlookDraft } from '../services/outlook-draft.js'
 
 const drafts = new Hono()
 
@@ -42,6 +43,19 @@ drafts.put('/:caseId/:file', async (c) => {
   }
 
   return c.json({ ok: true })
+})
+
+// POST /api/drafts/:caseId/:file/create-outlook-draft — create reply draft in Outlook
+drafts.post('/:caseId/:file/create-outlook-draft', async (c) => {
+  const caseId = c.req.param('caseId')
+  const file = c.req.param('file')
+
+  try {
+    const result = await createOutlookDraft(caseId, file)
+    return c.json(result)
+  } catch (err: any) {
+    return c.json({ error: err.message || 'Failed to create Outlook draft' }, 500)
+  }
 })
 
 export default drafts

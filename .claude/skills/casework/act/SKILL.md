@@ -107,9 +107,10 @@ fi
    ```
    python3 .claude/skills/casework/scripts/update-state.py --case-dir "$CASE_DIR" --step act --action troubleshooter --status active
    Agent(description="troubleshooter {caseNumber}", model="opus",
-     prompt="Case {caseNumber}, caseDir={caseDir}. {CHALLENGE_RESULT context if retry}. {AR context if isAR}. 读取 .claude/skills/casework/act/troubleshoot/SKILL.md 执行。")
+     prompt="Case {caseNumber}, caseDir={caseDir}. {CHALLENGE_RESULT context if retry}. {AR context if isAR}. 读取 .claude/agents/troubleshooter.md 获取完整执行步骤，然后执行。")
    python3 .claude/skills/casework/scripts/update-state.py --case-dir "$CASE_DIR" --step act --action troubleshooter --status completed
    ```
+   > subagent output 由 orchestrator 层统一保存（patrol-orchestrator.ts / case-session-manager.ts），不在 act 层处理。
 
 2. **reassess (inline)**
    ```

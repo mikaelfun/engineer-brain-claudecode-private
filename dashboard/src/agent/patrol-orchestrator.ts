@@ -21,6 +21,7 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync, unlinkSync, statSyn
 import { join, resolve } from 'path'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
+import { execSync } from 'child_process'
 import { config } from '../config.js'
 import { sseManager } from '../watcher/sse-manager.js'
 import { patrolStateManager } from '../services/patrol-state-manager.js'
@@ -139,7 +140,7 @@ function removeLock(): void {
  * Launch patrol via SDK query("/patrol").
  * All actual patrol logic lives in .claude/skills/patrol/SKILL.md.
  */
-export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
+export async function runSdkPatrol(force: boolean, mode: string = 'normal'): Promise<PatrolResult> {
   // Check mutual exclusion
   const existingLock = readLock()
   if (existingLock && !isLockStale(existingLock)) {
@@ -155,7 +156,7 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
   abortController = new AbortController()
 
   const startedAt = new Date().toISOString()
-  console.log(`[sdk-patrol] Starting patrol via SDK query (force=${force})`)
+  console.log(`[sdk-patrol] Starting patrol via SDK query (force=${force}, mode=${mode})`)
 
   // CRITICAL: Reset patrol-phase and patrol-progress.json to prevent stale data
   try {
@@ -165,6 +166,10 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
   try {
     const progressFile = config.patrolProgressFile
     if (existsSync(progressFile)) unlinkSync(progressFile)
+  } catch { /* ignore */ }
+  try {
+    const timingsFile = join(config.patrolDir, 'patrol-timings.json')
+    if (existsSync(timingsFile)) unlinkSync(timingsFile)
   } catch { /* ignore */ }
 
   patrolStateManager.update({
@@ -177,7 +182,7 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
   // Clear message store for fresh patrol run
   patrolMessageStore.clear()
 
-  const registryHandle = sdkRegistry.register({ source: 'patrol', context: 'patrol', intent: force ? 'Patrol run (force)' : 'Patrol run' })
+  const registryHandle = sdkRegistry.register({ source: 'patrol', context: 'patrol', intent: mode === 'new-cases' ? 'Patrol: new cases only' : force ? 'Patrol run (force)' : 'Patrol run' })
 
   try {
     // ── Performance-optimized prompt (ISS-perf) ──
@@ -185,8 +190,9 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
     // then another ~20s on 3 Bash turns for lock check/write that orchestrator already handles.
     // Fix: explicit paths + skip-lock instruction eliminates ~35s of starting overhead.
     const forceFlag = force ? ' --force' : ''
+    const modeFlag = mode === 'new-cases' ? ' --new' : ''
     const promptText = [
-      `Execute patrol${forceFlag}. source=webui`,
+      `Execute patrol${forceFlag}${modeFlag}. source=webui`,
       '',
       'CRITICAL INSTRUCTIONS (do NOT deviate):',
       '1. Read .claude/skills/patrol/SKILL.md FIRST (do NOT Glob or explore the codebase)',
@@ -441,10 +447,11 @@ export async function runSdkPatrol(force: boolean): Promise<PatrolResult> {
       }
 
       if (msg.type === 'tool_result') {
+        const maxToolResult = config.sseLimits.toolResultMaxLen
         const resultContent = typeof msg.content === 'string'
-          ? msg.content.slice(0, 500)
+          ? msg.content.slice(0, maxToolResult)
           : typeof msg.text === 'string'
-            ? msg.text.slice(0, 500)
+            ? msg.text.slice(0, maxToolResult)
             : ''
         if (resultContent) {
           const ts = new Date().toISOString()
@@ -559,6 +566,8 @@ export function isSdkPatrolRunning(): boolean {
   if (isLockStale(lock)) {
     console.warn('[sdk-patrol] Cleaning stale lock')
     removeLock()
+    // Fire-and-forget orphan cleanup (don't block the status check)
+    killOrphanPatrolProcesses().catch(() => {})
     return false
   }
   return true
@@ -616,4 +625,89 @@ function cleanupOldLogs(): void {
       console.log(`[sdk-patrol] Cleaned up ${removed} log file(s) older than ${LOG_RETENTION_DAYS} days`)
     }
   } catch { /* non-fatal */ }
+}
+
+// ============================================================
+// Orphan process cleanup
+// ============================================================
+
+/**
+ * Scan and kill orphaned claude.exe processes from dead patrol sessions.
+ *
+ * Strategy: only kill claude.exe processes whose PARENT process no longer exists.
+ * A living parent means the process is part of an active session (CLI, another SDK
+ * query, etc.) and must NOT be touched.
+ *
+ * This is safe because:
+ *   - Active CLI sessions: claude.exe's parent (terminal/shell) is alive → skipped
+ *   - Active SDK sessions: claude.exe's parent (node backend) is alive → skipped
+ *   - Dead patrol sessions: parent (old node/claude) already exited → orphan → killed
+ *
+ * Returns { killed: PID[], skipped: PID[] } for logging / API response.
+ */
+export async function killOrphanPatrolProcesses(): Promise<{ killed: number[]; skipped: number[]; error?: string }> {
+  try {
+    // 1. Single PowerShell call: get all claude.exe PIDs + ParentPIDs, and all live PIDs
+    const psCmd = [
+      '$c = Get-CimInstance Win32_Process -Filter "Name=\'claude.exe\'" | Select-Object ProcessId,ParentProcessId;',
+      '$allPids = [System.Collections.Generic.HashSet[int]]::new(); Get-Process | ForEach-Object { [void]$allPids.Add($_.Id) };',
+      '$c | ForEach-Object { "$($_.ProcessId),$($_.ParentProcessId),$($allPids.Contains($_.ParentProcessId))" }',
+    ].join(' ')
+    let stdout: string
+    try {
+      stdout = execSync(
+        `powershell -NoProfile -Command "${psCmd}"`,
+        { encoding: 'utf-8', timeout: 15_000, stdio: ['pipe', 'pipe', 'pipe'] }
+      )
+    } catch {
+      return { killed: [], skipped: [], error: 'Failed to list claude.exe processes' }
+    }
+
+    const lines = stdout.trim().split('\n').filter(l => l.trim().length > 0)
+    if (lines.length === 0) {
+      return { killed: [], skipped: [] }
+    }
+
+    // 2. Parse: "PID,ParentPID,ParentAlive"
+    const killed: number[] = []
+    const skipped: number[] = []
+
+    for (const line of lines) {
+      const parts = line.trim().split(',')
+      if (parts.length < 3) continue
+      const pid = parseInt(parts[0], 10)
+      const parentAlive = parts[2].trim().toLowerCase() === 'true'
+
+      if (isNaN(pid)) continue
+
+      if (parentAlive) {
+        // Parent is alive → this is part of an active session, don't touch
+        skipped.push(pid)
+        continue
+      }
+
+      // Parent is dead → orphan, kill it (with /T to also clean its child tree)
+      try {
+        execSync(`taskkill /PID ${pid} /F /T`, {
+          encoding: 'utf-8',
+          timeout: 5_000,
+          stdio: ['pipe', 'pipe', 'pipe'],
+        })
+        killed.push(pid)
+        console.log(`[sdk-patrol] Killed orphan claude.exe PID ${pid} (parent dead)`)
+      } catch {
+        console.warn(`[sdk-patrol] Failed to kill PID ${pid} (may already be dead)`)
+      }
+    }
+
+    if (killed.length > 0) {
+      console.log(`[sdk-patrol] Cleaned up ${killed.length} orphaned claude.exe process(es): ${killed.join(', ')}`)
+    }
+
+    return { killed, skipped }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('[sdk-patrol] Orphan cleanup failed:', msg)
+    return { killed: [], skipped: [], error: msg }
+  }
 }

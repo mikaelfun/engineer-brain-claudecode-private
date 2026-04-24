@@ -3,7 +3,7 @@
  */
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, CheckCircle2, Circle, AlertTriangle, FolderOpen, Clock, RefreshCw, ChevronDown, ChevronRight, Copy, Check, Pencil, X, Save } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Circle, AlertTriangle, FolderOpen, Clock, RefreshCw, ChevronDown, ChevronRight, Copy, Check, Pencil, X, Save, Mail } from 'lucide-react'
 import { Tabs } from '../components/common/Tabs'
 import { Card, CardHeader } from '../components/common/Card'
 import { SeverityBadge, CaseStatusBadge, SlaBadge, Badge, HealthScoreBadge, EntitlementWarningBanner, RdseBadge } from '../components/common/Badge'
@@ -13,9 +13,10 @@ import {
   useRefreshNotes, useRefreshLaborRecords,
   useCaseTeams, useCaseMeta, useCaseAnalysis, useCaseOnenote,
   useCaseDrafts, useCaseInspection, useCaseTodo, useCaseTodoFile,
-  useCaseTiming, useCaseLogs, useCaseAttachments,
+  useCaseTiming, useCaseLogs, useCaseAttachments, useCaseImages,
   useToggleCaseTodo, useCaseClaims
 } from '../api/hooks'
+import { apiPut, apiPost } from '../api/client'
 import MarkdownContent from '../components/common/MarkdownContent'
 import CaseAIPanel from '../components/CaseAIPanel'
 import CaseSummaryRenderer from '../components/case/CaseSummaryRenderer'
@@ -117,7 +118,12 @@ export default function CaseDetail() {
           <SeverityBadge severity={caseInfo.severity} />
           <CaseStatusBadge status={caseInfo.status} />
           {meta?.actualStatus && meta.actualStatus !== caseInfo.status?.toLowerCase() && (
-            <Badge variant="info" size="xs">{meta.actualStatus}</Badge>
+            <Badge variant="info" size="xs" title={meta.statusReasoning || undefined}>{meta.actualStatus}</Badge>
+          )}
+          {meta?.statusReasoning && (
+            <span className="text-xs truncate max-w-[300px]" style={{ color: 'var(--text-secondary)' }} title={meta.statusReasoning}>
+              {meta.statusReasoning}
+            </span>
           )}
           {caseInfo.is24x7 && /24\s*[x×]\s*7|yes|true/i.test(caseInfo.is24x7) && (
             <Badge variant="danger" size="xs">24×7</Badge>
@@ -219,6 +225,8 @@ function EmailsTab({ emails, caseNumber }: { emails: any[]; caseNumber: string }
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const [showSig, setShowSig] = useState<Set<string>>(new Set())
   const [allExpanded, setAllExpanded] = useState(false)
+  const { data: imagesData } = useCaseImages(caseNumber)
+  const [showImages, setShowImages] = useState(false)
 
   if (emails.length === 0) return <EmptyState icon="📧" title="No emails" />
 
@@ -293,21 +301,47 @@ function EmailsTab({ emails, caseNumber }: { emails: any[]; caseNumber: string }
     return { content: body, signature: '' }
   }
 
-  // Strip inline image markdown artifacts
+  // Strip inline image markdown artifacts (keep image refs with paths for renderBody)
   const cleanBody = (body: string) => {
     return body
       .replace(/\*\*Inline Images:\*\*\n?/g, '')
-      .replace(/!\[inline-image\]\(\)\n?/g, '')
+      // ISS-243: Don't strip ![inline-image]() — renderBody will handle empty-path images
+  }
+
+  // ISS-243: Pre-allocate available images to emails that have empty-path markers
+  // emails.md is chronological (oldest first), sorted is reverse-chrono for display
+  // We allocate images in chronological order to match the original markdown order
+  const chronological = [...emails].sort((a, b) =>
+    new Date(a.date).getTime() - new Date(b.date).getTime()
+  )
+  const imageUrls = imagesData?.images?.map(img => img.url) || []
+  const emailImageMap = new Map<string, string[]>()
+  let imgIdx = 0
+  for (const email of chronological) {
+    const emptyCount = (email.body?.match(/!\[inline-image\]\(\)/g) || []).length
+    if (emptyCount > 0) {
+      const allocated: string[] = []
+      for (let j = 0; j < emptyCount && imgIdx < imageUrls.length; j++) {
+        allocated.push(imageUrls[imgIdx++])
+      }
+      emailImageMap.set(email.id || '', allocated)
+    }
   }
 
   // Render body with inline images
-  const renderBody = (body: string) => {
+  const renderBody = (body: string, emailId: string) => {
     if (!body) return <span style={{ color: 'var(--text-tertiary)' }}>(No body)</span>
-    const parts = body.split(/(!\[.*?\]\(images\/[^)]+\))/)
+    // Get pre-allocated images for this email
+    const allocatedImages = emailImageMap.get(emailId) || []
+    let allocIdx = 0
+
+    // Match both ![...](images/xxx) AND ![inline-image]() (empty path)
+    const parts = body.split(/(!\[.*?\]\((?:images\/[^)]+)?\))/)
     return parts.map((part, i) => {
-      const imgMatch = part.match(/!\[.*?\]\((images\/([^)]+))\)/)
-      if (imgMatch) {
-        const filename = imgMatch[2]
+      // Match image with path: ![...](images/xxx.png)
+      const imgWithPath = part.match(/!\[.*?\]\((images\/([^)]+))\)/)
+      if (imgWithPath) {
+        const filename = imgWithPath[2]
         const src = `/api/cases/${caseNumber}/images/${filename}`
         return (
           <AuthImage
@@ -317,6 +351,30 @@ function EmailsTab({ emails, caseNumber }: { emails: any[]; caseNumber: string }
             className="max-w-full my-2 rounded border"
             style={{ borderColor: 'var(--border-subtle)', maxHeight: '400px' }}
           />
+        )
+      }
+      // Match empty-path image: ![inline-image]()
+      // ISS-243: Allocate from pre-assigned images for this email
+      const imgEmpty = part.match(/!\[inline-image\]\(\)/)
+      if (imgEmpty) {
+        if (allocIdx < allocatedImages.length) {
+          const src = allocatedImages[allocIdx++]
+          return (
+            <AuthImage
+              key={i}
+              src={src}
+              alt="inline"
+              className="max-w-full my-2 rounded border"
+              style={{ borderColor: 'var(--border-subtle)', maxHeight: '400px' }}
+            />
+          )
+        }
+        // Fallback: no more images available
+        return (
+          <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs my-1"
+            style={{ background: 'var(--bg-tertiary)', color: 'var(--text-tertiary)' }}>
+            🖼️ [image not available]
+          </span>
         )
       }
       return <span key={i}>{part}</span>
@@ -453,7 +511,7 @@ function EmailsTab({ emails, caseNumber }: { emails: any[]; caseNumber: string }
 
                 {/* Body content */}
                 <div className="text-sm whitespace-pre-wrap" style={{ color: 'var(--text-primary)', lineHeight: '1.7' }}>
-                  {renderBody(bodyContent)}
+                  {renderBody(bodyContent, id)}
                 </div>
 
                 {/* Signature toggle */}
@@ -478,6 +536,37 @@ function EmailsTab({ emails, caseNumber }: { emails: any[]; caseNumber: string }
           </div>
         )
       })}
+
+      {/* ISS-243: Inline images gallery — show all images from case images/ directory */}
+      {imagesData && imagesData.total > 0 && (
+        <div className="mt-4">
+          <button
+            onClick={() => setShowImages(!showImages)}
+            className="flex items-center gap-2 text-xs px-3 py-1.5 rounded"
+            style={{ background: 'var(--bg-tertiary)', color: 'var(--text-secondary)', border: '1px solid var(--border-subtle)', cursor: 'pointer' }}
+          >
+            🖼️ Inline Images ({imagesData.total})
+            <span style={{ transform: showImages ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', display: 'inline-block', fontSize: '10px' }}>▼</span>
+          </button>
+          {showImages && (
+            <div className="mt-2 grid gap-2" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
+              {imagesData.images.map((img) => (
+                <div key={img.filename} className="rounded-lg overflow-hidden border" style={{ borderColor: 'var(--border-subtle)', background: 'var(--bg-secondary)' }}>
+                  <AuthImage
+                    src={img.url}
+                    alt={img.filename}
+                    className="w-full object-contain"
+                    style={{ maxHeight: '200px' }}
+                  />
+                  <div className="px-2 py-1 text-xs truncate" style={{ color: 'var(--text-tertiary)' }}>
+                    {img.filename} · {Math.round(img.size / 1024)}KB
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -726,9 +815,10 @@ function TeamsTab({ chats, digest, caseId }: { chats: any[]; digest: { scoredAt:
     )
   }
 
-  // ISS-226: Replace ./assets/ paths in chat content with API URLs
+  // ISS-226/ISS-243: Replace assets/ paths in chat content with API URLs
+  // Matches both ./assets/xxx and assets/xxx (without ./ prefix)
   const rewriteImagePaths = (content: string) => {
-    return content.replace(/!\[([^\]]*)\]\(\.\/assets\/([^)]+)\)/g,
+    return content.replace(/!\[([^\]]*)\]\((?:\.\/)?assets\/([^)]+)\)/g,
       `![$1](/api/cases/${caseId}/teams/assets/$2)`)
   }
 
@@ -907,6 +997,8 @@ function DraftCard({ draft, defaultExpanded, caseNumber }: { draft: any; default
   const [copied, setCopied] = useState(false)
   const [editing, setEditing] = useState(false)
   const [editContent, setEditContent] = useState('')
+  const [outlookStatus, setOutlookStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
+  const [outlookLink, setOutlookLink] = useState<string | null>(null)
 
   const cleanContent = stripFrontmatter((draft.content || '')
     .replace(/\n{3,}/g, '\n\n')
@@ -934,15 +1026,9 @@ function DraftCard({ draft, defaultExpanded, caseNumber }: { draft: any; default
   const handleSave = async (e: React.MouseEvent) => {
     e.stopPropagation()
     try {
-      const res = await fetch(`/api/drafts/${caseNumber}/${draft.filename}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: editContent }),
-      })
-      if (res.ok) {
-        draft.content = editContent
-        setEditing(false)
-      }
+      await apiPut(`/drafts/${caseNumber}/${draft.filename}`, { content: editContent })
+      draft.content = editContent
+      setEditing(false)
     } catch { /* ignore */ }
   }
 
@@ -950,6 +1036,25 @@ function DraftCard({ draft, defaultExpanded, caseNumber }: { draft: any; default
     e.stopPropagation()
     setEditing(false)
     setEditContent('')
+  }
+
+  const handleCreateOutlookDraft = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setOutlookStatus('loading')
+    try {
+      const data = await apiPost<{ ok?: boolean; webLink?: string }>(`/drafts/${caseNumber}/${draft.filename}/create-outlook-draft`, {})
+      if (data.ok && data.webLink) {
+        setOutlookStatus('done')
+        setOutlookLink(data.webLink)
+        setTimeout(() => setOutlookStatus('idle'), 5000)
+      } else {
+        setOutlookStatus('error')
+        setTimeout(() => setOutlookStatus('idle'), 3000)
+      }
+    } catch {
+      setOutlookStatus('error')
+      setTimeout(() => setOutlookStatus('idle'), 3000)
+    }
   }
 
   return (
@@ -989,6 +1094,38 @@ function DraftCard({ draft, defaultExpanded, caseNumber }: { draft: any; default
             {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
             {copied ? 'Copied!' : 'Copy'}
           </button>
+          <button
+            onClick={handleCreateOutlookDraft}
+            disabled={outlookStatus === 'loading'}
+            className="flex items-center gap-1 px-2 py-1 text-xs rounded transition-colors"
+            style={{
+              color: outlookStatus === 'done' ? 'var(--accent-green)'
+                   : outlookStatus === 'error' ? 'var(--accent-red)'
+                   : outlookStatus === 'loading' ? 'var(--accent-blue)'
+                   : 'var(--text-tertiary)',
+              background: outlookStatus === 'done' ? 'var(--accent-green-dim)' : undefined,
+              opacity: outlookStatus === 'loading' ? 0.6 : 1,
+            }}
+            title="Create reply draft in Outlook"
+          >
+            <Mail className="w-3 h-3" />
+            {outlookStatus === 'loading' ? 'Creating...'
+             : outlookStatus === 'done' ? 'Created!'
+             : outlookStatus === 'error' ? 'Failed'
+             : 'Outlook'}
+          </button>
+          {outlookLink && outlookStatus === 'done' && (
+            <a
+              href={outlookLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="text-xs underline"
+              style={{ color: 'var(--accent-blue)' }}
+            >
+              Open
+            </a>
+          )}
           <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
             {new Date(draft.createdAt).toLocaleString()}
           </span>
@@ -1096,6 +1233,97 @@ function DraftsTab({ drafts, caseNumber }: { drafts: any[]; caseNumber: string }
   )
 }
 
+// ── Analysis section parser & renderer (matches CaseSummaryRenderer style) ──
+
+interface AnalysisSection {
+  title: string
+  content: string
+}
+
+function parseAnalysisSections(markdown: string): { header: string; sections: AnalysisSection[] } {
+  const lines = markdown.split('\n')
+  let header = ''
+  const sections: AnalysisSection[] = []
+  let current: AnalysisSection | null = null
+
+  for (const line of lines) {
+    if (line.startsWith('# ') && !line.startsWith('## ')) {
+      header = line.slice(2).trim()
+      continue
+    }
+    if (line.startsWith('## ')) {
+      if (current) sections.push(current)
+      current = { title: line.slice(3).trim(), content: '' }
+      continue
+    }
+    if (current) {
+      current.content += line + '\n'
+    }
+  }
+  if (current) sections.push(current)
+  return { header, sections }
+}
+
+/** Map section title keywords → accent color + emoji */
+function getAnalysisSectionStyle(title: string): { color: string; emoji: string } {
+  const t = title.toLowerCase()
+  if (t.includes('根因') || t.includes('root cause') || t.includes('结论') || t.includes('conclusion'))
+    return { color: 'var(--accent-red)', emoji: '🎯' }
+  if (t.includes('诊断') || t.includes('diagnostic') || t.includes('查询') || t.includes('query') || t.includes('kusto') || t.includes('log'))
+    return { color: 'var(--accent-blue)', emoji: '🔬' }
+  if (t.includes('知识') || t.includes('knowledge') || t.includes('来源') || t.includes('reference') || t.includes('source') || t.includes('文档'))
+    return { color: 'var(--accent-purple)', emoji: '📚' }
+  if (t.includes('建议') || t.includes('action') || t.includes('recommendation') || t.includes('后续') || t.includes('next step') || t.includes('mitigation'))
+    return { color: 'var(--accent-green)', emoji: '✅' }
+  if (t.includes('时间') || t.includes('timeline') || t.includes('chronolog'))
+    return { color: 'var(--accent-blue)', emoji: '📅' }
+  if (t.includes('风险') || t.includes('risk') || t.includes('warning') || t.includes('caveat'))
+    return { color: 'var(--accent-amber)', emoji: '⚠️' }
+  if (t.includes('summary') || t.includes('摘要') || t.includes('概述') || t.includes('overview'))
+    return { color: 'var(--accent-blue)', emoji: '📋' }
+  if (t.includes('finding') || t.includes('发现') || t.includes('observation'))
+    return { color: 'var(--accent-green)', emoji: '💡' }
+  // Default
+  return { color: 'var(--text-tertiary)', emoji: '📄' }
+}
+
+function AnalysisSectionCard({ section }: { section: AnalysisSection }) {
+  const { color, emoji } = getAnalysisSectionStyle(section.title)
+  return (
+    <Card padding="sm" style={{ borderLeft: `3px solid ${color}` }}>
+      <h4 className="font-bold text-base mb-2" style={{ color }}>{emoji} {section.title}</h4>
+      <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+        <MarkdownContent>{section.content.trim()}</MarkdownContent>
+      </div>
+    </Card>
+  )
+}
+
+/** Render analysis markdown with structured section cards */
+function AnalysisStructuredContent({ markdown }: { markdown: string }) {
+  const { header, sections } = parseAnalysisSections(markdown)
+
+  // If no ## sections found, fall back to raw markdown
+  if (sections.length === 0) {
+    return (
+      <Card>
+        <MarkdownContent>{markdown}</MarkdownContent>
+      </Card>
+    )
+  }
+
+  return (
+    <div className="space-y-3">
+      {header && (
+        <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{header}</h3>
+      )}
+      {sections.map((section, i) => (
+        <AnalysisSectionCard key={i} section={section} />
+      ))}
+    </div>
+  )
+}
+
 function AnalysisTab({ content, exists, files }: {
   content?: string
   exists?: boolean
@@ -1108,12 +1336,8 @@ function AnalysisTab({ content, exists, files }: {
     return <AnalysisFileList files={files} />
   }
 
-  // Single file or legacy format — render as-is
-  return (
-    <Card>
-      <MarkdownContent>{content}</MarkdownContent>
-    </Card>
-  )
+  // Single file or legacy format — render with structured sections
+  return <AnalysisStructuredContent markdown={content} />
 }
 
 function AnalysisFileList({ files }: { files: Array<{ filename: string; content: string; updatedAt: string; size: number }> }) {
@@ -1156,7 +1380,7 @@ function AnalysisFileList({ files }: { files: Array<{ filename: string; content:
             </button>
             {isExpanded && (
               <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--border-subtle)' }}>
-                <MarkdownContent>{f.content}</MarkdownContent>
+                <AnalysisStructuredContent markdown={f.content} />
               </div>
             )}
           </Card>
@@ -1173,8 +1397,10 @@ function OnenoteTab({ caseId, files, pages, scoring }: {
   scoring?: {
     scoredAt: string;
     format?: string;
-    // v2 four-section format
+    // v2 multi-section format
     keyInfo?: string[];
+    codeBlocks?: string[];
+    screenshots?: string[];
     analyses?: string[];
     actionItems?: string[];
     lowRelevance?: string[];
@@ -1334,12 +1560,14 @@ function OnenoteTab({ caseId, files, pages, scoring }: {
       {/* ── V2 Four-Section Layout ── */}
       {isV2 && scoring && (() => {
         const keyInfo = scoring.keyInfo || []
+        const codeBlockItems = scoring.codeBlocks || []
+        const screenshotItems = scoring.screenshots || []
         const analyses = scoring.analyses || []
         const actionItems = scoring.actionItems || []
         const lowRel = scoring.lowRelevance || []
 
         return <>
-          {/* Section 1: Key Information — amber */}
+          {/* Section: Key Information — amber */}
           {keyInfo.length > 0 && (
             <Card padding="sm" style={{ borderLeft: '3px solid var(--accent-amber)' }}>
               <h4 className="font-medium text-sm mb-2" style={{ color: 'var(--accent-amber)' }}>🔑 关键信息（Key Information）</h4>
@@ -1352,7 +1580,27 @@ function OnenoteTab({ caseId, files, pages, scoring }: {
             </Card>
           )}
 
-          {/* Section 2: Analysis & Reasoning — blue */}
+          {/* Section: Code Blocks — purple (conditional) */}
+          {codeBlockItems.length > 0 && (
+            <Card padding="sm" style={{ borderLeft: '3px solid var(--accent-purple, #a855f7)' }}>
+              <h4 className="font-medium text-sm mb-2" style={{ color: 'var(--accent-purple, #a855f7)' }}>💻 相关代码（Code）</h4>
+              <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                <MarkdownContent>{codeBlockItems.join('\n')}</MarkdownContent>
+              </div>
+            </Card>
+          )}
+
+          {/* Section: Screenshots — orange (conditional) */}
+          {screenshotItems.length > 0 && (
+            <Card padding="sm" style={{ borderLeft: '3px solid var(--accent-orange, #f97316)' }}>
+              <h4 className="font-medium text-sm mb-2" style={{ color: 'var(--accent-orange, #f97316)' }}>📸 相关截图（Screenshots）</h4>
+              <div className="text-sm space-y-1" style={{ color: 'var(--text-secondary)' }}>
+                {screenshotItems.map((item, i) => <div key={i}><MarkdownContent>{item}</MarkdownContent></div>)}
+              </div>
+            </Card>
+          )}
+
+          {/* Section: Analysis & Reasoning — blue */}
           {analyses.length > 0 && (
             <Card padding="sm" style={{ borderLeft: '3px solid var(--accent-blue)' }}>
               <h4 className="font-medium text-sm mb-2" style={{ color: 'var(--accent-blue)' }}>💡 分析推断（Analysis & Reasoning）</h4>
@@ -1379,7 +1627,7 @@ function OnenoteTab({ caseId, files, pages, scoring }: {
             </Card>
           )}
 
-          {/* Section 3: Action Plan — green */}
+          {/* Section: Action Plan — green */}
           {actionItems.length > 0 && (
             <Card padding="sm" style={{ borderLeft: '3px solid var(--accent-green)' }}>
               <h4 className="font-medium text-sm mb-2" style={{ color: 'var(--accent-green)' }}>📋 行动计划（Action Plan）</h4>
@@ -1399,7 +1647,7 @@ function OnenoteTab({ caseId, files, pages, scoring }: {
             </Card>
           )}
 
-          {/* Section 4: Low-Relevance — gray */}
+          {/* Section: Low-Relevance — gray */}
           {lowRel.length > 0 && (
             <Card padding="sm" style={{ borderLeft: '3px solid var(--border-subtle)', opacity: 0.7 }}>
               <h4 className="font-medium text-sm mb-2" style={{ color: 'var(--text-tertiary)' }}>📦 低价值信息（Low-Relevance）</h4>

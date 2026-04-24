@@ -53,3 +53,34 @@ None discarded.
 | defender-ai-security | Fusion | 1 | 3 | 0 | 0 |
 | defender-for-arm | Fusion | 0 | 1 | 0 | 0 |
 | sap-connector | Fusion | 0 | 4 | 0 | 0 |
+
+# Synthesize Log — defender — 2026-04-24
+
+## 模式
+增量（Phase 2.5 + Section 5 索引生成）
+
+## 执行内容
+- Phase 2.5: 生成 `_index.search.jsonl`（41 records）
+- Section 5: 更新 `_index.md` 新格式（9 列表格）
+- 更新 `progress.json → synthesizeState`
+- topicsToRegen: 0（无 topic 需重生成 guide，仅索引刷新）
+
+## 评分统计
+| Badge | Range | Count | Pct |
+|-------|-------|-------|-----|
+| 🟢 | 8-10 | 15 | 1.4% |
+| 🔵 | 5-7.9 | 815 | 73.5% |
+| 🟡 | 3-4.9 | 279 | 25.2% |
+| ⚪ | <3 | 0 | 0.0% |
+
+Overall avg: 6.06
+
+## 融合统计
+| Metric | Value |
+|--------|-------|
+| Total topics | 41 |
+| Fusion topics | 40 |
+| Compact topics | 1 |
+| Total entries | 1109 |
+| Draft files | 283 |
+| KQL files | 0 |

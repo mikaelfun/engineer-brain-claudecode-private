@@ -522,3 +522,29 @@
 ## 矛盾检测
 候选对扫描: 16 | 真矛盾: 3 (context_dependent) | 误报: 13
 详见: `.enrich/conflict-report.json` 和 `guides/conflict-report.md`
+
+# Synthesize Log — disk — 2026-04-24
+
+## 模式
+增量（Phase 2.5 + §5 索引更新）
+
+## 执行内容
+| 步骤 | 说明 |
+|------|------|
+| Phase 2.5 | 生成 `_index.search.jsonl`（41 topic 记录，含 4 维评分） |
+| §5 | 更新 `_index.md` 格式（新增 Keywords、Sources 列） |
+
+## 评分概况
+| Badge | 数量 | 范围 |
+|-------|------|------|
+| 🔵 | 41 | 5.0 - 7.9 |
+
+## 跳过的阶段
+- Phase 1（聚类）：topic-plan.json 已存在，无需重新聚类
+- Phase 1.5（矛盾检测）：无新条目
+- Phase 2（指南生成）：topicsToRegen = 0，无 topic 需重生成
+- Phase 3（Kusto 标记）：无变化
+
+## 新生成文件
+- `guides/_index.search.jsonl` — 41 条 topic 搜索记录
+- `guides/_index.md` — 更新格式（+Keywords, +Sources 列）

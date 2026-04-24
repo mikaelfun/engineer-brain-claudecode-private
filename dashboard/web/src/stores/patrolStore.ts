@@ -184,7 +184,7 @@ export const usePatrolStore = create<PatrolStore>()((set, _get) => ({
       update.completedAt = new Date().toISOString()
     }
     if (phase === 'initializing') {
-      // Bug 1 fix: Preserve case list skeleton, reset step progress to pending
+      // Reset all fields on new patrol start so sub-steps don't show stale green
       const resetCases: Record<string, CaseState> = {}
       for (const [cn, c] of Object.entries(state.cases)) {
         resetCases[cn] = {
@@ -199,6 +199,13 @@ export const usePatrolStore = create<PatrolStore>()((set, _get) => ({
       update.error = undefined
       update.completedAt = undefined
       update.phaseTimings = {}
+      // Clear init sub-step data unless this SSE event already carries new values
+      if (data.totalFound === undefined) update.totalFound = undefined
+      if (data.skippedCount === undefined) update.skippedCount = undefined
+      if (data.warmupStatus === undefined) update.warmupStatus = undefined
+      if (data.archivedCount === undefined) update.archivedCount = undefined
+      if (data.transferredCount === undefined) update.transferredCount = undefined
+      if (data.changedCases === undefined) update.changedCases = 0
     }
 
     return update

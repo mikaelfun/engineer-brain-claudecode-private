@@ -9,7 +9,7 @@
  */
 import { sseManager } from '../watcher/sse-manager.js'
 import { existsSync } from 'fs'
-import { parseSessionLog } from '../utils/session-log-parser.js'
+import { parseSessionLog, inferAgentType } from '../utils/session-log-parser.js'
 
 // ---- Types ----
 
@@ -166,7 +166,8 @@ class SdkSessionRegistry {
 
     if (subtype === 'task_started') {
       const taskId = message.task_id as string
-      const agentType = message.task_type || 'unknown'
+      let agentType = inferAgentType(message.task_type as string, message.description as string)
+
       taskAgentMap[taskId] = agentType
       this.subAgentMaps.set(id, taskAgentMap)
 

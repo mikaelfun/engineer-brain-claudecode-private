@@ -1,0 +1,17 @@
+{
+  "id": "inline-img-fix_20260423",
+  "title": "WebUI Case Email/Teams Inline Image Display Fix",
+  "type": "bug",
+  "status": "pending",
+  "issueId": "ISS-243",
+  "created": "2026-04-23T16:00:00+08:00",
+  "updated": "2026-04-23T16:00:00+08:00",
+  "phases": {
+    "total": 4,
+    "completed": 0
+  },
+  "tasks": {
+    "total": 19,
+    "completed": 0
+  }
+}

@@ -15,7 +15,7 @@
  *   PUT /settings                  — 保存用户配置
  */
 import { Hono } from 'hono'
-import { readFileSync, writeFileSync, existsSync, readdirSync, statSync } from 'fs'
+import { readFileSync, writeFileSync, existsSync, readdirSync, statSync, unlinkSync } from 'fs'
 import { join, resolve, dirname, isAbsolute } from 'path'
 import { fileURLToPath } from 'url'
 import {
@@ -34,7 +34,7 @@ import {
   clearSessionMessages,
   getCaseMcpServerNames,
 } from '../agent/case-session-manager.js'
-import { runSdkPatrol, isSdkPatrolRunning, cancelSdkPatrol, loadPatrolLastRun } from '../agent/patrol-orchestrator.js'
+import { runSdkPatrol, isSdkPatrolRunning, cancelSdkPatrol, loadPatrolLastRun, killOrphanPatrolProcesses } from '../agent/patrol-orchestrator.js'
 import { patrolStateManager } from '../services/patrol-state-manager.js'
 import { patrolMessageStore } from '../services/patrol-message-store.js'
 import { parseSessionLog, findLatestRunDir } from '../utils/session-log-parser.js'
@@ -193,18 +193,19 @@ caseRoutes.get('/case/:id/sessions', (c) => {
 caseRoutes.post('/patrol', async (c) => {
   try {
     let force = true
-    try { const body = await c.req.json<{ force?: boolean }>(); force = body?.force !== false } catch { /* no body = default force */ }
+    let mode = 'normal'
+    try { const body = await c.req.json<{ force?: boolean; mode?: string }>(); force = body?.force !== false; if (body?.mode) mode = body.mode } catch { /* no body = default force */ }
 
     if (isSdkPatrolRunning()) {
       return c.json({ error: 'Patrol already running' }, 409)
     }
 
     // Fire and forget — patrol runs in background
-    runSdkPatrol(force).catch(err => {
+    runSdkPatrol(force, mode).catch(err => {
       console.error('[patrol] SDK patrol failed:', err instanceof Error ? err.message : err)
     })
 
-    return c.json({ status: 'started' }, 202)
+    return c.json({ status: 'started', mode }, 202)
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     return c.json({ error: msg }, 500)
@@ -218,6 +219,48 @@ caseRoutes.post('/patrol/cancel', (c) => {
   }
   const cancelled = cancelSdkPatrol()
   return c.json({ success: cancelled, message: cancelled ? 'Patrol cancellation requested' : 'Failed to cancel' })
+})
+
+// POST /patrol/reset — force reset patrol state + remove lock file + kill orphan processes
+caseRoutes.post('/patrol/reset', async (c) => {
+  const lockPath = join(appConfig.patrolDir, 'patrol.lock')
+  const phasePath = join(appConfig.patrolDir, 'patrol-phase')
+  const removed: string[] = []
+
+  // 1. Cancel any running patrol first
+  if (isSdkPatrolRunning()) {
+    cancelSdkPatrol()
+    removed.push('cancelled running patrol')
+  }
+
+  // 2. Remove lock file
+  try {
+    if (existsSync(lockPath)) {
+      unlinkSync(lockPath)
+      removed.push('patrol.lock')
+    }
+  } catch { /* ignore */ }
+
+  // 3. Remove phase file
+  try {
+    if (existsSync(phasePath)) {
+      unlinkSync(phasePath)
+      removed.push('patrol-phase')
+    }
+  } catch { /* ignore */ }
+
+  // 4. Kill orphaned claude.exe processes (stale SDK sessions + sub-agents)
+  const orphanResult = await killOrphanPatrolProcesses()
+  if (orphanResult.killed.length > 0) {
+    removed.push(`killed ${orphanResult.killed.length} orphan claude.exe (PIDs: ${orphanResult.killed.join(', ')})`)
+  }
+
+  // 5. Reset in-memory state
+  patrolStateManager.reset()
+  patrolMessageStore.clear()
+  removed.push('in-memory state')
+
+  return c.json({ success: true, removed, orphans: orphanResult })
 })
 
 // GET /patrol/messages — 恢复 patrol agent 消息

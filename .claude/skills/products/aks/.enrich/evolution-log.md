@@ -2183,3 +2183,10 @@
 | 2026-04-20 | contentidea-kb | +1 AKS KB from ContentIdea (2 WIs processed, 1 empty-skip, 0 deduped) | ContentIdea#99927,#188552 |
 | 2026-04-20 | mslearn | Batch 1: 8 URLs scanned (all 8 already extracted - 7 JSONL dedup, 1 draft dedup), 0 new entries | create-upgrade-delete/* |
 | 2026-04-20 | ado-wiki | Built index: 705 pages (380 already scanned, 325 unscanned) for AKS wiki | Supportability/AzureContainers/Containers Wiki |
+| 2026-04-21 | mslearn | +3 AKS known issues (pods-pending, crashloopbackoff, nginx-perf), +4 guide drafts (cluster-start, azure-linux, unmanaged-ingress, agic), 1 dedup skipped (cgroup-v2) | batch 2: 8 URLs scanned |
+| 2026-04-21 | mslearn | +3 AKS known issues (pods-pending, cgroup-v2, crashloopbackoff, nginx-perf); 4 guide drafts already existed; 1 deduped | create-upgrade-delete, load-bal-ingress-c |
+| 2026-04-23 | mslearn | +5 AKS known issues (node failed state, image pull perf), 4 guide drafts (CPU PSI, disk IO, memory, CPU usage), 2 dedup skips (apiserver-etcd, health-probe) | batch 3: availability-performance |
+| 2026-04-23 | ado-wiki | Scanned 2 AKS pages (Track progress of a fix, Runbook Automation VMSS Windows) — both drafts already exist, 0 new entries | Supportability/AzureContainers/Containers Wiki |
+| 2026-04-23 | mslearn | +3 Track A (volume-affinity-conflict, probe-misconfigured-restart, node-notready-snat), +3 Track B drafts (oomkilled-guide, node-not-ready-basic, node-not-ready-after-healthy), 5 deduped | availability-performance batch |
+| 2026-04-24 | SYNTHESIZE | 187 topics (135 fusion, 52 compact), 1324 entries, 24 Kusto queries fused |
+| 2026-04-24 | mslearn | +4 AKS known issues (Windows kubelet, quota), 9 guide drafts (connectivity, DNS, SNAT), 119 stale URLs fixed in scanned list | mslearn batch scan |

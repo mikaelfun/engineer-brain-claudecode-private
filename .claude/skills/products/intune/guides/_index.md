@@ -1,57 +1,57 @@
 # Intune 排查指南索引
 
-| 指南 | 类型 | Kusto | 关键词 | 来源数 | 置信度 |
-|------|------|-------|--------|--------|--------|
-| [Intune 其他/未分类问题](intune-general.md) | 📊 速查 | 0 | contentidea-kb, content-idea-request, informational, break/fix, content idea request | 4 | high |
-| [Win32 应用部署与 IME](app-win32.md) | 📋 融合 | 2 | contentidea-kb, content-idea-request, ime, powershell, win32 | 4 | high |
-| [设备合规策略](compliance-policy.md) | 📋 融合 | 2 | contentidea-kb, content-idea-request, compliance, kusto, unknown | 4 | high |
-| [SCEP / NDES 证书部署与排查](cert-scep-ndes.md) | 📋 融合 | 1 | contentidea-kb, content-idea-request, ndes, scep, certificate | 4 | high |
-| [iOS/iPadOS 通用问题](ios-general.md) | 📋 融合 | 1 | contentidea-kb, content-idea-request, ios, enrollment, ade | 4 | high |
-| [Autopilot 通用问题](autopilot-general.md) | 📋 融合 | 1 | contentidea-kb, content-idea-request, autopilot, enrollment, windows | 5 | high |
-| [MAM 通用策略与 App SDK](mam-general.md) | 📋 融合 | 1 | contentidea-kb, content-idea-request, ios, android, mam | 4 | high |
-| [条件访问](conditional-access.md) | 📋 融合 | 0 | contentidea-kb, content-idea-request, conditional-access, compliance, enrollment | 4 | high |
-| [应用部署通用问题](app-general.md) | 📋 融合 | 1 | contentidea-kb, content-idea-request, company-portal, lob, ios | 4 | high |
-| [iOS 应用部署与 VPP](app-ios.md) | 📋 融合 | 3 | contentidea-kb, content-idea-request, ios, vpp, abm | 5 | high |
-| [21V 功能差异与不支持特性](21v-feature-gaps.md) | 📋 融合 | 0 | contentidea-kb, content-idea-request, 21v-unsupported, enrollment, 21v | 5 | high |
-| [Autopilot Hybrid AADJ 与域加入](autopilot-hybrid.md) | 📋 融合 | 1 | contentidea-kb, content-idea-request, autopilot, haadj, hybrid-aadj | 4 | high |
-| [Android 应用部署](app-android.md) | 📋 融合 | 1 | contentidea-kb, content-idea-request, android, enrollment, app-management | 4 | high |
-| [注册通用问题](enrollment-general.md) | 📋 融合 | 3 | contentidea-kb, content-idea-request, enrollment, license, device-limit | 4 | high |
-| [ADMX / OMA-URI / Settings Catalog](config-admx-omauri.md) | 📋 融合 | 1 | contentidea-kb, content-idea-request, csp, windows, oma-uri | 4 | high |
-| [Co-Management / SCCM / ConfigMgr](comanagement.md) | 📋 融合 | 1 | contentidea-kb, content-idea-request, co-management, sccm, enrollment | 5 | high |
-| [证书通用问题与 Cloud PKI](cert-general.md) | 📋 融合 | 1 | contentidea-kb, content-idea-request, certificate, enrollment, macos | 5 | high |
-| [设备操作（擦除/锁定/重置等）](device-actions.md) | 📋 融合 | 0 | contentidea-kb, content-idea-request, device-actions, retire, wipe | 4 | high |
-| [Graph API 与 PowerShell 自动化](graph-api.md) | 📋 融合 | 0 | contentidea-kb, content-idea-request, graph-api, rbac, admin-ui | 4 | high |
-| [Windows MAM 与 WIP / Edge](mam-windows.md) | 📊 速查 | 0 | contentidea-kb, content-idea-request, windows-mam, wip, edge | 4 | high |
-| [邮件配置与 Exchange](email-profiles.md) | 📋 融合 | 0 | contentidea-kb, content-idea-request, exchange-connector, break/fix, email-profile | 2 | high |
-| [Microsoft Tunnel VPN](vpn-ms-tunnel.md) | 📋 融合 | 0 | contentidea-kb, content-idea-request, vpn, ms-tunnel, proxy | 3 | high |
-| [PKCS / PFX 证书部署](cert-pkcs-pfx.md) | 📋 融合 | 1 | contentidea-kb, pkcs, content-idea-request, certificate, pending | 5 | high |
-| [许可证与租户](license-tenant.md) | 📋 融合 | 1 | contentidea-kb, content-idea-request, permissions, rbac, custom-role | 4 | high |
-| [Windows 注册与 Auto-Enrollment](enrollment-windows.md) | 📋 融合 | 1 | contentidea-kb, content-idea-request, auto-enrollment, co-management, enrollment | 4 | high |
-| [macOS 应用部署](app-macos.md) | 📋 融合 | 0 | contentidea-kb, content-idea-request, macos, lob, pkg | 4 | high |
-| [Office / M365 应用部署](app-office.md) | 📋 融合 | 0 | contentidea-kb, content-idea-request, office-c2r, autopilot, timeout | 3 | high |
-| [Security Baseline 与策略冲突](config-security-baseline.md) | 📋 融合 | 0 | contentidea-kb, content-idea-request, security-baselines, endpoint-security, security-baseline | 3 | high |
-| [Windows Update / Update Rings / WUFB](windows-update.md) | 📋 融合 | 0 | contentidea-kb, content-idea-request, wufb, windows-update, 21v-unsupported | 4 | high |
-| [Defender for Endpoint 集成](windows-defender.md) | 📊 速查 | 0 | contentidea-kb, content-idea-request, mde-attach, defender, endpoint-security | 5 | high |
-| [Autopilot ESP 与预配置](autopilot-esp.md) | 📋 融合 | 1 | content-idea-request, contentidea-kb, autopilot, esp, pre-provisioning | 3 | high |
-| [iOS/iPadOS 注册与 ADE/DEP](enrollment-ios.md) | 📋 融合 | 2 | contentidea-kb, content-idea-request, ios, enrollment, dep | 3 | high |
-| [BitLocker 加密管理](windows-bitlocker.md) | 📋 融合 | 0 | contentidea-kb, bitlocker, content-idea-request, tpm, silent-encryption | 4 | high |
-| [Wi-Fi 配置](wifi-profiles.md) | 📋 融合 | 0 | contentidea-kb, content-idea-request, scep, wifi, eap-tls | 2 | high |
-| [Android 通用问题](android-general.md) | 📊 速查 | 0 | contentidea-kb, content-idea-request, work-profile, android, android-enterprise | 4 | high |
-| [设备配置通用问题](config-general.md) | 📋 融合 | 2 | device-configuration, macos, contentidea-kb, kusto, security-baselines | 4 | high |
-| [Android MAM 与 App Protection](mam-android.md) | 📋 融合 | 1 | contentidea-kb, content-idea-request, mam, selective-wipe, httpsubsystem | 3 | high |
-| [Autopilot v2 / Device Preparation](autopilot-v2.md) | 📋 融合 | 1 | autopilot, ap-dp, apv2, autopilot-v2, intune-provisioning-client | 4 | high |
-| [macOS 软件更新 / DDM](macos-update.md) | 📋 融合 | 0 | contentidea-kb, ddm, content-idea-request, macos, mdm | 3 | high |
-| [Security Copilot for Intune](copilot-intune.md) | 📋 融合 | 0 | copilot, security-copilot, policy-configuration-agent, rbac, change-review-agent | 1 | high |
-| [Windows Hello for Business 与 KDC](cert-whfb.md) | 📋 融合 | 0 | whfb, provisioning, wam, kdc, certificate | 3 | high |
-| [报告与诊断日志收集](reporting-diagnostics.md) | 📋 融合 | 2 | update-readiness, mem-ur, contentidea-kb, epm, diagnostics | 3 | high |
-| [Windows 通用问题](windows-general.md) | 📊 速查 | 0 | wns, windows, push-notification, remote-action, endpoint-security | 3 | high |
-| [macOS Shell 脚本与 Sidecar Agent](macos-scripts.md) | 📋 融合 | 0 | content-idea-request, contentidea-kb, macos, shell-script, encoding | 3 | high |
-| [VPN 配置](vpn-general.md) | 📊 速查 | 0 | myworkspace, lab, workaround, content-idea-request, contentidea-kb | 3 | high |
-| [macOS 通用问题](macos-general.md) | 📊 速查 | 0 | macos, content-idea-request, contentidea-kb, app-wrapping-tool, download-queue | 4 | high |
-| [Windows Kiosk 模式](windows-kiosk.md) | 📋 融合 | 0 | kiosk, content-idea-request, contentidea-kb, assigned-access, sid-mapping | 2 | high |
-| [macOS FileVault 加密](macos-filevault.md) | 📋 融合 | 0 | macos, filevault, encryption, content-idea-request, contentidea-kb | 2 | high |
-| [Windows LAPS](windows-laps.md) | 📋 融合 | 0 | laps, windows-laps, event-10059, dns, 0x80072ee7 | 2 | high |
+| # | Topic | Title | Entries | Fusion | Score | Keywords | Sources | Files |
+|---|-------|-------|---------|--------|-------|----------|---------|-------|
+| 1 | intune-general | Intune 其他/未分类问题 | 934 | — | 🔵 5.1 | stream, blade loading, icm, loading, decommission | AW KB ML ON | [speed](intune-general.md) / [detail](details/intune-general.md) |
+| 2 | app-win32 | Win32 应用部署与 IME | 266 | ✅ | 🔵 5.8 | deny-all, managed-installer, setupapi, environment-variables, device-configuration | AW KB ML ON | [speed](app-win32.md) / [detail](details/app-win32.md) / [workflow](workflows/app-win32.md) |
+| 3 | compliance-policy | 设备合规策略 | 260 | ✅ | 🔵 5.8 | mdmstatus, Windows 10, UEFI, device-restriction, permissions | AW KB ML ON | [speed](compliance-policy.md) / [detail](details/compliance-policy.md) / [workflow](workflows/compliance-policy.md) |
+| 4 | cert-scep-ndes | SCEP / NDES 证书部署与排查 | 211 | ✅ | 🔵 5.8 | DCOM, Windows 10, thumbprint, certificate-renewal, sign-in | AW KB ML ON | [speed](cert-scep-ndes.md) / [detail](details/cert-scep-ndes.md) / [workflow](workflows/cert-scep-ndes.md) |
+| 5 | ios-general | iOS/iPadOS 通用问题 | 188 | ✅ | 🔵 5.7 | device-restriction, graph-api, error-1211, token, mdm | AW KB ML ON | [speed](ios-general.md) / [detail](details/ios-general.md) / [workflow](workflows/ios-general.md) |
+| 6 | autopilot-general | Autopilot 通用问题 | 180 | ✅ | 🔵 5.8 | enrollment-limit, device-membership, task-scheduler, ICM-678596064, enrollment-block | 21V AW KB ML ON | [speed](autopilot-general.md) / [detail](details/autopilot-general.md) / [workflow](workflows/autopilot-general.md) |
+| 7 | mam-general | MAM 通用策略与 App SDK | 174 | ✅ | 🔵 6.1 | managed-apps, PowerLift, msal, Intune-SDK, developer-options | AW KB ML ON | [speed](mam-general.md) / [detail](details/mam-general.md) / [workflow](workflows/mam-general.md) |
+| 8 | conditional-access | 条件访问 | 170 | ✅ | 🔵 5.5 | coexistence, error-530003, Microsoft 365, sharepoint, MFA | AW KB ML ON | [speed](conditional-access.md) / [detail](details/conditional-access.md) / [workflow](workflows/conditional-access.md) |
+| 9 | app-general | 应用部署通用问题 | 132 | ✅ | 🔵 5.6 | fairfax, download-failure, app-sso, store-signed, PRT | AW KB ML ON | [speed](app-general.md) / [detail](details/app-general.md) / [workflow](workflows/app-general.md) |
+| 10 | app-ios | iOS 应用部署与 VPP | 123 | ✅ | 🔵 5.8 | token-sync, eappxbundle, ampersand, OS-version, volume-purchase | 21V AW KB ML ON | [speed](app-ios.md) / [detail](details/app-ios.md) / [workflow](workflows/app-ios.md) |
+| 11 | 21v-feature-gaps | 21V 功能差异与不支持特性 | 119 | ✅ | 🔵 5.9 | msal, device-configuration, sign-in, URL-whitelist, amsactivityforuser | 21V AW KB ML ON | [speed](21v-feature-gaps.md) / [detail](details/21v-feature-gaps.md) / [workflow](workflows/21v-feature-gaps.md) |
+| 12 | autopilot-hybrid | Autopilot Hybrid AADJ 与域加入 | 103 | ✅ | 🔵 5.9 | delegate-rights, device-rename, flighting, deployment-profile, sso | AW KB ML ON | [speed](autopilot-hybrid.md) / [detail](details/autopilot-hybrid.md) / [workflow](workflows/autopilot-hybrid.md) |
+| 13 | app-android | Android 应用部署 | 101 | ✅ | 🔵 5.8 | managed-google-play, MGP, Android, upgrade, Incorrect/Incomplete/Missing Content | AW KB ML ON | [speed](app-android.md) / [detail](details/app-android.md) / [workflow](workflows/app-android.md) |
+| 14 | enrollment-general | 注册通用问题 | 85 | ✅ | 🔵 5.9 | silent-failure, enrollment-type, sign-in, Incorrect/Incomplete/Missing Content, migration | AW KB ML ON | [speed](enrollment-general.md) / [detail](details/enrollment-general.md) / [workflow](workflows/enrollment-general.md) |
+| 15 | config-admx-omauri | ADMX / OMA-URI / Settings Catalog | 81 | ✅ | 🔵 5.8 | co-managed, local-logon-restriction, not-applicable, custom-policy, migration | AW KB ML ON | [speed](config-admx-omauri.md) / [detail](details/config-admx-omauri.md) / [workflow](workflows/config-admx-omauri.md) |
+| 16 | comanagement | Co-Management / SCCM / ConfigMgr | 76 | ✅ | 🔵 5.9 | Windows 10, pre-release, token-sync, SCHED_E_UNKNOWN_OBJECT_VERSION, permissions | 21V AW KB ML ON | [speed](comanagement.md) / [detail](details/comanagement.md) / [workflow](workflows/comanagement.md) |
+| 17 | cert-general | 证书通用问题与 Cloud PKI | 72 | ✅ | 🔵 5.8 | SSL inspection, ca-limit, MDM_Authenticate, certificate-renewal, migration | 21V AW KB ML ON | [speed](cert-general.md) / [detail](details/cert-general.md) / [workflow](workflows/cert-general.md) |
+| 18 | device-actions | 设备操作（擦除/锁定/重置等） | 72 | ✅ | 🔵 5.3 | device-recovery, Exchange, google-limitation, device-lifecycle, bulk-deletion | AW KB ML ON | [speed](device-actions.md) / [detail](details/device-actions.md) / [workflow](workflows/device-actions.md) |
+| 19 | graph-api | Graph API 与 PowerShell 自动化 | 72 | ✅ | 🔵 5.7 | admin-ui, graph-api, permissions, physicalMemory, rbac | AW KB ML ON | [speed](graph-api.md) / [detail](details/graph-api.md) / [workflow](workflows/graph-api.md) |
+| 20 | mam-windows | Windows MAM 与 WIP / Edge | 66 | — | 🔵 5.7 | doWipe, direct-access, network-isolation, Edge, RemoteWipe | AW KB ML ON | [speed](mam-windows.md) / [detail](details/mam-windows.md) |
+| 21 | email-profiles | 邮件配置与 Exchange | 59 | ✅ | 🔵 5.3 | error-0x0000006, password-prompt, ACS-token, Exchange-connector, permissions | KB ML | [speed](email-profiles.md) / [detail](details/email-profiles.md) / [workflow](workflows/email-profiles.md) |
+| 22 | vpn-ms-tunnel | Microsoft Tunnel VPN | 56 | ✅ | 🔵 5.9 | limitation, low-level-socket, upgrade, Incorrect/Incomplete/Missing Content, mutual-tls | 21V AW KB | [speed](vpn-ms-tunnel.md) / [detail](details/vpn-ms-tunnel.md) / [workflow](workflows/vpn-ms-tunnel.md) |
+| 23 | cert-pkcs-pfx | PKCS / PFX 证书部署 | 52 | ✅ | 🔵 5.7 | prerequisite, enrollment policy, strong-mapping, permissions, re-push | 21V AW KB ML ON | [speed](cert-pkcs-pfx.md) / [detail](details/cert-pkcs-pfx.md) / [workflow](workflows/cert-pkcs-pfx.md) |
+| 24 | license-tenant | 许可证与租户 | 47 | ✅ | 🔵 5.6 | Configuration Manager, test-tenant, Delegated Administration, permissions, Troubleshoot pane | AW KB ML ON | [speed](license-tenant.md) / [detail](details/license-tenant.md) / [workflow](workflows/license-tenant.md) |
+| 25 | enrollment-windows | Windows 注册与 Auto-Enrollment | 42 | ✅ | 🔵 5.6 | DeviceEnroller, mfa-registration, UserCertificate, auto-enrollment, service-principal | AW KB ML ON | [speed](enrollment-windows.md) / [detail](details/enrollment-windows.md) / [workflow](workflows/enrollment-windows.md) |
+| 26 | app-macos | macOS 应用部署 | 40 | ✅ | 🔵 5.9 | mdm, Sidecar, signing, productbuild, uninstall | AW KB ML ON | [speed](app-macos.md) / [detail](details/app-macos.md) / [workflow](workflows/app-macos.md) |
+| 27 | app-office | Office / M365 应用部署 | 36 | ✅ | 🔵 6.2 | graph-api, ClickToRunSvc, architecture-mismatch, win32, 17006 | AW KB ON | [speed](app-office.md) / [detail](details/app-office.md) / [workflow](workflows/app-office.md) |
+| 28 | config-security-baseline | Security Baseline 与策略冲突 | 36 | ✅ | 🔵 5.9 | App-Control, PolicyID, Miracast, error-65000, security-baseline | AW KB ON | [speed](config-security-baseline.md) / [detail](details/config-security-baseline.md) / [workflow](workflows/config-security-baseline.md) |
+| 29 | windows-update | Windows Update / Update Rings / WUFB | 31 | ✅ | 🔵 5.7 | windows-update, update-ring, HTTP 407, Apple-limitation, major-OS-upgrade | 21V KB ML ON | [speed](windows-update.md) / [detail](details/windows-update.md) / [workflow](workflows/windows-update.md) |
+| 30 | windows-defender | Defender for Endpoint 集成 | 29 | — | 🔵 6.1 | tenant-not-found, tenant-onboarding, service-plan, OCE, MEM-portal | 21V AW KB ML ON | [speed](windows-defender.md) / [detail](details/windows-defender.md) |
+| 31 | autopilot-esp | Autopilot ESP 与预配置 | 25 | ✅ | 🔵 6.0 | msi, lob, attestation, self-deploying, azure-prt | AW KB ON | [speed](autopilot-esp.md) / [detail](details/autopilot-esp.md) / [workflow](workflows/autopilot-esp.md) |
+| 32 | enrollment-ios | iOS/iPadOS 注册与 ADE/DEP | 23 | ✅ | 🔵 5.5 | DEP, Incorrect/Incomplete/Missing-Content, XPC_TYPE_ERROR, unlock-token, network | KB ML ON | [speed](enrollment-ios.md) / [detail](details/enrollment-ios.md) / [workflow](workflows/enrollment-ios.md) |
+| 33 | windows-bitlocker | BitLocker 加密管理 | 22 | ✅ | 🔵 5.8 | Windows 10, UEFI, AAD, bootable-media, recovery | AW KB ML ON | [speed](windows-bitlocker.md) / [detail](details/windows-bitlocker.md) / [workflow](workflows/windows-bitlocker.md) |
+| 34 | wifi-profiles | Wi-Fi 配置 | 20 | ✅ | 🔵 5.7 | unknown, onboarding, clearpass, eap-tls, network-connectivity | KB ON | [speed](wifi-profiles.md) / [detail](details/wifi-profiles.md) / [workflow](workflows/wifi-profiles.md) |
+| 35 | android-general | Android 通用问题 | 19 | — | 🔵 6.2 | android-enterprise, Android, credentials, Android-Enterprise, file-explorer | AW KB ML ON | [speed](android-general.md) / [detail](details/android-general.md) |
+| 36 | config-general | 设备配置通用问题 | 15 | ✅ | 🔵 6.7 | configuration-profile, device-configuration, blade-error, device-restriction, mau | AW KB ML ON | [speed](config-general.md) / [detail](details/config-general.md) / [workflow](workflows/config-general.md) |
+| 37 | mam-android | Android MAM 与 App Protection | 15 | ✅ | 🔵 5.6 | Microsoft Planner, IntuneEvent, HttpSubsystem, httpsubsystem, gradle | AW KB ON | [speed](mam-android.md) / [detail](details/mam-android.md) / [workflow](workflows/mam-android.md) |
+| 38 | autopilot-v2 | Autopilot v2 / Device Preparation | 14 | ✅ | 🔵 6.1 | managed-installer, stuck-100-percent, service-principal, 21v, replication-delay | AW KB ML ON | [speed](autopilot-v2.md) / [detail](details/autopilot-v2.md) / [workflow](workflows/autopilot-v2.md) |
+| 39 | macos-update | macOS 软件更新 / DDM | 14 | ✅ | 🔵 6.1 | app-creation, device-configuration, status-report, error-configuration-cannot-be-applied, os-version | AW KB ON | [speed](macos-update.md) / [detail](details/macos-update.md) / [workflow](workflows/macos-update.md) |
+| 40 | copilot-intune | Security Copilot for Intune | 13 | ✅ | 🔵 6.0 | mc1242767, content-filtering, embedded-experience, intune-plugin, permissions | AW | [speed](copilot-intune.md) / [detail](details/copilot-intune.md) / [workflow](workflows/copilot-intune.md) |
+| 41 | cert-whfb | Windows Hello for Business 与 KDC | 12 | ✅ | 🔵 6.5 | kdc, domain-migration, WAM, sign-in, ADFS | AW KB ON | [speed](cert-whfb.md) / [detail](details/cert-whfb.md) / [workflow](workflows/cert-whfb.md) |
+| 42 | reporting-diagnostics | 报告与诊断日志收集 | 10 | ✅ | 🔵 6.2 | update-readiness, OneSettings, Unknown-status, DiagTrack, EPM | AW KB ON | [speed](reporting-diagnostics.md) / [detail](details/reporting-diagnostics.md) / [workflow](workflows/reporting-diagnostics.md) |
+| 43 | windows-general | Windows 通用问题 | 9 | — | 🔵 7.1 | ncbservice, push-notification, dependency-service, toast-notification, check-in | AW KB ON | [speed](windows-general.md) / [detail](details/windows-general.md) |
+| 44 | macos-scripts | macOS Shell 脚本与 Sidecar Agent | 8 | ✅ | 🔵 5.7 | exclude-groups, encoding, Unicode, shell-script, app-install | AW KB ML | [speed](macos-scripts.md) / [detail](details/macos-scripts.md) / [workflow](workflows/macos-scripts.md) |
+| 45 | vpn-general | VPN 配置 | 8 | — | 🔵 6.5 | storage, vm-start, lab, hyper-v, segment | AW KB ML | [speed](vpn-general.md) / [detail](details/vpn-general.md) |
+| 46 | macos-general | macOS 通用问题 | 7 | — | 🔵 6.1 | app-wrapping-tool, enrollment-renewal, mdm, Mac, storedownloadd | AW KB ML ON | [speed](macos-general.md) / [detail](details/macos-general.md) |
+| 47 | windows-kiosk | Windows Kiosk 模式 | 7 | ✅ | 🔵 6.6 | lnk-shortcut, IME, start-layout, SID-mapping, assigned-access | KB ON | [speed](windows-kiosk.md) / [detail](details/windows-kiosk.md) / [workflow](workflows/windows-kiosk.md) |
+| 48 | macos-filevault | macOS FileVault 加密 | 6 | — | 🔵 6.8 | assume-management, device-configuration, profile-installed, logout-required, -2016341106 | KB ON | [speed](macos-filevault.md) / [detail](details/macos-filevault.md) |
+| 49 | windows-laps | Windows LAPS | 6 | ✅ | 🔵 6.6 | device-disabled, Reset-LapsPassword, device-registration, 0x80070190, network | AW ON | [speed](windows-laps.md) / [detail](details/windows-laps.md) / [workflow](workflows/windows-laps.md) |
 
-最后更新: 2026-04-17
+最后更新: 2026-04-24
 
-总计: 49 个 topic (42 融合, 7 速查)
+总计: 49 个 topic (41 融合, 8 速查)

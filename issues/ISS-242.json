@@ -1,0 +1,13 @@
+{
+  "id": "ISS-242",
+  "title": "WebUI evidence界面未匹配claims.json正确路径，导致无法显示",
+  "description": "WebUI 的 evidence 展示界面无法正确加载 claims.json 文件内容。可能原因是前端读取 claims.json 的路径与实际存放路径不一致（尤其在 ISS-231/ISS-233 引入 runs/{runId}/ 结构后，claims.json 的实际位置可能已变化，但前端仍在读旧路径）。需要排查前端 evidence 组件读取 claims.json 的路径逻辑，与后端实际写入路径对齐。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "pending",
+  "testLoopScan": true,
+  "trackId": "evidence-claims-path_20260423",
+  "relatedIssues": ["ISS-233"],
+  "createdAt": "2026-04-23T16:00:00+08:00",
+  "updatedAt": "2026-04-23T16:00:00+08:00"
+}

@@ -1,0 +1,300 @@
+{
+  "product": "automation",
+  "generatedAt": "2026-04-24",
+  "topics": [
+    {
+      "slug": "runbook-sandbox-limits",
+      "title": "Runbook 沙箱资源限制与崩溃",
+      "entryIds": [
+        "automation-onenote-002",
+        "automation-onenote-014",
+        "automation-onenote-026",
+        "automation-mslearn-007",
+        "automation-mslearn-011",
+        "automation-mslearn-012",
+        "automation-mslearn-014",
+        "automation-mslearn-015",
+        "automation-mslearn-016"
+      ],
+      "draftPaths": [
+        "guides/drafts/onenote-jarvis-sandbox-diagnosis.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "sandbox",
+        "memory-limit",
+        "400MB",
+        "socket-limit",
+        "crash",
+        "language-mode",
+        "DrawbridgeHostV1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "runbook-module-dependency",
+      "title": "PS 模块依赖与兼容性",
+      "entryIds": [
+        "automation-onenote-001",
+        "automation-onenote-005",
+        "automation-onenote-008",
+        "automation-mslearn-008",
+        "automation-mslearn-013",
+        "automation-contentidea-kb-012"
+      ],
+      "draftPaths": [],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": false,
+      "keywords": [
+        "ps-module",
+        "cmdlet-not-recognized",
+        "module-update",
+        "ExchangeOnlineManagement",
+        "scheduled-job"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "hybrid-worker",
+      "title": "Hybrid Worker 部署与排查",
+      "entryIds": [
+        "automation-onenote-004",
+        "automation-onenote-006",
+        "automation-mslearn-009",
+        "automation-contentidea-kb-006"
+      ],
+      "draftPaths": [
+        "guides/drafts/onenote-extension-hybrid-worker.md",
+        "guides/drafts/onenote-hybrid-worker-tsg.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "hybrid-worker",
+        "extension-based",
+        "storage-firewall",
+        "CPUQuota",
+        "script-block"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "runbook-auth-credentials",
+      "title": "认证与凭据管理",
+      "entryIds": [
+        "automation-onenote-009",
+        "automation-onenote-034",
+        "automation-onenote-035",
+        "automation-onenote-036",
+        "automation-mslearn-001",
+        "automation-mslearn-002",
+        "automation-mslearn-010",
+        "automation-contentidea-kb-013"
+      ],
+      "draftPaths": [
+        "guides/drafts/onenote-mooncake-runbook-auth.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "RunAs-account",
+        "managed-identity",
+        "credential-expired",
+        "service-principal",
+        "MFA",
+        "authentication"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "update-management-v1",
+      "title": "Update Management (UMv1)",
+      "entryIds": [
+        "automation-onenote-007",
+        "automation-onenote-015",
+        "automation-onenote-016",
+        "automation-onenote-019",
+        "automation-onenote-025",
+        "automation-contentidea-kb-010",
+        "automation-contentidea-kb-011",
+        "automation-contentidea-kb-014"
+      ],
+      "draftPaths": [
+        "guides/drafts/onenote-kusto-um-queries.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "update-management",
+        "UMv1",
+        "linux",
+        "crond",
+        "proxy",
+        "IMDS",
+        "omsagent"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "azure-update-manager",
+      "title": "Azure Update Manager (AUMv2)",
+      "entryIds": [
+        "automation-onenote-044",
+        "automation-onenote-045",
+        "automation-onenote-046",
+        "automation-onenote-048",
+        "automation-onenote-049",
+        "automation-onenote-050",
+        "automation-contentidea-kb-015"
+      ],
+      "draftPaths": [
+        "guides/drafts/onenote-aum-tools.md",
+        "guides/drafts/onenote-definition-updates-check.md",
+        "guides/drafts/onenote-um-to-aum-migration.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "AUM",
+        "patchMode",
+        "AutomaticByPlatform",
+        "AzGPS",
+        "unsupported-image",
+        "Windows-Client"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "runbook-common-errors",
+      "title": "常见错误与排查方法",
+      "entryIds": [
+        "automation-onenote-003",
+        "automation-onenote-018",
+        "automation-onenote-043",
+        "automation-mslearn-003",
+        "automation-mslearn-004",
+        "automation-mslearn-005",
+        "automation-mslearn-006",
+        "automation-mslearn-017",
+        "automation-contentidea-kb-001",
+        "automation-contentidea-kb-007",
+        "automation-contentidea-kb-009"
+      ],
+      "draftPaths": [
+        "guides/drafts/onenote-generic-error-tsg.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "subscription-context",
+        "throttling",
+        "webhook",
+        "job-quota",
+        "debug-stream",
+        "parameter-limit"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "mooncake-feature-gaps",
+      "title": "Mooncake 功能差异与限制",
+      "entryIds": [
+        "automation-onenote-013",
+        "automation-onenote-020",
+        "automation-onenote-021"
+      ],
+      "draftPaths": [
+        "guides/drafts/onenote-automation-feature-gap.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "mooncake",
+        "feature-gap",
+        "modules-gallery",
+        "change-tracking",
+        "ARI"
+      ],
+      "confidence": "high"
+    },
+    {
+      "slug": "diagnostic-tools-reference",
+      "title": "诊断工具与参考资源",
+      "entryIds": [
+        "automation-contentidea-kb-008"
+      ],
+      "draftPaths": [
+        "guides/drafts/onenote-css-wiki-links.md",
+        "guides/drafts/onenote-kusto-cluster-access.md",
+        "guides/drafts/onenote-jarvis-namespaces.md",
+        "guides/drafts/onenote-kusto-runbook-queries.md",
+        "guides/drafts/onenote-jarvis-job-trigger.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "jarvis",
+        "kusto",
+        "css-wiki",
+        "ICM",
+        "Log-Analytics",
+        "diagnostic"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "slug": "python-sdk-runbook",
+      "title": "Python SDK 与代码示例",
+      "entryIds": [],
+      "draftPaths": [
+        "guides/drafts/onenote-python-sdk-azure-resources.md",
+        "guides/drafts/onenote-python-sdk-getting-started.md",
+        "guides/drafts/onenote-sql-azure-runbook.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "python-sdk",
+        "SQL-Azure",
+        "code-sample",
+        "Azure-resources"
+      ],
+      "confidence": "low"
+    },
+    {
+      "slug": "dsc-configuration",
+      "title": "DSC 状态配置",
+      "entryIds": [],
+      "draftPaths": [
+        "guides/drafts/onenote-dsc-for-vm.md"
+      ],
+      "kustoQueryFiles": [],
+      "hasFusionGuide": true,
+      "keywords": [
+        "DSC",
+        "state-configuration",
+        "nx-module"
+      ],
+      "confidence": "low"
+    }
+  ],
+  "discarded": [
+    {
+      "id": "automation-contentidea-kb-002",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "automation-contentidea-kb-003",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "automation-contentidea-kb-004",
+      "reason": "半成品（无根因无方案）"
+    },
+    {
+      "id": "automation-contentidea-kb-005",
+      "reason": "半成品（无根因无方案）"
+    }
+  ]
+}

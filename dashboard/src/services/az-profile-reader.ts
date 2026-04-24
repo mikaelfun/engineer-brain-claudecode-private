@@ -13,7 +13,7 @@
  */
 import { existsSync, readdirSync, readFileSync, statSync } from 'fs'
 import { join } from 'path'
-import { exec } from 'child_process'
+import { exec, spawn } from 'child_process'
 import { promisify } from 'util'
 
 const execAsync = promisify(exec)
@@ -223,5 +223,114 @@ export function stopAzProfileMonitor() {
   if (_bgTimer) {
     clearInterval(_bgTimer)
     _bgTimer = null
+  }
+}
+
+// ── Interactive login ──
+
+/**
+ * Read tenant ID from profile's azureProfile.json
+ */
+function readTenantId(profilePath: string): string | null {
+  try {
+    const azProfile = join(profilePath, 'azureProfile.json')
+    if (existsSync(azProfile)) {
+      const data = JSON.parse(readFileSync(azProfile, 'utf-8'))
+      const subs = data.subscriptions || []
+      if (subs.length > 0 && subs[0].tenantId) return subs[0].tenantId
+    }
+  } catch { /* fall through */ }
+  return null
+}
+
+/** Track in-progress login per profile */
+const _loginInProgress = new Set<string>()
+
+export function isLoginInProgress(profileDir: string): boolean {
+  return _loginInProgress.has(profileDir)
+}
+
+/**
+ * Trigger interactive `az login` for a specific profile.
+ * Opens the system browser for auth. Returns immediately after spawning.
+ * When the az login process exits, automatically runs health check to update cache.
+ */
+export async function loginAzProfile(profileDir: string): Promise<{ started: boolean; command: string; error?: string }> {
+  if (_loginInProgress.has(profileDir)) {
+    return { started: false, command: '', error: 'Login already in progress for this profile' }
+  }
+
+  const profiles = discoverProfiles()
+  const profile = profiles.find(p => p.profileDir === profileDir)
+  if (!profile) {
+    return { started: false, command: '', error: `Profile "${profileDir}" not found` }
+  }
+
+  const tenantId = readTenantId(profile.path)
+  const scope = profile.cloud === 'china'
+    ? 'https://management.chinacloudapi.cn/.default'
+    : 'https://management.azure.com/.default'
+
+  const args = ['login', '--scope', scope]
+  if (tenantId) {
+    args.push('--tenant', tenantId)
+  }
+  // China Cloud: browser flow often fails silently on Windows (WAM intercept),
+  // use device-code flow which always works and shows URL in stdout
+  if (profile.cloud === 'china') {
+    args.push('--use-device-code')
+  }
+
+  const command = `az ${args.join(' ')}`
+
+  try {
+    _loginInProgress.add(profileDir)
+
+    // For device-code flow (china), capture stdout to get the device code URL.
+    // For browser flow (global), use ignore (browser opens system-level).
+    const useDeviceCode = profile.cloud === 'china'
+    const child = spawn('az', args, {
+      env: { ...process.env, AZURE_CONFIG_DIR: profile.path },
+      stdio: useDeviceCode ? ['ignore', 'pipe', 'pipe'] : 'ignore',
+      shell: true,
+    })
+
+    // Capture device code output for logging (and potential frontend display)
+    let deviceCodeOutput = ''
+    if (useDeviceCode && child.stdout) {
+      child.stdout.on('data', (data: Buffer) => {
+        const line = data.toString()
+        deviceCodeOutput += line
+        console.log(`[az-profile] ${profile.name}: ${line.trim()}`)
+      })
+    }
+    if (useDeviceCode && child.stderr) {
+      child.stderr.on('data', (data: Buffer) => {
+        console.warn(`[az-profile] ${profile.name} stderr: ${data.toString().trim()}`)
+      })
+    }
+
+    child.on('close', async (code) => {
+      _loginInProgress.delete(profileDir)
+      if (code === 0) {
+        console.log(`[az-profile] ✅ Login succeeded for ${profile.name}, refreshing status...`)
+        await runHealthCheck()
+      } else {
+        console.warn(`[az-profile] ❌ Login failed for ${profile.name} (exit code ${code})`)
+        // Still refresh to update the error message
+        await runHealthCheck()
+      }
+    })
+
+    child.on('error', (err) => {
+      _loginInProgress.delete(profileDir)
+      console.warn(`[az-profile] Login spawn error for ${profile.name}:`, err.message)
+    })
+
+    console.log(`[az-profile] Started interactive login for ${profile.name}: ${command}`)
+    return { started: true, command }
+  } catch (err: any) {
+    _loginInProgress.delete(profileDir)
+    return { started: false, command, error: err.message }
   }
 }

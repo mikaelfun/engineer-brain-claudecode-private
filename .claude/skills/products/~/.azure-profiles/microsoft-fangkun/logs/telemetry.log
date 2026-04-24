@@ -1,0 +1,48 @@
+44416 : 2026-04-24 11:10:43,385 : INFO : telemetry.main : Attempt start. Configuration directory [~/.azure-profiles/microsoft-fangkun]. Cache directory [~/.azure-profiles/microsoft-fangkun\telemetry\20260424111042794].
+44416 : 2026-04-24 11:10:43,386 : INFO : telemetry.records : 1 cache files to upload.
+44416 : 2026-04-24 11:10:43,405 : INFO : telemetry.records : Processed file ~/.azure-profiles/microsoft-fangkun\telemetry\20260424111042794\cache into 1 records.
+44416 : 2026-04-24 11:10:43,406 : INFO : telemetry.records : Remove directory ~/.azure-profiles/microsoft-fangkun\telemetry\20260424111042794
+44416 : 2026-04-24 11:10:43,515 : INFO : telemetry.client : Accumulated 1 events. Flush the clients.
+44416 : 2026-04-24 11:10:43,516 : INFO : telemetry.client : Flush client c4395b75-49cc-422c-bc95-c7d51aef5d46.
+44416 : 2026-04-24 11:10:44,386 : INFO : telemetry.sender : Sending 4096 bytes
+44416 : 2026-04-24 11:10:44,386 : INFO : telemetry.sender : Finish uploading in 0.870352 seconds.
+57532 : 2026-04-24 11:10:44,878 : INFO : telemetry.main : Attempt start. Configuration directory [~/.azure-profiles/microsoft-fangkun]. Cache directory [~/.azure-profiles/microsoft-fangkun\telemetry\20260424111044130].
+57532 : 2026-04-24 11:10:44,879 : INFO : telemetry.records : 1 cache files to upload.
+57532 : 2026-04-24 11:10:44,895 : INFO : telemetry.records : Processed file ~/.azure-profiles/microsoft-fangkun\telemetry\20260424111044130\cache into 1 records.
+57532 : 2026-04-24 11:10:44,896 : INFO : telemetry.records : Remove directory ~/.azure-profiles/microsoft-fangkun\telemetry\20260424111044130
+57532 : 2026-04-24 11:10:45,026 : INFO : telemetry.client : Accumulated 1 events. Flush the clients.
+57532 : 2026-04-24 11:10:45,026 : INFO : telemetry.client : Flush client c4395b75-49cc-422c-bc95-c7d51aef5d46.
+57532 : 2026-04-24 11:10:45,905 : INFO : telemetry.sender : Sending 4096 bytes
+57532 : 2026-04-24 11:10:45,905 : INFO : telemetry.sender : Finish uploading in 0.878858 seconds.
+55876 : 2026-04-24 11:14:13,335 : INFO : telemetry.main : Attempt start. Configuration directory [~/.azure-profiles/microsoft-fangkun]. Cache directory [~/.azure-profiles/microsoft-fangkun\telemetry\20260424111412435].
+55876 : 2026-04-24 11:14:13,335 : INFO : telemetry.records : 1 cache files to upload.
+55876 : 2026-04-24 11:14:13,357 : INFO : telemetry.records : Processed file ~/.azure-profiles/microsoft-fangkun\telemetry\20260424111412435\cache into 1 records.
+55876 : 2026-04-24 11:14:13,358 : INFO : telemetry.records : Remove directory ~/.azure-profiles/microsoft-fangkun\telemetry\20260424111412435
+55876 : 2026-04-24 11:14:13,503 : INFO : telemetry.client : Accumulated 1 events. Flush the clients.
+55876 : 2026-04-24 11:14:13,503 : INFO : telemetry.client : Flush client c4395b75-49cc-422c-bc95-c7d51aef5d46.
+55876 : 2026-04-24 11:14:14,356 : INFO : telemetry.sender : Sending 4142 bytes
+55876 : 2026-04-24 11:14:14,357 : INFO : telemetry.sender : Finish uploading in 0.853434 seconds.
+18060 : 2026-04-24 11:18:04,516 : INFO : telemetry.main : Attempt start. Configuration directory [~/.azure-profiles/microsoft-fangkun]. Cache directory [~/.azure-profiles/microsoft-fangkun\telemetry\20260424111802187].
+18060 : 2026-04-24 11:18:04,517 : INFO : telemetry.records : 1 cache files to upload.
+18060 : 2026-04-24 11:18:04,541 : INFO : telemetry.records : Processed file ~/.azure-profiles/microsoft-fangkun\telemetry\20260424111802187\cache into 1 records.
+18060 : 2026-04-24 11:18:04,542 : INFO : telemetry.records : Remove directory ~/.azure-profiles/microsoft-fangkun\telemetry\20260424111802187
+18060 : 2026-04-24 11:18:04,999 : INFO : telemetry.client : Accumulated 1 events. Flush the clients.
+18060 : 2026-04-24 11:18:04,999 : INFO : telemetry.client : Flush client c4395b75-49cc-422c-bc95-c7d51aef5d46.
+18060 : 2026-04-24 11:18:05,887 : INFO : telemetry.sender : Sending 4089 bytes
+18060 : 2026-04-24 11:18:05,888 : INFO : telemetry.sender : Finish uploading in 0.888223 seconds.
+15036 : 2026-04-24 11:21:38,046 : INFO : telemetry.main : Attempt start. Configuration directory [~/.azure-profiles/microsoft-fangkun]. Cache directory [~/.azure-profiles/microsoft-fangkun\telemetry\20260424112135007].
+15036 : 2026-04-24 11:21:38,047 : INFO : telemetry.records : 1 cache files to upload.
+15036 : 2026-04-24 11:21:38,074 : INFO : telemetry.records : Processed file ~/.azure-profiles/microsoft-fangkun\telemetry\20260424112135007\cache into 1 records.
+15036 : 2026-04-24 11:21:38,076 : INFO : telemetry.records : Remove directory ~/.azure-profiles/microsoft-fangkun\telemetry\20260424112135007
+15036 : 2026-04-24 11:21:38,642 : INFO : telemetry.client : Accumulated 1 events. Flush the clients.
+15036 : 2026-04-24 11:21:38,643 : INFO : telemetry.client : Flush client c4395b75-49cc-422c-bc95-c7d51aef5d46.
+15036 : 2026-04-24 11:21:39,634 : INFO : telemetry.sender : Sending 4733 bytes
+15036 : 2026-04-24 11:21:39,634 : INFO : telemetry.sender : Finish uploading in 0.991029 seconds.
+42712 : 2026-04-24 11:33:40,368 : INFO : telemetry.main : Attempt start. Configuration directory [~/.azure-profiles/microsoft-fangkun]. Cache directory [~/.azure-profiles/microsoft-fangkun\telemetry\20260424113338337].
+42712 : 2026-04-24 11:33:40,369 : INFO : telemetry.records : 1 cache files to upload.
+42712 : 2026-04-24 11:33:40,393 : INFO : telemetry.records : Processed file ~/.azure-profiles/microsoft-fangkun\telemetry\20260424113338337\cache into 1 records.
+42712 : 2026-04-24 11:33:40,395 : INFO : telemetry.records : Remove directory ~/.azure-profiles/microsoft-fangkun\telemetry\20260424113338337
+42712 : 2026-04-24 11:33:40,743 : INFO : telemetry.client : Accumulated 1 events. Flush the clients.
+42712 : 2026-04-24 11:33:40,744 : INFO : telemetry.client : Flush client c4395b75-49cc-422c-bc95-c7d51aef5d46.
+42712 : 2026-04-24 11:33:41,646 : INFO : telemetry.sender : Sending 4269 bytes
+42712 : 2026-04-24 11:33:41,646 : INFO : telemetry.sender : Finish uploading in 0.901933 seconds.

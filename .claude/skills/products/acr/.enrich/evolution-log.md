@@ -211,3 +211,4 @@
 - **Remaining**: 23
 - **Exhausted**: false
 | 2026-04-20 | ado-wiki | Indexed 138 ACR/ACI pages from Supportability/AzureContainers wiki (74 ACR + 64 ACI) | first-run index build |
+| 2026-04-24 | SYNTHESIZE | 20 topics (16 fusion, 4 compact), 109 entries, index-only run (Phase 2.5 + S5) |

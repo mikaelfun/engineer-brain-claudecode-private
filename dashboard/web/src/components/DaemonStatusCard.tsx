@@ -44,18 +44,18 @@ function TokenRow({ token }: { token: DaemonTokenStatus }) {
     : colors.label
 
   return (
-    <div className="flex items-center gap-2 min-w-0">
-      <span className="inline-block w-2 h-2 rounded-full shrink-0" style={{ background: colors.dot }} />
-      <span className="text-xs font-mono w-10 shrink-0" style={{ color: 'var(--text-secondary)' }}>
+    <div className="flex items-center gap-1.5 min-w-0">
+      <span className="inline-block w-1.5 h-1.5 rounded-full shrink-0" style={{ background: colors.dot }} />
+      <span className="text-[10px] font-mono w-8 shrink-0" style={{ color: 'var(--text-secondary)' }}>
         {TOKEN_DISPLAY_NAMES[token.name] || token.name}
       </span>
       <div className="flex-1 min-w-0">
-        <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--bg-inset)' }}>
+        <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--bg-inset)' }}>
           <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${pct}%`, background: barColor }} />
         </div>
       </div>
       <span
-        className="text-[10px] font-mono w-11 text-right shrink-0"
+        className="text-[10px] font-mono w-9 text-right shrink-0"
         style={{ color: token.remainMin != null && token.remainMin < 10 ? 'var(--accent-red)' : 'var(--text-tertiary)' }}
       >
         {timeLabel}
@@ -66,8 +66,8 @@ function TokenRow({ token }: { token: DaemonTokenStatus }) {
 
 function TokenGroup({ label, color, bg, tokens }: { label: string; color: string; bg: string; tokens: DaemonTokenStatus[] }) {
   return (
-    <div className="space-y-1.5 min-w-0 flex-1">
-      <span className="inline-flex items-center justify-center text-[9px] font-semibold px-2 py-0.5 rounded" style={{ background: bg, color }}>
+    <div className="space-y-1 min-w-0">
+      <span className="inline-flex items-center justify-center text-[9px] font-semibold px-1.5 py-0.5 rounded" style={{ background: bg, color }}>
         {label}
       </span>
       {tokens.map((t) => <TokenRow key={t.name} token={t} />)}
@@ -95,6 +95,14 @@ export function DaemonStatusCard() {
   const isAlive = daemon.alive && daemon.heartbeatFresh
   const isStarting = daemon.alive && !daemon.heartbeatFresh
 
+  // Heartbeat age for display
+  const heartbeatAge = daemon.lastHeartbeat
+    ? Math.round((Date.now() - new Date(daemon.lastHeartbeat).getTime()) / 1000)
+    : null
+  const heartbeatLabel = heartbeatAge != null
+    ? heartbeatAge < 60 ? `${heartbeatAge}s ago` : `${Math.round(heartbeatAge / 60)}m ago`
+    : null
+
   return (
     <Card padding="sm">
       <div className="space-y-3">
@@ -111,6 +119,11 @@ export function DaemonStatusCard() {
             <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
               {isStarting ? 'Starting...' : !isAlive ? 'Offline' : ''}
             </span>
+            {heartbeatLabel && isAlive && (
+              <span className="text-[10px] font-mono" style={{ color: heartbeatAge! > 45 ? 'var(--accent-amber)' : 'var(--text-tertiary)' }}>
+                ♡ {heartbeatLabel}
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-1">
             {isAlive ? (
@@ -131,7 +144,7 @@ export function DaemonStatusCard() {
 
         {/* Token bars */}
         {tokens.length > 0 ? (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {TOKEN_GROUPS.map(group => {
               const groupTokens = group.names
                 .map(n => tokens.find(t => t.name === n))

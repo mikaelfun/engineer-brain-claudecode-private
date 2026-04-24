@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Case Row — Approach A Refined</title>
+<style>
+  :root {
+    --bg-base: #faf9fb;
+    --bg-surface: #ffffff;
+    --bg-elevated: #ffffff;
+    --bg-hover: #f3f1f5;
+    --bg-active: #ebe8ef;
+    --bg-inset: #f5f3f7;
+    --border-subtle: #e8e3f0;
+    --border-default: #d4ccdf;
+    --border-strong: #b0a8c0;
+    --text-primary: #1f1633;
+    --text-secondary: #3e3554;
+    --text-tertiary: #9e95b0;
+    --text-inverse: #ffffff;
+    --accent-blue: #6a5fc1;
+    --accent-blue-dim: rgba(106,95,193,0.10);
+    --accent-green: #16a34a;
+    --accent-green-dim: rgba(22,163,74,0.10);
+    --accent-amber: #d97706;
+    --accent-amber-dim: rgba(217,119,6,0.10);
+    --accent-red: #dc2626;
+    --accent-red-dim: rgba(220,38,38,0.10);
+    --accent-purple: #7c3aed;
+    --accent-purple-dim: rgba(124,58,237,0.10);
+    --tab-green-text: #15803d;
+    --tab-amber-text: #b45309;
+    --tab-purple-text: #6d28d9;
+    --shadow-card: rgba(0,0,0,0.04) 0 1px 3px;
+    --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg-base);
+    color: var(--text-primary);
+    font-family: 'Rubik', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    padding: 28px 36px;
+    min-height: 100vh;
+  }
+  h1 { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 4px; }
+  .subtitle { font-size: 12px; color: var(--text-secondary); margin-bottom: 24px; line-height: 1.6; }
+  .section-label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.8px; color: var(--text-tertiary); margin-bottom: 10px;
+  }
+
+  /* ─── Case Card ─── */
+  .case-card {
+    background: var(--bg-surface);
+    border: 1px solid rgba(106,95,193,0.22);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(106,95,193,0.06);
+    margin-bottom: 20px;
+  }
+  .case-card.collapsed-card {
+    border-color: var(--border-subtle);
+    box-shadow: var(--shadow-card);
+  }
+  .case-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px;
+    background: var(--bg-inset);
+  }
+  .cn { font-family: var(--font-mono); font-size: 13px; font-weight: 700; }
+  .cn.active { color: var(--accent-blue); }
+  .cn.muted { color: rgba(106,95,193,0.55); }
+  .pill {
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.3px; padding: 2px 8px; border-radius: 6px;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .pill-run { background: var(--accent-blue-dim); color: var(--accent-blue); }
+  .pill-ok { background: var(--accent-green-dim); color: var(--accent-green); }
+  .pill-purple { background: var(--accent-purple-dim); color: var(--accent-purple); }
+  .pill-amber { background: var(--accent-amber-dim); color: var(--accent-amber); }
+  .dur { font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary); }
+
+  /* ─── Full-width Pipeline Stepper ─── */
+  .pipeline-stepper {
+    display: flex;
+    align-items: flex-start;
+    padding: 16px 20px 6px;
+    gap: 0;
+  }
+  .ps-step {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    cursor: pointer;
+    padding: 6px 4px 8px;
+    border-radius: 10px;
+    transition: background 0.15s ease;
+  }
+  .ps-step:hover { background: var(--bg-hover); }
+  .ps-step.selected { background: var(--accent-blue-dim); }
+  .ps-step.selected-green { background: var(--accent-green-dim); }
+  .ps-step.selected-purple { background: var(--accent-purple-dim); }
+  .ps-step.selected-amber { background: var(--accent-amber-dim); }
+  .ps-icon {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; flex-shrink: 0;
+    position: relative; z-index: 1;
+  }
+  .ps-icon.done { background: var(--accent-green); color: white; }
+  .ps-icon.active { border: 2.5px solid var(--accent-blue); background: var(--accent-blue-dim); color: var(--accent-blue); }
+  .ps-icon.active-purple { border: 2.5px solid var(--accent-purple); background: var(--accent-purple-dim); color: var(--accent-purple); }
+  .ps-icon.wait { border: 2px solid var(--border-default); color: var(--text-tertiary); opacity: 0.4; }
+  .ps-label { font-size: 11px; font-weight: 700; margin-top: 5px; text-align: center; }
+  .ps-label.done { color: var(--accent-green); }
+  .ps-label.active { color: var(--accent-blue); }
+  .ps-label.active-purple { color: var(--accent-purple); }
+  .ps-label.wait { color: var(--text-tertiary); opacity: 0.4; }
+  .ps-dur { font-family: var(--font-mono); font-size: 9px; color: var(--text-tertiary); margin-top: 2px; }
+
+  /* Connector between steps — spans between step centers */
+  .ps-conn-wrap {
+    flex: 0 0 0px;
+    display: flex;
+    align-items: center;
+    position: relative;
+    z-index: 0;
+  }
+  .ps-conn {
+    width: 100%;
+    height: 2px;
+    border-radius: 1px;
+    position: absolute;
+    top: 22px; /* vertically center with 32px icon + 6px top padding */
+  }
+  /* We use a trick: connector sits between steps using negative margins */
+  .ps-step + .ps-step::before {
+    content: '';
+    position: absolute;
+    top: 22px;
+    height: 2px;
+    border-radius: 1px;
+    right: calc(50% + 20px);
+    left: calc(-50% + 20px);
+  }
+  .ps-step.conn-filled + .ps-step::before,
+  .ps-step + .ps-step.conn-filled-left::before { background: var(--accent-green); opacity: 0.5; }
+  .ps-step + .ps-step.conn-half::before { background: linear-gradient(90deg, var(--accent-green), var(--accent-blue)); opacity: 0.5; }
+  .ps-step + .ps-step.conn-empty::before { background: var(--border-subtle); }
+
+  /* ─── Detail Panel (expandable below pipeline) ─── */
+  .detail-panel {
+    padding: 0 20px 16px;
+  }
+  .detail-box {
+    background: var(--bg-inset);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    padding: 14px 16px;
+    animation: slideDown 0.2s ease-out;
+  }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .detail-title {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.6px; color: var(--text-tertiary); margin-bottom: 10px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .detail-title .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+  }
+
+  /* Refresh detail: subtask grid */
+  .subtask-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 8px;
+  }
+  .subtask-item {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+  }
+  .subtask-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .subtask-name { font-size: 11px; font-weight: 600; }
+  .subtask-delta { font-size: 9px; color: var(--text-tertiary); margin-left: auto; white-space: nowrap; }
+
+  /* Assess detail */
+  .assess-section { margin-bottom: 8px; }
+  .assess-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-tertiary); margin-bottom: 4px; }
+  .assess-text { font-size: 11px; color: var(--text-secondary); line-height: 1.6; }
+  .exec-plan {
+    display: flex; flex-wrap: wrap; gap: 4px;
+    margin-top: 4px;
+  }
+  .exec-step {
+    font-size: 10px; font-weight: 600;
+    padding: 3px 10px; border-radius: 6px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    display: flex; align-items: center; gap: 4px;
+  }
+  .exec-step .num {
+    font-size: 8px; font-weight: 800;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--accent-blue-dim); color: var(--accent-blue);
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* Act detail: action chain */
+  .action-chain { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; row-gap: 8px; }
+  .ac-node {
+    display: flex; align-items: center; gap: 5px;
+    padding: 6px 12px; border-radius: 8px;
+    font-size: 11px; font-weight: 600;
+    border: 1px solid var(--border-subtle); background: var(--bg-surface);
+    cursor: default; transition: all 0.15s ease;
+  }
+  .ac-node:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .ac-node.done { border-color: rgba(22,163,74,0.2); color: var(--accent-green); }
+  .ac-node.active { border-color: rgba(106,95,193,0.25); color: var(--accent-blue); background: rgba(106,95,193,0.04); }
+  .ac-node.active-purple { border-color: rgba(124,58,237,0.25); color: var(--accent-purple); background: rgba(124,58,237,0.04); }
+  .ac-node.wait { opacity: 0.4; color: var(--text-tertiary); border-style: dashed; }
+  .ac-node .mini-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .ac-node.done .mini-dot { background: var(--accent-green); }
+  .ac-node.active .mini-dot { background: var(--accent-blue); animation: pulse 2s ease-in-out infinite; }
+  .ac-node.active-purple .mini-dot { background: var(--accent-purple); animation: pulse 2s ease-in-out infinite; }
+  .ac-node.wait .mini-dot { background: var(--border-default); }
+  .ac-detail { font-size: 9px; opacity: 0.65; font-weight: 400; margin-left: 2px; }
+  .ac-arrow { font-size: 10px; color: var(--text-tertiary); flex-shrink: 0; }
+
+  /* Summarize detail */
+  .todo-list { list-style: none; }
+  .todo-item {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 5px 0;
+    font-size: 11px; color: var(--text-secondary); line-height: 1.5;
+  }
+  .todo-check {
+    width: 14px; height: 14px; border-radius: 4px;
+    border: 1.5px solid var(--accent-green);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 1px;
+    color: var(--accent-green); font-size: 9px;
+  }
+
+  /* Collapsed flow pills */
+  .flow-pills { display: flex; align-items: center; gap: 2px; }
+  .flow-pill {
+    padding: 2px 7px; border-radius: 4px;
+    font-size: 10px; font-weight: 600;
+    background: var(--bg-inset); color: var(--text-tertiary);
+  }
+  .flow-arrow { font-size: 9px; color: var(--text-tertiary); padding: 0 1px; }
+
+  /* Click indicator */
+  .click-hint {
+    font-size: 9px; color: var(--text-tertiary); font-style: italic;
+    text-align: center; padding: 4px 0 2px;
+    opacity: 0.6;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.7); }
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spin { animation: spin 1s linear infinite; display: inline-block; }
+
+  .example-label {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 700; color: var(--accent-blue);
+    margin-bottom: 8px; padding: 4px 12px;
+    background: var(--accent-blue-dim); border-radius: 6px;
+  }
+  .spacer { height: 16px; }
+</style>
+</head>
+<body>
+
+<h1>Case Row — 方案 A 细化</h1>
+<p class="subtitle">
+  Pipeline 拉宽到整个卡片宽度 · 每个步骤可点击展开详情面板 · 4 种展开状态各有不同内容
+</p>
+
+<!-- ═══════════════════════════════════════════════════════════
+     EXAMPLE 1: Click on "Act" — shows action chain
+     ═══════════════════════════════════════════════════════════ -->
+<div class="example-label">① 点击 Act 步骤 — 展开动作链</div>
+
+<div class="case-card">
+  <div class="case-head">
+    <span class="cn active">2504010005</span>
+    <span class="pill pill-purple"><span class="spin" style="font-size:8px;">⟳</span> Reassess</span>
+    <div style="flex:1;"></div>
+    <span class="dur">3m 42s</span>
+  </div>
+
+  <!-- Full-width pipeline stepper -->
+  <div class="pipeline-stepper">
+    <div class="ps-step">
+      <div class="ps-icon done">✓</div>
+      <div class="ps-label done">Refresh</div>
+      <div class="ps-dur">8s</div>
+    </div>
+    <div class="ps-step conn-filled">
+      <div class="ps-icon done">✓</div>
+      <div class="ps-label done">Assess</div>
+      <div class="ps-dur">12s</div>
+    </div>
+    <div class="ps-step conn-half selected-purple" style="background:var(--accent-purple-dim);">
+      <div class="ps-icon active-purple">
+        <div style="width:10px;height:10px;border-radius:50%;background:var(--accent-purple);animation:pulse 2s ease-in-out infinite;"></div>
+      </div>
+      <div class="ps-label active-purple">Act</div>
+    </div>
+    <div class="ps-step conn-empty">
+      <div class="ps-icon wait">📄</div>
+      <div class="ps-label wait">Summary</div>
+    </div>
+  </div>
+
+  <!-- Detail panel: Act → Action Flow -->
+  <div class="detail-panel">
+    <div class="detail-box">
+      <div class="detail-title">
+        <div class="dot" style="background:var(--accent-purple);"></div>
+        Action Flow
+      </div>
+      <div class="action-chain">
+        <div class="ac-node done">
+          <div class="mini-dot"></div>
+          Assess<span class="ac-detail">· needs-action</span>
+        </div>
+        <span class="ac-arrow">→</span>
+        <div class="ac-node done">
+          <div class="mini-dot"></div>
+          Troubleshoot<span class="ac-detail">· 1m 20s</span>
+        </div>
+        <span class="ac-arrow">→</span>
+        <div class="ac-node active-purple">
+          <div class="mini-dot"></div>
+          Reassess<span class="ac-detail"><span class="spin" style="font-size:8px;">⟳</span> evaluating…</span>
+        </div>
+        <span class="ac-arrow">→</span>
+        <div class="ac-node wait">
+          <div class="mini-dot"></div>
+          Challenger
+        </div>
+        <span class="ac-arrow">→</span>
+        <div class="ac-node wait">
+          <div class="mini-dot"></div>
+          Email
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     EXAMPLE 2: Click on "Refresh" — shows subtask deltas
+     ═══════════════════════════════════════════════════════════ -->
+<div class="example-label">② 点击 Refresh 步骤 — 展开 subtask 详情</div>
+
+<div class="case-card">
+  <div class="case-head">
+    <span class="cn active">2504010005</span>
+    <span class="pill pill-purple"><span class="spin" style="font-size:8px;">⟳</span> Reassess</span>
+    <div style="flex:1;"></div>
+    <span class="dur">3m 42s</span>
+  </div>
+
+  <div class="pipeline-stepper">
+    <div class="ps-step selected-green">
+      <div class="ps-icon done">✓</div>
+      <div class="ps-label done">Refresh</div>
+      <div class="ps-dur">8s</div>
+    </div>
+    <div class="ps-step conn-filled">
+      <div class="ps-icon done">✓</div>
+      <div class="ps-label done">Assess</div>
+      <div class="ps-dur">12s</div>
+    </div>
+    <div class="ps-step conn-half">
+      <div class="ps-icon active-purple">
+        <div style="width:10px;height:10px;border-radius:50%;background:var(--accent-purple);animation:pulse 2s ease-in-out infinite;"></div>
+      </div>
+      <div class="ps-label active-purple">Act</div>
+    </div>
+    <div class="ps-step conn-empty">
+      <div class="ps-icon wait">📄</div>
+      <div class="ps-label wait">Summary</div>
+    </div>
+  </div>
+
+  <!-- Detail panel: Refresh → Subtask Grid -->
+  <div class="detail-panel">
+    <div class="detail-box">
+      <div class="detail-title">
+        <div class="dot" style="background:var(--accent-green);"></div>
+        Data Refresh · 8s
+      </div>
+      <div class="subtask-grid">
+        <div class="subtask-item">
+          <div class="subtask-dot" style="background:var(--accent-green);"></div>
+          <span class="subtask-name" style="color:var(--accent-green);">D365</span>
+          <span class="subtask-delta">+3 emails · +1 note</span>
+        </div>
+        <div class="subtask-item">
+          <div class="subtask-dot" style="background:var(--accent-green);"></div>
+          <span class="subtask-name" style="color:var(--accent-green);">Teams</span>
+          <span class="subtask-delta">2 new msgs</span>
+        </div>
+        <div class="subtask-item">
+          <div class="subtask-dot" style="background:var(--accent-green);"></div>
+          <span class="subtask-name" style="color:var(--accent-green);">ICM</span>
+          <span class="subtask-delta">+1 discussion</span>
+        </div>
+        <div class="subtask-item">
+          <div class="subtask-dot" style="background:var(--accent-green);"></div>
+          <span class="subtask-name" style="color:var(--accent-green);">OneNote</span>
+          <span class="subtask-delta">1 page</span>
+        </div>
+        <div class="subtask-item">
+          <div class="subtask-dot" style="background:var(--text-tertiary); opacity:0.4;"></div>
+          <span class="subtask-name" style="color:var(--text-tertiary);opacity:0.6;">Attach</span>
+          <span class="subtask-delta" style="opacity:0.5;">skipped</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     EXAMPLE 3: Click on "Assess" — shows reasoning + exec plan
+     ═══════════════════════════════════════════════════════════ -->
+<div class="example-label">③ 点击 Assess 步骤 — 展开 reasoning + execution plan</div>
+
+<div class="case-card">
+  <div class="case-head">
+    <span class="cn active">2504010005</span>
+    <span class="pill pill-purple"><span class="spin" style="font-size:8px;">⟳</span> Reassess</span>
+    <div style="flex:1;"></div>
+    <span class="dur">3m 42s</span>
+  </div>
+
+  <div class="pipeline-stepper">
+    <div class="ps-step">
+      <div class="ps-icon done">✓</div>
+      <div class="ps-label done">Refresh</div>
+      <div class="ps-dur">8s</div>
+    </div>
+    <div class="ps-step conn-filled selected-amber" style="background:var(--accent-amber-dim);">
+      <div class="ps-icon done">✓</div>
+      <div class="ps-label done">Assess</div>
+      <div class="ps-dur">12s</div>
+    </div>
+    <div class="ps-step conn-half">
+      <div class="ps-icon active-purple">
+        <div style="width:10px;height:10px;border-radius:50%;background:var(--accent-purple);animation:pulse 2s ease-in-out infinite;"></div>
+      </div>
+      <div class="ps-label active-purple">Act</div>
+    </div>
+    <div class="ps-step conn-empty">
+      <div class="ps-icon wait">📄</div>
+      <div class="ps-label wait">Summary</div>
+    </div>
+  </div>
+
+  <!-- Detail panel: Assess → Reasoning + Exec Plan -->
+  <div class="detail-panel">
+    <div class="detail-box">
+      <div class="detail-title">
+        <div class="dot" style="background:var(--accent-amber);"></div>
+        Assess · 12s
+        <span class="pill pill-amber" style="margin-left:4px;">needs-action</span>
+      </div>
+
+      <div class="assess-section">
+        <div class="assess-label">Reasoning</div>
+        <div class="assess-text">
+          客户 4/18 发送了新邮件追问 WAF rule 配置问题的排查进展。D365 有 3 封新邮件未读，最新一封明确要求提供 root cause 分析和 next step。Teams 中 PG 已回复建议检查 Front Door 的 WAF policy 与 custom rule 冲突。需要先排查 Kusto 日志确认规则命中情况，再回复客户。
+        </div>
+      </div>
+
+      <div class="assess-section">
+        <div class="assess-label">Execution Plan</div>
+        <div class="exec-plan">
+          <div class="exec-step"><span class="num">1</span> Troubleshoot (Kusto WAF logs)</div>
+          <div class="exec-step"><span class="num">2</span> Reassess findings</div>
+          <div class="exec-step"><span class="num">3</span> Challenger review</div>
+          <div class="exec-step"><span class="num">4</span> Email drafter (result-confirm)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     EXAMPLE 4: Click on "Summary" — shows generated todo
+     ═══════════════════════════════════════════════════════════ -->
+<div class="example-label">④ 点击 Summary 步骤 — 展开生成的 Todo</div>
+
+<div class="case-card">
+  <div class="case-head">
+    <span class="cn muted">2503150023</span>
+    <span class="pill pill-ok">✓ Done</span>
+    <div style="flex:1;"></div>
+    <span class="dur">1m 52s</span>
+  </div>
+
+  <div class="pipeline-stepper">
+    <div class="ps-step">
+      <div class="ps-icon done">✓</div>
+      <div class="ps-label done">Refresh</div>
+      <div class="ps-dur">6s</div>
+    </div>
+    <div class="ps-step conn-filled">
+      <div class="ps-icon done">✓</div>
+      <div class="ps-label done">Assess</div>
+      <div class="ps-dur">10s</div>
+    </div>
+    <div class="ps-step conn-filled">
+      <div class="ps-icon done">✓</div>
+      <div class="ps-label done">Act</div>
+      <div class="ps-dur">52s</div>
+    </div>
+    <div class="ps-step conn-filled selected-green">
+      <div class="ps-icon done">✓</div>
+      <div class="ps-label done">Summary</div>
+      <div class="ps-dur">14s</div>
+    </div>
+  </div>
+
+  <div class="detail-panel">
+    <div class="detail-box">
+      <div class="detail-title">
+        <div class="dot" style="background:var(--accent-green);"></div>
+        Summary · Todo Generated
+      </div>
+      <ul class="todo-list">
+        <li class="todo-item">
+          <div class="todo-check">✓</div>
+          <div>
+            <div style="font-weight:600;color:var(--text-primary);">Review email draft</div>
+            <div style="font-size:10px;color:var(--text-tertiary);margin-top:1px;">drafts/follow-up-20260420.md — confirm WAF rule changes with customer</div>
+          </div>
+        </li>
+        <li class="todo-item">
+          <div class="todo-check" style="border-color:var(--accent-amber);color:var(--accent-amber);">!</div>
+          <div>
+            <div style="font-weight:600;color:var(--text-primary);">PG action pending</div>
+            <div style="font-size:10px;color:var(--text-tertiary);margin-top:1px;">Waiting for PG to confirm Front Door config change ETA</div>
+          </div>
+        </li>
+        <li class="todo-item">
+          <div class="todo-check" style="border-color:var(--border-default);color:var(--text-tertiary);">○</div>
+          <div>
+            <div style="font-weight:600;color:var(--text-primary);">Schedule follow-up</div>
+            <div style="font-size:10px;color:var(--text-tertiary);margin-top:1px;">Set reminder for 4/23 if no PG response</div>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     EXAMPLE 5: Collapsed (no step selected) + default Act auto-expand
+     ═══════════════════════════════════════════════════════════ -->
+<div class="example-label">⑤ 默认状态 — active case 自动展开 Act</div>
+
+<div class="case-card">
+  <div class="case-head">
+    <span class="cn active">2504080019</span>
+    <span class="pill pill-run"><span class="spin" style="font-size:8px;">⟳</span> Troubleshoot</span>
+    <div style="flex:1;"></div>
+    <span class="dur">1m 08s</span>
+  </div>
+
+  <div class="pipeline-stepper">
+    <div class="ps-step">
+      <div class="ps-icon done">✓</div>
+      <div class="ps-label done">Refresh</div>
+      <div class="ps-dur">7s</div>
+    </div>
+    <div class="ps-step conn-filled">
+      <div class="ps-icon done">✓</div>
+      <div class="ps-label done">Assess</div>
+      <div class="ps-dur">15s</div>
+    </div>
+    <div class="ps-step conn-half">
+      <div class="ps-icon active">
+        <div style="width:10px;height:10px;border-radius:50%;background:var(--accent-blue);animation:pulse 2s ease-in-out infinite;"></div>
+      </div>
+      <div class="ps-label active">Act</div>
+    </div>
+    <div class="ps-step conn-empty">
+      <div class="ps-icon wait">📄</div>
+      <div class="ps-label wait">Summary</div>
+    </div>
+  </div>
+
+  <div class="detail-panel">
+    <div class="detail-box">
+      <div class="detail-title">
+        <div class="dot" style="background:var(--accent-blue);"></div>
+        Action Flow
+      </div>
+      <div class="action-chain">
+        <div class="ac-node done">
+          <div class="mini-dot"></div>
+          Assess<span class="ac-detail">· needs-action</span>
+        </div>
+        <span class="ac-arrow">→</span>
+        <div class="ac-node active">
+          <div class="mini-dot"></div>
+          Troubleshoot<span class="ac-detail"><span class="spin" style="font-size:8px;">⟳</span> Kusto query…</span>
+        </div>
+        <span class="ac-arrow">→</span>
+        <div class="ac-node wait">
+          <div class="mini-dot"></div>
+          Reassess
+        </div>
+        <span class="ac-arrow">→</span>
+        <div class="ac-node wait">
+          <div class="mini-dot"></div>
+          Email
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     EXAMPLE 6: Collapsed done case (no detail panel)
+     ═══════════════════════════════════════════════════════════ -->
+<div class="example-label">⑥ 完成 case 折叠态 — 点击 pipeline 步骤可展开</div>
+
+<div class="case-card collapsed-card">
+  <div class="case-head" style="cursor:pointer;">
+    <span style="color:var(--text-tertiary);font-size:14px;">›</span>
+    <span class="cn muted">2501080001</span>
+    <span class="pill pill-ok">✓ Done</span>
+    <div class="flow-pills">
+      <span class="flow-pill">assess</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-pill" style="background:var(--accent-green-dim);color:var(--accent-green);">no-change</span>
+    </div>
+    <div style="flex:1;"></div>
+    <span class="dur">45s</span>
+  </div>
+</div>
+
+<div class="spacer"></div>
+<div class="click-hint">↑ 完成的 case 点击展开后，也可以点击各步骤查看详情</div>
+
+</body>
+</html>

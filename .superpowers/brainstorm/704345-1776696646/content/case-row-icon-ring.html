@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Case Row — Icon Selection</title>
+<style>
+  :root {
+    --bg-base: #faf9fb;
+    --bg-surface: #ffffff;
+    --bg-elevated: #ffffff;
+    --bg-hover: #f3f1f5;
+    --bg-inset: #f5f3f7;
+    --border-subtle: #e8e3f0;
+    --border-default: #d4ccdf;
+    --text-primary: #1f1633;
+    --text-secondary: #3e3554;
+    --text-tertiary: #9e95b0;
+    --text-inverse: #ffffff;
+    --accent-blue: #6a5fc1;
+    --accent-blue-dim: rgba(106,95,193,0.10);
+    --accent-green: #16a34a;
+    --accent-green-dim: rgba(22,163,74,0.10);
+    --accent-amber: #d97706;
+    --accent-amber-dim: rgba(217,119,6,0.10);
+    --accent-red: #dc2626;
+    --accent-red-dim: rgba(220,38,38,0.10);
+    --accent-purple: #7c3aed;
+    --accent-purple-dim: rgba(124,58,237,0.10);
+    --shadow-card: rgba(0,0,0,0.04) 0 1px 3px;
+    --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg-base);
+    color: var(--text-primary);
+    font-family: 'Rubik', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    padding: 28px 36px;
+  }
+  h1 { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 4px; }
+  .subtitle { font-size: 12px; color: var(--text-secondary); margin-bottom: 24px; line-height: 1.6; }
+  .example-label {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 700; color: var(--accent-blue);
+    margin-bottom: 8px; padding: 4px 12px;
+    background: var(--accent-blue-dim); border-radius: 6px;
+  }
+
+  /* ─── Case Card ─── */
+  .case-card {
+    background: var(--bg-surface);
+    border: 1px solid rgba(106,95,193,0.22);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(106,95,193,0.06);
+    margin-bottom: 24px;
+  }
+  .case-card.done-card {
+    border-color: var(--border-subtle);
+    box-shadow: var(--shadow-card);
+  }
+  .case-head {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 18px; background: var(--bg-inset);
+  }
+  .cn { font-family: var(--font-mono); font-size: 13px; font-weight: 700; }
+  .cn.active { color: var(--accent-blue); }
+  .cn.muted { color: rgba(106,95,193,0.55); }
+  .pill {
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.3px; padding: 2px 8px; border-radius: 6px;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .pill-run { background: var(--accent-blue-dim); color: var(--accent-blue); }
+  .pill-ok { background: var(--accent-green-dim); color: var(--accent-green); }
+  .pill-purple { background: var(--accent-purple-dim); color: var(--accent-purple); }
+  .pill-amber { background: var(--accent-amber-dim); color: var(--accent-amber); }
+  .dur { font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary); }
+
+  /* ─── Pipeline Stepper ─── */
+  .pipeline {
+    display: flex; align-items: flex-start;
+    padding: 16px 20px 6px;
+  }
+  .ps {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    position: relative; cursor: pointer; padding: 4px 4px 8px;
+    border-radius: 10px; transition: background 0.15s ease;
+  }
+  .ps:hover { background: var(--bg-hover); }
+
+  /* Icon — base */
+  .ps-icon {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; flex-shrink: 0;
+    position: relative; z-index: 1;
+    transition: box-shadow 0.2s ease;
+  }
+  .ps-icon.done { background: var(--accent-green); color: white; }
+  .ps-icon.active { border: 2.5px solid var(--accent-blue); background: var(--accent-blue-dim); color: var(--accent-blue); }
+  .ps-icon.active-purple { border: 2.5px solid var(--accent-purple); background: var(--accent-purple-dim); color: var(--accent-purple); }
+  .ps-icon.wait { border: 2px solid var(--border-default); color: var(--text-tertiary); opacity: 0.4; }
+
+  /* Icon — selected ring (only on icon, not whole step) */
+  .ps-icon.sel-green { box-shadow: 0 0 0 3px rgba(22,163,74,0.25); }
+  .ps-icon.sel-amber { box-shadow: 0 0 0 3px rgba(217,119,6,0.25); }
+  .ps-icon.sel-blue { box-shadow: 0 0 0 3px rgba(106,95,193,0.25); }
+  .ps-icon.sel-purple { box-shadow: 0 0 0 3px rgba(124,58,237,0.25); }
+
+  .ps-label { font-size: 11px; font-weight: 700; margin-top: 5px; text-align: center; }
+  .ps-label.done { color: var(--accent-green); }
+  .ps-label.active { color: var(--accent-blue); }
+  .ps-label.active-purple { color: var(--accent-purple); }
+  .ps-label.wait { color: var(--text-tertiary); opacity: 0.4; }
+  .ps-dur { font-family: var(--font-mono); font-size: 9px; color: var(--text-tertiary); margin-top: 2px; }
+
+  /* Connectors */
+  .ps + .ps::before {
+    content: ''; position: absolute;
+    top: 20px; height: 2px; border-radius: 1px;
+    right: calc(50% + 20px); left: calc(-50% + 20px);
+  }
+  .ps.c-green + .ps::before { background: var(--accent-green); opacity: 0.45; }
+  .ps + .ps.c-half::before { background: linear-gradient(90deg, var(--accent-green), var(--accent-blue)); opacity: 0.45; }
+  .ps + .ps.c-half-p::before { background: linear-gradient(90deg, var(--accent-green), var(--accent-purple)); opacity: 0.45; }
+  .ps + .ps.c-empty::before { background: var(--border-subtle); }
+
+  /* ─── Detail Panel ─── */
+  .detail-panel { padding: 0 20px 16px; }
+  .detail-box {
+    background: var(--bg-inset); border: 1px solid var(--border-subtle);
+    border-radius: 10px; padding: 14px 16px;
+    animation: slideDown 0.2s ease-out;
+  }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .detail-title {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.6px; color: var(--text-tertiary); margin-bottom: 10px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .detail-title .dot { width: 6px; height: 6px; border-radius: 50%; }
+
+  /* Refresh subtask grid */
+  .subtask-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px;
+  }
+  .st-item {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 10px; border-radius: 8px;
+    background: var(--bg-surface); border: 1px solid var(--border-subtle);
+  }
+  .st-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .st-name { font-size: 11px; font-weight: 600; }
+  .st-delta { font-size: 9px; color: var(--text-tertiary); margin-left: auto; white-space: nowrap; }
+
+  /* Assess */
+  .a-section { margin-bottom: 8px; }
+  .a-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-tertiary); margin-bottom: 4px; }
+  .a-text { font-size: 11px; color: var(--text-secondary); line-height: 1.6; }
+  .exec-plan { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+  .exec-step {
+    font-size: 10px; font-weight: 600; padding: 3px 10px; border-radius: 6px;
+    background: var(--bg-surface); border: 1px solid var(--border-subtle);
+    color: var(--text-secondary); display: flex; align-items: center; gap: 4px;
+  }
+  .exec-step .num {
+    font-size: 8px; font-weight: 800; width: 14px; height: 14px; border-radius: 50%;
+    background: var(--accent-blue-dim); color: var(--accent-blue);
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* Act action chain */
+  .action-chain { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; row-gap: 8px; }
+  .ac-node {
+    display: flex; align-items: center; gap: 5px;
+    padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 600;
+    border: 1px solid var(--border-subtle); background: var(--bg-surface);
+    transition: all 0.15s ease;
+  }
+  .ac-node:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .ac-node.done { border-color: rgba(22,163,74,0.2); color: var(--accent-green); }
+  .ac-node.active { border-color: rgba(106,95,193,0.25); color: var(--accent-blue); background: rgba(106,95,193,0.04); }
+  .ac-node.active-purple { border-color: rgba(124,58,237,0.25); color: var(--accent-purple); background: rgba(124,58,237,0.04); }
+  .ac-node.wait { opacity: 0.4; color: var(--text-tertiary); border-style: dashed; }
+  .ac-node .md { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .ac-node.done .md { background: var(--accent-green); }
+  .ac-node.active .md { background: var(--accent-blue); animation: pulse 2s ease-in-out infinite; }
+  .ac-node.active-purple .md { background: var(--accent-purple); animation: pulse 2s ease-in-out infinite; }
+  .ac-node.wait .md { background: var(--border-default); }
+  .ac-det { font-size: 9px; opacity: 0.65; font-weight: 400; margin-left: 2px; }
+  .ac-arr { font-size: 10px; color: var(--text-tertiary); flex-shrink: 0; }
+
+  /* Summary todos */
+  .todo-list { list-style: none; }
+  .todo-item {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 5px 0; font-size: 11px; color: var(--text-secondary); line-height: 1.5;
+  }
+  .todo-check {
+    width: 14px; height: 14px; border-radius: 4px;
+    border: 1.5px solid var(--accent-green);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 1px; color: var(--accent-green); font-size: 9px;
+  }
+
+  /* Collapsed flow pills */
+  .flow-pills { display: flex; align-items: center; gap: 2px; }
+  .flow-pill {
+    padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 600;
+    background: var(--bg-inset); color: var(--text-tertiary);
+  }
+  .flow-arrow { font-size: 9px; color: var(--text-tertiary); padding: 0 1px; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.7); }
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spin { animation: spin 1s linear infinite; display: inline-block; }
+</style>
+</head>
+<body>
+
+<h1>Case Row — 图标选中 ring 效果</h1>
+<p class="subtitle">选中态只在图标上加 ring（box-shadow），步骤区域背景不变，hover 时才有浅灰背景</p>
+
+<!-- ═══ 1: Act selected ═══ -->
+<div class="example-label">① Act 选中 — 图标紫色 ring</div>
+<div class="case-card">
+  <div class="case-head">
+    <span class="cn active">2504010005</span>
+    <span class="pill pill-purple"><span class="spin" style="font-size:8px;">⟳</span> Reassess</span>
+    <div style="flex:1;"></div>
+    <span class="dur">3m 42s</span>
+  </div>
+  <div class="pipeline">
+    <div class="ps">
+      <div class="ps-icon done">✓</div>
+      <div class="ps-label done">Refresh</div>
+      <div class="ps-dur">8s</div>
+    </div>
+    <div class="ps c-green">
+      <div class="ps-icon done">✓</div>
+      <div class="ps-label done">Assess</div>
+      <div class="ps-dur">12s</div>
+    </div>
+    <div class="ps c-half-p">
+      <div class="ps-icon active-purple sel-purple">
+        <div style="width:10px;height:10px;border-radius:50%;background:var(--accent-purple);animation:pulse 2s ease-in-out infinite;"></div>
+      </div>
+      <div class="ps-label active-purple">Act</div>
+    </div>
+    <div class="ps c-empty">
+      <div class="ps-icon wait">📄</div>
+      <div class="ps-label wait">Summary</div>
+    </div>
+  </div>
+  <div class="detail-panel">
+    <div class="detail-box">
+      <div class="detail-title">
+        <div class="dot" style="background:var(--accent-purple);"></div>
+        Action Flow
+      </div>
+      <div class="action-chain">
+        <div class="ac-node done"><div class="md"></div>Assess<span class="ac-det">· needs-action</span></div>
+        <span class="ac-arr">→</span>
+        <div class="ac-node done"><div class="md"></div>Troubleshoot<span class="ac-det">· 1m 20s</span></div>
+        <span class="ac-arr">→</span>
+        <div class="ac-node active-purple"><div class="md"></div>Reassess<span class="ac-det"><span class="spin" style="font-size:8px;">⟳</span> evaluating…</span></div>
+        <span class="ac-arr">→</span>
+        <div class="ac-node wait"><div class="md"></div>Challenger</div>
+        <span class="ac-arr">→</span>
+        <div class="ac-node wait"><div class="md"></div>Email</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 2: Refresh selected ═══ -->
+<div class="example-label">② Refresh 选中 — 图标绿色 ring</div>
+<div class="case-card">
+  <div class="case-head">
+    <span class="cn active">2504010005</span>
+    <span class="pill pill-purple"><span class="spin" style="font-size:8px;">⟳</span> Reassess</span>
+    <div style="flex:1;"></div>
+    <span class="dur">3m 42s</span>
+  </div>
+  <div class="pipeline">
+    <div class="ps">
+      <div class="ps-icon done sel-green">✓</div>
+      <div class="ps-label done">Refresh</div>
+      <div class="ps-dur">8s</div>
+    </div>
+    <div class="ps c-green">
+      <div class="ps-icon done">✓</div>
+      <div class="ps-label done">Assess</div>
+      <div class="ps-dur">12s</div>
+    </div>
+    <div class="ps c-half-p">
+      <div class="ps-icon active-purple">
+        <div style="width:10px;height:10px;border-radius:50%;background:var(--accent-purple);animation:pulse 2s ease-in-out infinite;"></div>
+      </div>
+      <div class="ps-label active-purple">Act</div>
+    </div>
+    <div class="ps c-empty">
+      <div class="ps-icon wait">📄</div>
+      <div class="ps-label wait">Summary</div>
+    </div>
+  </div>
+  <div class="detail-panel">
+    <div class="detail-box">
+      <div class="detail-title">
+        <div class="dot" style="background:var(--accent-green);"></div>
+        Data Refresh · 8s
+      </div>
+      <div class="subtask-grid">
+        <div class="st-item">
+          <div class="st-dot" style="background:var(--accent-green);"></div>
+          <span class="st-name" style="color:var(--accent-green);">D365</span>
+          <span class="st-delta">+3 emails · +1 note</span>
+        </div>
+        <div class="st-item">
+          <div class="st-dot" style="background:var(--accent-green);"></div>
+          <span class="st-name" style="color:var(--accent-green);">Teams</span>
+          <span class="st-delta">2 new msgs</span>
+        </div>
+        <div class="st-item">
+          <div class="st-dot" style="background:var(--accent-green);"></div>
+          <span class="st-name" style="color:var(--accent-green);">ICM</span>
+          <span class="st-delta">+1 discussion</span>
+        </div>
+        <div class="st-item">
+          <div class="st-dot" style="background:var(--accent-green);"></div>
+          <span class="st-name" style="color:var(--accent-green);">OneNote</span>
+          <span class="st-delta">1 page</span>
+        </div>
+        <div class="st-item">
+          <div class="st-dot" style="background:var(--text-tertiary);opacity:0.4;"></div>
+          <span class="st-name" style="color:var(--text-tertiary);opacity:0.6;">Attach</span>
+          <span class="st-delta" style="opacity:0.5;">skipped</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 3: Assess selected ═══ -->
+<div class="example-label">③ Assess 选中 — 图标琥珀 ring</div>
+<div class="case-card">
+  <div class="case-head">
+    <span class="cn active">2504010005</span>
+    <span class="pill pill-purple"><span class="spin" style="font-size:8px;">⟳</span> Reassess</span>
+    <div style="flex:1;"></div>
+    <span class="dur">3m 42s</span>
+  </div>
+  <div class="pipeline">
+    <div class="ps">
+      <div class="ps-icon done">✓</div>
+      <div class="ps-label done">Refresh</div>
+      <div class="ps-dur">8s</div>
+    </div>
+    <div class="ps c-green">
+      <div class="ps-icon done sel-amber">✓</div>
+      <div class="ps-label done">Assess</div>
+      <div class="ps-dur">12s</div>
+    </div>
+    <div class="ps c-half-p">
+      <div class="ps-icon active-purple">
+        <div style="width:10px;height:10px;border-radius:50%;background:var(--accent-purple);animation:pulse 2s ease-in-out infinite;"></div>
+      </div>
+      <div class="ps-label active-purple">Act</div>
+    </div>
+    <div class="ps c-empty">
+      <div class="ps-icon wait">📄</div>
+      <div class="ps-label wait">Summary</div>
+    </div>
+  </div>
+  <div class="detail-panel">
+    <div class="detail-box">
+      <div class="detail-title">
+        <div class="dot" style="background:var(--accent-amber);"></div>
+        Assess · 12s
+        <span class="pill pill-amber" style="margin-left:4px;">needs-action</span>
+      </div>
+      <div class="a-section">
+        <div class="a-label">Reasoning</div>
+        <div class="a-text">客户 4/18 发送新邮件追问 WAF rule 配置问题进展。最新邮件明确要求 root cause 分析和 next step。Teams 中 PG 已回复建议检查 Front Door WAF policy 与 custom rule 冲突。</div>
+      </div>
+      <div class="a-section">
+        <div class="a-label">Execution Plan</div>
+        <div class="exec-plan">
+          <div class="exec-step"><span class="num">1</span> Troubleshoot (Kusto WAF logs)</div>
+          <div class="exec-step"><span class="num">2</span> Reassess findings</div>
+          <div class="exec-step"><span class="num">3</span> Challenger review</div>
+          <div class="exec-step"><span class="num">4</span> Email drafter</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 4: Summary selected (done case) ═══ -->
+<div class="example-label">④ Summary 选中 — 完成 case 的 todo</div>
+<div class="case-card done-card">
+  <div class="case-head">
+    <span class="cn muted">2503150023</span>
+    <span class="pill pill-ok">✓ Done</span>
+    <div style="flex:1;"></div>
+    <span class="dur">1m 52s</span>
+  </div>
+  <div class="pipeline">
+    <div class="ps">
+      <div class="ps-icon done">✓</div>
+      <div class="ps-label done">Refresh</div>
+      <div class="ps-dur">6s</div>
+    </div>
+    <div class="ps c-green">
+      <div class="ps-icon done">✓</div>
+      <div class="ps-label done">Assess</div>
+      <div class="ps-dur">10s</div>
+    </div>
+    <div class="ps c-green">
+      <div class="ps-icon done">✓</div>
+      <div class="ps-label done">Act</div>
+      <div class="ps-dur">52s</div>
+    </div>
+    <div class="ps c-green">
+      <div class="ps-icon done sel-green">✓</div>
+      <div class="ps-label done">Summary</div>
+      <div class="ps-dur">14s</div>
+    </div>
+  </div>
+  <div class="detail-panel">
+    <div class="detail-box">
+      <div class="detail-title">
+        <div class="dot" style="background:var(--accent-green);"></div>
+        Summary · Todo Generated
+      </div>
+      <ul class="todo-list">
+        <li class="todo-item">
+          <div class="todo-check">✓</div>
+          <div>
+            <div style="font-weight:600;color:var(--text-primary);">Review email draft</div>
+            <div style="font-size:10px;color:var(--text-tertiary);margin-top:1px;">drafts/follow-up-20260420.md — confirm WAF rule changes</div>
+          </div>
+        </li>
+        <li class="todo-item">
+          <div class="todo-check" style="border-color:var(--accent-amber);color:var(--accent-amber);">!</div>
+          <div>
+            <div style="font-weight:600;color:var(--text-primary);">PG action pending</div>
+            <div style="font-size:10px;color:var(--text-tertiary);margin-top:1px;">Waiting for PG to confirm Front Door config ETA</div>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 5: Default active — Act auto-expanded, no ring (it's the active step) ═══ -->
+<div class="example-label">⑤ Active case 默认态 — Act 自动展开，无 ring（当前步骤天然高亮）</div>
+<div class="case-card">
+  <div class="case-head">
+    <span class="cn active">2504080019</span>
+    <span class="pill pill-run"><span class="spin" style="font-size:8px;">⟳</span> Troubleshoot</span>
+    <div style="flex:1;"></div>
+    <span class="dur">1m 08s</span>
+  </div>
+  <div class="pipeline">
+    <div class="ps">
+      <div class="ps-icon done">✓</div>
+      <div class="ps-label done">Refresh</div>
+      <div class="ps-dur">7s</div>
+    </div>
+    <div class="ps c-green">
+      <div class="ps-icon done">✓</div>
+      <div class="ps-label done">Assess</div>
+      <div class="ps-dur">15s</div>
+    </div>
+    <div class="ps c-half">
+      <div class="ps-icon active">
+        <div style="width:10px;height:10px;border-radius:50%;background:var(--accent-blue);animation:pulse 2s ease-in-out infinite;"></div>
+      </div>
+      <div class="ps-label active">Act</div>
+    </div>
+    <div class="ps c-empty">
+      <div class="ps-icon wait">📄</div>
+      <div class="ps-label wait">Summary</div>
+    </div>
+  </div>
+  <div class="detail-panel">
+    <div class="detail-box">
+      <div class="detail-title">
+        <div class="dot" style="background:var(--accent-blue);"></div>
+        Action Flow
+      </div>
+      <div class="action-chain">
+        <div class="ac-node done"><div class="md"></div>Assess<span class="ac-det">· needs-action</span></div>
+        <span class="ac-arr">→</span>
+        <div class="ac-node active"><div class="md"></div>Troubleshoot<span class="ac-det"><span class="spin" style="font-size:8px;">⟳</span> Kusto query…</span></div>
+        <span class="ac-arr">→</span>
+        <div class="ac-node wait"><div class="md"></div>Reassess</div>
+        <span class="ac-arr">→</span>
+        <div class="ac-node wait"><div class="md"></div>Email</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 6: Collapsed done case ═══ -->
+<div class="example-label">⑥ 完成折叠态 — 点击任意步骤图标展开</div>
+<div class="case-card done-card">
+  <div class="case-head" style="cursor:pointer;">
+    <span style="color:var(--text-tertiary);font-size:14px;">›</span>
+    <span class="cn muted">2501080001</span>
+    <span class="pill pill-ok">✓ Done</span>
+    <div class="flow-pills">
+      <span class="flow-pill">assess</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-pill" style="background:var(--accent-green-dim);color:var(--accent-green);">no-change</span>
+    </div>
+    <div style="flex:1;"></div>
+    <span class="dur">45s</span>
+  </div>
+</div>
+
+</body>
+</html>

@@ -104,6 +104,7 @@ actualStatus 有效值：`pending-engineer` | `pending-customer` | `pending-pg` 
 - **Playwright**：必须 Edge，禁止 `browser_snapshot`，截图分析走 subagent
 - **变量赋值**：不要和 `|` pipe 同行（会被静默丢弃）
 - **Write Tool Bug**：Write/Edit 后 Bash 可能触发缓存还原（[#42383](https://github.com/anthropics/claude-code/issues/42383)）。Workaround：`python3 -c "open('file','w').write(content)"` 或 Write 后立即 `git commit`
+- **`PROJECT_ROOT` 计算**：脚本中用 `cd "$SCRIPT_DIR/../../.." && pwd` 回溯项目根时，**必须数准层数**。出错会导致路径如 `.claude/.claude/...`，`[ -f ]` 静默 false，整块逻辑被跳过且无报错
 - **临时文件**：调试日志、一次性脚本输出、临时数据统一放 `.tmp/`，禁止在项目根目录生成散落文件
 - **设计产物**：设计参考图、UI 截图、mockup HTML 统一放 `dashboard/design-references/`
 - 详细规则 → `playbooks/guides/platform-gotchas.md`
@@ -120,6 +121,7 @@ actualStatus 有效值：`pending-engineer` | `pending-customer` | `pending-pg` 
 | 开发新功能 / Issue→Track | `playbooks/guides/developer-workflow.md` |
 | 浏览器 Profile / Token | `playbooks/guides/browser-profile-architecture.md` |
 | Case 目录 schema | `playbooks/schemas/case-directory.md` |
+| Lab 测试环境架构 | `playbooks/guides/lab-environments.md` |
 | Todo 格式 | `playbooks/schemas/todo-format.md` |
 | Case 生命周期 | `playbooks/rules/case-lifecycle.md` |
 | 测试红线 | `playbooks/rules/test-safety-redlines.md` |

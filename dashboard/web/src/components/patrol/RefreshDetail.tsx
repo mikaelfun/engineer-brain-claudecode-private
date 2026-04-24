@@ -48,6 +48,12 @@ interface RefreshDetailProps {
 }
 
 export default function RefreshDetail({ subtasks, durationMs }: RefreshDetailProps) {
+  // Derive header status from subtasks
+  const allSubs = subtasks ? Object.values(subtasks) : []
+  const hasActive = allSubs.some(s => s.status === 'active')
+  const allDone = allSubs.length > 0 && allSubs.every(s => s.status === 'completed' || s.status === 'skipped')
+  const headerDotColor = allDone ? 'var(--accent-green)' : hasActive ? 'var(--accent-blue)' : 'var(--text-tertiary)'
+
   return (
     <div style={{
       background: 'var(--bg-inset)', border: '1px solid var(--border-subtle)',
@@ -55,42 +61,83 @@ export default function RefreshDetail({ subtasks, durationMs }: RefreshDetailPro
       animation: 'detail-slide 0.2s ease-out',
     }}>
       <div style={{
-        fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
+        fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
         letterSpacing: '0.6px', color: 'var(--text-tertiary)', marginBottom: 10,
         display: 'flex', alignItems: 'center', gap: 6,
       }}>
-        <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent-green)' }} />
+        <div style={{
+          width: 6, height: 6, borderRadius: '50%', background: headerDotColor,
+          ...(hasActive ? { animation: 'sidebar-pulse 2s ease-in-out infinite' } : {}),
+        }} />
         Data Refresh{durationMs !== undefined ? ` · ${formatDurationShort(durationMs)}` : ''}
       </div>
       <div style={{
         display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 8,
       }}>
         {SUBTASK_ORDER.map(name => {
-          const sub = subtasks?.[name]
+          // Teams: merge teams-search + teams-write into one card
+          const isTeams = name === 'teams'
+          const sub = isTeams
+            ? (subtasks?.['teams-search'] || subtasks?.['teams'])
+            : subtasks?.[name]
           if (!sub) return null
+          const isDone = sub.status === 'completed'
+          const isActive = sub.status === 'active'
           const isSkipped = sub.status === 'skipped'
+          const isFailed = sub.status === 'failed'
+          const isPending = !isDone && !isActive && !isSkipped && !isFailed
           const deltaText = formatDelta(name, sub.delta)
+          const searchMs = isTeams ? (subtasks?.['teams-search']?.durationMs) : sub.durationMs
+          const writeMs = isTeams ? (subtasks?.['teams-write']?.durationMs) : undefined
+          const durText = searchMs !== undefined ? formatDurationShort(searchMs) : null
+
+          // Status-aware colors
+          const dotColor = isDone ? 'var(--accent-green)'
+            : isActive ? 'var(--accent-blue)'
+            : isFailed ? 'var(--accent-red)'
+            : 'var(--text-tertiary)'
+          const labelColor = isDone ? 'var(--accent-green)'
+            : isActive ? 'var(--accent-blue)'
+            : isFailed ? 'var(--accent-red)'
+            : 'var(--text-tertiary)'
+          const dotOpacity = isSkipped || isPending ? 0.4 : 1
+          const labelOpacity = isSkipped ? 0.6 : isPending ? 0.5 : 1
+
           return (
             <div key={name} style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '6px 10px', borderRadius: 8,
-              background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
+              padding: '8px 12px', borderRadius: 8,
+              background: isActive ? 'rgba(106,95,193,0.04)' : 'var(--bg-surface)',
+              border: `1px solid ${isActive ? 'rgba(106,95,193,0.22)' : 'var(--border-subtle)'}`,
             }}>
-              <div style={{
-                width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
-                background: isSkipped ? 'var(--text-tertiary)' : 'var(--accent-green)',
-                opacity: isSkipped ? 0.4 : 1,
-              }} />
-              <span style={{
-                fontSize: 11, fontWeight: 600,
-                color: isSkipped ? 'var(--text-tertiary)' : 'var(--accent-green)',
-                opacity: isSkipped ? 0.6 : 1,
-              }}>
-                {SUBTASK_LABELS[name]}
-              </span>
-              <span style={{ fontSize: 9, color: 'var(--text-tertiary)', marginLeft: 'auto', whiteSpace: 'nowrap', opacity: isSkipped ? 0.5 : 1 }}>
-                {isSkipped ? 'skipped' : (deltaText || 'no new')}
-              </span>
+              {/* Row 1: dot + label + duration */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                <div style={{
+                  width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
+                  background: dotColor, opacity: dotOpacity,
+                  ...(isActive ? { animation: 'sidebar-pulse 2s ease-in-out infinite' } : {}),
+                }} />
+                <span style={{
+                  fontSize: 12, fontWeight: 700,
+                  color: labelColor, opacity: labelOpacity,
+                }}>
+                  {SUBTASK_LABELS[name]}
+                </span>
+                {durText && (
+                  <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)', marginLeft: 'auto' }}>
+                    {isTeams && writeMs !== undefined
+                      ? `${durText} + ${formatDurationShort(writeMs)}`
+                      : durText}
+                  </span>
+                )}
+              </div>
+              {/* Row 2: delta or status */}
+              <div style={{ fontSize: 11, color: 'var(--text-secondary)', paddingLeft: 12, opacity: isSkipped || isPending ? 0.5 : 0.8 }}>
+                {isSkipped ? 'skipped'
+                  : isActive ? 'running…'
+                  : isPending ? 'waiting'
+                  : isFailed ? 'failed'
+                  : (deltaText || 'no new')}
+              </div>
             </div>
           )
         })}

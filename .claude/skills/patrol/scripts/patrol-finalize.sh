@@ -72,10 +72,16 @@ if [ "$AGENCY_COUNT" -gt 0 ]; then
   taskkill /IM agency.exe /F 2>/dev/null || true
 fi
 
-# ── Step 2: update-phase → aggregating ───────────────────────────────
+# ── Step 2: update-phase → aggregating (with cleanup result) ─────────
 log "Phase → aggregating"
+if [ "$AGENCY_COUNT" -gt 0 ]; then
+  CLEANUP_MSG="Killed $AGENCY_COUNT orphan processes"
+else
+  CLEANUP_MSG="No orphans"
+fi
 python3 "$SCRIPT_DIR/update-phase.py" \
-  --patrol-dir "$PATROL_DIR" --phase aggregating >/dev/null 2>&1 || true
+  --patrol-dir "$PATROL_DIR" --phase aggregating \
+  --current-action "Cleanup: $CLEANUP_MSG" >/dev/null 2>&1 || true
 
 # ── Step 3: Aggregate case results ───────────────────────────────────
 log "Aggregating case results..."
@@ -148,6 +154,12 @@ CASE_RESULTS_JSON="${CASE_RESULTS_JSON}]"
 COMPLETED_AT="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
 
 log "Writing patrol-state.json (processedCases=$PROCESSED)"
+
+# Update currentAction with aggregate summary for SSE → frontend
+python3 "$SCRIPT_DIR/update-phase.py" \
+  --patrol-dir "$PATROL_DIR" --phase aggregating \
+  --current-action "$CLEANUP_MSG · $PROCESSED/$TOTAL_CASES aggregated" \
+  --processed-cases "$PROCESSED" >/dev/null 2>&1 || true
 
 # Read changedCases from patrol-progress.json if available
 CHANGED_CASES="$PROCESSED"

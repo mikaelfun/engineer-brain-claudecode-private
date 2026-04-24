@@ -1,44 +1,44 @@
-# EOP Troubleshooting Guide Index
+# EOP 排查指南索引
 
-| Guide | Type | Kusto | Keywords | Entries | Confidence |
-|-------|------|-------|----------|---------|------------|
-| [外发邮件被阻止 - 发件人/租户限制 (5.1.8/5.1.90/5.7.705/5.7.750)](ndr-outbound-sender-blocks.md) | 📋 Fusion | 0 | NDR, 5.1.8, 5.1.90, 5.7.705 | 16 | high |
-| [IP 限流与信誉阻止 (4.7.500/5.7.708/AS codes)](ndr-ip-throttling-reputation.md) | 📋 Fusion | 0 | 4.7.500, 5.7.708, AS-code, IP-throttling | 15 | high |
-| [外部 IP 黑名单 (Spamhaus/DNSBL) 与 Delist](ip-blocklist-spamhaus.md) | 📋 Fusion | 0 | Spamhaus, DNSBL, IP-blocklist, delist | 6 | high |
-| [SPF 认证失败与配置](email-auth-spf.md) | 📋 Fusion | 0 | SPF, permerror, DNS-lookup, temperror | 12 | high |
-| [DKIM 签名验证失败与配置](email-auth-dkim.md) | 📋 Fusion | 0 | DKIM, body-hash, signature-verify, CnameMissing | 8 | high |
-| [DMARC/CompAuth 与 ARC 信任链](email-auth-dmarc-compauth.md) | 📋 Fusion | 0 | DMARC, CompAuth, ARC, auto-forwarding | 8 | high |
-| [仿冒与用户/域名冒充检测](spoofing-impersonation.md) | 📋 Fusion | 0 | spoofing, impersonation, UIMP, SPOOF | 5 | high |
-| [合法邮件误判为垃圾邮件/钓鱼 (FP)](false-positive-spam.md) | 📋 Fusion | 0 | false-positive, FP, SCL, quarantine | 10 | high |
-| [恶意邮件绕过过滤 (FN) 与投递覆盖](false-negative-bypass.md) | 📋 Fusion | 0 | false-negative, FN, bypass, override | 7 | high |
-| [FP/FN 调查与升级流程](fp-fn-escalation.md) | 📋 Fusion | 0 | FP-escalation, FN-escalation, Sonar, FPFN | 4 | high |
-| [隔离区操作、通知与释放](quarantine-operations.md) | 📋 Fusion | 0 | quarantine, notification, release, re-quarantine | 9 | high |
-| [ZAP 与投递后邮件移动](zap-post-delivery.md) | 📋 Fusion | 0 | ZAP, zero-hour-auto-purge, post-delivery, junk-movement | 5 | high |
-| [租户允许/阻止列表 (TABL) 管理](tabl-allow-block.md) | 📋 Fusion | 0 | TABL, Tenant-Allow-Block-List, URL, spoof | 10 | high |
-| [连接筛选与 IPv6 入站限制](connection-filter-ipv6.md) | 📋 Fusion | 0 | connection-filter, IP-Allow-List, IPv6, IPV:CAL | 6 | high |
-| [增强筛选 (EFC/Skip Listing) 配置](enhanced-filtering.md) | 📊 Quick Ref | 0 | Enhanced-Filtering, EFC, skip-listing, EFUsers | 5 | high |
-| [邮箱垃圾邮件配置与限制](junk-email-config.md) | 📋 Fusion | 0 | junk-email, Set-MailboxJunkEmailConfiguration, hash-limit, 510KB | 8 | high |
-| [传输规则 (Mail Flow Rules) 问题](transport-rules.md) | 📋 Fusion | 0 | transport-rule, mail-flow-rule, disclaimer, AND-OR-logic | 7 | high |
-| [反垃圾邮件策略配置与优先级](anti-spam-policy.md) | 📋 Fusion | 0 | anti-spam-policy, preset-security-policy, BCL, bulk-email | 5 | high |
-| [Advanced Delivery 与钓鱼模拟](advanced-delivery-phishsim.md) | 📋 Fusion | 0 | Advanced-Delivery, phishing-simulation, SecOps, IntraOrg | 5 | high |
-| [Safe Links (安全链接) 问题](safe-links.md) | 📋 Fusion | 0 | Safe-Links, URL-rewriting, time-of-click, API-only | 5 | high |
-| [Safe Attachments (安全附件) 问题](safe-attachments.md) | 📋 Fusion | 0 | Safe-Attachments, Dynamic-Delivery, ZAP, SharePoint | 6 | high |
-| [SharePoint/OneDrive 恶意软件检测](spo-odb-malware.md) | 📋 Fusion | 0 | SPO, ODB, malware, MSAV | 4 | high |
-| [中继/转发/外发路由与 HRDP](relay-forwarding-outbound.md) | 📋 Fusion | 0 | relay-pool, forwarding, HRDP, SRS | 10 | high |
-| [Connector 投递错误 (4xx/TLS/DNS)](connector-delivery-errors.md) | 📊 Quick Ref | 0 | connector, 4.4.312, 4.4.315, 4.4.316 | 9 | high |
-| [SMTP AUTH 设备/应用发送与认证](smtp-auth-device-sending.md) | 📋 Fusion | 0 | SMTP-AUTH, 5.7.57, 5.7.64, 5.2.251 | 9 | high |
-| [HVE 高量邮件发送 (OAuth/SMTP)](hve-high-volume-email.md) | 📊 Quick Ref | 0 | HVE, OAuth, XOAUTH2, 535-5.7.3 | 6 | high |
-| [DANE/DNSSEC/MTA-STS 出站验证](dane-dnssec-mtasts.md) | 📊 Quick Ref | 0 | DANE, DNSSEC, MTA-STS, TLSA | 8 | high |
-| [Hybrid 混合部署邮件流](hybrid-mail-flow.md) | 📊 Quick Ref | 0 | hybrid, on-premises, centralized-mail, Exchange-2010 | 15 | high |
-| [DBEB 边缘阻止与收件人验证 NDR](dbeb-recipient-validation.md) | 📊 Quick Ref | 0 | DBEB, 5.4.1, 5.1.1, 5.1.10 | 10 | high |
-| [21Vianet/Gallatin 功能差异与限制](21v-feature-gaps.md) | 📋 Fusion | 0 | 21v, Gallatin, Assist-365, feature-gap | 5 | high |
-| [MDO 门户权限与 UI 问题](mdo-portal-permissions.md) | 📋 Fusion | 0 | portal, permissions, RBAC, URBAC | 6 | high |
-| [Backscatter NDR 误判](backscatter-ndr.md) | 📊 Quick Ref | 0 | backscatter, NDR, false-positive, Message-ID | 2 | medium |
-| [Outlook 图片自动下载](image-download-outlook.md) | 📋 Fusion | 0 | image-download, outlook, safe-senders, authas-internal | 2 | medium |
-| [管理员提交与第三方网关覆盖](admin-submissions-overrides.md) | 📋 Fusion | 0 | submission, organizational-overrides, third-party-gateway, TLS | 2 | medium |
-| [升级流程与案例路由](escalation-case-routing.md) | 📋 Fusion | 0 | escalation, ADO, ICM, case-routing | 7 | high |
-| [MDO 跨产品功能 (Teams/MDA/Graph)](mdo-cross-product.md) | 📋 Fusion | 0 | Teams, MDA, Graph-API, BCC-alerting | 2 | medium |
-| [用户报告与杂项 NDR](user-reporting-misc.md) | 📋 Fusion | 0 | user-reporting, submission, Client-Allow-List, moderation | 2 | medium |
+| # | Topic | Title | Entries | Fusion | Score | Keywords | Sources | Files |
+|---|-------|-------|---------|--------|-------|----------|---------|-------|
+| 1 | ndr-outbound-sender-blocks | 外发邮件被阻止 - 发件人/租户限制 (5.1.8/5.1.90/5.7.705/5.7.750) | 16 | ✅ | 🔵 6.2 | 5.7.502, MFA, outbound-spam, unregistered domains, compromised-account | AW KB ML ON | [speed](ndr-outbound-sender-blocks.md) / [detail](details/ndr-outbound-sender-blocks.md) / [workflow](workflows/ndr-outbound-sender-blocks.md) |
+| 2 | ndr-ip-throttling-reputation | IP 限流与信誉阻止 (4.7.500/5.7.708/AS codes) | 15 | ✅ | 🔵 6.0 | 4.7.500, 5.0.350, 5.7.511, IP-reputation, throttling | AW ML ON | [speed](ndr-ip-throttling-reputation.md) / [detail](details/ndr-ip-throttling-reputation.md) / [workflow](workflows/ndr-ip-throttling-reputation.md) |
+| 3 | ip-blocklist-spamhaus | 外部 IP 黑名单 (Spamhaus/DNSBL) 与 Delist | 6 | ✅ | 🔵 6.9 | multi-IP, spamhaus, SpamCop, CSS, DNS | AW ON | [speed](ip-blocklist-spamhaus.md) / [detail](details/ip-blocklist-spamhaus.md) / [workflow](workflows/ip-blocklist-spamhaus.md) |
+| 4 | email-auth-spf | SPF 认证失败与配置 | 12 | ✅ | 🔵 6.3 | syntax-error, DNS, Mooncake, spoof-intelligence, SPF-fail | AW KB ML ON | [speed](email-auth-spf.md) / [detail](details/email-auth-spf.md) / [workflow](workflows/email-auth-spf.md) |
+| 5 | email-auth-dkim | DKIM 签名验证失败与配置 | 8 | ✅ | 🔵 5.6 | dkim, signature-didnt-verify, footer, DNS, ARC-sealer | AW ML | [speed](email-auth-dkim.md) / [detail](details/email-auth-dkim.md) / [workflow](workflows/email-auth-dkim.md) |
+| 6 | email-auth-dmarc-compauth | DMARC/CompAuth 与 ARC 信任链 | 8 | ✅ | 🔵 6.1 | direct-send, SRS, CompAuth-905, SPF, spf | AW ML ON | [speed](email-auth-dmarc-compauth.md) / [detail](details/email-auth-dmarc-compauth.md) / [workflow](workflows/email-auth-dmarc-compauth.md) |
+| 7 | spoofing-impersonation | 仿冒与用户/域名冒充检测 | 5 | ✅ | 🔵 6.0 | Inbound-Connector, impersonation, override, spoof-intelligence, allow-entry | AW ML ON | [speed](spoofing-impersonation.md) / [detail](details/spoofing-impersonation.md) / [workflow](workflows/spoofing-impersonation.md) |
+| 8 | false-positive-spam | 合法邮件误判为垃圾邮件/钓鱼 (FP) | 10 | ✅ | 🔵 6.4 | ucf, SFV, FP-escalation, spoof-intelligence, common-attachment-filter | AW ML ON | [speed](false-positive-spam.md) / [detail](details/false-positive-spam.md) / [workflow](workflows/false-positive-spam.md) |
+| 9 | false-negative-bypass | 恶意邮件绕过过滤 (FN) 与投递覆盖 | 7 | ✅ | 🔵 5.5 | preset-security-policy, SCL-bypass, spoof-intelligence, FN, Built-in-protection | ML | [speed](false-negative-bypass.md) / [detail](details/false-negative-bypass.md) / [workflow](workflows/false-negative-bypass.md) |
+| 10 | fp-fn-escalation | FP/FN 调查与升级流程 | 4 | ✅ | 🔵 5.6 | hybrid, FP-escalation, government, DoD, Safe-Links | AW ML ON | [speed](fp-fn-escalation.md) / [detail](details/fp-fn-escalation.md) / [workflow](workflows/fp-fn-escalation.md) |
+| 11 | quarantine-operations | 隔离区操作、通知与释放 | 9 | ✅ | 🔵 6.0 | high-confidence-phishing, missing-message, request-release, preset-security-policy, retention | AW ML ON | [speed](quarantine-operations.md) / [detail](details/quarantine-operations.md) / [workflow](workflows/quarantine-operations.md) |
+| 12 | zap-post-delivery | ZAP 与投递后邮件移动 | 5 | ✅ | 🔵 5.9 | email-delay, sender-allow, STOREDRIVER, message-moved, override | AW ML | [speed](zap-post-delivery.md) / [detail](details/zap-post-delivery.md) / [workflow](workflows/zap-post-delivery.md) |
+| 13 | tabl-allow-block | 租户允许/阻止列表 (TABL) 管理 | 10 | ✅ | 🔵 5.5 | permissions, sending-infrastructure, entry-limits, allow-entry, block | AW ML | [speed](tabl-allow-block.md) / [detail](details/tabl-allow-block.md) / [workflow](workflows/tabl-allow-block.md) |
+| 14 | connection-filter-ipv6 | 连接筛选与 IPv6 入站限制 | 6 | ✅ | 🔵 5.0 | 550-5.2.1, transport-rule, opt-in, efc, ipv6 | AW ML | [speed](connection-filter-ipv6.md) / [detail](details/connection-filter-ipv6.md) / [workflow](workflows/connection-filter-ipv6.md) |
+| 15 | enhanced-filtering | 增强筛选 (EFC/Skip Listing) 配置 | 5 | ✅ | 🔵 6.1 | dual-use, hybrid, efc, private-ip, skip-listing | AW ML | [speed](enhanced-filtering.md) / [detail](details/enhanced-filtering.md) |
+| 16 | junk-email-config | 邮箱垃圾邮件配置与限制 | 8 | ✅ | 🔵 6.5 | shared-mailbox, anti-spam-policy, junk-email, 510KB, allowed-senders | AW | [speed](junk-email-config.md) / [detail](details/junk-email-config.md) / [workflow](workflows/junk-email-config.md) |
+| 17 | transport-rules | 传输规则 (Mail Flow Rules) 问题 | 7 | ✅ | 🔵 5.6 | transport-rule, mail-flow-delay, mailflow-report, transport-rules, EAC-insight | AW ML | [speed](transport-rules.md) / [detail](details/transport-rules.md) / [workflow](workflows/transport-rules.md) |
+| 18 | anti-spam-policy | 反垃圾邮件策略配置与优先级 | 5 | ✅ | 🔵 6.1 | UI-error, orphaned-policy, anti-spam-policy, preset-security-policy, RegionBlockList | AW ML | [speed](anti-spam-policy.md) / [detail](details/anti-spam-policy.md) / [workflow](workflows/anti-spam-policy.md) |
+| 19 | advanced-delivery-phishsim | Advanced Delivery 与钓鱼模拟 | 5 | ✅ | 🔵 5.9 | AST, Advanced-Delivery, escalation, url-wrapping, SecOps | AW | [speed](advanced-delivery-phishsim.md) / [detail](details/advanced-delivery-phishsim.md) / [workflow](workflows/advanced-delivery-phishsim.md) |
+| 20 | safe-links | Safe Links (安全链接) 问题 | 5 | ✅ | 🟡 4.9 | limitation, URL-wrapping, URL-rewriting, time-of-click, Mimecast | AW ML | [speed](safe-links.md) / [detail](details/safe-links.md) / [workflow](workflows/safe-links.md) |
+| 21 | safe-attachments | Safe Attachments (安全附件) 问题 | 6 | ✅ | 🔵 5.0 | malware-filter, limitation, Dynamic-Delivery, Off-action, malicious-file-download | AW ML | [speed](safe-attachments.md) / [detail](details/safe-attachments.md) / [workflow](workflows/safe-attachments.md) |
+| 22 | spo-odb-malware | SharePoint/OneDrive 恶意软件检测 | 4 | ✅ | 🔵 6.5 | MSAV, SPO, 30-day-retention, quarantine, onedrive | AW | [speed](spo-odb-malware.md) / [detail](details/spo-odb-malware.md) / [workflow](workflows/spo-odb-malware.md) |
+| 23 | relay-forwarding-outbound | 中继/转发/外发路由与 HRDP | 10 | ✅ | 🔵 5.5 | hybrid, outbound-spam, 5.7.23, DNS, SRS | AW ML | [speed](relay-forwarding-outbound.md) / [detail](details/relay-forwarding-outbound.md) / [workflow](workflows/relay-forwarding-outbound.md) |
+| 24 | connector-delivery-errors | Connector 投递错误 (4xx/TLS/DNS) | 9 | ✅ | 🔵 5.5 | DNS, 450-4.4.315, Service-not-available, routing, remote-server | ML | [speed](connector-delivery-errors.md) / [detail](details/connector-delivery-errors.md) |
+| 25 | smtp-auth-device-sending | SMTP AUTH 设备/应用发送与认证 | 9 | ✅ | 🔵 5.6 | permissions, 5.2.253, MFA, hybrid, device-email | AW ML | [speed](smtp-auth-device-sending.md) / [detail](details/smtp-auth-device-sending.md) / [workflow](workflows/smtp-auth-device-sending.md) |
+| 26 | hve-high-volume-email | HVE 高量邮件发送 (OAuth/SMTP) | 6 | ✅ | 🟡 4.5 | printer, base64, port-587, allowed-application, 535-5.7.144 | ML | [speed](hve-high-volume-email.md) / [detail](details/hve-high-volume-email.md) |
+| 27 | dane-dnssec-mtasts | DANE/DNSSEC/MTA-STS 出站验证 | 8 | ✅ | 🟡 4.5 | 5.7.321, 5.4.8, 5.7.324, DNSSEC, STARTTLS | ML | [speed](dane-dnssec-mtasts.md) / [detail](details/dane-dnssec-mtasts.md) |
+| 28 | hybrid-mail-flow | Hybrid 混合部署邮件流 | 15 | ✅ | 🔵 5.3 | hybrid, KB3194415, double-scan, onmicrosoft.com, SPF-fail | KB ML | [speed](hybrid-mail-flow.md) / [detail](details/hybrid-mail-flow.md) |
+| 29 | dbeb-recipient-validation | DBEB 边缘阻止与收件人验证 NDR | 10 | ✅ | 🔵 5.5 | hybrid, AAD-Connect, DBEB, sender-not-authenticated, 5.1.1 | KB ML ON | [speed](dbeb-recipient-validation.md) / [detail](details/dbeb-recipient-validation.md) |
+| 30 | 21v-feature-gaps | 21Vianet/Gallatin 功能差异与限制 | 5 | ✅ | 🔵 6.7 | bug, IPAntispamRule, report-message, user-reported-settings, Assist-365 | AW ON | [speed](21v-feature-gaps.md) / [detail](details/21v-feature-gaps.md) / [workflow](workflows/21v-feature-gaps.md) |
+| 31 | mdo-portal-permissions | MDO 门户权限与 UI 问题 | 6 | ✅ | 🔵 6.2 | permissions, message-headers, entra-id, remediation, PIM | AW | [speed](mdo-portal-permissions.md) / [detail](details/mdo-portal-permissions.md) / [workflow](workflows/mdo-portal-permissions.md) |
+| 32 | backscatter-ndr | Backscatter NDR 误判 | 2 | ✅ | 🔵 6.2 | junk-folder, Message-ID, known-issue, bounce, hybrid-exchange | ML ON | [speed](backscatter-ndr.md) / [detail](details/backscatter-ndr.md) |
+| 33 | image-download-outlook | Outlook 图片自动下载 | 2 | ✅ | 🔵 6.5 | safe-senders, classic-outlook, outlook, gpo, owa | AW | [speed](image-download-outlook.md) / [detail](details/image-download-outlook.md) / [workflow](workflows/image-download-outlook.md) |
+| 34 | admin-submissions-overrides | 管理员提交与第三方网关覆盖 | 2 | ✅ | 🔵 5.0 | Retry-queue, lockdown, MD5, TLS-1.2, organizational-overrides | ML | [speed](admin-submissions-overrides.md) / [detail](details/admin-submissions-overrides.md) / [workflow](workflows/admin-submissions-overrides.md) |
+| 35 | escalation-case-routing | 升级流程与案例路由 | 7 | ✅ | 🔵 6.2 | spam-analyst, core-identity, case-closure, access-issue, FN | AW | [speed](escalation-case-routing.md) / [detail](details/escalation-case-routing.md) / [workflow](workflows/escalation-case-routing.md) |
+| 36 | mdo-cross-product | MDO 跨产品功能 (Teams/MDA/Graph) | 2 | ✅ | 🔵 6.0 | sample-collection, hybrid, outbound-spam, Graph-API, 5.7.129 | AW ML | [speed](mdo-cross-product.md) / [detail](details/mdo-cross-product.md) / [workflow](workflows/mdo-cross-product.md) |
+| 37 | user-reporting-misc | 用户报告与杂项 NDR | 2 | ✅ | 🔵 6.0 | APPROVAL.InvalidExpiry, user-reporting, moderation, spam filtering, SCL | KB | [speed](user-reporting-misc.md) / [detail](details/user-reporting-misc.md) / [workflow](workflows/user-reporting-misc.md) |
 
-Last updated: 2026-04-07
-Total: 37 topics (30 fusion, 7 quick ref)
+最后更新: 2026-04-24
+Total: 37 topics (37 fusion, 0 quick ref)

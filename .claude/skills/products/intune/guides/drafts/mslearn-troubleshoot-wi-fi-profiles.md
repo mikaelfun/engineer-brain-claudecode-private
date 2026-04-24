@@ -1,55 +1,31 @@
-# Troubleshooting Wi-Fi Device Configuration Profiles in Microsoft Intune
+---
+source: mslearn
+sourceRef: null
+sourceUrl: "https://learn.microsoft.com/en-us/troubleshoot/mem/intune/device-configuration/troubleshoot-wi-fi-profiles"
+importDate: "2026-04-21"
+type: guide-draft
+---
 
-Source: https://learn.microsoft.com/en-us/troubleshoot/mem/intune/device-configuration/troubleshoot-wi-fi-profiles
+# Troubleshooting Wi-Fi Device Configuration Profiles in Intune
 
-## Prerequisites
+## Android Wi-Fi Profile Troubleshooting
+1. Install prerequisite profiles in order: Trusted Root > SCEP > Wi-Fi
+2. Review Company Portal Omadmlog.log for wifimgr entries
+3. Key success log: Successfully applied, enabled and saved wifi profile
+4. On Device Admin devices: multiple certs may be listed; select newest
+5. Android Enterprise and Samsung Knox auto-manage cert selection
 
-- Trusted Root and SCEP profiles must be installed before Wi-Fi profile
-- Certificate chain must be complete on device
+## iOS/iPadOS Wi-Fi Profile Troubleshooting
+1. Verify Trusted Root and SCEP profiles in Settings > General > Profiles
+2. Check Console.app logs on Mac for Wi-Fi profile XML parsing
 
-## Deployment Flow (Android)
+## Windows Wi-Fi Profile Troubleshooting
+1. Check Event Viewer: DeviceManagement-Enterprise-Diagnostic-Provider > Admin
+2. Verify certificate chain via certlm.msc
+3. Use netsh wlan show profiles to verify deployment
+4. Check wireless AutoConfig service is running
 
-1. Trusted Root certificate notification > install
-2. SCEP certificate notification > install
-3. Wi-Fi profile notification > install
-4. Wi-Fi appears as saved network
-
-## Troubleshooting: Wi-Fi Profile Not Deployed
-
-1. Check profile assignment to correct group
-2. Verify device sync (LAST CHECK IN)
-3. Verify Trusted Root and SCEP profiles deployed
-4. Android: If CertificateSelector cannot match cert, Wi-Fi skipped
-   - Log: "Skipping Wifi profile because it is pending certificates"
-   - Check Any Purpose EKU mismatch
-5. Windows: Download MDM Diagnostic Information log
-
-## Troubleshooting: Deployed But Cannot Connect
-
-- Usually not an Intune issue
-- Try manual connection with same cert criteria
-- Check Radius server logs for connectivity errors
-
-## Users Not Getting New Profile After Password Change
-
-- Set up guest Wi-Fi as fallback
-- Enable auto-connect settings
-- Test with small group first
-- Verify SSID and Pre-Shared Key correct
-
-## All Wi-Fi Profiles Report Failing
-
-- Android Enterprise: When multiple Wi-Fi profiles deployed and one fails, all report failing (even working ones)
-
-## Wi-Fi Profile Reports Failing But Works
-
-- May be reporting error on Android
-- Update Intune app to version 2021.05.02 or later
-
-## Logs
-
-| Platform | Log | Search Term |
-|----------|-----|------------|
-| Android | Omadmlog.log | wifimgr |
-| iOS | Console app on Mac | Wi-Fi profile name |
-| Windows | Event Viewer DeviceManagement-Enterprise-Diagnostic-Provider | WiFi |
+## Common Issues
+- Certificate EKU mismatch between SCEP profile and CA template
+- Wi-Fi profile stuck in Pending when prerequisite cert profiles fail
+- RADIUS server rejecting client certificate

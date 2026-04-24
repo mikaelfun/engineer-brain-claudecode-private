@@ -1,0 +1,13 @@
+{
+  "id": "ISS-243",
+  "title": "WebUI Case 页 email 和 teams 的 inline 图片不显示",
+  "description": "CaseDetail 页面中 Email Tab 和 Teams Tab 渲染 markdown 时，inline 图片（内嵌截图、日志截图等）无法显示。\n\n### Email 图片\n- Email markdown 引用 images/inlineimg_xxx.png，case 目录下 images/ 有文件\n- 后端缺少 images/ 路由，前端 <img> 无法加载\n- 关联：ISS-188（仅覆盖后端路由缺失，未含前端渲染逻辑）\n\n### Teams 图片\n- Teams chat 消息中 inline 图片为 Graph API hostedContents URL，需 Bearer token\n- WebUI <img> 标签无法直接加载需认证的 URL\n- 关联：ISS-226（覆盖完整下载→本地化→后端API→前端渲染方案，已 tracked）\n\n本 issue 作为前端统一视角：确保 WebUI CaseDetail 页 email 和 teams tab 中所有 inline 图片可正常渲染显示。",
+  "type": "bug",
+  "priority": "P1",
+  "status": "tracked",
+  "testLoopScan": true,
+  "trackId": "inline-img-fix_20260423",
+  "relatedIssues": ["ISS-188", "ISS-226"],
+  "createdAt": "2026-04-23T16:00:00+08:00",
+  "updatedAt": "2026-04-23T16:00:00+08:00"
+}

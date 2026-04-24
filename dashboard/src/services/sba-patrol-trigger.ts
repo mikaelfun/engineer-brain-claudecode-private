@@ -29,6 +29,7 @@ let pollTimer: ReturnType<typeof setInterval> | null = null
 let lastKnownMessageCount = -1
 let lastProcessedMessageId: string | null = null
 let lastCheckAt: string | null = null
+let lastProcessedDetectedAt: string | null = null  // Only check history entries newer than this
 let triggerCount = 0
 let lastError: string | null = null
 let autoPatrolEnabled = true // Can be toggled via API
@@ -122,10 +123,13 @@ async function checkForNewSbaMessages(): Promise<void> {
       return
     }
 
-    // 3. Compare newMessageCount
+    // 3. Compare newMessageCount (calibration on first run)
     if (lastKnownMessageCount === -1) {
       lastKnownMessageCount = watch.newMessageCount
       lastProcessedMessageId = watch.lastMessageId
+      // Snapshot current history high-water mark so we don't re-trigger old cards
+      const latestEntry = watch.history[watch.history.length - 1]
+      lastProcessedDetectedAt = latestEntry?.detectedAt ?? new Date().toISOString()
       lastError = null
       return
     }
@@ -147,13 +151,24 @@ async function checkForNewSbaMessages(): Promise<void> {
     lastProcessedMessageId = watch.lastMessageId
     console.log(`[SBA-Trigger] New message detected (count: ${watch.newMessageCount}, id: ${watch.lastMessageId})`)
 
-    // 5. Get parsedCard from state file history (written by teams-poll.sh with Graph API)
+    // 5. Get parsedCard from NEW history entries only (not entire history)
+    //    Only entries with detectedAt > lastProcessedDetectedAt are candidates.
+    //    This prevents re-triggering patrol for old cards when a non-card message arrives.
+    const newEntries = lastProcessedDetectedAt
+      ? watch.history.filter(e => e.detectedAt > lastProcessedDetectedAt!)
+      : watch.history
+
     let parsedCard: ParsedCard | null = null
-    for (const entry of [...watch.history].reverse()) {
+    for (const entry of [...newEntries].reverse()) {
       if (entry.parsedCard?.type === 'case-assignment') {
         parsedCard = entry.parsedCard
         break
       }
+    }
+
+    // Advance high-water mark regardless of whether we found a card
+    if (watch.history.length > 0) {
+      lastProcessedDetectedAt = watch.history[watch.history.length - 1].detectedAt
     }
 
     // 6. Fallback: fetch from Graph API if no card in history
@@ -268,6 +283,7 @@ export function initSbaPatrolTrigger(): void {
   console.log('[SBA-Trigger] Starting SBA patrol trigger (60s interval)')
   lastKnownMessageCount = -1
   lastProcessedMessageId = null
+  lastProcessedDetectedAt = null
   lastError = null
 
   // Initial check

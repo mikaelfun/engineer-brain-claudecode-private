@@ -43,3 +43,4 @@
 - All 27 already scanned; diff = 0
 - lastRefreshed updated (was null)
 - Result: exhausted=true, discovered=0, deduplicated=0
+| 2026-04-24 | SYNTHESIZE | 11 topics (10 fusion, 1 compact), 57 entries, 0 Kusto queries fused |

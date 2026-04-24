@@ -9,7 +9,7 @@
     "ado-wiki": {
       "status": "scanning",
       "lastRefreshed": "2026-04-20T11:10:00Z",
-      "pendingPages": 138
+      "pendingPages": 69
     },
     "mslearn": {
       "status": "scanning",
@@ -17,13 +17,63 @@
       "pendingPages": 0
     },
     "contentidea": {
-      "status": "scanning",
+      "status": "idle",
       "lastRefreshed": null,
       "pendingPages": 0
     }
   },
   "21vGapLastUpdated": null,
   "lastMerged": null,
-  "lastSynthesized": null,
-  "synthesizeState": {}
+  "lastSynthesized": "2026-04-24",
+  "synthesizeState": {
+    "lastSynthesizedAt": "2026-04-24",
+    "lastEntryCount": 109,
+    "synthesizedEntryIds": 109,
+    "topicPlanHash": "263fbf98d0c3",
+    "draftHashes": {
+      "ado-wiki-a-aci-ip-appgw-sync.md": "e1579f24acc5",
+      "ado-wiki-a-aci-ip-dns-sync.md": "7fb1e9305ad3",
+      "ado-wiki-a-aci-quota-check.md": "7f4b27029254",
+      "ado-wiki-a-aci-terminologies.md": "74008d6d2203",
+      "ado-wiki-a-aci-troubleshooting-asi.md": "ddbdf6d64213",
+      "ado-wiki-a-acr-audit-logs.md": "5809a120386f",
+      "ado-wiki-a-acr-caching.md": "3fca66889dd5",
+      "ado-wiki-a-acr-change-analysis.md": "6d540a60199e",
+      "ado-wiki-a-acr-content-trust-delegation.md": "c3a59fbd927e",
+      "ado-wiki-a-acr-devops-cases-template.md": "669b1fd2c1b5",
+      "ado-wiki-a-acr-feedback-forum-post.md": "c234455af374",
+      "ado-wiki-a-acr-health-check-command.md": "d4ae66a01a8d",
+      "ado-wiki-a-acr-kusto-access.md": "80cbea14994b",
+      "ado-wiki-a-acr-kusto-queries.md": "216262eb347c",
+      "ado-wiki-a-acr-pg-teams-channel.md": "7500f0800793",
+      "ado-wiki-a-acr-private-link-troubleshooting-questions.md": "5f67ff753147",
+      "ado-wiki-a-jarvis-actions.md": "e488c64f819c",
+      "ado-wiki-a-rbac-abac-tsg.md": "e9daf3394e84",
+      "ado-wiki-a-set-up-aks-acr-cross-tenant.md": "ff7845bb2ee3",
+      "ado-wiki-a-technical-advisors-actions.md": "5de44944dfa7",
+      "ado-wiki-a-troubleshooting-using-asi.md": "3a35545f03cd",
+      "ado-wiki-acr-buildkit-secrets.md": "2418fedbd351",
+      "ado-wiki-acr-custom-domain.md": "31adf6e90fc4",
+      "ado-wiki-acr-escalation-process.md": "ab2e93ddd1e0",
+      "ado-wiki-acr-find-user-of-manifest-event.md": "8271dee0e2cc",
+      "ado-wiki-acr-investigate-bulk-image-tag-deletions.md": "451440eaa045",
+      "ado-wiki-acr-private-link.md": "b444ed5991f3",
+      "mslearn-acr-pull-troubleshooting-checklist.md": "e86baa0e923b",
+      "mslearn-acr-vulnerability-scanning.md": "94d5c795ca66",
+      "onenote-acr-kusto-queries.md": "f6b6dd5a1e22",
+      "onenote-acr-proxy-troubleshooting.md": "77bc08343a94"
+    },
+    "kqlHashes": {},
+    "topicRegenLog": [
+      {
+        "topic": "ALL (index generation)",
+        "reasons": [
+          "_index.search.jsonl missing",
+          "_index.md format update"
+        ],
+        "at": "2026-04-24"
+      }
+    ],
+    "mode": "incremental"
+  }
 }

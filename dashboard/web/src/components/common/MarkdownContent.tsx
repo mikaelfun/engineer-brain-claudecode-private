@@ -102,7 +102,7 @@ const markdownComponents = {
   // Blockquote: styled left border + background
   blockquote: ({ children, ...props }: any) => (
     <blockquote
-      className="px-4 py-2 my-4 italic rounded-r-lg"
+      className="px-3 py-1 my-1.5 italic rounded-r-lg text-[11px] leading-relaxed"
       style={{
         borderLeft: '4px solid var(--accent-blue)',
         background: 'var(--accent-blue-dim)',

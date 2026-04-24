@@ -169,3 +169,6 @@
 | [x] | teams-search-graph_20260422 | Teams Search: Graph API Parallel Fetch (ISS-236) | 2026-04-22 | 2026-04-22 |
 | [x] | watch-heartbeat_20260422 | Teams Watch 心跳机制 — UI 显示 on 但 daemon 实际未轮询 (ISS-237) | 2026-04-22 | 2026-04-22 |
 | [x] | graph-token-refresh_20260422 | Graph API Token 过期后无法自动刷新 (ISS-238) | 2026-04-22 | 2026-04-22 |
+| [x] | evidence-claims-path_20260423 | WebUI Evidence界面 claims.json 路径不匹配 (ISS-242) | 2026-04-23 | 2026-04-23 |
+| [ ] | inline-img-fix_20260423 | WebUI Case Email/Teams Inline Image Display Fix (ISS-243) | 2026-04-23 | 2026-04-23 |
+| [ ] | ir-first-routing_20260424 | Patrol new-case mode IR-first 路径修复 (ISS-247) | 2026-04-24 | 2026-04-24 |

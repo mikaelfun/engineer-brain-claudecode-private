@@ -1185,3 +1185,10 @@
 | 2026-04-20 | mslearn | Indexed 212 URLs from entra toc.yml; 151 already scanned, 60 pending | support/entra/toc.yml |
 | 2026-04-20 | mslearn | +2 Track A (IPv6 sign-in block, ASP.NET session expiry), +1 Track B draft (Connect Health data freshness guide), 5 skipped (informational/landing pages) | ad-dmn-services, app-integration |
 | 2026-04-20 | ado-wiki | Indexed 2811 pages (AzureAD: 1879, WDS: 932) for entra-id, first run | full-scan index build |
+| 2026-04-21 | mslearn | +7 entra-id app-integration issues (MSAL Android, CORS, sign-out, OWIN loop, token signature); +1 guide draft (Serilog logging) | app-integration batch |
+| 2026-04-21 | onenote | +1 entra-id known issue (Seamless SSO Mooncake enablement via PowerShell). 1 guide draft (AuthLog collection). 1 skip (Decode auth logs stub). 1 dedup (Sample SSO trace overlap with onenote-397). 4 pages processed. | POD/VMSCIM/Entra ID/AuthLog + Seamless SSO |
+| 2026-04-21 | ado-wiki | +1 new (hard match security hardening), 3 dedup, 3 existing drafts skipped | ACE Identity TSGs/AAD Connect - Synchronization (6 pages) |
+| 2026-04-23 | onenote | +0 known issues, +1 guide draft (AAD Domain Service readiness) | Mooncake POD Support Notebook/.../Readiness by topics/AAD Domain Service.md |
+| 2026-04-23 | mslearn | +10 entra-id known issues (SAML SSO, Graph API permissions, GSA client, dynamic groups, audit actors, sign-in reports); +2 guide drafts (netlog, dynamic-groups-tsg) | batch 217-226 |
+| 2026-04-24 | SYNTHESIZE | 37 topics (36 fusion, 1 compact), 3688 entries, 9 Kusto queries fused |
+| 2026-04-24 | mslearn | +5 entra-id Track A entries (SSO 403, TLS 1.2, MFA bypass, SSPR license, Graph group 403); +2 Track B drafts (TLS 1.2 guide, ADFS lockout guide); skipped 2 (hub page, code tutorial) | batch 227-231 |

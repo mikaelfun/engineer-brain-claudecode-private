@@ -31,6 +31,9 @@ tests/results/screenshots/
 dashboard/screenshots-*/
 dashboard/test-screenshots-*/
 
+# Design references & screenshots (gitignored, local only)
+dashboard/design-references/
+
 # Scattered images (no binary assets in this repo)
 *.png
 *.jpg
@@ -48,6 +51,7 @@ dist/
 
 # Temp directories & files
 tmp/
+.tmp/
 lancedb/
 .agents/
 

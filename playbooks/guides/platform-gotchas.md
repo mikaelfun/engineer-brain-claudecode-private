@@ -10,6 +10,18 @@
 **转换规则**：`C:\a\b` → `/c/a/b`，即盘符小写 + 去冒号 + 正斜杠。
 适用于所有 skill / agent 中的 Bash 调用。
 
+## Node v24 + Bash 双引号陷阱
+
+Node v24 默认启用 TypeScript strip-types，在 `node -e "..."` 中会触发 TS 语法校验。与 Bash 双引号组合时有两个高频陷阱：
+
+1. **`!==` 被 Bash 转义为 `\!==`** → Node TS parser 将 `\!` 视为非法 unicode escape → `SyntaxError`
+   - ❌ `node -e "...value!==false..."` （Bash 历史扩展会转义 `!`）
+   - ✅ `node -e "...value===false?'false':'true'..."` （反转逻辑避免 `!`）
+
+2. **`realpathSync` 返回 Windows 反斜杠路径** → 存入 Bash 变量 → 再传入 `node -e "...$VAR..."` 时反斜杠被当转义符吃掉
+   - ❌ `REAL=$(node -e "console.log(realpathSync('...'))")` 然后 `node -e "...dirname('$REAL')..."`
+   - ✅ `REAL=$(node -e "..." | sed 's|\\\\|/|g')` 然后用 Bash `dirname "$REAL"`
+
 ### 变量赋值 + pipe 陷阱
 
 当命令中**任何位置**出现 `|`（pipe）时，同一行用 `;` 设置的 shell 变量会被**静默丢弃**。变量赋值必须用换行独占一行：

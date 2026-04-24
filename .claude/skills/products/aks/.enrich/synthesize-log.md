@@ -208,3 +208,35 @@ Full (all 5 sources exhausted)
 | istio-networking | Quick | 1 | 0 | 0 |
 | throttling-quota | Fusion | 1 | 0 | 1 |
 | upgrade-auto-maintenance | Fusion | 1 | 1 | 3 |
+
+# Synthesize Log — aks — 2026-04-24
+
+## 模式
+增量（Phase 2.5 + Section 5 only — 生成缺失的 _index.search.jsonl + 更新 _index.md 格式）
+
+## 执行内容
+| 步骤 | 说明 | 结果 |
+|------|------|------|
+| Phase 2.5 | 生成 guides/_index.search.jsonl | 187 topics，含 keywords/errorCodes/symptoms/scores |
+| Section 5 | 更新 guides/_index.md 为新 9 列格式 | 187 行，按 entry 数降序 |
+| Section 7 | 更新 .enrich/progress.json synthesizeState | lastEntryCount=1326, draftHashes=415, kqlHashes=24 |
+
+## 评分统计（四维公式逐条计算）
+| 分段 | 数量 | 说明 |
+|------|------|------|
+| 🔵 5.0-7.9 | 185 | 可参考，建议验证关键步骤 |
+| 🟡 3.0-4.9 | 2 | 仅供方向参考 |
+
+## 跳过说明
+- topicsToRegen = 0（无 topic 需重生成 guide 文件）
+- Phase 2.5 和 Section 5 按 spec 无条件执行
+- Phase 2（Agent-A/B/C）已在之前执行完成，本次仅补生成索引文件
+
+## Fusion 统计
+| 指标 | 数值 |
+|------|------|
+| 总 topic 数 | 187 |
+| Fusion topic | 135 |
+| Workflow topic | 135 |
+| Quick-only topic | 52 |
+| 总条目数 | 1324 (2 discarded) |

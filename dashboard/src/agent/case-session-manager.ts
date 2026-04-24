@@ -1059,8 +1059,12 @@ export async function* stepCaseSession(
   options?: { emailType?: string; forceRefresh?: boolean; fullSearch?: boolean; canUseTool?: CanUseTool }
 ): AsyncGenerator<SDKMessage & { sdkSessionId?: string }> {
   // Build dynamic params for prompt template
+  const casesRoot = getCasesRoot()
+  const caseDir = join(casesRoot, 'active', caseNumber)
   const promptParams: Record<string, string> = {
     caseNumber,
+    casesRoot,
+    caseDir,
   }
 
   // Handle step-specific params
@@ -1166,7 +1170,12 @@ export async function* stepCaseSession(
         const bodyMatch = skillContent.match(/^---[\s\S]*?---\s*\n([\s\S]*)$/)
         const skillBody = bodyMatch ? bodyMatch[1] : skillContent
         // Inject as reference — agent doesn't need to Read SKILL.md
-        prompt = `${prompt}\n\n## Skill Reference (already loaded — do NOT re-read SKILL.md)\n\n${skillBody}`
+        // Replace template variables ({caseNumber}, {casesRoot}, {caseDir}) in skill body
+        let resolvedBody = skillBody
+        for (const [key, value] of Object.entries(promptParams)) {
+          resolvedBody = resolvedBody.replaceAll(`{${key}}`, value)
+        }
+        prompt = `${prompt}\n\n## Skill Reference (already loaded — do NOT re-read SKILL.md)\n\n${resolvedBody}`
       } catch {
         // Fallback to original prompt if read fails
       }

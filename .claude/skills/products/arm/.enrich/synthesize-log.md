@@ -85,3 +85,30 @@
 | arm-misc-operations-aks-arc-autonomous | 📋 融合 | 15 | 0 | 3 | 0 |
 | arm-misc-operations-latency-avnm | 📋 融合 | 15 | 0 | 3 | 0 |
 | arm-misc-operations-notfound-invalidtemplate | 📋 融合 | 9 | 5 | 3 | 0 |
+
+# Synthesize Log — arm — 2026-04-24
+
+## 模式
+增量（Phase 2.5 + §5 索引生成）
+
+## 统计
+- 总条目: 508
+- 总 topic: 60
+- 融合指南: 39
+- 速查表 only: 21
+- 排查工作流: 39
+
+## 评分分布
+- 🟢 (8.0-10.0): 25
+- 🔵 (5.0-7.9): 450
+- 🟡 (3.0-4.9): 26
+- ⚪ (0-2.9): 0
+- 全局平均分: 6.4
+
+## 生成文件
+- `guides/_index.search.jsonl` (新建, 60 records)
+- `guides/_index.md` (更新为新格式)
+- `.enrich/progress.json` (synthesizeState 更新)
+
+## topicsToRegen
+无（本次仅执行 Phase 2.5 + §5 无条件索引生成）

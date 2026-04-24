@@ -1,48 +1,49 @@
+---
+source: mslearn
+sourceRef: null
+sourceUrl: https://learn.microsoft.com/en-us/troubleshoot/azure/virtual-machines/windows/enable-disable-firewall-rule-guest-os
+importDate: "2026-04-24"
+type: guide-draft
+---
+
 # Enable or Disable Firewall Rule on Azure VM Guest OS
 
-> Source: https://learn.microsoft.com/en-us/troubleshoot/azure/virtual-machines/windows/enable-disable-firewall-rule-guest-os
-
-## When to Use
-
-Need to enable/disable specific firewall rules (e.g., RDP) rather than disabling entire firewall. Guest OS firewall is filtering partial traffic.
+Reference for enabling/disabling specific firewall rules (e.g., RDP) when guest OS firewall rule configuration blocks traffic.
 
 ## Online Methods
 
-### Custom Script Extension
+### Method 1: Custom Script Extension
 ```cmd
-# Enable RDP rule
+REM Enable RDP rule:
 netsh advfirewall firewall set rule dir=in name="Remote Desktop - User Mode (TCP-In)" new enable=yes
 
-# Disable RDP rule
+REM Disable RDP rule:
 netsh advfirewall firewall set rule dir=in name="Remote Desktop - User Mode (TCP-In)" new enable=no
 ```
 
-### Remote PowerShell
+### Method 2: Remote PowerShell
 ```powershell
 Enter-PSSession (New-PSSession -ComputerName "<HOSTNAME>" -Credential (Get-Credential) -SessionOption (New-PSSessionOption -SkipCACheck -SkipCNCheck))
-# Enable
 Enable-NetFirewallRule -DisplayName "RemoteDesktop-UserMode-In-TCP"
-# Disable
-Disable-NetFirewallRule -DisplayName "RemoteDesktop-UserMode-In-TCP"
 exit
 ```
 
-### PSTools
+### Method 3: PSTools
 ```cmd
-psexec \\<DIP> -u <username> cmd
+psexec \<DIP> -u <username> cmd
 netsh advfirewall firewall set rule dir=in name="Remote Desktop - User Mode (TCP-In)" new enable=yes
 ```
 
-### Remote Registry
-Navigate to: `<TARGET>\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\RemoteDesktop-UserMode-In-TCP`
+### Method 4: Remote Registry
+Connect via regedit > Connect Network Registry, navigate to:
+`SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\RemoteDesktop-UserMode-In-TCP`
 
-Change `Active=FALSE` to `Active=TRUE` (or vice versa) in the rule string.
+Change `Active=FALSE` to `Active=TRUE` (or vice versa).
 
 ## Offline Method
+Attach OS disk to recovery VM, load BROKENSYSTEM hive, find the correct ControlSet, modify FirewallRules RemoteDesktop-UserMode-In-TCP Active flag, unload hive, recreate VM.
 
-1. Attach OS disk to recovery VM
-2. Load SYSTEM hive as BROKENSYSTEM
-3. Find current ControlSet from `HKLM\BROKENSYSTEM\Select\Current`
-4. Navigate to `ControlSet00X\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\RemoteDesktop-UserMode-In-TCP`
-5. Change Active=FALSE to Active=TRUE
-6. Unload hive, detach disk, recreate VM
+## Notes
+- Same methods can be applied to any firewall rule by changing the rule name
+- If firewall is set via Group Policy, local changes will be overridden on next policy refresh
+- Microsoft best practice: keep Windows Firewall enabled, configure rules rather than disabling entirely

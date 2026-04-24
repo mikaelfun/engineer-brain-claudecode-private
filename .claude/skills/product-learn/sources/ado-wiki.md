@@ -6,6 +6,27 @@
 
 ---
 
+## Authentication
+
+**All `az` commands MUST use the Global az profile** from `config.json → azProfile.global`.
+
+```bash
+# Read profile name from config.json
+AZ_PROFILE=$(python3 -c "import json; print(json.load(open('config.json'))['azProfile']['global'])")
+export AZURE_CONFIG_DIR="$HOME/.azure-profiles/$AZ_PROFILE"
+```
+
+```powershell
+# PowerShell equivalent
+$cfg = Get-Content config.json | ConvertFrom-Json
+$env:AZURE_CONFIG_DIR = "$env:USERPROFILE\.azure-profiles\$($cfg.azProfile.global)"
+```
+
+> **Rule**: Every shell block that calls `az` must set `AZURE_CONFIG_DIR` first.
+> Never rely on the default `~/.azure` profile — it may point to a different cloud (e.g. Mooncake).
+
+---
+
 ## Discovery
 
 ### Product-to-Wiki Mapping
@@ -39,6 +60,8 @@ For each adoWiki entry, recursively enumerate the full page tree:
 
 ```powershell
 pwsh -NoProfile -Command '
+  $cfg = Get-Content config.json | ConvertFrom-Json
+  $env:AZURE_CONFIG_DIR = "$env:USERPROFILE\.azure-profiles\$($cfg.azProfile.global)"
   $org = "{org}"; $project = "{project}"; $wikiName = "{wikiName}"
   $pages = az devops invoke --area wiki --resource pages `
     --route-parameters project="$project" wikiIdentifier="$wikiName" `
@@ -138,6 +161,8 @@ Only projectWiki works with `az devops wiki page show`. REST API works for both 
 
 ```bash
 # Universal content read command (works for both codeWiki and projectWiki)
+AZ_PROFILE=$(python3 -c "import json; print(json.load(open('config.json'))['azProfile']['global'])")
+export AZURE_CONFIG_DIR="$HOME/.azure-profiles/$AZ_PROFILE"
 encoded_path=$(python3 -c "import urllib.parse; print(urllib.parse.quote('{pagePath}'))")
 MSYS_NO_PATHCONV=1 az rest --method get \
   --url "https://dev.azure.com/{org}/{project}/_apis/wiki/wikis/{wikiName}/pages?path=${encoded_path}&includeContent=true&api-version=7.1" \

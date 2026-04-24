@@ -207,10 +207,11 @@ def search_sap(query, routing, family_filter=None, top_n=10, pod_check=False, sc
                     "isMooncake": path_is_mc,
                 }
 
-                # POD 检查
+                # POD 检查（归一化反斜杠）
                 if pod_check and sap_scope_data:
+                    norm_path = entry["path"].replace("\\", "/")
                     in_pod = any(
-                        entry["path"].startswith(prefix)
+                        norm_path.startswith(prefix.replace("\\", "/"))
                         for prefix in sap_scope_data.get("validPrefixes", [])
                     )
                     result["inPod"] = in_pod

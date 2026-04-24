@@ -1,94 +1,80 @@
-# AVD Product Knowledge Base - Index
+# AVD 排查指南索引
 
-**Total Topics**: 74 | **Total Entries**: 684 (648 unique from 694 JSONL lines)
-**Last Updated**: 2026-04-18
-**Sources**: ado-wiki(357), contentidea-kb(146), mslearn(68), onenote(77)
+| # | Topic | Title | Entries | Fusion | Score | Keywords | Sources | Files |
+|---|-------|-------|---------|--------|-------|----------|---------|-------|
+| 1 | avd-agent-sxs-1 | AVD Agent 与 SxS Stack (Part 1) | 15 | ✅ | 🔵 5.7 | DNS, Event-3019, MSI, MissingMethodException, RDAgentBootLoader | KB ML ON | [speed](avd-agent-sxs-1.md) / [detail](details/avd-agent-sxs-1.md) / [workflow](workflows/avd-agent-sxs-1.md) |
+| 2 | avd-agent-sxs-2 | AVD Agent 与 SxS Stack (Part 2) | 22 | ✅ | 🔵 6.7 | DSC, DisableRegistryTools, DownloadMsiException, Error-1722, GPO | AW KB ML ON | [speed](avd-agent-sxs-2.md) / [detail](details/avd-agent-sxs-2.md) / [workflow](workflows/avd-agent-sxs-2.md) |
+| 3 | avd-authentication-sso-1 | AVD 认证与 SSO (Part 1) | 15 | ✅ | 🔵 6.3 | aad-auth, aadj, auth-loop, authentication, authentication-loop | AW KB | [speed](avd-authentication-sso-1.md) / [detail](details/avd-authentication-sso-1.md) / [workflow](workflows/avd-authentication-sso-1.md) |
+| 4 | avd-authentication-sso-2 | AVD 认证与 SSO (Part 2) | 10 | ✅ | 🔵 6.2 | 0x80072F7D, 0x80072f7d, AES128-SHA256, Azure-Front-Door, CredSSP | KB ML ON | [speed](avd-authentication-sso-2.md) / [detail](details/avd-authentication-sso-2.md) / [workflow](workflows/avd-authentication-sso-2.md) |
+| 5 | avd-authentication-sso-conditional-access | AVD 认证与 SSO - conditional-access | 3 | — | 🟡 4.8 | Conditional-Access, Entra-ID, PRT, SSO, Seamless-SSO | ML ON | [speed](avd-authentication-sso-conditional-access.md) / [detail](details/avd-authentication-sso-conditional-access.md) |
+| 6 | avd-azure-stack-hci | AVD on Azure Stack HCI | 4 | — | 🔵 6.2 | agent, azure-arc, azure-stack-hci, conflict, deployment | AW | [speed](avd-azure-stack-hci.md) / [detail](details/avd-azure-stack-hci.md) / [workflow](workflows/avd-azure-stack-hci.md) |
+| 7 | avd-black-screen | AVD 黑屏 | 10 | — | 🔵 6.7 | 0x10b, 0x3, 4005-event, agent-update, appreadiness | AW KB ON | [speed](avd-black-screen.md) / [detail](details/avd-black-screen.md) |
+| 8 | avd-conditional-access-conditional-access | AVD 条件访问与 MFA - conditional-access | 7 | — | 🟡 4.9 | Conditional-Access, Entra-join, MFA, PRT, Seamless-SSO | AW ML ON | [speed](avd-conditional-access-conditional-access.md) / [detail](details/avd-conditional-access-conditional-access.md) |
+| 9 | avd-conditional-access-context-based-redire | AVD 条件访问与 MFA - context-based-redirection | 3 | — | 🔵 6.5 | acrs, authentication-context, block-based, by-design, clipboard | AW | [speed](avd-conditional-access-context-based-redire.md) / [detail](details/avd-conditional-access-context-based-redire.md) |
+| 10 | avd-conditional-access-misc | AVD 条件访问与 MFA - 杂项 | 6 | ✅ | 🔵 5.4 | Break/Fix, Content Idea Request, DSC, Entra-join, MFA | KB ML | [speed](avd-conditional-access-misc.md) / [detail](details/avd-conditional-access-misc.md) / [workflow](workflows/avd-conditional-access-misc.md) |
+| 11 | avd-connection-general | AVD 连接通用 | 15 | ✅ | 🔵 6.7 | AAD-join, AD-Connect, Break/Fix, HTTP-5xx, ICM | AW KB ML ON | [speed](avd-connection-general.md) / [detail](details/avd-connection-general.md) / [workflow](workflows/avd-connection-general.md) |
+| 12 | avd-custom-image-1 | AVD 自定义镜像 (Part 1) | 15 | ✅ | 🔵 6.1 | NAME_ALREADY_REGISTERED, RDAgent, SxSStacklistener, Windows-Backup, agent | AW KB ML ON | [speed](avd-custom-image-1.md) / [detail](details/avd-custom-image-1.md) / [workflow](workflows/avd-custom-image-1.md) |
+| 13 | avd-custom-image-2 | AVD 自定义镜像 (Part 2) | 4 | ✅ | 🔵 5.2 | CD-ROM, Custom Script Extension, OOBE, agent-registration, cd-rom | ON | [speed](avd-custom-image-2.md) / [detail](details/avd-custom-image-2.md) / [workflow](workflows/avd-custom-image-2.md) |
+| 14 | avd-deployment-arm-1 | AVD ARM 部署 (Part 1) | 15 | ✅ | 🔵 6.3 | 403, ARM, Classic-AVD, Dell, app-group | AW | [speed](avd-deployment-arm-1.md) / [detail](details/avd-deployment-arm-1.md) / [workflow](workflows/avd-deployment-arm-1.md) |
+| 15 | avd-deployment-arm-2 | AVD ARM 部署 (Part 2) | 13 | ✅ | 🔵 6.2 | Break/Fix, Content Idea Request, DSC, JToken, Microsoft-Store | AW KB ML ON | [speed](avd-deployment-arm-2.md) / [detail](details/avd-deployment-arm-2.md) / [workflow](workflows/avd-deployment-arm-2.md) |
+| 16 | avd-deployment-arm-deployment-failure | AVD ARM 部署 - deployment-failure | 4 | — | 🔵 6.2 | EOSD, InvalidContentLink, arm-template, deployment-failure, eosd | AW ML | [speed](avd-deployment-arm-deployment-failure.md) / [detail](details/avd-deployment-arm-deployment-failure.md) |
+| 17 | avd-domain-join-1 | AVD 域加入 (Part 1) | 15 | ✅ | 🔵 6.4 | AADJ, Entra-Connect, Entra-join, HAADJ, HTML-client | AW KB ML | [speed](avd-domain-join-1.md) / [detail](details/avd-domain-join-1.md) / [workflow](workflows/avd-domain-join-1.md) |
+| 18 | avd-domain-join-2 | AVD 域加入 (Part 2) | 9 | ✅ | 🔵 6.1 | 0x5, AD, AddUserToRDUGroup, DNS, INSUFF_ACCESS_RIGHTS | AW ML ON | [speed](avd-domain-join-2.md) / [detail](details/avd-domain-join-2.md) / [workflow](workflows/avd-domain-join-2.md) |
+| 19 | avd-firewall-network | AVD 防火墙与网络 | 15 | ✅ | 🔵 6.0 | Break/Fix, China, Content Idea Request, Mooncake, aadcdn | AW KB ON | [speed](avd-firewall-network.md) / [detail](details/avd-firewall-network.md) / [workflow](workflows/avd-firewall-network.md) |
+| 20 | avd-fslogix-1 | AVD FSLogix 配置文件 (Part 1) | 15 | ✅ | 🔵 6.2 | 00000002, 0x80000003, 80070002, Break/Fix, FSLogix | AW KB ML ON | [speed](avd-fslogix-1.md) / [detail](details/avd-fslogix-1.md) / [workflow](workflows/avd-fslogix-1.md) |
+| 21 | avd-fslogix-2 | AVD FSLogix 配置文件 (Part 2) | 13 | ✅ | 🔵 6.5 | 00000002, 80070002, AD-domain-join, CleanupInvalidSessions, Cloud Cache | ON | [speed](avd-fslogix-2.md) / [detail](details/avd-fslogix-2.md) / [workflow](workflows/avd-fslogix-2.md) |
+| 22 | avd-gpo-config | AVD GPO 配置 | 4 | ✅ | 🔵 5.8 | 0x80072F7D, 0x80072f7d, ECC-cipher, GPO, RDS-CAL | AW KB ML | [speed](avd-gpo-config.md) / [detail](details/avd-gpo-config.md) / [workflow](workflows/avd-gpo-config.md) |
+| 23 | avd-host-pool-scaling-1 | AVD Host Pool 与缩放 (Part 1) | 15 | ✅ | 🔵 6.0 | 0x8024401c, 400-error, API, Break/Fix, CBS-corruption | KB ML | [speed](avd-host-pool-scaling-1.md) / [detail](details/avd-host-pool-scaling-1.md) / [workflow](workflows/avd-host-pool-scaling-1.md) |
+| 24 | avd-host-pool-scaling-2 | AVD Host Pool 与缩放 (Part 2) | 2 | ✅ | 🔵 5.0 | ASE, PaaS, VNet-integration, ase, deployment | ON | [speed](avd-host-pool-scaling-2.md) / [detail](details/avd-host-pool-scaling-2.md) / [workflow](workflows/avd-host-pool-scaling-2.md) |
+| 25 | avd-host-pool-scaling-scaling-plan | AVD Host Pool 与缩放 - scaling-plan | 8 | — | 🔵 6.6 | autoscale, by-design, configuration, host-pool, off-peak | AW | [speed](avd-host-pool-scaling-scaling-plan.md) / [detail](details/avd-host-pool-scaling-scaling-plan.md) / [workflow](workflows/avd-host-pool-scaling-scaling-plan.md) |
+| 26 | avd-intune | AVD Intune 管理 | 5 | — | 🔵 6.0 | contentidea-kb, context-based-redirection, custom-script-extension, drive-redirection, hotfix-pending | AW KB | [speed](avd-intune.md) / [detail](details/avd-intune.md) |
+| 27 | avd-licensing | AVD 许可证 | 10 | ✅ | 🔵 6.2 | LicensingMode, UPA, asr, azure-ad, billing | AW KB ML ON | [speed](avd-licensing.md) / [detail](details/avd-licensing.md) / [workflow](workflows/avd-licensing.md) |
+| 28 | avd-migration-classic | AVD Classic 迁移 | 5 | — | 🔵 5.3 | RDP-property, arm, authorization, avd-classic, contentidea-kb | AW KB | [speed](avd-migration-classic.md) / [detail](details/avd-migration-classic.md) / [workflow](workflows/avd-migration-classic.md) |
+| 29 | avd-monitoring-diagnostics | AVD 监控与诊断 | 8 | ✅ | 🔵 6.6 | adfs, alphanumerical-sort, asc, asc-tracing, avdi | AW KB ON | [speed](avd-monitoring-diagnostics.md) / [detail](details/avd-monitoring-diagnostics.md) / [workflow](workflows/avd-monitoring-diagnostics.md) |
+| 30 | avd-msix-appattach-deprecated-fixed | AVD MSIX App Attach - deprecated-fixed | 5 | — | 🔵 6.5 | application-group, appxmanifest, bsod, cimfs, crash | AW | [speed](avd-msix-appattach-deprecated-fixed.md) / [detail](details/avd-msix-appattach-deprecated-fixed.md) / [workflow](workflows/avd-msix-appattach-deprecated-fixed.md) |
+| 31 | avd-msix-appattach-misc | AVD MSIX App Attach - 杂项 | 17 | ✅ | 🔵 6.4 | AppxDeploymentServer, Break/Fix, MSIX, MSIX-App-Attach, RemoteApp | AW KB ON | [speed](avd-msix-appattach-misc.md) / [detail](details/avd-msix-appattach-misc.md) / [workflow](workflows/avd-msix-appattach-misc.md) |
+| 32 | avd-performance | AVD 性能 | 9 | ✅ | 🔵 6.6 | 0x1E, Excel, TaskCanceledException, admin-highlights, bugcheck | AW KB | [speed](avd-performance.md) / [detail](details/avd-performance.md) / [workflow](workflows/avd-performance.md) |
+| 33 | avd-printing | AVD 打印重定向 | 7 | ✅ | 🔵 6.3 | Dell-Wyse, Feature-on-Demand, FoD, Win10, contentidea-kb | AW KB ON | [speed](avd-printing.md) / [detail](details/avd-printing.md) / [workflow](workflows/avd-printing.md) |
+| 34 | avd-private-link | AVD Private Link | 6 | ✅ | 🔵 6.8 | asc, azure-activity-log, connection, connection-failure, custom-image | AW ML | [speed](avd-private-link.md) / [detail](details/avd-private-link.md) / [workflow](workflows/avd-private-link.md) |
+| 35 | avd-rdp-shortpath | AVD RDP Shortpath | 8 | ✅ | 🔵 6.2 | RDP-Shortpath, STUN, TURN, UDP, azure-stack-hci | AW KB ML | [speed](avd-rdp-shortpath.md) / [detail](details/avd-rdp-shortpath.md) / [workflow](workflows/avd-rdp-shortpath.md) |
+| 36 | avd-session-host-1 | AVD Session Host (Part 1) | 15 | ✅ | 🔵 6.3 | contentidea-kb | KB | [speed](avd-session-host-1.md) / [detail](details/avd-session-host-1.md) / [workflow](workflows/avd-session-host-1.md) |
+| 37 | avd-session-host-2 | AVD Session Host (Part 2) | 15 | ✅ | 🔵 6.1 | 0x3000046, 169.254.169.254, DNS, DiffDiskPlacement, DomainTrustCheck | KB ML ON | [speed](avd-session-host-2.md) / [detail](details/avd-session-host-2.md) / [workflow](workflows/avd-session-host-2.md) |
+| 38 | avd-session-host-3 | AVD Session Host (Part 3) | 10 | ✅ | 🔵 5.8 | AD trust, ConnectionFailedAdTrustedRelationshipFailure, Event-3019, GPO, JToken | AW ON | [speed](avd-session-host-3.md) / [detail](details/avd-session-host-3.md) / [workflow](workflows/avd-session-host-3.md) |
+| 39 | avd-session-host-update | AVD Session Host Update (SHU) | 6 | — | 🔵 6.5 | 403, AuthorizationFailed, DeniedAccessToCustomerResource, ForbiddenByPolicy, HyperVGeneration | AW ML | [speed](avd-session-host-update.md) / [detail](details/avd-session-host-update.md) / [workflow](workflows/avd-session-host-update.md) |
+| 40 | avd-teams-multimedia-misc | AVD Teams 多媒体 - 杂项 | 14 | ✅ | 🔵 6.7 | AVD-Insights, Host-Analyzer, MMR, Perfmon, Teams | AW KB ML ON | [speed](avd-teams-multimedia-misc.md) / [detail](details/avd-teams-multimedia-misc.md) / [workflow](workflows/avd-teams-multimedia-misc.md) |
+| 41 | avd-teams-multimedia-multimedia-redirecti | AVD Teams 多媒体 - multimedia-redirection | 3 | — | 🔵 5.7 | MMR, camera-redirection, heap-memory, memory-leak, mmr | AW ML | [speed](avd-teams-multimedia-multimedia-redirecti.md) / [detail](details/avd-teams-multimedia-multimedia-redirecti.md) |
+| 42 | avd-usb-peripheral | AVD USB 与外设重定向 | 16 | ✅ | 🔵 6.6 | GPO, RDP-property, RDSH, RemoteFX, USB-redirection | AW KB ON | [speed](avd-usb-peripheral.md) / [detail](details/avd-usb-peripheral.md) / [workflow](workflows/avd-usb-peripheral.md) |
+| 43 | avd-web-client-misc | AVD Web 客户端 - 杂项 | 17 | ✅ | 🔵 6.3 | 0x80090016, AADSTS1400002, AADSTS50105, Break/Fix, Content Idea Request | AW KB ON | [speed](avd-web-client-misc.md) / [detail](details/avd-web-client-misc.md) / [workflow](workflows/avd-web-client-misc.md) |
+| 44 | avd-windows-activation | AVD Windows Activation (KMS) | 1 | — | 🔵 6.5 | activation, jarvis, kms, kms-proxy, network | ON | [speed](avd-windows-activation.md) / [detail](details/avd-windows-activation.md) / [workflow](workflows/avd-windows-activation.md) |
+| 45 | avd-windows-app-misc | AVD Windows App 客户端 - 杂项 | 12 | ✅ | 🔵 6.2 | Ctrl+Win+L, MSI, MSRDC, WebView-log, Win-key | AW KB ML ON | [speed](avd-windows-app-misc.md) / [detail](details/avd-windows-app-misc.md) / [workflow](workflows/avd-windows-app-misc.md) |
+| 46 | contentidea-kb-legacy-1 | ContentIdea KB Legacy (Part 1) | 15 | — | 🔵 6.1 | Break/Fix, Content Idea Request, NTLMv2, contentidea-kb, lmcompatibilitylevel | KB | [speed](contentidea-kb-legacy-1.md) / [detail](details/contentidea-kb-legacy-1.md) |
+| 47 | contentidea-kb-legacy-2 | ContentIdea KB Legacy (Part 2) | 4 | — | 🔵 5.2 | Content Idea Request, RDP-property, RemoteApp, client-settings, connection-bar | KB | [speed](contentidea-kb-legacy-2.md) / [detail](details/contentidea-kb-legacy-2.md) / [workflow](workflows/contentidea-kb-legacy-2.md) |
+| 48 | data-collection-escalation | 数据收集与升级流程 | 8 | ✅ | 🔵 6.9 | AAD-join, ConfigMgr, Intune, Windows-11, aad-join | AW KB | [speed](data-collection-escalation.md) / [detail](details/data-collection-escalation.md) / [workflow](workflows/data-collection-escalation.md) |
+| 49 | general-other | 其他杂项 | 14 | ✅ | 🔵 6.1 | AD-DS, AppLocker, Azure-Files, CSP, CreateOrUpdateAzAutoAccount | AW ML ON | [speed](general-other.md) / [detail](details/general-other.md) / [workflow](workflows/general-other.md) |
+| 50 | w365-anc | W365 ANC 网络连接 | 11 | ✅ | 🔵 6.6 | ANC, CNAME, DNS, DSC, GPO | AW | [speed](w365-anc.md) / [detail](details/w365-anc.md) / [workflow](workflows/w365-anc.md) |
+| 51 | w365-automation-graph-1 | W365 Graph API 自动化 (Part 1) | 15 | ✅ | 🔵 6.2 | 401, 403, 403-forbidden, 5xx, AD-DS | AW KB ML | [speed](w365-automation-graph-1.md) / [detail](details/w365-automation-graph-1.md) / [workflow](workflows/w365-automation-graph-1.md) |
+| 52 | w365-automation-graph-2 | W365 Graph API 自动化 (Part 2) | 3 | ✅ | 🔵 6.8 | CreateOrUpdateAzAutoAccount, PowerShell, application-group, assigned-user, auto-scaling | ML ON | [speed](w365-automation-graph-2.md) / [detail](details/w365-automation-graph-2.md) / [workflow](workflows/w365-automation-graph-2.md) |
+| 53 | w365-boot | W365 Boot 启动模式 | 1 | ✅ | 🔵 5.5 | ServicesPipeTimeout, agent, boot, delayed-start, servicespipetimeout | ML | [speed](w365-boot.md) / [detail](details/w365-boot.md) / [workflow](workflows/w365-boot.md) |
+| 54 | w365-cloud-apps | W365 Cloud Apps | 2 | ✅ | 🔵 6.2 | conditional-access, connectivity, contentidea-kb, w365-app | AW KB | [speed](w365-cloud-apps.md) / [detail](details/w365-cloud-apps.md) / [workflow](workflows/w365-cloud-apps.md) |
+| 55 | w365-connector-3rdparty | W365 第三方连接器 (Citrix/VMware/HP) | 10 | ✅ | 🔵 6.5 | Citrix, Citrix-HDX, Immersive-Shell, Kusto, WAM | AW KB | [speed](w365-connector-3rdparty.md) / [detail](details/w365-connector-3rdparty.md) / [workflow](workflows/w365-connector-3rdparty.md) |
+| 56 | w365-deletion-fraud | W365 删除与防欺诈 | 2 | ✅ | 🔵 6.5 | 403, CLB, DMS-client, OCE, clb | AW | [speed](w365-deletion-fraud.md) / [detail](details/w365-deletion-fraud.md) / [workflow](workflows/w365-deletion-fraud.md) |
+| 57 | w365-frontline-frontline-shared | W365 Frontline 一线员工 - frontline-shared | 8 | — | 🔵 7.1 | DPP, DppNotEnabled, FLS, autopilot, autopilot-v2 | AW | [speed](w365-frontline-frontline-shared.md) / [detail](details/w365-frontline-frontline-shared.md) |
+| 58 | w365-frontline-misc | W365 Frontline 一线员工 - 杂项 | 10 | ✅ | 🔵 6.8 | ANC, AllocationFailed, COGS, DppNotEnabled, ErrorAzureAllocationFailure | AW | [speed](w365-frontline-misc.md) / [detail](details/w365-frontline-misc.md) / [workflow](workflows/w365-frontline-misc.md) |
+| 59 | w365-general | W365 通用管理 | 12 | — | 🔵 7.0 | 401, 403, CloudPC.ReadWrite.All, DFE, HTTP-403 | AW | [speed](w365-general.md) / [detail](details/w365-general.md) / [workflow](workflows/w365-general.md) |
+| 60 | w365-government | W365 Government (GCC/GCCH) | 11 | ✅ | 🔵 6.2 | aadj, anc, autopatch, brazil-south, byon | AW ON | [speed](w365-government.md) / [detail](details/w365-government.md) / [workflow](workflows/w365-government.md) |
+| 61 | w365-intune-policy | W365 Intune 策略 | 4 | ✅ | 🔵 7.0 | ai-enabled, cloud-device-agent, disk-expansion, edge-case, hyper-v | AW | [speed](w365-intune-policy.md) / [detail](details/w365-intune-policy.md) / [workflow](workflows/w365-intune-policy.md) |
+| 62 | w365-link-device-misc | W365 Link 设备 - 杂项 | 13 | ✅ | 🔵 6.6 | 4b-update, KB5066835, MFA, SSO, cloud-pc | AW | [speed](w365-link-device-misc.md) / [detail](details/w365-link-device-misc.md) / [workflow](workflows/w365-link-device-misc.md) |
+| 63 | w365-link-device-windows-365-link | W365 Link 设备 - windows-365-link | 11 | — | 🔵 6.6 | 0x80073712, KB5066835, authentication, auto-enrollment, clock | AW | [speed](w365-link-device-windows-365-link.md) / [detail](details/w365-link-device-windows-365-link.md) |
+| 64 | w365-monitoring-radar | W365 Monitoring & Radar | 2 | ✅ | 🔵 6.5 | display-bug, filters, os-version, radar, ui-bug | AW | [speed](w365-monitoring-radar.md) / [detail](details/w365-monitoring-radar.md) / [workflow](workflows/w365-monitoring-radar.md) |
+| 65 | w365-provisioning-1 | W365 Provisioning 配置 (Part 1) | 15 | ✅ | 🔵 6.7 | 0x801c001d, DriveLetter, Graph-API, Intune, PowerShell | AW | [speed](w365-provisioning-1.md) / [detail](details/w365-provisioning-1.md) / [workflow](workflows/w365-provisioning-1.md) |
+| 66 | w365-provisioning-2 | W365 Provisioning 配置 (Part 2) | 15 | ✅ | 🔵 6.5 | HIT, OCE-API, admin-username, anti-fraud, bitlocker | AW | [speed](w365-provisioning-2.md) / [detail](details/w365-provisioning-2.md) / [workflow](workflows/w365-provisioning-2.md) |
+| 67 | w365-provisioning-3 | W365 Provisioning 配置 (Part 3) | 15 | ✅ | 🔵 6.8 | activation, ad-sync, app-categories, app-sharing, automount | AW | [speed](w365-provisioning-3.md) / [detail](details/w365-provisioning-3.md) / [workflow](workflows/w365-provisioning-3.md) |
+| 68 | w365-provisioning-4 | W365 Provisioning 配置 (Part 4) | 2 | ✅ | 🔵 6.0 | AD-DS, MSIX, ad-ds, adds, dns | ON | [speed](w365-provisioning-4.md) / [detail](details/w365-provisioning-4.md) / [workflow](workflows/w365-provisioning-4.md) |
+| 69 | w365-provisioning-deprovisioned | W365 Provisioning 配置 - deprovisioned | 5 | — | 🔵 7.3 | FROG, HIT, ICE, abuse, anti-fraud | AW | [speed](w365-provisioning-deprovisioned.md) / [detail](details/w365-provisioning-deprovisioned.md) |
+| 70 | w365-provisioning-disk-recovery | W365 Provisioning 配置 - disk-recovery | 3 | — | 🔵 6.5 | cloud-pc, disk-recovery, hard-delete, icm, kusto | AW | [speed](w365-provisioning-disk-recovery.md) / [detail](details/w365-provisioning-disk-recovery.md) |
+| 71 | w365-provisioning-provisioning-policy | W365 Provisioning 配置 - provisioning-policy | 9 | — | 🔵 6.4 | CPCD, GBL, active-deletion, cloud-pc, cpcd | AW | [speed](w365-provisioning-provisioning-policy.md) / [detail](details/w365-provisioning-provisioning-policy.md) |
+| 72 | w365-provisioning-tenant-score | W365 Provisioning 配置 - tenant-score | 4 | — | 🔵 7.5 | abuse, anti-fraud, fraud, kusto, provisioning | AW | [speed](w365-provisioning-tenant-score.md) / [detail](details/w365-provisioning-tenant-score.md) |
+| 73 | w365-resize | W365 Resize 调整 | 9 | ✅ | 🔵 6.6 | 403-forbidden, BlockResizeForGen1VM, CSE-handler, CustomScriptExtension, RegisterRDAgent | AW | [speed](w365-resize.md) / [detail](details/w365-resize.md) / [workflow](workflows/w365-resize.md) |
+| 74 | w365-switch | W365 Switch | 5 | ✅ | 🔵 6.7 | black-screen, disconnect, hostapp, local-pc-missing, navigation | AW | [speed](w365-switch.md) / [detail](details/w365-switch.md) / [workflow](workflows/w365-switch.md) |
 
-## Topic Index
-
-| # | Topic | Entries | Guide | Details | Workflow |
-|---|-------|---------|-------|---------|----------|
-| 1 | AVD Agent 与 SxS Stack (Part 1) | 15 | [Quick Ref](avd-agent-sxs-1.md) | [Details](details/avd-agent-sxs-1.md) | [Workflow](workflows/avd-agent-sxs-1.md) |
-| 2 | AVD Agent 与 SxS Stack (Part 2) | 22 | [Quick Ref](avd-agent-sxs-2.md) | [Details](details/avd-agent-sxs-2.md) | [Workflow](workflows/avd-agent-sxs-2.md) |
-| 3 | AVD 认证与 SSO (Part 1) | 15 | [Quick Ref](avd-authentication-sso-1.md) | [Details](details/avd-authentication-sso-1.md) | [Workflow](workflows/avd-authentication-sso-1.md) |
-| 4 | AVD 认证与 SSO (Part 2) | 10 | [Quick Ref](avd-authentication-sso-2.md) | [Details](details/avd-authentication-sso-2.md) | [Workflow](workflows/avd-authentication-sso-2.md) |
-| 5 | AVD 认证与 SSO - conditional-access | 3 | [Quick Ref](avd-authentication-sso-conditional-access.md) | [Details](details/avd-authentication-sso-conditional-access.md) | [Workflow](workflows/avd-authentication-sso-conditional-access.md) |
-| 6 | AVD on Azure Stack HCI | 4 | [Quick Ref](avd-azure-stack-hci.md) | [Details](details/avd-azure-stack-hci.md) | [Workflow](workflows/avd-azure-stack-hci.md) |
-| 7 | AVD 黑屏 | 10 | [Quick Ref](avd-black-screen.md) | [Details](details/avd-black-screen.md) | [Workflow](workflows/avd-black-screen.md) |
-| 8 | AVD 条件访问与 MFA - conditional-access | 7 | [Quick Ref](avd-conditional-access-conditional-access.md) | [Details](details/avd-conditional-access-conditional-access.md) | [Workflow](workflows/avd-conditional-access-conditional-access.md) |
-| 9 | AVD 条件访问与 MFA - context-based-redirection | 3 | [Quick Ref](avd-conditional-access-context-based-redire.md) | [Details](details/avd-conditional-access-context-based-redire.md) | [Workflow](workflows/avd-conditional-access-context-based-redire.md) |
-| 10 | AVD 条件访问与 MFA - 杂项 | 6 | [Quick Ref](avd-conditional-access-misc.md) | [Details](details/avd-conditional-access-misc.md) | [Workflow](workflows/avd-conditional-access-misc.md) |
-| 11 | AVD 连接通用 | 15 | [Quick Ref](avd-connection-general.md) | [Details](details/avd-connection-general.md) | [Workflow](workflows/avd-connection-general.md) |
-| 12 | AVD 自定义镜像 (Part 1) | 15 | [Quick Ref](avd-custom-image-1.md) | [Details](details/avd-custom-image-1.md) | [Workflow](workflows/avd-custom-image-1.md) |
-| 13 | AVD 自定义镜像 (Part 2) | 4 | [Quick Ref](avd-custom-image-2.md) | [Details](details/avd-custom-image-2.md) | [Workflow](workflows/avd-custom-image-2.md) |
-| 14 | AVD ARM 部署 (Part 1) | 15 | [Quick Ref](avd-deployment-arm-1.md) | [Details](details/avd-deployment-arm-1.md) | [Workflow](workflows/avd-deployment-arm-1.md) |
-| 15 | AVD ARM 部署 (Part 2) | 13 | [Quick Ref](avd-deployment-arm-2.md) | [Details](details/avd-deployment-arm-2.md) | [Workflow](workflows/avd-deployment-arm-2.md) |
-| 16 | AVD ARM 部署 - deployment-failure | 4 | [Quick Ref](avd-deployment-arm-deployment-failure.md) | [Details](details/avd-deployment-arm-deployment-failure.md) | [Workflow](workflows/avd-deployment-arm-deployment-failure.md) |
-| 17 | AVD 域加入 (Part 1) | 15 | [Quick Ref](avd-domain-join-1.md) | [Details](details/avd-domain-join-1.md) | [Workflow](workflows/avd-domain-join-1.md) |
-| 18 | AVD 域加入 (Part 2) | 9 | [Quick Ref](avd-domain-join-2.md) | [Details](details/avd-domain-join-2.md) | [Workflow](workflows/avd-domain-join-2.md) |
-| 19 | AVD 防火墙与网络 | 15 | [Quick Ref](avd-firewall-network.md) | [Details](details/avd-firewall-network.md) | [Workflow](workflows/avd-firewall-network.md) |
-| 20 | AVD FSLogix 配置文件 (Part 1) | 15 | [Quick Ref](avd-fslogix-1.md) | [Details](details/avd-fslogix-1.md) | [Workflow](workflows/avd-fslogix-1.md) |
-| 21 | AVD FSLogix 配置文件 (Part 2) | 13 | [Quick Ref](avd-fslogix-2.md) | [Details](details/avd-fslogix-2.md) | [Workflow](workflows/avd-fslogix-2.md) |
-| 22 | AVD GPO 配置 | 4 | [Quick Ref](avd-gpo-config.md) | [Details](details/avd-gpo-config.md) | [Workflow](workflows/avd-gpo-config.md) |
-| 23 | AVD Host Pool 与缩放 (Part 1) | 15 | [Quick Ref](avd-host-pool-scaling-1.md) | [Details](details/avd-host-pool-scaling-1.md) | [Workflow](workflows/avd-host-pool-scaling-1.md) |
-| 24 | AVD Host Pool 与缩放 (Part 2) | 2 | [Quick Ref](avd-host-pool-scaling-2.md) | [Details](details/avd-host-pool-scaling-2.md) | [Workflow](workflows/avd-host-pool-scaling-2.md) |
-| 25 | AVD Host Pool 与缩放 - scaling-plan | 8 | [Quick Ref](avd-host-pool-scaling-scaling-plan.md) | [Details](details/avd-host-pool-scaling-scaling-plan.md) | [Workflow](workflows/avd-host-pool-scaling-scaling-plan.md) |
-| 26 | AVD Intune 管理 | 5 | [Quick Ref](avd-intune.md) | [Details](details/avd-intune.md) | [Workflow](workflows/avd-intune.md) |
-| 27 | AVD 许可证 | 10 | [Quick Ref](avd-licensing.md) | [Details](details/avd-licensing.md) | [Workflow](workflows/avd-licensing.md) |
-| 28 | AVD Classic 迁移 | 5 | [Quick Ref](avd-migration-classic.md) | [Details](details/avd-migration-classic.md) | [Workflow](workflows/avd-migration-classic.md) |
-| 29 | AVD 监控与诊断 | 8 | [Quick Ref](avd-monitoring-diagnostics.md) | [Details](details/avd-monitoring-diagnostics.md) | [Workflow](workflows/avd-monitoring-diagnostics.md) |
-| 30 | AVD MSIX App Attach - deprecated-fixed | 5 | [Quick Ref](avd-msix-appattach-deprecated-fixed.md) | [Details](details/avd-msix-appattach-deprecated-fixed.md) | [Workflow](workflows/avd-msix-appattach-deprecated-fixed.md) |
-| 31 | AVD MSIX App Attach - 杂项 | 17 | [Quick Ref](avd-msix-appattach-misc.md) | [Details](details/avd-msix-appattach-misc.md) | [Workflow](workflows/avd-msix-appattach-misc.md) |
-| 32 | AVD 性能 | 9 | [Quick Ref](avd-performance.md) | [Details](details/avd-performance.md) | [Workflow](workflows/avd-performance.md) |
-| 33 | AVD 打印重定向 | 7 | [Quick Ref](avd-printing.md) | [Details](details/avd-printing.md) | [Workflow](workflows/avd-printing.md) |
-| 34 | AVD Private Link | 6 | [Quick Ref](avd-private-link.md) | [Details](details/avd-private-link.md) | [Workflow](workflows/avd-private-link.md) |
-| 35 | AVD RDP Shortpath | 8 | [Quick Ref](avd-rdp-shortpath.md) | [Details](details/avd-rdp-shortpath.md) | [Workflow](workflows/avd-rdp-shortpath.md) |
-| 36 | AVD Session Host (Part 1) | 15 | [Quick Ref](avd-session-host-1.md) | [Details](details/avd-session-host-1.md) | [Workflow](workflows/avd-session-host-1.md) |
-| 37 | AVD Session Host (Part 2) | 15 | [Quick Ref](avd-session-host-2.md) | [Details](details/avd-session-host-2.md) | [Workflow](workflows/avd-session-host-2.md) |
-| 38 | AVD Session Host (Part 3) | 10 | [Quick Ref](avd-session-host-3.md) | [Details](details/avd-session-host-3.md) | [Workflow](workflows/avd-session-host-3.md) |
-| 39 | AVD Session Host Update (SHU) | 6 | [Quick Ref](avd-session-host-update.md) | [Details](details/avd-session-host-update.md) | [Workflow](workflows/avd-session-host-update.md) |
-| 40 | AVD Teams 多媒体 - 杂项 | 14 | [Quick Ref](avd-teams-multimedia-misc.md) | [Details](details/avd-teams-multimedia-misc.md) | [Workflow](workflows/avd-teams-multimedia-misc.md) |
-| 41 | AVD Teams 多媒体 - multimedia-redirection | 3 | [Quick Ref](avd-teams-multimedia-multimedia-redirecti.md) | [Details](details/avd-teams-multimedia-multimedia-redirecti.md) | [Workflow](workflows/avd-teams-multimedia-multimedia-redirecti.md) |
-| 42 | AVD USB 与外设重定向 | 16 | [Quick Ref](avd-usb-peripheral.md) | [Details](details/avd-usb-peripheral.md) | [Workflow](workflows/avd-usb-peripheral.md) |
-| 43 | AVD Web 客户端 - 杂项 | 17 | [Quick Ref](avd-web-client-misc.md) | [Details](details/avd-web-client-misc.md) | [Workflow](workflows/avd-web-client-misc.md) |
-| 44 | AVD Windows Activation (KMS) | 1 | [Quick Ref](avd-windows-activation.md) | [Details](details/avd-windows-activation.md) | [Workflow](workflows/avd-windows-activation.md) |
-| 45 | AVD Windows App 客户端 - 杂项 | 12 | [Quick Ref](avd-windows-app-misc.md) | [Details](details/avd-windows-app-misc.md) | [Workflow](workflows/avd-windows-app-misc.md) |
-| 46 | ContentIdea KB Legacy (Part 1) | 15 | [Quick Ref](contentidea-kb-legacy-1.md) | [Details](details/contentidea-kb-legacy-1.md) | [Workflow](workflows/contentidea-kb-legacy-1.md) |
-| 47 | ContentIdea KB Legacy (Part 2) | 4 | [Quick Ref](contentidea-kb-legacy-2.md) | [Details](details/contentidea-kb-legacy-2.md) | [Workflow](workflows/contentidea-kb-legacy-2.md) |
-| 48 | 数据收集与升级流程 | 8 | [Quick Ref](data-collection-escalation.md) | [Details](details/data-collection-escalation.md) | [Workflow](workflows/data-collection-escalation.md) |
-| 49 | 其他杂项 | 14 | [Quick Ref](general-other.md) | [Details](details/general-other.md) | [Workflow](workflows/general-other.md) |
-| 50 | W365 ANC 网络连接 | 11 | [Quick Ref](w365-anc.md) | [Details](details/w365-anc.md) | [Workflow](workflows/w365-anc.md) |
-| 51 | W365 Graph API 自动化 (Part 1) | 15 | [Quick Ref](w365-automation-graph-1.md) | [Details](details/w365-automation-graph-1.md) | [Workflow](workflows/w365-automation-graph-1.md) |
-| 52 | W365 Graph API 自动化 (Part 2) | 3 | [Quick Ref](w365-automation-graph-2.md) | [Details](details/w365-automation-graph-2.md) | [Workflow](workflows/w365-automation-graph-2.md) |
-| 53 | W365 Boot 启动模式 | 1 | [Quick Ref](w365-boot.md) | [Details](details/w365-boot.md) | [Workflow](workflows/w365-boot.md) |
-| 54 | W365 Cloud Apps | 2 | [Quick Ref](w365-cloud-apps.md) | [Details](details/w365-cloud-apps.md) | [Workflow](workflows/w365-cloud-apps.md) |
-| 55 | W365 第三方连接器 (Citrix/VMware/HP) | 10 | [Quick Ref](w365-connector-3rdparty.md) | [Details](details/w365-connector-3rdparty.md) | [Workflow](workflows/w365-connector-3rdparty.md) |
-| 56 | W365 删除与防欺诈 | 2 | [Quick Ref](w365-deletion-fraud.md) | [Details](details/w365-deletion-fraud.md) | [Workflow](workflows/w365-deletion-fraud.md) |
-| 57 | W365 Frontline 一线员工 - frontline-shared | 8 | [Quick Ref](w365-frontline-frontline-shared.md) | [Details](details/w365-frontline-frontline-shared.md) | [Workflow](workflows/w365-frontline-frontline-shared.md) |
-| 58 | W365 Frontline 一线员工 - 杂项 | 10 | [Quick Ref](w365-frontline-misc.md) | [Details](details/w365-frontline-misc.md) | [Workflow](workflows/w365-frontline-misc.md) |
-| 59 | W365 通用管理 | 12 | [Quick Ref](w365-general.md) | [Details](details/w365-general.md) | [Workflow](workflows/w365-general.md) |
-| 60 | W365 Government (GCC/GCCH) | 11 | [Quick Ref](w365-government.md) | [Details](details/w365-government.md) | [Workflow](workflows/w365-government.md) |
-| 61 | W365 Intune 策略 | 4 | [Quick Ref](w365-intune-policy.md) | [Details](details/w365-intune-policy.md) | [Workflow](workflows/w365-intune-policy.md) |
-| 62 | W365 Link 设备 - 杂项 | 13 | [Quick Ref](w365-link-device-misc.md) | [Details](details/w365-link-device-misc.md) | [Workflow](workflows/w365-link-device-misc.md) |
-| 63 | W365 Link 设备 - windows-365-link | 11 | [Quick Ref](w365-link-device-windows-365-link.md) | [Details](details/w365-link-device-windows-365-link.md) | [Workflow](workflows/w365-link-device-windows-365-link.md) |
-| 64 | W365 Monitoring & Radar | 2 | [Quick Ref](w365-monitoring-radar.md) | [Details](details/w365-monitoring-radar.md) | [Workflow](workflows/w365-monitoring-radar.md) |
-| 65 | W365 Provisioning 配置 (Part 1) | 15 | [Quick Ref](w365-provisioning-1.md) | [Details](details/w365-provisioning-1.md) | [Workflow](workflows/w365-provisioning-1.md) |
-| 66 | W365 Provisioning 配置 (Part 2) | 15 | [Quick Ref](w365-provisioning-2.md) | [Details](details/w365-provisioning-2.md) | [Workflow](workflows/w365-provisioning-2.md) |
-| 67 | W365 Provisioning 配置 (Part 3) | 15 | [Quick Ref](w365-provisioning-3.md) | [Details](details/w365-provisioning-3.md) | [Workflow](workflows/w365-provisioning-3.md) |
-| 68 | W365 Provisioning 配置 (Part 4) | 2 | [Quick Ref](w365-provisioning-4.md) | [Details](details/w365-provisioning-4.md) | [Workflow](workflows/w365-provisioning-4.md) |
-| 69 | W365 Provisioning 配置 - deprovisioned | 5 | [Quick Ref](w365-provisioning-deprovisioned.md) | [Details](details/w365-provisioning-deprovisioned.md) | [Workflow](workflows/w365-provisioning-deprovisioned.md) |
-| 70 | W365 Provisioning 配置 - disk-recovery | 3 | [Quick Ref](w365-provisioning-disk-recovery.md) | [Details](details/w365-provisioning-disk-recovery.md) | [Workflow](workflows/w365-provisioning-disk-recovery.md) |
-| 71 | W365 Provisioning 配置 - provisioning-policy | 9 | [Quick Ref](w365-provisioning-provisioning-policy.md) | [Details](details/w365-provisioning-provisioning-policy.md) | [Workflow](workflows/w365-provisioning-provisioning-policy.md) |
-| 72 | W365 Provisioning 配置 - tenant-score | 4 | [Quick Ref](w365-provisioning-tenant-score.md) | [Details](details/w365-provisioning-tenant-score.md) | [Workflow](workflows/w365-provisioning-tenant-score.md) |
-| 73 | W365 Resize 调整 | 9 | [Quick Ref](w365-resize.md) | [Details](details/w365-resize.md) | [Workflow](workflows/w365-resize.md) |
-| 74 | W365 Switch | 5 | [Quick Ref](w365-switch.md) | [Details](details/w365-switch.md) | [Workflow](workflows/w365-switch.md) |
-
-## Source Statistics
-
-- **ado-wiki**: 357 entries
-- **contentidea-kb**: 146 entries
-- **mslearn**: 68 entries
-- **onenote**: 77 entries
-
----
-*Generated by product-learn synthesize agent on 2026-04-18*
+最后更新: 2026-04-24

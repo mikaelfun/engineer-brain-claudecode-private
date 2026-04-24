@@ -196,6 +196,29 @@ if echo "$SAP_ACCURATE" | grep -q "^MISMATCH"; then
   YELLOW_ITEMS+=("修改 SAP: 当前 \`${SAP_CURRENT}\` → 建议 \`${SAP_SUGGESTED}\`（${SAP_REASON}）")
 fi
 
+# 21v Boundary 检测（cloudScope from sapCheck — LLM 语义判断客户实际环境）
+CLOUD_SCOPE=$(python3 -c "
+import json
+try:
+    meta = json.load(open('$META'))
+    if meta.get('isAR', False):
+        print('skip')
+    else:
+        sc = meta.get('sapCheck', {})
+        cs = sc.get('cloudScope', 'mooncake')
+        current_sap = meta.get('compliance', {}).get('sapPath', '')
+        is_mooncake_sap = '21Vianet' in current_sap or 'Mooncake' in current_sap or 'China' in current_sap
+        if cs == 'global' and is_mooncake_sap:
+            print('GLOBAL_MISMATCH')
+        else:
+            print('OK')
+except:
+    print('OK')
+" 2>/dev/null)
+if [ "$CLOUD_SCOPE" = "GLOBAL_MISMATCH" ]; then
+  RED_ITEMS+=("客户问题实际发生在 Azure Global，但 case SAP 为 Mooncake 路径。需 transfer case 到 Global team 或让客户新开 Global case")
+fi
+
 # Compliance warnings (ISS-218: surface compliance.warnings to todo)
 # This covers SAP scope mismatch detected during assess compliance check,
 # which is separate from the sapCheck done during summarize.

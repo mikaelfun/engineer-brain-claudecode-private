@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Case Row — Clean Icon Ring</title>
+<style>
+  :root {
+    --bg-base: #faf9fb;
+    --bg-surface: #ffffff;
+    --bg-inset: #f5f3f7;
+    --bg-hover: #f3f1f5;
+    --border-subtle: #e8e3f0;
+    --border-default: #d4ccdf;
+    --text-primary: #1f1633;
+    --text-secondary: #3e3554;
+    --text-tertiary: #9e95b0;
+    --text-inverse: #ffffff;
+    --accent-blue: #6a5fc1;
+    --accent-blue-dim: rgba(106,95,193,0.10);
+    --accent-green: #16a34a;
+    --accent-green-dim: rgba(22,163,74,0.10);
+    --accent-amber: #d97706;
+    --accent-amber-dim: rgba(217,119,6,0.10);
+    --accent-red: #dc2626;
+    --accent-purple: #7c3aed;
+    --accent-purple-dim: rgba(124,58,237,0.10);
+    --shadow-card: rgba(0,0,0,0.04) 0 1px 3px;
+    --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg-base); color: var(--text-primary);
+    font-family: 'Rubik', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    padding: 28px 36px;
+  }
+  h1 { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 4px; }
+  .subtitle { font-size: 12px; color: var(--text-secondary); margin-bottom: 24px; line-height: 1.6; }
+  .tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 700; color: var(--accent-blue);
+    margin-bottom: 8px; padding: 4px 12px;
+    background: var(--accent-blue-dim); border-radius: 6px;
+  }
+
+  /* ─── Case Card ─── */
+  .cc { background: var(--bg-surface); border: 1px solid rgba(106,95,193,0.22); border-radius: 14px; overflow: hidden; box-shadow: 0 2px 12px rgba(106,95,193,0.06); margin-bottom: 24px; }
+  .cc.done { border-color: var(--border-subtle); box-shadow: var(--shadow-card); }
+  .hd { display: flex; align-items: center; gap: 10px; padding: 10px 18px; background: var(--bg-inset); }
+  .cn { font-family: var(--font-mono); font-size: 13px; font-weight: 700; }
+  .cn.a { color: var(--accent-blue); }
+  .cn.m { color: rgba(106,95,193,0.55); }
+  .p { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; padding: 2px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; }
+  .p-r { background: var(--accent-blue-dim); color: var(--accent-blue); }
+  .p-g { background: var(--accent-green-dim); color: var(--accent-green); }
+  .p-v { background: var(--accent-purple-dim); color: var(--accent-purple); }
+  .p-a { background: var(--accent-amber-dim); color: var(--accent-amber); }
+  .d { font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary); }
+
+  /* ─── Pipeline ─── */
+  .pipe { display: flex; align-items: flex-start; padding: 16px 20px 6px; }
+  .s {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    position: relative; cursor: pointer; padding: 4px 4px 8px;
+  }
+  /* NO hover background at all */
+  .s-icon {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; flex-shrink: 0;
+    position: relative; z-index: 1;
+    transition: box-shadow 0.2s ease, transform 0.15s ease;
+  }
+  /* Hover: slight scale on icon only */
+  .s:hover .s-icon { transform: scale(1.08); }
+  .s-icon.ok { background: var(--accent-green); color: white; }
+  .s-icon.run { border: 2.5px solid var(--accent-blue); background: var(--accent-blue-dim); color: var(--accent-blue); }
+  .s-icon.run-v { border: 2.5px solid var(--accent-purple); background: var(--accent-purple-dim); color: var(--accent-purple); }
+  .s-icon.w { border: 2px solid var(--border-default); color: var(--text-tertiary); opacity: 0.4; }
+  /* Selected ring — icon only */
+  .s-icon.ring-g { box-shadow: 0 0 0 3px rgba(22,163,74,0.25); }
+  .s-icon.ring-a { box-shadow: 0 0 0 3px rgba(217,119,6,0.25); }
+  .s-icon.ring-b { box-shadow: 0 0 0 3px rgba(106,95,193,0.25); }
+  .s-icon.ring-v { box-shadow: 0 0 0 3px rgba(124,58,237,0.25); }
+
+  .s-lbl { font-size: 11px; font-weight: 700; margin-top: 5px; text-align: center; }
+  .s-lbl.ok { color: var(--accent-green); }
+  .s-lbl.run { color: var(--accent-blue); }
+  .s-lbl.run-v { color: var(--accent-purple); }
+  .s-lbl.w { color: var(--text-tertiary); opacity: 0.4; }
+  .s-dur { font-family: var(--font-mono); font-size: 9px; color: var(--text-tertiary); margin-top: 2px; }
+
+  /* Connectors */
+  .s + .s::before {
+    content: ''; position: absolute;
+    top: 20px; height: 2px; border-radius: 1px;
+    right: calc(50% + 20px); left: calc(-50% + 20px);
+  }
+  .s.cg + .s::before { background: var(--accent-green); opacity: 0.45; }
+  .s + .s.ch::before { background: linear-gradient(90deg, var(--accent-green), var(--accent-blue)); opacity: 0.45; }
+  .s + .s.chp::before { background: linear-gradient(90deg, var(--accent-green), var(--accent-purple)); opacity: 0.45; }
+  .s + .s.ce::before { background: var(--border-subtle); }
+
+  /* ─── Detail ─── */
+  .dp { padding: 0 20px 16px; }
+  .db {
+    background: var(--bg-inset); border: 1px solid var(--border-subtle);
+    border-radius: 10px; padding: 14px 16px;
+    animation: sd 0.2s ease-out;
+  }
+  @keyframes sd { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+  .dt { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-tertiary); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .dt .dot { width: 6px; height: 6px; border-radius: 50%; }
+
+  /* Subtask grid */
+  .stg { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+  .sti { display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 8px; background: var(--bg-surface); border: 1px solid var(--border-subtle); }
+  .std { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .stn { font-size: 11px; font-weight: 600; }
+  .stv { font-size: 9px; color: var(--text-tertiary); margin-left: auto; white-space: nowrap; }
+
+  /* Assess */
+  .as { margin-bottom: 8px; }
+  .al { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-tertiary); margin-bottom: 4px; }
+  .at { font-size: 11px; color: var(--text-secondary); line-height: 1.6; }
+  .ep { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+  .es { font-size: 10px; font-weight: 600; padding: 3px 10px; border-radius: 6px; background: var(--bg-surface); border: 1px solid var(--border-subtle); color: var(--text-secondary); display: flex; align-items: center; gap: 4px; }
+  .es .n { font-size: 8px; font-weight: 800; width: 14px; height: 14px; border-radius: 50%; background: var(--accent-blue-dim); color: var(--accent-blue); display: flex; align-items: center; justify-content: center; }
+
+  /* Action chain */
+  .ac { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; row-gap: 8px; }
+  .an { display: flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 600; border: 1px solid var(--border-subtle); background: var(--bg-surface); transition: box-shadow 0.15s ease; }
+  .an:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .an.ok { border-color: rgba(22,163,74,0.2); color: var(--accent-green); }
+  .an.run { border-color: rgba(106,95,193,0.25); color: var(--accent-blue); background: rgba(106,95,193,0.04); }
+  .an.rv { border-color: rgba(124,58,237,0.25); color: var(--accent-purple); background: rgba(124,58,237,0.04); }
+  .an.w { opacity: 0.4; color: var(--text-tertiary); border-style: dashed; }
+  .an .md { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .an.ok .md { background: var(--accent-green); }
+  .an.run .md { background: var(--accent-blue); animation: pulse 2s ease-in-out infinite; }
+  .an.rv .md { background: var(--accent-purple); animation: pulse 2s ease-in-out infinite; }
+  .an.w .md { background: var(--border-default); }
+  .ad { font-size: 9px; opacity: 0.65; font-weight: 400; margin-left: 2px; }
+  .aa { font-size: 10px; color: var(--text-tertiary); flex-shrink: 0; }
+
+  /* Summary todos */
+  .tl { list-style: none; }
+  .ti { display: flex; align-items: flex-start; gap: 8px; padding: 5px 0; font-size: 11px; color: var(--text-secondary); line-height: 1.5; }
+  .tc { width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid var(--accent-green); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; color: var(--accent-green); font-size: 9px; }
+
+  /* Collapsed */
+  .fp { display: flex; align-items: center; gap: 2px; }
+  .fl { padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 600; background: var(--bg-inset); color: var(--text-tertiary); }
+  .fa { font-size: 9px; color: var(--text-tertiary); padding: 0 1px; }
+
+  @keyframes pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.5; transform:scale(0.7); } }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .spin { animation: spin 1s linear infinite; display: inline-block; }
+</style>
+</head>
+<body>
+
+<h1>Case Row — 纯图标交互</h1>
+<p class="subtitle">步骤区域无 hover 背景 · 图标 hover 微放大 · 选中仅图标 ring · 连线不受干扰</p>
+
+<!-- ═══ 1: Act selected ═══ -->
+<div class="tag">① Act 选中</div>
+<div class="cc">
+  <div class="hd">
+    <span class="cn a">2504010005</span>
+    <span class="p p-v"><span class="spin" style="font-size:8px;">⟳</span> Reassess</span>
+    <div style="flex:1"></div>
+    <span class="d">3m 42s</span>
+  </div>
+  <div class="pipe">
+    <div class="s"><div class="s-icon ok">✓</div><div class="s-lbl ok">Refresh</div><div class="s-dur">8s</div></div>
+    <div class="s cg"><div class="s-icon ok">✓</div><div class="s-lbl ok">Assess</div><div class="s-dur">12s</div></div>
+    <div class="s chp"><div class="s-icon run-v ring-v"><div style="width:10px;height:10px;border-radius:50%;background:var(--accent-purple);animation:pulse 2s ease-in-out infinite;"></div></div><div class="s-lbl run-v">Act</div></div>
+    <div class="s ce"><div class="s-icon w">📄</div><div class="s-lbl w">Summary</div></div>
+  </div>
+  <div class="dp"><div class="db">
+    <div class="dt"><div class="dot" style="background:var(--accent-purple)"></div>Action Flow</div>
+    <div class="ac">
+      <div class="an ok"><div class="md"></div>Assess<span class="ad">· needs-action</span></div>
+      <span class="aa">→</span>
+      <div class="an ok"><div class="md"></div>Troubleshoot<span class="ad">· 1m 20s</span></div>
+      <span class="aa">→</span>
+      <div class="an rv"><div class="md"></div>Reassess<span class="ad"><span class="spin" style="font-size:8px;">⟳</span> evaluating…</span></div>
+      <span class="aa">→</span>
+      <div class="an w"><div class="md"></div>Challenger</div>
+      <span class="aa">→</span>
+      <div class="an w"><div class="md"></div>Email</div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ═══ 2: Refresh selected ═══ -->
+<div class="tag">② Refresh 选中</div>
+<div class="cc">
+  <div class="hd">
+    <span class="cn a">2504010005</span>
+    <span class="p p-v"><span class="spin" style="font-size:8px;">⟳</span> Reassess</span>
+    <div style="flex:1"></div>
+    <span class="d">3m 42s</span>
+  </div>
+  <div class="pipe">
+    <div class="s"><div class="s-icon ok ring-g">✓</div><div class="s-lbl ok">Refresh</div><div class="s-dur">8s</div></div>
+    <div class="s cg"><div class="s-icon ok">✓</div><div class="s-lbl ok">Assess</div><div class="s-dur">12s</div></div>
+    <div class="s chp"><div class="s-icon run-v"><div style="width:10px;height:10px;border-radius:50%;background:var(--accent-purple);animation:pulse 2s ease-in-out infinite;"></div></div><div class="s-lbl run-v">Act</div></div>
+    <div class="s ce"><div class="s-icon w">📄</div><div class="s-lbl w">Summary</div></div>
+  </div>
+  <div class="dp"><div class="db">
+    <div class="dt"><div class="dot" style="background:var(--accent-green)"></div>Data Refresh · 8s</div>
+    <div class="stg">
+      <div class="sti"><div class="std" style="background:var(--accent-green)"></div><span class="stn" style="color:var(--accent-green)">D365</span><span class="stv">+3 emails · +1 note</span></div>
+      <div class="sti"><div class="std" style="background:var(--accent-green)"></div><span class="stn" style="color:var(--accent-green)">Teams</span><span class="stv">2 new msgs</span></div>
+      <div class="sti"><div class="std" style="background:var(--accent-green)"></div><span class="stn" style="color:var(--accent-green)">ICM</span><span class="stv">+1 discussion</span></div>
+      <div class="sti"><div class="std" style="background:var(--accent-green)"></div><span class="stn" style="color:var(--accent-green)">OneNote</span><span class="stv">1 page</span></div>
+      <div class="sti"><div class="std" style="background:var(--text-tertiary);opacity:0.4"></div><span class="stn" style="color:var(--text-tertiary);opacity:0.6">Attach</span><span class="stv" style="opacity:0.5">skipped</span></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ═══ 3: Assess selected ═══ -->
+<div class="tag">③ Assess 选中</div>
+<div class="cc">
+  <div class="hd">
+    <span class="cn a">2504010005</span>
+    <span class="p p-v"><span class="spin" style="font-size:8px;">⟳</span> Reassess</span>
+    <div style="flex:1"></div>
+    <span class="d">3m 42s</span>
+  </div>
+  <div class="pipe">
+    <div class="s"><div class="s-icon ok">✓</div><div class="s-lbl ok">Refresh</div><div class="s-dur">8s</div></div>
+    <div class="s cg"><div class="s-icon ok ring-a">✓</div><div class="s-lbl ok">Assess</div><div class="s-dur">12s</div></div>
+    <div class="s chp"><div class="s-icon run-v"><div style="width:10px;height:10px;border-radius:50%;background:var(--accent-purple);animation:pulse 2s ease-in-out infinite;"></div></div><div class="s-lbl run-v">Act</div></div>
+    <div class="s ce"><div class="s-icon w">📄</div><div class="s-lbl w">Summary</div></div>
+  </div>
+  <div class="dp"><div class="db">
+    <div class="dt"><div class="dot" style="background:var(--accent-amber)"></div>Assess · 12s <span class="p p-a" style="margin-left:4px">needs-action</span></div>
+    <div class="as">
+      <div class="al">Reasoning</div>
+      <div class="at">客户 4/18 发送新邮件追问 WAF rule 配置问题进展。最新邮件明确要求 root cause 分析和 next step。Teams 中 PG 已回复建议检查 Front Door WAF policy 与 custom rule 冲突。</div>
+    </div>
+    <div class="as">
+      <div class="al">Execution Plan</div>
+      <div class="ep">
+        <div class="es"><span class="n">1</span>Troubleshoot (Kusto WAF logs)</div>
+        <div class="es"><span class="n">2</span>Reassess findings</div>
+        <div class="es"><span class="n">3</span>Challenger review</div>
+        <div class="es"><span class="n">4</span>Email drafter</div>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ═══ 4: Summary selected ═══ -->
+<div class="tag">④ Summary 选中（完成 case）</div>
+<div class="cc done">
+  <div class="hd">
+    <span class="cn m">2503150023</span>
+    <span class="p p-g">✓ Done</span>
+    <div style="flex:1"></div>
+    <span class="d">1m 52s</span>
+  </div>
+  <div class="pipe">
+    <div class="s"><div class="s-icon ok">✓</div><div class="s-lbl ok">Refresh</div><div class="s-dur">6s</div></div>
+    <div class="s cg"><div class="s-icon ok">✓</div><div class="s-lbl ok">Assess</div><div class="s-dur">10s</div></div>
+    <div class="s cg"><div class="s-icon ok">✓</div><div class="s-lbl ok">Act</div><div class="s-dur">52s</div></div>
+    <div class="s cg"><div class="s-icon ok ring-g">✓</div><div class="s-lbl ok">Summary</div><div class="s-dur">14s</div></div>
+  </div>
+  <div class="dp"><div class="db">
+    <div class="dt"><div class="dot" style="background:var(--accent-green)"></div>Summary · Todo Generated</div>
+    <ul class="tl">
+      <li class="ti"><div class="tc">✓</div><div><div style="font-weight:600;color:var(--text-primary)">Review email draft</div><div style="font-size:10px;color:var(--text-tertiary);margin-top:1px">drafts/follow-up-20260420.md — confirm WAF rule changes</div></div></li>
+      <li class="ti"><div class="tc" style="border-color:var(--accent-amber);color:var(--accent-amber)">!</div><div><div style="font-weight:600;color:var(--text-primary)">PG action pending</div><div style="font-size:10px;color:var(--text-tertiary);margin-top:1px">Waiting for PG to confirm Front Door config ETA</div></div></li>
+    </ul>
+  </div></div>
+</div>
+
+<!-- ═══ 5: Default active — no ring ═══ -->
+<div class="tag">⑤ Active 默认态 — 无 ring，Act 自动展开</div>
+<div class="cc">
+  <div class="hd">
+    <span class="cn a">2504080019</span>
+    <span class="p p-r"><span class="spin" style="font-size:8px;">⟳</span> Troubleshoot</span>
+    <div style="flex:1"></div>
+    <span class="d">1m 08s</span>
+  </div>
+  <div class="pipe">
+    <div class="s"><div class="s-icon ok">✓</div><div class="s-lbl ok">Refresh</div><div class="s-dur">7s</div></div>
+    <div class="s cg"><div class="s-icon ok">✓</div><div class="s-lbl ok">Assess</div><div class="s-dur">15s</div></div>
+    <div class="s ch"><div class="s-icon run"><div style="width:10px;height:10px;border-radius:50%;background:var(--accent-blue);animation:pulse 2s ease-in-out infinite;"></div></div><div class="s-lbl run">Act</div></div>
+    <div class="s ce"><div class="s-icon w">📄</div><div class="s-lbl w">Summary</div></div>
+  </div>
+  <div class="dp"><div class="db">
+    <div class="dt"><div class="dot" style="background:var(--accent-blue)"></div>Action Flow</div>
+    <div class="ac">
+      <div class="an ok"><div class="md"></div>Assess<span class="ad">· needs-action</span></div>
+      <span class="aa">→</span>
+      <div class="an run"><div class="md"></div>Troubleshoot<span class="ad"><span class="spin" style="font-size:8px;">⟳</span> Kusto query…</span></div>
+      <span class="aa">→</span>
+      <div class="an w"><div class="md"></div>Reassess</div>
+      <span class="aa">→</span>
+      <div class="an w"><div class="md"></div>Email</div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ═══ 6: Collapsed ═══ -->
+<div class="tag">⑥ 折叠态</div>
+<div class="cc done">
+  <div class="hd" style="cursor:pointer">
+    <span style="color:var(--text-tertiary);font-size:14px">›</span>
+    <span class="cn m">2501080001</span>
+    <span class="p p-g">✓ Done</span>
+    <div class="fp">
+      <span class="fl">assess</span><span class="fa">→</span>
+      <span class="fl" style="background:var(--accent-green-dim);color:var(--accent-green)">no-change</span>
+    </div>
+    <div style="flex:1"></div>
+    <span class="d">45s</span>
+  </div>
+</div>
+
+</body>
+</html>

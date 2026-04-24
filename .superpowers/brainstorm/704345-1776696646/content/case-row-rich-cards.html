@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Case Row — Rich Action Cards</title>
+<style>
+  :root {
+    --bg-base: #faf9fb;
+    --bg-surface: #ffffff;
+    --bg-inset: #f5f3f7;
+    --border-subtle: #e8e3f0;
+    --border-default: #d4ccdf;
+    --text-primary: #1f1633;
+    --text-secondary: #3e3554;
+    --text-tertiary: #9e95b0;
+    --text-inverse: #ffffff;
+    --accent-blue: #6a5fc1;
+    --accent-blue-dim: rgba(106,95,193,0.10);
+    --accent-green: #16a34a;
+    --accent-green-dim: rgba(22,163,74,0.10);
+    --accent-amber: #d97706;
+    --accent-amber-dim: rgba(217,119,6,0.10);
+    --accent-purple: #7c3aed;
+    --accent-purple-dim: rgba(124,58,237,0.10);
+    --accent-red: #dc2626;
+    --accent-red-dim: rgba(220,38,38,0.10);
+    --shadow-card: rgba(0,0,0,0.04) 0 1px 3px;
+    --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg-base); color: var(--text-primary); font-family: 'Rubik', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 28px 36px; }
+  h1 { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 4px; }
+  .sub { font-size: 12px; color: var(--text-secondary); margin-bottom: 24px; line-height: 1.7; }
+  .tag { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: var(--accent-blue); margin-bottom: 8px; padding: 4px 12px; background: var(--accent-blue-dim); border-radius: 6px; }
+
+  .cc { background: var(--bg-surface); border: 1px solid rgba(106,95,193,0.22); border-radius: 14px; overflow: hidden; box-shadow: 0 2px 12px rgba(106,95,193,0.06); margin-bottom: 28px; }
+  .cc.dn { border-color: var(--border-subtle); box-shadow: var(--shadow-card); }
+  .hd { display: flex; align-items: center; gap: 10px; padding: 10px 18px; background: var(--bg-inset); }
+  .cn { font-family: var(--font-mono); font-size: 13px; font-weight: 700; }
+  .cn.a { color: var(--accent-blue); }
+  .cn.m { color: rgba(106,95,193,0.55); }
+  .p { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; padding: 2px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; }
+  .pr { background: var(--accent-blue-dim); color: var(--accent-blue); }
+  .pg { background: var(--accent-green-dim); color: var(--accent-green); }
+  .pv { background: var(--accent-purple-dim); color: var(--accent-purple); }
+  .pa { background: var(--accent-amber-dim); color: var(--accent-amber); }
+  .d { font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary); }
+
+  /* Pipeline 3-step */
+  .pipe { display: flex; align-items: flex-start; padding: 16px 24px 6px; }
+  .s { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; cursor: pointer; padding: 4px 4px 8px; }
+  .si { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; position: relative; z-index: 1; transition: transform 0.15s ease, box-shadow 0.2s ease; }
+  .s:hover .si { transform: scale(1.08); }
+  .si.ok { background: var(--accent-green); color: white; }
+  .si.run { border: 2.5px solid var(--accent-blue); background: var(--accent-blue-dim); }
+  .si.rnv { border: 2.5px solid var(--accent-purple); background: var(--accent-purple-dim); }
+  .si.w { border: 2px solid var(--border-default); color: var(--text-tertiary); opacity: 0.4; }
+  .si.rg { box-shadow: 0 0 0 3px rgba(22,163,74,0.25); }
+  .si.rv { box-shadow: 0 0 0 3px rgba(124,58,237,0.25); }
+  .si.rb { box-shadow: 0 0 0 3px rgba(106,95,193,0.25); }
+  .sl { font-size: 11px; font-weight: 700; margin-top: 5px; }
+  .sl.ok { color: var(--accent-green); }
+  .sl.run { color: var(--accent-blue); }
+  .sl.rnv { color: var(--accent-purple); }
+  .sl.w { color: var(--text-tertiary); opacity: 0.4; }
+  .sd { font-family: var(--font-mono); font-size: 9px; color: var(--text-tertiary); margin-top: 2px; }
+  .s + .s::before { content: ''; position: absolute; top: 20px; height: 2px; border-radius: 1px; right: calc(50% + 20px); left: calc(-50% + 20px); background: var(--border-subtle); }
+  .s + .s.cg::before { background: var(--accent-green); opacity: 0.45; }
+  .s + .s.ch::before { background: linear-gradient(90deg, var(--accent-green), var(--accent-blue)); opacity: 0.45; }
+  .s + .s.chp::before { background: linear-gradient(90deg, var(--accent-green), var(--accent-purple)); opacity: 0.45; }
+  .s + .s.ce::before { background: var(--border-subtle); }
+
+  /* Detail panel */
+  .dp { padding: 0 20px 16px; }
+  .db { background: var(--bg-inset); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 14px 16px; animation: sd 0.2s ease-out; }
+  @keyframes sd { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+  .dt { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-tertiary); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+  .dt .dot { width: 6px; height: 6px; border-radius: 50%; }
+
+  /* ─── Rich Action Cards ─── */
+  .action-flow {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  /* Single action card */
+  .acard {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    position: relative;
+  }
+  /* Left: timeline dot + line */
+  .acard-timeline {
+    width: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+    padding-top: 14px;
+  }
+  .acard-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    z-index: 1;
+  }
+  .acard-dot.ok { background: var(--accent-green); }
+  .acard-dot.run { background: var(--accent-blue); animation: pulse 2s ease-in-out infinite; }
+  .acard-dot.rnv { background: var(--accent-purple); animation: pulse 2s ease-in-out infinite; }
+  .acard-dot.w { background: var(--border-default); opacity: 0.35; }
+  .acard-line {
+    width: 2px;
+    flex: 1;
+    border-radius: 1px;
+    margin-top: 4px;
+  }
+  .acard-line.ok { background: rgba(22,163,74,0.2); }
+  .acard-line.run { background: rgba(106,95,193,0.15); }
+  .acard-line.rnv { background: rgba(124,58,237,0.15); }
+  .acard-line.w { background: var(--border-subtle); opacity: 0.5; }
+
+  /* Right: card body */
+  .acard-body {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 0 8px 10px;
+  }
+  .acard-inner {
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    transition: box-shadow 0.15s ease;
+  }
+  .acard-inner:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+  .acard-inner.active-card { border-color: rgba(106,95,193,0.25); background: rgba(106,95,193,0.03); }
+  .acard-inner.active-v { border-color: rgba(124,58,237,0.25); background: rgba(124,58,237,0.03); }
+  .acard-inner.wait-card { border-style: dashed; opacity: 0.45; }
+
+  .acard-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .acard-name {
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .acard-name.ok { color: var(--accent-green); }
+  .acard-name.run { color: var(--accent-blue); }
+  .acard-name.rnv { color: var(--accent-purple); }
+  .acard-name.w { color: var(--text-tertiary); }
+  .acard-dur {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-tertiary);
+    margin-left: auto;
+  }
+  .acard-detail {
+    margin-top: 5px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.55;
+  }
+  .acard-detail.subtle { color: var(--text-tertiary); font-style: italic; }
+  .acard-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+  }
+  .acard-tag {
+    font-size: 9px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--bg-inset);
+    color: var(--text-tertiary);
+  }
+
+  /* Subtask grid (for Refresh detail) */
+  .stg { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+  .sti { display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 8px; background: var(--bg-surface); border: 1px solid var(--border-subtle); }
+
+  /* Todo */
+  .tl { list-style: none; }
+  .ti { display: flex; align-items: flex-start; gap: 8px; padding: 5px 0; font-size: 11px; color: var(--text-secondary); line-height: 1.5; }
+  .tc { width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid var(--accent-green); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; color: var(--accent-green); font-size: 9px; }
+
+  @keyframes pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.5; transform:scale(0.7); } }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .spin { animation: spin 1s linear infinite; display: inline-block; }
+</style>
+</head>
+<body>
+
+<h1>Case Row — Rich Action Cards</h1>
+<p class="sub">Action Flow 改为<b>垂直卡片列表</b>，每个 action 是一张卡片，有足够空间展示 reasoning / findings / detail。左侧时间线连接。</p>
+
+<!-- ═══ 1: 复杂 case — Act 展开 ═══ -->
+<div class="tag">① 复杂 case — 完整 action flow</div>
+<div class="cc">
+  <div class="hd">
+    <span class="cn a">2504010005</span>
+    <span class="p pv"><span class="spin" style="font-size:8px;">⟳</span> Reassess</span>
+    <div style="flex:1"></div><span class="d">3m 42s</span>
+  </div>
+  <div class="pipe">
+    <div class="s">      <div class="si ok">✓</div>  <div class="sl ok">Refresh</div><div class="sd">8s</div></div>
+    <div class="s chp">  <div class="si rnv rv"><div style="width:10px;height:10px;border-radius:50%;background:var(--accent-purple);animation:pulse 2s ease-in-out infinite;"></div></div>  <div class="sl rnv">Act</div></div>
+    <div class="s ce">   <div class="si w">📄</div>  <div class="sl w">Summary</div></div>
+  </div>
+  <div class="dp"><div class="db">
+    <div class="dt"><div class="dot" style="background:var(--accent-purple)"></div>Action Flow</div>
+    <div class="action-flow">
+
+      <!-- Assess (done) -->
+      <div class="acard">
+        <div class="acard-timeline">
+          <div class="acard-dot ok"></div>
+          <div class="acard-line ok"></div>
+        </div>
+        <div class="acard-body">
+          <div class="acard-inner">
+            <div class="acard-head">
+              <span class="acard-name ok">Assess</span>
+              <span class="p pa" style="font-size:8px;">needs-action</span>
+              <span class="acard-dur">12s</span>
+            </div>
+            <div class="acard-detail">客户 4/18 新邮件追问 WAF rule 排查进展，要求 root cause + next step。PG 在 Teams 建议检查 Front Door WAF policy 冲突。</div>
+            <div class="acard-tags">
+              <span class="acard-tag">+3 emails unread</span>
+              <span class="acard-tag">PG replied in Teams</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Troubleshoot (done) -->
+      <div class="acard">
+        <div class="acard-timeline">
+          <div class="acard-dot ok"></div>
+          <div class="acard-line ok"></div>
+        </div>
+        <div class="acard-body">
+          <div class="acard-inner">
+            <div class="acard-head">
+              <span class="acard-name ok">Troubleshoot</span>
+              <span class="acard-dur">1m 20s</span>
+            </div>
+            <div class="acard-detail">Kusto 查询 AzureDiagnostics 发现 WAF custom rule "BlockCN" 与 managed rule OWASP 3.2 冲突，导致合法请求被 403。建议客户禁用 custom rule 或调整 priority。</div>
+            <div class="acard-tags">
+              <span class="acard-tag">Kusto: 3 queries</span>
+              <span class="acard-tag">msft-learn: 2 docs</span>
+              <span class="acard-tag">root cause identified</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reassess (active) -->
+      <div class="acard">
+        <div class="acard-timeline">
+          <div class="acard-dot rnv"></div>
+          <div class="acard-line rnv"></div>
+        </div>
+        <div class="acard-body">
+          <div class="acard-inner active-v">
+            <div class="acard-head">
+              <span class="acard-name rnv">Reassess</span>
+              <span class="p pv" style="font-size:8px;"><span class="spin" style="font-size:7px;">⟳</span> evaluating</span>
+            </div>
+            <div class="acard-detail" style="color:var(--accent-purple);opacity:0.7;">Reviewing troubleshoot findings against customer's original question…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Challenger (pending) -->
+      <div class="acard">
+        <div class="acard-timeline">
+          <div class="acard-dot w"></div>
+          <div class="acard-line w"></div>
+        </div>
+        <div class="acard-body">
+          <div class="acard-inner wait-card">
+            <div class="acard-head">
+              <span class="acard-name w">Challenger</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Email (pending) -->
+      <div class="acard">
+        <div class="acard-timeline">
+          <div class="acard-dot w"></div>
+        </div>
+        <div class="acard-body">
+          <div class="acard-inner wait-card">
+            <div class="acard-head">
+              <span class="acard-name w">Email Drafter</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div></div>
+</div>
+
+<!-- ═══ 2: 简单 case — assess no-change ═══ -->
+<div class="tag">② 简单 case — Assess → no-change</div>
+<div class="cc">
+  <div class="hd">
+    <span class="cn a">2501080001</span>
+    <span class="p pr"><span class="spin" style="font-size:8px;">⟳</span> Summary</span>
+    <div style="flex:1"></div><span class="d">28s</span>
+  </div>
+  <div class="pipe">
+    <div class="s">     <div class="si ok">✓</div>  <div class="sl ok">Refresh</div><div class="sd">6s</div></div>
+    <div class="s cg">  <div class="si ok">✓</div>  <div class="sl ok">Act</div><div class="sd">8s</div></div>
+    <div class="s ch">  <div class="si run"><div style="width:10px;height:10px;border-radius:50%;background:var(--accent-blue);animation:pulse 2s ease-in-out infinite;"></div></div>  <div class="sl run">Summary</div></div>
+  </div>
+  <div class="dp"><div class="db">
+    <div class="dt"><div class="dot" style="background:var(--accent-blue)"></div>Action Flow</div>
+    <div class="action-flow">
+      <div class="acard">
+        <div class="acard-timeline">
+          <div class="acard-dot ok"></div>
+        </div>
+        <div class="acard-body">
+          <div class="acard-inner">
+            <div class="acard-head">
+              <span class="acard-name ok">Assess</span>
+              <span class="p pg" style="font-size:8px;">no-change</span>
+              <span class="acard-dur">8s</span>
+            </div>
+            <div class="acard-detail">无新邮件、无新 Teams 消息。Case 状态无变化，无需操作。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ═══ 3: 完成 case — 点击 Act 查看完整 flow ═══ -->
+<div class="tag">③ 完成 case — 完整 flow 回顾</div>
+<div class="cc dn">
+  <div class="hd">
+    <span class="cn m">2503150023</span>
+    <span class="p pg">✓ Done</span>
+    <div style="flex:1"></div><span class="d">2m 34s</span>
+  </div>
+  <div class="pipe">
+    <div class="s">     <div class="si ok">✓</div>     <div class="sl ok">Refresh</div><div class="sd">6s</div></div>
+    <div class="s cg">  <div class="si ok rg">✓</div>  <div class="sl ok">Act</div><div class="sd">1m 58s</div></div>
+    <div class="s cg">  <div class="si ok">✓</div>     <div class="sl ok">Summary</div><div class="sd">14s</div></div>
+  </div>
+  <div class="dp"><div class="db">
+    <div class="dt"><div class="dot" style="background:var(--accent-green)"></div>Action Flow · 1m 58s</div>
+    <div class="action-flow">
+
+      <div class="acard">
+        <div class="acard-timeline">
+          <div class="acard-dot ok"></div>
+          <div class="acard-line ok"></div>
+        </div>
+        <div class="acard-body">
+          <div class="acard-inner">
+            <div class="acard-head">
+              <span class="acard-name ok">Assess</span>
+              <span class="p pa" style="font-size:8px;">needs-action</span>
+              <span class="acard-dur">10s</span>
+            </div>
+            <div class="acard-detail">客户邮件请求 SSL 证书更新状态确认。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="acard">
+        <div class="acard-timeline">
+          <div class="acard-dot ok"></div>
+          <div class="acard-line ok"></div>
+        </div>
+        <div class="acard-body">
+          <div class="acard-inner">
+            <div class="acard-head">
+              <span class="acard-name ok">Troubleshoot</span>
+              <span class="acard-dur">52s</span>
+            </div>
+            <div class="acard-detail">确认 App Service 证书已自动续期，新证书 SHA 指纹匹配。DNS validation 通过。</div>
+            <div class="acard-tags">
+              <span class="acard-tag">Kusto: 1 query</span>
+              <span class="acard-tag">cert renewed</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="acard">
+        <div class="acard-timeline">
+          <div class="acard-dot ok"></div>
+        </div>
+        <div class="acard-body">
+          <div class="acard-inner">
+            <div class="acard-head">
+              <span class="acard-name ok">Email Drafter</span>
+              <span class="acard-dur">38s</span>
+            </div>
+            <div class="acard-detail">Generated result-confirm email with cert renewal details.</div>
+            <div class="acard-tags">
+              <span class="acard-tag">drafts/result-confirm-20260420.md</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div></div>
+</div>
+
+<!-- ═══ 4: Refresh 选中 ═══ -->
+<div class="tag">④ 点击 Refresh — subtask 详情</div>
+<div class="cc">
+  <div class="hd">
+    <span class="cn a">2504010005</span>
+    <span class="p pv"><span class="spin" style="font-size:8px;">⟳</span> Reassess</span>
+    <div style="flex:1"></div><span class="d">3m 42s</span>
+  </div>
+  <div class="pipe">
+    <div class="s">      <div class="si ok rg">✓</div>  <div class="sl ok">Refresh</div><div class="sd">8s</div></div>
+    <div class="s chp">  <div class="si rnv"><div style="width:10px;height:10px;border-radius:50%;background:var(--accent-purple);animation:pulse 2s ease-in-out infinite;"></div></div>  <div class="sl rnv">Act</div></div>
+    <div class="s ce">   <div class="si w">📄</div>  <div class="sl w">Summary</div></div>
+  </div>
+  <div class="dp"><div class="db">
+    <div class="dt"><div class="dot" style="background:var(--accent-green)"></div>Data Refresh · 8s</div>
+    <div class="stg">
+      <div class="sti"><div style="width:6px;height:6px;border-radius:50%;background:var(--accent-green);flex-shrink:0"></div><span style="font-size:11px;font-weight:600;color:var(--accent-green)">D365</span><span style="font-size:9px;color:var(--text-tertiary);margin-left:auto">+3 emails · +1 note</span></div>
+      <div class="sti"><div style="width:6px;height:6px;border-radius:50%;background:var(--accent-green);flex-shrink:0"></div><span style="font-size:11px;font-weight:600;color:var(--accent-green)">Teams</span><span style="font-size:9px;color:var(--text-tertiary);margin-left:auto">2 msgs</span></div>
+      <div class="sti"><div style="width:6px;height:6px;border-radius:50%;background:var(--accent-green);flex-shrink:0"></div><span style="font-size:11px;font-weight:600;color:var(--accent-green)">ICM</span><span style="font-size:9px;color:var(--text-tertiary);margin-left:auto">+1 disc</span></div>
+      <div class="sti"><div style="width:6px;height:6px;border-radius:50%;background:var(--accent-green);flex-shrink:0"></div><span style="font-size:11px;font-weight:600;color:var(--accent-green)">OneNote</span><span style="font-size:9px;color:var(--text-tertiary);margin-left:auto">1 page</span></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ═══ 5: Summary 选中 ═══ -->
+<div class="tag">⑤ Summary — Todo</div>
+<div class="cc dn">
+  <div class="hd">
+    <span class="cn m">2503150023</span>
+    <span class="p pg">✓ Done</span>
+    <div style="flex:1"></div><span class="d">2m 34s</span>
+  </div>
+  <div class="pipe">
+    <div class="s">     <div class="si ok">✓</div>     <div class="sl ok">Refresh</div><div class="sd">6s</div></div>
+    <div class="s cg">  <div class="si ok">✓</div>     <div class="sl ok">Act</div><div class="sd">1m 58s</div></div>
+    <div class="s cg">  <div class="si ok rg">✓</div>  <div class="sl ok">Summary</div><div class="sd">14s</div></div>
+  </div>
+  <div class="dp"><div class="db">
+    <div class="dt"><div class="dot" style="background:var(--accent-green)"></div>Summary · Todo</div>
+    <ul class="tl">
+      <li class="ti"><div class="tc">✓</div><div><div style="font-weight:600;color:var(--text-primary)">Review email draft</div><div style="font-size:10px;color:var(--text-tertiary);margin-top:1px">drafts/result-confirm-20260420.md</div></div></li>
+      <li class="ti"><div class="tc" style="border-color:var(--accent-amber);color:var(--accent-amber)">!</div><div><div style="font-weight:600;color:var(--text-primary)">Confirm cert binding</div><div style="font-size:10px;color:var(--text-tertiary);margin-top:1px">Verify custom domain SSL in portal</div></div></li>
+    </ul>
+  </div></div>
+</div>
+
+</body>
+</html>
