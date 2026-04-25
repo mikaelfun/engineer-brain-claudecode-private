@@ -711,6 +711,18 @@ async function cmdStart() {
     // 等页面加载完
     await page.waitForTimeout(8000);
 
+    // Post-SSO check: goto may report success but page redirected to login during wait
+    const postWaitUrl = page.url();
+    if (postWaitUrl.includes('login.microsoftonline.com') || postWaitUrl.includes('login.live.com')) {
+      log(`[${name}] Post-wait: on login page, retrying SSO...`);
+      const retry = await getHandleSSO()(page, {
+        targetDomain: config.tab,
+        log: (msg) => log(`[${name}] ${msg}`)
+      });
+      log(`[${name}] SSO retry: ${retry.action}`);
+      await page.waitForTimeout(5000);
+    }
+
     // 提取 token（session tab 跳过）
     if (config.tokenSource === 'none') {
       log(`[${name}] Session tab ready`);
