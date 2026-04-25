@@ -1163,7 +1163,8 @@ async function cmdWarmup() {
   // 后台启动 daemon
   const child = spawn(process.execPath, [__filename, 'start'], {
     detached: true,
-    stdio: 'ignore'
+    stdio: 'ignore',
+    env: { ...process.env, NODE_PATH: process.env.NODE_PATH || '/usr/lib/node_modules' }
   });
   child.unref();
 

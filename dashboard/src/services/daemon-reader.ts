@@ -219,6 +219,7 @@ export function spawnDaemonWarmup(): { pid: number | undefined } {
     detached: true,
     stdio: 'ignore',
     cwd: config.projectRoot,
+    env: { ...process.env, NODE_PATH: process.env.NODE_PATH || '/usr/lib/node_modules' },
   })
   child.unref()
 
