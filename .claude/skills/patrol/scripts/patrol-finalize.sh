@@ -66,10 +66,18 @@ fi
 
 # ── Step 1: Cleanup orphan agency processes ──────────────────────────
 log "Cleaning up orphan agency processes..."
-AGENCY_COUNT=$(tasklist 2>/dev/null | grep -c -i agency.exe || echo 0)
-if [ "$AGENCY_COUNT" -gt 0 ]; then
-  log "Found $AGENCY_COUNT agency.exe processes, killing..."
-  taskkill /IM agency.exe /F 2>/dev/null || true
+if command -v tasklist &>/dev/null; then
+  AGENCY_COUNT=$(tasklist 2>/dev/null | grep -c -i agency.exe || echo 0)
+  if [ "$AGENCY_COUNT" -gt 0 ]; then
+    log "Found $AGENCY_COUNT agency.exe processes, killing..."
+    taskkill /IM agency.exe /F 2>/dev/null || true
+  fi
+else
+  AGENCY_COUNT=$(pgrep -fc 'agency.*mcp' 2>/dev/null || echo 0)
+  if [ "$AGENCY_COUNT" -gt 0 ]; then
+    log "Found $AGENCY_COUNT agency processes, killing..."
+    pkill -f 'agency.*mcp' 2>/dev/null || true
+  fi
 fi
 
 # ── Step 2: update-phase → aggregating (with cleanup result) ─────────

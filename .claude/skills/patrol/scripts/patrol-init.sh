@@ -83,6 +83,9 @@ SKIP_HOURS=$(echo "$CFG_LINES" | sed -n '3p')
 [ -z "$PATROL_DIR" ] && PATROL_DIR="$CFG_PATROL_DIR"
 [ -z "$SKIP_HOURS" ] && SKIP_HOURS=3
 
+# Resolve pwsh command from config.json → platform.pwsh
+PWSH_CMD=$(python3 -c "import json; print(json.load(open(r'$CONFIG_FILE',encoding='utf-8')).get('platform',{}).get('pwsh','pwsh'))" 2>/dev/null || echo "pwsh")
+
 log "🚀 patrol-init.sh: casesRoot=$CASES_ROOT patrolDir=$PATROL_DIR skipHours=$SKIP_HOURS force=$FORCE source=$SOURCE"
 
 # ── Step 2: Mutex check ──
@@ -127,7 +130,7 @@ update_phase --patrol-dir "$PATROL_DIR" --phase discovering --source "$SOURCE"
 log "⏳ Querying D365 active cases..."
 ACTIVE_JSON_TMP="$PATROL_DIR/.active-cases-tmp.json"
 ACTIVE_RAW_TMP="$PATROL_DIR/.active-cases-raw.tmp"
-pwsh -NoProfile -File "$PROJECT_ROOT/.claude/skills/d365-case-ops/scripts/list-active-cases.ps1" -OutputJson > "$ACTIVE_RAW_TMP" 2>&1
+$PWSH_CMD -NoProfile -File "$PROJECT_ROOT/.claude/skills/d365-case-ops/scripts/list-active-cases.ps1" -OutputJson > "$ACTIVE_RAW_TMP" 2>&1
 LIST_EXIT=$?
 cp "$ACTIVE_RAW_TMP" "$SCRIPTS_DIR/list-active-cases.log" 2>/dev/null || true
 
@@ -293,7 +296,7 @@ else
 log "⏳ Running archive/transfer detection..."
 
 DETECT_JSON_TMP="$PATROL_DIR/.detect-status-tmp.json"
-pwsh -NoProfile -File "$PROJECT_ROOT/.claude/skills/d365-case-ops/scripts/detect-case-status.ps1" \
+$PWSH_CMD -NoProfile -File "$PROJECT_ROOT/.claude/skills/d365-case-ops/scripts/detect-case-status.ps1" \
   -CasesRoot "$CASES_ROOT" -ActiveCasesJson "$ACTIVE_CASES_JSON" > "$DETECT_JSON_TMP" 2>&1
 [ -f "$DETECT_JSON_TMP" ] && cp "$DETECT_JSON_TMP" "$SCRIPTS_DIR/detect-case-status.log" 2>/dev/null || true
 
@@ -465,7 +468,7 @@ log "⏳ Warming up (IR batch + token daemon)..."
 update_phase --patrol-dir "$PATROL_DIR" --phase warming-up --warmup-status "warming up tokens"
 
 # IR/FDR/FWR batch (background, ~3s)
-pwsh -NoProfile -File "$PROJECT_ROOT/.claude/skills/d365-case-ops/scripts/check-ir-status-batch.ps1" \
+$PWSH_CMD -NoProfile -File "$PROJECT_ROOT/.claude/skills/d365-case-ops/scripts/check-ir-status-batch.ps1" \
   -SaveMeta -MetaDir "$CASES_ROOT/active" > "$SCRIPTS_DIR/ir-check.log" 2>&1 &
 PID_IR=$!
 

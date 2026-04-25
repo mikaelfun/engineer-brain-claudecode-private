@@ -55,8 +55,9 @@ if [ -z "$CASES_ROOT" ]; then
   [ -z "$CASES_ROOT" ] && { echo "MIMIC_FAIL|reason=cannot read casesRoot from config.json"; exit 1; }
 fi
 
-AGENCY_EXE="$APPDATA/agency/CurrentVersion/agency.exe"
-[ ! -f "$AGENCY_EXE" ] && { echo "MIMIC_FAIL|reason=agency.exe not found"; exit 1; }
+_CFG_AGENCY=$("$PYTHON" -c "import json,os; print(json.load(open(os.path.join(r'''$PROJECT_ROOT''','config.json'),encoding='utf-8')).get('platform',{}).get('agencyExe',''))" 2>/dev/null || echo "")
+AGENCY_EXE="${_CFG_AGENCY:-${APPDATA:-$HOME/.config}/agency/CurrentVersion/agency}"
+[ ! -f "$AGENCY_EXE" ] && { echo "MIMIC_FAIL|reason=agency not found at $AGENCY_EXE"; exit 1; }
 
 # Auto-assign port
 if [ -z "$PORT" ]; then

@@ -9,9 +9,25 @@ $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
-$agency = 'C:\Users\fangkun\AppData\Roaming\agency\CurrentVersion\agency.exe'
+# Resolve agency path from config.json → platform.agencyExe, fallback to platform defaults
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$configPath = Join-Path (Resolve-Path "$scriptDir/../../..").Path 'config.json'
+$agency = $null
+if (Test-Path $configPath) {
+  try {
+    $cfg = Get-Content $configPath -Raw | ConvertFrom-Json
+    $agency = $cfg.platform.agencyExe
+  } catch {}
+}
+if (-not $agency -or -not (Test-Path $agency)) {
+  if ($env:APPDATA) {
+    $agency = Join-Path $env:APPDATA 'agency/CurrentVersion/agency.exe'
+  } else {
+    $agency = Join-Path $HOME '.config/agency/CurrentVersion/agency'
+  }
+}
 if (-not (Test-Path $agency)) {
-  throw "agency.exe not found: $agency"
+  throw "agency not found: $agency"
 }
 
 $tempDir = Join-Path $env:TEMP ('agency-icm-' + [guid]::NewGuid().ToString('N'))

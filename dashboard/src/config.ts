@@ -58,10 +58,16 @@ const SSE_DEFAULTS: SseLimits = {
   thinkingMaxLen: 5000,
 }
 
+interface PlatformConfig {
+  pwsh?: string
+  agencyExe?: string
+}
+
 interface ProjectConfig {
   casesRoot: string
   dataRoot?: string
   patrolDir?: string
+  platform?: PlatformConfig
   dashboard?: DashboardConfig
   sse?: Partial<SseLimits>
 }
@@ -172,6 +178,14 @@ export const config = {
     return dr ? resolveConfigPath(dr) : resolve(projectRoot, '..', 'data')
   },
   agentMaxConcurrency: 1,
+
+  get agencyExe(): string {
+    const configured = readProjectConfig().platform?.agencyExe
+    if (configured) return configured
+    const appdata = process.env.APPDATA
+    if (appdata) return join(appdata, 'agency', 'CurrentVersion', 'agency.exe')
+    return join(process.env.HOME || '', '.config', 'agency', 'CurrentVersion', 'agency')
+  },
 
   get noteGapThresholdDays(): number {
     return (readProjectConfig() as any).noteGapThresholdDays ?? 3

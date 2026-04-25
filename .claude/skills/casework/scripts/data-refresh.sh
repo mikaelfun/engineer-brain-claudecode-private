@@ -50,6 +50,7 @@ PROJECT_ROOT_WIN="$(to_win "$PROJECT_ROOT")"
 OUT_DIR="$CASE_DIR_ABS/.casework"
 UPDATE_STATE="$HERE/update-state.py"
 WRAPPER="$HERE/event-wrapper.sh"
+PWSH_CMD=$(python3 -c "import json; print(json.load(open('$PROJECT_ROOT/config.json',encoding='utf-8')).get('platform',{}).get('pwsh','pwsh'))" 2>/dev/null || echo "pwsh")
 
 # ── ISS-231: Read runId from state.json → run directory paths ──
 RUN_ID=$(python3 -c "
@@ -142,7 +143,7 @@ OUT_PARENT_WIN="$(to_win "$(dirname "$CASE_DIR_ABS")")"
   FETCH_ARGS=(-TicketNumber "$CASE_NUMBER" -OutputDir "$OUT_PARENT_WIN" -CacheMinutes 10 -SubtaskOutputDir "$SUBTASK_DIR")
   [ "$IS_AR" = "true" ] && [ -n "$MAIN_CASE" ] && FETCH_ARGS+=(-MainCaseNumber "$MAIN_CASE")
   bash "$WRAPPER" d365 "$CASE_DIR_ABS" -- \
-    pwsh -NoProfile -File "$PROJECT_ROOT/.claude/skills/d365-case-ops/scripts/fetch-all-data.ps1" "${FETCH_ARGS[@]}" \
+    $PWSH_CMD -NoProfile -File "$PROJECT_ROOT/.claude/skills/d365-case-ops/scripts/fetch-all-data.ps1" "${FETCH_ARGS[@]}" \
     > "$LOGD/d365.log" 2>&1
 ) &
 PID_D365=$!
@@ -159,7 +160,7 @@ PID_D365=$!
   # Post-processing: transform _mcp-raw.json + write per-chat .md (merged into write-teams.ps1 -RawFile)
   if [ -f "$CASE_DIR_ABS/teams/_mcp-raw.json" ]; then
     bash "$WRAPPER" teams-write "$CASE_DIR_ABS" -- \
-      pwsh -NoProfile -File "$PROJECT_ROOT/.claude/skills/casework/data-refresh/teams-search/scripts/write-teams.ps1" \
+      $PWSH_CMD -NoProfile -File "$PROJECT_ROOT/.claude/skills/casework/data-refresh/teams-search/scripts/write-teams.ps1" \
         -OutputDir "$CASE_DIR_ABS/teams" -RawFile "$CASE_DIR_ABS/teams/_mcp-raw.json" \
       > "$LOGD/teams-write.log" 2>&1
   fi
@@ -259,7 +260,7 @@ fi
 # 5. Attachments — L2, wrapped with event-wrapper.
 (
   bash "$WRAPPER" attachments "$CASE_DIR_ABS" -- \
-    pwsh -NoProfile -File "$PROJECT_ROOT/.claude/skills/d365-case-ops/scripts/download-attachments.ps1" \
+    $PWSH_CMD -NoProfile -File "$PROJECT_ROOT/.claude/skills/d365-case-ops/scripts/download-attachments.ps1" \
     -TicketNumber "$CASE_NUMBER" -OutputDir "$OUT_PARENT_WIN" -SubtaskOutputDir "$SUBTASK_DIR" \
     > "$LOGD/attachments.log" 2>&1
 ) &

@@ -23,6 +23,11 @@ const { execSync, spawn } = require('child_process');
 const SCRIPT_DIR = __dirname;
 const REGISTRY_PATH = path.join(SCRIPT_DIR, '..', 'registry.json');
 
+// ── Platform detection ──
+const _isWSL = (() => {
+  try { return fs.readFileSync('/proc/version', 'utf-8').toLowerCase().includes('microsoft'); } catch { return false; }
+})();
+
 // ── Lazy-load heavy deps (ISS-perf) ──
 // playwright-core takes ~5-8s to require on Windows.
 // warmup/status commands don't need it when daemon is alive,
@@ -30,7 +35,13 @@ const REGISTRY_PATH = path.join(SCRIPT_DIR, '..', 'registry.json');
 let _pw = null;
 function getPW() {
   if (!_pw) {
-    _pw = require(path.join(process.env.APPDATA, 'npm', 'node_modules', '@playwright', 'cli', 'node_modules', 'playwright-core'));
+    if (_isWSL) {
+      try { _pw = require('playwright-core'); } catch {
+        _pw = require('/usr/lib/node_modules/playwright-core');
+      }
+    } else {
+      _pw = require(path.join(process.env.APPDATA, 'npm', 'node_modules', '@playwright', 'cli', 'node_modules', 'playwright-core'));
+    }
   }
   return _pw;
 }
@@ -99,20 +110,18 @@ function releaseWarmupLock() {
 // ── Kill orphan Edge processes using daemon profile ──
 function killOrphanEdge() {
   try {
-    const out = execSync(
-      'powershell.exe -NoProfile -Command "Get-CimInstance Win32_Process -Filter \\"CommandLine LIKE \'%pw-token-daemon-profile%\' AND Name=\'msedge.exe\'\\" -ErrorAction SilentlyContinue | ForEach-Object { $_.ProcessId }"',
-      { encoding: 'utf-8', timeout: 10000 }
-    );
-    const pids = out.split('\n').map(l => l.trim()).filter(p => /^\d+$/.test(p));
+    const { spawnSync } = require('child_process');
+    const psCmd = 'Get-CimInstance Win32_Process -Filter "CommandLine LIKE \'%pw-token-daemon-profile%\' AND Name=\'msedge.exe\'" -ErrorAction SilentlyContinue | ForEach-Object { $_.ProcessId }';
+    const r = spawnSync('powershell.exe', ['-NoProfile', '-Command', psCmd], { encoding: 'utf-8', timeout: 10000 });
+    const pids = (r.stdout || '').split('\n').map(l => l.trim()).filter(p => /^\d+$/.test(p));
     for (const p of pids) {
       try {
-        execSync(`taskkill /PID ${p} /F 2>nul`, { encoding: 'utf-8', timeout: 5000 });
+        spawnSync('taskkill.exe', ['/PID', p, '/F'], { encoding: 'utf-8', timeout: 5000, stdio: ['pipe','pipe','pipe'] });
         log(`killed orphan Edge PID ${p}`);
       } catch {}
     }
     if (pids.length > 0) {
-      // Wait for profile locks to be released
-      try { execSync('ping -n 2 127.0.0.1 >nul', { timeout: 5000 }); } catch {}
+      try { execSync('sleep 1', { timeout: 3000 }); } catch {}
     }
   } catch (e) {
     log(`killOrphanEdge error (non-fatal): ${e.message}`);
@@ -127,6 +136,82 @@ function cleanStaleLocks() {
   }
   const defaultLock = path.join(PROFILE, 'Default', 'lock');
   try { if (fs.existsSync(defaultLock)) { fs.unlinkSync(defaultLock); } } catch {}
+}
+
+// ── WSL → Windows Edge CDP bridge ──
+let _cdpEdgePid = null;
+
+function readProjectConfig() {
+  const configPath = path.join(SCRIPT_DIR, '..', '..', '..', '..', 'config.json');
+  try { return JSON.parse(fs.readFileSync(configPath, 'utf-8')); } catch { return {}; }
+}
+
+function wslToWinPath(p) {
+  // /mnt/c/Users/... → C:\Users\...
+  const m = p.match(/^\/mnt\/([a-z])\/(.*)/);
+  if (m) return `${m[1].toUpperCase()}:\\${m[2].replace(/\//g, '\\')}`;
+  return p;
+}
+
+async function launchEdgeViaCDP() {
+  const { spawnSync } = require('child_process');
+  const cfg = readProjectConfig().platform || {};
+  const cdpPort = cfg.cdpPort || 9222;
+  const profileDir = cfg.edgeProfileDir || path.join(TEMP, 'pw-token-daemon-profile');
+  const winProfileDir = wslToWinPath(profileDir);
+
+  log(`CDP mode: launching Windows Edge on port ${cdpPort}, profile=${winProfileDir}`);
+
+  // Kill any existing Edge on this CDP port
+  try {
+    spawnSync('powershell.exe', ['-NoProfile', '-Command',
+      `Get-CimInstance Win32_Process -Filter "CommandLine LIKE '%--remote-debugging-port=${cdpPort}%' AND Name='msedge.exe'" -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -EA SilentlyContinue }`
+    ], { encoding: 'utf-8', timeout: 10000 });
+  } catch {}
+
+  // Launch Edge via Windows interop
+  const edgeArgs = `--remote-debugging-port=${cdpPort} --user-data-dir="${winProfileDir}" --headless=new --no-first-run --disable-gpu`;
+  try {
+    spawnSync('powershell.exe', ['-NoProfile', '-Command',
+      `Start-Process 'msedge' -ArgumentList '${edgeArgs}'`
+    ], { encoding: 'utf-8', timeout: 15000 });
+  } catch (e) {
+    throw new Error(`Failed to launch Edge: ${e.message}`);
+  }
+
+  // Wait for CDP endpoint
+  const cdpUrl = `http://127.0.0.1:${cdpPort}`;
+  let ready = false;
+  for (let i = 0; i < 30; i++) {
+    try {
+      const res = await fetch(`${cdpUrl}/json/version`);
+      if (res.ok) { ready = true; break; }
+    } catch {}
+    await new Promise(r => setTimeout(r, 500));
+  }
+  if (!ready) throw new Error(`CDP endpoint not ready after 15s on port ${cdpPort}`);
+
+  // Record Edge PID for cleanup
+  try {
+    const pidR = spawnSync('powershell.exe', ['-NoProfile', '-Command',
+      `Get-CimInstance Win32_Process -Filter "CommandLine LIKE '%--remote-debugging-port=${cdpPort}%' AND Name='msedge.exe'" | Select-Object -First 1 -ExpandProperty ProcessId`
+    ], { encoding: 'utf-8', timeout: 5000 });
+    _cdpEdgePid = parseInt((pidR.stdout || '').trim(), 10) || null;
+  } catch {}
+  log(`Edge launched (CDP port=${cdpPort}, PID=${_cdpEdgePid})`);
+
+  const browser = await getPW().chromium.connectOverCDP(cdpUrl);
+  const contexts = browser.contexts();
+  return contexts[0] || await browser.newContext();
+}
+
+function killCdpEdge() {
+  if (!_cdpEdgePid) return;
+  try {
+    execSync(`taskkill.exe /PID ${_cdpEdgePid} /F /T`, { encoding: 'utf-8', timeout: 5000 });
+    log(`killed CDP Edge PID ${_cdpEdgePid}`);
+  } catch {}
+  _cdpEdgePid = null;
 }
 
 // ── Cache 读写 ──
@@ -235,8 +320,8 @@ function readPid() {
 function isProcessAlive(pid) {
   if (!pid) return false;
   try {
-    // Windows: tasklist 查 PID
-    const out = execSync(`tasklist /FI "PID eq ${pid}" /NH`, { encoding: 'utf-8', timeout: 5000 });
+    const cmd = _isWSL ? 'tasklist.exe' : 'tasklist';
+    const out = execSync(`${cmd} /FI "PID eq ${pid}" /NH`, { encoding: 'utf-8', timeout: 5000, stdio: ['pipe','pipe','pipe'] });
     return out.includes(String(pid));
   } catch { return false; }
 }
@@ -669,10 +754,9 @@ async function cmdStart() {
   cleanStaleLocks();
   writePid();
 
-  const ctx = await getPW().chromium.launchPersistentContext(PROFILE, {
-    channel: 'msedge',
-    headless: true
-  });
+  const ctx = _isWSL
+    ? await launchEdgeViaCDP()
+    : await getPW().chromium.launchPersistentContext(PROFILE, { channel: 'msedge', headless: true });
 
   log(`Edge launched (PID file: ${PID_FILE})`);
 
@@ -749,6 +833,7 @@ async function cmdStart() {
     clearInterval(heartbeatTimer);
     if (httpServer) httpServer.close();
     await ctx.close().catch(() => {});
+    if (_isWSL) killCdpEdge();
     try { fs.unlinkSync(PID_FILE); } catch {}
     try { fs.unlinkSync(HEARTBEAT_FILE); } catch {}
     try { fs.unlinkSync(PORT_FILE); } catch {}
@@ -978,7 +1063,7 @@ function cmdStop() {
     return;
   }
   try {
-    execSync(`taskkill /PID ${pid} /F /T`, { encoding: 'utf-8', timeout: 10000 });
+    execSync(`taskkill.exe /PID ${pid} /F /T`, { encoding: 'utf-8', timeout: 10000 });
     console.log(`DAEMON_STOPPED|pid=${pid}`);
   } catch (e) {
     console.log(`DAEMON_STOP_FAILED|pid=${pid}|${e.message}`);
@@ -1001,7 +1086,7 @@ async function cmdEnsure() {
   // Daemon 不存活 → 清理 + 后台启动
   log('Daemon not alive, starting...');
   if (pid) {
-    try { execSync(`taskkill /PID ${pid} /F /T 2>nul`, { encoding: 'utf-8', timeout: 5000 }); } catch {}
+    try { execSync(`taskkill.exe /PID ${pid} /F /T 2>nul`, { encoding: 'utf-8', timeout: 5000 }); } catch {}
   }
   try { fs.unlinkSync(PID_FILE); } catch {}
   killOrphanEdge();
@@ -1010,7 +1095,8 @@ async function cmdEnsure() {
   // 后台启动自身的 start 命令
   const child = spawn(process.execPath, [__filename, 'start'], {
     detached: true,
-    stdio: 'ignore'
+    stdio: 'ignore',
+    env: { ...process.env, NODE_PATH: process.env.NODE_PATH || '/usr/lib/node_modules' }
   });
   child.unref();
 
@@ -1067,7 +1153,7 @@ async function cmdWarmup() {
 
   // 清理残留
   if (pid) {
-    try { execSync(`taskkill /PID ${pid} /F /T 2>nul`, { encoding: 'utf-8', timeout: 5000 }); } catch {}
+    try { execSync(`taskkill.exe /PID ${pid} /F /T 2>nul`, { encoding: 'utf-8', timeout: 5000 }); } catch {}
   }
   try { fs.unlinkSync(PID_FILE); } catch {}
   try { fs.unlinkSync(PORT_FILE); } catch {}
@@ -1123,12 +1209,17 @@ async function inlineWarmup() {
   cleanStaleLocks();
 
   let ctx;
+  const launchCtx = async () => {
+    if (_isWSL) return launchEdgeViaCDP();
+    return getPW().chromium.launchPersistentContext(PROFILE, { channel: 'msedge', headless: true });
+  };
+
   try {
-    ctx = await getPW().chromium.launchPersistentContext(PROFILE, { channel: 'msedge', headless: true });
+    ctx = await launchCtx();
   } catch {
     cleanStaleLocks();
     try {
-      ctx = await getPW().chromium.launchPersistentContext(PROFILE, { channel: 'msedge', headless: true });
+      ctx = await launchCtx();
     } catch (e) {
       console.log(`WARMUP_FAIL|launch failed: ${e.message.substring(0, 80)}`);
       return;

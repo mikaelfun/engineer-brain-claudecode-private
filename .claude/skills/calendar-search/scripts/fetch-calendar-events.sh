@@ -28,8 +28,10 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-AGENCY_EXE="$APPDATA/agency/CurrentVersion/agency.exe"
-[ ! -f "$AGENCY_EXE" ] && { echo "CAL_FAIL|reason=agency.exe not found"; exit 1; }
+_PROJ_ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
+_CFG_AGENCY=$(python3 -c "import json; print(json.load(open('$_PROJ_ROOT/config.json',encoding='utf-8')).get('platform',{}).get('agencyExe',''))" 2>/dev/null || echo "")
+AGENCY_EXE="${_CFG_AGENCY:-${APPDATA:-$HOME/.config}/agency/CurrentVersion/agency}"
+[ ! -f "$AGENCY_EXE" ] && { echo "CAL_FAIL|reason=agency not found at $AGENCY_EXE"; exit 1; }
 
 T0=$(date +%s)
 

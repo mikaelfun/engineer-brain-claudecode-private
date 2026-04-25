@@ -24,11 +24,12 @@ $script:D365UserName = "Kun Fang"
 
 # ── Playwright 浏览器 profile 路径 ──
 # --persistent --profile 使用绝对路径，避免在 cwd 创建浏览器数据
-$script:D365BrowserProfile = Join-Path $env:TEMP "playwright-d365-profile"
+$_TempDir = if ($env:TEMP) { $env:TEMP } elseif ($env:TMPDIR) { $env:TMPDIR } else { '/tmp' }
+$script:D365BrowserProfile = Join-Path $_TempDir "playwright-d365-profile"
 $script:D365AppUrl = "https://onesupport.crm.dynamics.com/main.aspx?forceUCI=1&appid=101acb62-8d00-eb11-a813-000d3a8b3117"
 
 if ([string]::IsNullOrWhiteSpace($env:PLAYWRIGHT_MCP_OUTPUT_DIR)) {
-    $script:D365RuntimeDir = Join-Path $env:TEMP "d365-case-ops-runtime"
+    $script:D365RuntimeDir = Join-Path $_TempDir "d365-case-ops-runtime"
     $script:D365OutputDir = Join-Path $script:D365RuntimeDir ".playwright-cli"
     $env:PLAYWRIGHT_MCP_OUTPUT_DIR = $script:D365OutputDir
 } else {
@@ -125,7 +126,7 @@ $script:_pwLockAcquired = @{}  # 跟踪当前进程持有的锁
 
 function Get-PlaywrightLockPath {
     param([string]$ProfileKey = "d365")
-    return Join-Path $env:TEMP ".claude-playwright-$ProfileKey.lock"
+    return Join-Path $_TempDir ".claude-playwright-$ProfileKey.lock"
 }
 
 <#
@@ -227,7 +228,7 @@ function Invoke-WithPlaywrightLock {
 # 注册进程退出时自动释放所有锁（防止 Ctrl+C 僵死）
 Register-EngineEvent -SourceIdentifier PowerShell.Exiting -Action {
     foreach ($key in @($script:_pwLockAcquired.Keys)) {
-        $lp = Join-Path $env:TEMP ".claude-playwright-$key.lock"
+        $lp = Join-Path $_TempDir ".claude-playwright-$key.lock"
         Remove-Item $lp -Force -ErrorAction SilentlyContinue
     }
 } -SupportEvent 2>$null
@@ -469,7 +470,7 @@ function Invoke-D365Api {
 
     # ── Daemon HTTP 优先路径 ──
     # 读取 daemon port 文件，如果 daemon 存活则走 HTTP 代理（快 ~50x）
-    $daemonPortFile = Join-Path $env:TEMP "pw-token-daemon-port.json"
+    $daemonPortFile = Join-Path $_TempDir "pw-token-daemon-port.json"
     if (Test-Path $daemonPortFile) {
         try {
             $portInfo = Get-Content $daemonPortFile -Raw | ConvertFrom-Json
@@ -478,7 +479,7 @@ function Invoke-D365Api {
 
             # Stale check: port 文件存在但 daemon 进程已死 → 清理文件，跳过 HTTP
             if ($daemonPid) {
-                $alive = tasklist /FI "PID eq $daemonPid" /NH 2>$null | Select-String "$daemonPid"
+                $alive = try { Get-Process -Id $daemonPid -ErrorAction Stop; $true } catch { $false }
                 if (-not $alive) {
                     Remove-Item $daemonPortFile -Force -ErrorAction SilentlyContinue
                     throw "Daemon PID $daemonPid not alive, stale port file cleaned"
@@ -645,7 +646,7 @@ function Get-IncidentId {
         [Parameter(Mandatory=$true)]
         [string]$TicketNumber
     )
-    $cacheFile = Join-Path $env:TEMP "d365-case-context.json"
+    $cacheFile = Join-Path $_TempDir "d365-case-context.json"
 
     # Try cache
     if (Test-Path $cacheFile) {
@@ -711,7 +712,7 @@ function Invoke-D365ApiBatch {
     )
 
     # ── Daemon HTTP 优先路径（batch） ──
-    $daemonPortFile = Join-Path $env:TEMP "pw-token-daemon-port.json"
+    $daemonPortFile = Join-Path $_TempDir "pw-token-daemon-port.json"
     if (Test-Path $daemonPortFile) {
         try {
             $portInfo = Get-Content $daemonPortFile -Raw | ConvertFrom-Json
@@ -720,7 +721,7 @@ function Invoke-D365ApiBatch {
 
             # Stale check
             if ($daemonPid) {
-                $alive = tasklist /FI "PID eq $daemonPid" /NH 2>$null | Select-String "$daemonPid"
+                $alive = try { Get-Process -Id $daemonPid -ErrorAction Stop; $true } catch { $false }
                 if (-not $alive) {
                     Remove-Item $daemonPortFile -Force -ErrorAction SilentlyContinue
                     throw "Daemon PID $daemonPid not alive, stale port file cleaned"
@@ -863,7 +864,7 @@ async page => {
 }
 
 function Get-CurrentCaseId {
-    $cacheFile = Join-Path $env:TEMP "d365-case-context.json"
+    $cacheFile = Join-Path $_TempDir "d365-case-context.json"
 
     # Try cache first
     if (Test-Path $cacheFile) {

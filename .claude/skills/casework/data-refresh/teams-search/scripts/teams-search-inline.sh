@@ -68,8 +68,9 @@ write_failed_event() {
   fi
 }
 
-AGENCY_EXE="$APPDATA/agency/CurrentVersion/agency.exe"
-[ ! -f "$AGENCY_EXE" ] && { echo "TEAMS_FAIL|reason=agency.exe not found"; exit 1; }
+_CFG_AGENCY=$(python3 -c "import json; print(json.load(open('$PROJECT_ROOT/config.json',encoding='utf-8')).get('platform',{}).get('agencyExe',''))" 2>/dev/null || echo "")
+AGENCY_EXE="${_CFG_AGENCY:-${APPDATA:-$HOME/.config}/agency/CurrentVersion/agency}"
+[ ! -f "$AGENCY_EXE" ] && { echo "TEAMS_FAIL|reason=agency not found at $AGENCY_EXE"; exit 1; }
 
 # Auto-assign port from case number hash if not specified.
 # MUST be deterministic: Python hash() is randomized per-process (PYTHONHASHSEED).

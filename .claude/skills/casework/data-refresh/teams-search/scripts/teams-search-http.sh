@@ -20,8 +20,10 @@ done
 
 [ -z "$CASES_ROOT" ] && { echo "Usage: teams-search-http.sh --cases-root <path>" >&2; exit 1; }
 
-AGENCY_EXE="$APPDATA/agency/CurrentVersion/agency.exe"
-[ ! -f "$AGENCY_EXE" ] && { echo "ERROR: agency.exe not found" >&2; exit 1; }
+_PROJ_ROOT="$(cd "$(dirname "$0")/../../../../../.." && pwd)"
+_CFG_AGENCY=$(python3 -c "import json; print(json.load(open('$_PROJ_ROOT/config.json',encoding='utf-8')).get('platform',{}).get('agencyExe',''))" 2>/dev/null || echo "")
+AGENCY_EXE="${_CFG_AGENCY:-${APPDATA:-$HOME/.config}/agency/CurrentVersion/agency}"
+[ ! -f "$AGENCY_EXE" ] && { echo "ERROR: agency not found at $AGENCY_EXE" >&2; exit 1; }
 
 LOG="$CASES_ROOT/.patrol/teams-queue.log"
 # Use python to create temp dir (avoids POSIX /tmp vs Windows path mismatch)

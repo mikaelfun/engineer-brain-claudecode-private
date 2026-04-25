@@ -155,7 +155,8 @@ MCP_PROXY_PID=""
 ensure_mcp_proxy() {
   [ "$MCP_PROXY_READY" = "1" ] && return 0
 
-  AGENCY_EXE="$APPDATA/agency/CurrentVersion/agency.exe"
+  _CFG_AGENCY=$(python3 -c "import json; print(json.load(open('$SCRIPT_ROOT/config.json',encoding='utf-8')).get('platform',{}).get('agencyExe',''))" 2>/dev/null || echo "")
+  AGENCY_EXE="${_CFG_AGENCY:-${APPDATA:-$HOME/.config}/agency/CurrentVersion/agency}"
   [ ! -f "$AGENCY_EXE" ] && return 1
 
   if ! curl -s --max-time 2 -o /dev/null "http://localhost:$PORT/" 2>/dev/null; then

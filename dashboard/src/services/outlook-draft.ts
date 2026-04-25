@@ -11,8 +11,9 @@ import { readFileSync, existsSync } from 'fs'
 import { join } from 'path'
 import { execSync, spawn } from 'child_process'
 import { getCaseDir } from './workspace.js'
+import { config } from '../config.js'
 
-const AGENCY_EXE = join(process.env.APPDATA || '', 'agency', 'CurrentVersion', 'agency.exe')
+const AGENCY_EXE = config.agencyExe
 
 interface DraftMeta {
   to: string
