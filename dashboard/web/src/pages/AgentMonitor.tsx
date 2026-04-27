@@ -600,11 +600,16 @@ function SubAgentDetailPanel({ agent }: { agent: SubAgent }) {
 // ---- Active Sessions Section ----
 
 /** Convert PatrolMainMessage kind to CaseSessionMessage type */
-function patrolKindToType(kind: string): CaseSessionMessage['type'] {
+function patrolKindToType(kind: string): CaseSessionMessage['type'] | null {
   switch (kind) {
     case 'tool-call': return 'tool-call'
     case 'tool-result': return 'tool-result'
     case 'response': return 'response'
+    case 'thinking': return 'thinking'
+    case 'agent-started':
+    case 'agent-progress':
+    case 'agent-completed':
+      return null
     default: return 'thinking'
   }
 }
@@ -632,6 +637,7 @@ function PatrolSessionDetail({ session }: { session: UnifiedSession }) {
     if (recoveredData?.subAgents && !hasRecoveredRef.current) {
       hasRecoveredRef.current = true
       for (const [taskId, sub] of Object.entries(recoveredData.subAgents as Record<string, any>)) {
+        if ((sub.agentType || taskId) === 'local_bash') continue
         subAgentHydrate({
           taskId,
           agentType: sub.agentType || taskId,
@@ -661,22 +667,22 @@ function PatrolSessionDetail({ session }: { session: UnifiedSession }) {
     // but ONLY if store messages belong to this session (sessionId match)
     const sessionIdMatch = !session.id || !storeSessionId || storeSessionId === session.id
     if (!isRecovered && mainMessages.length > 0 && sessionIdMatch) {
-      return mainMessages.map(m => ({
-        type: patrolKindToType(m.kind),
-        content: m.content || '',
-        toolName: m.toolName,
-        timestamp: m.timestamp,
-      }))
+      const result: CaseSessionMessage[] = []
+      for (const m of mainMessages) {
+        const type = patrolKindToType(m.kind)
+        if (type) result.push({ type, content: m.content || '', toolName: m.toolName, timestamp: m.timestamp })
+      }
+      return result
     }
 
     // Recovered or empty store → use API data
     if (recoveredData?.messages) {
-      return recoveredData.messages.map((m: any) => ({
-        type: patrolKindToType(m.kind || m.type),
-        content: m.content || '',
-        toolName: m.toolName,
-        timestamp: m.timestamp,
-      }))
+      const result: CaseSessionMessage[] = []
+      for (const m of recoveredData.messages as any[]) {
+        const type = patrolKindToType(m.kind || m.type)
+        if (type) result.push({ type, content: m.content || '', toolName: m.toolName, timestamp: m.timestamp })
+      }
+      return result
     }
 
     return []
@@ -1147,10 +1153,11 @@ function MainAgentsSection({
   // Sub-agent store
   const allSubAgents = useSubAgentStore((s) => s.agents)
 
-  // Group sub-agents by parent session
+  // Group sub-agents by parent session (exclude local_bash — SDK internal tasks)
   const subAgentsBySession = useMemo(() => {
     const map: Record<string, SubAgent[]> = {}
     for (const agent of Object.values(allSubAgents)) {
+      if (agent.agentType === 'local_bash') continue
       if (!map[agent.parentSessionId]) map[agent.parentSessionId] = []
       map[agent.parentSessionId].push(agent)
     }

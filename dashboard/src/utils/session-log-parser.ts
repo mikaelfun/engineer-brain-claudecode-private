@@ -15,6 +15,7 @@
  * the actual purpose is encoded in the description field (3-5 word task summary).
  */
 export function inferAgentType(taskType: string, description?: string): string {
+  if (taskType === 'local_bash') return 'local_bash'
   if (taskType && taskType !== 'local_agent' && taskType !== 'unknown') return taskType
   if (!description) return taskType || 'unknown'
 
@@ -109,6 +110,7 @@ export function parseSessionLog(sessionJsonlPath: string, agentsDir?: string): R
     if (subtype === 'task_started') {
       const taskId = msg.task_id as string
       const agentType = inferAgentType(msg.task_type as string, msg.description as string)
+      if (agentType === 'local_bash') continue
       const prompt = (msg.prompt || msg.description || '') as string
       const caseMatch = prompt.match(/(?:Case\s+|case\s+|\/active\/|caseNumber[:\s]+)(\d{10,})/i)
 
@@ -232,6 +234,23 @@ export function parseSessionLog(sessionJsonlPath: string, agentsDir?: string): R
     }
   }
   } // end if (existsSync(sessionJsonlPath))
+
+  // ---- Post-process: fix thinking/response classification for subagent output ----
+  // SDK subagent JSONL strips thinking blocks — all content arrives as text (→ response).
+  // Heuristic: if no thinking messages exist, treat all response messages except the last
+  // as thinking (they're internal reasoning before tool calls).
+  const hasThinking = result.mainMessages.some(m => m.type === 'thinking')
+  if (!hasThinking) {
+    let lastResponseIdx = -1
+    for (let i = result.mainMessages.length - 1; i >= 0; i--) {
+      if (result.mainMessages[i].type === 'response') { lastResponseIdx = i; break }
+    }
+    for (let i = 0; i < result.mainMessages.length; i++) {
+      if (result.mainMessages[i].type === 'response' && i !== lastResponseIdx) {
+        result.mainMessages[i].type = 'thinking'
+      }
+    }
+  }
 
   // ---- Merge sub-agent output files ----
   // Sub-agent logs are full SDK JSONL (same format as session.jsonl).
