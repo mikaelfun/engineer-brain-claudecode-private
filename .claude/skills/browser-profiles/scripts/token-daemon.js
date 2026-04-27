@@ -214,6 +214,76 @@ function killCdpEdge() {
   _cdpEdgePid = null;
 }
 
+function isBrowserClosedError(e) {
+  const msg = e?.message || '';
+  return msg.includes('browser has been closed') ||
+         msg.includes('Target page') ||
+         msg.includes('context has been closed') ||
+         msg.includes('Target closed') ||
+         msg.includes('Connection closed');
+}
+
+/**
+ * Reconnect CDP after browser death.
+ * Kills old Edge, launches new one, re-opens all tabs, updates the tabs object in-place.
+ */
+async function reconnectCDP(oldCtx, tabs, tokenEntries) {
+  log('Reconnecting CDP: killing old Edge and launching new one...');
+  try { await oldCtx.close().catch(() => {}); } catch {}
+  killCdpEdge();
+  killOrphanEdge();
+
+  try {
+    const newCtx = await launchEdgeViaCDP();
+    log('CDP reconnected, re-opening tabs...');
+
+    for (const [name, config] of tokenEntries) {
+      const page = await newCtx.newPage();
+      let startUrl = config.startUrl;
+      if (startUrl === 'dynamic:from-d365-workspace') {
+        startUrl = await resolveDtmUrl(newCtx);
+      }
+
+      log(`[${name}] Reconnect: opening ${startUrl}`);
+      await page.goto(startUrl, { waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => {});
+
+      const ssoResult = await getHandleSSO()(page, {
+        targetDomain: config.tab,
+        log: (msg) => log(`[${name}] ${msg}`)
+      });
+      if (ssoResult.success) {
+        log(`[${name}] Reconnect SSO: ${ssoResult.action}`);
+      }
+      await page.waitForTimeout(8000);
+
+      if (config.tokenSource === 'none') {
+        log(`[${name}] Reconnect: session tab ready`);
+      } else {
+        const tokenData = await getExtractToken()(page, config);
+        if (tokenData) {
+          const secret = tokenData.secret || tokenData.token || '';
+          const cacheData = tokenData.secret
+            ? { secret: tokenData.secret, expiresOn: tokenData.expiresOn, fetchedAt: new Date().toISOString() }
+            : { token: tokenData.token, timestamp: Date.now() / 1000, fetchedAt: new Date().toISOString() };
+          writeCache(config.cacheFile, cacheData);
+          log(`[${name}] Reconnect: token OK (len=${secret.length})`);
+        } else {
+          log(`[${name}] Reconnect: token extraction failed`);
+        }
+      }
+
+      // Update tabs in-place so the refresh loop uses the new page objects
+      tabs[name] = { page, config };
+    }
+
+    log('CDP reconnect complete, all tabs restored');
+    return true;
+  } catch (e) {
+    log(`CDP reconnect failed: ${e.message}`);
+    return false;
+  }
+}
+
 // ── Cache 读写 ──
 function resolveEnvPath(p) {
   return p.replace('$TEMP', TEMP);
@@ -857,11 +927,19 @@ async function cmdStart() {
   process.on('SIGTERM', shutdown);
 
   // Keep alive — 定期检查 token 过期并自动刷新 + session tab SSO 自愈
+  // Uses setTimeout chain (not setInterval) to ensure previous cycle completes before next starts.
   // Per-token stale retry counter: avoid hammering reload every 60s when token can't be refreshed
   const staleRetryCount = {};  // { tokenName: { count, lastAttempt } }
   const STALE_MAX_RETRIES = 3;
   const STALE_COOLDOWN_MS = 5 * 60 * 1000; // 5 min cooldown after max retries
-  setInterval(async () => {
+  const TOKEN_CHECK_INTERVAL_MS = 60000;
+  // Per-token refresh mutex: prevent overlapping refreshes on the same page object
+  const _refreshing = {};  // { tokenName: true } while refresh in progress
+  // Browser-closed error tracking for auto-reconnect
+  let _browserClosedCount = 0;
+  const BROWSER_CLOSED_THRESHOLD = 3; // trigger reconnect after N consecutive errors
+
+  const runTokenCheck = async () => {
     for (const [name, { page, config }] of Object.entries(tabs)) {
       // Session tab: 检查是否被踢到 login 页面，自动重新 SSO
       if (config.tokenSource === 'none') {
@@ -881,10 +959,17 @@ async function cmdStart() {
             }
           }
         } catch (e) {
-          log(`[${name}] Session check error: ${e.message}`);
+          if (isBrowserClosedError(e)) {
+            _browserClosedCount++;
+            log(`[${name}] Session check: browser closed (${_browserClosedCount}/${BROWSER_CLOSED_THRESHOLD})`);
+          } else {
+            log(`[${name}] Session check error: ${e.message}`);
+          }
         }
         continue;
       }
+      // Skip if another refresh is already running for this token
+      if (_refreshing[name]) continue;
       if (!isCacheValid(config.cacheFile, config.cacheTTLMinutes)) {
         log(`[${name}] Token expired, refreshing...`);
         // Check stale retry cooldown — avoid hammering reload when token can't be refreshed
@@ -894,6 +979,7 @@ async function cmdStart() {
           log(`[${name}] Stale retry limit reached (${sr.count}x), cooldown ${cooldownRemain}m remaining`);
           continue;
         }
+        _refreshing[name] = true;
         try {
           const tokenData = await getExtractToken()(page, config);
           if (tokenData) {
@@ -1049,11 +1135,43 @@ async function cmdStart() {
             }
           }
         } catch (e) {
-          log(`[${name}] Refresh error: ${e.message}`);
+          if (isBrowserClosedError(e)) {
+            _browserClosedCount++;
+            log(`[${name}] Refresh error: browser closed (${_browserClosedCount}/${BROWSER_CLOSED_THRESHOLD})`);
+          } else {
+            log(`[${name}] Refresh error: ${e.message}`);
+          }
+        } finally {
+          _refreshing[name] = false;
         }
       }
     }
-  }, 60000); // 每分钟检查
+
+    // Check if browser died and needs reconnect
+    if (_browserClosedCount >= BROWSER_CLOSED_THRESHOLD) {
+      log(`Browser closed errors reached threshold (${_browserClosedCount}), attempting CDP reconnect...`);
+      const reconnected = await reconnectCDP(ctx, tabs, tokenEntries);
+      if (reconnected) {
+        _browserClosedCount = 0;
+        // Reset stale retry counters on successful reconnect
+        for (const name of Object.keys(staleRetryCount)) {
+          staleRetryCount[name] = { count: 0, lastAttempt: 0 };
+        }
+      } else {
+        // Reconnect failed — back off by extending interval
+        log('CDP reconnect failed, will retry in 5 minutes');
+        _browserClosedCount = 0; // reset counter to try again later
+        setTimeout(runTokenCheck, 5 * 60 * 1000);
+        return; // skip normal scheduling
+      }
+    }
+
+    // Schedule next check (setTimeout chain prevents overlap)
+    setTimeout(runTokenCheck, TOKEN_CHECK_INTERVAL_MS);
+  };
+
+  // Start the check loop after initial delay
+  setTimeout(runTokenCheck, TOKEN_CHECK_INTERVAL_MS);
 }
 
 // ═══════════════════════════════════════

@@ -30,6 +30,7 @@ let lastBackendPid: number | null = null
 const NODE_TREE_PROCESS_NAMES = new Set([
   'node.exe', 'cmd.exe', 'pwsh.exe', 'powershell.exe', 'npm.cmd', 'npx.cmd',
   'conhost.exe',
+  'node', 'bash', 'sh', 'npm', 'npx', 'pwsh',
 ])
 
 /**
@@ -47,9 +48,16 @@ const DASHBOARD_CMD_PATTERNS = [
   'cd web.*npm run dev',
 ]
 
-/** Find PID listening on a given port (Windows) */
+const IS_LINUX = process.platform === 'linux'
+
+/** Find PID listening on a given port */
 async function findPidByPort(port: number): Promise<number | null> {
   try {
+    if (IS_LINUX) {
+      const { stdout } = await execAsync(`lsof -i :${port} -t 2>/dev/null | head -1`)
+      const pid = parseInt(stdout.trim(), 10)
+      return pid > 0 ? pid : null
+    }
     const { stdout } = await execAsync(
       `netstat -ano | findstr :${port} | findstr LISTENING`
     )
@@ -73,6 +81,19 @@ async function findPidByPort(port: number): Promise<number | null> {
 async function getAllProcessParentInfo(): Promise<Map<number, { parentPid: number; processName: string }>> {
   const map = new Map<number, { parentPid: number; processName: string }>()
   try {
+    if (IS_LINUX) {
+      const { stdout } = await execAsync(`ps -eo pid,ppid,comm --no-headers`, { maxBuffer: 10 * 1024 * 1024 })
+      for (const line of stdout.trim().split('\n')) {
+        const parts = line.trim().split(/\s+/)
+        if (parts.length >= 3) {
+          const pid = parseInt(parts[0], 10)
+          const parentPid = parseInt(parts[1], 10)
+          const processName = parts[2].toLowerCase()
+          if (pid > 0) map.set(pid, { parentPid, processName })
+        }
+      }
+      return map
+    }
     const { stdout } = await execAsync(
       `powershell -NoProfile -Command "Get-CimInstance Win32_Process | Select-Object ProcessId,Name,ParentProcessId | ConvertTo-Csv -NoTypeInformation"`,
       { maxBuffer: 10 * 1024 * 1024 } // 10MB buffer for all processes
@@ -143,10 +164,14 @@ async function findProcessTreeRoot(pid: number): Promise<number> {
   return currentPid
 }
 
-/** Kill a process tree by PID (Windows) — ISS-089: added /T for tree kill */
+/** Kill a process tree by PID */
 async function killPid(pid: number): Promise<void> {
   try {
-    await execAsync(`taskkill /F /T /PID ${pid}`)
+    if (IS_LINUX) {
+      await execAsync(`kill -9 -${pid} 2>/dev/null || kill -9 ${pid} 2>/dev/null`)
+    } else {
+      await execAsync(`taskkill /F /T /PID ${pid}`)
+    }
   } catch {
     // process may already be dead
   }
@@ -184,38 +209,41 @@ async function cleanupOrphanedDashboardProcesses(excludePids?: Set<number>): Pro
   }
 
   try {
-    // Get all cmd.exe and node.exe processes with command lines
-    const { stdout } = await execAsync(
-      `powershell -NoProfile -Command "Get-CimInstance Win32_Process -Filter \\"Name='cmd.exe' OR Name='node.exe'\\" | Select-Object ProcessId,CommandLine | ConvertTo-Csv -NoTypeInformation"`,
-      { maxBuffer: 5 * 1024 * 1024 }
-    )
+    let pidsToKill: number[] = []
 
-    const pidsToKill: number[] = []
-    const lines = stdout.trim().split('\n').filter(l => l.trim().length > 0)
+    if (IS_LINUX) {
+      const { stdout } = await execAsync(`ps aux`, { maxBuffer: 5 * 1024 * 1024 })
+      const lines = stdout.trim().split('\n').slice(1)
+      for (const line of lines) {
+        const parts = line.trim().split(/\s+/)
+        const pid = parseInt(parts[1], 10)
+        if (exclude.has(pid)) continue
+        const cmdLine = parts.slice(10).join(' ')
+        const isDashboard = DASHBOARD_CMD_PATTERNS.some(pattern => {
+          try { return new RegExp(pattern, 'i').test(cmdLine) } catch { return false }
+        })
+        if (isDashboard) pidsToKill.push(pid)
+      }
+    } else {
+      // Get all cmd.exe and node.exe processes with command lines
+      const { stdout } = await execAsync(
+        `powershell -NoProfile -Command "Get-CimInstance Win32_Process -Filter \\"Name='cmd.exe' OR Name='node.exe'\\" | Select-Object ProcessId,CommandLine | ConvertTo-Csv -NoTypeInformation"`,
+        { maxBuffer: 5 * 1024 * 1024 }
+      )
 
-    for (const line of lines) {
-      if (line.startsWith('"ProcessId"')) continue // header
-      // Parse CSV: "12345","C:\...\cmd.exe /d /s /c concurrently ..."
-      const match = line.match(/^"(\d+)","(.+)"$/)
-      if (!match) continue
-
-      const pid = parseInt(match[1], 10)
-      const cmdLine = match[2]
-
-      if (exclude.has(pid)) continue
-      if (!cmdLine) continue
-
-      // Check if command line matches any dashboard pattern
-      const isDashboard = DASHBOARD_CMD_PATTERNS.some(pattern => {
-        try {
-          return new RegExp(pattern, 'i').test(cmdLine)
-        } catch {
-          return false
-        }
-      })
-
-      if (isDashboard) {
-        pidsToKill.push(pid)
+      const lines = stdout.trim().split('\n').filter(l => l.trim().length > 0)
+      for (const line of lines) {
+        if (line.startsWith('"ProcessId"')) continue // header
+        const match = line.match(/^"(\d+)","(.+)"$/)
+        if (!match) continue
+        const pid = parseInt(match[1], 10)
+        const cmdLine = match[2]
+        if (exclude.has(pid)) continue
+        if (!cmdLine) continue
+        const isDashboard = DASHBOARD_CMD_PATTERNS.some(pattern => {
+          try { return new RegExp(pattern, 'i').test(cmdLine) } catch { return false }
+        })
+        if (isDashboard) pidsToKill.push(pid)
       }
     }
 
@@ -290,9 +318,17 @@ async function spawnFrontend(): Promise<void> {
   const cmd = `npx vite --port ${FRONTEND_PORT}`
   console.log(`[restart] Spawning frontend: ${cmd} (cwd: ${cwd})`)
   try {
-    await execAsync(
-      `powershell -NoProfile -Command "Start-Process -FilePath 'cmd' -ArgumentList '/c','npx','vite','--port','${FRONTEND_PORT}' -WorkingDirectory '${cwd}' -WindowStyle Hidden"`,
-    )
+    if (IS_LINUX) {
+      const child = spawn('npx', ['vite', '--port', String(FRONTEND_PORT)], {
+        cwd, detached: true, stdio: 'ignore',
+      })
+      child.unref()
+      lastFrontendPid = child.pid ?? null
+    } else {
+      await execAsync(
+        `powershell -NoProfile -Command "Start-Process -FilePath 'cmd' -ArgumentList '/c','npx','vite','--port','${FRONTEND_PORT}' -WorkingDirectory '${cwd}' -WindowStyle Hidden"`,
+      )
+    }
     console.log(`[restart] Frontend spawn initiated`)
   } catch (e) {
     console.error(`[restart] Failed to spawn frontend:`, e)
@@ -310,9 +346,18 @@ async function spawnBackend(): Promise<void> {
   const cmd = `node --import tsx/esm src/index.ts`
   console.log(`[restart] Spawning backend: ${cmd} (cwd: ${cwd})`)
   try {
-    await execAsync(
-      `powershell -NoProfile -Command "Start-Process -FilePath 'node' -ArgumentList '--import','tsx/esm','src/index.ts' -WorkingDirectory '${cwd}' -WindowStyle Hidden"`,
-    )
+    if (IS_LINUX) {
+      const child = spawn('node', ['--import', 'tsx/esm', 'src/index.ts'], {
+        cwd, detached: true, stdio: 'ignore',
+        env: { ...process.env, NODE_PATH: process.env.NODE_PATH || '/usr/lib/node_modules' },
+      })
+      child.unref()
+      lastBackendPid = child.pid ?? null
+    } else {
+      await execAsync(
+        `powershell -NoProfile -Command "Start-Process -FilePath 'node' -ArgumentList '--import','tsx/esm','src/index.ts' -WorkingDirectory '${cwd}' -WindowStyle Hidden"`,
+      )
+    }
     console.log(`[restart] Backend spawn initiated`)
   } catch (e) {
     console.error(`[restart] Failed to spawn backend:`, e)
