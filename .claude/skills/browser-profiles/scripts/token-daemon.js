@@ -1018,9 +1018,9 @@ async function cmdStart() {
               staleRetryCount[name] = { count: 0, lastAttempt: 0 };
             }
           } else {
-            // extractToken failed — check if page landed on login (session expired)
+            // extractToken failed — check if page landed on login/IDP page (session expired)
             const curUrl = page.url();
-            if (curUrl.includes('login.microsoftonline') || curUrl.includes('login.live')) {
+            if (curUrl.includes('login.microsoftonline') || curUrl.includes('login.live') || curUrl.includes('IdentityProvider')) {
               log(`[${name}] Session expired during refresh, re-doing SSO...`);
               const ssoResult = await getHandleSSO()(page, {
                 targetDomain: config.tab,
@@ -1044,7 +1044,8 @@ async function cmdStart() {
                 log(`[${name}] SSO re-auth failed: ${ssoResult.action}`);
               }
             } else {
-              log(`[${name}] Refresh failed (page: ${curUrl.substring(0, 60)})`);
+              staleRetryCount[name] = { count: (sr.count || 0) + 1, lastAttempt: Date.now() };
+              log(`[${name}] Refresh failed (page: ${curUrl.substring(0, 60)}) [attempt ${staleRetryCount[name].count}/${STALE_MAX_RETRIES}]`);
             }
           }
         } catch (e) {
