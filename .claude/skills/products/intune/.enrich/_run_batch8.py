@@ -8,6 +8,10 @@ BATCH_FILE = os.path.join(BASE, "_batch_8.json")
 OUT_JSONL  = os.path.join(BASE, "known-issues-contentidea-kb-batch8.jsonl")
 OUT_SCAN   = os.path.join(BASE, "scanned-contentidea-kb-batch8.json")
 
+PROJECT_ROOT = os.path.abspath(os.path.join(BASE, "../../../../.."))
+with open(os.path.join(PROJECT_ROOT, "config.json")) as _f:
+    _cfg = json.load(_f)
+
 ORG = "https://dev.azure.com/ContentIdea"
 RESOURCE = "499b84ac-1321-427f-aa17-267ca6975798"
 FIELDS = ",".join([
@@ -26,7 +30,7 @@ FIELDS = ",".join([
 API_VER = "7.0"
 CHUNK = 200
 DATE = "2026-04-17"
-AZURE_CONFIG_DIR = os.path.expanduser("~/.azure-profiles/microsoft-fangkun")
+AZURE_CONFIG_DIR = os.path.join(_cfg["azProfilesRoot"], _cfg["azProfile"]["global"])
 ID_PREFIX = "intune-contentidea-kb-b8"
 
 

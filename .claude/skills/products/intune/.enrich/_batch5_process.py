@@ -2,6 +2,10 @@ import json, subprocess, re, sys, os
 from datetime import datetime
 
 ENRICH = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(ENRICH, "../../../../.."))
+with open(os.path.join(PROJECT_ROOT, "config.json")) as _f:
+    _cfg = json.load(_f)
+
 BATCH_FILE = os.path.join(ENRICH, '_batch_5.json')
 OUT_JSONL = os.path.join(ENRICH, 'known-issues-contentidea-kb-batch5.jsonl')
 OUT_SCANNED = os.path.join(ENRICH, 'scanned-contentidea-kb-batch5.json')
@@ -33,7 +37,7 @@ def strip_html(h):
 
 def get_env():
     env = os.environ.copy()
-    env['AZURE_CONFIG_DIR'] = os.path.expanduser('~/.azure-profiles/microsoft-fangkun')
+    env['AZURE_CONFIG_DIR'] = os.path.join(_cfg['azProfilesRoot'], _cfg['azProfile']['global'])
     return env
 
 def get_token(env):

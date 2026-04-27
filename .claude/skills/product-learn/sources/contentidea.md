@@ -34,7 +34,8 @@ open('.enrich/_wiql_body.json','w').write(json.dumps({'query': q}))
 
 # Step 2b: 执行 WIQL（$top=20000 覆盖 ADO 服务端上限）
 AZ_PROFILE=$(python3 -c "import json; print(json.load(open('config.json'))['azProfile']['global'])")
-AZURE_CONFIG_DIR="$HOME/.azure-profiles/$AZ_PROFILE" az rest --method post \
+AZ_ROOT=$(python3 -c "import json; print(json.load(open('config.json'))['azProfilesRoot'])")
+AZURE_CONFIG_DIR="$AZ_ROOT/$AZ_PROFILE" az rest --method post \
   --url "https://dev.azure.com/ContentIdea/ContentIdea/_apis/wit/wiql?api-version=7.1&\$top=20000" \
   --resource "499b84ac-1321-427f-aa17-267ca6975798" \
   --body @.claude/skills/products/{product}/.enrich/_wiql_body.json
@@ -66,7 +67,8 @@ AZURE_CONFIG_DIR="$HOME/.azure-profiles/$AZ_PROFILE" az rest --method post \
 **取 top 10 未扫描 ID**，对每个执行：
 ```bash
 AZ_PROFILE=$(python3 -c "import json; print(json.load(open('config.json'))['azProfile']['global'])")
-export AZURE_CONFIG_DIR="$HOME/.azure-profiles/$AZ_PROFILE"
+AZ_ROOT=$(python3 -c "import json; print(json.load(open('config.json'))['azProfilesRoot'])")
+export AZURE_CONFIG_DIR="$AZ_ROOT/$AZ_PROFILE"
 AZURE_CONFIG_DIR="$AZURE_CONFIG_DIR" az boards work-item show \
   --id {workItemId} --org https://dev.azure.com/ContentIdea -o json
 ```

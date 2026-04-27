@@ -13,7 +13,8 @@
 ```bash
 # Read profile name from config.json
 AZ_PROFILE=$(python3 -c "import json; print(json.load(open('config.json'))['azProfile']['global'])")
-export AZURE_CONFIG_DIR="$HOME/.azure-profiles/$AZ_PROFILE"
+AZ_ROOT=$(python3 -c "import json; print(json.load(open('config.json'))['azProfilesRoot'])")
+export AZURE_CONFIG_DIR="$AZ_ROOT/$AZ_PROFILE"
 ```
 
 ```powershell
@@ -162,7 +163,8 @@ Only projectWiki works with `az devops wiki page show`. REST API works for both 
 ```bash
 # Universal content read command (works for both codeWiki and projectWiki)
 AZ_PROFILE=$(python3 -c "import json; print(json.load(open('config.json'))['azProfile']['global'])")
-export AZURE_CONFIG_DIR="$HOME/.azure-profiles/$AZ_PROFILE"
+AZ_ROOT=$(python3 -c "import json; print(json.load(open('config.json'))['azProfilesRoot'])")
+export AZURE_CONFIG_DIR="$AZ_ROOT/$AZ_PROFILE"
 encoded_path=$(python3 -c "import urllib.parse; print(urllib.parse.quote('{pagePath}'))")
 MSYS_NO_PATHCONV=1 az rest --method get \
   --url "https://dev.azure.com/{org}/{project}/_apis/wiki/wikis/{wikiName}/pages?path=${encoded_path}&includeContent=true&api-version=7.1" \

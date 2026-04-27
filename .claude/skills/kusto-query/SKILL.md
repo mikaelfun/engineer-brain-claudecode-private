@@ -37,14 +37,15 @@ allowed-tools:
 ```bash
 # 从 config.json 动态读取（Mooncake 示例）
 AZ_PROFILE=$(python3 -c "import json; print(json.load(open('config.json'))['azProfile']['mooncake'])")
-export AZURE_CONFIG_DIR="$HOME/.azure-profiles/$AZ_PROFILE"
+export AZURE_CONFIG_DIR="$(python3 -c "import json; print(json.load(open('config.json'))['azProfilesRoot'])")/$AZ_PROFILE"
 ```
 
 ### 单查询
 
 ```bash
 AZ_PROFILE=$(python3 -c "import json; print(json.load(open('config.json'))['azProfile']['mooncake'])")
-AZURE_CONFIG_DIR="$HOME/.azure-profiles/$AZ_PROFILE" \
+AZ_ROOT=$(python3 -c "import json; print(json.load(open('config.json'))['azProfilesRoot'])")
+AZURE_CONFIG_DIR="$AZ_ROOT/$AZ_PROFILE" \
 python3 scripts/kusto-query.py \
   --cluster "https://azcrpmc.kusto.chinacloudapi.cn" \
   --database "crp_allmc" \
@@ -56,7 +57,8 @@ python3 scripts/kusto-query.py \
 
 ```bash
 AZ_PROFILE=$(python3 -c "import json; print(json.load(open('config.json'))['azProfile']['mooncake'])")
-AZURE_CONFIG_DIR="$HOME/.azure-profiles/$AZ_PROFILE" \
+AZ_ROOT=$(python3 -c "import json; print(json.load(open('config.json'))['azProfilesRoot'])")
+AZURE_CONFIG_DIR="$AZ_ROOT/$AZ_PROFILE" \
 python3 scripts/kusto-query.py \
   --cluster "https://azcrpmc.kusto.chinacloudapi.cn" \
   --database "crp_allmc" \
@@ -78,7 +80,8 @@ python3 scripts/kusto-query.py \
 ```bash
 # 从 config.json 读取 profile（不要硬编码 profile 名）
 AZ_PROFILE=$(python3 -c "import json; c=json.load(open('config.json'))['azProfile']; print(c['mooncake'] if 'chinacloudapi' in '$CLUSTER' else c['global'])")
-export AZURE_CONFIG_DIR="$HOME/.azure-profiles/$AZ_PROFILE"
+AZ_ROOT=$(python3 -c "import json; print(json.load(open('config.json'))['azProfilesRoot'])")
+export AZURE_CONFIG_DIR="$AZ_ROOT/$AZ_PROFILE"
 ```
 
 ⚠️ **必须设置**，否则 DefaultAzureCredential 无法获取正确 cloud 的 token。

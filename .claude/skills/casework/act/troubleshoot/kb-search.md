@@ -51,7 +51,8 @@ pwsh -NoProfile -File scripts/ado-search.ps1 -Type workitem -Query "关键词" -
 
 **Wiki 页面读取**：
 ```bash
-export AZURE_CONFIG_DIR="$HOME/.azure-profiles/microsoft-fangkun"
+AZ_ROOT=$(python3 -c "import json; print(json.load(open('config.json'))['azProfilesRoot'])")
+export AZURE_CONFIG_DIR="$AZ_ROOT/microsoft-fangkun"
 az devops wiki page show --wiki "{wikiName}" --project "{project}" \
   --path "{pagePath}" --org "https://dev.azure.com/{org}" --detect false
 ```
