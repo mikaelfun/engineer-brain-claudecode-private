@@ -26,6 +26,7 @@ process.on('uncaughtException', (err) => {
 })
 
 import { serve } from '@hono/node-server'
+import { createServer } from 'net'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
@@ -196,6 +197,23 @@ startAzProfileMonitor((profiles) => {
 // Initialize SBA patrol trigger (monitors Teams Watch for new case assignments)
 initSbaPatrolTrigger()
 
+async function waitForPort(port: number, maxWaitMs = 10000): Promise<void> {
+  const start = Date.now()
+  while (Date.now() - start < maxWaitMs) {
+    const inUse = await new Promise<boolean>((resolve) => {
+      const srv = createServer()
+      srv.once('error', () => resolve(true))
+      srv.once('listening', () => { srv.close(); resolve(false) })
+      srv.listen(port)
+    })
+    if (!inUse) return
+    console.log(`[startup] Port ${port} in use, waiting for old process to exit...`)
+    await new Promise(r => setTimeout(r, 300))
+  }
+  throw new Error(`Port ${port} still in use after ${maxWaitMs}ms`)
+}
+
+await waitForPort(config.port)
 serve({
   fetch: app.fetch,
   port: config.port,

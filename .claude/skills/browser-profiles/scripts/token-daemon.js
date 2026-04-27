@@ -390,10 +390,24 @@ function readPid() {
 function isProcessAlive(pid) {
   if (!pid) return false;
   try {
-    const cmd = _isWSL ? 'tasklist.exe' : 'tasklist';
-    const out = execSync(`${cmd} /FI "PID eq ${pid}" /NH`, { encoding: 'utf-8', timeout: 5000, stdio: ['pipe','pipe','pipe'] });
+    if (_isWSL) {
+      process.kill(pid, 0);
+      return true;
+    }
+    const out = execSync(`tasklist /FI "PID eq ${pid}" /NH`, { encoding: 'utf-8', timeout: 5000, stdio: ['pipe','pipe','pipe'] });
     return out.includes(String(pid));
   } catch { return false; }
+}
+
+function killDaemonPid(pid) {
+  if (!pid) return;
+  try {
+    if (_isWSL) {
+      process.kill(pid, 'SIGTERM');
+    } else {
+      execSync(`taskkill /PID ${pid} /F /T`, { encoding: 'utf-8', timeout: 10000 });
+    }
+  } catch {}
 }
 
 function isHeartbeatFresh() {
@@ -1194,7 +1208,7 @@ function cmdStop() {
     return;
   }
   try {
-    execSync(`taskkill.exe /PID ${pid} /F /T`, { encoding: 'utf-8', timeout: 10000 });
+    killDaemonPid(pid);
     console.log(`DAEMON_STOPPED|pid=${pid}`);
   } catch (e) {
     console.log(`DAEMON_STOP_FAILED|pid=${pid}|${e.message}`);
@@ -1217,7 +1231,7 @@ async function cmdEnsure() {
   // Daemon 不存活 → 清理 + 后台启动
   log('Daemon not alive, starting...');
   if (pid) {
-    try { execSync(`taskkill.exe /PID ${pid} /F /T 2>nul`, { encoding: 'utf-8', timeout: 5000 }); } catch {}
+    killDaemonPid(pid);
   }
   try { fs.unlinkSync(PID_FILE); } catch {}
   killOrphanEdge();
@@ -1284,7 +1298,7 @@ async function cmdWarmup() {
 
   // 清理残留
   if (pid) {
-    try { execSync(`taskkill.exe /PID ${pid} /F /T 2>nul`, { encoding: 'utf-8', timeout: 5000 }); } catch {}
+    killDaemonPid(pid);
   }
   try { fs.unlinkSync(PID_FILE); } catch {}
   try { fs.unlinkSync(PORT_FILE); } catch {}

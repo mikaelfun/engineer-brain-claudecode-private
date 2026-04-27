@@ -116,27 +116,40 @@ export default function PatrolPage() {
             </>
           )}
 
-          {/* Action button — rightmost */}
+          {/* Action buttons — rightmost */}
           {isRunning ? (
-            <button
-              onClick={handleCancel}
-              disabled={cancelPatrol.isPending}
-              className="inline-flex items-center gap-2 font-bold uppercase transition-all"
-              style={{
-                fontSize: 12,
-                padding: '9px 22px',
-                borderRadius: 13,
-                letterSpacing: '0.3px',
-                background: 'var(--accent-red)',
-                color: 'var(--text-inverse)',
-                border: '1px solid rgba(0,0,0,0.1)',
-                opacity: cancelPatrol.isPending ? 0.6 : 1,
-                cursor: cancelPatrol.isPending ? 'not-allowed' : 'pointer',
-              }}
-            >
-              {cancelPatrol.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Square className="w-4 h-4" />}
-              Cancel
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleCancel}
+                disabled={cancelPatrol.isPending}
+                className="inline-flex items-center gap-2 font-bold uppercase transition-all"
+                style={{
+                  fontSize: 12,
+                  padding: '9px 22px',
+                  borderRadius: 13,
+                  letterSpacing: '0.3px',
+                  background: 'var(--accent-red)',
+                  color: 'var(--text-inverse)',
+                  border: '1px solid rgba(0,0,0,0.1)',
+                  opacity: cancelPatrol.isPending ? 0.6 : 1,
+                  cursor: cancelPatrol.isPending ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {cancelPatrol.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Square className="w-4 h-4" />}
+                Cancel
+              </button>
+              <button
+                onClick={handleReset}
+                disabled={resetPatrol.isPending}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-colors"
+                style={{ color: 'var(--text-tertiary)', opacity: resetPatrol.isPending ? 0.5 : 1 }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                title="Force reset — cancel patrol + clear all state and lock + kill orphan processes"
+              >
+                {resetPatrol.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RotateCcw className="w-3.5 h-3.5" />}
+              </button>
+            </div>
           ) : (
             <div className="flex items-center gap-2">
               <button

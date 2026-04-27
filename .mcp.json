@@ -1,51 +1,28 @@
 {
   "mcpServers": {
-    "playwright": {
-      "command": "cmd",
-      "args": ["/c", "npx", "@playwright/mcp@latest", "--browser", "msedge", "--output-dir", ".playwright-output"]
-    },
     "icm": {
-      "command": "cmd",
-      "args": ["/c", "%APPDATA%\\agency\\CurrentVersion\\agency.exe", "mcp", "icm"]
+      "command": "agency",
+      "args": ["mcp", "icm"]
     },
     "teams": {
-      "command": "cmd",
-      "args": ["/c", "%APPDATA%\\agency\\CurrentVersion\\agency.exe", "mcp", "teams"]
-    },
-    "kusto": {
-      "disabled": true,
-      "command": "cmd",
-      "args": ["/c", "set AZURE_CONFIG_DIR=%USERPROFILE%\\.azure-profiles\\cme-fangkun&&%APPDATA%\\agency\\CurrentVersion\\agency.exe", "mcp", "kusto", "--service-uri", "https://mcakshuba.chinaeast2.kusto.chinacloudapi.cn", "--database", "AKSprod"]
-    },
-    "msft-learn": {
-      "command": "cmd",
-      "args": ["/c", "%APPDATA%\\agency\\CurrentVersion\\agency.exe", "mcp", "msft-learn"]
-    },
-    "mail": {
-      "command": "cmd",
-      "args": ["/c", "%APPDATA%\\agency\\CurrentVersion\\agency.exe", "mcp", "mail"]
-    },
-    "workiq": {
-      "command": "cmd",
-      "args": ["/c", "%APPDATA%\\agency\\CurrentVersion\\agency.exe", "mcp", "workiq"]
+      "command": "agency",
+      "args": ["mcp", "teams"]
     },
     "enghub": {
-      "command": "cmd",
-      "args": ["/c", "%APPDATA%\\agency\\CurrentVersion\\agency.exe", "mcp", "enghub"]
+      "command": "agency",
+      "args": ["mcp", "enghub"]
     },
-    "local-rag": {
-      "command": "node",
-      "args": ["scripts/launch-local-rag.js"],
-      "env": {
-        "EMBEDDING_PROVIDER": "openai",
-        "OPENAI_API_KEY": "sk-vXY3OWzBgtQGxFry1cZerQB0bpLojgbkdyWt7wnsHMDeQ3uw",
-        "OPENAI_BASE_URL": "https://kunnewapi.net/v1",
-        "MODEL_NAME": "text-embedding-3-small",
-        "FALLBACK_PROVIDER": "azure",
-        "FALLBACK_API_KEY": "19veMd0vj3zco9ojgASQa1Z02sB15rtefRWdATa4wVoj4hfi4YY6JQQJ99CCACHYHv6XJ3w3AAAAACOGnBb6",
-        "FALLBACK_BASE_URL": "https://kunfoundryestus2.cognitiveservices.azure.com",
-        "FALLBACK_API_VERSION": "2023-05-15"
-      }
+    "msft-learn": {
+      "command": "agency",
+      "args": ["mcp", "msft-learn"]
+    },
+    "mail": {
+      "command": "agency",
+      "args": ["mcp", "mail"]
+    },
+    "workiq": {
+      "command": "agency",
+      "args": ["mcp", "workiq"]
     }
   }
 }

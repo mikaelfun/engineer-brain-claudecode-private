@@ -1,11 +1,8 @@
 /**
  * AzProfileCard — Azure CLI Profile 健康状态卡片
  *
- * 核心概念：后端每 15 分钟调一次 `az account get-access-token`，
- * 这不仅检查 refresh token 是否有效，同时自动续期 refresh token（90 天滑动窗口）。
- * 只要后端持续运行，refresh token 永远不会过期。
- *
- * 失效条件：后端停机 >90 天、管理员撤销 token、密码变更。
+ * 设计原则：az profiles 由 Windows 侧维护（通过 powershell.exe 调 Windows az login），
+ * WSL 只读取对应 profile 路径获取 token。不从 WSL 的 az CLI 执行 login（缺 WAM 会污染 MSAL）。
  */
 import { Card } from './common/Card'
 import { useAzProfileStatus, useAzProfileRefresh, useAzProfileLogin } from '../api/hooks'
@@ -18,12 +15,10 @@ function ProfileRow({ profile, onLogin, loginPending }: { profile: AzProfileStat
 
   return (
     <div className="flex items-center gap-2 min-w-0">
-      {/* Status dot */}
       <span
         className="inline-block w-2 h-2 rounded-full shrink-0"
         style={{ background: isOk ? 'var(--accent-green)' : isLoggingIn ? 'var(--accent-amber)' : 'var(--accent-red)' }}
       />
-      {/* Profile name */}
       <span
         className="text-xs font-mono flex-1 min-w-0 truncate"
         style={{ color: isOk ? 'var(--text-secondary)' : isLoggingIn ? 'var(--accent-amber)' : 'var(--accent-red)' }}
@@ -31,19 +26,17 @@ function ProfileRow({ profile, onLogin, loginPending }: { profile: AzProfileStat
       >
         {profile.name}
       </span>
-      {/* Status text or action */}
       {isLoggingIn ? (
         <Loader2 className="w-3 h-3 animate-spin shrink-0" style={{ color: 'var(--accent-amber)' }} />
       ) : !isOk ? (
         <button
           onClick={() => onLogin(profile.profileDir)}
           disabled={loginPending}
-          className="flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] rounded transition-colors disabled:opacity-50 shrink-0"
-          style={{ color: 'var(--accent-amber)', background: 'var(--accent-amber-dim)' }}
-          title="Open browser for interactive az login"
+          className="p-0.5 rounded transition-colors disabled:opacity-50 shrink-0"
+          style={{ color: 'var(--accent-amber)' }}
+          title={`az login — ${profile.name}`}
         >
-          <LogIn className="w-2.5 h-2.5" />
-          Login
+          <LogIn className="w-3 h-3" />
         </button>
       ) : null}
     </div>
@@ -62,14 +55,12 @@ function CloudGroup({ label, color, bg, profiles, onLogin, loginPending }: {
 
   return (
     <div className="space-y-1.5 min-w-0 flex-1">
-      {/* Cloud label */}
       <span
         className="inline-flex items-center justify-center text-[9px] font-semibold px-2 py-0.5 rounded"
         style={{ background: bg, color }}
       >
         {label}
       </span>
-      {/* Profile rows — fixed order by name */}
       {[...profiles]
         .sort((a, b) => a.name.localeCompare(b.name))
         .map((p) => (
@@ -104,7 +95,6 @@ export function AzProfileCard() {
   return (
     <Card padding="sm">
       <div className="space-y-3">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {allOk
@@ -129,7 +119,6 @@ export function AzProfileCard() {
           </button>
         </div>
 
-        {/* Two-column layout: 21V | Global */}
         <div className="flex gap-4">
           <CloudGroup
             label="21V"

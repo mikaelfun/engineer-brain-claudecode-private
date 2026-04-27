@@ -3,7 +3,7 @@
  *
  * GET  /api/az-profiles/status  — 各 profile 的 token 有效期
  * POST /api/az-profiles/refresh — 清缓存 + 强制重新获取 token（静默续期）
- * POST /api/az-profiles/login   — 触发交互式 az login（打开浏览器）
+ * POST /api/az-profiles/login   — 通过 Windows PowerShell 触发 az login
  */
 import { Hono } from 'hono'
 import { readAzProfileStatus, refreshAzProfileTokens, loginAzProfile, isLoginInProgress } from '../services/az-profile-reader.js'
