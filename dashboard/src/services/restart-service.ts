@@ -37,15 +37,22 @@ const NODE_TREE_PROCESS_NAMES = new Set([
  * Command-line patterns that identify dashboard-related processes.
  * Used by cleanupOrphanedDashboardProcesses() to find zombies.
  */
-const DASHBOARD_CMD_PATTERNS = [
-  'concurrently.*dev:server.*dev:web',
-  'npm run dev:server',
-  'npm run dev:web',
-  'node.*tsx.*src/index\\.ts',
+const FRONTEND_CMD_PATTERNS = [
   'npx.*vite.*--port',
   'vite.*--port',
-  // Also catch bare 'cd web && npm run dev' wrappers from concurrently
+]
+
+const BACKEND_CMD_PATTERNS = [
+  'concurrently.*dev:server.*dev:web',
+  'npm run dev:server',
+  'node.*tsx.*src/index\\.ts',
   'cd web.*npm run dev',
+]
+
+const DASHBOARD_CMD_PATTERNS = [
+  ...BACKEND_CMD_PATTERNS,
+  'npm run dev:web',
+  ...FRONTEND_CMD_PATTERNS,
 ]
 
 const IS_LINUX = process.platform === 'linux'
@@ -193,7 +200,7 @@ async function killPid(pid: number): Promise<void> {
  *
  * Called before each restart to ensure a clean slate.
  */
-async function cleanupOrphanedDashboardProcesses(excludePids?: Set<number>): Promise<number> {
+async function cleanupOrphanedDashboardProcesses(excludePids?: Set<number>, scope: 'all' | 'backend-only' = 'all'): Promise<number> {
   const myPid = process.pid
   const exclude = excludePids ?? new Set<number>()
   exclude.add(myPid)
@@ -210,6 +217,7 @@ async function cleanupOrphanedDashboardProcesses(excludePids?: Set<number>): Pro
 
   try {
     let pidsToKill: number[] = []
+    const patterns = scope === 'backend-only' ? BACKEND_CMD_PATTERNS : DASHBOARD_CMD_PATTERNS
 
     if (IS_LINUX) {
       const { stdout } = await execAsync(`ps aux`, { maxBuffer: 5 * 1024 * 1024 })
@@ -219,7 +227,7 @@ async function cleanupOrphanedDashboardProcesses(excludePids?: Set<number>): Pro
         const pid = parseInt(parts[1], 10)
         if (exclude.has(pid)) continue
         const cmdLine = parts.slice(10).join(' ')
-        const isDashboard = DASHBOARD_CMD_PATTERNS.some(pattern => {
+        const isDashboard = patterns.some(pattern => {
           try { return new RegExp(pattern, 'i').test(cmdLine) } catch { return false }
         })
         if (isDashboard) pidsToKill.push(pid)
@@ -240,7 +248,7 @@ async function cleanupOrphanedDashboardProcesses(excludePids?: Set<number>): Pro
         const cmdLine = match[2]
         if (exclude.has(pid)) continue
         if (!cmdLine) continue
-        const isDashboard = DASHBOARD_CMD_PATTERNS.some(pattern => {
+        const isDashboard = patterns.some(pattern => {
           try { return new RegExp(pattern, 'i').test(cmdLine) } catch { return false }
         })
         if (isDashboard) pidsToKill.push(pid)
@@ -382,8 +390,8 @@ export async function restartBackend(): Promise<{ success: boolean; message: str
   // Abort all active SDK queries before exiting (ISS-086)
   const aborted = abortAllQueries()
   console.log(`[restart] Aborted ${aborted} active queries before backend restart`)
-  // ISS-209: Clean up orphaned dashboard processes before restart
-  await cleanupOrphanedDashboardProcesses()
+  // ISS-209: Clean up orphaned backend processes only (don't kill frontend)
+  await cleanupOrphanedDashboardProcesses(undefined, 'backend-only')
   // NOTE: Do NOT kill own port — we ARE the backend process on BACKEND_PORT.
   // taskkill /T on our own tree would kill us before spawn runs.
   // Instead: kill saved PID from previous restart (if any), spawn new backend,

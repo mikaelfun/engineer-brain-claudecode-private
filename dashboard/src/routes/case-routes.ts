@@ -283,7 +283,29 @@ caseRoutes.get('/patrol/messages', (c) => {
   // No param → in-memory first, then latest disk log
   const inMemory = patrolMessageStore.getAll()
   if (inMemory.length > 0) {
-    return c.json({ messages: inMemory })
+    // Separate main messages from agent lifecycle events (match disk recovery format)
+    const messages = inMemory.filter(m => !m.kind.startsWith('agent-'))
+    const subAgents: Record<string, any> = {}
+    for (const m of inMemory) {
+      if (m.kind === 'agent-started' && m.taskId) {
+        subAgents[m.taskId] = {
+          taskId: m.taskId,
+          agentType: m.agentType || 'unknown',
+          caseNumber: m.caseNumber,
+          status: 'running',
+          description: m.content,
+          startedAt: m.timestamp,
+          messages: [],
+        }
+      } else if (m.kind === 'agent-progress' && m.taskId && subAgents[m.taskId]) {
+        subAgents[m.taskId].summary = m.content
+      } else if (m.kind === 'agent-completed' && m.taskId && subAgents[m.taskId]) {
+        subAgents[m.taskId].status = 'completed'
+        subAgents[m.taskId].summary = m.content
+        subAgents[m.taskId].completedAt = m.timestamp
+      }
+    }
+    return c.json({ messages, subAgents, source: 'memory' })
   }
 
   const logsDir = join(appConfig.patrolDir, 'logs')

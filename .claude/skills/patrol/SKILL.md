@@ -105,7 +105,7 @@ gathering ─┬─ casework 自闭环（summarize.status=completed）→ done
        casesRoot: {casesRoot}
        mode: patrol
 
-       读取 .claude/skills/casework/SKILL.md，按 mode=patrol 流程执行。
+       读取 .claude/skills/casework/SKILL-patrol.md，按流程执行。
        简单路径（无 troubleshooter）在 agent 内完成全部步骤后退出。
        排查路径（有 troubleshooter）在 IR email（如有）后标记 waiting-troubleshooter 退出。",
      run_in_background: true,

@@ -28,6 +28,7 @@ import { patrolStateManager } from '../services/patrol-state-manager.js'
 import { loadAgentDefinitions } from './case-session-manager.js'
 import { summarizeToolInput } from '../utils/sdk-message-broadcaster.js'
 import { parseAssistantBlocks } from '../utils/sse-helpers.js'
+import { inferAgentType } from '../utils/session-log-parser.js'
 import { patrolMessageStore } from '../services/patrol-message-store.js'
 import { sdkRegistry } from './sdk-session-registry.js'
 import { parseSessionLog } from '../utils/session-log-parser.js'
@@ -163,9 +164,11 @@ export async function runSdkPatrol(force: boolean, mode: string = 'normal'): Pro
     const phaseFile = join(config.patrolDir, 'patrol-phase')
     writeFileSync(phaseFile, 'initializing', 'utf-8')
   } catch { /* ignore */ }
+  // Write empty JSON instead of deleting — chokidar loses watch on unlinked files,
+  // so skill-side writes to a recreated file won't trigger change events.
   try {
     const progressFile = config.patrolProgressFile
-    if (existsSync(progressFile)) unlinkSync(progressFile)
+    writeFileSync(progressFile, '{}', 'utf-8')
   } catch { /* ignore */ }
   try {
     const timingsFile = join(config.patrolDir, 'patrol-timings.json')
@@ -265,14 +268,16 @@ export async function runSdkPatrol(force: boolean, mode: string = 'normal'): Pro
       const subtype = msg.subtype as string | undefined
 
       if (subtype === 'task_started') {
-        // Map task_id → case number (extracted from prompt)
         const taskId = msg.task_id as string
+        const rawType = (msg.task_type || 'unknown') as string
+        if (rawType === 'local_bash') continue
+        // Map task_id → case number (extracted from prompt)
         const prompt = (msg.prompt || msg.description || '') as string
         const caseMatch = prompt.match(/(?:Case\s+|case\s+|\/active\/|caseNumber[:\s]+)(\d{10,})/i)
         if (caseMatch) {
           taskCaseMap[taskId] = caseMatch[1]
         }
-        const agentType = msg.task_type || 'unknown'
+        const agentType = inferAgentType(rawType, msg.description as string)
         taskTypeMap[taskId] = agentType
         console.log(`[sdk-patrol] Sub-agent started: ${agentType} task=${taskId} case=${caseMatch?.[1] || '?'}`)
         sseManager.broadcast('patrol-agent' as any, {
