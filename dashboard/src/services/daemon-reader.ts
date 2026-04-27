@@ -56,8 +56,11 @@ function readJsonFile<T>(filePath: string): T | null {
 
 function isProcessAlive(pid: number): boolean {
   try {
-    const cmd = process.platform === 'linux' ? 'tasklist.exe' : 'tasklist'
-    const out = execSync(`${cmd} /FI "PID eq ${pid}" /NH`, {
+    if (process.platform === 'linux') {
+      process.kill(pid, 0)
+      return true
+    }
+    const out = execSync(`tasklist /FI "PID eq ${pid}" /NH`, {
       encoding: 'utf-8',
       timeout: 5000,
       stdio: ['pipe', 'pipe', 'pipe'],
@@ -251,12 +254,15 @@ export function stopDaemon(): { stopped: boolean; pid: number | null; error?: st
   }
 
   try {
-    const killCmd = process.platform === 'linux' ? 'taskkill.exe' : 'taskkill'
-    execSync(`${killCmd} /PID ${pid} /F /T`, {
-      encoding: 'utf-8',
-      timeout: 5000,
-      stdio: ['pipe', 'pipe', 'pipe'],
-    })
+    if (process.platform === 'linux') {
+      process.kill(pid, 'SIGTERM')
+    } else {
+      execSync(`taskkill /PID ${pid} /F /T`, {
+        encoding: 'utf-8',
+        timeout: 5000,
+        stdio: ['pipe', 'pipe', 'pipe'],
+      })
+    }
     cleanupDaemonFiles()
     return { stopped: true, pid }
   } catch (e: any) {
